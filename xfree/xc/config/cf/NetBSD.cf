@@ -536,6 +536,9 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
 
+/* Always build the XInput library, regardless of server support on this plattform */
+#define BuildXInputLib          YES
+
 #if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture)
 # include <xfree86.cf>
 #endif
