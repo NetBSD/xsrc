@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/02/23 18:29:00 hubertf Exp $
+#	$NetBSD: Makefile,v 1.13 2000/02/27 16:44:50 fredb Exp $
 #
 # Targets & Variables
 #
@@ -101,6 +101,6 @@ release snapshot: build
 		cksum -m *.tgz >MD5 && \
 		cksum -o 2 *.tgz >SYSVSUM
 #
-.endif # maketars exists and DESTDIR and RELEASEDIR check
+.endif # DESTDIR and RELEASEDIR check
 
 .include "/etc/mk.conf"
