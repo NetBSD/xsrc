@@ -1,4 +1,4 @@
-/* $NetBSD: hpcScreen.c,v 1.1 2000/05/06 06:01:49 takemura Exp $	*/
+/* $NetBSD: hpcScreen.c,v 1.2 2000/05/20 03:44:15 shin Exp $	*/
 /* $XConsortium: sunFbs.c,v 1.8 94/08/16 13:45:30 dpw Exp $ */
 /*
 Copyright (c) 1990, 1993  X Consortium
@@ -112,16 +112,10 @@ hpcMemoryMap (len, off, fd)
     off_t	off;
     int		fd;
 {
-    int		pagemask, mapsize;
     caddr_t	addr;
     pointer	mapaddr;
-    off_t	off2;
 
-    pagemask = getpagesize() - 1;
-    off2 = off & ~pagemask;
-    off -= off2;
-    len += off2;
-    mapsize = ((int) len + pagemask) & ~pagemask;
+    len += off;
     addr = 0;
 
     /*
@@ -129,15 +123,15 @@ hpcMemoryMap (len, off, fd)
      * interloper, e.g. another server, can't get this frame buffer,
      * and if another server already has it, this one won't.
      */
-    mapaddr = (pointer) mmap(addr, mapsize,
+    mapaddr = (pointer) mmap(addr, len,
 		    PROT_READ | PROT_WRITE, MAP_SHARED,
-		    fd, off);
+		    fd, 0);
     if (mapaddr == (pointer) -1) {
 	Error ("mapping frame buffer memory");
 	(void) close (fd);
 	mapaddr = NULL;
     }
-    return mapaddr + off2;
+    return mapaddr + off;
 }
 
 static Bool
