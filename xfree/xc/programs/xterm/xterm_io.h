@@ -1,9 +1,9 @@
 /*
- * $XFree86: xc/programs/xterm/xterm_io.h,v 1.13 2004/01/07 04:28:07 dawes Exp $
+ * $XFree86: xc/programs/xterm/xterm_io.h,v 1.17 2005/02/06 21:42:38 dickey Exp $
  */
 
 /*
- * Copyright 2000-2002,2003 by Thomas E. Dickey
+ * Copyright 2000-2003,2004 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -58,9 +58,16 @@
 #define USE_SYSV_TERMIO
 #endif
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__INTERIX) || defined(__APPLE__)
 #ifndef USE_POSIX_TERMIOS
 #define USE_POSIX_TERMIOS
+#endif
+#endif
+
+#if defined(AIXV4)
+#define USE_POSIX_TERMIOS
+#ifndef SYSV
+#define SYSV
 #endif
 #endif
 
@@ -68,7 +75,7 @@
 #define USE_TERMIOS
 #endif
 
-#ifdef SCO325
+#ifdef __SCO__
 #define USE_TERMIOS
 #define _SVID3
 #endif
@@ -160,7 +167,7 @@
 #ifdef SYSV
 #ifdef USE_USG_PTYS
 #include <sys/stream.h>			/* get typedef used in ptem.h */
-#if !defined(SVR4) || defined(SCO325)
+#if !defined(SVR4) || defined(__SCO__)
 #include <sys/ptem.h>			/* get struct winsize */
 #endif
 #endif /* USE_USG_PTYS */

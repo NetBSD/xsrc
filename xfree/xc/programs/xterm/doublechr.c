@@ -1,10 +1,12 @@
+/* $XTermId: doublechr.c,v 1.37 2005/01/09 23:11:07 tom Exp $ */
+
 /*
- * $XFree86: xc/programs/xterm/doublechr.c,v 3.12 2003/10/13 00:58:22 dickey Exp $
+ * $XFree86: xc/programs/xterm/doublechr.c,v 3.15 2005/01/14 01:50:02 dickey Exp $
  */
 
 /************************************************************
 
-Copyright 1997-2002,2003 by Thomas E. Dickey
+Copyright 1997-2004,2005 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -38,6 +40,8 @@ authorization.
 #include <data.h>
 #include <fontutils.h>
 
+#include <assert.h>
+
 /*
  * The first column is all that matters for double-size characters (since the
  * controls apply to a whole line).  However, it's easier to maintain the
@@ -52,9 +56,11 @@ repaint_line(unsigned newChrSet)
     register TScreen *screen = &term->screen;
     int curcol = screen->cur_col;
     int currow = screen->cur_row;
-    int len = screen->max_col + 1;
+    unsigned len = screen->max_col + 1;
     int width = len;
     unsigned oldChrSet = SCRN_BUF_CSETS(screen, currow)[0];
+
+    assert(screen->max_col >= 0);
 
     /*
      * Ignore repetition.
@@ -76,22 +82,21 @@ repaint_line(unsigned newChrSet)
 
     /*
      * ScrnRefresh won't paint blanks for us if we're switching between a
-     * single-size and double-size font.
+     * single-size and double-size font.  So we paint our own.
      */
     if (CSET_DOUBLE(oldChrSet) != CSET_DOUBLE(newChrSet)) {
-	ClearCurBackground(
-			      screen,
-			      CursorY(screen, currow),
-			      CurCursorX(screen, currow, 0),
-			      FontHeight(screen),
-			      len * CurFontWidth(screen, currow));
+	ClearCurBackground(screen,
+			   CursorY(screen, currow),
+			   CurCursorX(screen, currow, 0),
+			   (unsigned) FontHeight(screen),
+			   len * CurFontWidth(screen, currow));
     }
 
     /* FIXME: do VT220 softchars allow double-sizes? */
-    memset(SCRN_BUF_CSETS(screen, currow), newChrSet, len);
+    memset(SCRN_BUF_CSETS(screen, currow), (Char) newChrSet, len);
 
     screen->cur_col = 0;
-    ScrnRefresh(screen, currow, 0, 1, len, True);
+    ScrnUpdate(screen, currow, 0, 1, (int) len, True);
     screen->cur_col = curcol;
 }
 #endif
@@ -104,7 +109,7 @@ void
 xterm_DECDHL(Bool top)
 {
 #if OPT_DEC_CHRSET
-    repaint_line(top ? CSET_DHL_TOP : CSET_DHL_BOT);
+    repaint_line((unsigned) (top ? CSET_DHL_TOP : CSET_DHL_BOT));
 #endif
 }
 
@@ -222,7 +227,7 @@ xterm_DoubleGC(unsigned chrset, unsigned flags, GC old_gc)
     if (data->fn != 0) {
 	if (!strcmp(data->fn, name)) {
 	    if (data->fs != 0) {
-		XCopyGC(screen->display, old_gc, ~GCFont, data->gc);
+		XCopyGC(screen->display, old_gc, (unsigned long) (~GCFont), data->gc);
 		return data->gc;
 	    }
 	}
@@ -252,11 +257,11 @@ xterm_DoubleGC(unsigned chrset, unsigned flags, GC old_gc)
 
     gcv.graphics_exposures = TRUE;	/* default */
     gcv.font = data->fs->fid;
-    gcv.foreground = screen->foreground;
-    gcv.background = term->core.background_pixel;
+    gcv.foreground = T_COLOR(screen, TEXT_FG);
+    gcv.background = T_COLOR(screen, TEXT_BG);
 
     data->gc = XCreateGC(screen->display, VWindow(screen), mask, &gcv);
-    XCopyGC(screen->display, old_gc, ~GCFont, data->gc);
+    XCopyGC(screen->display, old_gc, (unsigned long) (~GCFont), data->gc);
     return data->gc;
 }
 #endif
