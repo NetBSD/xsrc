@@ -49,6 +49,8 @@
 static pointer mipsMapVidMem(int, unsigned long, unsigned long, int flags);
 static void mipsUnmapVidMem(int, pointer, unsigned long);
 
+unsigned int IOPortBase;
+
 void
 xf86OSInitVidMem(VidMemInfoPtr pVidMem)
 {
