@@ -4,5 +4,5 @@ XCOMM $XConsortium: Imakefile /main/1 1996/01/30 14:27:50 kaleb $
 
 all::
 
-InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/symbols/nec)
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/symbols/sharp)
 DependTarget()
