@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.1 2001/12/17 23:59:49 bjh21 Exp $	*/
+/*	$NetBSD: wscons.c,v 1.2 2001/12/18 00:06:15 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -66,7 +66,7 @@ extern int kbdmap[], kbdmap1[], kbdmap2[];
 /* Our private definitions */
 #include "private.h"
 
-#define DEBUG
+/* #define DEBUG */
 
 #ifdef DEBUG
 #define DPRINTF(x) ErrorF x
