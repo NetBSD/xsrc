@@ -1,5 +1,5 @@
 /* $XConsortium: main.c,v 1.23 94/04/17 20:43:55 rws Exp $ */
-/* $XFree86: contrib/programs/xman/main.c,v 3.0 1994/06/05 08:00:19 dawes Exp $ */
+/* $XFree86: contrib/programs/xman/main.c,v 3.0.2.1 1998/09/26 06:45:13 dawes Exp $ */
 /*
 
 Copyright (c) 1987, 1988  X Consortium
@@ -138,8 +138,7 @@ int saved_argc;
  *	Returns: return, what return.
  */
 
-void 
-main(argc,argv)
+int main(argc,argv)
 char ** argv;
 int argc;
 {

@@ -1,5 +1,5 @@
 /* $XConsortium: man.h,v 1.31 94/12/16 21:36:53 gildea Exp $ */
-/* $XFree86: contrib/programs/xman/man.h,v 3.1 1996/10/24 03:59:16 dawes Exp $ */
+/* $XFree86: contrib/programs/xman/man.h,v 3.1.2.1 1998/09/26 06:45:14 dawes Exp $ */
 /*
 
 Copyright (c) 1987, 1988  X Consortium
@@ -225,10 +225,6 @@ void CreateNewManpage(), RemoveThisManpage(), Search(), ShowVersion();
 /* help.c */
 
 Boolean MakeHelpWidget(), OpenHelpfile();
-
-/* main.c */
-
-void main();
 
 /* man.c */
 

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.22 91/09/09 16:02:18 rws Exp $
-XCOMM $XFree86: contrib/programs/xman/Imakefile,v 3.1 1995/07/22 13:37:11 dawes Exp $
+XCOMM $XFree86: contrib/programs/xman/Imakefile,v 3.1.2.1 1998/09/26 06:45:13 dawes Exp $
 
 #ifdef XmanSearchPath
 XMANSYSPATH = XmanSearchPath
@@ -11,7 +11,7 @@ LOCALMANPATH = -DLOCALMANPATH=\"$(XMANLOCALPATH)\"
 #endif
 MANPATHS = $(SYSMANPATH) $(LOCALMANPATH)
 HELPFILE = -DHELPFILE=\"$(LIBDIR)$(PATHSEP)xman.help\"
-	
+
  OSMAJORVERSION = OSMajorVersion
  OSMINORVERSION = OSMinorVersion
         DEFINES = -DOSMAJORVERSION=$(OSMAJORVERSION) -DOSMINORVERSION=$(OSMINORVERSION) $(HELPFILE) $(MANPATHS)
