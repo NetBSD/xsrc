@@ -1,4 +1,4 @@
-/* $NetBSD: x68kText.c,v 1.2 1999/06/27 14:16:06 minoura Exp $ */
+/* $NetBSD: x68kText.c,v 1.3 2003/01/24 16:58:08 nsmrtks Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -47,6 +47,8 @@ Bool x68kSaveScreen(ScreenPtr pScreen, Bool on);
  *                    FALSE otherwise
  *-----------------------------------------------------------------------*/
 static u_short r21;
+static u_short tpal0;
+static u_short tpal15;
 
 Bool x68kTextOpen(X68kScreenRec *pPriv)
 {
@@ -59,6 +61,12 @@ Bool x68kTextOpen(X68kScreenRec *pPriv)
 
     /* initialize scroll registers */
     pPriv->reg->crtc.r10 = pPriv->reg->crtc.r11 = 0;
+
+    tpal0 = pPriv->reg->tpal[0];
+    tpal15 = pPriv->reg->tpal[15];
+    
+    pPriv->reg->tpal[0] = 0;
+    pPriv->reg->tpal[15] = 0xFFFE;
 
     return TRUE;
 }
@@ -73,6 +81,8 @@ Bool x68kTextOpen(X68kScreenRec *pPriv)
 void x68kTextClose(X68kScreenRec *pPriv)
 {
     pPriv->reg->crtc.r21 = r21;  /* recover TVRAM mode */
+    pPriv->reg->tpal[0] = tpal0;
+    pPriv->reg->tpal[15] = tpal15;
     x68kFbCommonClose(pPriv);
 }
 
