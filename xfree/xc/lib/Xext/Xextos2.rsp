@@ -1,5 +1,0 @@
-DPMS.obj MITMisc.obj XAppgroup.obj XEVI.obj XLbx.obj XMultibuf.obj+
-XSecurity.obj XShape.obj XShm.obj XSync.obj XTestExt1.obj Xcup.obj+
-Xdbe.obj extutil.obj globals.obj /NOI /NOL /NOD /BAT
-Xext.dll
-Xext.map
