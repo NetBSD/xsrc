@@ -22,6 +22,8 @@ LOCAL_LIBRARIES = $(XMULIB) $(XTOOLLIB) XkbClientLibs $(XLIB)
 		parse.o menus.o events.o resize.o util.o version.o iconmgr.o \
 		cursor.o icons.o session.o
 
+   EXTRAMANDEFS = -DTWMDIR=${TWMDIR}
+
 all::
 
 SpecialCObjectRule(parse,$(_NOOP_),'-DSYSTEM_INIT_FILE="$(TWMDIR)/system.twmrc"')

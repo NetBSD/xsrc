@@ -136,7 +136,7 @@ differing visual types.
 .B "$HOME/.twmrc"
 This is the usual name for an individual user's startup file.
 .TP 8
-.B __projectroot__/lib/X11/twm/system.twmrc
+.B TWMDIR/system.twmrc
 If neither of the preceding files are found, \fItwm\fP will look in this
 file for a 
 default configuration.  This is often tailored by the site administrator to
@@ -1267,7 +1267,7 @@ they may be lost if they are iconified and no bindings to
 .nf
 .I $HOME/.twmrc.<screen number>
 .I $HOME/.twmrc
-.I __projectroot__/lib/X11/twm/system.twmrc
+.I TWMDIR/system.twmrc
 .fi
 .SH "ENVIRONMENT VARIABLES"
 .IP "DISPLAY" 8
