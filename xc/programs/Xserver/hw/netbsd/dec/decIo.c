@@ -1,4 +1,4 @@
-/*	$NetBSD: decIo.c,v 1.3 2002/02/22 15:46:33 ad Exp $	*/
+/*	$NetBSD: decIo.c,v 1.4 2002/12/29 19:43:32 ad Exp $	*/
 
 /* XConsortium: sunIo.c,v 5.26.1.3 95/01/25 23:02:33 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunIo.c,v 3.1 1995/01/28 15:46:06 dawes Exp */
@@ -216,6 +216,10 @@ ddxProcessArgument (argc, argv, i)
         decSoftCursor = TRUE;
         return 1;
     }
+    if (!strcmp(argv[i], "-hwcursor")) {
+        decHardCursor = TRUE;
+        return 1;
+    }
     if (!strcmp(argv[i], "-depth")) {
 	if (++i >= argc) UseMsg ();
     	decWantedDepth = atoi(argv[i]);
@@ -301,7 +305,8 @@ ddxUseMsg()
     ErrorF("-mouse fn           mouse device to open\n");
     ErrorF("-keyboard fn        keyboard device to open\n");
     ErrorF("-noaccel            disable SFB/TGA hardware accelleration\n");
-    ErrorF("-swcursor           use a software generated cursor\n");
+    ErrorF("-swcursor           use a software cursor\n");
+    ErrorF("-hwcursor           use a hardware cursor (overrides -swcursor)\n");
     ErrorF("-depth bpp          set desired depth (may not take effect)\n");
     ErrorF("-zaphod             disable active Zaphod mode\n");
 #if 0 /* XXX */

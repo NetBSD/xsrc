@@ -1,4 +1,4 @@
-/*	$NetBSD: dec.h,v 1.3 2002/02/22 15:46:33 ad Exp $	*/
+/*	$NetBSD: dec.h,v 1.4 2002/12/29 19:43:31 ad Exp $	*/
 
 /* XConsortium: sun.h,v 5.39.1.1 95/01/05 19:58:43 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.2 1995/02/12 02:36:21 dawes Exp */
@@ -206,6 +206,7 @@ extern int*		sunProtected;
 #endif
 
 extern Bool		decSoftCursor;
+extern Bool		decHardCursor;
 extern Bool		decAccelerate;
 extern int		decWantedDepth;
 extern char		*decKbdDev;

@@ -1,4 +1,4 @@
-/* $NetBSD: decInit.c,v 1.5 2002/02/26 12:34:53 ad Exp $ */
+/* $NetBSD: decInit.c,v 1.6 2002/12/29 19:43:32 ad Exp $ */
 
 #include    "dec.h"
 #include    "gcstruct.h"
@@ -44,11 +44,12 @@ decFbDataRec decFbData[] = {
 
     { WSDISPLAY_TYPE_TGA,	TRUE,	"TGA",		decTGAInit, },
 
-#elif defined(__mips__)
+#else
 
     { WSDISPLAY_TYPE_PM_MONO,	FALSE,	"PM (mono)",	decMFBInit, },
     { WSDISPLAY_TYPE_PM_COLOR,	FALSE,	"PM (color)",	decCFBInit, },
     { WSDISPLAY_TYPE_XCFB,	TRUE,	"XCFB",		decCFBInit, },
+    { WSDISPLAY_TYPE_VAX_MONO,	FALSE,	"SMG",		decMFBInit, },
 
 #endif
 };
@@ -65,6 +66,7 @@ static char *fallbackList[] = {
 
 fbFd decFbs[MAXSCREENS];
 Bool decSoftCursor = 0;
+Bool decHardCursor = 0;
 Bool decAccelerate = 1;
 int decWantedDepth = 0;
 char *decKbdDev;
