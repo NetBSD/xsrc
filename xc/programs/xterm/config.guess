@@ -2,6 +2,8 @@
 # Attempt to guess a canonical system name.
 #   Copyright (C) 1992, 93, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
 #
+# $XFree86: xc/programs/xterm/config.guess,v 1.2.2.4 1999/04/21 07:21:24 hohndel Exp $
+#
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -149,9 +151,6 @@ EOF
 	else
 		echo pyramid-pyramid-bsd
 	fi
-	exit 0 ;;
-    "Power Macintosh":Rhapsody:*:*)
-	echo powerpc-apple-rhapsody`echo ${UNAME_RELEASE}|sed -e 's/[^.]*//'`
 	exit 0 ;;
     NILE:*:*:dcosx)
 	echo pyramid-pyramid-svr4
@@ -375,7 +374,7 @@ EOF
 	case "${UNAME_MACHINE}" in
 	    9000/31? )            HP_ARCH=m68000 ;;
 	    9000/[34]?? )         HP_ARCH=m68k ;;
-	    9000/6?? | 9000/7?? | 9000/80[024] | 9000/8?[13679] | 9000/892 )
+	    9000/6?? | 9000/7?? | 9000/80[24] | 9000/8?[13679] | 9000/892 )
               sed 's/^              //' << EOF >dummy.c
               #include <stdlib.h>
               #include <unistd.h>
@@ -566,7 +565,7 @@ EOF
 	  sparclinux) echo "${UNAME_MACHINE}-unknown-linux-gnuaout" ; exit 0 ;;
 	  armlinux)   echo "${UNAME_MACHINE}-unknown-linux-gnuaout" ; exit 0 ;;
 	  m68klinux)  echo "${UNAME_MACHINE}-unknown-linux-gnuaout" ; exit 0 ;;
-	  elf32ppc*)  echo "powerpc-unknown-linux-gnu"              ; exit 0 ;;
+	  elf32ppc)   echo "powerpc-unknown-linux-gnu"              ; exit 0 ;;
 	esac
 
 	if test "${UNAME_MACHINE}" = "alpha" ; then
@@ -660,7 +659,7 @@ main(argc, argv)
 {
 #ifdef __ELF__
 # ifdef __GLIBC__
-#  if (__GLIBC__ >= 2)
+#  if __GLIBC__ >= 2
     printf ("%s-${VENDOR}-linux-gnu\n", argv[1]);
 #  else
     printf ("%s-${VENDOR}-linux-gnulibc1\n", argv[1]);
@@ -690,23 +689,9 @@ EOF
         # Use sysv4.2uw... so that sysv4* matches it.
 	echo ${UNAME_MACHINE}-pc-sysv4.2uw${UNAME_VERSION}
 	exit 0 ;;
-    # SysVr5/Unixware7
-    i?86:*:5*:* | i?86:SYSTEM_V:5*:*)
-	 if uname -a | grep SCO >/dev/null 2>/dev/null ; then
-	    (/bin/uname -s|egrep UnixWare >/dev/null) && UNAME_VER=uw${UNAME_VERSION}
-	    if /bin/uname -X 2>/dev/null >/dev/null ; then
-		(/bin/uname -X|egrep i80486 >/dev/null) && UNAME_MACHINE=i486
-		(/bin/uname -X|egrep '^Machine.*Pentium' >/dev/null) \
-			&& UNAME_MACHINE=i586
-	    fi
-		echo ${UNAME_MACHINE}-sco-sysv${UNAME_RELEASE}${UNAME_VER}
-	else
-		echo ${UNAME_MACHINE}-unknown-sysv${UNAME_RELEASE}
-	fi
-	exit 0 ;;
     i?86:*:4.*:* | i?86:SYSTEM_V:4.*:*)
 	if grep Novell /usr/include/link.h >/dev/null 2>/dev/null; then
-		echo ${UNAME_MACHINE}-univel-sysv4.2uw${UNAME_VERSION}
+		echo ${UNAME_MACHINE}-univel-sysv${UNAME_RELEASE}
 	else
 		echo ${UNAME_MACHINE}-pc-sysv${UNAME_RELEASE}
 	fi

@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: cursor.c,v 1.14 93/09/20 17:42:23 hersh Exp $
- *	$XFree86: xc/programs/xterm/cursor.c,v 3.13 2000/02/08 17:19:33 dawes Exp $
+ *	$XFree86: xc/programs/xterm/cursor.c,v 3.3.4.3 1998/10/20 20:51:44 hohndel Exp $
  */
 
 /*
@@ -31,25 +31,17 @@
 #include <xterm.h>
 #include <data.h>
 
-/*
- * Clear the selection if the cursor moves "before" the current position. 
- * Moving "after" is ok.
- *
- * That sounds fine - if the cursor really had anything direct relationship to
- * the selection.  For instance, if the cursor moved due to command line
- * editing, it would be nice to deselect.  However, what that means in practice
- * is that a fullscreen program which scrolls back a line will (because it must
- * temporarily reposition the cursor) clear the selection.
- *
- * However, it has an indirect relationship to the selection - we want to
- * prevent the application from changing the screen contents under the
- * highlighted region.
- */
-#define _CheckSelection(screen) \
-    if ((screen->cur_row < screen->endHRow) || \
-	(screen->cur_row == screen->endHRow && \
-	 screen->cur_col < screen->endHCol)) \
+static void _CheckSelection (register TScreen *screen)
+{
+    if (screen->cur_row > screen->endHRow ||
+	(screen->cur_row == screen->endHRow &&
+	 screen->cur_col >= screen->endHCol))
+	 ;
+    else
 	DisownSelection(term);
+}
+
+
 
 /*
  * Moves the cursor to the specified position, checking for bounds.
@@ -109,13 +101,13 @@ void
 CursorForward(register TScreen *screen, int n)
 {
 	screen->cur_col += n;
-	if (screen->cur_col > CurMaxCol(screen, screen->cur_row))
-		screen->cur_col = CurMaxCol(screen, screen->cur_row);
+	if (screen->cur_col > screen->max_col)
+		screen->cur_col = screen->max_col;
 	screen->do_wrap = 0;
 	_CheckSelection(screen);
 }
 
-/*
+/* 
  * moves the cursor down n, no scrolling.
  * Won't pass bottom margin or bottom of screen.
  */
@@ -134,7 +126,7 @@ CursorDown(register TScreen *screen, int n)
 	_CheckSelection(screen);
 }
 
-/*
+/* 
  * moves the cursor up n, no linestarving.
  * Won't pass top margin or top of screen.
  */
@@ -153,16 +145,16 @@ CursorUp(register TScreen *screen, int n)
 	_CheckSelection(screen);
 }
 
-/*
+/* 
  * Moves cursor down amount lines, scrolls if necessary.
  * Won't leave scrolling region. No carriage return.
  */
 void
-xtermIndex(register TScreen *screen, register int amount)
+Index(register TScreen *screen, register int amount)
 {
 	register int j;
 
-	/*
+	/* 
 	 * indexing when below scrolling region is cursor down.
 	 * if cursor high enough, no scrolling necessary.
 	 */
@@ -173,7 +165,7 @@ xtermIndex(register TScreen *screen, register int amount)
 	}
 
 	CursorDown(screen, j = screen->bot_marg - screen->cur_row);
-	xtermScroll(screen, amount - j);
+	Scroll(screen, amount - j);
 }
 
 /*
@@ -213,10 +205,9 @@ CarriageReturn(register TScreen *screen)
  * Save Cursor and Attributes
  */
 void
-CursorSave(register XtermWidget tw)
+CursorSave(register XtermWidget tw, register SavedCursor *sc)
 {
 	register TScreen *screen = &tw->screen;
-	register SavedCursor *sc = &screen->sc[screen->alternate != False];
 
 	sc->saved = True;
 	sc->row = screen->cur_row;
@@ -242,10 +233,9 @@ CursorSave(register XtermWidget tw)
  * Restore Cursor and Attributes
  */
 void
-CursorRestore(register XtermWidget tw)
+CursorRestore(register XtermWidget tw, register SavedCursor *sc)
 {
 	register TScreen *screen = &tw->screen;
-	register SavedCursor *sc = &screen->sc[screen->alternate != False];
 
 	/* Restore the character sets, unless we never did a save-cursor op.
 	 * In that case, we'll reset the character sets.
@@ -280,7 +270,7 @@ void
 CursorNextLine(TScreen *screen, int count)
 {
 	CursorDown(screen, count < 1 ? 1 : count);
-	CarriageReturn(screen);
+	CarriageReturn(screen); 	
 	do_xevents();
 }
 
