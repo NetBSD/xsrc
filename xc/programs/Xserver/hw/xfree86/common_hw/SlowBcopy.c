@@ -3,7 +3,7 @@
   for Alpha Linux
 *******************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/SlowBcopy.c,v 3.3 1997/01/05 11:58:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/SlowBcopy.c,v 3.3.2.1 1999/07/23 13:22:48 hohndel Exp $ */
  
 /* 
  *   Create a dependency that should be immune from the effect of register
@@ -14,6 +14,10 @@
  *   Slowbcopy(char *src, char *dst, int count)   
  *   
  */ 
+
+#ifdef __QNX__
+#include "compiler.h"
+#endif
 
 /* The outb() isn't needed on my machine, but who nows ... -- ost */
 void

@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.45.2.20 1999/06/17 16:24:02 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.45.2.23 1999/07/30 11:21:18 hohndel Exp $ */
 
 /*
  * Includes
@@ -44,9 +44,11 @@
 #include <stdlib.h>
 #endif	/* MACH386 */
 #include <ctype.h>
-#if defined(SYSV) || defined(SVR4) || defined(linux)
+#if defined(SYSV) || defined(SVR4) || defined(linux) || defined(__QNX__) || defined(__QNXNTO__)
 # include <string.h>
+#if !(defined(__QNX__) && !defined(__QNXNTO__))
 # include <memory.h>
+#endif
 #else
 #ifdef _MINIX
 # include <string.h>
@@ -425,7 +427,7 @@ extern struct RamDac_Name RamDac_Names[];
 #define V_EPSON		29
 
 #define NUM_VENDORS	29
-#define CHPS_PER_VENDOR	40
+#define CHPS_PER_VENDOR	41
 
 #define CHIP_AHEAD_UNK	SVGA_TYPE(V_AHEAD,0)	/* Ahead unknown	*/
 #define CHIP_AHEAD_A	SVGA_TYPE(V_AHEAD,1)	/* Ahead V5000 Version A*/
@@ -603,6 +605,7 @@ extern struct RamDac_Name RamDac_Names[];
 #define CHIP_S3_Trio3D	SVGA_TYPE(V_S3,37)	/* S3 Trio3D		*/
 #define CHIP_S3_Savage3D SVGA_TYPE(V_S3,38)	/* S3 Savage3D		*/
 #define CHIP_S3_Savage3D_M SVGA_TYPE(V_S3,39)	/* S3 Savage3D Macro	*/
+#define CHIP_S3_Trio3D_2X	SVGA_TYPE(V_S3,40)	/* S3 Trio3D		*/
 #define CHIP_TVGA_UNK	SVGA_TYPE(V_TRIDENT,0)	/* Trident unknown	*/
 #define CHIP_TVGA8200	SVGA_TYPE(V_TRIDENT,1)	/* Trident LX8200	*/
 #define CHIP_TVGA8800BR	SVGA_TYPE(V_TRIDENT,2)	/* Trident 8800BR	*/

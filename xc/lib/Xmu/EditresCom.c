@@ -26,7 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
-/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.3.2.3 1998/05/18 10:34:23 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.3.2.4 1999/07/23 13:22:15 hohndel Exp $ */
 
 /*
  * Author:  Chris D. Peterson, Dave Sternlicht, MIT X Consortium
@@ -203,7 +203,7 @@ Boolean *cont;
 	ident = (ResIdent) c_event->data.l[2];
 	if (c_event->data.l[3] != CURRENT_PROTOCOL_VERSION) {
 	    _XEditResResetStream(&globals.stream);
-	    _XEditResPut8(&globals.stream, CURRENT_PROTOCOL_VERSION);
+	    _XEditResPut8(&globals.stream, (unsigned int) CURRENT_PROTOCOL_VERSION);
 	    SendCommand(w, res_comm, ident, ProtocolMismatch, &globals.stream);
 	    return;
 	}
@@ -253,7 +253,7 @@ unsigned long length;
      */
 
     if (length < HEADER_SIZE) {
-	SendFailure(w, sel, ident, Failure, ERROR_MESSAGE);
+	SendFailure(w, sel, ident, ERROR_MESSAGE);
 	return(NULL);
     }
 

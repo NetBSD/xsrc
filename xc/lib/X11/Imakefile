@@ -3,7 +3,7 @@ XCOMM $TOG: Imakefile /main/196 1997/05/20 10:06:09 kaleb $
 
 
 
-XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.19.2.5 1998/11/06 13:54:24 dawes Exp $
+XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.19.2.6 1999/07/28 13:37:32 hohndel Exp $
 #define DoNormalLib NormalLibX11
 #define DoSharedLib SharedLibX11
 #define DoExtraLib SharedLibX11
@@ -965,6 +965,10 @@ LinkSourceFile(snprintf.c,../misc)
 SpecialCLibObjectRule(snprintf,$(ICONFIGFILES),-DLIBX11)
 #endif
 LinkSourceFile(snprintf.h,../misc)
+
+#ifdef QNXArchitecture
+LOCAL_LDFLAGS=-F
+#endif
 
 MAKEKEYS = ./makekeys
 

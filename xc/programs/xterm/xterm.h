@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xterm/xterm.h,v 3.9.2.4 1998/10/20 20:51:57 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/xterm.h,v 3.9.2.5 1999/07/28 13:38:07 hohndel Exp $ */
 /*
  * Common/useful definitions for XTERM application.
  *
@@ -42,6 +42,15 @@
 #define time_t long
 #endif
 
+#if defined(CSRG_BASED) || defined(__GNU__)
+#define USE_POSIX_TERMIOS 1
+#endif
+
+#ifdef USE_POSIX_TERMIOS
+#define HAVE_TERMIOS_H 1
+#define HAVE_TCGETATTR 1
+#endif
+
 #endif /* HAVE_CONFIG_H */
 
 /***====================================================================***/
@@ -82,6 +91,20 @@ extern int errno;
 
 #include <proto.h>
 #include <ptyx.h>
+
+#if (XtSpecificationRelease >= 6) && !defined(NO_XPOLL_H)
+#include <X11/Xpoll.h>
+#else
+#define Select(n,r,w,e,t) select(n,(fd_set*)r,(fd_set*)w,(fd_set*)e,(struct timeval *)t)
+#define XFD_COPYSET(src,dst) bcopy((src)->fds_bits, (dst)->fds_bits, sizeof(fd_set))
+#endif
+
+#ifdef USE_SYS_SELECT_H
+#include <sys/types.h>
+#include <sys/select.h>
+#endif
+
+#include <setjmp.h>
 
 #ifdef	__cplusplus
 extern "C" {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.36.2.9 1999/03/27 12:28:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.36.2.11 1999/07/29 09:22:55 hohndel Exp $ */
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1992 by David Dawes <dawes@XFree86.org>
@@ -607,6 +607,59 @@ extern capability iopcap;
 # define MOUSE_PROTOCOL_IN_KERNEL
 
 extern char* __XOS2RedirRoot(char*);
+
+#endif
+/**************************************************************************/
+/* QNX4                                                                   */
+/**************************************************************************/ 
+/* This is the QNX code for Watcom 10.6 and QNX 4.x */
+#if defined(__QNX__) && !defined(__QNXNTO__)
+#include <signal.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <termios.h>
+#include <ioctl.h>
+#include <sys/param.h>
+
+/* Warning: by default, the fd_set size is 32 in QNX!  */
+#define FD_SETSIZE 256
+#include <sys/select.h>
+
+  /* keyboard types */
+# define KB_84                   1
+# define KB_101                  2
+# define KB_OTHER                3
+
+  /* LEDs */
+#  define LED_CAP 0x04
+#  define LED_NUM 0x02
+#  define LED_SCR 0x01
+
+# define OSMOUSE_ONLY
+# define MOUSE_PROTOCOL_IN_KERNEL
+
+#endif
+
+/**************************************************************************/
+/* QNX/Neutrino                                                           */
+/**************************************************************************/ 
+/* This is the Neutrino code for for NTO2.0 and GCC */
+#if defined(__QNXNTO__)
+#include <signal.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <termios.h>
+#include <ioctl.h>
+#include <sys/param.h>
+
+/* Warning: by default, the fd_set size is 32 in NTO!  */
+#define FD_SETSIZE 256
+#include <sys/select.h>
+
+  /* keyboard types */
+# define KB_84                   1
+# define KB_101                  2
+# define KB_OTHER                3
 
 #endif
 

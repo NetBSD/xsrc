@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.28.2.7 1998/11/04 08:01:51 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.28.2.9 1999/07/29 09:22:46 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -556,7 +556,7 @@ xf86MseEvents(mouse)
 #endif
 
 #if !(defined(__NetBSD__) && defined(__atari__))
-#if !defined(AMOEBA) && !(defined (sun) && defined(i386) && defined (SVR4)) && !defined(MINIX) && !defined(__mips__)
+#if !defined(AMOEBA) && !(defined (sun) && defined(i386) && defined (SVR4)) && !defined(MINIX) && !defined(__mips__) && !(defined(__QNX__) && !defined(__QNXNTO__))
 /*
  * These are getting tossed in here until I can think of where
  * they really belong
