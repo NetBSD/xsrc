@@ -92,6 +92,9 @@ FSQueryXExtents8(svr, fid, range_type, str, str_len, extents)
 	       (SIZEOF(fsQueryXExtents8Reply) - SIZEOF(fsGenericReply)) >> 2,
 		  fsFalse))
 	return FSBadAlloc;
+    
+    if (reply.num_extents > SIZE_T_MAX / sizeof(FSXCharInfo)) 
+	return FSBadAlloc;
 
     ext = (FSXCharInfo *) FSmalloc(sizeof(FSXCharInfo) * reply.num_extents);
     *extents = ext;
@@ -147,6 +150,9 @@ FSQueryXExtents16(svr, fid, range_type, str, str_len, extents)
     if (!_FSReply(svr, (fsReply *) & reply,
 	      (SIZEOF(fsQueryXExtents16Reply) - SIZEOF(fsGenericReply)) >> 2,
 		  fsFalse))
+	return FSBadAlloc;
+
+    if (reply.num_extents > SIZE_T_MAX/sizeof(FSXCharInfo)) 
 	return FSBadAlloc;
 
     ext = (FSXCharInfo *) FSmalloc(sizeof(FSXCharInfo) * reply.num_extents);

@@ -78,7 +78,8 @@ FSListCatalogues(svr, pattern, maxNames, actualCount)
     (SIZEOF(fsListCataloguesReply) - SIZEOF(fsGenericReply)) >> 2, fsFalse))
 	return (char **) 0;
 
-    if (rep.num_catalogues) {
+    if (rep.num_catalogues && rep.num_catalogues <= SIZE_T_MAX/sizeof(char *)
+	&& rep.length <= ((SIZE_T_MAX+SIZEOF(fsListCataloguesReply)+1)>>2)) {
 	clist = (char **)
 	    FSmalloc((unsigned) rep.num_catalogues * sizeof(char *));
 	rlen = (rep.length << 2) - SIZEOF(fsListCataloguesReply);

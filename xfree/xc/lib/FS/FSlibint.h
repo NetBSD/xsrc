@@ -77,6 +77,11 @@ in this Software without prior written authorization from The Open Group.
 #include	<errno.h>
 #include	<stddef.h>
 
+#include	<limits.h>
+#ifndef SIZE_T_MAX
+#define SIZE_T_MAX UINT_MAX
+#endif
+
 typedef int (* FSIOErrorHandler)(FSServer *);
 typedef int (* FSErrorHandler)(FSServer *, FSErrorEvent *);
 
