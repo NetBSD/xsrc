@@ -1,8 +1,8 @@
-/* $XFree86: xc/programs/xterm/xterm.h,v 3.87 2003/02/25 23:36:55 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/xterm.h,v 3.89 2003/05/19 00:47:33 dickey Exp $ */
 
 /************************************************************
 
-Copyright 1999,2000,2001,2002 by Thomas E. Dickey
+Copyright 1999-2002,2003 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -164,6 +164,10 @@ authorization.
 #define HAVE_UTMP_UT_XSTATUS 1
 #endif
 
+#if defined(XKB)
+#define HAVE_XKBBELL 1
+#endif
+
 #endif /* HAVE_CONFIG_H */
 
 /***====================================================================***/
@@ -265,6 +269,7 @@ extern int errno;
 
 /***====================================================================***/
 
+#define XtNallowC1Printable	"allowC1Printable"
 #define XtNallowSendEvents	"allowSendEvents"
 #define XtNallowWindowOps	"allowWindowOps"
 #define XtNalwaysHighlight	"alwaysHighlight"
@@ -279,7 +284,9 @@ extern int errno;
 #define XtNboldColors		"boldColors"
 #define XtNboldFont		"boldFont"
 #define XtNboldMode		"boldMode"
+#define XtNbrokenLinuxOSC	"brokenLinuxOSC"
 #define XtNbrokenSelections	"brokenSelections"
+#define XtNbrokenStringTerm	"brokenStringTerm"
 #define XtNc132			"c132"
 #define XtNcacheDoublesize	"cacheDoublesize"
 #define XtNcharClass		"charClass"
@@ -376,6 +383,7 @@ extern int errno;
 #define XtNxmcInline		"xmcInline"
 #define XtNxmcMoveSGR		"xmcMoveSGR"
 
+#define XtCAllowC1Printable	"AllowC1Printable"
 #define XtCAllowSendEvents	"AllowSendEvents"
 #define XtCAllowWindowOps	"AllowWindowOps"
 #define XtCAlwaysHighlight	"AlwaysHighlight"
@@ -389,11 +397,14 @@ extern int errno;
 #define XtCBellSuppressTime	"BellSuppressTime"
 #define XtCBoldFont		"BoldFont"
 #define XtCBoldMode		"BoldMode"
+#define XtCBrokenLinuxOSC	"BrokenLinuxOSC"
 #define XtCBrokenSelections	"BrokenSelections"
+#define XtCBrokenStringTerm	"BrokenStringTerm"
 #define XtCC132			"C132"
 #define XtCCacheDoublesize	"CacheDoublesize"
 #define XtCCharClass		"CharClass"
 #define XtCCjkWidth 		"CjkWidth"
+#define XtCColorAttrMode        "ColorAttrMode"
 #define XtCColorMode		"ColorMode"
 #define XtCColumn		"Column"
 #define XtCCtrlFKeys		"CtrlFKeys"
@@ -459,6 +470,7 @@ extern int errno;
 #define XtCTrimSelection	"TrimSelection"
 #define XtCUnderLine		"UnderLine"
 #define XtCUtf8			"Utf8"
+#define XtCVeryBoldColors	"VeryBoldColors"
 #define XtCVT100Graphics	"VT100Graphics"
 #define XtCVisualBell		"VisualBell"
 #define XtCWideBoldFont		"WideBoldFont"
