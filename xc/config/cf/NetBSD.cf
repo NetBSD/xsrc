@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.89 2001/09/18 16:20:23 ad Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.90 2001/10/03 00:05:35 tv Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -143,11 +143,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasMktemp		NO
 #define MkdirHierCmd		mkdir -p
 
-#define CppCmd          	/usr/libexec/cpp
-#define StandardCppDefines	-traditional
-#define PreProcessCmd   	CppCmd
-#define PreIncDir		/usr/include
-
 #undef CcCmd
 #define CcCmd 			gcc
 #if defined(UseInstalled) && (!defined(XF86LinkKit) || !XF86LinkKit)
@@ -157,6 +152,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #else
 #define DefaultCCOptions 	-ansi -Dasm=__asm
 #endif
+
+#define CppCmd          	cpp
+#define StandardCppDefines	-traditional
+#define PreProcessCmd   	CcCmd -E
+#define PostIncDir		/usr/include
 
 #define GccGasOption 		-DGCCUSESGAS
 #define AsmDefines 		-DUSE_GAS
