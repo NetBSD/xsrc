@@ -315,7 +315,7 @@ void InitInput(argc, argv)
     int     	  argc;
     char    	  **argv;
 {
-    DevicePtr	p, k;
+    DeviceIntPtr	p, k;
     extern Bool mieqInit();
 
     p = AddInputDevice(alphaMouseProc, TRUE);
