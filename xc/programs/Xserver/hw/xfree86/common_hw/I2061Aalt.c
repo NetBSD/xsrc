@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/I2061Aalt.c,v 3.12 1996/12/23 06:44:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/I2061Aalt.c,v 3.12.2.1 1998/02/01 16:04:48 robin Exp $ */
 
 /*
  * This code is derived from code available from the STB bulletin board
@@ -15,6 +15,7 @@
 #include "compiler.h"
 #define NO_OSLIB_PROTOTYPES
 #include "xf86_OSlib.h"
+#include "xf86_HWlib.h"
 
 #define SEQREG   0x03C4
 #define MISCREG  0x03C2
@@ -29,7 +30,7 @@ unsigned short card;
 unsigned short crtcaddr;
 unsigned short clockreg;
 
-static double range[15] = {50.0, 51.0, 53.2, 58.5, 60.7, 64.4, 66.8, 73.5, 
+static double _range[15] = {50.0, 51.0, 53.2, 58.5, 60.7, 64.4, 66.8, 73.5, 
 			   75.6, 80.9, 83.2, 91.5, 100.0, 120.0, 120.0000001};
 
 #if NeedFunctionPrototypes
@@ -38,14 +39,12 @@ static void prtbinary(unsigned int size, unsigned int val);
 #endif
 static void wrt_clk_bit(unsigned int value);
 static void s3_init_clock(unsigned long setup,  unsigned short crtcport);
-static void et4000_init_clock(unsigned long setup);
 #else
 #if 0
 static void prtbinary();
 #endif
 static void wrt_clk_bit();
 static void s3_init_clock();
-static void et4000_init_clock();
 #endif
 #ifdef PC98_PW
 static void PWClockSet(short,unsigned long);
@@ -54,7 +53,7 @@ static void PWClockSet(short,unsigned long);
 static void PWLBClockSet(short,unsigned long);
 #endif
 
-static unsigned long
+unsigned long
 AltICD2061CalcClock(frequency)
 register long   frequency;               /* in Hz */
 {
@@ -86,8 +85,8 @@ register long   frequency;               /* in Hz */
 #endif
 
    freq = ((double)frequency)/1000000.0;
-   if (freq > range[13])
-      freq = range[13];
+   if (freq > _range[13])
+      freq = _range[13];
    else if (freq < 7.0)
       freq = 7.0;
 
@@ -111,9 +110,9 @@ register long   frequency;               /* in Hz */
 	 if (deltax < 0) deltax = -deltax;
 	 if (deltax <= delta) {
 	    for (i = 13; i >= 0; i--)
-	       if (fvco >= range[i])
+	       if (fvco >= _range[i])
 		  break;
-	    devx = (fvco - (range[i] + range[i+1])/2)/fvco;
+	    devx = (fvco - (_range[i] + _range[i+1])/2)/fvco;
 	    if (devx < 0)
 	       devx = -devx;
 	    if (deltax < delta || devx < dev) {
@@ -397,7 +396,7 @@ PWLBClockSet(short a, unsigned long setup)
  *    included in XFREE code base by Koen Gadeyne
  */
 
-static void
+void
 et4000_init_clock(unsigned long setup)
 {
     register unsigned char a=inb(0x3CC) & ~0x0C;
@@ -421,5 +420,3 @@ et4000_init_clock(unsigned long setup)
 #undef S
 
 }
-
-

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128init.c,v 3.6.2.5 1997/07/26 06:30:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128init.c,v 3.6.2.7 1998/02/10 22:35:49 robin Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -37,7 +37,7 @@ static int i128FontsSaved = 0;
 static int i128LUTSaved = 0;
 static Bool LUTInited = FALSE;
 static LUTENTRY oldlut[256];
-#define VGA_SAVE_COUNT 64*1024
+#define VGA_SAVE_COUNT 512*1024
 static unsigned char vgamem[VGA_SAVE_COUNT];    /* vga text memory */
 int i128InitCursorFlag = TRUE;
 int i128HDisplay;
@@ -47,7 +47,8 @@ extern struct i128io i128io;
 extern int i128Weight;
 extern int i128DisplayWidth;
 extern int i128DisplayOffset;
-extern int i128MemoryTypeDram;
+extern int i128DeviceType;
+extern int i128MemoryType;
 extern int i128RamdacType;
 
 
@@ -61,11 +62,8 @@ saveI128state()
 #endif
 {
 	/* iobase is filled in during the device probe (as well as config 1&2)*/
-	if ((i128io.id&0x7) > 1) {
-        	unsigned PCI_DevIOPorts[1];
+	if ((i128io.id&0x7) > 0) {
 
-      		PCI_DevIOPorts[0] = iR.iobase + 0x30;
-                xf86AddIOPorts(i128InfoRec.scrnIndex, 1, PCI_DevIOPorts);
                 xf86EnableIOPorts(i128InfoRec.scrnIndex);
 		iR.vga_ctl = inl(iR.iobase + 0x30);
 
@@ -73,20 +71,20 @@ saveI128state()
 	}
 
 	if (i128RamdacType == TI3025_DAC) {
-		iR.i128_base_g[INDEX_TI/4] =
-			i128mem.rbase_g[INDEX_TI/4]; /*  0x0018  */
-		iR.i128_base_g[DATA_TI/4]  =
-			i128mem.rbase_g[DATA_TI/4];  /*  0x001C  */
+		iR.i128_base_g[INDEX_TI] =
+			i128mem.rbase_g[INDEX_TI]; /*  0x0018  */
+		iR.i128_base_g[DATA_TI]  =
+			i128mem.rbase_g[DATA_TI];  /*  0x001C  */
 	} else if ((i128RamdacType == IBM526_DAC) ||
 		   (i128RamdacType == IBM528_DAC)) {
-		iR.i128_base_g[IDXL_I/4] =
-			i128mem.rbase_g[IDXL_I/4];   /*  0x0010  */
-		iR.i128_base_g[IDXH_I/4] =
-			i128mem.rbase_g[IDXH_I/4];   /*  0x0014  */
-		iR.i128_base_g[DATA_I/4] =
-			i128mem.rbase_g[DATA_I/4];   /*  0x0018  */
-		iR.i128_base_g[IDXCTL_I/4] =
-			i128mem.rbase_g[IDXCTL_I/4]; /*  0x001C  */
+		iR.i128_base_g[IDXL_I] =
+			i128mem.rbase_g[IDXL_I];   /*  0x0010  */
+		iR.i128_base_g[IDXH_I] =
+			i128mem.rbase_g[IDXH_I];   /*  0x0014  */
+		iR.i128_base_g[DATA_I] =
+			i128mem.rbase_g[DATA_I];   /*  0x0018  */
+		iR.i128_base_g[IDXCTL_I] =
+			i128mem.rbase_g[IDXCTL_I]; /*  0x001C  */
 	}
 
 	iR.i128_base_g[INT_VCNT] = i128mem.rbase_g[INT_VCNT]; /*  0x0020  */
@@ -116,88 +114,88 @@ saveI128state()
 	iR.i128_base_w[MW0_MASK] = i128mem.rbase_w[MW0_MASK]; /*  0x0024  */
 
 	if (i128RamdacType == TI3025_DAC) {
-		i128mem.rbase_g_b[INDEX_TI] = TI_CURS_CONTROL;
-		iR.Ti302X[TI_CURS_CONTROL] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_TRUE_COLOR_CONTROL;
-		iR.Ti302X[TI_TRUE_COLOR_CONTROL] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_VGA_SWITCH_CONTROL;
-		iR.Ti302X[TI_VGA_SWITCH_CONTROL] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_MUX_CONTROL_1;
-		iR.Ti302X[TI_MUX_CONTROL_1] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_MUX_CONTROL_2;
-		iR.Ti302X[TI_MUX_CONTROL_2] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_INPUT_CLOCK_SELECT;
-		iR.Ti302X[TI_INPUT_CLOCK_SELECT] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_OUTPUT_CLOCK_SELECT;
-		iR.Ti302X[TI_OUTPUT_CLOCK_SELECT] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_PALETTE_PAGE;
-		iR.Ti302X[TI_PALETTE_PAGE] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_GENERAL_CONTROL;
-		iR.Ti302X[TI_GENERAL_CONTROL] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_MISC_CONTROL;
-		iR.Ti302X[TI_MISC_CONTROL] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_AUXILIARY_CONTROL;
-		iR.Ti302X[TI_AUXILIARY_CONTROL] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_GENERAL_IO_CONTROL;
-		iR.Ti302X[TI_GENERAL_IO_CONTROL] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_GENERAL_IO_DATA;
-		iR.Ti302X[TI_GENERAL_IO_DATA] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_MCLK_DCLK_CONTROL;
-		iR.Ti302X[TI_MCLK_DCLK_CONTROL] = i128mem.rbase_g_b[DATA_TI];
-		i128mem.rbase_g_b[INDEX_TI] = TI_COLOR_KEY_CONTROL;
-		iR.Ti302X[TI_COLOR_KEY_CONTROL] = i128mem.rbase_g_b[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_CURS_CONTROL;		MB;
+		iR.Ti302X[TI_CURS_CONTROL] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_TRUE_COLOR_CONTROL;	MB;
+		iR.Ti302X[TI_TRUE_COLOR_CONTROL] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_VGA_SWITCH_CONTROL;	MB;
+		iR.Ti302X[TI_VGA_SWITCH_CONTROL] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_MUX_CONTROL_1;		MB;
+		iR.Ti302X[TI_MUX_CONTROL_1] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_MUX_CONTROL_2;		MB;
+		iR.Ti302X[TI_MUX_CONTROL_2] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_INPUT_CLOCK_SELECT;	MB;
+		iR.Ti302X[TI_INPUT_CLOCK_SELECT] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_OUTPUT_CLOCK_SELECT;	MB;
+		iR.Ti302X[TI_OUTPUT_CLOCK_SELECT] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_PALETTE_PAGE;		MB;
+		iR.Ti302X[TI_PALETTE_PAGE] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_GENERAL_CONTROL;		MB;
+		iR.Ti302X[TI_GENERAL_CONTROL] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_MISC_CONTROL;		MB;
+		iR.Ti302X[TI_MISC_CONTROL] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_AUXILIARY_CONTROL;	MB;
+		iR.Ti302X[TI_AUXILIARY_CONTROL] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_GENERAL_IO_CONTROL;	MB;
+		iR.Ti302X[TI_GENERAL_IO_CONTROL] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_GENERAL_IO_DATA;		MB;
+		iR.Ti302X[TI_GENERAL_IO_DATA] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_MCLK_DCLK_CONTROL;	MB;
+		iR.Ti302X[TI_MCLK_DCLK_CONTROL] = i128mem.rbase_g[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_COLOR_KEY_CONTROL;	MB;
+		iR.Ti302X[TI_COLOR_KEY_CONTROL] = i128mem.rbase_g[DATA_TI];
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x00;
-		i128mem.rbase_g_b[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;
-		iR.Ti3025[0] = i128mem.rbase_g_b[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x00;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;	MB;
+		iR.Ti3025[0] = i128mem.rbase_g[DATA_TI];
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x01;
-		i128mem.rbase_g_b[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;
-		iR.Ti3025[1] = i128mem.rbase_g_b[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x01;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;	MB;
+		iR.Ti3025[1] = i128mem.rbase_g[DATA_TI];
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x02;
-		i128mem.rbase_g_b[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;
-		iR.Ti3025[2] = i128mem.rbase_g_b[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x02;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;	MB;
+		iR.Ti3025[2] = i128mem.rbase_g[DATA_TI];
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x00;
-		i128mem.rbase_g_b[INDEX_TI] = TI_MCLK_PLL_DATA;
-		iR.Ti3025[3] = i128mem.rbase_g_b[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x00;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_MCLK_PLL_DATA;		MB;
+		iR.Ti3025[3] = i128mem.rbase_g[DATA_TI];
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x01;
-		i128mem.rbase_g_b[INDEX_TI] = TI_MCLK_PLL_DATA;
-		iR.Ti3025[4] = i128mem.rbase_g_b[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x01;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_MCLK_PLL_DATA;		MB;
+		iR.Ti3025[4] = i128mem.rbase_g[DATA_TI];
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x02;
-		i128mem.rbase_g_b[INDEX_TI] = TI_MCLK_PLL_DATA;
-		iR.Ti3025[5] = i128mem.rbase_g_b[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x02;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_MCLK_PLL_DATA;		MB;
+		iR.Ti3025[5] = i128mem.rbase_g[DATA_TI];
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x00;
-		i128mem.rbase_g_b[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;
-		iR.Ti3025[6] = i128mem.rbase_g_b[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x00;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;	MB;
+		iR.Ti3025[6] = i128mem.rbase_g[DATA_TI];
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x01;
-		i128mem.rbase_g_b[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;
-		iR.Ti3025[7] = i128mem.rbase_g_b[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x01;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;	MB;
+		iR.Ti3025[7] = i128mem.rbase_g[DATA_TI];
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x02;
-		i128mem.rbase_g_b[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;
-		iR.Ti3025[8] = i128mem.rbase_g_b[DATA_TI];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x02;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;	MB;
+		iR.Ti3025[8] = i128mem.rbase_g[DATA_TI];
 	} else if ((i128RamdacType == IBM526_DAC) ||
 		   (i128RamdacType == IBM528_DAC)) {
 		CARD32 i;
 
 		for (i=0; i<0x100; i++) {
-			i128mem.rbase_g_b[IDXL_I] = i;
-			iR.IBMRGB[i] = i128mem.rbase_g_b[DATA_I];
+			i128mem.rbase_g[IDXL_I] = i;			MB;
+			iR.IBMRGB[i] = i128mem.rbase_g[DATA_I];
 		}
 	}
 
@@ -213,84 +211,83 @@ restoreI128state()
 #endif
 {
 	int i;
-        unsigned PCI_DevIOPorts[3];
 
 	if (i128RamdacType == TI3025_DAC) {
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x00;
-		i128mem.rbase_g_b[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti3025[0];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x00;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti3025[0];		MB;
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x01;
-		i128mem.rbase_g_b[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti3025[1];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x01;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti3025[1];		MB;
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x02;
-		i128mem.rbase_g_b[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti3025[2];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x02;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_PIXEL_CLOCK_PLL_DATA;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti3025[2];		MB;
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x00;
-		i128mem.rbase_g_b[INDEX_TI] = TI_MCLK_PLL_DATA;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti3025[3];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x00;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_MCLK_PLL_DATA;		MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti3025[3];		MB;
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x01;
-		i128mem.rbase_g_b[INDEX_TI] = TI_MCLK_PLL_DATA;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti3025[4];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x01;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_MCLK_PLL_DATA;		MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti3025[4];		MB;
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x02;
-		i128mem.rbase_g_b[INDEX_TI] = TI_MCLK_PLL_DATA;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti3025[5];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x02;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_MCLK_PLL_DATA;		MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti3025[5];		MB;
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x00;
-		i128mem.rbase_g_b[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti3025[6];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x00;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti3025[6];		MB;
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x01;
-		i128mem.rbase_g_b[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti3025[7];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x01;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti3025[7];		MB;
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_PLL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = 0x02;
-		i128mem.rbase_g_b[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti3025[8];
+		i128mem.rbase_g[INDEX_TI] = TI_PLL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = 0x02;			MB;
+		i128mem.rbase_g[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti3025[8];		MB;
 
-		i128mem.rbase_g_b[INDEX_TI] = TI_CURS_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_CURS_CONTROL];
-		i128mem.rbase_g_b[INDEX_TI] = TI_TRUE_COLOR_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_TRUE_COLOR_CONTROL];
-		i128mem.rbase_g_b[INDEX_TI] = TI_VGA_SWITCH_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_VGA_SWITCH_CONTROL];
-		i128mem.rbase_g_b[INDEX_TI] = TI_MUX_CONTROL_1;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_MUX_CONTROL_1];
-		i128mem.rbase_g_b[INDEX_TI] = TI_MUX_CONTROL_2;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_MUX_CONTROL_2];
-		i128mem.rbase_g_b[INDEX_TI] = TI_INPUT_CLOCK_SELECT;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_INPUT_CLOCK_SELECT];
-		i128mem.rbase_g_b[INDEX_TI] = TI_OUTPUT_CLOCK_SELECT;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_OUTPUT_CLOCK_SELECT];
-		i128mem.rbase_g_b[INDEX_TI] = TI_PALETTE_PAGE;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_PALETTE_PAGE];
-		i128mem.rbase_g_b[INDEX_TI] = TI_GENERAL_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_GENERAL_CONTROL];
-		i128mem.rbase_g_b[INDEX_TI] = TI_MISC_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_MISC_CONTROL];
-		i128mem.rbase_g_b[INDEX_TI] = TI_AUXILIARY_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_AUXILIARY_CONTROL];
-		i128mem.rbase_g_b[INDEX_TI] = TI_GENERAL_IO_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_GENERAL_IO_CONTROL];
-		i128mem.rbase_g_b[INDEX_TI] = TI_GENERAL_IO_DATA;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_GENERAL_IO_DATA];
-		i128mem.rbase_g_b[INDEX_TI] = TI_MCLK_DCLK_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_MCLK_DCLK_CONTROL];
-		i128mem.rbase_g_b[INDEX_TI] = TI_COLOR_KEY_CONTROL;
-		i128mem.rbase_g_b[DATA_TI] = iR.Ti302X[TI_COLOR_KEY_CONTROL];
+		i128mem.rbase_g[INDEX_TI] = TI_CURS_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_CURS_CONTROL];	MB;
+		i128mem.rbase_g[INDEX_TI] = TI_TRUE_COLOR_CONTROL;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_TRUE_COLOR_CONTROL]; MB;
+		i128mem.rbase_g[INDEX_TI] = TI_VGA_SWITCH_CONTROL;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_VGA_SWITCH_CONTROL]; MB;
+		i128mem.rbase_g[INDEX_TI] = TI_MUX_CONTROL_1;		MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_MUX_CONTROL_1];	MB;
+		i128mem.rbase_g[INDEX_TI] = TI_MUX_CONTROL_2;		MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_MUX_CONTROL_2];	MB;
+		i128mem.rbase_g[INDEX_TI] = TI_INPUT_CLOCK_SELECT;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_INPUT_CLOCK_SELECT]; MB;
+		i128mem.rbase_g[INDEX_TI] = TI_OUTPUT_CLOCK_SELECT;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_OUTPUT_CLOCK_SELECT];MB;
+		i128mem.rbase_g[INDEX_TI] = TI_PALETTE_PAGE;		MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_PALETTE_PAGE];	MB;
+		i128mem.rbase_g[INDEX_TI] = TI_GENERAL_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_GENERAL_CONTROL]; MB;
+		i128mem.rbase_g[INDEX_TI] = TI_MISC_CONTROL;		MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_MISC_CONTROL];	MB;
+		i128mem.rbase_g[INDEX_TI] = TI_AUXILIARY_CONTROL;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_AUXILIARY_CONTROL]; MB;
+		i128mem.rbase_g[INDEX_TI] = TI_GENERAL_IO_CONTROL;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_GENERAL_IO_CONTROL]; MB;
+		i128mem.rbase_g[INDEX_TI] = TI_GENERAL_IO_DATA;		MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_GENERAL_IO_DATA]; MB;
+		i128mem.rbase_g[INDEX_TI] = TI_MCLK_DCLK_CONTROL;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_MCLK_DCLK_CONTROL]; MB;
+		i128mem.rbase_g[INDEX_TI] = TI_COLOR_KEY_CONTROL;	MB;
+		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_COLOR_KEY_CONTROL]; MB;
 	} else if ((i128RamdacType == IBM526_DAC) ||
 		   (i128RamdacType == IBM528_DAC)) {
 		CARD32 i;
@@ -299,28 +296,23 @@ restoreI128state()
 			if ((i == IBMRGB_sysclk_vco_div) ||
 			    (i == IBMRGB_sysclk_ref_div))
 				continue;
-			i128mem.rbase_g_b[IDXL_I] = i;
-			i128mem.rbase_g_b[DATA_I] = iR.IBMRGB[i];
+			i128mem.rbase_g[IDXL_I] = i;			MB;
+			i128mem.rbase_g[DATA_I] = iR.IBMRGB[i];		MB;
 		}
 
-   		i128mem.rbase_g_b[IDXL_I] = IBMRGB_sysclk_ref_div;
-   		i128mem.rbase_g_b[DATA_I] =
-			iR.IBMRGB[IBMRGB_sysclk_ref_div];
-   		i128mem.rbase_g_b[IDXL_I] = IBMRGB_sysclk_vco_div;
-   		i128mem.rbase_g_b[DATA_I] =
-			iR.IBMRGB[IBMRGB_sysclk_vco_div];
+   		i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_ref_div;	MB;
+   		i128mem.rbase_g[DATA_I] =
+			iR.IBMRGB[IBMRGB_sysclk_ref_div];		MB;
+   		i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_vco_div;	MB;
+   		i128mem.rbase_g[DATA_I] =
+			iR.IBMRGB[IBMRGB_sysclk_vco_div];		MB;
 		usleep(50000);
 	}
 
-        PCI_DevIOPorts[0] = iR.iobase + 0x1C;
-        PCI_DevIOPorts[1] = iR.iobase + 0x20;
-        PCI_DevIOPorts[2] = iR.iobase + 0x30;
-
-        xf86AddIOPorts(i128InfoRec.scrnIndex, 3, PCI_DevIOPorts);
         xf86EnableIOPorts(i128InfoRec.scrnIndex);
 
 	/* iobase is filled in during the device probe (as well as config 1&2)*/
-	if ((i128io.id&0x7) > 1) {
+	if ((i128io.id&0x7) > 0) {
 		int i;
 		unsigned char *vidmem = (unsigned char *)i128mem.mw0_ad;
 
@@ -331,13 +323,13 @@ restoreI128state()
 
 	/* restore the LUT */
 
-	i128mem.rbase_g_b[PEL_MASK] = 0xff;
-	i128mem.rbase_g_b[WR_ADR] = 0x00;
+	i128mem.rbase_g[PEL_MASK] = 0xff;				MB;
+	i128mem.rbase_g[WR_ADR] = 0x00;					MB;
 
 	for (i=0; i<256; i++) {
-	   i128mem.rbase_g_b[PAL_DAT] = oldlut[i].r;
-	   i128mem.rbase_g_b[PAL_DAT] = oldlut[i].g;
-	   i128mem.rbase_g_b[PAL_DAT] = oldlut[i].b;
+	   i128mem.rbase_g[PAL_DAT] = oldlut[i].r;			MB;
+	   i128mem.rbase_g[PAL_DAT] = oldlut[i].g;			MB;
+	   i128mem.rbase_g[PAL_DAT] = oldlut[i].b;			MB;
 	}
 
 	i128mem.rbase_w[MW0_CTRL] = iR.i128_base_w[MW0_CTRL]; /*  0x0000  */
@@ -348,22 +340,23 @@ restoreI128state()
 	i128mem.rbase_w[MW0_WKEY] = iR.i128_base_w[MW0_WKEY]; /*  0x001C  */
 	i128mem.rbase_w[MW0_KDAT] = iR.i128_base_w[MW0_KDAT]; /*  0x0020  */
 	i128mem.rbase_w[MW0_MASK] = iR.i128_base_w[MW0_MASK]; /*  0x0024  */
+									MB;
 
 	if (i128RamdacType == TI3025_DAC) {
-		i128mem.rbase_g[INDEX_TI/4] =
-			iR.i128_base_g[INDEX_TI/4]; /* 0x0018 */
-		i128mem.rbase_g[DATA_TI/4]  =
-			iR.i128_base_g[DATA_TI/4];  /* 0x001C */
+		i128mem.rbase_g[INDEX_TI] =
+			iR.i128_base_g[INDEX_TI]; /* 0x0018 */		MB;
+		i128mem.rbase_g[DATA_TI]  =
+			iR.i128_base_g[DATA_TI];  /* 0x001C */		MB;
 	} else if ((i128RamdacType == IBM526_DAC) ||
 		   (i128RamdacType == IBM528_DAC)) {
-		i128mem.rbase_g[IDXL_I/4] =
-			iR.i128_base_g[IDXL_I/4];   /* 0x0010 */
-		i128mem.rbase_g[IDXH_I/4] =
-			iR.i128_base_g[IDXH_I/4];   /* 0x0014 */
-		i128mem.rbase_g[DATA_I/4] =
-			iR.i128_base_g[DATA_I/4];   /* 0x0018 */
-		i128mem.rbase_g[IDXCTL_I/4] =
-			iR.i128_base_g[IDXCTL_I/4]; /* 0x001C */
+		i128mem.rbase_g[IDXL_I] =
+			iR.i128_base_g[IDXL_I];   /* 0x0010 */		MB;
+		i128mem.rbase_g[IDXH_I] =
+			iR.i128_base_g[IDXH_I];   /* 0x0014 */		MB;
+		i128mem.rbase_g[DATA_I] =
+			iR.i128_base_g[DATA_I];   /* 0x0018 */		MB;
+		i128mem.rbase_g[IDXCTL_I] =
+			iR.i128_base_g[IDXCTL_I]; /* 0x001C */		MB;
 	}
 
 	i128mem.rbase_g[INT_VCNT] = iR.i128_base_g[INT_VCNT]; /*  0x0020  */
@@ -382,6 +375,7 @@ restoreI128state()
 	i128mem.rbase_g[CRT_ZOOM] = iR.i128_base_g[CRT_ZOOM]; /*  0x0054  */
 	i128mem.rbase_g[CRT_1CON] = iR.i128_base_g[CRT_1CON]; /*  0x0058  */
 	i128mem.rbase_g[CRT_2CON] = iR.i128_base_g[CRT_2CON]; /*  0x005C  */
+									MB;
 
 	outl(iR.iobase + 0x20, iR.config2);
 	outl(iR.iobase + 0x1C, iR.config1);
@@ -413,7 +407,6 @@ i128Init(mode)
 #endif
 {
 	int pitch_multiplier, iclock;
-      	unsigned PCI_DevIOPorts[2];
 	Bool ret;
 	CARD32 tmp;
 
@@ -423,13 +416,10 @@ i128Init(mode)
 	 * we reset here again in case there was a VT switch
 	 */
 
-      	PCI_DevIOPorts[0] = iR.iobase + 0x1C;
-      	PCI_DevIOPorts[1] = iR.iobase + 0x20;
-        xf86AddIOPorts(i128InfoRec.scrnIndex, 2, PCI_DevIOPorts);
-        xf86EnableIOPorts(i128InfoRec.scrnIndex);
+	xf86EnableIOPorts(i128InfoRec.scrnIndex);
 	outl(iR.iobase + 0x1C, i128io.config1);
 	outl(iR.iobase + 0x20, i128io.config2);
-        xf86DisableIOPorts(i128InfoRec.scrnIndex);
+	xf86DisableIOPorts(i128InfoRec.scrnIndex);
 
 	if (!i128Initialized)
 		saveI128state();
@@ -442,7 +432,7 @@ i128Init(mode)
 		iclock = 4;
 	else if (i128RamdacType == IBM528_DAC)
 		iclock = 128 / i128InfoRec.bitsPerPixel;
-	else if (i128MemoryTypeDram)
+	else if (i128MemoryType == I128_MEMORY_DRAM)
 		iclock = 32 / i128InfoRec.bitsPerPixel; /* IBM526 DAC 32b bus */
 	else
 		iclock = 64 / i128InfoRec.bitsPerPixel; /* IBM524/526 DAC */
@@ -460,9 +450,15 @@ i128Init(mode)
 	i128mem.rbase_g[CRT_VFP] = mode->VSyncStart - mode->VDisplay;
 	i128mem.rbase_g[CRT_VS] = mode->VSyncEnd - mode->VSyncStart;
 	i128mem.rbase_g[CRT_BORD] = 0x00;
-	i128mem.rbase_g[CRT_1CON] = 0x00000070;
-	if (i128MemoryTypeDram)
+	tmp = 0x00000070;
+	if (i128DeviceType == I128_DEVICE_ID3)
+		tmp |= 0x00000100;
+	i128mem.rbase_g[CRT_1CON] = tmp;
+	if ((i128MemoryType == I128_MEMORY_DRAM) ||
+	    (i128MemoryType == I128_MEMORY_SGRAM))
 		tmp = 0x20000100;
+	else if (i128MemoryType == I128_MEMORY_WRAM)
+		tmp = 0x00040100;
 	else {
 		tmp = 0x00040101;
 		if (i128InfoRec.videoRam == 2048)
@@ -472,24 +468,37 @@ i128Init(mode)
 			tmp |= 0x01000000;  /* split transfer */
 	}
 	i128mem.rbase_g[CRT_2CON] = tmp;
+	i128mem.rbase_g[CRT_ZOOM] = 0x00000000;
 
 	i128mem.rbase_w[MW0_CTRL] = 0x00000000;
-	if (i128InfoRec.videoRam == 2048)
-		i128mem.rbase_w[MW0_SZ]   = 0x00000009;
-	else if (i128InfoRec.videoRam == 8192)
-		i128mem.rbase_w[MW0_SZ]   = 0x0000000B;
-	else
-		i128mem.rbase_w[MW0_SZ]   = 0x0000000A;  /* default to 4MB */
+	switch (i128InfoRec.videoRam) {
+		case 2048:
+			i128mem.rbase_w[MW0_SZ]   = 0x00000009;
+			break;
+		case 8192:
+			i128mem.rbase_w[MW0_SZ]   = 0x0000000B;
+			break;
+		case 8192+4096:
+			/* no break */
+		case 16384:
+			i128mem.rbase_w[MW0_SZ]   = 0x0000000C;
+			break;
+		case 4096:
+			/* no break */
+		default:
+			i128mem.rbase_w[MW0_SZ]   = 0x0000000A;/* default 4MB */
+			break;
+	}
 	i128mem.rbase_w[MW0_PGE]  = 0x00000000;
 	i128mem.rbase_w[MW0_ORG]  = 0x00000000;
 	i128mem.rbase_w[MW0_MSRC] = 0x00000000;
 	i128mem.rbase_w[MW0_WKEY] = 0x00000000;
 	i128mem.rbase_w[MW0_KDAT] = 0x00000000;
 	i128mem.rbase_w[MW0_MASK] = 0xFFFFFFFF;
+									MB;
 
-	if ((i128io.id&0x7) > 1) {
-      		PCI_DevIOPorts[0] = iR.iobase + 0x30;
-        	xf86AddIOPorts(i128InfoRec.scrnIndex, 1, PCI_DevIOPorts);
+	if ((i128io.id&0x7) > 0) {
+
         	xf86EnableIOPorts(i128InfoRec.scrnIndex);
 
 	   	i128io.vga_ctl &= 0x0000FF00;
@@ -531,24 +540,24 @@ InitLUT()
 {
    short i, j;
 
-   i128mem.rbase_g_b[PEL_MASK] = 0xff;
+   i128mem.rbase_g[PEL_MASK] = 0xff;					MB;
 
    if (!i128LUTSaved) {
-   	i128mem.rbase_g_b[RD_ADR] = 0x00;
+   	i128mem.rbase_g[RD_ADR] = 0x00;					MB;
    	for (i=0; i<256; i++) {
-   	   oldlut[i].r = i128mem.rbase_g_b[PAL_DAT];
-   	   oldlut[i].g = i128mem.rbase_g_b[PAL_DAT];
-   	   oldlut[i].b = i128mem.rbase_g_b[PAL_DAT];
+   	   oldlut[i].r = i128mem.rbase_g[PAL_DAT];			MB;
+   	   oldlut[i].g = i128mem.rbase_g[PAL_DAT];			MB;
+   	   oldlut[i].b = i128mem.rbase_g[PAL_DAT];			MB;
    	}
 	i128LUTSaved = 1;
    }
       
-   i128mem.rbase_g_b[WR_ADR] = 0x00;
+   i128mem.rbase_g[WR_ADR] = 0x00;					MB;
 
    for (i=0; i<256; i++) {
-      i128mem.rbase_g_b[PAL_DAT] = 0x00;
-      i128mem.rbase_g_b[PAL_DAT] = 0x00;
-      i128mem.rbase_g_b[PAL_DAT] = 0x00;
+      i128mem.rbase_g[PAL_DAT] = 0x00;					MB;
+      i128mem.rbase_g[PAL_DAT] = 0x00;					MB;
+      i128mem.rbase_g[PAL_DAT] = 0x00;					MB;
    }
 
    if (i128InfoRec.bitsPerPixel > 8) {
@@ -582,11 +591,11 @@ InitLUT()
 	 }
       }
 
-      i128mem.rbase_g[WR_ADR] = 0x00;
+      i128mem.rbase_g[WR_ADR] = 0x00;					MB;
       for(i=0; i<256; i++) {
-	 i128mem.rbase_g_b[PAL_DAT] = currenti128dac[i].r;
-	 i128mem.rbase_g_b[PAL_DAT] = currenti128dac[i].g;
-	 i128mem.rbase_g_b[PAL_DAT] = currenti128dac[i].b;
+	 i128mem.rbase_g[PAL_DAT] = currenti128dac[i].r;		MB;
+	 i128mem.rbase_g[PAL_DAT] = currenti128dac[i].g;		MB;
+	 i128mem.rbase_g[PAL_DAT] = currenti128dac[i].b;		MB;
       }
    }
    LUTInited = TRUE;

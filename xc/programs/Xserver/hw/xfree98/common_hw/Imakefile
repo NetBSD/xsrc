@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/5 1996/10/19 18:21:54 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common_hw/Imakefile,v 3.6 1996/12/23 07:06:39 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common_hw/Imakefile,v 3.6.2.1 1998/02/01 16:05:28 robin Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
@@ -23,7 +23,8 @@ GA968DIR = ga968
 #endif
 #if XF98GANBWAPServer || XF98NEC480Server || XF98NKVNECServer || \
     XF98WABSServer    || XF98WABEPServer  || XF98WSNAServer   || \
-    XF98TGUIServer    || XF98EGCServer
+    XF98TGUIServer    || XF98MGAServer    || XF98SVGAServer   || \
+    XF98EGCServer
 GENERICDIR = generic
 #endif
 

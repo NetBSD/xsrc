@@ -1,7 +1,7 @@
 XCOMM ---------------------------------------------------------------------
 XCOMM Imake rules for building libraries, programs, scripts, and data files
 XCOMM rules:  $TOG: Imake.rules /main/222 1997/07/17 20:04:40 kaleb $
-XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.5 1997/07/19 04:59:07 dawes Exp $
+XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.7 1998/02/06 09:02:17 dawes Exp $
 
 /*
  *		   MACHINE-INDEPENDENT RULES; DO NOT MODIFY
@@ -82,6 +82,7 @@ XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.5 1997/07/19 04:59:07 
  * MakeFlagsToShellFlags	(makeflags,shellcmd)
  * MakeNamedTargetSubdir	(dir,flags,subname)
  * LinkFileList			(step,list,dir,sub)
+ * LinkVarDirectory		(mdir,cdir,rdir,ldir)
  * InstallMultipleDestFlags	(step,list,dest,flags)
  * InstallMultipleDest		(step,list,dest)
  * InstallMultiple		(list,dest)
@@ -1316,6 +1317,34 @@ step:: list								@@\
 	@MakeFlagsToShellFlags(i,set +e); \				@@\
 	echo "	cd" dir; cd dir && \					@@\
 	for i in list; do (set -x; RemoveFile($$i); $(LN) sub/$$i .); done
+#endif
+
+
+/*
+ * LinkVarDirectory
+ *
+ * Make links from $LIBDIR (<ProjectRoot>/lib/X11) to /var/X11/
+ * For example /usr/X11R6/lib/X11/xdm ==> /var/X11/xdm so that X can be
+ * run from a read-only volume like a CD-ROM.
+ */
+#ifndef LinkVarDirectory
+#if HasVarDirectory && HasSymLinks
+#define LinkVarDirectory(mdir,cdir,rdir,ldir)				@@\
+install::								@@\
+	MakeDir(Concat($(DESTDIR)$(LIBDIR)/,cdir))			@@\
+	MakeDir(Concat($(VARDIR)/,mdir))				@@\
+	@MakeFlagsToShellFlags(i,set +e); \				@@\
+	if [ -d Concat($(DESTDIR)$(LIBDIR)/,cdir) ]; then \		@@\
+	  cd Concat($(DESTDIR)$(LIBDIR)/,cdir); \			@@\
+	  if [ -d rdir -a ! -h rdir ]; then \				@@\
+	    (cd rdir; tar cf - . | (cd Concat($(VARDIR)/,mdir); tar xf -; exit 0); exit 0); \ @@\
+	  fi; \								@@\
+	  $(RM) -r rdir; \						@@\
+	  $(LN) Concat($(VARDIR)/,mdir) ldir; \				@@\
+	fi
+#else
+#define LinkVarDirectory(mdir,cdir,rdir,ldir)
+#endif
 #endif
 
 

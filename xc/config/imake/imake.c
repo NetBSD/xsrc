@@ -8,7 +8,7 @@
  * be passed to the template file.                                         *
  *                                                                         *
  ***************************************************************************/
-/* $XFree86: xc/config/imake/imake.c,v 3.13.2.8 1997/07/27 02:41:04 dawes Exp $ */
+/* $XFree86: xc/config/imake/imake.c,v 3.13.2.16 1998/03/01 00:34:54 dawes Exp $ */
 
 /*
  * 
@@ -145,7 +145,7 @@ in this Software without prior written authorization from the X Consortium.
  *	#include INCLUDE_IMAKEFILE
  *	<add any global targets like 'clean' and long dependencies>
  */
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 /* This needs to be before _POSIX_SOURCE gets defined */
 # include <sys/param.h>
 # include <sys/types.h>
@@ -843,27 +843,109 @@ trim_version(p)
 }
 #endif
 
+
 #ifdef linux
+const char *libc_c=
+"#include <stdio.h>\n"
+"#include <ctype.h>\n"
+"\n"
+"#if 0\n"
+"#pragma weak gnu_get_libc_version\n"
+"#pragma weak __libc_version\n"
+"#pragma weak __linux_C_lib_version\n"
+"#else\n"
+"asm (\".weak gnu_get_libc_version\");\n"
+"asm (\".weak __libc_version\");\n"
+"asm (\".weak __linux_C_lib_version\");\n"
+"#endif\n"
+"\n"
+"extern const char * gnu_get_libc_version (void);\n"
+"extern const char * __linux_C_lib_version;\n"
+"extern const char __libc_version [];\n"
+"\n"
+"int\n"
+"main ()\n"
+"{\n"
+"  int libcmajor = 0, libcminor = 0, libcteeny = 0;\n"
+"\n"
+"  if (((&__linux_C_lib_version != 0)\n"
+"       && ((&__libc_version != 0) || (gnu_get_libc_version != 0)))\n"
+"      || (!(&__linux_C_lib_version != 0) && !(&__libc_version != 0)\n"
+"	  && !(gnu_get_libc_version != 0)))\n"
+"  {\n"
+"    libcmajor = 0;\n"
+"    libcminor = 0;\n"
+"    libcteeny = 0;\n"
+"  }\n"
+"  else\n"
+"  {\n"
+"    const char * ptr;\n"
+"    int glibcmajor = 0;\n"
+"\n"
+"    if (gnu_get_libc_version != 0)\n"
+"    {\n"
+"      ptr = gnu_get_libc_version ();\n"
+"      glibcmajor = 4;\n"
+"    }\n"
+"    else if (&__libc_version != 0)\n"
+"    {\n"
+"      ptr = __libc_version;\n"
+"      glibcmajor = 4;\n"
+"    }\n"
+"    else\n"
+"      ptr = __linux_C_lib_version;\n"
+"\n"
+"    while (!isdigit (*ptr))\n"
+"      ptr++;\n"
+"\n"
+"    sscanf (ptr, \"%d.%d.%d\", &libcmajor, &libcminor, &libcteeny);\n"
+"    libcmajor += glibcmajor;\n"
+"  }\n"
+"\n"
+"  printf(\"#define DefaultLinuxCLibMajorVersion %d\\n\", libcmajor);\n"
+"  printf(\"#define DefaultLinuxCLibMinorVersion %d\\n\", libcminor);\n"
+"  printf(\"#define DefaultLinuxCLibTeenyVersion %d\\n\", libcteeny);\n"
+"\n"
+"  return 0;\n"
+"}\n"
+;
+
 static void get_libc_version(inFile)
   FILE* inFile;
 {
-  static char* libcso = "/usr/lib/libc.so";
-  struct stat sb;
-  char buf[PATH_MAX];
-  char* ptr;
-  int libcmajor, libcminor, libcteeny;
+  char *aout = tmpnam (NULL);
+  FILE *fp;
+  const char *format = "%s -o %s -x c -";
+  char *cc;
+  int len;
+  char *command;
 
-  if (lstat (libcso, &sb) == 0) {
-    if (S_ISLNK (sb.st_mode)) {
-      if (readlink (libcso, buf, PATH_MAX) >= 0) {
-	for (ptr = buf; *ptr && !isdigit (*ptr); ptr++);
-	  (void) sscanf (ptr, "%d.%d.%d", &libcmajor, &libcminor, &libcteeny);
-	  fprintf(inFile, "#define DefaultLinuxCLibMajorVersion %d\n", libcmajor);    
-	  fprintf(inFile, "#define DefaultLinuxCLibMinorVersion %d\n", libcminor);    
-	  fprintf(inFile, "#define DefaultLinuxCLibTeenyVersion %d\n", libcteeny);    
-      }
-    }
-  }
+  cc = getenv ("CC");
+  if (cc == NULL)
+    cc = "gcc";
+  len = strlen (aout) + strlen (format) + strlen (cc);
+  if (len < 128) len = 128;
+  command = alloca (len);
+
+  if (snprintf (command , len, format, cc, aout) == len)
+    abort ();
+
+  fp = popen (command, "w");
+  if (fp == NULL || fprintf (fp, "%s\n", libc_c) < 0
+      || pclose (fp) != 0)
+    abort ();
+
+  fp = popen (aout, "r");
+  if (fp == NULL)
+    abort ();
+
+  while (fgets (command, len, fp))
+    fprintf (inFile, command);
+  
+  len = pclose (fp);
+  remove (aout);
+  if (len)
+    abort ();
 }
 
 static void get_ld_version(inFile)

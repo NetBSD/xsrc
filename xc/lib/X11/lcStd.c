@@ -197,16 +197,26 @@ _Xlcwcstombs(lcd, str, wstr, len)
 int
 _Xmbtowc(wstr, str, len)
     wchar_t *wstr;
+#ifdef ISC
+    char const *str;
+    size_t len;
+#else
     char *str;
     int len;
+#endif
 {
     return _Xlcmbtowc((XLCd) NULL, wstr, str, len);
 }
 
 int
 _Xmblen(str, len)
+#ifdef ISC
+    char const *str;
+    size_t len;
+#else
     char *str;
     int len;
+#endif
 {
     return _Xmbtowc((wchar_t *) NULL, str, len);
 }

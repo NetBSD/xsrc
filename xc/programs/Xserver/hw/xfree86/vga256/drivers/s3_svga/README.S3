@@ -1,0 +1,52 @@
+
+  This is the README for the new experimental S3 driver for
+non-ViRGE S3 chipsets in the XF86_SVGA server.  This is definitely
+an ALPHA quality driver and hasn't been well tested.
+Because of this, the configuration programs will install XF86_S3 by 
+default rather than this one.  But if you're adventurous or had some 
+problems with XF86_S3, you might want to give it a try.
+
+  The driver includes generic S3 support which should work on
+all non-ViRGE S3 chips (in theory, that is).  It also has improved
+support for chips that support S3's new style memory mapped I/O.
+These chips include the 868, 968 and recent Trio64 variants (not
+the plain old Trio64s).  Chips that are capable of using the new
+style MMIO will use it automatically.  The option "NO_MMIO" can
+be used to turn this off. 
+
+  Performance for chips using the new style MMIO is expected
+to be better than XF86_S3, especially on a PCI bus.  Performance
+without MMIO, however, is expected to be roughly comparable
+to XF86_S3 (faster in some areas, slower in others).
+
+  All color depths achievable with XF86_S3 should be possible
+with these drivers.  Additionally, packed 24 bpp "sortof" works
+for the 868 and 968.  Your results may vary. 
+
+  Nearly all the options and features supported by XF86_S3
+are supported by this driver.  Additionally, the standard XAA/SVGA 
+server options such as NO_ACCEL, SW_CURSOR, and NO_PIXMAP_CACHE are 
+also supported.  XF86_S3 features which are NOT supported in this 
+driver are DPMS support and gamma correction.
+
+  The driver supports the PCI_RETRY option when using MMIO and
+a PCI card.  This option can give large performance boosts for
+some operations, but has a tendency to hog the bus.  Because
+of this, the option is not set by default. Most hardware
+combinations may not have any problems using this option, but
+sound card gliches during intensive graphics operations have
+been reported on some. 
+
+  One shortcoming worth noting is that this driver does not yet
+contain the work-around for some S3 PCI bioses that report
+their memory usage incorrectly.  This can result in conflicting
+address spaces.  If this is the case on your hardware you should
+run XF86_S3 once and write down the address that your card is
+relocated to (as printed out in the server output).  Then you can 
+force the server to use this address with the MemBase field in the 
+XF86Config (see the man page on XF86Config).
+
+
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/README.S3,v 1.1.2.3 1998/02/27 03:29:58 dawes Exp $

@@ -1,0 +1,60 @@
+
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/README.tech,v 1.1.2.2 1998/01/24 00:04:37 robin Exp $
+
+Brief technical note on the NV1
+-------------------------------
+
+This document attempts to explain some of the technical features of the NV1.
+
+Central to the chip is the concept that user-space programs should be allowed 
+to have direct access to the chip. To enable this, the chip supports the 
+concepts of "channels". Each application that wants to draw to screen is 
+given a channel which allows it to perform graphics operations by writing to 
+specified locations. Each channel is a 64K region of memory mapped registers,
+divided into 8 identical subchannels. The NV1 supports 128 channels in total.
+
+Each channel can be mapped to a specific area of the screen. All coordinates
+supplied by the application are relative to this, the application doesn't
+actually know where on the screen it's window is mapped. The chip also
+supports clipping of this region, with multiple clip regions. If the number of
+clip regions is exceeded then the object has to be drawn multiple times,
+changing the clip regions for each invocation to ensure the correct clipping
+behaviour.
+
+Another feature of the chip is that all drawing is done via objects. For
+example, if I want to draw a rectangle, I create a rectangle object. Each
+object is given a unique 32 bit id. To actually draw a rectangle, I would load
+the rectangle object id into the subchannel, and then write the
+coordinates. The chip will add these coordinates to the channel's window offset
+to get the real screen coordinates, handle clipping, and then finally draw the
+rectangle.
+
+Each object has data associated with it, which specifies how to configure 
+the graphics hardware for that operation. The hardware has a hash table to 
+perform look up of objects. If you load a different object into the subchannel 
+then the hardware will look at the hash table for that id number and load the 
+associated data for that object into the graphics hardware.
+
+Software is needed to control this functionality. If the subchannel is loaded 
+with an object that isn't in the hash table, an interrupt is raised.
+Software will be expected to load the appropriate object into the hash 
+table and restart the drawing operation.
+
+Also, if multiple channels are drawing at the same time, the hardware will 
+multiplex between them. An interrupt will be raised when a context switch is 
+needed and the software will be expected to load the state for the channel to 
+be swapped to and restart drawing.
+
+In the case of XFree86, since the driver cannot handle interrupts as it 
+is not part of the kernel, we have to be extremely careful not to raise an 
+interrupt, as the chip will not do anything until the interrupt is dealt 
+with. It also means that we can only ever use one channel, and cannot 
+do any operations which require DMA such as host memory to screen blits, 
+the 3D texture mapping, or any of the sound functionality. If these features 
+are to be supported the driver will need to be moved into the kernel.
+
+For more details, download Nvidia's NVlib SDK.
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/README.tech,v 1.1.2.2 1998/01/24 00:04:37 robin Exp $ */

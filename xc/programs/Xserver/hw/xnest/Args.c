@@ -175,7 +175,7 @@ int ddxProcessArgument (argc, argv, i)
 void ddxUseMsg()
 {
   ErrorF("-display string        display name of the real server\n");
-  ErrorF("-sync                  sinchronize with the real server\n");
+  ErrorF("-sync                  synchronize with the real server\n");
   ErrorF("-full                  utilize full regeneration\n");
   ErrorF("-class string          default visual class\n");
   ErrorF("-depth int             default depth\n");

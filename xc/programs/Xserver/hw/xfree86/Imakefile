@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/12 1996/12/16 12:31:46 rws $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/Imakefile,v 3.28 1996/12/23 06:30:29 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/Imakefile,v 3.28.2.1 1998/02/15 16:08:46 hohndel Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
@@ -28,7 +28,7 @@ VGA16SCREEN = vga16
 ACCELDIRS = accel
 #endif
 
-#if !defined(OsfArchitecture) && !defined(AmoebaArchitecture)
+#if !defined(OsfArchitecture) && !defined(AmoebaArchitecture) && !defined(ArcArchitecture)
 SUPERPROBE = SuperProbe
 #endif
 

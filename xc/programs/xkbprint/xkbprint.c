@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.4.2.1 1997/06/22 10:32:59 dawes Exp $ */
+/* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.4.2.2 1998/02/26 08:29:31 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -604,11 +604,9 @@ FILE 	*	file;
 int		ok;
 XkbFileInfo 	result;
 
-#ifdef Lynx
     uSetEntryFile(NullString);
     uSetDebugFile(NullString);
     uSetErrorFile(NullString);
-#endif
     if (!parseArgs(argc,argv))
 	exit(1);
 #ifdef DEBUG

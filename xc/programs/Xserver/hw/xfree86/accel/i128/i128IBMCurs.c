@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128IBMCurs.c,v 3.0.4.2 1997/06/11 12:08:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128IBMCurs.c,v 3.0.4.3 1998/01/12 03:02:12 robin Exp $ */
 
 #include "servermd.h"
 
@@ -122,14 +122,14 @@ i128IBMRealizeCursor(pScr, pCurs)
 void 
 i128IBMCursorOn()
 {
-   unsigned char tmp;
+   CARD32 tmp;
 
    /* Enable cursor - X11 mode */
-   tmp = i128mem.rbase_g_b[IDXL_I];
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs;
-   i128mem.rbase_g_b[DATA_I] = 0x27;
+   tmp = i128mem.rbase_g[IDXL_I] & 0xFF;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs;				MB;
+   i128mem.rbase_g[DATA_I] = 0x27;					MB;
 
-   i128mem.rbase_g_b[IDXL_I] = tmp;
+   i128mem.rbase_g[IDXL_I] = tmp;					MB;
 
    return;
 }
@@ -137,14 +137,14 @@ i128IBMCursorOn()
 void
 i128IBMCursorOff()
 {
-   unsigned char tmp, tmp1;
+   CARD32 tmp, tmp1;
 
-   tmp = i128mem.rbase_g_b[IDXL_I];
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs;
-   tmp1 = i128mem.rbase_g_b[DATA_I] & ~3;
-   i128mem.rbase_g_b[DATA_I] = tmp1;
+   tmp = i128mem.rbase_g[IDXL_I] & 0xFF;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs;				MB;
+   tmp1 = i128mem.rbase_g[DATA_I] & 0xFC;
+   i128mem.rbase_g[DATA_I] = tmp1;					MB;
 
-   i128mem.rbase_g_b[IDXL_I] = tmp;
+   i128mem.rbase_g[IDXL_I] = tmp;					MB;
 
    return;
 }
@@ -154,7 +154,7 @@ i128IBMMoveCursor(pScr, x, y)
      ScreenPtr pScr;
      int   x, y;
 {
-   unsigned char tmp;
+   CARD32 tmp;
    extern int i128AdjustCursorXPos, i128hotX, i128hotY;
 
    if (i128BlockCursor)
@@ -168,21 +168,21 @@ i128IBMMoveCursor(pScr, x, y)
    if (y < 0)
       return;
 
-   tmp = i128mem.rbase_g_b[IDXL_I];
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_hot_x;
-   i128mem.rbase_g_b[DATA_I] = i128hotX & 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_hot_y;
-   i128mem.rbase_g_b[DATA_I] = i128hotY & 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_xl;
-   i128mem.rbase_g_b[DATA_I] = x & 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_xh;
-   i128mem.rbase_g_b[DATA_I] = (x >> 8) & 0x0F;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_yl;
-   i128mem.rbase_g_b[DATA_I] = y & 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_yh;
-   i128mem.rbase_g_b[DATA_I] = (y >> 8) & 0x0F;
+   tmp = i128mem.rbase_g[IDXL_I] & 0xFF;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_hot_x;				MB;
+   i128mem.rbase_g[DATA_I] = i128hotX & 0xFF;				MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_hot_y;				MB;
+   i128mem.rbase_g[DATA_I] = i128hotY & 0xFF;				MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_xl;				MB;
+   i128mem.rbase_g[DATA_I] = x & 0xFF;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_xh;				MB;
+   i128mem.rbase_g[DATA_I] = (x >> 8) & 0x0F;				MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_yl;				MB;
+   i128mem.rbase_g[DATA_I] = y & 0xFF;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_yh;				MB;
+   i128mem.rbase_g[DATA_I] = (y >> 8) & 0x0F;				MB;
 
-   i128mem.rbase_g_b[IDXL_I] = tmp;
+   i128mem.rbase_g[IDXL_I] = tmp;					MB;
    return;
 }
 
@@ -192,32 +192,32 @@ i128IBMRecolorCursor(pScr, pCurs, displayed)
      CursorPtr pCurs;
      Bool displayed;
 {
-   unsigned char tmp;
+   CARD32 tmp;
 
    if (!xf86VTSema) {
       miRecolorCursor(pScr, pCurs, displayed);
       return;
    }
 
-   tmp = i128mem.rbase_g_b[IDXL_I];
+   tmp = i128mem.rbase_g[IDXL_I] & 0xFF;
 
    /* Background color */
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_col1_r;
-   i128mem.rbase_g_b[DATA_I] = (pCurs->backRed >> 8) & 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_col1_g;
-   i128mem.rbase_g_b[DATA_I] = (pCurs->backGreen >> 8) & 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_col1_b;
-   i128mem.rbase_g_b[DATA_I] = (pCurs->backBlue >> 8) & 0xFF;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_col1_r;			MB;
+   i128mem.rbase_g[DATA_I] = (pCurs->backRed >> 8) & 0xFF;		MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_col1_g;			MB;
+   i128mem.rbase_g[DATA_I] = (pCurs->backGreen >> 8) & 0xFF;		MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_col1_b;			MB;
+   i128mem.rbase_g[DATA_I] = (pCurs->backBlue >> 8) & 0xFF;		MB;
 
    /* Foreground color */
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_col2_r;
-   i128mem.rbase_g_b[DATA_I] = (pCurs->foreRed >> 8) & 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_col2_g;
-   i128mem.rbase_g_b[DATA_I] = (pCurs->foreGreen >> 8) & 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_col2_b;
-   i128mem.rbase_g_b[DATA_I] = (pCurs->foreBlue >> 8) & 0xFF;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_col2_r;			MB;
+   i128mem.rbase_g[DATA_I] = (pCurs->foreRed >> 8) & 0xFF;		MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_col2_g;			MB;
+   i128mem.rbase_g[DATA_I] = (pCurs->foreGreen >> 8) & 0xFF;		MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_col2_b;			MB;
+   i128mem.rbase_g[DATA_I] = (pCurs->foreBlue >> 8) & 0xFF;		MB;
 
-   i128mem.rbase_g_b[IDXL_I] = tmp;
+   i128mem.rbase_g[IDXL_I] = tmp;					MB;
 
    return;
 }
@@ -231,7 +231,8 @@ i128IBMLoadCursor(pScr, pCurs, x, y)
    extern int i128hotX, i128hotY;
    int   index = pScr->myNum;
    register int   i;
-   unsigned char *ram, *p, tmph, tmpl, tmpc, tmpcurs;
+   unsigned char *ram, *p;
+   CARD32 tmph, tmpl, tmpc, tmpcurs;
    extern int i128InitCursorFlag;
 
    if (!xf86VTSema)
@@ -240,13 +241,13 @@ i128IBMLoadCursor(pScr, pCurs, x, y)
    if (!pCurs)
       return;
 
-   tmpc = i128mem.rbase_g_b[IDXCTL_I];
-   tmph = i128mem.rbase_g_b[IDXH_I];
-   tmpl = i128mem.rbase_g_b[IDXL_I];
+   tmpc = i128mem.rbase_g[IDXCTL_I] & 0xFF;
+   tmph = i128mem.rbase_g[IDXH_I] & 0xFF;
+   tmpl = i128mem.rbase_g[IDXL_I] & 0xFF;
 
    /* turn the cursor off */
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs;
-   if ((tmpcurs = i128mem.rbase_g_b[DATA_I]) & 0x03)
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs;				MB;
+   if ((tmpcurs = i128mem.rbase_g[DATA_I]) & 0x03)
       i128IBMCursorOff();
 
    /* load colormap */
@@ -256,33 +257,34 @@ i128IBMLoadCursor(pScr, pCurs, x, y)
 
    i128BlockCursor = TRUE;
 
-   i128mem.rbase_g_b[IDXCTL_I] = 0;
+   i128mem.rbase_g[IDXCTL_I] = 0;					MB;
 
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_hot_x;
-   i128mem.rbase_g_b[DATA_I] = 0x00;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_hot_y;
-   i128mem.rbase_g_b[DATA_I] = 0x00;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_xl;
-   i128mem.rbase_g_b[DATA_I] = 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_xh;
-   i128mem.rbase_g_b[DATA_I] = 0x7F;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_yl;
-   i128mem.rbase_g_b[DATA_I] = 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_yh;
-   i128mem.rbase_g_b[DATA_I] = 0x7F;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_hot_x;				MB;
+   i128mem.rbase_g[DATA_I] = 0x00;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_hot_y;				MB;
+   i128mem.rbase_g[DATA_I] = 0x00;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_xl;				MB;
+   i128mem.rbase_g[DATA_I] = 0xFF;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_xh;				MB;
+   i128mem.rbase_g[DATA_I] = 0x7F;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_yl;				MB;
+   i128mem.rbase_g[DATA_I] = 0xFF;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_yh;				MB;
+   i128mem.rbase_g[DATA_I] = 0x7F;					MB;
 
-   i128mem.rbase_g_b[IDXH_I] = (IBMRGB_curs_array >> 8) & 0xFF;
-   i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_array & 0xFF;
+   i128mem.rbase_g[IDXH_I] = (IBMRGB_curs_array >> 8) & 0xFF;		MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_curs_array & 0xFF;			MB;
 
-   i128mem.rbase_g_b[IDXCTL_I] = 1; /* enable auto-inc */
+   i128mem.rbase_g[IDXCTL_I] = 1; /* enable auto-inc */			MB;
 
    /* 
     * Output the cursor data.  The realize function has put the planes into
     * their correct order, so we can just blast this out.
     */
    p = ram;
-   for (i = 0; i < 1024; i++,p++)
-      i128mem.rbase_g_b[DATA_I] = *p;
+   for (i = 0; i < 1024; i++,p++) {
+      i128mem.rbase_g[DATA_I] = (CARD32 )*p;				MB;
+   }
 
    if (i128hotX >= MAX_CURS_WIDTH)
       i128hotX = MAX_CURS_WIDTH - 1;
@@ -293,9 +295,9 @@ i128IBMLoadCursor(pScr, pCurs, x, y)
    else if (i128hotY < 0)
       i128hotY = 0;
 
-   i128mem.rbase_g_b[IDXCTL_I] = tmpc;
-   i128mem.rbase_g_b[IDXH_I] = tmph;
-   i128mem.rbase_g_b[IDXL_I] = tmpl;
+   i128mem.rbase_g[IDXCTL_I] = tmpc;					MB;
+   i128mem.rbase_g[IDXH_I] = tmph;					MB;
+   i128mem.rbase_g[IDXL_I] = tmpl;					MB;
 
    i128BlockCursor = FALSE;
 

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.129.2.14 1997/07/06 07:28:00 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.129.2.22 1998/02/24 19:05:43 hohndel Exp $
 /*
  * This configuration file contains all of the configuration
  * information for the XFree86 based X Servers.
@@ -93,7 +93,7 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #define XF86P9000Server		YES
 #endif
 #ifndef XF86I128Server
-#define XF86I128Server		NO
+#define XF86I128Server		YES
 #endif
 #ifndef XF86TGAServer
 #define XF86TGAServer		YES
@@ -291,6 +291,14 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 # define XF98TGUIServer		BuildPC98Servers
 #endif
 
+#ifndef XF98MGAServer
+# define XF98MGAServer		BuildPC98Servers
+#endif
+
+#ifndef XF98SVGAServer
+# define XF98SVGAServer		BuildPC98Servers
+#endif
+
 #ifndef XF98EGCServer
 # define XF98EGCServer		BuildPC98Servers
 #endif
@@ -369,8 +377,8 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 # else
 #  define XF86SvgaDrivers	nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
 				cirrus ncr77c22 compaq mga oak al2101 \
-				ali cl64xx video7 chips ark mx realtek apm \
-				s3v generic
+				ali cl64xx video7 ark mx realtek apm \
+				s3v s3_svga chips generic
 # endif
 #endif
 
@@ -482,12 +490,15 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #endif
 
 /*
- * The default is to install the X servers setuid-root on most OSs.
- * It the servers are only started by xdm, they should not be setuid-root.
+ * The X servers need to run as root on most OSs.  We're now using a
+ * wrapper in that case, but we still need to make it known that the
+ * servers need SetUID.  When only using xdm, this (and the wrapper)
+ * are not required.  Disabling this automatically disables use of the
+ * wrapper.
  */
 #if !defined(i386MachArchitecture) && !defined(OS2Architecture)
-#ifndef InstallXserverSetUID
-#define InstallXserverSetUID	YES
+#ifndef XserverNeedsSetUID
+#define XserverNeedsSetUID	YES
 #endif
 #endif
 
@@ -507,7 +518,8 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #undef BuildPexExt
 #if XF86AccelServer || XF86SVGAServer || XF98AccelServer || \
     XF98GANBWAPServer || XF98NEC480Server || XF98NKVNECServer || \
-    XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer
+    XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer || \
+    XF98MGAServer || XF98SVGAServer
 #define BuildPexExt		YES
 #else
 #define BuildPexExt		NO
@@ -522,7 +534,8 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #  undef BuildGlxExt
 #  if XF86AccelServer || XF86SVGAServer || XF98AccelServer || \
       XF98GANBWAPServer || XF98NEC480Server || XF98NKVNECServer || \
-      XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer
+      XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer || \
+      XF98MGAServer || XF98SVGAServer
 #    define BuildGlxExt             YES
 #  else
 #    define BuildGlxExt             NO
@@ -536,7 +549,8 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #undef BuildXIE
 #if XF86AccelServer || XF86SVGAServer || XF98AccelServer || \
     XF98GANBWAPServer || XF98NEC480Server || XF98NKVNECServer || \
-    XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer
+    XF98WABSServer || XF98WABEPServer || XF98WSNAServer || XF98TGUIServer || \
+    XF98MGAServer || XF98SVGAServer
 #define BuildXIE		YES
 #else
 #define BuildXIE		NO
@@ -946,7 +960,7 @@ XFREE86JAPANESEDOCDIR = $(XFREE86DOCDIR)/Japanese
 #endif
 
 #ifndef XFree86Version
-#define XFree86Version	3310
+#define XFree86Version	3320
 #endif
 
 #ifndef XVendorString

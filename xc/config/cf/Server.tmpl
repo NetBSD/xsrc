@@ -4,7 +4,7 @@
  */
 
 XCOMM $XConsortium: Server.tmpl /main/14 1996/04/30 14:37:27 mw $
-XCOMM $XFree86: xc/config/cf/Server.tmpl,v 3.3.2.1 1997/05/03 09:43:00 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Server.tmpl,v 3.3.2.3 1998/02/07 00:54:21 dawes Exp $
 
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)" LDSTRIPFLAGS="$(LDSTRIPFLAGS)"
 
@@ -23,8 +23,14 @@ XCOMM $XFree86: xc/config/cf/Server.tmpl,v 3.3.2.1 1997/05/03 09:43:00 dawes Exp
 #ifndef DoThreadedServer
 #define DoThreadedServer NO
 #endif
+#ifndef XserverNeedsSetUID
+#define XserverNeedsSetUID NO
+#endif
+#ifndef UseXserverWrapper
+#define UseXserverWrapper XserverNeedsSetUID
+#endif
 #ifndef InstallServerSetUID
-#define InstallServerSetUID NO
+#define InstallServerSetUID (XserverNeedsSetUID && !UseXserverWrapper)
 #endif
 
 /*

@@ -1,5 +1,5 @@
 /* $XConsortium: Xtranssock.c /main/58 1996/12/04 10:22:50 lehors $ */
-/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.25.2.3 1997/07/19 04:59:17 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.25.2.4 1998/02/01 16:04:34 robin Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -956,7 +956,7 @@ char *port;
 	sprintf (sockname.sun_path, "%s%d", UNIX_PATH, getpid());
     }
 
-#ifdef BSD44SOCKETS
+#if defined(BSD44SOCKETS) && !defined(Lynx)
     sockname.sun_len = strlen(sockname.sun_path);
     namelen = SUN_LEN(&sockname);
 #else
@@ -1585,7 +1585,7 @@ char *port;
 	sprintf (sockname.sun_path, "%s%s", UNIX_PATH, port);
     }
 
-#ifdef BSD44SOCKETS
+#if defined(BSD44SOCKETS) && !defined(Lynx)
     sockname.sun_len = strlen (sockname.sun_path);
     namelen = SUN_LEN (&sockname);
 #else

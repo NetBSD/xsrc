@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaHW.c,v 3.50.2.1 1997/05/10 07:03:00 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaHW.c,v 3.50.2.3 1998/02/01 16:05:17 robin Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -71,7 +71,7 @@
 #define		EGC_LENGTH	0x4ae	/* EGC Bit length          */
 #endif
 
-#if !defined(PC98_NEC480) && !defined(PC98_EGC)
+#if !defined(PC98_NEC480) && !defined(PC98_EGC) && !defined(PC98_MGA)
 #if !defined(MONOVGA) && !defined(SCO)
 #ifndef SAVE_FONT1
 #define SAVE_FONT1
@@ -101,7 +101,7 @@
 
 /* bytes per plane to save for font data */
 #define FONT_AMOUNT 8192
-#endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) */
+#endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) && !defined(PC98_MGA) */
 
 #if defined(CSRG_BASED) || defined(MACH386)
 #include <sys/time.h>
@@ -152,6 +152,8 @@ setExternClock(
 
 static int currentGraphicsClock = -1;
 static int currentExternClock = -1;
+
+Bool (*vgaBlankScreenFunc)()=vgaBlankScreen;
 
 int vgaRamdacMask = 0x3F;
 
@@ -302,6 +304,37 @@ vgaProtect(on)
 }
 
 /*
+ * vgaBlankScreen -- blank the screen.
+ */
+
+Bool vgaBlankScreen(ScreenPtr ptr, Bool on)
+{
+
+#if !defined(PC98_EGC) && !defined(PC98_PEGC)
+  unsigned char scrn;
+
+  outb(0x3C4,1);
+  scrn = inb(0x3C5);
+
+  if(on) {
+    scrn &= 0xDF;			/* enable screen */
+  }else {
+    scrn |= 0x20;			/* blank screen */
+  }
+
+  (*vgaSaveScreenFunc)(SS_START);
+  outw(0x3C4, (scrn << 8) | 0x01); /* change mode */
+  (*vgaSaveScreenFunc)(SS_FINISH);
+#else
+  if(on) 
+    outb(0xa2, 0xd);
+  else
+    outb(0xa2, 0xc);
+#endif    
+  return TRUE;
+}
+
+/*
  * vgaSaveScreen -- blank the screen.
  */
 
@@ -310,41 +343,12 @@ vgaSaveScreen(pScreen, on)
      ScreenPtr pScreen;
      Bool  on;
 {
-#if !defined(PC98_EGC) && !defined(PC98_NEC480)
-   unsigned char scrn;
-
    if (on)
       SetTimeSinceLastInputEvent();
 
    if (xf86VTSema) {
-      /* the server is running on the current vt */
-      /* so just go for it */
-
-      outb(0x3C4,1);
-      scrn = inb(0x3C5);
-
-      if (on) {
-	 scrn &= 0xDF;			/* enable screen */
-      } else {
-	 scrn |= 0x20;			/* blank screen */
-      }
-
-      (*vgaSaveScreenFunc)(SS_START);
-      outw(0x3C4, (scrn << 8) | 0x01); /* change mode */
-      (*vgaSaveScreenFunc)(SS_FINISH);
+     (*vgaBlankScreenFunc)(pScreen,on);
    }
-#else /* PC98_EGC || PC98_NEC480 */
-  if (on)
-    SetTimeSinceLastInputEvent();
-  
-  if (xf86VTSema) 
-    {
-      if (on) 
-	outb(0xa2, 0xd);
-      else
-	outb(0xa2, 0xc);
-    }
-#endif /* PC98_EGC || PC98_NEC480 */
    return (TRUE);
 }
 

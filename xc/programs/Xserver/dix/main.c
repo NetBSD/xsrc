@@ -46,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: main.c /main/82 1996/09/28 17:12:09 rws $ */
-/* $XFree86: xc/programs/Xserver/dix/main.c,v 3.10.2.1 1997/06/01 12:33:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/main.c,v 3.10.2.2 1998/01/22 10:47:08 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -250,7 +250,9 @@ main(argc, argv)
     else
 	restart = 1;
 
+#if 0
     ExpandCommandLine(&argc, &argv);
+#endif
 
     /* These are needed by some routines which are called from interrupt
      * handlers, thus have no direct calling path back to main and thus

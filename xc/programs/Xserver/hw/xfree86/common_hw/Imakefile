@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/27 18:07:43 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Imakefile,v 3.24 1997/01/05 11:58:22 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Imakefile,v 3.24.2.1 1998/02/24 13:54:16 hohndel Exp $
 
 #include <Server.tmpl>
 
@@ -51,6 +51,8 @@ ObjectFromAsmSource(SlowBcopy,NullParameter)
 InstallLinkKitLibrary(xf86_hw,$(LINKKITDIR)/lib86)
 InstallLinkKitNonExecFile(xf86_HWlib.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(xf86_PCI.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(IBMRGB.h,$(LINKKITDIR)/drivers)
+InstallLinkKitNonExecFile(Ti302X.h,$(LINKKITDIR)/drivers)
 
 DependTarget()
 

@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/keyboard.tcl,v 3.9 1996/12/27 06:54:04 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/keyboard.tcl,v 3.9.2.2 1998/02/21 06:06:59 robin Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -17,29 +17,33 @@
 
 proc Keyboard_create_widgets { win } {
 	global XKBComponents XKBinserver XKBhandle
+	global pc98 messages
 
 	set w [winpathprefix $win]
-	frame $w.keyboard -width 640 -height 420 \
-		-relief ridge -borderwidth 5
+        if !$pc98 {
+	    frame $w.keyboard -width 640 -height 420 \
+		    -relief ridge -borderwidth 5
+	} else {
+	    frame $w.keyboard -width 640 -height 400 \
+		    -relief ridge -borderwidth 5
+	}
 
 	frame $w.keyboard.xkb
-	label $w.keyboard.xkb.text -text \
-		"Select the appropriate model and layout"
+	label $w.keyboard.xkb.text -text $messages(keyboard.4)
 	frame $w.keyboard.xkb.geom
-	label $w.keyboard.xkb.geom.title -text "Model:"
+	label $w.keyboard.xkb.geom.title -text $messages(keyboard.1)
 	combobox $w.keyboard.xkb.geom.cbox -bd 2 -width 30
 	eval [list $w.keyboard.xkb.geom.cbox linsert end] \
 		$XKBComponents(models,descriptions)
 	pack  $w.keyboard.xkb.geom.title $w.keyboard.xkb.geom.cbox -side top
 	frame $w.keyboard.xkb.lang
-	label $w.keyboard.xkb.lang.title -text "Layout (language):"
+	label $w.keyboard.xkb.lang.title -text $messages(keyboard.2)
 	combobox $w.keyboard.xkb.lang.cbox -bd 2 -width 30
 	eval [list $w.keyboard.xkb.lang.cbox linsert end] \
 		$XKBComponents(layouts,descriptions)
 	pack  $w.keyboard.xkb.lang.title $w.keyboard.xkb.lang.cbox -side top
 	frame $w.keyboard.xkb.vari
-	label $w.keyboard.xkb.vari.title -text \
-		"Variant (non U.S. Keyboards only):"
+	label $w.keyboard.xkb.vari.title -text $messages(keyboard.6)
 	combobox $w.keyboard.xkb.vari.cbox -bd 2 -width 30
 	$w.keyboard.xkb.vari.cbox linsert end "<None>"
 	eval [list $w.keyboard.xkb.vari.cbox linsert end] \
@@ -65,7 +69,7 @@ proc Keyboard_create_widgets { win } {
 	}
 	pack $w.keyboard.xkb.graphic  -side top -expand yes -fill x
 	if { $XKBinserver } {
-	    button $w.keyboard.xkb.apply -text "Apply" \
+	    button $w.keyboard.xkb.apply -text $messages(keyboard.3) \
 		-command "Keyboard_loadsettings $win load"
 	    pack $w.keyboard.xkb.apply -side top -expand yes -fill both
 	}
@@ -80,7 +84,7 @@ proc Keyboard_create_widgets { win } {
 }
 
 proc Keyboard_create_options_widgets { win } {
-	global XKBComponents keyboardXkbOpts
+	global XKBComponents keyboardXkbOpts messages
 
 	set w [winpathprefix $win]
 	set numopts [llength $XKBComponents(options,names)]
@@ -89,7 +93,7 @@ proc Keyboard_create_options_widgets { win } {
 		return
 	}
 
-	label $w.keyboard.options.title -text "Available options:"
+	label $w.keyboard.options.title -text $messages(keyboard.5)
 	pack  $w.keyboard.options.title -fill x \
 		-expand no -pady 3m -side top
 	frame $w.keyboard.options.line -relief sunken -height 2 -bd 3
@@ -117,7 +121,7 @@ proc Keyboard_create_options_widgets { win } {
 			pack $canv.list.$name -fill both -expand no
 			set tmp [list $name default]
 			set value -1
-			set desc "Use default setting"
+			set desc $messages(keyboard.7)
 			set keyboardXkbOpts($name) -1
 		    } else {
 			checkbutton $canv.list.$name \
@@ -223,13 +227,14 @@ proc Keyboard_deactivate { win } {
 
 proc Keyboard_loadsettings { win loadflag } {
 	global XKBComponents XKBrules Keyboard XKBhandle keyboardXkbOpts
+	global messages
 
 	set w [winpathprefix $win]
 	if { $loadflag == "load" } {
-		$w.keyboard.xkb.message configure -text "Applying..."
+		$w.keyboard.xkb.message configure -text $messages(keyboard.9)
 	}
 	if { $loadflag == "noload" } {
-		$w.keyboard.xkb.message configure -text "Please wait..."
+		$w.keyboard.xkb.message configure -text $messages(keyboard.10)
 	}
 	update
 	set geom_idx [$w.keyboard.xkb.geom.cbox curselection]
@@ -261,7 +266,7 @@ proc Keyboard_loadsettings { win loadflag } {
 		set notloaded [catch {eval xkb_load $comp $loadflag} kbd]
 		if { $notloaded } {
 			$w.keyboard.xkb.message configure \
-				-text "Failed! Try again"
+				-text $messages(keyboard.8)
 			bell
 			after 1000
 		} else {
@@ -285,25 +290,5 @@ proc Keyboard_loadsettings { win loadflag } {
 	}
 	focus $w
 	$w.keyboard.xkb.message configure -text ""
-}
-
-proc Keyboard_popup_help { win } {
-	catch {destroy .keyboardhelp}
-        toplevel .keyboardhelp -bd 5 -relief ridge
-        wm title .keyboardhelp "Help"
-	wm geometry .keyboardhelp +30+30
-        text .keyboardhelp.text
-        .keyboardhelp.text insert 0.0 "\n\n\n\
-		First select the model of keyboard that you have (or\
-		the closest equivalent).\n\
-		The small graphic will automatically be updated.\n\n\
-		Next select the layout and any variant or options desired.\n\n\
-		Pressing the 'Apply' button will cause the selected\
-		settings to take effect."
-	.keyboardhelp.text configure -state disabled
-        button .keyboardhelp.ok -text "Dismiss" \
-		-command "destroy .keyboardhelp"
-        focus .keyboardhelp.ok
-        pack .keyboardhelp.text .keyboardhelp.ok
 }
 

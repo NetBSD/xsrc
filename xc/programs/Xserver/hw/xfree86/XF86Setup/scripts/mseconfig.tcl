@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/mseconfig.tcl,v 3.3 1996/12/27 06:54:48 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/mseconfig.tcl,v 3.3.2.4 1998/02/26 13:59:01 dawes Exp $
 
 set clicks1 [clock clicks]
 
@@ -12,6 +12,8 @@ array set Pointer {
 	Protocol	""
 	BaudRate	""
 	SampleRate	""
+	Resolution	""
+	Buttons		""
 	Emulate3Buttons	""
 	Emulate3Timeout	""
 	ChordMiddle	""
@@ -64,6 +66,7 @@ if ![mkdir $XF86SetupDir 0700] {
 	exit 1
 }
 
+source $XF86Setup_library/texts/local_text.tcl
 source $XF86Setup_library/setuplib.tcl
 if ![getuid] {
 	set rand1 [random 1073741823]
@@ -90,10 +93,12 @@ if ![getuid] {
 }
 
 set_resource_defaults
+source $XF86Setup_library/mseproto.tcl
 source $XF86Setup_library/mouse.tcl
 Mouse_create_widgets .
 Mouse_activate .
-button .mouse.exit -text "Exit" -command "exit 0" -underline 1
+button .mouse.exit -text $messages(mouse.17) \
+	-command "exit 0" -underline $messages(mouse.18)
 pack .mouse.exit -side bottom -expand yes -fill x
 bind . <Alt-x>		"exit 0"
 bind . <Control-x>	"exit 0"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DCConf.c,v 3.2 1997/01/05 11:58:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DCConf.c,v 3.2.2.1 1998/02/26 13:59:03 dawes Exp $ */
 
 #ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
@@ -85,7 +85,6 @@ SymTabRec otab[];
 	  if (!c)  {
 	    currpointer = Pointer + pos;  /* locate current position */
 	    if(* currpointer == EOF){       /* handle EOF */ 
-	      xfree(Pointer);
 	      xfree(configRBuf);
 	      pos = 0;
 	      return( DCpushToken = EOF );
@@ -283,7 +282,6 @@ OptFlagRec tab[];
 		 configPath,lineno,currpointer);
 	pos += addlen;
       };
-    xfree(Pointer);
     return(Flag);
   }
 

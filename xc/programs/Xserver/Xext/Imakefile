@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/56 1996/11/26 16:07:54 swick $
-XCOMM $XFree86: xc/programs/Xserver/Xext/Imakefile,v 3.11 1997/01/12 10:40:05 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/Xext/Imakefile,v 3.11.2.1 1998/01/23 12:35:11 dawes Exp $
 #include <Server.tmpl>
 
 #if HasShm
@@ -70,6 +70,8 @@ SpecialCObjectRule(security,$(ICONFIGFILES),$(POLICYFILEDEF))
 #endif
 
 InstallLinkKitLibrary(ext,$(LINKKITDIR)/lib)
+
+LinkVarDirectory(xserver,.,xserver,.)
 
 #if BuildXCSecurity && InstallSecurityConfig
 InstallNonExecFile(SecurityPolicy,$(SERVERCONFIGDIR))

@@ -1,5 +1,5 @@
 .\" $XConsortium: Xserver.man /main/62 1996/12/09 17:06:18 kaleb $
-.\" $XFree86: xc/programs/Xserver/Xserver.man,v 3.5.2.1 1997/06/01 12:33:20 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/Xserver.man,v 3.5.2.4 1998/02/24 13:20:02 dawes Exp $
 .\" Copyright (c) 1984 - 1991, 1993, 1994  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -113,12 +113,14 @@ Not obeyed by all servers.
 .B \-co \fIfilename\fP
 sets name of RGB color database.  The default is <XRoot>/lib/X11/rgb,
 where <XRoot> refers to the root of the X11 install tree.
+.ig
 .TP 8
 .B \-config \fIfilename\fP
 reads more options from the given file.  Options in the file may be separated
 by newlines if desired.  If a '#' character appears on a line, all characters
 between it and the next newline are ignored, providing a simple commenting
 facility.  The \fB\-config\fP option itself may appear in the file.
+..
 .TP 8
 .B \-core
 causes the server to generate a core dump on fatal errors.
@@ -164,6 +166,9 @@ disables the XKEYBOARD extension if present.
 Disable a transport type.  For example, TCP/IP connections can be disabled
 with
 .B \-nolisten tcp
+.TP 8
+.B \-nolock
+Disable the use of an X server lock file.
 .TP 8
 .B \-p \fIminutes\fP
 sets screen-saver pattern cycle time in minutes.
@@ -280,9 +285,11 @@ Yet another XDMCP specific value, this one allows the display manager to
 identify each display so that it can locate the shared key.
 .SH XKEYBOARD OPTIONS
 X servers that support the XKEYBOARD extension accept the following options:
+.ig
 .TP 8
 .B \-xkbdir \fIdirectory\fP
 base directory for keyboard layout files
+..
 .TP 8
 .B \-xkbmap \fIfilename\fP
 keyboard description to load on startup

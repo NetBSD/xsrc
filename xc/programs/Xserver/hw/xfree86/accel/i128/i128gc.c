@@ -52,7 +52,7 @@ Support for I128 added by Robin Cutshaw <robin@XFree86.Org>
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128gc.c,v 3.2 1996/12/23 06:35:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128gc.c,v 3.2.2.1 1998/02/16 01:34:33 robin Exp $ */
 
 
 #include "X.h"
@@ -247,24 +247,6 @@ GCOps	i128NonTEOps = {
 void
 i128InitGC()
 {
-  /* Initialize ALU->MINTERM mappings for raster operations */
-  i128alu[GXclear] = 0;	                      /* 0 */
-  i128alu[GXand] = IGM_S_MASK & IGM_D_MASK;	      /* src AND dst */
-  i128alu[GXandReverse] = IGM_S_MASK & ~IGM_D_MASK;  /* src AND NOT dst */
-  i128alu[GXcopy] = IGM_S_MASK;		      /* src */
-  i128alu[GXandInverted] = ~IGM_S_MASK & IGM_D_MASK; /* NOT src AND dst */
-  i128alu[GXnoop] = IGM_D_MASK;		      /* dst */
-  i128alu[GXxor] = IGM_S_MASK ^ IGM_D_MASK;	      /* src XOR dst */
-  i128alu[GXor] = IGM_S_MASK | IGM_D_MASK;	      /* src OR dst */
-  i128alu[GXnor] = ~IGM_S_MASK & ~IGM_D_MASK;	      /* NOT src AND NOT dst */
-  i128alu[GXequiv] = ~IGM_S_MASK ^ IGM_D_MASK;	      /* NOT src XOR dst */
-  i128alu[GXinvert] = ~IGM_D_MASK;		      /* NOT dst */
-  i128alu[GXorReverse] = IGM_S_MASK | ~IGM_D_MASK;   /* src OR NOT dst */
-  i128alu[GXcopyInverted] = ~IGM_S_MASK;	      /* NOT src */
-  i128alu[GXorInverted] = ~IGM_S_MASK | IGM_D_MASK;  /* NOT src OR dst */
-  i128alu[GXnand] = ~IGM_S_MASK | ~IGM_D_MASK;	      /* NOT src OR NOT dst */
-  i128alu[GXset] = IGM_S_MASK | ~IGM_S_MASK;         /* 1 */
-
   i128BytesPerPixel = i128InfoRec.bitsPerPixel / 8;
 }
 

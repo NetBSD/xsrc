@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/28 05:13:04 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.4 1997/07/27 02:41:16 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.7 1998/02/25 12:20:30 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -73,11 +73,13 @@ LinuxDocReadmeTarget(S3V)
 LinuxDocReadmeTarget(SiS)
 LinuxDocReadmeTarget(W32)
 LinuxDocReadmeTarget(WstDig)
+LinuxDocReadmeTarget(apm)
 LinuxDocReadmeTarget(ark)
 LinuxDocReadmeTarget(agx)
 LinuxDocReadmeTarget(ati)
 LinuxDocReadmeTarget(chips)
 LinuxDocReadmeTarget(cirrus)
+LinuxDocReadmeTarget(mouse)
 LinuxDocReadmeTarget(trident)
 LinuxDocReadmeTarget(tseng)
 #if BuildAllDocs
@@ -97,9 +99,7 @@ LinuxDocTarget(DocIndex)
 LinuxDocReadmeTarget(LinkKit)
 LinuxDocReadmeTarget(clkprog)
 LinuxDocTarget(xinput)
-#if 0
 LinuxDocTargetLong(VidModes.sgml,VideoModes.doc,VideoModes)
-#endif
 LinuxDocTargetLong(VGADriv.sgml,VGADriver.Doc,VGADriver)
 
 InstallLinkKitNamedNonExec(README.LinkKit,README,$(LINKKITDIR))

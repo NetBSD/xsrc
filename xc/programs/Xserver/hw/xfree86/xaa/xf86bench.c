@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86bench.c,v 3.5.2.1 1997/05/16 11:35:23 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86bench.c,v 3.5.2.3 1998/01/23 14:27:06 robin Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -30,18 +30,13 @@
  * This is experimental, and should probably be made optional.
  */
 
+#include <X11/Xos.h>
 #include "servermd.h"
 #include "windowstr.h"
 #include "gcstruct.h"
 #include "regionstr.h"
 #include "mi.h"
 #include "fcntl.h"
-#include "time.h"
-#ifndef Lynx
-#include "sys/time.h"
-#else
-#include <time.h>
-#endif
 
 #include "xf86.h"
 #include "xf86xaa.h"

@@ -6,7 +6,7 @@
 !        or
 !    <serviceName> unmanaged <proxyAddress>
 !
-lbx managed /X11/bin/lbxproxy
+lbx managed /usr/X11R6/bin/lbxproxy
 !
 ! substitute site-specific info
 !xfwp unmanaged firewall:4444

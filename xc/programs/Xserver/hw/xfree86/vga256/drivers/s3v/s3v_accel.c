@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_accel.c,v 1.1.2.5 1997/06/29 08:43:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_accel.c,v 1.1.2.7 1998/02/09 14:27:39 robin Exp $ */
 
 /*
  *
@@ -46,6 +46,7 @@
 #include "vga.h"
 #include "xf86xaa.h"
 #include "xf86_OSlib.h"
+#include "xf86Priv.h"
 #include "regs3v.h"
 #include "s3v_driver.h"
 #include "s3v_rop.h"
@@ -140,7 +141,6 @@ S3VAccelInit()
          BACKGROUND_OPERATIONS |
          COP_FRAMEBUFFER_CONCURRENCY | 
          NO_SYNC_AFTER_CPU_COLOR_EXPAND |
-         HARDWARE_PATTERN_MONO_TRANSPARENCY |
          HARDWARE_PATTERN_BIT_ORDER_MSBFIRST |  
          HARDWARE_PATTERN_PROGRAMMED_BITS |
          HARDWARE_PATTERN_SCREEN_ORIGIN;
@@ -321,7 +321,9 @@ void
 S3VGEReset()
 {
 unsigned char tmp;
+int r;
 
+    WaitIdleEmpty();
     if(s3vPriv.chip == S3_ViRGE_VX){
         outb(vgaCRIndex, 0x63);
         }
@@ -329,12 +331,24 @@ unsigned char tmp;
         outb(vgaCRIndex, 0x66);
         }
     tmp = inb(vgaCRReg);
-    outb(vgaCRReg, tmp | 0x02);
-    outb(vgaCRReg, tmp & ~0x02);
-    usleep(10000);
-    WaitIdleEmpty();
 
-    SETB_DEST_SRC_STR(s3vPriv.Bpl, s3vPriv.Bpl); 
+    usleep(10000);
+    for (r=1; r<10; r++) {  /* try multiple times to avoid lockup of ViRGE/MX */
+      outb(vgaCRReg, tmp | 0x02);
+      usleep(10000);
+      outb(vgaCRReg, tmp & ~0x02);
+      usleep(10000);
+
+      WaitIdleEmpty();
+      SETB_DEST_SRC_STR(s3vPriv.Bpl, s3vPriv.Bpl); 
+
+      usleep(10000);
+      if (((IN_SUBSYS_STAT() & 0x3f00) != 0x3000)) 
+	ErrorF("restarting S3 graphics engine reset %2d ...\n",r);
+      else
+	break;
+    }
+
     SETB_SRC_BASE(0);
     SETB_DEST_BASE(0);   
 
@@ -352,8 +366,9 @@ unsigned char tmp;
     s3vCached_PAT_FGCLR = -1;
     s3vCached_PAT_BGCLR = -1;
     s3vCached_CMD_SET = -1;
-
-    ErrorF("ViRGE register cache hits: %d misses: %d\n",s3vCacheHit, s3vCacheMiss);    
+    if (xf86Verbose > 1)
+        ErrorF("ViRGE register cache hits: %d misses: %d\n",
+            s3vCacheHit, s3vCacheMiss);    
     s3vCacheHit = 0; s3vCacheMiss = 0;
 }
 

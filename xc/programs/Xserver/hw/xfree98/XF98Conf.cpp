@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/XF98Conf.cpp,v 3.13 1997/01/19 12:51:41 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/XF98Conf.cpp,v 3.13.2.3 1998/02/24 13:54:31 hohndel Exp $
 XCOMM
 XCOMM Copyright (c) 1994 by The XFree86 Project, Inc.
 XCOMM
@@ -42,7 +42,7 @@ XCOMM The location of the RGB database.  Note, this is the name of the
 XCOMM file minus the extension (like ".txt" or ".db").  There is normally
 XCOMM no need to change the default.
 
-    RgbPath	RGBPATH
+RgbPath		RGBPATH
 
 XCOMM Multiple FontPath entries are allowed (which are concatenated together),
 XCOMM as well as specifying multiple comma-separated entries in one FontPath
@@ -168,16 +168,11 @@ XCOMM To customise the XKB settings to suit your keyboard, modify the
 XCOMM lines below (which are the defaults).
 
 XCOMM These are the default XKB settings for XFree98
-XCOMM Xkbkeycodes "xfree98"
-XCOMM XkbTypes    "default"
-XCOMM XkbCompat   "pc98"
-XCOMM XkbSymbols  "nec/jp(pc98)"
-XCOMM XkbGeometry "nec(pc98)"
-
-XCOMM To specify a keymap file entry to use, use XkbKeymap.  This will
-XCOMM override the other Xkb parameters described above.
-XCOMM An example is:
-XCOMM    XkbKeymap   "xfree98"
+XCOMM XkbRules    "xfree98"
+XCOMM XkbModel    "pc98"
+XCOMM XkbLayout   "nec/jp"
+XCOMM XkbVariant  ""
+XCOMM XkbOptions  ""
 
 EndSection
 
@@ -195,6 +190,8 @@ XCOMM For NetBSD/pc98 (based on NetBSD 1.1 or later)
 NETBSDNEWMOUSEDEV
 XCOMM For NetBSD/pc98 (based on NetBSD 1.0)
 NETBSDOLDMOUSEDEV
+XCOMM For Linux/98
+LINUXMOUSEDEV
 
 XCOMM When using XQUEUE, comment out the above two lines, and uncomment
 XCOMM the following line.
@@ -482,6 +479,7 @@ Section "Device"
     ChipSet     "clgd5434"
     ClockChip   "cirrus"
     Option      "ga98nb1"
+    Option      "no_mmio"
 XCOMM    Option     "mmio"
 XCOMM    Option     "sw_cursor"
 EndSection
@@ -493,6 +491,7 @@ Section "Device"
     ChipSet     "clgd5434"
     ClockChip   "cirrus"
     Option      "ga98nb2"
+    Option      "no_mmio"
 XCOMM    Option     "mmio"
 XCOMM    Option     "sw_cursor"
 EndSection
@@ -504,6 +503,7 @@ Section "Device"
     ChipSet     "clgd5434"
     ClockChip   "cirrus"
     Option      "ga98nb4"
+    Option      "no_mmio"
 XCOMM    Option     "mmio"
 XCOMM    Option     "sw_cursor"
 EndSection
@@ -513,6 +513,7 @@ Section "Device"
     VendorName	"MELCO"
     BoardName	"WAP-2000/4000"
     Chipset	"clgd5434"
+    Option      "no_mmio"
 XCOMM    Option	"epsonmemwin"
     Option	"wap"
 EndSection
@@ -523,6 +524,8 @@ Section "Device"
     BoardName	"PCNKV/PCNKV2/NEC_CIRRUS"
     Chipset	"clgd5428"
 XCOMM    Chipset	"clgd5429"
+XCOMM    Chipset	"clgd5430"
+XCOMM    Option	"no_mmio"
 XCOMM    Option	"nec_cirrus"
 XCOMM    Option	"fast_dram"
     VideoRam    1024
@@ -532,6 +535,8 @@ Section "Device"
     Identifier	"NECTrident"
     VendorName	"NEC"
     BoardName	"NEC Trident"
+    Option	"xaa_no_color_exp"
+XCOMM    Option	"noaccel"
 XCOMM    Option	"Linear"
 XCOMM    Option	"med_dram"
 XCOMM    Option	"hw_cursor"
@@ -541,9 +546,18 @@ Section "Device"
     Identifier	"GA-DRV98"
     VendorName	"IO DATA"
     BoardName	"GA-DRV/98"
+    Option	"noaccel"
 XCOMM    Option	"med_dram"
 XCOMM    Option	"hw_cursor"
+    VideoRam	4096
+XCOMM    VideoRam	2048
 Endsection
+
+Section "Device"
+    Identifier	"MGA"
+    VendorName	"Matrox"
+    BoardName	"Millennium"
+EndSection
 
 Section "Device"
     Identifier	"PW"
@@ -693,6 +707,8 @@ Section "Device"
     Chipset	"s3_generic"
 XCOMM Chipset	"mmio_928"
 XCOMM Option	"ga968"
+    VideoRam	4096
+XCOMM    VideoRam	2048
 Endsection
 
 XCOMM **********************************************************************
@@ -714,17 +730,20 @@ XCOMM    Device	"GA98NB2"
 XCOMM    Device	"GA98NB4"
 XCOMM    Device	"NECTrident"
 XCOMM    Device	"GA-DRV98"
+XCOMM    Device	"MGA"
     Monitor	"Multi sync"
     Subsection "Display"
         Depth	    8
         Modes	    "800x600" "640x480" "1024x768"
+XCOMM        Modes	    "1024x768H" "640x400"
 XCOMM        Modes	    "NEC480" "640x400"
         ViewPort    0 0
 XCOMM        Virtual     1024 1024
 XCOMM        Virtual     1024 1022
+        Virtual     1024 768
 XCOMM        Virtual      640 480
 XCOMM        Virtual      640 400
-        Virtual     1280 816
+XCOMM        Virtual     1280 816
     EndSubsection
 EndSection
 

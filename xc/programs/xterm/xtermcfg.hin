@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/xtermcfg.hin,v 3.1.2.2 1997/05/25 05:07:02 dawes Exp $
+ * $XFree86: xc/programs/xterm/xtermcfg.hin,v 3.1.2.5 1998/02/24 13:54:40 hohndel Exp $
  */
 
 /************************************************************
@@ -29,24 +29,47 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 /* This is a template for <xtermcfg.h> */
 
+#undef ALLOWLOGGING	/* CF_ARG_ENABLE(enable-logging) */
+#undef ALLOWLOGFILEEXEC	/* CF_ARG_ENABLE(enable-logfile-exec) */
 #undef CC_HAS_PROTOS	/* CF_ANSI_CC */
 #undef DFT_COLORMODE	/* AC_ARG_WITH(default-color-mode) */
 #undef DFT_DECID	/* AC_ARG_WITH(default-terminal-id) */
+#undef DFT_TERMTYPE	/* AC_ARG_WITH(default-term-type) */
 #undef HAVE_STRERROR	/* AC_CHECK_FUNCS(strerror) */
 #undef HAVE_TERMCAP_H	/* AC_CHECK_HEADERS(termcap.h) */
+#undef HAVE_UNISTD_H	/* AC_CHECK_HEADERS(unistd.h) */
+#undef HAVE_XKBSTDBELL	/* AC_CHECK_FUNCS(XkbStdBell) */
+#undef HAVE_X11_DECKEYSYM_H /* AC_CHECK_HEADERS(X11/DECkeysym.h) */
+#undef HAVE_X11_XPOLL_H	/* AC_CHECK_HEADERS(X11/Xpoll.h) */
+#undef NO_ACTIVE_ICON	/* CF_ARG_DISABLE(active-icon) */
 #undef OPT_AIX_COLORS	/* CF_ARG_DISABLE(16-color) */
+#undef OPT_DEC_CHRSET	/* CF_ARG_DISABLE(doublechars) */
+#undef OPT_I18N_SUPPORT	/* CF_ARG_DISABLE(i18n) */
+#undef OPT_INPUT_METHOD	/* CF_ARG_DISABLE(input-method) */
 #undef OPT_ISO_COLORS	/* CF_ARG_DISABLE(ansi-color) */
+#undef OPT_PC_COLORS	/* CF_ARG_DISABLE(pc-color) */
+#undef OPT_HIGHLIGHT_COLOR /* CF_ARG_DISABLE(highlighting) */
+#undef OPT_TEK4014	/* CF_ARG_DISABLE(tek4014) */
 #undef OPT_TRACE	/* CF_ARG_ENABLE(trace) */
 #undef OPT_VT52_MODE	/* CF_ARG_DISABLE(vt52) */
+#undef OPT_XMC_GLITCH	/* CF_ARG_ENABLE(xmc-glitch) */
+#undef SCROLLBAR_RIGHT	/* CF_ARG_ENABLE(rightbar) */
 #undef USE_MY_MEMMOVE	/* CF_FUNC_MEMMOVE */
 #undef USE_OK_BCOPY	/* CF_FUNC_MEMMOVE */
+#undef USE_SYS_SELECT_H	/* CF_TYPE_FD_SET */
 #undef USE_TERMINFO	/* CF_FUNC_TGETENT */
 #undef const		/* AC_CONST */
 #undef size_t		/* AC_TYPE_SIZE_T */
 #undef time_t		/* AC_CHECK_TYPE(time_t, long) */
 
+#undef GCC_UNUSED
+
 #if USE_OK_BCOPY
 #define memmove(d,s,n) bcopy(s,d,n)
+#endif
+
+#if USE_MY_MEMMOVE
+#define memmove(d,s,n) my_memmove(d,s,n)
 #endif
 
 #if !HAVE_STRERROR
@@ -54,6 +77,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 extern char *my_strerror();
 #endif
 
-#if !HAVE_TERMCAP_H && !defined(NO_TERMCAP_H)
-#define NO_TERMCAP_H
+#if !HAVE_X11_XPOLL_H
+#define NO_XPOLL_H	/* X11R6.1 & up use Xpoll.h for select() definitions */
+#endif
+
+#if !HAVE_XKBSTDBELL
+#define NO_XKBSTDBELL	/* IRIX 6.2 incorrectly defines XKB in imake */
 #endif

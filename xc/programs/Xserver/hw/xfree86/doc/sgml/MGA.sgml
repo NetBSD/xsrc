@@ -3,35 +3,24 @@
 <article>
 <title>Information for Matrox Millennium/Mystique Users
 <author>The XFree86 Project Inc.
-<date>2 August 1997
+<date>21 February 1998
 <toc>
 
 <sect>Supported hardware
 <p>
-The current MGA driver in the SVGA server supports the Matrox Millennium 
+The current MGA driver in the SVGA server supports 
+<p>
+<itemize>
+<item>Matrox Millennium 
 (MGA2064W) with Ti3026 RAMDAC. It has been tested with 175, 220MHz, and
-250MHz cards with 2MB, 4MB and 8MB WRAM. It supports the Matrox Mystique
-with 170 and 220 MHz RAMDACs.
-
-There is experimental support for the Matrox
-Millennium II, which for the most part works, but DO NOT USE THIS ON PRODUCTION
-SYSTEMS - it is no where near tested enough for that role. We do not yet have
-the card's documentation, so this is a alpha quality addition - test this support
-at your own risk.
-
-This version of the server does not support the rev 3 Matrox Millennium I. 
-
-NOTE: This driver is pretty new, and not everything works like you expect
-it to. It shouldn't crash your machine, but you may have video artifacts
-or missing lines. Please report any and all problems to
-<htmlurl name="XFree86@Xfree86.org" url="mailto:XFree86@Xfree86.org">
-using the appropriate bug report sheet. 
+250MHz cards with 2MB, 4MB and 8MB WRAM. 
+<item>Millennium II both PCI and AGP. It has been tested with up to 16MB RAM.
+<item>Matrox Mystique
+with 170 and 220 MHz RAMDACs. Both 1064SG and 1164SG should work.
+</itemize>
 
 <sect>Features:
 <p>
-<itemize>
-<item>Basic support for the Matrox Millennium video adapter
-
 <itemize>
 <item>uses linear frame buffer
 <item>it should be possible to reach resolutions up to 1920x1024
@@ -41,62 +30,11 @@ using the appropriate bug report sheet.
 <item>supports VESA Display Power Management Signaling (DPMS)
 <item>supports RGB Sync-on-Green
 <item>supports DGA
-<item>has the following accelerations:
-<itemize>
-  <item>lines
-  <item>most bitblts
-  <item>filled rectangles
-  <item>cached pixmaps
-  <item>many more...
+<item>full accelerations:
 </itemize>
-The Millennium server is fairly well accelerated, and is one of the fastest
-XFree86 3.3.1 Xservers. Future work will concentrate on fixing
+This server is very well accelerated, and is one of the fastest
+XFree86 3.3.2 Xservers. Future work will concentrate on fixing
 remaining bugs.
-</itemize>
-
-<item>Basic support for the Matrox Mystique video adapter
-<itemize>
-<item>uses linear frame buffer
-<item>it should be possible to reach resolutions up to 1280x1024
-<item>it should be possible to use pixel depths of 8, 16, 24, and 32 bits
-  per pixel (256 pseudo colour, "high colour", "packed true colour",
-  "true colour"). 
-<item>supports VESA Display Power Management Signaling (DPMS)
-<item>has the following accelerations (may be with some bugs):
-<itemize>
-  <item>lines
-  <item>most bitblts
-  <item>filled rectangles
-  <item>cached pixmaps
-  <item>NOTE: If acceleration do not work properly, you had rather to insert:
-Option "noaccel" 
-line in the Device section of XF86Config file. It will be slower but will work better.
-</itemize>
-</itemize>
-</itemize>
-
-<itemize>Experimental Support for the Matrox Millennium II
-<item>Provided ONLY as a test and to provide early access to Mill II owners
-<item>Works as if it is a Millennium I
-<item>We don't have the card's tech docs yet, so no specific Mill II speedups
-<item>Has plenty of bugs:
-<itemize>
-  <item>May corrupt your text font when you exit X
-  <item>May not work correctly at 24 bpp
-  <item>Lots more where that came from... :-)
-</itemize>
-</itemize>
-
-
-<sect>Future Features (in order from highest to lowest priority)
-<p>
-
-<itemize>
-<item>more hardware acceleration (more primitive operations, etc)
-<item>hw cursor for Mystique board
-<item>more chipsets and RAMDACs
-<item>3D acceleration using Mesa
-</itemize>
 
 <sect>Technical Note:
 <p>
@@ -109,13 +47,14 @@ with these two components, although a 135 MHz RAMDAC part exists.
 
 <item>the MGA Storm (MGA1064SG) chipset with integrated 170 and 220 MHz RAMDAC
 
-<item>the MGA Storm (MGA2164W) chipset with the TI TVP 3026 RAMDAC. This is experimental 
+<item>the MGA Storm (MGA1164SG) chipset with integrated 170 and 220 MHz RAMDAC
 
-<item>We will eventually provide support for the other Matrox chipsets (once the
-Millennium driver is at a far enough stage and more people with other cards
-join the effort), including the Impression, Atlas, Genesis etc. 
+<item>the MGA Storm (MGA2164W) chipset with the TI TVP 3026 RAMDAC. 
 
-At the moment, however, only the Millennium and Mystique are supported.
+<item>We are still interested to provide support for the other Matrox chipsets 
+including the Impression, Atlas, Genesis etc. but at this time have not been 
+able to obtain the docs for them.
+
 </itemize>
 
 <sect>Configuration:
@@ -138,12 +77,18 @@ accelerated functions.
 <item>the driver doesn't support some values of HTotal parameter in
 Modelines in the XF86Config file. If you get flickering vertical stripes on
 the screen, try to change this parameter +/- 8.
+<item>On some Millennium II cards the driver shows severe distortions with 
+24bpp in modes above about 1024x768. We hope to have automated the detection
+and fix of this problem. If it still occurs, please use Option "mga_24bpp_fix"
+in the Device Section to get a stable picture.
 </itemize>
 
 <sect>Authors
 <p>
 
 Radoslaw Kapitan, <it>kapitan@student.uci.agh.edu.pl</it>
+
+Mark Vojkovich, <it>mvojkovi@sdcc10.ucsd.edu</it>
 
 and:
 
@@ -155,18 +100,13 @@ and:
 <item>Stephen Pitts, <it>pitts2@memphisonline.com</it>
 <item>Dirk Hohndel, <it>hohndel@XFree86.Org</it>
 <item>Leonard N. Zubkoff, <it>lnz@dandelion.com</it>
-<item>Mark Vojkovich, <it>mvojkovi@sdcc10.ucsd.edu</it>
 <item>Harm Hanemaayer, <it>H.Hanemaayer@inter.nl.net</it>
 <item>Guy Desbief, <it>g.desbief@aix.pacwan.net</it>
+<item>Takaaki Nomura, <it>tnomura@sfc.keio.ac.jp</it>
 </itemize>
 
-Visit the <url name = "Matrox Millennium XServer for XFree86 Home Page"
-url="http://www.bf.rmit.edu.au/~ajv/xf86-matrox.html">
-to keep up to date with the latest news, new sources, etc.
-
-
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.5 1997/08/02 13:48:14 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.8 1998/02/26 20:11:26 hohndel Exp $
 </verb>
 
 </article>

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.66.2.2 1997/06/29 08:43:36 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.66.2.3 1998/02/15 16:09:04 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -61,10 +61,6 @@ extern int atoi();
 #include "atKeynames.h"
 extern int xtest_command_key;
 #endif /* XTESTEXT1 */
-
-#ifdef PC98
-#include "pc98_vers.h"
-#endif
 
 #ifdef __EMX__
 #define seteuid(x) /*nothing*/

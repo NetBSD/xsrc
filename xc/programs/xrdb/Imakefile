@@ -1,13 +1,16 @@
 XCOMM $XConsortium: Imakefile,v 1.8 92/09/14 18:53:12 rws Exp $
-XCOMM $XFree86: xc/programs/xrdb/Imakefile,v 3.1 1994/12/17 10:10:44 dawes Exp $
+XCOMM $XFree86: xc/programs/xrdb/Imakefile,v 3.1.8.1 1998/02/15 16:09:53 hohndel Exp $
+#if HasMkstemp
+  MKTMP_DEFINES = -DHAS_MKSTEMP
+#endif
 #if PatheticCpp
         CPPDEFS = -DPATHETICCPP
 #endif
 XCOMM Due to ill make parsing the cpp is passed directly in source file
 #ifdef OS2Architecture
-        DEFINES = $(CPPDEFS)
+        DEFINES = $(CPPDEFS) $(MKTMP_DEFINES)
 #else
-        DEFINES = -DCPP="\"$(CPP)\"" $(CPPDEFS)
+        DEFINES = -DCPP="\"$(CPP)\"" $(CPPDEFS) $(MKTMP_DEFINES)
 #endif
         DEPLIBS = $(DEPXMULIB) $(DEPXLIB)
 LOCAL_LIBRARIES = $(XMULIB) $(XLIB)

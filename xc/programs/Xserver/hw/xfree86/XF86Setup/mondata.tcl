@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mondata.tcl,v 3.8.2.2 1997/05/12 12:52:18 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mondata.tcl,v 3.8.2.4 1998/02/15 16:08:53 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -54,7 +54,15 @@ set MonitorDescriptions [list \
 	"Multi-frequency that can do 1280x1024 @ 76 Hz" \
 ]
 
+set haveSelectedModes 0
+
+set DefaultColorDepth 8
+
+array set SelectedMonitorModes { }
+
 array set MonitorStdModes {
+	" 640x400 @ pc98 EGC mode : 60 Hz, 24 kHz hsync"
+	    "16.442 640 649 656 663 400 407 415 440"
 	" 640x400 @ 70 Hz, 31.5 kHz hsync"
 	    "25.175 640  664  760  800   400  409  411  450"
 	" 640x480 @ 60 Hz, 31.5 kHz hsync"
@@ -85,7 +93,7 @@ array set MonitorStdModes {
 	    "45.8   640  672  768  864   480  488  494  530 -HSync -VSync"
 	"1152x864 @ 60 Hz, 53.5 kHz hsync"
 	    "89.9  1152 1216 1472 1680   864  868  876  892 -HSync -VSync"
-	"800x600 @ 85 Hz, 55.84 kHz hsync"
+	" 800x600 @ 85 Hz, 55.84 kHz hsync"
 	   "60.75   800  864  928 1088   600  616  621  657 -HSync -VSync"
 	"1024x768 @ 70 Hz, 56.5 kHz hsync"
 	    "75    1024 1048 1184 1328   768  771  777  806 -hsync -vsync"
@@ -95,7 +103,7 @@ array set MonitorStdModes {
 	    "85    1024 1032 1152 1360   768  784  787  823"
 	"1152x864 @ 70 Hz, 62.4 kHz hsync"
 	    "92    1152 1208 1368 1474   864  865  875  895"
-	"800x600 @ 100 Hz, 64.02 kHz hsync"
+	" 800x600 @ 100 Hz, 64.02 kHz hsync"
 	    "69.650 800  864  928 1088   600  604  610  640 -HSync -VSync"
 	"1024x768 @ 85 Hz, 70.24 kHz hsync"
 	    "98.9  1024 1056 1216 1408   768 782 788 822 -HSync -VSync"
@@ -131,29 +139,29 @@ array set MonitorStdModes {
 	    "230    1800 1896 2088 2392 1440 1441 1444 1490 +HSync +VSync"
 	"1800x1440 @ 70Hz, 104.52 kHz hsync"
 	    "250    1800 1896 2088 2392 1440 1441 1444 1490 +HSync +VSync"
-	"320x200 @ 70 Hz, 31.5 kHz hsync, 8:5 aspect ratio"
+	" 320x200 @ 70 Hz, 31.5 kHz hsync, 8:5 aspect ratio"
 	    "12.588 320  336  384  400   200  204  205  225 Doublescan"
-	"320x240 @ 60 Hz, 31.5 kHz hsync, 4:3 aspect ratio"
+	" 320x240 @ 60 Hz, 31.5 kHz hsync, 4:3 aspect ratio"
 	    "12.588 320  336  384  400   240  245  246  262 Doublescan"
-	"320x240 @ 72 Hz, 36.5 kHz hsync"
+	" 320x240 @ 72 Hz, 36.5 kHz hsync"
 	    "15.750 320  336  384  400   240  244  246  262 Doublescan"
-	"400x300 @ 56 Hz, 35.2 kHz hsync, 4:3 aspect ratio"
+	" 400x300 @ 56 Hz, 35.2 kHz hsync, 4:3 aspect ratio"
 	    "18     400  416  448  512   300  301  302  312 Doublescan"
-	"400x300 @ 60 Hz, 37.8 kHz hsync"
+	" 400x300 @ 60 Hz, 37.8 kHz hsync"
 	    "20     400  416  480  528   300  301  303  314 Doublescan"
-	"400x300 @ 72 Hz, 48.0 kHz hsync"
+	" 400x300 @ 72 Hz, 48.0 kHz hsync"
 	    "25     400  424  488  520   300  319  322  333 Doublescan"
-	"480x300 @ 56 Hz, 35.2 kHz hsync, 8:5 aspect ratio"
+	" 480x300 @ 56 Hz, 35.2 kHz hsync, 8:5 aspect ratio"
 	    "21.656 480  496  536  616   300  301  302  312 Doublescan"
-	"480x300 @ 60 Hz, 37.8 kHz hsync"
+	" 480x300 @ 60 Hz, 37.8 kHz hsync"
 	    "23.890 480  496  576  632   300  301  303  314 Doublescan"
-	"480x300 @ 63 Hz, 39.6 kHz hsync"
+	" 480x300 @ 63 Hz, 39.6 kHz hsync"
 	    "25     480  496  576  632   300  301  303  314 Doublescan"
-	"480x300 @ 72 Hz, 48.0 kHz hsync"
+	" 480x300 @ 72 Hz, 48.0 kHz hsync"
 	    "29.952 480  504  584  624   300  319  322  333 Doublescan"
-	"512x384 @ 78 Hz, 31.50 kHz hsync"
+	" 512x384 @ 78 Hz, 31.50 kHz hsync"
 	    "20.160 512  528  592  640   384  385  388  404 -HSync -VSync"
-	"512x384 @ 85 Hz, 34.38 kHz hsync"
+	" 512x384 @ 85 Hz, 34.38 kHz hsync"
 	    "22     512  528  592  640   384  385  388  404 -HSync -VSync"
 }
 

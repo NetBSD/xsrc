@@ -3,7 +3,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/main.c,v 3.9.2.1 1997/07/13 14:45:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/main.c,v 3.9.2.3 1998/02/24 13:54:11 hohndel Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -60,6 +60,8 @@ static int  synchronize = 0;		/* sync X connection */
 static int  nodialog = 0;		/* Don't use Dialog */
 static int  notk = 0;			/* Don't add Tk to interp */
 static int  usescriptdir = 0;		/* Use script dir, not PATH */
+static Boolean pc98 = FALSE;		/* machine architecure */
+static int pc98_EGC = 0;                /* default server */
 
 #define PHASE1	"phase1.tcl"
 #define PHASE2	"phase2.tcl"
@@ -82,10 +84,10 @@ static char Set_InitVars[] =
 	"    set Xwinhome $env(XWINHOME)\n"
 	"} else {\n"
 	"    set xdirs [list " PROJECTROOT " /usr/X11R6 /usr/X11 "
-		"/usr/X /var/X11R6 /var/X11 /var/X /usr/X11R6.1 "
+		"/usr/X /var/X11R6 /var/X11 /var/X /usr/X11R6.3 "
 		"/usr/local/X11R6 /usr/local/X11 /usr/local/X]\n"
 	"    foreach dir $xdirs {\n"
-	"        if {[llength [glob -nocomplain $dir/bin/XF86_*]] } {\n"
+	"        if {[llength [glob -nocomplain $dir/bin/XF86_* $dir/bin/XF98_*]] } {\n"
 	"            set Xwinhome $dir\n"
 	"            break\n"
 	"        }\n"
@@ -123,6 +125,10 @@ static char usage_msg[] =
 	"Options always available:\n"
 	"   -sync		Use synchronous mode for display server\n"
 	"   -name <name>	Name to use for application\n"
+#ifdef PC98
+        "   -egc			Use EGC server\n"
+        "   -pegc		Use NEC480 server\n"
+#endif
 	"\n"
 	"Options available only when a filename is specified:\n"
 	"   -display <disp>	Display to use\n"
@@ -150,6 +156,10 @@ static Tk_ArgvInfo argTable[] = {
         "Don't open a connection to the X server or load Tk widgets"},
     {"-script", TK_ARGV_CONSTANT, (char *) 1, (char *) &usescriptdir,
         "Look for filename in the scripts directory"},
+    {"-egc", TK_ARGV_CONSTANT, (char *) 1, (char *) &pc98_EGC,
+        "Use egc"},
+    {"-pegc", TK_ARGV_CONSTANT, (char *) 0, (char *) &pc98_EGC,
+        "Use pegc"},
     {"--", TK_ARGV_REST, (char *) 1, (char *) &rest,
         "Pass all remaining arguments through to script"},
     /* This one is undocumented - it's used when execing a 2nd copy */
@@ -410,6 +420,23 @@ main(argc, argv)
     XtFree(tmpptr);
     Tcl_SetVar(interp, "argc", tmpbuf, TCL_GLOBAL_ONLY);
     Tcl_SetVar(interp, "argv0", argv0, TCL_GLOBAL_ONLY);
+#ifdef PC98
+    nodialog = 1;
+    Tcl_SetVar(interp, "pc98", "1", TCL_GLOBAL_ONLY);
+    if (pc98_EGC) {
+#if defined(linux) || defined(SVR4)
+      fprintf(stderr, "Sorry, EGC server doesn't work on this OS.\n");
+      fprintf(stderr, "-egc option can't be used.\n");
+      exit(1);
+#endif
+      Tcl_SetVar(interp, "pc98_EGC", "1", TCL_GLOBAL_ONLY);
+    } else {
+      Tcl_SetVar(interp, "pc98_EGC", "0", TCL_GLOBAL_ONLY);
+    }
+#else
+    Tcl_SetVar(interp, "pc98", "0", TCL_GLOBAL_ONLY);
+    Tcl_SetVar(interp, "pc98_EGC", "0", TCL_GLOBAL_ONLY);
+#endif
 
     if (filename == NULL) {
 	Tcl_LinkVar(interp, "Phase2FallBack",
@@ -608,7 +635,11 @@ extern int	TkCreateFrame (
 #endif
 );
 
+#if TK_MAJOR_VERSION == 8
+extern int      TkpInit (
+#else
 extern int	TkPlatformInit (
+#endif
 #if NeedFunctionProtoTypes
 	Tcl_Interp	*interp
 #endif
@@ -670,7 +701,11 @@ XF86Setup_TkInit(interp, display, appName)
 
     Tcl_ResetResult(interp);
     mainWindow = Tk_MainWindow(interp);
+#if TK_MAJOR_VERSION == 8
+    TkpInit(interp);
+#else
     TkPlatformInit(interp);
+#endif
 #endif
     XtFree(class);
 

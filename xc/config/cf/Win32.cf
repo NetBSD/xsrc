@@ -89,6 +89,7 @@ XCOMM operating system:  OSName
 #endif
 #define MathLibrary
 #define HasSymLinks		NO
+#define HasVarDirectory		NO
 #define HasPutenv		YES
 #define Osuf obj
 #ifndef CCsuf

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Option.h,v 3.65.2.8 1997/07/10 08:02:09 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Option.h,v 3.65.2.12 1998/02/24 19:05:57 hohndel Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -155,6 +155,7 @@ typedef struct {
 #define OPTION_PCI_RETRY	137 /* Use PCI-retry instead of busy-waiting */
 #define OPTION_NO_PCI_DISC	138 /* Disable PCI disconnect (S3) */
 #define OPTION_NO_SPLIT_XFER	139 /* Disable split VRAM transfers to avoid pixel wrapping (S3) */
+#define OPTION_MGA_24BPP_FIX	140 /* change PLL for higher clocks at 24bpp */
 
 /* Debugging options */
 #define OPTION_SHOWCACHE	150 /* Allow cache to be seen (S3) */
@@ -211,7 +212,9 @@ typedef struct {
 
 #define OPTION_TGUI_PCI_READ_ON  211 /* Trident TGUI PCI burst read */
 #define OPTION_TGUI_PCI_WRITE_ON 212 /* Trident TGUI PCI burst write */
-#define OPTION_TGUI_MCLK_66	 213 /* Run the TGUI at 66MHz MCLK */
+#define OPTION_TGUI_TVOUT	 213 /* Trident TV output force */
+#define OPTION_CYBER_SHADOW	 214 /* Trident Cyber Shadow registers */
+#define OPTION_TGUI_MCLK_66	 215 /* Trident MCLK at 66MHz */
 
 /* more Memory options */
 #define OPTION_FPM_VRAM		220 /* (s3v) */
@@ -250,6 +253,7 @@ typedef struct {
 #define CLOCK_OPTION_ICS1562    20 /* used for TGA server */
 #define CLOCK_OPTION_S3AURORA   21 /* use S3 Aurora64V+ programmable clocks */
 #define CLOCK_OPTION_S3TRIO64V2 22 /* use S3 Trio64V2 or ViRGE/DX/GX 170MHz clocks */
+#define CLOCK_OPTION_ICS5301    23 /* use ICS 5301 (ET4000W32i) */
 
 /*
  * Table to map option strings to tokens.
@@ -312,6 +316,8 @@ OptFlagRec xf86_OptionTab[] = {
   { "w32_interleave_off",OPTION_W32_INTERLEAVE_OFF },
   { "tgui_pci_read_on", OPTION_TGUI_PCI_READ_ON },
   { "tgui_pci_write_on",OPTION_TGUI_PCI_WRITE_ON },
+  { "tgui_tvout",       OPTION_TGUI_TVOUT },
+  { "cyber_shadow",	OPTION_CYBER_SHADOW },
   { "tgui_mclk_66",	OPTION_TGUI_MCLK_66 },
 
   { "noaccel",		OPTION_NOACCEL },
@@ -375,6 +381,7 @@ OptFlagRec xf86_OptionTab[] = {
   { "pci_retry",	OPTION_PCI_RETRY },
   { "no_pci_disconnect",	OPTION_NO_PCI_DISC },
   { "no_split_xfer",	OPTION_NO_SPLIT_XFER },
+  { "mga_24bpp_fix",	OPTION_MGA_24BPP_FIX },
 
   { "showcache",	OPTION_SHOWCACHE },
   { "fb_debug",		OPTION_FB_DEBUG },
@@ -463,6 +470,7 @@ OptFlagRec xf86_ClockOptionTab [] = {
   { "ch8398",		CLOCK_OPTION_CH8398 },    /* Chrontel 8398 */
   { "ati18818",		CLOCK_OPTION_ICS2595 },   /* ATI18818, ICS2595 compatible */
   { "et6000",		CLOCK_OPTION_ET6000 },    /* ET6000 */
+  { "ics5301",		CLOCK_OPTION_ICS5301 },   /* ET4000 W32i version of S3 GenDAC/ICS5301 */
   { "",			-1 },
 };
 

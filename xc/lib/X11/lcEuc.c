@@ -30,6 +30,7 @@ OF THIS SOFTWARE.
              Yoshiyuki Segawa		(segawa@ossi.com)
 
 *****************************************************************/
+/* $XFree86: xc/lib/X11/lcEuc.c,v 3.3.2.1 1998/01/25 06:11:06 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcGeneric.h"
@@ -1463,7 +1464,7 @@ _XlcGenericLoader(name)
 #else
 _XlcEucLoader(name)
 #endif
-    char *name;
+    _Xconst char *name;
 {
     XLCd lcd;
 

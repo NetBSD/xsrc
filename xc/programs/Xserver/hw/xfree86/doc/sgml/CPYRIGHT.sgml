@@ -10,7 +10,7 @@ XFree86 code without an explicit copyright is covered by the following
 copyright:
 
 <p>
-Copyright (C) 1994-1997 The XFree86 Project, Inc.  All Rights Reserved.
+Copyright (C) 1994-1998 The XFree86 Project, Inc.  All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -144,7 +144,7 @@ are met:
 
 <sect1>NVidia Corp
 <p>
-         Copyright (c) 1996 NVIDIA, Corp.  All rights reserved.        
+         Copyright (c) 1996-1998 NVIDIA, Corp.  All rights reserved.        
                                                                       
     NOTICE TO USER: The source code is copyrighted under U.S. and
     international laws.  NVIDIA, Corp. of Sunnyvale, California owns
@@ -158,7 +158,7 @@ are met:
     and internal comments to the code, notices to the end user
     as follows:
 
-    Copyright (c) 1996 NVIDIA, Corp.  NVIDIA design patents pending
+    Copyright (c) 1996-1998 NVIDIA, Corp.  NVIDIA design patents pending
     in the U.S. and foreign countries.
 
     NVIDIA, CORP.  MAKES NO REPRESENTATION ABOUT THE SUITABILITY OF
@@ -175,7 +175,7 @@ are met:
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/CPYRIGHT.sgml,v 3.9.2.1 1997/06/08 15:41:26 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/CPYRIGHT.sgml,v 3.9.2.2 1998/01/24 11:55:06 dawes Exp $
 
 
 

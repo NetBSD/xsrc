@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.45.2.7 1997/08/02 13:48:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.45.2.9 1998/02/15 23:31:55 robin Exp $ */
 
 /*
  * Includes
@@ -190,6 +190,7 @@ Bool Probe_UMC __STDCARGS((int *));
 Bool Probe_Weitek __STDCARGS((int *));
 Bool Probe_ARK __STDCARGS((int *));
 Bool Probe_SigmaDesigns __STDCARGS((int *));
+Bool Probe_Intergraphics __STDCARGS((int *));
 /* CoProc */
 Bool Probe_8514 __STDCARGS((int *));
 Bool Probe_ATIMach __STDCARGS((int *));
@@ -247,6 +248,7 @@ extern Chip_Descriptor Weitek_Descriptor;
 extern Chip_Descriptor Yamaha_Descriptor;
 extern Chip_Descriptor ARK_Descriptor;
 extern Chip_Descriptor SigmaDesigns_Descriptor;
+extern Chip_Descriptor Intergraphics_Descriptor;
 
 extern Chip_Descriptor IBM8514_Descriptor;
 extern Chip_Descriptor ATIMach_Descriptor;
@@ -411,9 +413,10 @@ extern struct RamDac_Name RamDac_Names[];
 #define V_ALLIANCE	24
 #define V_MATROX	25
 #define V_SD		26
+#define V_IG		27
 
-#define NUM_VENDORS	26
-#define CHPS_PER_VENDOR	34
+#define NUM_VENDORS	27
+#define CHPS_PER_VENDOR	35
 
 #define CHIP_AHEAD_UNK	SVGA_TYPE(V_AHEAD,0)	/* Ahead unknown	*/
 #define CHIP_AHEAD_A	SVGA_TYPE(V_AHEAD,1)	/* Ahead V5000 Version A*/
@@ -571,6 +574,8 @@ extern struct RamDac_Name RamDac_Names[];
 #define CHIP_S3_ViRGE_DX SVGA_TYPE(V_S3,30)	/* S3 ViRGE/DX		*/
 #define CHIP_S3_ViRGE_GX SVGA_TYPE(V_S3,31)	/* S3 ViRGE/GX		*/
 #define CHIP_S3_PLATO_PX SVGA_TYPE(V_S3,32)	/* S3 PLATO/PX		*/
+#define CHIP_S3_ViRGE_GX2 SVGA_TYPE(V_S3,33)	/* S3 ViRGE/GX2		*/
+#define CHIP_S3_ViRGE_MX SVGA_TYPE(V_S3,34)	/* S3 ViRGE/MX		*/
 #define CHIP_TVGA_UNK	SVGA_TYPE(V_TRIDENT,0)	/* Trident unknown	*/
 #define CHIP_TVGA8200	SVGA_TYPE(V_TRIDENT,1)	/* Trident LX8200	*/
 #define CHIP_TVGA8800BR	SVGA_TYPE(V_TRIDENT,2)	/* Trident 8800BR	*/
@@ -650,6 +655,9 @@ extern struct RamDac_Name RamDac_Names[];
 #define CHIP_YAMAHA6388	SVGA_TYPE(V_YAMAHA,0)	/* Yamaha 6388 VPDC	*/
 #define CHIP_SD_RM_UNK	SVGA_TYPE(V_SD,0)	/* Sigma Desigs unknown	*/
 #define CHIP_SD_RM64GX	SVGA_TYPE(V_SD,1)	/* Sigma Desigs SD6425	*/
+#define CHIP_IG_UNK	SVGA_TYPE(V_IG,0)	/* Intergraphics unknown	*/
+#define CHIP_IG_1680	SVGA_TYPE(V_IG,1)	/* Intergraphics IGA-1680	*/
+#define CHIP_IG_1682	SVGA_TYPE(V_IG,2)	/* Intergraphics IGA-1682	*/
 
 /*
  * Graphics Coprocessors

@@ -1,6 +1,6 @@
 /*
  * $XConsortium: xdpyinfo.c /main/34 1995/12/08 12:09:32 dpw $
- * $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.12 1997/01/18 07:02:33 dawes Exp $
+ * $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.12.2.2 1998/02/28 11:11:44 dawes Exp $
  * 
  * xdpyinfo - print information about X display connecton
  *
@@ -679,7 +679,10 @@ print_XF86VidMode_info(dpy, extname)
 char *kbdtable[] = { "Unknown", "84-key", "101-key", "Other", "Xqueue" };
 char *msetable[] = { "None", "Microsoft", "MouseSystems", "MMSeries",
 		     "Logitech", "BusMouse", "Mouseman", "PS/2", "MMHitTab",
-		     "GlidePoint", "Unknown", "Xqueue", "OSMouse" };
+		     "GlidePoint", "IntelliMouse", "ThinkingMouse",
+		     "IMPS/2", "ThinkingMousePS/2", "MouseManPlusPS/2",
+		     "GlidePointPS/2", "NetMousePS/2", "NetScrollPS/2",
+		     "SysMouse", "Auto" };
 char *flgtable[] = { "None", "ClearDTR", "ClearRTS",
 		     "ClearDTR and ClearRTS" };
 
@@ -704,17 +707,25 @@ print_XF86Misc_info(dpy, extname)
 
       if (!XF86MiscGetMouseSettings(dpy, &mouseinfo))
 	return 0;
-      printf("  Mouse Settings-       Device: %s, Type: %s\n",
-	strlen(mouseinfo.device) == 0 ? "None": mouseinfo.device,
-	msetable[mouseinfo.type+1]);
-      printf("                        BaudRate: %d, SampleRate: %d\n",
-	mouseinfo.baudrate, mouseinfo.samplerate);
+      printf("  Mouse Settings-       Device: %s, Type: ",
+	strlen(mouseinfo.device) == 0 ? "None": mouseinfo.device);
+      if (mouseinfo.type == MTYPE_XQUEUE)
+	printf("Xqueue\n");
+      else if (mouseinfo.type == MTYPE_OSMOUSE)
+	printf("OSMouse\n");
+      else if (mouseinfo.type <= MTYPE_AUTOMOUSE)
+	printf("%s\n", msetable[mouseinfo.type+1]);
+      else
+	printf("Unknown\n");
+      printf("                        BaudRate: %d, SampleRate: %d, Resolution: %d\n",
+	mouseinfo.baudrate, mouseinfo.samplerate, mouseinfo.resolution);
       printf("                        Emulate3Buttons: %s, Emulate3Timeout: %d ms\n",
 	mouseinfo.emulate3buttons? "yes": "no", mouseinfo.emulate3timeout);
       printf("                        ChordMiddle: %s, Flags: %s\n",
 	mouseinfo.chordmiddle? "yes": "no",
 	flgtable[(mouseinfo.flags & MF_CLEAR_DTR? 1: 0)
 		+(mouseinfo.flags & MF_CLEAR_RTS? 1: 0)] );
+      printf("                        Buttons: %d\n", mouseinfo.buttons);
     }
 
     return 1;

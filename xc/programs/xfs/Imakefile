@@ -1,5 +1,5 @@
 XCOMM $TOG: Imakefile /main/29 1997/05/25 15:12:14 kaleb $
-XCOMM $XFree86: xc/programs/xfs/Imakefile,v 3.7.2.2 1997/07/05 15:55:51 dawes Exp $
+XCOMM $XFree86: xc/programs/xfs/Imakefile,v 3.7.2.3 1998/01/23 12:35:21 dawes Exp $
 #undef ServerDefines
 #include <Server.tmpl>
 #define	IHaveSubdirs
@@ -44,6 +44,8 @@ ServerTarget(xfs,$(FSDIRS),NullParameter,$(FSLIBS),$(SYSLIBS) $(ZLIB))
 #else
 ServerTarget(xfs,$(FSDIRS),difs/main.o,$(FSLIBS),$(SYSLIBS) $(ZLIB))
 #endif
+
+LinkVarDirectory(fs,.,fs,.)
 
 CppFileTarget(config,config.cpp,$(SITE_CONFIG),$(ICONFIGFILES))
 

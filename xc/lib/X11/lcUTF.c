@@ -1,5 +1,4 @@
 /* $XConsortium: lcUTF.c /main/12 1996/12/04 10:12:29 swick $ */
-/* $XFree86: xc/lib/X11/lcUTF.c,v 3.3 1996/12/24 02:22:50 dawes Exp $ */
 /******************************************************************
 
               Copyright 1993 by SunSoft, Inc.
@@ -26,6 +25,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
   Author: Hiromu Inukai (inukai@Japan.Sun.COM) SunSoft, inc.
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/lcUTF.c,v 3.3.2.1 1998/01/25 06:11:09 dawes Exp $ */
 #include "XlcUTF.h"
 
 static long	getutfrune();
@@ -1262,7 +1262,7 @@ open_cstowcs(from_lcd, from, to_lcd, to)
 
 XLCd
 _XlcUtfLoader(name)
-    char *name;
+    _Xconst char *name;
 {
     XLCd lcd;
 

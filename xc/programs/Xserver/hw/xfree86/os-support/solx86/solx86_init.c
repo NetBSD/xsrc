@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_init.c,v 3.4 1996/12/23 06:51:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_init.c,v 3.4.2.1 1998/02/06 22:36:53 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -80,7 +80,10 @@ void xf86OpenConsole()
     	/* check if we're run with euid==0 */
     	if (geteuid() != 0)
 	{
-      	    FatalError("xf86OpenConsole: Server must be suid root\n");
+	    FatalError("xf86OpenConsole: Server must be running with root "
+	        "permissions\n"
+		"You should be using Xwrapper to start the server or xdm.\n"
+		"We strongly advise against making the server SUID root!\n");
 	}
 
 	/* Protect page 0 to help find NULL dereferencing */

@@ -1,3 +1,274 @@
+XFree86 3.3.2 (3 March 1998)
+1042. Fix xterm problem with inverse video and mouse highlighting
+      (#1571, Thomas Dickey).
+1041. Japanese translation of README.NetBSD (#1567, Isao Ohishi).
+1040. Fix PnP serial mouse support for OpenBSD and NetBSD (#1566,
+      Matthieu Herrb).
+1039. Fix a VGA16 core dump which can happen when no suitable modes are
+      found (Thomas Mueller).
+1038. Some bindist and doc updates (including #1565).
+1038. Japanese translation of README.SVR4 (#1564, Takaaki Nomura).
+1037. Fix a final imake libc problem (H.J. Lu).
+
+XFree86 3.3.1z (28 February 1998)
+1036. Don't report "ET6300" in the list of chips supported by the tseng
+      driver.
+1035. Update xdpyinfo to print the Buttons field from the XFree86-misc
+      extension.
+1034. Put Mono after VGA16 in the XF86Setup config file so that it will
+      start up on the VGA screen when a Herc mono screen is also present
+      (#1563, Kazutaka Yokata).
+1033. Workaround for '#pragma weak' problem in imake with some Linux
+      Alpha compilers (H.J. Lu).
+1032. Fix for ET4000/W32 cards with the VGA16 server (#1561, Thomas Mueller).
+1031. Documentation updates (#1559, 1560, 1562, Jorge Delgado, Takaaki Nomura,
+      Kazutaka Yokota).
+1030. Update scanpci (Robin Cutshaw).
+1029. Make Xwrapper delete long env vars rather than exit.
+
+XFree86 3.3.1g (26 February 1998)
+1028. PC98 doc updates (#1555, Takaaki Nomura).
+1027. S3V doc updates (#1554, Kevin Brosius).
+1026. Possible fix for Mach32 problem with SVGA ati driver (Marc La France).
+1025. SiS doc update (#1552, Mike Chapman).
+1024. Add some documentation for the s3_svga driver (#1550, Mark Vojkovich).
+1023. Update QuickStart doc (#1551, Joe Moss).
+1022. Updates for glibc 2.1 (#1549, H.J. Lu).
+1021. Updates to the docs on rebuilding XFree86/OS2 (#1548, Holger Veit).
+1020. Several documentation updates.
+1019. Get defaults for 24bpp fix on Millennium Millennium II right 
+      (Mark Vojkovich, Dirk Hohndel).
+1018. Update for Mach64 docs (#1547, Kevin Martin).
+1017. Better solution to imake linux libc version detection (H.J. Lu).
+1016. Resync the LinkKit site.def (Thomas Mueller).
+1015. Fix some XF86Setup problems, including use of the "generic" chipset
+      when starting the VGA16 server, resyncing the PC98 version
+      (#1544, 1545 Takaaki Nomura, Kazunori Ueno, Kazutaka Yokota).
+1014. Update docs for new buttons XF86Config parameter (#1543, 1553,
+      Kazutaka Yokota).
+1013. Fix Trident DPMS support (#1537, Alan Hourihane).
+1012. Fix problem with DCConf code referencing freed memory (#1535,
+      Kazutaka Yokota).
+1011. General doc updates (#1533, Takaaki Nomura).
+1010. Update version in install.sv3 (#1532, Michael Rohleder).
+1009. Fix for Millennium I bitblt breakage (#1531, Mark Vojkovich).
+1008. Fix some initialization problems in the xkb programs (#1233,
+      Andreas Schwab).
+1007. Allow number of mouse buttons to be set from XF86Setup (David Dawes).
+1006. Update XF86Setup to recognise the buttons field in
+      XF86MiscGet/SetMouseSetting() (#1530, Kazutaka Yokota).
+1005. Fix bogus "Resolution 0" being included in config files generated
+      by XF86Setup (#1534, Joe Moss).
+
+XFree86 3.3.1f (24 February 1998)
+1004. Add mga_24bpp_fix option to fix the problem with 24bpp on some MillII
+      cards (Sebastien Marineau, Dirk Hohndel).
+1003. Add Buttons statement to the Pointer section of XF86Config. Add buttons
+      to the XF86Misc extension. Update mouse.sgml accordingly (#1529,
+      Kazutaka Yokota).
+1002. Update SuperProbe's version and release date (#1528, Koen Gadeyne).
+1001. Change order of drivers in SVGA server so that chips driver comes after
+      the s3_svga driver.
+1000. Update mouse support information and documentation for LynxOS (#1527,
+      Thomas Mueller).
+ 999. Update PC98 documents (#1526, Takaaki Nomura, Isao Ohishi).
+ 998. Update XF98Conf.cpp for Linux/98 (#1526, Takaaki Nomura).
+ 997. Fix PC98 cirrus driver (#1526, Isao Ohishi).
+ 996. Fix XF86Setup (#1526, Kazunori Ueno, Takaaki Nomura).
+ 995. xterm fixes. Improve test for highlightColor. Remove ich and ich1 from
+      xterm and xterm-8bit terminfo descriptions. Restore 1-pixel overlap of
+      scrollbar border with left edge of window. Add a configure option,
+      --enable-logfile-exec. Makes the ALLOWLOGFILEEXEC code compile & run,
+      if configured. Minor documentation updates (#1525, Thomas Dickey).
+ 994. Improve hardware cursor look in doublescan modes on mga (#1524, 
+      Mark Vojkovich).
+ 993. Fix problems with S3 hardware cursor and problem with checking for
+      fake S3 chips in non-PCI systems (#1523, Mark Vojkovich).
+ 992. Update trident, DECtga and general docs (#1520-1522, Alan Hourihane).
+ 991. Add the Option tgui_mclk_66 for the 9440 chips to the trident server 
+      (#1519, Alan Hourihane).
+ 990. Fix MouseManPlusPS/2 problem on Linux (Kazutaka Yokota).
+ 989. Fix clock limits and pixmux problem in SVGA/S3 server (#1517, 
+      Harald Koenig).
+ 988. Small imake fix for NetBSD-current (#1516, Matthieu Herrb).
+ 987. Doc updates for NetBSD and OpenBSD (#1515, Matthieu Herrb).
+ 986. Add a few more cards to the Cards file (#1514, Harald Koenig).
+ 985. Fix LinkKit to include compaq, s3 and s3v drivers (#1513, Thomas Mueller).
+ 984. Disable the -xkbdir Xserver option.
+ 983. Attempt at fixing imake's libc version detection
+      (Carsten Paeth, H.J. Lu).
+ 982. Disable mouse protocols not supported by an OS in XF86Setup's
+      mouse selection page (David Dawes).
+ 981. Fix clock limits for Trio64V2 in SVGA/S3 server and misleading message
+      about LCD in SVGA/S3V server (#1512, Harald Koenig, Dirk Hohndel).
+ 980. Add english help text for modeselect in XF86Setup (Dirk Hohndel).
+ 979. Fix twm bug when using xsm (#1510, Matthieu Herrb).
+ 978. Update CHANGELOG item 971 (#1511, Takaaki Nomura).
+
+XFree86 3.3.1e (21 February 1998)
+ 977. Various OS/2 build fixes and doc updates (#1508,1509, Holger Veit).
+ 976. Fix printing of XAA messages (Dirk Hohndel).
+ 975. Updates to the NV1 README, add link to README.Riva128 (Dirk Hohndel).
+ 974. Updates to Cards file to include the new cards (Dirk Hohndel).
+ 973. LynxOS compile fix (#1504, Thomas Mueller).
+ 972. XAA poly code fix (#1505, Mark Vojkovich).
+ 971. XF86Setup japanization, Doc updates, XF98_SVGA fix, PC98 setup updates
+      (#1482,1506, Kazunori Ueno, Takaaki Nomura, Isao Ohishi, Kazuo Ito).
+ 970. Wrapper security updates (#1494,1495, Oyvind Aabling).
+ 969. New mouse code doc updates (#1499, Kazutaka YOKOTA).
+ 968. Disable color expansion for W32p, cleanup error message
+      (#1500,1501, Krajcsovits Gyorgy).
+ 967. Xdpyinfo updates for mouse/extension changes (#1498, Kazutaka YOKOTA).
+ 966. Contrib xload updates for NetBSD/OpenBSD (#1497, Matthieu Herrb).
+ 965. Fix SERVER_LOCK compile problem (#1496, Matthieu Herrb).
+ 964. Doc updates (#1489, Harald Koenig).
+ 963. Xterm fixes for platforms without termcap.h (#1490, Thomas Dickey).
+ 962. Fake S3 chip detection and warning (#1487, Harald Koenig).
+ 961. XFree98 doc and SuperProbe updates, s3_svga Imakefile updates
+      (#1485,1488, Takaaki Nomura).
+
+XFree86 3.3.1d (15 February 1998)
+ 960. SuperProbe additions of Intergraphics IGA-1680/1682, S3 Aurora64V+,
+      and Sigma Design REALmagic (#1484, Harald Koenig).
+ 959. Cirrus 7548 linear framebuffer fix (#1483, Achim Oppelt).
+ 958. xterm fix for 8-bit terminal description (#1481, Thomas Dickey).
+ 957. ViRGE 32bpp mode line fix (#1480, Kevin Brosius).
+ 956. AT24/AP6422 acceleration, DPMS, and clock updates (#1478, Henrik Harmsen).
+ 955. Doc updates, LynxOS xman and PnPMouse updates (#1477, Thomas Mueller).
+ 954. Fix namespace problem on OpenBSD (#1473, Matthieu Herrb).
+ 953. Fix hiding of the hardware cursor during DGA for svga/s3 server (#1472,
+      Mark Vojkovich).
+ 952. Small fix to Trident driver for Cyber 3985 detection and handling of
+      acceleration for older cards (#1471, Alan Hourihane).
+ 951. Add new mouse protocols to XF86Setup and XF86 Misc extention. Add new
+      field, `resolution', to relevant structures for Get/SetMouseSettings.
+      Check the current and new mouse type (MTYPE_XXX) and act appropriately
+      when applying new mouse settings. Minor update and bug fix for the
+      mouse driver code (#1470, Kazutaka Yokota).
+ 950. Add bindist files for PC98 and fix LinkKit (#1469, Takaaki Nomura).
+ 949. Support XF86Setup for PC98, Update VideoBoard98 file, Remove obsolete
+      XFree86(98) messages (#1469, Takaaki Nomura, Kazunori Ueno).
+ 948. Significant updates to xterm and its docs. A separate log file was
+      added in xc/programs/xterm/xterm.log.html (#1466, Thomas Dickey).
+ 947. Improve compatibility with Interactive Versions 4.1 and 4.0. Add
+      support to use Linux inline-math package (Version: 2.6) on ISC.
+      Add support for liboptm.a (optimized math lib) where available. Change
+      ECHECK() to ever include ETEST() on Interactive. Add support to
+      recognize "local transport" if LOCALCONN is, and UNIXCONN isn't
+      defined. Updates to bindist files. Add support for scanpci on
+      Interactive Unix. Dokumentation Updates for isc.sgml. Update for the
+      new Mousesupport which needs some defines which aren't available in the 
+      header files on ISC. Update to XF86Setup to compile with Tcl/Tk 8.0.
+      (#1464, Michael Rohleder).
+ 946. Fix OpenBSD config on different platforms. Update OpenBSD
+      documentation. Fix a small typo in Xnest. Use mkstemp in xrdb (from
+      NetBSD). Fix XF86Setup when the X link doesn't exist. Update xload's
+      Imakefile for NetBSD and OpenBSD (#1460,1462, Matthieu Herrb).
+ 945. Add option to turn on/off the shadow registers for Cyber chipsets in 
+      the trident driver (#1461, Alan Hourihane).
+ 944. Fix 32bpp on Elsa Winner2000Pro (#1457,1458, Rainer Canavan, 
+      Marc LaFrance).
+ 943. Use the MAP_SHARED option to mmap on NetBSD (required by the new uvm
+      virtual memory system) and suppress 386_BSD_MMAP code (1456,
+      Matthieu Herrb).
+ 942. Use new PCI routines to get the base address in the TGA server (#1455,
+      1459, Alan Hourihane).
+ 941. Improve messages when XAA acceleration is disabled 
+      (#1454, Alan Hourihane).
+ 940. Several Cirrus Laguna driver fixes. Add support for sw cursor. Add code 
+      to scan all PCI devices when looking for Cirrus chips. Add "pci_retry".
+      Add no_accel support. Enable 24bpp HW cursor. Improve FIFO threshold 
+      calculation. Fix bug with 24,32bpp on 5465. Update docs 
+      (#1450, Corin Anderson).
+ 939. Add xterm log file (#1448, Thomas Dickey).
+ 938. Add zoom initialization and fix blits on T2R (Robin Cutshaw).
+
+XFree86 3.3.1c (9 February 1998)
+ 937. Add DGA and remove accel for AT24 in apm driver (#1453, Henrik Harmsen).
+ 936. Clean up PCI probing and fix 8x8 pattern bug for ViRGE
+      (#1452, Sebastien Marineau).
+ 935. Fix snowy and corrupted display for 24bpp modes and implement TVP3026
+      rev B support for 24bpp on Mil II (#1446,1449 Sebastien Marineau).
+ 934. Fix Xqueue/OSMouse in XF86Setup.
+ 933. Fix DGA SetViewPort (#1439, Harald Koenig).
+ 932. Initialize VGAbase properly (and thereby fix ET6k memory probe)
+      (1438,1440,1441, Koen Gadeyne, Marc La France).
+ 931. Fix 24/32bpp on some Trident chips, clear up a few bugs for 9397 and
+      3Dimage cards (#1435,1427 Alan Hourihane).
+ 930. Make the buttons map works when a device is in the AlwaysCore mode
+      (#1434, Frederic Lepied).
+ 929. Fix the macro buttons behavior of the wacom driver (#1433, 
+      Frederic Lepied).
+ 928. Fix Matrox driver root weave problem (#1432, Sebastien Marineau).
+ 927. Fix S3 Aurora64V+ and ViRGE/MX support, make hw_cursor the default for
+      SVGA/s3v driver (#1426, Harald Koenig).
+ 926. Update Tseng documentation (#1425, Koen Gadeyne).
+ 925. Disable pci_retry by default in Matrox driver (#1424, Mark Vojkovich).
+ 924. Stop SVGA/S3V server from cleaning pci info, fix XAA HW cursor restore 
+      after a VT switch (#1423, Sebastien Marineau).
+ 923. Enable dashed line accelerateion for Matrox (#1422, Mark Vojkovich).
+ 922. Add SVGA/S3 server (#1420,1421, Mark Vojkovich).
+ 921. Fix a pattern fill hardware bug in some s3 chips (#1419, Mark Vojkovich).
+ 920. Fix nv driver to bail if another chipset is set and to use the already
+      probed pci info (Dirk Hohndel).
+ 919. Add support for several new mice, including Kensington ThinkingMouse, 
+      ALPS GlidePoint, Genius NetScroll, Genius NetMouse, Genius NetMouse,
+      ASCII MieMouse, Logitech MouseMan+, Logitech FirstMouse+ (#1380,
+      Kazutaka Yokota).
+ 918. Fix mga driver for PC98 (#1436, Takaaki Nomura).
+ 917. Fix PANIX98 support (#1436, Takaaki Nomura).
+ 916. Resync PC98 Imakefiles (#1436, Takaaki Nomura).
+ 915. Add wrapper for X server and disable setuid root installation of the
+      servers. Make server error messages more verbose when root permissions
+      are missing (David Dawes, Dirk Hohndel).
+ 914. Fix some problems with the /var/X11 config code, and disable it.
+
+XFree86 3.3.1b (31 January 1998)
+ 913. Tseng superpatch including Chrontel 8391 support, ICD2061 fixes,
+      DPMS updates, Bresenham line fixes, ET6000 probe crash fix,
+      MUSIC 4910 ramdac support, and XAA updates (#1415, Koen Gadeyne).
+ 912. Add simple mode selection feature to XF86Setup and allow the user
+      to pick the default color depth (#1414, Dirk Hohndel/S.u.S.E.)
+ 911. Fix uninitialized variable in scanpci, add BSD44 socket support for
+      LynxOS (#1412, Thomas Mueller).
+ 910. ATI driver updates including 3D Rage Pro support (#1408 Marc Aurele
+      La France).
+ 909. Cyrillic font updates (#1398 Andrey Chernov).
+ 908. MGA driver updates (#1395 Mark Vojkovich).
+ 907. XF98 updates including new MGA and SVGA server, TGUI updates,
+      Linux98 support, and XKB and locale fixes (#1387 Takaaki Nomura).
+ 906. XAA superpatch including rolled/unrolled font handling, wide and
+      dashed lines, trap fills, stipple/bitmap routines, cursor support,
+      pattern fills and non-linear support (#1385,1386,1393,1394,1410
+      Mark Vojkovich).
+ 905. Small fix for 9397 support in Trident driver (#1376, Alan Hourihane).
+ 904. Enable the new models of wacom tablets which don't follow  exactly the
+      Wacom IV protocol  (PenPartner and PL300) (#1379, Frederic Lepied).
+ 903. Allow use of DacSpeed in Mach64 driver (#1375, Kevin Martin).
+ 902. Fix a bug in the TMED DSTN dithering scheme for the 65555 and 68554 chips
+      and adhere much more strictly to the clock limits but allow these to be
+      overriden with Set_MemClk and DacSpeed options (#1377, David Bateman).
+ 901. Add ViRGE/MX support (#1374, Harald Koenig).
+ 900. Add DEC alpha and preliminary Revolution support to the I128 server.
+ 899. Update Ti302X register definitions (#1383, Mark Vojkovich).
+
+XFree86 3.3.1a (23 January 1998)
+ 898. Add accelerated drivers for Riva128 and NV1 from XSuSE baseline 
+      (David McKay).
+ 897. Add At3D patches from XSuSE baseline (Henrik Harmsen).
+ 896. Add Mach64 patches from XSuSE baseline (Kevin Martin).
+ 895. Add Trident patches from XSuSE baseline (Alan Hourihane).
+ 894. Add Tseng patches from XSuSE baseline (Koen Gadeyne).
+ 893. Fix two buffer overflow problems in the X server.
+ 892. Install config/log files under /var/X11.
+ 891. Add login.conf/setusercontext support to xdm for FreeBDS.
+ 890. Fix BSDI support and add bindist directory for it (Robin Cutshaw).
+ 889. For setuid Xservers, drop privs when running xkbcomp.
+ 888. Disable the Xserver '-config' option, which is a security problem
+      for setuid-root servers.
+ 887. Add DEC alpha and preliminary Revolution support to the I128 server
+      (Robin Cutshaw).
+
 XFree86 3.3.1 (4 August 1997)
  886. Fix a problem reading a config file generated by XF86Setup.
  885. Add Japanese translations of some man pages (#859, Kazuyuki Okamoto).
@@ -4777,3 +5048,5 @@ XFree86 3.0a (28 April 1994)
   1. Fold in client/lib OS support not picked up by the XC.
 
 XFree86 3.0 (26 April 1994)
+
+$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.133 1998/03/03 12:50:59 dawes Exp $

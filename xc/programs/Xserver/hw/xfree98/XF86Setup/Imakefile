@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/6 1996/10/25 10:34:41 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/XF86Setup/Imakefile,v 3.10.2.1 1997/05/17 12:25:23 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/XF86Setup/Imakefile,v 3.10.2.4 1998/02/26 13:59:13 dawes Exp $
 #include <Server.tmpl>
 #define IHaveSubdirs
 
@@ -30,7 +30,8 @@ includes::
        TCL_FILES = phase1.tcl phase2.tcl phase3.tcl phase4.tcl phase5.tcl \
 		   setuplib.tcl srvflags.tcl carddata.tcl \
 		   card.tcl done.tcl filelist.tcl keyboard.tcl \
-		   mondata.tcl monitor.tcl mouse.tcl LICENSE
+		   mseproto.tcl \
+		   mondata.tcl monitor.tcl modeselect.tcl mouse.tcl LICENSE
     TCLLIB_FILES = tcllib/button.tcl tcllib/combobox.tcl tcllib/misc.tcl \
 		   tcllib/downarrow.xbm tcllib/dialog.tcl tcllib/entry.tcl \
 		   tcllib/focus.tcl tcllib/init.tcl tcllib/listbox.tcl \
@@ -40,7 +41,7 @@ includes::
 		   tcllib/tkerror.tcl tcllib/uparrow.xbm tcllib/license.terms
       PICS_FILES = pics/vidcard.xbm pics/vidcard.msk \
 		   pics/XFree86.xbm pics/XFree86.msk
-         SUBDIRS = tcllib pics scripts
+         SUBDIRS = tcllib pics scripts texts
 
 #if BuildServersOnly && !defined(UseInstalled)
 /* Use installed X libraries and headers */
@@ -70,7 +71,7 @@ includes::
 		   $(TCLTK_LIBRARIES) $(XXF86VMLIB) $(XXF86MISCLIB) \
 		   $(USEINSTALLEDLIB) XawClientLibs MathLibrary
          DEPLIBS = XawClientDepLibs $(DEPXXF86VMLIB)
-      CARDDBFILE = $(LIBDIR)/Cards
+      CARDDBFILE = $(LIBDIR)/Cards98
       XCONFIGSRC = xf86Config
      XCONFIGFILE = XF86Config
 
@@ -80,24 +81,28 @@ includes::
 
  XF86SETUPLIBDIR = $(LIBDIR)/XF86Setup
          DEFINES = -DCARD_DATABASE_FILE='"$(CARDDBFILE)"' \
-		   $(XCONFIG_DEFINES)
+		   $(XCONFIG_DEFINES) -DPC98
         INCLUDES = -I../os-support -I../common \
 		   -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
 		   -I$(EXTINCSRC) $(USEINSTALLEDINC) \
 		   -I$(TCLINCDIR) -I$(TKINCDIR)
+
+    MSEPROTODEFS = $(STD_DEFINES) -DPC98
 
 #if HasLdRunPath
        CCENVSETUP = LD_RUN_PATH=$(USRLIBDIR):$(TCLLIBDIR)
            CCLINK = $(CCENVSETUP) $(CC)
 #endif
 
-AllTarget(ProgramTargetName(XF86Setup))
+AllTarget(ProgramTargetName(XF98Setup))
 
-LinkSourceFile(Cards,$(XF86SRC)/xf86config)
+LinkSourceFile(Cards98,$(XF98SRC)/xf86config)
 LinkSourceFile(cards.h,$(XF86SRC)/xf86config)
 LinkSourceFile(cards.c,$(XF86SRC)/xf86config)
 LinkSourceFile(xf86Config.c,$(XF86SRC)/common)
 LinkSourceFile(xf86_Config.h,$(XF86SRC)/common)
+
+CppFileTarget(mseproto.tcl, mseproto.cpp, $(MSEPROTODEFS), NullParameter)
 
 LinkSourceFile(CHANGELOG,$(XF86SRC)/XF86Setup)
 LinkSourceFile(LICENSE,$(XF86SRC)/XF86Setup)
@@ -108,12 +113,13 @@ LinkSourceFile(XF86Setup.man,$(XF86SRC)/XF86Setup)
 LinkSourceFile(card.tcl,$(XF86SRC)/XF86Setup)
 LinkSourceFile(carddata.tcl,$(XF86SRC)/XF86Setup)
 LinkSourceFile(done.tcl,$(XF86SRC)/XF86Setup)
-LinkSourceFile(filelist.tcl,$(XF86SRC)/XF86Setup)
 LinkSourceFile(keyboard.tcl,$(XF86SRC)/XF86Setup)
 LinkSourceFile(main.c,$(XF86SRC)/XF86Setup)
+LinkSourceFile(modeselect.tcl,$(XF86SRC)/XF86Setup)
 LinkSourceFile(mondata.tcl,$(XF86SRC)/XF86Setup)
 LinkSourceFile(monitor.tcl,$(XF86SRC)/XF86Setup)
 LinkSourceFile(mouse.tcl,$(XF86SRC)/XF86Setup)
+LinkSourceFile(mseproto.cpp,$(XF86SRC)/XF86Setup)
 LinkSourceFile(phase1.tcl,$(XF86SRC)/XF86Setup)
 LinkSourceFile(phase2.tcl,$(XF86SRC)/XF86Setup)
 LinkSourceFile(phase3.tcl,$(XF86SRC)/XF86Setup)
@@ -133,10 +139,8 @@ LinkSourceFile(tclxkbui.c,$(XF86SRC)/XF86Setup)
 LinkSourceFile(tkother.c,$(XF86SRC)/XF86Setup)
 LinkSourceFile(xfsconf.h,$(XF86SRC)/XF86Setup)
 
-NormalProgramTarget(XF86Setup,$(OBJS),$(DEPLIBS),$(LOCAL_LIBRARIES) $(SYSTEM_LIBRARIES) $(EXTRASYSLIBS),NullParameter)
-#ifndef DontInstallPC98Version
-InstallProgram(XF86Setup,$(BINDIR))
-#endif
+NormalProgramTarget(XF98Setup,$(OBJS),$(DEPLIBS),$(LOCAL_LIBRARIES) $(SYSTEM_LIBRARIES) $(EXTRASYSLIBS),NullParameter)
+InstallProgram(XF98Setup,$(BINDIR))
 DependTarget()
 
 MakeSubdirs($(SUBDIRS))

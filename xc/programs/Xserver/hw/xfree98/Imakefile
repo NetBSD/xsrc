@@ -3,14 +3,14 @@ XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:39:23 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/Imakefile,v 3.14 1996/12/23 07:04:53 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/Imakefile,v 3.14.2.2 1998/02/24 13:54:31 hohndel Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
 
 #if XF98GANBWAPServer || XF98NEC480Server || XF98NKVNECServer || \
     XF98WABSServer    || XF98WABEPServer  || XF98WSNAServer   || \
-    XF98TGUIServer
+    XF98TGUIServer    || XF98MGAServer    || XF98SVGAServer
 VGA256SCREEN = vga256
 #endif
 
@@ -81,7 +81,7 @@ DPI100USFONTPATH=\"$(LIBDIR)/fonts/100dpi/:unscaled\"
 #endif
 
 #ifdef FreeBSDArchitecture
-  FREEBSDMOUSEDEV=" Device      \"/dev/mse0\""
+  FREEBSDMOUSEDEV="    Device      \"/dev/mse0\""
 #else
   FREEBSDMOUSEDEV="XCOMM    Device      \"/dev/mse0\""
 #endif
@@ -99,6 +99,12 @@ DPI100USFONTPATH=\"$(LIBDIR)/fonts/100dpi/:unscaled\"
   NETBSDNEWMOUSEDEV="XCOMM     Device      \"/dev/lms0\""
 #endif
 
+#ifdef LinuxArchitecture
+  LINUXMOUSEDEV="    Device      \"/dev/mouse\""
+#else
+  LINUXMOUSEDEV="XCOMM    Device      \"/dev/mouse\""
+#endif
+
 #ifdef MinixArchitecture
 CppFileTarget($(XF86CONFIG), XF98Conf.cpp,
     -DRGBPATH=$(RGBPATH) -DMISCFONTPATH=$(MISCFONTPATH)
@@ -110,6 +116,7 @@ CppFileTarget($(XF86CONFIG), XF98Conf.cpp,
     -DFREEBSDMOUSEDEV=$(FREEBSDMOUSEDEV)
     -DNETBSDOLDMOUSEDEV=$(NETBSDOLDMOUSEDEV)
     -DNETBSDNEWMOUSEDEV=$(NETBSDNEWMOUSEDEV)
+    -DLINUXMOUSEDEV=$(LINUXMOUSEDEV)
     -DMODULEPATH=\"$(MODULEDIR)\"
     -DMANPAGE=$(MANPAGE), $(ICONFIGFILES))
 #else
@@ -124,6 +131,7 @@ CppFileTarget($(XF86CONFIG), XF98Conf.cpp, \
     -DFREEBSDMOUSEDEV=$(FREEBSDMOUSEDEV) \
     -DNETBSDOLDMOUSEDEV=$(NETBSDOLDMOUSEDEV) \
     -DNETBSDNEWMOUSEDEV=$(NETBSDNEWMOUSEDEV) \
+    -DLINUXMOUSEDEV=$(LINUXMOUSEDEV) \
     -DMODULEPATH=\"$(MODULEDIR)\" \
     -DMANPAGE=$(MANPAGE), $(ICONFIGFILES))
 #endif

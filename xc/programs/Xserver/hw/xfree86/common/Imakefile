@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/34 1996/10/27 11:05:08 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.1 1997/05/03 09:46:36 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.4 1998/02/22 01:28:23 robin Exp $
 
 
 
@@ -74,6 +74,12 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.1 1997/
 # endif
 #endif
 
+#if !defined(LynxOSArchitecture) && !defined(OS2Architecture)
+ PNP_MOUSE_SRC=xf86_PnPMouse.c
+ PNP_MOUSE_OBJ=xf86_PnPMouse.o
+ PNP_MOUSE_DEFINES=-DPNP_MOUSE
+#endif
+
 #if BuildDynamicLoading
 #  if PexDynamicModule
    PEX_MODULE_DEFINES = -DPEX_MODULE
@@ -137,6 +143,7 @@ SRCS =	\
 	xf86_Mouse.c \
 	xf86_Option.c \
 	$(KBD).c \
+	$(PNP_MOUSE_SRC) \
 	$(XF86_XINPUT_SRC) \
 	$(JOYSTICK_SRC) \
 	$(WACOM_SRC) \
@@ -155,6 +162,7 @@ OBJS = \
 	xf86Io.o \
 	xf86Lock.o \
 	xf86_Mouse.o \
+	$(PNP_MOUSE_OBJ) \
 	$(XF86_XINPUT_OBJ) \
 	$(JOYSTICK_OBJ) \
 	$(WACOM_OBJ) \
@@ -181,7 +189,7 @@ OFILES = \
 CONSDEFINES = XFree86ConsoleDefines
 EXP_DEFINES = -DEXPIRY_TIME=XF86ServerExpiry $(EXP_FORCE_DEFINES)
 
-    DEFINES = $(XCONFIGDEFINES) $(CONSDEFINES)
+    DEFINES = $(XCONFIGDEFINES) $(CONSDEFINES) $(PNP_MOUSE_DEFINES)
 
 #if XF86MonoServer
 VGA2BUILD = -DBUILD_VGA2

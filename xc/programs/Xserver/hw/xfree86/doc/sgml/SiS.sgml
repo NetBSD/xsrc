@@ -5,16 +5,19 @@
 <!-- Title information -->
 <title> Information for SiS Users
 <author> Xavier Ducoin (<it>xavier@rd.lectra.fr</it>)
-<date> 16 January 1997
+<date> 27 February 1998
 
 <!-- Table of contents -->
 <toc>
 
 <sect> Introduction <p>
 
-The driver was primarily written for the SiS86c201.
-The driver has almost been completed, with many additional features.
-These include
+This driver was primarily written for the SiS86c201.  It also works
+on the 202 and the 205 chips.  Support for other SiS products is
+not available in XFree86 release 3.3.2.  Drivers for the 5597/8 are
+currently under development and should be available in the next release.
+
+The driver supports many advanced features.  These include:
 <itemize>
   <item>Linear Addressing
   <item>8/15/16/24 bits per pixel
@@ -103,7 +106,7 @@ I can't reproduce this problem in 1024x768 75 MHz or 1280x1024 110 MHz
 or 1152x900 95 MHz.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SiS.sgml,v 3.3 1997/01/25 03:22:15 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SiS.sgml,v 3.3.2.1 1998/02/27 02:45:24 dawes Exp $
 </verb>
 
 </article>

@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/33 1996/10/28 05:12:24 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.44.2.2 1997/07/27 02:41:13 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.44.2.5 1998/02/25 12:20:22 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -81,15 +81,15 @@ all::
 
 #if !BuildLinuxDocText
 HWREADME =  README.ati README.trident README.tseng README.WstDig \
-            README.DECtga \
+            README.DECtga  README.apm \
             README.chips README.cirrus README.Video7 README.P9000 README.agx \
             README.S3 README.S3V README.SiS README.W32 README.Oak \
             README.Mach32 \
-            README.Mach64 README.ark README.MGA README.NV1
+            README.Mach64 README.ark README.MGA README.NV1 README.mouse
 
 MAINDOCS = COPYRIGHT README README.Config BUILD RELNOTES
 
-OTHERDOCS = /*VideoModes.doc*/ QuickStart.doc README.clkprog xinput
+OTHERDOCS = VideoModes.doc QuickStart.doc README.clkprog xinput
 #endif
 
 MISCDOCS = ServersOnly /*LbxproxyOnly*/ $(REPORTFORM) README.DGA
@@ -103,6 +103,7 @@ InstallMultipleDest(install,$(FILES),$(XFREE86DOCDIR))
 LinkFile(README.Mach32,READ.Mach32)
 LinkFile(README.Mach64,READ.Mach64)
 LinkFile(README.FreeBSD,READ.FreeBSD)
+LinkFile(README.Riva128,README.NV1)
 
 #ifdef IHaveSubdirs
 MakeSubdirs($(SUBDIRS))

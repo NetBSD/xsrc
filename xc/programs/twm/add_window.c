@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/add_window.c,v 1.1.1.2.8.1 1997/05/11 05:04:28 dawes Exp $ */
+/* $XFree86: xc/programs/twm/add_window.c,v 1.1.1.2.8.2 1998/02/22 10:17:46 hohndel Exp $ */
 /*****************************************************************************/
 /*
 
@@ -202,6 +202,12 @@ IconMgr *iconp;
     XGetWindowAttributes(dpy, tmp_win->w, &tmp_win->attr);
 
     XFetchName(dpy, tmp_win->w, &name);
+    if (name == NULL)
+	tmp_win->name = strdup(NoName);
+    else {
+      tmp_win->name = strdup(name);
+      XFree(name);
+    }
     tmp_win->class = NoClass;
     XGetClassHint(dpy, tmp_win->w, &tmp_win->class);
     FetchWmProtocols (tmp_win);
@@ -275,12 +281,6 @@ IconMgr *iconp;
     tmp_win->transient = Transient(tmp_win->w, &tmp_win->transientfor);
 
     tmp_win->nameChanged = 0;
-    if (name == NULL)
-	tmp_win->name = strdup(NoName);
-    else {
-      tmp_win->name = strdup(name);
-      XFree(name);
-    }
     if (tmp_win->class.res_name == NULL)
     	tmp_win->class.res_name = NoName;
     if (tmp_win->class.res_class == NULL)

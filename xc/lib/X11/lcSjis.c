@@ -35,6 +35,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
 				makoto@sm.sony.co.jp
 
 *****************************************************************/
+/* $XFree86: xc/lib/X11/lcSjis.c,v 3.2.2.1 1998/01/25 06:11:08 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcGeneric.h"
@@ -1527,7 +1528,7 @@ open_ctstowcs(from_lcd, from_type, to_lcd, to_type)
 
 XLCd
 _XlcSjisLoader(name)
-    char *name;
+    _Xconst char *name;
 {
     XLCd lcd;
 

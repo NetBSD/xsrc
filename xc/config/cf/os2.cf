@@ -2,7 +2,7 @@ XCOMM $XConsortium: os2.cf /main/1 1996/10/31 14:47:25 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.2 1997/08/04 02:10:31 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.4 1998/02/22 01:04:50 robin Exp $
 
 #define OSName           OS/2
 #define OSVendor	 IBM
@@ -44,6 +44,7 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.2 1997/08/04 02:10:31 da
 
 /* more directories */
 #define AdmDir		        $(LIBDIR)/adm
+#define ConfigDir		$(X11ROOT)$(LIBDIR)/config
         DESTDIR = $(X11ROOT)
 
 /* for the man pages */
@@ -85,6 +86,7 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.2 1997/08/04 02:10:31 da
 #define HasSecureRPC		NO
 #define	HasSymLinks		NO
 #define HasVFork		NO
+#define HasVarDirectory		NO
 #define HasStrcasecmp		NO
 #define Malloc0ReturnsNull	YES
 #define SetTtyGroup     	NO
@@ -130,11 +132,11 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.2 1997/08/04 02:10:31 da
 #define PreProcessCmd	CppCmd
 
 #define CcCmd	gcc
-#define DefaultCCOptions	-D__ST_MT_ERRNO -Zmtd -Zsysv-signals
-#define LibraryCCOptions	-D__ST_MT_ERRNO -Zmtd -Zsysv-signals
-#define ServerCCOptions		-D__ST_MT_ERRNO  -Zmtd -Zsysv-signals
+#define DefaultCCOptions	-D__ST_MT_ERRNO__ -Zmtd -Zsysv-signals
+#define LibraryCCOptions	-D__ST_MT_ERRNO__ -Zmtd -Zsysv-signals
+#define ServerCCOptions	-D__ST_MT_ERRNO__ -Zmtd -Zsysv-signals
 
-#define CplusplusCmd	g++
+#define CplusplusCmd g++
 #define CplusplusOptions	-Zmtd -Zsysv-signals
 
 #define MakeCmd x11make 

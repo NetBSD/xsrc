@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_Acc.man,v 3.58.2.5 1997/07/26 09:21:13 dawes Exp $ 
-.TH XF86_Accel 1 "Version 3.3.1"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_Acc.man,v 3.58.2.7 1998/02/26 20:11:14 hohndel Exp $ 
+.TH XF86_Accel 1 "Version 3.3.2"  "XFree86"
 .SH NAME
 XF86_Accel - accelerated X Window System servers for
 UNIX on x86 and Alpha platforms with an S3, Mach8, Mach32, Mach64, P9000, AGX,
@@ -113,7 +113,7 @@ XF86_Mach32:
 ATI Mach32
 .TP 13
 XF86_Mach64:
-ATI Mach64 (GX, CT, ET, VT, GT)
+ATI Mach64 (GX, CT, ET, VT, GT, 3D Rage II, 3D Rage II+DVD, Rage Pro)
 .TP 13
 XF86_P9000:
 Diamond Viper VLB, Diamond Viper PCI, Orchid P9000, and some clones
@@ -714,13 +714,13 @@ W32i and W32p chipset.  Try this if your picture looks distorted or you
 don't get a picture at all.
 .sp
 \fBno_block_write\fP - (Mach64) Disables the block write mode on
-certain types of VRAM Mach64 cards.  If noise or shadows appear on the
-screen, this option should remove them.
+certain types of VRAM-based Mach64 and on Rage Pro-based cards.  If
+noise or shadows appear on the screen, this option should remove them.
 .sp
 \fBblock_write\fP - (Mach64) Enables the block write mode on certain
-types of VRAM Mach64 cards.  Normally the Mach64 server will
-automatically determine if the card can handle block write mode, but
-this option will override the probe result.
+types of VRAM-based Mach64 and on Rage Pro-based cards.  Normally the
+Mach64 server will automatically determine if the card can handle
+block write mode, but this option will override the probe result.
 .sp
 \fBno_bios_clocks\fP - (Mach64) The Mach64 server normally reads the
 clocks from the BIOS.  This option overrides the BIOS clocks and

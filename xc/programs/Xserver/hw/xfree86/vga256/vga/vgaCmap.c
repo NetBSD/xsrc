@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaCmap.c,v 3.15 1996/12/23 06:59:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaCmap.c,v 3.15.2.2 1998/02/01 16:05:17 robin Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -71,6 +71,11 @@ vgaGetInstalledColormaps(pScreen, pmaps)
 }
 
 
+int vgaCheckColorMap(ColormapPtr pmap)
+{
+  return (pmap != InstalledMaps[pmap->pScreen->myNum]);
+}
+
 void
 vgaStoreColors(pmap, ndef, pdefs)
      ColormapPtr	pmap;
@@ -84,7 +89,7 @@ vgaStoreColors(pmap, ndef, pdefs)
     unsigned char overscan = ((vgaHWPtr)vgaNewVideoState)->Attribute[OVERSCAN];
     unsigned char tmp_overscan;
 
-    if (pmap != InstalledMaps[pmap->pScreen->myNum])
+    if (vgaCheckColorMap(pmap))
         return;
 
     /* GJA -- We don't want cfb code right now (in vga16 server) */
@@ -270,7 +275,7 @@ vgaInstallColormap(pmap)
       defs[i].flags =  DoRed|DoGreen|DoBlue;
     }
 
-  vgaStoreColors( pmap, entries, defs);
+  pmap->pScreen->StoreColors( pmap, entries, defs);
 
   WalkTree(pmap->pScreen, TellGainedMap, &pmap->mid);
   

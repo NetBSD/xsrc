@@ -3,12 +3,12 @@ XCOMM $XConsortium: Imakefile /main/2 1996/10/27 13:00:56 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/Imakefile,v 3.2 1996/12/27 07:05:41 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/Imakefile,v 3.2.2.1 1998/01/18 10:35:35 hohndel Exp $
 #include <Server.tmpl>
 
-SRCS = nv_driver.c
+SRCS = nv_driver.c nv1driver.c nv3driver.c nvaccel.c nv1setup.c nv3setup.c nv1cursor.c nv3cursor.c
 
-OBJS = nv_driver.o
+OBJS = nv_driver.o nv1driver.o nv3driver.o nvaccel.o nv1setup.o nv3setup.o nv1cursor.o nv3cursor.o
 
 DEFINES = -DPSZ=8
 
@@ -17,7 +17,7 @@ INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
 #else
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
            -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
-           -I$(SERVERSRC)/cfb -I../../vga \
+           -I$(SERVERSRC)/cfb -I../../vga -I../../../xaa \
            -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC)
 #endif
 
@@ -29,8 +29,20 @@ NormalAsmObjectRule()
 
 NormalRelocatableTarget(nv_drv,$(OBJS))
 
-InstallLinkKitNonExecFile(nv_driver.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv1ref.h,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv3ref.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nvreg.h,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nvuser.h,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nvvga.h,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nvcursor.h,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv1cursor.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv3cursor.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv_driver.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv1driver.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv3driver.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nvaccel.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv1setup.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv3setup.c,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/nv)
 
 DependTarget()

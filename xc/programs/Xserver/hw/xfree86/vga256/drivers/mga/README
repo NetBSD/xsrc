@@ -1,21 +1,12 @@
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/README,v 3.6.2.5 1997/08/02 13:48:22 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/README,v 3.6.2.6 1998/02/01 16:05:10 robin Exp $
 
 MGA Millennium (MGA2064W) with TVP3026 RAMDAC Driver v1.3
 =========================================================
 MGA Mystique (MGA1064W) with integrated RAMDAC Driver v1.3
 =========================================================
-MGA Millennium II (MGA2164W) with TVP3026 RAMDAC Driverv1.3 (experimental)
-
-NOTE: This driver is fairly new, and not everything works like you expect
-it to. It shouldn't crash your machine, and there are problems with 24 bpp,
-but it should work pretty well. Please report any and all problems to
-XFree86@Xfree86.org using the appropriate bug report sheet. 
-
-This is an experimental build for the Millennium II, and not everything 
-works as you'd expect. Please report any bugs for the Mill II to 
-Andrew.van.der.Stock@member.sage-au.org.au
+MGA Millennium II (MGA2164W) with TVP3026 RAMDAC Driverv1.3
 
 Features:
 ---------
@@ -30,8 +21,9 @@ Features:
    - 24 bits per pixel (packed true colour) **
    - 32 bits per pixel (true colour)
 
-There are some 24 bpp mode problems - tiling doesn't work properly, so for some 
-programs, notably Netscape, gimp, xsetroot, etc, you may see corrupted images.
+** We don't pass the xtest suite in 24bpp.  This is possibly due to
+some uncaught planemask mishap (MGA has severe planemask usage 
+restrictions in 24bpp).
 
 
 Planned Features
@@ -42,7 +34,7 @@ In order from highest to lowest priority:
 * More hardware acceleration.
 * Support for more chipsets and RAMDACs.
 * 3D acceleration
-* other depths (16,24,32 bits) and acceleration features for Mystique board
+* other depths (16,24,32 bits)
 
 Technical Notes:
 ----------------
@@ -59,7 +51,7 @@ Texas Instruments TVP3026 RAMDAC  and (MGA1064SG). Matrox has so far only shippe
 
 - for Mystique board:
 - - - - - - - - - - -
-up to 170 MHz,
+up to 170 MHz (220 in Mystique-220)
 
 This driver auto-detects the amount of installed WRAM and the RAMDAC speed,
 so you don't need to probe or specify these. Same goes for the clocks, which
@@ -105,9 +97,15 @@ But if you have problems with auto-detection, you can specify:
 Driver Options:
 ---------------
 
-"noaccel"	- turns off Drawing Engine (mandatory for Mystique)
-"sw_cursor"     - turns hardware cursor off
+"noaccel"	- turns off Drawing Engine
+"sw_cursor"     - turns hardware cursor off.  You will need this in
+			doublescan and interlaced modes because the
+			hardware cursor is broken in those modes
+			at the moment.
 "xaa_benchmark" - do some benchmarks during startup
+"no_pci_disconnect"  	- turns off pci disconnects.  Try this if you have 
+			problems with the MGA interferring with
+			soundcard operation or similar.
 
 - for Mystique board:
 - - - - - - - - - - -
@@ -169,7 +167,7 @@ Leonard N. Zubkoff
 lnz@dandelion.com
 
 Mark Vojkovich
-mvojkovi@sdcc10.ucsd.edu
+mvojkovi@ucsd.edu
 
 Michael Will
 zxmgv07@student.uni-tuebingen.de

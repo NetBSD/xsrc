@@ -13,7 +13,7 @@ Quick-Start Guide to XFree86 Setup
 				   Joe Moss
 
 
-				26 August 1996
+			       27 February 1998
 
 
 
@@ -57,8 +57,8 @@ setup the server:
 	    It will help speed up the process, if you know which protocol is
 	    used by your mouse to communicate. Some mice are capable of using
 	    two different protocols, although the method of switching between
-	    them varies.
-
+	    them varies.  In some cases, with new Plug-n-Play mice, the proto-
+	    col can be determined automatically.
 
 
 Quick-Start Guide to XFree86 Setup
@@ -116,15 +116,15 @@ that you are running as root.  If a problem is found, it will display a message
 and exit.  Correct the problem (e.g. install the missing files) and run it
 again.
 
+XF86Setup is internationalized. If you are Japanese and set the LANG environ-
+ment variable to ja, japan, japanese, etc., XF86Setup's screen can be
+Japanized. But it is necessary that XF86Setup is built with Japanized Tcl/Tk.
+Other language can be added, if you prepare its own directory under the direc-
+tory XF86Setup/texts. Please see under the directory XF86Setup/texts/generic.
+
 3.1  Initial questions
 
 If you have an existing XF86Config file, you will be asked if you would like to
-use it to set the default values of various configuration settings.  If you've
-already got an (at least somewhat) working configuration you will want to do
-this.
-
-If you are running on an OS which has a mouse driver in the kernel (e.g. SCO or
-SVR4), you may be asked if you'd like to use it.
 
 
 
@@ -137,6 +137,13 @@ Quick-Start Guide to XFree86 Setup
 
 
 
+use it to set the default values of various configuration settings.  If you've
+already got an (at least somewhat) working configuration you will want to do
+this.
+
+If you are running on an OS which has a mouse driver in the kernel (e.g. SCO or
+SVR4), you may be asked if you'd like to use it.
+
 Once the questions (if any) are completed, you will see a message indicating
 that the program is ready to switch into graphics mode.  Just press Enter.  If
 you don't get a graphics screen saying Welcome to XFree86 Setup within a
@@ -147,7 +154,7 @@ XF86Setup.
 3.2  Configuration areas
 
 Once the VGA16 server is started, and once the program has finished loading,
-you will see a screen with five buttons along the top and three along the bot-
+you will see a screen with six buttons along the top and three along the bot-
 tom.  The buttons along the top correspond to the general categories of config-
 uration settings.  They can be done in any order.  Each of these areas is
 explained in detail below.  The bottom row consists of the Abort, Done, and
@@ -177,20 +184,13 @@ you move your mouse it should show the pointer coordinates on the mouse and the
 buttons should turn black as you press the corresponding button on your mouse.
 If that is not happening, then your mouse is not correctly configured.
 
-Along the top is a row of buttons corresponding to the various possible proto-
-cols. There will also be several buttons and a couple of sliders for other set-
-tings, a visual representation of the mouse, and a button to apply any changes.
-There may also be an entry box in which the device can be set along with a list
-of possible devices.
+Along the top are some rows of buttons corresponding to the various possible
+protocols. There will also be several buttons and a couple of sliders for other
+settings, a visual representation of the mouse, and a button to apply any
+changes.  There may also be an entry box in which the device can be set along
+with a list of possible devices.
 
 First try moving your mouse around and see if the pointer moves correctly.  If
-so, try testing that the buttons are working properly.	If those are working as
-desired, go ahead and go on to another configuration area.
-
-If the mouse pointer doesn't move at all, you need to fix either the mouse
-device or the protocol (or both).  You can press 'n' followed by a Tab, to move
-to the list of mouse devices and select a different one.  Pressing 'p' will
-pick the next available protocol on the list.  After changing these, press 'a'
 
 
 
@@ -203,8 +203,17 @@ Quick-Start Guide to XFree86 Setup
 
 
 
-to apply the changes and try again.  Repeat the process until you are getting
-some response from your mouse.
+so, try testing that the buttons are working properly.	If those are working as
+desired, go ahead and go on to another configuration area.
+
+If the mouse pointer doesn't move at all, you need to fix either the mouse
+device or the protocol (or both).  You can press 'n' followed by a Tab, to move
+to the list of mouse devices and select a different one.  Pressing 'p' will
+pick the next available protocol on the list (protocols that are not available
+on your OS will be greyed-out).  If you have a PnP mouse, it may be easiest to
+just select "Auto" as the protocol.  After changing these, press 'a' to apply
+the changes and try again.  Repeat the process until you are getting some
+response from your mouse.
 
 If the mouse pointer or button indicators do something when you move the mouse,
 but the pointer is not moving properly, you probably have the wrong protocol
@@ -248,15 +257,6 @@ button will then be usable (i.e. not greyed out).  Please read them.
 If your card is not in the list, or if there are any special settings listed in
 the README file as required by your card, you can press the 'Detailed Setup'
 button to make sure that the required settings are selected.  Otherwise, you're
-finished with configuring your card.
-
-To use 'Detailed Setup': First select the appropriate server for your card.
-Then read the README file corresponding to the selected server by pressing the
-'Read README file' button (it won't do anything, if there is no README).
-
-Next, pick the chipset, and Ramdac of your card, if directed by the README
-file.  In most cases, you don't need to select these, as the server will detect
-(probe) them automatically.
 
 
 
@@ -268,6 +268,16 @@ file.  In most cases, you don't need to select these, as the server will detect
 Quick-Start Guide to XFree86 Setup
 
 
+
+finished with configuring your card.
+
+To use 'Detailed Setup': First select the appropriate server for your card.
+Then read the README file corresponding to the selected server by pressing the
+'Read README file' button (it won't do anything, if there is no README).
+
+Next, pick the chipset, and Ramdac of your card, if directed by the README
+file.  In most cases, you don't need to select these, as the server will detect
+(probe) them automatically.
 
 The clockchip should generally be picked, if your card has one, as these are
 often impossible to probe (the exception is when the clockchip is built into
@@ -283,7 +293,19 @@ you don't specify one.
 Additionally, you can also specify the amount of RAM on your card, though the
 server will usually be able to detect this.
 
-3.2.4  Monitor
+3.2.4  Modeselect
+
+Use this one to pick which depth you prefer to use (this determines how many
+colors can be displayed at a time) and to select all of the modes you are
+interested in possibly using.
+
+Your hardware may not be able to support all of depth and mode combinations
+that can be selected.  Any unsupported combinations will automatically be
+rejected by the server when it tries to startup.  Note also that if you select
+multiple modes, you will get a virtual screen as large as the largest of the
+usable modes.
+
+3.2.5  Monitor
 
 Enter the horizontal and vertical frequency ranges that your monitor supports
 in the corresponding entry boxes near the top of the screen.  You can enter
@@ -296,11 +318,24 @@ choices from the list of common monitor capabilities.  The program will use
 conservative values for each of these, so you'll get better performance if you
 type in the correct values from your monitor manual.
 
-3.2.5  Other
+3.2.6  Other
 
 You can probably just skip this one.
 
-3.2.6  Completing the configuration
+
+
+
+
+
+
+
+
+
+Quick-Start Guide to XFree86 Setup
+
+
+
+3.2.7  Completing the configuration
 
 Once you've finished with the above, press the 'Done' button and then the
 'Okay' button which will appear. You will then be switched back to text mode.
@@ -323,18 +358,6 @@ The display will show an entry box and three buttons.
 
 The first button allows you to run xvidtune to adjust your video modes.  One
 important point to keep in mind when using xvidtune is that switching video
-
-
-
-
-
-
-
-
-Quick-Start Guide to XFree86 Setup
-
-
-
 modes with Ctrl-Alt-+ is disabled while xvidtune is running.  You must use the
 'Next' and 'Prev' buttons to switch modes.  Because of this, you should be
 careful not to move the mouse when pressing either of these.  If by some chance
@@ -366,6 +389,18 @@ or perhaps Delete), at any time to stop the program, if you need to.  You can
 just start it over again.
 
 The xf86config program provides instructions on screen as to what you need to
+
+
+
+
+
+
+
+
+Quick-Start Guide to XFree86 Setup
+
+
+
 do.  Following are some notes that document the various stages in the process.
 They should help you get through the process quickly and provide some documen-
 tation for those people who like to know what they're getting themselves into,
@@ -390,17 +425,6 @@ It will also check if you have the /usr/X386 directory as used by older (pre
 If everything is okay, just press Enter and go on, otherwise press Control-C to
 exit and make any necessary changes and restart xf86config.
 
-
-
-
-
-
-
-
-Quick-Start Guide to XFree86 Setup
-
-
-
 4.3  Mouse setup
 
 Pick the mouse type from the menu and enter the name of the device to which
@@ -416,6 +440,10 @@ If you don't know which protocol your mouse uses, you'll just have to guess
 likely) and then see the troubleshooting section if it doesn't work when you
 run the server.
 
+The xf86config program has not been updated to allow you to select the latest
+mouse protocols, so you may have to edit the config file by hand after xf86con-
+fig has finished.
+
 4.4  Keyboard setup
 
 Simply answer yes to the question regarding keyboard setup.
@@ -427,6 +455,17 @@ something else, you can enter no.
 
 Setting up a monitor consists of entering the specifications of your monitor
 and a description of the model and manufacturer.
+
+
+
+
+
+
+
+
+Quick-Start Guide to XFree86 Setup
+
+
 
 You are first asked for the horizontal sync rate.  It is VERY important to
 enter the correct value(s) from the manual. If one of the ranges given matches
@@ -456,20 +495,9 @@ the next step - where you'll have to answer the questions yourself.
 If you selected your card in the previous step, then server selection is easy -
 just use the recommendation from the database.
 
-
-
-
-
-
-
-
-Quick-Start Guide to XFree86 Setup
-
-
-
 If you have a card which uses one of the chipsets for which a specific server
-exists (Mach8, Mach32, Mach64, AGX/XGA, 8514/A, S3, ET4000/W32, I128, P9000)
-you'll want to pick the accel option.
+exists (Mach8, Mach32, Mach64, AGX/XGA, 8514/A, S3, I128, P9000) you'll want to
+pick the accel option.
 
 Otherwise you'll probably want to use the SVGA server.
 
@@ -493,6 +521,17 @@ If you don't have one of the listed RAMDACs or Clockchips on your card, just
 press enter when asked what type you have.  If you do not have a programmable
 clock chip, the program will next attempt to probe to find out what clock rates
 are supported by your clock chip.
+
+
+
+
+
+
+
+
+Quick-Start Guide to XFree86 Setup
+
+
 
 4.9  Mode Selection
 
@@ -521,18 +560,6 @@ tinue.
 The program will now ask if you would like to write the configuration settings
 you've selected to the file XF86Config. Answer yes.
 
-
-
-
-
-
-
-
-
-Quick-Start Guide to XFree86 Setup
-
-
-
 4.11  Some final notes
 
 Lastly, the program tells you that it's finished its part of this process and
@@ -559,8 +586,20 @@ file to /usr/X11R6/lib/X11 and run the 'startx' command.
 You should now have a running X server.  If it's running but the display
 doesn't look as good as you think it should (i.e.  it doesn't fill the whole
 screen, it's off-center, it's wrapping around on one side, etc.) see the sec-
-tion on xvidtune.  If there is some other problem, see the troubleshooting sec-
-tion.
+tion on xvidtune.  If there is some other problem, see the troubleshooting
+
+
+
+
+
+
+
+
+Quick-Start Guide to XFree86 Setup
+
+
+
+section.
 
 
 6.  Running xvidtune
@@ -586,18 +625,6 @@ paste it into your editor.
 
 If you would like to adjust your other modes, you can click on the Next and
 Prev buttons to switch modes.
-
-
-
-
-
-
-
-
-
-Quick-Start Guide to XFree86 Setup
-
-
 
 When you are through using xvidtune simply press on the Quit button.
 
@@ -626,6 +653,18 @@ new card.
 If all else fails, you can try posting a message to comp.windows.x.i386unix or
 comp.os.linux.x or send email to XFree86@XFree86.org.
 
+
+
+
+
+
+
+
+
+Quick-Start Guide to XFree86 Setup
+
+
+
 7.1  The mouse doesn't move correctly, it stays in one area of the screen
 
 You've selected the wrong protocol for your mouse. Try a different one.
@@ -651,60 +690,21 @@ server, you just have to find the right combination of settings for your mouse.
 See the Pointer section of the XF86Config man page for a complete list of set-
 tings.
 
-
-
-
-
-
-
-
-
-
-
-Quick-Start Guide to XFree86 Setup
-
-
-
 7.4  The display is shifted to the left/right/top/bottom
 
 See the section on xvidtune.
 
 7.5  I don't appear to have xf86config or xvidtune on my system
 
-Hmmm. Three possibilities:
+Hmmm. A couple of possibilities:
 
-  1.  You have a version of XFree86 that is older than 3.1.2.  If this is the
-      case then you probably aren't reading this document either, because it
-      wasn't included in 3.1.2 and earlier releases.  Please upgrade to the
-      latest version.
-
-  2.  Your PATH is not set correctly. Make sure it includes the bin directory
+  1.  Your PATH is not set correctly. Make sure it includes the bin directory
       for the XFree86 binaries (usually, /usr/X11R6/bin
 
-  3.  You don't have a complete installation of XFree86.  Go back to wherever
+  2.  You don't have a complete installation of XFree86.  Go back to wherever
       you got XFree86 and get the missing pieces.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.4 1997/01/25 03:22:04 dawes Exp $
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.4.2.2 1998/02/28 04:47:08 dawes Exp $
 
 
 
@@ -808,32 +808,32 @@ Quick-Start Guide to XFree86 Setup
 3. Using XF86Setup .......................................................... 2
    3.1	Initial questions ................................................... 2
    3.2	Configuration areas ................................................. 3
-   3.3	Back to text mode ................................................... 5
-   3.4	The second server ................................................... 5
+   3.3	Back to text mode ................................................... 6
+   3.4	The second server ................................................... 6
    3.5	Ending text ......................................................... 6
 
 4. Running xf86config ....................................................... 6
-   4.1	The intro screen .................................................... 6
-   4.2	Getting your PATH right ............................................. 6
+   4.1	The intro screen .................................................... 7
+   4.2	Getting your PATH right ............................................. 7
    4.3	Mouse setup ......................................................... 7
    4.4	Keyboard setup ...................................................... 7
    4.5	Monitor setup ....................................................... 7
-   4.6	Selecting your card ................................................. 7
-   4.7	Server selection .................................................... 7
+   4.6	Selecting your card ................................................. 8
+   4.7	Server selection .................................................... 8
    4.8	Screen/Video configuration .......................................... 8
-   4.9	Mode Selection ...................................................... 8
-   4.10 Creating the XF86Config file ........................................ 8
+   4.9	Mode Selection ...................................................... 9
+   4.10 Creating the XF86Config file ........................................ 9
    4.11 Some final notes .................................................... 9
 
 5. Fixing the XF86Config file ............................................... 9
 
-6. Running xvidtune ......................................................... 9
+6. Running xvidtune ........................................................ 10
 
 7. Troubleshooting ......................................................... 10
    7.1	The mouse doesn't move correctly, it stays in one area of the
-	screen ............................................................. 10
-   7.2	The server doesn't start, it says the mouse is busy. ............... 10
-   7.3	The middle button doesn't work. .................................... 10
+	screen ............................................................. 11
+   7.2	The server doesn't start, it says the mouse is busy. ............... 11
+   7.3	The middle button doesn't work. .................................... 11
    7.4	The display is shifted to the left/right/top/bottom ................ 11
    7.5	I don't appear to have xf86config or xvidtune on my system ......... 11
 
@@ -857,4 +857,4 @@ Quick-Start Guide to XFree86 Setup
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/QuickStart.doc,v 3.6 1997/01/27 22:12:29 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/QuickStart.doc,v 3.6.2.2 1998/02/28 13:05:33 dawes Exp $

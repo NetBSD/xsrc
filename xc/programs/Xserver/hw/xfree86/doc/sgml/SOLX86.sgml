@@ -5,7 +5,7 @@
 
 <title>Information for Solaris for x86 Users
 <author>David Holland
-<date>16 May 1997
+<date>25 Feb 1998
 
 <!-- Table of contents -->
 <toc>
@@ -16,7 +16,7 @@
 <!--Contents
 --------
 
-	1) What is XFree86 3.3
+	1) What is XFree86 3.3.2
 	2) Solaris versions on which XFree86 has been tested.
 	3) The VT-switching sub-system in Solaris x86
 	4) Various notes for building XFree86 on Solaris x86
@@ -24,9 +24,9 @@
  -->
 
 
-<sect>What is XFree86 3.3<p>
+<sect>What is XFree86 3.3.2<p>
 
-	XFree86 3.3 is a port of X11R6.3 that supports several versions of 
+	XFree86 3.3.2 is a port of X11R6.3 that supports several versions of 
 	Intel-based Unix.  It is derived from X386 1.2 which was the X server 
 	distributed with X11R5.  This release consists of many new features 
 	and 
@@ -49,9 +49,9 @@ Many thanks to <bf/Jerry Whelan/ for making the space available for these
 binaries.
 -->
 
-<sect> Solaris for x86, versions on which XFree86 3.3 has been tested<p>
+<sect> Solaris for x86, versions on which XFree86 3.3.2 has been tested<p>
 
-XFree86 3.3 has been actively tested on:
+XFree86 3.3.2 has been actively tested on:
 <itemize>
 <!--
 <item>Solaris 2.1 for x86
@@ -59,6 +59,7 @@ XFree86 3.3 has been actively tested on:
 -->
 <item>Solaris 2.4 for x86 FCS
 <item>Solaris 2.5.1 for x86
+<item>Solaris 2.6 for x86
 </itemize>
 And is expected to run under:
 <itemize>
@@ -184,7 +185,7 @@ Under Solaris 2.4 for x86, <tt>sun.cf</tt> needs to read
 -->
 
 <item>Both Gcc, and ProWorks are supported by XFree86. Gcc-2.5.8 or
-        gcc-2.7.2  are 
+        gcc-2.7.2.3  are 
 	suggested, Gcc-2.6.0 is known not to work.  You also need to set 
 	HasGcc2 correctly in <tt>~xc/config/cf/xf86site.def</tt>.
 
@@ -206,7 +207,7 @@ Under Solaris 2.4 for x86, <tt>sun.cf</tt> needs to read
        c++filt from  GNU binutils. Don't install gas or ld from GNU
        binutils, use the one provided by Sun. 
        <p>
-       With XFree86 3.3, you will need to setup a /opt/SUNWspro/bin
+       With XFree86 3.3.2, you will need to setup a /opt/SUNWspro/bin
        directory containing symbolic links named <tt/cc/, <tt/CC/, and
        <tt/c++filt/ pointing respectively to the actual <tt/gcc/,
        <tt/g++/ and <tt/c++filt/ commands.
@@ -242,7 +243,7 @@ must be found before any
 	<tt>~xc/config/cf/xf86site.def</tt>.<p> to enable the aperture
 	driver. 
 
-        Under Solaris 2.5 and 2.5.1, there's a system driver
+        Under Solaris 2.5 and later, there's a system driver
         (<tt>/dev/xsvc</tt> that provides this functionality. It will
         be detected automatically by the server, so you don't need to
         install the driver.
@@ -329,7 +330,7 @@ Xserver.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SOLX86.sgml,v 3.12.2.4 1997/05/24 08:36:08 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SOLX86.sgml,v 3.12.2.6 1998/02/28 04:47:09 dawes Exp $
 
 
 

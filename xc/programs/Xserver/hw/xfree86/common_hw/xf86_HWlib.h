@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_HWlib.h,v 3.31.2.1 1997/05/06 13:27:29 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_HWlib.h,v 3.31.2.2 1998/02/01 16:04:49 robin Exp $ */ 
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -49,10 +49,13 @@
 /***************************************************************************/
 
 #include <X11/Xfuncproto.h>
+#include "xf86.h"
 
 _XFUNCPROTOBEGIN
 
 /* ICD2061Aalt.c */
+extern unsigned long AltICD2061CalcClock(long);
+
 extern void AltICD2061SetClock(
 #if NeedFunctionPrototypes
 	long,
@@ -64,6 +67,18 @@ extern void Et4000AltICD2061SetClock(
 #if NeedFunctionPrototypes
        long,
        int
+#endif
+);
+
+extern void et4000_init_clock(unsigned long);
+
+/* Ch8391clk.c  -->  used in drivers/tseng/tseng_driver.c */
+extern void Chrontel8391CalcClock(
+#if NeedFunctionPrototypes
+       long,
+       int *,
+       int *,
+       int *
 #endif
 );
 
@@ -179,7 +194,7 @@ extern int ET4000gendacSetClock(
 #endif
 );     
 
-extern int ET4000stg1703SetClock( 
+extern void ET4000stg1703SetClock( 
 #if NeedFunctionPrototypes
         long,
         int
@@ -308,12 +323,12 @@ extern void Chrontel8391SetClock(
 );
 
 /* STG1703clk.c */
-extern void STG1703SetClock(
-#if NeedFunctionPrototypes
-	long,
-	int
-#endif
-);
+extern void ET4000stg1703SetClock(long, int);
+extern void STG1703CalcProgramWord(long, unsigned int *);
+extern void STG1703SetClock(long, int);
+extern unsigned char STG1703getIndex(unsigned int);
+extern void STG1703magic(int);
+extern void STG1703setIndex(unsigned int, unsigned char);
 
 /* BUSmemcpy.s */
 extern void BusToMem(

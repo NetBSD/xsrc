@@ -3,7 +3,7 @@
 <!---->
 <!---->
 <!---->
-<!-- $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/README.html,v 3.4 1996/12/27 06:53:58 dawes Exp $ -->
+<!-- $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/README.html,v 3.4.2.1 1998/02/28 04:47:06 dawes Exp $ -->
 <HTML>
 <HEAD>
 <TITLE>README for XF86Setup</TITLE>
@@ -50,7 +50,6 @@
    <DT>main.c          <DD>Main prog that starts the Tcl interpreter
    <DT>tclcards.c      <DD>Routines to connect Tcl and the Cards
 			   database reading functions
-   <DT>tclcards.h      <DD>Prototypes for above
    <DT>tclkbd.c        <DD>Routines to connect to the XKB extension
    <DT>tclmisc.c       <DD>Routines to connect to the XFree86-Misc
 			   extension
@@ -72,6 +71,7 @@
    <DT>filelist.tcl    <DD>Lists of files that should be checked for
 			   proper installation
    <DT>keyboard.tcl    <DD>Routines for keyboard and other configuration
+   <DT>modeselect.tcl  <DD>Mode selection routines
    <DT>mondata.tcl     <DD>Default monitor sync rates and modes
    <DT>monitor.tcl     <DD>Monitor configuration routines
    <DT>mouse.tcl       <DD>Mouse configuration routines
@@ -89,6 +89,9 @@
 			   standard widget bindings (from the Tcl &amp;
 			   Tk 4.0p3 distributions) and with misc tcl
 			   routines and the combobox widget
+   <DT>texts           <DD>Directory containing helps and messages
+			   (The subdirectories "generic" and "ja" correspond
+			   to English and Japanese respectively)
   </DL>
 
 <H2>New Tcl commands</H2>
@@ -114,6 +117,9 @@
   communicate with the XFree86-VidModeExtension server extension,
   namely:
   <DL>
+    <DT>xf86vid_addmodeline     <DD>Add a new mode to the list of video modes
+    <DT>xf86vid_checkmodeline   <DD>Checks that a mode is usable
+    <DT>xf86vid_deletemodeline  <DD>Removes a mode from the list of valid modes
     <DT>xf86vid_getversion      <DD>Query extension version
     <DT>xf86vid_getbasevals     <DD>Get the ErrorBase and EventBase
     <DT>xf86vid_getmodeline     <DD>Get the current video mode settings
@@ -121,6 +127,7 @@
     <DT>xf86vid_getmonitor      <DD>Get monitor specs
     <DT>xf86vid_lockmodeswitch  <DD>Turn on/off mode switching
     <DT>xf86vid_switchmode      <DD>Switch to next/previous mode
+    <DT>xf86vid_switchtomode    <DD>Switch to a mode
   </DL>
   <P>Only the last two take an argument, which is either <KBD>lock</KBD>
   or <KBD>unlock</KBD> in the case of <KBD>xf86vid_lockmodeswitch</KBD>
@@ -156,8 +163,16 @@
     <DT>xf86misc_setmouse        <DD>Set the current mouse settings
     <DT>xf86misc_getkeyboard     <DD>Get the current keyboard settings
     <DT>xf86misc_setkeyboard     <DD>Set the current keyboard settings
-    <DT>xf86misc_getsaver        <DD>Get the power saver settings
-    <DT>xf86misc_setsaver        <DD>Set the power saver settings
+  </DL>
+
+<H3>XF86Config file reading commands</H3>
+
+  <P>Two commands are available for reading XF86Config file:
+  <DL>
+    <DT>xf86config_findfile	<DD>Locate the XF86Config that would be
+				    used by the server
+    <DT>xf86config_readfile	<DD>Read in the XF86Config file and set
+				    the values from it
   </DL>
 
 <H3>XKEYBOARD extension commands</H3>
@@ -170,7 +185,7 @@
     <DT>xkb_free               <DD>Free a previously allocated keyboard
 				   description structure
     <DT>xkb_getrulesprop       <DD>Read the _XKB_RULES_NAMES root property
-    <DT>xkb_list               <DD>Returns a list of available components
+    <DT>xkb_listcomponents     <DD>Returns a list of available components
     <DT>xkb_listrules          <DD>Returns a list of available rules
 				   defs and their descriptions
     <DT>xkb_load               <DD>Change the keyboard setup for the
@@ -204,6 +219,7 @@
     <DT>umask                  <DD>Set the file creation mode mask
     <DT>sleep                  <DD>Sleeps for the specified number
                                    of seconds
+    <DT>clock                  <DD>Obtain and manipulate time
     <DT>findfocuswindow        <DD>Search along an axis for a window which
 				   accepts focus (added to the interpreter
 				   after Tk has been initialized)

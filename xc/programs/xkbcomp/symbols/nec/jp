@@ -26,6 +26,8 @@
 //other dealings in this Software without prior written authorization
 //from the X Consortium.
 //
+// $XFree86: xc/programs/xkbcomp/symbols/nec/jp,v 3.3.2.2 1998/02/01 22:08:24 robin Exp $
+//
 // symbols for a NEC PC98 keyboard
 default xkb_symbols "pc98" {
 
@@ -78,7 +80,7 @@ default xkb_symbols "pc98" {
     key <AC12> { [ bracketright, braceright ], [ kana_MU, kana_closingbracket ] };
 
     key <LFSH> { [ Shift_L		]	};
-    key <AB01> { [ z, Z 		], [ kana_TSU		]	};
+    key <AB01> { [ z, Z 		], [ kana_TSU, kana_tsu ]	};
     key <AB02> { [ x, X			], [ kana_SA		]	};
     key <AB03> { [ c, C			], [ kana_SO		]	};
     key <AB04> { [ v, V			], [ kana_HI		]	};

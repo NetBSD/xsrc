@@ -51,7 +51,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
 OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.27.2.2 1997/07/05 15:55:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.27.2.6 1998/02/20 15:13:58 robin Exp $ */
 
 #ifdef WIN32
 #include <X11/Xwinsock.h>
@@ -193,6 +193,9 @@ OsSignal(sig, handler)
 #endif
 }
 
+#include <errno.h>
+extern int errno;
+
 #ifdef SERVER_LOCK
 /*
  * Explicit support for a server lock file like the ones used for UUCP.
@@ -200,9 +203,16 @@ OsSignal(sig, handler)
  * server at a time.  This keeps the servers from stomping on each other
  * if the user forgets to give them different display numbers.
  */
-#define LOCK_PATH "/tmp/.X"
-#define LOCK_TMPPATH "/tmp/.tX"
+#ifndef __EMX__
+#define LOCK_DIR "/tmp"
+#define LOCK_TMP_PREFIX "/.tX"
+#define LOCK_PREFIX "/.X"
 #define LOCK_SUFFIX "-lock"
+#else
+#define LOCK_TMP_PREFIX "/xf86$"
+#define LOCK_PREFIX "/xf86_"
+#define LOCK_SUFFIX ".lck"
+#endif
 
 #ifdef _MINIX
 #include <limits.h>	/* For PATH_MAX */
@@ -227,10 +237,8 @@ OsSignal(sig, handler)
 #endif
 #endif
 
-#include <errno.h>
-extern int errno;
-
 static Bool StillLocking = FALSE;
+static char LockFile[PATH_MAX];
 
 /*
  * LockServer --
@@ -242,24 +250,31 @@ void
 LockServer()
 {
 #ifndef AMOEBA
-  char tmp[PATH_MAX], lock[PATH_MAX], pid_str[12];
+  char tmp[PATH_MAX], pid_str[12];
   int lfd, i, haslock, l_pid, t;
+  char *tmppath = NULL;
+  int len;
 
   if (nolock) return;
   /*
    * Path names
    */
 #ifndef __EMX__
-  (void) sprintf(tmp, "%s%s%s", LOCK_TMPPATH, display, LOCK_SUFFIX);
-  (void) sprintf(lock, "%s%s%s", LOCK_PATH, display, LOCK_SUFFIX);
+  tmppath = LOCK_DIR;
 #else
   /* OS/2 uses TMP directory, must also prepare for 8.3 names */
-  { char *tmppath = getenv("TMP");
+  tmppath = getenv("TMP");
   if (!tmppath)
     FatalError("No TMP dir found\n");
-  (void) sprintf(tmp, "%s/xf86$%s.lck",tmppath, display);
-  (void) sprintf(lock, "%s/xf86_%s.lck",tmppath, display); }
 #endif
+
+  len = strlen(LOCK_PREFIX) > strlen(LOCK_TMP_PREFIX) ? strlen(LOCK_PREFIX) :
+						strlen(LOCK_TMP_PREFIX);
+  len += strlen(tmppath) + strlen(display) + strlen(LOCK_SUFFIX) + 1;
+  if (len > sizeof(LockFile))
+    FatalError("Display name `%s' is too long\n");
+  (void)sprintf(tmp, "%s" LOCK_TMP_PREFIX "%s" LOCK_SUFFIX, tmppath, display);
+  (void)sprintf(LockFile, "%s" LOCK_PREFIX "%s" LOCK_SUFFIX, tmppath, display);
 
   /*
    * Create a temporary file containing our PID.  Attempt three times
@@ -307,7 +322,7 @@ LockServer()
   i = 0;
   haslock = 0;
   while ((!haslock) && (i++ < 3)) {
-    haslock = (link(tmp,lock) == 0);
+    haslock = (link(tmp,LockFile) == 0);
     if (haslock) {
       /*
        * We're done.
@@ -318,17 +333,17 @@ LockServer()
       /*
        * Read the pid from the existing file
        */
-      lfd = open(lock, O_RDONLY);
+      lfd = open(LockFile, O_RDONLY);
       if (lfd < 0) {
         unlink(tmp);
-        FatalError("Can't read lock file %s\n", lock);
+        FatalError("Can't read lock file %s\n", LockFile);
       }
       pid_str[0] = '\0';
       if (read(lfd, pid_str, 11) != 11) {
         /*
          * Bogus lock file.
          */
-        unlink(lock);
+        unlink(LockFile);
         close(lfd);
         continue;
       }
@@ -345,7 +360,7 @@ LockServer()
         /*
          * Stale lock file.
          */
-        unlink(lock);
+        unlink(LockFile);
         continue;
       }
       else if (((t < 0) && (errno == EPERM)) || (t == 0)) {
@@ -355,42 +370,33 @@ LockServer()
         unlink(tmp);
 	FatalError("Server is already active for display %s\n%s %s\n%s\n",
 		   display, "\tIf this server is no longer running, remove",
-		   lock, "\tand start again.");
+		   LockFile, "\tand start again.");
       }
     }
   }
   unlink(tmp);
   if (!haslock)
-    FatalError("Could not create server lock file: %s\n", lock);
+    FatalError("Could not create server lock file: %s\n", LockFile);
   StillLocking = FALSE;
 #endif /* !AMOEBA */
 }
 
 /*
- * Unlock_Server --
+ * UnlockServer --
  *      Remove the server lock file.
  */
 void
 UnlockServer()
 {
 #ifndef AMOEBA
-  char buf[PATH_MAX];
-
   if (nolock) return;
 
   if (!StillLocking){
 
-#ifndef __EMX__
-  (void) sprintf(buf, "%s%s%s", LOCK_PATH, display, LOCK_SUFFIX);
-#else
-  /* OS/2 uses TMP directory, must also prepare for 8.3 names */
-   char *tmppath = getenv("TMP");
-  if (!tmppath)
-    FatalError("No TMP dir found\n");
-  (void) sprintf(buf, "%s/xf86_%s.lck",tmppath, display);
-  (void) chmod(buf,S_IREAD|S_IWRITE);
+#ifdef __EMX__
+  (void) chmod(LockFile,S_IREAD|S_IWRITE);
 #endif /* __EMX__ */
-  (void) unlink(buf);
+  (void) unlink(LockFile);
   }
 #endif
 
@@ -530,7 +536,9 @@ void UseMsg()
     ErrorF("c #                    key-click volume (0-100)\n");
     ErrorF("-cc int                default color visual class\n");
     ErrorF("-co file               color database file\n");
+#if 0
     ErrorF("-config file           read options from file\n");
+#endif
     ErrorF("-core                  generate core dump on fatal error\n");
     ErrorF("-dpi int               screen resolution in dots per inch\n");
 #ifdef DPMSExtension
@@ -948,6 +956,7 @@ char	*argv[];
     }
 }
 
+#if 0
 static void
 InsertFileIntoCommandLine(resargc, resargv, prefix_argc, prefix_argv,
 			  filename, suffix_argc, suffix_argv)
@@ -1042,6 +1051,7 @@ ExpandCommandLine(pargc, pargv)
     char ***pargv;
 {
     int i;
+
     for (i = 1; i < *pargc; i++)
     {
 	if ( (0 == strcmp((*pargv)[i], "-config")) && (i < (*pargc - 1)) )
@@ -1054,6 +1064,7 @@ ExpandCommandLine(pargc, pargv)
 	}
     }
 } /* end ExpandCommandLine */
+#endif
 
 #if defined(TCPCONN) || defined(STREAMSCONN)
 #ifndef WIN32
@@ -1426,3 +1437,164 @@ OpenDebug()
         chmod(aixlogfile,00644);
 }
 #endif
+
+#if !defined(WIN32) && !defined(__EMX__)
+/*
+ * "safer" versions of system(3), popen(3) and pclose(3) which give up
+ * all privs before running a command.
+ *
+ * This is based on the code in FreeBSD 2.2 libc.
+ */
+
+int
+System(command)
+    char *command;
+{
+    int pid, p;
+    void (*csig)();
+    int status;
+
+    if (!command)
+	return(1);
+
+#ifdef SIGCHLD
+    csig = signal(SIGCHLD, SIG_DFL);
+#endif
+
+    ErrorF("System: `%s'\n", command);
+
+    switch (pid = fork()) {
+    case -1:	/* error */
+	p = -1;
+    case 0:	/* child */
+	setgid(getgid());
+	setuid(getuid());
+	execl("/bin/sh", "sh", "-c", command, (char *)NULL);
+	_exit(127);
+    default:	/* parent */
+	do {
+	    p = waitpid(pid, &status, 0);
+	} while (p == -1 && errno == EINTR);
+	
+    }
+
+#ifdef SIGCHLD
+    signal(SIGCHLD, csig);
+#endif
+
+    return p == -1 ? -1 : status;
+}
+
+static struct pid {
+    struct pid *next;
+    FILE *fp;
+    int pid;
+} *pidlist;
+
+pointer
+Popen(command, type)
+    char *command;
+    char *type;
+{
+    struct pid *cur;
+    FILE *iop;
+    int pdes[2], pid;
+    void (*csig)();
+
+    if (command == NULL || type == NULL)
+	return NULL;
+
+    if ((*type != 'r' && *type != 'w') || type[1])
+	return NULL;
+
+    if ((cur = (struct pid *)xalloc(sizeof(struct pid))) == NULL)
+	return NULL;
+
+    if (pipe(pdes) < 0) {
+	xfree(cur);
+	return NULL;
+    }
+
+    switch (pid = fork()) {
+    case -1: 	/* error */
+	close(pdes[0]);
+	close(pdes[1]);
+	xfree(cur);
+	return NULL;
+    case 0:	/* child */
+	setgid(getgid());
+	setuid(getuid());
+	if (*type == 'r') {
+	    if (pdes[1] != 1) {
+		/* stdout */
+		dup2(pdes[1], 1);
+		close(pdes[1]);
+	    }
+	    close(pdes[0]);
+	} else {
+	    if (pdes[0] != 0) {
+		/* stdin */
+		dup2(pdes[0], 0);
+		close(pdes[0]);
+	    }
+	    close(pdes[1]);
+	}
+	execl("/bin/sh", "sh", "-c", command, (char *)NULL);
+	_exit(127);
+    }
+
+    /* parent */
+    if (*type == 'r') {
+	iop = fdopen(pdes[0], type);
+	close(pdes[1]);
+    } else {
+	iop = fdopen(pdes[1], type);
+	close(pdes[0]);
+    }
+
+    cur->fp = iop;
+    cur->pid = pid;
+    cur->next = pidlist;
+    pidlist = cur;
+
+#if 0
+    ErrorF("Popen: `%s', fp = %p\n", command, iop);
+#endif
+
+    return iop;
+}
+
+int
+Pclose(iop)
+    pointer iop;
+{
+    struct pid *cur, *last;
+    int omask;
+    int pstat;
+    int pid;
+
+#if 0
+    ErrorF("Pclose: fp = %p\n", iop);
+#endif
+
+    fclose(iop);
+
+    for (last = NULL, cur = pidlist; cur; last = cur, cur = cur->next)
+	if (cur->fp = iop)
+	    break;
+    if (cur == NULL)
+	return -1;
+
+    do {
+	pid = waitpid(cur->pid, &pstat, 0);
+    } while (pid == -1 && errno == EINTR);
+
+    if (last == NULL)
+	pidlist = cur->next;
+    else
+	last->next = cur->next;
+    xfree(cur);
+
+    return pid == -1 ? -1 : pstat;
+}
+#endif /* !WIN32 && !__EMX__ */

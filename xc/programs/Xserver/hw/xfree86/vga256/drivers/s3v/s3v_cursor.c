@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_cursor.c,v 1.1.2.2 1997/05/31 13:34:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_cursor.c,v 1.1.2.3 1998/02/07 10:05:46 hohndel Exp $ */
 
 /*
  *
@@ -332,8 +332,13 @@ S3VMoveCursor(pScr, x, y)
    x -= s3vHotX;
    y -= s3vHotY;
 
-   if (vgaBitsPerPixel > 16)
-      x &= ~1;
+   /* adjust for frame buffer base address granularity */
+   if (vgaBitsPerPixel == 8)
+     x += ((vga256InfoRec.frameX0) & 3);
+   else if (vgaBitsPerPixel == 16)
+     x += ((vga256InfoRec.frameX0) & 1);
+   else if (vgaBitsPerPixel == 24)
+     x += ((vga256InfoRec.frameX0+2) & 3) - 2;
 
    /*
     * Make these even when used.  There is a bug/feature on at least
@@ -356,7 +361,6 @@ S3VMoveCursor(pScr, x, y)
    }
 
    /* WaitIdle(); */
-
    /* This is the recomended order to move the cursor */
    outb(vgaCRIndex, 0x46);
    outb(vgaCRReg, (x & 0xff00)>>8);
@@ -396,6 +400,7 @@ S3VRecolorCursor(pScr, pCurs, displayed)
 
    switch (vgaBitsPerPixel) {
    case 8:
+     if (!(s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX)) {
       vgaGetInstalledColormaps(pScr, &pmap);
       sourceColor.red = pCurs->foreRed;
       sourceColor.green = pCurs->foreGreen;
@@ -419,7 +424,9 @@ S3VRecolorCursor(pScr, pCurs, displayed)
       outb(vgaCRReg, maskColor.pixel);
       outb(vgaCRReg, maskColor.pixel);
       break;
+     }  /* else fall through for ViRGE/MX... */
    case 16:
+     if (!(s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX)) {
       if (vga256InfoRec.weight.green == 5 && s3vPriv.chip != S3_ViRGE_VX) {
 	 packedcolfg = ((pCurs->foreRed   & 0xf800) >>  1)
 	    | ((pCurs->foreGreen & 0xf800) >>  6)
@@ -446,6 +453,7 @@ S3VRecolorCursor(pScr, pCurs, displayed)
       outb(vgaCRReg, packedcolbg);
       outb(vgaCRReg, packedcolbg>>8);
       break;
+     }  /* else fall through for ViRGE/MX... */
    case 24:
    case 32:
       outb(vgaCRIndex, 0x45);

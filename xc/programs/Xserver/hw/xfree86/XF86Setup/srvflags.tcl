@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/srvflags.tcl,v 3.4 1996/12/27 06:54:14 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/srvflags.tcl,v 3.4.2.2 1998/02/21 06:07:02 robin Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -18,37 +18,39 @@
 proc Other_create_widgets { win } {
 	global ServerFlags otherZap otherZoom otherTrapSignals
 	global otherXvidtune otherInpDevMods
+	global pc98_EGC messages
 
 	set w [winpathprefix $win]
 	frame $w.other -width 640 -height 420 \
 		-relief ridge -borderwidth 5
-
 	frame $w.srvflags -bd 2 -relief sunken
-	pack  $w.srvflags -in $w.other \
-		-fill both -expand yes -padx 20m -pady 20m
-	label $w.srvflags.title -text "Optional server settings\n\n\
-		These should be set to reasonable values, by default,\n\
-		so you probably don't need to change anything"
+	if !$pc98_EGC {
+		pack  $w.srvflags -in $w.other \
+			-fill both -expand yes -padx 20m -pady 20m
+	} else {
+		pack  $w.srvflags -in $w.other \
+			-fill both -expand yes -padx 20m -pady 5m
+		$w.other configure -height 400
+	}
+	label $w.srvflags.title -text $messages(srvflags.1)
 	pack  $w.srvflags.title -side top -fill both -expand yes
 	frame $w.srvflags.line -height 2 -bd 2 -relief sunken
 	pack  $w.srvflags.line -side top -fill x -pady 2m
 	checkbutton $w.srvflags.zap         -indicatoron true \
-		-text "Allow server to be killed with\
-		hotkey sequence (Ctrl-Alt-Backspace)" \
+		-text $messages(srvflags.2) \
 		-variable otherZap -anchor w
 	checkbutton $w.srvflags.zoom        -indicatoron true \
-		-text "Allow video mode switching" \
+		-text $messages(srvflags.3) \
 		-variable otherZoom -anchor w
 	checkbutton $w.srvflags.trapsignals -indicatoron true \
-		-text "Don't Trap Signals\
-			- prevents the server from exitting cleanly" \
+		-text $messages(srvflags.4) \
 		-variable otherTrapSignals -anchor w
 	checkbutton $w.srvflags.nonlocalxvidtune -indicatoron true \
-		-text "Allow video mode changes from other hosts" \
+		-text $messages(srvflags.5) \
 		-variable otherXvidtune -anchor w
 	checkbutton $w.srvflags.nonlocalmodindev -indicatoron true \
-		-text "Allow changes to keyboard and mouse settings\
-		from other hosts" -variable otherInpDevMods -anchor w
+		-text $messages(srvflags.6) \
+		-variable otherInpDevMods -anchor w
 	pack $w.srvflags.zap $w.srvflags.zoom $w.srvflags.trapsignals \
 		-anchor w -expand yes -fill x -padx 15m
 	pack $w.srvflags.nonlocalxvidtune $w.srvflags.nonlocalmodindev \
@@ -83,25 +85,5 @@ proc Other_deactivate { win } {
 		[expr $otherXvidtune?"AllowNonLocalXvidtune":""]
 	set ServerFlags(AllowNonLocalModInDev) \
 		[expr $otherInpDevMods?"AllowNonLocalModInDev":""]
-}
-
-proc Other_popup_help { win } {
-	catch {destroy .otherhelp}
-        toplevel .otherhelp -bd 5 -relief ridge
-        wm title .otherhelp "Help"
-	wm geometry .otherhelp +30+30
-        text   .otherhelp.text
-        .otherhelp.text insert 0.0 "\n\n\
-		On this screen you can select the settings of various\
-		server options.\n\
-		These should already be set to the values most often used\n\
-		and generally you don't need to make any changes.\n\n\
-		If you would like more information regarding what each\
-		of these do,\n\
-		read the XF86Config man page."
-        .otherhelp.text configure -state disabled
-        button .otherhelp.ok -text "Dismiss" -command "destroy .otherhelp"
-        focus  .otherhelp.ok
-        pack   .otherhelp.text .otherhelp.ok
 }
 

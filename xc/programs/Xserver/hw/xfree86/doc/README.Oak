@@ -11,7 +11,7 @@
 
 		  Jorge F. Delgado Mendoza (ernar@dit.upm.es)
 
-				 12 March 1996
+			       27 February 1998
 
 
 
@@ -21,33 +21,38 @@ The driver is used in the 8-bit / 256-color SVGA server and the mono server.
 The following chipsets for Oak Tech. Inc. are supported:
 
       OTI037C
-	    8-bit SVGA chipset, with up to 256Kbytes of DRAM, only preliminary
-	    support is included in the driver as I don't have a 037c to test
-	    it.
+	    8-bit VGA chipset, with up to 256Kbytes of DRAM. All the boards I
+	    have seen are only able to do standard VGA modes.  (ie. up to
+	    320x200x256 and up to 640x480x16). Currently the probe for this
+	    chip is disabled, so use the generic VGA driver instead.
 
       OTI067
 	    ISA SVGA chipset, up to 512Kbytes of DRAM (usually 70/80 ns).
 
       OTI077
 	    Enhanced version of the 067, with support for 1Mbyte and up to 65
-	    Mhz dot-clock, this chipset supports up to 1024x768x256 colors in
-	    Non-Interlaced mode, and up to 1280x1024x16 colors Interlaced.
+	    Mhz dot-clock. This chipset is capable of resolutions up to
+	    1024x768x256 colors in Non-Interlaced mode, and up to 1280x1024x16
+	    colors Interlaced.
 
       OTI087
 	    One of the first VLB chipsets available, it has a 16-bit external
-	    data path, and a 32-bit internal memory-controller data path, it
-	    also has register-based color expansion, hardware cursor, a primi-
-	    tive BitBlt engine, a 64 bit graphic latch and some other new (on
-	    its time) features. Maximum BIOS resolutions are 1024x768x256 Non-
-	    Interlaced and 1280x1024x256 interlaced.  Maximum Dot-Clock is
-	    80Mhz, but is usually coupled with the OTI068 clock generator whose
-	    highest frequency is 78Mhz.  Supports up to 2MBytes of 70/70R ns
-	    DRAM.
+	    data path, and a 32-bit internal memory-controller data path. It
+	    features some acceleration hardware: register-based color expan-
+	    sion, hardware cursor, a primitive BitBlt engine, a 64 bit graphic
+	    latch and some other new (on its time) features.  Maximum BIOS res-
+	    olutions are 1024x768x256 Non-Interlaced and 1280x1024x256 inter-
+	    laced. Maximum Dot-Clock is 80Mhz, but is usually coupled with the
+	    OTI068 clock generator capable of frequencies up to 78Mhz.	This
+	    chipset supports up to 2MBytes of 70/70R ns DRAM.
 
       OTI107 and OTI111
 	    These are new, PCI chipsets by Oak Tech. Inc. Support is not
-	    included for them, as they are very rare, and I haven't had the
-	    chance to look at one of these boards.
+	    included for them, as they are very rare and I haven't had the
+	    chance to look at one of these boards.  We have been unable to
+	    locate either 107's or 111's (also called "Spitfire 64111"). If
+	    anybody has such a board and can donate it to XFree86, I would be
+	    more than glad to add support for them.
 
 All the chipsets up to the OTI087 are "Backwards compatible", in fact some
 early drivers for the OTI087 based chipsets were those made for the 077.
@@ -56,21 +61,19 @@ Accelerated support is included only for OTI087 chipsets, also Mono server is
 only included for 067/077 chipsets.
 
 
+Information for Oak Technologies Inc. Chipset Users
+
+
+
+
+
+Information for Oak Technologies Inc. Chipset Users
+
+
+
 2.  XF86Config options
 
 The following options are of particular interest to the Oak driver. Each of
-
-
-Information for Oak Technologies Inc. Chipset Users
-
-
-
-
-
-Information for Oak Technologies Inc. Chipset Users
-
-
-
 them must be specified in the 'svga' driver section of the XF86Config file,
 within the Screen subsections to which they are applicable (you can enable
 options for all depths by specifying them in the Device section).
@@ -104,7 +107,7 @@ options for all depths by specifying them in the Device section).
 	    less 100%, (double BlitStones on xbench). Most OTI087 boards seem
 	    to have this feature broken, corrupting text from xterms and leav-
 	    ing mouse droppings throughout the screen. As a rule of thumb,
-	    enable it, if it works badly, disable it ;).
+	    enable it, if it works badly, disable it.
 
       Option "clock_50" (OTI087)
 	    This one will force the internal speed to 50 Mhz.
@@ -123,9 +126,6 @@ options for all depths by specifying them in the Device section).
 	    Makes the VLB interface to add one wait state to the first read or
 	    write of a given burst.
 
-      Option "first_wwait" (OTI087)
-	    Similar to the previous one, this only inserts a wait state in the
-
 
 
 
@@ -137,6 +137,8 @@ Information for Oak Technologies Inc. Chipset Users
 
 
 
+      Option "first_wwait" (OTI087)
+	    Similar to the previous one, this only inserts a wait state in the
 	    first 'write' of a given burst. reads are not affected. This is the
 	    default behaviour of the server.
 
@@ -189,8 +191,6 @@ VLB boards, thus if you have more than that on your board you shouldn't enable
 it.  The aperture is selected from the VideoRam parameter of the XF86Config or
 from the amount of memory that is detected if VideoRam is not found.
 
-I hope (because I have not tested it very thoroughly) that linear addressing
-will work on ISA boards, VLB ones are fine (I am writing this stuff on mine).
 
 
 
@@ -203,16 +203,16 @@ Information for Oak Technologies Inc. Chipset Users
 
 
 
-GOOD LUCK!!!!
+I hope (because I have not tested it very thoroughly) that linear addressing
+will work on all ISA boards, VLB ones work flawlessly.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.12 1997/01/25 03:22:02 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.12.2.2 1998/02/28 13:29:46 dawes Exp $
 
 
 
 
 
      $XConsortium: Oak.sgml /main/8 1996/05/12 20:58:00 kaleb $
-
 
 
 
@@ -341,7 +341,7 @@ Information for Oak Technologies Inc. Chipset Users
 
 1. Supported chipsets  ...................................................... 1
 
-2. XF86Config options  ...................................................... 1
+2. XF86Config options  ...................................................... 2
 
 3. Mode issues	............................................................. 3
 
@@ -395,4 +395,4 @@ Information for Oak Technologies Inc. Chipset Users
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Oak,v 3.17 1997/01/27 22:12:44 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Oak,v 3.17.2.2 1998/02/28 13:31:06 dawes Exp $

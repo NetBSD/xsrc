@@ -1,0 +1,24 @@
+ XF86SETUPLIBDIR = $(LIBDIR)/XF86Setup
+      SCRIPTSDIR = $(XF86SETUPLIBDIR)/texts/ja/
+
+     SCRIPTFILES = messages.tcl message_proc.tcl \
+		help_card.tcl help_done.tcl help_keyboard.tcl \
+		help_monitor.tcl help_mouse.tcl help_other.tcl \
+		help_intro.tcl help_modeselect.tcl
+   
+all::
+
+#ifndef DontInstallPC98Version
+InstallMultiple($(SCRIPTFILES),$(SCRIPTSDIR))
+#endif
+
+LinkSourceFile(messages.tcl,$(XF86SRC)/XF86Setup/texts/ja)
+LinkSourceFile(message_proc.tcl,$(XF86SRC)/XF86Setup/texts/ja)
+LinkSourceFile(help_card.tcl,$(XF86SRC)/XF86Setup/texts/ja)
+LinkSourceFile(help_done.tcl,$(XF86SRC)/XF86Setup/texts/ja)
+LinkSourceFile(help_keyboard.tcl,$(XF86SRC)/XF86Setup/texts/ja)
+LinkSourceFile(help_monitor.tcl,$(XF86SRC)/XF86Setup/texts/ja)
+LinkSourceFile(help_mouse.tcl,$(XF86SRC)/XF86Setup/texts/ja)
+LinkSourceFile(help_other.tcl,$(XF86SRC)/XF86Setup/texts/ja)
+LinkSourceFile(help_intro.tcl,$(XF86SRC)/XF86Setup/texts/ja)
+LinkSourceFile(help_modeselect.tcl,$(XF86SRC)/XF86Setup/texts/ja)

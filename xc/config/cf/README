@@ -3,7 +3,7 @@ $TOG: README /main/66 1997/05/20 10:05:36 kaleb $
 
 
 
-$XFree86: xc/config/cf/README,v 1.1.1.9.2.2 1997/05/21 15:02:13 dawes Exp $
+$XFree86: xc/config/cf/README,v 1.1.1.9.2.3 1998/01/23 12:35:07 dawes Exp $
 
 The easiest way to write an Imakefile is to find another one that does
 something similar and copy/modify it!
@@ -68,11 +68,13 @@ Imake.tmpl provides defaults for the following variables:
 	HasKrb5			system has Kerberos version 5 support?
 	HasLargeTmp		boolean for system has /tmp space
 	HasLatex		system has LaTeX document preparation software
+	HasLibCrypt		boolean for system has libcrypt
 	HasNdbm			boolean for system has ndbm routines
 	HasPoll			use poll() syscall?
 	HasPurify		boolean for system has Purify
 	HasPutenv		boolean for libc has putenv()
 	HasSecureRPC		boolean for Sun Secure RPC
+	HasSetUserContext	boolean for setusercontext()
 	HasSentinel		boolean for system has Sentinel available
 	HasSharedLibraries	boolean for system has shared libraries
 	HasShm			boolean for System V shared memory
@@ -81,9 +83,10 @@ Imake.tmpl provides defaults for the following variables:
 	HasStreams		use STREAMS I/O interface?
 	HasSymLinks		boolean for system has symbolic links
 	HasTestCenter		boolean for system has TestCenter
+	HasVarDirectory		boolean for system has /var
 	HasVFork		boolean for system has vfork()
 	HasVoidSignalReturn	boolean for POSIX signal() procs
-	HasZlib			boolean for /usr/lib/libz.a
+	HasZlib			boolean for system has libz
 	IncRoot			parent of X11 include directory
 	InstBinFlags		install flags for binaries
 	InstDatFlags		install flags for data files
@@ -144,6 +147,7 @@ Imake.tmpl provides defaults for the following variables:
 	UNCOMPRESSPATH		command to run uncompress
 	UnalignedReferencesAllowed	boolean for unaligned copies ok
 	UsrLibDir		directory in which to install libraries
+	VarDirectory		directory in /var for logs, etc., and config
 	YaccCmd			command to run yacc
 
 X11.tmpl provides defaults for the following variables:

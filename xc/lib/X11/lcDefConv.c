@@ -23,6 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
+/* $XFree86: xc/lib/X11/lcDefConv.c,v 1.1.1.2.2.1 1998/01/25 06:11:06 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"
@@ -332,7 +333,7 @@ open_strtowcs(from_lcd, from_type, to_lcd, to_type)
 
 XLCd
 _XlcDefaultLoader(name)
-    char *name;
+    _Xconst char *name;
 {
     XLCd lcd;
 

@@ -1,0 +1,381 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+<article>
+
+<!-- Titles information -->
+
+<title>SVR4 ユーザのための情報
+<author>The XFree86 Project, Inc
+<date>1998年2月27日(1998年3月1日訳)
+<trans>野村 高明(Takaaki Nomura)
+
+<abstract>
+<bf>注意:</bf> アクセラレーションがサポートされたサーバをお使いになる場合は、
+10節をお読みになり、書いてあることに従って下さい。そうしないと、X サーバを
+終了させたり、再起動したり、仮想端末の切替えを行なったりした時に、X サーバ
+はクラッシュするかもしれません。
+</abstract>
+
+<!-- Begin the document -->
+
+<sect> XFree86 がテストされている SVR4 のバージョン<p>
+XFree86 は、次のバージョンの SVR4 上でテストされています。<p>
+<bf>SVR4.0</bf>
+<itemize>
+<item>Microport: 2.2, 3.1, 4.1, 4.2
+<item>Esix: 4.0.3A, 4.0.4, 4.0.4.1
+<item>Dell: 2.1, 2.2, 2.2.1
+<item>UHC: 2.0, 3.6
+<item>Consensys: 1.2
+<item>MST: 4.0.3
+<item>AT&amp;T: 2.1, 4.0
+<item>ISC: 4.0.3
+<item>NCR: MP-RAS
+<item>PANIX: 5.0
+</itemize><p>
+<bf>SVR4.2</bf>
+<itemize>
+<item>Consensys
+<item>Novell/SCO UnixWare 1.x, 2.0
+</itemize>
+
+基本的に、XFree86 の SVR4 用バイナリは、ISA、EISA、MCA プラットフォーム上の
+いかなる SVR4.0(Solaris 2.x は例外)あるいは SVR4.2 上でも無変更で動作するで
+しょう。このリストに載っていない SVR4 上で XFree86 をお使いであれば、その
+ことを我々に知らせて下さい。
+
+<sect>VT-switch のホットキーの対処方法<p>
+VT-switch(仮想端末の切り替え)のホットキーに関しては、いくつかのバージョンの
+SVR4(Esix, Microport)は、2キー・シーケンス(<tt>Alt-Fn</tt>)を可能にする
+メカニズムを持っています。標準的な SVR4 のメカニズムは、<tt>Alt-SysReq-Fn</tt>
+です。X を走らせると、<tt>Alt-Fn</tt> シーケンスは、サーバが見るよりも先に
+ドライバが横取りしてしまい、X のアプリケーションでそれを使うことはできません。
+そこで、X を走らせている時は、標準的な 3キー・シーケンスに戻ることになるで
+しょう。これへの対処の仕方は、次の通りです。
+<descrip>
+<tag/Microport/
+  Microport のやり方は非常に単純です。2キー・モードは "Microport Mode"、
+  3キー・モードは "Compatible Mode" と呼ばれています。Microport Mode に
+  は <tt>Alt-SysReq-m</tt> で、Compatible Mode には <tt>Alt-SysReq-c</tt> で
+  入れます。X のクライアントが <tt>Alt-Fn</tt> シーケンスにアクセスするのを
+  可能にするためには、X サーバを起動後、<tt>Alt-SysReq-c</tt> を入力するだけ
+  でいいのです。
+<tag/Esix/
+  Esix にはモード切り替えをするキー・シーケンスはありません。それは、次の
+  2レベルで行ないます。<p>
+<enum>
+    <item>どちらのモードをデフォルトにするかを決めるカーネルパラメータが
+    あります。カーネルパラメータは、<tt>/etc/conf/pack.d/kd/space.c</tt> に
+    おける kd_2keysw の初期化で、それを 1(デフォルト)にすると、2キー・モード
+    になり、0 にすると、それが disable されます。<p>
+    <item>モードは、各々の VT が ioctl() を発行することにより変更できます。
+    XFree86 ユーザの便宜を図るため、`2key' と呼ばれるプログラムが用意されて
+    います。(ソースツリー上では <tt>xc/programs/Xserver/hw/xfree86/etc/</tt>
+    に、バイナリでは <tt>/usr/X11R6/lib/X11/etc/</tt> にあります。) この
+    プログラムをコンパイルしてインストールして下さい。これを使うためには、
+    <tt>XF86Config</tt> の Keyboard セクションに `<tt>VTInit "2key off"</tt>'
+    の 1行を入れて、サーバ起動時にそのプログラムが自動的に実行されるように
+    して下さい。これを実行すると、サーバの VT では 2キーによる切り替えが
+    OFF となり、他の VT では ON のままになります。<p>
+</enum>
+    詳細は、リリースノートに含まれる keyboard(7) manpage を参照して下さい
+    (オンラインの manpage にはこの情報は含まれていません)。
+</descrip>
+
+<sect>SVR4.0.4 と SVR4.2 上での SVR3 のバイナリの実行<p>
+SVR4.0.4 は SVR3 のバイナリ実行のための iBCS-2 に従った
+`Advanced Compatibility Package' を追加しました。このツールは SVR4.2 にも存在
+します。XFree86 は、SVR3 のクライアントからのローカル接続を受け入れるために、
+これを利用します。XFree86 のバイナリはこれらのツールを使うように作られていま
+す。もしまだであれば、`Advanced Compatibility Package' をインストールする必要
+があります。<p>
+SVR4.0.4 がすべての SCO バイナリと、ことによると ISC SVR3 のバイナリの多くも
+実行できる訳ではないことがわかっています。これは、XFree86 が悪いからではなく、
+SVR4 自身によるものです。その 1例としては、多くの SVR3 のプログラムが UFS
+ファイルシステムのことを知っておらず、そのために定義されているシステムコール
+を使うのではなく、ディレクトリをファイルとして読もうとすることがあります。
+これは明らかに失敗します。USL の SVR4.0.4 のリリースノート(ベンダから手に
+入れることができます)には、コンパチビリティを向上させるための沢山の示唆が
+あります。<p>
+いくつかの SCO バイナリに関しては、幸運にもそのまま使えるようです。何も変更
+は要りません。xterm のウィンドウ上でプログラムを実行するだけでいいのです。<p>
+ISC ユーザは、バイナリを実行する前に、バイナリエディタを必要とするでしょう。
+ISC は、どういう訳か、ローカル接続のためのパイプを <tt>/tmp/.X11-unix/Xn</tt>
+に置きます。不運なことに、ここは X コンソーシアムの X サーバが、ローカル接続
+のためにいつも使われる Unix ドメインソケットを置く場所でもあるのです。
+XFree86のサーバは、ISC のクライアントへのローカル接続のために、
+<tt>/dev/X/ISCCONN/Xn</tt>を使うように変更されました。従って、バイナリ
+エディタで、クライアントプログラムを編集しなければいけません。
+<tt>/tmp/.X11-unix</tt>をサーチして、それを <tt>/dev/X/ISCCONN</tt>に変更して
+下さい。そうすれば、後はベース OS のコンパチビリティについて心配するだけで
+済みます。
+
+<sect>SVR4 上で XFree86 を構築する場合の注意<p>
+<enum>
+<item>SVR4 で gcc をお使いなら、gcc-2.4.5(あるいは、最近の安定したリリース)
+   をお使いになることを強くお勧めします。2.6.0 は i386 プラットフォームでは
+   いくつかの問題があり、お勧めできません。<p>
+<item>構築を行なう前に、<tt>UFSNINODE</tt>(UFS ファイルシステムの場合)あるいは
+   <tt>S5INODE</tt>(S5 ファイルシステムの場合)のカーネルパラメータを約 650 に
+   上げることをお勧めします。他のいくつかのパラメータについては、
+   "SVR4 上で XFree86 を動作させる場合の注意" を御覧下さい。<p>
+<item><tt>BOOTSTRAPCFLAGS</tt>としては、以下が必要です。
+<quote>
+   Unixware:     "<tt>-DUSL</tt>"
+
+   NCR:          "<tt>-DNCR</tt>"
+
+   他の SVR4:   "<tt>-DSVR4 -Di386</tt>"
+</quote>
+</enum>
+<sect>SVR4 上で XFree86 を動作させる場合の注意<p>
+<bf>注意:</bf>アクセラレーションをサポートしたサーバをお使いになるおつもりで
+   あれば、10 節をお読みになり、書いてあることに従って下さい。そうしないと、
+   X サーバを終了させたり、再起動したり、仮想端末の切替えを行なったりした時に、
+   X サーバはクラッシュするかもしれません。
+<enum>
+<item>SVR4 では、<tt>/usr/X11R6/lib</tt>を <tt>LD_LIBRARY_PATH</tt>に加える
+   必要があるかもしれません。しかし、正しく構築されたクライアントを実行する
+   場合は、必要ありません。<p>
+<item>次のいくつかのカーネルパラメータを増加させるといいかもしれません。
+(<tt>idtune</tt>を実行するか、<tt>/etc/conf/cf.d/stune</tt>を編集して、
+<tt>idbuild</tt>でカーネルを再構築して下さい。)
+<quote>
+      <tt>[HS]FNOLIM    </tt>オープンされたファイル数のハード/ソフト上の制限<p>
+      <tt>MAXUP         </tt>1ユーザ当りのプロセスの最大値<p>
+      <tt>ARG_MAX       </tt>引数リストの最大長<p>
+      <tt>SHMMAX        </tt>共有メモリセグメントの最大サイズ(単位:バイト)<p>
+</quote>
+<item>どのマウスドライバを使うかを選択して下さい。最良の選択は、SVR4 のどの
+   バージョンを使うかに依存します。バスマウスをお使いなら、Xqueue が多分唯一の
+   選択でしょう。シリアルマウスの場合は、次のようにして下さい。<p>
+<descrip>
+<tag/Esix 4.0.3/      Xqueue が動作します。標準の asy ドライバを直接使うこと
+                        もできますが、マウスはスムーズに動かないでしょう。
+
+<tag/Microport SVR4 &lsqb;34&rsqb;.1/ Xqueue が動作します。asy ドライバを
+                        直接使ってもマウスはスムーズに動きます。
+</descrip>
+   Xqueue を使用するためには、<tt>XF86Config</tt> の <tt>Keyboard</tt>、
+   <tt>Pointer</tt>セクションにおいて、どちらも<tt>Protocol</tt>に
+   <tt>Xqueue</tt> を指定して下さい。また、マウスドライバパッケージをインス
+   トールし、mouseadmin を実行してマウスのセットアップを行なう必要があります。
+   mouseadmin が動かない場合は、`<tt>touch /dev/gmse</tt>' を事前に実行して
+   下さい。(mouseadmin は、カーネル再構築後に再実行する必要があります。さもな
+   ければ、<tt>/etc/conf/node.d/gmse</tt> に適当なエントリを加えて下さい。)<p>
+
+   <<bf>注意</bf>:ハードウェアカーソルと Xqueue を同時に使用すると、アクセラ
+   レーションのかかったサーバやドライバの多くで問題が起きます。シリアルマウス
+   をお持ちの場合は、Xqueue を使わないことでこれを回避できます。そうでない場合
+   は、XF86Config の Device セクションに、
+<tscreen><verb>
+   Option "sw_cursor"
+</verb></tscreen>
+   の 1行を入れて下さい。S3 サーバは、この問題が無いことで知られる唯一のサーバ
+   です。
+   <p>
+   Xqueue と標準 asy ドライバを同時に使用して問題が出る場合は、SAS をインス
+   トールする必要があります。SAS を使う場合、<tt>XF86Config</tt> は標準ドラ
+   イバを使うように設定して下さい。<p>
+   SAS は、ftp.physics.su.oz.au にあります。シリアルマウスに SAS を使う場合、
+   <tt>sas.h</tt> 内の <tt>EVENT_TIME</tt> を 80 から 30 に変更すれば、
+   スムーズな動きをするようになるでしょう。SAS の README に書いていないこと
+   として、次の 2点があります。<p>
+
+   - <tt>/etc/ap/chan.ap</tt> に、次の 1行を加えて下さい。
+<verb>
+      MAJOR    0       255     ldterm ttcompat
+</verb>
+   <tt>MAJOR</tt> は、SAS デバイスが使う major 番号です。それがいくつである
+   かは、カーネル再構築後、<tt>/etc/conf/cf.d/mdevice</tt> で調べて下さい。
+   major 番号は、`sas' で始まる行の 6番目のフィールドにあります。このファイ
+   ルは、新しいカーネルでリブートする前に更新しなければいけません。<p>
+   - インストールの手引きに、次のことが書いてありません。<p>
+<quote>
+     3a) `<tt>kconfig</tt>' を実行するか、<tt>/etc/conf/sdevice.d/asy</tt>
+         を編集して、asy ドライバを disable して下さい。<p>
+     3b) <tt>/etc/conf/bin/idbuild</tt>を実行して、カーネルを再構築して
+         下さい。<p>
+</quote>
+<item>SVR4 で xdm を使いたい場合は、shar ファイル
+   <tt>/usr/X11R6/lib/X11/etc/XdmConf.svr4</tt>を一時ディレクトリに展開して
+   下さい。<tt>README</tt> にどのファイルをどこにインストールすべきかが
+   書いてあります。各々のファイルをよく読んで、必要な変更を行なって下さい。<p>
+
+   <bf>注意</bf> いくつかの SVR4 のバージョン(ex. Esix 4.0.3)では、コンソー
+   ルで `vtgetty' を実行するデフォルトの inittab を持っています。xdm を
+   ブート時にスタートさせる場合、それはうまく動きません。問題なのは、vtgetty
+   セッションから logout すると、xdm がサーバのために使用する１つも含め、
+   全ての VT がクローズされてしまうことです。`getty' を使うのがお勧めです。
+   <tt>/etc/inittab</tt> を変更する場合は、<tt>/etc/conf/cf.d/init.base</tt>
+   も同時に変更して下さい。さもないと、次にカーネルを再構築した後で変更が
+   キャンセルされてしまいます。
+
+<item>VT の最大数を変更するためには、<tt>/etc/default/workstations</tt> の
+   ファイルを編集して、その数を変更して下さい。次にリブートした時に、デバイス
+   ノードは作成/削除されます。<p>
+<item>デフォルトのローカル接続タイプは、X11R6 で変更されました。Unix ドメイン
+   のソケットは、もはや "ローカル" 接続タイプとしては扱われません。このことは、
+   :0 に接続するクライアントは接続に Unix のソケットを使用しないことを意味
+   します。Unix のソケット接続を使うためには、クライアントは unix:0 に接続
+   しなければなりません。<p>
+
+   ローカル接続タイプは、"<tt>NAMED</tt>"(named ストリームパイプ)、
+   <tt>"PTS"</tt>(古い形式の USL のストリームパイプ)、"<tt>SCO</tt>"(SCO
+   Xsight のストリームパイプ)、"<tt>ISC</tt>"(ISC のストリームパイプ)の
+   いずれかです。<tt>XLOCAL</tt> 環境変数が、どの優先順位でローカル接続を
+   行なうかを決めるのに使用されます。デフォルトの設定は、
+   <tt>PTS:NAMED:ISC:SCO</tt> です。大抵の場合は、<tt>NAMED</tt> を使うのが
+   推奨されます。その理由は、それがデフォルトの <tt>PTS</tt> よりも速く、
+   PTS を使うと <tt>/dev/pts</tt> デバイスが不足してしまう(PTS を使う各々の
+   クライアントが <tt>/dev/pts</tt> デバイスを必要とします)からです。デフォ
+   ルトのローカル接続タイプを設定するためには、<tt>.xinitrc</tt>(xinit か
+   startx を使う場合)か <tt>/usr/X11R6/lib/xdm/Xsession</tt>(xdm を使う場合)
+   において、<tt>XLOCAL</tt> が設定され、export されるようにして下さい。
+
+</enum>
+
+<sect>SVR4 での一般のクライアントの構築<p>
+<enum>
+<item>沢山のクライアント(いくつかの明確に SVR4 をサポートしているものも含む)
+   が、SVR4 環境下の構築で <tt>-DSYSV</tt> の指定を必要とします。デフォルト
+   の設定でも指定されないかもしれません。手っ取り早い方法は、クライアントの
+   Imakefile に次のようなものを加えることです。
+<verb>
+      #if SystemV4
+           DEFINES = -DSYSV OTHER_CLIENT_DEPENDENT_DEFINES
+      #endif
+</verb>
+   一番いいのは、<tt>-DSYSV</tt> 無しで正しくコンパイルされるように、コードを
+   書き直すことです。<p>
+</enum>
+
+<sect>XFree86 で DOS/Merge 2.2 を使用するためには<p>
+Locus DOS/Merge 2.2 X クライアントは、XFree86 上で使用することができます。
+しかし、それを動かすためには、いくつかのことをする必要があります。1つの変更は、
+X クライアントと X11R5/6 の一般的な問題で、その他は、XFree86 のサーバに特有
+なことに対する作業です。必要な作業は以下の通りです。
+<enum>
+<item><tt>.xinitrc</tt>、<tt>.xsession</tt>の中で、<tt>&dollar;XMERGE</tt>を
+          設定し、export して下さい。一般に、<tt>XMERGE=vga</tt>と設定する
+          ようです。
+<item>`dos' クライアントの "zoom" 機能を使用されるのなら、サーバのキーボード
+          とマウスの本来のドライバの代わりに、"xqueue" を使わなければいけ
+          ません。そうでないと、最初に "zoom" を行なった後に、マウスは機能
+          しなくなるでしょう(`dos' クライアントが本来のドライバを使用する
+          ため、サーバは、zoom が終った後にマウスをアクセスできなくなるから
+          です)。他の唯一の選択肢は、各々のデバイスに別々のマウスを使用する
+          ことです。<p>
+<item>`dos' クライアントのフォントを XFree86 のフォントディレクトリにインス
+          トールする必要があります。BDF ファイルを探して下さい(`*pc???.bdf'
+          というパターンにマッチするファイルを見つけて下さい)。これらは、
+          <tt>/usr/lib/X11/fonts/misc</tt>にあるでしょう。これらのファイル
+          があるディレクトリに移動し、次のことを(`sh' か `ksh' を使って)
+          行なって下さい。
+<verb>
+	for i in *pc???.bdf
+	do
+	    /usr/X11R6/bin/bdftopcf $i > \
+			/usr/X11R6/lib/X11/fonts/misc/`basename $i .bdf`.pcf
+	done
+	cd /usr/X11R6/lib/X11/fonts/misc
+	/usr/X11R6/bin/mkfontdir
+	# Do this only if the server is already running.
+	/usr/X11R6/bin/xset fp rehash
+</verb>
+<item>`dos' クライアントは、内部キー表現から X のキーマップへの変換テーブル
+          を使います。Merge 2.2 に付いているテーブルは、SCO のサーバに対する
+          マッピングを使用するようです。正しいマッピングテーブルは、
+          <tt>/usr/X11R6/lib/X11/etc/xcode.xfree86</tt>にあります。このファ
+          イルは、<tt>/usr/lib/merge/xc</tt> にインストールして下さい。さら
+          に、次のリソースを `dos' クライアントの application-defaults ファ
+          イル(通常、<tt>/usr/lib/X11/app-defaults/DOS</tt> にあります)に
+          加えて下さい。
+<verb>
+	dos*xcodetable: /usr/lib/merge/xc/xcode.xfree86
+</verb>
+          もし間違ったテーブルがインストールされれば、テンキーの矢印キーは
+          `dos' クライアントで機能しなくなりますから、この新しいコードテー
+          ブルが必要なのは明らかでしょう。<p>
+<item>"zoom"機能を正しく動かすためには、&dollar;DISPLAY を "unix:N" か
+          "host_name:N" に設定して、`dos' を実行して下さい。単に ":0" を
+          使うと、クライアントは正しく動かないでしょう。`dos' は、
+          `-display' パラメータを受け付けません。従って、`dos' プログラムを
+          次のようなものに置き換えるのが多分いいでしょう。
+<verb>
+	#!/usr/bin/ksh
+   	if [ "X${DISPLAY}" != "X" ]
+   	then
+		case ${DISPLAY} in
+		:*)
+			DISPLAY=unix${DISPLAY}
+			;;
+		esac
+	fi
+	/usr/bin/dos.real "$@"
+</verb>
+</enum>
+<sect>Esix システムでのキーボードマッピングの問題<p>
+Esix 4.0.3A のあるコンソールドライバのパッチは、XFree86 のサーバのデフォルト
+キーマップを破壊します。キーのほとんどが正しくマップされなくなるので、この問題
+の影響を受ければ、それは明白になるでしょう。これに対する解決策は 2つあります。
+1つ目は、問題を起こしたコンソールドライバのパッチを削除することです。2つ目は、
+サーバ起動後にデフォルトのマッピングをリセットするために、xmodmap(1) を使用する
+ことです。デフォルトマッピングは <tt>/usr/X11R6/lib/X11/etc/xmodmap.std</tt> に
+あり、<tt>.xinitrc</tt>(xdm を使用している場合は、<tt>Xsetup</tt>)に、次の行を
+加えれば、自動的にインストールされます。
+<tscreen><verb>
+  xmodmap /usr/X11R6/lib/X11/etc/xmodmap.std
+</verb></tscreen>
+
+<sect>PANIX 上での 106 日本語キーボードの問題<p>
+PANIX for PC-AT は、DICOP(Desktop UNIX for Intel Cooperative Promotion Group)
+で標準化された日本語キーコードを使っています。そのため、XFree86 で 106 日本語
+キーボードを使用すると、キーコードのコンフリクトが起こります。これを避ける
+ためには、XF86Config に キーワード "panix106" を次のように指定して下さい。
+<verb>
+  Section "Keyboard"
+    Protocol    "Standard"
+    Autorepeat  500 5
+    XkbModel    "jp106"
+    XkbLayout   "jp"
+    panix106
+  EndSection
+</verb>
+
+<sect>アクセラレーションをサポートするサーバで必要なカーネルパッチ<p>
+SVR4.0 は、拡張 I/O レジスタ(0x3FF 以降)をアクセスするプログラムの処理に
+関してバグがあります。しかし、S3 や IBM 8514/A のようなチップを使用した
+ビデオカードはそれらのレジスタを使用します。このバグを引き起こすボードを
+サポートするため、XFree86 ではこの問題をフィックスするカーネルパッチを
+作成し、インストール、アンインストールができるスクリプトを用意しました。
+S3, 8514, Mach8, Mach32, P9000, AGX, W32 のサーバを使用する場合は、この
+パッチをインストールする必要があります。<p>
+
+Dell 2.2 は、Thomas Roell が Dell に勤めていた頃、このバグを見つけて
+フィックスしたので、パッチを当てる必要はないことが分かっています。
+Microport も 4.0 v4.2 リリースでフィックスしています。SVR4.2 も、
+USL がこの問題をフィックスしたので、パッチは必要ありません。<p>
+
+パッチは、ソースツリー上では <tt>xc/programs/Xserver/hw/xfree86/etc</tt>、
+バイナリ上では <tt>/usr/X11R6/lib/X11/etc</tt> のディレクトリの下にあります。
+インストールするスクリプトは `svr4_patch'、アンインストールするスクリプトは
+`svr4_rem_pch' です。パッチが当てられる対象のファイルは、
+<tt>/etc/conf/pack.d/kernel/os.o</tt> です。パッチのスクリプトは、パッチを
+当てる前にバグの存在を確認し、パッチ当てに成功したか失敗したかを知らせます。
+`svr4_patch' スクリプトは、もちろん root 権限で実行して下さい。オリジナルの
+<tt>os.o</tt>、パッチを当てるプログラム、削除するスクリプトのコピーは、
+<tt>/etc/conf/pack.d/kernel/.xfree86</tt> のディレクトリの下に保存されます。<p>
+
+我々がこの問題に対する簡単な解決策を見い出すのを手伝い、その情報をリリース
+する許可を与えてくれた Microport の John M. Sully に感謝します。<p>
+
+<sect>他の問題<p>
+アクセラレーションをサポートしたドライバは、SVR4.0 のいくつかのバージョンで
+ハングアップを起こします。この問題は、/dev/pmem をメモリマップする時、物理
+メモリがあるかどうかをカーネルがチェックすることに関連するようです。この
+ことは、メモリマップトレジスタをマップする時に問題を起こします。これは、
+かつて SVGA サーバの中の MGA ドライバで起きた問題です。他のドライバでも影響
+があるかもしれません。MGA ドライバで起きた問題は、現在はフィックスされて
+います。
+
+</article>

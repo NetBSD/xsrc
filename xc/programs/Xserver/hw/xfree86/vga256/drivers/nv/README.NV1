@@ -1,0 +1,27 @@
+
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/README.NV1,v 1.1.2.2 1998/01/24 00:04:36 robin Exp $
+
+
+XFree driver for NVidia NV1 / SGS-Thomson STG2000
+=================================================
+
+This driver now accelerates bitblits,filled rectangles and colour expansion.
+It also support a hardware cursor.
+
+More graphic acceleration is planned. There is no plan to support the audio 
+functionality of the chip.
+
+Notes
+-----
+
+* THE DRIVER DOES NOT SUPPORT THE VIRTUAL DESKTOP FEATURES OF XFREE86 
+This is because the NV1 does not have the necessary hardware to support this
+feature. If you want to change resolutions, you will have to modify your 
+config file. Comment out all but the mode you wish to use.
+
+Known Bugs 
+---------- 
+
+* Problems with certain Cyrix chips.
+
+

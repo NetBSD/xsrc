@@ -440,7 +440,7 @@ The frame buffer device expects all horizontal timings in number of dotclocks
 (in picoseconds, 1E-12 s), and vertical timings in number of scanlines.
 
 
-7.  Converting XFree86 timing values info frame buffer device timings
+7.  Converting XFree86 timing values into frame buffer device timings
 
 An XFree86 mode line consists of the following fields:
 
@@ -558,12 +558,12 @@ and on its mirrors.
 
 This readme was written by Geert Uytterhoeven, partly based on the original X-
 framebuffer.README by Roman Hodek and Martin Schaller. Section `Converting
-XFree86 timing values info frame buffer device timings' was provided by Frank
+XFree86 timing values into frame buffer device timings' was provided by Frank
 Neumann.
 
 The frame buffer device abstraction was designed by Martin Schaller.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree68/doc/sgml/fbdev.sgml,v 1.1.2.4 1997/08/02 13:54:10 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree68/doc/sgml/fbdev.sgml,v 1.1.2.5 1997/08/08 03:09:07 dawes Exp $
 
 
 
@@ -681,7 +681,7 @@ The Linux/m68k Frame Buffer Device
 
 6.  Video Mode Timings ...................................................... 5
 
-7.  Converting XFree86 timing values info frame buffer device timings ....... 7
+7.  Converting XFree86 timing values into frame buffer device timings ....... 7
 
 8.  References .............................................................. 8
 
@@ -725,4 +725,4 @@ The Linux/m68k Frame Buffer Device
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree68/doc/README.fbdev,v 1.1.2.4 1997/08/02 13:54:44 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree68/doc/README.fbdev,v 1.1.2.5 1997/08/08 03:34:18 dawes Exp $

@@ -25,7 +25,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
  */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.5.2.2 1997/07/28 14:17:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.5.2.4 1998/02/15 16:08:42 hohndel Exp $ */
 
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
@@ -285,18 +285,19 @@ Bool sunTCXInit (screen, pScreen, argc, argv)
 
 #if !defined(i386) && !defined(__bsdi__) /* { */
 
-#ifdef SVR4
+#ifdef SVR4 /* { */
 #include <sys/cg2reg.h>
 #else
-#ifndef CSRG_BASED
+#ifndef CSRG_BASED /* { */
 #include <pixrect/cg2reg.h>
 #else
-#if defined(__sparc__) || defined(__sparc)
+#if defined(__sparc__) || defined(__sparc) /* { */
 #include <machine/cgtworeg.h>
 #else
 #include <machine/cg2reg.h>
-#endif
-#endif
+#endif /* } */
+#endif /* } */
+#endif /* } */
 
 typedef struct {
     struct cg2memfb	mem;

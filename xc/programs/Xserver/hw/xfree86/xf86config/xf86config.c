@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.4 1997/07/19 04:59:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.5 1998/02/22 01:28:28 robin Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -139,13 +139,12 @@
 #define TREEROOT "/usr/X11R6"
 #define TREEROOTLX "/usr/X11R6/lib/X11"
 #define MODULEPATH "/usr/X11R6/lib/modules"
-#define CONFIGNAME "XF86Config"
 #else
 #define TREEROOT "/XFree86"
 #define TREEROOTLX "/XFree86/lib/X11"
 #define MODULEPATH "/XFree86/lib/modules"
-#define CONFIGNAME "XConfig"
 #endif
+#define CONFIGNAME "XF86Config"
 
 int config_mousetype;		/* Mouse. */
 int config_emulate3buttons;
@@ -2852,11 +2851,11 @@ char *ask_XF86Config_location() {
 #else /* __EMX__ */
 	{
 		printf("Please answer the following question with either 'y' or 'n'.\n");
-		printf("Shall I write it to the default location, drive:/XFree86/lib/X11/XConfig? ");
+		printf("Shall I write it to the default location, drive:/XFree86/lib/X11/XF86Config? ");
 		getstring(s);
 		printf("\n");
 		if (answerisyes(s)) {
-			return __XOS2RedirRoot("/XFree86/lib/X11/XConfig",'/');
+			return __XOS2RedirRoot("/XFree86/lib/X11/XF86Config",'/');
 		}
 #endif /* __EMX__ */
 	}
@@ -2865,11 +2864,7 @@ char *ask_XF86Config_location() {
 	getstring(s);
 	printf("\n");
 	if (answerisyes(s))
-#ifndef __EMX__
 		return "XF86Config";
-#else
-		return "XConfig";
-#endif
 
 	printf("Please give a filename to write to: ");
 	getstring(s);

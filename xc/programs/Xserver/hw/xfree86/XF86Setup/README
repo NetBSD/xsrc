@@ -40,7 +40,6 @@ MANIFEST
      main.c              Main prog that starts the Tcl interpreter
      tclcards.c          Routines to connect Tcl and the Cards database
                          reading functions
-     tclcards.h          Prototypes for above
      tclkbd.c            Routines to connect to the XKB extension
      tclmisc.c           Routines to connect to the XFree86-Misc extension
      tclmisc.h           Prototypes for above
@@ -61,6 +60,7 @@ MANIFEST
      filelist.tcl        Lists of files that should be checked for proper
                          installation
      keyboard.tcl        Routines for keyboard and other configuration
+     modeselect.tcl      Mode selection routines
      mondata.tcl         Default monitor sync rates and modes
      monitor.tcl         Monitor configuration routines
      mouse.tcl           Mouse configuration routines
@@ -78,7 +78,10 @@ MANIFEST
                          widget bindings (from the Tcl & Tk 4.0p3
                          distributions) and with misc tcl routines and the
                          combobox widget
-
+     texts               Directory containing helps and messages
+			 (The subdirectories "generic" and "ja" correspond
+			 to English and Japanese respectively)
+ 
 NEW TCL COMMANDS
 
    The program includes a Tcl interpreter which has been extended with
@@ -99,6 +102,12 @@ XFree86-VidModeExtension commands
 
    Several commands have been added which allow the program to communicate
    with the XFree86-VidModeExtension server extension, namely:
+     xf86vid_addmodeline
+			 Add a new mode to the list of video modes
+     xf86vid_checkmodeline
+			 Checks that a mode is usable
+     xf86vid_deletemodeline
+			 Removes a mode from the list of valid modes
      xf86vid_getversion  Query extension version
      xf86vid_getbasevals
                          Get the ErrorBase and EventBase
@@ -110,6 +119,8 @@ XFree86-VidModeExtension commands
      xf86vid_lockmodeswitch
                          Turn on/off mode switching
      xf86vid_switchmode  Switch to next/previous mode
+     xf86vid_switchtomode
+			 Switch to a mode
 
    Only the last two take an argument, which is either "lock" or "unlock"
    in the case of "xf86vid_lockmodeswitch" and either "next" or "prev" in
@@ -149,8 +160,15 @@ XFree86-Misc extension commands
                          Get the current keyboard settings
      xf86misc_setkeyboard
                          Set the current keyboard settings
-     xf86misc_getsaver   Get the power saver settings
-     xf86misc_setsaver   Set the power saver settings
+
+XF86Config file reading commands
+
+   Two commands are available for reading XF86Config file:
+
+     xf86config_findfile
+			 Locate the XF86Config that would be used by the server
+     xf86config_readfile
+			 Read in the XF86Config file and set the values from it
 
 XKEYBOARD extension commands
 
@@ -161,7 +179,7 @@ XKEYBOARD extension commands
      xkb_free            Free a previously allocated keyboard description
                          structure
      xkb_getrulesprop    Read the _XKB_RULES_NAMES root property
-     xkb_list            Returns a list of available components
+     xkb_listcomponents  Returns a list of available components
      xkb_listrules       Returns a list of available rules defs and their
                          descriptions
      xkb_load            Change the keyboard setup for the specified
@@ -192,6 +210,7 @@ Miscellaneous
      rmdir               Remove the named directory
      umask               Set the file creation mode mask
      sleep               Sleeps for the specified number of seconds
+     clock		 Obtain and manipulate time
      findfocuswindow     Search along an axis for a window which accepts
                          focus (added to the interpreter after Tk has been
                          initialized)

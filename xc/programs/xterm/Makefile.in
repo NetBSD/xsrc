@@ -1,20 +1,26 @@
+## $XFree86: xc/programs/xterm/Makefile.in,v 3.1.2.3 1998/02/15 16:09:55 hohndel Exp $ ##
+
 #### Start of system configuration section. ####
 
 srcdir		= @srcdir@
 VPATH  		= @srcdir@
 
 CC		= @CC@
+CPP		= @CPP@
 LINK		= $(CC) $(CFLAGS)
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 
-IMAKE_CFLAGS	= @IMAKE_CFLAGS@
-CFLAGS		= @CFLAGS@ $(IMAKE_CFLAGS)
-LIBS		= @LIBS@
-
 X_CFLAGS	= @X_CFLAGS@
 X_LIBS		= @X_LIBS@
+
+IMAKE_CFLAGS	= @IMAKE_CFLAGS@
+EXTRA_CFLAGS	= @EXTRA_CFLAGS@
+
+CPPFLAGS	= -I. -I$(srcdir) -DHAVE_CONFIG_H $(X_CFLAGS) $(IMAKE_CFLAGS)
+CFLAGS		= @CFLAGS@ $(EXTRA_CFLAGS) 
+LIBS		= @LIBS@
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
@@ -29,30 +35,41 @@ mandir		= $(prefix)/man/man$(manext)
 SHELL		= /bin/sh
 RM              = rm -f
 
-CPPFLAGS	= -I. -I$(srcdir) -DHAVE_CONFIG_H $(X_CFLAGS) 
-
 LDFLAGS		= 
 
 INSTALL_DIRS    = $(bindir) $(libdir) $(mandir)
 
+EXTRAHDR	= @EXTRAHDRS@
 EXTRASRC	= @EXTRASRCS@
 EXTRAOBJ	= @EXTRAOBJS@
 
-          SRCS1 = button.c charproc.c cursor.c data.c input.c \
-		  main.c menu.c misc.c screen.c scrollbar.c tabs.c \
-		  TekPrsTbl.c Tekproc.c util.c VTPrsTbl.c $(EXTRASRC)
-          OBJS1 = button.o charproc.o cursor.o data.o input.o \
-		  main.o menu.o misc.o screen.o scrollbar.o tabs.o \
-		  TekPrsTbl.o Tekproc.o util.o VTPrsTbl.o $(EXTRAOBJ)
+          SRCS1 = button.c charproc.c cursor.c data.c doublechr.c input.c \
+		  main.c menu.c misc.c print.c screen.c scrollbar.c tabs.c \
+		  util.c VTPrsTbl.c $(EXTRASRC)
+          OBJS1 = button.o charproc.o cursor.o data.o doublechr.o input.o \
+		  main.o menu.o misc.o print.o screen.o scrollbar.o tabs.o \
+		  util.o VTPrsTbl.o $(EXTRAOBJ)
           SRCS2 = resize.c
           OBJS2 = resize.o
            SRCS = $(SRCS1) $(SRCS2)
            OBJS = $(OBJS1) $(OBJS2)
-           HDRS = Tekparse.h VTparse.h data.h error.h main.h menu.h proto.h \
-                  ptyx.h xterm.h
+           HDRS = VTparse.h data.h error.h main.h menu.h proto.h \
+                  ptyx.h version.h xterm.h $(EXTRAHDR)
        PROGRAMS = xterm resize
 
 all:	$(PROGRAMS)
+
+.SUFFIXES : .i
+
+.c.o:
+@RULE_CC@
+	@ECHO_CC@$(CC) $(CPPFLAGS) $(CFLAGS) -c $(srcdir)/$*.c
+
+.c.i:
+@RULE_CC@
+	@ECHO_CC@$(CPP) -C $(CPPFLAGS) $*.c >$@
+
+main.o: version.h
 
 xterm : $(OBJS1)
 	$(LINK) $(LDFLAGS) -o $@ $(OBJS1) $(X_LIBS) $(LIBS)
@@ -76,7 +93,7 @@ uninstall:
 		$(mandir)/resize.$(manext)
 
 mostlyclean:
-	-$(RM) *.o core *~ *.BAK
+	-$(RM) *.[oi] XtermLog.* .pure core *~ *.BAK *.out
 
 clean: mostlyclean
 	-$(RM) $(PROGRAMS)
@@ -86,6 +103,10 @@ distclean: clean
 
 realclean: distclean
 	-$(RM) tags TAGS
+
+lint:
+	lint $(CPPFLAGS) $(SRCS1)
+	lint $(CPPFLAGS) $(SRCS2)
 
 tags:
 	ctags $(SRCS) $(HDRS)

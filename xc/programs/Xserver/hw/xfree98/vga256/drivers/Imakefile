@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/7 1996/10/25 15:43:11 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/Imakefile,v 3.8 1996/12/23 07:08:31 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/Imakefile,v 3.8.2.1 1998/02/01 16:05:34 robin Exp $
 #include <Server.tmpl>
 #define IHaveSubdirs
 
@@ -49,8 +49,20 @@ TGUISRCS = trident/?*.c
 TGUIOBJS = trident/tvga89_drv.o
 #endif
 
+#if XF98MGAServer
+MGADIR  = mga
+MGASRCS = mga/?*.c
+MGAOBJS = mga/mga_drv.o
+#endif
+
+#if XF98SVGAServer
+SVGADIR  = svga
+SVGASRCS = svga/?*.c
+SVGAOBJS = svga/cir_drv.o
+#endif
+
 SUBDIRS = $(GANBWAPDIR) $(NEC480DIR) $(NKVNECDIR) $(WABSDIR) $(WABEPDIR) \
-	  $(WSNADIR) $(TGUIDIR)
+	  $(WSNADIR) $(TGUIDIR) $(MGADIR) $(SVGADIR)
 
 #if XF98GANBWAPServer
 NormalDepLibraryTarget(driverganbwap,$(GANBWAPDIR) $(GANBWAPOBJS),$(GANBWAPOBJS))
@@ -72,6 +84,12 @@ NormalDepLibraryTarget(driverwsna,$(WSNADIR) $(WSNAOBJS),$(WSNAOBJS))
 #endif
 #if XF98TGUIServer
 NormalDepLibraryTarget(drivertrident,$(TGUIDIR) $(TGUIOBJS),$(TGUIOBJS))
+#endif
+#if XF98MGAServer
+NormalDepLibraryTarget(drivermga,$(MGADIR) $(MGAOBJS),$(MGAOBJS))
+#endif
+#if XF98SVGAServer
+NormalDepLibraryTarget(driversvga,$(SVGADIR) $(SVGAOBJS),$(SVGAOBJS))
 #endif
 
 NormalLibraryObjectRule()

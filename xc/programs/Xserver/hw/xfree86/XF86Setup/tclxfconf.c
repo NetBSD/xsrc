@@ -5,7 +5,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.15.2.4 1997/08/01 13:46:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.15.2.5 1998/02/15 16:08:56 hohndel Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -514,7 +514,9 @@ static char readconfig_usage[] = "Usage: xf86config_readfile " \
 #define StrOrNull(xx)	((xx)==NULL? "": (xx))
 static char *msetypes[] = { "None", "Microsoft", "MouseSystems", "MMSeries",
 		"Logitech", "BusMouse", "Mouseman", "PS/2", "MMHitTab",
-		"GlidePoint", "IntelliMouse", "Unknown", "Xqueue", "OSMouse" };
+		"GlidePoint", "IntelliMouse", "ThinkingMouse", "IMPS/2",
+		"ThinkingMousePS/2", "MouseManPlusPS/2", "GlidePointPS/2",
+		"NetMousePS/2", "NetScrollPS/2", "SysMouse", "Auto", };
 
 
 int
@@ -683,23 +685,28 @@ getsection_pointer(interp, varname)
   char *varname;
 {
 	char tmpbuf[16];
+	char *name;
 
+	name = NULL;
 #ifdef XQUEUE
 	if (xf86Info.mouseDev->mseProc == xf86XqueMseProc)
-		xf86Info.mouseDev->mseType = 11;
+		name = "Xqueue";
 #endif
 #if defined(USE_OSMOUSE) || defined(OSMOUSE_ONLY)
 	if (xf86Info.mouseDev->mseProc == xf86OsMouseProc)
-		xf86Info.mouseDev->mseType = 12;
+		name = "OSMouse";
 #endif
-	Tcl_SetVar2(interp, "mouse", "Protocol",
-		msetypes[xf86Info.mouseDev->mseType+1], 0);
+	if (name == NULL)
+		name = msetypes[xf86Info.mouseDev->mseType + 1];
+	Tcl_SetVar2(interp, "mouse", "Protocol", name, 0);
 	Tcl_SetVar2(interp, "mouse", "Device",
 		StrOrNull(xf86Info.mouseDev->mseDevice), 0);
 	sprintf(tmpbuf, "%d", xf86Info.mouseDev->baudRate);
 	Tcl_SetVar2(interp, "mouse", "BaudRate", tmpbuf, 0);
 	sprintf(tmpbuf, "%d", xf86Info.mouseDev->sampleRate);
 	Tcl_SetVar2(interp, "mouse", "SampleRate", tmpbuf, 0);
+	sprintf(tmpbuf, "%d", xf86Info.mouseDev->resolution);
+	Tcl_SetVar2(interp, "mouse", "Resolution", tmpbuf, 0);
 	Tcl_SetVar2(interp, "mouse", "Emulate3Buttons",
 		xf86Info.mouseDev->emulate3Buttons? "Emulate3Buttons": "", 0);
 	sprintf(tmpbuf, "%d", xf86Info.mouseDev->emulate3Timeout);

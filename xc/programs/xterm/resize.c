@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: resize.c,v 1.34 95/05/24 22:12:04 gildea Exp $
- *	$XFree86: xc/programs/xterm/resize.c,v 3.18.2.4 1997/06/11 12:09:06 dawes Exp $
+ *	$XFree86: xc/programs/xterm/resize.c,v 3.18.2.6 1998/02/20 14:28:04 robin Exp $
  */
 
 /*
@@ -87,7 +87,6 @@
 #define USE_SYSV_UTMP
 #else
 #define USE_TERMCAP
-#define NO_TERMCAP_H
 #endif
 #else /* else not SYSV */
 #define USE_TERMCAP
@@ -156,10 +155,19 @@ extern struct passwd *getpwuid(); 	/* does ANYBODY need this? */
 #endif
 #endif
 
+#ifndef DFT_TERMTYPE
+#define DFT_TERMTYPE "xterm"
+#endif
+
+#ifndef GCC_UNUSED
+#define GCC_UNUSED /* nothing */
+#endif
+
 #define	EMULATIONS	2
 #define	SUN		1
-#define	TIMEOUT		10
 #define	VT100		0
+
+#define	TIMEOUT		10
 
 #define	SHELL_UNKNOWN	0
 #define	SHELL_C		1
@@ -243,7 +251,7 @@ static void readstring PROTO((FILE *fp, char *buf, char *str));
 
 #ifdef USE_TERMCAP
 static char *strindex PROTO((char *s1, char *s2));
-#if !defined(NO_TERMCAP_H)
+#if HAVE_TERMCAP_H
 #include <termcap.h>
 #if defined(NCURSES_VERSION)
 	/* The tgetent emulation function in SVr4-style curses implementations
@@ -255,7 +263,7 @@ static char *strindex PROTO((char *s1, char *s2));
 #endif
 #else
 #include <curses.h>
-#endif /* ! NO_TERMCAP_H  */
+#endif /* HAVE_TERMCAP_H  */
 #endif
 
 /*
@@ -372,7 +380,7 @@ main (argc, argv)
 	tty = fileno(ttyfp);
 #ifdef USE_TERMCAP
 	if(!(env = getenv("TERM")) || !*env) {
-	    env = "xterm";
+	    env = DFT_TERMTYPE;
 	    if(SHELL_BOURNE == shell_type)
 		setname = "TERM=xterm;\nexport TERM;\n";
 	    else
@@ -384,7 +392,7 @@ main (argc, argv)
 #endif /* USE_TERMCAP */
 #ifdef USE_TERMINFO
 	if(!(env = getenv("TERM")) || !*env) {
-		env = "xterm";
+		env = DFT_TERMTYPE;
 		if(SHELL_BOURNE == shell_type)
 			setname = "TERM=xterm;\nexport TERM;\n";
 		else	setname = "setenv TERM xterm;\n";
@@ -646,7 +654,7 @@ resize_timeout(sig)
 /* ARGSUSED */
 static SIGNAL_T
 onintr(sig)
-    int sig;
+    int sig GCC_UNUSED;
 {
 #ifdef USE_SYSV_TERMIO
 	ioctl (tty, TCSETAW, &tioorig);

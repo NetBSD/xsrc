@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.c,v 3.11.2.2 1997/05/14 08:39:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.c,v 3.11.2.3 1998/02/01 16:05:18 robin Exp $ */
 /*
  * PCI Probe
  *
@@ -34,10 +34,23 @@ vgaGetPCIInfo()
 	return NULL;
 
     while (pcrp = pcrpp[i]) {
+#if !defined(PC98_TGUI) && !defined(PC98_MGA)
 	if ((pcrp->_base_class == PCI_CLASS_PREHISTORIC &&
 	     pcrp->_sub_class == PCI_SUBCLASS_PREHISTORIC_VGA) ||
 	    (pcrp->_base_class == PCI_CLASS_DISPLAY &&
 	     pcrp->_sub_class == PCI_SUBCLASS_DISPLAY_VGA)) {
+#else /* PC98 */
+#ifdef PC98_TGUI
+	if  (pcrp->_base_class == PCI_CLASS_DISPLAY &&
+	     pcrp->_sub_class == PCI_SUBCLASS_DISPLAY_VGA &&
+	     pcrp->_vendor == PCI_VENDOR_TRIDENT) {
+#endif
+#ifdef PC98_MGA
+	if  (pcrp->_base_class == PCI_CLASS_DISPLAY &&
+	     pcrp->_sub_class == PCI_SUBCLASS_DISPLAY_MISC &&
+	     pcrp->_vendor == PCI_VENDOR_MATROX) {
+#endif
+#endif /* PC98 */
 	    found = TRUE;
 	    if ((info = (vgaPCIInformation *)
 		 xalloc(sizeof(vgaPCIInformation))) == NULL)

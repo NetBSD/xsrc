@@ -1,0 +1,592 @@
+<!doctype linuxdoc system>
+
+<article>
+<title> NetBSD で XFree86 3.3.2 を使用する人は読んで下さい
+<author>Rich  Murphey,
+David Dawes,
+Marc  Wandschneider,
+Mark  Weaver,
+Matthieu Herrb
+<Date> 1998 年 3 月 1 日
+<trans> 大石  勲 Isao Ohishi &lt;ohishi@hf.rim.or.jp&gt;
+
+<toc>
+
+
+<sect> XFree86 って何？どこにあるの？
+
+<p>
+XFree86 3.3.2 は Intel ベースの様々な種類の UNIX の幾つかをサポートしている
+X11R6.3 の移植版です。X11R5 と一緒に配布された X386 1.2 という X サーバに
+由来しています。今回のリリースには沢山のバグ修正とともに多くの特徴と性能の
+改善が含まれています。本リリースは the X Consortium の X11R6.3 のソースコード
+にパッチを当てる事で入手できますし、また多くのアーキテクチャ用のバイナリも
+配布されます。
+
+
+<htmlurl url="COPYRIGHT.html" name="Copyright Notice"> を見て下さい.
+
+XFree86 のソースは次の anonymous ftp から入手できます:
+
+<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current"
+url="ftp://ftp.XFree86.org/pub/XFree86/current">
+
+NetBSD 1.2 以降用のバイナリは次から:
+
+<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/"
+url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD">
+
+ミラーサイトのリストはここにあります。
+<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/MIRRORS"
+url="ftp://ftp.XFree86.org/pub/XFree86/MIRRORS">
+
+<p>
+その他のバージョンの NetBSD :
+
+これらのバイナリは初期のバージョンの NetBSD とは互換性がありません。
+もし NetBSD 0.9, 1.0, 1.1 を使用しているのであれば、まず最初に新しい
+バージョンの NetBSD を使用する事を検討して下さい。
+
+アップグレードを行わないなら、XFree86 をソースから構築する必要があり
+ます。XFree86 3.3.2 は初期のバージョンの NetBSD でもきちんとコンパイル
+できる筈ですが、テストは行われていません。
+
+NetBSD/sparc に関しても XFree86 3.3.2 は作られています。詳細は
+<ref id="sparc" name="Building on other architectures"> の章を見て下さい。
+
+XFree86 のクライアントに関しては、NetBSD/alpha や NetBSD がサポートする
+他の多くのアーキテクチャでも作られています。
+
+XFree86 3.3.2 は PC98 の NetBSD もサポートしています。
+
+
+<sect>このドキュメントのバグの報告について
+
+<p>
+このファイルに関してコメントや提案があるならば、 email を 
+<em/matthieu@laas.fr/ (Matthieu Herrb) か <em/XFree86@XFree86.org/ 
+宛に送って頂ければ、校正します。
+
+<sect>本リリースの新しい特徴
+
+<p>
+<enum>
+<item>XFree86 3.3.2 の OS に依存しない部分の特徴に関しては、
+<htmlurl url="RELNOTES.html" name="Release Notes"> を参照して下さい。
+</enum>
+
+<sect>バイナリのインストール
+
+<p>
+インストール作業の詳細な指示に関しては、5 章の <htmlurl url="RELNOTES.html" 
+name="Release Notes"> を参照して下さい。
+
+
+
+<sect1> Xdm(ディスプレイマネージャ)のインストール
+
+<p>
+<tt>xc/lib/Xdmcp/WrapHelp.c</tt> というファイルがフランス(バイナリの
+配布物が作られている場所)では入手できませんので、XDM-AUTHORIZATION-1
+のサポートは含まれていません。WrapHelp.c を入手して <tt/xf86site.def/
+の <tt/HasXdmAuth/ をセットした後に xdm を作り直す必要があります。
+
+このファイルはアメリカ合衆国内で入手できます。詳細に関しては
+<htmlurl name="ftp.x.org:/pub/R6/xdm-auth/README"
+url="ftp://ftp.x.org/pub/R6/xdm-auth/README"> を見て下さい。
+
+ディスプレイマネージャを起動させるには、コンソールで root でログイン
+してから ``<tt/xdm -nodaemon/'' と入力して下さい。
+
+xdm を起動時にコンソールのgettyを無効にした状態で自動起動させたい時は
+次の記述を <tt>/etc/rc.local</tt> に追加して下さい。
+
+<tscreen><verb>
+  if [ -x /usr/X11R6/bin/xdm ]; then
+    echo -n ' xdm'; /usr/X11R6/bin/xdm
+  fi
+</verb></tscreen>
+
+コンソールのgettyを無効にするには、<tt>/etc/ttys</tt> 中のコンソールの
+エントリの ``<bf/on/'' を ``<bf/off/'' に変えます。:
+
+<tscreen><verb>
+ ttyv0	"/usr/libexec/getty Pc"	pc	off secure
+</verb></tscreen>
+
+
+<sect> ハードウェアに応じた X の設定
+
+<p>
+<tt/XF86Config/ ファイルには、X サーバがどんなモニターやビデオカードや
+マウスを使用しているかを記述します。使用しているハードウェアを特定して
+サーバに伝える為にそのファイルを作る<em/必要があります/。
+<p>
+XFree86 3.2 には新しくて使いやすい<bf/XF86Setup/という設定ツールが導入
+されました。これは root で実行しなければなりません。使用に際しての詳細
+な部分に関しては、XF86Setup のドキュメントを参考にして下さい。
+<p>
+ハードウェアに関する情報が必要です。
+<itemize>
+<item>マウスのタイプや転送速度や/devでのデバイスファイル名。
+<item>ビデオカードのチップセットの名称(例えば ET4000, S3, 等)。
+<item>モニターの同期周波数。
+</itemize>
+
+
+<tt/XF86Config/ ファイルを作る方法としては <tt/XF86Setup/ を使用する事
+をすすめます。xf86config というテキストベースのツールも XF86Setup が使
+えない様な(数少ない)場合に備えてまだ用意されています。また、サンプルの
+ファイル例も <tt>/usr/X11R6/lib/X11/XF86Config.eg</tt> にインストール
+されていますので、それをベースに修正して使用する事も出来ます。
+
+<tt/XF86Config/ ファイルの記述形式の詳細に関しては、<em>XF86Config(5)</em>
+のマニュアルを参照して下さい。
+
+ハードウェアにダメージを与えないようにするために、今のサーバはユーザ
+のホームディレクトリ上の <tt>XF86Config</tt> はもう読まなくなっていて、
+<tt>/etc/XF86Config</tt>,
+<tt>/usr/X11R6/lib/X11/XF86Config.hostname</tt> 又は
+<tt>/usr/X11R6/lib/X11/XF86Config</tt> のいずれかが必要となりました。
+
+XF86Config ファイルの設定が一旦終ったら、<tt>xvidtune</tt> を使用して
+ビデオモードのチューニングを行う事が出来ます。
+
+<sect1>マウスの設定
+
+<p>
+シリアルマウスが動作しない場合は、<tt>kermit</tt> とか <tt>tip</tt> 等
+を使用してマウスの繋がっているシリアルポートに接続して、マウスの動きで
+文字が発生するかどうかを確認して下さい。
+<p>
+NetBSD では pms マウスドライバが PS/2 タイプのマウスをバスマウスとして
+扱っています。PS/2 マウスを使用している場合には、<tt/XF86Config/ ファイル
+中の mouse セクションのプロトコルとして、<bf/busmouse/ を指定して下さい。
+<p>
+このドライバでは普通のPS/2マウスだけがサポートされています。最新のPS/2
+マウス(特に"3D"ローラー付のインテリマウスやマウスマン+等)は一度に3バイト
+以上の通信が可能ですが、まだサポートされていません。
+<p>
+XFree86 での一般的なマウスの設定に関しては <htmlurl url="mouse.html" 
+name="README.mouse"> を見て下さい。
+
+<sect1>その他の入力デバイス
+<p>
+XFree86 は <tt/XInput/ 機能拡張を使用して外部入力機器ドライバの
+ダイナミックローディングをサポートしました。現在では、これらの
+機器がサポートされています:
+<itemize>
+<item>ジョイスティック (<tt/xf86Jstk.so/)
+<item>Wacom タブレット (Wacom IV プロトコルのみ, <tt/xf86Wacom.so/)
+<item>SummaSketch タブレット (<tt/xf86Summa.so/)
+<item>Elographics タッチスクリーン (<tt/xf86Elo.so/)
+</itemize>
+
+特定の機器を使用するには、次の行の様に <tt/XF86Config/ の <bf/Module/ 
+セクションに機器に対応した <tt/.so/ ファイルの名称を追加して下さい。
+<tscreen>
+<tt/load/ <tt/"/<em/module/<tt/"/
+</tscreen>
+<tt/XF86Config/ の <bf/XInput/ セクションも設定する必要があります。
+設定手順の詳細に関しては <em>XF86Config(5)</em> のマニュアルを参照
+してください。
+<p>
+<em/xsetpointer(1)/ コマンドを使用すれば、X ポインタを操作する機器
+を変更する事が出来ます。
+<p>
+ジョイスティックサポートに関しては、カーネル内にジョイスティックデバイス
+ドライバが含まれていなければなりません。NetBSD 1.2 では含まれています。
+詳しくは <em/joy(4)/ を見て下さい。
+
+<sect1>PEX と XIE 拡張機能の設定
+<p>
+PEX と XIE 拡張機能は外部モジュールでサポートされています。これらの拡張機能
+を使いたいならば、<tt/XF86Config/ の <bf/Module/ セクションに次の行を追加し
+て下さい。
+<tscreen><verb>
+   load    "pex5.so"
+   load    "xie.so"
+</verb></tscreen>
+
+
+<sect>X の実行
+
+<p>
+X を実行させるには最低限 8MB のメモリが推奨されます。サーバとウィンドウ
+マネージャと xterm 一つで約 4MB 程のメモリを消費します。4MB のシステム
+だと、gcc等のような数MBの空きを期待しているアプリケーションへのメモリが
+残らなくなります。X は 4MB のメモリでも動作しますが、実際問題として X を
+動作させながらコンパイルを行うと、常にページングが発生している状態となり
+5 〜 10 倍程度の処理時間差が発生します。
+
+``<tt/startx >&amp; startx.log/'' と入力すれば、始めてのユーザでも簡単に
+X を起動する事ができます。エラーメッセージはリダイレクトしておかなければ、
+画面が切り替わってしまうので見えなくなります。
+
+X から戻るには、``<tt/exit/'' とコンソールの xterm で入力します。ホーム
+ディレクトリに <tt/.xinitrc/, <tt/.xserverrc/ や <tt/.twmrc/ のファイル
+を xinit や startx のマニュアルに従って記述したものとして作っておけば、X 
+をカスタマイズする事が出来ます。
+
+<sect>X に関するカーネルサポート
+
+<p>
+NetBSD で X のサポートを行う為に、次の行を <tt>/sys/arch/i386/conf</tt> 
+中の config ファイルに記述しておかなければなりません。
+
+<tscreen>
+ options XSERVER, UCONSOLE
+</tscreen>
+
+サーバは NetBSD/i386 で標準的な2つのコンソールドライバ( pccons と pcvt )
+をサポートしています。これらは実行時に検出され、サーバの設定などは必要あ
+りません。
+
+<p>
+pccons ドライバは最もよくテストされ、NetBSD のバイナリ配布用のカーネルに
+も含まれているドライバです。
+
+<p>
+pcvt ドライバは NetBSD に付属しています。pcvt の X モードは pccons の X
+モードと互換性があります。複数の仮想コンソールが利用できたり、各国対応の
+キーボードをサポートしていたりします。このドライバを使用するためには、
+カーネル config ファイル中の次の行:
+
+<tscreen>
+ device          pc0     at isa? port "IO_KBD" irq 1
+</tscreen>
+
+を
+
+<tscreen>
+ device         vt0     at isa? port "IO_KBD" irq 1
+</tscreen>
+
+に変更してカーネルを再構築して新しいカーネルをインストールして下さい。
+
+<p>
+XKB を使用しない場合は、サーバはキーボードドライバから得られた実際の
+ keymap を読み取って X の keymap として使用します。``<tt/RightAlt 
+ModeShift/'' を <tt/XF86Config/ に記述することで、右の <bf/Alt/ キー
+を <bf/AltGr/ として動作させる事が出来ます。
+
+<p>
+syscons と codrv は NetBSD に付属していません。これらは色々なところの
+anonymous FTP から入手できます。これらは XFree86 のバイナリ配布物では
+サポートされていません。これらをサポートするには <tt/xf86site.def/ 中
+の <tt/XFree86ConsoleDefines/ の記述に -DSYSCONS_SUPPORT や -DCODRV_SUPPORT
+を追加してコンパイルして下さい。詳細に関しては、
+<ref id="console-drivers" name="Console drivers"> を参照して下さい。
+
+pcconsを使用していると次のメッセージが表示されることがあります。
+<tscreen><verb>
+> Fatal server error:
+> xf86OpenConsole: CONSOLE_X_MODE_OFF failed (Inappropriate ioctl for device)
+> Was expecting pccons driver with X support
+> Check your kernel's console driver configuration and /dev entries
+> 
+</verb></tscreen>
+
+そういう時は、<tt>/dev/ttyv0</tt> を消して下さい。何故かは分からないの
+ですが ``<tt/MAKEDEV/'' が <tt>/dev/ttyqf</tt> を <tt>/dev/ttyv0</tt>
+へ移してしまう様です(Hung-Chi Chu氏 <em/hcchu@r350.ee.ntu.edu.tw/ の報告)。
+
+
+<sect1>Aperture Driver
+<p>
+NetBSD 0.9C 以降ではマルチユーザモード環境での <tt>/dev/mem</tt> への
+アクセスを拒否するという 4.4BSD のカーネルセキュリティ機能が含まれて
+います。しかし XFree86 のサーバは ビデオメモリへのリニアなアクセスが
+性能の向上に使われたり(必須となる事もあります)します。
+
+P9000, Mach64 や AGX のサーバはリニアメモリアクセスを要求しますし、他の
+アクセラレータ付きサーバも要求こそしませんが、性能向上の為に使用する事が
+出来ます。
+
+XFree86 にリニアメモリアクセスを許可するには2つの方法があります:
+<enum>
+<item>カーネルのセキュリティ機能を無効にする事で対応。カーネルのconfig
+   ファイルに `option INSECURE' を追加してカーネルを作り直せばよい。
+
+   NetBSD-1.0 では<tt>/sys/kern/kern_sysctl.c</tt> の205行にある
+   ``<bf/securelevel/'' 変数を <bf/-1/ で初期化する事でカーネルの
+   セキュリティは無効に出来ます。更に詳しく知りたければ
+   <tt>/usr/include/sys/systm.h</tt> のコメントを読んで下さい。
+
+<item>aperture driverをインストールする。:
+<enum>
+<item> 最初のステップは使用している OS のバージョンに強く依存します。
+<itemize>
+<item> NetBSD 1.0, 1.1, 1.2, 1.2.1 の場合
+   <p>
+   <tt>/etc/rc.local</tt> の最後に次の行を追加します。
+<tscreen><verb>
+ KERNDIR=/usr/X11R6/lib/X11/kernel
+ if [ -f ${KERNDIR}/ap.o ]; then
+   modload -o ${KERNDIR}/ap -e ap -p ${KERNDIR}/apinstall ${KERNDIR}/ap.o
+ fi
+</verb></tscreen>
+
+<item> NetBSD 1.2D とそれ以降の場合
+    <p>
+    <tt>/etc/lkm.conf</tt> に次の行を追加します。
+<tscreen><verb>
+/usr/X11R6/lib/X11/kernel/ap.o  -  ap /usr/X11R6/lib/X11/kernel/apinstall - 
+</verb></tscreen> 
+
+<item> NetBSD 1.2G, 1.3 とそれ以降の場合
+    <p>
+    <tt>lkm.conf</tt> のフォーマットが 1.2G で変わりました。
+    <tt>/etc/lkm.conf</tt> に次の行を追加してい下さい。
+<tscreen><verb>
+/usr/X11R6/lib/X11/kernel/ap.o  -  ap /usr/X11R6/lib/X11/kernel/apinstall - -AFTERMOUNT
+</verb></tscreen> 
+</itemize>
+
+<item> システムを再起動します。XFree86 は aperture ドライバが使用できる
+       場合は自動認識するようになるでしょう。
+</enum>
+
+    <bf/Warning:/ <tt>/netbsd</tt> や <tt>/bsd</tt> 以外のカーネルで
+    起動する場合、ローダブルカーネルモジュールを使用するとシステムが
+    クラッシュします。他のカーネルで起動する場合には、いつもシングル
+    ユーザモードで起動するようにして下さい。
+
+<p>
+<quote>
+   <bf/Caveat:/ aperture ドライバは一度に一つのアクセスしか許可しません。
+   (だから一旦 X が起動されるとシステムは同じセキュリティ状態になります)
+   これは複数のサーバを複数のVTで実行した場合に、最初の一つだけがリニア
+   アクセスできるという事です。同時に複数の X サーバを使用する必要が
+   ある場合には、'option INSECURE' を使用して下さい。
+</quote>
+
+</enum>
+
+
+<sect1>MIT-SHM
+<p>
+NetBSD 1.0 以降では System V 形式の共有メモリがサポートされています。
+XFree86 がカーネル内でこれがサポートされている事を検出すると、MIT-SHM
+拡張機能をサポートするようになります。
+
+    カーネルに System V 形式の共有メモリサポートを組み込むには、次の
+    行をカーネル config ファイルに追加して下さい。
+
+<tscreen><verb>
+ # System V-like IPC
+ options         SYSVMSG
+ options         SYSVSEM
+ options         SYSVSHM
+</verb></tscreen>
+ 
+    それから <tt>/sys/arch/i386/config</tt> ディレクトリで次の様に入力
+    します。
+
+<tscreen><verb>
+ # rm -f ../compile/<KERNEL-NAME>/*
+ # config <KERNEL-NAME>
+ # cd ../compile/<KERNEL-NAME>
+ # make depend 
+ # make
+</verb></tscreen>
+
+ そして新しいカーネルをインストールしてリブートします。
+
+<tscreen><verb>
+ # cp /netbsd /onetbsd
+ # cp netbsd /
+ # reboot
+</verb></tscreen>
+
+
+<sect> XFree86 配布物の再構築
+
+<p>
+サーバリンクキットを使用すれば、Xサーバを再構築するのに最低限ディスク
+容量で済みます。リンクキットの圧縮を解いて、<tt/xf86site.def/ の内容
+を必要に応じて変更し、``<tt>./mkmf</tt>'' と入力してサーバをリンクし
+ます。詳細に関しては <tt>/usr/X11R6/lib/Server/README</tt> を見て下さ
+い。
+
+
+See <htmlurl url="INSTALL.html" name="INSTALL"> for instructions on
+unbundling and building the source distribution.
+
+コンパイルする前に <tt>xc/config/cf/xf86site.def</tt> を編集して
+配布物の設定を行わなければなりません。ソースをコンパイルするには、
+xc ディレクトリで ``<tt/make World/'' と入力します。
+
+<sect1>コンソールドライバ<label id="console-drivers">
+
+<p>
+XFree86 3.3.2 では <tt/xf86site.def/ 中のオプション設定を使用して
+いるコンソールドライバの選択に使います。
+<itemize>
+<item> pccons を使用している場合:
+<tscreen><verb>
+ #define XFree86ConsoleDefines -DPCCONS_SUPPORT
+</verb></tscreen>
+<item> pcvt を使用している場合:
+<tscreen><verb>
+ #define XFree86ConsoleDefines -DPCVT_SUPPORT
+</verb></tscreen>
+<item> syscons を使用している場合:
+<tscreen><verb>
+ #define XFree86ConsoleDefines -DSYSCONS_SUPPORT
+</verb></tscreen>
+<item> codrv を使用している場合:
+<tscreen><verb>
+ #define XFree86ConsoleDefines -DCODRV_SUPPORT
+</verb></tscreen>
+</itemize>
+<tt/xf86site.def/ で <bf/XFree86ConsoleDefines/ を設定しない
+場合は、pccons と pcvt のドライバがサポートされます。
+
+<sect1>pcvt_ioctl.h ファイル:
+
+<p>
+XFree86 では標準で PCVT コンソールドライバのサポートが含まれています。
+しかし残念ながら、NetBSD は <tt>/usr/include/machine</tt> へ
+<tt/pcvt_ioctl.h/ をインストールしません。PCVT をサポートする XFree86
+を作る場合には、次のように root でコマンドを実行してから <tt/make World/
+を始めなければなりません。
+<tscreen><verb>
+cp /usr/src/sys/arch/i386/isa/pcvt/pcvt_ioctl.h /usr/include/machine
+</verb></tscreen>
+
+カーネルのソースを展開していない場合は、ftp.netbsd.org かそのミラー
+サイトからこのファイルを入手する事もできます。また PCVT を使用して
+いなければ、 <tt/xf86site.def/ の <bf/XFree86ConsoleDefines/ から
+-DPCVT_SUPPORT を削除する事もできます。
+
+ソースツリーを全て持っている場合は、<tt>/usr/src/sys/arch/i386/include</tt> 
+にこのファイルをコピーしておけば、<tt/make includes/ を実行する度に
+再インストールされる様になります。
+
+NetBSD のこの問題は PR&num;1391 として記載されていますが、何も対処され
+ていません。
+
+<sect1>console.h と ioctl_pc.h ファイル:
+
+<p>
+codrv をサポートしたサーバを作りたいが、<tt/ioctl_pc.h/ が
+<tt>/usr/include/machine</tt> にインストールされていない場合
+は、 <tt>xc/programs/Xserver/hw/xfree86/etc</tt> にあるファイル
+をインストールしておきます。NetBSD-current を使用している場合
+には <tt>/usr/src/sys/arch/i386/include</tt> にもインストール
+しておくと <tt/make includes/ する度に再インストールされます。
+
+codrv コンソールドライバをインストールした場合、このファイルは
+ドライバに付属しているものを使用しなければなりません。
+
+syscons の <tt/console.h/ ファイルは XFree86 からは提供していま
+せん。syscons に付属のものを使用して下さい。
+
+<sect1>NetBSD 1.0 以降での共有ライブラリサポート
+
+<p>
+    XFree86 3.3.2 は標準で NetBSD の共有ライブラリサポートを使用して
+    作られています。NetBSD 0.9 で XFree86 3.3.2 を作ったり、共有ライブ
+    ラリを使用したくない場合は、<tt/xf86site.def/ に次の行を加えます。
+
+<tscreen>	
+ #define BuildBsdSharedLibs 	NO
+</tscreen>
+
+<sect1>他のアーキテクチャでの構築<label id="sparc">
+
+<p>
+XFree86 3.3.2 は NetBSD/sparc 上でもコンパイルされています。Sun用の
+サーバのパッチは Dennis Ferguson 氏と Matthew Green 氏が作っていて、
+<tt>xc/programs/Xserver/hw/sun</tt> に置いてあります。<tt/xf86site.def/
+にも多少の変更が必要となります。
+<itemize>
+<item>全てのサーバを作らない <bf/NO/ 設定にする。(Sun 用のサーバ
+<bf/Xsun24Server/, <bf/XsunServer/, <bf/XsunMonoServer/ のどれを作る
+かという指示は <tt/NetBSD.cf/ の最後に定義します。)
+<item><bf/ServerToInstall/ をセットして、使用したい Sun 用のサーバが
+を選択してください(Xsun と XsunMono の場合)。
+<item>その他の設定可能なオプションに関しては、<htmlurl name="INSTALL document"
+url="INSTALL.html"> を参照して下さい。
+</itemize>
+
+この Sun 用サーバに関して問題が発生した場合は、xfree86 のメーリング
+リストよりも <em/port-sparc@NetBSD.Org/ のメーリングリストか、直接
+私 <em/matthieu@laas.fr/ 宛に連絡下さい。
+
+<p> 
+NetBSD プロジェクトではそれ自身のソースツリー上に、XFree86 のソース
+を元に幾つかの変更が行われたものを持っています。こちらのソースを使用
+して再構築することもできます。NetBSD の xsrc ソースツリーは次のところ
+から入手可能です。
+<htmlurl url="ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/xsrc/"
+name="ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/xsrc/">
+
+<sect>あたらしい X クライアントの構築
+
+<p>
+新しいクライアント(X のアプリケーション)を作る場合、ソース中に
+<tt/Imakefile/ が含まれているなら、<tt/xmkmf/ を使うのが最も簡単
+でしょう。``<tt/xmkmf -a/'' と入力すると、Makefileを作って、必要が
+あれば環境のチェックを行うので、後は ``<tt/make/'' と入力すれば
+良いです。同時にマニュアルもインストールした場合、<tt/whatis.db/
+を更新する為に ``<tt>makewhatis /usr/X11R6/man</tt>'' と実行して
+おきます。
+
+コンパイル中に ``Virtual memory exhausted'' というメッセージが
+cc から出力されるのを避けるには、データやスタックのサイズ制限を
+増やしておくといいでしょう(csh の場合 ``<tt/limit datasize 32M/''
+と ``<tt/limit stacksize 16M/'' を実行しておきます)。
+
+メモ: NetBSD 0.9A と XFree86 2.1 からは、<bf/__386BSD__/ という
+シンボルをコンパイラも X の BSD 用の設定ファイルも設定しなくなって
+います。クライアントを各種 BSD 系のシステムへ移植する時は、<bf/BSD/
+というシンボルを本来 BSD 特有なコードに使うようにする必要があります。
+これは BSD のリリース間の差に依存する時に使用されます。例えば、
+Net-2 以降のリリースに特有のコードの場合には次のように使います。
+
+<tscreen>                   
+#if (BSD >= 199103)
+</tscreen>
+
+このシンボルを正しく設定する為に、<tt>&lt;sys/param.h&gt;</tt> を
+ソース中でインクルードする様にしてください。XFree86 3.1.1 以降では、
+<bf/CSRG_BASED/ というシンボルが各種 BSD システムの為に定義されてい
+ます。これは <tt>&lt;sys/param.h&gt;</tt> のインクルードの保護の為に
+使われます。
+
+本当に i386 系の各種 BSD に特有な部分に関するコードには、
+FreeBSD には <bf/__FreeBSD__/ を NetBSD には <bf/__NetBSD__/ を
+OpenBSD には <bf/__OpenBSD__/ を 386BSD には <bf/__386BSD__/ を
+そして BSD/386 には <bf/__bsdi__/ を使用して下さい。
+
+メモ(その2): 実行時に次のようなメッセージがでたら
+
+<tscreen>                   
+ ld.so: undefined symbol _XtCvtStringToFont 
+</tscreen>
+
+NetBSD のダイナミックリンク機構の弱点でつまづいています。libXmu を
+使用するアプリケーションは、libXt も使用します。クライアントがごく
+普通の <tt/Imakefile/ を使用するなら、この依存性は自動的に Makefile
+中に含まれて問題がなくなるでしょう。もしそうでない場合は、``<tt/-lXt/''
+を Imakefile や Makefile のライブラリリストに追加して、再リンクすれ
+ば対応できます。
+
+<sect> 謝辞
+<p>
+次の方々に大変感謝します。
+<itemize>
+<item><bf/Pace Willison/ は最初に 386BSD を行いました。
+<item><bf/Amancio Hasty/ for fixing cursor restoration, mouse bugs
+and many others. 
+<item><bf/Christoph Robitschko/ は <tt/com.c/ 中の select() を修正しました。
+<item><bf/Nate Williams/ for the patchkit support for X.
+<item>Walnut Creek Cdrom の <bf/Rod Grimes/ と <bf/Jack Velte/ は FreeBSD
+のバイナリリリースに機材の使用を行いました。
+</itemize>
+
+<p>日本語訳に関するコメントは<em/&lt;ohishi@hf.rim.or.jp&gt;/までお願いします。
+
+</article>

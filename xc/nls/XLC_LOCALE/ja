@@ -1,6 +1,7 @@
 XCOMM  $XConsortium: ja /main/7 1996/09/28 16:51:56 rws $
 XCOMM  XLocale Database Sample for ja_JP.euc 
 XCOMM 
+XCOMM  $XFree86: xc/nls/XLC_LOCALE/ja,v 1.1.1.1.2.2 1998/02/01 22:08:10 robin Exp $
 
 XCOMM 
 XCOMM 	XLC_FONTSET category
@@ -35,6 +36,7 @@ fs2	{
 	}
 	font	{
 		primary		JISX0201.1976-0:GR
+		substitute	JISX0201.1976-0:GR
 		vertical_rotate	all
 	}
 }
