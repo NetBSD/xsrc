@@ -19,21 +19,24 @@ STIPPLEDEF = -DHAS_STIPPLE_CODE
 #endif
 #endif
 #endif
+#ifndef Sparc64Architecture
 #ifdef SparcArchitecture
 STIPPLESRC = stipsparc.s stipsparcte.s
 STIPPLEOBJ = stipsparc.o stipsparcte.o
 STIPPLEDEF = -DHAS_STIPPLE_CODE
 #endif
 #endif
+#endif
 
 #if PixelSize == 32
+#ifndef Sparc64Architecture
 #ifdef SparcArchitecture
 STIPPLESRC = stipsprc32.s stipsprcte32.s
 STIPPLEOBJ = stipsprc32.o stipsprcte32.o
 STIPPLEDEF = -DHAS_STIPPLE_CODE
 #endif
 #endif
-
+#endif
 
 SRCS =	 cfbgc.c cfbrrop.c cfbwindow.c \
 	 cfbpntwin.c cfbmskbits.c cfbpixmap.c cfbbitblt.c \
@@ -131,13 +134,17 @@ LinkSourceFile(cfbteblt8.c,LinkDirectory)
 #ifdef MipsArchitecture
 LinkSourceFile(stipmips.s,LinkDirectory)
 #endif
+#ifndef Sparc64Architecture
 #ifdef SparcArchitecture
 LinkSourceFile(stipsparc.s,LinkDirectory)
 #endif
 #endif
+#endif
 #if PixelSize == 32
+#ifndef Sparc64Architecture
 #ifdef SparcArchitecture
 LinkSourceFile(stipsprc32.s,LinkDirectory)
+#endif
 #endif
 #endif
 #endif
@@ -197,6 +204,7 @@ stipmipste.o: stipmipste.s
 	$(AS) -o $@ -DTETEXT stipmipste.s
 #endif
 
+#ifndef Sparc64Architecture
 #ifdef SparcArchitecture
 stipsparcte.s: stipsparc.s
 	$(RM) $@
@@ -211,8 +219,10 @@ stipsparcte.o: stipsparcte.s
 	$(CPP) -DTETEXT stipsparcte.s | $(AS) -o $@ -
 #endif
 #endif
+#endif
 
 #if PixelSize == 32
+#ifndef Sparc64Architecture
 #ifdef SparcArchitecture
 stipsprcte32.s: stipsprc32.s
 	$(RM) $@
@@ -225,6 +235,7 @@ stipsprc32.o: stipsprc32.s
 
 stipsprcte32.o: stipsprcte32.s
 	$(CPP) -DTETEXT stipsprcte32.s | $(AS) -o $@ -
+#endif
 #endif
 #endif
 
