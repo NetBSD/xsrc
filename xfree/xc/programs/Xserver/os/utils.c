@@ -1989,7 +1989,11 @@ CheckUserParameters(int argc, char **argv, char **envp)
 
 #ifdef USE_PAM
 #include <security/pam_appl.h>
+#ifndef _OPENPAM
 #include <security/pam_misc.h>
+#else
+#include <security/openpam.h>
+#endif
 #include <pwd.h>
 #endif /* USE_PAM */
 
@@ -1998,7 +2002,11 @@ CheckUserAuthorization(void)
 {
 #ifdef USE_PAM
     static struct pam_conv conv = {
+#ifndef _OPENPAM
 	misc_conv,
+#else
+	openpam_ttyconv,
+#endif
 	NULL
     };
 
