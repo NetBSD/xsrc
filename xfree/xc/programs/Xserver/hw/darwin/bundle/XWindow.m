@@ -1,7 +1,7 @@
 /*
  * NSWindow subclass for Mac OS X rootless X server
  */
-/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/XWindow.m,v 1.5 2001/11/06 23:18:14 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/XWindow.m,v 1.5.4.1 2002/06/03 18:09:24 torrey Exp $ */
 
 #import "XWindow.h"
 
@@ -37,6 +37,7 @@
     [self setAutodisplay:NO];       // MUST NOT autodisplay! See comment above
     [self disableFlushWindow];      // We do all the flushing manually
     [self setHasShadow: !isRoot];   // All windows have shadows except root
+    [self setReleasedWhenClosed:YES]; // Default, but we want to be sure
 
     // [self setAcceptsMouseMovedEvents:YES]; // MUST be AFTER orderFront?
 

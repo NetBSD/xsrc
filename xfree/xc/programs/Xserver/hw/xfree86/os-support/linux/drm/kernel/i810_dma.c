@@ -290,14 +290,18 @@ static unsigned long i810_alloc_page(drm_device_t *dev)
 
 static void i810_free_page(drm_device_t *dev, unsigned long page)
 {
-	if(page == 0UL)
-		return;
-
-	atomic_dec(&virt_to_page(page)->count);
-	clear_bit(PG_locked, &virt_to_page(page)->flags);
-	wake_up(&virt_to_page(page)->wait);
-	free_page(page);
-	return;
+	if (page) {
+#if LINUX_VERSION_CODE < 0x020409
+		atomic_dec(&virt_to_page(page)->count);
+		clear_bit(PG_locked, &virt_to_page(page)->flags);
+		wake_up(&virt_to_page(page)->wait);
+#else
+		struct page *p = virt_to_page(page);
+		put_page(p);
+		unlock_page(p);
+#endif
+		free_page(page);
+	}
 }
 
 static int i810_dma_cleanup(drm_device_t *dev)

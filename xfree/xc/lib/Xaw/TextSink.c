@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/TextSink.c,v 1.20 2001/12/14 19:54:45 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextSink.c,v 1.20.2.1 2002/07/04 17:07:10 paulo Exp $ */
 
 /*
  * Author:  Chris Peterson, MIT X Consortium.
@@ -1497,6 +1497,7 @@ XawTextSinkConvertPropertyList(String name, String spec, Screen *screen,
     XawTextPropertyList *propl, *prev = NULL;
     XawTextProperty *def_prop = NULL;
     String str, tok, tmp;
+    char buffer[BUFSIZ];
 
     if (prop_lists) ptr = (XawTextPropertyList**)
 	bsearch((void*)(long)qname, prop_lists, num_prop_lists,
@@ -1545,6 +1546,10 @@ XawTextSinkConvertPropertyList(String name, String spec, Screen *screen,
 	params = XawParseParamsString(tok);
 	ident = XrmStringToQuark(params->name);
 	if (ident == NULLQUARK) {
+	    XmuSnprintf(buffer, sizeof(buffer),
+			"Bad text property name \"%s\".", params->name);
+	    XtAppWarning(XtDisplayToApplicationContext
+			 (DisplayOfScreen(screen)), buffer);
 	    DestroyTextPropertyList(propl);
 	    if (prev)
 		prev->next = NULL;
@@ -1564,6 +1569,10 @@ XawTextSinkConvertPropertyList(String name, String spec, Screen *screen,
 
 	    if ((prop->font = XLoadQueryFont(DisplayOfScreen(screen),
 					     argval->value)) == NULL) {
+		XmuSnprintf(buffer, sizeof(buffer),
+			    "Cannot load font \"%s\".", argval->value);
+		XtAppWarning(XtDisplayToApplicationContext
+			     (DisplayOfScreen(screen)), buffer);
 		DestroyTextPropertyList(propl);
 		if (prev)
 		    prev->next = NULL;
@@ -1579,6 +1588,10 @@ XawTextSinkConvertPropertyList(String name, String spec, Screen *screen,
 	    argval->value) {
 	    if (!XAllocNamedColor(DisplayOfScreen(screen), colormap,
 				  argval->value, &color, &exact)) {
+		XmuSnprintf(buffer, sizeof(buffer),
+			    "Cannot allocate color \"%s\".", argval->value);
+		XtAppWarning(XtDisplayToApplicationContext
+			     (DisplayOfScreen(screen)), buffer);
 		DestroyTextPropertyList(propl);
 		if (prev)
 		    prev->next = NULL;
@@ -1592,6 +1605,10 @@ XawTextSinkConvertPropertyList(String name, String spec, Screen *screen,
 	    argval->value) {
 	    if (!XAllocNamedColor(DisplayOfScreen(screen), colormap,
 				  argval->value, &color, &exact)) {
+		XmuSnprintf(buffer, sizeof(buffer),
+			    "Cannot allocate color \"%s\".", argval->value);
+		XtAppWarning(XtDisplayToApplicationContext
+			     (DisplayOfScreen(screen)), buffer);
 		DestroyTextPropertyList(propl);
 		if (prev)
 		    prev->next = NULL;

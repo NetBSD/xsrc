@@ -122,8 +122,9 @@ Returns the text read from the source.
 Specifies the maximum number of characters the TextSrc should
 return to the application in \fItext_return\fP.
 .LP
-This function returns the actual number of characters read from the
-text buffer.  The function is not required to return \fIlength\fP
+This function returns the text position immediately after the
+characters read from the
+text buffer.  The function is not required to read \fIlength\fP
 characters if that many characters are in the file, it may break at
 any point that is convenient to the internal structure of the
 source.  It may take several calls to \fBRead\fP before the desired

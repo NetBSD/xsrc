@@ -16,7 +16,7 @@ As of the release of version 4.0.2 in December 2000, XFree86 has three
 release branches.  First is trunk of the CVS repository.  This is the main
 development stream, where all new work and work for future releases is done.
 
-Second is the stable bugfix branch for the latest full release (4.2.0).  It
+Second is the stable bugfix branch for the latest full release (4.2.1).  It
 is created around the time of the release.  The branch for this one is called
 "xf-4_2-branch".  Fixes for bugs found in the release will be added to this
 branch (as well as the trunk), and updates to this release (if any) will be
@@ -41,8 +41,8 @@ will consist of source code patches, plus binary updates to be layered on top
 of the previous full release.
 
 The next full release will be version 4.3.0, tentatively scheduled for late
-May 2002.  There is no scheduled update release.  If there is one, the ver-
-sion will be 4.2.1.
+late 2002.  There is no scheduled update release.  If there is one, the ver-
+sion will be 4.2.2.
 
 Aside from actual releases, snapshots of the active release branches are
 tagged in the CVS repository from time to time.  Each such snapshot has an
@@ -341,4 +341,4 @@ VendorRelease information can be interpreted.
      Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Versions.sgml,v 1.2 2002/01/16 20:38:45 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Versions,v 1.3 2002/01/16 20:51:04 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Versions,v 1.3.2.1 2002/09/04 03:39:36 dawes Exp $

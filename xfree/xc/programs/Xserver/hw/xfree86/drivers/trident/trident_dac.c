@@ -22,7 +22,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_dac.c,v 1.63 2002/01/11 13:06:30 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_dac.c,v 1.63.2.1 2002/03/29 18:34:24 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -191,7 +191,6 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     vgaHWPtr hwp = VGAHWPTR(pScrn);
     vgaRegPtr regp = &hwp->ModeReg;
     vgaRegPtr vgaReg = &hwp->ModeReg;
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
     
     /* Unprotect */
@@ -640,7 +639,6 @@ TridentRestore(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg)
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     CARD8 temp;
     int vgaIOBase;
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
     if (pTrident->Chipset > PROVIDIA9685) {
@@ -773,7 +771,6 @@ TridentSave(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg)
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     CARD8 temp;
     int vgaIOBase;
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
     /* Goto New Mode */
@@ -886,7 +883,6 @@ TridentShowCursor(ScrnInfoPtr pScrn)
 {
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     int vgaIOBase;
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
     /* 64x64 */
@@ -897,7 +893,6 @@ static void
 TridentHideCursor(ScrnInfoPtr pScrn) {
     int vgaIOBase;
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
     OUTW(vgaIOBase + 4, 0x4150);
@@ -908,7 +903,6 @@ TridentSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
 {
     int vgaIOBase;
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
     
     if (x < 0) {
@@ -934,7 +928,6 @@ TridentSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 {
     int vgaIOBase;
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
     OUTW(vgaIOBase + 4, (fg & 0x000000FF)<<8  | 0x48);
     OUTW(vgaIOBase + 4, (fg & 0x0000FF00)     | 0x49);
@@ -954,7 +947,6 @@ TridentLoadCursorImage(
 {
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     int vgaIOBase;
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
     memcpy((CARD8 *)pTrident->FbBase + (pScrn->videoRam * 1024) - 4096,

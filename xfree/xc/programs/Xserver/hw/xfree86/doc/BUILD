@@ -17,11 +17,11 @@
 We highly recommend using gcc to build XFree86, but it generally also builds
 with the native compiler for each platform;
 
-1.  How to get the XFree86 4.2.0 source
+1.  How to get the XFree86 4.2.1 source
 
 There are a few starting points for getting the XFree86 source.  One option
-is to start directly with the XFree86 4.2.0 source distribution.  In this
-case, the procedure is as follows:
+is to start directly with the XFree86 4.2.0 source distribution and updating
+it to 4.2.1 with a source patch.  In this case, the procedure is as follows:
 
    o The XFree86 source is contained in files X420src-1.tgz, X420src-2.tgz
      and X420src-3.tgz.  These can be found at
@@ -42,21 +42,22 @@ case, the procedure is as follows:
 
           gzip -d < X420src-3.tgz | tar vxf -
 
-   o If the release is not a full release, it is available as a patch against
-     the previous full release in the
-     ftp://ftp.xfree86.org/pub/XFree86/4.2.0/patches/ directory. Get the
-     patch file from there and apply it by running the following command:
+   o A patch relative to 4.2.0 is available at
+     ftp://ftp.xfree86.org/pub/XFree86/4.2.1/patches/.  The patch file is
+     4.2.0-4.2.1.diff.gz.
+
+     The patch can be applied by running:
 
           cd the directory containing the xc directory
 
-          gzip -d < file | patch -s -p0 -E
+          gzip -d < 4.2.0-4.2.1.diff.gz | patch -s -p0 -E
 
-     Look for special patching instructions in the Release Notes.
+     Look for special patching instructions in the Release  Notes.
 
 Another option is to get the source by anonymous CVS or CVSup.  See
 http://www.xfree86.org/cvs/ for details on the different procedure available.
 
-All method will produce one main source directory called xc.
+All methods will produce one main source directory called xc.
 
 2.  Configuring the source before building
 
@@ -71,7 +72,7 @@ Unlike previous versions, imake can now automatically detect and set the var-
 ious OS*Version parameters, so you shouldn't need to enter those settings
 explicitly.
 
-If you are using just the X420src-1.tgz part of the source dist, you will
+If you are using just the X421src-1.tgz part of the source dist, you will
 need to define BuildFonts to NO.
 
 3.  Using a shadow directory of symbolic links for the build
@@ -208,7 +209,7 @@ XFree86:
      shown do not match your system, you probably need to set them manually
      in host.def and report the problem to XFree86@XFree86.org.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.6 2001/11/15 17:32:16 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.6.4.1 2002/09/04 03:33:11 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/BUILD,v 3.7 2001/11/15 17:37:21 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/BUILD,v 3.7.4.1 2002/09/04 03:39:34 dawes Exp $
