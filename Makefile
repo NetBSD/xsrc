@@ -1,15 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 1999/05/16 16:07:12 tv Exp $
+#	$NetBSD: Makefile,v 1.5 1999/05/24 00:05:37 tv Exp $
 #
 # build and install xsrc
-
-build:
-.if exists(xc/xmakefile)
-	@echo ""
-	@echo "Warning:  This does not rebuild from a clean tree."
-	@echo "Use 'make clean' first if you want to start from scratch."
-	@echo ""
-.endif
-	@${MAKE} all install
 
 all: all-xc all-contrib
 
@@ -38,3 +29,12 @@ install-contrib:
 clean cleandir distclean:
 	@cd xc && ${MAKE} clean
 	@-cd contrib && ${MAKE} clean
+
+build:
+.if exists(xc/xmakefile)
+	@echo ""
+	@echo "Warning:  This does not rebuild from a clean tree."
+	@echo "Use 'make clean' first if you want to start from scratch."
+	@echo ""
+.endif
+	@${MAKE} all install
