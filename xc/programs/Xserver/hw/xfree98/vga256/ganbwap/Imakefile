@@ -1,5 +1,0 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/ganbwap/Imakefile,v 3.10.2.2 1998/02/01 22:08:17 robin Exp $
-
-#define VGADEFINES -DPC98_GANB_WAP
-
-#include "../Imakefile.vga"

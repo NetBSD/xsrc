@@ -1,8 +1,0 @@
-XCOMM $XConsortium: Imakefile,v 1.1 94/02/10 21:08:29 rws Exp $
-XCOMM $XFree86: xc/doc/specs/xterm/Imakefile,v 1.1.1.1.12.1 1998/11/07 04:42:28 dawes Exp $
-
-MakeSimpleDoc(ctlseqs,ctlseqs.ms)
-
-AllTarget(ctlseqs.txt)
-
-InstallRoffDoc(ctlseqs)

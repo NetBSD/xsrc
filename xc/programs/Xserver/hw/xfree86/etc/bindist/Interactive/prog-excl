@@ -1,5 +1,0 @@
-lib/X11
-lib/Server
-lib/lib*.so*
-lib/modules
-include/X11/bitmaps
