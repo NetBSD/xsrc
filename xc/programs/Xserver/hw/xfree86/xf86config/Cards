@@ -18,7 +18,18 @@
 # The majority of entries are just a binding of a model name to a
 # chipset/server and untested.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.15 1998/02/27 15:28:57 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.28 1998/11/10 11:55:42 dawes Exp $
+
+# VGA
+
+NAME Generic VGA compatible
+CHIPSET Generic VGA
+SERVER VGA16
+
+NAME Unsupported VGA compatible
+CHIPSET Generic VGA
+SERVER VGA16
+UNSUPPORTED
 
 #Chips & Technologies
 
@@ -65,7 +76,7 @@ LINE # Option "noaccel"
 LINE # Option "no_bitblt"
 LINE # Option "xaa_no_color_exp"
 LINE # Option "xaa_benchmark"
-LINE # Option "sw_cursor"
+LINE # Option "hw_cursor"
 LINE # Option "mmio"
 SEE Chips & Technologies CT65540
 
@@ -84,7 +95,7 @@ LINE # Option "noaccel"
 LINE # Option "no_bitblt"
 LINE # Option "xaa_no_color_exp"
 LINE # Option "xaa_benchmark"
-LINE # Option "sw_cursor"
+LINE # Option "hw_cursor"
 LINE # Option "sync_on_green"
 LINE # Option "fast_dram"
 LINE # Option "use_vclk1"
@@ -103,6 +114,10 @@ NAME Chips & Technologies CT68554
 CHIPSET ct68554
 SEE Chips & Technologies CT65550
 
+NAME Chips & Technologies CT69000
+CHIPSET ct69000
+SEE Chips & Technologies CT65550
+
 NAME Chips & Technologies CT64200
 CHIPSET ct64200
 SERVER SVGA
@@ -116,7 +131,7 @@ LINE # Option "noaccel"
 LINE # Option "no_bitblt"
 LINE # Option "xaa_no_color_exp"
 LINE # Option "xaa_benchmark"
-LINE # Option "sw_cursor"
+LINE # Option "hw_cursor"
 LINE # Option "nolinear"
 LINE # MemBase 0x03b00000
 LINE # Option "hw_clocks"
@@ -163,12 +178,21 @@ NAME Cirrus Logic GD5462
 CHIPSET CL-GD5462
 SERVER SVGA
 NOCLOCKPROBE
+LINE #Option "fifo_conservative"
 
 #tested
 NAME Cirrus Logic GD5464
 CHIPSET CL-GD5464
 SERVER SVGA
 NOCLOCKPROBE
+LINE #Option "fifo_conservative"
+
+#tested
+NAME Cirrus Logic GD5465
+CHIPSET CL-GD5465
+SERVER SVGA
+NOCLOCKPROBE
+LINE #Option "fifo_conservative"
 
 NAME Creative Labs Graphics Blaster MA302
 CHIPSET CL-GD5462
@@ -181,6 +205,12 @@ SEE Cirrus Logic GD5464
 NAME Creative Labs Graphics Blaster 3D
 CHIPSET CL-GD5464
 SEE Cirrus Logic GD5464
+
+#tested
+NAME Cirrus Logic GD5480
+CHIPSET CL-GD5480
+SERVER SVGA
+NOCLOCKPROBE
 
 #tested
 NAME Diamond SpeedStar 64
@@ -293,6 +323,61 @@ NAME Cirrus Logic GD754x (laptop)
 CHIPSET CL-GD7541/42/43/48
 SERVER SVGA
 NOCLOCKPROBE
+
+NAME Techworks Ultimate 3D
+CHIPSET CL-GD5464
+SEE Cirrus Logic GD5464
+
+NAME VideoLogic GrafixStar 550
+CHIPSET CL-GD5464
+SEE Cirrus Logic GD5464
+
+NAME Jaton Video-70P
+CHIPSET CL-GD5464
+SEE Cirrus Logic GD5464
+
+NAME PixelView Combo TV Pro (Prolink)
+CHIPSET CL-GD5480, 4MB
+SERVER SVGA
+COMMENT on card TV Tuner
+NOCLOCKPROBE
+
+NAME PixelView Combo TV 3D AGP (Prolink)
+CHIPSET CL-GD5465, 4MB
+SERVER SVGA
+COMMENT on card TV+FM Tuner
+NOCLOCKPROBE
+
+NAME Creative Labs Graphics Blaster Eclipse (OEM Model CT6510)
+SEE Cirrus Logic GD5465
+
+NAME VideoLogic GrafixStar 560 (PCI/AGP)
+SEE Cirrus Logic GD5465
+
+NAME Cirrus Logic GD5446 (noname card)
+CHIPSET CL-GD5446, 1MB (upgradable to 2MB).
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Octek VL-VGA-26
+CHIPSET CL-GD5426
+SEE Cirrus Logic GD542x
+
+NAME Octek VL-VGA-28
+CHIPSET CL-GD5428
+SEE Cirrus Logic GD542x
+
+NAME Octek Combo-26
+CHIPSET CL-GD5426
+SEE Cirrus Logic GD542x
+
+NAME Octek Combo-28
+CHIPSET CL-GD5428
+SEE Cirrus Logic GD542x
+
+NAME Octek AVGA-20
+CHIPSET CL-GD5420
+SEE Cirrus Logic GD542x
 
 # S3 801/805
 
@@ -1032,6 +1117,9 @@ LINE      #Option "fifo_moderate"
 LINE      #Option "pci_burst_on"
 LINE      #Option "pci_retry"
 
+NAME S3 ViRGE/MX+ (generic)
+SEE S3 ViRGE/MX (generic)
+
 
 
 
@@ -1049,6 +1137,9 @@ SEE S3 ViRGE/GX2 (generic)
 
 NAME S3 86C260 (generic)
 SEE S3 ViRGE/MX (generic)
+
+NAME S3 86C280 (generic)
+SEE S3 ViRGE/MX+ (generic)
 
 
 NAME ELSA Victory 3D
@@ -1108,7 +1199,7 @@ SEE S3 ViRGE/GX2 (generic)
 NAME WinFast 3D S600
 SEE LeadTek WinFast 3D S680
 
-NAME miro miroMedia 3D
+NAME Miro MiroMedia 3D
 SEE S3 ViRGE (generic)
 
 NAME Orchid Technology Fahrenheit Video 3D
@@ -1162,6 +1253,8 @@ SEE S3 ViRGE/VX (generic)
 NAME MELCO WGP-VX8
 SEE S3 ViRGE/VX (generic)
 
+NAME Diamond Stealth 3D 4000
+SEE S3 ViRGE/GX2 (generic)
 
 NAME Toshiba Tecra 750CDT
 SEE S3 ViRGE/MX (generic)
@@ -1175,7 +1268,19 @@ SEE S3 ViRGE/MX (generic)
 NAME Toshiba Tecra 550CDT
 SEE S3 ViRGE/MX (generic)
 
+# currently unsupported S3
 
+NAME S3 86C365 (Trio3D)
+SEE Unsupported VGA compatible
+
+NAME S3 86C391 (Savage3D)
+SEE Unsupported VGA compatible
+
+NAME S3 Trio3D
+SEE Unsupported VGA compatible
+
+NAME S3 Savage3D
+SEE Unsupported VGA compatible
 
 
 
@@ -1223,8 +1328,7 @@ LINE     #Option "xaa_no_color_exp"  # When text (or bitmap) is not rendered cor
 
 NAME ET6100 (generic)
 CHIPSET ET6100
-SERVER XSuSE_Tseng
-NOCLOCKPROBE
+SEE ET6000 (generic)
 
 NAME Diamond Stealth 32
 CLOCKCHIP icd2061a
@@ -1370,6 +1474,8 @@ SEE ET6000 (generic)
 KouTech KeyVision 128 EV
 SEE ET6000 (generic)
 
+NAME Jaton Video-58P
+SEE ET6000 (generic)
 
 # ATI
 
@@ -1412,120 +1518,291 @@ CHIPSET ATI-Mach64
 SERVER Mach64
 NOCLOCKPROBE
 
+NAME ATI Mach64 with ATI68860 RAMDAC
+LINE     #Ramdac "ati68860"
+SEE ATI Mach64
+
+NAME ATI Mach64 with ATI68860B RAMDAC
+LINE     #Ramdac "ati68860b"
+SEE ATI Mach64
+
+NAME ATI Mach64 with ATI68860C RAMDAC
+LINE     #Ramdac "ati68860c"
+SEE ATI Mach64
+
+NAME ATI Mach64 with ATI68875 RAMDAC
+LINE     #Ramdac "ati68875"
+SEE ATI Mach64
+
 NAME ATI Mach64 with AT&T 20C408 RAMDAC
-CHIPSET ATI-Mach64
-SERVER Mach64
 LINE     #Ramdac "att20c408"
-NOCLOCKPROBE
+SEE ATI Mach64
 
 NAME ATI Mach64 with CH8398 RAMDAC
-CHIPSET ATI-Mach64
-SERVER Mach64
 LINE     #Ramdac "ch8398"
-NOCLOCKPROBE
+SEE ATI Mach64
 
 NAME ATI Mach64 with IBM RGB514 RAMDAC
-CHIPSET ATI-Mach64
-SERVER Mach64
 LINE     #Ramdac "ibm_rgb514"
-NOCLOCKPROBE
-
-NAME ATI Mach64 CT (264CT), Internal RAMDAC
-CHIPSET ATI-Mach64
-SERVER Mach64
-NOCLOCKPROBE
-
-NAME ATI Mach64 VT (264VT), Internal RAMDAC
-CHIPSET ATI-Mach64
-SERVER Mach64
-NOCLOCKPROBE
-
-NAME ATI Mach64 GT (264GT), aka 3D RAGE, Internal RAMDAC
-CHIPSET ATI-Mach64
-SERVER Mach64
-NOCLOCKPROBE
-
-NAME ATI Mach64 3D RAGE II, Internal RAMDAC
-CHIPSET ATI-Mach64
-SERVER Mach64
-NOCLOCKPROBE
-
-NAME ATI Mach64 3D RAGE II+, Internal RAMDAC
-CHIPSET ATI-Mach64
-SERVER Mach64
-NOCLOCKPROBE
-
-NAME ATI Xpert@Play PCI and AGP, 3D Rage Pro
-CHIPSET ATI-Mach64
-SERVER Mach64
-NOCLOCKPROBE
-
-NAME ATI Xpert@Work, 3D Rage Pro
-CHIPSET ATI-Mach64
-SERVER Mach64
-NOCLOCKPROBE
-
-NAME ATI Pro Turbo+PC2TV, 3D Rage II+DVD
-CHIPSET ATI-Mach64
-SERVER Mach64
-NOCLOCKPROBE
-
-NAME ATI Graphics Xpression with STG1702 RAMDAC
 SEE ATI Mach64
 
-NAME ATI Graphics Xpression with 68875 RAMDAC
+NAME ATI Mach64 with STG1702 RAMDAC
+LINE     #Ramdac "stg1702"
 SEE ATI Mach64
 
-NAME ATI Graphics Xpression with CH8398 RAMDAC
-SEE ATI Mach64 with CH8398 RAMDAC
+NAME ATI Mach64 with STG1703 RAMDAC
+LINE     #Ramdac "stg1703"
+SEE ATI Mach64
 
-NAME ATI Graphics Xpression with AT&T 20C408 RAMDAC
-SEE ATI Mach64 with AT&T 20C408 RAMDAC
+NAME ATI Mach64 with TLC34075 RAMDAC
+LINE     #Ramdac "tlc34075"
+SEE ATI Mach64
 
-NAME ATI Graphics Xpression with Mach64 CT (264CT)
-SEE ATI Mach64 CT (264CT), Internal RAMDAC
+NAME ATI Mach64 with Internal RAMDAC
+SEE ATI Mach64
 
-NAME ATI Video Xpression
-SEE ATI Mach64 VT (264VT), Internal RAMDAC
+NAME ATI Mach64 CT (264CT)
+SEE ATI Mach64 with Internal RAMDAC
 
-NAME ATI 3D Xpression
-SEE ATI Mach64 GT (264GT), aka 3D RAGE, Internal RAMDAC
+NAME ATI Mach64 VT (264VT)
+SEE ATI Mach64 with Internal RAMDAC
 
-NAME ATI 3D Xpression+ PC2TV
-SEE ATI Mach64 3D RAGE II, Internal RAMDAC
+NAME ATI Mach64 GT (264GT), aka 3D RAGE
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Mach64 3D RAGE II
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Mach64 3D RAGE II+DVD
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Mach64 3D Rage IIC
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Mach64 3D Rage Pro
+SEE ATI Mach64 with Internal RAMDAC
 
 NAME ATI 3D Pro Turbo
-SEE ATI Mach64 3D RAGE II, Internal RAMDAC
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI 3D Pro Turbo PC2TV
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI 3D Xpression
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI 3D Xpression+
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI 3D Xpression+ PC2TV
+SEE ATI Mach64 with Internal RAMDAC
 
 NAME ATI All-in-Wonder
-SEE ATI Mach64 3D RAGE II+, Internal RAMDAC
+SEE ATI Mach64 with Internal RAMDAC
 
-NAME ATI Win Boost with STG1702 RAMDAC
-SEE ATI Mach64
-
-NAME ATI Win Boost with CH8398 RAMDAC
-SEE ATI Mach64 with CH8398 RAMDAC
-
-NAME ATI Win Boost with AT&T 20C408 RAMDAC
-SEE ATI Mach64 with AT&T 20C408 RAMDAC
-
-NAME ATI Win Boost with Mach64 CT (264CT)
-SEE ATI Mach64 CT (264CT), Internal RAMDAC
+NAME ATI All-in-Wonder Pro
+SEE ATI Mach64 with Internal RAMDAC
 
 NAME ATI Graphics Pro Turbo
 SEE ATI Mach64
 
+NAME ATI Graphics Pro Turbo with ATI68860 RAMDAC
+SEE ATI Mach64 with ATI68860 RAMDAC
+
+NAME ATI Graphics Pro Turbo with ATI68860B RAMDAC
+SEE ATI Mach64 with ATI68860B RAMDAC
+
+NAME ATI Graphics Pro Turbo with ATI68860C RAMDAC
+SEE ATI Mach64 with ATI68860C RAMDAC
+
+NAME ATI Graphics Pro Turbo with ATI68875 RAMDAC
+SEE ATI Mach64 with ATI68875 RAMDAC
+
+NAME ATI Graphics Pro Turbo with AT&T 20C408 RAMDAC
+SEE ATI Mach64 with AT&T 20C408 RAMDAC
+
+NAME ATI Graphics Pro Turbo with CH8398 RAMDAC
+SEE ATI Mach64 with CH8398 RAMDAC
+
+NAME ATI Graphics Pro Turbo with STG1702 RAMDAC
+SEE ATI Mach64 with STG1702 RAMDAC
+
+NAME ATI Graphics Pro Turbo with STG1703 RAMDAC
+SEE ATI Mach64 with STG1703 RAMDAC
+
+NAME ATI Graphics Pro Turbo with TLC34075 RAMDAC
+SEE ATI Mach64 with TLC34075 RAMDAC
+
 NAME ATI Graphics Pro Turbo 1600
 SEE ATI Mach64 with IBM RGB514 RAMDAC
 
-NAME ATI Win Turbo
+NAME ATI Graphics Xpression
 SEE ATI Mach64
 
+NAME ATI Graphics Xpression with ATI68860 RAMDAC
+SEE ATI Mach64 with ATI68860 RAMDAC
+
+NAME ATI Graphics Xpression with ATI68860B RAMDAC
+SEE ATI Mach64 with ATI68860B RAMDAC
+
+NAME ATI Graphics Xpression with ATI68860C RAMDAC
+SEE ATI Mach64 with ATI68860C RAMDAC
+
+NAME ATI Graphics Xpression with ATI68875 RAMDAC
+SEE ATI Mach64 with ATI68875 RAMDAC
+
+NAME ATI Graphics Xpression with AT&T 20C408 RAMDAC
+SEE ATI Mach64 with AT&T 20C408 RAMDAC
+
+NAME ATI Graphics Xpression with CH8398 RAMDAC
+SEE ATI Mach64 with CH8398 RAMDAC
+
+NAME ATI Graphics Xpression with STG1702 RAMDAC
+SEE ATI Mach64 with STG1702 RAMDAC
+
+NAME ATI Graphics Xpression with STG1703 RAMDAC
+SEE ATI Mach64 with STG1703 RAMDAC
+
+NAME ATI Graphics Xpression with TLC34075 RAMDAC
+SEE ATI Mach64 with TLC34075 RAMDAC
+
+NAME ATI Graphics Xpression with Mach64 CT (264CT)
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Video Boost
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Video Charger
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Video Xpression
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Video Xpression+
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI WinBoost
+SEE ATI Mach64
+
+NAME ATI WinBoost with ATI68860 RAMDAC
+SEE ATI Mach64 with ATI68860 RAMDAC
+
+NAME ATI WinBoost with ATI68860B RAMDAC
+SEE ATI Mach64 with ATI68860B RAMDAC
+
+NAME ATI WinBoost with ATI68860C RAMDAC
+SEE ATI Mach64 with ATI68860C RAMDAC
+
+NAME ATI WinBoost with ATI68875 RAMDAC
+SEE ATI Mach64 with ATI68875 RAMDAC
+
+NAME ATI WinBoost with AT&T 20C408 RAMDAC
+SEE ATI Mach64 with AT&T 20C408 RAMDAC
+
+NAME ATI WinBoost with CH8398 RAMDAC
+SEE ATI Mach64 with CH8398 RAMDAC
+
+NAME ATI WinBoost with STG1702 RAMDAC
+SEE ATI Mach64 with STG1702 RAMDAC
+
+NAME ATI WinBoost with STG1703 RAMDAC
+SEE ATI Mach64 with STG1703 RAMDAC
+
+NAME ATI WinBoost with TLC34075 RAMDAC
+SEE ATI Mach64 with TLC34075 RAMDAC
+
+NAME ATI WinBoost with Mach64 CT (264CT)
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI WinCharger
+SEE ATI Mach64
+
+NAME ATI WinCharger with ATI68860 RAMDAC
+SEE ATI Mach64 with ATI68860 RAMDAC
+
+NAME ATI WinCharger with ATI68860B RAMDAC
+SEE ATI Mach64 with ATI68860B RAMDAC
+
+NAME ATI WinCharger with ATI68860C RAMDAC
+SEE ATI Mach64 with ATI68860C RAMDAC
+
+NAME ATI WinCharger with ATI68875 RAMDAC
+SEE ATI Mach64 with ATI68875 RAMDAC
+
+NAME ATI WinCharger with AT&T 20C408 RAMDAC
+SEE ATI Mach64 with AT&T 20C408 RAMDAC
+
+NAME ATI WinCharger with CH8398 RAMDAC
+SEE ATI Mach64 with CH8398 RAMDAC
+
+NAME ATI WinCharger with STG1702 RAMDAC
+SEE ATI Mach64 with STG1702 RAMDAC
+
+NAME ATI WinCharger with STG1703 RAMDAC
+SEE ATI Mach64 with STG1703 RAMDAC
+
+NAME ATI WinCharger with TLC34075 RAMDAC
+SEE ATI Mach64 with TLC34075 RAMDAC
+
+NAME ATI WinCharger with Mach64 CT (264CT)
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI WinTurbo
+SEE ATI Mach64
+
+NAME ATI WinTurbo with ATI68860 RAMDAC
+SEE ATI Mach64 with ATI68860 RAMDAC
+
+NAME ATI WinTurbo with ATI68860B RAMDAC
+SEE ATI Mach64 with ATI68860B RAMDAC
+
+NAME ATI WinTurbo with ATI68860C RAMDAC
+SEE ATI Mach64 with ATI68860C RAMDAC
+
+NAME ATI WinTurbo with ATI68875 RAMDAC
+SEE ATI Mach64 with ATI68875 RAMDAC
+
+NAME ATI WinTurbo with AT&T 20C408 RAMDAC
+SEE ATI Mach64 with AT&T 20C408 RAMDAC
+
+NAME ATI WinTurbo with CH8398 RAMDAC
+SEE ATI Mach64 with CH8398 RAMDAC
+
+NAME ATI WinTurbo with STG1702 RAMDAC
+SEE ATI Mach64 with STG1702 RAMDAC
+
+NAME ATI WinTurbo with STG1703 RAMDAC
+SEE ATI Mach64 with STG1703 RAMDAC
+
+NAME ATI WinTurbo with TLC34075 RAMDAC
+SEE ATI Mach64 with TLC34075 RAMDAC
+
+NAME ATI WinTurbo with Mach64 CT (264CT)
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Xpert 98
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Xpert XL
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Xpert@Play
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Xpert@Play 98
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI Xpert@Work
+SEE ATI Mach64 with Internal RAMDAC
+
+NAME ATI integrated on Intel Maui MU440EX motherboard
+SEE ATI Mach64 with Internal RAMDAC
+
 NAME ASUS PCI-V264CT
-SEE ATI Mach64 CT (264CT), Internal RAMDAC
+SEE ATI Mach64 with Internal RAMDAC
 
 NAME ASUS PCI-AV264CT
-SEE ATI Mach64 CT (264CT), Internal RAMDAC
+SEE ATI Mach64 with Internal RAMDAC
 
 # AGX
 
@@ -1761,13 +2038,25 @@ SERVER SVGA
 
 # Oak
 
-NAME Oak (generic)
-CHIPSET Oak-067/77/87
+NAME Oak ISA Card (generic)
+CHIPSET Oak OTI-067/77
 SERVER SVGA
 
-NAME Paradise Accelerator Value
+NAME Oak 87 VLB (generic)
 CHIPSET Oak OTI-087
 SERVER SVGA
+LINE Option "fifo_aggressive" # Comment this if you experience streaks.
+LINE Option "no_wait"         # Comment this if you find problems.        
+LINE #Option "enable_bitblt"  # You may enable this and see if it works (see README.Oak file)
+
+NAME Oak 87 ISA (generic)
+CHIPSET Oak OTI-087
+SERVER SVGA
+LINE Option "noaccel"        # ISA cards seem to have Color Expansion support broken
+LINE #Option "enable_bitblt" # This should work on ISA, but lets not make it default just in case.
+
+NAME Paradise Accelerator Value
+SEE Oak 87 ISA (generic)
 
 # P9000
 
@@ -1796,6 +2085,16 @@ SERVER P9000
 LINE     Chipset "orchid_p9000"
 LINE     Membase 0xE0000000
 NOCLOCKPROBE
+
+# P9100
+
+NAME Weitek P9100 (generic)
+CHIPSET Weitek P9100
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Diamond Viper Pro Video
+SEE Weitek P9100 (generic)
 
 # Trident
 
@@ -1868,28 +2167,161 @@ CHIPSET Cyber9397
 SERVER SVGA
 NOCLOCKPROBE
 
+NAME Trident TGUI9682 (generic)
+CHIPSET TGUI9682
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident TGUI9685 (generic)
+CHIPSET TGUI9685
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Cyber 9382 (generic)
+CHIPSET Cyber9382
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Cyber 9385 (generic)
+CHIPSET Cyber9385
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Cyber 9388 (generic)
+CHIPSET Cyber9388
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Cyber 9397 (generic)
+CHIPSET Cyber9397
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident 3DImage975 (generic)
+CHIPSET 3dimage975
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident 3DImage975 AGP (generic)
+CHIPSET 3dimage975
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident 3DImage985 (generic)
+CHIPSET 3dimage985
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident TVGA 8800BR
+SEE Generic VGA compatible
+
+NAME Trident TVGA 8800CS
+SEE Generic VGA compatible
+
 # SiS
 
 NAME SiS SG86C201
 CHIPSET SIS86C201
 SERVER SVGA
 
+NAME SiS SG86C205
+CHIPSET SIS86C205
+SERVER SVGA
+LINE     # Option "no_accel" # Use this if acceleration is causing problems
+LINE     # Option "fifo_moderate" 
+LINE     # Option "fifo_conserv" 
+LINE     # Option "fifo_aggresive" 
+NOCLOCKPROBE
+
+NAME SiS SG86C215
+CHIPSET SIS86C215 
+SERVER SVGA
+LINE     # This is a cheap version of 86c205. I am not sure if acceleration works
+LINE     # Option "no_accel" # Use this if acceleration is causing problems
+LINE     # Option "no_BitBlt" # Use this if acceleration is causing problems
+LINE     # Option "fifo_moderate" 
+LINE     # Option "fifo_conserv" 
+LINE     # Option "fifo_aggresive" 
+NOCLOCKPROBE
+
+NAME SiS SG86C225
+CHIPSET SIS86C225
+SERVER SVGA
+LINE     # Option "no_accel" # Use this if acceleration is causing problems
+LINE     # Option "fifo_moderate" 
+LINE     # Option "fifo_conserv" 
+LINE     # Option "fifo_aggresive" 
+NOCLOCKPROBE
+
+NAME SiS 5597
+CHIPSET SiS5597
+SERVER SVGA
+LINE     # Option "no_accel" # Use this if acceleration is causing problems
+LINE     # Option "fifo_moderate" 
+LINE     # Option "fifo_conserv" 
+LINE     # Option "fifo_aggresive" 
+LINE     # Option "fast_vram"
+LINE     # Option "pci_burst_on"
+LINE     # Option "xaa_benchmark" # DON'T use with "ext_eng_queue" !!!
+LINE     # Option "ext_eng_queue" # Turbo-queue. This can cause drawing
+LINE                              # errors, but gives some accel
+NOCLOCKPROBE
+
+NAME SiS 5598
+CHIPSET SIS5598
+SERVER SVGA
+LINE     # Option "no_accel" # Use this if acceleration is causing problems
+LINE     # Option "fifo_moderate" 
+LINE     # Option "fifo_conserv" 
+LINE     # Option "fifo_aggresive" 
+LINE     # Option "fast_vram"
+LINE     # Option "pci_burst_on"
+LINE     # Option "xaa_benchmark" # DON'T use with "ext_eng_queue" !!!
+LINE     # Option "ext_eng_queue" # Turbo-queue. This can cause drawing
+LINE                              # errors, but gives some accel
+NOCLOCKPROBE
+
+NAME SiS 6326
+CHIPSET SiS6326
+SERVER SVGA
+LINE     # Option "no_accel" # Use this if acceleration is causing problems
+LINE     # Option "fifo_moderate" 
+LINE     # Option "fifo_conserv" 
+LINE     # Option "fifo_aggresive" 
+LINE     # Option "fast_vram"
+LINE     # Option "pci_burst_on"
+LINE     # Option "xaa_benchmark" # DON'T use with "ext_eng_queue" !!!
+LINE     # Option "ext_eng_queue" # Turbo-queue. This can cause drawing 
+LINE                              # errors, but gives some accel
+NOCLOCKPROBE
+
+NAME MSI MS-4417
+SEE SiS 6326
+
+NAME SiS 3D PRO AGP
+SEE SiS 6326
+
+NAME Miro Crystal DVD
+SEE SiS 6326
+
+NAME PC-Chips M567 Mainboard
+SEE SiS 5597
+
+NAME Diamond SpeedStar A50
+SEE SiS 6326
+
+# Cyrix
+
+NAME MediaGX
+CHIPSET mediagx
+SERVER SVGA
+NOCLOCKPROBE
+
 # Alliance ProMotion
 
 NAME Alliance ProMotion 6422
 CHIPSET AP6422
 SERVER SVGA
-
-# VGA
-
-NAME Generic VGA compatible
-CHIPSET Generic VGA
-SERVER VGA16
-
-NAME Unsupported VGA compatible
-CHIPSET Generic VGA
-SERVER VGA16
-UNSUPPORTED
 
 # Number 9 I128
 
@@ -1901,26 +2333,128 @@ NAME Number Nine Imagine I-128 Series 2 (2-4MB)
 CHIPSET I128
 SERVER I128
 
+NAME Revolution 3D (T2R)
+CHIPSET I128
+SERVER I128
+
+NAME Number Nine Revolution 3D AGP (4-8MB SGRAM)
+CHIPSET I128
+SERVER I128
+
+NAME Number Nine Imagine-128-T2R
+CHIPSET I128
+SERVER I128
+
 # Matrox
 
-NAME Matrox Millennium (MGA)
+NAME Matrox Millennium 2MB
 CHIPSET mga2064w
 SERVER SVGA
+LINE VideoRam 2048
 NOCLOCKPROBE
 
-NAME Matrox Millennium II
+NAME Matrox Millennium 4MB
+CHIPSET mga2064w
+SERVER SVGA
+LINE VideoRam 4096
+NOCLOCKPROBE
+
+NAME Matrox Millennium 8MB
+CHIPSET mga2064w
+SERVER SVGA
+LINE VideoRam 8192
+NOCLOCKPROBE
+
+NAME Matrox Millennium II 4MB
 CHIPSET mga2164w
 SERVER SVGA
+LINE VideoRam 4096
 NOCLOCKPROBE
 
-NAME Matrox Millennium II AGP
-CHIPSET mga2164w AGP
+NAME Matrox Millennium II 8MB
+CHIPSET mga2164w
 SERVER SVGA
+LINE VideoRam 8192
+NOCLOCKPROBE
+
+NAME Matrox Millennium II 16MB
+CHIPSET mga2164w
+SERVER SVGA
+LINE VideoRam 16384
+NOCLOCKPROBE
+
+NAME Matrox Millennium G200 4MB
+CHIPSET mgag200
+SERVER SVGA
+LINE VideoRam 4096
+NOCLOCKPROBE
+
+NAME Matrox Millennium G200 8MB
+CHIPSET mgag200
+SERVER SVGA
+LINE VideoRam 8192
+NOCLOCKPROBE
+
+NAME Matrox Millennium G200 16MB
+CHIPSET mgag200
+SERVER SVGA
+LINE VideoRam 16384
+NOCLOCKPROBE
+
+NAME Matrox Millennium G200 SD 4MB
+CHIPSET mgag200
+SERVER SVGA
+LINE VideoRam 4096
+LINE # Option "mga_sdram"
+NOCLOCKPROBE
+
+NAME Matrox Millennium G200 SD 8MB
+CHIPSET mgag200
+SERVER SVGA
+LINE VideoRam 8192
+LINE # Option "mga_sdram"
+NOCLOCKPROBE
+
+NAME Matrox Millennium G200 SD 16MB
+CHIPSET mgag200
+SERVER SVGA
+LINE VideoRam 16384
+LINE # Option "mga_sdram"
 NOCLOCKPROBE
 
 NAME Matrox Mystique
 CHIPSET mga1064sg
 SERVER SVGA
+NOCLOCKPROBE
+
+NAME Matrox Mystique G200 4MB
+CHIPSET mgag200
+SERVER SVGA
+LINE VideoRam 4096
+NOCLOCKPROBE
+
+NAME Matrox Mystique G200 8MB
+CHIPSET mgag200
+SERVER SVGA
+LINE VideoRam 8192
+NOCLOCKPROBE
+
+NAME Matrox Mystique G200 16MB
+CHIPSET mgag200
+SERVER SVGA
+LINE VideoRam 16384
+NOCLOCKPROBE
+
+NAME Matrox Productiva G100 4MB
+CHIPSET mgag100
+SERVER SVGA
+LINE VideoRam 4096
+NOCLOCKPROBE
+
+NAME Matrox Productiva G100 8MB
+CHIPSET mgag100
+SERVER SVGA
+LINE VideoRam 8192
 NOCLOCKPROBE
 
 # NV1
@@ -1935,17 +2469,113 @@ CHIPSET RIVA128
 SERVER SVGA
 NOCLOCKPROBE
 
+NAME RIVA TNT
+CHIPSET RIVATNT
+SERVER SVGA
+NOCLOCKPROBE
+
 NAME ELSA VICTORY ERAZOR
 SEE RIVA128
+
+NAME ELSA Winner 1000 R3D
+SEE RIVA128
+
+NAME ELSA ERAZOR II
+SEE RIVA TNT
 
 NAME Diamond Viper 330
 SEE RIVA128
 
+NAME Diamond Viper 550
+SEE RIVA TNT
+
 NAME STB Velocity 128
+SEE RIVA128
+
+NAME STB nvidia 128
 SEE RIVA128
 
 NAME ASUS 3Dexplorer
 SEE RIVA128
+
+# 3DLabs
+
+NAME ELSA GLoria-L/MX
+CHIPSET GLINT MX
+SERVER 3DLabs
+LINE #Option "no_accel"
+NOCLOCKPROBE
+
+NAME ELSA GLoria-L
+CHIPSET GLINT 500TX
+SERVER 3DLabs
+NOCLOCKPROBE
+
+NAME ELSA GLoria-XL
+CHIPSET GLINT MX
+SERVER 3DLabs
+NOCLOCKPROBE
+
+NAME Diamond Fire GL 3000
+CHIPSET GLINT 500TX
+SERVER 3DLabs
+LINE Option "firegl_3000"
+NOCLOCKPROBE
+
+NAME ELSA GLoria-S
+CHIPSET PERMEDIA
+SERVER 3DLabs
+LINE #Option "no_accel"
+LINE #VideoRam 8192
+NOCLOCKPROBE
+
+NAME Diamond Fire GL 1000
+CHIPSET PERMEDIA
+SERVER 3DLabs
+LINE #Option "no_accel"
+LINE #VideoRam 8192
+NOCLOCKPROBE
+
+NAME ELSA GLoria Synergy
+CHIPSET PERMEDIA 2
+SERVER 3DLabs
+LINE #Option "no_accel"
+NOCLOCKPROBE
+
+NAME ELSA Winner 2000/Office
+CHIPSET PERMEDIA 2
+SERVER 3DLabs
+LINE #Option "no_accel"
+NOCLOCKPROBE
+
+NAME Diamond Fire GL 1000 PRO
+CHIPSET PERMEDIA 2
+SERVER 3DLabs
+LINE #Option "no_accel"
+NOCLOCKPROBE
+
+NAME Creative Blaster Exxtreme
+CHIPSET PERMEDIA 2
+SERVER 3DLabs
+LINE #Option "no_accel"
+NOCLOCKPROBE
+
+NAME AccelStar Permedia II AGP
+CHIPSET PERMEDIA 2
+SERVER 3DLabs
+LINE #Option "no_accel"
+NOCLOCKPROBE
+
+NAME Leadtek WinFast 2300
+CHIPSET PERMEDIA 2
+SERVER 3DLabs
+NOCLOCKPROBE
+
+NAME 3DLabs Oxygen GMX
+CHIPSET PERMEDIA 2
+SERVER 3DLabs
+LINE #Option "no_accel"
+NOCLOCKPROBE
 
 # Alliance Semiconductor
 
@@ -1966,26 +2596,53 @@ SEE AT3D
 NAME Hercules Stingray 128 3D
 SEE AT3D
 
-# Misc
+# NeoMagic
 
-NAME Techworks Ultimate 3D
-CHIPSET CL-GD5464
-SEE Cirrus Logic GD5464
+NAME NeoMagic (laptop/notebook)
+CHIPSET MagicGraph 128 series
+SERVER SVGA
+LINE #    Chipset    "NM2160"
+LINE #    IOBase     0xfea00000
+LINE #    MemBase    0xfd000000
+LINE #    VideoRam   2048
+LINE #    DacSpeed   90
+LINE #    Option     "linear"
+LINE #    Option     "nolinear"
+LINE #    Option     "sw_cursor"
+LINE #    Option     "hw_cursor"
+LINE #    Option     "no_accel"
+LINE #    Option     "intern_disp"
+LINE #    Option     "extern_disp"
+LINE #    Option     "mmio"
+LINE #    Option     "no_mmio"
+LINE #    Option     "lcd_center"
+LINE #    Option     "no_stretch"
 
-NAME VideoLogic GrafixStar 550
-CHIPSET CL-GD5464
-SEE Cirrus Logic GD5464
+# Epson SPC8110
 
-NAME Jaton Video-70P
-CHIPSET CL-GD5464
-SEE Cirrus Logic GD5464
+NAME EPSON SPC8110 (CardPC)
+CHIPSET SPC8110
+SERVER SVGA
+LINE #    Chipset    "spc8110"
+LINE #    MemBase    0x03e00000
+LINE #    VideoRam   1024
+LINE #    Option     "nolinear"
+LINE #    Option     "sw_cursor"
+LINE #    Option     "noaccel"
+LINE #    Option     "fifo_moderate"
+LINE #    Option     "fifo_conservative"
 
-NAME Jaton Video-58P
-SEE ET6000 (generic)
+# Rendition
 
 NAME Rendition Verite 1000
 CHIPSET Verite 1000
-SEE Unsupported VGA compatible
+SERVER SVGA
+LINE # Option "sw_cursor"
+
+NAME Rendition Verite 2x00
+CHIPSET Verite 2x00
+SERVER SVGA
+LINE # Option "sw_cursor"
 
 NAME Creative Labs 3D Blaster PCI (Verite 1000)
 SEE Rendition Verite 1000
@@ -1996,8 +2653,39 @@ SEE Rendition Verite 1000
 NAME Sierra Screaming 3D
 SEE Rendition Verite 1000
 
-NAME NeoMagic (laptop/notebook)
-CHIPSET NeoMagic 128/V/ZV
-SEE Unsupported VGA compatible
+NAME Miro CRYSTAL VRX
+SEE Rendition Verite 1000
+
+NAME Diamond Stealth II S220
+CHIPSET Verite 2100
+SEE Rendition Verite 2x00
+
+NAME Hercules Thriller3D
+CHIPSET Verite 2200
+SEE Rendition Verite 2x00
+
+# Digital
+
+NAME Digital 8-plane TGA (UDB/Multia)
+CHIPSET TGA
+SERVER TGA
+RAMDAC Bt485
+
+NAME Digital 8-plane TGA (ZLXp-E1)
+CHIPSET TGA
+SERVER TGA
+RAMDAC Bt485
+
+NAME Digital 24-plane TGA (ZLXp-E2)
+CHIPSET TGA
+SERVER TGA
+RAMDAC Bt463
+
+NAME Digital 24-plane+3D TGA (ZLXp-E3)
+CHIPSET TGA
+SERVER TGA
+RAMDAC Bt463
+
+# Misc
 
 END

@@ -1,6 +1,10 @@
 XCOMM $XConsortium: Imakefile /main/28 1996/09/28 16:49:50 rws $
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/lib/oldX/Imakefile,v 1.1.1.2.2.2 1998/11/06 16:54:38 hohndel Exp $
 #define DoNormalLib NormalOldX
 #define DoSharedLib SharedOldX
+#define DoExtraLib SharedOldX
 #define DoDebugLib DebugOldX
 #define DoProfileLib ProfileOldX
 #define LibName oldX

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000pntwin.c,v 3.2 1996/12/23 06:40:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000pntwin.c,v 3.2.2.1 1998/10/21 10:44:38 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -66,8 +66,8 @@ SOFTWARE.
 #include "cfb.h"
 #include "mi.h"
 
-#include "p9000reg.h"
 #include "p9000.h"
+#include "p9000reg.h"
 
 extern void miPaintWindow();
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ATI.c,v 3.11.2.3 1997/07/07 04:10:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ATI.c,v 3.11.2.4 1998/10/20 20:51:09 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -102,9 +102,7 @@ int chip, *Chipset;
 			*Chipset = CHIP_ATI264ET;
 			break;
 		case 0x02B3:
-		case 0x02B4:
 		case 0x5654:
-		case 0x5655:
 			if (chip & 0x07000000)
 			{
 				Mach64xTB = TRUE;
@@ -113,10 +111,18 @@ int chip, *Chipset;
 			else
 				*Chipset = CHIP_ATI264VT;
 			break;
+		case 0x02B4:
+		case 0x5655:
+			Mach64xTB = TRUE;
+			*Chipset = CHIP_ATI264VT3;
+			break;
+		case 0x02B5:
+		case 0x5656:
+			Mach64xTB = TRUE;
+			*Chipset = CHIP_ATI264VT4;
+			break;
 		case 0x00D3:
-		case 0x00D4:
 		case 0x4754:
-		case 0x4755:
 			if (chip & 0x07000000)
 			{
 				Mach64xTB = TRUE;
@@ -125,18 +131,52 @@ int chip, *Chipset;
 			else
 				*Chipset = CHIP_ATI264GT;
 			break;
+		case 0x00D4:
+		case 0x4755:
+			Mach64xTB = TRUE;
+			*Chipset = CHIP_ATI264GTDVD;
+			break;
+		case 0x00D5:
+		case 0x00D6:
+		case 0x00D9:
+		case 0x4756:
+		case 0x4757:
+		case 0x475A:
+			Mach64xTB = TRUE;
+			*Chipset = CHIP_ATI264GTIIc;
+			break;
+		case 0x00C7:
+		case 0x00C9:
+		case 0x00CE:
+		case 0x00CF:
+		case 0x00D0:
+		case 0x4742:
+		case 0x4744:
+		case 0x4749:
+		case 0x4750:
+		case 0x4751:
+			Mach64xTB = TRUE;
+			*Chipset = CHIP_ATI264GT3;
+			break;
 		case 0x0166:
 		case 0x4C47:
+			Mach64xTB = TRUE;
 			*Chipset = CHIP_ATI264LT;
-			Mach64xTB = TRUE;
 			break;
-		case 0x00CF:
-		case 0x4750:
-			*Chipset = CHIP_ATI264GT3;
+		case 0x0161:
+		case 0x0163:
+		case 0x0168:
+		case 0x016F:
+		case 0x4C42:
+		case 0x4C44:
+		case 0x4C49:
+		case 0x4C50:
 			Mach64xTB = TRUE;
+			*Chipset = CHIP_ATI264LTPRO;
 			break;
 		default:
 			Chip_data = chip;
+			Mach64xTB = TRUE;	/* Most likely */
 			*Chipset = CHIP_ATI_UNK;
 			break;
 		}

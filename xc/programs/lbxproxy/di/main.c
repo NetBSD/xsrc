@@ -20,6 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/main.c,v 1.1.1.1.2.2 1998/11/05 19:38:33 hohndel Exp $ */
 
 #include "lbx.h"
 #include "wire.h"
@@ -100,6 +101,7 @@ main (argc, argv)
         FreeTags();
 	CacheFreeAll();
     }
+    CloseWellKnownSockets();
     exit (0);
 }
 

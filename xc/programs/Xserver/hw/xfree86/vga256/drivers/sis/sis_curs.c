@@ -26,7 +26,7 @@
  * accel/s3/s3Cursor.c, and ark/ark_cursor.c
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_curs.c,v 3.4.2.1 1997/05/31 13:34:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_curs.c,v 3.4.2.2 1998/07/28 13:57:15 hohndel Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -77,6 +77,8 @@ static int SISCursorGeneration = -1;
 static int SISCursorControlMode;
 static int SISCursorAddress;
 
+/*#define DEBUG*/
+
 /*
  * This is the set variables that defines the cursor state within the
  * driver.
@@ -98,6 +100,7 @@ Bool SISCursorInit(pm, pScr)
 	char *pm;
 	ScreenPtr pScr;
 {
+        unsigned char temp, temp2;
 	if (SISCursorGeneration != serverGeneration) {
 		if (!(miPointerInitialize(pScr, &SISPointerSpriteFuncs,
 		&xf86PointerScreenFuncs, FALSE)))
@@ -116,6 +119,22 @@ Bool SISCursorInit(pm, pScr)
 	/* Pop the cursor in the last 16KB aligned segment */
 	SISCursorAddress = vga256InfoRec.videoRam * 1024 - 16384;
 
+	/* Program the cursor address in the chipset, because if the user 
+	   specify a less amount of memory in XF86Config than in the BIOS,
+	   the calculated address don't match with the BIOS config */
+	if ( (SISchipset == SIS5597) || (SISchipset == SIS6326) )
+        {
+	        temp = SISCursorAddress / 262144; 
+                outb(0x3C4, 0x38);
+                temp2 = (inb(0x3C5) & 0x0F) | (temp << 4);
+#ifdef DEBUG
+                ErrorF ("Programming Cursor address in chipset: %d SR38=0x%X\n",SISCursorAddress, temp2);
+#endif	
+                outb(0x3C5, temp2);
+                outb(0x3C4, 0x1E);
+                temp2 = inb(0x3C5);
+                outb(0x3C5, (temp2 & 0xF7) );
+	}
 	return TRUE;
 }
 

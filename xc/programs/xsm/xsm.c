@@ -24,6 +24,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 ******************************************************************************/
+/* $XFree86: xc/programs/xsm/xsm.c,v 1.1.1.2.2.1 1998/11/05 15:08:48 dawes Exp $ */
 
 /*
  * X Session Manager.
@@ -62,6 +63,7 @@ Status StartSession ();
 void NewConnectionXtProc ();
 Status NewClientProc ();
 void InstallIOErrorHandler ();
+static void CloseListeners (void);
 
 /*
  * Extern declarations
@@ -78,6 +80,7 @@ extern Widget savePopup;
 
 extern int checkpoint_from_signal;
 
+static IceListenObj *listenObjs;
 
 
 /*
@@ -90,7 +93,6 @@ int  argc;
 char **argv;
 
 {
-    IceListenObj *listenObjs;
     char	*p;
     char 	errormsg[256];
     static	char environment_name[] = "SESSION_MANAGER";
@@ -167,6 +169,8 @@ char **argv;
 	fprintf (stderr, "%s\n", errormsg);
 	exit (1);
     }
+
+    atexit(CloseListeners);
 
     if (!SetAuthentication (numTransports, listenObjs, &authDataEntries))
     {
@@ -1382,3 +1386,11 @@ InstallIOErrorHandler ()
     if (prev_handler == default_handler)
 	prev_handler = NULL;
 }
+
+static void
+CloseListeners ()
+
+{
+    IceFreeListenObjs (numTransports, listenObjs);
+}
+

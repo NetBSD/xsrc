@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line.c,v 3.1.2.1 1997/05/26 14:36:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line.c,v 3.1.2.2 1998/07/30 06:24:20 hohndel Exp $ */
 
 /***********************************************************
 
@@ -48,7 +48,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: cfbline.c,v 1.24 94/07/28 14:33:33 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line.c,v 3.1.2.1 1997/05/26 14:36:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line.c,v 3.1.2.2 1998/07/30 06:24:20 hohndel Exp $ */
 
 /*
  * Generic accelerated general lines.
@@ -176,10 +176,8 @@ xf86PolyLine(pDrawable, pGC, mode, npt, pptInit)
 
     UseTwoPointLine = FALSE;
     if (xf86AccelInfoRec.Flags & USE_TWO_POINT_LINE) {
-#ifdef POLYSEGMENT
         if (xf86AccelInfoRec.Flags & TWO_POINT_LINE_NOT_LAST ||
         pGC->capStyle != CapNotLast)
-#endif
             UseTwoPointLine = TRUE;
     }
 
@@ -399,7 +397,7 @@ xf86PolyLine(pDrawable, pGC, mode, npt, pptInit)
 		            (pGC->capStyle == CapNotLast ? 0x100 : 0));
 #else
 		        xf86AccelInfoRec.SubsequentTwoPointLine(
-		            x1, y1, x2, y2, bias);
+		            x1, y1, x2, y2, bias | 0x100);
 #endif
 		        break;
 		    }
@@ -435,7 +433,7 @@ xf86PolyLine(pDrawable, pGC, mode, npt, pptInit)
 		            (pGC->capStyle == CapNotLast ? 0x100 : 0));
 #else
 		        xf86AccelInfoRec.SubsequentTwoPointLine(
-		            x1, y1, x2, y2, bias);
+		            x1, y1, x2, y2, bias | 0x100);
 #endif
 		    else {
 		        if (!(octant & YMAJOR))

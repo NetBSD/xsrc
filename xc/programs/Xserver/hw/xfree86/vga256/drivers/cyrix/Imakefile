@@ -1,0 +1,83 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cyrix/Imakefile,v 1.1.2.8 1998/10/22 04:31:05 hohndel Exp $
+XCOMM
+XCOMM This is an Imakefile for the cyrix driver.  
+XCOMM 
+XCOMM $XConsortium: Imakefile.cyrix /main/4 1996/02/21 17:13:36 kaleb $
+#include <Server.tmpl>
+
+SRCS = cyrix_driver.c cyrix_accel.c cyrix_cursor.c cyrix_cmap.c cyrix_bank.s \
+       cyrix_asm.s
+
+OBJS = cyrix_driver.o cyrix_accel.o cyrix_cursor.o cyrix_cmap.o cyrix_bank.o \
+       cyrix_asm.o
+
+DEFINES = -DPSZ=8
+
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+XCOMM
+XCOMM This define is for use under vga256/drivers; comment it out for vga2 or
+XCOMM vga16
+XCOMM
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I$(SERVERSRC)/cfb -I../../vga -I$(SERVERSRC)/include \
+           -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I../../../xaa \
+           -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+XCOMM
+XCOMM Use these lines instead for use under vga2/drivers or vga16/drivers
+XCOMM
+XCOMM INCLUDES = -I. -I$(XF86COMSRC) -I(XF86HWSRC) \
+XCOMM            -I$(XF86OSSRC) -I../../../vga256/vga \
+XCOMM            -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+#endif
+
+XCOMM
+XCOMM Uncomment this line for use with vga2
+XCOMM
+XCOMM DEFINES = -DMONOVGA
+
+XCOMM
+XCOMM Uncomment this line for use with vga16
+XCOMM
+XCOMM DEFINES = -DXF86VGA16
+
+#if MakeHasPosixVariableSubstitutions  
+SubdirLibraryRule($(OBJS))
+#endif
+
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+NormalRelocatableTarget(cyrix_drv, $(OBJS))
+
+XCOMM
+XCOMM These lines are for a driver under vga256/drivers
+XCOMM
+InstallLinkKitNonExecFile(cyrix.h,$(LINKKITDIR)/drivers/vga256/cyrix)
+InstallLinkKitNonExecFile(cyrix_accel.c,$(LINKKITDIR)/drivers/vga256/cyrix)
+InstallLinkKitNonExecFile(cyrix_cmap.c,$(LINKKITDIR)/drivers/vga256/cyrix)
+InstallLinkKitNonExecFile(cyrix_cursor.c,$(LINKKITDIR)/drivers/vga256/cyrix)
+InstallLinkKitNonExecFile(cyrix_driver.c,$(LINKKITDIR)/drivers/vga256/cyrix)
+InstallLinkKitNonExecFile(cyrix_bank.s,$(LINKKITDIR)/drivers/vga256/cyrix)
+InstallLinkKitNonExecFile(cyrix_asm.s,$(LINKKITDIR)/drivers/vga256/cyrix)
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/cyrix)
+
+XCOMM
+XCOMM These lines would be used in place of the above three lines for the
+XCOMM same driver being built under vga2/drivers.  If the driver is ONLY
+XCOMM going to be under vga2/drivers, use the above 3 lines, but replace
+XCOMM vga256 with vga2.  Same applies to vga16.
+XCOMM
+XCOMM Link Source File(cyrix_driver.c,$(VGADRIVERSRC)/cyrix)
+XCOMM Link Source File(cyrix_bank.s,$(VGADRIVERSRC)/cyrix)
+XCOMM
+XCOMM For vga2
+XCOMM
+XCOMM Install Link Kit Non Exec File(Imakefile,$(LINKKITDIR)/drivers/vga2/cyrix)
+XCOMM
+XCOMM For vga16
+XCOMM
+XCOMM Install Link Kit Non Exec File(Imakefile,$(LINKKITDIR)/drivers/vga16/cyrix)
+
+DependTarget()

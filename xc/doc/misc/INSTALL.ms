@@ -1,5 +1,6 @@
 .\" $XConsortium: INSTALL.ms /main/7 1996/12/22 20:44:54 swick $
 .\" X11R6.3 Installation instructions.  Use troff -ms macros
+.\" $XFree86: xc/doc/misc/INSTALL.ms,v 1.1.1.3.2.1 1998/11/08 09:06:30 dawes Exp $
 .ds Ts March 5, 1996\" updated by Emacs
 .\"
 .ie t \{
@@ -90,6 +91,10 @@ from the X Consortium.
 .\"
 This quick summary is no substitute for reading the full build
 instructions later in this document.
+.LP
+When building an XFree86 release, see also the \fBBUILD\fP document located
+in \fBxc/programs/Xserver/hw/xfree86/doc\fP for important XFree86-specific
+build instructions.
 .LP
 Edit \fBxc/config/cf/site.def\fP for local preferences.
 If you want to build with \fIgcc\fP

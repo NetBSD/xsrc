@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Dl.c,v 3.10 1996/12/29 13:50:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Dl.c,v 3.10.2.1 1998/09/27 04:33:36 dawes Exp $ */
 
 /*    
  * Copyright 1995 by Frederic Lepied, France. <fred@sugix.frmug.fr.net>
@@ -35,7 +35,7 @@
 #include "xf86_Config.h"
 #include "xf86Priv.h"
 
-#ifdef CSRG_BASED
+#if defined(CSRG_BASED) && !defined(__ELF__)
 #define PREPEND_UNDERSCORE
 #endif
 

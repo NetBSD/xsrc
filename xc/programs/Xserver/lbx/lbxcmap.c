@@ -27,6 +27,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from the X Consortium.
 */
+/* $XFree86: xc/programs/Xserver/lbx/lbxcmap.c,v 1.1.1.1.2.2 1998/10/31 20:39:47 hohndel Exp $ */
 
 #include <sys/types.h>
 #define NEED_REPLIES
@@ -76,6 +77,7 @@ static int LbxUnstallClient();
 void LbxReleaseCmap();
 
 static RESTYPE StalledResType;
+static ColormapPtr DefColormap;
 
 /*
  * Initialize the fields in the colormap private allocated for LBX.
@@ -105,10 +107,10 @@ LbxColormapPrivInit (pmap)
 
 
 static int
-LbxDefCmapPrivInit (pmap)
+LbxGetDefCmap (pmap)
     ColormapPtr pmap;
 {
-    pmap->devPrivates[lbxColormapPrivIndex].ptr = NULL;
+    DefColormap = pmap;
     return 1;
 }
 
@@ -162,9 +164,11 @@ LbxCmapInit ()
     if (lbxScreenPrivIndex < 0)
 	return 0;
 
-    lbxColormapPrivIndex = AllocateColormapPrivateIndex (LbxDefCmapPrivInit);
+    lbxColormapPrivIndex = AllocateColormapPrivateIndex (LbxGetDefCmap);
     if (lbxColormapPrivIndex < 0)
 	return 0;
+
+    DefColormap->devPrivates[lbxColormapPrivIndex].ptr = NULL;
 
     for (i = 0; i < screenInfo.numScreens; i++)
     {

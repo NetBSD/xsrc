@@ -4,13 +4,14 @@ XCOMM $XConsortium: Imakefile /main/3 1996/10/25 11:32:44 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/fbdev/Imakefile,v 3.3 1996/12/27 06:52:43 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/fbdev/Imakefile,v 3.3.2.1 1998/09/13 12:28:54 hohndel Exp $
 #include <Server.tmpl>
 
 
 SRCS = fbdev.c
 OBJS = fbdev.o
 
+#if XF68FBDevServer
 #if XF68FBDevIPLAN2p2
 FB_DEFINES:= $(FB_DEFINES) -DCONFIG_IPLAN2p2
 #endif
@@ -26,11 +27,15 @@ FB_DEFINES:= $(FB_DEFINES) -DCONFIG_ILBM
 #if XF68FBDevAFB
 FB_DEFINES:= $(FB_DEFINES) -DCONFIG_AFB
 #endif
+#endif
 #if XF68FBDevCFB8
 FB_DEFINES:= $(FB_DEFINES) -DCONFIG_CFB8
 #endif
 #if XF68FBDevCFB16
 FB_DEFINES:= $(FB_DEFINES) -DCONFIG_CFB16
+#endif
+#if XF68FBDevCFB24
+FB_DEFINES:= $(FB_DEFINES) -DCONFIG_CFB24
 #endif
 #if XF68FBDevCFB32
 FB_DEFINES:= $(FB_DEFINES) -DCONFIG_CFB32

@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile.LK /main/11 1996/10/25 21:18:33 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/Imakefile.LK,v 3.39.2.4 1998/02/15 16:08:49 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/Imakefile.LK,v 3.39.2.5 1998/10/18 20:41:58 hohndel Exp $
 /*
  * Server Makefile for LinkKit
  */
@@ -841,6 +841,25 @@ SetUIDServerTarget(XF86_I128,$(XF86I128SUBDIRS),$(XF86I128OBJS),$(XF86I128LIBS),
 LinkFile(XF86_I128.def,I128.def)
 #endif
 #endif        /* XF86I128Server */
+
+#if XF86GLINTServer
+XCOMM
+XCOMM XFree86 GLINT Server
+XCOMM
+XF86GLINTOBJS = XF86_GLINT.o lib/xaa8.o lib/xaa16.o lib/xaa24.o lib/xaa32.o
+XF86GLINTLIBS = $(DRIVERSRC)/LibraryTargetName(glint) $(XAALIBS) \
+		$(XF86LIBS) CFBLibs \
+		lib/LibraryTargetName(xf86cache)
+XF86GLINTSYSLIBS = $(SYSLIBS)
+XF86_GLINT.o: XF86_GLINT.c $(ICONFIGFILES)
+SetUIDServerTarget(XF86_3DLabs,$(XF86GLINTSUBDIRS),$(XF86GLINTOBJS),$(XF86GLINTLIBS),$(XF86GLINTSYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XF86_3DLabs
+#endif
+#ifdef OS2Architecture
+LinkFile(XF86_3DLabs.def,3DLabs.def)
+#endif
+#endif        /* XF86GLINTServer */
 
 
 #if XF86TGAServer

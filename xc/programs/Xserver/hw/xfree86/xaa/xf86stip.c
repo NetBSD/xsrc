@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86stip.c,v 3.1.2.1 1997/05/21 15:02:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86stip.c,v 3.1.2.2 1998/07/30 06:24:21 hohndel Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -98,6 +98,15 @@ xf86FillRectStippledCPUToScreenColorExpand(pDrawable, pGC, nBoxInit, pBoxInit)
 
     pPixmap = pGC->stipple;
 
+    if (xf86AccelInfoRec.ColorExpandFlags & ONLY_TRANSPARENCY_SUPPORTED) {
+      if ((pGC->fillStyle != FillStippled) && (pGC->alu != GXcopy) &&
+	  (pGC->bgPixel != -1) ) {
+	xf86AccelInfoRec.FillRectOpaqueStippledFallBack(pDrawable, pGC,
+						nBoxInit, pBoxInit);
+	return;
+      }
+    }
+
     for (nBox = nBoxInit, pBox = pBoxInit; nBox > 0; nBox--, pBox++) {
 	rectX1 = pBox->x1;
 	rectY1 = pBox->y1;
@@ -147,6 +156,26 @@ xf86FillRectStippledScreenToScreenColorExpand(pDrawable, pGC, nBoxInit, pBoxInit
 
     pPixmap = pGC->stipple;
 
+    if (xf86AccelInfoRec.ColorExpandFlags & ONLY_TRANSPARENCY_SUPPORTED) {
+      if ((pGC->fillStyle != FillStippled) && (pGC->alu != GXcopy) &&
+	  (pGC->bgPixel != -1)) {
+	xf86AccelInfoRec.FillRectOpaqueStippledFallBack(pDrawable, pGC,
+						nBoxInit, pBoxInit);
+	return;
+      }
+    }
+
+    if ((!(xf86AccelInfoRec.ColorExpandFlags & VIDEO_SOURCE_GRANULARITY_PIXEL))
+	  && (pPixmap->drawable.width > 32)) {
+	if (pGC->fillStyle == FillStippled)
+	    xf86AccelInfoRec.FillRectStippledFallBack(pDrawable, pGC,
+						      nBoxInit, pBoxInit);
+	else
+	    xf86AccelInfoRec.FillRectOpaqueStippledFallBack(pDrawable, pGC,
+						      nBoxInit, pBoxInit);
+	return;
+    }
+    
     for (nBox = nBoxInit, pBox = pBoxInit; nBox > 0; nBox--, pBox++) {
 	rectX1 = pBox->x1;
 	rectY1 = pBox->y1;

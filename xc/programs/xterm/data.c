@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: data.c,v 1.12 95/04/05 19:58:47 kaleb Exp $
- *	$XFree86: xc/programs/xterm/data.c,v 3.10 1998/06/04 16:43:56 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/data.c,v 3.2.4.4 1998/10/20 20:51:44 hohndel Exp $
  */
 
 /*
@@ -30,8 +30,8 @@
 #include <xtermcfg.h>
 #endif
 
-#include "ptyx.h"		/* gets Xt stuff, too */
-#include "data.h"
+#include <ptyx.h>		/* gets Xt stuff, too */
+#include <data.h>
 
 #include <setjmp.h>
 
@@ -80,13 +80,6 @@ int bcnt = 0;
 Char VTbuffer[BUF_SIZE];
 Char *bptr = VTbuffer;
 jmp_buf VTend;
-XPoint VTbox[NBOX] = {
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-};
 
 #ifdef DEBUG
 int debug = 0; 		/* true causes error messages to be displayed */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_driver.c,v 3.35.2.8 1998/01/31 14:23:29 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_driver.c,v 3.35.2.12 1998/11/06 09:46:58 hohndel Exp $ */
 /*
  * Copyright 1993 by Jon Block <block@frc.com>
  * Modified by Mike Hollick <hollick@graphics.cis.upenn.edu>
@@ -123,7 +123,9 @@ Bool ctVLB = FALSE;
 /* Panel Types */
 unsigned char ctPanelType = 0;
 #define TFT 1
+#undef SS
 #define SS 2			       /* STN Types */
+#undef DS
 #define DS 4
 #define DD 6
 #define IS_STN(X) X&6
@@ -442,16 +444,17 @@ static int Num_CHIPS_ExtPorts32 =
 #define CT_554   9
 #define CT_555   10
 #define CT_8554  11
-#define CT_4200  12
-#define CT_4300  13
+#define CT_9000  12
+#define CT_4200  13
+#define CT_4300  14
 #ifdef CT45X_SUPPORT
 /* CT_451 - CT457 are not supported */
-#define CT_451   14
-#define CT_452   15
-#define CT_453   16
-#define CT_455   17
-#define CT_456   18
-#define CT_457   19
+#define CT_451   15
+#define CT_452   16
+#define CT_453   17
+#define CT_455   18
+#define CT_456   19
+#define CT_457   20
 #endif
 
 static unsigned char CHIPSchipset;
@@ -464,7 +467,7 @@ CHIPSIdent(n)
     {
 	"ct65520", "ct65525", "ct65530", "ct65535", "ct65540", 
 	"ct65545", "ct65546", "ct65548", "ct65550", "ct65554",
-	"ct65555", "ct68554", "ct64200", "ct64300",
+	"ct65555", "ct68554", "ct69000", "ct64200", "ct64300",
 #ifdef CT45X_SUPPORT
 	"ct451", "ct452", "ct453", "ct455",
 	"ct456", "ct457",
@@ -1007,6 +1010,18 @@ CHIPSProbe()
 	    ctisHiQV32 = TRUE;	       /* Use the new HiQV32 architecture */
 	    ctDPMSSupport = TRUE;
 	    ctTMED = TRUE;           /* Flag the new STN dithering scheme */
+	} else if (!StrCaseCmp(vga256InfoRec.chipset, CHIPSIdent(CT_9000))) {
+	    CHIPSchipset = CT_9000;
+	    ctLinearSupport = TRUE;
+	    ctAccelSupport = TRUE;
+	    ctSupportMMIO = TRUE;
+	    ctUseMMIO = TRUE;        /* MMIO seems to be usuable on all Buses
+				      * In fact it seems that Blitting can only
+				      * be done with MMIO */
+	    ctHDepth = TRUE;
+	    ctisHiQV32 = TRUE;         /* Use the new HiQV32 architecture */
+	    ctDPMSSupport = TRUE;
+	    ctTMED = TRUE;           /* Flag the new STN dithering scheme */
 	} else if (!StrCaseCmp(vga256InfoRec.chipset, CHIPSIdent(CT_4200))) {
 	  CHIPSchipset = CT_4200;
 	  ctisWINGINE = TRUE;
@@ -1063,6 +1078,11 @@ CHIPSProbe()
 	} else if (tmp == 0xF4) {
 	    CHIPSchipset = CT_8554;
 	    ctUseMMIO = TRUE;	
+	    ctisHiQV32 = TRUE;     /* Use the new HiQV32 architecture */
+	    ctTMED = TRUE;         /* Flag the new STN dithering scheme */
+	} else if (tmp == 0xC0) {
+	    CHIPSchipset = CT_9000;
+	    ctUseMMIO = TRUE;   
 	    ctisHiQV32 = TRUE;     /* Use the new HiQV32 architecture */
 	    ctTMED = TRUE;         /* Flag the new STN dithering scheme */
 	} else {
@@ -1198,6 +1218,19 @@ CHIPSProbe()
 		ctDPMSSupport = TRUE;
 		ctTMED = TRUE;       /* Flag the new STN dithering scheme */
 	    }
+	    if (temp == 0xC0) {
+	        CHIPSchipset = CT_9000;
+		ctLinearSupport = TRUE;
+		ctAccelSupport = TRUE;
+		ctSupportMMIO = TRUE;
+		ctUseMMIO = TRUE;    /* MMIO seems to be usuable on all Buses.
+				      * In fact it seems that Blitting can only
+				      * be done with MMIO */
+		ctHDepth = TRUE;
+		ctisHiQV32 = TRUE;
+		ctDPMSSupport = TRUE;
+		ctTMED = TRUE;       /* Flag the new STN dithering scheme */
+           }
 	    if (CHIPSchipset != 99) {
 		outb(0x3D6, 0x04);
 		temp = inb(0x3D7);
@@ -1303,26 +1336,58 @@ Bool ctProbeHiQV()
   /* memory size */
   if (!vga256InfoRec.videoRam) {
       /* not given, probe it    */
-      /* XR43: DRAM interface   */
-      /* bit 2-1: memory size   */
-      /*          0: 1024 kB    */
-      /*          1: 2048 kB    */
-      /*          2: 4096 kB    */
-      /*          3: reserved   */
-      outb(0x3D6, 0x43);
-      switch ((inb(0x3D7) & 0x06) >> 1) {
-	case 0:
-	  vga256InfoRec.videoRam = 1024;
-	  break;
-	case 1:
+      if (CHIPSchipset == CT_9000) {
+	  /* The ct69000 has 2Mb of SGRAM integrated */
 	  vga256InfoRec.videoRam = 2048;
-	  break;
-	case 2:
-	case 3:
-	  vga256InfoRec.videoRam = 4096;
-	  break;
+      } else if (CHIPSchipset == CT_550) {
+          /* XR43: DRAM interface   */
+	  /* bit 2-1: memory size   */
+          /*          0: 1024 kB    */
+          /*          1: 2048 kB    */
+          /*          2:  reserved  */
+          /*          3: reserved   */
+          outb(0x3D6, 0x43);
+	  switch ((inb(0x3D7) & 0x06) >> 1) {
+	    case 0:
+	      vga256InfoRec.videoRam = 1024;
+	      break;
+	    case 1:
+	    case 2:
+	    case 3:
+	      vga256InfoRec.videoRam = 2048;
+	      break;
+	  }
+      } else {
+	  /* XRE0: Software reg     */
+	  /* bit 3-0: memory size   */
+          /*          0: 512k       */
+          /*          1: 1024k      */
+          /*          2: 1536k(1.5M)*/
+          /*          3: 2048k      */
+          /*          7: 4096k      */
+          outb(0x3D6, 0xE0);
+	  temp = inb(0x3D7) & 0xF;
+	  switch (temp) {
+	    case 0:
+	      vga256InfoRec.videoRam = 512;
+	      break;
+	    case 1:
+	      vga256InfoRec.videoRam = 1024;
+	      break;
+	    case 2:
+	      vga256InfoRec.videoRam = 1536;
+	      break;
+	    case 3:
+	      vga256InfoRec.videoRam = 2048;
+	      break;
+	    case 7:
+	      vga256InfoRec.videoRam = 4096;
+	      break;
+	    default:
+	      vga256InfoRec.videoRam = 1024;
+	    break;
+	  }
       }
-      
       ErrorF("%s %s: CHIPS: %d kB VRAM\n", XCONFIG_PROBED,
 	     vga256InfoRec.name, vga256InfoRec.videoRam);
   } else {
@@ -1491,9 +1556,10 @@ Bool ctProbeHiQV()
     }
   }
 
-    /* Test whether 16/24 bpp is being used, and bomb out if not
+    /* Test whether 16/24/32 bpp is being used, and bomb out if not
      * using linear addressing */
-    if (!ctLinearSupport && (vgaBitsPerPixel == 16 || vgaBitsPerPixel == 24)) {
+    if (!ctLinearSupport && (vgaBitsPerPixel == 16 || vgaBitsPerPixel == 24
+			     || vgaBitsPerPixel == 32)) {
 	ErrorF("%s %s: CHIPS: Depth %d only supported with linear addressing\n",
 	    XCONFIG_PROBED, vga256InfoRec.name, vgaBitsPerPixel);
 	return (FALSE);
@@ -1509,10 +1575,14 @@ Bool ctProbeHiQV()
 		ErrorF("%s %s: CHIPS: 16 bpp.\n", XCONFIG_GIVEN,
 		    vga256InfoRec.name);
 		CHIPS.ChipHas16bpp = TRUE;
-	    } else if (vgaBitsPerPixel > 16) {
+	    } else if (vgaBitsPerPixel == 24) {
 		ErrorF("%s %s: CHIPS: 24 bpp.\n", XCONFIG_GIVEN,
 		    vga256InfoRec.name);
 		CHIPS.ChipHas24bpp = TRUE;
+	    } else if (vgaBitsPerPixel == 32) {
+		ErrorF("%s %s: CHIPS: 32 bpp.\n", XCONFIG_GIVEN,
+		    vga256InfoRec.name);
+		CHIPS.ChipHas32bpp = TRUE;
 	    }
 	}
 	/* linear video Ram size */
@@ -1573,6 +1643,9 @@ Bool ctProbeHiQV()
       case CT_555:
       case CT_8554:
 	ctMemClk->Max = 55000;
+	break;
+      case CT_9000:
+	ctMemClk->Max = 100000;
 	break;
     }
 
@@ -1636,12 +1709,16 @@ Bool ctProbeHiQV()
     
     /* maximal clock */
     switch (CHIPSchipset) {
+      case CT_9000:
+	vga256InfoRec.maxClock = 220000;
+	break;
       case CT_8554:
       case CT_555:
 	vga256InfoRec.maxClock = 110000;
 	break;
       case CT_554:
 	vga256InfoRec.maxClock = 95000;
+	break;
       case CT_550:
 	outb(0x3D6, 0x04);
 	if ((inb(0x3D7) & 0xF) < 6) {
@@ -1693,6 +1770,7 @@ Bool ctProbeHiQV()
     OFLG_SET(OPTION_HW_CLKS, &CHIPS.ChipOptionFlags);
     OFLG_SET(OPTION_NOLINEAR_MODE, &CHIPS.ChipOptionFlags);
     OFLG_SET(OPTION_SW_CURSOR, &CHIPS.ChipOptionFlags);
+    OFLG_SET(OPTION_HW_CURSOR, &CHIPS.ChipOptionFlags);
     OFLG_SET(OPTION_STN, &CHIPS.ChipOptionFlags);
     OFLG_SET(OPTION_USE_MODELINE, &CHIPS.ChipOptionFlags);
     OFLG_SET(OPTION_NO_BITBLT, &CHIPS.ChipOptionFlags);
@@ -1954,6 +2032,7 @@ Bool ctProbeWINGINE()
   OFLG_SET(OPTION_HW_CLKS, &CHIPS.ChipOptionFlags);
   OFLG_SET(OPTION_NOLINEAR_MODE, &CHIPS.ChipOptionFlags);
   OFLG_SET(OPTION_SW_CURSOR, &CHIPS.ChipOptionFlags);
+  OFLG_SET(OPTION_HW_CURSOR, &CHIPS.ChipOptionFlags);
   OFLG_SET(OPTION_NO_BITBLT, &CHIPS.ChipOptionFlags);
   OFLG_SET(OPTION_NO_IMAGEBLT, &CHIPS.ChipOptionFlags);
 
@@ -2419,6 +2498,7 @@ Bool ctProbe()
     OFLG_SET(OPTION_HW_CLKS, &CHIPS.ChipOptionFlags);
     OFLG_SET(OPTION_NOLINEAR_MODE, &CHIPS.ChipOptionFlags);
     OFLG_SET(OPTION_SW_CURSOR, &CHIPS.ChipOptionFlags);
+    OFLG_SET(OPTION_HW_CURSOR, &CHIPS.ChipOptionFlags);
     OFLG_SET(OPTION_STN, &CHIPS.ChipOptionFlags);
     OFLG_SET(OPTION_USE_MODELINE, &CHIPS.ChipOptionFlags);
     OFLG_SET(OPTION_NO_BITBLT, &CHIPS.ChipOptionFlags);
@@ -3230,7 +3310,7 @@ CHIPSInit655xx(mode)
 	    new->Port_3D6[0x57] |= 0x60;   /* Enable vertical stretching     */
 	    temp = (mode->CrtcVDisplay / (ctSize.VDisplay -
 		    mode->CrtcVDisplay + 1));
-	    if (!OFLG_ISSET(OPTION_SW_CURSOR, &vga256InfoRec.options)) 
+	    if (OFLG_ISSET(OPTION_HW_CURSOR, &vga256InfoRec.options)) 
 	        temp = (temp == 0 ? 1 : temp);  /* HWCursorBug when doubling */
 	    new->Port_3D6[0x5A] = temp > 0x0F ? 0 : (unsigned char)temp;
 	} else {
@@ -3242,7 +3322,8 @@ CHIPSInit655xx(mode)
 
     /* set video mode */
     new->Port_3D6[0x2B] = ctVideoMode(vgaBitsPerPixel, xf86weight.green,
-	ctLCD ? min(HDisplay, ctSize.HDisplay) : HDisplay);
+	ctLCD ? min(HDisplay, ctSize.HDisplay) : HDisplay, ctLCD ? 
+        min(mode->CrtcVDisplay, ctSize.VDisplay) : mode->CrtcVDisplay);
 
 #ifdef DEBUG
     ErrorF("VESA Mode: %Xh\n", new->Port_3D6[0x2B]);
@@ -3535,7 +3616,8 @@ CHIPSInitWINGINE(mode)
 
     /* set video mode */
     new->Port_3D6[0x2B] = ctVideoMode(vgaBitsPerPixel, xf86weight.green,
-	ctLCD ? min(HDisplay, ctSize.HDisplay) : HDisplay);
+	mode->CrtcHDisplay, mode->CrtcVDisplay);
+
  
 #ifdef DEBUG
     ErrorF("VESA Mode: %Xh\n", new->Port_3D6[0x2B]);
@@ -3631,6 +3713,15 @@ CHIPSInitHiQV32(mode)
     ErrorF("CHIPSInitHiQV32\n");
 #endif
 
+    /*
+     * Possibly fix up the panel size, if the manufacture is stupid
+     * enough to set it incorrectly in text modes
+     */
+    if (OFLG_ISSET(OPTION_PANEL_SIZE, &vga256InfoRec.options)) {
+	ctSize.HDisplay = mode->CrtcHDisplay;
+	ctSize.VDisplay = mode->CrtcVDisplay;
+    }
+
     /* fix things that could be messed up by suspend/resume */
     tmp = inb(0x3CC);
     outb(0x3C2, (tmp & 0xFE) | ctVgaIOBaseFlag); 
@@ -3684,6 +3775,8 @@ CHIPSInitHiQV32(mode)
 	temp <<= 1;		       /* double the width of the buffer */
     } else if (vgaBitsPerPixel == 24) {
 	temp += temp << 1;
+    } else if (vgaBitsPerPixel == 32) {
+	temp <<= 2;
     }
     new->std.CRTC[0x13] = temp;
     new->Port_3D4[0x41] = (temp >> 8) & 0x0F;
@@ -3760,6 +3853,11 @@ CHIPSInitHiQV32(mode)
     new->Port_3D4[0x31] = ((mode->CrtcVDisplay - 1) & 0xF00) >> 8;
     new->Port_3D4[0x32] = (mode->CrtcVSyncStart & 0xF00) >> 8;
     new->Port_3D4[0x33] = (mode->CrtcVSyncStart & 0xF00) >> 8;
+    if (CHIPSchipset == CT_9000) {
+	/* The 69000 has overflow bits for the horizontal values as well */
+	new->Port_3D4[0x38] = (((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8;
+	new->Port_3D4[0x3C] = ((mode->CrtcHSyncEnd >> 3) & 0xC0);
+    }
     new->Port_3D4[0x40] |= 0x80;
 
     /* centering/stretching */
@@ -3789,7 +3887,8 @@ CHIPSInitHiQV32(mode)
      * software flag, and it appears to change with the mode */
     new->Port_3D6[0xE2] = ctVideoMode(vgaBitsPerPixel, xf86weight.green,
 	ctLCD ? min(mode->CrtcHDisplay, ctSize.HDisplay) :
-	mode->CrtcHDisplay);
+	mode->CrtcHDisplay, ctLCD ? min(mode->CrtcVDisplay, ctSize.VDisplay) :
+	mode->CrtcVDisplay);
 #ifdef DEBUG
     ErrorF("VESA Mode: %Xh\n", new->Port_3D6[0xE2]);
 #endif
@@ -3823,15 +3922,34 @@ CHIPSInitHiQV32(mode)
 	new->Port_3D6[0x81] = new->Port_3D6[0x81] & 0xF0 | 0x6;
 	/* 24bpp colour              */
 	new->Port_3D6[0x20] = 0x20;    /*BitBLT Draw Mode for 24 bpp */
+    } else if (vgaBitsPerPixel == 32) {
+        new->Port_3D6[0x81] = new->Port_3D6[0x81] & 0xF0 | 0x7;
+	/* 32bpp colour              */
+	new->Port_3D6[0x20] = 0x10;    /*BitBLT Draw Mode for 16 bpp */
     }
 
     /*CRT only */
     if (!ctLCD) {
 	if (mode->Flags & V_INTERLACE)
+	{
 	    new->Port_3D4[0x70] = 0x80          /*   set interlace */
 	      | (((((mode->CrtcHDisplay >> 3) - 1) >> 1) - 6) & 0x7F);
-		else
+	    /* 
+	     ** Double VDisplay to get back the full screen value, otherwise
+	     ** you only see half the picture.
+	     */
+	    mode->CrtcVDisplay = mode->VDisplay;
+	    temp = new->std.CRTC[7] & ~0x42;
+	    new->std.CRTC[7] = (temp | 
+				((((mode->CrtcVDisplay -1) & 0x100) >> 7 ) |
+				 (((mode->CrtcVDisplay -1) & 0x200) >> 3 )));
+	    new->std.CRTC[0x12] = (mode->CrtcVDisplay -1) & 0xFF;
+	    new->Port_3D4[0x31] = ((mode->CrtcVDisplay - 1) & 0xF00) >> 8;
+	}
+	else
+	{
 	    new->Port_3D4[0x70] &= ~0x80;	/* unset interlace */
+	}
     }
 
     /* STN specific */
@@ -3910,6 +4028,8 @@ CHIPSAdjust(x, y)
 	else
 	  Base = (Base >> 3) * 6;    /* 65550 seems to need 64bit alignment */
 	break;
+    case 32:
+        break;
     default:			     /* 8bpp */
 	Base >>= 2;
 	break;
@@ -3985,7 +4105,7 @@ CHIPSFbInit()
      * If hardware cursor is supported, the vgaHWCursor struct should
      * be filled in here.
      */
-    if (!OFLG_ISSET(OPTION_SW_CURSOR, &vga256InfoRec.options)) {
+    if (OFLG_ISSET(OPTION_HW_CURSOR, &vga256InfoRec.options)) {
 
 	/* Allocate 1kB of vram to the cursor, with 1kB alignment for
 	 * 6554x's and 4kb alignment for 65550's */
@@ -3999,9 +4119,7 @@ CHIPSFbInit()
 	    ErrorF("%s %s: CHIPS: Too little space for H/W cursor.\n",
 		XCONFIG_PROBED, vga256InfoRec.name);
 	} else {
-	    ErrorF("%s %s: CHIPS: H/W cursor selected\n",
-		OFLG_ISSET(XCONFIG_SPEEDUP, &vga256InfoRec.xconfigFlag) ?
-		XCONFIG_GIVEN : XCONFIG_PROBED,
+	    ErrorF("%s %s: CHIPS: H/W cursor selected\n", XCONFIG_GIVEN,
 		vga256InfoRec.name);
 	    vgaHWCursor.Initialized = TRUE;
 	    vgaHWCursor.Init = CHIPSCursorInit;
@@ -4041,6 +4159,14 @@ CHIPSFbInit()
 	    ctColorExpandScratchSize = 1024;
 #endif
 
+	/* 16bpp 8x8 mono pattern fill for 32bpp solid fill. QWORD aligned */
+	if (ctisHiQV32 && (vga256InfoRec.bitsPerPixel == 32)) {
+	    ctBLTPatternAddress = ctAllocate(8, 0x7);
+	    if (ctBLTPatternAddress == -1)
+	        ErrorF("%s %s: CHIPS: Too little space for 32bpp solid fill.\n",
+		   XCONFIG_PROBED, vga256InfoRec.name);
+	}
+	
 	/* Use the allocation function to now get an address that
 	 * points to the top of ram. As it won't be used again in
 	 * this acceleration scheme, we really don't care of the
@@ -4591,13 +4717,14 @@ ctRestore(restore)
 }
 
 int
-ctVideoMode(vgaBitsPerPixel, weightGreen, displaySize)
-    int vgaBitsPerPixel, weightGreen, displaySize;
+ctVideoMode(vgaBitsPerPixel, weightGreen, displayHSize, displayVSize)
+    int vgaBitsPerPixel, weightGreen, displayHSize, displayVSize;
 {
     /*     4 bpp  8 bpp  16 bpp  18 bpp  24 bpp  32 bpp */
     /* 640  0x20   0x30    0x40    -      0x50     -    */
     /* 800  0x22   0x32    0x42    -      0x52     -    */
     /*1024  0x24   0x34    0x44    -      0x54     -    */
+    /*1024   -     0x36    0x47    -      0x56     -    for 1024x600 */
     /*1152  0x27   0x37    0x47    -      0x57     -    */
     /*1280  0x28   0x38    0x49    -        -      -    */
     /*1600  0x2C   0x3C    0x4C   0x5D      -      -    */
@@ -4621,12 +4748,14 @@ ctVideoMode(vgaBitsPerPixel, weightGreen, displaySize)
 	break;
     }
 
-    switch (displaySize) {
+    switch (displayHSize) {
     case 800:
 	videoMode |= 0x02;
 	break;
     case 1024:
 	videoMode |= 0x04;
+	if(displayVSize < 768)
+	  videoMode |= 0x02;
 	break;
     case 1152:
 	videoMode |= 0x07;
@@ -4934,22 +5063,22 @@ int PowerManagementMode;
 	outb(0x3D6,0x73);
     tmp = inb(0x3D7);
     outb(0x3D7,((tmp & 0xF0) | dpmsreg));
-    /* Turn off the flat panel by directing the output to the CRT */
+    /* Turn off the flat panel */
     if (ctLCD) {
 	if (ctisHiQV32) {
-	    outb(0x3D0,0x1);
+	    outb(0x3D0,0x5);
 	    tmp = inb(0x3D1);
 	    if (lcdoff)
-	        outb(0x3D1, (tmp & 0xFC));
+	        outb(0x3D1, (tmp | 0x8));
 	    else
-	        outb(0x3D1, ((tmp & 0xFC) | 0x2));
+	        outb(0x3D1, (tmp & 0xF7));
 	} else {
-	    outb(0x3D6,0x51);
+	    outb(0x3D6,0x52);
 	    tmp = inb(0x3D7);
 	    if (lcdoff)
-	        outb(0x3D7, (tmp & 0xFB));
+	        outb(0x3D7, (tmp | 0x8));
 	    else
-	        outb(0x3D7, ((tmp & 0xFB) | 0x4));
+	        outb(0x3D7, (tmp & 0xF7));
 	}
     }
 }

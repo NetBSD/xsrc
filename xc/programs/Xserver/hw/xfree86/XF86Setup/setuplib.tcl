@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/setuplib.tcl,v 3.13.2.7 1998/02/28 08:54:10 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/setuplib.tcl,v 3.13.2.8 1998/11/01 11:19:27 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -25,7 +25,8 @@ proc initconfig {xwinhome} {
 	global pc98 pc98_EGC
 
 	set fontdir  "$xwinhome/lib/X11/fonts"
-	set Files(FontPath)	[list $fontdir/misc:unscaled \
+	set Files(FontPath)	[list $fontdir/local \
+		  $fontdir/misc:unscaled \
 		  $fontdir/75dpi:unscaled $fontdir/100dpi:unscaled \
 		  $fontdir/Type1 $fontdir/Speedo  \
 		  $fontdir/misc $fontdir/75dpi $fontdir/100dpi ]

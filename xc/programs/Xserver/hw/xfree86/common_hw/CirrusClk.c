@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/CirrusClk.c,v 3.11 1996/12/23 06:44:05 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/CirrusClk.c,v 3.11.2.1 1998/11/01 09:59:21 hohndel Exp $ */ 
 
 /*
  * Programming of the built-in Cirrus clock generator.
@@ -77,7 +77,7 @@ int CirrusFindClock(freq, max_clock, num_out, den_out, usemclk_out)
 {
 	int n, i;
 	int num, den;
-	int ffreq, mindiff;
+	int mindiff;
 	int mclk;
 
 	/* Prefer a tested value if it matches within 0.1%. */
@@ -86,6 +86,7 @@ int CirrusFindClock(freq, max_clock, num_out, den_out, usemclk_out)
 		diff = abs(CLOCKVAL(cirrusClockTab[i].numer, 
 		          cirrusClockTab[i].denom) - freq);
 		if (diff < freq / 1000) {
+                        mindiff = diff;
 			num = cirrusClockTab[i].numer;
 			den = cirrusClockTab[i].denom;
 			goto foundclock;
@@ -114,7 +115,6 @@ int CirrusFindClock(freq, max_clock, num_out, den_out, usemclk_out)
 				mindiff = diff;
 				num = n;
 				den = d;
-				ffreq = c;
 			}
 		}
 	}
@@ -124,7 +124,7 @@ foundclock:
 	*den_out = den;
 
 	/* Calculate the MCLK. */
-	outb(0x3c4, 0x0f);
+	outb(0x3c4, 0x1f);
 	mclk = 14318 * (inb(0x3c5) & 0x3f) / 8;
 	/*
 	 * Favour MCLK as VLCK if it matches as good as the found clock,

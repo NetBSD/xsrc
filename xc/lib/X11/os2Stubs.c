@@ -28,7 +28,7 @@
  *
  */
 
-/* $XFree86: xc/lib/X11/os2Stubs.c,v 3.0 1996/05/13 06:37:17 dawes Exp $ */
+/* $XFree86: xc/lib/X11/os2Stubs.c,v 3.0.4.1 1998/10/11 12:34:58 hohndel Exp $ */
 
 /* A few OS/2 functions needed in the X11 lib. Mainly, the file path redirection
  * functions and the "optimized" select() for the clients */
@@ -87,8 +87,8 @@ char *__XOS2RedirRoot1(char *format, char *arg1, char *arg2, char *arg3)
 /* sockets are present, this may call the emx select                          */
 
 
-HEV hPipeSem;
-HMODULE hmod_so32dll;
+HEV hPipeSem = 0;
+HMODULE hmod_so32dll = 0;
 static int (*os2_tcp_select)(int*,int,int,int,long);
 ULONG os2_get_sys_millis();
 extern int _files[];
@@ -420,6 +420,3 @@ APIRET rc;
 errno = 0;
 return(e);
 }
-
-
-

@@ -2,7 +2,7 @@ XCOMM $XConsortium: xf86.tmpl /main/2 1996/10/31 15:01:41 kaleb $
 
 
 
-XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11 1996/12/27 06:50:30 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11.2.2 1998/10/31 14:40:44 hohndel Exp $
 
 #if XF86LinkKit
     TOP_INCLUDES = TopIncludes
@@ -33,8 +33,17 @@ XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11 1996/12/27 06:50:30 dawes Exp $
 #ifndef ElographicsSupport
 #define ElographicsSupport	NO
 #endif
+#ifndef MicroTouchSupport
+#define MicroTouchSupport	NO
+#endif
 #ifndef SummaSketchSupport
 #define SummaSketchSupport	NO
+#endif
+#ifndef AceCadSupport
+#define AceCadSupport		NO
+#endif
+#ifndef DialBoxSupport
+#define DialBoxSupport		NO
 #endif
 
 #if BuildDynamicLoading
@@ -57,9 +66,24 @@ XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11 1996/12/27 06:50:30 dawes Exp $
 # else
 #  define ElographicsDefines
 # endif
+# if MicroTouchSupport
+#  define MicroTouchDefines -DMICROTOUCH_SUPPORT
+# else
+#  define MicroTouchDefines
+# endif
 # if SummaSketchSupport
 #  define SummaSketchDefines -DSUMMASKETCH_SUPPORT
 # else
 #  define SummaSketchDefines
+# endif
+# if AceCadSupport
+#  define AceCadDefines -DACECAD_SUPPORT
+# else
+#  define AceCadDefines
+# endif
+# if DialBoxSupport
+#  define DialBoxDefines -DDIALBOX_SUPPORT
+# else
+#  define DialBoxDefines
 # endif
 #endif

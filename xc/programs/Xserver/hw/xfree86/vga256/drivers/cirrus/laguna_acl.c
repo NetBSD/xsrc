@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/laguna_acl.c,v 3.4.2.3 1998/02/15 16:09:36 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/laguna_acl.c,v 3.4.2.6 1998/11/05 19:18:59 hohndel Exp $ */
 
 /*
- * New-style acceleration for the Laguna-family (CL-GD5462/5464).
+ * New-style acceleration for the Laguna-family (CL-GD5462/5464/5465).
  */
 
 #include "vga256.h"
@@ -35,21 +35,21 @@
 */
 static Bool lgUsePCIRetry = FALSE;
 
-void LagunaSync();
-void LagunaWaitQAvail();
-void LagunaSetupForFillRectSolid();
-void LagunaSubsequentFillRectSolid();
-void LagunaSetupForScreenToScreenCopy();
-void LagunaSubsequentScreenToScreenCopy();
-void LagunaSetupForCPUToScreenColorExpand();
-void LagunaSubsequentCPUToScreenColorExpand();
-void LagunaSetupForScreenToScreenColorExpand();
-void LagunaSubsequentScreenToScreenColorExpand();
-void LagunaSetupForFill8x8Pattern();
-void LagunaSubsequentFill8x8Pattern();
-void LagunaSetupFor8x8PatternColorExpand();
-void LagunaSubsequent8x8PatternColorExpand();
-void LagunaImageWrite();
+static void LagunaSync();
+static void LagunaWaitQAvail();
+static void LagunaSetupForFillRectSolid();
+static void LagunaSubsequentFillRectSolid();
+static void LagunaSetupForScreenToScreenCopy();
+static void LagunaSubsequentScreenToScreenCopy();
+static void LagunaSetupForCPUToScreenColorExpand();
+static void LagunaSubsequentCPUToScreenColorExpand();
+static void LagunaSetupForScreenToScreenColorExpand();
+static void LagunaSubsequentScreenToScreenColorExpand();
+static void LagunaSetupForFill8x8Pattern();
+static void LagunaSubsequentFill8x8Pattern();
+static void LagunaSetupFor8x8PatternColorExpand();
+static void LagunaSubsequent8x8PatternColorExpand();
+static void LagunaImageWrite();
 
 
 
@@ -75,7 +75,7 @@ int lgCirrusRop[16] = {
 
 
 /* Cirrus raster operations.  These are ROPs for the Pattern fetch unit. */
-int lgCirrusPatRop[16] = {
+static int lgCirrusPatRop[16] = {
   LGPATROP_0,			/* GXclear */
   LGPATROP_AND,			/* GXand */
   LGPATROP_SRC_AND_NOT_DST,	/* GXandReverse */
@@ -134,10 +134,12 @@ void LagunaAccelInit() {
     SCANLINE_PAD_DWORD | CPU_TRANSFER_PAD_DWORD |
       BIT_ORDER_IN_BYTE_LSBFIRST | VIDEO_SOURCE_GRANULARITY_DWORD;
 
-  xf86AccelInfoRec.SetupForCPUToScreenColorExpand =
-    LagunaSetupForCPUToScreenColorExpand;
-  xf86AccelInfoRec.SubsequentCPUToScreenColorExpand =
-    LagunaSubsequentCPUToScreenColorExpand;
+  if (cirrusChip != CLGD5465) {
+    xf86AccelInfoRec.SetupForCPUToScreenColorExpand =
+      LagunaSetupForCPUToScreenColorExpand;
+    xf86AccelInfoRec.SubsequentCPUToScreenColorExpand =
+      LagunaSubsequentCPUToScreenColorExpand;
+  }
 
   xf86AccelInfoRec.SetupForScreenToScreenColorExpand =
     LagunaSetupForScreenToScreenColorExpand;
@@ -170,8 +172,10 @@ void LagunaAccelInit() {
 
 
   /* PixMap caching and CPU-to-screen transfers. */
-  /* THe '62 had some host-to-screen transfer problems. */
-  if (cirrusChip != CLGD5462)
+  /* The '62 had some host-to-screen transfer problems. */
+  /* The '65 also has some host-to-screen troubles, particularly when
+     it comes to the AGP bus. */
+  if (! (cirrusChip == CLGD5462 || cirrusChip == CLGD5465))
     xf86AccelInfoRec.ImageWrite = LagunaImageWrite;
 
   xf86InitPixmapCache(&vga256InfoRec, vga256InfoRec.virtualY *
@@ -180,20 +184,7 @@ void LagunaAccelInit() {
 }
 
 
-/* Laguna chip status query routines */
-
-int LgReady(void)
-{
-  volatile unsigned char status;
-
-  status = *(unsigned char *)(cirrusMMIOBase + STATUS);
-  if (status & 0x07)
-    return 0;
-  else
-    return 1;
-}
-
-void LgSetBitmask(unsigned int m)
+static void LgSetBitmask(unsigned int m)
 {
   static unsigned int oldMask = 0xFFFFFFFF;
 
@@ -203,25 +194,24 @@ void LgSetBitmask(unsigned int m)
   }
 }
 
-
-void LagunaSync() {
-    while (!LgReady());
+static void LagunaSync() {
+    while (!LgREADY());
 }
 
-void LagunaWaitQAvail(int n) {
+static void LagunaWaitQAvail(int n) {
   if (!lgUsePCIRetry) {
-    volatile unsigned char qfree;
+    unsigned char qfree;
 
     /* Wait until n entries are open in the command queue */
     do
-      qfree = *(unsigned char *)(cirrusMMIOBase + QFREE);
+      qfree = *(volatile unsigned char *)(cirrusMMIOBase + QFREE);
     while (qfree < n);
   }
 }
   
 
 /* Solid color rectangle fill */
-void LagunaSetupForFillRectSolid(color, rop, planemask)
+static void LagunaSetupForFillRectSolid(color, rop, planemask)
     int color, rop, planemask;
 {
     switch (vga256InfoRec.bitsPerPixel) {
@@ -247,7 +237,7 @@ void LagunaSetupForFillRectSolid(color, rop, planemask)
     LgSetBitmask(planemask);
 }
 
-void LagunaSubsequentFillRectSolid(x, y, w, h)
+static void LagunaSubsequentFillRectSolid(x, y, w, h)
     int x, y, w, h;
 {
   /* Wait for room in the command queue. */
@@ -259,7 +249,7 @@ void LagunaSubsequentFillRectSolid(x, y, w, h)
 
 
 /* Screen-to-screen transfers */ 
-void LagunaSetupForScreenToScreenCopy(xdir, ydir, rop, planemask,
+static void LagunaSetupForScreenToScreenCopy(xdir, ydir, rop, planemask,
 				      transparency_color)
     int xdir, ydir;
     int rop;
@@ -272,22 +262,36 @@ void LagunaSetupForScreenToScreenCopy(xdir, ydir, rop, planemask,
     blitxdir = xdir;
     blitydir = ydir;
     bltmode = 0;
+
+    LagunaWaitQAvail(4);
+    
+    /* We set the rop up here because the LgSETROP macro conveniently
+       (really -- it is convenient!) clears the transparency bits
+       in DRAWDEF.  We'll set those bits appropriatly later. */
+    LgSETROP(lgCirrusRop[rop]);
+
     if (ydir < 0)
       bltmode |= BLITUP;
     if (blittransparent) {
+      /* Gotta extend the transparency_color to the full 32-bit
+	 size of the register. */
+      if (8 == vga256InfoRec.bitsPerPixel)
+	transparency_color |= (transparency_color << 8);
+      if (8 == vga256InfoRec.bitsPerPixel || 16 == vga256InfoRec.bitsPerPixel)
+	transparency_color |= (transparency_color << 16);
+
       bltmode |= COLORTRANS;
-      if (cirrusChip != CLGD5462)
-	bltmode |= PATeqSRC;
+      LgSETBACKGROUND(transparency_color);
+      LgSETTRANSPARENCY(TRANSEQ);
+    } else {
+      LgSETTRANSPARENCY(TRANSNONE);
     }
 
-    LagunaWaitQAvail(3);
-
-    LgSETROP(lgCirrusRop[rop]);
     LgSETMODE(SCR2SCR | COLORSRC | bltmode);
     LgSetBitmask(planemask);
 }
 
-void LagunaSubsequentScreenToScreenCopy(x1, y1, x2, y2, w, h)
+static void LagunaSubsequentScreenToScreenCopy(x1, y1, x2, y2, w, h)
     int x1, y1, x2, y2, w, h;
 {
     /*
@@ -317,7 +321,7 @@ void LagunaSubsequentScreenToScreenCopy(x1, y1, x2, y2, w, h)
 /*
  * CPU-to-screen color expansion.
  */
-void LagunaSetupForCPUToScreenColorExpand(bg, fg, rop, planemask)
+static void LagunaSetupForCPUToScreenColorExpand(bg, fg, rop, planemask)
     int bg, fg, rop;
     unsigned int planemask;
 {
@@ -357,7 +361,7 @@ void LagunaSetupForCPUToScreenColorExpand(bg, fg, rop, planemask)
     LgSetBitmask(planemask);
 }
 
-void LagunaSubsequentCPUToScreenColorExpand(x, y, w, h, skipleft)
+static void LagunaSubsequentCPUToScreenColorExpand(x, y, w, h, skipleft)
     int x, y, w, h, skipleft;
 {
   /*
@@ -374,7 +378,7 @@ void LagunaSubsequentCPUToScreenColorExpand(x, y, w, h, skipleft)
 
 /* Screen-to-screen color expansion. */
 
-void LagunaSetupForScreenToScreenColorExpand(bg, fg, rop, planemask)
+static void LagunaSetupForScreenToScreenColorExpand(bg, fg, rop, planemask)
     int bg, fg, rop;
     unsigned int planemask;
 {
@@ -407,9 +411,7 @@ void LagunaSetupForScreenToScreenColorExpand(bg, fg, rop, planemask)
     LagunaWaitQAvail(1);
     LgSETBACKGROUND(bg);
   } else {
-    bltmode |= COLORTRANS;
-    if (cirrusChip != CLGD5462)
-      bltmode |= PATeqSRC;
+    bltmode |= MONOTRANS;
   }
 
   LagunaWaitQAvail(4);
@@ -419,7 +421,7 @@ void LagunaSetupForScreenToScreenColorExpand(bg, fg, rop, planemask)
   LgSetBitmask(planemask);
 }
 
-void LagunaSubsequentScreenToScreenColorExpand(srcx, srcy, x, y, w, h)
+static void LagunaSubsequentScreenToScreenColorExpand(srcx, srcy, x, y, w, h)
     int srcx, srcy, x, y, w, h;
 {
 
@@ -441,7 +443,7 @@ void LagunaSubsequentScreenToScreenColorExpand(srcx, srcy, x, y, w, h)
 
 /* 8x8 color pattern fills */
 
-void LagunaSetupForFill8x8Pattern(patternx, patterny, rop, planemask,
+static void LagunaSetupForFill8x8Pattern(patternx, patterny, rop, planemask,
 				  transparency_color)
      int patternx, patterny, rop, planemask, transparency_color;
 {
@@ -469,7 +471,7 @@ void LagunaSetupForFill8x8Pattern(patternx, patterny, rop, planemask,
     /* Color transparency_color is transparent */
     LagunaWaitQAvail(1);
     LgSETBACKGROUND(c);
-    trans = TRANSEQ;
+    trans = TRANSBG;
   }
     
   LagunaWaitQAvail(4);
@@ -479,7 +481,7 @@ void LagunaSetupForFill8x8Pattern(patternx, patterny, rop, planemask,
   LgSetBitmask(planemask);
 }
 
-void LagunaSubsequentFill8x8Pattern(patternx, patterny, x, y, w, h)
+static void LagunaSubsequentFill8x8Pattern(patternx, patterny, x, y, w, h)
      int patternx, patterny, x, y, w, h;
 {
   LagunaWaitQAvail(3);
@@ -492,7 +494,7 @@ void LagunaSubsequentFill8x8Pattern(patternx, patterny, x, y, w, h)
 
 
 /* 8x8 mono pattern color expansion fills */
-void LagunaSetupFor8x8PatternColorExpand(patternx, patterny, bg, fg, rop,
+static void LagunaSetupFor8x8PatternColorExpand(patternx, patterny, bg, fg, rop,
 					 planemask)
      int patternx, patterny, bg, fg, rop, planemask;
 {
@@ -539,7 +541,7 @@ void LagunaSetupFor8x8PatternColorExpand(patternx, patterny, bg, fg, rop,
 
 }
 
-void LagunaSubsequent8x8PatternColorExpand(patternx, patterny, x, y, w, h)
+static void LagunaSubsequent8x8PatternColorExpand(patternx, patterny, x, y, w, h)
      int patternx, patterny, x, y, w, h;
 {
   LagunaWaitQAvail(3);
@@ -556,7 +558,7 @@ void LagunaSubsequent8x8PatternColorExpand(patternx, patterny, x, y, w, h)
    is srcwidth bytes wide.  The srcwidth may be larger than the 
    destination copy area. */
 
-void LagunaImageWrite(x, y, w, h, src, srcwidth, rop, planemask)
+static void LagunaImageWrite(x, y, w, h, src, srcwidth, rop, planemask)
     int x;
     int y;
     int w;

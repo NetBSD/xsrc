@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.c,v 3.71.2.14 1998/02/15 16:09:40 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.c,v 3.71.2.15 1998/11/08 10:03:49 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -1576,6 +1576,10 @@ vgaEnterLeaveVT(enter, screen_idx)
         xf86MapDisplay(screen_idx, LINEAR_REGION);
 
       (*vgaEnterLeaveFunc)(ENTER);
+#if defined(__linux__) && defined(PC98_EGC)
+      outb(0x62, 0x0c);
+      outb(0xa2, 0x0d);
+#endif
 #ifdef XFreeXDGA
       if (vga256InfoRec.directMode & XF86DGADirectGraphics) {
 	/* Should we do something here or not ? */
@@ -1778,7 +1782,10 @@ vgaCloseScreen(screen_idx, pScreen)
   outb(0x6a, 0x06);
 /* outb((hiresoflg)?0xa4:0x7c, 0x00); */
   outb(0x7c, 0x00);
-#endif
+#if defined(__linux__)
+  outb(0x62, 0x0d);
+#endif /* __linux__ */
+#endif /* PC98_EGC */
 #ifdef PC98_NEC480
 	{ int i;
 		extern short *vramwindow;

@@ -1,0 +1,36 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/spc8110/Imakefile,v 1.1.2.1 1998/10/18 20:42:37 hohndel Exp $
+
+#include <Server.tmpl>
+
+SRCS = spc_driver.c spc_bank.s spc_cursor.c spc_accel.c 
+
+OBJS = spc_driver.o spc_bank.o spc_cursor.o spc_accel.o
+
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+           -I$(SERVERSRC)/cfb -I../../vga -I../../../xaa \
+           -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+#endif
+
+DEFINES = -DPSZ=8
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+NormalRelocatableTarget(spc_drv, $(OBJS))
+
+InstallLinkKitNonExecFile(spc_driver.c,$(LINKKITDIR)/drivers/vga256/spc8110)
+InstallLinkKitNonExecFile(spc_driver.h,$(LINKKITDIR)/drivers/vga256/spc8110)
+InstallLinkKitNonExecFile(spc_accel.c,$(LINKKITDIR)/drivers/vga256/spc8110)
+InstallLinkKitNonExecFile(spc_cursor.c,$(LINKKITDIR)/drivers/vga256/spc8110)
+InstallLinkKitNonExecFile(spc_bank.s,$(LINKKITDIR)/drivers/vga256/spc8110)
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/spc8110)
+
+DependTarget()
+

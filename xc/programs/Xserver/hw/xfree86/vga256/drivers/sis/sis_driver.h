@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_driver.h,v 1.1 1997/01/12 10:43:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_driver.h,v 1.1.2.3 1998/11/04 08:02:06 hohndel Exp $ */
 
 /*
  *
@@ -30,6 +30,12 @@
 #define SIS86C201 0
 #define SIS86C202 1
 #define SIS86C205 2
+#define SIS86C215 3 /* treated as SIS86C205 */
+#define SIS86C225 4 /* treated as SIS86C205 */
+#define SIS5597   5
+#define SIS5598   6 /* treated as SIS5597 */
+#define SIS6326   7
+
 
 extern int SISchipset;
 
@@ -43,6 +49,7 @@ extern Bool sisAvoidImageBLT;
 extern unsigned char *sisBltDataWindow;
 
 extern Bool sisHWCursor;
+extern Bool sisTurboQueue;
 
 extern int sisAluConv[];		       /* Map Alu to SIS ROP source data  */
 

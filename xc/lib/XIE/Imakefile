@@ -1,7 +1,11 @@
 XCOMM $XConsortium: Imakefile /main/7 1996/09/28 16:43:07 rws $
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/lib/XIE/Imakefile,v 1.1.1.2.2.2 1998/11/06 16:54:34 hohndel Exp $
 
 #define DoNormalLib NormalLibXie
 #define DoSharedLib SharedLibXie
+#define DoExtraLib SharedLibXie
 #define DoDebugLib DebugLibXie
 #define DoProfileLib ProfileLibXie
 #define LibName XIE

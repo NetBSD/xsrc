@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.c,v 3.11.2.3 1998/02/01 16:05:18 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.c,v 3.11.2.4 1998/07/28 13:57:17 hohndel Exp $ */
 /*
  * PCI Probe
  *
@@ -156,10 +156,10 @@ vgaGetPCIInfo()
 	}
 	i++;
     }
-    if (found && xf86Verbose) {
-	int i = 0, j;
-	char *vendorname = NULL, *chipname = NULL;
 
+    if (found) {
+        int i = 0, j;
+        char *vendorname = NULL, *chipname = NULL;
 	while (xf86PCIVendorInfo[i].VendorName) {
 	    if (xf86PCIVendorInfo[i].VendorID == info->Vendor) {
 		j = 0;
@@ -175,32 +175,33 @@ vgaGetPCIInfo()
 		break;
 	    }
 	    i++;
+
 	}
-
-	ErrorF("%s %s: PCI: ", XCONFIG_PROBED, vga256InfoRec.name);
-	if (vendorname)
-	    ErrorF("%s ", vendorname);
-	else
-	    ErrorF("Unknown vendor (0x%04x) ", info->Vendor);
-	if (chipname)
-	    ErrorF("%s ", chipname);
-	else
-	    ErrorF("Unknown chipset (0x%04x) ", info->ChipType);
-	ErrorF("rev %d", info->ChipRev);
-
 	info->MemBase = membase;
 	info->MMIOBase = mmiobase;
 	info->IOBase = iobase;
 
-	if (membase)
-	    ErrorF(", Memory @ 0x%08x", membase);
-	if (membase2)
-	    ErrorF(", 0x%08x", membase2);
-	if (mmiobase)
-	    ErrorF(", MMIO @ 0x%08x", mmiobase);
-	if (iobase)
-	    ErrorF(", I/O @ 0x%04x", iobase);
-	ErrorF("\n");
+        if (xf86Verbose) {
+		ErrorF("%s %s: PCI: ", XCONFIG_PROBED, vga256InfoRec.name);
+	    if (vendorname)
+		ErrorF("%s ", vendorname);
+	    else
+		ErrorF("Unknown vendor (0x%04x) ", info->Vendor);
+	    if (chipname)
+		ErrorF("%s ", chipname);
+	    else
+		ErrorF("Unknown chipset (0x%04x) ", info->ChipType);
+	    ErrorF("rev %d", info->ChipRev);
+	    if (membase)
+		ErrorF(", Memory @ 0x%08x", membase);
+	    if (membase2)
+		ErrorF(", 0x%08x", membase2);
+	    if (mmiobase)
+		ErrorF(", MMIO @ 0x%08x", mmiobase);
+	    if (iobase)
+		ErrorF(", I/O @ 0x%04x", iobase);
+	    ErrorF("\n");
+	} 
     }
     return info;
 }

@@ -4,10 +4,11 @@ XCOMM $XConsortium: Imakefile /main/3 1996/11/04 09:57:27 kaleb $
 
 
 
-XCOMM $XFree86: xc/lib/zlib/Imakefile,v 1.2 1997/01/08 20:32:27 dawes Exp $
+XCOMM $XFree86: xc/lib/zlib/Imakefile,v 1.2.2.1 1998/11/06 13:54:36 dawes Exp $
 
 #define DoNormalLib   YES
 #define DoSharedLib   NO
+#define DoExtraLib    NO
 #define DoDebugLib    NO
 #define DoProfileLib  NO
 #define HasSharedData NO

@@ -3,6 +3,9 @@ XCOMM $XConsortium: Imakefile /main/1 1996/02/01 00:56:19 gildea $
 XCOMM Format the documentation about the release as a whole.
 XCOMM The files generated here are shipped in the top-level
 XCOMM xc/ directory.
+XCOMM
+XCOMM $XFree86: xc/doc/misc/Imakefile,v 1.1.1.1.4.3 1998/11/08 11:49:16 hohndel Exp $
+XCOMM
 
 MakeSimpleDoc(RELNOTES,RELNOTES.ms)
 
@@ -24,5 +27,18 @@ clean::
 
 AllTarget($(TARGETS))
 
-install:: $(TARGETS)
+#ifndef UpdateDocsInSource
+#define UpdateDocsInSource NO
+#endif
+
+#if UpdateDocsInSource
+SOURCETARGET = install
+#else
+SOURCETARGET = update
+#endif
+
+$(SOURCETARGET):: $(TARGETS)
 	$(CP) $(TARGETS) $(TOP)
+
+InstallRoffDoc(INSTALL)
+InstallRoffDoc(RELNOTES)

@@ -1,28 +1,27 @@
 <!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 
- <article>
+<article>
 
- <title>README for XFree86&tm; 3.3.2
- <author>The XFree86 Project, Inc
- <date>28 January 1998
+<title>README for XFree86&tm; 3.3.3
+<author>The XFree86 Project, Inc
+<date>19 November 1998
 
 
 <abstract>
 
 XFree86 is a port of X11R6.3 that supports several Unix and Unix-like
 operating systems on Intel and other platforms.  This release is a
-maintenance release, fixing bugs found in XFree86 3.3.1.
+full release, fixing a number of bugs and adding support for lots of
+new cards compared to XFree86-3.3.2.
 The release is available
 as source patches against the X Consortium X11R6.3 code and the XFree86
-3.3.1 release.  Binary distributions for many architectures are also
-available, including a binary upgrade for XFree86 3.3.1.
+3.3.2 release.  Binary distributions for many architectures are also
+available, including a binary upgrade for XFree86 3.3.2.
 
 </abstract>
 
-<toc>
-
-<sect>What's new in XFree86 3.3.2
+<sect>What's new in XFree86 3.3.3
 <p>
 
 For a summary of new features in this release, please refer to the
@@ -55,7 +54,7 @@ Note: Not all systems listed here have been tested with the current release.
     <tag/SVR4.2:/
 	<itemize>
 	<ITEM>Consensys
-	<ITEM>Novell UnixWare
+	<ITEM>Novell/SCO UnixWare
 	</itemize>	
 
     <tag/SVR3:/
@@ -68,10 +67,10 @@ Note: Not all systems listed here have been tested with the current release.
 
     <tag/Others:/
 	<itemize>	
-	<ITEM>NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3
+	<ITEM>NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2
 	<ITEM>OpenBSD 2.0, 2.1
 	<ITEM>FreeBSD 2.0.5, 2.1, 2.1.5, 2.1.6, 2.1.7, 2.1.7.1, 2.2,
-		2.2.1, 2.2.2, 2.2.5, 3.0-current
+		2.2.1, 2.2.2, 2.2.5, 2.2.6, 2,2,7, 3.0
 <!--
 	<ITEM>BSD/386 1.1, BSD/OS 2.0
 	<ITEM>Mach 386
@@ -90,8 +89,8 @@ Note: Not all systems listed here have been tested with the current release.
     <tag/PC98:/
 	<itemize>
 	<ITEM>FreeBSD(98) 2.0.5, 2.1, 2.1.5, 2.1.7.1, 2.2, 2.2.1,
-		2.2.2, 2.2.5
-	<ITEM>NetBSD/pc98 (based on NetBSD 1.2, 1.2.1)
+		2.2.2, 2.2.5, 2.2.6, 2,2,7
+	<ITEM>NetBSD/pc98 (based on NetBSD 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2)
 	<ITEM>PANIX 5.0 for 98
 	<ITEM>Linux/98
 	</itemize>
@@ -101,7 +100,7 @@ Note: Not all systems listed here have been tested with the current release.
 <sect> Supported video-card chip-sets
 <p>
 
-At this time, XFree86 3.3.2 supports the following chipsets:
+At this time, XFree86 3.3.3 supports the following chipsets:
 
   <DESCRIP>
     <tag/Ark Logic/
@@ -117,18 +116,22 @@ At this time, XFree86 3.3.2 supports the following chipsets:
     <tag/Avance Logic /
 	ALG2101, ALG2228, ALG2301, ALG2302, ALG2308, ALG2401
     <tag/Chips &amp; Technologies /
-	65520, 65530, 65540, 65545, 65520, 65530, 65540,
-	65545, 65546, 65548, 65550, 65554, 65555, 68554, 64200, 64300
+	65520, 65525, 65530, 65535, 65540, 65545, 65546, 65548, 65550,
+	65554, 65555, 68554, 69000, 64200, 64300
     <tag/Cirrus Logic /
 	CLGD5420, CLGD5422, CLGD5424, CLGD5426, CLGD5428,
 	CLGD5429, CLGD5430, CLGD5434, CLGD5436, CLGD5440, CLGD5446, CLGD5462,
 	CLGD5464, CLGD5465, CLGD5480, CLGD6205, CLGD6215,
 	CLGD6225, CLGD6235, CLGD6410, CLGD6412, CLGD6420,
 	CLGD6440, CLGD7541(*), CLGD7543(*), CLGD7548(*), CLGD7555(*)
-    <tag/Digital Equipment Corporation /
-	TGA
+    <tag/Cyrix/
+    	MediaGX, MediaGXm
     <tag/Compaq /
 	AVGA 
+    <tag/Digital Equipment Corporation /
+	TGA
+    <tag/Epson/
+    	SPC8110
     <tag/Genoa /
 	GVGA 
     <tag/IBM /
@@ -137,25 +140,31 @@ At this time, XFree86 3.3.2 supports the following chipsets:
 	AGX-014, AGX-015, AGX-016
     <tag/Matrox/
 	MGA2064W (Millennium), MGA1064SG (Mystique and Mystique 220),
-	MGA2164W (Millennium II PCI and AGP)
+	MGA2164W (Millennium II PCI and AGP), G100, G200
     <tag/MX /
 	MX68000(*), MX680010(*)
     <tag/NCR /
 	77C22(*), 77C22E(*), 77C22E+(*)
+    <tag/NeoMagic/
+        2200, 2160, 2097, 2093, 2090, 2070
     <tag/Number Nine/
 	I128 (series I and II), Revolution 3D (T2R)
     <tag>NVidia/SGS Thomson </tag>
-	NV1, STG2000, RIVA128
+	NV1, STG2000, RIVA128, Riva TNT
     <tag/OAK /
 	OTI067, OTI077, OTI087
     <tag/RealTek/
 	RTG3106(*)
+    <tag/Rendition/
+        V1000, V2x00
     <tag/S3 /
 	86C911, 86C924, 86C801, 86C805, 86C805i, 86C928, 86C864, 86C964,
 	86C732, 86C764, 86C765, 86C767, 86C775, 86C785, 86C868, 86C968,
 	86C325, 86C357, 86C375, 86C375, 86C385, 86C988, 86CM65, 86C260
     <tag/SiS/
-	86C201, 86C202, 86C205
+	86C201, 86C202, 86C205, 86C215, 86C225, 5597, 5598, 6326
+    <tag/3DLabs/
+        GLINT 500TX, GLINT MX, Permedia, Permedia 2, Permedia 2v
     <tag/Tseng /
 	ET3000, ET4000AX, ET4000/W32, ET4000/W32i, ET4000/W32p, ET6000, ET6100
     <tag/Trident /
@@ -163,12 +172,12 @@ At this time, XFree86 3.3.2 supports the following chipsets:
 	TVGA9000i, TVGA9100B, TVGA9200CXR, Cyber9320(*), TVGA9400CXi,
  	TVGA9420, TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi,
 	TGUI9680, ProVidia 9682, ProVidia 9685(*), Cyber 9382,
-	Cyber 9385, Cyber 9388, 3DImage975(PCI), 3DImage985(AGP), Cyber 9397,
+	Cyber 9385, Cyber 9388, 3DImage975, 3DImage985, Cyber 9397,
 	Cyber 9520
     <tag>Video 7/Headland Technologies </tag>
 	HT216-32(*)
     <tag/Weitek /
-	P9000
+	P9000, P9100
     <tag>Western Digital/Paradise </tag>
 	PVGA1 
     <tag/Western Digital /
@@ -197,7 +206,11 @@ Refer to the chipset-specific <tt>README</tt> files (currently for
 <htmlurl name="ATI (SVGA server)" url=ati.html>,
 <htmlurl name="Chips and Technologies" url=chips.html>,
 <htmlurl name=Cirrus url=cirrus.html>,
-<htmlurl name=Trident url=trident.html>)
+<htmlurl name=Trident url=trident.html>,
+<htmlurl name=NeoMagic url=neo.html>,
+<htmlurl name=Rendition url=rendition.html>,
+<htmlurl name=Epson url=epson.html>,
+<htmlurl name=3DLabs url=3DLabs.html>)
 for more information about using those chipsets.
 
 The monochrome server also supports generic VGA cards, using 64k of video
@@ -210,33 +223,6 @@ The VGA16 server supports memory banking with the ET4000, Trident, ATI,
 NCR, OAK and Cirrus 6420 chipsets allowing virtual display sizes up to
 about 1600x1200 (with 1MB of video memory).  For other chipsets the display
 size is limited to approximately 800x600.
-
-
-<bf>Notes:</bf>
-      The Diamond SpeedStar 24 (and possibly some SpeedStar+) boards are
-      NOT supported, even though they use the ET4000.
-
-      The Weitek 9100 and 9130 chipsets are not supported (these are used on
-      the Diamond Viper Pro and Viper SE boards).
-      Most other Diamond boards
-      will work with this release of XFree86. Diamond is actively
-      supporting The XFree86 Project, Inc.
-
-      3DLabs GLINT, Permedia and Permedia 2 support could unfortunately not
-      be included in XFree86 3.3.2 since there are open issues regarding the
-      documentation and whether or not they were provided to us under NDA.
-
-      S.u.S.E. will continue to make available binary only servers for these
-      cards. These servers can be freely distributed just like XFree86,
-      but sources cannot be made available. S.u.S.E. will continue to develop
-      these servers and will continue to try to donate the code back to
-      XFree86. For the time being S.u.S.E. will try to not only make Linux
-      binaries available, but binaries for other platforms as well.
-
-      Please contact <htmlurl name="x@suse.de" url="mailto:x@suse.de">
-      with further questions. You can find the
-      servers at <htmlurl name="http://www.suse.de/XSuSE/XSuSE_E.html"
-      url="http://www.suse.de/XSuSE/XSuSE_E.html">
 
 <sect>Where to get more information
 <p>
@@ -274,19 +260,6 @@ url="ftp://ftp.xfree86.org/pub/XFree86">.
 There is a Usenet news group <htmlurl name="comp.windows.x.i386unix"
 url="news:comp.windows.x.i386unix"> that contains mostly discussions
 about XFree86 and related topics. Many questions can be answered there.
-
-
-<sect>Thanks
-<p>
-        The XFree86 Project wants to express a special thanks to
-S.u.S.E. GmbH, Fuerth, Germany, for the long and successful
-cooperation over the last few years. S.u.S.E. GmbH at one point hired our
-Core Team member and Vice President Dirk Hohndel as an employee and
-allowed him to work more or less full time on XFree86 for almost nine
-months. S.u.S.E. continues to be a significant source of input and
-help to XFree86. This manifested itself in the XSuSE series of X
-servers that have all except for the GLINT server (due to unresolved      
-legal issues) been integrated into XFree86 3.3.2.
 
 <sect>Credits
 <p>
@@ -436,7 +409,7 @@ XFree86 support was integrated into the base X11R6 distribution by:
 
 <tag/Original accelerated code by:  /
 <itemize>
-       <item>Kevin Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
+       <item>Kevin E. Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
        <item>Rik Faith <it>&lt;faith@cs.unc.edu&gt;</it>,
        <item>Jon Tombs <it>&lt;tombs@XFree86.org&gt;</it>
 </itemize>
@@ -469,7 +442,7 @@ XFree86 support was integrated into the base X11R6 distribution by:
 </itemize>
 <tag/Mach32 accelerated code by:  /
 <itemize>
-       <item>Kevin Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
+       <item>Kevin E. Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
        <item>Rik Faith <it>&lt;faith@cs.unc.edu&gt;</it>,
        <item>Mike Bernson <it>&lt;mike@mbsun.mlb.org&gt;</it>,
        <item>Mark Weaver <it>&lt;Mark_Weaver@brown.edu&gt;</it>,
@@ -478,11 +451,11 @@ XFree86 support was integrated into the base X11R6 distribution by:
 </itemize>
 <tag/Mach64 accelerated code by:  /
 <itemize>
-       <item>Kevin Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
+       <item>Kevin E. Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
 </itemize>
 <tag/Mach8, 8514 accelerated code by:  /
 <itemize>
-       <item>Kevin Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
+       <item>Kevin E. Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
        <item>Rik Faith <it>&lt;faith@cs.unc.edu&gt;</it>,
        <item>Tiago Gons <it>&lt;tiago@comosjn.hobby.nl&gt;</it>,
        <item>Hans Nasten <it>&lt;nasten@everyware.se&gt;</it>,
@@ -663,10 +636,40 @@ XFree86 support was integrated into the base X11R6 distribution by:
 
 <tag/Tseng ET4000 and ET6000 SVGA driver by:  /
 <itemize>
-       <item>[Unknown authors]
+       <item>&lsqb;Unknown authors&rsqb;
        <item>Dirk Hohndel <it>&lt;hohndel@XFree86.Org&gt;</it>
        <item>Koen Gadeyne <it>&lt;koen.gadeyne@barco.com&gt;</it>
        <item>... and others
+</itemize>
+
+<tag/P9100 accelerated code by:  /
+<itemize>
+       <item>Joerg Knura <it>&lt;knura@imst.de&gt;</it>
+</itemize>
+
+<tag/Rendition code by:  /
+<itemize>
+       <item>Tim Rowley <it>&lt;tor@cs.brown.edu&gt;</it>
+       <item>Marc Langenbach <it>&lt;mlangen@studcs.uni-sb.de&gt;</it>
+</itemize>
+
+<tag/Cyrix accelerated code by:  /
+<itemize>
+       <item>Annius Groenink <it>&lt;Annius.Groenink@cwi.nl&gt;</it>
+       <item>Dirk Hohndel <it>&lt;hohndel@XFree86.Org&gt;</it>
+</itemize>
+
+<tag/Epson code by:  /
+<itemize>
+       <item>Thomas Mueller <it>&lt;tmueller@sysgo.de&gt</it>
+</itemize>
+
+<tag/3DLabs accelerated code by:   /
+<itemize>
+       <item>Alan Hourihane <it>&lt;alanh@fairlite.demon.co.uk&gt;</it>
+       <item>Dirk Hohndel <it>&lt;hohndel@XFree86.Org&gt;</it>
+       <item>Stefan Dirsch <it>&lt;sndirsch@suse.de&gt;</it>
+       <item>Helmut Fahrion <it>&lt;hf@suse.de&gt;</it>
 </itemize>
 
 <tag/XFree86-VidModeExtension and xvidtune client by:  /
@@ -852,7 +855,7 @@ XFree86 Project has been provided from its proceeds.
 	name="ATI Technologies Inc">
   <item>Andrew Burgess
   <item><url url="http://www.bsdi.com/"  
-	name="Berkeley Software Design, Inc">, Falls Church, VA
+	name="Berkeley Software Design, Inc">, Colorado Springs, CO
   <item><url url="http://www.caldera.com/"  
 	name="Caldera, Inc.">
   <item><url url="http://www.delix.de/"
@@ -928,7 +931,7 @@ information, contact The XFree86 Project, Inc, at
 
 Source patches are available to upgrade X11R6.3 PL2 from the X Consortium
 (now The Open Group)
-to XFree86 3.3.2.  Binaries for many OSs are also available.  The distribution
+to XFree86 3.3.3.  Binaries for many OSs are also available.  The distribution
 is available from:
 
 <itemize>
@@ -1085,13 +1088,13 @@ Refer to the <tt>README</tt> file under the specified directory for information 
 which files you need to get to build your distribution.
 -->
 
-Ensure that you are getting XFree86 3.3.2 - some of these sites may archive
+Ensure that you are getting XFree86 3.3.3 - some of these sites may archive
 older releases as well.  Check the <htmlurl name="RELNOTES"
 url="RELNOTES.html"> to find which files you need to take from the
 archive.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.33 1998/02/28 15:49:46 robin Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.41 1998/11/19 10:08:14 dawes Exp $
 
 
 

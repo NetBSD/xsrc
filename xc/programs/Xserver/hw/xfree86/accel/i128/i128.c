@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.c,v 3.22.2.11 1998/02/07 10:05:06 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.c,v 3.22.2.12 1998/10/24 02:12:39 robin Exp $ */
 
 #include "i128.h"
 #include "i128reg.h"
@@ -230,6 +230,7 @@ i128Probe()
    i128io.id =      inl(iR.iobase + 0x18) & /* 0x7FFFFFFF */ 0xFFFFFFFF;
    i128io.config1 = inl(iR.iobase + 0x1C) & /* 0xF3333F1F */ 0xFF333F1F;
    i128io.config2 = inl(iR.iobase + 0x20) & 0xC1F70FFF;
+   i128io.sgram   = inl(iR.iobase + 0x24) & 0xFFFFFFFF;
    i128io.soft_sw = inl(iR.iobase + 0x28) & 0x0000FFFF;
    i128io.vga_ctl = inl(iR.iobase + 0x30) & 0x0000FFFF;
 
@@ -275,12 +276,15 @@ i128Probe()
    ErrorF("    ID        0x%08x\n", i128io.id);
    ErrorF("    CONFIG1   0x%08x\n", i128io.config1);
    ErrorF("    CONFIG2   0x%08x\n", i128io.config2);
+   ErrorF("    SGRAM     0x%08x\n", i128io.sgram);
    ErrorF("    SOFT_SW   0x%08x\n", i128io.soft_sw);
    ErrorF("    VGA_CTL   0x%08x\n", i128io.vga_ctl);
 #endif
 
    iR.config1 = i128io.config1;
    iR.config2 = i128io.config2;
+   iR.sgram = i128io.sgram;
+   i128io.sgram = 0x21089030;
    /* vga_ctl is saved later */
 
    /* enable all of the memory mapped windows */
@@ -288,10 +292,6 @@ i128Probe()
    i128io.config1 &= 0xFF00001F;
    i128io.config1 |= 0x00333F10;
    outl(iR.iobase + 0x1C, i128io.config1);
-
-   i128io.config2 &= 0xFF0FFFFF;
-   i128io.config2 |= 0x00500000;
-   outl(iR.iobase + 0x20, i128io.config2);
 
    if (i128DeviceType == I128_DEVICE_ID3) {
 	if ((i128io.config2&6) == 2)
@@ -304,14 +304,23 @@ i128Probe()
    	   i128MemoryType = I128_MEMORY_DRAM;
    }
 
+   i128io.config2 &= 0xFF0FFFFF;
+   i128io.config2 |= 0x00100000;
+   if (i128MemoryType != I128_MEMORY_SGRAM)
+   	i128io.config2 |= 0x00400000;
+   outl(iR.iobase + 0x20, i128io.config2);
+
+
    xf86DisableIOPorts(i128InfoRec.scrnIndex);
 
    xf86ProbeFailed = FALSE;
 
-   ErrorF("%s %s: I128%s revision (%d)\n", 
+   ErrorF("%s %s: I128%s%s revision (%d)\n", 
 	  XCONFIG_PROBED, i128InfoRec.name,
 	  i128DeviceType == I128_DEVICE_ID2 ? "-II" :
-	  i128DeviceType == I128_DEVICE_ID3 ? "-T2R" : "",
+	  i128DeviceType == I128_DEVICE_ID3 ? "-T2R (Rev3D)" : "",
+	  i128DeviceType != I128_DEVICE_ID3 ? "" :
+	   i128MemoryType == I128_MEMORY_SGRAM ? "-SGRAM" : "-WRAM",
 	  i128io.id&0x7);
 
    OFLG_ZERO(&validOptions);
@@ -875,7 +884,8 @@ i128ProgramIBMRGB(freq, flags)
    i128mem.rbase_g[DATA_I] = 0x01;					MB;
    i128mem.rbase_g[IDXL_I] = IBMRGB_misc1;				MB;
    tmp2 = i128mem.rbase_g[DATA_I] & 0xbc;
-   if (i128MemoryType != I128_MEMORY_DRAM)
+   if ((i128MemoryType != I128_MEMORY_DRAM) &&
+       (i128MemoryType != I128_MEMORY_SGRAM))
    	tmp2 |= (i128RamdacType == IBM528_DAC) ? 3 : 1;
    i128mem.rbase_g[DATA_I] = tmp2;					MB;
    i128mem.rbase_g[IDXL_I] = IBMRGB_misc2;				MB;
@@ -885,6 +895,9 @@ i128ProgramIBMRGB(freq, flags)
    if (!((i128MemoryType == I128_MEMORY_DRAM) &&
 	 (i128InfoRec.bitsPerPixel > 16)))
 	tmp2 |= 0x40;
+   if ((i128MemoryType == I128_MEMORY_SGRAM) &&
+	 (i128InfoRec.bitsPerPixel > 16))
+	tmp2 &= 0x3F;
    i128mem.rbase_g[DATA_I] = tmp2;					MB;
    i128mem.rbase_g[IDXL_I] = IBMRGB_misc3;				MB;
    i128mem.rbase_g[DATA_I] = 0x00;					MB;
@@ -894,11 +907,18 @@ i128ProgramIBMRGB(freq, flags)
    /* ?? There is no write to cursor control register */
 
    if (i128RamdacType == IBM526_DAC) {
+	if (i128MemoryType == I128_MEMORY_SGRAM) {
+	    i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_ref_div;		MB;
+	    i128mem.rbase_g[DATA_I] = 0x09;				MB;
+	    i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_vco_div;		MB;
+	    i128mem.rbase_g[DATA_I] = 0x83;				MB;
+	} else {
 	/* program mclock to 52MHz */
-   	i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_ref_div;		MB;
-   	i128mem.rbase_g[DATA_I] = 0x08;					MB;
-   	i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_vco_div;		MB;
-   	i128mem.rbase_g[DATA_I] = 0x41;					MB;
+	    i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_ref_div;		MB;
+	    i128mem.rbase_g[DATA_I] = 0x08;				MB;
+	    i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_vco_div;		MB;
+	    i128mem.rbase_g[DATA_I] = 0x41;				MB;
+	}
 	/* should delay at least a millisec so we'll wait 50 */
    	usleep(50000);
    }

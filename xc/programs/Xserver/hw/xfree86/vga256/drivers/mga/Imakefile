@@ -1,13 +1,13 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/Imakefile,v 3.7.2.2 1998/02/01 16:05:10 robin Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/Imakefile,v 3.7.2.4 1998/09/20 05:42:34 dawes Exp $
 XCOMM
 XCOMM This is an Imakefile for the MGA driver.  
 XCOMM
 
 #include <Server.tmpl>
 
-SRCS = mga_driver.c mga_hwcurs.c mga_dac3026.c mga_dac1064.c \
+SRCS = mga_driver.c mga_hwcurs.c mga_dac3026.c mga_dac1064.c mga_dacG200.c \
        mga_storm8.c mga_storm16.c mga_storm24.c mga_storm32.c mga_xaarepl.c
-OBJS = mga_driver.o mga_hwcurs.o mga_dac3026.o mga_dac1064.o \
+OBJS = mga_driver.o mga_hwcurs.o mga_dac3026.o mga_dac1064.o mga_dacG200.o \
        mga_storm8.o mga_storm16.o mga_storm24.o mga_storm32.o mga_xaarepl.o
 
 #if XF86LinkKit
@@ -41,6 +41,7 @@ InstallLinkKitNonExecFile(mga_map.h,$(LINKKITDIR)/drivers/vga256/mga)
 InstallLinkKitNonExecFile(mga_macros.h,$(LINKKITDIR)/drivers/vga256/mga)
 InstallLinkKitNonExecFile(mga_dac3026.c,$(LINKKITDIR)/drivers/vga256/mga)
 InstallLinkKitNonExecFile(mga_dac1064.c,$(LINKKITDIR)/drivers/vga256/mga)
+InstallLinkKitNonExecFile(mga_dacG200.c,$(LINKKITDIR)/drivers/vga256/mga)
 InstallLinkKitNonExecFile(mga_xaarepl.c,$(LINKKITDIR)/drivers/vga256/mga)
 InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/mga)
 

@@ -1,0 +1,200 @@
+
+
+
+
+
+
+
+
+
+                        Information for Rendition Users
+
+                           The XFree86 Project Inc.
+
+                                23 October 1998
+
+
+
+1.  Supported hardware
+
+All cards based on the V1000 or the V2x00 should be supported. The server was
+tested on a miroCRYSTAL VRX (V1000), Diamond Stealth II S220 (V2100), and Her-
+cules Thriller3D (V2200).
+
+
+2.  Features
+
+   o Unaccelerated
+
+   o Hardware cursor
+
+   o Supported color depths
+
+        o 8 bits per pixel (256 pseudo colour)
+
+        o 16 bits per pixel (high colour)
+
+        o 32 bits per pixel (true colour)
+
+
+3.  XF86Config Option
+
+      Option "sw_cursor"
+            Disables use of the hardware cursor.
+
+      Option "overclock_mem"
+            Run the memory at a higher clock. Useful on some cards with display
+            glitches at higher resolutions. But adds the risk to damage the
+            hardware. Use with caution.
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/rendition.sgml,v 1.1.2.5 1998/11/07 13:52:46 dawes Exp $
+
+
+
+
+
+
+
+
+
+
+
+
+
+Information for Rendition Users                                               1
+
+
+
+
+
+Information for Rendition Users                                               2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                   CONTENTS
+
+
+
+1. Supported hardware  ...................................................... 1
+
+2. Features  ................................................................ 1
+
+3. XF86Config Option  ....................................................... 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                       i
+
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.rendition,v 1.1.2.4 1998/11/14 06:47:04 dawes Exp $

@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/os/connection.c,v 3.25.2.2 1997/07/05 15:55:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/connection.c,v 3.25.2.5 1998/11/05 14:03:10 dawes Exp $ */
 /*****************************************************************
  *  Stuff to create connections --- OS dependent
  *
@@ -109,6 +109,7 @@ extern __const__ int _nfiles;
 
 #if defined(TCPCONN) || defined(STREAMSCONN)
 # include <netinet/in.h>
+# include <arpa/inet.h>
 # ifndef hpux
 #  ifdef apollo
 #   ifndef NO_TCP_H
@@ -164,6 +165,10 @@ extern __const__ int _nfiles;
 #ifdef DNETCONN
 #include <netdnet/dn.h>
 #endif /* DNETCONN */
+
+/* added by raphael */
+#define ffs mffs
+extern int mffs(long);
 
 extern char *display;		/* The display number */
 int lastfdesc;			/* maximum file descriptor */
@@ -438,6 +443,15 @@ ResetWellKnownSockets ()
 #ifdef XDMCP
     XdmcpReset ();
 #endif
+}
+
+void
+CloseWellKnownConnections()
+{
+    int i;
+
+    for (i = 0; i < ListenTransCount; i++)
+	_XSERVTransClose (ListenTransConns[i]);
 }
 
 static void

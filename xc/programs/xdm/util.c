@@ -1,5 +1,5 @@
 /* $XConsortium: util.c,v 1.18 94/11/21 18:33:11 kaleb Exp $ */
-/* $XFree86: xc/programs/xdm/util.c,v 3.7 1996/10/03 08:49:48 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/util.c,v 3.7.4.1 1998/10/04 13:37:23 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -163,6 +163,7 @@ char	*string;
 {
 	char	*word;
 	char	*save;
+	char    **newargv;
 	int	i;
 
 	i = 0;
@@ -179,16 +180,17 @@ char	*string;
 	for (;;) {
 		if (!*string || isblank (*string)) {
 			if (word != string) {
-				argv = (char **) realloc ((char *) argv,
+				newargv = (char **) realloc ((char *) argv,
 					(unsigned) ((i + 2) * sizeof (char *)));
 				save = malloc ((unsigned) (string - word + 1));
-				if (!argv || !save) {
+				if (!newargv || !save) {
 					LogOutOfMem ("parseArgs");
-					if (argv)
-						free ((char *) argv);
+					free ((char *) argv);
 					if (save)
 						free (save);
 					return 0;
+				} else {
+				    argv = newargv;
 				}
 				argv[i] = strncpy (save, word, string-word);
 				argv[i][string-word] = '\0';

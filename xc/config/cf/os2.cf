@@ -2,7 +2,7 @@ XCOMM $XConsortium: os2.cf /main/1 1996/10/31 14:47:25 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.4 1998/02/22 01:04:50 robin Exp $
+XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.6 1998/11/04 13:17:43 hohndel Exp $
 
 #define OSName           OS/2
 #define OSVendor	 IBM
@@ -20,7 +20,7 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.4 1998/02/22 01:04:50 ro
 #define BootstrapCFlags   -DBSD43
 
 /* X_WCHAR and X_LOCALE are set in Xosdefs.h */
-#define StandardDefines   /**/
+#define StandardDefines   -DX_LOCALE -DX_WCHAR
 #define XawI18nDefines    -DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 
 /* This will redirect everything to /XFree86
@@ -98,6 +98,7 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.4 1998/02/22 01:04:50 ro
 #endif
 #define ConnectionFlags		-DTCPCONN -DOS2PIPECONN
 #define StdIncDir $(C_INCLUDE_PATH)
+#define HasStickyDirBit		NO
 
 /* XF86Setup stuff - does not work yet! */
 #define HasTcl			NO

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Cirrus.c,v 3.13 1996/12/23 06:31:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Cirrus.c,v 3.13.2.1 1998/10/25 14:15:08 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -128,11 +128,17 @@ int Class;
 			case PCI_CHIP_GD5446:
 				*Chipset = CHIP_CL5446;
 				break;
+			case PCI_CHIP_GD5480:
+				*Chipset = CHIP_CL5480;
+				break;
 			case PCI_CHIP_GD5462:
 				*Chipset = CHIP_CL5462;
 				break;
 			case PCI_CHIP_GD5464:
 				*Chipset = CHIP_CL5464;
+				break;
+			case PCI_CHIP_GD5465:
+				*Chipset = CHIP_CL5465;
 				break;
 			case PCI_CHIP_GD7541:
 				*Chipset = CHIP_CL7541;
@@ -269,6 +275,9 @@ int Class;
 					case 0x2E:
 						*Chipset = CHIP_CL5446;
 						break;
+					case 0x2F:
+						*Chipset = CHIP_CL5480;
+						break;
 					case 0x0A: /* guess */
 						*Chipset = CHIP_CL7541;
 						break;
@@ -286,7 +295,8 @@ int Class;
 					if (*Chipset == CHIP_CL5430 ||
 					    *Chipset == CHIP_CL5434 ||
 					    *Chipset == CHIP_CL5436 ||
-					    *Chipset == CHIP_CL5446)
+					    *Chipset == CHIP_CL5446 ||
+					    *Chipset == CHIP_CL5480)
 					{
 						/*
 						 * Make sure that there is
@@ -410,6 +420,7 @@ int Chipset;
 	case CHIP_CL5434:
 	case CHIP_CL5436:
 	case CHIP_CL5446:
+	case CHIP_CL5480:
 	case CHIP_CL7543:
 	case CHIP_CL7548:
 		Mem = 512;
@@ -423,6 +434,7 @@ int Chipset;
 		break;
 	case CHIP_CL5462:
 	case CHIP_CL5464:
+	case CHIP_CL5465:
 		/* Read BIOS scratch register. */
 		Mem = ((rdinx(SEQ_IDX, 0x14) & 0x07) + 1) * 1024;
 		break;

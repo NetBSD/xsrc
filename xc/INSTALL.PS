@@ -1,16 +1,16 @@
 %!PS-Adobe-3.0
-%%Creator: groff version 1.09
-%%CreationDate: Sun Dec 22 20:42:59 1996
+%%Creator: groff version 1.10
+%%CreationDate: Sun Nov  8 18:17:52 1998
 %%DocumentNeededResources: font Times-Bold
 %%+ font Times-Italic
 %%+ font Times-Roman
-%%DocumentSuppliedResources: procset grops 1.09 0
+%%DocumentSuppliedResources: procset grops 1.10 0
 %%Pages: 13
 %%PageOrder: Ascend
 %%Orientation: Portrait
 %%EndComments
 %%BeginProlog
-%%BeginResource: procset grops 1.09 0
+%%BeginResource: procset grops 1.10 0
 /setpacking where{
 pop
 currentpacking
@@ -47,7 +47,7 @@ dup setfont
 /MF{
 findfont
 [5 2 roll
-0 3 1 roll 
+0 3 1 roll
 neg 0 0]makefont
 dup setfont
 [exch/setfont cvx]cvx bind def
@@ -56,6 +56,9 @@ dup setfont
 /RES 0 def
 /PL 0 def
 /LS 0 def
+/MANUAL{
+statusdict begin/manualfeed true store end
+}bind def
 /PLG{
 gsave newpath clippath pathbbox grestore
 exch pop add exch pop
@@ -114,7 +117,7 @@ currentgray exch setgray fill setgray
 findfont
 dup maxlength 1 index/FontName known not{1 add}if dict begin
 {
-1 index/FID ne{def}{ pop pop}ifelse
+1 index/FID ne{def}{pop pop}ifelse
 }forall
 /Encoding exch def
 dup/FontName exch def
@@ -138,7 +141,7 @@ neg exch neg exch translate
 1 setlinewidth
 0 setlinejoin
 10 setmiterlimit
-[] 0 setdash
+[]0 setdash
 /setstrokeadjust where{
 pop
 false setstrokeadjust
@@ -150,7 +153,7 @@ false setoverprint
 newpath
 /CNT countdictstack def
 userdict begin
-/showpage{} def
+/showpage{}def
 }bind def
 /PEND{
 clear
@@ -197,7 +200,7 @@ def/PL 792 def/LS false def/ENC0[/asciicircum/asciitilde/Scaron/Zcaron
 /Times-Roman@0 ENC0/Times-Roman RE/Times-Italic@0 ENC0/Times-Italic RE
 /Times-Bold@0 ENC0/Times-Bold RE
 %%EndProlog
-%%Page: title 1
+%%Page: 1 1
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -206,7 +209,7 @@ BP
 (Stephen Gildea)272.241 219 Q/F2 11/Times-Roman@0 SF 2.75(XC)274.677 249
 S(onsortium)-2.75 E(March 5, 1996)273.77 333 Q(Updated F)251.704 357 Q
 (or Release 6.3)-.165 E EP
-%%Page: copyr 2
+%%Page: 2 2
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -245,132 +248,83 @@ this notice, the name of the X Consortium shall not be used in adv)72
 (are without prior written authorization from the X Consortium.)-.09 E
 /F2 9/Times-Italic@0 SF 2.25(XW)72 353 S(indow System)-2.745 E F1
 (is a trademark of X Consortium, Inc.)2.25 E EP
-%%Page: i 3
-%%BeginPageSetup
-BP
-%%EndPageSetup
-/F0 13/Times-Bold@0 SF -1.196(Ta)257.126 85 S(ble of Contents)1.196 E/F1
-11/Times-Roman@0 SF(1. Easy Build Instructions)72 127.6 Q -2.75 11
-(........................ 1)7.221 H(2. Building X)72 144.2 Q -2.75 11
-(............................ 1)6.297 H(2.1. Preparing the Site)72 160.8
-Q -2.75 11(......................... 1)9.674 H
-(2.2. Unpacking the Distrib)72 177.4 Q 6.836(ution .)-.22 F -2.75 11
-(..................... 2)11 H(2.2.1. Unpacking a Compressed FTP Distrib)
-72 194 Q 10.807(ution .)-.22 F -2.75 11(............... 2)11 H
-(2.2.2. Unpacking a gzipped FTP Distrib)72 210.6 Q 2.865(ution .)-.22 F
--2.75 11(................. 2)11 H
-(2.2.3. Unpacking a Split Compressed FTP Distrib)72 227.2 Q 1.017
-(ution .)-.22 F -2.75 11(.............. 2)11 H(2.2.4. Unpacking the T)72
-243.8 Q(ape Distrib)-.88 E 2.227(ution .)-.22 F -2.75 11
-(................... 3)11 H(2.2.5. Using the CD-R)72 260.4 Q 2.469(OM .)
--.44 F -2.75 11(....................... 3)11 H(2.3. Apply P)72 277 Q
-8.31(atches .)-.165 F -2.75 11(......................... 3)11 H
-(2.4. Symbolic Link T)72 293.6 Q 7.001(rees .)-.385 F -2.75 11
-(....................... 3)11 H(2.5. Con\214guration P)72 310.2 Q .676
-(arameters .)-.165 F -2.75 11(...................... 3)11 H
-(2.6. System Build Notes)72 326.8 Q -2.75 11(........................ 5)
-14.239 H(2.6.1. gcc)72 343.4 Q -2.75 11(............................. 5)
-9.982 H(2.6.2. Other GNU tools)72 360 Q -2.75 11
-(......................... 5)4.482 H(2.6.3. SparcW)72 376.6 Q(orks 2.0)
--.88 E -2.75 11(......................... 5)10.257 H
-(2.6.4. CenterLine C under Solaris 2)72 393.2 Q -2.75 11
-(..................... 5)6.319 H(2.6.5. IBM AIX 4.1.4)72 409.8 Q -2.75
-11(......................... 6)12.424 H(2.6.6. SunOS 4)72 426.4 Q -2.75
-11(........................... 6)13.326 H(2.6.7. Microsoft W)72 443 Q
-(indo)-.44 E(ws NT)-.275 E -2.75 11(....................... 6)2.755 H
-(2.6.8. Omron Luna)72 459.6 Q -2.75 11(.......................... 6)
-9.982 H(2.7. The Build)72 476.2 Q -2.75 11
-(............................ 7)2.942 H(2.8. Installing X)72 492.8 Q
--2.75 11(........................... 7)8.75 H
-(2.8.1. System Installation Notes)72 509.4 Q -2.75 11
-(...................... 7)8.442 H(2.8.1.1. The X Serv)72 526 Q
-(er on AIX 4)-.165 E -2.75 11(...................... 7)9.861 H
-(2.9. Shared Libraries)72 542.6 Q -2.75 11(......................... 8)
-15.493 H(2.10. Setting Up xterm)72 559.2 Q -2.75 11
-(......................... 8)7.221 H(2.11. Starting Serv)72 575.8 Q
-(ers at System Boot)-.165 E -2.75 11(.................... 8)11.357 H
-(2.11.1. On BSD-based systems using /etc/rc)72 592.4 Q -2.75 11
-(.................. 8)10.29 H(2.11.2. On SystemV)72 609 Q
-(-based systems)-1.1 E -2.75 11(..................... 9)8.024 H
-(2.12. Using OPEN LOOK applications)72 625.6 Q -2.75 11
-(.................... 9)4.79 H(2.13. Reb)72 642.2 Q(uilding after P)-.22
-E 13.733(atches .)-.165 F -8.25 11(..................... 1)11 H(0)-11 E
-(2.14. F)72 658.8 Q(ormatting the Documentation)-.165 E -8.25 11
-(.................... 1)16.252 H(0)-11 E(i)304.471 769 Q EP
-%%Page: blank 4
-showpage
-%%Page: 1 5
+%%Page: 1 3
 %%BeginPageSetup
 BP
 %%EndPageSetup
 /F0 11/Times-Bold@0 SF 2.75(1. Easy)72 85 R(Build Instructions)2.75 E/F1
 11/Times-Roman@0 SF
 (This quick summary is no substitute for reading the full b)72 101.6 Q
-(uild instructions later in this document.)-.22 E(Edit)72 118.2 Q F0
-(xc/con\214g/cf/site.def)2.75 E F1(for local preferences.)2.75 E
-(If you w)5.5 E(ant to b)-.11 E(uild with)-.22 E/F2 11/Times-Italic@0 SF
-(gcc)2.75 E F1(uncomment the)2.75 E F0(HasGcc2)2.75 E F1 2.75(line. If)
-72 131.2 R(you w)2.75 E(ant to install some)-.11 E(where other than)
--.275 E F0(/usr/X11R6.3)2.75 E F1 2.75(,c)C(hange)-2.75 E F0(Pr)2.75 E
-(ojectRoot)-.198 E F1 5.5(.\()C(Do)-5.5 E F2(not)2.75 E F1(use)2.75 E F0
-(DESTDIR)72 144.2 Q F1(.\))A(If an)72 160.8 Q 2.75<798c>-.165 G -.165
-(xe)-2.75 G 2.75(sh).165 G -2.475 -.22(av e)-2.75 H
+(uild instructions later in this document.)-.22 E(When b)72 118.2 Q
+(uilding an XFree86 release, see also the)-.22 E F0 -.11(BU)2.75 G(ILD)
+.11 E F1(document located in)2.75 E F0(xc/pr)2.75 E(o-)-.198 E
+(grams/Xser)72 131.2 Q -.11(ve)-.11 G(r/hw/xfr).11 E(ee86/doc)-.198 E F1
+(for important XFree86-speci\214c b)2.75 E(uild instructions.)-.22 E
+(Edit)72 147.8 Q F0(xc/con\214g/cf/site.def)2.75 E F1
+(for local preferences.)2.75 E(If you w)5.5 E(ant to b)-.11 E(uild with)
+-.22 E/F2 11/Times-Italic@0 SF(gcc)2.75 E F1(uncomment the)2.75 E F0
+(HasGcc2)2.75 E F1 2.75(line. If)72 160.8 R(you w)2.75 E
+(ant to install some)-.11 E(where other than)-.275 E F0(/usr/X11R6.3)
+2.75 E F1 2.75(,c)C(hange)-2.75 E F0(Pr)2.75 E(ojectRoot)-.198 E F1 5.5
+(.\()C(Do)-5.5 E F2(not)2.75 E F1(use)2.75 E F0(DESTDIR)72 173.8 Q F1
+(.\))A(If an)72 190.4 Q 2.75<798c>-.165 G -.165(xe)-2.75 G 2.75(sh).165
+G -2.475 -.22(av e)-2.75 H
 (been released by the X Consortium, stop here and follo)2.97 E 2.75(wt)
--.275 G(he instructions at the top of)-2.75 E(each patch, b)72 173.8 Q
+-.275 G(he instructions at the top of)-2.75 E(each patch, b)72 203.4 Q
 (ut don')-.22 E 2.75(td)-.198 G 2.75(oa)-2.75 G .33 -.165(ny o)-2.75 H
 2.75(ft).165 G(he)-2.75 E F2(mak)2.75 E(e)-.11 E F1
 (commands suggested in the patches.)2.75 E(Then continue here.)5.5 E
-(Check the appropriate v)72 190.4 Q(endor)-.165 E(-speci\214c)-.22 E F0
+(Check the appropriate v)72 220 Q(endor)-.165 E(-speci\214c)-.22 E F0
 (.cf)2.75 E F1(\214le in)2.75 E F0(xc/con\214g/cf/)2.75 E F1(to mak)2.75
 E 2.75(es)-.11 G(ure that)-2.75 E F0(OSMajorV)2.75 E(ersion)-1.1 E F1
-(and)2.75 E F0(OSMinorV)72 203.4 Q(ersion)-1.1 E F1
+(and)2.75 E F0(OSMinorV)72 233 Q(ersion)-1.1 E F1
 (are set correctly for your system.)2.75 E(Ov)5.5 E(erride them in)-.165
 E F0(site.def)2.75 E F1(if necessary)2.75 E(.)-.715 E(See if there is a)
-72 220 Q F0(BootstrapCFlags)2.75 E F1
+72 249.6 Q F0(BootstrapCFlags)2.75 E F1
 (mentioned in the comments in the v)2.75 E(endor)-.165 E(-speci\214c)
 -.22 E F0(.cf)2.75 E F1 2.75(\214le. If)2.75 F(there isn')2.75 E(t)-.198
-E(one,)72 233 Q F2(cd)2.75 E F1(to the)2.75 E F0(xc)2.75 E F1
-(directory and type:)2.75 E 2.75(%m)108 252 S(ak)-2.75 E 2.75(eW)-.11 G
-(orld >& w)-3.63 E(orld.log)-.11 E(If there is a)72 274.6 Q F0
+E(one,)72 262.6 Q F2(cd)2.75 E F1(to the)2.75 E F0(xc)2.75 E F1
+(directory and type:)2.75 E 2.75(%m)108 281.6 S(ak)-2.75 E 2.75(eW)-.11
+G(orld >& w)-3.63 E(orld.log)-.11 E(If there is a)72 304.2 Q F0
 (BootstrapCFlags)2.75 E F1 2.75(,t)C(ak)-2.75 E 2.75(ei)-.11 G(ts v)
--2.75 E(alue and type:)-.275 E 2.75(%m)108 293.6 S(ak)-2.75 E 2.75(eW)
+-2.75 E(alue and type:)-.275 E 2.75(%m)108 323.2 S(ak)-2.75 E 2.75(eW)
 -.11 G(orld BOO)-3.63 E(TSTRAPCFLA)-.44 E(GS=")-.44 E F2(value)A F1 2.75
 (">)C 2.75(&w)-2.75 G(orld.log)-2.86 E(Do not call the output \214le `)
-72 316.2 Q(`mak)-.916 E(e.log')-.11 E 2.75('w)-.916 G(hen doing `)-2.75
+72 345.8 Q(`mak)-.916 E(e.log')-.11 E 2.75('w)-.916 G(hen doing `)-2.75
 E(`mak)-.916 E 2.75(eW)-.11 G(orld')-3.63 E 2.75('. After)-.916 F 2.75
 (as)2.75 G(uccessful b)-2.75 E(uild, you can)-.22 E(install with:)72
-329.2 Q 2.75(%m)108 348.2 S(ak)-2.75 E 2.75(ei)-.11 G
-(nstall >& install.log)-2.75 E -1.21(Yo)72 370.8 S 2.75(uc)1.21 G
-(an install manual pages with:)-2.75 E 2.75(%m)108 389.8 S(ak)-2.75 E
+358.8 Q 2.75(%m)108 377.8 S(ak)-2.75 E 2.75(ei)-.11 G
+(nstall >& install.log)-2.75 E -1.21(Yo)72 400.4 S 2.75(uc)1.21 G
+(an install manual pages with:)-2.75 E 2.75(%m)108 419.4 S(ak)-2.75 E
 2.75(ei)-.11 G(nstall.man >& man.log)-2.75 E(While the system is b)72
-412.4 Q(uilding \(or if things f)-.22 E
+442 Q(uilding \(or if things f)-.22 E
 (ail\), read the rest of these installation instructions.)-.11 E F0 2.75
-(2. Building)72 464.4 R(X)2.75 E F1(This document gi)72 494 Q -.165(ve)
+(2. Building)72 494 R(X)2.75 E F1(This document gi)72 523.6 Q -.165(ve)
 -.275 G 2.75(sd).165 G(etailed instructions for b)-2.75 E
 (uilding Release 6: getting it of)-.22 E 2.75(ft)-.275 G(he distrib)
 -2.75 E(ution medium,)-.22 E
-(con\214guring, compiling, installing, running, and updating.)72 507 Q
-(Release Notes are in)72 523.6 Q F0(xc/RELNO)2.75 E(TES.*)-.44 E F1(\(v)
+(con\214guring, compiling, installing, running, and updating.)72 536.6 Q
+(Release Notes are in)72 553.2 Q F0(xc/RELNO)2.75 E(TES.*)-.44 E F1(\(v)
 2.75 E(arious formats\) in the distrib)-.275 E(ution.)-.22 E
-(More recent information about ne)72 540.2 Q(wly-disco)-.275 E -.165(ve)
+(More recent information about ne)72 569.8 Q(wly-disco)-.275 E -.165(ve)
 -.165 G(red problems may be found in the).165 E F2 -1.947 -.605(Fr e)
-2.75 H(quently Ask).605 E(ed Ques-)-.11 E(tions)72 553.2 Q F1
+2.75 H(quently Ask).605 E(ed Ques-)-.11 E(tions)72 582.8 Q F1
 (posting appearing monthly on the comp.windo)2.75 E(ws.x ne)-.275 E
 (wsgroup and xpert mailing list.)-.275 E(It is also)5.5 E -.22(av)72
-566.2 S(ailable via anon)-.055 E(ymous FTP on)-.165 E F0(ftp.x.or)2.75 E
+595.8 S(ailable via anon)-.055 E(ymous FTP on)-.165 E F0(ftp.x.or)2.75 E
 (g)-.11 E F1(in the \214le)2.75 E F0(contrib/faqs/F)2.75 E -1.98 -.495
 (AQ .)-.99 H(Z).495 E F1 2.75(,o)C 2.75(ro)-2.75 G 2.75(ny)-2.75 G
-(our local X mirror site.)-2.75 E F0 2.75(2.1. Pr)72 605.2 R
+(our local X mirror site.)-2.75 E F0 2.75(2.1. Pr)72 634.8 R
 (eparing the Site)-.198 E F1(If you are unpacking tar \214les, you will\
- need about 130 Mb to hold the)72 634.8 Q F0(xc/)2.75 E F1 2.75(part. T)
+ need about 130 Mb to hold the)72 664.4 Q F0(xc/)2.75 E F1 2.75(part. T)
 2.75 F 2.75(oi)-.88 G(nstall requires 30-50)-2.75 E(Mb assuming you ha)
-72 647.8 Q .33 -.165(ve s)-.22 H(hared libraries \(80-100 Mb without\).)
+72 677.4 Q .33 -.165(ve s)-.22 H(hared libraries \(80-100 Mb without\).)
 .165 E -1.21(Yo)5.5 G 2.75(uw)1.21 G(ill need an equi)-2.75 E -.275(va)
--.275 G(lent amount of).275 E -.165(ex)72 660.8 S(tra space to b).165 E
+-.275 G(lent amount of).275 E -.165(ex)72 690.4 S(tra space to b).165 E
 (uild, since you also need room for all the object \214les.)-.22 E
-(Distrib)72 677.4 Q(uted as tar \214les, Release 6.3 core is di)-.22 E
+(Distrib)72 707 Q(uted as tar \214les, Release 6.3 core is di)-.22 E
 (vided into parts as follo)-.275 E(ws:)-.275 E(1)303.25 769 Q EP
-%%Page: 2 6
+%%Page: 2 4
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -416,7 +370,7 @@ F2(cd)2.75 E F0(into)2.75 E(it:)72 454.4 Q(mkdir)108 473.4 Q F2(sour)
 F2(ftp-dir)2.75 E F0(/xc\255)A F2(N)A F0(cat xc\255)108 682 Q F2(N)A F0
 (.?? | uncompress | \(cd)A F2(sour)2.75 E(cedir)-.407 E F0 2.75(;t)1.833
 G(ar xf)-2.75 E 1.833<ad29>5.5 G(2)303.25 769 Q EP
-%%Page: 3 7
+%%Page: 3 5
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -489,7 +443,7 @@ E F2(cd)2.75 E F0(to it, and type this:)2.75 E(lndir)108 595.2 Q F2
 (Build information for each source directory is in \214les called)72 729
 Q F1(Imak)2.75 E(e\214le)-.11 E F0 5.5(.A)C(n)-5.5 E F1(Imak)2.75 E
 (e\214le)-.11 E F0 2.75(,a)C(long with local)-2.75 E(3)303.25 769 Q EP
-%%Page: 4 8
+%%Page: 4 6
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -591,7 +545,7 @@ Q(ork around some b)-.11 E(ugs in older v)-.22 E(ersions of Motif.)-.165
 E(Set to)5.5 E F1(YES)2.75 E F0(only if you)2.75 E
 (will be linking with Motif v)97 729.8 Q(ersion 1.1.1, 1.1.2, or 1.1.3.)
 -.165 E(4)303.25 769 Q EP
-%%Page: 5 9
+%%Page: 5 7
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -662,7 +616,7 @@ A(#de\214ne ExtraLibraries)108 638.8 Q(\255lsock)5.5 E 2.75(et \255lnsl)
 72 696.8 R 2.75(Cu)2.75 G(nder Solaris 2)-2.75 E F0
 (If you are using the CenterLine C compiler to compile the distrib)72
 726.4 Q(ution under Solaris 2, place the)-.22 E(5)303.25 769 Q EP
-%%Page: 6 10
+%%Page: 6 8
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -720,7 +674,7 @@ E 2.75(eM)-.11 G(AKE=mak)-2.75 E(e')-.11 E 2.75('a)-.916 G 2.75(tt)-2.75
 G(op le)-2.75 E -.165(ve)-.275 G(l, e.g., `).165 E(`mak)-.916 E(e)-.11 E
 (MAKE=mak)72 707.8 Q 2.75(eW)-.11 G(orld')-3.63 E('.)-.916 E(6)303.25
 769 Q EP
-%%Page: 7 11
+%%Page: 7 9
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -787,7 +741,7 @@ E .33 -.165(ve t)-.165 H(he LFT to Another Display').165 E('.)-.916 E
 (on\214rm the changes and e)-5.5 E(xit SMIT)-.165 E 2.75(;f)-.605 G
 (rom no)-2.75 E 2.75(wo)-.275 G(n, you should be able to run the serv)
 -2.75 E(er)-.165 E(just \214ne.)72 726 Q(7)303.25 769 Q EP
-%%Page: 8 12
+%%Page: 8 10
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -842,9 +796,9 @@ F0(script in the)2.75 E F2(/de)2.75 E(v)-.165 E F0
 .11 E F0(The)72 541.8 Q F1(xfs)2.75 E F0(and)2.75 E F1(xdm)2.75 E F0
 (programs are designed to be run automatically at system startup.)2.75 E
 (Please read the manual)5.5 E(pages for details on setting up con\214gu\
-ration \214les; reasonable sample \214les are in)72 554.8 Q F2(xc/pr)72
-567.8 Q(ograms/xdm/con\214g/)-.198 E F0(and)2.75 E F2(xc/pr)2.75 E
-(ograms/xfs/)-.198 E F0(.)A F2 2.75(2.11.1. On)72 606.8 R
+ration \214les; reasonable sample \214les are in)72 554.8 Q F2(xc/pr)
+2.75 E(ograms/xdm/con-)-.198 E(\214g/)72 567.8 Q F0(and)2.75 E F2(xc/pr)
+2.75 E(ograms/xfs/)-.198 E F0(.)A F2 2.75(2.11.1. On)72 606.8 R
 (BSD-based systems using /etc/r)2.75 E(c)-.198 E F0
 (If your system uses an)72 636.4 Q F2(/etc/r)2.75 E(c)-.198 E F0(\214le\
  at boot time, you can usually enable these programs by placing the fol\
@@ -852,7 +806,7 @@ ration \214les; reasonable sample \214les are in)72 554.8 Q F2(xc/pr)72
 (if [ \255f /usr/X11R6.3/bin/xfs ]; then)108 668.4 Q
 (/usr/X11R6.3/bin/xfs & echo \255n ' xfs')130 681.4 Q<8c>108 694.4 Q
 (if [ \255f /usr/X11R6.3/bin/xdm ]; then)108 720.4 Q(8)303.25 769 Q EP
-%%Page: 9 13
+%%Page: 9 11
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -918,7 +872,7 @@ H(lso changed since X11R5; if you \214nd that).165 E(OpenW)72 504.2 Q
 -.055 E -.11(ke)108 705.2 S(ysym KP_Do)-.055 E(wn = Do)-.275 E(wn)-.275
 E -.11(ke)108 718.2 S(ysym KP_Ne)-.055 E(xt = F35)-.165 E -.11(ke)108
 731.2 S(ysym KP_Insert = Insert)-.055 E(9)303.25 769 Q EP
-%%Page: 10 14
+%%Page: 10 12
 %%BeginPageSetup
 BP
 %%EndPageSetup
@@ -977,6 +931,56 @@ R(ou can also generate te)-1.21 E
 E F0 -.165(ex)2.75 G(tension as a).165 E/F2 11/Times-Italic@0 SF(mak)
 2.75 E(e)-.11 E F0(tar)72 562.4 Q(get, e.g., `)-.198 E(`mak)-.916 E 2.75
 (ei)-.11 G(cccm.txt')-2.75 E('.)-.916 E(10)300.5 769 Q EP
+%%Page: 1 13
+%%BeginPageSetup
+BP
+%%EndPageSetup
+/F0 13/Times-Bold@0 SF -1.196(Ta)257.126 85 S(ble of Contents)1.196 E/F1
+11/Times-Roman@0 SF(1. Easy Build Instructions)72 124 Q -2.75 11
+(........................ 1)7.221 H(2. Building X)72 137 Q -2.75 11
+(............................ 1)6.297 H(2.1. Preparing the Site)72 150 Q
+-2.75 11(......................... 1)9.674 H(2.2. Unpacking the Distrib)
+72 163 Q 6.836(ution .)-.22 F -2.75 11(..................... 2)11 H
+(2.2.1. Unpacking a Compressed FTP Distrib)72 176 Q 10.807(ution .)-.22
+F -2.75 11(............... 2)11 H
+(2.2.2. Unpacking a gzipped FTP Distrib)72 189 Q 2.865(ution .)-.22 F
+-2.75 11(................. 2)11 H
+(2.2.3. Unpacking a Split Compressed FTP Distrib)72 202 Q 1.017(ution .)
+-.22 F -2.75 11(.............. 2)11 H(2.2.4. Unpacking the T)72 215 Q
+(ape Distrib)-.88 E 2.227(ution .)-.22 F -2.75 11(................... 3)
+11 H(2.2.5. Using the CD-R)72 228 Q 2.469(OM .)-.44 F -2.75 11
+(....................... 3)11 H(2.3. Apply P)72 241 Q 8.31(atches .)
+-.165 F -2.75 11(......................... 3)11 H(2.4. Symbolic Link T)
+72 254 Q 7.001(rees .)-.385 F -2.75 11(....................... 3)11 H
+(2.5. Con\214guration P)72 267 Q .676(arameters .)-.165 F -2.75 11
+(...................... 3)11 H(2.6. System Build Notes)72 280 Q -2.75 11
+(........................ 5)14.239 H(2.6.1. gcc)72 293 Q -2.75 11
+(............................. 5)9.982 H(2.6.2. Other GNU tools)72 306 Q
+-2.75 11(......................... 5)4.482 H(2.6.3. SparcW)72 319 Q
+(orks 2.0)-.88 E -2.75 11(......................... 5)10.257 H
+(2.6.4. CenterLine C under Solaris 2)72 332 Q -2.75 11
+(..................... 5)6.319 H(2.6.5. IBM AIX 4.1.4)72 345 Q -2.75 11
+(......................... 6)12.424 H(2.6.6. SunOS 4)72 358 Q -2.75 11
+(........................... 6)13.326 H(2.6.7. Microsoft W)72 371 Q
+(indo)-.44 E(ws NT)-.275 E -2.75 11(....................... 6)2.755 H
+(2.6.8. Omron Luna)72 384 Q -2.75 11(.......................... 6)9.982
+H(2.7. The Build)72 397 Q -2.75 11(............................ 7)2.942
+H(2.8. Installing X)72 410 Q -2.75 11(........................... 7)8.75
+H(2.8.1. System Installation Notes)72 423 Q -2.75 11
+(...................... 7)8.442 H(2.8.1.1. The X Serv)72 436 Q
+(er on AIX 4)-.165 E -2.75 11(...................... 7)9.861 H
+(2.9. Shared Libraries)72 449 Q -2.75 11(......................... 8)
+15.493 H(2.10. Setting Up xterm)72 462 Q -2.75 11
+(......................... 8)7.221 H(2.11. Starting Serv)72 475 Q
+(ers at System Boot)-.165 E -2.75 11(.................... 8)11.357 H
+(2.11.1. On BSD-based systems using /etc/rc)72 488 Q -2.75 11
+(.................. 8)10.29 H(2.11.2. On SystemV)72 501 Q
+(-based systems)-1.1 E -2.75 11(..................... 9)8.024 H
+(2.12. Using OPEN LOOK applications)72 514 Q -2.75 11
+(.................... 9)4.79 H(2.13. Reb)72 527 Q(uilding after P)-.22 E
+13.733(atches .)-.165 F -8.25 11(..................... 1)11 H(0)-11 E
+(2.14. F)72 540 Q(ormatting the Documentation)-.165 E -8.25 11
+(.................... 1)16.252 H(0)-11 E(i)304.471 769 Q EP
 %%Trailer
 end
 %%EOF

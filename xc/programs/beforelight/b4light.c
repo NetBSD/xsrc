@@ -1,6 +1,6 @@
 /*
  * $XConsortium: b4light.c,v 1.3 94/04/17 20:59:38 rws Exp $
- * $XFree86: xc/programs/beforelight/b4light.c,v 3.2 1994/08/01 13:21:00 dawes Exp $
+ * $XFree86: xc/programs/beforelight/b4light.c,v 3.2.8.1 1998/10/04 13:37:12 hohndel Exp $
  *
 Copyright (c) 1992  X Consortium
 
@@ -278,7 +278,7 @@ int ignoreError (display, error)
 {
 }
 
-void main(argc, argv)
+int main(argc, argv)
     int argc;
     char **argv;
 {

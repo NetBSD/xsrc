@@ -1,5 +1,5 @@
 /* $XConsortium: menu.h /main/27 1996/12/01 23:47:03 swick $ */
-/* $XFree86: xc/programs/xterm/menu.h,v 3.10 1998/06/04 16:43:59 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/menu.h,v 3.4.2.2 1998/10/20 20:51:48 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -33,7 +33,12 @@ from the X Consortium.
 #ifndef included_menu_h
 #define included_menu_h
 
-#include "proto.h"
+#ifdef HAVE_CONFIG_H
+#include <xtermcfg.h>
+#endif
+
+#include <X11/Intrinsic.h>
+#include <proto.h>
 
 typedef struct _MenuEntry {
     char *name;

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/Imakefile.vga,v 1.3.2.1 1998/02/01 16:42:17 robin Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/Imakefile.vga,v 1.3.2.2 1998/10/18 20:42:47 hohndel Exp $
 XCOMM
 XCOMM
 XCOMM This is the Imakefile for the server-specific subdirectories
@@ -206,13 +206,12 @@ ObjectFromSpecialAsmSource(fFillXor,fFill,-DRROP=GXXor)
 #endif
 
 InstallLinkKitNonExecFile(vga.h,$(XF98LINKKITDIR)/drivers98)
+InstallLinkKitNonExecFile(vga256.h,$(XF98LINKKITDIR)/drivers98)
 InstallLinkKitNonExecFile(vgaBank.h,$(XF98LINKKITDIR)/drivers98)
+InstallLinkKitNonExecFile(vgaFasm.h,$(XF98LINKKITDIR)/drivers98)
+InstallLinkKitNonExecFile(vgaPCI.h,$(XF98LINKKITDIR)/drivers98)
 #ifndef DontInstallPC98Version
-InstallLinkKitNonExecFile(vga.h,$(XF98LINKKITDIR)/include)
-InstallLinkKitNonExecFile(vga256.h,$(XF98LINKKITDIR)/include)
-InstallLinkKitNonExecFile(vgaFasm.h,$(XF98LINKKITDIR)/include)
 InstallLinkKitNonExecFile(vgaHW.c,$(XF98LINKKITDIR)/VGADriverDoc)
-InstallLinkKitNonExecFile(vgaPCI.h,$(XF98LINKKITDIR)/include)
 #endif
 
 #ifndef OS2Architecture

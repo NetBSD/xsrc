@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/34 1996/10/27 11:05:08 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.4 1998/02/22 01:28:23 robin Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.9 1998/10/31 14:40:54 hohndel Exp $
 
 
 
@@ -33,8 +33,8 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.4 1998/
  XCONFIGFILE = XF86Config
 
 #if BuildXInputExt
- XF86_XINPUT_SRC = xf86Xinput.c
- XF86_XINPUT_OBJ = xf86Xinput.o
+ XF86_XINPUT_SRC = xf86Xinput.c xf86Switch.c
+ XF86_XINPUT_OBJ = xf86Xinput.o xf86Switch.o
 # if JoystickSupport
       JOYSTICK_SRC = xf86Jstk.c
 # endif
@@ -44,11 +44,20 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.4 1998/
 # if ElographicsSupport
    ELOGRAPHICS_SRC = xf86Elo.c
 # endif
+# if MicroTouchSupport
+    MICROTOUCH_SRC = xf86MuTouch.c
+# endif
 # if SummaSketchSupport
    SUMMASKETCH_SRC = xf86Summa.c
 # endif
+# if AceCadSupport
+        ACECAD_SRC = xf86AceCad.c
+# endif
+# if DialBoxSupport
+        DIALBOX_SRC = xf86Dial.c
+# endif
 # if ! BuildDynamicLoading
-    XINPUT_DEVICES = JoystickDefines WacomDefines ElographicsDefines SummaSketchDefines
+    XINPUT_DEVICES = JoystickDefines WacomDefines ElographicsDefines MicroTouchDefines SummaSketchDefines AceCadDefines DialBoxDefines
 #  if JoystickSupport
       JOYSTICK_OBJ = xf86Jstk.o
 #  endif
@@ -58,8 +67,17 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.4 1998/
 #  if ElographicsSupport
    ELOGRAPHICS_OBJ = xf86Elo.o
 #  endif
+#  if MicroTouchSupport
+    MICROTOUCH_OBJ = xf86MuTouch.o
+#  endif
 #  if SummaSketchSupport
    SUMMASKETCH_OBJ = xf86Summa.o
+#  endif
+#  if AceCadSupport
+        ACECAD_OBJ = xf86AceCad.o
+#  endif
+#  if DialBoxSupport
+        DIALBOX_OBJ = xf86Dial.o
 #  endif
 # else
  SHARED_CFLAGS = PositionIndependentCFlags $(MODULEDEFINES)
@@ -126,7 +144,28 @@ SERVERSRCS = \
 	XF86_AGX.c \
 	XF86_W32.c \
 	XF86_I128.c \
-	XF86_TGA.c
+	XF86_TGA.c \
+	XF86_GLINT.c
+
+#if BuildXInputExt
+XINPUT_DEV_SRCS = \
+	$(JOYSTICK_SRC) \
+	$(WACOM_SRC) \
+	$(ELOGRAPHICS_SRC) \
+	$(MICROTOUCH_SRC) \
+	$(SUMMASKETCH_SRC) \
+	$(ACECAD_SRC) \
+	$(DIALBOX_SRC)
+
+XINPUT_DEV_OBJS = \
+	$(JOYSTICK_OBJ) \
+	$(WACOM_OBJ) \
+	$(ELOGRAPHICS_OBJ) \
+	$(MICROTOUCH_OBJ) \
+	$(SUMMASKETCH_OBJ) \
+	$(ACECAD_OBJ) \
+	$(DIALBOX_OBJ)
+#endif
 
 SRCS =	\
 	$(XF86DL_SRC) \
@@ -145,10 +184,7 @@ SRCS =	\
 	$(KBD).c \
 	$(PNP_MOUSE_SRC) \
 	$(XF86_XINPUT_SRC) \
-	$(JOYSTICK_SRC) \
-	$(WACOM_SRC) \
-	$(ELOGRAPHICS_SRC) \
-	$(SUMMASKETCH_SRC) \
+	$(XINPUT_DEV_SRCS) \
 	$(XKBDDXSRC) \
 	$(BETASRC) \
 	$(SERVERSRCS)
@@ -164,10 +200,7 @@ OBJS = \
 	xf86_Mouse.o \
 	$(PNP_MOUSE_OBJ) \
 	$(XF86_XINPUT_OBJ) \
-	$(JOYSTICK_OBJ) \
-	$(WACOM_OBJ) \
-	$(ELOGRAPHICS_OBJ) \
-	$(SUMMASKETCH_OBJ) \
+	$(XINPUT_DEV_OBJS) \
 	$(XKBDDXOBJ) \
 	$(BETAOBJ) \
 	$(KBD).o
@@ -210,6 +243,7 @@ all:: $(OFILES)
 
 #if BuildXInputExt
 SpecialObjectRule(xf86Xinput.o,xf86Xinput.c $(ICONFIGFILES),$(XINPUT_DEVICES) $(MODULEDEFINES))
+SpecialObjectRule(xf86Switch.o,xf86Switch.c $(ICONFIGFILES),$(XINPUT_DEVICES) $(MODULEDEFINES))
 # if BuildDynamicLoading
 SpecialObjectRule(xf86Dl.o,xf86Dl.c,$(MODULEDEFINES))
 #  if JoystickSupport
@@ -227,10 +261,25 @@ SpecialObjectRule(xf86Elo.o,xf86Elo.c,$(SHARED_CFLAGS))
 DynamicModuleTarget(xf86Elo.so,xf86Elo.o)
 InstallDynamicModule(xf86Elo.so,$(MODULEDIR))
 #  endif
+#  if MicroTouchSupport
+SpecialObjectRule(xf86MuTouch.o,xf86MuTouch.c,$(SHARED_CFLAGS))
+DynamicModuleTarget(xf86MuTouch.so,xf86MuTouch.o)
+InstallDynamicModule(xf86MuTouch.so,$(MODULEDIR))
+#  endif
 #  if SummaSketchSupport
 SpecialObjectRule(xf86Summa.o,xf86Summa.c,$(SHARED_CFLAGS))
 DynamicModuleTarget(xf86Summa.so,xf86Summa.o)
 InstallDynamicModule(xf86Summa.so,$(MODULEDIR))
+#  endif
+#  if AceCadSupport
+SpecialObjectRule(xf86AceCad.o,xf86AceCad.c,$(SHARED_CFLAGS))
+DynamicModuleTarget(xf86AceCad.so,xf86AceCad.o)
+InstallDynamicModule(xf86AceCad.so,$(MODULEDIR))
+#  endif
+#  if DialBoxSupport
+SpecialObjectRule(xf86Dial.o,xf86Dial.c,$(SHARED_CFLAGS))
+DynamicModuleTarget(xf86Dial.so,xf86Dial.o)
+InstallDynamicModule(xf86Dial.so,$(MODULEDIR))
 #  endif
 # endif
 #endif
@@ -286,9 +335,18 @@ all:: XF86_W32.o
 SpecialObjectRule(XF86_I128.o,XF86_I128.c $(ICONFIGFILES),$(XF86SCREENFLAGS))
 all:: XF86_I128.o
 #endif
+#if XF86GLINTServer
+SpecialObjectRule(XF86_GLINT.o,XF86_GLINT.c $(ICONFIGFILES),$(XF86SCREENFLAGS))
+all:: XF86_GLINT.o
+#endif
 #if XF86TGAServer
 SpecialObjectRule(XF86_TGA.o,XF86_TGA.c $(ICONFIGFILES),$(XF86SCREENFLAGS))
 all:: XF86_TGA.o
+#endif
+#if XF86FBDevServer
+LinkSourceFile(XF68_FBDev.c,$(XF68SRC)/common)
+SpecialObjectRule(XF68_FBDev.o,XF68_FBDev.c $(ICONFIGFILES),$(XF86SCREENFLAGS))
+all:: XF68_FBDev.o
 #endif
 
 #if NeedXF86Beta
@@ -332,6 +390,7 @@ InstallLinkKitNonExecFile(XF86_P9000.c,$(LINKKITDIR))
 InstallLinkKitNonExecFile(XF86_AGX.c,$(LINKKITDIR))
 InstallLinkKitNonExecFile(XF86_W32.c,$(LINKKITDIR))
 InstallLinkKitNonExecFile(XF86_I128.c,$(LINKKITDIR))
+InstallLinkKitNonExecFile(XF86_GLINT.c,$(LINKKITDIR))
 InstallLinkKitNonExecFile(XF86_TGA.c,$(LINKKITDIR))
 InstallLinkKitNonExecFile(cfb16.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(cfb24.h,$(LINKKITDIR)/include)

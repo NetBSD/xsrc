@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86gc.c,v 3.7.2.1 1997/05/26 14:36:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86gc.c,v 3.7.2.2 1998/10/18 20:42:43 hohndel Exp $ */
 
 /***********************************************************
 
@@ -354,8 +354,11 @@ xf86ValidateGC(pGC, changes, pDrawable)
 	case GCTile:
 	    new_fillspans = TRUE;
 	    new_fillarea = TRUE;
+	    if((xf86AccelInfoRec.Flags & PIXMAP_CACHE) && !pGC->tileIsPixel &&
+		pGC->tile.pixmap && (pDrawable->type == DRAWABLE_WINDOW)) {
+		  pGC->tile.pixmap->drawable.serialNumber = NEXT_SERIAL_NUMBER;
+	    }
 	    break;
-
 	case GCStipple:
 	    if (pGC->stipple)
 	    {
@@ -372,8 +375,12 @@ xf86ValidateGC(pGC, changes, pDrawable)
 	    }
 	    new_fillspans = TRUE;
 	    new_fillarea = TRUE;
+	    if((xf86AccelInfoRec.Flags & PIXMAP_CACHE) && pGC->stipple &&
+		!(xf86AccelInfoRec.Flags & DO_NOT_CACHE_STIPPLES) &&
+		(pDrawable->type == DRAWABLE_WINDOW)){
+		  pGC->stipple->drawable.serialNumber = NEXT_SERIAL_NUMBER;
+	    }
 	    break;
-
 	case GCTileStipXOrigin:
 	    new_rotate = TRUE;
 	    break;

@@ -31,7 +31,7 @@
 |*                                                                           *|
  \***************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvuser.h,v 1.1.2.2 1998/01/24 00:04:41 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvuser.h,v 1.1.2.3 1998/10/19 07:33:51 hohndel Exp $ */
 
 #ifndef __NVUSER_H_
 #define __NVUSER_H_
@@ -197,6 +197,66 @@ typedef volatile struct {
  UINT32 reserved04[0x660];
 } NvRenderSolidLine;
 
+#define NV_RENDER_GDI0_RECTANGLE_AND_TEXT  75
+typedef volatile struct {
+ UINT32 unimp01;
+ UINT32 unimp02;
+ UINT32 unimp03;
+ UINT32 reserved01[0x03d];
+ UINT32 unimp04;
+ UINT32 reserved02[0x03f];
+ UINT32 unimp05;
+ UINT32 unimp06;
+ UINT32 reserved03[(0x03e)-1];
+ UINT32 Color1A;
+ struct {
+  UINT32 x_y;
+  UINT32 width_height;
+ } UnclippedRectangle[64];
+ UINT32 reserved04[(0x080)-3];
+ struct {
+  UINT32 top_left;
+  UINT32 bottom_right;
+ } ClipB;
+ UINT32 Color1B;
+ struct {
+  UINT32 top_left;
+  UINT32 bottom_right;
+ } ClippedRectangle[64];
+ UINT32 reserved05[(0x080)-5];
+ struct {
+  UINT32 top_left;
+  UINT32 bottom_right;
+ } ClipC;
+ UINT32 Color1C;
+ UINT32 SizeC;
+ UINT32 PointC;
+ UINT32 MonochromeColor1C[128];
+ UINT32 reserved06[(0x080)-6];
+ struct {
+  UINT32 top_left;
+  UINT32 bottom_right;
+ } ClipD;
+ UINT32 Color1D;
+ UINT32 SizeInD;
+ UINT32 SizeOutD;
+ UINT32 PointD;
+ UINT32 MonochromeColor1D[128];
+ UINT32 reserved07[(0x080)-7];
+ struct {
+  UINT32 top_left;
+  UINT32 bottom_right;
+ } ClipE;
+ UINT32 Color0E;
+ UINT32 Color1E;
+ UINT32 SizeInE;
+ UINT32 SizeOutE;
+ UINT32 PointE;
+ UINT32 MonochromeColor01E[128];
+ UINT32 reserved08[0x280];
+} NvRenderGdi0RectangleAndText;
+
+
 typedef struct {
   NvControl control;
   union {
@@ -207,6 +267,7 @@ typedef struct {
     NvImageBlit                  blit;
     NvImageMonochromeFromCpu     imageMonochromeFromCpu;
     NvRenderSolidLine            line;
+    NvRenderGdi0RectangleAndText glyphRectText;
   }method;
 }NvSubChannel;
 
@@ -245,6 +306,7 @@ typedef struct {
 #define COLOUR_EXPAND_OBJECT_ID  0x88000002
 #define LINE_OBJECT_ID           0x88000003
 #define LIN_OBJECT_ID            0x88000004
+#define GLYPH_OBJECT_ID          0x88000005
 
 /* Maps the user channel into the address space of the client */
 /* NULL on failure */

@@ -16,7 +16,7 @@
 <!--Contents
 --------
 
-	1) What is XFree86 3.3.2
+	1) What is XFree86
 	2) Solaris versions on which XFree86 has been tested.
 	3) The VT-switching sub-system in Solaris x86
 	4) Various notes for building XFree86 on Solaris x86
@@ -24,9 +24,9 @@
  -->
 
 
-<sect>What is XFree86 3.3.2<p>
+<sect>What is XFree86<p>
 
-	XFree86 3.3.2 is a port of X11R6.3 that supports several versions of 
+	XFree86 is a port of X11R6.3 that supports several versions of 
 	Intel-based Unix.  It is derived from X386 1.2 which was the X server 
 	distributed with X11R5.  This release consists of many new features 
 	and 
@@ -44,27 +44,13 @@ Solaris binaries for XFree86 are available for anonymous ftp from:
 	<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/Solaris"
 	url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/Solaris"><p>
 </quote>
-<!--
-Many thanks to <bf/Jerry Whelan/ for making the space available for these 
-binaries.
--->
 
-<sect> Solaris for x86, versions on which XFree86 3.3.2 has been tested<p>
+<sect> Solaris for x86, versions on which XFree86 3.3.3 has been tested<p>
 
 XFree86 3.3.2 has been actively tested on:
 <itemize>
-<!--
-<item>Solaris 2.1 for x86
-<item>Solaris 2.4 EA1 for x86
--->
-<item>Solaris 2.4 for x86 FCS
 <item>Solaris 2.5.1 for x86
 <item>Solaris 2.6 for x86
-</itemize>
-And is expected to run under:
-<itemize>
-<item>Solaris 2.4 EA2 for x86
-<item>Solaris 2.5 for x86
 </itemize>
 
 <sect>The VT-switching sub-system in Solaris x86<p>
@@ -330,7 +316,7 @@ Xserver.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SOLX86.sgml,v 3.12.2.6 1998/02/28 04:47:09 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SOLX86.sgml,v 3.12.2.7 1998/11/07 13:37:49 dawes Exp $
 
 
 

@@ -1,14 +1,14 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/Imakefile,v 3.5.2.2 1998/02/24 13:54:26 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/Imakefile,v 3.5.2.4 1998/11/04 08:02:04 hohndel Exp $
 
 #include <Server.tmpl>
 
 SRCS = s3driver.c s3probe.c s3BtCursor.c s3ELSA.c s3ramdacs.c s3init.c  \
        s3fbinit.c s3save.c s3TiCursor.c Ti3026Curs.c s3misc.c \
-       s3cursor.c IBMRGBCurs.c s3accel_pio.c s3accel_newmmio.c s3bank.s 
+       s3cursor.c IBMRGBCurs.c s3accel_pio.c s3accel_newmmio.c s3bank.s
 
 OBJS = s3driver.o s3probe.o s3BtCursor.o s3ELSA.o s3ramdacs.o s3init.o  \
        s3fbinit.o s3save.o s3TiCursor.o Ti3026Curs.o s3misc.o \
-       s3cursor.o IBMRGBCurs.o s3accel_pio.o s3accel_newmmio.o s3bank.o 
+       s3cursor.o IBMRGBCurs.o s3accel_pio.o s3accel_newmmio.o s3bank.o
 
 #if XF86LinkKit
 INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
@@ -51,4 +51,6 @@ InstallLinkKitNonExecFile(s3save.c,$(LINKKITDIR)/drivers/vga256/s3_svga)
 InstallLinkKitNonExecFile(s3bank.s,$(LINKKITDIR)/drivers/vga256/s3_svga)
 InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/s3_svga)
 
+#ifndef OS2Architecture
 DependTarget()
+#endif

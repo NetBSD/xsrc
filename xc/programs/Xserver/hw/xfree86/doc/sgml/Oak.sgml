@@ -71,7 +71,7 @@ Device section).
 
 <descrip>
 <tag>
-Option &dquot;linear&dquot; (OTI087)
+Option "linear" (OTI087)
 </tag>
         This option enables a linear framebuffer at 0xE00000 (14Mb) for
         cards recognized as ISA by the probe.  Cards that are VLB will
@@ -85,7 +85,7 @@ Option &dquot;linear&dquot; (OTI087)
         and then linear mode will not work with more than 14 Mbytes of
         main RAM. I know this because mine doesn't.
 <tag>
-Option &dquot;fifo_aggressive&dquot; (OTI087)
+Option "fifo_aggressive" (OTI087)
 </tag>
         This option will cause the command FIFO threshold of the
         chipset to be set at 0 instructions, which should be optimal
@@ -94,14 +94,14 @@ Option &dquot;fifo_aggressive&dquot; (OTI087)
 performance
         boost on a DX2-66 486.
 <tag>
-Option &dquot;fifo_conservative&dquot; (OTI087)
+Option "fifo_conservative" (OTI087)
 </tag>
         This option will set the FIFO to a safe value of 14, slowing
         the board by a 50&percnt;, use this only if you experience
 streaks or
         anomalies on the screen.
 <tag>
-Option &dquot;enable_bitblt&dquot; (OTI087)
+Option "enable_bitblt" (OTI087)
 </tag>
         This option will enable an internal cache on the board that
         will be used as a rudimentary bitblt engine. Performance boost
@@ -111,54 +111,54 @@ Option &dquot;enable_bitblt&dquot; (OTI087)
         screen. As a rule of thumb, enable it, if it works badly,
         disable it.
 <tag>
-Option &dquot;clock_50&dquot; (OTI087)
+Option "clock_50" (OTI087)
 </tag>
         This one will force the internal speed to 50 Mhz.
 <tag>
-Option &dquot;clock_66&dquot; (OTI087)
+Option "clock_66" (OTI087)
 </tag>
         This one will force the internal speed to 66 Mhz, speeding up
         performance of the chipset.
 
 <tag>
-Option &dquot;no_wait&dquot; (OTI087)
+Option "no_wait" (OTI087)
 </tag>
         Sets the VLB interface to no wait states. On a medium VLB
         board (mine is VLB/PCI, so its not a very fast one) in VLB
         transparent mode, it manages up to 16 Mbytes/second transfer
         rate through the bus.
 <tag>
-Option &dquot;first_wait&dquot; (OTI087)
+Option "first_wait" (OTI087)
 </tag>
         Makes the VLB interface to add one wait state to the first
         read or write of a given burst.
 <tag>
-Option &dquot;first_wwait&dquot; (OTI087)
+Option "first_wwait" (OTI087)
 </tag>
         Similar to the previous one, this only inserts a wait state in
         the first 'write' of a given burst. reads are not
         affected. This is the default behaviour of the server.
 <tag>
-Option &dquot;write_wait&dquot; (OTI087)
+Option "write_wait" (OTI087)
 </tag>
         This configures the VLB interface to add one wait state to
         each write cycle.
 <tag>
-Option &dquot;read_wait&dquot; (OTI087)
+Option "read_wait" (OTI087)
 </tag>
         This configures the VLB interface to add one wait state to
         each read cycle.
 <tag>
-Option &dquot;all_wait&dquot; (OTI087)
+Option "all_wait" (OTI087)
 </tag>
         Enables the slowest VLB transfer adding wait states in all
         cases. Hopefully, no board will need this enabled.
 <tag>
-Option &dquot;one_wait&dquot; (OTI087)
+Option "one_wait" (OTI087)
 </tag>
         Sets the VLB interface to at least one wait state.
 <tag>
-Option &dquot;noaccel&dquot; (OTI087)
+Option "noaccel" (OTI087)
 </tag>
         One accelerated routine has been lately added to the driver,
         allowing it to draw solid fills quite faster. This routine
@@ -200,7 +200,7 @@ downwards. ISA card owners should not use these options.
     addressing will work on all ISA boards, VLB ones work flawlessly.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.12.2.2 1998/02/28 13:29:46 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.12.2.3 1998/11/07 13:37:48 dawes Exp $
 
 
 

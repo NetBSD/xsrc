@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_video.c,v 3.2.4.1 1997/05/09 07:15:24 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_video.c,v 3.2.4.2 1998/09/27 12:58:59 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -45,7 +45,7 @@ typedef struct
 }
 _SMEMS;
 
-#define MAX_SMEMS	8
+#define MAX_SMEMS	16
 
 static _SMEMS	smems[MAX_SMEMS];
 

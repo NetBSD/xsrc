@@ -1,5 +1,5 @@
 /* $XConsortium: Init.c /main/7 1996/12/02 10:21:37 lehors $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Init.c,v 3.10 1997/01/12 10:48:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Init.c,v 3.10.2.1 1998/11/04 15:19:08 hohndel Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -54,7 +54,8 @@ void InitOutput(screenInfo, argc, argv)
   screenInfo->numPixmapFormats = 0;
   for (i = 0; i < xnestNumPixmapFormats; i++) 
     for (j = 0; j < xnestNumDepths; j++)
-      if (xnestPixmapFormats[i].depth == xnestDepths[j]) {
+      if ((xnestPixmapFormats[i].depth == 1) ||
+          (xnestPixmapFormats[i].depth == xnestDepths[j])) {
 	screenInfo->formats[screenInfo->numPixmapFormats].depth = 
 	  xnestPixmapFormats[i].depth;
 	screenInfo->formats[screenInfo->numPixmapFormats].bitsPerPixel = 

@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/filelist.tcl,v 3.4.2.1 1998/02/26 13:58:58 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/filelist.tcl,v 3.4.2.2 1998/11/14 09:20:46 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -97,7 +97,7 @@ array set FilePermsReadMe {
 	lib/X11/doc/README.MGA			444
 	lib/X11/doc/README.Mach32		444
 	lib/X11/doc/README.Mach64		444
-	lib/X11/doc/README.NV1			444
+	lib/X11/doc/README.NVIDIA		444
 	lib/X11/doc/README.Oak			444
 	lib/X11/doc/README.P9000		444
 	lib/X11/doc/README.S3			444

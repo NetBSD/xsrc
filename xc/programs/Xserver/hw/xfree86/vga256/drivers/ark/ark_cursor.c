@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ark/ark_cursor.c,v 3.8.2.1 1997/05/31 13:34:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ark/ark_cursor.c,v 3.8.2.2 1998/10/21 10:44:41 dawes Exp $ */
 /*
  * Copyright 1994  The XFree86 Project
  *
@@ -40,12 +40,12 @@
 #include "windowstr.h"
 
 #include "compiler.h"
-#include "vga256.h"
 #include "xf86.h"
 #include "mipointer.h"
 #include "xf86Priv.h"
 #include "xf86_Option.h"
 #include "xf86_OSlib.h"
+#include "vga256.h"
 #include "vga.h"
 
 extern Bool vgaUseLinearAddressing;

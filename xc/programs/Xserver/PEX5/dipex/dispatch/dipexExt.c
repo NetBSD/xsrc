@@ -1,5 +1,5 @@
 /* $XConsortium: dipexExt.c,v 5.11 94/04/17 20:36:04 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/dipexExt.c,v 3.3.4.1 1997/05/22 14:00:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/dipexExt.c,v 3.3.4.2 1998/09/20 05:42:29 dawes Exp $ */
 
 /***********************************************************
 
@@ -148,7 +148,7 @@ PexExtensionInit()
      */
 
     if (ddpexInit()) {
-	ErrorF("PEXExtensionInit: Couldn't init ddPEX!");
+	ErrorF("PEXExtensionInit: Couldn't init ddPEX!\n");
 	/* this isn't needed for the SI since ddpexInit won't fail
 	   in the SI but maybe some vendors versions might...
 	*/
@@ -161,7 +161,7 @@ PexExtensionInit()
      */
     pPEXFont=(dipexFont *)xalloc((unsigned long)(sizeof(dipexFont)));
     if (!pPEXFont) {
-	ErrorF("PEXExtensionInit: Memory error--could not allocate default PEX font");
+	ErrorF("PEXExtensionInit: Memory error--could not allocate default PEX font\n");
   	diFreePEXBuffer(pPEXBuffer);
 	return; 
     }
@@ -189,6 +189,7 @@ PexExtensionInit()
 	  ErrorF(errmsg);
           xfree(errmsg);
         }
+	ErrorF("\n");
 
 	xfree(pPEXFont);
 	defaultPEXFont = 0; 
@@ -208,7 +209,7 @@ PexExtensionInit()
 
     if (!AddResource(	pPEXFont->ddFont.id, PEXFontType,
 			(pointer)(pPEXFont))) {
-	ErrorF("PEXExtensionInit: Couldn't add default PEX font resource.");
+	ErrorF("PEXExtensionInit: Couldn't add default PEX font resource.\n");
 	xfree(pPEXFont);
 	defaultPEXFont = 0; 
   	diFreePEXBuffer(pPEXBuffer);

@@ -7,11 +7,11 @@
 
 
 
-				 README.VIDEO7
+                                 README.VIDEO7
 
-				 Craig Struble
+                                 Craig Struble
 
-				  17 May 1994
+                                  17 May 1994
 
 
 
@@ -27,7 +27,7 @@ guish between the different video7 chips.
 It also does not probe for memory, so in your XF86Config file, make sure that
 you use the following line:
 
-	  Videoram XXX
+          Videoram XXX
 
 
 Where XXX is the amount of RAM in your card. Most of them have at least 512k,
@@ -37,7 +37,7 @@ Also, the clock probing function of XFree86 doesn't seem to correctly get the
 clocks. The documentation I used (vgadoc3) suggests using the following values
 for the Clocks line in your XF86Config file:
 
-	  Clocks	25.175 28.322 30.000 32.514 34.000 36.000 38.000 40.000
+          Clocks        25.175 28.322 30.000 32.514 34.000 36.000 38.000 40.000
 
 
 For 800x600 mode, use a dot clock of 38 instead of 36 or 40 as suggested in
@@ -61,13 +61,13 @@ used in the BIOS mode (0x69) which is the 800x600 in 256 colors.
 
 
 
-README.VIDEO7
+README.VIDEO7                                                                 1
 
 
 
 
 
-README.VIDEO7
+README.VIDEO7                                                                 2
 
 
 
@@ -107,11 +107,11 @@ Craig Struble (cstruble@acm.vt.edu) Video 7 driver
 
 4.3  Things to do:
 
-   o	  Try dual banking mode.
+   o      Try dual banking mode.
 
-   o	  Write an svgalib driver.
+   o      Write an svgalib driver.
 
-   o	  Go back to graduate school. (I'm a glutton for punishment.)
+   o      Go back to graduate school. (I'm a glutton for punishment.)
 
 4.4  Disclaimer:
 
@@ -133,7 +133,7 @@ Craig Struble (cstruble@acm.vt.edu) Video 7 driver
 
 
 
-README.VIDEO7
+README.VIDEO7                                                                 3
 
 
 
@@ -199,7 +199,7 @@ README.VIDEO7
 
 
 
-README.VIDEO7
+README.VIDEO7                                                                 4
 
 
 
@@ -269,7 +269,7 @@ README.VIDEO7
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
@@ -325,8 +325,8 @@ README.VIDEO7
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Video7,v 3.15 1997/01/27 22:12:57 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Video7,v 3.15.2.2 1998/11/14 06:46:56 dawes Exp $

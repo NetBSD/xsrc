@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_init.c,v 3.7.2.3 1998/02/06 22:36:51 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_init.c,v 3.7.2.5 1998/10/18 20:42:24 hohndel Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -39,7 +39,7 @@
 #ifdef USE_DEV_FB
 extern char *getenv(const char *);
 #include <linux/fb.h>
-char *fb_dev_name;
+char *fb_dev_name = NULL;
 #endif
 
 static Bool KeepTty = FALSE;
@@ -97,21 +97,21 @@ void xf86OpenConsole()
 	    close(fd);
 	}
 
-#ifdef USE_DEV_FB
-	fb_dev_name=getenv("FRAMEBUFFER");
-	if (!fb_dev_name)
-	    fb_dev_name="/dev/fb0current";
-	if ((fbfd = open(fb_dev_name, O_RDONLY)) < 0)
-	    FatalError("xf86OpenConsole: Cannot open %s (%s)\n",
-	fb_dev_name, strerror(errno));
-	if (ioctl(fbfd, FBIOGET_VSCREENINFO, &var))
-	    FatalError("xf86OpenConsole: Unable to get screen info\n");
-#endif
 	ErrorF("(using VT number %d)\n\n", xf86Info.vtno);
 
 	sprintf(vtname,"/dev/tty%d",xf86Info.vtno); /* /dev/tty1-64 */
 
 	xf86Config(FALSE); /* Read XF86Config */
+
+#ifdef USE_DEV_FB
+	if (fb_dev_name) {
+	    if ((fbfd = open(fb_dev_name, O_RDONLY)) < 0) 
+		FatalError("xf86OpenConsole: Cannot open %s (%s)\n",
+			    fb_dev_name, strerror(errno));
+	    if (ioctl(fbfd, FBIOGET_VSCREENINFO, &var))
+		FatalError("xf86OpenConsole: Unable to get screen info\n");
+	}
+#endif
 
 	if (!KeepTty)
 	{
@@ -186,12 +186,14 @@ void xf86OpenConsole()
 	    FatalError("xf86OpenConsole: KDSETMODE KD_GRAPHICS failed\n");
 	}
 #ifdef USE_DEV_FB
-	/* copy info to new console */
-	var.yoffset=0;
-	var.xoffset=0;
-	if (ioctl(fbfd, FBIOPUT_VSCREENINFO, &var))
-	    FatalError("Unable to set screen info\n");
-	close(fbfd);
+	if (fb_dev_name) {
+	    /* copy info to new console */
+	    var.yoffset=0;
+	    var.xoffset=0;
+	    if (ioctl(fbfd, FBIOPUT_VSCREENINFO, &var))
+		FatalError("Unable to set screen info\n");
+	    close(fbfd);
+	}
 #endif
     }
     else 

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/Imakefile,v 3.11.2.2 1997/05/22 14:00:36 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/Imakefile,v 3.11.2.3 1998/11/04 08:01:50 hohndel Exp $
 
 
 
@@ -40,4 +40,6 @@ ObjectFromSpecialAsmSource(et4_bank,$(VGADRIVERSRC)/et4000/bank,NullParameter)
 
 InstallLinkKitLibrary(w32,$(LINKKITDIR)/drivers)
 
+#ifndef OS2Architecture
 DependTarget()
+#endif

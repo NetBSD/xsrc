@@ -2,7 +2,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_reg.h,v 1.1.2.2 1998/02/01 16:05:13 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_reg.h,v 1.1.2.3 1998/08/21 14:00:58 hohndel Exp $ */
 
 
 
@@ -286,7 +286,6 @@
 
 /* MGA1064 DAC Register file */
 /* MGA1064 direct registers */
-/* #define PCI_CHIP_MGA1064        0x051A */
 
 #define MGA1064_INDEX		0x00
 #define MGA1064_WADR_PAL	0x00
@@ -372,6 +371,8 @@
 #define MGA1064_PIX_PLLC_P	0x4e
 
 #define MGA1064_PIX_PLL_STAT	0x4f
+
+#define PCI_CHIP_MGAG200        0x0521
 
 #endif
 

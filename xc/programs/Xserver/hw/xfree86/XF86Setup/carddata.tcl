@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.7 1998/02/15 16:08:51 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.14 1998/11/14 09:20:44 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -17,10 +17,10 @@
 
 
 if !$pc98 {
-    set ServerList		[list Mono VGA16 SVGA 8514 AGX I128 \
-			          Mach8 Mach32 Mach64 P9000 S3 S3V TGA W32 ]
+    set ServerList		[list Mono VGA16 SVGA 8514 AGX I128 Mach8 \
+			          Mach32 Mach64 P9000 S3 S3V TGA W32 3DLabs ]
     set AccelServerList	[list 8514 AGX I128 Mach8 Mach32 Mach64 P9000 \
-			          S3 S3V TGA W32 ]
+			          S3 S3V TGA W32 3DLabs ]
 } else {
     set ServerList		[list EGC NEC480 GANBWAP NKVNEC TGUI MGA \
 			          WABS WABEP WSNA NECS3 PWSKB PWLB GA968 ]
@@ -47,7 +47,8 @@ set CardChipSets(SVGA-cirrus)	{ clgd5420 clgd5422 clgd5424 clgd5426 \
 set CardChipSets(SVGA-compaq)	cpq_avga
 set CardChipSets(SVGA-chips)	{ ct65520 ct65525 ct65530 ct65535 \
 				  ct65540 ct65545 ct65546 ct65548 \
-				  ct65550 ct65554 ct64200 ct64300 }
+				  ct65550 ct65554 ct65555 ct68554 \
+				  ct69000 ct64200 ct64300 }
 set CardChipSets(SVGA-et3000)	et3000
 set CardChipSets(SVGA-et4000)	{ et4000 et4000w32 et4000w32i \
 				  et4000w32i_rev_b et4000w32i_rev_c \
@@ -65,7 +66,8 @@ set CardChipSets(SVGA-pvga1)	{ pvga1 \
 				  wd90c31 wd90c33 wd90c20 }
 set CardChipSets(SVGA-realtek)	realtek
 set CardChipSets(SVGA-s3v)	s3_virge
-set CardChipSets(SVGA-sis)	{ sis86c201 sis86c202 sis86c205 }
+set CardChipSets(SVGA-sis)	{ sis86c201 sis86c202 sis86c205 sis86c215 \
+				  sis86c225 sis5597 sis5598 sis6326 }
 set CardChipSets(SVGA-tvga8900)	{ tvga8200lx tvga8800cs tvga8900b tvga8900c \
 				  tvga8900cl tvga8900d tvga9000 tvga9000i \
 				  tvga9100b tvga9200cxr \
@@ -73,6 +75,7 @@ set CardChipSets(SVGA-tvga8900)	{ tvga8200lx tvga8800cs tvga8900b tvga8900c \
 				  tgui9420dgi tgui9430dgi tgui9440agi \
 				  tgui96xx cyber938x }
 set CardChipSets(SVGA-video7)	video7
+set CardChipSets(SVGA-neo)	{ NM2070 NM2090 NM2093 NM2097 NM2160 NM2200 }
 set chiplist ""
 foreach idx [array names CardChipSets SVGA-*] {
 	eval lappend chiplist $CardChipSets($idx)
@@ -125,6 +128,7 @@ set CardChipSets(W32)	   { et4000w32 et4000w32i et4000w32i_rev_b \
 			     et4000w32i_rev_c et4000w32p_rev_a \
 			     et4000w32p_rev_b et4000w32p_rev_c \
 			     et4000w32p_rev_d et6000 }
+set CardChipSets(3DLabs)   { GLINT }
 
 set CardChipSets(EGC)	   { vga }
 set CardChipSets(NEC480)   { pegc }
@@ -207,6 +211,7 @@ set CardRamDacs(W32)	   { normal \
 			     att20c492 att20c493 att20c497 \
 			     ics5341 sc1502x stg1700 stg1702 \
 			     stg1703 ch8398 gendac et6000 }
+set CardRamDacs(3DLabs)	   {}
 
 set CardRamDacs(SVGA-ark)	   { ark1491a att20c490 att20c498 \
 					ics5342 stg1700 \
@@ -218,6 +223,7 @@ set CardRamDacs(SVGA-ati)	   [lrmdups [concat \
 					$CardRamDacs(Mach64)] ]
 set CardRamDacs(SVGA-et4000)	   $CardRamDacs(W32)
 set CardRamDacs(SVGA-mga)	   ti3026
+set CardRamDacs(SVGA-neo)	   {}
 set daclist ""
 foreach idx [array names CardRamDacs SVGA-*] {
 	eval lappend daclist $CardRamDacs($idx)
@@ -271,6 +277,7 @@ set CardClockChips(S3)	   { att20c409 att20c499 att20c408 \
 set CardClockChips(S3V)	   {} ;# { s3_trio64 }
 set CardClockChips(TGA)	   ics1562 
 set CardClockChips(W32)	   { dcs2824 et6000 icd2061a ics5341 stg1703 }
+set CardClockChips(3DLabs) {}
 
 set CardClockChips(SVGA-ark)		ics5342
 set CardClockChips(SVGA-cirrus)		cirrus
@@ -278,6 +285,7 @@ set CardClockChips(SVGA-et4000)		$CardClockChips(W32)
 set CardClockChips(SVGA-mga)		ti3026
 set CardClockChips(SVGA-pvga1)          icd2061A
 set CardClockChips(SVGA-tvga8900)	tgui
+set CardClockChips(SVGA-neo)		{}
 set clklist ""
 foreach idx [array names CardClockChips SVGA-*] {
 	eval lappend clklist $CardClockChips($idx)
@@ -331,7 +339,7 @@ set CardOptions(Mono)	   { 16clocks 8clocks all_wait clgd6225_lcd \
 			     tgui_pci_read_off tgui_pci_read_on \
 			     tgui_pci_write_off tgui_pci_write_on \
 			     w32_interleave_off w32_interleave_on \
-			     wap write_wait xaa_no_col_exp\
+			     wap write_wait xaa_no_color_exp\
 			   }
 set CardOptions(VGA16)	   { 16clocks all_wait clgd6225_lcd clkdiv2 \
 			     clock_50 clock_66 composite enable_bitblt \
@@ -349,7 +357,7 @@ set CardOptions(VGA16)	   { 16clocks all_wait clgd6225_lcd clkdiv2 \
 			     tgui_pci_read_off tgui_pci_read_on \
 			     tgui_pci_write_off tgui_pci_write_on \
 			     w32_interleave_off w32_interleave_on \
-			     write_wait xaa_no_col_exp\
+			     write_wait xaa_no_color_exp\
 			   }
 set CardOptions(SVGA)	   { 16clocks 8clocks all_wait clgd6225_lcd \
 			     clkdiv2 clock_50 clock_66 composite \
@@ -379,7 +387,7 @@ set CardOptions(SVGA)	   { 16clocks 8clocks all_wait clgd6225_lcd \
 			     use_vclk1 \
 			     w32_interleave_off w32_interleave_on wap \
 			     write_wait \
-			     xaa_benchmark xaa_no_col_exp \
+			     xaa_benchmark xaa_no_color_exp \
 			   }
 set CardOptions(8514)	   {}
 set CardOptions(AGX)	   { 8_bit_bus bt482_curs bt485_curs clkdiv2 \
@@ -436,6 +444,8 @@ set CardOptions(W32)	   { clkdiv2 fast_dram hibit_high hibit_low \
 			     pci_burst_off pci_burst_on \
 			     power_saver slow_dram \
 			     w32_interleave_off w32_interleave_on }
+set CardOptions(3DLabs)	   { dac_8_bit noaccel power_saver no_pixmap_cache \
+	                     pci_retry sw_cursor overclock_mem firegl_3000 }
 
 set CardOptions(EGC)		{}
 set CardOptions(NEC480)		{}
@@ -463,13 +473,14 @@ set CardReadmes(SVGA-chips)	README.chips
 set CardReadmes(SVGA-et3000)	README.tseng
 set CardReadmes(SVGA-et4000)	README.tseng
 set CardReadmes(SVGA-mga)	README.MGA
-set CardReadmes(SVGA-nv)	README.NV1
+set CardReadmes(SVGA-nv)	README.NVIDIA
 set CardReadmes(SVGA-oak)	README.Oak
 set CardReadmes(SVGA-pvga1)	README.WstDig
 set CardReadmes(SVGA-s3v)	README.S3V
 set CardReadmes(SVGA-sis)	README.SiS
 set CardReadmes(SVGA-tvga8900)	README.trident
 set CardReadmes(SVGA-video7)	README.Video7
+set CardReadmes(SVGA-neo)	README.neo
 set CardReadmes(SVGA-NONE)	{}
 set rdmelist ""
 foreach idx [array names CardReadmes SVGA-*] {
@@ -517,6 +528,7 @@ set CardReadmes(S3)	   README.S3
 set CardReadmes(S3V)	   README.S3V
 set CardReadmes(TGA)	   README.DECtga
 set CardReadmes(W32)	   README.W32
+set CardReadmes(3DLabs)	   README.3DLabs
 
 set CardReadmes(EGC)	   {}
 set CardReadmes(NEC480)	   {}

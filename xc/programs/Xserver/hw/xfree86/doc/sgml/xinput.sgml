@@ -4,7 +4,7 @@
 <!-- made up title -->
 <title> Information about the XInput extension in XFree86&tm;
 <author> Fr&eacute;d&eacute;ric Lepied
-<date> 12 May 1996
+<date> 2 November 1998
 <toc>
 
 <sect> Introduction <p>
@@ -47,6 +47,20 @@ The server supports the following extended devices :
 	</itemize>
 
 	<item>Elographics touchscreen. Features :
+	<itemize>
+		<item>Absolute mode.
+		<item>2 valuators (x and y axis).
+		<item>1 button.
+	</itemize>
+
+	<item>Stylus on MicroTouch touchscreen. Features :
+	<itemize>
+		<item>Absolute mode.
+		<item>2 valuators (x and y axis).
+		<item>1 button.
+	</itemize>
+
+	<item>Finger on MicroTouch touchscreen. Features :
 	<itemize>
 		<item>Absolute mode.
 		<item>2 valuators (x and y axis).
@@ -120,11 +134,44 @@ The server supports the following extended devices :
 		<item>Motion history capability.
 	</itemize>
 
+	<item>AceCad tablet. Features :
+	<itemize>
+		<item>Absolute or relative modes.
+		<item>2 valuators (x and y axis).
+		<item>2 button stylus or 4 button puck.
+		<item>Proximity report.
+		<item>Motion history capability.
+	</itemize>
+
+	<item>SWITCH virtual device. Features :
+	<itemize>
+		<item>Absolute mode.
+		<item>1 valuator (device id) which reports the id of the device controlling
+		the core pointer (works with the AlwaysCore feature see bellow).
+	</itemize>
+
+	<item>SGI button box. Features :
+	<itemize>
+		<item>Absolute or relative modes.
+		<item>8 valuators.
+		<item>32 buttons.
+		<item>Motion history capability.
+	</itemize>
+	
 </itemize>
 
 To  enable  an   extended  device, you  must   add   en  entry  in the
 <em>XF86Config</em> file.   Consult   to  the <em>XF86Config</em>  man
-pages to see the details.
+pages to see the details. <p>
+
+The  XFree86 implementation supports  a  non  standard feature  called
+<em>AlwaysCore</em> which enables an  XInput device to send both  core
+and extended events at the same time. To enable it you have to add the
+<em>AlwaysCore</em> keyword to the  subsection describing your  device
+in the <em>XF86Config</em>  file.  The  <em>SWITCH</em> virtual device
+reports a Motion event when another  device takes over the control of
+the core pointer. The id of the new device is reported in the first
+valuator of the event.
 
 <sect1> Clients <p>
 
@@ -139,7 +186,7 @@ Consult the man pages for details.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/xinput.sgml,v 3.6 1997/01/25 03:22:26 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/xinput.sgml,v 3.6.2.1 1998/11/04 15:19:07 hohndel Exp $
 
 
 

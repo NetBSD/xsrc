@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: ptyx.h /main/67 1996/11/29 10:34:19 swick $
- *	$XFree86: xc/programs/xterm/ptyx.h,v 3.41 1998/07/04 14:48:28 robin Exp $
+ *	$XFree86: xc/programs/xterm/ptyx.h,v 3.19.2.6 1998/10/22 04:31:16 hohndel Exp $
  */
 
 /*
@@ -29,6 +29,10 @@
 #ifndef included_ptyx_h
 #define included_ptyx_h 1
 
+#ifdef HAVE_CONFIG_H
+#include <xtermcfg.h>
+#endif
+
 /* ptyx.h */
 /* @(#)ptyx.h	X10/6.6	11/10/86 */
 
@@ -36,12 +40,13 @@
 #include <X11/Xmu/Misc.h>	/* For Max() and Min(). */
 #include <X11/Xfuncs.h>
 #include <X11/Xosdefs.h>
+#include <X11/Xmu/Converters.h>
 
 /* adapted from IntrinsicI.h */
 #define MyStackAlloc(size, stack_cache_array)     \
     ((size) <= sizeof(stack_cache_array)	  \
     ?  (XtPointer)(stack_cache_array)		  \
-    :  malloc((unsigned)(size)))
+    :  (XtPointer)malloc((unsigned)(size)))
 
 #define MyStackFree(pointer, stack_cache_array) \
     if ((pointer) != ((XtPointer)(stack_cache_array))) free(pointer)
@@ -470,7 +475,7 @@ fixme: You must have ANSI/ISO colors to support AIX colors
 /***====================================================================***/
 
 #if OPT_TRACE
-#include "trace.h"
+#include <trace.h>
 #else
 #define TRACE(p) /*nothing*/
 #define TRACE_CHILD /*nothing*/
@@ -571,6 +576,22 @@ typedef struct {
 #endif
 } SavedCursor;
 
+struct _vtwin {
+	Window	window;			/* X window id			*/
+	int	width;			/* width of columns		*/
+	int	height;			/* height of rows		*/
+	int	fullwidth;		/* full width of window		*/
+	int	fullheight;		/* full height of window	*/
+	int	f_width;		/* width of fonts in pixels	*/
+	int	f_height;		/* height of fonts in pixels	*/
+	int	scrollbar;		/* if > 0, width of scrollbar, and
+						scrollbar is showing	*/
+	GC	normalGC;		/* normal painting		*/
+	GC	reverseGC;		/* reverse painting		*/
+	GC	normalboldGC;		/* normal painting, bold font	*/
+	GC	reverseboldGC;		/* reverse painting, bold font	*/
+};
+
 typedef struct {
 /* These parameters apply to both windows */
 	Display		*display;	/* X display for screen		*/
@@ -609,8 +630,12 @@ typedef struct {
 #endif
 	int		border;		/* inner border			*/
 	Cursor		arrow;		/* arrow cursor			*/
+	unsigned long	event_mask;
 	unsigned short	send_mouse_pos;	/* user wants mouse transition  */
 					/* and position information	*/
+	int		mouse_button;	/* current button pressed	*/
+	int		mouse_row;	/* ...and its row		*/
+	int		mouse_col;	/* ...and its column		*/
 	int		select;		/* xterm selected		*/
 	Boolean		visualbell;	/* visual bell mode		*/
 	Boolean		allowSendEvents;/* SendEvent mode		*/
@@ -626,21 +651,7 @@ typedef struct {
 
 /* VT window parameters */
 	Boolean		Vshow;		/* VT window showing		*/
-	struct _vtwin {
-		Window	window;		/* X window id			*/
-		int	width;		/* width of columns		*/
-		int	height;		/* height of rows		*/
-		int	fullwidth;	/* full width of window		*/
-		int	fullheight;	/* full height of window	*/
-		int	f_width;	/* width of fonts in pixels	*/
-		int	f_height;	/* height of fonts in pixels	*/
-		int	scrollbar;	/* if > 0, width of scrollbar, and
-						scrollbar is showing	*/
-		GC	normalGC;	/* normal painting		*/
-		GC	reverseGC;	/* reverse painting		*/
-		GC	normalboldGC;	/* normal painting, bold font	*/
-		GC	reverseboldGC;	/* reverse painting, bold font	*/
-	} fullVwin;
+	struct _vtwin fullVwin;
 #ifndef NO_ACTIVE_ICON
 	struct _vtwin iconVwin;
 	struct _vtwin *whichVwin;
@@ -800,7 +811,7 @@ typedef struct {
 	Boolean		backarrow_key;		/* backspace/delete */
 	Pixmap		menu_item_bitmap;	/* mask for checking items */
 	Widget		mainMenu, vtMenu, tekMenu, fontMenu;
-	char*		menu_font_names[NMENUFONTS];
+	String		menu_font_names[NMENUFONTS];
 	int		menu_font_number;
 	XIC		xic;
 } TScreen;
@@ -835,7 +846,7 @@ typedef struct _Misc {
 #endif
     Boolean login_shell;
     Boolean re_verse;
-    int resizeGravity;
+    XtGravity resizeGravity;
     Boolean reverseWrap;
     Boolean autoWrap;
     Boolean logInhibit;

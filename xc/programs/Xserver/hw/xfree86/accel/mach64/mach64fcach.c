@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64fcach.c,v 3.8 1996/12/23 06:39:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64fcach.c,v 3.8.2.1 1998/11/04 08:01:50 hohndel Exp $ */
 /*
  * Copyright 1992,1993,1994 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -410,7 +410,7 @@ mach64DrawText(pDraw, pGC, x, y, count, chars, slot, texttype)
 	        }
             } 
 
-	    WaitQueue(6);
+	    WaitIdleEmpty();
 	    regw(DP_FRGD_CLR, pGC->fgPixel);
 	    regw(DP_BKGD_CLR, 0xffffffff);
 	    regw(DP_MIX, (MIX_SRC << 16) | MIX_NOT_SRC_OR_DST);

@@ -30,7 +30,7 @@
  * Courtesy of Jay Estabrook.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga_regs.h,v 3.4 1997/01/05 11:54:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga_regs.h,v 3.4.2.1 1998/10/19 20:29:40 hohndel Exp $ */
 
 #ifndef TGA_REGS_H
 #define TGA_REGS_H
@@ -50,6 +50,17 @@
 #define BT485_WRITE(v,r) \
 	TGA_WRITE_REG((r),TGA_RAMDAC_SETUP_REG);		\
 	TGA_WRITE_REG(((v)&0xff)|((r)<<8),TGA_RAMDAC_REG);
+
+#define BT463_LOAD_ADDR(a) \
+        TGA_WRITE_REG(BT463_ADDR_LO<<2, TGA_RAMDAC_SETUP_REG); \
+        TGA_WRITE_REG((BT463_ADDR_LO<<10)|((a)&0xff), TGA_RAMDAC_REG); \
+        TGA_WRITE_REG(BT463_ADDR_HI<<2, TGA_RAMDAC_SETUP_REG); \
+        TGA_WRITE_REG((BT463_ADDR_HI<<10)|(((a)>>8)&0xff), TGA_RAMDAC_REG);
+
+#define BT463_WRITE(m,a,v) \
+        BT463_LOAD_ADDR((a)); \
+        TGA_WRITE_REG(((m)<<2),TGA_RAMDAC_SETUP_REG); \
+        TGA_WRITE_REG(((m)<<10)|((v)&0xff),TGA_RAMDAC_REG);
 
 #define mb() \
 	__asm__ __volatile__("mb": : :"memory")
@@ -127,6 +138,8 @@
 /*
  * useful defines for managing the BT463 on the 24-plane TGAs
  */
+#define BT463_READ_BIT          0x2
+
 #define	BT463_ADDR_LO		0x0
 #define	BT463_ADDR_HI		0x1
 #define	BT463_REG_ACC		0x2

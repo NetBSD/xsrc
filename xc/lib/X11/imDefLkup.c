@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imDefLkup.c,v 3.3.4.1 1997/06/22 10:32:26 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imDefLkup.c,v 3.3.4.2 1998/10/21 06:40:39 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #define  NEED_EVENTS
@@ -1114,8 +1114,7 @@ _XimProtoMbLookupString(xic, ev, buffer, bytes, keysym, state)
 	_XimUnregCommitInfo(ic);
 
     } else  if (ev->type == KeyPress) {
-	ret = _XimLookupMBText(ic, ev, (unsigned char *)buffer,
-							bytes, keysym, NULL);
+	ret = _XimLookupMBText(ic, ev, buffer, bytes, keysym, NULL);
 	if (ret > 0) {
 	    if (keysym && *keysym != NoSymbol)
 		*state = XLookupBoth;

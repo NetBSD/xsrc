@@ -1,4 +1,4 @@
-# $XConsortium: iso8859-2 /main/1 1996/01/10 17:21:26 kaleb $
+# $TOG: iso8859-2 /main/2 1998/05/20 15:33:30 kaleb $
 #
 # ISO 8859-2 (Latin2) Compose Sequence
 #
@@ -57,6 +57,8 @@
 # are for compose sequences.
 <Multi_key> <A> <comma>			: "\241"	Aogonek
 <Multi_key> <comma> <A>			: "\241"	Aogonek
+<Multi_key> <A> <ogonek>		: "\241"	Aogonek
+<Multi_key> <ogonek> <A>		: "\241"	Aogonek
 <Multi_key> <U> <space>			: "\242"	breve
 <Multi_key> <L> <minus>			: "\243"	Lstroke
 <Multi_key> <x> <o>			: "\244"	currency
@@ -73,6 +75,8 @@
 <Multi_key> <0> <X>			: "\244"	currency
 <Multi_key> <L> <less>			: "\245"	Lcaron
 <Multi_key> <less> <L>			: "\245"	Lcaron
+<Multi_key> <L> <caron>			: "\245"	Lcaron
+<Multi_key> <caron> <L>			: "\245"	Lcaron
 <Multi_key> <S> <apostrophe>		: "\246"	Sacute
 <Multi_key> <apostrophe> <S>		: "\246"	Sacute
 <Multi_key> <S> <acute>			: "\246"	Sacute
@@ -92,10 +96,16 @@
 <Multi_key> <quotedbl> <quotedbl>	: "\250"	diaeresis
 <Multi_key> <S> <less>			: "\251"	Scaron
 <Multi_key> <less> <S>			: "\251"	Scaron
+<Multi_key> <S> <caron>			: "\251"	Scaron
+<Multi_key> <caron> <S>			: "\251"	Scaron
 <Multi_key> <S> <comma>			: "\252"	Scedilla
 <Multi_key> <comma> <S>			: "\252"	Scedilla
+<Multi_key> <S> <cedilla>		: "\252"	Scedilla
+<Multi_key> <cedilla> <S>		: "\252"	Scedilla
 <Multi_key> <T> <less>			: "\253"	Tcaron
 <Multi_key> <less> <T>			: "\253"	Tcaron
+<Multi_key> <T> <caron>			: "\253"	Tcaron
+<Multi_key> <caron> <T>			: "\253"	Tcaron
 <Multi_key> <Z> <apostrophe>		: "\254"	Zacute
 <Multi_key> <apostrophe> <Z>		: "\254"	Zacute
 <Multi_key> <Z> <acute>			: "\254"	Zacute
@@ -103,16 +113,22 @@
 <Multi_key> <minus> <minus>		: "\255"	hyphen
 <Multi_key> <Z> <less>			: "\256"	Zcaron
 <Multi_key> <less> <Z>			: "\256"	Zcaron
+<Multi_key> <Z> <caron>			: "\256"	Zcaron
+<Multi_key> <caron> <Z>			: "\256"	Zcaron
 <Multi_key> <Z> <period>		: "\257"	Zabovedot
 <Multi_key> <0> <asterisk>		: "\260"	degree
 <Multi_key> <asterisk> <0>		: "\260"	degree
 <Multi_key> <a> <comma>			: "\261"	aogonek
 <Multi_key> <comma> <a>			: "\261"	aogonek
+<Multi_key> <a> <ogonek>		: "\261"	aogonek
+<Multi_key> <ogonek> <a>		: "\261"	aogonek
 <Multi_key> <comma> <comma>		: "\262"	ogonek
 <Multi_key> <l> <minus>			: "\263"	lstroke
 <Multi_key> <apostrophe> <apostrophe>	: "\264"	acute
 <Multi_key> <l> <less>			: "\265"	lcaron
 <Multi_key> <less> <l>			: "\265"	lcaron
+<Multi_key> <l> <caron>			: "\265"	lcaron
+<Multi_key> <caron> <l>			: "\265"	lcaron
 <Multi_key> <s> <apostrophe>		: "\266"	sacute
 <Multi_key> <apostrophe> <s>		: "\266"	sacute
 <Multi_key> <s> <acute>			: "\266"	sacute
@@ -121,10 +137,16 @@
 <Multi_key> <comma> <comma>		: "\270"        cedilla
 <Multi_key> <s> <less>			: "\271"	scaron
 <Multi_key> <less> <s>			: "\271"	scaron
+<Multi_key> <s> <caron>			: "\271"	scaron
+<Multi_key> <caron> <s>			: "\271"	scaron
 <Multi_key> <s> <comma>			: "\272"	scedilla
 <Multi_key> <comma> <s>			: "\272"	scedilla
+<Multi_key> <s> <cedilla>		: "\272"	scedilla
+<Multi_key> <cedilla> <s>		: "\272"	scedilla
 <Multi_key> <t> <less>			: "\273"	tcaron
 <Multi_key> <less> <t>			: "\273"	tcaron
+<Multi_key> <t> <caron>			: "\273"	tcaron
+<Multi_key> <caron> <t>			: "\273"	tcaron
 <Multi_key> <z> <apostrophe>		: "\274"	zacute
 <Multi_key> <apostrophe> <z>		: "\274"	zacute
 <Multi_key> <z> <acute>			: "\274"	zacute
@@ -133,6 +155,8 @@
 <Multi_key> <acute> <acute>		: "\275"	doubleacute
 <Multi_key> <z> <less>			: "\276"	zcaron
 <Multi_key> <less> <z>			: "\276"	zcaron
+<Multi_key> <z> <caron>			: "\276"	zcaron
+<Multi_key> <caron> <z>			: "\276"	zcaron
 <Multi_key> <z> <period>		: "\277"	zabovedot
 <Multi_key> <R> <acute>			: "\300"	Racute
 <Multi_key> <acute> <R>			: "\300"	Racute
@@ -147,6 +171,8 @@
 <Multi_key> <A> <greater>		: "\302"	Acircumflex
 <Multi_key> <greater> <A>		: "\302"	Acircumflex
 <Multi_key> <A> <U>			: "\303"	Abreve
+<Multi_key> <A> <breve>			: "\303"	Abreve
+<Multi_key> <breve> <A>			: "\303"	Abreve
 <Multi_key> <A> <quotedbl>		: "\304"	Adiaeresis
 <Multi_key> <quotedbl> <A>		: "\304"	Adiaeresis
 <Multi_key> <L> <acute>			: "\305"	Lacute
@@ -159,18 +185,26 @@
 <Multi_key> <apostrophe> <C>		: "\306"	Cacute
 <Multi_key> <C> <comma>			: "\307"	Ccedilla
 <Multi_key> <comma> <C>			: "\307"	Ccedilla
+<Multi_key> <C> <cedilla>		: "\307"	Ccedilla
+<Multi_key> <cedilla> <C>		: "\307"	Ccedilla
 <Multi_key> <C> <less>			: "\310"	Ccaron
 <Multi_key> <less> <C>			: "\310"	Ccaron
+<Multi_key> <C> <caron>			: "\310"	Ccaron
+<Multi_key> <caron> <C>			: "\310"	Ccaron
 <Multi_key> <E> <acute>			: "\311"	Eacute
 <Multi_key> <acute> <E>			: "\311"	Eacute
 <Multi_key> <E> <apostrophe>		: "\311"	Eacute
 <Multi_key> <apostrophe> <E>		: "\311"	Eacute
 <Multi_key> <E> <comma>			: "\312"	Eogonek
 <Multi_key> <comma> <E>			: "\312"	Eogonek
+<Multi_key> <E> <ogonek>		: "\312"	Eogonek
+<Multi_key> <ogonek> <E>		: "\312"	Eogonek
 <Multi_key> <E> <quotedbl>		: "\313"	Ediaeresis
 <Multi_key> <quotedbl> <E>		: "\313"	Ediaeresis
 <Multi_key> <E> <less>			: "\314"	Ecaron
 <Multi_key> <less> <E>			: "\314"	Ecaron
+<Multi_key> <E> <caron>			: "\314"	Ecaron
+<Multi_key> <caron> <E>			: "\314"	Ecaron
 <Multi_key> <I> <acute>			: "\315"	Iacute
 <Multi_key> <acute> <I>			: "\315"	Iacute
 <Multi_key> <I> <apostrophe>		: "\315"	Iacute
@@ -181,6 +215,8 @@
 <Multi_key> <greater> <I>		: "\316"	Icircumflex
 <Multi_key> <D> <less>			: "\317"	Dcaron
 <Multi_key> <less> <D>			: "\317"	Dcaron
+<Multi_key> <D> <caron>			: "\317"	Dcaron
+<Multi_key> <caron> <D>			: "\317"	Dcaron
 <Multi_key> <D> <minus>			: "\320"	Dstroke
 <Multi_key> <minus> <D>			: "\320"	Dstroke
 <Multi_key> <N> <acute>			: "\321"	Nacute
@@ -189,6 +225,8 @@
 <Multi_key> <apostrophe> <N>		: "\321"	Nacute
 <Multi_key> <N> <less>			: "\322"	Ncaron
 <Multi_key> <less> <N>			: "\322"	Ncaron
+<Multi_key> <N> <caron>			: "\322"	Ncaron
+<Multi_key> <caron> <N>			: "\322"	Ncaron
 <Multi_key> <O> <acute>			: "\323"	Oacute
 <Multi_key> <acute> <O>			: "\323"	Oacute
 <Multi_key> <O> <apostrophe>		: "\323"	Oacute
@@ -204,6 +242,8 @@
 <Multi_key> <x> <x>			: "\327"	multiply
 <Multi_key> <R> <less>			: "\330"	Rcaron
 <Multi_key> <less> <R>			: "\330"	Rcaron
+<Multi_key> <R> <caron>			: "\330"	Rcaron
+<Multi_key> <caron> <R>			: "\330"	Rcaron
 <Multi_key> <U> <asterisk>		: "\331"	Uring
 <Multi_key> <asterisk> <U>		: "\331"	Uring
 <Multi_key> <U> <acute>			: "\332"	Uacute
@@ -220,6 +260,8 @@
 <Multi_key> <apostrophe> <Y>		: "\335"	Yacute
 <Multi_key> <T> <comma>			: "\336"	Tcedilla
 <Multi_key> <comma> <T>			: "\336"	Tcedilla
+<Multi_key> <T> <cedilla>		: "\336"	Tcedilla
+<Multi_key> <cedilla> <T>		: "\336"	Tcedilla
 <Multi_key> <s> <s>			: "\337"	ssharp
 <Multi_key> <r> <acute>			: "\340"	racute
 <Multi_key> <acute> <r>			: "\340"	racute
@@ -234,6 +276,8 @@
 <Multi_key> <a> <greater>		: "\342"	acircumflex
 <Multi_key> <greater> <a>		: "\342"	acircumflex
 <Multi_key> <a> <U>			: "\343"	abreve
+<Multi_key> <a> <breve>			: "\343"	abreve
+<Multi_key> <breve> <a>			: "\343"	abreve
 <Multi_key> <a> <quotedbl>		: "\344"	adiaeresis
 <Multi_key> <quotedbl> <a>		: "\344"	adiaeresis
 <Multi_key> <l> <acute>			: "\345"	lacute
@@ -246,18 +290,26 @@
 <Multi_key> <apostrophe> <c>		: "\346"	cacute
 <Multi_key> <c> <comma>			: "\347"	ccedilla
 <Multi_key> <comma> <c>			: "\347"	ccedilla
+<Multi_key> <c> <cedilla>		: "\347"	ccedilla
+<Multi_key> <cedilla> <c>		: "\347"	ccedilla
 <Multi_key> <c> <less>			: "\350"	ccaron
 <Multi_key> <less> <c>			: "\350"	ccaron
+<Multi_key> <c> <caron>			: "\350"	ccaron
+<Multi_key> <caron> <c>			: "\350"	ccaron
 <Multi_key> <e> <acute>			: "\351"	eacute
 <Multi_key> <acute> <e>			: "\351"	eacute
 <Multi_key> <e> <apostrophe>		: "\351"	eacute
 <Multi_key> <apostrophe> <e>		: "\351"	eacute
 <Multi_key> <e> <comma>			: "\352"	eogonek
 <Multi_key> <comma> <e>			: "\352"	eogonek
+<Multi_key> <e> <ogonek>		: "\352"	eogonek
+<Multi_key> <ogonek> <e>		: "\352"	eogonek
 <Multi_key> <e> <quotedbl>		: "\353"	ediaeresis
 <Multi_key> <quotedbl> <e>		: "\353"	ediaeresis
 <Multi_key> <e> <less>			: "\354"	ecaron
 <Multi_key> <less> <e>			: "\354"	ecaron
+<Multi_key> <e> <caron>			: "\354"	ecaron
+<Multi_key> <caron> <e>			: "\354"	ecaron
 <Multi_key> <i> <acute>			: "\355"	iacute
 <Multi_key> <acute> <i>			: "\355"	iacute
 <Multi_key> <i> <apostrophe>		: "\355"	iacute
@@ -268,6 +320,8 @@
 <Multi_key> <greater> <i>		: "\356"	icircumflex
 <Multi_key> <d> <less>			: "\357"	dcaron
 <Multi_key> <less> <d>			: "\357"	dcaron
+<Multi_key> <d> <caron>			: "\357"	dcaron
+<Multi_key> <caron> <d>			: "\357"	dcaron
 <Multi_key> <d> <minus>			: "\360"	dstroke
 <Multi_key> <minus> <d>			: "\360"	dstroke
 <Multi_key> <n> <acute>			: "\361"	nacute
@@ -276,6 +330,8 @@
 <Multi_key> <apostrophe> <n>		: "\361"	nacute
 <Multi_key> <n> <less>			: "\362"	ncaron
 <Multi_key> <less> <n>			: "\362"	ncaron
+<Multi_key> <n> <caron>			: "\362"	ncaron
+<Multi_key> <caron> <n>			: "\362"	ncaron
 <Multi_key> <o> <acute>			: "\363"	nacute
 <Multi_key> <acute> <o>			: "\363"	nacute
 <Multi_key> <o> <apostrophe>		: "\363"	nacute
@@ -292,6 +348,8 @@
 <Multi_key> <colon> <minus>		: "\367"	division
 <Multi_key> <r> <less>			: "\370"	rcaron
 <Multi_key> <less> <r>			: "\370"	rcaron
+<Multi_key> <r> <caron>			: "\370"	rcaron
+<Multi_key> <caron> <r>			: "\370"	rcaron
 <Multi_key> <u> <asterisk>		: "\371"	uring
 <Multi_key> <asterisk> <u>		: "\371"	uring
 <Multi_key> <u> <acute>			: "\372"	uacute
@@ -308,6 +366,8 @@
 <Multi_key> <apostrophe> <y>		: "\375"	yacute
 <Multi_key> <t> <comma>			: "\376"	tcedilla
 <Multi_key> <comma> <t>			: "\376"	tcedilla
+<Multi_key> <t> <cedilla>		: "\376"	tcedilla
+<Multi_key> <cedilla> <t>		: "\376"	tcedilla
 <Multi_key> <period> <period>		: "\377"	abovedot
 <dead_acute> <A>			: "\301"	Aacute
 <dead_acute> <C>			: "\306"	Cacute

@@ -20,7 +20,45 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv3driver.c,v 1.1.2.3 1998/01/24 11:55:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv3driver.c,v 1.1.2.6 1998/11/18 16:38:45 hohndel Exp $ */
+ /***************************************************************************\
+|*                                                                           *|
+|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*                                                                           *|
+|*     NOTICE TO USER:   The source code  is copyrighted under  U.S. and     *|
+|*     international laws.  Users and possessors of this source code are     *|
+|*     hereby granted a nonexclusive,  royalty-free copyright license to     *|
+|*     use this code in individual and commercial software.                  *|
+|*                                                                           *|
+|*     Any use of this source code must include,  in the user documenta-     *|
+|*     tion and  internal comments to the code,  notices to the end user     *|
+|*     as follows:                                                           *|
+|*                                                                           *|
+|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*                                                                           *|
+|*     NVIDIA, CORPORATION MAKES NO REPRESENTATION ABOUT THE SUITABILITY     *|
+|*     OF  THIS SOURCE  CODE  FOR ANY PURPOSE.  IT IS  PROVIDED  "AS IS"     *|
+|*     WITHOUT EXPRESS OR IMPLIED WARRANTY OF ANY KIND.  NVIDIA, CORPOR-     *|
+|*     ATION DISCLAIMS ALL WARRANTIES  WITH REGARD  TO THIS SOURCE CODE,     *|
+|*     INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGE-     *|
+|*     MENT,  AND FITNESS  FOR A PARTICULAR PURPOSE.   IN NO EVENT SHALL     *|
+|*     NVIDIA, CORPORATION  BE LIABLE FOR ANY SPECIAL,  INDIRECT,  INCI-     *|
+|*     DENTAL, OR CONSEQUENTIAL DAMAGES,  OR ANY DAMAGES  WHATSOEVER RE-     *|
+|*     SULTING FROM LOSS OF USE,  DATA OR PROFITS,  WHETHER IN AN ACTION     *|
+|*     OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,  ARISING OUT OF     *|
+|*     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOURCE CODE.     *|
+|*                                                                           *|
+|*     U.S. Government  End  Users.   This source code  is a "commercial     *|
+|*     item,"  as that  term is  defined at  48 C.F.R. 2.101 (OCT 1995),     *|
+|*     consisting  of "commercial  computer  software"  and  "commercial     *|
+|*     computer  software  documentation,"  as such  terms  are  used in     *|
+|*     48 C.F.R. 12.212 (SEPT 1995)  and is provided to the U.S. Govern-     *|
+|*     ment only as  a commercial end item.   Consistent with  48 C.F.R.     *|
+|*     12.212 and  48 C.F.R. 227.7202-1 through  227.7202-4 (JUNE 1995),     *|
+|*     all U.S. Government End Users  acquire the source code  with only     *|
+|*     those rights set forth herein.                                        *|
+|*                                                                           *|
+ \***************************************************************************/
 
 #include <math.h>
 #include <stdlib.h>
@@ -52,12 +90,13 @@
 #include "extensions/xf86dgastr.h"
 #endif
 
-#include "nv3ref.h"
 #include "nvcursor.h"
 #include "nvreg.h"
 
 
 #include "nvvga.h"
+
+static unsigned ramType, crystalFreq;
 
 void NV3EnterLeave(Bool enter)
 {
@@ -65,136 +104,197 @@ void NV3EnterLeave(Bool enter)
 
   if(enter) {
     xf86EnableIOPorts(vga256InfoRec.scrnIndex);
-    outb(vgaIOBase + 4, 0x11); temp = inb(vgaIOBase + 5);
-    outb(vgaIOBase + 5, temp & 0x7F); 
-    SR_Write(LOCK_EXT_INDEX,UNLOCK_EXT_MAGIC);
+    outb(vgaIOBase + 4, 17); temp = inb(vgaIOBase + 5);
+    outb(vgaIOBase + 5, temp & 127); 
+    outb(964,( 6  ));outb(965, 87  ) ;
   }else {
-    outb(vgaIOBase + 4, 0x11); temp = inb(vgaIOBase + 5);
-    outb(vgaIOBase + 5, (temp & 0x7F) | 0x80);
-    SR_Write(LOCK_EXT_INDEX,LOCK_EXT_MAGIC);
+    outb(vgaIOBase + 4, 17); temp = inb(vgaIOBase + 5);
+    outb(vgaIOBase + 5, (temp & 127) | 128);
+    outb(964,( 6  ));outb(965, 153  ) ;
     xf86DisableIOPorts(vga256InfoRec.scrnIndex);
   }
 }
 
-#define MapDevice(device,base) \
-  nv##device##Port=(unsigned*)xf86MapVidMem(vga256InfoRec.scrnIndex,\
-                                 MMIO_REGION,\
-                                 ((char*)(base))+DEVICE_BASE(device),\
-                                 DEVICE_SIZE(device))
+
+
+
+
+
 
 
 static void MapNV3Regs(void *regBase,void *frameBase)
 {
-  MapDevice(PRAMDAC,regBase);
-  MapDevice(PFB,regBase);
-  MapDevice(PFIFO,regBase);
-  MapDevice(PGRAPH,regBase);
-  MapDevice(PMC,regBase);
-  MapDevice(CHAN0,regBase);
-  MapDevice(PRAMIN,frameBase);
+  nvPRAMDACPort=(unsigned*)xf86MapVidMem(vga256InfoRec.scrnIndex, 3 , ((char*)( regBase ))+ (6815744) , ((6819839) - (6815744) +1) ) ;
+  nvPFBPort=(unsigned*)xf86MapVidMem(vga256InfoRec.scrnIndex, 3 , ((char*)( regBase ))+ (1048576) , ((1052671) - (1048576) +1) ) ;
+  nvPFIFOPort=(unsigned*)xf86MapVidMem(vga256InfoRec.scrnIndex, 3 , ((char*)( regBase ))+ (8192) , ((16383) - (8192) +1) ) ;
+  nvPGRAPHPort=(unsigned*)xf86MapVidMem(vga256InfoRec.scrnIndex, 3 , ((char*)( regBase ))+ (4194304) , ((4202495) - (4194304) +1) ) ;
+  nvPTIMERPort=(unsigned*)xf86MapVidMem(vga256InfoRec.scrnIndex, 3 , ((char*)( regBase ))+ (36864) , ((40959) - (36864) +1) ) ;
+  nvPEXTDEVPort=(unsigned*)xf86MapVidMem(vga256InfoRec.scrnIndex, 3 , ((char*)( regBase ))+ (1052672) , ((1056767) - (1052672) +1) ) ;
+  nvPMCPort=(unsigned*)xf86MapVidMem(vga256InfoRec.scrnIndex, 3 , ((char*)( regBase ))+ (0) , ((4095) - (0) +1) ) ;
+  nvCHAN0Port=(unsigned*)xf86MapVidMem(vga256InfoRec.scrnIndex, 3 , ((char*)( regBase ))+ (8388608) , ((8454143) - (8388608) +1) ) ;
+  nvPRAMINPort=(unsigned*)xf86MapVidMem(vga256InfoRec.scrnIndex, 3 , ((char*)( frameBase ))+ (12582912) , ((16777215) - (12582912) +1) ) ;
 }
 
-#define NV3_MAX_CLOCK_IN_KHZ 230000
+
 
 static void NV3FlipFunctions(vgaVideoChipRec *nv);
 
 int NV3Probe(vgaVideoChipRec *nv,void *base0,void *base1)
 {
-  int noaccel= OFLG_ISSET(OPTION_NOACCEL,&vga256InfoRec.options);
-
-  /* By the time we have got here, we know it is an NV3 */
-  vga256InfoRec.maxClock = NV3_MAX_CLOCK_IN_KHZ;
+  int boot0, chipRev, chipSubrev;
+  int noaccel= (( &vga256InfoRec.options )->flag_bits[( 60  )/ (8 * sizeof(CARD32)) ] & (1 << (( 60  )% (8 * sizeof(CARD32)) ))) ;
 
   MapNV3Regs(base0,base1);
 
-  if(!vga256InfoRec.videoRam) {
-    vga256InfoRec.videoRam = (1024 << 
-     (PFB_Read(BOOT_0) & PFB_Mask(BOOT_0_RAM_AMOUNT)));
+   
+  boot0      = nvPFBPort[((1048576    )- (1048576) )/4]   ;
+  chipRev    = nvPMCPort[((0    )- (0) )/4]    & 240;
+  chipSubrev = nvPMCPort[((0    )- (0) )/4]    & 15;
+  crystalFreq= (nvPEXTDEVPort[((1052672    )- (1052672) )/4]    & (( 1    ) << (6))   ) ? 14318 : 13500;
+
+  if (boot0 & (( 1    ) << (5))   )
+  {
+      if ((chipRev == 32 ) && (chipSubrev >= 2 ))
+      {        
+          ramType = 1 ;
+          switch (boot0 & 3)
+          {
+              case 0 :
+              case 3 :
+                  vga256InfoRec.videoRam = 1024 * 8;
+                  break;
+              case 2 :
+                  vga256InfoRec.videoRam = 1024 * 4;
+                  break;
+              case 1 :
+              default:
+                  vga256InfoRec.videoRam = 1024 * 2;
+                  break;
+          }
+      }            
+      else            
+      {
+          ramType = 0 ;
+          vga256InfoRec.videoRam = 1024 * 8;
+      }            
   }
+  else
+  {
+      ramType = 0 ;
+  
+      switch (boot0 & 3)
+      {
+          case 0 :
+              vga256InfoRec.videoRam = 1024 * 8;
+              break;
+          case 2 :
+              vga256InfoRec.videoRam = 1024 * 4;
+              break;
+          case 1 :
+          case 3 :
+              vga256InfoRec.videoRam = 1024 * 2;
+              break;
+      }
+  }        
+  
+   
+  vga256InfoRec.maxClock = 230000 ;
+
   nv->ChipLinearSize=vga256InfoRec.videoRam*1024;
-  /* Doesn't feel right that this should be an int! */  
+     
   nv->ChipLinearBase=(int)base1;  
-  nv->ChipHas32bpp=TRUE;
-  /* I/O ports are needed for things like pallete selection etc */
+  nv->ChipHas32bpp= 1 ;
+   
   xf86ClearIOPortList (vga256InfoRec.scrnIndex);
   xf86AddIOPorts(vga256InfoRec.scrnIndex,Num_VGA_IOPorts,VGA_IOPorts);  
   xf86EnableIOPorts(vga256InfoRec.scrnIndex);
-  vgaIOBase = (inb(0x3CC) & 0x01) ? 0x3D0 : 0x3B0;
-  NV3EnterLeave(ENTER);
+  vgaIOBase = (inb(972) & 1) ? 976 : 944;
+  NV3EnterLeave(1 );
 
-  /* The NV1 only supports 555 weighting, so force it here */
+   
   if(vgaBitsPerPixel==16 && !noaccel) {
-    ErrorF("%s %s: %s: Setting RGB weight to 555\n",XCONFIG_PROBED, 
+    ErrorF("%s %s: %s: Setting RGB weight to 555\n","(--)" , 
                                                     vga256InfoRec.name,
                                                     vga256InfoRec.chipset);
     xf86weight.green=xf86weight.blue=xf86weight.red=5;
   }
 
-  OFLG_SET(OPTION_NOACCEL, &(nv->ChipOptionFlags));
-  OFLG_SET(OPTION_SW_CURSOR, &(nv->ChipOptionFlags));
+  ((  &(nv->ChipOptionFlags) )->flag_bits[( 60  )/ (8 * sizeof(CARD32)) ] |= (1 << (( 60  )% (8 * sizeof(CARD32)) ))) ;
+  ((  &(nv->ChipOptionFlags) )->flag_bits[( 62  )/ (8 * sizeof(CARD32)) ] |= (1 << (( 62  )% (8 * sizeof(CARD32)) ))) ;
 
   NV3FlipFunctions(nv);
 
   return 1;    
 }
 
-/*
- * Fout=(Fin *(N/M)) / (1<<P)
- *
- * Constraints:
- *   1Mhz <= Fin/M <= 2Mhz
- * 128Hhz <= Fin * (N/M) <= 256Mhz
- *
- */
+static int NV3ClockSelect(float clockIn,float *clockOut,int *mOut,int *nOut,int *pOut)
+{
+    unsigned lowM,     highM;
+    unsigned DeltaNew, DeltaOld;
+    unsigned VClk;
+    unsigned Freq;
+    unsigned M;
+    unsigned N;
+    unsigned O;
+    unsigned P;
+    
+     
 
-/* NTSC cards have approx 14.3Mhz. Need to detect, but leave for now*/
-#define PLL_INPUT_FREQ 13500 
-#define M_MIN 7
-#define M_MAX 13
 
-#define P_MIN 0
-#define P_MAX 7 /* Not sure about this. Could be 4 */
-
-static int NV3ClockSelect(float clockIn,float *clockOut,int *mOut,
-                                        int *nOut,int *pOut)
-{ 
-  int m,n,p;
-  float bestDiff=1e10;
-  float target=0.0;
-  float best=0.0;
-  float diff;
-  int nMax,nMin;
-  
-  *clockOut=0.0;
-  for(p=P_MIN;p<=P_MAX;p++) {
-    for(m=M_MIN;m<=M_MAX;m++) {
-      float fm=(float)m;
-      /* Now calculate maximum and minimum values for n */
-      nMax=(int) (((256000/PLL_INPUT_FREQ)*fm)-0.5);
-      nMin=(int) (((128000/PLL_INPUT_FREQ)*fm)+0.5);
-      n=(int)(((clockIn*((float)(1<<p)))/PLL_INPUT_FREQ)*fm);
-      if(n>=nMin && n<=nMax) {  
-        float fn=(float)n;
-        target=(PLL_INPUT_FREQ*(fn/fm))/((float)(1<<p));
-        diff=fabs(target-clockIn);
-        if(diff<bestDiff) {
-          bestDiff=diff;
-          best=target;
-          *mOut=m;*nOut=n;*pOut=p;
-          *clockOut=best;
-	}
-      }
+    DeltaOld = -1;
+    VClk     = (unsigned)clockIn;
+    if (crystalFreq == 14318)
+    {
+         
+        lowM  = 8;
+        highM = 13;
     }
-  }
-  return (best!=0.0);    
+    else
+    {
+         
+        lowM  = 7;
+        highM = 12;
+    }                      
+     
+
+
+    for (P = 0; P <= 3; P ++)
+    {
+        Freq = VClk << P;
+         
+
+
+        if ((Freq >= 128000) && (Freq <= 230000))
+        {
+            for (M = lowM; M <= highM; M++)
+            {
+                N    = (VClk * M / crystalFreq) << P;
+                Freq = (crystalFreq * N / M) >> P;
+                if (Freq > VClk)
+                    DeltaNew = Freq - VClk;
+                else
+                    DeltaNew = VClk - Freq;
+                if (DeltaNew < DeltaOld)
+                {
+                     
+
+
+                    *mOut     = M;
+                    *nOut     = N;
+                    *pOut     = P;
+                    *clockOut = (float)VClk;
+                    DeltaOld  = DeltaNew;
+                }
+            }
+        }
+    }
+    return (DeltaOld != -1);
 }
 
-#define new ((vgaNVPtr)vgaNewVideoState)
+ 
 
-/* Very useful macro that allows you to set overflow bits */
-#define SetBitField(value,from,to) SetBF(to,GetBF(value,from))
-#define SetBit(n) (1<<(n))
-#define Set8Bits(value) ((value)&0xff)
+
+
 
 static int CalculateCRTC(DisplayModePtr mode)
 {
@@ -208,75 +308,74 @@ static int CalculateCRTC(DisplayModePtr mode)
       vertEnd = mode->CrtcVSyncEnd - 1,
       vertTotal = mode->CrtcVTotal - 2;
         
-  /* Calculate correct value for offset register */
-  new->std.CRTC[0x13]=((vga256InfoRec.displayWidth/8)*bpp)&0xff;
-  /* Extra bits for CRTC offset register */
-  new->regs.nv3.repaint0=
-    SetBitField((vga256InfoRec.displayWidth/8)*bpp,10:8,7:5);
+   
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[19]=((vga256InfoRec.displayWidth/8)*bpp)&255;
+   
+  ((vgaNVPtr)vgaNewVideoState)->regs.nv3.repaint0=
+    (( (((unsigned)((  (vga256InfoRec.displayWidth/8)*bpp  ) & (((unsigned)(1U << ((( 10)-( 8)+1)))-1)  << ( 8))  )) >> (8) )  ) << (5))  ;
 
-  /* The NV3 manuals states that for native modes, there should be no 
-   * borders. This code should also be tidied up to use symbolic names
-   */     
-  new->std.CRTC[0x0]=Set8Bits(horizTotal - 4);
-  new->std.CRTC[0x1]=Set8Bits(horizDisplay);
-  new->std.CRTC[0x2]=Set8Bits(horizDisplay);
-  new->std.CRTC[0x3]=SetBitField(horizTotal,4:0,4:0) | SetBit(7);
-  new->std.CRTC[0x4]=Set8Bits(horizStart);
-  new->std.CRTC[0x5]=SetBitField(horizTotal,5:5,7:7)|
-                     SetBitField(horizEnd,4:0,4:0);
-  new->std.CRTC[0x6]=SetBitField(vertTotal,7:0,7:0);
+   
 
-  new->std.CRTC[0x7]=SetBitField(vertTotal,8:8,0:0)|
-		     SetBitField(vertDisplay,8:8,1:1)|
-		     SetBitField(vertStart,8:8,2:2)|
-		     SetBitField(vertDisplay,8:8,3:3)|
-		     SetBit(4)|
-		     SetBitField(vertTotal,9:9,5:5)|
-		     SetBitField(vertDisplay,9:9,6:6)|
-		     SetBitField(vertStart,9:9,7:7);
+     
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[0]= (( horizTotal - 4 )&255) ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[1]= (( horizDisplay )&255) ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[2]= (( horizDisplay )&255) ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[3]= (( (((unsigned)((  horizTotal  ) & (((unsigned)(1U << ((( 4)-( 0)+1)))-1)  << ( 0))  )) >> (0) )  ) << (0))   | (1<<( 7 )) ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[4]= (( horizStart )&255) ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[5]= (( (((unsigned)((  horizTotal  ) & (((unsigned)(1U << ((( 5)-( 5)+1)))-1)  << ( 5))  )) >> (5) )  ) << (7))  |
+                     (( (((unsigned)((  horizEnd  ) & (((unsigned)(1U << ((( 4)-( 0)+1)))-1)  << ( 0))  )) >> (0) )  ) << (0))  ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[6]= (( (((unsigned)((  vertTotal  ) & (((unsigned)(1U << ((( 7)-( 0)+1)))-1)  << ( 0))  )) >> (0) )  ) << (0))  ;
 
-  new->std.CRTC[0x9]= SetBitField(vertDisplay,9:9,5:5) | SetBit(6);
-  new->std.CRTC[0x10]= Set8Bits(vertStart);
-  new->std.CRTC[0x11]= SetBitField(vertEnd,3:0,3:0) | SetBit(5);
-  new->std.CRTC[0x12]= Set8Bits(vertDisplay);
-  new->std.CRTC[0x15]= Set8Bits(vertDisplay);
-  new->std.CRTC[0x16]= Set8Bits(vertTotal + 1);
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[7]= (( (((unsigned)((  vertTotal  ) & (((unsigned)(1U << ((( 8)-( 8)+1)))-1)  << ( 8))  )) >> (8) )  ) << (0))  |
+		     (( (((unsigned)((  vertDisplay  ) & (((unsigned)(1U << ((( 8)-( 8)+1)))-1)  << ( 8))  )) >> (8) )  ) << (1))  |
+		     (( (((unsigned)((  vertStart  ) & (((unsigned)(1U << ((( 8)-( 8)+1)))-1)  << ( 8))  )) >> (8) )  ) << (2))  |
+		     (( (((unsigned)((  vertDisplay  ) & (((unsigned)(1U << ((( 8)-( 8)+1)))-1)  << ( 8))  )) >> (8) )  ) << (3))  |
+		     (1<<( 4 )) |
+		     (( (((unsigned)((  vertTotal  ) & (((unsigned)(1U << ((( 9)-( 9)+1)))-1)  << ( 9))  )) >> (9) )  ) << (5))  |
+		     (( (((unsigned)((  vertDisplay  ) & (((unsigned)(1U << ((( 9)-( 9)+1)))-1)  << ( 9))  )) >> (9) )  ) << (6))  |
+		     (( (((unsigned)((  vertStart  ) & (((unsigned)(1U << ((( 9)-( 9)+1)))-1)  << ( 9))  )) >> (9) )  ) << (7))  ;
 
-  new->regs.nv3.screenExtra= SetBitField(horizTotal,6:6,4:4) |
-                             SetBitField(vertDisplay,10:10,3:3) |
-                             SetBitField(vertStart,10:10,2:2) |
-                             SetBitField(vertDisplay,10:10,1:1) |
-                             SetBitField(vertTotal,10:10,0:0);
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[9]= (( (((unsigned)((  vertDisplay  ) & (((unsigned)(1U << ((( 9)-( 9)+1)))-1)  << ( 9))  )) >> (9) )  ) << (5))   | (1<<( 6 )) ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[16]= (( vertStart )&255) ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[17]= (( (((unsigned)((  vertEnd  ) & (((unsigned)(1U << ((( 3)-( 0)+1)))-1)  << ( 0))  )) >> (0) )  ) << (0))   | (1<<( 5 )) ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[18]= (( vertDisplay )&255) ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[21]= (( vertDisplay )&255) ;
+  ((vgaNVPtr)vgaNewVideoState)->std.CRTC[22]= (( vertTotal + 1 )&255) ;
 
-  if(mode->Flags & V_DBLSCAN) new->std.CRTC[0x9]|=0x80;
+  ((vgaNVPtr)vgaNewVideoState)->regs.nv3.screenExtra= (( (((unsigned)((  horizTotal  ) & (((unsigned)(1U << ((( 6)-( 6)+1)))-1)  << ( 6))  )) >> (6) )  ) << (4))   |
+                             (( (((unsigned)((  vertDisplay  ) & (((unsigned)(1U << ((( 10)-( 10)+1)))-1)  << ( 10))  )) >> (10) )  ) << (3))   |
+                             (( (((unsigned)((  vertStart  ) & (((unsigned)(1U << ((( 10)-( 10)+1)))-1)  << ( 10))  )) >> (10) )  ) << (2))   |
+                             (( (((unsigned)((  vertDisplay  ) & (((unsigned)(1U << ((( 10)-( 10)+1)))-1)  << ( 10))  )) >> (10) )  ) << (1))   |
+                             (( (((unsigned)((  vertTotal  ) & (((unsigned)(1U << ((( 10)-( 10)+1)))-1)  << ( 10))  )) >> (10) )  ) << (0))  ;
+
+  if(mode->Flags & 32 ) ((vgaNVPtr)vgaNewVideoState)->std.CRTC[9]|=128;
  
-  /* I think this should be SetBitField(horizTotal,8:8,0:0), but this
-   * doesn't work apparently. Why 260 ? 256 would make sense.
-   */
-  new->regs.nv3.horizExtra= (horizTotal < 260 ? 0 : 1);
+   
+
+
+  ((vgaNVPtr)vgaNewVideoState)->regs.nv3.horizExtra= (horizTotal < 260 ? 0 : 1);
   return 1;
 }
 
-/* Gamma seems possible only for 15bpp and 32bpp. Need to fiddle 
- * around to confirm this 
- */
-#define GammaMode() (!(vgaBitsPerPixel==8 || xf86weight.green==6))
+ 
+
+
+
 
 static void InitPalette(DisplayModePtr mode)
 {
   int bpp=vgaBitsPerPixel/8;
   int i;
 
-  if(!GammaMode()) return;
-  /* Put simple ramp in for now !! */
-  /* Do any other drivers implement gamma ?? */
+  if(! (!(vgaBitsPerPixel==8 || xf86weight.green==6)) ) return;
+   
+   
   for(i=0;i<256;i++) {
-    new->std.DAC[i*3]=i>>2;
-    new->std.DAC[(i*3)+1]=i>>2;
-    new->std.DAC[(i*3)+2]=i>>2;
+    ((vgaNVPtr)vgaNewVideoState)->std.DAC[i*3]=i>>2;
+    ((vgaNVPtr)vgaNewVideoState)->std.DAC[(i*3)+1]=i>>2;
+    ((vgaNVPtr)vgaNewVideoState)->std.DAC[(i*3)+2]=i>>2;
   }
 }
-
 
 static Bool NV3Init(DisplayModePtr mode)
 {
@@ -287,123 +386,117 @@ static Bool NV3Init(DisplayModePtr mode)
   int i;
   int pixelDepth;
  
-  /* Calculate standard VGA settings */
+   
   if(!vgaHWInit (mode, sizeof (vgaNVRec))) {
     return 0;
   }
-
-  /* Calculate Vclock frequency */
+   
+  ((vgaNVPtr)vgaNewVideoState)->vgaValid=1;
+   
   if(!NV3ClockSelect(clockIn,&clockOut,&m,&n,&p)) {
     ErrorF("%s %s: %s: Unable to set desired video clock\n",
-           XCONFIG_PROBED, vga256InfoRec.name,vga256InfoRec.chipset);
-    return FALSE;  
+           "(--)" , vga256InfoRec.name,vga256InfoRec.chipset);
+    return 0 ;  
   }
-  new->regs.nv3.vpllCoeff=PRAMDAC_Val(VPLL_COEFF_NDIV,n) | 
-                          PRAMDAC_Val(VPLL_COEFF_MDIV,m) |
-                          PRAMDAC_Val(VPLL_COEFF_PDIV,p);
-
-  /* VGA is always valid for the NV3 */
-  new->vgaValid=1;
+  ((vgaNVPtr)vgaNewVideoState)->regs.nv3.vpllCoeff= ((   n   ) << (8))    | 
+                          ((   m   ) << (0))    |
+                          ((   p   ) << (16))   ;
 
   CalculateCRTC(mode);
   InitPalette(mode);
-
-  /* For now I don't support 8 bit pallettes but it is easy to add */  
-  new->regs.nv3.repaint1=
-    PCRTC_Val(REPAINT1_LARGE_SCREEN,mode->CrtcHDisplay<1280) |
-    PCRTC_Def(REPAINT1_PALETTE_WIDTH,6BITS);
- 
-  /* Need to figure out what the algorithm to set these are */
-  new->regs.nv3.fifoControl=0x82;/*PCRTC_Def(FIFO_CONTROL_BURST_LENGTH,64);*/
-  new->regs.nv3.fifo=0x22;/*PCRTC_Val(FIFO_WATERMARK,256>>3)|
-                     PCRTC_Val(FIFO_RESET,1);*/
+     
+  ((vgaNVPtr)vgaNewVideoState)->regs.nv3.repaint1=
+    ((   mode->CrtcHDisplay<1280   ) << (2))    |
+    (( 1    ) << (1))   ;
+   
 
 
-  /* PixelFormat controls how many bits per pixel. 
-   * There is another register in the 
-   * DAC which controls if mode is 5:5:5 or 5:6:5
-   */
+
   pixelDepth=(vgaBitsPerPixel+1)/8;
   if(pixelDepth>3) pixelDepth=3;
-  new->regs.nv3.pixelFormat=pixelDepth;
+  ((vgaNVPtr)vgaNewVideoState)->regs.nv3.pixelFormat=pixelDepth;
 
-  new->regs.nv3.generalControl=
-     PRAMDAC_Def(GENERAL_CONTROL_IDC_MODE,GAMMA)|
-     PRAMDAC_Val(GENERAL_CONTROL_565_MODE,xf86weight.green==6)|
-     PRAMDAC_Def(GENERAL_CONTROL_TERMINATION,37OHM)|
-     PRAMDAC_Def(GENERAL_CONTROL_BPC,6BITS)|  
-     PRAMDAC_Def(GENERAL_CONTROL_VGA_STATE,SEL); /* Not sure about this */
-     
-  /* This makes sure that the Mclock and Vclock are are actually selected 
-   * via the PLL. It also sets the Vclock/Pclock ratio to be divide by 2
-   * or not. Not sure when this should be divide by 1, presumably for 
-   * very high Vclock????
-   */
-  new->regs.nv3.coeffSelect=PRAMDAC_Def(PLL_COEFF_SELECT_MPLL_SOURCE,PROG)|
-                            PRAMDAC_Def(PLL_COEFF_SELECT_VPLL_SOURCE,PROG)|
-                            PRAMDAC_Def(PLL_COEFF_SELECT_VCLK_RATIO,DB2);
+  ((vgaNVPtr)vgaNewVideoState)->regs.nv3.generalControl=
+     (( 0    ) << (4))   |
+     ((   xf86weight.green==6   ) << (12))   |
+     (( 0    ) << (17))   |
+     (( 0    ) << (20))   |  
+     (( 1    ) << (8))   ;  
+   
 
-  /* Disable Tetris tiling for now. This looks completely mad but could 
-   * give some significant performance gains. Will perhaps experiment 
-   * later on with this stuff!  
-   */
-  new->regs.nv3.config0=
-      PFB_Val(CONFIG_0_RESOLUTION,((vga256InfoRec.displayWidth+31)/32))|
-      PFB_Val(CONFIG_0_PIXEL_DEPTH,pixelDepth)|
-      PFB_Def(CONFIG_0_TILING,DISABLED); 
 
-  return TRUE;
+  nv3UpdateArbitrationSettings((unsigned int)clockOut,
+                               pixelDepth*8,
+                               crystalFreq,
+                              &(((vgaNVPtr)vgaNewVideoState)->regs.nv3.fifo),
+                              &(((vgaNVPtr)vgaNewVideoState)->regs.nv3.fifoControl));
+   
+
+
+
+
+
+  ((vgaNVPtr)vgaNewVideoState)->regs.nv3.coeffSelect= (( 1    ) << (8))   
+                                                    | (( 1    ) << (16))   
+                                                    | (( 1    ) << (28))   ;
+   
+
+
+   
+
+
+
+  ((vgaNVPtr)vgaNewVideoState)->regs.nv3.config0=
+      ((   ((vga256InfoRec.displayWidth+31)/32)   ) << (0))   |
+      ((   pixelDepth   ) << (8))   |
+      (( 1    ) << (12))   ; 
+
+  return 1 ;
 }  
-
-
 
 static void NV3Restore(void *data)
 {
   vgaNVPtr restore=data;
   NV3Registers *nv3=&(restore->regs.nv3);
 
-  /* I do not know what this does */
-  vgaProtect(TRUE); 
+   
 
-  PCRTC_Write(REPAINT0,nv3->repaint0);
-  PCRTC_Write(REPAINT1,nv3->repaint1);
-  PCRTC_Write(EXTRA,nv3->screenExtra);
-  PCRTC_Write(PIXEL,nv3->pixelFormat);
-  PCRTC_Write(HORIZ_EXTRA,nv3->horizExtra); 
-  PCRTC_Write(FIFO_CONTROL,nv3->fifoControl); 
- 
-  PFB_Write(CONFIG_0,nv3->config0);
 
-  PRAMDAC_Write(VPLL_COEFF,nv3->vpllCoeff);
-  PRAMDAC_Write(PLL_COEFF_SELECT,nv3->coeffSelect);
-  PRAMDAC_Write(GENERAL_CONTROL,nv3->generalControl);
-
+  vgaProtect(1 ); 
   vgaHWRestore((vgaHWPtr)restore);  
-  
-  vgaProtect(FALSE);
+  outb(980,( 25   ));outb(981,  nv3->repaint0  )  ;
+  outb(980,( 26   ));outb(981,  nv3->repaint1  )  ;
+  outb(980,( 37   ));outb(981,  nv3->screenExtra  )  ;
+  outb(980,( 40   ));outb(981,  nv3->pixelFormat  )  ;
+  outb(980,( 45   ));outb(981,  nv3->horizExtra  )  ; 
+  outb(980,( 27   ));outb(981,  nv3->fifoControl  )  ;
+  outb(980,( 32   ));outb(981,  nv3->fifo  )  ;
+  nvPFBPort[((1049088    )- (1048576) )/4] =(  nv3->config0  )  ;
+  nvPRAMDACPort[((6817032    )- (6815744) )/4] =(  nv3->vpllCoeff  )  ;
+  nvPRAMDACPort[((6817036    )- (6815744) )/4] =(  nv3->coeffSelect  )  ;
+  nvPRAMDACPort[((6817280    )- (6815744) )/4] =(  nv3->generalControl  )  ;
+  vgaProtect(0 );
 }
 
 static void *NV3Save(void *data)
 {
-  vgaNVPtr save=NULL;
+  vgaNVPtr save= ((void *)0) ;
 
   save=(vgaNVPtr)vgaHWSave((vgaHWPtr)data,sizeof(vgaNVRec));  
-  save->regs.nv3.repaint0=PCRTC_Read(REPAINT0);
-  save->regs.nv3.repaint1=PCRTC_Read(REPAINT1);
-  save->regs.nv3.screenExtra=PCRTC_Read(EXTRA);
-  save->regs.nv3.pixelFormat=PCRTC_Read(PIXEL);
-  save->regs.nv3.horizExtra=PCRTC_Read(HORIZ_EXTRA);
-  save->regs.nv3.fifoControl=PCRTC_Read(FIFO_CONTROL); 
-  save->regs.nv3.fifo=PCRTC_Read(FIFO);
-  save->regs.nv3.config0=PFB_Read(CONFIG_0);
-
-  save->regs.nv3.vpllCoeff=PRAMDAC_Read(VPLL_COEFF);
-  save->regs.nv3.coeffSelect=PRAMDAC_Read(PLL_COEFF_SELECT);
-  save->regs.nv3.generalControl=PRAMDAC_Read(GENERAL_CONTROL);
+  save->regs.nv3.repaint0= (outb(980, 25   ),inb(981))  ;
+  save->regs.nv3.repaint1= (outb(980, 26   ),inb(981))  ;
+  save->regs.nv3.screenExtra= (outb(980, 37   ),inb(981))  ;
+  save->regs.nv3.pixelFormat= (outb(980, 40   ),inb(981))  ;
+  save->regs.nv3.horizExtra= (outb(980, 45   ),inb(981))  ;
+  save->regs.nv3.fifoControl= (outb(980, 27   ),inb(981))  ; 
+  save->regs.nv3.fifo= (outb(980, 32   ),inb(981))  ;
+  save->regs.nv3.config0= nvPFBPort[((1049088    )- (1048576) )/4]   ;
+  save->regs.nv3.vpllCoeff= nvPRAMDACPort[((6817032    )- (6815744) )/4]   ;
+  save->regs.nv3.coeffSelect= nvPRAMDACPort[((6817036    )- (6815744) )/4]   ;
+  save->regs.nv3.generalControl= nvPRAMDACPort[((6817280    )- (6815744) )/4]   ;
 
   return (void*)save;
 }
-
 
 static void NV3Adjust(int x,int y) 
 {
@@ -413,21 +506,35 @@ static void NV3Adjust(int x,int y)
   int pan=(startAddr&3)*2;
   unsigned char byte;
   
-  /* Now shift start address. Word aligned */
-  CRTC_Write(0x0d,Set8Bits(offset));
-  CRTC_Write(0x0c,SetBitField(offset,15:8,7:0));
-  byte=PCRTC_Read(REPAINT0) & ~PCRTC_Mask(REPAINT0_START_ADDR_20_16);
-  PCRTC_Write(REPAINT0,SetBitField(offset,20:16,4:0)|byte);
-  /* Attribute register 0x13 is used to provide up to 4 pixel shift */
-  byte=inb(vgaIOBase+0x0a);
-  outb(0x3c0,0x13);
-  outb(0x3c0,pan);
+   
+  outb(980,( 13 ));outb(981, (( offset )&255)  ) ;
+  outb(980,( 12 ));outb(981, (( (((unsigned)((  offset  ) & (((unsigned)(1U << ((( 15)-( 8)+1)))-1)  << ( 8))  )) >> (8) )  ) << (0))   ) ;
+  byte= (outb(980, 25   ),inb(981))   & ~(((unsigned)(1U << ((( 4)-( 0)+1)))-1)  << ( 0))    ;
+  outb(980,( 25   ));outb(981,  (( (((unsigned)((  offset  ) & (((unsigned)(1U << ((( 20)-( 16)+1)))-1)  << ( 16))  )) >> (16) )  ) << (0))  |byte  )  ;
+   
+  byte=inb(vgaIOBase+10);
+  outb(960,19);
+  outb(960,pan);
 }
  
+ 
+
+
 
 static int NV3ValidMode(DisplayModePtr mode,Bool verbose,int flag)
 {
-  return MODE_OK;
+    unsigned bw, bwMax, bpp;
+
+    bpp = (vgaBitsPerPixel + 1) / 8;
+     
+
+
+    bwMax = (ramType == 0 ) ? 800000 : 700000;
+     
+
+
+    bw = mode->Clock * bpp;
+    return (bw > bwMax ? 255  : 0 );
 }
 
 
@@ -435,22 +542,22 @@ extern vgaHWCursorRec vgaHWCursor;
 
 static void NV3FbInit(void)
 {
-  /* Need check in here for wierd resolutions !! */
+   
 
-  if(!OFLG_ISSET(OPTION_SW_CURSOR, &vga256InfoRec.options)) {
-    /* Initialise the hardware cursor */
-    vgaHWCursor.Initialized = TRUE;
+  if(! ((  &vga256InfoRec.options )->flag_bits[( 62  )/ (8 * sizeof(CARD32)) ] & (1 << (( 62  )% (8 * sizeof(CARD32)) ))) ) {
+     
+    vgaHWCursor.Initialized = 1 ;
     vgaHWCursor.Init = NV3CursorInit;
     vgaHWCursor.Restore = NV3RestoreCursor;
     vgaHWCursor.Warp = NV3WarpCursor;
     vgaHWCursor.QueryBestSize = NV3QueryBestSize;
     if(xf86Verbose) {
-      ErrorF("%s %s: %s: Using hardware cursor\n",XCONFIG_PROBED, 
+      ErrorF("%s %s: %s: Using hardware cursor\n","(--)" , 
              vga256InfoRec.name,vga256InfoRec.chipset);
     }
   }
 
-  if(!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options)) {
+  if(! ((  &vga256InfoRec.options )->flag_bits[( 60  )/ (8 * sizeof(CARD32)) ] & (1 << (( 60  )% (8 * sizeof(CARD32)) ))) ) {
     NVAccelInit();
   }
   
@@ -463,10 +570,8 @@ static void NV3DisplayPowerManagementSet(int mode)
 static Bool NV3ScreenInit(ScreenPtr pScreen,pointer pbits, 
                           int xsize,int ysize,int dpix,int dpiy,int width)
 {
-  return TRUE;
+  return 1 ;
 }
-
-
 
 static void NV3SaveScreen(int on)
 {
@@ -477,9 +582,9 @@ static void NV3GetMode(DisplayModePtr display)
 {
 }
 
-/* Changes the entries in the NV struct to point at the correct function 
- * pointers. Called from the Probe() function
- */
+ 
+
+
 static void NV3FlipFunctions(vgaVideoChipRec *nv)
 {
   nv->ChipEnterLeave=NV3EnterLeave;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128reg.h,v 3.5.2.4 1998/02/15 23:31:57 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128reg.h,v 3.5.2.5 1998/10/24 02:14:51 robin Exp $ */
 /*
  * Copyright 1994 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -53,7 +53,7 @@ struct i128io {
     CARD32 id;
     CARD32 config1;
     CARD32 config2;
-    CARD32 rsvd1;
+    CARD32 sgram;
     CARD32 soft_sw;
     CARD32 vga_ctl;
 };
@@ -75,6 +75,7 @@ typedef struct {
 	unsigned short iobase;		/* saved only for iobase indexing    */
 	CARD32 config1;			/* iobase+0x1C register              */
 	CARD32 config2;			/* iobase+0x20 register              */
+	CARD32 sgram;			/* iobase+0x24 register              */
 	CARD32 vga_ctl;			/* iobase+0x30 register              */
 	CARD32 i128_base_g[0x60/4];	/* base g registers                  */
 	CARD32 i128_base_w[0x28/4];	/* base w registers                  */
@@ -117,6 +118,7 @@ typedef union {
 
 #define GINTP 0x0000
 #define GINTM 0x0004
+#define SGRAM 0x00A4
 
 /* RBASE_G register offsets  (divided by four for double word indexing */
 

@@ -3,14 +3,14 @@ XCOMM $XConsortium: Imakefile /main/1 1996/09/21 11:17:44 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/Imakefile,v 3.3.2.3 1997/07/27 02:41:06 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/Imakefile,v 3.3.2.5 1998/11/07 12:00:46 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
 
 #define IHaveSubdirs
 
-#if HasLinuxDoc
+#if DoSgmlDocs
 SGMLDIR = sgml
 #endif
 
@@ -80,15 +80,16 @@ all::
 
 #if !BuildLinuxDocText
 HWREADME =  README.ati README.trident README.tseng README.WstDig \
-	    README.DECtga \
+            README.DECtga  README.apm README.rendition README.epson \
             README.chips README.cirrus README.Video7 README.P9000 README.agx \
-	    README.S3 README.S3V README.SiS README.W32 README.Oak \
-	    README.Mach32 \
-	    README.Mach64 README.ark README.MGA README.NV1 README.fbdev
+            README.S3 README.S3V README.SiS README.W32 README.Oak \
+            README.Mach32 \
+            README.Mach64 README.ark README.MGA README.NV1 README.fbdev \
+            README.mouse
 
 MAINDOCS = COPYRIGHT README README.Config BUILD RELNOTES
 
-OTHERDOCS = /*VideoModes.doc*/ QuickStart.doc README.clkprog xinput
+OTHERDOCS = VideoModes.doc QuickStart.doc README.clkprog xinput
 #endif
 
 MISCDOCS = ServersOnly /*LbxproxyOnly*/ $(REPORTFORM) README.DGA
@@ -111,6 +112,7 @@ LinkSourceFile(QuickStart.doc,$(XF86SRC)/doc)
 LinkFile(README.Mach32,$(XF86SRC)/doc/READ.Mach32)
 LinkFile(README.Mach64,$(XF86SRC)/doc/READ.Mach64)
 LinkFile(README.FreeBSD,$(XF86SRC)/doc/READ.FreeBSD)
+LinkFile(README.Riva128,$(XF86SRC)/doc/README.NV1)
 LinkSourceFile(README,$(XF86SRC)/doc)
 LinkSourceFile(README.Bsdi,$(XF86SRC)/doc)
 LinkSourceFile(README.Config,$(XF86SRC)/doc)
@@ -136,12 +138,16 @@ LinkSourceFile(README.Video7,$(XF86SRC)/doc)
 LinkSourceFile(README.W32,$(XF86SRC)/doc)
 LinkSourceFile(README.WstDig,$(XF86SRC)/doc)
 LinkSourceFile(README.agx,$(XF86SRC)/doc)
+LinkSourceFile(README.apm,$(XF86SRC)/doc)
 LinkSourceFile(README.ark,$(XF86SRC)/doc)
 LinkSourceFile(README.ati,$(XF86SRC)/doc)
 LinkSourceFile(README.chips,$(XF86SRC)/doc)
 LinkSourceFile(README.cirrus,$(XF86SRC)/doc)
 LinkSourceFile(README.clkprog,$(XF86SRC)/doc)
+LinkSourceFile(README.epson,$(XF86SRC)/doc)
 LinkSourceFile(README.isc,$(XF86SRC)/doc)
+LinkSourceFile(README.mouse,$(XF86SRC)/doc)
+LinkSourceFile(README.rendition,$(XF86SRC)/doc)
 LinkSourceFile(README.trident,$(XF86SRC)/doc)
 LinkSourceFile(README.tseng,$(XF86SRC)/doc)
 LinkSourceFile(RELNOTES,$(XF86SRC)/doc)
@@ -155,3 +161,4 @@ MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
 #endif
 
+all::

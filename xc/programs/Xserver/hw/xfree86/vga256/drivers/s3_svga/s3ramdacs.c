@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3ramdacs.c,v 1.1.2.5 1998/02/24 13:54:27 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3ramdacs.c,v 1.1.2.6 1998/10/18 20:42:32 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -64,6 +64,7 @@ static Bool NORMAL_Probe();
 static Bool S3_TRIO32_Probe();
 static Bool S3_TRIO64_Probe();
 static Bool S3_TRIO64V2_Probe();
+static Bool S3_TRIO64V_Probe();
 static Bool TI3026_Probe();
 static Bool TI3030_Probe();
 static Bool TI3020_Probe();
@@ -260,7 +261,10 @@ s3RamdacInfo s3Ramdacs[] = {
 /* 23 */	{"s3_trio64v2", {170000,170000,0,135000}, S3_TRIO64V2_Probe, 
 			S3_TRIO_PreInit, S3_TRIO_Restore,S3_TRIO_Save,
 			S3_TRIO_Init},
-/* 24 */	{NULL, {0,0,0,0}, Null_Probe, Null_PreInit, Null_Restore, 
+/* 24 */	{"s3_trio64v+", {135000,95000,0,57000}, S3_TRIO64V_Probe, 
+			S3_TRIO_PreInit, S3_TRIO_Restore,S3_TRIO_Save,
+			S3_TRIO_Init},
+/* 25 */	{NULL, {0,0,0,0}, Null_Probe, Null_PreInit, Null_Restore, 
 			Null_Save,Null_Init}
 }; 
 
@@ -2464,6 +2468,8 @@ static Bool S3_TRIO_Probe(int type)
    if (S3_TRIOxx_SERIES(s3ChipId)) {
 	 if (S3_TRIO32_SERIES(s3ChipId))
 		found = S3_TRIO32_DAC;
+	 else if (S3_TRIO64V_SERIES(s3ChipId))
+		found = S3_TRIO64V_DAC;
 	 else if (S3_TRIO64V2_SERIES(s3ChipId))
 		found = S3_TRIO64V2_DAC;
 	 else 
@@ -2528,6 +2534,11 @@ static Bool S3_TRIO_Probe(int type)
 static Bool S3_TRIO64V2_Probe()
 {
     return S3_TRIO_Probe(S3_TRIO64V2_DAC);
+}
+
+static Bool S3_TRIO64V_Probe()
+{
+    return S3_TRIO_Probe(S3_TRIO64V_DAC);
 }
 
 static Bool S3_TRIO64_Probe()

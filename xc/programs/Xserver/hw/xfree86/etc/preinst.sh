@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/preinst.sh,v 3.8.2.5 1998/02/26 20:41:53 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/preinst.sh,v 3.8.2.6 1998/11/14 06:47:17 dawes Exp $
 #
-# preinst.sh  (for XFree86 3.3.2)
+# preinst.sh  (for XFree86 3.3.3)
 #
 # This script should be run before installing a new version.
 #

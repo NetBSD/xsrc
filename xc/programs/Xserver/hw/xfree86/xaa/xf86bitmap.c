@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86bitmap.c,v 3.7.2.1 1997/05/21 15:02:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86bitmap.c,v 3.7.2.2 1998/07/30 06:24:20 hohndel Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -169,17 +169,22 @@ srcy, bg, fg, rop, planemask)
     );
 
     if (xf86AccelInfoRec.ColorExpandFlags & ONLY_TRANSPARENCY_SUPPORTED) {
-        /* First fill-in the background. */
-        xf86AccelInfoRec.SetupForFillRectSolid(bg, rop, planemask);
-        xf86AccelInfoRec.SubsequentFillRectSolid(x, y, w, h);
-        if (xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS)
-            xf86AccelInfoRec.Sync();
-        xf86AccelInfoRec.SetupForCPUToScreenColorExpand(
-            -1, fg, rop, planemask);
-    }
-    else
-        xf86AccelInfoRec.SetupForCPUToScreenColorExpand(
-            bg, fg, rop, planemask);
+	if ((rop != GXcopy) && (bg != -1)) {
+	    xf86AccelInfoRec.WriteBitmapFallBack(x, y, w, h, src, srcwidth,
+			srcx, srcy, bg, fg, rop, planemask);
+     		return;
+	} else {
+	    if (bg != -1) {
+		xf86AccelInfoRec.SetupForFillRectSolid(bg, rop, planemask);
+		xf86AccelInfoRec.SubsequentFillRectSolid(x, y, w, h);
+		if (xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS) 
+		    xf86AccelInfoRec.Sync();
+	    }
+	    xf86AccelInfoRec.SetupForCPUToScreenColorExpand(-1, fg, rop,
+					planemask);    
+	}
+    } else
+    	xf86AccelInfoRec.SetupForCPUToScreenColorExpand(bg, fg, rop, planemask);
 
     if (xf86AccelInfoRec.ColorExpandFlags & BIT_ORDER_IN_BYTE_MSBFIRST)
         if (xf86AccelInfoRec.ColorExpandFlags & TRIPLE_BITS_24BPP)
@@ -338,6 +343,26 @@ srcy, bg, fg, rop, planemask)
 #endif
     );
 
+    if (xf86AccelInfoRec.ColorExpandFlags & ONLY_TRANSPARENCY_SUPPORTED) {
+	if ((rop != GXcopy) && (bg != -1)) {
+	    xf86AccelInfoRec.WriteBitmapFallBack(x, y, w, h, src, srcwidth,
+			srcx, srcy, bg, fg, rop, planemask);
+     	    return;
+	} else {
+	    if (bg != -1) {
+		xf86AccelInfoRec.SetupForFillRectSolid(bg, rop, planemask);
+		xf86AccelInfoRec.SubsequentFillRectSolid(x, y, w, h);
+		if (xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS) 
+		    xf86AccelInfoRec.Sync();
+	    }
+	    xf86AccelInfoRec.SetupForScanlineScreenToScreenColorExpand(
+		x, y, w, h, -1, fg, rop, planemask);
+	}
+    } else
+    	xf86AccelInfoRec.SetupForScanlineScreenToScreenColorExpand(
+		x, y, w, h, bg, fg, rop, planemask);
+
+
     if (xf86AccelInfoRec.ColorExpandFlags & BIT_ORDER_IN_BYTE_MSBFIRST)
         if (xf86AccelInfoRec.ColorExpandFlags & TRIPLE_BITS_24BPP)
             if (xf86AccelInfoRec.ColorExpandFlags & CPU_TRANSFER_BASE_FIXED)
@@ -360,21 +385,6 @@ srcy, bg, fg, rop, planemask)
                 DrawBitmapScanlineFunc = xf86DrawBitmapScanlineFixedBase;
             else
                 DrawBitmapScanlineFunc = xf86DrawBitmapScanline;
-
-    if (xf86AccelInfoRec.ColorExpandFlags & ONLY_TRANSPARENCY_SUPPORTED) {
-        if (bg != -1) {
-	    /* First fill-in the background. */
-	    xf86AccelInfoRec.SetupForFillRectSolid(bg, rop, planemask);
-	    xf86AccelInfoRec.SubsequentFillRectSolid(x, y, w, h);
-	    if (xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS)
-	      xf86AccelInfoRec.Sync();
-	}
-        xf86AccelInfoRec.SetupForScanlineScreenToScreenColorExpand(
-            x, y, w, h, -1, fg, rop, planemask);
-    }
-    else
-        xf86AccelInfoRec.SetupForScanlineScreenToScreenColorExpand(
-            x, y, w, h, bg, fg, rop, planemask);
 
     /* Calculate pointer to origin in bitmap. */
     srcp = srcwidth * srcy + (srcx >> 3) + src;

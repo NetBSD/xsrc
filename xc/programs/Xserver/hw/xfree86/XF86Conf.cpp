@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.cpp,v 3.29 1996/12/23 06:30:30 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.cpp,v 3.29.2.2 1998/11/04 15:19:01 hohndel Exp $
 XCOMM
 XCOMM Copyright (c) 1994 by The XFree86 Project, Inc.
 XCOMM
@@ -48,6 +48,7 @@ XCOMM Multiple FontPath entries are allowed (which are concatenated together),
 XCOMM as well as specifying multiple comma-separated entries in one FontPath
 XCOMM command (or a combination of both methods)
 
+USE_LOCALFONTS  LOCALFONTPATH
     FontPath	MISCFONTPATH
 USE_75FONTS	DPI75USFONTPATH
 USE_100FONTS	DPI100USFONTPATH
@@ -235,12 +236,15 @@ XCOMM Section "Xinput"
 XCOMM    SubSection "WacomStylus"
 XCOMM        Port "/dev/ttyS1"
 XCOMM        DeviceName "Wacom"
+XCOMM        AlwaysCore
 XCOMM    EndSubSection
 XCOMM    SubSection "WacomCursor"
 XCOMM        Port "/dev/ttyS1"
+XCOMM        AlwaysCore
 XCOMM    EndSubSection
 XCOMM    SubSection "WacomEraser"
 XCOMM        Port "/dev/ttyS1"
+XCOMM        AlwaysCore
 XCOMM    EndSubSection
 XCOMM
 XCOMM    SubSection "Elographics"
@@ -253,6 +257,7 @@ XCOMM        MaximumYPosition 3500
 XCOMM        Screen 0
 XCOMM        UntouchDelay 10
 XCOMM        ReportDelay 10
+XCOMM        AlwaysCore
 XCOMM    EndSubSection
 XCOMM   
 XCOMM    SubSection "Joystick"
@@ -276,6 +281,7 @@ XCOMM    SubSection "Mouse"
 XCOMM        Port "/dev/mouse2"
 XCOMM        DeviceName "Second Mouse"
 XCOMM        Protocol "Logitech"
+XCOMM        AlwaysCore
 XCOMM    EndSubSection
 XCOMM EndSection
 

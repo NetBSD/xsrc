@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/14 1996/10/27 11:03:56 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Imakefile,v 3.23.2.3 1998/02/15 23:31:53 robin Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Imakefile,v 3.23.2.4 1998/10/18 20:41:59 hohndel Exp $
 
 #if defined(SVR3Architecture) || defined(SVR4Architecture) || defined(SCOArchitecture)
 # define OSModule OS_SYSV
@@ -54,11 +54,13 @@ BASE_OBJ = MDA.o Herc.o CGA.o VGA.o RamDac.o MemProbe.o PCI.o
 SVGA_SRC = Tseng.c WD.c ChipsTech.c Video7.c Genoa.c Trident.c Oak.c \
 	   Cirrus.c Ahead.c ATI.c S3.c AL.c Yamaha.c NCR.c MX.c \
 	   RealTek.c Primus.c Compaq.c HMC.c UMC.c Weitek.c SiS.c \
-	   ARK.c Alliance.c Matrox.c SigmaDesigns.c Intergraphics.c
+	   ARK.c Alliance.c Matrox.c SigmaDesigns.c Intergraphics.c \
+	   Epson.c
 SVGA_OBJ = Tseng.o WD.o ChipsTech.o Video7.o Genoa.o Trident.o Oak.o \
 	   Cirrus.o Ahead.o ATI.o S3.o AL.o Yamaha.o NCR.o MX.o \
 	   RealTek.o Primus.o Compaq.o HMC.o UMC.o Weitek.o SiS.o \
-	   ARK.o Alliance.o Matrox.o SigmaDesigns.o Intergraphics.o
+	   ARK.o Alliance.o Matrox.o SigmaDesigns.o Intergraphics.o \
+	   Epson.o
 COPROC_SRC = 8514.c ATIMach.c I128.c GLINT.c
 COPROC_OBJ = 8514.o ATIMach.o I128.o GLINT.o
 SRCS = Main.c $(SVGA_SRC) $(COPROC_SRC) $(BASE_SRC) Print.c Utils.c $(OS_SRC)

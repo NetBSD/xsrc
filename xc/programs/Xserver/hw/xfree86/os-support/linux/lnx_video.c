@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.13.2.1 1997/05/11 05:04:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.13.2.2 1998/10/18 20:42:25 hohndel Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -407,7 +407,7 @@ Bool xf86DisableInterrupts()
 		if (iopl(3))
 			return (FALSE);
 #endif
-#if defined(__alpha__) || defined(__mc68000__)
+#if defined(__alpha__) || defined(__mc68000__) || defined(__powerpc__)
 #else
 #ifdef __GNUC__
 	__asm__ __volatile__("cli");
@@ -429,7 +429,7 @@ void xf86EnableInterrupts()
 		if (iopl(3))
 			return;
 #endif
-#if defined(__alpha__) || defined(__mc68000__)
+#if defined(__alpha__) || defined(__mc68000__) || defined(__powerpc__)
 #else
 #ifdef __GNUC__
 	__asm__ __volatile__("sti");

@@ -2,11 +2,11 @@
 
 <!-- Id: README.Config.sgml,v 1.1 1994/10/05 23:31:42 klemme Exp  -->
 
- <article>
+<article>
 
- <title>Configuring XFree86: A Step-By-Step Guide
- <author>David Wexelblat and The XFree86 Project, Inc
- <date>5 October 1994
+<title>Configuring XFree86: A Step-By-Step Guide
+<author>David Wexelblat and The XFree86 Project, Inc
+<date>5 October 1994
 
 <abstract>
 	This document describes how to set up your XFree86 server and
@@ -517,7 +517,7 @@ installation.
 </code>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Config.sgml,v 3.11 1997/01/25 03:21:50 dawes Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Config.sgml,v 3.11.2.1 1998/04/29 04:18:28 dawes Exp $ 
 
 
 

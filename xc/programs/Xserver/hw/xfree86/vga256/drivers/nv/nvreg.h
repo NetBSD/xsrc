@@ -2,26 +2,26 @@
 /*
  * Copyright 1996-1997  David J. McKay
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL 
- * DAVID J. MCKAY BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF 
- * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * DAVID J. MCKAY BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvreg.h,v 3.2.2.1 1998/01/18 10:35:36 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvreg.h,v 3.2.2.2 1998/10/19 07:33:50 hohndel Exp $ */
 
 #ifndef __NVREG_H_
 #define __NVREG_H_
@@ -87,6 +87,20 @@
 #define PDMA_Def(mask,value)            DEVICE_DEF(PDMA,mask,value)
 #define PDMA_Val(mask,value)            DEVICE_VALUE(PDMA,mask,value)
 #define PDMA_Mask(mask)                 DEVICE_MASK(PDMA,mask)
+
+#define PTIMER_Write(reg,value)         DEVICE_WRITE(PTIMER,reg,value)
+#define PTIMER_Read(reg)                DEVICE_READ(PTIMER,reg)
+#define PTIMER_Print(reg)               DEVICE_PRINT(PTIMER,reg)
+#define PTIMER_Def(mask,value)          DEVICE_DEF(PTIMER,mask,value)
+#define PTIMER_Val(mask,value)          DEVICE_VALUE(PTIEMR,mask,value)
+#define PTIMER_Mask(mask)               DEVICE_MASK(PTIMER,mask)
+
+#define PEXTDEV_Write(reg,value)         DEVICE_WRITE(PEXTDEV,reg,value)
+#define PEXTDEV_Read(reg)                DEVICE_READ(PEXTDEV,reg)
+#define PEXTDEV_Print(reg)               DEVICE_PRINT(PEXTDEV,reg)
+#define PEXTDEV_Def(mask,value)          DEVICE_DEF(PEXTDEV,mask,value)
+#define PEXTDEV_Val(mask,value)          DEVICE_VALUE(PEXTDEV,mask,value)
+#define PEXTDEV_Mask(mask)               DEVICE_MASK(PEXTDEV,mask)
 
 #define PFIFO_Write(reg,value)          DEVICE_WRITE(PFIFO,reg,value)
 #define PFIFO_Read(reg)                 DEVICE_READ(PFIFO,reg)
@@ -170,7 +184,9 @@ extern volatile unsigned  *nvPFBPort;     /* Points to the Frame buffer */
 extern volatile unsigned  *nvPRMPort;     /* Points to real mode stuff */
 extern volatile unsigned  *nvPGRAPHPort;  /* Graphics unit */
 extern volatile unsigned  *nvPDMAPort;    /* DMA engine */
-extern volatile unsigned  *nvPFIFOPort;   /* FIFO registers */ 
+extern volatile unsigned  *nvPFIFOPort;   /* FIFO registers */
+extern volatile unsigned  *nvPTIMERPort;  /* TIMER registers */
+extern volatile unsigned  *nvPEXTDEVPort; /* EXTDEV registers */
 extern volatile unsigned  *nvPRAMPort;    /* Priviliged RAM registers */
 extern volatile unsigned  *nvPRAMFCPort;  /* Priviliged RAM (Fifo) */
 extern volatile unsigned  *nvPRAMHTPort;  /* Priviliged RAM (hash) */
@@ -183,7 +199,7 @@ extern volatile unsigned  *nvPNVMPort;    /* Priviled Bus */
 extern volatile unsigned  *dumb;          /* FrameBuffer - hack!!!! */
 
 
-typedef enum {NV1,NV3,NumNVChips} NVChipType;
+typedef enum {NV1,NV3,NV4,NumNVChips} NVChipType;
 
 NVChipType GetChipType(void);
 

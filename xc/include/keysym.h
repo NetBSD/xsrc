@@ -56,5 +56,6 @@ SOFTWARE.
 #define XK_LATIN3
 #define XK_LATIN4
 #define XK_GREEK
+#define XK_CURRENCY
 
 #include <X11/keysymdef.h>

@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.19.2.2 1998/01/22 10:47:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.19.2.3 1998/09/27 12:59:29 hohndel Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -342,7 +342,7 @@ int i;
 		strncpy(nameRtrn,keymap,nameRtrnLen);
 		nameRtrn[nameRtrnLen-1]= '\0';
 	    }
-#if defined(Lynx) && defined(__i386__)
+#if defined(Lynx) && defined(__i386__) && defined(NEED_POPEN_WORKAROUND)
 	/* somehow popen/pclose is broken on LynxOS AT 2.3.0/2.4.0!
 	 * the problem usually shows up with XF86Setup
 	 * this hack waits at max 5 seconds after pclose() returns
@@ -352,7 +352,11 @@ int i;
             {
 		int i;
 		char name[PATH_MAX];
-		sprintf(name,"%s%s.xkm", xkm_output_dir, keymap);
+    		if (XkbBaseDirectory!=NULL)
+		    sprintf(name,"%s/%s%s.xkm", XkbBaseDirectory,
+		    		xkm_output_dir, keymap);
+		else
+		    sprintf(name,"%s%s.xkm", xkm_output_dir, keymap);
 		for (i = 0; i < 10; i++) {
 	            if (access(name, 0) == 0) break;
 		    usleep(500000);

@@ -28,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/bitmap/BitEdit.c,v 1.1.1.1.12.2 1998/10/04 15:23:06 hohndel Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium
@@ -974,7 +975,7 @@ void DoQuit(w, event, params, num_params) /* ARGSUSED */
   exit(0);
 }
 
-void main(argc, argv)
+int main(argc, argv)
     int    argc;
     char  *argv[];
 {

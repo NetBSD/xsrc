@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/card.tcl,v 3.12.2.4 1998/02/26 13:58:58 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/card.tcl,v 3.12.2.5 1998/11/12 10:34:55 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -184,12 +184,18 @@ proc Card_create_widgets { win } {
 	radiobutton $extr.videoram.m8m \
 		-variable cardRamSize -value 8192 -text $messages(card.21) \
 		-highlightthickness 0
+	radiobutton $extr.videoram.m12m \
+		-variable cardRamSize -value 12288 -text $messages(card.35) \
+		-highlightthickness 0
+	radiobutton $extr.videoram.m16m \
+		-variable cardRamSize -value 16384 -text $messages(card.36) \
+		-highlightthickness 0
 	pack  $extr.videoram.m256k $extr.videoram.m512k \
-	      $extr.videoram.m1m $extr.videoram.m2m \
+	      $extr.videoram.m1m $extr.videoram.m2m $extr.videoram.m3m \
 		-side top -fill x -expand yes \
 		-in $extr.videoram.col1
-	pack  $extr.videoram.m3m $extr.videoram.m4m \
-	      $extr.videoram.m6m $extr.videoram.m8m \
+	pack  $extr.videoram.m4m $extr.videoram.m6m \
+	      $extr.videoram.m8m $extr.videoram.m12m $extr.videoram.m16m \
 		-side top -fill x -expand yes \
 		-in $extr.videoram.col2
 

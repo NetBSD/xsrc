@@ -3,7 +3,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree68/fbdev/fbdev.c,v 3.4.2.3 1997/06/11 12:08:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree68/fbdev/fbdev.c,v 3.4.2.10 1998/11/08 11:49:18 hohndel Exp $ */
 /*
  *
  *  Author: Martin Schaller. Taken from hga2.c
@@ -18,12 +18,14 @@
  *	- Color, normal bitplanes [afb]
  *	- Color, chunky 8 bits per pixel [cfb8]
  *	- Color, chunky 16 bits per pixel [cfb16]
+ *	- Color, chunky 24 bits per pixel [cfb24]
  *	- Color, chunky 32 bits per pixel [cfb32]
  */
 
 
-#define fbdev_PATCHLEVEL "7"
+#define fbdev_PATCHLEVEL "10"
 
+#define DIRECTCOLORHACK		/* hack for directcolor */
 
 #include "X.h"
 #include "input.h"
@@ -48,6 +50,8 @@
 #include "afb.h"
 #endif /* CONFIG_AFB */
 #include <linux/fb.h>
+#include <asm/page.h>
+#include <stdlib.h>
 
 #include "colormapst.h"
 #include "resource.h"
@@ -56,7 +60,7 @@ extern char *fb_dev_name;	/* os-support/linux/lnx_init.c */
 
 
 static int *fbdevPrivateIndexP;
-static void (*fbdevBitBlt)();
+void (*fbdevBitBlt)() = NULL;
 static int (*CreateDefColormap)(ScreenPtr);
 
 extern int mfbCreateDefColormap(ScreenPtr);
@@ -76,8 +80,7 @@ extern void ipl2p4DoBitblt();
 extern int ipl2p8ScreenPrivateIndex;
 extern void ipl2p8DoBitblt();
 #endif /* CONFIG_IPLAN2p8 */
-#endif /* defined(CONFIG_IPLAN2p2) || defined(CONFIG_IPLAN2p4) || \
-	  defined(CONFIG_IPLAN2p8) */
+#endif /* CONFIG_IPLAN2p2 || CONFIG_IPLAN2p4 || CONFIG_IPLAN2p8 */
 
 #ifdef CONFIG_ILBM
 extern int ilbmCreateDefColormap(ScreenPtr);
@@ -100,10 +103,49 @@ extern int cfb16ScreenPrivateIndex;
 extern void cfb16DoBitblt();
 #endif /* CONFIG_CFB16 */
 
+#ifdef CONFIG_CFB24
+extern int cfb24ScreenPrivateIndex;
+extern void cfb24DoBitblt();
+#endif /* CONFIG_CFB24 */
+
 #ifdef CONFIG_CFB32
 extern int cfb32ScreenPrivateIndex;
 extern void cfb32DoBitblt();
 #endif /* CONFIG_CFB32 */
+
+#if defined(CONFIG_CFB16) || defined(CONFIG_CFB24) || defined(CONFIG_CFB32)
+extern int cfbListInstalledColormaps(ScreenPtr pScreen, Colormap *pmaps);
+extern void cfbInstallColormap(ColormapPtr pmap);
+extern void cfbUninstallColormap(ColormapPtr pmap);
+#endif /* CONFIG_CFB16 || CONFIG_CFB24 || CONFIG_CFB32 */
+
+#ifdef CONFIG_77C32
+extern int ncr77c32_init(ScreenPtr pScreen);
+#else
+#define ncr77c32_init			NULL
+#endif
+#ifdef CONFIG_MACH64
+extern int mach64_gx_init(ScreenPtr pScreen);
+extern int mach64_ct_init(ScreenPtr pScreen);
+extern int mach64_vt_init(ScreenPtr pScreen);
+extern int mach64_gt_init(ScreenPtr pScreen);
+#else
+#define mach64_gx_init			NULL
+#define mach64_ct_init			NULL
+#define mach64_vt_init			NULL
+#define mach64_gt_init			NULL
+#endif
+#ifdef CONFIG_IMSTT
+extern int imstt_init(ScreenPtr pScreen);
+#else
+#define imstt_init			NULL
+#endif
+#ifdef CONFIG_MGA
+extern int mga_init(ScreenPtr pScreen);
+#else
+#define mga_init			NULL
+#endif
+
 
 extern int fbdevValidTokens[];
 
@@ -123,8 +165,6 @@ static Bool fbdevSwitchMode(DisplayModePtr mode);
 static void xfree2fbdev(DisplayModePtr mode, struct fb_var_screeninfo *var);
 static void fbdev2xfree(struct fb_var_screeninfo *var, DisplayModePtr mode);
 
-
-static struct fb_var_screeninfo initscrvar;
 
 extern Bool xf86Exiting, xf86Resetting, xf86ProbeFailed;
 
@@ -191,6 +231,7 @@ ScrnInfoRec fbdevInfoRec = {
     NULL,			/* char *DCConfig */
     NULL,			/* char *DCOptions */
     0,				/* int MemClk */
+    0,				/* int LCDClk */
 #ifdef XFreeXDGA
     0,				/* int directMode */
     NULL,			/* void (*setBank)() */
@@ -204,7 +245,8 @@ ScrnInfoRec fbdevInfoRec = {
 
 };
 
-static pointer fbdevVirtBase = NULL;
+pointer fbdevVirtBase = NULL;
+pointer fbdevRegBase = NULL;
 
 static ScreenPtr savepScreen = NULL;
 static PixmapPtr ppix = NULL;
@@ -217,6 +259,77 @@ static ColormapPtr InstalledMaps[MAXSCREENS];
 	/* current colormap for each screen */
 
 
+static int fb_fd = -1;
+static struct fb_fix_screeninfo fb_fix;
+static struct fb_var_screeninfo fb_var;
+
+static unsigned long smem_start, smem_offset, smem_len;
+static unsigned long mmio_start, mmio_offset, mmio_len;
+static pointer smem_base, mmio_base;
+
+    /*
+     *  These aren't defined until the most recent kernels
+     */
+
+#ifndef FB_ACCEL_IMS_TWINTURBO
+#define FB_ACCEL_IMS_TWINTURBO		14
+#endif
+#ifndef FB_ACCEL_3DLABS_PERMEDIA2
+#define FB_ACCEL_3DLABS_PERMEDIA2	15
+#endif
+#ifndef FB_ACCEL_MATROX_MGA2064W
+#define FB_ACCEL_MATROX_MGA2064W	16
+#endif
+#ifndef FB_ACCEL_MATROX_MGA1064SG
+#define FB_ACCEL_MATROX_MGA1064SG	17
+#endif
+#ifndef FB_ACCEL_MATROX_MGA2164W
+#define FB_ACCEL_MATROX_MGA2164W	18
+#endif
+#ifndef FB_ACCEL_MATROX_MGA2164W_AGP
+#define FB_ACCEL_MATROX_MGA2164W_AGP	19
+#endif
+#ifndef FB_ACCEL_MATROX_MGAG100
+#define FB_ACCEL_MATROX_MGAG100		20
+#endif
+#ifndef FB_ACCEL_MATROX_MGAG200
+#define FB_ACCEL_MATROX_MGAG200		21
+#endif
+
+static struct accelentry {
+    CARD32 id;
+    const char *name;
+    int (*init)(ScreenPtr pScreen);
+} acceltab[] = {
+    { FB_ACCEL_NONE, "None", NULL },
+    { FB_ACCEL_ATARIBLITT, "Atari Blitter", NULL },
+    { FB_ACCEL_AMIGABLITT, "Amiga Blitter", NULL },
+    { FB_ACCEL_S3_TRIO64, "S3 Trio64", NULL },
+    { FB_ACCEL_NCR_77C32BLT, "NCR 77C32BLT", ncr77c32_init },
+    { FB_ACCEL_S3_VIRGE, "S3 ViRGE", NULL },
+    { FB_ACCEL_ATI_MACH64GX, "ATI Mach64GX", mach64_gx_init },
+    { FB_ACCEL_DEC_TGA, "DEC 21030 TGA", NULL },
+    { FB_ACCEL_ATI_MACH64CT, "ATI Mach64CT", mach64_ct_init },
+    { FB_ACCEL_ATI_MACH64VT, "ATI Mach64VT", mach64_vt_init },
+    { FB_ACCEL_ATI_MACH64GT, "ATI Mach64GT (3D RAGE)", mach64_gt_init },
+    { FB_ACCEL_SUN_CREATOR, "Sun Creator/Creator3D", NULL },
+    { FB_ACCEL_SUN_CGSIX, "Sun cg6", NULL },
+    { FB_ACCEL_SUN_LEO, "Sun leo/zx", NULL },
+    { FB_ACCEL_IMS_TWINTURBO, "IMS Twin Turbo", imstt_init },
+    { FB_ACCEL_3DLABS_PERMEDIA2, "3Dlabs Permedia 2", NULL },
+    { FB_ACCEL_MATROX_MGA2064W, "Matrox MGA2064W (Millennium)", mga_init },
+    { FB_ACCEL_MATROX_MGA1064SG, "Matrox MGA1064SG (Mystique)", mga_init },
+    { FB_ACCEL_MATROX_MGA2164W, "Matrox MGA2164W (Millennium II)", mga_init },
+    { FB_ACCEL_MATROX_MGA2164W_AGP, "Matrox MGA2164W (Millennium II AGP)", mga_init },
+    { FB_ACCEL_MATROX_MGAG100, "Matrox G100 (Productiva G100)", mga_init },
+    { FB_ACCEL_MATROX_MGAG200, "Matrox G200 (Millennium, Mystique)", mga_init },
+};
+
+static Bool UseModeDB = FALSE;
+
+static unsigned int BitsPerRGB, ColorMapSize;
+static unsigned int RedMask, GreenMask, BlueMask, TranspMask;
+
 #define StaticGrayMask	(1 << StaticGray)
 #define GrayScaleMask	(1 << GrayScale)
 #define StaticColorMask	(1 << StaticColor)
@@ -224,19 +337,7 @@ static ColormapPtr InstalledMaps[MAXSCREENS];
 #define TrueColorMask	(1 << TrueColor)
 #define DirectColorMask	(1 << DirectColor)
 
-#define ALL_VISUALS	(StaticGrayMask|\
-			 GrayScaleMask|\
-			 StaticColorMask|\
-			 PseudoColorMask|\
-			 TrueColorMask|\
-			 DirectColorMask)
-
-
-static int fb_fd = -1; 
-static struct fb_fix_screeninfo fb_fix;
-
-
-static Bool UseModeDB = FALSE;
+static int Visuals;
 
 
 static void open_framebuffer(void)
@@ -258,27 +359,37 @@ static void close_framebuffer(void)
 pointer xf86MapVidMem(int ScreenNum, int Region, pointer Base,
 		      unsigned long Size)
 {
-    pointer base;
-
     open_framebuffer();
-    base = (pointer)mmap((caddr_t)0, fb_fix.smem_len, PROT_READ | PROT_WRITE,
-			 MAP_SHARED, fb_fd, (off_t)0);
-    if ((long)base == -1)
+    smem_base = (pointer)mmap(NULL, smem_len, PROT_READ | PROT_WRITE,
+			      MAP_SHARED, fb_fd, (off_t)0);
+    if ((long)smem_base == -1)
 	FatalError("xf86MapVidMem: Could not mmap framebuffer (%s)\n",
 		   strerror(errno));
-    return(base);
+    smem_base = (char *)smem_base + smem_offset;
+    if (mmio_len) {
+	mmio_base = (pointer)mmap(NULL, mmio_len, PROT_READ | PROT_WRITE,
+				  MAP_SHARED, fb_fd, smem_len);
+	if ((long)mmio_base == -1)
+	    FatalError("xf86MapVidMem: Could not mmap MMIO registers (%s)\n",
+		       strerror(errno));
+	mmio_base = (char *)mmio_base + mmio_offset;
+    } else
+	mmio_base = 0;
+    return smem_base;
 }
 
 void xf86UnMapVidMem(int ScreenNum, int Region, pointer Base,
 		     unsigned long Size)
 {
-    munmap(fbdevVirtBase, fb_fix.smem_len);
+    if ((long)mmio_base != -1)
+	munmap((caddr_t)((unsigned long)mmio_base & PAGE_MASK), mmio_len);
+    if ((long)smem_base != -1)
+	munmap((caddr_t)((unsigned long)smem_base & PAGE_MASK), smem_len);
     close_framebuffer();
 }
 
-static void fbdevUpdateColormap(ScreenPtr pScreen, int dex, int count,
-				unsigned short *rmap, unsigned short *gmap,
-				unsigned short *bmap)
+static void fbdevUpdateColormap(int dex, int count, unsigned short *rmap,
+				unsigned short *gmap, unsigned short *bmap)
 {
     struct fb_cmap cmap;
 
@@ -288,9 +399,9 @@ static void fbdevUpdateColormap(ScreenPtr pScreen, int dex, int count,
 
     cmap.start = dex;
     cmap.len = count;
-    cmap.red = rmap+dex;
-    cmap.green = gmap+dex;
-    cmap.blue = bmap+dex;
+    cmap.red = rmap;
+    cmap.green = gmap;
+    cmap.blue = bmap;
     cmap.transp = NULL;
 
     if (ioctl(fb_fd, FBIOPUTCMAP, &cmap) < 0)
@@ -301,46 +412,65 @@ static void fbdevUpdateColormap(ScreenPtr pScreen, int dex, int count,
 static int fbdevListInstalledColormaps(ScreenPtr pScreen, Colormap *pmaps)
 {
     *pmaps = InstalledMaps[pScreen->myNum]->mid;
-    return(1);
+    return 1;
 }
 
 static void fbdevStoreColors(ColormapPtr pmap, int ndef, xColorItem *pdefs)
 {
-    unsigned short rmap[256], gmap[256], bmap[256];
-    int i;
+    xColorItem *directDefs = NULL;
 
     if (pmap != InstalledMaps[pmap->pScreen->myNum])
 	return;
 
-    while (ndef--) {
-	i = pdefs->pixel;
-	rmap[i] = pdefs->red;
-	gmap[i] = pdefs->green;
-	bmap[i] = pdefs->blue;
-	pdefs++;
-	fbdevUpdateColormap(pmap->pScreen, i, 1, rmap, gmap, bmap);
+#if defined(CONFIG_CFB16) || defined(CONFIG_CFB24) || defined(CONFIG_CFB32)
+    if ((pmap->pVisual->class | DynamicClass) == DirectColor) {
+	directDefs = (xColorItem *)
+			ALLOCATE_LOCAL(ColorMapSize*sizeof(xColorItem));
+	ndef = cfbExpandDirectColors (pmap, ndef, pdefs, directDefs);
+	pdefs = directDefs;
     }
+#endif /* CONFIG_CFB16 || CONFIG_CFB24 || CONFIG_CFB32 */
+
+    while (ndef--) {
+	fbdevUpdateColormap(pdefs->pixel, 1, &pdefs->red, &pdefs->green,
+			    &pdefs->blue);
+	pdefs++;
+    }
+
+    if (directDefs)
+	DEALLOCATE_LOCAL(directDefs);
 }
 
 static void fbdevInstallColormap(ColormapPtr pmap)
 {
     ColormapPtr oldmap = InstalledMaps[pmap->pScreen->myNum];
-    int entries = pmap->pVisual->ColormapEntries;
-    Pixel ppix[256];
-    xrgb prgb[256];
-    xColorItem defs[256];
+    int entries;
+    Pixel *ppix;
+    xrgb *prgb;
+    xColorItem *defs;
     int i;
 
     if (pmap == oldmap)
 	return;
+
+    if ((pmap->pVisual->class | DynamicClass) == DirectColor)
+	entries = (pmap->pVisual->redMask |
+		   pmap->pVisual->greenMask |
+		   pmap->pVisual->blueMask) + 1;
+    else
+	entries = pmap->pVisual->ColormapEntries;
+
+    ppix = (Pixel *)ALLOCATE_LOCAL(entries*sizeof(Pixel));
+    prgb = (xrgb *)ALLOCATE_LOCAL(entries*sizeof(xrgb));
+    defs = (xColorItem *)ALLOCATE_LOCAL(entries*sizeof(xColorItem));
 
     if (oldmap != NOMAPYET)
 	WalkTree(pmap->pScreen, TellLostMap, &oldmap->mid);
 
     InstalledMaps[pmap->pScreen->myNum] = pmap;
 
-    for (i = 0 ; i < entries; i++)
-	ppix[i]=i;
+    for (i = 0; i < entries; i++)
+	ppix[i] = i;
     QueryColors(pmap, entries, ppix, prgb);
 
     for (i = 0 ; i < entries; i++) {
@@ -348,13 +478,16 @@ static void fbdevInstallColormap(ColormapPtr pmap)
 	defs[i].red = prgb[i].red;
 	defs[i].green = prgb[i].green;
 	defs[i].blue = prgb[i].blue;
+	defs[i].flags =  DoRed|DoGreen|DoBlue;
     }
 
     fbdevStoreColors(pmap, entries, defs);
 
     WalkTree(pmap->pScreen, TellGainedMap, &pmap->mid);
 
-    return;
+    DEALLOCATE_LOCAL(ppix);
+    DEALLOCATE_LOCAL(prgb);
+    DEALLOCATE_LOCAL(defs);
 }
 
 static void fbdevUninstallColormap(ColormapPtr pmap)
@@ -400,8 +533,23 @@ static void fbdevPrintIdent(void)
 #ifdef CONFIG_CFB16
     ErrorF(", cfb16");
 #endif
+#ifdef CONFIG_CFB24
+    ErrorF(", cfb24");
+#endif
 #ifdef CONFIG_CFB32
     ErrorF(", cfb32");
+#endif
+#ifdef CONFIG_77C32
+    ErrorF(", NCR 77C32BLT (accel)");
+#endif
+#ifdef CONFIG_MACH64
+    ErrorF(", ATI Mach64 (accel)");
+#endif
+#ifdef CONFIG_IMSTT
+    ErrorF(", IMS TwinTurbo (accel)");
+#endif
+#ifdef CONFIG_MGA
+    ErrorF(", Matrox MGA (accel)");
 #endif
     ErrorF("\n");
 }
@@ -440,7 +588,7 @@ static Bool fbdevLookupMode(DisplayModePtr target)
 		break;
 	    }
 	}
-    return(found_mode);
+    return found_mode;
 }
 
 
@@ -452,9 +600,17 @@ static Bool fbdevProbe(void)
 {
     DisplayModePtr pMode, pEnd;
 
+    /*
+     * fb_dev_name also serves as global flag to tell the world that this is
+     * the FBDev server (actually, this is to tell the code in lnx_init.c)
+     */
+    fb_dev_name = getenv("FRAMEBUFFER");
+    if (!fb_dev_name)
+	fb_dev_name = "/dev/fb0";
+
     open_framebuffer();
 
-    if (ioctl(fb_fd, FBIOGET_VSCREENINFO, &initscrvar))
+    if (ioctl(fb_fd, FBIOGET_VSCREENINFO, &fb_var))
 	FatalError("fbdevProbe: unable to get screen params (%s)\n",
 		   strerror(errno));
 
@@ -465,7 +621,7 @@ static Bool fbdevProbe(void)
     if (!strcmp(pMode->name, "default")) {
 	ErrorF("%s %s: Using default frame buffer video mode\n", XCONFIG_GIVEN,
 	       fbdevInfoRec.name);
-	fbdevInfoRec.depth = initscrvar.bits_per_pixel;
+	fb_var.bits_per_pixel = fbdevInfoRec.depth;
 	fbdevInfoRec.bitsPerPixel = fbdevInfoRec.depth;
     } else {
 	ErrorF("%s %s: Using XF86Config video mode database\n", XCONFIG_GIVEN,
@@ -492,22 +648,27 @@ static Bool fbdevProbe(void)
 	fbdevInfoRec.SwitchMode = fbdevSwitchMode;
     }
 
-    return(TRUE);
+    return TRUE;
 }
 
 static void fbdevRestoreColors(ScreenPtr pScreen)
 {
     ColormapPtr pmap = InstalledMaps[pScreen->myNum];
     int entries;
-    Pixel ppix[256];
-    xrgb prgb[256];
-    xColorItem defs[256];
-    int i;
 
     if (!pmap)
 	pmap = (ColormapPtr) LookupIDByType(pScreen->defColormap, RT_COLORMAP);
     entries = pmap->pVisual->ColormapEntries;
     if (entries) {
+	Pixel *ppix;
+	xrgb *prgb;
+	xColorItem *defs;
+	int i;
+
+	ppix = (Pixel *)ALLOCATE_LOCAL(entries*sizeof(Pixel));
+	prgb = (xrgb *)ALLOCATE_LOCAL(entries*sizeof(xrgb));
+	defs = (xColorItem *)ALLOCATE_LOCAL(entries*sizeof(xColorItem));
+
 	for (i = 0 ; i < entries; i++)
 	    ppix[i] = i;
 	QueryColors(pmap, entries, ppix, prgb);
@@ -520,29 +681,67 @@ static void fbdevRestoreColors(ScreenPtr pScreen)
 	}
 
 	fbdevStoreColors(pmap, entries, defs);
+
+	DEALLOCATE_LOCAL(ppix);
+	DEALLOCATE_LOCAL(prgb);
+	DEALLOCATE_LOCAL(defs);
     }
 }
+
+#ifdef DIRECTCOLORHACK
+static void fbdevSetLinearColormap(const struct fb_var_screeninfo *var)
+{
+    int i;
+    unsigned short *rmap, *gmap, *bmap;
+
+    rmap = (unsigned short *)
+		ALLOCATE_LOCAL(ColorMapSize*sizeof(unsigned short));
+    gmap = (unsigned short *)
+		ALLOCATE_LOCAL(ColorMapSize*sizeof(unsigned short));
+    bmap = (unsigned short *)
+		ALLOCATE_LOCAL(ColorMapSize*sizeof(unsigned short));
+    for (i = 0; i < ColorMapSize; i++) {
+	float val = 65535.0*i/(ColorMapSize-1);
+	rmap[i] = val;
+	gmap[i] = val;
+	bmap[i] = val;
+    }
+    fbdevUpdateColormap(0, ColorMapSize, rmap, gmap, bmap);
+    DEALLOCATE_LOCAL(rmap);
+    DEALLOCATE_LOCAL(gmap);
+    DEALLOCATE_LOCAL(bmap);
+}
+#endif
 
 static Bool fbdevSaveScreen(ScreenPtr pScreen, int on)
 {
     switch (on) {
 	case SCREEN_SAVER_ON:
 	    {
-		unsigned short map[256];
+		unsigned short *map;
 		int i;
 
-		for (i = 0; i < 256; i++)
+		map = (unsigned short *)
+			ALLOCATE_LOCAL(ColorMapSize*sizeof(unsigned short));
+
+		for (i = 0; i < ColorMapSize; i++)
 		    map[i] = 0;
-		fbdevUpdateColormap(pScreen, 0, 256, map, map, map);
-		return(TRUE);
+		fbdevUpdateColormap(0, ColorMapSize, map, map, map);
+		return TRUE;
 	    }
 
 	case SCREEN_SAVER_OFF:
+#ifdef DIRECTCOLORHACK
+	    if (fb_fix.visual == FB_VISUAL_DIRECTCOLOR)
+		fbdevSetLinearColormap(&fb_var);
+	    else
+#endif
 	    fbdevRestoreColors(pScreen);
-	    return(TRUE);
+	    return TRUE;
     }
-    return(FALSE);
+    return FALSE;
 }
+
 
 /*
  *  fbdevScreenInit -- Attempt to find and initialize a framebuffer
@@ -559,15 +758,17 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 			    char **argv)
 {
     int displayResolution = 75;	/* default to 75dpi */
-    int dxres,dyres;
+    int dxres, dyres;
     extern int monitorResolution;
-    struct fb_var_screeninfo *var = &initscrvar;
+    struct fb_var_screeninfo *var = &fb_var;
     static unsigned short bw[] = {
 	0xffff, 0x0000
     };
     DisplayModePtr mode;
-    int bpp, xsize, ysize, width;
+    int i, bpp, xsize, ysize, width;
     char *fbtype;
+    VisualPtr visual;
+    struct accelentry *accelentry = NULL;
 
     open_framebuffer();
 
@@ -585,16 +786,23 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
     if (!UseModeDB) {
 	fbdev2xfree(var, mode);
 	mode->name = "default";
-	fbdevInfoRec.virtualX = var->xres_virtual;
-	fbdevInfoRec.virtualY = var->yres_virtual;
     } else
 	xfree2fbdev(mode, var);
 
+    var->accel_flags &= ~FB_ACCELF_TEXT;
     if (ioctl(fb_fd, FBIOPUT_VSCREENINFO, var))
 	FatalError("fbdevScreenInit: unable to set screen params (%s)\n",
 		   strerror(errno));
     if (ioctl(fb_fd, FBIOGET_FSCREENINFO, &fb_fix))
 	FatalError("ioctl(fd, FBIOGET_FSCREENINFO, ...)");
+
+    smem_start = (unsigned long)fb_fix.smem_start & PAGE_MASK;
+    smem_offset = (unsigned long)fb_fix.smem_start & ~PAGE_MASK;
+    smem_len = (smem_offset+fb_fix.smem_len+~PAGE_MASK) & PAGE_MASK;
+
+    mmio_start = (unsigned long)fb_fix.mmio_start & PAGE_MASK;
+    mmio_offset = (unsigned long)fb_fix.mmio_start & ~PAGE_MASK;
+    mmio_len = (mmio_offset+fb_fix.mmio_len+~PAGE_MASK) & PAGE_MASK;
 
     fbdevInfoRec.chipset = fb_fix.id;
     fbdevInfoRec.videoRam = fb_fix.smem_len>>10;
@@ -602,30 +810,51 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
     if (xf86Verbose) {
 	ErrorF("%s %s: Frame buffer device: %s\n", XCONFIG_PROBED,
 	       fbdevInfoRec.name, fbdevInfoRec.chipset);
-	ErrorF("%s %s: Video memory: %dK\n", XCONFIG_PROBED, fbdevInfoRec.name,
-	       fbdevInfoRec.videoRam);
+	ErrorF("%s %s: Video memory: %dK @ %p\n", XCONFIG_PROBED,
+	       fbdevInfoRec.name, fbdevInfoRec.videoRam, fb_fix.smem_start);
+	ErrorF("%s %s: MMIO regs: %dK @ %p\n", XCONFIG_PROBED,
+	       fbdevInfoRec.name, fb_fix.mmio_len>>10, fb_fix.mmio_start);
 	ErrorF("%s %s: Type %d type_aux %d bits_per_pixel %d\n", XCONFIG_PROBED,
 	       fbdevInfoRec.name, fb_fix.type, fb_fix.type_aux,
 	       var->bits_per_pixel);
     }
+    for (i = 0; i < sizeof(acceltab)/sizeof(*acceltab); i++)
+	if (fb_fix.accel == acceltab[i].id) {
+	    accelentry = &acceltab[i];
+	    break;
+	}
+    if (accelentry) {
+	if (xf86Verbose)
+	    ErrorF("%s %s: Hardware accelerator: %s\n", XCONFIG_PROBED,
+		   fbdevInfoRec.name, accelentry->name);
+	if (!accelentry->init)
+	    accelentry = NULL;
+    } else {
+	if (xf86Verbose)
+	    ErrorF("%s %s: Unknown hardware accelerator type %d\n",
+		   XCONFIG_PROBED, fbdevInfoRec.name, fb_fix.accel);
+    }
+    if (!accelentry) {
+	mmio_len = 0;
+	if (xf86Verbose)
+	    ErrorF("%s %s: No driver support for hardware acceleration\n",
+		   XCONFIG_PROBED, fbdevInfoRec.name);
+    } else if (OFLG_ISSET(OPTION_NOACCEL, &fbdevInfoRec.options)) {
+	accelentry = NULL;
+	mmio_len = 0;
+	if (xf86Verbose)
+	    ErrorF("%s %s: hardware acceleration disabled\n", XCONFIG_GIVEN,
+		   fbdevInfoRec.name);
+    }
 
-    if (serverGeneration == 1)
+    if (serverGeneration == 1) {
 	fbdevVirtBase = xf86MapVidMem(scr_index, 0, 0, 0);
+	fbdevRegBase = mmio_base;
+    }
 
-    /*
-     *  Do we have a virtual screen, and support for panning?
-     */
- 
-    if ((var->xres_virtual > var->xres && fb_fix.xpanstep) ||
-	(var->yres_virtual > var->yres && fb_fix.ypanstep)) {
-	fbdevInfoRec.AdjustFrame = fbdevAdjustFrame;
-	fbdevAdjustFrame(fbdevInfoRec.frameX0, fbdevInfoRec.frameY0);
-	ErrorF("%s %s: Enabled virtual desktop\n", XCONFIG_PROBED,
-	       fbdevInfoRec.name, fbdevInfoRec.videoRam);
-    } else
-	ErrorF("%s %s: No virtual desktop\n", XCONFIG_PROBED,
-	       fbdevInfoRec.name, fbdevInfoRec.videoRam);
- 
+    fbdevInfoRec.AdjustFrame = fbdevAdjustFrame;
+    fbdevAdjustFrame(fbdevInfoRec.frameX0, fbdevInfoRec.frameY0);
+
     if (var->nonstd)
 	FatalError("Can't handle non standard pixel format %d\n", var->nonstd);
 
@@ -633,6 +862,71 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
     xsize = var->xres_virtual;
     ysize = var->yres_virtual;
     width = fb_fix.line_length ? fb_fix.line_length<<3 : xsize;
+
+    fbdevInfoRec.bitsPerPixel = bpp;
+    Visuals = 0;
+    switch (fb_fix.visual) {
+	case FB_VISUAL_MONO01:
+	case FB_VISUAL_MONO10:
+	    Visuals = StaticGrayMask;
+	    fbdevInfoRec.depth = 1;
+	    BitsPerRGB = 1;
+	    ColorMapSize = 2;
+	    RedMask = 0;
+	    GreenMask = 0;
+	    BlueMask = 0;
+	    TranspMask = 0;
+	    break;
+
+	case FB_VISUAL_DIRECTCOLOR:
+#ifdef DIRECTCOLORHACK
+	    /* hack for directcolor */
+	    /* we fake to be truecolor and set a linear colormap later */
+#else
+	    if (!var->grayscale)
+		Visuals = PseudoColorMask | DirectColorMask | StaticColorMask;
+#endif
+	case FB_VISUAL_TRUECOLOR:
+	    Visuals |= var->grayscale ? StaticGrayMask | GrayScaleMask
+				      : TrueColorMask;
+	    fbdevInfoRec.depth = var->red.length+var->green.length+
+				 var->blue.length+var->transp.length;
+	    BitsPerRGB = var->red.length;
+	    if (var->green.length > BitsPerRGB)
+		BitsPerRGB = var->green.length;
+	    if (var->blue.length > BitsPerRGB)
+		BitsPerRGB = var->blue.length;
+	    ColorMapSize = 1<<BitsPerRGB;
+	    RedMask = ((1<<var->red.length)-1)<<var->red.offset;
+	    GreenMask = ((1<<var->green.length)-1)<<var->green.offset;
+	    BlueMask = ((1<<var->blue.length)-1)<<var->blue.offset;
+	    TranspMask = ((1<<var->transp.length)-1)<<var->transp.offset;
+	    break;
+
+	case FB_VISUAL_PSEUDOCOLOR:
+	    Visuals = GrayScaleMask;
+	    if (!var->grayscale)
+		Visuals |= PseudoColorMask | DirectColorMask | TrueColorMask;
+	case FB_VISUAL_STATIC_PSEUDOCOLOR:
+	    Visuals |= StaticGrayMask;
+	    if (!var->grayscale)
+		Visuals |= StaticColorMask;
+	    fbdevInfoRec.depth = bpp;
+	    BitsPerRGB = var->red.length;
+	    if (var->green.length > BitsPerRGB)
+		BitsPerRGB = var->green.length;
+	    if (var->blue.length > BitsPerRGB)
+		BitsPerRGB = var->blue.length;
+	    ColorMapSize = 1<<bpp;
+	    RedMask = 0;
+	    GreenMask = 0;
+	    BlueMask = 0;
+	    TranspMask = 0;
+	    break;
+
+	default:
+	    FatalError("Unknown visual type 0x%08x\n", fb_fix.visual);
+    }
 
     if (bpp == 1)
 	switch (fb_fix.type) {
@@ -651,7 +945,7 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 		    case FB_VISUAL_PSEUDOCOLOR:
 			pScreen->blackPixel = 1;
 			pScreen->whitePixel = 0;
-			fbdevUpdateColormap(NULL, 0, 2, bw, bw, bw);
+			fbdevUpdateColormap(0, 2, bw, bw, bw);
 			break;
 		    default:
 			FatalError("Can't handle visual %d\n", fb_fix.visual);
@@ -670,16 +964,21 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
     else
 	switch (fb_fix.type) {
 	    case FB_TYPE_INTERLEAVED_PLANES:
-		if (fb_fix.type_aux == 2)
+		if (fb_fix.type_aux == 2) {
+#if defined(CONFIG_IPLAN2p2) || defined(CONFIG_IPLAN2p4) || \
+     defined(CONFIG_IPLAN2p8)
+		    if (!iplSetVisualTypes(bpp, Visuals, BitsPerRGB))
+			FatalError("iplSetVisualTypes: FALSE\n");
+#endif /* CONFIG_IPLAN2p2 || CONFIG_IPLAN2p4 || CONFIG_IPLAN2p8 */
 		    switch(bpp) {
 #ifdef CONFIG_IPLAN2p2
 			case 2:
 			    fbtype = "iplan2p2";
 			    ipl2p2ScreenInit(pScreen, fbdevVirtBase, xsize,
 					     ysize, dxres, dyres, width);
-			    fbdevPrivateIndexP=&ipl2p2ScreenPrivateIndex;
-			    fbdevBitBlt=ipl2p2DoBitblt;
-			    CreateDefColormap=iplCreateDefColormap;
+			    fbdevPrivateIndexP = &ipl2p2ScreenPrivateIndex;
+			    fbdevBitBlt = ipl2p2DoBitblt;
+			    CreateDefColormap = iplCreateDefColormap;
 			    break;
 #endif
 
@@ -688,9 +987,9 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 			    fbtype = "iplan2p4";
 			    ipl2p4ScreenInit(pScreen, fbdevVirtBase, xsize,
 					     ysize, dxres, dyres, width);
-			    fbdevPrivateIndexP=&ipl2p4ScreenPrivateIndex;
-			    fbdevBitBlt=ipl2p4DoBitblt;
-			    CreateDefColormap=iplCreateDefColormap;
+			    fbdevPrivateIndexP = &ipl2p4ScreenPrivateIndex;
+			    fbdevBitBlt = ipl2p4DoBitblt;
+			    CreateDefColormap = iplCreateDefColormap;
 			    break;
 #endif
 
@@ -699,63 +998,19 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 			    fbtype = "iplan2p8";
 			    ipl2p8ScreenInit(pScreen, fbdevVirtBase, xsize,
 			    		     ysize, dxres, dyres, width);
-			    fbdevPrivateIndexP=&ipl2p8ScreenPrivateIndex;
-			    fbdevBitBlt=ipl2p8DoBitblt;
-			    CreateDefColormap=iplCreateDefColormap;
+			    fbdevPrivateIndexP = &ipl2p8ScreenPrivateIndex;
+			    fbdevBitBlt = ipl2p8DoBitblt;
+			    CreateDefColormap = iplCreateDefColormap;
 			    break;
 #endif
 			default:
 			    FatalError("Can't handle interleaved planes with "
 			    	       "%d planes\n", bpp);
 		    }
-		else
+		} else
 #ifdef CONFIG_ILBM
 		if (bpp <= 8) {
-		    int visuals = 0;
-
-		    switch (fb_fix.visual) {
-			case FB_VISUAL_MONO01:
-			case FB_VISUAL_MONO10:
-			    visuals = StaticGrayMask;
-			    break;
-
-			case FB_VISUAL_TRUECOLOR:
-			    if (var->grayscale)
-				visuals = StaticGrayMask|GrayScaleMask;
-			    else
-				visuals = ALL_VISUALS;
-			    break;
-
-			case FB_VISUAL_PSEUDOCOLOR:
-			    if (var->grayscale)
-				visuals = StaticGrayMask|GrayScaleMask;
-			    else
-				visuals = StaticGrayMask|GrayScaleMask|
-					  StaticColorMask|PseudoColorMask;
-			    break;
-
-			case FB_VISUAL_DIRECTCOLOR:
-			    if (var->grayscale)
-				visuals = StaticGrayMask;
-			    else
-				visuals = DirectColorMask;
-			    break;
-
-			case FB_VISUAL_STATIC_PSEUDOCOLOR:
-			case FB_VISUAL_STATIC_DIRECTCOLOR:
-			    if (var->grayscale)
-				visuals = StaticGrayMask;
-			    else
-				visuals = StaticColorMask;
-			    break;
-
-			default:
-			    ErrorF("Unknown frame buffer visual %d. Trying "
-				   "PSEUDOCOLOR\n", fb_fix.visual);
-			    visuals = PseudoColorMask;
-			    break;
-		    }
-		    if (!ilbmSetVisualTypes(bpp, visuals, var->red.length))
+		    if (!ilbmSetVisualTypes(bpp, Visuals, BitsPerRGB))
 			FatalError("ilbmSetVisualTypes: FALSE\n");
 		    width = fb_fix.line_length ? fb_fix.line_length<<3 :
 						 (fb_fix.type_aux<<3)/bpp;
@@ -774,51 +1029,7 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 	    case FB_TYPE_PLANES:
 #ifdef CONFIG_AFB
 		if (bpp <= 8) {
-		    int visuals = 0;
-
-		    switch (fb_fix.visual) {
-			case FB_VISUAL_MONO01:
-			case FB_VISUAL_MONO10:
-			    visuals = StaticGrayMask;
-			    break;
-
-			case FB_VISUAL_TRUECOLOR:
-			    if (var->grayscale)
-				visuals = StaticGrayMask|GrayScaleMask;
-			    else
-				visuals = ALL_VISUALS;
-			    break;
-
-			case FB_VISUAL_PSEUDOCOLOR:
-			    if (var->grayscale)
-				visuals = StaticGrayMask|GrayScaleMask;
-			    else
-				visuals = StaticGrayMask|GrayScaleMask|
-					  StaticColorMask|PseudoColorMask;
-			    break;
-
-			case FB_VISUAL_DIRECTCOLOR:
-			    if (var->grayscale)
-				visuals = StaticGrayMask;
-			    else
-				visuals = DirectColorMask;
-			    break;
-
-			case FB_VISUAL_STATIC_PSEUDOCOLOR:
-			case FB_VISUAL_STATIC_DIRECTCOLOR:
-			    if (var->grayscale)
-				visuals = StaticGrayMask;
-			    else
-				visuals = StaticColorMask;
-			    break;
-
-			default:
-			    ErrorF("Unknown frame buffer visual %d. Trying "
-			    	   "PSEUDOCOLOR\n", fb_fix.visual);
-			    visuals = PseudoColorMask;
-			    break;
-		    }
-		    if (!afbSetVisualTypes(bpp, visuals, var->red.length))
+		    if (!afbSetVisualTypes(bpp, Visuals, BitsPerRGB))
 			FatalError("afbSetVisualTypes: FALSE\n");
 		    fbtype = "afb";
 		    afbScreenInit(pScreen, fbdevVirtBase, xsize, ysize, dxres,
@@ -834,6 +1045,10 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 
 	    case FB_TYPE_PACKED_PIXELS:
 		width = fb_fix.line_length ? 8*fb_fix.line_length/bpp : xsize;
+#if defined(CONFIG_CFB16) || defined(CONFIG_CFB24) || defined(CONFIG_CFB32)
+		if (!cfbSetVisualTypes(bpp, Visuals, BitsPerRGB))
+		    FatalError("cfbSetVisualTypes: FALSE\n");
+#endif /* CONFIG_CFB16 || CONFIG_CFB24 || CONFIG_CFB32 */
 		switch (bpp) {
 #ifdef CONFIG_CFB8
 		    case 8:
@@ -849,25 +1064,79 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 #ifdef CONFIG_CFB16
 		    case 16:
 			fbtype = "cfb16";
-			cfb16ScreenInit(pScreen, fbdevVirtBase, xsize, ysize,
-					dxres, dyres, width);
+			if (!cfb16ScreenInit(pScreen, fbdevVirtBase, xsize, 
+					ysize, dxres, dyres, width))
+			    FatalError("cfb16ScreenInit: FALSE\n");
+			/* Fixup RGB ordering */
+			visual = pScreen->visuals + pScreen->numVisuals;
+			while (--visual >= pScreen->visuals) {
+				visual->offsetRed = fb_var.red.offset;
+				visual->offsetGreen = fb_var.green.offset;
+				visual->offsetBlue = fb_var.blue.offset;
+				visual->redMask = RedMask;
+				visual->greenMask = GreenMask;
+				visual->blueMask = BlueMask;
+			}
 			fbdevPrivateIndexP = &cfb16ScreenPrivateIndex;
 			fbdevBitBlt = cfb16DoBitblt;
 			CreateDefColormap = cfbCreateDefColormap;
+#ifdef DIRECTCOLORHACK
+			if (fb_fix.visual == FB_VISUAL_DIRECTCOLOR)
+			    fbdevSetLinearColormap(var);
+#endif
 			break;
 #endif
-    
+
+#ifdef CONFIG_CFB24
+		    case 24:
+			fbtype = "cfb24";
+			cfb24ScreenInit(pScreen, fbdevVirtBase, xsize, ysize,
+					dxres, dyres, width);
+			/* Fixup RGB ordering */
+			visual = pScreen->visuals + pScreen->numVisuals;
+			while (--visual >= pScreen->visuals) {
+				visual->offsetRed = fb_var.red.offset;
+				visual->offsetGreen = fb_var.green.offset;
+				visual->offsetBlue = fb_var.blue.offset;
+				visual->redMask = RedMask;
+				visual->greenMask = GreenMask;
+				visual->blueMask = BlueMask;
+			}
+			fbdevPrivateIndexP = &cfb24ScreenPrivateIndex;
+			fbdevBitBlt = cfb24DoBitblt;
+			CreateDefColormap = cfbCreateDefColormap;
+#ifdef DIRECTCOLORHACK
+			if (fb_fix.visual == FB_VISUAL_DIRECTCOLOR)
+			    fbdevSetLinearColormap(var);
+#endif
+			break;
+#endif
+
 #ifdef CONFIG_CFB32
 		    case 32:
 			fbtype = "cfb32";
 			cfb32ScreenInit(pScreen, fbdevVirtBase, xsize, ysize,
 					dxres, dyres, width);
+			/* Fixup RGB ordering */
+			visual = pScreen->visuals + pScreen->numVisuals;
+			while (--visual >= pScreen->visuals) {
+				visual->offsetRed = fb_var.red.offset;
+				visual->offsetGreen = fb_var.green.offset;
+				visual->offsetBlue = fb_var.blue.offset;
+				visual->redMask = RedMask;
+				visual->greenMask = GreenMask;
+				visual->blueMask = BlueMask;
+			}
 			fbdevPrivateIndexP = &cfb32ScreenPrivateIndex;
 			fbdevBitBlt = cfb32DoBitblt;
 			CreateDefColormap = cfbCreateDefColormap;
+#ifdef DIRECTCOLORHACK
+			if (fb_fix.visual == FB_VISUAL_DIRECTCOLOR)
+			    fbdevSetLinearColormap(var);
+#endif
 			break;
 #endif
-    
+
 		    default:
 			FatalError("Can't handle packed pixels with %d bits "
 				   "per pixel\n", bpp);
@@ -878,28 +1147,50 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 		FatalError("Unknown format type %d\n", fb_fix.type);
 	}
 
+    if (accelentry) {
+	ErrorF("%s %s: Initializing accel code\n", XCONFIG_PROBED,
+	       fbdevInfoRec.name);
+	if (!accelentry->init(pScreen))
+	    FatalError("Initialization of %s failed\n", accelentry->name);
+    }
+
     ErrorF("%s %s: Using %s driver\n", XCONFIG_PROBED, fbdevInfoRec.name,
 	   fbtype);
     pScreen->CloseScreen = fbdevCloseScreen;
-    pScreen->SaveScreen = (SaveScreenProcPtr)fbdevSaveScreen;
+    pScreen->SaveScreen = fbdevSaveScreen;
 
-    if (fb_fix.visual != FB_VISUAL_MONO10 &&
-	fb_fix.visual != FB_VISUAL_MONO01 &&
-	fb_fix.visual != FB_VISUAL_DIRECTCOLOR &&
-	fb_fix.visual != FB_VISUAL_TRUECOLOR) {
-	pScreen->InstallColormap = fbdevInstallColormap;
-	pScreen->UninstallColormap = fbdevUninstallColormap;
-	pScreen->ListInstalledColormaps = fbdevListInstalledColormaps;
-	pScreen->StoreColors = fbdevStoreColors;
+    switch (fb_fix.visual) {
+	case FB_VISUAL_MONO01:
+	case FB_VISUAL_MONO10:
+	    break;
+
+	case FB_VISUAL_PSEUDOCOLOR:
+	    pScreen->InstallColormap = fbdevInstallColormap;
+	    pScreen->UninstallColormap = fbdevUninstallColormap;
+	    pScreen->ListInstalledColormaps = fbdevListInstalledColormaps;
+	    pScreen->StoreColors = fbdevStoreColors;
+	    break;
+
+#if defined(CONFIG_CFB16) || defined(CONFIG_CFB24) || defined(CONFIG_CFB32)
+	case FB_VISUAL_TRUECOLOR:
+	    pScreen->InstallColormap = cfbInstallColormap;
+	    pScreen->UninstallColormap = cfbUninstallColormap;
+	    pScreen->ListInstalledColormaps = cfbListInstalledColormaps;
+	    pScreen->StoreColors = (void (*)())NoopDDA;
+	    break;
+
+	case FB_VISUAL_DIRECTCOLOR:
+	    pScreen->InstallColormap = cfbInstallColormap;
+	    pScreen->UninstallColormap = cfbUninstallColormap;
+	    pScreen->ListInstalledColormaps = cfbListInstalledColormaps;
+	    pScreen->StoreColors = (void (*)())NoopDDA;
+	    break;
+#endif /* CONFIG_CFB16 || CONFIG_CFB24 || CONFIG_CFB32 */
     }
     miDCInitialize(pScreen, &xf86PointerScreenFuncs);
-
-    if (!(*CreateDefColormap)(pScreen))
-	return(FALSE);
-
     savepScreen = pScreen;
 
-    return(TRUE);
+    return (*CreateDefColormap)(pScreen);
 }
 
 /*
@@ -927,6 +1218,7 @@ static void fbdevEnterLeaveVT(Bool enter, int screen_idx)
 
     if (enter) {
 	fbdevVirtBase = xf86MapVidMem(screen_idx, 0, 0, 0);
+	fbdevRegBase = mmio_base;
 
 	/*
 	 *  point pspix back to fbdevVirtBase, and copy the dummy buffer to the
@@ -945,31 +1237,7 @@ static void fbdevEnterLeaveVT(Bool enter, int screen_idx)
 
 	if (!xf86Resetting) {
 	    /* Update the colormap */
-	    ColormapPtr pmap = InstalledMaps[pScreen->myNum];
-	    int entries;
-	    Pixel ppix[256];
-	    xrgb prgb[256];
-	    xColorItem defs[256];
-	    int i;
-
-	    if (!pmap)
-		pmap = (ColormapPtr) LookupIDByType(pScreen->defColormap,
-						    RT_COLORMAP);
-	    entries = pmap->pVisual->ColormapEntries;
-	    if (entries) {
-		for (i = 0 ; i < entries; i++)
-		ppix[i] = i;
-		QueryColors (pmap, entries, ppix, prgb);
-
-		for (i = 0 ; i < entries; i++) {
-		    defs[i].pixel = ppix[i];
-		    defs[i].red = prgb[i].red;
-		    defs[i].green = prgb[i].green;
-		    defs[i].blue = prgb[i].blue;
-		}
-
-		fbdevStoreColors(pmap, entries, defs);
-	    }
+	    fbdevRestoreColors(pScreen);
 	}
     } else {
 	/*
@@ -988,34 +1256,58 @@ static void fbdevEnterLeaveVT(Bool enter, int screen_idx)
 	xf86UnMapVidMem(screen_idx, 0, 0, 0);
     }
 }
- 
+
 /*
  *  fbdevAdjustFrame -- Pan the display
  */
- 
-static void fbdevAdjustFrame(int x, int y)
-{
+
     /*
      *  Some range checking first
      *
      *  It seems that XFree sometimes passes values that are too large.
      *  Maybe this is an indication that we're moving to a second display? :-)
      */
- 
-    if (x < 0)
+
+static int checkframe_x(int x, const struct fb_fix_screeninfo *fix,
+			const struct fb_var_screeninfo *var)
+{
+    if (!fix->xpanstep)
 	x = 0;
-    else if (x > initscrvar.xres_virtual-initscrvar.xres)
-	x = initscrvar.xres_virtual-initscrvar.xres;
-    if (y < 0)
-	y = 0;
-    else if (y > initscrvar.yres_virtual-initscrvar.yres)
-	y = initscrvar.yres_virtual-initscrvar.yres;
- 
-    initscrvar.xoffset = x;
-    initscrvar.yoffset = y;
-    ioctl(fb_fd, FBIOPAN_DISPLAY, &initscrvar);
+    else {
+	if (x < 0)
+	    x = 0;
+	else if (x > var->xres_virtual-var->xres)
+	    x = var->xres_virtual-var->xres;
+	x -= x % fix->xpanstep;
+    }
+    return x;
 }
- 
+
+static int checkframe_y(int y, const struct fb_fix_screeninfo *fix,
+			const struct fb_var_screeninfo *var)
+{
+    if (!fix->ypanstep)
+	y = 0;
+    else {
+	if (y < 0)
+	    y = 0;
+	else if (y > var->yres_virtual-var->yres)
+	    y = var->yres_virtual-var->yres;
+	y -= y % fix->ypanstep;
+    }
+    return y;
+}
+
+static void fbdevAdjustFrame(int x, int y)
+{
+    x = checkframe_x(x, &fb_fix, &fb_var);
+    y = checkframe_y(y, &fb_fix, &fb_var);
+
+    fb_var.xoffset = x;
+    fb_var.yoffset = y;
+    ioctl(fb_fd, FBIOPAN_DISPLAY, &fb_var);
+}
+
 /*
  *  fbdevCloseScreen -- Called to ensure video is enabled when server exits.
  */
@@ -1037,7 +1329,38 @@ static Bool fbdevCloseScreen(int screen_idx, ScreenPtr screen)
 	(savepScreen->DestroyPixmap)(ppix);
 	ppix = NULL;
     }
-    return(TRUE);
+    return TRUE;
+}
+
+static Bool fbdevSetMode(DisplayModePtr mode, Bool doit)
+{
+    struct fb_var_screeninfo var1, var2;
+    ScreenPtr pScreen = savepScreen;
+
+    var1 = fb_var;
+    xfree2fbdev(mode, &var1);
+    var1.xoffset = checkframe_x(fbdevInfoRec.frameX0, &fb_fix, &var1);
+    var1.yoffset = checkframe_y(fbdevInfoRec.frameY0, &fb_fix, &var1);
+    var2 = var1;
+    var1.activate = FB_ACTIVATE_TEST;
+    if (ioctl(fb_fd, FBIOPUT_VSCREENINFO, &var1))
+	return FALSE;
+    if (var1.xres != var2.xres || var1.yres != var2.yres ||
+	var1.xres_virtual != var2.xres_virtual ||
+	var1.yres_virtual != var2.yres_virtual ||
+	var1.bits_per_pixel != var2.bits_per_pixel)
+	return FALSE;
+    fbdev2xfree(&var1, mode);
+
+    if (doit) {
+	var1.activate = FB_ACTIVATE_NOW;
+	if (ioctl(fb_fd, FBIOPUT_VSCREENINFO, &var1))
+	    return FALSE;
+	/* Restore the colormap */
+	fbdevRestoreColors(pScreen);
+	fb_var = var1;
+    }
+    return TRUE;
 }
 
 /*
@@ -1047,21 +1370,7 @@ static Bool fbdevCloseScreen(int screen_idx, ScreenPtr screen)
 
 static Bool fbdevValidMode(DisplayModePtr mode, Bool verbose, int flag)
 {
-    struct fb_var_screeninfo var = initscrvar;
-    Bool res = FALSE;
-
-    xfree2fbdev(mode, &var);
-    var.activate = FB_ACTIVATE_TEST;
-    if (!ioctl(fb_fd, FBIOPUT_VSCREENINFO, &var) &&
-    	var.bits_per_pixel == fbdevInfoRec.bitsPerPixel) {
-	fbdev2xfree(&var, mode);
-	if (var.xres_virtual > fbdevInfoRec.virtualX)
-	    fbdevInfoRec.virtualX = var.xres_virtual;
-	if (var.yres_virtual > fbdevInfoRec.virtualY)
-	    fbdevInfoRec.virtualY = var.yres_virtual;
-	res = TRUE;
-    }
-    return(res);
+    return fbdevSetMode(mode, FALSE);
 }
 
 /*
@@ -1070,24 +1379,7 @@ static Bool fbdevValidMode(DisplayModePtr mode, Bool verbose, int flag)
 
 static Bool fbdevSwitchMode(DisplayModePtr mode)
 {
-    struct fb_var_screeninfo var = initscrvar;
-    ScreenPtr pScreen = savepScreen;
-    Bool res = FALSE;
-
-    xfree2fbdev(mode, &var);
-    var.xoffset = fbdevInfoRec.frameX0;
-    var.yoffset = fbdevInfoRec.frameY0;
-    var.activate = FB_ACTIVATE_NOW;
-
-    if (!ioctl(fb_fd, FBIOPUT_VSCREENINFO, &var)) {
-	/* Restore the colormap */
-	fbdevRestoreColors(pScreen);
-	initscrvar.xres = var.xres;
-	initscrvar.yres = var.yres;
-	res = TRUE;
-    }
-
-    return(res);
+    return fbdevSetMode(mode, TRUE);
 }
 
 
@@ -1117,6 +1409,8 @@ static void xfree2fbdev(DisplayModePtr mode, struct fb_var_screeninfo *var)
 	var->sync |= FB_SYNC_VERT_HIGH_ACT;
     if (mode->Flags & V_PCSYNC)
 	var->sync |= FB_SYNC_COMP_HIGH_ACT;
+    if (mode->Flags & V_BCAST)
+	var->sync |= FB_SYNC_BROADCAST;
     if (mode->Flags & V_INTERLACE)
 	var->vmode = FB_VMODE_INTERLACED;
     else if (mode->Flags & V_DBLSCAN)
@@ -1140,6 +1434,8 @@ static void fbdev2xfree(struct fb_var_screeninfo *var, DisplayModePtr mode)
     mode->Flags |= var->sync & FB_SYNC_HOR_HIGH_ACT ? V_PHSYNC : V_NHSYNC;
     mode->Flags |= var->sync & FB_SYNC_VERT_HIGH_ACT ? V_PVSYNC : V_NVSYNC;
     mode->Flags |= var->sync & FB_SYNC_COMP_HIGH_ACT ? V_PCSYNC : V_NCSYNC;
+    if (var->sync & FB_SYNC_BROADCAST)
+	mode->Flags |= V_BCAST;
     if ((var->vmode & FB_VMODE_MASK) == FB_VMODE_INTERLACED)
 	mode->Flags |= V_INTERLACE;
     else if ((var->vmode & FB_VMODE_MASK) == FB_VMODE_DOUBLE)

@@ -28,6 +28,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
  */
+/* $XFree86: xc/programs/xclock/xclock.c,v 1.1.1.4.4.2 1998/10/04 15:23:11 hohndel Exp $ */
 
 #include <X11/Xatom.h>
 #include <X11/Intrinsic.h>
@@ -123,7 +124,7 @@ static void save(w, client_data, call_data)
     token->save_success = True;
 }
 
-void main(argc, argv)
+int main(argc, argv)
     int argc;
     char **argv;
 {

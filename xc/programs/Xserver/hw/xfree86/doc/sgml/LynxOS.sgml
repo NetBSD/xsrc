@@ -2,9 +2,9 @@
 
 <article>
 
-<title>README for XFree86 3.3.2 on LynxOS
+<title>README for XFree86 3.3.3 on LynxOS
 <author>Thomas Mueller
-<date>Last modified on: 24 February 1998
+<date>Last modified on: 10 October 1998
 <toc>
 
 <sect>What and Where is XFree86?<p>
@@ -23,15 +23,17 @@ The sources for XFree86 are available by anonymous ftp from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current"
 url="ftp://ftp.XFree86.org/pub/XFree86/current">
 
-Binaries of the 3.3.2 release for LynxOS AT are available from:
+Binaries of the 3.3.3 release for LynxOS AT are available from:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS">
  
-The binaries are built on `LynxOS 2.5.0 012797-G i386'. These binaries
-don't run on earlier LynxOS versions because of the changes made to
-the networking code in LynxOS 2.5.0. This XFree86 version has never
-been tested on LynxOS versions earlier than 2.4.0.
+The binaries were built on `LynxOS x86 3.0.0'. Because of changes
+made to the object format they don't run on earlier LynxOS versions.
+
+Building of this XFree86 version has never been tested on LynxOS versions
+earlier than 2.4.0. Binaries built on LynxOS 2.4.0 are expected to run
+on 2.3.0 as well.
 
 XFree86 supports LynxOS on the AT, on the microSPARC and
 on the PowerPC platform. X servers are currently available on
@@ -49,98 +51,14 @@ this file and we'll revise it.
 
 <sect>Installing the Binaries
 <p>
-The binary distribution is composed of a number of  tar archives
-which are the executables, servers, fonts, libraries, include files,
-man pages, config files, and the server link kit.  The full distribution
-takes over 95MB of disk space.  
-
-At minimum you need to unpack the 'required' <tt/X332*.tgz/ archives
-plus at least one server that matches your vga card. If you will be
-using the new <tt/XF86Setup/ utility you will also need the VGA16
-server.  You'll need about 40Mb for the minimum required run-time
-binaries only.
-
-<descrip>
-<tag/REQUIRED:/
-    <descrip>
-    <tag/preinst.sh/ 	Pre-installation script
-    <tag/postinst.sh/	Post-installation script
-    <tag/extract/	XFree86 extraction utility
-    <tag/X332bin/	Clients, run-time libs, and app-defaults files
-    <tag/X332doc/	Documentation
-    <tag/X332cfg/	sample config files for xinit, xdm
-    <tag/X332fnts/	75dpi and misc fonts
-    <tag/X332lib/	Data files required at run-time
-    <tag/X332set/	XF86Setup utility
-    <tag/X332VG16/	16 colour VGA server (XF86Setup needs this server)
-    </descrip>
-
-    The following are required for an upgrade from XFree86 3.3.1:
-
-    <descrip>
-    <tag/UPDATE from 3.3.1:/
-    <descrip>
-    <tag/preinst.sh/	Pre-installation script
-    <tag/postinst.sh/	Post-installation script
-    <tag/extract/	XFree86 extraction utility
-    <tag/X332upd.tgz/	Changes since 3.3.1 (except the servers)
-    <tag/X332doc.tgz/	Documentation
-    <tag/X332set.tgz/	XF86Setup utility
-    <tag/X332VG16.tgz/	16 colour VGA server (XF86Setup needs this server)
-    </descrip>
-
-    Choose at least one of the following server to match your hardware:
-
-    <descrip>
-    <tag/X3328514/	8514/A server
-    <tag/X332AGX/	AGX server
-    <tag/X332I128/	I128 server
-    <tag/X332Ma64/	Mach 64 server
-    <tag/X332Ma32/	Mach 32 server
-    <tag/X332Ma8/	Mach 8 server
-    <tag/X332Mono/	Monochrome server
-    <tag/X332P9K/	P9000 server
-    <tag/X332S3/	S3 server
-    <tag/X332S3V/	old S3 ViRGE server (please use SVGA server)
-    <tag/X332SVGA/	SVGA server
-    <tag/X332VG16/	16 colour VGA server (XF86Setup needs this server)
-    <tag/X332W32/	ET4000W32, ET6000 server
-    </descrip>
-
-<tag/OPTIONAL:/
-
-    <descrip>
-    <tag/X332f100/ 100dpi fonts
-    <tag/X332fcyr/ Cyrillic fonts
-    <tag/X332fnon/ Other fonts (Chinese, Japanese, Korean, Hebrew)
-    <tag/X332fscl/ Scalable fonts (Speedo and Type1)
-    <tag/X332fsrv/ Font server and config files
-    <tag/X332prog/ X header files, config files and compile-time libs
-    <tag/X332man/  Manual pages
-    <tag/X332nest/ Nested X server
-    <tag/X332prt/  X Print server
-    <tag/X332vfb/  Virtual frame buffer X server
-    <tag/X332lkit/ The X server LinkKit
-    <tag/X332ps/   PostScript version of the documentation
-    <tag/X332html/ HTML version of the documentation
-    <tag/X332jdoc/ Documentation in Japanese
-    <tag/X332jhtm/ HTML version of the documentation in Japanese
-    </descrip>
-</descrip>
-
-If this is your first time, then you can safely install all of the
-packages.  As a minimal install, you'll need doc, bin, fonts lib,
-config, and one X server. If you already have a version of XFree86
-installed, <bf>MAKE A BACKUP OF</bf> <tt>/usr/X11R6</tt>
-<bf>BEFORE DOING ANYTHING ELSE</bf>. The standard installation
-procedure will overwrite your existing version of XFree86.
-Also, be sure to read the Release Notes <htmlurl url="RELNOTES.html"
-name="Release Notes"> before installing.
+Please refer to section "Installing the XFree86 3.3.3 Release" of the 
+<htmlurl url="RELNOTES.html" name="Release Notes"> for detailed 
+installation instructions.
 
 If you plan to install XF86Setup you'll have to install
-<tt/X332prog/ as well since XF86Setup checks for the existence of
+<tt/X333prog/ as well since XF86Setup checks for the existence of
 a certain file name pattern which is satisfied only if you install
-the library files from <tt/X332prog/. This restriction will be
+the library files from <tt/X333prog/. This restriction will be
 fixed in future XFree86 releases for LynxOS.
 
 It may be necessary to increase the process stack limit in order to
@@ -150,289 +68,19 @@ system to make the changes active before you begin the installation.
 Also, be sure to include <tt>/usr/X11R6/bin</tt> in your PATH
 environment variable.
 
-<sect1>Full Install
-<p>
-<enum>
-<item>You must be logged in as root to unpack the archives because
-     several executables are set-user-id.  Otherwise the server may
-     abort if you unpack it as an ordinary user.
-
-     For the purposes of these installation instructions, it is assumed that
-     you have downloaded all the files to the <tt>/usr/tmp</tt> directory.
-     If you've put them in another directory, that's fine -- just replace
-     all occurrences of ``<tt>/usr/tmp</tt>'' with the name of that directory.
-
-<item>If you have about 80Mb free in the <tt>/usr</tt> partition create
-     a directory <tt>/usr/X11R6</tt> and skip to no. 3.
-     Otherwise, create a directory on another partition and sym link it into
-     <tt>/usr</tt>:
-
-<tscreen><verb>
- # cd /usr/local
- # mkdir X11R6
- # ln -s /usr/local/X11R6 /usr/X11R6
-</verb></tscreen>
-
-<item>Unpack everything:
-
-   Make the installation utility executable.  To do this,
-   make sure the `extract' file is in the same directory as all the X332*.tgz
-   files, and run the following from that directory:
-<tscreen><verb>
-	chmod 755 /usr/tmp/extract
-</verb></tscreen>
-
-  The installation utility ``extract'' is used to unpack the .tgz files
-  that make up the XFree86 distribution.  The .tgz files are gzipped
-  tar files.  However, ``tar'' in its standard form on most OSs is not
-  well-suited to the task of installing XFree86.  The extract utility is
-  a modified version of GNU tar 1.12 built with the options required to
-  make it suitable for installing XFree86.  The source for extract is
-  available from the same place you got the XFree86 distribution.
-
-  It is strongly recommended that you use the provided extract utility to
-  unpack the XFree86 distribution.  If you choose to ignore this and use
-  something else, we don't want to hear from you if you run into problems.
-  It is also important that you do not rename the extract utility.  If
-  renamed, it behaves just like the normal GNU tar.
-
-  To extract the XFree86 binaries, run the following as <bf>root</bf>:
-     If you are using bash:
-
-<tscreen><verb>
- # cd /usr/X11R6
- # for i in /usr/tmp/X332*.tgz; do
- #   extract $i
- # done
-</verb></tscreen>
-
-     Else, if you are using csh:
-<tscreen><verb>
- % cd /usr/X11R6
- % foreach i (/usr/tmp/X332*.tgz)
- %   /usr/tmp/extract $i
- % end
-</verb></tscreen>
-
-<item>Create a symbolic link ``<tt/X/'' that points to the server
-     that matches your video card.  The <em/XF86_*/ man pages list which
-     vga chip sets are supported by each server.  For example, if you
-     have an ET4000 based card you will use the XF86_SVGA server:
-
-<tscreen><verb>
- # cd /usr/X11R6/bin; rm -f X; ln -s XF86_SVGA X
-</verb></tscreen>
-</enum>
-
-<sect1>Minimal Install
-<p>
-First do numbers 1 and 2 above. Then unpack the required archives:
-
-<tscreen><verb>
- # cd /usr/X11R6
- # for i in bin fnts lib cfg prog; do
- #   /usr/tmp/extract  /usr/tmp/X332$i.tgz
- # done
-</verb></tscreen>
-
-Then unpack a server archive corresponding to your vga card.  The
-server man pages, <tt>X11R6/man/man1/XF86_*</tt>, list the vga chip
-sets supported by each server.  For example, if you have an ET4000
-based card you will use the XF86_SVGA server:
-
-<tscreen><verb>
- # /usr/tmp/extract /usr/tmp/X332SVGA.tgz
- # cd /usr/X11R6/bin; rm -f X; ln -s XF86_SVGA X
-</verb></tscreen>
-
-<sect1>After either Full or Minimal Install above
-<p>
-
-Be sure to include <tt>/usr/X11R6/bin</tt> in your PATH environment
-variable. If you plan to use clients of the MetroLink X package with 
-the XFree86 X server make sure to remove <tt>/usr/bin/X11/X</tt>
-file or put <tt>/usr/bin/X11</tt> after <tt>/usr/X11R6/bin</tt> in 
-your PATH environment variable.
-
-If you had already configured <tt>X11R6/lib/X11/xinit/xinitrc</tt> or
-<tt>X11R6/lib/X11/xdm/*</tt> omit the <tt/xinit-config/ or
-<tt/xdm-config/ archive or unpack it separately and merge in your
-customizations.
-
-The <tt/fscl/, <tt/fcyr/ and <tt/f100/ font archives are optional and 
-can be omitted if you are short on space.  The optional <tt/lkit/ archive 
-allows you to reconfigure and customize a X server binary.
-
-The optional <tt/prog/ archive is needed only for writing or compiling
-X applications. Before building programs check wether
-<tt>X11R6/lib/X11/config/lynx.cf</tt> has correct settings for
-OSMajorVersion, OSMinorVersion and OSTeenyVersion for your operating
-system version.
-
-Refer to section <ref id="running" name="Running XFree86"> for further
-information on necessary configuration steps before running XFree86 on
-LynxOS.
-
-<sect>Compiling the XFree86 Distribution<p>
-<sect1>Disk space requirements<p>
-Currently there is no support for shared libraries in the LynxOS
-XFree86 port. A complete binary installation along with manual pages
-will require approximately 90-100 MBytes of disk space. To compile
-the system you will need at least 230 MBytes of free disk space.
-
-<sect1>Changes to system environment (LynxOS AT)<p>
-Before compiling the XFree86 distribution you will have to make a
-few little adjustments to your system:
-
-  <descrip>
-  <tag>LynxOS AT 2.5</tag>
-  <itemize>
-  <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
-  <tscreen><verb>
-    #!/bin/sh
-    /usr/lib/gcc-lib/i386-unknown-lynxos2.5/2.7-96q1/cpp \
-	      -traditional "$@"
-  </verb></tscreen>
-    On other platforms than the AT the paths for the compiler support
-    programs are different. You may use
-  <tscreen><verb>
-	gcc -v
-  </verb></tscreen>
-    to find out the correct path. Set the file mode of <tt>/lib/cpp</tt> with
-  <tscreen><verb>
-	# chown root /lib/cpp
-	# chmod 755 /lib/cpp
-  </verb></tscreen>
-  <item>Modify <tt>/lib/liblynx.a</tt>. The X servers need the 
-    <tt>smem_create()</tt> system call to map the frame buffer into their 
-    address space. The system call is in <tt>liblynx</tt> library along
-    with other Lynx proprietary calls which (unfortunately) overlap
-    with calls in <tt>libc</tt>. To reduce confusion you should modify
-    <tt>liblynx</tt> as follows:
-  <tscreen><verb>
-    # mv /lib/liblynx.a /lib/liblynx.a.ORG
-    # mkdir /tmp/xx; cd /tmp/xx
-    # ar xv /lib/liblynx.a.ORG
-    # ar rv /lib/liblynx.a *smem*
-    # ranlib /lib/liblynx.a
-  </verb></tscreen>
-
-  </itemize>
-  <tag>LynxOS AT 2.4</tag>
-  <itemize>
-  <item>Use the CYGNUS GNU-C Compiler to build XFree86. With LynxOS 
-    2.4.0 you must execute the shell script <tt>/CYGNUS.bash</tt> to 
-    apply the necessary changes to your environment.
-  <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
-  <tscreen><verb>
-    #!/bin/sh
-    /cygnus/94q4-lynxos-x86/lib/gcc-lib/i386-lynx/2.6-94q4/cpp \
-	      -traditional "$@"
-  </verb></tscreen>
-    It is possible that future releases use a different path for
-    the CYGNUS compiler support programs. You may use
-  <tscreen><verb>
-	gcc -v
-  </verb></tscreen>
-    to find out the correct path. Set the file mode of <tt>/lib/cpp</tt> with
-  <tscreen><verb>
-	# chown root /lib/cpp
-	# chmod 755 /lib/cpp
-  </verb></tscreen>
-  </itemize>
-  <tag>LynxOS AT 2.3</tag>
-  This has actually not been tested, but the steps for described
-  for 2.4 should apply to 2.3 as well.
-  <tag>LynxOS AT 2.2.1</tag>
-  This has actually never been tested, be prepared that the build will
-  fail somewhere!
-  <itemize>
-  <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
-  <tscreen><verb>
-    #!/bin/sh
-    /usr/local/lib/gcc-cpp -traditional "$@"
-  </verb></tscreen>
-  <item>The loader /bin/ld of LynxOS 2.2.1 does not support the -L option
-    which is heavily used by X11R6 makefiles. To work around this
-    problem you must install a small wrapper program which replaces
-    the original /bin/ld program. Use the following steps to install
-    it:
-  <tscreen><verb>
-      # cd xc/programs/Xserver/hw/xfree/etc
-      # cc -o ld ld-wrapper.c
-      # mv /bin/ld /bin/ld.org
-      # mv ld /bin/ld
-      # chmod 511 /bin/ld
-      # chown root /bin/ld
-  </verb></tscreen>
-  <item>Modify system header files as follows:
-  <descrip>
-    <tag><tt>/usr/include/uio.h</tt></tag> surrounded by
-     <tscreen><verb>
-          #ifndef _UIO_H
-          #define _UIO_H
-          ...
-          #endif
-     </verb></tscreen>
-    <tag><tt>/usr/include/utmp.h</tt></tag> surrounded by
-     <tscreen><verb>
-          #ifndef _UTMP_H
-          #define _UTMP_H
-          ...
-          #endif
-     </verb></tscreen>
-    <tag><tt>/usr/include/unistd.h</tt></tag> add
-     <tscreen><verb>
-          extern int read();
-     </verb></tscreen>
-    </descrip>
-  </itemize>
-  </descrip>
-
-<sect1> make World<p>
-
-  Read <htmlurl url="BUILD.html" name="Building XFree86"> before
-  trying to rebuild XFree86 from the source distribution.
-
-  Before you start compilation you must edit <tt>xc/config/cf/lynx.cf</tt> to
-  match your operating system version (defaults set up for 2.5.0). Change 
-  the definitions of OSMajorVersion, OSMinorVersion and OSTeenyVersion 
-  accordingly.
-
-  You may now issue a
-
-  <tscreen><verb>
-     make World
-  </verb></tscreen>
-
-  to compile XFree86. After a few hours (and hopefully a successful
-  build of the XFree86 system) you can install the software using
-
-  <tscreen><verb>
-     make install
-  </verb></tscreen>
-
-  You must be logged in as super-user (root) when you invoke `make
-  install'.  Be sure to set your environment to use the same compiler
-  (LynxOS 2.3.0/2.4.0, CYGNUS GNU-C) as you did during the `make World'. To
-  install the LinkKit use
-
-  <tscreen><verb>
-     make install.linkkit
-  </verb></tscreen>
-
-  With LynxOS 2.2.1 programs will not be stripped during
-  installation. This is due to a problem with the strip program which
-  shows up when installing across file system boundaries.
-
-  Refer to section <ref id="installman" name="Installing XFree86 manual pages"> 
-  for manual page installation.
-
-  On LynxOS AT 2.5.0 you may encounter problems with <tt>make</tt> in
-  deeply nested subdirectories (eg core dumps, hangups). In this case
-  update to GNU make version 3.75 or higher.
+Refer to the next section <ref id="running" name="Running XFree86"> for
+further information on necessary configuration steps before running 
+XFree86 on LynxOS. 
 
 <sect>Running XFree86<p><label id="running">
+
+This section describes the changes to the LynxOS environment 
+which may be necessary to successfully run XFree86.
+
+Read <htmlurl url="QuickStart.html" name="Quick-Start Guide 
+to XFree86 Setup"> to learn more about how to configure XFree86 for
+your hardware.
+
 <sect1>System requirements<p>
   A minimum of 16MB of memory is required to run X. If you want to run
   real-world applications you should think of upgrading to 32MB (or more).
@@ -441,7 +89,7 @@ few little adjustments to your system:
 <sect2>Tunable parameters<p>
   To reasonably run XFree86 you may have to adjust a few system parameters.
 
-  On LynxOS 2.5.0 include a line
+  On LynxOS 2.5.0 and 3.0.0 include a line
 <verb>
   #define X_WINDOWS
 </verb>
@@ -480,9 +128,9 @@ few little adjustments to your system:
      # reboot -N
   </verb></tscreen>
 
-<sect1>Mouse support in 3.3.2<p>
+<sect1>Mouse support in 3.3.3<p>
 
-  XFree86 3.3.2 includes support for PnP mice (see also
+  XFree86 3.3.3 includes support for PnP mice (see also
   <htmlurl url="mouse.html" name="Mouse Support in XFree86">). The
   current LynxOS TTY device driver doesn't allow the necessary
   manipulation of the RTS line and therefore the support for
@@ -492,8 +140,9 @@ few little adjustments to your system:
 
   Starting with LynxOS AT 2.4.0 LynxOS includes a PS/2 mouse driver.
   Currently this driver is not fully supported by XFree86 (you'll
-  probably have to specify a mouse type which doesn't match the
-  real mouse type and in some cases lose mouse buttons).
+  probably have to specify the mouse type as <em>Microsoft</em>
+  regardless of real mouse type and in some cases you won't have
+  all mouse buttons supported).
   <tt>/usr/X11R6/lib/X11/etc/BM-Lynx.shar</tt> contains a LynxOS port 
   of the Linux bus mouse drivers. To install the drivers
   unpack the shar archive
@@ -671,6 +320,167 @@ few little adjustments to your system:
   Be sure to apply the change to the file copied to
   <tt>/usr/X11R6/lib/X11/config</tt>.
 
+<sect>Compiling the XFree86 Distribution<p>
+
+Before trying to rebuild XFree86 from source read <htmlurl url="BUILD.html"
+name="Building XFree86"> for a detailed description of the build
+process. The next sections contain LynxOS specific notes with
+respect to the build process.
+
+
+<sect1>Disk space requirements<p>
+Currently there is no support for shared libraries in the LynxOS
+XFree86 port. A complete binary installation along with manual pages
+will require approximately 90-100 MBytes of disk space. To compile
+the system you will need at least 230 MBytes of free disk space.
+
+<sect1>Changes to system environment (LynxOS AT)<p>
+Before compiling the XFree86 distribution you will have to make a
+few little adjustments to your system:
+
+  <descrip>
+  <tag>LynxOS AT 2.5</tag>
+  <itemize>
+  <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
+  <tscreen><verb>
+    #!/bin/sh
+    /usr/lib/gcc-lib/i386-unknown-lynxos2.5/2.7-96q1/cpp \
+	      -traditional "$@"
+  </verb></tscreen>
+    On other platforms than the AT the paths for the compiler support
+    programs are different. You may use
+  <tscreen><verb>
+	gcc -v
+  </verb></tscreen>
+    to find out the correct path. Set the file mode of <tt>/lib/cpp</tt> with
+  <tscreen><verb>
+	# chown root /lib/cpp
+	# chmod 755 /lib/cpp
+  </verb></tscreen>
+  <item>Modify <tt>/lib/liblynx.a</tt>. The X servers need the 
+    <tt>smem_create()</tt> system call to map the frame buffer into their 
+    address space. The system call is in <tt>liblynx</tt> library along
+    with other Lynx proprietary calls which (unfortunately) overlap
+    with calls in <tt>libc</tt>. To reduce confusion you should modify
+    <tt>liblynx</tt> as follows:
+  <tscreen><verb>
+    # mv /lib/liblynx.a /lib/liblynx.a.ORG
+    # mkdir /tmp/xx; cd /tmp/xx
+    # ar xv /lib/liblynx.a.ORG
+    # ar rv /lib/liblynx.a *smem*
+    # ranlib /lib/liblynx.a
+  </verb></tscreen>
+
+  </itemize>
+  <tag>LynxOS AT 2.4</tag>
+  <itemize>
+  <item>Use the CYGNUS GNU-C Compiler to build XFree86. With LynxOS 
+    2.4.0 you must execute the shell script <tt>/CYGNUS.bash</tt> to 
+    apply the necessary changes to your environment.
+  <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
+  <tscreen><verb>
+    #!/bin/sh
+    /cygnus/94q4-lynxos-x86/lib/gcc-lib/i386-lynx/2.6-94q4/cpp \
+	      -traditional "$@"
+  </verb></tscreen>
+    It is possible that future releases use a different path for
+    the CYGNUS compiler support programs. You may use
+  <tscreen><verb>
+	gcc -v
+  </verb></tscreen>
+    to find out the correct path. Set the file mode of <tt>/lib/cpp</tt> with
+  <tscreen><verb>
+	# chown root /lib/cpp
+	# chmod 755 /lib/cpp
+  </verb></tscreen>
+  </itemize>
+  <tag>LynxOS AT 2.3</tag>
+  This has actually not been tested, but the steps for described
+  for 2.4 should apply to 2.3 as well.
+  <tag>LynxOS AT 2.2.1</tag>
+  This has actually never been tested, be prepared that the build will
+  fail somewhere!
+  <itemize>
+  <item>Create a shell script named <tt>/lib/cpp</tt> as follows:
+  <tscreen><verb>
+    #!/bin/sh
+    /usr/local/lib/gcc-cpp -traditional "$@"
+  </verb></tscreen>
+  <item>The loader /bin/ld of LynxOS 2.2.1 does not support the -L option
+    which is heavily used by X11R6 makefiles. To work around this
+    problem you must install a small wrapper program which replaces
+    the original /bin/ld program. Use the following steps to install
+    it:
+  <tscreen><verb>
+      # cd xc/programs/Xserver/hw/xfree/etc
+      # cc -o ld ld-wrapper.c
+      # mv /bin/ld /bin/ld.org
+      # mv ld /bin/ld
+      # chmod 511 /bin/ld
+      # chown root /bin/ld
+  </verb></tscreen>
+  <item>Modify system header files as follows:
+  <descrip>
+    <tag><tt>/usr/include/uio.h</tt></tag> surrounded by
+     <tscreen><verb>
+          #ifndef _UIO_H
+          #define _UIO_H
+          ...
+          #endif
+     </verb></tscreen>
+    <tag><tt>/usr/include/utmp.h</tt></tag> surrounded by
+     <tscreen><verb>
+          #ifndef _UTMP_H
+          #define _UTMP_H
+          ...
+          #endif
+     </verb></tscreen>
+    <tag><tt>/usr/include/unistd.h</tt></tag> add
+     <tscreen><verb>
+          extern int read();
+     </verb></tscreen>
+    </descrip>
+  </itemize>
+  </descrip>
+
+<sect1> make World<p>
+
+  Read <htmlurl url="BUILD.html" name="Building XFree86"> before
+  trying to rebuild XFree86 from the source distribution.
+
+  You may then issue a
+
+  <tscreen><verb>
+     make World
+  </verb></tscreen>
+
+  to compile XFree86. After a few hours (and hopefully a successful
+  build of the XFree86 system) you can install the software using
+
+  <tscreen><verb>
+     make install
+  </verb></tscreen>
+
+  You must be logged in as super-user (root) when you invoke `make
+  install'.  Be sure to set your environment to use the same compiler
+  (LynxOS 2.3.0/2.4.0, CYGNUS GNU-C) as you did during the `make World'. To
+  install the LinkKit use
+
+  <tscreen><verb>
+     make install.linkkit
+  </verb></tscreen>
+
+  With LynxOS 2.2.1 programs will not be stripped during
+  installation. This is due to a problem with the strip program which
+  shows up when installing across file system boundaries.
+
+  Refer to section <ref id="installman" name="Installing XFree86 manual pages"> 
+  for manual page installation.
+
+  On LynxOS AT 2.5.0 you may encounter problems with <tt>make</tt> in
+  deeply nested subdirectories (eg core dumps, hangups). In this case
+  update to GNU make version 3.75 or higher.
+
 <sect>Building on microSPARC and PowerPC<label id="others"><p>
 
   XFree86 3.3 compiles on LynxOS microSPARC and on LynxOS PPC as well. On the
@@ -725,7 +535,7 @@ few little adjustments to your system:
   <tt>lynx.cf</tt> but it has never been tested (reports are welcome).
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.5 1998/02/26 13:59:06 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.8 1998/11/07 13:52:41 dawes Exp $
 
 
 

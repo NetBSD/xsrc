@@ -1,6 +1,6 @@
 /* $XConsortium: xf86Jstk.c /main/14 1996/10/25 14:11:36 kaleb $ */
 /*
- * Copyright 1995 by Frederic Lepied, France. <fred@sugix.frmug.fr.net>       
+ * Copyright 1995-1997 by Frederic Lepied, France. <Frederic.Lepied@sugix.frmug.org>       
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Jstk.c,v 3.18 1996/12/23 06:43:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Jstk.c,v 3.18.2.2 1998/11/12 11:32:04 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -44,6 +44,9 @@
 #include "xf86Version.h"
 
 #include "osdep.h"
+#ifdef XFree86LOADER
+#define strdup(a) xf86strdup(a)
+#endif
 
 /******************************************************************************
  * debugging macro
@@ -309,6 +312,36 @@ xf86JstkConfig(LocalDevicePtr    *array,
 }
 
 /*
+ ***************************************************************************
+ *
+ * xf86JstkConvert --
+ *	Convert valuators to X and Y.
+ *
+ ***************************************************************************
+ */
+static Bool
+xf86JstkConvert(LocalDevicePtr	local,
+		int		first,
+		int		num,
+		int		v0,
+		int		v1,
+		int		v2,
+		int		v3,
+		int		v4,
+		int		v5,
+		int*		x,
+		int*		y)
+{
+    if (first != 0 || num != 2)
+      return FALSE;
+
+    *x = v0;
+    *y = v1;
+
+    return TRUE;
+}
+
+/*
  * xf86JstkEvents --
  *      Read the new events from the device, and enqueue them.
  */
@@ -437,13 +470,21 @@ xf86JstkProc(pJstk, what)
         }
       else 
         {
-          for(loop=0; loop<nbaxes; loop++) {
-            InitValuatorAxisStruct(pJstk,
-                                   loop,
-                                   0, /* min val */
-                                   1000, /* max val */
-                                   9600); /* resolution */
-          }
+	    InitValuatorAxisStruct(pJstk,
+				   0,
+				   0, /* min val */
+				   screenInfo.screens[0]->width, /* max val */
+				   1, /* resolution */
+				   0, /* min_res */
+				   1); /* max_res */
+	    InitValuatorAxisStruct(pJstk,
+				   1,
+				   0, /* min val */
+				   screenInfo.screens[0]->height, /* max val */
+				   1, /* resolution */
+				   0, /* min_res */
+				   1); /* max_res */
+	    
 	  /* allocate the motion history buffer if needed */
 	  xf86MotionHistoryAllocate(local);
 
@@ -512,6 +553,8 @@ xf86JstkAllocate()
   local->close_proc = NULL;
   local->control_proc = NULL;
   local->switch_mode = NULL;
+  local->conversion_proc = xf86JstkConvert;
+  local->reverse_conversion_proc = NULL;
   local->fd = -1;
   local->atom = 0;
   local->dev = NULL;
@@ -568,4 +611,60 @@ init_xf86Jstk(unsigned long     server_version)
 }
 #endif
 
+#ifdef XFree86LOADER
+/*
+ * Entry point for the loader code
+ */
+XF86ModuleVersionInfo xf86JstkVersion = {
+    "xf86Jstk",
+    MODULEVENDORSTRING,
+    MODINFOSTRING1,
+    MODINFOSTRING2,
+    XF86_VERSION_CURRENT,
+    0x00010000,
+    {0,0,0,0}
+};
+
+void
+xf86JstkModuleInit(data, magic)
+    pointer *data;
+    INT32 *magic;
+{
+    static int cnt = 0;
+
+    switch (cnt) {
+      case 0:
+	*magic = MAGIC_VERSION;
+	*data = &xf86JstkVersion;
+	cnt++;
+	break;
+	
+      case 1:
+	*magic = MAGIC_LOAD;
+#ifdef linux
+	*data = "lnx_jstk.o";
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined (__OpenBSD__)
+	*data = "bsd_jstk.o";
+#else
+#error "Joystick XInput module not supported on this machine"
+#endif
+	cnt++;
+	break;
+
+      case 2:
+	*magic = MAGIC_ADD_XINPUT_DEVICE;
+	*data = &joystick_assoc;
+	cnt++;
+	break;
+
+      default:
+	*magic = MAGIC_DONE;
+	*data = NULL;
+	break;
+    } 
+}
+#endif
+
+	
 /* end of xf86Jstk.c */
+

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_colexp.c,v 1.2 1997/01/12 10:52:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_colexp.c,v 1.2.2.1 1998/07/28 13:57:15 hohndel Exp $ */
 
 /*
  *
@@ -148,8 +148,8 @@ sisMMIOColorExpandStippleFill(x, y, w, h, bits_in, sh, sox, soy, bg,
     }
     
 
-    if ( SISchipset == SIS86C205 )
-	patternHeight = 16 ;
+    if ( SISchipset == SIS86C205 || SISchipset == SIS5597 )
+ 	patternHeight = 16 ;
     else
 	patternHeight = 8 ;
 
@@ -186,7 +186,7 @@ sisMMIOColorExpandStippleFill(x, y, w, h, bits_in, sh, sox, soy, bg,
          * do it in one time 
 	 */
     	sisSETCMD(op);
-	sisBLTWAIT;
+	sisBLTWAIT; 
     }
     else {
 	/* must fill the area in several times

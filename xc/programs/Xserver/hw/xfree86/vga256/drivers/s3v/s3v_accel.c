@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_accel.c,v 1.1.2.7 1998/02/09 14:27:39 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_accel.c,v 1.1.2.9 1998/11/08 10:03:45 hohndel Exp $ */
 
 /*
  *
@@ -41,11 +41,11 @@
  */
 
 #include <math.h>
-#include "vga256.h"
 #include "xf86.h"
+#include "xf86_OSlib.h"
+#include "vga256.h"
 #include "vga.h"
 #include "xf86xaa.h"
-#include "xf86_OSlib.h"
 #include "xf86Priv.h"
 #include "regs3v.h"
 #include "s3v_driver.h"
@@ -318,12 +318,30 @@ S3VAccelSync()
  */
 
 void
-S3VGEReset()
+S3VGEReset(int from_timeout, int line, char *file)
 {
-unsigned char tmp;
-int r;
+    unsigned char tmp;
+    int r;
+    int32  fifo_control, miu_control, streams_timeout, misc_timeout;
 
-    WaitIdleEmpty();
+    if (from_timeout) {
+      static int n=0;
+      if (n++ < 10 || xf86Verbose > 1)
+	ErrorF("\tS3VGEReset called from %s line %d\n",file,line);
+    }
+    else
+      WaitIdleEmpty();
+
+
+    if (from_timeout && (s3vPriv.chip == S3_ViRGE || s3vPriv.chip == S3_ViRGE_VX
+			 || s3vPriv.chip == S3_ViRGE_DXGX)) {
+      /* reset will trash these registers, so save them */
+      fifo_control    = ((mmtr)s3vMmioMem)->memport_regs.regs.fifo_control;
+      miu_control     = ((mmtr)s3vMmioMem)->memport_regs.regs.miu_control;
+      streams_timeout = ((mmtr)s3vMmioMem)->memport_regs.regs.streams_timeout;
+      misc_timeout    = ((mmtr)s3vMmioMem)->memport_regs.regs.misc_timeout;
+    }
+
     if(s3vPriv.chip == S3_ViRGE_VX){
         outb(vgaCRIndex, 0x63);
         }
@@ -339,7 +357,8 @@ int r;
       outb(vgaCRReg, tmp & ~0x02);
       usleep(10000);
 
-      WaitIdleEmpty();
+      if (!from_timeout) 
+	WaitIdleEmpty();
       SETB_DEST_SRC_STR(s3vPriv.Bpl, s3vPriv.Bpl); 
 
       usleep(10000);
@@ -347,6 +366,15 @@ int r;
 	ErrorF("restarting S3 graphics engine reset %2d ...\n",r);
       else
 	break;
+    }
+
+    if (from_timeout && (s3vPriv.chip == S3_ViRGE || s3vPriv.chip == S3_ViRGE_VX
+			 || s3vPriv.chip == S3_ViRGE_DXGX)) {
+      /* restore trashed registers */
+      ((mmtr)s3vMmioMem)->memport_regs.regs.fifo_control    = fifo_control;
+      ((mmtr)s3vMmioMem)->memport_regs.regs.miu_control     = miu_control;
+      ((mmtr)s3vMmioMem)->memport_regs.regs.streams_timeout = streams_timeout;
+      ((mmtr)s3vMmioMem)->memport_regs.regs.misc_timeout    = misc_timeout;
     }
 
     SETB_SRC_BASE(0);

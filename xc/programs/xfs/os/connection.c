@@ -68,7 +68,7 @@ in this Software without prior written authorization from the X Consortium.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/connection.c,v 3.11.2.2 1997/07/05 15:55:53 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/connection.c,v 3.11.2.3 1998/11/05 14:03:13 dawes Exp $ */
 
 #include	<X11/Xtrans.h>
 #include	"misc.h"
@@ -312,6 +312,15 @@ OldListenRec *old_listen;
  */
 ResetSockets()
 {
+}
+
+void
+CloseSockets()
+{
+    int i;
+
+    for (i = 0; i < ListenTransCount; i++)
+	_FontTransClose (ListenTransConns[i]);
 }
 
 /*

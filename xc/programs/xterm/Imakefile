@@ -7,7 +7,7 @@ XCOMM Xterm assumes that bcopy can handle overlapping arguments.  If your
 XCOMM bcopy (or memcpy) cannot, write a routine called bcopy and link it in
 XCOMM or add -Dbcopy=mybcopy to the DEFINES list below.
 XCOMM
-XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.19 1998/04/05 00:46:08 robin Exp $
+XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.11.4.6 1998/10/20 20:51:31 hohndel Exp $
 XCOMM
 
 /* Uncomment SCROLLBAR_RIGHT if you want the scroll bar to be on the right */
@@ -60,7 +60,7 @@ module.o: ; $(CC) -c defines $(CFLAGS) module.c
  OSMAJORVERSION = OSMajorVersion
  OSMINORVERSION = OSMinorVersion
 
-#if !defined(AmoebaArchitecture) && !defined(OS2Architecture)
+#if !defined(AmoebaArchitecture) && !defined(OS2Architecture) && !defined(__GNU__)
         UTMPDEF = -DUTMP
 #endif
 
@@ -73,7 +73,7 @@ module.o: ; $(CC) -c defines $(CFLAGS) module.c
 		  -DOSMINORVERSION=$(OSMINORVERSION)
    MISC_DEFINES = /* -DALLOWLOGGING -DALLOWLOGFILEEXEC */ 
     XKB_DEFINES = XkbClientDefines
-        DEFINES = $(XKB_DEFINES) $(TERMCAPDEFINES) $(FEATURE_DEFINES) $(SCROLLBAR_RIGHT)
+        DEFINES = -I. $(XKB_DEFINES) $(TERMCAPDEFINES) $(FEATURE_DEFINES) $(SCROLLBAR_RIGHT)
 
 #ifdef OS2Architecture
           MAINSRC = os2main.c
@@ -83,12 +83,12 @@ module.o: ; $(CC) -c defines $(CFLAGS) module.c
           MAINOBJ = main.o
 #endif
           SRCS1 = button.c charproc.c charsets.c cursor.c \
-	  	  data.c doublechr.c input.c \
+	  	  data.c doublechr.c fontutils.c input.c \
 		  $(MAINSRC) menu.c misc.c print.c \
 		  screen.c scrollbar.c tabs.c util.c \
 		  TekPrsTbl.c Tekproc.c VTPrsTbl.c $(EXTRASRC)
           OBJS1 = button.o charproc.o charsets.o cursor.o \
-		  data.o doublechr.o input.o \
+		  data.o doublechr.o fontutils.o input.o \
 		  $(MAINOBJ) menu.o misc.o print.o \
 		  screen.o scrollbar.o tabs.o util.o \
 		  TekPrsTbl.o Tekproc.o VTPrsTbl.o $(EXTRAOBJ)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_accel.c,v 1.1.2.3 1998/02/15 23:32:05 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_accel.c,v 1.1.2.4 1998/10/21 10:44:41 dawes Exp $ */
 
 
 /*
@@ -13,12 +13,12 @@
   See apm_driver.c for more info.
 */
 
-#include "vga256.h"
 #include "compiler.h"
 #include "xf86.h"
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
 #include "xf86_HWlib.h"
+#include "vga256.h"
 #include "vga.h"
 #include "miline.h"
 #include "xf86xaa.h"

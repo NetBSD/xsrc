@@ -7,22 +7,21 @@
 
 
 
-		     Information for Solaris for x86 Users
+                     Information for Solaris for x86 Users
 
-				 David Holland
+                                 David Holland
 
-				  25 Feb 1998
+                                  25 Feb 1998
 
 
 
-1.  What is XFree86 3.3.2
+1.  What is XFree86
 
-XFree86 3.3.2 is a port of X11R6.3 that supports several versions of Intel-
-based Unix.  It is derived from X386 1.2 which was the X server distributed
-with X11R5.  This release consists of many new features and performance
-improvements as well as many bug fixes.  The release is available as source
-patches against the X Consortium code, as well as binary distributions for many
-architectures.
+XFree86 is a port of X11R6.3 that supports several versions of Intel-based
+Unix.  It is derived from X386 1.2 which was the X server distributed with
+X11R5.  This release consists of many new features and performance improvements
+as well as many bug fixes.  The release is available as source patches against
+the X Consortium code, as well as binary distributions for many architectures.
 
 The sources for XFree86 are available by anonymous ftp from:
 
@@ -34,21 +33,13 @@ Solaris binaries for XFree86 are available for anonymous ftp from:
      ftp://ftp.XFree86.org/pub/XFree86/current/binaries/Solaris
 
 
-2.  Solaris for x86, versions on which XFree86 3.3.2 has been tested
+2.  Solaris for x86, versions on which XFree86 3.3.3 has been tested
 
 XFree86 3.3.2 has been actively tested on:
-
-   o Solaris 2.4 for x86 FCS
 
    o Solaris 2.5.1 for x86
 
    o Solaris 2.6 for x86
-
-And is expected to run under:
-
-   o Solaris 2.4 EA2 for x86
-
-   o Solaris 2.5 for x86
 
 
 3.  The VT-switching sub-system in Solaris x86
@@ -59,18 +50,6 @@ RISK.
 
 The virtual terminals of Solaris work basically the same way as most other
 Intel based SVR4 VT sub-systems.  However, there are a number of limitations
-
-
-Information for Solaris for x86 Users
-
-
-
-
-
-Information for Solaris for x86 Users
-
-
-
 documented below.
 
 First, if you are running a Solaris 2.4 x86 system, and you want VT's, you will
@@ -78,9 +57,23 @@ have to create the necessary devices first, so become root.
 
 First verify the chanmux device driver's major number is 100:
 
-	  # grep -i chanmux /etc/name_to_major
-	  chanmux 100
-	  #
+
+
+
+
+Information for Solaris for x86 Users                                         1
+
+
+
+
+
+Information for Solaris for x86 Users                                         2
+
+
+
+          # grep -i chanmux /etc/name_to_major
+          chanmux 100
+          #
 
 
 If the number after 'chanmux' is anything but 100, I would suggest you immedi-
@@ -92,14 +85,14 @@ them.
 However, if it is 100, then as root type the following commands to create the
 maximum allowable number of virtual terminals.
 
-	  # cd /dev
-	  # mknod vt01 c 100 1
-	  # mknod vt02 c 100 2
-	  # mknod vt03 c 100 3
-	  # mknod vt04 c 100 4
-	  # mknod vt05 c 100 5
-	  # mknod vt06 c 100 6
-	  # mknod vt07 c 100 7
+          # cd /dev
+          # mknod vt01 c 100 1
+          # mknod vt02 c 100 2
+          # mknod vt03 c 100 3
+          # mknod vt04 c 100 4
+          # mknod vt05 c 100 5
+          # mknod vt06 c 100 6
+          # mknod vt07 c 100 7
 
 
 There is no need for a reconfiguration boot.
@@ -123,20 +116,6 @@ Then execute the command 'init q' to immediately enable the virtual terminals.
 
 The keys used for VT switching are as follows:
 
-
-
-
-
-
-
-
-
-
-
-Information for Solaris for x86 Users
-
-
-
      Alt-SysReq-F1 through Alt-SysReq-F7 enable VT screens 1-7 respec-
      tively (if the VT is active).
 
@@ -145,6 +124,17 @@ Information for Solaris for x86 Users
      Alt-SysReq-p enables the previous active VT screen.
 
      Alt-SysReq-h returns to the console.
+
+
+
+
+
+
+
+
+
+Information for Solaris for x86 Users                                         3
+
 
 
 If you are using virtual terminals, you must leave at least one free for use by
@@ -191,18 +181,6 @@ number of ioctl() calls are broken.
       containing symbolic links named cc, CC, and c++filt pointing respectively
       to the actual gcc, g++ and c++filt commands.
 
-
-
-
-
-
-
-
-
-Information for Solaris for x86 Users
-
-
-
   4.  If you don't have c++filt or if you have troubles in making World with
       c++filt, you need to set UseExportLists to NO in ~xc/config/cf/host.def.
 
@@ -211,6 +189,19 @@ Information for Solaris for x86 Users
   5.  If you are using ProWorks to compile the XFree86 distribution, you need
       to modify your PATH appropriately so the ProWorks tools are available.
       Normally, they should be in /opt/SUNWspro/bin
+
+
+
+
+
+
+
+
+
+
+Information for Solaris for x86 Users                                         4
+
+
 
   6.  You MUST put /usr/ccs/bin at the front of your PATH. There are known
       problems with some GNU replacements for the utilities found there. So the
@@ -244,7 +235,7 @@ Information for Solaris for x86 Users
       ify the terminal device to run the Xserver on.  The correct device is
       vt00 so your xinit command would look like so:
 
-		     xinit -- vt00
+                     xinit -- vt00
 
 
       If you have made the virtual terminal devices you do not need to specify
@@ -258,23 +249,25 @@ Information for Solaris for x86 Users
       your LD_LIBRARY_PATH is probably not necessary, however it doesn't hurt.
       :)
 
-
-
-
-
-
-
-
-Information for Solaris for x86 Users
-
-
-
       Including /usr/openwin/lib in the LD_LIBRARY_PATH is recommended because
       some Sun supplied binaries were not compiled with LD_RUN_PATH set prop-
       erly at compile time.
 
       Motif and CDE applications may require /usr/dt/lib in your
       LD_LIBRARY_PATH too.
+
+
+
+
+
+
+
+
+
+
+Information for Solaris for x86 Users                                         5
+
+
 
   3.  Xqueue is NOT supported under Solaris.  The includes necessary for Xqueue
       are available, however the driver does not seem to be in the kernel. (Go
@@ -305,7 +298,7 @@ Bug reports need to be sent to XFree86@XFree86.org, or posted to the comp.win-
 dows.x.i386unix newsgroup.  Questions or comments about the Solaris support, or
 the Solaris distribution need to be made to davidh@use.com, or danson@lgc.com.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SOLX86.sgml,v 3.12.2.6 1998/02/28 04:47:09 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SOLX86.sgml,v 3.12.2.7 1998/11/07 13:37:49 dawes Exp $
 
 
 
@@ -331,7 +324,6 @@ the Solaris distribution need to be made to davidh@use.com, or danson@lgc.com.
 
 
 
-Information for Solaris for x86 Users
 
 
 
@@ -339,6 +331,7 @@ Information for Solaris for x86 Users
 
 
 
+Information for Solaris for x86 Users                                         6
 
 
 
@@ -401,13 +394,20 @@ Information for Solaris for x86 Users
 
 
 
-				   CONTENTS
 
 
 
-1. What is XFree86 3.3.2 .................................................... 1
 
-2. Solaris for x86, versions on which XFree86 3.3.2 has been tested ......... 1
+
+
+
+                                   CONTENTS
+
+
+
+1. What is XFree86 .......................................................... 1
+
+2. Solaris for x86, versions on which XFree86 3.3.3 has been tested ......... 1
 
 3. The VT-switching sub-system in Solaris x86 ............................... 1
 
@@ -457,8 +457,8 @@ Information for Solaris for x86 Users
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SOLX86,v 3.20.2.6 1998/02/28 13:05:35 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SOLX86,v 3.20.2.9 1998/11/14 06:46:54 dawes Exp $

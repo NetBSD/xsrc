@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.h,v 3.4 1997/01/18 06:55:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.h,v 3.4.2.1 1998/10/19 20:29:40 hohndel Exp $ */
 
 #ifndef _TGA_H_
 #define _TGA_H_
@@ -97,11 +97,13 @@ extern void (*tgaImageFillFunc)(
 
 extern short tgaalu[];
 extern pointer tgaVideoMem;
+extern pointer tgaCursorMem;
 extern ScreenPtr savepScreen;
 
 extern int tgaValidTokens[];
 
 extern Bool tgaDAC8Bit;
+extern Bool tgaDACSyncOnGreen;
 
 /* Function Prototypes */
 
