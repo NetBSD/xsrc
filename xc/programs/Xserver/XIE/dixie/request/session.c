@@ -250,7 +250,9 @@ ProcQueryImageExtension(client)
   reply.majorVersion = xieMajorVersion;
   
   if (stuff->majorVersion != xieMajorVersion || 
+#if xieEarliestMinorVersion > 0		/* squelch compiler warning */
       stuff->minorVersion < xieEarliestMinorVersion ||
+#endif
       stuff->minorVersion > xieLatestMinorVersion) 
     reply.minorVersion = xieMinorVersion;
   else 
