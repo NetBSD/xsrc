@@ -191,6 +191,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 /*
+ * No shared libstdc++ on this platform yet.
+ */
+#if defined(x86_64Architecture)
+# define SharedLibGlu NO
+#endif
+
+/*
  * Dynamic loading supported starting in 1.0 on a.out platforms,
  * and on all ELF platforms.
  *
@@ -692,6 +699,15 @@ sed 's/\.[0-9]*$$//'`
 #endif
 
 /*
+ * Definition for compiling on Alpha machines
+ */
+#ifdef AlphaArchitecture
+
+/* Build the shared XDM greeter on Alpha if it supports shared libs */
+#define SharedLibXdmGreet HasSharedLibraries
+#endif
+
+/*
  * Definition for compile on macppc machines
  */
 #ifdef PpcArchitecture
@@ -724,55 +740,8 @@ sed 's/\.[0-9]*$$//'`
 /* 
  * General settings for all platforms 
  */ 
-#ifndef ForceNormalLib
-#define ForceNormalLib		YES
-#endif
-
-#ifndef SharedLibFontEnc
-#define SharedLibFontEnc	HasSharedLibraries
-#endif
-#ifndef SharedLibFS
-#define SharedLibFS		HasSharedLibraries
-#endif
-#ifndef SharedLibGLw
-#define SharedLibGLw		HasSharedLibraries
-#endif
-#ifndef SharedLibXRes
-#define SharedLibXRes		HasSharedLibraries
-#endif
-#ifndef SharedLibXau
-#define SharedLibXau		HasSharedLibraries
-#endif
-#ifndef SharedLibXdmcp
-#define SharedLibXdmcp		HasSharedLibraries
-#endif
-#ifndef SharedLibXfontcache
-#define SharedLibXfontcache	HasSharedLibraries
-#endif
-#ifndef SharedLibXinerama
-#define SharedLibXinerama	HasSharedLibraries
-#endif
-#ifndef SharedLibXss
-#define SharedLibXss		HasSharedLibraries
-#endif
-#ifndef SharedLibXvMC
-#define SharedLibXvMC		HasSharedLibraries
-#endif
-#ifndef SharedLibXxf86dga
-#define SharedLibXxf86dga	HasSharedLibraries
-#endif
-#ifndef SharedLibXxf86misc
-#define SharedLibXxf86misc	HasSharedLibraries
-#endif
-#ifndef SharedLibXxf86rush
-#define SharedLibXxf86rush	HasSharedLibraries
-#endif
-#ifndef SharedLibXxf86vm
-#define SharedLibXxf86vm	HasSharedLibraries
-#endif
-
 #ifndef SharedLibXdmGreet
-#define SharedLibXdmGreet	HasSharedLibraries
+#define SharedLibXdmGreet NO
 #endif
 
 #ifndef BuildHtmlManPages
