@@ -33,7 +33,11 @@
 #include <sys/fbio.h>
 #include <sys/openpromio.h>
 #elif defined(CSRG_BASED)
-#include <machine/fbio.h>
+# if defined(__NetBSD__)
+#  include <dev/sun/fbio.h>
+# else
+#  include <machine/fbio.h>
+# endif
 #else
 #include <sun/fbio.h>
 #endif
