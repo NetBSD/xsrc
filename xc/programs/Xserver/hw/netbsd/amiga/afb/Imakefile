@@ -19,14 +19,14 @@ OBJS1 =	 afbgc.o afbwindow.o afbfont.o afbpixmap.o afbfillsp.o afbsetsp.o \
 OBJS =	 $(OBJS1) afbseg.o afbbltC.o afbbltX.o afbbltCI.o afbbltO.o afbbltG.o \
 	 afbtileC.o afbtileG.o
 
-INCLUDES = -I. -I../../../mi -I../../../mfb -I../../../include -I$(XINCLUDESRC) \
-	   -I$(FONTINCSRC)
+INCLUDES = -I. -I../../../../mi -I../../../../mfb -I../../../../include \
+		-I$(XINCLUDESRC) -I$(FONTINCSRC)
 LINTDEFS = -DMFBPOLYGLYPHBLT=afbPolyGlyphBltWhite \
-	   -DMFBIMAGEGLYPHBLT=afbImageGlyphBltWhite \
-	   -DEQWHOLEWORD=MFB_EQWHOLEWORD_WHITE -DOPEQ=MFB_OPEQ_WHITE
+		-DMFBIMAGEGLYPHBLT=afbImageGlyphBltWhite \
+		-DEQWHOLEWORD=MFB_EQWHOLEWORD_WHITE -DOPEQ=MFB_OPEQ_WHITE
 
-LINTLIBS = ../../../dix/llib-ldix.ln ../../../os/llib-los.ln \
-		../../../mi/llib-lmi.ln
+LINTLIBS = ../../../../dix/llib-ldix.ln ../../../../os/llib-los.ln \
+		../../../../mi/llib-lmi.ln
 
 NormalLibraryObjectRule()
 NormalLibraryTarget(afb,$(OBJS))

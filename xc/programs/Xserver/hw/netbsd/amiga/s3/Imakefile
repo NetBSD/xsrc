@@ -16,12 +16,12 @@ OBJS = 	amigaCVscrin.o amigaCV.o \
         s3bcach.o s3fcach.o s3text.o xf86bcache.o xf86fcache.o xf86text.o \
 	s3font.o s3ss.o
 
-   INCLUDES = -I. -I.. -I../../.. -I../../../mi -I../../../mfb -I../../../cfb \
-		-I../../../include -I/sys/arch/amiga -I$(XINCLUDESRC) \
-		-I$(FONTINCSRC)
-   LINTLIBS = ../../../dix/llib-ldix.ln ../../../os/llib-los.ln \
-		../../../mfb/llib-lmfb.ln ../../../mi/llib-lmi.ln \
-		../../../cfb/llib-lcfb.ln
+   INCLUDES = -I. -I.. -I../../../.. -I../../../../mi -I../../../../mfb \
+		-I../../../../cfb -I../../../../include -I/sys/arch/amiga \
+		-I$(XINCLUDESRC) -I$(FONTINCSRC)
+   LINTLIBS = ../../../../dix/llib-ldix.ln ../../../../os/llib-los.ln \
+		../../../../mfb/llib-lmfb.ln ../../../../mi/llib-lmi.ln \
+		../../../../cfb/llib-lcfb.ln
 
 DEFINES = -DUSE_IMAGE_WRITE -DAMIGAMAXDEPTH=32 -DUSE_FONTCACHE \
 		-DGFX_CARD_SUPPORT -DCV64_SUPPORT

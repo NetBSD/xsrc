@@ -17,10 +17,11 @@ OBJS = \
 	macInit.o
 
    DEFINES = $(SIGNAL_DEFINES) -DPASS_OPTION
-   INCLUDES = -I.  -I../../include -I../../mi -I../../mfb \
+   INCLUDES = -I.  -I../../../include -I../../../mi -I../../../mfb \
 	      -I$(XINCLUDESRC) -I$(FONTINCSRC) -I$(EXTINCSRC)
-   LINTLIBS = ../../dix/llib-ldix.ln ../../os/llib-los.ln \
-	      ../../mfb/llib-lmfb.ln ../../mi/llib-lmi.ln ../../cfb/llib-lcfb.ln
+   LINTLIBS = ../../../dix/llib-ldix.ln ../../../os/llib-los.ln \
+	      ../../../mfb/llib-lmfb.ln ../../../mi/llib-lmi.ln \
+	      ../../../cfb/llib-lcfb.ln
 
 NormalLibraryObjectRule()
 
