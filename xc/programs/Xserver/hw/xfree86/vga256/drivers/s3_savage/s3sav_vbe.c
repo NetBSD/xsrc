@@ -367,14 +367,15 @@ S3SAVGetBIOSModes( int iDepth, S3VMODEENTRY* s3vModeTable )
 
 		do
 		{
-		    if( (iRefresh % 8) == 0 )
+		    if( (iRefresh % MAX_REFRESH_RATE_COUNT) == 0 )
 		    {
 			if( s3vModeTable->RefreshRate )
 			{
 			    s3vModeTable->RefreshRate = (unsigned char *)
 				xrealloc( 
 				    s3vModeTable->RefreshRate,
-				    (iRefresh+8) * sizeof(unsigned char)
+				    (iRefresh+MAX_REFRESH_RATE_COUNT) *
+					sizeof(unsigned char)
 				);
 			}
 			else
@@ -382,7 +383,7 @@ S3SAVGetBIOSModes( int iDepth, S3VMODEENTRY* s3vModeTable )
 			    s3vModeTable->RefreshRate = (unsigned char *)
 				xcalloc( 
 				    sizeof(unsigned char),
-				    (iRefresh+8)
+				    (iRefresh+MAX_REFRESH_RATE_COUNT)
 				);
 			}
 		    }
@@ -398,7 +399,7 @@ S3SAVGetBIOSModes( int iDepth, S3VMODEENTRY* s3vModeTable )
 
 		    s3vModeTable->RefreshRate[iRefresh++] = r.edi;
 		}
-		while( r.edx );
+		while( r.edx && iRefresh < MAX_REFRESH_RATE_COUNT);
 
 		s3vModeTable->RefreshCount = iRefresh;
 
