@@ -1,4 +1,4 @@
-/* $NetBSD: tgawindow.c,v 1.1 2004/01/18 04:13:22 rtr Exp $ */
+/* $NetBSD: tgawindow.c,v 1.1.2.1 2004/11/12 05:25:39 jmc Exp $ */
 
 /* $XConsortium: cfbwindow.c,v 5.22 94/04/17 20:29:07 dpw Exp $ */
 /***********************************************************
@@ -95,7 +95,7 @@ alphaTgaCopyWindow(pWin, ptOldOrg, prgnSrc)
 
     pwinRoot = WindowTable[pWin->drawable.pScreen->myNum];
 
-    REGION_INIT(pWin->drawable.pScreen, &rgnDst, NullBox, 0);
+    REGION_NULL(pWin->drawable.pScreen, &rgnDst);
 
     dx = ptOldOrg.x - pWin->drawable.x;
     dy = ptOldOrg.y - pWin->drawable.y;
