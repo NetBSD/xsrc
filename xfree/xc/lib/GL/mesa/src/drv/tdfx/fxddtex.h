@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxddtex.h,v 1.2 2000/12/08 19:36:23 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxddtex.h,v 1.1 2000/09/24 13:51:15 alanh Exp $ */
 #ifndef FXDDTEX_H
 #define FXDDTEX_H
 

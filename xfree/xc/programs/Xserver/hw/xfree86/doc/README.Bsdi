@@ -421,7 +421,7 @@ README for XFree86 3.1.2 on BSD/OS 2.0
 	       return (-1);
        #endif
 
-     $XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Bsdi,v 3.26 1997/01/27 22:12:34 dawes Exp $
+     $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Bsdi.sgml,v 3.20 1997/01/25 03:21:48 dawes Exp $
 
 
 
@@ -593,4 +593,4 @@ README for XFree86 3.1.2 on BSD/OS 2.0
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Bsdi,v 3.26 1997/01/27 22:12:34 dawes Exp $
+$XFree86$

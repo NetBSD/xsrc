@@ -478,4 +478,4 @@ by the server and client may result in a system lockup.
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DGA,v 3.6 2000/03/04 00:58:15 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/DGA,v 1.1 1999/11/19 13:54:09 hohndel Exp $

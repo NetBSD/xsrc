@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/stipsparc.s,v 1.3 1999/03/29 13:17:03 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * SPARC assembly code for optimized text rendering.

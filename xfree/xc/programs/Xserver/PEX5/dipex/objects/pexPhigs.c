@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexPhigs.c,v 3.6 1999/01/31 12:21:32 dawes Exp $ */
+/* $XFree86$ */
 
 
 /*++

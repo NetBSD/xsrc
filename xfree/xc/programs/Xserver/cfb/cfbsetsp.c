@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/cfb/cfbsetsp.c,v 3.2 2000/02/12 03:39:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbsetsp.c,v 3.1 1998/10/04 09:37:51 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

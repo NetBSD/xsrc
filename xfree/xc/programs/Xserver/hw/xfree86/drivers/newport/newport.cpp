@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport.cpp,v 1.1 2000/12/14 20:59:12 dawes Exp $ 
+.\" $XFree86$ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH NEWPORT __drivermansuffix__ "Version 4.0.2"  "XFree86"

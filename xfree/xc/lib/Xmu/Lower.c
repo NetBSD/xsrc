@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/Lower.c,v 1.9 1999/07/11 08:49:17 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Lower.c,v 1.8 1999/04/28 15:04:50 dawes Exp $ */
 
 #define  XK_LATIN1
 #include <X11/keysymdef.h>

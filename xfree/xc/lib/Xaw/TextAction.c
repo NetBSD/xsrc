@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/TextAction.c,v 3.35 2000/12/07 20:26:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextAction.c,v 3.35.2.2 2001/02/23 19:20:52 paulo Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -185,6 +185,7 @@ static void ToggleOverwrite(Widget, XEvent*, String*, Cardinal*);
 static void Undo(Widget, XEvent*, String*, Cardinal*);
 #endif
 static void UpcaseWord(Widget, XEvent*, String*, Cardinal*);
+static void DestroyFocusCallback(Widget, XtPointer, XtPointer);
 
 /*
  * External
@@ -2835,12 +2836,34 @@ RedrawDisplay(Widget w, XEvent *event, String *p, Cardinal *n)
     EndAction((TextWidget)w);
 }
 
+/* This is kind of a hack, but, only one text widget can have focus at
+ * a time on one display. There is a problem in the implementation of the
+ * text widget, the scrollbars can not be adressed via editres, since they
+ * are not children of a subclass of composite.
+ * The focus variable is required to make sure only one text window will
+ * show a block cursor at one time.
+ */
+struct _focus { Display *display; Widget widget; };
+static struct _focus *focus;
+static Cardinal num_focus;
+
+/*ARGSUSED*/
+static void
+DestroyFocusCallback(Widget w, XtPointer user_data, XtPointer call_data)
+{
+    struct _focus *f = (struct _focus*)(user_data);
+
+    if (f->widget == w)
+	f->widget = NULL;
+}
+
 /*ARGSUSED*/
 static void
 TextFocusIn(Widget w, XEvent *event, String *p, Cardinal *n)
 {
     TextWidget ctx = (TextWidget)w;
     Bool display_caret = ctx->text.display_caret;
+    int i;
 
     if (event->xfocus.detail == NotifyPointer)
 	return;
@@ -2853,6 +2876,27 @@ TextFocusIn(Widget w, XEvent *event, String *p, Cardinal *n)
     ctx->text.hasfocus = TRUE;
     if (display_caret)
 	EndAction(ctx);
+
+    for (i = 0; i < num_focus; i++)
+	if (focus[i].display == XtDisplay(w))
+	    break;
+    if (i >= num_focus) {
+	focus = (struct _focus*)
+	    XtRealloc((XtPointer)focus, sizeof(struct _focus) * (num_focus + 1));
+	i = num_focus;
+	focus[i].widget = NULL;
+	focus[i].display = XtDisplay(w);
+	num_focus++;
+    }
+    if (focus[i].widget != w) {
+	Widget old = focus[i].widget;
+
+	focus[i].widget = w;
+	if (old != NULL)
+	    TextFocusOut(old, event, p, n);
+	XtAddCallback(w, XtNdestroyCallback,
+		      DestroyFocusCallback, (XtPointer)&focus[i]);
+    }
 }
 
 /*ARGSUSED*/
@@ -2861,9 +2905,29 @@ TextFocusOut(Widget w, XEvent *event, String *p, Cardinal *n)
 {
     TextWidget ctx = (TextWidget)w;
     Bool display_caret = ctx->text.display_caret;
+    Widget shell;
+    Window window;
+    int i, revert;
 
-    if (event->xfocus.detail == NotifyPointer)
+    shell = w;
+    while (shell) {
+	if (XtIsShell(shell))
+	   break;
+	shell = XtParent(shell);
+    }
+
+    for (i = 0; i < num_focus; i++)
+	if (focus[i].display == XtDisplay(w))
+	    break;
+    XGetInputFocus(XtDisplay(w), &window, &revert);
+    if ((XtWindow(shell) == window &&
+	 (i < num_focus && focus[i].widget == w))
+	 || event->xfocus.detail == NotifyPointer)
 	return;
+
+    if (i < num_focus && focus[i].widget)
+	XtRemoveCallback(focus[i].widget, XtNdestroyCallback,
+			 DestroyFocusCallback, (XtPointer)&focus[i]);
 
     /* Let the input method know focus has left.*/
     _XawImUnsetFocus(w);
@@ -3110,6 +3174,8 @@ InsertChar(Widget w, XEvent *event, String *p, Cardinal *n)
 	FD_ZERO(&fds);
 	FD_SET(ConnectionNumber(XtDisplay(w)), &fds);
 	(void)select(FD_SETSIZE, &fds, NULL, NULL, &tmval);
+	if (tmval.tv_usec != 500000)
+	    usleep(40000);
 
 	StartAction(ctx, NULL);
 #ifndef OLDXAW
@@ -3342,8 +3408,9 @@ Numeric(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	    return;
 	}
 	else {
-	    mult = mult * 10 + params[0][0] - '0';
-	    ctx->text.mult = ctx->text.mult * 10 + params[0][0] - '0';
+	    mult = mult * 10 + (params[0][0] - '0') * (mult < 0 ? -1 : 1);
+	    ctx->text.mult = ctx->text.mult * 10 + (params[0][0] - '0') *
+			     (mult < 0 ? -1 : 1);
 	}
 	if (mult != ctx->text.mult || mult >= 32767) {	/* checks for overflow */
 	    XBell(XtDisplay(w), 0);

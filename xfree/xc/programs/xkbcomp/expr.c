@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/expr.c,v 3.4 2000/10/24 22:45:16 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/expr.c,v 3.3 1997/10/26 13:25:28 dawes Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"

@@ -39,7 +39,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/fslsfonts/fslsfonts.c,v 3.4 1999/12/27 00:40:00 robin Exp $ */
+/* $XFree86: xc/programs/fslsfonts/fslsfonts.c,v 3.3 1999/02/19 21:27:08 hohndel Exp $ */
 
 #include "FSlib.h"
 #include <stdio.h>

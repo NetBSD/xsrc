@@ -23,7 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/leo_cursor.c,v 1.1 2000/05/18 23:21:39 dawes Exp $ */
+/* $XFree86$ */
 
 #include "leo.h"
 

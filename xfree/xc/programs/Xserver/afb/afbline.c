@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbline.c,v 3.1 1998/03/20 21:04:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbline.c,v 3.0 1996/08/18 01:45:43 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium

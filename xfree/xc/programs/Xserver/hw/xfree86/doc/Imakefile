@@ -77,7 +77,7 @@ HWREADME = \
 	$(_NULLENTRY_)
 
 MAINDOCS = LICENSE README /*ReadmeFile(Config)*/ /*BUILD*/ RELNOTES \
-	   Install Status DESIGN
+	   Install Status DESIGN Versions
 
 OTHERDOCS = /*VideoModes.doc*/ /*QuickStart.doc*/ /*xinput*/ \
 	    ReadmeFile(fonts) ReadmeFile(mouse) ReadmeFile(DRI) \

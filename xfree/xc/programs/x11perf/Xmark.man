@@ -1,6 +1,6 @@
 .\" This manpage was written by Richard Braakman and is licensed under the
 .\" XFree86 license.
-.\" $XFree86: xc/programs/x11perf/Xmark.man,v 1.1 2000/08/26 04:30:59 dawes Exp $
+.\" $XFree86$
 .TH Xmark 1 "Release 6.4" "X Version 11"
 .SH NAME
 Xmark \- summarize x11perf results

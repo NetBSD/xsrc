@@ -1,5 +1,5 @@
 XCOMM $XConsortium: scoLib.rules /main/2 1996/09/28 16:12:20 rws $
-XCOMM $XFree86: xc/config/cf/scoLib.rules,v 1.5 1999/10/13 04:20:42 dawes Exp $
+XCOMM $XFree86: xc/config/cf/scoLib.rules,v 1.4 1999/06/06 08:47:45 dawes Exp $
 
 /*
  * SharedLibraryTarget3 - generate rules to create a shared library;

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.2 2000/08/23 21:06:18 dawes Exp $
+XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.1 2000/08/09 23:40:09 dawes Exp $
 
 #define CPPOnlyAsm(basename,options) RemoveFile(basename.i)		@@\
 	$(CPP) AsmDefines $(DEFINES) $(INCLUDES) options  basename.S | grep -v '^\#' > basename.i

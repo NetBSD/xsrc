@@ -1,5 +1,5 @@
 XCOMM $TOG: Imakefile /main/13 1997/08/02 10:10:54 kaleb $
-XCOMM $XFree86: xc/programs/xkbcomp/keycodes/Imakefile,v 3.10 2000/09/19 12:46:23 eich Exp $
+XCOMM $XFree86: xc/programs/xkbcomp/keycodes/Imakefile,v 3.8 1998/10/04 09:41:31 dawes Exp $
 #define IHaveSubdirs
 
     DATAFILES = amiga ataritt fujitsu hp ibm macintosh sony sun xfree86 \

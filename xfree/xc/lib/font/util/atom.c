@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/atom.c,v 1.3 1999/08/22 08:58:57 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

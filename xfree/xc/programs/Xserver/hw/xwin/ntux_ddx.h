@@ -17,7 +17,7 @@ software will be error-free.
 THESE DISCLAIMERS OF WARRANTY CONSTITUTE AN ESSENTIAL PART OF THIS
 AGREEMENT. 
 */
-/* $XFree86: xc/programs/Xserver/hw/xwin/ntux_ddx.h,v 1.1 2000/08/10 17:40:37 dawes Exp $ */
+/* $XFree86$ */
 
 /*
 * ntux_ddx.h

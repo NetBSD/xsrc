@@ -27,7 +27,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/token.c,v 1.4 1999/08/21 13:47:51 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/token.c,v 1.3 1999/03/02 11:49:22 dawes Exp $ */
 /* Authors: Sig Nin & Carol Thompson IBM Almaden Research Laboratory */
 #include "t1stdio.h"
 #include "util.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86cmap.c,v 1.19 2000/03/17 20:43:34 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86cmap.c,v 1.16 1999/08/01 07:57:12 dawes Exp $ */
 
 #ifdef _XOPEN_SOURCE
 #include <math.h>

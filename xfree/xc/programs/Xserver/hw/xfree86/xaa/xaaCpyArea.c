@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyArea.c,v 1.12 2000/09/28 20:47:59 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyArea.c,v 1.9 1999/01/31 12:22:09 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

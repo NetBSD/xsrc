@@ -67,7 +67,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpctoi.c,v 3.4 2000/10/05 21:59:29 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpctoi.c,v 3.3 1998/10/05 13:22:43 dawes Exp $ */
 
 #define _XIEC_MPCTOI
 #define _XIEC_PCTOI

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/font/X-TrueType/VISCII/Imakefile.inc,v 1.1 1999/03/28 15:32:05 dawes Exp $
+XCOMM $XFree86$
 
 #define ModuleName VISCII
 MODULENAME = ModuleName

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_video.c,v 1.5 2000/12/08 21:53:37 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_video.c,v 1.4 2000/12/08 17:14:26 dawes Exp $ */
 
 /* Adapted from ../mga/mga_video.c */
 

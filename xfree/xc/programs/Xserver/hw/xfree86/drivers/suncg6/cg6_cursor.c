@@ -23,7 +23,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_cursor.c,v 1.1 2000/06/30 19:30:46 dawes Exp $ */
+/* $XFree86:$ */
 
 #include "cg6.h"
 

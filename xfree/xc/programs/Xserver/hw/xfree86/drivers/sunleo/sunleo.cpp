@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/sunleo.cpp,v 1.4 2000/12/11 20:18:34 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunleo/sunleo.cpp,v 1.3 2000/06/14 02:13:14 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH SUNLEO __drivermansuffix__ "Version 4.0.2"  "XFree86"

@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/bufio.h,v 1.4 2000/09/19 12:46:08 eich Exp $ */
+/* $XFree86: xc/lib/font/include/bufio.h,v 1.2 1999/03/14 03:21:19 dawes Exp $ */
 
 #ifndef ___BUFIO_H___
 #define ___BUFIO_H___ 1

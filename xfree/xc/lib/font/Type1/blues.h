@@ -28,7 +28,7 @@
  * CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/blues.h,v 1.3 1999/08/22 08:58:49 dawes Exp $ */
+/* $XFree86$ */
 
  
 extern psobj *GetType1CharString ( psfont *fontP, unsigned char code );

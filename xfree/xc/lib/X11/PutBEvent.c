@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/PutBEvent.c,v 1.2 1999/05/09 10:49:55 dawes Exp $ */
+/* $XFree86$ */
 
 /* XPutBackEvent puts an event back at the head of the queue. */
 #define NEED_EVENTS

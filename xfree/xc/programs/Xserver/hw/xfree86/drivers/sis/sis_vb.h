@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vb.h,v 1.3 2000/12/02 01:16:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vb.h,v 1.2 2000/08/04 03:51:46 tsi Exp $ */
 
 /* CR30 VBInfo = CR31:CR30 */
 #define	SET_SIMU_SCAN_MODE	0x0001

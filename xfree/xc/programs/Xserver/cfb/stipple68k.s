@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/stipple68k.s,v 3.1 1998/10/04 09:37:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/stipple68k.s,v 3.0 1996/08/13 11:27:37 dawes Exp $ */
 
 /*
  * Stipple code for 68k processors

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xext/XAppgroup.c,v 1.6 1999/07/12 05:57:21 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XAppgroup.c,v 1.5 1998/10/03 08:42:54 dawes Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

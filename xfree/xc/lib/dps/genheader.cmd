@@ -1,6 +1,6 @@
 REM 
 /* OS/2 generate header files */
-/* $XFree86: xc/lib/dps/genheader.cmd,v 1.2 2000/05/18 23:46:14 dawes Exp $ */
+/* $XFree86: xc/lib/dps/genheader.cmd,v 1.1 2000/04/05 18:13:22 dawes Exp $ */
 cat psclrops.h psctrlops.h psctxtops.h psdataops.h psfontops.h psgsttops.h psioops.h psmathops.h psmtrxops.h psmiscops.h pspntops.h pspathops.h pssysops.h pswinops.h psopstack.h psXops.h psl2ops.h >.ph
 sed -e "/^$$/D" -e "/#/D" -e "/^\//D" -e "/^   gener/D" -e "/^.\//D" .ph | sort >.sort
 awk "/;/ {print;printf(\"\n\");}" .sort >.ttt

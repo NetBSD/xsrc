@@ -408,12 +408,12 @@ DriverRec, which contains a small set of essential details and driver entry
 points required during the early phase of InitOutput().  xf86AddDriver() adds
 it to the global xf86DriverList[] array.
 
-The DriverRec contains the driver's version, a short descriptive message, the
-Identify(), Probe() and AvailableOptions() function entry points as well as a
-pointer to the driver's module (as returned from the loader when the driver
-was loaded) and a reference count which keeps track of how many screens are
-using the driver.  The entry driver entry points are those required prior to
-the driver allocating and filling in its ScrnInfoRec.
+The DriverRec contains the driver canonical name, the Identify(), Probe() and
+AvailableOptions() function entry points as well as a pointer to the driver's
+module (as returned from the loader when the driver was loaded) and a refer-
+ence count which keeps track of how many screens are using the driver.  The
+entry driver entry points are those required prior to the driver allocating
+and filling in its ScrnInfoRec.
 
 For a static server, the xf86DriverList[] array is initialised at build time,
 and the loading of modules is not done.
@@ -5368,7 +5368,7 @@ Drivers must NOT include the following:
 
           DriverRec ZZZ = {
               VERSION,
-              "unaccelerated driver for ZZZ Zzzzzy cards",
+              ZZZ_DRIVER_NAME,
               ZZZIdentify,
               ZZZProbe,
               ZZZAvailableOptions,
@@ -6302,7 +6302,7 @@ eScreen() function.
          ZZZFreeRec(xf86Screens[scrnIndex]);
      }
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DESIGN.sgml,v 1.39 2000/12/04 18:49:54 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DESIGN.sgml,v 1.39.2.1 2001/02/08 19:31:03 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/DESIGN,v 1.33 2000/12/04 19:47:21 dawes Exp $
+$XFree86$

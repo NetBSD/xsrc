@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bdfutils.c,v 1.6 2000/04/05 18:13:25 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bdfutils.c,v 1.5 1999/07/17 08:55:11 dawes Exp $ */
 
 #ifndef FONTMODULE
 #include <ctype.h>

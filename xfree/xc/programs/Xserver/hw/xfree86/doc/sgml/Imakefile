@@ -11,7 +11,7 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.69 2000/12
 SGMLDEPENDS = defs.ent
 MANSGMLDEPENDS = mdefs.ent
   INDEXLIST = README.sgml RELNOTES.sgml Status.sgml LICENSE.sgml Install.sgml \
-	      DESIGN.sgml \
+	      DESIGN.sgml Versions.sgml \
 	      mouse.sgml fonts.sgml DRI.sgml DRIcomp.sgml \
 	      Darwin.sgml isc.sgml LynxOS.sgml NetBSD.sgml OpenBSD.sgml \
 	      OS2note.sgml \
@@ -111,6 +111,7 @@ LinuxDocTarget(Status)
 /* Other docs */
 LinuxDocReadmeTarget(fonts)
 LinuxDocReadmeTarget(mouse)
+LinuxDocTarget(Versions)
 #ifdef OUTOFDATE
 LinuxDocTargetLong(VidModes.sgml,VideoModes.doc,VideoModes)
 LinuxDocTarget(xinput)

@@ -26,7 +26,7 @@
  *           David Thomas <davtom@dream.org.uk>. 
  *           Xavier Ducoin <x.ducoin@lectra.com>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_regs2.h,v 1.3 2000/02/12 20:45:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_regs2.h,v 1.2 1999/05/15 06:24:56 dawes Exp $ */
 
 /* 3C4 */
 #define BankReg 0x06

@@ -1,5 +1,5 @@
 .\" Copyright (c) 1996  The XFree86 Project
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86DGA.man,v 3.6 1997/11/16 06:42:12 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86DGA.man,v 3.5 1997/01/20 12:36:18 dawes Exp $
 .\" $TOG: XF86DGA.man /main/9 1997/11/11 12:08:52 kaleb $
 .\" 
 .de ZN

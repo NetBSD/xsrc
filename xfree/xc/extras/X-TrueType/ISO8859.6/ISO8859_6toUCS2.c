@@ -73,7 +73,7 @@ Notice===
 	a microsoft-symbol encoding table the glyphs will match.  -- srtxg
 
  */
-/* $XFree86: xc/extras/X-TrueType/ISO8859.6/ISO8859_6toUCS2.c,v 1.2 2000/06/27 21:26:32 tsi Exp $ */
+/* $XFree86$ */
 
 #include "xttversion.h"
 

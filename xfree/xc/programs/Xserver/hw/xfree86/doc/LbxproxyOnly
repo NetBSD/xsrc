@@ -45,7 +45,7 @@ xc/config/cf/xf86site.def to have lbxproxy dynamically linked instead of
 statically linked against the X libraries.
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/LbxproxyOnly,v 3.3 1996/12/26 07:00:12 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/LbxproxyOnly,v 3.2 1996/12/23 06:44:42 dawes Exp $
 
 
 

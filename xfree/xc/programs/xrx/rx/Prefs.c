@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization from
 The Open Group.
 
 */
-/* $XFree86: xc/programs/xrx/rx/Prefs.c,v 1.4 1998/10/04 09:41:53 dawes Exp $ */
+/* $XFree86: xc/programs/xrx/rx/Prefs.c,v 1.3 1997/01/18 07:19:09 dawes Exp $ */
 
 #include "Prefs.h"
 #include <ctype.h>

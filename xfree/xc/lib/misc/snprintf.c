@@ -51,7 +51,7 @@
  * All Rights Reserved
  */
 
-/* $XFree86: xc/lib/misc/snprintf.c,v 3.1 1999/04/28 15:04:51 dawes Exp $ */
+/* $XFree86$ */
 
 
 /*

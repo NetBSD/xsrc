@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loader.h,v 1.1 2000/10/20 14:59:05 alanh Exp $
+ * $XFree86$
  */
 #ifdef USE_MODULES
 #include "config.h"

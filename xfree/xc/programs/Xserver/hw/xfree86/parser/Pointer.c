@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Pointer.c,v 1.8 2000/10/20 14:59:03 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Pointer.c,v 1.7 1999/09/04 13:04:54 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

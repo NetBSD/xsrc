@@ -564,13 +564,63 @@ Private Bool ThaiComposeConvert();
 
 #define BellVolume 		0
 
+#define ucs2tis(wc)  \
+ (unsigned char) ( \
+   (0<=(wc)&&(wc)<=0x7F) ? \
+     (wc) : \
+     ((0x0E01<=(wc)&&(wc)<=0x0E5F) ? ((wc)-0x0E00+0xA0) : 0))
+
 /*
  * Macros to save and recall last input character in XIC
  */
 #define IC_SavePreviousChar(ic,ch) \
 		(*((ic)->private.local.context->mb) = (char) (ch))
-#define IC_GetPreviousChar(ic,ch) \
-		((ch) = (unsigned char) *((ic)->private.local.context->mb))
+/*
+#define IC_GetPreviousChar(ic) \
+		((unsigned char) *((ic)->private.local.context->mb))
+*/
+Private unsigned char
+#if NeedFunctionPrototypes
+IC_GetPreviousChar(Xic ic)
+#else
+IC_GetPreviousChar(ic)
+  Xic ic;
+#endif
+{
+    XICCallback* cb = &ic->core.string_conversion_callback;
+
+    if (cb && cb->callback) {
+        XIMStringConversionCallbackStruct screc;
+        unsigned char c;
+
+        screc.position = 0;
+        screc.direction = XIMBackwardChar;
+        screc.operation = XIMStringConversionRetrieval;
+        screc.factor = 2;
+        screc.text = 0;
+
+        (cb->callback)((XIC)ic, cb->client_data, (XPointer)&screc);
+        if (!screc.text) { return 0; }
+        if ((screc.text->feedback &&
+             *screc.text->feedback == XIMStringConversionLeftEdge) ||
+            screc.text->length < 2)
+        {
+            c = 0;
+        } else {
+            if (screc.text->encoding_is_wchar) {
+                c = ucs2tis(screc.text->string.wcs[1]);
+                XFree(screc.text->string.wcs);
+            } else {
+                c = screc.text->string.mbs[1];
+                XFree(screc.text->string.mbs);
+            }
+        }
+        XFree(screc.text);
+        return c;
+    } else {
+        return (unsigned char) *((ic)->private.local.context->mb);
+    }
+}
 #define IC_ClearPreviousChar(ic) \
 		(*((ic)->private.local.context->mb) = 0)
 /*
@@ -1194,12 +1244,17 @@ XPointer	client_data;
            (XK_KP_F1 <= symbol && symbol <= XK_KP_Delete) ||
            (XK_KP_Multiply <= symbol && symbol <= XK_KP_9) ||
            (XK_F1 <= symbol && symbol <= XK_F35) ||
-           (symbol == XK_KP_Equal) ||
-           (symbol == NoSymbol))))
+           (symbol == XK_KP_Equal))))
         {
             IC_ClearPreviousChar(ic); 
             return False;
         }
+    if (((symbol >> 8 == 0xFF) &&
+         (XK_Shift_L <= symbol && symbol <= XK_Hyper_R)) ||
+        (symbol == NoSymbol))
+    {
+        return False;
+    }
 #if 0
     if (! XThaiTranslateKey(ev->xkey.display, ev->xkey.keycode, ev->xkey.state,
 	 		&modifiers, &symbol, &lsym, &usym))
@@ -1234,8 +1289,8 @@ XPointer	client_data;
      *  Thai Input sequence check
      */
     isc_mode = IC_IscMode(ic);
-    if (!IC_GetPreviousChar(ic, previous_char)) previous_char = ' ';
-    if (!THAI_isaccepted(buf[0],previous_char, isc_mode)) {
+    if (!(previous_char = IC_GetPreviousChar(ic))) previous_char = ' ';
+    if (!THAI_isaccepted(buf[0], previous_char, isc_mode)) {
         /* reject character */
         XBell(ev->xkey.display, BellVolume);
         return True;

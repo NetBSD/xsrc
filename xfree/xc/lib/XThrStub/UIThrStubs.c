@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/XThrStub/UIThrStubs.c,v 3.2 2000/10/24 18:07:37 dawes Exp $
+ * $XFree86: xc/lib/XThrStub/UIThrStubs.c,v 3.1 2000/02/29 03:09:06 dawes Exp $
  *
  * Copyright (c) 1995 David E. Wexelblat.  All rights reserved
  *

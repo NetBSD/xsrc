@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_reg.h,v 1.1 2000/11/14 17:28:13 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _ARK_REG_H
 #define _ARK_REG_H

@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/control/analyze.c,v 1.3 1998/10/06 10:35:15 dawes Exp $ */
+/* $XFree86$ */
 
 #define _XIEC_ANALYZE
 

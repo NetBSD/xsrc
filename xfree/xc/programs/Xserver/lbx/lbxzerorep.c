@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/lbx/lbxzerorep.c,v 1.2 2000/05/18 23:46:25 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * This module handles zeroing out unused pad bytes in core X replies.

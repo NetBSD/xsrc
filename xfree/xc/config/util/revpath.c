@@ -1,7 +1,7 @@
 /*
  * Copyright 1999 by The XFree86 Project, Inc.
  */
-/* $XFree86: xc/config/util/revpath.c,v 1.2 1999/02/01 11:55:49 dawes Exp $ */
+/* $XFree86: xc/config/util/revpath.c,v 1.1 1999/01/03 03:58:13 dawes Exp $ */
 
 /*
  * Reverse a pathname.  It returns a relative path that can be used to undo

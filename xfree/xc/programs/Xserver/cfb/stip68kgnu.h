@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/stip68kgnu.h,v 3.2 1998/10/04 09:37:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/stip68kgnu.h,v 3.1 1997/02/25 14:19:51 hohndel Exp $ */
 
 /*
  * Stipple stack macro for 68k GCC

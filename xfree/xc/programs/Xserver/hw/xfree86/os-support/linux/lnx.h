@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx.h,v 3.2 2000/02/15 02:00:14 eich Exp $ */
+/* $XFree86: Exp $ */
 
 #ifndef LNX_H_
 #ifdef __alpha__

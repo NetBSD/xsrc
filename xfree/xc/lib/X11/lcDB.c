@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcDB.c,v 3.12 2000/11/28 18:49:41 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcDB.c,v 3.11 2000/01/29 18:58:16 dawes Exp $ */
 
 
 

@@ -2,7 +2,7 @@
 #
 # ucs2any.pl -- Markus Kuhn <mkuhn@acm.org>
 #
-# $XFree86: xc/fonts/util/ucs2any.pl,v 1.3 2000/12/08 16:45:16 dawes Exp $
+# $XFree86$
 #
 # This Perl script allows you to generate from an ISO10646-1 encoded
 # BDF font other BDF fonts in any possible encoding. This way, you can

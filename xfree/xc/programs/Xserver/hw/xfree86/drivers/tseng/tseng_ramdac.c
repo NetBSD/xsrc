@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_ramdac.c,v 1.24 2000/12/06 15:35:25 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_ramdac.c,v 1.21 1998/08/19 07:49:19 dawes Exp $ */
 
 
 
@@ -51,8 +51,6 @@ static unsigned char black_cmap[] =
 static unsigned char white_cmap[] =
 {0xff, 0xff, 0xff};
 
-static int saved_cr;
-static int rmr;
 
 void
 tseng_dactopel(void)
@@ -340,11 +338,12 @@ Check_Tseng_Ramdac(ScrnInfoPtr pScrn)
     int temp;
     int dbyte;
     TsengPtr pTseng = TsengPTR(pScrn);
+    rgb zeros = {0, 0, 0};
 
     PDEBUG("	Check_Tseng_Ramdac\n");
 
-    rmr = inb(RAMDAC_RMR);
-    saved_cr = read_cr();
+    pTseng->dac.rmr = inb(RAMDAC_RMR);
+    pTseng->dac.saved_cr = read_cr();
     cr_saved = TRUE;
 
     /* first see if ramdac type was given in XF86Config. If so, assume that is 
@@ -429,6 +428,7 @@ Check_Tseng_Ramdac(ScrnInfoPtr pScrn)
     pTseng->DacInfo.Dac8Bit = FALSE;
     pTseng->DacInfo.DacPort16 = FALSE;
     pTseng->DacInfo.NotAttCompat = FALSE;	/* default: treat as ATT compatible DAC */
+    pTseng->DacInfo.rgb24packed = zeros;
     pScrn->progClock = FALSE;
     pTseng->ClockChip = -1;
     pTseng->MClkInfo.Programmable = FALSE;
@@ -460,6 +460,9 @@ Check_Tseng_Ramdac(ScrnInfoPtr pScrn)
 	pTseng->MClkInfo.min = 40000;
 	pTseng->MClkInfo.max = 60000;
 	pTseng->DacInfo.DacPort16 = TRUE;
+	pTseng->DacInfo.rgb24packed.red = 0xff;
+	pTseng->DacInfo.rgb24packed.green = 0xff0000;
+	pTseng->DacInfo.rgb24packed.blue = 0xff00;
 	break;
     case ICS5301_DAC:
 	pScrn->progClock = TRUE;
@@ -488,7 +491,7 @@ Check_Tseng_Ramdac(ScrnInfoPtr pScrn)
 	xf86TokenToString(TsengDacTable, pTseng->DacInfo.DacType));
 
     if (cr_saved && pTseng->DacInfo.RamdacShift == 10)
-	write_cr(saved_cr);
+	write_cr(pTseng->dac.saved_cr);
     outb(RAMDAC_RMR, 0xff);
     
     return TRUE;

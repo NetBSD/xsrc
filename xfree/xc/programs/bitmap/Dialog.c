@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/Dialog.c,v 1.2 1999/02/01 11:56:07 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium

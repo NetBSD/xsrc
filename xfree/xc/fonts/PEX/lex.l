@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/fonts/PEX/lex.l,v 3.10 1998/10/02 06:49:06 dawes Exp $ */
+/* $XFree86: xc/fonts/PEX/lex.l,v 3.9 1996/10/17 15:10:45 dawes Exp $ */
 
 
 #include <ctype.h>

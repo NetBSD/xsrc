@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/FreeType/ftutil.c,v 1.11 2000/08/11 21:12:42 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/ftutil.c,v 1.10 1999/10/13 04:20:50 dawes Exp $ */
 
 #ifndef FONTMODULE
 #include <ctype.h>

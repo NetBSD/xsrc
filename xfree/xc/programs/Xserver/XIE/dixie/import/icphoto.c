@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley, Dean Verheiden -- AGE Logic, Inc. April 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/import/icphoto.c,v 3.3 1998/10/25 07:11:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/import/icphoto.c,v 3.2 1998/10/05 13:22:07 dawes Exp $ */
 
 #define _XIEC_ICPHOTO
 

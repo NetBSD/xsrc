@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclPixel.c,v 1.4 1999/12/13 02:12:56 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclPixel.c,v 1.3 1999/09/27 14:59:15 dawes Exp $ */
 
 #include <stdio.h>
 

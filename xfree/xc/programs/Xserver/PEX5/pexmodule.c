@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/PEX5/pexmodule.c,v 1.6 2000/01/25 18:37:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/pexmodule.c,v 1.5 1999/01/26 05:53:47 dawes Exp $ */
 
 #include "xf86Module.h"
 #include "PEX.h"

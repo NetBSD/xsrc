@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. September 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/include/miuncomp.h,v 1.3 1998/10/25 12:47:56 dawes Exp $ */
+/* $XFree86$ */
 
 #define MIUNCOMP_BP_ARGS \
      BytePixel *src, \

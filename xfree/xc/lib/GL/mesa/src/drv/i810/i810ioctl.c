@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810ioctl.c,v 1.4 2000/08/28 02:43:11 tsi Exp $ */
+/* $XFree86$ */
 
 #include <stdio.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/miarc.c,v 3.7 1999/12/27 00:39:56 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miarc.c,v 3.6 1998/10/04 09:39:23 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

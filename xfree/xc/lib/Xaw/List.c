@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/lib/Xaw/List.c,v 1.15 2000/04/04 22:36:42 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/List.c,v 1.14 2000/02/25 23:20:46 dawes Exp $ */
 
 /*
  * List.c - List widget

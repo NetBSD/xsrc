@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dga.c,v 1.3 2000/06/17 00:03:25 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx_dga.c,v 1.2 2000/02/08 17:19:17 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

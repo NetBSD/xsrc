@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc.  May 1993
 
 ******************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/include/sched.h,v 1.3 1998/10/25 12:47:57 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _XIEH_SCHED
 #define _XIEH_SCHED

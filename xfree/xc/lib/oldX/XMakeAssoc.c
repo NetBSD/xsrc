@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/oldX/XMakeAssoc.c,v 1.2 1999/05/23 06:33:35 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Xlibint.h"
 #include "X10.h"

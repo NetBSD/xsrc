@@ -1,3 +1,136 @@
+XFree86 4.0.3 (16 March 2001)
+1278. Fixes for Thai XIM support (#4479, Theppitak Karoonboonyanan).
+1277. Fix XTRAP typo in miinitext.c (Damien Touraine).
+
+XFree86 4.0.2c (15 March 2001)
+1276. Don't build support for loading the Matrox HAL module on platforms
+      other than ix86.  This avoids some problems that show up on Alpha
+      platforms (Jay Estabrook).
+1275. Alias memset and memcpy to xf86memset and xf86memcpy in the loader,
+      which should catch implicit compiler-generated calls to these functions
+      (David Dawes).
+1274. Back out cirrus changes (item 1257) because they are incomplete.
+1273. Fix the `make depend` scripts to honour -U flags and not require a blank
+      for -f flag (Marc La France).
+1272. Update nv driver docs to indicate GeForce3 support (Mark Vojkovich).
+1271. A new (perl) version of the mkhtmlindex script that works better than
+      the shell version (David Dawes).
+1270. Major updates to the XFree86(1) man page (David Dawes).
+
+XFree86 4.0.2b (13 March 2001)
+1269. Only enable Xv support for the 630 in the sis driver (#A.263, Nick Lamb).
+1268. Modify the sis driver to prefer 24bpp framebuffer layout.  Perhaps not
+      all support 32bpp? (#A.263, Nick Lamb).
+1267. Add freetype2 build to stable branch (Keith Packard)
+1266. Fix to xf8_16bpp to handle ChangeWindowAttributes() correctly
+      (Egbert Eich).
+1265. Fixed Linux Alpha model mapping (Jay Estabrook).
+1264. Added support for non-APECS Alphas requiring sparse mapping to
+      FreeBSD port (Egbert Eich).
+1263. Moved options processing in VGA driver to handle vgaClocks option
+      correctly (Egbert Eich).
+1262. Fixed DAC handling in tseng driver, removed last static variables
+      (Egbert Eich).
+1261. Fixed resource registration in tdfx driver (Egbert Eich).
+1260. Savage driver: Added MMIO unmap to PreInit() MMIO map to ScreenInit
+      (Egbert Eich).
+1259. Fixed neomagic driver to keep server from core dumping on 2380
+      chipsets (Egbert Eich).
+1258. Modified handling of planemask register on G100 (Egbert Eich).
+1257. Major update to cirrus driver: Adds DGA, fixes acceleration etc.
+      (Egbert Eich).
+1256. Fix to C&T video driver to dislay colors correctly (Egbert Eich).
+1255. Fix in C&T driver that prevents left half of the screen to be blank
+      (Egbert Eich).
+1254. Fix to prevent server crashes on colormap changes after DGA mode
+      exits (Egbert Eich).
+1253. Updates for Render+Xinerama support (Keith Packard)
+1252. Updates for Hurd support (#A.324, Marcus Brinkmann).
+1251. Fix core dump in XqueueMousePreInit (#A.317, Fiel Cabral).
+1250. Fix a problem with the ThinkingMousePS/2 protocol handling of left
+      movement (#A.292, Ian Remmler).  (This has been in 3.3.x since 3.3.4.)
+1249. Don't try to mmap extra 64K blit window on older trident chips
+      (Alan Hourihane).
+1248. Fix Xnest build problem with newest gcc compilers (Marc La France).
+1247. Updates for console-related FreeBSD system header changes as of 4.1-REL
+      (FreeBSD ports patch-r, patch-s).
+1246. Don't leave free'd vrotate uninitialised in lib/X11/omGeneric.c
+      (FreeBSD ports patch-q).
+1245. Protect #define HasPam in FreeBSD.cf (FreeBSD ports patch-d).
+1244. fix a problem with multi-thread support on OpenBSD (released OpenBSD 
+      versions don't have getpwuid_r) (Matthieu Herrb)
+1243. allow to compile on OpenBSD-current which has completly removed PCVT
+      from its installation. (Matthieu Herrb)
+1242. Fix border garbage for the G400 second head by backing out #4205
+      (David Dawes).
+1241. Fix an Index/DAC register access conflict in glint pm2v, pm3 driver
+      (#A.319, Romain Dolbeau).
+
+XFree86 4.0.2a (28 February 2001)
+1240. Make the stub files that pswrap generates contain the same set of
+      includes as the Adobe version, which fixes problems building
+      standalone DPS clients (#4487, Juliusz Chroboczek).
+1239. Remove an incorrect ifdef in xterm's patch #141 which suppressed
+      overstriking to simulate bold font when xterm was compiled to support
+      wide characters (report/analysis by Adam M Costello
+      <amc@cs.berkeley.edu>, fixes Debian bugs #76404, #77575) (#4494,
+      Thomas Dickey).
+1238. Don't attempt to drive an mga G450 if the hal module isn't available
+      (#4465, David Woodhouse).
+1237. Fix a typo in Xfbdev.man (#4446, Juliusz Chroboczek).
+1236. Fix TrueType font problems in 4.0.2 (#4439, Juliusz Chroboczek).
+1235. Document the "DisplaySize" keyword in the XF86Config man page (#4438,
+      Andrew C. Aitchison).
+1234. Fix a bug in the fonts.sgml doc (#4432, Juliusz Chroboczek).
+1233. Fix a twm segfault if it gets events for buttons > 5 (#4407, 4425,
+      Nathan Hand).
+1232. Updates for Hurd support (#A.209, Marcus Brinkmann).
+1231. Include <time.h> in Xos.h to get struct tm (based on #4464, Mike Harris,
+      and H.J. Lu).
+1230. Add missing Rage 128 PD chip support (Ishikawa Mutsumi).
+1229. Work around compiler-generated call to memcpy in the sis driver
+      (David Dawes).
+1228. Fix the neomagic driver so that it saves/restores the palette (#4452,
+      Ken Hornstein).
+1227. Fix a palette saving bug in the vgahw module (#4452, Ken Hornstein).
+1226. Add support for wsmouse protocol under OpenBSD/i386 (Matthieu Herrb).
+1225. -
+1224. Make acceleration work on the Trident Cyber9388 (Alan Hourihane).
+1223. Make some changes to the clock selection for trident driver
+      (Alan Hourihane).
+1222. Ensure Video is unavailable when no acceleration available in the
+      trident driver (Alan Hourihane).
+1221. Allow xf86ClaimPciSlot to be called with a NULL GDevPtr, as it was
+      previously (Alan Hourihane).
+1220. Correct some problems with xedit c-mode. Fix geometry management
+      incompatibilites with Xaw 6 in the Form widget.
+      Fix problem in libxf86config when comparing float and double and
+      small fix to xf86cfg when converting a HorizSync or VertRefresh
+      specification string to format used internally by libxf86config.
+      Adds dvorak keyboard and fixes Ukranian in rules/xfree86.lst.
+      Fix problems in the xkb interface of xf86cfg and fix autorepeat with
+      MouseKeys, based on patches and suggestion of Stephen Montgomery-Smith
+      (Paulo César Pereira de Andrade).
+1219. Undo s3virge changes in 4.0.2 for Xv support on ViRGE chipsets since
+      they caused problems with plain ViRGE cards.  Xv is still supported
+      for the ViRGE DX (#4414, 4430, Kevin Brosius).
+1218. Fix incorrect driverName fields in the cyrix, i810 and sis drivers.
+      This was causing 'XFree86 -configure' to get the driver name wrong.
+      Also fix the documentation of this field in the DESIGN doc (David Dawes).
+1217. [SECURITY] Fix temp files vulnerabilites in xman on systems with 
+      mkstemp(). (Matthieu Herrb).
+1216. [SECURITY] Fix temp vulnerabilities in Xaw/MultiSrc.c using the technique
+      in patch #4279 (Branden Robinson). Fix temp file vulnerability in
+      gccmakedep based on report from Alan Cox. Fix temp file vulnerability 
+      in Imake.rules, InstallManPageAliases (Matthieu Herrb). 
+1215. Fix Neomagic 2200 screen corruption (Egbert Eich).
+1214. Add an imake control for determining when xload should be installed
+      set-gid (David Dawes).
+1213. Add some imake controls for installing Xkb and app-defaults files
+      in the traditional location rather than under /etc/X11 (Red Hat does
+      that) (David Dawes).
+1212. Misc bindist updates.
+
 XFree86 4.0.2 (18 December 2000)
 1211. Fix a problem introduced recently when using the "ps/2" protocol for
       mice on FreeBSD (David Dawes).
@@ -234,7 +367,7 @@ XFree86 4.0.1h (4 December 2000)
 1087. Status doc updates for Neomagic an NVIDIA (#4334, Andrew C. Aitchison,
       Mark Vojkovich).
 1086. Updated Rage 128 DRI support from the DRI CVS (Gareth Hughes, VA Linux).
-1085. Updates for Hurd support (#A.209, Marcus Brinkmann).
+1085. -
 1084. Bump the minor revisions of libXmu (UTF8_STRING) and libX11
       (Xutf8LookupString).
 1083. Fixes for all known bugs in the CompoundText parser and generator,
@@ -741,7 +874,7 @@ XFree86 4.0.1e (6 November 2000)
  841. Modify the mga/HALlib support to allow it to be selected at
       run-time.  This allows a driver built with HALlib to be used with
       older hardware (like the Millennium, Millennium 2) (#4204,
-      Antii Tapaninen).
+      Antti Tapaninen).
  840. Add config/imake support for Darwin (#4200, Torrey T. Lyons).
  839. Add a driver for the citron touch screen (#4199, Peter Kunzmann).
  838. Fix Html man page install problem (Robin Cutshaw).
@@ -12114,4 +12247,4 @@ XFree86 3.0a (28 April 1994)
 XFree86 3.0 (26 April 1994)
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.1485 2000/12/18 15:55:33 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.1485.2.42 2001/03/16 04:58:43 tsi Exp $

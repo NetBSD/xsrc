@@ -1,5 +1,5 @@
 /* XPM */
-/* $XFree86: xc/programs/xdm/config/XFree86.xpm,v 1.2 1999/03/14 14:39:40 dawes Exp $ */
+/* $XFree86$ */
 static char *XFree86[] = {
 /* width height num_colors chars_per_pixel */
 "   208   105      128            2",

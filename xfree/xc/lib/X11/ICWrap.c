@@ -60,7 +60,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/ICWrap.c,v 1.3 2000/11/29 17:40:23 dawes Exp $ */
+/* $XFree86$ */
 
 #define NEED_EVENTS
 #include "Xlibint.h"

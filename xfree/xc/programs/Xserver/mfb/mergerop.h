@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/mfb/mergerop.h,v 3.10 2000/10/17 16:53:20 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mergerop.h,v 3.9 2000/02/12 03:40:00 dawes Exp $ */
 
 #ifndef _MERGEROP_H_
 #define _MERGEROP_H_

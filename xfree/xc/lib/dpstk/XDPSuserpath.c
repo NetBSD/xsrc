@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dpstk/XDPSuserpath.c,v 1.2 2000/06/07 22:03:01 tsi Exp $ */
+/* $XFree86$ */
 
 #include <DPS/dpsXclient.h>
 #include <DPS/dpsops.h>

@@ -26,7 +26,7 @@
  * Author: Kevin E. Martin <martin@valinux.com>
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmR128.c,v 1.6 2000/12/12 17:17:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmR128.c,v 1.5 2000/12/04 19:21:54 dawes Exp $ */
 
 #ifdef XFree86Server
 # include "xf86.h"

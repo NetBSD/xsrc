@@ -2,7 +2,7 @@ XCOMM $TOG: os2.cf /main/2 1997/08/05 08:51:25 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.31 2000/11/30 23:29:57 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.30 2000/07/07 20:06:56 tsi Exp $
 
 #define OSName           OS/2
 #define OSVendor	 IBM

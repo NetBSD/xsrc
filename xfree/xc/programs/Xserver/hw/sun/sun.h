@@ -13,7 +13,7 @@
  * express or implied warranty.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.10 2000/10/24 18:07:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.9 2000/05/17 19:52:21 dawes Exp $ */
 
 #ifndef _SUN_H_ 
 #define _SUN_H_

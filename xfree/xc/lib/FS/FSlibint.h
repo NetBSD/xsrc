@@ -46,7 +46,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/FS/FSlibint.h,v 3.4 1999/02/19 21:26:52 hohndel Exp $ */
+/* $XFree86: xc/lib/FS/FSlibint.h,v 3.3 1998/10/03 08:41:07 dawes Exp $ */
 
 /*
  * FSlib internal decls

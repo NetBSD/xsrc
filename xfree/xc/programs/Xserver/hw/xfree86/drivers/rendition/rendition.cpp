@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition.cpp,v 1.7 2000/12/12 18:54:31 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/rendition.cpp,v 1.6 2000/12/11 20:18:23 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH RENDITION __drivermansuffix__ "Version 4.0.2"  "XFree86"

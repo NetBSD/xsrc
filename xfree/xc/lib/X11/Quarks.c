@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Quarks.c,v 1.2 1999/05/09 10:49:59 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Xlibint.h"
 #include <X11/Xresource.h>

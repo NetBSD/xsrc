@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/mbWMProps.c,v 1.3 2000/11/29 17:40:24 dawes Exp $ */
+/* $XFree86$ */
 
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>

@@ -4,7 +4,7 @@
 # Created: 1993-05-16
 # Public domain
 
-# $Id: mkinstalldirs,v 1.1.1.1 2001/01/01 12:49:30 veego Exp $
+# $Id: mkinstalldirs,v 1.1.1.2 2001/03/18 17:00:19 veego Exp $
 
 errstatus=0
 

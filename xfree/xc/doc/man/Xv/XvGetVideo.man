@@ -1,5 +1,5 @@
 .TH XvGetVideo 3X 
-.\" $XFree86: xc/doc/man/Xv/XvGetVideo.man,v 1.4 1999/03/02 11:49:14 dawes Exp $
+.\" $XFree86$
 .SH Name
 XvGetVideo \- capture video from a drawable
 .\"

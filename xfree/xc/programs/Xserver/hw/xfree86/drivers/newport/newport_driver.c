@@ -30,7 +30,7 @@
  * Project.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_driver.c,v 1.6 2000/12/14 20:59:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_driver.c,v 1.5 2000/12/09 03:31:36 dawes Exp $ */
 
 /* function prototypes, common data structures & generic includes */
 #include "newport.h"

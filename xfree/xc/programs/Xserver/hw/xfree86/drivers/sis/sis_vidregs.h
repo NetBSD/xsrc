@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vidregs.h,v 1.2 2000/12/04 18:50:01 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef SISREG_H
 #define SISREG_H

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/appgroup.c,v 1.3 2000/08/11 23:59:47 dawes Exp $ */
+/* $XFree86$ */
 /*
 Copyright 1996, 1998  The Open Group
 

@@ -27,7 +27,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/t1stdio.h,v 1.8 1999/08/21 13:47:50 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1stdio.h,v 1.7 1999/05/23 06:33:33 dawes Exp $ */
 /* T1IO FILE structure and related stuff */
 #ifdef XFree86LOADER
 #undef FILE

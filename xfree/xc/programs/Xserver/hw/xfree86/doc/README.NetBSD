@@ -1,24 +1,23 @@
-                     README for XFree86 4.0.2 on NetBSD
+                     README for XFree86 4.0.3 on NetBSD
 
 Rich  Murphey, David Dawes, Marc  Wandschneider, Mark  Weaver, Matthieu Herrb
 
-                      Last modified on: 7 December 2000
+                       Last modified on: 3 March 2001
 
 1.  What and Where is XFree86?
 
-XFree86 is a port of X11R6.4 that supports several versions of Intel-based
-Unix.  It is derived from X386 1.2, which was the X server distributed with
-X11R5.  This release consists of many new features and performance improve-
-ments as well as many bug fixes.
+XFree86 is the Open Source port of X.Org's X11R6.4 release that supports sev-
+eral UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86) operat-
+ing systems on Intel and other platforms.
 
 See the Copyright Notice.
 
 The sources for XFree86 are available by anonymous ftp from:
 
-ftp://ftp.XFree86.org/pub/XFree86/4.0.2
+ftp://ftp.XFree86.org/pub/XFree86/4.0.3
 
-Binaries for NetBSD 1.3 and later are available from:
-ftp://ftp.XFree86.org/pub/XFree86/4.0.2/binaries/NetBSD
+Binaries for NetBSD 1.4 and later are available from:
+ftp://ftp.XFree86.org/pub/XFree86/4.0.3/binaries/NetBSD
 
 A list of mirror sites is provided by http://www.xfree86.org/MIRRORS.shtml
 
@@ -34,7 +33,7 @@ if you have comments or suggestions about this file and we'll revise it.
 
 3.  New OS dependent features
 
-See the Release Notes for non-OS dependent new features in XFree86 4.0.2.
+See the Release Notes for non-OS dependent new features in XFree86 4.0.3.
 
 3.1  New OS dependent features in 4.0.2
 
@@ -77,8 +76,8 @@ Refer to the Installation Document for detailed installation instructions.
 
 5.  Configuring X for Your Hardware
 
-The /etc/XF86Config file tells the X server what kind of monitor, video card
-and mouse you have.  You must create it to tell the server what specific
+The /etc/X11/XF86Config file tells the X server what kind of monitor, video
+card and mouse you have.  You must create it to tell the server what specific
 hardware you have.
 
 You'll need info on your hardware:
@@ -89,6 +88,11 @@ You'll need info on your hardware:
 
    o Your monitor's sync frequencies.
 
+The recommended way to generate an XF86Config file is to use the xf86cfg
+utility.  The xf86config text utility is still there for the (few) cases
+where xf86cfg can't be used. Also, there is a sample file installed as
+/usr/X11R6/lib/X11/XF86Config.eg, which can be used as a starting point.
+
 For details about the XF86Config file format, refer to the XF86Config(5) man-
 ual page.
 
@@ -97,18 +101,19 @@ the xvidtune utility.
 
 5.1  About mouse configuration
 
-The NetBSD pms mouse driver handles PS/2 style mice as Busmouse. Specify the
-protocol as ``busmouse'' in the mouse section of your XF86Config file if
-you're using a PS/2 mouse.
+XFree86 4.0.3 has support for the mouse driver included in the wscons console
+driver introduced by NetBSD 1.4. Specify ``wsmouse'' as the protocol and
+``/dev/wsmouse0'' as the device in /etc/X11/XF86Config if you're using NetBSD
+1.4 or later with a PS/2 mouse.
+
+For older releases, the NetBSD pms mouse driver handles PS/2 style mice as
+Busmouse. Specify the protocol as ``busmouse'' in the mouse section of your
+XF86Config file if you're using a PS/2 mouse with NetBSD 1.3 or former
+releases.
 
 Only standard PS/2 mice are supported by this driver. Newest PS/2 mice that
 send more than three bytes at a time (especially Intellimouse, or MouseMan+
-with a ``3D'' roller) are not supported yet.
-
-XFree86 4.0.2 also has support for the mouse driver included in the new
-wscons console driver introduced by NetBSD 1.4. Specify ``wsmouse'' as the
-protocol and ``/dev/wsmouse0'' as the device in /etc/XF86Config if you're
-using NetBSD 1.4 with wscons.
+with a wheel) are not supported by NetBSD 1.3 and former releases.
 
 See README.mouse  for general instruction on mouse configuration in XFree86.
 
@@ -140,8 +145,8 @@ to:
 
 in /etc/rc.conf.
 
-Under NetBSD 1.4 with the wscons console driver, you must enable a virtual
-console for the X server first. To do this follow these steps:
+Under NetBSD 1.4 and later with the wscons console driver, you must enable a
+virtual console for the X server first. To do this follow these steps:
 
    o Make sure the device file exists. If not, ``cd /dev ; ./MAKEDEV
      wscons''.
@@ -182,9 +187,10 @@ configuration of the server itself is required.
 The pccons driver is the most widely tested and is the console driver con-
 tained in the NetBSD binary distribution's kernels.
 
-The pcvt console driver is bundled with NetBSD. The pcvt X mode is compatible
-with the pccons driver X mode. It offers several virtual consoles and inter-
-national keyboard support. In order to use this driver, change the line:
+The pcvt console driver was bundled with NetBSD until 1.4. The pcvt X mode is
+compatible with the pccons driver X mode. It offers several virtual consoles
+and international keyboard support. In order to use this driver, change the
+line:
 
      device          pc0     at isa? port "IO_KBD" irq 1
 
@@ -194,8 +200,9 @@ to
 
 in your kernel config file, and rebuild and install your kernel.
 
-XFree86 will also run with the wscons console driver in NetBSD 1.4. For now,
-it uses the pcvt compatibility mode, so be sure to have the lines:
+Wscons is the current console driver, included in NetBSD 1.4 and later. For
+now, XFree86 supports wscons using the pcvt compatibility mode, so be sure to
+have the lines:
 
      options         WSDISPLAY_COMPAT_PCVT           # emulate some ioctls
      options         WSDISPLAY_COMPAT_SYSCONS        # emulate some ioctls
@@ -212,14 +219,14 @@ By default NetBSD include the BSD 4.4 kernel security feature that disable
 access to the /dev/mem device when in multi-users mode. But XFree86 servers
 can take advantage (or require) linear access to the display memory.
 
-Most XFree86 4.0.2 card drivers require linear memory access.  There are two
+Most XFree86 4.0.3 card drivers require linear memory access.  There are two
 ways to allow XFree86 to access linear memory:
 
 The first way is to disable the kernel security feature by adding ``option
 INSECURE'' in the kernel configuration file and build a new kernel.
 
 The second way is to install the aperture driver, included in source form in
-xc/programs/Xserver/hw/xfree86/etc/apNetBSD.shar in the XFree86 4.0.2 source
+xc/programs/Xserver/hw/xfree86/etc/apNetBSD.shar in the XFree86 4.0.3 source
 distribution. Unpack it in a new directory of your choice by running:
 
        sh apNetBSD.shar
@@ -318,6 +325,11 @@ adding:
 to xc/config/host.def before rebuilding the server.  This has not been thor-
 oughly tested, except on the macppc.
 
+For the i386, you should include both pcvt and wscons support in order to use
+the pcvt compatibility mode of wscons:
+
+      #define XFree86ConsoleDefines -DPCVT_SUPPORT -DWSCONS_SUPPORT
+
 8.4  Building on other architectures
 
 Note that the NetBSD project has now its own source tree, based on the
@@ -358,7 +370,7 @@ Many thanks to all people who contributed to make XFree86 work on *BSD, in
 particular, David Dawes, Pace Willison, Amancio Hasty, Christoph Robitschko,
 Nate Williams, Rod Grimes, Jack Velte and Michael Smith.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.59 2000/12/12 18:54:29 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.59.2.1 2001/03/04 09:41:30 herrb Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.NetBSD,v 3.75 2000/12/12 19:04:02 dawes Exp $
+$XFree86$

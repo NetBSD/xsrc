@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbrrop.c,v 1.3 2000/02/12 05:43:18 dawes Exp $ */
+/* $XFree86$ */
 
 /* cfb reduced rasterop computations */
 

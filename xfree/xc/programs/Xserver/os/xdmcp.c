@@ -1,5 +1,5 @@
 /* $XConsortium: xdmcp.c /main/34 1996/12/02 10:23:29 lehors $ */
-/* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.13 2000/02/08 17:19:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.12 1999/02/24 03:21:58 dawes Exp $ */
 /*
  * Copyright 1989 Network Computing Devices, Inc., Mountain View, California.
  *

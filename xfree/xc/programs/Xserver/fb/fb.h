@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fb.h,v 1.22 2000/11/02 16:33:26 tsi Exp $
+ * $XFree86: xc/programs/Xserver/fb/fb.h,v 1.21 2000/10/23 21:16:45 tsi Exp $
  *
  * Copyright © 1998 Keith Packard
  *

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/Login.c,v 3.11 2000/09/19 12:46:23 eich Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/Login.c,v 3.8 2000/06/14 00:16:15 dawes Exp $ */
 
 /*
  * xdm - display manager daemon

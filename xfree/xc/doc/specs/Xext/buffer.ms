@@ -1,5 +1,5 @@
 .\" $TOG: buffer.ms /main/9 1997/11/04 17:55:08 kaleb $
-.\" $XFree86: xc/doc/specs/Xext/buffer.ms,v 1.3 2000/03/03 23:16:24 dawes Exp $
+.\" $XFree86$
 .TL
 Extending X for Double-Buffering, Multi-Buffering, and Stereo
 .AU

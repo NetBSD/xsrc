@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbzerarc.c,v 3.1 1998/10/04 09:37:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbzerarc.c,v 3.0 1996/06/29 09:05:57 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/X11/TextToStr.c,v 1.3 1998/10/03 08:41:23 dawes Exp $ */
+/* $XFree86: xc/lib/X11/TextToStr.c,v 1.2 1998/06/28 08:41:32 dawes Exp $ */
 
 #include <X11/Xlibint.h>
 #include <X11/Xatom.h>

@@ -1,7 +1,7 @@
 #ifndef _glxbuf_h_
 #define _glxbuf_h_
 
-/* $XFree86: xc/programs/Xserver/GL/glx/glxbuf.h,v 1.2 1999/06/14 07:31:25 dawes Exp $ */
+/* $XFree86$ */
 /*
 ** The contents of this file are subject to the GLX Public License Version 1.0
 ** (the "License"). You may not use this file except in compliance with the

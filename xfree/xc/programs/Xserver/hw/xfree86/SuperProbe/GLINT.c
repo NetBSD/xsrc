@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/GLINT.c,v 3.3 2000/08/11 17:27:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/GLINT.c,v 3.2 1999/11/19 13:54:14 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by Dirk Hohndel <hohndel@xfree86.org>
  *

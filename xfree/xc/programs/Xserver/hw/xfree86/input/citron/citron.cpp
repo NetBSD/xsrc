@@ -1,6 +1,6 @@
 .\" Copyright (c) 2000 Peter Kunzmann <support@@citron.de>
 .\"
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/citron/citron.cpp,v 1.4 2000/12/17 22:27:40 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/citron/citron.cpp,v 1.3 2000/12/12 18:35:42 dawes Exp $
 .\"
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'

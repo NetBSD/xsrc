@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imLcIc.c,v 1.3 2000/11/28 18:49:36 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imLcIc.c,v 1.2 2000/02/18 16:23:11 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xlib.h>

@@ -32,7 +32,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsAttVal.c,v 1.3 1999/03/02 11:49:25 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Ps.h"
 #include "AttrValid.h"

@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlibint.h,v 3.15 2000/02/08 17:18:43 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlibint.h,v 3.14 2000/01/29 18:58:13 dawes Exp $ */
 
 #ifndef _XLIBINT_H_
 #define _XLIBINT_H_ 1

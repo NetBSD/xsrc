@@ -67,7 +67,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpblend.c,v 3.3 1998/10/05 13:22:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpblend.c,v 3.2 1998/10/04 09:36:29 dawes Exp $ */
 
 #define _XIEC_MPBLEND
 #define _XIEC_PBLEND

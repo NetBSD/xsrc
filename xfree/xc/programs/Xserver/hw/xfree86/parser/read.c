@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/read.c,v 1.17 2000/12/06 15:35:32 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/read.c,v 1.14 2000/11/02 19:10:58 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/ungrdev.c,v 3.1 1998/10/04 09:37:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/ungrdev.c,v 3.0 1996/03/29 22:14:15 dawes Exp $ */
 
 /***********************************************************************
  *

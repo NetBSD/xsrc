@@ -4,7 +4,7 @@
    Written by Mark Vojkovich (mvojkovi@ucsd.edu)
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/shadowfb/shadow.c,v 1.10 2000/02/08 13:13:33 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/shadowfb/shadow.c,v 1.8 2000/01/21 01:12:21 dawes Exp $ */
 
 #include "X.h"
 #include "Xproto.h"

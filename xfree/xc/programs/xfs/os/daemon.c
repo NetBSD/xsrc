@@ -37,7 +37,7 @@ from the X Consortium.
 #else
 #include <sys/ioctl.h>
 #endif
-#if defined(__osf__) || defined(linux) || defined(MINIX)
+#if defined(__osf__) || defined(linux) || defined(MINIX) || defined(__GNU__)
 #define setpgrp setpgid
 #endif
 #ifdef hpux

@@ -48,7 +48,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/XawIm.c,v 1.11 2000/09/05 19:51:16 mvojkovi Exp $ */
+/* $XFree86: xc/lib/Xaw/XawIm.c,v 1.10 2000/06/13 23:15:48 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.62 2000/09/22 23:41:01 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.60 2000/06/30 19:06:56 keithp Exp $ */
 
 #include "Xfuncproto.h"
 #include "Xmd.h"

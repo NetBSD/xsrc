@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_warp.c,v 1.5 2000/11/02 19:10:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_warp.c,v 1.4 2000/09/26 15:57:12 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

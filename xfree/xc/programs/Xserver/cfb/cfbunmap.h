@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbunmap.h,v 1.5 1999/12/13 02:13:07 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbunmap.h,v 1.4 1998/11/28 10:42:52 dawes Exp $ */
 /*
  * Copyright (C) 1994-1998 The XFree86 Project, Inc.  All Rights Reserved.
  *

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/Imakefile,v 1.2 1998/07/25 16:55:43 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/Imakefile,v 1.1.2.1 1998/07/03 13:43:45 dawes Exp $
 
 INCLUDES = -I../../../SuperProbe
 

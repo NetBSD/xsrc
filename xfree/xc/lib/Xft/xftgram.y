@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftgram.y,v 1.2 2000/11/30 23:30:00 dawes Exp $
+ * $XFree86: xc/lib/Xft/xftgram.y,v 1.1 2000/11/29 08:39:23 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *

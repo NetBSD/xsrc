@@ -3,7 +3,7 @@ XCOMM platform:  $TOG: sun.cf /main/176 1997/12/09 17:27:51 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/sun.cf,v 3.54 2000/12/11 22:34:21 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/sun.cf,v 3.53 2000/08/11 19:51:01 dawes Exp $
 
 #ifndef OSName
 # define OSName		DefaultOSName

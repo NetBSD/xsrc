@@ -5,7 +5,7 @@ COMMENT from an ISO10646-1 encoded source BDF font.
 COMMENT ucs2any.pl by Markus Kuhn <mkuhn@acm.org>, 2000.
 COMMENT Id: 6x9.bdf,v 1.22 2000-09-02 18:25:06+01 mgk25 Exp mgk25 $
 COMMENT Send bug reports to Markus Kuhn <mkuhn@acm.org>
-COMMENT $XFree86: xc/fonts/bdf/misc/6x9-L1.bdf,v 1.1 2000/12/08 19:37:46 dawes Exp $
+COMMENT $XFree86$
 FONT -Misc-Fixed-Medium-R-Normal--9-90-75-75-C-60-ISO8859-1
 SIZE 9 75 75
 FONTBOUNDINGBOX 6 9 0 -2

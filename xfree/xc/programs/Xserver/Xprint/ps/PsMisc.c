@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsMisc.c,v 1.4 1998/10/04 09:37:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsMisc.c,v 1.3 1996/12/31 07:06:29 dawes Exp $ */
 
 #include "Xos.h"	/* for SIGCLD on pre-POSIX systems */
 #include <stdio.h>

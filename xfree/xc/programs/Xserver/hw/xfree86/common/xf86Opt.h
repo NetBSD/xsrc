@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Opt.h,v 1.10 2000/08/04 16:13:25 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Opt.h,v 1.8 1999/05/22 09:59:49 dawes Exp $ */
 
 /* Option handling things that ModuleSetup procs can use */
 

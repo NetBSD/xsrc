@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgabstore.c,v 1.2 1998/07/25 16:58:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgabstore.c,v 1.1.2.1 1997/07/16 10:36:49 hohndel Exp $ */
 /*
  * This file was derived from cfbbstore.c.
  */

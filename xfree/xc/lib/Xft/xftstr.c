@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftstr.c,v 1.2 2000/12/14 23:03:57 keithp Exp $
+ * $XFree86$
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *

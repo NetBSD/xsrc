@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/ICElib.h,v 3.2 1998/10/03 08:41:09 dawes Exp $ */
+/* $XFree86: xc/lib/ICE/ICElib.h,v 3.1 1996/12/23 05:58:57 dawes Exp $ */
 
 #ifndef _ICELIB_H_
 #define _ICELIB_H_

@@ -26,7 +26,7 @@
  *   by Andreas Stolcke <stolcke@icsi.berkeley.edu>
  */
 
-/* $XFree86: xc/programs/xdm/sessreg.c,v 3.15 2000/11/28 17:25:13 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/sessreg.c,v 3.14 2000/11/06 19:24:10 dawes Exp $ */
 
 /*
  * sessreg

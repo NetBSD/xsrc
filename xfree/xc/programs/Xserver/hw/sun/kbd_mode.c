@@ -27,7 +27,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/sun/kbd_mode.c,v 3.7 2000/05/17 19:52:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/kbd_mode.c,v 3.6 1998/10/04 09:38:33 dawes Exp $ */
 
 #ifndef lint
 static  char sccsid[] = "@(#)kbd_mode.c 7.1 87/04/13";

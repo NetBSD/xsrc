@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/events.c,v 3.5 1999/03/07 11:40:52 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/events.c,v 3.4 1998/12/20 11:58:16 dawes Exp $ */
 
 #include	<swaprep.h>
 

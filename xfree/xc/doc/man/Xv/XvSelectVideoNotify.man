@@ -1,5 +1,5 @@
 .TH XvSelectVideoNotify 3X
-.\" $XFree86: xc/doc/man/Xv/XvSelectVideoNotify.man,v 1.4 1999/03/02 11:49:17 dawes Exp $
+.\" $XFree86$
 .SH Name
 XvSelectVideoNotify \- enable or disable VideoNotify events
 .\"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Mach.c,v 3.5 1997/03/07 00:28:57 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Mach.c,v 3.4 1996/12/23 06:31:23 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by Robert V. Baron 
  *			<Robert.Baron@ernst.mach.cs.cmu.edu>

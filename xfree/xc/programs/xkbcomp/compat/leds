@@ -1,6 +1,6 @@
 // Use keyboard LEDs to show alternative group
 //
-// $XFree86: xc/programs/xkbcomp/compat/leds,v 1.1 2000/08/26 15:11:29 dawes Exp $
+// $XFree86$
 
 partial xkb_compatibility "scroll" {
    indicator "Scroll Lock" {

@@ -44,7 +44,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/t1intf.h,v 1.5 1999/08/21 13:47:49 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1intf.h,v 1.4 1999/05/15 12:10:07 dawes Exp $ */
 
 #ifdef BUILDCID
 #include "AFM.h"

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/xwin/InitOutput.c,v 1.2 2000/11/28 16:10:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/InitOutput.c,v 1.1 2000/08/10 17:40:37 dawes Exp $ */
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 #include <X11/Xwinsock.h>

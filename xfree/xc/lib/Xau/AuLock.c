@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xau/AuLock.c,v 3.2 2000/02/14 17:43:40 robin Exp $ */
+/* $XFree86: xc/lib/Xau/AuLock.c,v 3.1 1998/10/03 08:41:58 dawes Exp $ */
 
 #include <X11/Xauth.h>
 #include <X11/Xos.h>

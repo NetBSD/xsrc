@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loader.h,v 1.23 2000/11/13 23:09:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loader.h,v 1.22 2000/09/26 15:57:18 tsi Exp $ */
 
 /*
  *

@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/dispatch.c,v 3.7 1999/12/13 03:04:55 robin Exp $ */
+/* $XFree86: xc/programs/xfs/difs/dispatch.c,v 3.6 1999/08/22 07:19:45 dawes Exp $ */
 
 #include	<dispatch.h>
 #include	<swapreq.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xprint/AttrValid.c,v 1.3 1999/12/16 02:26:23 robin Exp $ */
+/* $XFree86: $ */
 
 /* $XConsortium: AttrValid.c /main/2 1996/11/16 15:23:21 rws $ */
 /*

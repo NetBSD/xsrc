@@ -21,7 +21,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/lbx/lbxcmap.c,v 1.6 2000/05/18 23:46:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxcmap.c,v 1.5 1998/11/15 11:11:18 dawes Exp $ */
 
 #include <sys/types.h>
 #define NEED_REPLIES

@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * $NCDId: @(#)os.h,v 4.2 1991/05/10 07:59:16 lemke Exp $
  *
  */
-/* $XFree86: xc/programs/xfs/include/os.h,v 3.9 2000/11/30 23:30:09 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/os.h,v 3.8 2000/02/13 06:15:45 dawes Exp $ */
 
 #ifndef	_OS_H_
 #define	_OS_H_

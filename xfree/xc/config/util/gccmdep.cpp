@@ -3,7 +3,7 @@ XCOMM!/bin/sh
 XCOMM
 XCOMM makedepend which uses 'gcc -M'
 XCOMM
-XCOMM $XFree86: xc/config/util/gccmdep.cpp,v 3.5 2000/11/14 21:59:21 dawes Exp $
+XCOMM $XFree86: xc/config/util/gccmdep.cpp,v 3.5.2.2 2001/02/26 16:49:45 dawes Exp $
 XCOMM
 XCOMM Based on mdepend.cpp and code supplied by Hongjiu Lu <hjl@nynexst.com>
 XCOMM
@@ -30,10 +30,10 @@ while [ $# != 0 ]; do
 	endmarker=
     else
 	case "$1" in
-	    -D*|-I*)
+	    -D*|-I*|-U*)
 		args="$args '$1'"
 		;;
-	    -g|-O*)
+	    -g*|-O*)
 		;;
 	    *)
 		if [ "$endmarker"x = x ]; then
@@ -48,12 +48,17 @@ XCOMM ignore these flags
 			    magic_string="$2"
 			    shift
 			    ;;
-			-f-)
-			    makefile="-"
-			    ;;
-			-f)
-			    makefile="$2"
-			    shift
+			-f*)
+			    if [ "$1" = "-f-" ]; then
+				makefile="-"
+			    elif [ "$1" = "-f" ]; then
+				makefile="$2"
+				shift
+			    else
+				echo "$1" | sed 's/^\-f//' >${TMP}arg
+				makefile="`cat ${TMP}arg`"
+				rm -f ${TMP}arg
+			    fi
 			    ;;
 			--*)
 			    endmarker=`echo $1 | sed 's/^\-\-//'`

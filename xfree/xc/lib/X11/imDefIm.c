@@ -31,7 +31,7 @@ OF THIS SOFTWARE.
                                makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imDefIm.c,v 1.7 2000/12/04 18:49:22 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imDefIm.c,v 1.6 2000/11/28 18:49:35 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #define NEED_EVENTS

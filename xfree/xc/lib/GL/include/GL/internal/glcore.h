@@ -1,7 +1,7 @@
 #ifndef __gl_core_h_
 #define __gl_core_h_
 
-/* $XFree86: xc/lib/GL/include/GL/internal/glcore.h,v 1.5 1999/06/14 07:23:42 dawes Exp $ */
+/* $XFree86$ */
 /*
 ** The contents of this file are subject to the GLX Public License Version 1.0
 ** (the "License"). You may not use this file except in compliance with the

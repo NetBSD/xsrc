@@ -25,7 +25,7 @@
  *	     Mitani Hiroshi <hmitani@drl.mei.co.jp>
  *	     David Thomas <davtom@dream.org.uk>.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_cursor.c,v 1.3 2000/03/31 20:13:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_cursor.c,v 1.2 2000/02/14 19:20:52 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86PciInfo.h"

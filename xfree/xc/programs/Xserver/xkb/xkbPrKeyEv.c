@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbPrKeyEv.c,v 3.7 2000/04/04 19:25:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbPrKeyEv.c,v 3.6 1997/07/12 12:09:42 hohndel Exp $ */
 
 #include <stdio.h>
 #include <math.h>

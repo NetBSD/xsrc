@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Convert.c,v 3.4 1998/12/20 11:57:07 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Convert.c,v 3.3 1998/10/03 09:06:50 dawes Exp $ */
 
 /*
 

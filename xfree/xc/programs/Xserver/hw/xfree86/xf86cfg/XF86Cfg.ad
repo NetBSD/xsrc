@@ -26,7 +26,7 @@
 !!
 !! Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
 !!
-!! $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/XF86Cfg.ad,v 1.6 2000/11/30 20:55:16 paulo Exp $
+!! $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/XF86Cfg.ad,v 1.7 2000/12/27 23:37:36 paulo Exp $
 !!
 
 *Form.background:			gray85
@@ -1338,7 +1338,7 @@ Press in the <b>Enable ???</b> label to set specific options.\
 <tt><b>Apply changes</b></tt> button there is no way to undo your changes.</font>
 
 
-*Expert.geometry:				800x600
+*Expert.geometry:				640x460
 *Expert*vpane.min:				64
 *Expert*vpane.max:				64
 *Expert*vpane.showGrip:				False
@@ -1767,3 +1767,4 @@ lines		-1,0,0,0,0,-1
 *expert*tree*buffers.flagsL.fromVert:		size
 *expert*tree*buffers.flags.fromVert:		size
 *expert*tree*buffers.flags.fromHoriz:		flagsL
+*Expert*close.label:				Close

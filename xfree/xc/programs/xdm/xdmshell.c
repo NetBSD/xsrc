@@ -32,7 +32,7 @@ in this Software without prior written authorization from The Open Group.
  * bring down X when you are finished.
  */
 
-/* $XFree86: xc/programs/xdm/xdmshell.c,v 3.4 1998/10/10 15:25:40 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/xdmshell.c,v 3.3 1998/10/04 09:41:00 dawes Exp $ */
 
 #include <stdio.h>
 #include "dm.h"

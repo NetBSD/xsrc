@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/stdPci.c,v 3.2 1999/12/06 03:55:13 robin Exp $ */
+/* $XFree86: $ */
 
 #include "X.h"
 #include "xf86.h"

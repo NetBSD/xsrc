@@ -24,7 +24,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  * 
- * $XFree86: xc/programs/Xserver/hw/xfree86/parser/DRI.c,v 1.8 2000/11/30 20:45:33 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/parser/DRI.c,v 1.6 2000/05/18 00:37:30 dawes Exp $
  * 
  */
 

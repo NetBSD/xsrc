@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xfs/include/difsutils.h,v 1.3 1999/08/21 13:48:51 dawes Exp $
+ * $XFree86: xc/programs/xfs/include/difsutils.h,v 1.2 1999/03/07 11:41:00 dawes Exp $
  */
 
 /************************************************************

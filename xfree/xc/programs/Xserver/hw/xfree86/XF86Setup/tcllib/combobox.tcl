@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/combobox.tcl,v 3.6 1996/12/27 06:54:54 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/combobox.tcl,v 3.5 1996/08/26 10:47:54 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

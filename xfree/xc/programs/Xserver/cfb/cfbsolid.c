@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbsolid.c,v 3.4 2000/02/12 03:39:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbsolid.c,v 3.3 1998/10/04 13:23:58 dawes Exp $ */
 
 
 #include "X.h"

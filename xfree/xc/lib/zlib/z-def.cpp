@@ -44,4 +44,4 @@ EXPORTS
 	zlibVersion @ 41 ;
 #endif
 
-/* $XFree86: xc/lib/zlib/z-def.cpp,v 1.1 2000/08/09 23:40:16 dawes Exp $ */
+/* $XFree86$ */

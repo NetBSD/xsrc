@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_dga.c,v 1.8 2000/02/14 19:20:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_dga.c,v 1.7 2000/02/11 22:35:56 dawes Exp $ */
 /*
  * file: apm_dga.c
  * ported from s3virge, ported from mga

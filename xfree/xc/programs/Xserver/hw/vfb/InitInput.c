@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/vfb/InitInput.c,v 3.5 2000/08/10 17:40:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/vfb/InitInput.c,v 3.4 1998/10/04 09:38:50 dawes Exp $ */
 
 #include "X11/X.h"
 #define NEED_EVENTS

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_cursor.c,v 1.20 2000/04/04 19:25:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_cursor.c,v 1.19 2000/02/08 13:13:10 eich Exp $ */
 
 /*
  * Copyright 1994  The XFree86 Project

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.147 2000/12/07 20:26:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.146 2000/12/06 20:22:36 eich Exp $ */
 
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.

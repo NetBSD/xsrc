@@ -240,7 +240,7 @@ CleanUpChild (void)
 	setsid();
 #else
 #if defined(SYSV) || defined(SVR4) || defined(__CYGWIN__)
-#if !(defined(SVR4) && defined(i386)) || defined(SCO325) || defined(__GNU__)
+#if !(defined(SVR4) && defined(i386)) || defined(SCO325)
 	setpgrp ();
 #endif
 #else

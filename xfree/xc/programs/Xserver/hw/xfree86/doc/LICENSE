@@ -2,14 +2,14 @@
 
                              The XFree86 Project
 
-                                    1999
+                                 March 2001
 
 1.  XFree86 License
 
 XFree86 code without an explicit copyright is covered by the following copy-
 right/license:
 
-Copyright (C) 1994-2000 The XFree86 Project, Inc.  All Rights Reserved.
+Copyright (C) 1994-2001 The XFree86 Project, Inc.  All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -592,7 +592,7 @@ For further information, contact:
 
 <sales@yandy.com> or <design@bigelowandholmes.com>
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.7 2000/03/06 22:59:23 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.7.2.1 2001/03/16 16:12:06 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/LICENSE,v 1.11 2000/12/01 19:47:45 dawes Exp $
+$XFree86$

@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/include.c,v 3.4 1998/10/05 13:21:49 dawes Exp $ */
+/* $XFree86$ */
 
 
 #include "def.h"

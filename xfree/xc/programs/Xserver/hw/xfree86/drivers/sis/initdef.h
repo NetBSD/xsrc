@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/initdef.h,v 1.4 2000/12/02 01:16:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/initdef.h,v 1.3 2000/09/22 11:35:46 alanh Exp $ */
 
 #define ULONG                   unsigned long
 #define USHORT                  unsigned short

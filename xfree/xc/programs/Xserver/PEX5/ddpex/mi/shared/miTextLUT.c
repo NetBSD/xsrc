@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miTextLUT.c,v 1.7 1998/10/04 09:34:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miTextLUT.c,v 1.6 1998/07/26 13:14:10 dawes Exp $ */
 
 #include "miLUT.h"
 #include "miWks.h"

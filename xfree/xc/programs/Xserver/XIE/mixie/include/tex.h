@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. April 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/include/tex.h,v 1.3 1998/10/25 12:47:57 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _XIEH_TEX
 #define _XIEH_TEX

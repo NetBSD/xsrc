@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/linux/linux.c,v 1.4 2000/08/28 02:43:14 tsi Exp $
+ * $XFree86$
  *
  * Copyright © 1999 Keith Packard
  *

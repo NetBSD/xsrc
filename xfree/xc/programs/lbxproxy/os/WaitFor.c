@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/WaitFor.c,v 1.5 1998/10/04 09:40:28 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/WaitFor.c,v 1.4 1998/08/20 13:59:49 dawes Exp $ */
 
 /*****************************************************************
  * OS Dependent input routines:

@@ -1,5 +1,5 @@
 .\" Header:   //Mercury/Projects/archives/XFree86/4.0/siliconmotion.cpp-arc   1.4   29 Nov 2000 14:12:56   Frido  $
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/siliconmotion.cpp,v 1.4 2000/12/12 18:54:31 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/siliconmotion.cpp,v 1.3 2000/12/11 20:12:34 dawes Exp $
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH siliconmotion __drivermansuffix__ "Version 4.0.2"  "XFree86"

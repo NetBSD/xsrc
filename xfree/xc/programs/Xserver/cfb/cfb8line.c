@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  *
- * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.13 2000/10/24 18:07:46 dawes Exp $
+ * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.12 2000/09/26 15:57:03 tsi Exp $
  * Jeff Anton'x fixes: cfb8line.c   97/02/07
  */
 

@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/StColor.c,v 1.2 1999/05/09 10:50:13 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Xlibint.h"
 

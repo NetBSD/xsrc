@@ -67,7 +67,7 @@ terms and conditions:
 	Dean && Ben - various additions to handle different techniques
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mephoto.c,v 3.4 1998/10/25 07:11:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mephoto.c,v 3.3 1998/10/05 13:22:31 dawes Exp $ */
 
 #define _XIEC_MEPHOTO
 #define _XIEC_EPHOTO

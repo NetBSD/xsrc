@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mutouch/xf86MuTouch.c,v 1.12 2000/06/07 22:03:10 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mutouch/xf86MuTouch.c,v 1.11 2000/05/24 01:11:10 dawes Exp $ */
 
 /*
  *******************************************************************************

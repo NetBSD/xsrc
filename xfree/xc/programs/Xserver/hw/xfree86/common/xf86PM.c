@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PM.c,v 3.4 2000/12/08 20:13:34 eich Exp $ */
+/* $XFree86: Exp $ */
 
 
 #include "X.h"

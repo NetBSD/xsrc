@@ -1,7 +1,7 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Config.cpp,v 1.13 2000/12/11 20:18:01 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Config.cpp,v 1.13.2.1 2001/02/28 20:15:48 dawes Exp $
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH XF86Config __filemansuffix__ "Version 4.0.2"  "XFree86"
+.TH XF86Config __filemansuffix__ "Version 4.0.3"  "XFree86"
 .SH NAME
 XF86Config - Configuration File for XFree86
 .SH DESCRIPTION
@@ -929,6 +929,11 @@ is added to the end of the line.  The data given here is used by the X
 server to determine if video modes are within the specifications of the
 monitor.  This information should be available in the monitor's handbook.
 If this entry is omitted, a default range of 43-72Hz is used.
+.TP 7
+.BI "DisplaySize  " "width height"
+This optional entry gives the width and height, in millimetres, of the
+picture area of the monitor. If given this is used to calculate the
+horizontal and vertical pitch (DPI) of the screen.
 .TP 7
 .BI "Gamma  " "gamma-value"
 .TP 7

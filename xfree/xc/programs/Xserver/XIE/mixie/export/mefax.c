@@ -67,7 +67,7 @@ terms and conditions:
 	Ben Fahy -- AGE Logic, Inc. Oct, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mefax.c,v 3.4 1998/10/25 07:11:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/mefax.c,v 3.3 1998/10/05 13:22:30 dawes Exp $ */
 
 #define _XIEC_MEPHOTO
 #define _XIEC_EPHOTO

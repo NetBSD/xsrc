@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/misym.c,v 1.32 2000/09/20 02:05:11 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/misym.c,v 1.31 2000/05/18 23:21:41 dawes Exp $ */
 
 /*
  *

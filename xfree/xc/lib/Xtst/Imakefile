@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/11 1995/12/08 11:56:32 dpw $
-XCOMM $XFree86: xc/lib/Xtst/Imakefile,v 1.2 1998/12/20 11:57:12 dawes Exp $
+XCOMM $XFree86$
 #define DoNormalLib NormalLibXtst
 #define DoSharedLib SharedLibXtst
 #define DoExtraLib SharedLibXtst

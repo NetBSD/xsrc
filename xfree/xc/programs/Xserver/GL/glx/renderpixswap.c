@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/renderpixswap.c,v 1.4 1999/07/18 08:34:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/renderpixswap.c,v 1.3 1999/06/14 07:31:34 dawes Exp $ */
 /*
 ** The contents of this file are subject to the GLX Public License Version 1.0
 ** (the "License"). You may not use this file except in compliance with the

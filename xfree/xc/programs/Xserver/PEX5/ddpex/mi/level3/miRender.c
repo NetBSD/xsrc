@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level3/miRender.c,v 3.5 1998/10/04 09:34:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level3/miRender.c,v 3.4 1998/07/26 13:14:00 dawes Exp $ */
 
 #include "miLUT.h"
 #include "dipex.h"

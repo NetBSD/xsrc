@@ -27,7 +27,7 @@
  *	DESCRIPTION
  *		Public include file for X Color Management System
  */
-/* $XFree86: xc/lib/X11/Xcms.h,v 1.4 1999/03/14 03:21:04 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xcms.h,v 1.3tsi Exp $ */
 #ifndef _XCMS_H_
 #define _XCMS_H_
 

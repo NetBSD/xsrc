@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/bitfun.c,v 1.3 1998/10/06 10:35:19 dawes Exp $ */
+/* $XFree86$ */
 
 #define _XIEC_MPBITFUN
 

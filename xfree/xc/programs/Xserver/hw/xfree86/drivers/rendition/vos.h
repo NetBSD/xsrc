@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vos.h,v 1.8 2000/03/31 20:13:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vos.h,v 1.7 2000/02/25 21:03:06 dawes Exp $ */
 /*
  * file vos.h
  *

@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/hurd_video.c,v 1.4 2000/11/14 18:20:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/hurd/hurd_video.c,v 1.3 1999/04/29 12:24:52 dawes Exp $ */
 
 #include <mach.h>
 #include <device/device.h>

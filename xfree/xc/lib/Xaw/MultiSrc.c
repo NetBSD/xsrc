@@ -67,6 +67,10 @@ in this Software without prior written authorization from The Open Group.
 #include "XawI18n.h"
 #include "Private.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #define MAGIC_VALUE	((XawTextPosition)-1)
 #define streq(a, b)	(strcmp((a), (b)) == 0)
 
@@ -1158,7 +1162,9 @@ StorePiecesInString(MultiSrcObject src)
 static FILE *
 InitStringOrFile(MultiSrcObject src, Bool newString)
 {
-    char *open_mode = NULL;
+    mode_t open_mode;
+    const char *fdopen_mode = NULL;
+    int fd;
     FILE *file;
     char fileName[TMPSIZ];
     Display *d = XtDisplayOfObject((Widget)src);
@@ -1208,7 +1214,8 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
 		XtErrorMsg("NoFile", "multiSourceCreate", "XawError",
 			   "Creating a read only disk widget and no file specified.",
 			   NULL, 0);
-	    open_mode = "r";
+	    open_mode = O_RDONLY;
+	    fdopen_mode = "r";
 	    break;
 	case XawtextAppend:
 	case XawtextEdit:
@@ -1218,10 +1225,18 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
 
 		(void)tmpnam((char *)src->multi_src.string);
 		src->multi_src.is_tempfile = True;
-		open_mode = "w";
+		open_mode = O_WRONLY | O_CREAT | O_EXCL;
+		fdopen_mode = "w";
 	    }
-	    else
-		open_mode = "r+";
+	    else {
+/* O_NOFOLLOW is a BSD & Linux extension */
+#ifdef O_NOFOLLOW
+		open_mode = O_RDWR | O_NOFOLLOW;
+#else
+		open_mode = O_RDWR; /* unsafe; subject to race conditions */
+#endif
+		fdopen_mode = "r+";
+	    }
 	    break;
 	default:
 	    XtErrorMsg("badMode", "multiSourceCreate", "XawError",
@@ -1243,12 +1258,14 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
     }
     
     if (!src->multi_src.is_tempfile) {
-	if ((file = fopen((char *)src->multi_src.string, open_mode)) != NULL) {
-	    (void)fseek(file, 0, 2);
-            src->multi_src.length = ftell(file);
-	    return file;
+	if ((fd = open((char *)src->multi_src.string, open_mode, 0666)) != 0) {
+	    if ((file = fdopen(fd, fdopen_mode)) != NULL) {
+		(void)fseek(file, 0, SEEK_END);
+		src->multi_src.length = (XawTextPosition)ftell(file);
+		return(file);
+	    }
 	}
-	else {
+	{
 	    String params[2];
 	    Cardinal num_params = 2;
 	    
@@ -1258,7 +1275,7 @@ InitStringOrFile(MultiSrcObject src, Bool newString)
 			    "openError", "multiSourceCreate", "XawWarning",
 			    "Cannot open file %s; %s", params, &num_params);
 	}
-    } 
+    }
     src->multi_src.length = 0;
     return (NULL);
 }

@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.80 2000/06/20 19:38:04 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.78 2000/03/24 18:12:38 tsi Exp $ */
 
 #include "X.h"
 #include "os.h"

@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dpstk/FontSB.c,v 1.2 2000/06/07 22:02:59 tsi Exp $ */
+/* $XFree86$ */
 
 #include <stdlib.h>
 #include <unistd.h>

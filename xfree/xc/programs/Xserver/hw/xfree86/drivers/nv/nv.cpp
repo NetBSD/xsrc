@@ -1,7 +1,7 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv.cpp,v 1.11 2000/12/11 20:18:21 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv.cpp,v 1.11.2.1 2001/03/15 19:26:21 mvojkovi Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH NV __drivermansuffix__ "Version 4.0.2"  "XFree86"
+.TH NV __drivermansuffix__ "Version 4.0.3"  "XFree86"
 .SH NAME
 nv \- NVIDIA video driver
 .SH SYNOPSIS
@@ -14,12 +14,14 @@ nv \- NVIDIA video driver
 .fi
 .SH DESCRIPTION
 .B nv 
-is an XFree86 driver for NVIDIA video cards.  The driver is fully
-accelerated, and provides support for the following framebuffer depths:
-8, 15, 16 (except Riva128) and 24.  All
-visual types are supported for depth 8, TrueColor
-visuals are supported for the other depths.  Multi-head configurations
-are supported.
+is  an  XFree86  driver  for  NVIDIA video cards.  The
+driver is fully accelerated and provides support  for  the
+following  framebuffer  depths: 8, 15, 16 (except Riva128)
+and 24.  All visual  types  are  supported  for  depth  8,
+TrueColor  and  DirectColor  visuals are supported for the
+other depths with the exception of the Riva128 which  only
+supports  TrueColor  in  the  higher  depths.   Multi-head
+configurations are supported.
 .SH SUPPORTED HARDWARE
 The
 .B nv
@@ -36,6 +38,12 @@ NV5
 .TP 22
 .B GeForce 256, QUADRO 
 NV10
+.TP 22
+.B GeForce2, QUADRO2
+NV11 & NV15
+.TP 22
+.B GeForce3
+NV20
 .SH CONFIGURATION DETAILS
 Please refer to XF86Config(__filemansuffix__) for general configuration
 details.  This section only covers configuration details specific to this

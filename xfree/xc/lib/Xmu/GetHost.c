@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/GetHost.c,v 3.5 1998/10/03 09:06:29 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/GetHost.c,v 3.4 1998/09/05 06:36:14 dawes Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium

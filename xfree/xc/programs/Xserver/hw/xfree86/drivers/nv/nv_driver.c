@@ -24,7 +24,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_driver.c,v 1.53 2000/12/14 16:33:09 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_driver.c,v 1.62 2001/02/23 01:19:09 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -35,9 +35,6 @@
 #include "nvvga.h"
 
 #include "xf86int10.h"
-#ifdef RENDER
-#include "picturestr.h"
-#endif
 
 /*
  * Forward definitions for the functions that make up the driver.
@@ -80,10 +77,7 @@ static Bool	NVModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 
 DriverRec NV = {
         VERSION,
-	"nv",
-#if 0
-        "accelerated driver for NVIDIA RIVA 128, TNT and TNT2 cards",
-#endif
+	NV_DRIVER_NAME,
         NVIdentify,
         NVProbe,
 	NVAvailableOptions,
@@ -96,6 +90,8 @@ static SymTabRec NVChipsets[] = {
     { NV_CHIP_RIVA128,    "RIVA128" },
     { NV_CHIP_TNT,        "RIVATNT" },
     { NV_CHIP_TNT2,       "RIVATNT2" },
+    { NV_CHIP_TNT2_A,     "RIVATNT2 (A)" },
+    { NV_CHIP_TNT2_B,     "RIVATNT2 (B)" },
     { NV_CHIP_UTNT2,      "RIVATNT2 (Ultra)" },
     { NV_CHIP_VTNT2,      "RIVATNT2 (Vanta)" },
     { NV_CHIP_UVTNT2,     "RIVATNT2 M64" },
@@ -111,6 +107,10 @@ static SymTabRec NVChipsets[] = {
     { NV_CHIP_GEFORCE2MXDDR, "GeForce2 MX DDR"},
     { NV_CHIP_QUADRO2MXR,   "Quadro 2 MXR"},
     { NV_CHIP_GEFORCE2GO,   "GeForce 2 Go"},
+    { NV_CHIP_GEFORCE3,     "GeForce3"},
+    { NV_CHIP_GEFORCE3_1,   "GeForce3 (rev 1)"},
+    { NV_CHIP_GEFORCE3_2,   "GeForce3 (rev 2)"},
+    { NV_CHIP_GEFORCE3_3,   "GeForce3 (rev 3)"},
     {-1,                        NULL }
 };
 
@@ -118,6 +118,8 @@ static PciChipsets NVPciChipsets[] = {
     { NV_CHIP_RIVA128,          NV_CHIP_RIVA128,        RES_SHARED_VGA },
     { NV_CHIP_TNT,              NV_CHIP_TNT,            RES_SHARED_VGA },
     { NV_CHIP_TNT2,             NV_CHIP_TNT2,           RES_SHARED_VGA },
+    { NV_CHIP_TNT2_A,           NV_CHIP_TNT2_A,         RES_SHARED_VGA },
+    { NV_CHIP_TNT2_B,           NV_CHIP_TNT2_B,         RES_SHARED_VGA },
     { NV_CHIP_UTNT2,            NV_CHIP_UTNT2,          RES_SHARED_VGA },
     { NV_CHIP_VTNT2,            NV_CHIP_VTNT2,          RES_SHARED_VGA },
     { NV_CHIP_UVTNT2,           NV_CHIP_UVTNT2,         RES_SHARED_VGA },
@@ -133,6 +135,10 @@ static PciChipsets NVPciChipsets[] = {
     { NV_CHIP_GEFORCE2MXDDR,    NV_CHIP_GEFORCE2MXDDR,  RES_SHARED_VGA },
     { NV_CHIP_QUADRO2MXR,       NV_CHIP_QUADRO2MXR,     RES_SHARED_VGA },
     { NV_CHIP_GEFORCE2GO,       NV_CHIP_GEFORCE2GO,     RES_SHARED_VGA },
+    { NV_CHIP_GEFORCE3,         NV_CHIP_GEFORCE3,       RES_SHARED_VGA },
+    { NV_CHIP_GEFORCE3_1,       NV_CHIP_GEFORCE3_1,     RES_SHARED_VGA },
+    { NV_CHIP_GEFORCE3_2,       NV_CHIP_GEFORCE3_2,     RES_SHARED_VGA },
+    { NV_CHIP_GEFORCE3_3,       NV_CHIP_GEFORCE3_3,     RES_SHARED_VGA },
     { -1,                       -1,                     RES_UNDEFINED  }
 };
 
@@ -156,9 +162,7 @@ static const char *vgahwSymbols[] = {
     "vgaHWFreeHWRec",
     "vgaHWSaveScreen",
     "vgaHWddc1SetSpeed",
-#ifdef DPMSExtension
     "vgaHWDPMSSet",
-#endif
     NULL
 };
 
@@ -177,9 +181,7 @@ static const char *cfbSymbols[] = {
 static const char *fbSymbols[] = {
     "fbScreenInit",
     "fbBres",
-#ifdef RENDER
     "fbPictureInit",
-#endif
     NULL
 };
 #endif
@@ -850,6 +852,7 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 
     pNv->Primary = xf86IsPrimaryPci(pNv->PciInfo);
 
+#ifndef __alpha__
     /* Initialize the card through int10 interface if needed */
 #if 0
      if ( !pNv->Primary &&)
@@ -861,6 +864,7 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
          xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Initializing int10\n");
          pNv->pInt = xf86InitInt10(pNv->pEnt->index);
      }
+#endif
    
     {
         resRange vgaio[] =      { {ResShrIoBlock,0x3B0,0x3BB},
@@ -1149,6 +1153,8 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
             
         case NV_CHIP_TNT:
         case NV_CHIP_TNT2:
+        case NV_CHIP_TNT2_A:
+        case NV_CHIP_TNT2_B:
         case NV_CHIP_UTNT2:
         case NV_CHIP_VTNT2:
         case NV_CHIP_UVTNT2:
@@ -1168,6 +1174,12 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
         case NV_CHIP_QUADRO2MXR:
 	case NV_CHIP_GEFORCE2GO:
             NV10Setup(pScrn);
+	    break;
+	case NV_CHIP_GEFORCE3:
+	case NV_CHIP_GEFORCE3_1:
+	case NV_CHIP_GEFORCE3_2:
+	case NV_CHIP_GEFORCE3_3:
+            NV20Setup(pScrn);
             break;
     }
 
@@ -1252,6 +1264,7 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
             break;
         case NV_ARCH_04:
         case NV_ARCH_10:
+        case NV_ARCH_20:
             pNv->FbUsableSize -= 128 * 1024;
             break;
     }
@@ -1517,6 +1530,8 @@ NVModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     if ( pNv->Restore )
         (*pNv->Restore)(pScrn, vgaReg, nvReg, FALSE);
 
+    NVResetGraphics(pScrn);
+
     vgaHWProtect(pScrn, FALSE);
 
     pNv->CurrentLayout.mode = mode;
@@ -1632,14 +1647,11 @@ NVScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     /* Setup the visuals we support. */
 
-#ifndef NV_USE_FB
-      if (pScrn->bitsPerPixel > 8) {
+    if ((pScrn->bitsPerPixel > 8) && (pNv->riva.Architecture == NV_ARCH_03)) {
           if (!miSetVisualTypes(pScrn->depth, TrueColorMask, pScrn->rgbBits,
                                 pScrn->defaultVisual))
               return FALSE;
-    } else 
-#endif
-    {
+    } else {
           if (!miSetVisualTypes(pScrn->depth, 
                                 miGetDefaultVisualMask(pScrn->depth),
                                 pScrn->rgbBits, pScrn->defaultVisual))
@@ -1697,10 +1709,8 @@ NVScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
             ret = fbScreenInit(pScreen, FBStart, pScrn->virtualX,
                                pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
                                displayWidth, pScrn->bitsPerPixel);
-#ifdef RENDER
             if (ret)
                 fbPictureInit (pScreen, 0, 0);
-#endif
             break;
 #endif           
         default:
@@ -1768,10 +1778,10 @@ NVScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     
     /* Initialize colormap layer.  
 	Must follow initialization of the default colormap */
-    if(!xf86HandleColormaps(pScreen, 256, 
-		(pNv->riva.Architecture == 3) ? 6 : 8,
-		(pNv->FBDev ? fbdevHWLoadPalette : NVdac->LoadPalette), 
-		NULL, CMAP_RELOAD_ON_MODE_SWITCH))
+    if(!xf86HandleColormaps(pScreen, 256, 8,
+	(pNv->FBDev ? fbdevHWLoadPalette : NVdac->LoadPalette), 
+	NULL, CMAP_RELOAD_ON_MODE_SWITCH | 
+  	((pNv->riva.Architecture != NV_ARCH_03) ? CMAP_PALETTED_TRUECOLOR : 0)))
 	return FALSE;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "- Palette loaded\n"));
@@ -1793,12 +1803,10 @@ NVScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	ShadowFBInit(pScreen, refreshArea);
     }
 
-#ifdef DPMSExtension
     /* Call the vgaHW DPMS function directly.
        XXX There must be a way to get all the DPMS modes. */
     xf86DPMSInit(pScreen, vgaHWDPMSSet, 0);
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "- DPMS set up\n"));
-#endif
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "- Color maps etc. set up\n"));
     

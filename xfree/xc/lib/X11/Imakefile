@@ -3,7 +3,7 @@ XCOMM $TOG: Imakefile /main/196 1997/05/20 10:06:09 kaleb $
 
 
 
-XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.34 2000/11/28 18:49:25 dawes Exp $
+XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.33 2000/11/28 17:25:07 dawes Exp $
 #define DoNormalLib NormalLibX11
 #define DoSharedLib SharedLibX11
 #define DoExtraLib SharedLibX11

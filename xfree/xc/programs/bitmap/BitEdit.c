@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/BitEdit.c,v 1.3 1999/02/01 11:56:05 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/BitEdit.c,v 1.2 1998/12/20 11:58:04 dawes Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium

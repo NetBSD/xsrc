@@ -13,7 +13,7 @@
  @end
 
 ***************************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/HALlib/binding.h,v 1.5 2000/12/06 20:39:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/HALlib/binding.h,v 1.3 2000/10/24 22:45:08 dawes Exp $ */
 
 #ifndef _BINDING
 #define _BINDING

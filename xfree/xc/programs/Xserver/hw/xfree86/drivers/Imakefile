@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/Imakefile,v 1.20 2000/11/28 20:59:17 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/Imakefile,v 1.19 2000/11/02 21:29:29 tsi Exp $
 
 #define IHaveModules
 #include <Server.tmpl>

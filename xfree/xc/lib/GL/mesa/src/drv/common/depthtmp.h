@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/common/depthtmp.h,v 1.4 2000/12/04 22:43:20 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/common/depthtmp.h,v 1.3 2000/12/04 21:00:59 dawes Exp $ */
 
 #ifndef DBG
 #define DBG 0

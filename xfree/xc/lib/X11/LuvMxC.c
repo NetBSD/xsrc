@@ -33,7 +33,7 @@
  *		querying routine.
  *
  */
-/* $XFree86: xc/lib/X11/LuvMxC.c,v 1.2 1999/05/09 10:49:47 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Xlibint.h"
 #include "Xcmsint.h"

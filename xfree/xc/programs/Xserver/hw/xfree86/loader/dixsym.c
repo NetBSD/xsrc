@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/dixsym.c,v 1.35 2000/11/22 07:19:44 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/dixsym.c,v 1.33 2000/09/20 02:05:11 keithp Exp $ */
 
 
 /*

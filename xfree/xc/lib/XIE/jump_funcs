@@ -1,5 +1,5 @@
 # $XConsortium: jump_funcs,v 1.2 94/12/07 10:44:37 kaleb Exp $
-# $XFree86: xc/lib/XIE/jump_funcs,v 3.1 1995/01/28 15:43:09 dawes Exp $
+# $XFree86: xc/lib/XIE/jump_funcs,v 3.0 1994/04/28 12:31:33 dawes Exp $
 00000000 T _XieAbort            libXIE         abort
 00000000 T _XieAwait            libXIE         await
 00000000 T _XiePutClientData    libXIE         clientdata

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxdd.c,v 1.3 2000/12/08 19:36:23 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxdd.c,v 1.2 2000/11/08 05:02:52 dawes Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128accel.c,v 1.7 2000/12/06 01:07:34 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128accel.c,v 1.6 2000/11/01 23:33:06 robin Exp $ */
 
 /*
  * Copyright 1997-2000 by Robin Cutshaw <robin@XFree86.Org>

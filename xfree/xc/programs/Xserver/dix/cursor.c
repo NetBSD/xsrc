@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/cursor.c,v 3.3 1998/10/04 09:38:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/cursor.c,v 3.2 1998/09/13 05:45:43 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

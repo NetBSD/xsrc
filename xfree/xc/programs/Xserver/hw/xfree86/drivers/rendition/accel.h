@@ -3,7 +3,7 @@
  *
  * header file for accel.c
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/accel.h,v 1.3 1999/11/19 13:54:44 hohndel Exp $ */
+/* $XFree86$ */
 
 #ifndef __ACCEL_H__
 #define __ACCEL_H__

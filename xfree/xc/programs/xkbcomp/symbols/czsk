@@ -10,7 +10,7 @@
 //
 // This file is distributed without any expressed or implied warranty.
 //
-// $XFree86: xc/programs/xkbcomp/symbols/czsk,v 1.4 2000/06/15 20:34:13 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/czsk,v 1.3 2000/06/14 00:16:16 dawes Exp $
 
 partial default alphanumeric_keys 
 xkb_symbols "us_sk_qwerty" {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/add_window.c,v 1.7 2000/10/24 22:45:14 dawes Exp $ */
+/* $XFree86: xc/programs/twm/add_window.c,v 1.6 1999/02/19 21:27:23 hohndel Exp $ */
 /*****************************************************************************/
 /*
 

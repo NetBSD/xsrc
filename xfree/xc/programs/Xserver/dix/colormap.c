@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/colormap.c,v 3.4 2000/01/22 01:59:55 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/colormap.c,v 3.2 1997/11/16 06:17:54 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

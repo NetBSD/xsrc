@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.29 1999/09/04 13:04:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.28 1999/07/12 08:14:26 dawes Exp $ */
 /*
  * Copyright 1996,1999 by Joseph V. Moss <joe@XFree86.Org>
  *

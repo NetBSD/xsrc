@@ -6,10 +6,10 @@
 <title>README for XFree86 &relvers; on OpenBSD
 <author>
 Matthieu Herrb
-<Date>Last modified on: 2 December 2000
+<Date>Last modified on: 3 March 2000
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.15 2000/12/12 18:54:29 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.15.2.1 2001/03/04 09:41:31 herrb Exp $
 </ident>
 
 <toc>
@@ -18,10 +18,9 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.15 2000/12/12
 <sect>What and Where is XFree86?
 
 <p>
-XFree86 is a port of X11R6.4 that supports several versions of
-Intel-based Unix.  It is derived from X386 1.2, which was the X server
-distributed with X11R5.  This release consists of many new features
-and performance improvements as well as many bug fixes. 
+XFree86 is the Open Source port of X.Org's X11R6.4 release that supports
+several UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86)
+operating systems on Intel and other platforms.
 
 See the <htmlurl url="COPYRIGHT.html" name="Copyright Notice">.
 
@@ -56,6 +55,13 @@ this file and we'll revise it.
 <p>
 See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
 non-OS dependent new features in XFree86 &relvers;.
+
+<sect1>New OS dependent features in 4.0.3
+<p>
+<itemize>
+<item>Support for the wscons console driver in post 2.8 OpenBSD.
+<item>A fix for multi-threaded libraries support. 
+</itemize>
 
 <sect1>New OS dependent features in 4.0.2
 <p>
@@ -115,7 +121,7 @@ for detailed installation instructions.
 
 <sect>Configuring X for Your Hardware
 <p>
-The <tt>/etc/XF86Config</tt> file tells the X server what kind of
+The <tt>/etc/X11/XF86Config</tt> file tells the X server what kind of
 monitor, 
 video card and mouse you have.  You <em/must/ create it to tell the
 server what specific hardware you have.
@@ -126,13 +132,13 @@ You'll need info on your hardware:
 <item>The video card's chipset (e.g. ET4000, S3, etc).
 <item>Your monitor's sync frequencies.
 </itemize>
-<!--
+
 The recommended way to generate an <tt/XF86Config/ file is to use the
-<tt/XF86Setup/ utility.  The xf86config text utility is still there
-for the (few) cases where XF86Setup can't be used. Also, there is a
+<tt/xf86cfg/ utility.  The xf86config text utility is still there
+for the (few) cases where xf86cfg can't be used. Also, there is a
 sample file installed as <tt>/usr/X11R6/lib/X11/XF86Config.eg</tt>,
 which can be used as a starting point.
--->
+
 
 For details about the <tt/XF86Config/ file format, refer to the
 <em>XF86Config(5)</em> manual page.
@@ -143,9 +149,11 @@ modes with the <tt>xvidtune</tt> utility.
 <sect1>About mouse configuration
 
 <p>
-If your serial mouse does not work try using <tt>kermit</tt> or
-<tt>tip</tt> to connect to the mouse serial port and verify that it
-does indeed generate characters.
+XFree86 &relvers; has support for the mouse driver included in
+the new <bf/wscons/ console driver introduced by OpenBSD-current after
+2.8. Specify ``<tt/wsmouse/'' as the protocol and
+``<tt>/dev/wsmouse0</tt>'' as the  device in <tt>/etc/X11/XF86Config</tt>
+if you're using OpenBSD-current with a PS/2 mouse.
 <p>
 The OpenBSD pms driver  provides both ``raw'' and ``cooked''
 (translated) modes.  ``raw'' mode does not do protocol translation, so
@@ -213,9 +221,13 @@ console drivers: pcvt and pccons. They are detected at runtime and no
 configuration of the server itself is required.
 
 <p>
-The pcvt console driver is the default in OpenBSD.  It offers
-several virtual consoles and international keyboard support. 
+The pcvt console driver is the default in OpenBSD up to OpenBSD 2.8.
+It offers several virtual consoles and international keyboard support.
 
+<p>
+OpenBSD-current after 2.8 has switched to the wscons console
+driver. This console driver has a pcvt compatibility mode for X
+support. 
 
 <sect1>Aperture Driver
 <p>
@@ -271,6 +283,11 @@ diff -u -r1.14 mem.c
  			return -1;
 </verb></tscreen>
 
+<p>In post 2.8 OpenBSD-current, a modified version of this patch has
+been integrated. You should set 
+<tscreen><verb>machdep.allowaperture=2</verb></tscreen>
+in <tt>/etc/sysctl.conf</tt> in order to achieve this. See the xf86(4)
+manual page for details. 
 <p>
 Another (less recommended) way to enable linear memory and I/O ports
 access is to disable the kernel security feature by adding ``option
@@ -314,11 +331,6 @@ changes to the <tt/xf86site.def/, type ``<tt>./mkmf</tt>'' and
 ``<tt/make/'' to link the server.  See <tt>/usr/X11R6/lib/Server/README</tt>
 for more info.
 
-<!-- out of date
-See <htmlurl url="INSTALL.html" name="INSTALL"> for instructions on
-unbundling and building the source distribution.
--->
-
 You should configure the distribution by editing
 <tt>xc/config/cf/host.def</tt>  before compiling.  To compile the
 sources, invoke ``<tt/make World/'' in the xc directory.
@@ -351,6 +363,11 @@ by adding:
 to <tt>xc/config/host.def</tt> before rebuilding the server. 
 This has not been thoroughly tested, except on the macppc. 
 
+For the i386, you should include both pcvt and wscons support in order
+to use the pcvt compatibility mode of wscons:
+<tscreen><verb>
+ #define XFree86ConsoleDefines -DPCVT_SUPPORT -DWSCONS_SUPPORT
+</verb></tscreen>
 
 
 <sect1>Building on other architectures<label id="otherarch">
@@ -360,7 +377,6 @@ XFree86 should also compiles on other OpenBSD architectures. However,
 please note that 3.9.x snapshots have only been tested on the i386 for 
 now. 
 
-<!--
 <p> 
 Note that OpenBSD project has now its own source tree, based on
 the XFree86 source tree, with some local modifications. You may want
@@ -368,7 +384,6 @@ to start with this tree to rebuild from sources.  The OpenBSD X11
 source tree is available by anoncvs from all OpenBSD anoncvs
 servers. See <htmlurl url="http://www.openbsd.org/anoncvs.html"
 name="http://www.openbsd.org/anoncvs.html"> for details on anoncvs.
--->
 
 <sect>Building New X Clients
 

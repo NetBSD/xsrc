@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dps/dpsXclient.c,v 1.3 2000/09/26 15:56:59 tsi Exp $ */
+/* $XFree86$ */
 
 #include <stdlib.h>
 #include <unistd.h>	/* sleep() */

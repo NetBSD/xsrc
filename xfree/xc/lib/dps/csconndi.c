@@ -47,7 +47,7 @@
  *  
  * Author:  Adobe Systems Incorporated and MIT X Consortium
  */
-/* $XFree86: xc/lib/dps/csconndi.c,v 1.5 2000/08/23 21:06:19 dawes Exp $ */
+/* $XFree86: xc/lib/dps/csconndi.c,v 1.4 2000/08/09 23:40:14 dawes Exp $ */
 
 #if defined(sun) && !defined(SVR4)
 #define memmove(t,f,c) bcopy(f,t,c)

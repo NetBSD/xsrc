@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbigblt8.c,v 1.3 1998/10/04 09:37:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbigblt8.c,v 1.2 1998/03/20 21:05:03 hohndel Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"

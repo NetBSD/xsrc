@@ -43,7 +43,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spencode.c,v 1.5 1999/01/31 04:59:26 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spencode.c,v 1.4 1998/10/03 09:07:11 dawes Exp $ */
 
 #include	"spint.h"
 

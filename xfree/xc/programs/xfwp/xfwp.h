@@ -21,7 +21,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/xfwp/xfwp.h,v 1.8 1999/12/27 00:40:13 robin Exp $ */
+/* $XFree86: xc/programs/xfwp/xfwp.h,v 1.7 1999/03/02 11:49:40 dawes Exp $ */
 
 #ifndef _XFWP_H
 #define _XFWP_H

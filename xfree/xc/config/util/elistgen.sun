@@ -15,7 +15,7 @@ XCOMM    linker to reconstruct the shared library, libfoo.so.
 XCOMM
 XCOMM ########################################################################
 XCOMM
-XCOMM $XFree86: xc/config/util/elistgen.sun,v 1.6 2000/02/09 17:10:25 dawes Exp $
+XCOMM $XFree86$
 
 XCOMM Utility programs
 FILTER=CXXFILT			# C++ symbol demangler

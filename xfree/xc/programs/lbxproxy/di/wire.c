@@ -41,7 +41,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.9 2000/06/07 22:03:15 tsi Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.8 1999/12/27 00:40:02 robin Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>

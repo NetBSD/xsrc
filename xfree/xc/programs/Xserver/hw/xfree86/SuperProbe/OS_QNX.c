@@ -23,7 +23,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from Orest Zborowski.
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_QNX.c,v 1.2 1999/09/25 12:39:42 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_QNX.c,v 1.0tsi Exp $
  */
 
 #include "Probe.h"

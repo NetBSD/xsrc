@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/CrGlCur.c,v 1.2 2000/01/29 18:58:09 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Xlibint.h"
 

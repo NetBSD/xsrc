@@ -30,7 +30,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
   ----------------------------------------------------------------------- **/
-/* $XFree86: xc/programs/xwd/list.c,v 3.3 1999/03/07 11:41:36 dawes Exp $ */
+/* $XFree86: xc/programs/xwd/list.c,v 3.2 1998/10/04 09:42:01 dawes Exp $ */
 
 #include <stdio.h>
 

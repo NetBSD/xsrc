@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/abort.c,v 1.5 1999/12/27 00:40:13 robin Exp $ */
+/* $XFree86: xc/programs/xieperf/abort.c,v 1.4 1999/03/02 11:49:41 dawes Exp $ */
 
 #include "xieperf.h"
 #include <stdio.h>

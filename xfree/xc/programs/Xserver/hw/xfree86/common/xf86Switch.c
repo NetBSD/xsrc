@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Switch.c,v 3.8 1999/05/07 02:56:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Switch.c,v 3.7 1999/04/04 09:33:50 dawes Exp $ */
 
 #if !defined(sun) || defined(i386)
 #include "xf86.h"

@@ -24,7 +24,7 @@
  *    John Carmack <johnc@idsoftware.com>
  *    Keith Whitwell <keithw@precisioninsight.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.h,v 1.4 2000/09/24 13:51:07 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.h,v 1.3 2000/06/22 16:59:24 tsi Exp $ */
 
 #ifndef MGATEX_INC
 #define MGATEX_INC

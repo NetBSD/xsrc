@@ -81,12 +81,11 @@ void InitOFile(void)
 #endif /* __MACH__ */
     printf("#include %s\n", FRIENDSFILE);
     printf("#include <string.h>\n");
-    if (special_h == 0) {
-	printf("#include \"%spsops.h\"\n\n", dpsops ? "d" : "");
-    } else {
+    outlineno += 3;  /* UPDATE this if you add more prolog */
+    if (special_h) {
 	printf("#include \"%s\"\n\n", special_h);
+        outlineno ++;
     }
-    outlineno += 4;  /* UPDATE this if you add more prolog */
     printf("#line 1 \"%s\"\n",ifile);
     outlineno++;
 }

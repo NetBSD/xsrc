@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.42 2000/11/06 19:24:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.41 2000/11/02 02:51:21 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

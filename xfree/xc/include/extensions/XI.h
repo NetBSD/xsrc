@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/include/extensions/XI.h,v 1.3 1998/12/06 13:30:37 dawes Exp $ */
+/* $XFree86$ */
 
 /* Definitions used by the server, library and client */
 

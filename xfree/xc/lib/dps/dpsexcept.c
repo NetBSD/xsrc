@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/lib/dps/dpsexcept.c,v 1.2 2000/02/18 12:18:55 tsi Exp $ */
+/* $XFree86: $ */
 
 /*
 Original version: Jeffrey Mogul, Stanford, 18 February 1983

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xhost/xhost.c,v 3.12 2000/08/10 17:40:41 dawes Exp $ */
+/* $XFree86: xc/programs/xhost/xhost.c,v 3.11 1999/03/14 03:22:29 dawes Exp $ */
 
 #if defined(TCPCONN) || defined(STREAMSCONN) || defined(AMTCPCONN)
 #define NEEDSOCKETS

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_stubs.c,v 3.3 1996/12/27 07:04:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_stubs.c,v 3.2 1996/10/17 15:19:44 dawes Exp $ */
 /*
  * (c) Copyright 1996 by Holger Veit
  *			<Holger.Veit@gmd.de>

@@ -23,7 +23,7 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/programs/Xserver/mi/migc.h,v 1.5 1998/10/04 09:39:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/migc.h,v 1.4 1998/04/05 02:28:45 dawes Exp $ */
 
 extern void miChangeGC(
 #if NeedFunctionPrototypes

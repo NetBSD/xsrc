@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsSpans.c,v 1.6 1999/12/13 02:13:02 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsSpans.c,v 1.5 1999/09/25 14:36:49 dawes Exp $ */
 
 #include "Ps.h"
 #include "gcstruct.h"

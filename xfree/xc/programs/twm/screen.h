@@ -28,7 +28,7 @@ in this Software without prior written authorization from The Open Group.
  * 11-3-88 Dave Payne, Apple Computer			File created
  *
  ***********************************************************************/
-/* $XFree86: xc/programs/twm/screen.h,v 1.3 1999/03/02 11:49:28 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _SCREEN_
 #define _SCREEN_

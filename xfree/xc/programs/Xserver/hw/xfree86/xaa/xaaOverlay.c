@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaOverlay.c,v 1.12 2000/09/28 20:48:01 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaOverlay.c,v 1.8 1999/03/28 15:33:03 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

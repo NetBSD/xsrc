@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/darwin/Xdarwin.cpp,v 1.1 2000/12/11 20:29:39 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/darwin/Xdarwin.man,v 1.2 2000/12/01 19:47:38 dawes Exp $
 .\"
 .TH XDARWIN 1 "Release 4.0.2" "XFree86"
 .SH NAME

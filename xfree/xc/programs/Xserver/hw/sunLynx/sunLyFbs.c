@@ -2,7 +2,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyFbs.c,v 3.4 1998/10/04 09:38:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyFbs.c,v 3.3 1998/06/27 12:53:57 hohndel Exp $ */
 
 /*
  * This is sunFbs.c modified for LynxOS

@@ -18,7 +18,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  * */
-/* $XFree86: xc/programs/twm/icons.h,v 1.3 1999/02/20 15:07:24 hohndel Exp $ */
+/* $XFree86: $ */
 
 /**********************************************************************
  *

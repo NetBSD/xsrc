@@ -27,7 +27,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/cfb/cfbcmap.c,v 3.12 2000/02/12 03:39:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbcmap.c,v 3.11 1999/04/11 13:10:39 dawes Exp $ */
 
 
 #include "X.h"

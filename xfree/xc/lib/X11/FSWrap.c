@@ -52,7 +52,7 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/X11/FSWrap.c,v 1.4 1999/05/09 10:49:18 dawes Exp $ */
+/* $XFree86: xc/lib/X11/FSWrap.c,v 1.3 1998/10/03 08:41:17 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

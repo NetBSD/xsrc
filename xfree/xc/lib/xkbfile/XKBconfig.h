@@ -27,7 +27,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/XKBconfig.h,v 3.4 2000/06/19 15:00:44 tsi Exp $ */
+/* $XFree86: xc/lib/xkbfile/XKBconfig.h,v 3.3 2000/06/14 18:20:33 dawes Exp $ */
 
 
 typedef struct _XkbConfigRtrn	*XkbConfigRtrnPtr;

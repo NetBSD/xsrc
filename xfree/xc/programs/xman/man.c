@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/man.c,v 1.5 2000/08/01 18:53:07 dawes Exp $ */
+/* $XFree86: xc/programs/xman/man.c,v 1.4 2000/06/13 23:15:53 dawes Exp $ */
 
 
 #include "globals.h"

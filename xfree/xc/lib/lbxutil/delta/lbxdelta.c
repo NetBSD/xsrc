@@ -22,7 +22,7 @@
  *
  * Author:  Dale Tonogai, Network Computing Devices
  */
-/* $XFree86: xc/lib/lbxutil/delta/lbxdelta.c,v 1.5 2000/06/07 22:03:02 tsi Exp $ */
+/* $XFree86: xc/lib/lbxutil/delta/lbxdelta.c,v 1.4 2000/05/18 23:46:16 dawes Exp $ */
 
 #include "X.h"
 #include "Xproto.h"

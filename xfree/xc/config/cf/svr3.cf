@@ -2,7 +2,7 @@ XCOMM $XConsortium: svr3.cf /main/1 1996/10/31 14:47:37 kaleb $
 
 
 
-XCOMM $XFree86: xc/config/cf/svr3.cf,v 3.13 2000/03/21 19:56:59 dawes Exp $
+XCOMM $XFree86: xc/config/cf/svr3.cf,v 3.12 2000/02/29 03:08:56 dawes Exp $
 
 #ifndef HasGcc
 #define HasGcc      YES

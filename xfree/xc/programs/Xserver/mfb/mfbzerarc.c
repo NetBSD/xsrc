@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbzerarc.c,v 3.4 2000/02/12 03:40:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbzerarc.c,v 3.3 1998/10/04 09:39:18 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group

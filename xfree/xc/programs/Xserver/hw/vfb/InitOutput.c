@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/vfb/InitOutput.c,v 3.14 2000/11/16 19:44:52 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/vfb/InitOutput.c,v 3.12 2000/08/10 17:40:31 dawes Exp $ */
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 #include <X11/Xwinsock.h>

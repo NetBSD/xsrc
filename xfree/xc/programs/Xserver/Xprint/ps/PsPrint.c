@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPrint.c,v 1.6 1999/12/13 02:13:02 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPrint.c,v 1.5 1998/10/04 09:37:29 dawes Exp $ */
 
 #include <stdio.h>
 #include <string.h>

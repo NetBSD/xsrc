@@ -31,7 +31,7 @@
 
 Notice===
 */
-/* $XFree86: xc/extras/X-TrueType/xttfuncs.c,v 1.8 2000/09/26 15:56:41 tsi Exp $ */
+/* $XFree86: xc/extras/X-TrueType/xttfuncs.c,v 1.7 2000/05/18 23:46:10 dawes Exp $ */
 
 #include "xttversion.h"
 

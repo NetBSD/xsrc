@@ -4,7 +4,7 @@ XCOMM $XConsortium: hpLib.rules /main/16 1996/12/04 11:44:35 swick $
  * HP shared library rules
  */
 
-XCOMM $XFree86: xc/config/cf/hpLib.rules,v 3.3 1999/01/11 05:13:06 dawes Exp $
+XCOMM $XFree86$
 
 #ifndef HasSharedLibraries
 # define HasSharedLibraries YES

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbimggblt.c,v 3.2 1998/10/04 09:39:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbimggblt.c,v 3.1 1998/03/20 21:08:14 hohndel Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 

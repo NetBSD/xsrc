@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_accel.c,v 1.32 2000/08/08 08:58:06 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_accel.c,v 1.29 1999/06/12 07:18:57 dawes Exp $ */
 
 /*
  * ET4/6K acceleration interface.
@@ -558,8 +558,6 @@ Tseng_setup_screencopy(TsengPtr pTseng,
     SET_XYDIR(blit_dir);
 }
 
-static int blitxdir, blitydir;
-
 void
 TsengSetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
     int xdir, int ydir, int rop,
@@ -575,8 +573,8 @@ TsengSetupForScreenToScreenCopy(ScrnInfoPtr pScrn,
 
 /*    ErrorF("C%d ", trans_color); */
 
-    blitxdir = xdir;
-    blitydir = ydir;
+    pTseng->acl_blitxdir = xdir;
+    pTseng->acl_blitydir = ydir;
 
     if (xdir == -1)
 	blit_dir |= 0x1;
@@ -627,14 +625,14 @@ TsengSubsequentScreenToScreenCopy(ScrnInfoPtr pScrn,
      * to be at the other end, so we must be aware of that in our
      * calculations.
      */
-    if (blitydir == -1) {
+    if (pTseng->acl_blitydir == -1) {
 	srcaddr = (y1 + h - 1) * pTseng->line_width;
 	destaddr = (y2 + h - 1) * pTseng->line_width;
     } else {
 	srcaddr = y1 * pTseng->line_width;
 	destaddr = y2 * pTseng->line_width;
     }
-    if (blitxdir == -1) {
+    if (pTseng->acl_blitxdir == -1) {
 	/* Accelerator start address must point to first byte to be processed.
 	 * Depending on the direction, this is the first or the last byte
 	 * in the multi-byte pixel.
@@ -722,8 +720,6 @@ TsengSetupForScanlineImageWrite(ScrnInfoPtr pScrn,
     ACL_SOURCE_Y_OFFSET(pTseng->line_width - 1);
 }
 
-static CARD32 iw_dest, iw_skipleft;
-
 void 
 TsengSubsequentScanlineImageWriteRect(ScrnInfoPtr pScrn,
     int x, int y, int w, int h, int skipleft)
@@ -732,8 +728,8 @@ TsengSubsequentScanlineImageWriteRect(ScrnInfoPtr pScrn,
 
 /*    ErrorF("r%d",h); */
 
-    iw_dest = y * pTseng->line_width + MULBPP(pTseng, x);
-    iw_skipleft = MULBPP(pTseng, skipleft);
+    pTseng->acl_iw_dest = y * pTseng->line_width + MULBPP(pTseng, x);
+    pTseng->acl_skipleft = MULBPP(pTseng, skipleft);
 
     wait_acl_queue(pTseng);
     SET_XY(pTseng, w, 1);
@@ -749,9 +745,10 @@ TsengSubsequentImageWriteScanline(ScrnInfoPtr pScrn,
 
     wait_acl_queue(pTseng);
 
-    ACL_SOURCE_ADDRESS(pTseng->AccelImageWriteBufferOffsets[bufno] + iw_skipleft);
-    START_ACL(pTseng, iw_dest);
-    iw_dest += pTseng->line_width;
+    ACL_SOURCE_ADDRESS(pTseng->AccelImageWriteBufferOffsets[bufno] 
+		       + pTseng->acl_skipleft);
+    START_ACL(pTseng, pTseng->acl_iw_dest);
+    pTseng->acl_iw_dest += pTseng->line_width;
 }
 
 /*

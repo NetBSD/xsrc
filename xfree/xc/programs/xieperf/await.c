@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86: xc/programs/xieperf/await.c,v 3.3 1999/03/02 10:42:07 dawes Exp $ */
+/* $XFree86: xc/programs/xieperf/await.c,v 3.1 1998/10/04 09:41:19 dawes Exp $ */
 
 #ifdef WIN32
 #include <X11/Xthreads.h>

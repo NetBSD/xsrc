@@ -660,4 +660,4 @@ __glXDispSwap_NewList
 __glXDispSwap_PixelStoref
 __glXDispSwap_PixelStorei
 
-/* $XFree86: xc/programs/Xserver/GL/glx/glx-def.cpp,v 1.1 2000/08/10 17:40:29 dawes Exp $ */
+/* $XFree86$ */

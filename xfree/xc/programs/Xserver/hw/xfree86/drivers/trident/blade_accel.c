@@ -23,7 +23,7 @@
  * 
  * Trident Blade3D accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/blade_accel.c,v 1.14 2000/12/06 14:33:59 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/blade_accel.c,v 1.13 2000/12/04 08:46:17 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

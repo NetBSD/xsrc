@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/kbddata.tcl,v 1.1 1999/04/05 07:12:59 dawes Exp $
+# $XFree86$
 #
 # Copyright 1998 by Joseph V. Moss <joe@XFree86.Org>
 #

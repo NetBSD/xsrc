@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Box.c,v 1.13 1999/06/06 08:47:53 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Box.c,v 1.12 1999/05/09 10:51:36 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

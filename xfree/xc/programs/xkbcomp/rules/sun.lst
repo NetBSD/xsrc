@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/rules/sun.lst,v 3.3 2000/12/06 20:18:08 eich Exp $
+// $XFree86: xc/programs/xkbcomp/rules/sun.lst,v 3.2 2000/12/06 15:35:35 eich Exp $
 
 ! model
   type4			Sun Type4

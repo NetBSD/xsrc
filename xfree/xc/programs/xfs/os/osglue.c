@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * $NCDId: @(#)osglue.c,v 4.6 1991/07/09 14:07:30 lemke Exp $
  *
  */
-/* $XFree86: xc/programs/xfs/os/osglue.c,v 3.9 1999/03/07 11:41:07 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/osglue.c,v 3.8 1998/10/04 09:41:14 dawes Exp $ */
 
 /*
  * this is miscellaneous OS specific stuff.

@@ -46,7 +46,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Context.c,v 1.2 1999/05/09 10:49:07 dawes Exp $ */
+/* $XFree86$ */
 
 /* This module implements a simple sparse array.
 

@@ -45,7 +45,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
 OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.67 2000/11/30 23:30:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.66 2000/11/14 18:20:38 dawes Exp $ */
 #ifdef __CYGWIN__
 #include <stdlib.h>
 #include <signal.h>

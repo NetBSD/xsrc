@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbbresd.c,v 1.3 1999/06/06 08:48:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/mfbbresd.c,v 1.2 1998/07/25 16:59:28 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium

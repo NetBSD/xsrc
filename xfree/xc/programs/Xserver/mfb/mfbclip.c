@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbclip.c,v 1.3 1999/04/11 13:11:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbclip.c,v 1.2 1999/01/31 12:22:19 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PciInfo.h,v 1.83 2000/12/07 21:34:20 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PciInfo.h,v 1.83.2.1 2001/02/15 16:01:40 martin Exp $ */
 /*
  * PCI Probe
  *
@@ -231,6 +231,7 @@
 #define PCI_CHIP_MACH64LS	0x4C53
 #define PCI_CHIP_RAGE128MF	0x4D46
 #define PCI_CHIP_RAGE128ML	0x4D4C
+#define PCI_CHIP_RAGE128PD	0x5044
 #define PCI_CHIP_RAGE128PF	0x5046
 #define PCI_CHIP_RAGE128PR	0x5052
 #define PCI_CHIP_RADEON_QD	0x5144
@@ -473,6 +474,8 @@
 #define PCI_CHIP_UTNT2		0x0029
 #define PCI_CHIP_VTNT2		0x002C
 #define PCI_CHIP_UVTNT2		0x002D
+#define PCI_CHIP_TNT2_A         0x002E
+#define PCI_CHIP_TNT2_B         0x002F
 #define PCI_CHIP_ITNT2		0x00A0
 #define PCI_CHIP_GEFORCE256     0x0100
 #define PCI_CHIP_GEFORCEDDR     0x0101
@@ -485,6 +488,11 @@
 #define PCI_CHIP_GEFORCE2GTS_1  0x0151
 #define PCI_CHIP_GEFORCE2ULTRA  0x0152
 #define PCI_CHIP_QUADRO2PRO     0x0153
+#define PCI_CHIP_GEFORCE3       0x0200
+#define PCI_CHIP_GEFORCE3_1     0x0201
+#define PCI_CHIP_GEFORCE3_2     0x0202
+#define PCI_CHIP_GEFORCE3_3     0x0203
+
 
 /* NVIDIA & SGS */
 #define PCI_CHIP_RIVA128	0x0018
@@ -796,6 +804,7 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_MACH64LS,	"Mach64 LS",0},
 				{PCI_CHIP_RAGE128MF,	"Rage 128 Mobility MF",0},
 				{PCI_CHIP_RAGE128ML,	"Rage 128 Mobility ML",0},
+				{PCI_CHIP_RAGE128PD,	"Rage 128 Pro PD",0},
 				{PCI_CHIP_RAGE128PF,	"Rage 128 Pro PF",0},
 				{PCI_CHIP_RAGE128PR,	"Rage 128 Pro PR",0},
 				{PCI_CHIP_RADEON_QD,	"Radeon QD",0},
@@ -1206,6 +1215,8 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_UTNT2,	"Riva Ultra TNT2",0},
 				{PCI_CHIP_VTNT2,	"Riva Vanta",0},
 				{PCI_CHIP_UVTNT2,	"Riva Ultra 64",0},
+                                {PCI_CHIP_TNT2_A,       "Riva TNT2 (A)",0},
+                                {PCI_CHIP_TNT2_B,       "Riva TNT2 (B)",0},
 				{PCI_CHIP_ITNT2,	"Riva Integrated",0},
 				{PCI_CHIP_GEFORCE256,	"GeForce 256",0},
 				{PCI_CHIP_GEFORCEDDR,	"GeForce DDR",0},
@@ -1217,6 +1228,10 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_GEFORCE2GTS_1,"GeForce2 GTS (rev 1)",0},
 				{PCI_CHIP_GEFORCE2ULTRA,"GeForce2 Ultra",0},
 				{PCI_CHIP_QUADRO2PRO,	"Quadro 2 Pro",0},
+                                {PCI_CHIP_GEFORCE3,     "GeForce3",0},
+                                {PCI_CHIP_GEFORCE3_1,   "GeForce3 (rev 1)",0},
+                                {PCI_CHIP_GEFORCE3_2,   "GeForce3 (rev 2)",0},
+                                {PCI_CHIP_GEFORCE3_3,   "GeForce3 (rev 3)",0},
 				{0x0000,		NULL,0}}},
 #ifdef VENDOR_INCLUDE_NONVIDEO
     {PCI_VENDOR_IMS, {

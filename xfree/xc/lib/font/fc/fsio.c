@@ -23,7 +23,7 @@
  *
  * Author:  	Dave Lemke, Network Computing Devices, Inc
  */
-/* $XFree86: xc/lib/font/fc/fsio.c,v 3.12 2000/11/28 17:25:09 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fsio.c,v 3.11 1999/12/27 01:14:10 robin Exp $ */
 /*
  * font server i/o routines
  */

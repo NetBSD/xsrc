@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Bob Scheifler and Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xext/XShm.c,v 1.2 1999/07/12 05:57:23 dawes Exp $ */
+/* $XFree86$ */
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD OR AN X PROJECT TEAM SPECIFICATION */
 

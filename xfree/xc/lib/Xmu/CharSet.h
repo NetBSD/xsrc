@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/CharSet.h,v 1.6 1998/10/03 09:06:21 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/CharSet.h,v 1.5 1998/08/16 10:25:03 dawes Exp $ */
 
 /*
  * The interfaces described by this header file are for miscellaneous utilities

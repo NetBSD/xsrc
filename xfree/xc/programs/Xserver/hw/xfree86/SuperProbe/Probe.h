@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.77 2000/12/06 15:35:05 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.75 2000/11/14 18:20:36 dawes Exp $ */
 
 /*
  * Includes

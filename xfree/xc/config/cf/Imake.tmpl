@@ -396,6 +396,9 @@ XCOMM the platform-specific parameters - edit site.def to change
 #define HasCplusplus		NO
 #endif
 #endif
+#ifndef HasMktemp
+#define HasMktemp		NO	/* if you have the mktemp command */
+#endif
 #ifndef HasNdbm
 #define HasNdbm			NO
 #endif

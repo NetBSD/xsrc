@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf24_32bpp/cfb24_32module.c,v 1.3 1999/01/26 05:54:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf24_32bpp/cfb24_32module.c,v 1.2 1999/01/24 13:32:41 dawes Exp $ */
 
 #ifdef XFree86LOADER
 

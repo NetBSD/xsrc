@@ -54,7 +54,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Object.c,v 1.4 1998/12/20 11:57:09 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Object.c,v 1.1.1.1.12.3 1998/10/04 15:22:54 hohndel Exp $ */
 
 #define OBJECT
 #include "IntrinsicI.h"

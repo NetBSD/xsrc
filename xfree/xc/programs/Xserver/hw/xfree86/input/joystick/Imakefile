@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/joystick/Imakefile,v 1.6 2000/11/06 19:24:07 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/joystick/Imakefile,v 1.5 1999/08/14 10:50:00 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>

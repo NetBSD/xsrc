@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/cygwin/bios_mmap.c,v 1.1 2000/08/10 17:40:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/mach/bios_mmap.c,v 3.4 1996/12/23 06:50:10 dawes Exp $ */
 /*
  * Copyright 1992 by Robert Baron <Robert.Baron@ernst.mach.cs.cmu.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>

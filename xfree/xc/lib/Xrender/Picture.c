@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xrender/Picture.c,v 1.7 2000/12/07 23:55:56 keithp Exp $
+ * $XFree86: xc/lib/Xrender/Picture.c,v 1.6 2000/12/05 07:42:29 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *

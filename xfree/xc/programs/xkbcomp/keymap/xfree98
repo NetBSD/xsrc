@@ -20,7 +20,7 @@
 //other dealings in this Software without prior written authorization
 //from The Open Group.
 //
-// $XFree86: xc/programs/xkbcomp/keymap/xfree98,v 3.5 1998/10/04 09:41:34 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/keymap/xfree98,v 3.4 1996/12/27 07:08:19 dawes Exp $
 
 default xkb_keymap "jp" {
     xkb_keycodes	{ include "xfree98"		};

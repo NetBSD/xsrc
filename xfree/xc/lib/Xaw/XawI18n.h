@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xaw/XawI18n.h,v 3.10 1999/12/27 00:39:23 robin Exp $ */
+/* $XFree86: xc/lib/Xaw/XawI18n.h,v 3.9 1999/07/19 13:36:04 dawes Exp $ */
 
 #ifdef HAS_WCTYPE_H
 #include <wctype.h>

@@ -1,5 +1,5 @@
 .TH XvQueryAdaptors 3X 
-.\" $XFree86: xc/doc/man/Xv/XvQueryAdaptors.man,v 1.4 1999/03/02 11:49:15 dawes Exp $
+.\" $XFree86$
 .SH Name
 XvQueryAdaptors \- return adaptor information for a screen
 .\"

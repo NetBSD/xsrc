@@ -39,7 +39,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/access.c,v 3.3 1998/10/25 07:12:34 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/access.c,v 3.2 1998/10/04 09:41:12 dawes Exp $ */
 
 #include	<X11/Xos.h>
 #ifndef MINIX

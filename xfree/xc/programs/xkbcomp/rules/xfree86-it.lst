@@ -4,7 +4,7 @@
 //  Elenco dei modelli e dei lingauggi
 //  Copyright 1996 by Joseph Moss
 //
-// $XFree86: xc/programs/xkbcomp/rules/xfree86-it.lst,v 1.4 1998/11/15 04:30:46 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/rules/xfree86-it.lst,v 1.3 1997/07/29 12:08:26 hohndel Exp $
 
 ! model
   microsoft       Microsoft Natural

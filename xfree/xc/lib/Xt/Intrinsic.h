@@ -44,7 +44,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Intrinsic.h,v 3.5 2000/12/15 22:48:39 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Intrinsic.h,v 3.4 1998/10/03 09:06:55 dawes Exp $ */
 
 #ifndef _XtIntrinsic_h
 #define _XtIntrinsic_h

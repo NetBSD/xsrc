@@ -112,7 +112,7 @@ enum GenericTypes {
 
 DriverRec CYRIX = {
     VERSION,
-    "accelerated driver for Cyrix integrated processors",
+    CYRIX_DRIVER_NAME,
     CYRIXIdentify,
     CYRIXProbe,
     CYRIXAvailableOptions,

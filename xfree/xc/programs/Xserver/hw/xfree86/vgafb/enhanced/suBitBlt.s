@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/enhanced/suBitBlt.s,v 1.3 1999/12/27 00:39:50 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/enhanced/suBitBlt.s,v 1.2 1998/07/25 16:58:31 dawes Exp $ */
 /*******************************************************************************
 			Copyr 1992 by Glenn G. Lai 
 

@@ -24,7 +24,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c,v 1.7 2000/11/03 18:46:12 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c,v 1.8 2001/02/21 00:42:57 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -324,6 +324,29 @@ NV10Setup(ScrnInfoPtr pScrn)
     pNv->riva.Architecture = 0x10;
     /*
      * Map chip-specific memory-mapped registers. This MUST be done in the OS specific driver code.
+     */
+    mmioFlags = VIDMEM_MMIO | VIDMEM_READSIDEEFFECT;
+    pNv->riva.PRAMIN = xf86MapPciMem(pScrn->scrnIndex, mmioFlags, pNv->PciTag,
+                                     regBase+0x00710000, 0x00010000);
+    pNv->riva.PCRTC  = xf86MapPciMem(pScrn->scrnIndex, mmioFlags, pNv->PciTag,
+                                     regBase+0x00600000, 0x00001000);
+
+    NVCommonSetup(pScrn);
+}
+
+void
+NV20Setup(ScrnInfoPtr pScrn)
+{
+    NVPtr pNv = NVPTR(pScrn);
+    CARD32 regBase = pNv->IOAddress;
+    int mmioFlags;
+
+    DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "NV10Setup\n"));
+
+    pNv->riva.Architecture = 0x20;
+    /*
+     * Map chip-specific memory-mapped registers. This MUST be done in the OS sp
+ecific driver code.
      */
     mmioFlags = VIDMEM_MMIO | VIDMEM_READSIDEEFFECT;
     pNv->riva.PRAMIN = xf86MapPciMem(pScrn->scrnIndex, mmioFlags, pNv->PciTag,

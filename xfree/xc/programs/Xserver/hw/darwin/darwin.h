@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/darwin/darwin.h,v 1.1 2000/11/15 01:36:13 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef _DARWIN_H
 #define _DARWIN_H

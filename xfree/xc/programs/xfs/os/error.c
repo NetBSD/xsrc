@@ -40,7 +40,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/error.c,v 1.6 2000/11/30 23:30:10 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/error.c,v 1.5 1998/10/25 12:48:07 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<stdarg.h>

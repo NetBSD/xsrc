@@ -526,7 +526,7 @@ Display 項では、使いたいサーバーの仮想スクリーンの大きさを指定できます。仮
 </code>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Config.sgml,v 3.2 1997/01/26 04:34:16 dawes Exp $
+$XFree86$
 </verb>
 <hrule>
 

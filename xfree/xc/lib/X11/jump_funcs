@@ -1,5 +1,5 @@
 # $TOG: jump_funcs /main/8 1998/06/17 15:34:53 kaleb $
-# $XFree86: xc/lib/X11/jump_funcs,v 3.10 1998/10/03 08:41:36 dawes Exp $
+# $XFree86: xc/lib/X11/jump_funcs,v 3.9 1996/12/30 13:58:21 dawes Exp $
 #
 00000000 T _XSaveContext        libX11         Context
 00000000 T _XFindContext        libX11         Context

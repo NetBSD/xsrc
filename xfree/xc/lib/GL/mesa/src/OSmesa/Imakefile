@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/OSmesa/Imakefile,v 1.6 2000/12/12 23:24:27 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/OSmesa/Imakefile,v 1.5 2000/11/13 23:31:25 dawes Exp $
 
 #include <Threads.tmpl>
 

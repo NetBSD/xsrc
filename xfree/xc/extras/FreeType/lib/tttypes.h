@@ -20,7 +20,7 @@
  *   of the high-level interface.  See also 'freetype.h'.
  *
  ******************************************************************/
-/* $XFree86: xc/extras/FreeType/lib/tttypes.h,v 1.5 2000/02/13 05:03:53 dawes Exp $ */
+/* $XFree86: xc/extras/FreeType/lib/tttypes.h,v 1.4 1999/01/24 03:38:35 dawes Exp $ */
 
 #ifndef TTTYPES_H
 #define TTTYPES_H

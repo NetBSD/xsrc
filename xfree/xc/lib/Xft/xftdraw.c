@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftdraw.c,v 1.10 2000/12/15 17:12:52 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftdraw.c,v 1.9 2000/12/12 00:45:17 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *

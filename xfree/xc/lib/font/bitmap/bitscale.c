@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bitscale.c,v 3.16 1999/11/19 13:53:28 hohndel Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bitscale.c,v 3.14 1999/08/01 07:56:54 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

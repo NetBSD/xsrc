@@ -1,5 +1,5 @@
 /* $XConsortium: get_load.c /main/37 1996/03/09 09:38:04 kaleb $ */
-/* $XFree86: xc/programs/xload/get_load.c,v 1.6 2000/11/15 01:36:17 dawes Exp $ */
+/* $XFree86: xc/programs/xload/get_load.c,v 1.5 2000/11/14 18:20:39 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium

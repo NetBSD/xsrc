@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 #!/citi/gtfd/mach/bin/perl -w
 ###############
-# $Id: hman.pl,v 1.1.1.1 2001/01/01 12:49:20 veego Exp $
+# $Id: hman.pl,v 1.1.1.2 2001/03/18 17:00:58 veego Exp $
 # $Source: /cvsroot/xsrc/xfree/xc/extras/rman/contrib/Attic/hman.pl,v $
 ############################################
 # TODO:

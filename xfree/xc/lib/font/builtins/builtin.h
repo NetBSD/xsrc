@@ -22,7 +22,7 @@
  *
  * Author:  Keith Packard, SuSE, Inc.
  */
-/* $XFree86: xc/lib/font/builtins/builtin.h,v 1.4 2000/02/23 20:29:33 dawes Exp $ */
+/* $XFree86: xc/lib/font/builtins/builtin.h,v 1.3 1999/12/30 02:29:49 robin Exp $ */
 
 #include <X11/Xdefs.h>
 #include <font.h>

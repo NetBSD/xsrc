@@ -12,7 +12,7 @@ the suitability of this software for any purpose.  It is provided "as
 is" without express or implied warranty.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Keyboard.c,v 1.3 2000/02/27 04:52:56 dawes Exp $ */
+/* $XFree86$ */
 
 #define NEED_EVENTS
 #include "X.h"

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/xcmisc.c,v 3.3 1998/10/04 09:36:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xcmisc.c,v 3.2 1996/12/23 06:29:03 dawes Exp $ */
 
 #define NEED_EVENTS
 #define NEED_REPLIES

@@ -13,7 +13,7 @@
  * express or implied warranty.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/sunAmoeba/sun.h,v 1.2 1998/06/27 12:53:54 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunAmoeba/sun.h,v 1.0tsi Exp $ */
 
 #ifndef _SUN_H_ 
 #define _SUN_H_

@@ -2,7 +2,7 @@
  *  Copyright (C) 1998 Itai Nahshon, Michael Schimek
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.h,v 1.6 2000/11/03 18:46:16 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/i2c/xf86i2c.h,v 1.4 1999/04/11 13:11:01 dawes Exp $ */
 #ifndef _XF86I2C_H
 #define _XF86I2C_H
 

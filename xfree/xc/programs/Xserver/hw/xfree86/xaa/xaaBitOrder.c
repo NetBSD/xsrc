@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaBitOrder.c,v 1.6 2000/06/13 02:51:24 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaBitOrder.c,v 1.4 1998/08/29 14:34:43 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_ansic.h"

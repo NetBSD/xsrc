@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/swaprep.c,v 3.5 2000/11/03 00:06:35 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/swaprep.c,v 3.3 1998/10/04 09:38:14 dawes Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/hw/xwin/InitInput.c,v 1.1 2000/08/10 17:40:37 dawes Exp $ */
+/* $XFree86$ */
 
 
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbimage.c,v 1.10 2000/02/12 03:39:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbimage.c,v 1.9 2000/01/29 18:58:26 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.13 2000/12/06 22:00:42 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.12 2000/11/29 18:12:26 dawes Exp $ */
 
 #include <stdio.h>
 #include "Xlibint.h"

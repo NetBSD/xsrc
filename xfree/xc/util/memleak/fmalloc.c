@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/util/memleak/fmalloc.c,v 3.10 2000/12/08 21:43:22 keithp Exp $ */
+/* $XFree86: xc/util/memleak/fmalloc.c,v 3.8 2000/06/15 01:26:22 dawes Exp $ */
 
 
 /*

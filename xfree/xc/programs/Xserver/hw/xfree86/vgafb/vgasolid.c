@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgasolid.c,v 1.3 1999/12/27 00:39:48 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgasolid.c,v 1.2 1998/07/25 16:58:24 dawes Exp $ */
 /*
  *
 Copyright (c) 1990  X Consortium

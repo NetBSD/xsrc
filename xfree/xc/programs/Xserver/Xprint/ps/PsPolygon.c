@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPolygon.c,v 1.5 1999/12/13 02:13:02 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsPolygon.c,v 1.4 1998/10/04 09:37:28 dawes Exp $ */
 
 #include "Ps.h"
 #include "gcstruct.h"

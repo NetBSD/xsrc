@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxclip.c,v 1.2 2000/12/08 19:36:23 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/fxclip.c,v 1.1 2000/09/24 13:51:12 alanh Exp $ */
 /*
  * Mesa 3-D graphics library
  * Version:  3.3

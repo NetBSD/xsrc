@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlib.h,v 3.18 2000/12/04 18:49:20 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlib.h,v 3.17 2000/11/28 18:49:27 dawes Exp $ */
 
 
 /*

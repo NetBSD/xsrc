@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/defaults.c,v 1.6 1999/08/21 13:48:02 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/defaults.c,v 1.5 1999/07/17 05:30:40 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

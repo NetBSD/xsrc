@@ -22,7 +22,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/extras/Mesa/include/GL/gl.h,v 1.7 2000/09/24 13:50:05 alanh Exp $ */
+/* $XFree86: xc/extras/Mesa/include/GL/gl.h,v 1.6 2000/08/11 16:36:41 dawes Exp $ */
 
 
 #ifndef __gl_h_

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.2 95/01/13 20:28:14 kaleb Exp $
-XCOMM $XFree86: xc/programs/Xserver/include/Imakefile,v 3.20 2000/10/24 18:07:52 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/include/Imakefile,v 3.19 2000/08/12 22:45:45 dawes Exp $
 
 #if defined(XFree86Version) || defined(BSDOSArchitecture)
 #if DoLoadableServer

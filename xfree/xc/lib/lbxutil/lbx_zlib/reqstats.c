@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/lbxutil/lbx_zlib/reqstats.c,v 1.3 2000/06/27 21:26:33 tsi Exp $ */
+/* $XFree86$ */
 
 #ifdef LBXREQSTATS
 

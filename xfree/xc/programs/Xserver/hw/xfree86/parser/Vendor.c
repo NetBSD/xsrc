@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Vendor.c,v 1.8 2000/11/30 20:45:34 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Vendor.c,v 1.7 2000/11/02 19:58:20 anderson Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

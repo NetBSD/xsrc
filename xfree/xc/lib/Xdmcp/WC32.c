@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xdmcp/WC32.c,v 1.3 1998/10/25 12:47:52 dawes Exp $ */
+/* $XFree86$ */
 
 #include <X11/Xos.h>
 #include <X11/X.h>

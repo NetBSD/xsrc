@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miQuadMesh.c,v 3.6 1998/10/04 09:34:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miQuadMesh.c,v 3.5 1998/07/26 13:13:52 dawes Exp $ */
 
 #include "miLUT.h"
 #include "ddpex2.h"

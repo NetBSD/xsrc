@@ -1,5 +1,5 @@
 # $XConsortium: jump_vars,v 1.2 94/12/07 10:48:56 kaleb Exp $
-# $XFree86: xc/lib/PEX5/jump_vars,v 3.1 1995/01/28 15:42:22 dawes Exp $
+# $XFree86: xc/lib/PEX5/jump_vars,v 3.0 1994/04/28 12:30:33 dawes Exp $
 #
 00000004 D _PEXDisplayInfoHeader libPEX5        pl_startup
 00000004 D _PEXPickCache        libPEX5        pl_startup

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/findopts,v 3.2 1997/12/06 08:53:03 hohndel Exp $
+# $XFree86: $
 #
 # This script should be run by XF86Setup \
 exec XF86Setup -notk `basename $0` -- ${1+"$@"}

@@ -1,6 +1,6 @@
 .TH Xv 3X
 .\"
-.\" $XFree86: xc/doc/man/Xv/Xv.man,v 1.5 2000/03/21 23:17:19 dawes Exp $
+.\" $XFree86: xc/doc/man/Xv/Xv.man,v 1.4 1999/03/02 11:49:13 dawes Exp $
 .SH Name
 Xv \- X Window System video extension
 .SH Description

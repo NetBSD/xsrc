@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/glxext.c,v 1.9 2000/12/07 20:26:03 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/glxext.c,v 1.8 2000/09/26 15:56:46 tsi Exp $ */
 
 /*
 ** The contents of this file are subject to the GLX Public License Version 1.0

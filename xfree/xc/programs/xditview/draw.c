@@ -1,6 +1,6 @@
 /*
  * $XConsortium: draw.c,v 1.8 94/04/17 20:43:35 gildea Exp $
- * $XFree86: xc/programs/xditview/draw.c,v 1.2 2000/12/03 05:20:53 keithp Exp $
+ * $XFree86: contrib/programs/xditview/draw.c,v 3.0 1994/06/05 07:59:48 dawes Exp $
  *
 Copyright (c) 1991  X Consortium
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgastate.c,v 1.6 2000/11/08 05:02:46 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgastate.c,v 1.5 2000/09/24 13:51:07 alanh Exp $ */
 
 #include <stdio.h>
 

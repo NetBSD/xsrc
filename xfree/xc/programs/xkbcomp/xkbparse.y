@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/xkbparse.y,v 3.8 2000/10/28 00:34:04 dawes Exp $ */
+/* $XFree86$ */
 
 %token
 	END_OF_FILE	0

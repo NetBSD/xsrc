@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/mi/miwideline.c,v 1.7 1999/10/13 22:33:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miwideline.c,v 1.6 1999/04/11 13:11:21 dawes Exp $ */
 
 /* Author:  Keith Packard, MIT X Consortium */
 

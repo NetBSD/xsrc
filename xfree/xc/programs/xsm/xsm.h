@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/xsm.h,v 1.3 1999/03/07 14:23:44 dawes Exp $ */
+/* $XFree86$ */
 
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>

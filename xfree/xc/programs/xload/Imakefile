@@ -27,7 +27,7 @@ LOCAL_LIBRARIES = XawClientLibs
 AllTarget(ProgramTargetName(xload))
 NormalProgramTarget(xload,$(OBJS),$(DEPLIBS),$(LOCAL_LIBRARIES),NullParameter)
 
-#if defined(OSF1Architecture) || defined(NetBSDArchitecture) || (defined(FreeBSDArchitecture) && OSMajorVersion > 1) || defined(OpenBSDArchitecture)
+#if !InstallXloadSetGID
 InstallProgram(xload,$(BINDIR))
 #else
 InstallProgramWithFlags(xload,$(BINDIR),$(INSTKMEMFLAGS))

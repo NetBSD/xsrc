@@ -1117,7 +1117,7 @@ vgaHWSaveColormap(ScrnInfoPtr scrninfp, vgaRegPtr save)
     } else {
 	/* save the colourmap */
 	hwp->writeDacReadAddr(hwp, 0x02);
-	for (i = 3; i < 768; i++) {
+	for (i = 6; i < 768; i++) {
 	    save->DAC[i] = hwp->readDacData(hwp);
 	    DACDelay(hwp);
 #ifdef DEBUG

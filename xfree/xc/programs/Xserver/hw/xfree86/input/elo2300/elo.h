@@ -24,7 +24,7 @@
  * in this Software without prior written authorization from Metro Link.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/elo2300/elo.h,v 1.2 1999/02/01 12:12:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/elo2300/elo.h,v 1.1 1998/12/05 14:40:16 dawes Exp $ */
 
 #ifndef	_elo_H_
 #define _elo_H_

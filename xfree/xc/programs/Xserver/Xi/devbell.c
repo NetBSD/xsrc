@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/devbell.c,v 3.1 1998/10/04 09:37:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/devbell.c,v 3.0 1996/03/29 22:13:08 dawes Exp $ */
 
 /***********************************************************************
  *

@@ -67,7 +67,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April 1993
 
 ******************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/difloat.c,v 1.6 1998/10/25 07:11:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/difloat.c,v 1.5 1998/10/06 10:35:14 dawes Exp $ */
 
 #ifndef XIE_IEEE_IS_NATIVE
 #define _XIEC_DIFLOAT

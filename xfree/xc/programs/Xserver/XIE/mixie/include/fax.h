@@ -66,7 +66,7 @@ terms and conditions:
 	Ben Fahy -- AGE Logic, Inc.  May 1993
 
 ******************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/include/fax.h,v 1.2 1998/10/05 13:22:39 dawes Exp $ */
+/* $XFree86$ */
 
 #ifndef XFree86LOADER
 #include <stdio.h>

@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level4/css_ex_str.c,v 1.8 1999/01/31 12:21:28 dawes Exp $ */
+/* $XFree86$ */
 /*
  * this file contains the element handling procedures for
  * the execute structure element.  It is stored in PEX format

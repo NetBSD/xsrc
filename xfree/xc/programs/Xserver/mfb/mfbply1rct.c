@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/mfb/mfbply1rct.c,v 1.4 1999/03/06 13:12:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbply1rct.c,v 1.3 1998/10/04 09:39:12 dawes Exp $ */
 
 #include "X.h"
 

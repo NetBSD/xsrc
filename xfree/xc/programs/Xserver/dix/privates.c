@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/dix/privates.c,v 3.6 1999/12/30 02:37:06 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/privates.c,v 3.5 1998/10/04 09:38:11 dawes Exp $ */
 
 #include "X.h"
 #include "scrnintstr.h"

@@ -47,7 +47,7 @@ SOFTWARE.
 ******************************************************************/
 
 /* $XConsortium: mkfontdir.c /main/13 1996/09/28 17:17:17 rws $ */
-/* $XFree86: xc/programs/mkfontdir/mkfontdir.c,v 3.11 2000/11/09 01:35:50 dawes Exp $ */
+/* $XFree86: xc/programs/mkfontdir/mkfontdir.c,v 3.10 1999/08/21 13:48:46 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

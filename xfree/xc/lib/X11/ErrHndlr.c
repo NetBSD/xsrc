@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/ErrHndlr.c,v 1.3 1999/03/02 11:49:21 dawes Exp $ */
+/* $XFree86$ */
 
 #include "Xlibint.h"
 

@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/miscutil.c,v 1.5 1999/09/04 09:14:12 dawes Exp $ */
+/* $XFree86: xc/lib/font/util/miscutil.c,v 1.4 1999/08/01 12:17:39 dawes Exp $ */
 
 #include <X11/Xosdefs.h>
 #ifndef X_NOT_STDC_ENV

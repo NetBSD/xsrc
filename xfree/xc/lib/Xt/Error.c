@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Error.c,v 3.9 1998/10/03 09:06:51 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Error.c,v 3.8 1997/07/26 12:59:01 dawes Exp $ */
 
 /*
 

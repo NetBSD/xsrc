@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xau/AuFileName.c,v 3.4 1999/05/09 10:51:32 dawes Exp $ */
+/* $XFree86: xc/lib/Xau/AuFileName.c,v 3.3 1998/10/03 08:41:58 dawes Exp $ */
 
 #include <X11/Xauth.h>
 #include <X11/Xos.h>

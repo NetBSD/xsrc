@@ -22,7 +22,7 @@
 /*  
  *	PanoramiX definitions
  */
-/* $XFree86: xc/include/extensions/panoramiXext.h,v 3.5 2000/03/01 01:04:21 dawes Exp $ */
+/* $XFree86$ */
 
 /* THIS IS NOT AN X PROJECT TEAM SPECIFICATION */
 

@@ -22,7 +22,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/util/lndir.c,v 3.10 2000/04/17 16:29:45 eich Exp $ */
+/* $XFree86: xc/config/util/lndir.c,v 3.8 1998/10/05 13:21:51 dawes Exp $ */
 
 /* From the original /bin/sh script:
 

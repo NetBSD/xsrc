@@ -1,5 +1,5 @@
 # $XConsortium: jump_funcs,v 1.2 94/12/07 10:48:56 kaleb Exp $
-# $XFree86: xc/lib/PEX5/jump_funcs,v 3.1 1995/01/28 15:42:19 dawes Exp $
+# $XFree86: xc/lib/PEX5/jump_funcs,v 3.0 1994/04/28 12:30:31 dawes Exp $
 #
 00000000 T _PEXEscape           libPEX5        pl_escape
 00000000 T _PEXEscapeWithReply  libPEX5        pl_escape

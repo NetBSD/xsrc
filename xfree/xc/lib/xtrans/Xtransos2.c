@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/xtrans/Xtransos2.c,v 3.6 1999/06/20 08:41:22 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransos2.c,v 3.5 1997/01/28 10:53:32 dawes Exp $ */
 
 /*
  * (c) Copyright 1996 by Sebastien Marineau and Holger Veit

@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/osdep.h,v 1.7 1999/12/27 00:40:06 robin Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/osdep.h,v 1.6 1998/10/04 09:40:29 dawes Exp $ */
 
 #define BOTIMEOUT 200 /* in milliseconds */
 #define BUFSIZE 4096

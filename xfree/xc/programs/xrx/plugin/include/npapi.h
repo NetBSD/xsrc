@@ -4,7 +4,7 @@
  *  npapi.h Revision: 1.76
  *  Netscape client plug-in API spec
  */
-/* $XFree86: xc/programs/xrx/plugin/include/npapi.h,v 1.3 2000/08/31 19:04:00 tsi Exp $ */
+/* $XFree86: xc/programs/xrx/plugin/include/npapi.h,v 1.2 1996/12/31 04:19:59 dawes Exp $ */
 
 #ifndef _NPAPI_H_
 #define _NPAPI_H_

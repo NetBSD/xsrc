@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/oclock/transform.c,v 3.2 1999/02/19 21:27:14 hohndel Exp $ */
+/* $XFree86: xc/programs/oclock/transform.c,v 3.1 1998/10/04 09:40:31 dawes Exp $ */
 
 
 /*

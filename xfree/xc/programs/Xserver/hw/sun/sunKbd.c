@@ -39,7 +39,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/hw/sun/sunKbd.c,v 1.4 1998/12/20 11:57:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunKbd.c,v 1.1.1.10.2.3 1998/10/04 15:22:59 hohndel Exp $ */
 
 #define NEED_EVENTS
 #include "sun.h"

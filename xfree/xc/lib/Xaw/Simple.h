@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Simple.h,v 1.7 1999/06/27 14:07:34 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Simple.h,v 1.6 1999/06/06 08:48:09 dawes Exp $ */
 
 #ifndef _Simple_h
 #define _Simple_h

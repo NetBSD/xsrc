@@ -23,7 +23,7 @@ from The Open Group.
 
 */
 
-/* $XFree86: xc/programs/Xserver/hw/dec/ws/mdepthinit.c,v 1.5 1999/01/31 12:21:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/dec/ws/mdepthinit.c,v 1.4 1998/10/04 09:38:22 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

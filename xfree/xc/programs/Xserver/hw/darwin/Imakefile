@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.4 2000/12/11 20:29:38 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.3 2000/12/01 19:47:37 dawes Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs

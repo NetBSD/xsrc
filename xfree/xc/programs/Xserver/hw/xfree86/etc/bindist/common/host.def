@@ -21,5 +21,5 @@
 
 #define InstallHardcopyDocs	YES
 #define HardcopyDocDirs		RX XIE XKB XPRINT
-
+#define InstallMiscManPages	YES
 

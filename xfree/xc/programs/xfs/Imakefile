@@ -1,5 +1,5 @@
 XCOMM $TOG: Imakefile /main/31 1998/06/16 15:16:14 msr $
-XCOMM $XFree86: xc/programs/xfs/Imakefile,v 3.21 2000/02/13 06:50:43 dawes Exp $
+XCOMM $XFree86: xc/programs/xfs/Imakefile,v 3.20 2000/02/13 06:15:42 dawes Exp $
 #undef ServerDefines
 #include <Server.tmpl>
 #define	IHaveSubdirs

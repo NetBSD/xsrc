@@ -39,4 +39,4 @@ EXPORTS
  XpStartJob
  XpStartPage
 /* $XConsortium: Xp-def.cpp /main/1 1996/11/13 14:44:46 lehors $ */
-/* $XFree86: xc/lib/Xp/Xp-def.cpp,v 1.2 2000/08/09 23:40:13 dawes Exp $ */
+/* $XFree86$ */

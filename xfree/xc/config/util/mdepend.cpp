@@ -22,7 +22,7 @@ XCOMM	work on both USG and BSD systems.  However, when System V.4 comes out,
 XCOMM	USG users will probably have to change "silent" to "-s" instead of
 XCOMM	"-" (at least, that is what the documentation implies).
 XCOMM
-XCOMM $XFree86: xc/config/util/mdepend.cpp,v 3.3 2000/08/08 03:16:26 dawes Exp $
+XCOMM $XFree86: xc/config/util/mdepend.cpp,v 3.3.2.2 2001/02/26 16:49:45 dawes Exp $
 XCOMM
 
 CC=PREPROC
@@ -66,7 +66,7 @@ do
 	endmarker=""
     else
 	case "$1" in
-	    -D*|-I*)
+	    -D*|-I*|-U*)
 		echo $n " '$1'$c" >> $ARGS
 		;;
 
@@ -87,9 +87,13 @@ do
 			-f*)
 			    if [ "$1" = "-f-" ]; then
 				makefile="-"
-			    else
+			    elif [ "$1" = "-f" ]; then
 				makefile="$2"
 				shift
+			    else
+				echo "$1" | sed 's/^\-f//' >${TMP}arg
+				makefile="`cat ${TMP}arg`"
+				rm -f ${TMP}arg
 			    fi
 			    ;;
 			-o)

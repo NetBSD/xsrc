@@ -28,7 +28,7 @@
  *	    Massimiliano Ghilardi, max@Linuz.sns.it, some fixes to the
  *				   clockchip programming code.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_driver.c,v 1.119 2000/12/08 09:05:16 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_driver.c,v 1.119.2.1 2001/02/10 11:22:11 alanh Exp $ */
 
 #include "xf1bpp.h"
 #include "xf4bpp.h"
@@ -418,6 +418,7 @@ static const char *xaaSymbols[] = {
     "XAACreateInfoRec",
     "XAAHelpPatternROP",
     "XAAHelpSolidROP",
+    "XAAFillSolidRects",
     "XAACopyROP",
     "XAAPatternROP",
     "XAAInit",
@@ -1635,9 +1636,9 @@ TRIDENTPreInit(ScrnInfoPtr pScrn, int flags)
 	case CYBERBLADEI7:
     	    pTrident->ddc1Read = Tridentddc1Read;
 	    ramtype = "SDRAM";
-	    pTrident->IsCyber = TRUE;
+	    /* pTrident->IsCyber = TRUE; VIA MVP4 integrated Desktop version */
 	    Support24bpp = TRUE;
-	    chipset = "CyberBlade/i7";
+	    chipset = "CyberBlade/i7/VIA MVP4";
 	    pTrident->NewClockCode = TRUE;
 	    pTrident->frequency = NTSC;
 	    break;
@@ -2079,10 +2080,13 @@ TRIDENTMapMem(ScrnInfoPtr pScrn)
 {
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     vgaHWPtr hwp = VGAHWPTR(pScrn);
+    int mapsize = 0x10000;
+
+    if (Is3Dchip) mapsize = 0x20000;
 
     if (IsPciCard && UseMMIO)
     	pTrident->IOBase = xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO, 
-		pTrident->PciTag, pTrident->IOAddress, 0x20000);
+		pTrident->PciTag, pTrident->IOAddress, mapsize);
     else {
     	pTrident->IOBase = xf86MapVidMem(pScrn->scrnIndex, VIDMEM_MMIO, 
 		pTrident->IOAddress, 0x1000);
@@ -2117,12 +2121,15 @@ static Bool
 TRIDENTUnmapMem(ScrnInfoPtr pScrn)
 {
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
+    int mapsize = 0x10000;
+
+    if (Is3Dchip) mapsize = 0x20000;
 
     /*
      * Unmap IO registers to virtual address space
      */ 
     if (IsPciCard && UseMMIO) 
-    	xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pTrident->IOBase, 0x20000);
+    	xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pTrident->IOBase, mapsize);
     else {
     	pTrident->IOBase -= 0xF00;
     	xf86UnMapVidMem(pScrn->scrnIndex, (pointer)pTrident->IOBase, 0x1000);
@@ -2579,12 +2586,9 @@ TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     pScrn->fbOffset = 0;
 
 #ifdef XvExtension
-    if (pTrident->Chipset >= CYBER9397)
+    if ((pTrident->Chipset >= CYBER9397) && (!pTrident->NoAccel))
 	TRIDENTInitVideo(pScreen);
 #endif
-
-    if(pTrident->BlockHandler)
-	pScreen->BlockHandler = pTrident->BlockHandler;
 
     pTrident->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = TRIDENTCloseScreen;
@@ -2744,6 +2748,9 @@ TRIDENTCloseScreen(int scrnIndex, ScreenPtr pScreen)
     if (pTrident->DGAModes)
 	xfree(pTrident->DGAModes);
     pScrn->vtSema = FALSE;
+
+    if(pTrident->BlockHandler)
+	pScreen->BlockHandler = pTrident->BlockHandler;
     
     pScreen->CloseScreen = pTrident->CloseScreen;
     return (*pScreen->CloseScreen)(scrnIndex, pScreen);

@@ -66,7 +66,7 @@ terms and conditions:
 	Gary Rogers, AGE Logic, Inc., January 1994
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jinclude.h,v 1.5 1999/01/31 12:21:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jinclude.h,v 1.4 1998/10/04 09:36:22 dawes Exp $ */
 
 /*
  * jinclude.h

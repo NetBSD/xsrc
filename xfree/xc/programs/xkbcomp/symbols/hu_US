@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/hu_US,v 1.1 2000/08/28 15:29:24 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/hu,v 1.1.2.2 1997/06/22 10:32:56 dawes Exp $
 
 default partial alphanumeric_keys 
 xkb_symbols "basic" {

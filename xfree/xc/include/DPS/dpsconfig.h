@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/include/DPS/dpsconfig.h,v 1.3 2000/08/31 19:03:54 tsi Exp $ */
+/* $XFree86: xc/include/DPS/dpsconfig.h,v 1.2 2000/08/23 22:10:02 tsi Exp $ */
 
 #ifndef	DPSCONFIG_H
 #define	DPSCONFIG_H

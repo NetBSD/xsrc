@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  *
  */
-/* $XFree86: xc/lib/Xaw/SmeLine.h,v 1.4 1998/10/03 08:42:21 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SmeLine.h,v 1.3 1998/08/20 13:59:12 dawes Exp $ */
 
 /*
  * This is the public header file for the Athena SmeLine object.

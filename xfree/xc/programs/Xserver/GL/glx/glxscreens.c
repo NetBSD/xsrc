@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxscreens.c,v 1.4 2000/06/17 00:03:12 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxscreens.c,v 1.3 2000/04/05 18:13:28 dawes Exp $ */
 /*
 ** The contents of this file are subject to the GLX Public License Version 1.0
 ** (the "License"). You may not use this file except in compliance with the

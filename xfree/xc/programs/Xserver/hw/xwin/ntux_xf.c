@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xwin/ntux_xf.c,v 1.1 2000/08/10 17:40:38 dawes Exp $ */
+/* $XFree86$ */
 
 #include <windows.h>
 #include <winioctl.h>

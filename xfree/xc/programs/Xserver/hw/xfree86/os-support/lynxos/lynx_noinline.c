@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_noinline.c,v 3.5 2000/07/31 23:25:18 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_noinline.c,v 3.4 1998/08/29 05:43:58 dawes Exp $ */
 /*
  * Copyright 1998 by Metro Link Incorporated
  *

@@ -18,7 +18,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/lib/Xaw/MenuButtoP.h,v 1.6 1999/06/20 08:41:02 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/MenuButtoP.h,v 1.5 1999/06/06 08:47:59 dawes Exp $ */
 
 /*
  * MenuButtonP.h - Private Header file for MenuButton widget.

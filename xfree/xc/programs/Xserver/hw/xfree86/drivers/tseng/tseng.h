@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng.h,v 1.33 2000/12/06 15:35:24 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng.h,v 1.30 2000/08/08 08:58:06 eich Exp $ */
 
 
 
@@ -150,11 +150,20 @@ typedef struct {
 } TsengRegRec, *TsengRegPtr;
 
 typedef struct {
+    unsigned char save1, save2, save3, save4;
+} clock_save;
+
+typedef struct {
     Bool Programmable;	      	       /* MemClk is programmable if set */
     Bool Set;			       /* reprogram MClk if TRUE */
     int MemClk;                        /* MemClk value in kHz */
     int min, max;	  	       /* MemClk limits */
 } TsengMClkInfoRec, *TsengMclkInfoPtr;
+
+typedef struct {
+    int saved_cr;
+    int rmr;
+} dac_save;
 
 typedef struct {
     t_ramdactype DacType;
@@ -163,6 +172,7 @@ typedef struct {
     int RamdacMask;		       /* typically 0x3f for 6 bit, 0xff for 8-bit ramdac */
     Bool Dac8Bit;		       /* dac is 8 bit instead of the default 6 bit */
     Bool DacPort16;		       /* Ramdac port is 16 bits wide instead of default 8 */
+    rgb rgb24packed;
 } TsengDacInfoRec, *TsengDacInfoPtr;
 
 typedef struct {
@@ -227,7 +237,16 @@ typedef struct {
     CARD32 HWCursorBufferOffset;
     unsigned char *HWCursorBuffer;
     unsigned char * XAAScanlineColorExpandBuffers[1];
+    int acl_blitxdir;
+    int acl_blitydir;
+    CARD32 acl_iw_dest;
+    CARD32 acl_skipleft;
+    CARD32 acl_ColorExpandDst;
+    int acl_colexp_width_dwords;
+    int acl_colexp_width_bytes;
+    dac_save dac;
     CARD32* ColExpLUT;
+    clock_save save_clock;
     EntityInfoPtr       pEnt;
     char * MMioBase;
     pointer scratchMemBase;

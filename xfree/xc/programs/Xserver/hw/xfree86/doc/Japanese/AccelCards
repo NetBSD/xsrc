@@ -1746,7 +1746,7 @@ XFree86: xc/programs/Xserver/hw/xfree86/doc/AccelCards,v 3.3 1995/01/28 15:58:25
 原文の著作権は XFree86 プロジェクト社にあります。 
 この和訳の著作権は XFree86 プロジェクト社、及び 岡本　一幸 にありますが、
 この和訳の不具合は私に、 電子メールで送って下さい。
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/AccelCards,v 3.2 1996/12/23 06:45:36 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/AccelCards,v 3.1 1996/02/04 09:07:55 dawes Exp $
 $XConsortium: AccelCards /main/3 1996/02/21 17:41:47 kaleb $
 ----------------------------------------------------------------------------
 [EOF]

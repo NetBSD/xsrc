@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/include/DPS/ColorSBP.h,v 1.2 2000/06/07 22:02:54 tsi Exp $ */
+/* $XFree86$ */
 
 #ifndef _ColorSelectionBoxP_H
 #define _ColorSelectionBoxP_H

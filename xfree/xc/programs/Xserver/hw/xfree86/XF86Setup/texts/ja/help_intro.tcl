@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/help_intro.tcl,v 1.2 1998/04/05 15:30:31 robin Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/help_intro.tcl,v 1.1.2.2 1998/02/26 20:11:22 hohndel Exp $
 #
  if !$pc98 {
     set message "\n\

@@ -28,7 +28,7 @@ in this Software without prior written authorization from The Open Group.
  * call this routine from their ClassInitialize procs (this routine may be
  * used as the class init proc).
  */
-/* $XFree86: xc/lib/Xaw/XawInit.c,v 1.8 1999/06/06 08:48:22 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/XawInit.c,v 1.7 1998/10/03 08:42:33 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/Vendor.h>

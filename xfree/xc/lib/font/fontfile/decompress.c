@@ -41,7 +41,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/decompress.c,v 1.3 2000/09/19 12:46:08 eich Exp $ */
+/* $XFree86$ */
 /* 
  * decompress - cat a compressed file
  */

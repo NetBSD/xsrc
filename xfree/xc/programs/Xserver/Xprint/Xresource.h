@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xprint/Xresource.h,v 1.5 2000/09/28 20:17:06 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/Xresource.h,v 1.4 2000/09/28 14:50:57 tsi Exp $ */
 
 /* $XConsortium: Xresource.h /main/1 1996/09/28 16:59:12 rws $ */
 /*

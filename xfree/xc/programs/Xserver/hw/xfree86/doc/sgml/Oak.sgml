@@ -201,7 +201,7 @@ downwards. ISA card owners should not use these options.
     addressing will work on all ISA boards, VLB ones work flawlessly.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.13 1999/08/23 06:38:50 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Oak.sgml,v 3.12.2.4 1999/08/18 13:12:11 hohndel Exp $
 
 
 

@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Box.h,v 1.6 1999/06/06 08:47:53 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Box.h,v 1.5 1998/10/03 08:42:02 dawes Exp $ */
 
 #ifndef _XawBox_h
 #define _XawBox_h

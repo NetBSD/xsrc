@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vb.c,v 1.2 2000/12/02 01:16:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vb.c,v 1.1 2000/08/01 20:52:26 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_ansic.h"

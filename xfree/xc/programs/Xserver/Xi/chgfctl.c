@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/chgfctl.c,v 3.2 1998/10/04 09:36:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/chgfctl.c,v 3.1 1996/05/06 05:56:01 dawes Exp $ */
 
 /********************************************************************
  *

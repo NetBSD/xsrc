@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbply1rct.c,v 3.6 2000/02/12 03:39:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbply1rct.c,v 3.5 1998/10/04 09:37:47 dawes Exp $ */
 
 #include "X.h"
 

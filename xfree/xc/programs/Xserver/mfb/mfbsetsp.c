@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbsetsp.c,v 1.4 1999/04/11 13:11:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbsetsp.c,v 1.3 1998/10/04 09:39:17 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 

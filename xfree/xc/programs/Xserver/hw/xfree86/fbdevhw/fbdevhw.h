@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.h,v 1.9 2000/11/18 19:37:14 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.h,v 1.8 2000/10/20 14:59:01 alanh Exp $ */
 
 #ifndef _FBDEVHW_H_
 #define _FBDEVHW_H_

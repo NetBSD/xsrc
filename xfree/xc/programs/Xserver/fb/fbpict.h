@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fbpict.h,v 1.2 2000/11/20 07:13:07 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fbpict.h,v 1.1 2000/10/02 05:25:46 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *

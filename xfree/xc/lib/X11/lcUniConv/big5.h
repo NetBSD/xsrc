@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/X11/lcUniConv/big5.h,v 1.1 2000/11/28 18:50:03 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * BIG5

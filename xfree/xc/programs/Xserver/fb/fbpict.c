@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fbpict.c,v 1.5 2000/11/29 08:43:08 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fbpict.c,v 1.3 2000/10/21 00:26:48 keithp Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcCpArea.c,v 1.5 2000/09/26 15:57:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcCpArea.c,v 1.4 1999/09/25 14:38:16 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/afb/afbtile.c,v 3.2 2000/11/22 00:58:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/afb/afbtile.c,v 3.1 2000/10/29 14:24:11 tsi Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 

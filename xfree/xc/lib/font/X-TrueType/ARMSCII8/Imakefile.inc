@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/font/X-TrueType/ARMSCII8/Imakefile.inc,v 1.1 1999/03/28 15:31:38 dawes Exp $
+XCOMM $XFree86$
 
 #define ModuleName ARMSCII8
 MODULENAME = ModuleName

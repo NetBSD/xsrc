@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April, 1993
 
 ******************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/include/error.h,v 3.3 1998/10/05 13:22:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/include/error.h,v 3.2 1998/10/04 09:35:58 dawes Exp $ */
 
 #ifndef _XIEH_ERROR
 #define _XIEH_ERROR

@@ -67,7 +67,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/control/strip.c,v 3.5 1999/01/31 12:21:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/control/strip.c,v 3.4 1998/10/25 07:11:52 dawes Exp $ */
 
 /*
  *  Include files

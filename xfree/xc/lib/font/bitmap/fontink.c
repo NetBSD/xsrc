@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/fontink.c,v 1.5 1999/11/19 13:53:29 hohndel Exp $ */
+/* $XFree86: xc/lib/font/bitmap/fontink.c,v 1.3 1998/10/03 09:07:22 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

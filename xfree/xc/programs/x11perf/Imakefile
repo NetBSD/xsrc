@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 2.31 93/09/04 19:58:26 rws Exp $
-XCOMM $XFree86: xc/programs/x11perf/Imakefile,v 3.3 2000/11/30 17:07:20 dawes Exp $
+XCOMM $XFree86: xc/programs/x11perf/Imakefile,v 3.2 2000/11/29 08:58:19 keithp Exp $
 #ifndef X11perfcompLib
 #define X11perfcompLib $(LIBDIR)/x11perfcomp
 #endif

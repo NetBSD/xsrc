@@ -2,7 +2,7 @@
 
                     Juliusz Chroboczek, <jch@xfree86.org>
 
-                              14 December 2000
+                               21 January 2001
 
 1.  Introduction
 
@@ -238,7 +238,7 @@ On most platforms, the XFree86 servers are modular: the font backends are
 included in modules that are loaded at runtime.  The modules to be loaded are
 specified in the `XF86Config' file using the `Load' directive:
 
-     Load "Type1"
+     Load "type1"
 
 If you have trouble installing fonts in a specific format, you may want to
 check the server's log file in order to see whether the relevant modules are
@@ -247,13 +247,15 @@ follows:
 
    o  "bitmap": bitmap fonts (`*.bdf', `*.pcf' and `*.snf');
 
-   o  "Type1": Type 1 fonts (`*.pfa' and `*.pfb') and CIDFonts;
+   o  "type1": Type 1 fonts (`*.pfa' and `*.pfb') and CIDFonts;
 
-   o  "Speedo": Bitstream Speedo fonts (`*.spd');
+   o  "speedo": Bitstream Speedo fonts (`*.spd');
 
    o  "freetype": TrueType fonts (`*.ttf' and `*.ttc');
 
    o  "xtt": alternate TrueType backend (`*.ttf' and `*.ttc').
+
+Please note that the argument of the `Load' directive is case-sensitive.
 
 3.  Fonts included with XFree86
 
@@ -1008,7 +1010,7 @@ The IANA RFC documents, available from a number of sites throughout the
 world, often provide interesting information about character set issues; my
 favourite is RFC 373.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.11 2000/12/15 20:01:56 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.11.2.1 2001/02/28 20:06:21 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.fonts,v 1.15 2000/12/15 20:22:16 dawes Exp $
+$XFree86$

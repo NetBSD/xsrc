@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/Printstr.h,v 1.3 1999/12/16 02:26:32 robin Exp $ */
+/* $XFree86: $ */
 
 /* $XConsortium: Printstr.h /main/2 1996/11/16 15:20:15 rws $ */
 /******************************************************************************

@@ -27,7 +27,7 @@
  * 2000
  * Modifier: Ivan Pascal        The XFree86 Project
  */
-/* $XFree86: xc/lib/X11/lcDefConv.c,v 1.5 2000/11/28 18:49:42 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcDefConv.c,v 1.4 2000/02/25 18:27:54 dawes Exp $ */
 
 /*
  * The default locale loader.

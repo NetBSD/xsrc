@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/help.c,v 1.3 2000/10/20 14:59:05 alanh Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/help.c,v 1.2 2000/09/26 15:57:22 tsi Exp $
  */
 
 #include <X11/IntrinsicP.h>

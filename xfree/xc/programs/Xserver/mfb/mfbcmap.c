@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbcmap.c,v 1.5 1998/11/22 10:37:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbcmap.c,v 1.4 1998/10/04 09:39:08 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

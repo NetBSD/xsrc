@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/ImUtil.c,v 3.6 2000/01/29 18:58:10 dawes Exp $ */
+/* $XFree86: xc/lib/X11/ImUtil.c,v 3.5 1999/05/09 10:49:36 dawes Exp $ */
 
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>

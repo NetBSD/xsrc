@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkmread.c,v 1.3 2000/10/28 00:34:02 dawes Exp $ */
+/* $XFree86$ */
 
 #include <stdio.h>
 

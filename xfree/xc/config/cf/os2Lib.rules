@@ -2,7 +2,7 @@ XCOMM $XConsortium: os2Lib.rules /main/1 1996/10/31 14:47:29 kaleb $
 
 
 
-XCOMM $XFree86: xc/config/cf/os2Lib.rules,v 3.11 2000/04/05 18:13:09 dawes Exp $
+XCOMM $XFree86: xc/config/cf/os2Lib.rules,v 3.10 1999/04/29 09:13:20 dawes Exp $
 
 /*
  * OS2/EMX shared library rules (DLL version)

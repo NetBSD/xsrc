@@ -4,7 +4,7 @@ XCOMM $XConsortium: necLib.rules /main/4 1996/09/28 16:11:42 rws $
  * NECOS shared library rules
  */
 
-XCOMM $XFree86: xc/config/cf/necLib.rules,v 1.2 1999/01/11 05:13:07 dawes Exp $
+XCOMM $XFree86$
 
 #ifndef HasSharedLibraries
 #define HasSharedLibraries YES

@@ -66,7 +66,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/MultiSink.c,v 1.18 2000/09/26 15:56:54 tsi Exp $ */
+/* $XFree86: xc/lib/Xaw/MultiSink.c,v 1.17 1999/06/13 13:47:19 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

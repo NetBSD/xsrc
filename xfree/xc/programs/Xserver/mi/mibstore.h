@@ -16,7 +16,7 @@
  */
 
 
-/* $XFree86: xc/programs/Xserver/mi/mibstore.h,v 1.3 1998/04/05 16:42:31 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mibstore.h,v 1.2 1997/01/08 20:52:06 dawes Exp $ */
 
 #ifndef _MIBSTORE_H
 #define _MIBSTORE_H

@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  *
  */
-/* $XFree86: xc/lib/Xaw/SimpleMenP.h,v 1.11 1999/06/20 08:41:05 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SimpleMenP.h,v 1.10 1999/06/13 13:47:20 dawes Exp $ */
 
 /*
  * SimpleMenuP.h - Private Header file for SimpleMenu widget.

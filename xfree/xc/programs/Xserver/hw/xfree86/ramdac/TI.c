@@ -24,7 +24,7 @@
  * Modified from IBM.c to support TI RAMDAC routines 
  *   by Jens Owen, <jens@precisioninsight.com>.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/TI.c,v 1.5 2000/05/02 21:04:46 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/TI.c,v 1.9 1999/02/12 22:52:10 hohndel Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

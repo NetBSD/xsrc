@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/FS/FSSetCats.c,v 1.3 1999/03/14 03:20:36 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSSetCats.c,v 1.0tsi Exp $ */
 
 /*
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_GNUmach.c,v 1.1 1998/08/16 10:25:38 dawes Exp $ */
+/* $XFree86$ */
 /*
  * (c) Copyright 1993,1994 by Robert V. Baron 
  *			<Robert.Baron@ernst.mach.cs.cmu.edu>

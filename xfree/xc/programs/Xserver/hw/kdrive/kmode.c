@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/kmode.c,v 1.5 2000/05/24 23:57:56 keithp Exp $
+ * $XFree86$
  *
  * Copyright 1999 SuSE, Inc.
  *

@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/StdCmap.h,v 1.6 1999/03/21 07:34:38 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/StdCmap.h,v 1.5 1998/10/03 09:06:33 dawes Exp $ */
 
 /*
  * The interfaces described by this header file are for miscellaneous utilities

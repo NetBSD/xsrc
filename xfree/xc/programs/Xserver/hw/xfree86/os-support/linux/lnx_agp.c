@@ -6,7 +6,7 @@
  * Copyright © 2000 VA Linux Systems, Inc.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_agp.c,v 3.4 2000/08/28 18:12:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_agp.c,v 3.3 2000/08/23 20:05:03 dawes Exp $ */
 
 #include "X.h"
 #include "xf86.h"

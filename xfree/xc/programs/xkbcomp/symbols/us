@@ -223,7 +223,7 @@ xkb_symbols "pc104" {
     key <LALT> {	[ 	Alt_L		]	};
     key <RALT> {	[	Alt_R		]	};
     key <LWIN> {	[	Meta_L		]	};
-    key <RWIN> {	[	Multi_key	]	};
+    key <RWIN> {	[	Meta_R		]	};
     key <MENU> {	[	Menu		]	};
 
     // modifier mappings

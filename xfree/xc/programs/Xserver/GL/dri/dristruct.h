@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/dristruct.h,v 1.9 2000/12/07 20:26:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/dristruct.h,v 1.8 2000/06/17 00:03:12 martin Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

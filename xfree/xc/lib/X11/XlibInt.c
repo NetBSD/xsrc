@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/XlibInt.c,v 3.23 2000/11/30 23:29:59 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XlibInt.c,v 3.22 2000/06/17 00:27:30 dawes Exp $ */
 
 /*
  *	XlibInt.c - Internal support routines for the C subroutine

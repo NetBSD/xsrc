@@ -19,7 +19,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_regs.c,v 1.5 2000/09/22 11:35:48 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_regs.c,v 1.4 2000/09/19 12:46:15 eich Exp $ */
 
 /*
  * The functions in this file are used to read/write the C&T extension register

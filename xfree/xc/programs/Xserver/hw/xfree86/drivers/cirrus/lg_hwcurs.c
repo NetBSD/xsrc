@@ -10,7 +10,7 @@
  * Much of this code is inspired by the HW cursor code from XFree86
  * 3.3.3.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_hwcurs.c,v 1.4 2000/12/06 15:35:17 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_hwcurs.c,v 1.1 1998/11/22 10:37:20 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

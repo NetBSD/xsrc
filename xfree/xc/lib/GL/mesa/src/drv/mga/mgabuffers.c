@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgabuffers.c,v 1.4 2000/09/24 13:51:05 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgabuffers.c,v 1.3 2000/08/25 13:42:22 dawes Exp $ */
 
 /*
  * Authors:

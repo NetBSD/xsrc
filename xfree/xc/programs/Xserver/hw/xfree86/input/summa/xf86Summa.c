@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/summa/xf86Summa.c,v 1.4 2000/08/11 19:10:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/summa/xf86Summa.c,v 1.3 1999/06/13 05:18:56 dawes Exp $ */
 
 static const char identification[] = "$Identification: 18 $";
 

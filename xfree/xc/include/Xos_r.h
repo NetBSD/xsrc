@@ -245,7 +245,7 @@ typedef struct {
 
 /* NetBSD, at least, is missing several of the unixware passwd fields. */
    
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 __inline__ void _Xpw_copyPasswd(_Xgetpwparams p)
 {
    memcpy(&(p).pws, (p).pwp, sizeof(struct passwd));

@@ -1,5 +1,5 @@
 // $XConsortium: fi /main/3 1996/08/31 12:19:29 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/fi,v 3.5 2000/10/27 18:31:09 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/fi,v 3.3 1996/12/23 07:13:17 dawes Exp $
 partial alphanumeric_keys 
  xkb_symbols "basic" {
  

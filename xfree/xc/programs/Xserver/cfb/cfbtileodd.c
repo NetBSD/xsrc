@@ -2,7 +2,7 @@
  * Fill odd tiled rectangles and spans.
  * no depth dependencies.
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbtileodd.c,v 3.3 2000/02/12 03:39:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbtileodd.c,v 3.2 1999/01/23 09:55:38 dawes Exp $ */
 
 /*
 

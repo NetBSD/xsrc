@@ -24,7 +24,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_video.c,v 1.1 2000/12/02 01:16:19 dawes Exp $ */
+/* $XFree86$ */
 
 /*
  * sis_video.c: SIS Xv driver. Based on the mga Xv driver by Mark Vojkovich

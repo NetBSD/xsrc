@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/rgb/rgb.c,v 3.4 1998/10/04 09:40:33 dawes Exp $ */
+/* $XFree86: xc/programs/rgb/rgb.c,v 3.3 1996/10/03 08:49:25 dawes Exp $ */
 
 
 /* reads from standard input lines of the form:

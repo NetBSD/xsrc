@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley && Larry Hare -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/medrawp.c,v 3.4 1998/10/25 07:11:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/medrawp.c,v 3.3 1998/10/05 13:22:30 dawes Exp $ */
 
 #define _XIEC_MEDRAWP
 #define _XIEC_EDRAWP

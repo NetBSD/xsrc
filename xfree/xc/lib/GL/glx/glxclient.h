@@ -18,7 +18,7 @@
 ** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
 **
 */
-/* $XFree86: xc/lib/GL/glx/glxclient.h,v 1.11 2000/12/07 20:26:03 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/glxclient.h,v 1.10 2000/11/13 23:31:22 dawes Exp $ */
 
 /*
  * Direct rendering support added by Precision Insight, Inc.

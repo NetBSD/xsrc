@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbgc.c,v 1.5 1999/04/11 13:11:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbgc.c,v 1.4 1998/10/04 13:12:23 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

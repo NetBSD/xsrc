@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810ioctl.h,v 1.5 2000/10/24 22:45:01 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810ioctl.h,v 1.4 2000/08/28 02:43:11 tsi Exp $ */
 
 #ifndef I810_IOCTL_H
 #define I810_IOCTL_H

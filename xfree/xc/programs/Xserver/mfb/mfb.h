@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfb.h,v 1.16 2000/02/12 03:40:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfb.h,v 1.15 1999/12/27 00:39:55 robin Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 

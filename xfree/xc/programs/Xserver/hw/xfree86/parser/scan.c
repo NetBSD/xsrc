@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/scan.c,v 1.14 2000/11/02 19:58:20 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/scan.c,v 1.12 2000/04/05 18:13:57 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

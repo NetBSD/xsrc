@@ -1,5 +1,5 @@
 /* $XConsortium: Display.c /main/4 1996/08/20 11:31:58 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Display.c,v 3.1 1996/12/23 07:09:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Display.c,v 3.0 1996/04/15 11:34:04 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

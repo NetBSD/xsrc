@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.cpp,v 1.4 2000/12/11 20:29:50 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.cpp,v 1.3 2000/12/11 20:18:46 dawes Exp $ 
 .TH FBDEVHW __drivermansuffix__ "Version 4.0.2"  "XFree86"
 .SH NAME
 fbdevhw \- os-specific submodule for framebuffer device access

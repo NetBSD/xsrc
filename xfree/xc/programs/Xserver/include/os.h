@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/os.h,v 3.36 2000/11/30 23:30:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/os.h,v 3.35 2000/08/02 15:30:36 keithp Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

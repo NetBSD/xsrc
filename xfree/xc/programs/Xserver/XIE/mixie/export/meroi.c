@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. August, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/meroi.c,v 3.4 1998/10/25 07:11:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/meroi.c,v 3.3 1998/10/05 13:22:32 dawes Exp $ */
 
 #define _XIEC_MEROI
 

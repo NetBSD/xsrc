@@ -31,7 +31,7 @@
  *   Modifier: Masayoshi Shimamura      FUJITSU LIMITED 
  *
  */
-/* $XFree86: xc/lib/X11/lcInit.c,v 3.7 2000/11/28 18:49:46 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcInit.c,v 3.6 2000/10/24 18:07:36 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

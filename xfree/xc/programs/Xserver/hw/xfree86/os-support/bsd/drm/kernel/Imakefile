@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/Imakefile,v 1.3 2000/10/27 16:59:40 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/Imakefile,v 1.2 2000/08/16 01:45:31 dawes Exp $
 
 #include <Server.tmpl>
 

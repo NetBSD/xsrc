@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xprint/DiPrint.h,v 1.3 1999/12/16 02:26:24 robin Exp $ */
+/* $XFree86: $ */
 
 /* $XConsortium: DiPrint.h /main/1 1996/09/28 16:57:42 rws $ */
 /*

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/font/stubs/xpstubs.c,v 1.1 1999/01/11 05:13:22 dawes Exp $ */
+/* $XFree86$ */
 
 /*
   stub for XpClient* functions.

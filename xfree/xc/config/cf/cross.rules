@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/cross.rules,v 1.2 2000/12/09 03:33:18 dawes Exp $
+XCOMM $XFree86$
 
 #define HostLinkRule(target, flags, src, libs)  cc -I$(BUILDINCDIR) -o target src
 

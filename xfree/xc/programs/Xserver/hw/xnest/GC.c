@@ -1,5 +1,5 @@
 /* $XConsortium: GC.c /main/8 1996/12/02 10:21:19 lehors $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/GC.c,v 3.4 1999/09/25 14:38:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/GC.c,v 3.3 1996/12/23 07:09:13 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtrans.c,v 3.23 2000/10/24 22:45:02 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtrans.c,v 3.22 1999/12/27 00:39:28 robin Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *

@@ -1,7 +1,7 @@
 XCOMM $TOG: X11.rules /main/4 1997/04/30 15:23:24 kaleb $
 
 
-XCOMM $XFree86: xc/config/cf/X11.rules,v 1.5 2000/11/06 19:24:00 dawes Exp $
+XCOMM $XFree86: xc/config/cf/X11.rules,v 1.4 1997/09/09 11:56:20 hohndel Exp $
 
 /* Note whether we are the top level project. */
 #ifndef SeenTopLevelProject

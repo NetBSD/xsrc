@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsFonts.c,v 1.3 1999/12/16 02:26:28 robin Exp $ */
+/* $XFree86: $ */
 
 /* $TOG: PsFonts.c /main/3 1998/02/09 15:42:34 kaleb $ */
 /*

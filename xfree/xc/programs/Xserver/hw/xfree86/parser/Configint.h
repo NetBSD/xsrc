@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Configint.h,v 1.16 2000/10/20 14:59:02 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Configint.h,v 1.15 2000/04/04 19:25:20 dawes Exp $ */
 /*
  * 
  * Copyright (c) 1997  Metro Link Incorporated

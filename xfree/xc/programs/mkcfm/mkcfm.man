@@ -15,7 +15,7 @@
 .\" The Original Software is CID font code that was developed by Silicon
 .\" Graphics, Inc.
 .\"
-.\" $XFree86: xc/programs/mkcfm/mkcfm.man,v 1.2 1999/05/15 12:10:37 dawes Exp $
+.\" $XFree86: xc/programs/mkcfm/mkcfm.man,v 1.1 1999/05/03 05:58:59 dawes Exp $
 .TH MKCFM 1 "Release 1.0" "CID Fonts Version 1.0"
 .SH NAME
 mkcfm - create summaries of font metric files in CID font directories

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/sparcPci.c,v 1.3 2000/11/02 19:10:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/sparcPci.c,v 1.2 2000/04/04 19:25:19 dawes Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *

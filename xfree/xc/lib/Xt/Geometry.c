@@ -54,7 +54,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Geometry.c,v 1.8 2000/10/21 03:16:16 keithp Exp $ */
+/* $XFree86: xc/lib/Xt/Geometry.c,v 1.7 2000/10/10 14:05:48 tsi Exp $ */
 
 #include "IntrinsicI.h"
 #include "ShellP.h"

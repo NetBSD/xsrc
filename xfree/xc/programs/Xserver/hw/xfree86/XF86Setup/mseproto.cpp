@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mseproto.cpp,v 3.2 1998/12/13 07:37:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mseproto.cpp,v 3.1 1998/03/27 23:23:05 hohndel Exp $ */
 
 #if defined(PC98)
 set SerialMouseTypes [list \

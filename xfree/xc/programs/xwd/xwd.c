@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/xwd/xwd.c,v 3.6 2000/12/01 00:24:36 dawes Exp $ */
+/* $XFree86: xc/programs/xwd/xwd.c,v 3.5 1999/03/07 11:41:37 dawes Exp $ */
 
 /*
  * xwd.c MIT Project Athena, X Window system window raster image dumper.

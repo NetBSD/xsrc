@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatexcnv.c,v 1.1 2000/09/24 13:51:08 alanh Exp $ */
+/* $XFree86: $ */
 /*
  * GLX Hardware Device Driver for Matrox Millenium G200
  * Copyright (C) 1999 Wittawat Yamwong

@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
 
-/* $XFree86: xc/lib/Xaw/SmeBSB.c,v 1.10 1999/06/06 08:48:11 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SmeBSB.c,v 1.9 1999/04/25 10:01:25 dawes Exp $ */
 
 /*
  * SmeBSB.c - Source code file for BSB Menu Entry object.

@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden, Robert NC Shelley -- AGE Logic, Inc. May, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/control/sched.c,v 1.4 1998/10/25 07:11:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/control/sched.c,v 1.3 1998/10/06 10:35:16 dawes Exp $ */
 
 /*
  *  Include files

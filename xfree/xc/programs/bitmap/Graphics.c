@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/bitmap/Graphics.c,v 1.4 1999/02/01 11:56:08 dawes Exp $ */
+/* $XFree86: xc/programs/bitmap/Graphics.c,v 1.3 1998/10/04 09:39:58 dawes Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium

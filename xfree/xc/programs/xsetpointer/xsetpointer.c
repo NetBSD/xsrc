@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xsetpointer/xsetpointer.c,v 3.5 1999/03/07 11:41:20 dawes Exp $ */
+/* $XFree86: xc/programs/xsetpointer/xsetpointer.c,v 3.4 1996/01/30 15:28:11 dawes Exp $ */
 
 /*
  * Copyright 1995 by Frederic Lepied, France. <fred@sugix.frmug.fr.net>       

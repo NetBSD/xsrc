@@ -28,7 +28,7 @@
  * 
  * GLINT 500TX / MX accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/tx_accel.c,v 1.22 2000/05/10 20:01:32 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/tx_accel.c,v 1.19 2000/01/21 01:12:18 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"

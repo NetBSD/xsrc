@@ -24,7 +24,7 @@
  *
  *    Wittawat Yamwong <Wittawat.Yamwong@stud.uni-hannover.de>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/common/hwlog.h,v 1.3 2000/11/18 19:37:05 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/common/hwlog.h,v 1.2 2000/06/22 16:59:23 tsi Exp $ */
  
 /* Usage:
  * - use mgaError for error messages. Always write to X error and log file.

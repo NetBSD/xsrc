@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/Xresource.h,v 3.5 2000/11/28 18:49:28 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xresource.h,v 3.4 2000/09/28 20:17:06 tsi Exp $ */
 
 #ifndef _XRESOURCE_H_
 #define _XRESOURCE_H_

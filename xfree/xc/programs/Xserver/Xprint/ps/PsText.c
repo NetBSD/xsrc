@@ -69,7 +69,7 @@ in this Software without prior written authorization from The Open Group.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsText.c,v 1.8 1999/12/30 13:09:37 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsText.c,v 1.7 1999/12/30 13:08:19 robin Exp $ */
 
 #include "Ps.h"
 #include "gcstruct.h"

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.11 94/02/07 16:07:31 gildea Exp $
-XCOMM $XFree86: xc/lib/font/util/Imakefile,v 1.6 2000/12/07 16:40:30 dawes Exp $
+XCOMM $XFree86: xc/lib/font/util/Imakefile,v 1.5 2000/11/30 23:30:00 dawes Exp $
 #include <Server.tmpl>
 
         INCLUDES = -I$(FONTINCSRC) -I../include

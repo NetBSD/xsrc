@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/FS/FSOpenFont.c,v 1.4 1999/02/25 06:00:55 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSOpenFont.c,v 1.3 1999/02/20 15:07:12 hohndel Exp $ */
 
 /*
 

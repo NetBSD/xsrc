@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miStruct.h,v 1.4 2000/08/31 19:03:55 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miStruct.h,v 1.3 1998/10/04 09:34:07 dawes Exp $ */
 
 #ifndef MISTRUCT_H
 #define MISTRUCT_H

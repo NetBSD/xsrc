@@ -69,7 +69,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/pmax/pmax_devs.c,v 1.6 1999/09/04 13:04:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/pmax/pmax_devs.c,v 1.5 1999/05/22 08:40:15 dawes Exp $ */
 
 #include "X.h"
 

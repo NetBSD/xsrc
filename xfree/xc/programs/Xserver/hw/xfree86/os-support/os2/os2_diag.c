@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_diag.c,v 3.7 2000/04/05 18:13:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_diag.c,v 3.6 1999/04/29 09:13:48 dawes Exp $ */
 /*
  * (c) Copyright 1997 by Holger Veit
  *			<Holger.Veit@gmd.de>
