@@ -36,6 +36,7 @@
  *	     Michel Dänzer, <michdaen@iiic.ethz.ch>
  */
 
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <dev/wscons/wsconsio.h>
@@ -196,7 +197,9 @@ WsfbSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 
 	/* Check that we're being loaded on a OpenBSD system */
 	LoaderGetOS(&osname, NULL, NULL, NULL);
-	if (!osname || strcmp(osname, "openbsd") != 0) {
+	if (!osname 
+	    || ((strcmp(osname, "openbsd") != 0) 
+	    && (strcmp(osname, "netbsd") != 0))) {
 		if (errmaj)
 			*errmaj = LDR_BADOS;
 		if (errmin)
