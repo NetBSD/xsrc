@@ -2,7 +2,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:42:50 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/doc/specs/programs/Imakefile,v 1.12 2001/04/19 15:08:29 dawes Exp $
+XCOMM $XFree86: xc/doc/specs/programs/Imakefile,v 1.14 2002/01/15 01:22:47 dawes Exp $
 
 /* does not include manual pages under util (not X programs)
    or any of the library function manual pages under doc/man */
@@ -13,7 +13,6 @@ XFREE86_MANUALS = \
   $(TOP)/programs/Xserver/hw/xfree86/xf86config/xf86config.man \
   $(TOP)/programs/Xserver/hw/xfree86/xf86cfg/xf86cfg.man \
   $(TOP)/programs/Xserver/hw/xfree86/reconfig/reconfig.man \
-  $(TOP)/programs/Xserver/hw/xfree86/SuperProbe/SuperProbe.man \
   $(TOP)/programs/Xserver/hw/xfree86/drivers/apm/apm.man \
   $(TOP)/programs/Xserver/hw/xfree86/drivers/ati/ati.man \
   $(TOP)/programs/Xserver/hw/xfree86/drivers/chips/chips.man \
@@ -53,16 +52,20 @@ XFREE86_MANUALS = \
   $(TOP)/programs/Xserver/hw/xfree86/etc/pcitweak.man \
   $(TOP)/programs/Xserver/hw/xfree86/etc/scanpci.man \
   $(TOP)/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.man \
+  $(TOP)/programs/Xserver/hw/xfree86/input/acecad/acecad.man \
+  $(TOP)/programs/Xserver/hw/xfree86/input/calcomp/calcomp.man \
+  $(TOP)/programs/Xserver/hw/xfree86/input/citron/citron.man \
+  $(TOP)/programs/Xserver/hw/xfree86/input/dmc/dmc.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/dynapro/dynapro.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/elographics/elographics.man \
+  $(TOP)/programs/Xserver/hw/xfree86/input/keyboard/keyboard.man \
+  $(TOP)/programs/Xserver/hw/xfree86/input/magictouch/magictouch.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/microtouch/microtouch.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/mouse/mouse.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/mutouch/mutouch.man \
+  $(TOP)/programs/Xserver/hw/xfree86/input/penmount/penmount.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/void/void.man \
   $(TOP)/programs/Xserver/hw/xfree86/input/wacom/wacom.man \
-  $(TOP)/programs/Xserver/hw/xfree86/input/keyboard/keyboard.man \
-  $(TOP)/programs/Xserver/hw/xfree86/input/penmount/penmount.man \
-  $(TOP)/programs/Xserver/hw/xfree86/input/citron/citron.man \
   $(TOP)/programs/Xserver/hw/darwin/XDarwin.man \
   $(TOP)/programs/Xserver/hw/darwin/utils/dumpkeymap.man \
   $(TOP)/programs/Xserver/hw/kdrive/Xkdrive.man \
@@ -136,6 +139,7 @@ MANUALS = \
   $(TOP)/programs/Xserver/hw/xnest/Xnest.man \
   $(TOP)/programs/scripts/xon.man \
   $(TOP)/programs/xprop/xprop.man \
+  $(TOP)/programs/xrandr/xrandr.man \
   $(TOP)/programs/xrdb/xrdb.man \
   $(TOP)/programs/xrefresh/xrefresh.man \
   $(TOP)/programs/Xserver/Xserver.man \
@@ -145,6 +149,7 @@ MANUALS = \
   $(TOP)/programs/xstdcmap/xstdcmap.man \
   $(TOP)/programs/Xserver/hw/sun/Xsun.man \
   $(TOP)/programs/xterm/xterm.man \
+  $(TOP)/programs/xtrap/xtrap.man \
   $(TOP)/programs/Xserver/hw/vfb/Xvfb.man \
   $(TOP)/programs/xwd/xwd.man \
   $(TOP)/programs/xwininfo/xwininfo.man \
