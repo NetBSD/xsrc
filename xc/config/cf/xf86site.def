@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.11 1997/06/22 10:32:22 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.15 1998/02/24 19:05:42 hohndel Exp $
 /******************************************************************************/
 /*
  * This file is to provide a quick method for most people to change the
@@ -248,6 +248,8 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.11 1997/06/22 10:32:22 dawes
 #define XF98WABEPServer		YES
 #define XF98WSNAServer		YES
 #define XF98TGUIServer		YES
+#define XF98MGAServer		YES
+#define XF98SVGAServer		YES
 #define XF98NECS3Server		YES
 #define XF98PWSKBServer		YES
 #define XF98PWLBServer		YES
@@ -288,8 +290,8 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.11 1997/06/22 10:32:22 dawes
  *
 #define XF86SvgaDrivers		nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
 				cirrus ncr77c22 compaq mga oak al2101 ali \
-				cl64xx video7 chips ark mx realtek apm \
-				s3v generic
+				cl64xx video7 ark mx realtek apm \
+				s3v s3_svga chips generic
  */
 
 /*
@@ -333,13 +335,15 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.11 1997/06/22 10:32:22 dawes
 
 
 /*
- * If you only run the X server under xdm the X servers don't need to be
- * installed SetUID, and you may comment out the lines below.  If you run
- * the servers by hand (with xinit or startx), then they do need to be
- * installed SetUID on most OSs.
- * Consult your system administrator before making the X server setuid.
+ * The X servers need to run as root on most OSs.  We're now using a
+ * wrapper in that case, but we still need to make it known that the
+ * servers need SetUID.  When only using xdm, this (and the wrapper)
+ * are not required.  Disabling this automatically disables use of the
+ * wrapper.
  *
-#define InstallXserverSetUID	NO
+ * If you're only starting the Xservers with xdm set this to NO
+ *
+#define XserverNeedsSetUID	NO
  */
 
 /*
