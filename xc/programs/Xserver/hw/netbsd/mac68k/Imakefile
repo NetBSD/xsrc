@@ -18,7 +18,7 @@ OBJS = \
 
    DEFINES = $(SIGNAL_DEFINES) -DPASS_OPTION
    INCLUDES = -I.  -I../../include -I../../mi -I../../mfb \
-	      -I$(INCLUDESRC) -I$(FONTINCSRC) -I$(EXTINCSRC)
+	      -I$(XINCLUDESRC) -I$(FONTINCSRC) -I$(EXTINCSRC)
    LINTLIBS = ../../dix/llib-ldix.ln ../../os/llib-los.ln \
 	      ../../mfb/llib-lmfb.ln ../../mi/llib-lmi.ln ../../cfb/llib-lcfb.ln
 
