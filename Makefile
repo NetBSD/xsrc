@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/11/05 15:55:34 fredb Exp $
+#	$NetBSD: Makefile,v 1.20 2000/11/08 06:35:41 is Exp $
 #
 # Targets & Variables
 #
@@ -106,7 +106,7 @@ release snapshot: build
 	${INSTALL} -d -m 755 -o root -g wheel ${RELEASEDIR}/binary/sets
 .if ${MACHINE} == "amiga"
 	cd xc/programs/Xserver/hw/netbsd/amiga && \
-		${INSTALL} -m 644 INSTALL.X11 ${RELEASEDIR}
+		${INSTALL} -c -m 644 INSTALL.X11 ${RELEASEDIR}
 .endif
 	sh ${BSDSRCDIR}/distrib/sets/maketars -x -s ${BSDSRCDIR}/distrib/sets \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
