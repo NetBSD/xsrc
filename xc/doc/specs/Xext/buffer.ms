@@ -99,7 +99,7 @@ Image Buffers
 .LP
 Normal windows are created using the standard \fBCreateWindow\fP request:
 .DS
-.ft 8
+.ft CR
 CreateWindow
 	parent          : WINDOW
 	w_id            : WINDOW
@@ -198,7 +198,7 @@ New Requests
 The new request, \fBCreateImageBuffers\fP, creates a group of
 image buffers and associates them with a normal X window:
 .DS
-.ft 8
+.ft CR
 CreateImageBuffers
 	w_id           : WINDOW
 	buffers        : LISTofBUFFER
@@ -309,7 +309,7 @@ whenever there is a pause in the animation.
 .LP
 To display an image buffer the following request can be used:
 .DS
-.ft 8
+.ft CR
 DisplayImageBuffers
 	buffers         : LISTofBUFFER
 	min_delay       : CARD16
@@ -389,7 +389,7 @@ as those defined for the core protocol.
 To explicitly clear a rectangular area of an image buffer to
 the window background, the following request can be used:
 .DS
-.ft 8
+.ft CR
 ClearImageBufferArea
 	buffer          : BUFFER
 	x, y            : INT16
@@ -415,7 +415,7 @@ either visible or are being retained in backing store.
 The group of image buffers allocated by a \fBCreateImageBuffers\fP
 request can be destroyed with the following request:
 .DS
-.ft 8
+.ft CR
 DestroyImageBuffers
 	w_id		: WINDOW
 
@@ -433,7 +433,7 @@ Attributes
 The following attributes will be associated with each window that
 is multi-buffered:
 .DS
-.ft 8
+.ft CR
 	displayed_buffer : CARD16
 	update_action    : {Undefined,Background,Untouched,Copied}
 	update_hint      : {Frequent,Intermittent,Static}
@@ -451,7 +451,7 @@ The ID for each buffer associated with the window is recorded
 in the \fIbuffers\fP list.
 The above attributes can be queried with the following request:
 .DS
-.ft 8
+.ft CR
 GetMultiBufferAttributes
 	w_id             : WINDOW
 	=>
@@ -471,7 +471,7 @@ is \fIupdate_hint\fP.  Rather than have a specific request
 to set this attribute, a generic set request is provided to
 allow for future expansion:
 .DS
-.ft 8
+.ft CR
 SetMultiBufferAttributes
 	w_id            : WINDOW
 	value_mask      : BITMASK
@@ -485,7 +485,7 @@ If the window is not multi-buffered, a \fBMatch\fP error will be generated.
 The following attributes are maintained for each buffer of a
 multi-buffered window:
 .DS
-.ft 8
+.ft CR
 	window           : WINDOW
 	event_mask       : SETofEVENT
 	index            : CARD16
@@ -503,7 +503,7 @@ the left side or right side of a stereo window.
 For non-stereo windows, this attribute will be set to \fIMono\fP.
 These attributes can be queried with the following request:
 .DS
-.ft 8
+.ft CR
 GetBufferAttributes
 	buffer          : BUFFER
 	=>
@@ -527,7 +527,7 @@ Rather than have a specific request
 to set this attribute, a generic set request is provided to
 allow for future expansion:
 .DS
-.ft 8
+.ft CR
 SetBufferAttributes
 	buffer          : BUFFER
 	value_mask      : BITMASK
@@ -543,7 +543,7 @@ returns a large list of information
 that would most likely be read once by Xlib for each screen, and used as a data base for
 other Xlib queries:
 .DS
-.ft 8
+.ft CR
 GetBufferInfo
 	root            : WINDOW
 	=>
@@ -553,7 +553,7 @@ GetBufferInfo
 .LP
 Where \fBSCREEN_INFO\fP and \fBBUFFER_INFO\fP are defined as:
 .DS
-.ft 8
+.ft CR
 
 	SCREEN_INFO     : [ normal_info : LISTofBUFFER_INFO,
 	                    stereo_info : LISTofBUFFER_INFO ]
@@ -576,7 +576,7 @@ memory limitations.
 The following request returns the major and minor version numbers
 of this extension:
 .DS
-.ft 8
+.ft CR
 GetBufferVersion
 	=>
 	major_number    : CARD8
@@ -620,7 +620,7 @@ client drawing into one of these buffers the opportunity
 to stop drawing until some portion of the buffer is
 writable, the following event is added:
 .DS
-.ft 8
+.ft CR
 ClobberNotify
 	buffer         :  BUFFER
 	state          : {Unclobbered,PartiallyClobbered,FullyClobbered}
@@ -653,7 +653,7 @@ request.  This allows the FIFO manager to load up a future frame as
 soon as a buffer becomes available.  To support this,
 the following event is added:
 .DS
-.ft 8
+.ft CR
 UpdateNotify
 	buffer         :  BUFFER
 .ft
@@ -678,7 +678,7 @@ Double-Buffering Normal Windows
 The following pseudo-code fragment illustrates how to create and display
 a double-buffered image:
 .DS
-.ft 8
+.ft CR
 /*
  * Create a normal window
  */
@@ -727,7 +727,7 @@ The following pseudo-code fragment illustrates how to create a
 a multi-buffered image and cycle through the images to
 simulate a movie loop:
 .DS
-.ft 8
+.ft CR
 /*
  * Create a normal window
  */
@@ -782,7 +782,7 @@ except the displayed image is made up of a left image
 buffer and a right image buffer.  To create a stereo window,
 a client makes the following request:
 .DS
-.ft 8
+.ft CR
 CreateStereoWindow
 	parent          : WINDOW
 	w_id            : WINDOW
@@ -853,7 +853,7 @@ Single-Buffered Stereo Windows
 The following shows how to create and display a single-buffered
 stereo image:
 .DS
-.ft 8
+.ft CR
 /*
  * Create the stereo window, map it the screen,
  * and draw the left and right images
@@ -896,7 +896,7 @@ either the left buffer ID or right buffer ID may be specified in a
 .LP
 To double-buffer a stereo window:
 .DS
-.ft 8
+.ft CR
 /*
  * Create stereo window and map it to the screen
  */
@@ -935,7 +935,7 @@ Multi-Buffering Stereo Windows
 .LP
 To cycle through \fIN\fP stereo images:
 .DS
-.ft 8
+.ft CR
 /*
  * Create stereo window
  */
