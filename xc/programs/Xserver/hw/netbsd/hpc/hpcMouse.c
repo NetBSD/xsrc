@@ -1,4 +1,4 @@
-/* $NetBSD: hpcMouse.c,v 1.2 2000/07/29 14:23:58 takemura Exp $	*/
+/* $NetBSD: hpcMouse.c,v 1.3 2001/06/24 14:46:54 takemura Exp $	*/
 /* $XConsortium: sunMouse.c,v 5.21 94/04/17 20:29:47 kaleb Exp $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -112,7 +112,7 @@ hpcMouseProc(device, what)
     switch (what) {
 	case DEVICE_INIT:
 	    if (pMouse != LookupPointerDevice()) {
-		ErrorF ("Cannot open non-system mouse");
+		hpcErrorF (("Cannot open non-system mouse"));
 		return !Success;
 	    }
 	    if (hpcPtrPriv.fd == -1)
@@ -130,12 +130,12 @@ hpcMouseProc(device, what)
 	case DEVICE_ON:
 #if 0
 	    if (ioctl (hpcPtrPriv.fd, VUIDGFORMAT, &oformat) == -1) {
-		Error ("hpcMouseProc ioctl VUIDGFORMAT");
+		hpcError ("hpcMouseProc ioctl VUIDGFORMAT");
 		return !Success;
 	    }
 	    format = VUID_FIRM_EVENT;
 	    if (ioctl (hpcPtrPriv.fd, VUIDSFORMAT, &format) == -1) {
-		Error ("hpcMouseProc ioctl VUIDSFORMAT");
+		hpcError ("hpcMouseProc ioctl VUIDSFORMAT");
 		return !Success;
 	    }
 #endif
@@ -158,7 +158,7 @@ hpcMouseProc(device, what)
 	case DEVICE_CLOSE:
 #if 0
 	    if (ioctl (hpcPtrPriv.fd, VUIDSFORMAT, &oformat) == -1)
-		Error ("hpcMouseProc ioctl VUIDSFORMAT");
+		hpcError ("hpcMouseProc ioctl VUIDSFORMAT");
 #endif
 	    break;
 
@@ -198,8 +198,8 @@ hpcMouseGetEvents (pPriv, pNumEvents, pAgain)
 	    *pNumEvents = 0;
 	    *pAgain = FALSE;
 	} else {
-	    Error ("hpcMouseGetEvents read");
-	    FatalError ("Could not read from mouse");
+	    hpcError ("hpcMouseGetEvents read");
+	    hpcFatalError (("Could not read from mouse"));
 	}
     } else {
 	*pNumEvents = nBytes / sizeof (hpcEvent);
@@ -381,7 +381,7 @@ hpcMouseEnqueueEvent (device, fe)
     case WSCONS_EVENT_MOUSE_ABSOLUTE_Z:
 	break;
     default:
-	FatalError ("hpcMouseEnqueueEvent: unrecognized id\n");
+	hpcFatalError (("hpcMouseEnqueueEvent: unrecognized id\n"));
 	break;
     }
 }

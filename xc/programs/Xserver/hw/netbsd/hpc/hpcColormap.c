@@ -1,4 +1,4 @@
-/* $NetBSD: hpcColormap.c,v 1.1 2000/05/06 06:01:49 takemura Exp $	*/
+/* $NetBSD: hpcColormap.c,v 1.2 2001/06/24 14:46:54 takemura Exp $	*/
 /* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
 /*
@@ -105,8 +105,8 @@ hpcUpdateColormap(pScreen, dex, count, rmap, gmap, bmap)
     cmap.blue = &bmap[dex];
 
     if (ioctl(pFb->fd, WSDISPLAYIO_PUTCMAP, &cmap) < 0) {
-	Error("UpdateColormap");
-	FatalError( "UpdateColormap: WSDISPLAY_PUTCMAP failed\n" );
+	hpcError("UpdateColormap");
+	hpcFatalError(("UpdateColormap: WSDISPLAY_PUTCMAP failed\n"));
     }
 }
 
@@ -180,7 +180,7 @@ hpcUninstallColormap(cmap)
 	    if (defMap)
 		(*cmap->pScreen->InstallColormap)(defMap);
 	    else
-		ErrorF("hpcUninstallColormap: Can't find default colormap\n");
+		hpcErrorF(("hpcUninstallColormap: Can't find default colormap\n"));
 	}
     }
 }
@@ -252,7 +252,7 @@ hpcInitializeColormap(pmap)
 	    cmap.blue = bmap;
 
 	    if (ioctl(pFb->fd, WSDISPLAYIO_GETCMAP, &cmap) < 0) {
-		FatalError( "hpcInitialiseColormap: WSDISPLAY_GETCMAP failed\n" );
+		hpcFatalError(("hpcInitialiseColormap: WSDISPLAY_GETCMAP failed\n"));
 	    }
 	    for (i = 0; i < 256; i++) {
 		pmap->red[i].co.local.red = (long)rmap[i] << 8;

@@ -1,4 +1,4 @@
-/* $NetBSD: hpcFB.c,v 1.1 2000/05/06 06:01:49 takemura Exp $	*/
+/* $NetBSD: hpcFB.c,v 1.2 2001/06/24 14:46:54 takemura Exp $	*/
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -195,6 +195,29 @@ hpc16ScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width)
     return TRUE;
 }
 
+int
+hpcSetDisplayMode(fd, mode, prevmode)
+	int fd;
+	int mode;
+	int *prevmode;
+{
+    if (prevmode != NULL) {
+	if (ioctl(fd, WSDISPLAYIO_GMODE, prevmode) < 0) {
+	    hpcError("ioctl(WSDISPLAYIO_GMODE)");
+	    return (-1);
+	}
+    }
+
+    if (prevmode == NULL || *prevmode != mode) {
+	    if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) < 0) {
+		hpcError("ioctl(WSDISPLAYIO_SMODE)");
+		return (-1);
+	    }
+    }
+
+    return (0);
+}
+
 Bool
 hpcFBInit(screen, pScreen, argc, argv)
     int	    	  screen;    	/* what screen am I going to be */
@@ -214,25 +237,22 @@ hpcFBInit(screen, pScreen, argc, argv)
 	    return FALSE;
 
 	if (!fb) {
-	    int dispmode;
-
 	    fbconf->hf_conf_index = HPCFB_CURRENT_CONFIG;
 	    if (ioctl(pFb->fd, HPCFBIO_GCONF, fbconf) < 0) {
-		perror("ioctl(HPCFBIO_GCONF)");
+		hpcError("ioctl(HPCFBIO_GCONF)");
 		return FALSE;
 	    }
-	    fprintf(stderr, "%dx%d (%dbytes/line) %dbit offset=%lx\n",
-		    fbconf->hf_width,
-		    fbconf->hf_height,
-		    fbconf->hf_bytes_per_line,
-		    fbconf->hf_pixel_width,
-		    fbconf->hf_offset);
+	    /* this isn't error */
+	    hpcErrorF(("%s: %dx%d (%dbytes/line) %dbit offset=%lx\n",
+		pFb->devname,
+		fbconf->hf_width,
+		fbconf->hf_height,
+		fbconf->hf_bytes_per_line,
+		fbconf->hf_pixel_width,
+		fbconf->hf_offset));
 
-	    dispmode = WSDISPLAYIO_MODE_MAPPED;
-	    if (ioctl(pFb->fd, WSDISPLAYIO_SMODE, &dispmode) < 0) {
-		perror("ioctl(WSDISPLAYIO_SMODE)");
+	    if (hpcSetDisplayMode(pFb->fd, WSDISPLAYIO_MODE_MAPPED, NULL) < 0)
 		return FALSE;
-	    }
 
 	    fb = hpcMemoryMap((size_t)fbconf->hf_bytes_per_line * fbconf->hf_height,
 			      fbconf->hf_offset, pFb->fd);

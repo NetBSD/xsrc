@@ -1,4 +1,4 @@
-/* $NetBSD: hpcIo.c,v 1.1 2000/05/06 06:01:49 takemura Exp $	*/
+/* $NetBSD: hpcIo.c,v 1.2 2001/06/24 14:46:54 takemura Exp $	*/
 /* $XConsortium: sunIo.c,v 5.26.1.3 95/01/25 23:02:33 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sunIo.c,v 3.1 1995/01/28 15:46:06 dawes Exp $ */
 /*-
@@ -255,15 +255,15 @@ ddxUseMsg()
 {
 #if 0 /* XXX */
 #ifndef XKB
-    ErrorF("-ar1 int            set autorepeat initiate time\n");
-    ErrorF("-ar2 int            set autorepeat interval time\n");
+    hpcErrorF(("-ar1 int            set autorepeat initiate time\n"));
+    hpcErrorF(("-ar2 int            set autorepeat interval time\n"));
 #endif
 #endif /* 0 XXX */
-    ErrorF("-debug              disable non-blocking console mode\n");
-    ErrorF("-dev fn[:fn][:fn]   name of device[s] to open\n");
+    hpcErrorF(("-debug              disable non-blocking console mode\n"));
+    hpcErrorF(("-dev fn[:fn][:fn]   name of device[s] to open\n"));
 #if 0 /* XXX */
-    ErrorF("-mono               force monochrome-only screen\n");
-    ErrorF("-zaphod             disable active Zaphod mode\n");
-    ErrorF("-fbinfo             tell more about the found frame buffer(s)\n");
+    hpcErrorF(("-mono               force monochrome-only screen\n"));
+    hpcErrorF(("-zaphod             disable active Zaphod mode\n"));
+    hpcErrorF(("-fbinfo             tell more about the found frame buffer(s)\n"));
 #endif /* 0 XXX */
 }
