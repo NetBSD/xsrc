@@ -1,4 +1,4 @@
-/* $NetBSD: tgagc.c,v 1.1 1999/04/27 08:18:24 ross Exp $ */
+/* $NetBSD: tgagc.c,v 1.2 1999/10/27 05:42:41 elric Exp $ */
 
 /***********************************************************
 
@@ -543,7 +543,7 @@ alphaTgaValidateGC(pGC, changes, pDrawable)
     {
 	GCOps	*newops;
 
-	if (newops = cfbMatchCommon (pGC, devPriv))
+	if (newops = alphaTgaMatchCommon (pGC, devPriv))
  	{
 	    if (pGC->ops->devPrivate.val)
 		miDestroyGCOps (pGC->ops);

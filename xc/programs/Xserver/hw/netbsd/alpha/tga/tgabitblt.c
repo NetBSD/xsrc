@@ -1,4 +1,4 @@
-/* $NetBSD: tgabitblt.c,v 1.1 1999/04/27 08:18:24 ross Exp $ */
+/* $NetBSD: tgabitblt.c,v 1.2 1999/10/27 05:42:41 elric Exp $ */
 
 /*
  * cfb copy area
@@ -86,6 +86,10 @@ alphaTgaCopyArea(pSrcDrawable, pDstDrawable,
     int width, height;
     int dstx, dsty;
 {
+    void (*blt)() = cfbDoBitblt;
+    if (pSrcDrawable->type == DRAWABLE_WINDOW &&
+	pDstDrawable->type == DRAWABLE_WINDOW)
+	blt = alphaTgaDoBitblt;
     return cfbBitBlt (pSrcDrawable, pDstDrawable,
-        pGC, srcx, srcy, width, height, dstx, dsty, alphaTgaDoBitblt, 0L);
+        pGC, srcx, srcy, width, height, dstx, dsty, blt, 0L);
 }
