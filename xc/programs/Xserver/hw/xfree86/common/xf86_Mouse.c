@@ -47,7 +47,11 @@
 #include "xf86_Config.h"
 
 #if defined(__NetBSD__)
+#undef MAXHOSTNAMELEN		/* avoid duplication from param.h */
+#include <sys/param.h>		/* pull in __NetBSD_Version__ */
+#if __NetBSD_Version__ >= 103060000
 #include <dev/wscons/wsconsio.h>
+#endif
 #endif
 
 #ifdef XINPUT
@@ -121,15 +125,17 @@ Bool xf86SupportedMouseTypes[] =
 	FALSE,	/* Genius NetScroll (PS/2) */
 #endif /* __FreeBSD__ */
 	TRUE,	/* sysmouse */
-#if defined(__NetBSD__)
-	TRUE,	/* wsmouse */
-#else
-	FALSE,	/* wsmouse */
-#endif
 #ifdef PNP_MOUSE
 	TRUE,	/* auto */
 #else
 	FALSE,	/* auto */
+#endif
+	FALSE,	/* xque */
+	FALSE,	/* osmouse */
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 103060000
+	TRUE,	/* wsmouse */
+#else
+	FALSE,	/* wsmouse */
 #endif
 };
 
@@ -167,8 +173,10 @@ unsigned short xf86MouseCflags[] =
 	0,						     /* NetScroll */
 
 	(CS8 | CSTOPB          | CREAD | CLOCAL | HUPCL ),   /* sysmouse */
-	0,						     /* wsmouse */
 	0,						     /* auto */
+	0,						     /* xque */
+	0,						     /* osmouse */
+	0,						     /* wsmouse */
 };
 #endif /* ! MOUSE_PROTOCOL_IN_KERNEL */
 
@@ -218,8 +226,15 @@ static unsigned char proto[][7] = {
 
   {  0xf8,   0x80, 0x00,   0x00, 5,    0x00,   0xff },  /* sysmouse */
 
+  {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* auto */
+  {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* xque */
+  {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* osmouse */
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 103060000
   {  0x00,   0x00, 0x00,   0x00, sizeof(struct wscons_event),
      				       0x00,   0x00 },  /* wsmouse */
+#else
+  {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* wsmouse */
+#endif
 };
 #endif /* ! MOUSE_PROTOCOL_IN_KERNEL */
 
@@ -637,7 +652,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
   static int           pBufP = 0;
   static unsigned char pBuf[32];
   MouseDevPtr          mouse = MOUSE_DEV(device);
-  
+
 #ifdef EXTMOUSEDEBUG
     ErrorF("received %d bytes ",nBytes);
     for ( i=0; i < nBytes; i++)
@@ -909,6 +924,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
 	}
       break;
 
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 103060000
     case P_WSMOUSE: {
       struct wscons_event ev;
 
@@ -935,17 +951,20 @@ xf86MouseProtocol(device, rBuf, nBytes)
 	dy = -ev.value;
 	buttons = mouse->lastButtons;
 	break;
+#ifdef WSCONS_EVENT_MOUSE_DELTA_Z
       case WSCONS_EVENT_MOUSE_DELTA_Z:
 	dx = dy = 0;
 	dz = ev.value;
 	buttons = mouse->lastButtons;
 	break;
+#endif
       default:
 	ErrorF("wsmouse: bad event type=%d\n", ev.type);
 	return;
       }
       break;
       }
+#endif /* defined(__NetBSD__) && __NetBSD_Version__ >= 103060000 */
 
     default: /* There's a table error */
       continue;
