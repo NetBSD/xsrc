@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2001/05/23 12:47:13 fredb Exp $
+#	$NetBSD: Makefile,v 1.28 2001/08/19 17:26:42 mrg Exp $
 #
 # Targets & Variables
 #
@@ -90,9 +90,9 @@ cleandir distclean: clean
 
 build:
 .if defined(UPDATE)
-	@${MAKE} all install
+	@${MAKE} all && ${MAKE} install
 .else
-	@${MAKE} cleandir all install
+	@${MAKE} cleandir && ${MAKE} all && ${MAKE} install
 .endif
 
 # release goo
