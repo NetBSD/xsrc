@@ -205,7 +205,7 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
 	NewDevice.GDev.identifier = "ISA Adapter";
 	NewDevice.GDev.busID = "ISA";
 	break;
-#if defined(__sparc__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
+#if defined(__sparc__) && !defined(__OpenBSD__)
     case BUS_SBUS: {
 	char *promPath = NULL;
 	NewDevice.sVideo = (sbusDevicePtr) busData;

@@ -2302,7 +2302,7 @@ xf86PostProbe(void)
 
     if (fbSlotClaimed) {
         if (pciSlotClaimed || isaSlotClaimed 
-#if defined(__sparc__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
+#if defined(__sparc__) && !defined(__OpenBSD__)
 	    || sbusSlotClaimed
 #endif
 	    ) { 
