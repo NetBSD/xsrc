@@ -464,31 +464,6 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
     pVMWARE->vmwareCapability = 0;
 #endif
 
-        if (pVMWARE->vmwareCapability & SVGA_CAP_8BIT_EMULATION) {
-	        pVMWARE->bitsPerPixel =
-                   vmwareReadReg(pVMWARE, SVGA_REG_HOST_BITS_PER_PIXEL);
-                vmwareWriteReg(pVMWARE,
-                               SVGA_REG_BITS_PER_PIXEL, pVMWARE->bitsPerPixel);
-        } else {
-	        pVMWARE->bitsPerPixel =
-                   vmwareReadReg(pVMWARE, SVGA_REG_BITS_PER_PIXEL);
-        }
-	pVMWARE->depth = vmwareReadReg(pVMWARE, SVGA_REG_DEPTH);
-	pVMWARE->videoRam = vmwareReadReg(pVMWARE, SVGA_REG_FB_MAX_SIZE);
-	pVMWARE->memPhysBase = vmwareReadReg(pVMWARE, SVGA_REG_FB_START);
-	pVMWARE->maxWidth = vmwareReadReg(pVMWARE, SVGA_REG_MAX_WIDTH);
-	pVMWARE->maxHeight = vmwareReadReg(pVMWARE, SVGA_REG_MAX_HEIGHT);
-	pVMWARE->cursorDefined = FALSE;
-	pVMWARE->cursorHidden = FALSE;
-
-        if (pVMWARE->vmwareCapability & SVGA_CAP_CURSOR_BYPASS_2) {
-                pVMWARE->cursorRemoveFromFB = SVGA_CURSOR_ON_REMOVE_FROM_FB;
-                pVMWARE->cursorRestoreToFB = SVGA_CURSOR_ON_RESTORE_TO_FB;
-        } else {
-                pVMWARE->cursorRemoveFromFB = SVGA_CURSOR_ON_HIDE;
-                pVMWARE->cursorRestoreToFB = SVGA_CURSOR_ON_SHOW;
-        }
-
     if (pVMWARE->vmwareCapability & SVGA_CAP_8BIT_EMULATION) {
         pVMWARE->bitsPerPixel =
            vmwareReadReg(pVMWARE, SVGA_REG_HOST_BITS_PER_PIXEL);
@@ -1411,30 +1386,6 @@ XF86ModuleData vmwareModuleData = { &vmwareVersRec, vmwareSetup, NULL };
 
 static pointer
 vmwareSetup(pointer module, pointer opts, int *errmaj, int *errmin)
-{
-	static Bool setupDone = FALSE;
-
-	if (!setupDone) {
-		setupDone = TRUE;
-		xf86AddDriver(&VMWARE, module, 0);
-
-		LoaderRefSymLists(vgahwSymbols, fbSymbols, ramdacSymbols, NULL);
-
-		return (pointer)1;
-	}
-	if (errmaj) {
-		*errmaj = LDR_ONCEONLY;
-	}
-	return NULL;
-}
-#endif	/* XFree86LOADER */
-
-ScreenPtr funcglob;
-ScrnInfoPtr scrnglob;
-int vmwareGCPrivateIndex;
-
-static void
-ScreenToPrivate(ScreenPtr pScreen, ScrnInfoPtr pScrn)
 {
     static Bool setupDone = FALSE;
 

@@ -258,7 +258,7 @@ vmwareCursorInit(ScreenPtr pScreen)
     /* Require cursor bypass for hwcursor.  Ignore deprecated FIFO hwcursor */
     if (!(pVMWARE->vmwareCapability & SVGA_CAP_CURSOR_BYPASS)) {
         return FALSE;
-
+    }
 
     infoPtr = xf86CreateCursorInfoRec();
     if (!infoPtr) 
