@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/darwinLib.rules,v 1.4 2002/01/16 00:39:59 keithp Exp $
+XCOMM $XFree86: xc/config/cf/darwinLib.rules,v 1.4.2.1 2002/07/16 22:03:05 torrey Exp $
 /*
  * Darwin/Mac OS X shared library rules
  */
@@ -57,14 +57,14 @@ install:: Concat(lib,libname.rev.dylib)					@@\
  * the library gone for long periods.
  */
 #ifndef SharedLibraryTarget
-#ifdef UseInstalled
-#define LinkBuildSonameLibrary(lib) true
-#else
-#define LinkBuildSonameLibrary(lib) (RemoveFile($(BUILDLIBDIR)/lib); \
+# ifdef UseInstalled
+#  define LinkBuildSonameLibrary(lib) true
+# else
+#  define LinkBuildSonameLibrary(lib) (RemoveFile($(BUILDLIBDIR)/lib); \
 	cd $(BUILDLIBDIR); $(LN) $(BUILDINCTOP)/$(CURRENT_DIR)/lib .)
-#endif
+# endif
 
-#define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
+# define SharedLibraryTarget(libname,rev,solist,down,up)		@@\
 AllTarget(Concat(lib,libname.rev.dylib))				@@\
 									@@\
 Concat(lib,libname.rev.dylib):  solist $(EXTRALIBRARYDEPS)		@@\
@@ -93,18 +93,18 @@ clean::									@@\
  * SharedDepLibraryTarget - generate rules to create a shared library.
  */
 #ifndef SharedDepLibraryTarget
-#ifdef UseInstalled
-#ifndef LinkBuildSonameLibrary
-#define LinkBuildSonameLibrary(lib) true
-#endif
-#else
-#ifndef LinkBuildSonameLibrary
-#define LinkBuildSonameLibrary(lib) (RemoveFile($(BUILDLIBDIR)/lib); \
+# ifdef UseInstalled
+#  ifndef LinkBuildSonameLibrary
+#   define LinkBuildSonameLibrary(lib) true
+#  endif
+# else
+#  ifndef LinkBuildSonameLibrary
+#   define LinkBuildSonameLibrary(lib) (RemoveFile($(BUILDLIBDIR)/lib); \
 	cd $(BUILDLIBDIR); $(LN) $(BUILDINCTOP)/$(CURRENT_DIR)/lib .)
-#endif
-#endif
+#  endif
+# endif
 
-#define SharedDepLibraryTarget(libname,rev,deplist,solist,down,up)	@@\
+# define SharedDepLibraryTarget(libname,rev,deplist,solist,down,up)	@@\
 AllTarget(Concat(lib,libname.rev.dylib))				@@\
 									@@\
 Concat(lib,libname.rev.dylib):  deplist $(EXTRALIBRARYDEPS)		@@\
@@ -128,6 +128,46 @@ clean::									@@\
 	$(RM) Concat(lib,libname.rev.dylib) Concat(lib,libname.dylib)
 
 #endif /* SharedDepLibraryTarget */
+
+/*
+ * SharedDepCplusplusLibraryTarget - generate rules to create a shared library.
+ */
+#ifndef SharedDepCplusplusLibraryTarget
+# ifdef UseInstalled
+#  ifndef LinkBuildSonameLibrary
+#   define LinkBuildSonameLibrary(lib) true
+#  endif
+# else
+#  ifndef LinkBuildSonameLibrary
+#   define LinkBuildSonameLibrary(lib) (RemoveFile($(BUILDLIBDIR)/lib); \
+	cd $(BUILDLIBDIR); $(LN) $(BUILDINCTOP)/$(CURRENT_DIR)/lib .)
+#  endif
+# endif
+
+# define SharedDepCplusplusLibraryTarget(libname,rev,deplist,solist,down,up)	@@\
+AllTarget(Concat(lib,libname.rev.dylib))				@@\
+									@@\
+Concat(lib,libname.rev.dylib):  deplist $(EXTRALIBRARYDEPS)		@@\
+	$(RM) $@~							@@\
+	@MAJREV=`expr rev : '\([^.]*\)'`; \				@@\
+	  INSTALLNAME=Concat(lib,libname.$$MAJREV.dylib); \		@@\
+	  set -x; (cd down; $(CXX) -o up/$@~ $(SHLIBLDFLAGS) -install_name $(USRLIBDIR)/$$INSTALLNAME -current_version rev -compatibility_version rev solist $(REQUIREDLIBS)); \ @@\
+	  $(RM) $$INSTALLNAME; $(LN) $@ $$INSTALLNAME; \		@@\
+	  LinkBuildSonameLibrary($$INSTALLNAME)				@@\
+	$(RM) $@							@@\
+	$(MV) $@~ $@							@@\
+	@if $(SOSYMLINK); then (set -x; \				@@\
+	  $(RM) Concat(lib,libname.dylib); \				@@\
+	  $(LN) $@ Concat(lib,libname.dylib)); fi			@@\
+	LinkBuildLibrary($@)						@@\
+	LinkBuildLibraryMaybe(Concat(lib,libname.dylib),$(SOSYMLINK))	@@\
+									@@\
+clean::									@@\
+	@MAJREV=`expr rev : '\([^.]*\)'`; \				@@\
+	set -x; $(RM) Concat(lib,libname.$$MAJREV.dylib)		@@\
+	$(RM) Concat(lib,libname.rev.dylib) Concat(lib,libname.dylib)
+
+#endif /* SharedDepCplusplusLibraryTarget */
 
 #ifndef SharedDepModuleTarget
 #define SharedDepModuleTarget(name,deps,solist)				@@\

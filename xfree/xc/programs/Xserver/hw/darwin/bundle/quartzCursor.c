@@ -3,7 +3,7 @@
  * Support for using the Quartz Window Manager cursor
  *
  **************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/quartzCursor.c,v 1.15 2001/12/22 05:28:35 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/quartzCursor.c,v 1.15.2.1 2002/08/20 21:56:15 torrey Exp $ */
 
 #include "quartzCommon.h"
 #include "quartzCursor.h"
@@ -31,6 +31,9 @@ static int darwinCursorScreenIndex = -1;
 static unsigned long darwinCursorGeneration = 0;
 static CursorPtr quartzLatentCursor = NULL;
 static QD_Cursor gQDArrow; // QuickDraw arrow cursor
+
+// Cursor for the main thread to set (NULL = arrow cursor).
+static volatile CCrsrHandle currentCursor = NULL;
 
 #define CURSOR_PRIV(pScreen) \
     ((QuartzCursorScreenPtr)pScreen->devPrivates[darwinCursorScreenIndex].ptr)
@@ -299,7 +302,12 @@ QuartzUnrealizeCursor(
                         (pScreen, pCursor);
         }
     } else {
-        FreeQDCursor((CCrsrHandle) pCursor->devPriv[pScreen->myNum]);
+        CCrsrHandle oldCursor = (CCrsrHandle) pCursor->devPriv[pScreen->myNum];
+
+        if (currentCursor != oldCursor) {
+            // This should only fail when quitting, in which case we just leak.
+            FreeQDCursor(oldCursor);
+        }
         pCursor->devPriv[pScreen->myNum] = NULL;
         return TRUE;
     }
@@ -336,19 +344,19 @@ QuartzSetCursor(
              (pCursor->bits->width <= CURSORWIDTH) && ScreenPriv->useQDCursor)
     {
         // Cursor is small enough to use QuickDraw directly.
-        CCrsrHandle curs;
 
         if (! ScreenPriv->qdCursorMode)    // remove the X cursor
             (*ScreenPriv->spriteFuncs->SetCursor)(pScreen, 0, x, y);
         ScreenPriv->qdCursorMode = TRUE;
 
-        curs = (CCrsrHandle) pCursor->devPriv[pScreen->myNum];
-        SetCCursor(curs);
+        currentCursor = (CCrsrHandle) pCursor->devPriv[pScreen->myNum];
+        QuartzMessageMainThread(kQuartzCursorUpdate);
         SHOW_QD_CURSOR(pScreen, ScreenPriv->qdCursorVisible);
     }
     else if (quartzRootless) {
         // Rootless can't use a software cursor, so we just use Mac OS arrow.
-        SetCursor(&gQDArrow);
+        currentCursor = NULL;
+        QuartzMessageMainThread(kQuartzCursorUpdate);
         SHOW_QD_CURSOR(pScreen, ScreenPriv->qdCursorVisible);
     }
     else {
@@ -356,6 +364,24 @@ QuartzSetCursor(
         HIDE_QD_CURSOR(pScreen, ScreenPriv->qdCursorVisible);
         ScreenPriv->qdCursorMode = FALSE;
         (*ScreenPriv->spriteFuncs->SetCursor)(pScreen, pCursor, x, y);
+    }
+}
+
+
+/*
+ * QuartzReallySetCursor
+ * Set the QuickDraw cursor. Called from the main thread since changing the
+ * cursor with QuickDraw is not thread safe on dual processor machines.
+ */
+void
+QuartzReallySetCursor()
+{
+    CCrsrHandle newCursor = currentCursor;
+
+    if (newCursor) {
+        SetCCursor(newCursor);
+    } else {
+        SetCursor(&gQDArrow);
     }
 }
 
@@ -557,7 +583,8 @@ void QuartzSuspendXCursor(
 {
     QuartzCursorScreenPtr ScreenPriv = CURSOR_PRIV(pScreen);
 
-    SetCursor(&gQDArrow);
+    currentCursor = NULL;
+    QuartzMessageMainThread(kQuartzCursorUpdate);
     SHOW_QD_CURSOR(pScreen, ScreenPriv->qdCursorVisible);
 }
 

@@ -25,7 +25,7 @@
  * XFree86 Project.
  */
 
-/* $XFree86: xc/lib/Xaw/Pixmap.c,v 3.16 2001/01/30 15:03:34 paulo Exp $ */
+/* $XFree86: xc/lib/Xaw/Pixmap.c,v 3.16.6.1 2002/07/04 17:07:10 paulo Exp $ */
 
 #include <string.h>
 #include <stdio.h>
@@ -70,6 +70,7 @@ static int qcmp_long(register _Xconst void*, register _Xconst void *);
 static int bcmp_long(register _Xconst void*, register _Xconst void *);
 static int qcmp_string(register _Xconst void*, register _Xconst void *);
 static int bcmp_string(register _Xconst void*, register _Xconst void *);
+static void GetResourcePixmapPath(Display*);
 
 /*
  * Initialization
@@ -649,8 +650,50 @@ _XawCachePixmap(XawPixmap *pixmap,
 #define PROJECT_ROOT	"/usr/X11R6"
 #endif
 
-static char *pixmap_path =
-   "%H/%T/%N:%P/include/X11/%T/%N:/usr/X11R6/include/X11/%T/%N:/usr/include/X11/%T/%N:%N";
+static char *pixmap_path = NULL;
+
+static void
+GetResourcePixmapPath(Display *display)
+{
+    XrmName xrm_name[2];
+    XrmClass xrm_class[2];
+    XrmRepresentation rep_type;
+    XrmValue value;
+    static char *default_path =
+	"%H/%T/%N:%P/include/X11/%T/%N:/usr/X11R6/include/X11/%T/%N:/usr/include/X11/%T/%N:%N";
+
+    xrm_name[0] = XrmPermStringToQuark("pixmapFilePath");
+    xrm_name[1] = NULLQUARK;
+    xrm_class[0] = XrmPermStringToQuark("PixmapFilePath");
+    xrm_class[1] = NULLQUARK;
+    if (!XrmGetDatabase(display))
+	(void) XGetDefault(display, "", "");
+    if (XrmQGetResource(XrmGetDatabase(display), xrm_name, xrm_class, 
+			&rep_type, &value) &&
+			rep_type == XrmPermStringToQuark("String")) {
+	int length = 0;
+	char *tok, *buffer = XtNewString(value.addr);
+
+	for (tok = strtok(buffer, ":"); tok; tok = strtok(NULL, ":")) {
+	    int toklen = strlen(tok);
+
+	    if (toklen) {
+		pixmap_path = XtRealloc(pixmap_path, length + toklen + 5);
+		strcpy(pixmap_path + length, tok);
+		if (length)
+		    pixmap_path[length++] = ':';
+		sprintf(pixmap_path + length, "%s/%%N", tok);
+		length += strlen(tok) + 3;
+	    }
+	}
+	pixmap_path = XtRealloc(pixmap_path, length + strlen(default_path) + 2);
+	if (length)
+	    pixmap_path[length++] = ':';
+	strcpy(pixmap_path + length, default_path);
+    }
+    else
+	pixmap_path = default_path;
+}
 
 static Bool
 BitmapLoader(XawParams *params, Screen *screen, Colormap colormap, int depth,
@@ -700,6 +743,8 @@ BitmapLoader(XawParams *params, Screen *screen, Colormap colormap, int depth,
       if (!sub[0].substitution)
 	sub[0].substitution = getenv("HOME");
       sub[1].substitution = params->name;
+      if (pixmap_path == NULL)
+	GetResourcePixmapPath(DisplayOfScreen(screen));
       filename = XtFindFile(pixmap_path, sub, XtNumber(sub), NULL);
       if (!filename)
 	return (FALSE);
@@ -900,6 +945,8 @@ XPixmapLoader(XawParams *params, Screen *screen, Colormap colormap, int depth,
       if (!sub[0].substitution)
 	sub[0].substitution = getenv("HOME");
       sub[1].substitution = params->name;
+      if (pixmap_path == NULL)
+	GetResourcePixmapPath(DisplayOfScreen(screen));
       filename = XtFindFile(pixmap_path, sub, XtNumber(sub), NULL);
       if (!filename)
 	return (False);

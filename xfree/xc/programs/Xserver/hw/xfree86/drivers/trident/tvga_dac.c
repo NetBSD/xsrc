@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/tvga_dac.c,v 1.5 2001/09/12 13:50:12 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/tvga_dac.c,v 1.5.4.1 2002/03/29 18:34:24 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -43,7 +43,6 @@ TVGAInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     int vgaIOBase;
     int offset = 0;
     int clock = mode->Clock;
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
     OUTB(0x3C4, 0x0B); INB(0x3C5); /* Ensure we are in New Mode */
@@ -140,7 +139,6 @@ TVGARestore(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg)
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     CARD8 temp;
     int vgaIOBase;
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
     /* Goto Old Mode */
@@ -188,7 +186,6 @@ TVGASave(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg)
     TRIDENTPtr pTrident = TRIDENTPTR(pScrn);
     CARD8 temp;
     int vgaIOBase;
-    vgaHWGetIOBase(VGAHWPTR(pScrn));
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
     temp = INB(0x3C8);

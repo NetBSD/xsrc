@@ -6,7 +6,7 @@
  * This file should be included before any X11 or IOKit headers
  * so that it can avoid symbol conflicts.
  */
-/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/quartzCommon.h,v 1.4 2001/12/22 05:28:35 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/quartzCommon.h,v 1.4.2.1 2002/08/20 21:56:15 torrey Exp $ */
 
 #ifndef _QUARTZCOMMON_H
 #define _QUARTZCOMMON_H
@@ -62,7 +62,8 @@ int QuartzFSUseQDCursor(int depth);
 // Messages that can be sent to the main thread.
 enum {
     kQuartzServerHidden,
-    kQuartzServerDied
+    kQuartzServerDied,
+    kQuartzCursorUpdate
 };
 
 #endif	/* _QUARTZCOMMON_H */

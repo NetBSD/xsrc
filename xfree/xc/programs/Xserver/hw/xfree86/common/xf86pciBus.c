@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86pciBus.c,v 3.48 2001/11/30 12:11:55 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86pciBus.c,v 3.48.2.1 2002/01/25 20:51:33 tsi Exp $ */
 /*
  * Copyright (c) 1997-1999 by The XFree86 Project, Inc.
  */
@@ -1916,9 +1916,11 @@ xf86GetPciBridgeInfo(const pciConfigPtr *pciInfo)
 		pnPciBus = &PciBus->next;
 		PciBus->primary = -1;
 		PciBus->secondary = -1; /* to be set below */
+#ifndef __ia64__
 		PciBus->brbus = pcrp->busnum;
 		PciBus->brdev = pcrp->devnum;
 		PciBus->brfunc = pcrp->funcnum;
+#endif
 		PciBus->subclass = sub_class;
 		PciBus->brcontrol = PCI_PCI_BRIDGE_VGA_EN;
 		PciBus->preferred_io = xf86ExtractTypeFromList(

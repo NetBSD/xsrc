@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:44:38 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.43 2001/12/20 19:03:47 keithp Exp $
+XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.43.2.1 2002/09/04 02:38:09 dawes Exp $
 #if BuildLoadableXlibI18n
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
@@ -95,6 +95,13 @@ EXTRA_LIBRARIES = /**/
 #endif
 #if NoRConst
  RCONST_DEFINES = -DNORCONST
+#endif
+#if DisableXLocaleDirEnv
+  SETID_DEFINES = -DNO_XLOCALEDIR
+#elif HasIssetugid
+  SETID_DEFINES = -DHASSETUGID
+#elif HasGetresuid
+  SETID_DEFINES = -DHASGETRESUID
 #endif
     XLC_DEFINES = -DXLOCALEDIR=\"$(XLOCALEDIR)\"
 #if HasKrb5
@@ -964,7 +971,7 @@ SpecialCLibObjectRule(Context,$(ICONFIGFILES),$(BC_DEFINES))
 SpecialCLibObjectRule(Xrm,$(_NOOP_),$(RCONST_DEFINES))
 SpecialCLibObjectRule(imTransR,$(ICONFIGFILES),$(CONN_DEFINES) $(XTRANS_XIM_DEFINES))
 SpecialCLibObjectRule(imTrans,$(ICONFIGFILES),$(CONN_DEFINES) $(XTRANS_XIM_DEFINES))
-SpecialCLibObjectRule(lcFile,$(ICONFIGFILES),$(XLC_DEFINES))
+SpecialCLibObjectRule(lcFile,$(ICONFIGFILES),$(XLC_DEFINES) $(SETID_DEFINES))
 #if BuildXKBlib
 SpecialCLibObjectRule(XKBCvt,$(_NOOP_),$(RCONST_DEFINES))
 SpecialCLibObjectRule(KeyBind,$(ICONFIGFILES),$(XKB_DEFINES))

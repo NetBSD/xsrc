@@ -1,3 +1,53 @@
+XFree86 4.2.1 (03 September 2002)
+ 715. [SECURITY] Fix an Xlib problem that made it possible to load arbitrary
+      code into privileged clients.
+ 714. Fix i810_free_page() and i830_free_page() for DRI kernel modules so
+      that later 2.4.x kernels are supported.
+
+XFree86 4.2.0.1 (21 August 2002)
+ 713. Fix intermittent XDarwin crash when changing cursors on dual processor
+      machines (Torrey T. Lyons).
+ 712. Fix Finder warnings about XDarwin plist format on Jaguar
+      (Torrey T. Lyons).
+ 711. Fix XDarwin build issues on Jaguar (Sean Fagan).
+ 710. When using the vesa driver and the DisplaySize option the server
+      would crash with a floating point exception due to a divide by zero
+      in miscreeninit() (#5298, Mike A. Harris).
+ 709. Updated patch from head to fix problem described in #5244
+      (freed memory being deref'd in xaw) (jik@kamens.brookline.ma.us)
+ 708. The function MoveLine in lib/Xaw/TextAction.c sometimes attempts to
+      read uninitialized memory when hit ctrl-N in a Text widget to move to
+      the next line (#5245, Johnathan Kamens).
+ 707. Close XDarwin rootless windows properly for Jaguar compatibility
+      (Greg Parker).
+ 706. Build libXt as a flat namespace image on Darwin (Torrey T. Lyons).
+ 705. Install the bitmap file xc/programs/bitmap/Stipple as Stippler on file
+      systems that are not case sensitive (Torrey T. Lyons).
+ 704. Build with libcurses on Darwin for forward compatibility
+      (Jordan Hubbard).
+ 703. [SECURITY] MIT-SHM update: try to avoid using SHM segments that the
+      client user doesn't have sufficient privileges to access
+      (Roberto Zunino, Matthieu Herrb).
+ 702. Fix a problem related to reserving the overlay key in the default
+      colormap in 24+8 mode.  This caused some clients using the 8-bit
+      visuals to fail (David Dawes).
+ 701. [SECURITY] Zlib error handling fix (Mark Adler).
+ 700. Put back XDarwin's byte-ordering fix for reading keymappings on
+      Darwin x86 that was inadvertently dropped (Rob Braun).
+ 699. Fix for `hostname` issue on Linux (Marc La France).
+ 698. Fix startx script for ksh (Philip B. Bruce).
+ 697. Fix Emulate3Buttons for wsmouse protocol on NetBSD and OpenBSD
+      (Matthieu Herrb).
+ 696. Temporary workaround for IA-64 (Marc La France).
+ 695. Fix SIGSEGV when printing modes that have no flags (Marc La France).
+ 694. Fix an unresolved symbol in libGLU.so that shows up when building it
+      with gcc-3 (David Dawes).
+ 693. Fix incorrect symbol prefixing with Xlib's i18n modules on Solaris,
+      and fix invalid code caused by a memcpy() macro being split by a
+      directive (Keith Packard, David Dawes, #5150, Sami Farin).
+ 692. Don't try to print mode names when NULL (David Dawes).
+ 691. Revert the ATI driver's composite sync default to off (Marc La France).
+
 XFree86 4.2.0 (18 January 2002)
  690. Workaround for hardware bug that prevents older ATI 3D Rage adapters from
       being assigned to XF86Config device sections (Marc La France).
@@ -14555,4 +14605,4 @@ XFree86 3.0a (28 April 1994)
 XFree86 3.0 (26 April 1994)
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.2144 2002/01/18 20:09:22 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.2144.2.22 2002/09/04 03:01:44 dawes Exp $

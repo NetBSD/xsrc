@@ -1,4 +1,4 @@
-                     README for XFree86 4.2.0 on OpenBSD
+                     README for XFree86 4.2.1 on OpenBSD
 
                                Matthieu Herrb
 
@@ -12,13 +12,13 @@ ing systems on Intel and other platforms.
 
 See the Copyright Notice.
 
-The sources for XFree86 4.2.0 are available by anonymous ftp from:
+The sources for XFree86 4.2.1 are available by anonymous ftp from:
 
-ftp://ftp.XFree86.org/pub/XFree86/4.2.0
+ftp://ftp.XFree86.org/pub/XFree86/4.2.1
 
 Binaries for OpenBSD/i386 3.0 and later are available from:
 
-ftp://ftp.XFree86.org/pub/XFree86/4.2.0/binaries/OpenBSD
+ftp://ftp.XFree86.org/pub/XFree86/4.2.1/binaries/OpenBSD
 
 A list of mirror sites is provided by http://www.xfree86.org/MIRRORS.shtml
 
@@ -32,7 +32,7 @@ if you have comments or suggestions about this file and we'll revise it.
 
 3.  New OS dependent features
 
-See the Release Notes for non-OS dependent new features in XFree86 4.2.0.
+See the Release Notes for non-OS dependent new features in XFree86 4.2.1.
 
 3.1  New OS dependent features in 4.2
 
@@ -128,7 +128,7 @@ the xvidtune utility.
 
 5.1  About mouse configuration
 
-XFree86 4.2.0 has support for the mouse driver included in the new wscons
+XFree86 4.2.1 has support for the mouse driver included in the new wscons
 console driver introduced by OpenBSD-2.9.  Specify ``wsmouse'' as the proto-
 col and ``/dev/wsmouse0'' as the  device in /etc/X11/XF86Config if you're
 using OpenBSD-2.9 or later with a PS/2 or USB mouse.
@@ -309,4 +309,4 @@ Nate Williams, Rod Grimes, Jack Velte and Michael Smith.
      Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.24 2002/01/16 22:35:17 herrb Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.OpenBSD,v 1.30 2002/01/16 22:37:23 herrb Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.OpenBSD,v 1.30.2.1 2002/09/04 03:39:35 dawes Exp $

@@ -27,7 +27,7 @@
  *
  * Authors: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vesa/vesa.c,v 1.24 2001/10/01 13:44:12 eich Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vesa/vesa.c,v 1.24.4.1 2002/07/04 17:07:08 paulo Exp $
  */
 
 #include "vesa.h"
@@ -524,9 +524,6 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86UnloadSubModule(pDDCModule);
     }
 
-    /* Set display resolution */
-    xf86SetDpi(pScrn, 0, 0);
-
     if ((pScrn->monitor->DDC = pVesa->monitor) != NULL)
 	xf86SetDDCproperties(pScrn, pVesa->monitor);
 
@@ -797,6 +794,9 @@ VESAPreInit(ScrnInfoPtr pScrn, int flags)
     pScrn->displayWidth = pScrn->virtualX;
 
     xf86PrintModes(pScrn);
+
+    /* Set display resolution */
+    xf86SetDpi(pScrn, 0, 0);
 
     if (pScrn->modes == NULL) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "No modes\n");

@@ -36,7 +36,7 @@
 //
 //=============================================================================
 
-/* $XFree86: xc/programs/Xserver/hw/darwin/darwinKeyboard.c,v 1.14 2001/12/05 06:27:43 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/darwinKeyboard.c,v 1.14.2.1 2002/02/07 02:53:11 torrey Exp $ */
 
 /*
 ===========================================================================
@@ -416,9 +416,9 @@ Bool DarwinReadKeymapFile(
                 km.charP = inBuffer;
                 km.intP++;
                 while (km.intP+3 < bufferEnd) {
-                    map_interface = *(km.intP++);
-                    map_handler_id = *(km.intP++);
-                    map_size = *(km.intP++);
+                    map_interface = NXSwapBigIntToHost(*(km.intP++));
+                    map_handler_id = NXSwapBigIntToHost(*(km.intP++));
+                    map_size = NXSwapBigIntToHost(*(km.intP++));
                     if (map_interface == interface) {
                         if (map_handler_id == handler_id || hasInterface) {
                             hasMatch = TRUE;

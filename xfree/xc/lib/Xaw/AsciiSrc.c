@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xaw/AsciiSrc.c,v 1.30 2001/12/14 19:54:38 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSrc.c,v 1.30.2.1 2002/07/04 17:07:09 paulo Exp $ */
 
 /*
  * AsciiSrc.c - AsciiSrc object. (For use with the text widget).
@@ -342,7 +342,7 @@ XawAsciiSrcInitialize(Widget request, Widget cnew,
  *
  * Parameters:
  *	w	- AsciiSource widget
- *		   pos - position of the text to retreive.
+ *	pos	- position of the text to retreive.
  *	text	- text block that will contain returned text
  *	length	- maximum number of characters to read
  *
@@ -350,7 +350,7 @@ XawAsciiSrcInitialize(Widget request, Widget cnew,
  *	This function reads the source.
  *
  * Returns:
- *	The number of characters read into the buffer
+ *	The character position following the retrieved text.
  */
 static XawTextPosition
 ReadText(Widget w, XawTextPosition pos, XawTextBlock *text, int length)
@@ -417,7 +417,7 @@ ReadText(Widget w, XawTextPosition pos, XawTextBlock *text, int length)
     text->firstPos = pos;
     text->ptr = piece->text + (pos - start);
     count = piece->used - (pos - start);
-    text->length = (length > count) ? count : length;
+    text->length = Max(0, (length > count) ? count : length);
     text->format = XawFmt8Bit;
 
     return (pos + text->length);
@@ -1777,15 +1777,15 @@ CvtAsciiTypeToString(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 static void
 GetDefaultPieceSize(Widget w, int offset, XrmValue *value)
 {
-    static int pagesize;
+    static XPointer pagesize;
 
     if (pagesize == 0) {
-	pagesize = _XawGetPageSize();
-	if (pagesize < BUFSIZ)
-	    pagesize = BUFSIZ;
+	pagesize = (XPointer)((long)_XawGetPageSize());
+	if (pagesize < (XPointer)BUFSIZ)
+	    pagesize = (XPointer)BUFSIZ;
     }
 
-    value->addr = (XtPointer)&pagesize;
+    value->addr = (XPointer)&pagesize;
 }
 
 #if (defined(ASCII_STRING) || defined(ASCII_DISK))

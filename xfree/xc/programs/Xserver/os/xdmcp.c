@@ -13,7 +13,7 @@
  * without express or implied warranty.
  *
  */
-/* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.20 2001/11/19 20:44:18 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.20.4.1 2002/03/11 18:59:51 keithp Exp $ */
 
 #ifdef WIN32
 /* avoid conflicting definitions */
@@ -660,34 +660,17 @@ XdmcpBlockHandler(
     pointer	    pReadmask)
 {
     fd_set *LastSelectMask = (fd_set*)pReadmask;
-    CARD32 millisToGo, wtMillis;
-    static struct timeval waittime;
+    CARD32 millisToGo;
 
     if (state == XDM_OFF)
 	return;
     FD_SET(xdmcpSocket, LastSelectMask);
     if (timeOutTime == 0)
 	return;
-    millisToGo = GetTimeInMillis();
-    if (millisToGo < timeOutTime)
-	millisToGo = timeOutTime - millisToGo;
-    else
+    millisToGo = timeOutTime - GetTimeInMillis();
+    if ((int) millisToGo < 0)
 	millisToGo = 0;
-    if (*wt == NULL)
-    {
-	waittime.tv_sec = (millisToGo) / 1000;
-	waittime.tv_usec = 1000 * (millisToGo % 1000);
-	*wt = &waittime;
-    }
-    else
-    {
-	wtMillis = (*wt)->tv_sec * 1000 + (*wt)->tv_usec / 1000;
-	if (millisToGo < wtMillis)
- 	{
-	    (*wt)->tv_sec = (millisToGo) / 1000;
-	    (*wt)->tv_usec = 1000 * (millisToGo % 1000);
-	}
-    }
+    AdjustWaitForDelay (wt, millisToGo);
 }
 
 /*
@@ -726,7 +709,7 @@ XdmcpWakeupHandler(
 	if (XFD_ANYSET(&AllClients) && state == XDM_RUN_SESSION)
 	    timeOutTime = GetTimeInMillis() +  keepaliveDormancy * 1000;
     }
-    else if (timeOutTime && GetTimeInMillis() >= timeOutTime)
+    else if (timeOutTime && (int) (GetTimeInMillis() - timeOutTime) >= 0)
     {
     	if (state == XDM_RUN_SESSION)
     	{

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Mode.c,v 1.48 2001/12/06 15:40:27 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Mode.c,v 1.48.2.3 2002/01/25 15:58:00 tsi Exp $ */
 
 /*
  * Copyright (c) 1997,1998 by The XFree86 Project, Inc.
@@ -1805,46 +1805,41 @@ xf86SetCrtcForModes(ScrnInfoPtr scrp, int adjustFlags)
 static void
 add(char **p, char *new)
 {
-    if (!*p) {
-        *p = xnfalloc(strlen(new) + 1);
-	strcpy(*p,new);
-    } else {
-        *p = xnfrealloc(*p,((*p)?strlen(*p):0) + strlen(new) + 2);
-	strcat(*p," ");
-	strcat(*p,new);
-    }
+    *p = xnfrealloc(*p, strlen(*p) + strlen(new) + 2);
+    strcat(*p, " ");
+    strcat(*p, new);
 }
 
 static void
 PrintModeline(int scrnIndex,DisplayModePtr mode)
 {
     char tmp[256];
-    char *flags = NULL;
+    char *flags = xnfcalloc(1, 1);
 
     if (mode->HSkew) { 
-        snprintf(tmp,256,"hskew %i",mode->HSkew); 
-	add(&flags,tmp);
+	snprintf(tmp, 256, "hskew %i", mode->HSkew); 
+	add(&flags, tmp);
     }
     if (mode->VScan) { 
-        snprintf(tmp,256,"vscan %i",mode->VScan); 
-	add(&flags,tmp);
+	snprintf(tmp, 256, "vscan %i", mode->VScan); 
+	add(&flags, tmp);
     }
-    if (mode->Flags & V_INTERLACE) add(&flags,"interlace");
-    if (mode->Flags & V_CSYNC) add(&flags,"composite");
-    if (mode->Flags & V_DBLSCAN) add(&flags,"doublescan");
-    if (mode->Flags & V_BCAST) add(&flags,"bcast");
-    if (mode->Flags & V_PHSYNC) add(&flags,"+hsync");
-    if (mode->Flags & V_NHSYNC) add(&flags,"-hsync");
-    if (mode->Flags & V_PVSYNC) add(&flags,"+vsync");
-    if (mode->Flags & V_NVSYNC) add(&flags,"-vsync");
-    if (mode->Flags & V_PCSYNC) add(&flags,"+csync");
-    if (mode->Flags & V_NCSYNC) add(&flags,"-csync");
-    xf86DrvMsgVerb(scrnIndex,X_INFO,3,
-		   "Modeline \"%s\"  %6.2f  %i %i %i %i  %i %i %i %i %s\n",
-		   mode->name,mode->Clock/1000., mode->HDisplay,
-		   mode->HSyncStart,mode->HSyncEnd,mode->HTotal,
-		   mode->VDisplay,mode->VSyncStart,mode->VSyncEnd,
-		   mode->VTotal,flags);
+    if (mode->Flags & V_INTERLACE) add(&flags, "interlace");
+    if (mode->Flags & V_CSYNC) add(&flags, "composite");
+    if (mode->Flags & V_DBLSCAN) add(&flags, "doublescan");
+    if (mode->Flags & V_BCAST) add(&flags, "bcast");
+    if (mode->Flags & V_PHSYNC) add(&flags, "+hsync");
+    if (mode->Flags & V_NHSYNC) add(&flags, "-hsync");
+    if (mode->Flags & V_PVSYNC) add(&flags, "+vsync");
+    if (mode->Flags & V_NVSYNC) add(&flags, "-vsync");
+    if (mode->Flags & V_PCSYNC) add(&flags, "+csync");
+    if (mode->Flags & V_NCSYNC) add(&flags, "-csync");
+    xf86DrvMsgVerb(scrnIndex, X_INFO, 3,
+		   "Modeline \"%s\"  %6.2f  %i %i %i %i  %i %i %i %i%s\n",
+		   mode->name, mode->Clock/1000., mode->HDisplay,
+		   mode->HSyncStart, mode->HSyncEnd, mode->HTotal,
+		   mode->VDisplay, mode->VSyncStart, mode->VSyncEnd,
+		   mode->VTotal, flags);
     xfree(flags);
 }
 
@@ -1897,8 +1892,13 @@ xf86PrintModes(ScrnInfoPtr scrp)
 	else
 	    prefix = "Mode";
 	if (hsync == 0 || refresh == 0) {
-	    xf86DrvMsg(scrp->scrnIndex, X_CONFIG,
-			"%s \"%s\"\n", prefix, p->name);
+	    if (p->name)
+		xf86DrvMsg(scrp->scrnIndex, X_CONFIG,
+			   "%s \"%s\"\n", prefix, p->name);
+	    else
+		xf86DrvMsg(scrp->scrnIndex, X_PROBED,
+			   "%s %dx%d (unnamed)\n", prefix, p->HDisplay,
+			    p->VDisplay);
 	} else if (p->Clock == p->SynthClock) {
 	    xf86DrvMsg(scrp->scrnIndex, X_CONFIG,
 			"%s \"%s\": %.1f MHz, %.1f kHz, %.1f Hz%s%s\n",

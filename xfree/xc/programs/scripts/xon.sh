@@ -1,5 +1,6 @@
 #!/bin/sh
 # $Xorg: xon.sh,v 1.4 2000/12/20 16:50:07 pookie Exp $
+# $XFree86: xc/programs/scripts/xon.sh,v 1.5.2.1 2002/01/28 18:27:33 tsi Exp $
 # start up xterm (or any other X command) on the specified host
 # Usage: xon host [arguments] [command]
 
@@ -47,7 +48,11 @@ case $DISPLAY in
 :*)
 	case `uname` in
 	Linux*)
-		fullname=`hostname -f`
+		if [ -z "`hostname --version | grep GNU`" ]; then
+			fullname=`hostname -f`
+		else
+			fullname=`hostname`
+		fi
 		;;
 	*)
 	fullname=`uname -n`

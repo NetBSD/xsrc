@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.141 2002/01/15 22:55:26 herrb Exp $
+XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.141.2.1 2002/09/04 02:38:08 dawes Exp $
 
 /***************************************************************************
  *                                                                         *
@@ -243,6 +243,15 @@ VENDORMANVERSION = XVendorManVersionString
 #endif
 #ifndef BuildLoadableXlibI18n
 #define BuildLoadableXlibI18n	(HasDlopen && SharedLibX11)
+#endif
+/*
+ * This disables XLOCALEDIR.  Set it if you're using BuildLoadableXlibI18n,
+ * don't have either issetugid() or getresuid(), and you need to protect
+ * clients that are setgid or setuid to an id other than 0.
+ */
+#ifndef DisableXLocaleDirEnv
+#define DisableXLocaleDirEnv	BuildLoadableXlibI18n && \
+					!(HasIssetugid || HasGetresuid)
 #endif
 #ifndef BuildXextLib
 #define BuildXextLib		(BuildLibraries || (BuildLibrariesForXServers && XnestServer))

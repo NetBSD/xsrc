@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_video.c,v 1.21 2002/01/13 00:15:52 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_video.c,v 1.21.2.1 2002/01/28 14:32:55 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -1356,6 +1356,8 @@ tridentFixFrame(ScrnInfoPtr pScrn, int *fixFrame)
 
   pTrident->hsync = (HTotal - HSyncStart) + 23 + h_off;
   pTrident->vsync = (VTotal - VSyncStart) - 2 + v_off;
+  pTrident->hsync_rskew = 0;
+  pTrident->vsync_bskew = 0;
   
   /* 
    * HACK !! As awful as this is, it appears to be the only way....Sigh!

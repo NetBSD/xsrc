@@ -28,7 +28,7 @@
  *	    Massimiliano Ghilardi, max@Linuz.sns.it, some fixes to the
  *				   clockchip programming code.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_driver.c,v 1.160 2002/01/15 18:31:19 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_driver.c,v 1.160.2.1 2002/03/29 18:34:24 alanh Exp $ */
 
 #include "xf1bpp.h"
 #include "xf4bpp.h"
@@ -2598,7 +2598,6 @@ TRIDENTScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     	vgaHWSetMmioFuncs(hwp, pTrident->IOBase, 0);
     }
 
-    vgaHWGetIOBase(hwp);
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
     /* Save the current state */

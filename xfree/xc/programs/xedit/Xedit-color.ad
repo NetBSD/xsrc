@@ -1,4 +1,4 @@
-! $XFree86: xc/programs/xedit/Xedit-color.ad,v 1.6 1999/08/28 09:01:20 dawes Exp $
+! $XFree86: xc/programs/xedit/Xedit-color.ad,v 1.6.8.1 2002/07/04 17:07:11 paulo Exp $
 
 #include "Xedit"
 
@@ -168,4 +168,4 @@ hexa?foreground=OrangeRed3&font=*courier-bold-r*12*&underline,\
 integer?foreground=OrangeRed3&font=*courier-bold-r*12*,\
 float?foreground=OrangeRed3&font=*courier-bold-r*12*&overstrike&underline,\
 punctuation?foreground=gray12&font=*courier-bold-r*12*,\
-error?foreground=yellow&background=red&font=*new century schoolbook-bold*25*
+error?foreground=yellow&background=red&font=*new century schoolbook-bold*24*

@@ -1,7 +1,7 @@
 /*
  * Rootless implementation for Mac OS X Aqua environment
  */
-/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/rootlessAquaImp.m,v 1.11 2002/01/17 02:44:27 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/rootlessAquaImp.m,v 1.11.2.1 2002/06/03 18:09:24 torrey Exp $ */
 
 #include "rootlessAquaImp.h"
 #include "XWindow.h"
@@ -154,7 +154,8 @@ void AquaDestroyWindow(void *rw)
 {
     AquaWindowRec *winRec = WINREC(rw);
 
-    [winRec->window release];
+    [winRec->window orderOut:nil];
+    [winRec->window close];
 }
 
 void AquaMoveWindow(void *rw, int x, int y)

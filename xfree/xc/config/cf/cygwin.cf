@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34 2001/12/10 16:22:37 alanh Exp $
+XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34.2.2 2002/02/19 08:43:33 alanh Exp $
 
 #ifndef OSName
 #define OSName                  Cygwin
@@ -138,7 +138,7 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34 2001/12/10 16:22:37 ala
 #  define OptimizedCDebugFlags	DefaultGcc2i386Opt
 # endif
 
-#define StandardDefines         -D__i386__ -DWIN32_LEAN_AND_MEAN -DX_LOCALE -D_X86_ -D__STDC__ -DNO_TCP_H -D__CYGWIN__ -D_XOPEN_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE
+#define StandardDefines         -D__i386__ -DWIN32_LEAN_AND_MEAN -DX_LOCALE -D_X86_ -D__STDC__ -DNO_TCP_H -D__CYGWIN__ -D_XOPEN_SOURCE -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -DNO_ALLOCA
 
 #define XawI18nDefines          -DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 #define HasWChar32              YES
@@ -308,10 +308,19 @@ XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.34 2001/12/10 16:22:37 ala
 #endif
 
 /* Server build rules */
+#ifndef XnestServer
 #define XnestServer			YES
+#endif
+#ifndef BuildXprint
 #define BuildXprint			YES
+#endif
+#ifndef XprtServer
 #define XprtServer			YES
+#endif
+#ifndef XVirtualFramebufferServer
 #define XVirtualFramebufferServer	YES
+#endif
+
 #define XWinServer			YES
 
 /*
