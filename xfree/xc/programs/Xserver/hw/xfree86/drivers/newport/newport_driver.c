@@ -32,6 +32,12 @@
  */
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_driver.c,v 1.24 2003/02/18 19:10:36 alanh Exp $ */
 
+#if defined(__NetBSD__)
+#include <fcntl.h>
+#include <dev/wscons/wsconsio.h>
+#include <sys/ioctl.h>
+#endif
+
 /* function prototypes, common data structures & generic includes */
 #include "newport.h"
 
@@ -743,7 +749,7 @@ NewportModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 					NPORT_DMODE1_RGBMD;
 	pNewportRegs->set.colorvram = 0;
 	pNewportRegs->set.xystarti = 0;
-	pNewportRegs->go.xyendi = ( (1279+64) << 16) | 1023;
+	pNewportRegs->go.xyendi = ( ( (width-1)+64) << 16) | (height-1);
 
 	/* default drawmode */
 	NewportWait(pNewportRegs);
@@ -781,9 +787,21 @@ NewportRestore(ScrnInfoPtr pScrn, Bool Closing)
 static unsigned
 NewportHWProbe(unsigned probedIDs[])
 {
+	unsigned hasNewport = 0;
+#if defined(__NetBSD__)
+	int fd, type, i;
+
+	probedIDs[0] = 0;
+
+	fd = open("/dev/ttyE0", O_RDONLY, 0);
+	i = ioctl(fd, WSDISPLAYIO_GTYPE, &type);
+	close(fd);
+
+	if ( (i == 0) && ( type == WSDISPLAY_TYPE_NEWPORT) )
+		hasNewport = 1;
+#else
 	FILE* cpuinfo;
 	char line[80];
-	unsigned hasNewport = 0;
 
 	if ((cpuinfo = fopen("/proc/cpuinfo", "r"))) {
 		while(fgets(line, 80, cpuinfo) != NULL) {
@@ -800,6 +818,7 @@ NewportHWProbe(unsigned probedIDs[])
 		}
 		fclose(cpuinfo);
 	}
+#endif
 	return hasNewport;
 }
 
