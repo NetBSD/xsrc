@@ -576,10 +576,11 @@ CFB32DIR = cfb32
 DDXDIR1  = hw/netbsd/dec
 DNBDIRS1 = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
 DNBOBJS1 = hw/netbsd/dec/decInit.o
-DNBLIBS1 = hw/netbsd/dec/sfb/libdecSfb.a hw/netbsd/dec/px/libdecPX.a hw/netbsd/dec/cfb/libdecCfb.a hw/netbsd/dec/mfb/libdecMfb.a hw/netbsd/dec/libdec.a CFB32Libs CFB8Libs
+DNBLIBS1 = hw/netbsd/dec/sfb/libdecSfb.a hw/netbsd/dec/px/libdecPX.a hw/netbsd/dec/cfb/libdecCfb.a hw/netbsd/dec/mfb/libdecMfb.a
 #if defined(AlphaArchitecture)
 DNBLIBS1 += hw/netbsd/dec/tga/libdecTga.a
 #endif
+DNBLIBS1 += hw/netbsd/dec/libdec.a CFB32Libs CFB8Libs
 SetUIDServerTarget(XdecNetBSD,$(DNBDIRS1),$(DNBOBJS1),$(DNBLIBS1),$(SYSLIBS))
 #ifndef ServerToInstall
 #define ServerToInstall XdecNetBSD
