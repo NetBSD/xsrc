@@ -216,6 +216,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define DlLibrary		/**/
 #endif
 
+/* All ELF NetBSD systems support Weak symbols */
+#define HasWeakSymbols		UseElfFormat 
+
 #ifdef i386Architecture
 # ifndef DefaultGcc2i386Opt
 #  if OSMajorVersion > 1 || (OSMajorVersion == 1 && OSMinorVersion > 2)
