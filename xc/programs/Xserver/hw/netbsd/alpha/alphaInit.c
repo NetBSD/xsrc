@@ -243,8 +243,8 @@ void OsVendorInit(
 	    rl.rlim_cur = maxfds < rl.rlim_max ? maxfds : rl.rlim_max;
 	    (void) setrlimit (RLIMIT_NOFILE, &rl);
 	}
-	alphaKbdPriv.fd = open ("/dev/wskbd", O_RDWR, 0);
-	alphaPtrPriv.fd = open ("/dev/wsmouse", O_RDWR, 0);
+	alphaKbdPriv.fd = open ("/dev/wskbd0", O_RDWR, 0);
+	alphaPtrPriv.fd = open ("/dev/wsmouse0", O_RDWR, 0);
         inited = 1;
     }
 }
