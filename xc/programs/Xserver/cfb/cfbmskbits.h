@@ -46,7 +46,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * XXX something other than Linux.
  */
 #if defined(__NetBSD__) && \
-	(defined(__alpha__) || defined(__vax__) || defined(__mips__) || defined(__arm__))
+	(defined(__alpha__) || defined(__vax__) || defined(__mips__) || defined(__arm__) || defined(__sh__))
 #include	"../hw/xfree86/common/compiler.h"
 #endif
 

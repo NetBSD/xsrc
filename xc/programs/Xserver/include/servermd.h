@@ -435,6 +435,25 @@ SOFTWARE.
 
 #endif /* SVR4 / BSD / i386 */
 
+#if defined(__sh__) && defined(__NetBSD__)
+
+#if defined(__LITTLE_ENDIAN__)
+# define IMAGE_BYTE_ORDER	LSBFirst        /* Values for the sh3el only */
+# define BITMAP_BIT_ORDER	LSBFirst
+# define GLYPHPADBYTES		4
+# define GETLEFTBITS_ALIGNMENT	1
+#else
+# define IMAGE_BYTE_ORDER	MSBFirst        /* Values for the sh3eb only */
+# define BITMAP_BIT_ORDER	MSBFirst
+# define GLYPHPADBYTES		4
+# define GETLEFTBITS_ALIGNMENT	1
+#endif
+
+#define AVOID_MEMORY_READ
+#define LARGE_INSTRUCTION_CACHE
+
+#endif /* __NetBSD__ && __sh__ */
+
 #if defined (linux) && defined (__mc68000__)
 
 #define IMAGE_BYTE_ORDER       MSBFirst
