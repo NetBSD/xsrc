@@ -786,7 +786,7 @@ static __inline__ void stw_u(unsigned long val, unsigned short *p)
 #define mem_barrier()         /* XXX: nop for now */
 #define write_mem_barrier()   /* XXX: nop for now */
 
-#elif defined(__mips__) || defined(__arm32__)
+#elif defined(__mips__) || defined(__arm32__) || defined(__arm__)
 
 unsigned int IOPortBase;  /* Memory mapped I/O port area */
 
@@ -938,7 +938,7 @@ __asm__ __volatile__(					\
 #endif /* !linux */
 #endif /* __mips__ */
 
-#if defined(__arm32__)
+#if defined(__arm32__) || defined(__arm__)
 #define ldq_u(p)	(*((unsigned long  *)(p)))
 #define ldl_u(p)	(*((unsigned int   *)(p)))
 #define ldw_u(p)	(*((unsigned short *)(p)))

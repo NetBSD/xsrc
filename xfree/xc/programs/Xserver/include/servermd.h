@@ -132,6 +132,14 @@ SOFTWARE.
 
 #endif /* vax */
 
+#if defined(__arm__)
+#define IMAGE_BYTE_ORDER        LSBFirst
+#define BITMAP_BIT_ORDER      LSBFirst
+#define GLYPHPADBYTES           4
+#define GETLEFTBITS_ALIGNMENT   1
+#define LARGE_INSTRUCTION_CACHE
+
+#endif /* __arm__ */
 #ifdef __arm32__
 
 #define IMAGE_BYTE_ORDER        LSBFirst

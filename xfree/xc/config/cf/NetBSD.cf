@@ -122,7 +122,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #if defined(UseInstalled)
 #define DefaultCCOptions 	/**/
 #else
-#ifdef Arm32Architecture
+#if defined(Arm32Architecture) || defined(CatsArchitecture)
 #define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char \
 				-fomit-frame-pointer
 #elif defined(PpcArchitecture)
@@ -154,6 +154,15 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # else
 #  define UseElfFormat NO
 # endif
+#endif
+
+#if 0
+/* one day we should enable this, but support is needed in the Xserver */
+#if UseElfFormat
+# ifndef DoLoadableServer
+#  define DoLoadableServer	YES
+# endif
+#endif
 #endif
 
 /*
@@ -205,6 +214,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  define ServerOSDefines 	XFree86ServerOSDefines
 # elif defined(Arm32Architecture)
 #   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# elif defined(CatsArchitecture)
+#   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME 
 # elif defined(PpcArchitecture)
 #  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
 # else
@@ -245,6 +256,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  define ServerExtraDefines GccGasOption XFree86ServerDefines
 #  ifndef XFree86ConsoleDefines
 #    define XFree86ConsoleDefines -DPCCONS_SUPPORT
+#  endif
+#elif defined(CatsArchitecture)
+#  define ServerExtraDefines GccGasOption XFree86ServerDefines
+#  ifndef XFree86ConsoleDefines
+#    define XFree86ConsoleDefines	-DPCCONS_SUPPORT -DPCVT_SUPPORT -DWSCONS_SUPPORT
 #  endif
 #elif defined(PpcArchitecture)
 #  define ServerExtraDefines	GccGasOption XFree86ServerDefines
@@ -543,7 +559,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 /* Always build the XInput library, regardless of server support on this plattform */
 #define BuildXInputLib          YES
 
-#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture)
+#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture) || defined(CatsArchitecture)
 # include <xfree86.cf>
 #endif
 
@@ -618,6 +634,13 @@ sed 's/\.[0-9]*$$//'`
 
 # define UseElfFormat		YES
 
+#endif
+
+/*
+ * Definition for compiling on cats machines
+ */
+#ifdef CatsArchitecture
+/* nothing is needed */
 #endif
 
 /*

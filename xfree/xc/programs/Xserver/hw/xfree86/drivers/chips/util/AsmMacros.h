@@ -130,7 +130,7 @@ unsigned long port;
    return ret;
 }
 #else
-#ifdef __arm32__
+#if defined(__arm32__) || defined(__arm__)
 unsigned int IOPortBase;  /* Memory mapped I/O port area */
 
 static __inline__ void

@@ -3045,7 +3045,7 @@ xf86FindPrimaryDevice()
 static void
 CheckGenericGA()
 {
-#if !defined(__sparc__) && !defined(__powerpc__) && !defined(__mips__) /* FIXME ?? */
+#if !defined(__arm__) && !defined(__sparc__) && !defined(__powerpc__) && !defined(__mips__) /* FIXME ?? */
     CARD16 GenericIOBase = VGAHW_GET_IOBASE();
     CARD8 CurrentValue, TestValue;
 
