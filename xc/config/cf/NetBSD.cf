@@ -1,9 +1,9 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.62 2000/01/10 12:44:42 shin Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.63 2000/01/10 23:50:33 tron Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.12 1998/12/22 11:23:02 hohndel Exp $
+XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.13 1999/10/12 17:18:20 hohndel Exp $
 
 
   

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/81 1996/10/22 18:32:26 kaleb $
-XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.10 1999/07/29 09:23:03 hohndel Exp $
+XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.11 1999/12/11 17:20:01 hohndel Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
@@ -114,6 +114,9 @@ SYS_LIBRARIES1 = -ls
 CRYPT_LIBRARIES = SpecialLibCrypt
 #else
 CRYPT_LIBRARIES = -lcrypt
+#if defined(LynxOSArchitecture)
+CRYPT_DEFINES = -DHAS_CRYPT
+#endif
 #endif
 #endif
 
@@ -204,7 +207,7 @@ LOCAL_LIBRARIES = $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) $(XDMCPLIB) $(RPCLIB
   EXTRA_DEFINES =
 #endif
         DEFINES = -DBINDIR=\"$(BINDIR)\" -DXDMDIR=\"$(XDMDIR)\" \
-		$(SIGNAL_DEFINES) \
+		$(SIGNAL_DEFINES) $(CRYPT_DEFINES) \
 		$(XDMAUTH_DEFINES) $(RPC_DEFINES) $(KRB5_DEFINES) \
 		$(PWD_DEFINES) $(CONN_DEFINES) \
 		$(GREET_DEFINES) $(FRAGILE_DEFINES) \

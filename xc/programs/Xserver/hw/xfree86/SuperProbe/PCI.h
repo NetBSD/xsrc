@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.15 1999/07/30 11:21:16 hohndel Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.17 1999/11/18 15:37:23 hohndel Exp $ */ 
 /*
  * PCI Probe
  *
@@ -326,6 +326,7 @@ extern struct pci_config_reg *pci_devp[];
 #define PCI_CHIP_PM6410		0x3210
 #define PCI_CHIP_PM6422		0x6422
 #define PCI_CHIP_PMAT24		0x6424
+#define PCI_CHIP_PMAT3D		0x643D
 
 /* Rendition */
 #define PCI_CHIP_V1000		0x0001
@@ -359,6 +360,8 @@ extern struct pci_config_reg *pci_devp[];
 #define PCI_CHIP_TRIO3D_2X	0x8A13
 #define PCI_CHIP_SAVAGE3D	0x8A20
 #define PCI_CHIP_SAVAGE3D_M	0x8A21
+#define PCI_CHIP_SAVAGE4	0x8A22
+#define PCI_CHIP_SAVAGE2000	0x9102
 
 /* ARK Logic */
 #define PCI_CHIP_1000PV		0xA091

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.8 1999/07/30 11:21:38 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.9 1999/10/21 12:08:05 hohndel Exp $ */
 
 /* regs3v.h
  *
@@ -55,27 +55,17 @@
        }\
 }
 
-
-#define S3_ViRGE_SERIES(chip)     ((chip&0xfff0)==0x31e0)
-#define S3_ViRGE_DXGX_SERIES(chip) (chip == S3_ViRGE_DXGX)
-#define S3_ViRGE_GX2_SERIES(chip) (chip == S3_ViRGE_GX2 || chip == S3_TRIO_3D_2X)
-#define S3_ViRGE_MX_SERIES(chip)  (chip == S3_ViRGE_MX || chip == S3_ViRGE_MXP)
-#define S3_ViRGE_MXP_SERIES(chip) (chip == S3_ViRGE_MXP)
-#define S3_ViRGE_VX_SERIES(chip)  ((chip&0xfff0)==0x3de0)
-#define S3_TRIO_3D_SERIES(chip)   (chip == S3_TRIO_3D)
-#define S3_TRIO_3D_2X_SERIES(chip)   (chip == S3_TRIO_3D_2X)
-#define S3_SAVAGE_3D_SERIES(chip)   (chip == PCI_CHIP_SAVAGE3D || chip == PCI_CHIP_SAVAGE3D)
-#define S3_ANY_ViRGE_SERIES(chip) (    S3_ViRGE_SERIES(chip)		\
-				    || S3_ViRGE_VX_SERIES(chip)		\
-				    || S3_ViRGE_DXGX_SERIES(chip)	\
-				    || S3_ViRGE_GX2_SERIES(chip)	\
-				    || S3_ViRGE_MX_SERIES(chip)		\
-				    || S3_SAVAGE_3D_SERIES(chip)	\
-				    || S3_TRIO_3D_SERIES(chip))
-#define S3_ANY_SERIES(chip)       (    S3_ViRGE_SERIES(chip)		\
-				    || S3_ViRGE_VX_SERIES(chip)		\
-				    || S3_SAVAGE_3D_SERIES(chip)	\
-				    || S3_TRIO_3D(chip))
+#if 0 /* currently not used at all */
+#define S3_ViRGE_SERIES(chip)		(chip == S3_ViRGE)
+#define S3_ViRGE_VX_SERIES(chip)	(chip == S3_ViRGE_VX)
+#define S3_ViRGE_DXGX_SERIES(chip)	(chip == S3_ViRGE_DXGX)
+#define S3_ViRGE_MXP_SERIES(chip)	(chip == S3_ViRGE_MXP)
+#define S3_SAVAGE_3D_SERIES(chip)	(chip == PCI_CHIP_SAVAGE3D || chip == PCI_CHIP_SAVAGE3D)
+#endif
+#define S3_ViRGE_GX2_SERIES(chip)	(chip == S3_ViRGE_GX2 || chip == S3_TRIO_3D_2X)
+#define S3_ViRGE_MX_SERIES(chip)	(chip == S3_ViRGE_MX || chip == S3_ViRGE_MXP)
+#define S3_TRIO_3D_SERIES(chip)		(chip == S3_TRIO_3D)
+#define S3_TRIO_3D_2X_SERIES(chip)	(chip == S3_TRIO_3D_2X)
 
 /* PCI data */
 #define PCI_S3_VENDOR_ID	0x5333
@@ -421,7 +411,7 @@ void S3VGEReset(int from_timeout, int line, char *file);
 
 /* Wait until Command FIFO is empty */
 #define WaitCommandEmpty()       do { int loop=0; mem_barrier(); 			\
-	if (s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX || s3vPriv.chip == S3_ViRGE_MXP) 		\
+	if (S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_ViRGE_MX_SERIES(s3vPriv.chip)) 	\
 	     while ((!(((((mmtr)s3vMmioMem)->subsys_regs.regs.adv_func_cntl)) & 0x400)) && (loop++<MAXLOOP));	\
 	else if (S3_TRIO_3D_SERIES(s3vPriv.chip)) \
 	     while (((IN_SUBSYS_STAT() & 0x5f00) != 0x5f00) && (loop++<MAXLOOP)); \

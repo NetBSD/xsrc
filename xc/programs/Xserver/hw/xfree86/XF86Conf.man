@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.man,v 3.52.2.14 1999/08/02 08:38:00 hohndel Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.man,v 3.52.2.19 1999/12/28 12:13:41 hohndel Exp $
 .TH XF86Config 4/5 "Version 3.3.5"  "XFree86"
 .SH NAME
 XF86Config - Configuration File for XFree86
@@ -312,7 +312,8 @@ available are:
 .B SysMouse
 .B ThinkingMouse
 .B ThinkingMousePS/2
-.B wsmouse
+.B USB
+.B Wsmouse
 .B Xqueue
 .fi
 .in -20
@@ -338,6 +339,15 @@ The \fBPS/2\fP and other \fBXXXXPS/2\fP protocol types are for PS/2 mice.
 regardless of the model of the PS/2 mouse.
 The other \fBXXXXPS/2\fP protocol types may or may not be supported by
 your OS.
+.PP
+The \fBwsouse\fP protocol is for mices handled by the wscons console
+driver in NetBSD 1.4 and later. It should be used with the
+/dev/wsmouse0 device. Refer to the wsmouse(4) manual page for
+details. 
+.PP
+The \fBUsb\fP protocol is for USB mices on OpenBSD 2.6 and later. It
+should be used with the /dev/uhid0 
+device. Refer to the uhid(4) and usb(4) manual pages for details. 
 .PP
 The rest of the protocol types are for serial mice.
 If your serial mouse is of a relatively new model, you may specify
@@ -1043,6 +1053,10 @@ to have multiple devices of the same type (i.e. multiple pens). This
 option is only available on wacom V devices (Intuos). To see which
 serial number belongs to a device, you have to set the DebugLevel to 6 and
 whatch the output of the X server.
+.TP 4
+.B Threshold \fI"number"\fP
+sets the pressure threshold used to generate a button 1 events of stylus
+devices for some models of tablets (Intuos and Graphire).
 .RE
 
 The \fBElographics\fP subsection support the following entries:
@@ -1073,6 +1087,11 @@ sets the maximum Y position reported by the touchscreen.
 .TP 4
 .B MinimumYPosition \fIposition\fP
 sets the minimum Y position reported by the touchscreen.
+
+When an axis minimum is greater than its maximum the driver
+reverse the axis. This is useful to cope with ill assembled
+screens.
+
 .TP 4
 .B ScreenNo \fInumber\fP
 sets the screen number where the touchscreen is mounted.
@@ -1108,8 +1127,20 @@ sets the motion history size. By default the value is zero.
 sets the level of debugging info reported. Valid values range from 0 to 5.
 A value of zero suppress all debugging reports and a value of 5 ask for the
 maximum verbosity.
-.RE
+.TP 4
+.B SwapXY
+Exchange the X and Y axes at the driver level. This is useful to cope with
+defective screen assemblies.
+.TP 4
+.B PortraitMode \fIorientation\fP
+configure the orientation of the screen. "Portrait" is to be used when the
+screen has been turned 90 degrees clockwise, "PortraitCCW" is used when the
+screen has been turned 90 degrees counter clockwise and "Landscape" (or not specifying
+this option) is for a normal orientation. It is to be noted that this option
+is applied after axes swap and reversal so it is possible to cope with defective
+assembly and still change orientation.
 
+.RE
 The \fBMicrotouchFinger\fP and \fBMicrotouchStylus\fP subsections support
 the following entries:
 .RS 8
@@ -1144,6 +1175,11 @@ sets the maximum Y position reported by the touchscreen.
 .TP 4
 .B MinimumYPosition \fIposition\fP
 sets the minimum Y position reported by the touchscreen.
+
+When an axis minimum is greater than its maximum the driver
+reverse the axis. This is useful to cope with ill assembled
+screens.
+
 .TP 4
 .B ScreenNo \fInumber\fP
 sets the screen number where the touchscreen is mounted.
@@ -1163,6 +1199,21 @@ sets the motion history size. By default the value is zero.
 sets the level of debugging info reported. Valid values range from 0 to 5.
 A value of zero suppress all debugging reports and a value of 5 ask for the
 maximum verbosity.
+.TP 4
+.B SwapXY
+Exchange the X and Y axes at the driver level. This is useful to cope with
+defective screen assemblies.
+.TP 4
+.B PortraitMode \fIorientation\fP
+configure the orientation of the screen. "Portrait" is to be used when the
+screen has been turned 90 degrees clockwise, "PortraitCCW" is used when the
+screen has been turned 90 degrees counter clockwise and "Landscape" (or not specifying
+this option) is for a normal orientation. It is to be noted that this option
+is applied after axes swap and reversal so it is possible to cope with defective
+assembly and still change orientation.
+.TP 4
+.B Frequency \fInumber\fP
+sets the frequency parameter for a ThruGlass Microtouch panel.
 
 .RE
 The \fBSummaSketch\fP subsection support the following entries:
@@ -1181,7 +1232,7 @@ sets the mode of the device.
 sets the cursor type, stylus or 4 button puck.
 .TP 4
 .B Increment \fIvalue\fP
-sets the maximum change in coordinates before new report.
+sets the minimum change in coordinates before new report.
 .TP 4
 .B HistorySize \fInumber\fP
 sets the motion history size. By default the value is zero.
@@ -1197,6 +1248,61 @@ and at the same time will be able, when asked so, to report extended events.
 You can use the last available integer feedback to control this feature. When
 the value of the feedback is zero, the feature is disabled. The feature is
 enabled for any other value.
+.TP 4
+.B Resolution value
+Sets tablet resolution.  Choose a value from below:
+
+lpi:    1 2 4 100 200 254 400 500 508 1000 1016
+
+        2000 2032 2540
+
+lpmm:   10 20 40
+
+Any other value, or if this option is not provided, will
+default to 500 lpi.  Note that "2540 lpi" is only available
+for the SummaSketch 12x12 tablet, and the Summa MM mode can
+restrict reported maximum coordinate value to be 16384, which
+means the higher the resolution, the smaller the usable tablet
+surface.
+.TP 4
+.B Hitachi_1217D
+Indicates a Hitachi 1217D tablet (which must have been set to
+run in Summa MM mode) is being used.  This option sets the
+"Compatible" flag, and the increment value to 0 (otherwise the
+Hitachi 1217D will not report buttons when the puck is held
+still).  Note that if "Increment value" option is given
+after this option (in config file line order), then the
+"Increment value" will take effect (but one should not want
+to set a non-zero increment with Hitachi 1217D).
+.TP 4
+.B ActiveOffset x y
+Where "x y" are in units of inches, to two decimal places
+(e.g. 0.25 0.25).  Sets the upper left corner of active area,
+from the upper left corner of tablet's surface.  Default is
+no offset.
+.TP 4
+.B ActiveArea x y
+Where "x y" are in units of inches, to two decimal places
+(e.g. 15.75 11.75).  Sets desired sub-area on tablet to use.
+Default is: maximum tablet area minus any ActiveOffsets, then
+map display screen to tablet to find maximum usable area.
+Except for tablets that do not provide a full rectangular
+surface (e.g. plastic corners molded into digitizing area),
+there is little reason why this option should be used.
+
+Combinations of ActiveOffset and ActiveArea values that do not
+match well with the tablet in use, will cause reduced usable area,
+incorrect scaling, and possibly usable area centered on the tablet
+surface.
+.TP 0
+.B General Note
+tablets to be recognized by this module must be set to run in Summa MM
+mode binary, 9600 baud, odd parity, one stop bit.  Also, usable tablet
+surface is mapped by following display screen aspect ratio; e.g. a 12x18
+tablet will have maximum area of 12x16 inches usable when the display
+sizes indicate 4:3 (say, 1024x768).  Previous behavior mapped the full
+tablet to screen, regardless tablet and screen aspect ratios, causing
+distortion when tracing/digitizing drawings on the tablet.
 .RE
 
 The \fBDialBox\fP subsection support the following entries:

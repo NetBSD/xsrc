@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86misc.h,v 3.6.2.6 1999/06/23 12:37:09 hohndel Exp $ */
+/* $XFree86: xc/include/extensions/xf86misc.h,v 3.6.2.7 1999/12/01 14:53:57 hohndel Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -55,6 +55,7 @@
 #define MTYPE_ACECAD		19
 #define MTYPE_WSMOUSE		20
 #define MTYPE_SUN		21
+#define MTYPE_USB		22
 
 #define MTYPE_XQUEUE		127
 #define MTYPE_OSMOUSE		126

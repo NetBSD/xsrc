@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.11 1999/07/29 09:22:46 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.14 1999/12/20 12:55:49 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -1444,6 +1444,79 @@ xf86Wakeup(blockData, err, pReadmask)
 #endif /* AMOEBA */
 
 
+#if defined(linux) && (defined(i386) || defined(__i386__))
+#include <asm/sigcontext.h>
+/* libc5 uses 'sigcontext_struct', and glibc2 #define's it to sigcontext */
+#ifdef sigcontext_struct
+#define SIGCONTEXT struct sigcontext
+#else
+#define SIGCONTEXT struct sigcontext_struct
+#endif
+
+/*
+ * partly stolen from linux/arch/i386/kernel/traps.c
+ */
+
+void show_registers(SIGCONTEXT *regs)
+{
+  int i;
+  unsigned long *stack, addr;
+  extern unsigned long _start, _etext;
+
+  ErrorF("\n");
+  ErrorF("eip: %08lx   eflags: %08lx\n",
+	 regs->eip, regs->eflags);
+  ErrorF("eax: %08lx   ebx: %08lx   ecx: %08lx   edx: %08lx\n",
+	 regs->eax, regs->ebx, regs->ecx, regs->edx);
+  ErrorF("esi: %08lx   edi: %08lx   ebp: %08lx   esp: %08lx",
+	 regs->esi, regs->edi, regs->ebp, regs->esp);
+
+  /*
+   * reading/printing the stack or code might be dangerous -- if the stack frame
+   * is wrong, this would cause another SIGSEGV :-(
+   */
+#if 1
+  ErrorF("\nStack: ");
+  stack = (unsigned long *) regs->esp;
+  for(i=0; i < 32; i++) {
+    if (((long) stack & 4095) == 0)
+      break;
+    if (i && ((i % 8) == 0))
+      ErrorF("\n       ");
+    ErrorF("%08lx ", *stack++);
+  }
+
+  ErrorF("\nCall Trace: ");
+  stack = (unsigned long *) regs->esp;
+  i = 1;
+  while (((long) stack & 4095) != 0) {
+    addr = *stack++;
+    /*
+     * If the address is either in the text segment,
+     * it *may* be the address of a calling routine;
+     * if so, print it so that someone tracing
+     * down the cause of the crash will be able to figure
+     * out the call path that was taken.
+     */
+    if (((addr >= (unsigned long) &_start) &&
+	 (addr <= (unsigned long) &_etext))) {
+      if (i && ((i % 8) == 0))
+	ErrorF("\n       ");
+      ErrorF("%08lx ", addr);
+      i++;
+    }
+  }
+
+  ErrorF("\nCode: ");
+  for(i=0;i<20;i++)
+    ErrorF("%02x ", ((unsigned char *)regs->eip)[i]);
+  ErrorF("\n");
+#endif
+}
+
+
+#endif
+
 /*
  * xf86SigHandler --
  *    Catch unexpected signals and exit cleanly.
@@ -1453,8 +1526,76 @@ xf86SigHandler(signo)
      int signo;
 {
   signal(signo,SIG_IGN);
-  xf86Info.caughtSignal = TRUE;
-  FatalError("Caught signal %d.  Server aborting\n", signo);
+  ErrorF("Caught signal %d.\n", signo);
+
+  /* should be FatalError() but needs to return */
+  ErrorF("\nServer aborting...\n");
+
+  /* from FatalError() in Xserver/os/utils.c */
+#ifdef DDXOSFATALERROR
+    OsVendorFatalError();
+#endif
+
+    /* needs to return, so from AbortServer() in Xserver/os/utils.c */
+
+    OsCleanup();
+    AbortDDX();
+    fflush(stderr);
+#ifdef AMOEBA
+    IOPCleanUp();
+#endif
+
+    /* and now we'd like to get a core dumped,
+       so we return to the place where SIGSEGV happend... */
+
+    {
+      char cwd[256];
+#ifdef NotYet  /* ifever */
+      char str[256];
+      struct passwd *pw = getpwuid(getuid());
+#endif
+
+#if defined(linux) && (defined(i386) || defined(__i386__))
+      show_registers((SIGCONTEXT*)((&signo) + 1));
+#endif
+
+#ifdef NotYet  /* ifever */
+      snprintf(str, 255, "/bin/sh -c '/usr/X11R6/bin/xfree86-core-notify %s %s %s&'",
+	       pw->pw_name, getcwd(cwd, 255), argv0);
+      system(str);
+#else
+      ErrorF("\n");
+      ErrorF("Please forward information about this crash to XFree86@XFree86.org\n");
+      ErrorF("including the _full_ output of the X server.\n");
+      ErrorF("\n");
+      ErrorF("To analyse the crash dump, please type\n");
+      ErrorF("\n");
+      ErrorF("\tgdb %s %s/core\n", argvGlobal[0], getcwd(cwd, 255));
+      ErrorF("\twhere\n");
+      ErrorF("\n");
+      ErrorF("and include this output in your report.  Thanks!\n");
+      ErrorF("\n");
+    }
+#endif
+
+#if defined(RLIMIT_CORE) && defined(RLIM_INFINITY)
+    if (1) {
+       struct rlimit rlimit = { RLIM_INFINITY, RLIM_INFINITY };
+       setrlimit(RLIMIT_CORE, &rlimit);
+    }
+#endif
+
+    {
+       struct sigaction sa;
+
+       sa.sa_handler = SIG_DFL;
+       sigemptyset(&sa.sa_mask);
+       sa.sa_flags = 0;
+       sigaction(signo, &sa, NULL);
+
+       if (!raise(SIGTRAP))
+	  raise(signo);		/* shouldn't be necessary */
+    }
 }
 
 /*
@@ -1483,6 +1624,9 @@ xf86VTSwitch()
 #ifndef __EMX__
     DisableDevice((DeviceIntPtr)xf86Info.pKeyboard);
     DisableDevice((DeviceIntPtr)xf86Info.pMouse);
+#ifdef XINPUT
+    xf86DisableInputDevices();
+#endif
 #endif
 
     if (!xf86VTSwitchAway()) {
@@ -1501,6 +1645,9 @@ xf86VTSwitch()
 #ifndef __EMX__
       EnableDevice((DeviceIntPtr)xf86Info.pKeyboard);
       EnableDevice((DeviceIntPtr)xf86Info.pMouse);
+#ifdef XINPUT
+    xf86EnableInputDevices();
+#endif
 #endif
 
     } else {
@@ -1523,6 +1670,9 @@ xf86VTSwitch()
 #ifndef __EMX__
     EnableDevice((DeviceIntPtr)xf86Info.pKeyboard);
     EnableDevice((DeviceIntPtr)xf86Info.pMouse);
+#ifdef XINPUT
+    xf86EnableInputDevices();
+#endif
 #endif
 
   }

@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclmisc.c,v 3.6.2.6 1999/04/21 07:21:07 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclmisc.c,v 3.6.2.7 1999/12/01 14:54:00 hohndel Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -311,7 +311,8 @@ static char *msetable[] = { "None", "Microsoft", "MouseSystems", "MMSeries",
 			    "ThinkingMouse", "IMPS/2", "ThinkingMousePS/2",
 			    "MouseManPlusPS/2", "GlidePointPS/2", 
 			    "NetMousePS/2", "NetScrollPS/2", "SysMouse",
-			    "Auto", "AceCad", "wsmouse", "Xqueue", "OSMouse" };
+			    "Auto", "AceCad", "wsmouse", "usb", 
+			    "Xqueue", "OSMouse" };
 #define MSETABLESIZE	(sizeof(msetable)/sizeof(char *))
 
 /*

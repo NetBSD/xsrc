@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/34 1996/10/27 11:05:08 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.13 1999/07/28 13:37:42 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.14 1999/12/01 12:49:21 hohndel Exp $
 
 
 
@@ -117,6 +117,15 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.13 1999
 # endif
 #endif
 
+#if UsbMouseSupport
+ USB_MOUSE_DEFINES = -DUSB_MOUSE
+ USB_MOUSE_SRC = xf86_UsbMse.c
+ USB_MOUSE_OBJ = xf86_UsbMse.o
+#if !HasLibUsb
+ LIBUSBSRC = $(XF86OSSRC)/libusb
+#endif
+#endif
+
 #if !defined(LynxOSArchitecture) && !defined(OS2Architecture) && !defined(QNXArchitecture)
  PNP_MOUSE_SRC=xf86_PnPMouse.c
  PNP_MOUSE_OBJ=xf86_PnPMouse.o
@@ -212,6 +221,7 @@ SRCS =	\
 	xf86_Option.c \
 	$(KBD).c \
 	$(PNP_MOUSE_SRC) \
+	$(USB_MOUSE_SRC) \
 	$(XF86_XINPUT_SRC) \
 	$(XINPUT_DEV_SRCS) \
 	$(XKBDDXSRC) \
@@ -228,6 +238,7 @@ OBJS = \
 	xf86Lock.o \
 	xf86_Mouse.o \
 	$(PNP_MOUSE_OBJ) \
+	$(USB_MOUSE_OBJ) \
 	$(XF86_XINPUT_OBJ) \
 	$(XINPUT_DEV_OBJS) \
 	$(XKBDDXOBJ) \
@@ -243,7 +254,7 @@ OFILES = \
 
    INCLUDES = -I. -I.. -I$(XF86OSSRC) -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
               -I$(SERVERSRC)/include -I$(SERVERSRC)/os \
-              -I$(XINCLUDESRC) -I$(EXTINCSRC)
+              -I$(XINCLUDESRC) -I$(EXTINCSRC) -I$(LIBUSBSRC)
 
      OSNAME = OSName
    OSVENDOR = OSVendor
@@ -251,7 +262,8 @@ OFILES = \
 CONSDEFINES = XFree86ConsoleDefines
 EXP_DEFINES = -DEXPIRY_TIME=XF86ServerExpiry $(EXP_FORCE_DEFINES)
 
-    DEFINES = $(XCONFIGDEFINES) $(CONSDEFINES) $(PNP_MOUSE_DEFINES)
+    DEFINES = $(XCONFIGDEFINES) $(CONSDEFINES) $(PNP_MOUSE_DEFINES) \
+	      $(USB_MOUSE_DEFINES)
 
 #if XF86MonoServer
 VGA2BUILD = -DBUILD_VGA2
