@@ -458,6 +458,12 @@ install.man:: 								@@\
 #endif
 
 /*
+ * NetBSD always uses the XFree86 contrib distribution.
+ */
+#undef	XF86Contrib
+#define	XF86Contrib	YES
+
+/*
  * Definitions for the SUN server on NetBSD/sparc or NetBSD/sun3
  */
 #if defined(SparcArchitecture) || defined(Sun3Architecture)
