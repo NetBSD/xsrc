@@ -30,7 +30,6 @@
 #define SAVE_FONT1
 #endif
 
-#if defined(Lynx) || defined(CSRG_BASED) || defined(MACH386) || defined(linux) || defined(AMOEBA) || defined(MINIX) || defined(__QNX__) || defined(sun) || defined(__GNU__)
 #ifndef NEED_SAVED_CMAP
 #define NEED_SAVED_CMAP
 #endif
@@ -40,13 +39,12 @@
 #ifndef SAVE_FONT2
 #define SAVE_FONT2
 #endif
-#endif
 
 /* bytes per plane to save for text */
 #define TEXT_AMOUNT 16384
 
 /* bytes per plane to save for font data */
-#define FONT_AMOUNT 8192
+#define FONT_AMOUNT (8*8192)
 
 #if 0
 /* Override all of these for now */
