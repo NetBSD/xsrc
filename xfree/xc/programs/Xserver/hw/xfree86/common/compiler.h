@@ -923,7 +923,7 @@ static __inline__ void stw_u(unsigned long val, unsigned short *p)
 #define PORT_SIZE short
 #endif
 
-unsigned int IOPortBase;  /* Memory mapped I/O port area */
+extern unsigned int IOPortBase;  /* Memory mapped I/O port area */
 
 static __inline__ void
 outb(unsigned PORT_SIZE port, unsigned char val)
