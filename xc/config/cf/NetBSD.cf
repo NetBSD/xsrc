@@ -303,6 +303,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
 #endif
 
+#if defined(pmaxArchitecture)
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+#endif
+
 #ifndef OptimizedCDebugFlags
 # define OptimizedCDebugFlags 	-O2
 #endif
@@ -457,44 +462,6 @@ install.man:: 								@@\
 
 #define InstallGenManPageAliases(file,destdir,suffix,aliases)		@@\
 	InstallManPageAliases(file,destdir,aliases)
-
-/*
- * Definition for compiling on MIPS machines
- */
-#ifdef MipsArchitecture
-#if 0 /* As distributed */
-#define PositionIndependentCFlags
-#define SharedLibraryLoadFlags -x -shared --whole-archive -soname `echo $@ | sed 's/\.[0-9]*$$//'`
-#define SharedXtReqs	$(XLIBONLY) $(SMLIB) $(ICELIB)
-#define SharedXmuReqs	$(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB) $(EXTENSIONLIB)
-#endif /* As distributed */
-
-#ifdef XdecServer
-#undef XdecServer
-#endif
-#define XdecServer NO
-
-#ifndef XpmaxServer
-#define XpmaxServer YES
-#endif
-
-#ifdef PexDynamicModule
-#undef PexDynamicModule
-#endif
-
-#ifdef XieDynamicModule
-#undef XieDynamicModule
-#endif
-
-#define PexDynamicModule	NO
-#define XieDynamicModule	NO
-
-#ifdef UseElfFormat
-#undef UseElfFormat
-#endif
-#define UseElfFormat YES
-
-#endif
 
 /*
  * Shared libraries supported starting in 1.0 on a.out platforms,
@@ -660,6 +627,14 @@ clean::									@@\
 #if defined(macppcArchitecture)
 # define XmacppcServer		YES
 #endif
+
+/*
+ * Definitions for the NetBSD/pmax X server.
+ */
+#if defined(pmaxArchitecture)
+# define XpmaxServer YES
+#endif
+
 
 #ifndef BuildScreenSaverLibrary
 #define BuildScreenSaverLibrary	YES
