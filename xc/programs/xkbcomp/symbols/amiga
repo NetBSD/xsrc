@@ -294,3 +294,176 @@ xkb_symbols "de" {
     modifier_map Mod2	{ Mode_switch };
     modifier_map Mod3	{ Meta_L, Meta_R };
 };
+
+xkb_symbols "fr" {
+
+    name[Group1]= "French";
+    key <ESC>  {	[	 Escape			]	};
+
+    // Begin "Function" section
+    key <FK01> {	[	 F1			]	};
+    key <FK02> {	[	 F2			]	};
+    key <FK03> {	[	 F3			]	};
+    key <FK04> {	[	 F4			]	};
+    key <FK05> {	[	 F5			]	};
+    key <FK06> {	[	 F6			]	};
+    key <FK07> {	[	 F7			]	};
+    key <FK08> {	[	 F8			]	};
+    key <FK09> {	[	 F9			]	};
+    key <FK10> {	[	 F10			]	};
+    // End "Function" section
+
+    // Alphanumeric section
+    key <TLDE> {	[     grave,	asciitilde	],
+			[	grave			]	};
+    key <AE01> {	[ ampersand,	1 		],
+			[ onesuperior,	exclam		]	};
+    key <AE02> {	[    eacute,	2		],
+			[ twosuperior,	at		]	};
+    key <AE03> {	[  quotedbl,	3		],
+			[ threesuperior, numbersign	]	};
+    key <AE04> {	[ apostrophe,	4		],
+			[      cent,	dollar		]	};
+    key <AE05> {	[ parenleft,	5		],
+			[ onequarter,	percent		]	};
+    key <AE06> {	[ section,	6		],
+			[   onehalf,	asciicircum	]	};
+    key <AE07> {	[    egrave,	7		],
+			[ threequarters, ampersand	]	};
+    key <AE08> {	[    exclam,	8		],
+			[ periodcentered, asterisk	]	};
+    key <AE09> {	[  ccedilla,	9		],
+			[ guillemotleft, parenleft	]	};
+    key <AE10> {	[    agrave,	0		],
+			[ guillemotright, parenright	]	};
+    key <AE11> {	[ parenright,	degree		],
+			[     minus,	underscore	]	};
+    key <AE12> {	[     minus,	underscore	],
+			[     equal,	plus		]	};
+    key <BKSL> {	[ backslash,	bar		]	};
+    key <BKSP> {	[	BackSpace		]	};
+
+    key  <TAB> {	[	Tab,	ISO_Left_Tab	]	};
+    key <AD01> {	[	  a,	A 		],
+			[     aring,	Aring		]	};
+    key <AD02> {	[	  z,	Z		],
+			[    degree,	degree		]	};
+    key <AD03> {	[	  e,	E		],
+			[ copyright,	copyright	]	};
+    key <AD04> {	[	  r,	R		],
+			[ registered,	registered	]	};
+    key <AD05> {	[	  t,	T		],
+			[     thorn,	THORN		]	};
+    key <AD06> {	[	  y,	Y		],
+			[  currency,	yen		]	};
+    key <AD07> {	[	  u,	U		],
+			[        mu,	mu		]	};
+    key <AD08> {	[	  i,	I		],
+			[ exclamdown,	brokenbar	]	};
+    key <AD09> {	[	  o,	O		],
+			[    oslash,	Ooblique	]	};
+    key <AD10> {	[	  p,	P		],
+			[ paragraph,	paragraph	]	};
+    key <AD11> {	[ dead_circumflex,	dead_diaeresis	],
+			[ bracketleft,	braceleft	]	};
+    key <AD12> {	[      dollar,	asterisk	],
+			[ bracketright,	braceright	]	};
+    key <RTRN> {	[	 Return			]	};
+
+    key <LCTL> {	[	 Control_L		]	};
+    key <CAPS> {	[	 Caps_Lock		]	};
+    key <AC01> {	[	  q,	Q 		],
+			[        ae,	AE		]	};
+    key <AC02> {	[	  s,	S		],
+			[    ssharp,	section		]	};
+    key <AC03> {	[	  d,	D		],
+			[       eth,	ETH		]	};
+    key <AC04> {	[	  f,	F		]	};
+    key <AC05> {	[	  g,	G		]	};
+    key <AC06> {	[	  h,	H		]	};
+    key <AC07> {	[	  j,	J		]	};
+    key <AC08> {	[	  k,	K		]	};
+    key <AC09> {	[	  l,	L		],
+			[  sterling,	sterling	]	};
+    key <AC10> {	[ 	  m,	M		],
+			[ semicolon,	colon		]	};
+    key <AC11> {	[    ugrave,	percent		],
+			[ quoteright,	quotedbl	]	};
+    key <AC12> {	[ 	 mu,	sterling	]	};
+
+    key <LFSH> {	[	 Shift_L		]	};
+    key <LSGT> {	[      less,	greater		]	};
+    key <AB01> {	[	  w,	W 		],
+			[ plusminus,	notsign		]	};
+    key <AB02> {	[	  x,	X		],
+			[  multiply,	division	]	};
+    key <AB03> {	[	  c,	C		],
+			[  ccedilla,	Ccedilla	]	};
+    key <AB04> {	[	  v,	V		],
+			[	ordfeminine		]	};
+    key <AB05> {	[	  b,	B		],
+			[	masculine		]	};
+    key <AB06> {	[	  n,	N		],
+			[     minus,	underscore	]	};
+    key <AB07> {	[     comma,	question	],
+			[   cedilla,	questiondown	]	};
+    key <AB08> {	[ semicolon,	period		],
+			[     comma,	less		]	};
+    key <AB09> {	[     colon,	slash		],
+			[    period,	greater		]	};
+    key <AB10> {	[     equal,	plus		],
+			[     slash,	question	]	};
+    key <RTSH> {	[	 Shift_R		]	};
+
+    key <LALT> {	[	 Alt_L 		]	};
+    key <LAMI> {	[	 Meta_L		]	};
+    key <SPCE> {	[	 space		]	};
+    key <RAMI> {	[	 Meta_R		]	};
+    key <RALT> {	[ Mode_switch,	Multi_key	]	};
+    // End alphanumeric section
+
+    // Begin "Editing" section
+    key <DELE> {	[	 Delete		]	};
+    key <HELP> {	[	 Help		]	};
+    key <UP>   {	[	 Up		]	};
+    key <LEFT> {	[	 Left		]	};
+    key <DOWN> {	[	 Down		]	};
+    key <RGHT> {	[	 Right		]	};
+    // End "Editing" section
+
+    // Begin "Keypad" section
+    key <KPLP> {	[ bracketleft,	braceleft	],
+			[	 Num_Lock		]	};
+    key <KPRP> {	[ bracketright,	braceright	],
+			[	 Scroll_Lock		]	};
+    key <KPDV> {	[	 KP_Divide		]	};
+    key <KPMU> {	[	 KP_Multiply		],
+			[	 Print			]	};
+
+    key <KP7>  {	[      KP_7,	KP_Home		]	};
+    key <KP8>  {	[      KP_8,	KP_Up		]	};
+    key <KP9>  {	[      KP_9,	KP_Prior	]	};
+    key <KPSU> {	[	 KP_Subtract		]	};
+
+    key <KP4>  {	[      KP_4,	KP_Left		]	};
+    key <KP5>  {	[	    KP_5		]	};
+    key <KP6>  {	[      KP_6,	KP_Right	]	};
+    key <KPAD> {	[	   KP_Add		]	};
+
+    key <KP1>  {	[      KP_1,	KP_End		]	};
+    key <KP2>  {	[      KP_2,	KP_Down		]	};
+    key <KP3>  {	[      KP_3,	KP_Next		]	};
+
+    key <KP0>  {	[      KP_0,	KP_Insert	]	};
+    key <KPDC> {	[ KP_Decimal,	KP_Delete	]	};
+    key <KPEN> {	[	  KP_Enter		]	};
+    // End "Keypad" section
+
+    // begin modifier mappings
+    modifier_map Shift  { Shift_L, Shift_R };
+    modifier_map Lock   { Caps_Lock };
+    modifier_map Control{ Control_L };
+    modifier_map Mod1	{ Alt_L };
+    modifier_map Mod2	{ Mode_switch };
+    modifier_map Mod3	{ Meta_L, Meta_R };
+};
