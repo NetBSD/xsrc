@@ -181,12 +181,14 @@ static Bool closeScreen (i, pScreen)
 {
     SetupScreen(pScreen);
     Bool    ret;
+    int mode = WSDISPLAYIO_MODE_EMUL;
 
     (void) OsSignal (SIGIO, SIG_IGN);
     alphaDisableCursor (pScreen);
     pScreen->CloseScreen = pPrivate->CloseScreen;
     ret = (*pScreen->CloseScreen) (i, pScreen);
     (void) (*pScreen->SaveScreen) (pScreen, SCREEN_SAVER_OFF);
+    ioctl(alphaFbs[pScreen->myNum].fd, WSDISPLAYIO_SMODE, &mode);
     xfree ((pointer) pPrivate);
     return ret;
 }
