@@ -19,6 +19,7 @@ XCOMM		NetBSD/amiga	client/server
 XCOMM		NetBSD/alpha	client/server
 XCOMM		NetBSD/arm32	client
 XCOMM		NetBSD/vax	client
+XCOMM		NetBSD/pc532	client
 XCOMM
 
 #ifndef OSName
@@ -251,6 +252,14 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #if defined(VaxArchitecture)
 # define BuildServer		NO		/* XXX */
+# define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+#endif
+
+#if defined(pc532Architecture)
+# define BuildServer		NO
 # define ServerOSDefines	-DDDXOSINIT
 # define ServerExtraDefines	GccGasOption
 # define PexDynamicModule	NO
