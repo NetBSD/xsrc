@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/doublechr.c,v 3.3 1998/06/04 16:43:57 hohndel Exp $
+ * $XFree86: xc/programs/xterm/doublechr.c,v 3.2.2.2 1998/10/20 20:51:45 hohndel Exp $
  */
 
 /************************************************************
@@ -34,13 +34,8 @@ authorization.
 
 ********************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <xtermcfg.h>
-#endif
-
-#include "ptyx.h"
-#include "data.h"
-#include "xterm.h"
+#include <xterm.h>
+#include <data.h>
 
 /*
  * The first column is all that matters for double-size characters (since the

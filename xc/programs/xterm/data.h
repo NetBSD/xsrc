@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: data.h /main/13 1996/11/24 17:35:40 rws $
- *	$XFree86: xc/programs/xterm/data.h,v 3.12 1998/06/04 16:43:57 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/data.h,v 3.3.2.3 1998/10/20 20:51:45 hohndel Exp $
  */
 /*
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
@@ -27,6 +27,8 @@
 
 #ifndef included_data_h
 #define included_data_h 1
+
+#include <ptyx.h>
 
 #if XtSpecificationRelease >= 6 && !defined(NO_XPOLL_H)
 #include <X11/Xpoll.h>
@@ -60,7 +62,6 @@ extern int Tbcnt;
 extern int Ttoggled;
 #endif
 
-extern XPoint VTbox[];
 extern Char *bptr;
 #ifdef ALLOWLOGGING
 extern char log_def_name[];

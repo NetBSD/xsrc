@@ -1,10 +1,10 @@
 /*
- * $XFree86: xc/programs/xterm/trace.h,v 3.1.2.3 1998/10/20 20:51:55 hohndel Exp $
+ * $XFree86: xc/programs/xterm/xcharmouse.h,v 1.1.2.1 1998/10/20 21:00:14 hohndel Exp $
  */
 
 /************************************************************
 
-Copyright 1997 by Thomas E. Dickey <dickey@clark.net>
+Copyright 1998 by Jason Bacon <acadix@execpc.com>
 
                         All Rights Reserved
 
@@ -27,24 +27,30 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
 
+
+#ifndef included_xcharmouse_h
+#define included_xcharmouse_h
+
 /*
- * Common/useful definitions for XTERM application
+ * Macros for dpmodes
+ * J. Bacon, acadix@execpc.com, June 1998
  */
-#ifndef	included_trace_h
-#define	included_trace_h
 
-#ifdef HAVE_CONFIG_H
-#include <xtermcfg.h>
-#endif
+/* DECSET arguments for turning on mouse reporting modes */
+#define SET_X10_MOUSE               9
+#define SET_VT200_MOUSE             1000
+#define SET_VT200_HIGHLIGHT_MOUSE   1001
+#define SET_BTN_EVENT_MOUSE         1002
+#define SET_ANY_EVENT_MOUSE         1003
 
-extern	void	Trace ( char *, ... )
-#ifdef GCC_PRINTF
-	__attribute__ ((format(printf,1,2)))
-#endif
-	;
-#define TRACE(p) Trace p;
+/* Values for screen->send_mouse_pos */
+enum {
+	MOUSE_OFF,
+	X10_MOUSE,
+	VT200_MOUSE,
+	VT200_HIGHLIGHT_MOUSE,
+	BTN_EVENT_MOUSE,
+	ANY_EVENT_MOUSE
+};
 
-extern	char	*trace_who;
-#define TRACE_CHILD int tracing_child = (trace_who = "child") != 0;
-
-#endif	/* included_trace_h */
+#endif /* included_xcharmouse_h */

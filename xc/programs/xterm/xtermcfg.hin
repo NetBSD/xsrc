@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/xtermcfg.hin,v 3.15 1998/06/04 16:44:05 hohndel Exp $
+ * $XFree86: xc/programs/xterm/xtermcfg.hin,v 3.1.2.6 1998/10/20 20:51:59 hohndel Exp $
  */
 
 /************************************************************
@@ -70,6 +70,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #undef size_t		/* AC_TYPE_SIZE_T */
 #undef time_t		/* AC_CHECK_TYPE(time_t, long) */
 
+#undef GCC_PRINTF
 #undef GCC_UNUSED
 
 #if USE_OK_BCOPY
@@ -78,11 +79,12 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #if USE_MY_MEMMOVE
 #define memmove(d,s,n) my_memmove(d,s,n)
+extern char * my_memmove(char * s1, char * s2, size_t n);
 #endif
 
 #if !HAVE_STRERROR
 #define strerror(n) my_strerror(n)
-extern char *my_strerror();
+extern char *my_strerror(int n);
 #endif
 
 #if !HAVE_X11_XPOLL_H

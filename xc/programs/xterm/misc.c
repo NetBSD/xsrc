@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: misc.c /main/112 1996/11/29 10:34:07 swick $
- *	$XFree86: xc/programs/xterm/misc.c,v 3.30 1998/06/04 16:43:59 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/misc.c,v 3.17.2.5 1998/10/20 20:51:48 hohndel Exp $
  */
 
 /*
@@ -26,11 +26,7 @@
  * SOFTWARE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <xtermcfg.h>
-#endif
-
-#include "ptyx.h"		/* X headers included here. */
+#include <xterm.h>
 
 #include <X11/Xos.h>
 #include <stdio.h>
@@ -47,12 +43,10 @@
 #include <X11/Xmu/SysUtil.h>
 #include <X11/Xmu/WinUtil.h>
 
-#include "xterm.h"
-
-#include "VTparse.h"
-#include "data.h"
-#include "error.h"
-#include "menu.h"
+#include <data.h>
+#include <error.h>
+#include <menu.h>
+#include <xcharmouse.h>
 
 #if XtSpecificationRelease < 6
 #ifndef X_GETTIMEOFDAY
@@ -61,8 +55,8 @@
 #endif
 
 #ifdef AMOEBA
-#include "amoeba.h"
-#include "module/proc.h"
+#include <amoeba.h>
+#include <module/proc.h>
 #endif
 
 #ifdef __EMX__
@@ -141,6 +135,12 @@ xevents(void)
 		else
 		if(OUR_EVENT(event, LeaveNotify))
 		  DoSpecialLeaveNotify (&event.xcrossing);
+		else if (screen->send_mouse_pos == ANY_EVENT_MOUSE
+		 && event.xany.type == MotionNotify
+		 && event.xcrossing.window == XtWindow(term)) {
+		    SendMousePosition((Widget)term, &event);
+		    continue;
+		}
 
 		if (!event.xany.send_event ||
 		    screen->allowSendEvents ||
@@ -592,7 +592,7 @@ StartLog(register TScreen *screen)
 	static char *log_default;
 #ifdef ALLOWLOGFILEEXEC
 	register char *cp;
-	register int i;
+	register int i = 0;
 #ifdef SYSV
 	/* SYSV has another pointer which should be part of the
 	** FILE structure but is actually a separate array.
@@ -607,13 +607,13 @@ StartLog(register TScreen *screen)
 		if(screen->logfile)
 			free(screen->logfile);
 		if(log_default == NULL) {
-			log_default = malloc(strlen(log_def_name) + 1);
+			log_default = (char *)malloc(strlen(log_def_name) + 1);
 			if (log_default == 0)
 				return;
 			strcpy(log_default, log_def_name);
 			mktemp(log_default);
 		}
-		if((screen->logfile = malloc(strlen(log_default) + 1)) == NULL)
+		if((screen->logfile = (char *)malloc(strlen(log_default) + 1)) == 0)
 			return;
 		strcpy(screen->logfile, log_default);
 	}
@@ -649,7 +649,7 @@ StartLog(register TScreen *screen)
 			if ((((cp = getenv("SHELL")) == NULL || *cp == 0)
 			  && ((pw = getpwuid(screen->uid)) == NULL
 			   || *(cp = pw->pw_shell) == 0))
-			 || (shell = malloc(strlen(cp) + 1)) == NULL)
+			 || (shell = (char *)malloc(strlen(cp) + 1)) == 0)
 				shell = "/bin/sh";
 			else
 				strcpy(shell, cp);
@@ -934,7 +934,7 @@ do_dcs(Char *dcsbuf, size_t dcslen)
 			reset_decudk();
 
 		while (*cp) {
-			char *str = malloc(strlen(cp) + 2);
+			char *str = (char *)malloc(strlen(cp) + 2);
 			int key = 0;
 			int len = 0;
 
@@ -1002,7 +1002,7 @@ Changename(register char *name)
 {
 #if OPT_ZICONBEEP	/* If warning should be given then give it */
     if ( zIconBeep && zIconBeep_flagged ) {
-	char *newname = malloc(strlen(name)+ 4 + 1);
+	char *newname = (char *)malloc(strlen(name)+ 4 + 1);
 	if (!newname) {
 	    fprintf(stderr, "malloc failed in Changename\n");
 	    return;

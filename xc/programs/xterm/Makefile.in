@@ -1,4 +1,4 @@
-## $XFree86: xc/programs/xterm/Makefile.in,v 3.13 1998/07/04 14:48:26 robin Exp $ ##
+## $XFree86: xc/programs/xterm/Makefile.in,v 3.1.2.5 1998/10/22 04:31:14 hohndel Exp $ ##
 
 #### Start of system configuration section. ####
 
@@ -46,12 +46,12 @@ EXTRASRC	= @EXTRASRCS@
 EXTRAOBJ	= @EXTRAOBJS@
 
           SRCS1 = button.c charproc.c charsets.c cursor.c \
-	  	  data.c doublechr.c input.c \
+	  	  data.c doublechr.c fontutils.c input.c \
 		  $(MAINSRC) menu.c misc.c print.c \
 		  screen.c scrollbar.c tabs.c util.c \
 		  TekPrsTbl.c Tekproc.c VTPrsTbl.c $(EXTRASRC)
           OBJS1 = button.o charproc.o charsets.o cursor.o \
-	  	  data.o doublechr.o input.o \
+	  	  data.o doublechr.o fontutils.o input.o \
 		  main.o menu.o misc.o print.o \
 		  screen.o scrollbar.o tabs.o util.o \
 		  VTPrsTbl.o $(EXTRAOBJ)
@@ -77,14 +77,16 @@ all:	$(PROGRAMS)
 
 main.o: version.h
 
+$(OBJS1) : ptyx.h
+
 xterm : $(OBJS1)
-	$(LINK) $(LDFLAGS) -o $@ $(OBJS1) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS) $(EXTRA_LOADFLAGS)
+	@ECHO_LD@$(LINK) $(LDFLAGS) -o $@ $(OBJS1) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS) $(EXTRA_LOADFLAGS)
 
 resize : $(OBJS2)
-	$(LINK) $(LDFLAGS) -o $@ $(OBJS2) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS)
+	@ECHO_LD@$(LINK) $(LDFLAGS) -o $@ $(OBJS2) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS)
 
 install: $(INSTALL_DIRS) xterm resize
-	$(INSTALL_PROGRAM) -s -m 4711 xterm  $(bindir)/xterm
+	$(INSTALL_PROGRAM) -s -m @XTERM_MODE@ xterm  $(bindir)/xterm
 	$(INSTALL_PROGRAM) -s -m  755 resize $(bindir)/resize
 	$(INSTALL_DATA) xterm.man  $(mandir)/xterm.$(manext)
 	$(INSTALL_DATA) resize.man $(mandir)/resize.$(manext)
