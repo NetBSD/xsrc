@@ -1,5 +1,5 @@
-/* $XConsortium: fontstruct.h,v 1.16 94/04/17 20:11:08 gildea Exp $ */
-/* $XFree86: xc/include/fonts/fontstruct.h,v 3.0 1996/04/15 11:14:54 dawes Exp $ */
+/* $XConsortium: fontstruct.h /main/17 1996/08/09 16:23:54 kaleb $ */
+/* $XFree86: xc/include/fonts/fontstruct.h,v 3.1 1996/12/23 05:58:39 dawes Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -110,34 +110,34 @@ typedef struct _Font {
     fsBitmapFormat format;
     int         (*get_glyphs) (
 #if NeedNestedPrototypes
-                FontPtr         /* font */,
-                unsigned long   /* count */,
-                unsigned char * /* chars */,
-                FontEncoding    /* encoding */,
-                unsigned long * /* count */,
-                CharInfoPtr *   /* glyphs */
+	FontPtr         /* font */,
+	unsigned long   /* count */,
+	unsigned char * /* chars */,
+	FontEncoding    /* encoding */,
+	unsigned long * /* count */,
+	CharInfoPtr *   /* glyphs */
 #endif
-                );
-    int         (*get_metrics) (
+);
+    int         (*get_metrics) ( 
 #if NeedNestedPrototypes
-                FontPtr         /* font */,
-                unsigned long   /* count */,
-                unsigned char * /* chars */,
-                FontEncoding    /* encoding */,
-                unsigned long * /* count */,
-                xCharInfo **    /* glyphs */
+	FontPtr         /* font */,
+	unsigned long   /* count */,
+	unsigned char * /* chars */,
+	FontEncoding    /* encoding */,
+	unsigned long * /* count */,
+	xCharInfo **    /* glyphs */
 #endif
-                );
-    void        (*unload_font) (
+);
+    void        (*unload_font) ( 
 #if NeedNestedPrototypes
-                FontPtr         /* font */
+	FontPtr         /* font */
 #endif
-                );
-    void        (*unload_glyphs) (
+);
+    void        (*unload_glyphs) ( 
 #if NeedNestedPrototypes
-                FontPtr         /* font */
+	FontPtr         /* font */
 #endif
-                );
+);
     FontPathElementPtr fpe;
     pointer     svrPrivate;
     pointer     fontPrivate;

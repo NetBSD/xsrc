@@ -1,5 +1,9 @@
-/* $XConsortium: exevents.c /main/51 1995/12/08 13:41:35 dpw $ */
-/* $XFree86: xc/programs/Xserver/Xi/exevents.c,v 3.3 1996/05/06 05:56:02 dawes Exp $ */
+/* $TOG: exevents.c /main/52 1997/04/14 08:30:09 barstow $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/Xi/exevents.c,v 3.3.4.1 1997/05/03 09:44:55 dawes Exp $ */
 /************************************************************
 
 Copyright (c) 1989  X Consortium

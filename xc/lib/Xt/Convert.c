@@ -1,5 +1,4 @@
-/* $XConsortium: Convert.c,v 1.74 94/04/17 20:13:48 kaleb Exp $ */
-/* $XFree86: xc/lib/Xt/Convert.c,v 3.0 1996/05/06 05:54:48 dawes Exp $ */
+/* $TOG: Convert.c /main/75 1997/05/15 17:28:31 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -33,6 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/Convert.c,v 3.0.4.1 1997/05/17 12:24:51 dawes Exp $ */
 
 /*
 
@@ -98,7 +98,7 @@ void _XtSetDefaultConverterTable(table)
     globalConverterTable = _XtGetProcessContext()->globalConverterTable;
 
     *table = (ConverterTable)
-	XtCalloc(CONVERTHASHSIZE, (unsigned)sizeof(ConverterPtr));
+	__XtCalloc(CONVERTHASHSIZE, (unsigned)sizeof(ConverterPtr));
     _XtAddDefaultConverters(*table);
 
     if (globalConverterTable) {
@@ -211,7 +211,7 @@ void _XtTableAddConverter(table, from_type, to_type, converter, convert_args,
 	XtFree((char *)p);
     }
 
-    p = (ConverterPtr) XtMalloc(sizeof(ConverterRec) +
+    p = (ConverterPtr) __XtMalloc(sizeof(ConverterRec) +
 				sizeof(XtConvertArgRec) * num_args);
     p->next	    = *pp;
     *pp = p;
@@ -268,7 +268,7 @@ void XtSetTypeConverter(from_type, to_type, converter, convert_args, num_args, c
 
     if (!process->globalConverterTable) {
 	process->globalConverterTable = (ConverterTable)
-	    XtCalloc(CONVERTHASHSIZE, (unsigned)sizeof(ConverterPtr));
+	    __XtCalloc(CONVERTHASHSIZE, (unsigned)sizeof(ConverterPtr));
     }
     _XtTableAddConverter(process->globalConverterTable, from, to,
 			 converter, convert_args,
@@ -343,7 +343,7 @@ void XtAddConverter(from_type, to_type, converter, convert_args, num_args)
 
     if (!process->globalConverterTable) {
 	process->globalConverterTable = (ConverterTable)
-	    XtCalloc(CONVERTHASHSIZE, (unsigned)sizeof(ConverterPtr));
+	    __XtCalloc(CONVERTHASHSIZE, (unsigned)sizeof(ConverterPtr));
     }
     _XtTableAddConverter(process->globalConverterTable, from, to,
 			 (XtTypeConverter)converter, convert_args, num_args,

@@ -1,5 +1,4 @@
-/* $XConsortium: IntrinsicI.h,v 1.59 94/10/10 18:57:48 kaleb Exp $ */
-/* $XFree86: xc/lib/Xt/IntrinsicI.h,v 3.1 1995/01/12 05:56:08 dawes Exp $ */
+/* $TOG: IntrinsicI.h /main/47 1997/05/15 17:30:09 kaleb $ */
 
 /***********************************************************
 
@@ -48,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/IntrinsicI.h,v 3.2.2.1 1997/05/17 12:24:55 dawes Exp $ */
 
 #ifndef _XtintrinsicI_h
 #define _XtintrinsicI_h
@@ -234,6 +234,46 @@ extern void _XtAddShellToHookObj(
     Widget      /* widget */
 #endif
 );
+
+/** GeoTattler stuff */
+
+#ifdef XT_GEO_TATTLER
+
+extern void _XtGeoTab ();
+extern void _XtGeoTrace (
+#if NeedVarargsPrototypes
+			    Widget widget, 
+			    ...
+#endif
+);
+
+#define CALLGEOTAT(f) f
+
+#else /* XT_GEO_TATTLER */
+
+#define CALLGEOTAT(f) 
+
+#endif /* XT_GEO_TATTLER */
+
+#ifndef XTTRACEMEMORY
+
+extern char* __XtMalloc (
+#if NeedFunctionPrototypes
+    unsigned	/* size */
+#endif
+);
+extern char* __XtCalloc (
+#if NeedFunctionPrototypes
+    unsigned	/* num */,
+    unsigned	/* size */
+#endif
+);
+
+#else
+
+#define __XtMalloc XtMalloc
+#define __XtCalloc XtCalloc
+#endif
 
 #endif /* _XtintrinsicI_h */
 /* DON'T ADD STUFF AFTER THIS #endif */

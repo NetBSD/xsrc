@@ -1,5 +1,5 @@
-/* $XConsortium: pexFont.c,v 5.7 94/04/17 20:36:07 hersh Exp $ */
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexFont.c,v 3.0 1995/07/07 15:36:00 dawes Exp $ */
+/* $XConsortium: pexFont.c /main/8 1996/12/02 10:19:08 lehors $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexFont.c,v 3.1 1996/12/23 06:26:27 dawes Exp $ */
 
 /***********************************************************
 
@@ -74,7 +74,11 @@ SOFTWARE.
 #endif
 #endif /* X_NOT_POSIX */
 #ifndef PATH_MAX
+#ifdef WIN32
+#define PATH_MAX 512
+#else
 #include <sys/param.h>
+#endif
 #ifndef PATH_MAX
 #ifdef MAXPATHLEN
 #define PATH_MAX MAXPATHLEN

@@ -1,5 +1,4 @@
-/* $XConsortium: Converters.c,v 1.101 95/06/08 23:20:39 gildea Exp $ */
-/* $XFree86: xc/lib/Xt/Converters.c,v 3.2 1996/03/10 11:52:27 dawes Exp $ */
+/* $TOG: Converters.c /main/102 1997/05/15 17:28:39 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -33,6 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/Converters.c,v 3.2.4.1 1997/05/17 12:24:52 dawes Exp $ */
 
 /*
 
@@ -1629,7 +1629,7 @@ Boolean XtCvtStringToCommandArgArray(dpy, args, num_args, fromVal, toVal,
             (String *)NULL, (Cardinal *)NULL);
 
     src = src_str = fromVal->addr;
-    dst = dst_str = XtMalloc((unsigned) strlen(src) + 1);
+    dst = dst_str = __XtMalloc((unsigned) strlen(src) + 1);
     tokens = 0;
 
     while (*src != '\0') {
@@ -1670,7 +1670,7 @@ Boolean XtCvtStringToCommandArgArray(dpy, args, num_args, fromVal, toVal,
 	    dst++;
     }
 
-    ptr = strarray = (String*) XtMalloc((Cardinal)(tokens+1) * sizeof(String));
+    ptr = strarray = (String*) __XtMalloc((Cardinal)(tokens+1) * sizeof(String));
     src = dst_str;
     while (--tokens >= 0) {
 	*ptr = src;

@@ -1,4 +1,4 @@
-/* $XConsortium: TMprint.c,v 1.14 94/04/17 20:14:55 kaleb Exp $ */
+/* $TOG: TMprint.c /main/15 1997/05/15 17:31:38 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -686,7 +686,7 @@ String _XtPrintXlations(w, xlations, accelWidget, includeRHS)
 #endif /* TRACE_TM */
     if (xlations == NULL) return NULL;
 
-    sb->current = sb->start = XtMalloc((Cardinal)1000);
+    sb->current = sb->start = __XtMalloc((Cardinal)1000);
     sb->max = 1000;
     maxPrints = 0;
     for (i = 0; i < xlations->numStateTrees; i++)
@@ -783,7 +783,7 @@ void _XtDisplayInstalledAccelerators(widget, event, params, num_params)
 	(bindData->simple.isComplex == False))
       return;
 
-    sb->current = sb->start = XtMalloc((Cardinal)1000);
+    sb->current = sb->start = __XtMalloc((Cardinal)1000);
     sb->start[0] = '\0';
     sb->max = 1000;
     maxPrints = 0;
@@ -829,7 +829,7 @@ String _XtPrintActions(actions, quarkTbl)
     TMStringBufRec	sbRec, *sb = &sbRec;
  
     sb->max = 1000;
-    sb->current = sb->start = XtMalloc((Cardinal)1000);
+    sb->current = sb->start = __XtMalloc((Cardinal)1000);
     PrintActions(sb, 
 		 actions,
 		 quarkTbl,
@@ -843,7 +843,7 @@ String _XtPrintState(stateTree, branchHead)
 {
     TMStringBufRec	sbRec, *sb = &sbRec;
 
-    sb->current = sb->start = XtMalloc((Cardinal)1000);
+    sb->current = sb->start = __XtMalloc((Cardinal)1000);
     sb->max = 1000;
     PrintState(sb, stateTree, branchHead,
 	       True, (Widget)NULL, (Display *)NULL);
@@ -863,7 +863,7 @@ String _XtPrintEventSeq(eventSeq, dpy)
     TMShortCard		i, j;
     Boolean		cycle = False;
 
-    sb->current = sb->start = XtMalloc((Cardinal)1000);
+    sb->current = sb->start = __XtMalloc((Cardinal)1000);
     sb->max = 1000;
     for (i = 0;
 	 i < MAXSEQS && eventSeq != NULL && !cycle;

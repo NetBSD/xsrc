@@ -1,4 +1,4 @@
-/* $XConsortium: Event.c /main/151 1995/12/08 18:21:53 converse $ */
+/* $TOG: Event.c /main/152 1997/05/15 17:29:12 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -290,14 +290,14 @@ AddEventHandler(widget, select_data, type, has_type_specifier, other, proc,
 
     if (!p) {		                /* New proc to add to list */
 	if (has_type_specifier) {
-	    p = (XtEventRec*) XtMalloc(sizeof(XtEventRec) + 
+	    p = (XtEventRec*) __XtMalloc(sizeof(XtEventRec) + 
 				       sizeof(XtEventRecExt));
 	    EXT_TYPE(p) = type;
 	    EXT_SELECT_DATA(p,0) = select_data;
 	    p->mask = 1;
 	    p->has_type_specifier = True;
 	} else {
-	    p = (XtEventRec*) XtMalloc(sizeof(XtEventRec));
+	    p = (XtEventRec*) __XtMalloc(sizeof(XtEventRec));
 	    p->mask = eventMask;
 	    p->has_type_specifier = False;
 	}
@@ -704,7 +704,7 @@ static void ExpandWWTable(tab)
 	tab->mask = (tab->mask << 1) + 1;
 	tab->rehash = tab->mask - 2;
     }
-    entries = tab->entries = (Widget *) XtCalloc(tab->mask+1, sizeof(Widget));
+    entries = tab->entries = (Widget *) __XtCalloc(tab->mask+1, sizeof(Widget));
     for (oldidx = 0; oldidx <= oldmask; oldidx++) {
 	if ((entry = oldentries[oldidx]) && entry != &WWfake) {
 	    newidx = WWHASH(tab, XtWindow(entry));
@@ -766,10 +766,10 @@ void _XtAllocWWTable(pd)
 {
     register WWTable tab;
 
-    tab = (WWTable) XtMalloc(sizeof(struct _WWTable));
+    tab = (WWTable) __XtMalloc(sizeof(struct _WWTable));
     tab->mask = 0x7f;
     tab->rehash = tab->mask - 2;
-    tab->entries = (Widget *) XtCalloc(tab->mask+1, sizeof(Widget));
+    tab->entries = (Widget *) __XtCalloc(tab->mask+1, sizeof(Widget));
     tab->occupied = 0;
     tab->fakes = 0;
     tab->pairs = NULL;
@@ -814,7 +814,7 @@ static Boolean CallEventHandlers(widget, event, mask)
 	    numprocs++;
     }
     if (numprocs > EHMAXSIZE) {
-	proc = (XtEventHandler *)XtMalloc(numprocs * (sizeof(XtEventHandler) +
+	proc = (XtEventHandler *)__XtMalloc(numprocs * (sizeof(XtEventHandler) +
 						      sizeof(XtPointer)));
 	closure = (XtPointer *)(proc + numprocs);
     } else {
@@ -1720,7 +1720,7 @@ void _XtSendFocusEvent(child, type)
 static XtEventDispatchProc* NewDispatcherList()
 {
     XtEventDispatchProc* l =
-	(XtEventDispatchProc*) XtCalloc((Cardinal) 128,
+	(XtEventDispatchProc*) __XtCalloc((Cardinal) 128,
 					(Cardinal)sizeof(XtEventDispatchProc));
     return l;
 }

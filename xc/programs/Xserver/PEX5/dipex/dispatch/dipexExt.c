@@ -1,5 +1,5 @@
 /* $XConsortium: dipexExt.c,v 5.11 94/04/17 20:36:04 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/dipexExt.c,v 3.3 1996/10/06 13:11:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/dipexExt.c,v 3.3.4.1 1997/05/22 14:00:27 dawes Exp $ */
 
 /***********************************************************
 
@@ -67,6 +67,9 @@ SOFTWARE.
 #undef _DIPEXEXT_
 #undef LOCAL_FLAG
 
+#ifdef DYNAMIC_MODULE
+#include "xf86Version.h"
+#endif
 
 unsigned long add_pad_of[] = {0, 3, 2, 1};
 
@@ -341,9 +344,7 @@ unsigned long server_version;
 {
 
   PexExtensionInitPtr = PexExtensionInit;
-#ifdef DEBUG
-  ErrorF("Init module PEX %p\n", PexExtensionInitPtr);
-#endif
+  ErrorF("\tPEX extension module for XFree86%s\n", XF86_VERSION);
   return 1;
 }
 #endif /* DYNAMIC_MODULE */

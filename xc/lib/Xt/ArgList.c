@@ -1,4 +1,4 @@
-/* $XConsortium: ArgList.c,v 1.21 94/04/17 20:13:37 gildea Exp $ */
+/* $TOG: ArgList.c /main/17 1997/05/15 17:28:09 kaleb $ */
 
 /***********************************************************
 
@@ -63,7 +63,7 @@ ArgList XtMergeArgLists(args1, num_args1, args2, num_args2)
 {
     ArgList result, args;
 
-    result = (ArgList) XtCalloc((unsigned) num_args1 + num_args2,
+    result = (ArgList) __XtCalloc((unsigned) num_args1 + num_args2,
 				(unsigned) sizeof(Arg));
 
     for (args = result; num_args1 != 0; num_args1--)

@@ -269,6 +269,8 @@ int  *rcodeP;
     switch (dictP[N].value.type) {
        case OBJ_ARRAY:
          valueP = dictP[N].value.data.arrayP;
+	 /* Just double check valueP. H.J. */
+	 if (valueP == NULL) break;
          if (strcmp(infoName,"FontMatrix") == 0) {
            /* 6 elments, return them as floats      */
            for (i=0;i<6;i++) {

@@ -1,5 +1,5 @@
-/* $XConsortium: fontdir.c,v 1.23 95/02/21 14:25:17 mor Exp $ */
-/* $XFree86: xc/lib/font/fontfile/fontdir.c,v 3.6 1996/02/09 08:19:38 dawes Exp $ */
+/* $XConsortium: fontdir.c /main/24 1996/09/28 16:49:04 rws $ */
+/* $XFree86: xc/lib/font/fontfile/fontdir.c,v 3.7 1996/12/23 06:02:21 dawes Exp $ */
 
 /*
 
@@ -732,12 +732,7 @@ FontFileAddFontFile (dir, fontName, fileName)
 	    extra->defaults = vals;
 	else
 	{
-	    /* XXX fix interfaces */
-	    struct resolution {
-		CARD16	x B16;
-		CARD16	y B16;
-		CARD16	point_size B16;
-	    } *resolution, *GetClientResolutions();
+	    FontResolutionPtr resolution;
 	    int num;
 
 	    extra->defaults.point_matrix[0] =
@@ -753,8 +748,8 @@ FontFileAddFontFile (dir, fontName, fileName)
 	        resolution = GetClientResolutions (&num);
 	        if (resolution && num > 0)
 	        {
-	    	    extra->defaults.x = resolution->x;
-	    	    extra->defaults.y = resolution->y;
+	    	    extra->defaults.x = resolution->x_resolution;
+	    	    extra->defaults.y = resolution->y_resolution;
 	        }
 	        else
 	        {

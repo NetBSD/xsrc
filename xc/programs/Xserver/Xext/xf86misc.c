@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.18 1996/08/21 08:38:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.21.2.1 1997/05/03 09:44:50 dawes Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -17,6 +17,7 @@
 #include "inputstr.h"
 #include "servermd.h"
 #define _XF86MISC_SERVER_
+#define _XF86MISC_SAVER_COMPAT_
 #include "xf86mscstr.h"
 #include "Xfuncproto.h"
 #include "xf86.h"
@@ -27,7 +28,11 @@
 #include "../os/osdep.h"
 #include <X11/Xauth.h>
 #ifndef ESIX
+#ifndef Lynx
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif
 #else
 #include <lan/socket.h>
 #endif
@@ -46,7 +51,6 @@ static void XF86MiscResetProc(
 #endif
 );
 
-static DISPATCH_PROC(LocalClient);
 static DISPATCH_PROC(ProcXF86MiscDispatch);
 static DISPATCH_PROC(ProcXF86MiscGetKbdSettings);
 static DISPATCH_PROC(ProcXF86MiscGetMouseSettings);
@@ -116,6 +120,10 @@ ProcXF86MiscQueryVersion(client)
     return (client->noClientException);
 }
 
+/*
+ * This will go away, but remains for now for compatibility with older
+ * clients.
+ */
 static int
 ProcXF86MiscSetSaver(client)
     register ClientPtr client;
@@ -135,12 +143,13 @@ ProcXF86MiscSetSaver(client)
     if (stuff->offTime < 0)
 	return BadValue;
 
-    vptr->suspendTime = stuff->suspendTime * 1000;
-    vptr->offTime = stuff->offTime * 1000;
-
     return (client->noClientException);
 }
 
+/*
+ * This will go away, but remains for now for compatibility with older
+ * clients.
+ */
 static int
 ProcXF86MiscGetSaver(client)
     register ClientPtr client;
@@ -159,8 +168,8 @@ ProcXF86MiscGetSaver(client)
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
-    rep.suspendTime = vptr->suspendTime / 1000;
-    rep.offTime = vptr->offTime / 1000;
+    rep.suspendTime = 0;
+    rep.offTime = 0;
     
     if (client->swapped) {
     	swaps(&rep.sequenceNumber, n);
@@ -355,16 +364,13 @@ ProcXF86MiscSetMouseSettings(client)
             flags = stuff->flags;
 	}
 
-    if (stuff->chordmiddle) {
-        if (stuff->emulate3buttons)
+    if (stuff->chordmiddle)
+        if (stuff->emulate3buttons
+		|| !(stuff->mousetype == MTYPE_MICROSOFT
+		     || stuff->mousetype == MTYPE_LOGIMAN) )
 	    return miscErrorBase + XF86MiscBadMouseCombo;
-        if ( !(stuff->mousetype == MTYPE_MICROSOFT
-                 || stuff->mousetype == MTYPE_LOGIMAN) )
-	    return miscErrorBase + XF86MiscBadMouseCombo;
-	
-        xf86Info.mouseDev->chordMiddle = stuff->chordmiddle!=0;
-    }
 
+    xf86Info.mouseDev->chordMiddle = stuff->chordmiddle!=0;
     xf86Info.mouseDev->emulate3Buttons = stuff->emulate3buttons!=0;
     xf86Info.mouseDev->emulate3Timeout = stuff->emulate3timeout;
 
@@ -422,7 +428,7 @@ ProcXF86MiscSetKbdSettings(client)
 	return BadValue;
     if (stuff->delay < 0)
 	return BadValue;
-    if (stuff->kbdtype < KTYPE_84KEY || stuff->kbdtype > KTYPE_XQUEUE)
+    if (stuff->kbdtype < KTYPE_UNKNOWN || stuff->kbdtype > KTYPE_XQUEUE)
 	return miscErrorBase + XF86MiscBadKbdType;
 
     if (xf86Info.kbdRate!=stuff->rate || xf86Info.kbdDelay!=stuff->delay) {
@@ -449,28 +455,6 @@ ProcXF86MiscSetKbdSettings(client)
     if (xf86Verbose)
 	ErrorF("SetKbdSettings - Succeeded\n");
     return (client->noClientException);
-}
-
-/* 
- * lifted from xc/programs/Xserver/os/access.c.
- */
-static int
-LocalClient(client)
-    ClientPtr client;
-{
-    int                 alen, notused;
-    struct sockaddr     *from = NULL;
-
-    if (!_XSERVTransGetPeerAddr (((OsCommPtr)client->osPrivate)->trans_conn,
-        &notused, &alen, (Xtransaddr*)&from)) {
-        if (alen == 0 || 
-            from->sa_family == AF_UNSPEC || from->sa_family == AF_UNIX) {
-            xfree ((char *) from);
-            return TRUE;
-        }
-        xfree ((char *) from);
-    }
-    return FALSE;
 }
 
 static int

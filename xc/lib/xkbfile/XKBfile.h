@@ -1,7 +1,7 @@
 #ifndef _XKBFILE_H_
 #define	_XKBFILE_H_ 1
 
-/* $XConsortium: XKBfile.h /main/5 1996/03/01 14:30:21 kaleb $ */
+/* $XConsortium: XKBfile.h /main/6 1996/08/31 12:44:58 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

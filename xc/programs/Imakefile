@@ -1,78 +1,71 @@
-XCOMM $XConsortium: Imakefile /main/71 1995/12/06 13:54:19 matt $
-XCOMM $XFree86: xc/programs/Imakefile,v 3.14 1996/08/13 11:27:15 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/83 1996/12/18 16:29:30 lehors $
+XCOMM $XFree86: xc/programs/Imakefile,v 3.15.2.1 1997/05/03 09:44:32 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
 
-#if !defined(Win32Architecture)
-
-#if HasXServer
-XINIDIR = xinit
-#endif
 #if BuildServer
-RGBDIR = rgb
-XSDIR = Xserver
+       RGBSRCDIR = rgb
+        XSSRCDIR = Xserver
+#endif
+#ifndef Win32Architecture
+#if HasXServer
+     XINITSRCDIR = xinit
 #endif
 #if BuildFontServer
-XFSDIR = xfs
+       XFSSRCDIR = xfs
 #endif
 #if BuildXKBlib
-XKBDIRS = setxkbmap xkbcomp xkbevd xkbprint xkbutils
+      XKBSRCDIRS = xkbcomp xkbevd xkbprint xkbutils
 #endif
-
 #if BuildScreenSaverExt
-SCRNSAVDIR = beforelight
+SCREENSAVESRCDIR = beforelight
 #endif
-
 #if BuildXF86VidModeExt
-XVIDTUNE = xvidtune
+  XVIDTUNESRCDIR = xvidtune
 #endif
-
 #if BuildXF86DGA
-XF86DGA = xf86dga
+   XF86DGASRCDIR = xf86dga
 #endif
-
+#if BuildXAServer
+       XASSRCDIR = Xaserver
+#endif
 #if BuildLBX
-LBXPROXY = lbxproxy
+  LBXPROXYSRCDIR = lbxproxy
+#endif
+  PROXYMGRSRCDIR = proxymngr
+    RSTARTSRCDIR = rstart
+   SMPROXYSRCDIR = smproxy
+       TWMSRCDIR = twm
+  XCONSOLESRCDIR = xconsole
+       XDMSRCDIR = xdm
+XFINDPROXYSRCDIR = xfindproxy
+      XFWPSRCDIR = xfwp
+     XHOSTSRCDIR = xhost
+       XMHSRCDIR = xmh
+       XRXSRCDIR = xrx
+       XSMSRCDIR = xsm
+     XTERMSRCDIR = xterm
+      SCRIPTSDIR = scripts
 #endif
 
 #if BuildServersOnly
-SUBDIRS = $(XSDIR)
+SUBDIRS = $(XSSRCDIR)
 #else
-#ifndef AmoebaArchitecture
 SUBDIRS = \
-	appres bdftopcf $(SCRNSAVDIR) \
-	bitmap editres fsinfo fslsfonts fstobdf iceauth \
-	mkfontdir oclock $(RGBDIR) rstart smproxy \
-	twm x11perf xauth xclipboard xclock \
-	xcmsdb xconsole xdm xdpyinfo $(XF86DGA) xfd $(XFSDIR) xhost xieperf \
-	$(XINIDIR) $(XKBDIRS) xkill xlogo xlsatoms xlsclients xlsfonts \
-	xmag xmh xmodmap xprop xrdb xrefresh xset \
-	xsetmode xsetpointer xsetroot xsm xstdcmap xterm \
-	$(XVIDTUNE) $(LBXPROXY) \
-	xwd xwininfo xwud $(XSDIR) scripts
-
-#else /* AmoebaArchitecture */
-SUBDIRS = \
-	appres bdftopcf $(SCRNSAVDIR) bitmap editres iceauth \
-	mkfontdir oclock $(RGBDIR) rstart smproxy \
-	twm $(XVIDTUNE) x11perf xauth xclipboard xclock \
-	xcmsdb xconsole xdpyinfo xfd xhost \
-	xieperf $(XINIDIR) xkill xlogo xlsatoms xlsclients xlsfonts \
-	xmag xmodmap xprop xrdb xrefresh xset \
-	xsetmode xsetpointer xsetroot xstdcmap xterm \
-	xwd xwininfo xwud $(XSDIR) scripts
-#endif
-#endif /* BuildServersOnly */
-
-#else /* Win32Architecture */
-SUBDIRS = \
-	appres bdftopcf bitmap editres fsinfo fslsfonts fstobdf iceauth \
-	mkfontdir oclock $(XVIDTUNE) x11perf xauth xclipboard xclock \
-	xcmsdb xdpyinfo xfd $(XFSDIR) \
-	xieperf xkill xlogo xlsatoms xlsclients xlsfonts \
-	xmag xmodmap xprop xrdb xrefresh xset xsetroot xstdcmap \
-	xwd xwininfo xwud
-
+	appres bdftopcf bitmap $(SCREENSAVESRCDIR) editres fsinfo \
+	fslsfonts fstobdf \
+	iceauth mkfontdir oclock setxkbmap $(PROXYMGRSRCDIR) \
+	$(RGBSRCDIR) $(RSTARTSRCDIR) $(SMPROXYSRCDIR) $(TWMSRCDIR) x11perf \
+	xauth xclipboard xclock xcmsdb $(XCONSOLESRCDIR) $(XDMSRCDIR) \
+	xdpyinfo $(XF86DGASRCDIR) xfd $(XFSSRCDIR) $(XFINDPROXYSRCDIR) \
+	$(XFWPSRCDIR) \
+	$(XHOSTSRCDIR) xieperf $(XINITSRCDIR) $(XKBSRCDIRS) xkill xlogo \
+	xlsatoms xlsclients xlsfonts xmag $(XMHSRCDIR) xmodmap xprop \
+	xrdb xrefresh $(XRXSRCDIR) xset xsetroot $(XSMSRCDIR) xstdcmap \
+	xsetmode xsetpointer \
+	$(XTERMSRCDIR) $(XVIDTUNESRCDIR) xwd xwininfo xwud \
+	$(XSSRCDIR) $(XASSRCDIR) \
+	$(LBXPROXYSRCDIR) $(SCRIPTSDIR)
 #endif
 
 MakeSubdirs($(SUBDIRS))

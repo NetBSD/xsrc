@@ -1,5 +1,5 @@
-/* $XConsortium: fslibos.h,v 1.15 94/07/20 10:37:01 mor Exp $ */
-/* $XFree86: xc/lib/font/fc/fslibos.h,v 3.2 1996/10/03 08:29:41 dawes Exp $ */
+/* $XConsortium: fslibos.h /main/16 1996/11/13 14:45:15 lehors $ */
+/* $XFree86: xc/lib/font/fc/fslibos.h,v 3.3 1996/12/23 06:02:08 dawes Exp $ */
 /*
  * Copyright 1990 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -204,13 +204,7 @@ typedef FdSet FdSetPtr;
 
 #else /* not WIN32 */
 
-#define BOOL wBOOL
-#undef Status
-#define Status wStatus
-#include <winsock.h>
-#undef Status
-#define Status int
-#undef BOOL
+#include <X11/Xwinsock.h>
 #include <X11/Xw32defs.h>
 
 typedef fd_set FdSet;

@@ -1,6 +1,6 @@
 XCOMM
-XCOMM $XConsortium: Imakefile,v 5.13 94/12/01 16:47:39 kaleb Exp $
-XCOMM $XFree86: xc/programs/Xserver/PEX5/dipex/swap/Imakefile,v 3.2 1996/10/03 08:30:33 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/13 1996/09/28 16:55:03 rws $
+XCOMM $XFree86: xc/programs/Xserver/PEX5/dipex/swap/Imakefile,v 3.3 1996/12/23 06:26:31 dawes Exp $
 XCOMM
 XCOMM 
 XCOMM Copyright 1989, 1990, 1991 by Sun Microsystems, Inc. and the X Consortium
@@ -42,7 +42,7 @@ XCOMM PERFORMANCE OF THIS SOFTWARE.
 		../objects/llib-lobj.ln
 
    PEXSRVINC = ../../include
-    INCLUDES = -I. -I$(PEXSRVINC) -I$(INCLUDESRC) -I$(SERVERSRC)/include
+    INCLUDES = -I. -I$(PEXSRVINC) -I$(XINCLUDESRC) -I$(SERVERSRC)/include
 
 
 SRCS =  convUtil.c cOCprim.c uOCprim.c floatconv.c check.c \

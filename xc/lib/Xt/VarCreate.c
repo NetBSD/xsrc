@@ -1,4 +1,4 @@
-/* $XConsortium: VarCreate.c,v 1.32 95/06/07 19:12:49 converse Exp $ */
+/* $TOG: VarCreate.c /main/33 1997/05/15 17:32:05 kaleb $ */
 
 /*
 
@@ -358,7 +358,7 @@ Widget _XtVaOpenApplication(app_context_return, application_class, options,
     dpy = _XtAppInit(&app_con, (String)application_class, options, num_options,
 		     argc_in_out, &argv_in_out, fallback_resources);
 
-    typed_args = (XtTypedArgList) XtMalloc((unsigned) sizeof(XtTypedArg));
+    typed_args = (XtTypedArgList) __XtMalloc((unsigned) sizeof(XtTypedArg));
     attr = va_arg (var_args, String);
     for(; attr != NULL; attr = va_arg (var_args, String)) {
         if (strcmp(attr, XtVaTypedArg) == 0) {

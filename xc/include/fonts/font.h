@@ -1,5 +1,5 @@
-/* $XConsortium: font.h,v 1.13 94/04/17 20:11:07 gildea Exp $ */
-/* $XFree86: xc/include/fonts/font.h,v 3.0 1996/04/15 11:14:53 dawes Exp $ */
+/* $XConsortium: font.h /main/14 1996/09/28 16:32:33 rws $ */
+/* $XFree86: xc/include/fonts/font.h,v 3.2 1997/01/14 22:13:06 dawes Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -159,6 +159,11 @@ extern void		    CacheFontPattern (
     char * /* pattern */,
     int /* patlen */,
     FontPtr /* pFont */
+#endif
+);
+extern FontResolutionPtr GetClientResolutions(
+#if NeedFunctionPrototypes
+    int * /* num */
 #endif
 );
 

@@ -1,5 +1,5 @@
 /*
- *	$XConsortium: Xproto.h,v 1.91 95/06/03 00:10:10 gildea Exp $
+ *	$XConsortium: Xproto.h /main/21 1996/03/20 15:27:51 mor $
  */
 
 /* Definitions for the X window system used by server and c bindings */
@@ -410,8 +410,6 @@ typedef CARD8 KEYCODE;
  * XRep:
  *    meant to be 32 byte quantity 
  *****************/
-
-#ifdef NEED_REPLIES
 
 /* GenericReply is the common format of all replies.  The "data" items
    are specific to each individual reply type. */
@@ -967,8 +965,6 @@ typedef struct {
     CARD32 pad7 B32;
     } xListHostsReply;
 
-#endif /* NEED_REPLIES */
-
 
 
 
@@ -996,10 +992,6 @@ typedef struct {
  * xEvent
  *    All events are 32 bytes
  *****************************************************************/
-
-#ifdef NEED_EVENTS                /* this hack is necessary because
-				     the symbol table in the library
-				     is too big to link */
 
 typedef struct _xEvent {
     union {
@@ -1230,16 +1222,12 @@ typedef struct {
     BYTE map[31];
     } xKeymapEvent;
 
-#endif /* NEED_EVENTS */
-
 #define XEventSize (sizeof(xEvent))
 
 /* XReply is the union of all the replies above whose "fixed part"
 fits in 32 bytes.  It does NOT include GetWindowAttributesReply,
 QueryFontReply, QueryKeymapReply, or GetKeyboardControlReply 
 ListFontsWithInfoReply */
-
-#ifdef NEED_REPLIES
 
 typedef union {
     xGenericReply generic;
@@ -1279,12 +1267,8 @@ typedef union {
     xGetScreenSaverReply screenSaver;
     xListHostsReply hosts;
     xError error;
-#ifdef NEED_EVENTS
     xEvent event;
-#endif /* NEED_EVENTS */
 } xReply;
-
-#endif /* NEED_REPLIES */
 
 
 
@@ -1430,8 +1414,6 @@ typedef struct {
     Time time B32;
     } xConvertSelectionReq;
 
-#ifdef NEED_EVENTS
-
 typedef struct {
     CARD8 reqType;
     BOOL propagate;
@@ -1445,8 +1427,6 @@ typedef struct {
     xEvent event;
 #endif /* WORD64 */
 } xSendEventReq;
-
-#endif /* NEED_EVENTS */
 
 typedef struct {
     CARD8 reqType;

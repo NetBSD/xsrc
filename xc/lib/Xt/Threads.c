@@ -1,4 +1,4 @@
-/* $XConsortium: Threads.c,v 1.16 95/06/06 21:00:38 kaleb Exp $ */
+/* $TOG: Threads.c /main/18 1997/05/15 17:31:57 kaleb $ */
 
 /************************************************************
 Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
@@ -59,11 +59,13 @@ in this Software without prior written authorization from the X Consortium.
 
 #ifdef XTHREADS
 
-#define xmalloc XtMalloc
+#define xmalloc __XtMalloc
 #define xfree XtFree
 #include <X11/Xthreads.h>
 
+#ifndef NDEBUG
 #define NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 
@@ -399,7 +401,7 @@ InitAppLock(app)
     app_lock->stack.size = STACK_INCR;
     app_lock->stack.sp = -1;
     app_lock->stack.st = 
-	(struct _Tstack *)XtMalloc(sizeof(struct _Tstack)*STACK_INCR);
+	(struct _Tstack *)__XtMalloc(sizeof(struct _Tstack)*STACK_INCR);
     for (ii = 0; ii < STACK_INCR; ii++) {
 	app_lock->stack.st[ii].c = xcondition_malloc();
 	xcondition_init(app_lock->stack.st[ii].c);

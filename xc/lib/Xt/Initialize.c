@@ -1,5 +1,4 @@
-/* $XConsortium: Initialize.c /main/200 1996/02/28 12:16:42 kaleb $ */
-/* $XFree86: xc/lib/Xt/Initialize.c,v 3.9 1996/05/13 06:37:25 dawes Exp $ */
+/* $TOG: Initialize.c /main/210 1997/05/15 17:29:50 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -33,6 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/Initialize.c,v 3.11.2.1 1997/05/17 12:24:54 dawes Exp $ */
 
 /*
 
@@ -67,13 +67,15 @@ in this Software without prior written authorization from the X Consortium.
 #include "StringDefs.h"
 #include "CoreP.h"
 #include "ShellP.h"
-#ifndef WIN32
-#include <pwd.h>
-#endif
 #include <stdio.h>
 #include <X11/Xlocale.h>
 #ifdef XTHREADS
 #include <X11/Xthreads.h>
+#endif
+#ifndef WIN32
+#define X_INCLUDE_PWD_H
+#define XOS_USE_XT_LOCKING
+#include <X11/Xos_r.h>
 #endif
 
 #ifdef __STDC__
@@ -234,52 +236,16 @@ String _XtGetUserName(dest, len)
     } else
 	*dest = '\0';
 #else
-#ifdef X_NOT_POSIX
-#ifndef i386
-# ifndef SYSV
-    extern struct passwd *getpwuid(), *getpwnam();
-# endif
-#endif
-#endif
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API)
-#ifdef sun
-#ifdef _POSIX_THREAD_SAFE_FUNCTIONS	/* Sun lies in Solaris 2.5 */
-#undef _POSIX_THREAD_SAFE_FUNCTIONS
-#endif
-#endif
-    struct passwd pws;
-    char pwbuf[LINE_MAX];
-#define PwName pws.pw_name
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-/* SVR4 threads, AIX 4.1.4 and earlier and OSF/1 3.2 and earlier pthreads */
-#define Getpwuid(u) getpwuid_r((u),&pws,pwbuf,sizeof pwbuf)
-#ifndef SVR4
-#define CallFailed -1
-    int pw;
-#else /* SVR4 */
-#define CallFailed NULL
+    _Xgetpwparams pwparams;
     struct passwd *pw;
-#endif /* SVR4 */
-#else /* _POSIX_THREAD_SAFE_FUNCTIONS */
-/* Digital UNIX 4.0, but not (beta) T4.0-1 */
-#define Getpwuid(u) getpwuid_r((u),&pws,pwbuf,sizeof pwbuf,&pwp)
-#define CallFailed -1
-    int pw;
-    struct passwd* pwp;
-#endif /* _POSIX_THREAD_SAFE_FUNCTIONS */
-#else /* XTHREADS && XUSE_MTSAFE_API */
-#define Getpwuid(u) getpwuid((u))
-#define PwName pw->pw_name
-#define CallFailed NULL
-    struct passwd *pw;
-#endif /* XTHREADS && XUSE_MTSAFE_API */
     char* ptr;
+
     if ((ptr = getenv("USER"))) {
 	(void) strncpy (dest, ptr, len);
 	dest[len-1] = '\0';
     } else {
-	if ((pw = Getpwuid(getuid())) != CallFailed)
-	    (void) strcpy (dest, PwName);
+	if ((pw = _XGetpwuid(getuid(),pwparams)) != NULL)
+	    (void) strcpy (dest, pw->pw_name);
 	else
 	    *dest = '\0';
     }
@@ -305,45 +271,8 @@ static String GetRootDirName(dest, len)
     } else
 	*dest = '\0';
 #else
-#ifdef X_NOT_POSIX
-#ifndef i386
-# ifndef SYSV
-     extern struct passwd *getpwuid(), *getpwnam();
-# endif
-#endif
-#endif
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API)
-#ifdef sun
-#ifdef _POSIX_THREAD_SAFE_FUNCTIONS     /* Sun lies in Solaris 2.5 */
-#undef _POSIX_THREAD_SAFE_FUNCTIONS
-#endif
-#endif
-    struct passwd pws;
-    char pwbuf[LINE_MAX];
-#define PwDir pws.pw_dir
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-/* SVR4 threads, AIX 4.1.4 and earlier and OSF/1 3.2 and earlier pthreads */
-#define Getpwnam(u) getpwnam_r((u),&pws,pwbuf,sizeof pwbuf)
-#ifndef SVR4
-#define CallFailed -1
-    int pw;
-#else /* SVR4 */
-#define CallFailed NULL
+    _Xgetpwparams pwparams;
     struct passwd *pw;
-#endif /* SVR4 */
-#else /* _POSIX_THREAD_SAFE_FUNCTIONS */
-/* Digital UNIX 4.0, but not (beta) T4.0-1 */
-#define Getpwnam(u) getpwnam_r((u),&pws,pwbuf,sizeof pwbuf,&pwp)
-#define CallFailed -1
-    int pw;
-    struct passwd* pwp;
-#endif /* _POSIX_THREAD_SAFE_FUNCTIONS */
-#else /* XTHREADS && XUSE_MTSAFE_API */
-#define Getpwnam(u) getpwnam((u))
-#define CallFailed NULL
-#define PwDir pw->pw_dir
-    struct passwd *pw;
-#endif /* XTHREADS && XUSE_MTSAFE_API */
     static char *ptr;
 
     if ((ptr = getenv("HOME"))) {
@@ -351,11 +280,11 @@ static String GetRootDirName(dest, len)
 	dest[len-1] = '\0';
     } else {
 	if (ptr = getenv("USER"))
-	    pw = Getpwnam(ptr);
+	    pw = _XGetpwnam(ptr,pwparams);
 	else
- 	    pw = Getpwuid(getuid());
-	if (pw != CallFailed)
-	    (void) strcpy (dest, PwDir);
+ 	    pw = _XGetpwuid(getuid(),pwparams);
+	if (pw != NULL)
+	    (void) strcpy (dest, pw->pw_dir);
 	else
 	    *dest = '\0';
     }
@@ -407,15 +336,15 @@ static void CombineUserDefaults(dpy, pdb)
     Display *dpy;
     XrmDatabase *pdb;
 {
+    char *slashDotXdefaults = "/.Xdefaults";
     char *dpy_defaults = XResourceManagerString(dpy);
-    static char slashDotXdefaults[] = "/.Xdefaults";
 
     if (dpy_defaults) {
 	XrmCombineDatabase(XrmGetStringDatabase(dpy_defaults), pdb, False);
     } else {
 	char filename[PATH_MAX];
 	(void) GetRootDirName(filename, 
-			PATH_MAX - sizeof slashDotXdefaults - 1);
+			PATH_MAX - strlen (slashDotXdefaults) - 1);
 	(void) strcat(filename, slashDotXdefaults);
 	(void)XrmCombineFileDatabase(filename, pdb, False);
     }
@@ -554,10 +483,10 @@ XrmDatabase XtScreenDatabase(screen)
 
 	if (!(filename = getenv("XENVIRONMENT"))) {
 	    int len;
-	    static char slashDotXdefaultsDash[] = "/.Xdefaults-";
+	    char *slashDotXdefaultsDash = "/.Xdefaults-";
 
 	    (void) GetRootDirName(filename = filenamebuf, 
-			PATH_MAX - sizeof slashDotXdefaultsDash - 1);
+			PATH_MAX - strlen (slashDotXdefaultsDash) - 1);
 	    (void) strcat(filename, slashDotXdefaultsDash);
 	    len = strlen(filename);
 	    GetHostname (filename+len, PATH_MAX-len);
@@ -635,7 +564,7 @@ static void _MergeOptionTables(src1, num_src1, src2, num_src2, dst, num_dst)
     enum {Check, NotSorted, IsSorted} sort_order = Check;
 
     *dst = table = (XrmOptionDescRec*)
-	XtMalloc( sizeof(XrmOptionDescRec) * (num_src1 + num_src2) );
+	__XtMalloc( sizeof(XrmOptionDescRec) * (num_src1 + num_src2) );
 
     (void) memmove(table, src1, sizeof(XrmOptionDescRec) * num_src1 );
     if (num_src2 == 0) {
@@ -744,7 +673,7 @@ XrmDatabase _XtPreparseCommandLine(urlist, num_urs, argc, argv, applName,
     String *targv;
     int targc = argc;
 
-    targv = (String *) XtMalloc(sizeof(char *) * argc);
+    targv = (String *) __XtMalloc(sizeof(char *) * argc);
     (void) memmove(targv, argv, sizeof(char *) * argc);
     _MergeOptionTables(opTable, XtNumber(opTable), urlist, num_urs,
 		       &options, &num_options);
@@ -832,7 +761,7 @@ static void ConnectionWatch (dpy, client_data, fd, opening, watch_data)
     XtAppContext app = XtDisplayToApplicationContext(dpy);
 
     if (opening) {
-	iptr = (XtInputId *) XtMalloc(sizeof(XtInputId));
+	iptr = (XtInputId *) __XtMalloc(sizeof(XtInputId));
 	*iptr = XtAppAddInput(app, fd, (XtPointer) XtInputReadMask,
 			      ProcessInternalConnection, client_data);
 	*watch_data = (XPointer) iptr;

@@ -1,5 +1,4 @@
-/* $XConsortium: Error.c,v 1.38 94/04/17 20:13:59 kaleb Exp $ */
-/* $XFree86: xc/lib/Xt/Error.c,v 3.1 1996/08/26 14:43:04 dawes Exp $ */
+/* $TOG: Error.c /main/39 1997/05/30 11:41:07 root $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -33,6 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/Error.c,v 3.3.2.2 1997/05/31 13:34:31 dawes Exp $ */
 
 /*
 
@@ -63,7 +63,6 @@ in this Software without prior written authorization from the X Consortium.
 
 #include "IntrinsicI.h"
 #include <stdio.h>
-#include "snprintf.h"
 
 /* The error handlers in the application context aren't used since we can't
    come up with a uniform way of using them.  If you can, define
@@ -231,29 +230,109 @@ static void InitErrorHandling (db)
     XrmMergeDatabases(errordb, db);
 }
 
-void _XtDefaultErrorMsg (name,type,class,defaultp,params,num_params)
+static void DefaultMsg (name,type,class,defaultp,params,num_params,error,fn)
     String name,type,class,defaultp;
     String* params;
     Cardinal* num_params;
+    Bool error;
+    void (*fn)(String);
 {
-    char buffer[1000], message[1000];
-    XtGetErrorDatabaseText(name,type,class,defaultp, buffer, 1000);
+#define BIGBUF 1024
+#ifdef notyet /* older versions don't, might want to wait until more do */
+#if defined(__linux__)  || defined(CSRG_BASED) /* everyone else needs to get with the program */
+#define USE_SNPRINTF
+#endif
+#endif
+    char buffer[BIGBUF];
+    char* message;
+    XtGetErrorDatabaseText(name,type,class,defaultp, buffer, BIGBUF);
 /*need better solution here, perhaps use lower level printf primitives? */
     if (params == NULL || num_params == NULL || *num_params == 0)
-	XtError(buffer);
-    else {
+	(*fn)(buffer);
+#ifndef WIN32 /* and OS/2 */
+    else if ((getuid () != geteuid ()) || getuid() == 0) {
+	if ((error && errorHandler == _XtDefaultError) ||
+	    (!error && warningHandler == _XtDefaultWarning)) {
+	    /*
+	     * if it's just going to go to stderr anyway, then we'll 
+	     * fprintf to stderr ourselves and skip the insecure sprintf.
+	     */
+	    int i = *num_params;
+	    String par[10];
+	    if (i > 10) i = 10;
+	    (void) memmove((char*)par, (char*)params, i * sizeof(String) );
+	    bzero( &par[i], (10-i) * sizeof(String) );
+	    (void) fprintf (stderr, "%s%s",
+			    error ? XTERROR_PREFIX : XTWARNING_PREFIX,
+			    error ? "Error: " : "Warning: ");
+	    (void) fprintf (stderr, buffer,
+			    par[0], par[1], par[2], par[3], par[4],
+			    par[5], par[6], par[7], par[8], par[9]);
+	    (void) fprintf (stderr, "%c", '\n');
+	    if (i != *num_params)
+		(*fn) ( "Some arguments in previous message were lost" );
+	    else if (error) exit (1);
+	} else {
+	    /*
+	     * can't tell what it might do, so we'll play it safe
+	     */
+	    XtWarning ("\
+This program is an suid-root program or is being run by the root user.\n\
+The full text of the error or warning message cannot be safely formatted\n\
+in this environment. You may get a more descriptive message by running the\n\
+program as a non-root user or by removing the suid bit on the executable.");
+	    (*fn)(buffer); /* if *fn is an ErrorHandler it should exit */
+	}
+    } else
+#endif
+    {
+	/*
+	 * If you have snprintf the worst thing that could happen is you'd
+	 * lose some information. Without snprintf you're probably going to 
+	 * scramble your heap and perhaps SEGV -- sooner or later.
+	 * If it hurts when you go like this then don't go like this! :-)
+	 */
 	int i = *num_params;
 	String par[10];
 	if (i > 10) i = 10;
 	(void) memmove((char*)par, (char*)params, i * sizeof(String) );
 	bzero( &par[i], (10-i) * sizeof(String) );
-        (void) _XtSnprintf(message, sizeof(message), buffer, par[0], par[1],
-			par[2], par[3], par[4], par[5], par[6], par[7],
-			par[8], par[9]);
-	XtError(message);
 	if (i != *num_params)
-	    XtWarning( "some arguments in previous message were lost" );
+	    XtWarning( "Some arguments in following message were lost" );
+	/* 
+	 * resist any temptation you might have to make `message' a
+	 * local buffer on the stack. Doing so is a security hole 
+	 * in programs executing as root. Error and Warning
+	 * messages shouldn't be called frequently enough for this
+	 * to be a performance issue.
+	 */
+	if ((message = __XtMalloc (BIGBUF))) {
+#ifndef USE_SNPRINTF
+	    message[BIGBUF-1] = 0;
+	    (void) sprintf (message, buffer, 
+#else
+	    (void) snprintf (message, BIGBUF, buffer,
+#endif
+			    par[0], par[1], par[2], par[3], par[4], 
+			    par[5], par[6], par[7], par[8], par[9]);
+#ifndef USE_SNPRINTF
+	    if (message[BIGBUF-1] != '\0')
+		XtWarning ("Possible heap corruption in Xt{Error,Warning}MsgHandler");
+#endif
+	    (*fn)(message);
+	    XtFree(message);
+	} else
+	    XtWarning ("Memory allocation failed, arguments in the following message were lost");
+	    (*fn)(buffer);
     }
+}
+
+void _XtDefaultErrorMsg (name,type,class,defaultp,params,num_params)
+    String name,type,class,defaultp;
+    String* params;
+    Cardinal* num_params;
+{
+    DefaultMsg (name,type,class,defaultp,params,num_params,True,XtError);
 }
 
 void _XtDefaultWarningMsg (name,type,class,defaultp,params,num_params)
@@ -261,25 +340,7 @@ void _XtDefaultWarningMsg (name,type,class,defaultp,params,num_params)
     String* params;
     Cardinal* num_params;
 {
-
-    char buffer[1000], message[1000];
-    XtGetErrorDatabaseText(name,type,class,defaultp, buffer, 1000);
-/*need better solution here*/
-    if (params == NULL || num_params == NULL || *num_params == 0)
-	XtWarning(buffer);
-    else {
-	int i = *num_params;
-	String par[10];
-	if (i > 10) i = 10;
-	(void) memmove((char*)par, (char*)params, i * sizeof(String) );
-	bzero ( &par[i], (10-i) * sizeof(String) );
-        (void) _XtSnprintf(message, sizeof(message), buffer, par[0], par[1],
-			par[2], par[3], par[4], par[5], par[6], par[7],
-			par[8], par[9]);
-	XtWarning(message); 
-	if (i != *num_params)
-	    XtWarning( "some arguments in previous message were lost" );
-   }
+    DefaultMsg (name,type,class,defaultp,params,num_params,False,XtWarning);
 }
 
 #if NeedFunctionPrototypes

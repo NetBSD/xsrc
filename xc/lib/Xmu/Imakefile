@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/81 1995/09/21 11:27:21 kaleb $
+XCOMM $XConsortium: Imakefile /main/82 1996/09/28 16:43:59 rws $
 
 #define DoNormalLib NormalLibXmu
 #define DoSharedLib SharedLibXmu
@@ -7,7 +7,8 @@ XCOMM $XConsortium: Imakefile /main/81 1995/09/21 11:27:21 kaleb $
 #define HasSharedData YES
 #define LibName Xmu
 #define SoRev SOXMUREV
-#define IncSubdir Xmu
+#define IncSubdir X11
+#define IncSubSubdir Xmu
 
 #include <Threads.tmpl>
 
@@ -25,7 +26,7 @@ REQUIREDLIBS = SharedXmuReqs
 OS_NAME_DEFINES = OsNameDefines
 #endif
         CSSDEFS = $(OS_NAME_DEFINES) ConnectionFlags
-        BITDEFS = -DBITMAPDIR=\"$(INCDIR)/bitmaps\"
+        BITDEFS = -DBITMAPDIR=\"$(INCDIR)/X11/bitmaps\"
 
 HEADERS = \
 	Xmu.h \

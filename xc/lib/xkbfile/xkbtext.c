@@ -1,4 +1,4 @@
-/* $XConsortium: xkbtext.c /main/4 1996/01/14 16:44:25 kaleb $ */
+/* $XConsortium: xkbtext.c /main/7 1996/12/28 05:39:31 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/lib/xkbfile/xkbtext.c,v 3.6 1996/12/29 13:43:41 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -1609,7 +1610,7 @@ register int i;
 
 /***====================================================================***/
 
-#define	PIXEL_MAX	65537
+#define	PIXEL_MAX	65535
 
 Bool
 #if NeedFunctionPrototypes

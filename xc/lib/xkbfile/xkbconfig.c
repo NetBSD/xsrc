@@ -1,4 +1,4 @@
-/* $XConsortium: xkbconfig.c /main/3 1996/01/01 10:53:07 kaleb $ */
+/* $XConsortium: xkbconfig.c /main/5 1996/12/27 20:52:56 kaleb $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -931,6 +931,7 @@ DefaultApplyControls(rtrn,xkb)
 {
 unsigned	on,off;
 XkbControlsPtr	ctrls;
+unsigned int	mask;
 
     if (XkbAllocControls(xkb,XkbAllControlsMask)!=Success)
 	return False;
@@ -939,6 +940,34 @@ XkbControlsPtr	ctrls;
 	 ctrls->enabled_ctrls=  rtrn->initial_ctrls;
     else ctrls->enabled_ctrls|= rtrn->initial_ctrls;
     ctrls->enabled_ctrls&= ~rtrn->initial_ctrls_clear;
+    if (rtrn->internal_mods.replace) {
+	ctrls->internal.real_mods= rtrn->internal_mods.mods;
+	ctrls->internal.vmods= rtrn->internal_mods.vmods;
+    }
+    else {
+	ctrls->internal.real_mods&= ~rtrn->internal_mods.mods_clear;
+	ctrls->internal.vmods&= ~rtrn->internal_mods.vmods_clear;
+	ctrls->internal.real_mods|= rtrn->internal_mods.mods;
+	ctrls->internal.vmods|= rtrn->internal_mods.vmods;
+    }
+    mask= 0;
+    (void)XkbVirtualModsToReal(xkb,ctrls->internal.vmods,&mask);
+    ctrls->internal.mask= (ctrls->internal.real_mods|mask);
+
+    if (rtrn->ignore_lock_mods.replace) {
+	ctrls->ignore_lock.real_mods= rtrn->ignore_lock_mods.mods;
+	ctrls->ignore_lock.vmods= rtrn->ignore_lock_mods.vmods;
+    }
+    else {
+	ctrls->ignore_lock.real_mods&= ~rtrn->ignore_lock_mods.mods_clear;
+	ctrls->ignore_lock.vmods&= ~rtrn->ignore_lock_mods.vmods_clear;
+	ctrls->ignore_lock.real_mods|= rtrn->ignore_lock_mods.mods;
+	ctrls->ignore_lock.vmods|= rtrn->ignore_lock_mods.vmods;
+    }
+    mask= 0;
+    (void)XkbVirtualModsToReal(xkb,ctrls->ignore_lock.vmods,&mask);
+    ctrls->ignore_lock.mask= (ctrls->ignore_lock.real_mods|mask);
+
     if (rtrn->repeat_delay>0)
 	ctrls->repeat_delay= rtrn->repeat_delay;
     if (rtrn->repeat_interval>0)

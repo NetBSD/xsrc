@@ -1,6 +1,6 @@
 XCOMM
-XCOMM $XConsortium: Imakefile,v 5.7 94/11/21 18:30:58 kaleb Exp $
-XCOMM $XFree86: xc/programs/Xserver/PEX5/ospex/Imakefile,v 3.3 1996/10/16 14:37:14 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/8 1996/09/28 16:55:19 rws $
+XCOMM $XFree86: xc/programs/Xserver/PEX5/ospex/Imakefile,v 3.4 1996/12/23 06:26:33 dawes Exp $
 XCOMM
 XCOMM 
 XCOMM Copyright 1989, 1990, 1991 by Sun Microsystems, Inc. and the X Consortium
@@ -54,7 +54,7 @@ ST_STUBS = -DSTORE_CMDS
 DDPEXINCLUDE = ../ddpex/mi/include
     INCLUDES = -I. 	\
 	-I$(PEXSRVINC) 	\
-	-I$(INCLUDESRC) \
+	-I$(XINCLUDESRC) \
 	-I$(SERVERSRC)/include \
 	-I$(DDPEXINCLUDE)
 

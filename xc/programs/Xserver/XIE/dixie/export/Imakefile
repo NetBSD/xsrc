@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile,v 1.5 94/01/12 19:47:21 rws Exp $
-XCOMM $XFree86: xc/programs/Xserver/XIE/dixie/export/Imakefile,v 3.1 1996/10/03 09:17:07 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/6 1996/09/28 16:55:25 rws $
+XCOMM $XFree86: xc/programs/Xserver/XIE/dixie/export/Imakefile,v 3.2 1996/12/23 06:26:40 dawes Exp $
 XCOMM build device independent export element objects
 #include <Server.tmpl>
 
@@ -17,7 +17,7 @@ OBJS2 = echist.o ecroi.o eroi.o
 
        OBJS = $(OBJS1) $(OBJS2)
 
-   INCLUDES = -I../../include -I$(SERVERSRC)/include -I$(INCLUDESRC) -I$(EXTINCSRC)
+   INCLUDES = -I../../include -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(EXTINCSRC)
    LINTLIBS = ../export/llib-lexp.ln ../import/llib-limp.ln \
               ../process/llib-lproc.ln ../request/llib-lreq.ln
 

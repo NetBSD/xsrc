@@ -1,5 +1,4 @@
-/* $XConsortium: Intrinsic.c /main/146 1995/10/30 15:56:56 converse $ */
-/* $XFree86: xc/lib/Xt/Intrinsic.c,v 3.6 1996/05/10 06:55:34 dawes Exp $ */
+/* $TOG: Intrinsic.c /main/150 1997/05/15 17:29:59 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -33,6 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/Intrinsic.c,v 3.7.2.2 1997/05/30 12:58:59 dawes Exp $ */
 
 /*
 
@@ -64,6 +64,7 @@ in this Software without prior written authorization from the X Consortium.
 #define INTRINSIC_C
 
 #include "IntrinsicI.h"
+#include "VarargsI.h"        /* for geoTattler */
 #ifndef NO_IDENTIFY_WINDOWS
 #include <X11/Xatom.h>
 #endif
@@ -252,6 +253,9 @@ static void CallChangeManaged(widget)
     }
 
     if (change_managed != NULL && managed_children != 0) {
+	CALLGEOTAT(_XtGeoTrace(widget,"Call \"%s\"[%d,%d]'s changemanaged\n", 
+		       XtName(widget), 
+		       widget->core.width, widget->core.height));
 	(*change_managed) (widget);
     }
 } /* CallChangeManaged */
@@ -323,7 +327,12 @@ static void RealizeWidget(widget)
 		      "invalidProcedure","realizeProc",XtCXtToolkitError,
 		      "No realize class procedure defined",
 		      (String *)NULL, (Cardinal *)NULL);
-    else (*realize) (widget, &value_mask, &values);
+    else {
+	CALLGEOTAT(_XtGeoTrace(widget,"Call \"%s\"[%d,%d]'s realize proc\n", 
+		       XtName(widget), 
+		       widget->core.width, widget->core.height));
+	(*realize) (widget, &value_mask, &values);
+    }
     window = XtWindow(widget);
     hookobj = XtHooksOfDisplay(XtDisplayOfObject(widget));
     if (XtHasCallbacks(hookobj,XtNchangeHook) == XtCallbackHasSome) {
@@ -342,7 +351,7 @@ static void RealizeWidget(widget)
 
 	len_nm = widget->core.name ? strlen(widget->core.name) : 0;
 	len_cl = strlen(class_name);
-	s = XtMalloc((unsigned) (len_nm + len_cl + 2));
+	s = __XtMalloc((unsigned) (len_nm + len_cl + 2));
 	s[0] = '\0';
 	if (len_nm)
 	    strcpy(s, widget->core.name);
@@ -987,8 +996,8 @@ String XtFindFile(path, substitutions, num_substitutions, predicate)
     int len;
     Boolean firstTime = TRUE;
 
-    buf = buf1 = XtMalloc((unsigned)PATH_MAX);
-    buf2 = XtMalloc((unsigned)PATH_MAX);
+    buf = buf1 = __XtMalloc((unsigned)PATH_MAX);
+    buf2 = __XtMalloc((unsigned)PATH_MAX);
 
     if (predicate == NULL) predicate = TestFile;
 
@@ -1066,9 +1075,20 @@ static char *ExtractLocaleName(lang)
 
 #if defined(hpux) || defined(CSRG_BASED) || defined(sun) || defined(SVR4) || defined(sgi) || defined(__osf__) || defined(AIXV3) || defined(ultrix) || defined(WIN32) || defined(__EMX__)
 #ifdef hpux
+/* 
+ * We need to discriminated between HPUX 9 and HPUX 10. The equivalent 
+ * code in Xlib in SetLocale.c does include locale.h via X11/Xlocale.h. 
+ */ 
+#include <locale.h>
+#ifndef _LastCategory
+/* HPUX 9 and earlier */
 #define SKIPCOUNT 2
 #define STARTCHAR ':'
 #define ENDCHAR ';'
+#else
+/* HPUX 10 */
+#define ENDCHAR ' '
+#endif
 #else
 #ifdef ultrix
 #define SKIPCOUNT 2
@@ -1118,6 +1138,8 @@ static char *ExtractLocaleName(lang)
 #endif
         if (end = strchr (start, ENDCHAR)) {
             len = end - start;
+	    if (len >= MAXLOCALE)
+		len = MAXLOCALE - 1;
             strncpy(buf, start, len);
             *(buf + len) = '\0';
 #ifdef WHITEFILL
@@ -1131,7 +1153,11 @@ static char *ExtractLocaleName(lang)
     }
 #ifdef WHITEFILL
     if (strchr(lang, ' ')) {
-	strcpy(buf, lang);
+	len = strlen(lang);
+	if (len >= MAXLOCALE - 1)
+	    len = MAXLOCALE - 1;
+	strncpy(buf, lang, len);
+	*(buf + len) = '\0';
 	for (start = buf; start = strchr(start, ' '); )
 	    *start++ = '-';
 	return buf;
@@ -1170,7 +1196,7 @@ static void FillInLangSubs(subs, pd)
 
     len = strlen(string) + 1;
     subs[0].substitution = string;
-    p1 = subs[1].substitution = XtMalloc((Cardinal) 3*len);
+    p1 = subs[1].substitution = __XtMalloc((Cardinal) 3*len);
     p2 = subs[2].substitution = subs[1].substitution + len;
     p3 = subs[3].substitution = subs[2].substitution + len;
 
@@ -1316,7 +1342,7 @@ String XtResolvePathname(dpy, type, filename, suffix, path, substitutions,
 	    int bytesUsed = bytesAllocd - bytesLeft;
 	    char *new;
 	    bytesAllocd +=1000;
-	    new = XtMalloc((Cardinal) bytesAllocd);
+	    new = __XtMalloc((Cardinal) bytesAllocd);
 	    strncpy( new, massagedPath, bytesUsed );
 	    ch = new + bytesUsed;
 	    if (pathMallocd)
@@ -1424,3 +1450,95 @@ Boolean XtCallAcceptFocus(widget, time)
     UNLOCK_APP(app);
     return retval;
 }
+
+#ifdef XT_GEO_TATTLER
+/**************************************************************************
+ GeoTattler:  This is used to debug Geometry management in Xt.
+  
+  It uses a pseudo resource XtNgeotattler.
+
+  E.G. if those lines are found in the resource database:
+
+    myapp*draw.XmScale.geoTattler: ON
+    *XmScrollBar.geoTattler:ON
+    *XmRowColumn.exit_button.geoTattler:ON
+
+   then:
+
+    all the XmScale children of the widget named draw,
+    all the XmScrollBars,
+    the widget named exit_button in any XmRowColumn
+
+   will return True to the function IsTattled(), and will generate
+   outlined trace to stdout.
+
+*************************************************************************/
+
+#define XtNgeoTattler "geoTattler"
+#define XtCGeoTattler "GeoTattler"
+
+typedef struct { Boolean   geo_tattler ;} GeoDataRec ;
+
+static XtResource geo_resources[] = {
+    { XtNgeoTattler, XtCGeoTattler, XtRBoolean, sizeof(Boolean),
+      XtOffsetOf(GeoDataRec, geo_tattler), 
+      XtRImmediate, (XtPointer) False }
+};
+
+/************************************************************************
+  This function uses XtGetSubresources to find out if a widget
+  needs to be geo-spied by the caller. */
+#if NeedFunctionPrototypes
+static Boolean IsTattled (Widget widget)
+#else
+static Boolean IsTattled (widget) Widget widget ;
+#endif
+{
+    GeoDataRec geo_data ;
+
+    XtGetSubresources(widget, (XtPointer)&geo_data,
+                      (String)NULL, (String)NULL, 
+		      geo_resources, XtNumber(geo_resources), 
+		      NULL, 0);
+    
+    return geo_data.geo_tattler;
+
+}  /* IsTattled */
+
+static int n_tab = 0 ;  /* not MT for now */
+
+void
+#if NeedFunctionPrototypes
+_XtGeoTab (int direction)  /* +1 or -1 */
+#else
+_XtGeoTab (direction) 
+int direction ;
+#endif
+{
+    n_tab += direction ;
+}
+
+
+void 
+#if NeedVarargsPrototypes
+_XtGeoTrace (Widget widget, ...)
+#else
+_XtGeoTrace (widget, va_alist)
+Widget widget;
+va_dcl
+#endif
+{
+    va_list args;
+    char *fmt;
+    int i ;
+    if (IsTattled(widget)) {
+	Va_start(args, widget);
+	fmt = va_arg(args, char *);
+	for (i=0; i<n_tab; i++) printf("     ");
+	(void) vprintf(fmt, args);
+	va_end(args);
+    }
+}
+
+#endif /* XT_GEO_TATTLER */
+

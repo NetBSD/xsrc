@@ -1,5 +1,5 @@
 /* $XConsortium: Xtrans.h,v 1.29 95/06/08 23:20:39 gildea Exp $ */
-/* $XFree86: xc/lib/xtrans/Xtrans.h,v 3.7 1996/10/17 15:13:33 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtrans.h,v 3.9 1997/01/18 06:52:39 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -175,7 +175,11 @@ struct iovec {
 };
 
 #else
+#ifndef Lynx
 #include <sys/uio.h>
+#else
+#include <uio.h>
+#endif
 #endif
 
 typedef struct _XtransConnInfo *XtransConnInfo;
@@ -311,6 +315,12 @@ int TRANS(CreateListener)(
 #if NeedFunctionPrototypes
     XtransConnInfo,	/* ciptr */
     char *		/* port */
+#endif
+);
+
+int TRANS(NoListen) (
+#if NeedFunctionPrototypes
+    char*               /* protocol*/
 #endif
 );
 

@@ -1,4 +1,4 @@
-/* $XConsortium: PassivGrab.c /main/28 1996/01/26 17:34:47 converse $ */
+/* $TOG: PassivGrab.c /main/29 1997/05/15 17:30:30 kaleb $ */
 
 /********************************************************
 
@@ -95,7 +95,7 @@ static void DeleteDetailFromMask(ppDetailMask, detail)
 
     if (!pDetailMask) {
 	int i;
-	pDetailMask = (Mask *)XtMalloc(sizeof(Mask) * MasksPerDetailMask);
+	pDetailMask = (Mask *)__XtMalloc(sizeof(Mask) * MasksPerDetailMask);
 	for (i = MasksPerDetailMask; --i >= 0; )
 	    pDetailMask[i] = ~0;
 	*ppDetailMask = pDetailMask;
@@ -117,7 +117,7 @@ static Mask *CopyDetailMask(pOriginalDetailMask)
     if (!pOriginalDetailMask)
 	return NULL;
     
-    pTempMask = (Mask *)XtMalloc(sizeof(Mask) * MasksPerDetailMask);
+    pTempMask = (Mask *)__XtMalloc(sizeof(Mask) * MasksPerDetailMask);
     
     for ( i = 0; i < MasksPerDetailMask; i++)
       pTempMask[i]= pOriginalDetailMask[i];
@@ -148,7 +148,7 @@ static XtServerGrabPtr CreateGrab(widget, ownerEvents, modifiers,
     
     if (confine_to || cursor)
 	need_ext = True;
-    grab = (XtServerGrabPtr)XtMalloc(sizeof(XtServerGrabRec) +
+    grab = (XtServerGrabPtr)__XtMalloc(sizeof(XtServerGrabRec) +
 				     (need_ext ? sizeof(XtServerGrabExtRec)
 				      : 0));
     grab->next = NULL;
