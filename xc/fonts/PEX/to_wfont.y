@@ -1,6 +1,6 @@
 %{
 /* $XConsortium: to_wfont.y /main/9 1996/06/11 07:38:48 kaleb $ */
-/* $XFree86: xc/fonts/PEX/to_wfont.y,v 3.6 1996/12/23 05:56:32 dawes Exp $ */
+/* $XFree86: xc/fonts/PEX/to_wfont.y,v 3.6.2.1 1998/12/22 11:23:04 hohndel Exp $ */
 
 /*****************************************************************
 
@@ -351,7 +351,7 @@ check_num_ch()
 
 yyerror()
 {
-#if !defined(CSRG_BASED) && !defined(linux) && !defined(Lynx)
+#if !defined(CSRG_BASED) && !defined(linux) && !defined(Lynx) && !defined(__GNU__)
 	extern int      yylineno;
 #endif
 #	define ERR_SIZE (sizeof(err_string) / sizeof(char *))
@@ -374,7 +374,7 @@ yyerror()
 		str = err_string[yyerrno-1];
 	else
 		str = "Syntax error";
-#if !defined(CSRG_BASED) && !defined(linux) && !defined(Lynx)
+#if !defined(CSRG_BASED) && !defined(linux) && !defined(Lynx) && !defined(__GNU__)
 		fprintf(stderr, "line %d: %s.\n", yylineno, str);
 #else
 		fprintf(stderr, "%s.\n", str);
