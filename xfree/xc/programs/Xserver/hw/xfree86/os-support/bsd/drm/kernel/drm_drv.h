@@ -649,12 +649,19 @@ static int DRM(init)( device_t nbdev )
 	unit = minor(dev->device.dv_unit);
 #endif
 
+#if __NetBSD__
+	dev->irq = 1;
+	dev->pci_bus = dev->pa.pa_bus;
+	dev->pci_slot = dev->pa.pa_device;
+	dev->pci_func = dev->pa.pa_function;
+#else
 	dev->irq = pci_get_irq(dev->device);
 	/* XXX Fix domain number (alpha hoses) */
-	dev->pci_domain = 0;
 	dev->pci_bus = pci_get_bus(dev->device);
 	dev->pci_slot = pci_get_slot(dev->device);
 	dev->pci_func = pci_get_function(dev->device);
+#endif
+	dev->pci_domain = 0;
 
 	dev->maplist = DRM(calloc)(1, sizeof(*dev->maplist), DRM_MEM_MAPS);
 	if (dev->maplist == NULL) {
@@ -806,6 +813,9 @@ int DRM(open)(dev_t kdev, int flags, int fmt, DRM_STRUCTPROC *p)
 	int retcode = 0;
 
 	dev = DRIVER_SOFTC(minor(kdev));
+
+	if (dev == NULL)
+		return ENXIO;
 
 	DRM_DEBUG( "open_count = %d\n", dev->open_count );
 
