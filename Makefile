@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2000/10/30 21:26:00 is Exp $
+#	$NetBSD: Makefile,v 1.19 2000/11/05 15:55:34 fredb Exp $
 #
 # Targets & Variables
 #
@@ -26,7 +26,7 @@
 
 .include <bsd.own.mk>
 
-
+.MAIN: all
 all: all-xc all-contrib all-local
 
 all-xc:
