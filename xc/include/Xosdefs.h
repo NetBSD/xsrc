@@ -58,8 +58,10 @@ in this Software without prior written authorization from the X Consortium.
 
 #ifdef vax
 #ifndef ultrix			/* assume vanilla BSD */
+#ifndef __NetBSD__
 #define X_NOT_POSIX
 #define X_NOT_STDC_ENV
+#endif
 #endif
 #endif
 
