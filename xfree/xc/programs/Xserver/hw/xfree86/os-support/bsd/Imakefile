@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/12 1996/10/27 11:06:35 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/Imakefile,v 3.47 2001/02/15 19:34:20 eich Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/Imakefile,v 3.50 2001/12/31 18:18:49 herrb Exp $
 
 #include <Server.tmpl>
 
@@ -65,19 +65,27 @@ MTRRDEFINES = -DHAS_MTRR_BUILTIN
 #endif
 
 #if UsbMouseSupport
-USBMOUSEDEFINES = -DUSBMOUSE_SUPPORT
+USBMOUSEDEFINES1 = -DUSBMOUSE_SUPPORT
 #if !HasLibUsb
 LIBUSBINCLUDES = -Ilibusb
 #define IHaveSubdirs
 SUBDIRS = libusb
+#else
+#if HasLibUsbHid
+USBMOUSEDEFINES2 = -DHAS_LIB_USB_HID
 #endif
 #endif
+#endif
+USBMOUSEDEFINES = $(USBMOUSEDEFINES1) $(USBMOUSEDEFINES2)
 
-
-#if (defined(NetBSDArchitecture) || defined(OpenBSDArchitecture)) \
-	&& defined(i386Architecture)
+#if (defined(OpenBSDArchitecture) || defined(NetBSDArchitecture)) && defined(i386Architecture)
+# if !defined(HasApmKqueue) || !HasApmKqueue
 APMSRC = bsd_apm.c
 APMOBJ = bsd_apm.o
+# else
+APMSRC = bsd_kqueue_apm.c
+APMOBJ = bsd_kqueue_apm.o
+# endif
 #else
 APMSRC = pm_noop.c
 APMOBJ = pm_noop.o

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.c,v 1.50 2001/05/10 22:18:57 dbateman Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgahw/vgaHW.c,v 1.53 2001/09/18 21:23:23 herrb Exp $ */
 
 /*
  *
@@ -10,9 +10,7 @@
  *
  */
 
-#if !defined(AMOEBA) && !defined(MINIX)
 #define _NEED_SYSI86
-#endif
 
 #include "X.h"
 #include "misc.h"
@@ -30,6 +28,10 @@
 #define SAVE_FONT1
 #endif
 
+/*
+ * These used to be OS-specific, which made this module have an undesirable
+ * OS dependency.  Define them by default for all platforms.
+ */
 #ifndef NEED_SAVED_CMAP
 #define NEED_SAVED_CMAP
 #endif
@@ -650,8 +652,10 @@ vgaHWSaveScreen(ScreenPtr pScreen, int mode)
 
    on = xf86IsUnblank(mode);
 
+#if 0
    if (on)
       SetTimeSinceLastInputEvent();
+#endif
 
    if ((pScrn != NULL) && pScrn->vtSema) {
      vgaHWBlankScreen(pScrn, on);
@@ -1816,6 +1820,9 @@ vgaHWGetIOBase(vgaHWPtr hwp)
 {
     hwp->IOBase = (hwp->readMiscOut(hwp) & 0x01) ?
 				VGA_IOBASE_COLOR : VGA_IOBASE_MONO;
+    xf86DrvMsgVerb(hwp->pScrn->scrnIndex, X_INFO, 3,
+	"vgaHWGetIOBase: hwp->IOBase is 0x%04x, hwp->PIOOffset is 0x%04x\n",
+	hwp->IOBase, hwp->PIOOffset);
 }
 
 

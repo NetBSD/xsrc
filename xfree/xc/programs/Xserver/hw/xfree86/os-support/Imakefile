@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.44 2001/04/23 12:08:14 alanh Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.52 2001/12/27 20:07:05 dawes Exp $
 
 
 
@@ -11,11 +11,14 @@ XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:38:46 kaleb $
 #define IHaveSubdirs
 
 #if defined(i386Architecture) || defined(ia64Architecture) || \
-	(defined(LinuxArchitecture) && defined(AlphaArchitecture)) || \
+	(defined(SunArchitecture) && defined(SparcArchitecture)) || \
 	(defined(FreeBSDArchitecture) && defined(AlphaArchitecture)) || \
 	(defined(NetBSDArchitecture) && defined(AlphaArchitecture)) || \
-	defined(PpcArchitecture) || defined(SparcArchitecture) || \
-	(defined(LinuxArchitecture) && defined(MipsArchitecture))
+	(defined(NetBSDArchitecture) && defined(PpcArchitecture)) || \
+	(defined(NetBSDArchitecture) && defined(SparcArchitecture)) || \
+	(defined(OpenBSDArchitecture) && defined(PpcArchitecture)) || \
+	(defined(LynxOSArchitecture) && defined(PpcArchitecture)) || \
+	defined(LinuxArchitecture)
 BUS_SUBDIR = bus
 #endif
 
@@ -37,11 +40,7 @@ OS_SUBDIR = sysv
 
 #if defined(SVR4Architecture) 
 # if defined(SunArchitecture)
-#  if OSMinorVersion < 8
-OS_SUBDIR = solx86
-#  else
-OS_SUBDIR = sol8_x86
-#  endif
+OS_SUBDIR = sunos
 # elif defined(PmaxOSArchitecture)
 OS_SUBDIR = pmax
 # elif defined(DguxArchitecture)
@@ -68,20 +67,8 @@ OS_SUBDIR = bsd
 OS_SUBDIR = bsdi
 #endif
 
-#if defined(i386MachArchitecture) || defined(OsfArchitecture)
 #if defined(GNUMachArchitecture)
 OS_SUBDIR = hurd
-#else
-OS_SUBDIR = mach
-#endif
-#endif
-
-#if defined(AmoebaArchitecture)
-OS_SUBDIR = amoeba
-#endif
-
-#if defined(MinixArchitecture)
-OS_SUBDIR = minix
 #endif
 
 #if defined(OS2Architecture)
@@ -92,18 +79,26 @@ OS_SUBDIR = os2
 OS_SUBDIR = sco
 #endif
 
-#if BuildXF86DRI && !DoLoadableServer
+#if !DoLoadableServer
+
+#if BuildXF86DRI
 DRM_SRC = $(OS_SUBDIR)/drm/?*.c
 DRM_OBJ = $(OS_SUBDIR)/drm/?*.o
 DRM_DONES = $(OS_SUBDIR)/drm/DONE
 #endif
 
+VBE_SRC = vbe/?*.c
+VBE_OBJ = vbe/?*.o
+VBE_DONES = vbe/DONE
+
+#endif
+
 SUBDIRS = $(OS_SUBDIR) $(BUS_SUBDIR) misc vbe
 
-SRCS = $(OS_SUBDIR)/?*.c $(BUS_SUBDIR)/?*.c misc/?*.c vbe/?*.c $(DRM_SRC)
-OBJS = $(OS_SUBDIR)/?*.o $(BUS_SUBDIR)/?*.o misc/?*.o vbe/?*.o $(DRM_OBJ)
+SRCS = $(OS_SUBDIR)/?*.c $(BUS_SUBDIR)/?*.c misc/?*.c $(VBE_SRC) $(DRM_SRC)
+OBJS = $(OS_SUBDIR)/?*.o $(BUS_SUBDIR)/?*.o misc/?*.o $(VBE_OBJ) $(DRM_OBJ)
 
-DONES = $(OS_SUBDIR)/DONE $(BUS_SUBDIR)/DONE misc/DONE vbe/DONE $(DRM_DONES)
+DONES = $(OS_SUBDIR)/DONE $(BUS_SUBDIR)/DONE misc/DONE $(VBE_DONES) $(DRM_DONES)
 
 #if HasParallelMake
 MakeMutex($(SUBDIRS) $(OBJS) $(DONES))

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Pci.h,v 1.18.2.1 2001/05/21 05:00:36 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Pci.h,v 1.21 2001/11/01 23:35:33 dawes Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -85,7 +85,7 @@
  */
 #define MAX_PCI_DEVICES 64	/* Max number of devices accomodated */
 				/* by xf86scanpci		     */
-#if defined(i386) || defined(__i386) || defined(__i386__)
+#if defined(i386) || defined(__i386__) || defined(__i386)
 /* Q&D stopgap to deal with mainboards whose PCI space is smaller */
 #define MAX_PCI_BUSES   128	/* Max number of PCI buses           */
 #else
@@ -141,7 +141,7 @@
 /*
  * Select architecture specific PCI init function
  */
-#if (defined(__powerpc__) || defined(__mips__)) && defined(linux)
+#if (defined(__powerpc__) || defined(__mips__) || defined(__sh__) || defined(__mc68000__) || defined(__arm__) || defined(__s390__) || defined(__hppa__)) && defined(linux)
 # define ARCH_PCI_INIT linuxPciInit
 # define INCLUDE_XF86_MAP_PCI_MEM
 #elif defined(__powerpc__) && defined(__OpenBSD__)
