@@ -8,6 +8,8 @@ Changes from the NetBSD-1.4 distribution:
 - autorepeat works now if you enable the xkb support. However,
   you have to use -ar1 <timeoutvalue> -ar2 <repeatinterval> with xkb, e.g.
   Xamiga -ar1 500 -ar2 100 <other options here>
+- the X server may not be installed setuid root any longer. Instead, use
+  the Xwrapper (or, as always has been possible, xdm).
 
 Please read the X11-Faq for installing X11.
 
@@ -210,9 +212,7 @@ NetBSD-1.4 distribution.
     We don't install the Xserver setuid root, so you have three options to
     fix this:
       - use xdm
-      - make the Xserver setuid root:
-         chown root:bin /usr/X11R6/bin/Xamiga
-         chmod 47511 /usr/X11R6/bin/Xamiga
+      - use the Xwrapper
       - give everyone access to some devices with:
          chmod 666 /dev/kbd /dev/mouse /dev/view??
 
