@@ -84,7 +84,7 @@ clCopyWindow(pWin, ptOldOrg, prgnSrc)
 
     pwinRoot = WindowTable[pWin->drawable.pScreen->myNum];
 
-    REGION_INIT(pWin->drawable.pScreen, &rgnDst, NullBox, 0);
+    REGION_NULL(pWin->drawable.pScreen, &rgnDst);
 
     dx = ptOldOrg.x - pWin->drawable.x;
     dy = ptOldOrg.y - pWin->drawable.y;
