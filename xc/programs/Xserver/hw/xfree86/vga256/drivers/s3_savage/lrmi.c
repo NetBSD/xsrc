@@ -45,7 +45,7 @@ This software has NO WARRANTY.  Use it at your own risk.
 #endif
 
 #if defined(linux)
-#define	CONTEXT_REGS	CONTEXT_REGS
+#define	CONTEXT_REGS	context.vm.regs
 #define	REG(x)		x
 #elif defined(__NetBSD__)
 #define	CONTEXT_REGS	context.vm.substr.regs
