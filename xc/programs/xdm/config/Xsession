@@ -15,6 +15,9 @@ done
 case $# in
 1)
 	case $1 in
+	kdm)
+		exec $SHELL -c startkde
+		;;
 	failsafe)
 		exec xterm -geometry 80x24-0-0
 		;;
