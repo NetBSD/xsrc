@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1999/12/28 19:51:54 fredb Exp $
+#	$NetBSD: Makefile,v 1.10 2000/02/05 00:54:27 fredb Exp $
 #
 # Targets & Variables
 #
@@ -92,7 +92,7 @@ release snapshot: build
 .endif # INSTALL_DONE or BUILD_DONE
 #
 	${INSTALL} -d -m 755 -o root -g wheel ${RELEASEDIR}/binary/sets
-	sh ${BSDSRCDIR}/distrib/sets/maketars -x -s ../src/distrib/sets \
+	sh ${BSDSRCDIR}/distrib/sets/maketars -x -s ${BSDSRCDIR}/src/distrib/sets \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
 	cd ${RELEASEDIR}/binary/sets && \
 		cksum -o 1 *.tgz >BSDSUM && \
