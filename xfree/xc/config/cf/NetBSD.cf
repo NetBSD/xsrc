@@ -657,7 +657,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define OptimizedCDebugFlags	-O2
 
 # ifndef XF86Server
-/* #  define XF86Server		YES */
+#  define XF86Server		YES
 # endif
 
 /* # define XkbServerDefines  -DXKB_ALWAYS_USES_SOFT_REPEAT */
@@ -666,7 +666,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #   ifndef DoLoadableServer
 #     define DoLoadableServer	NO
 #   endif
-#   define XF86CardDrivers	wsfb sunffb
+#   define XF86OSCardDrivers	/* wsfb sunffb */
 #   define AsOutputArchSize	64
 #   define AsVISOption		-Av9a
 #   define XFree86ConsoleDefines -DWSCONS_SUPPORT
