@@ -1,4 +1,4 @@
-/* $NetBSD: x68kText.c,v 1.1.1.1 1998/11/10 14:13:11 minoura Exp $ */
+/* $NetBSD: x68kText.c,v 1.2 1999/06/27 14:16:06 minoura Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -56,6 +56,9 @@ Bool x68kTextOpen(X68kScreenRec *pPriv)
     /* enable TVRAM simultaneous access mode */
     r21 = pPriv->reg->crtc.r21;
     pPriv->reg->crtc.r21 = 0x01f0;
+
+    /* initialize scroll registers */
+    pPriv->reg->crtc.r10 = pPriv->reg->crtc.r11 = 0;
 
     return TRUE;
 }
