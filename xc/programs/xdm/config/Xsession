@@ -39,5 +39,7 @@ else
 			;;
 		esac
 	esac
-	exec xsm
+	xclock -geometry 50x50-1+1 &
+	xterm -geometry 80x25+0+0 &
+	exec twm
 fi
