@@ -8,6 +8,8 @@ MAPFILES = \
 
 InstallMultipleFlags($(MAPFILES),$(FONTDIR)/util,$(INSTDATFLAGS))
 NormalProgramTarget(ucs2any,ucs2any.o,,,)
+InstallProgram(ucs2any,$(BINDIR))
+InstallManPage(ucs2any,$(MANDIR))
 InstallNamedProg(bdftruncate.pl,bdftruncate,$(BINDIR))
 InstallManPage(bdftruncate,$(MANDIR))
 
