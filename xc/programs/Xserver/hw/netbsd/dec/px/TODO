@@ -1,20 +1,11 @@
-$NetBSD: TODO,v 1.3 2002/07/24 14:16:39 ad Exp $
+$NetBSD: TODO,v 1.4 2002/09/13 17:31:34 ad Exp $
 
--- Remaining bugs
+Remaining bugs:
 
 Using a Motif textbox leaves artifacts on alpha, and possibly mips 8-bit
 color. Works fine on mips with 32-bit color. pxDoFillSpansUS() and/or raw
 scanline routines are the suspects.
 
-Software cursor leaves a trail of rubbish.
+Xaw text boxes have artifacts sometimes.
 
-PushPixels() is broken on mips, works fine on alpha.
-
--- Possible optimisations
-
-- MIPS and Alpha assembly versions of compress/expand routines
-- Stippled PushPixels (important for Motif menus, no joke)
-- Unnatural stippled spans with XYMASKs
-- Full-blown tiling should be a combo of WRITE and COPY
-- Figure out why queueing doesn't work
-- Make i860 firmware work
+The PixelStamp's sloped lines are off; need to draw them the hard way.

@@ -1,7 +1,7 @@
-/*	$NetBSD: pxglyph.c,v 1.4 2002/07/24 14:16:39 ad Exp $	*/
+/*	$NetBSD: pxglyph.c,v 1.5 2002/09/13 17:31:35 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -106,6 +106,8 @@
 		pb[12] = c;				\
 	} while (0)
 
+void	pxSolidBox(pxScreenPrivPtr, pxPacketPtr, BoxPtr, int);
+
 #ifdef _IMAGEGLYPH
 void
 pxImageGlyphBlt(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
@@ -160,12 +162,30 @@ pxPolyGlyphBlt(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 
 	switch (RECT_IN_REGION(pGC->pScreen, clip, &box)) {
 	case rgnPART:
-#ifdef _IMAGEGLYPH
+#ifndef notyet
+#  ifdef _IMAGEGLYPH
 		miImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci,
 		    pGlyphBase);
-#else
+#  else
 		miPolyGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci,
 		    pGlyphBase);
+#  endif
+#else
+#  ifdef _IMAGEGLYPH
+		if (pGC->fillStyle == FillSolid)
+			pxSlowImageGlyphBlt(pDrawable, pGC, x, y, nglyph,
+			    ppci, pGlyphBase);
+		else
+			miImageGlyphBlt(pDrawable, pGC, x, y, nglyph,
+			    ppci, pGlyphBase);
+#  else
+		if (pGC->fillStyle == FillSolid)
+			pxSlowPolyGlyphBlt(pDrawable, pGC, x, y, nglyph,
+			    ppci, pGlyphBase);
+		else
+			miPolyGlyphBlt(pDrawable, pGC, x, y, nglyph,
+			    ppci, pGlyphBase);
+#  endif
 #endif
 		return;
 	case rgnOUT:
@@ -199,13 +219,17 @@ pxPolyGlyphBlt(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 
 	while (nglyph--) {
 		pci = *ppci++;
-		fb = (u_int32_t *)pci->bits;
 		w = GLYPHWIDTHPIXELS(pci);
 		h = GLYPHHEIGHTPIXELS(pci);
+
+		if ((w | h) == 0)
+			continue;
+
+		fb = (u_int32_t *)pci->bits;
 		x0 = x + pci->metrics.leftSideBearing;
 		y0 = y - pci->metrics.ascent;
 		ex = x0 + w;
-		x += pci->metrics.characterWidth;;
+		x += pci->metrics.characterWidth;
 		lw = (h << 2) - 1;
 		psy = (y0 << 3) + lw;
 		v1 = (x0 << 19) | psy;
@@ -251,10 +275,14 @@ pxPolyTEGlyphBlt(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 #endif
 
 	pfont = pGC->font;
-
 	widthGlyph = FONTMAXBOUNDS(pfont,characterWidth);
 	heightGlyph = FONTASCENT(pfont) + FONTDESCENT(pfont);
+
+	if ((widthGlyph | heightGlyph) == 0)
+		return;
+
 	clip = cfbGetCompositeClip(pGC);
+
 	box.x1 = x + pDrawable->x;
 	box.x2 = box.x1 + (widthGlyph * nglyph);
 	box.y1 = y + pDrawable->y - FONTASCENT(pfont);
@@ -262,13 +290,31 @@ pxPolyTEGlyphBlt(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 
 	switch (RECT_IN_REGION(pGC->pScreen, clip, &box)) {
 	case rgnPART:
-#ifdef _IMAGEGLYPH
+#ifndef notyet
+#  ifdef _IMAGEGLYPH
 		miImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci,
 		    pGlyphBase);
-#else
+#  else
 		miPolyGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci,
 		    pGlyphBase);
-#endif
+#  endif
+#else
+#  ifdef _IMAGEGLYPH
+		if (pGC->fillStyle == FillSolid)
+			pxSlowImageGlyphBlt(pDrawable, pGC, x, y, nglyph,
+			    ppci, pGlyphBase);
+		else
+			miImageGlyphBlt(pDrawable, pGC, x, y, nglyph,
+			    ppci, pGlyphBase);
+#  else
+		if (pGC->fillStyle == FillSolid)
+			pxSlowPolyGlyphBlt(pDrawable, pGC, x, y, nglyph,
+			    ppci, pGlyphBase);
+		else
+			miPolyGlyphBlt(pDrawable, pGC, x, y, nglyph,
+			    ppci, pGlyphBase);
+#  endif
+#endif		
 		return;
 	case rgnOUT:
 		return;
@@ -327,3 +373,148 @@ pxPolyTEGlyphBlt(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 
 	pxPacketFlush(sp, &pxp);
 }
+
+#ifdef notyet
+/*
+ * "Slow" glyph routines.  These are used when glyphs are larger than 16x16,
+ * or when the glyph is clipped - cases that our basic routines don't
+ * handle.  The advantages over using the mi layer are that fewer packets
+ * will be used, and that no intermediate copy to a scratch pixmap is
+ * performed.
+ */
+void
+#ifdef _IMAGEGLYPH
+pxSlowPolyGlyphBlt(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
+		   unsigned int nglyph, CharInfoPtr *ppci,
+		   pointer pGlyphBase)
+#else
+pxSlowImageGlyphBlt(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
+		   unsigned int nglyph, CharInfoPtr *ppci,
+		   pointer pGlyphBase)
+#endif
+{
+	pxScreenPrivPtr sp;
+	FontPtr pfont;
+	pxPacket pxp;
+	CharInfoPtr pci;
+	RegionRec rgnDst;
+	RegionPtr clip;
+	BoxRec srcBox;
+	BoxPtr pBox, pMaxBox;
+	pxPrivGCPtr gcPriv;
+	int w, h, x0, y0;
+	u_int32_t *pb;
+
+#ifdef _IMAGEGLYPH
+	PX_TRACE("pxSlowImageGlyphBlt");
+#else
+	PX_TRACE("pxSlowPolyGlyphBlt");
+#endif
+
+	pfont = pGC->font;
+	x += pDrawable->x;
+	y += pDrawable->y;
+	gcPriv = pxGetGCPrivate(pGC);
+	sp = gcPriv->sp;
+	clip = cfbGetCompositeClip(pGC);
+
+	pb = pxPacketStart(sp, &pxp, 4, 13);
+	pb[0] = STAMP_CMD_LINES | STAMP_RGB_FLAT |
+	    STAMP_LW_PERPRIMATIVE | STAMP_XY_PERPRIMATIVE;
+	pb[1] = gcPriv->pmask;
+	pb[2] = 0;
+	pb[3] = gcPriv->umet | STAMP_WE_XYMASK;
+
+	while (nglyph-- > 0) {
+		pci = *ppci++;
+		w = GLYPHWIDTHPIXELS(pci);
+		h = GLYPHHEIGHTPIXELS(pci);
+
+		if ((w | h) == 0)
+			continue;
+
+		x0 = x + pci->metrics.leftSideBearing;
+		y0 = y - pci->metrics.ascent;
+		srcBox.x1 = x0;
+		srcBox.y1 = y0;
+		srcBox.x2 = x0 + w;
+		srcBox.y2 = y0 + h;
+		REGION_INIT(pGC->pScreen, &rgnDst, &srcBox, 1);
+
+		/*
+		 * Clip the shape of the dst to the destination composite
+		 * clip.
+		 */
+		REGION_INTERSECT(pGC->pScreen, &rgnDst, &rgnDst, clip);
+
+		if (!REGION_NIL(&rgnDst)) {
+			pBox = REGION_RECTS(&rgnDst);
+			pMaxBox = pBox + REGION_NUM_RECTS(&rgnDst);
+
+			if (pBox->y2 - pBox->y1 <= 16) {
+				for (; pBox < pMaxBox; pBox++) {
+#ifdef _IMAGEGLYPH
+					pxSolidBox(sp, &pxp, pBox,
+					    gcPriv->bgPixel);
+#endif
+					pxSqueege16(sp, &pxp, pci->bits,
+					    PADGLYPHWIDTHBYTES(w),
+					    pBox->x1, pBox->y1,
+					    pBox->x2, pBox->y2,
+					    pBox->x1 - x0,
+					    pBox->y1 - y0,
+					    gcPriv->fgFill);
+				}
+			} else {
+				for (; pBox < pMaxBox; pBox++) {
+#ifdef _IMAGEGLYPH
+					pxSolidBox(sp, &pxp, pBox,
+					    gcPriv->bgPixel);
+#endif
+					pxSqueege16(sp, &pxp, pci->bits,
+					    PADGLYPHWIDTHBYTES(w),
+					    pBox->x1, pBox->y1,
+					    pBox->x2, pBox->y2,
+					    pBox->x1 - x0,
+					    pBox->y1 - y0,
+					    gcPriv->fgFill);
+				}
+			}
+		}
+
+		x += pci->metrics.characterWidth;
+		REGION_UNINIT(pGC->pScreen, &rgnDst);
+	}
+
+	pxPacketFlush(sp, &pxp);
+}
+
+#ifdef _IMAGEGLYPH
+void
+pxSolidBox(pxScreenPrivPtr sp, pxPacketPtr pxp, BoxPtr pBox, int fill)
+{
+	static const u_int allones = 0xffffffff;
+	u_int32_t *pb;
+	int lw, psy;
+
+	pb = pxPacketAddPrim(sp, pxp);
+	pb[0] = allones;
+	pb[1] = allones;
+	pb[2] = allones;
+	pb[3] = allones;
+	pb[4] = allones;
+	pb[5] = allones;
+	pb[6] = allones;
+	pb[7] = allones;
+
+	lw = ((pBox->y2 - pBox->y1) << 2) - 1;
+	psy = (pBox->y1 << 3) + lw;
+
+	pb[8] = XYMASKADDR(sp->stampw, sp->stamphm, pBox->x1, pBox->y1, 0, 0);
+	pb[9] = (pBox->x1 << 19) | psy;
+	pb[10] = (pBox->x2 << 19) | psy;
+	pb[11] = lw;
+	pb[12] = fill;
+}
+#endif
+#endif

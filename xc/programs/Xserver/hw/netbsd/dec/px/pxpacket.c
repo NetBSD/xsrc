@@ -1,4 +1,4 @@
-/*	$NetBSD: pxpacket.c,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: pxpacket.c,v 1.2 2002/09/13 17:31:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,11 +41,23 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
-static int	idgen;
+static int	idgen = 1;
 
 Bool	pxPacketTryGlom(pxScreenPrivPtr, pxPacketPtr, u_int32_t *, int);
-void	pxPacketResetStic(pxScreenPrivPtr, const char *);
+void	pxPacketReset(pxScreenPrivPtr, const char *);
 int	pxPacketTailDistance(pxScreenPrivPtr, int);
+
+static __inline__ volatile u_int32_t *pxPollAddr(pxScreenPrivPtr, u_int32_t *);
+
+static __inline__ volatile u_int32_t *
+pxPollAddr(pxScreenPrivPtr sp, u_int32_t *pb)
+{
+	u_long v;
+
+	v = (u_long)pb - (u_long)sp->sxc + sp->buf_pa;
+	v = ((v & 0xffff8000) << 3) | (v & 0x7fff);
+	return ((volatile u_int32_t *)((u_long)sp->poll + (v >> 9)));
+}
 
 u_int32_t *
 pxPacketStart(pxScreenPrivPtr sp, pxPacketPtr pp, int hdrsz, int primsz)
@@ -59,7 +71,7 @@ pxPacketStart(pxScreenPrivPtr sp, pxPacketPtr pp, int hdrsz, int primsz)
 		sel = (sp->pbsel ^= 1);
 	else {
 		/* Allocate a buffer and assign it a unique ID. */
-		pp->ident = (idgen += 2) | 1;
+		pp->ident = (idgen += 2);
 		pp->bufnum = sp->sxc->sxc_head;
 		sel = pp->bufnum;
 		sp->sxc->sxc_done[sel] = pp->ident;
@@ -85,13 +97,11 @@ pxPacketAddPrim0(pxScreenPrivPtr sp, pxPacketPtr pp)
 
 	PX_TRACE("pxPacketAddPrim0");
 
-	pxPacketFlush(sp, pp);
-
 	if (!sp->queueing)
 		sel = (sp->pbsel ^= 1);
 	else {
 		/* Allocate a buffer and assign it a unique ID. */
-		pp->ident = (idgen += 2) | 1;
+		pp->ident = (idgen += 2);
 		pp->bufnum = sp->sxc->sxc_head;
 		sel = pp->bufnum;
 		sp->sxc->sxc_done[sel] = pp->ident;
@@ -99,8 +109,10 @@ pxPacketAddPrim0(pxScreenPrivPtr sp, pxPacketPtr pp)
 
 	pb = sp->buf + sel * (STIC_PACKET_SIZE / sizeof(u_int32_t));
 	memcpy(pb, pp->head, pp->hdrsz * sizeof(u_int32_t));
-	pp->head = pb;
 
+	pxPacketFlush(sp, pp);
+
+	pp->head = pb;
 	pp->curpb = pb + pp->hdrsz;
 	pp->primcnt = 0;
 	pb[1] &= 0x00ffffff;
@@ -173,8 +185,8 @@ pxPacketFlush(pxScreenPrivPtr sp, pxPacketPtr pp)
 	volatile u_int32_t *poll;
 	volatile struct stic_xcomm *sxc;
 	volatile struct stic_regs *sr;
+	volatile u_int32_t v;
 	u_int32_t *pb;
-	u_long v;
 	u_int i, j;
 
 	PX_TRACE("pxPacketFlush");
@@ -183,13 +195,15 @@ pxPacketFlush(pxScreenPrivPtr sp, pxPacketPtr pp)
 
 	if (pp->primcnt != 0)
 		pb[1] = (pb[1] & 0xffffff) | pp->primcnt << 24;
-
-	if ((pb[1] & 0xff000000) == 0)
+	if ((pb[1] & 0xff000000) == 0) {
+		if (!sp->queueing)
+			sp->pbsel ^= 1;
 		return;
+	}
 
 	sxc = sp->sxc;
+	sr = sp->stic;
 
-#ifdef notyet
 	if (sp->queueing) {
 #ifdef notyet
 		/*
@@ -225,82 +239,73 @@ pxPacketFlush(pxScreenPrivPtr sp, pxPacketPtr pp)
 #endif
 
 		/*
-		 * Wait for the STIC to catch up if the queue is full.
+		 * Wait for the STIC to catch up if the queue is full... 
 		 */
-		for (;;) {
-			i = (sxc->sxc_head + 1) % sp->nbuf;
-			if (i != sxc->sxc_tail)
-				break;
-			if (!sxc->sxc_busy)
-				v = sxc->sxc_tail * STIC_PACKET_SIZE +
-				    STIC_XCOMM_SIZE + sp->buf_pa;
-				v = ((v & 0xffff8000) << 3) | (v & 0x7fff);
-				poll = (volatile u_int32_t *)((u_long)sp->poll + (v >> 9));
-				sxc->sxc_busy = 1;
-				if (*poll != STAMP_OK) {
-					ErrorF("pxPacketFlush: poll failed\n");
-					sxc->sxc_busy = 0;
-				}
-			}
-
-			if ((sp->stic->sr_ipdvint & STIC_INT_P_EN) == 0)
-				ErrorF("packet done intr not enabled!");
-		}
-	}
-#endif
-
-	v = (u_long)pb - (u_long)sp->sxc + sp->buf_pa;
-	v = ((v & 0xffff8000) << 3) | (v & 0x7fff);
-	poll = (volatile u_int32_t *)((u_long)sp->poll + (v >> 9));
-
-#ifdef notyet
-	if (!sp->queueing) {
-#endif
-		sr = sp->stic;
-
-		/* Wait for the previous command to complete. */
-		for (i = 1000000; i != 0; i--) {
-			j = sr->sr_ipdvint;
-			if ((j & STIC_INT_P) != 0)
+		for (i = 10000000; i != 0; i--) {
+			j = (sxc->sxc_head + 1) & (sp->nbuf - 1);
+			if (j != sxc->sxc_tail)
 				break;
 		}
-		sr->sr_ipdvint = STIC_INT_P_WE | (j & STIC_INT_P_EN);
-#if 0
-		px_mb();
-#endif
-		/* Flush the write to sr_ipdvint. */
-		v = sr->sr_sticsr;
-
-		/* Try to start DMA. */
-		for (i = STAMP_RETRIES; i != 0; i--) {
-			if (*poll == STAMP_OK)
-				break;
-			for (j = 0; j < 100; j++)
-				v = j;
+		if (i == 0) {
+			pxPacketReset(sp, "pxPacketFlush: queue wedged");
+			return;
 		}
-
-		if (i == 0)
-			pxPacketResetStic(sp, "pxPacketFlush");
-#ifdef notyet
-	} else {
-		sxc->sxc_head = (sxc->sxc_head + 1) % sp->nbuf;
 
 		/*
-		 * If the queue is not running, try to start the packet ONCE
-		 * only, as we may have interrupted and as a result the
-		 * kernel may have also tried to submit the packet.  (Over
-		 * eager use of the poll registers can cause the STIC to
-		 * go ballistic.)
+		 * ... and directly hand it some work if it's idle.  If not,
+		 * the kernel will take care of the pakect that we handed
+		 * off.
 		 */
-		if (sxc->sxc_busy == 0) {
-			sxc->sxc_busy = 1;
-			if (*poll != STAMP_OK) {
-				ErrorF("pxPacketFlush: poll failed\n");
-				sxc->sxc_busy = 0;
-			}			
+		if ((sr->sr_ipdvint & STIC_INT_P) != 0) {
+			sr->sr_ipdvint = STIC_INT_P_WE | STIC_INT_P_EN;
+			v = sr->sr_sticsr;
+			sxc->sxc_head = (sxc->sxc_head + 1) & (sp->nbuf - 1);
+
+			poll = pxPollAddr(sp, sp->buf + sxc->sxc_tail *
+			    (STIC_PACKET_SIZE / sizeof(u_int32_t)));
+
+			if (*poll != STAMP_OK)
+				pxPacketReset(sp, 
+				    "pxPacketFlush: queue start failed\n");
+		} else {
+			/*
+			 * There is a few instruction-cycle margin for error
+			 * here, where the queue can become idle.  We could
+			 * compensate against that by tickling the poll
+			 * register ourself, but that turns out to be a
+			 * sometimes unwise thing to do.
+			 */
+			sxc->sxc_head = (sxc->sxc_head + 1) & (sp->nbuf - 1);
 		}
+
+		return;
 	}
-#endif
+
+	poll = pxPollAddr(sp, pb);
+
+	/*
+	 * Wait for any previous command to complete.
+	 */
+	for (i = 1000000; i != 0; i--) {
+		j = sr->sr_ipdvint;
+		if ((j & STIC_INT_P) != 0)
+			break;
+	}
+	sr->sr_ipdvint = STIC_INT_P_WE | (j & STIC_INT_P_EN);
+	v = sr->sr_sticsr;
+
+	/*
+	 * Try to start DMA.
+	 */
+	for (i = STAMP_RETRIES; i != 0; i--) {
+		if (*poll == STAMP_OK)
+			break;
+		for (j = 0; j < 100; j++)
+			v = j;
+	}
+
+	if (i == 0)
+		pxPacketReset(sp, "pxPacketFlush");
 }
 
 void
@@ -316,10 +321,11 @@ pxPacketWait(pxScreenPrivPtr sp, pxPacketPtr pp)
 			if ((sp->stic->sr_ipdvint & STIC_INT_P) != 0)
 				break;
 		if (i == 0)
-			pxPacketResetStic(sp, "pxPacketWait");
+			pxPacketReset(sp, "pxPacketWait");
 	} else {
 		sxc = sp->sxc;
 
+		/* XXX Potential for stall? */
 		while (sxc->sxc_done[pp->bufnum] == pp->ident)
 			;
 	}
@@ -336,12 +342,14 @@ pxPacketFlushWait(pxScreenPrivPtr sp, pxPacketPtr pp)
 }
 
 void
-pxPacketResetStic(pxScreenPrivPtr sp, const char *func)
+pxPacketReset(pxScreenPrivPtr sp, const char *func)
 {
 
-	PX_TRACE("pxPacketResetStic");
+	PX_TRACE("pxPacketReset");
 
 	ErrorF("%s(): resetting STIC\n", func);
 	if (ioctl(sp->fd, STICIO_RESET))
 		ErrorF("%s(): reset failed: %s\n", func, strerror(errno));
+	if (sp->queueing)
+		ioctl(sp->fd, STICIO_STARTQ);
 }
