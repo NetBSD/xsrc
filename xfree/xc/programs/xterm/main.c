@@ -2183,7 +2183,7 @@ get_pty (int *pty, char *from GCC_UNUSED)
 				(resource.utmpInhibit ? OPTY_NOP : OPTY_LOGIN),
 				getuid(), from)) < 0);
 
-#elif defined(__osf__) || (defined(__GLIBC__) && !defined(USE_USG_PTYS))
+#elif defined(__osf__) || (defined(__GLIBC__) && !defined(USE_USG_PTYS)) || defined(__NetBSD__)
 
 	int tty;
 	result = openpty(pty, &tty, ttydev, NULL, NULL);
