@@ -4,7 +4,7 @@ static char *rid="$TOG: main.c /main/249 1997/08/26 14:13:43 kaleb $";
 
 /*
  * 				 W A R N I N G
- * 
+ *
  * If you think you know what all of this code is doing, you are
  * probably very mistaken.  There be serious and nasty dragons here.
  *
@@ -46,13 +46,13 @@ Copyright 1987, 1988 by Digital Equipment Corporation, Maynard.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
-supporting documentation, and that the name of Digital not be used in 
-advertising or publicity pertaining to distribution of the software 
-without specific, written prior permission.  
+both that copyright notice and this permission notice appear in
+supporting documentation, and that the name of Digital not be used in
+advertising or publicity pertaining to distribution of the software
+without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -64,7 +64,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/xterm/main.c,v 3.67 1998/03/27 23:24:01 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/main.c,v 3.68 1998/04/05 00:46:10 robin Exp $ */
 
 
 /* main.c */
@@ -75,6 +75,7 @@ SOFTWARE.
 
 #include "version.h"
 #include "ptyx.h"
+
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
 
@@ -85,9 +86,11 @@ SOFTWARE.
 
 #include <pwd.h>
 #include <ctype.h>
+
 #include "data.h"
 #include "error.h"
 #include "menu.h"
+#include "xterm.h"
 
 #ifdef AMOEBA
 #include <amoeba.h>
@@ -344,16 +347,12 @@ static Bool IsPts = False;
 #endif
 
 #include <stdio.h>
-#include <errno.h>
 #include <setjmp.h>
 
 #ifdef X_NOT_STDC_ENV
-extern int errno;
-#define Time_t long
-extern Time_t time ();
+extern time_t time ();
 #else
 #include <time.h>
-#define Time_t time_t
 #endif
 
 #ifdef hpux
@@ -457,35 +456,19 @@ int	Ptyfd;
 #endif
 #endif
 
-#ifndef X_NOT_POSIX
-#include <unistd.h>
-#else
+#ifdef X_NOT_POSIX
 extern long lseek();
 #if defined(USG)
 extern unsigned sleep();
 #else
 extern void sleep();
 #endif
-#endif
-
-#ifndef X_NOT_STDC_ENV
-#include <stdlib.h>
-#else
-extern char *malloc();
-extern char *calloc();
-extern char *realloc();
-extern char *getenv();
-extern void exit();
-#endif
-#ifdef X_NOT_POSIX
 extern char *ttyname();
 #endif
 
 #ifdef SYSV
 extern char *ptsname();
 #endif
-
-#include "xterm.h"
 
 int switchfb[] = {0, 2, 1, 3};
 
@@ -513,7 +496,7 @@ static Bool xterm_exiting = False;
 ** Ordinarily it should be okay to omit the assignment in the following
 ** statement. Apparently the c89 compiler on AIX 4.1.3 has a bug, or does
 ** it? Without the assignment though the compiler will init command_to_exec
-** to 0xffffffff instead of NULL; and subsequent usage, e.g. in spawn() to 
+** to 0xffffffff instead of NULL; and subsequent usage, e.g. in spawn() to
 ** SEGV.
 */
 static char **command_to_exec = NULL;
@@ -604,7 +587,7 @@ static struct jtchars d_jtc = {
 static int override_tty_modes = 0;
 struct _xttymodes {
     char *name;
-    Size_t len;
+    size_t len;
     int set;
     char value;
 } ttymodelist[] = {
@@ -666,7 +649,7 @@ static char etc_utmp[] = UTMP_FILENAME;
 
 #ifdef LASTLOG
 static char etc_lastlog[] = LASTLOG_FILENAME;
-#endif 
+#endif
 
 #ifdef WTMP
 static char etc_wtmp[] = WTMP_FILENAME;
@@ -723,6 +706,16 @@ static struct _resource {
 #endif
     Boolean wait_for_map;
     Boolean useInsertMode;
+#if OPT_ZICONBEEP
+    int zIconBeep;		/* beep level when output while iconified */
+#endif
+#if OPT_SAME_NAME
+    Boolean sameName;		/* Don't change the title or icon name if it is
+				 * the same.  This prevents flicker on the
+				 * screen at the cost of an extra request to
+				 * the server.
+				 */
+#endif
 } resource;
 
 /* used by VT (charproc.c) */
@@ -751,9 +744,17 @@ static XtResource application_resources[] = {
 	offset(sunKeyboard), XtRString, "false"},
 #endif
     {"waitForMap", "WaitForMap", XtRBoolean, sizeof (Boolean),
-        offset(wait_for_map), XtRString, "false"},
+	offset(wait_for_map), XtRString, "false"},
     {"useInsertMode", "UseInsertMode", XtRBoolean, sizeof (Boolean),
-        offset(useInsertMode), XtRString, "false"},
+	offset(useInsertMode), XtRString, "false"},
+#if OPT_ZICONBEEP
+    {"zIconBeep", "ZIconBeep", XtRInt, sizeof (int),
+	offset(zIconBeep), XtRImmediate, 0},
+#endif
+#if OPT_SAME_NAME
+    {"sameName", "SameName", XtRBoolean, sizeof (Boolean),
+	offset(sameName), XtRString, "true"},
+#endif
 };
 #undef offset
 
@@ -861,6 +862,13 @@ static XrmOptionDescRec optionDescList[] = {
 {"+vb",		"*visualBell",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-wf",		"*waitForMap",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+wf",		"*waitForMap",	XrmoptionNoArg,		(caddr_t) "off"},
+#if OPT_ZICONBEEP
+{"-ziconbeep",  "*zIconBeep",   XrmoptionSepArg,        (caddr_t) NULL},
+#endif
+#if OPT_SAME_NAME
+{"-samename",	"*sameName",	XrmoptionNoArg,		(caddr_t) "on"},
+{"+samename",	"*sameName",	XrmoptionNoArg,		(caddr_t) "off"},
+#endif
 /* bogus old compatibility stuff for which there are
    standard XtAppInitialize options now */
 {"%",		"*tekGeometry",	XrmoptionStickyArg,	(caddr_t) NULL},
@@ -966,6 +974,12 @@ static struct _options {
 { "-C",                    "intercept console messages (not supported)" },
 #endif
 { "-Sxxd",                 "slave mode on \"ttyxx\", file descriptor \"d\"" },
+#if OPT_ZICONBEEP
+{ "-ziconbeep percent",    "beep and flag icon of window having hidden output" },
+#endif
+#if OPT_SAME_NAME
+{"-/+sameName",	   "Turn on/off the no flicker option for title and icon name" },
+#endif
 { NULL, NULL }};
 
 static char *message[] = {
@@ -1052,11 +1066,11 @@ ConvertConsoleSelection(w, selection, target, type, value, length, format)
 #endif /* TIOCCONS */
 
 Arg ourTopLevelShellArgs[] = {
-	{ XtNallowShellResize, (XtArgVal) TRUE },	
+	{ XtNallowShellResize, (XtArgVal) TRUE },
 	{ XtNinput, (XtArgVal) TRUE },
 };
 int number_ourTopLevelShellArgs = 2;
-	
+
 Widget toplevel;
 Bool waiting_for_initial_map;
 
@@ -1142,7 +1156,7 @@ char **argv;
 	if (!ttydev)
 #endif
 	{
-	    fprintf (stderr, 
+	    fprintf (stderr,
 	    	     "%s:  unable to allocate memory for ttydev or ptydev\n",
 		     ProgramName);
 	    exit (1);
@@ -1256,7 +1270,7 @@ char **argv;
         d_tio.c_line = NTTYDISC;
 #else
 	d_tio.c_line = 0;
-#endif	
+#endif
 #endif /* USE_POSIX_TERMIOS */
 #ifdef __sgi
         d_tio.c_cflag &= ~(HUPCL|PARENB);
@@ -1406,7 +1420,7 @@ char **argv;
 #endif
 
 	    XtSetErrorHandler(xt_error);
-	    toplevel = XtAppInitialize (&app_con, "XTerm", 
+	    toplevel = XtAppInitialize (&app_con, "XTerm",
 					optionDescList,
 					XtNumber(optionDescList),
 					&argc, argv, fallback_resources,
@@ -1448,6 +1462,17 @@ char **argv;
 	    }
 	}
 
+#if OPT_ZICONBEEP
+	zIconBeep = resource.zIconBeep;
+	zIconBeep_flagged = False;
+	if ( zIconBeep > 100 || zIconBeep < -100 ) {
+	    zIconBeep = 0;	/* was 100, but I prefer to defaulting off. */
+	    fprintf( stderr, "a number between -100 and 100 is required for zIconBeep.  0 used by default\n");
+	}
+#endif /* OPT_ZICONBEEP */
+#if OPT_SAME_NAME
+        sameName = resource.sameName;
+#endif
 	xterm_name = resource.xterm_name;
 	sunFunctionKeys = resource.sunFunctionKeys;
 #if OPT_SUNPC_KBD
@@ -1472,7 +1497,7 @@ char **argv;
 	    XtSetValues( toplevel, args, 2);
 	}
 
-	XtSetValues (toplevel, ourTopLevelShellArgs, 
+	XtSetValues (toplevel, ourTopLevelShellArgs,
 		     number_ourTopLevelShellArgs);
 
 	/* Parse the rest of the command line */
@@ -1589,10 +1614,10 @@ char **argv;
 		} /* else not reached */
 	    }
 
-	    if (!resource.icon_name) 
+	    if (!resource.icon_name)
 	      resource.icon_name = resource.title;
 	    XtSetArg (args[0], XtNtitle, resource.title);
-	    XtSetArg (args[1], XtNiconName, resource.icon_name);		
+	    XtSetArg (args[1], XtNiconName, resource.icon_name);
 
 	    XtSetValues (toplevel, args, 2);
 	}
@@ -1672,7 +1697,7 @@ char **argv;
 #if OSMAJORVERSION < 4
 	/* In AIXV3, xterms started from /dev/console have CLOCAL set.
 	 * This means we need to clear CLOCAL so that SIGHUP gets sent
-	 * to the slave-pty process when xterm exits. 
+	 * to the slave-pty process when xterm exits.
 	 */
 
 	{
@@ -1713,7 +1738,7 @@ char **argv;
 #endif	/* USE_SYSV_TERMIO */
 #endif /* MINIX */
 #endif  /* AMOEBA */
-	
+
 	FD_ZERO (&pty_mask);
 	FD_ZERO (&X_mask);
 	FD_ZERO (&Select_mask);
@@ -1721,8 +1746,8 @@ char **argv;
 	FD_SET (ConnectionNumber(screen->display), &X_mask);
 	FD_SET (screen->respond, &Select_mask);
 	FD_SET (ConnectionNumber(screen->display), &Select_mask);
-	max_plus1 = (screen->respond < ConnectionNumber(screen->display)) ? 
-		(1 + ConnectionNumber(screen->display)) : 
+	max_plus1 = (screen->respond < ConnectionNumber(screen->display)) ?
+		(1 + ConnectionNumber(screen->display)) :
 		(1 + screen->respond);
 
 #ifdef DEBUG
@@ -1777,19 +1802,19 @@ get_pty (pty)
 	  The order of this code is *important*.  On SYSV/386 we want to open
 	  a /dev/ttyp? first if at all possible.  If none are available, then
 	  we'll try to open a /dev/pts??? device.
-	  
+
 	  The reason for this is because /dev/ttyp? works correctly, where
 	  as /dev/pts??? devices have a number of bugs, (won't update
 	  screen correcly, will hang -- it more or less works, but you
 	  really don't want to use it).
-	  
+
 	  Most importantly, for boxes of this nature, one of the major
 	  "features" is that you can emulate a 8086 by spawning off a UNIX
 	  program on 80386/80486 in v86 mode.  In other words, you can spawn
 	  off multiple MS-DOS environments.  On ISC the program that does
 	  this is named "vpix."  The catcher is that "vpix" will *not* work
 	  with a /dev/pts??? device, will only work with a /dev/ttyp? device.
-	  
+
 	  Since we can open either a /dev/ttyp? or a /dev/pts??? device,
 	  the flag "IsPts" is set here so that we know which type of
 	  device we're dealing with in routine spawn().  That's the reason
@@ -1937,21 +1962,21 @@ pty_search(pty)
 
 static void
 get_terminal ()
-/* 
+/*
  * sets up X and initializes the terminal structure except for term.buf.fildes.
  */
 {
 	register TScreen *screen = &term->screen;
-	
-	screen->arrow = make_colored_cursor (XC_left_ptr, 
+
+	screen->arrow = make_colored_cursor (XC_left_ptr,
 					     screen->mousecolor,
 					     screen->mousecolorback);
 }
 
 /*
- * The only difference in /etc/termcap between 4014 and 4015 is that 
+ * The only difference in /etc/termcap between 4014 and 4015 is that
  * the latter has support for switching character sets.  We support the
- * 4015 protocol, but ignore the character switches.  Therefore, we 
+ * 4015 protocol, but ignore the character switches.  Therefore, we
  * choose 4014 over 4015.
  *
  * Features of the 4014 over the 4012: larger (19") screen, 12-bit
@@ -2090,7 +2115,7 @@ extern char **environ;
 
 static int
 spawn ()
-/* 
+/*
  *  Inits pty and tty and forks a login process.
  *  Does not close fd Xsocket.
  *  If slave, the pty named in passedPty is already open for use
@@ -2234,7 +2259,7 @@ spawn ()
 			/* Get a copy of the current terminal's state,
 			 * if we can.  Some systems (e.g., SVR4 and MacII)
 			 * may not have a controlling terminal at this point
-			 * if started directly from xdm or xinit,     
+			 * if started directly from xdm or xinit,
 			 * in which case we just use the defaults as above.
 			 */
 #ifdef TIOCSLTC
@@ -2251,7 +2276,7 @@ spawn ()
 
 #else	/* not USE_SYSV_TERMIO */
 #ifdef USE_POSIX_TERMIOS
-			if (tcgetattr(tty, &tio) == -1) 
+			if (tcgetattr(tty, &tio) == -1)
 			        tio = d_tio;
 #else   /* not USE_POSIX_TERMIOS */
 			if(ioctl(tty, TIOCGETP, (char *)&sg) == -1)
@@ -2367,7 +2392,7 @@ spawn ()
 	    while (*envnew != NULL) {
 		if(tgetent(ptr, *envnew) == 1) {
 			TermName = *envnew;
-			if (*ptr) 
+			if (*ptr)
 			    if(!TEK4014_ACTIVE(screen))
 				resize(screen, termcap, newtc);
 			break;
@@ -2412,11 +2437,12 @@ spawn ()
 #endif
 	    if ((screen->pid = fork ()) == -1)
 		SysError (ERROR_FORK);
-		
+
 	    if (screen->pid == 0) {
 		/*
 		 * now in child process
 		 */
+		TRACE_CHILD
 #if defined(_POSIX_SOURCE) || defined(SVR4) || defined(__convex__) || defined(SCO325)
 		int pgrp = setsid();
 #else
@@ -2593,7 +2619,7 @@ spawn ()
 #endif /* USE_HANDSHAKE -- from near fork */
 
 #ifdef USE_TTY_GROUP
-	{ 
+	{
 #include <grp.h>
 		struct group *ttygrp;
 		if ((ttygrp = getgrnam("tty")) != 0) {
@@ -2644,7 +2670,7 @@ spawn ()
 		    tio.c_oflag |= ONLCR;
 #ifdef OPOST
 		    tio.c_oflag |= OPOST;
-#endif /* OPOST */		    
+#endif /* OPOST */
 #ifdef MINIX	/* should be ifdef _POSIX_SOURCE */
 		    cfsetispeed(&tio, B9600);
 		    cfsetospeed(&tio, B9600);
@@ -2661,7 +2687,7 @@ spawn ()
 #else /* USE_POSIX_TERMIOS */
 		    cfsetispeed(&tio, B9600);
 		    cfsetospeed(&tio, B9600);
-		    /* Clear CLOCAL so that SIGHUP is sent to us 
+		    /* Clear CLOCAL so that SIGHUP is sent to us
 		       when the xterm ends */
 		    tio.c_cflag &= ~CLOCAL;
 #endif /* USE_POSIX_TERMIOS */
@@ -2897,6 +2923,7 @@ spawn ()
 		sprintf (buf, "%lu",
 			 ((unsigned long) XtWindow (XtParent(CURRENT_EMU(screen)))));
 		Setenv ("WINDOWID=", buf);
+
 		/* put the display into the environment of the shell*/
 		Setenv ("DISPLAY=", XDisplayString (screen->display));
 
@@ -2956,7 +2983,7 @@ spawn ()
 #endif /* AMOEBA */
 
 #ifdef Lynx
-{
+	{
 	struct termio	t;
 	if (ioctl(0, TCGETA, &t) >= 0)
 	{
@@ -2964,7 +2991,7 @@ spawn ()
 		t.c_oflag |= OPOST;
 		ioctl(0, TCSETA, &t);
 	}
-}
+	}
 #endif
 
 #ifdef UTMP
@@ -3020,7 +3047,7 @@ spawn ()
 		(void) strncpy(utmp.ut_user,
 			       (pw && pw->pw_name) ? pw->pw_name : "????",
 			       sizeof(utmp.ut_user));
-		    
+
 		/* why are we copying this string again? look up 16 lines. */
 		(void)strncpy(utmp.ut_id, ptynameptr, sizeof(utmp.ut_id));
 		(void) strncpy (utmp.ut_line,
@@ -3038,16 +3065,16 @@ spawn ()
 #endif
 		(void) strncpy(utmp.ut_host, buf, sizeof(utmp.ut_host));
 #endif
-		(void) strncpy(utmp.ut_name, pw->pw_name, 
+		(void) strncpy(utmp.ut_name, pw->pw_name,
 			       sizeof(utmp.ut_name));
 
 		utmp.ut_pid = getpid();
 #if defined(SVR4) || defined(SCO325) || (defined(linux) && __GLIBC__ >= 2)
 		utmp.ut_session = getsid(0);
-		utmp.ut_xtime = time ((Time_t *) 0);
+		utmp.ut_xtime = time ((time_t *) 0);
 		utmp.ut_tv.tv_usec = 0;
 #else
-		utmp.ut_time = time ((Time_t *) 0);
+		utmp.ut_time = time ((time_t *) 0);
 #endif
 
 		/* write out the entry */
@@ -3093,12 +3120,12 @@ spawn ()
 				utmp.ut_type = USER_PROCESS;
 #endif /* MINIX */
 #ifdef HAS_UTMP_UT_HOST
-				(void) strncpy(utmp.ut_host, 
+				(void) strncpy(utmp.ut_host,
 					       XDisplayString (screen->display),
 					       sizeof(utmp.ut_host));
 #endif
 				/* cast needed on Ultrix 4.4 */
-				time((Time_t*)&utmp.ut_time);
+				time((time_t*)&utmp.ut_time);
 				lseek(i, (long)(tslot * sizeof(struct utmp)), 0);
 				write(i, (char *)&utmp, sizeof(struct utmp));
 				close(i);
@@ -3142,7 +3169,7 @@ spawn ()
 				    (void) strncpy(lastlog.ll_line, ttydev +
 					sizeof("/dev"),
 					sizeof (lastlog.ll_line));
-				    (void) strncpy(lastlog.ll_host, 
+				    (void) strncpy(lastlog.ll_host,
 					  XDisplayString (screen->display),
 					  sizeof (lastlog.ll_host));
 				    time(&lastlog.ll_time);
@@ -3255,10 +3282,14 @@ spawn ()
 
 		/* need to reset after all the ioctl bashing we did above */
 #if defined(TIOCSSIZE) && (defined(sun) && !defined(SVR4))
-		ioctl  (0, TIOCSSIZE, &ts);
+		i = ioctl (0, TIOCSSIZE, &ts);
+		TRACE(("spawn TIOCSSIZE %dx%d return %d\n", ts.ts_lines, ts.ts_cols, i))
 #else	/* not old SunOS */
 #ifdef TIOCSWINSZ
-		ioctl (0, TIOCSWINSZ, (char *)&ws);
+		i = ioctl (0, TIOCSWINSZ, (char *)&ws);
+		TRACE(("spawn TIOCSWINSZ %dx%d return %d\n", ws.ws_row, ws.ws_col, i))
+#else
+		TRACE(("spawn cannot tell pty its size\n"))
 #endif	/* TIOCSWINSZ */
 #endif	/* sun */
 
@@ -3268,7 +3299,7 @@ spawn ()
 			/* print error message on screen */
 			fprintf(stderr, "%s: Can't execvp %s\n", xterm_name,
 			 *command_to_exec);
-		} 
+		}
 
 #ifdef USE_SYSV_SIGHUP
 		/* fix pts sh hanging around */
@@ -3400,7 +3431,7 @@ spawn ()
 
 /*
  * Unfortunately, System V seems to have trouble divorcing the child process
- * from the process group of xterm.  This is a problem because hitting the 
+ * from the process group of xterm.  This is a problem because hitting the
  * INTR or QUIT characters on the keyboard will cause xterm to go away if we
  * don't ignore the signals.  This is annoying.
  */
@@ -3546,7 +3577,7 @@ static int spawn()
     int i, n, ncap;
     errstat err;
     struct caplist *cl;
-    char buf[64], numbuf[12];
+    char buf[64];
     struct caplist *capvnew;
     int ttythread();
     int xwatchdogthread();
@@ -3741,7 +3772,7 @@ static int spawn()
 
 	argvec[0] = term->misc.login_shell ? shname_minus : shname;
 	argvec[1] = NULL;
-    
+
 	if (find_program(shell, &shellcap) != STD_OK) {
 	    fprintf(stderr, "%s: Could not find %s!\n", xterm_name, shell);
 	    exit(ERROR_EXEC);
@@ -3852,11 +3883,11 @@ Exit(n)
 		    utptr->ut_type = DEAD_PROCESS;
 #if defined(SVR4) || defined(SCO325) || (defined(linux) && __GLIBC__ >= 2)
 		    utmp.ut_session = getsid(0);
-		    utmp.ut_xtime = time ((Time_t *) 0);
+		    utmp.ut_xtime = time ((time_t *) 0);
 		    utmp.ut_tv.tv_usec = 0;
 #else
 		    *utptr->ut_user=0;
-		    utptr->ut_time = time((Time_t *) 0);
+		    utptr->ut_time = time((time_t *) 0);
 #endif
 		    (void) pututline(utptr);
 #ifdef WTMP
@@ -3940,7 +3971,7 @@ register char *oldtc, *newtc;
 {
 #ifndef USE_SYSV_ENVVARS
 	register char *ptr1, *ptr2;
-	register Size_t i;
+	register size_t i;
 	register int li_first = 0;
 	register char *temp;
 
@@ -4048,7 +4079,7 @@ char *fmt;
  	sprintf(buf+strlen(buf), fmt, x0,x1,x2,x3,x4,x5,x6,x7,x8,x9);
  	strcat(buf, ": ");
  	strcat(buf, SysErrorMsg (oerrno));
- 	strcat(buf, "\n");	
+ 	strcat(buf, "\n");
 #ifndef AMOEBA
 	f = open("/dev/console",O_WRONLY);
 	write(f, buf, strlen(buf));
@@ -4182,6 +4213,7 @@ kill_process_group(pid, sig)
     int pid;
     int sig;
 {
+    TRACE(("kill_process_group(pid=%d, sig=%d)\n", pid, sig))
 #ifndef AMOEBA
 #ifndef X_NOT_POSIX
     return kill (-pid, sig);
