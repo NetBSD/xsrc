@@ -18,21 +18,22 @@ void netbsdPciSetBits(PCITAG, int, CARD32, CARD32);
 
 static int devpci = -1;
 
+static pciBusFuncs_t netbsdFuncs0 = {
+/* pciReadLong      */	netbsdPciConfRead,
+/* pciWriteLong     */	netbsdPciConfWrite,
+/* pciSetBitsLong   */	netbsdPciSetBits,
+/* pciAddrHostToBus */	pciAddrNOOP,
+/* pciAddrBusToHost */	pciAddrNOOP
+};
+
 pciBusInfo_t netbsdPci0 = {
 /* configMech  */	PCI_CFG_MECH_OTHER,
 /* numDevices  */	32,
 /* secondary   */	FALSE,
 /* primary_bus */	0,
-/* io_base */		0,	/* XXX */
-/* io_size */		0,	/* XXX */
-/* funcs       */	{
-				netbsdPciConfRead,
-				netbsdPciConfWrite,
-				netbsdPciSetBits,
-				pciAddrNOOP,
-				pciAddrNOOP
-			},
-/* pciBusPriv  */	NULL
+/* funcs       */	&netbsdFuncs0,
+/* pciBusPriv  */	NULL,
+/* bridge      */	NULL
 };
 
 void
