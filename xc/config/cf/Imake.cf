@@ -132,6 +132,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34 1997/01/05 11:49:28 dawes Exp $
 #  define mac68kArchitecture
 #  undef mac68k
 # endif
+# if defined(__amiga__) || defined(amiga)
+#  define amigaArchitecture
+#  undef amiga
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__
