@@ -1,6 +1,6 @@
                               Fonts in XFree86
 
-                    Juliusz Chroboczek, <jch@xfree86.org>
+                  Juliusz Chroboczek, <jch@pps.jussieu.fr>
 
                               17 November 2003
 
@@ -10,9 +10,9 @@ This document describes the support for fonts in XFree86.  Installing fonts
 (section 2., page 1) is aimed at the casual user wishing to install fonts in
 XFree86; the rest of the document describes the font support in more detail.
 
-We assume some familiarity with digital fonts.  If anything is not clear to
-you, please consult Appendix: Background (section 5., page 1) at the end of
-this document for background information.
+We assume that you have some familiarity with digital fonts.  If anything is
+not clear to you, please consult Appendix: Background (section 5., page 1) at
+the end of this document for background information.
 
 1.1  Two font systems
 
@@ -270,9 +270,9 @@ structure should be as follows:
 
 After creating this directory structure and copying the relevant files, you
 should create a `fonts.scale' file.  This file has the same format as in the
-case of (non-CID) scalable fonts, except that its first column contains
-PostScript font names with the extension `.cid' appended rather than actual
-filenames:
+case of (non-CID) scalable fonts, except that its first column contains Post-
+Script font names with the extension `.cid' appended rather than actual file-
+names:
 
      1
      Adobe-Korea1/Munhwa-Regular--UniKS-UCS2-H.cid \
@@ -593,7 +593,7 @@ backends to share their encoding data, and allows simple configuration of new
 locales independently of font type.
 
 Please note: the X-TrueType (X-TT) backend does not use the fontenc layer,
-but instead uses its own method for font reencoding.  If you are only inter-
+but instead uses its own method for font re-encoding.  If you are only inter-
 ested in X-TT you may want to skip to Using Symbol Fonts (section 4.1.5, page
 1), as the intervening information does not apply to X-TT.  X-TT itself is
 described in more detail in X-TrueType (section 4.2.2, page 1).
@@ -702,9 +702,9 @@ as the font file used or in a system-wide location
 (`/usr/X11R6/lib/X11/fonts/encodings/' by default).
 
 The `encodings.dir' file has a similar format to `fonts.dir'.  Its first line
-specifies the number of encodings, while every successive line has two
-columns, the name of the encoding, and the name of the encoding file; this
-can be relative to the current directory, or absolute.  Every encoding name
+specifies the number of encodings, while every successive line has two col-
+umns, the name of the encoding, and the name of the encoding file; this can
+be relative to the current directory, or absolute.  Every encoding name
 should agree with the encoding name defined in the encoding file.  For exam-
 ple,
 
@@ -1181,7 +1181,7 @@ The IANA RFC documents, available from a number of sites throughout the
 world, often provide interesting information about character set issues; see
 for example RFC 373.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.24 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/fonts.sgml,v 1.27 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.fonts,v 1.28 2003/12/20 19:47:28 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.fonts,v 1.32 2005/03/04 03:25:45 dawes Exp $

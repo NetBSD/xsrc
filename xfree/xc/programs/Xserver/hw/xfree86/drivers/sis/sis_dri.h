@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dri.h,v 1.12 2004/01/04 18:08:00 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dri.h,v 1.13 2004/06/21 00:43:22 twini Exp $ */
+/* $XdotOrg$ */
 /*
  * SiS DRI wrapper
  *
@@ -36,6 +37,14 @@
 
 #include "xf86drm.h"
 
+/* Hack: When the types were changed, the typedefs
+ * went into drm.h. This file did not exist earlier.
+ */
+#ifndef _DRM_H_
+#define drm_handle_t drmHandle
+#define drm_context_t drmContext
+#endif
+
 #define SIS_MAX_DRAWABLES 256
 #define SISIOMAPSIZE (64*1024)
 
@@ -64,7 +73,7 @@ typedef struct {
 #define SIS_DEPTH 2
 
 typedef struct {
-  drmHandle handle;
+  drm_handle_t handle;
   drmSize size;
   drmAddress map;
 } sisRegion, *sisRegionPtr;

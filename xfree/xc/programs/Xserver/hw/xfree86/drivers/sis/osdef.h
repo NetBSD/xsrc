@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/osdef.h,v 1.10 2004/02/25 17:45:11 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/osdef.h,v 1.11 2004/06/21 00:43:22 twini Exp $ */
+/* $XdotOrg$ */
 /*
  * OS depending defines
  *
@@ -52,7 +53,7 @@
 
 /* The choices are: */
 /* #define LINUX_KERNEL	 */  	/* Kernel framebuffer */
-#define LINUX_XF86    		/* XFree86 */
+#define LINUX_XF86    		/* XFree86/X.org */
 
 #ifdef OutPortByte
 #undef OutPortByte
@@ -108,7 +109,7 @@
 #endif
 
 /**********************************************************************/
-/*  XFree86                                                           */
+/*  XFree86/X.org                                                     */
 /**********************************************************************/
 
 #ifdef LINUX_XF86

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_sarea.h,v 1.1 2001/03/21 17:11:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_sarea.h,v 1.2 2004/12/10 16:07:02 alanh Exp $ */
 
 /*
  * Copyright 2000 Gareth Hughes
@@ -176,7 +176,7 @@ typedef struct {
 
    /* The current cliprects, or a subset thereof.
     */
-   XF86DRIClipRectRec boxes[MGA_NR_SAREA_CLIPRECTS];
+   drm_clip_rect_t boxes[MGA_NR_SAREA_CLIPRECTS];
    unsigned int nbox;
 
    /* Information about the most recently used 3d drawable.  The
@@ -197,7 +197,7 @@ typedef struct {
    unsigned int exported_nback;
    int exported_back_x, exported_front_x, exported_w;
    int exported_back_y, exported_front_y, exported_h;
-   XF86DRIClipRectRec exported_boxes[MGA_NR_SAREA_CLIPRECTS];
+   drm_clip_rect_t exported_boxes[MGA_NR_SAREA_CLIPRECTS];
 
    /* Counters for aging textures and for client-side throttling.
     */

@@ -4,7 +4,7 @@ XCOMM $Xorg: hpLib.rules,v 1.3 2000/08/17 19:41:47 cpqbld Exp $
  * HP shared library rules
  */
 
-XCOMM $XFree86: xc/config/cf/hpLib.rules,v 3.4 2001/01/17 16:22:31 dawes Exp $
+XCOMM $XFree86: xc/config/cf/hpLib.rules,v 3.5 2004/03/25 03:36:21 dawes Exp $
 
 #ifndef HasSharedLibraries
 # define HasSharedLibraries YES
@@ -70,7 +70,7 @@ XCOMM $XFree86: xc/config/cf/hpLib.rules,v 3.4 2001/01/17 16:22:31 dawes Exp $
  */
 #ifndef InstallSharedLibrary
 # define InstallSharedLibrary(libname,rev,dest)				@@\
-install:: Concat(lib,libname.sl.rev) 					@@\
+install::								@@\
 	MakeDir($(DESTDIR)dest)						@@\
 	RMoveToBakFile(Concat($(DESTDIR)dest/lib,libname.sl.rev))	@@\
 	$(INSTALL) $(INSTALLFLAGS) $(INSTLIBFLAGS) Concat(lib,libname.sl.rev) $(DESTDIR)dest @@\

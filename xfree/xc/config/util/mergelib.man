@@ -1,7 +1,7 @@
-.\" $XFree86: xc/config/util/mergelib.man,v 1.2 2003/04/07 22:03:49 herrb Exp $
+.\" $XFree86: xc/config/util/mergelib.man,v 1.3 2005/02/11 03:02:53 dawes Exp $
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
-.TH MERGELIB 1 __xorgversion__
+.TH MERGELIB 1 __vendorversion__
 .SH NAME
 mergelib \- merge one library into another
 .SH SYNOPSIS

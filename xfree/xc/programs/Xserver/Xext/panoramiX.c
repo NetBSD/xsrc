@@ -23,7 +23,53 @@ shall not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from Digital
 Equipment Corporation.
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/panoramiX.c,v 3.38 2003/11/10 18:21:43 tsi Exp $ */
+/*
+ * Copyright (c) 1996-2004 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiX.c,v 3.40 2004/06/30 20:21:38 martin Exp $ */
 
 #define NEED_REPLIES
 #include <stdio.h>
@@ -53,6 +99,17 @@ Equipment Corporation.
 #include "modinit.h"
 
 
+PanoramiXData 	*panoramiXdataPtr = NULL;
+unsigned long XRT_WINDOW;
+
+#ifdef PANORAMIX
+
+#ifdef GLXPROXY
+extern VisualPtr glxMatchVisual(ScreenPtr pScreen,
+				VisualPtr pVisual,
+				ScreenPtr pMatchScreen);
+#endif
+
 #if 0
 static unsigned char PanoramiXReqCode = 0;
 #endif
@@ -64,7 +121,6 @@ int 		PanoramiXPixWidth = 0;
 int 		PanoramiXPixHeight = 0;
 int 		PanoramiXNumScreens = 0;
 
-PanoramiXData 	*panoramiXdataPtr = NULL;
 RegionRec   	PanoramiXScreenRegion = {{0, 0, 0, 0}, NULL};
 
 static int		PanoramiXNumDepths;
@@ -76,7 +132,6 @@ static VisualPtr	PanoramiXVisuals;
 XID		*PanoramiXVisualTable = NULL;
 
 unsigned long XRC_DRAWABLE;
-unsigned long XRT_WINDOW;
 unsigned long XRT_PIXMAP;
 unsigned long XRT_GC;
 unsigned long XRT_COLORMAP;
@@ -416,6 +471,56 @@ XineramaRegisterConnectionBlockCallback(void (*func)(void))
     return TRUE;
 }
 
+static void XineramaInitData(ScreenPtr pScreen)
+{
+    int i, w, h;
+
+    REGION_NULL(pScreen, &PanoramiXScreenRegion)
+    for (i = 0; i < PanoramiXNumScreens; i++) {
+	BoxRec TheBox;
+
+        pScreen = screenInfo.screens[i];
+
+	panoramiXdataPtr[i].x = dixScreenOrigins[i].x;
+	panoramiXdataPtr[i].y = dixScreenOrigins[i].y;
+	panoramiXdataPtr[i].width = pScreen->width;
+	panoramiXdataPtr[i].height = pScreen->height;
+
+	TheBox.x1 = panoramiXdataPtr[i].x;
+	TheBox.x2 = TheBox.x1 + panoramiXdataPtr[i].width;
+	TheBox.y1 = panoramiXdataPtr[i].y;
+	TheBox.y2 = TheBox.y1 + panoramiXdataPtr[i].height;
+
+	REGION_INIT(pScreen, &XineramaScreenRegions[i], &TheBox, 1);
+	REGION_UNION(pScreen, &PanoramiXScreenRegion, &PanoramiXScreenRegion,
+		     &XineramaScreenRegions[i]);
+    }
+
+    PanoramiXPixWidth = panoramiXdataPtr[0].x + panoramiXdataPtr[0].width;
+    PanoramiXPixHeight = panoramiXdataPtr[0].y + panoramiXdataPtr[0].height;
+
+    for (i = 1; i < PanoramiXNumScreens; i++) {
+	w = panoramiXdataPtr[i].x + panoramiXdataPtr[i].width;
+	h = panoramiXdataPtr[i].y + panoramiXdataPtr[i].height;
+
+	if (PanoramiXPixWidth < w)
+	    PanoramiXPixWidth = w;
+	if (PanoramiXPixHeight < h)
+	    PanoramiXPixHeight = h;
+    }
+}
+
+void XineramaReinitData(ScreenPtr pScreen)
+{
+    int i;
+
+    REGION_UNINIT(pScreen, &PanoramiXScreenRegion);
+    for (i = 0; i < PanoramiXNumScreens; i++)
+	REGION_UNINIT(pScreen, &XineramaScreenRegions[i]);
+
+    XineramaInitData(pScreen);
+}
+
 /*
  *	PanoramiXExtensionInit():
  *		Called from InitExtensions in main().  
@@ -430,8 +535,7 @@ void PanoramiXExtensionInit(int argc, char *argv[])
     ExtensionEntry 	*extEntry;
     ScreenPtr		pScreen = screenInfo.screens[0];
     PanoramiXScreenPtr	pScreenPriv;
-    int			w, h;
-    
+
     if (noPanoramiXExtension) 
 	return;
 
@@ -509,41 +613,7 @@ void PanoramiXExtensionInit(int argc, char *argv[])
 	return;
     }
   
-
-    REGION_NULL(pScreen, &PanoramiXScreenRegion);
-    for (i = 0; i < PanoramiXNumScreens; i++) {
-	BoxRec TheBox;
-
-	pScreen = screenInfo.screens[i];
-
-	panoramiXdataPtr[i].x = dixScreenOrigins[i].x;
-	panoramiXdataPtr[i].y = dixScreenOrigins[i].y;
-	panoramiXdataPtr[i].width = pScreen->width;
-	panoramiXdataPtr[i].height = pScreen->height;
-
-	TheBox.x1 = panoramiXdataPtr[i].x;
-	TheBox.x2 = TheBox.x1 + panoramiXdataPtr[i].width;
-	TheBox.y1 = panoramiXdataPtr[i].y;
-	TheBox.y2 = TheBox.y1 + panoramiXdataPtr[i].height;
-
-	REGION_INIT(pScreen, &XineramaScreenRegions[i], &TheBox, 1);
-	REGION_UNION(pScreen, &PanoramiXScreenRegion, &PanoramiXScreenRegion,
-						&XineramaScreenRegions[i]);
-    }
-    
-
-    PanoramiXPixWidth = panoramiXdataPtr[0].x + panoramiXdataPtr[0].width;	
-    PanoramiXPixHeight = panoramiXdataPtr[0].y + panoramiXdataPtr[0].height;
-
-    for (i = 1; i < PanoramiXNumScreens; i++) {
-	w = panoramiXdataPtr[i].x + panoramiXdataPtr[i].width;
-	h = panoramiXdataPtr[i].y + panoramiXdataPtr[i].height;
-
-	if(PanoramiXPixWidth < w) 
-	    PanoramiXPixWidth = w;	
-	if(PanoramiXPixHeight < h) 
-	    PanoramiXPixHeight = h;	
-    }
+    XineramaInitData(pScreen);
 
     /*
      *	Put our processes into the ProcVector
@@ -789,6 +859,18 @@ void PanoramiXConsolidate(void)
 	/* check if the visual exists on all screens */
 	for (j = 1; j < PanoramiXNumScreens; j++) {
 	    pScreen2 = screenInfo.screens[j];
+
+#ifdef GLXPROXY
+	    pVisual2 = glxMatchVisual(pScreen, pVisual, pScreen2);
+	    if (pVisual2) {
+		PanoramiXVisualTable[(pVisual->vid * MAXSCREENS) + j] =
+		    pVisual2->vid;
+		continue;
+	    } else if (glxMatchVisual(pScreen, pVisual, pScreen)) {
+		PanoramiXVisualTable[(pVisual->vid * MAXSCREENS) + j] = 0;
+		break;
+	    }
+#endif
 	    pVisual2 = pScreen2->visuals;
 
 	    for (k = 0; k < pScreen2->numVisuals; k++, pVisual2++) {
@@ -1256,3 +1338,11 @@ XineramaGetImageData(
     REGION_UNINIT(pScreen, &SrcRegion);
     REGION_UNINIT(pScreen, &GrabRegion);
 }
+
+#else
+PanoramiXRes *
+PanoramiXFindIDByScrnum(RESTYPE type, XID id, int screen)
+{
+    return NULL;
+}
+#endif

@@ -34,7 +34,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86: xc/programs/dpsexec/dpsexec.c,v 1.7 2002/03/05 21:50:15 herrb Exp $ */
+/* $XFree86: xc/programs/dpsexec/dpsexec.c,v 1.8 2004/04/03 22:38:53 tsi Exp $ */
 
 #include <errno.h>
 #include <stdlib.h>
@@ -62,9 +62,9 @@
 #define ARGCAST void *
 #endif
 
-static void MyStatusProc (ctxt, code)
-    DPSContext ctxt;
-    int code;
+static void MyStatusProc (
+    DPSContext ctxt,
+    int code)
 {
     if (code == PSZOMBIE) {
 	/* Zombie event means context died */
@@ -72,9 +72,9 @@ static void MyStatusProc (ctxt, code)
     }
 }
 
-int main(argc, argv)
-    int argc;
-    char **argv;
+int main(
+    int argc,
+    char **argv)
 {
     char *displayname = "";
     Display *dpy;

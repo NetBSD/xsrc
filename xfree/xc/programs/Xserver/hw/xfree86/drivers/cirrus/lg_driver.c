@@ -13,7 +13,7 @@
  *	David Dawes, Andrew E. Mileski, Leonard N. Zubkoff,
  *	Guy DESBIEF, Itai Nahshon.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_driver.c,v 1.50 2003/11/07 22:49:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_driver.c,v 1.52 2005/02/18 02:55:07 dawes Exp $ */
 
 #define EXPERIMENTAL
 
@@ -181,6 +181,7 @@ static const char *vgahwSymbols[] = {
 	"vgaHWSave",
 	"vgaHWSaveScreen",
 	"vgaHWUnlock",
+	"vgaHWVBlankKGA",
 	NULL
 };
 
@@ -987,9 +988,13 @@ LgModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	}
 
 	/* Initialise the ModeReg values */
+	hwp->Flags |= VGA_FIX_SYNC_PULSES;
 	if (!vgaHWInit(pScrn, mode))
 		return FALSE;
 	pScrn->vtSema = TRUE;
+
+	/* We have vertical blank end extension bits, so undo KGA workaround */
+	vgaHWVBlankKGA(mode, &hwp->ModeReg, 0, 0);
 
 	if (VDiv2)
 		hwp->ModeReg.CRTC[0x17] |= 0x04;
@@ -1004,34 +1009,34 @@ LgModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	hwp->ModeReg.MiscOutReg &= ~0x01;
 #endif
 
-
-	/* ??? Should these be both ...End or ...Start, not one of each? */
-	pCir->chip.lg->ModeReg.ExtVga[CR1A] = (((mode->CrtcVSyncStart + 1) & 0x300 ) >> 2)
-								| (((mode->CrtcHSyncEnd >> 3) & 0xC0) >> 2);
+	pCir->chip.lg->ModeReg.ExtVga[CR1A] =
+		(((mode->CrtcVBlankEnd - 1) & 0x300) >> 2) |
+		((((mode->CrtcHSyncEnd >> 3) - 1) & 0x0C0) >> 2);
 
 	width = pScrn->displayWidth * pScrn->bitsPerPixel / 8;
 	if (pScrn->bitsPerPixel == 1)
 		width <<= 2;
-	hwp->ModeReg.CRTC[0x13] = (width + 7) >> 3;
+	width = (width + 7) >> 3;
+	hwp->ModeReg.CRTC[0x13] = width;
 	/* Offset extension (see CR13) */
 	pCir->chip.lg->ModeReg.ExtVga[CR1B] &= 0xEF;
-	pCir->chip.lg->ModeReg.ExtVga[CR1B] |= (((width + 7) >> 3) & 0x100)?0x10:0x00;
-	pCir->chip.lg->ModeReg.ExtVga[CR1B] |= 0x22;
-	pCir->chip.lg->ModeReg.ExtVga[CR1D] = (((width + 7) >> 3) & 0x200)?0x01:0x00;
+	pCir->chip.lg->ModeReg.ExtVga[CR1B] |= (width & 0x100) >> 4;
+	pCir->chip.lg->ModeReg.ExtVga[CR1B] |= 0xA2;
+	pCir->chip.lg->ModeReg.ExtVga[CR1D] = (width & 0x200) >> 9;
 
 	/* Set the 28th bit to enable extended modes. */
 	pCir->chip.lg->ModeReg.VSC = 0x10000000;
 
 	/* Overflow register (sure are a lot of overflow bits around...) */
-	pCir->chip.lg->ModeReg.ExtVga[CR1E] = 0x00;
-	pCir->chip.lg->ModeReg.ExtVga[CR1E] |= ((mode->CrtcHTotal>>3 & 0x0100)?1:0)<<7;
-	pCir->chip.lg->ModeReg.ExtVga[CR1E] |= ((mode->CrtcHDisplay>>3 & 0x0100)?1:0)<<6;
-	pCir->chip.lg->ModeReg.ExtVga[CR1E] |= ((mode->CrtcHSyncStart>>3 & 0x0100)?1:0)<<5;
-	pCir->chip.lg->ModeReg.ExtVga[CR1E] |= ((mode->CrtcHSyncStart>>3 & 0x0100)?1:0)<<4;
-	pCir->chip.lg->ModeReg.ExtVga[CR1E] |= ((mode->CrtcVTotal & 0x0400)?1:0)<<3;
-	pCir->chip.lg->ModeReg.ExtVga[CR1E] |= ((mode->CrtcVDisplay & 0x0400)?1:0)<<2;
-	pCir->chip.lg->ModeReg.ExtVga[CR1E] |= ((mode->CrtcVSyncStart & 0x0400)?1:0)<<1;
-	pCir->chip.lg->ModeReg.ExtVga[CR1E] |= ((mode->CrtcVSyncStart & 0x0400)?1:0)<<0;
+	pCir->chip.lg->ModeReg.ExtVga[CR1E] =
+		((((mode->CrtcHTotal >> 3) - 5) & 0x0100) >> 1) |
+		((((mode->CrtcHDisplay >> 3) - 1) & 0x0100) >> 2) |
+		((((mode->CrtcHBlankStart >> 3) - 1) & 0x0100) >> 3) |
+		((((mode->CrtcHSyncStart >> 3) - 1) & 0x0100) >> 4) |
+		(((mode->CrtcVTotal - 2) & 0x0400) >> 7) |
+		(((mode->CrtcVDisplay - 1) & 0x0400) >> 8) |
+		(((mode->CrtcVBlankStart - 1) & 0x0400) >> 9) |
+		(((mode->CrtcVSyncStart - 1) & 0x0400) >> 10);
 
 	lineData = &LgLineData[pCir->chip.lg->lineDataIndex];
 
@@ -1730,17 +1735,19 @@ LgValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 
 	lace = 1 + ((mode->Flags & V_INTERLACE) != 0);
 
-	if ((mode->CrtcHDisplay <= 2048) &&
-		(mode->CrtcHSyncStart <= 4096) &&
-		(mode->CrtcHSyncEnd <= 4096) &&
-		(mode->CrtcHTotal <= 4096) &&
-		(mode->CrtcVDisplay <= 2048 * lace) &&
-		(mode->CrtcVSyncStart <= 4096 * lace) &&
-		(mode->CrtcVSyncEnd <= 4096 * lace) &&
-		(mode->CrtcVTotal <= 4096 * lace)) {
+	if ((mode->CrtcHDisplay > 2048) ||
+		(mode->CrtcHSyncStart > 4096) ||
+		(mode->CrtcHSyncEnd > 4096) ||
+		(mode->CrtcHTotal > 4096)) {
+		return(MODE_BAD_HVALUE);
+	} else if ((mode->CrtcVDisplay > 2048 * lace) ||
+		(mode->CrtcVSyncStart > 4096 * lace) ||
+		(mode->CrtcVSyncEnd > 4096 * lace) ||
+		(mode->CrtcVTotal > 4096 * lace)) {
+		return(MODE_BAD_VVALUE);
+	} else {
 		return(MODE_OK);
 	}
-	return(MODE_BAD);
 }
 
 

@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -58,7 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/SetValues.c,v 1.3 2001/12/14 19:56:30 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/SetValues.c,v 1.4 2004/05/05 00:07:03 dickey Exp $ */
 
 #include "IntrinsicI.h"
 
@@ -75,7 +75,7 @@ static void SetValues(
   Cardinal		num_args)	/* number of items in arg list       */
 {
     register ArgList		arg;
-    register int 	        i;
+    register Cardinal 	        i;
     register XrmName		argName;
     register XrmResourceList*   xrmres;
 
@@ -112,7 +112,7 @@ static Boolean CallSetValues (
     superclass = class->core_class.superclass;
     UNLOCK_PROCESS;
     if (superclass)
-        redisplay = 
+        redisplay =
 	    CallSetValues(superclass, current, request, new, args, num_args);
 
     LOCK_PROCESS;
@@ -151,7 +151,7 @@ CallConstraintSetValues (
 	LOCK_PROCESS;
 	superclass = (ConstraintWidgetClass) class->core_class.superclass;
 	UNLOCK_PROCESS;
-	redisplay = 
+	redisplay =
 	   CallConstraintSetValues(superclass,
 				   current, request, new, args, num_args);
     }
@@ -163,12 +163,12 @@ CallConstraintSetValues (
     return (redisplay);
 }
 
-void XtSetSubvalues(base, resources, num_resources, args, num_args)
-  XtPointer             base;           /* Base address to write values to   */
-  register XtResourceList resources;    /* The current resource values.      */
-  register Cardinal     num_resources;  /* number of items in resources      */
-  ArgList               args;           /* The resource values to set        */
-  Cardinal              num_args;       /* number of items in arg list       */
+void XtSetSubvalues(
+  XtPointer             base,           /* Base address to write values to   */
+  register XtResourceList resources,    /* The current resource values.      */
+  register Cardinal     num_resources,  /* number of items in resources      */
+  ArgList               args,           /* The resource values to set        */
+  Cardinal              num_args)       /* number of items in arg list       */
 {
       register XrmResourceList*   xrmres;
       xrmres = _XtCreateIndirectionTable (resources, num_resources);
@@ -177,10 +177,10 @@ void XtSetSubvalues(base, resources, num_resources, args, num_args)
 }
 
 
-void XtSetValues(w, args, num_args)
-    register Widget   w;
-	     ArgList  args;
-	     Cardinal num_args;
+void XtSetValues(
+    register Widget   w,
+	     ArgList  args,
+	     Cardinal num_args)
 {
     register Widget oldw, reqw;
     /* need to use strictest alignment rules possible in next two decls. */
@@ -236,12 +236,12 @@ void XtSetValues(w, args, num_args)
 	    UNLOCK_PROCESS;
 	} else constraintSize = 0;
     } else constraintSize = 0;
-	
+
     if (constraintSize) {
 	/* Allocate and copy current constraints into oldw */
 	oldw->core.constraints = XtStackAlloc(constraintSize, oldcCache);
 	reqw->core.constraints = XtStackAlloc(constraintSize, reqcCache);
-	(void) memmove((char *) oldw->core.constraints, 
+	(void) memmove((char *) oldw->core.constraints,
 		       (char *) w->core.constraints, (int) constraintSize);
 
 	/* Set constraint values */
@@ -250,7 +250,7 @@ void XtSetValues(w, args, num_args)
 	    (XrmResourceList *)(cwc->constraint_class.resources),
 	    cwc->constraint_class.num_resources, args, num_args);
 	UNLOCK_PROCESS;
-	(void) memmove((char *) reqw->core.constraints, 
+	(void) memmove((char *) reqw->core.constraints,
 		       (char *) w->core.constraints, (int) constraintSize);
     }
 
@@ -271,8 +271,8 @@ void XtSetValues(w, args, num_args)
 	call_data.type = XtHsetValues;
 	call_data.widget = w;
 	call_data.event_data = (XtPointer) &set_val;
-	XtCallCallbackList(hookobj, 
-		((HookObject)hookobj)->hooks.changehook_callbacks, 
+	XtCallCallbackList(hookobj,
+		((HookObject)hookobj)->hooks.changehook_callbacks,
 		(XtPointer)&call_data);
     }
 
@@ -304,7 +304,7 @@ void XtSetValues(w, args, num_args)
 	    w->core.border_width    = oldw->core.border_width;
 	    geoReq.request_mode	    |= CWBorderWidth;
 	}
-    
+
 	if (geoReq.request_mode != 0) {
 	    /* Pass on any requests for unchanged geometry values */
 	    if (geoReq.request_mode !=
@@ -334,7 +334,7 @@ void XtSetValues(w, args, num_args)
 		}
 	    }
 	    CALLGEOTAT(_XtGeoTrace(w,
-		     "\nXtSetValues sees some geometry changes for \"%s\".\n", 
+		     "\nXtSetValues sees some geometry changes for \"%s\".\n",
 			   XtName(w)));
 	    CALLGEOTAT(_XtGeoTab(1));
 	    do {
@@ -344,19 +344,19 @@ void XtSetValues(w, args, num_args)
 		    call_data.type = XtHpreGeometry;
 		    call_data.widget = w;
 		    call_data.request = &geoReq;
-		    XtCallCallbackList(hookobj, 
-			((HookObject)hookobj)->hooks.geometryhook_callbacks, 
+		    XtCallCallbackList(hookobj,
+			((HookObject)hookobj)->hooks.geometryhook_callbacks,
 			(XtPointer)&call_data);
 		    call_data.result = result =
 			_XtMakeGeometryRequest(w, &geoReq, &geoReply,
 					       &cleared_rect_obj);
 		    call_data.type = XtHpostGeometry;
 		    call_data.reply = &geoReply;
-		    XtCallCallbackList(hookobj, 
-			((HookObject)hookobj)->hooks.geometryhook_callbacks, 
+		    XtCallCallbackList(hookobj,
+			((HookObject)hookobj)->hooks.geometryhook_callbacks,
 			(XtPointer)&call_data);
 		} else {
-		    result = _XtMakeGeometryRequest(w, &geoReq, &geoReply, 
+		    result = _XtMakeGeometryRequest(w, &geoReq, &geoReply,
 						    &cleared_rect_obj);
 		}
 		if (result == XtGeometryYes || result == XtGeometryDone)

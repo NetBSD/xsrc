@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/main.c,v 3.12 2002/10/15 01:45:02 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/main.c,v 3.13 2004/04/03 10:50:05 herrb Exp $ */
 
 #include	<stdlib.h>
 #include	<sys/types.h>
@@ -95,7 +95,6 @@ main(int argc, char *argv[])
 
     /* init stuff */
     ProcessCmdLine(argc, argv);
-    InitErrors();
 
     /*
      * Do this first thing, to get any options that only take effect at
@@ -104,6 +103,7 @@ main(int argc, char *argv[])
     if (ReadConfigFile(configfilename) != FSSuccess) {
 	FatalError("couldn't read config file\n");
     }
+    InitErrors();
 
     /* make sure at least world write access is disabled */
     if (((oldumask = umask(022)) & 002) == 002)

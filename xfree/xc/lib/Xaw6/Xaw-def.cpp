@@ -60,12 +60,12 @@ EXPORTS
  toggleWidgetClass DATA
  treeClassRec DATA
  treeWidgetClass DATA
-#ifndef __UNIXOS2__
- vendorShellClassRec DATA
- vendorShellWidgetClass DATA
-#endif
  viewportClassRec DATA
  viewportWidgetClass DATA
+ _XawTextBuildLineTable
+ _XawTextGetSTRING
+ _XawTextNeedsUpdating
+ _XawTextShowPosition
  XawAsciiSave
  XawAsciiSaveAsFile
  XawAsciiSourceChanged
@@ -95,6 +95,7 @@ EXPORTS
  XawTextEnableRedisplay
  XawTextGetInsertionPoint
  XawTextGetSelectionPos
+ XawTextGetSink
  XawTextGetSource
  XawTextInvalidate
  XawTextReplace
@@ -133,12 +134,5 @@ EXPORTS
  XawViewportSetLocation
  XawWidgetArray
  XawWidgetCount
-#ifdef __UNIXOS2__ /* xconsole */
- _XawTextGetSTRING
- _XawTextShowPosition
- XawTextGetSink
- _XawTextBuildLineTable
- _XawTextNeedsUpdating
-#endif
 /* $Xorg: Xaw-def.cpp,v 1.3 2000/08/17 19:45:44 cpqbld Exp $ */
-/* $XFree86: xc/lib/Xaw6/Xaw-def.cpp,v 1.1 2002/05/31 18:45:44 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw6/Xaw-def.cpp,v 1.2 2004/05/06 01:17:29 dawes Exp $ */

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_libc.h,v 3.64 2004/02/13 23:58:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_libc.h,v 3.66 2004/12/29 21:22:55 tsi Exp $ */
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2004 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -72,7 +72,7 @@
  * libc_wrapper.c.
  */
 
-#if defined(XFree86LOADER) || defined(NEED_XF86_TYPES)
+#if (defined(XFree86LOADER) && defined(IN_MODULE)) || defined(NEED_XF86_TYPES)
 
 /*
  * First, the new data types
@@ -220,14 +220,14 @@ typedef int xf86jmp_buf[1024];
 /* xf86shmclt() */
 #define XF86IPC_RMID 0
 
-#endif /* defined(XFree86LOADER) || defined(NEED_XF86_TYPES) */
+#endif /* (XFree86LOADER && IN_MODULE) || NEED_XF86_TYPES */
 
 /*
  * the rest of this file should only be included for code that is supposed
  * to go into modules
  */
 
-#if defined(XFree86LOADER) && !defined(DONT_DEFINE_WRAPPERS)
+#if defined(XFree86LOADER) && defined(IN_MODULE) && !defined(DONT_DEFINE_WRAPPERS)
 
 #undef abort
 #define abort()			xf86abort()
@@ -289,6 +289,7 @@ typedef int xf86jmp_buf[1024];
 #define fopen(ccp1,ccp2)	xf86fopen(ccp1,ccp2)
 #undef printf
 #define printf			xf86printf
+#define printf_is_xf86printf	1	/* For GCC's printf attributes */
 #undef fprintf
 #define fprintf			xf86fprintf
 #undef fputc
@@ -710,9 +711,9 @@ typedef int xf86jmp_buf[1024];
 #undef FILENAME_MAX
 #define FILENAME_MAX		1024
 
-#endif /* XFree86LOADER  && !DONT_DEFINE_WRAPPERS */
+#endif /* XFree86LOADER && IN_MODULE && !DONT_DEFINE_WRAPPERS */
 
-#if defined(XFree86LOADER) && \
+#if defined(XFree86LOADER) && defined(IN_MODULE) && \
     (!defined(DONT_DEFINE_WRAPPERS) || defined(DEFINE_SETJMP_WRAPPERS))
 #undef setjmp
 #define setjmp(a)               xf86setjmp_macro(a)

@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_cursor.c,v 1.29 2004/02/25 17:45:13 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_cursor.c,v 1.30 2004/06/21 00:43:22 twini Exp $ */
+/* $XdotOrg$ */
 /*
  * SiS hardware cursor handling
  *
@@ -918,13 +919,14 @@ SiS300UseHWCursor(ScreenPtr pScreen, CursorPtr pCurs)
 	}
 #endif
         break;
-      case PCI_CHIP_SIS550:
-      case PCI_CHIP_SIS650:
       case PCI_CHIP_SIS315:
       case PCI_CHIP_SIS315H:
       case PCI_CHIP_SIS315PRO:
-      case PCI_CHIP_SIS660:
+      case PCI_CHIP_SIS550:
+      case PCI_CHIP_SIS650:
       case PCI_CHIP_SIS330:
+      case PCI_CHIP_SIS660:
+      case PCI_CHIP_SIS340:
         if(mode->Flags & V_INTERLACE)
            return FALSE;
 	if((mode->Flags & V_DBLSCAN) && (pCurs->bits->height > 32))
@@ -992,6 +994,7 @@ SiSUseHWCursorARGB(ScreenPtr pScreen, CursorPtr pCurs)
       case PCI_CHIP_SIS315PRO:
       case PCI_CHIP_SIS330:
       case PCI_CHIP_SIS660:
+      case PCI_CHIP_SIS340:
         if(mode->Flags & V_INTERLACE)
            return FALSE;
 	if((pCurs->bits->height > 64) || (pCurs->bits->width > 64))
@@ -1366,6 +1369,7 @@ SiSHWCursorInit(ScreenPtr pScreen)
       case PCI_CHIP_SIS315PRO:
       case PCI_CHIP_SIS330:
       case PCI_CHIP_SIS660:
+      case PCI_CHIP_SIS340:
         infoPtr->MaxWidth  = 64;
         infoPtr->MaxHeight = 64;
         infoPtr->ShowCursor = SiS310ShowCursor;

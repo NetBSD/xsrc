@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/search.c,v 1.6 2003/04/09 20:31:31 herrb Exp $ */
+/* $XFree86: xc/programs/xman/search.c,v 1.7 2004/03/12 02:17:55 dickey Exp $ */
 
 
 #include "globals.h"
@@ -43,7 +43,7 @@ static int BEntrySearch(char * string, char ** first, int number);
 
 /*	Function Name: MakeSearchWidget
  *	Description: This Function Creates the Search Widget.
- *	Arguments: man_globals - the pseudo globas for this manpage.
+ *	Arguments: man_globals - the pseudo globals for this manpage.
  *                 w - the widgets parent
  *	Returns: the search widget.
  */
@@ -55,18 +55,18 @@ MakeSearchWidget(ManpageGlobals * man_globals, Widget parent)
   Arg arglist[2];
   Cardinal num_args = 0;
 
-  XtSetArg(arglist[0], XtNtransientFor, parent); 
-  man_globals->search_widget = XtCreatePopupShell(SEARCHNAME, 
-						  transientShellWidgetClass, 
+  XtSetArg(arglist[0], XtNtransientFor, parent);
+  man_globals->search_widget = XtCreatePopupShell(SEARCHNAME,
+						  transientShellWidgetClass,
 						  parent,
 						  arglist, 1);
 
   if (resources.clear_search_string) {
-    XtSetArg(arglist[0], XtNvalue, ""); num_args++;  
+    XtSetArg(arglist[0], XtNvalue, ""); num_args++;
   }
 
   dialog = XtCreateManagedWidget(DIALOG, dialogWidgetClass,
-				 man_globals->search_widget, 
+				 man_globals->search_widget,
 				 arglist, num_args);
 
   if ( (text = XtNameToWidget(dialog, "value")) == (Widget) NULL)
@@ -79,7 +79,7 @@ MakeSearchWidget(ManpageGlobals * man_globals, Widget parent)
   XawDialogAddButton(dialog, CANCEL, NULL, NULL);
 
 /*
- * This is a bit gross, but it get the cancel button underneath the 
+ * This is a bit gross, but it get the cancel button underneath the
  * others, and forms them up to the right size..
  */
 
@@ -117,26 +117,26 @@ ManpageGlobals * man_globals)
   Widget dialog;
 
   dialog = XtNameToWidget(man_globals->search_widget, DIALOG);
-  if (dialog != NULL) 
+  if (dialog != NULL)
     return(XawDialogGetValueString(dialog));
 
   PopupWarning(man_globals,
-	      "Could not get the search string, no search will be preformed.");
+	      "Could not get the search string, no search will be performed.");
   return(NULL);
 }
 
-  
+
 /*	Function Name: DoSearch
  *	Description: This function performs a search for a man page or apropos
  *                   search upon search string.
- *	Arguments: man_globals - the pseudo globas for this manpage.
+ *	Arguments: man_globals - the pseudo globals for this manpage.
  *                 type - the type of search.
  *	Returns: none.
  */
 
 #define LOOKLINES 6
 
-/* 
+/*
  * Manual searches look through the list of manual pages for the right one
  * with a binary search.
  *
@@ -219,15 +219,15 @@ DoSearch(ManpageGlobals * man_globals, int type)
     }
 
 #ifdef HAS_MKSTEMP
-    if ((file = fdopen(fd, "r")) == NULL) 
+    if ((file = fdopen(fd, "r")) == NULL)
 #else
     if((file = fopen(mantmp,"r")) == NULL)
 #endif
       PrintError("lost temp file? out of temp space?");
 
-/* 
+/*
  * Since we keep the FD open we can unlink the file safely, this
- * will keep extra files out of /tmp. 
+ * will keep extra files out of /tmp.
  */
 
     unlink(mantmp);
@@ -237,7 +237,7 @@ DoSearch(ManpageGlobals * man_globals, int type)
     /*
      * Check first LOOKLINES lines for "nothing appropriate".
      */
-  
+
     count = 0;
     flag = FALSE;
     while ( (fgets(cmp_str, BUFSIZ, file) != NULL) && (count < LOOKLINES) ) {
@@ -253,7 +253,7 @@ DoSearch(ManpageGlobals * man_globals, int type)
 
     /*
      * If the file is less than this number of lines then assume that there is
-     * nothing apropriate found. This does not confuse the apropos filter.
+     * nothing appropriate found. This does not confuse the apropos filter.
      */
 
     if (flag) {
@@ -262,12 +262,13 @@ DoSearch(ManpageGlobals * man_globals, int type)
       ChangeLabel(man_globals->label,string_buf);
       return(NULL);
     }
-  
+
     strcpy(man_globals->manpage_title,label);
-    ChangeLabel(man_globals->label,label);
+    man_globals->manpage_show_file = FALSE;
+    ShowManTitle(man_globals);
     fseek(file, 0L, 0);		/* reset file to point at top. */
   }
-  else {			/* MANUAL SEACH */
+  else {			/* MANUAL SEARCH */
     file = DoManualSearch(man_globals, search_string);
     if (file == NULL) {
       sprintf(string_buf,"No manual entry for %s.", search_string);
@@ -283,7 +284,7 @@ DoSearch(ManpageGlobals * man_globals, int type)
     Widget dialog;
 
     dialog = XtNameToWidget(man_globals->search_widget, DIALOG);
-    if (dialog == NULL) 
+    if (dialog == NULL)
       PopupWarning(man_globals, "Could not clear the search string.");
 
     XtSetArg(arglist[0], XtNvalue, "");
@@ -301,14 +302,14 @@ DoSearch(ManpageGlobals * man_globals, int type)
 
 #define NO_ENTRY -100
 
-static FILE * 
+static FILE *
 DoManualSearch(ManpageGlobals *man_globals, char * string)
 {
   int e_num = NO_ENTRY;
   int i;
 
 /* search current section first. */
-  
+
   i = man_globals->current_directory;
   e_num = BEntrySearch(string, manual[i].entries, manual[i].nentries);
 
@@ -333,7 +334,7 @@ DoManualSearch(ManpageGlobals *man_globals, char * string)
 	man_globals->manpagewidgets.box[man_globals->current_directory]);
   }
   else {
-    /* 
+    /*
      * Highlight the element we are searching for if it is in the directory
      * listing currently being shown.
      */
@@ -359,7 +360,7 @@ int number)
 {
   int check, cmp, len_cmp, global_number;
   char *head, *tail;
-  
+
   global_number = 0;
   while (TRUE) {
 
@@ -370,12 +371,12 @@ int number)
     check = number/2;
 
     head = rindex(first[ global_number + check ], '/');
-    if (head == NULL) 
+    if (head == NULL)
       PrintError("index failure in BEntrySearch");
     head++;
 
     tail = rindex(head, '.');
-    if (tail == NULL) 
+    if (tail == NULL)
       /* not an error, some systems (e.g. sgi) have only a .z suffix */
       tail = head + strlen(head);
 
@@ -385,7 +386,7 @@ int number)
     if ( cmp == 0 && len_cmp == 0) {
       return(global_number + check);
     }
-    else if ( cmp < 0 || ((cmp == 0) && (len_cmp < 0)) ) 
+    else if ( cmp < 0 || ((cmp == 0) && (len_cmp < 0)) )
       number = check;
     else /* cmp > 0 || ((cmp == 0) && (len_cmp > 0)) */ {
       global_number += (check + 1);

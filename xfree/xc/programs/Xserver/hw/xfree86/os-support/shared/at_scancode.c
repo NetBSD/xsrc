@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/at_scancode.c,v 1.5 2004/02/13 23:58:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/at_scancode.c,v 1.6 2005/02/18 00:33:33 dawes Exp $ */
 /*
  * Copyright (c) 2002-2003 by The XFree86 Project, Inc.
  * All rights reserved.
@@ -63,6 +63,9 @@ ATScancode(InputInfoPtr pInfo, int *scanCode)
              case KEY_Prefix1:
                   pKbd->scanPrefix = *scanCode;  /* special prefixes */
                   return TRUE;
+	  }
+          if (!xf86IsPc98()) {
+            switch (*scanCode) {
              case 0x59: *scanCode = KEY_0x59; break;
              case 0x5a: *scanCode = KEY_0x5A; break;
              case 0x5b: *scanCode = KEY_0x5B; break;
@@ -91,6 +94,7 @@ ATScancode(InputInfoPtr pInfo, int *scanCode)
              case 0x74: *scanCode = KEY_0x74; break;
              case 0x75: *scanCode = KEY_0x75; break;
              case 0x76: *scanCode = KEY_0x76; break;
+            }
           }
           break;
        case KEY_Prefix0:

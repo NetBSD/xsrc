@@ -44,7 +44,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/error.c,v 1.12 2004/01/28 22:12:49 herrb Exp $ */
+/* $XFree86: xc/programs/xfs/os/error.c,v 1.13 2004/04/03 10:50:05 herrb Exp $ */
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -86,6 +86,7 @@ Bool        UseSyslog;
 Bool        log_open = FALSE;
 #endif
 char        ErrorFile[PATH_MAX];
+static char	    CurrentErrorFile[PATH_MAX];
 
 static void
 abort_server(void)
@@ -112,7 +113,7 @@ InitErrors(void)
     }
 #endif
 
-    if (ErrorFile[0]) {
+    if (ErrorFile[0] && strcmp(CurrentErrorFile, ErrorFile) != 0) {
 	i = creat(ErrorFile, 0666);
 	if (i != -1) {
 	    dup2(i, 2);
@@ -120,6 +121,7 @@ InitErrors(void)
 	} else {
 	    ErrorF("can't open error file \"%s\"\n", ErrorFile);
 	}
+	strncpy(CurrentErrorFile, ErrorFile, sizeof CurrentErrorFile);
     }
 }
 

@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/WaitFor.c,v 1.9 2001/12/14 20:00:57 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/WaitFor.c,v 1.10 2004/04/03 22:38:55 tsi Exp $ */
 
 /*****************************************************************
  * OS Dependent input routines:
@@ -63,7 +63,38 @@ SOFTWARE.
 #include "util.h"
 #include <sys/param.h>
 
+#include <sys/socket.h> 
+
+#ifdef hpux 
+#include <sys/utsname.h> 
+#include <sys/ioctl.h> 
+#endif 
+
+#ifdef AIXV3 
+#include <sys/ioctl.h> 
+#endif 
+
+#ifdef QNX4 
+#include <sys/stat.h> 
+#endif 
+
+#if defined (TCPCONN) || defined(STREAMSCONN) 
+# include <netinet/in.h> 
+# if !defined(hpux) 
+#  ifdef apollo 
+#   ifndef NO_TCP_H 
+#    include <netinet/tcp.h> 
+#   endif 
+#  else 
+#   include <netinet/tcp.h> 
+#  endif 
+# endif 
+#endif 
+
+#include <sys/uio.h>
+
 #include <X11/Xpoll.h>
+
 #include "osdep.h"
 #include "os.h"
 #include "pm.h"

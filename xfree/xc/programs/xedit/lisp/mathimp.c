@@ -27,7 +27,7 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/lisp/mathimp.c,v 1.15 2003/10/24 20:38:16 tsi Exp $ */
+/* $XFree86: xc/programs/xedit/lisp/mathimp.c,v 1.16 2004/10/23 15:29:33 dawes Exp $ */
 
 
 /*
@@ -2666,7 +2666,6 @@ cmp_object_object(LispObj *op1, LispObj *op2, int real)
 			return (cmp_flonum(ODF(op1), bi_getd(OBI(op2))));
 		    case LispDFloat_t:
 			return (cmp_flonum(ODF(op1), ODF(op2)));
-			break;
 		    case LispRatio_t:
 			return (cmp_flonum(ODF(op1),
 					   (double)OFRN(op2) /

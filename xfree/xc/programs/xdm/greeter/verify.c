@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.27 2004/01/25 01:12:25 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.28 2004/10/21 06:06:43 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -239,7 +239,7 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 	/* Build path of the auth script and call it */
 	snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", style);
 	auth_call(as, path, style, "-s", "response", greet->name, 
-		  (void *)NULL);
+		  lc->lc_class, (void *)NULL);
 	authok = auth_getstate(as);
 
 	if ((authok & AUTH_ALLOW) == 0) {

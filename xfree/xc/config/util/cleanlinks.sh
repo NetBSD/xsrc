@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright © 2000, 2003 by The XFree86 Project, Inc
+# Copyright © 2000, 2003, 2004 by The XFree86 Project, Inc
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -50,14 +50,15 @@
 #
 # Author: David Dawes <dawes@xfree86.org>
 #
-# $XFree86: xc/config/util/cleanlinks.sh,v 1.3 2004/02/13 23:58:28 dawes Exp $
+# $XFree86: xc/config/util/cleanlinks.sh,v 1.4 2004/10/19 16:49:11 dawes Exp $
 
+echo Removing dangling symbolic links ...
 find . -type l -print |
 (
 	read i
 	while [ X"$i" != X ]; do
 		if [ ! -f "$i" ]; then
-			echo $i is a dangling symlink, removing
+			echo $i
 			rm -f "$i"
 		fi
 		read i
@@ -65,6 +66,9 @@ find . -type l -print |
 )
 
 echo Removing empty directories ...
-#find . -type d -depth -print | xargs rmdir > /dev/null 2>&1
-find . -type d -depth -empty -print -exec rmdir {} \;
+if find . -prune -print -empty > /dev/null 2>&1; then
+	find . -type d -depth -empty -print -exec rmdir {} \;
+else
+	find . -type d -depth -exec rmdir {} \; -print 2>/dev/null
+fi
 exit 0

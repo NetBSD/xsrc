@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_sarea.h,v 1.6 2003/09/28 20:15:57 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_sarea.h,v 1.7 2004/12/10 16:07:01 alanh Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario,
  *                VA Linux Systems Inc., Fremont, California.
@@ -195,7 +195,7 @@ typedef struct {
     unsigned int vc_format;
 
     /* The current cliprects, or a subset thereof */
-    XF86DRIClipRectRec boxes[RADEON_NR_SAREA_CLIPRECTS];
+    drm_clip_rect_t boxes[RADEON_NR_SAREA_CLIPRECTS];
     unsigned int nbox;
 
     /* Counters for throttling of rendering clients */

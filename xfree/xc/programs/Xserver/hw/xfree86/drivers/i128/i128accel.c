@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128accel.c,v 1.8 2003/02/17 16:08:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128accel.c,v 1.9 2004/03/29 16:25:16 tsi Exp $ */
 
 /*
  * Copyright 1997-2000 by Robin Cutshaw <robin@XFree86.Org>
@@ -24,7 +24,6 @@
  */
 
 #include "xaa.h"
-#include "xaalocal.h"
 #include "xf86fbman.h"
 #include "miline.h"
 #include "servermd.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/vertarr.c,v 1.5 2004/01/28 18:11:43 alanh Exp $ */
+/* $XFree86: xc/lib/GL/glx/vertarr.c,v 1.7 2004/10/23 15:29:25 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -35,6 +35,7 @@
 */
 
 #define NEED_GL_FUNCS_WRAPPED
+#include <assert.h>
 #include "glxclient.h"
 #include "packrender.h"
 #include <string.h>
@@ -67,10 +68,12 @@
 #define __GL_SEC_COLOR_FUNC(NAME, let) \
     case GL_##NAME: \
       seccolorPointer->proc = (void (*)(const void *))glSecondaryColor3##let##v; \
+      break
 
 #define __GL_FOG_FUNC(NAME, let) \
     case GL_##NAME: \
       fogPointer->proc = (void (*)(const void *))glFogCoord##let##v; \
+      break
 
 #define __GL_INDEX_FUNC(NAME, let) \
     case GL_##NAME: \
@@ -93,95 +96,70 @@
 	texCoordPointer->mtex_proc = (void (*)(GLenum, const void *))glMultiTexCoord4##let##vARB; \
       } break
 
-static GLuint __glXTypeSize(GLenum enm)
-{
-    switch (enm) {
-      case __GL_BOOLEAN_ARRAY:	return sizeof(GLboolean);
-      case GL_BYTE: 		return sizeof(GLbyte); 	
-      case GL_UNSIGNED_BYTE: 	return sizeof(GLubyte);
-      case GL_SHORT: 		return sizeof(GLshort); 	
-      case GL_UNSIGNED_SHORT: 	return sizeof(GLushort);
-      case GL_INT: 		return sizeof(GLint); 		
-      case GL_UNSIGNED_INT: 	return sizeof(GLint);
-      case GL_FLOAT: 		return sizeof(GLfloat);
-      case GL_DOUBLE:	 	return sizeof(GLdouble);
-      default:			return 0;
-    }
-}
+/**
+ * Table of sizes, in bytes, of a GL types.  All of the type enums are be in 
+ * the range 0x1400 - 0x140F.  That includes types added by extensions (i.e.,
+ * \c GL_HALF_FLOAT_NV).  This elements of this table correspond to the
+ * type enums masked with 0x0f.
+ * 
+ * \notes
+ * \c GL_HAVE_FLOAT_NV is not included.  Neither are \c GL_2_BYTES,
+ * \c GL_3_BYTES, or \c GL_4_BYTES.
+ */
+static const GLuint __glXTypeSize_table[16] = {
+    1, 1, 2, 2, 4, 4, 4, 0, 0, 0, 8, 0, 0, 0, 0, 0
+};
 
+#define __glXTypeSize(e) ((((e) & ~0x0f) != 0x1400) \
+    ? 0 : __glXTypeSize_table[ (e) & 0x0f ])
+
+
+/**
+ * Initialize vertex array state for a GLX context.
+ * 
+ * \param gc  GLX context whose vertex array state is to be initialized.
+ * 
+ * \todo
+ * Someone is going to have to check the spec.  This function takes greate
+ * care to initialize the \c size and \c type fields to "correct" values
+ * for each array.  I'm not sure this is necessary.  I think it should be
+ * acceptable to just \c memset the whole \c arrays and \c texCoord arrays
+ * to zero and be done with it.  The spec may say something to the contrary,
+ * however.
+ */
 void __glXInitVertexArrayState(__GLXcontext *gc)
 {
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     __GLXvertArrayState *va = &state->vertArray;
     GLint i;
 
-    va->vertex.enable = GL_FALSE;
-    va->vertex.proc = NULL;
-    va->vertex.skip = 0;
-    va->vertex.ptr = 0;
-    va->vertex.size = 4;
-    va->vertex.type = GL_FLOAT;
-    va->vertex.stride = 0;
+    va->enables = 0;
+    va->texture_enables = 0;
 
-    va->normal.enable = GL_FALSE;
-    va->normal.proc = NULL;
-    va->normal.skip = 0;
-    va->normal.ptr = 0;
-    va->normal.size = 3;
-    va->normal.type = GL_FLOAT;
-    va->normal.stride = 0;
-
-    va->color.enable = GL_FALSE;
-    va->color.proc = NULL;
-    va->color.skip = 0;
-    va->color.ptr = 0;
-    va->color.size = 4;
-    va->color.type = GL_FLOAT;
-    va->color.stride = 0;
-
-    va->secondaryColor.enable = GL_FALSE;
-    va->secondaryColor.proc = NULL;
-    va->secondaryColor.skip = 0;
-    va->secondaryColor.ptr = 0;
-    va->secondaryColor.size = 3;
-    va->secondaryColor.type = GL_FLOAT;
-    va->secondaryColor.stride = 0;
-
-    va->fogCoord.enable = GL_FALSE;
-    va->fogCoord.proc = NULL;
-    va->fogCoord.skip = 0;
-    va->fogCoord.ptr = 0;
-    va->fogCoord.size = 1;
-    va->fogCoord.type = GL_FLOAT;
-    va->fogCoord.stride = 0;
-
-    va->index.enable = GL_FALSE;
-    va->index.proc = NULL;
-    va->index.skip = 0;
-    va->index.ptr = 0;
-    va->index.size = 1;
-    va->index.type = GL_FLOAT;
-    va->index.stride = 0;
-
-    for (i=0; i<__GLX_MAX_TEXTURE_UNITS; ++i) {
-        __GLXvertexArrayPointerState *texCoord = &va->texCoord[i];
-
-	texCoord->enable = GL_FALSE;
-	texCoord->proc = NULL;
-	texCoord->skip = 0;
-	texCoord->ptr = 0;
-	texCoord->size = 4;
-	texCoord->type = GL_FLOAT;
-	texCoord->stride = 0;
+    for ( i = 0 ; i < __GLX_MAX_ARRAYS ; i++ ) {
+	va->arrays[ i ].proc = NULL;
+	va->arrays[ i ].skip = 0;
+	va->arrays[ i ].ptr = 0;
+	va->arrays[ i ].size = 1;
+	va->arrays[ i ].type = GL_FLOAT;
+	va->arrays[ i ].stride = 0;
     }
 
-    va->edgeFlag.enable = GL_FALSE;
-    va->edgeFlag.proc = NULL;
-    va->edgeFlag.skip = 0;
-    va->edgeFlag.ptr = 0;
-    va->edgeFlag.size = 1;
-    va->edgeFlag.type = GL_UNSIGNED_BYTE;
-    va->edgeFlag.stride = 0;
+    va->arrays[ edgeFlag_ARRAY ].type = GL_UNSIGNED_BYTE;;
+
+    va->arrays[ secondaryColor_ARRAY ].size = 3;
+    va->arrays[ color_ARRAY ].size = 4;
+    va->arrays[ normal_ARRAY ].size = 3;
+    va->arrays[ vertex_ARRAY ].size = 4;
+
+    for ( i = 0 ; i < __GLX_MAX_TEXTURE_UNITS ; i++ ) {
+	va->texCoord[ i ].proc = NULL;
+	va->texCoord[ i ].skip = 0;
+	va->texCoord[ i ].ptr = 0;
+	va->texCoord[ i ].size = 4;
+	va->texCoord[ i ].type = GL_FLOAT;
+	va->texCoord[ i ].stride = 0;
+    }
 
     va->maxElementsVertices = INT_MAX;
     va->maxElementsIndices = INT_MAX;
@@ -194,7 +172,7 @@ void glVertexPointer(GLint size, GLenum type, GLsizei stride,
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
-    __GLXvertexArrayPointerState *vertexPointer = &state->vertArray.vertex;
+    __GLXvertexArrayPointerState *vertexPointer = &state->vertArray.arrays[ vertex_ARRAY ];
 
     /* Check arguments */
     if (size < 2 || size > 4 || stride < 0) {
@@ -230,7 +208,7 @@ void glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
-    __GLXvertexArrayPointerState *normalPointer = &state->vertArray.normal;
+    __GLXvertexArrayPointerState *normalPointer = &state->vertArray.arrays[ normal_ARRAY ];
 
     /* Check arguments */
     if (stride < 0) {
@@ -267,7 +245,7 @@ void glColorPointer(GLint size, GLenum type, GLsizei stride,
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
-    __GLXvertexArrayPointerState *colorPointer = &state->vertArray.color;
+    __GLXvertexArrayPointerState *colorPointer = &state->vertArray.arrays[ color_ARRAY ];
 
     /* Check arguments */
     if (stride < 0) {
@@ -307,7 +285,7 @@ void glIndexPointer(GLenum type, GLsizei stride, const GLvoid *pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
-    __GLXvertexArrayPointerState *indexPointer = &state->vertArray.index;
+    __GLXvertexArrayPointerState *indexPointer = &state->vertArray.arrays[ index_ARRAY ];
 
     /* Check arguments */
     if (stride < 0) {
@@ -381,7 +359,7 @@ void glEdgeFlagPointer(GLsizei stride, const GLvoid *pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
-    __GLXvertexArrayPointerState *edgeFlagPointer = &state->vertArray.edgeFlag;
+    __GLXvertexArrayPointerState *edgeFlagPointer = &state->vertArray.arrays[ edgeFlag_ARRAY ];
 
     /* Check arguments */
     if (stride < 0) {
@@ -409,7 +387,7 @@ void glSecondaryColorPointer(GLint size, GLenum type, GLsizei stride,
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
-    __GLXvertexArrayPointerState *seccolorPointer = &state->vertArray.secondaryColor;
+    __GLXvertexArrayPointerState *seccolorPointer = &state->vertArray.arrays[ secondaryColor_ARRAY ];
 
     /* Check arguments */
     if ( (stride < 0) || (size != 3) ) {
@@ -449,7 +427,7 @@ void glFogCoordPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
-    __GLXvertexArrayPointerState *fogPointer = &state->vertArray.fogCoord;
+    __GLXvertexArrayPointerState *fogPointer = &state->vertArray.arrays[ fogCoord_ARRAY ];
 
     /* Check arguments */
     if (stride < 0) {
@@ -482,6 +460,7 @@ void glFogCoordPointer(GLenum type, GLsizei stride, const GLvoid * pointer)
 void glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
+    __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
     GLboolean tEnable = GL_FALSE, cEnable = GL_FALSE, nEnable = GL_FALSE;
     GLenum tType = GL_FLOAT, nType = GL_FLOAT, vType = GL_FLOAT;
     GLenum cType = GL_FALSE;
@@ -616,27 +595,19 @@ void glInterleavedArrays(GLenum format, GLsizei stride, const GLvoid *pointer)
 
     trueStride = (stride == 0) ? size : stride;
 
-    glDisableClientState(GL_SECONDARY_COLOR_ARRAY);
-    glDisableClientState(GL_FOG_COORDINATE_ARRAY);
-    glDisableClientState(GL_EDGE_FLAG_ARRAY);
-    glDisableClientState(GL_INDEX_ARRAY);
+    state->vertArray.enables = 0;
+    state->vertArray.texture_enables = 0;
     if (tEnable) {
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glTexCoordPointer(tSize, tType, trueStride, (const char *)pointer);
-    } else {
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     }
     if (cEnable) {
 	glEnableClientState(GL_COLOR_ARRAY);
 	glColorPointer(cSize, cType, trueStride, (const char *)pointer+cOffset);
-    } else {
-	glDisableClientState(GL_COLOR_ARRAY);
     }
     if (nEnable) {
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glNormalPointer(nType, trueStride, (const char *)pointer+nOffset);
-    } else {
-	glDisableClientState(GL_NORMAL_ARRAY);
     }
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(vSize, vType, trueStride, (const char *)pointer+vOffset);
@@ -651,52 +622,360 @@ void glArrayElement(GLint i)
     __GLXvertArrayState *va = &state->vertArray;
     GLint j;
 
-    if (va->edgeFlag.enable == GL_TRUE) {
-	(*va->edgeFlag.proc)(va->edgeFlag.ptr+i*va->edgeFlag.skip);
+
+    if (IS_TEXARRAY_ENABLED(state, 0)) {
+	(*va->texCoord[0].proc)(va->texCoord[0].ptr+i*va->texCoord[0].skip);
     }
 
-    for (j=0; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
-	if (va->texCoord[j].enable == GL_TRUE) {
-	    (*va->texCoord[j].proc)(va->texCoord[j].ptr+i*va->texCoord[j].skip);
+    /* Multitexturing is handled specially because the protocol
+     * requires an extra parameter.
+     */
+    for (j=1; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
+	if (IS_TEXARRAY_ENABLED(state, j)) {
+	    (*va->texCoord[j].mtex_proc)(GL_TEXTURE0 + j, va->texCoord[j].ptr+i*va->texCoord[j].skip);
 	}
     }
 
-    if (va->color.enable == GL_TRUE) {
-	(*va->color.proc)(va->color.ptr+i*va->color.skip);
-    }
-
-    if (va->secondaryColor.enable == GL_TRUE) {
-	(*va->secondaryColor.proc)(va->secondaryColor.ptr+i*va->secondaryColor.skip);
-    }
-
-    if (va->index.enable == GL_TRUE) {
-	(*va->index.proc)(va->index.ptr+i*va->index.skip);
-    }
-
-    if (va->normal.enable == GL_TRUE) {
-	(*va->normal.proc)(va->normal.ptr+i*va->normal.skip);
-    }
-
-    if (va->fogCoord.enable == GL_TRUE) {
-	(*va->fogCoord.proc)(va->fogCoord.ptr+i*va->fogCoord.skip);
-    }
-
-    if (va->vertex.enable == GL_TRUE) {
-	(*va->vertex.proc)(va->vertex.ptr+i*va->vertex.skip);
+    for ( j = 0 ; j < __GLX_MAX_ARRAYS ; j++ ) {
+	if (IS_ARRAY_ENABLED_BY_INDEX(state, j)) {
+	    (*va->arrays[ j ].proc)(va->arrays[ j ].ptr+i*va->arrays[ j ].skip);
+	}
     }
 }
 
-void glDrawArrays(GLenum mode, GLint first, GLsizei count)
+
+struct array_info {
+    __GLXdispatchDrawArraysComponentHeader ai;
+    GLsizei bytes;
+    const GLubyte *ptr;
+    GLsizei skip;
+};
+
+
+/**
+ * Initialize a \c array_info structure for each array that is enabled in
+ * \c state.  Determine how many arrays are enabled, and store the result
+ * in \c num_arrays.  Determine how big each vertex is, and store the result
+ * in \c total_vertex_size.
+ * 
+ * \returns The size of the final request.  This is the size, in bytes, of
+ * the DrawArrays header, the ARRAY_INFO structures, and all the vertex data.
+ * This value \b assumes a \c X_GLXRender command is used.  The true size
+ * will be 4 bytes larger if a \c X_GLXRenderLarge command is used.
+ */
+static GLuint
+prep_arrays(const __GLXattribute * const state, struct array_info * arrays,
+	    GLint count,
+	    GLsizei *num_arrays, GLsizei *total_vertex_size)
 {
-    __GLXcontext *gc = __glXGetCurrentContext();
-    __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
-    __GLXvertArrayState *va = &state->vertArray;
-    const GLubyte *vaPtr = NULL, *naPtr = NULL, *caPtr = NULL,
-                  *scaPtr = NULL, *faPtr = NULL,
-                  *iaPtr = NULL, *tcaPtr[__GLX_MAX_TEXTURE_UNITS];
-    const GLboolean *efaPtr = NULL;
+    GLsizei na = 0;
+    GLsizei vs = 0;
+
+#define ASSIGN_ARRAY_INFO(state, enum_name, arr) \
+    do { \
+	arrays[ na ].ai.datatype = state->vertArray. arr .type ; \
+	arrays[ na ].ai.numVals = state->vertArray. arr .size ; \
+	arrays[ na ].ai.component = GL_ ## enum_name ## _ARRAY; \
+\
+	arrays[ na ].bytes = state->vertArray. arr .size \
+	    * __glXTypeSize( state->vertArray. arr .type ); \
+	arrays[ na ].ptr = state->vertArray. arr .ptr; \
+	arrays[ na ].skip = state->vertArray. arr .skip; \
+\
+	vs += __GLX_PAD(arrays[ na ].bytes); \
+	na++; \
+    } while( 0 )
+
+#define ADD_ARRAY_IF_ENABLED(state, enum_name, arr) \
+    do { if ( IS_ARRAY_ENABLED(state, arr) ) { \
+	ASSIGN_ARRAY_INFO(state, enum_name, arrays[ arr ## _ARRAY ] ); \
+    } } while( 0 )
+    
+    ADD_ARRAY_IF_ENABLED(state, VERTEX, vertex);
+    ADD_ARRAY_IF_ENABLED(state, NORMAL, normal);
+    ADD_ARRAY_IF_ENABLED(state, COLOR, color);
+    ADD_ARRAY_IF_ENABLED(state, SECONDARY_COLOR, secondaryColor);
+    ADD_ARRAY_IF_ENABLED(state, FOG_COORD, fogCoord);
+    ADD_ARRAY_IF_ENABLED(state, EDGE_FLAG, edgeFlag);
+    ADD_ARRAY_IF_ENABLED(state, INDEX, index);
+
+    /* The standard DrawArrays protocol *only* supports a single array of
+     * texture coordinates.
+     */
+    if ( IS_TEXARRAY_ENABLED(state, 0) ) {
+	ASSIGN_ARRAY_INFO(state, TEXTURE_COORD, texCoord[0]);
+    }
+
+    *num_arrays = na;
+    *total_vertex_size = vs;
+
+    return __GLX_PAD((__GLX_COMPONENT_HDR_SIZE * na)
+		     + (vs * count)
+		     + __GLX_DRAWARRAYS_CMD_HDR_SIZE);
+}
+
+
+/**
+ * Emits the vertex data for the DrawArrays GLX protocol.
+ */
+static GLsizei
+emit_vertex(GLubyte * data, const struct array_info * arrays,
+	    GLsizei num_arrays, GLint element, GLsizei offset)
+{
+    GLint i;
+
+    for ( i = 0 ; i < num_arrays ; i++ ) {
+	(void) memcpy( data + offset,
+		       arrays[i].ptr + (arrays[i].skip * element),
+		       arrays[i].bytes );
+	offset += __GLX_PAD(arrays[i].bytes);
+    }
+
+    return offset;
+}
+
+
+static void
+emit_header(GLubyte * pc, const struct array_info * arrays,
+	    GLsizei num_arrays, GLsizei count, GLenum mode)
+{
+    __GLXdispatchDrawArraysComponentHeader *arrayInfo;
+    GLsizei i;
+
+    __GLX_PUT_LONG(0, count);
+    __GLX_PUT_LONG(4, num_arrays);
+    __GLX_PUT_LONG(8, mode);
+
+    arrayInfo = (__GLXdispatchDrawArraysComponentHeader *)
+	(pc + __GLX_DRAWARRAYS_HDR_SIZE);
+
+
+    /* Write the ARRAY_INFO data.
+     */
+
+    for ( i = 0 ; i < num_arrays ; i++ ) {
+	arrayInfo[i] = arrays[i].ai;
+    }
+}
+
+
+/**
+ * Emit GLX DrawArrays protocol using a GLXRender packet.
+ */
+static void   
+emit_Render_DrawArrays(__GLXcontext * gc, const struct array_info * arrays,
+		       GLsizei first, GLsizei count, GLsizei num_arrays, GLenum mode,
+		       GLsizei cmdlen, GLsizei total_vertex_size)
+{
+    GLubyte * pc = gc->pc;
+    GLsizei offset;
+    GLsizei i;
+
+    __GLX_BEGIN_VARIABLE(X_GLrop_DrawArrays, cmdlen);
+    emit_header(pc + 4, arrays, num_arrays, count, mode);
+
+
+    /* Write the actual array data.
+     */
+
+    offset = __GLX_DRAWARRAYS_CMD_HDR_SIZE 
+	+ (num_arrays * __GLX_COMPONENT_HDR_SIZE);
+    for ( i = 0 ; i < count ; i++ ) {
+	offset = emit_vertex(pc, arrays, num_arrays, i + first, offset);
+    }
+
+    __GLX_END(cmdlen);
+}
+
+
+/**
+ * Emit GLX DrawArrays protocol using a GLXRenderLarge packet.
+ */
+static void   
+emit_RenderLarge_DrawArrays(__GLXcontext * gc, const struct array_info * arrays,
+		       GLsizei first, GLsizei count, GLsizei num_arrays, GLenum mode,
+		       GLsizei cmdlen, GLsizei total_vertex_size)
+{
+    GLubyte * pc = gc->pc;
+    GLsizei offset;
+    GLsizei i;
+    GLint maxSize;
+    GLint totalRequests;
+    GLint requestNumber;
+    GLsizei elements_per_request;
+
+
+    /* Calculate the maximum amount of data can be stuffed into a single
+     * packet.  sz_xGLXRenderReq is added because bufSize is the maximum
+     * packet size minus sz_xGLXRenderReq.
+     * 
+     * The important value here is elements_per_request.  This is the number
+     * of complete array elements that will fit in a single buffer.  There
+     * may be some wasted space at the end of the buffer, but splitting
+     * elements across buffer boundries would be painful.
+     */
+
+    maxSize = (gc->bufSize + sz_xGLXRenderReq) - sz_xGLXRenderLargeReq;
+
+    elements_per_request = maxSize / total_vertex_size;
+
+    totalRequests = ((count + (elements_per_request - 1))
+		     / elements_per_request) + 1;
+
+
+    /* Fill in the header data and send it away.
+     */
+
+    __GLX_BEGIN_VARIABLE_LARGE(X_GLrop_DrawArrays, cmdlen+4);
+    emit_header(pc + 8, arrays, num_arrays, count, mode);
+
+    gc->pc = pc + (__GLX_DRAWARRAYS_CMD_HDR_SIZE + 4)
+	    + (__GLX_COMPONENT_HDR_SIZE * num_arrays);
+    __glXSendLargeChunk(gc, 1, totalRequests, gc->buf, gc->pc - gc->buf);
+
+
+    /* Write the actual array data.
+     */
+    offset = 0;
+    requestNumber = 2;
+    for ( i = 0 ; i < count ; i++ ) {
+	if ( i == elements_per_request ) {
+	    __glXSendLargeChunk(gc, requestNumber, totalRequests, 
+				gc->buf, offset);
+	    requestNumber++;
+	    offset = 0;
+
+	    count -= i;
+	    first += i;
+	    i = 0;
+	}
+
+	offset = emit_vertex(gc->buf, arrays, num_arrays, i + first, offset);
+    }
+
+    /* If the buffer isn't empty, emit the last, partial request.
+     */
+    if ( offset != 0 ) {
+	assert(requestNumber == totalRequests);
+	__glXSendLargeChunk(gc, requestNumber, totalRequests, gc->buf, offset);
+    }
+
+    gc->pc = gc->buf;
+}
+
+
+/**
+ * Emit DrawArrays protocol.  This function acts as a switch betteen
+ * \c emit_Render_DrawArrays and \c emit_RenderLarge_DrawArrays depending
+ * on how much array data is to be sent.
+ */
+static void
+emit_DrawArraysEXT(const __GLXattribute * const state,
+		   GLint first, GLsizei count, GLenum mode)
+{
+    struct array_info arrays[32];
+    GLsizei num_arrays;
+    GLsizei total_vertex_size;
+     __GLXcontext *gc = __glXGetCurrentContext();
+    GLuint cmdlen;
+
+
+    /* Determine how big the final request will be.  This depends on a number
+     * of factors.  It depends on how many array elemets there are (which is
+     * the passed-in 'count'), how many arrays are enabled, how many elements
+     * are in each array entry, and what the types are for each array.
+     */
+
+    cmdlen = prep_arrays(state, arrays, count, & num_arrays,
+			 & total_vertex_size);
+
+
+    /* If the data payload and the protocol header is too large for a Render
+     * command, use a RenderLarge command.
+     */
+    if (cmdlen > gc->maxSmallRenderCommandSize) {
+	emit_RenderLarge_DrawArrays(gc, arrays, first, count, num_arrays,
+				    mode, cmdlen, total_vertex_size);
+    }
+    else {
+	emit_Render_DrawArrays(gc, arrays, first, count, num_arrays,
+			       mode, cmdlen, total_vertex_size);
+    }
+}
+
+
+/**
+ * Emit a DrawArrays call using the old "protocol."  This isn't really
+ * DrawArrays protocol at all.  It just simulates DrawArrays by using
+ * immediate-mode vertex calls.  Very, very slow for large arrays, but works
+ * with every GLX server.
+ */
+static void
+emit_DrawArrays_old(const __GLXattribute * const state, 
+		    GLint first, GLsizei count, GLenum mode)
+{
+    const __GLXvertArrayState *va = &state->vertArray;
+    const GLubyte *vaPtr[__GLX_MAX_ARRAYS];
+    const GLubyte *tcaPtr[__GLX_MAX_TEXTURE_UNITS];
     GLint i, j;
 
+    /*
+    ** Set up pointers for quick array traversal.
+    */
+    
+    (void) memset( vaPtr,  0, sizeof(vaPtr) );
+    (void) memset( tcaPtr, 0, sizeof(tcaPtr) );
+
+    for ( j = 0 ; j < __GLX_MAX_ARRAYS ; j++ ) {
+	if (IS_ARRAY_ENABLED_BY_INDEX(state, j)) {
+	    vaPtr[ j ] = va->arrays[ j ].ptr + first * va->arrays[ j ].skip;
+	}
+    }
+
+    for ( j = 0 ; j < __GLX_MAX_TEXTURE_UNITS ; j++ ) {
+	if (IS_TEXARRAY_ENABLED(state, j)) 
+	    tcaPtr[ j ] = va->texCoord[ j ].ptr + first * va->texCoord[ j ].skip;
+    }
+
+    glBegin(mode);
+        for (i = 0; i < count; i++) {
+	    if (IS_TEXARRAY_ENABLED(state, 0)) {
+		(*va->texCoord[0].proc)(tcaPtr[0]);
+		tcaPtr[0] += va->texCoord[0].skip;
+	    }
+
+	    /* Multitexturing is handled specially because the protocol
+	     * requires an extra parameter.
+	     */
+	    for (j=1; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
+		if (IS_TEXARRAY_ENABLED(state, j)) {
+		    (*va->texCoord[j].mtex_proc)(GL_TEXTURE0 + j, tcaPtr[j]);
+		    tcaPtr[j] += va->texCoord[j].skip;
+		}
+	    }
+
+	    for ( j = 0 ; j < __GLX_MAX_ARRAYS ; j++ ) {
+		if (IS_ARRAY_ENABLED_BY_INDEX(state, j)) {
+		    (*va->arrays[ j ].proc)(vaPtr[ j ]);
+		    vaPtr[ j ] += va->arrays[ j ].skip;
+		}
+            }
+        }
+    glEnd();
+}
+
+
+/**
+ * Validate that the \c mode and \c count parameters to \c glDrawArrays or
+ * \c glDrawElements are valid.  If the arguments are not valid, then an
+ * error code is set in the GLX context.
+ * 
+ * \returns \c GL_TRUE if the arguments are valide, \c GL_FALSE if they are
+ *          not.
+ */
+static GLboolean
+glx_validate_array_args(__GLXcontext *gc, GLenum mode, GLsizei count)
+{
     switch(mode) {
       case GL_POINTS:
       case GL_LINE_STRIP:
@@ -711,87 +990,47 @@ void glDrawArrays(GLenum mode, GLint first, GLsizei count)
 	break;
       default:
         __glXSetError(gc, GL_INVALID_ENUM);
-        return;
+        return GL_FALSE;
     }
 
     if (count < 0) {
 	__glXSetError(gc, GL_INVALID_VALUE);
-	return;
-    } 
-
-    /*
-    ** Set up pointers for quick array traversal.
-    */
-    if (va->normal.enable == GL_TRUE) 
-	naPtr = va->normal.ptr + first * va->normal.skip;
-    if (va->color.enable == GL_TRUE) 
-	caPtr = va->color.ptr + first * va->color.skip;
-    if (va->secondaryColor.enable == GL_TRUE) 
-	scaPtr = va->secondaryColor.ptr + first * va->secondaryColor.skip;
-    if (va->fogCoord.enable == GL_TRUE) 
-	faPtr = va->fogCoord.ptr + first * va->fogCoord.skip;
-    if (va->index.enable == GL_TRUE) 
-	iaPtr = va->index.ptr + first * va->index.skip;
-    for (j=0; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
-	if (va->texCoord[j].enable == GL_TRUE) 
-	    tcaPtr[j] = va->texCoord[j].ptr + first * va->texCoord[j].skip;
+	return GL_FALSE;
     }
-    if (va->edgeFlag.enable == GL_TRUE) 
-	efaPtr = va->edgeFlag.ptr + first * va->edgeFlag.skip;
-    if (va->vertex.enable == GL_TRUE)
-	vaPtr = va->vertex.ptr + first * va->vertex.skip;
 
-    glBegin(mode);
-        for (i = 0; i < count; i++) {
-            if (va->edgeFlag.enable == GL_TRUE) {
-                (*va->edgeFlag.proc)(efaPtr);
-                efaPtr += va->edgeFlag.skip;
-            }
-
-	    
-	    if (va->texCoord[0].enable == GL_TRUE) {
-		(*va->texCoord[0].proc)(tcaPtr[0]);
-		tcaPtr[0] += va->texCoord[0].skip;
-	    }
-
-	    /* Multitexturing is handled specially because the protocol
-	     * requires an extra parameter.
-	     */
-	    for (j=1; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
-		if (va->texCoord[j].enable == GL_TRUE) {
-		    (*va->texCoord[j].mtex_proc)(GL_TEXTURE0 + j, tcaPtr[j]);
-		    tcaPtr[j] += va->texCoord[j].skip;
-		}
-	    }
-
-            if (va->color.enable == GL_TRUE) {
-                (*va->color.proc)(caPtr);
-                caPtr += va->color.skip;
-            }
-            if (va->secondaryColor.enable == GL_TRUE) {
-                (*va->secondaryColor.proc)(scaPtr);
-                scaPtr += va->secondaryColor.skip;
-            }
-            if (va->fogCoord.enable == GL_TRUE) {
-                (*va->fogCoord.proc)(faPtr);
-                faPtr += va->fogCoord.skip;
-            }
-            if (va->index.enable == GL_TRUE) {
-                (*va->index.proc)(iaPtr);
-                iaPtr += va->index.skip;
-            }
-            if (va->normal.enable == GL_TRUE) {
-                (*va->normal.proc)(naPtr);
-                naPtr += va->normal.skip;
-            }
-            if (va->vertex.enable == GL_TRUE) {
-                (*va->vertex.proc)(vaPtr);
-                vaPtr += va->vertex.skip;
-        }
-    }
-    glEnd();
+    return GL_TRUE;
 }
 
+
+void glDrawArrays(GLenum mode, GLint first, GLsizei count)
+{
+    __GLXcontext *gc = __glXGetCurrentContext();
+    const __GLXattribute * state = 
+       (const __GLXattribute *)(gc->client_state_private);
+
+
+    if ( ! glx_validate_array_args(gc, mode, count) ) {
+	return;
+    }
+
+    /* The "true" DrawArrays protocol does not support generic attributes,
+     * multiple vertex arrays, or multiple texture coordinate arrays.
+     */
+    if ( state->NoDrawArraysProtocol 
+	 || (state->vertArray.texture_enables > 1) ) {
+	emit_DrawArrays_old(state, first, count, mode);
+    }
+    else {
+	emit_DrawArraysEXT(state, first, count, mode);
+    }
+}
+
+
+/**
+ * \todo Modify this to use the "true" DrawArrays protocol if possible.  This
+ * would probably require refactoring out parts of \c emit_DrawArraysEXT into
+ * more general functions that could be used in either place.
+ */
 void glDrawElements(GLenum mode, GLsizei count, GLenum type,
 		    const GLvoid *indices)
 {
@@ -803,27 +1042,9 @@ void glDrawElements(GLenum mode, GLsizei count, GLenum type,
     const GLuint *iPtr3 = NULL;
     GLint i, j, offset = 0;
 
-    switch (mode) {
-      case GL_POINTS:
-      case GL_LINE_STRIP:
-      case GL_LINE_LOOP:
-      case GL_LINES:
-      case GL_TRIANGLE_STRIP:
-      case GL_TRIANGLE_FAN:
-      case GL_TRIANGLES:
-      case GL_QUAD_STRIP:
-      case GL_QUADS:
-      case GL_POLYGON:
-	break;
-      default:
-        __glXSetError(gc, GL_INVALID_ENUM);
-        return;
-    }
-
-    if (count < 0) {
-	__glXSetError(gc, GL_INVALID_VALUE);
+    if ( ! glx_validate_array_args(gc, mode, count) ) {
 	return;
-    } 
+    }
 
     switch (type) {
       case GL_UNSIGNED_BYTE:
@@ -853,28 +1074,30 @@ void glDrawElements(GLenum mode, GLsizei count, GLenum type,
 		offset = (GLint)(*iPtr3++);
 		break;
 	    }
-            if (va->edgeFlag.enable == GL_TRUE) {
-                (*va->edgeFlag.proc)(va->edgeFlag.ptr+(offset*va->edgeFlag.skip));
-            }
-	    for (j=0; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
-		if (va->texCoord[j].enable == GL_TRUE) {
-		    (*va->texCoord[j].proc)(va->texCoord[j].ptr+
-		    				(offset*va->texCoord[j].skip));
+
+	    if (IS_TEXARRAY_ENABLED(state, 0)) {
+		(*va->texCoord[0].proc)(va->texCoord[0].ptr+
+					(offset*va->texCoord[0].skip));
+	    }
+
+	    /* Multitexturing is handled specially because the protocol
+	     * requires an extra parameter.
+	     */
+	    for (j=1; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
+		if (IS_TEXARRAY_ENABLED(state, j)) {
+		    (*va->texCoord[j].mtex_proc)(GL_TEXTURE0 + j,
+						 va->texCoord[j].ptr+
+						 (offset*va->texCoord[j].skip));
 		}
 	    }
-            if (va->color.enable == GL_TRUE) {
-                (*va->color.proc)(va->color.ptr+(offset*va->color.skip));
+
+	    for ( j = 0 ; j < __GLX_MAX_ARRAYS ; j++ ) {
+		if (IS_ARRAY_ENABLED_BY_INDEX(state, j)) {
+		    (*va->arrays[ j ].proc)(va->arrays[ j ].ptr
+					    +(offset*va->arrays[ j ].skip));
+		}
             }
-            if (va->index.enable == GL_TRUE) {
-                (*va->index.proc)(va->index.ptr+(offset*va->index.skip));
-            }
-            if (va->normal.enable == GL_TRUE) {
-                (*va->normal.proc)(va->normal.ptr+(offset*va->normal.skip));
-            }
-            if (va->vertex.enable == GL_TRUE) {
-                (*va->vertex.proc)(va->vertex.ptr+(offset*va->vertex.skip));
         }
-    }
     glEnd();
 }
 
@@ -921,7 +1144,7 @@ void glClientActiveTextureARB(GLenum texture)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXattribute * state = (__GLXattribute *)(gc->client_state_private);
-    GLint unit = (GLint) texture - GL_TEXTURE0_ARB;
+    GLint unit = (GLint) texture - GL_TEXTURE0;
 
     if (unit < 0 || __GLX_MAX_TEXTURE_UNITS <= unit) {
 	__glXSetError(gc, GL_INVALID_ENUM);

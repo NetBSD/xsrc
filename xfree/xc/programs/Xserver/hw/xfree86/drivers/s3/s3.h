@@ -1,9 +1,9 @@
 /*
  *      Copyright 2001  Ani Joshi <ajoshi@unixbox.com>
- * 
+ *
  *      XFree86 4.x driver for S3 chipsets
- * 
- * 
+ *
+ *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that copyright
@@ -13,7 +13,7 @@
  * written prior permission.  Ani Joshi makes no representations
  * about the suitability of this software for any purpose.  It is provided
  * "as-is" without express or implied warranty.
- *                 
+ *
  * ANI JOSHI DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
  * EVENT SHALL ANI JOSHI BE LIABLE FOR ANY SPECIAL, INDIRECT OR
@@ -24,7 +24,7 @@
  *
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3.h,v 1.18 2003/07/17 08:19:35 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3/s3.h,v 1.19 2004/11/26 12:08:49 tsi Exp $ */
 
 
 #ifndef _S3_H
@@ -39,20 +39,10 @@
 #include "xf86_ansic.h"
 #include "vgaHW.h"
 
-
 #include "xf86xv.h"
 #include "Xv.h"
 #include "fourcc.h"
 
-
-#ifndef S3_USEFB
-#define PSZ 8
-#include "cfb.h"
-#undef PSZ
-#include "cfb16.h"
-#include "cfb24.h"
-#include "cfb32.h"
-#endif
 
 typedef struct _S3RegRec {
 	unsigned char	cr31, cr32, cr33, cr34, cr3a, cr3b, cr3c;
@@ -97,8 +87,8 @@ typedef struct _S3Rec {
         PCITAG                  PciTag;
         EntityInfoPtr           pEnt;
         unsigned long           IOAddress;
-        unsigned long           FBAddress; 
-        unsigned char *         FBBase;   
+        unsigned long           FBAddress;
+        unsigned char *         FBBase;
         unsigned char *         MMIOBase;
         unsigned long           videoRam;
         OptionInfoPtr           Options;

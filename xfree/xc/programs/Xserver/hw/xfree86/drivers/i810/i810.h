@@ -27,7 +27,54 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810.h,v 1.42 2003/09/28 20:15:57 alanh Exp $ */
+/*
+ * Copyright (c) 2003-2005 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810.h,v 1.45 2005/01/31 01:06:04 dawes Exp $ */
 
 /*
  * Authors:
@@ -162,9 +209,13 @@ typedef struct _I810Rec {
    int auxPitch;
    int auxPitchBits;
 
+   Bool CursorIsARGB;
    int CursorOffset;
    unsigned long CursorPhysical;
    unsigned long CursorStart;
+   int CursorARGBOffset;
+   unsigned long CursorARGBPhysical;
+   unsigned long CursorARGBStart;
    unsigned long OverlayPhysical;
    unsigned long OverlayStart;
    int colorKey;
@@ -184,7 +235,7 @@ typedef struct _I810Rec {
    pciVideoPtr PciInfo;
    PCITAG PciTag;
 
-   I810RingBuffer LpRing;
+   I810RingBuffer *LpRing;
    unsigned int BR[20];
 
    int LmFreqSel;
@@ -195,6 +246,8 @@ typedef struct _I810Rec {
    unsigned long DcacheOffset;
    int HwcursKey;
    unsigned long HwcursOffset;
+   int ARGBHwcursKey;
+   unsigned long ARGBHwcursOffset;
 
    int GttBound;
 
@@ -235,14 +288,15 @@ typedef struct _I810Rec {
    unsigned long backHandle;
    unsigned long zHandle;
    unsigned long cursorHandle;
+   unsigned long cursorARGBHandle;
    unsigned long xvmcHandle;
    unsigned long sysmemHandle;
    Bool agpAcquired;
-   drmHandle buffer_map;
-   drmHandle ring_map;
-   drmHandle overlay_map;
-   drmHandle mc_map;
-   drmHandle xvmcContext;
+   drm_handle_t buffer_map;
+   drm_handle_t ring_map;
+   drm_handle_t overlay_map;
+   drm_handle_t mc_map;
+   drm_handle_t xvmcContext;
 #endif
    Bool agpAcquired2d;
 
@@ -328,5 +382,8 @@ extern void I810InitVideo(ScreenPtr pScreen);
 extern void I810InitMC(ScreenPtr pScreen);
 
 extern const OptionInfoRec *I810AvailableOptions(int chipid, int busid);
+
+#define I810_DEFAULT_VIDEOMEM_2D        (MB(8) / 1024)
+#define I810_DEFAULT_VIDEOMEM_3D        (MB(16) / 1024)
 
 #endif /* _I810_H_ */

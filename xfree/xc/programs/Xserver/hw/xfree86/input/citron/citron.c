@@ -1,4 +1,4 @@
-/* $Id: citron.c,v 1.1.1.5 2004/03/05 14:29:12 tron Exp $
+/* $Id: citron.c,v 1.1.1.6 2005/03/18 13:12:27 tron Exp $
  * Copyright (c) 1998  Metro Link Incorporated
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/citron/citron.c,v 1.12 2003/11/06 18:38:11 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/citron/citron.c,v 1.13 2004/04/26 22:26:10 dawes Exp $ */
 
 /*
  * Based, in part, on code with the following copyright notice:
@@ -206,27 +206,12 @@ static int      debug_level = 0;
 #define DDS 5		/* DDS package */
 #define DC	5		/* cit_DriverComm */
 
-#define XFREE86_V4
-
-#ifdef XFREE86_V4
 #define WAIT(t)												\
     err = xf86WaitForInput(-1, ((t) * 1000));				\
     if (err == -1) {										\
 	ErrorF("Citron select error\n");	\
 	return !Success;										\
     }
-#else
-#define WAIT(t)												\
-    timeout.tv_sec = 0;										\
-    timeout.tv_usec = (t) * 1000;							\
-    SYSCALL(err = select(0, NULL, NULL, NULL, &timeout));	\
-    if (err == -1) {										\
-	ErrorF("Citron select error : %s\n", strerror(errno));	\
-	return !Success;										\
-    }
-#endif
-
-
 
 
 /*****************************************************************************

@@ -21,7 +21,7 @@ XCOMM site:  $TOG: site.sample /main/r64_final/1 1998/02/05 16:28:49 kaleb $
  * .cf file, not overridden in site.def.                                   *
  *                                                                         *
  ***************************************************************************/
-XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.25 2002/02/27 00:51:12 dawes Exp $
+XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.26 2004/06/09 18:30:56 dawes Exp $
 
 /* if you want host-specific customization, this is one way to do it */
 /*
@@ -89,10 +89,6 @@ XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.25 2002/02/27 00:51:12 dawes Ex
  *
 #define EtcX11Directory ProjectRoot/etc
  */
-
-
-/* Only set HasXdmAuth to YES if you have a Wraphelp.c file. */
-/* #define HasXdmAuth YES */
 
 /*
 #if defined(SunArchitecture) && defined(SparcArchitecture)

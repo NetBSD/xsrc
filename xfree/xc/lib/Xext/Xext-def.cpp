@@ -17,7 +17,7 @@ EXPORTS
  XShapeQueryExtents
  XShapeQueryVersion
  XShapeSelectInput
-#if (defined(__CYGWIN__) && defined(HAS_SHM)) || defined(__UNIXOS2__)
+#if defined(HAS_SHM)
  XShmAttach
  XShmCreateImage
  XShmCreatePixmap
@@ -116,14 +116,6 @@ EXPORTS
  XcupGetReservedColormapEntries
  XcupQueryVersion
  XcupStoreColors
-#if !defined(__CYGWIN__) && !defined(__UNIXOS2__)
- XPanoramiXQueryVersion
- XPanoramiXAllocInfo
- XPanoramiXGetScreenCount
- XPanoramiXGetScreenSize
- XPanoramiXGetState
- XPanoramiXQueryExtension
-#endif
  DPMSQueryExtension
  DPMSGetVersion
  DPMSCapable
@@ -137,4 +129,4 @@ EXPORTS
  XeviQueryVersion
  XeviGetVisualInfo
 /* $Xorg: Xext-def.cpp,v 1.3 2000/08/17 19:45:53 cpqbld Exp $ */
-/* $XFree86: xc/lib/Xext/Xext-def.cpp,v 1.9 2002/05/31 18:45:44 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/Xext-def.cpp,v 1.10 2004/05/06 01:17:29 dawes Exp $ */

@@ -1,10 +1,12 @@
+/* $XTermId: trace.h,v 1.32 2004/07/17 14:53:34 tom Exp $ */
+
 /*
- * $XFree86: xc/programs/xterm/trace.h,v 3.14 2003/10/27 01:07:57 dickey Exp $
+ * $XFree86: xc/programs/xterm/trace.h,v 3.16 2004/07/20 01:14:41 dickey Exp $
  */
 
 /************************************************************
 
-Copyright 1997-2001,2003 by Thomas E. Dickey
+Copyright 1997-2003,2004 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -44,6 +46,10 @@ extern	void	Trace ( char *, ... )
 	;
 #define TRACE(p) Trace p
 
+#if OPT_TRACE > 1
+#define TRACE2(p) Trace p
+#endif
+
 extern	char *	visibleChars (PAIRED_CHARS(Char *buf, Char *buf2), unsigned len);
 extern	char *	visibleIChar (IChar *, unsigned);
 
@@ -55,6 +61,9 @@ extern	void	TraceSizeHints(XSizeHints *);
 
 extern	void	TraceTranslations(const char *, Widget);
 #define	TRACE_TRANS(name,w) TraceTranslations(name,w)
+
+extern	void	TraceXtermResources(void);
+#define	TRACE_XRES() TraceXtermResources()
 
 extern	void	TraceArgv(const char *tag, char **argv);
 #define	TRACE_ARGV(tag,argv) TraceArgv(tag,argv)

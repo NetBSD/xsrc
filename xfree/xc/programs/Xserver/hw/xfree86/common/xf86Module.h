@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Module.h,v 1.38 2004/02/13 23:58:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Module.h,v 1.41 2005/01/21 02:03:12 dawes Exp $ */
 
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -104,11 +104,11 @@ typedef enum {
  * changed.  The minor revision mask is 0x0000FFFF and the major revision
  * mask is 0xFFFF0000.
  */
-#define ABI_ANSIC_VERSION	SET_ABI_VERSION(0, 2)
-#define ABI_VIDEODRV_VERSION	SET_ABI_VERSION(0, 7)
-#define ABI_XINPUT_VERSION	SET_ABI_VERSION(0, 4)
-#define ABI_EXTENSION_VERSION	SET_ABI_VERSION(0, 2)
-#define ABI_FONT_VERSION	SET_ABI_VERSION(0, 4)
+#define ABI_ANSIC_VERSION	SET_ABI_VERSION(0, 3)
+#define ABI_VIDEODRV_VERSION	SET_ABI_VERSION(0, 8)
+#define ABI_XINPUT_VERSION	SET_ABI_VERSION(0, 5)
+#define ABI_EXTENSION_VERSION	SET_ABI_VERSION(0, 3)
+#define ABI_FONT_VERSION	SET_ABI_VERSION(0, 5)
 
 #define MODINFOSTRING1	0xef23fdc5
 #define MODINFOSTRING2	0x10dc023a

@@ -1,4 +1,4 @@
-XCOMM  $XFree86: xc/nls/XLC_LOCALE/georgian-academy,v 1.2 2000/12/01 17:43:02 dawes Exp $
+XCOMM  $XFree86: xc/nls/XLC_LOCALE/georgian-academy,v 1.3 2005/02/02 14:33:23 pascal Exp $
 XCOMM  XLocale Database Sample for georgian-academy
 XCOMM 
 
@@ -20,6 +20,11 @@ XCOMM 	fs1 class
 fs1	{
 	charset         GEORGIAN-ACADEMY:GR
 	font            GEORGIAN-ACADEMY:GR
+}
+XCOMM 	fs2 class 
+fs2	{
+	charset         GEORGIAN-ACADEMY:GL
+	font            GEORGIAN-ACADEMY:GL
 }
 END XLC_FONTSET
 

@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/def.h,v 3.14 2003/01/17 17:09:49 tsi Exp $ */
+/* $XFree86: xc/config/makedepend/def.h,v 3.16 2004/06/09 19:00:09 tsi Exp $ */
 
 #include "Xos.h"
 #include "Xfuncproto.h"
@@ -48,39 +48,39 @@ in this Software without prior written authorization from The Open Group.
 #define MAXINCFILES	128	/* "-include" files */
 #define MAXDIRS		64
 #define SYMTABINC	10	/* must be > 1 for define() to work right */
-#define	TRUE		1
-#define	FALSE		0
+#define TRUE		1
+#define FALSE		0
 
 /* the following must match the directives table in main.c */
-#define	IF		0
-#define	IFDEF		1
-#define	IFNDEF		2
-#define	ELSE		3
-#define	ENDIF		4
-#define	DEFINE		5
-#define	UNDEF		6
-#define	INCLUDE		7
-#define	LINE		8
-#define	PRAGMA		9
-#define ERROR           10
-#define IDENT           11
-#define SCCS            12
-#define ELIF            13
-#define EJECT           14
-#define WARNING         15
-#define INCLUDENEXT     16
-#define IFFALSE         17     /* pseudo value --- never matched */
-#define ELIFFALSE       18     /* pseudo value --- never matched */
-#define INCLUDEDOT      19     /* pseudo value --- never matched */
-#define IFGUESSFALSE    20     /* pseudo value --- never matched */
-#define ELIFGUESSFALSE  21     /* pseudo value --- never matched */
-#define INCLUDENEXTDOT  22     /* pseudo value --- never matched */
+#define IF		0
+#define IFDEF		1
+#define IFNDEF		2
+#define ELSE		3
+#define ENDIF		4
+#define DEFINE		5
+#define UNDEF		6
+#define INCLUDE		7
+#define LINE		8
+#define PRAGMA		9
+#define ERROR		10
+#define IDENT		11
+#define SCCS		12
+#define ELIF		13
+#define EJECT		14
+#define WARNING		15
+#define INCLUDENEXT	16
+#define IFFALSE		17	/* pseudo value --- never matched */
+#define ELIFFALSE	18	/* pseudo value --- never matched */
+#define INCLUDEDOT	19	/* pseudo value --- never matched */
+#define IFGUESSFALSE	20	/* pseudo value --- never matched */
+#define ELIFGUESSFALSE	21	/* pseudo value --- never matched */
+#define INCLUDENEXTDOT	22	/* pseudo value --- never matched */
 
 #ifdef DEBUG
 extern int	_debugmask;
 /*
  * debug levels are:
- * 
+ *
  *     0	show ifn*(def)*,endif
  *     1	trace defined/!defined
  *     2	show #include
@@ -89,7 +89,7 @@ extern int	_debugmask;
  */
 #define debug(level,arg) { if (_debugmask & (1 << level)) warning arg; }
 #else
-#define	debug(level,arg) /**/
+#define debug(level,arg) /**/
 #endif /* DEBUG */
 
 typedef	unsigned char boolean;
@@ -97,6 +97,7 @@ typedef	unsigned char boolean;
 struct symtab {
 	char	*s_name;
 	char	*s_value;
+	char	*s_args;
 };
 
 /* possible i_flag */
@@ -105,8 +106,7 @@ struct symtab {
 #define MARKED		(1<<2)	/* whether it's in the makefile */
 #define SEARCHED	(1<<3)	/* whether we have read this */
 #define FINISHED	(1<<4)	/* whether we are done reading this */
-#define INCLUDED_SYM	(1<<5)	/* whether #include SYMBOL was found
-				   Can't use i_list if TRUE */
+
 struct	inclist {
 	char		*i_incstring;	/* string from #include line */
 	char		*i_file;	/* path name of the include file */
@@ -138,7 +138,7 @@ char *malloc(), *realloc();
 #endif /* macII */
 
 char			*copy(char *str);
-int                     match(char *str, char **list);
+int			match(char *str, char **list);
 char			*base_name(char *file);
 char			*getnextline(struct filepointer *fp);
 struct symtab		**slookup(char *symbol, struct inclist *file);
@@ -147,35 +147,35 @@ struct symtab		**isdefined(char *symbol, struct inclist *file,
 struct symtab		**fdefined(char *symbol, struct inclist *file,
 				   struct inclist **srcfile);
 struct filepointer	*getfile(char *file);
-void                    included_by(struct inclist *ip, 
+void			included_by(struct inclist *ip,
 				    struct inclist *newfile);
 struct inclist		*newinclude(char *newfile, char *incstring);
-void                    inc_clean (void);
+void			inc_clean(void);
 struct inclist		*inc_path(char *file, char *include, int type);
 
-void                    freefile(struct filepointer *fp);
+void			freefile(struct filepointer *fp);
 
-void                    define2(char *name, char *val, struct inclist *file);
-void                    define(char *def, struct inclist *file);
-void                    undefine(char *symbol, struct inclist *file);
-int                     find_includes(struct filepointer *filep, 
-				      struct inclist *file, 
-				      struct inclist *file_red, 
+void			define2(char *name, char *args, char *val,
+				struct inclist *file);
+void			define(char *def, struct inclist *file);
+void			undefine(char *symbol, struct inclist *file);
+int			find_includes(struct filepointer *filep,
+				      struct inclist *file,
+				      struct inclist *file_red,
 				      int recursion, boolean failOK);
 
-void                    recursive_pr_include(struct inclist *head, 
+void			recursive_pr_include(struct inclist *head,
 					     char *file, char *base);
-void                    add_include(struct filepointer *filep, 
-				    struct inclist *file, 
-				    struct inclist *file_red, 
+void			add_include(struct filepointer *filep,
+				    struct inclist *file,
+				    struct inclist *file_red,
 				    char *include, int type,
 				    boolean failOK);
 
-int                     cppsetup(char *filename,
+int			cppsetup(char *filename,
 				 char *line,
 				 struct filepointer *filep,
 				 struct inclist *inc);
-
 
 extern void fatalerr(char *, ...);
 extern void warning(char *, ...);

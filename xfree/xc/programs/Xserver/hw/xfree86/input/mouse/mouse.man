@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.man,v 1.7 2003/05/29 21:48:10 herrb Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/mouse/mouse.man,v 1.9 2005/02/17 01:41:26 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH MOUSE __drivermansuffix__ __vendorversion__
@@ -73,7 +73,7 @@ device.  This option is mandatory, and there is no default setting.
 .TP 7
 .BI "Option \*qButtons\*q \*q" integer \*q
 Specifies the number of mouse buttons.  In cases where the number of buttons
-cannot be auto-detected, the default value is 3.
+cannot be auto-detected, the default value is 3.  The maximum value is 24.
 .TP 7
 .BI "Option \*qEmulate3Buttons\*q \*q" boolean \*q
 Enable/disable the emulation of the third (middle) mouse button for mice

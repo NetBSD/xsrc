@@ -29,13 +29,13 @@ Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of Digital not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/ResourceI.h,v 1.6 2003/04/21 16:34:28 herrb Exp $ */
+/* $XFree86: xc/lib/Xt/ResourceI.h,v 1.7 2004/05/05 00:07:03 dickey Exp $ */
 
 /****************************************************************
  *
@@ -60,6 +60,13 @@ SOFTWARE.
 #define StringToQuark(string) XrmStringToQuark(string)
 #define StringToName(string) XrmStringToName(string)
 #define StringToClass(string) XrmStringToClass(string)
+
+extern void _XtDependencies(
+    XtResourceList  * /* class_resp */,
+    Cardinal	    * /* class_num_resp */,
+    XrmResourceList * /* super_res */,
+    Cardinal	     /* super_num_res */,
+    Cardinal	     /* super_widget_size */);
 
 extern void _XtResourceDependencies(
     WidgetClass  /* wc */

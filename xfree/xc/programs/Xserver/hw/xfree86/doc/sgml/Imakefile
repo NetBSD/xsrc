@@ -1,9 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/16 1996/10/28 05:13:04 kaleb $
-
-
-
-
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.87 2004/01/28 02:09:21 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.91 2005/03/08 21:11:14 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -17,6 +12,10 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.87 2004/01
 RELNOTES=RELNOTES.sgml
 #endif
 
+#if BuildDmx
+DMXDOCS = $(SERVERSRC)/hw/dmx/doc/dmx.sgml $(SERVERSRC)/hw/dmx/doc/scaled.sgml
+#endif
+
 SGMLDEPENDS = defs.ent
 MANSGMLDEPENDS = mdefs.ent
   INDEXLIST = README.sgml $(RELNOTES) LICENSE.sgml Install.sgml \
@@ -25,6 +24,7 @@ MANSGMLDEPENDS = mdefs.ent
 	      XKB-Config.sgml XKB-Enhancing.sgml \
 	      Darwin.sgml isc.sgml LynxOS.sgml NetBSD.sgml OpenBSD.sgml \
 	      OS2Notes.sgml SCO.sgml Solaris.sgml \
+	      $(DMXDOCS) \
               apm.sgml ati.sgml chips.sgml cyrix.sgml DECtga.sgml \
 	      I128.sgml i740.sgml i810.sgml newport.sgml \
 	      r128.sgml rendition.sgml s3virge.sgml SiS.sgml
@@ -109,9 +109,13 @@ clean::
 
 FORMATTEDDIR = ..
 
+/* Update top level docs. */
+UpdateFormattedDocLong(README,$(TOP),README.txt)
+UpdateFormattedDocLong(Install,$(TOP),Install.txt)
+UpdateFormattedDocLong(BUILD,$(TOP),BUILD.txt)
+UpdateFormattedDocLong(LICENSE,$(TOP),LICENSE.txt)
 #if BuildRelnotes
-/* Update RELNOTES at top level */
-UpdateFormattedDoc(RELNOTES,$(TOP))
+UpdateFormattedDocLong(RELNOTES,$(TOP),RELNOTES.txt)
 #endif
 
 /* Update the README files in xc/programs/xkbcomp */

@@ -1,3 +1,5 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel/drm_os_freebsd.h,v 1.17 2005/03/03 03:35:41 dawes Exp $ */
+
 /**
  * \file drm_os_freebsd.h
  * OS-specific #defines for FreeBSD
@@ -147,8 +149,13 @@
 /* Currently our DRMFILE (filp) is a void * which is actually the pid
  * of the current process.  It should be a per-open unique pointer, but
  * code for that is not yet written */
+#if __FreeBSD_version >= 502116
+#define DEV_T 			struct cdev *
+#else
+#define DEV_T			dev_t
+#endif
 #define DRMFILE			void *
-#define DRM_IOCTL_ARGS		dev_t kdev, u_long cmd, caddr_t data, int flags, DRM_STRUCTPROC *p, DRMFILE filp
+#define DRM_IOCTL_ARGS		DEV_T kdev, u_long cmd, caddr_t data, int flags, DRM_STRUCTPROC *p, DRMFILE filp
 #define DRM_SUSER(p)		suser(p)
 #define DRM_TASKQUEUE_ARGS	void *arg, int pending
 #define DRM_IRQ_ARGS		void *arg
@@ -302,6 +309,11 @@ for ( ret = 0 ; !ret && !(condition) ; ) {		\
 /* The macros conflicted in the MALLOC_DEFINE */
 MALLOC_DECLARE(malloctype);
 #undef malloctype
+
+#if __FreeBSD_version < 502109
+#define bus_alloc_resource_any(dev, type, rid, flags) \
+	bus_alloc_resource(dev, type, rid, 0ul, ~0ul, 1, flags)
+#endif
 
 #if __FreeBSD_version >= 480000
 #define cpu_to_le32(x) htole32(x)
@@ -459,7 +471,7 @@ extern d_close_t	DRM(close);
 extern d_read_t		DRM(read);
 extern d_poll_t		DRM(poll);
 extern d_mmap_t		DRM(mmap);
-extern int		DRM(open_helper)(dev_t kdev, int flags, int fmt, 
+extern int		DRM(open_helper)(DEV_T kdev, int flags, int fmt, 
 					 DRM_STRUCTPROC *p, drm_device_t *dev);
 extern drm_file_t	*DRM(find_file_by_proc)(drm_device_t *dev, 
 					 DRM_STRUCTPROC *p);

@@ -1,7 +1,7 @@
 XCOMM  $XConsortium: iso8859-9e /main/7 1996/09/28 16:51:50 rws $
 XCOMM  XLocale Database Sample for iso8859-9e.
 XCOMM 
-XCOMM  $XFree86: xc/nls/XLC_LOCALE/iso8859-9e,v 1.3 2000/12/01 17:43:03 dawes Exp $
+XCOMM  $XFree86: xc/nls/XLC_LOCALE/iso8859-9e,v 1.4 2005/02/02 14:33:23 pascal Exp $
 
 XCOMM 
 XCOMM 	XLC_FONTSET category
@@ -25,6 +25,15 @@ fs1	{
 	}
 	font	{
 		primary		ISO8859-9E:GR
+	}
+}
+XCOMM 	fs2 class 
+fs2	{
+	charset	{
+		name		ISO8859-9E:GL
+	}
+	font	{
+		primary		ISO8859-9E:GL
 	}
 }
 END XLC_FONTSET

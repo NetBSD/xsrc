@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/pc/sr,v 1.3 2003/10/25 13:24:05 pascal Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/pc/sr,v 1.4 2004/06/19 13:53:47 pascal Exp $
 // Serbian XKB keyboard mapping (derived from "Danube" D.2)
 //
 // Danube D.2 from 2003-05-12 is available at http://srpski.org/dunav/
@@ -209,3 +209,15 @@ xkb_symbols "level3" {
   key <AB10> {   [ any,any,     emdash,              endash   ]   }; // / ?
 
 };
+
+xkb_symbols "alternatequotes" {
+  // Another acceptable »pair of quotes« for Serbian 
+
+  name[Group1]= "Serbian Cyrillic with alternate quotes";
+
+  include "pc/sr(default)"
+
+  key <AC02> {   [ any,any,     guillemotright, NoSymbol ]   }; // s
+  key <AC03> {   [ any,any,     guillemotleft,  NoSymbol ]   }; // d
+};
+

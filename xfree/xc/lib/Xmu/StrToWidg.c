@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/StrToWidg.c,v 1.7 2001/12/14 19:55:53 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/StrToWidg.c,v 1.8 2004/10/23 15:29:26 dawes Exp $ */
 
 /*
  * XmuCvtStringToWidget
@@ -73,7 +73,7 @@ XmuCvtStringToWidget(XrmValuePtr args, Cardinal *num_args,
 	if ((*widgetP)->core.xrm_name == name)
 	  {
 		widget = *widgetP;
-		done(&widget, Widget);
+		done(&widget, Widget)
 	    }
 	}
 
@@ -83,7 +83,7 @@ XmuCvtStringToWidget(XrmValuePtr args, Cardinal *num_args,
     if ((*widgetP)->core.xrm_name == name)
       {
 	    widget = *widgetP;
-	    done(&widget, Widget);
+	    done(&widget, Widget)
 	}
 
     /* try to match classes of normal children */
@@ -95,7 +95,7 @@ XmuCvtStringToWidget(XrmValuePtr args, Cardinal *num_args,
 	if ((*widgetP)->core.widget_class->core_class.xrm_class == name)
 	  {
 		widget = *widgetP;
-		done(&widget, Widget);
+		done(&widget, Widget)
 	    }
 	}
 
@@ -105,7 +105,7 @@ XmuCvtStringToWidget(XrmValuePtr args, Cardinal *num_args,
     if ((*widgetP)->core.widget_class->core_class.xrm_class == name)
       {
 	    widget = *widgetP;
-	    done(&widget, Widget);
+	    done(&widget, Widget)
 	}
 
     XtStringConversionWarning(fromVal->addr, XtRWidget);

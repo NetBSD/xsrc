@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_cursor.h,v 1.17 2004/02/25 17:45:13 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_cursor.h,v 1.18 2004/06/21 00:43:22 twini Exp $ */
+/* $XdotOrg$ */
 /*
  * SiS hardware cursor handling
  * Definitions

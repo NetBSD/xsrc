@@ -32,9 +32,10 @@ lib/libXt.so.7.0
 lib/libXtst.so.7.0
 lib/libXv.so.2.0
 lib/libXvMC.so.2.0
-lib/libXxf86dga.so.2.0
+lib/libXxf86dga.so.2.1
 lib/libXxf86misc.so.2.0
 lib/libXxf86vm.so.2.0
+lib/libdmx.so.1.0
 lib/libdps.so.2.0
 lib/libdpstk.so.2.0
 lib/libexpat.so.4.0

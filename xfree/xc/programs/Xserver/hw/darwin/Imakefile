@@ -1,22 +1,36 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.20 2003/11/11 01:29:47 torrey Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.21 2004/05/28 07:44:00 torrey Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
 
 LinkSourceFile(XFree86.man,../xfree86)
 
+/* The version of miinitext.c in mi is built with many extensions off. */
+LinkSourceFile(miinitext.c,$(SERVERSRC)/mi)
+SpecialCObjectRule(miinitext,$(ICONFIGFILES),$(EXT_DEFINES))
+
+#if BuildXInputExt
+XINPUTSRCS = darwinXinput.c
+XINPUTOBJS = darwinXinput.o
+#endif
+
 SRCS =	darwin.c \
         darwinEvents.c \
-        darwinKeyboard.c
+        darwinKeyboard.c \
+        miinitext.c \
+        $(XINPUTSRCS)
 
 OBJS =	darwin.o \
         darwinEvents.o \
-        darwinKeyboard.o
+        darwinKeyboard.o \
+        miinitext.o \
+        $(XINPUTOBJS)
 
 INCLUDES = -I. -I$(SERVERSRC)/mi -I$(SERVERSRC)/fb -I$(EXTINCSRC) \
            -I$(SERVERSRC)/render -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
            -I$(SERVERSRC)/os -I$(INCLUDESRC) -I$(FONTINCSRC) \
-           -I$(SERVERSRC)/miext/shadow -I$(SERVERSRC)/hw/xfree86
+           -I$(SERVERSRC)/miext/shadow -I$(SERVERSRC)/hw/xfree86 \
+           -I$(SERVERSRC)/Xi
 
 OSNAME = OSName
 OSVENDOR = OSVendor

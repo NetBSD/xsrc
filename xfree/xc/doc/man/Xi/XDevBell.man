@@ -1,5 +1,5 @@
 .\"
-.\" $XFree86: xc/doc/man/Xi/XDevBell.man,v 1.3 2003/04/28 22:18:15 herrb Exp $
+.\" $XFree86: xc/doc/man/Xi/XDevBell.man,v 1.4 2005/02/11 03:03:03 dawes Exp $
 .\"
 .\"
 .\" Copyright ([\d,\s]*) by Hewlett-Packard Company, Ardent Computer, 
@@ -13,7 +13,7 @@
 .\" 
 .\" $Xorg: XDevBell.man,v 1.3 2000/08/17 19:41:56 cpqbld Exp $
 .ds xL Programming With Xlib
-.TH XDeviceBell 3X11 __xorgversion__ "X FUNCTIONS"
+.TH XDeviceBell 3X11 __vendorversion__ "X FUNCTIONS"
 .SH NAME
 XDeviceBell \- ring a bell on a device supported through the input extension
 .SH SYNTAX

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_video.c,v 1.34 2004/02/20 16:59:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_video.c,v 1.36 2004/04/25 14:26:37 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -17,7 +17,6 @@
 #include "xf86xv.h"
 #include "Xv.h"
 #include "xaa.h"
-#include "xaalocal.h"
 #include "dixstruct.h"
 #include "fourcc.h"
 
@@ -578,48 +577,19 @@ MGADisplayVideoOverlay(
     short src_w, short src_h,
     short drw_w, short drw_h
 ){
+#define VSYNC_POS 2
+
     MGAPtr pMga = MGAPTR(pScrn);
-    int tmp, hzoom, intrep;
-    int maxOverlayClock;
+    int tmp, intrep;
 
     CHECK_DMA_QUIESCENT(pMga, pScrn);
-
-    /* got 48 scanlines to do it in */
-    tmp = INREG(MGAREG_VCOUNT) + 48;
-    /* FIXME always change it in vertical retrace use CrtcV ?*/
-    if(tmp > pScrn->currentMode->CrtcVTotal)
-	tmp -= 49; /* too bad */
-    else
-        tmp = pScrn->currentMode->CrtcVTotal -1;
-
-    tmp = pScrn->currentMode->VDisplay +1;
-    /* enable accelerated 2x horizontal zoom when pixelclock >135MHz */
-
-    if ((pMga->ChipRev >= 0x80) || (pMga->Chipset == PCI_CHIP_MGAG550)) {
-	/* G450, G550 */
-	maxOverlayClock = 234000;
-    } else {
-	maxOverlayClock = 135000;
-    }
-
-    hzoom = (pScrn->currentMode->Clock > maxOverlayClock) ? 1 : 0;
-
-    switch(id) {
-    case FOURCC_UYVY:
-	OUTREG(MGAREG_BESGLOBCTL, 0x000000c0 | (3 * hzoom) | (tmp << 16));
-	break;
-    case FOURCC_YUY2:
-    default:
-	OUTREG(MGAREG_BESGLOBCTL, 0x00000080 | (3 * hzoom) | (tmp << 16));
-	break;
-    }
 
     OUTREG(MGAREG_BESA1ORG, offset);
 
     if(y1 & 0x00010000)
-	OUTREG(MGAREG_BESCTL, 0x00040c41);
+	OUTREG(MGAREG_BESCTL, 0x00050c41);
     else 
-	OUTREG(MGAREG_BESCTL, 0x00040c01);
+	OUTREG(MGAREG_BESCTL, 0x00050c01);
  
     OUTREG(MGAREG_BESHCOORD, (dstBox->x1 << 16) | (dstBox->x2 - 1));
     OUTREG(MGAREG_BESVCOORD, (dstBox->y1 << 16) | (dstBox->y2 - 1));
@@ -640,11 +610,20 @@ MGADisplayVideoOverlay(
     OUTREG(MGAREG_BESVISCAL, tmp & 0x001ffffc);
 
     intrep = ((drw_w == src_w) || (drw_w < 2)) ? 0 : 1;
-    tmp = (((src_w - intrep) << 16)/(drw_w - intrep)) << hzoom;
+    tmp = (((src_w - intrep) << 16)/(drw_w - intrep));
     if(tmp >= (32 << 16))
 	tmp = (32 << 16) - 1;
     OUTREG(MGAREG_BESHISCAL, tmp & 0x001ffffc);
 
+    switch(id) {
+    case FOURCC_UYVY:
+	OUTREG(MGAREG_BESGLOBCTL, 0x000000c0 | (VSYNC_POS << 16));
+	break;
+    case FOURCC_YUY2:
+    default:
+	OUTREG(MGAREG_BESGLOBCTL, 0x00000080 | (VSYNC_POS << 16));
+	break;
+    }
 }
 
 static void

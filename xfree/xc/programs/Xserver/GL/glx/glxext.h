@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxext.h,v 1.8 2004/02/09 23:46:31 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxext.h,v 1.9 2004/12/10 16:06:59 alanh Exp $ */
 #ifndef _glxext_h_
 #define _glxext_h_
 
@@ -73,8 +73,16 @@ extern void __glXResetLargeCommandStatus(__GLXclientState*);
 extern int __glXQueryContextInfoEXT(__GLXclientState *cl, GLbyte *pc);
 extern int __glXSwapQueryContextInfoEXT(__GLXclientState *cl, GLbyte *pc);
 
-extern int __glXMakeCurrentReadSGI(__GLXclientState *cl, GLbyte *pc);
-extern int __glXSwapMakeCurrentReadSGI(__GLXclientState *cl, GLbyte *pc);
+extern int DoMakeCurrent( __GLXclientState *cl, GLXDrawable drawId,
+    GLXDrawable readId, GLXContextID contextId, GLXContextTag tag );
+extern int DoGetVisualConfigs(__GLXclientState *cl, unsigned screen,
+    GLboolean do_swap);
+extern int DoGetFBConfigs(__GLXclientState *cl, unsigned screen,
+    GLboolean do_swap);
+extern int DoCreateContext(__GLXclientState *cl, GLXContextID gcId,
+    GLXContextID shareList, VisualID visual, GLuint screen, GLboolean isDirect);
+extern int DoCreateGLXPixmap(__GLXclientState *cl, VisualID visual,
+    GLuint screenNum, XID pixmapId, XID glxpixmapId);
 
 extern void GlxExtensionInit(void);
 

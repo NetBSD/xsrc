@@ -8,7 +8,7 @@
  *
  **************************************************************/
 /*
- * Copyright (c) 2001-2003 Torrey T. Lyons and Greg Parker.
+ * Copyright (c) 2001-2004 Torrey T. Lyons and Greg Parker.
  *                 All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -33,7 +33,7 @@
  * holders shall not be used in advertising or otherwise to promote the sale,
  * use or other dealings in this Software without prior written authorization.
  */
-/* $XFree86: xc/programs/Xserver/hw/darwin/quartz/quartzCocoa.m,v 1.4 2003/05/14 05:27:56 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/quartz/quartzCocoa.m,v 1.5 2004/06/08 22:58:10 torrey Exp $ */
 
 #include "quartzCommon.h"
 
@@ -64,6 +64,7 @@ void QuartzReadPreferences(void)
     darwinFakeMouse3Mask = [Preferences button3Mask];
     darwinMouseAccelChange = [Preferences mouseAccelChange];
     quartzUseSysBeep = [Preferences systemBeep];
+    quartzEnableKeyEquivalents = [Preferences enableKeyEquivalents];
 
     // quartzRootless has already been set
     if (quartzRootless) {

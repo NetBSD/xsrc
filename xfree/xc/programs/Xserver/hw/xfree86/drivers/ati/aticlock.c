@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticlock.c,v 1.22 2004/01/05 16:42:01 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticlock.c,v 1.24 2004/12/31 16:07:06 tsi Exp $ */
 /*
- * Copyright 1997 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -435,6 +435,7 @@ ATIMatchClockLine
 (
     ScrnInfoPtr              pScreenInfo,
     ATIPtr                   pATI,
+    ClockRangePtr            pRange,
     const                int **ClockLine,
     const unsigned short int NumberOfClocks,
     const                int CalibrationClockNumber,
@@ -491,8 +492,12 @@ ATIMatchClockLine
                 continue;
 
             Gap = abs(XF86ConfigClock - SpecificationClock);
-            if (Gap >= MinimumGap)
+            if (Gap > MinimumGap)
+            {
+                if (SpecificationClock > pRange->maxClock)
+                    continue;
                 goto SkipThisClockGenerator;
+            }
             if (!Gap)
             {
                 if (ClockIndex == CalibrationClockNumber)
@@ -1012,7 +1017,7 @@ ProbeClocks:
         pATI->OptionProbeClocks = TRUE;
 
         /* Attempt to match probed clocks to a known specification */
-        pATI->Clock = ATIMatchClockLine(pScreenInfo, pATI,
+        pATI->Clock = ATIMatchClockLine(pScreenInfo, pATI, pRange,
             SpecificationClockLine, NumberOfUndividedClocks,
             CalibrationClockNumber, 0);
 
@@ -1054,7 +1059,7 @@ ProbeClocks:
         pScreenInfo->numClocks = NumberOfClocks;
 
         /* Attempt to match clocks to a known specification */
-        pATI->Clock = ATIMatchClockLine(pScreenInfo, pATI,
+        pATI->Clock = ATIMatchClockLine(pScreenInfo, pATI, pRange,
             SpecificationClockLine, NumberOfUndividedClocks, -1, 0);
 
 #ifndef AVOID_CPIO
@@ -1071,8 +1076,8 @@ ProbeClocks:
                  * includes the standard VGA clocks for ATI adapters, and clock
                  * lines that could have been used with the pre-2.1.1 driver.
                  */
-                if (ATIMatchClockLine(pScreenInfo, pATI, InvalidClockLine,
-                    NumberOfClocks, -1, 0))
+                if (ATIMatchClockLine(pScreenInfo, pATI, pRange,
+                                      InvalidClockLine, NumberOfClocks, -1, 0))
                 {
                     pATI->OptionProbeClocks = TRUE;
                 }
@@ -1094,8 +1099,8 @@ ProbeClocks:
                     while ((++ClockMap, ClockMap %= NumberOf(ClockMaps)))
                     {
                         pATI->Clock = ATIMatchClockLine(pScreenInfo, pATI,
-                            SpecificationClockLine, NumberOfUndividedClocks,
-                            -1, ClockMap);
+                            pRange, SpecificationClockLine,
+                            NumberOfUndividedClocks, -1, ClockMap);
                         if (pATI->Clock != ATI_CLOCK_NONE)
                         {
                             xf86DrvMsgVerb(pScreenInfo->scrnIndex,

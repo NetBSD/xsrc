@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Shell.c,v 3.17 2003/05/27 22:26:43 tsi Exp $ */
+/* $XFree86: xc/lib/Xt/Shell.c,v 3.18 2004/05/05 00:07:03 dickey Exp $ */
 
 /*
 
@@ -100,15 +100,15 @@ in this Software without prior written authorization from The Open Group.
  ***************************************************************************/
 
 #ifdef CRAY
-void _XtShellDepth();
-void _XtShellColormap();
-void _XtShellAncestorSensitive();
-void _XtTitleEncoding();
+void _XtShellDepth(Widget, int, XrmValue *);
+void _XtShellColormap(Widget, int, XrmValue *);
+void _XtShellAncestorSensitive(Widget, int, XrmValue *);
+void _XtTitleEncoding(Widget, int, XrmValue *);
 #else
-static void _XtShellDepth();
-static void _XtShellColormap();
-static void _XtShellAncestorSensitive();
-static void _XtTitleEncoding();
+static void _XtShellDepth(Widget, int, XrmValue *);
+static void _XtShellColormap(Widget, int, XrmValue *);
+static void _XtShellAncestorSensitive(Widget, int, XrmValue *);
+static void _XtTitleEncoding(Widget, int, XrmValue *);
 #endif
 
 /***************************************************************************
@@ -134,7 +134,7 @@ static XtResource shellResources[]=
 	{ XtNallowShellResize, XtCAllowShellResize, XtRBoolean,
 	    sizeof(Boolean), Offset(shell.allow_shell_resize),
 	    XtRImmediate, (XtPointer)False},
-	{ XtNgeometry, XtCGeometry, XtRString, sizeof(String), 
+	{ XtNgeometry, XtCGeometry, XtRString, sizeof(String),
 	    Offset(shell.geometry), XtRString, (XtPointer)NULL},
 	{ XtNcreatePopupChildProc, XtCCreatePopupChildProc, XtRFunction,
 	    sizeof(XtCreatePopupChildProc), Offset(shell.create_popup_child_proc),
@@ -152,14 +152,16 @@ static XtResource shellResources[]=
 	    Offset(shell.visual), XtRImmediate, CopyFromParent}
 };
 
-static void ClassPartInitialize(), Initialize();
-static void Realize();
-static void Resize();
-static Boolean SetValues();
-static void GetValuesHook();
-static void ChangeManaged(); /* XXX */
-static XtGeometryResult GeometryManager(), RootGeometryManager();
-static void Destroy();
+static void ClassPartInitialize(WidgetClass);
+static void Initialize(Widget, Widget, ArgList, Cardinal *);
+static void Realize(Widget, Mask *, XSetWindowAttributes *);
+static void Resize(Widget);
+static Boolean SetValues(Widget, Widget, Widget, ArgList , Cardinal *);
+static void GetValuesHook(Widget, ArgList, Cardinal*);
+static void ChangeManaged(Widget);
+static XtGeometryResult GeometryManager(Widget, XtWidgetGeometry *, XtWidgetGeometry *);
+static XtGeometryResult RootGeometryManager(Widget gw, XtWidgetGeometry *request, XtWidgetGeometry *reply);
+static void Destroy(Widget);
 
 static ShellClassExtensionRec shellClassExtRec = {
     NULL,
@@ -178,7 +180,7 @@ externaldef(shellclassrec) ShellClassRec shellClassRec = {
     /* class_part_initialize*/	ClassPartInitialize,
     /* Class init'ed ?	  */	FALSE,
     /* initialize	  */	Initialize,
-    /* initialize_notify  */	NULL,		
+    /* initialize_notify  */	NULL,
     /* realize		  */	Realize,
     /* actions		  */	NULL,
     /* num_actions	  */	0,
@@ -193,8 +195,8 @@ externaldef(shellclassrec) ShellClassRec shellClassRec = {
     /* resize		  */	Resize,
     /* expose		  */	NULL,
     /* set_values	  */	SetValues,
-    /* set_values_hook	  */	NULL,			
-    /* set_values_almost  */	XtInheritSetValuesAlmost,  
+    /* set_values_hook	  */	NULL,
+    /* set_values_almost  */	XtInheritSetValuesAlmost,
     /* get_values_hook	  */	GetValuesHook,
     /* accept_focus	  */	NULL,
     /* intrinsics version */	XtVersion,
@@ -240,7 +242,7 @@ externaldef(overrideshellclassrec) OverrideShellClassRec overrideShellClassRec =
     /* class_part_initialize*/	NULL,
     /* Class init'ed ?    */	FALSE,
     /* initialize         */    NULL,
-    /* initialize_notify    */	NULL,		
+    /* initialize_notify    */	NULL,
     /* realize            */    XtInheritRealize,
     /* actions            */    NULL,
     /* num_actions        */    0,
@@ -255,9 +257,9 @@ externaldef(overrideshellclassrec) OverrideShellClassRec overrideShellClassRec =
     /* resize             */    XtInheritResize,
     /* expose             */    NULL,
     /* set_values         */    NULL,
-    /* set_values_hook      */	NULL,			
-    /* set_values_almost    */	XtInheritSetValuesAlmost,  
-    /* get_values_hook      */	NULL,			
+    /* set_values_hook      */	NULL,
+    /* set_values_almost    */	XtInheritSetValuesAlmost,
+    /* get_values_hook      */	NULL,
     /* accept_focus       */    NULL,
     /* intrinsics version */	XtVersion,
     /* callback offsets   */    NULL,
@@ -278,7 +280,7 @@ externaldef(overrideshellclassrec) OverrideShellClassRec overrideShellClassRec =
   }
 };
 
-externaldef(overrideshellwidgetclass) WidgetClass overrideShellWidgetClass = 
+externaldef(overrideshellwidgetclass) WidgetClass overrideShellWidgetClass =
 	(WidgetClass) (&overrideShellClassRec);
 
 /***************************************************************************
@@ -317,7 +319,7 @@ static XtResource wmResources[]=
 	    Offset(wm.base_height),
 	    XtRInt, (XtPointer) &default_unspecified_shell_int},
 	{ XtNwinGravity, XtCWinGravity, XtRGravity, sizeof(int),
-	    Offset(wm.win_gravity), 
+	    Offset(wm.win_gravity),
 	    XtRGravity, (XtPointer) &default_unspecified_shell_int},
 	{ XtNminWidth, XtCMinWidth, XtRInt, sizeof(int),
 	    Offset(wm.size_hints.min_width),
@@ -378,9 +380,9 @@ static XtResource wmResources[]=
 	    Offset(wm.urgency), XtRImmediate, (XtPointer) False}
 };
 
-static void WMInitialize();
-static Boolean WMSetValues();
-static void WMDestroy();
+static void WMInitialize(Widget, Widget, ArgList, Cardinal *);
+static Boolean WMSetValues(Widget, Widget, Widget, ArgList, Cardinal *);
+static void WMDestroy(Widget);
 
 externaldef(wmshellclassrec) WMShellClassRec wmShellClassRec = {
   {
@@ -391,7 +393,7 @@ externaldef(wmshellclassrec) WMShellClassRec wmShellClassRec = {
     /* class_part_initialize*/	NULL,
     /* Class init'ed ?    */	FALSE,
     /* initialize         */    WMInitialize,
-    /* initialize_notify    */	NULL,		
+    /* initialize_notify    */	NULL,
     /* realize            */    XtInheritRealize,
     /* actions            */    NULL,
     /* num_actions        */    0,
@@ -406,9 +408,9 @@ externaldef(wmshellclassrec) WMShellClassRec wmShellClassRec = {
     /* resize             */    XtInheritResize,
     /* expose             */    NULL,
     /* set_values         */    WMSetValues,
-    /* set_values_hook      */	NULL,			
-    /* set_values_almost    */	XtInheritSetValuesAlmost,  
-    /* get_values_hook      */	NULL,			
+    /* set_values_hook      */	NULL,
+    /* set_values_almost    */	XtInheritSetValuesAlmost,
+    /* get_values_hook      */	NULL,
     /* accept_focus       */    NULL,
     /* intrinsics version */	XtVersion,
     /* callback offsets   */    NULL,
@@ -450,8 +452,8 @@ static XtResource transientResources[]=
 	    Offset(shell.save_under), XtRImmediate, (XtPointer)True},
 };
 
-static void TransientRealize();
-static Boolean TransientSetValues();
+static void TransientRealize(Widget, Mask *, XSetWindowAttributes *);
+static Boolean TransientSetValues(Widget, Widget, Widget, ArgList, Cardinal *);
 
 externaldef(transientshellclassrec) TransientShellClassRec transientShellClassRec = {
   {
@@ -462,7 +464,7 @@ externaldef(transientshellclassrec) TransientShellClassRec transientShellClassRe
     /* class_part_initialize*/	NULL,
     /* Class init'ed ?	  */	FALSE,
     /* initialize	  */	NULL,
-    /* initialize_notify  */	NULL,		
+    /* initialize_notify  */	NULL,
     /* realize		  */	TransientRealize,
     /* actions		  */	NULL,
     /* num_actions	  */	0,
@@ -477,9 +479,9 @@ externaldef(transientshellclassrec) TransientShellClassRec transientShellClassRe
     /* resize		  */	XtInheritResize,
     /* expose		  */	NULL,
     /* set_values	  */	TransientSetValues,
-    /* set_values_hook	  */	NULL,			
-    /* set_values_almost  */	XtInheritSetValuesAlmost,  
-    /* get_values_hook	  */	NULL,			
+    /* set_values_hook	  */	NULL,
+    /* set_values_almost  */	XtInheritSetValuesAlmost,
+    /* get_values_hook	  */	NULL,
     /* accept_focus	  */	NULL,
     /* intrinsics version */	XtVersion,
     /* callback offsets	  */	NULL,
@@ -527,9 +529,9 @@ static XtResource topLevelResources[]=
 	    Offset(topLevel.iconic), XtRImmediate, (XtPointer)False}
 };
 
-static void TopLevelInitialize();
-static Boolean TopLevelSetValues();
-static void TopLevelDestroy();
+static void TopLevelInitialize(Widget, Widget, ArgList, Cardinal *);
+static Boolean TopLevelSetValues(Widget, Widget, Widget, ArgList, Cardinal *);
+static void TopLevelDestroy(Widget);
 
 externaldef(toplevelshellclassrec) TopLevelShellClassRec topLevelShellClassRec = {
   {
@@ -540,7 +542,7 @@ externaldef(toplevelshellclassrec) TopLevelShellClassRec topLevelShellClassRec =
     /* class_part_initialize*/	NULL,
     /* Class init'ed ?    */	FALSE,
     /* initialize         */    TopLevelInitialize,
-    /* initialize_notify    */	NULL,		
+    /* initialize_notify    */	NULL,
     /* realize            */    XtInheritRealize,
     /* actions            */    NULL,
     /* num_actions        */    0,
@@ -555,9 +557,9 @@ externaldef(toplevelshellclassrec) TopLevelShellClassRec topLevelShellClassRec =
     /* resize             */    XtInheritResize,
     /* expose             */    NULL,
     /* set_values         */    TopLevelSetValues,
-    /* set_values_hook      */	NULL,			
-    /* set_values_almost    */	XtInheritSetValuesAlmost,  
-    /* get_values_hook      */	NULL,			
+    /* set_values_hook      */	NULL,
+    /* set_values_almost    */	XtInheritSetValuesAlmost,
+    /* get_values_hook      */	NULL,
     /* accept_focus       */    NULL,
     /* intrinsics version */	XtVersion,
     /* callback offsets   */    NULL,
@@ -597,16 +599,16 @@ externaldef(toplevelshellwidgetclass) WidgetClass topLevelShellWidgetClass =
 static XtResource applicationResources[]=
 {
     {XtNargc, XtCArgc, XtRInt, sizeof(int),
-	  Offset(application.argc), XtRImmediate, (XtPointer)0}, 
+	  Offset(application.argc), XtRImmediate, (XtPointer)0},
     {XtNargv, XtCArgv, XtRStringArray, sizeof(String*),
 	  Offset(application.argv), XtRPointer, (XtPointer) NULL}
 };
 #undef Offset
 
-static void ApplicationInitialize();
-static void ApplicationDestroy();
-static Boolean ApplicationSetValues();
-static void ApplicationShellInsertChild();
+static void ApplicationInitialize(Widget, Widget, ArgList, Cardinal *);
+static void ApplicationDestroy(Widget);
+static Boolean ApplicationSetValues(Widget, Widget, Widget, ArgList, Cardinal *);
+static void ApplicationShellInsertChild(Widget);
 
 static CompositeClassExtensionRec compositeClassExtension = {
     /* next_extension	*/	NULL,
@@ -627,7 +629,7 @@ externaldef(applicationshellclassrec) ApplicationShellClassRec applicationShellC
     /* class_part_initialize*/	NULL,
     /* Class init'ed ?    */	FALSE,
     /* initialize         */    ApplicationInitialize,
-    /* initialize_notify  */	NULL,		
+    /* initialize_notify  */	NULL,
     /* realize            */    XtInheritRealize,
     /* actions            */    NULL,
     /* num_actions        */    0,
@@ -642,9 +644,9 @@ externaldef(applicationshellclassrec) ApplicationShellClassRec applicationShellC
     /* resize             */    XtInheritResize,
     /* expose             */    NULL,
     /* set_values         */    ApplicationSetValues,
-    /* set_values_hook    */	NULL,			
+    /* set_values_hook    */	NULL,
     /* set_values_almost  */	XtInheritSetValuesAlmost,
-    /* get_values_hook    */	NULL,			
+    /* get_values_hook    */	NULL,
     /* accept_focus       */    NULL,
     /* intrinsics version */	XtVersion,
     /* callback offsets   */    NULL,
@@ -727,9 +729,9 @@ static XtResource sessionResources[]=
 };
 #undef Offset
 
-static void SessionInitialize();
-static void SessionDestroy();
-static Boolean SessionSetValues();
+static void SessionInitialize(Widget, Widget, ArgList, Cardinal *);
+static void SessionDestroy(Widget);
+static Boolean SessionSetValues(Widget, Widget, Widget, ArgList, Cardinal *);
 
 static CompositeClassExtensionRec sessionCompositeClassExtension = {
     /* next_extension	*/	NULL,
@@ -750,7 +752,7 @@ externaldef(sessionshellclassrec) SessionShellClassRec sessionShellClassRec = {
     /* class_part_initialize*/	NULL,
     /* Class init'ed ?    */	FALSE,
     /* initialize         */    SessionInitialize,
-    /* initialize_notify  */	NULL,	
+    /* initialize_notify  */	NULL,
     /* realize            */    XtInheritRealize,
     /* actions            */    NULL,
     /* num_actions        */    0,
@@ -765,7 +767,7 @@ externaldef(sessionshellclassrec) SessionShellClassRec sessionShellClassRec = {
     /* resize             */    XtInheritResize,
     /* expose             */    NULL,
     /* set_values         */    SessionSetValues,
-    /* set_values_hook    */	NULL,		
+    /* set_values_hook    */	NULL,
     /* set_values_almost  */	XtInheritSetValuesAlmost,
     /* get_values_hook    */	NULL,
     /* accept_focus       */    NULL,
@@ -803,9 +805,9 @@ externaldef(sessionshellwidgetclass) WidgetClass sessionShellWidgetClass =
  * Whew!
  ****************************************************************************/
 
-static void ComputeWMSizeHints(w, hints)
-    WMShellWidget w;
-    XSizeHints *hints;
+static void ComputeWMSizeHints(
+    WMShellWidget w,
+    XSizeHints *hints)
 {
     register long flags;
     hints->flags = flags = w->wm.size_hints.flags;
@@ -847,8 +849,8 @@ static void ComputeWMSizeHints(w, hints)
 #undef copy
 }
 
-static void _SetWMSizeHints(w)
-    WMShellWidget w;
+static void _SetWMSizeHints(
+    WMShellWidget w)
 {
     XSizeHints *size_hints = XAllocSizeHints();
 
@@ -858,8 +860,8 @@ static void _SetWMSizeHints(w)
     XFree((char*)size_hints);
 }
 
-static ShellClassExtension _FindClassExtension(widget_class)
-    WidgetClass widget_class;
+static ShellClassExtension _FindClassExtension(
+    WidgetClass widget_class)
 {
     ShellClassExtension ext;
     for (ext = (ShellClassExtension)((ShellWidgetClass)widget_class)
@@ -884,8 +886,7 @@ static ShellClassExtension _FindClassExtension(widget_class)
     return ext;
 }
 
-static void ClassPartInitialize(widget_class)
-    WidgetClass widget_class;
+static void ClassPartInitialize(WidgetClass widget_class)
 {
     ShellClassExtension ext = _FindClassExtension(widget_class);
     if (ext != NULL) {
@@ -908,15 +909,15 @@ static void ClassPartInitialize(widget_class)
 }
 
 
-static void EventHandler();
-static void _popup_set_prop();
+static void EventHandler(Widget wid, XtPointer closure, XEvent *event, Boolean *continue_to_dispatch);
+static void _popup_set_prop(ShellWidget);
 
 
 /*ARGSUSED*/
-static void XtCopyDefaultDepth(widget, offset, value)
-    Widget      widget;
-    int		offset;
-    XrmValue    *value;
+static void XtCopyDefaultDepth(
+    Widget      widget,
+    int		offset,
+    XrmValue    *value)
 {
     value->addr = (XPointer)(&DefaultDepthOfScreen(XtScreenOfObject(widget)));
 }
@@ -924,20 +925,20 @@ static void XtCopyDefaultDepth(widget, offset, value)
 #ifndef CRAY
 static
 #endif
-void _XtShellDepth(widget,closure,value)
-    Widget widget;
-    int closure;
-    XrmValue *value;
+void _XtShellDepth(
+    Widget widget,
+    int closure,
+    XrmValue *value)
 {
    if (widget->core.parent == NULL) XtCopyDefaultDepth(widget,closure,value);
    else _XtCopyFromParent (widget,closure,value);
 }
 
 /*ARGSUSED*/
-static void XtCopyDefaultColormap(widget, offset, value)
-    Widget      widget;
-    int		offset;
-    XrmValue    *value;
+static void XtCopyDefaultColormap(
+    Widget      widget,
+    int		offset,
+    XrmValue    *value)
 {
     value->addr = (XPointer)(&DefaultColormapOfScreen(XtScreenOfObject(widget)));
 }
@@ -945,10 +946,10 @@ static void XtCopyDefaultColormap(widget, offset, value)
 #ifndef CRAY
 static
 #endif
-void _XtShellColormap(widget,closure,value)
-    Widget widget;
-    int closure;
-    XrmValue *value;
+void _XtShellColormap(
+    Widget widget,
+    int closure,
+    XrmValue *value)
 {
    if (widget->core.parent == NULL)
 	   XtCopyDefaultColormap(widget,closure,value);
@@ -958,10 +959,10 @@ void _XtShellColormap(widget,closure,value)
 #ifndef CRAY
 static
 #endif
-void _XtShellAncestorSensitive(widget,closure,value)
-    Widget widget;
-    int closure;
-    XrmValue *value;
+void _XtShellAncestorSensitive(
+    Widget widget,
+    int closure,
+    XrmValue *value)
 {
    static Boolean true = True;
    if (widget->core.parent == NULL) value->addr = (XPointer)(&true);
@@ -972,10 +973,10 @@ void _XtShellAncestorSensitive(widget,closure,value)
 #ifndef CRAY
 static
 #endif
-void _XtTitleEncoding(widget, offset, value)
-    Widget widget;
-    int offset;
-    XrmValue *value;
+void _XtTitleEncoding(
+    Widget widget,
+    int offset,
+    XrmValue *value)
 {
     static Atom atom;
     if (XtWidgetToApplicationContext(widget)->langProcRec.proc) atom = None;
@@ -985,10 +986,11 @@ void _XtTitleEncoding(widget, offset, value)
 
 
 /* ARGSUSED */
-static void Initialize(req, new, args, num_args)
-	Widget req, new;
-	ArgList args;		/* unused */
-	Cardinal *num_args;	/* unused */
+static void Initialize(
+	Widget req,
+	Widget new,
+	ArgList args,		/* unused */
+	Cardinal *num_args)	/* unused */
 {
 	ShellWidget w = (ShellWidget) new;
 
@@ -1008,16 +1010,16 @@ static void Initialize(req, new, args, num_args)
 		TRUE, EventHandler, (XtPointer) NULL);
 
 #ifdef EDITRES
-	XtAddEventHandler(new, (EventMask) 0, TRUE, 
+	XtAddEventHandler(new, (EventMask) 0, TRUE,
 			  _XEditResCheckMessages, NULL);
 #endif
 }
 
 /* ARGSUSED */
-static void WMInitialize(req, new, args, num_args)
-	Widget req,new;
-	ArgList args;		/* unused */
-	Cardinal *num_args;	/* unused */
+static void WMInitialize(
+	Widget req, Widget new,
+	ArgList args,		/* unused */
+	Cardinal *num_args)	/* unused */
 {
 	WMShellWidget w = (WMShellWidget) new;
 	TopLevelShellWidget tls = (TopLevelShellWidget) new;	/* maybe */
@@ -1041,10 +1043,10 @@ static void WMInitialize(req, new, args, num_args)
 
 
 /* ARGSUSED */
-static void TopLevelInitialize(req, new, args, num_args)
-	Widget req, new;
-	ArgList args;		/* unused */
-	Cardinal *num_args;	/* unused */
+static void TopLevelInitialize(
+	Widget req, Widget new,
+	ArgList args,		/* unused */
+	Cardinal *num_args)	/* unused */
 {
 	TopLevelShellWidget w = (TopLevelShellWidget) new;
 
@@ -1058,15 +1060,15 @@ static void TopLevelInitialize(req, new, args, num_args)
 	    w->wm.wm_hints.initial_state = IconicState;
 }
 
-static String *NewArgv();
-static String *NewStringArray();
-static void FreeStringArray();
+static String *NewArgv(int, String *);
+static String *NewStringArray(String *);
+static void FreeStringArray(String *);
 
 /* ARGSUSED */
-static void ApplicationInitialize(req, new, args, num_args)
-    Widget req, new;
-    ArgList args;		/* unused */
-    Cardinal *num_args;		/* unused */
+static void ApplicationInitialize(
+    Widget req, Widget new,
+    ArgList args,		/* unused */
+    Cardinal *num_args)		/* unused */
 {
     ApplicationShellWidget w = (ApplicationShellWidget)new;
 
@@ -1090,9 +1092,9 @@ static void ApplicationInitialize(req, new, args, num_args)
 #define XtRestartStyleHintMask	(1L<<7)
 #define XtShutdownCommandMask	(1L<<8)
 
-static void JoinSession();
-static void SetSessionProperties();
-static void StopManagingSession();
+static void JoinSession(SessionShellWidget);
+static void SetSessionProperties(SessionShellWidget, Boolean, unsigned long, unsigned long);
+static void StopManagingSession(SessionShellWidget, SmcConn);
 
 typedef struct _XtSaveYourselfRec {
     XtSaveYourself next;
@@ -1101,7 +1103,7 @@ typedef struct _XtSaveYourselfRec {
     Boolean        shutdown;
     Boolean        fast;
     Boolean        cancel_shutdown;
-    int		   phase; 
+    int		   phase;
     int            interact_dialog_type;
     Boolean	   request_cancel;
     Boolean	   request_next_phase;
@@ -1111,10 +1113,10 @@ typedef struct _XtSaveYourselfRec {
 } XtSaveYourselfRec;
 
 /* ARGSUSED */
-static void SessionInitialize(req, new, args, num_args)
-    Widget req, new;
-    ArgList args;		/* unused */
-    Cardinal *num_args;		/* unused */
+static void SessionInitialize(
+    Widget req, Widget new,
+    ArgList args,		/* unused */
+    Cardinal *num_args)		/* unused */
 {
 #ifndef XT_NO_SM
     SessionShellWidget w = (SessionShellWidget)new;
@@ -1123,7 +1125,7 @@ static void SessionInitialize(req, new, args, num_args)
 	XtNewString(w->session.session_id);
     if (w->session.restart_command) w->session.restart_command =
 	NewStringArray(w->session.restart_command);
-    if (w->session.clone_command) w->session.clone_command = 
+    if (w->session.clone_command) w->session.clone_command =
 	NewStringArray(w->session.clone_command);
     if (w->session.discard_command) w->session.discard_command =
 	NewStringArray(w->session.discard_command);
@@ -1135,7 +1137,7 @@ static void SessionInitialize(req, new, args, num_args)
 	NewStringArray(w->session.environment);
     if (w->session.current_dir) w->session.current_dir =
 	XtNewString(w->session.current_dir);
-    if (w->session.program_path) w->session.program_path = 
+    if (w->session.program_path) w->session.program_path =
 	XtNewString(w->session.program_path);
 
     w->session.checkpoint_state = XtSaveInactive;
@@ -1151,12 +1153,12 @@ static void SessionInitialize(req, new, args, num_args)
 #endif /* !XT_NO_SM */
 }
 
-static void Resize(w)
-    Widget w;
+static void Resize(
+    Widget w)
 {
-    register ShellWidget sw = (ShellWidget)w;    
+    register ShellWidget sw = (ShellWidget)w;
     Widget childwid;
-    int i;
+    Cardinal i;
     for(i = 0; i < sw->composite.num_children; i++) {
         if (XtIsManaged(sw->composite.children[i])) {
              childwid = sw->composite.children[i];
@@ -1167,12 +1169,12 @@ static void Resize(w)
     }
 }
 
-static void GetGeometry();
+static void GetGeometry(Widget, Widget);
 
-static void Realize(wid, vmask, attr)
-	Widget wid;
-	Mask *vmask;
-	XSetWindowAttributes *attr;
+static void Realize(
+	Widget wid,
+	Mask *vmask,
+	XSetWindowAttributes *attr)
 {
 	ShellWidget w = (ShellWidget) wid;
         Mask mask = *vmask;
@@ -1206,8 +1208,8 @@ static void Realize(wid, vmask, attr)
 			    w->core.background_pixmap =
 				(*childP)->core.background_pixmap;
 		    } else {
-			attr->background_pixel = 
-			    w->core.background_pixel = 
+			attr->background_pixel =
+			    w->core.background_pixel =
 				(*childP)->core.background_pixel;
 		    }
 		    break;
@@ -1240,9 +1242,9 @@ static void Realize(wid, vmask, attr)
 }
 
 
-static void _SetTransientForHint(w, delete)
-     TransientShellWidget w;
-     Boolean delete;
+static void _SetTransientForHint(
+     TransientShellWidget w,
+     Boolean delete)
 {
     Window window_group;
 
@@ -1268,15 +1270,15 @@ static void _SetTransientForHint(w, delete)
 }
 
 
-static void TransientRealize(w, vmask, attr)
-     Widget w;
-     Mask *vmask;
-     XSetWindowAttributes *attr;
+static void TransientRealize(
+     Widget w,
+     Mask *vmask,
+     XSetWindowAttributes *attr)
 {
     XtRealizeProc realize;
 
     LOCK_PROCESS;
-    realize = 
+    realize =
 	transientShellWidgetClass->core_class.superclass->core_class.realize;
     UNLOCK_PROCESS;
     (*realize) (w, vmask, attr);
@@ -1284,9 +1286,9 @@ static void TransientRealize(w, vmask, attr)
     _SetTransientForHint((TransientShellWidget)w, False);
 }
 
-static Widget GetClientLeader(w)
-    Widget w;
-{	
+static Widget GetClientLeader(
+    Widget w)
+{
     while ((! XtIsWMShell(w) || ! ((WMShellWidget)w)->wm.client_leader)
 	   && w->core.parent)
 	w = w->core.parent;
@@ -1298,8 +1300,8 @@ static Widget GetClientLeader(w)
     return w;
 }
 
-static void EvaluateWMHints(w)
-    WMShellWidget w;
+static void EvaluateWMHints(
+    WMShellWidget w)
 {
 	XWMHints *hintp = &w->wm.wm_hints;
 
@@ -1335,8 +1337,8 @@ static void EvaluateWMHints(w)
 }
 
 
-static void EvaluateSizeHints(w)
-    WMShellWidget w;
+static void EvaluateSizeHints(
+    WMShellWidget w)
 {
 	struct _OldXSizeHints *sizep = &w->wm.size_hints;
 
@@ -1397,8 +1399,8 @@ static void EvaluateSizeHints(w)
 	}
 }
 
-static void _popup_set_prop(w)
-	ShellWidget w;
+static void _popup_set_prop(
+	ShellWidget w)
 {
 	Widget p;
 	WMShellWidget wmshell = (WMShellWidget) w;
@@ -1520,7 +1522,7 @@ static void _popup_set_prop(w)
 	if (p == (Widget) w) {
 	    for ( ; p->core.parent != NULL; p = p->core.parent);
 	    if (XtIsSubclass(p, sessionShellWidgetClass)) {
-		String sm_client_id = 
+		String sm_client_id =
 		    ((SessionShellWidget)p)->session.session_id;
 		if (sm_client_id != NULL) {
 		    XChangeProperty(XtDisplay((Widget)w), XtWindow((Widget)w),
@@ -1544,11 +1546,11 @@ static void _popup_set_prop(w)
 }
 
 /* ARGSUSED */
-static void EventHandler(wid, closure, event, continue_to_dispatch)
-	Widget wid;
-	XtPointer closure;	/* unused */
-	XEvent *event;
-        Boolean *continue_to_dispatch; /* unused */
+static void EventHandler(
+	Widget wid,
+	XtPointer closure,	/* unused */
+	XEvent *event,
+        Boolean *continue_to_dispatch) /* unused */
 {
 	register ShellWidget w = (ShellWidget) wid;
 	WMShellWidget wmshell = (WMShellWidget) w;
@@ -1592,19 +1594,19 @@ static void EventHandler(wid, closure, event, continue_to_dispatch)
 			wmshell->wm.wait_for_wm = TRUE;
 		    }
 #undef EQ
-		}		    
+		}
 		break;
 
 	      case ReparentNotify:
 		if (event->xreparent.window == XtWindow(w)) {
 		   if (event->xreparent.parent !=
 		       RootWindowOfScreen(XtScreen(w)))
-		       w->shell.client_specified &= 
+		       w->shell.client_specified &=
 			   ~(_XtShellNotReparented | _XtShellPositionValid);
 		   else {
 		       w->core.x = event->xreparent.x;
 		       w->core.y = event->xreparent.y;
-		       w->shell.client_specified |= 
+		       w->shell.client_specified |=
 			   (_XtShellNotReparented | _XtShellPositionValid);
 		   }
 	        }
@@ -1624,7 +1626,7 @@ static void EventHandler(wid, closure, event, continue_to_dispatch)
 
                     if (XtIsTopLevelShell(wid))
                         ((TopLevelShellWidget)wid)->topLevel.iconic = TRUE;
-  
+
 		    pdi = _XtGetPerDisplayInput(event->xunmap.display);
 
 		    device = &pdi->pointer;
@@ -1651,7 +1653,7 @@ static void EventHandler(wid, closure, event, continue_to_dispatch)
 		}
 	      default:
 		 return;
-	} 
+	}
 	{
 	XtWidgetProc resize;
 
@@ -1661,22 +1663,22 @@ static void EventHandler(wid, closure, event, continue_to_dispatch)
 
 	if (sizechanged && resize) {
 	    CALLGEOTAT(_XtGeoTrace((Widget)w,
-			   "Shell \"%s\" is being resized to %d %d.\n", 
+			   "Shell \"%s\" is being resized to %d %d.\n",
 			   XtName(wid), wid->core.width, wid->core.height ));
 	    (*resize)(wid);
 	 }
 	}
 }
 
-static void Destroy(wid)
-	Widget wid;
+static void Destroy(
+	Widget wid)
 {
 	if (XtIsRealized(wid))
 	    XDestroyWindow( XtDisplay(wid), XtWindow(wid) );
 }
 
-static void WMDestroy(wid)
-	Widget wid;
+static void WMDestroy(
+	Widget wid)
 {
 	WMShellWidget w = (WMShellWidget) wid;
 
@@ -1684,24 +1686,24 @@ static void WMDestroy(wid)
 	XtFree((char *) w->wm.window_role);
 }
 
-static void TopLevelDestroy(wid)
-	Widget wid;
+static void TopLevelDestroy(
+	Widget wid)
 {
 	TopLevelShellWidget w = (TopLevelShellWidget) wid;
 
 	XtFree((char *) w->topLevel.icon_name);
 }
 
-static void ApplicationDestroy(wid)
-    Widget wid;
+static void ApplicationDestroy(
+    Widget wid)
 {
     ApplicationShellWidget w = (ApplicationShellWidget) wid;
     if (w->application.argc > 0)
 	FreeStringArray(w->application.argv);
 }
 
-static void SessionDestroy(wid)
-    Widget wid;
+static void SessionDestroy(
+    Widget wid)
 {
 #ifndef XT_NO_SM
     SessionShellWidget w = (SessionShellWidget) wid;
@@ -1725,8 +1727,8 @@ static void SessionDestroy(wid)
  * match the child before parsing the geometry resource.
  *
  */
-static void GetGeometry(W, child)
-    Widget W, child;
+static void GetGeometry(
+    Widget W, Widget child)
 {
     register ShellWidget w = (ShellWidget)W;
     Boolean is_wmshell = XtIsWMShell(W);
@@ -1749,7 +1751,7 @@ static void GetGeometry(W, child)
 	if (is_wmshell) {
 	    WMShellPart* wm = &((WMShellWidget)w)->wm;
 	    EvaluateSizeHints((WMShellWidget)w);
-	    (void) memmove((char*)&hints, (char*)&wm->size_hints, 
+	    (void) memmove((char*)&hints, (char*)&wm->size_hints,
 			   sizeof(struct _OldXSizeHints));
 	    hints.win_gravity = wm->win_gravity;
 	    if (wm->size_hints.flags & PBaseSize) {
@@ -1815,12 +1817,11 @@ static void GetGeometry(W, child)
 }
 
 
-static void ChangeManaged(wid)
-    Widget wid;
+static void ChangeManaged(Widget wid)
 {
     ShellWidget w = (ShellWidget) wid;
     Widget child = NULL;
-    int i;
+    Cardinal i;
 
     for (i = 0; i < w->composite.num_children; i++) {
 	if (XtIsManaged(w->composite.children[i])) {
@@ -1844,12 +1845,12 @@ static void ChangeManaged(wid)
  * it is possible that some time in the future the request will be
  * asynchronusly denied and the window reverted to it's old size/shape.
  */
- 
+
 /*ARGSUSED*/
-static XtGeometryResult GeometryManager( wid, request, reply )
-	Widget wid;
-	XtWidgetGeometry *request;
-	XtWidgetGeometry *reply;
+static XtGeometryResult GeometryManager(
+	Widget wid,
+	XtWidgetGeometry *request,
+	XtWidgetGeometry *reply)
 {
 	ShellWidget shell = (ShellWidget)(wid->core.parent);
 	XtWidgetGeometry my_request;
@@ -1883,7 +1884,7 @@ static XtGeometryResult GeometryManager( wid, request, reply )
 	     * so, whatever the WM sized us to (if the Shell requested
 	     * only one of the two) is now the correct child size
 	     */
-	    
+
 	    if (!(request->request_mode & XtCWQueryOnly)) {
 		wid->core.width = shell->core.width;
 		wid->core.height = shell->core.height;
@@ -1901,14 +1902,14 @@ typedef struct {
 	Boolean done;
 } QueryStruct;
 
-static Bool isMine(dpy, event, arg)
-	Display *dpy;
-	register XEvent  *event;
-	char *arg;
+static Bool isMine(
+	Display *dpy,
+	register XEvent  *event,
+	char *arg)
 {
 	QueryStruct *q = (QueryStruct *) arg;
 	register Widget w = q->w;
-	
+
 	if ( (dpy != XtDisplay(w)) || (event->xany.window != XtWindow(w)) ) {
 	    return FALSE;
 	}
@@ -1916,7 +1917,7 @@ static Bool isMine(dpy, event, arg)
 	    if (event->type == ConfigureNotify) {
 		q->done = TRUE;
 		return TRUE;
-	    } 
+	    }
 	}
 	else if (event->type == ConfigureNotify)
 	    return TRUE;	/* flush old events */
@@ -1934,10 +1935,10 @@ static Bool isMine(dpy, event, arg)
 	return FALSE;
 }
 
-static Boolean _wait_for_response(w, event, request_num)
-	ShellWidget	w;
-	XEvent		*event;
-        unsigned long	request_num;
+static Boolean _wait_for_response(
+	ShellWidget	w,
+	XEvent		*event,
+        unsigned long	request_num)
 {
 	XtAppContext app = XtWidgetToApplicationContext((Widget) w);
 	QueryStruct q;
@@ -1959,13 +1960,13 @@ static Boolean _wait_for_response(w, event, request_num)
 	while (XCheckIfEvent(XtDisplay(w),event,isMine,(char*)&q)) {
 	    if (q.done) return TRUE;
 	}
-	
+
 	while (timeout > 0) {
-	    if (_XtWaitForSomething (app, 
-				     FALSE, TRUE, TRUE, TRUE, 
-				     TRUE, 
+	    if (_XtWaitForSomething (app,
+				     FALSE, TRUE, TRUE, TRUE,
+				     TRUE,
 #ifdef XTHREADS
-				     FALSE, 
+				     FALSE,
 #endif
 				     &timeout) != -1) {
 		while (XCheckIfEvent(XtDisplay(w),event,isMine,(char*)&q)) {
@@ -1977,9 +1978,9 @@ static Boolean _wait_for_response(w, event, request_num)
 }
 
 /*ARGSUSED*/
-static XtGeometryResult RootGeometryManager(gw, request, reply)
-    Widget gw;
-    XtWidgetGeometry *request, *reply;
+static XtGeometryResult RootGeometryManager(
+    Widget gw,
+    XtWidgetGeometry *request, XtWidgetGeometry *reply)
 {
     register ShellWidget w = (ShellWidget)gw;
     XWindowChanges values;
@@ -1991,7 +1992,7 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
     unsigned long request_num;
 
     CALLGEOTAT(_XtGeoTab(1));
-  
+
     if (XtIsWMShell(gw)) {
 	wm = True;
 	hintp = &((WMShellWidget)w)->wm.size_hints;
@@ -2003,7 +2004,7 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
    	hintp->height = w->core.height;
     } else
 	wm = False;
-    
+
     oldx = w->core.x;
     oldy = w->core.y;
     oldwidth = w->core.width;
@@ -2077,7 +2078,7 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 
     if (!XtIsRealized((Widget)w)) {
 	CALLGEOTAT(_XtGeoTrace((Widget)w,
-		      "Shell \"%s\" is not realized, return XtGeometryYes.\n", 
+		      "Shell \"%s\" is not realized, return XtGeometryYes.\n",
 		       XtName((Widget)w)));
     	CALLGEOTAT(_XtGeoTab(-1));
 	return XtGeometryYes;
@@ -2098,7 +2099,7 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 				  "border_width = %d\n",values.border_width));}
 #endif
     CALLGEOTAT(_XtGeoTab(-1));
-    
+
     XConfigureWindow(XtDisplay((Widget)w), XtWindow((Widget)w), mask,&values);
 
     if (wm && !w->shell.override_redirect
@@ -2120,12 +2121,12 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 
     if (wm && ((WMShellWidget)w)->wm.wait_for_wm == FALSE) {
 	    /* the window manager is sick
-	     * so I will do the work and 
+	     * so I will do the work and
 	     * say no so if a new WM starts up,
 	     * or the current one recovers
 	     * my size requests will be visible
 	     */
-	CALLGEOTAT(_XtGeoTrace((Widget)w,"Shell \"%s\" has wait_for_wm == FALSE, return XtGeometryNo.\n", 
+	CALLGEOTAT(_XtGeoTrace((Widget)w,"Shell \"%s\" has wait_for_wm == FALSE, return XtGeometryNo.\n",
 		       XtName((Widget)w)));
     	CALLGEOTAT(_XtGeoTab(-1));
 
@@ -2137,7 +2138,7 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 	/* got an event */
 	if (event.type == ConfigureNotify) {
 
-#define NEQ(x, msk) ((mask & msk) && (values.x != event.xconfigure.x))	
+#define NEQ(x, msk) ((mask & msk) && (values.x != event.xconfigure.x))
 	    if (NEQ(x, CWX) ||
 		NEQ(y, CWY) ||
 		NEQ(width, CWWidth) ||
@@ -2146,27 +2147,27 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 #ifdef XT_GEO_TATTLER
 		if (NEQ(x, CWX)) {
 		    CALLGEOTAT(_XtGeoTrace((Widget)w,
-					   "received Configure X %d\n", 
+					   "received Configure X %d\n",
 					   event.xconfigure.x));
 		}
 		if (NEQ(y, CWY)) {
 		    CALLGEOTAT(_XtGeoTrace((Widget)w,
-					   "received Configure Y %d\n", 
+					   "received Configure Y %d\n",
 					   event.xconfigure.y));
 		}
 		if (NEQ(width, CWWidth)) {
 		    CALLGEOTAT(_XtGeoTrace((Widget)w,
-					   "received Configure Width %d\n", 
+					   "received Configure Width %d\n",
 					   event.xconfigure.width));
 		}
 		if (NEQ(height, CWHeight)) {
 		    CALLGEOTAT(_XtGeoTrace((Widget)w,
-					   "received Configure Height %d\n", 
+					   "received Configure Height %d\n",
 					   event.xconfigure.height));
 		}
 		if (NEQ(border_width, CWBorderWidth)) {
 		    CALLGEOTAT(_XtGeoTrace((Widget)w,
-				        "received Configure BorderWidth %d\n", 
+				        "received Configure BorderWidth %d\n",
 					event.xconfigure.border_width));
 		}
 #endif
@@ -2213,7 +2214,7 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 			       "internalError", "shell", XtCXtToolkitError,
 			       "Shell's window manager interaction is broken",
 			       (String *)NULL, (Cardinal *)NULL);
-    } else if (wm) { /* no event */ 
+    } else if (wm) { /* no event */
 	((WMShellWidget)w)->wm.wait_for_wm = FALSE; /* timed out; must be broken */
     }
     PutBackGeometry();
@@ -2225,10 +2226,10 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 		}
 
 /* ARGSUSED */
-static Boolean SetValues(old, ref, new, args, num_args)
-	Widget old, ref, new;
-	ArgList args;
-	Cardinal *num_args;
+static Boolean SetValues(
+	Widget old, Widget ref, Widget new,
+	ArgList args,
+	Cardinal *num_args)
 {
 	ShellWidget nw = (ShellWidget) new;
 	ShellWidget ow = (ShellWidget) old;
@@ -2271,10 +2272,10 @@ static Boolean SetValues(old, ref, new, args, num_args)
 }
 
 /* ARGSUSED */
-static Boolean WMSetValues(old, ref, new, args, num_args)
-	Widget old, ref, new;
-	ArgList args;		/* unused */
-	Cardinal *num_args;	/* unused */
+static Boolean WMSetValues(
+	Widget old, Widget ref, Widget new,
+	ArgList args,		/* unused */
+	Cardinal *num_args)	/* unused */
 {
 	WMShellWidget nwmshell = (WMShellWidget) new;
 	WMShellWidget owmshell = (WMShellWidget) old;
@@ -2352,7 +2353,7 @@ static Boolean WMSetValues(old, ref, new, args, num_args)
  	    if (nwmshell->wm.transient) {
 		if (!XtIsTransientShell(new) &&
 		    !nwmshell->shell.override_redirect &&
-		    nwmshell->wm.wm_hints.window_group != 
+		    nwmshell->wm.wm_hints.window_group !=
 		       XtUnspecifiedWindowGroup)
 		    XSetTransientForHint(XtDisplay(new), XtWindow(new),
 					 nwmshell->wm.wm_hints.window_group);
@@ -2392,14 +2393,14 @@ static Boolean WMSetValues(old, ref, new, args, num_args)
 }
 
 /*ARGSUSED*/
-static Boolean TransientSetValues(oldW, refW, newW, args, num_args)
-     Widget oldW, refW, newW;
-     ArgList args;		/* unused */
-     Cardinal *num_args;	/* unused */
+static Boolean TransientSetValues(
+     Widget oldW, Widget refW, Widget newW,
+     ArgList args,		/* unused */
+     Cardinal *num_args)	/* unused */
 {
     TransientShellWidget old = (TransientShellWidget)oldW;
     TransientShellWidget new = (TransientShellWidget)newW;
-    
+
     if (XtIsRealized(newW)
 	&& ((new->wm.transient && !old->wm.transient)
 	    || ((new->transient.transient_for != old->transient.transient_for)
@@ -2414,10 +2415,10 @@ static Boolean TransientSetValues(oldW, refW, newW, args, num_args)
 
 
 /* ARGSUSED */
-static Boolean TopLevelSetValues(oldW, refW, newW, args, num_args)
-     Widget oldW, refW, newW;
-     ArgList args;		/* unused */
-     Cardinal *num_args;	/* unused */
+static Boolean TopLevelSetValues(
+     Widget oldW, Widget refW, Widget newW,
+     ArgList args,		/* unused */
+     Cardinal *num_args)	/* unused */
 {
     TopLevelShellWidget old = (TopLevelShellWidget)oldW;
     TopLevelShellWidget new = (TopLevelShellWidget)newW;
@@ -2474,9 +2475,9 @@ static Boolean TopLevelSetValues(oldW, refW, newW, args, num_args)
     return False;
 }
 
-static String * NewArgv(count, str)
-    int count;
-    String *str;  /* do not assume it's terminated by a NULL element */
+static String * NewArgv(
+    int count,
+    String *str)  /* do not assume it's terminated by a NULL element */
 {
     Cardinal nbytes = 0;
     Cardinal num = 0;
@@ -2507,10 +2508,10 @@ static String * NewArgv(count, str)
 
 
 /*ARGSUSED*/
-static Boolean ApplicationSetValues(current, request, new, args, num_args)
-    Widget current, request, new;
-    ArgList args;
-    Cardinal *num_args;
+static Boolean ApplicationSetValues(
+    Widget current, Widget request, Widget new,
+    ArgList args,
+    Cardinal *num_args)
 {
     ApplicationShellWidget nw = (ApplicationShellWidget) new;
     ApplicationShellWidget cw = (ApplicationShellWidget) current;
@@ -2536,16 +2537,16 @@ static Boolean ApplicationSetValues(current, request, new, args, num_args)
 }
 
 /*ARGSUSED*/
-static Boolean SessionSetValues(current, request, new, args, num_args)
-    Widget current, request, new;
-    ArgList args;
-    Cardinal *num_args;
+static Boolean SessionSetValues(
+    Widget current, Widget request, Widget new,
+    ArgList args,
+    Cardinal *num_args)
 {
 #ifndef XT_NO_SM
     SessionShellWidget nw = (SessionShellWidget) new;
     SessionShellWidget cw = (SessionShellWidget) current;
-    unsigned long set_mask = 0L;
-    unsigned long unset_mask = 0L;
+    unsigned long set_mask = 0UL;
+    unsigned long unset_mask = 0UL;
     Boolean initialize = False;
 
     if (cw->session.session_id != nw->session.session_id) {
@@ -2564,7 +2565,7 @@ static Boolean SessionSetValues(current, request, new, args, num_args)
 
     if (cw->session.current_dir != nw->session.current_dir) {
 	if (nw->session.current_dir) {
-	    nw->session.current_dir = 
+	    nw->session.current_dir =
 		XtNewString(nw->session.current_dir);
 	    set_mask |= XtCurrentDirectoryMask;
 	} else unset_mask |= XtCurrentDirectoryMask;
@@ -2582,7 +2583,7 @@ static Boolean SessionSetValues(current, request, new, args, num_args)
 
     if (cw->session.environment != nw->session.environment) {
 	if (nw->session.environment) {
-	    nw->session.environment = 
+	    nw->session.environment =
 		NewStringArray(nw->session.environment);
 	    set_mask |= XtEnvironmentMask;
 	} else unset_mask |= XtEnvironmentMask;
@@ -2591,7 +2592,7 @@ static Boolean SessionSetValues(current, request, new, args, num_args)
 
     if (cw->session.program_path != nw->session.program_path) {
 	if (nw->session.program_path) {
-	    nw->session.program_path = 
+	    nw->session.program_path =
 		XtNewString(nw->session.program_path);
 	    set_mask |= XtProgramMask;
 	} else unset_mask |= XtProgramMask;
@@ -2635,7 +2636,7 @@ static Boolean SessionSetValues(current, request, new, args, num_args)
     }
 
     if (nw->session.connection && (set_mask || unset_mask || initialize))
-	SetSessionProperties(new, initialize, set_mask, unset_mask);
+	SetSessionProperties((SessionShellWidget) new, initialize, set_mask, unset_mask);
 
     if ((cw->session.join_session && !nw->session.join_session) ||
 	(cw->session.connection && !nw->session.connection))
@@ -2666,17 +2667,17 @@ static Boolean SessionSetValues(current, request, new, args, num_args)
     return False;
 }
 
-void _XtShellGetCoordinates( widget, x, y)
-    Widget widget;
-    Position* x;
-    Position* y;
+void _XtShellGetCoordinates(
+    Widget widget,
+    Position* x,
+    Position* y)
 {
     ShellWidget w = (ShellWidget)widget;
-    if (XtIsRealized(widget) && 
+    if (XtIsRealized(widget) &&
 	!(w->shell.client_specified & _XtShellPositionValid)) {
 	int tmpx, tmpy;
 	Window tmpchild;
-	(void) XTranslateCoordinates(XtDisplay(w), XtWindow(w), 
+	(void) XTranslateCoordinates(XtDisplay(w), XtWindow(w),
 				     RootWindowOfScreen(XtScreen(w)),
 				     (int) -w->core.border_width,
 				     (int) -w->core.border_width,
@@ -2689,10 +2690,10 @@ void _XtShellGetCoordinates( widget, x, y)
     *y = w->core.y;
 }
 
-static void GetValuesHook(widget, args, num_args)
-    Widget	widget;
-    ArgList	args;
-    Cardinal*	num_args;
+static void GetValuesHook(
+    Widget	widget,
+    ArgList	args,
+    Cardinal*	num_args)
 {
     ShellWidget w = (ShellWidget) widget;
 
@@ -2714,8 +2715,8 @@ static void GetValuesHook(widget, args, num_args)
     }
 }
 
-static void ApplicationShellInsertChild(widget)
-    Widget widget;
+static void ApplicationShellInsertChild(
+    Widget widget)
 {
     if (! XtIsWidget(widget) && XtIsRectObj(widget)) {
 	XtAppWarningMsg(XtWidgetToApplicationContext(widget),
@@ -2727,7 +2728,7 @@ static void ApplicationShellInsertChild(widget)
 	XtWidgetProc insert_child;
 
 	LOCK_PROCESS;
-	insert_child = 
+	insert_child =
 	    ((CompositeWidgetClass)applicationShellClassRec.core_class.
 	   superclass)->composite_class.insert_child;
 	UNLOCK_PROCESS;
@@ -2736,28 +2737,28 @@ static void ApplicationShellInsertChild(widget)
 }
 
 /**************************************************************************
- 
-  Session Protocol Participation 
+
+  Session Protocol Participation
 
  *************************************************************************/
 
 #define XtSessionCheckpoint	0
 #define XtSessionInteract	1
 
-static void CallSaveCallbacks();
-static String *EditCommand();
-static Boolean ExamineToken();
-static void GetIceEvent();
-static XtCheckpointToken GetToken();
-static void XtCallCancelCallbacks();
-static void XtCallDieCallbacks();
-static void XtCallSaveCallbacks();
-static void XtCallSaveCompleteCallbacks();
+static void CallSaveCallbacks(SessionShellWidget );
+static String *EditCommand(String, String *, String *);
+static Boolean ExamineToken(XtPointer);
+static void GetIceEvent(XtPointer, int *, XtInputId *);
+static XtCheckpointToken GetToken(Widget, int);
+static void XtCallCancelCallbacks(SmcConn, SmPointer);
+static void XtCallDieCallbacks(SmcConn, SmPointer);
+static void XtCallSaveCallbacks(SmcConn, SmPointer, int, Bool, int, Bool);
+static void XtCallSaveCompleteCallbacks(SmcConn, SmPointer);
 
 #ifndef XT_NO_SM
-static void StopManagingSession(w, connection)
-    SessionShellWidget w;
-    SmcConn connection; /* connection to close, if any */
+static void StopManagingSession(
+    SessionShellWidget w,
+    SmcConn connection) /* connection to close, if any */
 {
     if (connection)
 	SmcCloseConnection(connection, 0, NULL);
@@ -2770,8 +2771,8 @@ static void StopManagingSession(w, connection)
 }
 
 #define XT_MSG_LENGTH 256
-static void JoinSession(w)
-    SessionShellWidget w;
+static void JoinSession(
+    SessionShellWidget w)
 {
     IceConn ice_conn;
     SmcCallbacks smcb;
@@ -2784,7 +2785,7 @@ static void JoinSession(w)
     smcb.save_complete.callback = XtCallSaveCompleteCallbacks;
     smcb.shutdown_cancelled.callback = XtCallCancelCallbacks;
     smcb.save_yourself.client_data = smcb.die.client_data =
-	smcb.save_complete.client_data = 
+	smcb.save_complete.client_data =
 	    smcb.shutdown_cancelled.client_data = (SmPointer) w;
     mask = SmcSaveYourselfProcMask | SmcDieProcMask |
 	SmcSaveCompleteProcMask | SmcShutdownCancelledProcMask;
@@ -2841,8 +2842,7 @@ static void JoinSession(w)
 
 #endif /* !XT_NO_SM */
 
-static String * NewStringArray(str)
-    String *str;
+static String * NewStringArray(String *str)
 {
     Cardinal nbytes = 0;
     Cardinal num = 0;
@@ -2871,8 +2871,7 @@ static String * NewStringArray(str)
     return newarray;
 }
 
-static void FreeStringArray(str)
-    String *str;
+static void FreeStringArray(String *str)
 {
     if (str)
 	XtFree((char *) str);
@@ -2880,9 +2879,9 @@ static void FreeStringArray(str)
 
 
 #ifndef XT_NO_SM
-static SmProp * CardPack(name, closure)
-    char *name;
-    XtPointer closure;
+static SmProp * CardPack(
+    char *name,
+    XtPointer closure)
 {
     unsigned char *prop = (unsigned char *) closure;
     SmProp *p;
@@ -2912,9 +2911,9 @@ static SmProp * ArrayPack(char *name, XtPointer closure)
     return p;
 }
 
-static SmProp * ListPack(name, closure)
-    char *name;
-    XtPointer closure;
+static SmProp * ListPack(
+    char *name,
+    XtPointer closure)
 {
     String *prop = *(String **) closure;
     SmProp *p;
@@ -2936,15 +2935,15 @@ static SmProp * ListPack(name, closure)
     return p;
 }
 
-static void FreePacks(props, num_props)
-    SmProp **props;
-    int num_props;
+static void FreePacks(
+    SmProp **props,
+    int num_props)
 {
     while (--num_props >= 0)
 	XtFree((char *) props[num_props]);
 }
 
-typedef SmProp* (*PackProc)();
+typedef SmProp* (*PackProc)(char *, XtPointer);
 
 typedef struct PropertyRec {
     char *	name;
@@ -2968,11 +2967,11 @@ static PropertyRec propertyTable[] = {
 
 #define XT_NUM_SM_PROPS 11
 
-static void SetSessionProperties(w, initialize, set_mask, unset_mask)
-    SessionShellWidget w;
-    Boolean initialize;
-    unsigned long set_mask;
-    unsigned long unset_mask;
+static void SetSessionProperties(
+    SessionShellWidget w,
+    Boolean initialize,
+    unsigned long set_mask,
+    unsigned long unset_mask)
 {
     PropertyTable p = propertyTable;
     int n;
@@ -3013,7 +3012,7 @@ static void SetSessionProperties(w, initialize, set_mask, unset_mask)
 	    FreePacks(props, num_props);
 	}
 	return;
-    } 
+    }
 
     if (set_mask) {
 	mask = 1L;
@@ -3030,17 +3029,17 @@ static void SetSessionProperties(w, initialize, set_mask, unset_mask)
 	mask = 1L;
 	num_props = 0;
 	for (n = XtNumber(propertyTable); n; n--, p++, mask <<= 1)
-	    if (mask & unset_mask) 
+	    if (mask & unset_mask)
 		pnames[num_props++] = p->name;
 	SmcDeleteProperties(w->session.connection, num_props, pnames);
     }
 }
 
 /*ARGSUSED*/
-static void GetIceEvent(client_data, source, id)
-    XtPointer	client_data;
-    int *	source;
-    XtInputId *	id;
+static void GetIceEvent(
+    XtPointer	client_data,
+    int *	source,
+    XtInputId *	id)
 {
     SessionShellWidget w = (SessionShellWidget) client_data;
     IceProcessMessagesStatus status;
@@ -3055,8 +3054,8 @@ static void GetIceEvent(client_data, source, id)
     }
 }
 
-static void CleanUpSave(w)
-    SessionShellWidget w;
+static void CleanUpSave(
+    SessionShellWidget w)
 {
     XtSaveYourself next = w->session.save->next;
     XtFree((char *)w->session.save);
@@ -3064,9 +3063,9 @@ static void CleanUpSave(w)
     if (w->session.save)
 	CallSaveCallbacks(w);
 }
-    
-static void CallSaveCallbacks(w)
-    SessionShellWidget w;
+
+static void CallSaveCallbacks(
+    SessionShellWidget w)
 {
     XtCheckpointToken token;
 
@@ -3084,14 +3083,13 @@ static void CallSaveCallbacks(w)
 }
 
 /*ARGSUSED*/
-static void XtCallSaveCallbacks(connection, client_data, save_type, shutdown,
-				interact, fast)
-    SmcConn	connection;	/* unused */
-    SmPointer	client_data;
-    int		save_type;
-    Bool	shutdown;
-    int		interact;
-    Bool	fast;
+static void XtCallSaveCallbacks(
+    SmcConn	connection,	/* unused */
+    SmPointer	client_data,
+    int		save_type,
+    Bool	shutdown,
+    int		interact,
+    Bool	fast)
 {
     SessionShellWidget w = (SessionShellWidget) client_data;
     XtSaveYourself save;
@@ -3119,9 +3117,9 @@ static void XtCallSaveCallbacks(connection, client_data, save_type, shutdown,
 	CallSaveCallbacks(w);
 }
 
-static void XtInteractPermission(connection, data)
-    SmcConn	connection;
-    SmPointer	data;
+static void XtInteractPermission(
+    SmcConn	connection,
+    SmPointer	data)
 {
     Widget w = (Widget) data;
     SessionShellWidget sw = (SessionShellWidget) data;
@@ -3129,7 +3127,7 @@ static void XtInteractPermission(connection, data)
     XtCallbackProc callback;
     XtPointer client_data;
 
-        
+
     _XtPeekCallback(w, sw->session.interact_callbacks, &callback,
 		    &client_data);
     if (callback) {
@@ -3143,9 +3141,9 @@ static void XtInteractPermission(connection, data)
 }
 
 /*ARGSUSED*/
-static void XtCallSaveCompleteCallbacks(connection, client_data)
-    SmcConn	connection;
-    SmPointer	client_data;
+static void XtCallSaveCompleteCallbacks(
+    SmcConn	connection,
+    SmPointer	client_data)
 {
     SessionShellWidget w =  (SessionShellWidget) client_data;
 
@@ -3154,9 +3152,9 @@ static void XtCallSaveCompleteCallbacks(connection, client_data)
 }
 
 /*ARGSUSED*/
-static void XtCallNextPhaseCallbacks(connection, client_data)
-    SmcConn	connection;	/* unused */
-    SmPointer	client_data;
+static void XtCallNextPhaseCallbacks(
+    SmcConn	connection,	/* unused */
+    SmPointer	client_data)
 {
     SessionShellWidget w =  (SessionShellWidget) client_data;
     w->session.save->phase = 2;
@@ -3164,9 +3162,9 @@ static void XtCallNextPhaseCallbacks(connection, client_data)
 }
 
 /*ARGSUSED*/
-static void XtCallDieCallbacks(connection, client_data)
-    SmcConn	connection;	/* unused */
-    SmPointer	client_data;
+static void XtCallDieCallbacks(
+    SmcConn	connection,	/* unused */
+    SmPointer	client_data)
 {
     SessionShellWidget w =  (SessionShellWidget) client_data;
 
@@ -3176,9 +3174,9 @@ static void XtCallDieCallbacks(connection, client_data)
 }
 
 /*ARGSUSED*/
-static void XtCallCancelCallbacks(connection, client_data)
-    SmcConn	connection;	/* unused */
-    SmPointer	client_data;
+static void XtCallCancelCallbacks(
+    SmcConn	connection,	/* unused */
+    SmPointer	client_data)
 {
     SessionShellWidget w = (SessionShellWidget) client_data;
     Boolean call_interacts = False;
@@ -3208,19 +3206,19 @@ static void XtCallCancelCallbacks(connection, client_data)
     }
 }
 
-static XtCheckpointToken GetToken(widget, type)
-    Widget	widget;
-    int		type;
+static XtCheckpointToken GetToken(
+    Widget	widget,
+    int		type)
 {
     SessionShellWidget w = (SessionShellWidget) widget;
     XtCheckpointToken token;
     XtSaveYourself save = w->session.save;
-   
+
     if (type == XtSessionCheckpoint)
 	w->session.save->save_tokens++;
     else if (type == XtSessionInteract)
 	w->session.save->interact_tokens++;
-    else 
+    else
 	return (XtCheckpointToken) NULL;
 
     token = (XtCheckpointToken) __XtMalloc(sizeof(XtCheckpointTokenRec));
@@ -3253,8 +3251,8 @@ XtCheckpointToken XtSessionGetToken(Widget widget)
     return token;
 }
 
-static Boolean ExamineToken(call_data)
-    XtPointer	call_data;
+static Boolean ExamineToken(
+    XtPointer	call_data)
 {
     XtCheckpointToken token = (XtCheckpointToken) call_data;
     SessionShellWidget w = (SessionShellWidget) token->widget;
@@ -3321,11 +3319,11 @@ void XtSessionReturnToken(XtCheckpointToken token)
 	}
     }
 
-    phase_done = (w->session.save->save_tokens == 0 && 
+    phase_done = (w->session.save->save_tokens == 0 &&
 		  w->session.checkpoint_state == XtSaveActive);
 
     if (phase_done) {
-	if (w->session.save->request_next_phase && 
+	if (w->session.save->request_next_phase &&
 	    w->session.save->phase == 1) {
 	    SmcRequestSaveYourselfPhase2(w->session.connection,
 					 XtCallNextPhaseCallbacks,
@@ -3341,9 +3339,9 @@ void XtSessionReturnToken(XtCheckpointToken token)
     UNLOCK_APP(app);
 }
 
-static Boolean IsInArray(str, sarray)
-    String str;
-    String *sarray;
+static Boolean IsInArray(
+    String str,
+    String *sarray)
 {
     if (str == NULL || sarray == NULL)
 	return False;
@@ -3354,10 +3352,10 @@ static Boolean IsInArray(str, sarray)
     return False;
 }
 
-static String* EditCommand(str, src1, src2)
-    String str;		/* if not NULL, the sm_client_id */
-    String *src1;	/* first choice */
-    String *src2;	/* alternate */
+static String* EditCommand(
+    String str,		/* if not NULL, the sm_client_id */
+    String *src1,	/* first choice */
+    String *src2)	/* alternate */
 {
     Boolean have;
     Boolean want;
@@ -3373,7 +3371,7 @@ static String* EditCommand(str, src1, src2)
     if ((want && have) || (!want && !have)) {
 	if (sarray == src1)
 	    return src1;
-	else 
+	else
 	    return NewStringArray(sarray);
     }
 
@@ -3386,7 +3384,7 @@ static String* EditCommand(str, src1, src2)
 	*s = *sarray;		s++; sarray++;
 	*s = "-xtsessionID";	s++;
 	*s = str;		s++;
-	for (; --count > 0; s++, sarray++) 
+	for (; --count > 0; s++, sarray++)
 	    *s = *sarray;
 	*s = (String) NULL;
     } else {

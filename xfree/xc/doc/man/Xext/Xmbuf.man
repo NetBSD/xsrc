@@ -34,13 +34,13 @@
 .\" without express or implied warranty.
 .\" 
 .\"
-.\" $XFree86: xc/doc/man/Xext/Xmbuf.man,v 1.4 2003/11/23 05:40:35 dawes Exp $
+.\" $XFree86: xc/doc/man/Xext/Xmbuf.man,v 1.5 2005/02/11 03:03:02 dawes Exp $
 .\"
 .de ZN
 .ie t \fB\^\\$1\^\fR\\$2
 .el \fI\^\\$1\^\fP\\$2
 ..
-.TH XMBUF 3X11 __xorgversion__ "X FUNCTIONS"
+.TH XMBUF 3X11 __vendorversion__ "X FUNCTIONS"
 .SH NAME
 XmbufQueryExtension, XmbufGetVersion, XmbufCreateBuffers, XmbufDestroyBuffers, XmbufDisplayBuffers, XmbufGetWindowAttributes, XmbufChangeWindowAttributes, XmbufGetBufferAttributes, XmbufChangeBufferAttributes, XmbufGetScreenInfo, XmbufCreateStereoWindow - X multibuffering functions
 .SH SYNTAX

@@ -47,6 +47,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/swaprep.c,v 1.6 2004/04/03 22:38:54 tsi Exp $ */
 
 #include	<stdio.h>
 #include	"misc.h"
@@ -309,8 +310,8 @@ SwapQueryExtensionReply(rep)
 }
 
 static void
-SwapCharInfo(pInfo)
-    xCharInfo  *pInfo;
+SwapCharInfo(
+    xCharInfo  *pInfo)
 {
     register char n;
 
@@ -323,8 +324,8 @@ SwapCharInfo(pInfo)
 }
 
 static void
-SwapFontInfo(pr)
-    xQueryFontReply *pr;
+SwapFontInfo(
+    xQueryFontReply *pr)
 {
     register char n;
 
@@ -340,8 +341,8 @@ SwapFontInfo(pr)
 }
 
 static void
-SwapLbxFontInfo(pr)
-    xLbxFontInfo *pr;
+SwapLbxFontInfo(
+    xLbxFontInfo *pr)
 {
     register char n;
 
@@ -360,9 +361,9 @@ SwapLbxFontInfo(pr)
  * to swap it for external use
  */
 void
-SwapFont(pr, native)
-    xQueryFontReply *pr;
-    Bool	native;
+SwapFont(
+    xQueryFontReply *pr,
+    Bool	native)
 {
     unsigned    i;
     xCharInfo  *pxci;

@@ -1,12 +1,12 @@
 <!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
 
-<title>Notes on Rebuilding XFree86/OS2 from Scratch
+<title>Notes on Rebuilding XFree86&reg;/OS2 from Scratch
 <author>Holger Veit
 <date>Last modified March 8th, 2000
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2Notes.sgml,v 1.2 2003/01/04 04:20:23 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2Notes.sgml,v 1.3 2004/12/08 22:27:11 dawes Exp $
 </ident>
 
 <toc>

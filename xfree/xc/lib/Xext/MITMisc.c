@@ -1,6 +1,4 @@
 /*
- * $Xorg: MITMisc.c,v 1.4 2001/02/09 02:03:49 xorgcvs Exp $
- *
 Copyright 1989, 1998  The Open Group
 
 Permission to use, copy, modify, distribute, and sell this software and its
@@ -24,7 +22,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  *
  */
-/* $XFree86: xc/lib/Xext/MITMisc.c,v 1.4 2002/10/16 02:19:22 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/MITMisc.c,v 1.5 2005/01/27 02:28:58 dawes Exp $ */
 
 /* RANDOM CRUFT! THIS HAS NO OFFICIAL X CONSORTIUM BLESSING */
 
@@ -76,9 +74,8 @@ static XEXT_GENERATE_CLOSE_DISPLAY (close_display, mit_info)
  *                                                                           *
  *****************************************************************************/
 
-Bool XMITMiscQueryExtension (dpy, event_basep, error_basep)
-    Display *dpy;
-    int *event_basep, *error_basep;
+Bool
+XMITMiscQueryExtension(Display *dpy, int *event_basep, int *error_basep)
 {
     XExtDisplayInfo *info = find_display (dpy);
 
@@ -92,9 +89,8 @@ Bool XMITMiscQueryExtension (dpy, event_basep, error_basep)
 }
 
 
-Status XMITMiscSetBugMode(dpy, onOff)
-    Display *dpy;
-    Bool onOff;
+Status
+XMITMiscSetBugMode(Display *dpy, Bool onOff)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xMITSetBugModeReq *req;
@@ -111,8 +107,8 @@ Status XMITMiscSetBugMode(dpy, onOff)
     return 1;
 }
 
-Bool XMITMiscGetBugMode(dpy)
-    Display *dpy;
+Bool
+XMITMiscGetBugMode(Display *dpy)
 {
     XExtDisplayInfo *info = find_display (dpy);
     register xMITGetBugModeReq *req;

@@ -24,13 +24,13 @@ comp.windows.x.i386unix
 
 There is currently no support for shared Libraries so it will be filespace
 consuming if you want to build X11-clients with X11R6. Best you mix X11R6
-Server with X11R5 and X11R4 clients. And only compile clients who need the
+Server with X11R5 and X11R4 clients, and only compile clients who need the
 new facilities provided in the X11R6 Libraries against them.
 
      Please note:
             XFree86 Version 4.0 will be the last version which is known
             to compile on Interactive Unix.
-            I've only tested this version on Interactive Unix, Version 4.1mu.
+            I have only tested this version on Interactive Unix, Version 4.1mu.
 
 2.  Things needed for compiling the sources
 
@@ -66,8 +66,8 @@ new facilities provided in the X11R6 Libraries against them.
       binutils
             You could use the assembler and linker the assembler is most pre-
             ferred,and the linker is needed at least if you want to link
-            libFresco.a within a Program.  Don't use strip and ar/ranlib, the
-            first generates buggy binaries when stripping (at least on my
+            libFresco.a within a Program.  Do not use strip and ar/ranlib,
+            the first generates buggy binaries when stripping (at least on my
             machines) and the last requires the use of ranlib after creating
             an archive, this is not configured.  Current: 2.8.1.0.15 (Used:
             as, ld, ar, strip)
@@ -211,8 +211,8 @@ Please add the following at the bottom of math.h, before the last #endif
      BOOTSTRAPCFLAGS="-DISC [-DISC30 | -DISC40] -DSYSV [-Di386]"
 
       -DISC -DISC30
-            these two defines are necessary to build the release I don't know
-            if the build will succeed for ISC versions prior than 3.x
+            these two defines are necessary to build the release I do not
+            know if the build will succeed for ISC versions prior than 3.x
 
       -DISC40
             are only for getting the ISC version and therefore set the Has-
@@ -296,8 +296,8 @@ Please add the following at the bottom of math.h, before the last #endif
                           *blinkRate:             0
                           *cursorPositionVisible: false
 
-          This bug seems to be fixed since 3.1.2, and therefore the
-          workaround is not needed anymore.
+          This bug seems to be fixed since 3.1.2, and therefore the work-
+          around is not needed anymore.
 
         o ELSA Winner 2000PRO/X Revision G
 
@@ -319,10 +319,10 @@ Please add the following at the bottom of math.h, before the last #endif
 
 6.  Multibuffer Extension
 
-This is an obsolete Extension. Anyway, if you want to include this Extension
-inside your build, you have to add: #define BuildMultibuffer        YES
-inside xf86site.def Please note, this Extension should be disabled when
-building the Loader Server.
+This is an obsolete Extension. If you want to include this Extension inside
+your build, you have to add: #define BuildMultibuffer        YES inside
+xf86site.def Please note, this Extension should be disabled when building the
+Loader Server.
 
 7.  Default Definitions
 
@@ -457,12 +457,13 @@ You could do this automatically with menu entry no. 5.
      The old path to the pipes on ISC's R4 /tmp/.X11-unix has changed to
      /dev/X/ISCCONN. For compatibility reasons on ISC, the pipes in the new
      directory will be linked to a file inside the old.  This will normally
-     be a hard link, so it can't go across filesystems. On ISC Version 4.x
-     this is now allowed. But you should use the new S5L on both filesystems.
+     be a hard link, so it cannot go across filesystems. On ISC Version 4.x
+     this is now allowed, but you should use the new S5L on both filesystems.
+
      ISC30 systems should take care that the two directories are on the same
-     FS. Else if you are using a ISC40 compiled binary, the Server could
-     maybe abort due to a SIGSYS.  We tried to catch this signal, so if it
-     dumps please send me a note.
+     FS, else if you are using a ISC40 compiled binary, the Server could
+     maybe abort because of a SIGSYS.  We tried to catch this signal, so if
+     it dumps please send me a note.
 
    o Warnings you may see:
 
@@ -470,7 +471,7 @@ You could do this automatically with menu entry no. 5.
 
                           Warning: Unable to load any usable fontset
 
-          The case are the new gzipped fonts, but the Warning isn't serious.
+          The case are the new gzipped fonts, but the Warning is not serious.
 
         o If you start a server you may see the following message:
 
@@ -486,7 +487,7 @@ All thanks should go to the members of the XFree86 Team for their great work
 and the X Consortium for their Public Release of X11R6, as to all who con-
 tribute to this excellent piece of free software.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/isc.sgml,v 3.24 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/isc.sgml,v 3.25 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.isc,v 3.41 2003/07/15 02:28:31 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.isc,v 3.43 2005/03/04 03:25:46 dawes Exp $

@@ -45,9 +45,10 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/include/wire.h,v 1.8 2003/11/17 22:20:49 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/include/wire.h,v 1.9 2004/04/03 22:38:54 tsi Exp $ */
 
 #ifdef DEBUG 		/* Need this here because lbx.h undef's DEBUG */
+#define LBX_DEBUG
 extern int lbxDebug;
 #endif
 
@@ -96,8 +97,8 @@ typedef struct _extinfo *ExtensionInfoPtr;
 typedef struct _LbxOptionsListRec {
     CARD8       optcode;
     Bool        negotiate;
-    int         (*req)();
-    int         (*reply)();
+    int         (*req)(XServerPtr server, unsigned char *buf);
+    int         (*reply)(XServerPtr server, unsigned char *preply, int replylen);
 } LbxOptionsListRec;
 
 typedef struct _LbxDeltaOptionsRec {
@@ -112,8 +113,8 @@ typedef struct _LbxDeltaOptionsRec {
 typedef struct _LbxStreamComp {
     int         typelen;
     char        *type;
-    int         (*req)();
-    int         (*reply)();
+    int         (*req)(XServerPtr server, unsigned char *buf);
+    int         (*reply)(XServerPtr server, unsigned char *preply, int replylen);
 } LbxStreamCompRec;
 
 typedef struct _LbxCmapAllMethod {

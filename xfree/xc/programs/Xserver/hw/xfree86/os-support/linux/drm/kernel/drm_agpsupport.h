@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/kernel/drm_agpsupport.h,v 1.14 2005/03/06 03:55:47 dawes Exp $ */
 /**
  * \file drm_agpsupport.h 
  * DRM support for AGP/GART backend
@@ -37,9 +38,35 @@
 
 #if __REALLY_HAVE_AGP
 
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,11)
 #define DRM_AGP_GET (drm_agp_t *)inter_module_get("drm_agp")
 #define DRM_AGP_PUT inter_module_put("drm_agp")
+#else
+#define DRM_AGP_GET &agp_api
+#define DRM_AGP_PUT
+
+typedef struct {
+        void                    (*free_memory)(struct agp_memory *);
+        struct agp_memory *     (*allocate_memory)(size_t, u32);
+        int                     (*bind_memory)(struct agp_memory *, off_t);
+        int                     (*unbind_memory)(struct agp_memory *);
+        void                    (*enable)(u32);
+        int                     (*acquire)(void);
+        void                    (*release)(void);
+        int                     (*copy_info)(struct agp_kern_info *);
+} drm_agp_t;
+
+static drm_agp_t agp_api = {
+	agp_free_memory,
+	agp_allocate_memory,
+	agp_bind_memory,
+	agp_unbind_memory,
+	agp_enable,
+	agp_backend_acquire,
+	agp_backend_release,
+	agp_copy_info
+};
+#endif
 
 /**
  * Pointer to the drm_agp_t structure made available by the agpgart module.
@@ -80,7 +107,7 @@ int DRM(agp_info)(struct inode *inode, struct file *filp,
 	info.id_vendor         = kern->device->vendor;
 	info.id_device         = kern->device->device;
 
-	if (copy_to_user((drm_agp_info_t *)arg, &info, sizeof(info)))
+	if (copy_to_user((drm_agp_info_t __user *)arg, &info, sizeof(info)))
 		return -EFAULT;
 	return 0;
 }
@@ -174,7 +201,7 @@ int DRM(agp_enable)(struct inode *inode, struct file *filp,
 	if (!dev->agp || !dev->agp->acquired || !drm_agp->enable)
 		return -EINVAL;
 
-	if (copy_from_user(&mode, (drm_agp_mode_t *)arg, sizeof(mode)))
+	if (copy_from_user(&mode, (drm_agp_mode_t __user *)arg, sizeof(mode)))
 		return -EFAULT;
 
 	dev->agp->mode    = mode.mode;
@@ -206,10 +233,11 @@ int DRM(agp_alloc)(struct inode *inode, struct file *filp,
 	DRM_AGP_MEM      *memory;
 	unsigned long    pages;
 	u32 		 type;
+	drm_agp_buffer_t __user *argp = (void __user *)arg;
 
 	if (!dev->agp || !dev->agp->acquired)
 		return -EINVAL;
-	if (copy_from_user(&request, (drm_agp_buffer_t *)arg, sizeof(request)))
+	if (copy_from_user(&request, argp, sizeof(request)))
 		return -EFAULT;
 	if (!(entry = DRM(alloc)(sizeof(*entry), DRM_MEM_AGPLISTS)))
 		return -ENOMEM;
@@ -237,7 +265,7 @@ int DRM(agp_alloc)(struct inode *inode, struct file *filp,
 	request.handle   = entry->handle;
 	request.physical = memory->physical;
 
-	if (copy_to_user((drm_agp_buffer_t *)arg, &request, sizeof(request))) {
+	if (copy_to_user(argp, &request, sizeof(request))) {
 		dev->agp->memory       = entry->next;
 		dev->agp->memory->prev = NULL;
 		DRM(free_agp)(memory, pages);
@@ -291,7 +319,7 @@ int DRM(agp_unbind)(struct inode *inode, struct file *filp,
 
 	if (!dev->agp || !dev->agp->acquired)
 		return -EINVAL;
-	if (copy_from_user(&request, (drm_agp_binding_t *)arg, sizeof(request)))
+	if (copy_from_user(&request, (drm_agp_binding_t __user *)arg, sizeof(request)))
 		return -EFAULT;
 	if (!(entry = DRM(agp_lookup_entry)(dev, request.handle)))
 		return -EINVAL;
@@ -328,7 +356,7 @@ int DRM(agp_bind)(struct inode *inode, struct file *filp,
 
 	if (!dev->agp || !dev->agp->acquired || !drm_agp->bind_memory)
 		return -EINVAL;
-	if (copy_from_user(&request, (drm_agp_binding_t *)arg, sizeof(request)))
+	if (copy_from_user(&request, (drm_agp_binding_t __user *)arg, sizeof(request)))
 		return -EFAULT;
 	if (!(entry = DRM(agp_lookup_entry)(dev, request.handle)))
 		return -EINVAL;
@@ -367,7 +395,7 @@ int DRM(agp_free)(struct inode *inode, struct file *filp,
 
 	if (!dev->agp || !dev->agp->acquired)
 		return -EINVAL;
-	if (copy_from_user(&request, (drm_agp_buffer_t *)arg, sizeof(request)))
+	if (copy_from_user(&request, (drm_agp_buffer_t __user *)arg, sizeof(request)))
 		return -EFAULT;
 	if (!(entry = DRM(agp_lookup_entry)(dev, request.handle)))
 		return -EINVAL;

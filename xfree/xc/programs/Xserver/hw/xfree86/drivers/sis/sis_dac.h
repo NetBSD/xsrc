@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dac.h,v 1.20 2004/02/25 17:45:13 twini Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dac.h,v 1.21 2004/06/21 00:43:22 twini Exp $ */
+/* $XdotOrg$ */
 /*
  * DAC helper functions (Save/Restore, MemClk, etc)
  * Definitions and prototypes

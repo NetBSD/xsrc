@@ -46,6 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/extensions.c,v 1.6 2004/04/03 22:38:53 tsi Exp $ */
 
 /* tracks server extensions */
 
@@ -70,12 +71,12 @@ typedef struct _extinfo {
 }           ExtensionInfoRec;
 
 static Bool
-AddExtension(server, name, reply, rep_mask, ev_mask)
-    XServerPtr  server;
-    char       *name;
-    xLbxQueryExtensionReplyPtr reply;
+AddExtension(
+    XServerPtr  server,
+    char       *name,
+    xLbxQueryExtensionReplyPtr reply,
     CARD8      *rep_mask,
-               *ev_mask;
+    CARD8      *ev_mask)
 {
     ExtensionInfoPtr eip = NULL;
     int         req_mask_len;
@@ -118,8 +119,8 @@ AddExtension(server, name, reply, rep_mask, ev_mask)
 }
 
 void
-DeleteExtensions(server)
-    XServerPtr server;
+DeleteExtensions(
+    XServerPtr server)
 {
     ExtensionInfoPtr eip;
 
@@ -134,25 +135,25 @@ DeleteExtensions(server)
 
 /*ARGSUSED*/
 void
-HandleExtensionError(client, err, nr)
-    ClientPtr   client;
-    xError     *err;
-    ReplyStuffPtr nr;
+HandleExtensionError(
+    ClientPtr   client,
+    xError     *err,
+    ReplyStuffPtr nr)
 {
 }
 
 /*ARGSUSED*/
 void
-HandleExtensionEvent(client, ev)
-    ClientPtr   client;
-    xEvent     *ev;
+HandleExtensionEvent(
+    ClientPtr   client,
+    xEvent     *ev)
 {
 }
 
 static Bool
-check_mask(mask, minorop)
-    CARD8      *mask;
-    int         minorop;
+check_mask(
+    CARD8      *mask,
+    int         minorop)
 {
     if (mask[minorop >> 3] & (1 << (minorop & 7)))
 	return REQ_TYPE_YES;
@@ -161,9 +162,9 @@ check_mask(mask, minorop)
 }
 
 Bool
-CheckExtensionForEvents(client, req)
-    ClientPtr client;
-    xReq       *req;
+CheckExtensionForEvents(
+    ClientPtr client,
+    xReq       *req)
 {
     int         opcode = req->reqType;
     int         minorop = req->data;
@@ -181,9 +182,9 @@ CheckExtensionForEvents(client, req)
 }
 
 Bool
-CheckExtensionForReplies(client, req)
-    ClientPtr client;
-    xReq       *req;
+CheckExtensionForReplies(
+    ClientPtr client,
+    xReq       *req)
 {
     int         opcode = req->reqType;
     int         minorop = req->data;
@@ -201,10 +202,10 @@ CheckExtensionForReplies(client, req)
 }
 
 static Bool
-HandleLbxQueryExtensionReply(client, nr, data)
-    ClientPtr   client;
-    ReplyStuffPtr nr;
-    char       *data;
+HandleLbxQueryExtensionReply(
+    ClientPtr   client,
+    ReplyStuffPtr nr,
+    char       *data)
 {
     xLbxQueryExtensionReply *reply;
     xQueryExtensionReply crep;
@@ -240,10 +241,12 @@ HandleLbxQueryExtensionReply(client, nr, data)
 }
 
 static int
-QueryExtensionReply(client, present, opcode, event, error)
-    ClientPtr client;
-    Bool present;
-    int opcode, event, error;
+QueryExtensionReply(
+    ClientPtr client,
+    Bool present,
+    int opcode,
+    int event,
+    int error)
 {
     xQueryExtensionReply reply;
 
@@ -269,8 +272,8 @@ QueryExtensionReply(client, present, opcode, event, error)
 }
 
 int
-ProcLBXQueryExtension(client)
-    ClientPtr   client;
+ProcLBXQueryExtension(
+    ClientPtr   client)
 {
     REQUEST(xQueryExtensionReq);
     char        n;

@@ -29,7 +29,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.30 2003/11/17 22:20:51 dawes Exp $ */
+/* $XFree86: xc/programs/xdpyinfo/xdpyinfo.c,v 3.31 2004/06/30 20:21:47 martin Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -69,6 +69,9 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #ifdef PANORAMIX
 #include <X11/extensions/Xinerama.h>
+#endif
+#ifdef DMX
+#include <X11/extensions/dmxext.h>
 #endif
 #include <X11/Xos.h>
 #include <stdio.h>
@@ -172,6 +175,38 @@ print_display_info(Display *dpy)
 	    }
 	}
 	printf("\n");
+    }
+
+    if (strstr(ServerVendor (dpy), "DMX")) {
+	int vendrel = VendorRelease(dpy);
+        int major, minor, year, month, day;
+
+        major    = vendrel / 100000000;
+        vendrel -= major   * 100000000;
+        minor    = vendrel /   1000000;
+        vendrel -= minor   *   1000000;
+        year     = vendrel /     10000;
+        vendrel -= year    *     10000;
+        month    = vendrel /       100;
+        vendrel -= month   *       100;
+        day      = vendrel;
+
+                                /* Add other epoch tests here */
+        if (major > 0 && minor > 0) year += 2000;
+
+                                /* Do some sanity tests in case there is
+                                 * another server with the same vendor
+                                 * string.  That server could easily use
+                                 * values < 100000000, which would have
+                                 * the effect of keeping our major
+                                 * number 0. */
+        if (major > 0 && major <= 20
+            && minor >= 0 && minor <= 99
+            && year >= 2000
+            && month >= 1 && month <= 12
+            && day >= 1 && day <= 31)
+            printf("DMX version: %d.%d.%04d%02d%02d\n",
+                   major, minor, year, month, day);
     }
 
     req_size = XExtendedMaxRequestSize (dpy);
@@ -1003,6 +1038,109 @@ print_xinerama_info(Display *dpy, char *extname)
 
 #endif /* PANORAMIX */
 
+#ifdef DMX
+static const char *core(DMXInputAttributes *iinfo)
+{
+    if (iinfo->isCore)         return "core";
+    else if (iinfo->sendsCore) return "extension (sends core)";
+    else                       return "extension";
+}
+
+static int print_dmx_info(Display *dpy, char *extname)
+{
+    int                  event_base, error_base;
+    int                  major_version, minor_version, patch_version;
+    DMXScreenAttributes  sinfo;
+    DMXInputAttributes   iinfo;
+    int                  count;
+    int                  i;
+
+    if (!DMXQueryExtension(dpy, &event_base, &error_base)
+        || !DMXQueryVersion(dpy, &major_version, &minor_version,
+                            &patch_version)) return 0;
+    print_standard_extension_info(dpy, extname, major_version, minor_version);
+    printf("  Version stamp: %d\n", patch_version);
+
+    if (!DMXGetScreenCount(dpy, &count)) return 1;
+    printf("  Screen count: %d\n", count);
+    for (i = 0; i < count; i++) {
+        if (DMXGetScreenAttributes(dpy, i, &sinfo)) {
+            printf("    %2d %s %ux%u+%d+%d %d @%dx%d\n",
+                   i, sinfo.displayName,
+                   sinfo.screenWindowWidth, sinfo.screenWindowHeight,
+                   sinfo.screenWindowXoffset, sinfo.screenWindowYoffset,
+                   sinfo.logicalScreen,
+                   sinfo.rootWindowXorigin, sinfo.rootWindowYorigin);
+        }
+    }
+
+    if (major_version != 1
+        || minor_version < 1
+        || !DMXGetInputCount(dpy, &count))
+        return 1;
+
+    printf("  Input count = %d\n", count);
+    for (i = 0; i < count; i++) {
+#ifdef XINPUT
+        Display *backend;
+        char    *backendname = NULL;
+#endif
+        if (DMXGetInputAttributes(dpy, i, &iinfo)) {
+            switch (iinfo.inputType) {
+            case DMXLocalInputType:
+                printf("    %2d local %s", i, core(&iinfo));
+                break;
+            case DMXConsoleInputType:
+                printf("    %2d console %s %s", i, core(&iinfo),
+                       iinfo.name);
+                break;
+            case DMXBackendInputType:
+#ifdef XINPUT
+                if (iinfo.physicalId >= 0) {
+                    if ((backend = XOpenDisplay(iinfo.name))) {
+                        XExtensionVersion *ext
+                            = XGetExtensionVersion(backend, INAME);
+                        if (ext
+                            && ext != (XExtensionVersion *)NoSuchExtension) {
+                            
+                            int         count, i;
+                            XDeviceInfo *devInfo = XListInputDevices(backend,
+                                                                     &count);
+                            if (devInfo) {
+                                for (i = 0; i < count; i++) {
+                                    if ((unsigned)iinfo.physicalId
+                                        == devInfo[i].id
+                                        && devInfo[i].name) {
+                                        backendname = strdup(devInfo[i].name);
+                                        break;
+                                    }
+                                }
+                                XFreeDeviceList(devInfo);
+                            }
+                        }
+                        XCloseDisplay(backend);
+                    }
+                }
+#endif
+                printf("    %2d backend %s o%d/%s",i, core(&iinfo),
+                       iinfo.physicalScreen, iinfo.name);
+                if (iinfo.physicalId >= 0) printf("/id%d", iinfo.physicalId);
+#ifdef XINPUT
+                if (backendname) {
+                    printf("=%s", backendname);
+                    free(backendname);
+                }
+#endif
+                break;
+            }
+        }
+        printf("\n");
+    }
+    return 1;
+}
+
+#endif /* DMX */
+
 
 /* utilities to manage the list of recognized extensions */
 
@@ -1050,6 +1188,9 @@ ExtensionPrintInfo known_extensions[] =
 #endif
 #ifdef PANORAMIX
     {"XINERAMA", print_xinerama_info, False},
+#endif
+#ifdef DMX
+    {"DMX", print_dmx_info, False},
 #endif
     /* add new extensions here */
 };

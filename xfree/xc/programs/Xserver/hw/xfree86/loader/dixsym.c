@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/dixsym.c,v 1.65 2004/02/17 15:30:26 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/dixsym.c,v 1.68 2005/02/03 02:01:14 dawes Exp $ */
 
 /*
  * Copyright 1995-1998 by Metro Link, Inc.
@@ -22,7 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -336,6 +336,7 @@ LOOKUP dixLookupTab[] = {
     /* utils.c */
     SYMFUNC(Xstrdup)
     SYMFUNC(XNFstrdup)
+    SYMFUNC(Xasprintf)
     SYMVAR(Must_have_memory)
     SYMFUNC(AdjustWaitForDelay)
     SYMVAR(noTestExtensions)
@@ -350,6 +351,7 @@ LOOKUP dixLookupTab[] = {
     SYMFUNC(VErrorF)
     SYMFUNC(ErrorF)
     SYMFUNC(Error)
+    SYMFUNC(LogTypeToTxt)
     /* xalloc.c */
     SYMFUNC(XNFalloc)
     SYMFUNC(XNFcalloc)
@@ -358,6 +360,11 @@ LOOKUP dixLookupTab[] = {
     SYMFUNC(Xcalloc)
     SYMFUNC(Xfree)
     SYMFUNC(Xrealloc)
+#if !defined(LONG64) && !defined(WORD64)
+    SYMFUNC(Xllalloc)
+    SYMFUNC(Xllrealloc)
+    SYMFUNC(Xllcalloc)
+#endif
     /* WaitFor.c */
     SYMFUNC(ScreenSaverTime)
     SYMFUNC(TimerFree)

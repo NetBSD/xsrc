@@ -639,7 +639,7 @@ int r128_cce_init( DRM_IOCTL_ARGS )
 
 	LOCK_TEST_WITH_RETURN( dev, filp );
 
-	DRM_COPY_FROM_USER_IOCTL( init, (drm_r128_init_t *)data, sizeof(init) );
+	DRM_COPY_FROM_USER_IOCTL( init, (drm_r128_init_t __user *)data, sizeof(init) );
 
 	switch ( init.func ) {
 	case R128_INIT_CCE:
@@ -682,7 +682,7 @@ int r128_cce_stop( DRM_IOCTL_ARGS )
 
 	LOCK_TEST_WITH_RETURN( dev, filp );
 
-	DRM_COPY_FROM_USER_IOCTL(stop, (drm_r128_cce_stop_t *)data, sizeof(stop) );
+	DRM_COPY_FROM_USER_IOCTL(stop, (drm_r128_cce_stop_t __user *)data, sizeof(stop) );
 
 	/* Flush any pending CCE commands.  This ensures any outstanding
 	 * commands are exectuted by the engine before we turn it off.
@@ -920,10 +920,11 @@ int r128_cce_buffers( DRM_IOCTL_ARGS )
 	drm_device_dma_t *dma = dev->dma;
 	int ret = 0;
 	drm_dma_t d;
+	drm_dma_t __user *argp = (void __user *)data;
 
 	LOCK_TEST_WITH_RETURN( dev, filp );
 
-	DRM_COPY_FROM_USER_IOCTL( d, (drm_dma_t *) data, sizeof(d) );
+	DRM_COPY_FROM_USER_IOCTL( d, argp, sizeof(d) );
 
 	/* Please don't send us buffers.
 	 */
@@ -947,7 +948,7 @@ int r128_cce_buffers( DRM_IOCTL_ARGS )
 		ret = r128_cce_get_buffers( filp, dev, &d );
 	}
 
-	DRM_COPY_TO_USER_IOCTL((drm_dma_t *) data, d, sizeof(d) );
+	DRM_COPY_TO_USER_IOCTL(argp, d, sizeof(d) );
 
 	return ret;
 }

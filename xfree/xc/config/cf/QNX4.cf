@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/QNX4.cf,v 1.4 2002/01/07 20:38:18 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/QNX4.cf,v 1.5 2004/06/02 22:42:53 dawes Exp $
 
 #define StripInstalledPrograms	NO
 #define BuildServer 		YES
@@ -85,7 +85,7 @@ XCOMM platform:  $XFree86: xc/config/cf/QNX4.cf,v 1.4 2002/01/07 20:38:18 dawes 
 
 #define StandardCppDefines	-traditional StandardDefines
 #define StandardDefines OSDefines SourceDefines
-#define ServerOSDefines -DDDXTIME XFree86ServerOSDefines 
+#define ServerOSDefines XFree86ServerOSDefines 
 #define ServerExtraDefines XFree86ServerDefines
 #define ExtraFilesToClean       *.err *.map 
 

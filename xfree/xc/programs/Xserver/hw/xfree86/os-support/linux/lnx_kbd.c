@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_kbd.c,v 1.5 2003/11/04 03:14:39 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_kbd.c,v 1.9 2004/11/10 04:28:38 dawes Exp $ */
 
 /*
  * Copyright (c) 2002 by The XFree86 Project, Inc.
@@ -7,6 +7,52 @@
  * Based on the code from lnx_io.c which is
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
+ */
+/*
+ * Copyright (c) 1994-2004 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #define NEED_EVENTS
@@ -24,6 +70,16 @@
 #include "lnx_kbd.h"
 
 #define KBC_TIMEOUT 250        /* Timeout in ms for sending to keyboard controller */
+
+#ifndef KBD_DIRECTHW
+#define KBD_DIRECTHW 0
+#endif
+
+#if !(defined(__alpha__) || defined (__i386__) || defined(__ia64__))
+#undef KBD_DIRECTHW
+#define KBD_DIRECTHW 0
+#endif
+
 
 static KbdProtocolRec protocols[] = {
    {"standard", PROT_STD },
@@ -108,7 +164,7 @@ GetKbdLeds(InputInfoPtr pInfo)
 #endif
 
 static int
-KDKBDREP_ioctl_ok(int rate, int delay) {
+KDKBDREP_ioctl_ok(int fd, int rate, int delay) {
 #if defined(KDKBDREP) && !defined(__sparc__)
      /* This ioctl is defined in <linux/kd.h> but is not
 	implemented anywhere - must be in some m68k patches. */
@@ -117,7 +173,7 @@ KDKBDREP_ioctl_ok(int rate, int delay) {
    /* don't change, just test */
    kbdrep_s.rate = -1;
    kbdrep_s.delay = -1;
-   if (ioctl( 0, KDKBDREP, &kbdrep_s )) {
+   if (ioctl( fd, KDKBDREP, &kbdrep_s )) {
        return 0;
    }
 
@@ -132,7 +188,7 @@ KDKBDREP_ioctl_ok(int rate, int delay) {
    if (kbdrep_s.delay < 1)
      kbdrep_s.delay = 1;
    
-   if (ioctl( 0, KDKBDREP, &kbdrep_s )) {
+   if (ioctl( fd, KDKBDREP, &kbdrep_s )) {
      return 0;
    }
 
@@ -174,9 +230,6 @@ static void
 SetKbdRepeat(InputInfoPtr pInfo, char rad)
 {
   KbdDevPtr pKbd = (KbdDevPtr) pInfo->private;
-  int i;
-  int timeout;
-  int         value = 0x7f;    /* Maximum delay with slowest rate */
 
 #ifdef __sparc__
   int         rate  = 500;     /* Default rate */
@@ -184,32 +237,40 @@ SetKbdRepeat(InputInfoPtr pInfo, char rad)
 #else
   int         rate  = 300;     /* Default rate */
   int         delay = 250;     /* Default delay */
-#endif
+
+# if KBD_DIRECTHW
+  int i;
+  int timeout;
+  int         value = 0x7f;    /* Maximum delay with slowest rate */
 
   static int valid_rates[] = { 300, 267, 240, 218, 200, 185, 171, 160, 150,
 			       133, 120, 109, 100, 92, 86, 80, 75, 67,
 			       60, 55, 50, 46, 43, 40, 37, 33, 30, 27,
 			       25, 23, 21, 20 };
-#define RATE_COUNT (sizeof( valid_rates ) / sizeof( int ))
+# define RATE_COUNT (sizeof( valid_rates ) / sizeof( int ))
 
   static int valid_delays[] = { 250, 500, 750, 1000 };
-#define DELAY_COUNT (sizeof( valid_delays ) / sizeof( int ))
+# define DELAY_COUNT (sizeof( valid_delays ) / sizeof( int ))
+
+# endif
+
+#endif
 
   if (pKbd->rate >= 0) 
     rate = pKbd->rate * 10;
   if (pKbd->delay >= 0)
     delay = pKbd->delay;
 
-  if(KDKBDREP_ioctl_ok(rate, delay)) 	/* m68k? */
+  if(KDKBDREP_ioctl_ok(pInfo->fd, rate, delay)) 	/* m68k? */
     return;
 
   if(KIOCSRATE_ioctl_ok(rate, delay))	/* sparc? */
     return;
 
+#if KBD_DIRECTHW
+
   if (xf86IsPc98())
     return;
-
-#if defined(__alpha__) || defined (__i386__) || defined(__ia64__)
 
   /* The ioport way */
 
@@ -241,7 +302,7 @@ SetKbdRepeat(InputInfoPtr pInfo, char rad)
   usleep(10000);
   outb(0x60, value);
 
-#endif /* __alpha__ || __i386__ || __ia64__ */
+#endif /* KBD_DIRECTHW */
 }
 
 typedef struct {

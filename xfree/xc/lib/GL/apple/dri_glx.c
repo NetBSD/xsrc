@@ -2,6 +2,7 @@
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
 Copyright (c) 2002 Apple Computer, Inc.
+Copyright (c) 2004 Torrey T. Lyons
 All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,7 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/apple/dri_glx.c,v 1.1 2003/06/30 01:45:10 torrey Exp $ */
+/* $XFree86: xc/lib/GL/apple/dri_glx.c,v 1.3 2004/12/10 17:47:24 alanh Exp $ */
 
 /*
  * Authors:
@@ -48,13 +49,125 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <stdarg.h>
 
 
+/* Apple OpenGL "driver" information. */
+static const char *__driDriverName = "apple";
+static const char __driConfigOptions[] = "";
+static const int __driDriverMajor = 1;
+static const int __driDriverMinor = 0;
+static const int __driDriverPatch = 0;
+
+
+/*
+ * printf wrappers
+ */
+
+static void InfoMessageF(const char *f, ...)
+{
+    va_list args;
+    const char *env;
+
+    if ((env = getenv("LIBGL_DEBUG")) && strstr(env, "verbose")) {
+        fprintf(stderr, "libGL: ");
+        va_start(args, f);
+        vfprintf(stderr, f, args);
+        va_end(args);
+    }
+}
+
+static void ErrorMessageF(const char *f, ...)
+{
+    va_list args;
+
+    if (getenv("LIBGL_DEBUG")) {
+        fprintf(stderr, "libGL error: ");
+        va_start(args, f);
+        vfprintf(stderr, f, args);
+        va_end(args);
+    }
+}
+
+
+/*
+ * Given a display pointer and screen number, determine the name of
+ * the DRI driver for the screen. (I.e. "r128", "tdfx", etc).
+ * Return True for success, False for failure.
+ */
+static Bool GetDriverName(Display *dpy, int scrNum, char **driverName)
+{
+    int directCapable;
+
+    *driverName = NULL;
+
+    if (!XAppleDRIQueryDirectRenderingCapable(dpy, scrNum, &directCapable)) {
+        ErrorMessageF("XAppleDRIQueryDirectRenderingCapable failed\n");
+        return False;
+    }
+    if (!directCapable) {
+        ErrorMessageF("XAppleDRIQueryDirectRenderingCapable returned false\n");
+        return False;
+    }
+
+    *driverName = (char *) __driDriverName;
+
+    InfoMessageF("XF86DRIGetClientDriverName: %d.%d.%d %s (screen %d)\n",
+                 __driDriverMajor, __driDriverMinor, __driDriverPatch,
+                 *driverName, scrNum);
+
+    return True;
+}
+
+
+/*
+ * Exported function for querying the DRI driver for a given screen.
+ *
+ * The returned char pointer points to a static array that will be
+ * overwritten by subsequent calls.
+ */
+const char *glXGetScreenDriver (Display *dpy, int scrNum) {
+    static char ret[32];
+    char *driverName;
+    if (GetDriverName(dpy, scrNum, &driverName)) {
+        int len;
+        if (!driverName)
+            return NULL;
+        len = strlen (driverName);
+        if (len >= 31)
+            return NULL;
+        memcpy (ret, driverName, len+1);
+        Xfree(driverName);
+        return ret;
+    }
+    return NULL;
+}
+
+
+/*
+ * Exported function for obtaining a driver's option list (UTF-8 encoded XML).
+ *
+ * The returned char pointer points directly into the driver. Therefore
+ * it should be treated as a constant.
+ *
+ * If the driver was not found or does not support configuration NULL is
+ * returned.
+ *
+ * Note: In a standard GLX imlementation the driver remains opened after
+ * this function returns.
+ */
+const char *glXGetDriverConfig (const char *driverName) {
+    if (strcmp(driverName, __driDriverName) == 0)
+        return __driConfigOptions;
+    else
+        return NULL;
+}
+
+
 static void driDestroyDisplay(Display *dpy, void *private)
 {
     __DRIdisplayPrivate *pdpyp = (__DRIdisplayPrivate *)private;
 
     if (pdpyp) {
-	Xfree(pdpyp->createScreen);
-	Xfree(pdpyp);
+        Xfree(pdpyp->libraryHandles);
+        Xfree(pdpyp);
     }
 }
 
@@ -65,6 +178,7 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
     __DRIdisplayPrivate *pdpyp;
     int eventBase, errorBase;
     int major, minor, patch;
+    int scrn;
 
     /* Initialize these fields to NULL in case we fail.
      * If we don't do this we may later get segfaults trying to free random
@@ -75,16 +189,16 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
     pdisp->createScreen = NULL;
 
     if (!XAppleDRIQueryExtension(dpy, &eventBase, &errorBase)) {
-	return NULL;
+        return NULL;
     }
 
     if (!XAppleDRIQueryVersion(dpy, &major, &minor, &patch)) {
-	return NULL;
+        return NULL;
     }
 
     pdpyp = (__DRIdisplayPrivate *)Xmalloc(sizeof(__DRIdisplayPrivate));
     if (!pdpyp) {
-	return NULL;
+        return NULL;
     }
 
     pdpyp->driMajor = major;
@@ -96,14 +210,30 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
     /* allocate array of pointers to createScreen funcs */
     pdisp->createScreen = (CreateScreenFunc *) Xmalloc(numScreens * sizeof(void *));
     if (!pdisp->createScreen)
-       return NULL;
+        return NULL;
+
+    /* allocate array of pointers to createScreen funcs */
+    pdisp->createNewScreen = (CreateNewScreenFunc *) Xmalloc(numScreens * sizeof(void *));
+    if (!pdisp->createNewScreen) {
+        Xfree(pdisp->createScreen);
+        Xfree(pdpyp);
+        return NULL;
+    }
+
+    /* allocate array of library handles */
+    pdpyp->libraryHandles = (void **) Xmalloc(numScreens * sizeof(void*));
+    if (!pdpyp->libraryHandles) {
+        Xfree(pdisp->createNewScreen);
+        Xfree(pdisp->createScreen);
+        Xfree(pdpyp);
+        return NULL;
+    }
 
     /* we'll statically bind to the __driCreateScreen function */
-    {
-       int i;
-       for (i = 0; i < numScreens; i++) {
-          pdisp->createScreen[i] = __driCreateScreen;
-       }
+    for (scrn = 0; scrn < numScreens; scrn++) {
+        pdisp->createScreen[scrn] = __driCreateScreen;
+        pdisp->createNewScreen[scrn] = NULL;
+        pdpyp->libraryHandles[scrn] = NULL;
     }
 
     return (void *)pdpyp;

@@ -6,7 +6,7 @@
 
                                   Abstract
 
-     This document describes how to configure XFree86 XKB from a user's
+      This document describes how to configure XFree86 XKB from a user's
      point a few. It converts basic configuration syntax and gives also
      a few examples.
 
@@ -195,4 +195,4 @@ compatibility reasons. Avoid using it if it is possible.
      Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/XKB-Config.sgml,v 1.4 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.XKB-Config,v 1.6 2003/10/19 19:57:13 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.XKB-Config,v 1.7 2005/02/15 01:47:38 dawes Exp $

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/os.c,v 1.5 2004/02/13 23:58:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/os.c,v 1.6 2004/04/03 22:26:24 dawes Exp $ */
 
 /*
  * Copyright (c) 1999-2002 by The XFree86 Project, Inc.
@@ -66,7 +66,7 @@
 #define OSNAME "lynxos"
 #elif defined(__GNU__)
 #define OSNAME "hurd"
-#elif defined(SCO)
+#elif defined(__SCO__)
 #define OSNAME "sco"
 #elif defined(DGUX)
 #define OSNAME "dgux"

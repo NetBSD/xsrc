@@ -1,5 +1,5 @@
 .\"
-.\" $XFree86: xc/lib/Xft/Xft.man,v 1.6 2003/06/12 14:12:27 eich Exp $
+.\" $XFree86: xc/lib/Xft/Xft.man,v 1.7 2004/09/15 17:38:21 herrb Exp $
 .\"
 .\" Copyright 2000 Keith Packard, member of The XFree86 Project, Inc..\"
 .\" Permission to use, copy, modify, distribute, and sell this software and its
@@ -172,7 +172,7 @@ As of version 2,
 has become relatively stable and is expected to retain source and binary
 compatibility in future releases.
 .SH "SEE ALSO"
-fonttconfig(3)
+fontconfig(3)
 .br
 __projectroot__/lib/X11/doc/README.fonts
 .SH AUTHOR

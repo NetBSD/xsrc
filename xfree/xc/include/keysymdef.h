@@ -47,7 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/include/keysymdef.h,v 1.12 2001/12/14 19:53:26 dawes Exp $ */
+/* $XFree86: xc/include/keysymdef.h,v 1.13 2004/06/14 20:43:04 dawes Exp $ */
 
 #define XK_VoidSymbol		0xFFFFFF	/* void symbol */
 
@@ -582,7 +582,7 @@ SOFTWARE.
 #define XK_Odiaeresis          0x0d6
 #define XK_multiply            0x0d7
 #define XK_Ooblique            0x0d8
-#define XK_Oslash              XK_Ooblique
+#define XK_Oslash              0x0d8
 #define XK_Ugrave              0x0d9
 #define XK_Uacute              0x0da
 #define XK_Ucircumflex         0x0db
@@ -616,7 +616,7 @@ SOFTWARE.
 #define XK_odiaeresis          0x0f6
 #define XK_division            0x0f7
 #define XK_oslash              0x0f8
-#define XK_ooblique            XK_oslash
+#define XK_ooblique            0x0f8
 #define XK_ugrave              0x0f9
 #define XK_uacute              0x0fa
 #define XK_ucircumflex         0x0fb
@@ -981,7 +981,7 @@ SOFTWARE.
 #define XK_Arabic_noon_ghunna                          0x5fa
 #define XK_Arabic_heh_doachashmee                      0x5fb
 #define XK_Farsi_yeh                                   0x5fc
-#define XK_Arabic_farsi_yeh                     XK_Farsi_yeh
+#define XK_Arabic_farsi_yeh                            0x5fc
 #define XK_Arabic_yeh_baree                            0x5fd
 #define XK_Arabic_heh_goal                             0x5fe
 #define XK_Arabic_switch        0xFF7E  /* Alias for mode_switch */
@@ -1146,7 +1146,7 @@ SOFTWARE.
 #define XK_Greek_ETAaccent                             0x7a3
 #define XK_Greek_IOTAaccent                            0x7a4
 #define XK_Greek_IOTAdieresis                          0x7a5
-#define XK_Greek_IOTAdiaeresis         XK_Greek_IOTAdieresis /* old typo */
+#define XK_Greek_IOTAdiaeresis                         0x7a5 /* old typo */
 #define XK_Greek_OMICRONaccent                         0x7a7
 #define XK_Greek_UPSILONaccent                         0x7a8
 #define XK_Greek_UPSILONdieresis                       0x7a9

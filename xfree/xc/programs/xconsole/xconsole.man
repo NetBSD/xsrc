@@ -23,9 +23,9 @@
 .\" dealing in this Software without prior written authorization from the
 .\" The Open Group.
 .\"
-.\" $XFree86: xc/programs/xconsole/xconsole.man,v 1.10 2002/10/16 02:27:40 dawes Exp $
+.\" $XFree86: xc/programs/xconsole/xconsole.man,v 1.11 2005/02/11 03:03:17 dawes Exp $
 .\"
-.TH XCONSOLE 1 __xorgversion__
+.TH XCONSOLE 1 __vendorversion__
 .SH NAME
 xconsole \- monitor system console messages with X
 .SH SYNOPSIS

@@ -69,6 +69,8 @@ lib/libXxf86misc.so.1
 lib/libXxf86misc.so
 lib/libXxf86vm.so.1
 lib/libXxf86vm.so
+lib/libdmx.so.1
+lib/libdmx.so
 lib/libdps.so.1
 lib/libdps.so
 lib/libXmu.so.6

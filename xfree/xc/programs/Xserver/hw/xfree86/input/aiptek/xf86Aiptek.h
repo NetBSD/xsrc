@@ -34,7 +34,7 @@
  * TORTIOUS ACTIONS, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/aiptek/xf86Aiptek.h,v 1.3 2003/12/10 01:50:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/aiptek/xf86Aiptek.h,v 1.4 2004/04/26 22:26:10 dawes Exp $ */
 
 #ifndef _AIPTEK_H_
 #define _AIPTEK_H_
@@ -78,14 +78,7 @@
 #include <keysym.h>
 #include <mipointer.h>
 
-#ifdef XFree86LOADER
-#   include <xf86Module.h>
-#endif
-
-#define XCONFIG_PROBED "(==)"
-#define XCONFIG_GIVEN  "(**)"
-
-#define xf86Verbose 1
+#include <xf86Module.h>
 
 #undef PRIVATE
 #define PRIVATE(x) XI_PRIVATE(x)

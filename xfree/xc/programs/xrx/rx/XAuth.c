@@ -26,6 +26,7 @@ other dealings in this Software without prior written authorization from
 The Open Group.
 
 */
+/* $XFree86: xc/programs/xrx/rx/XAuth.c,v 1.3 2004/04/03 22:38:56 tsi Exp $ */
 
 #include "RxI.h"
 #ifdef XFUNCPROTO_NOT_AVAILABLE
@@ -36,6 +37,8 @@ The Open Group.
 #ifndef XFUNCPROTO_NOT_AVAILABLE
 #include <X11/Xauth.h>
 #endif
+
+#include "XAuth.h"
 
 static void
 printhexdigit(char *ptr, unsigned int d)

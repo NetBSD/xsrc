@@ -26,10 +26,10 @@
 .\" from the X Consortium.
 .\"
 .\"
-.\" $XFree86: xc/doc/man/general/security.man,v 1.5 2003/07/09 15:27:25 tsi Exp $
+.\" $XFree86: xc/doc/man/general/security.man,v 1.6 2005/02/11 03:03:10 dawes Exp $
 .\"
 .nr )S 12
-.TH XSECURITY __miscmansuffix__ __xorgversion__
+.TH XSECURITY __miscmansuffix__ __vendorversion__
 .SH NAME
 Xsecurity \- X display access control
 .SH SYNOPSIS

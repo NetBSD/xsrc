@@ -1,4 +1,4 @@
-XCOMM $Xorg: sequentLib.rules,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
+XCOMM $XFree86: xc/config/cf/sequentLib.rules,v 1.4 2004/06/01 00:16:53 dawes Exp $
 
 /*
  * SVR4 shared library rules
@@ -89,7 +89,7 @@ install::								@@\
  */
 #ifndef InstallLibrary
 #define	InstallLibrary(libname,dest)					@@\
-install:: LibraryTargetName(libname)					@@\
+install::								@@\
 	MakeDir($(DESTDIR)dest)						@@\
 	$(INSTALL) $(INSTALLFLAGS) $(INSTLIBFLAGS) LibraryTargetName(libname) $(DESTDIR)dest @@\
 	RanLibrary($(RANLIBINSTFLAGS) $(DESTDIR)dest/LibraryTargetName(libname))	@@\
@@ -128,7 +128,7 @@ BuildHidesyms(libname)
  */
 #ifndef InstallSharedLibrary
 # define InstallSharedLibrary(libname,rev,dest)				@@\
-install:: Concat(lib,libname.so.rev) 					@@\
+install::								@@\
 	MakeDir($(DESTDIR)dest)						@@\
 	$(INSTALL) $(INSTALLFLAGS) $(INSTSHLIBFLAGS) Concat(lib,libname.so.rev) $(DESTDIR)dest @@\
 	$(RM) Concat($(DESTDIR)dest/lib,libname.so)			@@\
@@ -287,7 +287,7 @@ file.$(MANSUFFIX).z: file.section					@@\
 	$(CP) /tmp/file.man.z file.$(MANSUFFIX).z; \			@@\
 	$(RM) /tmp/file.man.z						@@\
 									@@\
-install.man:: file.$(MANSUFFIX).z					@@\
+install.man::								@@\
 	MakeDir($(DESTDIR)$(MANDIR))					@@\
 	$(INSTALL) -c $(INSTMANFLAGS) file.$(MANSUFFIX).z $(DESTDIR)$(MANDIR)/file.$(MANSUFFIX).z
 
@@ -308,7 +308,7 @@ depend:: prefix.cat Concat(prefix,MsgCatI.h)				@@\
 									@@\
 all:: prefix.cat							@@\
 									@@\
-install:: prefix.cat							@@\
+install::								@@\
 	MakeDir($(DESTDIR)$(MESSAGECATDIR))				@@\
 	$(INSTALL) $(INSTALLFLAGS) $(INSTLIBFLAGS) prefix.cat $(DESTDIR)$(MESSAGECATDIR)/prefix.cat	@@\
 	$(RM) $(DESTDIR)$(MESSAGECATDIR)/prefix				@@\

@@ -45,7 +45,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/include/lbx.h,v 1.7 2003/11/17 22:20:48 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/include/lbx.h,v 1.8 2004/04/03 22:38:54 tsi Exp $ */
 
 #ifndef _LBX_H_
 #define _LBX_H_
@@ -182,10 +182,11 @@ typedef struct {
 
 
 typedef struct _ClientPublic {
-    int             (*writeToClient) ();
-    int             (*uncompressedWriteToClient) ();
-    unsigned long   (*requestLength) ();
-    int             (*readRequest)();
+    int             (*writeToClient) (ClientPtr /*who*/, int /*count*/, char * /*buf*/);
+    /* below member is not used by the X11 tree, better keep it for compatibility reasons */
+    int             (*uncompressedWriteToClient) (ClientPtr /*who*/, int /*count*/, char * /*buf*/);
+    unsigned long   (*requestLength) (xReq *req, ClientPtr sc, int gotnow, Bool *partp);
+    int             (*readRequest) (ClientPtr /*client*/);
 } ClientPublicRec, *ClientPublicPtr;
 
 typedef struct _Client {
@@ -441,8 +442,8 @@ extern void ZeroOtherStats();
 
 #endif /* LBX_STATS */
 
-extern void DumpCompressionStats();
-extern void ZeroCompressionStats();
+extern void DumpCompressionStats(void);
+extern void ZeroCompressionStats(void);
 
 /* tables.c */
 extern int ProcLBXInternAtom(

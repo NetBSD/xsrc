@@ -25,10 +25,10 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/doc/man/general/Standards.man,v 1.4 2001/01/27 18:20:38 dawes Exp $
+.\" $XFree86: xc/doc/man/general/Standards.man,v 1.5 2005/02/11 03:03:10 dawes Exp $
 .\"
 .\"
-.TH XSTANDARDS __miscmansuffix__ __xorgversion__
+.TH XSTANDARDS __miscmansuffix__ __vendorversion__
 .SH NAME
 XStandards \- X Consortium Standards and X Project Team Specifications
 .SH SYNOPSIS

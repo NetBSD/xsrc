@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dm.c,v 3.24 2004/01/10 21:26:29 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/dm.c,v 3.25 2004/04/03 22:26:26 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -73,7 +73,7 @@ from The Open Group.
 #endif
 
 
-#if defined(SVR4) && !defined(SCO) && !defined(sun)
+#if defined(SVR4) && !defined(__SCO__) && !defined(sun)
 extern FILE    *fdopen();
 #endif
 

@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -58,7 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/TMgrab.c,v 1.4 2003/04/21 16:34:28 herrb Exp $ */
+/* $XFree86: xc/lib/Xt/TMgrab.c,v 1.5 2004/05/05 00:07:03 dickey Exp $ */
 
 /*LINTLIBRARY*/
 #include "IntrinsicI.h"
@@ -184,7 +184,7 @@ static Boolean DoGrab(
 	UNLOCK_PROCESS;
 	return False;
     }
-    
+
     switch (typeMatch->eventType) {
       case ButtonPress:
       case ButtonRelease:
@@ -207,15 +207,15 @@ static Boolean DoGrab(
 		     None
 		     );
 	break;
-	
+
       case KeyPress:
       case KeyRelease:
 	GrabAllCorrectKeys(widget, typeMatch, modMatch, grabP);
 	break;
-	
+
       case EnterNotify:
 	break;
-	
+
       default:
 	XtAppWarningMsg(XtWidgetToApplicationContext(widget),
 			"invalidPopup","unsupportedOperation",XtCXtToolkitError,
@@ -227,8 +227,8 @@ static Boolean DoGrab(
     return False;
 }
 
-void _XtRegisterGrabs(widget)
-    Widget widget;
+void _XtRegisterGrabs(
+    Widget widget)
 {
     XtTranslations 	xlations = widget->core.tm.translations;
     TMComplexStateTree 	*stateTreePtr;
@@ -243,14 +243,14 @@ void _XtRegisterGrabs(widget)
     /* walk the widget instance action bindings table looking for */
     /* actions registered as grab actions. */
     /* when you find one, do a grab on the triggering event */
-    
+
     if (xlations == NULL) return;
     stateTreePtr = (TMComplexStateTree *) xlations->stateTreeTbl;
     if (*stateTreePtr == NULL) return;
     for (i = 0; i < xlations->numStateTrees; i++, stateTreePtr++) {
-	if (bindData->simple.isComplex) 
+	if (bindData->simple.isComplex)
 	  procs = TMGetComplexBindEntry(bindData, i)->procs;
-	else 
+	else
 	  procs = TMGetSimpleBindEntry(bindData, i)->procs;
 	for (count=0; count < (*stateTreePtr)->numQuarks; count++) {
 	    GrabActionRec* grabP;
@@ -259,9 +259,9 @@ void _XtRegisterGrabs(widget)
 	    LOCK_PROCESS;
 	    for (grabP = grabActionList; grabP != NULL; grabP = grabP->next) {
 		if (grabP->action_proc == procs[count]) {
-		    /* we've found a "grabber" in the action table. Find the 
-		     * states that call this action.  Note that if there is 
-		     * more than one "grabber" in the action table, we end 
+		    /* we've found a "grabber" in the action table. Find the
+		     * states that call this action.  Note that if there is
+		     * more than one "grabber" in the action table, we end
 		     * up searching all of the states multiple times.
 		     */
 		    doGrab.widget = widget;
@@ -278,7 +278,7 @@ void _XtRegisterGrabs(widget)
 }
 
 void XtRegisterGrabAction(
-    XtActionProc action_proc, 
+    XtActionProc action_proc,
     _XtBoolean owner_events,
     unsigned int event_mask,
     int pointer_mode,
@@ -318,8 +318,8 @@ void XtRegisterGrabAction(
 }
 
 /*ARGSUSED*/
-void _XtGrabInitialize(app)
-    XtAppContext	app;
+void _XtGrabInitialize(
+    XtAppContext	app)
 {
     LOCK_PROCESS;
     if (grabActionList == NULL)

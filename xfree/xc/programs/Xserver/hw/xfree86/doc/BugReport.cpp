@@ -29,14 +29,6 @@ VIDEO CARD:
 
     [e.g. Matrox G200]
 
-    RAMDAC:
-
-    [Usually only relevant for old cards]
-
-    CLOCKCHIP:
-
-    [Usually only relevant for old cards]
-
     VIDEO MEMORY:
 
     [e.g. 2MB DRAM  Include both the amount, and type (if known)]
@@ -50,8 +42,9 @@ REPORT:
     [Include details of any problems you encountered.  If you didn't have
      any problems, just say "no problems".  Indicate what modes and colour
      depths you tested.  If you found a bug, give a description of how to
-     reproduce it.]
+     reproduce it.  If you have problems, include a full copy of your
+     XFree86 log file, usually "/var/log/XFree86.0.log".]
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/BugReport.cpp,v 1.1 2001/01/15 23:00:01 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/BugReport.cpp,v 1.2 2005/02/11 03:03:11 dawes Exp $

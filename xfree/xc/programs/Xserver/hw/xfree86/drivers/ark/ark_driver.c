@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_driver.c,v 1.23 2003/09/24 02:43:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark_driver.c,v 1.24 2004/11/26 13:44:59 tsi Exp $ */
 /*
  *	Copyright 2000	Ani Joshi <ajoshi@unixbox.com>
  *
@@ -702,6 +702,7 @@ static Bool ARKModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 		}
 	}
 
+	hwp->Flags |= VGA_FIX_SYNC_PULSES;
 	if (!vgaHWInit(pScrn, mode))
 		return FALSE;
 
@@ -797,28 +798,18 @@ static Bool ARKModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
 	new->sr15 = new->sr16 = 0;
 
-	tmp = 0;
-	if ((mode->CrtcVTotal - 2) & 0x400)
-		tmp |= 0x80;
-	if ((mode->CrtcVDisplay - 1) & 0x400)
-		tmp |= 0x40;
-	if (mode->CrtcVSyncStart & 0x400)
-		tmp |= 0x10;
-	new->cr40 = tmp;
+	/* XXX Are Sync & Blank flipped in the next two? */
 
-	tmp = new->cr41;	/* initialized earlier */
-	if ((mode->CrtcHTotal / 8 - 5) & 0x100)
-		tmp |= 0x80;
-	if ((mode->CrtcHDisplay / 8 - 1) & 0x100)
-		tmp |= 0x40;
-	if ((mode->CrtcHSyncStart / 8 - 1) & 0x100)
-		tmp |= 0x20;
-	if ((mode->CrtcHSyncStart / 8) & 0x100)
-		tmp |= 0x10;
-	new->cr41 |= tmp;
+	new->cr40 = (((mode->CrtcVTotal - 2) & 0x400) >> 3)
+		| (((mode->CrtcVDisplay - 1) & 0x400) >> 4)
+		| (((mode->CrtcVSyncStart - 1) & 0x400) >> 6);
 
-	new->cr44 = rdinx(vgaIOBase + 4, 0x44) & ~0x34;
-	new->cr44 &= ~0x01;
+	new->cr41 |= ((((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 1)
+		| ((((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 2)
+		| ((((mode->CrtcHBlankStart >> 3) - 1) & 0x100) >> 3)
+		| ((((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 4);
+
+	new->cr44 = rdinx(vgaIOBase + 4, 0x44) & ~0x35;
 	new->cr42 = 0;
 
 	/* check interlace here later */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/sun_kbdEv.c,v 1.6 2003/10/09 11:44:00 pascal Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/sun_kbdEv.c,v 1.7 2005/01/24 21:27:11 tsi Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
@@ -54,48 +54,38 @@ extern Bool noXkbExtension;
 #define XE_KEYBOARD 2
 
 #ifdef XTESTEXT1
-
 #define	XTestSERVER_SIDE
 #include "xtestext1.h"
+
 extern short xtest_mousex;
 extern short xtest_mousey;
 extern int   on_steal_input;
 extern Bool  XTestStealKeyData();
 extern void  XTestStealMotionData();
 
+#endif /* XTESTEXT1 */
+
+static void
+suneqEnqueue(xEvent *ev, int code, int dir, int devtype)
+{
+    int blocked;
+
+    ev->u.u.detail = code;
+    ev->u.u.type = dir;
+#ifdef XTESTEXT1
+    if (on_steal_event &&
+	!XTestStealKeyData(code, dir, dev_type, xtest_mousex, xtest_mousey))
+	return;
+#endif
+
+    blocked = xf86BlockSIGIO();
 #ifdef XINPUT
-#define ENQUEUE(ev, code, direction, dev_type) \
-  (ev)->u.u.detail = (code); \
-  (ev)->u.u.type   = (direction); \
-  if (!on_steal_input ||  \
-      XTestStealKeyData((ev)->u.u.detail, (ev)->u.u.type, dev_type, \
-			xtest_mousex, xtest_mousey)) \
-  xf86eqEnqueue((ev))
+    xf86eqEnqueue(ev);
 #else
-#define ENQUEUE(ev, code, direction, dev_type) \
-  (ev)->u.u.detail = (code); \
-  (ev)->u.u.type   = (direction); \
-  if (!on_steal_input ||  \
-      XTestStealKeyData((ev)->u.u.detail, (ev)->u.u.type, dev_type, \
-			xtest_mousex, xtest_mousey)) \
-  mieqEnqueue((ev))
+    mieqEnqueue(ev);
 #endif
-
-#else /* ! XTESTEXT1 */
-
-#ifdef XINPUT
-#define ENQUEUE(ev, code, direction, dev_type) \
-  (ev)->u.u.detail = (code); \
-  (ev)->u.u.type   = (direction); \
-  xf86eqEnqueue((ev))
-#else
-#define ENQUEUE(ev, code, direction, dev_type) \
-  (ev)->u.u.detail = (code); \
-  (ev)->u.u.type   = (direction); \
-  mieqEnqueue((ev))
-#endif
-
-#endif
+    xf86UnblockSIGIO(blocked);
+}
 
 static void startautorepeat(long keycode);
 static CARD32 processautorepeat(OsTimerPtr timer, CARD32 now, pointer arg);
@@ -860,7 +850,7 @@ sunPostKbdEvent(Firm_event *event)
      * NOTE: There cannot be multiple Mode_Switch keys !!!!
      */
 
-    ENQUEUE(&kevent, keycode, (down ? KeyPress : KeyRelease), XE_KEYBOARD);
+    suneqEnqueue(&kevent, keycode, (down ? KeyPress : KeyRelease), XE_KEYBOARD);
 }
 
 /*
@@ -914,8 +904,8 @@ processautorepeat(OsTimerPtr timer, CARD32 now, pointer arg)
      * succession
      */
 
-    ENQUEUE(&kevent, keycode,  KeyRelease, XE_KEYBOARD);
-    ENQUEUE(&kevent, keycode,  KeyPress, XE_KEYBOARD);
+    suneqEnqueue(&kevent, keycode, KeyRelease, XE_KEYBOARD);
+    suneqEnqueue(&kevent, keycode, KeyPress, XE_KEYBOARD);
 
     /* And return the appropriate value so we get rescheduled */
     return xf86Info.kbdRate;

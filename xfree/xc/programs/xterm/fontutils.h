@@ -1,10 +1,10 @@
 /*
- * $XFree86: xc/programs/xterm/fontutils.h,v 1.12 2003/10/27 01:07:57 dickey Exp $
+ * $XFree86: xc/programs/xterm/fontutils.h,v 1.14 2005/01/14 01:50:02 dickey Exp $
  */
 
 /************************************************************
 
-Copyright 1998-2000,2003 by Thomas E. Dickey
+Copyright 1998-2004,2005 by Thomas E. Dickey
 
                         All Rights Reserved
 
@@ -57,7 +57,7 @@ extern char *xtermSpecialFont(unsigned atts, unsigned chrset);
 
 #if OPT_BOX_CHARS
 extern Bool xtermMissingChar(unsigned ch, XFontStruct *font);
-extern void xtermDrawBoxChar(TScreen *screen, int ch, unsigned flags, GC gc, int x, int y);
+extern void xtermDrawBoxChar(TScreen *screen, unsigned ch, unsigned flags, GC gc, int x, int y);
 #endif
 
 #if OPT_LOAD_VTFONTS
@@ -68,14 +68,21 @@ extern void HandleLoadVTFonts PROTO_XT_ACTIONS_ARGS;
 extern Bool xtermLoadVTFonts(XtermWidget w, char *aName, char *cName);
 #endif
 
+#define xtermIsDecGraphic(ch) ((ch) > 0 && (ch) < 32)
+
+#if OPT_RENDERFONT && OPT_WIDE_CHARS
+extern Bool xtermIsLineDrawing(unsigned /* wc */);
+extern Bool xtermXftMissing(XftFont * /* font */, unsigned /* wc */);
+#endif
+
 #if OPT_SHIFT_FONTS
 extern void HandleSmallerFont PROTO_XT_ACTIONS_ARGS;
 extern void HandleLargerFont PROTO_XT_ACTIONS_ARGS;
 #endif
 
 #if OPT_WIDE_CHARS
-extern int ucs2dec(int);
-extern int dec2ucs(int);
+extern unsigned ucs2dec(unsigned);
+extern unsigned dec2ucs(unsigned);
 #endif
 
 #endif /* included_fontutils_h */

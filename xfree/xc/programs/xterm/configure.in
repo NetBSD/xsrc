@@ -1,9 +1,10 @@
+dnl $XTermId: configure.in,v 1.180 2005/01/13 23:33:54 tom Exp $
 dnl
-dnl $XFree86: xc/programs/xterm/configure.in,v 3.62 2003/10/27 01:07:57 dickey Exp $
+dnl $XFree86: xc/programs/xterm/configure.in,v 3.68 2005/01/14 01:50:02 dickey Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl
-dnl Copyright 1997-2002,2003 by Thomas E. Dickey
+dnl Copyright 1997-2004,2005 by Thomas E. Dickey
 dnl
 dnl                         All Rights Reserved
 dnl
@@ -51,10 +52,17 @@ AC_GCC_TRADITIONAL
 AC_PROG_AWK
 AC_PROG_INSTALL
 AC_ARG_PROGRAM
+AC_CHECK_PROGS(LINT, tdlint lint alint)
 
 ###	checks for UNIX variants that set C preprocessor variables
 AC_AIX
 AC_ISC_POSIX
+
+###	checks for compiler characteristics
+CF_ANSI_CC_CHECK
+AC_CONST
+CF_PROG_EXT
+CF_XOPEN_SOURCE
 
 ###	checks for header files
 AC_CHECK_HEADERS( \
@@ -64,10 +72,14 @@ termios.h \
 unistd.h \
 )
 AC_HEADER_TIME
+AM_LANGINFO_CODESET
 
 ###	checks for typedefs
 CF_SIZE_T
 AC_CHECK_TYPE(time_t, long)
+AC_TYPE_MODE_T
+AC_TYPE_PID_T
+AC_TYPE_UID_T
 
 ###	checks for library functions
 AC_CHECK_FUNCS( \
@@ -75,6 +87,7 @@ AC_CHECK_FUNCS( \
 	gethostname \
 	getlogin \
 	memmove \
+	putenv \
 	strerror \
 	strftime \
 	tcgetattr \
@@ -83,6 +96,14 @@ AC_CHECK_FUNCS( \
 CF_FUNC_MEMMOVE
 CF_FUNC_TGETENT
 CF_UTMP
+
+AC_MSG_CHECKING(if you want to disable setuid)
+CF_ARG_DISABLE(setuid,
+	[  --disable-setuid        disable setuid in xterm, do not install setuid],
+	[disable_setuid=yes],
+	[disable_setuid=no],
+	no)
+AC_MSG_RESULT($disable_setuid)
 
 AC_MSG_CHECKING(if you want to link with utempter)
 AC_ARG_WITH(utempter,
@@ -93,23 +114,18 @@ AC_MSG_RESULT($use_utempter)
 
 if test "$use_utempter" = yes ; then
 	CF_UTEMPTER
+	test "$cf_cv_have_utempter" = yes && disable_setuid=yes
 fi
 
 ###	checks for external data
 CF_ERRNO
 CF_TTY_GROUP
 
-###	checks for compiler characteristics
-CF_ANSI_CC_CHECK
-AC_CONST
-CF_PROG_EXT
-
 ###	checks for system services and user specified options
 
 CF_POSIX_WAIT
 CF_SYSV
 CF_SVR4
-CF_GNU_SOURCE
 CF_X_TOOLKIT
 
 AC_CHECK_HEADERS( \
@@ -126,7 +142,14 @@ LIBS="$LIBS $X_EXTRA_LIBS"
 
 # Check for openpty() in -lutil if the UNIX98-style pty functions are not
 # available. E.g. for GNU libc 2.0.
-AC_CHECK_FUNCS(grantpt, [], AC_CHECK_LIB(util,openpty))
+case $host_os in #(vi
+netbsd*)	# 2004/8/15 - revisit this if/when grantpt is known to work.
+	AC_CHECK_LIB(util,openpty)
+	;;
+*)
+	AC_CHECK_FUNCS(grantpt, [], AC_CHECK_LIB(util,openpty))
+	;;
+esac
 
 AC_PATH_PROG(XTERM_PATH,xterm)
 
@@ -137,7 +160,7 @@ AC_CHECK_FUNCS(Xutf8LookupString, [],[
 	EXTRAOBJS="$EXTRAOBJS xutf8.o"
 ])
 
-CF_WITH_IMAKE_CFLAGS('$(MAIN_DEFINES)')
+CF_WITH_IMAKE_CFLAGS($(MAIN_DEFINES) $(VENDORMANDEFS))
 
 AC_MSG_CHECKING(for default terminal-id)
 AC_ARG_WITH(terminal-id,
@@ -519,26 +542,7 @@ CF_ARG_ENABLE(toolbar,
 	[enable_toolbar=no])
 AC_MSG_RESULT($enable_toolbar)
 if test "$enable_toolbar" = yes ; then
-	# The Xaw library in XFree86 4.x is broken.  Let's try to avoid using
-	# that for the toolbar.
-	cf_broken_xaw=no
-	AC_MSG_CHECKING(for broken Xaw library)
-	AC_TRY_COMPILE([
-#include <X11/Intrinsic.h>
-#include <X11/Xaw/XawInit.h>
-	],[
-#if defined(XawVersion) && XawVersion > 7000000L
-make an error
-#endif
-	],[
-	cf_broken_xaw=no
-	],[
-	cf_broken_xaw=yes
-	])
-	AC_MSG_RESULT($cf_broken_xaw)
-	if test "$cf_broken_xaw" = no ; then
-		AC_DEFINE(OPT_TOOLBAR,1)
-	fi
+	AC_DEFINE(OPT_TOOLBAR,1)
 fi
 
 AC_MSG_CHECKING(if you want VT52 emulation)
@@ -549,11 +553,21 @@ CF_ARG_DISABLE(vt52,
 AC_MSG_RESULT($enable_vt52)
 test "$enable_vt52" = no && AC_DEFINE(OPT_VT52_MODE,0)
 
+AC_MSG_CHECKING(if you want to use mini-luit/Latin9 built-in support)
+CF_ARG_ENABLE(mini-luit,
+	[  --enable-mini-luit      enable mini-luit (built-in Latin9 support)],
+	[enable_mini_luit=yes],
+	[enable_mini_luit=no])
+AC_MSG_RESULT($enable_mini_luit)
+if test "$enable_mini_luit" = yes ; then
+	AC_DEFINE(OPT_MINI_LUIT,1)
+fi
+
 AC_MSG_CHECKING(if you want to use luit)
 CF_ARG_ENABLE(luit,
 	[  --enable-luit           enable luit filter (Unicode translation)],
 	[enable_luit=yes],
-	[enable_luit=no])
+	[enable_luit=$enable_mini_luit])
 AC_MSG_RESULT($enable_luit)
 if test "$enable_luit" = yes ; then
 	AC_DEFINE(OPT_LUIT_PROG,1)
@@ -571,6 +585,16 @@ if test "$enable_wchar" = yes ; then
 	EXTRAHDRS="$EXTRAHDRS charclass.h precompose.h wcwidth.h"
 	EXTRASRCS="$EXTRASRCS charclass.c precompose.c wcwidth.c"
 	EXTRAOBJS="$EXTRAOBJS charclass.o precompose.o wcwidth.o"
+fi
+
+AC_MSG_CHECKING(if you want dynamic-abbreviation support)
+CF_ARG_ENABLE(dec-locator,
+	[  --enable-dabbrev        enable dynamic-abbreviation support],
+	[enable_dabbrev=yes],
+	[enable_dabbrev=no])
+AC_MSG_RESULT($enable_dabbrev)
+if test "$enable_dabbrev" = yes ; then
+	AC_DEFINE(OPT_DABBREV,1)
 fi
 
 AC_MSG_CHECKING(if you want DECterm Locator support)
@@ -639,6 +663,18 @@ AC_SUBST(CHARPROC_DEPS)
 AC_SUBST(EXTRAHDRS)
 AC_SUBST(EXTRASRCS)
 AC_SUBST(EXTRAOBJS)
+
+if test $disable_setuid = yes ; then
+	MAY_SETUID="#"
+	NOT_SETUID=
+	AC_DEFINE(DISABLE_SETUID)
+else
+	MAY_SETUID=
+	NOT_SETUID="#"
+fi
+
+AC_SUBST(MAY_SETUID)
+AC_SUBST(NOT_SETUID)
 
 ###	remove from CPPFLAGS the optional features we define in xtermcfg.h
 ###	or other conflicting symbols that may be defined via imake:

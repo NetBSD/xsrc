@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atidga.c,v 1.11 2004/01/05 16:42:01 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atidga.c,v 1.14 2004/12/31 16:07:06 tsi Exp $ */
 /*
- * Copyright 2000 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 2000 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,8 +21,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef AVOID_DGA
-
 #include "ati.h"
 #include "atiadjust.h"
 #include "atichip.h"
@@ -42,18 +40,18 @@
 static Bool
 ATIDGAOpenFramebuffer
 (
-    ScrnInfoPtr   pScreenInfo,
-    char          **DeviceName,
-    unsigned char **ApertureBase,
-    int           *ApertureSize,
-    int           *ApertureOffset,
-    int           *flags
+    ScrnInfoPtr  pScreenInfo,
+    char         **DeviceName,
+    unsigned int *ApertureBase,
+    unsigned int *ApertureSize,
+    unsigned int *ApertureOffset,
+    unsigned int *flags
 )
 {
     ATIPtr pATI = ATIPTR(pScreenInfo);
 
     *DeviceName = NULL;         /* No special device */
-    *ApertureBase = (unsigned char *)(pATI->LinearBase);
+    *ApertureBase = pATI->LinearBase;
     *ApertureSize = pScreenInfo->videoRam * 1024;
     *ApertureOffset = 0;        /* Always */
     *flags = 0;                 /* Root premissions OS-dependent */
@@ -475,5 +473,3 @@ ATIDGAInit
     return DGAInit(pScreen, &pATI->ATIDGAFunctions, pATI->pDGAMode,
                    pATI->nDGAMode);
 }
-
-#endif /* AVOID_DGA */

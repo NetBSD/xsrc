@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/zx1PCI.c,v 1.9 2004/02/13 23:58:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/zx1PCI.c,v 1.11 2005/01/08 21:57:56 tsi Exp $ */
 /*
  * Copyright (C) 2002-2003 The XFree86 Project, Inc.
  * All rights reserved.
@@ -216,6 +216,8 @@ static int           zx1_fakebus = -1;
 static Bool          zx1_hasvga = FALSE;
 
 static pointer pZX1IoRes[8], pZX1MemRes[8];	/* Rope resources */
+
+static unsigned int sbaid;
 
 /* Non-PCI configuration space access macros */
 #define MIO_BYTE(offset) \
@@ -515,14 +517,24 @@ xf86PreScanZX1(void)
 	return FALSE;
 
     /* Look for ZX1's SBA and IOC */	/* XXX What about Dino? */
-    if ((MIO_LONG(MIO_FUNCTION0 + PCI_ID_REG) !=
-	 DEVID(VENDOR_HP, CHIP_ZX1_SBA)) ||
-	(MIO_LONG(MIO_FUNCTION1 + PCI_ID_REG) !=
-	 DEVID(VENDOR_HP, CHIP_ZX1_IOC))) {
+    do {
+	tmp = MIO_LONG(MIO_FUNCTION0 + PCI_ID_REG);
+
+	if ((tmp == DEVID(VENDOR_HP, CHIP_ZX1_SBA)) ||
+	    (tmp == DEVID(VENDOR_HP, CHIP_REO_SBA))) {
+	    sbaid = tmp;
+	    tmp = MIO_LONG(MIO_FUNCTION1 + PCI_ID_REG);
+
+	    if ((tmp == DEVID(VENDOR_HP, CHIP_ZX1_IOC)) ||
+		(tmp == DEVID(VENDOR_HP, CHIP_REO_IOC)) ||
+		(tmp == DEVID(VENDOR_HP, CHIP_SX1K_IOC)))
+		break;
+	}
+
 	xf86UnMapVidMem(-1, pZX1mio, mapSize);
 	pZX1mio = NULL;
 	return FALSE;
-    }
+    } while (0);
 
     /* Map rope configuration space */
     ioaaddr = MIO_QUAD(ROPE_CONFIG_BASE);
@@ -963,8 +975,8 @@ xf86PostScanZX1(void)
     pBusInfo = pciBusInfo[0];
 
     /*
-     * Certain 2.4 & 2.5 Linux kernels add fake PCI devices.  Remove them to
-     * prevent any possible interference with our PCI validation.
+     * Certain Linux kernels add fake PCI devices.  Remove them to prevent any
+     * possible interference with our PCI validation.
      *
      * Also, if VGA isn't routed on server entry, determine if VGA routing
      * needs to be enabled while the server is running.
@@ -978,6 +990,9 @@ xf86PostScanZX1(void)
 	case DEVID(VENDOR_HP, CHIP_ZX1_IOC):	/* Pluto function 1 */
 	case DEVID(VENDOR_HP, CHIP_ZX1_LBA):	/* Mercury */
 	case DEVID(VENDOR_HP, CHIP_ZX1_AGP8):	/* QuickSilver */
+	case DEVID(VENDOR_HP, CHIP_REO_SBA):
+	case DEVID(VENDOR_HP, CHIP_REO_IOC):
+	case DEVID(VENDOR_HP, CHIP_SX1K_IOC):
 	    xfree(pPCI);		/* Remove it */
 	    continue;
 
@@ -1028,7 +1043,9 @@ xf86PostScanZX1(void)
 	    zx1_fakebus = zx1_subno[i] + 1;
 
 	while (!zx1_busnmpt[zx1_busno[i]]) {
+#ifndef linux
 	    if (zx1_busno[i])	/* Info for bus zero is in static storage */
+#endif
 		xfree(pciBusInfo[zx1_busno[i]]);
 	    pciBusInfo[zx1_busno[i]++] = NULL;
 	    if (zx1_busno[i] > zx1_subno[i])
@@ -1060,7 +1077,7 @@ xf86PostScanZX1(void)
     pPCI->tag = PCI_MAKE_TAG(zx1_fakebus, 0, 0);
     pPCI->busnum = zx1_fakebus;
  /* pPCI->devnum = pPCI->funcnum = 0; */
-    pPCI->pci_device_vendor = DEVID(VENDOR_HP, CHIP_ZX1_SBA);
+    pPCI->pci_device_vendor = sbaid;
     pPCI->pci_base_class = PCI_CLASS_BRIDGE;
  /* pPCI->pci_sub_class = PCI_SUBCLASS_BRIDGE_HOST; */
     pPCI->fakeDevice = TRUE;

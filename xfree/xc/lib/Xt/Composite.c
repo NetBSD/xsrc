@@ -6,13 +6,13 @@ Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the names of Digital, or Sun not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -58,7 +58,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/Composite.c,v 1.6 2001/12/14 19:56:08 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Composite.c,v 1.7 2004/05/05 00:07:02 dickey Exp $ */
 
 #define COMPOSITE
 #include "IntrinsicI.h"
@@ -73,11 +73,11 @@ static XtResource resources[] = {
      XtOffsetOf(CompositeRec, composite.insert_position), XtRImmediate, NULL},
 };
 
-static void CompositeClassPartInitialize();
-static void CompositeInitialize();
-static void CompositeInsertChild();
-static void CompositeDeleteChild();
-static void CompositeDestroy();
+static void CompositeClassPartInitialize(WidgetClass);
+static void CompositeInitialize(Widget, Widget, ArgList, Cardinal *);
+static void CompositeInsertChild(Widget);
+static void CompositeDeleteChild(Widget);
+static void CompositeDestroy(Widget);
 
 externaldef(compositeclassrec) CompositeClassRec compositeClassRec = {
   { /******* CorePart *******/
@@ -88,7 +88,7 @@ externaldef(compositeclassrec) CompositeClassRec compositeClassRec = {
     /* class_part_initialize*/	CompositeClassPartInitialize,
     /* class_inited	    */	FALSE,
     /* initialize	    */	CompositeInitialize,
-    /* initialize_hook      */	NULL,		
+    /* initialize_hook      */	NULL,
     /* realize		    */	XtInheritRealize,
     /* actions		    */	NULL,
     /* num_actions	    */	0,
@@ -103,9 +103,9 @@ externaldef(compositeclassrec) CompositeClassRec compositeClassRec = {
     /* resize		    */	NULL,
     /* expose		    */	NULL,
     /* set_values	    */	NULL,
-    /* set_values_hook      */	NULL,			
-    /* set_values_almost    */	XtInheritSetValuesAlmost,  
-    /* get_values_hook      */	NULL,			
+    /* set_values_hook      */	NULL,
+    /* set_values_almost    */	XtInheritSetValuesAlmost,
+    /* get_values_hook      */	NULL,
     /* accept_focus	    */	NULL,
     /* version		    */	XtVersion,
     /* callback_offsets     */  NULL,
@@ -125,8 +125,8 @@ externaldef(compositeclassrec) CompositeClassRec compositeClassRec = {
 
 externaldef(compositewidgetclass) WidgetClass compositeWidgetClass = (WidgetClass) &compositeClassRec;
 
-static void InheritAllowsChangeManagedSet(widget_class)
-    WidgetClass widget_class;
+static void InheritAllowsChangeManagedSet(
+    WidgetClass widget_class)
 {
     CompositeWidgetClass cc = (CompositeWidgetClass) widget_class;
     CompositeClassExtension ext, super_ext, new_ext;
@@ -149,7 +149,7 @@ static void InheritAllowsChangeManagedSet(widget_class)
 	super_ext->record_size == sizeof(CompositeClassExtensionRec) &&
 	super_ext->allows_change_managed_set) {
 
-	new_ext = (CompositeClassExtension) 
+	new_ext = (CompositeClassExtension)
 	    __XtCalloc(1, sizeof(CompositeClassExtensionRec));
 
 	/* Be careful to inherit only what is appropriate */
@@ -164,8 +164,8 @@ static void InheritAllowsChangeManagedSet(widget_class)
     UNLOCK_PROCESS;
 }
 
-static void CompositeClassPartInitialize(widgetClass)
-	WidgetClass widgetClass;
+static void CompositeClassPartInitialize(
+	WidgetClass widgetClass)
 {
     register CompositePartPtr wcPtr;
     register CompositePartPtr superPtr = NULL;
@@ -203,16 +203,16 @@ static void CompositeClassPartInitialize(widgetClass)
     UNLOCK_PROCESS;
 }
 
-static void CompositeDestroy(w)
-    Widget	w;
+static void CompositeDestroy(
+    Widget	w)
 {
     register CompositeWidget cw = (CompositeWidget) w;
 
     XtFree((char *) cw->composite.children);
 }
 
-static void CompositeInsertChild(w)
-    Widget	w;
+static void CompositeInsertChild(
+    Widget	w)
 {
     register Cardinal	     position;
     register Cardinal        i;
@@ -230,7 +230,7 @@ static void CompositeInsertChild(w)
     if (cw->composite.num_children == cw->composite.num_slots) {
 	/* Allocate more space */
 	cw->composite.num_slots +=  (cw->composite.num_slots / 2) + 2;
-	cw->composite.children = children = 
+	cw->composite.children = children =
 	    (WidgetList) XtRealloc((XtPointer) children,
 	    (unsigned) (cw->composite.num_slots) * sizeof(Widget));
     }
@@ -242,8 +242,8 @@ static void CompositeInsertChild(w)
     cw->composite.num_children++;
 }
 
-static void CompositeDeleteChild(w)
-    Widget	w;
+static void CompositeDeleteChild(
+    Widget	w)
 {
     register Cardinal	     position;
     register Cardinal	     i;
@@ -266,10 +266,11 @@ static void CompositeDeleteChild(w)
 }
 
 /* ARGSUSED */
-static void CompositeInitialize(requested_widget, new_widget, args, num_args)
-    Widget   new_widget, requested_widget;
-    ArgList args;
-    Cardinal *num_args;
+static void CompositeInitialize(
+    Widget   requested_widget,
+    Widget   new_widget,
+    ArgList args,
+    Cardinal *num_args)
 {
     register CompositeWidget cw;
 

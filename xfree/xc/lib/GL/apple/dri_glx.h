@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/apple/dri_glx.h,v 1.3 2003/10/24 15:25:06 tsi Exp $ */
+/* $XFree86: xc/lib/GL/apple/dri_glx.h,v 1.4 2004/12/10 17:47:24 alanh Exp $ */
 
 /*
  * Authors:
@@ -50,7 +50,7 @@ struct __DRIdisplayPrivateRec {
     /*
     ** Array of library handles [indexed by screen number]
     */
-    CreateScreenFunc **createScreen;
+    void **libraryHandles;
 };
 
 typedef struct __DRIdisplayPrivateRec  __DRIdisplayPrivate;

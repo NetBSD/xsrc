@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.12 2003/09/28 20:15:41 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.13 2004/12/10 16:06:59 alanh Exp $ */
 /**
  * \file sarea.h 
  * SAREA definitions.
@@ -34,7 +34,7 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.12 2003/09/28 20:15:41 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/sarea.h,v 1.13 2004/12/10 16:06:59 alanh Exp $ */
 
 #ifndef _SAREA_H_
 #define _SAREA_H_
@@ -88,7 +88,7 @@ typedef struct _XF86DRISAREA {
     drmLock			drawable_lock;
     XF86DRISAREADrawableRec	drawableTable[SAREA_MAX_DRAWABLES];
     XF86DRISAREAFrameRec        frame;
-    drmContext			dummy_context;
+    drm_context_t			dummy_context;
 } XF86DRISAREARec, *XF86DRISAREAPtr;
 
 #endif

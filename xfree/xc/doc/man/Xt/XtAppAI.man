@@ -25,7 +25,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.\" $XFree86: xc/doc/man/Xt/XtAppAI.man,v 1.6 2003/04/28 22:18:18 herrb Exp $
+.\" $XFree86: xc/doc/man/Xt/XtAppAI.man,v 1.7 2005/02/11 03:03:04 dawes Exp $
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xI Intrinsics
@@ -125,7 +125,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAppAddInput 3Xt __xorgversion__ "XT FUNCTIONS"
+.TH XtAppAddInput 3Xt __vendorversion__ "XT FUNCTIONS"
 .SH NAME
 XtAppAddInput, XtRemoveInput \- register and remove an input source
 .SH SYNTAX

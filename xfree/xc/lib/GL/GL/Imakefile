@@ -1,10 +1,56 @@
-XCOMM $XFree86: xc/lib/GL/GL/Imakefile,v 1.24 2004/02/07 04:30:15 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/GL/Imakefile,v 1.31 2004/12/10 16:06:56 alanh Exp $
+/*
+ * Copyright (c) 1994-2004 by The XFree86 Project, Inc.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject
+ * to the following conditions:
+ *
+ *   1.  Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions, and the following disclaimer.
+ *
+ *   2.  Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer
+ *       in the documentation and/or other materials provided with the
+ *       distribution, and in the same place and form as other copyright,
+ *       license and disclaimer information.
+ *
+ *   3.  The end-user documentation included with the redistribution,
+ *       if any, must include the following acknowledgment: "This product
+ *       includes software developed by The XFree86 Project, Inc
+ *       (http://www.xfree86.org/) and its contributors", in the same
+ *       place and form as other third-party acknowledgments.  Alternately,
+ *       this acknowledgment may appear in the software itself, in the
+ *       same form and location as other such third-party acknowledgments.
+ *
+ *   4.  Except as contained in this notice, the name of The XFree86
+ *       Project, Inc shall not be used in advertising or otherwise to
+ *       promote the sale, use or other dealings in this Software without
+ *       prior written authorization from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <Threads.tmpl>
 
 #define DoNormalLib NormalLibGlx
 #define DoSharedLib SharedLibGlx
-#define DoExtraLib SharedLibGlx
+#define DoExtraLib ExtraLibGlx
 #define DoDebugLib DebugLibGlx
 #define DoProfileLib ProfileLibGlx
 
@@ -21,18 +67,17 @@ XCOMM $XFree86: xc/lib/GL/GL/Imakefile,v 1.24 2004/02/07 04:30:15 dawes Exp $
 BASEREQUIREDLIBS = SharedGLReqs
 #endif
 
-#include "../mesa/src/array_cache/Imakefile.inc"
-#include "../mesa/src/math/Imakefile.inc"
-#include "../mesa/src/swrast/Imakefile.inc"
-#include "../mesa/src/swrast_setup/Imakefile.inc"
-#include "../mesa/src/tnl/Imakefile.inc"
-#include "../mesa/src/tnl_dd/Imakefile.inc"
-#include "../mesa/src/Imakefile.inc"
+#include "../mesa/array_cache/Imakefile.inc"
+#include "../mesa/math/Imakefile.inc"
+#include "../mesa/swrast/Imakefile.inc"
+#include "../mesa/swrast_setup/Imakefile.inc"
+#include "../mesa/tnl/Imakefile.inc"
+#include "../mesa/Imakefile.inc"
 #ifdef i386Architecture
-#include "../mesa/src/X86/Imakefile.inc"
+#include "../mesa/x86/Imakefile.inc"
 #endif
 #ifdef SparcArchitecture
-#include "../mesa/src/SPARC/Imakefile.inc"
+#include "../mesa/sparc/Imakefile.inc"
 #endif
 
 XCOMM
@@ -42,7 +87,7 @@ XCOMM
       PROFSRC = lowpc.c highpc.c
       PROFOBJ = lowpc.o highpc.o
 
-SubdirLibraryRule($(PROFOBJ))
+AllTarget($(PROFOBJ))
 NormalLintTarget($(PROFSRC))
 #endif
 
@@ -51,28 +96,26 @@ NormalLintTarget($(PROFSRC))
 #endif
 
       GLXOBJS = $(GLXLIBSRC)/glx/?*.o
+     GLXEOBJS = $(GLXLIBSRC)/glx/$(EXTRASUBDIR)/?*.o
      GLXUOBJS = $(GLXLIBSRC)/glx/unshared/?*.o $(GLAPI_OBJ)
      GLXDOBJS = $(GLXLIBSRC)/glx/debugger/?*.o $(GLAPI_OBJ)
      GLXPOBJS = $(GLXLIBSRC)/glx/profiled/?*.o $(GLAPI_OBJ)
 
 #if BuildXF86DRI
-      DRIOBJS = $(GLXLIBSRC)/dri/XF86dri.o $(GLXLIBSRC)/dri/dri_glx.o
-     DRIUOBJS = $(GLXLIBSRC)/dri/unshared/XF86dri.o $(GLXLIBSRC)/dri/unshared/dri_glx.o
-     DRIDOBJS = $(GLXLIBSRC)/dri/debugger/XF86dri.o $(GLXLIBSRC)/dri/debugger/dri_glx.o
-     DRIPOBJS = $(GLXLIBSRC)/dri/profiled/XF86dri.o $(GLXLIBSRC)/dri/profiled/dri_glx.o
-
       DRMOBJS = $(GLXLIBSRC)/dri/drm/?*.o
+     DRMEOBJS = $(GLXLIBSRC)/dri/drm/$(EXTRASUBDIR)/?*.o
      DRMUOBJS = $(GLXLIBSRC)/dri/drm/unshared/?*.o
      DRMDOBJS = $(GLXLIBSRC)/dri/drm/debugger/?*.o
      DRMPOBJS = $(GLXLIBSRC)/dri/drm/profiled/?*.o
 
     MESAOBJS = $(COREMESAOBJS)  $(MESA_ASM_OBJS)
+   MESAEOBJS = $(COREMESAEOBJS) $(MESA_ASM_EOBJS)
    MESAUOBJS = $(COREMESAUOBJS) $(MESA_ASM_UOBJS)
    MESADOBJS = $(COREMESADOBJS) $(MESA_ASM_DOBJS)
    MESAPOBJS = $(COREMESAPOBJS) $(MESA_ASM_POBJS)
 
 #if GlxUseBuiltInDRIDriver
-#include "../mesa/src/drv/common/Imakefile.inc"
+#include "../mesa/drivers/dri/common/Imakefile.inc"
 #endif
 
 
@@ -82,20 +125,22 @@ XCOMM nothing
 
 #elif GlxBuiltInGamma
 
-#define MesaDrvGammaBuildDir $(GLXLIBSRC)/mesa/src/drv/gamma/
-#include "../mesa/src/drv/gamma/Imakefile.inc"
+#define MesaDrvGammaBuildDir $(GLXLIBSRC)/mesa/drivers/dri/gamma/
+#include "../mesa/drivers/dri/gamma/Imakefile.inc"
 
      DRVOBJS = $(GAMMAOBJS)  $(MESAOBJS)  $(DRMOBJS)
+    DRVEOBJS = $(GAMMAEOBJS) $(MESAEOBJS) $(DRMEOBJS)
     DRVUOBJS = $(GAMMAUOBJS) $(MESAUOBJS) $(DRMUOBJS)
     DRVDOBJS = $(GAMMADOBJS) $(MESADOBJS) $(DRMDOBJS)
     DRVPOBJS = $(GAMMAPOBJS) $(MESAPOBJS) $(DRMPOBJS)
 
 #elif GlxBuiltInTdfx
 
-#define MesaDrvTdfxBuildDir $(GLXLIBSRC)/mesa/src/drv/tdfx/
-#include "../mesa/src/drv/tdfx/Imakefile.inc"
+#define MesaDrvTdfxBuildDir $(GLXLIBSRC)/mesa/drivers/dri/tdfx/
+#include "../mesa/drivers/dri/tdfx/Imakefile.inc"
 
      DRVOBJS = $(TDFXOBJS)  $(MESAOBJS)  $(DRMOBJS)
+    DRVEOBJS = $(TDFXEOBJS) $(MESAEOBJS) $(DRMEOBJS)
     DRVUOBJS = $(TDFXUOBJS) $(MESAUOBJS) $(DRMUOBJS)
     DRVDOBJS = $(TDFXDOBJS) $(MESADOBJS) $(DRMDOBJS)
     DRVPOBJS = $(TDFXPOBJS) $(MESAPOBJS) $(DRMPOBJS)
@@ -104,78 +149,87 @@ OTHERREQUIREDLIBS = -lglide3 -ldl
 
 #elif GlxBuiltInI810
 
-#define MesaDrvI810BuildDir $(GLXLIBSRC)/mesa/src/drv/i810/
-#include "../mesa/src/drv/i810/Imakefile.inc"
+#define MesaDrvI810BuildDir $(GLXLIBSRC)/mesa/drivers/dri/i810/
+#include "../mesa/drivers/dri/i810/Imakefile.inc"
 
      DRVOBJS = $(I810OBJS)  $(COMMONOBJS)  $(MESAOBJS)  $(DRMOBJS)
+    DRVEOBJS = $(I810EOBJS) $(COMMONEOBJS) $(MESAUEBJS) $(DRMUEBJS)
     DRVUOBJS = $(I810UOBJS) $(COMMONUOBJS) $(MESAUOBJS) $(DRMUOBJS)
     DRVDOBJS = $(I810DOBJS) $(COMMONDOBJS) $(MESADOBJS) $(DRMDOBJS)
     DRVPOBJS = $(I810POBJS) $(COMMONPOBJS) $(MESAPOBJS) $(DRMPOBJS)
 
-#elif GlxBuiltInI830
-#define MesaDrvI830BuildDir $(GLXLIBSRC)/mesa/src/drv/i830/
-#include "../mesa/src/drv/i830/Imakefile.inc"
+#elif GlxBuiltInI915
 
-     DRVOBJS = $(I830OBJS)  $(COMMONOBJS)  $(MESAOBJS)  $(DRMOBJS)
-    DRVUOBJS = $(I830UOBJS) $(COMMONUOBJS) $(MESAUOBJS) $(DRMUOBJS)
-    DRVDOBJS = $(I830DOBJS) $(COMMONDOBJS) $(MESADOBJS) $(DRMDOBJS)
-    DRVPOBJS = $(I830POBJS) $(COMMONPOBJS) $(MESAPOBJS) $(DRMPOBJS)
+#define MesaDrvI915BuildDir $(GLXLIBSRC)/mesa/drivers/dri/i915/
+#include "../mesa/drivers/dri/i915/Imakefile.inc"
+
+     DRVOBJS = $(I915OBJS)  $(COMMONOBJS)  $(MESAOBJS)  $(DRMOBJS)
+    DRVEOBJS = $(I915EOBJS) $(COMMONEOBJS) $(MESAEOBJS) $(DRMEOBJS)
+    DRVUOBJS = $(I915UOBJS) $(COMMONUOBJS) $(MESAUOBJS) $(DRMUOBJS)
+    DRVDOBJS = $(I915DOBJS) $(COMMONDOBJS) $(MESADOBJS) $(DRMDOBJS)
+    DRVPOBJS = $(I915POBJS) $(COMMONPOBJS) $(MESAPOBJS) $(DRMPOBJS)
 
 #elif GlxBuiltInMga
 
-#define MesaDrvMgaBuildDir $(GLXLIBSRC)/mesa/src/drv/mga/
-#include "../mesa/src/drv/mga/Imakefile.inc"
+#define MesaDrvMgaBuildDir $(GLXLIBSRC)/mesa/drivers/dri/mga/
+#include "../mesa/drivers/dri/mga/Imakefile.inc"
 
      DRVOBJS = $(MGAOBJS)  $(COMMONOBJS)  $(MESAOBJS)  $(DRMOBJS)
+    DRVEOBJS = $(MGAEOBJS) $(COMMONEOBJS) $(MESAEOBJS) $(DRMEOBJS)
     DRVUOBJS = $(MGAUOBJS) $(COMMONUOBJS) $(MESAUOBJS) $(DRMUOBJS)
     DRVDOBJS = $(MGADOBJS) $(COMMONDOBJS) $(MESADOBJS) $(DRMDOBJS)
     DRVPOBJS = $(MGAPOBJS) $(COMMONPOBJS) $(MESAPOBJS) $(DRMPOBJS)
 
 #elif GlxBuiltInR128
 
-#define MesaDrvR128BuildDir $(GLXLIBSRC)/mesa/src/drv/r128/
-#include "../mesa/src/drv/r128/Imakefile.inc"
+#define MesaDrvR128BuildDir $(GLXLIBSRC)/mesa/drivers/dri/r128/
+#include "../mesa/drivers/dri/r128/Imakefile.inc"
 
      DRVOBJS = $(R128OBJS)  $(COMMONOBJS)  $(MESAOBJS)  $(DRMOBJS)
+    DRVEOBJS = $(R128EOBJS) $(COMMONEOBJS) $(MESAEOBJS) $(DRMEOBJS)
     DRVUOBJS = $(R128UOBJS) $(COMMONUOBJS) $(MESAUOBJS) $(DRMUOBJS)
     DRVDOBJS = $(R128DOBJS) $(COMMONDOBJS) $(MESADOBJS) $(DRMDOBJS)
     DRVPOBJS = $(R128POBJS) $(COMMONPOBJS) $(MESAPOBJS) $(DRMPOBJS)
 
 #elif GlxBuiltInRadeon
 
-#define MesaDrvRadeonBuildDir $(GLXLIBSRC)/mesa/src/drv/radeon/
-#include "../mesa/src/drv/radeon/Imakefile.inc"
+#define MesaDrvRadeonBuildDir $(GLXLIBSRC)/mesa/drivers/dri/radeon/
+#include "../mesa/drivers/dri/radeon/Imakefile.inc"
 
      DRVOBJS = $(RADEONOBJS)  $(COMMONOBJS)  $(MESAOBJS)  $(DRMOBJS)
+    DRVEOBJS = $(RADEONEOBJS) $(COMMONEOBJS) $(MESAEOBJS) $(DRMEOBJS)
     DRVUOBJS = $(RADEONUOBJS) $(COMMONUOBJS) $(MESAUOBJS) $(DRMUOBJS)
     DRVDOBJS = $(RADEONDOBJS) $(COMMONDOBJS) $(MESADOBJS) $(DRMDOBJS)
     DRVPOBJS = $(RADEONPOBJS) $(COMMONPOBJS) $(MESAPOBJS) $(DRMPOBJS)
 
 #elif GlxBuiltInFfb
 
-#define MesaDrvFfbBuildDir $(GLXLIBSRC)/mesa/src/drv/ffb/
-#include "../mesa/src/drv/ffb/Imakefile.inc"
+#define MesaDrvFfbBuildDir $(GLXLIBSRC)/mesa/drivers/dri/ffb/
+#include "../mesa/drivers/dri/ffb/Imakefile.inc"
 
      DRVOBJS = $(FFBOBJS)  $(MESAOBJS)  $(DRMOBJS)
+    DRVEOBJS = $(FFBEOBJS) $(MESAEOBJS) $(DRMEOBJS)
     DRVUOBJS = $(FFBUOBJS) $(MESAUOBJS) $(DRMUOBJS)
     DRVDOBJS = $(FFBDOBJS) $(MESADOBJS) $(DRMDOBJS)
     DRVPOBJS = $(FFBPOBJS) $(MESAPOBJS) $(DRMPOBJS)
 
 #elif GlxBuiltInSIS
 
-#define MesaDrvSisBuildDir $(GLXLIBSRC)/mesa/src/drv/sis/
-#include "../mesa/src/drv/sis/Imakefile.inc"
+#define MesaDrvSisBuildDir $(GLXLIBSRC)/mesa/drivers/dri/sis/
+#include "../mesa/drivers/dri/sis/Imakefile.inc"
 
      DRVOBJS = $(SISOBJS)  $(MESAOBJS)  $(DRMOBJS)
+    DRVEOBJS = $(SISEOBJS) $(MESAEOBJS) $(DREUOBJS)
     DRVUOBJS = $(SISUOBJS) $(MESAUOBJS) $(DRMUOBJS)
     DRVDOBJS = $(SISDOBJS) $(MESADOBJS) $(DRMDOBJS)
     DRVPOBJS = $(SISPOBJS) $(MESAPOBJS) $(DRMPOBJS)
 
 #elif GlxBuiltInXMesa
 
-#include "../mesa/src/X/Imakefile.inc"
+#include "../mesa/drivers/x11/Imakefile.inc"
 
      DRVOBJS = $(MESAOBJS) $(XMESA_OBJS)
+    DRVEOBJS = $(MESAEOBJS) $(XMESA_EOBJS)
     DRVUOBJS = $(MESAUOBJS) $(XMESA_UOBJS)
     DRVDOBJS = $(MESADOBJS) $(XMESA_DOBJS)
     DRVPOBJS = $(MESAPOBJS) $(XMESA_POBJS)
@@ -214,14 +268,15 @@ VMODEREQUIREDLIBS = $(LDPRELIBS) $(XXF86VMLIB)
 
 REQUIREDLIBS = $(OTHERREQUIREDLIBS) $(VMODEREQUIREDLIBS) $(BASEREQUIREDLIBS)
 
-        OBJS = $(GLXOBJS) $(DRIOBJS) $(DRVOBJS)
+        OBJS = $(GLXOBJS) $(DRIOBJS) $(DRVOBJS) $(DRMOBJS)
+       EOBJS = $(GLXEOBJS) $(DRIEOBJS) $(DRVEOBJS) $(DRMEOBJS)
 #if HasSharedLibraries && !SharedLibGlxWithoutPIC
-       UOBJS = $(GLXUOBJS) $(DRIUOBJS) $(DRVUOBJS)
+       UOBJS = $(GLXUOBJS) $(DRIUOBJS) $(DRVUOBJS) $(DRMUOBJS)
 #else
        UOBJS = $(OBJS)
 #endif
-       DOBJS = $(GLXDOBJS) $(DRIDOBJS) $(DRVDOBJS)
-       POBJS = $(GLXPOBJS) $(DRIPOBJS) $(DRVPOBJS)
+       DOBJS = $(GLXDOBJS) $(DRIDOBJS) $(DRVDOBJS) $(DRMDOBJS)
+       POBJS = $(GLXPOBJS) $(DRIPOBJS) $(DRVPOBJS) $(DRMPOBJS)
 
 #if LocalThreads
 #if NeedUIThrStubs
@@ -256,6 +311,14 @@ install::
 #if DebugLibGlx
 DebuggedLibraryTarget($(LIBNAME),$(DOBJS))
 InstallLibrary($(LIBNAME)_d,$(USRLIBDIR))
+#endif
+#if ExtraLibGlx && defined(ExtraLibRules)
+all::
+	ExtraLibMkdir()
+include::
+	ExtraLibMkdir()
+ExtraDepLibraryTarget($(LIBNAME),$(SOREV),$(EOBJS),$(EOBJS) $(ETHREADOBJS))
+ExtraInstallLibrary($(LIBNAME),$(SOREV))
 #endif
 #if ProfileLibGlx
 ProfiledLibraryTarget($(LIBNAME),$(POBJS))

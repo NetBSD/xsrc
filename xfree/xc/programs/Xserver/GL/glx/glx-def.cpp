@@ -92,7 +92,6 @@ __glXCreateDrawablePrivate
 __glXDeassociateContext
 __glXDestroyDrawablePrivate
 __glXFindDrawablePrivate
-__glXFormatGLModes
 __glXFree
 __glXGetDrawablePrivate
 __glXGetDrawableSize
@@ -660,4 +659,4 @@ __glXDispSwap_NewList
 __glXDispSwap_PixelStoref
 __glXDispSwap_PixelStorei
 
-/* $XFree86: xc/programs/Xserver/GL/glx/glx-def.cpp,v 1.1 2000/08/10 17:40:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glx-def.cpp,v 1.2 2004/12/10 16:06:59 alanh Exp $ */

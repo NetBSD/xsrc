@@ -3,7 +3,7 @@
  * 
  * Copyright 1999 by Andrew C Aitchison <A.C.Aitchison@dpmms.cam.ac.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/ddcProperty.c,v 1.10 2003/11/03 05:11:04 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/ddcProperty.c,v 1.11 2004/12/11 20:38:46 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -92,12 +92,12 @@ xf86SetDDCproperties(ScrnInfoPtr pScrnInfo, xf86MonPtr DDC)
       ErrorF("xf86RegisterRootWindowProperty %p(%d,%d,%d,%d,%d,%p)\n",
 	     xf86RegisterRootWindowProperty,
 	     pScrnInfo->scrnIndex,
-	     EDID1Atom, XA_INTEGER, 8,
+	     EDID1Atom, XA_CARDINAL, 8,
 	     128, (unsigned char *)EDID1rawdata  );
 #endif
 
       ret = xf86RegisterRootWindowProperty(pScrnInfo->scrnIndex,
-					   EDID1Atom, XA_INTEGER, 8, 
+					   EDID1Atom, XA_CARDINAL, 8, 
 					   128, (unsigned char *)EDID1rawdata
 					   );
       if (ret != Success)
@@ -118,11 +118,11 @@ xf86SetDDCproperties(ScrnInfoPtr pScrnInfo, xf86MonPtr DDC)
       ErrorF("xf86RegisterRootWindowProperty %p(%d,%d,%d,%d,%d,%p)\n",
 	     xf86RegisterRootWindowProperty,
 	     pScrnInfo->scrnIndex,
-	     EDID2Atom, XA_INTEGER, 8,
+	     EDID2Atom, XA_CARDINAL, 8,
 	     256, (unsigned char *)EDID2rawdata  );
 #endif
       ret = xf86RegisterRootWindowProperty(pScrnInfo->scrnIndex,
-					   EDID2Atom, XA_INTEGER, 8, 
+					   EDID2Atom, XA_CARDINAL, 8, 
 					   256, (unsigned char *)EDID2rawdata
 					   );
       if (ret != Success)

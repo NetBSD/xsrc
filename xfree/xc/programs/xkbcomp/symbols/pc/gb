@@ -1,7 +1,7 @@
 
 // based on a keyboard map from an 'xkb/symbols/gb' file
 //
-// $XFree86: xc/programs/xkbcomp/symbols/pc/gb,v 1.7 2004/02/26 07:10:57 pascal Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/pc/gb,v 1.8 2004/04/03 13:43:43 pascal Exp $
 
 partial default alphanumeric_keys
 xkb_symbols "basic" {
@@ -28,7 +28,7 @@ xkb_symbols "basic" {
     include "level3(ralt_switch_multikey)"
 };
 
-partial default alphanumeric_keys 
+partial alphanumeric_keys 
 xkb_symbols "intl" { 
 
     // Describes the differences between a very simple en_US 
@@ -58,4 +58,16 @@ xkb_symbols "intl" {
     key <LSGT>  { [  backslash,        bar,            bar,         bar ] };
 
     include "level3(ralt_switch_multikey)"
+};
+
+partial alphanumeric_keys
+xkb_symbols "nodeadkeys" {
+    // Modifies the basic gb layout to eliminate all dead keys
+    // Written by Philip Clayton.
+
+    include "pc/gb(basic)"
+    include "pc/latin(nodeadkeys)"
+
+    key <AC11>    { [apostrophe,         at,  asciicircum,  caron ] };
+    key <BKSL>    { [numbersign, asciitilde,        grave,  breve ] };
 };

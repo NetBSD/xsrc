@@ -11,7 +11,7 @@
 <date> 1st January 2001
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.38 2001/10/01 13:44:02 eich Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.39 2005/02/15 01:36:54 dawes Exp $
 </ident>
 
 <!-- Table of contents -->
@@ -287,8 +287,14 @@ TextClockFreq 25.175
 	the text console.
 <tag>
 Option "FPClock8"   "65.0MHz"
+</tag><p></p>
+<tag>
 Option "FPClock16"  "65.0MHz"
+</tag><p></p>
+<tag>
 Option "FPClock24"  "65.0MHz"
+</tag><p></p>
+<tag>
 Option "FPClock32"  "65.0MHz"
 </tag>
 	In general the LCD panel clock should be set independently of the
@@ -303,6 +309,8 @@ Option "FPClock32"  "65.0MHz"
 	the clocks to 65MHz.
 <tag>
 Option "CRTClkIndx" "2"
+</tag><p></p>
+<tag>
 Option "FPClkIndx" "1"
 </tag>
 	The HiQV series of chips have three programmable clocks. The
@@ -366,6 +374,8 @@ DacSpeed 80.000
 	beyond its specifications might cause damage.
 <tag>
 Option "SetMClk" "38.000MHz"
+</tag><p></p>
+<tag>
 Option "SetMClk" "38000kHz"
 </tag>
 	This option sets the internal memory clock (MCLK) registers of HiQV
@@ -462,15 +472,35 @@ Option "Crt2Memory" "2048"
 	section below about dual-head display.
 <tag>
 Option "XaaNoScreenToScreenCopy",
+</tag><p></p>
+<tag>
 Option "XaaNoSolidFillRect",
+</tag><p></p>
+<tag>
 Option "XaaNoSolidHorVertLine",
+</tag><p></p>
+<tag>
 Option "XaaNoMono8x8PatternFillRect",
+</tag><p></p>
+<tag>
 Option "XaaNoColor8x8PatternFillRect",
+</tag><p></p>
+<tag>
 Option "XaaNoCPUToScreenColorExpandFill", 
+</tag><p></p>
+<tag>
 Option "XaaNoScreenToScreenColorExpandFill",
+</tag><p></p>
+<tag>
 Option "XaaNoImageWriteRect",
+</tag><p></p>
+<tag>
 Option "XaaNoImageReadRect",
+</tag><p></p>
+<tag>
 Option "XaaNoPixmapCache",
+</tag><p></p>
+<tag>
 Option "XaaNoOffscreenPixmaps" 
 </tag>
 	These option individually disable the features of the XAA acceleration

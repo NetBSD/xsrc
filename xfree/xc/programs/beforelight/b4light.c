@@ -26,7 +26,7 @@ in this Software without prior written authorization from the X Consortium.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/beforelight/b4light.c,v 3.7 2003/10/24 20:38:10 tsi Exp $ */
+/* $XFree86: xc/programs/beforelight/b4light.c,v 3.8 2004/04/03 22:38:53 tsi Exp $ */
 
 #include <X11/Xatom.h>
 #include <X11/Intrinsic.h>
@@ -289,7 +289,7 @@ main(int argc, char *argv[])
     XID			    kill_id;
     Atom		    kill_type;
     int			    i;
-    int			    (*oldHandler)();
+    XErrorHandler   oldHandler;
     Window 		    r;
     int			    x, y;
     unsigned int	    w, h, b, d;

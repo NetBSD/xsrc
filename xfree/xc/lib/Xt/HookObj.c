@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/HookObj.c,v 1.3 2001/12/14 19:56:17 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/HookObj.c,v 1.4 2004/05/05 00:07:03 dickey Exp $ */
 
 #include "IntrinsicI.h"
 #include "StringDefs.h"
@@ -70,7 +70,7 @@ externaldef(hookobjclassrec) HookObjClassRec hookObjClassRec = {
     /* class_part_initialize*/	NULL,
     /* class_inited       */	FALSE,
     /* initialize	  */	Initialize,
-    /* initialize_hook    */	NULL,		
+    /* initialize_hook    */	NULL,
     /* realize		  */	NULL,
     /* actions		  */	NULL,
     /* num_actions	  */	0,
@@ -85,9 +85,9 @@ externaldef(hookobjclassrec) HookObjClassRec hookObjClassRec = {
     /* resize		  */	NULL,
     /* expose		  */	NULL,
     /* set_values	  */	NULL,
-    /* set_values_hook    */	NULL,			
-    /* set_values_almost  */	NULL,  
-    /* get_values_hook    */	GetValuesHook,			
+    /* set_values_hook    */	NULL,
+    /* set_values_almost  */	NULL,
+    /* get_values_hook    */	GetValuesHook,
     /* accept_focus	  */	NULL,
     /* version		  */	XtVersion,
     /* callback_offsets   */    NULL,
@@ -101,7 +101,7 @@ externaldef(hookobjclassrec) HookObjClassRec hookObjClassRec = {
   }
 };
 
-externaldef(hookObjectClass) WidgetClass hookObjectClass = 
+externaldef(hookObjectClass) WidgetClass hookObjectClass =
 	(WidgetClass)&hookObjClassRec;
 
 static void FreeShellList(
@@ -114,21 +114,21 @@ static void FreeShellList(
 	XtFree((char*)h->hooks.shells);
 }
 
-static void Initialize(req, new, args, num_args)
-    Widget req, new;
-    ArgList args;
-    Cardinal* num_args;
+static void Initialize(
+    Widget req,
+    Widget new,
+    ArgList args,
+    Cardinal* num_args)
 {
     HookObject w = (HookObject) new;
     w->hooks.max_shells = 0;
     XtAddCallback (new, XtNdestroyCallback, FreeShellList, (XtPointer) NULL);
 }
 
-static void GetValuesHook(widget, args, num_args)
-    Widget widget;
-    ArgList args;
-    Cardinal* num_args;
+static void GetValuesHook(
+    Widget widget,
+    ArgList args,
+    Cardinal* num_args)
 {
     /* get the XtNshells and XtNnumShells pseudo-resources */
 }
-

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_ansic.h,v 3.54 2004/02/13 23:58:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_ansic.h,v 3.59 2004/12/13 22:40:55 tsi Exp $ */
 /*
- * Copyright 1997-2003 by The XFree86 Project, Inc
+ * Copyright 1997-2004 by The XFree86 Project, Inc
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -71,14 +71,30 @@
 # endif /* __OS2ELF__ */
 #endif /* IN_MODULE */
 
+#ifndef HAVE_SYSV_IPC
+#define HAVE_SYSV_IPC 1
+#endif
+
+#ifndef HAVE_MMAP
+#ifdef __UNIXOS2__
+#define HAVE_MMAP 0
+#endif
+#ifdef HAS_SVR3_MMAPDRV
+#define HAVE_MMAP 0
+#endif
+#ifndef HAVE_MMAP
+#define HAVE_MMAP 1
+#endif
+#endif
+
 /*
  * The first set of definitions are required both for modules and
  * libc_wrapper.c.
  */
 
-#if defined(XFree86LOADER) || defined(NEED_XF86_TYPES)
+#if (defined(XFree86LOADER) && defined(IN_MODULE)) || defined(NEED_XF86_TYPES)
 
-#if !defined(SYSV) && !defined(SVR4) && !defined(Lynx) || defined(SCO)  
+#if !defined(SYSV) && !defined(SVR4) && !defined(Lynx) || defined(__SCO__)  
 #define HAVE_VSSCANF
 #define HAVE_VFSCANF
 #endif 
@@ -155,9 +171,9 @@
 #define MAXLONG LONG_MAX
 #endif
 
-#endif /* XFree86LOADER || NEED_XF86_TYPES */
+#endif /* (XFree86LOADER && IN_MODULE) || NEED_XF86_TYPES */
 
-#if defined(XFree86LOADER) || defined(NEED_XF86_PROTOTYPES)
+#if (defined(XFree86LOADER) && defined(IN_MODULE)) || defined(NEED_XF86_PROTOTYPES)
 /*
  * ANSI C compilers only.
  */
@@ -250,9 +266,9 @@ extern int xf86sprintf(char*,const char*,...);
 extern int xf86snprintf(char*,xf86size_t,const char*,...);
 extern double xf86sqrt(double);
 #if defined(HAVE_VSSCANF) || !defined(NEED_XF86_PROTOTYPES)
-extern int xf86sscanf(char*,const char*,...);
+extern int xf86sscanf(const char*,const char*,...);
 #else
-extern int xf86sscanf(/*char*,const char*,char *,char *,char *,char *,
+extern int xf86sscanf(/*const char*,const char*,char *,char *,char *,char *,
 			char *,char *,char *,char *,char *,char * */);
 #endif
 extern char* xf86strcat(char*,const char*);
@@ -342,20 +358,27 @@ extern void xf86longjmp(xf86jmp_buf env, int val);
 	(xf86getjmptype() == 1 ? xf86setjmp1((env), xf86setjmp1_arg2()) : \
 		xf86setjmperror((env))))
 
-#else /* XFree86LOADER || NEED_XF86_PROTOTYPES */
+#else /* (XFree86LOADER && IN_MODULE) || NEED_XF86_PROTOTYPES */
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <ctype.h>
-#ifdef HAVE_SYSV_IPC
+#include <string.h>
+#if HAVE_SYSV_IPC
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #endif
+#if HAVE_MMAP
+#include <sys/mman.h>
+#ifndef MAP_FAILED
+#define MAP_FAILED ((caddr_t)-1)
+#endif
+#endif
 #include <sys/stat.h>
 #define stat_t struct stat
-#endif /* XFree86LOADER || NEED_XF86_PROTOTYPES */
+#endif /* (XFree86LOADER && IN_MODULE) || NEED_XF86_PROTOTYPES */
 
 /*
  * These things are always required by drivers (but not by libc_wrapper.c),

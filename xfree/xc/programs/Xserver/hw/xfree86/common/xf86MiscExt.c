@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86MiscExt.c,v 1.17 2004/02/13 23:58:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86MiscExt.c,v 1.18 2005/01/26 05:31:49 dawes Exp $ */
 /*
- * Copyright (c) 1999-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1999-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -437,8 +437,8 @@ MiscExtAuthorizeDevice(InputInfoPtr pInfo, char *device)
     if (!authorized) {
 	char *path;
 
-	if (!xf86InputDeviceList
-	    || (path = strdup(xf86InputDeviceList)) == NULL) 
+	if (!xf86FilePaths->inputDeviceList
+	    || (path = strdup(xf86FilePaths->inputDeviceList)) == NULL) 
 	    return FALSE;
 	
 	elem = strtok(path,",");
@@ -650,8 +650,8 @@ MiscExtGetFilePaths(const char **configfile, const char **modulepath,
     DEBUG_P("MiscExtGetFilePaths");
 
     *configfile = xf86ConfigFile;
-    *modulepath = xf86ModulePath;
-    *logfile    = xf86LogFile;
+    *modulepath = xf86FilePaths->modulePath;
+    *logfile    = xf86FilePaths->logFile;
 
     return TRUE;
 }

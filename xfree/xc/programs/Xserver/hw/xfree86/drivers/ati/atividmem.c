@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atividmem.c,v 1.16 2004/01/05 16:42:05 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atividmem.c,v 1.18 2004/12/31 16:07:07 tsi Exp $ */
 /*
- * Copyright 1997 through 2004 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2005 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -141,7 +141,18 @@ ATIUnmapMMIO
 )
 {
     if (pATI->pMMIO)
-        xf86UnMapVidMem(iScreen, pATI->pMMIO, getpagesize());
+    {
+        unsigned long PageMask = getpagesize() - 1;
+        unsigned long MMIOBase, MMIOSize;
+
+        if (!(MMIOBase = pATI->Block1Base))
+            MMIOBase = pATI->Block0Base;
+        MMIOBase &= ~PageMask;
+        MMIOSize =
+            (pATI->Block0Base + 0x00000400U + PageMask - MMIOBase) & ~PageMask;
+
+        xf86UnMapVidMem(iScreen, pATI->pMMIO, MMIOSize);
+    }
 
     pATI->pMMIO = pATI->pBlock[0] = pATI->pBlock[1] = NULL;
 }
@@ -159,7 +170,16 @@ ATIUnmapCursor
 )
 {
     if (pATI->pCursorPage)
-        xf86UnMapVidMem(iScreen, pATI->pCursorPage, getpagesize());
+    {
+        unsigned long PageMask = getpagesize() - 1;
+        unsigned long CursorBase, CursorSize;
+
+        CursorBase = pATI->CursorBase & ~PageMask;
+        CursorSize = (pATI->CursorBase + 0x00000400U + PageMask - CursorBase) &
+            ~PageMask;
+
+        xf86UnMapVidMem(iScreen, pATI->pCursorPage, CursorSize);
+    }
 
     pATI->pCursorPage = pATI->pCursorImage = NULL;
 }
@@ -178,7 +198,7 @@ ATIMapApertures
 {
     pciVideoPtr   pVideo;
     PCITAG        Tag;
-    unsigned long PageSize;
+    unsigned long PageSize, PageMask;
 
     if (pATI->Mapped)
         return TRUE;
@@ -193,8 +213,6 @@ ATIMapApertures
         if (!pATI->LinearBase && !pATI->Block0Base)
             return FALSE;
     }
-
-    PageSize = getpagesize();
 
     if ((pVideo = pATI->PCIInfo))
         Tag = ((pciConfigPtr)(pVideo->thisCard))->tag;
@@ -292,17 +310,26 @@ ATIMapApertures
 
     }
 
+    PageSize = getpagesize();
+    PageMask = PageSize - 1;
+
     /* Map MMIO aperture */
     if (pATI->Block0Base)
     {
-        unsigned long MMIOBase = pATI->Block0Base & ~(PageSize - 1);
+        unsigned long MMIOBase, MMIOSize;
+
+        if (!(MMIOBase = pATI->Block1Base))
+            MMIOBase = pATI->Block0Base;
+        MMIOBase &= ~PageMask;
+        MMIOSize =
+           (pATI->Block0Base + 0x00000400U + PageMask - MMIOBase) & ~PageMask;
 
         if (pVideo)
             pATI->pMMIO = xf86MapPciMem(iScreen, VIDMEM_MMIO,
-                Tag, MMIOBase, PageSize);
+                Tag, MMIOBase, MMIOSize);
         else
             pATI->pMMIO = xf86MapVidMem(iScreen, VIDMEM_MMIO,
-                MMIOBase, PageSize);
+                MMIOBase, MMIOSize);
 
         if (!pATI->pMMIO)
         {
@@ -350,14 +377,18 @@ ATIMapApertures
     /* Map hardware cursor image area */
     if (pATI->CursorBase && !pATI->pCursorImage)
     {
-        unsigned long CursorBase = pATI->CursorBase & ~(PageSize - 1);
+        unsigned long CursorBase, CursorSize;
+
+        CursorBase = pATI->CursorBase & ~PageMask;
+        CursorSize = (pATI->CursorBase + 0x00000400U + PageMask - CursorBase) &
+            ~PageMask;
 
         if (pVideo)
             pATI->pCursorPage = xf86MapPciMem(iScreen, VIDMEM_FRAMEBUFFER,
-                Tag, CursorBase, PageSize);
+                Tag, CursorBase, CursorSize);
         else
             pATI->pCursorPage = xf86MapVidMem(iScreen, VIDMEM_FRAMEBUFFER,
-                CursorBase, PageSize);
+                CursorBase, CursorSize);
 
         if (!pATI->pCursorPage)
         {

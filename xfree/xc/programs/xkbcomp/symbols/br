@@ -1,5 +1,5 @@
 //
-// $XFree86: xc/programs/xkbcomp/symbols/br,v 1.4 2000/11/28 17:25:14 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/br,v 1.6 2004/06/19 13:53:47 pascal Exp $
 //
 partial default alphanumeric_keys 
 xkb_symbols "abnt2" {
@@ -50,18 +50,18 @@ xkb_symbols "abnt2" {
 			[      asciitilde,     asciicircum      ]	};
     key <AC12> {        [    bracketright,      braceright      ],
                         [       masculine                       ]       };
+    key <AB00> {        [       backslash,             bar      ]       };
     key <AB03> {        [               c,               C      ],
 			[       copyright                       ]       };
     key <AB07> {        [               m,               M      ],
 			[              mu                       ]       };
-    key <BKSL> {        [       backslash,             bar      ]       };
     key <AB10> {        [       semicolon,           colon      ]       };
 // ABNT-2 keyboard has this special key
     key <AB11> {        [           slash,        question      ],
                         [          degree,    questiondown	]       };
 
     key <KPPT> {	[  KP_Decimal				]	};
-    key <KPDL> {	[  KP_Delete,	comma			]	};
+    key <KPDL> {	[  KP_Delete,	KP_Separator		]	};
 
     // begin modifier mappings
     
@@ -92,4 +92,3 @@ xkb_symbols "nodeadkeys" {
     key <AD11> {	[      apostrophe,	     grave 	]	};
     key <AC11> {	[      asciitilde,     asciicircum      ]	};
 };
-

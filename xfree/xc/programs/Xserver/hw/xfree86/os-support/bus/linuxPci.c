@@ -1,51 +1,94 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/linuxPci.c,v 1.10 2002/11/17 18:42:01 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/linuxPci.c,v 1.12 2004/12/31 03:30:41 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
- * Permission to use, copy, modify, distribute, and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and that
- * both that copyright notice and this permission notice appear in
- * supporting documentation, and that the name of Concurrent Computer
- * Corporation not be used in advertising or publicity pertaining to
- * distribution of the software without specific, written prior
- * permission.  Concurrent Computer Corporation makes no representations
- * about the suitability of this software for any purpose.  It is
- * provided "as is" without express or implied warranty.
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting documentation, and
+ * that the name of Concurrent Computer Corporation not be used in advertising
+ * or publicity pertaining to distribution of the software without specific,
+ * written prior permission.  Concurrent Computer Corporation makes no
+ * representations about the suitability of this software for any purpose.  It
+ * is provided "as is" without express or implied warranty.
  *
- * CONCURRENT COMPUTER CORPORATION DISCLAIMS ALL WARRANTIES WITH REGARD
- * TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL CONCURRENT COMPUTER CORPORATION BE
- * LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
- * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
- *
+ * CONCURRENT COMPUTER CORPORATION DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
+ * IN NO EVENT SHALL CONCURRENT COMPUTER CORPORATION BE LIABLE FOR ANY SPECIAL,
+ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
  * Copyright 1998 by Metro Link Incorporated
  *
- * Permission to use, copy, modify, distribute, and sell this software
- * and its documentation for any purpose is hereby granted without fee,
- * provided that the above copyright notice appear in all copies and that
- * both that copyright notice and this permission notice appear in
- * supporting documentation, and that the name of Metro Link
- * Incorporated not be used in advertising or publicity pertaining to
- * distribution of the software without specific, written prior
- * permission.  Metro Link Incorporated makes no representations
- * about the suitability of this software for any purpose.  It is
- * provided "as is" without express or implied warranty.
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting documentation, and
+ * that the name of Metro Link Incorporated not be used in advertising or
+ * publicity pertaining to distribution of the software without specific,
+ * written prior permission.  Metro Link Incorporated makes no representations
+ * about the suitability of this software for any purpose.  It is provided "as
+ * is" without express or implied warranty.
  *
- * METRO LINK INCORPORATED DISCLAIMS ALL WARRANTIES WITH REGARD
- * TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL METRO LINK INCORPORATED BE
- * LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
- * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
- * SOFTWARE.
+ * METRO LINK INCORPORATED DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
+ * IN NO EVENT SHALL METRO LINK INCORPORATED BE LIABLE FOR ANY SPECIAL,
+ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
+ * Copyright 2004 The XFree86 Project, Inc.
+ *
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * 1.  Redistributions of source code must retain the above copyright notice,
+ *     this list of conditions, and the following disclaimer.
+ *
+ * 2.  Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution, and
+ *     in the same place and form as other copyright, license and disclaimer
+ *     information.
+ *
+ * 3.  The end-user documentation included with the redistribution, if any,
+ *     must include the following acknowledgment:  "This product includes
+ *     software developed by The XFree86 Project, Inc (http://www.xfree86.org/)
+ *     and its contributors", in the same place and form as other third-party
+ *     acknowledgments.  Alternately, this acknowledgment may appear in the
+ *     software itself, in the same form and location as other such third-party
+ *     acknowledgments.
+ *
+ * 4.  Except as contained in this notice, the name of The XFree86 Project, Inc
+ *     shall not be used in advertising or otherwise to promote the sale, use
+ *     or other dealings in this Software without prior written authorization
+ *     from The XFree86 Project, Inc.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+ * XFREE86 PROJECT, INC OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+ * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdio.h>
+#include <dirent.h>
 #include "compiler.h"
 #include "xf86.h"
 #include "xf86Priv.h"
@@ -53,22 +96,31 @@
 #include "Pci.h"
 
 /*
- * linux platform specific PCI access functions -- using /proc/bus/pci
- * needs kernel version 2.2.x
+ * Linux specific PCI access functions -- using /proc/bus/pci
+ * Needs kernel version 2.2.x
  */
 static CARD32 linuxPciCfgRead(PCITAG tag, int off);
 static void linuxPciCfgWrite(PCITAG, int off, CARD32 val);
 static void linuxPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits);
+#ifdef __powerpc__
+static ADDRESS linuxPpcBusAddrToHostAddr(PCITAG, PciAddrType, ADDRESS);
+static ADDRESS linuxPpcHostAddrToBusAddr(PCITAG, PciAddrType, ADDRESS);
+#endif /* __powerpc__ */
 
-static pciBusFuncs_t linuxFuncs0 = {
+static pciBusFuncs_t linuxBusFuncs = {
 /* pciReadLong      */	linuxPciCfgRead,
 /* pciWriteLong     */	linuxPciCfgWrite,
 /* pciSetBitsLong   */	linuxPciCfgSetBits,
+#ifdef __powerpc__
+/* pciAddrHostToBus */	linuxPpcHostAddrToBusAddr,
+/* pciAddrBusToHost */	linuxPpcBusAddrToHostAddr
+#else /* __powerpc__ */
 /* pciAddrHostToBus */	pciAddrNOOP,
 /* pciAddrBusToHost */	pciAddrNOOP
+#endif /* __powerpc__ */
 };
 
-static pciBusInfo_t linuxPci0 = {
+static pciBusInfo_t linuxBusInfo = {
 /* configMech  */	PCI_CFG_MECH_OTHER,
 /* numDevices  */	32,
 /* secondary   */	FALSE,
@@ -76,52 +128,365 @@ static pciBusInfo_t linuxPci0 = {
 #ifdef PowerMAX_OS
 /* ppc_io_base */	0,
 /* ppc_io_size */	0,
-#endif
-/* funcs       */	&linuxFuncs0,
+#endif /* PowerMAX_OS */
+/* funcs       */	&linuxBusFuncs,
 /* pciBusPriv  */	NULL,
 /* bridge      */	NULL
 };
 
+static long int busDomain[MAX_PCI_BUSES];
+static Bool useDomainInBus = FALSE;
+
+static struct {
+    PCITAG tag;
+    signed char size[7];
+    char empty;
+} linuxSize[MAX_PCI_DEVICES];
+
 void
-linuxPciInit()
+linuxPciInit(void)
 {
-	struct stat st;
-	if ((xf86Info.pciFlags == PCIForceNone) ||
-	    (-1 == stat("/proc/bus/pci", &st))) {
-		/* when using this as default for all linux architectures,
-		   we'll need a fallback for 2.0 kernels here */
-		return;
+    pointer fp;
+    struct dirent *direntp;
+    long int busno, pcibus, domain;
+    long int maxbus, Index;
+
+    if ((xf86Info.pciFlags == PCIForceNone) ||
+	(!(fp = opendir("/proc/bus/pci"))))
+	return;
+
+    maxbus = MAX_PCI_BUSES;
+    (void)memset(busDomain, -1, sizeof(busDomain));
+    (void)memset(linuxSize, -1, sizeof(linuxSize));
+
+    /*
+     * Rationalise the kernel's somewhat confused, but still evolving,
+     * domain/bus numbering into something we can actually use, both presently
+     * and in the foreseeable future.
+     *
+     * Scan /proc/bus/pci, beginning with the assumption that the kernel's bus
+     * numbers are unique across all domains.  If this assumption is found to
+     * not hold, switch to pre-pending domain numbers to bus numbers.  In the
+     * unlikely event this still doesn't give us unique bus numbers, we
+     * consider the kernel to be babbling and we refuse to use its PCI
+     * framework.
+     *
+     * Note that our domain numbers are always one more than the kernel's, if
+     * any.
+     */
+    while ((direntp = readdir(fp))) {
+	const char *fname, *ename;
+
+	if (!strcmp(direntp->d_name, ".") ||
+	    !strcmp(direntp->d_name, "..") ||
+	    !strcmp(direntp->d_name, "devices"))
+	    continue;
+
+	if (!(fname = strchr(direntp->d_name, ':'))) {
+	    fname = direntp->d_name;
+	    domain = 0;
+	} else {
+	    errno = 0;
+	    domain = strtol(direntp->d_name, (pointer)&ename, 16);
+	    if (errno || (domain < 0) ||
+		(fname != ename) || (fname == direntp->d_name)) {
+		xf86Msg(X_ERROR,
+			"linuxPciInit:  Ignoring unexpected bus name:"
+			"  \"/proc/bus/pci/%s\"\n", direntp->d_name);
+		continue;
+	    }
+
+	    domain++;
+	    fname++;
 	}
-	pciNumBuses    = 1;
-	pciBusInfo[0]  = &linuxPci0;
-	pciFindFirstFP = pciGenFindFirst;
-	pciFindNextFP  = pciGenFindNext;
+
+	errno = 0;
+	busno = strtol(fname, (pointer)&ename, 16);
+	if (errno || (busno < 0) || (busno > 255) || *ename || !*fname) {
+	    xf86Msg(X_ERROR,
+		    "linuxPciInit:  Ignoring unexpected bus name:"
+		    "  \"/proc/bus/pci/%s\"\n", direntp->d_name);
+	    continue;
+	}
+
+	/* Possibly switch to pre-pending domain numbers */
+	while (1) {
+	    long int busCopy[MAX_PCI_BUSES];
+
+	    if (useDomainInBus)
+		pcibus = PCI_MAKE_BUS(domain, busno);
+	    else
+		pcibus = busno;
+
+	    if (pcibus >= MAX_PCI_BUSES) {
+		while (pcibus >= maxbus)
+		    maxbus <<= 1;
+		break;
+	    }
+
+	    if (busDomain[pcibus] < 0) {
+		busDomain[pcibus] = domain;
+		break;
+	    }
+
+	    /* useDomainInBus should still be FALSE here, but check anyway */
+	    if (useDomainInBus) {
+		if (pciNumBuses == 0)
+		    xf86Msg(X_ERROR,
+			    "linuxPciInit:  Duplicate bus found:"
+			    "  \"/proc/bus/pci/%s\"\n", direntp->d_name);
+		(void)closedir(fp);
+		(void)memset(busDomain, -1, sizeof(busDomain));
+		return;
+	    }
+
+	    /* Redo busDomain array with domains pre-pended to buses */
+	    (void)memset(busCopy, -1, sizeof(busCopy));
+
+	    for (Index = 0;  Index < MAX_PCI_BUSES;  Index++) {
+		if (busDomain[Index] < 0)
+		    continue;
+
+		pcibus = PCI_MAKE_BUS(busDomain[Index], Index);
+		if (pcibus >= MAX_PCI_BUSES) {
+		    while (pcibus >= maxbus)
+			maxbus <<= 1;
+		    continue;
+		}
+
+		busCopy[pcibus] = busDomain[Index];
+	    }
+
+	    useDomainInBus = TRUE;
+	    (void)memcpy(busDomain, busCopy, sizeof(busCopy));
+	}
+    }
+
+    (void)closedir(fp);
+
+    if (maxbus > MAX_PCI_BUSES)
+	xf86Msg(X_ERROR,
+		"linuxPciInit:  This system needs MAX_PCI_BUSES increased to"
+		" %ld\n", maxbus);
+
+#ifdef INCLUDE_XF86_NO_DOMAIN
+
+    /*
+     * When domain support is compiled out...
+     *
+     * On PowerPC's, PCI allocations are relocated into the host's view before
+     * conflict checking, thus avoiding the bulk (if not, all) of the
+     * re-allocations that would otherwise occur.
+     *
+     * But, among other things, this also means PowerPC kernels that don't make
+     * bus numbers unique across all domains (and that are therefore not
+     * limited to 256 buses) are not yet supported.
+     *
+     * Ensure all other architectures are mono-domain kernel-wise too.  Not
+     * doing so would cause us to overly re-allocate resources, and thereby
+     * interfere with the kernel's hotplug support.
+     */
+#ifndef __powerpc__
+
+    if (!useDomainInBus) {
+	domain = -1;
+	for (pcibus = 0;  pcibus < MAX_PCI_BUSES;  pcibus++) {
+	    if (busDomain[pcibus] < 0)
+		continue;
+
+	    if (domain < 0) {
+		domain = busDomain[pcibus];
+	    } else if (domain != busDomain[pcibus]) {
+		useDomainInBus = TRUE;
+		break;
+	    }
+	}
+    }
+
+#endif /* __powerpc__ */
+
+    if (useDomainInBus) {
+	xf86Msg(X_ERROR, "linuxPciInit:  This platform must not #define"
+		" INCLUDE_XF86_NO_DOMAIN\n");
+	(void)memset(busDomain, -1, sizeof(busDomain));
+	return;
+    }
+
+#endif /* INCLUDE_XF86_NO_DOMAIN */
+
+    /*
+     * Look for PCI allocation sizes in /proc/bus/pci/devices.  Read them in if
+     * found.
+     */
+    if ((fp = fopen("/proc/bus/pci/devices", "r"))) {
+	long int iDevice = 0, maxdevice = MAX_PCI_DEVICES;
+	char buffer[512];
+
+	while (fgets(buffer, sizeof(buffer), fp)) {
+	    static const char format[] =
+		/* An optional domain, then bus+dev, vendorid, deviceid, irq */
+		"%04lx:%02lx%02x\t%*04x%*04x\t%*x"
+		/* 7 PCI resource bases */
+		"\t%*x\t%*x\t%*x\t%*x\t%*x\t%*x\t%*x"
+		/* 7 PCI resource sizes, then an optional driver name */
+#ifdef __sparc__
+		"\t%llx\t%llx\t%llx\t%llx\t%llx\t%llx\t%llx";
+	    unsigned long long size[7];
+#else
+		"\t%lx\t%lx\t%lx\t%lx\t%lx\t%lx\t%lx";
+	    unsigned long size[7];
+#endif
+	    unsigned int devfn;
+
+	    if (!buffer[0])
+		break;
+
+	    if (buffer[strlen(buffer) - 1] != '\n') {
+		xf86Msg(X_ERROR, "Line buffer for \"/proc/bus/pci/devices\""
+			" not large enough\n");
+		break;
+	    }
+
+	    /*
+	     * First try matching the domain-less format, then the longer
+	     * format.  The latter represents an educated guess at what the
+	     * future might hold for /proc/bus/pci/devices.
+	     */
+	    domain = 0;
+	    if (sscanf(buffer, format + 6, (unsigned long *)&busno, &devfn,
+		       size + 0, size + 1, size + 2, size + 3, size + 4,
+		       size + 5, size + 6) != 9) {
+		if (sscanf(buffer, format, (unsigned long *)&domain,
+			   (unsigned long *)&busno, &devfn,
+			   size + 0, size + 1, size + 2, size + 3, size + 4,
+			   size + 5, size + 6) != 10)
+		    break;
+		domain++;
+	    }
+
+	    if (useDomainInBus)
+		pcibus = PCI_MAKE_BUS(domain, busno);
+	    else
+		pcibus = busno;
+
+	    if ((iDevice >= MAX_PCI_DEVICES) || (pcibus >= MAX_PCI_BUSES) ||
+		(busDomain[pcibus] < 0)) {
+		while (iDevice >= maxdevice)
+		    maxdevice <<= 1;
+	    } else {
+		linuxSize[iDevice].tag =
+		    PCI_MAKE_TAG(pcibus, devfn >> 3, devfn & 7);
+		for (Index = 0;  Index < 7;  Index++)
+		    for (;  size[Index];  size[Index] >>= 1)
+			linuxSize[iDevice].size[Index]++;
+		linuxSize[iDevice].empty = FALSE;
+	    }
+
+	    iDevice++;
+	}
+
+	(void)fclose(fp);
+
+	if (maxdevice > MAX_PCI_DEVICES)
+	    xf86Msg(X_ERROR,
+		    "linuxPciInit:  This system needs MAX_PCI_DEVICES"
+		    " increased to %ld\n", maxdevice);
+    }
+
+    /* Always prefer a hardware-derived mechanism over an OS-provided one */
+    if (pciNumBuses)
+	return;
+
+    pciFindFirstFP = pciGenFindFirst;
+    pciFindNextFP = pciGenFindNext;
+
+    /* Generate pciBusInfo_t's for all buses derived from the kernel */
+    for (pcibus = 0;  pcibus < MAX_PCI_BUSES;  pcibus++) {
+	if (busDomain[pcibus] < 0)
+	    continue;
+
+	pciBusInfo[pcibus] = xnfalloc(sizeof(pciBusInfo_t));
+	/* The bus scan will re-initialise some fields */
+	*pciBusInfo[pcibus] = linuxBusInfo;
+
+	pciNumBuses = pcibus + 1;
+    }
+}
+
+/* Return PCI allocation sizes linuxPciInit() retrieved */
+Bool
+xf86GetPciSizeFromOS(PCITAG tag, int Index, int *bits)
+{
+    unsigned int pcibus, device;
+
+    if ((Index < 0) || (Index >= 7))
+	return FALSE;
+
+    pcibus = PCI_BUS_FROM_TAG(tag);
+    if ((pcibus >= MAX_PCI_BUSES) || (busDomain[pcibus] < 0))
+	return FALSE;
+
+    for (device = 0;  device < MAX_PCI_DEVICES;  device++) {
+	if (linuxSize[device].empty || (linuxSize[device].tag != tag))
+	    continue;
+
+	if (linuxSize[device].size[Index] < 2)
+	    return FALSE;
+
+	*bits = linuxSize[device].size[Index];
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static char *
+linuxGetPciFileName(PCITAG tag)
+{
+	static PCITAG namedTag;
+	static char pciName[32] = {0, };	/* Should be enough */
+
+	if (!pciName[0] || (tag != namedTag)) {
+		long int pcibus, bus, dev, func;
+
+		pcibus = PCI_BUS_FROM_TAG(tag);
+		if ((pcibus >= MAX_PCI_BUSES) || (busDomain[pcibus] < 0))
+			return "";		/* Bad device */
+
+		if (useDomainInBus)
+			bus = PCI_BUS_NO_DOMAIN(pcibus);
+		else
+			bus = pcibus;
+
+		dev = PCI_DEV_FROM_TAG(tag);
+		func = PCI_FUNC_FROM_TAG(tag);
+
+		if (busDomain[pcibus] == 0)
+			sprintf(pciName, "/proc/bus/pci/%02lx/%02lx.%1lx",
+				bus, dev, func);
+		else
+			sprintf(pciName, "/proc/bus/pci/%04lx:%02lx/%02lx.%1lx",
+				busDomain[pcibus] - 1, bus, dev, func);
+
+		namedTag = tag;
+	}
+
+	return pciName;
 }
 
 static int
 linuxPciOpenFile(PCITAG tag)
 {
-	static int	lbus,ldev,lfunc,fd = -1;
-	int		bus, dev, func;
-	char		file[32];
+	static PCITAG	openTag;
+	static int	fd = -1;
 
-	bus  = PCI_BUS_FROM_TAG(tag);
-	dev  = PCI_DEV_FROM_TAG(tag);
-	func = PCI_FUNC_FROM_TAG(tag);
-	if (fd == -1 || bus != lbus || dev != ldev || func != lfunc) {
-		if (fd != -1)
+	if ((fd < 0) || (tag != openTag)) {
+		if (fd >= 0)
 			close(fd);
-		if (bus < 256)
-			sprintf(file, "/proc/bus/pci/%02x/%02x.%1x",
-				bus, dev, func);
-		else
-			sprintf(file, "/proc/bus/pci/%04x/%02x.%1x",
-				bus, dev, func);
-		fd = open(file,O_RDWR);
-		lbus  = bus;
-		ldev  = dev;
-		lfunc = func;
+		fd = open(linuxGetPciFileName(tag), O_RDWR);
+		openTag = tag;
 	}
+
 	return fd;
 }
 
@@ -131,10 +496,11 @@ linuxPciCfgRead(PCITAG tag, int off)
 	int	fd;
 	CARD32	val = 0xffffffff;
 
-	if (-1 != (fd = linuxPciOpenFile(tag))) {
-		lseek(fd,off,SEEK_SET);
-		read(fd,&val,4);
+	if ((fd = linuxPciOpenFile(tag)) >= 0) {
+		lseek(fd, off, SEEK_SET);
+		read(fd, &val, 4);
 	}
+
 	return PCI_CPU(val);
 }
 
@@ -143,10 +509,10 @@ linuxPciCfgWrite(PCITAG tag, int off, CARD32 val)
 {
 	int	fd;
 
-	if (-1 != (fd = linuxPciOpenFile(tag))) {
-		lseek(fd,off,SEEK_SET);
+	if ((fd = linuxPciOpenFile(tag)) >= 0) {
+		lseek(fd, off, SEEK_SET);
 		val = PCI_CPU(val);
-		write(fd,&val,4);
+		write(fd, &val, 4);
 	}
 }
 
@@ -156,16 +522,64 @@ linuxPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits)
 	int	fd;
 	CARD32	val = 0xffffffff;
 
-	if (-1 != (fd = linuxPciOpenFile(tag))) {
-		lseek(fd,off,SEEK_SET);
-		read(fd,&val,4);
+	if ((fd = linuxPciOpenFile(tag)) >= 0) {
+		lseek(fd, off, SEEK_SET);
+		read(fd, &val, 4);
 		val = PCI_CPU(val);
 		val = (val & ~mask) | (bits & mask);
 		val = PCI_CPU(val);
-		lseek(fd,off,SEEK_SET);
-		write(fd,&val,4);
+		lseek(fd, off, SEEK_SET);
+		write(fd, &val, 4);
 	}
 }
+
+#if defined(__powerpc__)
+
+#ifndef __NR_pciconfig_iobase
+#define __NR_pciconfig_iobase   200
+#endif
+
+static ADDRESS
+linuxPpcBusAddrToHostAddr(PCITAG tag, PciAddrType type, ADDRESS addr)
+{
+    if (type == PCI_MEM)
+    {
+	ADDRESS membase = syscall(__NR_pciconfig_iobase, 1,
+		    PCI_BUS_FROM_TAG(tag), PCI_DFN_FROM_TAG(tag));
+	return (addr + membase);
+    }
+
+    if (type == PCI_IO)
+    {
+	ADDRESS iobase = syscall(__NR_pciconfig_iobase, 2,
+		    PCI_BUS_FROM_TAG(tag), PCI_DFN_FROM_TAG(tag));
+	return (addr + iobase);
+    }
+
+    return addr;
+}
+
+static ADDRESS
+linuxPpcHostAddrToBusAddr(PCITAG tag, PciAddrType type, ADDRESS addr)
+{
+    if (type == PCI_MEM)
+    {
+	ADDRESS membase = syscall(__NR_pciconfig_iobase, 1,
+		    PCI_BUS_FROM_TAG(tag), PCI_DFN_FROM_TAG(tag));
+	return (addr - membase);
+    }
+
+    if (type == PCI_IO)
+    {
+	ADDRESS iobase = syscall(__NR_pciconfig_iobase, 2,
+		    PCI_BUS_FROM_TAG(tag), PCI_DFN_FROM_TAG(tag));
+	return (addr - iobase);
+    }
+
+    return addr;
+}
+
+#endif /* __powerpc__ */
 
 #ifndef INCLUDE_XF86_NO_DOMAIN
 
@@ -180,6 +594,9 @@ linuxPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits)
  * For the sparc64 port, this means 2.4.12 or later.  For ppc, this
  * functionality is almost, but not quite there yet.  Alpha and other kernel
  * ports to multi-domain architectures still need to implement this.
+ *
+ * Obviously, for this to work, such host bridges must advertise themselves on
+ * the root bus segment they provide.
  *
  * This scheme is also predicated on the use of an IOADDRESS compatible type to
  * designate I/O addresses.  Although IOADDRESS is defined as an unsigned
@@ -199,7 +616,7 @@ linuxPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits)
 #include <linux/pci.h>
 
 #ifndef PCIIOC_BASE		/* Ioctls for /proc/bus/pci/X/Y nodes. */
-#define PCIIOC_BASE		('P' << 24 | 'C' << 16 | 'I' << 8)
+#define PCIIOC_BASE		(('P' << 24) | ('C' << 16) | ('I' << 8))
 
 /* Get controller for PCI device. */
 #define PCIIOC_CONTROLLER	(PCIIOC_BASE | 0x00)
@@ -250,12 +667,20 @@ static struct pciSizes {
 	1U << 24, 1U << 31	/* ??? */
     },
     {
+	PCI_VENDOR_SUN, PCI_CHIP_SCHIZO_PLUS,
+	1U << 24, 1U << 31	/* ??? */
+    },
+    {
 	PCI_VENDOR_SUN, PCI_CHIP_SABRE,
 	1U << 24, (unsigned long)(1ULL << 32)
     },
     {
 	PCI_VENDOR_SUN, PCI_CHIP_HUMMINGBIRD,
 	1U << 24, (unsigned long)(1ULL << 32)
+    },
+    {
+	PCI_VENDOR_SUN, PCI_CHIP_TOMATILLO,
+	1U << 24, 1U << 31	/* ??? */
     }
 };
 #define NUM_SIZES (sizeof(pciControllerSizes) / sizeof(pciControllerSizes[0]))
@@ -459,6 +884,40 @@ xf86ReadDomainMemory(PCITAG Tag, ADDRESS Base, int Len, unsigned char *Buf)
     xf86UnMapVidMem(-1, ptr, size);
 
     return Len;
+}
+
+Bool
+xf86LocatePciMemoryArea(PCITAG Tag, char **devName, unsigned int *devOffset,
+			unsigned int *fbSize, unsigned int *fbOffset,
+			unsigned int *flags)
+{
+    pciConfigPtr pPCI;
+    unsigned int offset;
+
+    if (!devName || !devOffset || devOffset[1])
+	return FALSE;
+
+    offset = devOffset[0];
+
+    if (fbOffset) {
+	if ((offset ^ (unsigned int)(-1L)) < *fbOffset)
+	    return FALSE;
+
+	offset += *fbOffset;
+    }
+
+    if (fbSize && ((offset ^ (unsigned int)(-1L)) < *fbSize))
+	return FALSE;
+
+    pPCI = xf86GetPciHostConfigFromTag(Tag);
+    if (!pPCI)
+	return TRUE;
+
+    *devName = linuxGetPciFileName(pPCI->tag);
+    if (flags)
+	*flags = 0;
+
+    return TRUE;
 }
 
 resPtr

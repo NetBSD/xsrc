@@ -7,9 +7,9 @@
 1.  Introduction
 
 This document provides a brief summary of the i810/i815 support provided by
-the i810 driver.  Support for later chipsets is not covered here.  More up to
-date information about the i810 driver can be found in the i810(4) manual
-page.
+the i810 driver only.  Support for later chipsets is not covered here.  More
+up to date information about the i810 driver can be found in the i810(4) man-
+ual page.
 
 2.  Supported Hardware
 
@@ -47,7 +47,7 @@ page.
 
    o This driver currently only works for Linux/ix86 and recent versions of
      FreeBSD.  It requires the agpgart kernel support, which is included in
-     Linux kernels 2.3.42 and higher, and FreeBSD 4.1 and higher.
+     Linux kernels 2.3.42 and higher, and also FreeBSD 4.1 and higher.
 
 5.  Reported Working Video Cards
 
@@ -60,8 +60,8 @@ page.
 6.  Configuration
 
 The driver auto-detects all device information necessary to initialize the
-card.  The only lines you need in the "Device" section of your XF86Config
-file are:
+card.  The only lines that you need in the "Device" section of your XF86Con-
+fig file are:
 
             Section "Device"
                 Identifier "Intel i810"
@@ -83,7 +83,7 @@ module.  You will probably have to compile the module yourself (see the notes
 in the module).
 
 Note: the i810 driver detects whether your motherboard has display cache
-video memory.  This memory is has reduced bandwidth compared to normal system
+video memory.  This memory has reduced bandwidth compared to normal system
 memory, and isn't used by the server.  The main function of this memory is
 for ancillary buffers (eg. z buffer) in a forthcoming 3d capable server.
 
@@ -111,9 +111,7 @@ This driver was donated to The XFree86 Project by:
          Cedar Park, TX
          USA
 
-http://www.precisioninsight.com
-
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/i810.sgml,v 1.4 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/i810.sgml,v 1.5 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.i810,v 1.11 2003/07/29 20:59:05 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.i810,v 1.12 2005/03/04 03:25:46 dawes Exp $

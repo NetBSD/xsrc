@@ -25,7 +25,7 @@
 
 <article>
 
-<title>XFree86 server 4.x Design (DRAFT)
+<title>XFree86&reg; server 4.x Design (DRAFT)
 <author>The XFree86 Project, Inc
 <date>19 December 2003
 
@@ -36,7 +36,7 @@
 
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DESIGN.sgml,v 1.54 2003/12/19 20:38:57 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DESIGN.sgml,v 1.57 2004/12/08 22:27:11 dawes Exp $
 </ident>
 
 
@@ -1120,7 +1120,7 @@ is what &s.code;InitOutput()&e.code; does:
     &s.code;void ChipAdjustFrame(int index, int x, int y, int flags)&e.code;
     <quote><p>
       Changes the viewport for the screen identified by
-      &s.code;index;&e.code;.
+      &s.code;index&e.code;.
 
       It should be noted that many chipsets impose restrictions on where the
       viewport may be placed in the virtual resolution, either for alignment
@@ -2771,10 +2771,9 @@ The following include files are typically required by video drivers:
     "cfb32.h"&e.code;
   </quote>
 
-  If a driver uses XAA, it needs these:
+  If a driver uses XAA, it needs this:
   <quote>
-    &s.code;"xaa.h"&nl;
-    "xaalocal.h"&e.code;
+    &s.code;"xaa.h"&e.code;
   </quote>
 
   If a driver uses the fb manager, it needs this:
@@ -3327,10 +3326,10 @@ typedef struct {
   Bool (*OpenFramebuffer)(
        ScrnInfoPtr pScrn,
        char **name,
-       unsigned char **mem,
-       int *size,
-       int *offset,
-       int *extra
+       unsigned int *mem,
+       unsigned int *size,
+       unsigned int *offset,
+       unsigned int *extra
   );
   void (*CloseFramebuffer)(ScrnInfoPtr pScrn);
   Bool (*SetMode)(ScrnInfoPtr pScrn, DGAModePtr pMode);
@@ -3377,7 +3376,13 @@ typedef struct {
 	</quote>
       &s.code;mem&e.code;
 	<quote><p>
-	       The physical address of the start of the framebuffer.
+	       The physical address of the start of the framebuffer, or the
+	       &s.code;mmap(2)&e.code; offset into the device designated by
+	       &s.code;name&e.code;.  This is actually a pointer to two
+	       consecutive 32-bit values.  Regardless of hardware architecture,
+	       the first of these is to be set to the low-order 32 bits of the
+	       address or offset, and the second is to be set to the high-order
+	       32 bits.
 
 	</quote>
       &s.code;size&e.code;
@@ -3463,7 +3468,7 @@ typedef struct {
     &s.code;void FillRect (pScrn, x, y, w, h, color)&e.code;
     <quote><p>
       This optional function should fill a rectangle
-      &s.code;w&nbsp;&times;&nbsp;h&e.code; located at
+      &s.code;w x h&e.code; located at
       &s.code;(x,y)&e.code; in the given color.
 
     </quote>
@@ -3471,7 +3476,7 @@ typedef struct {
     &s.code;void BlitRect (pScrn, srcx, srcy, w, h, dstx, dsty)&e.code;
     <quote><p>
       This optional function should copy an area
-      &s.code;w&nbsp;&times;&nbsp;h&e.code; located at
+      &s.code;w x h&e.code; located at
       &s.code;(srcx,srcy)&e.code; to location &s.code;(dstx,dsty)&e.code;.
       This function will need to handle copy directions as appropriate.
 

@@ -29,7 +29,7 @@
  * holders shall not be used in advertising or otherwise to promote the sale,
  * use or other dealings in this Software without prior written authorization.
  */
-/* $XFree86: xc/programs/Xserver/hw/darwin/darwin.c,v 1.56 2003/11/24 05:39:01 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/darwin.c,v 1.58 2004/06/02 22:42:56 dawes Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -46,6 +46,13 @@
 #include "xf86Version.h"
 #include "xf86Date.h"
 #include "dix.h"
+
+#ifdef XINPUT
+# include "XI.h"
+# include "XIproto.h"
+# include "exevents.h"
+# include "extinit.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -363,6 +370,22 @@ static int DarwinMouseProc(
                         miPointerGetMotionEvents,
                         DarwinChangePointerControl,
                         0 );
+#ifdef XINPUT
+            InitValuatorAxisStruct( pPointer,
+                                    0,     // X axis
+                                    0,     // min value
+                                    16000, // max value (fixme screen size?)
+                                    1,     // resolution (fixme ?)
+                                    1,     // min resolution
+                                    1 );   // max resolution
+            InitValuatorAxisStruct( pPointer,
+                                    1,     // X axis
+                                    0,     // min value
+                                    16000, // max value (fixme screen size?)
+                                    1,     // resolution (fixme ?)
+                                    1,     // min resolution
+                                    1 );   // max resolution
+#endif
             break;
 
         case DEVICE_ON:
@@ -629,6 +652,13 @@ void OsVendorFatalError( void )
     ErrorF( "   OsVendorFatalError\n" );
 }
 
+
+/*
+ * OsVendorPreInit
+ */
+void OsVendorPreInit(void)
+{
+}
 
 /*
  * OsVendorInit

@@ -23,9 +23,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xdm/sessreg.man,v 1.8 2001/12/14 20:01:24 dawes Exp $
+.\" $XFree86: xc/programs/xdm/sessreg.man,v 1.9 2005/02/11 03:03:18 dawes Exp $
 .\"
-.TH SESSREG 1 __xorgversion__
+.TH SESSREG 1 __vendorversion__
 .SH NAME
 sessreg \- manage utmp/wtmp entries for non-init clients
 .SH SYNOPSIS

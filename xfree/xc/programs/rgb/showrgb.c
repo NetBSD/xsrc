@@ -26,13 +26,13 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Jim Fulton, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/rgb/showrgb.c,v 3.9 2002/05/31 18:46:08 dawes Exp $ */
+/* $XFree86: xc/programs/rgb/showrgb.c,v 3.10 2004/04/03 22:26:25 dawes Exp $ */
 
 #ifndef USE_RGB_TXT
 #ifdef NDBM
 #include <ndbm.h>
 #else
-#if defined(SVR4) && !defined(SCO325)
+#if defined(SVR4) && !defined(__SCO__)
 #include <rpcsvc/dbm.h>
 #else
 #include <dbm.h>

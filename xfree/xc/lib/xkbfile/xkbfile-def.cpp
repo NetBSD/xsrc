@@ -85,13 +85,11 @@ EXPORTS
  XkmReadFileSection
  XkmReadFileSectionName
  XkmReadTOC
-#ifdef __UNIXOS2__
  _XkbStrCaseCmp
  XkbCFDflts
  _XkbErrLocation
  _XkbErrCode
  _XkbErrMessages
  _XkbKSCheckCase
-#endif
 
-/* $XFree86: xc/lib/xkbfile/xkbfile-def.cpp,v 1.2 2003/11/06 03:25:42 dawes Exp $ */
+/* $XFree86: xc/lib/xkbfile/xkbfile-def.cpp,v 1.3 2004/05/06 01:17:30 dawes Exp $ */

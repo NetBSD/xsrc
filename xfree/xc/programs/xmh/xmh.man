@@ -26,9 +26,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/programs/xmh/xmh.man,v 1.4 2003/05/29 21:48:12 herrb Exp $
+.\" $XFree86: xc/programs/xmh/xmh.man,v 1.6 2005/02/11 03:03:20 dawes Exp $
 .\"
-.TH XMH 1 __xorgversion__
+.TH XMH 1 __vendorversion__
 .SH NAME
 xmh \- send and read mail with an X interface to MH
 .SH SYNOPSIS
@@ -1344,44 +1344,44 @@ above.
 Xmh*CommandButtonCount:		5
 
 Xmh*commandBox.button1.label:	Inc
-Xmh*commandBox.button1.translations: #override\\
+Xmh*commandBox.button1.translations: #override\\\&
 	<Btn1Down>,<Btn1Up>: XmhIncorporateNewMail() unset()
 
 Xmh*commandBox.button2.label:	Compose
-Xmh*commandBox.button2.translations: #override\\
+Xmh*commandBox.button2.translations: #override\\\&
 	<Btn1Down>,<Btn1Up>: XmhComposeMessage() unset()
 
 Xmh*commandBox.button3.label:	Next
-Xmh*commandBox.button3.translations: #override\\
+Xmh*commandBox.button3.translations: #override\\\&
 	<Btn1Down>,<Btn1Up>: XmhViewNextMessage() unset()
 
 Xmh*commandBox.button4.label:	Delete
-Xmh*commandBox.button4.translations: #override\\
+Xmh*commandBox.button4.translations: #override\\\&
 	<Btn1Down>,<Btn1Up>: XmhMarkDelete() unset()
 
 Xmh*commandBox.button5.label:	Commit
-Xmh*commandBox.button5.translations: #override\\
+Xmh*commandBox.button5.translations: #override\\\&
 	<Btn1Down>,<Btn1Up>: XmhCommitChanges() unset()
 
 ! To redefine the accelerator bindings to exclude modifier keys,
 ! and add your own keyboard accelerator for Compose Message:
 
-Xmh*tocMenu.accelerators: #override\\n\\
-	!:<Key>I:	XmhIncorporateNewMail()\\n\\
-	!:<Key>C: 	XmhCommitChanges()\\n\\
-	!:<Key>R:	XmhForceRescan()\\n\\
-	!:<Key>P:	XmhPackFolder()\\n\\
+Xmh*tocMenu.accelerators: #override\\n\\\&
+	!:<Key>I:	XmhIncorporateNewMail()\\n\\\&
+	!:<Key>C: 	XmhCommitChanges()\\n\\\&
+	!:<Key>R:	XmhForceRescan()\\n\\\&
+	!:<Key>P:	XmhPackFolder()\\n\\\&
 	!:<Key>S:	XmhSortFolder()\\n
-Xmh*messageMenu.accelerators: #override\\n\\
-	!:<Key>E:	XmhComposeMessage()\\n\\
-	!<Key>space:    XmhViewNextMessage()\\n\\
-	!:<Key>c:	XmhMarkCopy()\\n\\
-	!:<Key>d:	XmhMarkDelete()\\n\\
-	!:<Key>f:	XmhForward()\\n\\
-	!:<Key>m:	XmhMarkMove()\\n\\
-	!:<Key>n:	XmhViewNextMessage()\\n\\
-	!:<Key>p:	XmhViewPreviousMessage()\\n\\
-	!:<Key>r:	XmhReply()\\n\\
+Xmh*messageMenu.accelerators: #override\\n\\\&
+	!:<Key>E:	XmhComposeMessage()\\n\\\&
+	!<Key>space:    XmhViewNextMessage()\\n\\\&
+	!:<Key>c:	XmhMarkCopy()\\n\\\&
+	!:<Key>d:	XmhMarkDelete()\\n\\\&
+	!:<Key>f:	XmhForward()\\n\\\&
+	!:<Key>m:	XmhMarkMove()\\n\\\&
+	!:<Key>n:	XmhViewNextMessage()\\n\\\&
+	!:<Key>p:	XmhViewPreviousMessage()\\n\\\&
+	!:<Key>r:	XmhReply()\\n\\\&
 	!:<Key>u:	XmhUnmark()\\n
 .fi
 .PP

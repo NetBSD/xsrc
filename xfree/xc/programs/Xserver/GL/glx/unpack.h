@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/unpack.h,v 1.5 2002/10/30 12:52:03 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/unpack.h,v 1.7 2004/12/10 16:06:59 alanh Exp $ */
 #ifndef __GLX_unpack_h__
 #define __GLX_unpack_h__
 

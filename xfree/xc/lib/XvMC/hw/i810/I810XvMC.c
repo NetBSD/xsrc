@@ -33,7 +33,7 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **
 **
 ***************************************************************************/
-/* $XFree86: xc/lib/XvMC/hw/i810/I810XvMC.c,v 1.11 2002/11/19 09:35:49 alanh Exp $ */
+/* $XFree86: xc/lib/XvMC/hw/i810/I810XvMC.c,v 1.12 2004/12/10 16:06:58 alanh Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -237,7 +237,7 @@ Status XvMCCreateContext(Display *display, XvPortID port,
 
   /* 
      X server returns a structure like this:
-     drmContext
+     drm_context_t
      fbBase
      OverlayOffset
      OverlaySize
