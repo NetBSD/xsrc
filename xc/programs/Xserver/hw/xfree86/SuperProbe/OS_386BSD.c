@@ -382,7 +382,7 @@ int Len;
 	Byte *Base = Bios_Base + Offset;
 	unsigned long bs = (unsigned long) Base;
 
-#if defined(__arm32__) || defined(__alpha__)
+#if defined(__arm__) || defined(__arm32__) || defined(__alpha__)
 	return(-1);
 #endif
 

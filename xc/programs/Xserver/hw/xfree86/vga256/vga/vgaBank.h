@@ -34,11 +34,11 @@ extern void *vgaWriteBottom;
 extern void *vgaWriteTop;
 extern Bool vgaReadFlag, vgaWriteFlag;
 #if !defined(__mc68000__)
-#if defined(__alpha__) || defined(__arm32__)
+#if defined(__alpha__) || defined(__arm__) || defined(__arm32__)
 extern unsigned long writeseg;
-#else /* __alpha__ || __arm32__ */
+#else /* __alpha__ || __arm__ || __arm32__ */
 extern void *writeseg;
-#endif /* __alpha__ || __arm32__ */
+#endif /* __alpha__ || __arm__ || __arm32__ */
 
 /* vgaBank.s */
 

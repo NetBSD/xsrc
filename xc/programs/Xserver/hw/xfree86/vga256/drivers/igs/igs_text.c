@@ -462,7 +462,7 @@ void (*igs_glyphwidth_fn[32])(
 /*
  * Bit output macros
  */
-#ifdef __arm32__ 
+#if defined(__arm__) || defined(__arm32__)
 
 #define IGS_WRITE_WORD(bits)  *(unsigned int *)vgaLinearBase =        \
             IGS_TXT_CHAR | IGS_TXT_WIDTH |                            \
@@ -548,7 +548,7 @@ void igsDrawTextTE(glyphp, nglyph, glyphwidth, glyphheight)
 	}
 	if (shift > 0) 
 	{
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 	    *(unsigned int *)vgaLinearBase = IGS_TXT_CHAR | 
 		(shift >16 ? IGS_TXT_WIDTH : ((shift-1) << 16)) |          
 		    byte_reversed[(lowBits & 0xFF00) >> 8] |   
@@ -609,7 +609,7 @@ void igsDrawTextNonTE(glyphinfop, nglyph, glyphheight)
 	}
 	if (shift > 0) 
 	{
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 	    *(unsigned int *)vgaLinearBase = IGS_TXT_CHAR | 
 		(shift >16 ? IGS_TXT_WIDTH : ((shift-1) << 16)) |          
 		    byte_reversed[(lowBits & 0xFF00) >> 8] |   
@@ -683,7 +683,7 @@ static void igsDrawTextScanlineWidth8(glyphp, line, nglyph)
         bits |= byte_reversed[glyphp[1][line]];
         bits |= byte_reversed[glyphp[2][line]] << 24;
         bits |= byte_reversed[glyphp[3][line]] << 16;
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 	*(unsigned int *)vgaLinearBase = IGS_TXT_CHAR | IGS_TXT_WIDTH | 
 	    (bits & 0xFFFF); 
 	*(unsigned int *)vgaLinearBase = IGS_TXT_CHAR | IGS_TXT_WIDTH | 
@@ -693,7 +693,7 @@ static void igsDrawTextScanlineWidth8(glyphp, line, nglyph)
         bits |= byte_reversed[glyphp[5][line]];
         bits |= byte_reversed[glyphp[6][line]] << 24;
         bits |= byte_reversed[glyphp[7][line]] << 16;
-#ifdef __arm32__
+#if defined(__arm__) || defined(__arm32__)
 	*(unsigned int *)vgaLinearBase = IGS_TXT_CHAR | IGS_TXT_WIDTH | 
 	    (bits & 0xFFFF); 
 	*(unsigned int *)vgaLinearBase = IGS_TXT_CHAR | IGS_TXT_WIDTH | 

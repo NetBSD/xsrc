@@ -37,7 +37,7 @@
 #include "xf86xaa.h"
 #include "ct_driver.h"
 
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
 #ifdef	CHIPS_HIQV
 #include "xf86local.h"
 #endif
@@ -88,7 +88,7 @@ void CTNAME(SubsequentFill8x8Pattern)();
 void CTNAME(SetupFor8x8PatternColorExpand)();
 void CTNAME(Subsequent8x8PatternColorExpand)();
 
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
 #ifdef	CHIPS_HIQV
 RegionPtr CTNAME(CopyArea)();
 void CTNAME(DoPixWinBitBltCopy)();
@@ -145,7 +145,7 @@ void _ctAccelInit() {
     if (!ctColorTransparency)
 	xf86GCInfoRec.CopyAreaFlags |= NO_TRANSPARENCY;
 
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
     xf86GCInfoRec.CopyArea = CTNAME(CopyArea);
 #endif
 #endif
@@ -977,7 +977,7 @@ void CTNAME(Subsequent8x8PatternColorExpand)(patternx, patterny, x, y, w, h)
     ctSETHEIGHTWIDTHGO(h, w * vgaBytesPerPixel);
 }
 
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
 #ifdef	CHIPS_HIQV
 RegionPtr CTNAME(CopyArea)(pSrcDrawable, pDstDrawable,
 			    pGC, srcx, srcy, width, height, dstx, dsty)

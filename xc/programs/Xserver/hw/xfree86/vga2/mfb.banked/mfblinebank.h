@@ -41,7 +41,8 @@ extern int vgaSaveReadseg;
 #define USE_GCC_INLINE
 #endif
 
-#if __GNUC__ > 1 && !defined(__alpha__) && !defined(__arm32__)
+#if __GNUC__ > 1 && !defined(__alpha__) && !defined(__arm__) && \
+    !defined(__arm32__)
 #define USE_ASM_BANK_MACROS
 #endif
 

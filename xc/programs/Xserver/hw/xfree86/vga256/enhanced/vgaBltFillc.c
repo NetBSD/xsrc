@@ -55,7 +55,7 @@ void fastBitBltCopy(
 )
 {
   if (xdir <= 0) {
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
       /* I wouldn't have called these variables Pitch... -JJK */
       srcPitch -= width;
       dstPitch -= width;
@@ -172,15 +172,15 @@ void fastBitBltCopy(
 	  pdst += dstPitch;
 	  height--;
       }
-#else	/* !__arm32__ */
+#else	/* !__arm__ && !__arm32__ */
     while (height--) {
       memmove(pdst-width, psrc-width, width);
       pdst += dstPitch - width;
       psrc += srcPitch - width;
     }
-#endif	/* __arm32__ */
+#endif	/* __arm__ || __arm32__ */
   } else {
-#ifdef	__arm32__
+#if defined(__arm__) || defined(__arm32__)
       /* I wouldn't have called these variables Pitch... -JJK */
       srcPitch += width;
       dstPitch += width;
@@ -289,13 +289,13 @@ void fastBitBltCopy(
 	  pdst += dstPitch;
 	  height--;
       }
-#else	/* !__arm32__ */
+#else	/* !__arm__ && !__arm32__ */
     while (height--) {
       memcpy(pdst, psrc, width);
       pdst += dstPitch + width;
       psrc += srcPitch + width;
     }
-#endif	/* __arm32__ */
+#endif	/* __arm__ || __arm32__ */
   }
 }
 
