@@ -392,7 +392,7 @@ typedef struct {
 
 #ifndef NeXTSTEP
 #define DPSSYNCHOOK(ctxt) \
-	if ((ctxt)->contextFlags && DPS_FLAG_SYNC) DPSWaitContext(ctxt);
+	if ((ctxt)->contextFlags & DPS_FLAG_SYNC) DPSWaitContext(ctxt);
 #endif /* NeXT */
 
 /*=== PROCEDURES ===*/
