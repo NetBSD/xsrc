@@ -697,7 +697,7 @@ sed 's/\.[0-9]*$$//'`
 /*
  * Definition for compile on macppc machines
  */
-#ifdef PpcArchitecture
+#ifdef macppcArchitecture
 
 # define OptimizedCDebugFlags 	-O2
 # define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
@@ -707,6 +707,8 @@ sed 's/\.[0-9]*$$//'`
 # endif
 
 # define UseElfFormat		YES
+
+# define XmacppcServer		YES
 
 #endif
 
