@@ -165,7 +165,7 @@ _XimCheckLocaleName(im, address, address_len, locale_name, len)
 	*p = '\0';
 
 	for( n = 0; n < len; n++ )
-	    if( locale_name[n] && !strcmp( pp, locale_name[n] ) )
+	    if( locale_name[n] && !strcasecmp( pp, locale_name[n] ) )
 		return locale_name[n];
 	if (finish)
 	    break;
