@@ -93,14 +93,18 @@
 #endif
 
 /* bytes per plane to save for text */
-#if defined(Lynx) || defined(linux) || defined(MINIX) || defined(__QNX__)
+#if defined(Lynx) || defined(linux) || defined(MINIX) || defined(__QNX__) || defined(__NetBSD__)
 #define TEXT_AMOUNT 16384
 #else
 #define TEXT_AMOUNT 4096
 #endif
 
 /* bytes per plane to save for font data */
+#if defined(__NetBSD__)
+#define FONT_AMOUNT (8*8192) /* all font slots */
+#else
 #define FONT_AMOUNT 8192
+#endif
 #endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) && !defined(PC98_MGA) */
 
 #if defined(CSRG_BASED) || defined(MACH386) || defined(__GNU__) 
