@@ -19,7 +19,15 @@ ROOT_DEFINES = -DDFLT_XKB_CONFIG_ROOT=\"$(LIBDIR)/xkb\"
 
 INCLUDES = -I$(EXTINCSRC)
 
-all::
+PROGRAMS = ProgramTarget(xkbcomp)
+
+#ifdef amigaArchitecture
+MDXKBFILES = de-amiga.xkm
+$(MDXKBFILES): $(PROGRAMS)
+	./xkbcomp -xkm -o de-amiga.xkm -m de keymap/amiga
+#endif
+
+all:: $(PROGRAMS) $(MDXKBFILES)
 
 SpecialCObjectRule(xkbpath,$(ICONFIGFILES),$(ROOT_DEFINES))
 
@@ -29,6 +37,9 @@ install::
 	@echo "Creating $(LIBDIR)/xkb and $(LIBDIR)/xkb/compiled"
 	MakeDir($(DESTDIR)$(LIBDIR)/xkb)
 	MakeDir($(DESTDIR)$(LIBDIR)/xkb/compiled)
+#ifdef amigaArchitecture
+	$(INSTALL) -c $(INSTDATFLAGS) de-amiga.xkm $(DESTDIR)$(LIBDIR)/xkb/compiled/de.xkm
+#endif
 
 InstallProgram(xkbcomp,$(LIBDIR)/xkb)
 
