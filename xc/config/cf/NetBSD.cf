@@ -1,9 +1,9 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.84 2001/02/05 23:03:18 wdk Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.85 2001/03/05 21:14:43 tron Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.13 1999/10/12 17:18:20 hohndel Exp $
+XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.14 2001/02/04 21:44:00 herrb Exp $
 
 
   
@@ -304,7 +304,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define ServerOSDefines	-DDDXOSINIT -DDDXTIME
 # define ServerExtraDefines	GccGasOption XFree86ServerDefines
 # ifndef XFree86ConsoleDefines
-#  define XFree86ConsoleDefines -DPCCONS_SUPPORT
+#  if OSMajorVersion < 1 || OSMajorVersion == 1 && (OSMinorVersion < 5)
+#   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
+#  else
+#   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DWSCONS_SUPPORT 
+#  endif
 # endif
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO

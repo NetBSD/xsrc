@@ -27,7 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
-/* $XFree86: xc/lib/Xaw/AsciiSrc.c,v 1.1.1.2.4.2 1998/05/16 09:05:19 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSrc.c,v 1.1.1.2.4.3 2001/01/26 22:34:21 herrb Exp $ */
 
 /*
  * AsciiSrc.c - AsciiSrc object. (For use with the text widget).
@@ -48,8 +48,11 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Xaw/AsciiSrcP.h>
 #include <X11/Xmu/Misc.h>
 #include <X11/Xmu/CharSet.h>
-#include <X11/Xaw/MultiSrcP.h> 
+#include <X11/Xaw/MultiSrcP.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #if (defined(ASCII_STRING) || defined(ASCII_DISK))
 #  include <X11/Xaw/AsciiText.h> /* for Widget Classes. */
@@ -980,7 +983,9 @@ InitStringOrFile(src, newString)
 AsciiSrcObject src;
 Boolean newString;
 {
-    char * open_mode;
+    mode_t open_mode = 0;
+    const char *fdopen_mode = NULL;
+    int fd;
     FILE * file;
     char fileName[TMPSIZ];
 
@@ -1022,7 +1027,8 @@ Boolean newString;
 	    XtErrorMsg("NoFile", "asciiSourceCreate", "XawError",
 		     "Creating a read only disk widget and no file specified.",
 		       NULL, 0);
-	open_mode = "r";
+	open_mode = O_RDONLY;
+	fdopen_mode = "r";
 	break;
     case XawtextAppend:
     case XawtextEdit:
@@ -1030,9 +1036,17 @@ Boolean newString;
 	    src->ascii_src.string = fileName;
 	    (void) tmpnam(src->ascii_src.string);
 	    src->ascii_src.is_tempfile = TRUE;
-	    open_mode = "w";
-	} else
-	    open_mode = "r+";
+	    open_mode = O_WRONLY | O_CREAT | O_EXCL;
+	    fdopen_mode = "w";
+	} else {
+/* O_NOFOLLOW is a BSD & Linux extension */
+#ifdef O_NOFOLLOW
+	    open_mode = O_RDWR | O_NOFOLLOW;
+#else
+	    open_mode = O_RDWR; /* unsafe; subject to race conditions */
+#endif
+	    fdopen_mode = "r+";
+	}
 	break;
     default:
 	XtErrorMsg("badMode", "asciiSourceCreate", "XawError",
@@ -1051,11 +1065,14 @@ Boolean newString;
     }
     
     if (!src->ascii_src.is_tempfile) {
-	if ((file = fopen(src->ascii_src.string, open_mode)) != 0) {
-	    (void) fseek(file, (Off_t)0, 2);
-	    src->ascii_src.length = (XawTextPosition) ftell(file);
-	    return file;
-	} else {
+	if ((fd = open(src->ascii_src.string, open_mode, 0666))) {
+	    if ((file = fdopen(fd, fdopen_mode)) != NULL) {
+		(void)fseek(file, 0, SEEK_END);
+		src->ascii_src.length = (XawTextPosition)ftell(file);
+		return (file);
+	    }
+	}
+	{
 	    String params[2];
 	    Cardinal num_params = 2;
 	    
@@ -1065,9 +1082,9 @@ Boolean newString;
 			    "openError", "asciiSourceCreate", "XawWarning",
 			    "Cannot open file %s; %s", params, &num_params);
 	}
-    } 
+    }
     src->ascii_src.length = 0;
-    return((FILE *)NULL);
+    return(NULL);
 }
 
 static void

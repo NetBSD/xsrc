@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.14 1999/12/20 12:55:49 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.15 2001/02/09 23:01:36 herrb Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -497,7 +497,7 @@ xf86PostKbdEvent(key)
   KeySym      *keysym;
   int         keycode;
   static int  lockkeys = 0;
-#if defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT)
+#if defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
   static Bool first_time = TRUE;
 #endif
 
@@ -506,12 +506,12 @@ xf86PostKbdEvent(key)
     scanCode = xf86CodrvMap[scanCode];
 #endif
 
-#if defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT)
+#if defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
   if (first_time)
   {
     first_time = FALSE;
     VTSwitchEnabled = (xf86Info.consType == SYSCONS)
-	    || (xf86Info.consType == PCVT);
+	    || (xf86Info.consType == PCVT) || (xf86Info.consType == WSCONS);
   }
 #endif
 
@@ -555,13 +555,13 @@ xf86PostKbdEvent(key)
 #ifndef PC98
     case KEY_Prefix0:
     case KEY_Prefix1:
-#if defined(PCCONS_SUPPORT) || defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT)
+#if defined(PCCONS_SUPPORT) || defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
       if (xf86Info.consType == PCCONS || xf86Info.consType == SYSCONS
-	  || xf86Info.consType == PCVT) {
+	  || xf86Info.consType == PCVT || xf86Info.consType == WSCONS) {
 #endif
         xf86Info.scanPrefix = scanCode;  /* special prefixes */
         return;
-#if defined(PCCONS_SUPPORT) || defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT)
+#if defined(PCCONS_SUPPORT) || defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
       }
       break;
 #endif
@@ -611,7 +611,7 @@ xf86PostKbdEvent(key)
   else if (
 #ifdef CSRG_BASED
            (xf86Info.consType == PCCONS || xf86Info.consType == SYSCONS
-	    || xf86Info.consType == PCVT) &&
+	    || xf86Info.consType == PCVT || xf86Info.consType == WSCONS) &&
 #endif
            (xf86Info.scanPrefix == KEY_Prefix0)) {
     xf86Info.scanPrefix = 0;
@@ -734,7 +734,7 @@ xf86PostKbdEvent(key)
 		break;
 #endif
 
-#if defined(linux) || (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT))) || defined(SCO)
+#if defined(linux) || (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT))) || defined(SCO)
 	/*
 	 * Under Linux, the raw keycodes are consumed before the kernel
 	 * does any processing on them, so we must emulate the vt switching
@@ -751,8 +751,9 @@ xf86PostKbdEvent(key)
       case KEY_F9:
       case KEY_F10:
         if (VTSwitchEnabled && !xf86Info.vtSysreq
-#if (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT)))
-	    && (xf86Info.consType == SYSCONS || xf86Info.consType == PCVT)
+#if (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)))
+	    && (xf86Info.consType == SYSCONS || xf86Info.consType == PCVT
+		|| xf86Info.consType == WSCONS)
 #endif
 	    )
         {
@@ -768,8 +769,9 @@ xf86PostKbdEvent(key)
       case KEY_F11:
       case KEY_F12:
         if (VTSwitchEnabled && !xf86Info.vtSysreq
-#if (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT)))
-	    && (xf86Info.consType == SYSCONS || xf86Info.consType == PCVT)
+#if (defined(CSRG_BASED) && (defined(SYSCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)))
+	    && (xf86Info.consType == SYSCONS || xf86Info.consType == PCVT
+		|| xf86Info.consType == WSCONS)
 #endif
 	    )
         {

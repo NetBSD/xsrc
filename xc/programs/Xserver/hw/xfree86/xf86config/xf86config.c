@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.17 1999/12/20 12:55:59 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.18 2001/02/04 19:41:52 herrb Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -349,7 +349,7 @@ static char *mousetype_name[11] = {
 	"MM HitTablet",
 	"Microsoft IntelliMouse",
 	"Acecad tablet",
-	"NetBSD WSCONS Mouse"
+	"Net/OpenBSD WSCONS Mouse"
 };
 
 static char *mousedev_text =
@@ -2136,8 +2136,8 @@ static char *XF86Config_fontpathchunk_text =
 "\n"
 "# For OSs that support Dynamically loaded modules, ModulePath can be\n"
 "# used to set a search path for the modules.  This is currently supported\n"
-"# for Linux ELF, FreeBSD 2.x and NetBSD 1.x.  The default path is shown\n"
-"# here.\n"
+"# for Linux ELF, FreeBSD 2.x, NetBSD 1.x and OpenBSD 2.x.\n"
+"# The default path is shown here.\n"
 "\n"
 "#    ModulePath \"" MODULEPATH "\"\n"
 "\n"
@@ -2147,7 +2147,7 @@ static char *XF86Config_fontpathchunk_text =
 "# Module section -- this is an optional section which is used to specify\n"
 "# which dynamically loadable modules to load.  Dynamically loadable\n"
 "# modules are currently supported only for Linux ELF, FreeBSD 2.x\n"
-"# and NetBSD 1.x.  Currently, dynamically loadable modules are used\n"
+"# NetBSD 1.x and OpenBSD. Currently, dynamically loadable modules are used\n"
 "# only for some extended input (XInput) device drivers.\n"
 "# **********************************************************************\n"
 "#\n"

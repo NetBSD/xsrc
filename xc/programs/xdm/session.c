@@ -1,5 +1,5 @@
 /* $XConsortium: session.c /main/77 1996/11/24 17:32:33 rws $ */
-/* $XFree86: xc/programs/xdm/session.c,v 3.11.2.8 1999/12/11 17:20:02 hohndel Exp $ */
+/* $XFree86: xc/programs/xdm/session.c,v 3.11.2.9 2000/02/08 20:32:13 dawes Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -470,6 +470,15 @@ Display		*dpy;
 SessionExit (d, status, removeAuth)
     struct display  *d;
 {
+#ifdef USE_PAM
+    if (pamh) {
+	/* shutdown PAM session */
+	pam_close_session(pamh, 0);
+	pam_end(pamh, PAM_SUCCESS);
+	pamh = NULL;
+    }
+#endif
+    
     /* make sure the server gets reset after the session is over */
     if (d->serverPid >= 2 && d->resetSignal)
 	kill (d->serverPid, d->resetSignal);
@@ -504,14 +513,6 @@ SessionExit (d, status, removeAuth)
 	    }
 	}
 #endif /* K5AUTH */
-#ifdef USE_PAM
-	if (pamh) {
-	  /* shutdown PAM session */
-	  pam_close_session(pamh, 0);
-	  pam_end(pamh, PAM_SUCCESS);
-	  pamh = NULL;
-	}
-#endif
     }
     Debug ("Display %s exiting with status %d\n", d->name, status);
     exit (status);

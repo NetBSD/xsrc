@@ -9,6 +9,8 @@
 # users were accustomed to uwm, the defaults could be set up not to decorate
 # any windows and to use meta-keys.
 #
+# $XFree86: xc/programs/twm/system.twmrc,v 1.1.1.2.2.2 2000/01/21 18:39:35 dawes Exp $
+#
 
 NoGrabServer
 RestartPreviousState
