@@ -85,6 +85,15 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.8.2.9 1998/12/30 10:04:09 dawes Exp $
 #ifndef BuildXAServer
 #define BuildXAServer		(HasXAServer & HasCplusplus)
 #endif
+/*
+ * This disables XLOCALEDIR.  Set it if you're using BuildLoadableXlibI18n,
+ * don't have either issetugid() or getresuid(), and you need to protect
+ * clients that are setgid or setuid to an id other than 0.
+ */
+#ifndef DisableXLocaleDirEnv
+#define DisableXLocaleDirEnv	BuildLoadableXlibI18n && \
+					!(HasIssetugid || HasGetresuid)
+#endif
 #ifndef BuildMITMiscExt
 #define BuildMITMiscExt		YES
 #endif

@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.99 2002/07/22 21:04:06 manu Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.100 2002/09/05 15:14:44 itojun Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -125,6 +125,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
        (OSMajorVersion == 1 && OSMinorVersion < 2))) 
 #define HasMkstemp		YES
 #endif
+
+#ifndef HasIssetugid
+# if (OSMajorVersion > 1 || (OSMajorVersion == 1 && OSMinorVersion >= 5))
+#  define HasIssetugid          YES
+# endif
+#endif
+
 /*
  * Compiler Features
  */
