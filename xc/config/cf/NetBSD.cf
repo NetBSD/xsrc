@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.63 2000/01/10 23:50:33 tron Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.64 2000/01/22 21:08:49 mycroft Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -417,8 +417,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 /*
  * Documentation formatting
  */
-#define NeqnCmd			neqn -Tlatin1
-#define NroffCmd		nroff -Tlatin1
+#define NeqnCmd			neqn -Tascii
+#define NroffCmd		nroff -Tascii
 #define	EqnCmd 			eqn -Tps
 #define TroffCmd        	groff -Tps
 
