@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2002/12/25 22:01:43 tron Exp $
+#	$NetBSD: Makefile,v 1.35 2002/12/25 22:08:21 tron Exp $
 #
 # Targets & Variables
 #
@@ -139,7 +139,7 @@ release snapshot: build
 	cd ${XCDIR}/programs/Xserver/hw/netbsd/amiga && \
 		${INSTALL} -c -m 644 INSTALL.X11 ${RELEASEDIR}
 .endif
-.if defined(METALOG) && !exists(${DESTDIR}/etc)
+.if defined(METALOG.add) && !exists(${DESTDIR}/etc)
 	cd ${NETBSDSRCDIR}/distrib/sets && \
 	    sh ./maketars -x -d ${DESTDIR:S,^$,/,} -N ${NETBSDSRCDIR}/etc -t ${RELEASEDIR}/binary/sets
 .else
