@@ -1,14 +1,19 @@
 XCOMM $XConsortium: Imakefile /main/2 1996/10/27 13:00:56 kaleb $
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/Imakefile,v 3.2.2.3 1998/10/19 20:57:08 hohndel Exp $
 
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/Imakefile,v 3.2.2.1 1998/01/18 10:35:35 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/Imakefile,v 3.2.2.3 1998/10/19 20:57:08 hohndel Exp $
 #include <Server.tmpl>
 
-SRCS = nv_driver.c nv1driver.c nv3driver.c nvaccel.c nv1setup.c nv3setup.c nv1cursor.c nv3cursor.c
+SRCS = nv_driver.c nv1driver.c nv3driver.c nv4driver.c nvaccel.c nv1setup.c nv3setup.c nv4setup.c \
+       nv1cursor.c nv3cursor.c nv4cursor.c nv3arb.c nv4arb.c
 
-OBJS = nv_driver.o nv1driver.o nv3driver.o nvaccel.o nv1setup.o nv3setup.o nv1cursor.o nv3cursor.o
+OBJS = nv_driver.o nv1driver.o nv3driver.o nv4driver.o nvaccel.o nv1setup.o nv3setup.o nv4setup.o \
+       nv1cursor.o nv3cursor.o nv4cursor.o nv3arb.o nv4arb.o
 
 DEFINES = -DPSZ=8
 
@@ -31,18 +36,26 @@ NormalRelocatableTarget(nv_drv,$(OBJS))
 
 InstallLinkKitNonExecFile(nv1ref.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nv3ref.h,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv4ref.h,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv3arb.h,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv4arb.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nvreg.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nvuser.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nvvga.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nvcursor.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nv1cursor.c,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nv3cursor.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv4cursor.c,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nv_driver.c,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nv1driver.c,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nv3driver.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv4driver.c,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nvaccel.c,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nv1setup.c,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(nv3setup.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv4setup.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv3arb.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nv4arb.c,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/nv)
 
 DependTarget()

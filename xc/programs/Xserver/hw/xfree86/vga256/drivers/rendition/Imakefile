@@ -1,0 +1,63 @@
+XCOMM  $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/Imakefile,v 1.1.2.9 1998/10/31 14:41:03 hohndel Exp $
+XCOMM
+XCOMM This is an Imakefile for the Rendition driver.  
+XCOMM
+
+#include <Server.tmpl>
+
+XCOMM #define IHaveSubdirs
+XCOMM #define SUBDIRS vlib
+
+SRCS=rendition_driver.c hwcursor.c vmodes.c vramdac.c \
+     vvga.c v1krisc.c vboard.c 
+OBJS=rendition_driver.o hwcursor.o vmodes.o vramdac.o \
+     vvga.o v1krisc.o vboard.o
+
+EXTRA_DEFINES=-DXSERVER 
+#-DDEBUG
+
+RDRVDIR=drivers/vga256/rendition
+
+#if XF86LinkKit
+INCLUDES=-I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES=-I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+         -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+         -I$(SERVERSRC)/cfb -I../../vga -I../../../xaa \
+         -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+NormalRelocatableTarget(rendition_drv,$(OBJS))
+
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(cscode.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(hwcursor.c,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(hwcursor.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(rendition_driver.c,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(v1kregs.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(v1krisc.c,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(v1krisc.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(v2kregs.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vboard.c,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vboard.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vgafont-std.data,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vgafont-vrx.data,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vgapalette.data,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vloaduc.c,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vloaduc.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vmodes.c,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vmodes.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vos.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vramdac.c,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vramdac.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vtest.c,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vtypes.h,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vvga.c,$(LINKKITDIR)/$(RDRVDIR))
+InstallLinkKitNonExecFile(vvga.h,$(LINKKITDIR)/$(RDRVDIR))
+
+DependTarget()

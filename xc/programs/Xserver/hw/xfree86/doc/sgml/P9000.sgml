@@ -2,13 +2,19 @@
  
 <article>
  
-<title>XFree86 3.3 P9000 Server Release Notes
+<title>XFree86 3.3.3 P9000 Server Release Notes
 <author>Erik Nygren (<it>nygren@mit.edu</it>)
-<date>1996 March 31
+<date>1998 October 13
 <toc>
  
 <sect>Change Log <p>
 <descrip>
+<tag/1998.10.13:/
+	<itemize>
+	<item>
+	  Fixed a bug that would cause the server to crash when it tried
+	  to enable or disable the screen saver while at a VT (Erik Nygren)
+	</itemize>
 <tag/1997.01.30:/
 	<itemize>
 	<item>
@@ -226,13 +232,9 @@ if you have problems with this.  Specify the chipset <tt>"orchid_p9000"</tt> in
 the <tt>Device</tt> section of <tt>XF86Config</tt>
 
 <sect>Viper Pro and other P9100 and P9130 cards (UNSUPPORTED!!!) <p>
-These are NOT supported yet.  We don't have the hardware to write and
-or test drivers for them on.  The docs I have says the P9100 has a
-different interface than the P9000.  As a result, they may need an
-entirely new server.  If you need support for one of these cards, you
-should look into XInside's AcceleratedX.  It's a commercial product
-that costs about &dollar;99.  Send email to <it>info@xinside.com</it>
-for more information.
+These are NOT supported yet by this server, but are supported in the 
+p9x00 driver of the SVGA server.
+
 
 <sect>Acceleration <p>
 Some of the acceleration code is working, but
@@ -371,14 +373,14 @@ of the <tt>XF86Config</tt> file are:
 			This line may now be omitted and clocks will
 			be matched automatically.
    <tag/Option/		<descrip>
-			<tag/&dquot;sw_cursor&dquot;/
+			<tag/"sw_cursor"/
 			   use software cursor
-			<tag/&dquot;vram_128&dquot;/
+			<tag/"vram_128"/
 			   use if you have 1024K VRAM in 128Kx8 SIMMS
-			<tag/&dquot;sync_on_green&dquot;/
+			<tag/"sync_on_green"/
 			   generate sync pulses on the green signal.  Most
 			   (all?) P9000 based boards don't support this.
-			<tag/&dquot;noaccel&dquot;/
+			<tag/"noaccel"/
 			   do not do hardware acceleration if
 				it's causing problems for you
 			</descrip>
@@ -457,7 +459,7 @@ During the course of the next few months, people will be working on
 acceleration, etc.  Please send any patches to me (<it>nygren@mit.edu</it>).
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/P9000.sgml,v 3.18.2.4 1997/05/17 12:03:30 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/P9000.sgml,v 3.18.2.6 1998/11/07 13:37:48 dawes Exp $
 
 
 

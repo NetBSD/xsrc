@@ -4,11 +4,11 @@
  
 <title>Information for Linux Users
 <author>Orest Zborowski, Dirk Hohndel
-<date>February 26, 1997
+<date>November 7, 1998
 <toc>
 
 <sect>Linux versions on which XFree86 has been tested <p>
-XFree86 has been tested with Linux version 2.0.32 and several 2.1xx kernels.
+XFree86 has been tested with Linux version 2.0.32 and several 2.1.x kernels.
 It is known not to compile with kernel sources newer then somewhere around
 2.1.70, due to incompatibilities in the joystick driver. Except for the
 joystick driver, it works just fine with all 2.1.x kernels tested (including
@@ -40,10 +40,8 @@ symlink from <tt>/lib/libX{11,t,aw}.so.3</tt> to
 
 <sect>Installing XFree86 <p>
 Starting with version 3.0, XFree86 is installed in <tt>/usr/X11R6</tt>. 
-Each binary distribution of XFree86 3.X comes with a detailed
-installation document relevant to that release. The most up-to-date
-information is kept there, while this document describes basic features
-of XFree86 3.X on Linux and how to compile the sources.
+The installation details are provided in the <htmlurl name="RELNOTES"
+url="RELNOTES.html">.
 
 <sect>Running XFree86 <p>
 XFree86 requires about 4mb of virtual memory to run, although
@@ -144,7 +142,7 @@ systems.
 
 <sect>xterm
 <p>
-The XFree86-3.3.2 binary release contains an xterm binary that has been linked
+The XFree86-3.3.3 binary release contains an xterm binary that has been linked
 statically against libtermcap. This was done to make sure that it will
 correctly work with all distributions, regardless whether they rely on
 libtermcap or libncurses. Contrary to the xterm binaries in some beta version
@@ -161,6 +159,9 @@ devices are:
 <item>Wacom tablets (Wacom IV protocol only, <tt/xf86Wacom.so/)
 <item>SummaSketch tablets (<tt/xf86Summa.so/)
 <item>Elographics touchscreen (<tt/xf86Elo.so/)
+<item>AceCad ADVANCEDigitizer (<tt/xf86AceCad.so/)
+<item>MicroTouch TouchPen (<tt/xf86MuTouch.so/)
+<item>SGI dial box (<tt/xf86Dial.so/)
 </itemize>
 
 To use a specific device, add the line
@@ -223,7 +224,7 @@ Bug reports should be sent to <it>XFree86@XFree86.org</it> or posted
 to the <it>comp.windows.x.i386unix</it> newsgroup.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.4 1998/02/26 20:11:26 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.6 1998/11/08 09:06:39 dawes Exp $
 
 
 

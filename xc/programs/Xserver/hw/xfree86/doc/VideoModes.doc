@@ -7,15 +7,15 @@
 
 
 
-			  XFree86 Video Timings HOWTO
+                          XFree86 Video Timings HOWTO
 
-		       Eric S. Raymond <esr@thyrsus.com>
+                       Eric S. Raymond <esr@thyrsus.com>
 
-			    Version 3.0, 8 Aug 1997
+                            Version 3.0, 8 Aug 1997
 
 
 
-				   Abstract
+                                   Abstract
 
      How to compose a mode line for your card/monitor combination under
      XFree86.  The XFree86 distribution now includes good facilities for
@@ -61,13 +61,13 @@ base monitor mode in most cases.  Unfortunately, XF86Setup(1) has some limita-
 tions; it only knows about standard video modes up to 1280x1024.  If you have a
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                   1
 
 
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                   2
 
 
 
@@ -90,7 +90,7 @@ ways to tweak the timing numbers to achieve particular effects.
 If you have xvidtune(1), you'll be able to test new modes on the fly, without
 modifying your X configuration files or even rebooting your X server.  Other-
 wise, XFree86 allows you to hot-key between different modes defined in Xconfig
-(see XFree86.man for details).	Use this capability to save yourself hassles!
+(see XFree86.man for details).  Use this capability to save yourself hassles!
 When you want to test a new mode, give it a unique mode label and add it to the
 end of your hot-key list.  Leave a known-good mode as the default to fall back
 on if the test mode doesn't work.
@@ -102,7 +102,7 @@ Knowing how the display works is essential to understanding what numbers to put
 in the various fields in the file Xconfig.  Those values are used in the lowest
 levels of controlling the display by the XFree86 server.
 
-The display generates a picture from a series of dots.	The dots are arranged
+The display generates a picture from a series of dots.  The dots are arranged
 from left to right to form lines.  The lines are arranged from top to bottom to
 form the picture.  The dots emit light when they are struck by the electron
 beam inside the display.  To make the beam strike each dot for an equal amount
@@ -121,7 +121,7 @@ second line is swept during one half-frame and the others are filled in in dur-
 ing a second half-frame.
 
 Starting the beam at the top left of the display is called the beginning of a
-frame.	The frame ends when the beam reaches the the top left corner again as
+frame.  The frame ends when the beam reaches the the top left corner again as
 it comes from the bottom right corner of the display.  A frame is made up of
 all of the lines the beam traced from the top of the display to the bottom.
 
@@ -133,14 +133,14 @@ all of the lines the beam traced from the top of the display to the bottom.
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                   3
 
 
 
 If the electron beam were on all of the time it was sweeping through the frame,
 all of the dots on the display would be illuminated.  There would be no black
 border around the edges of the display.  At the edges of the display the pic-
-ture would become distorted because the beam is hard to control there.	To
+ture would become distorted because the beam is hard to control there.  To
 reduce the distortion, the dots around the edges of the display are not illumi-
 nated by the beam even though the beam may be pointing at them.  The viewable
 area of the display is reduced this way.
@@ -164,7 +164,7 @@ the end of every frame.
 
 The display requires that there be short time periods both before and after the
 horizontal and vertical sync pulses so that the position of the electron beam
-can stabilize.	If the beam can't stabilize, the picture will not be steady.
+can stabilize.  If the beam can't stabilize, the picture will not be steady.
 
 In a later section, we'll come back to these basics with definitions, formulas
 and examples to help you use them.
@@ -173,7 +173,7 @@ and examples to help you use them.
 4.  Basic Things to Know about your Display and Adapter
 
 There are some fundamental things you need to know before hacking an Xconfig
-entry.	These are:
+entry.  These are:
 
    o your monitor's horizontal and vertical sync frequency options
 
@@ -199,7 +199,7 @@ manual.  The vertical sync frequency number is typically calibrated in Hz
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                   4
 
 
 
@@ -265,7 +265,7 @@ If you're using XFree86:
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                   5
 
 
 
@@ -273,26 +273,26 @@ XFree86 Video Timings HOWTO
      (**) stands for supplied, (--) stands for probed/default values
      (**) Mouse: type: MouseMan, device: /dev/ttyS1, baudrate: 9600
      Warning: The directory "/usr/andrew/X11fonts" does not exist.
-	      Entry deleted from font path.
+              Entry deleted from font path.
      (**) FontPath set to "/usr/lib/X11/fonts/misc/,/usr/lib/X11/fonts/75dpi/"
      (--) S3: card type: 386/486 localbus
-     (--) S3: chipset:	 924
-			 ---
-	 Chipset -- this is the exact chip type; an early mask of the 86C911
+     (--) S3: chipset:   924
+                         ---
+         Chipset -- this is the exact chip type; an early mask of the 86C911
 
      (--) S3: chipset driver: s3_generic
      (--) S3: videoram:  1024k
-			 -----
-	      Size of on-board frame-buffer RAM
+                         -----
+              Size of on-board frame-buffer RAM
 
-     (**) S3: clocks:  25.00  28.00  40.00   3.00  50.00  77.00  36.00	45.00
-     (**) S3: clocks:	0.00   0.00  79.00  31.00  94.00  65.00  75.00	71.00
-		       ------------------------------------------------------
-				   Possible driving frequencies in MHz
+     (**) S3: clocks:  25.00  28.00  40.00   3.00  50.00  77.00  36.00  45.00
+     (**) S3: clocks:   0.00   0.00  79.00  31.00  94.00  65.00  75.00  71.00
+                       ------------------------------------------------------
+                                   Possible driving frequencies in MHz
 
      (--) S3: Maximum allowed dot-clock: 110MHz
-					 ------
-					Bandwidth
+                                         ------
+                                        Bandwidth
      (**) S3: Mode "1024x768": mode clock =  79.000, clock used =  79.000
      (--) S3: Virtual resolution set to 1024x768
      (--) S3: Using a banksize of 64k, line width of 1024
@@ -303,13 +303,13 @@ XFree86 Video Timings HOWTO
 If you're using SGCS or X/Inside X:
 
      WGA: 86C911 (mem: 1024k clocks: 25 28 40 3 50 77 36 45 0 0 79 31 94 65 75 71)
-     ---  ------       -----	     --------------------------------------------
-      |     |		 |		   Possible driving frequencies in MHz
-      |     |		 +-- Size of on-board frame-buffer RAM
+     ---  ------       -----         --------------------------------------------
+      |     |            |                 Possible driving frequencies in MHz
+      |     |            +-- Size of on-board frame-buffer RAM
       |     +-- Chip type
       +-- Server type
 
-Note: do this with your machine unloaded (if at all possible).	Because X is an
+Note: do this with your machine unloaded (if at all possible).  Because X is an
 application, its timing loops can collide with disk activity, rendering the
 numbers above inaccurate.  Do it several times and watch for the numbers to
 stabilize; if they don't, start killing processes until they do.  SVr4 users:
@@ -321,7 +321,7 @@ this suppresses the timing loop and gives X an exact list of the clock values
 it can try.  Using the data from the example above:
 
      wga
-	  Clocks    25 28 40 3 50 77 36 45 0 0 79 31 94 65 75 71
+          Clocks    25 28 40 3 50 77 36 45 0 0 79 31 94 65 75 71
 
 
 
@@ -331,7 +331,7 @@ it can try.  Using the data from the example above:
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                   6
 
 
 
@@ -360,12 +360,12 @@ If it's not, look at the monitor's highest rated resolution.  As a rule of
 thumb, here's how to translate these into bandwidth estimates (and thus into
 rough upper bounds for the dot clock you can use):
 
-	  640x480	      25
-	  800x600	      36
-	  1024x768	 65
-	  1024x768 interlaced 45
-	  1280x1024	 110
-	  1600x1200	 185
+          640x480             25
+          800x600             36
+          1024x768       65
+          1024x768 interlaced 45
+          1280x1024      110
+          1600x1200      185
 
 BTW, there's nothing magic about this table; these numbers are just the lowest
 dot clocks per resolution in the standard XFree86 Modes database (except for
@@ -397,23 +397,23 @@ limit of your monitor's video bandwidth.  The following are examples:
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                   7
 
 
 
-	  Brand 		   Video Bandwidth
-	  ----------		   ---------------
-	  NEC 4D		   75Mhz
-	  Nano 907a	      50Mhz
-	  Nano 9080i		   60Mhz
-	  Mitsubishi HL6615	   110Mhz
-	  Mitsubishi Diamond Scan	100Mhz
-	  IDEK MF-5117		   65Mhz
-	  IOCOMM Thinksync-17 CM-7126	136Mhz
-	  HP D1188A	      100Mhz
-	  Philips SC-17AS		110Mhz
-	  Swan SW617		   85Mhz
-	  Viewsonic 21PS	   185Mhz
+          Brand                    Video Bandwidth
+          ----------               ---------------
+          NEC 4D                   75Mhz
+          Nano 907a           50Mhz
+          Nano 9080i               60Mhz
+          Mitsubishi HL6615        110Mhz
+          Mitsubishi Diamond Scan       100Mhz
+          IDEK MF-5117             65Mhz
+          IOCOMM Thinksync-17 CM-7126   136Mhz
+          HP D1188A           100Mhz
+          Philips SC-17AS               110Mhz
+          Swan SW617               85Mhz
+          Viewsonic 21PS           185Mhz
 
 
 Even low-end monitors usually aren't terribly bandwidth-constrained for their
@@ -433,26 +433,26 @@ you right away if this were so).
 4.2  What these control:
 
 The sync frequency ranges of your monitor, together with your video adapter's
-dot clock, determine the ultimate resolution that you can use.	But it's up to
+dot clock, determine the ultimate resolution that you can use.  But it's up to
 the driver to tap the potential of your hardware.  A superior hardware combina-
 tion without an equally competent device driver is a waste of money.  On the
 other hand, with a versatile device driver but less capable hardware, you can
-push the hardware's envelope a little.	This is the design philosophy of
+push the hardware's envelope a little.  This is the design philosophy of
 XFree86.
 
 
 5.  Interpreting the Basic Specifications
 
 This section explains what the specifications above mean, and some other things
-you'll need to know.  First, some definitions.	Next to each in parens is the
+you'll need to know.  First, some definitions.  Next to each in parens is the
 variable name we'll use for it when doing calculations
 
       horizontal sync frequency (HSF)
-	    Horizontal scans per second (see above).
+            Horizontal scans per second (see above).
 
       vertical sync frequency (VSF)
-	    Vertical scans per second (see above).  Mainly important as the
-	    upper limit on your refresh rate.
+            Vertical scans per second (see above).  Mainly important as the
+            upper limit on your refresh rate.
 
 
 
@@ -463,53 +463,53 @@ variable name we'll use for it when doing calculations
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                   8
 
 
 
       dot clock (DCF)
-	    More formally, `driving clock frequency'; The frequency of the
-	    crystal or VCO on your adaptor --- the maximum dots-per-second it
-	    can emit.
+            More formally, `driving clock frequency'; The frequency of the
+            crystal or VCO on your adaptor --- the maximum dots-per-second it
+            can emit.
 
       video bandwidth (VB)
-	    The highest frequency you can feed into your monitor's video input
-	    and still expect to see anything discernible. If your adaptor pro-
-	    duces an alternating on/off pattern, its lowest frequency is half
-	    the DCF, so in theory bandwidth starts making sense at DCF/2. For
-	    tolerably crisp display of fine details in the video image, how-
-	    ever, you don't want it much below your highest DCF, and preferably
-	    higher.
+            The highest frequency you can feed into your monitor's video input
+            and still expect to see anything discernible. If your adaptor pro-
+            duces an alternating on/off pattern, its lowest frequency is half
+            the DCF, so in theory bandwidth starts making sense at DCF/2. For
+            tolerably crisp display of fine details in the video image, how-
+            ever, you don't want it much below your highest DCF, and preferably
+            higher.
 
       frame length (HFL, VFL)
-	    Horizontal frame length (HFL) is the number of dot-clock ticks
-	    needed for your monitor's electron gun to scan one horizontal line,
-	    including the inactive left and right borders.  Vertical frame
-	    length (VFL) is the number of scan lines in the entire image,
-	    including the inactive top and bottom borders.
+            Horizontal frame length (HFL) is the number of dot-clock ticks
+            needed for your monitor's electron gun to scan one horizontal line,
+            including the inactive left and right borders.  Vertical frame
+            length (VFL) is the number of scan lines in the entire image,
+            including the inactive top and bottom borders.
 
       screen refresh rate (RR)
-	    The number of times per second your screen is repainted (this is
-	    also called "frame rate").	Higher frequencies are better, as they
-	    reduce flicker.  60Hz is good, VESA-standard 72Hz is better.  Com-
-	    pute it as
+            The number of times per second your screen is repainted (this is
+            also called "frame rate").  Higher frequencies are better, as they
+            reduce flicker.  60Hz is good, VESA-standard 72Hz is better.  Com-
+            pute it as
 
-		      RR = DCF / (HFL * VFL)
+                      RR = DCF / (HFL * VFL)
 
-	    Note that the product in the denominator is not the same as the
-	    monitor's visible resolution, but typically somewhat larger.  We'll
-	    get to the details of this below.
+            Note that the product in the denominator is not the same as the
+            monitor's visible resolution, but typically somewhat larger.  We'll
+            get to the details of this below.
 
-	    The rates for which interlaced modes are usually specified (like
-	    87Hz interlaced) are actually the half-frame rates: an entire
-	    screen seems to have about that flicker frequency for typical dis-
-	    plays, but every single line is refreshed only half as often.
+            The rates for which interlaced modes are usually specified (like
+            87Hz interlaced) are actually the half-frame rates: an entire
+            screen seems to have about that flicker frequency for typical dis-
+            plays, but every single line is refreshed only half as often.
 
-	    For calculation purposes we reckon an interlaced display at its
-	    full-frame (refresh) rate, i.e. 43.5Hz. The quality of an inter-
-	    laced mode is better than that of a non-interlaced mode with the
-	    same full-frame rate, but definitely worse then the non-interlaced
-	    one corresponding to the half-frame rate.
+            For calculation purposes we reckon an interlaced display at its
+            full-frame (refresh) rate, i.e. 43.5Hz. The quality of an inter-
+            laced mode is better than that of a non-interlaced mode with the
+            same full-frame rate, but definitely worse then the non-interlaced
+            one corresponding to the half-frame rate.
 
 5.1  About Bandwidth:
 
@@ -517,7 +517,7 @@ Monitor makers like to advertise high bandwidth because it constrains the
 sharpness of intensity and color changes on the screen.  A high bandwidth means
 smaller visible details.
 
-Your monitor uses electronic signals to present an image to your eyes.	Such
+Your monitor uses electronic signals to present an image to your eyes.  Such
 signals always come in in wave form once they are converted into analog form
 from digitized form.  They can be considered as combinations of many simpler
 wave forms each one of which has a fixed frequency, many of them are in the Mhz
@@ -529,7 +529,7 @@ wave forms each one of which has a fixed frequency, many of them are in the Mhz
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                   9
 
 
 
@@ -549,26 +549,26 @@ enables you to "see" the whole image.
 
 Here are some pictures to help:
 
-	  _______________________
-	 |			 |     The horizontal sync frequency
-	 |->->->->->->->->->->-> |     is the number of times per
-	 |			)|     second that the monitor's
-	 |<-----<-----<-----<--- |     electron beam can trace
-	 |			 |     a pattern like this
-	 |			 |
-	 |			 |
-	 |			 |
-	 |_______________________|
-	  _______________________
-	 |	  ^		 |     The vertical sync frequency
-	 |	 ^ |		 |     is the number of times per
-	 |	 | v		 |     second that the monitor's
-	 |	 ^ |		 |     electron beam can trace
-	 |	 | |		 |     a pattern like this
-	 |	 ^ |		 |
-	 |	 | v		 |
-	 |	 ^ |		 |
-	 |_______|_v_____________|
+          _______________________
+         |                       |     The horizontal sync frequency
+         |->->->->->->->->->->-> |     is the number of times per
+         |                      )|     second that the monitor's
+         |<-----<-----<-----<--- |     electron beam can trace
+         |                       |     a pattern like this
+         |                       |
+         |                       |
+         |                       |
+         |_______________________|
+          _______________________
+         |        ^              |     The vertical sync frequency
+         |       ^ |             |     is the number of times per
+         |       | v             |     second that the monitor's
+         |       ^ |             |     electron beam can trace
+         |       | |             |     a pattern like this
+         |       ^ |             |
+         |       | v             |
+         |       ^ |             |
+         |_______|_v_____________|
 
 Remember that the actual raster scan is a very tight zigzag pattern; that is,
 the beam moves left-right and at the same time up-down.
@@ -576,10 +576,10 @@ the beam moves left-right and at the same time up-down.
 Now we can see how the dot clock and frame size relates to refresh rate.  By
 definition, one hertz (hz) is one cycle per second.  So, if your horizontal
 frame length is HFL and your vertical frame length is VFL, then to cover the
-entire screen takes (HFL * VFL) ticks.	Since your card emits DCF ticks per
+entire screen takes (HFL * VFL) ticks.  Since your card emits DCF ticks per
 second by definition, then obviously your monitor's electron gun(s) can sweep
 the screen from left to right and back and from bottom to top and back DCF /
-(HFL * VFL) times/sec.	This is your screen's refresh rate, because it's how
+(HFL * VFL) times/sec.  This is your screen's refresh rate, because it's how
 many times your screen can be updated (thus refreshed) per second!
 
 You need to understand this concept to design a configuration which trades off
@@ -595,32 +595,32 @@ For those of you who handle visuals better than text, here is one:
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  10
 
 
 
-	     RR 				     VB
-	      |   min HSF		      max HSF |
-	      |    |		 R1	   R2  |      |
+             RR                                      VB
+              |   min HSF                     max HSF |
+              |    |             R1        R2  |      |
      max VSF -+----|------------/----------/---|------+----- max VSF
-	      |    |:::::::::::/::::::::::/:::::\     |
-	      |    \::::::::::/::::::::::/:::::::\    |
-	      |     |::::::::/::::::::::/:::::::::|   |
-	      |     |:::::::/::::::::::/::::::::::\   |
-	      |     \::::::/::::::::::/::::::::::::\  |
-	      |      \::::/::::::::::/::::::::::::::| |
-	      |       |::/::::::::::/:::::::::::::::| |
-	      |        \/::::::::::/:::::::::::::::::\|
-	      |        /\:::::::::/:::::::::::::::::::|
-	      |       /  \:::::::/::::::::::::::::::::|\
-	      |      /	  |:::::/:::::::::::::::::::::| |
-	      |     /	  \::::/::::::::::::::::::::::| \
+              |    |:::::::::::/::::::::::/:::::\     |
+              |    \::::::::::/::::::::::/:::::::\    |
+              |     |::::::::/::::::::::/:::::::::|   |
+              |     |:::::::/::::::::::/::::::::::\   |
+              |     \::::::/::::::::::/::::::::::::\  |
+              |      \::::/::::::::::/::::::::::::::| |
+              |       |::/::::::::::/:::::::::::::::| |
+              |        \/::::::::::/:::::::::::::::::\|
+              |        /\:::::::::/:::::::::::::::::::|
+              |       /  \:::::::/::::::::::::::::::::|\
+              |      /    |:::::/:::::::::::::::::::::| |
+              |     /     \::::/::::::::::::::::::::::| \
      min VSF -+----/-------\--/-----------------------|--\--- min VSF
-	      |   /	    \/			      |   \
-	      +--/----------/\------------------------+----\- DCF
-		R1	  R2  \ 		      |     \
-			       min HSF		      |    max HSF
-						      VB
+              |   /         \/                        |   \
+              +--/----------/\------------------------+----\- DCF
+                R1        R2  \                       |     \
+                               min HSF                |    max HSF
+                                                      VB
 
 This is a generic monitor mode diagram.  The x axis of the diagram shows the
 clock rate (DCF), the y axis represents the refresh rate (RR). The filled
@@ -648,7 +648,7 @@ zontal sync frequency.
 
 Another way to look at the formula we derived above is
 
-	  DCF = RR * HFL * VFL
+          DCF = RR * HFL * VFL
 
 
 That is, your dot clock is fixed.  You can use those dots per second to buy
@@ -661,7 +661,7 @@ either refresh rate, horizontal resolution, or vertical resolution.  If one of
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  11
 
 
 
@@ -675,7 +675,7 @@ it.
 In choosing your settings, remember: if you set RR too low, you will get mugged
 by screen flicker.
 
-You probably do not want to pull your refresh rate below 60Hz.	This is the
+You probably do not want to pull your refresh rate below 60Hz.  This is the
 flicker rate of fluorescent lights; if you're sensitive to those, you need to
 hang with 72Hz, the VESA ergonomic standard.
 
@@ -712,9 +712,9 @@ colors, white and black with no shades of gray in between.
 
 For 256-color displays, a byte of video memory is required for each visible dot
 to be shown.  This byte contains the information that determines what mix of
-red, green, and blue is generated for its dot.	To get the amount of memory
+red, green, and blue is generated for its dot.  To get the amount of memory
 required, multiply the number of visible dots per line by the number of visible
-lines.	For a display with a resolution of 800x600, this would be 800 x 600 =
+lines.  For a display with a resolution of 800x600, this would be 800 x 600 =
 480,000, which is the number of visible dots on the display.  This is also, at
 one byte per dot, the number of bytes of video memory that are necessary on
 your adapter card.
@@ -727,7 +727,7 @@ your adapter card.
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  12
 
 
 
@@ -737,7 +737,7 @@ for virtual-screen panning.
 
 However, if you only have 512K on board, then you can't use this resolution.
 Even if you have a good monitor, without enough video RAM, you can't take
-advantage of your monitor's potential.	On the other hand, if your SVGA has one
+advantage of your monitor's potential.  On the other hand, if your SVGA has one
 meg, but your monitor can display at most 800x600, then high resolution is
 beyond your reach anyway (see Using Interlaced Modes (section 12., page 19) for
 a possible remedy).
@@ -768,7 +768,7 @@ your monitor has a 55KHz horizontal scan frequency.  The quantity (DCF / HSF)
 is then 1181 (65MHz = 65000KHz; 65000/55 = 1181).
 
 Now for our first bit of black magic.  You need to round this figure to the
-nearest multiple of 8.	This has to do with the VGA hardware controller used by
+nearest multiple of 8.  This has to do with the VGA hardware controller used by
 SVGA and S3 cards; it uses an 8-bit register, left-shifted 3 bits, for what's
 really an 11-bit quantity.  Other card types such as ATI 8514/A may not have
 this requirement, but we don't know and the correction can't hurt.  So round
@@ -783,7 +783,7 @@ As a rule of thumb, 80% of the horizontal frame length is available for hori-
 zontal resolution, the visible part of the horizontal scan line (this allows,
 roughly, for borders and sweepback time -- that is, the time required for the
 beam to move from the right screen edge to the left edge of the next raster
-line).	In this example, that's 944 ticks.
+line).  In this example, that's 944 ticks.
 
 
 
@@ -793,7 +793,7 @@ line).	In this example, that's 944 ticks.
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  13
 
 
 
@@ -809,7 +809,7 @@ nient, you just multiply the diagonal by by 0.8 to get width and 0.6 to get
 height.
 
 So, HFL=1176 and VFL=743.  Dividing 65MHz by the product of the two gives us a
-nice, healthy 74.4Hz refresh rate.  Excellent!	Better than VESA standard!  And
+nice, healthy 74.4Hz refresh rate.  Excellent!  Better than VESA standard!  And
 you got 944x708 to boot, more than the 800 by 600 you were probably expecting.
 Not bad at all!
 
@@ -823,7 +823,7 @@ driving Your Monitor (section 11., page 18) for more general discussion of this
 issue. )
 
 So far, most of this is simple arithmetic and basic facts about raster dis-
-plays.	Hardly any black magic at all!
+plays.  Hardly any black magic at all!
 
 
 9.  Black Magic and Sync Pulses
@@ -838,7 +838,7 @@ of the monitor.  The HSF and VSF you've pulled off the spec sheet are nominal,
 approximate maximum sync frequencies.  The sync pulse in the signal from the
 adapter card tells the monitor how fast to actually run.
 
-Recall the two pictures above?	Only part of the time required for raster-scan-
+Recall the two pictures above?  Only part of the time required for raster-scan-
 ning a frame is used for displaying viewable image (ie. your resolution).
 
 9.1  Horizontal Sync:
@@ -859,28 +859,28 @@ at the same instant as shown below:
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  14
 
 
 
        |___ __ __ __ __ __ __ __ __ __ __ __ __
-       |_ _ _ _ _ _ _ _ _ _ _ _ 	       |
+       |_ _ _ _ _ _ _ _ _ _ _ _                |
        |_______________________|_______________|_____
-       0		       ^	       ^     unit: ticks
-			       |   ^	   ^   |
-			       HR  |	   |  HFL
-			       |   |<----->|   |
-			       |<->|  HSP  |<->|
-			       HGT1	    HGT2
+       0                       ^               ^     unit: ticks
+                               |   ^       ^   |
+                               HR  |       |  HFL
+                               |   |<----->|   |
+                               |<->|  HSP  |<->|
+                               HGT1         HGT2
 
 Now, we would like to place a sync pulse of length HSP as shown above, ie,
 between the end of clock ticks for display data and the end of clock ticks for
 the entire frame.  Why so?  because if we can achieve this, then your screen
-image won't shift to the right or to the left.	It will be where it supposed to
+image won't shift to the right or to the left.  It will be where it supposed to
 be on the screen, covering squarely the monitor's viewable area.
 
 Furthermore, we want about 30 ticks of "guard time" on either side of the sync
-pulse.	This is represented by HGT1 and HGT2.  In a typical configuration HGT1
+pulse.  This is represented by HGT1 and HGT2.  In a typical configuration HGT1
 != HGT2, but if you're building a configuration from scratch, you want to start
 your experimentation with them equal (that is, with the sync pulse centered).
 
@@ -908,14 +908,14 @@ Some makers like to quote their horizontal framing parameters as timings rather
 than dot widths.  You may see the following terms:
 
       active time (HAT)
-	    Corresponds to HR, but in milliseconds.  HAT * DCF = HR.
+            Corresponds to HR, but in milliseconds.  HAT * DCF = HR.
 
       blanking time (HBT)
-	    Corresponds to (HFL - HR), but in milliseconds.  HBT * DCF = (HFL -
-	    HR).
+            Corresponds to (HFL - HR), but in milliseconds.  HBT * DCF = (HFL -
+            HR).
 
       front porch (HFP)
-	    This is just HGT1.
+            This is just HGT1.
 
 
 
@@ -925,15 +925,15 @@ than dot widths.  You may see the following terms:
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  15
 
 
 
       sync time
-	    This is just HSP.
+            This is just HSP.
 
       back porch (HBP)
-	    This is just HGT2.
+            This is just HGT2.
 
 9.2  Vertical Sync:
 
@@ -976,13 +976,13 @@ Screen refresh rate = 65Mhz/(737*1232)=71.6 Hz.  This is still excellent.
 
 Figuring the vertical sync pulse layout is similar:
 
-	|___ __ __ __ __ __ __ __ __ __ __ __ __
-	|_ _ _ _ _ _ _ _ _ _ _ _		|
-	|_______________________|_______________|_____
-	0		       VR	       VFL     unit: ticks
-				^   ^	    ^
-				|   |	    |
-				|<->|<----->|
+        |___ __ __ __ __ __ __ __ __ __ __ __ __
+        |_ _ _ _ _ _ _ _ _ _ _ _                |
+        |_______________________|_______________|_____
+        0                      VR              VFL     unit: ticks
+                                ^   ^       ^
+                                |   |       |
+                                |<->|<----->|
 
 
 
@@ -991,11 +991,11 @@ Figuring the vertical sync pulse layout is similar:
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  16
 
 
 
-				 VGT	VSP
+                                 VGT    VSP
 
 We start the sync pulse just past the end of the vertical display data ticks.
 VGT is the vertical guard time required for the sync pulse.  Most monitors are
@@ -1008,28 +1008,28 @@ tick is the time for tracing a complete HORIZONTAL frame, therefore in our
 example, it is 1232/65Mhz=18.95us.
 
 Experience shows that a vertical sync pulse should be in the range of 50us and
-300us.	As an example let's use 150us, which translates into 8 vertical clock
+300us.  As an example let's use 150us, which translates into 8 vertical clock
 ticks (150us/18.95us~8).
 
 Some makers like to quote their vertical framing parameters as timings rather
 than dot widths.  You may see the following terms:
 
       active time (VAT)
-	    Corresponds to VR, but in milliseconds.  VAT * VSF = VR.
+            Corresponds to VR, but in milliseconds.  VAT * VSF = VR.
 
       blanking time (VBT)
-	    Corresponds to (VFL - VR), but in milliseconds.  VBT * VSF = (VFL -
-	    VR).
+            Corresponds to (VFL - VR), but in milliseconds.  VBT * VSF = (VFL -
+            VR).
 
       front porch (VFP)
-	    This is just VGT.
+            This is just VGT.
 
       sync time
-	    This is just VSP.
+            This is just VSP.
 
       back porch (VBP)
-	    This is like a second guard time after the vertical sync pulse.  It
-	    is often zero.
+            This is like a second guard time after the vertical sync pulse.  It
+            is often zero.
 
 
 10.  Putting it All Together
@@ -1057,7 +1057,7 @@ The horizontal section consists of four fields which specify how each
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  17
 
 
 
@@ -1069,17 +1069,17 @@ which dot the horizontal sync pulse will end.  The fourth field specifies the
 total horizontal frame length (HFL).
 
 The vertical section also contains four fields.  The first field contains the
-number of visible lines which will appear on the display (VR).	The second
+number of visible lines which will appear on the display (VR).  The second
 field indicates the line number at which the vertical sync pulse will begin.
 The third field specifies the line number at which the vertical sync pulse will
 end.  The fourth field contains the total vertical frame length (VFL).
 
 Example:
 
-	  #Modename    clock  horizontal timing  vertical timing
+          #Modename    clock  horizontal timing  vertical timing
 
-	  "752x564"	40    752 784  944 1088  564 567 569 611
-		     44.5  752 792  976 1240  564 567 570 600
+          "752x564"     40    752 784  944 1088  564 567 569 611
+                     44.5  752 792  976 1240  564 567 570 600
 
 
 (Note: stock X11R5 doesn't support fractional dot clocks.)
@@ -1123,7 +1123,7 @@ that there are 630 total lines being used.
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  18
 
 
 
@@ -1150,12 +1150,12 @@ done.
 11.  Overdriving Your Monitor
 
 You should absolutely not try exceeding your monitor's scan rates if it's a
-fixed-frequency type.  You can smoke your hardware doing this!	There are
+fixed-frequency type.  You can smoke your hardware doing this!  There are
 potentially subtler problems with overdriving a multisync monitor which you
 should be aware of.
 
 Having a pixel clock higher than the monitor's maximum bandwidth is rather
-harmless, in contrast.	(Note: the theoretical limit of discernible features is
+harmless, in contrast.  (Note: the theoretical limit of discernible features is
 reached when the pixel clock reaches double the monitor's bandwidth.  This is a
 straightforward application of Nyquist's Theorem: consider the pixels as a spa-
 tially distributed series of samples of the drive signals and you'll see why.)
@@ -1189,7 +1189,7 @@ cares about such problems) related to the maximum pixel frequency of the board.
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  19
 
 
 
@@ -1255,7 +1255,7 @@ needs to support a 90Hz frame rate if the mode you specified looks like a 45Hz
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  20
 
 
 
@@ -1287,7 +1287,7 @@ Q. The example you gave is not a standard screen size, can I use it?
 
 A. Why not?  There is NO reason whatsoever why you have to use 640x480,
 800x600, or even 1024x768.  The XFree86 servers let you configure your hardware
-with a lot of freedom.	It usually takes two to three tries to come up the
+with a lot of freedom.  It usually takes two to three tries to come up the
 right one.  The important thing to shoot for is high refresh rate with reason-
 able viewing area. not high resolution at the price of eye-tearing flicker!
 
@@ -1295,7 +1295,7 @@ Q. It this the only resolution given the 65Mhz dot clock and 55Khz HSF?
 
 A. Absolutely not!  You are encouraged to follow the general procedure and do
 some trial-and-error to come up a setting that's really to your liking.  Exper-
-imenting with this can be lots of fun.	Most settings may just give you nasty
+imenting with this can be lots of fun.  Most settings may just give you nasty
 video hash, but in practice a modern multi-sync monitor is usually not damaged
 easily. Be sure though, that your monitor can support the frame rates of your
 mode before using it for longer times.
@@ -1308,7 +1308,7 @@ Q. You just mentioned two standard resolutions. In Xconfig, there are many
 standard resolutions available, can you tell me whether there's any point in
 tinkering with timings?
 
-A. Absolutely!	Take, for example, the "standard" 640x480 listed in the current
+A. Absolutely!  Take, for example, the "standard" 640x480 listed in the current
 Xconfig.  It employs 25Mhz driving frequency, frame lengths are 800 and 525 =>
 refresh rate ~ 59.5Hz. Not too bad.  But 28Mhz is a commonly available driving
 frequency from many SVGA boards.  If we use it to drive 640x480, following the
@@ -1321,7 +1321,7 @@ procedure we discussed above, you would get frame lengths like 812 and 505.
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  21
 
 
 
@@ -1351,11 +1351,11 @@ to fix them.
 
 You move the image by changing the sync pulse timing.  You scale it by changing
 the frame length (you need to move the sync pulse to keep it in the same rela-
-tive position, otherwise scaling will move the image as well).	Here are some
+tive position, otherwise scaling will move the image as well).  Here are some
 more specific recipes:
 
-The horizontal and vertical positions are independent.	That is, moving the
-image horizontally doesn't affect placement vertically, or vice-versa.	How-
+The horizontal and vertical positions are independent.  That is, moving the
+image horizontally doesn't affect placement vertically, or vice-versa.  How-
 ever, the same is not quite true of scaling.  While changing the horizontal
 size does nothing to the vertical size or vice versa, the total change in both
 may be limited.  In particular, if your image is too large in both dimensions
@@ -1387,7 +1387,7 @@ If the image is shifted up (lower border too large, you want to move the image
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  22
 
 
 
@@ -1402,7 +1402,7 @@ file, possibly a lower-speed one is being activated by mistake.
 14.4  The image is too wide (too narrow) horizontally
 
 To fix this, increase (decrease) the horizontal frame length.  That is, change
-the fourth number in the first timing section.	To avoid moving the image, also
+the fourth number in the first timing section.  To avoid moving the image, also
 move the sync pulse (second and third numbers) half as far, to keep it in the
 same relative position.
 
@@ -1453,7 +1453,7 @@ Here is a copy of modeplot:
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  23
 
 
 
@@ -1463,7 +1463,7 @@ XFree86 Video Timings HOWTO
      #
      # Do `modeplot -?' to see the control options.
      #
-     # ($Id: VideoModes.doc,v 1.1.1.3 1998/03/08 09:09:39 veego Exp $)
+     # ($Id: VideoModes.doc,v 1.1.1.4 1998/11/23 15:38:02 veego Exp $)
 
      # Monitor description. Bandwidth in MHz, horizontal frequencies in kHz
      # and vertical frequencies in Hz.
@@ -1478,22 +1478,22 @@ XFree86 Video Timings HOWTO
 
      while [ "$1" != "" ]
      do
-	  case $1 in
-	  -t) TITLE="$2"; shift;;
-	  -b) BANDWIDTH="$2"; shift;;
-	  -h) MINHSF="$2" MAXHSF="$3"; shift; shift;;
-	  -v) MINVSF="$2" MAXVSF="$3"; shift; shift;;
-	  -a) ASPECT="$2"; shift;;
-	  -g) GNUOPTS="$2"; shift;;
-	  -?) cat <<EOF
+          case $1 in
+          -t) TITLE="$2"; shift;;
+          -b) BANDWIDTH="$2"; shift;;
+          -h) MINHSF="$2" MAXHSF="$3"; shift; shift;;
+          -v) MINVSF="$2" MAXVSF="$3"; shift; shift;;
+          -a) ASPECT="$2"; shift;;
+          -g) GNUOPTS="$2"; shift;;
+          -?) cat <<EOF
      modeplot control switches:
 
-     -t "<description>"  name of monitor	    defaults to "Viewsonic 21PS"
-     -b <nn>		 bandwidth in MHz	    defaults to 185
-     -h <min> <max>	 min & max HSF (kHz)	    defaults to 31 85
-     -v <min> <max>	 min & max VSF (Hz)	    defaults to 50 160
-     -a <aspect ratio>	 aspect ratio		    defaults to 4/3
-     -g "<options>"	 pass options to gnuplot
+     -t "<description>"  name of monitor            defaults to "Viewsonic 21PS"
+     -b <nn>             bandwidth in MHz           defaults to 185
+     -h <min> <max>      min & max HSF (kHz)        defaults to 31 85
+     -v <min> <max>      min & max VSF (Hz)         defaults to 50 160
+     -a <aspect ratio>   aspect ratio               defaults to 4/3
+     -g "<options>"      pass options to gnuplot
 
      The -b, -h and -v options are required, -a, -t, -g optional.  You can
      use -g to pass a device type to gnuplot so that (for example) modeplot's
@@ -1502,11 +1502,11 @@ XFree86 Video Timings HOWTO
      The modeplot tool was created by Eric S. Raymond <esr@thyrsus.com> based on
      analysis and scratch code by Martin Lottermoser <Martin.Lottermoser@mch.sni.de>
 
-     This is modeplot $Revision: 1.1.1.3 $
+     This is modeplot $Revision: 1.1.1.4 $
      EOF
-	       exit;;
-	  esac
-	  shift
+               exit;;
+          esac
+          shift
      done
 
      gnuplot $GNUOPTS <<EOF
@@ -1519,13 +1519,13 @@ XFree86 Video Timings HOWTO
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  24
 
 
 
      # Magic numbers.  Unfortunately, the plot is quite sensitive to changes in
-     # these, and they may fail to represent reality on some monitors.	We need
-     # to fix values to get even an approximation of the mode diagram.	These come
+     # these, and they may fail to represent reality on some monitors.  We need
+     # to fix values to get even an approximation of the mode diagram.  These come
      # from looking at lots of values in the ModeDB database.
      F1 = 1.30 # multiplier to convert horizontal resolution to frame width
      F2 = 1.05 # multiplier to convert vertical resolution to frame height
@@ -1585,7 +1585,7 @@ description. These assumptions are:
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  25
 
 
 
@@ -1597,8 +1597,8 @@ XFree86 Video Timings HOWTO
       fixed multiples of horizontal and vertical resolutions, respectively:
 
 
-		HFL = F1 * HR
-		VFL = F2 * VR
+                HFL = F1 * HR
+                VFL = F2 * VR
 
 As a rough guide, take F1 = 1.30 and F2 = 1.05 (see frame (section 8., page 12)
 "Computing Frame Sizes").
@@ -1611,24 +1611,24 @@ derived as follows.
 The refresh rate is equal to the clock rate divided by the product of the frame
 sizes:
 
-	  RR = DCF / (HFL * VFL)	(*)
+          RR = DCF / (HFL * VFL)        (*)
 
 On the other hand, the horizontal frame length is equal to the clock rate
 divided by the horizontal sync frequency:
 
-	  HFL = DCF / HSF		(**)
+          HFL = DCF / HSF               (**)
 
 VFL can be reduced to HFL be means of the two assumptions above:
 
-	  VFL = F2 * VR
-	      = F2 * (HR / AR)
-	      = (F2/F1) * HFL / AR (***)
+          VFL = F2 * VR
+              = F2 * (HR / AR)
+              = (F2/F1) * HFL / AR (***)
 
 Inserting (**) and (***) into (*) we obtain:
 
-	  RR = DCF / ((F2/F1) * HFL**2 / AR)
-	     = (F1/F2) * AR * DCF * (HSF/DCF)**2
-	     = (F1/F2) * AR * HSF**2 / DCF
+          RR = DCF / ((F2/F1) * HFL**2 / AR)
+             = (F1/F2) * AR * DCF * (HSF/DCF)**2
+             = (F1/F2) * AR * HSF**2 / DCF
 
 For fixed HSF, F1, F2 and AR, this is a hyperbola in our diagram.  Drawing two
 such curves for minimum and maximum horizontal sync frequencies we have
@@ -1637,7 +1637,7 @@ obtained the two remaining boundaries of the permitted region.
 The straight lines crossing the capability region represent particular resolu-
 tions. This is based on (*) and the second assumption:
 
-	  RR = DCF / (HFL * VFL) = DCF / (F1 * HR * F2 * VR)
+          RR = DCF / (HFL * VFL) = DCF / (F1 * HR * F2 * VR)
 
 By drawing such lines for all resolutions one is interested in, one can immedi-
 ately read off the possible relations between resolution, clock rate and
@@ -1651,14 +1651,14 @@ depend on monitor properties, but they do depend on the second assumption.
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  26
 
 
 
 The modeplot tool provides you with an easy way to do this.  Do modeplot -? to
 see its control options. A typical invocation looks like this:
 
-	  modeplot -t "Swan SW617" -b 85 -v 50 90 -h 31 58
+          modeplot -t "Swan SW617" -b 85 -v 50 90 -h 31 58
 
 The -b option specifies video bandwidth; -v and -h set horizontal and vertical
 sync frequency ranges.
@@ -1717,7 +1717,7 @@ Martin's original gnuplot code for one case.
 
 
 
-XFree86 Video Timings HOWTO
+XFree86 Video Timings HOWTO                                                  27
 
 
 
@@ -1787,7 +1787,7 @@ XFree86 Video Timings HOWTO
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
@@ -1843,8 +1843,8 @@ XFree86 Video Timings HOWTO
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/VideoModes.doc,v 3.14.2.2 1998/02/20 23:14:34 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/VideoModes.doc,v 3.14.2.4 1998/11/14 06:47:07 dawes Exp $

@@ -1,5 +1,5 @@
 XCOMM platform:  $TOG: linux.cf /main/36 1997/06/16 22:21:03 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.12 1998/03/01 01:57:10 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.16 1998/11/08 11:21:49 hohndel Exp $
 
 #ifndef LinuxElfDefault
 #define LinuxElfDefault		YES
@@ -40,7 +40,7 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.12 1998/03/01 01:57:10
 
 /* Set some defaults for the Default* values in case imake doesn't find them */
 #ifndef DefaultLinuxCLibMajorVersion
-#ifdef AlphaArchitecture
+#if defined(AlphaArchitecture) || defined(PowerPCArchitecture)
 #define DefaultLinuxCLibMajorVersion	6
 #else
 #define DefaultLinuxCLibMajorVersion	5
@@ -259,6 +259,14 @@ XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 #define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
 #endif /* Mc68020Architecture */
 
+#ifdef PowerPCArchitecture
+#define DefaultCCOptions        -fsigned-char
+#define OptimizedCDebugFlags	-O2
+#define LinuxMachineDefines 	-D__powerpc__
+#define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME -DPART_NET
+#define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+#endif /* PowerPCArchitecture */
+
 #define StandardDefines		-Dlinux LinuxMachineDefines LinuxSourceDefines
 
 #if UseElfFormat
@@ -272,7 +280,13 @@ XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 #else
 #define ServerExtraSysLibs	/**/
 #endif
+
+#if HasDECnet
+#define ConnectionFlags		-DUNIXCONN -DTCPCONN -DDNETCONN
+#define ExtraLibraries		-ldnet
+#else
 #define ConnectionFlags		-DUNIXCONN -DTCPCONN
+#endif
 
 /* Some of these man page defaults are overriden in the above OS sections */
 #ifndef ManSuffix

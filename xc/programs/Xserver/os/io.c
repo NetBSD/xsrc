@@ -46,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: io.c /main/72 1996/12/27 15:40:56 rws $ */
-/* $XFree86: xc/programs/Xserver/os/io.c,v 3.15 1997/01/18 06:58:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/io.c,v 3.15.2.1 1998/10/20 20:51:29 hohndel Exp $ */
 /*****************************************************************
  * i/o functions
  *
@@ -84,6 +84,10 @@ extern int errno;
 #ifdef LBX
 #include "lbxserve.h"
 #endif
+
+/* added by raphael */
+#define ffs mffs
+extern int mffs(long);
 
 CallbackListPtr       ReplyCallback;
 CallbackListPtr       FlushCallback;
@@ -967,7 +971,8 @@ FlushClient(who, oc, extraBuf, extraCount)
 void
 FlushAllOutput()
 {
-    register int index, base, mask;
+    register int index, base;
+    register fd_mask mask; /* raphael */
     OsCommPtr oc;
     register ClientPtr client;
     Bool newoutput = NewOutputPending;

@@ -3,10 +3,9 @@ XCOMM $XConsortium: Imakefile /main/1 1996/09/21 11:17:58 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/sgml/Imakefile,v 3.3.2.4 1997/07/27 02:41:08 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/doc/sgml/Imakefile,v 3.3.2.5 1998/11/04 08:01:40 hohndel Exp $
 
 #include <Server.tmpl>
-
 #include <lnxdoc.rules>
 
 #if (defined(BSD386Architecture) || BuildAllDocs) && 0
@@ -74,11 +73,15 @@ LinuxDocReadmeTarget(S3V)
 LinuxDocReadmeTarget(SiS)
 LinuxDocReadmeTarget(W32)
 LinuxDocReadmeTarget(WstDig)
-LinuxDocReadmeTarget(agx)
+LinuxDocReadmeTarget(apm)
 LinuxDocReadmeTarget(ark)
+LinuxDocReadmeTarget(agx)
 LinuxDocReadmeTarget(ati)
 LinuxDocReadmeTarget(chips)
 LinuxDocReadmeTarget(cirrus)
+LinuxDocReadmeTarget(epson)
+LinuxDocReadmeTarget(mouse)
+LinuxDocReadmeTarget(rendition)
 LinuxDocReadmeTarget(trident)
 LinuxDocReadmeTarget(tseng)
 LinuxDocReadmeTarget(fbdev)
@@ -96,9 +99,7 @@ LinuxDocTarget(DocIndex)
 LinuxDocReadmeTarget(LinkKit)
 LinuxDocReadmeTarget(clkprog)
 LinuxDocTarget(xinput)
-#if 0
 LinuxDocTargetLong(VidModes.sgml,VideoModes.doc,VideoModes)
-#endif
 LinuxDocTargetLong(VGADriv.sgml,VGADriver.Doc,VGADriver)
 
 LinkSourceFile(Bsdi.sgml,$(XF86SRC)/doc/sgml)
@@ -137,12 +138,16 @@ LinkSourceFile(Video7.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(W32.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(WstDig.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(agx.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(apm.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(ark.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(ati.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(chips.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(cirrus.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(clkprog.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(epson.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(isc.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(mouse.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(rendition.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(trident.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(tseng.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(xinput.sgml,$(XF86SRC)/doc/sgml)

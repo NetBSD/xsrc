@@ -7,17 +7,17 @@
 
 
 
-			  Information for Linux Users
+                          Information for Linux Users
 
-			 Orest Zborowski, Dirk Hohndel
+                         Orest Zborowski, Dirk Hohndel
 
-			       February 26, 1997
+                               November 7, 1998
 
 
 
 1.  Linux versions on which XFree86 has been tested
 
-XFree86 has been tested with Linux version 2.0.32 and several 2.1xx kernels.
+XFree86 has been tested with Linux version 2.0.32 and several 2.1.x kernels.
 It is known not to compile with kernel sources newer then somewhere around
 2.1.70, due to incompatibilities in the joystick driver. Except for the joy-
 stick driver, it works just fine with all 2.1.x kernels tested (including
@@ -51,30 +51,26 @@ will continue to work, but may need an explicit symlink from
 
 3.  Installing XFree86
 
-Starting with version 3.0, XFree86 is installed in /usr/X11R6.	Each binary
-distribution of XFree86 3.X comes with a detailed installation document rele-
-vant to that release. The most up-to-date information is kept there, while this
-document describes basic features of XFree86 3.X on Linux and how to compile
-the sources.
-
-
-
-
-
-Information for Linux Users
-
-
-
-
-
-Information for Linux Users
-
+Starting with version 3.0, XFree86 is installed in /usr/X11R6.  The installa-
+tion details are provided in the RELNOTES.
 
 
 4.  Running XFree86
 
 XFree86 requires about 4mb of virtual memory to run, although having 8mb of RAM
 is probably the minimum comfortable configuration. A 387 coprocessor is helpful
+
+
+Information for Linux Users                                                   1
+
+
+
+
+
+Information for Linux Users                                                   2
+
+
+
 for 386 machines, although greater gains in interactive performance are
 obtained with an increase in physical memory.  Also, a faster graphics card,
 bus or RAM, will improve server performance.
@@ -125,22 +121,20 @@ was compiled, or reloaded using the `loadkeys' utility. Not all keys are bound:
 kernel-specific, multiple keysym, and dead keys are not handled by the server.
 All others are translated to their X equivalents.  Note that the XFree86 server
 only allows for four modifier maps: unshifted, shifted, modeswitch unshifted
-
-
-
-
-
-
-
-
-Information for Linux Users
-
-
-
 and modeswitch shifted.  Depending on what the modeswitch key is (it is config-
 urable in your XF86Config and defaults to Alt), XFree86 will read those tables
 into its keymaps.  This means if you use certain keys, like left-Control, for
 Linux modeswitch, that will not be mappable to X.
+
+
+
+
+
+
+
+
+Information for Linux Users                                                   3
+
 
 
 5.  Installing Xdm, the display manager
@@ -169,7 +163,7 @@ systems.
 
 6.  xterm
 
-The XFree86-3.3.2 binary release contains an xterm binary that has been linked
+The XFree86-3.3.3 binary release contains an xterm binary that has been linked
 statically against libtermcap. This was done to make sure that it will cor-
 rectly work with all distributions, regardless whether they rely on libtermcap
 or libncurses. Contrary to the xterm binaries in some beta version following
@@ -190,6 +184,12 @@ using the XInput extension. Currently supported devices are:
 
    o Elographics touchscreen (xf86Elo.so)
 
+   o AceCad ADVANCEDigitizer (xf86AceCad.so)
+
+   o MicroTouch TouchPen (xf86MuTouch.so)
+
+   o SGI dial box (xf86Dial.so)
+
 To use a specific device, add the line
 
 
@@ -199,7 +199,7 @@ To use a specific device, add the line
 
 
 
-Information for Linux Users
+Information for Linux Users                                                   4
 
 
 
@@ -219,12 +219,12 @@ kernel.
 
 7.1  Configuring PEX, XIE and GLX extensions
 
-The PEX, XIE and GLX extensions are now supported as external modules.	If you
+The PEX, XIE and GLX extensions are now supported as external modules.  If you
 want to have access to these extensions, add the following lines to the Module
 section of XF86Config:
 
-	load	"pex5.so"
-	load	"xie.so"
+        load    "pex5.so"
+        load    "xie.so"
 
 
 For GLX you need to get the appropriate GLX modules, first. They are, at this
@@ -265,7 +265,7 @@ tions are provided, as an example.
 
 
 
-Information for Linux Users
+Information for Linux Users                                                   5
 
 
 
@@ -274,7 +274,7 @@ Information for Linux Users
 Bug reports should be sent to XFree86@XFree86.org or posted to the comp.win-
 dows.x.i386unix newsgroup.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.4 1998/02/26 20:11:26 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.6 1998/11/08 09:06:39 dawes Exp $
 
 
 
@@ -331,7 +331,7 @@ dows.x.i386unix newsgroup.
 
 
 
-Information for Linux Users
+Information for Linux Users                                                   6
 
 
 
@@ -401,7 +401,7 @@ Information for Linux Users
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
@@ -411,7 +411,7 @@ Information for Linux Users
 
 3. Installing XFree86  ...................................................... 1
 
-4. Running XFree86  ......................................................... 2
+4. Running XFree86  ......................................................... 1
 
 5. Installing Xdm, the display manager ...................................... 3
 
@@ -457,8 +457,8 @@ Information for Linux Users
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Linux,v 3.21.2.4 1998/02/27 02:54:58 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Linux,v 3.21.2.8 1998/11/14 06:46:45 dawes Exp $

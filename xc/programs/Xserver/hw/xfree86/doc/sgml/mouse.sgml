@@ -96,7 +96,7 @@ Linux/98          Ok        ?         Ok        NA        NA
 LynxOS            Ok        NA        Ok        Ok        NA
 NetBSD            Ok        Ok        Ok        SP*1      NA
 NetBSD/pc98       Ok        ?         Ok        NA        NA
-OpenBSD           Ok        Ok        Ok        Ok*1      NA
+OpenBSD           Ok        Ok        Ok        Ok*1      OK*1
 OS/2              SP*2      SP*2      SP*2      SP*2      SP*2
 SCO               Ok        ?         SP*1      SP*1      NA
 Solaris 2.x       Ok        NA*1      ?*1       Ok        NA
@@ -167,16 +167,23 @@ any PS/2 mouse regardless of the brand of the mouse.
 The PS/2 mouse is not supported.
 
 <sect1>OpenBSD <p>
-OpenBSD does not support extended PS/2 mouse protocols (<tt>"xxxPS/2"</tt>).
-
-The PS/2 mouse device driver <tt>/dev/pms</tt> emulates the bus mouse.
-Specify the <tt>"BusMouse"</tt> protocol for 
-any PS/2 mouse regardless of the brand of the mouse when using this device.
-
-The raw PS/2 mouse device driver <tt>/dev/psm</tt> uses the standard PS/2
+The raw PS/2 mouse device driver <tt>/dev/psm0</tt> uses the raw PS/2
 mouse protocol.
-Therefore, you should specify the <tt>"PS/2"</tt> protocol for 
-any PS/2 mouse regardless of the brand of the mouse when using this device.
+
+OpenBSD 2.2 and earlier does not support extended PS/2 mouse protocols
+(<tt>"xxxPS/2"</tt>) .  Therefore, you should specify the
+<tt>"PS/2"</tt> protocol for any PS/2 mouse regardless of the brand of
+the mouse.
+
+OpenBSD 2.3 and later support all extended PS/2 mouse protocols. 
+You can select the <tt>"Auto"</tt> protocol for PnP PS/2
+mice or any specific extended (<tt>"xxxPS/2"</tt>) protocol
+for non PnP mice.
+
+There is also a cooked PS/2 mouse device driver <tt>/dev/pms0</tt>
+which emulates the bus mouse.  Specify the <tt>"BusMouse"</tt>
+protocol for any PS/2 mouse regardless of the brand of the mouse when
+using this device.
 
 <sect1>OS/2 <p>
 XFree86/OS2 always uses the native mouse driver of the operating system
@@ -647,6 +654,6 @@ PS/2 mouse detection:
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.1.2.8 1998/03/02 09:58:25 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.1.2.10 1998/11/07 13:52:45 dawes Exp $
 </verb>
 </article>

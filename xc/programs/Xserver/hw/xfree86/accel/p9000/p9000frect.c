@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000frect.c,v 3.2 1996/12/23 06:40:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000frect.c,v 3.2.2.1 1998/10/21 10:44:38 dawes Exp $ */
 /*
  * Fill rectangles.
  */
@@ -47,8 +47,8 @@
 #include "cfbmskbits.h"
 #include "mergerop.h"
 
-#include "p9000reg.h"
 #include "p9000.h"
+#include "p9000reg.h"
 
 #define NUM_STACK_RECTS	1024
 /* #define P9000_DEBUG_FRECT 1 */

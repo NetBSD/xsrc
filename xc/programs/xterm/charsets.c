@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/charsets.c,v 1.1 1998/04/05 00:49:04 robin Exp $
+ * $XFree86: xc/programs/xterm/charsets.c,v 1.1.2.1 1998/10/20 21:00:13 hohndel Exp $
  */
 
 /************************************************************
@@ -34,15 +34,8 @@ authorization.
 
 ********************************************************/
 
-#ifdef HAVE_CONFIG_H
-#include <xtermcfg.h>
-#endif
-
-#include <X11/Xos.h>
-
-#include "ptyx.h"
-#include "data.h"
-#include "xterm.h"
+#include <xterm.h>
+#include <data.h>
 
 /*
  * This module performs translation as needed to support the DEC VT220 national

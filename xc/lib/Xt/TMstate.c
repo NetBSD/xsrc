@@ -32,6 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/TMstate.c,v 1.1.1.3.6.3 1998/10/19 20:57:06 hohndel Exp $ */
 
 /*
 
@@ -77,7 +78,11 @@ static StatePtr NewState();
 
 static String XtNtranslationError = "translationError";
 
+#ifndef __EMX__
 TMGlobalRec _XtGlobalTM; /* initialized to zero K&R */
+#else
+TMGlobalRec _XtGlobalTM = {0};
+#endif
 
 #define MatchIncomingEvent(tmEvent, typeMatch, modMatch) \
   (typeMatch->eventType == tmEvent->event.eventType && \

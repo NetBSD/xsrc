@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86text.c,v 3.6.2.1 1997/05/17 12:25:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86text.c,v 3.6.2.3 1998/11/13 05:15:03 dawes Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -123,7 +123,7 @@ xf86ImageGlyphBltNonTE(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
     int i;
 
     glyphWidth = FONTMAXBOUNDS(pfont, characterWidth);
-    h = FONTASCENT(pfont) + FONTDESCENT(pfont);
+    h = FONTMAXBOUNDS(pfont,ascent) + FONTMAXBOUNDS(pfont,descent);
 
     if ((h | glyphWidth) == 0)
 	return;
@@ -141,7 +141,7 @@ xf86ImageGlyphBltNonTE(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 	width += ppci[i]->metrics.characterWidth;
 
     x = xInit + pDrawable->x;
-    y = yInit - FONTASCENT(pfont) + pDrawable->y;
+    y = yInit - FONTMAXBOUNDS(pfont,ascent) + pDrawable->y;
     bbox.x1 = x;
     bbox.x2 = x + width;
     bbox.y1 = y;
@@ -229,7 +229,7 @@ xf86PolyGlyphBltNonTE(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 
     glyphWidth = FONTMAXBOUNDS(pfont, characterWidth);
 
-    h = FONTASCENT(pfont) + FONTDESCENT(pfont);
+    h = FONTMAXBOUNDS(pfont,ascent) + FONTMAXBOUNDS(pfont,descent);
     if ((h | glyphWidth) == 0)
 	return;
 
@@ -248,7 +248,7 @@ xf86PolyGlyphBltNonTE(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 	    - ppci[nglyph - 1]->metrics.leftSideBearing;
 
     x = xInit + (*ppci)->metrics.leftSideBearing + pDrawable->x;
-    y = yInit - FONTASCENT(pfont) + pDrawable->y;
+    y = yInit - FONTMAXBOUNDS(pfont,ascent) + pDrawable->y;
     bbox.x1 = x;
     bbox.x2 = x + width;
     bbox.y1 = y;
@@ -729,7 +729,7 @@ nglyph, ppci, pglyphBase)
 
     glyphWidth = FONTMAXBOUNDS(pfont, characterWidth);
     glyphWidthBytes = GLYPHWIDTHBYTESPADDED(*ppci);
-    h = FONTASCENT(pfont) + FONTDESCENT(pfont);
+    h = FONTMAXBOUNDS(pfont,ascent) + FONTMAXBOUNDS(pfont,descent);
 
     if ((h | glyphWidth) == 0)
 	return;
@@ -748,22 +748,22 @@ nglyph, ppci, pglyphBase)
      * x-coordinate.
      */
     x = xInit + (*ppci)->metrics.leftSideBearing + pDrawable->x;
-    y = yInit - FONTASCENT(pfont) + pDrawable->y;
+    y = yInit - FONTMAXBOUNDS(pfont,ascent) + pDrawable->y;
 
     /* Allocate list of pointers to glyph info. */
     glyphinfop = (NonTEGlyphInfo *)ALLOCATE_LOCAL(nglyph *
         sizeof(NonTEGlyphInfo));
 
     w = CollectCharacterInfo(glyphinfop, nglyph, pglyphBase, ppci,
-        FONTASCENT(pfont));
+        FONTMAXBOUNDS(pfont,ascent));
 
     /* Calculate the size of the backing rectangle */
     backrect.width = 0;
     for (i = 0; i < nglyph; i++)
 	backrect.width += ppci[i]->metrics.characterWidth;
     backrect.x = xInit + pDrawable->x;
-    backrect.y = y;
-    backrect.height = h;
+    backrect.y = yInit - FONTASCENT(pfont) + pDrawable->y;
+    backrect.height = FONTASCENT(pfont) + FONTDESCENT(pfont);
 
     /*
      * There is the possibility of overlapping characters with NonTE
@@ -817,7 +817,7 @@ nglyph, ppci, pglyphBase)
 
     glyphWidth = FONTMAXBOUNDS(pfont, characterWidth);
     glyphWidthBytes = GLYPHWIDTHBYTESPADDED(*ppci);
-    h = FONTASCENT(pfont) + FONTDESCENT(pfont);
+    h = FONTMAXBOUNDS(pfont,ascent) + FONTMAXBOUNDS(pfont,descent);
 
     if ((h | glyphWidth) == 0)
 	return;
@@ -827,7 +827,7 @@ nglyph, ppci, pglyphBase)
         sizeof(NonTEGlyphInfo));
 
     w = CollectCharacterInfo(glyphinfop, nglyph, pglyphBase, ppci,
-        FONTASCENT(pfont));
+        FONTMAXBOUNDS(pfont,ascent));
 
     /*
      * Check for non-standard glyphs, glyphs that are too wide,
@@ -848,15 +848,15 @@ nglyph, ppci, pglyphBase)
      * x-coordinate.
      */
     x = xInit + (*ppci)->metrics.leftSideBearing + pDrawable->x;
-    y = yInit - FONTASCENT(pfont) + pDrawable->y;
+    y = yInit - FONTMAXBOUNDS(pfont,ascent) + pDrawable->y;
 
     /* Calculate the size of the backing rectangle */
     backrect.width = 0;
     for (i = 0; i < nglyph; i++)
 	backrect.width += ppci[i]->metrics.characterWidth;
     backrect.x = xInit + pDrawable->x;
-    backrect.y = y;
-    backrect.height = h;
+    backrect.y = yInit - FONTASCENT(pfont) + pDrawable->y;
+    backrect.height = FONTASCENT(pfont) + FONTDESCENT(pfont);
 
     /*
      * There is the possibility of overlapping characters with NonTE
@@ -908,7 +908,7 @@ nglyph, ppci, pglyphBase)
 
     glyphWidth = FONTMAXBOUNDS(pfont, characterWidth);
     glyphWidthBytes = GLYPHWIDTHBYTESPADDED(*ppci);
-    h = FONTASCENT(pfont) + FONTDESCENT(pfont);
+    h = FONTMAXBOUNDS(pfont,ascent) + FONTMAXBOUNDS(pfont,descent);
 
     /*
      * Check for non-standard glyphs, glyphs that are too wide.
@@ -927,14 +927,14 @@ nglyph, ppci, pglyphBase)
      * x-coordinate.
      */
     x = xInit + (*ppci)->metrics.leftSideBearing + pDrawable->x;
-    y = yInit - FONTASCENT(pfont) + pDrawable->y;
+    y = yInit - FONTMAXBOUNDS(pfont,ascent) + pDrawable->y;
 
     /* Allocate list of pointers to glyph info. */
     glyphinfop = (NonTEGlyphInfo *)ALLOCATE_LOCAL(nglyph *
         sizeof(NonTEGlyphInfo));
 
     w = CollectCharacterInfo(glyphinfop, nglyph, pglyphBase, ppci,
-        FONTASCENT(pfont));
+        FONTMAXBOUNDS(pfont,ascent));
     
     xf86AccelInfoRec.SetupForCPUToScreenColorExpand(
         -1, pGC->fgPixel, pGC->alu, pGC->planemask);
@@ -977,7 +977,7 @@ nglyph, ppci, pglyphBase)
 
     glyphWidth = FONTMAXBOUNDS(pfont, characterWidth);
     glyphWidthBytes = GLYPHWIDTHBYTESPADDED(*ppci);
-    h = FONTASCENT(pfont) + FONTDESCENT(pfont);
+    h = FONTMAXBOUNDS(pfont,ascent) + FONTMAXBOUNDS(pfont,descent);
 
     if ((h | glyphWidth) == 0)
 	return;
@@ -987,7 +987,7 @@ nglyph, ppci, pglyphBase)
         sizeof(NonTEGlyphInfo));
 
     w = CollectCharacterInfo(glyphinfop, nglyph, pglyphBase, ppci,
-        FONTASCENT(pfont));
+        FONTMAXBOUNDS(pfont,ascent));
 
     /*
      * Check for non-standard glyphs, glyphs that are too wide,
@@ -1008,7 +1008,7 @@ nglyph, ppci, pglyphBase)
      * x-coordinate.
      */
     x = xInit + (*ppci)->metrics.leftSideBearing + pDrawable->x;
-    y = yInit - FONTASCENT(pfont) + pDrawable->y;
+    y = yInit - FONTMAXBOUNDS(pfont,ascent) + pDrawable->y;
 
     xf86AccelInfoRec.SetupForScanlineScreenToScreenColorExpand(
         x, y, w, h, -1, pGC->fgPixel, pGC->alu, pGC->planemask);

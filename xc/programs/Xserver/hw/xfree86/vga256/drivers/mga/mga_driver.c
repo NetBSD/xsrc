@@ -35,9 +35,12 @@
  *		Leonard N. Zubkoff
  *			lnz@dandelion.com
  *		Support for 8MB boards, RGB Sync-on-Green, and DPMS.
+ *		Doug Merritt
+ *			doug@netcom.com
+ *		Fixed 32bpp hires 8MB horizontal line glitch at middle right
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.24 1998/02/24 19:06:00 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_driver.c,v 1.1.2.35 1998/10/31 14:41:00 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -457,7 +460,8 @@ static char *
 MGAIdent(n)
 int n;
 {
-	static char *chipsets[] = {"mga2064w", "mga1064sg", "mga2164w", "mga2164w AGP" };
+	static char *chipsets[] = {"mga2064w", "mga1064sg", "mga2164w",
+	                           "mga2164w AGP", "mgag200", "mgag100" };
 
 	if (n + 1 > sizeof(chipsets) / sizeof(char *))
 		return(NULL);
@@ -508,22 +512,30 @@ MGAProbe()
 				   pcr->_device);
 			    id = vga256InfoRec.chipID;
 			}
+			MGAchipset = id;
 			switch(id) {
 				case PCI_CHIP_MGA2064:
-					MGAchipset = id;
 					vga256InfoRec.chipset = MGAIdent(0);
 				break;
 				case PCI_CHIP_MGA1064:
-					MGAchipset = id;
 					vga256InfoRec.chipset = MGAIdent(1);
 				break;
 				case PCI_CHIP_MGA2164:
-					MGAchipset = id;
 					vga256InfoRec.chipset = MGAIdent(2);
 				break;
 				case PCI_CHIP_MGA2164_AGP:
-					MGAchipset = id;
 					vga256InfoRec.chipset = MGAIdent(3);
+				break;
+				case PCI_CHIP_MGAG200:
+				case PCI_CHIP_MGAG200_PCI:
+					vga256InfoRec.chipset = MGAIdent(4);
+				break;
+				case PCI_CHIP_MGAG100:
+				case PCI_CHIP_MGAG100_PCI:
+					vga256InfoRec.chipset = MGAIdent(5);
+				break;
+				default:
+					MGAchipset = 0;
 			}
 			if (MGAchipset)
 				mgapcr = pcr;
@@ -561,37 +573,17 @@ MGAProbe()
 	/* rev 3 (at least Mystique 220) has these swapped */
 	/* so does the Mill II */
 	
-	if ( pcr->_base0 ) {	/* details: mgabase1 sdk pp 4-11 */
-		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
-			MGAchipset == PCI_CHIP_MGA2164 ||
-			MGAchipset == PCI_CHIP_MGA2164_AGP)
-			MGA.ChipLinearBase = pcr->_base0 & 0xff800000;
-		else
-			MGAMMIOAddr = pcr->_base0 & 0xffffc000;
-	} else {
-		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
-			MGAchipset == PCI_CHIP_MGA2164 ||
-			MGAchipset == PCI_CHIP_MGA2164_AGP)
-			MGA.ChipLinearBase = 0;
-		else
-			MGAMMIOAddr = 0;
-	}
+	/* details: mgabase1 sdk pp 4-11 */
+	/* details: mgabase2 sdk pp 4-12 */
 	
-	if ( pcr->_base1 ) {	/* details: mgabase2 sdk pp 4-12 */
-		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
-			MGAchipset == PCI_CHIP_MGA2164 ||
-			MGAchipset == PCI_CHIP_MGA2164_AGP)
-	
-			MGAMMIOAddr = pcr->_base1 & 0xffffc000;
-		else
-			MGA.ChipLinearBase = pcr->_base1 & 0xff800000;
+	if ( MGAchipset == PCI_CHIP_MGA2064 ||
+		MGAchipset == PCI_CHIP_MGA1064 && MGArev < 3 )
+	{
+		MGA.ChipLinearBase = pcr->_base1 & 0xff800000;
+		MGAMMIOAddr = pcr->_base0 & 0xffffc000;
 	} else {
-		if ( (MGAchipset == PCI_CHIP_MGA1064 && MGArev >= 3) ||
-			MGAchipset == PCI_CHIP_MGA2164 ||
-			MGAchipset == PCI_CHIP_MGA2164_AGP)
-			MGAMMIOAddr = 0;
-		else
-			MGA.ChipLinearBase = 0;
+		MGA.ChipLinearBase = pcr->_base0 & 0xff800000;
+		MGAMMIOAddr = pcr->_base1 & 0xffffc000;
 	}
 
 	/* Allow this to be overriden in the XF86Config file */
@@ -738,22 +730,33 @@ MGAProbe()
 	 * file, we respect that setting.
 	 */
 
-	if (!vga256InfoRec.videoRam)
-	   if ( MGAchipset == PCI_CHIP_MGA2164 || MGAchipset == PCI_CHIP_MGA2164_AGP )
-		vga256InfoRec.videoRam = MGACountRam(8); /* count to 16 mb */
-	   else
+	if (!vga256InfoRec.videoRam) {
+	   if ( MGA_IS_2164(MGAchipset) || MGA_IS_G100(MGAchipset) ) {
+		vga256InfoRec.videoRam = 4096;
+		ErrorF("(!!) %s: Unable to probe for video memory size.  "
+			"Assuming 8 Meg.\tPlease specify the correct amount "
+			"in the XF86Config file.\tSee the file README.MGA "
+			"for details.\n", vga256InfoRec.name);
+	   } else if (MGA_IS_G200(MGAchipset)) {
+		vga256InfoRec.videoRam = 8192;
+		ErrorF("(!!) %s: Unable to probe for video memory size.  "
+			"Assuming 8 Meg.\tPlease specify the correct amount "
+			"in the XF86Config file.\tSee the file README.MGA "
+			"for details.\n", vga256InfoRec.name);
+	   } else
 		vga256InfoRec.videoRam = MGACountRam(4); /* count to 8 mb */
+	}
 	
 	MGA.ChipLinearSize = vga256InfoRec.videoRam;
 
 	/* sanity check ChipLinearSize */
 
-	if ( MGAchipset == PCI_CHIP_MGA2164 || MGAchipset == PCI_CHIP_MGA2164_AGP )
+	if ( MGA_IS_2164(MGAchipset) || MGA_IS_GCLASS(MGAchipset) )
 	{
 		if ( MGA.ChipLinearSize < 2048 || MGA.ChipLinearSize > 16384 )
 		{
 			MGA.ChipLinearSize = 2048; /* nice safe size */
-			ErrorF("(!!) %s: reset VideoRAM to 2 MB for safety!",
+			ErrorF("(!!) %s: reset VideoRAM to 2 MB for safety!\n",
 				vga256InfoRec.name);
 		}
 	}
@@ -762,7 +765,7 @@ MGAProbe()
 		if ( MGA.ChipLinearSize < 2048 || MGA.ChipLinearSize > 8192 )
 		{
 			MGA.ChipLinearSize = 2048; /* nice safe size */
-			ErrorF("(!!) %s: reset VideoRAM to 2 MB for safety!",
+			ErrorF("(!!) %s: reset VideoRAM to 2 MB for safety!\n",
 				vga256InfoRec.name);
 		}
 	}
@@ -782,6 +785,10 @@ MGAProbe()
 		break;
 	case PCI_CHIP_MGA1064:
 		MGA1064RamdacInit();
+		break;
+	case PCI_CHIP_MGAG100:
+	case PCI_CHIP_MGAG200:
+		MGAG200RamdacInit();
 		break;
 	}
 	
@@ -810,6 +817,7 @@ MGAProbe()
 	OFLG_SET(OPTION_HW_CURSOR, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_PCI_RETRY, &MGA.ChipOptionFlags);
 	OFLG_SET(OPTION_MGA_24BPP_FIX, &MGA.ChipOptionFlags);
+	OFLG_SET(OPTION_MGA_SDRAM, &MGA.ChipOptionFlags);
 
 	OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
 	OFLG_SET(OPTION_DAC_8_BIT, &vga256InfoRec.options);
@@ -821,6 +829,23 @@ MGAProbe()
 	vgaSetPitchAdjustHook(MGAPitchAdjust);
 
 	vgaSetLinearOffsetHook(MGALinearOffset);
+
+	save = pciReadLong(MGAPciTag, PCI_OPTION_REG);
+
+	if (MGA_IS_GCLASS(MGAchipset)) {
+	    /* for the Gx00 chipsets we want to know whether the card uses
+	       SDRAM or SGRAM */
+	    if ( (save & (0x01 << 14)) == 0 ) {
+		ErrorF("%s %s: detected an SDRAM card\n",
+		    XCONFIG_PROBED, vga256InfoRec.name);
+		MGAIsSDRAM = TRUE;
+	    }
+	    else {
+		ErrorF("%s %s: detected an SGRAM card\n",
+		    XCONFIG_PROBED, vga256InfoRec.name);
+		MGAIsSDRAM = FALSE;
+	    }
+	}
 
 #ifdef DPMSExtension
 	vga256InfoRec.DPMSSet = MGADisplayPowerManagementSet;
@@ -841,8 +866,11 @@ TestAndSetRounding(pitch)
 {
 	MGAinterleave = (vga256InfoRec.videoRam > 2048);
 		
-	/* we can't use interleave on Mystique */
-	if (MGAchipset == PCI_CHIP_MGA1064) {
+	/* we can't use interleave on Mystique and G100/G200 */
+	if (MGAchipset == PCI_CHIP_MGA1064
+		|| MGA_IS_G100(MGAchipset)
+		|| MGA_IS_G200(MGAchipset))
+	{
 		MGAinterleave = 0;
 	}
 		
@@ -886,7 +914,10 @@ TestAndSetRounding(pitch)
 		break;
 	}
 
-	if (MGAchipset == PCI_CHIP_MGA1064) {
+	if (MGAchipset == PCI_CHIP_MGA1064
+		|| MGA_IS_G100(MGAchipset)
+		|| MGA_IS_G200(MGAchipset))
+	{
 		MGABppShft--;
 	}
 	
@@ -924,6 +955,10 @@ MGAPitchAdjust()
 	switch (MGAchipset)
 	{
 		case PCI_CHIP_MGA1064:
+		case PCI_CHIP_MGAG100:
+		case PCI_CHIP_MGAG200:
+		case PCI_CHIP_MGAG100_PCI:
+		case PCI_CHIP_MGAG200_PCI:
 			pWidth = &width2[0];
 			break;
 
@@ -1030,11 +1065,22 @@ MGALinearOffset()
 	    ydstorg_modulo <<= 1;
 	}
 	MGAydstorg = offset / BytesPerPixel;
-	while ((offset % offset_modulo) != 0 ||
-	       (MGAydstorg % ydstorg_modulo) != 0)
-	{
-	    offset++;
-	    MGAydstorg = offset / BytesPerPixel;
+
+	/*
+	 * When this was unconditional, it caused a line of horizontal garbage
+	 * at the middle right of the screen at the 4Meg boundary in 32bpp
+	 * (and presumably any other modes that use more than 4M). But it's
+	 * essential for 24bpp (it may not matter either way for 8bpp & 16bpp,
+	 * I'm not sure; I didn't notice problems when I checked with and
+	 * without.)
+	 * DRM Doug Merritt 12/97, submitted to XFree86 6/98 (oops)
+	 */
+	if (BytesPerPixel < 4) {
+	    while ((offset % offset_modulo) != 0 ||
+		   (MGAydstorg % ydstorg_modulo) != 0) {
+		offset++;
+		MGAydstorg = offset / BytesPerPixel;
+	    }
 	}
 
 	return MGAydstorg * BytesPerPixel;
@@ -1082,6 +1128,9 @@ MGAFbInit()
 	        vga256InfoRec.name, MGAdac.MemoryClock / 1000.0);
 	}
 	
+	if (OFLG_ISSET(OPTION_MGA_SDRAM, &vga256InfoRec.options))
+		MGAIsSDRAM = TRUE;
+
 	if (!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options))
 	{
 	        /*
@@ -1110,7 +1159,10 @@ MGAFbInit()
 		/*
 		 * now call the new acc interface
 		 */
-		if (MGAchipset == PCI_CHIP_MGA1064 )  {
+		if (MGAchipset == PCI_CHIP_MGA1064 ||
+		    MGA_IS_G100(MGAchipset) ||
+		    MGA_IS_G200(MGAchipset))
+		{
 			MGAusefbitblt = 0;
 			} else {
 			MGAusefbitblt = !(MGABios.FeatFlag & 0x00000001);
@@ -1139,6 +1191,11 @@ DisplayModePtr mode;
 		return MGA3026Init(mode);
 	case PCI_CHIP_MGA1064:                               
 		return MGA1064Init(mode);
+	case PCI_CHIP_MGAG100:
+	case PCI_CHIP_MGAG200:
+	case PCI_CHIP_MGAG100_PCI:
+	case PCI_CHIP_MGAG200_PCI:
+		return MGAG200Init(mode);
 	}
 }
 
@@ -1167,6 +1224,12 @@ vgaHWPtr restore;
 	case PCI_CHIP_MGA1064:
 		MGA1064Restore(restore);
 		break;
+	case PCI_CHIP_MGAG100:
+	case PCI_CHIP_MGAG200:
+	case PCI_CHIP_MGAG100_PCI:
+	case PCI_CHIP_MGAG200_PCI:
+		MGAG200Restore(restore);
+		break;
 	}
 
 	MGAStormSync();
@@ -1193,6 +1256,11 @@ vgaHWPtr save;
 		return (void *)MGA3026Save(save);
 	case PCI_CHIP_MGA1064:
 		return (void *)MGA1064Save(save);
+	case PCI_CHIP_MGAG100:
+	case PCI_CHIP_MGAG200:
+	case PCI_CHIP_MGAG100_PCI:
+	case PCI_CHIP_MGAG200_PCI:
+		return (void *)MGAG200Save(save);
 	}
 }
 
@@ -1224,9 +1292,7 @@ Bool enter;
 
 	if (enter)
 	{
-#ifndef PC98_MGA
 		xf86EnableIOPorts(vga256InfoRec.scrnIndex);
-#endif
 		if (MGAMMIOBase)
 		{
 			xf86MapDisplay(vga256InfoRec.scrnIndex,
@@ -1382,3 +1448,100 @@ int PowerManagementMode;
 	outb(0x3DF, crtcext1);
 }
 #endif
+#if defined (EXTRADEBUG)
+/*
+ * some functions to track input/output in the server
+ */
+
+CARD8
+dbg_inreg8(int addr,int verbose)
+{
+    CARD8 ret;
+
+    ret = *(volatile CARD8 *)(MGAMMIOBase + (addr));
+    if(verbose)
+	ErrorF( "inreg8 : 0x%8x = 0x%x\n",addr,ret);
+    return ret;
+}
+
+CARD16
+dbg_inreg16(int addr,int verbose)
+{
+    CARD16 ret;
+
+    ret = *(volatile CARD16 *)(MGAMMIOBase + (addr));
+    if(verbose)
+	ErrorF( "inreg16: 0x%8x = 0x%x\n",addr,ret);
+    return ret;
+}
+
+CARD32
+dbg_inreg32(int addr,int verbose)
+{
+    CARD32 ret;
+
+    ret = *(volatile CARD32 *)(MGAMMIOBase + (addr));
+    if(verbose)
+	ErrorF( "inreg32: 0x%8x = 0x%x\n",addr,ret);
+    return ret;
+}
+
+void
+dbg_outreg8(int addr,int val)
+{
+    CARD8 ret;
+
+#if 0
+    if( addr == 0x1fdf )
+    	return;
+#endif
+    if( addr != 0x3c00 ) {
+	ret = dbg_inreg8(addr,0);
+	ErrorF( "outreg8 : 0x%8x = 0x%x was 0x%x\n",addr,val,ret);
+    }
+    else {
+	ErrorF( "outreg8 : index 0x%x\n",val);
+    }
+    *(volatile CARD8 *)(MGAMMIOBase + (addr)) = (val);
+}
+
+void
+dbg_outreg16(int addr,int val)
+{
+    CARD16 ret;
+
+#if 0
+    if (addr == 0x1fde)
+    	return;
+#endif
+    ret = dbg_inreg16(addr,0);
+    ErrorF( "outreg16 : 0x%8x = 0x%x was 0x%x\n",addr,val,ret);
+    *(volatile CARD16 *)(MGAMMIOBase + (addr)) = (val);
+}
+
+void
+dbg_outreg32(int addr,int val)
+{
+    CARD32 ret;
+
+#if 0
+    if (((addr & 0xff00) == 0x1c00) 
+    	&& (addr != 0x1c04)
+/*    	&& (addr != 0x1c1c) */
+    	&& (addr != 0x1c20)
+    	&& (addr != 0x1c24)
+    	&& (addr != 0x1c80)
+    	&& (addr != 0x1c8c)
+    	&& (addr != 0x1c94)
+    	&& (addr != 0x1c98)
+    	&& (addr != 0x1c9c)
+	 ) {
+	 ErrorF( "refused address 0x%x\n",addr);
+    	return;
+    }
+#endif
+    ret = dbg_inreg32(addr,0);
+    ErrorF( "outreg32 : 0x%8x = 0x%x was 0x%x\n",addr,val,ret);
+    *(volatile CARD32 *)(MGAMMIOBase + (addr)) = (val);
+}
+#endif /* EXTRADEBUG */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000.c,v 3.44.2.7 1998/02/07 10:05:11 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000.c,v 3.44.2.8 1998/10/18 20:42:08 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1994 by Erik Nygren <nygren@mit.edu>
@@ -966,6 +966,9 @@ p9000SaveScreen (pScreen, on)
      ScreenPtr     pScreen;
      Bool          on;
 {
+  /* writing to the ramdac while at a VT will crash the server */
+  if (!xf86VTSema) return (TRUE);
+
   if (on) 
     {
       SetTimeSinceLastInputEvent();

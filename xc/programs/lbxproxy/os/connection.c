@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.1.1.2.2.2 1998/02/01 22:08:23 robin Exp $ */
+/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.1.1.2.2.4 1998/11/05 14:03:12 dawes Exp $ */
 /*
  *
  * The connection code/ideas for SVR4/Intel environments was contributed by
@@ -306,13 +306,20 @@ open_unix_socket ()
 {
     int oldUmask;
     int request;
+    unsigned int mode;
 
     bzero ((char *) &unsock, sizeof (unsock));
     unsock.sun_family = AF_UNIX;
     oldUmask = umask (0);
 #ifdef X_UNIX_DIR
-    if (!mkdir (X_UNIX_DIR, 0777))
-	chmod (X_UNIX_DIR, 0777);
+
+#ifdef HAS_STICKY_DIR_BIT
+    mode = 01777;
+#else
+    mode = 0777;
+#endif
+    mkdir (X_UNIX_DIR, mode);
+    chmod (X_UNIX_DIR, mode);
 #endif
     strcpy (unsock.sun_path, X_UNIX_PATH);
     strcat (unsock.sun_path, display);
@@ -365,6 +372,17 @@ open_unix_socket ()
     (void)umask(oldUmask);
     return request;
 }
+
+void
+close_unix_socket()
+{
+    char path[64];
+
+    strcpy(path, X_UNIX_PATH);
+    strcat(path, display);
+    unlink(path);
+}
+
 #endif /*UNIXCONN */
 
 #ifdef LOCALCONN
@@ -533,15 +551,21 @@ open_unix_local()
 {
     int oldUmask;
     int request;
+    unsigned int mode;
 
     bzero((char *) &unsock, sizeof (unsock));
     unsock.sun_family = AF_UNIX;
     oldUmask = umask (0);
 
-    mkdir(X_STREAMS_DIR, 0777); /* "/dev/X" */
-    chmod(X_STREAMS_DIR, 0777);
-    if (!mkdir(X_UNIX_DEVDIR, 0777))
-      chmod(X_UNIX_DEVDIR, 0777);
+#ifdef HAS_STICKY_DIR_BIT
+    mode = 01777;
+#else
+    mode = 0777;
+#endif
+    mkdir(X_STREAMS_DIR, mode); /* "/dev/X" */
+    chmod(X_STREAMS_DIR, mode);
+    mkdir(X_UNIX_DEVDIR, mode);
+    chmod(X_UNIX_DEVDIR, mode);
     strcpy(unsock.sun_path, X_UNIX_DEVPATH);
     strcat(unsock.sun_path, display);
     xlocal_unlink(unsock.sun_path);
@@ -563,8 +587,8 @@ open_unix_local()
 
     if (useSlashTmpForUNIX) {
 	char tmpPath[64];
-	if (!mkdir(X_UNIX_DIR, 0777))
-	  chmod(X_UNIX_DIR, 0777);
+	mkdir(X_UNIX_DIR, mode);
+	chmod(X_UNIX_DIR, mode);
 	strcpy(tmpPath, X_UNIX_PATH);
 	strcat(tmpPath, display);
 	xlocal_unlink(tmpPath);
@@ -700,6 +724,7 @@ open_isc_local()
 {
     int fd = -1,fds = -1;
     char pathISC[64],pathX11[64];
+    unsigned int mode;
 
     mkdir(X_STREAMS_DIR, 0777); /* "/dev/X" */
     chmod(X_STREAMS_DIR, 0777);
@@ -723,8 +748,13 @@ open_isc_local()
 	    XLOCAL_MSG((0,"ISC connections available at [%s]\n", pathISC));
 
 	    if (!useSlashTmpForUNIX) {
-		mkdir(X_UNIX_DIR, 0777);
-		chmod(X_UNIX_DIR, 0777);
+#ifdef HAS_STICKY_DIR_BIT
+		mode = 01777;
+#else
+		mode = 0777;
+#endif
+		mkdir(X_UNIX_DIR, mode);
+		chmod(X_UNIX_DIR, mode);
 		strcpy(pathX11, X_UNIX_PATH);
 		strcat(pathX11, display);
 		if (xlocal_unlink(pathX11) < 0) {
@@ -913,9 +943,15 @@ open_pts_local()
     char *slave;
     int fd;
     char path[64];
+    int mode;
 
-    mkdir(X_STREAMS_DIR, 0777);
-    chmod(X_STREAMS_DIR, 0777);
+#ifdef HAS_STICKY_DIR_BIT
+    mode = 01777;
+#else
+    mode = 0777;
+#endif
+    mkdir(X_STREAMS_DIR, mode);
+    chmod(X_STREAMS_DIR, mode);
   
     strcpy(path, X_PTS_PATH);
     strcat(path, display);
@@ -1009,9 +1045,15 @@ open_named_local()
     int fd,fld[2];
     char path[64];
     struct stat sbuf;
+    int mode;
 
-    mkdir(X_STREAMS_DIR, 0777);
-    chmod(X_STREAMS_DIR, 0777);
+#ifdef HAS_STICKY_DIR_BIT
+    mode = 01777;
+#else
+    mode = 0777;
+#endif
+    mkdir(X_STREAMS_DIR, mode);
+    chmod(X_STREAMS_DIR, mode);
   
     strcpy(path, X_NAMED_PATH);
     strcat(path, display);
@@ -1504,6 +1546,18 @@ ResetWellKnownSockets ()
 	    kill (ParentProcess, SIGUSR1);
 	}
     }
+}
+
+void
+CloseWellKnownSockets()
+{
+#ifdef LOCALCONN
+    xlocal_close_sockets();
+#else
+#ifdef UNIXCONN
+    close_unix_socket();
+#endif
+#endif
 }
 
 void

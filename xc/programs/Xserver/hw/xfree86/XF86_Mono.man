@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_Mono.man,v 3.23.2.3 1998/02/26 13:58:53 dawes Exp $
-.TH XF86_Mono 1 "Version 3.3.2"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_Mono.man,v 3.23.2.5 1998/11/06 09:45:59 hohndel Exp $
+.TH XF86_Mono 1 "Version 3.3.3"  "XFree86"
 .SH NAME
 XF86_Mono - 1 bit non-accelerated X Window System servers for UNIX on
 x86 platforms
@@ -20,8 +20,8 @@ server supports the following popular SuperVGA chipsets in monochrome mode:
 ATI:
 18800, 18800-1, 28800-2, 28800-4, 28800-5, 28800-6, 68800-3, 68800-6, 68800AX,
 68800LX, 88800GX-C, 88800GX-D, 88800GX-E, 88800GX-F, 88800CX, 264CT, 264ET,
-264VT, 264GT (a.k.a. 3D Rage), 264VT-B, 264VT3, 264GT-B (a.k.a. 3D Rage II),
-264GT3 (a.k.a. 3D Rage Pro)
+264VT, 264GT (a.k.a. 3D Rage), 264VT-B, 264VT3, 264VT4, 264GT-B (a.k.a. 3D Rage
+II), 264GT-IIc, 264GT3 (a.k.a. 3D Rage Pro), 264LT, 264LT-Pro
 .TP 4
 Tseng:
 ET3000, ET4000, ET4000/W32

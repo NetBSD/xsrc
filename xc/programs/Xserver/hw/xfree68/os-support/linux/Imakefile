@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/2 1996/10/19 19:10:59 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/os-support/linux/Imakefile,v 3.2 1996/12/27 06:52:58 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/os-support/linux/Imakefile,v 3.2.2.1 1998/10/18 20:41:53 hohndel Exp $
 #include <Server.tmpl>
 
 #if BuildXInputExt
@@ -31,6 +31,7 @@ INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
 INIT_DEFINES = -DUSE_DEV_FB
 
 SpecialCObjectRule(lnx_init,NullParameter,$(INIT_DEFINES))
+SpecialCObjectRule(lnx_io,NullParameter, -DUSE_MEDIUMRAW_KBD)
 SubdirLibraryRule($(OBJS))
 NormalLibraryObjectRule()
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.14 1998/02/07 10:05:09 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.15 1998/10/18 20:42:04 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -352,6 +352,15 @@ SymTabRec mach64ChipTable[] = {
     { MACH64_GI_ID, "Mach64 RagePro" },
     { MACH64_GP_ID, "Mach64 RagePro" },
     { MACH64_GQ_ID, "Mach64 RagePro" },
+    { MACH64_VV_ID, "Mach64 VT4" },
+    { MACH64_GV_ID, "Mach64 Rage IIC" },
+    { MACH64_GW_ID, "Mach64 Rage IIC" },
+    { MACH64_GZ_ID, "Mach64 Rage IIC" },
+    { MACH64_LD_ID, "Mach64 Rage LT Pro" },
+    { MACH64_LG_ID, "Mach64 Rage LT Pro" },
+    { MACH64_LB_ID, "Mach64 Rage LT Pro" },
+    { MACH64_LI_ID, "Mach64 Rage LT Pro" },
+    { MACH64_LP_ID, "Mach64 Rage LT Pro" },
     { -1, "" },
 };
 
@@ -389,6 +398,8 @@ int	mach64VRAMMemClk;
 int	mach64MemCycle;
 Bool	mach64IntegratedController;
 Bool	mach64HasDSP;
+Bool	mach64HasBlockWrite;
+Bool	mach64AGP;
 
 static ATIInformationBlock *GetATIInformationBlock(BlockIO)
     Bool BlockIO;
@@ -480,6 +491,15 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    case MACH64_GI_ID:
    case MACH64_GP_ID:
    case MACH64_GQ_ID:
+   case MACH64_VV_ID:
+   case MACH64_GV_ID:
+   case MACH64_GW_ID:
+   case MACH64_GZ_ID:
+   case MACH64_LD_ID:
+   case MACH64_LG_ID:
+   case MACH64_LB_ID:
+   case MACH64_LI_ID:
+   case MACH64_LP_ID:
 	info.ChipType = tmp & CFG_CHIP_TYPE;
 	break;
    default:
@@ -524,15 +544,33 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    }
 
    tmp = inl(ioMEM_CNTL);
-   if (((info.ChipType == MACH64_VT_ID ||
-	 info.ChipType == MACH64_GT_ID) && (info.ChipRev & 0x07)) ||
-       info.ChipType == MACH64_VU_ID ||
-       info.ChipType == MACH64_GU_ID ||
-       info.ChipType == MACH64_GB_ID ||
-       info.ChipType == MACH64_GD_ID ||
-       info.ChipType == MACH64_GI_ID ||
-       info.ChipType == MACH64_GP_ID ||
-       info.ChipType == MACH64_GQ_ID) {
+   if (info.ChipType == MACH64_GX_ID ||
+       info.ChipType == MACH64_CX_ID ||
+       info.ChipType == MACH64_CT_ID ||
+       info.ChipType == MACH64_ET_ID ||
+       ((info.ChipType == MACH64_VT_ID || info.ChipType == MACH64_GT_ID) &&
+	!(info.ChipRev & 0x07))) {
+     switch (tmp & MEM_SIZE_ALIAS) {
+     case MEM_SIZE_512K:
+       info.Mem_Size = 512;
+       break;
+     case MEM_SIZE_1M:
+       info.Mem_Size = 1024;
+       break;
+     case MEM_SIZE_2M:
+       info.Mem_Size = 2*1024;
+       break;
+     case MEM_SIZE_4M:
+       info.Mem_Size = 4*1024;
+       break;
+     case MEM_SIZE_6M:
+       info.Mem_Size = 6*1024;
+       break;
+     case MEM_SIZE_8M:
+       info.Mem_Size = 8*1024;
+       break;
+     }
+   } else {
      switch (tmp & MEM_SIZE_ALIAS_GTB) {
      case MEM_SIZE_512K:
        info.Mem_Size = 512;
@@ -554,27 +592,6 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
        break;
      case MEM_SIZE_16M_GTB:
        info.Mem_Size = 16*1024;
-       break;
-     }
-   } else {
-     switch (tmp & MEM_SIZE_ALIAS) {
-     case MEM_SIZE_512K:
-       info.Mem_Size = 512;
-       break;
-     case MEM_SIZE_1M:
-       info.Mem_Size = 1024;
-       break;
-     case MEM_SIZE_2M:
-       info.Mem_Size = 2*1024;
-       break;
-     case MEM_SIZE_4M:
-       info.Mem_Size = 4*1024;
-       break;
-     case MEM_SIZE_6M:
-       info.Mem_Size = 6*1024;
-       break;
-     case MEM_SIZE_8M:
-       info.Mem_Size = 8*1024;
        break;
      }
    }
@@ -669,6 +686,15 @@ GetATIPCIInformation()
 	    case PCI_MACH64_GI_ID:
 	    case PCI_MACH64_GP_ID:
 	    case PCI_MACH64_GQ_ID:
+	    case PCI_MACH64_VV_ID:
+	    case PCI_MACH64_GV_ID:
+	    case PCI_MACH64_GW_ID:
+	    case PCI_MACH64_GZ_ID:
+	    case PCI_MACH64_LD_ID:
+	    case PCI_MACH64_LG_ID:
+	    case PCI_MACH64_LB_ID:
+	    case PCI_MACH64_LI_ID:
+	    case PCI_MACH64_LP_ID:
 		info.ChipType = devid;
 		break;
 	    default:
@@ -677,19 +703,18 @@ GetATIPCIInformation()
 	    }
 	    info.ChipRev = pcrp->_rev_id;
 	    info.ApertureBase = pcrp->_base0 & 0xFFFFFFF0;
-	    if (((info.ChipType == PCI_MACH64_VT_ID ||
-		  info.ChipType == PCI_MACH64_GT_ID) && (info.ChipRev & 0x07)) ||
-		info.ChipType == PCI_MACH64_VU_ID ||
-		info.ChipType == PCI_MACH64_GU_ID ||
-		info.ChipType == PCI_MACH64_GB_ID ||
-		info.ChipType == PCI_MACH64_GD_ID ||
-		info.ChipType == PCI_MACH64_GI_ID ||
-		info.ChipType == PCI_MACH64_GP_ID ||
-		info.ChipType == PCI_MACH64_GQ_ID) {
-		info.RegisterBase = pcrp->_base2 & 0xFFFFF000;
-	    } else {
+	    if (info.ChipType == MACH64_GX_ID ||
+		info.ChipType == MACH64_CX_ID ||
+		info.ChipType == PCI_MACH64_CT_ID ||
+		info.ChipType == PCI_MACH64_ET_ID ||
+		((info.ChipType == PCI_MACH64_VT_ID ||
+		  info.ChipType == PCI_MACH64_GT_ID) &&
+		 !(info.ChipRev & 0x07))) {
 		info.RegisterBase = 0;
+	    } else {
+		info.RegisterBase = pcrp->_base2 & 0xFFFFF000;
 	    }
+
 	    /*
 	     * The docs say check (pcrp->_user_config_0 & 0x04) for BlockIO
 	     * but this doesn't seem to be reliable.  Instead check if
@@ -754,10 +779,19 @@ GetATIPCIInformation()
 		     info.BlockIO ? "Block" : "Sparse", info.IOBase);
 	  }
       } else {
-	ErrorF("%s %s: PCI: unknown ATI (0x%04x) rev %d, Aperture @ 0x%08x,"
-		" %s I/O @ 0x%04x\n", XCONFIG_PROBED, mach64InfoRec.name,
-		devid, info.ChipRev, info.ApertureBase,
-		info.BlockIO ? "Block" : "Sparse", info.IOBase);
+	  if (info.RegisterBase) {
+	      ErrorF("%s %s: PCI: unknown ATI (0x%04x) rev %d, "
+		     "Aperture @ 0x%08x, Registers @ 0x%08x, %s I/O @ 0x%04x\n",
+		     XCONFIG_PROBED, mach64InfoRec.name, devid,
+		     info.ChipRev, info.ApertureBase, info.RegisterBase,
+		     info.BlockIO ? "Block" : "Sparse", info.IOBase);
+	  } else {
+	      ErrorF("%s %s: PCI: unknown ATI (0x%04x) rev %d, "
+		     "Aperture @ 0x%08x, %s I/O @ 0x%04x\n",
+		     XCONFIG_PROBED, mach64InfoRec.name, devid,
+		     info.ChipRev, info.ApertureBase,
+		     info.BlockIO ? "Block" : "Sparse", info.IOBase);
+	  }
       }
     }
     if (found) {
@@ -960,24 +994,49 @@ mach64Probe()
 		"Sparse", 0x2EC);
     }
 
-    if (mach64ChipType == MACH64_GX_ID || mach64ChipType == MACH64_CX_ID)
+    if (mach64ChipType == MACH64_GX_ID || mach64ChipType == MACH64_CX_ID) {
 	mach64IntegratedController = FALSE;
-    else
+    } else {
 	/* Even for MACH64_UNKNOWN_ID more than likely */
 	mach64IntegratedController = TRUE;
+    }
 
-    if (((mach64ChipType == MACH64_VT_ID ||
-	  mach64ChipType == MACH64_GT_ID) && (mach64ChipRev & 0x07)) ||
-	mach64ChipType == MACH64_VU_ID ||
-	mach64ChipType == MACH64_GU_ID ||
-	mach64ChipType == MACH64_GB_ID ||
-	mach64ChipType == MACH64_GD_ID ||
-	mach64ChipType == MACH64_GI_ID ||
-	mach64ChipType == MACH64_GP_ID ||
-	mach64ChipType == MACH64_GQ_ID) {
-	mach64HasDSP = TRUE;
-    } else {
+    if (mach64ChipType == MACH64_GX_ID ||
+	mach64ChipType == MACH64_CX_ID ||
+	mach64ChipType == MACH64_CT_ID ||
+	mach64ChipType == MACH64_ET_ID ||
+	((mach64ChipType == MACH64_VT_ID || mach64ChipType == MACH64_GT_ID) &&
+	 !(mach64ChipRev & 0x07))) {
 	mach64HasDSP = FALSE;
+    } else {
+	mach64HasDSP = TRUE;
+    }
+
+    if (mach64ChipType == MACH64_GX_ID ||
+        mach64ChipType == MACH64_CX_ID ||
+        mach64ChipType == MACH64_GB_ID ||
+        mach64ChipType == MACH64_GD_ID ||
+        mach64ChipType == MACH64_GI_ID ||
+        mach64ChipType == MACH64_GP_ID ||
+        mach64ChipType == MACH64_GQ_ID ||
+        mach64ChipType == MACH64_LD_ID ||
+        mach64ChipType == MACH64_LG_ID ||
+        mach64ChipType == MACH64_LB_ID ||
+        mach64ChipType == MACH64_LI_ID ||
+        mach64ChipType == MACH64_LP_ID) {
+	mach64HasBlockWrite = TRUE;
+    } else {
+	mach64HasBlockWrite = FALSE;
+    }
+
+    if (mach64ChipType == MACH64_GB_ID ||
+        mach64ChipType == MACH64_GD_ID ||
+        mach64ChipType == MACH64_GW_ID ||
+        mach64ChipType == MACH64_GZ_ID ||
+        mach64ChipType == MACH64_LB_ID) {
+	mach64AGP = TRUE;
+    } else {
+	mach64AGP = FALSE;
     }
 
 #ifdef DEBUG
@@ -1116,7 +1175,16 @@ mach64Probe()
 		   mach64ChipType == MACH64_GD_ID ||
 		   mach64ChipType == MACH64_GI_ID ||
 		   mach64ChipType == MACH64_GP_ID ||
-		   mach64ChipType == MACH64_GQ_ID) {
+		   mach64ChipType == MACH64_GQ_ID ||
+		   mach64ChipType == MACH64_VV_ID ||
+		   mach64ChipType == MACH64_GV_ID ||
+		   mach64ChipType == MACH64_GW_ID ||
+		   mach64ChipType == MACH64_GZ_ID ||
+		   mach64ChipType == MACH64_LD_ID ||
+		   mach64ChipType == MACH64_LG_ID ||
+		   mach64ChipType == MACH64_LB_ID ||
+		   mach64ChipType == MACH64_LI_ID ||
+		   mach64ChipType == MACH64_LP_ID) {
 	    mach64InfoRec.maxClock = 230000;
 	} else {
 	    if (xf86bpp == 8)
@@ -1146,12 +1214,11 @@ mach64Probe()
     }
     OFLG_SET(OPTION_DAC_6_BIT, &validOptions);
     OFLG_SET(OPTION_OVERRIDE_BIOS, &validOptions);
-    if (!mach64IntegratedController ||
-	mach64ChipType == MACH64_GB_ID ||
-        mach64ChipType == MACH64_GD_ID ||
-        mach64ChipType == MACH64_GI_ID ||
-        mach64ChipType == MACH64_GP_ID ||
-        mach64ChipType == MACH64_GQ_ID) {
+    if (mach64HasDSP) {
+	OFLG_SET(OPTION_FIFO_CONSERV, &validOptions);
+	OFLG_SET(OPTION_FIFO_AGGRESSIVE, &validOptions);
+    }
+    if (mach64HasBlockWrite) {
 	OFLG_SET(OPTION_NO_BLOCK_WRITE, &validOptions);
 	OFLG_SET(OPTION_BLOCK_WRITE, &validOptions);
     }
@@ -1189,8 +1256,7 @@ mach64Probe()
 	    ErrorF("VESA LocalBus\n");
 	    break;
 	case PCI:
-	    if (mach64ChipType == MACH64_GB_ID ||
-		mach64ChipType == MACH64_GD_ID)
+	    if (mach64AGP)
 		ErrorF("AGP\n");
 	    else
 		ErrorF("PCI\n");
@@ -1217,8 +1283,39 @@ mach64Probe()
 
     mach64MemType = info->Mem_Type;
     if (xf86Verbose) {
-	ErrorF("%s %s: Memory type: %d\n", XCONFIG_PROBED,
-	       mach64InfoRec.name, mach64MemType);
+	ErrorF("%s %s: Memory type: ", XCONFIG_PROBED, mach64InfoRec.name);
+	if (mach64IntegratedController) {
+	    switch (mach64MemType) {
+	    case DRAM:
+		ErrorF("DRAM");
+		break;
+	    case EDO_DRAM:
+	    case PSEUDO_EDO:
+		ErrorF("EDO");
+		break;
+	    case SDRAM:
+		ErrorF("SDRAM");
+		break;
+	    case SGRAM:
+		ErrorF("SGRAM");
+		break;
+	    }
+	} else {
+	    switch (mach64MemType) {
+	    case DRAMx4:
+	    case DRAMx16:
+	    case GraphicsDRAMx16:
+		ErrorF("DRAM");
+		break;
+	    case VRAMx16:
+	    case VRAMx16ssr:
+	    case EnhancedVRAMx16:
+	    case EnhancedVRAMx16ssr:
+		ErrorF("VRAM");
+		break;
+	    }
+	}
+	ErrorF(" (%d)\n", mach64MemType);
     }
     mach64MinFreq = info->MinFreq;
     mach64MaxFreq = info->MaxFreq;

@@ -1,11 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_accel.c,v 3.1.2.1 1997/05/09 07:15:48 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_accel.c,v 3.1.2.4 1998/11/04 08:02:06 hohndel Exp $ */
 
 
 /*
  * This is a sample driver implementation template for the new acceleration
  * interface.
  */
-
+/*#define DEBUG*/
 #include "vga256.h"
 #include "xf86.h"
 #include "vga.h"
@@ -66,9 +66,14 @@ void SISAccelInit()
 {
     int cacheStart, cacheEnd;
     int sisCursorSize = sisHWCursor ? 16384 : 0 ; 
+    int sisTurboQueueSize = sisTurboQueue ? 32768 : 0; 
     int offscreen_available ;
     int sisBLTPatternAddress ;
     int sisBLTPatternOffscreenSize ;
+
+    /* sisTurboQueueSize is 32k, but it's aligned on a 32k boundary */
+    if (sisHWCursor && sisTurboQueue) {sisCursorSize = 32768;}
+
     /*
      * If you want to disable acceleration, just don't modify anything
      * in the AccelInfoRec.
@@ -93,8 +98,9 @@ void SISAccelInit()
      */
        
 
-    xf86AccelInfoRec.Flags = BACKGROUND_OPERATIONS | 
-	(sisUseXAAcolorExp ? PIXMAP_CACHE : 0 ) |
+
+    xf86AccelInfoRec.Flags =  BACKGROUND_OPERATIONS | 
+	  (sisUseXAAcolorExp ? PIXMAP_CACHE : 0 ) |
 	    HARDWARE_PATTERN_PROGRAMMED_BITS | 
 		HARDWARE_PATTERN_PROGRAMMED_ORIGIN |
 		    HARDWARE_PATTERN_BIT_ORDER_MSBFIRST |
@@ -158,7 +164,9 @@ void SISAccelInit()
 	
 	    offscreen_available = vga256InfoRec.videoRam * 1024 - 
 		vga256InfoRec.displayWidth * vga256InfoRec.virtualY
-		    * (vgaBitsPerPixel / 8);
+		    * (vgaBitsPerPixel / 8) ;
+		    
+	    offscreen_available = offscreen_available - sisCursorSize - sisTurboQueueSize;
 	    sisBLTPatternOffscreenSize = 1024 ;
 	
 	    if (offscreen_available < sisBLTPatternOffscreenSize) {
@@ -166,12 +174,18 @@ void SISAccelInit()
 		       " memory for expand color.\n",
 		       XCONFIG_PROBED, vga256InfoRec.name);
 		sisBLTPatternOffscreenSize = 0 ;
+#ifdef DEBUG
+		ErrorF("offscreen_available: %d\n", offscreen_available );
+#endif
 	    }
 	    else {
 		sisBLTPatternAddress = vga256InfoRec.videoRam * 1024 
-		    - sisCursorSize - sisBLTPatternOffscreenSize;
+		    - sisCursorSize - sisTurboQueueSize - sisBLTPatternOffscreenSize;
 		xf86AccelInfoRec.ScratchBufferAddr=sisBLTPatternAddress;
 		xf86AccelInfoRec.ScratchBufferSize=sisBLTPatternOffscreenSize;
+#ifdef DEBUG
+		ErrorF("sisBLTPatternAddress at 0x0%x\n", sisBLTPatternAddress );
+#endif
 	    }
 	}	
 	/*
@@ -196,16 +210,27 @@ void SISAccelInit()
 		* vga256InfoRec.bitsPerPixel / 8;
 	cacheEnd =
 	    vga256InfoRec.videoRam * 1024 - 1024 - sisBLTPatternOffscreenSize -
-		sisCursorSize ;
+		sisCursorSize - sisTurboQueueSize; 
 
 	xf86InitPixmapCache(&vga256InfoRec, cacheStart, cacheEnd);
+#ifdef DEBUG
+    ErrorF("virtualY = %d \ndisplayWidth %d \nbitsPerPixel %d \nVisible framebuffer size: %dK\n",  
+    vga256InfoRec.displayWidth,
+    vga256InfoRec.virtualY,
+    vga256InfoRec.bitsPerPixel,
+    cacheStart/1024);
+    ErrorF("Pixmap cache from top - %dK to top - %dK. Size %dK\n",   
+            vga256InfoRec.videoRam-(cacheStart/1024),
+            vga256InfoRec.videoRam-(cacheEnd/1024),
+            (cacheEnd-cacheStart)/1024);
+#endif
     }
     /* 
      * Now set variables often used
      *
      */
     
-    sisPatternHeight = (SISchipset == SIS86C205) ? 16 : 8  ;
+    sisPatternHeight = ((SISchipset == SIS86C205) || (SISchipset == SIS5597)|| (SISchipset == SIS6326)) ? 16 : 8  ;
     
 }
 
@@ -213,7 +238,14 @@ void SISAccelInit()
  * This is the implementation of the Sync() function.
  */
 void SISSync() {
-    sisBLTWAIT;
+ /* Don't activate these messages unless you have a VERY GOOD reason */
+#if 0  
+        ErrorF("\nQueue free before sync: %d\n",(*(unsigned short *)(sisMMIOBase+BR(10))));
+#endif
+    sisBLTSync;
+#if 0
+        ErrorF("Queue free after sync.: %d\n",(*(unsigned short *)(sisMMIOBase+BR(10))));
+#endif
 }
 
 static int sisALUConv[] =
@@ -422,7 +454,7 @@ void SISSubsequentScreenToScreenColorExpand(srcx, srcy, x, y, ww, h)
     int w ;
     int widthTodo ;
 
-    /*ErrorF("SISSubsequentScreenToScreenColorExpand()\n");*/
+/*    ErrorF("SISSubsequentScreenToScreenColorExpand()\n"); */
 #define maxWidth 144
     /* can't expand more than maxWidth in one time.
        it's a work around for scanline greater than maxWidth 
@@ -547,7 +579,7 @@ void SISSetupFor8x8PatternColorExpand(patternx, patterny, bg, fg,
 	sisSETROPFG(0xf0);	/* pat copy */
 	sisSETROPBG(0xcc); 	/* copy */
     }
-    sisBLTWAIT;
+    sisBLTWAIT; 
     sisSETPITCH(0, dstpitch);    
     sisSETSRCADDR(0);
     sisColExp_op = op ;
@@ -577,10 +609,9 @@ void SISSubsequent8x8PatternColorExpand(patternx, patterny, x, y, w, h)
     int			shift ;
 
     dstaddr = ( y * vga256InfoRec.displayWidth + x ) * vgaBytesPerPixel;
-
-    /*ErrorF("SISSubsequent8x8PatternColorExpand(%d %d %d %d %d %d)\n",
+/*    ErrorF("SISSubsequent8x8PatternColorExpand(%d %d %d %d %d %d)\n",
 	   patternx, patterny, x, y, w, h);*/
-    sisBLTWAIT;
+    sisBLTSync;
     patternRegPtr = sisSETPATREG();
     srcPatternRegPtr = (unsigned char *)sisPatternReg ;
     shift = 8-patternx ;

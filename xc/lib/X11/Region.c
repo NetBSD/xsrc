@@ -71,6 +71,7 @@ SOFTWARE.
  * rectangles in the same places (of the same width, of course). This maintains
  * the y-x-banding that's so nice to have...
  */
+/* $XFree86: xc/lib/X11/Region.c,v 1.1.1.2.2.2 1998/10/04 15:22:50 hohndel Exp $ */
 
 #include "Xlibint.h"
 #include "Xutil.h"
@@ -480,10 +481,14 @@ miRegionCopy(dstrgn, rgn)
         {
             if (dstrgn->rects)
             {
+		BOX *prevRects = dstrgn->rects;
+		
                 if (! (dstrgn->rects = (BOX *)
 		       Xrealloc((char *) dstrgn->rects,
-				(unsigned) rgn->numRects * (sizeof(BOX)))))
+				(unsigned) rgn->numRects * (sizeof(BOX))))) {
+		    Xfree(prevRects);
 		    return;
+		}
             }
             dstrgn->size = rgn->numRects;
 	}

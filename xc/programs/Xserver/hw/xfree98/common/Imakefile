@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/19 1996/10/25 21:24:28 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.3 1998/02/07 14:51:59 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.6 1998/10/31 14:41:13 hohndel Exp $
 
 
 
@@ -33,8 +33,8 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.3 1998/
  XCONFIGFILE = XF86Config
 
 #if BuildXInputExt
- XF86_XINPUT_SRC = xf86Xinput.c
- XF86_XINPUT_OBJ = xf86Xinput.o
+ XF86_XINPUT_SRC = xf86Xinput.c xf86Switch.c
+ XF86_XINPUT_OBJ = xf86Xinput.o xf86Switch.o
 # if JoystickSupport
       JOYSTICK_SRC = xf86Jstk.c
 # endif
@@ -44,11 +44,20 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.3 1998/
 # if ElographicsSupport
    ELOGRAPHICS_SRC = xf86Elo.c
 # endif
+# if MicroTouchSupport
+    MICROTOUCH_SRC = xf86MuTouch.c
+# endif
 # if SummaSketchSupport
    SUMMASKETCH_SRC = xf86Summa.c
 # endif
+# if AceCadSupport
+        ACECAD_SRC = xf86AceCad.c
+# endif
+# if DialBoxSupport
+        DIALBOX_SRC = xf86Dial.c
+# endif
 # if ! BuildDynamicLoading
-    XINPUT_DEVICES = JoystickDefines WacomDefines ElographicsDefines SummaSketchDefines
+    XINPUT_DEVICES = JoystickDefines WacomDefines ElographicsDefines MicroTouchDefines SummaSketchDefines AceCadDefines DialBoxDefines
 #  if JoystickSupport
       JOYSTICK_OBJ = xf86Jstk.o
 #  endif
@@ -58,8 +67,17 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.3 1998/
 #  if ElographicsSupport
    ELOGRAPHICS_OBJ = xf86Elo.o
 #  endif
+#  if MicroTouchSupport
+    MICROTOUCH_OBJ = xf86MuTouch.o
+#  endif
 #  if SummaSketchSupport
    SUMMASKETCH_OBJ = xf86Summa.o
+#  endif
+#  if AceCadSupport
+        ACECAD_OBJ = xf86AceCad.o
+#  endif
+#  if DialBoxSupport
+        DIALBOX_OBJ = xf86Dial.o
 #  endif
 # else
  SHARED_CFLAGS = PositionIndependentCFlags $(MODULEDEFINES)
@@ -67,7 +85,7 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.3 1998/
 #   ifdef LinuxArchitecture
    ARCH_JSTK = ../os-support/linux/lnx_jstk.o
 #   endif
-#   if defined(FreeBSDArchitecture) || defined(NetBSDArchitecture)
+#   if defined(FreeBSDArchitecture) || defined(NetBSDArchitecture) || defined(OpenBSDArchitecture)
    ARCH_JSTK = ../os-support/bsd/bsd_jstk.o
 #   endif
 #  endif
@@ -142,7 +160,10 @@ SRCS =	\
 	$(JOYSTICK_SRC) \
 	$(WACOM_SRC) \
 	$(ELOGRAPHICS_SRC) \
+	$(MICROTOUCH_SRC) \
 	$(SUMMASKETCH_SRC) \
+	$(ACECAD_SRC) \
+	$(DIALBOX_SRC) \
 	$(XKBDDXSRC) \
 	$(BETASRC) \
 	$(SERVERSRCS)
@@ -161,7 +182,10 @@ OBJS = \
 	$(JOYSTICK_OBJ) \
 	$(WACOM_OBJ) \
 	$(ELOGRAPHICS_OBJ) \
+	$(MICROTOUCH_OBJ) \
 	$(SUMMASKETCH_OBJ) \
+	$(ACECAD_OBJ) \
+	$(DIALBOX_OBJ) \
 	$(XKBDDXOBJ) \
 	$(BETAOBJ) \
 	$(KBD).o
@@ -218,11 +242,32 @@ DynamicModuleTarget(xf86Elo.so,xf86Elo.o)
 InstallDynamicModule(xf86Elo.so,$(MODULEDIR))
 #   endif
 #  endif
+#  if MicroTouchSupport
+SpecialObjectRule(xf86MuTouch.o,xf86MuTouch.c,$(SHARED_CFLAGS))
+DynamicModuleTarget(xf86MuTouch.so,xf86MuTouch.o)
+#   ifndef DontInstallPC98Version
+InstallDynamicModule(xf86MuTouch.so,$(MODULEDIR))
+#   endif
+#  endif
 #  if SummaSketchSupport
 SpecialObjectRule(xf86Summa.o,xf86Summa.c,$(SHARED_CFLAGS))
 DynamicModuleTarget(xf86Summa.so,xf86Summa.o)
 #   ifndef DontInstallPC98Version
 InstallDynamicModule(xf86Summa.so,$(MODULEDIR))
+#   endif
+#  endif
+#  if AceCadSupport
+SpecialObjectRule(xf86AceCad.o,xf86AceCad.c,$(SHARED_CFLAGS))
+DynamicModuleTarget(xf86AceCad.so,xf86AceCad.o)
+#   ifndef DontInstallPC98Version
+InstallDynamicModule(xf86AceCad.so,$(MODULEDIR))
+#   endif
+#  endif
+#  if DialBoxSupport
+SpecialObjectRule(xf86Dial.o,xf86Dial.c,$(SHARED_CFLAGS))
+DynamicModuleTarget(xf86Dial.so,xf86Dial.o)
+#   ifndef DontInstallPC98Version
+InstallDynamicModule(xf86Dial.so,$(MODULEDIR))
 #   endif
 #  endif
 # endif
@@ -279,6 +324,8 @@ LinkSourceFile(cfb32.h,$(XF86SRC)/common)
 LinkSourceFile(coKeynames.h,$(XF86SRC)/common)
 LinkSourceFile(compiler.h,$(XF86SRC)/common)
 LinkSourceFile(xf86.h,$(XF86SRC)/common)
+LinkSourceFile(xf86AceCad.c,$(XF86SRC)/common)
+LinkSourceFile(xf86Dial.c,$(XF86SRC)/common)
 #if NeedXF86Beta
 LinkSourceFile(xf86Beta.c,$(XF86SRC)/common)
 #endif
@@ -291,12 +338,14 @@ LinkSourceFile(xf86Elo.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Events.c,$(XF86SRC)/common)
 LinkSourceFile(xf86ExtInit.h,$(XF86SRC)/common)
 LinkSourceFile(xf86Init.c,$(XF86SRC)/common)
+LinkSourceFile(xf86Io.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Jstk.c,$(XF86SRC)/common)
+LinkSourceFile(xf86MuTouch.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Summa.c,$(XF86SRC)/common)
+LinkSourceFile(xf86Switch.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Wacom.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Xinput.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Xinput.h,$(XF86SRC)/common)
-LinkSourceFile(xf86Io.c,$(XF86SRC)/common)
 LinkSourceFile(xf86XKB.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Kbd.c,$(XF86SRC)/common)
 LinkSourceFile(xf86KbdBSD.c,$(XF86SRC)/common)

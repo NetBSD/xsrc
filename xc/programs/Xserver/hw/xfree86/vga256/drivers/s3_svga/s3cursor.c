@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3cursor.c,v 1.1.2.2 1998/02/24 13:54:26 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3cursor.c,v 1.1.2.4 1998/10/22 04:31:07 hohndel Exp $
 *
 */
 
@@ -18,14 +18,15 @@
 #include "windowstr.h"
 
 #include "compiler.h"
-#include "vga256.h"
 #include "xf86.h"
 #include "mipointer.h"
 #include "xf86Priv.h"
 #include "xf86_Option.h"
 #include "xf86_OSlib.h"
+#include "vga256.h"
 #include "vga.h"
 #include "xf86cursor.h"
+#include "xf86xaa.h"
 
 #define XCONFIG_FLAGS_ONLY
 #include "xf86_Config.h"
@@ -159,9 +160,11 @@ void S3CursorInit()
 
 
     	XAACursorInfoRec.Flags = USE_HARDWARE_CURSOR |
+				HARDWARE_CURSOR_PROGRAMMED_BITS |
 				HARDWARE_CURSOR_PROGRAMMED_ORIGIN |		
 				HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
 				HARDWARE_CURSOR_SHORT_BIT_FORMAT;
+	XAACursorInfoRec.LoadCursorImage = s3LoadCursorImage;
 	XAACursorInfoRec.SetCursorColors = s3SetCursorColors;
 	XAACursorInfoRec.SetCursorPosition = s3SetCursorPosition;
 	XAACursorInfoRec.HideCursor = s3HideCursor;
@@ -179,6 +182,83 @@ void S3CursorInit()
 	vgaHWCursor.Warp = XAAWarpCursor;
 	vgaHWCursor.QueryBestSize = XAAQueryBestSize;
     }
+}
+
+
+#define VerticalRetraceWait() \
+{ \
+   outb(vgaCRIndex, 0x17); \
+   if ( inb(vgaCRReg) & 0x80 ) { \
+       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; \
+       while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x08) ; \
+       }\
+}
+
+static void 
+s3LoadCursorImage(bits, xorigin, yorigin)
+   unsigned char *bits;
+   int xorigin, yorigin;
+{
+   unsigned char cr45;
+
+   if (!xf86VTSema)
+      return;
+
+   UNLOCK_SYS_REGS;
+
+   WaitIdle();
+
+   /* Wait for vertical retrace */
+   VerticalRetraceWait();
+
+   /* turn cursor off */
+   outb(vgaCRIndex, 0x45);
+   cr45 = inb(vgaCRReg);
+   outb(vgaCRReg, cr45 & 0xFE);
+
+   /* move cursor off-screen */
+   outb(vgaCRIndex, 0x46);
+   outb(vgaCRReg, 0xff);
+   outb(vgaCRIndex, 0x47);
+   outb(vgaCRReg, 0x7f);
+   outb(vgaCRIndex, 0x49);
+   outb(vgaCRReg, 0xff);
+   outb(vgaCRIndex, 0x4e);
+   outb(vgaCRReg, 0x3f);
+   outb(vgaCRIndex, 0x4f);
+   outb(vgaCRReg, 0x3f);
+   outb(vgaCRIndex, 0x48);
+   outb(vgaCRReg, 0x7f);
+
+   if (xorigin == 0 && yorigin == 0)
+       xf86AccelInfoRec.ImageWrite(
+           XAACursorInfoRec.CursorDataX,
+           XAACursorInfoRec.CursorDataY,
+           (XAACursorInfoRec.MaxWidth * XAACursorInfoRec.MaxHeight * 2) / xf86bpp,
+           1,
+           bits,
+           0, GXcopy, ~0
+       );
+   else
+       /*
+        * XXX
+        * Must simulate programmable origin by uploading pattern
+        * "skewed" (horizontally and/or vertically).
+        */
+      	ErrorF("%s %s: s3cursor:  x/y origin %d %d  != 0\n", 
+			XCONFIG_PROBED, vga256InfoRec.name,xorigin,yorigin);
+       ;
+
+   WaitIdle();
+
+   /* Wait for vertical retrace */
+   VerticalRetraceWait();
+
+   /* turn cursor on */
+   outb(vgaCRIndex, 0x45);
+   outb(vgaCRReg, cr45);
+
+   LOCK_SYS_REGS;
 }
 
  

@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:39:23 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/Imakefile,v 3.14.2.2 1998/02/24 13:54:31 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/Imakefile,v 3.14.2.3 1998/11/04 14:38:31 hohndel Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
@@ -22,7 +22,7 @@ VGA16SCREEN = vga16
 ACCELDIRS = accel
 #endif
 
-#if !defined(OsfArchitecture) && !defined(AmoebaArchitecture)
+#if !defined(OsfArchitecture) && !defined(AmoebaArchitecture) && !defined(ArcArchitecture)
 SUPERPROBE = SuperProbe
 #endif
 
@@ -51,6 +51,7 @@ MANPAGE=Concat3(FileManDir,/XF86Config.,FileManSuffix)
 #endif
 
 RGBPATH=\"DefaultRGBDatabase\"
+LOCALFONTPATH=\"$(LIBDIR)/fonts/local/\"
 MISCFONTPATH=\"$(LIBDIR)/fonts/misc/\"
 T1FONTPATH=\"$(LIBDIR)/fonts/Type1/\"
 SPFONTPATH=\"$(LIBDIR)/fonts/Speedo/\"
@@ -59,6 +60,11 @@ DPI100FONTPATH=\"$(LIBDIR)/fonts/100dpi/\"
 DPI75USFONTPATH=\"$(LIBDIR)/fonts/75dpi/:unscaled\"
 DPI100USFONTPATH=\"$(LIBDIR)/fonts/100dpi/:unscaled\"
 
+#if MakeLocalFontDir
+  USE_LOCALFONTS="    FontPath"
+#else
+  USE_LOCALFONTS="XCOMM    FontPath"
+#endif
 #if Build75DpiFonts
   USE_75FONTS="    FontPath"
 #else
@@ -108,6 +114,7 @@ DPI100USFONTPATH=\"$(LIBDIR)/fonts/100dpi/:unscaled\"
 #ifdef MinixArchitecture
 CppFileTarget($(XF86CONFIG), XF98Conf.cpp,
     -DRGBPATH=$(RGBPATH) -DMISCFONTPATH=$(MISCFONTPATH)
+    -DUSE_LOCALFONT=$(USELOCALFONT) -DLOCALFONTPATH=$(LOCALFONTPATH)
     -DUSE_T1FONTS=$(USE_T1FONTS) -DT1FONTPATH=$(T1FONTPATH)
     -DUSE_SPFONTS=$(USE_SPFONTS) -DSPFONTPATH=$(SPFONTPATH)
     -DUSE_75FONTS=$(USE_75FONTS) -DDPI75FONTPATH=$(DPI75FONTPATH)
@@ -122,6 +129,7 @@ CppFileTarget($(XF86CONFIG), XF98Conf.cpp,
 #else
 CppFileTarget($(XF86CONFIG), XF98Conf.cpp, \
     -DRGBPATH=$(RGBPATH) -DMISCFONTPATH=$(MISCFONTPATH) \
+    -DUSE_LOCALFONTS=$(USE_LOCALFONTS) -DLOCALFONTPATH=$(LOCALFONTPATH) \
     -DUSE_T1FONTS=$(USE_T1FONTS) -DT1FONTPATH=$(T1FONTPATH) \
     -DUSE_SPFONTS=$(USE_SPFONTS) -DSPFONTPATH=$(SPFONTPATH) \
     -DUSE_75FONTS=$(USE_75FONTS) -DDPI75FONTPATH=$(DPI75FONTPATH) \

@@ -4,9 +4,9 @@
 
 <!-- Title information -->
 <title> Information for Chips and Technologies Users
-<author> David Bateman (<it>dbateman@ee.uts.edu.au</it>),
+<author> David Bateman (<it>dbateman@eng.uts.edu.au</it>),
          Egbert Eich (<it>Egbert.Eich@Physik.TH-Darmstadt.DE</it>)
-<date> 28th July 1997
+<date> 5th June 1998
 
 <!-- Table of contents -->
 <toc>
@@ -16,12 +16,12 @@
 The Chips and Technologies range of chips are primarily manufactured
 for use in laptop computers, where their power conservation circuitry
 is of importance. They can however be found in a few "<tt>Green</tt>"
-video cards for desktop machines. This release of XFree includes 
+video cards for desktop machines. This release of XFree86 includes 
 support for 
 
 <itemize>
 <item>Linear Addressing
-<item>16/ 24 bits per pixel
+<item>16/24/32 bits per pixel
 <item>Fully programmable clocks are supported
 <item>H/W cursor support
 <item>BitBLT acceleration of many operations using XAA
@@ -75,6 +75,12 @@ to some degree.
 	color (i.e 32bpp mode). Also memory mapped I/O is possible on all bus
 	configurations. 
 	(Max Ram: 2Mb, Max Dclk: 80MHz@3.3V,100MHz@5V)
+
+        ( Note: At least one non-PCI bus system with a ct65550 requires the
+        "<tt>-no_bios</tt>" option for the SuperProbe to correctly detect
+	the chipset with the factory default BIOS settings. The XF86_SVGA
+	server can correctly detect the chip in the same situation. )
+
 <tag>ct65554</tag>
 	This chip is similar to the 65550 but has a 64bit memory bus as 
 	opposed to a 32bit bus. It also has higher limits on the maximum
@@ -90,6 +96,11 @@ to some degree.
 	serial link allows an LCD screens to be located up to 100m from the 
 	video processor. Expect to see this chip soon in LCD desktop machines
 	(Max Ram: 4Mb, Max Dclk: 110MHz@3.3V)
+<tag>ct69000</tag>
+	Similar to the 65555 but incorporates 2Mbytes of SGRAM on chip. It is
+	the first Chips and Technologies chipset where all of the registers
+	are accessible through MMIO, rather than just the BitBlt registers.
+	(Max Ram: 2Mb Only, Max Dclk: 220MHz@3.3V)
 <tag>ct64200</tag>
 	This chip, also known as the WinGine, is used in video cards
         for desktop systems. It often uses external DAC's and programmable
@@ -116,30 +127,30 @@ options for all depths by specifying them in the Device section).
 
 <descrip>
 <tag>
-Option &dquot;noaccel&dquot;
+Option "noaccel"
 </tag>
         This option will disable the use of any accelerated functions.
         This is likely to help with some problems related to DRAM
         timing, high dot clocks, and bugs in accelerated functions, at
         the cost of performance (which will still be reasonable on VLB/PCI).
 <tag>
-Option &dquot;no_bitblt&dquot; (Chips 65545 and later)
+Option "no_bitblt" (Chips 65545 and later)
 </tag>
         This option will disable the use of the BitBLT engine which the
 	65545 and above have. If you can use the  "<tt>noaccel</tt>" option
 	to correct a problem, then this option might be better to use.
 	It still allows the use of generic speedups.
 <tag>
-Option &dquot;xaa_no_color_exp&dquot; (Chips 65545 and later)
+Option "xaa_no_color_exp" (Chips 65545 and later)
 </tag>
 	This option will have the effect of disabling the use
 	of monochrome colour expansion. In particular this effects
 	text and bitmaps. It is useful for problems related to image writes,
 	and possible acceleration problems. In general this will result in
 	a reduced performance. Note that this option replaces the 
-	"<tt>no_imageblt</tt>" option used in XFree 3.2.
+	"<tt>no_imageblt</tt>" option used in XFree86 3.2.
 <tag>
-Option &dquot;xaa_benchmark&dquot; (Chips 65545 and later)
+Option "xaa_benchmark" (Chips 65545 and later)
 </tag>
 	Turns on the XAA acceleration benchmarks. Information regarding
 	what graphics primitives are accelerated and their relatives
@@ -152,12 +163,12 @@ videoram 1024 (or another value)
 	Note that many ct655xx chips only allow up to 1Mb of videoram,
 	and the amount should be correctly detected.
 <tag>
-Option &dquot;nolinear&dquot; (Chips 65530 and later)
+Option "nolinear" (Chips 65530 and later)
 </tag>
 	By default linear addressing is used on all ct655xx chips.
 	However this might be broken in some implementations. It
 	is possible to turn the linear addressing off with this
-	option. Note that H/W acceleration and 16/24bpp are only
+	option. Note that H/W acceleration and 16/24/32bpp are only
 	supported with linear addressing.
 <tag>
 MemBase 0x03b00000 (or a different address)
@@ -170,18 +181,25 @@ MemBase 0x03b00000 (or a different address)
 	to suit. Note that for the 65530 this is required as the
 	base address can't be correctly probed.
 <tag>
-Option &dquot;sw_cursor&dquot; (Chips 65545 and later)
+Option "hw_cursor" (Chips 65545 and later)
 </tag>
-        This disables use of the hardware cursor provided by the chip.
-        Try this if the cursor seems to have problems. 
+        This option enables the use of a hardware accelerated cursor. This
+	effectively speeds all graphics operations as the job of ensuring that
+	the cursor remains on top is now given to the hardware. It also
+	reduces the effect of cursor flashing during graphics operations.
 <tag>
-Option &dquot;STN&dquot;
+Option "sw_cursor" (Chips 65545 and later)
+</tag>
+        Software cursors have now been made the default and so this option
+	has no effect.
+<tag>
+Option "STN"
 </tag>
 	The server is unable to differentiate between SS STN 
  	and TFT displays. This forces it to identify the display
 	as a SS STN rather than a TFT.
 <tag>
-Option &dquot;use_modeline&dquot;
+Option "use_modeline"
 </tag>
 	The flat panel timings are related to the panel size and not the
 	size of the mode specified in XF86Config. For this reason the
@@ -190,7 +208,7 @@ Option &dquot;use_modeline&dquot;
 	recalculated from the modeline with this option. However the panel
 	size will still be probed.
 <tag>
-Option &dquot;fix_panel_size&dquot;
+Option "fix_panel_size"
 </tag>
 	For some machines the LCD panel size is incorrectly probed from
 	the registers. This option forces the LCD panel size to be
@@ -198,26 +216,26 @@ Option &dquot;fix_panel_size&dquot;
 	use of a mode that is a different size than the panel. Before
 	using this check that the server reports an incorrect panel
 	size. This option can be used in conjunction with the option
-	&dquot;use_modeline&dquot; to program all the panel timings using
+	"use_modeline" to program all the panel timings using
 	the modeline values.
 <tag>
-Option &dquot;no_stretch&dquot;
+Option "no_stretch"
 </tag>
 	When the size of the mode used is less than the panel size, the
 	default behaviour of the server is to stretch the mode in an attempt
 	to fill the screen. A "<tt>letterbox</tt>" effect with no stretching
 	can be achieved using this option.
 <tag>
-Option &dquot;lcd_center&dquot;
+Option "lcd_center"
 </tag>
 	When the size of the mode used is less than the panel size, the
 	default behaviour of the server is to align the left hand edge of
 	the display with the left hand edge of the screen. Using this option
 	the mode can be centered in the screen. This option is reported to
-	have problems with some machines at 16/24bpp, the effect of which
+	have problems with some machines at 16/24/32bpp, the effect of which
 	is that the right-hand edge of the mode will be pushed off the screen.
 <tag>
-Option &dquot;hw_clocks&dquot; (Chips 65535 and later)
+Option "hw_clocks" (Chips 65535 and later)
 </tag>
 	On chips 65535 and later, the default is to use the programmable
 	clock for all clocks. It is possible to use the fixed clocks
@@ -231,14 +249,17 @@ Option &dquot;hw_clocks&dquot; (Chips 65535 and later)
 	programmable clock makes this option obsolete and so it's use
 	isn't recommended.
 <tag>
-Option &dquot;use_vclk1&dquot; (Chips 65550 and later)
+Option "use_vclk1" (Chips 65550 and later)
 </tag>
 	The HiQV series of chips have three programmable clocks. The
 	first two are usually loaded with 25.175 and 28.322MHz for
 	VGA backward compatibility, and the third is used as a fully
 	programmable clock. On at least one system (the Inside 686 LCD/S
 	single board computer) the third clock is unusable. This option
-	forces the use of VClk1 as the programmable clock.
+	forces the use of VClk1 as the programmable clock. It has been
+	reported that this option can fix the blue/black screen problem
+	on startup that a few machines suffer. 
+
 <tag>
 TextClockFreq 25.175
 </tag>
@@ -250,7 +271,7 @@ TextClockFreq 25.175
 	select a different clock for the server to use when returning to
 	the text console.
 <tag>
-Option &dquot;mmio&dquot;
+Option "mmio"
 </tag>
         This enables the use of memory-mapped I/O to talk to the BitBLT
         engine. By default memory-mapped I/O is not enabled on the
@@ -261,35 +282,35 @@ Option &dquot;mmio&dquot;
 	machines MMIO is enabled by default because the blitter can not
 	be used otherwise.
 <tag>
-Option &dquot;suspend_hack&dquot;
+Option "suspend_hack"
 </tag>
 	This option sets the centering and stretching to the bios
 	default values. This can fix suspend/resume problems on some
-	machines. It overrides the options &dquot;lcd_center&dquot; 
-	and &dquot;no_stretch&dquot;.
+	machines. It overrides the options "lcd_center" 
+	and "no_stretch".
 <tag>
-Option &dquot;use_18bit_bus&dquot;  (Chips 65540/45/46/48)
+Option "use_18bit_bus"  (Chips 65540/45/46/48)
 </tag>
 	For 24bpp on TFT screens, the server assumes that a 24bit bus
 	is being used. This can result in a reddish tint to 24bpp mode.
 	This option, selects an 18 bit TFT bus. For other depths this
 	option has no effect.
 <tag>
-Chipset &dquot;ct65546&dquot; (or some other chip)
+Chipset "ct65546" (or some other chip)
 </tag>
 	It is possible that the chip could be misidentified, particular
 	due to interactions with other drivers in the server. It is
 	possible to force the server to identify a particular chip with
 	this option.
 <tag>
-Option &dquot;sync_on_green&dquot; (Chips 65550/54/55 and 68554)
+Option "sync_on_green" (Chips 65550/54/55 and 68554)
 </tag>
 	Composite sync on green. Possibly useful if you wish to use an
 	old workstation monitor. The 65550/54 internal RAMDAC's support
 	this mode of operation, but whether a particular machine does
 	depends on the manufacturer. 
 <tag>
-Option &dquot;fast_dram&dquot; (Chips 65550/54/55 and 68554)
+Option "fast_dram" (Chips 65550/54/55 and 68554)
 </tag>
 	This option sets the internal memory clock (MCLK) registers to 38MHz.
 	The default value programmed by the BIOS is usually OK, but some
@@ -332,7 +353,7 @@ driver you'll needed to considered several points
 	attempt to round-up the virtual X dimension to a multiple of 64,
 	but leave the virtual resolution untouched. This might further
 	reduce the available memory.
-<tag> * 16/24 Bits Per Pixel </tag>
+<tag> * 16/24/32 Bits Per Pixel </tag>
 		Chips later than the ct65540 are capable of supporting
 	Hi-Color and True-Color modes. These are implemented in the current
 	server. The clocks in the 6554x series of chips are internally
@@ -342,8 +363,8 @@ driver you'll needed to considered several points
 	at 8bpp. The 6555x series of chips doesn't need to use additional
 	clock cycles to display higher depths, and so the same modeline
 	can be used at all depths, without needing to divide the clocks.
-	Also 16/24 bpp modes will need 2 or 3 times respectively more video
-	ram.
+	Also 16/24/32 bpp modes will need 2 , 3 or 4 times respectively more
+	video ram.
 <tag> * Frame Acceleration</tag>
 		Many DSTN screens use frame acceleration to improve the
 	performance of the screen. This can be done by using an external
@@ -374,7 +395,9 @@ driver you'll needed to considered several points
 	more memory bandwidth for use in the drawing operations. Some
 	users prefer to use clocks that are defined by their BIOS. This
 	has the advantage that the BIOS will probably restore the clock
-	they specified after a suspend/resume or LCD/CRT switch.
+	they specified after a suspend/resume or LCD/CRT switch. For a
+	complete discussion on the dot clock limitations, see the next
+	section.
 </descrip>
 
 The driver is capable of driving both a CRT and a flat panel
@@ -413,6 +436,119 @@ Test on a Zeos Meridan 850c (800x600 DSTN, 65545, 1Mbyte)
 
 The NEC Versa 4080 just needs the "fix_panel_size" option.
 
+<sect> The Full Story on Clock Limitations <p>
+
+There has been much confusion about exactly what the clock limitations
+of the Chips and Technologies chipsets are. Hence I hope that this
+section will clear up the misunderstandings. 
+
+In general there are two factors determining the maximum dotclock.
+There is the limit of the maximum dotclock the video processor can handle, 
+and there is another limitation of the available memory bandwidth. The 
+memory bandwidth is determined by the clock used for the video memory.
+For chipsets incapable of colour depths greater that 8bpp like the 65535,
+the dotclock limit is solely determined by the highest dotclock the video
+processor is capable of handling. So this limit will be either 56MHz or
+68MHz for the 655xx chipsets, depending on what voltage they are driven
+with, or 80MHz for the 64200 WinGine machines.
+
+The 6554x and 64300 WinGine chipsets are capable of colour depths of 16
+or 24bpp. However there is no reliable way of probing the memory clock
+used in these chipsets, and so a conservative limit must be taken for
+the dotclock limit. In this case the driver divides the video processors
+dotclock limitation by the number of bytes per pixel, so that the
+limitations for the various colour depths are
+
+<verb>
+                        8bpp    16bpp   24bpp
+64300                   85      42.5    28.33
+65540/65545 3.3v        56      28      18.67
+65540/65545 5v          68      34      22.67
+65546/65548             80      40      26.67
+</verb>
+
+For a CRT or TFT screen these limitations are conservative and the user
+might safely override them with the "<tt>DacSpeed</tt>" option to some
+extent. However these numbers take no account of the extra bandwidth 
+needed for DSTN screens. 
+
+For the HiQV series of chips, the memory clock can be successfully probed.
+Hence you will see a line like
+
+<verb>
+(--) SVGA: CHIPS: probed memory clock of 40090 KHz
+</verb>
+
+in your startx log file. Note that many chips are capable of higher
+memory clocks than actually set by BIOS. You can use the Set_MClk
+option in your XF86Config file to get a higher MClk. However some
+video ram, particularly EDO, might not be fast enough to handle this,
+resulting in drawing errors on the screen. The formula to determine the
+maximum usable dotclock on the HiQV series of chips is
+
+<verb>
+Max Dotclock = min(MaxDClk,  0.70  * 4 * MemoryClk / (BytesPerPixel + 
+                (isDSTN == TRUE ? 1 : 0)))
+</verb>
+
+which says that there are two limits on the dotclock. One the overall
+maximum, and another due to the available memory bandwidth of the chip.
+For the memory bandwidth 4 bytes are transfered every clock cycle (Hence
+the 4), but after accounting for the RAS/CAS signaling only about 70%
+of the bandwidth is available. The whole thing is divided by the bytes
+per pixel, plus an extra byte if you are using a DSTN. The extra byte
+with DSTN screens is used for the frame buffering/acceleration in these
+screens. So for the various Chips and Technologies chips the maximum
+specifications are
+
+<verb>
+                    Max DClk MHz      Max Mem Clk MHz
+65550 rev A 3.3v          80                38 
+65550 rev A 5v           110                38
+65550 rev B               95                50
+65554                     94.5              55
+65555                    110                55
+68554                    110                55
+69000                    220               100
+</verb>
+
+Note that all of the chips except the 65550 rev A are 3.3v only. Which
+is the reason for the drop in the dot clock. Now the maximum memory clock
+is just the maximum supported by the video processor, not the maximum
+supported by the video memory. So the value actually used for the memory
+clock might be significantly less than this maximum value. But assuming your
+memory clock is programmed to these maximum values the various maximum dot
+clocks for the chips are
+
+<verb>
+                        ------CRT/TFT-------    --------DSTN--------
+                        8bpp    16bpp   24bpp   8bpp    16bpp   24bpp
+65550 rev A 3.3v        80      53.2    35.47   53.2    35.47   26.6
+65550 rev A 5v          106.2   53.2    35.47   53.2    35.47   26.6
+65550 rev B             95      70      46.67   70      46.67   35.0
+65554                   94.5    77      51.33   77      51.33   38.5
+65555                   110     77      51.33   77      51.33   38.5
+68554                   110     77      51.33   77      51.33   38.5
+69000                   220    140      93.33  140      93.33   70.0
+</verb>
+
+If you exceed the maximum set by the memory clock, you'll get corruption
+on the screen during graphics operations, as you will be starving the
+HW BitBlt engine of clock cycles. If you are driving the video memory
+too fast (too high a MemClk) you'll get pixel corruption as the data
+actually written to the video memory is corrupted by driving the memory
+too fast. You can probably get away with exceeding the Max DClk at 8bpp
+on TFT's or CRT's by up to 10% or so without problems, it will just generate
+more heat, since the 8bpp clocks aren't limited by the available memory
+bandwidth.
+
+If you find you truly can't achieve the mode you are after with the default
+clock limitations, look at the options "<tt>DacSpeed</tt>" and 
+"<tt>Set_MemClk</tt>". Using these should give you all the capabilities
+you'll need in the server to get a particular mode to work. However use
+caution with these options, because there is no guarantee that driving the
+video processor beyond it capabilities won't cause damage.
+
 <sect> Troubleshooting <p>
 
 <descrip>
@@ -421,13 +557,14 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
 	the cursor to be redrawn as a white box, when the mode is changed.
 	This can be fixed by moving the cursor to a different region,
 	switching to the console and back again, or if it is too annoying
-	the H/W cursor can be disabled with the "<tt>sw_cursor</tt>" option.
+	the H/W cursor can be disabled by removing the "<tt>hw_cursor</tt>"
+	option.
 <tag> The cursor hot-spot isn't at the same point as the cursor</tag>
  	With modes on the 6555x machines that are stretched to fill the
 	flat panel, the H/W cursor is not correspondingly stretched. This
 	is a small and long-standing bug in the current server. You can
-	avoid this by either using the "<tt>no_stretch</tt>" or
-	<tt>sw_cursor</tt>" options.
+	avoid this by either using the "<tt>no_stretch</tt>" option or
+	removing the <tt>hw_cursor</tt>" option.
 <tag> The lower part of the screen is corrupted</tag>
 	Many DSTN screens use the top of video ram to implement a frame
 	accelerator. This reduces the amount of video ram available to
@@ -508,7 +645,7 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
 	doubled vertically. The lower half of the screen is not accessible.
 	The servers solution to this problem is not to do doubling vertically.
 	Which results in the 320x240 mode only expanded to 640x360. If this
-	is a problem, a work around is to use the "<tt>sw_cursor</tt>"
+	is a problem, a work around is to remove the "<tt>hw_cursor</tt>"
 	option. The server will then allow the mode to occupy the whole
 	640x480 LCD.
 <tag> After a suspend/resume my screen is messed up</tag>
@@ -537,19 +674,24 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
 	the reverse is also true. If the "<tt>use_18bit_bus</tt>" is used
 	and the TFT bus width is 24bpp, then the screen will appear reddish.
 	Note that this option only has an effect on TFT screens. 
-<tag> I can't start X-windows with 16 or 24bpp</tag>
-	Firstly, is your machine capable of 16/24bpp with the mode
+<tag> I can't start X-windows with 16, 24 or 32bpp</tag>
+	Firstly, is your machine capable of 16/24/32bpp with the mode
 	specified. Many LCD displays are incapable of using a 24bpp 
-	mode. Also you need at least a 65540 to use 16/24bpp, and the
-	amount of memory used by the mode will be doubled/tripled. The
-	correct options to start the server with these modes are
+	mode. Also you need at least a 65540 to use 16/24bpp and at least a
+	65550 for 32bpp. The amount of memory used by the mode will be
+	doubled/tripled/quadrupled. The correct options to start the server
+	with these modes are
+
 <verb>
 	  startx -- -bpp 16               5-6-5 RGB ('64K color', XGA)
 	  startx -- -bpp 16 -weight 555   5-5-5 RGB ('Hicolor')
 	  startx -- -bpp 24               8-8-8 RGB truecolor
 </verb>
-	Note that there is currently no "<tt>-bpp 32</tt>" mode in the Xserver,
-	although the 65550 is capable of this.
+	or with the HiQV series of chips (6555x, 68554 or 69000) you might try
+<verb>
+	  startx -- -bpp 32               8-8-8 RGB truecolor
+</verb>
+
 </descrip>
 
 
@@ -562,7 +704,10 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
   the clock value slightly. For example 65.00MHz might be unstable while
   65.10MHz is not. So for unexplained problems not addressed above, please
   try to alter the clock you are using slightly, say in steps of 0.05MHz
-  and see if the problem goes away.
+  and see if the problem goes away. Alternatively, using the
+  "<tt>use_vclk1</tt>" option with chips later than the 65550 might also
+  help.
+
 
   For other screen drawing related problems, try the "<tt>noaccel</tt>" or
   "<tt>no_bitblt</tt>" options. A useful trick for all laptop computers is to
@@ -578,7 +723,7 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
 
 <sect> Disclaimer <p>
 
-Xfree, allows the user to do damage to their hardware with software.
+XFree86, allows the user to do damage to their hardware with software.
 Although the authors of this software have tried to prevent this, they
 disclaim all responsibility for any damage caused by the software. Use
 caution, if you think the Xserver is frying your screen, TURN THE COMPUTER
@@ -610,10 +755,10 @@ software.
 </itemize>
 
 We also thank the many people on the net who have contributed by reporting
-bugs and extensively testing this server before its inclusion in XFree 3.2
+bugs and extensively testing this server before its inclusion in XFree86 3.2
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.12.2.7 1998/01/31 14:23:27 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.12.2.12 1998/11/07 13:52:45 dawes Exp $
 </verb>
 
 </article>

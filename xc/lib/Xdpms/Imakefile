@@ -1,6 +1,7 @@
-XCOMM $XFree86: xc/lib/Xdpms/Imakefile,v 1.1 1997/01/12 10:39:50 dawes Exp $
+XCOMM $XFree86: xc/lib/Xdpms/Imakefile,v 1.1.2.1 1998/11/06 13:54:28 dawes Exp $
 #define DoNormalLib NormalLibXdpms
 #define DoSharedLib SharedLibXdpms
+#define DoExtraLib SharedLibXdpms
 #define DoDebugLib DebugLibXdpms
 #define DoProfileLib ProfileLibXdpms
 #define LibName Xdpms

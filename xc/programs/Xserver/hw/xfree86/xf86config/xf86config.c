@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.5 1998/02/22 01:28:28 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.9 1998/11/09 13:36:56 dawes Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -91,13 +91,16 @@
  */
 #define XFREE86_VERSION 330
 
+#ifndef __EMX__
+#define TEMPORARY_XF86CONFIG_DIR_PREFIX "/tmp/.xf86config"
+#endif
 /*
  * This is the filename of the temporary XF86Config file that is written
  * when the program is told to probe clocks (which can only happen for
  * root).
  */
 #ifndef __EMX__
-#define TEMPORARY_XF86CONFIG_FILENAME "/tmp/XF86Config.tmp"
+#define TEMPORARY_XF86CONFIG_FILENAME "XF86Config.tmp"
 #else
 /* put in root dir, would have to find TMP dir first else */
 #define TEMPORARY_XF86CONFIG_FILENAME "\\XConfig.tmp"
@@ -128,8 +131,8 @@
 #define DUMBCONFIG2 "\\dconfig.2"
 #define DUMBCONFIG3 "\\dconfig.3"
 #else
-#define DUMBCONFIG2 "/tmp/dumbconfig.2"
-#define DUMBCONFIG3 "/tmp/dumbconfig.3"
+#define DUMBCONFIG2 "dumbconfig.2"
+#define DUMBCONFIG3 "dumbconfig.3"
 #endif
 
 /* some more vars to make path names in texts more flexible. OS/2 users
@@ -185,6 +188,7 @@ char *config_xkbcompat;
 char *config_xkbsymbols;
 char *config_xkbgeometry;
 
+char *temp_dir = "";
 
 
 
@@ -197,6 +201,7 @@ int card_selected;	/* Card selected from database. */
 int card_screentype;
 int card_accelserver;
 
+int dont_ask_ramdac_clock;
 
 void write_XF86Config();
 
@@ -243,6 +248,31 @@ static char *finalcomment_text =
 "\n";
 
 
+void *Malloc(int i) {
+	void *p;
+
+	p = malloc(i);
+	if (p == NULL) {
+		printf("Fatal malloc error\n");
+		exit(-1);
+	}
+	return p;
+}
+
+void createtmpdir() {
+#ifndef __EMX__
+	/* length of prefix + 20 (digits in 2**64) + 1 (slash) + 1 */
+	temp_dir = Malloc(strlen(TEMPORARY_XF86CONFIG_DIR_PREFIX) + 22);
+	sprintf(temp_dir, "%s%d", TEMPORARY_XF86CONFIG_DIR_PREFIX, getpid());
+	if (mkdir(temp_dir, 0700) != 0) {
+		printf("Cannot create directory %s\n", temp_dir);
+		exit(-1);
+	}
+	/* append a slash */
+	strcat(temp_dir, "/");
+#endif
+}
+
 void keypress() {
 	printf("Press enter to continue, or ctrl-c to abort.");
 	getchar();
@@ -285,7 +315,7 @@ void getstring(s)
  * the server will enable a third button automatically if there is one
  */
 
-static char *mousetype_identifier[10] = {
+static char *mousetype_identifier[11] = {
 	"Microsoft",
 	"MouseSystems",
 	"Busmouse",
@@ -295,6 +325,7 @@ static char *mousetype_identifier[10] = {
 	"MMSeries",
 	"MMHitTab",
 	"IntelliMouse",
+	"acecad",
 #ifdef __EMX__
 	"OSMOUSE"
 #endif
@@ -314,7 +345,8 @@ static char *mousetype_name[10] = {
 	"Logitech MouseMan (Microsoft compatible)",
 	"MM Series",	/* XXXX These descriptions should be improved. */
 	"MM HitTablet",
-	"Microsoft IntelliMouse"
+	"Microsoft IntelliMouse",
+	"Acecad tablet"
 };
 
 static char *mousedev_text =
@@ -370,7 +402,7 @@ void mouse_configuration() {
 	char s[80];
 	printf("%s", mouseintro_text);
 	
-	for (i = 0; i < 9; i++)
+	for (i = 0; i < 10; i++)
 		printf("%2d.  %s\n", i + 1, mousetype_name[i]);
 
 	printf("\n");
@@ -433,6 +465,7 @@ void mouse_configuration() {
 		break;
 	case 1 : /* Mouse Systems. */
 	case 8 : /* IntelliMouse */
+	case 9 : /* ACECAD */
 		printf("%s", threebuttonmousecomment_text);
 		break;
 	default :
@@ -457,14 +490,14 @@ void mouse_configuration() {
 	if (strlen(s) == 0)
 		config_pointerdevice = "/dev/mouse";
 	else {
-		config_pointerdevice = malloc(strlen(s) + 1);
+		config_pointerdevice = Malloc(strlen(s) + 1);
 		strcpy(config_pointerdevice, s);
        }
        printf("\n");
 
 #else /* __EMX__ */
        	/* set some reasonable defaults for OS/2 */
-       	config_mousetype = 9;
+       	config_mousetype = 10;
 	config_chordmiddle = 0;       
 	config_cleardtrrts = 0;
 	config_emulate3buttons = 0;
@@ -652,13 +685,13 @@ void xkb_composekeymaps()
 	      + strlen(sympart1[xkbsym1].symname)
 	      + strlen(sympart2[xkbsym2].extend)
 	      + 1;
-	config_xkbsymbols = malloc(i);
+	config_xkbsymbols = Malloc(i);
 	sprintf(config_xkbsymbols,"%s(%s)%s",
 		sympart2[xkbsym2].prefix,
 		sympart1[xkbsym1].symname,
 		sympart2[xkbsym2].extend);
 
-	config_xkbgeometry = malloc(strlen(sympart1[xkbsym1].geoname)+1);
+	config_xkbgeometry = Malloc(strlen(sympart1[xkbsym1].geoname)+1);
 	sprintf(config_xkbgeometry,"%s",sympart1[xkbsym1].geoname);
 
 	return;
@@ -883,7 +916,7 @@ void monitor_configuration() {
 		printf("%s", customhsync_text);
 		printf("Horizontal sync range: ");
 		getstring(s);
-		config_hsyncrange = malloc(strlen(s) + 1);
+		config_hsyncrange = Malloc(strlen(s) + 1);
 		strcpy(config_hsyncrange, s);
 		printf("\n");
 	}
@@ -911,7 +944,7 @@ void monitor_configuration() {
 		/* Custom vsync range option selected. */
 		printf("Vertical sync range: ");
 		getstring(s);
-		config_vsyncrange = malloc(strlen(s) + 1);
+		config_vsyncrange = Malloc(strlen(s) + 1);
 		strcpy(config_vsyncrange, s);
 		printf("\n");
 		break;
@@ -923,7 +956,7 @@ void monitor_configuration() {
 	if (strlen(s) == 0)
 		config_monitoridentifier = "My Monitor";
 	else {
-		config_monitoridentifier = malloc(strlen(s) + 1);
+		config_monitoridentifier = Malloc(strlen(s) + 1);
 		strcpy(config_monitoridentifier, s);
 	}
 	printf("Enter the vendor name of your monitor: ");
@@ -931,7 +964,7 @@ void monitor_configuration() {
 	if (strlen(s) == 0)
 		config_monitorvendorname = "Unknown";
 	else {
-		config_monitorvendorname = malloc(strlen(s) + 1);
+		config_monitorvendorname = Malloc(strlen(s) + 1);
 		strcpy(config_monitorvendorname, s);
 	}
 	printf("Enter the model name of your monitor: ");
@@ -939,7 +972,7 @@ void monitor_configuration() {
 	if (strlen(s) == 0)
 		config_monitormodelname = "Unknown";
 	else {
-		config_monitormodelname = malloc(strlen(s) + 1);
+		config_monitormodelname = Malloc(strlen(s) + 1);
 		strcpy(config_monitormodelname, s);
 	}
 }
@@ -976,11 +1009,11 @@ static char *cardunsupported_text =
 "this card definition was based on, there's a chance that it is now\n"
 "supported.\n";
 
-#define NU_ACCELSERVER_IDS 10
+#define NU_ACCELSERVER_IDS 11
 
 static char *accelserver_id[NU_ACCELSERVER_IDS] = {
 	"S3", "Mach32", "Mach8", "8514", "P9000", "AGX", "W32", "Mach64",
-	"I128", "S3V"
+	"I128", "S3V", "3DLabs"
 };
 
 void carddb_configuration() {
@@ -988,6 +1021,7 @@ void carddb_configuration() {
 	char s[80];
 	card_selected = -1;
 	card_screentype = -1;
+	dont_ask_ramdac_clock = 0;
 	printf("%s", cardintro_text);
 	printf("Do you want to look at the card database? ");
 	getstring(s);
@@ -1049,11 +1083,39 @@ void carddb_configuration() {
 				card_accelserver = i;
 				break;
 			}
+		if (!strncmp(card[card_selected].server, "XBF_", 4)) {
+			for (i = 0; i < NU_ACCELSERVER_IDS; i++)
+				if (strcmp(card[card_selected].server+4,
+				accelserver_id[i]) == 0) {
+					card_screentype = 4;
+					card_accelserver = i;
+					dont_ask_ramdac_clock = 1;
+					break;
+				}
+			if (card_screentype == -1)
+				card_screentype = 3;
+		}
+		if (!strncmp(card[card_selected].server, "XFCom_", 6)) {
+			for (i = 0; i < NU_ACCELSERVER_IDS; i++)
+				if (strcmp(card[card_selected].server+6,
+				accelserver_id[i]) == 0) {
+					card_screentype = 4;
+					card_accelserver = i;
+					dont_ask_ramdac_clock = 1;
+					break;
+				}
+			if (card_screentype == -1)
+				card_screentype = 3;
+		}
 
 		printf("\nYour selected card definition:\n\n");
 		printf("Identifier: %s\n", card[card_selected].name);
 		printf("Chipset:    %s\n", card[card_selected].chipset);
-		printf("Server:     XF86_%s\n", card[card_selected].server);
+		if (!strncmp(card[card_selected].server, "XBF_", 4) ||
+		    !strncmp(card[card_selected].server, "XFCom_", 6))
+		    printf("Server:     %s\n", card[card_selected].server);
+		else
+		    printf("Server:     XF86_%s\n", card[card_selected].server);
 		if (card[card_selected].ramdac != NULL)
 			printf("Ramdac:     %s\n", card[card_selected].ramdac);
 		if (card[card_selected].dacspeed != NULL)
@@ -1108,6 +1170,12 @@ static char *screenlink_text =
 
 static char *varlink_text =
 "The directory /var/X11R6/bin exists. On many Linux systems this is the\n"
+"preferred location of the symbolic link 'X'. You can select this location\n"
+"when setting the symbolic link.\n"
+"\n";
+
+static char *etclink_text =
+"The directory /etc/X11 exists. On many Linux systems this is the\n"
 "preferred location of the symbolic link 'X'. You can select this location\n"
 "when setting the symbolic link.\n"
 "\n";
@@ -1230,23 +1298,22 @@ static char *clockchip_id[] = {
 };
 
 static char *deviceclockscomment_text =
-"For most configurations, a Clocks line is useful since it prevents the slow\n"
-"and nasty sounding clock probing at server start-up. Probed clocks are\n"
-"displayed at server startup, along with other server and hardware\n"
-"configuration info. You can save this information in a file by running\n"
-"'X -probeonly 2>output_file'. Be warned that clock probing is inherently\n"
-"imprecise; some clocks may be slightly too high (varies per run).\n"
+"For most modern configurations, a Clocks line is neither required or\n"
+"desirable.  However for some older hardware it can be useful since it\n"
+"prevents the slow and nasty sounding clock probing at server start-up.\n"
+"Probed clocks are displayed at server startup, along with other server\n"
+"and hardware configuration info. You can save this information in a file\n"
+"by running 'X -probeonly 2>output_file'. Be warned that clock probing is\n"
+"inherently imprecise; some clocks may be slightly too high (varies per run).\n"
 "\n";
 
 static char *deviceclocksquestion_text =
 "At this point I can run X -probeonly, and try to extract the clock information\n"
-"from the output. It is recommended that you do this yourself and add a clocks\n"
-"line (note that the list of clocks may be split over multiple Clocks lines) to\n"
-"your Device section afterwards. Be aware that a clocks line is not\n"
-"appropriate for drivers that have a fixed set of clocks and don't probe by\n"
-"default (e.g. Cirrus). Also, for the P9000 server you must simply specify\n"
-"clocks line that matches the modes you want to use.  For the S3 server with\n"
-"a programmable clock chip you need a 'ClockChip' line and no Clocks line.\n"
+"from the output. It is recommended that you do this yourself and if a set of\n"
+"clocks is shown then you add a clocks line (note that the list of clocks may\n"
+"be split over multiple Clocks lines) to your Device section afterwards. Be\n"
+"aware that a clocks line is not appropriate for most modern hardware that\n"
+"has programmable clocks.\n"
 "\n"
 "You must be root to be able to run X -probeonly now.\n"
 "\n";
@@ -1292,11 +1359,12 @@ static char *virtual_text =
 "differently-sized virtual screen\n"
 "\n";
 
-#define NU_ACCEL_SERVERS 10
+#define NU_ACCEL_SERVERS 11
 
 static char *accelserver_name[NU_ACCEL_SERVERS] = {
 	"XF86_S3", "XF86_Mach32", "XF86_Mach8", "XF86_8514", "XF86_P9000",
-	"XF86_AGX", "XF86_W32" ,"XF86_Mach64", "XF86_I128", "XF86_S3V"
+	"XF86_AGX", "XF86_W32" ,"XF86_Mach64", "XF86_I128", "XF86_S3V",
+	"XF86_3DLabs"
 };
 
 static int videomemory[5] = {
@@ -1377,8 +1445,13 @@ void screen_configuration() {
 	printf("%s", screenintro_text);
 
 	if (card_screentype != -1)
-		printf(" 5  Choose the server from the card definition, XF86_%s.\n\n",
-			card[card_selected].server);
+		if (!strncmp(card[card_selected].server, "XBF_", 4) ||
+		    !strncmp(card[card_selected].server, "XFCom_", 6))
+			printf(" 5  Choose the server from the card definition, %s.\n\n",
+				card[card_selected].server);
+		else
+			printf(" 5  Choose the server from the card definition, XF86_%s.\n\n",
+				card[card_selected].server);
 
 	printf("Which one of these screen types do you intend to run by default (1-%d)? ",
 		4 + (card_screentype != -1 ? 1 : 0));
@@ -1414,7 +1487,12 @@ void screen_configuration() {
 			if (!answerisyes(s))
 				varlink = 0;
 		}
-		if (config_screentype == 4 && usecardscreentype)
+		if (usecardscreentype &&
+			(!strncmp(card[card_selected].server, "XBF_", 4) ||
+			!strncmp(card[card_selected].server, "XFCom_", 6)))
+			/* Use screen type from card definition. */
+			servername = card[card_selected].server;
+		else if (config_screentype == 4 && usecardscreentype)
 			/* Use screen type from card definition. */
 			servername = accelserver_name[card_accelserver];
 		else
@@ -1491,7 +1569,7 @@ void screen_configuration() {
 		else
 			config_deviceidentifier = "My Video Card";
 	else {
-		config_deviceidentifier = malloc(strlen(s) + 1);
+		config_deviceidentifier = Malloc(strlen(s) + 1);
 		strcpy(config_deviceidentifier, s);
 	}
 	printf("%s", devicevendornamecomment_text);
@@ -1501,7 +1579,7 @@ void screen_configuration() {
 	if (strlen(s) == 0)
 		config_devicevendorname = "Unknown";
 	else {
-		config_devicevendorname = malloc(strlen(s) + 1);
+		config_devicevendorname = Malloc(strlen(s) + 1);
 		strcpy(config_devicevendorname, s);
 	}
 	printf("Enter the model (board) name of your video card: ");
@@ -1509,7 +1587,7 @@ void screen_configuration() {
 	if (strlen(s) == 0)
 		config_deviceboardname = "Unknown";
 	else {
-		config_deviceboardname = malloc(strlen(s) + 1);
+		config_deviceboardname = Malloc(strlen(s) + 1);
                 strcpy(config_deviceboardname, s);
 	}
 	printf("\n");
@@ -1651,7 +1729,7 @@ void screen_configuration() {
 
 	printf("%s", devicesettingscomment_text);
 
-	if (config_screentype < 3)
+	if ((config_screentype != 4) || dont_ask_ramdac_clock)
 		goto skipramdacselection;
 
 	printf("%s", ramdaccomment_text);
@@ -1697,6 +1775,10 @@ void screen_configuration() {
 	}
 
 skipramdacselection:
+
+	if ((config_screentype == 5) || dont_ask_ramdac_clock)
+		goto skipclockprobing;
+
 	emptylines();
 	printf("%s", clockchipcomment_text);
 
@@ -1753,6 +1835,9 @@ skipramdacselection:
 		FILE *f;
 		char *buf;
 		char syscmdline[2*256+100]; /* enough */
+		char *fname = NULL;
+		char *d2name = NULL;
+		char *d3name = NULL;
 
 		if (getuid() != 0) {
 			printf("Sorry, you must be root to do this.\n\n");
@@ -1760,25 +1845,38 @@ skipramdacselection:
 		}
 		printf("%s", probeonlywarning_text);
 		keypress();
-		printf("Running X -probeonly -pn -xf86config "
-			TEMPORARY_XF86CONFIG_FILENAME ".\n");
-		write_XF86Config(TEMPORARY_XF86CONFIG_FILENAME);
+		fname = Malloc(strlen(temp_dir) +
+				strlen(TEMPORARY_XF86CONFIG_FILENAME) + 1);
+		sprintf(fname, "%s%s", temp_dir,
+			TEMPORARY_XF86CONFIG_FILENAME);
+		d2name = Malloc(strlen(temp_dir) + strlen(DUMBCONFIG2) + 1);
+		sprintf(d2name, "%s%s", temp_dir, DUMBCONFIG2);
+		d3name = Malloc(strlen(temp_dir) + strlen(DUMBCONFIG3) + 1);
+		sprintf(d3name, "%s%s", temp_dir, DUMBCONFIG3);
+		printf("Running X -probeonly -pn -xf86config %s.\n", fname);
+		write_XF86Config(fname);
 #ifndef __EMX__
 		sync();
 #endif
 		/* compose a line with the real path */
 #ifndef __EMX__
-		sprintf(syscmdline,
-		       "X -probeonly -pn -xf86config "
-		       TEMPORARY_XF86CONFIG_FILENAME " 2>" DUMBCONFIG2);
+		sprintf(syscmdline, "X -probeonly -pn -xf86config %s 2> %s",
+			fname, d2name);
 #else
 		/* OS/2 does not have symlinks, so "X" does not exist,
 		 * call the real X server
 		 */
-		sprintf(syscmdline,"%s/XF86_%s -probeonly -pn -xf86config "
-		       TEMPORARY_XF86CONFIG_FILENAME " 2>" DUMBCONFIG2,
-		       __XOS2RedirRoot("/XFree86/bin",'\\'),
-		       card[card_selected].server);
+		if (!strncmp(card[card_selected].server, "XBF_", 4) ||
+		    !strncmp(card[card_selected].server, "XFCom_", 6))
+			sprintf(syscmdline,"%s/%s -probeonly -pn -xf86config "
+			       TEMPORARY_XF86CONFIG_FILENAME " 2>" DUMBCONFIG2,
+			       __XOS2RedirRoot("/XFree86/bin",'\\'),
+			       card[card_selected].server);
+		else
+			sprintf(syscmdline,"%s/XF86_%s -probeonly -pn -xf86config "
+			       TEMPORARY_XF86CONFIG_FILENAME " 2>" DUMBCONFIG2,
+			       __XOS2RedirRoot("/XFree86/bin",'\\'),
+			       card[card_selected].server);
 #endif
 
 		if (system(syscmdline)) {
@@ -1787,13 +1885,14 @@ skipramdacselection:
 			goto clocksprobefailed;
 		}
 		/* Look for 'clocks:' (case sensitive). */		
-		if (system("grep clocks\\: " DUMBCONFIG2 " >" DUMBCONFIG3)) {
+		sprintf(syscmdline, "grep clocks\\: %s > %s", d2name, d3name);
+		if (system(syscmdline)) {
 			printf("grep failed.\n");
 			printf("Cannot find clocks in server output.\n");
 			goto clocksprobefailed;
 		}
-		f = fopen(DUMBCONFIG3, "r");
-		buf = malloc(8192);
+		f = fopen(d3name, "r");
+		buf = Malloc(8192);
 		/* Parse lines. */
 		while (fgets(buf, 8192, f) != NULL) {
 			char *clks;
@@ -1806,7 +1905,7 @@ skipramdacselection:
 				continue;
 			clks[strlen(clks) - 1] = '\0';	/* Remove '\n'. */
 			config_clocksline[config_numberofclockslines] =
-				malloc(strlen(clks) + 1);
+				Malloc(strlen(clks) + 1);
 			strcpy(config_clocksline[config_numberofclockslines],
 				clks);
 			printf("Clocks %s\n", clks);
@@ -1814,9 +1913,9 @@ skipramdacselection:
 		}
 		fclose(f);
 clocksprobefailed:
-		unlink(DUMBCONFIG3);
-		unlink(DUMBCONFIG2);
-		unlink(TEMPORARY_XF86CONFIG_FILENAME);
+		unlink(d3name);
+		unlink(d2name);
+		unlink(fname);
 		printf("\n");
 
 endofprobeonly:
@@ -1859,7 +1958,9 @@ skipclockprobing:
 		printf("Select modes from the following list:\n\n");
 
 		for (i = 0; i < NU_MODESTRINGS; i++)
-			printf("%2d  %s\n", i + 1, modestring[i]);
+			printf(" %c  %s\n", i < 9 ? '1' + i :
+			                            'a' + i - 9, 
+			                    modestring[i]);
 		printf("\n");
 
 		printf("%s", modeslist_text);
@@ -1870,29 +1971,39 @@ skipclockprobing:
 
 		modes[0] = '\0';
 		for (i = 0; i < strlen(s); i++) {
-			if (s[i] < '1' || s[i] > '0' + NU_MODESTRINGS) {
+		        if ( NU_MODESTRINGS > 9 ) {
+			  if ((s[i] < '1' || s[i] > '9') &&
+			      (s[i] < 'a' || s[i] > 'a' + NU_MODESTRINGS - 10)) {
 				printf("Invalid mode skipped.\n");
 				continue;
+			    }
+			}
+			else {
+			  if (s[i] < '1' || s[i] > '0' + NU_MODESTRINGS) {
+				printf("Invalid mode skipped.\n");
+				continue;
+			  }
 			}
 			if (i > 0)
 				strcat(modes, " ");
-			strcat(modes, modestring[s[i] - '1']);
+			strcat(modes, modestring[s[i] <= '9' ? s[i] - '1' :
+			                                       s[i] - 'a' + 9]);
 		}
 		switch (c) {
 		case 0 :
-			config_modesline8bpp = malloc(strlen(modes) + 1);
+			config_modesline8bpp = Malloc(strlen(modes) + 1);
 			strcpy(config_modesline8bpp, modes);
 			break;
 		case 1 :
-			config_modesline16bpp = malloc(strlen(modes) + 1);
+			config_modesline16bpp = Malloc(strlen(modes) + 1);
 			strcpy(config_modesline16bpp, modes);
 			break;
 		case 2 :
-			config_modesline24bpp = malloc(strlen(modes) + 1);
+			config_modesline24bpp = Malloc(strlen(modes) + 1);
 			strcpy(config_modesline24bpp, modes);
 			break;
 		case 3 :
-			config_modesline32bpp = malloc(strlen(modes) + 1);
+			config_modesline32bpp = Malloc(strlen(modes) + 1);
 			strcpy(config_modesline32bpp, modes);
 			break;
 		}
@@ -1972,6 +2083,7 @@ static char *XF86Config_firstchunk_text =
 static char *XF86Config_fontpaths[] = 
 {
 /*	"    FontPath	\"" TREEROOTLX "/fonts/75dpi/\"\n"*/
+	"/fonts/local/",
 	"/fonts/misc/",
 	"/fonts/75dpi/:unscaled",
 	"/fonts/100dpi/:unscaled",
@@ -2142,8 +2254,11 @@ static char *pointersection_text2 =
 "#    Protocol	\"Xqueue\"\n"
 "\n"
 "# Baudrate and SampleRate are only for some Logitech mice\n"
-"\n"
-"#    BaudRate	9600\n"
+"# or for the AceCad tablets which require 9600 baud\n"
+"\n";
+
+static char *pointersection_text3 =
+"    BaudRate	9600\n"
 "#    SampleRate	150\n"
 "\n"
 "# Emulate3Buttons is an option for 2-button Microsoft mice\n"
@@ -2519,6 +2634,10 @@ void write_XF86Config(filename)
 	fprintf(f, "    Device      \"%s\"\n", config_pointerdevice);
 #endif
 	fprintf(f, "%s", pointersection_text2);
+	/* ACECAD tablets need 9600 baud set */
+	if (config_mousetype != 9)
+		fprintf(f, "#");
+	fprintf(f, "%s", pointersection_text3);
 	if (!config_emulate3buttons)
 		fprintf(f, "#");
 	fprintf(f, "    Emulate3Buttons\n");
@@ -2869,7 +2988,7 @@ char *ask_XF86Config_location() {
 	printf("Please give a filename to write to: ");
 	getstring(s);
 	printf("\n");
-	filename = malloc(strlen(s) + 1);
+	filename = Malloc(strlen(s) + 1);
 	strcpy(filename, s);
 	return filename;
 }
@@ -2943,7 +3062,9 @@ void path_check() {
  * Program entry point.
  */
 
-void main() {
+int main() {
+	createtmpdir();
+
 	emptylines();
 
 	printf("%s", intro_text);

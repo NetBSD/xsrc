@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Converters.c,v 3.2.4.1 1997/05/17 12:24:52 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Converters.c,v 3.2.4.2 1998/10/11 12:35:04 hohndel Exp $ */
 
 /*
 
@@ -122,7 +122,11 @@ static XrmQuark  XtQGravity;
 static XrmQuark  XtQInt;
 static XrmQuark  XtQPixel;
 static XrmQuark  XtQPosition;
+#ifdef __EMX__
+XrmQuark  _XtQString = 0;
+#else
 XrmQuark  _XtQString;
+#endif
 
 void _XtConvertInitialize()
 {

@@ -7,15 +7,15 @@
 
 
 
-			       Building XFree86
+                               Building XFree86
 
-				  David Dawes
+                                  David Dawes
 
-			       27 February 1997
+                                7 November 1998
 
 
 
-				   Abstract
+                                   Abstract
 
      This document describes how to build XFree86 from the source distri-
      bution.  It covers building from the full source distribution as well
@@ -31,24 +31,24 @@
      attempting to build XFree86.  These files contain additional informa-
      tion that you may need to successfully build under your OS.
 
-We highly recommend using GCC-2 to build XFree86.  Do not use version 2.6.0 or
-2.4.x versions prior to 2.4.5 due to bugs that cause either build or execution
-failures.  (gcc-2 is available from prep.ai.mit.edu and other sites archiving
-GNU source.)
+We highly recommend using GCC-2 to build XFree86.  GCC-2 is available from
+prep.ai.mit.edu and other sites archiving GNU source.  Note that both gcc-2.8.0
+and egcs have been proven to break the code multiple times.  Especially egcs
+seems to fail in several modules when optimizing.
 
-1.1  How to get the XFree86 3.3.2 source
+1.1  How to get the XFree86 3.3.3 source
 
 There are a few starting points for getting the XFree86 source.  One option is
-to start directly with the XFree86 3.3.2 source distribution.  In this case,
+to start directly with the XFree86 3.3.3 source distribution.  In this case,
 the procedure is as follows:
 
-   o The XFree86 3.3.2 source is contained in files X332src-1.tgz,
-     X332src-2.tgz and X332src-3.tgz.  These can be found at
-     ftp://ftp.xfree86.org/pub/XFree86/3.3.2/source/ and similar locations on
-     XFree86 mirror sites.  X332src-2.tgz contains the fonts and documentation
-     source.  X332src-3.tgz contains the hardcopy documentation.  X332src-1.tgz
-     contains everything else.	If you don't need the docs or fonts you can get
-     by with only X332src-1.tgz.
+   o The XFree86 3.3.3 source is contained in files X333src-1.tgz,
+     X333src-2.tgz and X333src-3.tgz.  These can be found at
+     ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/ and similar locations on
+     XFree86 mirror sites.  X333src-2.tgz contains the fonts and documentation
+     source.  X333src-3.tgz contains the hardcopy documentation.  X333src-1.tgz
+     contains everything else.  If you don't need the docs or fonts you can get
+     by with only X333src-1.tgz.
 
    o Extract each of these files by running the following from a directory on a
      filesystem containing enough space (the full source requires around 140MB,
@@ -61,62 +61,63 @@ the procedure is as follows:
 
 
 
-Building XFree86
+Building XFree86                                                              1
 
 
 
 
 
-Building XFree86
+Building XFree86                                                              2
 
 
 
-		    gzip -d < X332src-1.tgz | tar vxf -
-		    gzip -d < X332src-2.tgz | tar vxf -
-		    gzip -d < X332src-3.tgz | tar vxf -
+                    gzip -d < X333src-1.tgz | tar vxf -
+                    gzip -d < X333src-2.tgz | tar vxf -
+                    gzip -d < X333src-3.tgz | tar vxf -
 
 
 
 Another option is to start with the X11R6.3 source distribution and patch it up
-to XFree86 3.3.2.  In this case you need to do the following:
+to XFree86 3.3.3.  In this case you need to do the following:
 
    o Start with the X Consortium's X11R6.3 distribution with public patches 1
-     and 2 applied.  This can be obtained by following the links from the The
-     Open Group's X home page <URL:http://www.opengroup.org/tech/desktop/x/>.
+     and 2 (but not 3) applied.  This can be obtained by following the links
+     from the The Open Group's X home page <URL:http://www.open-
+     group.org/tech/desktop/x/>.
 
-   o Get the files R6.3pl2-3.3.2.diff1.gz, R6.3pl2-3.3.2.diff2.gz,
-     R6.3pl2-3.3.2.diff3.gz, R6.3pl2-3.3.2.diff4.gz, and cfont332.tgz from
-     ftp://ftp.xfree86.org/pub/XFree86/3.3.2/patches/ (or a similar location on
-     mirror sites).  To upgrade the source to XFree86 3.3.2, run the following
+   o Get the files R6.3pl2-3.3.3.diff1.gz, R6.3pl2-3.3.3.diff2.gz,
+     R6.3pl2-3.3.3.diff3.gz, and R6.3pl2-3.3.3.diff4.gz from
+     ftp://ftp.xfree86.org/pub/XFree86/3.3.3/patches/ (or a similar location on
+     mirror sites).  To upgrade the source to XFree86 3.3.3, run the following
      from directory containing the xc directory of the X11R6.3 pl2 source tree:
 
 
-		    gzip -d < R6.3pl2-3.3.2.diff1.gz | patch -p0 -E
-		    gzip -d < R6.3pl2-3.3.2.diff2.gz | patch -p0 -E
-		    gzip -d < R6.3pl2-3.3.2.diff3.gz | patch -p0 -E
-		    gzip -d < R6.3pl2-3.3.2.diff4.gz | patch -p0 -E
-		    gzip -d < cfont332.tgz | tar vxf -
+                    gzip -d < R6.3pl2-3.3.3.diff1.gz | patch -p0 -E
+                    gzip -d < R6.3pl2-3.3.3.diff2.gz | patch -p0 -E
+                    gzip -d < R6.3pl2-3.3.3.diff3.gz | patch -p0 -E
+                    gzip -d < R6.3pl2-3.3.3.diff4.gz | patch -p0 -E
+
 
 
 
      Be sure to do this with a clean unmodified source tree.  If you don't some
      patches may fail.
 
-A further option is to start with the XFree86 3.3.1 source, and patch it up to
-XFree86 3.3.2.	In this case you need to do the following:
+A further option is to start with the XFree86 3.3.2 source, and patch it up to
+XFree86 3.3.3.  In this case you need to do the following:
 
-   o If using this option, you would already have the XFree86 3.3.1 source.
+   o If using this option, you would already have the XFree86 3.3.2 source.  If
+     you have applied any of the public patches to 3.3.2,       back them out
+     before starting the upgrade to 3.3.3.
 
-   o Get the files 3.3.1-3.3.2.diff.gz, and cfont332.tgz from
-     ftp://ftp.xfree86.org/pub/XFree86/3.3.2/patches/ (or a similar location on
-     mirror sites).  To upgrade the source to XFree86 3.3.2, run the following
-     from directory containing the xc directory of the XFree86 3.3.1 source
+   o Get the file 3.3.2-3.3.3.diff.gz from
+     ftp://ftp.xfree86.org/pub/XFree86/3.3.3/patches/ (or a similar location on
+     mirror sites).  To upgrade the source to XFree86 3.3.3, run the following
+     from directory containing the xc directory of the XFree86 3.3.2 source
      tree:
 
 
-		    gzip -d < 3.3.1-3.3.2.diff1.gz | patch -p0 -E
-		    rm -fr xc/fonts/bdf/cyrillic
-		    gzip -d < cfont332.tgz | tar vxf -
+                    gzip -d < 3.3.2-3.3.3.diff.gz | patch -p0 -E
 
 
 
@@ -124,30 +125,30 @@ XFree86 3.3.2.	In this case you need to do the following:
      Be sure to do this with a clean unmodified source tree.  If you don't some
      patches may fail.
 
+
+
+
+
+
+
+
+
+Building XFree86                                                              3
+
+
+
 If you only want to build the XFree86 X servers, you can use a cut-down version
-
-
-
-
-
-
-
-
-Building XFree86
-
-
-
 of the XFree86 source tree called the ``servers only'' distribution.  If you
 choose this option, do the following:
 
-   o Get the X332servonly.tgz file from
-     ftp://ftp.xfree86.org/pub/XFree86/3.3.2/source/ (or a similar locations on
+   o Get the X333servonly.tgz file from
+     ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/ (or a similar locations on
      mirror sites.
 
    o Extract this by running the following:
 
 
-		    gzip -d < X332servonly.tgz | tar vxf -
+                    gzip -d < X333servonly.tgz | tar vxf -
 
 
 
@@ -155,40 +156,40 @@ XFree86 supports a small subset of the X Consortium X11R6.1 contrib distribu-
 tion.  If you wish to build this, you will need at least the following
 files/directories from that distribution:
 
-	  contrib/Imakefile
-	  contrib/programs/Imakefile
-	  contrib/programs/ico
-	  contrib/programs/listres
-	  contrib/programs/showfont
-	  contrib/programs/viewres
-	  contrib/programs/xbiff
-	  contrib/programs/xcalc
-	  contrib/programs/xditview
-	  contrib/programs/xedit
-	  contrib/programs/xev
-	  contrib/programs/xeyes
-	  contrib/programs/xfontsel
-	  contrib/programs/xgc
-	  contrib/programs/xload
-	  contrib/programs/xman
-	  contrib/programs/xmessage
+          contrib/Imakefile
+          contrib/programs/Imakefile
+          contrib/programs/ico
+          contrib/programs/listres
+          contrib/programs/showfont
+          contrib/programs/viewres
+          contrib/programs/xbiff
+          contrib/programs/xcalc
+          contrib/programs/xditview
+          contrib/programs/xedit
+          contrib/programs/xev
+          contrib/programs/xeyes
+          contrib/programs/xfontsel
+          contrib/programs/xgc
+          contrib/programs/xload
+          contrib/programs/xman
+          contrib/programs/xmessage
 
 
-You will also need the XFree86 patch contrib-3.3.2.diff.gz.  To apply the
+You will also need the XFree86 patch contrib-3.3.3.diff.gz.  To apply the
 patch, run the following from the directory containing the contrib directory:
 
-	  gzip -d < contrib-3.3.2.diff.gz | patch -p0 -E
+          gzip -d < contrib-3.3.3.diff.gz | patch -p0 -E
 
 
-Alternatively, you can just get the file X332contrib.tgz from the XFree86
+Alternatively, you can just get the file X333contrib.tgz from the XFree86
 source directory, and extract it by running:
 
-	  gzip -d < X332contrib.tgz | tar vxf -
+          gzip -d < X333contrib.tgz | tar vxf -
 
 If you wish to build the xtest distribution, get the source distribution
 X33test.tgz from the XFree86 source directory, and extract it by running:
 
-	  gzip -d < X33test.tgz | tar vxf -
+          gzip -d < X33test.tgz | tar vxf -
 
 
 
@@ -198,8 +199,7 @@ X33test.tgz from the XFree86 source directory, and extract it by running:
 
 
 
-
-Building XFree86
+Building XFree86                                                              4
 
 
 
@@ -208,7 +208,7 @@ Note, xtest is no longer part of the core X11 distribution (since X11R6.3).
 1.2  Configuring the source before building
 
 It is recommended that you start the configuration process by going to the
-xc/config/cf directory, and copying the file xf86site.def to host.def.	Then
+xc/config/cf directory, and copying the file xf86site.def to host.def.  Then
 read through the host.def file (which is heavily commented), and set any param-
 eters that you want for your configuration.  You can usually find out what the
 default settings are by checking the .cf file(s) relevant to your OS.
@@ -217,7 +217,7 @@ Unlike previous versions, imake can now automatically detect and set the vari-
 ous OS*Version parameters, so you shouldn't need to enter those settings
 explicitly.
 
-If you are using just the X332src-1.tgz part of the source dist, you will need
+If you are using just the X333src-1.tgz part of the source dist, you will need
 to define BuildFonts to NO.
 
 If you are using the ``servers only'' distribution, you will need to define
@@ -238,7 +238,7 @@ the full source distribution, the installation should be done from the xc
 directory.  When using the ``servers only'' distribution, the install should be
 done from the xc/programs/Xserver directory.  To do the install, run ``make
 install'' and ``make install.man''.  Make sure you have enough space in
-/usr/X11R6 for the install to succeed.	If you want to install on a filesystem
+/usr/X11R6 for the install to succeed.  If you want to install on a filesystem
 other than /usr, make a symbolic link to /usr/X11R6 before installing.
 
 To install the binary LinkKit (in /usr/X11R6/lib/Server), run ``make
@@ -265,7 +265,7 @@ installed:
 
 
 
-Building XFree86
+Building XFree86                                                              5
 
 
 
@@ -279,19 +279,19 @@ Building XFree86
 
   3.  From xc/programs/Xserver, run:
 
-		make Makefile
-		make Makefiles
-		make depend
-		make
+                make Makefile
+                make Makefiles
+                make depend
+                make
 
 
 3.  Reconfiguring the server (binary distribution)
 
 If you have installed the server Binary LinkKit, it is possible to reconfigure
-the drivers and some of the extensions in the servers.	For details of how to
+the drivers and some of the extensions in the servers.  For details of how to
 do this, please refer to the README.LinkKit file.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.1.2.7 1998/02/28 13:00:00 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.1.2.9 1998/11/07 13:37:45 dawes Exp $
 
 
 
@@ -331,7 +331,7 @@ do this, please refer to the README.LinkKit file.
 
 
 
-Building XFree86
+Building XFree86                                                              6
 
 
 
@@ -401,12 +401,12 @@ Building XFree86
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
 1. Building XFree86 From a Source Distribution .............................. 1
-   1.1 How to get the XFree86 3.3.2 source .................................. 1
+   1.1 How to get the XFree86 3.3.3 source .................................. 1
    1.2 Configuring the source before building ............................... 4
    1.3 Building and installing the distribution ............................. 4
 
@@ -457,8 +457,8 @@ Building XFree86
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/BUILD,v 3.1.2.6 1998/02/28 13:05:32 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/BUILD,v 3.1.2.10 1998/11/14 06:46:39 dawes Exp $

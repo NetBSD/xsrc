@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.4 1998/02/07 09:23:28 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.6 1998/11/06 09:46:25 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -24,6 +24,8 @@
 /* $XConsortium: xf86Events.c /main/46 1996/10/25 11:36:30 kaleb $ */
 
 /* [JCH-96/01/21] Extended std reverse map to four buttons. */
+
+#include <math.h>
 
 #define NEED_EVENTS
 #include "X.h"
@@ -170,7 +172,11 @@ static void xf86VTSwitch(
 #endif
 	);
 #ifdef XFreeXDGA
+#ifdef XINPUT
+void XF86DirectVideoMoveMouse(
+#else
 static void XF86DirectVideoMoveMouse(
+#endif
 #if NeedFunctionPrototypes
 	int x,
 	int y,
@@ -208,7 +214,7 @@ static CARD32 buttonTimer(
  * the mouse reports both pressed at the same time ...
  */
 
-static char stateTab[48][3] = {
+static signed char stateTab[48][3] = {
 
 /* nothing pressed */
   {  0,  0,  0 },	
@@ -295,8 +301,6 @@ static char hitachMap[16] = {  0,  2,  1,  3,
 			       8, 10,  9, 11,
 			       4,  6,  5,  7,
 			      12, 14, 13, 15 };
-
-#define reverseBits(map, b)	(((b) & ~0x0f) | map[(b) & 0x0f])
 
 
 /*
@@ -1045,7 +1049,6 @@ buttonTimer(timer, now, arg)
     return(0);
 }
 
-
 /*      
  * xf86PostMseEvent --
  *	Translate the raw hardware MseEvent into an XEvent(s), and tell DIX
@@ -1068,6 +1071,9 @@ xf86PostMseEvent(device, buttons, dx, dy)
   int				is_pointer; /* the mouse is the pointer ? */
 #endif
 
+  float mult;
+  static float dxremaind = 0.0, dyremaind = 0.0;
+
 #ifdef AMOEBA
   int	      pressed;
 
@@ -1087,24 +1093,52 @@ xf86PostMseEvent(device, buttons, dx, dy)
 
   truebuttons = buttons;
   if (private->mseType == P_MMHIT)
-    buttons = reverseBits(hitachMap, buttons);
+    buttons = hitachMap[buttons];
   else
-    buttons = reverseBits(reverseMap, buttons);
+    buttons = reverseMap[buttons];
 
   if (dx || dy) {
-    
+
+    /*
+     * The accelaration stuff is now done in xf86Xinput.c when XInput
+     * support is enabled.
+     */
+#ifndef XINPUT
     /*
      * accelerate the baby now if sqrt(dx*dx + dy*dy) > threshold !
      * but do some simpler arithmetic here...
      */
-    if ((abs(dx) + abs(dy)) >= private->threshold) {
-      dx = (dx * private->num) / private->den;
-      dy = (dy * private->num)/ private->den;
-    }
 
-#ifdef XINPUT
-    if (is_pointer) {
+      if ( private->threshold ) 
+      {
+	  if ((abs(dx) + abs(dy)) >= private->threshold) {
+	      dx = (dx * private->num) / private->den;
+	      dy = (dy * private->num)/ private->den;
+	  }
+      }
+      else
+      {
+#if 0
+	  mult = sqrt((float)(dx*dx+dy*dy)) *
+	      (float)(private->num) / (float)(private->den) + 0.5;
+#else
+	  mult = pow((float)(dx*dx+dy*dy), (float)(private->num) /
+		     (float)(private->den) / 2.0) / 2.0;
 #endif
+	  if ( dx )
+	  {
+	      dxremaind = mult * (float)dx + dxremaind;
+	      dx = (int)dxremaind;
+	      dxremaind = dxremaind - (float)dx;
+	  }
+	  if ( dy )
+	  {
+	      dyremaind = mult * (float)dy + dyremaind;
+	      dy = (int)dyremaind;
+	      dyremaind = dyremaind - (float)dy;
+	  }
+      }
+
 #ifdef XFreeXDGA
       if (((ScrnInfoPtr)(xf86Info.currentScreen->devPrivates[xf86ScreenIndex].ptr))->directMode&XF86DGADirectMouse) {
 	XF86DirectVideoMoveMouse(dx, dy, mevent->u.keyButtonPointer.time);
@@ -1113,21 +1147,9 @@ xf86PostMseEvent(device, buttons, dx, dy)
 	{
 	  MOVEPOINTER(dx, dy, mevent->u.keyButtonPointer.time);
 	}
-#ifdef XINPUT
-    }
-    else {
-      xev->type = DeviceMotionNotify;
-      xev->deviceid = device->id | MORE_EVENTS;
-      xv->type = DeviceValuator;
-      xv->deviceid = device->id;
-      xv->num_valuators = 2;
-      xv->first_valuator = 0;
-      xv->device_state = 0;
-      xv->valuator0 = dx;
-      xv->valuator1 = dy;
-      xf86eqEnqueue(mevent);
-    }
-#endif
+#else
+      xf86PostMotionEvent(device, 0, 0, 2, dx, dy);
+#endif /* XINPUT */
   }
 
   if (private->emulate3Buttons)
@@ -1139,19 +1161,17 @@ xf86PostMseEvent(device, buttons, dx, dy)
        * would nearly double its size, so I'll stick with this fix.  - TJW
        */
       if (private->mseType == P_MMHIT)
-        change = buttons ^ reverseBits(hitachMap, private->lastButtons);
+        change = buttons ^ hitachMap[private->lastButtons];
       else
-        change = buttons ^ reverseBits(reverseMap, private->lastButtons);
+        change = buttons ^ reverseMap[private->lastButtons];
       if (change & 02)
 	{
-#ifdef XINPUT
-	    if (xf86CheckButton(2, (buttons & 02))) {
-#endif
+#ifndef XINPUT
 	  ENQUEUE(mevent,
 		  2, (buttons & 02) ? ButtonPress : ButtonRelease,
 		  XE_POINTER);
-#ifdef XINPUT
-	    }
+#else
+	  xf86PostButtonEvent(device, 0, 2, (buttons & 02), 0, 0);	  
 #endif
 	}
       
@@ -1160,51 +1180,23 @@ xf86PostMseEvent(device, buttons, dx, dy)
        */
       if ((id = stateTab[buttons + private->emulateState][0]) != 0)
 	{
-#ifdef XINPUT
-          if (is_pointer) {
-	      if (xf86CheckButton(abs(id), (id >= 0))) {
-#endif
+#ifndef XINPUT
             ENQUEUE(mevent,
                     abs(id), (id < 0 ? ButtonRelease : ButtonPress), 
                     XE_POINTER);
-#ifdef XINPUT
-	      }
-          }
-          else {
-            xev->type = (id < 0 ? DeviceButtonRelease : DeviceButtonPress);
-            xev->deviceid = device->id | MORE_EVENTS;
-	    xev->detail = abs(id);
-            xv->type = DeviceValuator;
-            xv->deviceid = device->id;
-            xv->num_valuators = 0;
-            xv->device_state = 0;
-            xf86eqEnqueue(mevent);
-          }
+#else
+	    xf86PostButtonEvent(device, 0, abs(id), (id >= 0), 0, 0);
 #endif 
 	}
 
       if ((id = stateTab[buttons + private->emulateState][1]) != 0)
 	{
-#ifdef XINPUT
-	  if (is_pointer) {
-	    if (xf86CheckButton(abs(id), (id >= 0))) {
-#endif
+#ifndef XINPUT
             ENQUEUE(mevent,
                     abs(id), (id < 0 ? ButtonRelease : ButtonPress), 
                     XE_POINTER);
-#ifdef XINPUT
-	    }
-          }
-          else {
-            xev->type = (id < 0 ? DeviceButtonRelease : DeviceButtonPress);
-            xev->deviceid = device->id | MORE_EVENTS;
-	    xev->detail = abs(id);
-            xv->type = DeviceValuator;
-            xv->deviceid = device->id;
-            xv->num_valuators = 0;
-            xv->device_state = 0;
-            xf86eqEnqueue(mevent);
-          }   
+#else
+	    xf86PostButtonEvent(device, 0, abs(id), (id >= 0), 0, 0);
 #endif
 	}
 
@@ -1229,27 +1221,13 @@ xf86PostMseEvent(device, buttons, dx, dy)
     {
 #ifdef AMOEBA
       if (truebuttons != 0) {
-#ifdef XINPUT
-          if (is_pointer) {
-	    if (xf86CheckButton(truebuttons)) {
-#endif
+# ifndef XINPUT
 	    ENQUEUE(mevent,
 		    truebuttons, (pressed ? ButtonPress : ButtonRelease),
 		    XE_POINTER);
-#ifdef XINPUT
-	    }
-	  }
-	  else {
-            xev->type = pressed ? DeviceButtonPress : DeviceButtonRelease;
-            xev->deviceid = device->id | MORE_EVENTS;
-	    xev->detail = truebuttons;
-            xv->type = DeviceValuator;
-            xv->deviceid = device->id;
-            xv->num_valuators = 0;
-            xv->device_state = 0;
-            xf86eqEnqueue(mevent);
-	  }
-#endif
+# else
+	    xf86PostButtonEvent(device, 0, truebuttons, pressed, 0, 0);
+# endif
       }
 #else
       /*
@@ -1258,33 +1236,19 @@ xf86PostMseEvent(device, buttons, dx, dy)
        * is the reverse of the button mapping reported to the server.
        */
       if (private->mseType == P_MMHIT)
-        change = buttons ^ reverseBits(hitachMap, private->lastButtons);
+        change = buttons ^ hitachMap[private->lastButtons];
       else
-        change = buttons ^ reverseBits(reverseMap, private->lastButtons);
+        change = buttons ^ reverseMap[private->lastButtons];
       while (change)
 	{
 	  id = ffs(change);
 	  change &= ~(1 << (id-1));
-#ifdef XINPUT
-          if (is_pointer) {
-	    if (xf86CheckButton(id, (buttons&(1<<(id-1))))) {
-#endif
+# ifndef XINPUT
             ENQUEUE(mevent,
                     id, (buttons&(1<<(id-1)))? ButtonPress : ButtonRelease,
                     XE_POINTER);
-#ifdef XINPUT
-	    }
-          }
-          else {
-            xev->type = (buttons&(1<<(id-1)))? DeviceButtonPress : DeviceButtonRelease;
-            xev->deviceid = device->id | MORE_EVENTS;
-	    xev->detail = id;
-            xv->type = DeviceValuator;
-            xv->deviceid = device->id;
-            xv->num_valuators = 0;
-            xv->device_state = 0;
-            xf86eqEnqueue(mevent);
-          }
+# else
+	    xf86PostButtonEvent(device, 0, id, (buttons&(1<<(id-1))), 0, 0);
 #endif
 	}
 #endif
@@ -1523,7 +1487,11 @@ XTestGenerateEvent(dev_type, keycode, keystate, mousex, mousey)
 
 
 #ifdef XFreeXDGA
+#ifdef XINPUT
+void
+#else
 static void
+#endif
 XF86DirectVideoMoveMouse(x, y, mtime)
      int x;
      int y;

@@ -1,0 +1,58 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/p9x00/Imakefile,v 1.1.2.2 1998/10/22 04:31:06 hohndel Exp $
+
+#define IHaveModules
+#include <Server.tmpl>
+
+SRCS = p9x00Driver.c p9x00VGA.c p9x00DAC.c p9x00ICD2061A.c p9x00XAA.c \
+	p9x00Access.c p9x00Probe.c
+OBJS = p9x00Driver.o p9x00VGA.o p9x00DAC.o p9x00ICD2061A.o p9x00XAA.o \
+	p9x00Access.o p9x00Probe.o
+
+DEFINES = -DPSZ=8
+
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+           -I$(SERVERSRC)/cfb -I../../vga -I../../../xaa \
+	   -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+NormalRelocatableTarget(p9x00_drv,$(OBJS))
+
+
+InstallLinkKitNonExecFile(p9x00Driver.c,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00Driver.h,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00Access.c,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00Access.h,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00Probe.c,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00Probe.h,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00Regs.h,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00VGA.c,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00VGA.h,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00VGARegs.h,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00ICD2061A.c,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00ICD2061A.h,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00Includes.h,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00DAC.c,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00DAC.h,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00XAA.c,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(p9x00XAA.h,$(LINKKITDIR)/drivers/vga256/p9x00)
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/p9x00)
+
+#if DoLoadableServer
+InstallDynamicModule(p9x00_drv.o,$(MODULEDIR))
+#endif
+
+#ifndef OS2Architecture
+DependTarget()
+#endif
+

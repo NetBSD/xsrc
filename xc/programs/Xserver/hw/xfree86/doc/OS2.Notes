@@ -7,11 +7,11 @@
 
 
 
-		 Notes on Rebuilding XFree86/OS2 from Scratch
+                 Notes on Rebuilding XFree86/OS2 from Scratch
 
-				  Holger Veit
+                                  Holger Veit
 
-			   Last modified 26 Mar 1998
+                         Last modified 04 October 1998
 
 
 
@@ -21,14 +21,14 @@ X11 and XFree86 were initially developed on Unix-based systems. Usually Unix
 systems provide a rich number of tools and utilities to get certain things
 done. Under OS/2, these tools are not installed, but ports are available which
 are sometimes functionally equivalent to Unix utilities with the same name, but
-also differ sometimes in a subtle way.	This guide will give you hints if you
+also differ sometimes in a subtle way.  This guide will give you hints if you
 intend to rebuild the system from scratch under OS/2.
 
 Please also read README.OS2 for end-user information, and set at least the
 environment variables described there.
 
-At the current time, the most recent version available is XFree86-3.3.2.  This
-is a full and unrestricted version which comes with complete source code. 3.3.2
+At the current time, the most recent version available is XFree86-3.3.3.  This
+is a full and unrestricted version which comes with complete source code. 3.3.3
 is not only a bugfix release, but also supports new hardware, some of which
 might not even supported by OS/2 itself. See the RELEASE NOTES document for
 details.
@@ -36,7 +36,7 @@ details.
 If you want to join the XFree86 developer team, e.g. to add support for certain
 hardware, please send a request to BOD@XFree86.org. Please think about such a
 step carefully before, though, since much work is involved. Please use the
-XFree86-3.3.2 source code as a test example how to compile the system. The
+XFree86-3.3.3 source code as a test example how to compile the system. The
 ability to manage that is a basic requirement for becoming a developer.
 
 
@@ -61,13 +61,13 @@ need:
 
 
 
-Notes on Rebuilding XFree86/OS2 from Scratch
+Notes on Rebuilding XFree86/OS2 from Scratch                                  1
 
 
 
 
 
-Notes on Rebuilding XFree86/OS2 from Scratch
+Notes on Rebuilding XFree86/OS2 from Scratch                                  2
 
 
 
@@ -111,7 +111,7 @@ installed them. Nor did I install the test subtree.
   1.  Install all the above utilities. Refer to the corresponding documenta-
       tion.  Verify that everything works well, particularly EMX.
 
-  2.  It is a good idea to use the same or a similar structure I have.	I have
+  2.  It is a good idea to use the same or a similar structure I have.  I have
       made a directory \x11 on the partition for compiling and have put every-
       thing below this tree. I found that a clean tree occupies less than the
       half space of the disk, this gives me the opportunity to rename this tree
@@ -121,7 +121,7 @@ installed them. Nor did I install the test subtree.
 
   3.  To unpack the files you would usually execute the command
 
-	   gzip -dc file.tar.gz | tar xvf -
+           gzip -dc file.tar.gz | tar xvf -
 
 
       in the \x11 directory. At the end you will usually see the irritating,
@@ -133,7 +133,7 @@ installed them. Nor did I install the test subtree.
 
 
 
-Notes on Rebuilding XFree86/OS2 from Scratch
+Notes on Rebuilding XFree86/OS2 from Scratch                                  3
 
 
 
@@ -142,7 +142,7 @@ Notes on Rebuilding XFree86/OS2 from Scratch
   4.  After that, is is likely necessary to apply some patches, either from the
       XConsortium or from the XFree86 project. Before you do this, enter
 
-		 chmod -R a+rw \x11\xc
+                 chmod -R a+rw \x11\xc
 
 
 
@@ -153,13 +153,13 @@ Notes on Rebuilding XFree86/OS2 from Scratch
       creating new directories, so we need to create them on advance. For each
       added-XXX file you find, execute from \x11
 
-	   xc\config\util\added added-XXX
+           xc\config\util\added added-XXX
 
 
       If there is no added-XXX file available, you can make one with the fol-
       lowing instructions:
 
-		 grep "\*\*\* xc/" patchfile >added-file
+                 grep "\*\*\* xc/" patchfile >added-file
 
 
 
@@ -171,7 +171,7 @@ Notes on Rebuilding XFree86/OS2 from Scratch
   6.  After that you can apply the patches in the right order. Usually this is
       done by a command
 
-		 patch -p -E <patchfile 2>&1 | tee patchlog
+                 patch -p -E <patchfile 2>&1 | tee patchlog
 
 
 
@@ -180,8 +180,8 @@ Notes on Rebuilding XFree86/OS2 from Scratch
       recommended -s option, this makes patch quiet, and you won't see problems
       in the patchlog file. Use
 
-		 find \x11 -name *.rej -print
-		 find \x11 -name *# -print
+                 find \x11 -name *.rej -print
+                 find \x11 -name *# -print
 
 
 
@@ -190,7 +190,7 @@ Notes on Rebuilding XFree86/OS2 from Scratch
       lems of this kind, else you have made a mistake. Finally remove the orig-
       inal files with
 
-		 find \x11 -name *.orig -print -exec rm {} ;
+                 find \x11 -name *.orig -print -exec rm {} ;
 
 
 
@@ -199,7 +199,7 @@ Notes on Rebuilding XFree86/OS2 from Scratch
 
 
 
-Notes on Rebuilding XFree86/OS2 from Scratch
+Notes on Rebuilding XFree86/OS2 from Scratch                                  4
 
 
 
@@ -207,17 +207,17 @@ Notes on Rebuilding XFree86/OS2 from Scratch
       your requirements (you probably don't want to compile all X servers).
       Certain changes must be set to the following values:
 
-	 o Disable if not already done any PC98 server; PC98 (Japanese XFree86)
-	   does not work yet. Porters from Japan are welcome!
+         o Disable if not already done any PC98 server; PC98 (Japanese XFree86)
+           does not work yet. Porters from Japan are welcome!
 
-	 o #define WacomSupport 	   NO #define ElographicsSupport
-	   NO Both options are not yet supported.
+         o #define WacomSupport            NO #define ElographicsSupport
+           NO Both options are not yet supported.
 
-	 o Tcl* and Tk* don't need to be set explicitly. Reasonable defaults
-	   are in the other config files, provided you have a complete
-	   XFree86/OS2 binary tree with the tcl/tk runtime support installed.
+         o Tcl* and Tk* don't need to be set explicitly. Reasonable defaults
+           are in the other config files, provided you have a complete
+           XFree86/OS2 binary tree with the tcl/tk runtime support installed.
 
-	 o #define BuildDynamicLoading	 NO This does not work.
+         o #define BuildDynamicLoading   NO This does not work.
 
   8.  Go to the directory xc\util\compress and make compress.exe there. Install
       the program produced there in your path. I stumbled more than once on
@@ -248,15 +248,15 @@ Notes on Rebuilding XFree86/OS2 from Scratch
 
  14.  Finally, from the xc dir, execute
 
-		 xmake install
-		 xmake install.man
+                 xmake install
+                 xmake install.man
 
 
  15.  There are a few minor glitches in the installation:
 
-	1.  The xdm and linkkit directories will fail in compile and installa-
-	    tion.  This is no problem and has no effect on the rest of the sys-
-	    tem.
+        1.  The xdm and linkkit directories will fail in compile and installa-
+            tion.  This is no problem and has no effect on the rest of the sys-
+            tem.
 
 
 
@@ -265,25 +265,25 @@ Notes on Rebuilding XFree86/OS2 from Scratch
 
 
 
-Notes on Rebuilding XFree86/OS2 from Scratch
+Notes on Rebuilding XFree86/OS2 from Scratch                                  5
 
 
 
-	2.  The imake.exe which is installed in \XFree86\bin is usually defec-
-	    tive.  The one which was built initially and installed in the root
-	    directory of the drive where you have the source tree is okay. So
-	    simply copy this \imake.exe to the \XFree86\bin directory manually.
-	    Some day this might be fixed.
+        2.  The imake.exe which is installed in \XFree86\bin is usually defec-
+            tive.  The one which was built initially and installed in the root
+            directory of the drive where you have the source tree is okay. So
+            simply copy this \imake.exe to the \XFree86\bin directory manually.
+            Some day this might be fixed.
 
-	3.  XF86Setup is not ported yet and won't work with the tcl/tk port
-	    available for XFree86/OS2. My idea was to replace this by some
-	    native installation tool, which I didn't find the time to do yet.
-	    Feel free to spend a bit of time to play with XF86Setup if you
-	    like.
+        3.  XF86Setup is not ported yet and won't work with the tcl/tk port
+            available for XFree86/OS2. My idea was to replace this by some
+            native installation tool, which I didn't find the time to do yet.
+            Feel free to spend a bit of time to play with XF86Setup if you
+            like.
 
 Well, you see, this was quite easy :-)
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.3 1998/02/26 20:11:29 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.4 1998/10/11 12:35:56 hohndel Exp $
 
 
 
@@ -331,7 +331,7 @@ Well, you see, this was quite easy :-)
 
 
 
-Notes on Rebuilding XFree86/OS2 from Scratch
+Notes on Rebuilding XFree86/OS2 from Scratch                                  6
 
 
 
@@ -401,7 +401,7 @@ Notes on Rebuilding XFree86/OS2 from Scratch
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
@@ -457,8 +457,8 @@ Notes on Rebuilding XFree86/OS2 from Scratch
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.8.2.3 1998/02/27 02:54:55 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.8.2.5 1998/11/14 06:46:39 dawes Exp $

@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv3cursor.c,v 1.1.2.3 1998/02/08 01:12:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv3cursor.c,v 1.1.2.5 1998/11/18 16:38:44 hohndel Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -33,17 +33,16 @@
 #include "windowstr.h"
 
 #include "compiler.h"
-#include "vga256.h"
 #include "xf86.h"
 #include "mipointer.h"
 #include "xf86Priv.h"
 #include "xf86_Option.h"
 #include "xf86_OSlib.h"
+#include "vga256.h"
 #include "vga.h"
 
 #include "miline.h"
 
-#include "nv3ref.h"
 #include "nvreg.h"
 #include "nvcursor.h"
 
@@ -62,7 +61,7 @@ static miPointerSpriteFuncRec NV3PointerSpriteFuncs =
   NV3MoveCursor,
 };
 
-/* vga256 interface defines Init, Restore, Warp, QueryBestSize. */
+ 
 
 
 extern miPointerScreenFuncRec xf86PointerScreenFuncs;
@@ -70,21 +69,21 @@ extern xf86InfoRec xf86Info;
 
 static int NV3CursorGeneration = -1;
 
-/*
- * This is the set variables that defines the cursor state within the
- * driver.
- */
+ 
+
+
+
 
 static int NV3CursorHotX;
 static int NV3CursorHotY;
 static CursorPtr NV3CursorpCurs;
 
 
-/*
- * This is a high-level init function, called once; it passes a local
- * miPointerSpriteFuncRec with additional functions that we need to provide.
- * It is called by the SVGA server.
- */
+ 
+
+
+
+
 
 Bool NV3CursorInit(char *pm,ScreenPtr pScr)
 {
@@ -96,58 +95,58 @@ Bool NV3CursorInit(char *pm,ScreenPtr pScr)
 
   if(NV3CursorGeneration != serverGeneration) {
     if(!(miPointerInitialize(pScr, &NV3PointerSpriteFuncs,
-			     &xf86PointerScreenFuncs, FALSE))) {
-      return FALSE;
+			     &xf86PointerScreenFuncs, 0 ))) {
+      return 0 ;
     }
     pScr->RecolorCursor = NV3RecolorCursor;
     NV3CursorGeneration = serverGeneration;
   }
-  return TRUE;
+  return 1 ;
 }
 
-/*
- * This enables displaying of the cursor by the NV3 graphics chip.
- * It's a local function, it's not called from outside of the module.
- */
+ 
+
+
+
 
 static void NV3ShowCursor(void)
 {
   unsigned char tmp;
-  tmp = PCRTC_Read(GRCURSOR1)|1|PCRTC_Def(GRCURSOR1_CURSOR,ENABLE);
-  PCRTC_Write(GRCURSOR1,tmp);
+  tmp = (outb(980, 49   ),inb(981))  |1| (( 1    ) << (0))   ;
+  outb(980,( 49   ));outb(981,  tmp  )  ;
 }
 
-/*
- * This disables displaying of the cursor by the NV3 graphics chip.
- * This is also a local function, it's not called from outside.
- */
+ 
+
+
+
 void NV3HideCursor(void)
 {
   unsigned char tmp;
-  tmp = PCRTC_Read(GRCURSOR1)&(~PCRTC_Def(GRCURSOR1_CURSOR,ENABLE));
-  PCRTC_Write(GRCURSOR1,tmp);
+  tmp = (outb(980, 49   ),inb(981))  &(~(( 1    ) << (0))   );
+  outb(980,( 49   ));outb(981,  tmp  )  ;
 }
 
-/*
- * This function is called when a new cursor image is requested by
- * the server. The main thing to do is convert the bitwise image
- * provided by the server into a format that the graphics card
- * can conveniently handle, and store that in system memory.
- * Adapted from accel/s3/s3Cursor.c.
- */
+ 
 
 
-/* The NV3 supports true colour cursors, useless for X but essential
- * for those animated cursors under Win95!
- */
-#define MAX_CURS 32
-#define TRANSPARENT_PIXEL 0
-#define SHOW
+
+
+
+
+
+
+ 
+
+
+
+
+
 typedef struct {
-  unsigned short foreColour, /* Colour for this cursor in RGB555 */
+  unsigned short foreColour,  
                  backColour;
-  unsigned short image[MAX_CURS*MAX_CURS]; /* Image */
-  int address; /* Pramin where image loaded */
+  unsigned short image[32 * 32 ];  
+  int address;  
 }NV3Cursor;
   
   
@@ -155,10 +154,10 @@ static unsigned short ConvertToRGB555(int red,int green,int blue)
 {
   unsigned short colour;
 
-  colour=((red>>11)&0x1f)<<10;
-  colour|=((green>>11)&0x1f)<<5;
-  colour|=((blue>>11)&0x1f);
-  colour|=1<<15; /* We must set the top bit, else it appears transparent */
+  colour=((red>>11)&31)<<10;
+  colour|=((green>>11)&31)<<5;
+  colour|=((blue>>11)&31);
+  colour|=1<<15;  
 
   return colour;
 }
@@ -174,10 +173,10 @@ static void RenderCursor(CursorBits *bits,NV3Cursor *cursor)
   height = bits->height;
   width=bits->width;
   source=(unsigned char*)bits->source;
-  pad=PixmapBytePad(bits->width, 1);/* Bytes per line. */
+  pad= ((PixmapWidthPaddingInfo[    1  ].notPower2 ? (((int)(  bits->width  ) * PixmapWidthPaddingInfo[    1  ].bytesPerPixel + PixmapWidthPaddingInfo[    1  ].bytesPerPixel) >> PixmapWidthPaddingInfo[    1  ].padBytesLog2) : ((int)((  bits->width  ) + PixmapWidthPaddingInfo[    1  ].padRoundUp) >> PixmapWidthPaddingInfo[    1  ].padPixelsLog2))  << PixmapWidthPaddingInfo[  1 ].padBytesLog2) ; 
   mask=(unsigned char*)bits->mask;
-  for(y=0,i=0,lineOffset=0;y<MAX_CURS;y++,lineOffset+=pad) {
-    for(x=0;x<MAX_CURS;x++,i++) {
+  for(y=0,i=0,lineOffset=0;y< 32 ;y++,lineOffset+=pad) {
+    for(x=0;x< 32 ;x++,i++) {
       if(x<width && y<height) {
         byteIndex=lineOffset+(x/8);bitIndex=x%8;
         maskBit=mask[byteIndex]&(1<<bitIndex);
@@ -186,10 +185,10 @@ static void RenderCursor(CursorBits *bits,NV3Cursor *cursor)
 	  cursor->image[i]=(sourceBit) ? cursor->foreColour :
                                          cursor->backColour;
 	}else {
-          cursor->image[i]=TRANSPARENT_PIXEL;
+          cursor->image[i]= 0 ;
 	}        
       }else {
-        cursor->image[i]=TRANSPARENT_PIXEL;
+        cursor->image[i]= 0 ;
       }
     }
   }
@@ -202,12 +201,12 @@ static Bool NV3RealizeCursor(ScreenPtr pScr,CursorPtr pCurs)
   pointer *pPriv = &pCurs->bits->devPriv[index];
   CursorBits *bits = pCurs->bits;
 
-  /* Presumably this checks to see if this is already the cursor in there */
-  if(pCurs->bits->refcnt > 1) return TRUE;
+   
+  if(pCurs->bits->refcnt > 1) return 1 ;
 
-  ram = (NV3Cursor*)xalloc(sizeof(NV3Cursor));
+  ram = (NV3Cursor*)Xalloc((unsigned long)( sizeof(NV3Cursor) )) ;
   *pPriv = (pointer) ram;
-  if(!ram) return FALSE;
+  if(!ram) return 0 ;
 
   ram->foreColour=
      ConvertToRGB555(pCurs->foreRed,pCurs->foreGreen,pCurs->foreBlue);
@@ -216,13 +215,13 @@ static Bool NV3RealizeCursor(ScreenPtr pScr,CursorPtr pCurs)
   
   RenderCursor(bits,ram);
 
-  return TRUE;
+  return 1 ;
 }
 
-/*
- * This is called when a cursor is no longer used. The intermediate
- * cursor image storage that we created needs to be deallocated.
- */
+ 
+
+
+
 
 static Bool NV3UnrealizeCursor(ScreenPtr pScr,CursorPtr pCurs)
 {
@@ -230,29 +229,29 @@ static Bool NV3UnrealizeCursor(ScreenPtr pScr,CursorPtr pCurs)
 
   if(pCurs->bits->refcnt <= 1 &&
       (priv = pCurs->bits->devPriv[pScr->myNum])) {
-    xfree(priv);
-    pCurs->bits->devPriv[pScr->myNum] = 0x0;
+    Xfree((pointer)( priv )) ;
+    pCurs->bits->devPriv[pScr->myNum] = 0;
   }
-  return TRUE;
+  return 1 ;
 }
 
-/*
- * This function uploads a cursor image to the video memory of the
- * graphics card. The source image has already been converted by the
- * Realize function to a format that can be quickly transferred to
- * the card.
- * This is a local function that is not called from outside of this
- * module.
- */
+ 
 
-#define PRAMINRead nvPRAMINPort(addr) nvPRAMINPort[addr]
-#define PRAMINWrite(addr,val) nvPRAMINPort[addr]=(val)
 
-#define CURSOR_ADDRESS ((8192-2048)/4)
 
-#define SetBitField(value,from,to) SetBF(to,GetBF(value,from))
-#define SetBit(n) (1<<(n))
-#define Set8Bits(value) ((value)&0xff)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static void NV3LoadCursorToCard(ScreenPtr pScr,CursorPtr pCurs)
 {
@@ -270,30 +269,30 @@ static void NV3LoadCursorToCard(ScreenPtr pScr,CursorPtr pCurs)
   numInts=sizeof(cursor->image)/sizeof(int);
   image=(int*)cursor->image;
 
-  save=PCRTC_Read(GRCURSOR1);
+  save= (outb(980, 49   ),inb(981))  ;
 
-  PCRTC_Write(GRCURSOR1,0);
+  outb(980,( 49   ));outb(981,  0  )  ;
 
-  /* Upload the cursor to the card */
+   
   for(i=0;i<numInts;i++) {
-    PRAMINWrite(CURSOR_ADDRESS+i,image[i]);
+    nvPRAMINPort[ ((8192-2048)/4) +i ]=( image[i] ) ;
   }
-  /* Tell the ramdac where we are */
-  PCRTC_Write(GRCURSOR0,SetBitField(CURSOR_ADDRESS*4,21:16,5:0));
-  save&=0x7;
-  PCRTC_Write(GRCURSOR1,save|SetBitField(CURSOR_ADDRESS*4,15:11,7:3));
+   
+  outb(980,( 48   ));outb(981,  (( (((unsigned)((  ((8192-2048)/4) *4  ) & (((unsigned)(1U << ((( 21)-( 16)+1)))-1)  << ( 16))  )) >> (16) )  ) << (0))    )  ;
+  save&=7;
+  outb(980,( 49   ));outb(981,  save| (( (((unsigned)((  ((8192-2048)/4) *4  ) & (((unsigned)(1U << ((( 15)-( 11)+1)))-1)  << ( 11))  )) >> (11) )  ) << (3))    )  ;
   
 
 }
 
-/*
- * This function should make the graphics chip display new cursor that
- * has already been "realized". We need to upload it to video memory,
- * make the graphics chip display it.
- * This is a local function that is not called from outside of this
- * module (although it largely corresponds to what the SetCursor
- * function in the Pointer record needs to do).
- */
+ 
+
+
+
+
+
+
+
 
 static void NV3LoadCursor(ScreenPtr pScr,CursorPtr pCurs,int x,int y)
 {
@@ -304,23 +303,23 @@ static void NV3LoadCursor(ScreenPtr pScr,CursorPtr pCurs,int x,int y)
   if(!pCurs)
     return;
 
-  /* Remember the cursor currently loaded into this cursor slot. */
+   
   NV3CursorpCurs = pCurs;
 
   NV3HideCursor();
 
   NV3LoadCursorToCard(pScr, pCurs);
 
-  /* Position cursor */
+   
   NV3MoveCursor(pScr, x, y);
 
-  /* Turn it on. */
+   
   NV3ShowCursor();
 }
 
-/*
- * This function should display a new cursor at a new position.
- */
+ 
+
+
 
 static void NV3SetCursor(ScreenPtr pScr,CursorPtr pCurs,int x,int y,
                         Bool generateEvent)
@@ -334,10 +333,10 @@ static void NV3SetCursor(ScreenPtr pScr,CursorPtr pCurs,int x,int y,
   NV3LoadCursor(pScr, pCurs, x, y);
 }
 
-/*
- * This function should redisplay a cursor that has been
- * displayed earlier. It is called by the SVGA server.
- */
+ 
+
+
+
 
 void NV3RestoreCursor(ScreenPtr pScr)
 {
@@ -348,10 +347,10 @@ void NV3RestoreCursor(ScreenPtr pScr)
   NV3LoadCursor(pScr, NV3CursorpCurs, x, y);
 }
 
-/*
- * This function is called when the current cursor is moved. It makes
- * the graphic chip display the cursor at the new position.
- */
+ 
+
+
+
 
 static void NV3MoveCursor(ScreenPtr pScr,int x,int y)
 {
@@ -361,16 +360,16 @@ static void NV3MoveCursor(ScreenPtr pScr,int x,int y)
 
   x -= vga256InfoRec.frameX0 + NV3CursorHotX;
   y -= vga256InfoRec.frameY0 + NV3CursorHotY;
-  x&=PRAMDAC_Mask(GRCURSOR_START_POS_X);
-  PRAMDAC_Write(GRCURSOR_START_POS,PRAMDAC_Val(GRCURSOR_START_POS_X,x)|
-                                   PRAMDAC_Val(GRCURSOR_START_POS_Y,y));
+  x&= (((unsigned)(1U << ((( 11)-( 0)+1)))-1)  << ( 0))    ;
+  nvPRAMDACPort[((6816512    )- (6815744) )/4] =(  ((   x   ) << (0))   |
+                                   ((   y   ) << (16))     )  ;
 }
 
-/*
- * This is a local function that programs the colors of the cursor
- * on the graphics chip.
- * Adapted from accel/s3/s3Cursor.c.
- */
+ 
+
+
+
+
 
 static void NV3RecolorCursor(ScreenPtr pScr,CursorPtr pCurs,Bool displayed)
 {
@@ -392,10 +391,10 @@ static void NV3RecolorCursor(ScreenPtr pScr,CursorPtr pCurs,Bool displayed)
 
 }
 
-/*
- * This doesn't do very much. It just calls the mi routine. It is called
- * by the SVGA server.
- */
+ 
+
+
+
 
 void NV3WarpCursor(ScreenPtr pScr,int x,int y)
 {
@@ -403,19 +402,19 @@ void NV3WarpCursor(ScreenPtr pScr,int x,int y)
   xf86Info.currentScreen = pScr;
 }
 
-/*
- * This function is called by the SVGA server. It returns the
- * size of the hardware cursor that we support when asked for.
- * It is called by the SVGA server.
- */
+ 
+
+
+
+
 
 void NV3QueryBestSize(int class,unsigned short *pwidth, 
                      unsigned short *pheight,ScreenPtr pScreen)
 {
   if(*pwidth > 0) {
-    if(class == CursorShape) {
-      *pwidth = MAX_CURS;
-      *pheight = MAX_CURS;
+    if(class == 0 ) {
+      *pwidth = 32 ;
+      *pheight = 32 ;
     } else
       (void)mfbQueryBestSize(class, pwidth, pheight, pScreen);
   }

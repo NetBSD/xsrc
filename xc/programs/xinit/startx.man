@@ -1,6 +1,8 @@
 .\" $XConsortium: startx.man /main/8 1996/12/09 17:09:15 kaleb $
 .\" Copyright (c) 1993  X Consortium
 .\" 
+.\" $XFree86: xc/programs/xinit/startx.man,v 1.1.1.3.2.2 1998/11/05 19:38:35 hohndel Exp $
+.\"
 .\" Permission is hereby granted, free of charge, to any person obtaining
 .\" a copy of this software and associated documentation files (the
 .\" "Software"), to deal in the Software without restriction, including
@@ -49,6 +51,17 @@ their site.  And to update this manual page when they do!
 The \fIstartx\fP script is a front end to \fIxinit\fP that provides a
 somewhat nicer user interface for running a single session of the X
 Window System.  It is typically run with no arguments.
+.PP
+One important exception is the case when a different color depth is being
+selected. Since this is involves passing an argument to the server, the
+option has to be prefixed with 
+.RB `--'
+(see the 
+.IR xinit(1)
+manual page for more details on the arguments). In order to start the server
+in 16bpp use
+.sp
+startx -- -bpp 16
 .PP
 To determine the client to run,
 .I startx

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.h,v 1.1.2.5 1998/02/07 10:05:47 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.h,v 1.1.2.6 1998/10/18 20:42:34 hohndel Exp $ */
 
 /* Header file for ViRGE server */
 
@@ -11,7 +11,7 @@ extern vgaCRIndex, vgaCRReg;
 /* Driver data structure; this should contain all neeeded info for a mode */
 typedef struct {     
    vgaHWRec std;
-   unsigned char SR10, SR11, SR12, SR13, SR15, SR18, SR29; /* SR9-SR1C, ext seq. */
+   unsigned char SR8, SR10, SR11, SR12, SR13, SR15, SR18, SR29; /* SR9-SR1C, ext seq. */
    unsigned char SR54, SR55, SR56, SR57;
    unsigned char Clock;
    unsigned char s3DacRegs[0x101];

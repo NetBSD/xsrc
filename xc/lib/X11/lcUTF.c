@@ -1,4 +1,4 @@
-/* $XConsortium: lcUTF.c /main/12 1996/12/04 10:12:29 swick $ */
+/* $TOG: lcUTF.c /main/25 1998/05/20 14:47:50 kaleb $ */
 /******************************************************************
 
               Copyright 1993 by SunSoft, Inc.
@@ -25,72 +25,163 @@ OR PERFORMANCE OF THIS SOFTWARE.
   Author: Hiromu Inukai (inukai@Japan.Sun.COM) SunSoft, inc.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/lcUTF.c,v 3.3.2.1 1998/01/25 06:11:09 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcUTF.c,v 3.3.2.3 1998/10/24 09:11:43 dawes Exp $ */
+
+
+#ifdef X_LOCALE
+
 #include "XlcUTF.h"
 
-static long	getutfrune();
+static int getutfrune(
+#if NeedFunctionPrototypes
+    char**,
+    int*
+#endif
+);
 static void our_wctomb(
 #if NeedFunctionPrototypes
-		       unsigned short r, 
-		       char **bufptr, 
-		       int *buf_len
+    wchar_t, 
+    char **, 
+    int *
 #endif
 );
 static int our_mbtowc(
 #if NeedFunctionPrototypes   
-		      unsigned long *p, 
-		      char *s, 
-		      size_t n
+    wchar_t*, 
+    char*, 
+    size_t
 #endif
 );
 static void	latin2rune(
 #if NeedFunctionPrototypes
-			   unsigned char c, 
-			   Rune *r
+    unsigned char, 
+    Rune*
 #endif
 );
 static void	jis02012rune(
 #if NeedFunctionPrototypes
-			     unsigned char c, 
-			     Rune *r
+    unsigned char, 
+    Rune*
 #endif
 );
 static void	jis02082rune(
 #if NeedFunctionPrototypes
-			     unsigned char c, 
-			     Rune *r
+    unsigned char, 
+    Rune*
 #endif
 );
 static void	ksc2rune(
 #if NeedFunctionPrototypes
-			 unsigned char c, 
-			 Rune *r
+    unsigned char, 
+    Rune*
 #endif
 );
 static void	gb2rune(
 #if NeedFunctionPrototypes
-			unsigned char c, 
-			Rune *r
+    unsigned char, 
+    Rune*
 #endif
 );
-static void	init_latin1tab();
-static void	init_latin2tab();
-static void	init_latin3tab();
-static void	init_latin4tab();
-static void	init_latin5tab();
-static void	init_latin6tab();
-static void	init_latin7tab();
-static void	init_latin8tab();
-static void	init_latin9tab();
-static void	init_jis0201tab();
-static void	init_jis0208tab();
-static void	init_ksc5601tab();
-static void	init_gb2312tab();
+static void	init_latin1tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_latin2tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_latin3tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_latin4tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_cyrillictab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_koi8rtab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_arabictab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_greektab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_hebrewtab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_latin5tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_latin6tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_latin9tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_jis0201tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_jis0208tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_ksc5601tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
+static void	init_gb2312tab(
+#if NeedFunctionPrototypes
+    int*,
+    wchar_t
+#endif
+);
 
-
-static long	*tabkuten = NULL;
-static long	*tabksc = NULL;
-static long	*tabgb = NULL;
+static int*	tabkuten = NULL;
+static int*	tabksc = NULL;
+static int*	tabgb = NULL;
 
 static UtfData utfdata_list = (UtfData)NULL;
 
@@ -98,22 +189,26 @@ static XlcUTFDataRec default_utf_data[] =
 {
     {"ISO8859-1", XlcGL, init_latin1tab, latin2rune, N11n_none, 0x20},
     {"ISO8859-1", XlcGR, init_latin1tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGL, init_latin2tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGR, init_latin2tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGL, init_latin3tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGR, init_latin3tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGL, init_latin4tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGR, init_latin4tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGL, init_latin5tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGR, init_latin5tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGL, init_latin6tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGR, init_latin6tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGL, init_latin7tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGR, init_latin7tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGL, init_latin8tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGR, init_latin8tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGL, init_latin9tab, latin2rune, N11n_none, 0x20},
-    {"ISO8859-1", XlcGR, init_latin9tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-2", XlcGL, init_latin2tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-2", XlcGR, init_latin2tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-3", XlcGL, init_latin3tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-3", XlcGR, init_latin3tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-4", XlcGL, init_latin4tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-4", XlcGR, init_latin4tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-5", XlcGL, init_cyrillictab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-5", XlcGR, init_cyrillictab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-6", XlcGL, init_arabictab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-6", XlcGR, init_arabictab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-7", XlcGL, init_greektab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-7", XlcGR, init_greektab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-8", XlcGL, init_hebrewtab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-8", XlcGR, init_hebrewtab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-9", XlcGL, init_latin5tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-9", XlcGR, init_latin5tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-10", XlcGL, init_latin6tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-10", XlcGR, init_latin6tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-15", XlcGL, init_latin9tab, latin2rune, N11n_none, 0x20},
+    {"ISO8859-15", XlcGR, init_latin9tab, latin2rune, N11n_none, 0x20},
     {"JISX0201.1976-0", XlcGL, init_jis0201tab, jis02012rune, N11n_none, 0x20},
     {"JISX0201.1976-0", XlcGR, init_jis0201tab, jis02012rune, N11n_none, 0x20},
     {"JISX0208.1983-0", XlcGL, init_jis0208tab, jis02082rune, N11n_ja, 0x2222},
@@ -122,81 +217,69 @@ static XlcUTFDataRec default_utf_data[] =
     {"KSC5601.1987-0", XlcGR, init_ksc5601tab, ksc2rune, N11n_ko, 0x2160},
     {"GB2312.1980-0", XlcGL, init_gb2312tab, gb2rune, N11n_zh, 0x2175},
     {"GB2312.1980-0", XlcGR, init_gb2312tab, gb2rune, N11n_zh, 0x2175},
+    {"KOI8-R", XlcGL, init_koi8rtab, latin2rune, N11n_none, 0x20},
+    {"KOI8-R", XlcGR, init_koi8rtab, latin2rune, N11n_none, 0x20},
 };
 
 
 static void
 set_latin_nop(table, default_val)
-long	*table;
-long	default_val;
+    int*	table;
+    wchar_t	default_val;
 {
     register int i;
-    for(i = 0; i < 0x1fff; i++)
-	table[i] = default_val;
+    for(i = 0; i < LATINMAX; i++)
+	table[i] = (int) default_val;
     return;
 }
 
 static void
 set_cjk_nop(to_tbl, to_max, default_val)
-long	**to_tbl;
-long	default_val;
-int	to_max;
+    int*	to_tbl;
+    wchar_t	default_val;
+    int	to_max;
 {
     register int i;
     for(i = 0; i < to_max; i++)
-	(*to_tbl)[i] = default_val;
+	to_tbl[i] = default_val;
     return;
 }
 
 static void
 set_latin_tab(fptr, table, fb_default)
-FILE	*fptr;
-long	*table;
-long	fb_default;
+    FILE*	fptr;
+    int*	table;
+    wchar_t	fb_default;
 {
-    int		i = 0;
     int		j = 0;
-    int		rv = 0;
+    int		rv;
     long	value;
 
-    for(i = 0; i < NRUNE; i++)
-	table[i] = -1;
     while((rv = fscanf(fptr, "%lx", &value)) != EOF) {
-	if(rv != 0 && value >= 0) {
-	    table[value] = j++;
-	} else {
-	    set_latin_nop(table, fb_default);
-	    return;
-	}
+	if(rv != 0)
+	    table[j++] = (wchar_t) value;
     }
 }
 
 static void
 set_cjk_tab(fptr, to_tbl, from_tbl, to_max, fb_default)
-FILE	*fptr;
-long	**to_tbl, *from_tbl;
-int	to_max;
-long	fb_default;
+    FILE*	fptr;
+    int*	to_tbl;
+    int*	from_tbl;
+    int		to_max;
+    wchar_t	fb_default;
 {
-    register int	i = 0;
     int		j = 0;
-    int		rv = 0;
+    int		rv;
     long	value;
 
-    for(i = 0; i < NRUNE; i++)
-	from_tbl[i] = -1;
     while((rv = fscanf(fptr, "%lx", &value)) != EOF) {
-	if(rv != 0) {
-	    (*to_tbl)[j++] = value;
-	} else {
-	    set_cjk_nop(to_tbl, to_max, fb_default);
-	    break;
-	}
+	if(rv != 0)
+	    to_tbl[j++] = value;
     }
-    for(i = 0; i < to_max; i++) {
-	if((value = (*to_tbl)[i]) != -1){
-	    from_tbl[abs(value)] = i;
-	}
+    for(j = 0; j < to_max; j++) {
+	if((value = to_tbl[j]) != -1)
+	    from_tbl[abs(value)] = j;
     }
 }
 
@@ -204,10 +287,17 @@ extern int _XlcResolveI18NPath();
 static char TBL_DATA_DIR[] = "tbl_data";
 
 static void
-init_latin_tab(tbl, fb_default, which)
-    long*	tbl;
-    long	fb_default;
+#if NeedFunctionPrototypes
+init_8859_tab(
+    int*	tbl,
+    wchar_t	fb_default,
+    char*	which)
+#else
+init_8859_tab(tbl, fb_default, which)
+    int*	tbl;
+    wchar_t	fb_default;
     char*	which;
+#endif
 {
     FILE*	fp = NULL;
     char	dirname[BUFSIZE];
@@ -226,7 +316,7 @@ init_latin_tab(tbl, fb_default, which)
 	if ((3 + (p ? strlen(p) : 0) + 
 	    strlen (TBL_DATA_DIR) + strlen (which)) < BUFSIZE) {
 	    sprintf(filename, "%s/%s/%s", p, TBL_DATA_DIR, which);
-	    fp = fopen(filename, "r");
+	    fp = fopen (filename, "r");
 	}
 	if(fp) {
 	    set_latin_tab(fp, tbl, fb_default);
@@ -245,12 +335,21 @@ init_latin_tab(tbl, fb_default, which)
 }
 
 static void
+#if NeedFunctionPrototypes
+init_cjk_tab(
+    int*	tbl,
+    wchar_t	fb_default,
+    char*	which,
+    int**	tab,
+    long	max)
+#else
 init_cjk_tab(tbl, fb_default, which, tab, max)
-    long*	tbl;
-    long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
     char*	which;
-    long**	tab;
+    int**	tab;
     long	max;
+#endif
 {
     FILE*	fp = NULL;
     char	dirname[BUFSIZE];
@@ -258,7 +357,7 @@ init_cjk_tab(tbl, fb_default, which, tab, max)
     char*	p;
     char*	q;
 
-    if((*tab = (long *)Xmalloc(max * sizeof(long))) == NULL) {
+    if((*tab = (int*)Xmalloc(max * sizeof(int))) == NULL) {
 	return;
     }
     _XlcResolveI18NPath(dirname, BUFSIZE);
@@ -271,10 +370,10 @@ init_cjk_tab(tbl, fb_default, which, tab, max)
 	if ((3 + (p ? strlen(p) : 0) + 
 	    strlen (TBL_DATA_DIR) + strlen (which)) < BUFSIZE) {
 	    sprintf(filename, "%s/%s/%s", p, TBL_DATA_DIR, which);
-	    fp = fopen(filename, "r");
+	    fp = fopen (filename, "r");
 	}
 	if(fp) {
-	    set_cjk_tab(fp, tab, tbl, max, fb_default);
+	    set_cjk_tab(fp, *tab, tbl, max, fb_default);
 	    fclose(fp);
 	    return;
 	}
@@ -285,86 +384,188 @@ init_cjk_tab(tbl, fb_default, which, tab, max)
 	}
     }
     if(!fp) {
-	set_cjk_nop(tab, max, fb_default);
+	set_cjk_nop(*tab, max, fb_default);
     }
 }
 
 static void
+#if NeedFunctionPrototypes
+init_latin1tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_latin1tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
-    init_latin_tab (tbl, fb_default, tab8859_1);
+    init_8859_tab (tbl, fb_default, tab8859_1);
 }
 
 static void
+#if NeedFunctionPrototypes
+init_latin2tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_latin2tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
-    init_latin_tab (tbl, fb_default, tab8859_2);
+    init_8859_tab (tbl, fb_default, tab8859_2);
 }
 
 static void
+#if NeedFunctionPrototypes
+init_latin3tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_latin3tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
-    init_latin_tab (tbl, fb_default, tab8859_3);
+    init_8859_tab (tbl, fb_default, tab8859_3);
 }
 
 static void
+#if NeedFunctionPrototypes
+init_latin4tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_latin4tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
-    init_latin_tab (tbl, fb_default, tab8859_4);
+    init_8859_tab (tbl, fb_default, tab8859_4);
 }
 
 static void
+#if NeedFunctionPrototypes
+init_cyrillictab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
+init_cyrillictab(tbl, fb_default)
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
+{
+    init_8859_tab (tbl, fb_default, tab8859_5);
+}
+
+static void
+#if NeedFunctionPrototypes
+init_koi8rtab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
+init_koi8rtab(tbl, fb_default)
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
+{
+    init_8859_tab (tbl, fb_default, tabkoi8_r);
+}
+
+static void
+#if NeedFunctionPrototypes
+init_arabictab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
+init_arabictab(tbl, fb_default)
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
+{
+    init_8859_tab (tbl, fb_default, tab8859_6);
+}
+
+static void
+#if NeedFunctionPrototypes
+init_greektab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
+init_greektab(tbl, fb_default)
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
+{
+    init_8859_tab (tbl, fb_default, tab8859_7);
+}
+
+static void
+#if NeedFunctionPrototypes
+init_hebrewtab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
+init_hebrewtab(tbl, fb_default)
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
+{
+    init_8859_tab (tbl, fb_default, tab8859_8);
+}
+
+static void
+#if NeedFunctionPrototypes
+init_latin5tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_latin5tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
-    init_latin_tab (tbl, fb_default, tab8859_5);
+    init_8859_tab (tbl, fb_default, tab8859_9);
 }
 
 static void
+#if NeedFunctionPrototypes
+init_latin6tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_latin6tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
-    init_latin_tab (tbl, fb_default, tab8859_6);
+    init_8859_tab (tbl, fb_default, tab8859_10);
 }
 
 static void
-init_latin7tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
-{
-    init_latin_tab (tbl, fb_default, tab8859_7);
-}
-
-static void
-init_latin8tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
-{
-    init_latin_tab (tbl, fb_default, tab8859_8);
-}
-
-static void
+#if NeedFunctionPrototypes
+init_latin9tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_latin9tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
-    init_latin_tab (tbl, fb_default, tab8859_9);
+    init_8859_tab (tbl, fb_default, tab8859_15);
 }
 
 static void
+#if NeedFunctionPrototypes
+init_jis0201tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_jis0201tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
 	int i;
 	for(i = 0; i < NRUNE; i++)
@@ -372,25 +573,43 @@ long	fb_default;
 }
 
 static void
+#if NeedFunctionPrototypes
+init_jis0208tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_jis0208tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
     init_cjk_tab (tbl, fb_default, jis0208, &tabkuten, KUTENMAX);
 }
 
 static void
+#if NeedFunctionPrototypes
+init_ksc5601tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_ksc5601tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
     init_cjk_tab (tbl, fb_default, ksc5601, &tabksc, KSCMAX);
 }
 
 static void
+#if NeedFunctionPrototypes
+init_gb2312tab(
+    int*	tbl,
+    wchar_t	fb_default)
+#else
 init_gb2312tab(tbl, fb_default)
-long	*tbl;
-long	fb_default;
+    int*	tbl;
+    wchar_t	fb_default;
+#endif
 {
     init_cjk_tab (tbl, fb_default, gb2312, &tabgb, GBMAX);
 }
@@ -404,8 +623,9 @@ make_entry()
 }
 
 static int	once = 0;
+
 static int
-_XlcInitUTFInfo(lcd)
+InitUTFInfo(lcd)
 XLCd	lcd;
 {
     if(!once) {
@@ -436,7 +656,7 @@ XLCd	lcd;
 			continue;
 		    } else {
  			pdata->initialize = default_utf_data[j].initialize;
-			pdata->fromtbl = (long *)Xmalloc(NRUNE * sizeof(long));
+			pdata->fromtbl = (int *)Xmalloc(LATINMAX * sizeof(int));
 			(*pdata->initialize)(pdata->fromtbl, default_utf_data[j].fallback_value);
 			pdata->already_init = True;
 			pdata->charset = charset;
@@ -466,7 +686,7 @@ utftocs(conv, from, from_left, to, to_left, args, num_args)
     char	*utfptr;
     char 	*bufptr;
     int		utf_len, buf_len;
-    long	l;
+    wchar_t	wc;
     XlcCharSet	tmpcharset = (XlcCharSet)NULL;
     UtfData	pdata = utfdata_list;
 
@@ -480,16 +700,18 @@ utftocs(conv, from, from_left, to, to_left, args, num_args)
 
     while(utf_len > 0 && buf_len > 0) {
 	char *p = utfptr;
-	if((l = getutfrune(&p, &utf_len)) == -2) {
+        int rune = getutfrune(&p, &utf_len);
+	if(rune == -1) {
 	    return -1;
 	} else {
+	    wc = (wchar_t) rune;
 	    while(pdata->next) {
-		long	r;
-		long	*tbl;
+		wchar_t		r;
+		int*		tbl;
 
 		tbl = pdata->fromtbl;
-		tbl += l;
-		if((r = *tbl) == -1) {
+		tbl += wc;
+		if (*tbl == -1) {
 		    if(tmpcharset) {
 			    goto end;
 		    } else {
@@ -497,6 +719,7 @@ utftocs(conv, from, from_left, to, to_left, args, num_args)
 			continue;
 		    }
 		} else {
+		    r = *tbl;
 		    utfptr = p;
 		    if(!tmpcharset) tmpcharset = pdata->charset;
 		}
@@ -524,7 +747,7 @@ utftocs(conv, from, from_left, to, to_left, args, num_args)
 		}
 		break;
 	    }
-	    if(!tmpcharset) return (-1); /* Unknown Codepoint */
+	    if(!tmpcharset) return -1; /* Unknown Codepoint */
 	}
     }
 end:
@@ -553,7 +776,7 @@ utf1tocs(conv, from, from_left, to, to_left, args, num_args)
     char	**ptr = NULL;
     char	char_ptr[UTFmax];
     int		i = 0;
-    unsigned long	dummy = (unsigned long)0;
+    wchar_t	dummy = (wchar_t)0;
 
     if (from == NULL || *from == NULL)
 	return utftocs(conv, from, from_left, to, to_left, args, num_args);
@@ -592,12 +815,12 @@ ucstocs(conv, from, from_left, to, to_left, args, num_args)
 
     while(ucs_len > 0 && buf_len > 0) {
 	while(pdata->next) {
-	    long	r;
-	    long	*tbl;
+	    wchar_t	r;
+	    int*	tbl;
 
 	    tbl = pdata->fromtbl;
 	    tbl += *ucsptr;
-	    if((r = *tbl) == -1) {
+	    if(*tbl == -1) {
 		if(tmpcharset) {
 		    goto end;
 		} else {
@@ -605,6 +828,7 @@ ucstocs(conv, from, from_left, to, to_left, args, num_args)
 		    continue;
 		}
 	    } else {
+		r = *tbl;
 		if(!tmpcharset) tmpcharset = pdata->charset;
 	    }
 	    ucsptr++;
@@ -634,7 +858,7 @@ ucstocs(conv, from, from_left, to, to_left, args, num_args)
 	    }
 	    break;
 	}
-	if(!tmpcharset) return (-1); /* Unknown Codepoint */
+	if(!tmpcharset) return  -1; /* Unknown Codepoint */
     }
 end:
     if((num_args > 0) && tmpcharset)
@@ -649,7 +873,7 @@ end:
     return 0;
 }
 
-static long
+static int
 #if NeedFunctionPrototypes
 getutfrune(char **read_from, int *from_len)
 #else
@@ -660,7 +884,7 @@ int *from_len;
 {
     int c, i;
     char str[UTFmax]; /* MB_LEN_MAX really */
-    unsigned long l;
+    wchar_t wc;
     int n;
 
     str[0] = '\0';
@@ -668,18 +892,18 @@ int *from_len;
 	c = **read_from;
 	(*read_from)++;
 	str[i++] = c;
-	n = our_mbtowc(&l, str, i);
+	n = our_mbtowc(&wc, str, i);
 	if(n == -1)
-	    return(-2);
+	    return -1;
 	if(n > 0) {
 	    *from_len -= n;
-	    return(l);
+	    return wc;
 	}
     }
-    return(-2);
+    return -1;
 }
 
-static
+static int
 cstoutf(conv, from, from_left, to, to_left, args, num_args)
     XlcConv conv;
     char **from;
@@ -744,7 +968,7 @@ cstoutf(conv, from, from_left, to, to_left, args, num_args)
     return 0;
 }
 
-static
+static int
 cstoucs(conv, from, from_left, to, to_left, args, num_args)
     XlcConv conv;
     char **from;
@@ -797,7 +1021,7 @@ cstoucs(conv, from, from_left, to, to_left, args, num_args)
 	if(!r) {
 	    continue;
 	}
-	*ucsptr = (long)r;
+	*ucsptr = (wchar_t)r;
 	ucsptr++;
 	ucs_len--;
 	r = 0;
@@ -814,65 +1038,63 @@ cstoucs(conv, from, from_left, to, to_left, args, num_args)
 
 static void
 #if NeedFunctionPrototypes
-our_wctomb(Rune r, char **utfptr, int *utf_len)
+our_wctomb(wchar_t r, char **utfptr, int *utf_len)
 #else
 our_wctomb(r, utfptr, utf_len)
-Rune r;
+wchar_t r;
 char **utfptr;
 int *utf_len;
 #endif
 {
-    long l = (long)r;
-
     if(!utfptr || !*utfptr)
 	return;               /* no shift states */
-    if(l & ~Wchar2) {
-	if(l & ~Wchar4) {
-	    if(l & ~Wchar5) {
+    if(r & ~Wchar2) {
+	if(r & ~Wchar4) {
+	    if(r & ~Wchar5) {
 		/* 6 bytes */
-		*(*utfptr)++ = T6 | ((l >> 5*Bitx) & Mask6);
-		*(*utfptr)++ = Tx | ((l >> 4*Bitx) & Maskx);
-		*(*utfptr)++  = Tx | ((l >> 3*Bitx) & Maskx);
-		*(*utfptr)++  = Tx | ((l >> 2*Bitx) & Maskx);
-		*(*utfptr)++  = Tx | ((l >> 1*Bitx) & Maskx);
-		*(*utfptr)++  = Tx |  (l & Maskx);
+		*(*utfptr)++ = T6 | ((r >> 5*Bitx) & Mask6);
+		*(*utfptr)++ = Tx | ((r >> 4*Bitx) & Maskx);
+		*(*utfptr)++  = Tx | ((r >> 3*Bitx) & Maskx);
+		*(*utfptr)++  = Tx | ((r >> 2*Bitx) & Maskx);
+		*(*utfptr)++  = Tx | ((r >> 1*Bitx) & Maskx);
+		*(*utfptr)++  = Tx |  (r & Maskx);
 		*utf_len -= 6;
 		return;
 	    }
 	    /* 5 bytes */
-	    *(*utfptr)++ = T5 |  (l >> 4*Bitx);
-	    *(*utfptr)++ = Tx | ((l >> 3*Bitx) & Maskx);
-	    *(*utfptr)++ = Tx | ((l >> 2*Bitx) & Maskx);
-	    *(*utfptr)++ = Tx | ((l >> 1*Bitx) & Maskx);
-	    *(*utfptr)++ = Tx |  (l & Maskx);
+	    *(*utfptr)++ = T5 |  (r >> 4*Bitx);
+	    *(*utfptr)++ = Tx | ((r >> 3*Bitx) & Maskx);
+	    *(*utfptr)++ = Tx | ((r >> 2*Bitx) & Maskx);
+	    *(*utfptr)++ = Tx | ((r >> 1*Bitx) & Maskx);
+	    *(*utfptr)++ = Tx |  (r & Maskx);
 	    *utf_len -= 5;
 	    return;
 	}
-	if(l & ~Wchar3) {
+	if(r & ~Wchar3) {
 	    /* 4 bytes */
-	    *(*utfptr)++ = T4 |  (l >> 3*Bitx);
-	    *(*utfptr)++ = Tx | ((l >> 2*Bitx) & Maskx);
-	    *(*utfptr)++ = Tx | ((l >> 1*Bitx) & Maskx);
-	    *(*utfptr)++ = Tx |  (l & Maskx);
+	    *(*utfptr)++ = T4 |  (r >> 3*Bitx);
+	    *(*utfptr)++ = Tx | ((r >> 2*Bitx) & Maskx);
+	    *(*utfptr)++ = Tx | ((r >> 1*Bitx) & Maskx);
+	    *(*utfptr)++ = Tx |  (r & Maskx);
 	    *utf_len -= 4;
 	    return;
 	}
 	/* 3 bytes */
-	*(*utfptr)++ = T3 |  (l >> 2*Bitx);
-	*(*utfptr)++ = Tx | ((l >> 1*Bitx) & Maskx);
-	*(*utfptr)++ = Tx |  (l & Maskx);
+	*(*utfptr)++ = T3 |  (r >> 2*Bitx);
+	*(*utfptr)++ = Tx | ((r >> 1*Bitx) & Maskx);
+	*(*utfptr)++ = Tx |  (r & Maskx);
 	*utf_len -= 3;
 	return;
     }
-    if(l & ~Wchar1) {
+    if(r & ~Wchar1) {
 	/* 2 bytes */
-	*(*utfptr)++ = T2 | (l >> 1*Bitx);
-	*(*utfptr)++ = Tx | (l & Maskx);
+	*(*utfptr)++ = T2 | (r >> 1*Bitx);
+	*(*utfptr)++ = Tx | (r & Maskx);
 	*utf_len -= 2;
 	return;
     }
     /* 1 byte */
-    *(*utfptr)++ = T1 | l;
+    *(*utfptr)++ = T1 | r;
     *utf_len -= 1;
     return;
 }
@@ -904,7 +1126,7 @@ Rune *r;
     static int lastc;
     unsigned char	ch = (c|0x80); /* XXX */
     int n;
-    long l;
+    wchar_t l;
 
     switch(state) {
     case init:
@@ -955,7 +1177,7 @@ gb2rune(c, r)
 {
     static enum { state0, state1 } state = state0;
     static int lastc;
-    long n, ch;
+    long n;
     unsigned char	ch1 = (c|0x80); /* XXX */
 
     switch(state) {
@@ -976,11 +1198,10 @@ gb2rune(c, r)
 	    state = state0;
 	    return;
         }
-        ch = tabgb[n];
-        if(ch < 0){
+        if(tabgb[n] < 0){
 	    emit(BADMAP);
         } else
-	    emit(ch);
+	    emit(tabgb[n]);
         state = state0;
     }
 }
@@ -998,7 +1219,7 @@ jis02082rune(c, r)
     static int lastc;
     unsigned char	ch = (c|0x80); /* XXX */
     int n;
-    long l;
+    wchar_t l;
 
 again:
     switch(state) {
@@ -1019,13 +1240,10 @@ again:
 	    n = h*100 + l - 3232;
 	} else
 	    n = (lastc&0x7F)*100 + (ch&0x7f) - 3232; /* kuten */
-	if((l = tabkuten[n]) == -1){
+	if(tabkuten[n] == -1){
 	    emit(BADMAP);
 	} else {          
-	    if(l < 0){
-		l = -l;
-	    }
-	    emit(l);
+	    emit(tabkuten[n]);
 	}        
 	state = state0;
     }
@@ -1033,17 +1251,17 @@ again:
 
 static int
 #if NeedFunctionPrototypes
-our_mbtowc(unsigned long *p, char *s, size_t n)
+our_mbtowc(wchar_t *p, char *s, size_t n)
 #else
 our_mbtowc(p, s, n)
-    unsigned long *p;
+    wchar_t *p;
     char *s;
     size_t n;
 #endif
 {
     unsigned char *us;
     int c0, c1, c2, c3, c4, c5;
-    unsigned long wc;
+    wchar_t wc;
 
     if(s == 0)
 	return 0;		/* no shift states */
@@ -1174,7 +1392,7 @@ create_conv(lcd, methods)
     conv->methods = methods;
 
     conv->state = NULL;
-    _XlcInitUTFInfo(lcd);
+    InitUTFInfo(lcd);
 
     return conv;
 }
@@ -1270,7 +1488,8 @@ _XlcUtfLoader(name)
     if (lcd == (XLCd) NULL)
 	return lcd;
     
-    if ((_XlcCompareISOLatin1(XLC_PUBLIC_PART(lcd)->codeset, "utf"))) {
+    if (!XLC_PUBLIC_PART(lcd)->codeset ||
+	(_XlcCompareISOLatin1(XLC_PUBLIC_PART(lcd)->codeset, "utf"))) {
 	_XlcDestroyLC(lcd);
 	return (XLCd) NULL;
     }
@@ -1285,3 +1504,7 @@ _XlcUtfLoader(name)
 
     return lcd;
 }
+
+#else
+typedef int dummy;
+#endif /* X_LOCALE */

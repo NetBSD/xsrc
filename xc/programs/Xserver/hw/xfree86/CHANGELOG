@@ -1,3 +1,411 @@
+XFree86 3.3.3 (18 November 1998)
+1244. Obfuscate the NVIDIA sources by NVIDIA's request.
+
+XFree86 3.3.2Zc (15 November 1998)
+1243. Update the MGA docs to mention a HW cursor problem (#2226, Koen Gadeyne).
+
+XFree86 3.3.2Zb (13 November 1998)
+1242. Fix XAA NonTE ImageText backing rect problem (#2223, Mark Vojkovich).
+1241. Update Mach64-related docs (#2219, Kevin E. Martin).
+1240. Use a smaller display FIFO depth on Rage IIC cards (#2219, 
+      Geert Uytterhoeven and Kevin E. Martin).
+1239. Add support for the Wacom V protocol (Raph Levien).
+1238. Real fix for the XWarpCursor problem (Frederic Lepied).
+1237. Update mkfontdir to create an appropriate fonts.dir file when no
+      fonts are found rather than doing nothing.
+1236. A quick attempt at neutralising a stack-buffer overflow problem in
+      the Xprt server.
+1235. Update XF86Setup to add 12MB and 16MB to the videoram choices available
+      (#2217, Joe Moss).
+1234. Recognise __alpha__ for Linux in Imake.cf (#2214, Matti Aarnio).
+1233. Add a missing part of item 1087 (#2213, David Wragg).
+1232. Fix a problem compiling libXaw on Solaris 2.6 x86 with gcc 2.8.1
+      (James Hawtin).
+1231. Replace __syscall() with syscall() in Linux/Alpha PCI code (#2211,
+      Matti Aarnio).
+1231. Fix a 64-bit pointer masking problem in mga_xaarepl.c (#2210,
+      Matti Aarnio).
+1230. Fix some int vs long problems in s3im.c (#2209, Matti Aarnio).
+1229. Fix a 64-bit alignment problem in cfb8line.c (#2208, Matti Aarnio).
+1228. Fix a missing return statement in cfbInitVisuals() (#2207, Matti Aarnio).
+1227. Some PC98 updates (#2201, 2204, Takaaki Nomura).
+1226. Cards file updates (#2199, Harald Koenig).
+1225. Fix a problem with with xf86config creating files in /tmp that opens
+      up a symlink/race exploit.
+
+XFree86 3.3.2Za (8 November 1998)
+1224. Disable acceleration for Trident Cyber9397 and Cyber9388.
+1223. Try to avoid most of the ViRGE/GX2 lockups and add diagnostic messages
+      for this case (#2192, Harald Koenig).
+1222. Update XF86Setup for the new SiS chipsets (#2191, Juanjo Santamarta).
+1221. Fix XF98_EGC server on Linux/98 (#2190, Ryota Ii).
+1220. Fix ConnectionFlags and HasStickDirBit settings (#2189, Holger Veit,
+      #2193, Thomas Mueller, #2195, Geert Uytterhoeven).
+1219. Documentation udpates (including #2186,2190, Takaaki Nomura, #2187,
+      Thomas Mueller, #2188, Douglas Ridgway, #2191, Juanjo Santamarta).
+1218. Various bindist updates, and some documentation building updates
+      (including #2194, Thomas Mueller).
+1217. Fix problem introduced by item 1214.
+
+XFree86 3.3.2Z (6 November 1998)
+1216. Update XFree86 version in man pages (#2184, Takaaki Nomura).
+1215. Enable building of XIE, PEX and GLX extensions (as modules) when using
+      the fbdev servers and fix slight logic error in xfree86.cf (#2185
+      Kars de Jong).
+1214. Add support for building a.out compatibility libraries on FreeBSD/ELF
+      systems.
+1213. Implement -Udefine for imake (#2180, Chris Demetriou).
+1212. Teach imake how to automatically determine the NetBSD architecture
+      (#2180, Jason Thorpe).
+1211. Make sure that XMULIB in bsdLib.tmpl includes SM and ICE (#2180,
+      Frank van der Linden).
+1210. Only allow the X server -nolock option when the real uid is root.
+1209. Add smooth mouse acceleration; only used when threshold is 0, old
+      behaviour otherwise.  Note, this is only used when the server is
+      built with XInput disabled (#2182, Kevin Brown).
+1208. FBDev updates: remove duplicates from Imakefile, small cleanup in
+      fbdev.c, sync XF86Conf.cpp (#2183, Geert Uytterhoeven).
+1207. Change default in tseng driver to be linear mode in 8bpp. Add 
+      Option "no_linear" to disable this (#2176, Koen Gadeyne).
+1206. Make sw cursor the default for C&T chipsets, allow the hw cursor to be
+      enabled with Option "hw_cursor". Update documentation and Cards file
+      accordingly (#2179, David Bateman).
+1205. Documentation updates and additions to the Cards data base 
+      (Annius Groenink, Derek Fawcus, #2181, Corin Anderson, 
+      #2178, Juanjo Santamarta).
+1204. Fix problem with inverted text on Permedia 2 cards (Alan Hourihane).
+
+XFree86 3.3.2j (4 November 1998)
+1203. Cleanups to Cirrus driver: Make some accesses to mmio regs volatile.
+      Remove function LgReady and enable macro LgREADY. Remove inclusion of
+      cir_blitLG.h in cir_driver.c. Tag some code in laguna_acl.c as static
+      (Itai Nahshon).
+1202. Update XF86Setup to offer new READMEs (Dirk Hohndel).
+1201. Documentation updates (#2172,2173, Koen Gadeyne, Takaaki Nomura).
+1200. Change tguiMMIOBase to be volatile.
+1199. XInput updates: documentation updates, corrected a bug for XInput
+      devices in relative mode, touchscreen devices are made focusable
+      (#2171, Frederic Lepied).
+1198. Fix Xnext problem (Klaas de Waal).
+1197. Resync for PC98 (#2170, Takaaki Nomura).
+1196. Update README, Relnotes and others, add NeoMagic README, 3DLabs README
+      and Cyrix README (Dirk Hohndel).
+1195. Increase memclk on Rendition V2x00 cards (Tim Rowley).
+1194. Fix XAA to correctly handle the boundary box of non TE fonts (#2167,
+      David Bateman).
+1193. Fix broken OSMOUSE support, add missing prototype in Xlib.h, update
+      OS2.sgml and a few Imakefiles (#2166, Holger Veit).
+1192. SiS updates: support for set_mclk and dac_speed options, better
+      bandwidth estimate for max dot-clock, proper restoring of sis special
+      registers for 5597/6326, better init sequence (avoids potential
+      problems on server restarts), quick support for 86C215 and 225 (setting
+      it as 205 equivalent) (#2165, Juanjo Santamarta).
+1191. Mach64 updates: fix a font bug for non-terminal image text fonts, 
+      update docs and Cards database (#2164, Kevin Martin).
+1190. Replace the non-POSIX cfmakeraw() in dialbox support (Frederic Lepied).
+1190. Fix security problem by creating /tmp/.X11-unix with sticky bit (#2168,
+      Kevin Vajk, David Dawes, Dirk Hohndel).
+1188. Some sanity checks on DISPLAY name (#2168, Kevin Vajk).
+1187. Documentation updates (#2162, Taketoshi Sano).
+1186. Fix drawing bug in cfb where inverted text in TrueColor visuals
+      wouldn't be visible (missing GC validation) (#2160, Alan Hourihane).
+1185. Add PC105 keyboard support to XKB (#2157, Matthieu Herrb).
+1184. XF68_FBDev fixes: sync the various Imakefiles with the xfree86 master,
+      fix DefaultColorDepth and Depth in the default XF86Config, since
+      XF68_FBDev now extracts only ModeLine-alike information if you use
+      `mode "default"', Depth and Virtual are taken from XF86Config, more
+      protocode for acceleration support (#2158,2159,2163, Geert Uytterhoeven)
+1183. Fix ScreenToScreenCopy with transparency_color != -1 on Laguna chips
+      (#2155, Corin Anderson).
+
+XFree86 3.3.2i (1 November 1998)
+1182. Add local font directory and update postinst.sh, XF86Conf.cpp,
+      xf86config and XF86Setup accordingly (Dirk Hohndel).
+1181. Fix LCD timing and activate HW cursor for CLGD7541/CLGD7543, fix Cirrus
+      blitter code and correct the clock programming (Tim Stadelmann,
+      Corin Anderson).
+1180. Actually apply patch #2090 already mentioned in the CHANGELOG below as
+      change 1136 (#2149, Corin Anderson).
+1179. Fix xterm to fall back to the old font behaviour when the font server
+      offers a bold font which doesn't quite match the normal font (#2151,
+      Thomas Dickey).
+1178. Fix Xqueue/XInput problem.
+
+XFree86 3.3.2h (31 October 1998)
+1177. Fix Cyrix assembly instructions (Annius Groenink).
+1176. Fix axis swaping for Elographics touchscreen (Patrick Lecoanet), 
+      fix events sending for device with more than 6 valuators
+      (Frederic Lepied), add SGI dial box support (Francois-Regis Colin and
+      Frederic Lepied)(#2145).
+1175. Remove intrusive P9000 probe from p9x00 server, add DPMS (Joerg Knura).
+1174. Fix problem that p9x00 probe destroys the font memory on LynxOS (#2132,
+      Thomas Mueller).
+1173. Fix acceleration for G100 SGRAM (add missing initialization to
+      planemask) (#2146, Xavier Ducoin).
+1172. Fix system Lockup on LynxOS with CT69000 and add Option "fix_panel_size" 
+      to the CT69000 (and other HiQV32) driver (#2147, Thomas Mueller).
+1171. Fix LBX bug (#2143, Mark Vojkovich).
+1170. SiS 6326 fixes (Juanjo Santamarta).
+1169. Remove some redundant code from Trident server, fix a small bug in 3D
+      card acceleration added in change 1165 and update the docs
+      (#2135,2136,2137,2139 Alan Hourihane).
+1168. Fix a problem with cursor storage on 1064/G100/G200 due to not taking 
+      the modified ydstorg into account (#2134, Mark Vojkovich).
+1167. Minor update to spc8110 driver (#2133, Thomas Mueller).
+1166. Fix DPMS for 3DLabs server (#2130, Alan Hourihane).
+1165. Add acceleration for the Triden 3D chipset family (9397, 9388, 9520,
+      Image975, Image985) (#2129, Alan Hourihane).
+1164. Add some more chipsets to SuperProbe and scanpci, add generic PCI
+      bridge handling to SuperProbe. Update xf86site.def to reflect new
+      servers. Add more cards (#2128, Itai Nahshon).
+1163. MGA documentation update (#2127, Mark Vojkovich).
+1162. Fix build problems on SVR4 where inb is executed in the arguments of an
+      outb (#2122, Takaaki Nomura).
+1161. Fix pci_retry on 1064 and G100/G200.  Fix sync-on-green on Mystique. 
+      Disable probing of memory on 2164 and G100/G200 (#2123, Mark Vojkovich).
+1160. Remove vaxp.[ch] from Rendition LinkKit rules (#2117,2131, 
+      Thomas Mueller).
+1159. More fixes to Trident code in Probe_Trident() and SuperProbe (#2112,2116,
+      Taketoshi Sano).
+1158. Updates to Cards file (#2113-2115,2118-2121,2138, Petter Reinholdtsen, 
+      Jorge Delgado Mendoza, Christopher Bowman, David John Thomas, 
+      Corin Anderson, Thomas Mueller, Matthieu Herrb, Steve Lumos, 
+      Tim Rowley, Jens Owen, Andrew Aitchison, Juanjo Santamarta).
+1157. Fix wrong cursor position when changing modes in svga/s3 driver
+      (#2111, Harald Koenig).
+1156. Fix duplicate lines in xterm (#2110 Thomas Dickey).
+1155. Fix problem with xdm trying to print sigset_t on some OSs.
+
+XFree86 3.3.2g (24 October 1998)
+1154. Prevent lockups on the 5465 AGP when blitting lots of text, doc updates
+      (#2108,2109, Conrin Anderson).
+1153. Add documentation for 24bpp TGA support (#2105, Tim Rowley).
+1152. Further cleanup of rendition code plus hardware cursor for the v2x00
+      (#2104,2107 Tim Rowley).
+1151. Fix error specifying the chipset in P9x00 driver (#2100, Takaaki Nomura).
+1150. Fix Trident probing in SuperProbe (#2101, Taketoshi Sano).
+1149. Fix calculation of maximum blit size for MGA (Mark Vojkovich).
+1148. Fixes for VNidia driver (palette reloading in 8bpp and bandwidth
+      calculation) (#2102, David Schmenk, NVidia).
+1147. Add timeout flag to xvidtune (based on #2099, Peter Brevik).
+1146. Fix LinkKit and some documentation updates (#2098, Takaaki Nomura).
+1145. Fix problem with table sizes in xterm (#2097, Thomas Dickey).
+1144. Fix Trio64 cursor (#1964, Harald Koenig).
+1143. Add 16bpp support for Cyber 9320 (Masahiko Kami).
+1142. Update SuperProbe version (#2094, Koen Gadeyne).
+1141. Improve cyber9382/cyber9385 handling in trident driver and SuperProbe
+      (#2082, 2093, Taketoshi Sano).
+1140. Fix calls to open to use O_* flags (#2087, Uchiyama Yasushi).
+1139. Update spc8110 SuperProbe code (#2096, Thomas Mueller).
+1138. Deal with pedantic legacy cc on old LynxOS versions in imakemdep.h,
+      add spc8110 to Cards file (#2092, Thomas Mueller).
+1137. Fix a crash due to NULL pointer dereferencing in the P9x00 svga driver 
+      along with fixes to Map/UnMapVidMem use (#2091, Thomas Mueller).
+1136. Fix some cirrus problems: the double mouse bug and the blanking bug
+      (#2090, Corin Anderson).
+1135. Fix some Xlib bugs that cause problems when using XKB in some
+      locales (like latin2), add support for iso8859-15, and include
+      a couple of basic fonts for iso8859-15 (Kaleb Keithley/TOG).
+1134. Add missing references to xf86Switch for XF68_FBDev (#2089,
+      Geert Uytterhoeven).
+1133. More fixes to xf86config: handle more than 10 modes, don't ask
+      RAMDAC on some servers, add 3DLabs server. Add 3DLabs server to
+      XF86Setup. Add lots of entries to cards file (Dirk Hohndel).
+1132. Adapt xf86config to handle XFCom and XBF servers (#2086, Kevin Martin,
+      Precision Insight).
+1131. Clean up rendition driver to make it somewhat more portable and adapt
+      it more to XFree86 (Dirk Hohndel).
+1130. Add sync on green for G100/G200 and 1064. Add hardware cursor support
+      for the G100/G200. Fix incorrect setting of the transc bit during solid
+      fills for the G100 (#2055, Mark Vojkovich).
+1129. Resync xterm. For log see xterm.log.html (#2029,2044,2045,2056,
+      Thomas Dickey).
+1128. Add support for new ATI chips in the ATI driver, SuperProbe and
+      scanpci, fix text restoration in Mach32 server (#2051, Marc La France).
+1127. Fix 64bit problems with ffs (Linux/AXP) (#1876, Raphael Finkel).
+
+XFree86 3.3.2f (19 October 1998)
+1126. Add Riva TNT support and fix memory bandwidth problems with Riva 128
+      at higher dot clocks (David Schmenk, NVidia).
+1125. LynxOS updates: OS version detection for imake, top-level Makefile
+      patch for host.def creation, documentation update (#2039, Thomas Mueller)
+1124. Add 24-plane TGA support (#2035, Tim Rowley).
+1123. Fix problem in the S3 drivers with disabled onboard S3 chips when
+      using S3 cards (#2084, Harald Koenig).
+1122. Fix problems with Cirrus 5480 at high resolutions and jitter that 
+      appeared with the 546x's using the BitBLT engine (#2080, Corin Anderson).
+1121. Fix clock limits for modes with PIXMUX enabled in tseng driver (#2079,
+      Koen Gadeyne).
+1120. Patch to NetBSD wscons support (#2077, Matthieu Herrb and ???).
+1119. Updates to README.NetBSD, README.OpenBSD and README.mouse (#2076,
+      Matthieu Herrb).
+1118. Fix lockups with ViRGE chips (#2075, Harald Koenig).
+1117. Add AceCad tablet as mouse protocol (#2074, Jeff Anton).
+1116. Fixes for LinkKit and XF86Setup plus some Dokumentation updates (#2073,
+      Takaaki Nomura).
+1115. Force XAA to recache times and stipples when the GC changes (#2072,
+      Mark Vojkovich).
+1114. Fix handling of SIS5597/98 in SiSProbe and SiSIdent (#2071,
+      Harald Koenig).
+1113. Fixes for Mach64 server. Add probe code for VT4, Rage IIC (3 variations) 
+      and Rage LT Pro (5 variations). Rework probe code so that future cards 
+      are properly identified by default. Simplify code for supporting new 
+      chips when they are introduced. Improve the verbose output to be more 
+      informative. Add FIFO_CONSERVATIVE and FIFO_AGGRESSIVE options for DSP 
+      FIFO programming. Correct DSP FIFO calculation code. Fix vga restoration 
+      code. (#2070, Marc LaFrance, Kevin Martin). 
+1112. Add support for the EPSON SPC8110 graphics chip for the SVGA server as
+      well as SuperProbe (#2065, Thomas Mueller).
+1111. Update SuperProbe for some Trident chips (#2061,2064,2068,2069,2081,
+      Taketoshi Sano).
+1110. Several FBDev server fixes: Add support for Linux/PPC, Build cfb16 and
+      cfb32 support for XF{68,86}_FBDev on all architectures, build cfb24
+      support on Intel only (cfb24 is little endian only at the moment), fix
+      imake where it relies on the signedness of chars, add `bcast' flag to
+      the XF86Config modeline format (needed for Amiga PAL and NTSC
+      broadcast-compatible video modes), make cfbmskbits compile on big
+      endian machines (NOTE: it does NOT work on big endian yet!),
+      is_fb_server flag was tested before it was initialized, use fb_dev_name
+      instead, and check for it at the right moment, Utmp fixes: currently
+      Linux/PPC uses glibc-1.99, which announces itself with 
+      __GLIBC__ == 2 and __GLIBC_MINOR__ == 0 (there will never be a public
+      release of the real glibc-2.0 for Linux/PPC. The next release will be
+      2.1. Fix 16 and 32bpp TrueColor, fix panning, remove hardcoded 256 as
+      array size, first hooks for hardware acceleration, remove some
+      duplicate code. Use _MEDIUMRAW_KBD on XF68_FBDev (#2059,2078,
+      Geert Uytterhoeven).
+1109. Fix Trident 3DImage cards and treat the Cyber9388 as a Cyber9397 (#2058,
+      Alan Hourihane and #2062, Taketoshi Sano).
+1108. Fix typo in Imake.cf (#2053,2054, Takaaki Nomura, Matthieu Herrb).
+1107. Fix for the P9000 server, which crashed when you switched to a VT
+      (#2049, Erik Nygren).
+1106. NetBSD doesn't define 'unix' in the C preprocessor and emits a warning
+      if that symbol is tested (#2046,2047 Matthieu Herrb).
+1105. Fix the wrong (too low) clock limits for S3 Trio64V+ chips (#2042,
+      Harald Koenig).
+1104. 24bpp (high res display problems) and 32bpp (horizontal stripe) fixes
+      for the mga driver (#1715, 1716, Doug Merritt). 
+1103. Add NeoMagic 2200 support (#2031,2034, Jens Owen, Precision Insight).
+1102. XInput patches, including driver for the AceCad ADVANCEDigitizer 
+      (#716, Shane Watts) and driver for MicroTouch TouchPen touch screen 
+      (#714, Patrick Lecoanet) (#2037, Frederic Lepied, Patrick Lecoanet).
+1101. Update SuperProbe for C&T chips (#2027, Taketoshi Sano).
+1100. OS/2 updates for 3.3.3: make rendition driver compile with EMX, adjust
+      linker DEF files to 3.3.3 version, initialize a number of Xlib/Xt data
+      structures, correct a minor linker bug in OS/2, SGML doc updates (#2026,
+      Holger Veit).
+1099. Fix rendering errors in vga code (#1746,2021, Jens Owen, 
+      Precision Insight).
+1098. Fix text restore problem and improve high res 32bpp modes in MGA
+      server (Radek Kapitan).
+1097. Fix small problems in Gx00 code in MGA server (Dirk Hohndel).
+
+XFree86 3.3.2e (4 October 1998)
+1096. VSTATUS support in xterm (#2019, Robert Earl).
+1095. Support for arc4random() in xdm/genauth.c (#2019, Michael Shalayeff).
+1094. German amiga XKB maps (#2019, Bernd Ernesti).
+1093. Swedish sun keyboad support in Xsun and xkb (#2019, Magnus Holmberg).
+1092. OpenBSD/amiga support in imake (#2019, Niklas Hallqvist).
+1091. Make LinkVarDirectory handle DESTDIR, OpenBSD.cf synchronisation, fix
+      TopXInclude definition in X11.rules (for building contrib against $TOP
+      instead of using installed tree), fix CompressAllFonts usage in
+      X11.tmpl, don't install lndir on OpenBSD, fix a missing parameter in
+      makestrs.c, realloc() usage fixes, fix a Xnest crash with too many
+      visuals, void main() -> int main() for ANSI conformance, close unused
+      sockets after fork() in xdm, on OpenBSD, add a explicit VT specification
+      in Xservers for xdm (#2019, Matthieu Herrb).
+1090. Partial OpenBSD/powerpc support (#2019. Dale Rahn)
+1089. LP64 compiler warning fixes from the NetBSD xsrc tree (#2019,
+      Ross Harvey).
+1088. Add sync on green support to MGA Gx00 (Dirk Hohndel).
+1087. Make XFree86 work with egcs-1.1/gcc-2.8.1 (#2017, David Wragg).
+1086. Fix for SiS6326 (Juanjo Santamarta).
+1085. Fix G200/SDRAM and G100 support (Dirk Hohndel).
+1084. Add support for NM2090 and partially implemented (but disabled) support
+      for the NM2200 (#2010, Jens Owen, Precision Insight).
+1083. MGA acceleration bug fixes (#2009, Mark Vojkovich).
+1082. Fix cursor problem in S3V server (Harald Koenig).
+
+XFree86 3.3.2d (27 September 1998)
+1081. Add mga_sdram option that allows SDRAM versions of the G200 to work
+      (Dirk Hohndel).
+1080. Add NeoMagic driver (#1986, Kevin Martin, Jens Owen, Precision Insight).
+1079. Fix lockups with S3 ViRGE/MX+ chips (#1998, Dirk Koopman).
+1078. Add C&T 69000 support in driver and SuperProbe, add 64200 and 64300
+      support in SuperProbe, fix memory probing error on 65554 and later
+      chipsets in SuperProbe and C&T driver. Add 32bpp support with limited
+      acceleration for 65550 or later. Fix for CRT interlaced modes on 65550
+      or later. Fix maximum dotclock probing for the 65554 chipset. BIOS
+      software flag for 1024x600 LCD (toshiba protege machines) is set
+      correctly so that suspend/resume works correctly on these machines.
+      Change the way DPMS switches off LCD panels to be more generic.
+      Documentation updates and include discussion on clock limitations
+      (#1996, David Bateman).
+1077. Fix LCD detection for CLGD755x and add some CLGD755x support code
+      (#1975, Isao Ohishi).
+1076. Add LynxOS 3.0.0 support, keyboard LED support. Fix X server startup
+      delay (on LynxOS) when using XKB. Increase number of shared memory
+      segments for hardware access in X server (needed by certain drivers, eg
+      RIVA128) (#1934, Thomas Mueller).
+1075. Some updates to the FreeBSD/ELF support, including auto-detection
+      of the binary format.
+1074. xman improvements for NetBSD/OpenBSD (#1983, Matthieu Herrb,
+      Ross Harvey).
+1073. Resync the xfree98 tree (#1929, Takaaki Nomura).
+1072. Avoid VT switch problem with MGA driver on Linux/98 (#1929,
+      Hirofumi Nishizuka).
+1071. Resync LinkKit (#1929, Takaaki Nomura).
+1070. Avoid iopl problem in the rendition driver on non-Linux platforms
+      (#1929, Takaaki Nomura).
+1069. Add '\n' to some of the messages in PEXExtensionInit().
+
+XFree86 3.3.2c (13 September 1998)
+1068. Fix panning in 24bpp on Permedia family boards (Dirk Hohndel).
+1067. Add acceleration to P9x00 driver (Joerg Knura).
+1066. Fix 3DLabs AGP lockup problem (Dirk Hohndel).
+1065. Initial support to build XF86_FBDev on Linux (Gerd Knorr, Dirk Hohndel).
+1064. Acceleration, 16bpp, line and frame compression for Cyrix 
+      (Annius Groenink).
+1063. Build support for FreeBSD/ELF (#1946, Doug Rabson, Joachim Kuebart,
+      Ollivier Robert).
+1062. Add config support for building XFree86 on Linux with DECnet transport
+      (#1939, Eduardo Serrat).
+1061. Attempt to fix MGA G200 clock problem and to support G100
+      as Mystique (Dirk Hohndel, Radek Kapitan).
+1060. Add some acceleration to Cyrix server (Annius Groenink).
+1059. Fix overlapping option numbers.
+1058. Add Mystique hardware cursor.
+1057. Add P9x00 driver (Joerg Knura).
+1056. Add support for the IBM RGB640 RAMDAC to the 3DLabs server
+      (Alan Hourihane).
+1055. Small fix for SiS driver (Juanjo Santamarta).
+
+XFree86 3.3.2b (25 August 1998)
+1054. Fix build problem with Cyrix driver (Dirk Hohndel).
+1053. Add Matrox G200 support (Radek Kapitan).
+1052. Update SiS driver with better 6326 support and other fixes
+      (Juanjo Santamarta, David Thomas).
+1051. Update Cyrix driver (Annius Groenink, Dirk Hohndel).
+
+XFree86 3.3.2a (7 August 1998)
+1050. Add Cyrix MediaGX server (Annius Groenink).
+1049. Add 3DLabs server (Alan Hourihane, Stefan Dirsch, Helmut Fahrion,
+      Dirk Hohndel)
+1048. Add Rendition server (Marc Langenbach).
+1047. Fix some problems with -quiet flag (PCI addresses are nowbeing set)
+      (Juanjo Santamarta).
+1046. Add 5597/5598/6326 support to sis driver (Mike Chapman, Juanjo Santamarta,
+      Mitani Hiroshi).
+
+XFree86 3.3.2.3 (15 July 1998)
+1045. Add detection of new ViRGE/MX+, fix 8/16bpp problem with ViRGE/GX2,
+      fix SVGA/s3 driver not allowing "newmmio" for Trio64V2, fix S3V and 
+      SVGA/s3_virge PCI PCI allocation check for 64M banks, fix S3V crash 
+      due to too late `Reduce the videoRam value ...' for huge video memory 
+      (or very small virtual X size)(Harald Koenig).
+1044. Documentation updates.
+1043. Fix Riva128 driver problem with shared IRQ (David McKay).
+
 XFree86 3.3.2 (3 March 1998)
 1042. Fix xterm problem with inverse video and mouse highlighting
       (#1571, Thomas Dickey).
@@ -5049,4 +5457,4 @@ XFree86 3.0a (28 April 1994)
 
 XFree86 3.0 (26 April 1994)
 
-$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.133 1998/03/03 12:50:59 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.194 1998/11/18 16:42:18 hohndel Exp $

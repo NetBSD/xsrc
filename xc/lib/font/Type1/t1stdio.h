@@ -27,6 +27,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
+/* $XFree86: xc/lib/font/Type1/t1stdio.h,v 1.1.1.1.12.1 1998/10/21 06:50:18 dawes Exp $ */
 /* T1IO FILE structure and related stuff */
 #define FILE F_FILE
 typedef unsigned char F_char;
@@ -54,6 +55,7 @@ typedef struct F_FILE {
 #define EOF (-1)     /* end of file */
 #define F_BUFSIZ (512)
  
+#undef getc
 #define getc(f) \
   ( \
    ( ((f)->b_cnt > 0) && ((f)->flags == 0) ) ? \
@@ -69,5 +71,7 @@ extern int T1Close(), T1ungetc(), T1Read();
 #define  ungetc(c,f)        T1Ungetc(c,f)
 #define  fgetc(f)           T1Getc(f)
 #define  fread(bufP,size,n,f) T1Read(bufP,size,n,f)
+#undef feof
 #define  feof(f)            (((f)->flags & FIOEOF) && ((f)->b_cnt==0))
+#undef ferror
 #define  ferror(f)          (((f)->flags & FIOERROR)?(f)->error:0)

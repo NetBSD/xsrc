@@ -22,7 +22,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.h,v 3.9.2.6 1998/01/18 10:35:38 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.h,v 3.9.2.7 1998/10/31 14:41:08 hohndel Exp $ */
 
 extern int TVGAchipset;
 extern Bool IsCyber;
@@ -67,7 +67,13 @@ extern Bool IsCyber;
 #define IsAdvCyber	((TVGAchipset == CYBER9382) || \
 			 (TVGAchipset == CYBER9385) || \
 			 (TVGAchipset == CYBER9388) || \
+			 (TVGAchipset == CYBER9520) || \
 			 (TVGAchipset == CYBER9397))
+#define Is3Dchip	((TVGAchipset == CYBER9397) || \
+			 (TVGAchipset == CYBER9388) || \
+			 (TVGAchipset == CYBER9520) || \
+			 (TVGAchipset == IMAGE975) || \
+			 (TVGAchipset == IMAGE985))
 
 #ifdef INITIALIZE_LIMITS
 /* Clock Limits */

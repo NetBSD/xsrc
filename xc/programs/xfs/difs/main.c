@@ -1,5 +1,5 @@
 /* $XConsortium: main.c,v 1.15 94/04/17 19:56:18 mor Exp $ */
-/* $XFree86: xc/programs/xfs/difs/main.c,v 3.0 1995/06/02 10:32:44 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/main.c,v 3.0.6.1 1998/11/05 14:03:13 dawes Exp $ */
 /*
  * Font server main routine
  */
@@ -166,6 +166,7 @@ main(argc, argv)
 	    FatalError("couldn't read config file\n");
     }
 
+    CloseSockets();
     CloseErrors();
     exit(0);
 }

@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/reconfig.man,v 3.6 1996/12/23 06:51:44 dawes Exp $
-.TH reconfig 1 "Version 3.2" "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/reconfig.man,v 3.6.2.1 1998/11/06 09:46:55 hohndel Exp $
+.TH reconfig 1 "Version 3.3.3" "XFree86"
 .SH NAME
 reconfig \- convert old Xconfig to new XF86Config
 .SH SYNOPSIS

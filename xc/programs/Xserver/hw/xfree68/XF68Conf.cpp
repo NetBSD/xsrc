@@ -3,7 +3,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/XF68Conf.cpp,v 3.3 1996/12/27 06:51:50 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/XF68Conf.cpp,v 3.3.2.2 1998/11/06 09:45:32 hohndel Exp $
 XCOMM
 XCOMM Copyright (c) 1994 by The XFree86 Project, Inc.
 XCOMM
@@ -239,12 +239,15 @@ XCOMM Section "Xinput"
 XCOMM    SubSection "WacomStylus"
 XCOMM        Port "/dev/ttyS1"
 XCOMM        DeviceName "Wacom"
+XCOMM        AlwaysCore
 XCOMM    EndSubSection
 XCOMM    SubSection "WacomCursor"
 XCOMM        Port "/dev/ttyS1"
+XCOMM        AlwaysCore
 XCOMM    EndSubSection
 XCOMM    SubSection "WacomEraser"
 XCOMM        Port "/dev/ttyS1"
+XCOMM        AlwaysCore
 XCOMM    EndSubSection
 XCOMM
 XCOMM    SubSection "Elographics"
@@ -257,6 +260,7 @@ XCOMM        MaximumYPosition 3500
 XCOMM        Screen 0
 XCOMM        UntouchDelay 10
 XCOMM        ReportDelay 10
+XCOMM        AlwaysCore
 XCOMM    EndSubSection
 XCOMM   
 XCOMM    SubSection "Joystick"
@@ -280,6 +284,7 @@ XCOMM    SubSection "Mouse"
 XCOMM        Port "/dev/mouse2"
 XCOMM        DeviceName "Second Mouse"
 XCOMM        Protocol "Logitech"
+XCOMM        AlwaysCore
 XCOMM    EndSubSection
 XCOMM EndSection
 
@@ -475,15 +480,14 @@ XCOMM     EndSubsection
 XCOMM EndSection
 
 XCOMM Server for the Linux/m68k Frame Buffer Device
-XCOMM Note: DefaultColorDepth, Depth and Virtual aren't used for mode "default"
 
 Section "Screen"
     Driver	"fbdev"
     Device	"Linux/m68k Frame Buffer Device"
     Monitor	"Generic Monitor"
-    DefaultColorDepth 4
+    DefaultColorDepth 8
     SubSection "Display"
-	Depth	    1
+	Depth	    8
 	Modes	    "default"
 	Virtual	    1152 900
     EndSubSection

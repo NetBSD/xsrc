@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.32.2.8 1998/02/08 11:19:24 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.32.2.11 1998/11/08 09:06:27 dawes Exp $
 XCOMM ----------------------------------------------------------------------
 
 /*
@@ -585,6 +585,9 @@ TCLIBDIR = TclLibDir
 #ifndef InstKmemFlags     /* put -g kmem -m 2711 in site.def... */
 #define InstKmemFlags InstUidFlags
 #endif
+#ifndef HasStickyDirBit
+#define HasStickyDirBit	YES
+#endif
 #ifndef ParallelMakeFlags
 #define ParallelMakeFlags /**/
 #endif
@@ -924,7 +927,7 @@ TCLIBDIR = TclLibDir
 #endif
 #endif
 #ifndef TroffCmd
-#define TroffCmd psroff
+#define TroffCmd groff -Tps
 #endif
 #ifndef NroffCmd
 #define NroffCmd nroff
@@ -946,6 +949,9 @@ TCLIBDIR = TclLibDir
 #endif
 #ifndef ColCmd
 #define ColCmd col
+#endif
+#ifndef ColFlags
+#define ColFlags -b
 #endif
 #ifndef DvipsCmd
 #define DvipsCmd dvips
@@ -1113,6 +1119,7 @@ CXXEXTRA_INCLUDES = CplusplusExtraIncludes
               EQN = EqnCmd
              NEQN = NeqnCmd
               COL = ColCmd
+         COLFLAGS = ColFlags
 #if HasLatex
             DVIPS = DvipsCmd
             LATEX = LatexCmd

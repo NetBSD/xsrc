@@ -59,26 +59,26 @@ almost certainly be set after first running the server with the
 <tt>-probeonly</tt> option, so as to avoid the probe in later runs.
 
 <descrip>
-<tag>Option &dquot;composite&dquot;</tag>
+<tag>Option "composite"</tag>
 		This option will set the composite sync for
 		monitors that require this.
-<tag>Option &dquot;dac_8_bit&dquot;</tag>
+<tag>Option "dac_8_bit"</tag>
 		This option enables 8 bits per RGB value.  Note
 		this option does not work with all RAMDACs, and
                 is not considered supported by the Mach32 itself.
-<tag>Option &dquot;ast_mach32&dquot;</tag>
+<tag>Option "ast_mach32"</tag>
 		This option sets some special handling for the AST
 		version of the Mach32 card that comes soldered in to
 		some of their motherboards.  This card will lock up
 		without this option.
-<tag>Option &dquot;intel_gx&dquot;</tag>
+<tag>Option "intel_gx"</tag>
                 This option sets the memory aperture address to
                 the hardwired value for the Intel GX Pro.  It is
                 equivalent to setting Membase to 0x78000000.
-<tag>Option &dquot;no_linear&dquot;</tag>
+<tag>Option "no_linear"</tag>
                 This option disables the use of the linear mapped
                 framebuffer.  This should be auto-detected.
-<tag>Option &dquot;sw_cursor&dquot;</tag>
+<tag>Option "sw_cursor"</tag>
 		This option allows you to use the software cursor
                 instead of the hardware cursor.
 <tag>MemBase baseaddress</tag>
@@ -91,7 +91,7 @@ almost certainly be set after first running the server with the
 		location.
 <tag>Clocks <it>clock</it> ...</tag>
                 This entry gives the clock rates for the server to use.
-<tag>Ramdac &dquot;<it>type</it>&dquot;</tag>
+<tag>Ramdac "<it>type</it>"</tag>
 		This entry specifies the RAMDAC type.  The following
 		values are valid for <it>type</it>:
 		<itemize>
@@ -135,7 +135,7 @@ Mach32 X server.  They include:
 <item>Sixteen bit character support (e.g., Chinese and Japanese character
        sets) has been known to lose parts of characters.  While this should
        be fixed, if it occurs try running the server with Option
-       &dquot;no_linear&dquot;.
+       "no_linear".
 </itemize>
 
 Bug reports should be sent to XFree86@XFree86.org or posted to the
@@ -144,7 +144,7 @@ comp.windows.x.i386unix newsgroup.
 <p>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach32.sgml,v 3.5.2.2 1997/07/10 08:02:10 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach32.sgml,v 3.5.2.3 1998/11/07 13:37:47 dawes Exp $
 
 
 

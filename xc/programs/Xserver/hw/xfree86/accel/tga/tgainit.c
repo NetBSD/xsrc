@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgainit.c,v 3.8 1996/12/27 07:03:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgainit.c,v 3.8.2.1 1998/10/19 20:29:41 hohndel Exp $ */
 
 #include "tga.h"
 #include "tga_presets.h"
@@ -30,6 +30,8 @@
 typedef struct {
 	unsigned long Bt485[0x20];
 	unsigned long tgaRegs[0x200];
+        unsigned long Bt463[0x20];
+        unsigned long Bt463win[48];
 } tgaRegisters;
 static tgaRegisters SR;
 
@@ -98,23 +100,72 @@ tgaSetCRTCRegs(crtcRegs)
 	ICS1562ClockSelect(crtcRegs->clock_sel);
 	TGA_WRITE_REG(virtX, TGA_HORIZ_REG);
 	TGA_WRITE_REG(virtY, TGA_VERT_REG);
-	TGA_WRITE_REG(0x05, TGA_VALID_REG); /* Enable Video */
+	TGA_WRITE_REG(0x01, TGA_VALID_REG); /* Enable Video */
 }
+
+
+unsigned
+BT463_READ(unsigned m, unsigned a)
+{
+  unsigned val;
+
+  BT463_LOAD_ADDR(a);
+  TGA_WRITE_REG((m<<2)|0x2, TGA_RAMDAC_SETUP_REG);
+  val = TGA_READ_REG(TGA_RAMDAC_REG);
+  val = (val >> 16) & 0xff;
+  return val;
+}
+
+
+unsigned
+BT485_READ(unsigned reg)
+{
+  unsigned val;
+
+  TGA_WRITE_REG(reg|0x1, TGA_RAMDAC_SETUP_REG);
+  val = TGA_READ_REG(TGA_RAMDAC_REG);
+  val = (val >> 16) & 0xff;
+  return val;
+}
+
 
 void
 saveTGAstate()
 {
-	int i;
+	int i, j;
 
 	/* Do the RAMDAC */
-	TGA_WRITE_REG(BT485_CMD_0, TGA_RAMDAC_SETUP_REG);
-	SR.Bt485[0] = TGA_READ_REG(TGA_RAMDAC_REG);
-	TGA_WRITE_REG(BT485_CMD_1, TGA_RAMDAC_SETUP_REG);
-	SR.Bt485[1] = TGA_READ_REG(TGA_RAMDAC_REG);
-	TGA_WRITE_REG(BT485_CMD_2, TGA_RAMDAC_SETUP_REG);
-	SR.Bt485[2] = TGA_READ_REG(TGA_RAMDAC_REG);
-	TGA_WRITE_REG(BT485_CMD_3, TGA_RAMDAC_SETUP_REG);
-	SR.Bt485[3] = TGA_READ_REG(TGA_RAMDAC_REG);
+	if (tga_type == 0) { /* 8-plane */
+	  SR.Bt485[0] = BT485_READ(BT485_CMD_0);
+	  SR.Bt485[1] = BT485_READ(BT485_CMD_1);
+	  SR.Bt485[2] = BT485_READ(BT485_CMD_2);
+	  SR.Bt485[3] = BT485_READ(BT485_CMD_3);
+	  SR.Bt485[4] = BT485_READ(BT485_ADDR_PAL_WRITE);
+	  SR.Bt485[5] = BT485_READ(BT485_PIXEL_MASK);
+	} else {
+	  SR.Bt463[0] = BT463_READ(BT463_REG_ACC, BT463_CMD_REG_0);
+	  SR.Bt463[1] = BT463_READ(BT463_REG_ACC, BT463_CMD_REG_1);
+	  SR.Bt463[2] = BT463_READ(BT463_REG_ACC, BT463_CMD_REG_2);
+
+	  SR.Bt463[3] = BT463_READ(BT463_REG_ACC, BT463_READ_MASK_0);
+	  SR.Bt463[4] = BT463_READ(BT463_REG_ACC, BT463_READ_MASK_1);
+	  SR.Bt463[5] = BT463_READ(BT463_REG_ACC, BT463_READ_MASK_2);
+	  SR.Bt463[6] = BT463_READ(BT463_REG_ACC, BT463_READ_MASK_3);
+
+	  SR.Bt463[7] = BT463_READ(BT463_REG_ACC, BT463_BLINK_MASK_0);
+	  SR.Bt463[8] = BT463_READ(BT463_REG_ACC, BT463_BLINK_MASK_1);
+	  SR.Bt463[9] = BT463_READ(BT463_REG_ACC, BT463_BLINK_MASK_2);
+	  SR.Bt463[10] = BT463_READ(BT463_REG_ACC, BT463_BLINK_MASK_3);
+
+	  BT463_LOAD_ADDR(BT463_WINDOW_TYPE_BASE);
+	  TGA_WRITE_REG((BT463_REG_ACC<<2)|0x2, TGA_RAMDAC_SETUP_REG);
+  
+	  for (i = 0, j = 0; i < 16; i++) {
+	    SR.Bt463win[j++] = (TGA_READ_REG(TGA_RAMDAC_REG)>>16)&0xff;
+	    SR.Bt463win[j++] = (TGA_READ_REG(TGA_RAMDAC_REG)>>16)&0xff;
+	    SR.Bt463win[j++] = (TGA_READ_REG(TGA_RAMDAC_REG)>>16)&0xff;
+	  }
+	}
 
 	SR.tgaRegs[0] = TGA_READ_REG(TGA_HORIZ_REG);
 	SR.tgaRegs[1] = TGA_READ_REG(TGA_VERT_REG);
@@ -132,14 +183,40 @@ restoreTGAstate()
 {
 	int i;
 
-	/* FIXME ! */
-#ifdef SOMETHINGWRONGHERE
-	BT485_WRITE(SR.Bt485[0], BT485_CMD_0);
-	BT485_WRITE(SR.Bt485[1], BT485_CMD_1);
-	BT485_WRITE(SR.Bt485[2], BT485_CMD_2);
-	BT485_WRITE(SR.Bt485[3], BT485_CMD_3);
-#endif
+	if (tga_type == 0) { /* 8-plane */ 
+	  BT485_WRITE(SR.Bt485[0], BT485_CMD_0);
+	  BT485_WRITE(SR.Bt485[1], BT485_CMD_1);
+	  BT485_WRITE(SR.Bt485[2], BT485_CMD_2);
+	  BT485_WRITE(SR.Bt485[3], BT485_CMD_3);
+	  BT485_WRITE(SR.Bt485[4], BT485_ADDR_PAL_WRITE);
+	  BT485_WRITE(SR.Bt485[5], BT485_PIXEL_MASK);
+	} else {
+	  int i, j;
 
+	  BT463_WRITE(BT463_REG_ACC, BT463_CMD_REG_0, SR.Bt463[0]);
+	  BT463_WRITE(BT463_REG_ACC, BT463_CMD_REG_1, SR.Bt463[1]);
+	  BT463_WRITE(BT463_REG_ACC, BT463_CMD_REG_2, SR.Bt463[2]);
+
+	  BT463_WRITE(BT463_REG_ACC, BT463_READ_MASK_0, SR.Bt463[3]);
+	  BT463_WRITE(BT463_REG_ACC, BT463_READ_MASK_1, SR.Bt463[4]);
+	  BT463_WRITE(BT463_REG_ACC, BT463_READ_MASK_2, SR.Bt463[5]);
+	  BT463_WRITE(BT463_REG_ACC, BT463_READ_MASK_3, SR.Bt463[6]);
+
+	  BT463_WRITE(BT463_REG_ACC, BT463_BLINK_MASK_0, SR.Bt463[7]);
+	  BT463_WRITE(BT463_REG_ACC, BT463_BLINK_MASK_1, SR.Bt463[8]);
+	  BT463_WRITE(BT463_REG_ACC, BT463_BLINK_MASK_2, SR.Bt463[9]);
+	  BT463_WRITE(BT463_REG_ACC, BT463_BLINK_MASK_3, SR.Bt463[10]);
+
+	  BT463_LOAD_ADDR(BT463_WINDOW_TYPE_BASE);
+	  TGA_WRITE_REG((BT463_REG_ACC<<2), TGA_RAMDAC_SETUP_REG);
+	  
+	  for (i = 0, j = 0; i < 16; i++) {
+	    TGA_WRITE_REG(SR.Bt463win[j++]|(BT463_REG_ACC<<10), TGA_RAMDAC_REG);
+	    TGA_WRITE_REG(SR.Bt463win[j++]|(BT463_REG_ACC<<10), TGA_RAMDAC_REG);
+	    TGA_WRITE_REG(SR.Bt463win[j++]|(BT463_REG_ACC<<10), TGA_RAMDAC_REG);
+	  }
+	}
+	  
 	TGA_WRITE_REG(0x00, TGA_VALID_REG); /* Disable Video */
 
 	TGA_WRITE_REG(SR.tgaRegs[0], TGA_HORIZ_REG);
@@ -203,12 +280,60 @@ BT485Enable()
 #endif
 {
    /* Specific BT485 setup, for UDB(Multia) 8plane TGA */
-   BT485_WRITE(0xA0 | (tgaDAC8Bit ? 2 : 0), BT485_CMD_0);
+   BT485_WRITE(0x80 | (tgaDAC8Bit ? 2 : 0) | (tgaDACSyncOnGreen ? 8 : 0),
+		 BT485_CMD_0);
    BT485_WRITE(0x01, BT485_ADDR_PAL_WRITE);
    BT485_WRITE(0x14, BT485_CMD_3); /* 64x64 cursor */
-   BT485_WRITE(0x40, BT485_CMD_1); /* 8bpp */
+   switch (tgaInfoRec.depth) {
+   case 8:
+     BT485_WRITE(0x40, BT485_CMD_1);
+     break;
+   case 15:
+     BT485_WRITE(0x30, BT485_CMD_1);
+     break;
+   case 16:
+     BT485_WRITE(0x38, BT485_CMD_1);
+     break;
+   case 24:
+     BT485_WRITE(0x10, BT485_CMD_1);
+     break;
+   }
    BT485_WRITE(0x20, BT485_CMD_2);
    BT485_WRITE(0xFF, BT485_PIXEL_MASK);
+}
+
+void
+#if NeedFunctionPrototypes
+BT463Enable(void)
+#else
+BT463Enable()
+#endif
+{
+  int i;
+
+  BT463_WRITE(BT463_REG_ACC, BT463_CMD_REG_0, 0x40);
+/*  BT463_WRITE(BT463_REG_ACC, BT463_CMD_REG_1, 0x00); */
+  BT463_WRITE(BT463_REG_ACC, BT463_CMD_REG_1, 0x08);
+  BT463_WRITE(BT463_REG_ACC, BT463_CMD_REG_2, (tgaDACSyncOnGreen?0x80:0x00));
+  
+  BT463_WRITE(BT463_REG_ACC, BT463_READ_MASK_0, 0xff);
+  BT463_WRITE(BT463_REG_ACC, BT463_READ_MASK_1, 0xff);
+  BT463_WRITE(BT463_REG_ACC, BT463_READ_MASK_2, 0xff);
+  BT463_WRITE(BT463_REG_ACC, BT463_READ_MASK_3, 0x0f);
+  
+  BT463_WRITE(BT463_REG_ACC, BT463_BLINK_MASK_0, 0x00);
+  BT463_WRITE(BT463_REG_ACC, BT463_BLINK_MASK_1, 0x00);
+  BT463_WRITE(BT463_REG_ACC, BT463_BLINK_MASK_2, 0x00);
+  BT463_WRITE(BT463_REG_ACC, BT463_BLINK_MASK_3, 0x00);
+
+  BT463_LOAD_ADDR(BT463_WINDOW_TYPE_BASE);
+  TGA_WRITE_REG((BT463_REG_ACC<<2), TGA_RAMDAC_SETUP_REG);
+  
+  for (i = 0; i < 16; i++) {
+    TGA_WRITE_REG(0x00|(BT463_REG_ACC<<10), TGA_RAMDAC_REG);
+    TGA_WRITE_REG(0x01|(BT463_REG_ACC<<10), TGA_RAMDAC_REG);
+    TGA_WRITE_REG(0x80|(BT463_REG_ACC<<10), TGA_RAMDAC_REG);
+  }
 }
 
 #if NeedFunctionPrototypes
@@ -221,28 +346,58 @@ InitLUT()
 {
    int i;
 
-   /* Get BT485's pallette */
-   BT485_WRITE(0x00, BT485_ADDR_PAL_WRITE);
-   TGA_WRITE_REG(BT485_DATA_PAL, TGA_RAMDAC_SETUP_REG);
+   if (tga_type == 0) { /* 8-plane  */
 
-   for (i=0; i<256; i++) {
-      oldlut[i].r = TGA_READ_REG(TGA_RAMDAC_REG);
-      oldlut[i].g = TGA_READ_REG(TGA_RAMDAC_REG);
-      oldlut[i].b = TGA_READ_REG(TGA_RAMDAC_REG);
-   }
+     /* Get BT485's pallette */
+     BT485_WRITE(0x00, BT485_ADDR_PAL_WRITE);
+     TGA_WRITE_REG(BT485_DATA_PAL, TGA_RAMDAC_SETUP_REG);
+     
+     for (i=0; i<256; i++) {
+       oldlut[i].r = TGA_READ_REG(TGA_RAMDAC_REG);
+       oldlut[i].g = TGA_READ_REG(TGA_RAMDAC_REG);
+       oldlut[i].b = TGA_READ_REG(TGA_RAMDAC_REG);
+     }
 
-   for (i=0; i<16; i++) {
-      TGA_WRITE_REG(0x00|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
-      TGA_WRITE_REG(0x00|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
-      TGA_WRITE_REG(0x00|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
-   }
+     for (i=0; i<16; i++) {
+       TGA_WRITE_REG(0x00|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
+       TGA_WRITE_REG(0x00|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
+       TGA_WRITE_REG(0x00|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
+     }
 
-   for (i=0; i<720; i+=4) {
+     for (i=0; i<720; i+=4) {
        TGA_WRITE_REG(0x55|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
        TGA_WRITE_REG(0x00|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
        TGA_WRITE_REG(0x00|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
        TGA_WRITE_REG(0x00|(BT485_DATA_PAL<<8),TGA_RAMDAC_REG);
-   } 
+     } 
+
+   } else {
+     /* Running in TrueColor... we don't need this, do we? -tor */
+#if 0
+     /* Get BT463's pallette */
+     BT463_LOAD_ADDR(0x0000);
+     TGA_WRITE_REG((BT463_PALETTE<<2), TGA_RAMDAC_REG);
+     
+     for (i=0; i<256; i++) {
+       oldlut[i].r = TGA_READ_REG(TGA_RAMDAC_REG);
+       oldlut[i].g = TGA_READ_REG(TGA_RAMDAC_REG);
+       oldlut[i].b = TGA_READ_REG(TGA_RAMDAC_REG);
+     }
+
+     for (i=0; i<16; i++) {
+       TGA_WRITE_REG(0x00|(BT463_PALETTE<<10),TGA_RAMDAC_REG);
+       TGA_WRITE_REG(0x00|(BT463_PALETTE<<10),TGA_RAMDAC_REG);
+       TGA_WRITE_REG(0x00|(BT463_PALETTE<<10),TGA_RAMDAC_REG);
+     }
+     
+     for (i=0; i<720; i+=4) {
+       TGA_WRITE_REG(0x55|(BT463_PALETTE<<10),TGA_RAMDAC_REG);
+       TGA_WRITE_REG(0x00|(BT463_PALETTE<<10),TGA_RAMDAC_REG);
+       TGA_WRITE_REG(0x00|(BT463_PALETTE<<10),TGA_RAMDAC_REG);
+       TGA_WRITE_REG(0x00|(BT463_PALETTE<<10),TGA_RAMDAC_REG);
+     }
+#endif
+   }
 
    LUTInited = TRUE;
 }
@@ -258,10 +413,8 @@ tgaInitEnvironment()
 {
    if (tga_type == TYPE_TGA_8PLANE)
 	BT485Enable();
-#ifdef SUPPORT24
    else
 	BT463Enable();
-#endif
    InitLUT();
 }
 
@@ -278,6 +431,12 @@ tgaInitAperture()
 					(pointer)(tgaInfoRec.MemBase |
 					fb_offset_presets[tga_type]),
 					tgaInfoRec.videoRam * 1024);
+
+	if (tga_type != 0)
+		tgaCursorMem = xf86MapVidMem(screen_idx, LINEAR_REGION,
+					(pointer)(tgaInfoRec.MemBase |
+					fb_offset_presets[tga_type] & 0xfff0000),
+					0x4000);
 
 	tgaVideoMemSave = (unsigned char *)xalloc(tgaInfoRec.videoRam * 1024);
 	if (tgaVideoMemSave == NULL)

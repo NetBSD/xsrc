@@ -3,9 +3,45 @@ XCOMM $XConsortium: Imakefile /main/2 1996/10/19 19:10:09 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/etc/Imakefile,v 3.2.2.1 1997/05/03 09:45:13 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/etc/Imakefile,v 3.2.2.2 1998/11/04 08:01:41 hohndel Exp $
 
 #include <Server.tmpl>
+
+#if SystemV
+ CONFIGFILES = ldterm.sdevice ptem.sdevice ptm.sdevice pts.node \
+               pts.sdevice sp.node sp.sdevice
+    INSTPROG = install.sv3
+#ifdef i386ScoArchitecture
+   MISCFILES = dmmap.shar 
+#else
+   MISCFILES = mmapSVR3.shar
+#endif
+#endif
+
+#if SystemV4
+    INSTPROG = install.sv4
+     XDMCONF = XdmConf.svr4
+#ifdef SunArchitecture
+   MISCFILES = apSolx86.shar xcode.xfree86
+#else
+   MISCFILES = 2key.c xcode.xfree86
+#endif
+#endif
+
+#ifdef LynxOSArchitecture
+ CONFIGFILES = pty.cfg
+   MISCFILES = BM-Lynx.shar 
+#endif
+
+/* Are these really needed? */
+#if 0
+# ifdef FreeBSDArchitecture
+    INSTPROG = inst.freebsd
+# endif
+# ifdef NetBSDArchitecture
+    INSTPROG = inst.netbsd
+# endif
+#endif
 
 #if !BuildServersOnly
 #ifdef SunArchitecture
@@ -26,7 +62,7 @@ POSTINST = postinst.sh
 
 all:: $(FILES)
 
-#if defined(FreeBSDArchitecture) || defined(NetBSDArchitecture)
+#if defined(FreeBSDArchitecture) || defined(NetBSDArchitecture) || defined(OpenBSDArchitecture)
        SRCS1 = kbd_mode.c
      DEFINES = XFree86ConsoleDefines
 
@@ -41,7 +77,9 @@ InstallManPage(kbd_mode,$(MANDIR))
 #if BuildScanpci
        SRCS2 = scanpci.c
 
-#if defined(NetBSDArchitecture) && OSMajorVersion >= 1 && OSMinorVersion >= 1
+#if defined(OpenBSDArchitecture) || defined(NetBSDArchitecture) \
+    && ((OSMajorVersion == 1 && OSMinorVersion >= 1) || OSMajorVersion >= 2)
+DEFINES = -DUSE_I386_IOPL
 SYS_LIBRARIES = -li386
 #endif
 
@@ -62,7 +100,24 @@ InstallProgram(joycal,$(BINDIR))
 
         SRCS = $(SRCS1) $(SRCS2) $(SRCS3)
 
+#if (SystemV && !defined(i386ScoArchitecture)) || SystemV4
+InstallNamedProg($(INSTPROG),xf86install,$(LIBDIR)/etc)
+#endif
+
 InstallMultipleDestFlags(install,$(FILES),$(LIBDIR)/etc,$(INSTDATFLAGS))
+
+#if SystemV
+InstallNamedProg(svr3_patch,svr3_patch,$(LIBDIR)/etc)
+InstallNamedProg(svr3_rem_pch,svr3_patch_rem,$(LIBDIR)/etc)
+#endif
+#if SystemV4 && !defined(SunArchitecture)
+InstallNamedProg(svr4_patch,svr4_patch,$(LIBDIR)/etc)
+InstallNamedProg(svr4_rem_pch,svr4_patch_rem,$(LIBDIR)/etc)
+#endif
+#if defined(LynxOSArchitecture) && (OSMajorVersion == 2 && OSMinorVersion < 3)
+NormalProgramTarget(ld-wrapper,ld-wrapper.o,NullParameter,NullParameter,NullParameter)
+InstallProgram(ld-wrapper,$(LIBDIR)/etc)
+#endif
 
 #if !BuildServersOnly
 LinkFile(xterm.termcap,$(PROGRAMSRC)/xterm/termcap)

@@ -29,6 +29,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/lib/XIE/globals.h,v 1.1.1.1.12.2 1998/10/19 20:57:06 hohndel Exp $ */
 
 XieExtInfo *_XieExtInfoHeader = NULL;
 
@@ -112,6 +113,10 @@ void (*(_XieElemFuncs[]))() =
 };
 
 
+#ifndef __EMX__
 XieTechFuncRec *_XieTechFuncs[xieValMaxTechGroup];
+#else
+XieTechFuncRec *_XieTechFuncs[xieValMaxTechGroup] = {0};
+#endif
 
 Bool _XieTechFuncsInitialized = 0;

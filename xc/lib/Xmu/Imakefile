@@ -1,7 +1,11 @@
 XCOMM $XConsortium: Imakefile /main/82 1996/09/28 16:43:59 rws $
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/lib/Xmu/Imakefile,v 1.1.1.3.2.3 1998/11/06 13:54:30 dawes Exp $
 
 #define DoNormalLib NormalLibXmu
 #define DoSharedLib SharedLibXmu
+#define DoExtraLib SharedLibXmu
 #define DoDebugLib DebugLibXmu
 #define DoProfileLib ProfileLibXmu
 #define HasSharedData YES
@@ -25,7 +29,7 @@ REQUIREDLIBS = SharedXmuReqs
 #ifdef OsNameDefines
 OS_NAME_DEFINES = OsNameDefines
 #endif
-        CSSDEFS = $(OS_NAME_DEFINES) ConnectionFlags
+        CSSDEFS = $(OS_NAME_DEFINES) $(CONNECTION_FLAGS)
         BITDEFS = -DBITMAPDIR=\"$(INCDIR)/X11/bitmaps\"
 
 HEADERS = \

@@ -23,7 +23,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_jstk.c,v 3.6 1996/12/23 06:50:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_jstk.c,v 3.6.2.1 1998/07/30 06:23:52 hohndel Exp $ */
 
 static const char rcs_id[] = "Id: lnx_jstk.c,v 1.1 1995/12/20 14:06:09 lepied Exp";
 
@@ -65,6 +65,7 @@ xf86JoystickOn(char *name, int *timeout, int *centerX, int *centerY)
     }
 
   if (*timeout == 0) {
+#ifdef JS_GET_TIMELIMIT
     if (ioctl (fd, JS_GET_TIMELIMIT, timeout) == -1) {
       Error("joystick JS_GET_TIMELIMIT ioctl");
     }
@@ -73,11 +74,14 @@ xf86JoystickOn(char *name, int *timeout, int *centerX, int *centerY)
 	ErrorF("(--) Joystick: timeout value = %d\n", *timeout);
       }
     }
+#endif
   }
   else {
+#ifdef JS_SET_TIMELIMIT
     if (ioctl(fd, JS_SET_TIMELIMIT, timeout) == -1) {
       Error("joystick JS_SET_TIMELIMIT ioctl");
     }
+#endif
   }
 
   /* Assume the joystick is centred when this is called */

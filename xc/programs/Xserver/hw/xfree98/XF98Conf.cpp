@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/XF98Conf.cpp,v 3.13.2.3 1998/02/24 13:54:31 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/XF98Conf.cpp,v 3.13.2.5 1998/11/10 11:55:43 dawes Exp $
 XCOMM
 XCOMM Copyright (c) 1994 by The XFree86 Project, Inc.
 XCOMM
@@ -48,7 +48,8 @@ XCOMM Multiple FontPath entries are allowed (which are concatenated together),
 XCOMM as well as specifying multiple comma-separated entries in one FontPath
 XCOMM command (or a combination of both methods)
 
-    FontPath	MISCFONTPATH
+USE_LOCALFONTS	LOCALFONTPATH
+FontPath	MISCFONTPATH
 USE_75FONTS	DPI75USFONTPATH
 USE_100FONTS	DPI100USFONTPATH
 USE_T1FONTS	T1FONTPATH
@@ -540,6 +541,7 @@ XCOMM    Option	"noaccel"
 XCOMM    Option	"Linear"
 XCOMM    Option	"med_dram"
 XCOMM    Option	"hw_cursor"
+    VideoRam	2048
 Endsection
 
 Section "Device"
@@ -557,6 +559,8 @@ Section "Device"
     Identifier	"MGA"
     VendorName	"Matrox"
     BoardName	"Millennium"
+    VideoRam	4096
+XCOMM    VideoRam	2048
 EndSection
 
 Section "Device"

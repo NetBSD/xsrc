@@ -1,5 +1,5 @@
 
-$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/README.RIVA128,v 1.1.2.2 1998/01/24 00:04:36 robin Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/README.RIVA128,v 1.1.2.3 1998/10/19 07:33:38 hohndel Exp $
 
 XFree driver for NVidia/SGS-Thomson RIVA128
 ===========================================
@@ -27,4 +27,12 @@ Also many thanks to Curtis,Dwight and Don at Nvidia for their help and support.
 Dave McKay
 January 1998
 
+10/16/98
 
+Update
+=====
+Video noise fixed.  Also disabled mono expansion code.  Should be faster
+on higher end machines.
+
+Dave Schmenk
+NVIDIA Corp

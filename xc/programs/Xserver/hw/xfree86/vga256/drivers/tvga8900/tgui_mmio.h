@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_mmio.h,v 3.1.2.4 1998/01/18 10:35:39 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_mmio.h,v 3.1.2.5 1998/10/31 14:41:10 hohndel Exp $ */
 /*
  * Copyright 1996 by Alan Hourihane, Wigan, England.
  *
@@ -35,10 +35,14 @@
 #endif /* PC98_TGUI */
 
 #ifdef TRIDENT_MMIO
+#define IMAGEBUSY(b) \
+		b = (*(unsigned long *)(tguiMMIOBase + IMAGE_GE_STATUS)) & 0xF8000000;
 #define BLTBUSY(b) \
 		b = (*(unsigned char *)(tguiMMIOBase + GER_STATUS)) & GE_BUSY;
 #define OLDBLTBUSY(b) \
 		b = (*(unsigned char *)(tguiMMIOBase + OLDGER_STATUS))&GE_BUSY;
+#define IMAGE_STATUS(c) \
+		*(unsigned long *)(tguiMMIOBase + IMAGE_GE_STATUS) = c;
 #define TGUI_STATUS(c) \
 		*(unsigned char *)(tguiMMIOBase + GER_STATUS) = c;
 #define OLDTGUI_STATUS(c) \
@@ -111,6 +115,8 @@
 		*(unsigned long *)(tguiMMIOBase + GER_PLANEMASK) = c;
 #define TGUI_OUTB(addr, c) \
 		*(unsigned long *)(tguiMMIOBase + addr) = c;
+#define IMAGE_OUT(addr,c) \
+		*(unsigned long *)(tguiMMIOBase + addr) = c;
 #define TGUI_COMMAND(c) \
 		{ \
 		TGUI_OPERMODE(GE_OP); \
@@ -131,6 +137,8 @@
 #else
 #define BLTBUSY(b) \
 		b = inb(GER_BASE+GER_STATUS) & GE_BUSY;
+#define IMAGEBUSY(b) \
+		b = inl(GER_BASE+IMAGE_GE_STATUS) & 0xF8000000;
 #define OLDBLTBUSY(b) \
 		{	\
 			outb(GER_INDEX, OLDGER_STATUS); \
@@ -138,6 +146,8 @@
 		}
 #define TGUI_STATUS(c) \
 		outb(GER_BASE+GER_STATUS, c);
+#define IMAGE_STATUS(c) \
+		outl(GER_BASE+IMAGE_GE_STATUS, c);
 #define OLDTGUI_STATUS(c) \
 		{	\
 			outb(GER_INDEX, OLDGER_STATUS); \
@@ -232,6 +242,8 @@
 		outl(GER_BASE+GER_DSTCLIP_XY, XY_MERGE(x,y));
 #define TGUI_PATLOC(addr) \
 		outw(GER_BASE+GER_PATLOC, addr);
+#define IMAGE_OUT(addr,c) \
+		outl(GER_BASE+addr, c);
 #define TGUI_PLANEMASK(c) \
 		outl(GER_BASE+GER_PLANEMASK, c);
 #define TGUI_OUTB(addr, c) \

@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/messages.tcl,v 1.1.2.4 1998/02/26 20:11:23 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/messages.tcl,v 1.1.2.5 1998/11/12 10:34:57 dawes Exp $
 #
 # messages in done.tcl :
 set messages(done.1)	"\n\
@@ -151,6 +151,8 @@ set messages(card.34) \
 	"このカードは、XFree86 ではまだ完全にはサポートされて\n\
 	いません。ただし、通常のVGA モードで動くように\n\
 	設定は済んでいます。"
+set messages(card.35) "12 メガ"
+set messages(card.36) "16 メガ"
 
 # messages in keyboard.tcl :
 set messages(keyboard.1) "モデル:"

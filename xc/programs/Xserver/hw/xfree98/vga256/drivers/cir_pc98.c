@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/cir_pc98.c,v 3.6.4.3 1998/02/24 13:54:34 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/cir_pc98.c,v 3.6.4.4 1998/09/27 12:59:24 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -98,7 +98,9 @@ static unsigned char regs[0x100] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  /*	f8-ff	*/
 };
 
+#ifdef	DEBUG
 	ErrorF("\n*** called init_aile\n");
+#endif
 
 #if 1
 outb(0x3C4, 0x22);
@@ -163,6 +165,7 @@ outw(0x3ce,0x0433);
 #endif
 #endif
 
+#ifdef	DEBUG
 	ErrorF("3B4");
 	for(i=0;i<0x100;i++) {
 		outb(0x3b4,i);
@@ -227,6 +230,7 @@ outw(0x3ce,0x0433);
 	ErrorF("\n");
 
 	ErrorF("3DA:%04x\n",inb(0x3da));
+#endif	/* DEBUG */
 
 /* unlock LED */
 outb(0x3C4, 0x2d);
@@ -273,7 +277,9 @@ static void enter_aile( void )
 {
 
 	char c;
+#ifdef	DEBUG
 	ErrorF("\n*** called enter_aile\n");
+#endif
 
 outb(0x3d4, 0x24);
 c = inb(0x3d5);
@@ -393,7 +399,9 @@ outb(0x3c2, c | 0x02);
 static void leave_aile( void )
 {
 	char c;
+#ifdef	DEBUG
 	ErrorF("\n*** called leave_aile\n");
+#endif
 
 c=inb(0x3cc);
 outb(0x3c2, c | 0x02);
@@ -416,7 +424,9 @@ outb(0x3c2, c & 0xfd);
 	outb(0x6a, 0x8e);
 	outb(0x6a, 0x06);
 
+#ifdef	DEBUG
 	ErrorF("called leave_aile\n");
+#endif
 	outb(0x68, 0x0f);
 	outb(0x6a, 0x07);
 	outb(0x6a, 0x8e);

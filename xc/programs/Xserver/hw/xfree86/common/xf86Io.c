@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.28.2.5 1998/02/24 19:05:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.28.2.7 1998/11/04 08:01:51 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -435,6 +435,7 @@ xf86MseProc(pPointer, what)
 			(PtrCtrlProcPtr)xf86MseCtrl);
 }
 
+
 int  
 xf86MseProcAux(pPointer, what, mouse, fd, ctrl)
      DeviceIntPtr	pPointer;
@@ -452,6 +453,13 @@ xf86MseProcAux(pPointer, what, mouse, fd, ctrl)
     case DEVICE_INIT: 
       pPointer->public.on = FALSE;
  
+      /* WARNING! WARNING! WARNING!
+       * If you change something here, also fix the same thing in 
+       * xf86OsMouseProc (os-support/xxx/xxx_mouse.c) and 
+       * xf86XqueMseProc (os-support/xxx/xqueue.c)
+       * otherwise you will break support for these pointer devices
+       */
+
       /*
        * [KAZU-241097] We don't know exactly how many buttons the
        * device has...
@@ -465,7 +473,27 @@ xf86MseProcAux(pPointer, what, mouse, fd, ctrl)
 			      miPointerGetMotionEvents,
 			      ctrl, 
 			      miPointerGetMotionBufferSize());
-
+#ifdef XINPUT
+      InitValuatorAxisStruct(pPointer,
+			     0,
+			     0, /* min val */
+			     screenInfo.screens[0]->width, /* max val */
+			     1, /* resolution */
+			     0, /* min_res */
+			     1); /* max_res */
+      InitValuatorAxisStruct(pPointer,
+			     1,
+			     0, /* min val */
+			     screenInfo.screens[0]->height, /* max val */
+			     1, /* resolution */
+			     0, /* min_res */
+			     1); /* max_res */
+      /* Initialize valuator values in synch
+       * with dix/event.c DefineInitialRootWindow
+       */
+      *pPointer->valuator->axisVal = screenInfo.screens[0]->width / 2;
+      *(pPointer->valuator->axisVal+1) = screenInfo.screens[0]->height / 2;
+#endif
       xf86MouseInit(mouse);
 
       break;

@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/twm/menus.c,v 1.1.1.5.4.2 1998/10/24 08:48:23 hohndel Exp $ */
 /*****************************************************************************/
 /*
 
@@ -2092,7 +2093,7 @@ ExecuteFunction(func, action, w, tmp_win, eventp, context, pulldown)
 		XFree (ptr);
 		ptr = ExpandFilename(tmp);
 		if (ptr) {
-		    fd = open (ptr, 0);
+		    fd = open (ptr, O_RDONLY);
 		    if (fd >= 0) {
 			count = read (fd, buff, MAX_FILE_SIZE - 1);
 			if (count > 0) XStoreBytes (dpy, buff, count);
@@ -2219,7 +2220,7 @@ ExecuteFunction(func, action, w, tmp_win, eventp, context, pulldown)
 
     case F_FILE:
 	action = ExpandFilename(action);
-	fd = open(action, 0);
+	fd = open(action, O_RDONLY);
 	if (fd >= 0)
 	{
 	    count = read(fd, buff, MAX_FILE_SIZE - 1);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xvidtune/xvidtune.c,v 3.22 1996/10/16 14:45:23 dawes Exp $ */
+/* $XFree86: xc/programs/xvidtune/xvidtune.c,v 3.22.4.1 1998/10/22 19:09:04 hohndel Exp $ */
 
 /*
 
@@ -52,6 +52,7 @@ from Kaleb S. KEITHLEY.
 int MajorVersion, MinorVersion;
 int EventBase, ErrorBase;
 int dot_clock, mode_flags;
+unsigned long    TestTimeout=5000;  /* Default test timeout */
 
 /* Minimum extension version required */
 #define MINMAJOR 0
@@ -491,7 +492,7 @@ static void TestCB (w, client, call)
     XtPopup(testing_popup, XtGrabExclusive /*XtGrabNone*/);
     XSync(XtDisplay(w), False);   
     TOid = XtAppAddTimeOut (XtWidgetToApplicationContext (w),
-		5000, TestTO, (XtPointer) w);
+		TestTimeout, TestTO, (XtPointer) w);
 
     ApplyCB (w, client, call);
 }
@@ -1379,6 +1380,7 @@ static void usage()
     fprintf(stderr, "        -next                             Switch to next video mode\n");
     fprintf(stderr, "        -prev                             Switch to previous video mode\n");
     fprintf(stderr, "        -unlock                           Enable mode switch hot-keys\n");
+    fprintf(stderr, "        -timeout [seconds]                Set testmode timeout in seconds,\n");
     exit(1);
 }
 
@@ -1429,8 +1431,18 @@ int main (argc, argv)
     }
  
     /* This should probably be done differently */
+
+    if(  argc == 3  ) { /* this can only be the timeout case */
+        if(  (!strcmp(argv[1], "-timeout"))  ) {
+            TestTimeout = ((unsigned long) atol( argv[2] )) * 1000L;
+	} 
+	else
+	    usage();
+    }
+
     if (argc > 1) {
 	int i = 0;
+        
 	if (argc != 2)
 		usage();
 	if (!strcmp(argv[1], "-next"))

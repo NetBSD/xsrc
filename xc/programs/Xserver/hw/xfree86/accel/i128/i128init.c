@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128init.c,v 3.6.2.7 1998/02/10 22:35:49 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128init.c,v 3.6.2.8 1998/10/24 02:12:40 robin Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -50,6 +50,7 @@ extern int i128DisplayOffset;
 extern int i128DeviceType;
 extern int i128MemoryType;
 extern int i128RamdacType;
+extern int i128DACSyncOnGreen;
 
 
 
@@ -311,6 +312,11 @@ restoreI128state()
 
         xf86EnableIOPorts(i128InfoRec.scrnIndex);
 
+	if (i128MemoryType == I128_MEMORY_SGRAM) {
+		outl(iR.iobase + 0x24, iR.sgram & 0x7FFFFFFF);
+		outl(iR.iobase + 0x24, iR.sgram | 0x80000000);
+	}
+
 	/* iobase is filled in during the device probe (as well as config 1&2)*/
 	if ((i128io.id&0x7) > 0) {
 		int i;
@@ -432,7 +438,8 @@ i128Init(mode)
 		iclock = 4;
 	else if (i128RamdacType == IBM528_DAC)
 		iclock = 128 / i128InfoRec.bitsPerPixel;
-	else if (i128MemoryType == I128_MEMORY_DRAM)
+	else if ((i128MemoryType == I128_MEMORY_DRAM) ||
+		 (i128MemoryType == I128_MEMORY_SGRAM))
 		iclock = 32 / i128InfoRec.bitsPerPixel; /* IBM526 DAC 32b bus */
 	else
 		iclock = 64 / i128InfoRec.bitsPerPixel; /* IBM524/526 DAC */
@@ -453,6 +460,8 @@ i128Init(mode)
 	tmp = 0x00000070;
 	if (i128DeviceType == I128_DEVICE_ID3)
 		tmp |= 0x00000100;
+	if (i128DACSyncOnGreen)
+		tmp |= 0x00000004;
 	i128mem.rbase_g[CRT_1CON] = tmp;
 	if ((i128MemoryType == I128_MEMORY_DRAM) ||
 	    (i128MemoryType == I128_MEMORY_SGRAM))
@@ -504,6 +513,11 @@ i128Init(mode)
 	   	i128io.vga_ctl &= 0x0000FF00;
    		i128io.vga_ctl |= 0x00000082;
    		outl(iR.iobase + 0x30, i128io.vga_ctl);
+
+		if (i128MemoryType == I128_MEMORY_SGRAM) {
+			outl(iR.iobase + 0x24, 0x21089030);
+			outl(iR.iobase + 0x24, 0xA1089030);
+		}
 
         	xf86DisableIOPorts(i128InfoRec.scrnIndex);
 

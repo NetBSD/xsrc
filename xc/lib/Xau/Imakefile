@@ -1,7 +1,8 @@
 XCOMM $XConsortium: Imakefile /main/27 1996/09/28 16:43:28 rws $
-XCOMM $XFree86: xc/lib/Xau/Imakefile,v 3.3 1996/12/23 06:00:28 dawes Exp $
+XCOMM $XFree86: xc/lib/Xau/Imakefile,v 3.3.2.1 1998/11/06 13:54:26 dawes Exp $
 #define DoNormalLib NormalLibXau
 #define DoSharedLib SharedLibXau
+#define DoExtraLib SharedLibXau
 #define DoDebugLib DebugLibXau
 #define DoProfileLib ProfileLibXau
 #define LibName Xau

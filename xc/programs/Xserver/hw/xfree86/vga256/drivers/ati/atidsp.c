@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atidsp.c,v 1.1.2.1 1998/02/01 16:41:50 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atidsp.c,v 1.1.2.2 1998/10/20 20:51:18 hohndel Exp $ */
 /*
  * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -90,7 +90,7 @@ ATIDSPProbe(void)
     ATIXCLKMaxRASDelay = GetBits(IO_Value, CTL_MEM_TRAS) + trp + 2;
     ATIDisplayFIFODepth = 32;
 
-    if (ATIChip < ATI_CHIP_264GT3)
+    if (ATIChip < ATI_CHIP_264VT4)
     {
         ATIXCLKPageFaultDelay += 2;
         ATIXCLKMaxRASDelay += 3;

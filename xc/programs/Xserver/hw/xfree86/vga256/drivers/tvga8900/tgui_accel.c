@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_accel.c,v 3.6.2.5 1998/01/18 10:35:38 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_accel.c,v 3.6.2.6 1998/10/31 14:41:09 hohndel Exp $ */
 
 /*
  * Copyright 1996 by Alan Hourihane, Wigan, England.
@@ -49,14 +49,19 @@ extern Bool ClipOn;
 #define MMIONAME(x)			x##MMIO
 
 #define TGUISync			MMIONAME(TGUISync)
+#define IMAGESync			MMIONAME(IMAGESync)
 #define TGUIAccelInit			MMIONAME(TGUIAccelInit)
 #define TGUISetupForFillRectSolid	MMIONAME(TGUISetupForFillRectSolid)
+#define IMAGESetupForFillRectSolid	MMIONAME(IMAGESetupForFillRectSolid)
 #define TGUI9685SetupForFillRectSolid	MMIONAME(TGUI9685SetupForFillRectSolid)
 #define TGUISubsequentFillRectSolid	MMIONAME(TGUISubsequentFillRectSolid)
+#define IMAGESubsequentFillRectSolid	MMIONAME(IMAGESubsequentFillRectSolid)
 #define TGUILinearSubsequentFillRectSolid	MMIONAME(TGUILinearSubsequentFillRectSolid)
 #define TGUISetClippingRectangle	MMIONAME(TGUISetClippingRectangle)
 #define TGUISetupForScreenToScreenCopy	MMIONAME(TGUISetupForScreenToScreenCopy)
 #define TGUISubsequentScreenToScreenCopy	MMIONAME(TGUISubsequentScreenToScreenCopy)
+#define IMAGESetupForScreenToScreenCopy	MMIONAME(IMAGESetupForScreenToScreenCopy)
+#define IMAGESubsequentScreenToScreenCopy	MMIONAME(IMAGESubsequentScreenToScreenCopy)
 #define TGUISubsequentBresenhamLine		MMIONAME(TGUISubsequentBresenhamLine)
 #define TGUISetupForCPUToScreenColorExpand	MMIONAME(TGUISetupForCPUToScreenColorExpand)
 #define TGUISubsequentCPUToScreenColorExpand	MMIONAME(TGUISubsequentCPUToScreenColorExpand)
@@ -68,13 +73,18 @@ extern Bool ClipOn;
 #endif
 
 void TGUISync();
+void IMAGESync();
 void TGUISetupForFillRectSolid();
 void TGUI9685SetupForFillRectSolid();
+void IMAGESetupForFillRectSolid();
+void IMAGESubsequentFillRectSolid();
 void TGUISubsequentFillRectSolid();
 void TGUILinearSubsequentFillRectSolid();
 void TGUISetClippingRectangle();
 void TGUISetupForScreenToScreenCopy();
 void TGUISubsequentScreenToScreenCopy();
+void IMAGESetupForScreenToScreenCopy();
+void IMAGESubsequentScreenToScreenCopy();
 void TGUISubsequentBresenhamLine();
 void TGUISetupForCPUToScreenColorExpand();
 void TGUISubsequentCPUToScreenColorExpand();
@@ -108,6 +118,7 @@ void TGUISubsequentImageWrite();
  */
 void TGUIAccelInit() {
 
+  if (!Is3Dchip) {
     xf86AccelInfoRec.Flags = BACKGROUND_OPERATIONS | PIXMAP_CACHE |
 				HARDWARE_PATTERN_MOD_64_OFFSET |
 				HARDWARE_PATTERN_SCREEN_ORIGIN |
@@ -174,6 +185,23 @@ void TGUIAccelInit() {
 	TGUISetupForScreenToScreenColorExpand;
     xf86AccelInfoRec.SubsequentScreenToScreenColorExpand = 
 	TGUISubsequentScreenToScreenColorExpand;
+  } else {
+    xf86AccelInfoRec.Flags = PIXMAP_CACHE | BACKGROUND_OPERATIONS |
+				ONLY_TWO_BITBLT_DIRECTIONS;
+
+    xf86AccelInfoRec.Sync = IMAGESync;
+
+    xf86GCInfoRec.PolyFillRectSolidFlags = NO_PLANEMASK | NO_TRANSPARENCY;
+
+    xf86AccelInfoRec.SetupForFillRectSolid = IMAGESetupForFillRectSolid;
+    xf86AccelInfoRec.SubsequentFillRectSolid = IMAGESubsequentFillRectSolid;
+
+    xf86GCInfoRec.CopyAreaFlags = NO_PLANEMASK | NO_TRANSPARENCY;
+    xf86AccelInfoRec.SetupForScreenToScreenCopy =
+       					IMAGESetupForScreenToScreenCopy;
+    xf86AccelInfoRec.SubsequentScreenToScreenCopy =
+	       				IMAGESubsequentScreenToScreenCopy;
+  }
 
     xf86AccelInfoRec.ServerInfoRec = &vga256InfoRec;
 
@@ -425,4 +453,90 @@ void TGUISubsequentScreenToScreenColorExpand(srcx, srcy, x, y, w, h)
 	TGUI_DEST_XY(x,y);
 	TGUI_DIM_XY(w,h);
 	TGUI_COMMAND(GE_BLT);
+}
+
+void
+IMAGESync()
+{
+    int count = 0, timeout = 0;
+    int busy;
+
+    for (;;) {
+	IMAGEBUSY(busy);
+	if (busy == 0) {
+	    return;
+	}
+	count++;
+	if (count == 10000000) {
+	    ErrorF("Trident: BitBLT engine time-out.\n");
+	    count = 9990000;
+	    timeout++;
+	    if (timeout == 8) {
+		/* Reset BitBLT Engine */
+		IMAGE_STATUS(0x00);
+		return;
+	    }
+	}
+    }
+}
+
+void
+IMAGESetupForScreenToScreenCopy( 
+				int xdir, int ydir, int rop,
+				unsigned int planemask, int transparency_color)
+{
+    blitxdir = 0;
+    if ((xdir < 0) || (ydir < 0)) blitxdir |= 1<<2;
+
+    IMAGE_OUT(0x20, 0x40000000 | GE_OP);
+    IMAGE_OUT(0x20, 0x70000000);
+    IMAGE_OUT(0x20, 0x60000000 |vga256InfoRec.displayWidth<<16 | vga256InfoRec.displayWidth);
+    IMAGE_OUT(0x6C, 0x00000000);
+    IMAGE_OUT(0x70, 0x00000000);
+    IMAGE_OUT(0x7C, 0x00000000);
+    IMAGE_OUT(0x20, 0x90000000 | TGUIRops_alu[rop]);
+}
+
+void
+IMAGESubsequentScreenToScreenCopy(int x1, int y1,
+					int x2, int y2, int w, int h)
+{
+    if (blitxdir) {
+	IMAGE_OUT(0x00, (y1+h-1)<<16 | (x1+w-1));
+	IMAGE_OUT(0x04, y1<<16 | x1);
+	IMAGE_OUT(0x08, (y2+h-1)<<16 | (x2+w-1));
+	IMAGE_OUT(0x0C, y2<<16 | x2);
+    } else {
+	IMAGE_OUT(0x00, y1<<16 | x1);
+	IMAGE_OUT(0x04, (y1+h-1)<<16 | (x1+w-1));
+	IMAGE_OUT(0x08, y2<<16 | x2);
+	IMAGE_OUT(0x0C, (y2+h-1)<<16 | (x2+w-1));
+    }
+
+    IMAGE_OUT(0x24, 0x80000000 | 1<<22 | 1<<7 | 1<<10 | blitxdir);
+    IMAGESync();
+}
+
+void
+IMAGESetupForFillRectSolid(int color, 
+				    int rop, unsigned int planemask)
+{
+    REPLICATE(color);
+    IMAGE_OUT(0x20, 0x60000000 |vga256InfoRec.displayWidth<<16 | vga256InfoRec.displayWidth);
+    IMAGE_OUT(0x6C, 0x00000000);
+    IMAGE_OUT(0x70, 0x00000000);
+    IMAGE_OUT(0x7C, 0x00000000);
+    IMAGE_OUT(0x20, 0x40000000 | GE_OP);
+    IMAGE_OUT(0x44, color);
+    IMAGE_OUT(0x48, color);
+    IMAGE_OUT(0x20, 0x90000000 | TGUIRops_alu[rop]);
+}
+
+void
+IMAGESubsequentFillRectSolid(int x, int y, int w, int h)
+{
+    IMAGE_OUT(0x08, y<<16 | x);
+    IMAGE_OUT(0x0C, (y+h-1)<<16 | x+w-1);
+    IMAGE_OUT(0x24, 0x80000000 | 1<<22 | 1<<10 | 1<<9);
+    IMAGESync();
 }

@@ -3,7 +3,7 @@
 
 <title>Information for DEC 21030 Users (aka TGA)
 <author>The XFree86 Project, Inc.
-<date>26th February 1998
+<date>23th October 1998
 <toc>
 
 <p>
@@ -19,20 +19,15 @@
 that matches other criteria.
 
 <item>Due to the above, Virtual Resolutions is not supported either.
-
-<item>VideoRam is currently limited to 2MB.
-
-<item>The 8plane 21030 is currently the only supported chipset. I don't
-have access to the 24plane or the 24plane3D chip.
 </enum>
 
 <item>The following options may be specified for the 21030 driver:
 <descrip>
-<tag>Option &dquot;dac_8_bit&dquot;</tag>
-	Turn on 8Bit BT485 RamDac.
-<tag>Option &dquot;dac_6_bit&dquot;</tag>
-	Turn on 6Bit BT485 RamDac.
-<tag>MemBase &dquot;0x???????&dquot;</tag>
+<tag>Option "dac_8_bit"</tag>
+	Turn on 8Bit BT485 RamDac (Multia and 8-plane TGA only).
+<tag>Option "dac_6_bit"</tag>
+	Turn on 6Bit BT485 RamDac (Multia and 8-plane TGA only).
+<tag>MemBase 0x???????</tag>
 	If the server does not detect the base address of the 21030, then
 	Check /proc/pci for the 21030 and look for the "Prefetchable 32 bit
 	memory at 0x???????" and enter this as your MemBase setting.
@@ -44,12 +39,13 @@ have access to the 24plane or the 24plane3D chip.
 </itemize>
 
 <sect> Additional Notes <p>
-The code for the 21030 as yet - has only been tested on DEC's UDB box, better
-known as the Multia, in a Linux environment.
+This code has been tested only under Linux on DEC's UDB box
+(Multia), the ZLZp-E1 (8-plane TGA), and the ZLXp-E2 (24-plane
+TGA).  The ZLXp-E3 (24-plane+3D TGA) is untested but should work.
 
 <p>
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DECtga.sgml,v 3.6.2.3 1998/02/26 20:11:25 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DECtga.sgml,v 3.6.2.5 1998/11/07 13:37:46 dawes Exp $
 </verb>
 
 </article>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.13 1996/12/23 06:43:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.13.2.1 1998/10/25 09:49:20 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -216,43 +216,52 @@ xf86ZoomViewport (pScreen, zoom)
 
   if (pScr->modes != pScr->modes->next)
   {
+    int frameX0, frameX1, frameY0, frameY1;
     pScr->modes = zoom > 0 ? pScr->modes->next : pScr->modes->prev;
 
-    if ((pScr->SwitchMode)(pScr->modes))
-    {
-      /* 
-       * adjust new frame for the displaysize
-       */
-      pScr->frameX0 = (pScr->frameX1 + pScr->frameX0 -pScr->modes->HDisplay)/2;
-      pScr->frameX1 = pScr->frameX0 + pScr->modes->HDisplay - 1;
+    /* 
+     * adjust new frame for the displaysize
+     */
+    frameX0 = pScr->frameX0;
+    frameX1 = pScr->frameX1;
+    frameY0 = pScr->frameY0;
+    frameY1 = pScr->frameY1;
+    pScr->frameX0 = (pScr->frameX1 + pScr->frameX0 -pScr->modes->HDisplay)/2;
+    pScr->frameX1 = pScr->frameX0 + pScr->modes->HDisplay - 1;
 
-      if (pScr->frameX0 < 0)
-	{
-	  pScr->frameX0 = 0;
-	  pScr->frameX1 = pScr->frameX0 + pScr->modes->HDisplay - 1;
-	}
-      else if (pScr->frameX1 >= pScr->virtualX)
-	{
-	  pScr->frameX0 = pScr->virtualX - pScr->modes->HDisplay;
-	  pScr->frameX1 = pScr->frameX0 + pScr->modes->HDisplay - 1;
-	}
+    if (pScr->frameX0 < 0)
+      {
+	pScr->frameX0 = 0;
+	pScr->frameX1 = pScr->frameX0 + pScr->modes->HDisplay - 1;
+      }
+    else if (pScr->frameX1 >= pScr->virtualX)
+      {
+	pScr->frameX0 = pScr->virtualX - pScr->modes->HDisplay;
+	pScr->frameX1 = pScr->frameX0 + pScr->modes->HDisplay - 1;
+      }
       
-      pScr->frameY0 = (pScr->frameY1 + pScr->frameY0 - pScr->modes->VDisplay)/2;
-      pScr->frameY1 = pScr->frameY0 + pScr->modes->VDisplay - 1;
+    pScr->frameY0 = (pScr->frameY1 + pScr->frameY0 - pScr->modes->VDisplay)/2;
+    pScr->frameY1 = pScr->frameY0 + pScr->modes->VDisplay - 1;
 
-      if (pScr->frameY0 < 0)
-	{
-	  pScr->frameY0 = 0;
-	  pScr->frameY1 = pScr->frameY0 + pScr->modes->VDisplay - 1;
-	}
-      else if (pScr->frameY1 >= pScr->virtualY)
-	{
-	  pScr->frameY0 = pScr->virtualY - pScr->modes->VDisplay;
-	  pScr->frameY1 = pScr->frameY0 + pScr->modes->VDisplay - 1;
-	}
-    }
-    else /* switch failed, so go back to old mode */
+    if (pScr->frameY0 < 0)
+      {
+	pScr->frameY0 = 0;
+	pScr->frameY1 = pScr->frameY0 + pScr->modes->VDisplay - 1;
+      }
+    else if (pScr->frameY1 >= pScr->virtualY)
+      {
+	pScr->frameY0 = pScr->virtualY - pScr->modes->VDisplay;
+	pScr->frameY1 = pScr->frameY0 + pScr->modes->VDisplay - 1;
+      }
+
+    if (!(pScr->SwitchMode)(pScr->modes)) {
+      /* switch failed, so go back to old mode */
       pScr->modes = zoom > 0 ? pScr->modes->prev : pScr->modes->next;
+      pScr->frameX0 = frameX0;
+      pScr->frameX1 = frameX1;
+      pScr->frameY0 = frameY0;
+      pScr->frameY1 = frameY1;
+    }
   }
 
   (pScr->AdjustFrame)(pScr->frameX0, pScr->frameY0);

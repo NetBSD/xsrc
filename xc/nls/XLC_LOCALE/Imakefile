@@ -1,8 +1,8 @@
-XCOMM $TOG: Imakefile /main/14 1997/06/11 06:46:23 kaleb $
+XCOMM $TOG: Imakefile /main/17 1998/05/21 07:51:40 kaleb $
 
 
 
-XCOMM $XFree86: xc/nls/XLC_LOCALE/Imakefile,v 1.5.2.2 1997/06/15 07:25:26 dawes Exp $
+XCOMM $XFree86: xc/nls/XLC_LOCALE/Imakefile,v 1.5.2.3 1998/10/21 06:40:44 dawes Exp $
 
   WCHAR32 = HasWChar32
    TBLDIR = $(XLOCALEDIR)/tbl_data
@@ -58,15 +58,17 @@ LTarget(iso8859-6)
 LTarget(iso8859-7)
 LTarget(iso8859-8)
 LTarget(iso8859-9)
+LTarget(iso8859-10)
+LTarget(iso8859-15)
 LTarget(ja)
 LTarget(ja.JIS)
 LTarget(ja.SJIS)
 LTarget(ko)
+LTarget(koi8-r)
 LTarget(zh)
 LTarget(zh_TW)
 LTarget(th_TH.TACTIS)
 LTarget(en_US.utf)
-LTarget(koi8-r)
 #ifdef UXPArchitecture
 LTarget(ja.U90)
 LTarget(ja.S90)
@@ -81,8 +83,10 @@ InstallNonExecFile(tab8859_6,$(TBLDIR))
 InstallNonExecFile(tab8859_7,$(TBLDIR))
 InstallNonExecFile(tab8859_8,$(TBLDIR))
 InstallNonExecFile(tab8859_9,$(TBLDIR))
+InstallNonExecFile(tab8859_10,$(TBLDIR))
+InstallNonExecFile(tab8859_15,$(TBLDIR))
 InstallNonExecFile(jis0208,$(TBLDIR))
 InstallNonExecFile(ksc5601,$(TBLDIR))
 InstallNonExecFile(gb2312,$(TBLDIR))
 InstallNonExecFile(jis0201,$(TBLDIR))
-InstallNonExecFile(tabkoi8-r,$(TBLDIR))
+InstallNonExecFile(tabkoi8_r,$(TBLDIR))

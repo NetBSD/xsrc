@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_storm.c,v 1.1.2.6 1998/02/26 13:59:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_storm.c,v 1.1.2.15 1998/10/31 14:41:00 hohndel Exp $ */
 
 #include "compiler.h"
 #include "vga256.h"
@@ -25,6 +25,7 @@ extern Bool MGAIsClipped;
 extern Bool MGAUsePCIRetry;
 extern Bool MGAUseBLKOpaqueExpansion;
 extern Bool MGAIsMillennium2;
+extern Bool MGATranscSolidFill;
 extern int  MGAMaxFastBlitY;
 
 static void MGANAME(SetupForScreenToScreenCopy)();
@@ -49,13 +50,17 @@ static CARD32 MGADashPattern[4];
 
 void MGANAME(AccelInit)() 
 {
-    if(MGAchipset == PCI_CHIP_MGA2164_AGP || MGAchipset == PCI_CHIP_MGA2164)
+    if(MGA_IS_2164(MGAchipset))
 	MGAIsMillennium2 = TRUE;
 
     if(OFLG_ISSET(OPTION_PCI_RETRY, &vga256InfoRec.options))
     	MGAUsePCIRetry = TRUE; 
 
-    MGAUseBLKOpaqueExpansion = (MGAchipset != PCI_CHIP_MGA1064);
+    MGAUseBLKOpaqueExpansion = (MGAchipset != PCI_CHIP_MGA1064 &&
+    				!MGA_IS_GCLASS(MGAchipset));
+
+    MGATranscSolidFill =       (MGA_IS_G200(MGAchipset) ||
+				MGA_IS_2164(MGAchipset));
 
     xf86AccelInfoRec.Flags = 	BACKGROUND_OPERATIONS | 
 				COP_FRAMEBUFFER_CONCURRENCY |
@@ -136,6 +141,40 @@ void MGANAME(AccelInit)()
     xf86AccelInfoRec.FillRectStippled = MGAFillRectStippled;
     xf86AccelInfoRec.FillRectOpaqueStippled = MGAFillRectStippled; 
 
+    if (MGA_IS_G100(MGAchipset)) {
+        /* the G100 gets unhappy if we use planemasks... */
+	xf86GCInfoRec.CopyAreaFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.FillPolygonSolidFlags |= NO_PLANEMASK;
+
+	xf86GCInfoRec.PolyRectangleSolidZeroWidthFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.PolyLineSolidZeroWidthFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.PolySegmentSolidZeroWidthFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.PolyLineDashedZeroWidthFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.PolySegmentDashedZeroWidthFlags |= NO_PLANEMASK;
+
+	xf86GCInfoRec.PolyGlyphBltNonTEFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.ImageGlyphBltNonTEFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.PolyGlyphBltTEFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.ImageGlyphBltTEFlags |= NO_PLANEMASK;
+
+	xf86GCInfoRec.FillSpansSolidFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.FillSpansTiledFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.FillSpansStippledFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.FillSpansOpaqueStippledFlags |= NO_PLANEMASK;
+
+	xf86GCInfoRec.SecondaryPolyFillRectOpaqueStippledFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.SecondaryPolyFillRectStippledFlags |= NO_PLANEMASK;
+
+	xf86GCInfoRec.PolyFillRectSolidFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.PolyFillRectTiledFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.PolyFillRectStippledFlags |= NO_PLANEMASK;
+	xf86GCInfoRec.PolyFillRectOpaqueStippledFlags |= NO_PLANEMASK;
+
+	xf86GCInfoRec.PolyFillArcSolidFlags |= NO_PLANEMASK;
+
+	xf86AccelInfoRec.ColorExpandFlags |= NO_PLANEMASK;
+    }
+
 #if PSZ == 24
     /* Shotgun approach.  XAA should do some of these on it's own
 	but it isn't getting all of them */
@@ -183,6 +222,14 @@ void MGANAME(AccelInit)()
 
 	if(cacheEnd > (vga256InfoRec.videoRam * 1024))
 	    cacheEnd = (vga256InfoRec.videoRam * 1024);
+
+	/* Mystique only: Reserve 1K at top of memory for hardware cursor */
+	if (OFLG_ISSET(OPTION_HW_CURSOR, &vga256InfoRec.options) &&
+	 ((MGAchipset == PCI_CHIP_MGA1064) || (MGA_IS_GCLASS(MGAchipset))) &&
+	    (cacheEnd > (vga256InfoRec.videoRam-1)*1024))
+	{
+	    cacheEnd = (vga256InfoRec.videoRam-1)*1024;
+	}
 
 	if(cacheEnd > maxFastBlitMem) {
 	     MGAMaxFastBlitY = maxFastBlitMem / 
@@ -233,8 +280,22 @@ CARD32 MGAAtypeNoBLK[16] = {
    MGADWG_RSTR | 0x00070000, MGADWG_RPL  | 0x000f0000
 };
 
+Bool MGAIsClipped = FALSE;
+Bool MGAUsePCIRetry = FALSE;
+Bool MGAUseBLKOpaqueExpansion;
+Bool MGAIsMillennium2 = FALSE;
+int  MGAMaxFastBlitY = 0;
+Bool MGATranscSolidFill = FALSE;
+Bool MGAIsSDRAM = FALSE;
+
 void 
 MGAStormAccelInit() {
+    /*
+     * for SDRAM cards we cannot use block mode
+     */
+    if (MGAIsSDRAM)
+    	MGAAtype[3] = MGAAtypeNoBLK[3];
+
     switch( vgaBitsPerPixel )
     {
     case 8:
@@ -251,12 +312,6 @@ MGAStormAccelInit() {
     	break;
     }
 }
-
-Bool MGAIsClipped = FALSE;
-Bool MGAUsePCIRetry = FALSE;
-Bool MGAUseBLKOpaqueExpansion;
-Bool MGAIsMillennium2 = FALSE;
-int  MGAMaxFastBlitY = 0;
 
 void 
 MGAStormSync()
@@ -277,6 +332,9 @@ void
 MGAStormEngineInit()
 {
     CARD32 maccess = 0;
+    				
+    if(MGA_IS_G100(MGAchipset))
+    	maccess = 1 << 14;	/* enable JEDEC */
     
     switch( vgaBitsPerPixel )
     {
@@ -284,13 +342,13 @@ MGAStormEngineInit()
         break;
     case 16:
 	/* set 16 bpp, turn off dithering, turn on 5:5:5 pixels */
-        maccess = 1 + (1 << 30) + (1 << 31);
+        maccess |= 1 + (1 << 30) + (1 << 31);
         break;
     case 24:
-        maccess = 3;
+        maccess |= 3;
         break;
     case 32:
-        maccess = 2;
+        maccess |= 2;
         break;
     }
 
@@ -298,7 +356,8 @@ MGAStormEngineInit()
     OUTREG(MGAREG_PITCH, vga256InfoRec.displayWidth);
     OUTREG(MGAREG_YDSTORG, MGAydstorg);
     OUTREG(MGAREG_MACCESS, maccess);
-    OUTREG(MGAREG_PLNWT, ~0);
+    if( !(MGA_IS_G100(MGAchipset) && MGAIsSDRAM) )
+	    OUTREG(MGAREG_PLNWT, ~0);
     OUTREG(MGAREG_OPMODE, MGAOPM_DMA_BLIT);
 
     /* put clipping in a know state */
@@ -336,11 +395,10 @@ MGANAME(SetupForScreenToScreenCopy)(xdir, ydir, rop, planemask, trans_color)
     if(ydir == -1) BltScanDirection |= BLIT_UP;
     if(xdir == -1) BltScanDirection |= BLIT_LEFT;
 
-    if(BltScanDirection) {
-    	WAITFIFO(4);
+    WAITFIFO(4);
+    if(xdir == -1) {
     	OUTREG(MGAREG_DWGCTL, MGAAtypeNoBLK[rop] | MGADWG_SHIFTZERO | 
 			MGADWG_BITBLT | MGADWG_BFCOL);
-    	OUTREG(MGAREG_SGN, BltScanDirection);
     } else {
 	if(MGAusefbitblt && (rop == GXcopy)) {
 	    if(MGAIsMillennium2)
@@ -350,12 +408,13 @@ MGANAME(SetupForScreenToScreenCopy)(xdir, ydir, rop, planemask, trans_color)
 	      xf86AccelInfoRec.SubsequentScreenToScreenCopy = 
 		MGANAME(SubsequentScreenToScreenCopy_FastBlit_Broken);
 	}
-    	WAITFIFO(3);
     	OUTREG(MGAREG_DWGCTL, MGAAtypeNoBLK[rop] | MGADWG_SHIFTZERO | 
-			MGADWG_BITBLT | MGADWG_SGNZERO | MGADWG_BFCOL);
+			MGADWG_BITBLT | MGADWG_BFCOL);
     }
+    OUTREG(MGAREG_SGN, BltScanDirection);
 #if PSZ != 24
-    OUTREG(MGAREG_PLNWT, planemask);
+    if(! MGA_IS_G100(MGAchipset))
+	    OUTREG(MGAREG_PLNWT, planemask);
 #endif
     OUTREG(MGAREG_AR5, ydir * xf86AccelInfoRec.FramebufferWidth);
 }
@@ -391,6 +450,11 @@ MGANAME(SubsequentScreenToScreenCopy_FastBlit)(srcX, srcY, dstX, dstY, w, h)
 {
     register int start, end;
 
+    if(BltScanDirection & BLIT_UP) {
+        srcY += h - 1;
+        dstY += h - 1;
+    }
+
     w--;
     start = XYADDRESS(srcX, srcY);
     end = start + w;
@@ -413,13 +477,13 @@ MGANAME(SubsequentScreenToScreenCopy_FastBlit)(srcX, srcY, dstX, dstY, w, h)
 	}
 	
     	WAITFIFO(6);
-    	OUTREG(MGAREG_DWGCTL, 0x040A600C);
+    	OUTREG(MGAREG_DWGCTL, 0x040A400C);
     	OUTREG(MGAREG_AR0, end);
     	OUTREG(MGAREG_AR3, start);
     	OUTREG(MGAREG_FXBNDRY, ((dstX + w) << 16) | dstX);
     	OUTREG(MGAREG_YDSTLEN + MGAREG_EXEC, (dstY << 16) | h);
     	OUTREG(MGAREG_DWGCTL, MGAAtypeNoBLK[GXcopy] | MGADWG_SHIFTZERO | 
-			MGADWG_BITBLT | MGADWG_SGNZERO | MGADWG_BFCOL);
+			MGADWG_BITBLT | MGADWG_BFCOL);
 	return;
     }  
 
@@ -440,6 +504,11 @@ MGANAME(SubsequentScreenToScreenCopy_FastBlit_Broken)(srcX, srcY, dstX, dstY, w,
     int srcX, srcY, dstX, dstY, w, h;
 {
     register int start, end;
+
+    if(BltScanDirection & BLIT_UP) {
+        srcY += h - 1;
+        dstY += h - 1;
+    }
 
     w--;
     start = XYADDRESS(srcX, srcY);
@@ -481,23 +550,23 @@ MGANAME(SubsequentScreenToScreenCopy_FastBlit_Broken)(srcX, srcY, dstX, dstY, w,
 	
     	    WAITFIFO(8);
             OUTREG(MGAREG_CXRIGHT, cxright);
-    	    OUTREG(MGAREG_DWGCTL, 0x040A600C);
+    	    OUTREG(MGAREG_DWGCTL, 0x040A400C);
     	    OUTREG(MGAREG_AR0, end);
     	    OUTREG(MGAREG_AR3, start);
     	    OUTREG(MGAREG_FXBNDRY, (fxright << 16) | dstX);
     	    OUTREG(MGAREG_YDSTLEN + MGAREG_EXEC, (dstY << 16) | h);
     	    OUTREG(MGAREG_DWGCTL, MGAAtypeNoBLK[GXcopy] | MGADWG_SHIFTZERO | 
-			MGADWG_BITBLT | MGADWG_SGNZERO | MGADWG_BFCOL);
+			MGADWG_BITBLT | MGADWG_BFCOL);
             OUTREG(MGAREG_CXRIGHT, 0xFFFF);
 	} else {
      	    WAITFIFO(6);
-    	    OUTREG(MGAREG_DWGCTL, 0x040A600C);
+    	    OUTREG(MGAREG_DWGCTL, 0x040A400C);
     	    OUTREG(MGAREG_AR0, end);
     	    OUTREG(MGAREG_AR3, start);
     	    OUTREG(MGAREG_FXBNDRY, ((dstX + w) << 16) | dstX);
     	    OUTREG(MGAREG_YDSTLEN + MGAREG_EXEC, (dstY << 16) | h);
     	    OUTREG(MGAREG_DWGCTL, MGAAtypeNoBLK[GXcopy] | MGADWG_SHIFTZERO | 
-			MGADWG_BITBLT | MGADWG_SGNZERO | MGADWG_BFCOL);
+			MGADWG_BITBLT | MGADWG_BFCOL);
 	}
 	return;
     }  
@@ -543,14 +612,15 @@ MGANAME(SetupForFillRectSolid)(color, rop, planemask)
     SolidLineCMD = MGADWG_LINE_OPEN | MGADWG_SOLID | MGADWG_SHIFTZERO | 
 		   MGADWG_BFCOL | MGAAtypeNoBLK[rop];
 
-    if(MGAIsMillennium2) FilledRectCMD |= MGADWG_TRANSC;
+    if(MGATranscSolidFill) FilledRectCMD |= MGADWG_TRANSC;
 
     REPLICATE24(color);
     REPLICATE(planemask);
     WAITFIFO(3);
     OUTREG(MGAREG_FCOL, color);
 #if PSZ != 24
-    OUTREG(MGAREG_PLNWT, planemask);
+    if(! MGA_IS_G100(MGAchipset))
+	    OUTREG(MGAREG_PLNWT, planemask);
 #endif
     OUTREG(MGAREG_DWGCTL, FilledRectCMD);
 }
@@ -663,7 +733,8 @@ MGANAME(SetupForCPUToScreenColorExpand)(bg, fg, rop, planemask)
 
     OUTREG(MGAREG_FCOL, fg);
 #if PSZ != 24
-    OUTREG(MGAREG_PLNWT, planemask);
+    if(! MGA_IS_G100(MGAchipset))
+	    OUTREG(MGAREG_PLNWT, planemask);
 #endif
     OUTREG(MGAREG_DWGCTL, mgaCMD);
 }
@@ -720,7 +791,8 @@ MGANAME(SetupForScreenToScreenColorExpand)(bg, fg, rop, planemask)
 
     OUTREG(MGAREG_FCOL, fg);
 #if PSZ != 24
-    OUTREG(MGAREG_PLNWT, planemask);
+    if(! MGA_IS_G100(MGAchipset))
+	    OUTREG(MGAREG_PLNWT, planemask);
 #endif
     OUTREG(MGAREG_AR5, xf86AccelInfoRec.FramebufferWidth * PSZ);
     OUTREG(MGAREG_DWGCTL, mgaCMD);
@@ -810,7 +882,8 @@ MGANAME(SetupForDashedLine)(fg, bg, rop, planemask, size)
 
     OUTREG(MGAREG_DWGCTL, DashCMD);
 #if PSZ != 24
-    OUTREG(MGAREG_PLNWT, planemask);
+    if(! MGA_IS_G100(MGAchipset))
+	    OUTREG(MGAREG_PLNWT, planemask);
 #endif
     OUTREG(MGAREG_FCOL, fg);
 
@@ -831,10 +904,9 @@ MGANAME(SubsequentDashedBresenhamLine)(x1, y1, octant, err, e1, e2, len ,start)
     	WAITFIFO(5);
     	OUTREG(MGAREG_DWGCTL, NiceDashCMD);
 	if(octant & XDECREASING) {
-	   len = x1 - len + 1;
     	   OUTREG(MGAREG_SHIFT, ((-y1 & 0x07) << 4) | 
-				((len - start) & 0x07)); 
-   	   OUTREG(MGAREG_FXBNDRY, ((x1 + 1) << 16) | len);
+				((7 - start - x1) & 0x07)); 
+   	   OUTREG(MGAREG_FXBNDRY, ((x1 + 1) << 16) | (x1 - len + 1));
     	} else {
     	   OUTREG(MGAREG_SHIFT, (((1 - y1) & 0x07) << 4) | 
 				((start - x1) & 0x07)); 
@@ -902,7 +974,8 @@ MGANAME(SetupFor8x8PatternColorExpand)(patternx, patterny, bg, fg,
 
     OUTREG(MGAREG_FCOL, fg);
 #if PSZ != 24
-    OUTREG(MGAREG_PLNWT, planemask);
+    if(! MGA_IS_G100(MGAchipset))
+	    OUTREG(MGAREG_PLNWT, planemask);
 #endif
     OUTREG(MGAREG_DWGCTL, PatternRectCMD);
     OUTREG(MGAREG_PAT0, patternx);

@@ -1,5 +1,5 @@
 /* $XConsortium: menu.c /main/66 1996/12/01 23:46:59 swick $ */
-/* $XFree86: xc/programs/xterm/menu.c,v 3.18 1998/06/04 16:43:58 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/menu.c,v 3.9.2.3 1998/10/20 20:51:47 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -27,13 +27,10 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
-#ifdef HAVE_CONFIG_H
-#include <xtermcfg.h>
-#endif
+#include <ptyx.h>
+#include <data.h>
+#include <menu.h>
 
-#include "ptyx.h"
-#include "data.h"
-#include "menu.h"
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
 #include <X11/Xmu/CharSet.h>
@@ -47,7 +44,7 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Xos.h>
 #endif
 
-#include "xterm.h"
+#include <xterm.h>
 
 Arg menuArgs[2] = {{ XtNleftBitmap, (XtArgVal) 0 },
 		   { XtNsensitive, (XtArgVal) 0 }};

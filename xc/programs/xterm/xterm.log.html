@@ -20,7 +20,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF   *
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
  *****************************************************************************
-  $XFree86: xc/programs/xterm/xterm.log.html,v 1.8 1998/07/04 14:48:31 robin Exp $
+  $XFree86: xc/programs/xterm/xterm.log.html,v 1.1.2.8 1998/11/01 09:59:26 hohndel Exp $
   -->
 <HTML>
 <HEAD>
@@ -41,6 +41,13 @@ in the XFree86 CHANGELOG (found in the unbundled tree,
 xc/programs/Xserver/hw/xfree86).
 
 <UL>
+<LI><A HREF="#xterm_88">Patch #88 - 1998/10/31 - XFree86 3.9Nk and 3.3.2h</A>
+<LI><A HREF="#xterm_87">Patch #87 - 1998/10/21 - XFree86 3.9Nj and 3.3.2f</A>
+<LI><A HREF="#xterm_86">Patch #86 - 1998/10/14 - XFree86 3.9Nj and 3.3.2e</A>
+<LI><A HREF="#xterm_85">Patch #85 - 1998/10/12 - XFree86 3.9Nj and 3.3.2e</A>
+<LI><A HREF="#xterm_84">Patch #84 - 1998/10/9 - XFree86 3.9Ni and 3.3.2e</A>
+<LI><A HREF="#sync_83">Resync #83 - 1998/10/7 - XFree86 3.3.2e</A>
+<LI><A HREF="#xterm_83">Patch #83 - 1998/8/25 - XFree86 3.9Nb</A>
 <LI><A HREF="#xterm_82">Patch #82 - 1998/7/15 - XFree86 3.9Aj</A>
 <LI><A HREF="#xterm_81">Patch #81 - 1998/7/14 - XFree86 3.9Aj</A>
 <LI><A HREF="#xterm_80">Patch #80 - 1998/6/29 - XFree86 3.9Ai</A>
@@ -124,6 +131,120 @@ xc/programs/Xserver/hw/xfree86).
 <LI><A HREF="#xterm_02">Patch #2 - 1996/1/7</A>
 <LI><A HREF="#xterm_01">Patch #1 - 1996/1/6</A>
 </UL>
+
+<H1><A NAME="xterm_88">Patch #88 - 1998/10/31 - XFree86 3.9Nk and 3.3.2h</A></H1>
+This refines my #85 patch by checking for a case where the font server
+returns a bold font that does not quite correspond to the normal font.
+When I asked for a bold version of the 6x12 font, the font server
+returned a near equivalent where the ascent and descent values did not
+match, causing xterm to leave lines across the display.
+This patch makes xterm reject that type of mismatch, falling back to the
+old font behavior.
+
+<H1><A NAME="xterm_87">Patch #87 - 1998/10/21 - XFree86 3.9Nj and 3.3.2f</A></H1>
+This corrects a problem reported by Stefan Dalibor.  My table entries for the
+<em>printerExtent</em> and <em>printerFormFeed</em> resources used the wrong
+types for sizeof, causing the printer to not work properly on some platforms
+because the <em>printAttributes</em> resource was overwritten (e.g., Digital Unix with DEC Alpha).
+<p>
+I reviewed all of the resource table entries and fixed a potential problem with
+<em>resizeGravity</em>, which was typed as <em>int</em> rather than
+<em>XtGravity</em>.
+
+<H1><A NAME="xterm_86">Patch #86 - 1998/10/14 - XFree86 3.9Nj and 3.3.2e</A></H1>
+A small fix: when switching to/from the continuous mouse reporting mode,
+the event mask was incorrect if xterm was built under X11R5 because the
+original data was saved under an ifdef for active-icon.
+
+<H1><A NAME="xterm_85">Patch #85 - 1998/10/12 - XFree86 3.9Nj and 3.3.2e</A></H1>
+Some cleanup (I noticed the pixel droppings a few months ago after getting a
+new 17" monitor):
+<ul>
+	<li>split-out the functions that load/reload fonts for xterm as new
+	  file fontutils.c to extend them to support automatic loading of
+	  bold font corresponding to the normal font.  Adapted logic from
+	  EMU 1.3 for this purpose.  This fixes most occurrences of pixel
+	  droppings from bold characters.
+
+	<li>modified by renaming variables and adding casts to permit compile
+	  with g++.
+
+	<li>modify headers so they can all be compiled without order
+	  dependencies, and use bracketed rather than quoting includes to allow
+	  compile from separate directory.
+
+	<li>renamed xtermm terminfo entry to xterm-mono, to avoid conflict with
+	  Solaris entry now in ncurses.
+</ul>
+
+<H1><A NAME="xterm_84">Patch #84 - 1998/10/9 - XFree86 3.9Ni</A> and 3.3.2e</H1>
+Several small fixes and enhancements, including a patch from
+Bjorn Helgaas:
+<ul>
+	<li>correct initialization of TERMCAP environment variable, which 
+	  was frequently set to garbage on non-Linux systems because 
+	  "termcap" and "newtc" contained random data from the stack. 
+ 
+	<li>remove the LINEWRAPPED attribute from lines as they are cleared. 
+	  Previously, the attribute was set but never cleared. 
+ 
+	<li>make word and line selections work even when lines are wrapped 
+	  by xterm.  Previously, selections were limited to one screen line. 
+</ul>
+as well as
+<ul>
+	<li>modify logic for line-wrapping to reset the associated flag if
+	  the application deletes a character. This fixes a problem reported
+	  by Bjorn Helgaas where word/line selection would still wrap even
+	  after deleting characters from the first line.
+	<li>add kll/kH capabilities to xterm-xfree86 entries in termcap and
+	  terminfo (request by Michael Schroeder).
+	<li>shorten descriptions in termcap to make resolved entries all
+	  shorter than 1023 character limit.
+	<li>use DECSTR control sequence to shorten initialization and reset
+	  strings in xterm-xfree86 termcap and terminfo.
+	<li>use rmul/smul and rmir/smir in xterm-r5 terminfo to match termcap.
+	<li>correct typos in initialization and reset strings in xterm-r5
+	  termcap and terminfo.
+	<li>disable special translations of key symbols (the backarrow key,
+	  the editing keypad and the keypad "+") when a modifier other than
+	  shift, control or numlock is used.  This makes xterm handle the meta
+	  key as expected by people using emacs (reported by Pete Harlan
+	  &lt;harlan@pointofchoice.com&gt; in linux.debian.user newsgroup).
+</ul>
+
+<H1><A NAME="sync_83">Resync #83 - 1998/10/7 - XFree86 3.3.2e</A></H1>
+
+Merge changes through patch #83 with the 3.3.2e version.  This follows a
+patch by Matthieu Herrb &lt;matthieu@laas.fr&gt; to add checks for nonnull
+return from malloc.
+
+<H1><A NAME="xterm_83">Patch #83 - 1998/8/25 - XFree86 3.9Nb</A></H1>
+Several small fixes and enhancements:
+<ul>
+	<li>add configure test to infer if xterm should be installed setuid
+	  based on previously installed xterm (reported by Stephen Marley
+	  and Stefan Dalibor).
+
+	<li>integrate/extend patch by Jason Bacon to implement quasi-continuous
+	  mouse reporting.
+
+	<li>correct control sequences transmitted by function keys F1 to F4
+	  when sunFunctionKeys resource is true (it was still using the
+	  VT100 control sequences).
+
+	<li>modify handling of backarrow key so that the control modifier
+	  toggles the backspace/delete interpretation set by the
+	  backarrowKey resource.
+
+	<li>limit the row and column values used to report mouse position.
+</ul>
+
+From resync with XFree86 3.9Nb:
+<ul>
+	<li>add support for the VSTATUS control character (patch by
+	  Robert Earl &lt;rearl@teleport.com&gt;).
+</ul>
 
 <H1><A NAME="xterm_82">Patch #82 - 1998/7/15 - XFree86 3.9Aj</A></H1>
 Bug fix for patch #81:

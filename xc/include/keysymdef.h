@@ -1,15 +1,9 @@
-/* $TOG: keysymdef.h /main/25 1997/06/21 10:54:51 kaleb $ */
+/* $TOG: keysymdef.h /main/28 1998/05/22 16:18:01 kaleb $ */
 
 /***********************************************************
-Copyright (c) 1987, 1994  X Consortium
+Copyright 1987, 1994, 1998  The Open Group
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+All Rights Reserved.
 
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
@@ -17,15 +11,15 @@ in all copies or substantial portions of the Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR
+IN NO EVENT SHALL THE OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR
 OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
-Except as contained in this notice, the name of the X Consortium shall
+Except as contained in this notice, the name of The Open Group shall
 not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
-from the X Consortium.
+from The Open Group.
 
 
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -75,6 +69,7 @@ SOFTWARE.
 /* International & multi-key character composition */
 
 #define XK_Multi_key		0xFF20  /* Multi-key character compose */
+#define XK_Codeinput		0xFF37
 #define XK_SingleCandidate	0xFF3C
 #define XK_MultipleCandidate	0xFF3D
 #define XK_PreviousCandidate	0xFF3E
@@ -98,6 +93,7 @@ SOFTWARE.
 #define XK_Kana_Shift		0xFF2E  /* Kana Shift */
 #define XK_Eisu_Shift		0xFF2F  /* Alphanumeric Shift */
 #define XK_Eisu_toggle		0xFF30  /* Alphanumeric toggle */
+#define XK_Kanji_Bangou		0xFF37  /* Codeinput */
 #define XK_Zen_Koho		0xFF3D	/* Multiple/All Candidate(s) */
 #define XK_Mae_Koho		0xFF3E	/* Previous Candidate */
 
@@ -760,6 +756,17 @@ SOFTWARE.
 #define XK_utilde              0x3fd
 #define XK_umacron             0x3fe
 #endif /* XK_LATIN4 */
+
+/*
+ * Latin-9 (a.k.a. Latin-0)
+ * Byte 3 = 19
+ */
+
+#ifdef XK_LATIN9
+#define XK_OE                  0x13bc
+#define XK_oe                  0x13bd
+#define XK_Ydiaeresis          0x13be
+#endif /* XK_LATIN9 */
 
 /*
  * Katakana
@@ -1570,3 +1577,19 @@ SOFTWARE.
 #define XK_Korean_Won					0xeff
 
 #endif /* XK_KOREAN */
+
+#ifdef XK_CURRENCY
+#define XK_EcuSign					0x20a0
+#define XK_ColonSign					0x20a1
+#define XK_CruzeiroSign					0x20a2
+#define XK_FFrancSign					0x20a3
+#define XK_LiraSign					0x20a4
+#define XK_MillSign					0x20a5
+#define XK_NairaSign					0x20a6
+#define XK_PesetaSign					0x20a7
+#define XK_RupeeSign					0x20a8
+#define XK_WonSign					0x20a9
+#define XK_NewSheqelSign				0x20aa
+#define XK_DongSign					0x20ab
+#define XK_EuroSign					0x20ac
+#endif

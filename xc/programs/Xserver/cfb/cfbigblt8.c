@@ -26,10 +26,12 @@ in this Software without prior written authorization from the X Consortium.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
+/* $XFree86: xc/programs/Xserver/cfb/cfbigblt8.c,v 1.1.1.1.12.2 1998/11/05 19:38:31 hohndel Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"
 #include	"Xproto.h"
+#include	"mi.h"
 #include	"cfb.h"
 #include	"fontstruct.h"
 #include	"dixfontstr.h"
@@ -60,6 +62,16 @@ cfbImageGlyphBlt8 (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
     int		and;
     int		pm;
     cfbPrivGC	    *priv;
+
+    /*
+     * We can't avoid GC validations if calling mi functions.
+     */
+    if ((pGC->ops->PolyFillRect == miPolyFillRect) ||
+	(pGC->ops->PolyGlyphBlt == miPolyGlyphBlt))
+    {
+	miImageGlyphBlt(pDrawable, pGC, x, y, nglyph, ppci, pglyphBase);
+	return;
+    }
 
     QueryGlyphExtents(pGC->font, ppci, (unsigned long)nglyph, &info);
 

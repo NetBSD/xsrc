@@ -1,4 +1,7 @@
 XCOMM $XConsortium: Imakefile /main/2 1996/11/16 15:20:42 rws $
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/lib/Xp/Imakefile,v 1.1.1.1.2.2 1998/11/06 16:54:37 hohndel Exp $
 /******************************************************************************
  ******************************************************************************
  **
@@ -40,6 +43,7 @@ XCOMM $XConsortium: Imakefile /main/2 1996/11/16 15:20:42 rws $
 
 #define DoNormalLib	NormalLibXp
 #define DoSharedLib	SharedLibXp
+#define DoExtraLib	SharedLibXp
 #define DoDebugLib	DebugLibXp
 #define DoProfileLib	ProfileLibXp
 #define LibName		Xp

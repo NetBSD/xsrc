@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_teblt8.c,v 1.3 1997/01/18 06:56:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_teblt8.c,v 1.3.2.1 1998/10/21 10:44:47 dawes Exp $ */
 
 /*
  * Copyright (c) 1989  X Consortium
@@ -43,11 +43,11 @@
  * 8/16/24 bit displays, in Copy mode with no clipping.
  */
 
-#include        "vga256.h"
 #include	"xf86.h"
+#include	"xf86_OSlib.h"
+#include        "vga256.h"
 #include	"vga.h"		       /* For vgaBase. */
 #include        "vgaBank.h"
-#include	"xf86_OSlib.h"
 
 #include "compiler.h"
 

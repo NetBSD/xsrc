@@ -7,9 +7,9 @@
 
 
 
-				   Copyright
+                                   Copyright
 
-			   The XFree86 Project, Inc.
+                           The XFree86 Project, Inc.
 
 
 
@@ -61,13 +61,13 @@ The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
 
-Copyright
+Copyright                                                                     1
 
 
 
 
 
-Copyright
+Copyright                                                                     2
 
 
 
@@ -133,7 +133,7 @@ the University of California, Lawrence Berkeley Laboratory.
 
 
 
-Copyright
+Copyright                                                                     3
 
 
 
@@ -199,7 +199,7 @@ EVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 
 
 
-Copyright
+Copyright                                                                     4
 
 
 
@@ -265,7 +265,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOURCE CODE.
 
 
 
-Copyright
+Copyright                                                                     5
 
 
 
@@ -335,7 +335,7 @@ Copyright
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
@@ -391,8 +391,8 @@ Copyright
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/COPYRIGHT,v 3.16.2.2 1998/01/25 04:06:33 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/COPYRIGHT,v 3.16.2.4 1998/11/14 06:46:39 dawes Exp $

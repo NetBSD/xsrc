@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.47.2.8 1998/02/24 19:05:53 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.47.2.9 1998/10/18 20:42:10 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -77,6 +77,7 @@ typedef struct _DispM {
 #define V_PCSYNC    0x0080
 #define V_NCSYNC    0x0100
 #define V_HSKEW     0x0200	/* hskew provided */
+#define V_BCAST     0x0400
 #define V_PIXMUX    0x1000
 #define V_DBLCLK    0x2000
 #define V_CLKDIV2   0x4000

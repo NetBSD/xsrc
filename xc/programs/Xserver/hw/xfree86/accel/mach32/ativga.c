@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/ativga.c,v 3.6 1996/12/23 06:38:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/ativga.c,v 3.6.2.1 1998/10/20 20:51:13 hohndel Exp $ */
 /***************************************************************************
  * Start of VGA font saving and restoration code.
  * Created: Sun Jun 27 12:50:09 1993 by faith@cs.unc.edu
@@ -120,10 +120,10 @@ void mach32SaveVGAInfo(screen_idx)
     */
 
    /* Unlock ATI specials */
-   outb(ATIExtReg, (((b8_save = inATI(0xb8)) & 0xC0) << 8) | 0xb8);
+   outw(ATIExtReg, (((b8_save = inATI(0xb8)) & 0xC0) << 8) | 0xb8);
 
    b2_save = inATI(0xb2);
-   outb(ATIExtReg, 0x00b2);	/* segment select 0 */
+   outw(ATIExtReg, 0x00b2);	/* segment select 0 */
 
    vgaNewVideoState = vgaHWSave(vgaNewVideoState, sizeof(SaveBlock));
 

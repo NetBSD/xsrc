@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/28 05:13:04 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.7 1998/02/25 12:20:30 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.15 1998/11/13 13:00:44 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -64,7 +64,7 @@ LinuxDocReadmeTarget(DECtga)
 LinuxDocReadmeTarget(Mach32)
 LinuxDocReadmeTarget(Mach64)
 LinuxDocReadmeTarget(MGA)
-LinuxDocReadmeTarget(NV1)
+LinuxDocReadmeTarget(NVIDIA)
 LinuxDocReadmeTarget(Oak)
 LinuxDocReadmeTarget(P9000)
 LinuxDocReadmeTarget(Video7)
@@ -79,12 +79,15 @@ LinuxDocReadmeTarget(agx)
 LinuxDocReadmeTarget(ati)
 LinuxDocReadmeTarget(chips)
 LinuxDocReadmeTarget(cirrus)
+LinuxDocReadmeTarget(cyrix)
+LinuxDocReadmeTarget(epson)
 LinuxDocReadmeTarget(mouse)
+LinuxDocReadmeTarget(neo)
+LinuxDocReadmeTarget(rendition)
+LinuxDocReadmeTarget(3DLabs)
 LinuxDocReadmeTarget(trident)
 LinuxDocReadmeTarget(tseng)
-#if BuildAllDocs
 LinuxDocReadmeTarget(fbdev)
-#endif
 
 /* Main docs */
 LinuxDocTargetLong(CPYRIGHT.sgml,COPYRIGHT,COPYRIGHT)

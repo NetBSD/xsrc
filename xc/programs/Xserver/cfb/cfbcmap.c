@@ -1,5 +1,5 @@
 /* $XConsortium: cfbcmap.c,v 4.19 94/04/17 20:28:46 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/cfb/cfbcmap.c,v 3.1.8.2 1997/05/11 05:04:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbcmap.c,v 3.1.8.3 1998/11/10 11:55:30 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -581,8 +581,6 @@ cfbInitVisuals (visualp, depthp, nvisualp, ndepthp, rootDepthp, defaultVisp, siz
                sizes,
                bitsPerRGB
            );
-#else
-    return TRUE;
 #endif
-
+    return TRUE;
 }

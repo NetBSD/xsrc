@@ -29,7 +29,7 @@
  * cir_blitLG.h
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blitLG.h,v 3.7.2.1 1998/02/15 16:09:33 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blitLG.h,v 3.7.2.3 1998/11/05 19:18:57 hohndel Exp $ */
 
 
 /* This header file defines the necessary structures, contstants, and 
@@ -90,7 +90,8 @@ enum {                      /* OR these together to form a bitBLT mode */
   SCR2SCR    = 0x1110,      /* Screen/Screen transfers */
   COLORSRC   = 0x0000,      /* Source is color data */
   MONOSRC    = 0x0040,      /* Source is mono data (color expansion) */
-  COLORTRANS = 0x0009,      /* Transparent screen/screen transfer */
+  COLORTRANS = 0x0001,      /* Transparent screen/screen transfer */
+  MONOTRANS  = 0x0005,      /* Transparent screen/screen color expansion */
   COLORFILL  = 0x0070,      /* Solid color fill mode */
   SRAM1SCR2SCR = 0x1180,    /* Pattern fill, source from SRAM1 */
 
@@ -100,6 +101,14 @@ enum {                      /* OR these together to form a bitBLT mode */
   SRAM2PAT2SCR   = 0x1108,  /* SRAM2 is pattern source */
 
   PATeqSRC   = 0x0800,      /* The Pattern and Source operands are the same */
+                            /* Advice from Corey:  don't ever try to use 
+			       this option!  8)  There's a documented bug
+			       with it on the '62, and, well, I have
+			       empirical evidence that either the bug's
+			       still around, even in the '64 and the '65.
+			       It's a performance option, anyway, so not
+			       using it should be okay. */
+
 
   BLITUP     = 0x8000       /* The blit is proceeding from bottom to top */
 };
@@ -114,16 +123,8 @@ enum {                      /* Select transparency compare */
 
 extern int lgCirrusRop[16];  /* Defined in cir_blitLG.c */
 
-
-/* Use the function call as opposed to the macro.  The reason is that
-   the function call uses a volatile variable, which is necessary for 
-   forcing the STATUS register to be read each time.  Using just the macro,
-   only one read will be performed, and the machine will hang. */
-int LgReady(void);
-/*
 #define LgREADY() \
-  ((*(unsigned char *)(cirrusMMIOBase + STATUS) & 0x07) == 0x00)
-*/
+  ((*(volatile unsigned char *)(cirrusMMIOBase + STATUS) & 0x07) == 0x00)
 
 #define LgSETROP(rop) \
   *(unsigned short *)(cirrusMMIOBase + DRAWDEF) = (rop);

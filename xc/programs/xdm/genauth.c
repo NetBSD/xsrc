@@ -1,5 +1,5 @@
 /* $XConsortium: genauth.c,v 1.23 95/07/10 21:18:07 gildea Exp $ */
-/* $XFree86: xc/programs/xdm/genauth.c,v 3.4 1996/01/24 22:04:37 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/genauth.c,v 3.4.4.2 1998/10/22 04:31:11 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -74,6 +74,7 @@ longtochars (l, c)
 
 # define FILE_LIMIT	1024	/* no more than this many buffers */
 
+#ifndef ARC4_RANDOM
 static
 sumFile (name, sum)
 char	*name;
@@ -87,7 +88,7 @@ long	sum[2];
     int	    i;
     int     ret_status = 0;
 
-    fd = open (name, 0);
+    fd = open (name, O_RDONLY);
     if (fd < 0) {
 	LogError("Cannot open randomFile \"%s\", errno = %d\n", name, errno);
 	return 0;
@@ -111,10 +112,35 @@ long	sum[2];
     close (fd);
     return ret_status;
 }
+#endif
 
 static
 InitXdmcpWrapper ()
 {
+#ifdef	ARC4_RANDOM
+    u_int32_t sum[2];
+
+    sum[0] = arc4random();
+    sum[1] = arc4random();
+    *(u_char *)sum = 0;
+
+    _XdmcpWrapperToOddParity(sum, key);
+
+#elif DEV_RANDOM
+    int fd;
+    unsigned char   tmpkey[8];
+    
+    if ((fd = open(DEV_RANDOM, O_RDONLY)) >= 0) {
+	if (read(fd, tmpkey, 8) == 8) {
+	    tmpkey[0] = 0;
+	    _XdmcpWrapperToOddParity(tmpkey, key);
+	    close(fd);
+	    return;	
+	} else {
+	    close(fd);
+	}
+    }
+#else    
     long	    sum[2];
     unsigned char   tmpkey[8];
 
@@ -126,6 +152,7 @@ InitXdmcpWrapper ()
     longtochars (sum[1], tmpkey+4);
     tmpkey[0] = 0;
     _XdmcpWrapperToOddParity (tmpkey, key);
+#endif
 }
 
 #endif

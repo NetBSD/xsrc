@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atichip.h,v 1.1.2.1 1998/02/01 16:41:44 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atichip.h,v 1.1.2.2 1998/10/20 20:51:17 hohndel Exp $ */
 /*
  * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -61,8 +61,11 @@
 #define ATI_CHIP_264VT3   28    /* Mach64 */
 #define ATI_CHIP_264GTDVD 29    /* Mach64 */
 #define ATI_CHIP_264LT    30    /* Mach64 */
-#define ATI_CHIP_264GT3   31    /* Mach64 */
-#define ATI_CHIP_Mach64   32    /* Mach64 */
+#define ATI_CHIP_264VT4   31    /* Mach64 */
+#define ATI_CHIP_264GT2C  32    /* Mach64 */
+#define ATI_CHIP_264GTPRO 33    /* Mach64 */
+#define ATI_CHIP_264LTPRO 34    /* Mach64 */
+#define ATI_CHIP_Mach64   35    /* Mach64 */
 extern CARD8 ATIChip;
 extern const char *ATIChipNames[];
 

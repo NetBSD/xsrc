@@ -47,7 +47,7 @@ SOFTWARE.
 ******************************************************************/
 
 /* $XConsortium: mkfontdir.c /main/13 1996/09/28 17:17:17 rws $ */
-/* $XFree86: xc/programs/mkfontdir/mkfontdir.c,v 3.4 1996/12/23 07:10:37 dawes Exp $ */
+/* $XFree86: xc/programs/mkfontdir/mkfontdir.c,v 3.4.2.1 1998/11/12 11:32:09 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_
@@ -454,7 +454,7 @@ DoDirectory(dirName)
 	return FALSE;
     }
     status = TRUE;
-    if (table.used > 0)
+    if (table.used >= 0)
 	status = WriteFontTable (dirName, &table);
     FontFileFreeTable (&table);
     return status;

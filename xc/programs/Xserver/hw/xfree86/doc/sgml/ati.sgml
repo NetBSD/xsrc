@@ -68,11 +68,10 @@ of the following ATI graphics controller chips is present:
 VGAWonder series:  18800, 18800-1, 28800-2, 28800-4, 28800-5, 28800-6
    Mach32 series:  68800-3, 68800-6, 68800AX, 68800LX
    Mach64 series:  88800GX-C, 88800GX-D, 88800GX-E, 88800GX-F, 88800CX,
-                   264CT, 264ET, 264VT, 264GT (a.k.a. 3D Rage), 264VT-B,
-                   264VT3, 264GT-B (a.k.a. 3D Rage II), 264GT3 (a.k.a.
-                   3D Rage Pro)</verb>
-There is some support for the 264LT (ATI's recent entry into the laptop
-world), but it is untested.<p>
+                   264CT, 264ET, 264VT, 264GT (3D Rage), 264VT-B, 264VT3,
+                   264VT4, 264GT-B (3D Rage II), 264GTIIc (3D Rage IIc),
+                   264GT3 (3D Rage Pro), 264LT (3D Rage LT), 264LTPro
+                   (3D Rage LT Pro)</verb>
 The driver also supports 32K, 64K and 16M-colour modes on the 264xT series of
 adapters using the accelerator CRTC (but not the VGA CRTC).
 This support is as yet unaccelerated.<p>
@@ -453,7 +452,7 @@ This version will make it quite a bit easier to introduce new function such as
 acceleration, additional colour depths, and so on.
 This is the version found in XFree86 3.3.2.<p>
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.15.2.2 1998/02/01 16:04:54 robin Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.15.2.3 1998/10/20 20:51:14 hohndel Exp $
 
 
 

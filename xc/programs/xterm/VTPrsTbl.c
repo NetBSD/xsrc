@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: VTPrsTbl.c,v 1.10 95/06/09 22:17:06 gildea Exp $
- *	$XFree86: xc/programs/xterm/VTPrsTbl.c,v 3.14 1998/04/05 00:46:09 robin Exp $
+ *	$XFree86: xc/programs/xterm/VTPrsTbl.c,v 3.10.2.2 1998/10/20 20:51:33 hohndel Exp $
  */
 
 /*
@@ -30,7 +30,7 @@
 #include <xtermcfg.h>
 #endif
 
-#include "VTparse.h"
+#include <VTparse.h>
 
 #ifndef OPT_VT52_MODE
 #define OPT_VT52_MODE   1 /* true if xterm supports VT52 emulation */

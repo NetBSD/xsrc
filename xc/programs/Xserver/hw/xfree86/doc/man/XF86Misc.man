@@ -4,12 +4,12 @@
 .\"
 .\" Copyright (c) 1996  Joe Moss, The XFree86 Project
 .\" 
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86Misc.man,v 3.6.2.3 1998/02/26 13:59:04 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86Misc.man,v 3.6.2.4 1998/11/06 09:46:30 hohndel Exp $
 .de ZN
 .ie t \fB\^\\$1\^\fR\\$2
 .el \fI\^\\$1\^\fP\\$2
 ..
-.TH XF86MISC 3X11 "3.3.2" "XFree86" "X FUNCTIONS"
+.TH XF86MISC 3X11 "3.3.3" "XFree86" "X FUNCTIONS"
 .SH NAME
 XF86MiscQueryExtension, XF86MiscQueryVersion, XF86MiscGetMouseSettings, XF86MiscSetMouseSettings, XF86MiscGetKbdSettings, XF86MiscSetKbdSettings \- XFree86-Misc extension interface functions
 .SH SYNTAX

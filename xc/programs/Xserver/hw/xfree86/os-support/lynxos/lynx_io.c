@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_io.c,v 3.3 1996/08/10 13:07:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_io.c,v 3.3.4.1 1998/09/27 12:58:59 hohndel Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -96,11 +96,23 @@ int duration;
 void xf86SetKbdLeds(leds)
 int leds;
 {
+#ifdef KBD_SET_LEDS
+    ioctl(xf86Info.consoleFd, KBD_SET_LEDS, &leds);
+#endif
 }
 
 int xf86GetKbdLeds()
 {
-	return 0;
+#ifdef KBD_SET_LEDS
+    int leds;
+
+    if (ioctl(xf86Info.consoleFd, KBD_SET_LEDS, &leds) < 0)
+        return 0;
+      
+    return leds;
+#else
+    return 0;
+#endif
 }
 
 void xf86SetKbdRepeat(char rad)

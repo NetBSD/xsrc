@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_Acc.man,v 3.58.2.7 1998/02/26 20:11:14 hohndel Exp $ 
-.TH XF86_Accel 1 "Version 3.3.2"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_Acc.man,v 3.58.2.9 1998/11/06 09:45:57 hohndel Exp $ 
+.TH XF86_Accel 1 "Version 3.3.3"  "XFree86"
 .SH NAME
 XF86_Accel - accelerated X Window System servers for
 UNIX on x86 and Alpha platforms with an S3, Mach8, Mach32, Mach64, P9000, AGX,
@@ -92,7 +92,7 @@ These are derived from the
 .I X386
 server provided with X11R5, and from the
 .I X8514
-server developed by Kevin Martin <martin@cs.unc.edu>.
+server developed by Kevin E. Martin <martin@cs.unc.edu>.
 .SH CONFIGURATIONS
 .PP
 The servers support the following chipsets:
@@ -113,7 +113,8 @@ XF86_Mach32:
 ATI Mach32
 .TP 13
 XF86_Mach64:
-ATI Mach64 (GX, CT, ET, VT, GT, 3D Rage II, 3D Rage II+DVD, Rage Pro)
+ATI Mach64 (GX, CT, ET, VT, VT3, VT4, LT, GT (3D Rage), 3D Rage II, 3D
+Rage IIC, 3D Rage II+DVD, Rage Pro)
 .TP 13
 XF86_P9000:
 Diamond Viper VLB, Diamond Viper PCI, Orchid P9000, and some clones
@@ -430,9 +431,13 @@ This must be specified if the server fails to detect it.
 \fBstg1700\fP - (S3) Card has an STG1700 RAMDAC.  This must be specified
 if the server fails to detect it.
 .sp
-\fBstg1703\fP - (S3,W32) Card has an STG1703 RAMDAC.  This must be specified
-if the server fails to detect it. Using the W32 server you MUST explicitly 
-set the STG1703 as ClockChip to be able to use the programming capabilities.
+\fBstg1702\fP - (Mach64) Card has an STG1702 RAMDAC.  This must be
+specified if the server fails to detect it.
+.sp
+\fBstg1703\fP - (S3, W32, Mach64) Card has an STG1703 RAMDAC.  This
+must be specified if the server fails to detect it.  Using the W32
+server you MUST explicitly set the STG1703 as ClockChip to be able to
+use the programming capabilities.
 .sp
 \fBs3gendac\fP - (S3) Card has an S3 86C708 GENDAC.
 This RAMDAC does not support 8 bit per RGB mode (don't specify
@@ -491,10 +496,10 @@ specified if the server fails to detect it.
 \fBati68860\fP - (Mach64) Card has an ATI 68860 RAMDAC.  This must be
 specified if the server fails to detect it.
 .sp
-\fBati68880\fP - (Mach64) Card has an ATI 68860 RAMDAC.  This must be
+\fBati68860b\fP - (Mach64) Card has an ATI 68860b RAMDAC.  This must be
 specified if the server fails to detect it.
 .sp
-\fBstg1702\fP - (Mach64) Card has an STG1702 RAMDAC.  This must be
+\fBati68860c\fP - (Mach64) Card has an ATI 68860c RAMDAC.  This must be
 specified if the server fails to detect it.
 .sp
 \fBch8398\fP - (Mach64) Card has an Chrontel 8398 RAMDAC.  This must
@@ -502,6 +507,9 @@ be specified if the server fails to detect it.
 .sp
 \fBatt20c408\fP - (Mach64) Card has an AT&T 20C408 RAMDAC.  This must
 be specified if the server fails to detect it.
+.sp
+\fBintenal\fP - (Mach64) Card has an internal (i.e., built-in) RAMDAC.
+This must be specified if the server fails to detect it.
 .TP 8
 .B IOBase \fIioaddress\fP
 specified the base address for extended IO registers.  This is only
@@ -820,7 +828,7 @@ In addition to the authors of \fIXFree86\fP the following people
 contributed major work to this server:
 .PP
 .nf
-Kevin Martin,       \fImartin@cs.unc.edu\fP
+Kevin E. Martin,    \fImartin@cs.unc.edu\fP
 Jon Tombs,          \fItombs@XFree86.org\fP
 Rik Faith,          \fIfaith@cs.unc.edu\fP
 .fi
@@ -856,7 +864,7 @@ Development and improvement of the S3 specific code.
 .RE
 .PP
 .nf
-Kevin Martin,       \fImartin@cs.unc.edu\fP
+Kevin E. Martin,    \fImartin@cs.unc.edu\fP
 Rik Faith,          \fIfaith@cs.unc.edu\fP
 Tiago Gons,         \fItiago@comosjn.hobby.nl\fP
 Hans Nasten,        \fInasten@everyware.se\fP
@@ -867,7 +875,7 @@ Development and improvement of the Mach8 and 8514/A specific code.
 .RE
 .PP
 .nf
-Kevin Martin,       \fImartin@cs.unc.edu\fP
+Kevin E. Martin,    \fImartin@cs.unc.edu\fP
 Rik Faith,          \fIfaith@cs.unc.edu\fP
 Mike Bernson,       \fImike@mbsun.mlb.org\fP
 Mark Weaver,        \fIMark_Weaver@brown.edu\fP
@@ -879,7 +887,7 @@ Development and improvement of the Mach32 specific code.
 .RE
 .PP
 .nf
-Kevin Martin,       \fImartin@cs.unc.edu\fP
+Kevin E. Martin,    \fImartin@cs.unc.edu\fP
 .fi
 .RS 8
 Development of the Mach64 specific code.

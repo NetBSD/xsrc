@@ -1,4 +1,4 @@
-# $XConsortium: iso8859-1 /main/6 1995/11/08 07:24:10 kaleb $
+# $TOG: iso8859-1 /main/7 1998/05/20 15:33:23 kaleb $
 #
 # ISO 8859-1 (Latin1) Compose Sequence
 #
@@ -17,8 +17,8 @@
 <Multi_key> <parenright> <parenright>	: "]"	bracketright
 <Multi_key> <asciicircum> <space>	: "^"	asciicircum
 <Multi_key> <space> <asciicircum>	: "^"	asciicircum
-<Multi_key> <greater> <space>		: "^"	asciicirum
-<Multi_key> <space> <greater>		: "^"	asciicirum
+<Multi_key> <greater> <space>		: "^"	asciicircum
+<Multi_key> <space> <greater>		: "^"	asciicircum
 <Multi_key> <grave> <space>		: "`"	grave
 <Multi_key> <space> <grave>		: "`"	grave
 <Multi_key> <parenleft> <minus>		: "{"	braceleft
@@ -186,6 +186,8 @@
 <Multi_key> <minus> <A>			: "\303"	Atilde
 <Multi_key> <A> <quotedbl>		: "\304"	Adiaeresis
 <Multi_key> <quotedbl> <A>		: "\304"	Adiaeresis
+<Multi_key> <A> <diaeresis>		: "\304"	Adiaeresis
+<Multi_key> <diaeresis> <A>		: "\304"	Adiaeresis
 <Multi_key> <A> <asterisk>		: "\305"	Aring
 <Multi_key> <asterisk> <A>		: "\305"	Aring
 <Multi_key> <A> <E>			: "\306"	AE
@@ -205,6 +207,8 @@
 <Multi_key> <minus> <a>			: "\343"	atilde
 <Multi_key> <a> <quotedbl>		: "\344"	adiaeresis
 <Multi_key> <quotedbl> <a>		: "\344"	adiaeresis
+<Multi_key> <a> <diaeresis>		: "\344"	adiaeresis
+<Multi_key> <diaeresis> <a>		: "\344"	adiaeresis
 <Multi_key> <a> <asterisk>		: "\345"	aring
 <Multi_key> <asterisk> <a>		: "\345"	aring
 <Multi_key> <a> <e>			: "\346"	ae
@@ -228,6 +232,8 @@
 <Multi_key> <greater> <E>		: "\312"	Ecircumflex
 <Multi_key> <E> <quotedbl>		: "\313"	Ediaeresis
 <Multi_key> <quotedbl> <E>		: "\313"	Ediaeresis
+<Multi_key> <E> <diaeresis>		: "\313"	Ediaeresis
+<Multi_key> <diaeresis> <E>		: "\313"	Ediaeresis
 <Multi_key> <e> <grave>			: "\350"	egrave
 <Multi_key> <grave> <e>			: "\350"	egrave
 <Multi_key> <e> <acute>			: "\351"	eacute
@@ -240,6 +246,8 @@
 <Multi_key> <greater> <e>		: "\352"	ecircumflex
 <Multi_key> <e> <quotedbl>		: "\353"	ediaeresis
 <Multi_key> <quotedbl> <e>		: "\353"	ediaeresis
+<Multi_key> <e> <diaeresis>		: "\353"	ediaeresis
+<Multi_key> <diaeresis> <e>		: "\353"	ediaeresis
 <Multi_key> <I> <grave>			: "\314"	Igrave
 <Multi_key> <grave> <I>			: "\314"	Igrave
 <Multi_key> <I> <acute>			: "\315"	Iacute
@@ -252,6 +260,8 @@
 <Multi_key> <greater> <I>		: "\316"	Icircumflex
 <Multi_key> <I> <quotedbl>		: "\317"	Idiaeresis
 <Multi_key> <quotedbl> <I>		: "\317"	Idiaeresis
+<Multi_key> <I> <diaeresis>		: "\317"	Idiaeresis
+<Multi_key> <diaeresis> <I>		: "\317"	Idiaeresis
 <Multi_key> <i> <grave>			: "\354"	igrave
 <Multi_key> <grave> <i>			: "\354"	igrave
 <Multi_key> <i> <acute>			: "\355"	iacute
@@ -264,6 +274,8 @@
 <Multi_key> <greater> <i>		: "\356"	icircumflex
 <Multi_key> <i> <quotedbl>		: "\357"	idiaeresis
 <Multi_key> <quotedbl> <i>		: "\357"	idiaeresis
+<Multi_key> <i> <diaeresis>		: "\357"	idiaeresis
+<Multi_key> <diaeresis> <i>		: "\357"	idiaeresis
 <Multi_key> <N> <asciitilde>		: "\321"	Ntilde
 <Multi_key> <asciitilde> <N>		: "\321"	Ntilde
 <Multi_key> <N> <minus>			: "\321"	Ntilde
@@ -288,6 +300,8 @@
 <Multi_key> <minus> <O>			: "\325"	Otilde
 <Multi_key> <O> <quotedbl>		: "\326"	Odiaeresis
 <Multi_key> <quotedbl> <O>		: "\326"	Odiaeresis
+<Multi_key> <O> <diaeresis>		: "\326"	Odiaeresis
+<Multi_key> <diaeresis> <O>		: "\326"	Odiaeresis
 <Multi_key> <O> <slash>			: "\330"	Ooblique
 <Multi_key> <slash> <O>			: "\330"	Ooblique
 <Multi_key> <o> <grave>			: "\362"	ograve
@@ -306,6 +320,8 @@
 <Multi_key> <minus> <o>			: "\365"	otilde
 <Multi_key> <o> <quotedbl>		: "\366"	odiaeresis
 <Multi_key> <quotedbl> <o>		: "\366"	odiaeresis
+<Multi_key> <o> <diaeresis>		: "\366"	odiaeresis
+<Multi_key> <diaeresis> <o>		: "\366"	odiaeresis
 <Multi_key> <o> <slash>			: "\370"	oslash
 <Multi_key> <slash> <o>			: "\370"	oslash
 <Multi_key> <U> <grave>			: "\331"	Ugrave
@@ -320,6 +336,8 @@
 <Multi_key> <greater> <U>		: "\333"	Ucircumflex
 <Multi_key> <U> <quotedbl>		: "\334"	Udiaeresis
 <Multi_key> <quotedbl> <U>		: "\334"	Udiaeresis
+<Multi_key> <U> <diaeresis>		: "\334"	Udiaeresis
+<Multi_key> <diaeresis> <U>		: "\334"	Udiaeresis
 <Multi_key> <u> <grave>			: "\371"	ugrave
 <Multi_key> <grave> <u>			: "\371"	ugrave
 <Multi_key> <u> <acute>			: "\372"	uacute
@@ -332,6 +350,8 @@
 <Multi_key> <greater> <u>		: "\373"	ucircumflex
 <Multi_key> <u> <quotedbl>		: "\374"	udiaeresis
 <Multi_key> <quotedbl> <u>		: "\374"	udiaeresis
+<Multi_key> <u> <diaeresis>		: "\374"	udiaeresis
+<Multi_key> <diaeresis> <u>		: "\374"	udiaeresis
 <Multi_key> <s> <s>			: "\337"	ssharp
 <Multi_key> <T> <H>			: "\336"	THORN
 <Multi_key> <t> <h>			: "\376"	thorn
@@ -345,6 +365,9 @@
 <Multi_key> <apostrophe> <y>		: "\375"	yacute
 <Multi_key> <y> <quotedbl>		: "\377"	ydiaeresis
 <Multi_key> <quotedbl> <y>		: "\377"	ydiaeresis
+<Multi_key> <y> <diaeresis>		: "\377"	ydiaeresis
+<Multi_key> <diaeresis> <y>		: "\377"	ydiaeresis
+#
 #
 # dead key accent keysyms
 # Special Character
@@ -434,8 +457,8 @@ Ctrl<T> <less> <slash>			: "\\"	backslash
 Ctrl<T> <parenright> <parenright>	: "]"	bracketright
 Ctrl<T> <asciicircum> <space>		: "^"	asciicircum
 Ctrl<T> <space> <asciicircum>		: "^"	asciicircum
-Ctrl<T> <greater> <space>		: "^"	asciicirum
-Ctrl<T> <space> <greater>		: "^"	asciicirum
+Ctrl<T> <greater> <space>		: "^"	asciicircum
+Ctrl<T> <space> <greater>		: "^"	asciicircum
 Ctrl<T> <grave> <space>			: "`"	grave
 Ctrl<T> <space> <grave>			: "`"	grave
 Ctrl<T> <parenleft> <minus>		: "{"	braceleft
@@ -603,6 +626,8 @@ Ctrl<T> <A> <minus>			: "\303"	Atilde
 Ctrl<T> <minus> <A>			: "\303"	Atilde
 Ctrl<T> <A> <quotedbl>			: "\304"	Adiaeresis
 Ctrl<T> <quotedbl> <A>			: "\304"	Adiaeresis
+Ctrl<T> <A> <diaeresis>			: "\304"	Adiaeresis
+Ctrl<T> <diaeresis> <A>			: "\304"	Adiaeresis
 Ctrl<T> <A> <asterisk>			: "\305"	Aring
 Ctrl<T> <asterisk> <A>			: "\305"	Aring
 Ctrl<T> <A> <E>				: "\306"	AE
@@ -622,6 +647,8 @@ Ctrl<T> <a> <minus>			: "\343"	atilde
 Ctrl<T> <minus> <a>			: "\343"	atilde
 Ctrl<T> <a> <quotedbl>			: "\344"	adiaeresis
 Ctrl<T> <quotedbl> <a>			: "\344"	adiaeresis
+Ctrl<T> <a> <diaeresis>			: "\344"	adiaeresis
+Ctrl<T> <diaeresis> <a>			: "\344"	adiaeresis
 Ctrl<T> <a> <asterisk>			: "\345"	aring
 Ctrl<T> <asterisk> <a>			: "\345"	aring
 Ctrl<T> <a> <e>				: "\346"	ae
@@ -645,6 +672,8 @@ Ctrl<T> <E> <greater>			: "\312"	Ecircumflex
 Ctrl<T> <greater> <E>			: "\312"	Ecircumflex
 Ctrl<T> <E> <quotedbl>			: "\313"	Ediaeresis
 Ctrl<T> <quotedbl> <E>			: "\313"	Ediaeresis
+Ctrl<T> <E> <diaeresis>			: "\313"	Ediaeresis
+Ctrl<T> <diaeresis> <E>			: "\313"	Ediaeresis
 Ctrl<T> <e> <grave>			: "\350"	egrave
 Ctrl<T> <grave> <e>			: "\350"	egrave
 Ctrl<T> <e> <acute>			: "\351"	eacute
@@ -657,6 +686,8 @@ Ctrl<T> <e> <greater>			: "\352"	ecircumflex
 Ctrl<T> <greater> <e>			: "\352"	ecircumflex
 Ctrl<T> <e> <quotedbl>			: "\353"	ediaeresis
 Ctrl<T> <quotedbl> <e>			: "\353"	ediaeresis
+Ctrl<T> <e> <diaeresis>			: "\353"	ediaeresis
+Ctrl<T> <diaeresis> <e>			: "\353"	ediaeresis
 Ctrl<T> <I> <grave>			: "\314"	Igrave
 Ctrl<T> <grave> <I>			: "\314"	Igrave
 Ctrl<T> <I> <acute>			: "\315"	Iacute
@@ -669,6 +700,8 @@ Ctrl<T> <I> <greater>			: "\316"	Icircumflex
 Ctrl<T> <greater> <I>			: "\316"	Icircumflex
 Ctrl<T> <I> <quotedbl>			: "\317"	Idiaeresis
 Ctrl<T> <quotedbl> <I>			: "\317"	Idiaeresis
+Ctrl<T> <I> <diaeresis>			: "\317"	Idiaeresis
+Ctrl<T> <diaeresis> <I>			: "\317"	Idiaeresis
 Ctrl<T> <i> <grave>			: "\354"	igrave
 Ctrl<T> <grave> <i>			: "\354"	igrave
 Ctrl<T> <i> <acute>			: "\355"	iacute
@@ -681,6 +714,8 @@ Ctrl<T> <i> <greater>			: "\356"	icircumflex
 Ctrl<T> <greater> <i>			: "\356"	icircumflex
 Ctrl<T> <i> <quotedbl>			: "\357"	idiaeresis
 Ctrl<T> <quotedbl> <i>			: "\357"	idiaeresis
+Ctrl<T> <i> <diaeresis>			: "\357"	idiaeresis
+Ctrl<T> <diaeresis> <i>			: "\357"	idiaeresis
 Ctrl<T> <N> <asciitilde>		: "\321"	Ntilde
 Ctrl<T> <asciitilde> <N>		: "\321"	Ntilde
 Ctrl<T> <N> <minus>			: "\321"	Ntilde
@@ -705,6 +740,8 @@ Ctrl<T> <O> <minus>			: "\325"	Otilde
 Ctrl<T> <minus> <O>			: "\325"	Otilde
 Ctrl<T> <O> <quotedbl>			: "\326"	Odiaeresis
 Ctrl<T> <quotedbl> <O>			: "\326"	Odiaeresis
+Ctrl<T> <O> <diaeresis>			: "\326"	Odiaeresis
+Ctrl<T> <diaeresis> <O>			: "\326"	Odiaeresis
 Ctrl<T> <O> <slash>			: "\330"	Ooblique
 Ctrl<T> <slash> <O>			: "\330"	Ooblique
 Ctrl<T> <o> <grave>			: "\362"	ograve
@@ -723,6 +760,8 @@ Ctrl<T> <o> <minus>			: "\365"	otilde
 Ctrl<T> <minus> <o>			: "\365"	otilde
 Ctrl<T> <o> <quotedbl>			: "\366"	odiaeresis
 Ctrl<T> <quotedbl> <o>			: "\366"	odiaeresis
+Ctrl<T> <o> <diaeresis>			: "\366"	odiaeresis
+Ctrl<T> <diaeresis> <o>			: "\366"	odiaeresis
 Ctrl<T> <o> <slash>			: "\370"	oslash
 Ctrl<T> <slash> <o>			: "\370"	oslash
 Ctrl<T> <U> <grave>			: "\331"	Ugrave
@@ -737,6 +776,8 @@ Ctrl<T> <U> <greater>			: "\333"	Ucircumflex
 Ctrl<T> <greater> <U>			: "\333"	Ucircumflex
 Ctrl<T> <U> <quotedbl>			: "\334"	Udiaeresis
 Ctrl<T> <quotedbl> <U>			: "\334"	Udiaeresis
+Ctrl<T> <U> <diaeresis>			: "\334"	Udiaeresis
+Ctrl<T> <diaeresis> <U>			: "\334"	Udiaeresis
 Ctrl<T> <u> <grave>			: "\371"	ugrave
 Ctrl<T> <grave> <u>			: "\371"	ugrave
 Ctrl<T> <u> <acute>			: "\372"	uacute
@@ -749,6 +790,8 @@ Ctrl<T> <u> <greater>			: "\373"	ucircumflex
 Ctrl<T> <greater> <u>			: "\373"	ucircumflex
 Ctrl<T> <u> <quotedbl>			: "\374"	udiaeresis
 Ctrl<T> <quotedbl> <u>			: "\374"	udiaeresis
+Ctrl<T> <u> <diaeresis>			: "\374"	udiaeresis
+Ctrl<T> <diaeresis> <u>			: "\374"	udiaeresis
 Ctrl<T> <s> <s>				: "\337"	ssharp
 Ctrl<T> <T> <H>				: "\336"	THORN
 Ctrl<T> <t> <h>				: "\376"	thorn
@@ -762,4 +805,6 @@ Ctrl<T> <y> <apostrophe>		: "\375"	yacute
 Ctrl<T> <apostrophe> <y>		: "\375"	yacute
 Ctrl<T> <y> <quotedbl>			: "\377"	ydiaeresis
 Ctrl<T> <quotedbl> <y>			: "\377"	ydiaeresis
+Ctrl<T> <y> <diaeresis>			: "\377"	ydiaeresis
+Ctrl<T> <diaeresis> <y>			: "\377"	ydiaeresis
 # End of Sequence Definition

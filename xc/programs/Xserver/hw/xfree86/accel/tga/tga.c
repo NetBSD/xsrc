@@ -23,7 +23,7 @@
  * Author:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.c,v 3.17.2.8 1998/02/15 16:09:03 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.c,v 3.17.2.9 1998/10/19 20:29:39 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -44,6 +44,7 @@
 #include "tga_presets.h"
 
 #include "xf86xaa.h"
+#include "xf86scrin.h"
 
 #define XCONFIG_FLAGS_ONLY
 #include "xf86_Config.h"
@@ -61,6 +62,8 @@
 #include "opaque.h"
 #include "extensions/dpms.h"
 #endif
+
+extern int defaultColorVisualClass;
 
 static int tgaValidMode(
 #if NeedFunctionPrototypes
@@ -147,6 +150,7 @@ extern miPointerScreenFuncRec xf86PointerScreenFuncs;
 extern Bool xf86Exiting, xf86Resetting, xf86ProbeFailed;
 ScreenPtr savepScreen = NULL;
 Bool tgaDAC8Bit = FALSE;
+Bool tgaDACSyncOnGreen = FALSE;
 Bool tgaBt485PixMux = FALSE;
 Bool tgaReloadCursor, tgaBlockCursor;
 unsigned char tgaSwapBits[256];
@@ -156,8 +160,9 @@ static PixmapPtr ppix = NULL;
 int tga_type;
 int tgaDisplayWidth;
 pointer tgaVideoMem = NULL;
+pointer tgaCursorMem = NULL;
 extern unsigned char *tgaVideoMemSave;
-static tgaCRTCRegRec tgaCRTCRegs;
+tgaCRTCRegRec tgaCRTCRegs;
 volatile unsigned long *VidBase;
 #define tgaReorderSwapBits(a,b)		b = \
 		(a & 0x80) >> 7 | \
@@ -273,14 +278,10 @@ tgaProbe()
 	case TYPE_TGA_24PLANE:
 		ErrorF("%s %s: DEC 21030 TGA 24 Plane Chip Found.\n",
 			XCONFIG_PROBED, tgaInfoRec.name);
-		ErrorF("Sorry, but the 24 Plane Chip is not yet supported.\n");
-		return(FALSE);
 		break;
 	case TYPE_TGA_24PLUSZ:
 		ErrorF("%s %s: DEC 21030 TGA 24 Plane 3D Chip Found.\n",
 			XCONFIG_PROBED, tgaInfoRec.name);
-		ErrorF("Sorry, but the 24Plane3D Chip is not yet supported.\n");
-		return(FALSE);
 		break;
 	default:
 		ErrorF("%s %s: OUCH ! Found an unknown TGA Chip. Aborting..\n",
@@ -291,7 +292,17 @@ tgaProbe()
 
   if (tgaInfoRec.videoRam == 0)
   {
-	tgaInfoRec.videoRam = 2048;
+	switch (tga_type) {
+	case TYPE_TGA_8PLANE:
+		tgaInfoRec.videoRam = 2*1024;
+		break;
+	case TYPE_TGA_24PLANE:
+		tgaInfoRec.videoRam = 8*1024;
+		break;
+	case TYPE_TGA_24PLUSZ:
+		tgaInfoRec.videoRam = 16*1024;
+		break;
+	}
   	ErrorF("%s %s: videoram : %dk\n", XCONFIG_PROBED, tgaInfoRec.name,
 		tgaInfoRec.videoRam);
   }
@@ -328,6 +339,7 @@ tgaProbe()
   OFLG_SET(OPTION_DAC_8_BIT, &validOptions);
   OFLG_SET(OPTION_DAC_8_BIT, &tgaInfoRec.options); /* Set 8bit by default */
   OFLG_SET(OPTION_DAC_6_BIT, &validOptions);
+/*  OFLG_SET(OPTION_SYNC_ON_GREEN, &validOptions); */
   OFLG_SET(OPTION_POWER_SAVER, &validOptions);
 
   xf86VerifyOptions(&validOptions, &tgaInfoRec);
@@ -417,6 +429,14 @@ tgaProbe()
   if (OFLG_ISSET(OPTION_DAC_6_BIT, &tgaInfoRec.options))
 	tgaDAC8Bit = FALSE;
 
+#ifdef NOTYET
+  if (OFLG_ISSET(OPTION_SYNC_ON_GREEN, &tgaInfoRec.options)) {
+	tgaDACSyncOnGreen = TRUE;
+	ErrorF("%s %s: Putting RAMDAC into sync-on-green mode\n",
+		XCONFIG_GIVEN, tgaInfoRec.name);
+  }
+#endif
+
 #ifdef DPMSExtension
   if (DPMSEnabledSwitch ||
       (OFLG_ISSET(OPTION_POWER_SAVER, &tgaInfoRec.options) &&
@@ -428,15 +448,77 @@ tgaProbe()
 	xf86bpp = tgaInfoRec.depth;
   if (xf86weight.red == 0 || xf86weight.green == 0 || xf86weight.blue == 0)
 	xf86weight = tgaInfoRec.weight;
-  switch (xf86bpp) {
-	case 8:
-		/* XAA uses this */
-		xf86weight.green = (tgaDAC8Bit ? 8 : 6);
-		break;
-	default:
-		ErrorF("Invalid value for bpp. 8bpp is only supported.\n");
-		return(FALSE);
+
+  if ((tga_type == 0) && (xf86bpp>8)) {
+    ErrorF("Invalid value for bpp. Only 8bpp is supported on 8-plane TGA.\n");
+    return(FALSE);
   }
+  if ((tga_type != 0) && ((xf86bpp==8) || (xf86bpp==16))) {
+    ErrorF("Invalid value for bpp. Only 24bpp is supported on 24-plane TGA.\n");
+    return(FALSE);
+  }
+  switch (xf86bpp) {
+  case 8:
+    /* XAA uses this */
+    xf86weight.green = (tgaDAC8Bit ? 8 : 6);
+    break;
+#ifdef NOTYET
+  case 16:
+    if (xf86weight.red==5 && xf86weight.green==5 && xf86weight.blue==5) {
+      tgaInfoRec.depth = 15;
+    } else if (xf86weight.red==5 &&
+	       xf86weight.green==6 && xf86weight.blue==5) {
+      tgaInfoRec.depth = 16;
+    } else {
+      ErrorF(
+	"Invalid color weighting %1d%1d%1d (only 555 and 565 are valid)\n",
+	xf86weight.red,xf86weight.green,xf86weight.blue);
+      return(FALSE);
+    }
+    tgaInfoRec.bitsPerPixel = 16;
+    if (tgaInfoRec.defaultVisual < 0)
+      tgaInfoRec.defaultVisual = TrueColor;
+    if (defaultColorVisualClass < 0)
+      defaultColorVisualClass = tgaInfoRec.defaultVisual;
+    break;
+#endif
+  case 24:
+    xf86weight.red =  xf86weight.green = xf86weight.blue = 8;
+    tgaInfoRec.depth = 24;
+    tgaInfoRec.bitsPerPixel = 32;
+    if (tgaInfoRec.defaultVisual < 0)
+      tgaInfoRec.defaultVisual = TrueColor;
+    if (defaultColorVisualClass < 0)
+      defaultColorVisualClass = tgaInfoRec.defaultVisual;
+    break;
+  default:
+         ErrorF("Invalid value for bpp.  Valid values are 8, 16, 24 and 32.\n");
+         return(FALSE);
+  }
+
+#if 0
+  if (tga_type == 0) { /* 8-plane */
+    switch (xf86bpp) {
+    case 8:
+      /* XAA uses this */
+      xf86weight.green = (tgaDAC8Bit ? 8 : 6);
+      break;
+    default:
+      ErrorF("Invalid value for bpp. 8bpp is only supported.\n");
+      return(FALSE);
+    }
+  } else {
+    switch (xf86bpp) {
+    case 32:
+      /* XAA uses this */
+      xf86weight.red = xf86weight.green = xf86weight.blue = 8;
+      break;
+    default:
+      ErrorF("Invalid value for bpp. 32bpp is only supported.\n");
+      return(FALSE);
+    }
+  }
+#endif
 
 #ifdef XFreeXDGA
 #ifdef NOTYET
@@ -462,6 +544,7 @@ tgaInitialize (scr_index, pScreen, argc, argv)
 	int displayResolution = 75; 	/* default to 75dpi */
 	int i;
 	extern int monitorResolution;
+	Bool (*ScreenInitFunc)(register ScreenPtr, pointer, int, int, int, int, int);
 
 	/* Init the screen */
 	
@@ -485,7 +568,19 @@ tgaInitialize (scr_index, pScreen, argc, argv)
 	/* Let's use the new XAA Architecture.....*/
  	TGAAccelInit();
 
-	if (!xf86XAAScreenInit8bpp(pScreen,
+	switch (tgaInfoRec.bitsPerPixel) {
+	case 8:
+	  ScreenInitFunc = &xf86XAAScreenInit8bpp;
+	  break;
+	case 16:
+	  ScreenInitFunc = &xf86XAAScreenInit16bpp;
+	  break;
+	case 32:
+	  ScreenInitFunc = &xf86XAAScreenInit32bpp;
+	  break;
+	}
+
+	if (!ScreenInitFunc(pScreen,
 #else
 	if (!cfbScreenInit(pScreen,
 #endif
@@ -519,7 +614,7 @@ tgaInitialize (scr_index, pScreen, argc, argv)
 			break;
 	}
 
-	if ( (OFLG_ISSET(OPTION_HW_CURSOR, &tgaInfoRec.options)) ||
+	if ( /* (OFLG_ISSET(OPTION_HW_CURSOR, &tgaInfoRec.options)) || */
 	     (OFLG_ISSET(OPTION_BT485_CURS, &tgaInfoRec.options)) ) {
 		pScreen->QueryBestSize = tgaQueryBestSize;
 		xf86PointerScreenFuncs.WarpCursor = tgaWarpCursor;
@@ -698,34 +793,11 @@ tgaSaveScreen (pScreen, on)
 	SetTimeSinceLastInputEvent();
 
     if (xf86VTSema) {
-
-#ifdef NOTYET
-	if (on) {
-	    if (tgaHWCursorSave != -1) {
-		tgaSetRamdac(tgaCRTCRegs.color_depth, TRUE,
-				tgaCRTCRegs.dot_clock);
-		regwb(GEN_TEST_CNTL, tgaHWCursorSave);
-		tgaHWCursorSave = -1;
-	    }
-	    tgaRestoreColor0(pScreen);
-	    if (tgaRamdacSubType != DAC_ATI68875)
-		outb(ioDAC_REGS+2, 0xff);
-	} else {
-	    outb(ioDAC_REGS, 0);
-	    outb(ioDAC_REGS+1, 0);
-	    outb(ioDAC_REGS+1, 0);
-	    outb(ioDAC_REGS+1, 0);
-	    outb(ioDAC_REGS+2, 0x00);
-
-	    tgaSetRamdac(CRTC_PIX_WIDTH_8BPP, TRUE,
-			    tgaCRTCRegs.dot_clock);
-	    tgaHWCursorSave = regrb(GEN_TEST_CNTL);
-	    regwb(GEN_TEST_CNTL, tgaHWCursorSave & ~HWCURSOR_ENABLE);
-
-	    if (tgaRamdacSubType != DAC_ATI68875)
-		outb(ioDAC_REGS+2, 0x00);
-	}
-#endif
+        if (on) {
+           TGA_WRITE_REG(0x01, TGA_VALID_REG); /* SCANNING */
+        } else {
+           TGA_WRITE_REG(0x03, TGA_VALID_REG); /* SCANNING and BLANK */    
+        }
     }
 
     return(TRUE);

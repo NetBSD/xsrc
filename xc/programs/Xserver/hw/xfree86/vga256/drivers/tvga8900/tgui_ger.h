@@ -22,7 +22,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_ger.h,v 3.9.2.3 1998/01/18 10:35:39 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_ger.h,v 3.9.2.4 1998/10/31 14:41:09 hohndel Exp $ */
 
 /* Graphics Engine for 9420/9430 */
 
@@ -116,6 +116,9 @@
 #define GER_FPATCOL	0x78
 #define GER_BPATCOL	0x7C
 #define GER_PLANEMASK	0x80
+
+/* 3D Chips */
+#define IMAGE_GE_STATUS	0x64
 
 /* ROPS */
 #define TGUIROP_0		0x00		/* 0 */

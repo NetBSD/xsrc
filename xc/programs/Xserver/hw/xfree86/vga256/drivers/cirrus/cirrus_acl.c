@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cirrus_acl.c,v 3.6.2.10 1997/08/02 13:48:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cirrus_acl.c,v 3.6.2.12 1998/11/01 09:59:23 hohndel Exp $ */
 
 /*
  * New-style acceleration for chips with BitBLT engine:
@@ -111,6 +111,8 @@ enum {
 
 #ifndef MMIO    
 
+unsigned char cirrusForegroundColorLow;	/* Bits [7:0] of foreground colour */
+
 int cirrusUseAutoStart = FALSE;
 int cirrusUseSolidColorFill = FALSE;
 int cirrusPCIRetrySupport = FALSE;
@@ -178,7 +180,8 @@ static void InitializeChipFeatures() {
     cirrusChipFeatures = 0;
 
     if (cirrusChip == CLGD5436 || cirrusChip == CLGD5446 ||
-	cirrusChip == CLGD5480 || cirrusChip == CLGD7555) {
+	cirrusChip == CLGD5480 || cirrusChip == CLGD7555 ||
+	cirrusChip == CLGD7556) {
         cirrusChipFeatures |= PACKED24FILL;
         cirrusChipFeatures |= DWORDCOLOREXPANSIONSCANLINEPAD;
 #ifdef MMIO
@@ -188,7 +191,8 @@ static void InitializeChipFeatures() {
 
 #ifdef MMIO
     if (cirrusChip == CLGD5436 || cirrusChip == CLGD5446 ||
-	cirrusChip == CLGD5480)
+	cirrusChip == CLGD5480 || cirrusChip == CLGD7555 ||
+	cirrusChip == CLGD7556)
         cirrusChipFeatures |= AUTOSTART;
 #endif
 
@@ -216,7 +220,7 @@ static void InitializeChipFeatures() {
     /* "Write Mask" is used for left-edge clipping. */
     if (cirrusChip == CLGD5430 || cirrusChip == CLGD5436 ||
 	cirrusChip == CLGD5446 || cirrusChip == CLGD5480 ||
-	cirrusChip == CLGD7555)
+	cirrusChip == CLGD7555 || cirrusChip == CLGD7556)
         cirrusChipFeatures |= WRITEMASK;
 
     if (cirrusChip == CLGD5446 || cirrusChip == CLGD5480)
@@ -497,6 +501,10 @@ void CirrusSetupForFillRectSolid(color, rop, planemask)
       }
       SETFOREGROUNDCOLOR16(color);
     }
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      cirrusForegroundColorLow = (unsigned char)color;
+#endif
 
 
     
@@ -541,6 +549,10 @@ void Cirrus8SubsequentFillRectSolid(x, y, w, h)
         WAITEMPTY()
     else
         WAITUNTILFINISHED();
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      SETFOREGROUNDCOLOR(cirrusForegroundColorLow);
+#endif
     SETWIDTHANDHEIGHT(w, h);			/* 8 */
 
 #if 0
@@ -562,6 +574,10 @@ void Cirrus16SubsequentFillRectSolid(x, y, w, h)
         WAITEMPTY()
     else
         WAITUNTILFINISHED();
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      SETFOREGROUNDCOLOR(cirrusForegroundColorLow);
+#endif
     SETWIDTHANDHEIGHT(w * 2, h);		/* 10 */
 
 #if 0
@@ -583,6 +599,10 @@ void Cirrus24SubsequentFillRectSolid(x, y, w, h)
         WAITEMPTY()
     else
         WAITUNTILFINISHED();
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      SETFOREGROUNDCOLOR(cirrusForegroundColorLow);
+#endif
     SETWIDTHANDHEIGHT(w * 3, h);		/* 8 */
 
 #if 0
@@ -604,6 +624,10 @@ void Cirrus32SubsequentFillRectSolid(x, y, w, h)
         WAITEMPTY()
     else
         WAITUNTILFINISHED();
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      SETFOREGROUNDCOLOR(cirrusForegroundColorLow);
+#endif
     SETWIDTHANDHEIGHT(w * 4, h);		/* 8 */
 
 #if 0
@@ -645,6 +669,9 @@ transparency_color)
             transparency_color &= 0xFF;
             transparency_color |= transparency_color << 8;
         }
+	else {
+	    bltmode |= PIXELWIDTH16;
+	}
         SETTRANSPARENCYCOLOR16(transparency_color);
         bltmode |= TRANSPARENCYCOMPARE;
     }
@@ -769,6 +796,11 @@ void CirrusSetupForCPUToScreenColorExpand(bg, fg, rop, planemask)
         }
         SETFOREGROUNDCOLOR16(fg);
     }
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      cirrusForegroundColorLow = (unsigned char)fg;
+#endif
+
     switch (vga256InfoRec.bitsPerPixel) {
     case 8 :
         bltmode |= COLOREXPAND | SYSTEMSRC;
@@ -805,6 +837,10 @@ void CirrusSubsequentCPUToScreenColorExpand(x, y, w, h, skipleft)
      * a reasonable assumption since it transferred the CPU data.
      */
     w = BPPADJUST(w);
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      SETFOREGROUNDCOLOR(cirrusForegroundColorLow);
+#endif
     SETWIDTHANDHEIGHT(w, h);
     if (CHIPHAS(WRITEMASK)) {
         /*
@@ -883,6 +919,10 @@ void CirrusSetupForScreenToScreenColorExpand(bg, fg, rop, planemask)
         }
         SETFOREGROUNDCOLOR16(fg);
     }
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      cirrusForegroundColorLow = (unsigned char)fg;
+#endif
 
     switch (vga256InfoRec.bitsPerPixel) {
     case 8 :
@@ -915,6 +955,10 @@ void CirrusSubsequentScreenToScreenColorExpand(srcx, srcy, x, y, w, h)
         WAITEMPTY()
     else
         WAITUNTILFINISHED();
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      SETFOREGROUNDCOLOR(cirrusForegroundColorLow);
+#endif
     SETWIDTHANDHEIGHT(w, h);
     srcaddr = srcy * vga256InfoRec.displayWidth;
     srcaddr = BPPADJUST(srcaddr);
@@ -996,6 +1040,10 @@ rop, planemask)
         }
         SETFOREGROUNDCOLOR16(fg);
     }
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      cirrusForegroundColorLow = (unsigned char)fg;
+#endif
 
     switch (vga256InfoRec.bitsPerPixel) {
     case 8 :
@@ -1031,6 +1079,10 @@ void CirrusSubsequentScanlineScreenToScreenColorExpand(srcaddr)
     else
         WAITUNTILFINISHED();
     srcaddr /= 8;
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      SETFOREGROUNDCOLOR(cirrusForegroundColorLow);
+#endif
     SETWIDTHANDHEIGHT(scanline_width, 1);
     SETSRCADDR(srcaddr);
     SETDESTADDR(scanline_destaddr);
@@ -1061,6 +1113,9 @@ transparency_color)
             transparency_color &= 0xFF;
             transparency_color |= transparency_color << 8;
         }
+	else {
+	    bltmode |= PIXELWIDTH16;
+	}
         SETTRANSPARENCYCOLOR16(transparency_color);
         bltmode |= TRANSPARENCYCOMPARE;
     }
@@ -1169,6 +1224,11 @@ planemask)
         }
         SETFOREGROUNDCOLOR16(fg);
     }
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      cirrusForegroundColorLow = (unsigned char)fg;
+#endif
+
     switch (vga256InfoRec.bitsPerPixel) {
     case 8 :
         bltmode |= COLOREXPAND | PATTERNCOPY;
@@ -1232,6 +1292,10 @@ void CirrusSubsequent8x8PatternColorExpand(patternx, patterny, x, y, w, h)
         WAITEMPTY()
     else
         WAITUNTILFINISHED();
+#ifndef MMIO
+    if (CHIPHAS(FGCOLORREGISTERSIDEEFFECT))
+      SETFOREGROUNDCOLOR(cirrusForegroundColorLow);
+#endif
     SETWIDTHANDHEIGHT(w, h);
     SETSRCADDR(srcaddr);
     SETDESTADDR(destaddr);

@@ -19,7 +19,7 @@ XCOMM $TOG: Library.tmpl /main/44 1997/04/28 11:47:53 kaleb $
 
 
 
-XCOMM $XFree86: xc/config/cf/Library.tmpl,v 3.5.2.1 1997/06/11 12:08:29 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Library.tmpl,v 3.5.2.3 1998/11/06 23:14:02 dawes Exp $
 
 #ifndef LibraryCplusplusOptions
 # if DoSharedLib && defined(SharedLibraryCplusplusOptions)
@@ -157,6 +157,22 @@ LIB_MT_DEFINES = LibraryMTDefines
 #endif
 #endif
 
+#ifndef DoExtraLib
+#define DoExtraLib NO
+#endif
+
+#if DoExtraLib && defined(ExtraLibRules)
+# define _ExtraLibMkdir() ExtraLibMkdir()
+# define _ExtraObjCompile(options) ExtraObjCompile(options)
+# define _ExtraObjCplusplusCompile(options) ExtraObjCplusplusCompile(options)
+# define _ExtraCleanDir() ExtraCleanDir()
+#else
+# define _ExtraLibMkdir() $(_NULLCMD_)
+# define _ExtraObjCompile(options) $(_NULLCMD_)
+# define _ExtraObjCplusplusCompile(options) $(_NULLCMD_)
+# define _ExtraCleanDir() $(_NULLCMD_)
+#endif
+
 #ifndef CplusplusSource
 # define SRCsuf c
 #else
@@ -171,6 +187,7 @@ target									@@\
 	_DebuggedObjCompile(options)					@@\
 	_ProfiledObjCompile(options)					@@\
 	_NormalObjCompile(options)					@@\
+	_ExtraObjCompile(options)					@@\
 	_SharedObjCompile(options)
 
 #ifdef CplusplusSource
@@ -179,6 +196,7 @@ target									@@\
 	_DebuggedObjCplusplusCompile(options)				@@\
 	_ProfiledObjCplusplusCompile(options)				@@\
 	_NormalObjCplusplusCompile(options)				@@\
+	_ExtraObjCplusplusCompile(options)				@@\
 	_SharedObjCplusplusCompile(options)
 #else
 # define _CompileObjCplusplus(target, options)
@@ -190,11 +208,13 @@ all::									@@\
 	_DebuggedLibMkdir()						@@\
 	_ProfiledLibMkdir()						@@\
 	_NormalLibMkdir()						@@\
+	_ExtraLibMkdir()						@@\
 									@@\
 includes::								@@\
 	_DebuggedLibMkdir()						@@\
 	_ProfiledLibMkdir()						@@\
 	_NormalLibMkdir()						@@\
+	_ExtraLibMkdir()						@@\
 									@@\
 _CompileObj(.c.Osuf:,$(_NOOP_))						@@\
 _CompileObjCplusplus(.SRCsuf.Osuf:,$(_NOOP_))				@@\
@@ -203,6 +223,7 @@ clean::									@@\
 	_DebuggedCleanDir()						@@\
 	_ProfiledCleanDir()						@@\
 	_NormalCleanDir()						@@\
+	_ExtraCleanDir()						@@\
 
 #endif /* LibraryObjectRule */
 
@@ -375,6 +396,12 @@ InstallLibrary($(LIBNAME)_p,$(USRLIBDIR))
 DebuggedLibraryTarget($(LIBNAME),$(OBJS))
 #   if !defined(LibInstall) || LibInstall
 InstallLibrary($(LIBNAME)_d,$(USRLIBDIR))
+#   endif
+#  endif
+#  if DoExtraLib && defined(ExtraLibRules)
+ExtraLibraryTarget($(LIBNAME),$(SoRev),$(OBJS))
+#   if !defined(LibInstall) || LibInstall
+ExtraInstallLibrary($(LIBNAME),$(SoRev))
 #   endif
 #  endif
 

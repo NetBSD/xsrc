@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: util.c /main/33 1996/12/01 23:47:10 swick $
- *	$XFree86: xc/programs/xterm/util.c,v 3.29 1998/07/04 14:48:30 robin Exp $
+ *	$XFree86: xc/programs/xterm/util.c,v 3.13.2.9 1998/10/20 20:51:56 hohndel Exp $
  */
 
 /*
@@ -28,18 +28,13 @@
 
 /* util.c */
 
-#ifdef HAVE_CONFIG_H
-#include <xtermcfg.h>
-#endif
+#include <xterm.h>
 
-#include <stdio.h>
+#include <data.h>
+#include <error.h>
+#include <menu.h>
 
-#include "ptyx.h"
-#include "data.h"
-#include "error.h"
-#include "menu.h"
-
-#include "xterm.h"
+#include <ctype.h>
 
 extern Bool waiting_for_initial_map;
 
@@ -1618,6 +1613,8 @@ char * my_memmove(char * s1, char * s2, size_t n)
 				bfr = (bfr != 0)
 					? realloc(bfr, length)
 					: malloc(length);
+				if (bfr == NULL) 
+				    SysError(ERROR_MMALLOC);
 			}
 			for (j = 0; j < n; j++)
 				bfr[j] = s2[j];
@@ -1641,3 +1638,15 @@ char *my_strerror(int n)
 }
 #endif
 #endif
+
+int char2lower(int ch)
+{
+	if (isascii(ch) && isupper(ch)) {		/* lowercasify */
+#ifdef _tolower
+		ch = _tolower (ch);
+#else
+		ch = tolower (ch);
+#endif
+	}
+	return ch;
+}

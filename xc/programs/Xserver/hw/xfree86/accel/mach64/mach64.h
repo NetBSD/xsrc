@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.h,v 3.14.2.2 1998/02/23 19:06:00 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.h,v 3.14.2.3 1998/10/18 20:42:05 hohndel Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -87,6 +87,7 @@ extern int mach64MemCycle;
 
 extern Bool mach64IntegratedController;
 extern Bool mach64HasDSP;
+extern Bool mach64HasBlockWrite;
 
 extern unsigned int mach64MemorySize;
 extern unsigned int mach64ApertureSize;

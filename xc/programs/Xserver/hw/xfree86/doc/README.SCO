@@ -7,11 +7,11 @@
 
 
 
-			   Information for SCO Users
+                           Information for SCO Users
 
-		       J. Kean Johnston (hug@netcom.com)
+                       J. Kean Johnston (hug@netcom.com)
 
-			       30 November 1996
+                               30 November 1996
 
 
 
@@ -20,91 +20,91 @@
 The following files are provided in the binary distribution:
 
 
-	   README.SCO
-		 This file.
+           README.SCO
+                 This file.
 
-	   gunzip.Z
-		 The GNU uncompress utility.
+           gunzip.Z
+                 The GNU uncompress utility.
 
-	   *X312Xdoc.tgz
-		 The XFree86 specific documentation.
+           *X312Xdoc.tgz
+                 The XFree86 specific documentation.
 
-	   X312Mono.tgz
-		 The Mono server
+           X312Mono.tgz
+                 The Mono server
 
-	   X312VG16.tgz
-		 The 16 colour VGA server
+           X312VG16.tgz
+                 The 16 colour VGA server
 
-	   X312SVGA.tgz
-		 The Super VGA server
+           X312SVGA.tgz
+                 The Super VGA server
 
-	   X312S3.tgz
-		 The S3 server
+           X312S3.tgz
+                 The S3 server
 
-	   X3128514.tgz
-		 The 8514 server
+           X3128514.tgz
+                 The 8514 server
 
-	   X312AGX.tgz
-		 The AGX server
+           X312AGX.tgz
+                 The AGX server
 
-	   X312Mc32.tgz
-		 The Mach 32 server
+           X312Mc32.tgz
+                 The Mach 32 server
 
-	   X312Mc64.tgz
-		 The Mach 64 server
+           X312Mc64.tgz
+                 The Mach 64 server
 
-	   X312Mc8.tgz
-		 The Mach 8 server
+           X312Mc8.tgz
+                 The Mach 8 server
 
-	   X312P9k.tgz
-		 The P9000 server
-
-
-
-Information for SCO Users
+           X312P9k.tgz
+                 The P9000 server
 
 
 
+Information for SCO Users                                                     1
 
 
-Information for SCO Users
 
 
 
-	   X312W32.tgz
-		 The ET4000/W32 server
+Information for SCO Users                                                     2
 
-	   *X312cfg.tgz
-		 The local configuration files for xdm/fs/xinit.
 
-	   *X312bin.tgz
-		 The bin directory, contains most executables.
 
-	   *X312lib.tgz
-		 The shared and unshared libraries.
+           X312W32.tgz
+                 The ET4000/W32 server
 
-	   *X312fnt1.tgz
-		 75dpi and misc fonts.
+           *X312cfg.tgz
+                 The local configuration files for xdm/fs/xinit.
 
-	   X312fnt2.tgz
-		 100dpi and Speedo fonts.
+           *X312bin.tgz
+                 The bin directory, contains most executables.
 
-	   *X312inc.tgz
-		 The X11 include files.
+           *X312lib.tgz
+                 The shared and unshared libraries.
 
-	   X312man.tgz
-		 The formatted man pages.
+           *X312fnt1.tgz
+                 75dpi and misc fonts.
 
-	   X312lkit.tgz
-		 The server link kit (all drivers + PEX).
+           X312fnt2.tgz
+                 100dpi and Speedo fonts.
 
-	   X312util.tgz
-		 Lots of PD utilities provided as is.
+           *X312inc.tgz
+                 The X11 include files.
 
-	   X312pex.tgz
-		 All files relating to PEX including libraries and header
-		 files.  The LinkKit is required to obtain servers capable
-		 of running PEX.
+           X312man.tgz
+                 The formatted man pages.
+
+           X312lkit.tgz
+                 The server link kit (all drivers + PEX).
+
+           X312util.tgz
+                 Lots of PD utilities provided as is.
+
+           X312pex.tgz
+                 All files relating to PEX including libraries and header
+                 files.  The LinkKit is required to obtain servers capable
+                 of running PEX.
 
 To obtain a minimum XFree86 installation you will require the archives marked
 with a `*' above, the server binary best suited to your machine and optionally
@@ -116,9 +116,9 @@ To install the XFree86 binaries just follow these steps.
   1.  Obtain the files you require.
 
 
-      The rest of this procedure must be done as root.	If you do not run the
+      The rest of this procedure must be done as root.  If you do not run the
       extraction as root the permissions on the files will not be correct.  For
-      example,	the `X' server is s-bit root and will not function correctly if
+      example,  the `X' server is s-bit root and will not function correctly if
       extracted as an ordinary user.
 
   2.  create a directory /usr/X11R6, permissions 755 should do nicely.
@@ -133,13 +133,13 @@ To install the XFree86 binaries just follow these steps.
 
 
 
-Information for SCO Users
+Information for SCO Users                                                     3
 
 
 
   4.  extract the archives, for example:
 
-		       gunzip < X312bin.tgz | tar xvpf -
+                       gunzip < X312bin.tgz | tar xvpf -
 
 
 
@@ -160,7 +160,7 @@ The SCO port comes as part of the standard XFree86 distribution.  Consult the
 XFree86 README for more information on the location of sources.
 
 Please note that as of XFree86 3.2, Only SCO Open Server Release 5 and onwards
-are supported.	If you are using a previous version of SCO UNIX and you want to
+are supported.  If you are using a previous version of SCO UNIX and you want to
 use XFree86, use the 3.1 series, or be prepared for build failures.
 
 For people who want and need to look around the source, there are now two files
@@ -185,7 +185,7 @@ work fine without TCP/IP but you will most likely have to do some or all of
 these things:
 
    o Do not worry about errors from the X server complaining about
-     ``/dev/socksys''.	The X server is configured to run on systems with and
+     ``/dev/socksys''.  The X server is configured to run on systems with and
      without TCP/IP.  This error is just pointing out that you do not have
      TCP/IP and that this method of connecting to the server has been disabled.
 
@@ -199,7 +199,7 @@ these things:
 
 
 
-Information for SCO Users
+Information for SCO Users                                                     4
 
 
 
@@ -215,7 +215,7 @@ Information for SCO Users
      For example:
 
 
-	       -rwsr-xr-x   1 root     bin	1074060 Jul 24 11:54 XF86_W32
+               -rwsr-xr-x   1 root     bin      1074060 Jul 24 11:54 XF86_W32
 
 
 
@@ -223,7 +223,7 @@ Information for SCO Users
      is correct while:
 
 
-	       -rwxr-xr-x   1 root     bin	1074060 Jul 24 11:54 XF86_W32
+               -rwxr-xr-x   1 root     bin      1074060 Jul 24 11:54 XF86_W32
 
 
 
@@ -240,13 +240,13 @@ Information for SCO Users
      ``/dev/spx'' and ``Xsco''.
 
 
-   o Your streams resources may be configured too low.	You should check your
+   o Your streams resources may be configured too low.  You should check your
      streams parameters against the following values,  if the are higher then
      you do not need to changes them.  To check these values, login as root,
      change directory to ``/etc/conf/cf.d'' and then run ``./configure''.
 
      Once you are running configure,  choose the ``Streams Data'' option and
-     step through the entries.	Just press <ENTER> at each prompt unless you
+     step through the entries.  Just press <ENTER> at each prompt unless you
      want to change a value.  The values to look for,  and their minimum val-
      ues, are:
 
@@ -265,22 +265,22 @@ Information for SCO Users
 
 
 
-Information for SCO Users
+Information for SCO Users                                                     5
 
 
 
-				  NSTREAM      128
-				  NQUEUE       512
-				  NBLK4096     4
-				  NBLK2048     32
-				  NBLK1024     32
-				  NBLK512      32
-				  NBLK256      64
-				  NBLK128      256
-				  NBLK64       256
-				  NBLK16       256
-				  NBLK4        128
-				  NUMSP        128
+                                  NSTREAM      128
+                                  NQUEUE       512
+                                  NBLK4096     4
+                                  NBLK2048     32
+                                  NBLK1024     32
+                                  NBLK512      32
+                                  NBLK256      64
+                                  NBLK128      256
+                                  NBLK64       256
+                                  NBLK16       256
+                                  NBLK4        128
+                                  NUMSP        128
 
 
 
@@ -310,10 +310,10 @@ After compiling the tree, or after installing the binary distribution you can
 get man to recognise the XFree86 man pages by adding /usr/X11R6/man to the MAN-
 PATH in /etc/default/man, the line should look similar to:
 
-	 MANPATH=/usr/man:/usr/X11R6/man
+         MANPATH=/usr/man:/usr/X11R6/man
 
 
-This allows all users to view the X man pages.	You may change your own MANPATH
+This allows all users to view the X man pages.  You may change your own MANPATH
 environment variable if you do not want everyone to access the man pages.
 
 By default the man pages are compressed using ``compress'' to conserve space.
@@ -331,7 +331,7 @@ your ``xf86site.def'' file.  Those using the binary distribution can use
 
 
 
-Information for SCO Users
+Information for SCO Users                                                     6
 
 
 
@@ -339,7 +339,7 @@ Information for SCO Users
 
 XFree86 will accept connections from SCO binaries (R3 upwards) and the SCO R5
 server will also accept connections from XFree86 binaries. This means you may
-mix and match the two if you have ODT.	For example you may still use the Motif
+mix and match the two if you have ODT.  For example you may still use the Motif
 window manager (mwm) if you prefer.
 
 
@@ -348,7 +348,7 @@ window manager (mwm) if you prefer.
 As of GCC version 2.8.0, Open Server is supported. Configure it by using the
 following:
 
-	 ./configure i486-sco3.2v5.0
+         ./configure i486-sco3.2v5.0
 
 There is no reason to modify gcc in any way.  It compiles cleanly on Open
 Server 5.
@@ -397,20 +397,20 @@ following files.
 
 
 
-Information for SCO Users
+Information for SCO Users                                                     7
 
 
 
       README
-	    the standard XFree86 README (/usr/X11R6/lib/X11/doc)
+            the standard XFree86 README (/usr/X11R6/lib/X11/doc)
 
       README.SVR3
-	    Although a lot of this readme is based on Interactive a substantial
-	    proportion is still relevant.
+            Although a lot of this readme is based on Interactive a substantial
+            proportion is still relevant.
 
       All of the VGA/Config documentation.
-	    /usr/X11R6/lib/X11/doc/VideoModes.doc and the README files for par-
-	    ticular video cards.
+            /usr/X11R6/lib/X11/doc/VideoModes.doc and the README files for par-
+            ticular video cards.
 
 
 9.  Known Problems
@@ -426,32 +426,32 @@ Information for SCO Users
 
       Problem:
 
-		 The server does not start up,	and I cannot tell what is
-		 going wrong as it did not print any error messages.
+                 The server does not start up,  and I cannot tell what is
+                 going wrong as it did not print any error messages.
 
       Causes:
 
-		 There can be any number of causes why the server doesn't
-		 start.  The first step is to find out what the server has
-		 to say.  To do this we have to catch the error output of
-		 the server into a file.  This output contains a log of
-		 what the server is finding/doing as it starts up.  To get
-		 this output run:
+                 There can be any number of causes why the server doesn't
+                 start.  The first step is to find out what the server has
+                 to say.  To do this we have to catch the error output of
+                 the server into a file.  This output contains a log of
+                 what the server is finding/doing as it starts up.  To get
+                 this output run:
 
-				     startx 2> /tmp/errs
+                                     startx 2> /tmp/errs
 
 
 
-		 The output of the server will now be in "/tmp/errs".  You
-		 should look through this output for possible problems,
-		 and then check here in this document for any references
-		 to the problems you are seeing.
+                 The output of the server will now be in "/tmp/errs".  You
+                 should look through this output for possible problems,
+                 and then check here in this document for any references
+                 to the problems you are seeing.
 
       Problem:
 
-		 The server starts up,	the screen goes blank,	and I
-		 never see anything else.  It appears that my machine has
-		 hung.
+                 The server starts up,  the screen goes blank,  and I
+                 never see anything else.  It appears that my machine has
+                 hung.
 
       Causes:
 
@@ -463,185 +463,185 @@ Information for SCO Users
 
 
 
-Information for SCO Users
+Information for SCO Users                                                     8
 
 
 
-		 Again this can have many causes.  Most likely your
-		 XF86Config is wrong.  You should be able to kill the
-		 server by typing Ctrl-Alt-BackSpace,  if it is still run-
-		 ning.	If this does not restore your display then you may
-		 have to drive your system blind.  Always keep another
-		 login running at the shell prompt so that you may switch
-		 to that screen and run commands even if you cannot see
-		 anything on the screen.  Try these things,  usually in
-		 the order given:
+                 Again this can have many causes.  Most likely your
+                 XF86Config is wrong.  You should be able to kill the
+                 server by typing Ctrl-Alt-BackSpace,  if it is still run-
+                 ning.  If this does not restore your display then you may
+                 have to drive your system blind.  Always keep another
+                 login running at the shell prompt so that you may switch
+                 to that screen and run commands even if you cannot see
+                 anything on the screen.  Try these things,  usually in
+                 the order given:
 
-		    o log out of the login where you started ``X'' and
-		      then change consoles.  This will cause the SCO
-		      screen switching code to try to reset the card.
+                    o log out of the login where you started ``X'' and
+                      then change consoles.  This will cause the SCO
+                      screen switching code to try to reset the card.
 
-		    o run ``vidi v80x25'',  this command will also try to
-		      set your card into a viewable mode.
+                    o run ``vidi v80x25'',  this command will also try to
+                      set your card into a viewable mode.
 
-		    o shutdown the machine cleanly with ``shutdown'' and
-		      try again.
+                    o shutdown the machine cleanly with ``shutdown'' and
+                      try again.
 
-		 When first trying to get XFree86 to run,  be sure to use
-		 a simple setup.  Get 640x480 working first then move on
-		 to higher resolutions.  Always trap the output of the
-		 server as shown earlier.  Once you have the valid clocks
-		 for your video card (as provided in the server output),
-		 hard code them into your XF86Config as this will take
-		 some strain off your monitor during XFree86 startup where
-		 it usually probes the various clock frequencies.  Getting
-		 the ``X'' screen to appear can be a painfully slow task.
-		 Be patient and read as much of the doco as you can han-
-		 dle.  You will get it to work.
-
-      Problem:
-
-
-				 Fatal server error:
-				 xf86MapVidMem:No class map defined for (XXXXX,XXXXX)
-
-
-      Causes:
-
-
-		   1.  Your system does not have the correct
-		       /etc/conf/pack.d/cn/class.h, You can confirm this
-		       by editing the file and looking for the string
-		       "SVGA", if it is not there then you should re-
-		       install this file from the "Extended Utilities"
-		       diskettes provided with your OS.  If this is not
-		       possible then installing the "dmmap" driver from
-		       the distribution may allow the server to operate
-		       correctly.
+                 When first trying to get XFree86 to run,  be sure to use
+                 a simple setup.  Get 640x480 working first then move on
+                 to higher resolutions.  Always trap the output of the
+                 server as shown earlier.  Once you have the valid clocks
+                 for your video card (as provided in the server output),
+                 hard code them into your XF86Config as this will take
+                 some strain off your monitor during XFree86 startup where
+                 it usually probes the various clock frequencies.  Getting
+                 the ``X'' screen to appear can be a painfully slow task.
+                 Be patient and read as much of the doco as you can han-
+                 dle.  You will get it to work.
 
       Problem:
 
 
+                                 Fatal server error:
+                                 xf86MapVidMem:No class map defined for (XXXXX,XXXXX)
 
-
-
-
-
-
-
-Information for SCO Users
-
-
-
-		 xf86install does not work.
 
       Causes:
 
-		 You should not be running xf86install when using the
-		 XFree86 server under SCO.  It is used for Interactive
-		 (ISC) installations.
 
-      Problem:
-
-		 The server starts but the screen is not aligned correctly
-		 or is shaky and impossible to view.
-
-      Causes:
-
-		 This is most likely due to an incorrect XF86Config setup.
-		 Look for the files README.Config  VideoModes.doc (in
-		 /usr/X11R6/lib/X11/doc with the binary distribution).
-		 These files explains how to fix up your video modes.
-
-      Problem:
-
-	      1.  Can only run a limited number of xterms.
-
-	      2.  xterm does not work but other programs like xclock do work.
-
-      Causes:
-
-		 Not enough or no pseudo ttys devices are present on your
-		 system.  Run "mkdev ptty" and increase the number of
-		 ptty's.
-
-      Problem:
-
-		 When running curses/termcap applications in an xterm the
-		 output gets corrupted especially when scrolling.
-
-      Causes:
-
-	      1.  You are running an original 1.3 distribution of XFree86.
-		  Update to the latest version (3.2 or greater).
-
-	      2.  You have resized the window and not ran "eval `resize`"
-		  before using your application.  The SCO operating system does
-		  not support dynamic resizing of xterms fully so this command
-		  must be run after resizing an xterm in order for curses/term-
-		  cap applications to operate correctly.
-
-      Problem:
-
-	      1.  When starting X it dies with an error "Cannot access a needed
-		  shared library".
-
-
-
-
-
-
-
-
-
-
-Information for SCO Users
-
-
-
-	      2.  When starting an X application is dies with the above error.
-
-      Causes:
-
-	      1.  You do not have the binaries installed in the correct direc-
-		  tory.  Check that they are in /usr/X11R6
-
-	      2.  You have upgraded to a new binary distribution which has a
-		  new version of the shared libraries which are not compatible
-		  with your old binaries.  To fix this you will need to re-
-		  install the old shared libraries or recompile your applica-
-		  tion against the new libraries.
+                   1.  Your system does not have the correct
+                       /etc/conf/pack.d/cn/class.h, You can confirm this
+                       by editing the file and looking for the string
+                       "SVGA", if it is not there then you should re-
+                       install this file from the "Extended Utilities"
+                       diskettes provided with your OS.  If this is not
+                       possible then installing the "dmmap" driver from
+                       the distribution may allow the server to operate
+                       correctly.
 
       Problem:
 
 
-		 When linking against the SCO motif library I get an unre-
-		 solved external for "XtDisplayStringConversionWarning"
-		 when using gcc.
+
+
+
+
+
+
+
+Information for SCO Users                                                     9
+
+
+
+                 xf86install does not work.
+
+      Causes:
+
+                 You should not be running xf86install when using the
+                 XFree86 server under SCO.  It is used for Interactive
+                 (ISC) installations.
+
+      Problem:
+
+                 The server starts but the screen is not aligned correctly
+                 or is shaky and impossible to view.
+
+      Causes:
+
+                 This is most likely due to an incorrect XF86Config setup.
+                 Look for the files README.Config  VideoModes.doc (in
+                 /usr/X11R6/lib/X11/doc with the binary distribution).
+                 These files explains how to fix up your video modes.
+
+      Problem:
+
+              1.  Can only run a limited number of xterms.
+
+              2.  xterm does not work but other programs like xclock do work.
+
+      Causes:
+
+                 Not enough or no pseudo ttys devices are present on your
+                 system.  Run "mkdev ptty" and increase the number of
+                 ptty's.
+
+      Problem:
+
+                 When running curses/termcap applications in an xterm the
+                 output gets corrupted especially when scrolling.
+
+      Causes:
+
+              1.  You are running an original 1.3 distribution of XFree86.
+                  Update to the latest version (3.2 or greater).
+
+              2.  You have resized the window and not ran "eval `resize`"
+                  before using your application.  The SCO operating system does
+                  not support dynamic resizing of xterms fully so this command
+                  must be run after resizing an xterm in order for curses/term-
+                  cap applications to operate correctly.
+
+      Problem:
+
+              1.  When starting X it dies with an error "Cannot access a needed
+                  shared library".
+
+
+
+
+
+
+
+
+
+
+Information for SCO Users                                                    10
+
+
+
+              2.  When starting an X application is dies with the above error.
+
+      Causes:
+
+              1.  You do not have the binaries installed in the correct direc-
+                  tory.  Check that they are in /usr/X11R6
+
+              2.  You have upgraded to a new binary distribution which has a
+                  new version of the shared libraries which are not compatible
+                  with your old binaries.  To fix this you will need to re-
+                  install the old shared libraries or recompile your applica-
+                  tion against the new libraries.
+
+      Problem:
+
+
+                 When linking against the SCO motif library I get an unre-
+                 solved external for "XtDisplayStringConversionWarning"
+                 when using gcc.
 
       Causes:
 
 
-		 The SCO library is compiled with limited length identi-
-		 fiers.  To work around this add the following code to
-		 your application when compiling under XFree86 with gcc
-		 and SCO motif.
+                 The SCO library is compiled with limited length identi-
+                 fiers.  To work around this add the following code to
+                 your application when compiling under XFree86 with gcc
+                 and SCO motif.
 
-			  #ifdef SCO
-			  void XtDisplayStringConversionWarnin(dpy, from, toType)
-			      Display*	dpy;
-			      String	from;
-			      String	toType;
-			  { XtDisplayStringConversionWarning(dpy, from, toType); }
-			  #endif
+                          #ifdef SCO
+                          void XtDisplayStringConversionWarnin(dpy, from, toType)
+                              Display*  dpy;
+                              String    from;
+                              String    toType;
+                          { XtDisplayStringConversionWarning(dpy, from, toType); }
+                          #endif
 
 
       Problem:
 
-		 The server fails to run and prints out a line similar to:
+                 The server fails to run and prints out a line similar to:
 
-		 XFree86: Cannot open /dev/spx for ???? listener: No such
-		 file or directory
+                 XFree86: Cannot open /dev/spx for ???? listener: No such
+                 file or directory
 
       Causes:
 
@@ -661,57 +661,57 @@ Information for SCO Users
 
 
 
-Information for SCO Users
+Information for SCO Users                                                    11
 
 
 
-		 All SCO unix installations appear to have the Streams
-		 pseudo tty driver installed, but not all the devices are
-		 present.
+                 All SCO unix installations appear to have the Streams
+                 pseudo tty driver installed, but not all the devices are
+                 present.
 
-		   1.  there should be a /etc/conf/pack.d/sp directory,
+                   1.  there should be a /etc/conf/pack.d/sp directory,
 
-		   2.  /etc/conf/sdevice.d/sp should have a 'Y' in it.
+                   2.  /etc/conf/sdevice.d/sp should have a 'Y' in it.
 
-		   3.  You need a file in /etc/conf/node.d which contains
-		       something like:
+                   3.  You need a file in /etc/conf/node.d which contains
+                       something like:
 
-				    clone  spx	     c	  sp
-				    sp	   X0S	     c	  127
-				    sp	   X0R	     c	  126
-				    sp	   X1S	     c	  125
-				    sp	   X1R	     c	  124
-				    sp	   X2S	     c	  123
-				    sp	   X2R	     c	  122
-				    sp	   X3S	     c	  121
-				    sp	   X3R	     c	  120
-				    sp	   X4S	     c	  119
-				    sp	   X4R	     c	  118
-				    sp	   X5S	     c	  117
-				 sp   X5R	c    116
-				    sp	   X6S	     c	  115
-				    sp	   X6R	     c	  114
-				    sp	   X7S	     c	  113
-				    sp	   X7R	     c	  112
-
-
-		 if you don't have something like this (maybe called
-		 "Xsco") then create one and that should fix your problem.
-		 As far as I can tell the streams pseudo tty driver should
-		 be there.
-
-		 The simplest way to get the devices if you had to create
-		 this file is to rebuild the kernel and the environment.
-		 If you don't want to do this then:
+                                    clone  spx       c    sp
+                                    sp     X0S       c    127
+                                    sp     X0R       c    126
+                                    sp     X1S       c    125
+                                    sp     X1R       c    124
+                                    sp     X2S       c    123
+                                    sp     X2R       c    122
+                                    sp     X3S       c    121
+                                    sp     X3R       c    120
+                                    sp     X4S       c    119
+                                    sp     X4R       c    118
+                                    sp     X5S       c    117
+                                 sp   X5R       c    116
+                                    sp     X6S       c    115
+                                    sp     X6R       c    114
+                                    sp     X7S       c    113
+                                    sp     X7R       c    112
 
 
-			      touch /etc/.new_unix
-			      cd /etc/conf/bin
-			      ./idmkenv
+                 if you don't have something like this (maybe called
+                 "Xsco") then create one and that should fix your problem.
+                 As far as I can tell the streams pseudo tty driver should
+                 be there.
+
+                 The simplest way to get the devices if you had to create
+                 this file is to rebuild the kernel and the environment.
+                 If you don't want to do this then:
+
+
+                              touch /etc/.new_unix
+                              cd /etc/conf/bin
+                              ./idmkenv
 
 
 
-		 and try it out.
+                 and try it out.
 
 
 11.  Acknowledgements
@@ -727,7 +727,7 @@ provided.  Thanks to SCO in general for making information available for
 
 
 
-Information for SCO Users
+Information for SCO Users                                                    12
 
 
 
@@ -736,7 +736,7 @@ XFree86 development.
 Thanks also to Peter Eubert (peter.eubert@iwb.mw.tu-muenchen.dbp.de) and Kent
 Hamilton (kenth@stl.scscom.COM) for input on compiling under 3.2.4 systems.
 Larry Plona (faxi@world.std.com) and Didier Poirot (dp@chorus.fr) for their
-input on xdm and 3.2.4 compilation under 3.1.	And of course the beta list for
+input on xdm and 3.2.4 compilation under 3.1.   And of course the beta list for
 its input on everything.
 
 Special thanks to Jerry Whelan (guru@stasi.bradley.edu) for providing an ftp
@@ -793,7 +793,7 @@ site for the binary distribution.
 
 
 
-Information for SCO Users
+Information for SCO Users                                                    13
 
 
 
@@ -863,7 +863,7 @@ Information for SCO Users
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
@@ -919,8 +919,8 @@ Information for SCO Users
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SCO,v 3.26 1997/01/27 22:12:53 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SCO,v 3.26.2.2 1998/11/14 06:46:54 dawes Exp $
