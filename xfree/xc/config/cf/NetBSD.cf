@@ -371,6 +371,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # undef  InstallCmd
 # define InstallCmd 		/usr/bin/install
 #endif
+#define StripInstalledPrograms	YES
 
 #ifndef ExtraFilesToClean
 # define ExtraFilesToClean 	*.core
