@@ -66,6 +66,10 @@ SOFTWARE.
 #define LONG64
 #endif
 
+#if defined(__sparc_v9__) || (defined(__sparc__) && defined(__arch64__))
+#define LONG64
+#endif
+
 #ifdef __sgi
 #if (_MIPS_SZLONG == 64)
 #define LONG64
