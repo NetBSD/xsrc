@@ -101,10 +101,10 @@ extern struct cfdriver DRM(cd);
 #define DRM_CURPROC		curproc
 #define DRM_STRUCTPROC		struct proc
 #define DRM_SPINTYPE		struct simplelock
-#define DRM_SPININIT(l,name)
+#define DRM_SPININIT(l,name)	simple_lock_init(l)
 #define DRM_SPINUNINIT(l)
-#define DRM_SPINLOCK(l)	
-#define DRM_SPINUNLOCK(u)
+#define DRM_SPINLOCK(l)		simple_lock(l)
+#define DRM_SPINUNLOCK(u)	simple_unlock(u)
 #define DRM_CURRENTPID		curproc->p_pid
 
 /* Currently our DRMFILE (filp) is a void * which is actually the pid
