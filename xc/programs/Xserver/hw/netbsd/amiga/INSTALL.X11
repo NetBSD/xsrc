@@ -43,36 +43,46 @@ Please read the X11-Faq for installing X11.
 
     /usr/X11R6/lib/X11/xdm/Xservers
     /usr/X11R6/lib/X11/xinit/xserverrc
+    ~/.xserverrc
 
-   This is an example for Xservers:
+   This is an example for /usr/X11R6/lib/X11/xdm/Xservers:
     :0 local /usr/X11R6/bin/X -dev /dev/grf0 -width 680 -height 540 -nozap
 
-   and this is an example for xserverrc:
+   and this is an example for /usr/X11R6/lib/X11/xinit/xserverrc or
+   ~/.xserverrc:
     X -dev /dev/grf0 -width 680 -height 540 -nozap
 
    Locale keymap support:
        Currently supported keymaps: usa1 (default) and de.
-       You need to 'compile' a german keymap with this command:
-
-         xkbcomp -R/usr/X11R6/lib/X11/xkb -xkm -o /tmp/de.xkm -m de keymap/amiga
-
-       and then move the new keymap with this command into the X11 tree:
-
-         mv /tmp/de.xkm /usr/X11R6/lib/X11/xkb/compiled/de.xkm
-
-       You have to become root to move this file and to modify Xservers
-       or xserverrc.
-       Then you can add this options at the end of the line of Xservers
-       or xserverrc:
+       Add this options at the end of the line of Xservers, xserverrc or
+       ~/.xserverrc if you want to use the german keymap (you need to
+       become root to modify one of first two files):
 
          +kb -xkbmap de
 
-      Take a look at these files if you want to add other keymaps:
+       +kb          enable the X Keyboard Extension which is needed for -xkbmap
+       -xkbmap de   loads the german (de) XKB keyboard description on startup
+                    from /usr/X11R6/lib/X11/xkb/compiled/de.xkm
 
-        /usr/X11R6/lib/X11/xkb/geometry/amiga
-        /usr/X11R6/lib/X11/xkb/keycodes/amiga
-        /usr/X11R6/lib/X11/xkb/keymap/amiga
-        /usr/X11R6/lib/X11/xkb/symbols/amiga
+       You can create the german keymap if it is missing or you want to modify
+       the keymap or use this as an example if you want to add other keymaps:
+         First you need to 'compile' a german keymap with this commands:
+
+           cd /usr/X11R6/lib/X11/xkb
+           xkbcomp -xkm -o compiled/de.xkm -m de keymap/amiga
+
+         and then move the new keymap with this command into the X11 tree:
+
+           mv /tmp/de.xkm /usr/X11R6/lib/X11/xkb/compiled/de.xkm
+
+         You have to become root to move this file.
+
+         Take a look at these files if you want to add other keymaps:
+
+           /usr/X11R6/lib/X11/xkb/geometry/amiga
+           /usr/X11R6/lib/X11/xkb/keycodes/amiga
+           /usr/X11R6/lib/X11/xkb/keymap/amiga
+           /usr/X11R6/lib/X11/xkb/symbols/amiga
 
    Xamiga starts by default on grf0 (ECS/AGA) with a display width of 680
    and a display height of 540.
