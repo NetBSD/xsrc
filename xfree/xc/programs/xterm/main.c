@@ -3693,7 +3693,7 @@ spawn (void)
 		tslot = ttyslot();
 		added_utmp_entry = False;
 		{
-			if (pw && !resource.utmpInhibit &&
+			if (tslot > 0 && pw && !resource.utmpInhibit &&
 			    (i = open(etc_utmp, O_WRONLY)) >= 0) {
 				bzero((char *)&utmp, sizeof(utmp));
 				(void) strncpy(utmp.ut_line,
