@@ -59,7 +59,7 @@ int Len;
                		strerror(errno));
         	return(-1);
 	}
-	mlen = (Offset + Len + psize - 1) & ~psize;
+	mlen = (Offset + Len + psize - 1) & ~(psize - 1);
 	ptr = mmap((caddr_t)0, mlen, PROT_READ, MAP_SHARED, fd, (off_t)Base);
 	if ((int)ptr == -1)
 	{

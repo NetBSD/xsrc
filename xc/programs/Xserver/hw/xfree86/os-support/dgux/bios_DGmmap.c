@@ -51,7 +51,7 @@ int Len;
 		return(-1);
 	}
 	psize = sysconf(_SC_PAGESIZE);
-	mlen = (Offset + Len + psize -1) & ~psize;
+	mlen = (Offset + Len + psize -1) & ~(psize - 1);
 	ptr = (unsigned char *)mmap((caddr_t)0, mlen, PROT_READ, MAP_SHARED,
 					fd, (off_t)Base);
 	if ((int)ptr == -1)
