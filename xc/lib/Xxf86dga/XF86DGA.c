@@ -689,7 +689,7 @@ int *width, *bank, *ram;
    /* This requires linux-0.99.pl10 or above */
    *addr = (void *)mmap(NULL, *bank, PROT_READ,
                         MAP_FILE | MAP_SHARED, fd, 
-			(off_t)offset + bus_base_addr);
+			(off_t)(unsigned long)offset + bus_base_addr);
 #ifdef DEBUG
    fprintf(stderr, "XF86DGAGetVideo: physaddr: 0x%08x, size: %d\n",
 	   (long)offset, *bank);
