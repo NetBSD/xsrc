@@ -315,6 +315,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 /* x86_64 */
 #if defined(x86_64Architecture)
 # define OptimizedCDebugFlags	-O2	/* XXX not needed anymore? */
+# define NetBSDMachineDefines	-D__AMD64__
 #endif
 
 /* set default */
@@ -656,7 +657,6 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define BuildServer		YES
 # define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
 # define ServerExtraDefines	GccGasOption XFree86ServerDefines -D_XSERVER64
-# define NetBSDMachineDefines	-D__AMD64__
 # ifndef XFree86ConsoleDefines
 # define XFree86ConsoleDefines	-DWSCONS_SUPPORT -DPCVT_SUPPORT
 # endif
