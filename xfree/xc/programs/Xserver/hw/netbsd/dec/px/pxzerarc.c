@@ -1,4 +1,4 @@
-/*	$NetBSD: pxzerarc.c,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: pxzerarc.c,v 1.2 2004/03/12 21:54:00 matt Exp $	*/
 
 /************************************************************
 
@@ -38,10 +38,11 @@ in this Software without prior written authorization from the X Consortium.
 
 #include "X.h"
 #include "Xprotostr.h"
-#include "miscstruct.h"
 #include "gcstruct.h"
 #include "pixmapstr.h"
 #include "scrnintstr.h"
+#include "regionstr.h"
+#include "miscstruct.h"
 #include "px.h"
 #include "cfb.h"
 #include "mizerarc.h"

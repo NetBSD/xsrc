@@ -1,4 +1,4 @@
-/*	$NetBSD: px.h,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: px.h,v 1.2 2004/03/12 21:54:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -299,7 +299,7 @@ void	pxExpandBuf8to24(void *, void *, int);
 RegionPtr	pxCopyArea(DrawablePtr, DrawablePtr, GCPtr, int, int, int,
 			   int, int, int);
 void	pxDoBitblt(DrawablePtr, DrawablePtr, int, RegionPtr,
-		   DDXPointPtr, unsigned long, unsigned long);
+		   DDXPointPtr, unsigned long);
 
 /*
  * pxfillrct.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxbitblt.c,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: pxbitblt.c,v 1.2 2004/03/12 21:54:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -121,8 +121,7 @@ pxCopyArea(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, GCPtr pGC,
 
 void
 pxDoBitblt(DrawablePtr pSrcDrawable, DrawablePtr pDstDrawable, int alu,
-	   RegionPtr prgnDst, DDXPointPtr pptSrc, unsigned long pmask,
-	   unsigned long bitplane)
+	   RegionPtr prgnDst, DDXPointPtr pptSrc, unsigned long pmask)
 {
 	BoxPtr pbox, pboxTmp, pboxNext, pboxBase, pboxNew1, pboxNew2;
 	DDXPointPtr pptTmp, pptNew1, pptNew2;

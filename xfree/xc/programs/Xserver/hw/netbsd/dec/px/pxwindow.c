@@ -1,4 +1,4 @@
-/*	$NetBSD: pxwindow.c,v 1.1 2004/01/18 05:21:41 rtr Exp $	*/
+/*	$NetBSD: pxwindow.c,v 1.2 2004/03/12 21:54:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ pxCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
 	}
 
 	pxDoBitblt((DrawablePtr)pwinRoot, (DrawablePtr)pwinRoot,
-	    GXcopy, &rgnDst, pptSrc, ~0L, ~0L);
+	    GXcopy, &rgnDst, pptSrc, ~0L);
 
 	DEALLOCATE_LOCAL(pptSrc);
 	REGION_UNINIT(pWin->drawable.pScreen, &rgnDst);
