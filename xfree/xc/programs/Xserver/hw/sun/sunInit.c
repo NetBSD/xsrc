@@ -850,7 +850,7 @@ sunCfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
 }
 
 extern BSFuncRec	cfbBSFuncRec, cfb16BSFuncRec, cfb32BSFuncRec;
-extern int  cfb16ScreenPrivateIndex, cfb32ScreenPrivateIndex;
+/*extern*/ int  cfb16ScreenPrivateIndex, cfb32ScreenPrivateIndex;
 extern Bool cfbCloseScreen(), cfb16CloseScreen(), cfb32CloseScreen();
 
 Bool
