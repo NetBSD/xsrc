@@ -3256,8 +3256,10 @@ I830BIOSLeaveVT(int scrnIndex, int flags)
    RestoreHWState(pScrn);
    RestoreBIOSMemSize(pScrn);
    I830UnbindGARTMemory(pScrn);
+#ifdef XF86DRI
    if (pI830->AccelInfoRec)
       pI830->AccelInfoRec->NeedToSync = FALSE;
+#endif
 }
 
 /*
