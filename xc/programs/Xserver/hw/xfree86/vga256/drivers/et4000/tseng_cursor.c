@@ -321,6 +321,7 @@ static void TsengLoadCursorToCard(pScr, pCurs, x, y)
 	if (vgaUseLinearAddressing)
 		memcpy((unsigned char *)vgaLinearBase + tsengCursorAddress,
 			cursor_image, 1024);
+#ifndef __mc68000__
 	else {
 		/*
 		 * The cursor can only be in the last 16K of video memory,
@@ -332,6 +333,7 @@ static void TsengLoadCursorToCard(pScr, pCurs, x, y)
 			cursor_image, 1024);
 		vgaRestoreBank();
 	}
+#endif
 }
 
 /*

@@ -87,6 +87,7 @@ void (*ourmfbDoBitbltCopyInverted)();
 #endif
 #else
 unsigned long useSpeedUp = 0;
+#if !defined(__mc68000__)
 #if !defined(__alpha__)
 extern void speedupvga256TEGlyphBlt8();
 extern void speedupvga2568FillRectOpaqueStippled32();
@@ -97,6 +98,7 @@ extern void vga2568FillRectOpaqueStippled32();
 extern void vga2568FillRectTransparentStippled32();
 #endif /* !__alpha__ */
 extern void OneBankvgaBitBlt();
+#endif /* !__mc68000__ */
 #endif /* MONOVGA */
 #endif /* !XF86VGA16 */
 
@@ -279,6 +281,9 @@ int vgaSegmentMask;
 void *vgaReadBottom;
 void *vgaReadTop;
 void *vgaWriteBottom;
+#ifdef __mc68000__
+unsigned long writeseg;
+#endif
 void *vgaWriteTop =    (pointer)&writeseg; /* dummy for linking */
 Bool vgaReadFlag;
 Bool vgaWriteFlag;
@@ -536,11 +541,13 @@ vgaProbe()
     }
   }
       
+#if !(defined(__NetBSD__) && defined(__atari__))
 #if !defined(PC98) || defined(PC98_TGUI) || defined(PC98_MGA) || defined(PC98_SVGA)
   /* First do a general PCI probe (unless disabled) */
   if (!OFLG_ISSET(OPTION_NO_PCI_PROBE, &vga256InfoRec.options)) {
     vgaPCIInfo = vgaGetPCIInfo();
   }
+#endif
 #endif
 
   for (i=0; Drivers[i]; i++)
@@ -1032,6 +1039,7 @@ vgaProbe()
 
 #if !defined(XF86VGA16)
 #if !defined(MONOVGA)
+#if !defined(__mc68000__) /* m68k dislike banked modes */
 	if ((vga256InfoRec.speedup & ~SPEEDUP_ANYWIDTH) &&
             vga256InfoRec.displayWidth != 1024)
 	  {
@@ -1090,6 +1098,7 @@ vgaProbe()
 	}
 
       } /* endif vgaBitsPerPixel == 8 */
+#endif /* !__mc68000__ */
 
 	/* Initialise chip-specific enhanced fb functions */
 	vgaHWCursor.Initialized = FALSE;
@@ -1101,6 +1110,10 @@ vgaProbe()
 	vgaPhysLinearBase = Drivers[i]->ChipLinearBase;
 	vgaLinearSize = Drivers[i]->ChipLinearSize;
 
+#ifdef __mc68000__
+	vga256InfoRec.physBase = vgaPhysLinearBase;
+	vga256InfoRec.physSize = vga256InfoRec.videoRam * 1024;
+#else
 #ifdef XFreeXDGA
 	if (vgaUseLinearAddressing) {
 	    vga256InfoRec.physBase = vgaPhysLinearBase;
@@ -1111,10 +1124,17 @@ vgaProbe()
 	    vga256InfoRec.setBank = vgaSetVidPage;
 	}
 #endif
+#endif
 
+#ifdef __mc68000__
+	/* Currently linear addressing is required for m68k. */
+	/* Bail out if it is not enabled. */
+	if (!vgaUseLinearAddressing) {
+#else
 	/* Currently linear addressing is required for 16/32bpp. */
 	/* Bail out if it is not enabled. */
 	if (vgaBitsPerPixel > 8 && !vgaUseLinearAddressing) {
+#endif
  	    ErrorF("%s: Linear addressing is required for %dbpp\n",
  	    vga256InfoRec.name, vgaBitsPerPixel);
 	    vgaEnterLeaveFunc(LEAVE);
@@ -1140,6 +1160,7 @@ vgaProbe()
 #endif /* !MONOVGA */
 #endif /* !XF86VGA16 */
 
+#if !(defined(__NetBSD__) && defined(__atari__))
 #if !defined(PC98) || defined(PC98_TGUI) || defined(PC98_MGA) || defined(PC98_SVGA)
 	if (!OFLG_ISSET(OPTION_NO_PCI_PROBE, &vga256InfoRec.options)) {
 	  /* Free PCI information */
@@ -1150,6 +1171,7 @@ vgaProbe()
 	  }
 	}
 #endif
+#endif
 
 	return TRUE;
      }
@@ -1157,8 +1179,10 @@ vgaProbe()
 
   vgaSaveScreenFunc = vgaHWSaveScreen;
 
+#if !(defined(__NetBSD__) && defined(__atari__))
   /* Free PCI information */
   xf86cleanpci();
+#endif
   
   if (vga256InfoRec.chipset)
     ErrorF("%s: '%s' is an invalid chipset", vga256InfoRec.name,
@@ -1241,6 +1265,12 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
 
         vgaLinearOrig = vgaLinearBase; /* save copy of original base */
     }
+#ifdef __mc68000__
+    else {
+	ErrorF("No linear memory selected.\n");
+	return(FALSE);
+    }
+#endif
 #ifdef MONOVGA
     if (vga256InfoRec.displayWidth * vga256InfoRec.virtualY >= vgaSegmentSize * 8)
     {                                                     /* ^ mfb bug */
@@ -1258,7 +1288,11 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
 #ifdef XF86VGA16
     vgaVirtBase = vgaBase;
 #else
+#ifdef __mc68000__
+    vgaVirtBase = vgaLinearBase;
+#else
     vgaVirtBase = (pointer)VGABASE;
+#endif
 #endif
 #endif
 
@@ -1332,7 +1366,11 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
 #else
   xf86AccelInfoRec.ServerInfoRec = &vga256InfoRec;
   if (vgaBitsPerPixel == 8)
+#ifndef __mc68000__
       if (!xf86XAAScreenInitvga256(pScreen,
+#else
+      if (!xf86XAAScreenInit8bpp(pScreen,
+#endif
 		     (pointer) vgaVirtBase,
 		     vga256InfoRec.virtualX,
 		     vga256InfoRec.virtualY,
@@ -1467,6 +1505,15 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
       }
     else /* banked: */
 #endif
+#ifdef __mc68000__
+    {
+	/* m68k only uses linear frame buffer, should not happen */
+	ErrorF("%s: Linear addressing is required!\n",
+		vga256InfoRec.name);
+	vgaEnterLeaveFunc(LEAVE);
+	return(FALSE);
+    }
+#else /* __mc68000__ */
 
     for (vgaVirtPtr = vgaVirtBase;
 #if defined(MONOVGA) || defined(XF86VGA16)
@@ -1490,6 +1537,7 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
             }
             memset(vgaPhysPtr,pScreen->blackPixel,vgaSegmentSize);
         }
+#endif /* __mc68000__ */
 #endif /* !PC98_EGC */
 #endif /* MONOVGA */
 #endif /* !PC98_NEC480 */
@@ -1623,7 +1671,11 @@ vgaEnterLeaveVT(enter, screen_idx)
                       &pixPt);
 #else
           if (vgaBitsPerPixel == 8)
+#ifndef __mc68000__
 	      vga256DoBitblt(&ppix->drawable, &pspix->drawable, GXcopy,
+#else
+	      cfbDoBitblt(&ppix->drawable, &pspix->drawable, GXcopy,
+#endif
 	          &pixReg, &pixPt, 0xFF);
           if (vgaBitsPerPixel == 16)
 	      cfb16DoBitblt(&ppix->drawable, &pspix->drawable, GXcopy,
@@ -1678,7 +1730,11 @@ vgaEnterLeaveVT(enter, screen_idx)
                       &pixPt, 0xFF);
 #else
           if (vgaBitsPerPixel == 8)
+#ifndef __mc68000__
 	      vga256DoBitblt(&pspix->drawable, &ppix->drawable, GXcopy,
+#else
+	      cfbDoBitblt(&pspix->drawable, &ppix->drawable, GXcopy,
+#endif
 	          &pixReg, &pixPt, 0xFF);
           if (vgaBitsPerPixel == 16)
 	      cfb16DoBitblt(&pspix->drawable, &ppix->drawable, GXcopy,

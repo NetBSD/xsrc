@@ -49,27 +49,45 @@ void W32Stipple(src, y, stipple_height, dst, screen_width, w, h, rot)
 		    y = 0;
 	    	if (rot)
 		    RotBitsLeft(bits,rot);
-		*MBP2 = w32_dst;
+		*MBP2 = byteswap32(w32_dst);
 	    	w32_dst += nlwDst;
 		w = w32_chunks;
 
 		while (w--)
 		{
+#if !(BITMAP_BIT_ORDER == MSBFirst)
 		    *ACL = bits;
 		    *ACL = bits >> 8;
 		    *ACL = bits >> 16;
 		    *ACL = bits >> 24;
+#else
+		    *ACL = bits >> 24;
+		    *ACL = bits >> 16;
+		    *ACL = bits >> 8;
+		    *ACL = bits;
+#endif
 	    	}
 		switch (w32_misc)
 		{
 		    case 3:
+#if !(BITMAP_BIT_ORDER == MSBFirst)
 			*ACL = bits;
 			*ACL = bits >> 8;
 			*ACL = bits >> 16;
+#else
+			*ACL = bits >> 16;
+			*ACL = bits >> 8;
+			*ACL = bits;
+#endif
 			break;
 		    case 2:
+#if !(BITMAP_BIT_ORDER == MSBFirst)
 			*ACL = bits;
 			*ACL = bits >> 8;
+#else
+			*ACL = bits >> 8;
+			*ACL = bits;
+#endif
 			break;
 		    case 1:
 			*ACL = bits;

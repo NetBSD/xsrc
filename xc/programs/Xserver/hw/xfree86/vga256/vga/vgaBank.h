@@ -33,6 +33,7 @@ extern void *vgaReadTop;
 extern void *vgaWriteBottom;
 extern void *vgaWriteTop;
 extern Bool vgaReadFlag, vgaWriteFlag;
+#if !defined(__mc68000__)
 #if defined(__alpha__)
 extern unsigned long writeseg;
 #else /* __alpha__ */
@@ -144,6 +145,7 @@ extern void SpeedUpComputePrev(
 extern unsigned SpeedUpRowsNext[];
 extern unsigned SpeedUpRowsPrev[];
 
+#endif /* __mc68000__ */
 
 #ifdef CSRG_BASED
 #define VGABASE 0xFF000000

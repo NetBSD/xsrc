@@ -128,7 +128,9 @@
 #define KEY_Period       /* . (Period)  >(Greater)0x34  */   52
 #define KEY_Slash        /* / (Slash)   ?         0x35  */   53
 #define KEY_ShiftR       /* Shift(right)          0x36  */   54
+#if !(defined(__NetBSD__) && defined(__atari__))
 #define KEY_KP_Multiply  /* *                     0x37  */   55
+#endif
 #define KEY_Alt          /* Alt(left)             0x38  */   56
 #define KEY_Space        /*   (SpaceBar)          0x39  */   57
 #define KEY_CapsLock     /* CapsLock              0x3a  */   58
@@ -142,6 +144,7 @@
 #define KEY_F8           /* F8                    0x42  */   66
 #define KEY_F9           /* F9                    0x43  */   67
 #define KEY_F10          /* F10                   0x44  */   68
+#if !(defined(__NetBSD__) && defined(__atari__))
 #define KEY_NumLock      /* NumLock               0x45  */   69
 #define KEY_ScrollLock   /* ScrollLock            0x46  */   70
 #define KEY_KP_7         /* 7           Home      0x47  */   71 
@@ -219,6 +222,37 @@
 #define KEY_SN_KP_Next   /* ServerNumLock Next    0x93  */  147
 #define KEY_SN_KP_Ins    /* ServerNumLock Ins     0x94  */  148
 #define KEY_SN_KP_Del    /* ServerNumLock Del     0x95  */  149
+
+#else  /* !(defined(__NetBSD__) && defined(__atari__)) */
+#define KEY_Home         /* Home                  0x47  */   71
+#define KEY_Up           /* Up                    0x48  */   72
+#define KEY_KP_Minus     /* - (Minus)             0x4a  */   74
+#define KEY_Left         /* Left                  0x4b  */   75
+#define KEY_Right        /* Right                 0x4d  */   77
+#define KEY_KP_Plus      /* + (Plus)              0x4e  */   78
+#define KEY_Down         /* Down                  0x50  */   80
+#define KEY_Insert       /* Insert                0x52  */   82
+#define KEY_Delete       /* Delete                0x53  */   83
+#define KEY_Less         /* < (Less)   >(Greater) 0x60  */   96
+#define KEY_Undo         /* Undo                  0x61  */   97
+#define KEY_Help         /* Help                  0x62  */   98
+#define KEY_F11          /* F11                   0x63  */   99
+#define KEY_F12          /* F12                   0x64  */  100
+#define KEY_KP_Divide    /* Didive                0x65  */  101
+#define KEY_KP_Multiply  /* *                     0x66  */  102
+#define KEY_KP_7         /* 7           Home      0x67  */  103
+#define KEY_KP_8         /* 8           Up        0x68  */  104
+#define KEY_KP_9         /* 9           PgUp      0x69  */  105
+#define KEY_KP_4         /* 4           Left      0x6a  */  106
+#define KEY_KP_5         /* 5                     0x6b  */  107
+#define KEY_KP_6         /* 6           Right     0x6c  */  108
+#define KEY_KP_1         /* 1           End       0x6d  */  109
+#define KEY_KP_2         /* 2           Down      0x6e  */  110
+#define KEY_KP_3         /* 3           PgDown    0x6f  */  111
+#define KEY_KP_0         /* 0           Insert    0x70  */  112
+#define KEY_KP_Decimal   /* . (Decimal) Delete    0x71  */  113
+#define KEY_KP_Enter     /* Enter                 0x72  */  114
+#endif /* !(defined(__NetBSD__) && defined(__atari__)) */
 
 #else
 

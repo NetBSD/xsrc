@@ -244,10 +244,10 @@ static __inline__ void tseng_wait(reg,name,mask)
     *ACL_BACKGROUND_RASTER_OPERATION = W32PatternOpTable[rop];
 
 #define SET_DELTA(Min, Maj) \
-    *((LongP) ACL_DELTA_MINOR) = ((Maj) << 16) + (Min)
+    *((LongP) ACL_DELTA_MINOR) = byteswap32(((Maj) << 16) + (Min))
 
 #define SET_SECONDARY_DELTA(Min, Maj) \
-    *((LongP) ACL_SECONDARY_DELTA_MINOR) = ((Maj) << 16) + (Min)
+    *((LongP) ACL_SECONDARY_DELTA_MINOR) = byteswap32(((Maj) << 16) + (Min))
 
 #ifdef NO_OPTIMIZE
 #define SET_XYDIR(dir) \
@@ -269,18 +269,18 @@ static __inline__ void tseng_wait(reg,name,mask)
 
 /* Must do 0x09 (in one operation) for the W32 */
 #define START_ACL(dst) \
-    *(ACL_DESTINATION_ADDRESS) = dst; \
+    *(ACL_DESTINATION_ADDRESS) = byteswap32(dst); \
     if (et4000_type < TYPE_ET4000W32P) *ACL_OPERATION_STATE = 0x09;
 
 /* START_ACL for the ET6000 */
 #define START_ACL_6(dst) \
-    *(ACL_DESTINATION_ADDRESS) = dst;
+    *(ACL_DESTINATION_ADDRESS) = byteswap32(dst);
 
 #define START_ACL_CPU(dst) \
     if (et4000_type < TYPE_ET4000W32P) \
       *tsengCPU2ACLBase = dst; \
     else \
-      *(ACL_DESTINATION_ADDRESS) = dst;
+      *(ACL_DESTINATION_ADDRESS) = byteswap32(dst);
 
 
 /***********************************************************************/

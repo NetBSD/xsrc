@@ -14,5 +14,7 @@ void
 GlennsIODelay(count)
 int count;
 {
+#ifndef __mc68000__
 	usleep(1);
+#endif
 }

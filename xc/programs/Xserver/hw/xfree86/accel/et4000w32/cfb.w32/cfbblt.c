@@ -336,12 +336,12 @@ else
 	{
 #define W32_SET_BLT0 \
 { \
-    *MBP0 = (CARD32)(psrc) & 0xfffffffc; \
+    *MBP0 = byteswap32((CARD32)(psrc) & 0xfffffffc); \
     ggl1 = (void*)(W32Buffer + ((CARD32)(psrc) & 0x3)); \
 }
 #define W32_SET_BLT1 \
 { \
-    *MBP1 = (CARD32)(pdst) & 0xfffffffc; \
+    *MBP1 = byteswap32((CARD32)(pdst) & 0xfffffffc); \
     ggl2 = (void*)(W32Buffer + 8192 + ((CARD32)(pdst) & 0x3)); \
 }
 	    char *ggl1, *ggl2;
@@ -388,12 +388,12 @@ else
 #define GGL_X_FORWARD \
 		    if (ggl_src) \
 		    { \
-			*MBP0 = (CARD32)psrc; \
+			*MBP0 = byteswap32((CARD32)psrc); \
 			psrc = (void*)W32Buffer; \
 		    } \
 		    if (ggl_dst) \
 		    { \
-			*MBP1 = (CARD32)pdst; \
+			*MBP1 = byteswap32((CARD32)pdst); \
 			pdst = (void*)(W32Buffer + 8192); \
 		    }
 
@@ -594,12 +594,12 @@ pdst++;
 #define GGL_X_BACKWARD \
 		    if (ggl_src) \
 		    { \
-			*MBP0 = (CARD32)psrc - 2048; \
+			*MBP0 = byteswap32((CARD32)psrc - 2048); \
 			psrc = (void*)(W32Buffer + 2048); \
 		    } \
 		    if (ggl_dst) \
 		    { \
-			*MBP1 = (CARD32)pdst - 2048; \
+			*MBP1 = byteswap32((CARD32)pdst - 2048); \
 			pdst = (void*)(W32Buffer + 10240); \
 		    }
 

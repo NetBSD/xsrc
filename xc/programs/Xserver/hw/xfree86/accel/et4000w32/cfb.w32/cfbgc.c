@@ -70,7 +70,11 @@ SOFTWARE.
 #include "w32funcs.h"
 
 #if PSZ == 8
-# define useTEGlyphBlt  W32TEGlyphBlt8
+# ifndef __mc68000__
+#  define useTEGlyphBlt  W32TEGlyphBlt8
+# else
+#  define useTEGlyphBlt  cfbTEGlyphBlt8
+# endif
 #else
 # ifdef WriteBitGroup
 #  define useTEGlyphBlt	cfbImageGlyphBlt8

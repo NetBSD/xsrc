@@ -419,7 +419,7 @@ void tseng_init_acl()
                                          the ACL can start processing as
                                          soon as the first byte arrives */
     }
-    *ACL_DESTINATION_Y_OFFSET = vga256InfoRec.displayWidth * tseng_bytesperpixel - 1;
+    *ACL_DESTINATION_Y_OFFSET = byteswap16(vga256InfoRec.displayWidth * tseng_bytesperpixel - 1);
     *ACL_XY_DIRECTION = 0;
 
     *MMU_CONTROL = 0x74;
@@ -447,13 +447,13 @@ void tseng_init_acl()
        */
       if (Is_W32p_ab)
       {
-        *((LongP) (MMioBase + 0x00)) = 0x200000L;
-        *((LongP) (MMioBase + 0x04)) = 0x280000L;
+        *((LongP) (MMioBase + 0x00)) = BYTESWAP32(0x200000L);
+        *((LongP) (MMioBase + 0x04)) = BYTESWAP32(0x280000L);
       }
       else /* rev C & D */
       {
         *((LongP) (MMioBase + 0x00)) = 0x0L;
-        *((LongP) (MMioBase + 0x04)) = 0x100000L;
+        *((LongP) (MMioBase + 0x04)) = BYTESWAP32(0x100000L);
       }
     }
     

@@ -34,17 +34,17 @@ COLOR_REPLICATE_DWORD (int color)
 static __inline__ void 
 SET_FG_COLOR (int color)
 {
-  *ACL_SOURCE_ADDRESS = tsengFg;
-  *ACL_SOURCE_Y_OFFSET = 3;
+  *ACL_SOURCE_ADDRESS = byteswap32(tsengFg);
+  *ACL_SOURCE_Y_OFFSET = BYTESWAP16(3);
   color = COLOR_REPLICATE_DWORD (color);
-  *tsengMemFg = color;
+  *tsengMemFg = byteswap32(color);
   if (Is_W32p_up)
     {
       *ACL_SOURCE_WRAP = 0x02;
     }
   else
     {
-      *(tsengMemFg + 1) = color;
+      *(tsengMemFg + 1) = byteswap32(color);
       *ACL_SOURCE_WRAP = 0x12;
     }
 }
@@ -52,17 +52,17 @@ SET_FG_COLOR (int color)
 static __inline__ void 
 SET_BG_COLOR (int color)
 {
-  *ACL_PATTERN_ADDRESS = tsengPat;
-  *ACL_PATTERN_Y_OFFSET = 3;
+  *ACL_PATTERN_ADDRESS = byteswap32(tsengPat);
+  *ACL_PATTERN_Y_OFFSET = BYTESWAP16(3);
   color = COLOR_REPLICATE_DWORD (color);
-  *tsengMemPat = color;
+  *tsengMemPat = byteswap32(color);
   if (Is_W32p_up)
     {
       *ACL_PATTERN_WRAP = 0x02;
     }
   else
     {
-      *(tsengMemPat + 1) = color;
+      *(tsengMemPat + 1) = byteswap32(color);
       *ACL_PATTERN_WRAP = 0x12;
     }
 }
@@ -76,22 +76,22 @@ SET_BG_COLOR (int color)
 static __inline__ void 
 SET_FG_BG_COLOR (int fgcolor, int bgcolor)
 {
-  *ACL_PATTERN_ADDRESS = tsengPat;
-  *ACL_SOURCE_ADDRESS = tsengFg;
-  *((LongP) ACL_PATTERN_Y_OFFSET) = 0x00030003;
+  *ACL_PATTERN_ADDRESS = byteswap32(tsengPat);
+  *ACL_SOURCE_ADDRESS = byteswap32(tsengFg);
+  *((LongP) ACL_PATTERN_Y_OFFSET) = BYTESWAP32(0x00030003);
   fgcolor = COLOR_REPLICATE_DWORD (fgcolor);
   bgcolor = COLOR_REPLICATE_DWORD (bgcolor);
-  *tsengMemFg = fgcolor;
-  *tsengMemPat = bgcolor;
+  *tsengMemFg = byteswap32(fgcolor);
+  *tsengMemPat = byteswap32(bgcolor);
   if (Is_W32p_up)
     {
-      *((LongP) ACL_PATTERN_WRAP) = 0x00020002;
+      *((LongP) ACL_PATTERN_WRAP) = BYTESWAP32(0x00020002);
     }
   else
     {
-      *(tsengMemFg + 1) = fgcolor;
-      *(tsengMemPat + 1) = bgcolor;
-      *((LongP) ACL_PATTERN_WRAP) = 0x00120012;
+      *(tsengMemFg + 1) = byteswap32(fgcolor);
+      *(tsengMemPat + 1) = byteswap32(bgcolor);
+      *((LongP) ACL_PATTERN_WRAP) = BYTESWAP32(0x00120012);
     }
 }
 
@@ -145,7 +145,7 @@ SET_XY (int x, int y)
     new_x = MULBPP (x - 1);
   else
     new_x = MULBPP (x) - 1;
-  *ACL_XY_COUNT = ((y - 1) << 16) + new_x;
+  *ACL_XY_COUNT = byteswap32(((y - 1) << 16) + new_x);
   old_x = x;
   old_y = y;
 }
@@ -158,7 +158,7 @@ SET_X_YRAW (int x, int y)
     new_x = MULBPP (x - 1);
   else
     new_x = MULBPP (x) - 1;
-  *ACL_XY_COUNT = (y << 16) + new_x;
+  *ACL_XY_COUNT = byteswap32((y << 16) + new_x);
   old_x = x;
   old_y = y - 1;		/* old_y is invalid (raw transfer) */
 }
@@ -181,7 +181,7 @@ SET_XY_4 (int x, int y)
   if ((old_y != y) || (old_x != x))
     {
       new_xy = ((y - 1) << 16) + MULBPP (x - 1);
-      *ACL_XY_COUNT = new_xy;
+      *ACL_XY_COUNT = byteswap32(new_xy);
       old_x = x;
       old_y = y;
     }
@@ -195,7 +195,7 @@ SET_XY_6 (int x, int y)
   if ((old_y != y) || (old_x != x))
     {
       new_xy = ((y - 1) << 16) + MULBPP (x) - 1;
-      *ACL_XY_COUNT = new_xy;
+      *ACL_XY_COUNT = byteswap32(new_xy);
       old_x = x;
       old_y = y;
     }
@@ -206,7 +206,7 @@ SET_XY_6 (int x, int y)
 static __inline__ void 
 SET_XY_RAW (int x, int y)
 {
-  *ACL_XY_COUNT = (y << 16) + x;
+  *ACL_XY_COUNT = byteswap32((y << 16) + x);
   old_x = old_y = -1;		/* invalidate old_x/old_y (raw transfers) */
 }
 

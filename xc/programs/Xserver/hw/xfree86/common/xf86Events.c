@@ -132,6 +132,12 @@ Bool xf86VTSema = TRUE;
 extern	InputInfo 	inputInfo;
 #endif	/* XINPUT */
 
+#if defined(__NetBSD__) && defined(__atari__)
+static xEvent autoRepeatEvent;
+static int autoRepeatKeyDown = 0;
+static Bool autoRepeatFirst;
+#endif
+
 /*
  * The first of many hack's to get VT switching to work under
  * Solaris 2.1 for x86. The basic problem is that Solaris is supposed
@@ -344,7 +350,7 @@ void
 ProcessInputEvents ()
 {
   int x, y;
-#ifdef INHERIT_LOCK_STATE
+#if defined(INHERIT_LOCK_STATE) || (defined(__NetBSD__) && defined(__atari__))
   static int generation = 0;
 #endif
 
@@ -361,6 +367,17 @@ ProcessInputEvents ()
     IOPEvent		events[MAXEVENTS];
     int			dx, dy, nevents;
 #endif
+#if defined(__NetBSD__) && defined(__atari__)
+   /*
+    * The initial state of CapsLock, NumLock and ScrollLock can't find out
+    * at NetBSD Atari, but we must reset our autorepeat.
+    */
+    if (generation != serverGeneration) {
+       generation = serverGeneration;
+       autoRepeatKeyDown = 0;
+       autoRepeatFirst = FALSE;
+    }
+#else
 
     /*
      * With INHERIT_LOCK_STATE defined, the initial state of CapsLock, NumLock
@@ -397,6 +414,7 @@ ProcessInputEvents ()
       }
     }
 #endif
+#endif /* defined(__NetBSD__) && defined(__atari__) */
 
 #ifdef AMOEBA
     /*
@@ -520,6 +538,7 @@ xf86PostKbdEvent(key)
   }
 #endif  /* i386 && SVR4 */
 
+#if !(defined(__NetBSD__) && defined(__atari__))
 #ifndef ASSUME_CUSTOM_KEYCODES
   /*
    * First do some special scancode remapping ...
@@ -641,6 +660,7 @@ xf86PostKbdEvent(key)
     }
 #endif /* not PC98 */  
 #endif /* !ASSUME_CUSTOM_KEYCODES */
+#endif /* !(defined(__NetBSD__) && defined(__atari__)) */
 
   /*
    * and now get some special keysequences
@@ -973,6 +993,7 @@ xf86PostKbdEvent(key)
     }
 #endif /* not PC98 */	
 
+#if !(defined(__NetBSD__) && defined(__atari__))
 #ifndef ASSUME_CUSTOM_KEYCODES
   /*
    * normal, non-keypad keys
@@ -993,6 +1014,7 @@ xf86PostKbdEvent(key)
   }
 #endif /* !ASSUME_CUSTOM_KEYCODES */
   if (updateLeds) xf86KbdLeds();
+#endif /* !(defined(__NetBSD__) && defined(__atari__)) */
 #ifdef XKB
   }
 #endif
@@ -1033,6 +1055,17 @@ xf86PostKbdEvent(key)
 
       }
     }
+#if defined(__NetBSD__) && defined(__atari__)
+    /* initialize AutoRepeater */
+    if ((kevent.u.u.type == KeyPress) && (!keyc->modifierMap[keycode])) {
+       memcpy(&autoRepeatEvent, &kevent, sizeof(kevent));
+       autoRepeatFirst = TRUE;
+       autoRepeatKeyDown++;
+    } else {
+       autoRepeatFirst = FALSE;
+       autoRepeatKeyDown = 0;
+    }
+#endif /* defined(__NetBSD__) && defined(__atari__) */
 }
 #endif /* !__EMX__ */
 
@@ -1270,6 +1303,26 @@ xf86Block(blockData, pTimeout, pReadmask)
      OSTimePtr pTimeout;
      pointer  pReadmask;
 {
+#if defined(__NetBSD__) && defined(__atari__)
+    int delta;
+    static struct timeval artv = { 0, 0 };      /* autorepeat timeval */
+
+    if(!autoRepeatKeyDown)
+       return;
+
+    if (xf86Info.autoRepeat != AutoRepeatModeOn)
+       return;
+
+    if (*pTimeout == NULL)
+       *pTimeout = &artv;
+
+    (*pTimeout)->tv_sec = 0;
+    if (autoRepeatFirst)
+       delta = xf86Info.kbdDelay - TimeSinceLastInputEvent();
+    else
+       delta = xf86Info.kbdRate - TimeSinceLastInputEvent();
+    (*pTimeout)->tv_usec = delta > 0 ? delta * 1000 : 0;
+#endif /* defined(__NetBSD__) && defined(__atari__) */
 }
 
 
@@ -1325,6 +1378,21 @@ xf86Wakeup(blockData, err, pReadmask)
 	(xf86Info.mouseDev->mseEvents)(xf86Info.mouseDev);
       }
 #endif	/* __OSF__ */
+#if defined(__NetBSD__) && defined(__atari__)
+    if ((xf86Info.autoRepeat == AutoRepeatModeOn) && autoRepeatKeyDown) {
+       int delta = TimeSinceLastInputEvent();
+       if ((!autoRepeatFirst && (delta >= xf86Info.kbdRate))
+             || (delta >= xf86Info.kbdDelay)) {
+       autoRepeatFirst = FALSE;
+       xf86Info.lastEventTime = autoRepeatEvent.u.keyButtonPointer.time = GetTimeInMillis();
+       autoRepeatEvent.u.u.type = KeyRelease;
+       xf86eqEnqueue(&autoRepeatEvent);
+       autoRepeatEvent.u.u.type = KeyPress;
+       xf86eqEnqueue(&autoRepeatEvent);
+       xf86Info.inputPending = TRUE;
+      }
+    }
+#endif /* defined(__NetBSD__) && defined(__atari__) */
   }
 #else   /* __EMX__ */
 

@@ -112,6 +112,13 @@ extern Bool xf86LinearVidMem(
 	void
 #endif
 );
+#ifdef __mc68000__
+extern pointer xf86GetLinearAddress(
+#if NeedFunctionPrototypes
+	void
+#endif
+);
+#endif
 extern pointer xf86MapVidMem(
 #if NeedFunctionPrototypes
 	int,

@@ -52,19 +52,19 @@ void W32pImageText4();
     *ACL_ROUTING_CONTROL		= 0x2; \
     *ACL_VIRTUAL_BUS_SIZE		= 0x0; \
     *ACL_XY_DIRECTION			= 0; \
-    *ACL_DESTINATION_Y_OFFSET		= DST_OFFSET; \
-    *ACL_SOURCE_ADDRESS			= W32Foreground; \
-    *MBP0 				= W32Foreground; \
-    *ACL_PATTERN_ADDRESS		= W32Background; \
-    *(LongP)W32Buffer	 		= FOREGROUND; \
-    *(LongP)(W32Buffer + 4) 		= FOREGROUND; \
+    *ACL_DESTINATION_Y_OFFSET		= byteswap16(DST_OFFSET); \
+    *ACL_SOURCE_ADDRESS			= byteswap32(W32Foreground); \
+    *MBP0 				= byteswap32(W32Foreground); \
+    *ACL_PATTERN_ADDRESS		= byteswap32(W32Background); \
+    *(LongP)W32Buffer	 		= byteswap32(FOREGROUND); \
+    *(LongP)(W32Buffer + 4) 		= byteswap32(FOREGROUND); \
     *ACL_SOURCE_WRAP			= 0x12; \
-    *ACL_SOURCE_Y_OFFSET		= 0x3; \
+    *ACL_SOURCE_Y_OFFSET		= BYTESWAP16(0x3); \
     *ACL_PATTERN_WRAP			= 0x12; \
-    *ACL_PATTERN_Y_OFFSET		= 0x3; \
-    *MBP0 				= W32Background; \
-    *(LongP)W32Buffer	 		= BACKGROUND; \
-    *(LongP)(W32Buffer + 4) 		= BACKGROUND; \
+    *ACL_PATTERN_Y_OFFSET		= BYTESWAP16(0x3); \
+    *MBP0 				= byteswap32(W32Background); \
+    *(LongP)W32Buffer	 		= byteswap32(BACKGROUND); \
+    *(LongP)(W32Buffer + 4) 		= byteswap32(BACKGROUND); \
 }
 
 #define W32P_INIT_IMAGE_TEXT(FOREGROUND, BACKGROUND, DST_OFFSET, X, Y) \
@@ -77,17 +77,17 @@ void W32pImageText4();
     else \
       *ACL_ROUTING_CONTROL		= 0x02; \
     *ACL_XY_DIRECTION			= 0; \
-    *ACL_DESTINATION_Y_OFFSET		= DST_OFFSET; \
-    *ACL_SOURCE_ADDRESS			= W32Foreground; \
-    *MBP0 				= W32Foreground; \
-    *(LongP)W32Buffer	 		= FOREGROUND; \
+    *ACL_DESTINATION_Y_OFFSET		= byteswap16(DST_OFFSET); \
+    *ACL_SOURCE_ADDRESS			= byteswap32(W32Foreground); \
+    *MBP0 				= byteswap32(W32Foreground); \
+    *(LongP)W32Buffer	 		= byteswap32(FOREGROUND); \
     *ACL_SOURCE_WRAP			= 0x02; \
     *ACL_PATTERN_WRAP			= 0x02; \
-    *ACL_PATTERN_ADDRESS		= W32Background; \
-    *MBP0 				= W32Background; \
-    *(LongP)W32Buffer	 		= BACKGROUND; \
+    *ACL_PATTERN_ADDRESS		= byteswap32(W32Background); \
+    *MBP0 				= byteswap32(W32Background); \
+    *(LongP)W32Buffer	 		= byteswap32(BACKGROUND); \
     *ACL_MIX_ADDRESS			= 0; \
-    *ACL_MIX_Y_OFFSET 			= 31; \
+    *ACL_MIX_Y_OFFSET 			= BYTESWAP16(31); \
 }
 
 

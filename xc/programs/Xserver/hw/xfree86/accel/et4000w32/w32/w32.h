@@ -35,6 +35,7 @@ glenn@cs.utexas.edu)
 #include "X.h"
 #include "misc.h"
 #include "vgaBank.h"
+#include "compiler.h"
 #include <stdio.h>
 
 typedef unsigned char *ByteP; 
@@ -232,15 +233,14 @@ void figure(char*);
 #define WAIT_XY \
 {while (*(volatile unsigned char *)ACL_ACCELERATOR_STATUS & 0x4);}
 
-
 #define SET_XY(X, Y) \
-    {*((LongP) ACL_X_COUNT) = (((Y) - 1) << 16) + ((X) - 1) * (PSZ >> 3);}
+    {*((LongP) ACL_X_COUNT) = byteswap32((((Y) - 1) << 16) + ((X) - 1) * (PSZ >> 3));}
 
 
 /* Must do 0x09 (in one operation) for the W32 */
 #define START_ACL(dst) \
 { \
-    *(ACL_DESTINATION_ADDRESS) = dst; \
+    *(ACL_DESTINATION_ADDRESS) = byteswap32(dst); \
     if (W32OrW32i) *ACL_OPERATION_STATE = 0x09; \
 }
 
@@ -292,9 +292,9 @@ void figure(char*);
 #define START_ACL_CPU(dst) \
 { \
     if (W32OrW32i) \
-	*(MBP2) = dst; \
+	*(MBP2) = byteswap32(dst); \
     else \
-	*(ACL_DESTINATION_ADDRESS) = dst; \
+	*(ACL_DESTINATION_ADDRESS) = byteswap32(dst); \
 }
 
 
@@ -355,29 +355,29 @@ if (FrameBuffer)
 
 #define W32_SET_BYTE(DST) \
 { \
-    *MBP0 = (CARD32)(DST) & 0xfffffffc; \
+    *MBP0 = byteswap32((CARD32)(DST) & 0xfffffffc); \
     W32Ptr = (void*)(W32Buffer + ((CARD32)(DST) & 0x3)); \
 }
 
 
 #define W32_SET_SHORT(DST) \
 { \
-    *MBP0 = (CARD32)(DST) & 0xfffffffc; \
+    *MBP0 = byteswap32((CARD32)(DST) & 0xfffffffc); \
     W32Ptr = (void*)(W32Buffer + ((CARD32)(DST) & 0x3)); \
 }
 
 
 #define W32_SET_LONG(DST) \
 { \
-    *MBP0 = (CARD32)DST; \
+    *MBP0 = byteswap32((CARD32)DST); \
     W32Ptr = (void*)W32Buffer; \
 }
 
 
 #define W32_SET_BYTE2(DST) \
 { \
-    *MBP0 = (CARD32)(DST) & 0xfffffffc; \
-    *MBP1 = ((CARD32)(DST) & 0xfffffffc) + 8192; \
+    *MBP0 = byteswap32((CARD32)(DST) & 0xfffffffc); \
+    *MBP1 = byteswap32(((CARD32)(DST) & 0xfffffffc) + 8192); \
     W32Ptr = (void*)(W32Buffer + ((CARD32)(DST) & 0x3)); \
 }
 
@@ -387,30 +387,30 @@ if (FrameBuffer)
 
 #define W32_SET_LONG2(DST) \
 { \
-    *MBP0 = (CARD32)DST; \
-    *MBP1 = (CARD32)(DST) + 8192; \
+    *MBP0 = byteswap32((CARD32)DST); \
+    *MBP1 = byteswap32((CARD32)(DST) + 8192); \
     W32Ptr = (void*)W32Buffer; \
 }
 
 
 #define W32_BYTE(DST) \
 { \
-    *MBP0 = (CARD32)(DST) & 0xfffffffc; \
+    *MBP0 = byteswap32((CARD32)(DST) & 0xfffffffc); \
     DST = (void*)(W32Buffer + ((CARD32)(DST) & 0x3)); \
 }
 #define W32_SHORT(DST) W32_BYTE(DST)
 
 #define W32_BYTE1(DST) \
 { \
-    *MBP1 = (CARD32)(DST) & 0xfffffffc; \
+    *MBP1 = byteswap32((CARD32)(DST) & 0xfffffffc); \
     DST = (void*)(W32Buffer + 8192 + ((CARD32)(DST) & 0x3)); \
 }
 
 
 #define W32_BYTE2(DST) \
 { \
-    *MBP0 = (CARD32)(DST) & 0xfffffffc; \
-    *MBP1 = ((CARD32)(DST) & 0xfffffffc) + 8192; \
+    *MBP0 = byteswap32((CARD32)(DST) & 0xfffffffc); \
+    *MBP1 = byteswap32(((CARD32)(DST) & 0xfffffffc) + 8192); \
     DST = (void*)(W32Buffer + ((CARD32)(DST) & 0x3)); \
 }
 #define W32_SHORT2(DST) W32_BYTE2(DST)
@@ -418,15 +418,15 @@ if (FrameBuffer)
 
 #define W32_LONG(DST) \
 { \
-    *MBP0 = (CARD32)(DST); \
+    *MBP0 = byteswap32((CARD32)(DST)); \
     DST = (void*)W32Buffer; \
 }
 
 
 #define W32_LONG2(DST) \
 { \
-    *MBP0 = (CARD32)(DST); \
-    *MBP1 = (CARD32)(DST) + 8192; \
+    *MBP0 = byteswap32((CARD32)(DST)); \
+    *MBP1 = byteswap32((CARD32)(DST) + 8192); \
     DST = (void*)W32Buffer; \
 }
 
@@ -437,15 +437,15 @@ if (FrameBuffer)
 
 #define W32_PIXEL8(DST, COLOR) \
 { \
-    *MBP0 = (CARD32)(DST) & 0xfffffffc; \
+    *MBP0 = byteswap32((CARD32)(DST) & 0xfffffffc); \
     *(W32Buffer + ((CARD32)(DST) & 0x3)) = COLOR; \
 } 
 
 
 #define W32_PIXEL16(DST, COLOR) \
 { \
-    *MBP0 = (CARD32)(DST) & 0xfffffffc; \
-    *(WordP)(W32Buffer + ((CARD32)(DST) & 0x3)) = COLOR; \
+    *MBP0 = byteswap32((CARD32)(DST) & 0xfffffffc); \
+    *(WordP)(W32Buffer + ((CARD32)(DST) & 0x3)) = byteswap16(COLOR); \
 } 
 
 
@@ -454,8 +454,8 @@ if (FrameBuffer)
  */
 #define W32_PIXEL32(DST, COLOR) \
 { \
-    *MBP0 = (CARD32)(DST); \
-    *(LongP)W32Buffer = COLOR; \
+    *MBP0 = byteswap32((CARD32)(DST)); \
+    *(LongP)W32Buffer = byteswap32(COLOR); \
 } 
 
 
@@ -464,8 +464,8 @@ if (FrameBuffer)
  */
 #define W32_PIXEL32(DST, COLOR) \
 { \
-    *MBP0 = (CARD32)(DST); \
-    *(LongP)W32Buffer = COLOR; \
+    *MBP0 = byteswap32((CARD32)(DST)); \
+    *(LongP)W32Buffer = byteswap32(COLOR); \
 } 
 
 

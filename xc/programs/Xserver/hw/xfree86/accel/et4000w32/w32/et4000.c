@@ -139,12 +139,21 @@ static void *   ET4000Save();
 static void     ET4000Restore();
 static void     ET4000Adjust();
 static void     ET4000FbInit();
+#ifndef __mc68000__
 extern void     ET4000SetRead();
 extern void     ET4000SetWrite();
 extern void     ET4000SetReadWrite();
 extern void     ET4000W32SetRead();
 extern void     ET4000W32SetWrite();
 extern void     ET4000W32SetReadWrite();
+#else
+# define	ET4000SetRead 		(void (*)())NoopDDA
+# define	ET4000SetWrite		(void (*)())NoopDDA
+# define	ET4000SetReadWrite	(void (*)())NoopDDA
+# define	ET4000W32SetRead	(void (*)())NoopDDA
+# define	ET4000W32SetWrite	(void (*)())NoopDDA
+# define	ET4000W32SetReadWrite	(void (*)())NoopDDA
+#endif
 extern void	TsengAccelInit();
 extern void     ET4000HWSaveScreen();
 
@@ -1158,6 +1167,7 @@ ET4000Probe()
 static void
 ET4000FbInit()
 {
+#ifndef __mc68000__
 #ifndef MONOVGA
   int useSpeedUp;
 
@@ -1203,6 +1213,7 @@ ET4000FbInit()
     vga256LowlevFuncs.fillBoxSolid = speedupvga256FillBoxSolid;
   }
 #endif /* MONOVGA */
+#endif /* __mc68000__ */
 }
 
 

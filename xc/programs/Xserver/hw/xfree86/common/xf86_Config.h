@@ -189,6 +189,7 @@ static SymTabRec DriverTab[] = {
 #define XQUE      	1040
 #define OSMOUSE   	1041
 #define WSMOUSE   	1042
+#define SUNMOUSE	1043
 
 #ifdef INIT_CONFIG
 static SymTabRec MouseTab[] = {
@@ -215,6 +216,7 @@ static SymTabRec MouseTab[] = {
   { XQUE,	"xqueue" },
   { OSMOUSE,	"osmouse" },
   { WSMOUSE,	"wsmouse" },
+  { SUNMOUSE,	"sun" },
   { -1,		"" },
 };
 #endif /* INIT_CONFIG */
@@ -559,6 +561,7 @@ static SymTabRec KeyboardTab[] = {
 #define P_XQUE		20		/* xque */
 #define P_OSMOUSE	21		/* osmouse */
 #define P_WSMOUSE	22		/* NetBSD wsmouse */
+#define P_SUN		23		/* sun */
 
 #define EMULATE3	50
 #define BAUDRATE	51
