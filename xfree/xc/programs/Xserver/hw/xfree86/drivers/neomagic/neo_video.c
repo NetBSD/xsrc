@@ -26,7 +26,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * Copyright 2002 SuSE Linux AG, Author: Egbert Eich
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_video.c,v 1.4 2002/11/25 14:05:00 eich Exp $ */
 
 #include "neo.h"
 #include "neo_video.h"
@@ -193,7 +192,7 @@ static XF86ImageRec NEOVideoImages[] =
 	16,
 	XvPacked,
 	1,
-	16, 0xF800, 0x07E0, 0x001F,
+	16, 0x001F, 0x07E0, 0xF800,
 	0, 0, 0,
 	0, 0, 0,
 	0, 0, 0,
