@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.90 2001/10/03 00:05:35 tv Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.91 2001/10/15 16:25:45 uch Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -35,6 +35,7 @@ XCOMM		NetBSD/sgimips	client
 XCOMM		NetBSD/luna68k	client
 XCOMM		NetBSD/mipsco	client
 XCOMM		NetBSD/algor	client
+XCOMM		NetBSD/playstation2	client
 XCOMM
 
 #ifndef OSName
@@ -423,6 +424,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(algorArchitecture)
+# define BuildServer		NO
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+#endif
+
+#if defined(playstation2Architecture)
 # define BuildServer		NO
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
