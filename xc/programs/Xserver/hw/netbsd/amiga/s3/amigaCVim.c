@@ -79,8 +79,8 @@ extern void mybcopyas (void * src, void *dst, int n);
  */
 
  
-#define mybcopy(src, dst, n) asm volatile ("movel %0,a0; movel %1,a1;\
-movel %2, d0; jsr _mybcopyas" : : "g" (src), "g" (dst), "g" (n) : \
+#define mybcopy(src, dst, n) asm volatile ("movel %0,%%a0; movel %1,%%a1;\
+movel %2, %%d0; jsr _mybcopyas" : : "g" (src), "g" (dst), "g" (n) : \
 "a0", "a1", "d0", "d1")
  
 #endif
