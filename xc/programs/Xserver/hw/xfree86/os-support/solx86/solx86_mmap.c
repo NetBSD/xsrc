@@ -43,6 +43,8 @@ int Len;
 	int fd;
 	unsigned char *ptr;
 	char	solx86_vtname[10];
+	int mlen;
+	int psize = 4096;	/* XXX x86 only */
 
 	/*
      	 * Solaris 2.1 x86 SVR4 (10/27/93)
@@ -56,8 +58,9 @@ int Len;
         	ErrorF("xf86ReadBios: Failed to open %s (%s)\n", solx86_vtname,
                		strerror(errno));
         	return(-1);
-	}	
-	ptr = mmap((caddr_t)0, 0x8000, PROT_READ, MAP_SHARED, fd, (off_t)Base);
+	}
+	mlen = (Offset + Len + psize - 1) & ~psize;
+	ptr = mmap((caddr_t)0, mlen, PROT_READ, MAP_SHARED, fd, (off_t)Base);
 	if ((int)ptr == -1)
 	{
 		ErrorF("xf86ReadBios: %s mmap failed\n", solx86_vtname);
@@ -65,7 +68,7 @@ int Len;
 		return(-1);
 	}
 	(void)memcpy(Buf, (void *)(ptr + Offset), Len);
-	(void)munmap((caddr_t)ptr, 0x8000);
+	(void)munmap((caddr_t)ptr, mlen);
 	(void)close(fd);
 	return(Len);
 }
