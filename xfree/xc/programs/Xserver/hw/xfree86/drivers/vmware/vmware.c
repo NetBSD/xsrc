@@ -7,7 +7,7 @@ char rcsId_vmware[] =
 
     "Id: vmware.c,v 1.11 2001/02/23 02:10:39 yoel Exp $";
 #endif
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.c,v 1.8 2001/10/28 03:33:53 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/vmware.c,v 1.11 2002/05/14 20:24:06 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -102,10 +102,23 @@ static const char *vgahwSymbols[] = {
 };
 
 static const char *fbSymbols[] = {
+	"fbCopyPlane",
+	"fbCopyRegion",
+	"fbCreateDefColormap",
+	"fbDoCopy",
 	"fbPictureInit",
+	"fbQueryBestSize",
 	"fbScreenInit",
 	NULL
 };
+
+static const char *ramdacSymbols[] = {
+    "xf86CreateCursorInfoRec",
+    "xf86DestroyCursorInfoRec",
+    "xf86InitCursor",
+    NULL
+};
+
 
 #ifdef XFree86LOADER
 static XF86ModuleVersionInfo vmwareVersRec = {
@@ -389,6 +402,7 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
 		pVMWARE->valueReg =
 		   SVGA_LEGACY_BASE_PORT + SVGA_VALUE_PORT*sizeof(uint32);
 	} else {
+		/* Note:  This setting of valueReg causes unaligned I/O */
 		pVMWARE->indexReg =
 		   pVMWARE->PciInfo->ioBase[0] + SVGA_INDEX_PORT;
 		pVMWARE->valueReg =
@@ -443,7 +457,7 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
 	pVMWARE->maxWidth = vmwareReadReg(pVMWARE, SVGA_REG_MAX_WIDTH);
 	pVMWARE->maxHeight = vmwareReadReg(pVMWARE, SVGA_REG_MAX_HEIGHT);
 	pVMWARE->cursorDefined = FALSE;
-	pVMWARE->mouseHidden = FALSE;
+	pVMWARE->cursorHidden = FALSE;
 
         if (pVMWARE->vmwareCapability & SVGA_CAP_CURSOR_BYPASS_2) {
                 pVMWARE->cursorRemoveFromFB = SVGA_CURSOR_ON_REMOVE_FROM_FB;
@@ -688,9 +702,19 @@ VMWAREPreInit(ScrnInfoPtr pScrn, int flags)
 		return FALSE;
 	}
 	xf86LoaderReqSymLists(fbSymbols, NULL);
+
+        /* Need ramdac for hwcursor */
+	if (pVMWARE->hwCursor) {
+		if (!xf86LoadSubModule(pScrn, "ramdac")) {
+			VMWAREFreeRec(pScrn);
+			return FALSE;
+		}
+		xf86LoaderReqSymLists(ramdacSymbols, NULL);
+	}
+
 #if 0
 	/* XXX This driver doesn't use XAA! */
-	if (!pVMWARE->noAccel || pVMWARE->hwCursor) {
+	if (!pVMWARE->noAccel) {
 		if (!xf86LoadSubModule(pScrn, "xaa")) {
 			VMWAREFreeRec(pScrn);
 			return FALSE;
@@ -855,9 +879,14 @@ static Bool
 VMWARECloseScreen(int scrnIndex, ScreenPtr pScreen)
 {
 	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
+	VMWAREPtr pVMWARE = VMWAREPTR(pScrn);
+
 	VMWARERestore(pScrn);
 	VMWAREStopFIFO(pScrn);
 	VMWAREUnmapMem(pScrn);
+        if (pVMWARE->CursorInfoRec)
+            xf86DestroyCursorInfoRec(pVMWARE->CursorInfoRec);
+
 	pScrn->vtSema = FALSE;
 	ScreenFromPrivate(pScreen, pScrn);
 	return (*pScreen->CloseScreen)(scrnIndex, pScreen);
@@ -882,8 +911,6 @@ VMWARELoadPalette(ScrnInfoPtr pScrn, int numColors, int* indices,
 		vmwareWriteReg(pVMWARE, SVGA_PALETTE_BASE + *indices * 3 + 2, colors[*indices].blue);
 		indices++;
 	}
-
-	pVMWARE->checkCursorColor = TRUE;
 	VmwareLog(("Palette loading done\n"));
 }
 
@@ -953,7 +980,7 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	 * Initialise the framebuffer.
 	 */
 
-	ret = fbScreenInit (pScreen, pVMWARE->FbBase,
+	ret = fbScreenInit (pScreen, pVMWARE->FbBase + pVMWARE->fbOffset,
 			    pScrn->virtualX, pScrn->virtualY,
 			    pScrn->xDpi, pScrn->yDpi,
 			    pScrn->displayWidth,
@@ -987,11 +1014,14 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	 * Wrap the CloseScreen vector and set SaveScreen.
 	 */
 	ScreenToPrivate(pScreen, pScrn);
+
         /*
          * If backing store is to be supported (as is usually the case),
          * initialise it.
          */
         miInitializeBackingStore(pScreen);
+        xf86SetBackingStore(pScreen);
+        xf86SetSilkenMouse(pScreen);
 
         /*
          * Set initial black & white colourmap indices.
@@ -1004,16 +1034,19 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
          */
 
         /*
-         * Initialise cursor functions.  This example is for the mi
-         * software cursor.
+         * Initialise cursor functions.
          */
-	if (pVMWARE->hwCursor) {
-		vmwareCursorInit(0, pScreen);
-	} else {
-	        miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
-	}
+        miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
 
-    	if (!fbCreateDefColormap(pScreen))
+        if (pVMWARE->hwCursor) {
+            if (!vmwareCursorInit(pScreen)) {
+		xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
+                      "Hardware cursor initialization failed\n");
+                pVMWARE->hwCursor = FALSE;
+            }
+        }
+
+	if (!fbCreateDefColormap(pScreen))
 	    return FALSE;
 
 	if (!xf86HandleColormaps(pScreen, 256, 8,
@@ -1029,9 +1062,7 @@ VMWAREScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	}
 
 	vmwareSendSVGACmdUpdateFullScreen(pVMWARE);
-	if (pVMWARE->hwCursor) {
-		vmwareRestoreCursor(pScreen);
-	}
+
 	/* Done */
 	return TRUE;
 }
@@ -1156,7 +1187,7 @@ vmwareSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 		setupDone = TRUE;
 		xf86AddDriver(&VMWARE, module, 0);
 
-		LoaderRefSymLists(vgahwSymbols, fbSymbols, NULL);
+		LoaderRefSymLists(vgahwSymbols, fbSymbols, ramdacSymbols, NULL);
 
 		return (pointer)1;
 	}
@@ -1230,16 +1261,6 @@ ScreenToPrivate(ScreenPtr pScreen, ScrnInfoPtr pScrn)
     pScreen->RealizeFont            = vmwareRealizeFont;
     pScreen->UnrealizeFont          = vmwareUnrealizeFont;
 
-    /* Cursor Procedures */
-
-    pScreen->ConstrainCursor        = vmwareConstrainCursor;
-    pScreen->CursorLimits           = vmwareCursorLimits;
-    pScreen->DisplayCursor          = vmwareDisplayCursor;
-    pScreen->RealizeCursor          = vmwareRealizeCursor;
-    pScreen->UnrealizeCursor        = vmwareUnrealizeCursor;
-    pScreen->RecolorCursor          = vmwareRecolorCursor;
-    pScreen->SetCursorPosition      = vmwareSetCursorPosition;
-
     /* GC procedures */
 
     pScreen->CreateGC               = vmwareCreateGC;
@@ -1268,7 +1289,6 @@ ScreenToPrivate(ScreenPtr pScreen, ScrnInfoPtr pScrn)
     pScreen->CreateGC               = vmwareCreateGC;
     pScreen->GetSpans               = vmwareGetSpans;
     pScreen->GetImage               = vmwareGetImage;
-    pScreen->BlockHandler           = vmwareBlockHandler;
     pScreen->SaveDoomedAreas        = vmwareSaveDoomedAreas;
     pScreen->RestoreAreas           = vmwareRestoreAreas;
 
