@@ -583,7 +583,6 @@ MouseDevPtr mouse;
 
 #if defined(__NetBSD__)
       case P_WSMOUSE:
-      case P_SUN:
 	break;
 #endif
 
@@ -707,7 +706,6 @@ xf86MouseProtocol(device, rBuf, nBytes)
 #endif
 #if defined(__NetBSD__)
 	mouse->mseType != P_WSMOUSE &&
-	mouse->mseType != P_SUN &&
 #endif
 	((rBuf[i] & mouse->protoPara[2]) != mouse->protoPara[3] 
 	 || rBuf[i] == 0x80))
