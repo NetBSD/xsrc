@@ -27,7 +27,7 @@
 //from the X Consortium.
 //
 default xkb_keymap "jp" {
-    xkb_keycodes	{ include "xfree68"		};
+    xkb_keycodes	{ include "x68k"		};
     xkb_types		{ include "default"		};
     xkb_compatibility	{ include "default"		};
     xkb_symbols		{ include "sharp/jp(x68k)"	};
