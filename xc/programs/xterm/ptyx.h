@@ -1214,6 +1214,9 @@ typedef struct _Misc {
 #if OPT_SHIFT_KEYS
     Boolean shift_keys;		/* true if we interpret shifted special-keys */
 #endif
+#if OPT_SUNPC_KBD
+    int ctrl_fkeys;		/* amount to add to XK_F1 for ctrl modifier */
+#endif
 #if OPT_NUM_LOCK
     Boolean real_NumLock;	/* true if we treat NumLock key specially */
     unsigned long num_lock;	/* modifier for Num_Lock */
