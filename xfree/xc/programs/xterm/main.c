@@ -2695,6 +2695,7 @@ spawn(void)
 #endif
 #ifdef USE_LASTLOG
     struct lastlog lastlog;
+#endif
 #ifdef USE_LASTLOGX
     struct lastlogx lastlog;
 #endif /* USE_LASTLOG */
