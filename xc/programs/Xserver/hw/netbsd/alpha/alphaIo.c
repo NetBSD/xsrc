@@ -229,10 +229,12 @@ ddxProcessArgument (argc, argv, i)
     if (strcmp (argv[i], "-mono") == 0) {	/* -mono */
 	return 1;
     }
+#endif
     if (strcmp (argv[i], "-zaphod") == 0) {	/* -zaphod */
-	sunActiveZaphod = FALSE;
+	alphaActiveZaphod = FALSE;
 	return 1;
     }
+#if 0 /* XXX */
     if (strcmp (argv[i], "-flipPixels") == 0) {	/* -flipPixels */
 	sunFlipPixels = TRUE;
 	return 1;

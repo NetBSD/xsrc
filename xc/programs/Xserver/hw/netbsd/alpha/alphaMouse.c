@@ -55,9 +55,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include    "alpha.h"
 #include <stdio.h>
 
-#if 0 /* XXX */
 Bool alphaActiveZaphod = TRUE;
-#endif /* 0 XXX */
 
 static Bool alphaCursorOffScreen();
 static void alphaCrossScreen();
@@ -359,14 +357,13 @@ alphaCursorOffScreen (pScreen, x, y)
     extern Bool PointerConfinedToScreen();
 
     if (PointerConfinedToScreen()) return TRUE;
-#if 0 /* XXX */
     /*
      * Active Zaphod implementation:
      *    increment or decrement the current screen
      *    if the x is to the right or the left of
      *    the current screen.
      */
-    if (sunActiveZaphod &&
+    if (alphaActiveZaphod &&
 	screenInfo.numScreens > 1 && (*x >= (*pScreen)->width || *x < 0)) {
 	index = (*pScreen)->myNum;
 	if (*x < 0) {
@@ -380,7 +377,6 @@ alphaCursorOffScreen (pScreen, x, y)
 	}
 	ret = TRUE;
     }
-#endif /* 0 XXX */
     return ret;
 }
 

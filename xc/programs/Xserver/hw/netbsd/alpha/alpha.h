@@ -194,7 +194,9 @@ extern fbFd		alphaFbs[];
 #if 0
 extern Bool		sunSwapLkeys;
 extern Bool		sunFlipPixels;
-extern Bool		sunActiveZaphod;
+#endif
+extern Bool		alphaActiveZaphod;
+#if 0
 extern Bool		sunFbInfo;
 extern Bool		sunCG4Frob;
 extern Bool		sunNoGX;
