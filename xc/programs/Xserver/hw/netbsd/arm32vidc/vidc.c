@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.3 2001/12/18 00:06:14 bjh21 Exp $	*/
+/*	$NetBSD: vidc.c,v 1.4 2002/04/01 23:15:26 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -422,7 +422,7 @@ void InitInput(int argc, char *argv[])
 
 	/* Try to init the wsmouse device */
 	private.wsmouse_fd = wsmouse_init();
-	if (private.mouse_fd == -1) {
+	if (private.wsmouse_fd == -1) {
 		/* Try and init the old rpc mouse device */
 		private.mouse_fd = rpc_init_mouse();
 		if (private.mouse_fd == -1)
@@ -488,8 +488,8 @@ int vidc_init_screen(int index, ScreenPtr screen, int argc, char **argv)
 	private.con_fd = -1;
 	private.wsdisplay_fd = -1;
 
-	if (!wsdisplay_init(screen, argc, argv) &&
-	    !rpc_init_screen(screen, argc, argv))
+	if (!wsdisplay_init(screen, argc, argv))
+	    if (!rpc_init_screen(screen, argc, argv))
 		FatalError("Unabled to initialize frame buffer\n");
 
 	if ((private.vram_base = mmap(0, private.width * private.yres,
@@ -659,6 +659,8 @@ int ddxProcessArgument(int argc, char **argv, int i)
 	return 0;
 }
 
+
+#ifdef DDXTIME
 /*
  * DDXTIME is defined for the XFree86 servers in ServerOSDefines so
  * we have to implement a local version for the vidc server as os/util.c
@@ -672,6 +674,8 @@ GetTimeInMillis()
     gettimeofday(&tp, 0);
     return(tp.tv_sec * 1000) + (tp.tv_usec / 1000);
 }
+#endif
+
 
 /* dummy functions to link X server with X input Extension */
 void
