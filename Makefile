@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2001/04/09 11:51:39 tron Exp $
+#	$NetBSD: Makefile,v 1.23 2001/04/09 22:41:10 tron Exp $
 #
 # Targets & Variables
 #
@@ -46,14 +46,16 @@ all-xc:
 all-contrib:
 	@if [ ! -f contrib/Makefile ]; then \
 	  cd contrib && PATH=../${XCDIR}/config/imake:$$PATH \
-	    sh ../${XCDIR}/config/util/xmkmf -a ../${XCDIR} ../contrib; \
+	    sh ../${XCDIR}/config/util/xmkmf -a ../${XCDIR} \
+	       ${.CURDIR}/contrib; \
 	fi
 	@cd contrib && ${MAKE}
 
 all-local:
 	@if [ ! -f local/Makefile ]; then \
 	  cd local && PATH=../${XCDIR}/config/imake:$$PATH \
-	    sh ../${XCDIR}/config/util/xmkmf -a ../${XCDIR} ../local; \
+	    sh ../${XCDIR}/config/util/xmkmf -a ../${XCDIR} \
+	      ${.CURDIR}/local; \
 	fi
 	@cd local && ${MAKE}
 
