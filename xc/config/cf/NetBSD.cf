@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.98 2002/07/05 17:42:03 tron Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.99 2002/07/22 21:04:06 manu Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -28,6 +28,7 @@ XCOMM		NetBSD/pc532	client
 XCOMM		NetBSD/x68k	client/server
 XCOMM		NetBSD/macppc	client/server
 XCOMM		NetBSD/hpcmips	client/server
+XCOMM		NetBSD/hpcarm	client/server
 XCOMM		NetBSD/mvme68k	client
 XCOMM		NetBSD/next68k	client
 XCOMM		NetBSD/prep	client
@@ -385,6 +386,15 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(hpcmipsArchitecture)
+# define ServerOSDefines	-DDDXOSINIT
+# define BuildServer		YES
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+# define ServerExtraDefines	-DSTATIC_COLOR
+# define XserverNeedsSetUID	YES
+#endif
+
+#if defined(hpcarmArchitecture)
 # define ServerOSDefines	-DDDXOSINIT
 # define BuildServer		YES
 # define PexDynamicModule	NO
@@ -838,6 +848,13 @@ clean::									@@\
  * Definitions for the NetBSD/hpcmips X server.
  */
 #if defined(hpcmipsArchitecture)
+# define XhpcServer		YES
+#endif
+
+/*
+ * Definitions for the NetBSD/hpcarm X server.
+ */
+#if defined(hpcarmArchitecture)
 # define XhpcServer		YES
 #endif
 
