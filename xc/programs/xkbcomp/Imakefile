@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/12 1996/09/04 09:36:17 kaleb $
-XCOMM $XFree86: xc/programs/xkbcomp/Imakefile,v 3.3 1996/12/23 07:11:35 dawes Exp $
+XCOMM $XFree86: xc/programs/xkbcomp/Imakefile,v 3.3.2.1 1998/01/23 12:35:23 dawes Exp $
 #define IHaveSubdirs
 
           SRCS = xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
@@ -42,6 +42,8 @@ install::
 	$(INSTALL) -c $(INSTDATFLAGS) de-amiga.xkm $(DESTDIR)$(LIBDIR)/xkb/compiled/de.xkm
 	$(INSTALL) -c $(INSTDATFLAGS) fr-amiga.xkm $(DESTDIR)$(LIBDIR)/xkb/compiled/fr.xkm
 #endif
+
+LinkVarDirectory(xkb,xkb,compiled,compiled)
 
 InstallProgram(xkbcomp,$(LIBDIR)/xkb)
 
