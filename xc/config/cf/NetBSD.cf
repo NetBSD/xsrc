@@ -22,6 +22,7 @@ XCOMM		NetBSD/atari	client/server
 XCOMM		NetBSD/vax	client/server
 XCOMM		NetBSD/pc532	client
 XCOMM		NetBSD/x68k	client/server
+XCOMM		NetBSD/macppc	client/server
 XCOMM
 
 #ifndef OSName
@@ -289,6 +290,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #if defined(x68kArchitecture)
 # define ServerOSDefines	-DDDXOSINIT
 # define ServerExtraDefines	GccGasOption -D__x68k__
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+#endif
+
+#if defined(macppcArchitecture)
+# define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption -D__macppc__
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
 #endif
@@ -612,6 +620,13 @@ install.man:: 								@@\
  */
 #if defined(x68kArchitecture)
 # define X68kServer		YES
+#endif
+
+/*
+ * Definitions for the NetBSD/macppc X server.
+ */
+#if defined(macppcArchitecture)
+# define XmacppcServer		YES
 #endif
 
 #ifndef BuildScreenSaverLibrary
