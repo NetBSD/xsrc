@@ -118,7 +118,7 @@ DEFAULT_USER_PATH=DefaultUserPath
 		do							\@@\
 			if test -f $$name;				\@@\
 			then						\@@\
-				filefunc($from: name,(DESTDIR)dest/$$name);	\@@\
+				filefunc($$name,$(DESTDIR)dest/$$name);	\@@\
 			else						\@@\
 				MakeDirect($(DESTDIR)dest/$$name);	\@@\
 			fi;						\@@\
