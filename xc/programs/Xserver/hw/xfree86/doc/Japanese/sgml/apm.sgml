@@ -131,7 +131,7 @@ try a slightly different clock and it should work.
 まく動作するはずです。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/apm.sgml,v 1.1.2.1 1999/05/25 06:39:27 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/apm.sgml,v 1.1.2.2 1999/11/26 15:23:54 hohndel Exp $
 </verb>
 
 <sect>日本語訳について<p>

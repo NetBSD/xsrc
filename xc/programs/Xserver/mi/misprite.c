@@ -5,7 +5,7 @@
  */
 
 /* $XConsortium: misprite.c,v 5.47 94/04/17 20:27:53 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/mi/misprite.c,v 3.0 1996/08/25 14:13:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/misprite.c,v 3.0.4.1 1999/11/18 15:37:35 hohndel Exp $ */
 
 /*
 
@@ -1888,20 +1888,20 @@ miSpriteSetCursor (pScreen, pCursor, x, y)
     miSpriteScreenPtr	pScreenPriv;
 
     pScreenPriv = (miSpriteScreenPtr) pScreen->devPrivates[miSpriteScreenIndex].ptr;
-    pScreenPriv->shouldBeUp = TRUE;
-    if (pScreenPriv->x == x &&
-	pScreenPriv->y == y &&
-	pScreenPriv->pCursor == pCursor &&
-	!pScreenPriv->checkPixels)
-    {
-	return;
-    }
     if (!pCursor)
     {
     	pScreenPriv->shouldBeUp = FALSE;
     	if (pScreenPriv->isUp)
 	    miSpriteRemoveCursor (pScreen);
 	pScreenPriv->pCursor = 0;
+	return;
+    }
+    pScreenPriv->shouldBeUp = TRUE;
+    if (pScreenPriv->x == x &&
+	pScreenPriv->y == y &&
+	pScreenPriv->pCursor == pCursor &&
+	!pScreenPriv->checkPixels)
+    {
 	return;
     }
     pScreenPriv->x = x;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3bci.h,v 1.1.2.1 1999/07/30 11:21:28 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3bci.h,v 1.1.2.2 1999/12/01 12:49:33 hohndel Exp $ */
 
 #ifndef _S3BCI_H_
 #define _S3BCI_H_
@@ -30,7 +30,7 @@ __inline__ void BCI_SEND_DEBUG(unsigned int * bci_base,
 #define BCI_CMD_RECT_YP              0x02000000
 #define BCI_CMD_SCANLINE             0x50000000
 #define BCI_CMD_LINE                 0x5C000000
-#define BCI_CMD_LINE_LAST_PIXEL      0x51000000
+#define BCI_CMD_LINE_LAST_PIXEL      0x58000000
 #define BCI_CMD_BYTE_TEXT            0x63000000
 #define BCI_CMD_NT_BYTE_TEXT         0x67000000
 #define BCI_CMD_BIT_TEXT             0x6C000000
@@ -76,8 +76,8 @@ __inline__ void BCI_SEND_DEBUG(unsigned int * bci_base,
 #define BCI_CMD_PAT_SBD_COLOR_NEW    0x0000000A
 #define BCI_CMD_PAT_SBD_MONO_NEW     0x0000000B
 
-#define BCI_BD_BW_DISABLE            0x20000000
-#define BCI_BD_TILE_MASK             0x1E000000
+#define BCI_BD_BW_DISABLE            0x10000000
+#define BCI_BD_TILE_MASK             0x03000000
 #define BCI_BD_TILE_NONE             0x00000000
 #define BCI_BD_TILE_16               0x02000000
 #define BCI_BD_TILE_32               0x04000000

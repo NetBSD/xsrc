@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_driver.h,v 1.1.2.1 1999/07/30 11:21:34 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_driver.h,v 1.1.2.2 1999/12/01 12:49:34 hohndel Exp $ */
 
 /* Header file for ViRGE server */
 
@@ -27,7 +27,7 @@ typedef struct {
    unsigned char CR50, CR51, CR53, CR58, CR5B, CR5D, CR5E;
    unsigned char CR65, CR66, CR67, CR68, CR69, CR6F; /* Video attrib. */
    unsigned char CR86, CR88;
-   unsigned char CR90, CRB0;
+   unsigned char CR90, CR91, CRB0;
    unsigned char ColorStack[8]; /* S3 hw cursor color stack CR4A/CR4B */
    unsigned int  STREAMS[22];   /* Streams regs */
    unsigned int  MMPR0, MMPR1, MMPR2, MMPR3;   /* MIU regs */
@@ -71,15 +71,11 @@ typedef struct {
    int MCLK;
    Bool NoPCIRetry;
 
-   /*
-    *  The layout of the "engine idle" bits in Status Word 0 (48C00)
-    * changed between Savage4 Rev A and Savage4 Rev B.  The fields
-    * below have the appropriate values.
-    */
-				/* 3D & 4RevA   4RevB    */
-   unsigned StatusFE;		/* 0000ffff	001fffff */
-   unsigned StatusMask;		/* 0008ffff	081fffff */
-   unsigned Status2DI;		/* 00080000	08000000 */
+   int (*WaitQueue)(int);
+   int (*WaitIdle)(void);
+   int (*WaitIdleEmpty)(void);
+   int (*WaitCommandEmpty)(void);
+
 } S3VPRIV;
 
 
@@ -108,6 +104,15 @@ extern unsigned short S3SAVGetBIOSModeTable( int, S3VMODETABLE* );
 extern void S3SAVSetVESAMode( int, int );
 extern void S3SAVSetTextMode( );
 #endif
+
+/* Constants for CR69. */
+
+#define CRT_ACTIVE	0x01
+#define LCD_ACTIVE	0x02
+#define TV_ACTIVE	0x04
+#define CRT_ATTACHED	0x10
+#define LCD_ATTACHED	0x20
+#define TV_ATTACHED	0x40
 
 /* Various defines which are used to pass flags between the Setup and 
  * Subsequent functions. 

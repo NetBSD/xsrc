@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3init.c,v 1.1.2.1 1998/02/07 10:05:42 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3init.c,v 1.1.2.2 1999/12/11 15:31:01 hohndel Exp $ */
 /*
  *
  * Copyright 1995-1997 The XFree86 Project, Inc.
@@ -426,7 +426,10 @@ Bool S3InitLevelThree(DisplayModePtr mode)
    /* CR3B and CR3C may undergo some additional modifications
 	later on */
    outb(vgaCRIndex, 0x3b);
-   outb(vgaCRReg, (new->CRTC[0] + new->CRTC[4] + 1) / 2);
+   if (!S3_AURORA64VP_SERIES(s3ChipId)) {
+      outb(vgaCRIndex, 0x3b);
+      outb(vgaCRReg, (new->CRTC[0] + new->CRTC[4] + 1) / 2);
+   }
 
    /****** CR3C ******/
    outb(vgaCRIndex, 0x3c);
@@ -713,8 +716,14 @@ else
 	    else
 	       itmp = new->CRTC[0]+ ((i&0x01)<<8) + 1;
       }
-      outb(vgaCRReg, itmp & 0xff);
-      i |= (itmp&0x100) >> 2;
+      if (S3_AURORA64VP_SERIES(s3ChipId)) {
+      	 outb(vgaCRReg, 0);
+      	 i &= ~0x40;
+      }
+      else {
+    	 outb(vgaCRReg, itmp & 0xff);
+	 i |= (itmp&0x100) >> 2;
+      }
 
       /****** CR3C ******/
       outb(vgaCRIndex, 0x3c);
@@ -829,6 +838,25 @@ else
       tmp = inb(vgaCRReg);
       if (!(tmp & 0x0c)) 		/* 1-cycle EDO */
 	 outb(vgaCRReg, tmp | 0x08);		/* 2-cycle EDO */
+   }
+
+   if (S3_AURORA64VP_SERIES(s3ChipId)) {
+      outb(0x3c4, 0x08);  /* unlock extended SEQ regs */
+      outb(0x3c5, 0x06);
+      if (OFLG_ISSET(OPTION_LCD_CENTER, &vga256InfoRec.options)) {
+	 outb(0x3c4, 0x54);  outb(0x3c5, 0x10);
+	 outb(0x3c4, 0x55);  outb(0x3c5, 0x00);
+	 outb(0x3c4, 0x56);  outb(0x3c5, 0x1c);
+	 outb(0x3c4, 0x57);  outb(0x3c5, 0x00);
+      }
+      else {
+	 outb(0x3c4, 0x54);  outb(0x3c5, 0x1f);
+	 outb(0x3c4, 0x55);  outb(0x3c5, 0x1f);
+	 outb(0x3c4, 0x56);  outb(0x3c5, 0x1f);
+	 outb(0x3c4, 0x57);  outb(0x3c5, 0xff);
+      }
+      outb(0x3c4, 0x08);  /* lock extended SEQ regs */
+      outb(0x3c5, 0x00);
    }
 
    if (S3_964_SERIES(s3ChipId) && DAC_IS_BT485_SERIES) {

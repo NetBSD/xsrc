@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86stip.c,v 3.1.2.2 1998/07/30 06:24:21 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86stip.c,v 3.1.2.3 1999/10/21 12:08:10 hohndel Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -389,6 +389,9 @@ stipplewidth, stippleheight, srcx, srcy, bg, fg, rop, planemask)
     /* Calculate the non-expanded bitmap width rounded up to 32-bit words, */
     /* in units of pixels. */
     bitmapwidth = ((bytewidth + 3) / 4) * 32;
+
+    if (xf86AccelInfoRec.ColorExpandFlags & CPU_TRANSFER_PAD_QWORD)
+       bitmapwidth = (bitmapwidth + 63) & ~63;
 
     endoffset = (bitmapwidth / 8) * xf86AccelInfoRec.PingPongBuffers;
     offset = 0;

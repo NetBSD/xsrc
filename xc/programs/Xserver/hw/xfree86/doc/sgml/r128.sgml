@@ -1,0 +1,118 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+
+<article>
+<title>Information for ATI Rage 128 Users
+<author>Precision Insight, Inc., SuSE GmBH
+<date>6 October 1999
+<toc>
+
+<sect>Supported Hardware
+<p>
+<itemize>
+  <item>ATI Rage 128 based cards
+</itemize>
+
+
+<sect>Features
+<p>
+<itemize>
+  <item>Full support (including hardware accelerated 2D drawing) for 8, 15,
+        16, 24, and 32 bit per pixel depths.
+  <item>Hardware cursor support to reduce sprite flicker.
+  <item>Support for high resolution video modes up to 1800x1440 @ 70Hz.
+  <item>Support for doublescan video modes (e.g., 320x200 and 320x240).
+  <item>Support for gamma correction at all pixel depths.
+  <item>Fully programmable clock supported.
+  <item>Robust text mode restore for VT switching.
+</itemize>
+
+
+<sect>Technical Notes
+<p>
+<itemize>
+  <item>None
+</itemize>
+
+
+<sect>Reported Working Video Cards
+<p>
+<itemize>
+  <item>Rage Fury AGP 32MB
+  <item>XPERT 128 AGP 16MB
+  <item>XPERT 99 AGP 8MB
+</itemize>
+
+
+<sect>Configuration
+<p>
+The driver auto-detects all device information necessary to
+initialize the card.  The only lines you need in the "Device"
+section of your XF86Config file are:
+<verb>
+       Section "Device"
+           Identifier "r128"
+       EndSection
+</verb>
+or let xf86config or XF86Setup do this for you.
+
+However, if you have problems with auto-detection, you can specify:
+<itemize>
+  <item>VideoRam - in kilobytes
+  <item>MemBase  - physical address of the linear framebuffer
+  <item>IOBase   - physical address of the memory mapped IO registers
+  <item>ChipID   - PCI DEVICE ID
+</itemize>
+
+
+<sect>Driver Options
+<p>
+<itemize>
+  <item>"hw_cursor" - request hardware cursor (default)
+  <item>"sw_cursor" - software cursor only
+  <item>"no_accel"  - software rendering only
+  <item>"dac_8_bit" - use color weight 888 in 8 bpp mode (default)
+  <item>"dac_6_bit" - use color weight 666 in 8 bpp mode (VGA emulation)
+</itemize>
+
+
+<sect>Known Limitations
+<p>
+<itemize>
+  <item>None
+</itemize>
+
+
+<sect>Authors
+<p>
+<itemize>
+   <item>Alan Hourihane <it>alanh@fairlite.demon.co.uk</it>
+   <item>Rickard E. (Rik) Faith <it>&lt;faith@precisioninsight.com&gt;</it>
+   <item>Kevin E. Martin <it>&lt;kevin@precisioninsight.com&gt;</it>
+   <item>Dirk Hohndel <it>&lt;hohndel@suse.de&gt;</it>
+</itemize>
+
+<p>This driver was donated to The XFree86 Project by:
+<verb>
+    Precision Insight, Inc.
+    Cedar Park, TX
+    USA
+</verb>
+it is based on earlier work donated to The XFree86 Project by:
+<verb>
+    SuSE GmbH
+    Schanzaekerstr. 10
+    90443 Nuernberg
+    Germany
+</verb>
+
+<htmlurl name="http://www.precisioninsight.com"
+          url="http://www.precisioninsight.com"> -- 
+<htmlurl name="http://www.suse.com"
+          url="http://www.suse.com">
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/r128.sgml,v 1.1.2.1 1999/10/11 21:04:38 hohndel Exp $
+$PI: xc/programs/Xserver/hw/xfree86/doc/sgml/r128.sgml,v 1.2 1999/10/08 08:33:58 faith Exp $
+</verb>
+
+</article>

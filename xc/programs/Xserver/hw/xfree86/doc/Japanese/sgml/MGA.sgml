@@ -8,7 +8,7 @@
 <author>The XFree86 Project Inc.
 <date>30 December 1998
 <trans>The X Japanese Documentation Project
-<tdate>16 January 1999
+<tdate>2 August 1999
 <toc>
 
 <!-- <sect>Supported hardware -->
@@ -59,6 +59,10 @@ tested.
 -->
 <item>SGRAM 版と SDRAM 版の Productiva G100。テストは 4MB 版と 8MB 版
 で行いました。
+<!--
+<item>Matrox G400 (only the first head and no TVout support).
+-->
+<item>Matrox G400 (対応したばかりであり、TV 出力はサポートしていません)
 </itemize>
 
 <!-- <sect1>What's not supported -->
@@ -357,7 +361,7 @@ Mark Vojkovich, <it>mvojkovi@sdcc10.ucsd.edu</it>
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/MGA.sgml,v 1.1.2.1 1999/05/25 06:39:14 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/MGA.sgml,v 1.1.2.2 1999/11/26 15:23:43 hohndel Exp $
 </verb>
 
 <sect>日本語訳について<p>

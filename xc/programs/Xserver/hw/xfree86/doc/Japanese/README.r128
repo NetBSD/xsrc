@@ -1,0 +1,123 @@
+  ATI Rage 128 ユーザ向けの情報
+  Precision Insight, Inc., SuSE GmBH
+  6 October 1999
+  The X Japanese Documentation Project
+  16 October 1999
+  ____________________________________________________________
+
+  目次
+
+  1. サポートしているハードウェア
+  2. 機能
+  3. 技術的な事項
+  4. 動作が報告されているビデオカード
+  5. 設定
+  6. ドライバのオプション
+  7. 知られている制限
+  8. 作者
+
+  ______________________________________________________________________
+
+  1.  サポートしているハードウェア
+
+  o  ATI Rage 128 ベースのカード
+
+  2.  機能
+
+  o  8, 15, 16, 24, 32 bpp を完全にサポート(2D 描画のハードウェアアクセ
+     ラレーションも含む)
+
+  o  スプライトのちらつきの少ないハードウェアカーソル
+
+  o  1800x1440 @ 70Hz までの高解像度のビデオモードのサポート
+
+  o  ダブルスキャンビデオモード(320x200, 320x240 など)のサポート
+
+  o  ガンマ補正を全てのピクセルの深さでサポート
+
+  o  完全にプログラム可能なクロックのサポート
+
+  o  仮想端末の切り替えに対して頑健なテキストモード復元
+
+  3.  技術的な事項
+
+  o  なし
+
+  4.  動作が報告されているビデオカード
+
+  o  Rage Fury AGP 32MB
+
+  o  XPERT 128 AGP 16MB
+
+  o  XPERT 99 AGP 8MB
+
+  5.  設定
+
+  このドライバはカードを初期化するために必要な全てのデバイス情報を自動的
+  に検出します。XF86Config ファイルの "Device" セクションに記述する必要
+  があるのは以下の行だけです:
+
+         Section "Device"
+             Identifier "r128"
+         EndSection
+
+  あるいは、xf86config や XF86Setup がこれと同じことを行います。
+
+  ただし、自動検出がうまく行かない場合には以下の項目を設定することができ
+  ます:
+
+  o  VideoRam - キロバイト単位
+
+  o  MemBase  - リニアフレームバッファの物理アドレス
+
+  o  IOBase   - メモリマップト I/O レジスタの物理アドレス
+
+  o  ChipID   - PCI のデバイス ID
+
+  6.  ドライバのオプション
+
+  o  "hw_cursor" - ハードウェアカーソルを使用する(デフォルト)
+
+  o  "sw_cursor" - ソフトウェアカーソルのみを使用
+
+  o  "no_accel"  - ソフトウェアレンダリングのみを使用
+
+  o  "dac_8_bit" - 8bpp モードでの色の重み付けを 888 とする(デフォルト)
+
+  o  "dac_6_bit" - 8bpp モードでの色の重み付けを 666 とする(VGA エミュレ
+     ーション)
+
+  7.  知られている制限
+
+  o  なし
+
+  8.  作者
+
+  o  Alan Hourihane alanh@fairlite.demon.co.uk
+
+  o  Rickard E. (Rik) Faith <faith@precisioninsight.com>
+
+  o  Kevin E. Martin <kevin@precisioninsight.com>
+
+  o  Dirk Hohndel <hohndel@suse.de>
+
+  このドライバは
+
+      Precision Insight, Inc.
+      Cedar Park, TX
+      USA
+
+  によって XFree86 プロジェクトに寄付されました。このドライバは
+
+      SuSE GmbH
+      Schanzaekerstr. 10
+      90443 Nuernberg
+      Germany
+
+  が以前に寄付した成果を元にしています。
+
+  http://www.precisioninsight.com -- http://www.suse.com
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.r128,v 1.1.2.1 1999/12/02 12:30:34 hohndel Exp $
+  $PI: xc/programs/Xserver/hw/xfree86/doc/sgml/r128.sgml,v 1.2 1999/10/08 08:33:58 faith Exp $
+

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3misc.c,v 1.1.2.2 1998/02/20 14:28:01 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3misc.c,v 1.1.2.3 1999/12/11 15:31:01 hohndel Exp $ */
 /*
  *
  * Copyright 1995-1997 The XFree86 Project, Inc.
@@ -88,6 +88,8 @@ static short S3PixMuxShift(DisplayModePtr mode)
       pixMuxShift = -(s3Bpp>>1);  /* for 16/32 bpp */
    else if (S3_864_SERIES(s3ChipId) || S3_805_I_SERIES(s3ChipId))
       pixMuxShift = -(s3Bpp>>1);  /* for 16/32 bpp */
+   else if (S3_AURORA64VP_SERIES(s3ChipId))
+      pixMuxShift = 0;
    else if (S3_TRIOxx_SERIES(s3ChipId))
       pixMuxShift = -(s3Bpp == 2);
    else if (S3_x64_SERIES(s3ChipId)) 

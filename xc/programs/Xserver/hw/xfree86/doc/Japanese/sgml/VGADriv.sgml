@@ -2040,7 +2040,7 @@ Sunnyvale, CA  94086 <newline>
 </descrip>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/VGADriv.sgml,v 3.1.2.3 1999/06/02 07:51:44 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/VGADriv.sgml,v 3.1.2.4 1999/11/26 15:23:51 hohndel Exp $
 
 
 
@@ -2048,7 +2048,7 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/VGADriv.sgml,v 3.1.2.
 
 $XConsortium: VGADriv.sgml /main/9 1996/10/28 05:13:22 kaleb $
 </verb>
-<code></code>
+<hrule>
 
 このファイルは
 xc/programs/Xserver/hw/xfree86/doc/sgml/VGADriv.sgml,v 3.13.2.1 1998/02/01 16:04:54
@@ -2070,7 +2070,7 @@ name="http://xjman.dsl.gr.jp/"> (略称 xjman プロジェクト) にあります。
 この和訳の不具合は私 &lt;kgh12351@nifty.ne.jp&gt; または xjman プロジェクト
 まで電子メールで送って下さい。
 
-<code></code>
+<hrule>
 &lsqb;EOF&rsqb;
 
 </article>

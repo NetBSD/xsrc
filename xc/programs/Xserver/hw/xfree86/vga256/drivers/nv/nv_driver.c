@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.11 1999/07/05 09:07:39 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.12 1999/11/26 15:24:13 hohndel Exp $ */
 
 #include <math.h>
 #include <stdlib.h>
@@ -116,11 +116,13 @@ typedef Bool (*NVProbeFuncType)(vgaVideoChipRec *rec,void *base0,void *base1);
 Bool NV1Probe(vgaVideoChipRec *rec,void *base0,void *base1);
 Bool NV3Probe(vgaVideoChipRec *rec,void *base0,void *base1);
 Bool NV4Probe(vgaVideoChipRec *rec,void *base0,void *base1);
+Bool NV10Probe(vgaVideoChipRec *rec,void *base0,void *base1);
 
 static NVProbeFuncType NVProbeFuncList[NumNVChips]= {
   NV1Probe,
   NV3Probe,
-  NV4Probe
+  NV4Probe,
+  NV10Probe
 };
 
 
@@ -140,7 +142,10 @@ static NVProbeInfo probeList[]={
   { "RIVA ULTRA TNT2",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_UTNT2},
   { "RIVA VANTA",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_VTNT2},
   { "RIVA ULTRA VANTA",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_UVTNT2},
-  { "RIVA INTEGRATED",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_ITNT2}
+  { "RIVA INTEGRATED",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_ITNT2},
+  { "GeForce 256",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_GEFORCE256},
+  { "GeForce DDR",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_GEFORCEDDR},
+  { "Quadro",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_QUADRO}
 };
 
 

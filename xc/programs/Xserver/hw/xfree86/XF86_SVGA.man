@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_SVGA.man,v 3.42.2.12 1999/08/02 08:38:03 hohndel Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_SVGA.man,v 3.42.2.13 1999/10/11 20:57:56 hohndel Exp $ 
 .TH XF86_SVGA 1 "Version 3.3.5"  "XFree86"
 .SH NAME
 XF86_SVGA - SVGA X Window System servers for UNIX on 
@@ -39,7 +39,7 @@ ATI:
 18800, 18800-1, 28800-2, 28800-4, 28800-5, 28800-6, 68800-3, 68800-6, 68800AX,
 68800LX, 88800GX-C, 88800GX-D, 88800GX-E, 88800GX-F, 88800CX, 264CT, 264ET, 
 264VT, 264GT (a.k.a. 3D Rage), 264VT-B, 264VT3, 264VT4, 264GT-B (a.k.a. 3D Rage
-II), 264GT-IIc, 264GT3 (a.k.a. 3D Rage Pro), 264LT, 264LT Pro
+II), 264GT-IIc, 264GT3 (a.k.a. 3D Rage Pro), 264LT, 264LT Pro, Rage 128
 .TP 4
 Tseng:
 ET3000, ET4000, ET4000/W32, ET6000
@@ -114,7 +114,8 @@ I740 (AGP and PCI)
 .PP
 Accelerated support is included for most of the Cirrus chipsets, the Western
 Digital WD90C31 and WD90C33 chipsets, the Oak OTI087 chipset, Chips &
-Technologies, ARK Logic chipsets, the ET6000 and the ET4000/W32p.
+Technologies, ARK Logic chipsets, the ET6000, the ET4000/W32p, and the ATI
+Rage 128.
 Accelerated 8bpp support for the ET4000/W32 (i and p) and ET6000 is
 implemented in a separate server (see
 \fIXF86_W32(1)\fP). Users of boards based on ATI's Mach8, Mach32 and Mach64
@@ -151,7 +152,7 @@ are:
 .RS 1.5i
 .TP 4
 ATI:
-ati (See README.ati for other recognized names)
+ati (See README.ati for other recognized names), r128 (for ATI Rage 128)
 .TP 4
 Tseng:
 et3000, et4000W32, et4000W32i, et4000W32i_rev_b, et4000W32i_rev_c,
@@ -282,10 +283,11 @@ Refer to the \fIXF86Config(4/5)\fP
 manual page for details of how to set the timeouts for the different levels
 of operation.
 .sp
-\fBnoaccel\fP - for Cirrus, WD, ARK, C&T, MGA, Tseng and i740 chipsets.
+\fBnoaccel\fP - for Cirrus, WD, ARK, C&T, MGA, Tseng, i740, and ATI Rage
+128 (r128) chipsets.
 This option disables the accelerated features for the clgd542X, clgd543x,
-clgd5446, clgd546X, wd90c24, wd90c31 and wd90c33, C&T, ARK, MGA, Tseng
-and i740 chipsets.
+clgd5446, clgd546X, wd90c24, wd90c31 and wd90c33, C&T, ARK, MGA, Tseng,
+i740, and ATI Rage 128 (r128) chipsets.
 .sp
 \fBno_pixmap_cache\fP - for any chip that uses XAA for acceleration,
 which includes ARK, Cirrus, C&T, MGA, SiS, Trident 9440/9680, and Tseng
@@ -363,11 +365,11 @@ suspend_hack, use_18bit_bus\fP - more Chips & Technologies specific
 options for use with LCD screens. Refer to <XRoot>/lib/X11/doc/README.chips
 for a detailed description of these options.
 .sp
-\fBhw_cursor\fP - for ARK, ET6000 and i740 chipsets.  This option enables the
-hardware cursor.
+\fBhw_cursor\fP - for ARK, ET6000, i740, and ATI Rage 128 (r128) chipsets.
+This option enables the hardware cursor.
 .sp
-\fBsw_cursor\fP - for Cirrus, C&T and i740 chipsets.  This option disables the
-hardware cursor.
+\fBsw_cursor\fP - for Cirrus, C&T, i740, and ATI Rage 128 (r128) chipsets.
+This option disables the hardware cursor.
 .sp
 \fBsync_on_green\fP - for Chips & Technologies 65550's and 65554's
 and Matrox MGA2064W's.  This option enables the generation of a sync
@@ -441,6 +443,9 @@ Extra documentation for the ARK driver
 .TP 30
 <XRoot>/lib/X11/doc/README.ati
 Extra documentation for the ATI vgawonder driver
+.TP 30
+<XRoot>/lib/X11/doc/README.r128
+Extra documentation for the ATI Rage 128 driver
 .TP 30
 <XRoot>/lib/X11/doc/README.chips
 Extra documentation for the Chips & Technologies driver

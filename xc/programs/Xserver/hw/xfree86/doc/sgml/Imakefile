@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/28 05:13:04 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.18 1999/07/22 08:14:03 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.20 1999/10/21 12:07:53 hohndel Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -93,6 +93,8 @@ LinuxDocReadmeTarget(3DLabs)
 LinuxDocReadmeTarget(trident)
 LinuxDocReadmeTarget(tseng)
 LinuxDocReadmeTarget(i740)
+LinuxDocReadmeTarget(i810)
+LinuxDocReadmeTarget(r128)
 
 /* Main docs */
 LinuxDocTargetLong(CPYRIGHT.sgml,COPYRIGHT,COPYRIGHT)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86bitmap.c,v 3.7.2.2 1998/07/30 06:24:20 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86bitmap.c,v 3.7.2.3 1999/10/21 12:08:10 hohndel Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -401,6 +401,9 @@ srcy, bg, fg, rop, planemask)
         bitmapwidth = ((bytewidth + 3) / 4) * 32 * 3;
     else
         bitmapwidth = ((bytewidth + 3) / 4) * 32;
+
+    if (xf86AccelInfoRec.ColorExpandFlags & CPU_TRANSFER_PAD_QWORD)
+       bitmapwidth = (w + 63) & ~63;
 
     if (xf86AccelInfoRec.ColorExpandFlags & TRIPLE_BITS_24BPP)
         /*

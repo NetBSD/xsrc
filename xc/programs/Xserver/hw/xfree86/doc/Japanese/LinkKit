@@ -6,8 +6,6 @@
 
   1.  XFree86 3.3.3 リンクキットの Readme
 
-
-
   1. gcc-2 を使用しないシステムで、gcc-2 で作成されたバイナリ配付物を使
      用する場合はたぶん libgcc.a を組み込む必要があります。
 
@@ -17,7 +15,6 @@
 
   3. xf86site.def ファイルを編集して、構築したいサーバと組み込みたいドラ
      イバや機能拡張を定義します。
-
 
   o  デフォルト値が正しくなければ、使用するコンパイラに合わせて HasGcc
      と HasGcc2 を設定します。
@@ -62,7 +59,6 @@
      YES にします。
 
   o  WAB-S サーバを作成するには: XF98WABSServer を YES にします。
-
 
   o  WAB-EP サーバを作成するには: XF98WABEPServer を YES にします。
 
@@ -146,8 +142,6 @@
 
        ./mkmf
 
-
-
   6. `make' を実行して、設定したようにサーバをリンクします。
 
   7. `make install' を実行して、新しいサーバをインストールします。
@@ -164,17 +158,9 @@
      まれているドライバを調べることができます。組み込まれている機能拡張
      を調べるには、X サーバを起動して `xdpyinfo' を実行してください。
 
-
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/LinkKit,v 3.1.2.2 1999/06/02 07:50:38 hohndel Exp $
-
-
-
-
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/LinkKit,v 3.1.2.3 1999/11/26 15:22:59 hohndel Exp $
 
   $XConsortium: LinkKit.sgml /main/8 1996/10/27 11:05:58 kaleb $
-
-
-
 
   2.  日本語訳について
 
@@ -186,13 +172,4 @@
   指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 プロジェ
   クト社にあり、日本語訳に関する権利は X Japanese Documentation Project
   にあります。
-
-
-
-
-
-
-
-
-
 

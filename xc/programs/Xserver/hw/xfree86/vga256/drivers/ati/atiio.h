@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiio.h,v 1.1.2.2 1999/07/05 09:07:34 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiio.h,v 1.1.2.3 1999/10/12 17:18:54 hohndel Exp $ */
 /*
  * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -50,18 +50,18 @@ extern CARD16 ATIIOPortDAC_MASK, ATIIOPortDAC_DATA,
               ATIIOPortDAC_READ, ATIIOPortDAC_WRITE;
 
 /* I/O decoding definitions */
-#define SPARSE_IO	0
-#define BLOCK_IO	1
+#define SPARSE_IO 0
+#define BLOCK_IO  1
 extern CARD16 ATIIOBase;
 extern CARD8 ATIIODecoding;
-#define ATIIOPort(_PortTag)							\
-        (((ATIIODecoding == SPARSE_IO) ?					\
-          (((_PortTag) & SPARSE_IO_SELECT) | ((_PortTag) & IO_BYTE_SELECT)) :	\
-          (((_PortTag) & BLOCK_IO_SELECT)  | ((_PortTag) & IO_BYTE_SELECT))) |	\
+#define ATIIOPort(_PortTag)                                                     \
+        (((ATIIODecoding == SPARSE_IO) ?                                        \
+          (((_PortTag) & SPARSE_IO_SELECT) | ((_PortTag) & IO_BYTE_SELECT)) :   \
+          (((_PortTag) & BLOCK_IO_SELECT)  | ((_PortTag) & IO_BYTE_SELECT))) |  \
          ATIIOBase)
 
-extern CARD8 ATIB2Reg;		/* The B2 mirror */
-extern CARD8 ATIVGAOffset;	/* Low index for ATIIOPortVGAWonder */
+extern CARD8 ATIB2Reg;          /* The B2 mirror */
+extern CARD8 ATIVGAOffset;      /* Low index for ATIIOPortVGAWonder */
 
 extern void ATISetVGAIOBase FunctionPrototype((const CARD8));
 extern void ATIModifyExtReg FunctionPrototype((const CARD8, int, const CARD8,
@@ -118,33 +118,33 @@ extern void ATIAccessMach64PLLReg FunctionPrototype((const CARD8, const Bool));
         )
 
 /* Wait until "n" queue entries are free */
-#define ibm8514WaitQueue(_n)						\
-	{								\
-		while (inw(GP_STAT) & (0x0100U >> (_n)));		\
-	}
-#define ATIWaitQueue(_n)						\
-	{								\
-		while (inw(EXT_FIFO_STATUS) & (0x10000U >> (_n)));	\
-	}
+#define ibm8514WaitQueue(_n)                                            \
+        {                                                               \
+                while (inw(GP_STAT) & (0x0100U >> (_n)));               \
+        }
+#define ATIWaitQueue(_n)                                                \
+        {                                                               \
+                while (inw(EXT_FIFO_STATUS) & (0x10000U >> (_n)));      \
+        }
 
 /* Wait until GP is idle and queue is empty */
-#define WaitIdleEmpty()							\
-	{								\
-		while (inw(GP_STAT) & (GPBUSY | 1));			\
-	}
-#define ProbeWaitIdleEmpty()						\
-	{								\
-		int i;							\
-		for (i = 0; i < 100000; i++)				\
-			if (!(inw(GP_STAT) & (GPBUSY | 1)))		\
-				break;					\
-	}
+#define WaitIdleEmpty()                                                 \
+        {                                                               \
+                while (inw(GP_STAT) & (GPBUSY | 1));                    \
+        }
+#define ProbeWaitIdleEmpty()                                            \
+        {                                                               \
+                int i;                                                  \
+                for (i = 0; i < 100000; i++)                            \
+                        if (!(inw(GP_STAT) & (GPBUSY | 1)))             \
+                                break;                                  \
+        }
 
 /* Wait until GP has data available */
-#define WaitDataReady()							\
-	{								\
-		while (!(inw(GP_STAT) & DATARDY));			\
-	}
+#define WaitDataReady()                                                 \
+        {                                                               \
+                while (!(inw(GP_STAT) & DATARDY));                      \
+        }
 
 
 #endif /* ___ATIIO_H___ */

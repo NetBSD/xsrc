@@ -1,6 +1,6 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XFree86.1x,v 1.1.2.1 1999/05/25 06:11:02 hohndel Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/XFree86.1x,v 1.1.2.2 1999/11/26 15:23:34 hohndel Exp $
 .\"
-.\" Copyright (c) 1998 The X Japanese Documentation Project.
+.\" Copyright (c) 1998, 1999 The X Japanese Documentation Project.
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining a
 .\" copy of this software and associated documentation files (the
@@ -33,8 +33,12 @@
 .\"         Doc Version 3.47
 .\" Updated Sat Nov 28 17:25:05 JST 1998
 .\"         by Taketoshi Sano <kgh12351@nifty.ne.jp> to match XFree86 3.3.3 
+.\" Updated Sat Aug 21 11:39:13 JST 1999
+.\"         by FUJIWARA Teruyoshi <fujiwara@linux.or.jp> to match XFree86 3.3.4
+.\" Updated Sun Sep 12 00:39:17 JST 1999
+.\"         by FUJIWARA Teruyoshi <fujiwara@linux.or.jp> to match XFree86 3.3.5
 .\"
-.TH XFree86 1 "Version 3.3.3"  "XFree86"
+.TH XFree86 1 "Version 3.3.5"  "XFree86"
 .SH 名前
 .\"0 XFree86 - X11R6 for UNIX on x86 platforms
 XFree86 - x86 マシンで動作する UNIX 用の X11R6
@@ -63,27 +67,31 @@ Snitily Graphics Consulting Service によって X11R5 に寄贈された。
 .br
 -- Solaris (x86) 2.1, 2.4, 2.5, 2.5.1, 2.6
 .br
--- FreeBSD 2.0.5, 2.1, 2.1.5, 2.1.6, 2.1.7, 2.1.7.1, 2.2, 2.2.1, 2.2.2, 2.2.5, 2.2.6, 3.0-current
+-- FreeBSD 2.0.5, 2.1, 2.1.5, 2.1.6, 2.1.7, 2.1.7.1, 2.2, 2.2.1,
+2.2.2, 2.2.5, 2.2.6, 2.2.7, 2.2.8, 3.0, 3.1, 3.2
 .br
-.\"0 -- NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3 (i386 port only)
--- NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3 (i386 版のみ)
+.\"0 -- NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2, 1.3.3, 1.4 (i386 port only)
+-- NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2, 1.3.3, 1.4 (i386 版のみ)
 .br
--- OpenBSD 2.0, 2.1
+-- OpenBSD 2.0, 2.1, 2.2, 2.3, 2.4, 2.5
 .br
 .\"0 -- BSD/386 version 1.1 and BSD/OS 2.0
--- BSD/386 version 1.1 および BSD/OS 2.0
+-- BSD/386 バージョン 1.1 および BSD/OS 2.0
 .br
 .\"0 -- Mach (from CMU)
 -- Mach (CMU から)
 .br
 -- Linux
 .br
--- Amoeba version 5.1
+.\"0 -- Amoeba version 5.1
+-- Amoeba バージョン 5.1
 .br
--- Minix-386vm version 1.6.25.1
+.\"0 -- Minix-386vm version 1.6.25.1
+-- Minix-386vm バージョン 1.6.25.1
 .br
-.\"0 -- LynxOS AT versions 2.2.1, 2.3.0 and 2.4.0, LynxOS microSPARC 2.4.0
--- LynxOS AT versions 2.2.1, 2.3.0 および 2.4.0, LynxOS microSPARC 2.4.0
+.\"0 -- LynxOS versions 2.3.0, 2.4.0, 2.5.x and 3.0.x (except 68k and Mips platforms, X servers for x86 and microSPARC only)
+-- LynxOS バージョン 2.3.0, 2.4.0, 2.5.x, 3.0.x (68k, Mips 版を除く。X サーバは
+x86 と microSPARC 用しかない)
 .ad
 .RE
 .PP
@@ -325,8 +333,7 @@ SCO 上でのみサポートされている。 \fBvt\fP オプションと同等で、SCO 上の
 .B \-xf86config \fIfile\fP
 .\"0 Read the server configuration from \fIfile\fP.  This option is only available
 .\"0 when the server is run as root (i.e, with real-uid 0).
-\fIfile\fP からサーバの構成情報を読み込む。このオプションは  root (つまり実 
- (real) uid  が 0 のアカウント) でサーバを起動したときにのみ有効である。
+\fIfile\fP からサーバの構成情報を読み込む。このオプションは  root (つまり実 (real) uid  が 0 のアカウント) でサーバを起動したときにのみ有効である。
 .TP 8
 .B \-keeptty
 .\"0 Prevent the server from detaching its initial controlling terminal.  This
@@ -341,8 +348,7 @@ SCO 上でのみサポートされている。 \fBvt\fP オプションと同等で、SCO 上の
 .B Ctrl+Alt+Backspace
 .\"0 Immediately kills the server -- no questions asked.  (Can be disabled by
 .\"0 specifying "DontZap" in the \fBServerFlags\fP section of the XF86Config file.)
-即座にサーバを停止する -- 確認のための質問は無い。 (XF86Config ファイルの 
- \fBServerFlags\fP 節に "DontZap" と指定することで無効にできる。)
+即座にサーバを停止する -- 確認のための質問は無い。 (XF86Config ファイルの \fBServerFlags\fP 節に "DontZap" と指定することで無効にできる。)
 .TP 8
 .B Ctrl+Alt+Keypad-Plus
 .\"0 Change video mode to next one specified in the configuration file,

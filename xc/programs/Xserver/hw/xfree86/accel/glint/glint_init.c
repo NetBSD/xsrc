@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint_init.c,v 1.20.2.7 1999/08/17 07:39:27 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint_init.c,v 1.20.2.8 1999/12/10 12:38:19 hohndel Exp $ */
 /*
  * Copyright 1997 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -69,7 +69,7 @@ unsigned int glintSetLUT(int , unsigned int );
 int pprod = -2;
 int Bppshift = 0;
 extern int coprotype;
-
+extern glintLBvideoRam;
 
 #define PARTPROD(a,b,c) (((a)<<6) | ((b)<<3) | (c))
 
@@ -792,6 +792,22 @@ glintInit(DisplayModePtr mode)
 
     if (IS_3DLABS_PM_FAMILY(coprotype)) {
 	  permediapreinit();
+    }
+
+    /* this sets LB bank size and page detectors required for 3D operations */
+    if (IS_3DLABS_TX_MX_CLASS(coprotype)) {
+	int lb_mb = glintLBvideoRam / 1024;
+
+	/* 0x11 = enables EDO functionality and two page detectors */
+
+	if(lb_mb == 8)
+	    GLINT_SLOW_WRITE_REG((2<<1) | 0x11,	LBMemoryEDO)	/* 512K pix */
+	else if(lb_mb == 16)
+	    GLINT_SLOW_WRITE_REG((3<<1) | 0x11,	LBMemoryEDO)	/* 1M pix */
+	else if(lb_mb == 32)
+	    GLINT_SLOW_WRITE_REG((4<<1) | 0x11,	LBMemoryEDO)	/* 2M pix */
+	else if(lb_mb == 64)
+	    GLINT_SLOW_WRITE_REG((5<<1) | 0x11,	LBMemoryEDO)	/* 4M pix */
     }
 
     if (IS_3DLABS_PERMEDIA_CLASS(coprotype)) {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.c,v 3.80.2.22 1999/07/23 13:22:54 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.c,v 3.80.2.23 2000/01/06 02:12:10 robin Exp $ */
 /*
  * cir_driver.c,v 1.10 1994/09/14 13:59:50 scooper Exp
  *
@@ -1694,7 +1694,7 @@ cirrusProbe()
 	   * Some cards don't initialise SRF correctly, so do it here if the
 	   * user has specified the videoram amount.
 	   */
-	  if (!(HAVE543X() || HAVE75XX()))
+	  if (!(HAVE543X() || HAVE75XX() || (cirrusChip == CLGD5480)))
 	       {
 	       unsigned char SRF = 0;
 	       if (vga256InfoRec.videoRam > 1024)

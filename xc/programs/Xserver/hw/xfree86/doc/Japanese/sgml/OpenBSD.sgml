@@ -7,10 +7,10 @@
 <title>OpenBSD 用 XFree86 に関する README
 <author>
 Matthieu Herrb
-<Date>Last modified on: 29 December 1998
+<Date>Last modified on: 20 August 1999
 <trans>
 The X Japanese Documentation Project
-<tdate>Last modified on: 8 February 1999
+<tdate>Last modified on: 12 September 1999
 
 <toc>
 
@@ -52,9 +52,9 @@ XFree86 のソースは以下の場所から anonymous ftp で入手することができま
 url="ftp://ftp.XFree86.org/pub/XFree86/current">
 
 <!--
-Binaries for OpenBSD 2.4 and later are available from:
+Binaries for OpenBSD 2.5 and later are available from:
 -->
-OpenBSD 2.4 用のバイナリは以下の場所から入手できます:
+OpenBSD 2.5 用のバイナリは以下の場所から入手できます:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/OpenBSD"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/OpenBSD">
@@ -95,16 +95,34 @@ this file and we'll revise it.
 てください。本ドキュメントを修正します。
 
 <!--
-<sect>New features in this release
+<sect>New OS-dependent features in this release
 -->
-<sect>今回のリリースにおける新機能
+<sect>今回のリリースにおける OS 依存の新機能
 <p>
 <!--
-See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
-new features in XFree86.
+None. See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
+non-OS dependent new features in XFree86 3.3.5.
 -->
-XFree86 の新機能については、
-<htmlurl url="RELNOTES.html" name="リリースノート">を参照してください。
+ありません。XFree86 3.3.5 における、OS に依存しない新機能については
+<htmlurl url="RELNOTES.html" name="リリースノート">をご覧ください。
+
+<!--
+<sect>New OS-dependent features in XFree86 3.3.4
+-->
+<sect>XFree86 3.3.4 における OS 依存の新機能
+<p>
+<itemize>
+<!--
+<item>The maximum number of open connections in the server has been
+raised to 128,
+-->
+<item>サーバの最大接続数が 128 に増えました。
+<!--
+<item>the <tt>resize</tt> utility was fixed.
+-->
+<item><tt>resize</tt> ユーティリティが修正されました。
+</itemize>
+<p>
 
 <!--
 <sect>Installing the Binaries
@@ -527,8 +545,8 @@ run <tt>./MAKEDEV std</tt> in <tt>/dev</tt>. Edit
 <tt>/etc/sysctl.conf</tt> to set the variable
 <bf>machdep.allowaperture</bf> to 1.
 -->
-アパーチャドライバはカーネルの一部です。カーネルの設定ファイルに
-'option APERTURE' を追加し、新しいカーネルの構築とインストールを行い、
+アパーチャドライバはカーネルの一部です。カーネルの設定ファイル
+に 'option APERTURE' を追加し、新しいカーネルの構築とインストールを行い、
 <tt>/dev</tt> ディレクトリで <tt>./MAKEDEV std</tt> を実行します。
 <tt>/etc/sysctl.conf</tt> を編集し、変数 
 <bf>machdep.allowaperture</bf> に 1 を設定します。
@@ -778,7 +796,8 @@ pages you should update <tt/whatis.db/ by running ``<tt>makewhatis
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/OpenBSD.sgml,v 1.1.2.1 1999/05/25 06:39:18 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/OpenBSD.sgml,v 1.1.2.2 1999/11/26 15:23:46 hohndel Exp $
+
 
 
 
@@ -787,4 +806,11 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/OpenBSD.sgml,v 1.1.2.
 $XConsortium$
 </verb>
 
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project の藤原輝嘉 <url
+url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;"> が行いました。問題点の指摘やご意
+見は藤原まで御連絡ください。
+原文の著作権は XFree86 プロジェクト社にあり、日本語訳に伴う権利は
+X Japanese Documentation Project にあります。
 </article>

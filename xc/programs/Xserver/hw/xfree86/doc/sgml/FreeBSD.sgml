@@ -92,6 +92,7 @@ The serial mouse has a D-Sub female 9- or 25-pin connector.
 The bus mouse has either a D-Sub male 9-pin connector 
 or a round DIN 9-pin connector.
 The PS/2 mouse is equipped with a small, round DIN 6-pin connector.
+The USB mouse has a flat rectangular connector.
 Some mice come with adapters with which the connector can 
 be converted to another.  If you are to use such an adapter,
 remember the connector at the very end of the mouse/adapter pair is 
@@ -101,6 +102,8 @@ The next thing to decide is a <tt>/dev</tt> entry for the given interface.
 For the bus and PS/2 mice, there is little choice: 
 the bus mouse always use <tt>/dev/mse0</tt>,
 and the PS/2 mouse is always at <tt>/dev/psm0</tt>.
+You can attach multiple USB mice to your system or to your USB hub.
+They are accessible as <tt>/dev/ums0</tt>, <tt>/dev/ums1</tt>,...
 There may be more than one serial port to which the serial
 mouse can be attached.  Many people often assign the first, built-in 
 serial port <tt>/dev/cuaa0</tt> to the mouse.
@@ -161,6 +164,13 @@ FreeBSD version 2.2.6 and later directly support
 these protocol types in the PS/2 mouse driver <tt/psm/ and it is not
 necessary to tell the X server which PS/2 mouse protocol type is to 
 be used; ``<tt/Auto/'' should work, otherwise use ``<tt>PS/2</tt>''.
+</quote>
+<item>You must specify the ``<tt>Auto</tt>'' protocol for the USB mouse.
+<quote>
+<bf/NOTE:/ Other XFree86 document may mention ``<tt>Usb</tt>'' as one of 
+keywords for the mouse protocol.  This keyword is not necessary, thus, not 
+supported in FreeBSD.  Be sure to use ``<tt>Auto</tt>'' for the USB
+mouse.
 </quote>
 <item>The ``<tt>Logitech</tt>'' protocol is for old mouse models 
 from Logitech.
@@ -342,7 +352,7 @@ Many thanks to:
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/FreeBSD.sgml,v 3.25.2.5 1998/11/07 13:37:46 dawes Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/FreeBSD.sgml,v 3.25.2.7 1999/12/10 16:00:17 hohndel Exp $ 
 
 
 

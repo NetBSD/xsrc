@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Rendition.c,v 3.1.6.1 1999/06/17 16:27:48 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Rendition.c,v 3.1.6.2 1999/11/26 15:22:51 hohndel Exp $ */
 /*
  * (c) Copyright 1997 by Dirk Hohndel <hohndel@xfree86.org>
  *
@@ -72,7 +72,7 @@ int *Chipset;
 	while (pci_devp[++i] != NULL)
 	{
 	    pcip = pci_devp[i];
-	    if (pcip->_vendor == PCI_VENDOR_RENDITION)
+	    if (pcip->_vendor == PCI_VENDOR_RENDITION && pcrp->_status_command & 7)
 	    {
 	    	switch (pcip->_device)
 		{

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ATI.c,v 3.11.2.5 1999/06/17 16:23:56 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ATI.c,v 3.11.2.6 1999/10/12 17:18:35 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -174,11 +174,13 @@ int chip, *Chipset;
 			Mach64xTB = TRUE;
 			*Chipset = CHIP_ATI264LTPRO;
 			break;
+		case 0x00CB:
 		case 0x00CC:
 		case 0x00CD:
 		case 0x00CE:
 		case 0x00D1:
 		case 0x00D2:
+		case 0x474C:
 		case 0x474D:
 		case 0x474E:
 		case 0x474F:
@@ -186,6 +188,17 @@ int chip, *Chipset;
 		case 0x4753:
 			Mach64xTB = TRUE;
 			*Chipset = CHIP_ATI264XL;
+			break;
+		case 0x016C:
+		case 0x016D:
+		case 0x0171:
+		case 0x0172:
+		case 0x4C4D:
+		case 0x4C4E:
+		case 0x4C52:
+		case 0x4C53:
+			Mach64xTB = TRUE;
+			*Chipset = CHIP_ATIMOBILITY;
 			break;
 		default:
 			Chip_data = chip;

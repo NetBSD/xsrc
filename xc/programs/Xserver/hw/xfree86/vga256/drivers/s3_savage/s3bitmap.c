@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3bitmap.c,v 1.1.2.1 1999/07/30 11:21:30 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3bitmap.c,v 1.1.2.4 1999/12/28 12:14:04 hohndel Exp $ */
 
 void SavageWriteBitmapScreenToScreenColorExpand
 (
@@ -50,7 +50,7 @@ void SavageWriteBitmapCPUToScreenColorExpand
 )
 {
     BCI_GET_PTR;
-    int i, j, count, shift;
+    int i, j, count, shift, reset;
     unsigned int cmd;
     unsigned int * srcp;
 
@@ -61,7 +61,9 @@ void SavageWriteBitmapCPUToScreenColorExpand
         | BCI_CMD_DEST_GBD | BCI_CMD_SRC_MONO;
     cmd |= s3vAlu[rop];
 
-    count = (w + 31) / 32;
+    if( !srcwidth )
+        return;
+
     BCI_SEND(cmd);
     BCI_SEND(BCI_CLIP_LR(x, x+w-1));
     BCI_SEND(fg);
@@ -74,26 +76,29 @@ void SavageWriteBitmapCPUToScreenColorExpand
     w += srcx & 31;
     count = (w + 31) / 32;
     src += (srcy * srcwidth) + ((srcx & ~31) / 8);
+
+    /* The BCI region is 128k bytes.  A screen-sized mono bitmap can */
+    /* exceed that. */
+
+    reset = 65536 / srcwidth;
     
     for (j = 0; j < h; j ++) {
         BCI_SEND(BCI_X_Y(x, y+j));
 	BCI_SEND(BCI_W_H(w, 1));
 	srcp = (unsigned int*) src;
 	for (i = count; i > 0; srcp ++, i --) {
-#if 1
-	    /* We have to invert the bits in each dword. */
+	    /* We have to invert the bits in each byte. */
 	    unsigned long u = *srcp;
-	    u = ((u & 0x0000ffff) << 16) | ((u & 0xffff0000) >> 16);
-	    u = ((u & 0x00ff00ff) << 8) | ((u & 0xff00ff00) >> 8);
 	    u = ((u & 0x0f0f0f0f) << 4) | ((u & 0xf0f0f0f0) >> 4);
 	    u = ((u & 0x33333333) << 2) | ((u & 0xcccccccc) >> 2);
 	    u = ((u & 0x55555555) << 1) | ((u & 0xaaaaaaaa) >> 1);
 	    BCI_SEND(u);
-#else
-	    BCI_SEND(*srcp);
-#endif
 	}
 	src += srcwidth;
+        if( !--reset ) {
+            bci_ptr = s3vPriv.BciMem;
+            reset = 65536 / srcwidth;
+        }
     }
 }
 
@@ -117,20 +122,28 @@ void SavageImageWrite
     cmd |= s3vAlu[rop];
 
     count = ((w * vgaBitsPerPixel + 31) / 32) * h;
+    WaitQueue( count );
     BCI_SEND(cmd);
     BCI_SEND(BCI_CLIP_LR(x, x+w));
     BCI_SEND(BCI_X_Y(x, y));
     BCI_SEND(BCI_W_H(w, h));
     srcp = src;
-    if (vgaBitsPerPixel == 32) {
-      /* Color is 0xffffff00 on Intel */
-	for (i = count; i > 0; srcp ++, i --) {
-	    BCI_SEND(*srcp << 8);
-	}
+
+    /* 
+      The BCI region is 128k bytes.  We've used 16 bytes so far.
+      We copy the rest in big chunks.
+    */
+
+#define CHUNKSIZE	(98304/4)
+
+    while( count > CHUNKSIZE )
+    {
+        memcpy( bci_ptr, srcp, CHUNKSIZE*4 );
+        count -= CHUNKSIZE;
+        srcp += CHUNKSIZE;
     }
-    else {
-	for (i = count; i > 0; srcp ++, i --) {
-	    BCI_SEND(*srcp);
-	}
+
+    for (i = count; i > 0; srcp ++, i --) {
+	BCI_SEND(*srcp);
     }
 }

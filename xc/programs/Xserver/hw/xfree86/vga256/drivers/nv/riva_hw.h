@@ -36,11 +36,17 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
 \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_hw.h,v 1.1.2.4 1999/04/21 07:21:17 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_hw.h,v 1.1.2.6 2000/01/08 03:25:40 robin Exp $ */
 #ifndef __RIVA_HW_H__
 #define __RIVA_HW_H__
-#define RIVA_SW_VERSION 0x00010000
+#define RIVA_SW_VERSION 0x00010002
 
+/*
+ * Define supported architectures.
+ */
+#define NV_ARCH_03  0x03
+#define NV_ARCH_04  0x04
+#define NV_ARCH_10  0x10
 /***************************************************************************\
 *                                                                           *
 *                             FIFO registers.                               *
@@ -218,7 +224,60 @@ typedef volatile struct
     float TextureS;
     float TextureT;
 } RivaTexturedTriangle03;
+typedef volatile struct
+{
+    unsigned reserved00[4];
+    unsigned short FifoFree;
+    unsigned short Nop;
+    unsigned reserved01[0x0BB];
+    unsigned ColorKey;
+    unsigned TextureOffset;
+    unsigned TextureFormat;
+    unsigned TextureFilter;
+    unsigned Blend;
+/* This is a problem on LynxOS */
+#ifdef Control
+#undef Control
+#endif
+    unsigned Control;
+    unsigned FogColor;
+    unsigned reserved02[0x39];
+    struct
+    {
+        float ScreenX;
+        float ScreenY;
+        float ScreenZ;
+        float EyeM;
+        unsigned Color;
+        unsigned Specular;
+        float TextureS;
+        float TextureT;
+    } Vertex[16];
+    unsigned DrawTriangle3D;
+} RivaTexturedTriangle05;
 
+/*
+ * 2D/3D surfaces
+ */
+typedef volatile struct
+{
+    unsigned reserved00[4];
+    unsigned short FifoFree;
+    unsigned short Nop;
+    unsigned reserved01[0x0BE];
+    unsigned Offset;
+} RivaSurface;
+typedef volatile struct
+{
+    unsigned reserved00[4];
+    unsigned short FifoFree;
+    unsigned short Nop;
+    unsigned reserved01[0x0BD];
+    unsigned Pitch;
+    unsigned RenderBufferOffset;
+    unsigned ZBufferOffset;
+} RivaSurface3D;
+    
 /***************************************************************************\
 *                                                                           *
 *                        Virtualized RIVA H/W interface.                    *
@@ -247,6 +306,7 @@ typedef struct _riva_hw_inst
     unsigned LockUnlockIndex;
     unsigned VBlankBit;
     unsigned FifoFreeCount;
+    unsigned FifoEmptyCount;
     /*
      * Non-FIFO registers.
      */
@@ -289,6 +349,7 @@ typedef struct _riva_hw_inst
     RivaScreenBlt           *Blt;
     RivaBitmap              *Bitmap;
     RivaTexturedTriangle03  *Tri03;
+    RivaTexturedTriangle05  *Tri05;
 } RIVA_HW_INST;
 /*
  * Extended mode state information.
@@ -328,13 +389,12 @@ int RivaGetConfig(RIVA_HW_INST *);
 /*
  * FIFO Free Count. Should attempt to yield processor if RIVA is busy.
  */
-#define RIVA_FIFO_FREE(hwinst,hwptr,cnt)                                    \
-{                                                                           \
-while ((hwinst).FifoFreeCount < (cnt))                                      \
-{                                                                           \
-    (hwinst).FifoFreeCount = (hwinst).hwptr->FifoFree >> 2;                 \
-}                                                                           \
-(hwinst).FifoFreeCount -= (cnt);                                            \
+
+#define RIVA_FIFO_FREE(hwinst,hwptr,cnt)                           \
+{                                                                  \
+   while ((hwinst).FifoFreeCount < (cnt))                          \
+	(hwinst).FifoFreeCount = (hwinst).hwptr->FifoFree >> 2;        \
+   (hwinst).FifoFreeCount -= (cnt);                                \
 }
 #endif /* __RIVA_HW_H__ */
 

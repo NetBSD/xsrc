@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint.c,v 1.32.2.12 1999/08/17 07:39:26 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint.c,v 1.32.2.13 1999/12/10 12:38:18 hohndel Exp $ */
 /*
  * Copyright 1997 by Alan Hourihane, Wigan, England.
  *
@@ -381,7 +381,7 @@ glintProbe()
   i = -1;
   while ((pcrp = pcrpp[++i]) != (pciConfigPtr)NULL) {
     if ((pcrp->_vendor == PCI_VENDOR_3DLABS) &&
-	(pcrp->_command & PCI_CMD_IO_ENABLE) &&
+	/* (pcrp->_command & PCI_CMD_IO_ENABLE) && */
 	(pcrp->_command & PCI_CMD_MEM_ENABLE))
     {
         switch (pcrp->_device)

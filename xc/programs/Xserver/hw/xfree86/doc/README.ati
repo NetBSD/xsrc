@@ -74,7 +74,8 @@ sent:
         Mach64 series:  88800GX-C, 88800GX-D, 88800GX-E, 88800GX-F, 88800CX,
                         264CT, 264ET, 264VT, 264GT (3D Rage), 264VT-B, 264VT3,
                         264VT4, 264GT-B (3D Rage II), 3D Rage IIc, 3D Rage Pro,
-                        3D Rage LT, 3D Rage LT Pro, 3D Rage XL, 3D Rage XC
+                        3D Rage LT, 3D Rage LT Pro, 3D Rage XL, 3D Rage XC,
+                        3D Rage Mobility
 
 The driver also supports 32K, 64K and 16M-colour modes on the 264xT and 3D
 Rage series of adapters using the accelerator CRTC (but not the VGA CRTC).
@@ -363,10 +364,6 @@ driver.  They include:
      bug in kernels 2.0.31 or earlier that prevents proper APM operation.
      Upgrade to a more recent kernel or disable APM support.
 
-     The TV port on some Mach64 adapters needs to be disabled using an ATI
-     utility that might or might not be supplied with the adapter.  This
-     problem is currently under investigation.
-
    o When using a Mach64's accelerator CRTC, the virtual resolution must be
      less than 8192 pixels wide.  The VGA CRTC further limits the virtual
      resolution width to less than 4096 pixels, or to less than 2048 pixels
@@ -511,11 +508,11 @@ Version 4 is a rather major restructuring of version 3, which became larger
 than I could comfortably handle in one source file.  This version will make
 it quite a bit easier to introduce new function such as acceleration, addi-
 tional colour depths, and so on.  This is the version found in XFree86 3.3.2,
-3.3.3, 3.3.3.1, 3.3.3.2 and 3.3.4.
+3.3.3, 3.3.3.1, 3.3.3.2, 3.3.4, 3.3.6 and 3.3.6.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.15.2.4 1999/07/05 09:07:28 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/ati.sgml,v 3.15.2.6 1999/12/11 15:28:32 hohndel Exp $
 
      $XConsortium: ati.sgml /main/9 1996/10/19 18:03:54 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.ati,v 3.29.2.8 1999/07/05 10:25:13 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.ati,v 3.29.2.10 1999/12/11 15:30:56 hohndel Exp $

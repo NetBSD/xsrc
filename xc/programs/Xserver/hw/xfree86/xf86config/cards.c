@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/cards.c,v 3.11.2.1 1998/01/18 10:35:45 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/cards.c,v 3.11.2.2 1999/10/11 16:05:04 hohndel Exp $ */
 
 /*
  *  Functions to manipulate card database.
@@ -15,6 +15,24 @@
 #include <string.h>
 
 #include "cards.h"
+
+#define FileName(file) file->d_name
+#ifndef X_NOT_POSIX
+# include <dirent.h>
+#else
+# ifdef SYSV
+#  include <dirent.h>
+# else
+#  ifdef USG
+#   include <dirent.h>
+#  else
+#   include <sys/dir.h>
+#   ifndef dirent
+#    define dirent direct
+#   endif
+#  endif
+# endif
+#endif
 
 /*
  * Database format:
@@ -104,22 +122,51 @@ static char *cirrus_comment =
 "# address that the card maps the framebuffer to.\n";
 
 int parse_database() {
-	FILE *f;
-	char buf[128];
-	int i, lineno;
-	char filename[128];
+    FILE *f;
+    char buf[128];
+    int i, lineno;
+    char filename[128];
+    char dirName[128];
+    DIR *dirp;
+    struct dirent *file;
+    int cardInFile;
+    char *pattern;
 
-#ifndef __EMX__
-	strcpy(filename, CARD_DATABASE_FILE);
+    lastcard = -1;
+
+#ifdef __EMX__
+    strcpy(filename, (char*)__XOS2RedirRoot(CARD_DATABASE_FILE));
+    {
 #else
-	strcpy(filename, (char*)__XOS2RedirRoot(CARD_DATABASE_FILE));
+    /*
+     * we want to have the directory component in dirName and the Name-prefix
+     * of the database in pattern. Ususally this means
+     * dirName /usr/X11R6/lib/X11
+     * pattern Cards
+     */
+    strcpy(dirName, CARD_DATABASE_FILE);
+    pattern = dirName + strlen(dirName);
+    while ((pattern >= dirName) && (*pattern != '/'))
+	pattern--;
+    if (pattern < dirName) /* something went really wrong with finding the directory part */
+	return -1;
+    *pattern = '\0';
+    pattern++;
+    if ((dirp = opendir (dirName)) == NULL)
+	return -1;
+    while ((file = readdir (dirp)) != NULL) {
+	if (strncmp(FileName(file),pattern,sizeof(pattern)) != 0)
+		continue;
+	strcpy(filename, dirName);
+	strcat(filename,"/");
+	strncat(filename, FileName(file),sizeof(filename)-strlen(filename)-1);
 #endif
 	f = fopen(filename, "r");
 	if (f == NULL)
 		return -1;
 
-	lastcard = -1;
 	lineno = 0;
+	cardInFile = -1;
 
 	for (;;) {
 		if (getline(f, buf))
@@ -131,7 +178,7 @@ int parse_database() {
 		if (strncmp(buf, "END", 3) == 0)
 			/* End of database. */
 			break;
-		if (strncmp(buf, "LINE", 4) == 0 && lastcard>=0) {
+		if (strncmp(buf, "LINE", 4) == 0 && cardInFile>=0) {
 			/* Line of Device comment. */
 			char *lines;
 			/* Append to existing lines. */
@@ -155,6 +202,7 @@ int parse_database() {
 		if (strncmp(buf, "NAME", 4) == 0) {
 			/* New entry. */
 			lastcard++;
+			cardInFile++;
 			card[lastcard].name = malloc(strlen(buf + 5) + 1);
 			strcpy(card[lastcard].name, buf + 5);
 			card[lastcard].chipset = NULL;
@@ -165,7 +213,7 @@ int parse_database() {
 			card[lastcard].lines = "";
 			continue;
 		}
-		if (lastcard < 0)  /* no NAME line found yet */
+		if (cardInFile < 0)  /* no NAME line found yet */
 		   continue; 
 		if (strncmp(buf, "SEE", 3) == 0) {
 			/* Reference to another entry. */
@@ -176,6 +224,7 @@ int parse_database() {
 					buf + 4);
 				free(card[lastcard].name);
 				lastcard--;
+				cardInFile--;
 				continue;
 			}
 			if (card[lastcard].chipset == NULL)
@@ -249,21 +298,21 @@ int parse_database() {
 	    }
 
 	fclose(f);
+    }
 
-	/*
-	 * Add general comments.
-	 */
-	for (i = 0; i <= lastcard; i++) {
-		if (card[i].server && strcmp(card[i].server, "S3") == 0)
-			appendstring(&card[i].lines, s3_comment);
-		if (card[i].chipset && 
-		    strncmp(card[i].chipset, "CL-GD", 5) == 0)
-			appendstring(&card[i].lines, cirrus_comment);
-	}
+    /*
+     * Add general comments.
+     */
+    for (i = 0; i <= lastcard; i++) {
+	    if (card[i].server && strcmp(card[i].server, "S3") == 0)
+		    appendstring(&card[i].lines, s3_comment);
+	    if (card[i].chipset && strncmp(card[i].chipset, "CL-GD", 5) == 0)
+		    appendstring(&card[i].lines, cirrus_comment);
+    }
 
-	sort_database();
+    sort_database();
 
-	return 0;
+    return 0;
 }
 
 #ifdef __STDC__

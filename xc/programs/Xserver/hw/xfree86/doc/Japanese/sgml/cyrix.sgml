@@ -4,9 +4,9 @@
 <!-- Information for Cyrix Chipset Users -->
 <title>Cyrix チップセットのユーザ向けの情報
 <author>The XFree86 Project Inc.
-<date>6 November 1998
+<date>22 June 1999
 <trans>The X Japanese Documentation Project
-<tdate>10 December 1998
+<tdate>2 August 1999
 <toc>
 
 <!-- Supported hardware -->
@@ -57,14 +57,15 @@ CPUs with integrated graphics:
 <itemize>
 <item><!-- On some older chipsets, the driver may trigger an illegal instruction
 just after probing for the ``scratchpad size''.  If this is the case,
-email to Annius.Groenink@cwi.nl with the output of  -->
+email to hecker@cat.dfrc.nasa.gov with the output of 
+-->
 一部の古いチップセットにおいては、「scratchpad size」を調べた直後にド
 ライバが不正な命令を出すことがあります。このような場合には、
 <verb>
 XF86_SVGA -probeonly -verbose
 </verb>
 <!-- and this will be fixed. -->
-の出力結果を添えて Annius.Groenink@cwi.nl に電子メールを送ってください。
+の出力結果を添えて hecker@cat.dfrc.nasa.gov 宛に電子メールを送ってください。
 そうすればきっと修正されると思います。
 <item><!-- There are limitations to the modeline values that can be specified.
 Particularly, the difference between the first two horizontal
@@ -72,6 +73,18 @@ timings (e.g. 640 656, 1024 1048) must be at least 16 and at most 24. -->
 指定できるモード行の値には制限があります。特に、最初の2つの垂直タイミ
 ング(例えば 640 656, 1024, 1048)の差は少なくとも16、かつ多くとも24でな
 ければなりません。
+<!--
+The modeline values are not used in the 3.3.4 server since there is a
+static array used to load the registers.  The modeline only identifies
+that a particular resolution is desired.  The standard VESA modes up
+to 1280x768 are supported.  For more specific information, consult
+the source code.
+-->
+XFree86 3.3.4 ではモード行の値は使われません。というのも、レジスタのロー
+ドに使われる静的配列があるからです。モード行は特定の解像度が要求されて
+いることだけを識別します。1280x768 までの標準の VESA モードがサポート
+されています。もっと具体的な情報については、ソースコードを調べてくださ
+い。
 <item><!-- The 4 colour server is slow due to the VGA banking mode used.
 Moreover,
 it does not work the way it is run by XF86Setup, which is probably
@@ -79,6 +92,19 @@ due to the timing limitations. -->
 4色のサーバでは VGA バンクモードが使われるため動作が遅いです。さらに、
 XF86Setup から動作させることはできません。これはタイミングの制限のため
 だと思われます。
+<item><!-- The 3.3.4 server MAY totally hang the machine at times.  It is
+reported to be stable on a BSD platform using twm.  It has crashed
+when using resolutions greater than 800x600 on a Linux (Debian 
+based) system using wm as the window manager.  The safest course is
+to use the 3.3.3.1 server instead.  Efforts are under way to resolve
+this issue and provide a more robust server under the 4.x release. -->
+3.3.4 のサーバは時々マシンを完全にハングさせてしまう<em>かもしれません</em>。
+このサーバは twm を使っている BSD プラットフォームでは安定していると報
+告されています。wm をウィンドウマネージャとして使っている Linux
+(Debian ベース)で 800x600 より大きい解像度を使うとクラッシュしました。
+最も安全な方法は、3.3.4 のサーバを使うのをやめて 3.3.3.1 のサーバを使
+うことです。この問題を解決し、バージョン 4.x のリリースではもっと頑健
+なサーバを提供することを目指して努力が続けられています。
 </itemize>
 
 <sect>作者<p>
@@ -86,13 +112,17 @@ XF86Setup から動作させることはできません。これはタイミングの制限のため
 <itemize>
 <item>Annius Groenink <it>&lt;Annius.Groenink@cwi.nl&gt;</it>
 <item>Dirk Hohndel <it>&lt;hohndel@XFree86.org&gt;</it>
+<item>Brian Falardeau 
 <item><!-- Special thanks to Cyrix and Wyse for helping us with the development of
-this server. -->
+this server.  Brian, a Cyrix employee, made the 3.3.4 update possible since
+the new 4.0 server has been our top priority. -->
 このサーバの開発に協力してくださった Cyrix と Wyse に深く感謝します。
+我々の再優先課題が新しいバージョン 4.0 サーバになったため、Brian さん(Cyrix 
+にお勤めです)がバージョン 3.3.4 への更新を行ってくださいました。
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/cyrix.sgml,v 1.1.2.1 1999/05/25 06:39:31 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/cyrix.sgml,v 1.1.2.2 1999/11/26 15:23:57 hohndel Exp $
 </verb>
 
 <sect>日本語訳について<p>
@@ -103,4 +133,3 @@ name="&lt;fujiwara@linux.or.jp&gt;"> が行いました。問題点の指摘やご意
 原文の著作権は XFree86 プロジェクト社にあり、日本語訳の著作権は
 X Japanese Documentation Project にあります。
 </article>
-

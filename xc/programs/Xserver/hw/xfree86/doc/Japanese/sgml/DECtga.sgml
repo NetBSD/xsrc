@@ -89,7 +89,7 @@ ZLXp-E2 (24プレーンを持つ TGA)上で動作する Linux でしかテストしていま
 きっと動作するはずです。
 <p>
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/DECtga.sgml,v 1.1.2.1 1999/05/25 06:39:11 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/DECtga.sgml,v 1.1.2.2 1999/11/26 15:23:38 hohndel Exp $
 </verb>
 
 <sect>日本語訳について<p>

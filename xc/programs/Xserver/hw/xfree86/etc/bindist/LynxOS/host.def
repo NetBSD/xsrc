@@ -1,7 +1,7 @@
 /*
  * host.def for building LynxOS binary dists
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/LynxOS/host.def,v 1.1.2.1 1997/07/10 08:02:19 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/LynxOS/host.def,v 1.1.2.2 1999/12/11 15:30:59 hohndel Exp $
  */
 
 #define InstallEmptyHostDef
@@ -9,3 +9,4 @@
 #define HasTk			YES
 #define HasTcl			YES
 
+#define HasLibCrypt		YES

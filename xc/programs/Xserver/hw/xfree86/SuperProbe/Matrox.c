@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Matrox.c,v 3.2.2.5 1998/12/22 11:23:14 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Matrox.c,v 3.2.2.6 1999/11/26 15:22:50 hohndel Exp $ */
 /*
  * (c) Copyright 1997 Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -58,7 +58,7 @@ int *Chipset;
 	if (!NoPCI)
 	{
 	    while ((pcrp = pci_devp[i]) != (struct pci_config_reg *)NULL) {
-		if (pcrp->_vendor == PCI_VENDOR_MATROX)
+		if (pcrp->_vendor == PCI_VENDOR_MATROX && pcrp->_status_command & 7)
 		{
 			switch (pcrp->_device)
 			{

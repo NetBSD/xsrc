@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/regs3sav.h,v 1.1.2.1 1999/07/30 11:21:28 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/regs3sav.h,v 1.1.2.2 1999/12/01 12:49:32 hohndel Exp $ */
 
 /* regs3v.h
  *
@@ -66,13 +66,29 @@
 #define S3_ANY_SERIES(chip)       (    S3_ViRGE_SERIES(chip)		\
 				    || S3_ViRGE_VX_SERIES(chip))
 
-#define S3_SAVAGE_SERIES(chip)    ((chip&0xfff0)==0x8A20)
+#define S3_SAVAGE3D_SERIES(chip)  ((chip == S3_SAVAGE3D_MV) ||\
+				   (chip == S3_SAVAGE3D))
+#define	S3_SAVAGE_MX_SERIES(chip)  ((chip == S3_SAVAGE_MX_MV) ||\
+				   (chip == S3_SAVAGE_MX))
+#define	S3_SAVAGE_IX_SERIES(chip) ((chip == S3_SAVAGE_IX_MV) ||\
+				   (chip == S3_SAVAGE_IX))
+#define S3_SAVAGE_MXIX(chip)	  (S3_SAVAGE_MX_SERIES(chip) || \
+				   S3_SAVAGE_IX_SERIES(chip))
+
+#define S3_SAVAGE_SERIES(chip)    (((chip&0xfff0)==0x8a20) || \
+				   (chip==0x9102) || \
+				   S3_SAVAGE_MXIX(chip))
 
 /* PCI data */
 #define PCI_S3_VENDOR_ID	0x5333
 #define PCI_SAVAGE3D            0x8A20
 #define PCI_SAVAGE3D_MV         0x8A21
 #define PCI_SAVAGE4             0x8A22
+#define PCI_SAVAGE2000		0x9102
+#define PCI_SAVAGE_MX_MV	0x8C10
+#define PCI_SAVAGE_MX		0x8C11
+#define PCI_SAVAGE_IX_MV	0x8C12
+#define PCI_SAVAGE_IX		0x8C13
 
 #define PCI_ViRGE		0x5631
 #define PCI_ViRGE_VX		0x883D
@@ -86,6 +102,11 @@
 #define S3_SAVAGE3D              1
 #define S3_SAVAGE3D_MV           2
 #define S3_SAVAGE4               3
+#define S3_SAVAGE2000            4
+#define S3_SAVAGE_MX_MV		 5
+#define S3_SAVAGE_MX		 6
+#define S3_SAVAGE_IX_MV		 7
+#define S3_SAVAGE_IX		 8
 
 #define S3_ViRGE		 1
 #define S3_ViRGE_VX		 2
@@ -391,38 +412,38 @@ LUTENTRY;
 void S3VGEReset(int from_timeout, int line, char *file);
 
 /* Wait until "v" queue entries are free */
-#define	WaitQueue(v) \
-  if (s3vPriv.NoPCIRetry) { \
-    do { int loop=0; int slots=MAXFIFO-v; mem_barrier(); \
-         while ((((STATUS_WORD0 & s3vPriv.StatusFE) > slots)) && (loop++<MAXLOOP)); \
-         if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__); \
-    } while (0); }
+
+#define WaitQueue(v) \
+  if( s3vPriv.NoPCIRetry ) { \
+    if( (*s3vPriv.WaitQueue)(v) ) \
+      S3VGEReset(1,__LINE__,__FILE__); \
+  }
 
 /* Wait until GP is idle and queue is empty */
-#define	WaitIdleEmpty()  \
-  do { int loop=0; mem_barrier(); \
-       while (((STATUS_WORD0 & s3vPriv.StatusMask) != s3vPriv.Status2DI) && (loop++<MAXLOOP)); \
-       /*if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__);*/ \
-  } while (0)
+
+#define WaitIdleEmpty() \
+  if( (*s3vPriv.WaitIdleEmpty)() ) { \
+   /*S3VGEReset(1,__LINE__,__FILE__);*/ \
+  }
 
 /* Wait until GP is idle */
+
 #define WaitIdle() \
-  do { int loop=0; mem_barrier(); \
-       while ((!(STATUS_WORD0 & s3vPriv.Status2DI)) && (loop++<MAXLOOP)); \
-        /* if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__);*/ \
-  } while (0)
+  if( s3vPriv.WaitIdle() ) { \
+    /*S3VGEReset(1,__LINE__,__FILE__);*/ \
+  }
 
 /* Wait until Command FIFO is empty */
+
 #define WaitCommandEmpty() \
-  do { int loop=0; mem_barrier(); \
-       while ((STATUS_WORD0 & s3vPriv.StatusFE) && (loop++<MAXLOOP)); \
-       /*if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__);*/ \
-  } while (0)
+  if( s3vPriv.WaitCommandEmpty() ) { \
+    /* S3VGEReset(1,__LINE__,__FILE__); */ \
+  }
 
 /* Wait until a DMA transfer is done */ 
 #define WaitDMAEmpty() \
   do { int loop=0; mem_barrier(); \
-       while  (((((mmtr)s3vMmioMem)->dma_regs.regs.cmd.write_pointer) != (((mmtr)s3vMmioMem)->dma_regs.regs.cmd.read_pointer)) && (loop++<MAXLOOP)); \
+       while  (((((mmtr)s3savMmioMem)->dma_regs.regs.cmd.write_pointer) != (((mmtr)s3savMmioMem)->dma_regs.regs.cmd.read_pointer)) && (loop++<MAXLOOP)); \
        if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__); \
   } while(0)
 

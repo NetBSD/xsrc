@@ -1,6 +1,6 @@
 /*
  * $XConsortium: fmalloc.c /main/7 1996/11/24 17:42:06 rws $
- * $XFree86: xc/util/memleak/fmalloc.c,v 3.3 1996/12/31 05:02:25 dawes Exp $
+ * $XFree86: xc/util/memleak/fmalloc.c,v 3.3.2.1 1999/12/20 14:36:30 hohndel Exp $
  *
 Copyright (c) 1992  X Consortium
 
@@ -42,6 +42,7 @@ in this Software without prior written authorization from the X Consortium.
 
 extern char **environ;
 extern etext;
+extern __data_start;
 
 #ifndef FALSE
 #define FALSE 0

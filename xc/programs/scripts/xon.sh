@@ -2,6 +2,9 @@
 # $XConsortium: xon.sh,v 1.10 94/12/09 22:53:55 gildea Exp $
 # start up xterm (or any other X command) on the specified host
 # Usage: xon host [arguments] [command]
+#
+# $XFree86: xc/programs/scripts/xon.sh,v 1.1.1.2.4.3 1999/12/11 17:43:23 hohndel Exp $
+# 
 case $# in
 0)
 	echo "Usage: $0 <hostname> [-user user] [-name window-name] [-debug]"
@@ -123,7 +126,7 @@ x*)
 	sess_mangr="SESSION_MANAGER=$SESSION_MANAGER "
 	;;
 esac
-vars="$xpath$xauth$sess_mangr"DISPLAY="$DISPLAY"
+vars='PATH=$PATH:/usr/X11R6/bin '"$xpath$xauth$sess_mangr"DISPLAY="$DISPLAY"
 case $# in
 0)
 	$rcmd 'sh -c '"'$vars"' xterm '$ls' -name "'"$resource"'" -T "'"$label"'" -n "'"$label"'" '"$redirect'"

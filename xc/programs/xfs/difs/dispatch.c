@@ -47,7 +47,7 @@ in this Software without prior written authorization from the X Consortium.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/dispatch.c,v 3.0.6.2 1997/05/31 13:34:47 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/dispatch.c,v 3.0.6.3 1999/12/03 09:27:42 hohndel Exp $ */
 
 #include	"FS.h"
 #include	"FSproto.h"
@@ -111,6 +111,7 @@ Dispatch()
                 result;
     int        *clientReady;
     ClientPtr   client;
+    int		op;
 
     nextFreeClientID = MINCLIENT;
     nClients = 0;
@@ -144,7 +145,13 @@ Dispatch()
 		if (result > (MAX_REQUEST_SIZE << 2))
 		    result = FSBadLength;
 		else
-		    result = (*client->requestVector[MAJOROP]) (client);
+		{
+		    op = MAJOROP;
+		    if (op >= NUM_PROC_VECTORS)
+			result = ProcBadRequest (client);
+		    else
+			result = (*client->requestVector[op]) (client);
+		}
 		if (result != FSSuccess) {
 		    if (client->noClientException != FSSuccess)
 			CloseDownClient(client);

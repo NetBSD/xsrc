@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.66.2.5 1998/12/22 11:23:23 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.66.2.6 1999/11/26 15:22:56 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -282,24 +282,32 @@ InitOutput(pScreenInfo, argc, argv)
    */
   if (!xf86Info.notrapSignals)
   {
+     struct sigaction sa;
+
+     sa.sa_handler = &xf86SigHandler;
+     sigemptyset(&sa.sa_mask); 
+     sigaddset(&sa.sa_mask,SIGTRAP);
+     sa.sa_flags = 0;
+     sigaction(SIGSEGV,&sa,NULL);
+
      xf86Info.caughtSignal=FALSE;
-     signal(SIGSEGV,xf86SigHandler);
-     signal(SIGILL,xf86SigHandler);
+     sigaction(SIGSEGV,&sa,NULL);
+     sigaction(SIGILL,&sa,NULL);
 #ifdef SIGEMT
-     signal(SIGEMT,xf86SigHandler);
+     sigaction(SIGEMT,&sa,NULL);
 #endif
-     signal(SIGFPE,xf86SigHandler);
+     sigaction(SIGFPE,&sa,NULL);
 #ifdef SIGBUS
-     signal(SIGBUS,xf86SigHandler);
+     sigaction(SIGBUS,&sa,NULL);
 #endif
 #ifdef SIGSYS
-     signal(SIGSYS,xf86SigHandler);
+     sigaction(SIGSYS,&sa,NULL);
 #endif
 #ifdef SIGXCPU
-     signal(SIGXCPU,xf86SigHandler);
+     sigaction(SIGXCPU,&sa,NULL);
 #endif
 #ifdef SIGXFSZ
-     signal(SIGXFSZ,xf86SigHandler);
+     sigaction(SIGXFSZ,&sa,NULL);
 #endif
   }
 

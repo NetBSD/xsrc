@@ -1,11 +1,11 @@
-  XFree86 3.3.3 P9000 サーバ リリースノート
+  XFree86 P9000 サーバ リリースノート
   Erik Nygren (nygren@mit.edu)
-  1998 October 13
+  1998 December 29
   The X Japanese Documentation Project
-  1999 January 27
+  1999 November 22
   ____________________________________________________________
 
-  目次
+  Table of Contents
 
 
   1. 変更履歴
@@ -31,7 +31,6 @@
   ______________________________________________________________________
 
   1.  変更履歴
-
 
 
      1998.10.13:
@@ -63,6 +62,7 @@
 
      o  p9000pntwin.c に追加を行いました: 8/16/32bpp 時のウィンドウのペ
         イント操作のアクセラレーション (Henrik Harmsen)
+
 
      o  bpp が大きいときの描画機能のために p9000gc16.c と p9000gc32.c を
         追加しました(Henrik Harmsen)
@@ -149,6 +149,9 @@
      o  XF86Config のオプション指定が原因となる問題をさらにいくつか修正
         しました。(Erik Nygren)
 
+     o  XF86Config のオプション指定が原因となる問題をさらにいくつか修正
+        しました。(Erik Nygren)
+
      o  Orchid P9000 における最大クロック値をできるだけ修正しました。
         (Harry Langenbacher, Erik Nygren)
 
@@ -193,7 +196,6 @@
      o  水平解像度からシステム設定を決めるルーチンを書き直しました。ま
         た、検出において有効な水平解像度をチェックするようにしまし
         た。(Erik Nygren)
-
      o  全ての色の深さに対して MoveWindow のアクセラレーションを追加しま
         した。 32bpp でも opaque move 操作がいい感じで動くようになりまし
         た!  (Chris Mason)
@@ -258,8 +260,6 @@
   現在は動作するはずです。これらのカードで問題が起きた場合には、
   harry@brain.jpl.nasa.gov まで御連絡ください。 XF86Config の Device セ
   クションで chipset "orchid_p9000" を指定してください。
-
-
 
 
   4.  Viper Pro および他の P9100, P9130 カード (サポートはしていませ
@@ -329,7 +329,9 @@
   これらのモードでは、まだ正しく動作しないアプリケーションがたくさんあり
   ます。これに関する指摘は筆者にしないでください。アプリの作者が既に問題
   を解決していなければ、彼らに知らせてくだい。悪いのは彼らですからね...
-  :-) 問題の例:
+  :-)
+
+  問題の例:
 
      xv 3.00
         32bpp と 16bpp では 24ビットイメージをうまく扱えます。8bpp モー
@@ -450,6 +452,7 @@
         ほとんど全ての有効なモード(この値は水平方向の解像度を制約するの
         で、水平方向の解像度にはどんな値でも使えるわけではありません)
 
+
   XF86Config の Display セクションで現在サポートされているキーワードを以
   下に示します:
 
@@ -519,9 +522,9 @@
 
   o  Henrik Harmsen (harmsen@eritel.se)
 
-  Viper PCI サーバを動作させる際に協力してくれた Matt Thomas さん
-  (thomas@lkg.dec.com) と Bob Hollinger さん (bob@interaccess.com) に感
-  謝します。
+     Viper PCI サーバを動作させる際に協力してくれた Matt Thomas さん
+     (thomas@lkg.dec.com) と Bob Hollinger さん (bob@interaccess.com) に
+     感謝します。
 
   バンク切り替えのパッチは残念ながら統合できませんでしたが、作者の David
   Moews さん (dmoews@xraysgi.ims.uconn.edu) に深く感謝します。
@@ -533,7 +536,7 @@
   したら、どうか筆者 (nygren@mit.edu) まで送ってください。
 
 
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.P9000,v 1.1.2.1 1999/06/02 07:50:51 hohndel Exp $
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.P9000,v 1.1.2.3 1999/12/28 12:13:48 hohndel Exp $
 
 
 
@@ -552,43 +555,3 @@
   点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 プロ
   ジェクト社にあり、日本語訳の著作権は X Japanese Documentation Project
   にあります。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

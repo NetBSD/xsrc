@@ -8,7 +8,7 @@
  
 <sect>Introduction <p>
 
-This document describes mouse support in XFree86 3.3.4, whose
+This document describes mouse support in XFree86 3.3.6, whose
 X servers have the revised mouse driver.
 
 Mouse configuration has often been mysterious task for
@@ -19,8 +19,8 @@ section in the <tt>XF86Config</tt> file by hand.
 
 <sect>Supported Hardware <p>
 
-XFree86 X servers support three classes of mice:
-serial, bus and PS/2 mice.
+XFree86 X servers support four classes of mice:
+serial, bus, PS/2 mice and USB.
 
 <descrip>
 <tag>Serial mouse</tag>
@@ -61,6 +61,13 @@ The PS/2 mouse with additional features requires a specialized
 initialization procedure to enable these features.
 Without proper initialization, it behaves as though it were an ordinary
 two or three button mouse.
+
+<tag>USB mouse </tag>
+USB (Universal Serial Bus) ports are present on most modern
+computers. Several devices can be plugged into this bus, including
+mices and keyboards. 
+
+XFree86 3.3.6 includes support for USB mices on some systems.
 </descrip>
 
 Many mice nowadays can be used both as a serial mouse and as a PS/2 mouse.
@@ -85,23 +92,23 @@ of buttons (see below).
                                 Protocol Types
                 serial     PnP     BusMouse    PS/2   Extended PS/2
 OS platforms   protocols  serial   protocol  protocol  protocols
-                          "Auto"  "BusMouse"  "PS/2"   "xxxPS/2"
---------------------------------------------------------------------
-BSD/OS            Ok        ?         ?         ?         ?
-FreeBSD           Ok        Ok        Ok        Ok        SP*1
-FreeBSD(98)       Ok        ?         Ok        NA        NA
-Interactive Unix  Ok        NA        ?*1       ?*1       NA
-Linux             Ok        Ok        Ok        Ok        Ok
-Linux/98          Ok        ?         Ok        NA        NA
-LynxOS            Ok        NA        Ok        Ok        NA
-NetBSD            Ok        Ok        Ok        SP*1      SP*1
-NetBSD/pc98       Ok        ?         Ok        NA        NA
-OpenBSD           Ok        Ok        Ok        Ok*1      OK*1
-OS/2              SP*2      SP*2      SP*2      SP*2      SP*2
-SCO               Ok        ?         SP*1      SP*1      NA
-Solaris 2.x       Ok        NA*1      ?*1       Ok        NA
-SVR4              Ok        NA*1      SP*1      SP*1      NA
-PANIX             Ok        ?         SP*1      SP*1      NA
+                          "Auto"  "BusMouse"  "PS/2"   "xxxPS/2"    USB
+-------------------------------------------------------------------------
+BSD/OS            Ok        ?         ?         ?         ?          ?
+FreeBSD           Ok        Ok        Ok        Ok        SP*1       SP*1
+FreeBSD(98)       Ok        ?         Ok        NA        NA         ?
+Interactive Unix  Ok        NA        ?*1       ?*1       NA         ?
+Linux             Ok        Ok        Ok        Ok        Ok         ?
+Linux/98          Ok        ?         Ok        NA        NA         ?
+LynxOS            Ok        NA        Ok        Ok        NA         ?
+NetBSD            Ok        Ok        Ok        SP*1      SP*1       SP*1
+NetBSD/pc98       Ok        ?         Ok        NA        NA         NA
+OpenBSD           Ok        Ok        Ok        Ok*1      OK*1       OK*1
+OS/2              SP*2      SP*2      SP*2      SP*2      SP*2       ?
+SCO               Ok        ?         SP*1      SP*1      NA         ?
+Solaris 2.x       Ok        NA*1      ?*1       Ok        NA         ?
+SVR4              Ok        NA*1      SP*1      SP*1      NA         ?
+PANIX             Ok        ?         SP*1      SP*1      NA         ?
 
 Ok: support is available,  NA: not available, ?: untested or unknown.
 SP: support is available in a different form
@@ -119,6 +126,9 @@ No testing has been done with BSD/OS.
 FreeBSD supports the <tt>"SysMouse"</tt> protocol which must be 
 specified when the <tt>moused</tt> daemon is running in versions 2.2.1 
 or later.
+When running the <tt>moused</tt>daemon, you must always specify the
+<tt>/dev/sysmouse</tt> device and the <tt>"SysMouse"</tt> protocol
+to the X server, regardless of the actual type of your mouse.
 
 FreeBSD versions 2.2.5 or earlier do not support extended PS/2 
 mouse protocols (<tt>"xxxPS/2"</tt>).
@@ -126,11 +136,17 @@ Always specify the <tt>"PS/2"</tt> protocol for any PS/2 mouse
 in these versions regardless of the brand of the mouse.
 
 FreeBSD versions 2.2.6 or later include the kernel-level
-support for these mice.
+support for these PS/2 mice.
 Specify the <tt>"PS/2"</tt> or <tt>"Auto"</tt> protocol and 
 the X server will automatically make use of the kernel-level support.
 In fact, you may always specify <tt>"Auto"</tt> to any mouse in these
 versions unless the mouse is an old serial model which doesn't support PnP.
+
+FreeBSD versions 3.1 or later have support for USB mice.
+Specify the <tt>"Auto"</tt> protocol for the <tt>/dev/ums0</tt> device.
+(If the <tt>moused</tt> daemon is running for the USB mouse, 
+you must use <tt>/dev/sysmouse</tt> instead of <tt>/dev/ums0</tt>
+as explained above.) See the <em>ums(4)</em> manual page for details. 
 
 <sect1>FreeBSD(98) <p>
 The PS/2 mouse is not supported.
@@ -164,11 +180,14 @@ The PS/2 mouse device driver <tt>/dev/pms</tt> emulates the bus mouse.
 Therefore, you should always specify the <tt>"BusMouse"</tt> protocol for 
 any PS/2 mouse regardless of the brand of the mouse.
 <p>
-XFree86 3.3.4 supports the <tt>"wsmouse"</tt> protocol introduced in NetBSD
+XFree86 3.3.6 supports the <tt>"wsmouse"</tt> protocol introduced in NetBSD
 1.4 along with the wscons console driver. You need to run binaries
 compiled on NetBSD 1.4 to have support 
 for it though. Use <tt>"/dev/wsmouse0"</tt> for the device. Refer to the 
 <em>wsmouse(4)</em> manual page for kernel configuration informations.
+<p>
+This driver also provides support for USB mices. See the
+<em>ums(4)</em> manual page for details. 
 
 <sect1>NetBSD/pc98 <p>
 The PS/2 mouse is not supported.
@@ -191,6 +210,11 @@ There is also a cooked PS/2 mouse device driver <tt>/dev/pms0</tt>
 which emulates the bus mouse.  Specify the <tt>"BusMouse"</tt>
 protocol for any PS/2 mouse regardless of the brand of the mouse when
 using this device.
+<p>
+XFree86 3.3.6 support USB mices on OpenBSD 2.6 and later though the
+generic Human Interface Device (hid) <tt>/dev/uhid*</tt>. Select the
+<tt>"usb"</tt> protocol and the <tt>/dev/uhid*</tt> instance
+corresponding to your mouse as the device name.
 
 <sect1>OS/2 <p>
 XFree86/OS2 always uses the native mouse driver of the operating system
@@ -356,6 +380,11 @@ and is using a ``compatible'' protocol according to PnP information.
 If you suspect this is the case with your mouse, please send report to
 <it/&lt;XFree86@XFree86.Org&gt;/.
 
+<tag>USB mouse</tag>
+If your mouse is connected to the USB port, it can either be supported 
+by an OS-specific protocol (see below), or as a generic Human
+Interface Device by the <tt>"usb"</tt> protocol. 
+
 <tag>Standardized protocols</tag>
 Mouse device drivers in your OS may use the standardized protocol 
 regardless of the model or the class of the mouse.
@@ -458,6 +487,46 @@ PS/2 mouse detection:
 <verb>
 	Protocol "Auto"
 	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+</verb>
+
+<sect1>MS Intellimouse Explorer (PS/2, USB)<p>
+This mouse has an optical sensor which produces a nifty red glowing
+under it. It has 5 buttons and a wheel, and comes with an adaptor to
+be used as either PS/2 or USB. 
+
+To use this mouse as the PS/2 device and the OS supports PS/2 mouse 
+initialization:
+<verb>
+	Protocol "IMPS/2"
+	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+</verb>
+
+To use this mouse as the PS/2 device but the OS does not support PS/2 mouse 
+initialization (the wheel won't work in this case):
+<verb>
+	Protocol "PS/2"
+	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+</verb>
+
+To use this mouse as the PS/2 device and the OS supports automatic
+PS/2 mouse detection:
+<verb>
+	Protocol "Auto"
+	Device   "/dev/xxxx"  (where xxxx is the PS/2 mouse device)
+</verb>
+
+To use this mouse as the USB device and the OS supports the generic
+HID protocol:
+<verb>
+	Protocol "usb"
+	Device   "/dev/uhidx" (where x is the USB device number)
+</verb>
+
+To use this mouse as the USB device and the OS supports automatic
+mouse detection:
+<verb>
+	Protocol "Auto"
+	Device   "/dev/xxxx"  (where xxxx is the USB mouse device)
 </verb>
 
 <sect1>Kensington Thinking Mouse (serial, PS/2) <p>
@@ -661,6 +730,6 @@ PS/2 mouse detection:
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.1.2.12 1999/06/30 13:00:29 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.1.2.14 1999/12/10 12:38:21 hohndel Exp $
 </verb>
 </article>
