@@ -1,0 +1,109 @@
+NAME		= x11-ssh-askpass
+CLASS		= SshAskpass
+
+BINDIR		= /usr/local/libexec/ssh
+
+CAT		= cat
+CHMOD		= chmod -c
+CP		= cp -df
+GREP		= grep
+GZIP		= gzip
+LN		= ln -sf
+MKDIR		= mkdir -p
+MV		= mv -f
+RM		= rm -f
+SED		= sed
+TAR		= tar
+
+MAKE_CHANGELOG	= cvs2cl
+
+VERSION		= 1.0
+PROJECT		= $(NAME)-$(VERSION)
+TARBALL_DIR	= $(PROJECT)
+TARBALL		= $(PROJECT).tar.gz
+
+HDRS = \@@\
+ drawing.h \@@\
+ dynlist.h \@@\
+ resources.h \@@\
+ x11-ssh-askpass.h
+
+SRCS = \@@\
+ drawing.c \@@\
+ dynlist.c \@@\
+ resources.c \@@\
+ x11-ssh-askpass.c
+
+OBJS = \@@\
+ drawing.o \@@\
+ dynlist.o \@@\
+ resources.o \@@\
+ x11-ssh-askpass.o
+
+EXTRAS = \@@\
+ ChangeLog \@@\
+ Imakefile \@@\
+ README \@@\
+ $(CLASS)-1337.ad \@@\
+ $(CLASS)-NeXTish.ad \@@\
+ $(CLASS)-green.ad \@@\
+ $(CLASS)-motif.ad \@@\
+ $(CLASS)-default.ad
+ 
+APP_DEFAULTS	= $(CLASS)-default.ad
+
+LOCAL_LIBRARIES	= -lXt -lX11 -lSM -lICE
+
+#ifndef ComplexProgramTargetNoMan
+#define ComplexProgramTargetNoMan(x) ComplexProgramTarget(x)
+#endif
+
+#ifndef InstallAppDefaults
+#define InstallAppDefaults(x) InstallNamedNonExec(x.ad,x,$(XAPPLOADDIR))
+#endif
+
+ComplexProgramTargetNoMan($(NAME))
+InstallAppDefaults($(CLASS))
+
+install::
+	@set -x; \
+	if [ -f $(DESTDIR)$(BINDIR)/ssh-askpass ]; then \
+	  $(MV) $(DESTDIR)$(BINDIR)/ssh-askpass \
+	    $(DESTDIR)$(BINDIR)/ssh-askpass.old; \
+	fi
+	$(LN) $(NAME) $(DESTDIR)$(BINDIR)/ssh-askpass
+
+.PHONY: depends changelog realclean spotless tar
+
+depends: depend
+
+includes:: $(CLASS)_ad.h
+
+$(CLASS).ad:
+	$(LN) $(APP_DEFAULTS) $(CLASS).ad
+
+$(CLASS)_ad.h: $(CLASS).ad
+	$(SED) -n '/^[^!]/s/.*/"&",/p' <$(CLASS).ad >$@
+
+changelog:
+	$(MAKE_CHANGELOG)
+
+clean::
+	-$(RM) $(CLASS)_ad.h
+
+realclean: clean
+	-$(RM) $(CLASS).ad
+
+spotless: realclean
+	-$(RM) Makefile Makefile.bak ChangeLog
+
+tar: changelog
+	-$(RM) -r $(TARBALL_DIR)
+	$(MKDIR) $(TARBALL_DIR)
+	$(CP) $(EXTRAS) $(SRCS) $(HDRS) $(TARBALL_DIR)/
+	$(CHMOD) -R u+rwX,go+rX,go-w $(TARBALL_DIR)
+	-$(RM) $(TARBALL).bak
+	-$(MV) $(TARBALL) $(TARBALL).bak
+	$(TAR) -cvf - $(TARBALL_DIR) |$(GZIP) -9 -c >$(TARBALL)
+	-$(RM) -r $(TARBALL_DIR)
+
