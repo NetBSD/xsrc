@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.2 2004/03/08 01:08:19 bjh21 Exp $	*/
+/*	$NetBSD: wscons.c,v 1.3 2004/03/10 09:46:33 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -199,7 +199,7 @@ void wskbd_io(void)
 			DPRINTF(("X11 code = 0x%x\n", x_event.u.u.detail));
 		} else {
 			/* Assume WSKBD_TYPE_PC_XT, i.e. no translation. */
-			x_event.u.u.detail = wsev.value;
+			x_event.u.u.detail = wsev.value & 0x7f;
 		}
 
 		/*
