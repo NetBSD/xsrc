@@ -1,5 +1,5 @@
 /* $XConsortium: vendor.c,v 1.10 94/04/17 20:43:59 rws Exp $ */
-/* $XFree86: contrib/programs/xman/vendor.c,v 3.1 1995/07/22 06:52:34 dawes Exp $ */
+/* $XFree86: contrib/programs/xman/vendor.c,v 3.1.2.1 1998/02/20 15:14:00 robin Exp $ */
 /*
 
 Copyright (c) 1987, 1988  X Consortium
@@ -146,6 +146,9 @@ static SectionNameRec SectionNames[] = {
     {"(6) Games",			"6"},
     {"(7) Miscellaneous",		"7"},
     {"(8) Sys. Administration",		"8"},
+#ifdef Lynx
+    {"(9) Device driver service calls",	"9"},
+#endif
     {"(l) Local",			"l"},
     {"(n) New",				"n"},
     {"(o) Old",				"o"},
