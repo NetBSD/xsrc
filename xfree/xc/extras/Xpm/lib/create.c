@@ -32,7 +32,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/create.c,v 1.3 2002/01/07 19:40:49 dawes Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/create.c,v 1.5 2003/10/07 21:25:37 herrb Exp $ */
 
 /*
  * The code related to FOR_MSW has been added by
@@ -126,7 +126,9 @@ LFUNC(PutImagePixels1, void, (XImage *image, unsigned int width,
 
 LFUNC(PutPixel1, int, (XImage *ximage, int x, int y, unsigned long pixel));
 LFUNC(PutPixel, int, (XImage *ximage, int x, int y, unsigned long pixel));
+#if !defined(WORD64) && !defined(LONG64)
 LFUNC(PutPixel32, int, (XImage *ximage, int x, int y, unsigned long pixel));
+#endif
 LFUNC(PutPixel32MSB, int, (XImage *ximage, int x, int y, unsigned long pixel));
 LFUNC(PutPixel32LSB, int, (XImage *ximage, int x, int y, unsigned long pixel));
 LFUNC(PutPixel16MSB, int, (XImage *ximage, int x, int y, unsigned long pixel));
@@ -765,7 +767,6 @@ XpmCreateImageFromXpmImage(display, image,
     unsigned int depth;
     int bitmap_format;
     XpmFreeColorsFunc freeColors;
-    void *closure;
 
     /* variables to return */
     XImage *ximage = NULL;
@@ -812,10 +813,6 @@ XpmCreateImageFromXpmImage(display, image,
 	freeColors = attributes->free_colors;
     else
 	freeColors = FreeColors;
-    if (attributes && (attributes->valuemask & XpmColorClosure))
-	closure = attributes->color_closure;
-    else
-	closure = NULL;
 
     ErrorStatus = XpmSuccess;
 
@@ -1812,6 +1809,7 @@ PutPixel(ximage, x, y, pixel)
     return 1;
 }
 
+#if !defined(WORD64) && !defined(LONG64)
 static int
 PutPixel32(ximage, x, y, pixel)
     register XImage *ximage;
@@ -1825,6 +1823,7 @@ PutPixel32(ximage, x, y, pixel)
     *((unsigned long *)addr) = pixel;
     return 1;
 }
+#endif
 
 static int
 PutPixel32MSB(ximage, x, y, pixel)
@@ -1951,7 +1950,6 @@ xpmParseDataAndCreate(display, data, image_return, shapeimage_return,
     unsigned int depth;
     int bitmap_format;
     XpmFreeColorsFunc freeColors;
-    void *closure;
 
     /* variables to return */
     XImage *ximage = NULL;
@@ -2009,10 +2007,6 @@ xpmParseDataAndCreate(display, data, image_return, shapeimage_return,
 	freeColors = attributes->free_colors;
     else
 	freeColors = FreeColors;
-    if (attributes && (attributes->valuemask & XpmColorClosure))
-	closure = attributes->color_closure;
-    else
-	closure = NULL;
 
     cmts = info && (info->valuemask & XpmReturnComments);
 

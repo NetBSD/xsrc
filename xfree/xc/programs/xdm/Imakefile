@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:14 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.52.2.1 2003/09/17 05:58:16 herrb Exp $
+XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.67 2004/01/25 01:12:24 dawes Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
@@ -43,12 +43,6 @@ KRBIV_INCLUDES = KrbIVIncludes
 KRBIVLIB = KrbIVLibraries
 #endif
 
-#if HasKrbIV
-KRBIV_DEFINES = KrbIVDefines
-KRBIV_INCLUDES = KrbIVIncludes
-KRBIVLIB = KrbIVLibraries
-#endif
-
 #if HasKrb5
 KRB5_DEFINES = Krb5Defines
 KRB5_INCLUDE = Krb5Includes
@@ -59,7 +53,7 @@ KRB5SRCS = krb5auth.c
 #if !HasArc4Random
 PRNGCSRCS = prngc.c
 PRNGCOBJS = prngc.o
-#endif 
+#endif
 
 #if SharedLibXdmGreet
 GREET_DIR = greeter
@@ -154,6 +148,10 @@ RANDOM_DEFINES = RandomDefines
 VFORK_DEFINES = -DHAS_VFORK
 #endif
 
+#if HasMkstemp
+MKSTEMP_DEFINES = -DHAS_MKSTEMP
+#endif
+
 #if UseXKBInClients
 XKB_CLIENT_DEFINES = XkbClientDefines
 #endif
@@ -166,13 +164,23 @@ SYS_LIBRARIES1 = -lutil
 
 #if HasSetProcTitle
 PROCTITLE_DEFINES = -DHAS_SETPROCTITLE
+#if defined(BSDOSArchitecture)
+# XXX - only BSD/OS has this in libutil
+SYS_LIBRARIES1 = -lutil
+#endif
 #endif
 
-#undef HasSnprintf
-#define HasSnprintf NO 
+#if !HasSnprintf
+SNPRINTFSRCS = snprintf.c
+SNPRINTFOBJS = snprintf.o
+#endif
 
-#if HasSnprintf
-SNPRINTF_DEFINES = -DHAS_SNPRINTF
+#if HasGetIfAddrs
+IFADDRS_DEFINES = -DHAS_GETIFADDRS
+#endif
+
+#if BuildIPv6 && !IPv6SocketsAlsoIPv4 && !PreferXdmcpIPv6
+IPV6_DEFINES = -UIPv6
 #endif
 
 #ifdef HasSunC
@@ -191,7 +199,7 @@ LIFREQ_FLAGS = -Xa
 
 INCLUDES = $(KRB5_INCLUDE)
 DEPLIBS = $(DEPXMULIB) $(DEPXTOOLLIB) $(DEPXLIB) $(DEPXAUTHLIB) \
-	$(DEPXDMCPLIB) $(XINDEPLIBS)
+	  $(DEPXDMCPLIB) $(XINDEPLIBS)
 LOCAL_LIBRARIES = $(GREETLIBS) $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) \
 	$(XDMCPLIB) $(RPCLIB) $(PAM_LIBRARIES) $(DLLIBRARY) \
 	$(CRYPT_LIBRARIES) $(KRBIVLIB) $(XINLIBS)
@@ -200,22 +208,22 @@ LOCAL_LIBRARIES = $(GREETLIBS) $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) \
 		  netaddr.c reset.c resource.c protodpy.c policy.c \
 		  session.c socket.c streams.c util.c xdmcp.c \
 		  mitauth.c \
-		  genauth.c access.c choose.c $(PRNGCSRCS) \
+		  genauth.c access.c choose.c $(SNPRINTFSRCS) $(PRNGCSRCS) \
 		  $(XDMAUTHSRCS) $(RPCSRCS) $(KRB5SRCS) $(GREETSRCS)
           OBJS1 = auth.o daemon.o server.o dpylist.o dm.o error.o file.o \
 		  netaddr.o reset.o resource.o protodpy.o policy.o \
 		  session.o socket.o streams.o util.o xdmcp.o \
 		  mitauth.o \
-		  genauth.o access.o choose.o $(PRNGCOBJS) \
+		  genauth.o access.o choose.o $(SNPRINTFOBJS) $(PRNGCOBJS) \
 		  $(XDMAUTHOBJS) $(RPCOBJS) $(KRB5OBJS) $(GREETOBJS)
           SRCS2 = xdmshell.c
           OBJS2 = xdmshell.o
 #if BuildChooser
           SRCS3 = chooser.c
           OBJS3 = chooser.o
-       DEPLIBS3 = XawClientDepLibs XkbClientDepLibs $(DEPXDMCPLIB) \
-		  $(XINDEPLIBS)
-          LIBS3 = XawClientLibs XkbClientLibs $(XDMCPLIB) $(XINLIBS)
+       DEPLIBS3 = $(XINDEPLIBS) XawClientDepLibs XkbClientDepLibs \
+		  $(DEPXDMCPLIB)
+          LIBS3 = $(XINLIBS) XawClientLibs XkbClientLibs $(XDMCPLIB)
 #endif
 
           SRCS4 = sessreg.c
@@ -241,6 +249,7 @@ LOCAL_LIBRARIES = $(GREETLIBS) $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) \
 #endif
        PROGRAMS = ProgramTargetName(xdm) ProgramTargetName(xdmshell) ProgramTargetName(sessreg) $(CHOOSER) $(XDM_SHADOW)
 
+    CHOOSERPATH = $(XDMDIR)/chooser
  OSMAJORVERSION = OSMajorVersion
  OSMINORVERSION = OSMinorVersion
    CONN_DEFINES = $(CONNECTION_FLAGS)
@@ -252,8 +261,9 @@ LOCAL_LIBRARIES = $(GREETLIBS) $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) \
 		-DOSMAJORVERSION=$(OSMAJORVERSION) \
 		-DOSMINORVERSION=$(OSMINORVERSION) \
 		$(XKB_CLIENT_DEFINES) $(USER_CONTEXT_DEFINES) \
-		$(XPM_DEFINES) $(XINERAMA_DEFINES) $(PROCTITLE_DEFINES)
-   EXTRAMANDEFS = $(RANDOM_DEFINES)
+		$(XPM_DEFINES) $(XINERAMA_DEFINES) $(PROCTITLE_DEFINES) \
+		$(IFADDRS_DEFINES) $(IPV6_DEFINES) $(MKSTEMP_DEFINES)
+   EXTRAMANDEFS = $(RANDOM_DEFINES) -DCHOOSERPATH=$(CHOOSERPATH)
 
 XCOMM
 XCOMM Special definitions for compiling default resources; these parameters
@@ -275,7 +285,7 @@ RES_DEFINES = '-DDEF_SERVER_LINE=":0 local $(DEF_SERVER) :0"' \
 		  '-DDEF_SYSTEM_SHELL="$(BOURNE_SHELL)"' \
 		  '-DDEF_FAILSAFE_CLIENT="$(BINDIR)/xterm"' \
 		  '-DDEF_XDM_CONFIG="$(XDMDIR)/xdm-config"' \
-		  '-DDEF_CHOOSER="$(XDMDIR)/chooser"' \
+		  '-DDEF_CHOOSER="$(CHOOSERPATH)"' \
 		  '-DDEF_AUTH_DIR="$(XDMDIR)"' \
 		  '-DDEF_GREETER_LIB="$(XDMDIR)/libXdmGreet.so"'
 
@@ -330,6 +340,10 @@ ObjectFromSpecialSource(Loginsh,Login,-DUSESHADOW)
 ObjectFromSpecialSource(sessionsh,session,-DUSESHADOW)
 #endif
 #endif /* !SharedLibXdmGreet */
+
+#if !HasSnprintf
+LinkSourceFile(snprintf.c,$(LIBSRC)/misc)
+#endif
 
 #ifdef IHaveSubdirs
 MakeSubdirs($(SUBDIRS))

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/session.c,v 3.33.4.2 2003/09/29 21:01:09 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/session.c,v 3.37 2004/01/07 04:28:06 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -87,7 +87,7 @@ extern	struct spwd	*getspnam(GETSPNAM_ARGS);
 extern	void	endspent(void);
 # endif
 #endif
-#if defined(CSRG_BASED) || defined(__GLIBC__)
+#if defined(CSRG_BASED) || defined(__GLIBC__) || defined(USL)
 # include <pwd.h>
 # include <unistd.h>
 #else

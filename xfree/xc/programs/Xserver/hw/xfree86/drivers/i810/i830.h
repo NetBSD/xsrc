@@ -27,7 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830.h,v 1.7.2.1 2003/10/21 02:22:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830.h,v 1.13 2004/02/20 00:06:00 alanh Exp $ */
 
 /*
  * Authors:
@@ -147,6 +147,7 @@ typedef struct _I830Rec {
    unsigned long TotalVideoRam;
    I830MemRange StolenMemory;		/* pre-allocated memory */
    unsigned long BIOSMemorySize;	/* min stolen pool size */
+   int BIOSMemSizeLoc;
 
    /* These change according to what has been allocated. */
    long FreeMemory;
@@ -182,6 +183,7 @@ typedef struct _I830Rec {
 
    Bool NeedRingBufferLow;
    Bool allowPageFlip;
+   Bool disableTiling;
 
    int auxPitch;
    int auxPitchBits;
@@ -295,6 +297,13 @@ typedef struct _I830Rec {
    Bool closing;
    Bool suspended;
 
+   /* fbOffset converted to (x, y). */
+   int xoffset;
+   int yoffset;
+
+   int SaveGeneration;
+   Bool vbeRestoreWorkaround;
+   Bool displayInfo;
 } I830Rec;
 
 #define I830PTR(p) ((I830Ptr)((p)->driverPrivate))
@@ -391,5 +400,8 @@ extern void I830ChangeFrontbuffer(ScrnInfoPtr pScrn,int buffer);
 
 #define ALLOCATE_DRY_RUN		0x80000000
 
+/* Chipset registers for VIDEO BIOS memory RW access */
+#define DRAM_RW_CONTROL 0x58
+#define DRAM_WRITE    0x33330000
 
 #endif /* _I830_H_ */

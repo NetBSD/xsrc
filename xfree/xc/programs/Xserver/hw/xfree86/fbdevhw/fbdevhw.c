@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.c,v 1.30.2.1 2003/08/26 12:17:37 daenzer Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.c,v 1.33 2003/10/30 17:37:16 tsi Exp $ */
 
 /* all driver need this */
 #include "xf86.h"
@@ -462,7 +462,7 @@ fbdevHWSetVideoModes(ScrnInfoPtr pScrn)
 	int virtY = pScrn->display->virtualY;
 	struct fb_var_screeninfo var;
 	char **modename;
-	DisplayModePtr mode,this,last = NULL;
+	DisplayModePtr mode,this,last = pScrn->modes;
 
 	TRACE_ENTER("VerifyModes");
 	if (NULL == pScrn->display->modes)
@@ -542,7 +542,7 @@ fbdevHWUseBuildinMode(ScrnInfoPtr pScrn)
 
 /* -------------------------------------------------------------------- */
 
-void
+static void
 calculateFbmem_len(fbdevHWPtr fPtr)
 {
 	fPtr->fboff = (unsigned long) fPtr->fix.smem_start & ~PAGE_MASK;
@@ -747,7 +747,7 @@ fbdevHWLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
 /* -------------------------------------------------------------------- */
 /* these can be hooked directly into ScrnInfoRec                        */
 
-int
+ModeStatus
 fbdevHWValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 {
 	ScrnInfoPtr pScrn = xf86Screens[scrnIndex];

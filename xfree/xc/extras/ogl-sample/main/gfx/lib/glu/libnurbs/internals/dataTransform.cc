@@ -31,11 +31,12 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/06/09 15:20:50 $ $Revision: 1.1.1.1 $
+** $Date: 2004/03/05 14:26:36 $ $Revision: 1.1.1.2 $
 */
 /*
-** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/dataTransform.cc,v 1.1.1.1 2001/06/09 15:20:50 tron Exp $
+** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/dataTransform.cc,v 1.1.1.2 2004/03/05 14:26:36 tron Exp $
 */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/dataTransform.cc,v 1.2 2003/10/22 19:20:57 tsi Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -47,6 +48,7 @@
 
 extern directedLine* arcLoopToDLineLoop(Arc_ptr loop);
 
+/*
 static directedLine* copy_loop(Arc_ptr loop, Real2* vertArray, int& index, directedLine dline_buf[], sampledLine sline_buf[], int& index_dline)
 {
   directedLine *ret;
@@ -103,7 +105,7 @@ static int num_edges(Bin& bin)
     sum += jarc->pwlArc->npts-1;
   return sum;
 }
-/*
+
 directedLine* bin_to_DLineLoops(Bin& bin)
 {
   directedLine *ret=NULL;

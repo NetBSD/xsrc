@@ -1,28 +1,28 @@
-/* $XFree86: xc/lib/xtrans/Xtransos2.c,v 3.6 1999/06/20 08:41:22 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransos2.c,v 3.10 2003/08/26 15:38:39 tsi Exp $ */
 
 /*
  * (c) Copyright 1996 by Sebastien Marineau and Holger Veit
  *			<marineau@genie.uottawa.ca>
  *                      <Holger.Veit@gmd.de>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL 
- * HOLGER VEIT  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF 
- * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * HOLGER VEIT  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- * 
+ *
  * Except as contained in this notice, the name of Sebastien Marineau or Holger Veit shall not be
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from Holger Veit or Sebastien Marineau.
@@ -50,7 +50,7 @@ BOOL init_server_pipes();
 #ifdef TRANS_CLIENT
 
 static XtransConnInfo
-TRANS(Os2OpenClient)(Xtransport *thistrans, char *protocol, 
+TRANS(Os2OpenClient)(Xtransport *thistrans, char *protocol,
 		     char *host, char *port)
 {
 	APIRET rc;
@@ -122,7 +122,7 @@ TRANS(Os2OpenClient)(Xtransport *thistrans, char *protocol,
  * the server. Make the pipe and wait for server to connect */
 
    sprintf(clientname,"\\PIPE\\X\\%d.%d",getpid(),unique_id++);
- 
+
    rc = DosCreateNPipe (clientname, &hfd,
                        NP_NOINHERIT | NP_ACCESS_DUPLEX,
                        1 | NP_NOWAIT | NP_TYPE_BYTE | NP_READMODE_BYTE,
@@ -251,7 +251,7 @@ TRANS(Os2OpenClient)(Xtransport *thistrans, char *protocol,
 
 #ifdef TRANS_SERVER
 static XtransConnInfo
-TRANS(Os2OpenServer)(Xtransport *thistrans, char *protocol, 
+TRANS(Os2OpenServer)(Xtransport *thistrans, char *protocol,
 		     char *host, char *port)
 {
    APIRET rc;
@@ -341,7 +341,7 @@ TRANS(Os2OpenServer)(Xtransport *thistrans, char *protocol,
        ciptr->peeraddrlen = namelen;
        ((struct sockaddr *)ciptr->peeraddr)->sa_family = AF_UNIX;
        strcpy(((struct sockaddr *)ciptr->peeraddr)->sa_data,"local");
-     
+
       PRMSG (5, "Os2OpenServer: Filled in struct: len %d %d name %s\n",
                 ciptr->addrlen,ciptr->peeraddrlen,((struct sockaddr *)ciptr->peeraddr)->sa_data);
 
@@ -380,7 +380,7 @@ TRANS(Os2OpenServer)(Xtransport *thistrans, char *protocol,
 
 #ifdef TRANS_CLIENT
 static XtransConnInfo
-TRANS(Os2OpenCLTSClient)(Xtransport *thistrans, char *protocol, 
+TRANS(Os2OpenCLTSClient)(Xtransport *thistrans, char *protocol,
 			 char *host, char *port)
 {
 	PRMSG(2,"Os2OpenCLTSClient(%s,%s,%s)\n",protocol,host,port);
@@ -390,7 +390,7 @@ TRANS(Os2OpenCLTSClient)(Xtransport *thistrans, char *protocol,
 
 #ifdef TRANS_CLIENT
 static XtransConnInfo
-TRANS(Os2OpenCOTSClient)(Xtransport *thistrans, char *protocol, 
+TRANS(Os2OpenCOTSClient)(Xtransport *thistrans, char *protocol,
 			 char *host, char *port)
 {
 	PRMSG(2,"Os2OpenCOTSClient(%s,%s,%s)\n",protocol,host,port);
@@ -401,7 +401,7 @@ TRANS(Os2OpenCOTSClient)(Xtransport *thistrans, char *protocol,
 
 #ifdef TRANS_SERVER
 static XtransConnInfo
-TRANS(Os2OpenCLTSServer)(Xtransport *thistrans, char *protocol, 
+TRANS(Os2OpenCLTSServer)(Xtransport *thistrans, char *protocol,
 			 char *host, char *port)
 {
 	PRMSG(2,"Os2OpenCLTSServer(%s,%s,%s)\n",protocol,host,port);
@@ -412,7 +412,7 @@ TRANS(Os2OpenCLTSServer)(Xtransport *thistrans, char *protocol,
 
 #ifdef TRANS_SERVER
 static XtransConnInfo
-TRANS(Os2OpenCOTSServer)(Xtransport *thistrans, char *protocol, 
+TRANS(Os2OpenCOTSServer)(Xtransport *thistrans, char *protocol,
 			 char *host, char *port)
 {
 	PRMSG(2,"Os2OpenCOTSServer(%s,%s,%s)\n",protocol,host,port);
@@ -429,16 +429,16 @@ TRANS(Os2ReopenCOTSServer)(Xtransport *thistrans, int fd, char *port)
     XtransConnInfo ciptr;
     char addr_name[256];
     int namelen;
-    
+
     PRMSG(2,"Os2ReopenCOTSServer(%d,%s)\n", fd, port, 0);
-    
+
     if( (ciptr=(XtransConnInfo)xcalloc(1,sizeof(struct _XtransConnInfo))) == NULL )
     {
 	PRMSG(1,"Os2ReopenCOTSServer: xcalloc(1,%d) failed\n",
 	      sizeof(struct _XtransConnInfo),0,0 );
 	return NULL;
     }
-    
+
         strcpy(addr_name,"local");
         namelen=sizeof(addr_name);
         if ((ciptr->addr = (char *) xalloc (namelen)) == NULL)
@@ -488,7 +488,7 @@ TRANS(Os2SetOption)(XtransConnInfo ciptr, int option, int arg)
 #ifdef TRANS_SERVER
 
 static
-TRANS(Os2CreateListener)(XtransConnInfo ciptr, char *port)
+TRANS(Os2CreateListener)(XtransConnInfo ciptr, char *port, unsigned int flags)
 {
 	PRMSG(2,"Os2CreateListener(%x->%d,%s)\n",ciptr,ciptr->fd,port);
 	return 0;
@@ -601,7 +601,7 @@ TRANS(Os2Accept)(XtransConnInfo ciptr, int *status)
          {
               PRMSG(1, "Os2Accept: Unable to reconnect server pipe %d\n", ciptr->fd,0,0 );
               }  /* Consider this non-fatal for present connection */
- 
+
 /* And finally fill-in info in newciptr */
 
         namelen=sizeof(struct sockaddr);
@@ -752,7 +752,7 @@ TRANS(Os2Write)(XtransConnInfo ciptr, char *buf, int size)
     rc = DosWrite(ciptr->fd, buf, size, &nWritten);
     if (rc == 0){
          ret = nWritten;
-         if(nWritten == 0) { 
+         if(nWritten == 0) {
                  errno=EAGAIN;
                  ret = -1;
                  }
@@ -833,6 +833,7 @@ Xtransport	TRANS(OS2LocalFuncs) = {
 	TRANS(Os2OpenCOTSClient),
 #endif /* TRANS_CLIENT */
 #ifdef TRANS_SERVER
+	NULL,
 	TRANS(Os2OpenCOTSServer),
 #endif /* TRANS_SERVER */
 #ifdef TRANS_CLIENT

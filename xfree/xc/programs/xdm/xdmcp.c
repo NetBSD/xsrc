@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.21.2.1 2003/09/17 05:58:17 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.26 2004/01/07 04:28:06 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -56,6 +56,7 @@ from The Open Group.
 #endif
 #endif
 #include	<netdb.h>
+#include	<arpa/inet.h>
 
 #include <time.h>
 #define Time_t time_t
@@ -88,6 +89,9 @@ static void send_willing (struct sockaddr *from, int fromlen, ARRAY8Ptr authenti
 int	xdmcpFd = -1;
 #endif
 int	chooserFd = -1;
+#if defined(IPv6) && defined(AF_INET6)
+int	chooserFd6 = -1;
+#endif
 
 FD_TYPE	WellKnownSocketsMask;
 int	WellKnownSocketsMax;
@@ -111,6 +115,14 @@ DestroyWellKnownSockets (void)
 	FD_CLR(chooserFd, &WellKnownSocketsMask);
 	chooserFd = -1;
     }
+#if defined(IPv6) && defined(AF_INET6)
+    if (chooserFd6 != -1)
+    {
+	close (chooserFd6);
+	FD_CLR(chooserFd6, &WellKnownSocketsMask);
+	chooserFd6 = -1;
+    }
+#endif
     CloseListenSockets();
 }
 
@@ -134,6 +146,9 @@ AnyWellKnownSockets (void)
 #ifdef STREAMS_CONN
       xdmcpFd != -1 ||
 #endif
+#if defined(IPv6) && defined(AF_INET6)
+      chooserFd6 != -1 ||
+#endif
       chooserFd != -1 || FD_ANYSET(&WellKnownSocketsMask);
 }
 
@@ -148,6 +163,9 @@ sendForward (
 {
 #ifdef AF_INET
     struct sockaddr_in	    in_addr;
+#endif
+#if defined(IPv6) && defined(AF_INET6)
+    struct sockaddr_in6	    in6_addr;
 #endif
 #ifdef AF_DECnet
 #endif
@@ -169,6 +187,21 @@ sendForward (
 	    return;
 	memmove( (char *) &in_addr.sin_addr, address->data, address->length);
 	addrlen = sizeof (struct sockaddr_in);
+	break;
+#endif
+#if defined(IPv6) && defined(AF_INET6)
+    case FamilyInternet6:
+	addr = (struct sockaddr *) &in6_addr;
+	bzero ((char *) &in6_addr, sizeof (in6_addr));
+#ifdef SIN6_LEN
+	in6_addr.sin6_len = sizeof(in6_addr);
+#endif
+	in6_addr.sin6_family = AF_INET6;
+	in6_addr.sin6_port = htons ((short) XDM_UDP_PORT);
+	if (address->length != 16)
+	    return;
+	memmove( (char *) &in6_addr.sin6_addr, address->data, address->length);
+	addrlen = sizeof (struct sockaddr_in6);
 	break;
 #endif
 #ifdef AF_DECnet
@@ -218,11 +251,28 @@ all_query_respond (
     CARD16	connectionType;
     int		family;
     int		length;
+    const char	*addrstring;
+#if defined(IPv6) && defined(AF_INET6) 
+    char	addrbuf[INET6_ADDRSTRLEN] = "";
+#endif
 
     family = ConvertAddr((XdmcpNetaddr) from, &length, (char **)&(addr.data));
     addr.length = length;	/* convert int to short */
-    Debug ("all_query_respond: conntype=%d, addr=%lx, len=%d\n",
-	   family, (unsigned long) *(addr.data), addr.length);
+    if (debugLevel > 0) {
+#if defined(IPv6) && defined(AF_INET6) 
+	void *ipaddr;
+	if (family == AF_INET6) {
+	    ipaddr = & ((struct sockaddr_in6 *) from)->sin6_addr;
+	} else {
+	    ipaddr = & ((struct sockaddr_in *) from)->sin_addr;
+	}
+	addrstring = inet_ntop(family, ipaddr, addrbuf, sizeof(addrbuf));
+#else
+	addrstring = inet_ntoa(((struct sockaddr_in *)from)->sin_addr);
+#endif
+	Debug("all_query_respond: conntype=%d, addr=%s, len=%d\n",
+	    family, addrstring, addr.length);
+    }
     if (family < 0)
 	return;
     connectionType = family;
@@ -301,7 +351,11 @@ void
 ProcessRequestSocket (int fd)
 {
     XdmcpHeader		header;
+#if defined(IPv6) && defined(AF_INET6)
+    struct sockaddr_storage	addr;
+#else
     struct sockaddr	addr;
+#endif
     int			addrlen = sizeof addr;
 
     Debug ("ProcessRequestSocket\n");
@@ -362,7 +416,7 @@ WaitForSomething (void)
 	{
 #ifdef STREAMSCONN
 	    if (xdmcpFd >= 0 && FD_ISSET (xdmcpFd, &reads))
-		ProcessRequestSocket ();
+		ProcessRequestSocket (xdmcpFd);
 #endif
 	    if (chooserFd >= 0 && FD_ISSET (chooserFd, &reads))
 	    {
@@ -374,6 +428,18 @@ WaitForSomething (void)
 		ProcessChooserSocket (chooserFd);
 		FD_CLR(chooserFd, &reads);
 	    }
+#if defined(IPv6) && defined(AF_INET6)
+	    if (chooserFd6 >= 0 && FD_ISSET (chooserFd6, &reads))
+	    {
+#ifdef ISC
+	        if (!ChildReady) {
+	           WaitForSomething ();
+                } else
+#endif
+		ProcessChooserSocket (chooserFd6);
+		FD_CLR(chooserFd6, &reads);
+	    }
+#endif 
 	    ProcessListenSockets(&reads);
 	}
 	if (ChildReady)
@@ -458,6 +524,113 @@ NetworkAddressToName(
     switch (connectionType)
     {
     case FamilyInternet:
+#if defined(IPv6) && defined(AF_INET6)
+    case FamilyInternet6:
+	{
+	    CARD8		*data;
+	    struct hostent	*hostent;
+	    char 		*hostname = NULL;
+	    char		*name;
+	    char		*localhost;
+	    int			 multiHomed = 0;
+	    struct addrinfo	 hints, *ai = NULL, *nai;
+	    int 		 type;
+
+	    if (connectionType == FamilyInternet6)
+		type = AF_INET6;
+	    else
+		type = AF_INET;
+
+	    data = connectionAddress->data;
+	    hostent = gethostbyaddr ((char *)data,
+				     connectionAddress->length, type);
+	    if (hostent) {
+		if (sourceAddress) {
+		    bzero(&hints, sizeof(hints));
+		    hints.ai_flags = AI_CANONNAME;
+		    if (getaddrinfo(hostent->h_name, NULL, &hints, &ai) == 0) {
+			hostname = ai->ai_canonname;
+			for (nai = ai->ai_next; nai!=NULL; nai=nai->ai_next) {
+			    if ((ai->ai_protocol == nai->ai_protocol) &&
+				(ai->ai_addrlen == nai->ai_addrlen) &&
+			        (memcmp(ai->ai_addr,nai->ai_addr,
+					ai->ai_addrlen) != 0) ) {
+				multiHomed = 1;
+			    }
+			}
+		    }
+		} else {
+		    hostname = hostent->h_name;
+		}
+	    }
+
+	    localhost = localHostname ();
+
+	    /* 
+	     * protect against bogus host names 
+	     */
+	    if (hostname && hostname[0] && (hostname[0] != '.') 
+			&& !multiHomed)
+	    {
+		if (!strcmp (localhost, hostname))
+		{
+		    if (!getString (name, 10))
+			return 0;
+		    sprintf (name, ":%d", displayNumber);
+		}
+		else
+		{
+		    if (removeDomainname)
+		    {
+		    	char    *localDot, *remoteDot;
+    
+			/* check for a common domain name.  This
+			 * could reduce names by recognising common
+			 * super-domain names as well, but I don't think
+			 * this is as useful, and will confuse more
+			 * people
+ 			 */
+		    	if ((localDot = strchr(localhost, '.')) &&
+		            (remoteDot = strchr(hostname, '.')))
+			{
+			    /* smash the name in place; it won't
+			     * be needed later.
+			     */
+			    if (!strcmp (localDot+1, remoteDot+1))
+				*remoteDot = '\0';
+			}
+		    }
+
+		    if (!getString (name, strlen (hostname) + 10))
+			return 0;
+		    sprintf (name, "%s:%d", hostname, displayNumber);
+		}
+	    }
+	    else
+	    {
+		if (!getString (name, INET6_ADDRSTRLEN + 10))
+		    return 0;
+		if (multiHomed) {
+		    if (connectionType == FamilyInternet) {
+			data = (CARD8 *) 
+			  &((struct sockaddr_in *)originalAddress)->
+			  sin_addr;
+		    } else {
+			data = (CARD8 *) 
+			  &((struct sockaddr_in6 *)originalAddress)->sin6_addr;
+		    }
+		}
+		if (inet_ntop(type, data, name, INET6_ADDRSTRLEN) == NULL) {
+		    free(name);
+		    return 0;
+		} 
+		sprintf(name + strlen(name), ":%d", displayNumber);
+	    }
+	    if (ai)
+		freeaddrinfo(ai);
+	    return name;
+	}
+#else /* IPv6 */
 	{
 	    CARD8		*data;
 	    struct hostent	*hostent;
@@ -529,6 +702,7 @@ NetworkAddressToName(
 	    }
 	    return name;
 	}
+#endif /* IPv6 */
 #ifdef DNET
     case FamilyDECnet:
 	return NULL;
@@ -603,6 +777,30 @@ forward_respond (
 		    memmove( (char *) &in_addr.sin_port, clientPort.data, 2);
 		    client = (struct sockaddr *) &in_addr;
 		    clientlen = sizeof (in_addr);
+		    all_query_respond (client, clientlen, &authenticationNames,
+			       FORWARD_QUERY, fd);
+		}
+		break;
+#endif
+#if defined(IPv6) && defined(AF_INET6)
+	    case AF_INET6:
+		{
+		    struct sockaddr_in6	in6_addr;
+
+		    if (clientAddress.length != 16 ||
+		        clientPort.length != 2)
+		    {
+			goto badAddress;
+		    }
+		    bzero ((char *) &in6_addr, sizeof (in6_addr));
+#ifdef SIN6_LEN
+		    in6_addr.sin6_len = sizeof(in6_addr);
+#endif
+		    in6_addr.sin6_family = AF_INET6;
+		    memmove(&in6_addr,clientAddress.data,clientAddress.length);
+		    memmove((char *) &in6_addr.sin6_port, clientPort.data, 2);
+		    client = (struct sockaddr *) &in6_addr;
+		    clientlen = sizeof (in6_addr);
 		    all_query_respond (client, clientlen, &authenticationNames,
 			       FORWARD_QUERY, fd);
 		}
@@ -1195,12 +1393,24 @@ NetworkAddressToHostname (
     switch (connectionType)
     {
     case FamilyInternet:
+#if defined(IPv6) && defined(AF_INET6)
+    case FamilyInternet6:
+#endif
 	{
 	    struct hostent	*hostent = NULL;
+#if defined(IPv6) && defined(AF_INET6)
+	    char dotted[INET6_ADDRSTRLEN];
+#else
 	    char dotted[20];
+#endif
 	    char *local_name = "";
 	    int af_type;
 
+#if defined(IPv6) && defined(AF_INET6)
+	    if (connectionType == FamilyInternet6)
+		af_type = AF_INET6;
+	    else
+#endif
 		af_type = AF_INET;
 
 	    hostent = gethostbyaddr ((char *)connectionAddress->data,
@@ -1208,6 +1418,30 @@ NetworkAddressToHostname (
 
 	    if (hostent) {
 		/* check for DNS spoofing */
+#if defined(IPv6) && defined(AF_INET6)
+		struct addrinfo	*ai = NULL, *nai;
+		if (getaddrinfo(hostent->h_name, NULL, NULL, &ai) == 0) {
+		    for (nai = ai; nai != NULL; nai = nai->ai_next) {
+			if ((af_type == nai->ai_family) &&
+			  (connectionAddress->length == nai->ai_addrlen) &&
+			  (memcmp(connectionAddress->data,nai->ai_addr,
+			    nai->ai_addrlen) != 0) ) {
+			    break;
+			}
+		    }
+		    if (ai == NULL) {
+			inet_ntop(af_type, connectionAddress->data, 
+			  dotted, sizeof(dotted));
+
+			LogError("Possible DNS spoof attempt %s->%s.", dotted,
+			  hostent->h_name);
+			hostent = NULL;
+		    }
+		    freeaddrinfo(ai);
+		} else {
+		    hostent = NULL;
+		}
+#else
 		char *s = strdup(hostent->h_name); /* fscking non-reentrancy of getXXX() */
 		if ((hostent = gethostbyname(s))) {
 			if (memcmp((char*)connectionAddress->data, hostent->h_addr,
@@ -1219,15 +1453,21 @@ NetworkAddressToHostname (
 			}
 		}
 		free(s);
+#endif
 	    }
 
 	    if (!hostent) {
 		/* can't get name, so use emergency fallback */
+#if defined(IPv6) && defined(AF_INET6)
+		inet_ntop(af_type, connectionAddress->data, 
+		  	  dotted, sizeof(dotted));
+#else
 		sprintf(dotted, "%d.%d.%d.%d",
 			connectionAddress->data[0],
 			connectionAddress->data[1],
 			connectionAddress->data[2],
 			connectionAddress->data[3]);
+#endif
 		local_name = dotted;
 		LogError ("Cannot convert Internet address %s to host name\n",
 			  dotted);

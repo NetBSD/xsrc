@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:17 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xdm/greeter/Imakefile,v 1.7.2.1 2003/09/17 05:58:18 herrb Exp $
+XCOMM $XFree86: xc/programs/xdm/greeter/Imakefile,v 1.9 2004/01/03 16:19:58 herrb Exp $
 
 #define DoNormalLib NO
 #define DoSharedLib YES
@@ -38,7 +38,7 @@ KRB5_INCLUDE = Krb5Includes
 #endif
 
 #ifdef SharedXmuReqs			/* do we support required libs? */
-REQUIREDLIBS = SharedXmuReqs
+REQUIREDLIBS = SharedXmuReqs $(XPMLIB)
 #endif
 
 #ifdef OSF1Architecture
@@ -83,6 +83,10 @@ INCLUDES = -I.. $(KRBIV_INCLUDES) $(KRB5_INCLUDE)
  DEFINES = $(GREETER_DEFINES) $(XDMAUTH_DEFINES) $(RPC_DEFINES) \
 	   $(KRBIV_DEFINES) $(KRB5_DEFINES) $(PWD_DEFINES) $(PAM_DEFINES) \
 	   $(XKB_CLIENT_DEFINES) $(XPM_DEFINES)
+
+XCOMM Override SHLIBDIR so that shared library is installed in XDMDIR instead
+XCOMM of default shared library directory
+SHLIBDIR = $(XDMDIR)
 
 SRCS = greet.c verify.c Login.c
 OBJS = greet.o verify.o Login.o

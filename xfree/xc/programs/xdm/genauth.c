@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/genauth.c,v 3.15.2.3 2003/10/17 21:37:45 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/genauth.c,v 3.24 2003/12/21 15:07:06 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -126,15 +126,15 @@ pollRandomDevice (int fd)
  * DAMAGE.
  */
 
-static unsigned int epool[32], erotate, eadd_ptr;
+static CARD32 epool[32], erotate, eadd_ptr;
 
 static void
-add_entropy (unsigned const int *in, int nwords)
+add_entropy (const CARD32 *in, int nwords)
 {
-	static unsigned const int twist_table[8] = {
+	static const CARD32 twist_table[8] = {
 		         0, 0x3b6e20c8, 0x76dc4190, 0x4db26158,
 		0xedb88320, 0xd6d6a3e8, 0x9b64c2b0, 0xa00ae278 };
-	unsigned i, w;
+	CARD32 i, w;
 	int new_rotate;
 
 	while (nwords--) {
@@ -179,9 +179,9 @@ add_entropy (unsigned const int *in, int nwords)
  * reflect the addition of 16 longwords of new data.
  */
 static void 
-pmd5_hash (unsigned int *out, unsigned const int in[16])
+pmd5_hash (CARD32 *out, const CARD32 in[16])
 {
-    unsigned int a, b, c, d;
+    CARD32 a, b, c, d;
 
     a = out[0];
     b = out[1];
@@ -286,7 +286,7 @@ sumFile (const char *name, int len, int whence, off_t offset)
 	    return -1;
 	}
 	readlen += cnt;
-	add_entropy((unsigned*)buf, (cnt + 3) / 4);
+	add_entropy((CARD32 *)buf, (cnt + 3) / 4);
     }
     close (fd);
     Debug("read %d bytes from entropy source \"%s\"\n", readlen, name);
@@ -298,7 +298,7 @@ AddTimerEntropy (void)
 {
     struct timeval now;
     X_GETTIMEOFDAY (&now);
-    add_entropy((unsigned*)&now, sizeof(now)/sizeof(unsigned));
+    add_entropy((CARD32 *)&now, sizeof(now)/sizeof(CARD32));
 }
 
 #define BSIZ 0x10000
@@ -318,8 +318,8 @@ AddOtherEntropy (void)
 void
 AddPreGetEntropy (void)
 {
-    static long offset;
-    long readlen;
+    static off_t offset;
+    off_t readlen;
 
     AddTimerEntropy();
     if ((readlen = sumFile (randomFile, BSIZ, SEEK_SET, offset)) == BSIZ) {
@@ -346,7 +346,7 @@ AddPreGetEntropy (void)
 static void
 InitXdmcpWrapper (void)
 {
-    u_int32_t sum[4];
+    CARD32 sum[4];
 
 #ifdef	ARC4_RANDOM
     sum[0] = arc4random();
@@ -437,16 +437,17 @@ GenerateAuthData (char *auth, int len)
 		auth[i] |= bit;
 	}
     }
+    return 1;
 #else /* !XDMAUTH */
 #ifdef ARC4_RANDOM
-    unsigned int *rnd = (unsigned*)auth;
+    CARD32 *rnd = (CARD32 *)auth;
     int i;
 
     for (i = 0; i < len; i += 4)
 	rnd[i / 4] = arc4random();
     return 1;
 #else /* !ARC4_RANDOM */
-    unsigned tmp[4] = { 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476 };
+    CARD32 tmp[4] = { 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476 };
 #ifdef DEV_RANDOM
     int fd;
     

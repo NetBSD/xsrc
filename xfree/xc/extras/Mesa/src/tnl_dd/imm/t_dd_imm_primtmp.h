@@ -1,4 +1,3 @@
-/* $Id: t_dd_imm_primtmp.h,v 1.1.1.1 2003/02/28 13:19:09 tron Exp $ */
 
 /*
  * Mesa 3-D graphics library

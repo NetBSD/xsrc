@@ -31,12 +31,13 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/intersect.cc,v 1.2 2003/10/22 19:20:57 tsi Exp $ */
 
 /*
  * intersect.c++
  *
- * $Date: 2001/06/09 15:20:51 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/intersect.cc,v 1.1.1.1 2001/06/09 15:20:51 tron Exp $
+ * $Date: 2004/03/05 14:26:36 $ $Revision: 1.1.1.2 $
+ * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/intersect.cc,v 1.1.1.2 2004/03/05 14:26:36 tron Exp $
  */
 
 #include "glimports.h"
@@ -53,7 +54,9 @@
 enum i_result { INTERSECT_VERTEX, INTERSECT_EDGE };
 
 /* local functions */
+#ifndef NDEBUG
 static int		arc_classify( Arc_ptr, int, REAL );
+#endif
 static enum i_result	pwlarc_intersect( PwlArc *, int, REAL, int, int[3] );
 
 
@@ -175,7 +178,10 @@ int
 Subdivider::arc_split( Arc_ptr jarc, int param, REAL value, int dir )
 {
     int		maxvertex = jarc->pwlArc->npts;
-    Arc_ptr	jarc1, jarc2, jarc3;
+    Arc_ptr	jarc1;
+#ifdef NOTDEF
+    Arc_ptr	jarc2, jarc3;
+#endif
     TrimVertex* v = jarc->pwlArc->pts;
 
     int		loc[3];
@@ -394,6 +400,7 @@ pwlarc_intersect(
     }
 }
 
+#ifndef NDEBUG
 /*----------------------------------------------------------------------------
  * arc_classify - determine which side of a line a jarc lies 
  *----------------------------------------------------------------------------
@@ -437,6 +444,7 @@ arc_classify( Arc_ptr jarc, int param, REAL value )
 	}
     }
 }
+#endif
 
 void
 Subdivider::classify_tailonleft_s( Bin& bin, Bin& in, Bin& out, REAL val )

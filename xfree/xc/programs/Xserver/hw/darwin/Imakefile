@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.15.2.2 2003/03/04 02:48:04 torrey Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/Imakefile,v 1.20 2003/11/11 01:29:47 torrey Exp $
 
 #include <Server.tmpl>
 #define IHaveSubdirs
@@ -7,20 +7,16 @@ LinkSourceFile(XFree86.man,../xfree86)
 
 SRCS =	darwin.c \
         darwinEvents.c \
-        darwinKeyboard.c \
-        xfIOKit.c \
-        xfIOKitCursor.c
+        darwinKeyboard.c
 
 OBJS =	darwin.o \
         darwinEvents.o \
-        darwinKeyboard.o \
-        xfIOKit.o \
-        xfIOKitCursor.o
+        darwinKeyboard.o
 
 INCLUDES = -I. -I$(SERVERSRC)/mi -I$(SERVERSRC)/fb -I$(EXTINCSRC) \
            -I$(SERVERSRC)/render -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
            -I$(SERVERSRC)/os -I$(INCLUDESRC) -I$(FONTINCSRC) \
-           -I$(SERVERSRC)/hw/xfree86
+           -I$(SERVERSRC)/miext/shadow -I$(SERVERSRC)/hw/xfree86
 
 OSNAME = OSName
 OSVENDOR = OSVendor
@@ -39,14 +35,14 @@ CLUTDEF = -DUSE_NEW_CLUT
 #endif
 
 #if DarwinQuartzSupport
-# if HasNSCarbonWindow
-SUBDIRS = bundle quartz utils
+# if (OSMajorVersion == 1 && OSMinorVersion >= 4) || OSMajorVersion >= 5
+SUBDIRS = iokit bundle quartz utils
 # else
-SUBDIRS = bundle quartz_1.3 utils
+SUBDIRS = iokit bundle quartz_1.3 utils
 # endif
 QUARTZDEF = -DDARWIN_WITH_QUARTZ
 #else
-SUBDIRS = utils
+SUBDIRS = iokit utils
 #endif
 
 DEFINES = $(QUARTZDEF)
@@ -57,8 +53,6 @@ SpecialCObjectRule(darwin,$(ICONFIGFILES),$(OSNAMEDEF) $(BUILDERMSG) \
 
 NormalLibraryObjectRule()
 NormalLibraryTarget(darwin,$(OBJS))
-
-AllTarget(xfIOKitStartup.o)
 
 InstallManPage(XDarwin,$(MANDIR))
 InstallManPage(XFree86,$(MANDIR))

@@ -31,12 +31,13 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/bin.cc,v 1.2 2003/10/22 19:20:56 tsi Exp $ */
 
 /*
  * bin.c++
  *
- * $Date: 2001/06/09 15:20:50 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/bin.cc,v 1.1.1.1 2001/06/09 15:20:50 tron Exp $
+ * $Date: 2004/03/05 14:26:36 $ $Revision: 1.1.1.2 $
+ * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/bin.cc,v 1.1.1.2 2004/03/05 14:26:36 tron Exp $
  */
 
 #include "glimports.h"
@@ -154,12 +155,12 @@ Bin::listBezier( void )
     for( Arc_ptr jarc=firstarc(); jarc; jarc=nextarc() ) {
 	if( jarc->isbezier( ) ) {
     	    assert( jarc->pwlArc->npts == 2 );	
+#ifndef NDEBUG
 	    TrimVertex  *pts = jarc->pwlArc->pts;
     	    REAL s1 = pts[0].param[0];
     	    REAL t1 = pts[0].param[1];
     	    REAL s2 = pts[1].param[0];
     	    REAL t2 = pts[1].param[1];
-#ifndef NDEBUG
 	   dprintf( "arc (%g,%g) (%g,%g)\n", s1, t1, s2, t2 );
 #endif
 	}

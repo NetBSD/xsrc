@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dm.h,v 3.29.2.1 2003/09/17 05:58:16 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/dm.h,v 3.34 2003/12/12 03:20:45 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -100,21 +100,6 @@ typedef int		waitType;
 typedef union wait	waitType;
 #endif
 #endif /* X_NOT_POSIX */
-
-#ifdef USE_PAM
-#include <security/pam_appl.h>
-#endif
-
-#ifdef CSRG_BASED
-#include <sys/param.h>
-#ifdef HAS_SETUSERCONTEXT
-#include <login_cap.h>
-#include <pwd.h>
-#ifdef USE_BSDAUTH
-#include <bsd_auth.h>
-#endif
-#endif
-#endif
 
 #ifdef USE_PAM
 #include <security/pam_appl.h>
@@ -523,11 +508,6 @@ extern void ProcessRequestSocket(int fd);
 #define Setjmp(e)   sigsetjmp(e,1)
 #define Longjmp(e,v)	siglongjmp(e,v)
 #define Jmp_buf		sigjmp_buf
-#endif
-
-#ifndef HAS_SNPRINTF
-#include <X11/Xmu/SysUtil.h>
-#define snprintf XmuSnprintf
 #endif
 
 typedef SIGVAL (*SIGFUNC)(int);

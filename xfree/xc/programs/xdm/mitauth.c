@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/mitauth.c,v 1.4.4.1 2003/09/17 05:58:16 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/mitauth.c,v 1.6 2003/09/17 05:48:32 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
