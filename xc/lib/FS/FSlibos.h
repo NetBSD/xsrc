@@ -72,8 +72,10 @@ in this Software without prior written authorization from the X Consortium.
 #ifdef _POSIX_SOURCE
 #include <limits.h>
 #else
+#ifndef __NetBSD__
 #define _POSIX_SOURCE
 #include <limits.h>
+#endif
 #undef _POSIX_SOURCE
 #endif
 #endif
