@@ -47,7 +47,7 @@ SOFTWARE.
 ******************************************************************/
 
 /* $XConsortium: os.h /main/60 1996/12/15 21:25:13 rws $ */
-/* $XFree86: xc/programs/Xserver/include/os.h,v 3.16 1996/12/23 07:09:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/os.h,v 3.16.2.1 1998/01/22 10:47:13 dawes Exp $ */
 
 #ifndef OS_H
 #define OS_H
@@ -505,6 +505,31 @@ extern int OsInitColors(
 #endif
 );
 
+#if !defined(WIN32) && !defined(__EMX__)
+extern int System(
+#if NeedFunctionPrototypes
+    char *
+#endif
+);
+
+extern pointer Popen(
+#if NeedFunctionPrototypes
+    char *,
+    char *
+#endif
+);
+
+extern int Pclose(
+#if NeedFunctionPrototypes
+    pointer
+#endif
+);
+#else
+#define System(a) system(a)
+#define Popen(a,b) popen(a,b)
+#define Pclose(a) pclose(a)
+#endif
+
 extern int AddHost(
 #if NeedFunctionPrototypes
     ClientPtr	/*client*/,
@@ -673,14 +698,12 @@ extern XID GenerateAuthorization(
 #endif
 );
 
-#ifdef ThisIsASecurityProblem   /* This will be removed in the next XFree/TOG release */
 extern void ExpandCommandLine(
 #if NeedFunctionPrototypes
     int * /*pargc*/,
     char *** /*pargv*/
 #endif
 );
-#endif
 
 extern int ddxProcessArgument(
 #if NeedFunctionPrototypes
