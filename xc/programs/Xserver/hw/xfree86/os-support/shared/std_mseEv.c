@@ -37,7 +37,11 @@
 void xf86MouseEvents(mouse)
     MouseDevPtr	mouse;
 {
+#if defined(__NetBSD__)
+	unsigned char rBuf[512];
+#else
 	unsigned char rBuf[64];
+#endif
 	int nBytes;
 
 	if ((nBytes = read(mouse->mseFd, (char *)rBuf, sizeof(rBuf))) > 0)
