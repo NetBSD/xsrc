@@ -24,7 +24,7 @@ PROGRAMS = ProgramTarget(xkbcomp)
 #ifdef amigaArchitecture
 MDXKBFILES = de-amiga.xkm
 $(MDXKBFILES): $(PROGRAMS)
-	./xkbcomp -xkm -o de-amiga.xkm -m de keymap/amiga
+	$(XKBCOMPCMD) -xkm -o de-amiga.xkm -m de keymap/amiga
 #endif
 
 all:: $(PROGRAMS) $(MDXKBFILES)
