@@ -445,7 +445,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #if defined(AMD64Architecture)
 # define HasMTRRBuiltin       YES
-# define XF86AFB              YES
 #endif
 
 /*
