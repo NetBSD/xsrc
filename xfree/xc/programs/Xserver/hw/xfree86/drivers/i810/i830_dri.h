@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_dri.h,v 1.5 2002/12/10 01:27:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_dri.h,v 1.5.2.1 2003/10/21 02:22:38 dawes Exp $ */
 
 #ifndef _I830_DRI_H
 #define _I830_DRI_H
@@ -131,7 +131,7 @@ typedef struct _I830SAREA {
    unsigned int TexState3[I830_TEX_SETUP_SIZE];
    unsigned int TexBlendState3[I830_TEXBLEND_SIZE];
    unsigned int TexBlendStateWordsUsed3;
-   
+
    unsigned int StippleState[I830_STP_SETUP_SIZE];
 } I830SAREARec, *I830SAREAPtr;
 

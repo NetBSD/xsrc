@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_swtcl.h,v 1.1 2002/10/30 12:51:57 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_swtcl.h,v 1.1.2.1 2003/05/06 23:21:44 daenzer Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -43,6 +43,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern void radeonInitSwtcl( GLcontext *ctx );
 extern void radeonDestroySwtcl( GLcontext *ctx );
 
+extern void radeonFlushVertices( GLcontext *ctx, GLuint flags );
 extern void radeonChooseRenderState( GLcontext *ctx );
 extern void radeonChooseVertexState( GLcontext *ctx );
 

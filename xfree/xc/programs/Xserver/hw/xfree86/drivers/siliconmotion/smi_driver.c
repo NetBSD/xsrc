@@ -26,7 +26,7 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from The XFree86 Project or Silicon Motion.
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_driver.c,v 1.28 2003/02/05 17:45:29 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_driver.c,v 1.28.2.1 2003/05/09 02:22:00 dawes Exp $ */
 
 #include "xf86Resources.h"
 #include "xf86RAC.h"
@@ -1410,7 +1410,7 @@ SMI_Save(ScrnInfoPtr pScrn)
 	ENTER_PROC("SMI_Save");
 
 	/* Save the standard VGA registers */
-	vgaHWSave(pScrn, vgaSavePtr, VGA_SR_MODE);
+	vgaHWSave(pScrn, vgaSavePtr, VGA_SR_ALL);
 	save->smiDACMask = VGAIN8(pSmi, VGA_DAC_MASK);
 	VGAOUT8(pSmi, VGA_DAC_READ_ADDR, 0);
 	for (i = 0; i < 256; i++)
@@ -1601,7 +1601,7 @@ SMI_WriteMode(ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, SMIRegPtr restore)
 		VGAOUT8_INDEX(pSmi, VGA_SEQ_INDEX, VGA_SEQ_DATA, 0xA0, restore->SRA0);
 
 		/* Restore the standard VGA registers */
-		vgaHWRestore(pScrn, vgaSavePtr, VGA_SR_MODE);
+		vgaHWRestore(pScrn, vgaSavePtr, VGA_SR_ALL);
 		if (restore->smiDACMask)
 		{
 			VGAOUT8(pSmi, VGA_DAC_MASK, restore->smiDACMask);
@@ -1672,7 +1672,7 @@ SMI_WriteMode(ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, SMIRegPtr restore)
 		} 
 
 		if (restore->modeInit)
-		    vgaHWRestore(pScrn, vgaSavePtr, VGA_SR_MODE);
+		    vgaHWRestore(pScrn, vgaSavePtr, VGA_SR_ALL);
 
 		if (!SMI_LYNXM_SERIES(pSmi->Chipset))
 		{

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xdm/dm_auth.h,v 1.2 2000/05/31 07:15:11 eich Exp $
+ * $XFree86: xc/programs/xdm/dm_auth.h,v 1.2.10.1 2003/09/17 05:58:16 herrb Exp $
  */
 
 /************************************************************
@@ -87,6 +87,14 @@ extern void SetLocalAuthorization (struct display *d);
 extern void SetUserAuthorization (struct display *d, struct verify_info *verify);
 
 /* genauth.c */
-extern void GenerateAuthData (char *auth, int len);
+extern int GenerateAuthData (char *auth, int len);
+#if !defined(ARC4_RANDOM)
+extern void AddPreGetEntropy (void);
+extern void AddOtherEntropy (void);
+extern void AddTimerEntropy (void);
+#endif
+
+/* prngc.c */
+extern int get_prngd_bytes(char *, int, unsigned short, char *);
 
 #endif /* _DM_AUTH_H_ */

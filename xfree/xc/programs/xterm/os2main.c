@@ -5,7 +5,7 @@
 #ifndef lint
 static char *rid = "$XConsortium: main.c,v 1.227.1.2 95/06/29 18:13:15 kaleb Exp $";
 #endif /* lint */
-/* $XFree86: xc/programs/xterm/os2main.c,v 3.62 2003/05/21 22:59:13 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/os2main.c,v 3.57 2002/12/27 21:05:22 dickey Exp $ */
 
 /***********************************************************
 
@@ -62,8 +62,6 @@ SOFTWARE.
 #include <os2.h>
 #define XTERM_MAIN
 
-#define RES_OFFSET(field)	XtOffsetOf(XTERM_RESOURCE, field)
-
 #include <version.h>
 #include <xterm.h>
 
@@ -80,8 +78,6 @@ SOFTWARE.
 #include <X11/Xaw3d/Form.h>
 #elif defined(HAVE_LIB_NEXTAW)
 #include <X11/neXtaw/Form.h>
-#elif defined(HAVE_LIB_XAWPLUS)
-#include <X11/XawPlus/Form.h>
 #endif
 
 #endif /* OPT_TOOLBAR */
@@ -254,36 +250,56 @@ static jmp_buf env;
 
 /* used by VT (charproc.c) */
 
+#define offset(field)	XtOffsetOf(XTERM_RESOURCE, field)
+
 static XtResource application_resources[] =
 {
-    Sres("name", "Name", xterm_name, DFT_TERMTYPE),
-    Sres("iconGeometry", "IconGeometry", icon_geometry, NULL),
-    Sres(XtNtitle, XtCTitle, title, NULL),
-    Sres(XtNiconName, XtCIconName, icon_name, NULL),
-    Sres("termName", "TermName", term_name, NULL),
-    Sres("ttyModes", "TtyModes", tty_modes, NULL),
-    Bres("hold", "Hold", hold_screen, FALSE),
-    Bres("utmpInhibit", "UtmpInhibit", utmpInhibit, FALSE),
-    Bres("messages", "Messages", messages, TRUE),
-    Bres("sunFunctionKeys", "SunFunctionKeys", sunFunctionKeys, FALSE),
+    {"name", "Name", XtRString, sizeof(char *),
+     offset(xterm_name), XtRString, DFT_TERMTYPE},
+    {"iconGeometry", "IconGeometry", XtRString, sizeof(char *),
+     offset(icon_geometry), XtRString, (caddr_t) NULL},
+    {XtNtitle, XtCTitle, XtRString, sizeof(char *),
+     offset(title), XtRString, (caddr_t) NULL},
+    {XtNiconName, XtCIconName, XtRString, sizeof(char *),
+     offset(icon_name), XtRString, (caddr_t) NULL},
+    {"termName", "TermName", XtRString, sizeof(char *),
+     offset(term_name), XtRString, (caddr_t) NULL},
+    {"ttyModes", "TtyModes", XtRString, sizeof(char *),
+     offset(tty_modes), XtRString, (caddr_t) NULL},
+    {"hold", "Hold", XtRBoolean, sizeof(Boolean),
+     offset(hold_screen), XtRString, "false"},
+    {"utmpInhibit", "UtmpInhibit", XtRBoolean, sizeof(Boolean),
+     offset(utmpInhibit), XtRString, "false"},
+    {"messages", "Messages", XtRBoolean, sizeof(Boolean),
+     offset(messages), XtRString, "true"},
+    {"sunFunctionKeys", "SunFunctionKeys", XtRBoolean, sizeof(Boolean),
+     offset(sunFunctionKeys), XtRString, "false"},
 #if OPT_SUNPC_KBD
-    Bres("sunKeyboard", "SunKeyboard", sunKeyboard, FALSE),
+    {"sunKeyboard", "SunKeyboard", XtRBoolean, sizeof(Boolean),
+     offset(sunKeyboard), XtRString, "false"},
 #endif
 #if OPT_HP_FUNC_KEYS
-    Bres("hpFunctionKeys", "HpFunctionKeys", hpFunctionKeys, FALSE),
+    {"hpFunctionKeys", "HpFunctionKeys", XtRBoolean, sizeof(Boolean),
+     offset(hpFunctionKeys), XtRString, "false"},
 #endif
-    Bres("waitForMap", "WaitForMap", wait_for_map, FALSE),
-    Bres("useInsertMode", "UseInsertMode", useInsertMode, FALSE),
+    {"waitForMap", "WaitForMap", XtRBoolean, sizeof(Boolean),
+     offset(wait_for_map), XtRString, "false"},
+    {"useInsertMode", "UseInsertMode", XtRBoolean, sizeof(Boolean),
+     offset(useInsertMode), XtRString, "false"},
 #if OPT_ZICONBEEP
-    Ires("zIconBeep", "ZIconBeep", zIconBeep, 0),
+    {"zIconBeep", "ZIconBeep", XtRInt, sizeof(int),
+     offset(zIconBeep), XtRImmediate, 0},
 #endif
 #if OPT_SAME_NAME
-    Bres("sameName", "SameName", sameName, TRUE),
+    {"sameName", "SameName", XtRBoolean, sizeof(Boolean),
+     offset(sameName), XtRString, "true"},
 #endif
 #if OPT_SESSION_MGT
-    Bres("sessionMgt", "SessionMgt", sessionMgt, TRUE),
+    {"sessionMgt", "SessionMgt", XtRBoolean, sizeof(Boolean),
+     offset(sessionMgt), XtRString, "true"},
 #endif
 };
+#undef offset
 
 static char *fallback_resources[] =
 {
@@ -361,10 +377,6 @@ static XrmOptionDescRec optionDescList[] = {
 {"+hold",	"*hold",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "off"},
-#if OPT_C1_PRINT
-{"-k8",		"*allowC1Printable", XrmoptionNoArg,	(caddr_t) "on"},
-{"+k8",		"*allowC1Printable", XrmoptionNoArg,	(caddr_t) "off"},
-#endif
 /* parse logging options anyway for compatibility */
 {"-l",		"*logging",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+l",		"*logging",	XrmoptionNoArg,		(caddr_t) "off"},
@@ -499,12 +511,12 @@ static OptionHelp xtermOptions[] = {
 { "-/+ah",                 "turn on/off always highlight" },
 #ifndef NO_ACTIVE_ICON
 { "-/+ai",                 "turn off/on active icon" },
-{ "-fi fontname",          "icon font for active icon" },
+{ "-fi fontname",	   "icon font for active icon" },
 #endif /* NO_ACTIVE_ICON */
 { "-b number",             "internal border in pixels" },
-{ "-/+bc",                 "turn on/off text cursor blinking" },
-{ "-bcf milliseconds",     "time text cursor is off when blinking"},
-{ "-bcn milliseconds",     "time text cursor is on when blinking"},
+{ "-/+bc",		   "turn on/off text cursor blinking" },
+{ "-bcf milliseconds",	   "time text cursor is off when blinking"},
+{ "-bcn milliseconds",	   "time text cursor is on when blinking"},
 { "-/+bdc",                "turn off/on display of bold as color"},
 { "-/+cb",                 "turn on/off cut-to-beginning-of-line inhibit" },
 { "-cc classrange",        "specify additional character classes" },
@@ -512,19 +524,16 @@ static OptionHelp xtermOptions[] = {
 { "-/+cn",                 "turn on/off cut newline inhibit" },
 { "-cr color",             "text cursor color" },
 { "-/+cu",                 "turn on/off curses emulation" },
-{ "-/+dc",                 "turn off/on dynamic color selection" },
+{ "-/+dc",		   "turn off/on dynamic color selection" },
 #if OPT_HIGHLIGHT_COLOR
 { "-hc color",             "selection background color" },
 #endif
 #if OPT_HP_FUNC_KEYS
 { "-/+hf",                 "turn on/off HP Function Key escape codes" },
 #endif
-{ "-/+hold",               "turn on/off logic that retains window after exit" },
-{ "-/+im",                 "use insert mode for TERMCAP" },
+{ "-/+hold",		   "turn on/off logic that retains window after exit" },
+{ "-/+im",		   "use insert mode for TERMCAP" },
 { "-/+j",                  "turn on/off jump scroll" },
-#if OPT_C1_PRINT
-{ "-/+k8",                 "turn on/off C1-printable classification"},
-#endif
 #ifdef ALLOWLOGGING
 { "-/+l",                  "turn on/off logging" },
 { "-lf filename",          "logging filename" },
@@ -535,7 +544,7 @@ static OptionHelp xtermOptions[] = {
 { "-/+ls",                 "turn on/off login shell" },
 { "-/+mb",                 "turn on/off margin bell" },
 { "-mc milliseconds",      "multiclick time in milliseconds" },
-{ "-/+mesg",               "forbid/allow messages" },
+{ "-/+mesg",		   "forbid/allow messages" },
 { "-ms color",             "pointer color" },
 { "-nb number",            "margin bell in characters from right end" },
 { "-/+nul",                "turn off/on display of underlining" },
@@ -548,7 +557,7 @@ static OptionHelp xtermOptions[] = {
 { "-rightbar",             "force scrollbar right (default left)" },
 { "-leftbar",              "force scrollbar left" },
 #endif
-{ "-/+rvc",                "turn off/on display of reverse as color" },
+{ "-/+rvc",		   "turn off/on display of reverse as color" },
 { "-/+sf",                 "turn on/off Sun Function Key escape codes" },
 { "-/+si",                 "turn on/off scroll-on-tty-output inhibit" },
 { "-/+sk",                 "turn on/off scroll-on-keypress" },
@@ -1320,8 +1329,6 @@ pty_search(int *pty)
 	    ptioctl(*pty, XTY_TRACE, 0);
 #endif
 	    return 0;
-	} else {
-	    fprintf(stderr, "Unable to open %s, errno=%d\n", ptydev, errno);
 	}
     }
     return 1;
@@ -1487,7 +1494,7 @@ spawn(void)
     char *ptr, *shname, buf[64];
     int i, no_dev_tty = FALSE, envsize;
     char *dev_tty_name = (char *) 0;
-    TTYSIZE_STRUCT ts;
+    struct winsize ws;
     int pgrp = getpid();
     char numbuf[12], **envnew;
 
@@ -1599,16 +1606,19 @@ spawn(void)
      * the program to proceed (but not to set $TERMCAP) if the termcap
      * entry is not found.
      */
-    if (!get_termcap(TermName = resource.term_name, ptr, newtc)) {
-	char *last = NULL;
+    get_termcap(TermName = resource.term_name, ptr, newtc);
+
+    /*
+     * This block is invoked only if there was no terminal name specified
+     * by the command-line option "-tn".
+     */
+    if (!TermName) {
 	TermName = *envnew;
 	while (*envnew != NULL) {
-	    if ((last == NULL || strcmp(last, *envnew))
-		&& get_termcap(*envnew, ptr, newtc)) {
+	    if (get_termcap(*envnew, ptr, newtc)) {
 		TermName = *envnew;
 		break;
 	    }
-	    last = *envnew;
 	    envnew++;
 	}
     }
@@ -1616,17 +1626,17 @@ spawn(void)
     /* tell tty how big window is */
 #if OPT_TEK4014
     if (TEK4014_ACTIVE(screen)) {
-	TTYSIZE_ROWS(ts) = 38;
-	TTYSIZE_COLS(ts) = 81;
-	ts.ws_xpixel = TFullWidth(screen);
-	ts.ws_ypixel = TFullHeight(screen);
+	ws.ws_row = 38;
+	ws.ws_col = 81;
+	ws.ws_xpixel = TFullWidth(screen);
+	ws.ws_ypixel = TFullHeight(screen);
     } else
 #endif
     {
-	TTYSIZE_ROWS(ts) = screen->max_row + 1;
-	TTYSIZE_COLS(ts) = screen->max_col + 1;
-	ts.ws_xpixel = FullWidth(screen);
-	ts.ws_ypixel = FullHeight(screen);
+	ws.ws_row = screen->max_row + 1;
+	ws.ws_col = screen->max_col + 1;
+	ws.ws_xpixel = FullWidth(screen);
+	ws.ws_ypixel = FullHeight(screen);
     }
 
     if (am_slave < 0) {
@@ -1764,10 +1774,10 @@ opencons();*/
 	    if (handshake.rows > 0 && handshake.cols > 0) {
 		screen->max_row = handshake.rows;
 		screen->max_col = handshake.cols;
-		TTYSIZE_ROWS(ts) = screen->max_row + 1;
-		TTYSIZE_COLS(ts) = screen->max_col + 1;
-		ts.ws_xpixel = FullWidth(screen);
-		ts.ws_ypixel = FullHeight(screen);
+		ws.ws_row = screen->max_row + 1;
+		ws.ws_col = screen->max_col + 1;
+		ws.ws_xpixel = FullWidth(screen);
+		ws.ws_ypixel = FullHeight(screen);
 	    }
 
 	    sprintf(numbuf, "%d", screen->max_col + 1);
@@ -1779,7 +1789,7 @@ opencons();*/
 	    environ = gblenvp;
 
 	    /* need to reset after all the ioctl bashing we did above */
-	    ptioctl(0, TIOCSWINSZ, (char *) &ts);
+	    ptioctl(0, TIOCSWINSZ, (char *) &ws);
 
 	    signal(SIGHUP, SIG_DFL);
 
@@ -2062,12 +2072,12 @@ ptioctl(int fd, int func, void *data)
 			   NULL, 0, NULL);
     case TIOCSWINSZ:
 	return DosDevIOCtl(fd, XFREE86_PTY, XTY_TIOCSWINSZ,
-			   (ULONG *) data, sizeof(TTYSIZE_STRUCT), &len,
+			   (ULONG *) data, sizeof(struct winsize), &len,
 			   NULL, 0, NULL);
     case TIOCGWINSZ:
 	return DosDevIOCtl(fd, XFREE86_PTY, XTY_TIOCGWINSZ,
 			   NULL, 0, NULL,
-			   (ULONG *) data, sizeof(TTYSIZE_STRUCT), &len);
+			   (ULONG *) data, sizeof(struct winsize), &len);
     case XTY_ENADUP:
 	i = 1;
 	return DosDevIOCtl(fd, XFREE86_PTY, XTY_ENADUP,

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_libc.h,v 3.56 2003/02/22 06:00:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_libc.h,v 3.56.2.1 2003/10/08 17:56:34 eich Exp $ */
 
 
 
@@ -71,7 +71,11 @@ struct xf86stat {
 typedef int xf86key_t;
 
 /* setjmp/longjmp */
+#if defined(__ia64__)
+typedef int xf86jmp_buf[1024] __attribute__ ((aligned (16))); /* guarantees 128-bit alignment! */
+#else
 typedef int xf86jmp_buf[1024];
+#endif
 
 /* for setvbuf */
 #define XF86_IONBF    1

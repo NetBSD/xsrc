@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/XlcPubI.h,v 3.9 2001/11/16 00:52:27 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XlcPubI.h,v 3.9.6.1 2003/03/11 23:18:49 herrb Exp $ */
 
 #ifndef _XLCPUBLICI_H_
 #define _XLCPUBLICI_H_
@@ -217,6 +217,7 @@ extern int _XlcResolveI18NPath(
 extern char *_XlcLocaleDirName(
 #if NeedFunctionPrototypes
      char*             /* dir_name */,
+     size_t,	       /* dir_len */
      char*             /* lc_name */
 #endif
 );

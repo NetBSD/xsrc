@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/drv/i830/Imakefile,v 1.7 2002/11/25 14:04:51 eich Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/i830/Imakefile,v 1.7.2.1 2003/05/24 22:22:04 sven Exp $
 
 #include <Threads.tmpl>
 
@@ -74,4 +74,16 @@ InstallLibrary($(SOPROF_LIBNAME),$(MODULEDIR)/dri)
 #endif
 
 DependTarget()
+
+InstallDriverSDKNonExecFile(Imakefile,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
+InstallDriverSDKNonExecFile(i830_3d_reg.h,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
+InstallDriverSDKNonExecFile(i830_context.h,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
+InstallDriverSDKNonExecFile(i830_debug.h,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
+InstallDriverSDKNonExecFile(i830_ioctl.h,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
+InstallDriverSDKNonExecFile(i830_screen.h,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
+InstallDriverSDKNonExecFile(i830_span.h,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
+InstallDriverSDKNonExecFile(i830_state.h,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
+InstallDriverSDKNonExecFile(i830_tex.h,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
+InstallDriverSDKNonExecFile(i830_tris.h,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
+InstallDriverSDKNonExecFile(i830_vb.h,$(DRIVERSDKDIR)/lib/GL/mesa/src/drv/i830)
 

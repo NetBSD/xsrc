@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/xdmauth.c,v 1.5 2001/12/14 20:01:25 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/xdmauth.c,v 1.5.4.1 2003/09/17 05:58:17 herrb Exp $ */
 /*
  * xdm - display manager daemon
  * Author:  Keith Packard, MIT X Consortium
@@ -135,7 +135,13 @@ XdmGetAuthHelper (namelen, name, includeRho)
     }
     memmove( (char *)new->name, name, namelen);
     new->name_length = namelen;
-    GenerateAuthData ((char *)new->data, new->data_length);
+    if (!GenerateAuthData ((char *)new->data, new->data_length))
+    {
+	free ((char *) new->name);
+	free ((char *) new->data);
+	free ((char *) new);
+	return (Xauth *) 0;
+    }
     /*
      * set the first byte of the session key to zero as it
      * is a DES key and only uses 56 bits

@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/choose.c,v 3.15 2001/12/14 20:01:20 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/choose.c,v 3.15.4.1 2003/09/17 05:58:16 herrb Exp $ */
 
 /*
  * choose.c
@@ -43,6 +43,7 @@ in this Software without prior written authorization from The Open Group.
 #include <sys/types.h>
 
 #include "dm_socket.h"
+#include <arpa/inet.h>
 
 #ifndef X_NO_SYS_UN
 #ifndef Lynx
@@ -200,16 +201,17 @@ FormatChooserArgument (char *buf, int len)
 	{
 	    char *port;
 	    int portlen;
-	    ARRAY8Ptr localAddress;
+	    ARRAY8Ptr localAddress = getLocalAddress ();
+
 
 	    port = NetaddrPort((XdmcpNetaddr)addr_buf, &portlen);
 	    result_buf[0] = netfamily >> 8;
 	    result_buf[1] = netfamily & 0xFF;
 	    result_buf[2] = port[0];
 	    result_buf[3] = port[1];
-	    localAddress = getLocalAddress ();
-	    memmove( (char *)result_buf+4, (char *)localAddress->data, 4);
-	    result_len = 8;
+	    memmove( (char *)result_buf+4, (char *)localAddress->data, 
+	      localAddress->length);
+	    result_len = 4 + localAddress->length;
 	}
 	break;
 #ifdef AF_DECnet
@@ -280,13 +282,17 @@ RegisterIndirectChoice (
 {
     ChoicePtr	c;
     int		insert;
+#if 0
     int		found = 0;
+#endif
 
     Debug ("Got indirect choice back\n");
     for (c = choices; c; c = c->next) {
 	if (XdmcpARRAY8Equal (clientAddress, &c->client) &&
 	    connectionType == c->connectionType) {
+#if 0
 	    found = 1;
+#endif
 	    break;
 	}
     }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPCache.c,v 1.30 2000/09/25 23:56:14 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPCache.c,v 1.30.10.1 2003/08/16 01:13:58 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -763,6 +763,7 @@ XAAInitPixmapCache(
 	1) Don't take up more than half the memory.
 	2) Don't bother if you can't get at least four.
 	3) Don't make more than MAX_512.
+	4) Don't have any of there are no 256x256s.
 
      256x256 -
 	1) Don't take up more than a quarter of the memory enless there
@@ -785,6 +786,13 @@ XAAInitPixmapCache(
     if(!Target512) Target256 = ntotal >> 3;
     else Target256 = ntotal >> 4;
     if(Target256 < 4) Target256 = 0;
+
+    if(Num512 && Num256 < 4) {
+	while(Num512 && Num256 < Target256) {
+	   SubdivideList(&List512, &List256);
+	   Num256 += 4; Num512--;
+	}
+    }
 
     if(!Num512) { /* no room */
     } else if((Num512 < 4) || (!Target512)) {

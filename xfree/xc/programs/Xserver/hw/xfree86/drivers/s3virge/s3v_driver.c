@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_driver.c,v 1.86 2003/02/04 02:20:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_driver.c,v 1.86.2.1 2003/06/01 22:13:00 alanh Exp $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
@@ -1781,8 +1781,8 @@ S3VSave (ScrnInfoPtr pScrn)
       VGAOUT8(vgaCRIndex, 0x93);
       save->CR93 = VGAIN8(vgaCRReg);
    }
-   if (ps3v->Chipset == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(ps3v->Chipset) || 
-       S3_ViRGE_MX_SERIES(ps3v->Chipset)) {
+   if (ps3v->Chipset == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(ps3v->Chipset) ||
+       S3_ViRGE_MX_SERIES(ps3v->Chipset) || S3_TRIO_3D_SERIES(ps3v->Chipset)) {
       VGAOUT8(vgaCRIndex, 0x90);
       save->CR90 = VGAIN8(vgaCRReg);
       VGAOUT8(vgaCRIndex, 0x91);
@@ -2109,7 +2109,7 @@ S3VWriteMode (ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, S3VRegPtr restore)
       VGAOUT8(vgaCRReg, restore->CR93);
    }
    if (ps3v->Chipset == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(ps3v->Chipset) ||
-       S3_ViRGE_MX_SERIES(ps3v->Chipset)) {
+       S3_ViRGE_MX_SERIES(ps3v->Chipset) || S3_TRIO_3D_SERIES(ps3v->Chipset)) {
       VGAOUT8(vgaCRIndex, 0x90);
       VGAOUT8(vgaCRReg, restore->CR90);
       VGAOUT8(vgaCRIndex, 0x91);
@@ -2267,7 +2267,6 @@ S3VWriteMode (ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr, S3VRegPtr restore)
      VGAOUT8(vgaCRReg, restore->CR3A);
    else
      VGAOUT8(vgaCRReg, cr3a);
-
 
    if (xf86GetVerbosity() > 1) {
       xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, VERBLEV, 

@@ -54,9 +54,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xterm/xterm.man,v 3.93 2003/05/19 00:47:34 dickey Exp $
+.\" $XFree86: xc/programs/xterm/xterm.man,v 3.90 2003/02/25 23:36:56 dickey Exp $
 .\"
-.\" updated by Thomas E. Dickey for XFree86, July 1996 - May 2003.
+.\" updated by Thomas E. Dickey for XFree86, July 1996 - August 2002.
 .TH XTERM 1 __vendorversion__
 .SH NAME
 xterm \- terminal emulator for X
@@ -98,17 +98,12 @@ The VT220 emulation does not support soft fonts, it is otherwise complete.
 .IR Termcap (5)
 entries that work with
 .I xterm
-include
-an optional platform-specific entry,
-``xterm,'' ``vt102,'' ``vt100'' and ``ansi,'' and ``dumb.''
+include ``xterm,'' ``vt102,'' ``vt100'' and ``ansi,'' and
 .I xterm
 automatically searches the termcap file in this order for these entries and then
 sets the ``TERM'' and the ``TERMCAP'' environment variables.
 You may also use ``vt220,''  but must set the terminal emulation level
 with the \fBdecTerminalID\fP resource.
-(The ``TERMCAP'' environment variable is not set if \fIxterm\fP is linked
-against a terminfo library, since the requisite information is not provided
-by the termcap emulation of terminfo libraries).
 .PP
 Many of the special
 .I xterm
@@ -301,9 +296,6 @@ Othrwise, they have a column width of 1.
 This may be useful for some legacy CJK text
 terminal-based programs assuming box drawings and others to have a column
 width of 2.
-It also has to be turned on when you specify a truetype
-CJK double-width (bi-width/monospace) font either with \fB\-fa\fP at
-the command line or \fBfaceName\fP resource.
 The default is ``false''
 .TP 8
 .B "+cjk_width"
@@ -388,9 +380,6 @@ See also the discussion of \fBboldFont\fP and \fBboldMode\fP resources.
 This option sets the pattern for fonts selected from the FreeType
 library if support for that library was compiled into xterm.
 This corresponds to the \fBfaceName\fP resource.
-When a CJK
-double-width font is specified, you also need to turn
-on the \fBcjkWidth\fP resource.
 .TP 8
 .BI \-fbb
 This option indicates that \fIxterm\fP should compare normal and bold fonts bounding
@@ -502,14 +491,6 @@ feature on or off.
 .B +j
 This option indicates that \fIxterm\fP should not do jump scrolling.
 .TP 8
-.B \-k8
-This option sets the \fBallowC1Printable\fP resource.
-When \fBallowC1Printable\fP is set, \fIxterm\fP overrides the mapping
-of C1 control characters (code 128-159) to treat them as printable.
-.TP 8
-.B +k8
-This option resets the \fBallowC1Printable\fP resource.
-.TP 8
 .B \-l
 Turn logging on.
 Normally logging is not supported, due to security concerns.
@@ -565,30 +546,13 @@ This option indicates that the shell that is started in the \fIxterm\fP window
 will be a login shell (i.e., the first character of argv[0] will be a dash,
 indicating to the shell that it should read the user's .login or .profile).
 .sp
-The \fB\-ls\fP flag and the \fBloginShell\fP resource
-are ignored if \fB\-e\fP is also given,
-because \fIxterm\fP does not know how to make the shell
-start the given command after whatever it does when it is a login
-shell \- the user's shell of choice need not be a Bourne shell after all.
-Also, \fIxterm\ \-e\fP is supposed to provide a consistent
-functionality for other applications that need to start text-mode
-programs in a window, and if \fBloginShell\fP were not ignored, the
-result of ~/.profile might interfere with that.
-.IP
-If you do want the effect of \fB\-ls\fP and \fB\-a\fP simultaneously, you
-may get away with something like
-.RS 15
-xterm -e /bin/bash -l -c "my command here"
-.RE
-.IP
-Finally, \fB\-ls\fP is not completely ignored,
-because \fIxterm\ \-ls\ \-e\fP does write a \fI/etc/wtmp\fP entry
-(if configured to do so),
-whereas \fIxterm\ \-e\fP does not.
+Note that this is incompatible with \fB\-e\fP, since the \fIlogin\fP program
+does not provide a way to specify the command to run in the new shell.
+If you specify both, \fIxterm\fP uses \fB\-ls\fP.
 .TP 8
 .B +ls
 This option indicates that the shell that is started should not be a login
-shell (i.e., it will be a normal ``subshell'').
+shell (i.e. it will be a normal ``subshell'').
 .TP 8
 .B \-mb
 This option indicates that \fIxterm\fP should ring a margin bell when
@@ -750,13 +714,6 @@ This option indicates that \fIxterm\fP should start in Tektronix mode, rather
 than in VT102 mode.
 Switching between the two windows is done using the
 ``Options'' menus.
-.IR Termcap (5)
-entries that work with
-.I xterm
-``tek4014,'' ``tek4015,'' ``tek4012'', ``tek4013'' and ``tek4010,'' and ``dumb.''
-.I xterm
-automatically searches the termcap file in this order for these entries and then
-sets the ``TERM'' and the ``TERMCAP'' environment variables.
 .TP 8
 .B +t
 This option indicates that \fIxterm\fP should start in VT102 mode.
@@ -1015,14 +972,6 @@ See
 .BR mesg (1).
 The default is ``true''.
 .TP 8
-.B "ptyHandshake (\fPclass\fBPtyHandshake)
-If ``true'', \fIxterm\fP will perform handshaking during initialization
-to ensure that the parent and child processes update the \fButmp\fP
-and \fBstty\fP state.
-Platforms with newer pseudo-terminal interfaces do not require this feature;
-normally it is not configured.
-The default is ``true''.
-.TP 8
 .B "ptyInitialErase (\fPclass\fB PtyInitialErase)"
 If ``true'', \fIxterm\fP will use the pseudo-terminal's sense of the stty erase
 value.
@@ -1143,15 +1092,8 @@ Not all window managers
 necessarily support application icon windows.
 Some window managers
 will allow you to enter keystrokes into the active icon window.
-The default is ``false.''
-.TP 8
-.B "allowC1Printable (\fPclass\fB AllowC1Printable)"
-If true, overrides the mapping of C1 controls
-(codes 128-159) to make them be treated
-as if they were printable characters.
-Although this corresponds to no particular standard,
-some users insist it is a VT100.
-The default is ``false.''
+The
+default is ``false.''
 .TP 8
 .B "allowSendEvents (\fPclass\fB AllowSendEvents)"
 Specifies whether or not synthetic key and button events (generated using
@@ -1242,12 +1184,6 @@ It attempts to match a bold font for the other font selections
 (\fBfont1\fP through \fBfont6\fP).
 If the normal and bold fonts are distinct, this resource has no effect.
 .TP 8
-.B "brokenLinuxOSC (\fPclass\fB BrokenLinuxOSC)"
-If true, \fIxterm\fP applies a workaround to ignore malformed control
-sequences that a Linux script might send.
-Compare the palette control sequences documented in \fIconsole_codes\fR
-with ECMA-48.
-.TP 8
 .B "brokenSelections (\fPclass\fB BrokenSelections)"
 If true, \fIxterm\fP in 8-bit mode will interpret
 .B STRING
@@ -1258,12 +1194,6 @@ selections carry ISO-8859-1 encoded text.
 Setting this resource to
 ``true'' violates the ICCCM; it may, however, be useful for interacting
 with some broken X clients.
-The default is ``false.''
-.TP 8
-.B "brokenStringTerm (\fPclass\fB BrokenStringTerm)"
-provides a work-around for some ISDN routers which start an application
-control string without completing it.
-Set this to ``true'' if \fIxterm\fP appears to freeze when connecting.
 The default is ``false.''
 .TP 8
 .B "c132 (\fPclass\fB C132)"
@@ -1311,7 +1241,7 @@ should be worked around.
 See the \fB\-cu\fP option for details.
 The default is ``false.''
 .TP 8
-.B "colorAttrMode (\fPclass\fB ColorAttrMode)"
+.B "colorAttrMode (\fPclass\fB ColorMode)"
 Specifies whether ``colorBD'', ``colorBL'', ``colorUL'', and
 ``colorRV'' should override ANSI colors.
 If not, these are displayed only when no ANSI colors
@@ -1323,23 +1253,23 @@ Specifies whether or not recognition of ANSI (ISO 6429)
 color change escape sequences should be enabled.
 The default is ``true.''
 .TP 8
-.B "colorBDMode (\fPclass\fB ColorAttrMode)"
+.B "colorBDMode (\fPclass\fB ColorMode)"
 Specifies whether characters with the bold attribute should be displayed in
 color or as bold characters.
 Note that setting \fBcolorMode\fR off disables
 all colors, including bold.
 .TP 8
-.B "colorBLMode (\fPclass\fB ColorAttrMode)"
+.B "colorBLMode (\fPclass\fB ColorMode)"
 Specifies whether characters with the blink attribute should be displayed in
 color.
 Note that setting \fBcolorMode\fR off disables all colors, including this.
 .TP 8
-.B "colorRVMode (\fPclass\fB ColorAttrMode)"
+.B "colorRVMode (\fPclass\fB ColorMode)"
 Specifies whether characters with the reverse attribute should be displayed in
 color.
 Note that setting \fBcolorMode\fR off disables all colors, including this.
 .TP 8
-.B "colorULMode (\fPclass\fB ColorAttrMode)"
+.B "colorULMode (\fPclass\fB ColorMode)"
 Specifies whether characters with the underline attribute should be displayed
 in color or as underlined characters.
 Note that setting \fBcolorMode\fR off
@@ -1906,7 +1836,7 @@ The default is ``0'' (off).
 Any other value will turn on UTF-8 mode.
 See the \fBlocale\fR resource for non-UTF-8 locales.
 .TP 8
-.B "veryBoldColors (\fPclass\fB VeryBoldColors)"
+.B "veryBoldColors (\fPclass\fB ColorMode)"
 Specifies whether to combine video attributes with colors specified by
 \fBcolorBD\fR, \fBcolorBL\fR and \fBcolorUL\fR.
 The resource value is the sum of values for each attribute:
@@ -3130,7 +3060,7 @@ is used for miscellaneous errors, usually accompanied by a specific message,
 11
 ERROR_FIONBIO
 .br
-main: ioctl() failed on FIONBIO
+main: ioctl() failed on FIONBIO 
 .TP
 12
 ERROR_F_GETFL
@@ -3153,7 +3083,7 @@ ERROR_TIOCGETP
 spawn: ioctl() failed on TIOCGETP
 .TP
 17
-ERROR_PTSNAME
+ERROR_PTSNAME  
 .br
 spawn: ptsname() failed
 .TP
@@ -3163,22 +3093,22 @@ ERROR_OPPTSNAME
 spawn: open() failed on ptsname
 .TP
 19
-ERROR_PTEM
+ERROR_PTEM     
 .br
 spawn: ioctl() failed on I_PUSH/"ptem"
 .TP
 20
-ERROR_CONSEM
+ERROR_CONSEM   
 .br
 spawn: ioctl() failed on I_PUSH/"consem"
 .TP
 21
-ERROR_LDTERM
+ERROR_LDTERM   
 .br
 spawn: ioctl() failed on I_PUSH/"ldterm"
 .TP
 22
-ERROR_TTCOMPAT
+ERROR_TTCOMPAT 
 .br
 spawn: ioctl() failed on I_PUSH/"ttcompat"
 .TP

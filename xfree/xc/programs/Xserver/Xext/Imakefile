@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:47:55 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/Xext/Imakefile,v 3.42 2002/03/06 21:12:32 mvojkovi Exp $
+XCOMM $XFree86: xc/programs/Xserver/Xext/Imakefile,v 3.42.2.1 2003/05/24 22:22:05 sven Exp $
 
 #include <Server.tmpl>
 
@@ -170,3 +170,4 @@ DependSubdirs($(SUBDIRS))
 
 InstallDriverSDKNonExecFile(dgaproc.h,$(DRIVERSDKINCLUDEDIR))
 InstallDriverSDKNonExecFile(xvdix.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(xvmcext.h,$(DRIVERSDKINCLUDEDIR))

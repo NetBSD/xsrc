@@ -1,9 +1,9 @@
 dnl
-dnl $XFree86: xc/programs/xterm/aclocal.m4,v 3.47 2003/05/21 22:59:11 dickey Exp $
+dnl $XFree86: xc/programs/xterm/aclocal.m4,v 3.44 2002/12/27 21:05:20 dickey Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl
-dnl Copyright 1997-2002,2003 by Thomas E. Dickey
+dnl Copyright 1997-2001,2002 by Thomas E. Dickey
 dnl
 dnl                         All Rights Reserved
 dnl
@@ -26,8 +26,6 @@ dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl ---------------------------------------------------------------------------
 dnl ---------------------------------------------------------------------------
-dnl CF_ADD_CFLAGS version: 5 updated: 2002/12/01 00:12:15
-dnl -------------
 dnl Copy non-preprocessor flags to $CFLAGS, preprocessor flags to $CPPFLAGS
 dnl The second parameter if given makes this macro verbose.
 AC_DEFUN([CF_ADD_CFLAGS],
@@ -64,8 +62,6 @@ fi
 
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ANSI_CC_CHECK version: 9 updated: 2001/12/30 17:53:34
-dnl ----------------
 dnl This is adapted from the macros 'fp_PROG_CC_STDC' and 'fp_C_PROTOTYPES'
 dnl in the sharutils 4.2 distribution.
 AC_DEFUN([CF_ANSI_CC_CHECK],
@@ -116,20 +112,14 @@ fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ARG_DISABLE version: 3 updated: 1999/03/30 17:24:31
-dnl --------------
 dnl Allow user to disable a normally-on option.
 AC_DEFUN([CF_ARG_DISABLE],
 [CF_ARG_OPTION($1,[$2],[$3],[$4],yes)])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ARG_ENABLE version: 3 updated: 1999/03/30 17:24:31
-dnl -------------
 dnl Allow user to enable a normally-off option.
 AC_DEFUN([CF_ARG_ENABLE],
 [CF_ARG_OPTION($1,[$2],[$3],[$4],no)])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ARG_OPTION version: 3 updated: 1997/10/18 14:42:41
-dnl -------------
 dnl Restricted form of AC_ARG_ENABLE that ensures user doesn't give bogus
 dnl values.
 dnl
@@ -151,8 +141,6 @@ ifelse($3,,[    :]dnl
 ])dnl
   ])])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CHECK_CACHE version: 7 updated: 2001/12/19 00:50:10
-dnl --------------
 dnl Check if we're accidentally using a cache from a different machine.
 dnl Derive the system name, as a check for reusing the autoconf cache.
 dnl
@@ -183,8 +171,6 @@ if test ".$system_name" != ".$cf_cv_system_name" ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CHECK_CFLAGS version: 2 updated: 2001/12/30 19:09:58
-dnl ---------------
 dnl Conditionally add to $CFLAGS and $CPPFLAGS values which are derived from
 dnl a build-configuration such as imake.  These have the pitfall that they
 dnl often contain compiler-specific options which we cannot use, mixed with
@@ -205,8 +191,6 @@ AC_TRY_LINK([#include <stdio.h>],[printf("Hello world");],,
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CHECK_ERRNO version: 9 updated: 2001/12/30 18:03:23
-dnl --------------
 dnl Check for data that is usually declared in <stdio.h> or <errno.h>, e.g.,
 dnl the 'errno' variable.  Define a DECL_xxx symbol if we must declare it
 dnl ourselves.
@@ -236,8 +220,6 @@ fi
 CF_CHECK_EXTERN_DATA($1,int)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CHECK_EXTERN_DATA version: 3 updated: 2001/12/30 18:03:23
-dnl --------------------
 dnl Check for existence of external data in the current set of libraries.  If
 dnl we can modify it, it's real enough.
 dnl $1 = the name to check
@@ -261,13 +243,10 @@ fi
 
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_DISABLE_ECHO version: 10 updated: 2003/04/17 22:27:11
-dnl ---------------
 dnl You can always use "make -n" to see the actual options, but it's hard to
 dnl pick out/analyze warning messages when the compile-line is long.
 dnl
 dnl Sets:
-dnl	ECHO_LT - symbol to control if libtool is verbose
 dnl	ECHO_LD - symbol to prefix "cc -o" lines
 dnl	RULE_CC - symbol to put before implicit "cc -c" lines (e.g., .c.o)
 dnl	SHOW_CC - symbol to put before explicit "cc -c" lines
@@ -278,36 +257,29 @@ AC_MSG_CHECKING(if you want to see long compiling messages)
 CF_ARG_DISABLE(echo,
 	[  --disable-echo          display "compiling" commands],
 	[
-    ECHO_LT='--silent'
     ECHO_LD='@echo linking [$]@;'
     RULE_CC='	@echo compiling [$]<'
     SHOW_CC='	@echo compiling [$]@'
     ECHO_CC='@'
 ],[
-    ECHO_LT=''
     ECHO_LD=''
     RULE_CC='# compiling'
     SHOW_CC='# compiling'
     ECHO_CC=''
 ])
 AC_MSG_RESULT($enableval)
-AC_SUBST(ECHO_LT)
 AC_SUBST(ECHO_LD)
 AC_SUBST(RULE_CC)
 AC_SUBST(SHOW_CC)
 AC_SUBST(ECHO_CC)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_ERRNO version: 5 updated: 1997/11/30 12:44:39
-dnl --------
 dnl Check if 'errno' is declared in <errno.h>
 AC_DEFUN([CF_ERRNO],
 [
 CF_CHECK_ERRNO(errno)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_FUNC_MEMMOVE version: 5 updated: 2000/08/12 23:18:52
-dnl ---------------
 dnl Check for memmove, or a bcopy that can handle overlapping copy.  If neither
 dnl is found, add our own version of memmove to the list of objects.
 AC_DEFUN([CF_FUNC_MEMMOVE],
@@ -337,8 +309,6 @@ int main() {
 	fi
 ])])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_FUNC_TGETENT version: 7 updated: 2002/12/27 21:05:20
-dnl ---------------
 dnl Check for tgetent function in termcap library.  If we cannot find this,
 dnl we'll use the $LINES and $COLUMNS environment variables to pass screen
 dnl size information to subprocesses.  (We cannot use terminfo's compatibility
@@ -425,8 +395,6 @@ else
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_ATTRIBUTES version: 9 updated: 2002/12/21 19:25:52
-dnl -----------------
 dnl Test for availability of useful gcc __attribute__ directives to quiet
 dnl compiler warnings.  Though useful, not all are supported -- and contrary
 dnl to documentation, unrecognized directives cause older compilers to barf.
@@ -491,6 +459,8 @@ EOF
 		if AC_TRY_EVAL(ac_compile); then
 			test -n "$verbose" && AC_MSG_RESULT(... $cf_attribute)
 			cat conftest.h >>confdefs.h
+#		else
+#			sed -e 's/__attr.*/\/*nothing*\//' conftest.h >>confdefs.h
 		fi
 	done
 else
@@ -500,8 +470,6 @@ rm -rf conftest*
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_WARNINGS version: 13 updated: 2003/05/19 23:35:40
-dnl ---------------
 dnl Check if the compiler supports useful warning options.  There's a few that
 dnl we don't use, simply because they're too noisy:
 dnl
@@ -541,7 +509,7 @@ EOF
 		if AC_TRY_EVAL(ac_compile); then
 			test -n "$verbose" && AC_MSG_RESULT(... -$cf_opt)
 			EXTRA_CFLAGS="$EXTRA_CFLAGS -$cf_opt"
-			test "$cf_opt" = Wcast-qual && CPPFLAGS="$CPPFLAGS -DXTSTRINGDEFINES"
+			test "$cf_opt" = Wcast-qual && EXTRA_CFLAGS="$EXTRA_CFLAGS -DXTSTRINGDEFINES"
 		fi
 	done
 	rm -f conftest*
@@ -550,8 +518,6 @@ fi
 AC_SUBST(EXTRA_CFLAGS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GNU_SOURCE version: 3 updated: 2000/10/29 23:30:53
-dnl -------------
 dnl Check if we must define _GNU_SOURCE to get a reasonable value for
 dnl _XOPEN_SOURCE, upon which many POSIX definitions depend.  This is a defect
 dnl (or misfeature) of glibc2, which breaks portability of many applications,
@@ -580,22 +546,14 @@ make an error
 test "$cf_cv_gnu_source" = yes && CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_HELP_MESSAGE version: 3 updated: 1998/01/14 10:56:23
-dnl ---------------
 dnl Insert text into the help-message, for readability, from AC_ARG_WITH.
 AC_DEFUN([CF_HELP_MESSAGE],
 [AC_DIVERT_HELP([$1])dnl
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_IMAKE_CFLAGS version: 14 updated: 2003/04/12 15:42:00
-dnl ---------------
 dnl Use imake to obtain compiler flags.  We could, in principle, write tests to
 dnl get these, but if imake is properly configured there is no point in doing
 dnl this.
-dnl
-dnl Parameters (used in constructing a sample Imakefile):
-dnl	$1 = optional value to append to $IMAKE_CFLAGS
-dnl	$2 = optional value to append to $IMAKE_LOADFLAGS
 AC_DEFUN([CF_IMAKE_CFLAGS],
 [
 AC_PATH_PROGS(IMAKE,xmkmf imake)
@@ -698,8 +656,6 @@ AC_SUBST(IMAKE_CFLAGS)
 AC_SUBST(IMAKE_LOADFLAGS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_INPUT_METHOD version: 3 updated: 2000/04/11 23:46:57
-dnl ---------------
 dnl Check if the X libraries support input-method
 AC_DEFUN([CF_INPUT_METHOD],
 [
@@ -729,8 +685,6 @@ AC_TRY_LINK([
 [cf_cv_input_method=no])])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_LASTLOG version: 4 updated: 2002/10/27 23:21:42
-dnl ----------
 dnl Check for header defining _PATH_LASTLOG, or failing that, see if the lastlog
 dnl file exists.
 AC_DEFUN([CF_LASTLOG],
@@ -756,8 +710,6 @@ AC_TRY_COMPILE([
 test $cf_cv_path_lastlog != no && AC_DEFINE(USE_LASTLOG)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_POSIX_WAIT version: 2 updated: 2000/05/29 16:16:04
-dnl -------------
 dnl Check for POSIX wait support
 AC_DEFUN([CF_POSIX_WAIT],
 [
@@ -781,32 +733,6 @@ AC_TRY_LINK([
 test "$cf_cv_posix_wait" = yes && AC_DEFINE(USE_POSIX_WAIT)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PROG_EXT version: 8 updated: 2002/12/21 19:25:52
-dnl -----------
-dnl Compute $PROG_EXT, used for non-Unix ports, such as OS/2 EMX.
-AC_DEFUN([CF_PROG_EXT],
-[
-AC_REQUIRE([CF_CHECK_CACHE])
-PROG_EXT=
-case $cf_cv_system_name in
-os2*)
-    # We make sure -Zexe is not used -- it would interfere with @PROG_EXT@
-    CFLAGS="$CFLAGS -Zmt"
-    CPPFLAGS="$CPPFLAGS -D__ST_MT_ERRNO__"
-    CXXFLAGS="$CXXFLAGS -Zmt"
-    LDFLAGS=`echo "$LDFLAGS -Zmt -Zcrtdll" | sed -e "s%-Zexe%%g"`
-    PROG_EXT=".exe"
-    ;;
-cygwin*)
-    PROG_EXT=".exe"
-    ;;
-esac
-AC_SUBST(PROG_EXT)
-test -n "$PROG_EXT" && AC_DEFINE_UNQUOTED(PROG_EXT,"$PROG_EXT")
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl CF_SIZE_T version: 4 updated: 2000/01/22 00:19:54
-dnl ---------
 dnl	On both Ultrix and CLIX, I find size_t defined in <stdio.h>
 AC_DEFUN([CF_SIZE_T],
 [
@@ -827,8 +753,6 @@ AC_MSG_RESULT($cf_cv_type_size_t)
 test $cf_cv_type_size_t = no && AC_DEFINE(size_t, unsigned)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_SVR4 version: 3 updated: 2000/05/31 10:16:52
-dnl -------
 dnl Check if this is an SVR4 system.  We need the definition for xterm
 AC_DEFUN([CF_SVR4],
 [
@@ -856,8 +780,6 @@ static struct termio d_tio;
 test "$cf_cv_svr4" = yes && AC_DEFINE(SVR4)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_SYSV version: 2 updated: 2000/05/29 16:16:04
-dnl -------
 dnl Check if this is a SYSV platform
 AC_DEFUN([CF_SYSV],
 [
@@ -887,8 +809,6 @@ static struct termio d_tio;
 test "$cf_cv_sysv" = yes && AC_DEFINE(SYSV)
 ])dn
 dnl ---------------------------------------------------------------------------
-dnl CF_SYSV_UTMP version: 5 updated: 2001/12/27 12:55:07
-dnl ------------
 dnl Check if this is a SYSV flavor of UTMP
 AC_DEFUN([CF_SYSV_UTMP],
 [
@@ -908,8 +828,6 @@ struct $cf_cv_have_utmp x;
 test $cf_cv_sysv_utmp = yes && AC_DEFINE(USE_SYSV_UTMP)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_TERMIO_C_ISPEED version: 2 updated: 2000/05/29 16:16:04
-dnl ------------------
 dnl Check for SGI's broken redefinition of baud rates introduced in IRIX 6.5
 dnl (there doesn't appear to be a useful predefined symbol).
 AC_DEFUN([CF_TERMIO_C_ISPEED],
@@ -927,8 +845,6 @@ foo.c_ospeed = B9600;
 test "$cf_cv_termio_c_ispeed" = yes && AC_DEFINE(HAVE_TERMIO_C_ISPEED)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_TTY_GROUP version: 5 updated: 2003/03/19 23:52:35
-dnl ------------
 dnl Check if the system has a tty-group defined.  This is used in xterm when
 dnl setting pty ownership.
 AC_DEFUN([CF_TTY_GROUP],
@@ -972,10 +888,7 @@ osf*) #(vi
 	cf_cv_tty_group_name="terminal"
 	;;
 *)
-	cf_cv_tty_group_name="unknown"
-	if ( egrep '^tty:' /etc/group 2>/dev/null 1>/dev/null ) then
-		cf_cv_tty_group_name="tty"
-	fi
+	cf_cv_tty_group_name="tty"
 	;;
 esac
 fi
@@ -983,14 +896,7 @@ fi
 
 AC_DEFINE_UNQUOTED(TTY_GROUP_NAME,"$cf_cv_tty_group_name")
 
-# This is only a double-check that the group-name we obtained above really
-# does apply to the device.  We cannot perform this test if we are in batch
-# mode, or if we are cross-compiling.
-
-AC_CACHE_CHECK(if we may use $cf_cv_tty_group_name group,cf_cv_tty_group,[
-cf_tty_name=`tty`
-if test "$cf_tty_name" != "not a tty"
-then
+AC_CACHE_CHECK(if we may use tty group,cf_cv_tty_group,[
 AC_TRY_RUN([
 #include <unistd.h>
 #include <sys/types.h>
@@ -1016,17 +922,10 @@ int main()
 	[cf_cv_tty_group=yes],
 	[cf_cv_tty_group=no],
 	[cf_cv_tty_group=unknown])
-elif test "$cross_compiling" = yes; then
-	cf_cv_tty_group=unknown
-else
-	cf_cv_tty_group=yes
-fi
 ])
 test $cf_cv_tty_group = yes && AC_DEFINE(USE_TTY_GROUP)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_TYPE_FD_SET version: 3 updated: 1999/10/16 13:49:00
-dnl --------------
 dnl Check for the declaration of fd_set.  Some platforms declare it in
 dnl <sys/types.h>, and some in <sys/select.h>, which requires <sys/types.h>.
 dnl Finally, if we are using this for an X application, Xpoll.h may include
@@ -1058,8 +957,6 @@ if test $cf_cv_type_fd_set = sys/select.h ; then
 fi
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_UPPER version: 5 updated: 2001/01/29 23:40:59
-dnl --------
 dnl Make an uppercase version of a variable
 dnl $1=uppercase($2)
 AC_DEFUN([CF_UPPER],
@@ -1067,8 +964,6 @@ AC_DEFUN([CF_UPPER],
 $1=`echo "$2" | sed y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%`
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTEMPTER version: 2 updated: 2000/01/22 22:50:59
-dnl -----------
 dnl Try to link with utempter library
 AC_DEFUN([CF_UTEMPTER],
 [
@@ -1091,8 +986,6 @@ if test "$cf_cv_have_utempter" = yes ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP version: 8 updated: 2002/10/27 23:21:42
-dnl -------
 dnl Check for UTMP/UTMPX headers
 AC_DEFUN([CF_UTMP],
 [
@@ -1138,8 +1031,6 @@ if test $cf_cv_have_utmp != no ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_HOST version: 6 updated: 2002/10/27 23:21:42
-dnl ---------------
 dnl Check if UTMP/UTMPX struct defines ut_host member
 AC_DEFUN([CF_UTMP_UT_HOST],
 [
@@ -1158,8 +1049,6 @@ test $cf_cv_have_utmp_ut_host != no && AC_DEFINE(HAVE_UTMP_UT_HOST)
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_NAME version: 3 updated: 2002/10/27 23:21:42
-dnl ---------------
 dnl Check if UTMP/UTMPX struct defines ut_name member
 AC_DEFUN([CF_UTMP_UT_NAME],
 [
@@ -1195,8 +1084,6 @@ esac
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_SESSION version: 4 updated: 2002/10/27 23:21:42
-dnl ------------------
 dnl Check if UTMP/UTMPX struct defines ut_session member
 AC_DEFUN([CF_UTMP_UT_SESSION],
 [
@@ -1215,8 +1102,6 @@ fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_XSTATUS version: 3 updated: 2001/12/27 12:55:07
-dnl ------------------
 dnl Check for known variants on the UTMP/UTMPX struct's exit-status as reported
 dnl by various people:
 dnl
@@ -1253,8 +1138,6 @@ fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_UTMP_UT_XTIME version: 6 updated: 2002/10/27 23:21:42
-dnl ----------------
 dnl Check if UTMP/UTMPX struct defines ut_xtime member
 AC_DEFUN([CF_UTMP_UT_XTIME],
 [
@@ -1282,81 +1165,11 @@ fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_VERBOSE version: 2 updated: 1997/09/05 10:45:14
-dnl ----------
 dnl Use AC_VERBOSE w/o the warnings
 AC_DEFUN([CF_VERBOSE],
 [test -n "$verbose" && echo "	$1" 1>&AC_FD_MSG
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_WITH_IMAKE_CFLAGS version: 2 updated: 2003/04/13 20:09:42
-dnl --------------------
-dnl xterm and similar programs build more readily when propped up with imake's
-dnl hand-tuned definitions.  If we do not use imake, provide fallbacks for the
-dnl most common definitions that we're not likely to do by autoconf tests.
-AC_DEFUN([CF_WITH_IMAKE_CFLAGS],[
-AC_MSG_CHECKING(if we should use imake to help)
-CF_ARG_DISABLE(imake,
-	[  --disable-imake         disable use of imake for definitions],
-	[enable_imake=no],
-	[enable_imake=yes])
-AC_MSG_RESULT($enable_imake)
-if test "$enable_imake" = yes ; then
-	CF_IMAKE_CFLAGS(ifelse($1,,,$1))
-	CF_ADD_CFLAGS($IMAKE_CFLAGS)
-else
-	IMAKE_CFLAGS=
-	IMAKE_LOADFLAGS=
-	CF_VERBOSE(make fallback definitions)
-
-	UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
-	case $UNAME_RELEASE in
-	[[0-9]]*.[[0-9]]**)
-		OSMAJORVERSION=`echo "$UNAME_RELEASE" |sed -e 's/\..*//'`
-		OSMINORVERSION=`echo "$UNAME_RELEASE" |sed -e 's/^[[^.]]*\.//' -e 's/\..*//'`
-		IMAKE_CFLAGS="-DOSMAJORVERSION=$OSMAJORVERSION -DOSMINORVERSION=$OSMINORVERSION $IMAKE_CFLAGS"
-		;;
-	esac
-
-	# FUNCPROTO is standard with X11R6, but XFree86 drops it, leaving some
-	# fallback/fragments for NeedPrototypes, etc.
-	IMAKE_CFLAGS="-DFUNCPROTO=15 $IMAKE_CFLAGS"
-
-	# If this is not set properly, Xaw's scrollbars will not work
-	case `$ac_config_guess` in
-	*freebsd*|*gnu*|*irix5*|*irix6*|*linux-gnu*|*netbsd*|*openbsd*)
-		IMAKE_CFLAGS="-DNARROWPROTO=1 $IMAKE_CFLAGS"
-	esac
-
-	CF_ADD_CFLAGS($IMAKE_CFLAGS)
-
-	AC_SUBST(IMAKE_CFLAGS)
-	AC_SUBST(IMAKE_LOADFLAGS)
-fi
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl CF_XKB_BELL_EXT version: 2 updated: 2003/05/18 17:28:57
-dnl ---------------
-dnl Check for XKB bell extension
-AC_DEFUN([CF_XKB_BELL_EXT],[
-AC_CACHE_CHECK(for XKB Bell extension, cf_cv_xkb_bell_ext,[
-AC_TRY_LINK([
-#include <X11/XKBlib.h>		/* has the prototype */
-#include <X11/extensions/XKBbells.h>	/* has the XkbBI_xxx definitions */
-],[
-int x = XkbBI_Info
-	|XkbBI_MinorError
-	|XkbBI_MajorError
-	|XkbBI_TerminalBell
-	|XkbBI_MarginBell;
-],[cf_cv_xkb_bell_ext=yes],[cf_cv_xkb_bell_ext=no])
-])
-
-test "$cf_cv_xkb_bell_ext" = yes && AC_DEFINE(HAVE_XKB_BELL_EXT)
-])
-dnl ---------------------------------------------------------------------------
-dnl CF_X_ATHENA version: 11 updated: 2002/12/26 20:56:10
-dnl -----------
 dnl Check for Xaw (Athena) libraries
 dnl
 AC_DEFUN([CF_X_ATHENA],
@@ -1371,9 +1184,6 @@ AC_ARG_WITH(neXtaw,
 	[  --with-neXtaw           link with neXT Athena library],
 	[cf_x_athena=neXtaw])
 
-AC_ARG_WITH(XawPlus,
-	[  --with-XawPlus          link with Athena-Plus library],
-	[cf_x_athena=XawPlus])
 
 AC_CHECK_LIB(Xext,XextCreateExtension,
 	[LIBS="-lXext $LIBS"])
@@ -1384,8 +1194,6 @@ CF_X_ATHENA_CPPFLAGS($cf_x_athena)
 CF_X_ATHENA_LIBS($cf_x_athena)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_X_ATHENA_CPPFLAGS version: 2 updated: 2002/10/09 20:00:37
-dnl --------------------
 dnl Normally invoked by CF_X_ATHENA, with $1 set to the appropriate flavor of
 dnl the Athena widgets, e.g., Xaw, Xaw3d, neXtaw.
 AC_DEFUN([CF_X_ATHENA_CPPFLAGS],
@@ -1431,8 +1239,6 @@ elif test "$cf_x_athena_include" != default ; then
 fi
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_X_ATHENA_LIBS version: 3 updated: 2003/02/16 15:24:54
-dnl ----------------
 dnl Normally invoked by CF_X_ATHENA, with $1 set to the appropriate flavor of
 dnl the Athena widgets, e.g., Xaw, Xaw3d, neXtaw.
 AC_DEFUN([CF_X_ATHENA_LIBS],
@@ -1461,15 +1267,13 @@ do
 				LIBS="$cf_lib $LIBS"
 				AC_MSG_CHECKING(for $cf_test in $cf_lib)
 			fi
-			cf_SAVE="$LIBS"
-			LIBS="$X_PRE_LIBS $LIBS $X_EXTRA_LIBS"
 			AC_TRY_LINK([],[$cf_test()],
 				[cf_result=yes],
-				[cf_result=no])
+				[cf_result=no],
+				[$X_PRE_LIBS $LIBS $X_EXTRA_LIBS])
 			AC_MSG_RESULT($cf_result)
 			if test "$cf_result" = yes ; then
 				cf_x_athena_lib="$cf_lib"
-				LIBS="$cf_SAVE"
 				break
 			else
 				LIBS="$cf_save"
@@ -1487,8 +1291,6 @@ CF_UPPER(cf_x_athena_LIBS,HAVE_LIB_$cf_x_athena)
 AC_DEFINE_UNQUOTED($cf_x_athena_LIBS)
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_X_FREETYPE version: 3 updated: 2001/04/28 13:51:55
-dnl -------------
 dnl Check for X freetype libraries (XFree86 4.x)
 AC_DEFUN([CF_X_FREETYPE],
 [
@@ -1514,8 +1316,6 @@ else
 fi
 ])
 dnl ---------------------------------------------------------------------------
-dnl CF_X_TOOLKIT version: 9 updated: 2001/12/30 19:09:58
-dnl ------------
 dnl Check for X Toolkit libraries
 dnl
 AC_DEFUN([CF_X_TOOLKIT],

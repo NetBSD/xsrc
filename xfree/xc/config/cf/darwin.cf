@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/darwin.cf,v 1.34 2002/12/04 04:40:15 torrey Exp $
+XCOMM platform:  $XFree86: xc/config/cf/darwin.cf,v 1.34.2.1 2003/09/17 05:58:15 herrb Exp $
 
 /* Darwin / Mac OS X configuration by John Carmack <johnc@idsoftware.com> */
 
@@ -31,6 +31,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasShadowPasswd         NO
 #define HasUsableFileMmap       YES
 #define HasZlib                 YES
+#define HasArc4Random		YES
 #ifndef HasShm
 # define HasShm                 YES
 #endif

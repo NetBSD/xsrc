@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_driver.c,v 1.27 2003/02/14 17:12:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_driver.c,v 1.27.2.2 2003/10/21 02:22:38 dawes Exp $ */
 /**************************************************************************
 
 Copyright 2001 VA Linux Systems Inc., Fremont, California.
@@ -43,7 +43,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors: Jeff Hartmann <jhartmann@valinux.com>
  *          Abraham van der Merwe <abraham@2d3d.co.za>
- *          David Dawes <dawes@tungstengraphics.com>
+ *          David Dawes <dawes@xfree86.org>
  */
 
 /*
@@ -1562,7 +1562,7 @@ I830BIOSPreInit(ScrnInfoPtr pScrn, int flags)
 		    "VideoRam reduced to %d kByte (limited to aperture size)\n",
 		    pScrn->videoRam);
    }
-      
+
    if (mem > 0) {
       /*
        * If the reserved (BIOS accessible) memory is less than the desired
@@ -1589,13 +1589,11 @@ I830BIOSPreInit(ScrnInfoPtr pScrn, int flags)
       else 
 	 pI830->newBIOSMemSize =
 			KB(ROUND_DOWN_TO(pScrn->videoRam - reserve, 64));
-
       if (pI830->vbeInfo->TotalMemory * 64 < pI830->newBIOSMemSize / 1024) {
 
 	 xf86DrvMsg(pScrn->scrnIndex, X_INFO,
 		    "Will attempt to tell the BIOS that there is "
 		    "%d kB VideoRAM\n", pI830->newBIOSMemSize / 1024);
-
 	 if (SaveBIOSMemSize(pScrn)) {
 	    pI830->overrideBIOSMemSize = TRUE;
 	    SetBIOSMemSize(pScrn, pI830->newBIOSMemSize);
@@ -1677,8 +1675,8 @@ I830BIOSPreInit(ScrnInfoPtr pScrn, int flags)
    else
       pI830->CursorNeedsPhysical = FALSE;
 
-   /* Force ring buffer to be in low memory for the 845G. */
-   if (IS_845G(pI830))
+   /* Force ring buffer to be in low memory for the 845G and later. */
+   if (IS_845G(pI830) || IS_I85X(pI830) || IS_I865G(pI830))
       pI830->NeedRingBufferLow = TRUE;
 
    /*
@@ -2238,16 +2236,17 @@ SaveHWState(ScrnInfoPtr pScrn)
 #endif
 
    pVesa = pI830->vesa;
-   /* This save/restore method doesn't work for 845G BIOS */
    /*
-    * XXX If it's fixed in production versions, this could be removed.
-    *
+    * This save/restore method doesn't work for 845G BIOS, or for some
+    * other platforms.  Enable it in all cases.
+    */
+   /*
     * KW: This may have been because of the behaviour I've found on my
     * board: The 'save' command actually modifies the interrupt
     * registers, turning off the irq & breaking the kernel module
     * behaviour.
     */
-   if (!I845G_VBE_WORKAROUND || !IS_845G(pI830)) {
+   if (!I845G_VBE_WORKAROUND) {
       CARD16 imr = INREG16(IMR);
       CARD16 ier = INREG16(IER);
       CARD16 hwstam = INREG16(HWSTAM);
@@ -3257,6 +3256,8 @@ I830BIOSLeaveVT(int scrnIndex, int flags)
    RestoreHWState(pScrn);
    RestoreBIOSMemSize(pScrn);
    I830UnbindGARTMemory(pScrn);
+   if (pI830->AccelInfoRec)
+      pI830->AccelInfoRec->NeedToSync = FALSE;
 }
 
 /*
@@ -3386,35 +3387,36 @@ I830BIOSSaveScreen(ScreenPtr pScreen, int mode)
 
    DPRINTF(PFX, "I830BIOSSaveScreen: %d, on is %s\n", mode, BOOLTOSTRING(on));
 
-   for (i = 0; i < MAX_DISPLAY_PIPES; i++) {
-      if (i == 0) {
-	 ctrl = DSPACNTR;
-	 base = DSPABASE;
-      } else {
-	 ctrl = DSPBCNTR;
-	 base = DSPBADDR;
+   if (pScrn->vtSema) {
+      for (i = 0; i < MAX_DISPLAY_PIPES; i++) {
+	 if (i == 0) {
+	    ctrl = DSPACNTR;
+	    base = DSPABASE;
+	 } else {
+	    ctrl = DSPBCNTR;
+	    base = DSPBADDR;
+	 }
+	 if (pI830->planeEnabled[i]) {
+	    temp = INREG(ctrl);
+	    if (on)
+	       temp |= DISPLAY_PLANE_ENABLE;
+	    else
+	       temp &= ~DISPLAY_PLANE_ENABLE;
+	    OUTREG(ctrl, temp);
+	    /* Flush changes */
+	    temp = INREG(base);
+	    OUTREG(base, temp);
+	 }
       }
-      if (pI830->planeEnabled[i]) {
-	 temp = INREG(ctrl);
+
+      if (pI830->CursorInfoRec && !pI830->SWCursor && pI830->cursorOn) {
 	 if (on)
-	    temp |= DISPLAY_PLANE_ENABLE;
+	    pI830->CursorInfoRec->ShowCursor(pScrn);
 	 else
-	    temp &= ~DISPLAY_PLANE_ENABLE;
-	 OUTREG(ctrl, temp);
-	 /* Flush changes */
-	 temp = INREG(base);
-	 OUTREG(base, temp);
+	    pI830->CursorInfoRec->HideCursor(pScrn);
+	 pI830->cursorOn = TRUE;
       }
    }
-
-   if (pI830->CursorInfoRec && !pI830->SWCursor && pI830->cursorOn) {
-      if (on)
-	 pI830->CursorInfoRec->ShowCursor(pScrn);
-      else
-	 pI830->CursorInfoRec->HideCursor(pScrn);
-      pI830->cursorOn = TRUE;
-   }
-
    return TRUE;
 }
 
@@ -3584,3 +3586,5 @@ I830InitpScrn(ScrnInfoPtr pScrn)
    pScrn->ValidMode = I830ValidMode;
    pScrn->PMEvent = I830PMEvent;
 }
+
+

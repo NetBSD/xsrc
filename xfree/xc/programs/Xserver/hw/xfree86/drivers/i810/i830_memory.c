@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_memory.c,v 1.6 2003/02/08 02:26:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i830_memory.c,v 1.6.2.1 2003/10/21 02:22:39 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -44,7 +44,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Keith Whitwell <keith@tungstengraphics.com>
- *   David Dawes <dawes@tungstengraphics.com>
+ *   David Dawes <dawes@xfree86.org>
  *
  */
 
@@ -1298,7 +1298,7 @@ I830SetupMemoryTiling(ScrnInfoPtr pScrn)
 		    "MakeTiles failed for the back buffer.\n");
       }
    }
-	
+
 }
 #endif /* XF86DRI */
 

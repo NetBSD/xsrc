@@ -6,7 +6,7 @@
    Pre-fb-write callbacks and RENDER support - Nolan Leake (nolan@vmware.com)
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/shadowfb/shadow.c,v 1.18 2003/02/21 15:06:19 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/shadowfb/shadow.c,v 1.18.2.1 2003/04/15 20:32:29 sven Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -461,18 +461,28 @@ ShadowComposite(
     ShadowScreenPtr pPriv = GET_SCREEN_PRIVATE(pScreen);
     PictureScreenPtr ps = GetPictureScreen(pScreen);
     BoxRec box;
+    BoxPtr extents;
     Bool boxNotEmpty = FALSE;
 
-    box.x1 = pDst->pDrawable->x + xDst;
-    box.y1 = pDst->pDrawable->y + yDst;
-    box.x2 = box.x1 + width;
-    box.y2 = box.y1 + height;
-
     if (pPriv->vtSema
-	&& pDst->pDrawable->type == DRAWABLE_WINDOW && BOX_NOT_EMPTY(box)) {
-        if (pPriv->preRefresh)
-            (*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
-        boxNotEmpty = TRUE;
+	&& pDst->pDrawable->type == DRAWABLE_WINDOW) {
+
+	box.x1 = pDst->pDrawable->x + xDst;
+	box.y1 = pDst->pDrawable->y + yDst;
+	box.x2 = box.x1 + width;
+	box.y2 = box.y1 + height;
+
+	extents = &pDst->pCompositeClip->extents;
+	if(box.x1 < extents->x1) box.x1 = extents->x1;
+	if(box.x2 > extents->x2) box.x2 = extents->x2;
+	if(box.y1 < extents->y1) box.y1 = extents->y1;
+	if(box.y2 > extents->y2) box.y2 = extents->y2;
+	
+	if (BOX_NOT_EMPTY(box)) {
+	    if (pPriv->preRefresh)
+		(*pPriv->preRefresh)(pPriv->pScrn, 1, &box);
+	    boxNotEmpty = TRUE;
+	}
     }
     
     ps->Composite = pPriv->Composite;

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.24 2002/11/26 01:16:09 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.24.2.1 2003/09/17 05:58:18 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -304,6 +304,47 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 	char		**argv;
 
 	Debug ("Verify %s ...\n", greet->name);
+
+#if defined(sun) && defined(SVR4)
+	/* Solaris: If CONSOLE is set to /dev/console in /etc/default/login, 
+	   then root can only login on system console */
+
+# define SOLARIS_LOGIN_DEFAULTS "/etc/default/login"
+
+	if (strcmp(greet->name, "root") == 0) {
+	    char *console = NULL, *tmp = NULL;
+	    FILE *fs;
+
+	    if ((fs= fopen(SOLARIS_LOGIN_DEFAULTS, "r")) != NULL)
+	    {   
+		char str[120];
+		while (!feof(fs))
+		{
+		    fgets(str, 120, fs);
+		    if(str[0] == '#' || strlen(str) < 8)
+			continue;
+		    if((tmp = strstr(str, "CONSOLE=")) != NULL)
+			console = strdup((tmp+8));
+		}
+		fclose(fs);
+                if ( console != NULL && 
+		  (strncmp(console, "/dev/console", 12) == 0) && 
+		  (strncmp(d->name,":0",2) != 0) )
+		{
+                        Debug("Not on system console\n");
+                        bzero(greet->password, strlen(greet->password));
+             		XFree(console); 
+	                return 0;
+                }
+		Xfree(console);	
+	    }
+	    else
+	    {
+		Debug("Could not open %s\n", SOLARIS_LOGIN_DEFAULTS);
+	    }	
+	}
+#endif    
+
 #ifndef USE_PAM
 	p = getpwnam (greet->name);
 	endpwent();

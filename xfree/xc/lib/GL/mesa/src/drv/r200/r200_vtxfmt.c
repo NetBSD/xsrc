@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_vtxfmt.c,v 1.3 2002/12/16 16:18:55 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r200/r200_vtxfmt.c,v 1.3.2.1 2003/05/06 23:21:45 daenzer Exp $ */
 /*
 Copyright (C) The Weather Channel, Inc.  2002.  All Rights Reserved.
 
@@ -38,6 +38,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r200_ioctl.h"
 #include "r200_tex.h"
 #include "r200_tcl.h"
+#include "r200_swtcl.h"
 #include "r200_vtxfmt.h"
 
 #include "api_noop.h"
@@ -59,7 +60,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 struct r200_vb vb;
 
-static void r200FlushVertices( GLcontext *, GLuint );
+static void r200VtxFmtFlushVertices( GLcontext *, GLuint );
 
 static void count_func( const char *name,  struct dynfn *l )
 {
@@ -357,12 +358,13 @@ static void VFMT_FALLBACK_OUTSIDE_BEGIN_END( const char *caller )
       fprintf(stderr, "%s from %s\n", __FUNCTION__, caller);
 
    if (ctx->Driver.NeedFlush) 
-      r200FlushVertices( ctx, ctx->Driver.NeedFlush );
+      r200VtxFmtFlushVertices( ctx, ctx->Driver.NeedFlush );
 
    if (ctx->NewState)
       _mesa_update_state( ctx ); /* clear state so fell_back sticks */
 
    _tnl_wakeup_exec( ctx );
+   ctx->Driver.FlushVertices = r200FlushVertices;
 
    assert( rmesa->dma.flush == 0 );
    rmesa->vb.fell_back = GL_TRUE;
@@ -404,6 +406,7 @@ static void VFMT_FALLBACK( const char *caller )
    prim = rmesa->vb.prim[0];
    ctx->Driver.CurrentExecPrimitive = GL_POLYGON+1;
    _tnl_wakeup_exec( ctx );
+   ctx->Driver.FlushVertices = r200FlushVertices;
 
    assert(rmesa->dma.flush == 0);
    rmesa->vb.fell_back = GL_TRUE;
@@ -756,7 +759,7 @@ static void r200VtxfmtValidate( GLcontext *ctx )
 	    fprintf(stderr, "reinstall (new install)\n");
 
 	 _mesa_install_exec_vtxfmt( ctx, &rmesa->vb.vtxfmt );
-	 ctx->Driver.FlushVertices = r200FlushVertices;
+	 ctx->Driver.FlushVertices = r200VtxFmtFlushVertices;
 	 ctx->Driver.NewList = r200NewList;
 	 rmesa->vb.installed = GL_TRUE;
 	 vb.context = ctx;
@@ -772,6 +775,7 @@ static void r200VtxfmtValidate( GLcontext *ctx )
 	 if (rmesa->dma.flush)
 	    rmesa->dma.flush( rmesa );
 	 _tnl_wakeup_exec( ctx );
+	 ctx->Driver.FlushVertices = r200FlushVertices;
 	 rmesa->vb.installed = GL_FALSE;
 	 vb.context = 0;
       }
@@ -931,7 +935,7 @@ static GLboolean r200NotifyBegin( GLcontext *ctx, GLenum p )
    return GL_TRUE;
 }
 
-static void r200FlushVertices( GLcontext *ctx, GLuint flags )
+static void r200VtxFmtFlushVertices( GLcontext *ctx, GLuint flags )
 {
    r200ContextPtr rmesa = R200_CONTEXT( ctx );
 

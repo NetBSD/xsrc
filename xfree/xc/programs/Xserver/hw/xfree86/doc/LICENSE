@@ -161,6 +161,62 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+2.2.3  Theodore Ts'o.
+
+Copyright Theodore Ts'o, 1994, 1995, 1996, 1997, 1998, 1999.  All rights
+reserved.
+
+Redistribution and use in source and binary forms, with or without modifica-
+tion, are permitted provided that the following conditions are met:
+
+  1.  Redistributions of source code must retain the above copyright notice,
+      and the entire permission notice in its entirety, including the dis-
+      claimer of warranties.
+
+  2.  Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+  3.  he name of the author may not be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE, ALL OF WHICH ARE HEREBY DISCLAIMED.  IN NO
+EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPE-
+CIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTH-
+ERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF NOT
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+2.2.4  Theo de Raadt and Damien Miller
+
+Copyright (c) 1995,1999 Theo de Raadt.  All rights reserved.  Copyright (c)
+2001-2002 Damien Miller.  All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modifica-
+tion, are permitted provided that the following conditions are met:
+
+  1.   Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+
+  2.   Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MER-
+CHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO
+EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPE-
+CIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTH-
+ERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
 2.3  NVIDIA Corp
 
 Copyright (c) 1996 NVIDIA, Corp.  All rights reserved.
@@ -618,7 +674,7 @@ For further information, contact:
 
 info@urwpp.de or design@bigelowandholmes.com
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.12 2003/02/24 03:41:16 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LICENSE.sgml,v 1.12.2.1 2003/10/17 21:37:44 herrb Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/LICENSE,v 1.17 2003/02/24 04:03:20 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/LICENSE,v 1.17.2.1 2003/10/17 21:39:24 herrb Exp $

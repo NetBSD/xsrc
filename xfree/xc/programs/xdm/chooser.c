@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/chooser.c,v 3.24 2001/12/14 20:01:20 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/chooser.c,v 3.24.4.1 2003/09/17 05:58:16 herrb Exp $ */
 
 /*
  * Chooser - display a menu of names and let the user select one
@@ -262,13 +262,16 @@ static void
 PingHosts (XtPointer closure, XtIntervalId *id)
 {
     HostAddr	*hosts;
+    int		 sfd = socketFD;
 
     for (hosts = hostAddrdb; hosts; hosts = hosts->next)
     {
 	if (hosts->type == QUERY)
-	    XdmcpFlush (socketFD, &directBuffer, (XdmcpNetaddr) hosts->addr, hosts->addrlen);
+	    XdmcpFlush (sfd, &directBuffer, 
+			(XdmcpNetaddr) hosts->addr, hosts->addrlen);
 	else
-	    XdmcpFlush (socketFD, &broadcastBuffer, (XdmcpNetaddr) hosts->addr, hosts->addrlen);
+	    XdmcpFlush (sfd, &broadcastBuffer, 
+			(XdmcpNetaddr) hosts->addr, hosts->addrlen);
     }
     if (++pingTry < TRIES)
 	XtAddTimeOut (PING_INTERVAL, PingHosts, (XtPointer) 0);
@@ -354,7 +357,7 @@ AddHostname (ARRAY8Ptr hostname, ARRAY8Ptr status, struct sockaddr *addr, int wi
 	    	    struct hostent  *hostent;
 		    char	    *host;
     	
-	    	    hostent = gethostbyaddr ((char *)hostAddr.data, hostAddr.length, AF_INET);
+	    	    hostent = gethostbyaddr ((char *)hostAddr.data, hostAddr.length, addr->sa_family);
 	    	    if (hostent)
 	    	    {
 			XdmcpDisposeARRAY8 (hostname);
@@ -466,9 +469,10 @@ ReceivePacket (XtPointer closure, int *source, XtInputId *id)
     int		    saveHostname = 0;
     struct sockaddr addr;
     int		    addrlen;
+    int		    sfd = * (int *) closure;
 
     addrlen = sizeof (addr);
-    if (!XdmcpFill (socketFD, &buffer, (XdmcpNetaddr) &addr, &addrlen))
+    if (!XdmcpFill (sfd, &buffer, (XdmcpNetaddr) &addr, &addrlen))
 	return;
     if (!XdmcpReadHeader (&buffer, &header))
 	return;
@@ -486,7 +490,8 @@ ReceivePacket (XtPointer closure, int *source, XtInputId *id)
 	    if (header.length == 6 + authenticationName.length +
 	    	hostname.length + status.length)
 	    {
-		if (AddHostname (&hostname, &status, &addr, header.opcode == (int) WILLING))
+		if (AddHostname (&hostname, &status, (struct sockaddr *) &addr,
+		  		 header.opcode == (int) WILLING))
 		    saveHostname = 1;
 	    }
     	}
@@ -498,7 +503,8 @@ ReceivePacket (XtPointer closure, int *source, XtInputId *id)
     	{
 	    if (header.length == 4 + hostname.length + status.length)
 	    {
-		if (AddHostname (&hostname, &status, &addr, header.opcode == (int) WILLING))
+		if (AddHostname (&hostname, &status, (struct sockaddr *) &addr,
+		  		 header.opcode == (int) WILLING))
 		    saveHostname = 1;
 
 	    }
@@ -673,12 +679,17 @@ RegisterHostname (char *name)
     }
     else
     {
-
-	/* address as hex string, e.g., "12180022" (depreciated) */
+	/* address as hex string, e.g., "12180022" (deprecated) */
 	if (strlen(name) == 8 &&
 	    FromHex(name, (char *)&in_addr.sin_addr, strlen(name)) == 0)
 	{
 	    in_addr.sin_family = AF_INET;
+	    in_addr.sin_port = htons (XDM_UDP_PORT);
+#ifdef BSD44SOCKETS
+	    in_addr.sin_len = sizeof(in_addr);
+#endif
+	    RegisterHostaddr ((struct sockaddr *)&in_addr, sizeof (in_addr),
+				QUERY);
 	}
 	/* Per RFC 1123, check first for IP address in dotted-decimal form */
 	else if ((in_addr.sin_addr.s_addr = inet_addr(name)) != -1)
@@ -718,12 +729,15 @@ RegisterHostname (char *name)
     else
     {
 
-	/* address as hex string, e.g., "12180022" (depreciated) */
+	/* address as hex string, e.g., "12180022" (deprecated) */
 	if (strlen(name) == 8 &&
 	    FromHex(name, (char *)&in_addr.sin_addr, strlen(name)) == 0)
 	{
 	    in_addr.sin_family = AF_INET;
-	}
+	    in_addr.sin_port = htons (XDM_UDP_PORT);
+	    RegisterHostaddr ((struct sockaddr *)&in_addr, sizeof (in_addr),
+				QUERY);
+	} else {
 	/* Per RFC 1123, check first for IP address in dotted-decimal form */
 	else if ((in_addr.sin_addr.s_addr = inet_addr(name)) != -1)
 	    in_addr.sin_family = AF_INET;
@@ -740,6 +754,8 @@ RegisterHostname (char *name)
 	in_addr.sin_port = htons (XDM_UDP_PORT);
 	RegisterHostaddr ((struct sockaddr *)&in_addr, sizeof (in_addr),
 			  QUERY);
+	}
+
     }
 }
 #endif /* __GNU__ */
@@ -830,7 +846,7 @@ InitXDMCP (char **argv)
 #endif
     
     XtAddInput (socketFD, (XtPointer) XtInputReadMask, ReceivePacket,
-		(XtPointer) 0);
+		(XtPointer) &socketFD);
     while (*argv)
     {
 	RegisterHostname (*argv);
