@@ -119,6 +119,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define LibraryMTDefines	-DUSE_NBSD_THREADLIB
 # define SystemMTDefines	-D_REENTRANT
 # define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXNO_MTSAFE_PWDAPI
+#else
+# define ThreadedX		NO
 #endif
 
 /*
