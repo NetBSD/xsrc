@@ -341,7 +341,7 @@ OptZlibReply(preply, replylen)
     int		  replylen;
 {
     lbxNegOpt.streamOpts.streamCompInit = ZlibInit;
-    lbxNegOpt.streamOpts.streamCompArg = (pointer) zlevel;
+    lbxNegOpt.streamOpts.streamCompArg = (pointer)(long) zlevel;
     lbxNegOpt.streamOpts.streamCompStuffInput = ZlibStuffInput;
     lbxNegOpt.streamOpts.streamCompInputAvail = ZlibInputAvail;
     lbxNegOpt.streamOpts.streamCompFlush = ZlibFlush;
