@@ -341,7 +341,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * Builtin MTRR support (NetBSD 1.5Y and up)
  */
 # if ((OSMajorVersion > 1) || \
-      (OSMajorVersion == 1 && OSMinorVersion > 6) || \
+      (OSMajorVersion == 1 && OSMinorVersion >= 6) || \
       (OSMajorVersion == 1 && OSMinorVersion == 5 && \
        OSTeenyVersion >= 25))
 #  define HasMTRRBuiltin        YES
