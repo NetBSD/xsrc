@@ -104,8 +104,9 @@ xf86InitializeAcceleration(pScreen)
     !OFLG_ISSET(OPTION_XAA_NO_COL_EXP,
     &(xf86AccelInfoRec.ServerInfoRec->options))) {
         CPUToScreenColorExpand = TRUE;
-#if 0
+#if 1
         /* There's a more useful message below. */
+        if (xf86Verbose)
         ErrorF("%s %s: XAA: CPU-to-screen color expand\n",
             XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
 #endif
@@ -115,15 +116,18 @@ xf86InitializeAcceleration(pScreen)
     !OFLG_ISSET(OPTION_XAA_NO_COL_EXP,
     &(xf86AccelInfoRec.ServerInfoRec->options))) {
         ScreenToScreenColorExpand = TRUE;
-#if 0
+#if 1
+        if (xf86Verbose)
         ErrorF("%s %s: XAA: Screen-to-screen color expand\n",
             XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
 #endif
     }
     if (xf86AccelInfoRec.SetupForScanlineScreenToScreenColorExpand &&
-    xf86AccelInfoRec.SubsequentScanlineScreenToScreenColorExpand) {
+    xf86AccelInfoRec.SubsequentScanlineScreenToScreenColorExpand &&
+    !OFLG_ISSET(OPTION_XAA_NO_COL_EXP,
+    &(xf86AccelInfoRec.ServerInfoRec->options))) {
         ScanlineScreenToScreenColorExpand = TRUE;
-#if 0
+#if 1
         if (xf86Verbose)
             ErrorF("%s %s: XAA: Scanline screen-to-screen color expand\n",
                 XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
