@@ -50,7 +50,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/FS/FSlibint.h,v 3.7 2001/12/14 19:53:33 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSlibint.h,v 3.7.4.2 2003/09/01 21:05:36 herrb Exp $ */
 
 /*
  * FSlib internal decls
@@ -76,11 +76,6 @@ in this Software without prior written authorization from The Open Group.
 #include	"FSlibos.h"
 #include	<errno.h>
 #include	<stddef.h>
-
-#include	<limits.h>
-#ifndef SIZE_T_MAX
-#define SIZE_T_MAX UINT_MAX
-#endif
 
 typedef int (* FSIOErrorHandler)(FSServer *);
 typedef int (* FSErrorHandler)(FSServer *, FSErrorEvent *);

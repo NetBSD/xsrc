@@ -91,7 +91,7 @@ FSQueryXInfo(svr, fid, info, props, offsets, prop_data)
     props->num_offsets = local_pi.num_offsets;
     props->data_len = local_pi.data_len;
 
-    if (props->num_offsets > SIZE_T_MAX / sizeof(FSPropOffset)) 
+    if (props->num_offsets > SIZE_MAX / sizeof(FSPropOffset)) 
 	return FSBadAlloc;
 
     /* prepare for prop data */

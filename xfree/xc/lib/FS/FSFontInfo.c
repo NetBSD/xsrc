@@ -124,11 +124,11 @@ FSListFontsWithXInfo(svr, pattern, maxNames, count, info, pprops, offsets, prop_
 	    break;
 	if ((i + reply.nReplies) >= size) {
 
-	    if (reply.nReplies > SIZE_T_MAX - i - 1) 
+	    if (reply.nReplies > SIZE_MAX - i - 1) 
 		goto badmem;
 	    size = i + reply.nReplies + 1;
 
-	    if (size > SIZE_T_MAX / sizeof(char *)) 
+	    if (size > SIZE_MAX / sizeof(char *)) 
 		goto badmem;
 
 	    if (fhdr) {
@@ -243,7 +243,7 @@ FSListFontsWithXInfo(svr, pattern, maxNames, count, info, pprops, offsets, prop_
 	pi[i]->num_offsets = local_pi.num_offsets;
 	pi[i]->data_len = local_pi.data_len;
 
-	if (pi[i]->num_offsets > SIZE_T_MAX / sizeof(FSPropOffset))
+	if (pi[i]->num_offsets > SIZE_MAX / sizeof(FSPropOffset))
 	    goto badmem;
 
 	po[i] = (FSPropOffset *)
