@@ -310,6 +310,9 @@ typedef struct drm_vbl_sig {
 struct drm_device {
 #ifdef __NetBSD__
 	struct device	  device;	/* NetBSD's softc is an extension of struct device */
+
+	DRM_SPINTYPE	dev_lock;
+	DRM_SPINTYPE	dma_lock;
 #endif
 	const char	  *name;	/* Simple driver name		   */
 	char		  *unique;	/* Unique identifier: e.g., busid  */
