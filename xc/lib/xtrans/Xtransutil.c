@@ -1,5 +1,5 @@
 /* $XConsortium: Xtransutil.c /main/32 1996/12/04 10:22:57 lehors $ */
-/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.9 1996/12/23 06:04:18 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.9.2.3 1999/06/13 09:34:44 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -470,14 +470,16 @@ char *str;
 #include <sys/stat.h>
 #include <errno.h>
 
+#if !defined(S_IFLNK) && !defined(S_ISLNK)
+#define lstat(a,b) stat(a,b)
+#endif
+
 static int 
 trans_mkdir(char *path, int mode)
 {
     struct stat buf;
 
     if (mkdir(path, mode) == 0) {
-	/* I don't know why this is done, but  it was in the original 
-	   xtrans code */
 	chmod(path, mode);
 	return 0;
     }
@@ -487,7 +489,16 @@ trans_mkdir(char *path, int mode)
 	if (lstat(path, &buf) != 0) {
 	    return -1;
 	}
-	if (S_ISDIR(buf.st_mode) && ((buf.st_mode & ~S_IFMT) == mode)) {
+	/* the mode check seems to be too paranoid and makes things
+	   fail on some Linux version where the directory exists and
+	   has the wrong mode
+	 */
+	if (S_ISDIR(buf.st_mode)
+#if 0
+	    && ((buf.st_mode & ~S_IFMT) == mode)
+#endif
+	   ) 
+	{
 	    return 0;
 	}
     }

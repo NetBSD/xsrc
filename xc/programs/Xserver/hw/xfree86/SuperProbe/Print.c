@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.46.2.16 1998/12/22 11:23:15 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.46.2.19 1999/06/17 16:24:01 hohndel Exp $ */
 
 #include "Probe.h"
 
@@ -46,8 +46,9 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "ATI 264VT", "ATI 264VT-B", "ATI 264VT3", "ATI 264VT4",
 		  "ATI 264GT (3D Rage I)", "ATI 264GT-B (3D Rage II)",
 		  "ATI 264GT-B+DVD (3D Rage II+DVD)",
-		  "ATI 264GT-IIc (3D Rage IIc)", "ATI 264GT3 (3D Rage III)",
-		  "ATI 264LT", "ATI 264LT Pro" },
+		  "ATI 264GT-IIc (3D Rage IIc)", "ATI 264GT3 (3D Rage Pro)",
+		  "ATI 264LT", "ATI 264LT Pro (3D Rage LT Pro)",
+		  "ATI Rage XL or XC" },
 /* AL */	{ "Avance Logic (chipset unknown)",
 		  "Avance Logic 2101", "Avance Logic 2228" },
 /* CT */	{ "Chips & Tech (chipset unknown)",
@@ -107,6 +108,7 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 /* Primus */	{ "Primus P2000" },
 /* Realtek */	{ "Realtek (chipset unknown)",
 		  "Realtek RT-3103", "Realtek RT-3105", "Realtek RT-3106" },
+/* Rendition */ { "Rendition V1000", "Rendition V2000" },
 /* S3 */	{ "S3 (chipset unknown)",
 		  "S3 86C911", "S3 86C924",
 		  "S3 86C801, A or B-step", 
@@ -139,6 +141,10 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "S3 ViRGE/GX2",
 		  "S3 ViRGE/MX",
 		  "S3 ViRGE/MXP",
+		  "S3 Trio3D Business",
+		  "S3 Trio3D",
+		  "S3 Savage3D",
+		  "S3 Savage3D (Macrovision Support)",
 	       },
 /* Trident */	{ "Trident (chipset unknown)",
 		  "Trident LX8200",
@@ -154,7 +160,10 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "Trident Cyber9385-1",
 		  "Trident Cyber9388", "Trident Cyber9388-1",
 		  "Trident Cyber9397", "Trident Cyber9520",
-                  "Trident 3DImage975", "Trident 3DImage985", },
+		  "Trident 3DImage975", "Trident 3DImage985",
+/* Bill Mair */
+		  "Trident Cyber9397 DVD"
+		},
 /* Tseng */	{ "Tseng (chipset unknown)",
 		  "Tseng ET3000", "Tseng ET4000", 
 		  "Tseng ET4000/W32", "Tseng ET4000/W32i", 
@@ -187,7 +196,13 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 /* SiS */	{ "Silicon Integrated Systems (chipset unknown)",
                   "Silicon Integrated Systems SG86C201",
 		  "Silicon Integrated Systems SG86C202",
-		  "Silicon Integrated Systems SG86C205" },
+		  "Silicon Integrated Systems SG86C205",
+		  "Silicon Integrated Systems SG86C215",
+		  "Silicon Integrated Systems SG86C225",
+		  "Silicon Integrated Systems 5597/5598",
+		  "Silicon Integrated Systems 530/620",
+		  "Silicon Integrated Systems 6326 AGP",
+		},
 /* ARK */	{ "ARK Logic (chipset unknown)",
 		  "ARK Logic ARK1000VL",
 		  "ARK Logic ARK1000PV",
@@ -210,7 +225,7 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "Matrox G200 AGP" },
 /* Sigma Designs */	{ "Sigma Designs (chipset unknown)",
 		  "Sigma Designs REALmagic64/GX (SD 6425)" },
-/* Intergraphcis */	{ "Intergraphics (chipset unknown)",
+/* Intergraphics */	{ "Intergraphics (chipset unknown)",
 		  "Intergraphics IGA-1680",
 		  "Intergraphics IGA-1682" },
 /* Epson */	{ "Epson SPC8110" },
@@ -300,6 +315,8 @@ struct RamDac_Name RamDac_Names[] =
 	  "Matrox G100 built-in DAC w/clock" },
 	{ "MGAG200",
 	  "Matrox G200 built-in DAC w/clock" },
+	{ "SiS",
+	  "SiS built-in DAC w/clock" },
 };
 
 static CONST char *CoProc_Names[NUM_CP_TYPES][CHPS_PER_CPTYPE] = 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.11 1998/12/22 11:23:14 hohndel Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.14 1999/06/17 16:24:00 hohndel Exp $ */ 
 /*
  * PCI Probe
  *
@@ -199,15 +199,6 @@ struct pci_config_reg {
 
 extern struct pci_config_reg *pci_devp[];
 
-void xf86writepci(
-#if NeedFunctionPrototypes
-	int,
-	int,
-	unsigned long,
-	unsigned long
-#endif
-);
-
 #define PCI_VENDOR_NCR_1	0x1000
 #define PCI_VENDOR_ATI		0x1002
 #define PCI_VENDOR_AVANCE	0x1005
@@ -220,14 +211,19 @@ void xf86writepci(
 #define PCI_VENDOR_MATROX	0x102B
 #define PCI_VENDOR_CHIPSTECH	0x102C
 #define PCI_VENDOR_SIS		0x1039
+#define PCI_VENDOR_SGS          0x104A
 #define PCI_VENDOR_NUMNINE	0x105D
 #define PCI_VENDOR_UMC		0x1060
+#define PCI_VENDOR_NVIDIA       0x10DE
 #define PCI_VENDOR_ALLIANCE	0x1142
+#define PCI_VENDOR_TRITECH	0x1292
+#define PCI_VENDOR_NVIDIA_SGS   0x12D2
+#define PCI_VENDOR_RENDITION	0x1163
 #define PCI_VENDOR_SIGMADESIGNS	0x1236
 #define PCI_VENDOR_S3		0x5333
 #define PCI_VENDOR_ARK		0xEDD8
 #define PCI_VENDOR_3DLABS	0x3D3D
-#define PCI_VENDOR_INTERGRAPHICS	0x10ea
+#define PCI_VENDOR_INTERGRAPHICS	0x10EA
 
 /* Matrox */
 #define PCI_CHIP_MGA2085PX	0x0518
@@ -242,12 +238,7 @@ void xf86writepci(
 
 /* ATI */
 #define PCI_CHIP_MACH32		0x4158
-#define PCI_CHIP_MACH64GX	0x4758
-#define PCI_CHIP_MACH64CX	0x4358
-#define PCI_CHIP_MACH64CT	0x4354
-#define PCI_CHIP_MACH64ET	0x4554
-#define PCI_CHIP_MACH64VT	0x5654
-#define PCI_CHIP_MACH64GT	0x4754
+	/* Other ATI ChipID's deleted;  not used by SuperProbe */
 
 /* Avance Logic */
 #define PCI_CHIP_ALG2301	0x2301
@@ -274,6 +265,7 @@ void xf86writepci(
 #define PCI_CHIP_GD5480		0x00BC
 #define PCI_CHIP_GD5462		0x00D0
 #define PCI_CHIP_GD5464		0x00D4
+#define PCI_CHIP_GD5464BD       0x00D5
 #define PCI_CHIP_GD5465		0x00D6
 #define PCI_CHIP_GD7542		0x1200
 #define PCI_CHIP_GD7543		0x1202
@@ -286,6 +278,8 @@ void xf86writepci(
 #define PCI_CHIP_9660		0x9660
 #define PCI_CHIP_9680		0x9680
 #define PCI_CHIP_9682		0x9682
+/* Bill Mair */
+#define PCI_CHIP_939A		0x939A
 #define PCI_CHIP_9388		0x9388
 #define PCI_CHIP_9397		0x9397
 #define PCI_CHIP_9520		0x9520
@@ -294,20 +288,49 @@ void xf86writepci(
 
 /* Chips & Tech */
 #define PCI_CHIP_65545		0x00D8
+#define PCI_CHIP_65548          0x00DC
+#define PCI_CHIP_65550          0x00E0
+#define PCI_CHIP_65554          0x00E4
+#define PCI_CHIP_65555          0x00E5
+#define PCI_CHIP_68554          0x00F4
 
 /* SiS */
 #define PCI_CHIP_SG86C201	0x0001
 #define PCI_CHIP_SG86C202	0x0002
 #define PCI_CHIP_SG86C205	0x0205
+#define PCI_CHIP_SG86C215	0x0215
+#define PCI_CHIP_SG86C225	0x0225
+#define PCI_CHIP_SIS5598	0x0200	
+#define PCI_CHIP_SIS5597	0x0200
+#define PCI_CHIP_SIS6326	0x6326
+#define PCI_CHIP_SIS530		0x6306
+#define PCI_CHIP_SIS620		0x6306
+
+/* SGS */
+#define PCI_CHIP_STG2000        0x0008
+#define PCI_CHIP_STG1764        0x0009
+
+/* NVIDIA */
+#define PCI_CHIP_NV1            0x0008
+#define PCI_CHIP_DAC64          0x0009
+
+/* NVIDIA & SGS */
+#define PCI_CHIP_RIVA128        0x0018
 
 /* Number Nine */
 #define PCI_CHIP_I128		0x2309
 #define PCI_CHIP_I128_2		0x2339
+#define PCI_CHIP_I128_3		0x493D
 
 /* Alliance Semiconductor */
 #define PCI_CHIP_PM6410		0x3210
 #define PCI_CHIP_PM6422		0x6422
 #define PCI_CHIP_PMAT24		0x6424
+
+/* Rendition */
+#define PCI_CHIP_V1000		0x0001
+#define PCI_CHIP_V2000		0x0002 /* just guessing */
+
 
 /* SIGMA DESIGNS */
 #define PCI_CHIP_SD_REALMAGIG64GX	0x6401
@@ -331,6 +354,10 @@ void xf86writepci(
 #define PCI_CHIP_ViRGE_GX2	0x8A10
 #define PCI_CHIP_ViRGE_MX	0x8C01
 #define PCI_CHIP_ViRGE_MXP	0x8C03
+#define PCI_CHIP_TRIO3D_B	0x8903
+#define PCI_CHIP_TRIO3D		0x8904
+#define PCI_CHIP_SAVAGE3D	0x8A20
+#define PCI_CHIP_SAVAGE3D_M	0x8A21
 
 /* ARK Logic */
 #define PCI_CHIP_1000PV		0xA091
@@ -344,10 +371,12 @@ void xf86writepci(
 #define PCI_CHIP_3DLABS_DELTA      0x0003
 #define PCI_CHIP_3DLABS_PERMEDIA   0x0004
 
+/* Tritech Microelectronics */
+#define PCI_CHIP_TR25202	0xFC02
+
 /* Intergraphics */
 #define PCI_CHIP_INTERG_1680	0x1680
 #define PCI_CHIP_INTERG_1682	0x1682
-
 
 /* Increase this as required */
 #define MAX_DEV_PER_VENDOR 18

@@ -1,5 +1,5 @@
 XCOMM platform:  $TOG: FreeBSD.cf /main/18 1997/06/12 07:40:35 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.19 1998/12/18 11:56:07 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.20 1999/01/09 14:18:56 dawes Exp $
 
 #ifndef UseElfFormat
 #define UseElfFormat		DefaultToElfFormat
@@ -192,6 +192,19 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define TclIncDir		/usr/local/include/tcl8.0
 #endif
 
+#ifndef JpTkLibName
+#define JpTkLibName		tk80jp
+#endif
+#ifndef JpTkIncDir
+#define JpTkIncDir		/usr/local/include/tk8.0jp
+#endif
+#ifndef JpTclLibName
+#define JpTclLibName		tcl80jp
+#endif
+#ifndef JpTclIncDir
+#define JpTclIncDir		/usr/local/include/tcl8.0jp
+#endif
+
 #elif OSMajorVersion == 2 && OSMinorVersion == 2 && OSTeenyVersion > 2
 /*
  * For 2.2.5, the defaults assume that the tcl-7.6 and tk-4.2
@@ -209,6 +222,19 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #ifndef TclIncDir
 #define TclIncDir		/usr/local/include/tcl7.6
+#endif
+
+#ifndef JpTkLibName
+#define JpTkLibName		tk42jp
+#endif
+#ifndef JpTkIncDir
+#define JpTkIncDir		/usr/local/include/tk4.2jp
+#endif
+#ifndef JpTclLibName
+#define JpTclLibName		tcl76jp
+#endif
+#ifndef JpTclIncDir
+#define JpTclIncDir		/usr/local/include/tcl7.6jp
 #endif
 
 #elif OSMajorVersion == 2 && OSMinorVersion == 2

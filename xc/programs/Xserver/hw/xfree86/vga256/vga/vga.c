@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.c,v 3.71.2.15 1998/11/08 10:03:49 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.c,v 3.71.2.16 1999/04/15 12:37:03 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -1115,6 +1115,8 @@ vgaProbe()
 	vga256InfoRec.physSize = vga256InfoRec.videoRam * 1024;
 #else
 #ifdef XFreeXDGA
+	if (vga256InfoRec.directMode & XF86DGADirectPresent)
+	    vga256InfoRec.directMode |= XF86DGAAccelPresent;
 	if (vgaUseLinearAddressing) {
 	    vga256InfoRec.physBase = vgaPhysLinearBase;
 	    vga256InfoRec.physSize = vga256InfoRec.videoRam * 1024;
@@ -1603,6 +1605,32 @@ vgaEnterLeaveVT(enter, screen_idx)
       pspix = (PixmapPtr)pScreen->devPrivate;
 #endif
     }
+
+#ifdef XFreeXDGA
+    /*
+     * Patch up things to allow a graphics operations to go to the screen
+     * while remaining in direct graphics mode.
+     */
+    if (vga256InfoRec.directMode & XF86DGADoAccel) {
+	if (enter) {
+#if !defined(MONOVGA) && !defined(XF86VGA16)
+            if (vgaBitsPerPixel == 8)
+	        pspix->devPrivate.ptr = (pointer)vgaVirtBase;
+	    else
+	        pspix->devPrivate.ptr = vgaLinearBase;
+#else
+	    pspix->devPrivate.ptr = (pointer)vgaVirtBase;
+#endif
+	} else {
+#if !defined(MONOVGA) && !defined(XF86VGA16)
+	    if (xf86AccelInfoRec.Sync != NULL)
+		xf86AccelInfoRec.Sync();	/* XXX */
+#endif
+	    pspix->devPrivate.ptr = ppix->devPrivate.ptr;
+	}
+	return;
+    }
+#endif /* XFreeXDGA */
 
   /* Force every GC writing to the screen to be validated.  */
   if (pScreen && !xf86Exiting && !xf86Resetting)

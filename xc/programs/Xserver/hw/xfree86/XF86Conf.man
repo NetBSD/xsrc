@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.man,v 3.52.2.9 1998/11/06 09:45:54 hohndel Exp $
-.TH XF86Config 4/5 "Version 3.3.3"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.man,v 3.52.2.13 1999/06/30 13:00:15 hohndel Exp $
+.TH XF86Config 4/5 "Version 3.3.4"  "XFree86"
 .SH NAME
 XF86Config - Configuration File for XFree86
 .SH DESCRIPTION
@@ -99,6 +99,7 @@ names of these are:
 .B xf86Wacom.so
 .B xf86Summa.so
 .B xf86AceCad.so
+.B xf86Calcomp.so
 .B xf86Dial.so
 .fi
 .in -20
@@ -919,6 +920,7 @@ must appear. The subsections names are:
 \fBMouse\fP (Mouse)
 \fBDialBox\fP (SGI Button Box)
 \fBAceCad\fP (an AceCad tablet)
+\fBDrawingBoard\fP (a Calcomp DrawingBoard tablet)
 .fi
 
 The \fBJoystick\fP subsection supports the following entries:
@@ -938,7 +940,7 @@ driver.
 .B MaximumXPosition \fIvalue\fP
 sets the maximum X value reported by the device driver.
 .TP 4
-.B MininimumXPosition \fIvalue\fP
+.B MinimumXPosition \fIvalue\fP
 sets the minimum X value reported by the device driver.
 .TP 4
 .B MaximumYPosition \fIvalue\fP
@@ -1027,6 +1029,20 @@ When this option is enabled, the active zone  begins according to TopX
 and TopY.  The bottom corner is ajusted to keep the ratio width/heigth
 of the active zone the same as the screen while maximizing the area
 described by TopX, TopY, BottomX, BottomY.
+.TP 4
+.B DebugLevel \fInumber \fP
+sets the level of debugging info reported.
+.TP 4
+.B BaudRate \f19200\fP or \f9600\fP (default)
+changes the serial link speed. This option is only available for
+wacom V models (Intuos).
+.TP 4
+.B Serial \fInumber\fP
+sets the serial number associated with the physical device. This allows
+to have multiple devices of the same type (i.e. multiple pens). This
+option is only available on wacom V devices (Intuos). To see which
+serial number belongs to a device, you have to set the DebugLevel to 6 and
+whatch the output of the X server.
 .RE
 
 The \fBElographics\fP subsection support the following entries:
@@ -1170,6 +1186,10 @@ sets the maximum change in coordinates before new report.
 .B HistorySize \fInumber\fP
 sets the motion history size. By default the value is zero.
 .TP 4
+.B Compatible
+prevents the driver from asking the firmware id of the tablet to
+enable some compatible tablet to work (like the Numonics GridMaster).
+.TP 4
 .B AlwaysCore
 enables the sharing of the core pointer. When this feature is enabled, the
 device will take control of the core pointer (and thus will emit core events)
@@ -1178,6 +1198,7 @@ You can use the last available integer feedback to control this feature. When
 the value of the feedback is zero, the feature is disabled. The feature is
 enabled for any other value.
 .RE
+
 The \fBDialBox\fP subsection support the following entries:
 .RS 8
 .TP 4
@@ -1201,6 +1222,70 @@ You can use the last available integer feedback to control this feature. When
 the value of the feedback is zero, the feature is disabled. The feature is
 enabled for any other value.
 .RE
+
+The \fBAceCad\fP subsection support the following entries:
+.RS 8
+.TP 4
+.B Port \fI"path"\fP
+sets the path to the special file which represents the device driver.
+.TP 4
+.B DeviceName \fI"name"\fP
+sets the name of the X device.
+.TP 4
+.B Mode \fIRelative|Absolute\fP
+sets the mode of the device.
+.TP 4
+.B Cursor \fIStylus|Puck\fP
+sets the cursor type, 3 button stylus or 4 button puck.
+.TP 4
+.B Increment \fIvalue\fP
+sets the maximum change in coordinates before new report.
+.TP 4
+.B HistorySize \fInumber\fP
+sets the motion history size. By default the value is zero.
+.TP 4
+.B Model \fIacecadIII|flair\fP
+Select either tablet model according to your hardware.
+.TP 4
+.B AlwaysCore
+enables the sharing of the core pointer. When this feature is enabled, the
+device will take control of the core pointer (and thus will emit core events)
+and at the same time will be able, when asked so, to report extended events.
+You can use the last available integer feedback to control this feature. When
+the value of the feedback is zero, the feature is disabled. The feature is
+enabled for any other value.
+.RE
+
+The \fBDrawingBoard\fP subsection support the following entries:
+.RS 8
+.TP 4
+.B Port \fI"path"\fP
+sets the path to the special file which represents the device driver.
+.TP 4
+.B DeviceName \fI"name"\fP
+sets the name of the X device.
+.TP 4
+.B Mode \fIRelative|Absolute\fP
+sets the mode of the device.
+.TP 4
+.B Cursor \fIStylus|Puck\fP
+sets the cursor type, stylus or 4 button puck.
+.TP 4
+.B Increment \fIvalue\fP
+sets the maximum change in coordinates before new report.
+.TP 4
+.B HistorySize \fInumber\fP
+sets the motion history size. By default the value is zero.
+.TP 4
+.B AlwaysCore
+enables the sharing of the core pointer. When this feature is enabled, the
+device will take control of the core pointer (and thus will emit core events)
+and at the same time will be able, when asked so, to report extended events.
+You can use the last available integer feedback to control this feature. When
+the value of the feedback is zero, the feature is disabled. The feature is
+enabled for any other value.
+.RE
+
 The \fBMouse\fP subsection support the same entries as the
 standard \fBPointer\fP section, plus the following:
 .RS 8

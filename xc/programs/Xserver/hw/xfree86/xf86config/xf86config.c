@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.10 1998/12/06 05:40:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.11 1999/06/21 09:45:22 hohndel Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -584,6 +584,7 @@ static struct symlist2 {
 	char *desc;	/* description */
 } sympart2[] = {
 {	"en_US",	"+be",	"Belgium"},
+{	"en_US",	"+br",	"Brazil/ABNT2 layout"},
 {	"en_US",	"+bg",	"Bulgaria"},
 {	"en_US",	"+ca",	"Canada"},
 {	"en_US",	"+cs",	"Czechoslovakia"},
@@ -603,6 +604,7 @@ static struct symlist2 {
 {	"en_US",	"+de_CH",	"Switzerland/German layout"},
 {	"en_US",	"+gb",	"United Kingdom"},
 {	"us",		"",	"USA"},
+{	"us",		"+us_intl",	"US International"},
 {	"en_US",	"",	"DEFAULT"}
 };
 
@@ -737,6 +739,8 @@ static struct kmlist {
 {"xfree86(th)",		"Standard 101-key, Thai encoding"},
 {"xfree86(de_CH)",	"Standard 101-key, Swiss/German encoding"},
 {"xfree86(fr_CH)",	"Standard 101-key, Swiss/French encoding"},
+{"xfree86(us_intl)",	"Standard 101-key, US international"},
+{"xfree86(br)",		"Brazilian ABNT2"},
 #ifdef XFREE98_XKB
 {"xfree98(jp)",		"NEC PC98, Japanese encoding"},
 #endif

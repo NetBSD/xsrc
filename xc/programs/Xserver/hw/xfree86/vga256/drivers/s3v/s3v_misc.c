@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_misc.c,v 1.1.2.8 1998/10/19 04:09:35 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_misc.c,v 1.1.2.10 1999/06/18 10:36:24 hohndel Exp $ */
 
 /*
  *
@@ -68,7 +68,9 @@ s3vGetPCIInfo()
 
    if (vgaPCIInfo && vgaPCIInfo->AllCards) {
       while (pcrp = vgaPCIInfo->AllCards[i]) {
-         if (pcrp->_vendor == PCI_S3_VENDOR_ID && pcrp->_command != 0) {
+         if ((pcrp->_vendor == PCI_S3_VENDOR_ID) && 
+             (pcrp->_command & PCI_CMD_IO_ENABLE) &&
+	     (pcrp->_command & PCI_CMD_MEM_ENABLE)) {
 	    int ChipId = pcrp->_device;
 	    if (vga256InfoRec.chipID) {
 	      ErrorF("%s %s: S3 chipset override, using chip_id = 0x%04x instead of 0x%04x\n",
@@ -96,6 +98,9 @@ s3vGetPCIInfo()
 	    case PCI_ViRGE_MXP:
 	       info.ChipType = S3_ViRGE_MXP;
 	       break;
+           case PCI_TRIO_3D:
+              info.ChipType = S3_TRIO_3D;
+              break;
 	    default:
 	       info.ChipType = S3_UNKNOWN;
 	       info.DevID = pcrp->_device;

@@ -1,8 +1,9 @@
 XCOMM $XConsortium: Imakefile /main/12 1996/09/28 17:18:05 rws $
-XCOMM $XFree86: xc/programs/xkbcomp/keycodes/Imakefile,v 3.6 1996/12/23 07:12:21 dawes Exp $
+XCOMM $XFree86: xc/programs/xkbcomp/keycodes/Imakefile,v 3.6.2.1 1999/05/23 05:30:12 dawes Exp $
 #define IHaveSubdirs
 
-     DATAFILES = amiga ataritt fujitsu hp ibm sony sun x68k xfree86 xfree98
+     DATAFILES = amiga ataritt fujitsu hp ibm macintosh sony sun x68k xfree86 \
+		xfree98
        SUBDIRS = digital sgi
 
 all::

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.129.2.36 1998/11/07 04:42:24 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.129.2.42 1999/06/17 16:23:46 hohndel Exp $
 /*
  * This configuration file contains all of the configuration
  * information for the XFree86 based X Servers.
@@ -199,6 +199,9 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #define XF68FBDevIPLAN2p8	NO
 #define XF68FBDevILBM		NO
 #define XF68FBDevAFB		YES
+#define XF68FBDev77C32		YES
+#define XF68FBDevMach64		YES
+#define XF68FBDevIMSTT		YES
 #endif
 #endif
 
@@ -486,7 +489,7 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 				cirrus ncr77c22 compaq mga oak al2101 \
 				ali cl64xx video7 ark mx realtek s3v apm \
 				s3_svga neo chips cyrix rendition p9x00 \
-				spc8110 generic
+				spc8110 i740 tdfx generic
 # endif
 #endif
 
@@ -613,6 +616,16 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #   define XF68FBDevCFB32	YES
 #  endif
 # endif
+/* Accelerated stuff */
+# ifndef XF68FBDev77C32
+#  define XF68FBDev77C32	YES
+# endif
+# ifndef XF68FBDevMach64
+#  define XF68FBDevMach64	YES
+# endif
+# ifndef XF68FBDevIMSTT
+#  define XF68FBDevIMSTT	YES
+# endif
 #else
 # ifndef XF68FBDevIPLAN2p2
 #  define XF68FBDevIPLAN2p2	NO
@@ -640,6 +653,15 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 # endif
 # ifndef XF68FBDevCFB32
 #  define XF68FBDevCFB32	NO
+# endif
+# ifndef XF68FBDev77C32
+#  define XF68FBDev77C32	NO
+# endif
+# ifndef XF68FBDevMach64
+#  define XF68FBDevMach64	NO
+# endif
+# ifndef XF68FBDevIMSTT
+#  define XF68FBDevIMSTT	NO
 # endif
 #endif
 
@@ -758,6 +780,9 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #ifndef ElographicsSupport
 #define ElographicsSupport	YES 
 #endif
+#ifndef DynaproSupport
+#define DynaproSupport		YES 
+#endif
 #ifndef MicroTouchSupport
 #define MicroTouchSupport	YES 
 #endif
@@ -776,6 +801,9 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #endif
 #ifndef JoystickSupport
 #define JoystickSupport		NO
+#endif
+#ifndef CalcompSupport
+#define CalcompSupport		YES
 #endif
 
 /*
@@ -820,6 +848,17 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #define BuildXF86Setup			YES
 #else
 #define BuildXF86Setup			NO
+#endif
+#endif
+
+/*
+ * Build Japanese versions of XF86Setup -- needs Japanised Tk and Tcl
+ */
+#ifndef BuildJpXF86Setup
+#if HasJpTk && HasJpTcl && BuildXF86VidModeLibrary && BuildXF86MiscLibrary && BuildXKBlib
+#define BuildJpXF86Setup		YES
+#else
+#define BuildJpXF86Setup		NO
 #endif
 #endif
 
@@ -1141,7 +1180,7 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 #endif
 
 #ifndef XFree86Version
-#define XFree86Version	3330
+#define XFree86Version	334
 #endif
 
 #ifndef XVendorString

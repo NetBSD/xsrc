@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.29 1999/06/17 16:23:45 hohndel Exp $
 /******************************************************************************/
 /*
  * This file is to provide a quick method for most people to change the
@@ -350,7 +350,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
 				cirrus ncr77c22 compaq mga oak al2101 ali \
 				cl64xx video7 ark mx realtek apm \
 				s3v s3_svga neo chips cyrix rendition p9x00 \
-				generic
+				spc8110 i740 tdfx generic
  */
 
 /*
@@ -493,9 +493,11 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
 #define WacomSupport		YES
 #define MicroTouchSupport	YES 
 #define ElographicsSupport	YES 
+#define DynaproSupport		YES 
 #define SummaSketchSupport	YES
 #define AceCadSupport		YES
 #define DialBoxSupport		YES
+#define CalcompSupport		YES
  */
 
 /*

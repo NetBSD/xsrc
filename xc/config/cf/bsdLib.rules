@@ -4,7 +4,7 @@ XCOMM $XConsortium: bsdLib.rules /main/3 1996/09/28 16:09:18 rws $
 
 
 
-XCOMM $XFree86: xc/config/cf/bsdLib.rules,v 3.4.2.6 1998/11/08 11:49:53 dawes Exp $
+XCOMM $XFree86: xc/config/cf/bsdLib.rules,v 3.4.2.7 1999/07/17 01:32:44 dawes Exp $
 /*
  * NetBSD/FreeBSD shared library rules
  */
@@ -279,7 +279,7 @@ clean::									@@\
 #define ExtraLibRules
 
 #ifndef AoutSharedLibraryDef
-#define AoutSharedLibraryDef -DBSDSHLIB
+#define AoutSharedLibraryDef -DBSDSHLIB -DAOUT_COMPAT_LIB
 #endif
 #ifndef AoutSharedLibraryLoadFlags
 #define AoutSharedLibraryLoadFlags -aout -Bshareable
