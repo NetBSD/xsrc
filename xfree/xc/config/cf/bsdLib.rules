@@ -317,7 +317,7 @@ clean::									@@\
 #define SharedDepCplusplusLibraryTarget(libname,rev,deplist,solist,down,up)	@@\
 AllTarget(Concat(lib,libname.so.rev))					@@\
 									@@\
-Concat(lib,libname.so.rev):  deplist					@@\
+Concat(lib,libname.so.rev):  deplist $(EXTRALIBRARYDEPS)		@@\
 	$(RM) $@~							@@\
 	@SONAME=`echo $@ | sed 's/\.[^\.]*$$//'`; set -x; \		@@\
 		(cd down; $(CXX) -o up/$@~ $(SHLIBLDFLAGS) -Wl,-soname,$$SONAME solist $(REQUIREDLIBS) BaseShLibReqs); \ @@\
