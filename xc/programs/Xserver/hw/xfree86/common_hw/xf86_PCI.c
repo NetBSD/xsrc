@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.9 1998/11/10 11:55:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.10 1998/11/30 12:16:54 dawes Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -1128,15 +1128,15 @@ xf86scanpci(int scrnIndex)
 
 	    pcr._bus = pcibuses[pcibusidx];
 
-	    if (pciMfDev(pcr._bus, pcr._cardnum))
-		maxfunc = 7;
-
 	    tag = pcibusTag(pcr._bus, pcr._cardnum, 0);
 	    for (pcr._func = 0; pcr._func <= maxfunc; pcr._func++) {
 		tag = pcibusFTag(tag, pcr._func);
 		pcr._device_vendor = pcibusRead(tag, PCI_ID_REG);
 		if (pcr._device_vendor == 0xffffffff)	/* nothing there */
 		    continue;
+
+		if (pciMfDev(pcr._bus, pcr._cardnum))
+		    maxfunc = 7;
 
 		pcr._status_command = pcibusRead(tag, PCI_CMD_STAT_REG);
 		pcr._class_revision = pcibusRead(tag, PCI_CLASS_REG);

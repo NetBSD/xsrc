@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.24.2.9 1998/11/12 10:34:48 dawes Exp $ */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.24.2.11 1998/12/27 13:10:09 dawes Exp $ */
 
 
 /* 
@@ -173,7 +173,11 @@ in this Software without prior written authorization from the X Consortium.
 #endif
 
 #ifdef  MACH
+#ifdef __GNU__
+#define imake_ccflags ""
+#else
 #define imake_ccflags "-DNOSTDHDRS"
+#endif
 #endif
 
 /* this is for OS/2 under EMX. This won't work with DOS */
@@ -269,6 +273,9 @@ in this Software without prior written authorization from the X Consortium.
 /* expects cpp in PATH */
 #define DEFAULT_CPP "cpp"
 #endif
+#if defined(__GNU__)
+#define USE_CC_E
+#endif
 
 #if defined(Lynx)
 /* On LynxOS 2.4.0 imake gets built with the old "legacy"
@@ -305,7 +312,7 @@ char *cpp_argv[ARGUMENTS] = {
 	"-Uunix",	/* remove unix symbol so that filename unix.c okay */
 #endif
 #endif
-#if defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__) || defined(MACH) || defined(linux)
+#if defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__) || defined(MACH) || defined(linux) || defined(__GNU__)
 # ifdef __i386__
 	"-D__i386__",
 # endif
@@ -692,6 +699,11 @@ char *cpp_argv[ARGUMENTS] = {
 	if ((__sp = strchr((buf), ' ')) != NULL)			\
 		*__sp = '/';						\
     } while (0)
+#elif defined(DGUX)
+# define DEFAULT_OS_MAJOR_REV	"r R%[0-9]"
+# define DEFAULT_OS_MINOR_REV	"r R%*d.%[0-9]"
+# define DEFAULT_OS_TEENY_REV	"r R%*d.%*dMU%[0-9]"
+# define DEFAULT_OS_NAME	"smr %[^\n]"
 #else
 # if defined(__Lynx__) || defined(Lynx)
 /* Lynx 2.4.0 /bin/cc doesn't like #elif */

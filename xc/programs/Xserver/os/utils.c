@@ -51,7 +51,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
 OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.27.2.9 1998/11/10 11:55:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.27.2.11 1998/12/27 02:01:20 dawes Exp $ */
 
 #ifdef WIN32
 #include <X11/Xwinsock.h>
@@ -83,6 +83,12 @@ OR PERFORMANCE OF THIS SOFTWARE.
 #include <ctype.h>    /* for isspace */
 #if NeedVarargsPrototypes
 #include <stdarg.h>
+#endif
+
+#if defined(DGUX)
+#include <sys/resource.h>
+#include <netdb.h>
+#include <unistd.h>
 #endif
 
 #ifdef AMOEBA
@@ -212,6 +218,11 @@ extern int errno;
 #define LOCK_TMP_PREFIX "/xf86$"
 #define LOCK_PREFIX "/xf86_"
 #define LOCK_SUFFIX ".lck"
+#endif
+
+#if defined(DGUX)
+#include <limits.h>
+#include <sys/param.h>
 #endif
 
 #ifdef _MINIX
@@ -1403,6 +1414,7 @@ VErrorF(f, args)
     char *f;
     va_list args;
 {
+#if !defined(DGUX)
 #ifdef AIXV3
     vfprintf(aixfd, f, args);
     fflush (aixfd);
@@ -1411,6 +1423,19 @@ VErrorF(f, args)
 #else
     vfprintf(stderr, f, args);
 #endif /* AIXV3 */
+#else /* DGUX */
+    /* writing to the console while the server is running is bad with DG/ux */
+    static Bool firstTime = TRUE;
+    static Bool suppress = FALSE;
+
+    if (firstTime) {
+	firstTime = FALSE;
+	if (isatty(fileno(stderr)))
+	    suppress = TRUE;
+    }
+    if (!suppress)
+	vfprintf(stderr, f, args);
+#endif /* DGUX */
 }
 #endif
 
@@ -1431,6 +1456,7 @@ ErrorF(
     VErrorF(f, args);
     va_end(args);
 #else
+#if !defined(DGUX)
 #ifdef AIXV3
     fprintf(aixfd, f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9);
     fflush (aixfd);
@@ -1445,6 +1471,19 @@ ErrorF(
     mu_unlock(&print_lock);
 #endif
 #endif /* AIXV3 */
+#else /* DGUX */
+    /* writing to the console while the server is running is bad with DG/ux */
+    static Bool firstTime = TRUE;
+    static Bool suppress = FALSE;
+
+    if (firstTime) {
+	firstTime = FALSE;
+	if (isatty(fileno(stderr)))
+	    suppress = TRUE;
+    }
+    if (!suppress)
+	fprintf(stderr, f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9);
+#endif /* DGUX */
 #endif
 }
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.9 1998/11/09 13:36:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.10 1998/12/06 05:40:41 dawes Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config

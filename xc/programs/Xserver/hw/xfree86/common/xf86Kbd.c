@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Kbd.c,v 3.14 1997/01/05 11:58:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Kbd.c,v 3.14.2.2 1998/12/22 11:23:23 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -238,15 +238,14 @@ xf86KbdGetMapping (pKeySyms, pModMap)
      CARD8      *pModMap;
 {
   KeySym        *k;
-#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && !(defined(__NetBSD__) && defined(__atari__))
-
+#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && !defined(DGUX) && !defined(__GNU__) && !(defined(__NetBSD__) && defined(__atari__))
   keymap_t      keymap;
-#endif /* !Lynx && !AMOEBA && !MINIX && !__OSF__ && !__EMX__ */
+#endif /* !Lynx && !AMOEBA && !MINIX && !__OSF__ && !__EMX__ && !__mips__ && !DGUX */
   char          type;
   int           i, j;
   KeySym        *pMap;
   
-#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && !(defined(__NetBSD__) && defined(__atari__))
+#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && !defined(__GNU__) && !(defined(__NetBSD__) && defined(__atari__))
   xf86Info.kbdType =
     ioctl(xf86Info.consoleFd, KDGKBTYPE, &type) != -1 ? type : KB_101;
   if (xf86Info.kbdType == KB_84)
@@ -258,7 +257,7 @@ xf86KbdGetMapping (pKeySyms, pModMap)
   pMap = map;
 #endif
 
-#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && !(defined(__NetBSD__) && defined(__atari__))
+#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && !defined(DGUX) && !defined(__GNU__) && !(defined(__NetBSD__) && defined(__atari__))
   /*
    * use the keymap, which can be gotten from our oringinal vt??.
    * ( ttymap(1) !!!! )
@@ -281,7 +280,7 @@ xf86KbdGetMapping (pKeySyms, pModMap)
 	if (k[0] == k[2] && k[1] == k[3]) k[2] = k[3] = NoSymbol;
       }
   }
-#endif /* !Lynx && !AMOEBA && !MINIX && !__OSF__ && !__EMX__ */
+#endif /* !Lynx && !AMOEBA && !MINIX && !__OSF__ && !__EMX__ && !__mips__ && !DGUX */
 
   /*
    * Apply the special key mapping specified in XF86Config 
@@ -387,7 +386,7 @@ xf86KbdGetMapping (pKeySyms, pModMap)
 
     }
   
-#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && !(defined(__NetBSD__) && defined(__atari__))
+#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && !defined(__GNU__) && !(defined(__NetBSD__) && defined(__atari__))
   xf86Info.kbdType =
     ioctl(xf86Info.consoleFd, KDGKBTYPE, &type) != -1 ? type : KB_101;
 #else
