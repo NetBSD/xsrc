@@ -1499,7 +1499,7 @@ mapVidMemSparse(int ScreenNum, unsigned long Base, unsigned long Size, int flags
     xf86ReadMmio16 = readSparse16;
     xf86ReadMmio32 = readSparse32;
 	
-    if ((flags & VIDMEM_MMIO) ||
+    if ((flags & (VIDMEM_MMIO|VIDMEM_MMIO_32BIT)) ||
         ((flags & VIDMEM_FRAMEBUFFER) && (flags & VIDMEM_SPARSE)))
 	mapflags = 0;
     else
