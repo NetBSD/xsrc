@@ -97,7 +97,7 @@ static KeySym map[] = {
 	XK_Tab,		NoSymbol,		/* 0x30 */
 	XK_space,	NoSymbol,		/* 0x31 */
 	XK_quoteleft,	XK_asciitilde,		/* 0x32 */
-	XK_Delete,	NoSymbol,		/* 0x33 */
+	XK_BackSpace,	NoSymbol,		/* 0x33 */
 	NoSymbol,	NoSymbol,		/* 0x34 */
 	XK_Escape,	NoSymbol,		/* 0x35 */
 	XK_Control_L,	NoSymbol,		/* 0x36 */
