@@ -1,0 +1,14 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/Imakefile,v 1.1.1.2 1996/01/03 07:12:03 dawes Exp $
+
+
+
+
+XCOMM $XConsortium: Imakefile /main/2 1995/11/13 10:12:03 kaleb $
+
+#include <Server.tmpl>
+#define IHaveSubdirs
+
+SUBDIRS = XF68AccelServerDirs cache
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

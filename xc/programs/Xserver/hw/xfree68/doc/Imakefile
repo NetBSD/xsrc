@@ -84,8 +84,8 @@ HWREADME =  README.ati README.trident README.tseng README.WstDig \
             README.chips README.cirrus README.Video7 README.P9000 README.agx \
             README.S3 README.S3V README.SiS README.W32 README.Oak \
             README.Mach32 \
-            README.Mach64 README.ark README.MGA README.NV1 README.fbdev \
-            README.mouse
+            README.Mach64 README.ark README.MGA README.NVIDIA README.fbdev \
+            README.mouse README.neo README.rendition README.3DLabs README.cyrix
 
 MAINDOCS = COPYRIGHT README README.Config BUILD RELNOTES
 
@@ -112,7 +112,7 @@ LinkSourceFile(QuickStart.doc,$(XF86SRC)/doc)
 LinkFile(README.Mach32,$(XF86SRC)/doc/READ.Mach32)
 LinkFile(README.Mach64,$(XF86SRC)/doc/READ.Mach64)
 LinkFile(README.FreeBSD,$(XF86SRC)/doc/READ.FreeBSD)
-LinkFile(README.Riva128,$(XF86SRC)/doc/README.NV1)
+LinkFile(README.Riva128,$(XF86SRC)/doc/README.NVIDIA)
 LinkSourceFile(README,$(XF86SRC)/doc)
 LinkSourceFile(README.Bsdi,$(XF86SRC)/doc)
 LinkSourceFile(README.Config,$(XF86SRC)/doc)
@@ -122,7 +122,7 @@ LinkSourceFile(README.Linux,$(XF86SRC)/doc)
 LinkSourceFile(README.LynxOS,$(XF86SRC)/doc)
 LinkSourceFile(README.Mach,$(XF86SRC)/doc)
 LinkSourceFile(README.MGA,$(XF86SRC)/doc)
-LinkSourceFile(README.NV1,$(XF86SRC)/doc)
+LinkSourceFile(README.NVIDIA,$(XF86SRC)/doc)
 LinkSourceFile(README.NetBSD,$(XF86SRC)/doc)
 LinkSourceFile(README.OpenBSD,$(XF86SRC)/doc)
 LinkSourceFile(README.OS2,$(XF86SRC)/doc)
@@ -150,6 +150,10 @@ LinkSourceFile(README.mouse,$(XF86SRC)/doc)
 LinkSourceFile(README.rendition,$(XF86SRC)/doc)
 LinkSourceFile(README.trident,$(XF86SRC)/doc)
 LinkSourceFile(README.tseng,$(XF86SRC)/doc)
+LinkSourceFile(README.neo,$(XF86SRC)/doc)
+LinkSourceFile(README.rendition,$(XF86SRC)/doc)
+LinkSourceFile(README.3DLabs,$(XF86SRC)/doc)
+LinkSourceFile(README.cyrix,$(XF86SRC)/doc)
 LinkSourceFile(RELNOTES,$(XF86SRC)/doc)
 LinkSourceFile(ServersOnly,$(XF86SRC)/doc)
 LinkSourceFile(VideoModes.doc,$(XF86SRC)/doc)

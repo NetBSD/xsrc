@@ -131,7 +131,9 @@ EXP_FORCE_DEFINES = -DSHOW_BETA_MESSAGE -DEXPIRE_SERVER
 #endif
 
 SERVERSRCS = \
-	XF68_FBDev.c
+	XF68_FBDev.c \
+	XF68_SVGA.c \
+	XF68_W32.c
 
 #if BuildXInputExt
 XINPUT_DEV_SRCS = \
@@ -216,7 +218,7 @@ OFILES = \
 	xf86MIniExt.o \
 	xf86_Option.o
 
-   INCLUDES = -I. -I.. -I$(XF86OSSRC) -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+   INCLUDES = -I. -I.. -I$(XF68OSSRC) -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
               -I$(SERVERSRC)/include -I$(SERVERSRC)/os \
               -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
@@ -226,7 +228,11 @@ OFILES = \
 CONSDEFINES = XFree86ConsoleDefines
 EXP_DEFINES = -DEXPIRY_TIME=XF86ServerExpiry $(EXP_FORCE_DEFINES)
 
+#if defined(NetBSDArchitecture) && defined(atariArchitecture)
+    DEFINES = $(XCONFIGDEFINES) $(CONSDEFINES) $(PNP_MOUSE_DEFINES)
+#else
     DEFINES = $(XCONFIGDEFINES) $(CONSDEFINES) $(PNP_MOUSE_DEFINES) -DFBDEV_SERVER
+#endif
 
 #if XF86MonoServer
 VGA2BUILD = -DBUILD_VGA2
@@ -241,7 +247,9 @@ VGA2MONOBUILD = -DBUILD_VGA2_MONO
 VGA16MONOBUILD = -DBUILD_VGA16_MONO
 #endif
 
-KEYB_DEFINES = -DASSUME_CUSTOM_KEYCODES
+#if !(defined(NetBSDArchitecture) && defined(atariArchitecture))
+    KEYB_DEFINES = -DASSUME_CUSTOM_KEYCODES
+#endif
 
 XF86SCREENFLAGS = $(VGA2BUILD) $(VGA16BUILD) $(VGA2MONOBUILD) $(VGA16MONOBUILD)
 
@@ -298,6 +306,14 @@ SpecialCObjectRule($(KBD),$(ICONFIGFILES),$(KEYB_DEFINES))
 SpecialObjectRule(XF68_FBDev.o,XF68_FBDev.c $(ICONFIGFILES),$(XF86SCREENFLAGS))
 all:: XF68_FBDev.o
 #endif
+#if XF68SVGAServer
+SpecialObjectRule(XF68_SVGA.o,XF68_SVGA.c $(ICONFIGFILES),$(XF86SCREENFLAGS))
+all:: XF68_SVGA.o
+#endif
+#if XF68W32Server
+SpecialObjectRule(XF68_W32.o,XF68_W32.c $(ICONFIGFILES),$(XF86SCREENFLAGS))
+all:: XF68_W32.o
+#endif
 
 #if NeedXF86Beta
 SpecialObjectRule($(BETAOBJ),$(BETASRC),$(EXP_DEFINES))
@@ -328,6 +344,7 @@ LinkSourceFile(xf86Events.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Init.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Io.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Jstk.c,$(XF86SRC)/common)
+LinkSourceFile(xf86KbdBSD.c,$(XF86SRC)/common)
 LinkSourceFile(xf86KbdLnx.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Kbd.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Switch.c,$(XF86SRC)/common)
@@ -347,6 +364,9 @@ LinkSourceFile(xf86Xinput.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Xinput.h,$(XF86SRC)/common)
 LinkSourceFile(xf86_Config.h,$(XF86SRC)/common)
 LinkSourceFile(xf86_Option.h,$(XF86SRC)/common)
+LinkSourceFile(cfb16.h,$(XF86SRC)/common)
+LinkSourceFile(cfb24.h,$(XF86SRC)/common)
+LinkSourceFile(cfb32.h,$(XF86SRC)/common)
 
 InstallLinkKitLibrary(xf86,$(LINKKITDIR)/lib)
 InstallLinkKitNonExecFile(xf86Init.o,$(LINKKITDIR)/lib)

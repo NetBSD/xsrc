@@ -550,6 +550,7 @@ XF68MINIT  = $(XF68COMSRC)/xf86Init_m.o $(XF68CONFIGSRC)/xf86MIniExt.o
 XF68CONFIG = $(XF68CONFIGSRC)/xf86_Option.o
 XF68COMLIB = $(XF68COMSRC)/LibraryTargetName(xf86)
 XF68OSLIB  = $(XF68OSSRC)/LibraryTargetName(xf86_os)
+XF68HWLIB  = $(XF68HWSRC)/LibraryTargetName(xf86_hw)
 XF68LIBS   = $(XF68INIT) $(XF68CONFIG) $(XF68COMLIB) $(XF68OSLIB)
 XF68MLIBS  = $(XF68MINIT) $(XF68CONFIG) $(XF68COMLIB) $(XF68OSLIB)
  
@@ -638,6 +639,12 @@ XF86TGA = XF86_TGA
 #if XF68FBDevServer
 XF68FBDEV = XF68_FBDev
 #endif
+#if XF68SVGAServer
+XF68SVGA = XF68_SVGA
+#endif
+#if XF68W32Server
+XF68W32 = XF68_W32
+#endif 
 #if XF86FBDevServer
 XF68FBDEV = XF86_FBDev
 #endif
@@ -704,6 +711,7 @@ XVFB = Xvfb
     defined(XF86P9000Server) || defined(XF86AGXServer) || \
     defined(XF86I128Server) || defined(XF86TGAServer) || \
     defined(XF86FBDevServer) || defined(XF68FBDevServer) || \
+    defined(XF68SVGAServer) || defined(XF68W32Server) || \
     defined(XnestServer) || defined(XVirtualFramebufferServer)
 MakeMutex($(XF86SVGA) $(XF98GANBWAP) $(XF98NEC480) $(XF98NKVNEC) $(XF98WABS) \
 	  $(XF98WABEP) $(XF98WSNA) $(XF98TGUI) $(XF98MGA) $(XF98SVGA) \
@@ -711,7 +719,7 @@ MakeMutex($(XF86SVGA) $(XF98GANBWAP) $(XF98NEC480) $(XF98NKVNEC) $(XF98WABS) \
 	  $(XF98EGC) $(XF86W32) $(XF86MONO) $(XF86S3) $(XF86S3V) $(XF98NECS3) \
 	  $(XF98PWSKB) $(XF98PWLB) $(XF98GA968) $(XF868514) $(XF86MACH8) \
 	  $(XF86MACH32) $(XF86MACH64) $(XF86P9000) $(XF86AGX) $(XF86I128) \
-	  $(XF86TGA) $(XF68FBDEV) $(XNEST) $(XVFB))
+	  $(XF86TGA) $(XF68FBDEV) $(XF68SVGA) $(XF68W32) $(XNEST) $(XVFB))
 #endif
 MakeMutex($(STDDIRS) mfb cfb cfb16 cfb32)
 #endif
@@ -1732,39 +1740,39 @@ MFBDIR  = mfb
 DDXDIR3 = hw/xfree68
 #if XF68FBDevIPLAN2p2
 IPLAN2P2DIR = iplan2p2
-FBDEVFBLIBS:= $(FBDEVFBLIBS) iplan2p2/LibraryTargetName(ipl2p2)
+FBDEVFBLIBS+= iplan2p2/LibraryTargetName(ipl2p2)
 #endif
 #if XF68FBDevIPLAN2p4
 IPLAN2P4DIR = iplan2p4
-FBDEVFBLIBS:= $(FBDEVFBLIBS) iplan2p4/LibraryTargetName(ipl2p4)
+FBDEVFBLIBS+= iplan2p4/LibraryTargetName(ipl2p4)
 #endif
 #if XF68FBDevIPLAN2p8
 IPLAN2P8DIR = iplan2p8
-FBDEVFBLIBS:= $(FBDEVFBLIBS) iplan2p8/LibraryTargetName(ipl2p8)
+FBDEVFBLIBS+= iplan2p8/LibraryTargetName(ipl2p8)
 #endif
 #if XF68FBDevILBM
 ILBMDIR = ilbm
-FBDEVFBLIBS:= $(FBDEVFBLIBS) ilbm/LibraryTargetName(ilbm)
+FBDEVFBLIBS+= ilbm/LibraryTargetName(ilbm)
 #endif
 #if XF68FBDevAFB
 AFBDIR = afb
-FBDEVFBLIBS:= $(FBDEVFBLIBS) afb/LibraryTargetName(afb)
+FBDEVFBLIBS+= afb/LibraryTargetName(afb)
 #endif
 #if XF68FBDevCFB8
 CFB8DIR = cfb
-FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB8)
+FBDEVFBLIBS+= $(CFB8)
 #endif
 #if XF68FBDevCFB16
 CFB16DIR = cfb16
-FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB16)
+FBDEVFBLIBS+= $(CFB16)
 #endif
 #if XF68FBDevCFB24
 CFB24DIR = cfb24
-FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB24)
+FBDEVFBLIBS+= $(CFB24)
 #endif
 #if XF68FBDevCFB32
 CFB32DIR = cfb32
-FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB32)
+FBDEVFBLIBS+= $(CFB32)
 #endif
 XF68FBDevSUBDIRS = $(STDDIRS) $(MFBDIR) $(IPLAN2P2DIR) $(IPLAN2P4DIR) \
                    $(IPLAN2P8DIR) $(ILBMDIR) $(AFBDIR) $(CFB8DIR) \
@@ -1788,6 +1796,59 @@ SetUIDServerTarget(XF68_FBDev,$(XF68FBDevSUBDIRS),$(XF68FBDevOBJS),$(XF68FBDevLI
 #endif
 #endif /* XF68FBDevServer */
 
+#if XF68SVGAServer
+XCOMM
+XCOMM XFree68 SVGA Server
+XCOMM
+MFBDIR   = mfb
+CFB8DIR  = cfb
+CFB16DIR = cfb16
+CFB24DIR = cfb24
+CFB32DIR = cfb32
+DDXDIR3 = hw/xfree68
+XF68SVGASUBDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) \
+                  $(CFB16DIR) $(CFB24DIR) $(CFB32DIR) $(DDXDIR3) $(DEPDIRS)
+XF68SVGAOBJS = $(XF68COMSRC)/XF68_SVGA.o $(XF68SRC)/vga256/vga256Conf.o \
+               $(XF68SRC)/xaa/xaa8/xaa8.o \
+               $(XF68SRC)/xaa/xaa16/xaa16.o $(XF68SRC)/xaa/xaa24/xaa24.o \
+               $(XF68SRC)/xaa/xaa32/xaa32.o
+XF68SVGALIBS =  $(XF68SRC)/vga256/drivers/LibraryTargetName(drivers) \
+               $(XF68SRC)/xaa/LibraryTargetName(xaa) \
+               $(XF68SRC)/vga256/LibraryTargetName(vga256) \
+               $(XF68LIBS) $(XF68HWLIB) CFBLibs
+XF68SVGASYSLIBS = $(SYSLIBS)
+#if HasParallelMake
+MakeMutex($(XF68SVGASUBDIRS) $(XF68SVGAOBJS) $(XF68SVGALIBS) $(XF68SVGASYSLIBS)
+)
+#endif
+SetUIDServerTarget(XF68_SVGA,$(XF68SVGASUBDIRS),$(XF68SVGAOBJS),$(XF68SVGALIBS),$(XF68SVGASYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XF68_SVGA
+#endif
+#endif /* XF68SVGAServer */
+
+#if XF68W32Server
+XCOMM
+XCOMM XFree68 W32 Server
+XCOMM
+MFBDIR  = mfb
+CFB8DIR = cfb
+DDXDIR1 = hw/xfree68
+XF68W32SUBDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(DDXDIR1) $(DEPDIRS)
+XF68W32OBJS = $(XF68COMSRC)/XF68_W32.o $(XF68ACCELSRC)/et4000w32/w32Conf.o
+XF68W32LIBS = $(XF68ACCELSRC)/et4000w32/w32/LibraryTargetName(w32) \
+              $(XF68ACCELSRC)/et4000w32/cfb.w32/LibraryTargetName(cfb) \
+              $(XF68ACCELSRC)/et4000w32/w32/LibraryTargetName(w32) \
+              $(XF68LIBS) $(XF68HWLIB) CFB8Libs
+XF68W32SYSLIBS = $(SYSLIBS)
+#if HasParallelMake
+MakeMutex($(XF68W32SUBDIRS) $(XF68W32OBJS) $(XF68W32LIBS) $(XF68W32SYSLIBS))
+#endif
+SetUIDServerTarget(XF68_W32,$(XF68W32SUBDIRS),$(XF68W32OBJS),$(XF68W32LIBS),$(XF68W32SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XF68_W32
+#endif
+#endif
 
 #if XprtServer
 XCOMM

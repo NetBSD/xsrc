@@ -1,0 +1,34 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/cache/Imakefile,v 1.1.1.2 1996/01/03 07:12:04 dawes Exp $
+
+
+
+
+XCOMM $XConsortium: Imakefile /main/2 1995/11/13 10:10:55 kaleb $
+#include <Server.tmpl>
+
+SRCS = 	xf86bcache.c xf86fcache.c xf86text.c
+
+OBJS = 	xf86bcache.o xf86fcache.o xf86text.o
+
+DEFINES = -DPSZ=8
+
+INCLUDES = -I$(XF68COMSRC) -I$(XF68HWSRC) -I$(XF68OSSRC) -I. \
+	   -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
+           -I$(SERVERSRC)/cfb -I$(XINCLUDESRC) -I$(FONTINCSRC)
+
+NormalLibraryObjectRule()
+
+NormalAsmObjectRule()
+
+NormalLibraryTarget(xf68cache,$(OBJS))
+
+InstallLinkKitLibrary(xf68cache,$(LINKKITDIR)/lib)
+
+LinkSourceFile(xf86bcache.c,$(XF86ACCELSRC)/cache)
+LinkSourceFile(xf86fcache.c,$(XF86ACCELSRC)/cache)
+LinkSourceFile(xf86text.c,$(XF86ACCELSRC)/cache)
+LinkSourceFile(xf86bcache.h,$(XF86ACCELSRC)/cache)
+LinkSourceFile(xf86fcache.h,$(XF86ACCELSRC)/cache)
+LinkSourceFile(xf86text.h,$(XF86ACCELSRC)/cache)
+
+DependTarget()
