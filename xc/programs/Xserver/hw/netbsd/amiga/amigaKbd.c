@@ -305,7 +305,7 @@ static void amigaInitKbdNames (names, pKbd)
 #endif
 
 #if 1
-    names->keymap = "keymap/amiga(usa1)";
+    names->keymap = "amiga(usa1)";
     names->compat = NULL;
     names->geometry = NULL;
     names->keycodes = NULL;
