@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2001/04/09 22:41:10 tron Exp $
+#	$NetBSD: Makefile,v 1.24 2001/04/10 12:10:51 tron Exp $
 #
 # Targets & Variables
 #
@@ -26,7 +26,7 @@
 
 .include <bsd.own.mk>
 
-.if defined(USE_XF86_4)
+.if defined(USE_XF86_4) && (${USE_XF86_4} != no)
 XCDIR=	xfree/xc
 .else
 XCDIR=	xc
