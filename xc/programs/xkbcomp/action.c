@@ -1,5 +1,4 @@
-/* $XConsortium: action.c /main/10 1996/03/01 14:31:49 kaleb $ */
-/* $XFree86: xc/programs/xkbcomp/action.c,v 3.2 1996/08/26 14:44:09 dawes Exp $ */
+/* $TOG: action.c /main/11 1997/06/30 05:35:35 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/action.c,v 3.2.4.2 1997/07/26 06:31:00 dawes Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"
@@ -1066,7 +1066,7 @@ unsigned long 		tmp;
 	    if (!ExprResolveKeyName(value,&rtrn,NULL,NULL))
 		return ReportMismatch(action->type,field,"key name");
 	    tmp= KeyNameToLong(rtrn.keyName.name);
-	    if (!FindNamedKey(xkb,tmp,&t1,True,CreateKeyNames(xkb))) {
+	    if (!FindNamedKey(xkb,tmp,&t1,True,CreateKeyNames(xkb),0)) {
 		return ReportNotFound(action->type,field,"Key",
 				XkbKeyNameText(rtrn.keyName.name,XkbMessage));
 	    }

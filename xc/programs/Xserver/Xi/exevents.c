@@ -1,9 +1,4 @@
 /* $TOG: exevents.c /main/52 1997/04/14 08:30:09 barstow $ */
-
-
-
-
-/* $XFree86: xc/programs/Xserver/Xi/exevents.c,v 3.3.4.1 1997/05/03 09:44:55 dawes Exp $ */
 /************************************************************
 
 Copyright (c) 1989  X Consortium
@@ -50,6 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
+/* $XFree86: xc/programs/Xserver/Xi/exevents.c,v 3.3.4.2 1997/07/05 15:55:41 dawes Exp $ */
 
 /********************************************************************
  *
@@ -146,7 +142,7 @@ ProcessOtherEvent (xE, other, count)
     if (DeviceEventCallback)
     {
 	DeviceEventInfoRec eventinfo;
-	eventinfo.events = (xEventPtr)xE;
+	eventinfo.events = (xEventPtr) xE;
 	eventinfo.count = count;
 	CallCallbacks(&DeviceEventCallback, (pointer)&eventinfo);
     }

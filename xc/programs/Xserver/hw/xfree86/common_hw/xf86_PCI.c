@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.4 1997/05/19 08:06:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.5 1997/07/26 06:30:48 dawes Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -170,6 +170,10 @@ int scrnIndex;
 	    pcr._base4  = inl(PCI_MODE1_DATA_REG);
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | (PCI_MAP_REG_START+0x14));
 	    pcr._base5  = inl(PCI_MODE1_DATA_REG);
+            outl(PCI_MODE1_ADDRESS_REG, config_cmd | (PCI_MAP_REG_START+0x18));
+	    pcr.rsvd1  = inl(PCI_MODE1_DATA_REG);
+            outl(PCI_MODE1_ADDRESS_REG, config_cmd | (PCI_MAP_REG_START+0x1C));
+	    pcr.rsvd2  = inl(PCI_MODE1_DATA_REG);
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x30);
 	    pcr._baserom = inl(PCI_MODE1_DATA_REG);
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | PCI_INTERRUPT_REG);
@@ -282,6 +286,8 @@ int scrnIndex;
             pcr._base3 = inl(pcr._ioaddr + 0x1C);
             pcr._base4 = inl(pcr._ioaddr + 0x20);
             pcr._base5 = inl(pcr._ioaddr + 0x24);
+            pcr.rsvd1  = inl(pcr._ioaddr + 0x28);
+            pcr.rsvd2  = inl(pcr._ioaddr + 0x2C);
             pcr._baserom = inl(pcr._ioaddr + 0x30);
             pcr._max_min_ipin_iline = inl(pcr._ioaddr + 0x3C);
             pcr._user_config = inl(pcr._ioaddr + 0x40);
@@ -1128,6 +1134,8 @@ xf86scanpci(int scrnIndex)
 		pcr._base3 = pcibusRead(tag, PCI_MAP_REG_START + 0x0c);
 		pcr._base4 = pcibusRead(tag, PCI_MAP_REG_START + 0x10);
 		pcr._base5 = pcibusRead(tag, PCI_MAP_REG_START + 0x14);
+		pcr.rsvd1  = pcibusRead(tag, PCI_MAP_REG_START + 0x18);
+		pcr.rsvd2  = pcibusRead(tag, PCI_MAP_REG_START + 0x1C);
 		pcr._baserom = pcibusRead(tag, PCI_MAP_ROM_REG);
 		pcr._max_min_ipin_iline = pcibusRead(tag, PCI_INTERRUPT_REG);
 		pcr._user_config = pcibusRead(tag, PCI_REG_USERCONFIG);

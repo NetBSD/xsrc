@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.3 1997/05/27 06:22:17 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.5 1997/08/02 13:48:11 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -48,7 +48,7 @@ set CardChipSets(SVGA-et4000)	{ et4000 et4000w32 et4000w32i \
 				  et4000w32p_rev_b et4000w32p_rev_c \
 				  et4000w32p_rev_d et6000 }
 set CardChipSets(SVGA-gvga)	gvga
-set CardChipSets(SVGA-mga)	{ mga2064w mga1064sg }
+set CardChipSets(SVGA-mga)	{ mga2064w mga1064sg mga2164w }
 set CardChipSets(SVGA-mx)	mx
 set CardChipSets(SVGA-ncr77c22)	{ ncr77c22 ncr77c22e }
 set CardChipSets(SVGA-nv)	{ nv1 stg2000 }
@@ -394,6 +394,7 @@ set CardReadmes(SVGA-s3v)	README.S3V
 set CardReadmes(SVGA-sis)	README.SiS
 set CardReadmes(SVGA-tvga8900)	README.trident
 set CardReadmes(SVGA-video7)	README.Video7
+set CardReadmes(SVGA-NONE)	{}
 set rdmelist ""
 foreach idx [array names CardReadmes SVGA-*] {
 	eval lappend rdmelist $CardReadmes($idx)

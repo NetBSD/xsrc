@@ -1,4 +1,4 @@
-/* $XConsortium: xfwp.h /main/18 1996/12/12 16:57:17 swick $ */
+/* $TOG: xfwp.h /main/19 1997/04/16 16:24:48 reed $ */
 
 /*
 Copyright (c) 1996  X Consortium
@@ -107,6 +107,11 @@ enum CONFIG_CHECK {FAILURE, SUCCESS};
 enum CONFIG_TYPE {PM, REM_CLIENT};
 enum LISTEN_STATE {AVAILABLE, IN_USE};
 enum SERVICE_ID_TYPES {CLIENT, PMGR, FINDPROXY};
+enum LOG_EVENTS {
+  CLIENT_ACCEPT,                /* event 0:  client connection granted */
+  CLIENT_REJECT_CONFIG,         /* event 1:  client conn rejected by config file */
+  CLIENT_REJECT_SERVER          /* event 2:  client conn rejected by server query */
+};
 
 struct ice_data
 {
@@ -125,6 +130,8 @@ struct client_conn_buf
   int			time_to_close;
   int			creation_time;
   int			fd;
+  char *		source;
+  char * 	        destination;
 };
 
 struct pm_conn_buf
@@ -150,11 +157,13 @@ struct config
   int 			client_listen_timeout;
   int 			client_data_timeout;
   struct timeval	select_timeout;
-  char 			pm_listen_port[6];
-  char *  		config_file_path;
+  char *		pm_listen_port;
+  char *   		config_file_path;
+  char * 		log_file_path;
   int			lines_allocated;
   int			rule_count;
   struct config_line **  config_file_data;
+  int			log_level;
 };
 
 struct server_list
@@ -195,6 +204,16 @@ struct config_line
   char * 		operator;
   char * 		service;
   int	 		service_id;
+};
+
+struct log_struct
+{
+  enum LOG_EVENTS       event;
+  char *                source;
+  char *                destination;
+  char *                log_string;
+  int                   log_status;
+  int                   config_rule_num;
 };
 
 /*
@@ -287,7 +306,8 @@ void  doProcessWritables(int fd_counter,
 int doConfigCheck(struct sockaddr_in * temp_sockaddr_in,
 		  struct sockaddr_in * server_sockaddr_in,
                   struct config * config_info,
-		  int context);
+		  int context,
+		  struct log_struct * log_data);
 /*
 // Need to put the ICE callback function declaration here
 // (Don't forget call to the ICE library to register callback!)

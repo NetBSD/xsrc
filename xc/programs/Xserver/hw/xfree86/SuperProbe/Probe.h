@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.45.2.4 1997/05/22 14:00:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Probe.h,v 3.45.2.7 1997/08/02 13:48:09 dawes Exp $ */
 
 /*
  * Includes
@@ -442,11 +442,12 @@ extern struct RamDac_Name RamDac_Names[];
 #define CHIP_ATI88800CX	SVGA_TYPE(V_ATI,15) 	/* ATI 88800CX		*/
 #define CHIP_ATI264CT	SVGA_TYPE(V_ATI,16) 	/* ATI 264CT		*/
 #define CHIP_ATI264ET	SVGA_TYPE(V_ATI,17) 	/* ATI 264ET		*/
-#define CHIP_ATI264LT	SVGA_TYPE(V_ATI,18)	/* ATI 264LT		*/
-#define CHIP_ATI264VT	SVGA_TYPE(V_ATI,19) 	/* ATI 264VT		*/
-#define CHIP_ATI264VTB	SVGA_TYPE(V_ATI,20)	/* ATI 264VT-B		*/
-#define CHIP_ATI264GT	SVGA_TYPE(V_ATI,21) 	/* ATI 264GT		*/
-#define CHIP_ATI264GTB	SVGA_TYPE(V_ATI,22)	/* ATI 264GT-B		*/
+#define CHIP_ATI264VT	SVGA_TYPE(V_ATI,18) 	/* ATI 264VT		*/
+#define CHIP_ATI264VTB	SVGA_TYPE(V_ATI,19)	/* ATI 264VT-B		*/
+#define CHIP_ATI264GT	SVGA_TYPE(V_ATI,20) 	/* ATI 264GT		*/
+#define CHIP_ATI264GTB	SVGA_TYPE(V_ATI,21)	/* ATI 264GT-B		*/
+#define CHIP_ATI264LT	SVGA_TYPE(V_ATI,22)	/* ATI 264LT		*/
+#define CHIP_ATI264GT3	SVGA_TYPE(V_ATI,23)	/* ATI 264GT3		*/
 #define CHIP_AL_UNKNOWN	SVGA_TYPE(V_AL,0)	/* Avance Logic unknown	*/
 #define CHIP_AL2101	SVGA_TYPE(V_AL,1)	/* Avance Logic 2101	*/
 #define CHIP_AL2228	SVGA_TYPE(V_AL,2)	/* Avance Logic 2228	*/
@@ -471,6 +472,8 @@ extern struct RamDac_Name RamDac_Names[];
 #define CHIP_CTF65546	SVGA_TYPE(V_CT,14)	/* C&T F65546		*/
 #define CHIP_CTF65550	SVGA_TYPE(V_CT,15)	/* C&T F65550		*/
 #define CHIP_CTF65554	SVGA_TYPE(V_CT,16)	/* C&T F65554		*/
+#define CHIP_CTF65555	SVGA_TYPE(V_CT,17)	/* C&T F65555		*/
+#define CHIP_CTF68554	SVGA_TYPE(V_CT,18)	/* C&T F68554		*/
 #define CHIP_CL_UNKNOWN	SVGA_TYPE(V_CIRRUS,0)	/* Cirrus unknown	*/
 #define CHIP_CL510	SVGA_TYPE(V_CIRRUS,1)	/* Cirrus CL-GD 510/520	*/
 #define CHIP_CL610	SVGA_TYPE(V_CIRRUS,2)	/* Cirrus CL-GD 610/620	*/
@@ -600,6 +603,7 @@ extern struct RamDac_Name RamDac_Names[];
 #define CHIP_MGA2085PX	SVGA_TYPE(V_MATROX,1)	/* Matrox Atlas		*/
 #define CHIP_MGA2064W	SVGA_TYPE(V_MATROX,2)	/* Matrox Millennium	*/
 #define CHIP_MGA1064SG	SVGA_TYPE(V_MATROX,3)	/* Matrox Mystique	*/
+#define CHIP_MGA2164W	SVGA_TYPE(V_MATROX,4)	/* Matrox Millennium II	*/
 #define CHIP_TSENG_UNK	SVGA_TYPE(V_TSENG,0)	/* Tseng unknown	*/
 #define CHIP_ET3000	SVGA_TYPE(V_TSENG,1)	/* Tseng ET3000		*/
 #define CHIP_ET4000	SVGA_TYPE(V_TSENG,2)	/* Tseng ET4000		*/
@@ -612,6 +616,8 @@ extern struct RamDac_Name RamDac_Names[];
 #define CHIP_ET4KW32P_C	SVGA_TYPE(V_TSENG,9)	/* Tseng ET4000/W32p rC	*/
 #define CHIP_ET4KW32P_D	SVGA_TYPE(V_TSENG,10)	/* Tseng ET4000/W32p rD	*/
 #define CHIP_ET6K	SVGA_TYPE(V_TSENG,11)	/* Tseng ET6000		*/
+#define CHIP_ET6K1	SVGA_TYPE(V_TSENG,12)	/* Tseng ET6100		*/
+#define CHIP_ET6K3	SVGA_TYPE(V_TSENG,13)	/* Tseng ET6300		*/
 #define CHIP_UMC_408	SVGA_TYPE(V_UMC,0)	/* UMC 85c408		*/
 #define CHIP_V7_UNKNOWN	SVGA_TYPE(V_VIDEO7,0)	/* Video7 unknown	*/
 #define CHIP_V7_FWRITE	SVGA_TYPE(V_VIDEO7,1)	/* Video7 Fastwrite/VRAM*/

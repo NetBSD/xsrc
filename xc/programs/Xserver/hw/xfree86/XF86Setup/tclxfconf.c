@@ -5,7 +5,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.15.2.3 1997/06/01 12:33:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.15.2.4 1997/08/01 13:46:01 dawes Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -768,7 +768,7 @@ getsection_monitor(interp, varname)
 		    Tcl_SetVar2(interp, namebuf, "Gamma", tmpbuf, 0);
 		}
 		Tcl_SetVar2(interp, namebuf, "Modelines", "", 0);
-		for (dptr = mptr->Modes; ; dptr = dptr->next) {
+		for (dptr = mptr->Modes; dptr; dptr = dptr->next) {
 		    sprintf(tmpbuf, "\"%s\" %.4g %d %d %d %d %d %d %d %d",
 			dptr->name, dptr->Clock/1000.0,
 			dptr->HDisplay, dptr->HSyncStart,

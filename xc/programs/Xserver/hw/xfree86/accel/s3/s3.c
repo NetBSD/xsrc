@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3.c,v 3.155.2.10 1997/06/01 12:33:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3.c,v 3.155.2.13 1997/07/07 04:11:07 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -565,25 +565,18 @@ s3GetPCIInfo()
       for (j=0; (pcrp = pcrpp[j]); j++) {
 	 if (i != j) {
 	    map_64m[ (pcrp->_base0 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base0+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base1 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base1+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base2 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base2+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base3 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base3+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base4 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base4+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base5 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base5+0x3ffffff) >> 26) & 0x3f] = 1;
 	 }
       }
 
       /* check for 64MB alignment and free space */
       
       if ((base0 & 0x3ffffff) ||
-	  map_64m[(base0 >> 26) & 0x3f] || 
-	  map_64m[((base0+0x3ffffff) >> 26) & 0x3f]) {
+	  map_64m[(base0 >> 26) & 0x3f]) {
 	 for (j=63; j>=16 && map_64m[j]; j--);
 	 info.MemBase = ((unsigned long)j) << 26;
 	 ErrorF("%s %s: PCI: base address not correctly aligned or address conflict\n",
@@ -1008,6 +1001,7 @@ s3Probe()
    OFLG_SET(OPTION_ELSA_W2000PRO_X8, &validOptions);
    OFLG_SET(OPTION_MIRO_80SV, &validOptions);
    OFLG_SET(OPTION_NO_PCI_DISC, &validOptions);
+   OFLG_SET(OPTION_NO_SPLIT_XFER, &validOptions);
    xf86VerifyOptions(&validOptions, &s3InfoRec);
 
 #ifdef __alpha__
@@ -1400,7 +1394,7 @@ s3Probe()
      }
    } 
 
-#if 0
+#if 1
    else {
     /* shouldn't we probe it anyway to ensure options are set? */
     if(!(s3Ramdacs[s3RamdacType].DacProbe)()) {
@@ -1597,6 +1591,17 @@ s3Probe()
       else if (s3Bpp>2 && s3InfoRec.maxClock > 50000)
 	 s3InfoRec.maxClock = 50000;  
    }
+
+   /* override maxClock settings form ramdac code... */
+   if (OFLG_ISSET(XCONFIG_DACSPEED, &s3InfoRec.xconfigFlag))
+      if (xf86bpp > 24 && s3InfoRec.dacSpeeds[3] > 0)
+	 s3InfoRec.maxClock = s3InfoRec.dacSpeeds[3];
+      else if (xf86bpp >= 24 && s3InfoRec.dacSpeeds[2] > 0)
+	 s3InfoRec.maxClock = s3InfoRec.dacSpeeds[2];
+      else if (xf86bpp > 8 && xf86bpp < 24 && s3InfoRec.dacSpeeds[1] > 0)
+	 s3InfoRec.maxClock = s3InfoRec.dacSpeeds[1];
+      else if (xf86bpp <= 8 && s3InfoRec.dacSpeeds[0] > 0)
+	 s3InfoRec.maxClock = s3InfoRec.dacSpeeds[0];
 
    if (xf86Verbose) {
       if (! OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &s3InfoRec.clockOptions)) {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32init.c,v 3.14 1996/12/23 06:38:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32init.c,v 3.14.2.1 1997/07/10 08:02:08 hohndel Exp $ */
 /*
  * Written by Jake Richter
  * Copyright (c) 1989, 1990 Panacea Inc., Londonderry, NH - All Rights Reserved
@@ -376,7 +376,9 @@ void mach32SetRamdac(clock)
 
     WaitQueue(11);
     /* blank adjust = 0.  pixel delay = 3, except = 1 for 68830 */
-    SET_BLANK_ADJ(mach32Ramdac == DAC_ATI68830 ? 0x04 : 0x0c);
+    if (!OFLG_ISSET(OPTION_AST_MACH32, &mach32InfoRec.options))  {
+	SET_BLANK_ADJ(mach32Ramdac == DAC_ATI68830 ? 0x04 : 0x0c);
+    }
 
     /* Guarantee low pixel clock */
     outw(CLOCK_SEL, 0x11);
@@ -418,7 +420,9 @@ void mach32SetRamdac(clock)
 		outw(EXT_GE_CONFIG, old_EXT_GE_CONFIG | MULTIPLEX_PIXELS);
 
 		/* set the blank adj and pixel delay values */
-		SET_BLANK_ADJ(1);
+		if (!OFLG_ISSET(OPTION_AST_MACH32, &mach32InfoRec.options))  {
+		    SET_BLANK_ADJ(1);
+		}
 	    } else {
 		/* Set clock source */
 		outb(INPUT_CLK_SEL, 0);
@@ -439,7 +443,9 @@ void mach32SetRamdac(clock)
 	MaskOn = 0;
 	switch (mach32RamdacSubType) {
         case DAC_ATT20C490:
-            SET_BLANK_ADJ(1);
+	    if (!OFLG_ISSET(OPTION_AST_MACH32, &mach32InfoRec.options))  {
+        	SET_BLANK_ADJ(1);
+	    }
             outb(DAC_MASK, 0);
 	    outw(EXT_GE_CONFIG, old_EXT_GE_CONFIG | DAC_RS1 | PIXEL_WIDTH_8);
             outb(ATT_MODE, (mach32InfoRec.depth == 15) ? 0xa2 : 0xc2);
@@ -451,7 +457,9 @@ void mach32SetRamdac(clock)
 		(PIXEL_WIDTH_16 | mach32WeightMask | 2));
 	    break;
         case DAC_BT481:
-            SET_BLANK_ADJ(1);
+	    if (!OFLG_ISSET(OPTION_AST_MACH32, &mach32InfoRec.options))  {
+        	SET_BLANK_ADJ(1);
+	    }
             outb(DAC_MASK, 0);
 	    outw(EXT_GE_CONFIG, old_EXT_GE_CONFIG | DAC_RS1 | PIXEL_WIDTH_8);
             outb(ATT_MODE, (mach32InfoRec.depth == 15) ? 0xa8 : 0xe8);
@@ -467,7 +475,9 @@ void mach32SetRamdac(clock)
 		ErrorF("Pixel multiplexing not supported at this depth\n");
 		break;
 	    }
-	    SET_BLANK_ADJ(1);
+	    if (!OFLG_ISSET(OPTION_AST_MACH32, &mach32InfoRec.options))  {
+		SET_BLANK_ADJ(1);
+	    }
 	    outw(EXT_GE_CONFIG, old_EXT_GE_CONFIG | DAC_RS2 | PIXEL_WIDTH_8);
 	    /* input clock is CLK3 */
 	    outb(INPUT_CLK_SEL, 1);
@@ -492,7 +502,9 @@ void mach32SetRamdac(clock)
  * 640x480 60 Hz?  We will just check to see if the dot clock == 32MHz.
  */
 	    if ((*clock & (0x0f << 2)) == (9 << 2)) {
-		SET_BLANK_ADJ(2);
+		if (!OFLG_ISSET(OPTION_AST_MACH32, &mach32InfoRec.options))  {
+		    SET_BLANK_ADJ(2);
+		}
 	    }
 
 	    outw(EXT_GE_CONFIG,
@@ -545,7 +557,9 @@ void mach32InitDisplay(screen_idx)
 
     mach32SetVGAPage(0);
 
-    old_MISC_CNTL = inw(R_MISC_CNTL);
+    if (!OFLG_ISSET(OPTION_AST_MACH32, &mach32InfoRec.options))  {
+        old_MISC_CNTL = inw(R_MISC_CNTL);
+    }
     old_EXT_GE_CONFIG = inw(R_EXT_GE_CONFIG);
 
     WaitQueue(3);
@@ -627,14 +641,18 @@ void mach32CleanUp()
 
     case DAC_BT481:
     case DAC_ATT20C490:
-	SET_BLANK_ADJ(0x0c);
+	if (!OFLG_ISSET(OPTION_AST_MACH32, &mach32InfoRec.options))  {
+	    SET_BLANK_ADJ(0x0c);
+	}
 	outw(CLOCK_SEL, 0x11);
 	/* should call SetRamdac to set to 8 bpp */
 	outw(EXT_GE_CONFIG, (old_EXT_GE_CONFIG & ~0x3030) | 0x1010);
 	outb(ATT_MODE, old_DAC_ATT_mode);
 	break;
     case DAC_TLC34075:
-	SET_BLANK_ADJ(0x0c);
+	if (!OFLG_ISSET(OPTION_AST_MACH32, &mach32InfoRec.options))  {
+	    SET_BLANK_ADJ(0x0c);
+	}
 	outw(CLOCK_SEL, 0x11);
 	/* should call SetRamdac to set to 8 bpp */
 	outw(EXT_GE_CONFIG, (old_EXT_GE_CONFIG & ~0x3030) | 0x2010);
@@ -669,7 +687,9 @@ void mach32CleanUp()
     outw(MEM_BNDRY, old_MEM_BNDRY);
     outw(MISC_OPTIONS, old_MISC_OPTIONS);
 
-    outw(MISC_CNTL, old_MISC_CNTL);
+    if (!OFLG_ISSET(OPTION_AST_MACH32, &mach32InfoRec.options))  {
+        outw(MISC_CNTL, old_MISC_CNTL);
+    }
 
     WaitIdleEmpty(); /* Make sure that all commands have finished */
 

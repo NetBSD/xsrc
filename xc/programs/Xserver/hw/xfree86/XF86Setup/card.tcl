@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/card.tcl,v 3.12 1996/12/27 06:54:00 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/card.tcl,v 3.12.2.1 1997/06/20 09:13:48 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -211,7 +211,7 @@ proc Card_create_widgets { win } {
 	pack  $w.card.options.text.sb -side left -fill y
 
 	$w.card.readme configure -state disabled
-	for {set idx 0} {from: idx < [llength DeviceIDs]} {incr idx} {
+	for {set idx 0} {$idx < [llength $DeviceIDs]} {incr idx} {
 		set cardReadmeWasSeen($idx)	0
 	}
 	if { $UseConfigFile } {
@@ -307,16 +307,39 @@ proc Card_cbox_setentry { cb text } {
 }
 
 proc Card_selected { win lbox } {
-	global cardServer cardReadmeWasSeen cardDevNum
+	global cardServer cardReadmeWasSeen cardDevNum cardDriverReadme
 
 	set w [winpathprefix $win]
 	if { ![string length [$lbox curselection]] } return
 	set cardentry	[$lbox get [$lbox curselection]]
 	set carddata	[xf86cards_getentry $cardentry]
+	set cardDriverReadme ""
 	$w.card.title configure -text "Card selected: $cardentry"
 	$w.card.options.text.text delete 0.0 end
 	if { [lsearch [lindex $carddata 7] UNSUPPORTED] == -1 } {
 	    #Card_cbox_setentry $w.card.chipset.cbox  [lindex $carddata 1]
+	    set cardDriverReadmeRaw		      [lindex $carddata 1]
+	    switch -glob $cardDriverReadmeRaw {
+		    S3\ ViRGE	{ set cardDriverReadme "s3v" }
+		    ET3*	{ set cardDriverReadme "et3000" }
+		    ET4*	{ set cardDriverReadme "et4000" }
+		    ET6*	{ set cardDriverReadme "et4000" }
+		    CL*		{ set cardDriverReadme "cirrus" }
+		    ARK*	{ set cardDriverReadme "ark" }
+		    ct*		{ set cardDriverReadme "chips" }
+		    mga*	{ set cardDriverReadme "mga" }
+		    MGA*	{ set cardDriverReadme "mga" }
+		    TVGA*	{ set cardDriverReadme "tvga8900" }
+		    TGUI*	{ set cardDriverReadme "tvga8900" }
+		    SIS*	{ set cardDriverReadme "sis" }
+		    nv1*	{ set cardDriverReadme "nv" }
+		    Oak*	{ set cardDriverReadme "oak" }
+		    WD*		{ set cardDriverReadme "pvga1" }
+		    ALG*	{ set cardDriverReadme "NONE" }
+		    AP*		{ set cardDriverReadme "NONE" }
+		    Avance*	{ set cardDriverReadme "NONE" }
+		    Alliance*	{ set cardDriverReadme "NONE" }
+	    }
 	    set cardServer			      [lindex $carddata 2]
 	    Card_cbox_setentry $w.card.ramdac.cbox    [lindex $carddata 3]
 	    Card_cbox_setentry $w.card.clockchip.cbox [lindex $carddata 4]
@@ -441,7 +464,7 @@ proc Card_set_cboxlists { win args } {
 }
 
 proc Card_display_readme { win } {
-	global cardServer CardReadmes cardReadmeWasSeen
+	global cardServer CardReadmes cardReadmeWasSeen cardDriverReadme
 	global cardDevNum Xwinhome
 
 	set w [winpathprefix $win]
@@ -453,7 +476,13 @@ proc Card_display_readme { win } {
         text .cardreadme.file.text -setgrid true \
 		-xscroll ".cardreadme.horz.hsb set" \
 		-yscroll ".cardreadme.file.vsb set"
-	foreach file $CardReadmes($cardServer) {
+	if { ![string compare $cardServer "SVGA"] &&
+	     [string length $cardDriverReadme] } {
+		set readmeindex $cardServer-$cardDriverReadme
+	} else {
+		set readmeindex $cardServer
+	}
+	foreach file $CardReadmes($readmeindex) {
 		set fd [open $Xwinhome/lib/X11/doc/$file r]
 		.cardreadme.file.text insert end [read $fd]
 		close $fd

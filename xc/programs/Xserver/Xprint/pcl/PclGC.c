@@ -1,4 +1,4 @@
-/* $XConsortium: PclGC.c /main/2 1996/12/30 14:56:42 kaleb $ */
+/* $TOG: PclGC.c /main/3 1997/06/11 17:53:43 samborn $ */
 /*******************************************************************
 **
 **    *********************************************************
@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclGC.c,v 1.3 1996/12/31 07:05:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclGC.c,v 1.3.2.1 1997/06/15 07:25:28 dawes Exp $ */
 
 #include "gcstruct.h"
 
@@ -668,7 +668,7 @@ PclUpdateDrawableGC( pGC, pDrawable, outFile )
 		sz = h * BitmapBytePad( w );
 
 		bits = (char *)xalloc( sz );
-		mfbGetImage( pGC->tile, 0, 0, w, h, XYPixmap, ~0, bits );
+		mfbGetImage(pGC->tile.pixmap, 0, 0, w, h, XYPixmap, ~0, bits);
 		PclSendPattern( bits, sz, 1, h, w, 100, *outFile );
 		xfree( bits );
 	    }
@@ -676,7 +676,7 @@ PclUpdateDrawableGC( pGC, pDrawable, outFile )
 	    {
 		sz = h * PixmapBytePad( w, 8 );
 		bits = (char *)xalloc( sz );
-		cfbGetImage( pGC->tile, 0, 0, w, h, ZPixmap, ~0, bits );
+		cfbGetImage(pGC->tile.pixmap, 0, 0, w, h, ZPixmap, ~0, bits);
 		PclSendPattern( bits, sz, 8, h, w, 100, *outFile );
 		xfree( bits );
 	    }
@@ -685,7 +685,7 @@ PclUpdateDrawableGC( pGC, pDrawable, outFile )
 		sz = h * PixmapBytePad( w, 24 );
 		
 		bits = (char *)xalloc( sz );
-		cfb32GetImage( pGC->tile, 0, 0, w, h, ZPixmap, ~0, bits );
+		cfb32GetImage(pGC->tile.pixmap, 0, 0, w, h, ZPixmap, ~0, bits);
 		PclSendPattern( bits, sz, 24, h, w, 100, *outFile );
 		xfree( bits );
 	    }

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/81 1996/10/22 18:32:26 kaleb $
-XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.2 1997/05/27 06:22:28 dawes Exp $
+XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.3 1997/06/08 15:41:29 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
@@ -97,7 +97,7 @@ SYS_LIBRARIES1 = -lauth
 SYS_LIBRARIES1 = -ls
 #endif
 
-#if defined(XFree86Version) && HasLibCrypt || defined(NetBSDArchitecture) || defined(OpenBSDArchitecture)
+#if defined(XFree86Version) && HasLibCrypt || defined(NetBSDArchitecture)
 #ifdef SpecialLibCrypt
 SYS_LIBRARIES2 = SpecialLibCrypt
 #else

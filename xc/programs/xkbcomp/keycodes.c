@@ -1,4 +1,4 @@
-/* $XConsortium: keycodes.c /main/11 1996/12/27 21:16:54 kaleb $ */
+/* $TOG: keycodes.c /main/13 1997/06/13 05:59:12 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -87,6 +87,7 @@ typedef struct _KeyNamesInfo {
     int			effectiveMax;
     unsigned long	names[XkbMaxLegalKeyCode+1];
     unsigned 		files[XkbMaxLegalKeyCode+1];
+    unsigned char	has_alt_forms[XkbMaxLegalKeyCode+1];
     IndicatorNameInfo *	leds;
     AliasInfo *		aliases;
 } KeyNamesInfo;
@@ -300,6 +301,7 @@ ClearKeyNamesInfo(info)
     info->effectiveMax= 255;
     bzero((char *)info->names,sizeof(info->names));
     bzero((char *)info->files,sizeof(info->files));
+    bzero((char *)info->has_alt_forms,sizeof(info->has_alt_forms));
     if (info->leds)
 	ClearIndicatorNameInfo(info->leds,info);
     if (info->aliases)
@@ -359,7 +361,7 @@ AddKeyName(info,kc,name,merge,fileID,reportCollisions)
     Bool		reportCollisions;
 #endif
 {
-int		old,override;
+int		old;
 unsigned long	lval;
 
     if ((kc<info->effectiveMin)||(kc>info->effectiveMax)) {
@@ -383,7 +385,10 @@ unsigned long	lval;
 	LongToKeyName(info->names[kc],buf);
 	buf[4]= '\0';
 	if (info->names[kc]==lval) {
-	    if (reportCollisions) {
+	    if (info->has_alt_forms[kc] || (merge==MergeAltForm)) {
+		info->has_alt_forms[kc]= True;
+	    }
+	    else if (reportCollisions) {
 		WARN("Multiple identical key name definitions\n");
 		ACTION2("Later occurences of \"<%s> = %d\" ignored\n",buf,kc);
 	    }
@@ -406,27 +411,32 @@ unsigned long	lval;
 	    info->files[kc]= 0;
 	}
     }
-    override= (merge==MergeOverride);
     old= FindKeyByLong(info,lval);
     if ((old!=0)&&(old!=kc)) {
-	if (override) {
+	if (merge==MergeOverride) {
 	    info->names[old]= 0;
 	    info->files[old]= 0;
+	    info->has_alt_forms[old]= True;
 	    if (reportCollisions) {
 		WARN1("Key name <%s> assigned to multiple keys\n",name);
 		ACTION2("Using %d, ignoring %d\n",kc,old);
 	    }
 	}
-	else {
-	    if (reportCollisions) {
+	else if (merge!=MergeAltForm) {
+	    if ((reportCollisions)&&(warningLevel>3)) {
 		WARN1("Key name <%s> assigned to multiple keys\n",name);
 		ACTION2("Using %d, ignoring %d\n",old,kc);
+		ACTION("Use 'alternate' keyword to assign the same name to multiple keys\n");
 	    }
 	    return True;
+	}
+	else {
+	    info->has_alt_forms[old]= True;
 	}
     }
     info->names[kc]= lval;
     info->files[kc]= fileID;
+    info->has_alt_forms[kc]= (merge==MergeAltForm);
     return True;
 }
 
@@ -454,11 +464,15 @@ char buf[5];
 	from->name= NULL;
     }
     for (i=from->computedMin;i<=from->computedMax;i++) {
+	unsigned thisMerge;
 	if (from->names[i]==0)
 	    continue;
 	LongToKeyName(from->names[i],buf);
 	buf[4]= '\0';
-	if (!AddKeyName(into,i,buf,merge,from->fileID,False))
+	if (from->has_alt_forms[i])
+	     thisMerge= MergeAltForm;
+	else thisMerge= merge;
+	if (!AddKeyName(into,i,buf,thisMerge,from->fileID,False))
 	    into->errorCount++;
     }
     if (from->leds) {

@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/15 1996/10/28 05:13:52 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/Imakefile,v 3.22.2.1 1997/05/24 13:38:19 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/Imakefile,v 3.22.2.2 1997/07/27 02:41:33 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -117,7 +117,6 @@ LinkSourceFile(QuickStart.doc,$(XF86SRC)/doc)
 LinkFile(README.Mach32,$(XF86SRC)/doc/READ.Mach32)
 LinkFile(README.Mach64,$(XF86SRC)/doc/READ.Mach64)
 LinkFile(README.FreeBSD,$(XF86SRC)/doc/READ.FreeBSD)
-LinkFile(README.OpenBSD,$(XF86SRC)/doc/README.NetBSD)
 LinkSourceFile(README,$(XF86SRC)/doc)
 LinkSourceFile(README.Bsdi,$(XF86SRC)/doc)
 LinkSourceFile(README.Config,$(XF86SRC)/doc)
@@ -129,6 +128,7 @@ LinkSourceFile(README.Mach,$(XF86SRC)/doc)
 LinkSourceFile(README.MGA,$(XF86SRC)/doc)
 LinkSourceFile(README.NV1,$(XF86SRC)/doc)
 LinkSourceFile(README.NetBSD,$(XF86SRC)/doc)
+LinkSourceFile(README.OpenBSD,$(XF86SRC)/doc)
 LinkSourceFile(README.OS2,$(XF86SRC)/doc)
 LinkSourceFile(README.Oak,$(XF86SRC)/doc)
 LinkSourceFile(README.P9000,$(XF86SRC)/doc)

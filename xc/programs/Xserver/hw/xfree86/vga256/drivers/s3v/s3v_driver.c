@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.10 1997/06/01 12:33:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.13 1997/07/26 06:30:55 dawes Exp $ */
 
 /*
  *
@@ -341,6 +341,8 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    outb(vgaCRReg, restore->CR43);
    outb(vgaCRIndex, 0x65);             
    outb(vgaCRReg, restore->CR65);
+   outb(vgaCRIndex, 0x6d);
+   outb(vgaCRReg, restore->CR6D);
 
 
    /* Restore the desired video mode with CR67 */
@@ -348,6 +350,8 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    outb(vgaCRIndex, 0x67);             
    cr67 = inb(vgaCRReg) & 0xf; /* Possible hardware bug on VX? */
    outb(vgaCRReg, 0x50 | cr67); 
+   usleep(10000);
+   outb(vgaCRIndex, 0x67);             
    outb(vgaCRReg, restore->CR67 & ~0x0c); /* Don't enable STREAMS yet */
 
    /* Other mode timing and extended regs */
@@ -417,6 +421,8 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    VerticalRetraceWait();
    outb(vgaCRIndex, 0x67);    
    outb(vgaCRReg, 0x50);   /* For possible bug on VX?! */          
+   usleep(10000);
+   outb(vgaCRIndex, 0x67);
    outb(vgaCRReg, restore->CR67); 
 
 
@@ -497,7 +503,31 @@ unsigned char cr3a, cr53, cr66;
     * in the generic VGA portion.
     */
 
+   outb(vgaCRIndex, 0x66);
+   cr66 = inb(vgaCRReg);
+   outb(vgaCRReg, cr66 | 0x80);
+   outb(vgaCRIndex, 0x3a);
+   cr3a = inb(vgaCRReg);
+   outb(vgaCRReg, cr3a | 0x80);
+
+   outb(vgaCRIndex, 0x66);
+   cr66 = inb(vgaCRReg);
+   outb(vgaCRReg, cr66 | 0x80);
+   outb(vgaCRIndex, 0x3a);
+   cr3a = inb(vgaCRReg);
+   outb(vgaCRReg, cr3a | 0x80);
+
    save = (vgaS3VPtr)vgaHWSave((vgaHWPtr)save, sizeof(vgaS3VRec));
+
+   outb(vgaCRIndex, 0x66);
+   outb(vgaCRReg, cr66);
+   outb(vgaCRIndex, 0x3a);             
+   outb(vgaCRReg, cr3a);
+
+   outb(vgaCRIndex, 0x66);
+   outb(vgaCRReg, cr66);
+   outb(vgaCRIndex, 0x3a);             
+   outb(vgaCRReg, cr3a);
 
    /* First unlock extended sequencer regs */
    outb(0x3c4, 0x08);
@@ -556,6 +586,8 @@ unsigned char cr3a, cr53, cr66;
    save->CR5E = inb(vgaCRReg);  
    outb(vgaCRIndex, 0x65);             
    save->CR65 = inb(vgaCRReg);
+   outb(vgaCRIndex, 0x6d);
+   save->CR6D = inb(vgaCRReg);
 
 
    /* Save sequencer extended regs for DCLK PLL programming */
@@ -673,6 +705,7 @@ S3VProbe()
 S3PCIInformation *pciInfo = NULL;
 unsigned char config1, config2, m, n, n1, n2, cr66;
 int mclk;
+DisplayModePtr pMode, pEnd;
 
    if (vga256InfoRec.chipset) {
       if (StrCaseCmp(vga256InfoRec.chipset,S3VIdent(0)))
@@ -928,6 +961,51 @@ int mclk;
       else s3vPriv.NeedSTREAMS = FALSE;
    s3vPriv.STREAMSRunning = FALSE;
 
+
+   pEnd = pMode = vga256InfoRec.modes;
+   do {
+      /* Setup the Mode.Private if required */
+      if (!pMode->PrivSize || !pMode->Private) {
+	 pMode->PrivSize = S3_MODEPRIV_SIZE;
+	 pMode->Private = (INT32 *)xcalloc(sizeof(INT32), S3_MODEPRIV_SIZE);
+	 pMode->Private[0] = 0;
+      }
+      
+      /* Set default for invert_vclk */
+      if (!(pMode->Private[0] & (1 << S3_INVERT_VCLK))) {
+	 pMode->Private[S3_INVERT_VCLK] = 0;
+	 pMode->Private[0] |= 1 << S3_INVERT_VCLK;
+      }
+      
+      /* Set default for blank_delay */
+      if (!(pMode->Private[0] & (1 << S3_BLANK_DELAY))) {
+	 pMode->Private[0] |= (1 << S3_BLANK_DELAY);
+	 if(s3vPriv.chip == S3_ViRGE_VX)
+	    /* these values need to be changed once CR67_1 is set
+	       for gamma correction (see S3V server) ! */
+	    if (vgaBitsPerPixel == 8)
+	       pMode->Private[S3_BLANK_DELAY] = 0x00;
+	    else if (vgaBitsPerPixel == 16)
+	       pMode->Private[S3_BLANK_DELAY] = 0x00;
+	    else
+	       pMode->Private[S3_BLANK_DELAY] = 0x51;
+	 else
+	    if (vgaBitsPerPixel == 8)
+	       pMode->Private[S3_BLANK_DELAY] = 0x00;
+	    else if (vgaBitsPerPixel == 16)
+	       pMode->Private[S3_BLANK_DELAY] = 0x02;
+	    else
+	       pMode->Private[S3_BLANK_DELAY] = 0x04;
+      }
+      
+      /* Set default for early_sc */
+      if (!(pMode->Private[0] & (1 << S3_EARLY_SC))) {
+	 pMode->Private[0] |= 1 << S3_EARLY_SC;
+	 pMode->Private[S3_EARLY_SC] = 0;
+      }
+      pMode = pMode->next;
+   } while (pMode != pEnd);
+
    /* And finally set various possible option flags */
 
    vga256InfoRec.bankedMono = FALSE;
@@ -1131,7 +1209,7 @@ int i, j;
    new->SR15 = 0x03 | 0x80; 
    new->SR18 = 0x00;
    new->CR43 = 0x00;
-   new->CR65 = 0x20;
+   new->CR65 = 0x00;
    new->CR54 = 0x00;
    
    /* Memory controller registers. Optimize for better graphics engine 
@@ -1283,7 +1361,6 @@ int i, j;
    width = (vga256InfoRec.displayWidth * (vgaBitsPerPixel / 8))>> 3;
    new->std.CRTC[19] = 0xFF & width;
    new->CR51 = (0x300 & width) >> 4; /* Extension bits */
-   new->CR65 = 0x20;
    
    /* And finally, select clock source 2 for programmable PLL */
    new->std.MiscOutReg |= 0x0c;      
@@ -1313,10 +1390,39 @@ int i, j;
       outb(vgaCRIndex, 0x36);
       new->CR36 = inb(vgaCRReg);
       if(OFLG_ISSET(OPTION_FPM_VRAM, &vga256InfoRec.options)) 
-         new->CR36 = new->CR36 | 0x0c;
+         new->CR36 |=  0x0c;
       else 
          new->CR36 &= ~0x0c;
       }
+
+   if (mode->Private) {
+      if (mode->Private[0] & (1 << S3_INVERT_VCLK)) {
+	 if (mode->Private[S3_INVERT_VCLK])
+	    new->CR67 |= 1;
+	 else
+	    new->CR67 &= ~1;
+      }
+      if (mode->Private[0] & (1 << S3_BLANK_DELAY)) {
+	 if (s3vPriv.chip == S3_ViRGE_VX)
+	    new->CR6D = mode->Private[S3_BLANK_DELAY];
+	 else {
+	    new->CR65 = (new->CR65 & ~0x38) 
+	       | (mode->Private[S3_BLANK_DELAY] & 0x07) << 3;
+	    outb(vgaCRIndex, 0x6d);
+	    new->CR6D = inb(vgaCRReg);
+	 }
+      }
+      if (mode->Private[0] & (1 << S3_EARLY_SC)) {
+	 if (mode->Private[S3_EARLY_SC])
+	    new->CR65 |= 2;
+	 else
+	    new->CR65 &= ~2;
+      }
+   }
+   else {
+      outb(vgaCRIndex, 0x6d);
+      new->CR6D = inb(vgaCRReg);
+   }
 
    outb(vgaCRIndex, 0x68);
    new->CR68 = inb(vgaCRReg);
@@ -1487,28 +1593,28 @@ int * streams;
 
    ((mmtr)s3vMmioMem)->streams_regs.regs.prim_stream_cntl = 
          streams[0] & 0x77000000;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.col_chroma_key_cntl = 0x00;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.second_stream_cntl = 0x03000000;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.chroma_key_upper_bound = 0x00;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.second_stream_stretch = 0x00;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.blend_cntl = 0x01000000;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.prim_fbaddr0 = 0x00;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.prim_fbaddr1 = 0x00;
+   ((mmtr)s3vMmioMem)->streams_regs.regs.col_chroma_key_cntl = streams[1];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.second_stream_cntl = streams[2];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.chroma_key_upper_bound = streams[3];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.second_stream_stretch = streams[4];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.blend_cntl = streams[5];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.prim_fbaddr0 = streams[6];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.prim_fbaddr1 = streams[7];
    ((mmtr)s3vMmioMem)->streams_regs.regs.prim_stream_stride = 
          streams[8] & 0x0fff;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.double_buffer = 0x00;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.second_fbaddr0 = 0x00;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.second_fbaddr1 = 0x00;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.second_stream_stride = 0x01;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.opaq_overlay_cntl = 0x40000000;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.k1 = 0x00;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.k2 = 0x00;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.dda_vert = 0x00;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.prim_start_coord = 0x00010001;
+   ((mmtr)s3vMmioMem)->streams_regs.regs.double_buffer = streams[9];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.second_fbaddr0 = streams[10];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.second_fbaddr1 = streams[11];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.second_stream_stride = streams[12];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.opaq_overlay_cntl = streams[13];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.k1 = streams[14];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.k2 = streams[15];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.dda_vert = streams[16];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.prim_start_coord = streams[18];
    ((mmtr)s3vMmioMem)->streams_regs.regs.prim_window_size = 
          streams[19] & 0x07ff07ff;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.second_start_coord = 0x07ff07ff;
-   ((mmtr)s3vMmioMem)->streams_regs.regs.second_window_size = 0x00010001;
+   ((mmtr)s3vMmioMem)->streams_regs.regs.second_start_coord = streams[20];
+   ((mmtr)s3vMmioMem)->streams_regs.regs.second_window_size = streams[21];
 
 
 }

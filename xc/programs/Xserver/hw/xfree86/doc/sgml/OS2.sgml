@@ -1,13 +1,13 @@
 <!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
-<title>README for XFree86 3.3 on OS/2
+<title>README for XFree86 3.3.1 on OS/2
 <author>Holger Veit
-<Date>Last modified on: 17 May 1997
+<Date>Last modified on: 2 August 1997
 
 <toc>
 
-<sect>Introductory Note about the release 3.3
+<sect>Introductory Note about the release 3.3.1
 <p>
 Before looking into this file, please check for any LATEST.OS2 files
 that may come with the binary distribution. Please also check out the
@@ -19,12 +19,16 @@ following XFree86/OS2 WWW pages:
 </itemize>
 before you claim to have found any problems.
 
-This version of the code is called XFree86/OS2 3.3. This is a full, unrestricted
-version which does not expire, and for which the complete source code is
-available. In contrast to beta versions, we consider this code as sufficiently
-stable for use by an end user. Since there have been numerous bugfixes, we
-recommend this version, even if you had XFree86/OS2 3.2 before and it worked
-satisfyingly with your hardware.
+This version of the code is called XFree86/OS2 3.3.1. This is a bugfix release
+for 3.3. It is a full, unrestricted version which does not expire, and for 
+which the complete source code is available. In contrast to beta versions, we 
+consider this code as sufficiently stable for use by an end user. Since there 
+have been numerous bugfixes, we recommend this version, even if you had 
+XFree86/OS2 3.2 before and it worked satisfyingly with your hardware.
+By the time 3.3.1 is released, the older version 3.3 will be withdrawn,
+and archives will be updated to this version. There may still be references 
+to 3.3 still in documents; these apply to 3.3.1 as well, unless otherwise
+noted.
 
 Previous versions have been tested in a large number of configurations
 and have been found to be working, with some bugs left, rather flawlessly.
@@ -133,8 +137,8 @@ this file and we'll revise it.
 <item>There are no specific requirements concerning network cards, disk types,
        or CD ROM equipment; of course the more powerful, the better.
 <item>Depending on the packages installed, a disk space of 20-55MB on a
-       HPFS formatted partition (or a NFS partition natively allowing long 
-       filenames) is required. XFree86/OS2 will not run on FAT partitions.
+       HPFS formatted partition (or a NFS or ext2fs partition natively 
+       allowing long filenames) is required. XFree86/OS2 will not run on FAT partitions.
 <item>You need a video card that is supported by XFree86. Refer to the general
        README document for a list of supported cards. Note that the sets
        of video cards supported by XFree86 on one hand and OS/2 on the other 
@@ -149,7 +153,7 @@ this file and we'll revise it.
 <p>
 <itemize>
 <item>Any version of Warp 3 with at least fixpack 17, or Warp 4 is required
-<item>XFree86/OS2-3.3 may use a local named-pipe connection or a TCP/IP 
+<item>XFree86/OS2-3.3.1 may use a local named-pipe connection or a TCP/IP 
        based network connection.
        <enum>
        <item>Warp comes with the Internet Access Kit (IAK), which is
@@ -167,7 +171,7 @@ this file and we'll revise it.
        or NetBIOS work, and I won't to provide support for that in the future.
 <item>If you want to write or port applications for XFree86, you are
        encouraged to do so. You will need a complete installation of
-       EMX/gcc 0.9C or later for doing so. Neither the second (obsolete)
+       EMX/gcc 0.9C fix2 or later for doing so. Neither the second (obsolete)
        implementation of gcc, nor any commercial package, including
        Cset/2, VAC++, Borland C++/OS2, Watcom C++, Metaware C, and others,
        is suitable for porting, because various parts of the X DLLs rely
@@ -197,43 +201,43 @@ were ported to XFree86.
 <descrip>
 <tag/REQUIRED:/
     <descrip>
-    <tag/X33base/	A special device driver and the SuperProbe program
-    <tag/X33doc/	READMEs and XFree86 specific man pages.
-    <tag/X33bin/	all of the executable X client applications and shared libs
-    <tag/X33fnts/	the misc and 75dpi fonts
+    <tag/X331base/	A special device driver and the SuperProbe program
+    <tag/X331doc/	READMEs and XFree86 specific man pages.
+    <tag/X331bin/	all of the executable X client applications and shared libs
+    <tag/X331fnts/	the misc and 75dpi fonts
     <tag/emxrt/         Runtime libraries of EMX
     </descrip>
 
     Choose at least one of the following to match your hardware:
 
     <descrip>
-    <tag/X338514/	the X server for IBM 8514/A and compatible boards
-    <tag/X33AGX/	the X server for AGX boards
-    <tag/XA32AI128/	the X server for &num;9 Imagination 128 boards
-    <tag/X33Ma32/	the X server for ATI Mach32 graphics boards
-    <tag/X33Ma64/	the X server for ATI Mach64 graphics boards
-    <tag/X33Ma8/	the X server for ATI Mach8 graphics boards
-    <tag/X33Mono/	the Monochrome X Server
-    <tag/X33P9K/	the X server for P9000 based boards
-    <tag/X33S3/ 	the X server for S3 based boards (excluding S3 ViRGE)
-    <tag/X33S3V/ 	the X server for S3 ViRGE based boards
-    <tag/X33SVGA/	the 8-bit pseudo-color X server for Super VGA cards
-    <tag/X33VG16/	the 4-bit pseudo-color X server for VGA &amp; SVGA cards.
-    <tag/X33W32/	the X server for et4000w32 based boards
+    <tag/X3318514/	the X server for IBM 8514/A and compatible boards
+    <tag/X331AGX/	the X server for AGX boards
+    <tag/X331I128/	the X server for &num;9 Imagination 128 boards
+    <tag/X331Ma32/	the X server for ATI Mach32 graphics boards
+    <tag/X331Ma64/	the X server for ATI Mach64 graphics boards
+    <tag/X331Ma8/	the X server for ATI Mach8 graphics boards
+    <tag/X331Mono/	the Monochrome X Server
+    <tag/X331P9K/	the X server for P9000 based boards
+    <tag/X331S3/ 	the X server for S3 based boards (excluding S3 ViRGE)
+    <tag/X331S3V/ 	the X server for S3 ViRGE based boards
+    <tag/X331SVGA/	the 8-bit pseudo-color X server for Super VGA cards
+    <tag/X331VG16/	the 4-bit pseudo-color X server for VGA &amp; SVGA cards.
+    <tag/X331W32/	the X server for et4000w32 based boards
     </descrip>
 
 <tag/OPTIONAL:/
 
     <descrip>
-    <tag/X33man/ 	pre-formatted man pages for the X11 interface and clients
-    <tag/X33f100/	100dpi fonts
-    <tag/X33fscl/	Speedo and Type1 fonts
-    <tag/X33fnon/ 	Japanese, Chinese and other fonts
-    <tag/X33fcyr/	Cyrillic fonts
-    <tag/X33fsrv/	the font server with man pages.
-    <tag/X33prog/	the X11 header files and programmer's utilities
+    <tag/X331man/ 	pre-formatted man pages for the X11 interface and clients
+    <tag/X331f100/	100dpi fonts
+    <tag/X331fscl/	Speedo and Type1 fonts
+    <tag/X331fnon/ 	Japanese, Chinese and other fonts
+    <tag/X331fcyr/	Cyrillic fonts
+    <tag/X331fsrv/	the font server with man pages.
+    <tag/X331prog/	the X11 header files and programmer's utilities
 			for compiling other X applications
-    <tag/X33pex/	PEX fonts and libraries required for PEX applications
+    <tag/X331pex/	PEX fonts and libraries required for PEX applications
     </descrip>
 </descrip>
 
@@ -242,7 +246,7 @@ software to obtain carefully. Each X server is an archive of about 1.2MB
 and occupies 3.0MB on the disk. You won't normally need more than the
 single Xserver tailored to your video card.
 
-If it is your first time install, get the <tt/X33base/ archive before any
+If it is your first time install, get the <tt/X331base/ archive before any
 of the other packages. This package contains a driver and a test program,
 which analyzes your video hardware. If this program fails or reports an
 incompatible hardware, it makes no sense to obtain the other packages in
@@ -287,12 +291,12 @@ drive with the letter Y: (which you probably don't have). Change the letter
 in all commands accordingly.
 
 <enum>
-<item>Obtain the package <tt/X33base/ and install it from the root directory
+<item>Obtain the package <tt/X331base/ and install it from the root directory
        of the Y: drive, by entering the following commands:
 <tscreen><verb>
 [C:\] Y:
 [Y:\] cd \
-[Y:\] unzip \path_of_package\X33base.zip
+[Y:\] unzip \path_of_package\X331base.zip
 </verb></tscreen>
 
 <item>Edit your CONFIG.SYS file to contain the following line somewhere:
@@ -351,11 +355,11 @@ This can be changed, but is strictly discouraged.
        drive, and type:
 <tscreen><verb>
 drive:> cd \
-drive:> unzip \path_of_packages\X33xxxx.zip
+drive:> unzip \path_of_packages\X331xxxx.zip
 </verb></tscreen>
 <item>You might encounter that some packages report duplicate files, e.g.
 the X server packages install corresponding README files, which are also
-in the X33doc package. This is okay, the files are the same. Let unzip
+in the X331doc package. This is okay, the files are the same. Let unzip
 replace the files.
 <item>There is no special sequence of installing packages required.
 </enum>
@@ -616,7 +620,7 @@ port heavily relies on
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.3 1997/05/24 08:36:06 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.4 1997/08/04 02:10:42 dawes Exp $
 
 
 

@@ -371,7 +371,7 @@ If the server gets it wrong, you may end up with a severe system crash (e.g.
 if it maps the video memory right on top of your system memory). If this hap-
 pens, RESET IMMEDIATELY. Do not try to shut down cleanly, because the X-server,
 thinking it writes to the VGA memory, will write to system memory instead, and
-you'll by writing corrupted data to disk. If you did a sync prior to starting
+you'll be writing corrupted data to disk. If you did a sync prior to starting
 the server, there will be no harm done (only a filesystem check which should
 end up clean). DO NOT attempt to redirect the server output to a file on the
 system you're testing on (that will write data after you synced).
@@ -388,7 +388,7 @@ mining the MemBase your card uses, trying to put it a few Mb above the system
 memory is a good first guess. E.g. if you have 16 Mb of RAM, defining MemBase
 0x01000000 (=16M) or 0x01400000 (=20M) may work.
 
-However, this may only work on non-PCI systems, as those mostly map all
+However, this may only work on non-PCI systems, as PCI systems mostly map all
 
 
 
@@ -444,17 +444,17 @@ card, and there is no reliable way to read it back from the card. You need to
 know the address in some way, and specify it. The current code does an intelli-
 gent guess at it, but this is no guarantee.
 
+On ISA cards, things are much more simple: ISA only uses 24 address lines, and
+hence the linear memory MUST lie within the 16 MB boundary. Together with the
+4MB granularity of the linear memory base address on ET4000 cards, this means
+that you cannot have more than 12 MB of system memory in the machine if you
+want to use linear memory. Hence, the only realistic MemBase for ISA cards is
+0x00C00000. This is also what the server will automatically choose if it
+detects an ISA W32 card.
 
-8.  Mode issues
-
-The accelerated driver on ET4000W32p and ET6000 uses 1K bytes of scratch space
-in video memory. Consequently, a 1024x1024 virtual resolution should not be
-used with a 1Mbyte card.
-
-The use of a higher dot clock frequencies has a negative effect on the perfor-
-mance of graphics operations on non-et6000 cards (the effect is much less, or
-even non-existing, on ET6000 cards), especially BitBlt, when little video mem-
-ory bandwidth is left for drawing. Memory bandwidth is the speed at which data
+WARNING: you must not have over 12 MB of system memory in this case. Or if you
+have it, you must disable access to all memory above the 12 MB mark.  Some
+operating systems allow you to specify at startup how much memory it is allowed
 
 
 
@@ -467,6 +467,20 @@ ory bandwidth is left for drawing. Memory bandwidth is the speed at which data
 
 
 
+to use, so you don't have to unplug some memory each time you want to use lin-
+ear memory.
+
+
+8.  Mode issues
+
+The accelerated driver on ET4000W32p and ET6000 uses 1K bytes of scratch space
+in video memory. Consequently, a 1024x1024 virtual resolution should not be
+used with a 1Mbyte card.
+
+The use of a higher dot clock frequencies has a negative effect on the perfor-
+mance of graphics operations on non-et6000 cards (the effect is much less, or
+even non-existing, on ET6000 cards), especially BitBlt, when little video mem-
+ory bandwidth is left for drawing. Memory bandwidth is the speed at which data
 can be pumped into the memory while the RAMDAC is pulling it out to display it
 on the screen.
 
@@ -508,6 +522,17 @@ The XFree Acceleration Architecture makes extensive use of the unused video
 memory on the VGA card. If there is not enough free video memory, some acceler-
 ation features will be disabled or crippled, resulting in less performance.
 
+
+
+
+
+
+
+
+ Information for Tseng Chipset Users
+
+
+
 To avoid this from happening, try to keep an absolute minimum of 16 kb of free
 memory, in addition to the 1kb already reserved by the accelerator.
 
@@ -518,19 +543,6 @@ will then be used by the accelerator to enhance performance.
 
 Most 1MB cards cannot display modes larger than 1024x768 with a decent refresh
 rate, leaving 256kb unused.
-
-
-
-
-
-
-
-
-
-
-
- Information for Tseng Chipset Users
-
 
 
 10.  ET6000 memory size facts and fiction
@@ -576,6 +588,17 @@ The "xy" number tells you how much MEGABITS are in that one chip.
 
 The amount of RAM on the card is then:
 
+
+
+
+
+
+
+
+ Information for Tseng Chipset Users
+
+
+
 ("xy" * number_of_MDRAM_chips) / 8    Mbytes
 
 On my board, there are two MD908 chips, which means I have
@@ -586,17 +609,6 @@ Boards with two MD909 chips have 2.25 MB, etc.
 
 Current MDRAM chips are MD904, MD906, MD908, MD909, MD910, MD916, MD918 and
 MD920.
-
-
-
-
-
-
-
-
-
- Information for Tseng Chipset Users
-
 
 
 11.  ET6000 memory bandwidth hype and the impact on video modes
@@ -641,18 +653,6 @@ Currently the 16-bit (32768 or 65536 colors), 24-bit (16M colors, packed
 pixel), and 32-bit (16M colors, sparse) pixel support in the SVGA server
 requires linear addressing. (This restriction may be removed in a future ver-
 sion, but with nearly all new cards using the PCI bus (where linear addressing
-poses no problem), removing the linear addressing requirement presently has a
-lower priority than other features.) Option "linear" can be specified in a
-depth-specific screen section to enable linear addressing; a MemBase setting
-(in the device section) is probably also required on non-PCI based systems, and
-optionally on PCI systems that have trouble finding out for themselves where
-the MemBase is.
-
-Non-PCI cards are not (or not well) supported in linear memory mode at this
-moment. Some of them don't support it at all, and some of the ones that do have
-so many address decoding bugs that it isn't feasible to provide a working solu-
-tion.
-
 
 
 
@@ -664,6 +664,18 @@ tion.
  Information for Tseng Chipset Users
 
 
+
+poses no problem), removing the linear addressing requirement presently has a
+lower priority than other features.) Option "linear" can be specified in a
+depth-specific screen section to enable linear addressing; a MemBase setting
+(in the device section) is probably also required on non-PCI based systems, and
+optionally on PCI systems that have trouble finding out for themselves where
+the MemBase is.
+
+Non-PCI cards are not (or not well) supported in linear memory mode at this
+moment. Some of them don't support it at all, and some of the ones that do have
+so many address decoding bugs that it isn't feasible to provide a working solu-
+tion.
 
 For the most part, many of the accelerated features in the 8bpp server have
 been implemented to support 16, 24, and 32 bpp modes for the W32p and the
@@ -708,18 +720,6 @@ Example (2Mb of video memory):
      EndSection
 
 
-13.  Trouble shooting with the SVGA Tseng driver
-
-First of all, make sure that the default modes selected from your XF86Config
-are supported by your monitor, i.e. make sure the horizontal sync limit is cor-
-rect. It is best to start with standard 640x480x256 with a 25.175 MHz clock (by
-specifying a single horizontal sync of 31.5) to make sure the driver works on
-your configuration. The default mode used will always be the first mode listed
-in the modes line, with the highest dot clock listed for that resolution in the
-timing section.
-
-Note that some VESA standard mode timings may give problems on some monitors
-
 
 
 
@@ -731,6 +731,17 @@ Note that some VESA standard mode timings may give problems on some monitors
 
 
 
+13.  Trouble shooting with the SVGA Tseng driver
+
+First of all, make sure that the default modes selected from your XF86Config
+are supported by your monitor, i.e. make sure the horizontal sync limit is cor-
+rect. It is best to start with standard 640x480x256 with a 25.175 MHz clock (by
+specifying a single horizontal sync of 31.5) to make sure the driver works on
+your configuration. The default mode used will always be the first mode listed
+in the modes line, with the highest dot clock listed for that resolution in the
+timing section.
+
+Note that some VESA standard mode timings may give problems on some monitors
 (try increasing the horizontal sync pulse, i.e. the difference between the mid-
 dle two horizontal timing values, or try multiples of 16 or 32 for all of the
 horizontal timing parameters).
@@ -774,17 +785,6 @@ horizontal timing parameters).
 	    or a problem with the BitBLT engine. Try the "noaccel" option.
 	    Also check the BIOS settings.
 
-      `ACL: TIMEOUT' messages from the server.
-	    Same as for the above entry. However, on some systems, the problem
-	    will not go away no matter what you do. It may be related to the
-	    operating system you use (it has only been seen on Linux systems,
-	    and even then it depends on the kernel versions). Sometimes, choos-
-	    ing another MemBase may help.
-
-      Occasional erroneous pixels in text, pixel dust when moving window-frame
-	    Probably related to MCLK setting that is too high (can happen with
-	    linear addressing even though banked mode runs OK). Most (if not
-	    all) ET6000 cards are sold with the MCLK slightly over clocked for
 
 
 
@@ -797,6 +797,17 @@ horizontal timing parameters).
 
 
 
+      `ACL: TIMEOUT' messages from the server.
+	    Same as for the above entry. However, on some systems, the problem
+	    will not go away no matter what you do. It may be related to the
+	    operating system you use (it has only been seen on Linux systems,
+	    and even then it depends on the kernel versions). Sometimes, choos-
+	    ing another MemBase may help.
+
+      Occasional erroneous pixels in text, pixel dust when moving window-frame
+	    Probably related to MCLK setting that is too high (can happen with
+	    linear addressing even though banked mode runs OK). Most (if not
+	    all) ET6000 cards are sold with the MCLK slightly over clocked for
 	    performance (the current norm is 90 or 92 MHz), which may cause
 	    these problems. There is currently no fix for this. If the pixel
 	    dust is only temporary (it disappears as soon as nothing moves on
@@ -840,17 +851,6 @@ horizontal timing parameters).
 	    There are two possible solutions: disable acceleration using the
 	    "noaccel" option, or disable PCI-retry (which is causing the large
 	    bus delays) by removing the "pci_retry" option.  This will cause a
-	    very small slowdown of accelerated operations.
-
-	    The "pci_retry" option applies not only to the PCI bus systems, but
-	    has a similar effect on other busses.
-
-For other screen drawing related problems, try the "noaccel" option.
-
-As a final fallback, consider trying the separate accelerated W32 server. It is
-more mature, and has been tested more extensively as a result. See README.W32.
-
-If you are having driver-related problems that are not addressed by this
 
 
 
@@ -863,41 +863,41 @@ If you are having driver-related problems that are not addressed by this
 
 
 
-document, or if you have found bugs in accelerated functions, you can try con-
-tacting the XFree86 team.
+	    very small slowdown of accelerated operations.
+
+	    The "pci_retry" option applies not only to the PCI bus systems, but
+	    has a similar effect on other busses.
+
+      "Cannot read colourmap from VGA.	Will restore with default"
+	    If this error occurs, the server was unable to properly initialize
+	    the RAMDAC, and tries to restore a default color map. On some
+	    unsupported RAMDACs, this will have the adverse effect of removing
+	    all color altogether, leaving you with a bunch of weird colors, or
+	    with a completely black screen. If that happens, add the ramdac
+	    "normal" statement to the Device section in your XF86Config file.
+	    In most cases, this will solve the color problem.
+
+For other screen drawing related problems, try the "noaccel" option.
+
+As a final fallback, consider trying the separate accelerated W32 server. It is
+more mature, and has been tested more extensively as a result. See README.W32.
+
+If you are having driver-related problems that are not addressed by this docu-
+ment, or if you have found bugs in accelerated functions, you can try contact-
+ing the XFree86 team.
 
 In fact, reports (success or failure) are very welcome, especially on configu-
 rations that have not been tested. You can do this via the BetaReport form
 (mail it to report@XFree86.org). You may want to keep an eye on forthcoming
 beta releases at www.xfree86.org.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/tseng.sgml,v 3.15.2.9 1997/06/01 12:33:37 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/tseng.sgml,v 3.15.2.11 1997/08/02 13:48:15 dawes Exp $
 
 
 
 
 
      $XConsortium: tseng.sgml /main/6 1996/10/27 11:06:09 kaleb $
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1013,7 +1013,7 @@ beta releases at www.xfree86.org.
 
 7.  linear memory base address (MemBase) issues  ............................ 6
 
-8.  Mode issues  ............................................................ 7
+8.  Mode issues  ............................................................ 8
 
 9.  Acceleration issues  .................................................... 8
 
@@ -1023,7 +1023,7 @@ beta releases at www.xfree86.org.
 
 12. Linear addressing and 16bpp/24bpp/32bpp modes  ......................... 10
 
-13. Trouble shooting with the SVGA Tseng driver ............................ 11
+13. Trouble shooting with the SVGA Tseng driver ............................ 12
 
 
 
@@ -1055,4 +1055,4 @@ beta releases at www.xfree86.org.
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.tseng,v 3.24.2.9 1997/06/01 12:41:32 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.tseng,v 3.24.2.11 1997/08/02 13:53:33 dawes Exp $

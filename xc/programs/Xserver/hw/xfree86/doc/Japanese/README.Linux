@@ -273,7 +273,6 @@
   バグ報告は XFree86@XFree86.org に送るか comp.windows.x.i386unix のニュ
   ースグループに投稿して下さい。
 
-  XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.9 1996/10/20 13:33:12 dawes Exp
 
   $XConsortium: Linux.sgml /main/3 1995/11/12 19:59:39 kaleb $
 
@@ -288,7 +287,7 @@
   す。この和訳の著作権は XFree86 プロジェクト社と岡本 一幸にありますが、
   この和訳の不具合は私に、電子メールで送って下さい。
 
-  XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Japanese/Linux.sgml,v 3.10 1995/11/15 07:38:32 dawes Exp
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.Linux,v 3.4.2.1 1997/07/31 06:05:48 dawes Exp $
 
   ______________________________________________________________________
 

@@ -812,7 +812,7 @@ proc tkMenuFirstEntry menu {
     }
     for {set i 0} {$i <= $last} {incr i} {
 	if {([catch {set state [$menu entrycget $i -state]}] == 0)
-		&& (from: state != "disabled") && ([menu type $i] != "tearoff")} {
+		&& ($state != "disabled") && ([$menu type $i] != "tearoff")} {
 	    $menu activate $i
 	    return
 	}

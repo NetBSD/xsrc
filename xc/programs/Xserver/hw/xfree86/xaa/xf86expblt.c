@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86expblt.c,v 3.8.2.3 1997/05/17 12:25:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86expblt.c,v 3.8.2.4 1997/07/26 06:30:58 dawes Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -1155,7 +1155,19 @@ static unsigned int *DrawTextScanlineWidth24(base, glyphp, line, nglyph)
  * boundary in the stipple bitmap scanline.
  * Source data access can be unaligned.
  */
- 
+
+static unsigned int stipplemask[33] = {
+  0x00000000, 0x00000001, 0x00000003, 0x00000007,
+  0x0000000F, 0x0000001F, 0x0000003F, 0x0000007F,
+  0x000000FF, 0x000001FF, 0x000003FF, 0x000007FF,
+  0x00000FFF, 0x00001FFF, 0x00003FFF, 0x00007FFF, 
+  0x0000FFFF, 0x0001FFFF, 0x0003FFFF, 0x0007FFFF,
+  0x000FFFFF, 0x001FFFFF, 0x003FFFFF, 0x007FFFFF,
+  0x00FFFFFF, 0x01FFFFFF, 0x03FFFFFF, 0x07FFFFFF,
+  0x0FFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF,
+  0xFFFFFFFF
+};
+
 unsigned int *xf86DrawStippleScanline(base, src, srcwidth, stipplewidth,
 srcoffset, w)
     unsigned int *base;
@@ -1167,48 +1179,27 @@ srcoffset, w)
     int w;			/* Width of scanline in pixels. */
 {
     UINT64_DECLARE(bits);
-    int shift, i, sw;
+    int shift, sw;
     unsigned char *srcp;
 
     UINT64_ASSIGN(bits, 0, 0);
     shift = 0;
-    i = 0;
     sw = stipplewidth - srcoffset * 8;
     srcp = src + srcoffset;
     for (;;) {
         int dw;
-        /*
-         * If we can add the whole stipple width, do so.
-         * If the stipple width is larger than the number of pixels left
-         * to draw, only add part of the stipple.
-         */
+
         dw = min(w, sw);
         if (dw >= 32) {
-            UINT64_ORLEFTSHIFTEDINT(bits, ldl_u((unsigned int *)srcp), shift);
+	    UINT64_ORLEFTSHIFTEDINT(bits, ldl_u((unsigned int *)srcp), shift);
             shift += 32;
             sw -= 32;
             w -= 32;
             srcp += 4;
         }
         else {
-            /* Make sure no source overrunning occurs. */
-            if (dw > 24) {
-                UINT64_ORLEFTSHIFTEDINT(bits, ldl_u((unsigned int *)srcp), shift);
-            }
-            else
-            if (dw > 16) {
-                unsigned int data;
-                data = ldw_u((unsigned short *)srcp) +
-                    (*(unsigned char *)(srcp + 2) << 16);
-                UINT64_ORLEFTSHIFTEDINT(bits, data, shift);
-            }
-            else
-            if (dw > 8) {
-                UINT64_ORLEFTSHIFTEDINT(bits, ldw_u((unsigned short *)srcp), shift);
-            }
-            else {
-                UINT64_ORLEFTSHIFTEDINT(bits, *(unsigned char *)srcp, shift);
-            }
+	    UINT64_ORLEFTSHIFTEDINT(bits, ((ldl_u((unsigned int *)srcp))
+					   & stipplemask[dw]), shift);
             shift += dw;
             sw = 0;
             w -= dw;

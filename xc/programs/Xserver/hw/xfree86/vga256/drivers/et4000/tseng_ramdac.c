@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_ramdac.c,v 3.3.2.9 1997/06/01 12:33:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_ramdac.c,v 3.3.2.12 1997/07/28 15:06:53 dawes Exp $ */
 
 /*
  *
@@ -68,9 +68,9 @@ static unsigned char white_cmap[] = {0xff, 0xff, 0xff};
 static Bool dac_is_16bit = FALSE;
 
 /* generic_ramdac avoids RAMDAC code from using ATT-specific extensions */
-static BOOL generic_ramdac;
+static BOOL generic_ramdac = FALSE;
 
-static int RamdacShift;
+static int RamdacShift = 10;
 
 /*
  * this variable will avoid the server from assigning 8-bit colors to a 6-bit DAC
@@ -355,14 +355,14 @@ void Check_Tseng_Ramdac()
           {
               cr_saved = FALSE;
               TsengRamdacType = ATT20C47xA_DAC;
-              return;
+              goto dac_found;
           }
 
           write_cr(0xe0);
           if ((read_cr() >> 5) != 0x7)
           {
               TsengRamdacType = ATT20C497_DAC;
-              return;
+              goto dac_found;
           }
 
           write_cr(0x60);
@@ -393,13 +393,16 @@ void Check_Tseng_Ramdac()
         }
     }
 
+dac_found:
+
    /* defaults: 8-bit wide DAC port, 6-bit color lookup-tables */
    RamdacShift = 10;
    vgaRamdacMask = 0x3f;
    TsengDac8Bit = FALSE;
    dac_is_16bit = FALSE;
+   generic_ramdac = FALSE;   /* default: treat as ATT compatible DAC */
 
-   /* now override deaults with appropriate values for each RAMDAC */
+   /* now override defaults with appropriate values for each RAMDAC */
    switch(TsengRamdacType)
    {
      case  ATT20C490_DAC:
@@ -408,6 +411,7 @@ void Check_Tseng_Ramdac()
               vgaRamdacMask = 0xff;
               TsengDac8Bit = TRUE;
               break;
+     case UNKNOWN_DAC:
      case Sierra1502X_DAC:
               generic_ramdac = TRUE;   /* avoids treatment as ATT compatible DAC */
               break;
@@ -621,6 +625,9 @@ void tseng_set_dacspeed(int bytesperpixel)
     }
 #endif
 
+    if (vga256InfoRec.dacSpeeds[bytesperpixel-1] > 0)
+      vga256InfoRec.maxClock = vga256InfoRec.dacSpeeds[bytesperpixel-1];
+
 #ifndef MONOVGA  /* cosmetic: vgaBitsPerPixel is "0" in VGA16 and MONO mode */
 #ifndef XF86VGA16
     if (xf86Verbose) {
@@ -765,7 +772,7 @@ static unsigned char CMD_ICS5341[] = { 0x00, 0x20, 0x60, 0x40, 0xFF,
                                        0x10, 0x30, 0x50, 0x90, 0x70 };
 
 static unsigned char CMD_STG1703[] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
-                                       0x05, 0x02, 0x03, 0x04, 0xFF };
+                                       0x05, 0x02, 0x03, 0x09, 0x04 };
 
 static unsigned char CMD_CH8398[]  = { 0x04, 0xC4, 0x64, 0x74, 0xFF,
                                        0x24, 0x14, 0x34, 0xB4, 0xFF };

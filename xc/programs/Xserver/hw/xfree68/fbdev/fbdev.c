@@ -3,7 +3,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree68/fbdev/fbdev.c,v 3.4.2.2 1997/05/16 11:35:07 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree68/fbdev/fbdev.c,v 3.4.2.3 1997/06/11 12:08:45 dawes Exp $ */
 /*
  *
  *  Author: Martin Schaller. Taken from hga2.c
@@ -190,6 +190,7 @@ ScrnInfoRec fbdevInfoRec = {
     0,				/* int textClockFreq */
     NULL,			/* char *DCConfig */
     NULL,			/* char *DCOptions */
+    0,				/* int MemClk */
 #ifdef XFreeXDGA
     0,				/* int directMode */
     NULL,			/* void (*setBank)() */

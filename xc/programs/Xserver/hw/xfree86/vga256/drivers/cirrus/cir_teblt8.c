@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_teblt8.c,v 3.23.2.1 1997/05/10 09:10:23 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_teblt8.c,v 3.23.2.3 1997/07/07 05:49:03 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -653,8 +653,20 @@ glyphwidth, fg)
 				*(unsigned short *)destp =
 					byte_reversed[dworddata & 0xff] +
 					(byte_reversed[(dworddata & 0xff00) >> 8] << 8);
-				shift -= 16;
-				dworddata >>= 16;
+				if (shift > 32) {
+				  destp += 2;
+				  dworddata >>= 16;
+				  /* Write a 16-bit word. */
+				  *(unsigned short *)destp =
+				    byte_reversed[dworddata & 0xff] +
+				    (byte_reversed[(dworddata & 0xff00) >> 8] << 8);
+				  shift -= 32;
+				  dworddata = glyphp[i][line];
+				  dworddata >>= (glyphwidth - shift);
+				} else {
+				  shift -= 16;
+				  dworddata >>= 16;
+				}
 				destp += 2;
 			}
 			i++;

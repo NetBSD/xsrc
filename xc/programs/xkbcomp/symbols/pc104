@@ -1,0 +1,20 @@
+// $TOG: pc104 /main/2 1997/06/13 06:25:12 kaleb $
+// Use "Alt_*" for both alt keys, "Meta_*" for both windows keys, and Menu for
+// the menu key
+default partial modifier_keys 
+xkb_symbols "altmeta" {
+    key <LALT> {	[ 	Alt_L		]	};
+    key <LWIN> {	[ 	Meta_L		]	};
+    key <RALT> {	[ 	Alt_R		]	};
+    key <RWIN> {	[ 	Meta_R		]	};
+    key <MENU> {	[ 	Menu		]	};
+};
+
+// Same as the default, but put "Multi_key" (compose) on the menu key.
+xkb_symbols "compose" {
+    key <LALT> {	[ 	Alt_L		]	};
+    key <LWIN> {	[ 	Meta_L		]	};
+    key <RALT> {	[ 	Alt_R		]	};
+    key <RWIN> {	[ 	Meta_R		]	};
+    key <MENU> {	[ 	Multi_key	]	};
+}

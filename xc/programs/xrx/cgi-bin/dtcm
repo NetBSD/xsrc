@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl
-# $XConsortium: dtcm /main/14 1996/12/03 20:06:00 rws $
+# $TOG: dtcm /main/15 1997/06/13 14:31:52 kaleb $
 # CGI script to launch dtcm
 #
 
@@ -61,7 +61,7 @@ sub parse_auth {
     if ($input) {
 	($param_name, $param_value) = split(/=/, $input, 2);
 	if ($param_name eq "auth") {
-	    (from: name_ret, key_ret) = split(/:/, $param_value, 2);
+	    ($name_ret, $key_ret) = split(/:/, $param_value, 2);
 	}
     }
 }
@@ -148,7 +148,7 @@ if ($query)
     %params = split(/\?/, $query);
     foreach $param (split(/\?/, $query)) {
 
-	(from: name, value) = split(/=/, $param, 2);
+	($name, $value) = split(/=/, $param, 2);
 	if ($name eq "WIDTH") {
 	    $width = $value;
 	} elsif ($name eq "HEIGHT") {
@@ -227,6 +227,8 @@ if ($query)
 	}
 	# add display specification to the command line
 	$command .= " -display $xdisplay";
+	# and put it in the environment too for good measure.
+	$ENV{'DISPLAY'} = $xdisplay;
     }
     if ($width && $height) {
 	# add geometry specification to the command line

@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.46.2.4 1997/05/22 14:00:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.46.2.7 1997/08/02 13:48:09 dawes Exp $ */
 
 #include "Probe.h"
 
@@ -42,9 +42,11 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "ATI 88800GX-C", "ATI 88800GX-D", "ATI 88800GX-E",
 		  "ATI 88800GX-F",
 		  "ATI 88800CX",
-		  "ATI 264CT", "ATI 264ET", "ATI 264LT",
+		  "ATI 264CT", "ATI 264ET",
 		  "ATI 264VT", "ATI 264VT-B",
-		  "ATI 264GT (3D Rage I)", "ATI 264GT-B (3D Rage II)" },
+		  "ATI 264GT (3D Rage I)", "ATI 264GT-B (3D Rage II or II+)",
+		  "ATI 264LT",
+		  "ATI 264GT3 (3D Rage III)" },
 /* AL */	{ "Avance Logic (chipset unknown)",
 		  "Avance Logic 2101", "Avance Logic 2228" },
 /* CT */	{ "Chips & Tech (chipset unknown)",
@@ -55,7 +57,8 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "Chips & Tech F65520", "Chips & Tech F65530",
 		  "Chips & Tech F65540", "Chips & Tech F65545",
 		  "Chips & Tech F65548", "Chips & Tech F65546",
-		  "Chips & Tech F65550", "Chips & Tech F65554"},
+		  "Chips & Tech F65550", "Chips & Tech F65554",
+		  "Chips & Tech F65555", "Chips & Tech F68554" },
 /* Cirrus */	{ "Cirrus (chipset unknown)",
 		  "Cirrus CL-GD 510/520", "Cirrus CL-GD 610/620",
 		  "Cirrus Video7 OEM",
@@ -150,7 +153,7 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "Tseng ET4000/W32p Rev B",
 		  "Tseng ET4000/W32p Rev C",
 		  "Tseng ET4000/W32p Rev D",
-		  "Tseng ET6000",
+		  "Tseng ET6000", "Tseng ET6100", "Tseng ET6300"
 		},
 /* UMC */	{ "UMC 85c408" },
 /* Video7 */	{ "Video7 (chipset unknown)",
@@ -187,7 +190,8 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 /* Matrox */	{ "Matrox (chipset unknown)",
 		  "Matrox Atlas",
 		  "Matrox Millennium",
-		  "Matrox Mystique" },
+		  "Matrox Mystique",
+		  "Matrox Millennium II" },
 /* Sigma Designs */	{ "Sigma Designs (chipset unknown)",
 		  "Sigma Designs REALmagic64/GX (SD 6425)" },
 };

@@ -1,0 +1,8 @@
+XCOMM $TOG: Imakefile /main/1 1997/06/10 06:56:20 kaleb $
+
+     DATAFILES = jp
+
+all::
+
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/symbols/sgi)
+DependTarget()

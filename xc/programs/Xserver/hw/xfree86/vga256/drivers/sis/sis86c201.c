@@ -25,7 +25,7 @@
  * Modified 1996 by Xavier Ducoin <xavier@rd.lectra.fr>
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis86c201.c,v 3.17.2.3 1997/05/09 07:15:48 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis86c201.c,v 3.17.2.4 1997/07/26 06:30:56 dawes Exp $ */
 
 /*#define DEBUG*/
 /*#define IO_DEBUG*/
@@ -631,8 +631,8 @@ static unsigned int
 sisPCIMMIOBase()
 {
     
-    if ( vgaPCIInfo->IOBase ) 
-	return vgaPCIInfo->IOBase ;
+    if ( vgaPCIInfo->MMIOBase ) 
+	return vgaPCIInfo->MMIOBase ;
     else 
 	return -1;
 }

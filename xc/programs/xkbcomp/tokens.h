@@ -1,4 +1,4 @@
-/* $XConsortium: tokens.h /main/6 1996/08/31 12:15:55 kaleb $ */
+/* $TOG: tokens.h /main/7 1997/06/10 06:54:16 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -43,6 +43,7 @@
 #define	OVERRIDE	11
 #define	AUGMENT		12
 #define	REPLACE		13
+#define	ALTERNATE	14
 
 #define	VIRTUAL_MODS	20
 #define	TYPE		21

@@ -269,7 +269,7 @@ proc writeXF86Config {filename args} {
 			set id [format "%dx%d" \
 			    [lindex $modeline 1] [lindex $modeline 5]]
 			puts $fd [format "   Modeline  %-11s %s" \
-			    "\"from: id\""  modeline]
+			    "\"$id\""  $modeline]
 			lappend modeNames $id
 		}
 	    } else {
@@ -285,7 +285,7 @@ proc writeXF86Config {filename args} {
 			set id [format "%dx%d" \
 			    [lindex $modeline 1] [lindex $modeline 5]]
 			puts $fd [format "   Modeline  %-11s %s" \
-			    "\"from: id\""  modeline]
+			    "\"$id\""  $modeline]
 			lappend modeNames $id
 		}
 	    }

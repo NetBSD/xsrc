@@ -1,5 +1,5 @@
 /*
- * $TOG: Xrm.c /main/3 1997/05/30 15:23:06 kaleb $
+ * $TOG: Xrm.c /main/4 1997/06/22 07:14:18 kaleb $
  */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
@@ -57,7 +57,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/Xrm.c,v 1.3.2.1 1997/05/31 13:34:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/Xrm.c,v 1.3.2.2 1997/06/22 12:19:26 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>
@@ -491,6 +491,7 @@ static XrmDatabase NewDatabase()
     db = (XrmDatabase) xalloc(sizeof(XrmHashBucketRec));
     if (db) {
 	db->table = (NTable)NULL;
+	db->mbstate = (XPointer)NULL;
 #ifdef NOT_IN_SERVER
 	db->methods = _XrmInitParseInfo(&db->mbstate);
 #else

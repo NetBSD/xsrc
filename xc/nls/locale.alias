@@ -5,7 +5,7 @@ XCOMM	Each alias name is described within one line.
 XCOMM	The first word is the alias name (simplified locale name)
 XCOMM	the second word is full locale name.
 XCOMM
-XCOMM	$XFree86: xc/nls/locale.alias,v 1.4.2.1 1997/05/03 09:44:28 dawes Exp $
+XCOMM	$XFree86: xc/nls/locale.alias,v 1.4.2.2 1997/07/31 13:46:47 dawes Exp $
 XCOMM
 POSIX			C
 POSIX-UTF2		C
@@ -299,6 +299,7 @@ Korean_Korea.949	ko_KR.eucKR
 Japanese_Japan.932	ja_JP.SJIS
 XCOMM Other miscellaneous locale names
 ISO8859-1		en_US.ISO8859-1
+ISO-8859-1		en_US.ISO8859-1
 #ifndef __uxp__
 japan			ja_JP.eucJP
 #else

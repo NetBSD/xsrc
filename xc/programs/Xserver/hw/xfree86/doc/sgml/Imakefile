@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/28 05:13:04 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.3 1997/05/24 11:35:36 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Imakefile,v 3.25.2.4 1997/07/27 02:41:16 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -105,7 +105,6 @@ LinuxDocTargetLong(VGADriv.sgml,VGADriver.Doc,VGADriver)
 InstallLinkKitNamedNonExec(README.LinkKit,README,$(LINKKITDIR))
 InstallLinkKitNonExecFile(VGADriver.Doc,$(LINKKITDIR)/VGADriverDoc)
 
-LinkFile(OpenBSD.sgml, NetBSD.sgml)
 #if BuildAllDocs
 LinkSourceFile(fbdev.sgml,$(XF68SRC)/doc/sgml)
 #endif

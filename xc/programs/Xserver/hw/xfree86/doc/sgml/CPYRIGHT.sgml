@@ -10,7 +10,7 @@ XFree86 code without an explicit copyright is covered by the following
 copyright:
 
 <p>
-Copyright (C) 1994, 1995, 1996 The XFree86 Project, Inc.  All Rights Reserved.
+Copyright (C) 1994-1997 The XFree86 Project, Inc.  All Rights Reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -175,7 +175,7 @@ are met:
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/CPYRIGHT.sgml,v 3.9 1997/01/25 03:21:49 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/CPYRIGHT.sgml,v 3.9.2.1 1997/06/08 15:41:26 dawes Exp $
 
 
 

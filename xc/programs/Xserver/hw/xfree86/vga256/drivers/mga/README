@@ -1,20 +1,21 @@
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/README,v 3.6.2.4 1997/05/23 12:19:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/README,v 3.6.2.5 1997/08/02 13:48:22 dawes Exp $
 
-MGA Millennium (MGA2064W) with TVP3026 RAMDAC Driver v1.2
+MGA Millennium (MGA2064W) with TVP3026 RAMDAC Driver v1.3
 =========================================================
-MGA Mystique (MGA1064W) with integrated RAMDAC Driver v1.2
+MGA Mystique (MGA1064W) with integrated RAMDAC Driver v1.3
 =========================================================
+MGA Millennium II (MGA2164W) with TVP3026 RAMDAC Driverv1.3 (experimental)
 
 NOTE: This driver is fairly new, and not everything works like you expect
 it to. It shouldn't crash your machine, and there are problems with 24 bpp,
 but it should work pretty well. Please report any and all problems to
 XFree86@Xfree86.org using the appropriate bug report sheet. 
 
-This is the first release of Mystique driver and, for this board, acceleration
-functions might not work. 
-
+This is an experimental build for the Millennium II, and not everything 
+works as you'd expect. Please report any bugs for the Mill II to 
+Andrew.van.der.Stock@member.sage-au.org.au
 
 Features:
 ---------
@@ -191,4 +192,4 @@ hohndel@XFree86.Org
 Visit the Matrox Millennium XServer for XFree86 Home Page:
     http://www.bf.rmit.edu.au/~ajv/xf86-matrox.html
 to keep upto date with the latest news, new sources, etc.
-
+ 

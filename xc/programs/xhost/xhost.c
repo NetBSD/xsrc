@@ -1,5 +1,4 @@
-/* $XConsortium: xhost.c,v 11.63 95/04/03 20:56:49 mor Exp $ */
-/* $XFree86: xc/programs/xhost/xhost.c,v 3.6 1997/01/18 07:02:59 dawes Exp $ */
+/* $TOG: xhost.c /main/56 1997/06/30 18:36:09 kaleb $ */
 /*
 
 Copyright (c) 1985, 1986, 1987  X Consortium
@@ -29,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/xhost/xhost.c,v 3.6.2.1 1997/07/06 07:28:20 dawes Exp $ */
 
 #if defined(TCPCONN) || defined(STREAMSCONN) || defined(AMTCPCONN)
 #define NEEDSOCKETS
@@ -170,7 +170,7 @@ main(argc, argv)
     char **argv;
 {
     register char *arg;
-    int i, nhosts;
+    int i, nhosts = 0;
     char *hostname;
     int nfailed = 0;
     XHostAddress *list;

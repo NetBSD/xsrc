@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dac3026.c,v 1.1.2.2 1997/05/29 07:37:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dac3026.c,v 1.1.2.3 1997/08/02 13:48:22 dawes Exp $ */
 /*
  * Copyright 1994 by Robin Cutshaw <robin@XFree86.org>
  *
@@ -970,6 +970,17 @@ MGA3026RamdacInit()
         MGAdac.MemoryClock = MGABios.Clk4MB * 10;
     else
         MGAdac.MemoryClock = MGABios.Clk8MB * 10;
+
+/* XXX ajv need to have more details about Mill II */
+/* this catches the case where the ROM is being probed and the ROM's layout
+   is new (ie overridden) and we don't have a clue. It's just a safe value,
+   and should be taken out asap we get documentation */
+/* Actually, having some save range here isn't all that a bad idea;
+   between 40 and 100 MHz sounds reasonable (dhh) */
+
+    if ( (MGAdac.MemoryClock < 40000.0) ||
+         (MGAdac.MemoryClock >100000.0) )
+	MGAdac.MemoryClock = 50000.0; /* XXX hack hack hack */
 
 #if MCLK_FROM_XCONFIG
     /* or get it from XF86Config */

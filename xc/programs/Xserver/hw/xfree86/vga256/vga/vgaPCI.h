@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.5 1997/05/22 14:00:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.8 1997/08/02 13:48:23 dawes Exp $ */
 /*
  * PCI Probe
  *
@@ -43,7 +43,11 @@
 #define PCI_CHIP_MACH64CT	0x4354
 #define PCI_CHIP_MACH64ET	0x4554
 #define PCI_CHIP_MACH64VT	0x5654
+#define PCI_CHIP_MACH64VU	0x5655
+#define PCI_CHIP_MACH64GP	0x4750
 #define PCI_CHIP_MACH64GT	0x4754
+#define PCI_CHIP_MACH64GU	0x4755
+#define PCI_CHIP_MACH64LT	0x4C47
 
 /* Avance Logic */
 #define PCI_CHIP_ALG2301	0x2301
@@ -89,12 +93,15 @@
 #define PCI_CHIP_MGA2085	0x0518
 #define PCI_CHIP_MGA2064	0x0519
 #define PCI_CHIP_MGA1064	0x051a
+#define PCI_CHIP_MGA2164	0x051b
 
 /* Chips & Tech */
 #define PCI_CHIP_65545		0x00D8
 #define PCI_CHIP_65548		0x00DC
 #define PCI_CHIP_65550		0x00E0
 #define PCI_CHIP_65554		0x00E4
+#define PCI_CHIP_65555		0x00E5
+#define PCI_CHIP_68554		0x00F4
 
 /* SiS */
 #define PCI_CHIP_SG86C201	0x0001
@@ -194,7 +201,11 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_MACH64CT,	"Mach64 CT"},
 				{PCI_CHIP_MACH64ET,	"Mach64 ET"},
 				{PCI_CHIP_MACH64VT,	"Mach64 VT"},
+				{PCI_CHIP_MACH64VU,	"Mach64 VT"},
+				{PCI_CHIP_MACH64GP,	"Mach64 GT"},
 				{PCI_CHIP_MACH64GT,	"Mach64 GT"},
+				{PCI_CHIP_MACH64GU,	"Mach64 GT"},
+				{PCI_CHIP_MACH64LT,	"Mach64 LT"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_AVANCE,	"Avance Logic",	{
 				{PCI_CHIP_ALG2301,	"ALG2301"},
@@ -244,12 +255,15 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_MGA2085,	"MGA 2085PX"},
 				{PCI_CHIP_MGA2064,	"MGA 2064W"},
 				{PCI_CHIP_MGA1064,	"MGA 1064SG"},
+				{PCI_CHIP_MGA2164,	"MGA 2164W"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_CHIPSTECH, "C&T", {
 				{PCI_CHIP_65545,	"65545"},
 				{PCI_CHIP_65548,	"65548"},
 				{PCI_CHIP_65550,	"65550"},
 				{PCI_CHIP_65554,	"65554"},
+				{PCI_CHIP_65555,	"65555"},
+				{PCI_CHIP_68554,	"68554"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_SIS,	"SiS",	{
 				{PCI_CHIP_SG86C201,	"SG86C201"},

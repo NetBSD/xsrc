@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_vid.c,v 3.4.2.1 1997/05/21 15:02:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_vid.c,v 3.4.2.2 1997/06/21 09:23:49 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -40,7 +40,7 @@
 
 struct kd_memloc MapDSC[MAXSCREENS][NUM_REGIONS];
 pointer AllocAddress[MAXSCREENS][NUM_REGIONS];
-static char *apertureDevName;
+static char *apertureDevName = NULL;
 
 Bool xf86LinearVidMem()
 {
@@ -95,7 +95,7 @@ unsigned long Size;
 	 * defined. (its very very unlikely that the server will try to mmap
 	 * anything below FFFFF that can't be handled by /dev/vtXX.
 	 * If the server tries to mmap anything above FFFFF, and
-	 * HAS_APERTURE_DRV the server will die.
+	 * HAS_APERTURE_DRV the server will die.)
 	 * 
 	 * DWH - 2/23/94
 	 */
@@ -104,13 +104,21 @@ unsigned long Size;
 		sprintf(solx86_vtname,"/dev/vt%02d",xf86Info.vtno);
 	else
 
+	{
 #ifdef HAS_APERTURE_DRV
+		if (!apertureDevName)
+			if (!xf86LinearVidMem())
+				FatalError("xf86MapVidMem: Could not mmap "
+					   "linear framebuffer [s=%x,a=%x]\n",
+					   Size, Base);
+		
 		sprintf(solx86_vtname, apertureDevName);
 #else
 		FatalError("%s: Could not mmap framebuffer [s=%x,a=%x] (%s)\n",
 			   "xf86MapVidMem", Size, Base,
 			   "aperture driver unavailable");
 #endif
+	}
 
 	if ((fd = open(solx86_vtname, O_RDWR,0)) < 0)
 	{

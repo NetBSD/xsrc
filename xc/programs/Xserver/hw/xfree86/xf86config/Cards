@@ -18,7 +18,7 @@
 # The majority of entries are just a binding of a model name to a
 # chipset/server and untested.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.8 1997/06/02 07:57:05 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.11 1997/08/02 13:48:24 dawes Exp $
 
 #Chips & Technologies
 
@@ -93,6 +93,14 @@ SEE Chips & Technologies CT65530
 
 NAME Chips & Technologies CT65554
 CHIPSET ct65554
+SEE Chips & Technologies CT65550
+
+NAME Chips & Technologies CT65555
+CHIPSET ct65555
+SEE Chips & Technologies CT65550
+
+NAME Chips & Technologies CT68554
+CHIPSET ct68554
 SEE Chips & Technologies CT65550
 
 NAME Chips & Technologies CT64200
@@ -1363,6 +1371,11 @@ CHIPSET ATI-Mach64
 SERVER Mach64
 NOCLOCKPROBE
 
+NAME ATI Mach64 3D RAGE II+, Internal RAMDAC
+CHIPSET ATI-Mach64
+SERVER Mach64
+NOCLOCKPROBE
+
 NAME ATI Graphics Xpression with STG1702 RAMDAC
 SEE ATI Mach64
 
@@ -1389,6 +1402,9 @@ SEE ATI Mach64 3D RAGE II, Internal RAMDAC
 
 NAME ATI 3D Pro Turbo
 SEE ATI Mach64 3D RAGE II, Internal RAMDAC
+
+NAME ATI All-in-Wonder
+SEE ATI Mach64 3D RAGE II+, Internal RAMDAC
 
 NAME ATI Win Boost with STG1702 RAMDAC
 SEE ATI Mach64
@@ -1768,6 +1784,16 @@ CHIPSET mga2064w
 SERVER SVGA
 NOCLOCKPROBE
 
+NAME Matrox Millennium II
+CHIPSET mga2164w
+SERVER SVGA
+NOCLOCKPROBE
+
+NAME Matrox Mystique
+CHIPSET mga1064sg
+SERVER SVGA
+NOCLOCKPROBE
+
 # NV1
 
 NAME Diamond Edge 3D
@@ -1794,11 +1820,6 @@ SEE ET6000 (generic)
 
 NAME Diamond Stealth Video 2500
 CHIPSET Alliance AT24 
-SERVER SVGA
-NOCLOCKPROBE
-
-NAME Matrox Mystique
-CHIPSET MGA1064SG
 SERVER SVGA
 NOCLOCKPROBE
 

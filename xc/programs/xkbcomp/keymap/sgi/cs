@@ -1,9 +1,9 @@
-// $XConsortium: cs /main/1 1996/08/31 12:17:49 kaleb $
+// $TOG: cs /main/3 1997/06/14 06:36:05 kaleb $
 default xkb_keymap "indy" {
-    xkb_keycodes	{ include "sgi/indy(pc102)"		};
+    xkb_keycodes	{ include "sgi/indy(universal)"		};
     xkb_types		{ include "default"			};
     xkb_compatibility	{ include "default"			};
-    xkb_symbols 	{ include "us(pc102)+cs"		};
+    xkb_symbols 	{ include "us(pc_universal)+cs"		};
     xkb_geometry	{ include "sgi/indy(pc102)"		};
 };
 xkb_keymap "indigo" {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dac1064.c,v 1.1.2.7 1997/05/27 12:02:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dac1064.c,v 1.1.2.8 1997/07/26 06:30:54 dawes Exp $ */
 
 
 /*
@@ -870,5 +870,8 @@ MGA1064RamdacInit()
 {
     MGAdac.isHwCursor = FALSE;
     
-    MGAdac.maxPixelClock = 170000;
+    if (MGArev < 3)
+	MGAdac.maxPixelClock = 170000;
+    else
+	MGAdac.maxPixelClock = 220000;
 }

@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/hu,v 1.1.2.1 1997/05/10 07:03:05 hohndel Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/hu,v 1.1.2.2 1997/06/22 10:32:56 dawes Exp $
 
 default partial alphanumeric_keys 
 xkb_symbols "basic" {
@@ -32,7 +32,7 @@ xkb_symbols "basic" {
     key <AE10> {        [ odiaeresis,   Odiaeresis      ],
                         [ doubleacute,  dead_doubleacute ]       };
     key <AE11> {        [ udiaeresis,   Udiaeresis      ],
-                        [   diaresis,   dead_diaeresis  ]       };
+                        [   diaeresis,  dead_diaeresis  ]       };
     key <AE12> {        [    oacute,    Oacute          ],
                         [   cedilla,    dead_cedilla    ]       };
 

@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/preinst.sh,v 3.8.2.2 1997/05/24 08:36:11 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/preinst.sh,v 3.8.2.4 1997/07/19 07:00:08 dawes Exp $
 #
-# preinst.sh  (for XFree86 3.3)
+# preinst.sh  (for XFree86 3.3.1)
 #
 # This script should be run before installing a new version.
 #
@@ -14,34 +14,38 @@
 #
 
 RUNDIR=/usr/X11R6
-LIBLIST=" \
-	libICE.so \
-	libPEX5.so \
-	libSM.so \
-	libX11.so \
-	libXIE.so \
-	libXaw.so \
-	libXext.so \
-	libXi.so \
-	libXmu.so \
-	libXp.so \
-	libXt.so \
-	libXtst.so \
-	liboldX.so \
-	libICE.so.6 \
-	libPEX5.so.6 \
-	libSM.so.6 \
-	libX11.so.6 \
-	libXIE.so.6 \
-	libXaw.so.6 \
-	libXext.so.6 \
-	libXi.so.6 \
-	libXmu.so.6 \
-	libXp.so.6 \
-	libXt.so.6 \
-	libXtst.so.6 \
-	liboldX.so.6 \
-	"
+
+#
+# Don't need this when using 'extract' to do the installation.
+#
+#LIBLIST=" \
+#	libICE.so \
+#	libPEX5.so \
+#	libSM.so \
+#	libX11.so \
+#	libXIE.so \
+#	libXaw.so \
+#	libXext.so \
+#	libXi.so \
+#	libXmu.so \
+#	libXp.so \
+#	libXt.so \
+#	libXtst.so \
+#	liboldX.so \
+#	libICE.so.6 \
+#	libPEX5.so.6 \
+#	libSM.so.6 \
+#	libX11.so.6 \
+#	libXIE.so.6 \
+#	libXaw.so.6 \
+#	libXext.so.6 \
+#	libXi.so.6 \
+#	libXmu.so.6 \
+#	libXp.so.6 \
+#	libXt.so.6 \
+#	libXtst.so.6 \
+#	liboldX.so.6 \
+#	"
 
 OLDFILES=" \
 	lib/X11/doc/LbxproxyOnly \
@@ -53,39 +57,81 @@ OLDFILES=" \
 
 if [ "`uname`" = Linux ]; then
 	if file -L /bin/sh | grep ELF >/dev/null 2>&1; then
+	    case "`arch`" in
+	    i*86)
 		echo ""
-		echo "You appear to have an ELF system."
-		echo "Make sure you are installing the ELF binary dist"
-		# Check ldconfig
-		LDSO=`/sbin/ldconfig -v -n | awk '{ print $3 }'`
-		LDSOMIN=`echo $LDSO | awk -F. '{ print $3 }'`
-		LDSOMID=`echo $LDSO | awk -F. '{ print $2 }'`
-		LDSOMAJ=`echo $LDSO | awk -F. '{ print $1 }'`
-		if [ "$LDSOMAJ" -gt 1 ]; then
-			: OK
+		if ldd /bin/sh | grep "libc.so.6" >/dev/null 2>&1; then
+		    echo "You appear to have an glibc (libc-6) based system."
+		    echo "Make sure you are installing the 'Linux-ix86-glibc' binary dist"
 		else
-			if [ "$LDSOMID" -gt 7 ]; then
-				: OK
-			else
-				if [ "$LDSOMIN" -ge 14 ]; then
-					: OK
-				else
-					echo ""
-					echo "Before continuing you will need to get a current version of ld.so."
-					echo "Version 1.7.14 or newer will do."
-					NEEDSOMETHING=YES
-				fi
-			fi
+		    echo "You appear to have an ELF system."
+		    echo "Make sure you are installing the 'Linux-ix86' binary dist"
+		    echo "and *not* the 'Linux-ix86-glibc' binary dist"
 		fi
+		;;
+	    esac
+	    # Check ldconfig
+	    LDSO=`/sbin/ldconfig -v -n | awk '{ print $3 }'`
+	    LDSOMIN=`echo $LDSO | awk -F. '{ print $3 }'`
+	    LDSOMID=`echo $LDSO | awk -F. '{ print $2 }'`
+	    LDSOMAJ=`echo $LDSO | awk -F. '{ print $1 }'`
+	    if [ "$LDSOMAJ" -gt 1 ]; then
+	    	: OK
+	    else
+	    	if [ "$LDSOMID" -gt 7 ]; then
+	    		: OK
+	    	else
+		    if [ "$LDSOMIN" -ge 14 ]; then
+			: OK
+		    else
+	    		echo ""
+	    		echo "Before continuing you will need to get a current version of ld.so."
+	    		echo "Version 1.7.14 or newer will do."
+	    		NEEDSOMETHING=YES
+		    fi
+		fi
+	    fi
 	else
-		case "`arch`" in
-		i*86)
-			echo ""
-			echo "You appear to have an a.out system."
-			echo "a.out binaries are not available for this release"
-			exit 1
-			;;
-		esac
+	    case "`arch`" in
+	    i*86)
+		echo ""
+		echo "You appear to have an a.out system."
+		echo "a.out binaries are not available for this release"
+		exit 1
+		;;
+	    esac
+	fi
+	# Check if /dev/tty0 exists
+	if [ -c /dev/tty0 -o -h /dev/tty0 ]; then
+	    : OK
+	else
+	    echo ""
+	    echo "/dev/tty0 does not exist.  The X servers need this device."
+	    echo "Do you want me to create it for you? (y/n)"
+	    read response
+	    echo ""
+	    case "$response" in
+	    [yY]*)
+		(cd /dev; ./MAKEDEV tty0) >/dev/null 2>&1
+		if [ ! -c /dev/tty0 ]; then
+		    (mknod /dev/tty0 c 4 0; chown root.tty /dev/tty0;
+		     chmod 622 /dev/tty0) >/dev/null 2>&1
+		fi
+		if [ ! -c /dev/tty0 ]; then
+		    echo "Unable to create /dev/tty0"
+		    echo ""
+		    echo "Try to do it manually by running either of the following commands as root:"
+		    echo "    cd /dev; ./MAKEDEV tty0"
+		    echo "or:"
+		    echo "    mknod /dev/tty0 c 4 0; chown root.tty /dev/tty0; chmod 622 /dev/tty0"
+		    NEEDSOMETHING=YES
+		fi
+		;;
+	    *)
+		echo "You will need to create the device yourself before proceeding"
+		NEEDSOMETHING=YES
+		;;
+	    esac
 	fi
 fi
 
@@ -107,8 +153,15 @@ fi
 
 echo ""
 echo "You are strongly advised to backup your /usr/X11R6 directory before"
-echo "proceeding with this installation.  This installation will overwrite"
-echo "existing files."
+echo "proceeding with this installation, especially if you have customised"
+echo "any configuration files.  This is best done by either backing"
+echo "it up to tape, or making a backup copy of it.  It is not recommended"
+echo "that you simply rename the existing directory because you will then"
+echo "likely have problems finding other things that have been installed"
+echo "there.  If you do have such a problem, and didn't follow this advice"
+echo "please do not contact us about it when you find things missing."
+echo ""
+echo "This installation will overwrite existing files."
 echo ""
 echo "Do you want to continue? (y/n) "
 read response
@@ -121,12 +174,12 @@ case "$response" in
 		;;
 esac
 
-for i in $LIBLIST; do
-	if [ -h $RUNDIR/lib/$i ]; then
-		echo Removing old library link $RUNDIR/lib/$i
-		rm -f $RUNDIR/lib/$i
-	fi
-done
+#for i in $LIBLIST; do
+#	if [ -h $RUNDIR/lib/$i ]; then
+#		echo Removing old library link $RUNDIR/lib/$i
+#		rm -f $RUNDIR/lib/$i
+#	fi
+#done
 
 for i in $OLDFILES; do
 	if [ -f $RUNDIR/$i ]; then

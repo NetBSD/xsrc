@@ -1,4 +1,4 @@
-// $XConsortium: en_US /main/6 1996/08/31 12:19:35 kaleb $
+// $TOG: en_US /main/7 1997/06/14 06:37:05 kaleb $
 
 partial hidden alphanumeric_keys 
 xkb_symbols "basic" {
@@ -40,6 +40,15 @@ xkb_symbols "pc105" {
 
     modifier_map Mod3 { Mode_switch };
 };
+xkb_symbols "pc_universal" {
+    key <RALT> { [ Mode_switch ] };
+    key <RWIN> { [ Multi_key ] };
+
+    augment "us(pc_universal)"
+    include "iso9995-3(basic)"
+
+    modifier_map Mod3 { Mode_switch };
+};
 
 xkb_symbols "sun4" {
     include "us(sun4)"
@@ -71,6 +80,26 @@ xkb_symbols "pc104_nodeadkeys" {
     key <RWIN> { [ Multi_key ] };
 
     augment "us(pc104)"
+    include "iso9995-3(nodeadkeys101)"
+
+    modifier_map Mod3 { Mode_switch };
+};
+
+xkb_symbols "pc105_nodeadkeys" {
+    key <RALT> { [ Mode_switch ] };
+    key <RWIN> { [ Multi_key ] };
+
+    augment "us(pc105)"
+    include "iso9995-3(nodeadkeys101)"
+
+    modifier_map Mod3 { Mode_switch };
+};
+
+xkb_symbols "pc_universal_nodeadkeys" {
+    key <RALT> { [ Mode_switch ] };
+    key <RWIN> { [ Multi_key ] };
+
+    augment "us(pc_universal)"
     include "iso9995-3(nodeadkeys101)"
 
     modifier_map Mod3 { Mode_switch };
