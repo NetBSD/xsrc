@@ -1,5 +1,5 @@
 /* $XConsortium: menu.h /main/27 1996/12/01 23:47:03 swick $ */
-/* $XFree86: xc/programs/xterm/menu.h,v 3.4.2.2 1998/10/20 20:51:48 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/menu.h,v 3.4.2.3 1999/07/28 13:38:02 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -156,9 +156,11 @@ typedef enum {
     vtMenu_hardreset,
     vtMenu_clearsavedlines,
     vtMenu_line2,
+#if OPT_TEK4014
     vtMenu_tekshow,
     vtMenu_tekmode,
     vtMenu_vthide,
+#endif
     vtMenu_LAST
 } vtMenuIndices;
 

@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: data.c,v 1.12 95/04/05 19:58:47 kaleb Exp $
- *	$XFree86: xc/programs/xterm/data.c,v 3.2.4.4 1998/10/20 20:51:44 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/data.c,v 3.2.4.5 1999/07/28 13:38:00 hohndel Exp $
  */
 
 /*
@@ -33,47 +33,19 @@
 #include <ptyx.h>		/* gets Xt stuff, too */
 #include <data.h>
 
-#include <setjmp.h>
-
 #if OPT_TEK4014
-TekWidget tekWidget;
-TekLink *TekRefresh;
-
-XPoint T_boxlarge[NBOX] = {
-	{0, 0},
-	{8, 0},
-	{0, 14},
-	{-8, 0},
-	{0, -14},
-};
-XPoint T_box2[NBOX] = {
-	{0, 0},
-	{7, 0},
-	{0, 12},
-	{-7, 0},
-	{0, -12},
-};
-XPoint T_box3[NBOX] = {
-	{0, 0},
-	{5, 0},
-	{0, 12},
-	{-5, 0},
-	{0, -12},
-};
-XPoint T_boxsmall[NBOX] = {
-	{0, 0},
-	{5, 0},
-	{0, 9},
-	{-5, 0},
-	{0, -9},
-};
-jmp_buf Tekend;
-int Tbcnt = 0;
-Char *Tbuffer;
 Char *Tbptr;
+Char *Tbuffer;
 Char *Tpushb;
 Char *Tpushback;
+TekLink *TekRefresh;
+TekWidget tekWidget;
+int TEKgcFontMask = GCFont;
+int T_lastx = -1;
+int T_lasty = -1;
+int Tbcnt = 0;
 int Ttoggled = 0;
+jmp_buf Tekend;
 #endif
 
 int bcnt = 0;
@@ -115,13 +87,7 @@ char *ttydev;
 #ifdef ALLOWLOGGING
 char log_def_name[] = "XtermLog.XXXXXX";
 #endif
-int T_lastx = -1;
-int T_lasty = -1;
 
 int waitingForTrackInfo = 0;
 EventMode eventMode = NORMAL;
 
-GC visualBellGC;
-
-int VTgcFontMask = GCFont;
-int TEKgcFontMask = GCFont;

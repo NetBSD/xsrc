@@ -1,9 +1,9 @@
 dnl
-dnl $XFree86: xc/programs/xterm/aclocal.m4,v 3.1.2.7 1998/10/20 20:51:35 hohndel Exp $
+dnl $XFree86: xc/programs/xterm/aclocal.m4,v 3.1.2.8 1999/07/28 13:37:53 hohndel Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl 
-dnl Copyright 1997,1998 by Thomas E. Dickey <dickey@clark.net>
+dnl Copyright 1997,1998,1999 by Thomas E. Dickey <dickey@clark.net>
 dnl 
 dnl                         All Rights Reserved
 dnl 
@@ -53,7 +53,7 @@ do
 	AC_TRY_COMPILE(
 [
 #ifndef CC_HAS_PROTOS
-#if !defined(__STDC__) || __STDC__ != 1
+#if !defined(__STDC__) || (__STDC__ != 1)
 choke me
 #endif
 #endif
@@ -78,11 +78,11 @@ fi
 dnl ---------------------------------------------------------------------------
 dnl Allow user to disable a normally-on option.
 AC_DEFUN([CF_ARG_DISABLE],
-[CF_ARG_OPTION($1,[$2 (default: on)],[$3],[$4],yes)])dnl
+[CF_ARG_OPTION($1,[$2],[$3],[$4],yes)])dnl
 dnl ---------------------------------------------------------------------------
 dnl Allow user to enable a normally-off option.
 AC_DEFUN([CF_ARG_ENABLE],
-[CF_ARG_OPTION($1,[$2 (default: off)],[$3],[$4],no)])dnl
+[CF_ARG_OPTION($1,[$2],[$3],[$4],no)])dnl
 dnl ---------------------------------------------------------------------------
 dnl Restricted form of AC_ARG_ENABLE that ensures user doesn't give bogus
 dnl values.
@@ -409,7 +409,7 @@ then
 	changequote(,)dnl
 	cat > conftest.$ac_ext <<EOF
 #line __oline__ "configure"
-int main(int argc, char *argv[]) { return argv[argc-1] == 0; }
+int main(int argc, char *argv[]) { return (argv[argc-1] == 0) ; }
 EOF
 	changequote([,])dnl
 	AC_CHECKING([for gcc warning options])
@@ -602,6 +602,25 @@ AC_DEFUN([CF_VERBOSE],
 [test -n "$verbose" && echo "	$1" 1>&AC_FD_MSG
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl Check if xterm is installed setuid, assume we want to do the same on a
+dnl new install
+AC_DEFUN([CF_XTERM_MODE],[
+AC_PATH_PROG(XTERM_PATH,xterm)
+XTERM_MODE=755
+AC_MSG_CHECKING(for presumed installation-mode)
+if test -f "$XTERM_PATH" ; then
+	ls -Ll $XTERM_PATH >conftest.out
+	read cf_mode cf_rest <conftest.out
+	case ".$cf_mode" in #(vi
+	.???s*)
+		XTERM_MODE=4711
+		;;
+	esac
+fi
+AC_MSG_RESULT($XTERM_MODE)
+AC_SUBST(XTERM_MODE)
+])dnl
+dnl ---------------------------------------------------------------------------
 dnl Check for Xaw (Athena) libraries
 dnl
 AC_DEFUN([CF_X_ATHENA],
@@ -618,11 +637,11 @@ AC_ARG_WITH(neXtaw,
 
 AC_CHECK_HEADERS(X11/$cf_x_athena/SimpleMenu.h)
 
-AC_CHECK_LIB(Xmu, XmuClientWindow,,[
-AC_CHECK_LIB(Xmu_s, XmuClientWindow)])
-
 AC_CHECK_LIB(Xext,XextCreateExtension,
 	[LIBS="-lXext $LIBS"])
+
+AC_CHECK_LIB(Xmu, XmuClientWindow,,[
+AC_CHECK_LIB(Xmu_s, XmuClientWindow)])
 
 AC_CHECK_LIB($cf_x_athena, XawSimpleMenuAddGlobalActions,
 	[LIBS="-l$cf_x_athena $LIBS"],[
@@ -695,23 +714,4 @@ if test $cf_have_X_LIBS = no ; then
 test program.  You will have to check and add the proper libraries by hand
 to makefile.])
 fi
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl Check if xterm is installed setuid, assume we want to do the same on a
-dnl new install
-AC_DEFUN([CF_XTERM_MODE],[
-AC_PATH_PROG(XTERM_PATH,xterm)
-XTERM_MODE=755
-AC_MSG_CHECKING(for presumed installation-mode)
-if test -f "$XTERM_PATH" ; then
-	ls -l $XTERM_PATH >conftest.out
-	read cf_mode cf_rest <conftest.out
-	case ".$cf_mode" in #(vi
-	.???s*)
-		XTERM_MODE=4711
-		;;
-	esac
-fi
-AC_MSG_RESULT($XTERM_MODE)
-AC_SUBST(XTERM_MODE)
 ])dnl

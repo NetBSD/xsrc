@@ -25,7 +25,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/xterm/screen.c,v 3.12.2.4 1998/12/18 11:56:41 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/screen.c,v 3.12.2.5 1999/07/28 13:38:06 hohndel Exp $ */
 
 /* screen.c */
 
@@ -35,7 +35,13 @@
 #include <xcharmouse.h>
 
 #include <signal.h>
+
+#ifdef att
+#define ATT
+#endif
+
 #ifdef SVR4
+#undef SYSV
 #define SYSV
 #include <termios.h>
 #else
@@ -53,6 +59,10 @@
 #include <sys/termio.h>
 #endif
 
+#if (defined(ATT) && !defined(__sgi)) || (defined(SYSV) && defined(i386)) || (defined (__GLIBC__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))
+#define USE_USG_PTYS
+#endif
+
 #ifdef SYSV
 #if !defined(DGUX)    /* Intel DG/ux uses termios.h */
 #include <sys/termio.h>
@@ -61,12 +71,10 @@
 #include <sys/stream.h>			/* get typedef used in ptem.h */
 #include <sys/ptem.h>
 #endif
-#else
-#if defined(sun) && !defined(SVR4)
+#elif defined(sun) && !defined(SVR4)
 #include <sys/ttycom.h>
 #ifdef TIOCSWINSZ
 #undef TIOCSSIZE
-#endif
 #endif
 #endif
 
@@ -804,11 +812,9 @@ ScreenResize (
 	int move_down_by;
 #if defined(TIOCSSIZE) && (defined(sun) && !defined(SVR4))
 	struct ttysize ts;
-#else	/* not old SunOS */
-#ifdef TIOCSWINSZ
+#elif defined(TIOCSWINSZ)
 	struct winsize ws;
-#endif	/* TIOCSWINSZ */
-#endif	/* sun */
+#endif	/* sun vs TIOCSWINSZ */
 	Window tw = TextWindow (screen);
 
 	TRACE(("ScreenResize %dx%d\n", height, width))
@@ -936,8 +942,7 @@ ScreenResize (
 			kill_process_group(pgrp, SIGWINCH);
 	}
 #endif	/* SIGWINCH */
-#else	/* not old SunOS */
-#ifdef TIOCSWINSZ
+#elif defined(TIOCSWINSZ)
 	/* Set tty's idea of window size */
 	ws.ws_row = rows;
 	ws.ws_col = cols;
@@ -955,8 +960,7 @@ ScreenResize (
 #endif	/* SIGWINCH */
 #else
 	TRACE(("ScreenResize cannot do anything to pty\n"))
-#endif	/* TIOCSWINSZ */
-#endif	/* sun */
+#endif	/* sun vs TIOCSWINSZ */
 	return (0);
 }
 

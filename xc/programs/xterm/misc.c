@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: misc.c /main/112 1996/11/29 10:34:07 swick $
- *	$XFree86: xc/programs/xterm/misc.c,v 3.17.2.5 1998/10/20 20:51:48 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/misc.c,v 3.17.2.6 1999/07/28 13:38:03 hohndel Exp $
  */
 
 /*
@@ -30,7 +30,6 @@
 
 #include <X11/Xos.h>
 #include <stdio.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <ctype.h>
 #include <pwd.h>
@@ -48,7 +47,7 @@
 #include <menu.h>
 #include <xcharmouse.h>
 
-#if XtSpecificationRelease < 6
+#if (XtSpecificationRelease < 6)
 #ifndef X_GETTIMEOFDAY
 #define X_GETTIMEOFDAY(t) gettimeofday(t,(struct timezone *)0)
 #endif
@@ -64,9 +63,6 @@
 #endif
 
 extern char **environ;		/* used in 'Setenv()' */
-
-extern jmp_buf Tekend;
-extern jmp_buf VTend;
 
 extern Widget toplevel;		/* used in 'ChangeGroup()' */
 

@@ -1,6 +1,6 @@
 /*
  * $XConsortium: charproc.c /main/196 1996/12/03 16:52:46 swick $
- * $XFree86: xc/programs/xterm/charproc.c,v 3.42.2.11 1998/10/22 04:31:15 hohndel Exp $
+ * $XFree86: xc/programs/xterm/charproc.c,v 3.42.2.12 1999/07/28 13:37:54 hohndel Exp $
  */
 
 /*
@@ -70,7 +70,6 @@ in this Software without prior written authorization from the X Consortium.
 #endif
 
 #include <stdio.h>
-#include <setjmp.h>
 #include <ctype.h>
 
 #ifdef MINIX
@@ -108,7 +107,6 @@ in this Software without prior written authorization from the X Consortium.
 #endif
 #endif
 
-extern jmp_buf VTend;
 extern Widget toplevel;
 extern char *ProgramName;
 
@@ -1118,8 +1116,10 @@ static void VTparse(void)
 			break;
 
 		 case CASE_ENQ:
+#if 0
 			for (count = 0; xterm_name[count] != 0; count++)
 				unparseputc(xterm_name[count], screen->respond);
+#endif
 			break;
 
 		 case CASE_BELL:
