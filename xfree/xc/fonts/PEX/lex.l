@@ -1,11 +1,15 @@
 %{
-/* $Xorg: lex.l,v 1.3 2000/08/17 19:42:52 cpqbld Exp $ */
+/* $Xorg: lex.l,v 1.4 2001/02/09 02:03:21 xorgcvs Exp $ */
 
 /*****************************************************************
 
 Copyright 1989,1990, 1991, 1998  The Open Group
 
-All Rights Reserved.
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -43,7 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/fonts/PEX/lex.l,v 3.12 2001/04/01 13:59:58 tsi Exp $ */
+/* $XFree86: xc/fonts/PEX/lex.l,v 3.14 2002/01/08 22:10:57 dawes Exp $ */
 
 
 #include <ctype.h>
@@ -142,3 +146,21 @@ int	n;
 	else
 		return 0;
 }
+
+#ifdef QNX4
+
+int yywrap (void) {
+    if (!feof(yyin))
+        return (0);
+/* The following appears not to work with flex.  As it is error
+   handling code, we just comment it out. */
+#if !defined(FLEX_SCANNER)
+    if (yybgin != (yysvec+1)) { /* make sure we are in state 0 */
+        ErrIntro(yylineno);
+        fprintf(stderr,"end of input file/missing endps\n");
+    }
+#endif
+    return (1);
+}
+
+#endif /* QNX4 */
