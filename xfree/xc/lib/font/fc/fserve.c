@@ -1507,8 +1507,8 @@ fs_send_open_font(pointer client, FontPathElementPtr fpe, Mask flags,
 
     if (conn->blockState & FS_GIVE_UP)
 	return BadFontName;
-    
-    if (namelen > sizeof (buf) - 1)
+ 
+    if (namelen <= 0 || namelen > sizeof (buf) - 1)
 	return BadFontName;
     
     /*
