@@ -238,9 +238,7 @@ static void DoSpecialEnterNotify (register XEnterWindowEvent *ev)
 #ifdef ACTIVEWINDOWINPUTONLY
     if (ev->window == XtWindow(XtParent(CURRENT_EMU(screen))))
 #endif
-      if (((ev->detail) != NotifyInferior) &&
-	  ev->focus &&
-	  !(screen->select & FOCUS))
+      if (((ev->detail) != NotifyInferior) && ev->focus)
 	selectwindow(screen, INWINDOW);
 }
 
@@ -262,9 +260,7 @@ static void DoSpecialLeaveNotify (register XEnterWindowEvent *ev)
 #ifdef ACTIVEWINDOWINPUTONLY
     if (ev->window == XtWindow(XtParent(CURRENT_EMU(screen))))
 #endif
-      if (((ev->detail) != NotifyInferior) &&
-	  ev->focus &&
-	  !(screen->select & FOCUS))
+      if (((ev->detail) != NotifyInferior) && ev->focus)
 	unselectwindow(screen, INWINDOW);
 }
 
@@ -349,9 +345,9 @@ unselectwindow(register TScreen *screen, register int flag)
     } else
 #endif
     {
-	if (screen->xic)
-	    XUnsetICFocus(screen->xic);
 	screen->select &= ~flag;
+	if (screen->xic && screen->select == 0)
+	    XUnsetICFocus(screen->xic);
 	if(screen->cursor_state &&
 	   (screen->cursor_col != screen->cur_col ||
 	    screen->cursor_row != screen->cur_row))
