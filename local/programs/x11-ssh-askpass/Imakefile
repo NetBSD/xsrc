@@ -53,7 +53,8 @@ EXTRAS = \@@\
  
 APP_DEFAULTS	= $(CLASS)-default.ad
 
-LOCAL_LIBRARIES	= -lXt -lX11 -lSM -lICE
+DEPLIBS        	= $(DEPXTOOLLIB) $(DEPXLIB)
+LOCAL_LIBRARIES	= $(XTOOLLIB) $(XLIB)
 
 #ifndef ComplexProgramTargetNoMan
 #define ComplexProgramTargetNoMan(x) ComplexProgramTarget(x)
