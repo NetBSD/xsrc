@@ -1,10 +1,11 @@
 /*
- *	$XConsortium: scrollbar.c /main/47 1996/12/01 23:47:08 swick $
- *	$XFree86: xc/programs/xterm/scrollbar.c,v 3.27 2000/05/18 00:33:21 dawes Exp $
+ *	$Xorg: scrollbar.c,v 1.4 2000/08/17 19:55:09 cpqbld Exp $
  */
 
+/* $XFree86: xc/programs/xterm/scrollbar.c,v 3.30 2001/03/12 00:54:18 dickey Exp $ */
+
 /*
- * Copyright 2000 by Thomas E. Dickey
+ * Copyright 2000,2001 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -151,7 +152,7 @@ ResizeScreen(register XtermWidget xw, int min_width, int min_height)
 
 	if (! XGetWMNormalHints(screen->display, XtWindow(XtParent(xw)),
 				&sizehints, &supp))
-	     sizehints.flags = 0;
+	    bzero(&sizehints, sizeof(sizehints));
 	sizehints.base_width = min_width;
 	sizehints.base_height = min_height;
 	sizehints.width_inc = FontWidth(screen);

@@ -1,9 +1,9 @@
 /*
- * $XConsortium: Tekproc.c /main/120 1996/11/29 10:33:20 swick $
- * $XFree86: xc/programs/xterm/Tekproc.c,v 3.29 2000/02/08 17:19:27 dawes Exp $
+ * $Xorg: Tekproc.c,v 1.4 2000/08/17 19:55:07 cpqbld Exp $
  *
  * Warning, there be crufty dragons here.
  */
+/* $XFree86: xc/programs/xterm/Tekproc.c,v 3.33 2001/04/12 01:02:49 dickey Exp $ */
 
 
 /*
@@ -58,7 +58,6 @@ in this Software without prior written authorization from the X Consortium.
 
 #include <xterm.h>
 
-#include <X11/Xos.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
@@ -78,10 +77,6 @@ in this Software without prior written authorization from the X Consortium.
 #include <data.h>
 #include <error.h>
 #include <menu.h>
-
-#ifndef X_NOT_STDC_ENV
-#include <time.h>
-#endif
 
 #ifdef MINIX
 #include <sys/nbio.h>

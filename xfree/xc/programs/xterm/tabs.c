@@ -1,7 +1,8 @@
 /*
- *	$XConsortium: tabs.c,v 1.4 91/05/06 17:12:18 gildea Exp $
- *	$XFree86: xc/programs/xterm/tabs.c,v 3.7 2000/02/08 17:19:42 dawes Exp $
+ *	$XFree86: xc/programs/xterm/tabs.c,v 3.9 2001/01/17 23:46:39 dawes Exp $
  */
+
+/* $Xorg: tabs.c,v 1.3 2000/08/17 19:55:09 cpqbld Exp $ */
 
 /*
  * Copyright 2000 by Thomas E. Dickey

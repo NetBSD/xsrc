@@ -1,5 +1,5 @@
 /*
- *	$TOG: screen.c /main/37 1997/08/26 14:13:55 kaleb $
+ *	$Xorg: screen.c,v 1.3 2000/08/17 19:55:09 cpqbld Exp $
  */
 
 /*
@@ -54,7 +54,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/xterm/screen.c,v 3.51 2000/08/25 21:51:13 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/screen.c,v 3.56 2001/04/12 01:02:50 dickey Exp $ */
 
 /* screen.c */
 
@@ -63,63 +63,9 @@
 #include <error.h>
 #include <data.h>
 #include <xcharmouse.h>
+#include <xterm_io.h>
 
 #include <signal.h>
-
-#ifdef SVR4
-#include <termios.h>
-#elif !defined(__CYGWIN__)
-#include <sys/ioctl.h>
-#endif
-
-#if defined(__CYGWIN__) && !defined(TIOCSPGRP)
-#include <termios.h>
-#define TIOCSPGRP (_IOW('t', 118, pid_t))
-#endif
-
-#ifdef __hpux
-#include <sys/termio.h>
-#endif
-
-#ifdef SYSV
-#if !defined(DGUX)			/* Intel DG/ux uses termios.h */
-#include <sys/termio.h>
-#endif /* DGUX */
-#ifdef USE_USG_PTYS
-#include <sys/stream.h>			/* get typedef used in ptem.h */
-#include <sys/ptem.h>
-#endif
-#elif defined(sun) && !defined(SVR4)
-#include <sys/ttycom.h>
-#ifdef TIOCSWINSZ
-#undef TIOCSSIZE
-#endif
-#endif
-
-#ifdef MINIX
-#include <termios.h>
-#endif
-
-#ifdef ISC
-#ifndef SYSV
-#include <sys/termio.h>
-#endif
-#define TIOCGPGRP TCGETPGRP
-#define TIOCSPGRP TCSETPGRP
-#endif
-
-#ifdef __EMX__
-extern int ptioctl(int fd, int func, void* data);
-#define ioctl ptioctl
-#define TIOCSWINSZ	113
-#define TIOCGWINSZ	117
-struct winsize {
-	unsigned short	ws_row;		/* rows, in characters */
-	unsigned short	ws_col;		/* columns, in characters */
-	unsigned short	ws_xpixel;	/* horizontal size, pixels */
-	unsigned short	ws_ypixel;	/* vertical size, pixels */
-};
-#endif
 
 /*
  * Allocates memory for a 2-dimensional array of chars and returns a pointer
@@ -294,8 +240,8 @@ ScreenWrite (
 	int avail  = screen->max_col - screen->cur_col + 1;
 	Char *col;
 	int wrappedbit;
- 	Char starcol, starcol2; 
 #if OPT_WIDE_CHARS
+ 	Char starcol, starcol2; 
  	Char *comb1l = 0, *comb1h = 0, *comb2l = 0, *comb2h = 0;
 #endif
  
@@ -333,16 +279,14 @@ ScreenWrite (
 
 	wrappedbit = ScrnTstWrapped(screen, screen->cur_row);
 
+#if OPT_WIDE_CHARS
 	starcol = *col;
 	starcol2 = col[length-1];
+#endif
 
 	/* write blanks if we're writing invisible text */
 	if (flags & INVISIBLE) {
-#if OPT_WIDE_CHARS
-		memset(col, ' ', real_width);
-#else
 		memset(col, ' ', length);
-#endif
 	} else {
 		memcpy(col, str, length); /* This can stand for the present. If it
                                              is wrong, we will scribble over it */

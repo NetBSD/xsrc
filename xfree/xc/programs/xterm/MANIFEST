@@ -1,4 +1,4 @@
-MANIFEST for xterm-141, version xterm-141
+MANIFEST for xterm-152, version xterm-152
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 256colres.h                     resource-definitions for 256-color mode
@@ -50,9 +50,11 @@ main.h                          default definitions for 'xterm'
 make.com                        build-script for VMS port of 'xterm'
 menu.c                          popup/pulldown menus for 'xterm'
 menu.h                          interface of menu.c
+minstall.sh                     script for installing manpages
 misc.c                          miscellaneous utility functions for 'xterm'
 mkdirs.sh                       configure script: make directories for install process
 os2main.c                       main program for OS/2 EMX port of 'xterm'
+plink.sh                        script to prune unneeded libraries from link
 precompose.c                    table of precompose sequences
 precompose.h                    interface of precompose.c
 print.c                         VT100+ print support functions
@@ -78,10 +80,13 @@ vms.h                           system headers and definitions for vms.c
 wcwidth.c                       wide-character utility functions
 wcwidth.h                       interface of wcwidth.c
 xcharmouse.h                    Jason Bacon's mouse-defs, cleaned up a little
+xstrings.c                      a few common string functions
+xstrings.h                      interface of xstrings.c
 xterm.dat                       application defaults for VMS port of 'xterm'
 xterm.h                         common includes, definitions and prototypes for 'xterm'
 xterm.man                       manual page for 'xterm'
 xterm_axp.opt                   linker options file for VMS port of 'xterm'
+xterm_io.h                      split-out definitions of termio/termios/sgtty and winsize from main.c, os2main.c, screen.c and resize.c
 xtermcfg.hin                    configure script: template for xtermcfg.h
 tektests                        subdirectory
 tektests/aitest.tek             tek4014 demo: draw a globe

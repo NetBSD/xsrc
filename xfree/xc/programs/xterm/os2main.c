@@ -5,7 +5,7 @@
 #ifndef lint
 static char *rid="$XConsortium: main.c,v 1.227.1.2 95/06/29 18:13:15 kaleb Exp $";
 #endif /* lint */
-/* $XFree86: xc/programs/xterm/os2main.c,v 3.40 2000/09/22 10:42:08 alanh Exp $ */
+/* $XFree86: xc/programs/xterm/os2main.c,v 3.45 2001/04/12 01:02:50 dickey Exp $ */
 
 /***********************************************************
 
@@ -71,8 +71,6 @@ SOFTWARE.
 
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
-
-#include <X11/Xos.h>
 #include <X11/cursorfont.h>
 #ifdef I18N
 #include <X11/Xlocale.h>
@@ -90,21 +88,15 @@ SOFTWARE.
 #include <menu.h>
 #include <main.h>
 #include <xstrings.h>
-
-#include <sys/termio.h>
+#include <xterm_io.h>
 
 int setpgrp(pid_t pid ,gid_t pgid) {}
 int chown(const char* fn, pid_t pid, gid_t gid) {}
 char *ttyname(int fd) { return "/dev/tty"; }
 
-#include <sys/ioctl.h>
 #include <sys/stat.h>
-
 #include <sys/param.h>	/* for NOFILE */
-
 #include <stdio.h>
-#include <time.h>
-
 #include <signal.h>
 
 static SIGNAL_T reapchild (int n);
@@ -424,6 +416,8 @@ static XrmOptionDescRec optionDescList[] = {
 {"+im",		"*useInsertMode", XrmoptionNoArg,	(caddr_t) "off"},
 {"-vb",		"*visualBell",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+vb",		"*visualBell",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-pob",	"*popOnBell",	XrmoptionNoArg,		(caddr_t) "on"},
+{"+pob",	"*popOnBell",	XrmoptionNoArg,		(caddr_t) "off"},
 #if OPT_WIDE_CHARS
 {"-wc",		"*wideChars",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+wc",		"*wideChars",	XrmoptionNoArg,		(caddr_t) "off"},
@@ -441,7 +435,7 @@ static XrmOptionDescRec optionDescList[] = {
    standard XtAppInitialize options now */
 {"%",		"*tekGeometry",	XrmoptionStickyArg,	(caddr_t) NULL},
 {"#",		".iconGeometry",XrmoptionStickyArg,	(caddr_t) NULL},
-{"-T",		"*title",	XrmoptionSepArg,	(caddr_t) NULL},
+{"-T",		".title",	XrmoptionSepArg,	(caddr_t) NULL},
 {"-n",		"*iconName",	XrmoptionSepArg,	(caddr_t) NULL},
 {"-r",		"*reverseVideo",XrmoptionNoArg,		(caddr_t) "on"},
 {"+r",		"*reverseVideo",XrmoptionNoArg,		(caddr_t) "off"},
@@ -539,6 +533,7 @@ static struct _options {
 { "-/+ulc",                "turn off/on display of underline as color" },
 { "-/+ut",                 "turn on/off utmp inhibit (not supported)" },
 { "-/+vb",                 "turn on/off visual bell" },
+{ "-/+pob",                "turn on/off pop on bell" },
 #if OPT_WIDE_CHARS
 { "-/+wc",                 "turn on/off wide-character mode" },
 #endif
@@ -713,43 +708,6 @@ XtActionsRec actionProcs[] = {
 Atom wm_delete_window;
 
 #ifdef __EMX__
-
-#define XFREE86_PTY	0x76
-
-#define XTY_TIOCSETA	0x48
-#define XTY_TIOCSETAW	0x49
-#define XTY_TIOCSETAF	0x4a
-#define XTY_TIOCCONS	0x4d
-#define XTY_TIOCSWINSZ	0x53
-#define XTY_ENADUP	0x5a
-#define XTY_TRACE	0x5b
-#define XTY_TIOCGETA	0x65
-#define XTY_TIOCGWINSZ	0x66
-#define PTMS_GETPTY	0x64
-#define PTMS_BUFSZ	14
-#ifndef NCCS
-#define NCCS 11
-#endif
-
-#define TIOCSWINSZ	113
-#define TIOCGWINSZ	117
-
-struct pt_termios
-{
-        unsigned short  c_iflag;
-        unsigned short  c_oflag;
-        unsigned short  c_cflag;
-        unsigned short  c_lflag;
-        unsigned char   c_cc[NCCS];
-        long            _reserved_[4];
-};
-
-struct winsize {
-        unsigned short  ws_row;         /* rows, in characters */
-        unsigned short  ws_col;         /* columns, in characters */
-        unsigned short  ws_xpixel;      /* horizontal size, pixels */
-        unsigned short  ws_ypixel;      /* vertical size, pixels */
-};
 
 int ptioctl(int fd, int func, void* data)
 {

@@ -1,5 +1,4 @@
-/* $XConsortium: menu.h /main/27 1996/12/01 23:47:03 swick $ */
-/* $XFree86: xc/programs/xterm/menu.h,v 3.22 2000/03/31 20:13:46 dawes Exp $ */
+/* $Xorg: menu.h,v 1.3 2000/08/17 19:55:09 cpqbld Exp $ */
 /*
 
 Copyright 1999-2000 by Thomas E. Dickey
@@ -51,6 +50,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/xterm/menu.h,v 3.25 2001/01/17 23:46:37 dawes Exp $ */
 
 #ifndef included_menu_h
 #define included_menu_h
@@ -113,6 +113,7 @@ extern void HandleSendSignal       PROTO_XT_ACTIONS_ARGS;
 extern void HandleSetTekText       PROTO_XT_ACTIONS_ARGS;
 extern void HandleSetTerminalType  PROTO_XT_ACTIONS_ARGS;
 extern void HandleSetVisualBell    PROTO_XT_ACTIONS_ARGS;
+extern void HandleSetPopOnBell     PROTO_XT_ACTIONS_ARGS;
 extern void HandleSoftReset        PROTO_XT_ACTIONS_ARGS;
 extern void HandleSunFunctionKeys  PROTO_XT_ACTIONS_ARGS;
 extern void HandleSunKeyboard      PROTO_XT_ACTIONS_ARGS;
@@ -190,6 +191,7 @@ typedef enum {
     vtMenu_allow132,
     vtMenu_cursesemul,
     vtMenu_visualbell,
+    vtMenu_poponbell,
     vtMenu_marginbell,
 #if OPT_BLINK_CURS
     vtMenu_cursorblink,
@@ -428,6 +430,11 @@ extern void SetItemSensitivity(Widget mi, XtArgVal val);
   update_menu_item (term->screen.vtMenu, \
 		    vtMenuEntries[vtMenu_visualbell].widget, \
 		    term->screen.visualbell)
+
+#define update_poponbell() \
+  update_menu_item (term->screen.vtMenu, \
+		    vtMenuEntries[vtMenu_poponbell].widget, \
+		    term->screen.poponbell)
 
 #define update_marginbell() \
   update_menu_item (term->screen.vtMenu, \

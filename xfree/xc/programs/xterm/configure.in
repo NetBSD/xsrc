@@ -1,5 +1,5 @@
 dnl
-dnl $XFree86: xc/programs/xterm/configure.in,v 3.43 2000/09/22 10:42:07 alanh Exp $
+dnl $XFree86: xc/programs/xterm/configure.in,v 3.47 2001/04/12 01:02:50 dickey Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl
@@ -37,7 +37,8 @@ CF_CHECK_CACHE
 dnl Only add to this case statement when a system has a compiler that is not
 dnl detected by AC_PROG_CC.
 case "$host_os" in
-openedition)	: ${CFLAGS="-O2 -Wc,dll -D_ALL_SOURCE -Wl,EDIT=NO"}
+openedition)	: ${CFLAGS="-O2 -Wc,dll -Wl,EDIT=NO"}
+		: ${CPPFLAGS="-D_ALL_SOURCE"}
 		: ${LIBS="/usr/lib/Xaw.x /usr/lib/SM.x /usr/lib/ICE.x /usr/lib/X11.x"}
 		: ${CC=c89};;
 esac
@@ -47,6 +48,7 @@ AC_PROG_CPP
 AC_GCC_TRADITIONAL
 AC_PROG_AWK
 AC_PROG_INSTALL
+AC_ARG_PROGRAM
 
 ###	checks for UNIX variants that set C preprocessor variables
 AC_AIX
@@ -59,6 +61,7 @@ stdlib.h \
 termios.h \
 unistd.h \
 )
+AC_HEADER_TIME
 
 ###	checks for typedefs
 CF_SIZE_T
@@ -67,6 +70,7 @@ AC_CHECK_TYPE(time_t, long)
 ###	checks for library functions
 AC_CHECK_FUNCS( \
 	bcopy \
+	getlogin \
 	memmove \
 	strerror \
 	tcgetattr \
@@ -103,18 +107,6 @@ CF_SVR4
 CF_GNU_SOURCE
 CF_X_TOOLKIT
 
-# Change CPPFLAGS temporarily so that checks for X include files will
-# look in any directories specified with `--x-includes=DIR', obtained
-# via xmkmf, or located by AC_PATH_XTRA.  These flags are already in
-# CFLAGS (put there by CF_X_TOOLKIT), but that doesn't help here because
-# AC_CHECK_HEADERS uses cpp, not cc.
-
-if test "${x_includes}" != NONE && test -n "${x_includes}"; then
-	C_SWITCH_X_SITE=-I`echo ${x_includes} | sed -e "s/:/ -I/g"`
-fi
-cf_save_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$C_SWITCH_X_SITE $CPPFLAGS"
-
 AC_CHECK_HEADERS( \
 	X11/DECkeysym.h \
 	X11/Sunkeysym.h \
@@ -124,8 +116,6 @@ AC_CHECK_HEADERS( \
 CF_X_ATHENA
 CF_TYPE_FD_SET
 CF_TERMIO_C_ISPEED
-
-CPPFLAGS="$cf_save_CPPFLAGS"
 
 LIBS="$LIBS $X_EXTRA_LIBS"
 
@@ -147,8 +137,8 @@ CF_ARG_DISABLE(imake,
 AC_MSG_RESULT($enable_imake)
 if test $enable_imake = yes ; then
 	CF_IMAKE_CFLAGS($(MAIN_DEFINES))
+	CF_ADD_CFLAGS($IMAKE_CFLAGS)
 fi
-AC_SUBST(IMAKE_CFLAGS)
 
 AC_MSG_CHECKING(for default terminal-id)
 AC_ARG_WITH(terminal-id,
@@ -307,6 +297,18 @@ CF_ARG_DISABLE(boxchars,
 	[enable_boxchars=yes])
 AC_MSG_RESULT($enable_boxchars)
 test $enable_boxchars = no && AC_DEFINE(OPT_BOX_CHARS,0)
+
+AC_MSG_CHECKING(if you want to use FreeType library)
+CF_ARG_DISABLE(freetype,
+	[  --disable-freetype      disable freetype library-support],
+	[enable_freetype=no],
+	[enable_freetype=yes])
+AC_MSG_RESULT($enable_freetype)
+if test $enable_freetype = yes ; then
+	CF_X_FREETYPE
+else
+	CPPFLAGS=`echo "$CPPFLAGS" | sed -e s/-DXRENDERFONT//`
+fi
 
 AC_MSG_CHECKING(if you want support for HP-style function keys)
 CF_ARG_ENABLE(hp-fkeys,
@@ -531,12 +533,12 @@ AC_SUBST(EXTRAHDRS)
 AC_SUBST(EXTRASRCS)
 AC_SUBST(EXTRAOBJS)
 
-###	remove from IMAKE_CFLAGS the optional features we define in xtermcfg.h
+###	remove from CPPFLAGS the optional features we define in xtermcfg.h
 for cf_def in \
 	SCROLLBAR_RIGHT \
 	OPT_WIDE_CHARS
 do
-	IMAKE_CFLAGS=`echo "$IMAKE_CFLAGS" | sed -e s/-D$cf_def//`
+	CPPFLAGS=`echo "$CPPFLAGS" | sed -e s/-D$cf_def//`
 done
 
 ###	output Makefile and xtermcfg.h
