@@ -181,7 +181,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
 #define XF86W32Server		YES
 #define XF86I128Server		YES
 #define XF86GLINTServer		YES
-#define XF86FBDevServer		YES
+#define XF86FBDevServer		NO
 #else
 #define XF86SVGAServer          NO
 #define XF86VGA16Server         NO
