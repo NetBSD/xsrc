@@ -29,3 +29,4 @@ LinkFile(map-ISO8859-16,8859-16.TXT)
 LinkFile(map-JISX0201.1976-0,JIS0201.TXT)
 LinkFile(map-KOI8-R,KOI8-R.TXT)
 
+includes :: ucs2any
