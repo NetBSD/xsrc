@@ -1,5 +1,5 @@
 # $XConsortium: terminfo,v 1.11 94/10/13 21:24:31 gildea Exp $
-# $XFree86: xc/programs/xterm/terminfo,v 3.13.2.7 1999/05/10 13:10:05 hohndel Exp $
+# $XFree86: xc/programs/xterm/terminfo,v 3.39 2000/02/29 03:09:29 dawes Exp $
 #
 # XFree86 updates/notes/new entries (including xterm-8bit, xterm-16color)
 # - Thomas E. Dickey <dickey@clark.net>
@@ -13,7 +13,7 @@
 # meml locks memory above the cursor; memu unlocks (ala HP terminals).  This
 #	is not recognized by some older (e.g., SVr3) tic programs, but none
 #	do more than warn about it.  Ignore the warning.
-# rmcup clears memory before switching to the alternate screen.  The older
+# smcup clears memory before switching to the alternate screen.  The older
 #	(deprecated) \E[?47h did not do this, requiring applications to
 #	embed a \E[2J in the rmcup string.  However, that behavior cannot
 #	be disabled via titeInhibit, making that resource not function as
@@ -66,21 +66,106 @@
 # vt220 does this only when in vt220 mode; when emulating a vt100 the editing
 # keypad is inactive.
 #
-# Alternative keycodes: 
-# -------------------- 
-# Several of the function keys have alternative names, depending on the type of 
-# host which your xterm is connected to.  DEC (i.e., the VMS system) uses F15 
-# as the HELP key, F16 as the DO key.  Unix applications generally do not do 
-# this.  Curses applications in particular, assign a unique keycode to each 
-# capability string.  These terminal descriptions do not have conflicting 
-# definitions, to ensure that Unix curses applications use a consistent set of 
-# keycodes.  To get a VMS-bias, make these substitutions: 
-#	1. change khome to kfnd 
-#	2. change kend to kslt 
-# Some legacy applications using the termcap emulation may expect kll where 
-# we have specified kend. 
-# 
+# Alternative keycodes:
+# --------------------
+# Several of the function keys have alternative names, depending on the type of
+# host which your xterm is connected to.  DEC (i.e., the VMS system) uses F15
+# as the HELP key, F16 as the DO key.  Unix applications generally do not do
+# this.  Curses applications in particular, assign a unique keycode to each
+# capability string.  These terminal descriptions do not have conflicting
+# definitions, to ensure that Unix curses applications use a consistent set of
+# keycodes.  To get a VMS-bias, make these substitutions:
+#	1. change khome to kfnd
+#	2. change kend to kslt
+# Some legacy applications using the termcap emulation may expect kll where
+# we have specified kend.
+#
+# Function keys with modifiers (Sun/PC):
+# -------------------------------------
+#	Shift-Fx          - kf{12+x}
+#	Control-Fx        - kf{24+x}
+#	Shift-Control-Fx  - kf{36+x}
+#
+# The terminfo defines some special keys which are documented as "shifted",
+# e.g., kDC is shifted-delete-character.  In this description, the modifier is
+# actually the control key, to avoid conflict with the common usage of shifted
+# pageup and pagedown for window manager functions. 
+#
 xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
+	npc,
+	kDC=\E[3;5~,
+	kEND=\EO5F,
+	kHOM=\EO5H,
+	kIC=\E[2;5~,
+	kLFT=\EO5D,
+	kNXT=\E[6;5~,
+	kPRV=\E[5;5~,
+	kRIT=\EO5C,
+	kb2=\EOE,
+	kcbt=\E[Z,
+	kcub1=\EOD,
+	kcud1=\EOB,
+	kcuf1=\EOC,
+	kcuu1=\EOA,
+	kend=\EOF,
+	kent=\EOM,
+	kf1=\EOP,
+	kf10=\E[21~,
+	kf11=\E[23~,
+	kf12=\E[24~,
+	kf13=\EO2P,
+	kf14=\EO2Q,
+	kf15=\EO2R,
+	kf16=\EO2S,
+	kf17=\E[15;2~,
+	kf18=\E[17;2~,
+	kf19=\E[18;2~,
+	kf2=\EOQ,
+	kf20=\E[19;2~,
+	kf21=\E[20;2~,
+	kf22=\E[21;2~,
+	kf23=\E[23;2~,
+	kf24=\E[24;2~,
+	kf25=\EO5P,
+	kf26=\EO5Q,
+	kf27=\EO5R,
+	kf28=\EO5S,
+	kf29=\E[15;5~,
+	kf3=\EOR,
+	kf30=\E[17;5~,
+	kf31=\E[18;5~,
+	kf32=\E[19;5~,
+	kf33=\E[20;5~,
+	kf34=\E[21;5~,
+	kf35=\E[23;5~,
+	kf36=\E[24;5~,
+	kf37=\EO6P,
+	kf38=\EO6Q,
+	kf39=\EO6R,
+	kf4=\EOS,
+	kf40=\EO6S,
+	kf41=\E[15;6~,
+	kf42=\E[17;6~,
+	kf43=\E[18;6~,
+	kf44=\E[19;6~,
+	kf45=\E[20;6~,
+	kf46=\E[21;6~,
+	kf47=\E[23;6~,
+	kf48=\E[24;6~,
+	kf5=\E[15~,
+	kf6=\E[17~,
+	kf7=\E[18~,
+	kf8=\E[19~,
+	kf9=\E[20~,
+	khome=\EOH,
+	kich1=\E[2~,
+	kmous=\E[M,
+	knp=\E[6~,
+	kpp=\E[5~,
+	use=xterm-basic,
+#
+# This chunk is used for building the VT220/Sun/PC keyboard variants.
+xterm-basic|xterm terminal emulator - common (XFree86),
 	am,
 	bce,
 	km,
@@ -112,7 +197,6 @@ xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 	cup=\E[%i%p1%d;%p2%dH,
 	cuu=\E[%p1%dA,
 	cuu1=\E[A,
-	cvvis=\E[?25h,
 	dch=\E[%p1%dP,
 	dch1=\E[P,
 	dl=\E[%p1%dM,
@@ -122,7 +206,7 @@ xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 	el=\E[K,
 	el1=\E[1K,
 	enacs=\E(B\E)0,
-	flash=\E[?5h\E[?5l,
+	flash=\E[?5h$<100/>\E[?5l,
 	home=\E[H,
 	hpa=\E[%i%p1%dG,
 	ht=^I,
@@ -133,18 +217,67 @@ xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 	ind=^J,
 	invis=\E[8m,
 	is2=\E[!p\E[?3;4l\E[4l\E>,
-	ka1=\EOw,
-	ka3=\EOu,
-	kb2=\EOy,
-	kbeg=\EOE,
 	kbs=^H,
+	kdch1=\E[3~,
+	mc0=\E[i,
+	mc4=\E[4i,
+	mc5=\E[5i,
+	meml=\El,
+	memu=\Em,
+	op=\E[39;49m,
+	rc=\E8,
+	rev=\E[7m,
+	ri=\EM,
+	rmacs=^O,
+	rmam=\E[?7l,
+	rmcup=\E[?1049l,
+	rmir=\E[4l,
+	rmkx=\E[?1l\E>,
+	rmso=\E[27m,
+	rmul=\E[24m,
+	rs1=\Ec,
+	rs2=\E[!p\E[?3;4l\E[4l\E>,
+	sc=\E7,
+	setab=\E[4%p1%dm,
+	setaf=\E[3%p1%dm,
+	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
+	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
+	sgr=\E[0%?%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	sgr0=\E[m\017,
+	smacs=^N,
+	smam=\E[?7h,
+	smcup=\E[?1049h,
+	smir=\E[4h,
+	smkx=\E[?1h\E=,
+	smso=\E[7m,
+	smul=\E[4m,
+	tbc=\E[3g,
+	u6=\E[%i%d;%dR,
+	u7=\E[6n,
+	u8=\E[?1;2c,
+	u9=\E[c,
+	vpa=\E[%i%p1%dd,
+#
+# The xterm-xfree86 description has all of the features, but is not completely
+# compatible with vt220.  If you are using a Sun or PC keyboard, set the
+# sunKeyboard resource to true:
+#	+ maps the editing keypad
+#	+ interprets control-function-key as a second array of keys, so a
+#	  12-fkey keyboard can support vt220's 20-fkeys.
+#	+ maps numeric keypad "+" to ",".
+#	+ uses DEC-style control sequences for the application keypad.
+#	  
+xterm-vt220|XFree86 xterm emulating vt220,
+	ka1=\EOw,
+	ka3=\EOy,
+	kbeg=\EOu,
 	kc1=\EOq,
 	kc3=\EOs,
+	kcbt=\E[Z,
 	kcub1=\EOD,
 	kcud1=\EOB,
 	kcuf1=\EOC,
 	kcuu1=\EOA,
-	kdch1=\177, 
 	kend=\E[4~,
 	kent=\EOM,
 	kf1=\EOP,
@@ -172,59 +305,108 @@ xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 	kmous=\E[M,
 	knp=\E[6~,
 	kpp=\E[5~,
-	mc0=\E[i,
-	mc4=\E[4i,
-	mc5=\E[5i,
-	meml=\El,
-	memu=\Em,
-	op=\E[39;49m,
-	rc=\E8,
-	rev=\E[7m,
-	ri=\EM,
-	rmacs=^O,
-	rmam=\E[?7l,
-	rmcup=\E[?1047l\E[?1048l,
-	rmir=\E[4l,
-	rmkx=\E[?1l\E>,
-	rmso=\E[27m,
-	rmul=\E[24m,
-	rs1=\Ec,
-	rs2=\E[!p\E[?3;4l\E[4l\E>,
-	sc=\E7,
-	setab=\E[4%p1%dm,
-	setaf=\E[3%p1%dm,
-	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
-	sgr0=\E[m\017,
-	smacs=^N,
-	smam=\E[?7h,
-	smcup=\E[?1048h\E[?1047h,
-	smir=\E[4h,
-	smkx=\E[?1h\E=,
-	smso=\E[7m,
-	smul=\E[4m,
-	tbc=\E[3g,
-	u6=\E[%i%d;%dR,
-	u7=\E[6n,
-	u8=\E[?1;2c,
-	u9=\E[c,
-	vpa=\E[%i%p1%dd,
+	use=xterm-basic,
 #
-# The xterm-xfree86 description has all of the features, but is not completely
-# compatible with vt220.  If you are using a Sun or PC keyboard, set the
-# sunKeyboard resource to true:
-#	+ maps the editing keypad
-#	+ interprets control-function-key as a second array of keys, so a
-#	  12-fkey keyboard can support vt220's 20-fkeys.
-#	+ maps numeric keypad "+" to ",".
-#	  
-xterm-vt220|XFree86 xterm emulating vt220,
-	kdch1=\E[3~,
-	kend=\E[4~,
-	khome=\E[1~,
-	use=xterm-xfree86,
-
+xterm-vt52|XFree86 xterm emulating dec vt52,
+	cols#80,
+	it#8,
+	lines#24,
+	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	bel=^G,
+	clear=\EH\EJ,
+	cr=^M,
+	cub1=\ED,
+	cud1=\EB,
+	cuf1=\EC,
+	cup=\EY%p1%' '%+%c%p2%' '%+%c,
+	cuu1=\EA,
+	ed=\EJ,
+	el=\EK,
+	home=\EH,
+	ht=^I,
+	ind=^J,
+	kbs=^H,
+	kcub1=\ED,
+	kcud1=\EB,
+	kcuf1=\EC,
+	kcuu1=\EA,
+	nel=^M^J,
+	ri=\EI,
+	rmacs=\EG,
+	smacs=\EF,
+#
+# kf30-kf45 are keysyms XK_R1 through XK_R15 on the Sun keyboard.
+xterm-sun|XFree86 xterm with sun function keys,
+	kb2=\E[218z,
+	kcpy=\E[197z,
+	kcub1=\EOD,
+	kcud1=\EOB,
+	kcuf1=\EOC,
+	kcuu1=\EOA,
+	kdch1=\177,
+	kend=\E[220z,
+	kent=\EOM,
+	kf1=\E[224z,
+	kf10=\E[233z,
+	kf11=\E[192z,
+	kf12=\E[193z,
+	kf13=\E[194z,
+	kf14=\E[195z,
+	kf15=\E[196z,
+	kf17=\E[198z,
+	kf18=\E[199z,
+	kf19=\E[200z,
+	kf2=\E[225z,
+	kf20=\E[201z,
+	kf3=\E[226z,
+	kf31=\E[208z,
+	kf32=\E[209z,
+	kf33=\E[210z,
+	kf34=\E[211z,
+	kf35=\E[212z,
+	kf36=\E[213z,
+	kf38=\E[215z,
+	kf4=\E[227z,
+	kf40=\E[217z,
+	kf42=\E[219z,
+	kf44=\E[221z,
+	kf5=\E[228z,
+	kf6=\E[229z,
+	kf7=\E[230z,
+	kf8=\E[231z,
+	kf9=\E[232z,
+	kfnd=\E[200z,
+	khlp=\E[196z,
+	khome=\E[214z,
+	kich1=\E[2z,
+	kmous=\E[M,
+	knp=\E[222z,
+	kpp=\E[216z,
+	kund=\E[195z,
+	use=xterm-basic,
+#
+xterm-hp|XFree86 xterm with hpterm function keys,
+	kclr=\EJ,
+	kcub1=\ED,
+	kcud1=\EB,
+	kcuf1=\EC,
+	kcuu1=\EA,
+	kdch1=\EP,
+	kend=\EF,
+	kf1=\Ep,
+	kf2=\Eq,
+	kf3=\Er,
+	kf4=\Es,
+	kf5=\Et,
+	kf6=\Eu,
+	kf7=\Ev,
+	kf8=\Ew,
+	khome=\Eh,
+	kich1=\EQ,
+	knp=\ES,
+	kpp=\ET,
+	use=xterm-basic,
+#
 # Other variants:
 xterm-24|xterms|vs100|xterm terminal emulator (X Window System),
 	lines#24,
@@ -235,6 +417,10 @@ xterm-65|xterm with tall window 65x80 (X Window System),
 xterm-bold|xterm with bold instead of underline (X Window System),
 	smso=\E[7m,
 	smul=\E[1m,
+	use=xterm,
+xterm-boldso|xterm with bold for standout (X Window System),
+	rmso=\E[m,
+	smso=\E[1m,
 	use=xterm,
 xterm-mono|monochrome xterm (X Window System),
 	colors@,
@@ -248,8 +434,52 @@ xterm-mono|monochrome xterm (X Window System),
 	sgr@,
 	use=xterm,
 #
+# VTxxx terminals are usually set up so that full-screen applications will use
+# the cursor application mode strings.  This is good for full-screen
+# applications, including legacy applications which may have hard-coded
+# behavior, but bad for interactive shells (e.g., tcsh, bash) which use arrow
+# keys to scroll through a history of command strings.
+#
+# To see the difference between normal/application modes, consider this example:
+#	+ In normal (non-application) mode, the terminal transmits a down-arrow
+#	  as \E[C, which happens to echo as a down-arrow.
+#	+ In application mode the terminal transmits \EOC, which echoes as C.
+#	  That is because the \EO is the SS3 control, which says to use the
+#	  character from the G3 character set for the next cell.
+# 
+# One example of hard-coded behavior would be for applications written to work
+# with VT52 and VT100 terminals.  If the application's parser ignores 'O' and
+# '?' characters after the escape, then the cursor and keypad strings for the
+# two terminals are the same.  (Indeed, one of the first curses applications
+# which I used did something like this to cover "ANSI" terminals -TD).
+#
+# To make this work (leaving the cursor keys in normal mode), we have to adjust
+# the terminal initialization sequences:
+#
+#	smkx/rmkx set/reset the cursor and keypad application modes.  We retain
+#		the latter (otherwise many applications fail).
+#
+#	smcup/rmcup set/restore cursor-addressing mode for full-screen
+#		applications.  For xterm, this normally means the alternate
+#		screen, which is not compatible with interactive shells.  Some
+#		programs are "smart" and disable these.
+#
+xterm-noapp|xterm with cursor keys in normal mode,
+	kcub1=\E[D,
+	kcud1=\E[B,
+	kcuf1=\E[C,
+	kcuu1=\E[A,
+	rmcup@,
+	rmkx=\E>,
+	smcup@,
+	smkx=\E=,
+	use=xterm,
+#
 # This should work for the commonly used "color xterm" variations (XFree86
-# xterm, color_xterm, nxterm, rxvt):
+# xterm, color_xterm, nxterm, rxvt).  Note that it does not set 'bce', so for
+# XFree86 and and rxvt, some applications that use colors will be less
+# efficient, and in a few special cases (with "smart" optimization) the wrong
+# color will be painted in spots.
 xterm-color|generic "ANSI" color xterm (X Window System),
 	colors#8,
 	ncv@,
@@ -258,11 +488,6 @@ xterm-color|generic "ANSI" color xterm (X Window System),
 	setab=\E[4%p1%dm,
 	setaf=\E[3%p1%dm,
 	use=xterm-r6,
-#
-xterm-boldso|xterm with bold for standout (X Window System),
-	rmso=\E[m,
-	smso=\E[1m,
-	use=xterm,
 #
 # vi may work better with this entry, because vi
 # doesn't use insert mode much
@@ -303,7 +528,7 @@ xterm-nrc|xterm with VT220 national replacement character sets,
 # Originally I suppressed setaf/setab, since ANSI specifies only 8 colors, but
 # Stephen Marley persuaded me to allow the "ANSI" color controls to extend to
 # 16 colors.  (Note that ncurses 4.2 uses setf/setb from this description;
-# however 5.0 selects either according to their availability).  - T.Dickey 
+# however 5.0 selects either according to their availability).  - T.Dickey
 #
 # SVr4 curses does not use more than 8 colors anyway, so using 16 colors is
 # either for terminfo-level applications or via ncurses.
@@ -316,9 +541,29 @@ xterm-16color|xterm with 16 colors,
 	setb=%p1%{8}%/%{6}%*%{4}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m,
 	setf=%p1%{8}%/%{6}%*%{3}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m,
 	use=xterm-xfree86,
-# 
+#
+# OPT_PC_MODE should be settable with OSC, and the init for this
+# should turn it off; then ncv could be 0.
+# This uses RGB values 0..1000
+xterm-256color|xterm with 256 colors,
+	ccc,
+	colors#256,
+	ncv#32,
+	pairs#256,
+	initc=\E]4;%p1%d;rgb\:%p2%{255}%*%{1000}%/%2.2X/%p3%{255}%*%{1000}%/%2.2X/%p4%{255}%*%{1000}%/%2.2X\E\\,
+	setab=\E[48;5;%p1%dm,
+	setaf=\E[38;5;%p1%dm,
+	setb=\E[48;5;%p1%dm,
+	setf=\E[38;5;%p1%dm,
+	use=xterm-xfree86,
+xterm-88color|xterm with 88 colors,
+	colors#88,
+	pairs#88,
+	use=xterm-256color,
+#
 # This is an 8-bit version of xterm, which emulates DEC vt220 with ANSI color.
-# To use it, your decTerminalID resource must be set to 200 or above.
+# To use it, your decTerminalID resource must be set to 200 or above, and the
+# sunKeyboard resource set to true.
 #
 #	HTS	\E H	\210
 #	RI	\E M	\215
@@ -332,6 +577,7 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	mc5i,
 	mir,
 	msgr,
+	npc,
 	xenl,
 	colors#8,
 	cols#80,
@@ -357,7 +603,6 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	cup=\233%i%p1%d;%p2%dH,
 	cuu=\233%p1%dA,
 	cuu1=\233A,
-	cvvis=\233?25h,
 	dch=\233%p1%dP,
 	dch1=\233P,
 	dl=\233%p1%dM,
@@ -367,7 +612,7 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	el=\233K,
 	el1=\2331K,
 	enacs=\E(B\E)0,
-	flash=\233?5h\233?5l,
+	flash=\233?5h$<100/>\233?5l,
 	home=\233H,
 	hpa=\233%i%p1%dG,
 	ht=^I,
@@ -385,6 +630,7 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	kbs=^H,
 	kc1=\217q,
 	kc3=\217s,
+	kcbt=\233Z,
 	kcub1=\217D,
 	kcud1=\217B,
 	kcuf1=\217C,
@@ -428,7 +674,7 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	ri=\215,
 	rmacs=^O,
 	rmam=\233?7l,
-	rmcup=\233?1047l\233?1048l,
+	rmcup=\233?1049l,
 	rmir=\2334l,
 	rmkx=\233?1l\E>,
 	rmso=\23327m,
@@ -440,11 +686,11 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	setaf=\2333%p1%dm,
 	setb=\2334%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
 	setf=\2333%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
-	sgr=\2330%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
+	sgr=\2330%?%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
 	sgr0=\233m^O,
 	smacs=^N,
 	smam=\233?7h,
-	smcup=\233?1048h\233?1047h,
+	smcup=\233?1049h,
 	smir=\2334h,
 	smkx=\233?1h\E=,
 	smso=\2337m,
@@ -505,9 +751,9 @@ xterm-r6|xterm-old|xterm X11R6 version,
 	kcud1=\EOB,
 	kcuf1=\EOC,
 	kcuu1=\EOA,
-	kdch1=\177, 
+	kdch1=\177,
 	kend=\E[4~,
-	kf1=\EOP,
+	kf1=\E[11~,
 	kf10=\E[21~,
 	kf11=\E[23~,
 	kf12=\E[24~,
@@ -518,10 +764,10 @@ xterm-r6|xterm-old|xterm X11R6 version,
 	kf17=\E[31~,
 	kf18=\E[32~,
 	kf19=\E[33~,
-	kf2=\EOQ,
+	kf2=\E[12~,
 	kf20=\E[34~,
-	kf3=\EOR,
-	kf4=\EOS,
+	kf3=\E[13~,
+	kf4=\E[14~,
 	kf5=\E[15~,
 	kf6=\E[17~,
 	kf7=\E[18~,
@@ -610,7 +856,7 @@ xterm-r5|xterm R5 version,
 	kcud1=\EOB,
 	kcuf1=\EOC,
 	kcuu1=\EOA,
-	kdch1=\177, 
+	kdch1=\177,
 	kdl1=\E[31~,
 	kel=\E[8~,
 	kend=\E[4~,
@@ -652,6 +898,6 @@ xterm-r5|xterm R5 version,
 # This is the only entry which you should have to customize, since "xterm"
 # is widely used for a variety of incompatible terminal emulations including
 # color_xterm and rxvt.
-xterm|X11 terminal emulator, 
+xterm|X11 terminal emulator,
 	use=xterm-xfree86,
 #	use=xterm-r6,

@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: data.c,v 1.12 95/04/05 19:58:47 kaleb Exp $
- *	$XFree86: xc/programs/xterm/data.c,v 3.2.4.5 1999/07/28 13:38:00 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/data.c,v 3.19 2000/02/10 18:57:38 dawes Exp $
  */
 
 /*
@@ -33,24 +33,24 @@
 #include <ptyx.h>		/* gets Xt stuff, too */
 #include <data.h>
 
+Widget toplevel;		/* top-most widget in xterm */
+
 #if OPT_TEK4014
-Char *Tbptr;
-Char *Tbuffer;
+PtyData *Tbuffer;
 Char *Tpushb;
 Char *Tpushback;
 TekLink *TekRefresh;
 TekWidget tekWidget;
+Widget tekshellwidget;
 int TEKgcFontMask = GCFont;
 int T_lastx = -1;
 int T_lasty = -1;
-int Tbcnt = 0;
 int Ttoggled = 0;
 jmp_buf Tekend;
 #endif
 
-int bcnt = 0;
-Char VTbuffer[BUF_SIZE];
-Char *bptr = VTbuffer;
+PtyData VTbuffer;
+
 jmp_buf VTend;
 
 #ifdef DEBUG
@@ -58,9 +58,9 @@ int debug = 0; 		/* true causes error messages to be displayed */
 #endif	/* DEBUG */
 
 XtAppContext app_con;
-XtermWidget term;		/* master data structure for client */
+XtermWidget term;	/* master data structure for client */
 char *xterm_name;	/* argv[0] */
-Boolean sunFunctionKeys;
+int hold_screen;
 
 #if OPT_ZICONBEEP
 int zIconBeep;  /* non-zero means beep; see charproc.c for details -IAN! */
@@ -73,15 +73,17 @@ Boolean sameName;            /* Don't change the title or icon name if it
 			the cost of an extra request to the server */
 #endif
 
-#if OPT_SUNPC_KBD
-Boolean sunKeyboard;
-#endif
-
 int am_slave = 0;	/* set to 1 if running as a slave process */
 int max_plus1;
+#ifdef VMS
+int Select_mask;
+int X_mask;
+int pty_mask;
+#else /* VMS */
 fd_set Select_mask;
 fd_set X_mask;
 fd_set pty_mask;
+#endif /* VMS */
 char *ptydev;
 char *ttydev;
 #ifdef ALLOWLOGGING
@@ -91,3 +93,41 @@ char log_def_name[] = "XtermLog.XXXXXX";
 int waitingForTrackInfo = 0;
 EventMode eventMode = NORMAL;
 
+#if OPT_WIDE_CHARS
+char defaultUTF8[2] = { '0', 0 };
+
+const unsigned short dec2ucs[32] = {
+	0x25ae		/* black vertical rectangle			*/,
+	0x25c6		/* black diamond				*/,
+	0x2592		/* medium shade					*/,
+	0x2409		/* symbol for horizontal tabulation		*/,
+	0x240c		/* symbol for form feed				*/,
+	0x240d		/* symbol for carriage return			*/,
+	0x240a		/* symbol for line feed				*/,
+	0x00b0		/* degree sign					*/,
+	0x00b1		/* plus-minus sign				*/,
+	0x2424		/* symbol for newline				*/,
+	0x240b		/* symbol for vertical tabulation		*/,
+	0x2518		/* box drawings light up and left		*/,
+	0x2510		/* box drawings light down and left		*/,
+	0x250c		/* box drawings light down and right		*/,
+	0x2514		/* box drawings light up and right		*/,
+	0x253c		/* box drawings light vertical and horizontal	*/,
+	UCS_REPL	/* replacement character			*/,
+	UCS_REPL	/* replacement character			*/,
+	0x2500		/* box drawings light horizontal		*/,
+	UCS_REPL	/* replacement character			*/,
+	UCS_REPL	/* replacement character			*/,
+	0x251c		/* box drawings light vertical and right	*/,
+	0x2524		/* box drawings light vertical and left		*/,
+	0x2534		/* box drawings light up and horizontal		*/,
+	0x252c		/* box drawings light down and horizontal	*/,
+	0x2502		/* box drawings light vertical			*/,
+	0x2264		/* less-than or equal to			*/,
+	0x2265		/* greater-than or equal to			*/,
+	0x03c0		/* greek small letter pi			*/,
+	0x2260		/* not equal to					*/,
+	0x00a3		/* pound sign					*/,
+	0x00b7		/* middle dot					*/
+};
+#endif
