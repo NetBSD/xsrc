@@ -1,38 +1,9 @@
 /*
  *	$XConsortium: scrollbar.c /main/47 1996/12/01 23:47:08 swick $
- *	$XFree86: xc/programs/xterm/scrollbar.c,v 3.26 2000/03/03 20:02:34 dawes Exp $
+ *	$XFree86: xc/programs/xterm/scrollbar.c,v 3.6.2.6 1998/10/20 20:51:52 hohndel Exp $
  */
 
 /*
- * Copyright 2000 by Thomas E. Dickey <dickey@clark.net>
- *
- *                         All Rights Reserved
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Except as contained in this notice, the name(s) of the above copyright
- * holders shall not be used in advertising or otherwise to promote the
- * sale, use or other dealings in this Software without prior written
- * authorization.
- *
- *
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
  *
  *                         All Rights Reserved
@@ -66,7 +37,6 @@
 #include <data.h>
 #include <error.h>
 #include <menu.h>
-#include <xcharmouse.h>
 
 /* Event handlers */
 
@@ -139,9 +109,6 @@ ResizeScreen(register XtermWidget xw, int min_width, int min_height)
 	 * to have time to completely rewrite xterm.
 	 */
 
-	TRACE(("ResizeScreen(min_width=%d, min_height=%d) xw=%#lx\n",
-		min_width, min_height, (long) xw));
-
 #ifndef nothack
 	/*
 	 * NOTE: If you change the way any of the hints are calculated
@@ -179,20 +146,13 @@ ResizeScreen(register XtermWidget xw, int min_width, int min_height)
 		      XtNminHeight, min_height + FontHeight(screen),
 		      NULL);
 
-	reqWidth = screen->fullVwin.f_width * (screen->max_col + 1) + min_width;
+	reqWidth = (screen->max_col + 1) * screen->fullVwin.f_width + min_width;
 	reqHeight = screen->fullVwin.f_height * (screen->max_row + 1) + min_height;
-
-	TRACE(("...requesting screensize chars %dx%d, pixels %dx%d\n",
-		(screen->max_row + 1),
-		(screen->max_col + 1),
-		reqHeight, reqWidth));
-
 	geomreqresult = XtMakeResizeRequest ((Widget)xw, reqWidth, reqHeight,
 					     &repWidth, &repHeight);
 
 	if (geomreqresult == XtGeometryAlmost) {
-	    TRACE(("...almost, retry screensize %dx%d\n", repHeight, repWidth));
-	    geomreqresult = XtMakeResizeRequest ((Widget)xw, repWidth,
+	     geomreqresult = XtMakeResizeRequest ((Widget)xw, repWidth,
 						  repHeight, NULL, NULL);
 	}
 	XSync(screen->display, FALSE);	/* synchronize */
@@ -258,7 +218,7 @@ ScrollBarReverseVideo(register Widget scrollWidget)
 	args[1].value = (XtArgVal) bg;
 	nargs--;				/* don't set border_pixmap */
 	if (bdpix == XtUnspecifiedPixmap) {	/* if not pixmap then pixel */
-	    args[2].value = args[1].value;	/* keep border visible */
+	    args[2].value = (XtArgVal) bdr;	/* keep old border color */
 	} else {				/* ignore since pixmap */
 	    nargs--;				/* don't set border pixel */
 	}
@@ -338,7 +298,7 @@ WindowScroll(register TScreen *screen, int top)
 
 	XClearArea(
 	    screen->display,
-	    VWindow(screen),
+	    TextWindow(screen),
 	    (int) x,
 	    (int) refreshtop * FontHeight(screen) + screen->border,
 	    (unsigned) Width(screen),
@@ -362,7 +322,7 @@ ScrollBarOn (XtermWidget xw, int init, int doalloc)
 	    if (screen->scrollWidget) return;
 
 	    /* make it a dummy size and resize later */
-	    if ((screen->scrollWidget = CreateScrollBar (xw, -1, -1, 5))
+	    if ((screen->scrollWidget = CreateScrollBar (xw, -1, - 1, 5))
 		== NULL) {
 		Bell(XkbBI_MinorError,0);
 		return;
@@ -444,22 +404,6 @@ ScrollBarOff(register TScreen *screen)
 	    XClearWindow (screen->display, XtWindow (term));
 	    Redraw ();
 	}
-}
-
-/*
- * Toggle the visibility of the scrollbars.
- */
-void
-ToggleScrollBar(XtermWidget w)
-{
-    register TScreen *screen = &w->screen;
-
-    if (screen->fullVwin.scrollbar) {
-	ScrollBarOff (screen);
-    } else {
-	ScrollBarOn (w, FALSE, FALSE);
-    }
-    update_scrollbar();
 }
 
 /*ARGSUSED*/
@@ -562,18 +506,6 @@ params_to_pixels (TScreen *screen, String *params, Cardinal n)
     return mult;
 }
 
-static long
-AmountToScroll(Widget gw, String *params, Cardinal nparams)
-{
-    if (IsXtermWidget(gw)) {
-    	register TScreen *screen = &((XtermWidget)gw)->screen;
-	if (nparams > 2
-	 && screen->send_mouse_pos != MOUSE_OFF)
-	    return 0;
-	return params_to_pixels (screen, params, nparams);
-    }
-    return 0;
-}
 
 /*ARGSUSED*/
 void HandleScrollForward (
@@ -582,11 +514,12 @@ void HandleScrollForward (
     String *params,
     Cardinal *nparams)
 {
-    long amount;
-
-    if ((amount = AmountToScroll(gw, params, *nparams)) != 0) {
+    if (IsXtermWidget(gw)) {
+    	register TScreen *screen = &((XtermWidget)gw)->screen;
+	long amount = params_to_pixels (screen, params, *nparams);
 	ScrollTextUpDownBy (gw, (XtPointer) 0, (XtPointer)amount);
     }
+    return;
 }
 
 
@@ -597,9 +530,10 @@ void HandleScrollBack (
     String *params,
     Cardinal *nparams)
 {
-    long amount;
-
-    if ((amount = -AmountToScroll(gw, params, *nparams)) != 0) {
+    if (IsXtermWidget(gw)) {
+    	register TScreen *screen = &((XtermWidget)gw)->screen;
+	long amount = -params_to_pixels (screen, params, *nparams);
 	ScrollTextUpDownBy (gw, (XtPointer) 0, (XtPointer)amount);
     }
+    return;
 }

@@ -1,28 +1,6 @@
 /* $XConsortium: menu.h /main/27 1996/12/01 23:47:03 swick $ */
-/* $XFree86: xc/programs/xterm/menu.h,v 3.22 2000/03/31 20:13:46 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/menu.h,v 3.4.2.3 1999/07/28 13:38:02 hohndel Exp $ */
 /*
-
-Copyright 1999-2000 by Thomas E. Dickey <dickey@clark.net>
-
-                        All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose and without fee is hereby granted,
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in
-supporting documentation, and that the name of the above listed
-copyright holder(s) not be used in advertising or publicity pertaining
-to distribution of the software without specific, written prior
-permission.
-
-THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM ALL WARRANTIES WITH REGARD
-TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE
-LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-
 
 Copyright (c) 1989  X Consortium
 
@@ -74,6 +52,8 @@ extern MenuEntry fontMenuEntries[];
 extern MenuEntry tekMenuEntries[];
 #endif
 
+extern Arg menuArgs[];
+
 extern void Handle8BitControl      PROTO_XT_ACTIONS_ARGS;
 extern void HandleAllow132         PROTO_XT_ACTIONS_ARGS;
 extern void HandleAllowSends       PROTO_XT_ACTIONS_ARGS;
@@ -86,26 +66,16 @@ extern void HandleBackarrow        PROTO_XT_ACTIONS_ARGS;
 extern void HandleClearSavedLines  PROTO_XT_ACTIONS_ARGS;
 extern void HandleCreateMenu       PROTO_XT_ACTIONS_ARGS;
 extern void HandleCursesEmul       PROTO_XT_ACTIONS_ARGS;
-extern void HandleCursorBlink      PROTO_XT_ACTIONS_ARGS;
-extern void HandleDeleteIsDEL      PROTO_XT_ACTIONS_ARGS;
-extern void HandleFontBoxChars     PROTO_XT_ACTIONS_ARGS;
-extern void HandleFontDoublesize   PROTO_XT_ACTIONS_ARGS;
-extern void HandleFontLoading      PROTO_XT_ACTIONS_ARGS;
 extern void HandleHardReset        PROTO_XT_ACTIONS_ARGS;
-extern void HandleHpFunctionKeys   PROTO_XT_ACTIONS_ARGS;
 extern void HandleJumpscroll       PROTO_XT_ACTIONS_ARGS;
 extern void HandleLogging          PROTO_XT_ACTIONS_ARGS;
 extern void HandleMarginBell       PROTO_XT_ACTIONS_ARGS;
-extern void HandleMetaEsc          PROTO_XT_ACTIONS_ARGS;
-extern void HandleNumLock          PROTO_XT_ACTIONS_ARGS;
-extern void HandleOldFunctionKeys  PROTO_XT_ACTIONS_ARGS;
 extern void HandlePopupMenu        PROTO_XT_ACTIONS_ARGS;
 extern void HandlePrint            PROTO_XT_ACTIONS_ARGS;
 extern void HandleQuit             PROTO_XT_ACTIONS_ARGS;
 extern void HandleRedraw           PROTO_XT_ACTIONS_ARGS;
 extern void HandleReverseVideo     PROTO_XT_ACTIONS_ARGS;
 extern void HandleReverseWrap      PROTO_XT_ACTIONS_ARGS;
-extern void HandleScoFunctionKeys  PROTO_XT_ACTIONS_ARGS;
 extern void HandleScrollKey        PROTO_XT_ACTIONS_ARGS;
 extern void HandleScrollTtyOutput  PROTO_XT_ACTIONS_ARGS;
 extern void HandleScrollbar        PROTO_XT_ACTIONS_ARGS;
@@ -119,14 +89,12 @@ extern void HandleSunKeyboard      PROTO_XT_ACTIONS_ARGS;
 extern void HandleTekCopy          PROTO_XT_ACTIONS_ARGS;
 extern void HandleTekPage          PROTO_XT_ACTIONS_ARGS;
 extern void HandleTekReset         PROTO_XT_ACTIONS_ARGS;
-extern void HandleTiteInhibit      PROTO_XT_ACTIONS_ARGS;
 extern void HandleVisibility       PROTO_XT_ACTIONS_ARGS;
 
 extern void DoSecureKeyboard (Time tp);
-extern void SetupMenus (Widget shell, Widget *forms, Widget *menus);
 
 /*
- * The following definitions MUST match the order of entries given in
+ * The following definitions MUST match the order of entries given in 
  * the mainMenuEntries, vtMenuEntries, and tekMenuEntries arrays in menu.c.
  */
 
@@ -144,18 +112,6 @@ typedef enum {
     mainMenu_line1,
     mainMenu_8bit_ctrl,
     mainMenu_backarrow,
-#if OPT_NUM_LOCK
-    mainMenu_num_lock,
-    mainMenu_meta_esc,
-#endif
-    mainMenu_delete_del,
-    mainMenu_old_fkeys,
-#if OPT_HP_FUNC_KEYS
-    mainMenu_hp_fkeys,
-#endif
-#if OPT_SCO_FUNC_KEYS
-    mainMenu_sco_fkeys,
-#endif
     mainMenu_sun_fkeys,
 #if OPT_SUNPC_KBD
     mainMenu_sun_kbd,
@@ -191,10 +147,7 @@ typedef enum {
     vtMenu_cursesemul,
     vtMenu_visualbell,
     vtMenu_marginbell,
-#if OPT_BLINK_CURS
-    vtMenu_cursorblink,
-#endif
-    vtMenu_titeInhibit,
+    vtMenu_altscreen,
 #ifndef NO_ACTIVE_ICON
     vtMenu_activeicon,
 #endif /* NO_ACTIVE_ICON */
@@ -208,7 +161,6 @@ typedef enum {
     vtMenu_tekmode,
     vtMenu_vthide,
 #endif
-    vtMenu_altscreen,
     vtMenu_LAST
 } vtMenuIndices;
 
@@ -226,27 +178,14 @@ typedef enum {
 #define fontMenu_lastBuiltin fontMenu_font6
     fontMenu_fontescape,
     fontMenu_fontsel,
-/* number of non-line items down to here should match NMENUFONTS in ptyx.h */
-#if OPT_DEC_CHRSET || OPT_BOX_CHARS || OPT_DEC_SOFTFONT
-    fontMenu_line1,
-#if OPT_BOX_CHARS
-    fontMenu_font_boxchars,
-#endif
-#if OPT_DEC_CHRSET
-    fontMenu_font_doublesize,
-#endif
-#if OPT_DEC_SOFTFONT
-    fontMenu_font_loadable,
-#endif
-#endif
     fontMenu_LAST
 } fontMenuIndices;
+/* number of non-line items should match NMENUFONTS in ptyx.h */
 
 
 /*
  * items in tek4014 mode menu
  */
-#if OPT_TEK4014
 typedef enum {
     tekMenu_tektextlarge,
     tekMenu_tektext2,
@@ -262,18 +201,22 @@ typedef enum {
     tekMenu_tekhide,
     tekMenu_LAST
 } tekMenuIndices;
-#endif
 
 
 /*
  * macros for updating menus
  */
 
-#define update_menu_item(w,mi,val) UpdateMenuItem(mi,val)
-extern void UpdateMenuItem(Widget mi, XtArgVal val);
+#define update_menu_item(w,mi,val) { if (mi) { \
+    menuArgs[0].value = (XtArgVal) ((val) ? term->screen.menu_item_bitmap \
+				          : None); \
+    XtSetValues (mi, menuArgs, (Cardinal) 1); }}
 
-#define set_sensitivity(w,mi,val) SetItemSensitivity(mi,val)
-extern void SetItemSensitivity(Widget mi, XtArgVal val);
+
+#define set_sensitivity(w,mi,val) { if (mi) { \
+    menuArgs[1].value = (XtArgVal) (val); \
+    XtSetValues (mi, menuArgs+1, (Cardinal) 1);  }}
+
 
 
 /*
@@ -296,8 +239,6 @@ extern void SetItemSensitivity(Widget mi, XtArgVal val);
   update_menu_item (term->screen.mainMenu, \
 		    mainMenuEntries[mainMenu_logging].widget, \
 		    term->screen.logging)
-#else
-#define update_logging() /*nothing*/
 #endif
 
 #define update_8bit_control() \
@@ -310,58 +251,16 @@ extern void SetItemSensitivity(Widget mi, XtArgVal val);
 		    mainMenuEntries[mainMenu_backarrow].widget, \
 		    term->keyboard.flags & MODE_DECBKM)
 
-#if OPT_NUM_LOCK
-#define update_num_lock() \
-  update_menu_item (term->screen.mainMenu, \
-		    mainMenuEntries[mainMenu_num_lock].widget, \
-		    term->misc.real_NumLock)
-#define update_meta_esc() \
-  update_menu_item (term->screen.mainMenu, \
-		    mainMenuEntries[mainMenu_meta_esc].widget, \
-		    term->screen.meta_sends_esc)
-#else
-#define update_num_lock() /*nothing*/
-#define update_meta_esc() /*nothing*/
-#endif
-
 #define update_sun_fkeys() \
   update_menu_item (term->screen.mainMenu, \
 		    mainMenuEntries[mainMenu_sun_fkeys].widget, \
-		    term->keyboard.type == keyboardIsSun)
-
-#define update_old_fkeys() \
-  update_menu_item (term->screen.mainMenu, \
-		    mainMenuEntries[mainMenu_old_fkeys].widget, \
-		    term->keyboard.type == keyboardIsLegacy)
-
-#define update_delete_del() \
-  update_menu_item (term->screen.mainMenu, \
-		    mainMenuEntries[mainMenu_delete_del].widget, \
-		    xtermDeleteIsDEL())
+		    sunFunctionKeys)
 
 #if OPT_SUNPC_KBD
 #define update_sun_kbd() \
   update_menu_item (term->screen.mainMenu, \
 		    mainMenuEntries[mainMenu_sun_kbd].widget, \
-		    term->keyboard.type == keyboardIsVT220)
-#endif
-
-#if OPT_HP_FUNC_KEYS
-#define update_hp_fkeys() \
-  update_menu_item (term->screen.mainMenu, \
-		    mainMenuEntries[mainMenu_hp_fkeys].widget, \
-		    term->keyboard.type == keyboardIsHP)
-#else
-#define update_hp_fkeys() /*nothing*/
-#endif
-
-#if OPT_SCO_FUNC_KEYS
-#define update_sco_fkeys() \
-  update_menu_item (term->screen.mainMenu, \
-		    mainMenuEntries[mainMenu_sco_fkeys].widget, \
-		    term->keyboard.type == keyboardIsSCO)
-#else
-#define update_sco_fkeys() /*nothing*/
+		    sunKeyboard)
 #endif
 
 #define update_scrollbar() \
@@ -377,7 +276,7 @@ extern void SetItemSensitivity(Widget mi, XtArgVal val);
 #define update_reversevideo() \
   update_menu_item (term->screen.vtMenu, \
 		    vtMenuEntries[vtMenu_reversevideo].widget, \
-		    (term->misc.re_verse))
+		    (term->flags & REVERSE_VIDEO))
 
 #define update_autowrap() \
   update_menu_item (term->screen.vtMenu, \
@@ -418,7 +317,7 @@ extern void SetItemSensitivity(Widget mi, XtArgVal val);
   update_menu_item (term->screen.vtMenu, \
 		    vtMenuEntries[vtMenu_allow132].widget, \
 		    term->screen.c132)
-
+  
 #define update_cursesemul() \
   update_menu_item (term->screen.vtMenu, \
 		    vtMenuEntries[vtMenu_cursesemul].widget, \
@@ -434,24 +333,10 @@ extern void SetItemSensitivity(Widget mi, XtArgVal val);
 		    vtMenuEntries[vtMenu_marginbell].widget, \
 		    term->screen.marginbell)
 
-#if OPT_BLINK_CURS
-#define update_cursorblink() \
-  update_menu_item (term->screen.vtMenu, \
-		    vtMenuEntries[vtMenu_cursorblink].widget, \
-		    term->screen.cursor_blink)
-#else
-#define update_cursorblink() /* nothing */
-#endif
-
 #define update_altscreen() \
   update_menu_item (term->screen.vtMenu, \
 		    vtMenuEntries[vtMenu_altscreen].widget, \
 		    term->screen.alternate)
-
-#define update_titeInhibit() \
-  update_menu_item (term->screen.vtMenu, \
-		    vtMenuEntries[vtMenu_titeInhibit].widget, \
-		    !(term->misc.titeInhibit))
 
 #ifndef NO_ACTIVE_ICON
 #define update_activeicon() \
@@ -459,33 +344,6 @@ extern void SetItemSensitivity(Widget mi, XtArgVal val);
 		    vtMenuEntries[vtMenu_activeicon].widget, \
 		    term->misc.active_icon)
 #endif /* NO_ACTIVE_ICON */
-
-#if OPT_DEC_CHRSET
-#define update_font_doublesize() \
-  update_menu_item (term->screen.fontMenu, \
-		    fontMenuEntries[fontMenu_font_doublesize].widget, \
-		    term->screen.font_doublesize)
-#else
-#define update_font_doublesize() /* nothing */
-#endif
-
-#if OPT_BOX_CHARS
-#define update_font_boxchars() \
-  update_menu_item (term->screen.fontMenu, \
-		    fontMenuEntries[fontMenu_font_boxchars].widget, \
-		    term->screen.force_box_chars)
-#else
-#define update_font_boxchars() /* nothing */
-#endif
-
-#if OPT_DEC_SOFTFONT
-#define update_font_loadable() \
-  update_menu_item (term->screen.fontMenu, \
-		    fontMenuEntries[fontMenu_font_loadable].widget, \
-		    term->misc.font_loadable)
-#else
-#define update_font_loadable() /* nothing */
-#endif
 
 #if OPT_TEK4014
 #define update_tekshow() \
@@ -496,10 +354,10 @@ extern void SetItemSensitivity(Widget mi, XtArgVal val);
 #define update_vttekmode() { \
     update_menu_item (term->screen.vtMenu, \
 		      vtMenuEntries[vtMenu_tekmode].widget, \
-		      term->screen.TekEmu); \
+		      term->screen.TekEmu) \
     update_menu_item (term->screen.tekMenu, \
 		      tekMenuEntries[tekMenu_vtmode].widget, \
-		      !term->screen.TekEmu); }
+		      !term->screen.TekEmu) }
 
 #define update_vtshow() \
   update_menu_item (term->screen.tekMenu, \

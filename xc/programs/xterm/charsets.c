@@ -1,10 +1,10 @@
 /*
- * $XFree86: xc/programs/xterm/charsets.c,v 1.8 2000/02/08 17:19:30 dawes Exp $
+ * $XFree86: xc/programs/xterm/charsets.c,v 1.1.2.1 1998/10/20 21:00:13 hohndel Exp $
  */
 
 /************************************************************
 
-Copyright 1998-2000 by Thomas E. Dickey <dickey@clark.net>
+Copyright 1998 by Thomas E. Dickey <dickey@clark.net>
 
                         All Rights Reserved
 
@@ -37,8 +37,6 @@ authorization.
 #include <xterm.h>
 #include <data.h>
 
-#include <X11/keysym.h>
-
 /*
  * This module performs translation as needed to support the DEC VT220 national
  * replacement character sets.  We assume that xterm's font is based on the ISO
@@ -56,218 +54,28 @@ authorization.
  *
  * The latter reference, though easier to read, has a few errors and omissions.
  */
-
-/*
- * Translate an input keysym to the corresponding NRC keysym.
- */
-unsigned xtermCharSetIn(unsigned code, int charset)
+int xtermCharSets(Char *buf, Char *ptr, char leftset)
 {
-	if (code >= 128 && code < 256) {
-		switch (charset) {
-		case 'A':	/* United Kingdom set (or Latin 1)	*/
-			if (code == XK_sterling)
-				code = 0x23;
-			code &= 0x7f;
-			break;
-
-#if OPT_XMC_GLITCH
-		case '?':
-#endif
-		case '1':	/* Alternate Character ROM standard characters */
-		case '2':	/* Alternate Character ROM special graphics */
-		case 'B':	/* ASCII set				*/
-			break;
-
-		case '0':	/* special graphics (line drawing)	*/
-			break;
-
-		case '4':	/* Dutch */
-			switch (code) {
-			case XK_sterling:	code = 0x23;	break;
-			case XK_threequarters:	code = 0x40;	break;
-			case XK_ydiaeresis:	code = 0x5b;	break;
-			case XK_onehalf:	code = 0x5c;	break;
-	/* N/A		case XK_bar:		code = 0x5d;	break; */
-			case XK_diaeresis:	code = 0x7b;	break;
-	/* N/A		case XK_f:		code = 0x7c;	break; */
-			case XK_onequarter:	code = 0x7d;	break;
-			case XK_acute:		code = 0x7e;	break;
-			}
-			break;
-
-		case 'C':
-		case '5':	/* Finnish */
-			switch (code) {
-			case XK_Adiaeresis:	code = 0x5b;	break;
-			case XK_Odiaeresis:	code = 0x5c;	break;
-			case XK_Aring:		code = 0x5d;	break;
-			case XK_Udiaeresis:	code = 0x5e;	break;
-			case XK_eacute:		code = 0x60;	break;
-			case XK_adiaeresis:	code = 0x7b;	break;
-			case XK_odiaeresis:	code = 0x7c;	break;
-			case XK_aring:		code = 0x7d;	break;
-			case XK_udiaeresis:	code = 0x7e;	break;
-			}
-			break;
-
-		case 'R':	/* French */
-			switch (code) {
-			case XK_sterling:	code = 0x23;	break;
-			case XK_agrave:		code = 0x40;	break;
-			case XK_degree:		code = 0x5b;	break;
-			case XK_ccedilla:	code = 0x5c;	break;
-			case XK_section:	code = 0x5d;	break;
-			case XK_eacute:		code = 0x7b;	break;
-			case XK_ugrave:		code = 0x7c;	break;
-			case XK_egrave:		code = 0x7d;	break;
-			case XK_diaeresis:	code = 0x7e;	break;
-			}
-			break;
-
-		case 'Q':	/* French Canadian */
-			switch (code) {
-			case XK_agrave:		code = 0x40;	break;
-			case XK_acircumflex:	code = 0x5b;	break;
-			case XK_ccedilla:	code = 0x5c;	break;
-			case XK_ecircumflex:	code = 0x5d;	break;
-			case XK_icircumflex:	code = 0x5e;	break;
-			case XK_ocircumflex:	code = 0x60;	break;
-			case XK_eacute:		code = 0x7b;	break;
-			case XK_ugrave:		code = 0x7c;	break;
-			case XK_egrave:		code = 0x7d;	break;
-			case XK_ucircumflex:	code = 0x7e;	break;
-			}
-			break;
-
-		case 'K':	/* German */
-			switch (code) {
-			case XK_section:	code = 0x40;	break;
-			case XK_Adiaeresis:	code = 0x5b;	break;
-			case XK_Odiaeresis:	code = 0x5c;	break;
-			case XK_Udiaeresis:	code = 0x5d;	break;
-			case XK_adiaeresis:	code = 0x7b;	break;
-			case XK_odiaeresis:	code = 0x7c;	break;
-			case XK_udiaeresis:	code = 0x7d;	break;
-			case XK_ssharp:		code = 0x7e;	break;
-			}
-			break;
-
-		case 'Y':	/* Italian */
-			switch (code) {
-			case XK_sterling:	code = 0x23;	break;
-			case XK_section:	code = 0x40;	break;
-			case XK_degree:		code = 0x5b;	break;
-			case XK_ccedilla:	code = 0x5c;	break;
-			case XK_eacute:		code = 0x5d;	break;
-			case XK_ugrave:		code = 0x60;	break;
-			case XK_agrave:		code = 0x7b;	break;
-			case XK_ograve:		code = 0x7c;	break;
-			case XK_egrave:		code = 0x7d;	break;
-			case XK_igrave:		code = 0x7e;	break;
-			}
-			break;
-
-		case 'E':
-		case '6':	/* Norwegian/Danish */
-			switch (code) {
-			case XK_Adiaeresis:	code = 0x40;	break;
-			case XK_AE:		code = 0x5b;	break;
-			case XK_Ooblique:	code = 0x5c;	break;
-			case XK_Aring:		code = 0x5d;	break;
-			case XK_Udiaeresis:	code = 0x5e;	break;
-			case XK_adiaeresis:	code = 0x60;	break;
-			case XK_ae:		code = 0x7b;	break;
-			case XK_oslash:		code = 0x7c;	break;
-			case XK_aring:		code = 0x7d;	break;
-			case XK_udiaeresis:	code = 0x7e;	break;
-			}
-			break;
-
-		case 'Z':	/* Spanish */
-			switch (code) {
-			case XK_sterling:	code = 0x23;	break;
-			case XK_section:	code = 0x40;	break;
-			case XK_exclamdown:	code = 0x5b;	break;
-			case XK_Ntilde:		code = 0x5c;	break;
-			case XK_questiondown:	code = 0x5d;	break;
-			case XK_degree:		code = 0x7b;	break;
-			case XK_ntilde:		code = 0x7c;	break;
-			case XK_ccedilla:	code = 0x7d;	break;
-			}
-			break;
-
-		case 'H':
-		case '7':	/* Swedish */
-			switch (code) {
-			case XK_Eacute:		code = 0x40;	break;
-			case XK_Adiaeresis:	code = 0x5b;	break;
-			case XK_Odiaeresis:	code = 0x5c;	break;
-			case XK_Aring:		code = 0x5d;	break;
-			case XK_Udiaeresis:	code = 0x5e;	break;
-			case XK_eacute:		code = 0x60;	break;
-			case XK_adiaeresis:	code = 0x7b;	break;
-			case XK_odiaeresis:	code = 0x7c;	break;
-			case XK_aring:		code = 0x7d;	break;
-			case XK_udiaeresis:	code = 0x7e;	break;
-			}
-			break;
-
-		case '=':	/* Swiss */
-			switch (code) {
-			case XK_ugrave:		code = 0x23;	break;
-			case XK_agrave:		code = 0x40;	break;
-			case XK_eacute:		code = 0x5b;	break;
-			case XK_ccedilla:	code = 0x5c;	break;
-			case XK_ecircumflex:	code = 0x5d;	break;
-			case XK_icircumflex:	code = 0x5e;	break;
-			case XK_egrave:		code = 0x5f;	break;
-			case XK_ocircumflex:	code = 0x60;	break;
-			case XK_adiaeresis:	code = 0x7b;	break;
-			case XK_odiaeresis:	code = 0x7c;	break;
-			case XK_udiaeresis:	code = 0x7d;	break;
-			case XK_ucircumflex:	code = 0x7e;	break;
-			}
-			break;
-
-		default:	/* any character sets we don't recognize*/
-			break;
-		}
-		code &= 0x7f;	/* NRC in any case is 7-bit */
-	}
-	return code;
-}
-
-/*
- * Translate a string to the display form.  This assumes the font has the
- * DEC graphic characters in cells 0-31, and otherwise is ISO-8859-1.
- */
-int xtermCharSetOut(IChar *buf, IChar *ptr, char leftset)
-{
-	IChar *s;
+	Char *s;
 	register TScreen *screen = &term->screen;
 	int count = 0;
 	int rightset = screen->gsets[(int)(screen->curgr)];
 
-	TRACE(("CHARSET GL=%c(G%d) GR=%c(G%d) %s\n",
-		leftset,  screen->curss ? screen->curss : screen->curgl,
-		rightset, screen->curgr,
-		visibleIChar(buf, ptr-buf)));
+	TRACE(("CHARSET %c/%c %.*s\n", leftset, rightset, ptr-buf, buf))
 
-	for (s = buf; s < ptr; ++s) {
-		int eight = CharOf(E2A(*s));
-		int seven = eight & 0x7f;
-		int cs = (eight >= 128) ? rightset : leftset;
-		int chr = eight;
+	for (s=buf; s<ptr; ++s) {
+		int cs = (*s >= 128) ? rightset : leftset;
 
 		count++;
 		switch (cs) {
 		case 'A':	/* United Kingdom set (or Latin 1)	*/
 			if ((term->flags & NATIONAL)
 			 || (screen->ansi_level <= 1)) {
-				if (chr == 0x23)
-					chr = XPOUND;	/* UK pound sign*/
+				*s &= 0xff;
+				if (*s == '#')
+					*s = '\036';	/* UK pound sign*/
 			} else {
-				chr = (seven | 0x80);
+				*s |= 0x80;
 			}
 			break;
 
@@ -280,161 +88,155 @@ int xtermCharSetOut(IChar *buf, IChar *ptr, char leftset)
 			break;
 
 		case '0':	/* special graphics (line drawing)	*/
-			if (chr >= 0x5f && chr <= 0x7e) {
-#if OPT_WIDE_CHARS
-				if (screen->utf8_mode)
-				    chr = dec2ucs[chr - 0x5f];
-				else
-#endif
-				    chr = (chr == 0x5f) ? 0x7f : (chr - 0x5f);
-			}
+			if (*s>=0x5f && *s<=0x7e)
+				*s = *s == 0x5f ? 0x7f : *s - 0x5f;
 			break;
 
 		case '4':	/* Dutch */
-			switch (chr = seven) {
-			case 0x23:	chr = XK_sterling;	break;
-			case 0x40:	chr = XK_threequarters;	break;
-			case 0x5b:	chr = XK_ydiaeresis;	break;
-			case 0x5c:	chr = XK_onehalf;	break;
-			case 0x5d:	chr = XK_bar;		break;
-			case 0x7b:	chr = XK_diaeresis;	break;
-			case 0x7c:	chr = XK_f;		break;
-			case 0x7d:	chr = XK_onequarter;	break;
-			case 0x7e:	chr = XK_acute;		break;
+			switch (*s &= 0x7f) {
+			case '#':	*s = 0x1e;		break;
+			case '@':	*s = 0xbe;		break;
+			case 0x5b:	*s = 0xff;		break;
+			case 0x5c:	*s = 0xbd;		break;
+			case 0x5d:	*s = '|';		break;
+			case 0x7b:	*s = 0xa8;		break;
+			case 0x7c:	*s = 'f';		break;
+			case 0x7d:	*s = 0xbc;		break;
+			case 0x7e:	*s = 0xb4;		break;
 			}
 			break;
 
 		case 'C':
 		case '5':	/* Finnish */
-			switch (chr = seven) {
-			case 0x5b:	chr = XK_Adiaeresis;	break;
-			case 0x5c:	chr = XK_Odiaeresis;	break;
-			case 0x5d:	chr = XK_Aring;		break;
-			case 0x5e:	chr = XK_Udiaeresis;	break;
-			case 0x60:	chr = XK_eacute;	break;
-			case 0x7b:	chr = XK_adiaeresis;	break;
-			case 0x7c:	chr = XK_odiaeresis;	break;
-			case 0x7d:	chr = XK_aring;		break;
-			case 0x7e:	chr = XK_udiaeresis;	break;
+			switch (*s &= 0x7f) {
+			case 0x5b:	*s = 0xc4;		break;
+			case 0x5c:	*s = 0xd6;		break;
+			case 0x5d:	*s = 0xc5;		break;
+			case 0x5e:	*s = 0xdc;		break;
+			case 0x60:	*s = 0xe9;		break;
+			case 0x7b:	*s = 0xe4;		break;
+			case 0x7c:	*s = 0xf6;		break;
+			case 0x7d:	*s = 0xe5;		break;
+			case 0x7e:	*s = 0xfc;		break;
 			}
 			break;
 
 		case 'R':	/* French */
-			switch (chr = seven) {
-			case 0x23:	chr = XK_sterling;	break;
-			case 0x40:	chr = XK_agrave;	break;
-			case 0x5b:	chr = XK_degree;	break;
-			case 0x5c:	chr = XK_ccedilla;	break;
-			case 0x5d:	chr = XK_section;	break;
-			case 0x7b:	chr = XK_eacute;	break;
-			case 0x7c:	chr = XK_ugrave;	break;
-			case 0x7d:	chr = XK_egrave;	break;
-			case 0x7e:	chr = XK_diaeresis;	break;
+			switch (*s &= 0x7f) {
+			case '#':	*s = 0x1e;		break;
+			case '@':	*s = 0xe0;		break;
+			case 0x5b:	*s = 0xb0;		break;
+			case 0x5c:	*s = 0xe7;		break;
+			case 0x5d:	*s = 0xa7;		break;
+			case 0x7b:	*s = 0xe9;		break;
+			case 0x7c:	*s = 0xf9;		break;
+			case 0x7d:	*s = 0xe8;		break;
+			case 0x7e:	*s = 0xa8;		break;
 			}
-			break;
+		break;
 
 		case 'Q':	/* French Canadian */
-			switch (chr = seven) {
-			case 0x40:	chr = XK_agrave;	break;
-			case 0x5b:	chr = XK_acircumflex;	break;
-			case 0x5c:	chr = XK_ccedilla;	break;
-			case 0x5d:	chr = XK_ecircumflex;	break;
-			case 0x5e:	chr = XK_icircumflex;	break;
-			case 0x60:	chr = XK_ocircumflex;	break;
-			case 0x7b:	chr = XK_eacute;	break;
-			case 0x7c:	chr = XK_ugrave;	break;
-			case 0x7d:	chr = XK_egrave;	break;
-			case 0x7e:	chr = XK_ucircumflex;	break;
+			switch (*s &= 0x7f) {
+			case '@':	*s = 0xe0;		break;
+			case 0x5b:	*s = 0xe2;		break;
+			case 0x5c:	*s = 0xe7;		break;
+			case 0x5d:	*s = 0xea;		break;
+			case 0x5e:	*s = 0xee;		break;
+			case 0x60:	*s = 0xf4;		break;
+			case 0x7b:	*s = 0xe9;		break;
+			case 0x7c:	*s = 0xf9;		break;
+			case 0x7d:	*s = 0xe8;		break;
+			case 0x7e:	*s = 0xfb;		break;
 			}
 			break;
 
 		case 'K':	/* German */
-			switch (chr = seven) {
-			case 0x40:	chr = XK_section;	break;
-			case 0x5b:	chr = XK_Adiaeresis;	break;
-			case 0x5c:	chr = XK_Odiaeresis;	break;
-			case 0x5d:	chr = XK_Udiaeresis;	break;
-			case 0x7b:	chr = XK_adiaeresis;	break;
-			case 0x7c:	chr = XK_odiaeresis;	break;
-			case 0x7d:	chr = XK_udiaeresis;	break;
-			case 0x7e:	chr = XK_ssharp;	break;
+			switch (*s &= 0x7f) {
+			case '@':	*s = 0xa7;		break;
+			case 0x5b:	*s = 0xc4;		break;
+			case 0x5c:	*s = 0xd6;		break;
+			case 0x5d:	*s = 0xdc;		break;
+			case 0x7b:	*s = 0xe4;		break;
+			case 0x7c:	*s = 0xf6;		break;
+			case 0x7d:	*s = 0xfc;		break;
+			case 0x7e:	*s = 0xdf;		break;
 			}
 			break;
 
 		case 'Y':	/* Italian */
-			switch (chr = seven) {
-			case 0x23:	chr = XK_sterling;	break;
-			case 0x40:	chr = XK_section;	break;
-			case 0x5b:	chr = XK_degree;	break;
-			case 0x5c:	chr = XK_ccedilla;	break;
-			case 0x5d:	chr = XK_eacute;	break;
-			case 0x60:	chr = XK_ugrave;	break;
-			case 0x7b:	chr = XK_agrave;	break;
-			case 0x7c:	chr = XK_ograve;	break;
-			case 0x7d:	chr = XK_egrave;	break;
-			case 0x7e:	chr = XK_igrave;	break;
+			switch (*s &= 0x7f) {
+			case '#':	*s = 0x1e;		break;
+			case '@':	*s = 0xa7;		break;
+			case 0x5b:	*s = 0xb0;		break;
+			case 0x5c:	*s = 0xe7;		break;
+			case 0x5d:	*s = 0xe9;		break;
+			case 0x60:	*s = 0xf9;		break;
+			case 0x7b:	*s = 0xe0;		break;
+			case 0x7c:	*s = 0xf2;		break;
+			case 0x7d:	*s = 0xe8;		break;
+			case 0x7e:	*s = 0xec;		break;
 			}
 			break;
 
 		case 'E':
 		case '6':	/* Norwegian/Danish */
-			switch (chr = seven) {
-			case 0x40:	chr = XK_Adiaeresis;	break;
-			case 0x5b:	chr = XK_AE;		break;
-			case 0x5c:	chr = XK_Ooblique;	break;
-			case 0x5d:	chr = XK_Aring;		break;
-			case 0x5e:	chr = XK_Udiaeresis;	break;
-			case 0x60:	chr = XK_adiaeresis;	break;
-			case 0x7b:	chr = XK_ae;		break;
-			case 0x7c:	chr = XK_oslash;	break;
-			case 0x7d:	chr = XK_aring;		break;
-			case 0x7e:	chr = XK_udiaeresis;	break;
+			switch (*s &= 0x7f) {
+			case '@':	*s = 0xc4;		break;
+			case 0x5b:	*s = 0xc6;		break;
+			case 0x5c:	*s = 0xd8;		break;
+			case 0x5d:	*s = 0xc5;		break;
+			case 0x5e:	*s = 0xdc;		break;
+			case 0x60:	*s = 0xe4;		break;
+			case 0x7b:	*s = 0xe6;		break;
+			case 0x7c:	*s = 0xf8;		break;
+			case 0x7d:	*s = 0xe5;		break;
+			case 0x7e:	*s = 0xfc;		break;
 			}
 			break;
 
 		case 'Z':	/* Spanish */
-			switch (chr = seven) {
-			case 0x23:	chr = XK_sterling;	break;
-			case 0x40:	chr = XK_section;	break;
-			case 0x5b:	chr = XK_exclamdown;	break;
-			case 0x5c:	chr = XK_Ntilde;	break;
-			case 0x5d:	chr = XK_questiondown;	break;
-			case 0x7b:	chr = XK_degree;	break;
-			case 0x7c:	chr = XK_ntilde;	break;
-			case 0x7d:	chr = XK_ccedilla;	break;
+			switch (*s &= 0x7f) {
+			case '#':	*s = 0x1e;		break;
+			case '@':	*s = 0xa7;		break;
+			case 0x5b:	*s = 0xa1;		break;
+			case 0x5c:	*s = 0xd1;		break;
+			case 0x5d:	*s = 0xbf;		break;
+			case 0x7b:	*s = 0xb0;		break;
+			case 0x7c:	*s = 0xf1;		break;
+			case 0x7d:	*s = 0xe7;		break;
 			}
 			break;
 
 		case 'H':
 		case '7':	/* Swedish */
-			switch (chr = seven) {
-			case 0x40:	chr = XK_Eacute;	break;
-			case 0x5b:	chr = XK_Adiaeresis;	break;
-			case 0x5c:	chr = XK_Odiaeresis;	break;
-			case 0x5d:	chr = XK_Aring;		break;
-			case 0x5e:	chr = XK_Udiaeresis;	break;
-			case 0x60:	chr = XK_eacute;	break;
-			case 0x7b:	chr = XK_adiaeresis;	break;
-			case 0x7c:	chr = XK_odiaeresis;	break;
-			case 0x7d:	chr = XK_aring;		break;
-			case 0x7e:	chr = XK_udiaeresis;	break;
+			switch (*s &= 0x7f) {
+			case '@':	*s = 0xc9;		break;
+			case 0x5b:	*s = 0xc4;		break;
+			case 0x5c:	*s = 0xd6;		break;
+			case 0x5d:	*s = 0xc5;		break;
+			case 0x5e:	*s = 0xdc;		break;
+			case 0x60:	*s = 0xe9;		break;
+			case 0x7b:	*s = 0xe4;		break;
+			case 0x7c:	*s = 0xf6;		break;
+			case 0x7d:	*s = 0xe5;		break;
+			case 0x7e:	*s = 0xfc;		break;
 			}
 			break;
 
 		case '=':	/* Swiss */
-			switch (chr = seven) {
-			case 0x23:	chr = XK_ugrave;	break;
-			case 0x40:	chr = XK_agrave;	break;
-			case 0x5b:	chr = XK_eacute;	break;
-			case 0x5c:	chr = XK_ccedilla;	break;
-			case 0x5d:	chr = XK_ecircumflex;	break;
-			case 0x5e:	chr = XK_icircumflex;	break;
-			case 0x5f:	chr = XK_egrave;	break;
-			case 0x60:	chr = XK_ocircumflex;	break;
-			case 0x7b:	chr = XK_adiaeresis;	break;
-			case 0x7c:	chr = XK_odiaeresis;	break;
-			case 0x7d:	chr = XK_udiaeresis;	break;
-			case 0x7e:	chr = XK_ucircumflex;	break;
+			switch (*s &= 0x7f) {
+			case '#':	*s = 0xf9;		break;
+			case '@':	*s = 0xe0;		break;
+			case 0x5b:	*s = 0xe9;		break;
+			case 0x5c:	*s = 0xe7;		break;
+			case 0x5d:	*s = 0xea;		break;
+			case 0x5e:	*s = 0xee;		break;
+			case 0x5f:	*s = 0xe8;		break;
+			case 0x60:	*s = 0xf4;		break;
+			case 0x7b:	*s = 0xe4;		break;
+			case 0x7c:	*s = 0xf6;		break;
+			case 0x7d:	*s = 0xfc;		break;
+			case 0x7e:	*s = 0xfb;		break;
 			}
 			break;
 
@@ -442,7 +244,6 @@ int xtermCharSetOut(IChar *buf, IChar *ptr, char leftset)
 			count --;
 			break;
 		}
-		*s = A2E(chr);
 	}
 	return count;
 }

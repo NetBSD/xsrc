@@ -1,6 +1,4 @@
-## $XFree86: xc/programs/xterm/Makefile.in,v 3.28 2000/02/08 17:19:27 dawes Exp $ ##
-
-SHELL		= /bin/sh
+## $XFree86: xc/programs/xterm/Makefile.in,v 3.1.2.5 1998/10/22 04:31:14 hohndel Exp $ ##
 
 #### Start of system configuration section. ####
 
@@ -9,7 +7,6 @@ VPATH  		= @srcdir@
 
 CC		= @CC@
 CPP		= @CPP@
-AWK		= @AWK@
 LINK		= $(CC) $(CFLAGS)
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
@@ -23,9 +20,8 @@ IMAKE_CFLAGS	= @IMAKE_CFLAGS@
 EXTRA_CFLAGS	= @EXTRA_CFLAGS@
 EXTRA_LOADFLAGS	= @IMAKE_LOADFLAGS@
 
-CPPFLAGS	= -I. -I$(srcdir) -DHAVE_CONFIG_H $(X_CFLAGS) $(IMAKE_CFLAGS) @CPPFLAGS@
-CFLAGS		= @CFLAGS@ $(EXTRA_CFLAGS)
-LDFLAGS		= @LDFLAGS@
+CPPFLAGS	= -I. -I$(srcdir) -DHAVE_CONFIG_H $(X_CFLAGS) $(IMAKE_CFLAGS)
+CFLAGS		= @CFLAGS@ $(EXTRA_CFLAGS) 
 LIBS		= @LIBS@
 
 prefix		= @prefix@
@@ -35,19 +31,15 @@ manext		= 1
 bindir		= $(exec_prefix)/bin
 libdir		= $(exec_prefix)/lib
 mandir		= $(prefix)/man/man$(manext)
-appsdir		= $(libdir)/X11/app-defaults
 
 #### End of system configuration section. ####
 
+SHELL		= /bin/sh
 RM              = rm -f
 
-DESTDIR		=
-BINDIR		= $(DESTDIR)$(bindir)
-LIBDIR		= $(DESTDIR)$(libdir)
-MANDIR		= $(DESTDIR)$(mandir)
-APPSDIR		= $(DESTDIR)$(appsdir)
+LDFLAGS		= 
 
-INSTALL_DIRS    = $(BINDIR) $(APPSDIR) $(MANDIR)
+INSTALL_DIRS    = $(bindir) $(libdir) $(mandir)
 
 EXTRAHDR	= @EXTRAHDRS@
 EXTRASRC	= @EXTRASRCS@
@@ -55,12 +47,12 @@ EXTRAOBJ	= @EXTRAOBJS@
 
           SRCS1 = button.c charproc.c charsets.c cursor.c \
 	  	  data.c doublechr.c fontutils.c input.c \
-		  $(MAINSRC) menu.c misc.c print.c ptydata.c \
+		  $(MAINSRC) menu.c misc.c print.c \
 		  screen.c scrollbar.c tabs.c util.c \
-		  VTPrsTbl.c $(EXTRASRC)
+		  TekPrsTbl.c Tekproc.c VTPrsTbl.c $(EXTRASRC)
           OBJS1 = button.o charproc.o charsets.o cursor.o \
 	  	  data.o doublechr.o fontutils.o input.o \
-		  main.o menu.o misc.o print.o ptydata.o \
+		  main.o menu.o misc.o print.o \
 		  screen.o scrollbar.o tabs.o util.o \
 		  VTPrsTbl.o $(EXTRAOBJ)
           SRCS2 = resize.c
@@ -73,7 +65,7 @@ EXTRAOBJ	= @EXTRAOBJS@
 
 all:	$(PROGRAMS)
 
-.SUFFIXES : .i .def .hin
+.SUFFIXES : .i
 
 .c.o:
 @RULE_CC@
@@ -83,12 +75,9 @@ all:	$(PROGRAMS)
 @RULE_CC@
 	@ECHO_CC@$(CPP) -C $(CPPFLAGS) $*.c >$@
 
-.def.hin:
-	grep '^CASE_' $< | $(AWK) '{printf "#define %s %d\n", $$1, n++}' >$@
-
 main.o: version.h
 
-$(OBJS1) : ptyx.h xtermcfg.h
+$(OBJS1) : ptyx.h
 
 xterm : $(OBJS1)
 	@ECHO_LD@$(LINK) $(LDFLAGS) -o $@ $(OBJS1) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS) $(EXTRA_LOADFLAGS)
@@ -96,52 +85,27 @@ xterm : $(OBJS1)
 resize : $(OBJS2)
 	@ECHO_LD@$(LINK) $(LDFLAGS) -o $@ $(OBJS2) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS)
 
-256colres.h : $(srcdir)/256colres.pl
-	-rm -f $@
-	perl $(srcdir)/256colres.pl > $@
-
-88colres.h : $(srcdir)/88colres.pl
-	-rm -f $@
-	perl $(srcdir)/88colres.pl > $@
-
-charproc.o : @CHARPROC_DEPS@
-
-install-full \
-install :: $(INSTALL_DIRS) xterm resize
-	$(srcdir)/sinstall.sh "$(INSTALL_PROGRAM)" xterm  @XTERM_PATH@ $(BINDIR)/xterm
-	$(INSTALL_PROGRAM) -s -m  755 resize $(BINDIR)/resize
-	$(INSTALL_DATA) $(srcdir)/xterm.man    $(MANDIR)/xterm.$(manext)
-	$(INSTALL_DATA) $(srcdir)/resize.man   $(MANDIR)/resize.$(manext)
-	$(INSTALL_DATA) $(srcdir)/XTerm.ad     $(APPSDIR)/XTerm
-	$(INSTALL_DATA) $(srcdir)/XTerm-col.ad $(APPSDIR)/XTerm-color
+install: $(INSTALL_DIRS) xterm resize
+	$(INSTALL_PROGRAM) -s -m @XTERM_MODE@ xterm  $(bindir)/xterm
+	$(INSTALL_PROGRAM) -s -m  755 resize $(bindir)/resize
+	$(INSTALL_DATA) xterm.man  $(mandir)/xterm.$(manext)
+	$(INSTALL_DATA) resize.man $(mandir)/resize.$(manext)
 	@echo 'Completed installation of executables and documentation.'
-install ::
 	@echo 'Use "make install-ti" to install terminfo description.'
 
-TERMINFO_DIR = @TERMINFO_DIR@
-SET_TERMINFO = @SET_TERMINFO@
-
-install-full \
-install-ti :: $(TERMINFO_DIR)
-	$(SET_TERMINFO) tic $(srcdir)/terminfo
-	@echo 'Completed installation of terminfo description.'
-
-install-full \
-install-tc ::
-	@test -f /etc/termcap && echo 'You must install the termcap entry manually by editing /etc/termcap'
+install-ti:
+	TERMINFO=@private_TERMINFO@ tic terminfo
 
 installdirs: $(INSTALL_DIRS)
 
 uninstall:
-	-$(RM) $(BINDIR)/xterm
-	-$(RM) $(BINDIR)/resize
-	-$(RM) $(MANDIR)/xterm.$(manext)
-	-$(RM) $(MANDIR)/resize.$(manext)
-	-$(RM) $(APPSDIR)/XTerm
-	-$(RM) $(APPSDIR)/XTerm-color
+	-$(RM) $(bindir)/xterm \
+		$(bindir)/resize \
+		$(mandir)/xterm.$(manext) \
+		$(mandir)/resize.$(manext)
 
 mostlyclean:
-	-$(RM) *.[ois] XtermLog.* .pure core *~ *.bak *.BAK *.out
+	-$(RM) *.[ois] XtermLog.* .pure core *~ *.BAK *.out
 
 clean: mostlyclean
 	-$(RM) $(PROGRAMS)
@@ -150,10 +114,7 @@ distclean: clean
 	-$(RM) Makefile config.status config.cache config.log xtermcfg.h
 
 realclean: distclean
-	-$(RM) tags TAGS ctlseqs.ps
-
-ctlseqs.ps : ctlseqs.ms
-	tbl ctlseqs.ms | groff -ms >$@
+	-$(RM) tags TAGS
 
 lint:
 	lint $(CPPFLAGS) $(SRCS1)
@@ -165,12 +126,7 @@ tags:
 TAGS:
 	etags $(SRCS) $(HDRS)
 
-$(TERMINFO_DIR) $(INSTALL_DIRS):
+$(INSTALL_DIRS):
 	$(SHELL) ${srcdir}/mkdirs.sh $@
 
 ALWAYS:
-
-depend : $(TABLES)
-	makedepend -- $(CPPFLAGS) -- $(SRCS)
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
