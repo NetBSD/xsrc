@@ -25,7 +25,7 @@ LOCAL_LIBRARIES = XawClientLibs
 #ifdef OsfArchitecture
   SYS_LIBRARIES = -lld
 #endif
-#ifdef i386BsdArchitecture
+#if defined(i386BsdArchitecture) && !defined(NetBSDArchitecture)
   SYS_LIBRARIES = -lutil -lkvm
 #endif
            SRCS = xload.c get_load.c
