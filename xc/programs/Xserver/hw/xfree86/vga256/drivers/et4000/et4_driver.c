@@ -495,6 +495,12 @@ ET4000LinMem(Bool autodetect)
    * address space.
    */
 
+#ifdef __mc68000__
+  /* Atari Crazy Dots (VME ET4000) card only has 1MB, so we cannot mmap 4MB */
+  if(OFLG_ISSET(OPTION_CRAZYDOTS, &vga256InfoRec.options))
+    ET4000.ChipLinearSize = 1024 * 1024;
+  else
+#endif
   ET4000.ChipLinearSize = 4096 * 1024;
 
   ET4000.ChipLinearBase = vga256InfoRec.MemBase;
@@ -1146,6 +1152,14 @@ ET4000Probe()
 
 #endif /* MONOVGA */
 
+#ifdef __mc68000__
+  if (et4000_type == TYPE_ET4000)
+  {
+    /* Atari Crazy Dots (VME ET4000) card */
+    OFLG_SET(OPTION_CRAZYDOTS, &ET4000.ChipOptionFlags);
+  }
+#endif /* __mc68000__ */
+
   if (et4000_type < TYPE_ET6000)
   {
     /* Initialize option flags allowed for this driver */
@@ -1665,6 +1679,13 @@ ET4000Restore(restore)
         (ClockSelect)(restore->std.NoClock);
       }
 
+#ifdef __mc68000__
+  /* Clock setting for Atari Crazy Dots (VME ET4000) card */
+  if(OFLG_ISSET(OPTION_CRAZYDOTS, &vga256InfoRec.options))
+  {
+    CDSetClock (vga256InfoRec.clock[restore->std.NoClock]);
+  }
+#endif /* __mc68000__ */
 #ifndef MONOVGA
   if (tseng_use_ACL & (restore->std.Attribute[16] & 1)) /* are we going to graphics mode? */
     tseng_init_acl(); /* initialize acceleration hardware */
@@ -2098,9 +2119,14 @@ ET4000Init(mode)
       new->Compatibility = (new->Compatibility & 0xFD) | 
       				((new->std.NoClock & 0x04) >> 1);
 #ifndef OLD_CLOCK_SCHEME
-      /* clock select bit 3 = divide-by-2 disable/enable */
-      new->AuxillaryMode = (tseng_save_divide ^ ((new->std.NoClock & 0x08) << 3)) |
-                           (new->AuxillaryMode & 0xBF);
+      /* Don't set mclk/2 on an Atari Crazy Dots (VME ET4000) card */
+      if (!OFLG_ISSET(OPTION_CRAZYDOTS, &vga256InfoRec.options))
+      {
+        /* clock select bit 3 = divide-by-2 disable/enable */
+        new->AuxillaryMode = (tseng_save_divide ^
+                             ((new->std.NoClock & 0x08) << 3)) |
+                             (new->AuxillaryMode & 0xBF);
+      }
       /* clock select bit 4 = CS3 */
       new->GenPurp = ((new->std.NoClock & 0x10) << 2) | (new->GenPurp & 0x3F);
 #else

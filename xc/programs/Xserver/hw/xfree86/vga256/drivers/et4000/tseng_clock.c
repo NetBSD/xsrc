@@ -252,3 +252,53 @@ Tseng_ICD2061AClockSelect(freq)
 }
 #endif
 
+#ifdef __mc68000__
+/*
+ * Clock setting for the Atari VME Crazy Dots card.  This is an ET4000 card
+ * with an ICS 1394M clock chip.  Clock setting is done by writing to card
+ * address 0x00.  This address cannot be read!
+ * Julian Coleman 1998.  With thanks to Juergen Orschiedt
+ */
+
+#if NeedFunctionPrototypes
+void CDSetClock (int);
+#else
+void CDSetClock ();
+#endif
+
+void CDSetClock (freq)
+  int freq;
+{
+
+#define NUMCLOCKS 15
+#define MCLK_WRITE 0x00
+#define RAMDAC_6BIT 0x00
+#define RAMDAC_8BIT 0x80
+
+/* Clocks, bit values and RAMDAC settings */
+  static int clocks[NUMCLOCKS] =
+     { 14318, 16257, 20000, 24000, 25175, 28332, 32514, 36000,
+    40000, 44900, 50000, 50344, 56644, 65028, 80000};
+
+  static unsigned char clockbits[NUMCLOCKS] =
+    {  0x00,  0x10,  0x17,  0x0c,  0x04,  0x14,  0x18,  0x1a,
+     0x1c,  0x03,  0x0f,  0x13,  0x07,  0x11,  0x1f };
+
+  int i;
+
+  for (i = 0; i < NUMCLOCKS; i++) {
+    if (abs (freq - clocks[i]) < 50) {
+#ifdef DEBUG
+      ErrorF("CDSetClock: using frequency %d (%d)\n",
+          clocks[i], i);
+#endif
+      outb (MCLK_WRITE, clockbits[i] | RAMDAC_6BIT);
+      return;
+    }
+  }
+
+  /* Shouldn't get here but ... */
+  ErrorF ("CDSetClock: Modeline clock doesn't match available clocks\n");
+  return;
+}
+#endif /* __mc68000__ */
