@@ -19,7 +19,8 @@ OBJS = */?*_drv.o
 SRCS = al2101/?*.c ali/?*.c apm/?*.c ark/?*.c ati/?*.c chips/?*.c cirrus/?*.c \
        cl64xx/?*.c et3000/?*.c et4000/?*.c generic/?*.c gvga/?*.c \
        mga/?*.c mx/?*.c ncr77c22/?*.c oak/?*.c pvga1/?*.c realtek/?*.c \
-       sis/?*.c tvga8900/?*.c video7/?*.c nv/?*.c compaq/?*.c s3v/?*.c
+       sis/?*.c tvga8900/?*.c video7/?*.c nv/?*.c compaq/?*.c s3v/?*.c \
+       neomagic/?*.c
 XCOMM s3_svga.c/?*.c
 
 OBJS = al2101/?*_drv.o ali/?*_drv.o apm/?*_drv.o ark/?*_drv.o ati/?*_drv.o \
