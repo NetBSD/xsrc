@@ -145,7 +145,6 @@ xkb_symbols "extended" {
     modifier_map Mod5   { Scroll_Lock };
     // end modifier mappings
 
-
 // *** FIXME
 //    key <LSGT> {	[ quoteleft,	asciitilde	]	};
 //    key <AE01> {	[	  1,	exclam 		],
