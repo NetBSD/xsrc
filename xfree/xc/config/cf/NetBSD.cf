@@ -357,13 +357,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 /* x86_64 */
 #if defined(x86_64Architecture)
-# define OptimizedCDebugFlags	-O2	/* XXX not needed anymore? */
+# define OptimizedCDebugFlags	-O2 GccAliasingArgs	/* XXX not needed anymore? */
 # define NetBSDMachineDefines	-D__AMD64__
 #endif
 
 /* set default */
 #ifndef OptimizedCDebugFlags
-# define OptimizedCDebugFlags 	-O2
+# define OptimizedCDebugFlags 	-O2 GccAliasingArgs
 #endif
 /* End of MACHINE_CPU specific options */
 
