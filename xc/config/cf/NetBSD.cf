@@ -6,8 +6,6 @@ XCOMM platform:  $XConsortium: NetBSD.cf /main/14 1996/01/28 07:42:14 kaleb $
 
 XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.44 1996/10/23 13:07:55 dawes Exp $
 
-#ifndef OpenBSDArchitecture
-
 #ifndef OSName
 #define OSName		NetBSD 1.2
 #endif
@@ -17,27 +15,10 @@ XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.44 1996/10/23 13:07:55 daw
 #ifndef OSMinorVersion
 #define OSMinorVersion    2
 #endif
-/* 1 = A, 2 = B, 3 = C */
+/* XXX this does not deal with patches, but, patches should not affect it */
+/* 1 = A, 2 = B, 3 = C, 4 = D, 5 = E */
 #ifndef OSTeenyVersion
-#define OSTeenyVersion	  0
-#endif
-
-#else
-
-#ifndef OSName
-#define OSName		OpenBSD 2.0
-#endif
-#ifndef OSMajorVersion
-#define OSMajorVersion    2
-#endif
-#ifndef OSMinorVersion
-#define OSMinorVersion    0
-#endif
-/* 1 = A, 2 = B, 3 = C */
-#ifndef OSTeenyVersion
-#define OSTeenyVersion	  0
-#endif
-
+#define OSTeenyVersion	  4
 #endif
 
 #ifndef OSVendor
@@ -48,9 +29,9 @@ XCOMM operating system:  OSName
 /*
  * C library features
  */
-#if defined(OpenBSDArchitecture) || \
-   defined(NetBSDArchitecture) && (OsMajorVersion == 1 && OsMinorVersion >= 2)
-#  define HasPoll			YES
+#if ((OsMajorVersion == 1 && OsMinorVersion >= 2) || \
+   (OsMajorVersion > 1))
+# define HasPoll			YES
 #endif
 #define HasNdbm         	YES
 #define HasPutenv       	YES
@@ -77,7 +58,7 @@ XCOMM operating system:  OSName
 /*
  * There's a bug in NetBSD 1.0, 1.1 and 1.2 dlsym()
  */
-#if !defined(OpenBSDArchitecture) && OSMajorVersion == 1 && OSMinorVersion <= 2
+#if OSMajorVersion == 1 && OSMinorVersion <= 2
 #  define HasDlsymBug		YES
 #endif
 
@@ -94,11 +75,6 @@ XCOMM operating system:  OSName
 #define UseGas			YES
 #define GnuCpp			YES
 
-/* OpenBSD has gcc 2.7.2.1 which fixes the strength-reduce bug */
-#ifdef OpenBSDArchitecture
-#define DefaultGcc2i386Opt	-O2
-#endif
-
 #define NeedConstPrototypes	YES
 #define NeedFunctionPrototypes	YES
 #define NeedNestedPrototypes	YES
@@ -110,11 +86,7 @@ XCOMM operating system:  OSName
 #define CppCmd          	/usr/libexec/cpp
 #define StandardCppDefines	-traditional
 #define PreProcessCmd   	CppCmd
-#ifndef OpenBSDArchitecture
 #define PreIncDir		/usr/include
-#else
-#define PreIncDir /usr/lib/gcc-lib/i386-unknown-openbsd1.2/2.7.2.1/include
-#endif
 
 #undef CcCmd
 #define CcCmd 			gcc
@@ -168,11 +140,7 @@ XCOMM operating system:  OSName
 #define ExtraLibraries		/**/
 #endif
 #ifndef UseGnuMalloc
-#ifndef OpenBSDArchitecture
-#  define UseGnuMalloc		YES
-#else
-#  define UseGnuMalloc		NO
-#endif
+# define UseGnuMalloc		YES
 #endif
 #ifndef GnuMallocLibrary
 #define GnuMallocLibrary	-lgnumalloc
@@ -314,7 +282,7 @@ install.man:: 								@@\
  * site.def
  */
 #ifndef UseRgbTxt
-#define UseRgbTxt	YES
+#define UseRgbTxt	NO
 #endif
 #endif
 
