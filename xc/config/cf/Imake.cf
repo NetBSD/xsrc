@@ -224,6 +224,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Ex
 #  define luna68kArchitecture
 #  undef luna68k
 # endif
+# if defined(__mipsco__) || defined(mipsco)
+#  define mipscoArchitecture
+#  undef mipsco
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__
