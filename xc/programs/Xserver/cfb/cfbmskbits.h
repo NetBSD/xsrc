@@ -40,6 +40,16 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #endif
 
 /*
+ * XXX ldq_u() is used below unconditionally, but only pulled in if
+ * XXX XFREE86 is defined (above).  I suspect someone didn't think
+ * XXX about the possibility of using this code on an Alpha running
+ * XXX something other than Linux.
+ */
+#if defined(__NetBSD__) && defined(__alpha__)
+#include	"../hw/xfree86/common/compiler.h"
+#endif
+
+/*
  * ==========================================================================
  * Converted from mfb to support memory-mapped color framebuffer by smarks@sun, 
  * April-May 1987.
