@@ -109,9 +109,13 @@ RES_SRC=bsdResource.c
 RES_OBJ=bsdResource.o
 #endif
 
-#if defined(AlphaArchitecture)
+#if defined(AlphaArchitecture) && defined(FreeBSDArchitecture)
 AXP_SRC=bsd_ev56.c xf86Axp.c bsd_axp.c
 AXP_OBJ=bsd_ev56.o xf86Axp.o bsd_axp.o
+#endif
+#if defined(AlphaArchitecture) && defined(NetBSDArchitecture)
+AXP_SRC=bsd_ev56.c
+AXP_OBJ=bsd_ev56.o
 #endif
 
 #if (defined(FreeBSDArchitecture) || defined(NetBSDArchitecture)) && HasAgpGart
