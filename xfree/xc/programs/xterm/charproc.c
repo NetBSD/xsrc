@@ -2164,6 +2164,7 @@ VTparse(void)
 	    break;
 
 	case CASE_ST:
+	    parsestate = groundtable;
 	    if (!string_used)
 		break;
 	    string_area[--string_used] = '\0';
@@ -2184,7 +2185,6 @@ VTparse(void)
 		/* ignored */
 		break;
 	    }
-	    parsestate = groundtable;
 	    break;
 
 	case CASE_SOS:
