@@ -1236,7 +1236,7 @@ StartProxyReply(server, rep)
 		      lbxNegOpt.serverDeltaMaxLen);
     LBXInitDeltaCache(&server->outdeltas, lbxNegOpt.proxyDeltaN,
 		      lbxNegOpt.proxyDeltaMaxLen);
-    QueueWorkProc(ProxyWorkProc, NULL, (pointer) server->index);
+    QueueWorkProc(ProxyWorkProc, NULL, (pointer)(long) server->index);
 
 #ifdef OPTDEBUG
     fprintf(stderr, "squishing = %d\n", lbxNegOpt.squish);
