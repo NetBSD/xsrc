@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.19.2.3 1998/09/27 12:59:29 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.19.2.4 2000/06/15 23:24:07 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -139,10 +139,8 @@ char 	cmd[PATH_MAX],file[PATH_MAX],xkm_output_dir[PATH_MAX],*map,*outFile;
 		+strlen(file)+strlen(xkm_output_dir)
 		+strlen(outFile)+53 > PATH_MAX)
 	{
-#ifdef DEBUG
 	    ErrorF("compiler command for keymap (%s) exceeds max length\n",
 								names->keymap);
-#endif
 	    return False;
 	}
 #ifndef __EMX__
@@ -169,10 +167,8 @@ char 	cmd[PATH_MAX],file[PATH_MAX],xkm_output_dir[PATH_MAX],*map,*outFile;
 		+strlen(file)+strlen(xkm_output_dir)
 		+strlen(outFile)+49 > PATH_MAX)
 	{
-#ifdef DEBUG
             ErrorF("compiler command for keymap (%s) exceeds max length\n",
 							names->keymap);
-#endif
 	    return False;
 	}
 	sprintf(cmd,"xkbcomp -w %d -xkm %s%s -em1 %s -emp %s -eml %s keymap/%s %s%s.xkm",
@@ -236,6 +232,10 @@ int i;
 	sprintf(keymap,"server-%s",display);
     }
     else {
+	if (strlen(names->keymap) > PATH_MAX - 1) {
+	    ErrorF("name of keymap (%s) exceeds max length\n", names->keymap);
+	    return False;
+	}
 	strcpy(keymap,names->keymap);
     }
 
@@ -254,10 +254,8 @@ int i;
 		+strlen(POST_ERROR_MSG1)+strlen(xkm_output_dir)
 		+strlen(keymap)+48 > PATH_MAX)
 	{
-#ifdef DEBUG
             ErrorF("compiler command for keymap (%s) exceeds max length\n",
 							names->keymap);
-#endif
 	    return False;
 	}
 #ifndef WIN32
@@ -294,10 +292,8 @@ int i;
 		+strlen(ERROR_PREFIX)+strlen(POST_ERROR_MSG1)
 		+strlen(xkm_output_dir)+strlen(keymap)+44 > PATH_MAX)
 	{
-#ifdef DEBUG
             ErrorF("compiler command for keymap (%s) exceeds max length\n",
 							names->keymap);
-#endif
 	    return False;
 	}
 #ifndef WIN32
