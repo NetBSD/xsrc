@@ -40,7 +40,7 @@ Public TransportSW _XimTransportRec[] = {
 #ifdef TCPCONN
     "tcp",        _XimTransConf, /* use X transport lib */
 #endif /* TCPCONN */
-#ifdef UNIXCONN
+#if defined(UNIXCONN) || defined(LOCALCONN)
     "local",      _XimTransConf, /* use X transport lib */
 #endif /* UNIXCONN */
 #ifdef DNETCONN

@@ -22,7 +22,7 @@
  */
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_init.c,v 3.1 1995/06/24 10:29:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_init.c,v 3.1.6.1 1998/02/06 22:36:51 hohndel Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -48,7 +48,10 @@ void xf86OpenConsole()
 	/* check if we're run with euid==0 */
 	if (geteuid() != 0)
 	{
-	    FatalError("xf86OpenConsole: Server must be suid root\n");
+	    FatalError("xf86OpenConsole: Server must be running with root "
+	        "permissions\n"
+		"You should be using Xwrapper to start the server or xdm.\n"
+		"We strongly advise against making the server SUID root!\n");
 	}
 
     	/*

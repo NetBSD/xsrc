@@ -1,6 +1,6 @@
 /*
  * $XConsortium: parsedpy.c,v 1.9 94/04/17 20:37:51 hersh Exp $
- * $XFree86: xc/programs/xauth/parsedpy.c,v 3.0 1996/06/10 09:17:48 dawes Exp $
+ * $XFree86: xc/programs/xauth/parsedpy.c,v 3.0.4.1 1998/02/15 16:09:52 hohndel Exp $
  *
  * parse_displayname - utility routine for splitting up display name strings
  *
@@ -41,7 +41,7 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Xauth.h>			/* for FamilyLocal */
 #include <X11/Xmu/SysUtil.h>
 
-#ifdef UNIXCONN
+#if defined(UNIXCONN) || defined(LOCALCONN)
 #define UNIX_CONNECTION "unix"
 #define UNIX_CONNECTION_LENGTH 4
 #endif
@@ -129,7 +129,7 @@ Bool parse_displayname (displayname, familyp, hostp, dpynump, scrnump, restp)
 
     len = (ptr - displayname);	/* length of host name */
     if (len == 0) {			/* choose most efficient path */
-#ifdef UNIXCONN
+#if defined(UNIXCONN) || defined(LOCALCONN)
 	host = copystring (UNIX_CONNECTION, UNIX_CONNECTION_LENGTH);
 	family = FamilyLocal;
 #else
@@ -146,7 +146,7 @@ Bool parse_displayname (displayname, familyp, hostp, dpynump, scrnump, restp)
 	if (dnet) {
 	    family = dnet;
 	} else {
-#ifdef UNIXCONN
+#if defined(UNIXCONN) || defined(LOCALCONN)
 	    if (host && strcmp (host, UNIX_CONNECTION) == 0)
 	      family = FamilyLocal;
 	    else

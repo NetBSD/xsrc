@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Wacom.c,v 3.25.2.3 1997/07/31 06:24:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Wacom.c,v 3.25.2.5 1998/02/07 10:05:21 hohndel Exp $ */
 
 /*
  * This driver is only able to handle the Wacom IV protocol.
@@ -205,7 +205,7 @@ static SymTabRec ModeTabRec[] = {
 #define XI_CURSOR "CURSOR"	/* X device name for the cursor */
 #define XI_ERASER "ERASER"	/* X device name for the eraser */
 #define MAX_VALUE 100           /* number of positions */
-#define MAXTRY 50               /* max number of try to receive magic number */
+#define MAXTRY 2                /* max number of try to receive magic number */
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
 
 #define WC_RESET_IV	"#\r"	/* reset to wacom IV command set */
@@ -220,9 +220,15 @@ static SymTabRec ModeTabRec[] = {
 #define WC_NO_MACRO1	"~M1\r"	/* disable macro buttons of group 1 */
 #define WC_RATE 	"IT0\r"	/* max transmit rate (unit of 5 ms) */
 #define WC_TILT_MODE	"FM1\r"	/* enable extra protocol for tilt management */
+#define WC_NO_INCREMENT	"IN0\r"	/* do not enable increment mode */
+#define WC_STREAM_MODE	"SR\r"	/* enable continuous mode */
+#define WC_PRESSURE_MODE "PH1\r" /* enable pressure mode */
+#define WC_START	"ST\r"	/* start sending coordinates */
 
 static const char * setup_string = WC_MULTI WC_UPPER_ORIGIN
- WC_ALL_MACRO WC_NO_MACRO1 WC_RATE;
+ WC_ALL_MACRO WC_NO_MACRO1 WC_RATE WC_NO_INCREMENT WC_STREAM_MODE;
+
+static const char * penpartner_setup_string = WC_PRESSURE_MODE WC_START;
 
 #define COMMAND_SET_MASK	0xc0
 #define BAUD_RATE_MASK		0x0a
@@ -255,44 +261,51 @@ static const char * setup_string = WC_MULTI WC_UPPER_ORIGIN
 static KeySym wacom_map[] = 
 {
     NoSymbol,	/* 0x00 */
-    XK_F1,	/* 0x01 */
-    XK_F2,	/* 0x02 */
-    XK_F3,	/* 0x03 */
-    XK_F4,	/* 0x04 */
-    XK_F5,	/* 0x05 */
-    XK_F6,	/* 0x06 */
-    XK_F7,	/* 0x07 */
-    XK_F8,	/* 0x08 */
-    XK_F8,	/* 0x09 */
-    XK_F10,	/* 0x0a */
-    XK_F11,	/* 0x0b */
-    XK_F12,	/* 0x0c */
-    XK_F13,	/* 0x0d */
-    XK_F14,	/* 0x0e */
-    XK_F15,	/* 0x0f */
-    XK_F16,	/* 0x10 */
-    XK_F17,	/* 0x11 */
-    XK_F18,	/* 0x12 */
-    XK_F19,	/* 0x13 */
-    XK_F20,	/* 0x14 */
-    XK_F21,	/* 0x15 */
-    XK_F22,	/* 0x16 */
-    XK_F23,	/* 0x17 */
-    XK_F24,	/* 0x18 */
-    XK_F25,	/* 0x19 */
-    XK_F26,	/* 0x1a */
-    XK_F27,	/* 0x1b */
-    XK_F28,	/* 0x1c */
-    XK_F29,	/* 0x1d */
-    XK_F30,	/* 0x1e */
-    XK_F31,	/* 0x1f */
-    XK_F32	/* 0x20 */
+    NoSymbol,	/* 0x01 */
+    NoSymbol,	/* 0x02 */
+    NoSymbol,	/* 0x03 */
+    NoSymbol,	/* 0x04 */
+    NoSymbol,	/* 0x05 */
+    NoSymbol,	/* 0x06 */
+    NoSymbol,	/* 0x07 */
+    XK_F1,	/* 0x08 */
+    XK_F2,	/* 0x09 */
+    XK_F3,	/* 0x0a */
+    XK_F4,	/* 0x0b */
+    XK_F5,	/* 0x0c */
+    XK_F6,	/* 0x0d */
+    XK_F7,	/* 0x0e */
+    XK_F8,	/* 0x0f */
+    XK_F8,	/* 0x10 */
+    XK_F10,	/* 0x11 */
+    XK_F11,	/* 0x12 */
+    XK_F12,	/* 0x13 */
+    XK_F13,	/* 0x14 */
+    XK_F14,	/* 0x15 */
+    XK_F15,	/* 0x16 */
+    XK_F16,	/* 0x17 */
+    XK_F17,	/* 0x18 */
+    XK_F18,	/* 0x19 */
+    XK_F19,	/* 0x1a */
+    XK_F20,	/* 0x1b */
+    XK_F21,	/* 0x1c */
+    XK_F22,	/* 0x1d */
+    XK_F23,	/* 0x1e */
+    XK_F24,	/* 0x1f */
+    XK_F25,	/* 0x20 */
+    XK_F26,	/* 0x21 */
+    XK_F27,	/* 0x22 */
+    XK_F28,	/* 0x23 */
+    XK_F29,	/* 0x24 */
+    XK_F30,	/* 0x25 */
+    XK_F31,	/* 0x26 */
+    XK_F32	/* 0x27 */
 };
 
 /* minKeyCode = 8 because this is the min legal key code */
 static KeySymsRec wacom_keysyms = {
   /* map	minKeyCode	maxKC	width */
-  wacom_map,	8,		0x20,	1
+  wacom_map,	8,		0x27,	1
 };
 
 /******************************************************************************
@@ -608,50 +621,49 @@ send_request(int	fd,
     }
   
     do {
-	switch (wait_for_fd(fd)) {
-	case -1:
-	    ErrorF("Wacom select error : %s\n", strerror(errno));
-	    return NULL;
-	    break;
-	case 0:
-	    ErrorF("Timeout while reading Wacom tablet. No tablet connected ???\n");
-	    return NULL;
-	    break;
-	}
-
 	maxtry = MAXTRY;
     
+	/* Read the first byte of the answer which must be equal to the first
+	 * byte of the request.
+	 */
 	do {    
-	    wait_for_fd(fd);
-	    SYSCALL(nr = read(fd, answer, 1));
-	    if ((nr == -1) && (errno != EAGAIN)) {
-		ErrorF("Wacom read error : %s\n", strerror(errno));
-		return NULL;
-	    }
-	    DBG(10, ErrorF("%c err=%d [0]\n", answer[0], nr));
-	    maxtry--;  
-	} while ((answer[0] != request[0]) && maxtry);
-
-	if (maxtry == 0) {
-	    ErrorF("Wacom unable to read first byte of request '%s' answer after %d tries\n", request, MAXTRY);
-	    return NULL;
-	}
-
-	do {    
-	    maxtry = MAXTRY;
-	    do {    
-		wait_for_fd(fd);
-		SYSCALL(nr = read(fd, answer+1, 1));
+	    if ((nr = wait_for_fd(fd)) > 0) {
+		SYSCALL(nr = read(fd, answer, 1));
 		if ((nr == -1) && (errno != EAGAIN)) {
 		    ErrorF("Wacom read error : %s\n", strerror(errno));
 		    return NULL;
 		}
-		DBG(10, ErrorF("%c err=%d [1]\n", answer[1], nr));
+		DBG(10, ErrorF("%c err=%d [0]\n", answer[0], nr));
+	    }
+	    maxtry--;  
+	} while ((answer[0] != request[0]) && maxtry);
+
+	if (maxtry == 0) {
+	    ErrorF("Wacom unable to read first byte of request '%s' answer after %d tries\n",
+		   request, MAXTRY);
+	    return NULL;
+	}
+
+	/* Read the second byte of the answer which must be equal to the second
+	 * byte of the request.
+	 */
+	do {    
+	    maxtry = MAXTRY;
+	    do {    
+		if ((nr = wait_for_fd(fd)) > 0) {
+		    SYSCALL(nr = read(fd, answer+1, 1));
+		    if ((nr == -1) && (errno != EAGAIN)) {
+			ErrorF("Wacom read error : %s\n", strerror(errno));
+			return NULL;
+		    }
+		    DBG(10, ErrorF("%c err=%d [1]\n", answer[1], nr));
+		}
 		maxtry--;  
 	    } while ((nr == -1) && maxtry);
       
 	    if (maxtry == 0) {
-		ErrorF("Wacom unable to read second byte of request '%s' answer after %d tries\n", request, MAXTRY);
+		ErrorF("Wacom unable to read second byte of request '%s' answer after %d tries\n",
+		       request, MAXTRY);
 		return NULL;
 	    }
 
@@ -664,28 +676,41 @@ send_request(int	fd,
     } while ((answer[0] != request[0]) &&
 	     (answer[1] != request[1]));
 
-    /* read until carriage return */
+    /* Read until carriage return or timeout (to handle broken protocol
+     * implementations which don't end with a <cr>).
+     */
     len = 2;
+    maxtry = MAXTRY;
     do {    
-	maxtry = MAXTRY;
 	do {    
-	    wait_for_fd(fd);
-	    SYSCALL(nr = read(fd, answer+len, 1));
-	    if ((nr == -1) && (errno != EAGAIN)) {
-		ErrorF("Wacom read error : %s\n", strerror(errno));
-		return NULL;
+	    if ((nr = wait_for_fd(fd)) > 0) {
+		SYSCALL(nr = read(fd, answer+len, 1));
+		if ((nr == -1) && (errno != EAGAIN)) {
+		    ErrorF("Wacom read error : %s\n", strerror(errno));
+		    return NULL;
+		}
+		DBG(10, ErrorF("%c err=%d [%d]\n", answer[len], nr, len));
 	    }
-	    DBG(10, ErrorF("%c err=%d [%d]\n", answer[len], nr, len));
-	    maxtry--;  
-	} while ((nr == -1) && maxtry);
+	    else {
+		DBG(10, ErrorF("timeout remains %d tries\n", maxtry));
+		maxtry--;
+	    }
+	} while ((nr <= 0) && maxtry);
 
-	if (maxtry == 0) {
-	    ErrorF("Wacom unable to read last byte of request '%s' answer after %d tries\n", request, MAXTRY);
-	    return NULL;
+	if (nr > 0) {
+	    len += nr;
 	}
-	len += nr;
+	
+	if (maxtry == 0) {
+	    ErrorF("Wacom unable to read last byte of request '%s' answer after %d tries\n",
+		   request, MAXTRY);
+	    break;
+	}
     } while (answer[len-1] != '\r');
 
+    if (len <= 3)
+	return NULL;
+    
     answer[len-1] = '\0';
   
     return answer;
@@ -907,11 +932,12 @@ xf86WcmSendEvents(LocalDevicePtr	local,
 
 		DBG(6, ErrorF("macro=%d buttons=%d wacom_map[%d]=%x\n",
 			      macro, buttons, macro, wacom_map[macro]));
-			
-		xf86PostKeyEvent(local->dev, macro, 1,
+
+		/* First available Keycode begins at 8 => macro+7 */
+		xf86PostKeyEvent(local->dev, macro+7, 1,
 				 is_absolute, 0, 5,
 				 0, 0, buttons, rtx, rty);
-		xf86PostKeyEvent(local->dev, macro, 0,
+		xf86PostKeyEvent(local->dev, macro+7, 0,
 				 is_absolute, 0, 5,
 				 0, 0, buttons, rtx, rty);
 	    }
@@ -1112,10 +1138,11 @@ xf86WcmOpen(LocalDevicePtr	local)
     int			a, b;
     int			loop, idx;
     float		version = 0.0;
-  
+    int			is_a_penpartner = 0;
+    
     DBG(1, ErrorF("opening %s\n", common->wcmDevice));
 
-    SYSCALL(local->fd = open(common->wcmDevice, O_RDWR|O_NDELAY));
+    SYSCALL(local->fd = open(common->wcmDevice, O_RDWR|O_NDELAY, 0));
     if (local->fd == -1) {
 	ErrorF("Error opening %s : %s\n", common->wcmDevice, strerror(errno));
 	return !Success;
@@ -1191,24 +1218,8 @@ xf86WcmOpen(LocalDevicePtr	local)
 	ErrorF("Wacom select error : %s\n", strerror(errno));
 	return !Success;
     }
-  
-#ifdef POSIX_TTY
-    /* send a START just for the case the tablet would have been stopped */
-    SYSCALL(err = tcflow(local->fd, TCION));
-    if (err == -1) {
-	ErrorF("Wacom tcflow TCION error : %s\n", strerror(errno));
-    }
 
-    /* flush input and output */
-    SYSCALL(err = tcflush(local->fd, TCIOFLUSH));
-    if (err == -1) {
-	ErrorF("Wacom tcflush TCIOFLUSH error : %s\n", strerror(errno));
-    }
-#else
-    Code for OSs without POSIX tty functions
-#endif
-
-		     DBG(2, ErrorF("reading model\n"));
+    DBG(2, ErrorF("reading model\n"));
     if (!send_request(local->fd, WC_MODEL, buffer)) 
 	return !Success;
     DBG(2, ErrorF("%s\n", buffer));
@@ -1216,29 +1227,37 @@ xf86WcmOpen(LocalDevicePtr	local)
     if (xf86Verbose)
 	ErrorF("%s Wacom tablet model : %s\n", XCONFIG_PROBED, buffer+2);
 
-    /* answer is in the form ~#Tablet-Model ROM_Version */
-    /* loop while not space */
-    for(loop=0; loop<strlen(buffer) && *(buffer+loop) != ' '; loop++);
+    /* answer is in the form ~#Tablet-Model VRom_Version */
+    /* look for the first V from the end of the string */
+    /* this seems to be the better way to find the version of the ROM */
+    for(loop=strlen(buffer); loop>=0 && *(buffer+loop) != 'V'; loop--);
     for(idx=loop; idx<strlen(buffer) && *(buffer+idx) != '-'; idx++);
     *(buffer+idx) = '\0';
   
     /* extract version numbers */
-    if (loop+2 < strlen(buffer)) {
-	sscanf(buffer+loop+2, "%f", &version);
-    }
+    sscanf(buffer+loop+1, "%f", &version);
 
     /* tilt works on ROM 1.4 and above */
     DBG(2, ErrorF("wacom flags=%d ROM version=%f buffer=%s\n",
-		  common->wcmFlags, version, buffer+loop+2));
+		  common->wcmFlags, version, buffer+loop+1));
     if ((common->wcmFlags & TILT_FLAG) && (version >= (float)1.4)) {
 	common->wcmPktLength = 9;
     }
 
-    DBG(2, ErrorF("reading config\n"));
-    if (!send_request(local->fd, WC_CONFIG, buffer))
-	return !Success;
-    DBG(2, ErrorF("%s\n", buffer));
-    sscanf(buffer+19, "%d,%d,%d,%d", &a, &b, &common->wcmResolX, &common->wcmResolY);
+    /* check for a PenPartner model which doesn't answer WC_CONFIG request */
+    if (buffer[2] == 'C' && buffer[3] == 'T') {
+	DBG(2, ErrorF("detected a PenPartner model\n"));
+	common->wcmResolX = 1000;
+	common->wcmResolY = 1000;
+	is_a_penpartner = 1;
+    }
+    else {
+	DBG(2, ErrorF("reading config\n"));
+	if (!send_request(local->fd, WC_CONFIG, buffer))
+	    return !Success;
+	DBG(2, ErrorF("%s\n", buffer));
+	sscanf(buffer+19, "%d,%d,%d,%d", &a, &b, &common->wcmResolX, &common->wcmResolY);
+    }
     
     DBG(2, ErrorF("reading max coordinates\n"));
     if (!send_request(local->fd, WC_COORD, buffer))
@@ -1251,7 +1270,14 @@ xf86WcmOpen(LocalDevicePtr	local)
 		  common->wcmResolY));
   
     /* send a setup string to the tablet */
-    SYSCALL(err = write(local->fd, setup_string, strlen(setup_string)));
+    if (is_a_penpartner) {
+	SYSCALL(err = write(local->fd, penpartner_setup_string,
+			    strlen(penpartner_setup_string)));
+    }
+    else {
+	SYSCALL(err = write(local->fd, setup_string, strlen(setup_string)));
+    }
+    
     if (err == -1) {
 	ErrorF("Wacom write error : %s\n", strerror(errno));
 	return !Success;

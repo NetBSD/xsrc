@@ -1,4 +1,5 @@
-XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.10 1997/07/27 02:41:03 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.11 1998/02/15 16:08:33 hohndel Exp $
+XCOMM $OpenBSD: OpenBSD.cf,v 1.11 1997/12/09 03:03:48 gene Exp $
 
 #ifndef OSName
 #define OSName			DefaultOSName OSBinaryType
@@ -79,7 +80,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define ServerExtraSysLibs	-li386
 #else
 # define OptimizedCDebugFlags 	-O2
-# if defined(SparcArchitecture) || defined(AlphaArchitecture)
+# if defined(SparcArchitecture) || defined(AlphaArchitecture) || defined(AmigaArchitecture) || defined(Sun3Architecture)
 #  define ServerOSDefines 	-DDDXOSINIT
 # else
 #  define ServerOSDefines 	/**/
@@ -98,7 +99,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # if defined(AlphaArchitecture)
 #  define ServerExtraDefines GccGasOption -D_XSERVER64
 # else
-#  define ServerExtraDefines GccGasOption
+#  if !defined(Sun3Architecture)
+#   define ServerExtraDefines GccGasOption
+#  endif
 # endif
 #endif
 
@@ -217,14 +220,16 @@ install.man:: 								@@\
  * options and setting here into the correct section
  */
 
-
 /*
  * Definitions for the alpha architecture
  */
 #ifdef AlphaArchitecture
 
+# define XF86Contrib
 # include <xf86.rules>
 # define BuildServer		NO
+# define XnestServer		NO
+# define XVirtualFramebufferServer	NO
 
  /*
   * For the current ECOFF system
@@ -249,6 +254,12 @@ install.man:: 								@@\
  */
 #ifdef i386Architecture
 
+/*
+ * For safety reasons, don't install the X server setuid on OpenBSD
+ * use xdm instead
+ */
+# define InstallXserverSetUID	NO
+
 # define BuildDynamicLoading	YES
 # include <xfree86.cf>
 
@@ -261,6 +272,14 @@ install.man:: 								@@\
  */
 #ifdef Mc68020Architecture
 
+/*
+ * Function CSE makes gas -k not recognize external function calls as lazily
+ * resolvable symbols, thus sometimes making ld.so report undefined symbol
+ * errors on symbols found in shared library members that would never be 
+ * called.  Ask niklas@openbsd.org for details.
+ */
+# define PositionIndependentCFlags -fpic -fno-function-cse
+
 #endif /* Mc68020Architecture */
 
 
@@ -269,6 +288,7 @@ install.man:: 								@@\
  */
 #ifdef AmigaArchitecture
 
+# define XF86Contrib
 # include <xf86.rules>
 # define BuildServer		NO
 
@@ -289,7 +309,7 @@ install.man:: 								@@\
 /*
  * Definitions for the mac68k architecture
  */
-#ifdef Mac68kArchitecture
+#ifdef mac68kArchitecture
 
 # include <xf86.rules>
 # define BuildServer		NO

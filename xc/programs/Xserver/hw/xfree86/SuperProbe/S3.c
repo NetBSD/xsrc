@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/S3.c,v 3.15.2.1 1997/05/06 13:24:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/S3.c,v 3.15.2.3 1998/02/15 23:31:56 robin Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -134,6 +134,14 @@ int *Chipset;
 				   *Chipset = CHIP_S3_ViRGE_GX;
 				else
 				   *Chipset = CHIP_S3_ViRGE_DX;
+				break;
+			case PCI_CHIP_ViRGE_GX2:
+			        PCIProbed = TRUE;
+				*Chipset = CHIP_S3_ViRGE_GX2;
+				break;
+			case PCI_CHIP_ViRGE_MX:
+			        PCIProbed = TRUE;
+				*Chipset = CHIP_S3_ViRGE_MX;
 				break;
 			case PCI_CHIP_ViRGE_VX:
 			        PCIProbed = TRUE;
@@ -315,40 +323,49 @@ int *Chipset;
 			   chip_id  = rdinx(CRTC_IDX, 0x2d) << 8;
 			   chip_id |= rdinx(CRTC_IDX, 0x2e);
 			   chip_rev = rdinx(CRTC_IDX, 0x2f);
-			   if      (chip_id == 0x8880)
+			   switch (chip_id) {
+			   case 0x8880:
 			      *Chipset = CHIP_S3_866;
-			   else if (chip_id == 0x8890) 
+			      break;
+			   case 0x8890:
 			      *Chipset = CHIP_S3_868;
-			   else if (chip_id == 0x8810) 
+			      break;
+			   case 0x8810: 
 			      *Chipset = CHIP_S3_Trio32;
-			   else if (chip_id == PCI_CHIP_TRIO)
+			      break;
+			   case PCI_CHIP_TRIO:
 			      if ((chip_rev&0x40)  ==  0x40)
 				 *Chipset = CHIP_S3_Trio64V;
 			      else
 				 *Chipset = CHIP_S3_Trio64;
-			   else if (chip_id == PCI_CHIP_968) 
-			      *Chipset = CHIP_S3_968;
-			   else if (chip_id == PCI_CHIP_ViRGE) 
-			      *Chipset = CHIP_S3_ViRGE;
-			   else if (chip_id == PCI_CHIP_ViRGE_VX) 
-			      *Chipset = CHIP_S3_ViRGE_VX;
-			   else if (chip_id == PCI_CHIP_PLATO_PX) 
-			      *Chipset = CHIP_S3_PLATO_PX;
-			   else if (chip_id == PCI_CHIP_TRIO64V2_DXGX)
+			      break;
+			   case PCI_CHIP_TRIO64V2_DXGX:
 			      if (rdinx(CRTC_IDX, 0x6f) & 1)
 				 *Chipset = CHIP_S3_Trio64V2_GX;
 			      else
 				 *Chipset = CHIP_S3_Trio64V2_DX;
-			   else if (chip_id == 0x8a01)
+			      break;
+			   case PCI_CHIP_ViRGE_DXGX:
 			      if (rdinx(CRTC_IDX, 0x6f) & 1)
 				 *Chipset = CHIP_S3_ViRGE_GX;
 			      else
 				 *Chipset = CHIP_S3_ViRGE_DX;
-			   else {
-			      Chip_data = rev;
-			      Chip_data = (Chip_data << 16) | chip_id;
-			      Chip_data = (Chip_data <<  8) | chip_rev;
-			      *Chipset = CHIP_S3_UNKNOWN;
+			      break;
+
+			   case PCI_CHIP_968:
+			   case PCI_CHIP_AURORA64VP:
+			   case PCI_CHIP_ViRGE:
+			   case PCI_CHIP_ViRGE_VX:
+			   case PCI_CHIP_PLATO_PX: 
+			   case PCI_CHIP_ViRGE_GX2:
+			   case PCI_CHIP_ViRGE_MX:
+			      *Chipset = chip_id;
+			      break;
+			   default:
+			     Chip_data = rev;
+			     Chip_data = (Chip_data << 16) | chip_id;
+			     Chip_data = (Chip_data <<  8) | chip_rev;
+			     *Chipset = CHIP_S3_UNKNOWN;
 			   }
 			   break;				 
 			}
@@ -402,6 +419,19 @@ int Chipset;
 			      break;
 			   case 6:
 			      Mem = 1 * 1024;
+			      break;
+			   }
+			}
+			else if (Chipset == CHIP_S3_ViRGE_GX2 ||
+				 Chipset == CHIP_S3_ViRGE_MX)
+			{
+			   switch((config & 0xC0) >> 6)
+			   {
+			   case 1:
+			      Mem = 4 * 1024;
+			      break;
+			   case 3:
+			      Mem = 2 * 1024;
 			      break;
 			   }
 			}

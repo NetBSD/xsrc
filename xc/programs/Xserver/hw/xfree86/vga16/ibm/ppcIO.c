@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcIO.c,v 3.7 1996/12/23 06:53:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcIO.c,v 3.7.2.1 1998/02/01 16:04:58 robin Exp $ */
 /*
 
 Copyright (c) 1990  X Consortium
@@ -277,7 +277,7 @@ Init16Output( pScreen, pbits, virtx, virty, dpix, dpiy, width )
   if (!mfbAllocatePrivates(pScreen, (int*)NULL, (int*)NULL))
 	return ;
 
-  miScreenInit(pScreen, pbits, virtx, virty, 75, 75, virtx,
+  miScreenInit(pScreen, pbits, virtx, virty, 75, 75, width,
 	VGA_MAXPLANES, NUM_DEPTHS, vgaDepths, defvisual /* See above */,
 	NUM_VISUALS, vgaVisuals, &ppcBSFuncRec);
 

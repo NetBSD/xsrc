@@ -1,9 +1,25 @@
-/* $XFree86: xc/programs/xterm/xterm.h,v 3.9.2.1 1997/05/23 09:24:46 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/xterm.h,v 3.9.2.3 1998/02/22 01:28:30 robin Exp $ */
 /*
  * Common/useful definitions for XTERM application
  */
 #ifndef	included_xterm_h
 #define	included_xterm_h
+
+#ifndef GCC_UNUSED
+#define GCC_UNUSED /* nothing */
+#endif
+
+#ifndef HAVE_CONFIG_H
+
+#ifndef HAVE_X11_DECKEYSYM_H
+#define HAVE_X11_DECKEYSYM_H 1
+#endif
+
+#ifndef DFT_TERMTYPE
+#define DFT_TERMTYPE "xterm"
+#endif
+
+#endif
 
 #include "proto.h"
 
@@ -51,11 +67,14 @@ extern void HideCursor PROTO((void));
 extern void SetVTFont PROTO((int i, Bool doresize, char *name1, char *name2));
 extern void ShowCursor PROTO((void));
 extern void SwitchBufPtrs PROTO((TScreen *screen));
-extern void VTReset PROTO((int full));
+extern void ToggleAlternate PROTO((TScreen *screen));
+extern void VTReset PROTO((int full, int saved));
 extern void VTRun PROTO((void));
+extern void dotext PROTO((TScreen *screen, int charset, Char *buf, Char *ptr));
+extern void resetCharsets PROTO((TScreen *screen));
 extern void set_cursor_gcs PROTO((TScreen *screen));
-extern void unparseputc1 PROTO((int c, int fd));
 extern void unparseputc PROTO((int c, int fd));
+extern void unparseputc1 PROTO((int c, int fd));
 extern void unparseseq PROTO((ANSI *ap, int fd));
 
 #if OPT_ISO_COLORS
@@ -77,12 +96,21 @@ extern void CursorUp PROTO((TScreen *screen, int  n));
 extern void Index PROTO((TScreen *screen, int amount));
 extern void RevIndex PROTO((TScreen *screen, int amount));
 
+/* doublechr.c */
+extern void xterm_DECDHL PROTO((Bool top));
+extern void xterm_DECSWL PROTO((void));
+extern void xterm_DECDWL PROTO((void));
+
 /* input.c */
 extern void Input PROTO((TKeyboard *keyboard, TScreen *screen, XKeyEvent *event, Bool eightbit));
 extern void StringInput PROTO((TScreen *screen, char *string, Size_t nbytes));
 
 /* main.c */
+#ifndef __EMX__
 extern int main PROTO((int argc, char **argv));
+#else
+extern int main PROTO((int argc, char **argv, char **envp));
+#endif
 
 extern int GetBytesAvailable PROTO((int fd));
 extern int kill_process_group PROTO((int pid, int sig));
@@ -95,6 +123,7 @@ extern SIGNAL_T Exit PROTO((int n));
 
 /* menu.c */
 extern void do_hangup          PROTO_XT_CALLBACK_ARGS;
+extern void show_8bit_control  PROTO((Bool value));
 
 /* misc.c */
 extern Cursor make_colored_cursor PROTO((unsigned cursorindex, unsigned long fg, unsigned long bg));
@@ -123,13 +152,14 @@ extern void Setenv PROTO((char *var, char *value));
 extern void SysError PROTO((int i));
 extern void VisualBell PROTO((void));
 extern void creat_as PROTO((int uid, int gid, char *pathname, int mode));
-extern void do_dcs PROTO((Char *buf, int len));
+extern void do_dcs PROTO((Char *buf, Size_t len));
 extern void do_osc PROTO((Char *buf, int len));
 extern void do_xevents PROTO((void));
 extern void end_tek_mode PROTO((void));
 extern void end_vt_mode PROTO((void));
 extern void hide_tek_window PROTO((void));
 extern void hide_vt_window PROTO((void));
+extern void reset_decudk PROTO((void));
 extern void set_tek_visibility PROTO((int on));
 extern void set_vt_visibility PROTO((int on));
 extern void switch_modes PROTO((Bool tovt));
@@ -142,25 +172,32 @@ extern void CloseLog PROTO((TScreen *screen));
 extern void FlushLog PROTO((TScreen *screen));
 #endif
 
+/* print.c */
+extern int xtermPrinterControl PROTO((int chr));
+extern void xtermAutoPrint PROTO((int chr));
+extern void xtermMediaControl PROTO((int param, int private));
+
 /* screen.c */
 extern Bool non_blank_line PROTO((ScrnBuf sb, int row, int col, int len));
 extern ScrnBuf Allocate PROTO((int nrow, int ncol, Char **addr));
 extern int ScreenResize PROTO((TScreen *screen, int width, int height, unsigned *flags));
-extern int ScrnGetAttributes PROTO((TScreen *screen, int row, int col, Char *str, int length));
+extern int ScrnTstWrapped PROTO((TScreen *screen, int row));
+extern size_t ScrnPointers PROTO((TScreen *screen, size_t len));
 extern void ClearBufRows PROTO((TScreen *screen, int first, int last));
-extern void ScreenWrite PROTO((TScreen *screen, char *str, unsigned flags, unsigned cur_fg, unsigned cur_bg, int length));
+extern void ScreenWrite PROTO((TScreen *screen, Char *str, unsigned flags, unsigned cur_fg_bg, int length));
+extern void ScrnClrWrapped PROTO((TScreen *screen, int row));
 extern void ScrnDeleteChar PROTO((TScreen *screen, int n, int size));
-extern void ScrnDeleteLine PROTO((ScrnBuf sb, int n, int last, int size, int where));
+extern void ScrnDeleteLine PROTO((TScreen *screen, ScrnBuf sb, int n, int last, int size, int where));
 extern void ScrnInsertChar PROTO((TScreen *screen, int n, int size));
-extern void ScrnInsertLine PROTO((ScrnBuf sb, int last, int where, int n, int size));
+extern void ScrnInsertLine PROTO((TScreen *screen, ScrnBuf sb, int last, int where, int n, int size));
 extern void ScrnRefresh PROTO((TScreen *screen, int toprow, int leftcol, int nrows, int ncols, int force));
-extern void ScrnSetAttributes PROTO((TScreen *screen, int row, int col, unsigned mask, unsigned value, int length));
+extern void ScrnSetWrapped PROTO((TScreen *screen, int row));
 
 /* scrollbar.c */
 extern void DoResizeScreen PROTO((XtermWidget xw));
 extern void HandleScrollBack PROTO_XT_ACTIONS_ARGS;
 extern void HandleScrollForward PROTO_XT_ACTIONS_ARGS;
-extern void ResizeScrollBar PROTO((Widget scrollWidget, int x, int y, unsigned height));
+extern void ResizeScrollBar PROTO((TScreen *screen));
 extern void ScrollBarDrawThumb PROTO((Widget scrollWidget));
 extern void ScrollBarOff PROTO((TScreen *screen));
 extern void ScrollBarOn PROTO((XtermWidget xw, int init, int doalloc));
@@ -178,9 +215,10 @@ extern void TabSet PROTO((Tabs tabs, int col));
 extern void TabZonk PROTO((Tabs	tabs));
 
 /* util.c */
-extern GC updatedXtermGC PROTO((TScreen *screen, int flags, int fg, int bg, Bool hilite));
+extern GC updatedXtermGC PROTO((TScreen *screen, int flags, int fg_bg, Bool hilite));
 extern int AddToRefresh PROTO((TScreen *screen));
 extern int HandleExposure PROTO((TScreen *screen, XEvent *event));
+extern int drawXtermText PROTO((TScreen *screen, unsigned flags, GC gc, int x, int y, int chrset, Char *text, int len));
 extern void ChangeColors PROTO((XtermWidget tw, ScrnColors *pNew));
 extern void ClearRight PROTO((TScreen *screen, int n));
 extern void ClearScreen PROTO((TScreen *screen));
@@ -195,7 +233,6 @@ extern void ReverseVideo PROTO((XtermWidget termw));
 extern void Scroll PROTO((TScreen *screen, int amount));
 extern void do_erase_display PROTO((TScreen *screen, int param, int mode));
 extern void do_erase_line PROTO((TScreen *screen, int param, int mode));
-extern void drawXtermText PROTO((TScreen *screen, unsigned flags, GC gc, int x, int y, char *text, int len));
 extern void recolor_cursor PROTO((Cursor cursor, unsigned long fg, unsigned long bg));
 extern void resetXtermGC PROTO((TScreen *screen, int flags, Bool hilite));
 extern void scrolling_copy_area PROTO((TScreen *screen, int firstline, int nlines, int amount));
@@ -204,8 +241,8 @@ extern void scrolling_copy_area PROTO((TScreen *screen, int firstline, int nline
 
 extern Pixel getXtermBackground PROTO((int flags, int color));
 extern Pixel getXtermForeground PROTO((int flags, int color));
-extern unsigned extract_bg PROTO((unsigned color));
-extern unsigned extract_fg PROTO((unsigned color, unsigned flags));
+extern int extract_bg PROTO((unsigned color));
+extern int extract_fg PROTO((unsigned color, unsigned flags));
 extern unsigned makeColorPair PROTO((int fg, int bg));
 extern unsigned xtermColorPair PROTO((void));
 extern void ClearCurBackground PROTO((TScreen *screen, int top, int left, unsigned height, unsigned width));
@@ -234,5 +271,19 @@ extern void useCurBackground PROTO((Bool flag));
 	XFillRectangle (screen->display, TextWindow(screen), \
 		ReverseGC(screen), left, top, width, height); \
 	useCurBackground(FALSE)
+
+#if OPT_DEC_CHRSET
+extern int getXtermChrSet PROTO((int row, int col));
+extern int curXtermChrSet PROTO((int row));
+#else
+#define getXtermChrSet(row, col) 0
+#define curXtermChrSet(row) 0
+#endif
+
+#if OPT_XMC_GLITCH
+extern void Mark_XMC PROTO((TScreen *screen, int param));
+extern void Jump_XMC PROTO((TScreen *screen));
+extern void Resolve_XMC PROTO((TScreen *screen));
+#endif
 
 #endif	/* included_xterm_h */

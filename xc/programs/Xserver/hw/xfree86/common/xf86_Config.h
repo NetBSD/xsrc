@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Config.h,v 3.59.2.4 1997/05/18 12:00:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Config.h,v 3.59.2.8 1998/02/24 19:05:56 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -85,6 +85,7 @@ typedef struct {
    char *DCConfig;
    char *DCOptions;
    int MemClk;                 /* General flag used for memory clocking */
+   int LCDClk;
 } GDevRec, *GDevPtr;
 
 typedef struct {
@@ -174,9 +175,18 @@ static SymTabRec DriverTab[] = {
 #define PS_2		1026
 #define MMHITTAB	1027
 #define GLIDEPOINT	1028
-#define INTELLIMOUSE    1029
-#define XQUE      	1030
-#define OSMOUSE   	1031
+#define IMSERIAL	1029
+#define THINKING	1030
+#define IMPS2		1031
+#define THINKINGPS2	1032
+#define MMANPLUSPS2	1033
+#define GLIDEPOINTPS2	1034
+#define NETPS2		1035
+#define NETSCROLLPS2	1036
+#define SYSMOUSE	1037
+#define AUTOMOUSE	1038
+#define XQUE      	1039
+#define OSMOUSE   	1040
 
 #ifdef INIT_CONFIG
 static SymTabRec MouseTab[] = {
@@ -189,16 +199,25 @@ static SymTabRec MouseTab[] = {
   { PS_2,	"ps/2" },
   { MMHITTAB,	"mmhittab" },
   { GLIDEPOINT,	"glidepoint" },
-  { INTELLIMOUSE,"intellimouse" },
+  { IMSERIAL,	"intellimouse" },
+  { THINKING,	"thinkingmouse" },
+  { IMPS2,	"imps/2" },
+  { THINKINGPS2,"thinkingmouseps/2" },
+  { MMANPLUSPS2,"mousemanplusps/2" },
+  { GLIDEPOINTPS2,"glidepointps/2" },
+  { NETPS2,	"netmouseps/2" },
+  { NETSCROLLPS2,"netscrollps/2" },
+  { SYSMOUSE,	"sysmouse" },
+  { AUTOMOUSE,	"auto" },
   { XQUE,	"xqueue" },
   { OSMOUSE,	"osmouse" },
   { -1,		"" },
 };
 #endif /* INIT_CONFIG */
 
-#define FONTPATH	1040
-#define RGBPATH		1041
-#define MODULEPATH	1042
+#define FONTPATH	1045
+#define RGBPATH		1046
+#define MODULEPATH	1047
 
 #ifdef INIT_CONFIG
 static SymTabRec FilesTab[] = {
@@ -405,6 +424,7 @@ static SymTabRec KeyMapTab[] = {
 #define CHIPID		30
 #define CHIPREV		31
 #define MEMCLOCK        32
+#define LCDCLOCK        33
 #define VGABASEADDR    100
 #define S3REFCLK       101
 #define S3BLANKDELAY   102
@@ -444,6 +464,7 @@ SymTabRec DeviceTab[] = {
   { TEXTCLOCKFRQ, "textclockfreq" },
   { MEMCLOCK,   "set_memclk" },
   { MEMCLOCK,   "set_mclk" },
+  { LCDCLOCK,   "set_lcdclk" },
   { -1,		"" },
 };
 #else
@@ -517,8 +538,17 @@ static SymTabRec KeyboardTab[] = {
 						   [CHRIS-211092] */
 #define P_PS2		6			/* PS/2 mouse */
 #define P_MMHIT		7			/* MM_HitTab */
-#define P_GLIDEPOINT	8			/* ALPS GlidePoint */
-#define P_MSINTELLIMOUSE  9                     /* Microsoft IntelliMouse */
+#define P_GLIDEPOINT	8		/* ALPS serial GlidePoint */
+#define P_IMSERIAL	9		/* Microsoft serial IntelliMouse */
+#define P_THINKING	10		/* Kensington serial ThinkingMouse */
+#define P_IMPS2		11		/* Microsoft PS/2 IntelliMouse */
+#define P_THINKINGPS2	12		/* Kensington PS/2 ThinkingMouse */
+#define P_MMANPLUSPS2	13		/* Logitech PS/2 MouseMan+ */
+#define P_GLIDEPOINTPS2	14		/* ALPS PS/2 GlidePoint */
+#define P_NETPS2	15		/* Genius PS/2 NetMouse */
+#define P_NETSCROLLPS2	16		/* Genius PS/2 NetScroll */
+#define P_SYSMOUSE	17		/* SysMouse */
+#define P_AUTO		18		/* automatic */
 
 #define EMULATE3	50
 #define BAUDRATE	51
@@ -533,6 +563,9 @@ static SymTabRec KeyboardTab[] = {
 #define REPEATEDMIDDLE	59
 #define DEVICE_NAME	60
 #define ALWAYSCORE	61
+#define PRESOLUTION	62
+#define ZAXISMAPPING	63
+#define PBUTTONS	64
 
 #ifdef INIT_CONFIG
 static SymTabRec PointerTab[] = {
@@ -550,11 +583,25 @@ static SymTabRec PointerTab[] = {
   { CLEARRTS,	"clearrts" },
   { CHORDMIDDLE,"chordmiddle" },
   { REPEATEDMIDDLE,"repeatedmiddle" },
+  { PRESOLUTION,"resolution" },
 #endif
   { DEVICE_NAME,"devicename" },
 #ifdef XINPUT
   { ALWAYSCORE,"alwayscore" },
 #endif
+  { ZAXISMAPPING, "zaxismapping" },
+  { PBUTTONS,	"buttons" },
+  { -1,		"" },
+};
+#endif /* INIT_CONFIG */
+
+#define XAXIS		68
+#define YAXIS		69
+
+#ifdef INIT_CONFIG
+static SymTabRec ZMapTab[] = {
+  { XAXIS,	"x" },
+  { YAXIS,	"y" },
   { -1,		"" },
 };
 #endif /* INIT_CONFIG */
@@ -643,6 +690,7 @@ static SymTabRec VisualTab[] = {
 #define XCONFIG_VGABASE         20      /* XF86Config or default */
 #define XCONFIG_MODULEPATH      21      /* XF86Config or default */
 #define XCONFIG_MEMCLOCK        22      /* XF86Config or default */
+#define XCONFIG_LCDCLOCK        23      /* XF86Config or default */
 
 #define XCONFIG_GIVEN		"(**)"
 #define XCONFIG_PROBED		"(--)"

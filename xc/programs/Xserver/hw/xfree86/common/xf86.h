@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.47.2.5 1997/07/13 14:45:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.47.2.8 1998/02/24 19:05:53 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -219,6 +219,7 @@ typedef struct {
   char          *DCConfig;
   char          *DCOptions;
   int            MemClk;          /* General flag used for memory clocking */
+  int            LCDClk;
 #ifdef XFreeXDGA
   int            directMode;
   void           (*setBank)(
@@ -327,6 +328,11 @@ extern Bool        xf86VTSema;
 
 /* Mouse device private record */
 
+#define MSE_MAPTOX		(-1)
+#define MSE_MAPTOY		(-2)
+#define MSE_MAXBUTTONS		12
+#define MSE_DFLTBUTTONS		3
+
 typedef struct _MouseDevRec {
     DeviceProc    mseProc;              /* procedure for initializing */
     void          (* mseEvents)(
@@ -338,17 +344,26 @@ typedef struct _MouseDevRec {
     int           mseFd;
     char          *mseDevice;
     int           mseType;
+    int           mseModel;
     int           baudRate;
     int           oldBaudRate;
     int           sampleRate;
     int           lastButtons;
     int           threshold, num, den;  /* acceleration */
+    int           buttons;		/* # of buttons */
     int           emulateState;         /* automata state for 2 button mode */
     Bool          emulate3Buttons;
     int           emulate3Timeout;      /* Timeout for 3 button emulation */
     Bool          chordMiddle;
     int           mouseFlags;		/* Flags to Clear after opening mouse dev */
     int		  truebuttons;		/* Arg to maintain before emulate3buttons timer callback */
+
+    int           resolution;
+    int           negativeZ;
+    int           positiveZ;
+#ifndef MOUSE_PROTOCOL_IN_KERNEL
+    unsigned char protoPara[7];
+#endif
     
 #ifndef CSRG_BASED
     /* xque part */
@@ -697,6 +712,13 @@ void xf86MouseCtrl(
 #endif
 );
 #endif
+
+/* xf86_PnPMouse.c */
+int xf86GetPnPMouseProtocol(
+#if NeedFunctionPrototypes
+    MouseDevPtr mouse
+#endif
+);
 
 /* xf86Kbd.c */
 Bool LegalModifier(

@@ -1,4 +1,4 @@
-/* $XConsortium: i128cmap.c /main/2 1996/02/21 17:23:10 kaleb $ */
+/* $TOG: i128cmap.c /main/4 1997/10/19 15:03:02 kaleb $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -24,7 +24,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128cmap.c,v 3.2 1996/12/23 06:35:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128cmap.c,v 3.2.2.1 1998/01/12 03:02:10 robin Exp $ */
 
 /*
  * Modified by Amancio Hasty and Jon Tombs
@@ -79,12 +79,12 @@ i128RestoreDACvalues()
 
    if (xf86VTSema) {
       BLOCK_CURSOR;
-      i128mem.rbase_g_b[WR_ADR] = 0x00;
+      i128mem.rbase_g[WR_ADR] = 0x00;					MB;
 
       for (i=0; i < 256; i++) {
-	 i128mem.rbase_g_b[PAL_DAT] = currenti128dac[i].r;
-	 i128mem.rbase_g_b[PAL_DAT] = currenti128dac[i].g;
-	 i128mem.rbase_g_b[PAL_DAT] = currenti128dac[i].b;
+	 i128mem.rbase_g[PAL_DAT] = currenti128dac[i].r;		MB;
+	 i128mem.rbase_g[PAL_DAT] = currenti128dac[i].g;		MB;
+	 i128mem.rbase_g[PAL_DAT] = currenti128dac[i].b;		MB;
       }
       UNBLOCK_CURSOR;
    }
@@ -137,10 +137,10 @@ i128StoreColors(pmap, ndef, pdefs)
 	    xf86bGammaMap[pdefs[i].blue  >> 8] >> 2;
       }
       if (xf86VTSema) {
-	 i128mem.rbase_g_b[WR_ADR] = pdefs[i].pixel;
-	 i128mem.rbase_g_b[PAL_DAT] = r;
-	 i128mem.rbase_g_b[PAL_DAT] = g;
-	 i128mem.rbase_g_b[PAL_DAT] = b;
+	 i128mem.rbase_g[WR_ADR] = pdefs[i].pixel;			MB;
+	 i128mem.rbase_g[PAL_DAT] = r;					MB;
+	 i128mem.rbase_g[PAL_DAT] = g;					MB;
+	 i128mem.rbase_g[PAL_DAT] = b;					MB;
       }
    }
    UNBLOCK_CURSOR;
@@ -155,7 +155,7 @@ i128InstallColormap(pmap)
    Pixel *ppix;
    xrgb *prgb;
    xColorItem *defs;
-   int   i;
+   int   i,j;
 
    if (pmap == oldmap)
       return;
@@ -179,15 +179,44 @@ i128InstallColormap(pmap)
    for (i = 0; i < entries; i++)
       ppix[i] = i;
 
-   QueryColors(pmap, entries, ppix, prgb);
+  if (pmap->class == GrayScale || pmap->class == PseudoColor)
+    {
+      for ( i=j=0; i<entries; i++) 
+        {
+	  if (pmap->red[i].fShared || pmap->red[i].refcnt != 0)
+	    {
+	      defs[j].pixel = i;
+              defs[j].flags = DoRed|DoGreen|DoBlue;
+	      if (pmap->red[i].fShared)
+	        {
+	          defs[j].red = pmap->red[i].co.shco.red->color;
+	          defs[j].green = pmap->red[i].co.shco.green->color;
+	          defs[j].blue = pmap->red[i].co.shco.blue->color;
+	        }
+	        else if (pmap->red[i].refcnt != 0)
+	        {
+	          defs[j].red = pmap->red[i].co.local.red;
+	          defs[j].green = pmap->red[i].co.local.green;
+	          defs[j].blue = pmap->red[i].co.local.blue;
+	        }
+	      j++;
+	    }
+        }
+      entries = j;
+    }
+  else
+    {
+      QueryColors( pmap, entries, ppix, prgb);
 
-   for (i = 0; i < entries; i++) {	/* convert xrgbs to xColorItems */
-      defs[i].pixel = ppix[i];
-      defs[i].red = prgb[i].red;
-      defs[i].green = prgb[i].green;
-      defs[i].blue = prgb[i].blue;
-      defs[i].flags = DoRed | DoGreen | DoBlue;
-   }
+      for ( i=0; i<entries; i++) /* convert xrgbs to xColorItems */
+        {
+          defs[i].pixel = ppix[i];
+          defs[i].red = prgb[i].red;
+          defs[i].green = prgb[i].green;
+          defs[i].blue = prgb[i].blue;
+          defs[i].flags =  DoRed|DoGreen|DoBlue;
+        }
+    }
 
    i128StoreColors(pmap, entries, defs);
 
@@ -233,15 +262,15 @@ i128RestoreColor0(pScreen)
    QueryColors(InstalledMaps[pScreen->myNum], 1, &pix, &rgb);
 
    BLOCK_CURSOR;
-   i128mem.rbase_g_b[WR_ADR] = 0x00;
+   i128mem.rbase_g[WR_ADR] = 0x00;					MB;
    if (i128DAC8Bit) {
-      i128mem.rbase_g_b[PAL_DAT] = xf86rGammaMap[rgb.red   >> 8];
-      i128mem.rbase_g_b[PAL_DAT] = xf86gGammaMap[rgb.green >> 8];
-      i128mem.rbase_g_b[PAL_DAT] = xf86bGammaMap[rgb.blue  >> 8];
+      i128mem.rbase_g[PAL_DAT] = xf86rGammaMap[rgb.red   >> 8];		MB;
+      i128mem.rbase_g[PAL_DAT] = xf86gGammaMap[rgb.green >> 8];		MB;
+      i128mem.rbase_g[PAL_DAT] = xf86bGammaMap[rgb.blue  >> 8];		MB;
    } else {
-      i128mem.rbase_g_b[PAL_DAT] = xf86rGammaMap[rgb.red   >> 8] >> 2;
-      i128mem.rbase_g_b[PAL_DAT] = xf86gGammaMap[rgb.green >> 8] >> 2;
-      i128mem.rbase_g_b[PAL_DAT] = xf86bGammaMap[rgb.blue  >> 8] >> 2;
+      i128mem.rbase_g[PAL_DAT] = xf86rGammaMap[rgb.red   >> 8] >> 2;	MB;
+      i128mem.rbase_g[PAL_DAT] = xf86gGammaMap[rgb.green >> 8] >> 2;	MB;
+      i128mem.rbase_g[PAL_DAT] = xf86bGammaMap[rgb.blue  >> 8] >> 2;	MB;
    }
    UNBLOCK_CURSOR;
 }

@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase4.tcl,v 3.8 1996/12/27 06:54:11 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase4.tcl,v 3.8.2.1 1998/02/21 06:07:01 robin Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -15,6 +15,8 @@
 # Phase IV - Commands run after second server is started
 #
 
+source $XF86Setup_library/texts/local_text.tcl
+
 if $StartServer {
 	set_resource_defaults
 
@@ -23,7 +25,7 @@ if $StartServer {
 	create_main_window [set w .xf86setup]
 
 	# put up a message ASAP so the user knows we're still alive
-	label $w.waitmsg -text "Loading  -  Please wait..."
+	label $w.waitmsg -text $messages(phase4.1)
 	pack  $w.waitmsg -expand yes -fill both
 	update idletasks
 
@@ -32,7 +34,7 @@ if $StartServer {
 
 	source $tk_library/tk.tcl
 	set_default_arrow_bindings
-	set msg "Congratulations, you've got a running server!\n\n"
+	set msg $messages(phase4.13)
 } else {
 	set msg ""
 }
@@ -45,54 +47,43 @@ proc Phase4_run_xvidtune { win } {
 
 proc Phase4_nextphase { win } {
 	global Confname StartServer
+	global messages
 
 	set w [winpathprefix $win]
 	set saveto [$w.saveto.entry get]
 	check_tmpdirs
 	writeXF86Config $Confname-3 -displayof $w -realdevice
 	set backupmsg ""
+	make_message_phase4 $saveto
 	if [file exists $saveto] {
 	    if {[catch {exec mv $saveto $saveto.bak} ret] != 0} {
 		bell
-		$w.mesg configure -text \
-		    "Unable to backup $saveto as $saveto.bak!\n\
-		    The configuration has not been saved!\n\
-		    Try again, with a different file name"
+		$w.mesg configure -text $messages(phase4.2);
 		return
 	    }
-	    set backupmsg "A backup of the previous configuration has\n\
-		been saved to the file $saveto.bak"
+	    set backupmsg $messages(phase4.3)
 	}
 	if {[catch {exec cp $Confname-3 $saveto} ret] != 0} {
 	    bell
-            $w.mesg configure -text \
-		"Unable to save the configuration to\n\
-		the file $saveto.\n\n\
-		Try again, with a different file name"
+            $w.mesg configure -text $messages(phase4.4)
 	    return
 	}
-	$w.text configure -text \
-		"The configuration has been completed.\n\n\
-		$backupmsg"
+	$w.text configure \
+		-text "$messages(phase4.5)$backupmsg"
 	pack forget $w.buttons $w.mesg $w.saveto
 	if $StartServer {
 		set cmd {mesg "Just a moment..." info; shutdown}
 	} else {
 		set cmd {shutdown;source $XF86Setup_library/phase5.tcl}
 	}
-	button $w.okay -text "Okay"  -command $cmd
+	button $w.okay -text $messages(phase4.6)  -command $cmd
 	pack   $w.text $w.okay -side top
 	focus  $w.okay
 }
 
-label  $w.text -text " $msg\
-	You can now run xvidtune to adjust your display settings,\n\
-	if you want to change the size or placement of the screen image\n\n\
-	If not, go ahead and exit\n\n\n\
-	If you choose to save the configuration, a backup copy will be\n\
-	made, if the file already exists"
+label  $w.text -text " $msg$messages(phase4.7)"
 frame  $w.saveto
-label  $w.saveto.title -text "Save configuration to:"
+label  $w.saveto.title -text $messages(phase4.8)
 entry  $w.saveto.entry -bd 2 -width 40
 pack   $w.saveto.title $w.saveto.entry -side left
 if [getuid] {
@@ -106,12 +97,12 @@ if [getuid] {
 }
 label  $w.mesg -text ""
 frame  $w.buttons
-button $w.buttons.xvidtune -text "Run xvidtune" \
+button $w.buttons.xvidtune -text $messages(phase4.9) \
 	-command [list Phase4_run_xvidtune $w]
-button $w.buttons.save -text "Save the configuration and exit" \
+button $w.buttons.save -text $messages(phase4.10) \
 	-command [list Phase4_nextphase $w]
-button $w.buttons.abort -text "Abort - Don't save the configuration" \
-	-command "clear_scrn;puts stderr Aborted;shutdown 1"
+button $w.buttons.abort -text $messages(phase4.11) \
+	-command "clear_scrn;puts stderr $messages(phase4.12);shutdown 1"
 pack   $w.buttons.xvidtune $w.buttons.save $w.buttons.abort -side top \
 	-pady 5m -fill x
 

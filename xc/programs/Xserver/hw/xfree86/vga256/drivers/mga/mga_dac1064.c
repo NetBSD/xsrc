@@ -1,8 +1,8 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dac1064.c,v 1.1.2.8 1997/07/26 06:30:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dac1064.c,v 1.1.2.10 1998/02/07 10:05:26 hohndel Exp $ */
 
 
 /*
- * Mystique RAMDAC driver v1.2
+ * Mystique RAMDAC driver v1.3
  *
  * Author:	Andrew van der Stock
  * 		ajv@greebo.svhm.org.au
@@ -33,8 +33,12 @@
  *			g.desbief@aix.pacwan.net
  *		RAMDAC timing, for MGA 1064SG integrated RAMDAC
  *
+ *		Andrew van der Stock, andrew.van.der.Stock@member.sage-au.org.au
+ * 		MGA BIOS stuff
+ *
 */
  
+#include "compiler.h"
 #include "xf86.h"
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
@@ -43,6 +47,7 @@
 #include "vgaPCI.h"
 
 #include "mga_reg.h"
+#include "mga_bios.h"
 #include "mga.h"
 
 /*
@@ -98,6 +103,29 @@ static unsigned char MGADACbpp32[] = {
 	0x00, 0x00, 0x0D, 0xCA, 0x33, 0x58, 0xC2
 };
 
+#ifdef	PC98_MGA
+static unsigned char PC98_MGADACbpp8[] = {
+	0xFE, 0x03, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+	0x3F, 0x43, 0x50, 0x00, 0x05, 0x09, 0x20, 0x19, 
+	0x10, 0x3f, 0x40, 0x00, 0x07,
+	0x00, 0x00, 0x1C, 0xEE, 0x9A, 0x82, 0x5B
+};
+
+static unsigned char PC98_MGADACbpp16[] = {
+	0xFE, 0x07, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+	0x3F, 0x43, 0x50, 0x00, 0x02, 0x09, 0x20, 0x19, 
+	0x10, 0x3f, 0x40, 0x00, 0x07,
+	0x00, 0x00, 0x1C, 0xEE, 0x9A, 0x82, 0x5B
+};
+
+static unsigned char PC98_MGADACbpp32[] = {
+	0xFE, 0x07, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
+	0x2A, 0x02, 0x10, 0x00, 0x07, 0x09, 0x20, 0x19, 
+	0x10, 0x3f, 0x40, 0x00, 0x07,
+	0x00, 0x00, 0x00, 0x0E, 0x9A, 0x80, 0x5A
+};
+#endif	/* PC98_MGA */
+
 /*
  * This is a convenience macro, so that entries in the driver structure
  * can simply be dereferenced with 'newVS->xxx'.
@@ -113,10 +141,6 @@ typedef struct {
 	unsigned char ExtVga[6];
 } vgaMGARec, *vgaMGAPtr;
     
-/*
- * Read/write to the DAC via MMIO 
- */
-
 /*
  * Read/write to the DAC via MMIO 
  */
@@ -170,6 +194,80 @@ unsigned char reg, val;
 	OUTREG8(RAMDAC_OFFSET + reg, val);
 }
 
+#ifdef	PC98_MGA
+/*
+ * MGA-1064SG for PC98
+ *
+ *	written by Isao OHISHI(X98 core team)
+ */
+static void MGA1064PC98Init()
+{
+	int i;
+	long option_reg;
+
+
+	outb(MGAREG_FIFOSTATUS, 0x6);
+	outb(MGAREG_VCOUNT, 0x6);
+	outb(MGAREG_Reset, 0x6);
+
+	switch(vgaBitsPerPixel)
+	{
+	case 8:
+		outb(MGAREG_IEN,0xe5);
+		outb(0x1e3c,0xe5);
+		outb(0x1fff,0x02);
+		pciWriteLong( MGAPciTag, PCI_OPTION_REG, 0x1f094e21 );
+		outMGA1064( MGA1064_SYS_PLL_M, 0x09 );
+		outMGA1064( MGA1064_SYS_PLL_N, 0x73 );
+		outMGA1064( MGA1064_SYS_PLL_P, 0x10 );
+		for(i=0; i<sizeof(MGADACregs); i++) {
+			outMGA1064( MGADACregs[i], PC98_MGADACbpp8[i] );
+		}
+		break;
+	case 16:
+		outb(MGAREG_IEN,0xd8);
+		outb(0x1e3c,0xd8);
+		outb(0x1fff,0x02);
+		pciWriteLong( MGAPciTag, PCI_OPTION_REG, 0x1f094e21 );
+		outMGA1064( MGA1064_SYS_PLL_M, 0x09 );
+		outMGA1064( MGA1064_SYS_PLL_N, 0x73 );
+		outMGA1064( MGA1064_SYS_PLL_P, 0x10 );
+		for(i=0; i<sizeof(MGADACregs); i++) {
+			outMGA1064( MGADACregs[i], PC98_MGADACbpp16[i] );
+		}
+		break;
+	case 24:
+		/* not yet at all*/
+/*
+option_reg = pciReadLong(MGAPciTag, PCI_OPTION_REG);
+ErrorF("pciReadLong = %x\n",option_reg);
+ErrorF("MGA1064_SYS_PLL_M = %x\n",inMGA1064( MGA1064_SYS_PLL_M ));
+ErrorF("MGA1064_SYS_PLL_N = %x\n",inMGA1064( MGA1064_SYS_PLL_N ));
+ErrorF("MGA1064_SYS_PLL_P = %x\n",inMGA1064( MGA1064_SYS_PLL_P ));
+for(i=0; i<sizeof(MGADACregs); i++) {
+	ErrorF("inMGA1064( %x ) = %x\n", MGADACregs[i], inMGA1064( MGADACregs[i] ));
+}
+*/
+		break;
+	case 32:
+		outb(MGAREG_IEN,0x75);
+		outb(0x1e3c,0x75);
+		outb(0x1fff,0x01);
+		pciWriteLong( MGAPciTag, PCI_OPTION_REG, 0x1f094e21 );
+		outMGA1064( MGA1064_SYS_PLL_M, 0x09 );
+		outMGA1064( MGA1064_SYS_PLL_N, 0x73 );
+		outMGA1064( MGA1064_SYS_PLL_P, 0x10 );
+		for(i=0; i<sizeof(MGADACregs); i++) {
+			outMGA1064( MGADACregs[i], PC98_MGADACbpp32[i] );
+		}
+		break;
+	default:
+		FatalError("MGA: unsupported depth\n");
+	}
+
+	outb(MGAREG_MISC_WRITE, 0xd);
+}
+#endif	/* PC98_MGA */
 
 /*
  * MGA1064SGCalcClock - Calculate the PLL settings (m, n, p, s).
@@ -350,10 +448,17 @@ MGA1064SGSetPCLK( f_out, bpp )
 
 	/* The actual frequency output by the clock */
 	double f_pll;
+	long f_max;
 
-	/* Get the maximum pixel clock frequency */
-	long f_max = MGA1064_MAX_PCLK_FREQ  ;
-	if ( vga256InfoRec.maxClock < MGA1064_MAX_PCLK_FREQ   )
+	/* Get the maximum pixel clock frequency from the BIOS, 
+         * or from a reasonable default
+         */
+	if ( MGABios2.PinID && MGABios2.PclkMax != 0xff )
+		f_max = (MGABios2.PclkMax+100) * 1000; /* [ajv - scale it] */
+	else
+		f_max = MGA1064_MAX_PCLK_FREQ;
+
+	if ( vga256InfoRec.maxClock < f_max )
 		f_max = vga256InfoRec.maxClock;
 
 	/* Do the calculations for m, n, and p */
@@ -431,9 +536,17 @@ MGA1064SGSetMCLK( f_out )
 	int pclk_m, pclk_n, pclk_p,pclk_s;
 	int mclk_ctl, rfhcnt;
 	long	option_reg;
+	long	f_max;
+
+	/* ajv - get it from the bios, if it exists */
+
+	if (MGABios2.PinID)
+		f_max = MGABios2.ClkMem * 1000;
+	else
+		f_max = MGA1064_MAX_MCLK_FREQ;
 
 	f_pll = MGA1064SGCalcClock(
-		f_out, MGA1064_MAX_MCLK_FREQ,
+		f_out, f_max,
 		& mclk_m, & mclk_n, & mclk_p ,& mclk_s
 	);
 
@@ -494,8 +607,14 @@ MGA1064SGSetMCLK( f_out )
 	rfhcnt = ( 332.0 * f_pll / 1280000.0 );
 	if ( rfhcnt > 15 )
 		rfhcnt = 0;
-	pciWriteLong( MGAPciTag, PCI_OPTION_REG, ( rfhcnt << 16 ) |
-		( pciReadLong( MGAPciTag, PCI_OPTION_REG ) & ~0xf0000 ));
+
+	rfhcnt <<= 16;
+
+    	if(!OFLG_ISSET(OPTION_PCI_RETRY, &vga256InfoRec.options))
+	   rfhcnt |= (1 << 29);
+
+ 	pciWriteLong( MGAPciTag, PCI_OPTION_REG, rfhcnt |
+		( pciReadLong( MGAPciTag, PCI_OPTION_REG ) & ~0x200f0000 ));
 
 #ifdef DEBUG
 	ErrorF( "MGA1064SGSetMCLK: syspll_m=%x syspll_n=%x syspll_p=%x, option_reg=%x\n"
@@ -570,6 +689,13 @@ DisplayModePtr mode;
 	vs = mode->CrtcVSyncStart		- 1;
 	ve = mode->CrtcVSyncEnd			- 1;
 	vt = mode->CrtcVTotal			- 2;
+	
+	/* HTOTAL & 0xF equal to 0xE in 8bpp or 0x4 in 24bpp causes strange
+	 * vertical stripes
+	 */  
+	if((ht & 0x0F) == 0x0E || (ht & 0x0F) == 0x04)
+		ht++;
+		
 	if (vgaBitsPerPixel == 24)
 		wd = (vga256InfoRec.displayWidth * 3) >> (4 - MGABppShft);
 	else
@@ -602,6 +728,8 @@ DisplayModePtr mode;
 		newVS->ExtVga[3]	= (((1 << MGABppShft) * 3) - 1) | 0x80;
 	else
 		newVS->ExtVga[3]	= ((1 << MGABppShft) - 1) | 0x80;
+
+	newVS->ExtVga[3] &= 0xE7;	/* ajv - bits 4-5 MUST be 0 or bad karma happens */
 
 	newVS->ExtVga[4]	= 0;
 		
@@ -679,6 +807,10 @@ DisplayModePtr mode;
 		ErrorF("synchro dans le vert\n");
 	}
 	newVS->DAClong = 0x5F094F21;
+
+#ifdef	PC98_MGA
+	MGA1064PC98Init();
+#endif
 
 	MGA1064SGSetPCLK(
 		vga256InfoRec.clock[newVS->std.NoClock], 1 << MGABppShft
@@ -869,9 +1001,17 @@ void
 MGA1064RamdacInit()
 {
     MGAdac.isHwCursor = FALSE;
-    
-    if (MGArev < 3)
-	MGAdac.maxPixelClock = 170000;
+
+    if ( MGABios2.PinID )
+    {
+	MGAdac.maxPixelClock = (MGABios2.RamdacSpeed+100) * 1000;
+	ErrorF("Using BIOS value for maxPixelClock: %d kHz\n", MGAdac.maxPixelClock);
+    }
     else
-	MGAdac.maxPixelClock = 220000;
+    {
+	if ( MGArev < 3 )
+	   MGAdac.maxPixelClock = 170000;
+	else
+	   MGAdac.maxPixelClock = 220000;
+    }
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/regs3v.h,v 3.4.2.1 1997/05/06 13:26:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/regs3v.h,v 3.4.2.2 1998/01/31 14:23:21 hohndel Exp $ */
 /*
  * regs3v.h
  *
@@ -41,7 +41,9 @@
 
 #define S3_ViRGE_SERIES(chip)      (chip==PCI_ViRGE)
 #define S3_ViRGE_VX_SERIES(chip)   (chip==PCI_ViRGE_VX)
-#define S3_ViRGE_DXGX_SERIES(chip) (chip==PCI_ViRGE_DXGX)
+#define S3_ViRGE_DXGX_SERIES(chip) (chip==PCI_ViRGE_DXGX || chip==PCI_ViRGE_GX2 || chip==PCI_ViRGE_MX)
+#define S3_ViRGE_GX2_SERIES(chip)   (chip==PCI_ViRGE_GX2)
+#define S3_ViRGE_MX_SERIES(chip)   (chip==PCI_ViRGE_MX)
 #define S3_ANY_ViRGE_SERIES(chip) (    S3_ViRGE_SERIES(chip)		\
 				    || S3_ViRGE_VX_SERIES(chip)		\
 				    || S3_ViRGE_DXGX_SERIES(chip))
@@ -52,12 +54,16 @@
 #define PCI_ViRGE		0x5631
 #define PCI_ViRGE_VX		0x883D
 #define PCI_ViRGE_DXGX		0x8A01
+#define PCI_ViRGE_GX2		0x8A10
+#define PCI_ViRGE_MX		0x8C01
 
 /* Chip tags */
 #define S3_UNKNOWN		 0
 #define S3_ViRGE		 1
 #define S3_ViRGE_VX		 2
 #define S3_ViRGE_DXGX		 3
+#define S3_ViRGE_GX2		 4
+#define S3_ViRGE_MX		 5
 
 /* VESA Approved Register Definitions */
 #define	DAC_MASK	0x03c6

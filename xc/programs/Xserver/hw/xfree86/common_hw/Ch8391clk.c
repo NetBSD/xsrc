@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Ch8391clk.c,v 3.6 1996/12/23 06:44:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Ch8391clk.c,v 3.6.2.1 1998/02/01 16:04:48 robin Exp $ */
 /*
  * Copyright 1995 The XFree86 Project, Inc
  *
@@ -23,6 +23,10 @@
  * modified to fit into XFree86 source tree by
  * Harald Koenig  <koenig@tat.physik.uni-tuebingen.de>
  * 14 January 1995
+ *
+ * modified to be used by the Tseng code by
+ * Krajcsovits Gyorgy <krajo@augusta.inf.elte.hu>
+ * 19 August 1997
  *
  */
 
@@ -236,28 +240,31 @@ unsigned int clk;
    ie: 0-7, 8 values are restricted.  10-15, 6 values are restricted.
    19-23, 5 values ; 28-31, 4 values; 37-39, 3 values; 46-47, 2; 55, 1
    if I have interpreted this pattern correctly, there aren't any other
-   values, but then I could be wrong
+   values, but then I could be wrong.
+
+   Note that the Chrontel 8398A clockchip doesn't have these restrictions.
+       [krajo]
 
    the chrontel literature also says use of M values of 10 or less for
-   best circuit performance
+   best circuit performance ( 8391, 8398, 8398A )
 
 */
 
-
-
 #if NeedFunctionPrototypes
-void Chrontel8391SetClock(long freq, int clk)
+void Chrontel8391CalcClock(long freq, int *best_m, int *best_n, int *best_k)
 #else
 void
-Chrontel8391SetClock(freq, clk)
+Chrontel8391CalcClock(freq, best_m, best_n, best_k)
 long freq;
-int clk;
+int *best_m;
+int *best_n; 
+int *best_k;
 #endif
 {
    double ffreq;
-   int n, nmin, nmax, k, m, m0;
-   int best_n, best_m;
-   double  diff, mindiff;
+   int n, nmin, nmax, m, m0;
+   int bbest_n, bbest_m, kk;
+   double  diff, mindiff; 
 
    if (freq < FREQ_MIN)
       ffreq = FREQ_MIN / 1000.0;
@@ -266,11 +273,11 @@ int clk;
    else
       ffreq = freq / 1000.0;
 
-   /* work out suitable timings */
+      /* work out suitable timings */
 
-   /* pick the right p value */
+      /* pick the right p value */
 
-   for(k=0; k<4 && ffreq <= 67.5; k++)
+   for(kk=0; kk<4 && ffreq <= 67.5; kk++)
       ffreq *= 2;
 
    /* now 67.5 <= ffreq <= 135.0 */
@@ -284,38 +291,60 @@ int clk;
    if (nmin<8) nmin = 8;  /* because (n <= 7) isn't allowed */
    nmax = (int)(ffreq * (32+2)) -8 +1;
    if (nmax > 255) nmax = 255;
-   
+
    mindiff = ffreq;
    for (n = nmin; n <= nmax; n++) {
       if ( /* (n <= 7) || */
-	  (n >= 10 && n <= 15) ||
-	  (n >= 19 && n <= 23) || (n >= 28 && n <= 31) ||
-	  (n >= 37 && n <= 39) || (n == 46) || (n == 47) ||
-	  (n == 51))
-	 continue;    /* the above numbers are not allowed, skip */
+          (n >= 10 && n <= 15) ||
+          (n >= 19 && n <= 23) || (n >= 28 && n <= 31) ||
+          (n >= 37 && n <= 39) || (n == 46) || (n == 47) ||
+          (n == 51))
+         continue;    /* the above numbers are not allowed, skip */
       m0 = (int)((n+8) / ffreq) - 2;
       for (m=m0-1; m<=m0+1; m++) {
-	 if (m<1 || m>31) continue;
-	
-	 diff = (n+8.0) / (m+2) - ffreq;
-	 if (diff<0)
-	    diff = -diff;
-	
+         if (m<1 || m>31) continue;
+
+         diff = (n+8.0) / (m+2) - ffreq;
+         if (diff<0)
+            diff = -diff;
 	 if (diff < mindiff) {
-	    mindiff = diff;
-	    best_n = n;
-	    best_m = m;
-	 }
+            mindiff = diff;
+            bbest_n = n;
+            bbest_m = m;
+         }
       }
    }
+   *best_m = bbest_m;
+   *best_n = bbest_n;
+   *best_k = kk;
+}
+
+
+
+#if NeedFunctionPrototypes
+void Chrontel8391SetClock(long freq, int clk)
+#else
+void
+Chrontel8391SetClock(freq, clk)
+long freq;
+int clk;
+#endif
+{
+   int best_m, best_n, k;
+   Chrontel8391CalcClock(freq, &best_m, &best_n, &k);
+
 #ifdef DEBUG
-   diff = freq/1000.0 - (CHRONTEL_REF_FREQ * (best_n+8.0) / ((best_m + 2) * (1 << k)));
+
+   diff = freq/1000.0 - (CHRONTEL_REF_FREQ * (best_n+8.0) / ((best_m + 2) * (1 \\<< k)));
    if (diff<0) diff = -diff;
    ErrorF("clk %d, setting to %12f, m %3d, n %3d, k %d, err %12f\n", clk,
-	  CHRONTEL_REF_FREQ * (best_n+8.0) / ((best_m + 2) * (1 << k)),
-	  best_m, best_n, k, diff);
+          CHRONTEL_REF_FREQ * (best_n+8.0) / ((best_m + 2) * (1 << k)),
+          best_m, best_n, k, diff);
 #endif
+
 
    s3ProgramChrontel8391Clock(best_m, best_n, k, clk);
    return;
 }
+
+

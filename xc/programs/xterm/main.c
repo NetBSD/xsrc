@@ -1,7 +1,6 @@
 #ifndef lint
-static char *rid="$XConsortium: main.c /main/247 1996/11/29 10:33:51 swick $";
+static char *rid="$TOG: main.c /main/249 1997/08/26 14:13:43 kaleb $";
 #endif /* lint */
-/* $XFree86: xc/programs/xterm/main.c,v 3.47.2.6 1997/07/06 07:28:22 dawes Exp $ */
 
 /*
  * 				 W A R N I N G
@@ -65,6 +64,8 @@ SOFTWARE.
 
 ******************************************************************/
 
+/* $XFree86: xc/programs/xterm/main.c,v 3.47.2.8 1998/02/27 01:29:29 dawes Exp $ */
+
 
 /* main.c */
 
@@ -72,6 +73,7 @@ SOFTWARE.
 #include <xtermcfg.h>
 #endif
 
+#include "version.h"
 #include "ptyx.h"
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
@@ -79,11 +81,6 @@ SOFTWARE.
 #include <X11/Xos.h>
 #include <X11/cursorfont.h>
 #include <X11/Xaw/SimpleMenu.h>
-
-#if XtSpecificationRelease >= 6
-#include <X11/Xpoll.h>
-#endif
-
 #include <X11/Xlocale.h>
 
 #include <pwd.h>
@@ -223,6 +220,13 @@ static Bool IsPts = False;
 #else /* USE_TERMIOS */
 #ifdef SYSV
 #include <sys/termio.h>
+#else /* SYSV */
+#if defined(sun) && !defined(SVR4)
+#include <sys/ttycom.h>
+#ifdef TIOCSWINSZ
+#undef TIOCSSIZE
+#endif
+#endif
 #endif /* SYSV */
 #endif /* USE_TERMIOS else */
 #endif /* USE_POSIX_TERMIOS */
@@ -248,9 +252,8 @@ static Bool IsPts = False;
 #define USE_SYSV_TERMIO
 #define USE_SYSV_SIGNALS
 #define	USE_SYSV_PGRP
+#ifndef TIOCSWINSZ
 #define USE_SYSV_ENVVARS		/* COLUMNS/LINES vs. TERMCAP */
-#ifndef SCO
-#undef USE_TERMCAP_ENVVARS	/* SCO wants both TERMCAP and TERMINFO env */
 #endif
 /*
  * now get system-specific includes
@@ -327,6 +330,9 @@ static Bool IsPts = False;
 
 #ifdef linux
 #define HAS_SAVED_IDS_AND_SETEUID
+#ifndef CBAUD
+#define CBAUD 0010017
+#endif
 #endif
 
 #if !defined(MINIX) && !defined(WIN32) && !defined(Lynx)
@@ -488,6 +494,7 @@ int switchfb[] = {0, 2, 1, 3};
 
 extern int tgetent PROTO((char *ptr, char *name));
 
+static SIGNAL_T reapchild PROTO((int n));
 static char *base_name PROTO((char *name));
 static int pty_search PROTO((int *pty));
 static int remove_termcap_entry PROTO((char *buf, char *str));
@@ -497,10 +504,9 @@ static void Help PROTO((void));
 static void HsSysError PROTO((int pf, int error));
 static void KeyboardMapping PROTO_XT_ACTIONS_ARGS;
 static void Syntax PROTO((char *badOption));
+static void Version PROTO((void));
 static void get_terminal PROTO((void));
 static void resize PROTO((TScreen *s, char *oldtc, char *newtc));
-
-static SIGNAL_T reapchild PROTO((int n));
 
 static Bool added_utmp_entry = False;
 
@@ -715,6 +721,9 @@ static struct _resource {
     char *tty_modes;
     Boolean utmpInhibit;
     Boolean sunFunctionKeys;	/* %%% should be widget resource? */
+#if OPT_SUNPC_KBD
+    Boolean sunKeyboard;
+#endif
     Boolean wait_for_map;
     Boolean useInsertMode;
 } resource;
@@ -725,7 +734,7 @@ static struct _resource {
 
 static XtResource application_resources[] = {
     {"name", "Name", XtRString, sizeof(char *),
-	offset(xterm_name), XtRString, "xterm"},
+	offset(xterm_name), XtRString, DFT_TERMTYPE},
     {"iconGeometry", "IconGeometry", XtRString, sizeof(char *),
 	offset(icon_geometry), XtRString, (caddr_t) NULL},
     {XtNtitle, XtCTitle, XtRString, sizeof(char *),
@@ -740,6 +749,10 @@ static XtResource application_resources[] = {
 	offset(utmpInhibit), XtRString, "false"},
     {"sunFunctionKeys", "SunFunctionKeys", XtRBoolean, sizeof (Boolean),
 	offset(sunFunctionKeys), XtRString, "false"},
+#if OPT_SUNPC_KBD
+    {"sunKeyboard", "SunKeyboard", XtRBoolean, sizeof (Boolean),
+	offset(sunKeyboard), XtRString, "false"},
+#endif
     {"waitForMap", "WaitForMap", XtRBoolean, sizeof (Boolean),
         offset(wait_for_map), XtRString, "false"},
     {"useInsertMode", "UseInsertMode", XtRBoolean, sizeof (Boolean),
@@ -755,7 +768,9 @@ static char *fallback_resources[] = {
     "XTerm*mainMenu.Label:  Main Options (no app-defaults)",
     "XTerm*vtMenu.Label:  VT Options (no app-defaults)",
     "XTerm*fontMenu.Label:  VT Fonts (no app-defaults)",
+#if OPT_TEK4014
     "XTerm*tekMenu.Label:  Tek Options (no app-defaults)",
+#endif
     NULL
 };
 
@@ -794,6 +809,9 @@ static XrmOptionDescRec optionDescList[] = {
 #ifndef NO_ACTIVE_ICON
 {"-fi",		"*iconFont",	XrmoptionSepArg,	(caddr_t) NULL},
 #endif /* NO_ACTIVE_ICON */
+#if OPT_HIGHLIGHT_COLOR
+{"-hc",		"*highlightColor", XrmoptionSepArg,	(caddr_t) NULL},
+#endif
 {"-j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "off"},
 /* parse logging options anyway for compatibility */
@@ -809,19 +827,29 @@ static XrmOptionDescRec optionDescList[] = {
 {"-nb",		"*nMarginBell",	XrmoptionSepArg,	(caddr_t) NULL},
 {"-nul",	"*underLine",	XrmoptionNoArg,		(caddr_t) "off"},
 {"+nul",	"*underLine",	XrmoptionNoArg,		(caddr_t) "on"},
+{"-pc",		"*boldColors",	XrmoptionNoArg,		(caddr_t) "on"},
+{"+pc",		"*boldColors",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-rw",		"*reverseWrap",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+rw",		"*reverseWrap",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-s",		"*multiScroll",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+s",		"*multiScroll",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-sb",		"*scrollBar",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+sb",		"*scrollBar",	XrmoptionNoArg,		(caddr_t) "off"},
+#ifdef SCROLLBAR_RIGHT
+{"-leftbar",	"*rightScrollBar", XrmoptionNoArg,	(caddr_t) "off"},
+{"-rightbar",	"*rightScrollBar", XrmoptionNoArg,	(caddr_t) "on"},
+#endif
 {"-sf",		"*sunFunctionKeys", XrmoptionNoArg,	(caddr_t) "on"},
 {"+sf",		"*sunFunctionKeys", XrmoptionNoArg,	(caddr_t) "off"},
-{"-si",		"*scrollTtyOutput",	XrmoptionNoArg,		(caddr_t) "off"},
-{"+si",		"*scrollTtyOutput",	XrmoptionNoArg,		(caddr_t) "on"},
+{"-si",		"*scrollTtyOutput", XrmoptionNoArg,	(caddr_t) "off"},
+{"+si",		"*scrollTtyOutput", XrmoptionNoArg,	(caddr_t) "on"},
 {"-sk",		"*scrollKey",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+sk",		"*scrollKey",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-sl",		"*saveLines",	XrmoptionSepArg,	(caddr_t) NULL},
+#if OPT_SUNPC_KBD
+{"-sp",		"*sunKeyboard", XrmoptionNoArg,		(caddr_t) "on"},
+{"+sp",		"*sunKeyboard", XrmoptionNoArg,		(caddr_t) "off"},
+#endif
 {"-t",		"*tekStartup",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+t",		"*tekStartup",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-tm",		"*ttyModes",	XrmoptionSepArg,	(caddr_t) NULL},
@@ -853,6 +881,7 @@ static struct _options {
   char *opt;
   char *desc;
 } options[] = {
+{ "-version",              "print the version number" },
 { "-help",                 "print out this message" },
 { "-display displayname",  "X server to contact" },
 { "-geometry geom",        "size (in characters) and position" },
@@ -882,6 +911,9 @@ static struct _options {
 { "-/+cu",                 "turn on/off curses emulation" },
 { "-/+dc",		   "turn off/on dynamic color selection" },
 { "-fb fontname",          "bold text font" },
+#if OPT_HIGHLIGHT_COLOR
+{ "-hc",		   "selection background color" },
+#endif
 { "-/+im",		   "use insert mode for TERMCAP" },
 { "-/+j",                  "turn on/off jump scroll" },
 #ifdef ALLOWLOGGING
@@ -898,14 +930,22 @@ static struct _options {
 { "-nb number",            "margin bell in characters from right end" },
 { "-/+nul",                "turn on/off display of underlining" },
 { "-/+aw",                 "turn on/off auto wraparound" },
+{ "-/+pc",                 "turn on/off PC-style bold colors" },
 { "-/+rw",                 "turn on/off reverse wraparound" },
 { "-/+s",                  "turn on/off multiscroll" },
 { "-/+sb",                 "turn on/off scrollbar" },
+#ifdef SCROLLBAR_RIGHT
+{ "-rightbar",             "force scrollbar right (default left)" },
+{ "-leftbar",              "force scrollbar left" },
+#endif
 { "-/+sf",                 "turn on/off Sun Function Key escape codes" },
 { "-/+si",                 "turn on/off scroll-on-tty-output inhibit" },
 { "-/+sk",                 "turn on/off scroll-on-keypress" },
 { "-sl number",            "number of scrolled lines to save" },
+{ "-/+sp",                 "turn on/off Sun/PC Function/Keypad mapping" },
+#if OPT_TEK4014
 { "-/+t",                  "turn on/off Tek emulation window" },
+#endif
 { "-tm string",            "terminal mode keywords and characters" },
 { "-tn name",              "TERM environment variable name" },
 { "-/+ulc",                "turn off/on display of underline as color" },
@@ -917,7 +957,9 @@ static struct _options {
 { "-/+vb",                 "turn on/off visual bell" },
 { "-/+wf",                 "turn on/off wait for map before command exec" },
 { "-e command args ...",   "command to execute" },
+#if OPT_TEK4014
 { "%geom",                 "Tek window geometry" },
+#endif
 { "#geom",                 "icon window geometry" },
 { "-T string",             "title name for window" },
 { "-n string",             "icon name for window" },
@@ -930,12 +972,11 @@ static struct _options {
 { NULL, NULL }};
 
 static char *message[] = {
-"Fonts must be fixed width and, if both normal and bold are specified, must",
+"Fonts should be fixed width and, if both normal and bold are specified, should",
 "have the same size.  If only a normal font is specified, it will be used for",
 "both normal and bold text (by doing overstriking).  The -e option, if given,",
-"must be appear at the end of the command line, otherwise the user's default",
-"shell will be started.  Options that start with a plus sign (+) restore the",
-"default.",
+"must appear at the end of the command line, otherwise the user's default shell",
+"will be started.  Options that start with a plus sign (+) restore the default.",
 NULL};
 
 static void Syntax (badOption)
@@ -964,13 +1005,19 @@ static void Syntax (badOption)
     exit (1);
 }
 
+static void Version ()
+{
+    puts (XTERM_VERSION);
+    exit (0);
+}
+
 static void Help ()
 {
     struct _options *opt;
     char **cpp;
 
-    fprintf (stderr, "usage:\n        %s [-options ...] [-e command args]\n\n",
-	     ProgramName);
+    fprintf (stderr, "%s usage:\n    %s [-options ...] [-e command args]\n\n",
+	     XTERM_VERSION, ProgramName);
     fprintf (stderr, "where options include:\n");
     for (opt = options; opt->opt; opt++) {
 	fprintf (stderr, "    %-28s %s\n", opt->opt, opt->desc);
@@ -990,19 +1037,16 @@ static void Help ()
 /* ARGSUSED */
 static Boolean
 ConvertConsoleSelection(w, selection, target, type, value, length, format)
-    Widget w;
-    Atom *selection, *target, *type;
-    XtPointer *value;
-    unsigned long *length;
-    int *format;
+    Widget w GCC_UNUSED;
+    Atom *selection GCC_UNUSED, *target GCC_UNUSED, *type GCC_UNUSED;
+    XtPointer *value GCC_UNUSED;
+    unsigned long *length GCC_UNUSED;
+    int *format GCC_UNUSED;
 {
     /* we don't save console output, so can't offer it */
     return False;
 }
 #endif /* TIOCCONS */
-
-
-extern WidgetClass xtermWidgetClass;
 
 Arg ourTopLevelShellArgs[] = {
 	{ XtNallowShellResize, (XtArgVal) TRUE },	
@@ -1020,10 +1064,11 @@ Bool waiting_for_initial_map;
 static void
 DeleteWindow(w, event, params, num_params)
     Widget w;
-    XEvent *event;
-    String *params;
-    Cardinal *num_params;
+    XEvent *event GCC_UNUSED;
+    String *params GCC_UNUSED;
+    Cardinal *num_params GCC_UNUSED;
 {
+#if OPT_TEK4014
   if (w == toplevel)
     if (term->screen.Tshow)
       hide_vt_window();
@@ -1033,16 +1078,17 @@ DeleteWindow(w, event, params, num_params)
     if (term->screen.Vshow)
       hide_tek_window();
     else
+#endif
       do_hangup(w, (XtPointer)0, (XtPointer)0);
 }
 
 /* ARGSUSED */
 static void
 KeyboardMapping(w, event, params, num_params)
-    Widget w;
+    Widget w GCC_UNUSED;
     XEvent *event;
-    String *params;
-    Cardinal *num_params;
+    String *params GCC_UNUSED;
+    Cardinal *num_params GCC_UNUSED;
 {
     switch (event->type) {
        case MappingNotify:
@@ -1069,9 +1115,19 @@ char **argv;
 	register TScreen *screen;
 	int mode;
 
-	XtSetLanguageProc (NULL, NULL, NULL);
-
+	/* Do these first, since we may not be able to open the display */
 	ProgramName = argv[0];
+	if (argc > 1) {
+		if (!strncmp(argv[1], "-v", 2))
+			Version();
+		if (!strncmp(argv[1], "-h", 2) && strncmp(argv[1], "-hc", 3))
+			Help();
+	}
+
+	/* This dumps core on HP-UX 9.05 with X11R5 */
+#if OPT_I18N_SUPPORT
+	XtSetLanguageProc (NULL, NULL, NULL);
+#endif
 
 #ifndef AMOEBA
 	/* +2 in case longer tty name like /dev/ttyq255 */
@@ -1346,13 +1402,17 @@ char **argv;
 			       (int) ruid, strerror(errno));
 #endif
 
+	    XtSetErrorHandler(xt_error);
 	    toplevel = XtAppInitialize (&app_con, "XTerm", 
-				    optionDescList, XtNumber(optionDescList), 
-				    &argc, argv, fallback_resources, NULL, 0);
+					optionDescList,
+					XtNumber(optionDescList),
+					&argc, argv, fallback_resources,
+					NULL, 0);
+	    XtSetErrorHandler((XtErrorHandler)0);
 
 	    XtGetApplicationResources(toplevel, (XtPointer) &resource,
-				  application_resources,
-				  XtNumber(application_resources), NULL, 0);
+				      application_resources,
+				      XtNumber(application_resources), NULL, 0);
 
 #ifdef HAS_SAVED_IDS_AND_SETEUID
 	    if (seteuid(euid) == -1)
@@ -1364,7 +1424,6 @@ char **argv;
 			       (int) egid, strerror(errno));
 #endif
 	}
-
 
 	waiting_for_initial_map = resource.wait_for_map;
 
@@ -1388,7 +1447,10 @@ char **argv;
 
 	xterm_name = resource.xterm_name;
 	sunFunctionKeys = resource.sunFunctionKeys;
-	if (strcmp(xterm_name, "-") == 0) xterm_name = "xterm";
+#if OPT_SUNPC_KBD
+	sunKeyboard = resource.sunKeyboard;
+#endif
+	if (strcmp(xterm_name, "-") == 0) xterm_name = DFT_TERMTYPE;
 	if (resource.icon_geometry != NULL) {
 	    int scr, junk;
 	    int ix, iy;
@@ -1466,7 +1528,7 @@ char **argv;
 
         term = (XtermWidget) XtCreateManagedWidget(
 	    "vt100", xtermWidgetClass, toplevel, NULL, 0);
-            /* this causes the initialize method to be called */
+	    /* this causes the initialize method to be called */
 
         screen = &term->screen;
 
@@ -1492,10 +1554,12 @@ char **argv;
 
 	inhibit = 0;
 #ifdef ALLOWLOGGING
-	if (term->misc.logInhibit) 	    inhibit |= I_LOG;
+	if (term->misc.logInhibit)		inhibit |= I_LOG;
 #endif
 	if (term->misc.signalInhibit)		inhibit |= I_SIGNAL;
-	if (term->misc.tekInhibit)			inhibit |= I_TEK;
+#if OPT_TEK4014
+	if (term->misc.tekInhibit)		inhibit |= I_TEK;
+#endif
 
 	term->initflags = term->flags;
 
@@ -1530,12 +1594,13 @@ char **argv;
 	    XtSetValues (toplevel, args, 2);
 	}
 
-
+#if OPT_TEK4014
 	if(inhibit & I_TEK)
 		screen->TekEmu = FALSE;
 
 	if(screen->TekEmu && !TekInit())
 		exit(ERROR_INIT);
+#endif
 
 #ifndef MINIX
 #ifdef DEBUG
@@ -1580,9 +1645,11 @@ char **argv;
 
 	/* open a terminal for client */
 	get_terminal ();
+
 	spawn ();
+
 	/* Child process is out there, let's catch its termination */
-	signal (SIGCHLD, reapchild);
+	(void) signal (SIGCHLD, reapchild);
 
 	/* Realize procs have now been executed */
 
@@ -1591,18 +1658,11 @@ char **argv;
 	    char buf[80];
 
 	    buf[0] = '\0';
-	    sprintf (buf, "%lx\n", 
-	    	     screen->TekEmu ? XtWindow (XtParent (tekWidget)) :
-				      XtWindow (XtParent (term)));
+	    sprintf (buf, "%lx\n", XtWindow (XtParent (CURRENT_EMU(screen))));
 	    write (screen->respond, buf, strlen (buf));
 	}
 #endif /* !AMOEBA */
 
-#ifdef ALLOWLOGGING
-	if (term->misc.log_on) {
-		StartLog(screen);
-	}
-#endif
 	screen->inhibit = inhibit;
 
 #ifdef AIXV3
@@ -1667,10 +1727,22 @@ char **argv;
 #endif	/* DEBUG */
 	XSetErrorHandler(xerror);
 	XSetIOErrorHandler(xioerror);
+
+	(void) setuid (screen->uid); /* we're done with privileges... */
+	(void) setgid (screen->gid);
+	done_setuid = 1;
+
+#ifdef ALLOWLOGGING
+	if (term->misc.log_on) {
+		StartLog(screen);
+	}
+#endif
 	for( ; ; ) {
-		if(screen->TekEmu) {
+#if OPT_TEK4014
+		if(screen->TekEmu)
 			TekRun();
-		} else
+		else
+#endif
 			VTRun();
 	}
 }
@@ -1732,7 +1804,7 @@ get_pty (pty)
 	if ((*pty = open ("/dev/ptmx", O_RDWR)) < 0) {
 	    return 1;
 	}
-#if defined(SVR4) || (defined(i386) && defined(SYSV)) || defined(SCO325)
+#if defined(SVR4) || defined(SCO325) || (defined(i386) && defined(SYSV))
 	strcpy(ttydev, ptsname(*pty));
 #if defined (SYSV) && defined(i386) && !defined(SVR4)
 	IsPts = True;
@@ -1890,6 +1962,7 @@ get_terminal ()
  * All of these are supported by xterm.
  */
 
+#if OPT_TEK4014
 static char *tekterm[] = {
 	"tek4014",
 	"tek4015",		/* 4014 with APL character set support */
@@ -1899,6 +1972,7 @@ static char *tekterm[] = {
 	"dumb",
 	0
 };
+#endif
 
 /* The VT102 is a VT100 with the Advanced Video Option included standard.
  * It also adds Escape sequences for insert/delete character/line.
@@ -1911,6 +1985,7 @@ static char *vtterm[] = {
 #ifdef USE_X11TERM
 	"x11term",		/* for people who want special term name */
 #endif
+	DFT_TERMTYPE,		/* for people who want special term name */
 	"xterm",		/* the prefered name, should be fastest */
 	"vt102",
 	"vt100",
@@ -1921,7 +1996,7 @@ static char *vtterm[] = {
 
 /* ARGSUSED */
 static SIGNAL_T hungtty(i)
-	int i;
+	int i GCC_UNUSED;
 {
 	longjmp(env, 1);
 	SIGNAL_RETURN;
@@ -2061,11 +2136,9 @@ spawn ()
 	int envsize;		/* elements in new environment */
 	char buf[64];
 	char *TermName = NULL;
-#if defined(sun) && !defined(SVR4)
-#ifdef TIOCSSIZE
+#if defined(TIOCSSIZE) && (defined(sun) && !defined(SVR4))
 	struct ttysize ts;
-#endif	/* TIOCSSIZE */
-#else	/* not sun */
+#else	/* not old SunOS */
 #ifdef TIOCSWINSZ
 	struct winsize ws;
 #endif	/* TIOCSWINSZ */
@@ -2108,24 +2181,25 @@ spawn ()
 	} else {
 		Bool tty_got_hung;
 
- 		/*
- 		 * Sometimes /dev/tty hangs on open (as in the case of a pty
- 		 * that has gone away).  Simply make up some reasonable
- 		 * defaults.
- 		 */
- 		signal(SIGALRM, hungtty);
- 		alarm(2);		/* alarm(1) might return too soon */
- 		if (! setjmp(env)) {
- 			tty = open ("/dev/tty", O_RDWR, 0);
- 			alarm(0);
+		/*
+		 * Sometimes /dev/tty hangs on open (as in the case of a pty
+		 * that has gone away).  Simply make up some reasonable
+		 * defaults.
+		 */
+
+		signal(SIGALRM, hungtty);
+		alarm(2);		/* alarm(1) might return too soon */
+		if (! setjmp(env)) {
+			tty = open ("/dev/tty", O_RDWR, 0);
+			alarm(0);
 			tty_got_hung = False;
- 		} else {
+		} else {
 			tty_got_hung = True;
- 			tty = -1;
- 			errno = ENXIO;
- 		}
- 		signal(SIGALRM, SIG_DFL);
- 
+			tty = -1;
+			errno = ENXIO;
+		}
+		signal(SIGALRM, SIG_DFL);
+
 		/*
 		 * Check results and ignore current control terminal if
 		 * necessary.  ENXIO is what is normally returned if there is
@@ -2133,7 +2207,7 @@ spawn ()
 		 * seem to return EIO.  Solaris 2.3 is said to return EINVAL.
 		 */
 		no_dev_tty = FALSE;
- 		if (tty < 0) {
+		if (tty < 0) {
 			if (tty_got_hung || errno == ENXIO || errno == EIO ||
 			    errno == EINVAL || errno == ENOTTY) {
 				no_dev_tty = TRUE;
@@ -2235,11 +2309,12 @@ spawn ()
 	}
 
 	/* avoid double MapWindow requests */
-	XtSetMappedWhenManaged( screen->TekEmu ? XtParent(tekWidget) :
-			        XtParent(term), False );
+	XtSetMappedWhenManaged(XtParent(CURRENT_EMU(screen)), False );
+
 	wm_delete_window = XInternAtom(XtDisplay(toplevel), "WM_DELETE_WINDOW",
 				       False);
-	if (!screen->TekEmu)
+
+	if (!TEK4014_ACTIVE(screen))
 	    VTInit();		/* realize now so know window size for tty driver */
 #if defined(TIOCCONS) || defined(SRIOCSREDIR)
 	if (Console) {
@@ -2250,15 +2325,19 @@ spawn ()
 	    XmuGetHostname (mit_console_name + MIT_CONSOLE_LEN, 255);
 	    mit_console = XInternAtom(screen->display, mit_console_name, False);
 	    /* the user told us to be the console, so we can use CurrentTime */
-	    XtOwnSelection(screen->TekEmu ? XtParent(tekWidget) : XtParent(term),
+	    XtOwnSelection(XtParent(CURRENT_EMU(screen)),
 			   mit_console, CurrentTime,
 			   ConvertConsoleSelection, NULL, NULL);
 	}
 #endif
+#if OPT_TEK4014
 	if(screen->TekEmu) {
 		envnew = tekterm;
 		ptr = newtc;
-	} else {
+	}
+	else
+#endif
+	{
 		envnew = vtterm;
 		ptr = termcap;
 	}
@@ -2274,8 +2353,8 @@ spawn ()
 	if (resource.term_name) {
 	    TermName = resource.term_name;
 	    if (tgetent (ptr, resource.term_name) == 1) {
-		if (*ptr) 
-		    if (!screen->TekEmu)
+		if (*ptr)
+		    if (!TEK4014_ACTIVE(screen))
 			resize (screen, termcap, newtc);
 	    }
 	}
@@ -2290,7 +2369,7 @@ spawn ()
 		if(tgetent(ptr, *envnew) == 1) {
 			TermName = *envnew;
 			if (*ptr) 
-			    if(!screen->TekEmu)
+			    if(!TEK4014_ACTIVE(screen))
 				resize(screen, termcap, newtc);
 			break;
 		}
@@ -2298,26 +2377,27 @@ spawn ()
 	    }
 	}
 
-#if defined(sun) && !defined(SVR4)
-#ifdef TIOCSSIZE
+#if defined(TIOCSSIZE) && (defined(sun) && !defined(SVR4))
 	/* tell tty how big window is */
-	if(screen->TekEmu) {
+	if(TEK4014_ACTIVE(screen)) {
 		ts.ts_lines = 38;
 		ts.ts_cols = 81;
 	} else {
 		ts.ts_lines = screen->max_row + 1;
 		ts.ts_cols = screen->max_col + 1;
 	}
-#endif	/* TIOCSSIZE */
-#else	/* not sun */
+#else	/* not old SunOS */
 #ifdef TIOCSWINSZ
 	/* tell tty how big window is */
-	if(screen->TekEmu) {
+#if OPT_TEK4014
+	if(TEK4014_ACTIVE(screen)) {
 		ws.ws_row = 38;
 		ws.ws_col = 81;
 		ws.ws_xpixel = TFullWidth(screen);
 		ws.ws_ypixel = TFullHeight(screen);
-	} else {
+	} else
+#endif
+	{
 		ws.ws_row = screen->max_row + 1;
 		ws.ws_col = screen->max_col + 1;
 		ws.ws_xpixel = FullWidth(screen);
@@ -2380,12 +2460,15 @@ spawn ()
 		close (screen->respond);
 #ifdef TIOCSWINSZ
                 /* tell tty how big window is */
-                if(screen->TekEmu) {
+#if OPT_TEK4014
+                if(TEK4014_ACTIVE(screen)) {
                         ws.ws_row = 24;
                         ws.ws_col = 80;
                         ws.ws_xpixel = TFullWidth(screen);
                         ws.ws_ypixel = TFullHeight(screen);
-                } else {
+                } else
+#endif
+		{
                         ws.ws_row = screen->max_row + 1;
                         ws.ws_col = screen->max_col + 1;
                         ws.ws_xpixel = FullWidth(screen);
@@ -2495,12 +2578,13 @@ spawn ()
 		}
 
 		/* use the same tty name that everyone else will use
-		** (from ttyname)
-		*/
+		 * (from ttyname)
+		 */
 		if ((ptr = ttyname(tty)) != 0)
 		{
 			/* it may be bigger */
-			ttydev = realloc (ttydev, (unsigned) (strlen(ptr) + 1));
+			ttydev = realloc (ttydev,
+				(unsigned) (strlen(ptr) + 1));
 			(void) strcpy(ttydev, ptr);
 		}
 #if defined(SYSV) && defined(i386) && !defined(SVR4)
@@ -2797,9 +2881,7 @@ spawn ()
 		envsize += 1;   /* LOGNAME */
 #endif /* UTMP */
 #ifdef USE_SYSV_ENVVARS
-#ifndef TIOCSWINSZ		/* window size not stored in driver? */
 		envsize += 2;	/* COLUMNS, LINES */
-#endif /* TIOCSWINSZ */
 #ifdef UTMP
 		envsize += 2;   /* HOME, SHELL */
 #endif /* UTMP */
@@ -2813,9 +2895,8 @@ spawn ()
 		if(!TermName)
 			*newtc = 0;
 
-		sprintf (buf, "%lu", screen->TekEmu ? 
-			 ((unsigned long) XtWindow (XtParent(tekWidget))) :
-			 ((unsigned long) XtWindow (XtParent(term))));
+		sprintf (buf, "%lu",
+			 ((unsigned long) XtWindow (XtParent(CURRENT_EMU(screen)))));
 		Setenv ("WINDOWID=", buf);
 		/* put the display into the environment of the shell*/
 		Setenv ("DISPLAY=", XDisplayString (screen->display));
@@ -2934,7 +3015,7 @@ spawn ()
 
 		/* set up the new entry */
 		utmp.ut_type = USER_PROCESS;
-#if !defined(linux) && !defined(SVR4)
+#if !(defined(linux) && __GLIBC__ < 2) && !defined(SVR4)
 		utmp.ut_exit.e_exit = 2;
 #endif
 		(void) strncpy(utmp.ut_user,
@@ -2962,7 +3043,7 @@ spawn ()
 			       sizeof(utmp.ut_name));
 
 		utmp.ut_pid = getpid();
-#if defined(SVR4) || defined(SCO325)
+#if defined(SVR4) || defined(SCO325) || (defined(linux) && __GLIBC__ >= 2)
 		utmp.ut_session = getsid(0);
 		utmp.ut_xtime = time ((Time_t *) 0);
 		utmp.ut_tv.tv_usec = 0;
@@ -2978,11 +3059,16 @@ spawn ()
 		if (term->misc.login_shell)
 		    updwtmpx(WTMPX_FILE, &utmp);
 #else
+#if defined(linux) && __GLIBC__ >= 2
+		if (term->misc.login_shell)
+		    updwtmp(etc_wtmp, &utmp);
+#else
 		if (term->misc.login_shell &&
 		     (i = open(etc_wtmp, O_WRONLY|O_APPEND)) >= 0) {
 		    write(i, (char *)&utmp, sizeof(struct utmp));
 		    close(i);
 		}
+#endif
 #endif
 #endif
 		/* close the file */
@@ -3112,12 +3198,10 @@ spawn ()
 		    if(handshake.rows > 0 && handshake.cols > 0) {
 			screen->max_row = handshake.rows;
 			screen->max_col = handshake.cols;
-#if defined(sun) && !defined(SVR4)
-#ifdef TIOCSSIZE
+#if defined(TIOCSSIZE) && (defined(sun) && !defined(SVR4))
 			ts.ts_lines = screen->max_row + 1;
 			ts.ts_cols = screen->max_col + 1;
-#endif /* TIOCSSIZE */
-#else /* !sun */
+#else /* not old SunOS */
 #ifdef TIOCSWINSZ
 			ws.ws_row = screen->max_row + 1;
 			ws.ws_col = screen->max_col + 1;
@@ -3130,7 +3214,6 @@ spawn ()
 #endif /* USE_HANDSHAKE */
 
 #ifdef USE_SYSV_ENVVARS
-#ifndef TIOCSWINSZ
 		{
 		char numbuf[12];
 		sprintf (numbuf, "%d", screen->max_col + 1);
@@ -3138,7 +3221,6 @@ spawn ()
 		sprintf (numbuf, "%d", screen->max_row + 1);
 		Setenv("LINES=", numbuf);
 		}
-#endif
 #ifdef UTMP
 		if (pw) {	/* SVR4 doesn't provide these */
 		    if (!getenv("HOME"))
@@ -3148,7 +3230,7 @@ spawn ()
 		}
 #endif /* UTMP */
 #else /* USE_SYSV_ENVVAR */
-		if(!screen->TekEmu && *newtc) {
+		if(!TEK4014_ACTIVE(screen) && *newtc) {
 		    strcpy (termcap, newtc);
 		    resize (screen, termcap, newtc);
 		}
@@ -3173,11 +3255,9 @@ spawn ()
 
 
 		/* need to reset after all the ioctl bashing we did above */
-#if defined(sun) && !defined(SVR4)
-#ifdef TIOCSSIZE
+#if defined(TIOCSSIZE) && (defined(sun) && !defined(SVR4))
 		ioctl  (0, TIOCSSIZE, &ts);
-#endif	/* TIOCSSIZE */
-#else	/* not sun */
+#else	/* not old SunOS */
 #ifdef TIOCSWINSZ
 		ioctl (0, TIOCSWINSZ, (char *)&ws);
 #endif	/* TIOCSWINSZ */
@@ -3498,18 +3578,20 @@ static int spawn()
     }
 
     /* avoid double MapWindow requests */
-    XtSetMappedWhenManaged( screen->TekEmu ? XtParent(tekWidget) :
-					XtParent(term), False );
+    XtSetMappedWhenManaged( XtParent(CURRENT_EMU(screen)), False );
     wm_delete_window = XInternAtom(XtDisplay(toplevel), "WM_DELETE_WINDOW",
 					False);
 
     /* realize now so know window size for tty driver */
-    if (!screen->TekEmu) VTInit();
+    if (!TEK4014_ACTIVE(screen)) VTInit();
 
+#if OPT_TEK4014
     if (screen->TekEmu) {
 	envnew = tekterm;
 	ptr = newtc;
-    } else {
+    } else
+#endif
+    {
 	envnew = vtterm;
 	ptr = termcap;
     }
@@ -3520,7 +3602,7 @@ static int spawn()
 	TermName = resource.term_name;
 	if (tgetent (ptr, resource.term_name) == 1) {
 	    if (*ptr)
-		if (!screen->TekEmu)
+		if (!TEK4014_ACTIVE(screen))
 		    resize (screen, termcap, newtc);
     }
 
@@ -3530,7 +3612,7 @@ static int spawn()
 	    if(tgetent(ptr, *envnew) == 1) {
 		TermName = *envnew;
 		if (*ptr)
-		    if(!screen->TekEmu)
+		    if(!TEK4014_ACTIVE(screen))
 			resize(screen, termcap, newtc);
 		break;
 	    }
@@ -3590,9 +3672,8 @@ static int spawn()
     Setenv ("TERM=", TermName);
     if(!TermName) *newtc = 0;
 
-    sprintf (buf, "%lu", screen->TekEmu ?
-	((unsigned long) XtWindow (XtParent(tekWidget))) :
-	((unsigned long) XtWindow (XtParent(term))));
+    sprintf (buf, "%lu",
+	((unsigned long) XtWindow (XtParent(CURRENT_EMU(screen)))));
     Setenv ("WINDOWID=", buf);
 
     /* put the display into the environment of the shell*/
@@ -3602,7 +3683,7 @@ static int spawn()
     if (!getenv("HOME")) Setenv("HOME=", DEF_HOME);
     if (!getenv("SHELL")) Setenv("SHELL=", DEF_SHELL);
 
-    if(!screen->TekEmu && *newtc) {
+    if(!TEK4014_ACTIVE(screen) && *newtc) {
 	strcpy (termcap, newtc);
 	resize (screen, termcap, newtc);
     }
@@ -3726,6 +3807,7 @@ SIGNAL_T
 Exit(n)
 	int n;
 {
+	register TScreen *screen = &term->screen;
 #ifdef UTMP
 #ifdef USE_SYSV_UTMP
 #if defined(SVR4) || defined(SCO325)
@@ -3737,7 +3819,7 @@ Exit(n)
 #endif
 	char* ptyname;
 	char* ptynameptr = 0;
-#if defined(WTMP) && !defined(SVR4)
+#if defined(WTMP) && !defined(SVR4) && !(defined(linux) && __GLIBC__ >= 2)
 	int fd;			/* for /etc/wtmp */
 	int i;
 #endif
@@ -3769,7 +3851,7 @@ Exit(n)
 	    /* write it out only if it exists, and the pid's match */
 	    if (utptr && (utptr->ut_pid == term->screen.pid)) {
 		    utptr->ut_type = DEAD_PROCESS;
-#if defined(SVR4) || defined(SCO325)
+#if defined(SVR4) || defined(SCO325) || (defined(linux) && __GLIBC__ >= 2)
 		    utmp.ut_session = getsid(0);
 		    utmp.ut_xtime = time ((Time_t *) 0);
 		    utmp.ut_tv.tv_usec = 0;
@@ -3783,12 +3865,17 @@ Exit(n)
 		    if (term->misc.login_shell)
 			updwtmpx(WTMPX_FILE, &utmp);
 #else
+#if defined(linux) && __GLIBC__ >= 2
+		    if (term->misc.login_shell)
+			updwtmp(etc_wtmp, &utmp);
+#else
 		    /* set wtmp entry if wtmp file exists */
 		    if (term->misc.login_shell &&
 			(fd = open(etc_wtmp, O_WRONLY | O_APPEND)) >= 0) {
 		      i = write(fd, utptr, sizeof(utmp));
 		      i = close(fd);
 		    }
+#endif
 #endif
 #endif
 
@@ -3823,8 +3910,8 @@ Exit(n)
         close(term->screen.respond); /* close explicitly to avoid race with slave side */
 #endif
 #ifdef ALLOWLOGGING
-	if(term->screen.logging)
-		CloseLog(&term->screen);
+	if(screen->logging)
+		CloseLog(screen);
 #endif
 
 #ifndef AMOEBA
@@ -3922,7 +4009,7 @@ nonblocking_wait()
 
 /* ARGSUSED */
 static SIGNAL_T reapchild (n)
-    int n;
+    int n GCC_UNUSED;
 {
     int pid;
 
@@ -3930,7 +4017,8 @@ static SIGNAL_T reapchild (n)
 
 #ifdef USE_SYSV_SIGNALS
     /* cannot re-enable signal before waiting for child
-       because then SVR4 loops.  Sigh.  HP-UX 9.01 too. */
+     * because then SVR4 loops.  Sigh.  HP-UX 9.01 too.
+     */
     (void) signal(SIGCHLD, reapchild);
 #endif
 

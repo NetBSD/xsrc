@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_cursor.c,v 3.20.2.4 1997/05/31 13:34:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_cursor.c,v 3.20.2.5 1998/02/21 06:07:07 robin Exp $ */
 /*
  *
  * Copyright 1993-94 by Simon P. Cooper, New Brunswick, New Jersey, USA.
@@ -35,6 +35,9 @@
 #include "Xproto.h"
 #include "misc.h"
 #include "input.h"
+#ifdef	PC98_SVGA
+#include "compiler.h"
+#endif
 #include "cursorstr.h"
 #include "regionstr.h"
 #include "scrnintstr.h"

@@ -1,5 +1,5 @@
 /* $XConsortium: FSlibInt.c /main/19 1996/09/28 16:32:39 rws $ */
-/* $XFree86: xc/lib/FS/FSlibInt.c,v 3.2 1996/12/23 05:58:50 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSlibInt.c,v 3.2.2.1 1998/02/15 16:08:36 hohndel Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -83,7 +83,11 @@ static void _EatData32();
 #define ECHECK(err) (WSAGetLastError() == err)
 #define ESET(val) WSASetLastError(val)
 #else
+#ifdef ISC
+#define ECHECK(err) ((errno == err) || ETEST())
+#else
 #define ECHECK(err) (errno == err)
+#endif
 #define ESET(val) errno = val
 #endif
 

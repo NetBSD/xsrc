@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/laguna_acl.c,v 3.4.2.2 1997/05/10 11:23:17 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/laguna_acl.c,v 3.4.2.3 1998/02/15 16:09:36 hohndel Exp $ */
 
 /*
  * New-style acceleration for the Laguna-family (CL-GD5462/5464).
@@ -25,9 +25,15 @@
    is safe.  The PCI bus never locked during a large number of screen-screen
    copies, colexp fills, etc.  For now, we'll stick with this setting.
    (3.2p)
-*/
-#define ALWAYS_CHECK_FIFO   0
 
+   Update (3.3.1a): Some folks have been complaining about mysterious
+   lockups on AGP machines with 5465's.  While I don't have such a 
+   card and can't test the hypothesis, I suspect that the issue is that
+   the PCI bus is being flooded or something.  The solution is to make
+   the PCI retry thing (ALWAYS_CHECK_FIFO from earlier) to be default
+   to FALSE, and user-setable to TRUE (with option "pci_retry").
+*/
+static Bool lgUsePCIRetry = FALSE;
 
 void LagunaSync();
 void LagunaWaitQAvail();
@@ -105,6 +111,11 @@ void LagunaAccelInit() {
     xf86AccelInfoRec.Flags |= NO_TRANSPARENCY;
   xf86AccelInfoRec.Sync = LagunaSync;
 
+  /* Let the PCI bus handle the retry of missed transactions
+     should the command FIFO fill up.  Usually safe, but sometimes
+     hangs machine. */
+  if (OFLG_ISSET(OPTION_PCI_RETRY, &vga256InfoRec.options))
+    lgUsePCIRetry = TRUE;
 
   /* Solid Color fills */
   xf86AccelInfoRec.SetupForFillRectSolid = LagunaSetupForFillRectSolid;
@@ -198,15 +209,14 @@ void LagunaSync() {
 }
 
 void LagunaWaitQAvail(int n) {
-#if ALWAYS_CHECK_FIFO
-  /* Wait until n entries are open in the command queue */
+  if (!lgUsePCIRetry) {
+    volatile unsigned char qfree;
 
-  volatile unsigned char qfree;
-
-  do
-    qfree = *(unsigned char *)(cirrusMMIOBase + QFREE);
-  while (qfree < n);
-#endif
+    /* Wait until n entries are open in the command queue */
+    do
+      qfree = *(unsigned char *)(cirrusMMIOBase + QFREE);
+    while (qfree < n);
+  }
 }
   
 

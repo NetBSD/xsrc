@@ -4,15 +4,18 @@
  
 <title>Information for Linux Users
 <author>Orest Zborowski, Dirk Hohndel
-<date>May 13, 1997
+<date>February 26, 1997
 <toc>
 
 <sect>Linux versions on which XFree86 has been tested <p>
-XFree86 has been tested with Linux version 2.0.30. It should work
-with any version since 1.0 without change. The binaries and libraries are
-based on the 5.4.7 Elf C libraries, and the 1.7.14 dynamic linker
-<tt>ld.so</tt>. You will at least need the 5.2.x Elf C libraries to
-successfully use the servers.
+XFree86 has been tested with Linux version 2.0.32 and several 2.1xx kernels.
+It is known not to compile with kernel sources newer then somewhere around
+2.1.70, due to incompatibilities in the joystick driver. Except for the
+joystick driver, it works just fine with all 2.1.x kernels tested (including
+2.1.88). It should work with any version since 1.0 without change. The 
+binaries and libraries are based on the 5.3.12 Elf C libraries, and the 
+1.7.14 dynamic linker <tt>ld.so</tt>. You will at least need the 5.2.x Elf 
+C libraries to successfully use the servers.
 
 <sect>Backwards Compatibility <p>
 X11R6 is considered a major update from X11R5, so the shared
@@ -141,7 +144,7 @@ systems.
 
 <sect>xterm
 <p>
-The XFree86-3.3 binary release contains an xterm binary that has been linked
+The XFree86-3.3.2 binary release contains an xterm binary that has been linked
 statically against libtermcap. This was done to make sure that it will
 correctly work with all distributions, regardless whether they rely on
 libtermcap or libncurses. Contrary to the xterm binaries in some beta version
@@ -190,7 +193,7 @@ time, not part of the XFree86 distribution.
 
 <sect> Compiling XFree86 <p>
 There are no special instructions required for compiling XFree86.
-This version was compiled with gcc-2.7.2.1, the 5.4.7 Elf libraries and the
+This version was compiled with gcc-2.7.2.1, the 5.3.12 Elf libraries and the
 1.7.14 shared, dynamic linker ld.so. 
 The server has been
 compiled with <tt>-m486</tt>, which optimizes it for the 486 processor, but
@@ -203,16 +206,6 @@ but libraries for those extensions are always generated. They can be loaded
 at runtime, see the XFree86 man page for details. By modifying
 <tt>site.def</tt>, extra extensions can be compiled into the server.
 Alternately, the link kit can be used to craft modified servers.
-
-The distribution is very large, but it is possible to compile
-XFree86 on a single 64mb partition, if the source tree is carefully trimmed
-(no manpages, PEX or large clients). Simply run ``<tt>make Makefiles</tt>'' to
-create
-the Makefiles, then stop the make and run each piece individually. It is
-not necessary to run ``<tt>make depend</tt>'' as well, which saves some
-space.  Having
-150mb available makes compiling XFree86 a lot easier. You will need about
-10mb of virtual memory to compile the entire server.
 
 If an aout version of XFree86 is to be built and patches are applied which 
 significantly change the libraries,
@@ -230,7 +223,7 @@ Bug reports should be sent to <it>XFree86@XFree86.org</it> or posted
 to the <it>comp.windows.x.i386unix</it> newsgroup.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.3 1997/05/23 12:19:40 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.4 1998/02/26 20:11:26 hohndel Exp $
 
 
 

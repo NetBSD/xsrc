@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.11 1997/07/07 04:11:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.14 1998/02/07 10:05:09 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
- * Copyright 1993,1994,1995,1996 by Kevin E. Martin, Chapel Hill, North Carolina.
+ * Copyright 1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -88,6 +88,7 @@ extern void SetTimeSinceLastInputEvent();
 unsigned int mach64MemorySize = 0;
 unsigned int mach64ApertureSize = 0;
 unsigned long mach64ApertureAddr = 0;
+unsigned long mach64RegisterAddr = 0;
 extern char *xf86VisualNames[];
 
 #ifdef PIXPRIV
@@ -164,7 +165,8 @@ ScrnInfoRec mach64InfoRec = {
     0,			/* int textClockFreq */
     NULL,               /* char* DCConfig */
     NULL,               /* char* DCOptions */
-    0			/* int MemClk */
+    0,			/* int MemClk */
+    0			/* int LCDClk */
 #ifdef XFreeXDGA
     ,0,                  /* int directMode */
     NULL,               /* Set Vid Page */
@@ -276,6 +278,7 @@ typedef struct ATIPCIInformation {
    int  ChipRev;
    unsigned long ApertureBase;
    unsigned long IOBase;
+   unsigned long RegisterBase;
    Bool BlockIO;
 } ATIPCIInformation;
    
@@ -336,12 +339,19 @@ SymTabRec mach64RamdacTable[] = {
 };  
 
 SymTabRec mach64ChipTable[] = {
-    { MACH64_GX, "Mach64 GX" },
-    { MACH64_CX, "Mach64 CX" },
-    { MACH64_CT, "Mach64 CT" },
-    { MACH64_ET, "Mach64 ET" },
-    { MACH64_VT, "Mach64 VT" },
-    { MACH64_GT, "Mach64 GT" },
+    { MACH64_GX_ID, "Mach64 GX" },
+    { MACH64_CX_ID, "Mach64 CX" },
+    { MACH64_CT_ID, "Mach64 CT" },
+    { MACH64_ET_ID, "Mach64 ET" },
+    { MACH64_VT_ID, "Mach64 VT" },
+    { MACH64_VU_ID, "Mach64 VT3" },
+    { MACH64_GT_ID, "Mach64 GT" },
+    { MACH64_GU_ID, "Mach64 RageII+DVD" },
+    { MACH64_GB_ID, "Mach64 RagePro" },
+    { MACH64_GD_ID, "Mach64 RagePro" },
+    { MACH64_GI_ID, "Mach64 RagePro" },
+    { MACH64_GP_ID, "Mach64 RagePro" },
+    { MACH64_GQ_ID, "Mach64 RagePro" },
     { -1, "" },
 };
 
@@ -378,6 +388,7 @@ int	mach64DRAMMemClk;
 int	mach64VRAMMemClk;
 int	mach64MemCycle;
 Bool	mach64IntegratedController;
+Bool	mach64HasDSP;
 
 static ATIInformationBlock *GetATIInformationBlock(BlockIO)
     Bool BlockIO;
@@ -457,25 +468,19 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    }
    switch (tmp & CFG_CHIP_TYPE) {
    case MACH64_GX_ID:
-	info.ChipType = MACH64_GX;
-	break;
    case MACH64_CX_ID:
-	info.ChipType = MACH64_CX;
-	break;
    case MACH64_CT_ID:
-	info.ChipType = MACH64_CT;
-	break;
    case MACH64_ET_ID:
-	info.ChipType = MACH64_ET;
-	break;
    case MACH64_VT_ID:
    case MACH64_VU_ID:
-	info.ChipType = MACH64_VT;
-	break;
    case MACH64_GT_ID:
    case MACH64_GU_ID:
+   case MACH64_GB_ID:
+   case MACH64_GD_ID:
+   case MACH64_GI_ID:
    case MACH64_GP_ID:
-	info.ChipType = MACH64_GT;
+   case MACH64_GQ_ID:
+	info.ChipType = tmp & CFG_CHIP_TYPE;
 	break;
    default:
 	/*
@@ -483,7 +488,7 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
 	 * register themselves in PCI configuration space.
 	 */
 	if (BlockIO) {
-	    info.ChipType = MACH64_UNKNOWN;
+	    info.ChipType = MACH64_UNKNOWN_ID;
 	    break;
 	}
 	info.Mach64_Present = FALSE;
@@ -503,7 +508,7 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
 #endif
 
    tmp = inl(ioCONFIG_STAT0);
-   if (info.ChipType == MACH64_GX || info.ChipType == MACH64_CX) {
+   if (info.ChipType == MACH64_GX_ID || info.ChipType == MACH64_CX_ID) {
 	info.Bus_Type = tmp & CFG_BUS_TYPE;
 	info.Mem_Type = (tmp & CFG_MEM_TYPE) >> 3;
 	info.DAC_Type = (tmp & CFG_INIT_DAC_TYPE) >> 9;
@@ -519,8 +524,15 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    }
 
    tmp = inl(ioMEM_CNTL);
-   if ((info.ChipType == MACH64_VT || info.ChipType == MACH64_GT) &&
-       (info.ChipRev & 0x07)) {
+   if (((info.ChipType == MACH64_VT_ID ||
+	 info.ChipType == MACH64_GT_ID) && (info.ChipRev & 0x07)) ||
+       info.ChipType == MACH64_VU_ID ||
+       info.ChipType == MACH64_GU_ID ||
+       info.ChipType == MACH64_GB_ID ||
+       info.ChipType == MACH64_GD_ID ||
+       info.ChipType == MACH64_GI_ID ||
+       info.ChipType == MACH64_GP_ID ||
+       info.ChipType == MACH64_GQ_ID) {
      switch (tmp & MEM_SIZE_ALIAS_GTB) {
      case MEM_SIZE_512K:
        info.Mem_Size = 512;
@@ -539,6 +551,9 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
        break;
      case MEM_SIZE_8M_GTB:
        info.Mem_Size = 8*1024;
+       break;
+     case MEM_SIZE_16M_GTB:
+       info.Mem_Size = 16*1024;
        break;
      }
    } else {
@@ -636,34 +651,45 @@ GetATIPCIInformation()
 	if (pcrp->_vendor == PCI_ATI_VENDOR_ID) {
 	    found = TRUE;
 	    devid = pcrp->_device;
-	    switch (pcrp->_device) {
-	    case PCI_MACH64_GX:
-		info.ChipType = MACH64_GX;
+	    switch (devid) {
+	    case PCI_MACH64_GX_ID:
+		info.ChipType = MACH64_GX_ID;
 		break;
-	    case PCI_MACH64_CX:
-		info.ChipType = MACH64_CX;
+	    case PCI_MACH64_CX_ID:
+		info.ChipType = MACH64_CX_ID;
 		break;
-	    case PCI_MACH64_CT:
-		info.ChipType = MACH64_CT;
-		break;
-	    case PCI_MACH64_ET:
-		info.ChipType = MACH64_ET;
-		break;
-	    case PCI_MACH64_VT:
-	    case PCI_MACH64_VU:
-		info.ChipType = MACH64_VT;
-		break;
-	    case PCI_MACH64_GT:
-	    case PCI_MACH64_GU:
-	    case PCI_MACH64_GP:
-		info.ChipType = MACH64_GT;
+	    case PCI_MACH64_CT_ID:
+	    case PCI_MACH64_ET_ID:
+	    case PCI_MACH64_VT_ID:
+	    case PCI_MACH64_VU_ID:
+	    case PCI_MACH64_GT_ID:
+	    case PCI_MACH64_GU_ID:
+	    case PCI_MACH64_GB_ID:
+	    case PCI_MACH64_GD_ID:
+	    case PCI_MACH64_GI_ID:
+	    case PCI_MACH64_GP_ID:
+	    case PCI_MACH64_GQ_ID:
+		info.ChipType = devid;
 		break;
 	    default:
-		info.ChipType = MACH64_UNKNOWN;
+		info.ChipType = MACH64_UNKNOWN_ID;
 		break;
 	    }
 	    info.ChipRev = pcrp->_rev_id;
 	    info.ApertureBase = pcrp->_base0 & 0xFFFFFFF0;
+	    if (((info.ChipType == PCI_MACH64_VT_ID ||
+		  info.ChipType == PCI_MACH64_GT_ID) && (info.ChipRev & 0x07)) ||
+		info.ChipType == PCI_MACH64_VU_ID ||
+		info.ChipType == PCI_MACH64_GU_ID ||
+		info.ChipType == PCI_MACH64_GB_ID ||
+		info.ChipType == PCI_MACH64_GD_ID ||
+		info.ChipType == PCI_MACH64_GI_ID ||
+		info.ChipType == PCI_MACH64_GP_ID ||
+		info.ChipType == PCI_MACH64_GQ_ID) {
+		info.RegisterBase = pcrp->_base2 & 0xFFFFF000;
+	    } else {
+		info.RegisterBase = 0;
+	    }
 	    /*
 	     * The docs say check (pcrp->_user_config_0 & 0x04) for BlockIO
 	     * but this doesn't seem to be reliable.  Instead check if
@@ -712,12 +738,21 @@ GetATIPCIInformation()
     xf86cleanpci();
 
     if (found && xf86Verbose) {
-      if (info.ChipType != MACH64_UNKNOWN) {
-	ErrorF("%s %s: PCI: %s rev %d, Aperture @ 0x%08x,"
-		" %s I/O @ 0x%04x\n", XCONFIG_PROBED, mach64InfoRec.name,
-		xf86TokenToString(mach64ChipTable, info.ChipType),
-		info.ChipRev, info.ApertureBase,
-		info.BlockIO ? "Block" : "Sparse", info.IOBase);
+      if (info.ChipType != MACH64_UNKNOWN_ID) {
+	  if (info.RegisterBase) {
+	      ErrorF("%s %s: PCI: %s rev %d, Aperture @ 0x%08x,"
+		     " Registers @ 0x%08x, %s I/O @ 0x%04x\n",
+		     XCONFIG_PROBED, mach64InfoRec.name,
+		     xf86TokenToString(mach64ChipTable, info.ChipType),
+		     info.ChipRev, info.ApertureBase, info.RegisterBase,
+		     info.BlockIO ? "Block" : "Sparse", info.IOBase);
+	  } else {
+	      ErrorF("%s %s: PCI: %s rev %d, Aperture @ 0x%08x,"
+		     " %s I/O @ 0x%04x\n", XCONFIG_PROBED, mach64InfoRec.name,
+		     xf86TokenToString(mach64ChipTable, info.ChipType),
+		     info.ChipRev, info.ApertureBase,
+		     info.BlockIO ? "Block" : "Sparse", info.IOBase);
+	  }
       } else {
 	ErrorF("%s %s: PCI: unknown ATI (0x%04x) rev %d, Aperture @ 0x%08x,"
 		" %s I/O @ 0x%04x\n", XCONFIG_PROBED, mach64InfoRec.name,
@@ -748,8 +783,7 @@ mach64PrintCTPLL()
     M = pll[PLL_REF_DIV];
 
     N = pll[VCLK0_FB_DIV];
-    if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
-	(mach64ChipRev & 0x07) && (pll[PLL_XCLK_CNTL] & 0x10)) {
+    if (mach64HasDSP && (pll[PLL_XCLK_CNTL] & 0x10)) {
 	switch (pll[VCLK_POST_DIV] & VCLK0_POST) {
 	case 0: P = 3; break;
 	case 1: P = 2; break; /* Unknown */
@@ -762,8 +796,7 @@ mach64PrintCTPLL()
     ErrorF("VCLK0: M=%d, N=%d, P=%d, Clk=%.2f\n", M, N, P,
 	   (double)((2 * R * N)/(M * P)) / 100.0);
     N = pll[VCLK1_FB_DIV];
-    if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
-	(mach64ChipRev & 0x07) && (pll[PLL_XCLK_CNTL] & 0x20)) {
+    if (mach64HasDSP && (pll[PLL_XCLK_CNTL] & 0x20)) {
 	switch ((pll[VCLK_POST_DIV] & VCLK1_POST) >> 2) {
 	case 0: P = 3; break;
 	case 1: P = 2; break; /* Unknown */
@@ -776,8 +809,7 @@ mach64PrintCTPLL()
     ErrorF("VCLK1: M=%d, N=%d, P=%d, Clk=%.2f\n", M, N, P,
 	   (double)((2 * R * N)/(M * P)) / 100.0);
     N = pll[VCLK2_FB_DIV];
-    if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
-	(mach64ChipRev & 0x07) && (pll[PLL_XCLK_CNTL] & 0x40)) {
+    if (mach64HasDSP && (pll[PLL_XCLK_CNTL] & 0x40)) {
 	switch ((pll[VCLK_POST_DIV] & VCLK2_POST) >> 4) {
 	case 0: P = 3; break;
 	case 1: P = 2; break; /* Unknown */
@@ -790,8 +822,7 @@ mach64PrintCTPLL()
     ErrorF("VCLK2: M=%d, N=%d, P=%d, Clk=%.2f\n", M, N, P,
 	   (double)((2 * R * N)/(M * P)) / 100.0);
     N = pll[VCLK3_FB_DIV];
-    if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
-	(mach64ChipRev & 0x07) && (pll[PLL_XCLK_CNTL] & 0x80)) {
+    if (mach64HasDSP && (pll[PLL_XCLK_CNTL] & 0x80)) {
 	switch ((pll[VCLK_POST_DIV] & VCLK3_POST) >> 6) {
 	case 0: P = 3; break;
 	case 1: P = 2; break; /* Unknown */
@@ -929,11 +960,25 @@ mach64Probe()
 		"Sparse", 0x2EC);
     }
 
-    if (mach64ChipType == MACH64_GX || mach64ChipType == MACH64_CX)
+    if (mach64ChipType == MACH64_GX_ID || mach64ChipType == MACH64_CX_ID)
 	mach64IntegratedController = FALSE;
     else
-	/* Even for MACH64_UNKNOWN more than likely */
+	/* Even for MACH64_UNKNOWN_ID more than likely */
 	mach64IntegratedController = TRUE;
+
+    if (((mach64ChipType == MACH64_VT_ID ||
+	  mach64ChipType == MACH64_GT_ID) && (mach64ChipRev & 0x07)) ||
+	mach64ChipType == MACH64_VU_ID ||
+	mach64ChipType == MACH64_GU_ID ||
+	mach64ChipType == MACH64_GB_ID ||
+	mach64ChipType == MACH64_GD_ID ||
+	mach64ChipType == MACH64_GI_ID ||
+	mach64ChipType == MACH64_GP_ID ||
+	mach64ChipType == MACH64_GQ_ID) {
+	mach64HasDSP = TRUE;
+    } else {
+	mach64HasDSP = FALSE;
+    }
 
 #ifdef DEBUG
     if (mach64IntegratedController)
@@ -1061,9 +1106,18 @@ mach64Probe()
 	mach64InfoRec.maxClock = 135000;
 	break;
     case DAC_INTERNAL:
-	if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
+	if ((mach64ChipType == MACH64_VT_ID || mach64ChipType == MACH64_GT_ID) &&
 	    (mach64ChipRev & 0x07)) {
 	    mach64InfoRec.maxClock = 170000;
+	} else if (mach64ChipType == MACH64_VU_ID ||
+		   mach64ChipType == MACH64_GU_ID) {
+	    mach64InfoRec.maxClock = 200000;
+	} else if (mach64ChipType == MACH64_GB_ID ||
+		   mach64ChipType == MACH64_GD_ID ||
+		   mach64ChipType == MACH64_GI_ID ||
+		   mach64ChipType == MACH64_GP_ID ||
+		   mach64ChipType == MACH64_GQ_ID) {
+	    mach64InfoRec.maxClock = 230000;
 	} else {
 	    if (xf86bpp == 8)
 		mach64InfoRec.maxClock = 135000;
@@ -1079,6 +1133,9 @@ mach64Probe()
 	break;
     }
 
+    if (mach64InfoRec.dacSpeeds[0] > 0)
+	mach64InfoRec.maxClock = mach64InfoRec.dacSpeeds[0];
+
     OFLG_ZERO(&validOptions);
     OFLG_SET(OPTION_CLKDIV2, &validOptions);
     OFLG_SET(OPTION_HW_CURSOR, &validOptions);
@@ -1089,7 +1146,12 @@ mach64Probe()
     }
     OFLG_SET(OPTION_DAC_6_BIT, &validOptions);
     OFLG_SET(OPTION_OVERRIDE_BIOS, &validOptions);
-    if (!mach64IntegratedController) {
+    if (!mach64IntegratedController ||
+	mach64ChipType == MACH64_GB_ID ||
+        mach64ChipType == MACH64_GD_ID ||
+        mach64ChipType == MACH64_GI_ID ||
+        mach64ChipType == MACH64_GP_ID ||
+        mach64ChipType == MACH64_GQ_ID) {
 	OFLG_SET(OPTION_NO_BLOCK_WRITE, &validOptions);
 	OFLG_SET(OPTION_BLOCK_WRITE, &validOptions);
     }
@@ -1114,7 +1176,7 @@ mach64Probe()
 
     if (xf86Verbose)
     {
-	ErrorF("%s %s: card type: ", XCONFIG_PROBED, mach64InfoRec.name);
+	ErrorF("%s %s: Card type: ", XCONFIG_PROBED, mach64InfoRec.name);
 	switch(mach64BusType)
 	{
 	case ISA:
@@ -1127,7 +1189,11 @@ mach64Probe()
 	    ErrorF("VESA LocalBus\n");
 	    break;
 	case PCI:
-	    ErrorF("PCI\n");
+	    if (mach64ChipType == MACH64_GB_ID ||
+		mach64ChipType == MACH64_GD_ID)
+		ErrorF("AGP\n");
+	    else
+		ErrorF("PCI\n");
 	    break;
 	default:
 	    ErrorF("Unknown\n");
@@ -1250,7 +1316,7 @@ mach64Probe()
 
 	    for (i = 0; i < mach64InfoRec.clocks; i++) {
 		if (i % 8 == 0) 
-		    ErrorF("\n%s %s: clocks:", 
+		    ErrorF("\n%s %s: Clocks:", 
 			   (OFLG_ISSET(XCONFIG_CLOCKS,&mach64InfoRec.xconfigFlag) &&
 			    OFLG_ISSET(OPTION_NO_BIOS_CLOCKS, &mach64InfoRec.options)) ?
 			   XCONFIG_GIVEN : XCONFIG_PROBED,
@@ -1301,10 +1367,10 @@ mach64Probe()
                 xf86DeleteMode(&mach64InfoRec, pMode);
                 pMode = pModeSv;
           } else if ((pMode->Flags & V_DBLSCAN) &&
-		     (mach64ChipType == MACH64_GX ||
-		      mach64ChipType == MACH64_CX ||
-		      mach64ChipType == MACH64_CT ||
-		      mach64ChipType == MACH64_ET)) {
+		     (mach64ChipType == MACH64_GX_ID ||
+		      mach64ChipType == MACH64_CX_ID ||
+		      mach64ChipType == MACH64_CT_ID ||
+		      mach64ChipType == MACH64_ET_ID)) {
                 pModeSv=pMode->next;
                 ErrorF("%s %s: Doublescan mode not supported on the %s\n",
                        XCONFIG_PROBED, mach64InfoRec.name,
@@ -1402,11 +1468,13 @@ mach64Probe()
 	mach64MemorySize = MEM_SIZE_4M;
     else if (mach64InfoRec.videoRam <= 6144)
 	mach64MemorySize = MEM_SIZE_6M;
-    else
+    else if (mach64InfoRec.videoRam <= 8192)
 	mach64MemorySize = MEM_SIZE_8M;
+    else
+	mach64MemorySize = MEM_SIZE_16M;
 	
     if (xf86Verbose) {
-       ErrorF("%s %s: videoram: %dk\n",
+       ErrorF("%s %s: Video RAM: %dk\n",
 	      OFLG_ISSET(XCONFIG_VIDEORAM, &mach64InfoRec.xconfigFlag) ?
 	      XCONFIG_GIVEN : XCONFIG_PROBED, mach64InfoRec.name,
 	      mach64InfoRec.videoRam );
@@ -1430,8 +1498,12 @@ mach64Probe()
     mach64MaxY = (mach64InfoRec.videoRam * 1024) /
                  (mach64VirtX * (mach64InfoRec.bitsPerPixel / 8)) - 1;
 
-    /* Reserve space for the registers at the end of video memory */
-    mach64InfoRec.videoRam--;
+    /* No need to reserve space for the registers in the frame buffer */
+    /* if we are using the auxilliary register aperture */
+    if (!pciInfo || !(pciInfo->RegisterBase)) {
+	/* Reserve space for the registers at the end of video memory */
+	mach64InfoRec.videoRam--;
+    }
 
     available_ram = mach64InfoRec.videoRam * 1024;
 
@@ -1502,10 +1574,17 @@ mach64Probe()
 		mach64ApertureAddr = 0x04000000;  /* for VLB */
 	}
 
-	if ((mach64BusType == ISA) && (mach64ChipType != MACH64_VT)) {
+	if ((mach64BusType == ISA) && (mach64ChipType != MACH64_VT_ID)) {
 	    mach64ApertureSize = MEM_SIZE_4M;
 	    if (xf86Verbose) {
 	        ErrorF("%s %s: Using 4 MB aperture @ 0x%08x\n", XCONFIG_PROBED,
+		       mach64InfoRec.name, mach64ApertureAddr);
+	    }
+	} else if ((mach64BusType == PCI) && (mach64IntegratedController)) {
+	    mach64ApertureSize = MEM_SIZE_16M;
+	    if (xf86Verbose) {
+	        ErrorF("%s %s: Using 16 MB aperture @ 0x%08x\n",
+		       XCONFIG_PROBED,
 		       mach64InfoRec.name, mach64ApertureAddr);
 	    }
 	} else {
@@ -1515,9 +1594,18 @@ mach64Probe()
 		       mach64InfoRec.name, mach64ApertureAddr);
 	    }
 	}
+
+	if (pciInfo && pciInfo->RegisterBase) {
+	    mach64RegisterAddr = pciInfo->RegisterBase;
+	    if (xf86Verbose) {
+	        ErrorF("%s %s: Using 4 KB register aperture @ 0x%08x\n",
+		       XCONFIG_PROBED,
+		       mach64InfoRec.name, mach64RegisterAddr);
+	    }
+	}
     } else {
 	ErrorF("To use the Mach64 X server you need to be able to use\n");
-	ErrorF("a 4 or 8 Mb memory aperture.\n");
+	ErrorF("a 4, 8 or 16 Mb memory aperture.\n");
 	xf86DisableIOPorts(mach64InfoRec.scrnIndex);
 	return(FALSE);
     }
@@ -1538,6 +1626,11 @@ mach64Probe()
 		   mach64InfoRec.name,
 		   mach64RamdacTable[i].name);
 	}
+	ErrorF("%s %s: Ramdac speed: %d MHz\n",
+	       OFLG_ISSET(XCONFIG_DACSPEED, &mach64InfoRec.xconfigFlag) ?
+	       XCONFIG_GIVEN : XCONFIG_PROBED,
+	       mach64InfoRec.name,
+	       mach64InfoRec.maxClock / 1000);
     }
 
     mach64DAC8Bit = ((!OFLG_ISSET(OPTION_DAC_6_BIT, &mach64InfoRec.options) &&
@@ -1643,7 +1736,6 @@ mach64Initialize (scr_index, pScreen, argc, argv)
 			  mach64VirtX, mach64VirtY,
 			  displayResolution, displayResolution,
 			  mach64VirtX))
-
 		return(FALSE);
 
     savepScreen = pScreen;

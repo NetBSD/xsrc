@@ -1,9 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86defs.c,v 3.4 1997/01/20 12:38:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86defs.c,v 3.4.2.1 1998/02/01 16:05:20 robin Exp $ */
 
 
 #include "windowstr.h"
 #include "gcstruct.h"
 #include "regionstr.h"
+#include "xf86cursor.h"
 
 #include "xf86.h"
 #include "xf86xaa.h"
@@ -30,6 +31,8 @@ xf86GCInfoRecType xf86GCInfoRec = {
     NULL, 0,	/* FillSpansStippled() */
     NULL, 0,	/* FillSpansOpaqueStippled() */
     NULL, 0,	/* CopyArea() */
+    NULL, 0,  	/* PolyLineDashedZeroWidth() */
+    NULL, 0,  	/* PolySegmentDashedZeroWidth() */
     NULL,	/* FillSpansFallBack */
     NULL,	/* PolyGlyphBltFallBack() */
     NULL,	/* ImageGlyphBltFallBack() */
@@ -58,6 +61,7 @@ xf86AccelInfoRecType xf86AccelInfoRec = {
     NULL,	/* WriteBitmapFallBack() */
     NULL,	/* SetupForFillRectSolid() */
     NULL,	/* SubsequentFillRectSolid() */
+    NULL,	/* SubsequentFillTrapezoidSolid() */
     NULL,	/* SetupForScreenToScreenCopy() */
     NULL,	/* SubsequentScreenToScreenCopy() */
     NULL,	/* SubsequentBresenhamLine() */
@@ -66,7 +70,7 @@ xf86AccelInfoRecType xf86AccelInfoRec = {
     NULL,	/* SetupForFill8x8Pattern() */
     NULL,	/* SubsequentFill8x8Pattern() */
     NULL,	/* SetupFor8x8PatternColorExpand() */
-    NULL,	/* SetupFor8x8PatternColorExpand() */
+    NULL,	/* Subsequent8x8PatternColorExpand() */
     NULL,	/* SetupForCPUToScreenColorExpand() */
     NULL,	/* SubsequentCPUToScreenColorExpand() */
     NULL,	/* SetupForScreenToScreenColorExpand() */
@@ -80,6 +84,9 @@ xf86AccelInfoRecType xf86AccelInfoRec = {
     NULL,	/* VerticalLineGXcopyFallBack() */
     NULL,	/* BresenhamLineFallBack() */
     NULL,	/* xf86GetLongWidthAndPointer() */
+    NULL,	/* SetupForDashedLine() */
+    NULL,	/* SubsequentDashedBresenhamLine() */
+    NULL,	/* SubsequentDashedTwoPointLine() */
     NULL,	/* Sync() */
     0,		/* Flags */
     0,		/* ColorExpandFlags */
@@ -99,4 +106,20 @@ xf86AccelInfoRecType xf86AccelInfoRec = {
     NULL,	/* ServerInfoRec */
     0,		/* PixmapCacheMemoryStart */
     0,		/* PixmapCacheMemoryEnd */
+    0, 		/* LinePatternMaxLength */
+    NULL,	/* LinePatternBuffer */
+};
+
+XAACursorInfoRecType XAACursorInfoRec = {
+    0,		/* Flags */
+    0,		/* MaxWidth */
+    0,		/* MaxHeight */
+    0,		/* CursorDataX */
+    0,		/* CursorDataY */
+    NULL,	/* SetCursorColors */
+    NULL,	/* SetCursorPosition */
+    NULL,	/* LoadCursorImage */
+    NULL,	/* HideCursor */
+    NULL,	/* ShowCursor */
+    NULL 	/* GetInstalledColormaps */
 };

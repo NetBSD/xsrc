@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3ramdacs.c,v 3.10.2.5 1997/07/19 04:59:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3ramdacs.c,v 3.10.2.8 1998/02/15 16:09:01 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -1095,7 +1095,11 @@ static int TI3020_3025_Init(DisplayModePtr mode)
       } else {
 	 /* set s3 reg65 for some unknown reason			*/
 	 if (s3InfoRec.bitsPerPixel == 32)
-	    outb(vgaCRReg, 0x80);
+            if (OFLG_ISSET(OPTION_ELSA_W2000PRO,&s3InfoRec.options)) {
+               outb(vgaCRReg, 0x40);
+            } else {
+               outb(vgaCRReg, 0x80);
+            }
 	 else if (s3InfoRec.bitsPerPixel == 16)
 	    outb(vgaCRReg, 0x40);
 	 else
@@ -1866,6 +1870,7 @@ static int STG17xx_PreInit()
     if((xf86bpp <= 8) &&  (S3_x64_SERIES(s3ChipId) || 
 			S3_805_I_SERIES(s3ChipId))) {
 	s3ATT498PixMux = TRUE;
+	pixMuxPossible = TRUE;
 	nonMuxMaxClock = 67500;
 	pixMuxMinClock = 67500;
         allowPixMuxInterlace = TRUE;
@@ -2528,6 +2533,7 @@ static int S3_TRIO_PreInit()
 {
     unsigned char sr8, sr27, sr28;
     int m,n,n1,n2, mclk;
+    int h_lcd, v_lcd, lcdclk;
 
     /* Verify that depth is supported by ramdac */
 	/* all are supported */
@@ -2598,16 +2604,44 @@ static int S3_TRIO_PreInit()
        outb(0x3c4, 0x28);
        sr28 = inb(0x3c5);
        mclk /= ((sr27 >> 2) & 0x03) + 1;
+       if (OFLG_ISSET(XCONFIG_LCDCLOCK, &s3InfoRec.xconfigFlag)) {
+	  lcdclk = s3InfoRec.LCDClk;
+       } else {
+	  int sr12, sr13;
+          outb(0x3c4, 0x12);
+          sr12 = inb(0x3c5);
+          outb(0x3c4, 0x13);
+          sr13 = inb(0x3c5);
+    	  n1 = sr12 & 0x3f;
+    	  n2 = (sr12>>6) & 0x03;
+          lcdclk = ((1431818 * (sr13+2)) / (n1+2) / (1 << n2) + 50) / 100;
+       }
+       outb(0x3c4, 0x61);
+       h_lcd = inb(0x3c5);
+       outb(0x3c4, 0x66);
+       h_lcd |= ((inb(0x3c5) & 0x02) << 7);
+       h_lcd = (h_lcd+1) * 8;
+       outb(0x3c4, 0x69);
+       v_lcd = inb(0x3c5);
+       outb(0x3c4, 0x6e);
+       v_lcd |= ((inb(0x3c5) & 0x70) << 4);
+       v_lcd++;
     }
 
     outb(0x3c4, 0x08);
     outb(0x3c5, sr8);
       
     if (xf86Verbose)
-       if (OFLG_ISSET(CLOCK_OPTION_S3AURORA, &s3InfoRec.clockOptions))
+       if (OFLG_ISSET(CLOCK_OPTION_S3AURORA, &s3InfoRec.clockOptions)) {
 	  ErrorF("%s %s: Using Aurora64 programmable clock (MCLK %1.3f MHz, SR27=%02x, SR28=%02x)\n"
 		 ,clockchip_probed, s3InfoRec.name
 		 ,mclk / 1000.0, sr27, sr28);
+	  ErrorF("%s %s: LCD size %dx%d, clock %1.3f MHz\n"
+		 , OFLG_ISSET(XCONFIG_LCDCLOCK, &s3InfoRec.xconfigFlag) ? XCONFIG_GIVEN : XCONFIG_PROBED
+		 , s3InfoRec.name
+		 , h_lcd, v_lcd
+		 , lcdclk / 1000.0);
+       }		 
        else if (OFLG_ISSET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions))
 	  ErrorF("%s %s: Using Trio64V2 programmable clock (MCLK %1.3f MHz)\n"
 		 ,clockchip_probed, s3InfoRec.name
@@ -4442,8 +4476,43 @@ s3GendacClockSelect(freq)
 #else
 
 	 if (S3_TRIOxx_SERIES(s3ChipId)) {
-	    if (OFLG_ISSET(CLOCK_OPTION_S3AURORA, &s3InfoRec.clockOptions))
-	       (void) S3AuroraSetClock(freq, 2); /* can't fail */
+	    if (OFLG_ISSET(CLOCK_OPTION_S3AURORA, &s3InfoRec.clockOptions)) {
+	       outb(0x3c4, 0x08);  /* unlock extended SEQ regs */
+               outb(0x3c5, 0x06);
+               outb(0x3c4, 0x31);
+	       if (inb(0x3c5) & 0x10) { /* LCD on */
+		 if (!s3InfoRec.LCDClk) {  /* entered only once for first mode */
+		   int h_lcd, v_lcd;
+		   outb(0x3c4, 0x61);
+		   h_lcd = inb(0x3c5);
+		   outb(0x3c4, 0x66);
+		   h_lcd |= ((inb(0x3c5) & 0x02) << 7);
+		   h_lcd = (h_lcd+1) * 8;
+		   outb(0x3c4, 0x69);
+		   v_lcd = inb(0x3c5);
+		   outb(0x3c4, 0x6e);
+		   v_lcd |= ((inb(0x3c5) & 0x70) << 4);
+		   v_lcd++;
+		     
+		   /* check if first mode has physical LCD resolution */
+		   if (s3InfoRec.modes->HDisplay == h_lcd && s3InfoRec.modes->VDisplay == v_lcd)
+		     s3InfoRec.LCDClk = s3InfoRec.clock[s3InfoRec.modes->Clock];
+		   else {
+		     int n1, n2, sr12, sr13;
+		     outb(0x3c4, 0x12);
+		     sr12 = inb(0x3c5);
+		     outb(0x3c4, 0x13);
+		     sr13 = inb(0x3c5);
+		     n1 = sr12 & 0x3f;
+		     n2 = (sr12>>6) & 0x03;
+		     s3InfoRec.LCDClk = ((1431818 * (sr13+2)) / (n1+2) / (1 << n2) + 50) / 100;
+		   }
+		 }
+		 (void) S3AuroraSetClock(s3InfoRec.LCDClk, 2); /* can't fail */
+	       }
+  	       else
+		 (void) S3AuroraSetClock(freq, 2); /* can't fail */
+	    }
 	    else if (OFLG_ISSET(CLOCK_OPTION_S3TRIO64V2, &s3InfoRec.clockOptions))
 	       (void) S3Trio64V2SetClock(freq, 2); /* can't fail */
 	    else 

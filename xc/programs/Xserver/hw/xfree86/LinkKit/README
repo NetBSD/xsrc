@@ -7,20 +7,20 @@
 
 
 
-		      Readme for the XFree86 3.3 LinkKit
+		     Readme for the XFree86 3.3.2 LinkKit
 
 			   The XFree86 Project, Inc.
 
-				  16 May 1997
+			       26 February 1998
 
 
 
-1.  Readme for the XFree86 3.3 LinkKit
+1.  Readme for the XFree86 3.3.2 LinkKit
 
   1.  For systems which don't use gcc-2, you may need to install libgcc.a if
       the binary distribution you are using was built with gcc-2.
 
-  2.  Make sure that you have the XFree86 3.3 libraries installed under
+  2.  Make sure that you have the XFree86 3.3.2 libraries installed under
       /usr/X11R6 if you will be linking Xnest with the LinkKit.  The LinkKit is
       now self-contained for the other servers.
 
@@ -61,13 +61,13 @@
 
 
 
-Readme for the XFree86 3.3 LinkKit
+Readme for the XFree86 3.3.2 LinkKit
 
 
 
 
 
-Readme for the XFree86 3.3 LinkKit
+Readme for the XFree86 3.3.2 LinkKit
 
 
 
@@ -87,6 +87,12 @@ Readme for the XFree86 3.3 LinkKit
 	 o To build the WSN-A2F server: set XF98WSNAServer to YES.
 
 	 o To build the Trident Cyber9320/9680 server: set XF98TGUIServer to
+	   YES.
+
+	 o To build the Matrox Millennium/Mystique Server: set XF98MGAServer to
+	   YES.
+
+	 o To build the Cirrus Logic CLGD7555 Server: set XF98SVGAServer to
 	   YES.
 
 	 o To build the EGC server: set XF98EGCServer to YES.
@@ -118,6 +124,19 @@ Readme for the XFree86 3.3 LinkKit
 	   include in the mono or VGA16 servers (when building dual-headed
 	   servers).
 
+
+
+
+
+
+
+
+
+
+Readme for the XFree86 3.3.2 LinkKit
+
+
+
 	 o Note: the ordering of drivers determines the order in which the
 	   probing is done.  The `generic' driver should be the last one
 	   included in the Mono and VGA16 and SVGA servers because its probe
@@ -125,17 +144,6 @@ Readme for the XFree86 3.3 LinkKit
 
 	 o To use dynamically loadable modules(e.g. PEX, XIE): set Extensions-
 	   DynamicModules to YES.
-
-
-
-
-
-
-
-
-Readme for the XFree86 3.3 LinkKit
-
-
 
 	 o To include the PEX extension: set BuildPexExt to YES.
 
@@ -184,7 +192,18 @@ Readme for the XFree86 3.3 LinkKit
       ning it with the `-showconfig' flag.  To check which extensions are
       included, start the Xserver and run `xdpyinfo'.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v 3.14.2.1 1997/05/17 12:03:29 dawes Exp $
+
+
+
+
+
+
+
+Readme for the XFree86 3.3.2 LinkKit
+
+
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v 3.14.2.3 1998/02/26 20:11:26 hohndel Exp $
 
 
 
@@ -199,7 +218,54 @@ Readme for the XFree86 3.3 LinkKit
 
 
 
-Readme for the XFree86 3.3 LinkKit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Readme for the XFree86 3.3.2 LinkKit
 
 
 
@@ -273,7 +339,7 @@ Readme for the XFree86 3.3 LinkKit
 
 
 
-1. Readme for the XFree86 3.3 LinkKit  ...................................... 1
+1. Readme for the XFree86 3.3.2 LinkKit  .................................... 1
 
 
 
@@ -329,4 +395,4 @@ Readme for the XFree86 3.3 LinkKit
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/README,v 3.21.2.1 1997/05/17 12:25:09 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/README,v 3.21.2.3 1998/02/27 02:54:54 dawes Exp $

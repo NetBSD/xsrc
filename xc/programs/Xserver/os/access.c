@@ -1,5 +1,5 @@
 /* $XConsortium: access.c /main/68 1996/12/15 22:57:09 rws $ */
-/* $XFree86: xc/programs/Xserver/os/access.c,v 3.18.2.1 1997/05/11 05:04:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/access.c,v 3.18.2.4 1998/02/21 06:07:16 robin Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -160,7 +160,26 @@ SOFTWARE.
 #endif
 #endif
 
+#if defined(Lynx) && defined(BSD44SOCKETS)
+#define VARIABLE_IFREQ
+#endif
+
 #endif /* WIN32 */
+
+#ifndef PATH_MAX
+#ifndef Lynx
+#include <sys/param.h>
+#else
+#include <param.h>
+#endif 
+#ifndef PATH_MAX
+#ifdef MAXPATHLEN
+#define PATH_MAX MAXPATHLEN
+#else
+#define PATH_MAX 1024
+#endif
+#endif
+#endif 
 
 #include "dixstruct.h"
 #include "osdep.h"
@@ -780,7 +799,8 @@ ResetHosts (display)
     register HOST	*host;
     char                lhostname[120], ohostname[120];
     char 		*hostname = ohostname;
-    char		fname[100];
+    char		fname[PATH_MAX + 1];
+    int			fnamelen;
     FILE		*fd;
     char		*ptr;
     int                 i, hostlen;
@@ -816,13 +836,21 @@ ResetHosts (display)
         FreeHost (host);
     }
 #ifndef __EMX__
-    strcpy (fname, "/etc/X");
-    strcat (fname, display);
-    strcat (fname, ".hosts");
+#define ETC_HOST_PREFIX "/etc/X"
+#define ETC_HOST_SUFFIX ".hosts"
 #else
-    sprintf (fname, "/XFree86/lib/X11/X%s.hosts",display);
+#define ETC_HOST_PREFIX "/XFree86/lib/X11/X"
+#define ETC_HOST_SUFFIX ".hosts"
+#endif /* __EMX__ */
+    fnamelen = strlen(ETC_HOST_PREFIX) + strlen(ETC_HOST_SUFFIX) +
+		strlen(display) + 1;
+    if (fnamelen > sizeof(fname))
+	FatalError("Display name `%s' is too long\n");
+    sprintf(fname, ETC_HOST_PREFIX "%s" ETC_HOST_SUFFIX, display);
+#ifdef __EMX__
     strcpy(fname, (char*)__XOS2RedirRoot(fname));
 #endif /* __EMX__ */
+
     if (fd = fopen (fname, "r")) 
     {
         while (fgets (ohostname, sizeof (ohostname), fd))

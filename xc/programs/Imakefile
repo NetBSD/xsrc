@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/83 1996/12/18 16:29:30 lehors $
-XCOMM $XFree86: xc/programs/Imakefile,v 3.15.2.1 1997/05/03 09:44:32 dawes Exp $
+XCOMM $XFree86: xc/programs/Imakefile,v 3.15.2.2 1998/02/15 16:08:40 hohndel Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
 
@@ -15,7 +15,7 @@ XCOMM $XFree86: xc/programs/Imakefile,v 3.15.2.1 1997/05/03 09:44:32 dawes Exp $
        XFSSRCDIR = xfs
 #endif
 #if BuildXKBlib
-      XKBSRCDIRS = xkbcomp xkbevd xkbprint xkbutils
+      XKBSRCDIRS = setxkbmap xkbcomp xkbevd xkbprint xkbutils
 #endif
 #if BuildScreenSaverExt
 SCREENSAVESRCDIR = beforelight
@@ -54,7 +54,7 @@ SUBDIRS = $(XSSRCDIR)
 SUBDIRS = \
 	appres bdftopcf bitmap $(SCREENSAVESRCDIR) editres fsinfo \
 	fslsfonts fstobdf \
-	iceauth mkfontdir oclock setxkbmap $(PROXYMGRSRCDIR) \
+	iceauth mkfontdir oclock $(PROXYMGRSRCDIR) \
 	$(RGBSRCDIR) $(RSTARTSRCDIR) $(SMPROXYSRCDIR) $(TWMSRCDIR) x11perf \
 	xauth xclipboard xclock xcmsdb $(XCONSOLESRCDIR) $(XDMSRCDIR) \
 	xdpyinfo $(XF86DGASRCDIR) xfd $(XFSSRCDIR) $(XFINDPROXYSRCDIR) \

@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.5 1997/08/02 13:48:11 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.7 1998/02/15 16:08:51 hohndel Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -16,10 +16,17 @@
 #
 
 
-set ServerList		[list Mono VGA16 SVGA 8514 AGX I128 \
-			      Mach8 Mach32 Mach64 P9000 S3 S3V TGA W32 ]
-set AccelServerList	[list 8514 AGX I128 Mach8 Mach32 Mach64 P9000 \
-			      S3 S3V TGA W32 ]
+if !$pc98 {
+    set ServerList		[list Mono VGA16 SVGA 8514 AGX I128 \
+			          Mach8 Mach32 Mach64 P9000 S3 S3V TGA W32 ]
+    set AccelServerList	[list 8514 AGX I128 Mach8 Mach32 Mach64 P9000 \
+			          S3 S3V TGA W32 ]
+} else {
+    set ServerList		[list EGC NEC480 GANBWAP NKVNEC TGUI MGA \
+			          WABS WABEP WSNA NECS3 PWSKB PWLB GA968 ]
+    set AccelServerList [list EGC NEC480 GANBWAP NKVNEC TGUI MGA \
+			          WABS WABEP WSNA NECS3 PWSKB PWLB GA968 ]
+}
 
 ###
 
@@ -27,7 +34,7 @@ set AccelServerList	[list 8514 AGX I128 Mach8 Mach32 Mach64 P9000 \
 # and SVGA servers, the list is broken out by driver)?
 set CardChipSets(SVGA-al2101)	al2101
 set CardChipSets(SVGA-ali)	{ ali2228 ali2301 ali2302 ali2308 ali2401 }
-set CardChipSets(SVGA-apm)	{ ap6422 at24 }
+set CardChipSets(SVGA-apm)	{ ap6422 at24 AT3D }
 set CardChipSets(SVGA-ark)	{ ark1000vl ark1000pv ark2000pv ark2000mt }
 set CardChipSets(SVGA-ati)	ati
 set CardChipSets(SVGA-cl64xx)	{ cl6410 cl6412 cl6420 cl6440 }
@@ -51,7 +58,7 @@ set CardChipSets(SVGA-gvga)	gvga
 set CardChipSets(SVGA-mga)	{ mga2064w mga1064sg mga2164w }
 set CardChipSets(SVGA-mx)	mx
 set CardChipSets(SVGA-ncr77c22)	{ ncr77c22 ncr77c22e }
-set CardChipSets(SVGA-nv)	{ nv1 stg2000 }
+set CardChipSets(SVGA-nv)	{ nv1 stg2000 riva128 }
 set CardChipSets(SVGA-oak)	{ oti067 oti077 oti087 oti037c }
 set CardChipSets(SVGA-pvga1)	{ pvga1 \
 				  wd90c00 wd90c10 wd90c30 wd90c24 \
@@ -118,6 +125,30 @@ set CardChipSets(W32)	   { et4000w32 et4000w32i et4000w32i_rev_b \
 			     et4000w32i_rev_c et4000w32p_rev_a \
 			     et4000w32p_rev_b et4000w32p_rev_c \
 			     et4000w32p_rev_d et6000 }
+
+set CardChipSets(EGC)	   { vga }
+set CardChipSets(NEC480)   { pegc }
+set CardChipSets(GANBWAP)  { clgd5426 clgd5428 clgd5429 clgd5430 \
+			     clgd5434 clgd5440 clgd5446 clgd7543 \
+			     clgd7548 clgd7555 }
+set CardChipSets(NKVNEC)   { clgd5426 clgd5428 clgd5429 clgd5430 \
+			     clgd5434 clgd5440 clgd5446 clgd7543 \
+			     clgd7548 clgd7555 }
+set CardChipSets(WABS)	   { clgd5426 clgd5428 clgd5429 clgd5430 \
+			     clgd5434 clgd5440 clgd5446 clgd7543 \
+			     clgd7548 clgd7555 }
+set CardChipSets(WABEP)	   { clgd5426 clgd5428 clgd5429 clgd5430 \
+			     clgd5434 clgd5440 clgd5446 clgd7543 \
+			     clgd7548 clgd7555 }
+set CardChipSets(WSNA)	   { clgd5426 clgd5428 clgd5429 clgd5430 \
+			     clgd5434 clgd5440 clgd5446 clgd7543 \
+			     clgd7548 clgd7555 }
+set CardChipSets(TGUI)	   { tgui9660xgi tgui9680 cyber938x }
+set CardChipSets(MGA)	   { }
+set CardChipSets(NECS3)	   { s3_generic mmio_928 }
+set CardChipSets(PWSKB)	   { s3_generic mmio_928 }
+set CardChipSets(PWLB)	   { mmio_928 s3_generic }
+set CardChipSets(GA968)	   { newmmio mmio_928 s3_generic }
 
 ###
 
@@ -200,6 +231,20 @@ set CardRamDacs(VGA16)		[lrmdups [concat $CardRamDacs(SVGA-ati) \
 set CardRamDacs(Mono-ati)	$CardRamDacs(SVGA-ati)
 set CardRamDacs(Mono-et4000)	$CardRamDacs(SVGA-et4000)
 set CardRamDacs(Mono)		$CardRamDacs(VGA16)
+
+set CardRamDacs(EGC)		{}
+set CardRamDacs(NEC480)		{}
+set CardRamDacs(GANBWAP)	{}
+set CardRamDacs(NKVNEC)		{}
+set CardRamDacs(WABS)		{}
+set CardRamDacs(WABEP)		{}
+set CardRamDacs(WSNA)		{}
+set CardRamDacs(TGUI)		{}
+set CardRamDacs(MGA)		ti3026
+set CardRamDacs(NECS3)		{ sc15025 s3_sdac }
+set CardRamDacs(PWSKB)		{ sc15025 bt478 bt485 s3_gendac att20c498 }
+set CardRamDacs(PWLB)		{ att20c505 sc15025 ti3025 }
+set CardRamDacs(GA968)		ibm_rgb524
 unset daclist idx
 
 ###
@@ -250,6 +295,20 @@ set CardClockChips(Mono-tvga8900)	$CardClockChips(SVGA-tvga8900)
 set CardClockChips(Mono)  [lrmdups [concat $CardClockChips(Mono-cirrus) \
 				$CardClockChips(Mono-et4000) \
 				$CardClockChips(Mono-tvga8900)] ]
+
+set CardClockChips(EGC)		{}
+set CardClockChips(NEC480)	{}
+set CardClockChips(GANBWAP)	cirrus
+set CardClockChips(NKVNEC)	cirrus
+set CardClockChips(WABS)	cirrus
+set CardClockChips(WABEP)	cirrus
+set CardClockChips(WSNA)	cirrus
+set CardClockChips(TGUI)	tgui
+set CardClockChips(MGA)		ti3026
+set CardClockChips(NECS3)	s3_sdac
+set CardClockChips(PWSKB)	{ icd2061a s3_gendac }
+set CardClockChips(PWLB)	{ icd2061a ti3025 }
+set CardClockChips(GA968)	{}
 unset clklist idx
 
 # For each server, what options can be chosen?
@@ -378,6 +437,23 @@ set CardOptions(W32)	   { clkdiv2 fast_dram hibit_high hibit_low \
 			     power_saver slow_dram \
 			     w32_interleave_off w32_interleave_on }
 
+set CardOptions(EGC)		{}
+set CardOptions(NEC480)		{}
+set CardOptions(GANBWAP)	{ ga98nb1 ga98nb2 ga98nb4 wap epsonmemwin \
+				  sw_cursor }
+set CardOptions(NKVNEC)		{ nec_cirrus }
+set CardOptions(WABS)		{}
+set CardOptions(WABEP)		{ med_dram }
+set CardOptions(WSNA)		{ epsonmemwin sw_cursor med_dram }
+set CardOptions(TGUI)		{ noaccel }
+set CardOptions(MGA)		{ noaccel }
+set CardOptions(NECS3)		{ necwab nomemaccess dac_8_bit bt485_curs }
+set CardOptions(PWSKB)		{ pcskb pcskb4 pchkb pw805i pw_mux \
+				  nomemaccess epsonmemwin dac_8_bit \
+				  bt485_curs }
+set CardOptions(PWLB)		{ pw_localbus dac_8_bit bt485_curs numbernine }
+set CardOptions(GA968)		{}
+
 # For each server, what readme files are applicable?
 set CardReadmes(SVGA-ark)	README.ark
 set CardReadmes(SVGA-ati)	README.ati
@@ -442,3 +518,16 @@ set CardReadmes(S3V)	   README.S3V
 set CardReadmes(TGA)	   README.DECtga
 set CardReadmes(W32)	   README.W32
 
+set CardReadmes(EGC)	   {}
+set CardReadmes(NEC480)	   {}
+set CardReadmes(GANBWAP)   README.cirrus
+set CardReadmes(NKVNEC)    README.cirrus
+set CardReadmes(WABS)	   README.cirrus
+set CardReadmes(WABEP)	   README.cirrus
+set CardReadmes(WSNA)	   README.cirrus
+set CardReadmes(TGUI)	   README.trident
+set CardReadmes(MGA)	   README.MGA
+set CardReadmes(NECS3)	   README.S3
+set CardReadmes(PWSKB)	   README.S3
+set CardReadmes(PWLB)	   README.S3
+set CardReadmes(GA968)	   README.S3

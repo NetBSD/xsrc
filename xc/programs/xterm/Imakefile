@@ -1,5 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/65 1996/02/02 14:27:54 kaleb $
-XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.11.4.2 1997/05/16 13:55:39 dawes Exp $
+XCOMM $TOG: Imakefile /main/68 1997/08/28 08:08:34 kaleb $
 XCOMM
 XCOMM                         Attention xterm porters
 XCOMM
@@ -8,6 +7,11 @@ XCOMM Xterm assumes that bcopy can handle overlapping arguments.  If your
 XCOMM bcopy (or memcpy) cannot, write a routine called bcopy and link it in
 XCOMM or add -Dbcopy=mybcopy to the DEFINES list below.
 XCOMM
+XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.11.4.5 1998/02/20 14:28:03 robin Exp $
+XCOMM
+
+/* Uncomment SCROLLBAR_RIGHT if you want the scroll bar to be on the right */
+SCROLLBAR_RIGHT = -DSCROLLBAR_RIGHT
 
 /*
  * Fixes to allow compile with X11R5
@@ -22,6 +26,15 @@ XCOMM
 
 #ifndef XkbClientLibs
 #define XkbClientLibs /**/
+#endif
+
+#ifndef SpecialCObjectRule
+#define SpecialCObjectRule(module,ignore,defines) \
+module.o: ; $(CC) -c defines $(CFLAGS) module.c
+#endif
+
+#ifndef ProgramTargetName
+#define ProgramTargetName(program) program
 #endif
 
 /*
@@ -44,21 +57,8 @@ XCOMM
       FEATURE_DEFINES = -DDEBUG -DALLOWLOGGING
 #endif
 
-#if defined(NetBSDArchitecture) || defined(OpenBSDArchitecture) || (defined(FreeBSDArchitecture) && (OSMajorVersion < 2)) || (defined(SunArchitecture) && !defined(SVR4Architecture)) || defined(i386Sco325Architecture)
- TERMCAPDEFINES = -DNO_TERMCAP_H
-#endif
-
  OSMAJORVERSION = OSMajorVersion
  OSMINORVERSION = OSMinorVersion
-
-/*
- * This is for linking statically against libX11 and libXt for some debugging
- * purposes
- */
-#ifdef StaticXterm
-XTOOLONLYLIB=StaticLibrary($(TOOLKITSRC),Xt)
-XONLYLIB=StaticLibrary($(XLIBSRC),X11)
-#endif
 
 #if !defined(AmoebaArchitecture) && !defined(OS2Architecture)
         UTMPDEF = -DUTMP
@@ -73,7 +73,7 @@ XONLYLIB=StaticLibrary($(XLIBSRC),X11)
 		  -DOSMINORVERSION=$(OSMINORVERSION)
    MISC_DEFINES = /* -DALLOWLOGFILEEXEC */ 
     XKB_DEFINES = XkbClientDefines
-        DEFINES = $(XKB_DEFINES) $(TERMCAPDEFINES) $(FEATURE_DEFINES)
+        DEFINES = $(XKB_DEFINES) $(TERMCAPDEFINES) $(FEATURE_DEFINES) $(SCROLLBAR_RIGHT)
 
 #ifdef OS2Architecture
           MAINSRC = os2main.c
@@ -82,11 +82,11 @@ XONLYLIB=StaticLibrary($(XLIBSRC),X11)
           MAINSRC = main.c
           MAINOBJ = main.o
 #endif
-          SRCS1 = button.c charproc.c cursor.c data.c input.c \
-		  $(MAINSRC) menu.c misc.c screen.c scrollbar.c tabs.c \
+          SRCS1 = button.c charproc.c cursor.c data.c doublechr.c input.c \
+		  $(MAINSRC) menu.c misc.c print.c screen.c scrollbar.c tabs.c \
 		  TekPrsTbl.c Tekproc.c util.c VTPrsTbl.c $(EXTRASRC)
-          OBJS1 = button.o charproc.o cursor.o data.o input.o \
-		  $(MAINOBJ) menu.o misc.o screen.o scrollbar.o tabs.o \
+          OBJS1 = button.o charproc.o cursor.o data.o doublechr.o input.o \
+		  $(MAINOBJ) menu.o misc.o print.o screen.o scrollbar.o tabs.o \
 		  TekPrsTbl.o Tekproc.o util.o VTPrsTbl.o $(EXTRAOBJ)
           SRCS2 = resize.c
           OBJS2 = resize.o
@@ -98,7 +98,7 @@ XONLYLIB=StaticLibrary($(XLIBSRC),X11)
 
 #ifndef TermcapLibrary
 #if SystemV && !defined(MacIIArchitecture)
-#if defined(CrayArchitecture) || defined(HPArchitecture) || defined(RsArchitecture)
+#if defined(CrayArchitecture) || (defined(HPArchitecture) && OSMajorVersion < 10) || defined(RsArchitecture)
 #define TermcapLibrary -lcurses		/* special cases of System V */
 #else
 #define TermcapLibrary -ltermlib	/* usually in here */

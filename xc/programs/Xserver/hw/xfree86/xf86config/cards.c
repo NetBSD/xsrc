@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/cards.c,v 3.11 1996/12/23 07:04:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/cards.c,v 3.11.2.1 1998/01/18 10:35:45 hohndel Exp $ */
 
 /*
  *  Functions to manipulate card database.
@@ -254,9 +254,10 @@ int parse_database() {
 	 * Add general comments.
 	 */
 	for (i = 0; i <= lastcard; i++) {
-		if (strcmp(card[i].server, "S3") == 0)
+		if (card[i].server && strcmp(card[i].server, "S3") == 0)
 			appendstring(&card[i].lines, s3_comment);
-		if (strncmp(card[i].chipset, "CL-GD", 5) == 0)
+		if (card[i].chipset && 
+		    strncmp(card[i].chipset, "CL-GD", 5) == 0)
 			appendstring(&card[i].lines, cirrus_comment);
 	}
 

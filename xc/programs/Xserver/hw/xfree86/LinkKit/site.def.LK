@@ -4,7 +4,7 @@ XCOMM $XConsortium: site.def.LK /main/12 1996/10/28 04:23:14 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.25.2.3 1997/05/17 12:25:09 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.25.2.6 1998/02/26 13:58:57 dawes Exp $
 
 /* Configuration file for Server Link Kit */
 
@@ -146,6 +146,8 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.25.2.3 19
 #define XF98WABEPServer		YES
 #define XF98WSNAServer		YES
 #define XF98TGUIServer		YES
+#define XF98MGAServer		YES
+#define XF98SVGAServer		YES
 #define XF98NECS3Server		YES
 #define XF98PWSKBServer		YES
 #define XF98PWLBServer		YES
@@ -162,14 +164,15 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.25.2.3 19
  */
 
 #define XF86SvgaDrivers		nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
-				cirrus ncr77c22 mga oak al2101 ali cl64xx \
-				video7 chips ark mx realtek apm generic
+				cirrus ncr77c22 compaq mga oak al2101 \
+				ali cl64xx video7 ark mx realtek apm \
+				s3v s3_svga chips generic
 
-#define XF86Vga16Drivers	/*et4000*/ et3000 ncr77c22 ati sis tvga8900 oak \
+#define XF86Vga16Drivers	et4000 et3000 ncr77c22 ati sis tvga8900 oak \
 				cl64xx generic 
 
-#define XF86Vga2Drivers		/*et4000*/ et3000 pvga1 gvga ati sis tvga8900 \
-				/*cirrus*/ ncr77c22 oak cl64xx generic
+#define XF86Vga2Drivers		et4000 et3000 pvga1 gvga ati sis tvga8900 \
+				cirrus ncr77c22 oak cl64xx generic
 
 #define XF86MonoDrivers		hgc1280 sigma apollo hercules
 

@@ -11,7 +11,7 @@
 
 			   Rich Murphey, David Dawes
 
-				  16 May 1997
+				  25 Feb 1998
 
 
 
@@ -41,20 +41,20 @@ If you want to save space, first select which archives you want to unpack.  If
 you can't decide what to pick and you have 52Mb of disk space, it's safe to
 unpack everything.
 
-At a minimum you need to unpack the 'required' X33*.tgz archives plus at least
+At a minimum you need to unpack the 'required' X332*.tgz archives plus at least
 one server that matches your vga card.	You'll need 13Mb for the minimum
 required run-time binaries only.
 
       Required:
 
-		  X33bin.tgz
+		  X332bin.tgz
 			all the executable X client applications and shared
 			libs
 
-		  X33fnts.tgz
+		  X332fnts.tgz
 			the misc, 75 dpi and PEX fonts
 
-		  X33lib.tgz
+		  X332lib.tgz
 			data files needed at runtime
 
       Required unless you have already customized your configuration files:
@@ -71,57 +71,57 @@ required run-time binaries only.
 
 
 
-		  X33cfg.tgz
+		  X332cfg.tgz
 			customizable xinit and xdm runtime configuration files
 
       Choose at least one server:
 
-		  X338514.tgz
+		  X3328514.tgz
 			8-bit color for IBM 8514 and true compatibles.
 
-		  X33AGX.tgz
+		  X332AGX.tgz
 			8 and 16-bit color for AGX and XGA boards.
 
-		  X33I128.tgz
+		  X332I128.tgz
 			8 and 16-bit color for I128 boards.
 
-		  X33Ma32.tgz
+		  X332Ma32.tgz
 			8 and 16-bit color for ATI Mach32 boards.
 
-		  X33Ma64.tgz
+		  X332Ma64.tgz
 			8, 16 and 32-bit color for ATI Mach64 boards.
 
-		  X33Ma8.tgz
+		  X332Ma8.tgz
 			8-bit color for ATI Mach8 boards.
 
-		  X33Mono.tgz
+		  X332Mono.tgz
 			1-bit monochrome for VGA, Super-VGA, Hercules, and oth-
 			ers.
 
-		  X33P9K.tgz
+		  X332P9K.tgz
 			8, 16, and 32-bit color for Weitek P9000 boards (Dia-
 			mond Viper).
 
-		  X33S3.tgz
+		  X332S3.tgz
 			8, 16 and 32-bit color for S3 boards.
 
-		  X33S3V.tgz
+		  X332S3V.tgz
 			8 and 16-bit color for S3 ViRGE boards.
 
-		  X33SVGA.tgz
+		  X332SVGA.tgz
 			>=8-bit color for Super-VGA cards.
 
-		  X33VG16.tgz
+		  X332VG16.tgz
 			4-bit color for VGA and Super-VGA cards
 
-		  X33W32.tgz
+		  X332W32.tgz
 			8-bit Color for ET4000/W32, /W32i, /W32p and ET6000
 			cards.
 
-		  X339GAN.tgz
+		  X3329GAN.tgz
 			8-bit color for PC98 GA-98NB/WAP boards
 
-		  X339480.tgz
+		  X3329480.tgz
 			8-bit color for PC98 PEGC
 
 
@@ -137,60 +137,60 @@ required run-time binaries only.
 
 
 
-		  X339NKV.tgz
+		  X3329NKV.tgz
 			8-bit color for PC98 NEC-CIRRUS/EPSON NKV/NKV2 boards
 
-		  X339WBS.tgz
+		  X3329WBS.tgz
 			8-bit color for PC98 WAB-S boards
 
-		  X339WEP.tgz
+		  X3329WEP.tgz
 			8-bit color for PC98 WAB-EP boards
 
-		  X339WSN.tgz
+		  X3329WSN.tgz
 			8-bit color for PC98 WSN-A2F boards
 
-		  X339EGC.tgz
+		  X3329EGC.tgz
 			4-bit color for PC98 EGC
 
-		  X339TGU.tgz
-			8 and 16-bit color for PC98 Trident Cyber9320/9680
+		  X3329TGU.tgz
+			8 and 16-bit color for PC98 Trident Cyber9320/968x
 			boards
 
-		  X339NS3.tgz
+		  X3329MGA.tgz
+			>=8-bit color for PC98 Millennium/Mystique cards.
+
+		  X3329SVG.tgz
+			8-bit color for PC98 Cirrus755x boards
+
+		  X3329NS3.tgz
 			8 and 16-bit color for PC98 NEC S3 boards
 
-		  X339SPW.tgz
+		  X3329SPW.tgz
 			8 and 16-bit color for PC98 S3 PW/PCSKB boards
 
-		  X339LPW.tgz
+		  X3329LPW.tgz
 			8 and 16-bit color for PC98 S3 PW/LB boards
 
-		  X339GA9.tgz
-			8 and 16-bit color for PC98 S3 GA-968 boards
+		  X3329GA9.tgz
+			8, 16 and 32-bit color for PC98 S3 GA-968 boards
 
-		  X33nest.tgz
+		  X332nest.tgz
 			A nested server running as a client window on another
 			display.
 
       Optional:
 
-		  X32doc.tgz
+		  X332doc.tgz
 			READMEs
 
-		  X32ps.tgz
+		  X332ps.tgz
 			READMEs in PostScript
 
-		  X32html.tgz
+		  X332html.tgz
 			READMEs in HTML
 
-		  X32man.tgz
+		  X332man.tgz
 			man pages
-
-		  X32f100.tgz
-			100dpi fonts
-
-		  X32fscl.tgz
-			Speedo and Type1 fonts
 
 
 
@@ -203,16 +203,22 @@ required run-time binaries only.
 
 
 
-		  X32fnon.tgz
+		  X332f100.tgz
+			100dpi fonts
+
+		  X332fscl.tgz
+			Speedo and Type1 fonts
+
+		  X332fnon.tgz
 			Japanese, Chinese and other non-english fonts
 
-		  X32fcyr.tgz
+		  X332fcyr.tgz
 			Cyrillic fonts
 
-		  X32fsrv.tgz
+		  X332fsrv.tgz
 			the font server and its man page
 
-		  X32prog.tgz
+		  X332prog.tgz
 			config, lib*.a and *.h files needed only for compiling
 
 2.1  Full Install:
@@ -250,13 +256,7 @@ required run-time binaries only.
       If you are using sh (as root usually does):
 
 
-	    # for i in X33*.tgz; do
-	    #	tar -x -z --unlink -f $i
-	    # done
 
-
-
-      Else, if you are using csh:
 
 
 
@@ -269,7 +269,15 @@ required run-time binaries only.
 
 
 
-	    % foreach i (X33*.tgz)
+	    # for i in X332*.tgz; do
+	    #	tar -x -z --unlink -f $i
+	    # done
+
+
+
+      Else, if you are using csh:
+
+	    % foreach i (X332*.tgz)
 	    %	tar -x -z --unlink -f $i
 	    % end
 
@@ -288,7 +296,7 @@ required run-time binaries only.
 First do numbers 1, 2 and 4 above. Then unpack the required archives:
 
       # for i in bin fnts lib xicf; do
-      #   tar -x -z --unlink -f  X33$i.tgz
+      #   tar -x -z --unlink -f  X332$i.tgz
       # done
 
 Then unpack a server archive corresponding to your vga card.  The server man
@@ -296,7 +304,7 @@ pages, X11R6/man/man1/XF86_*, list the vga chip sets supported by each server.
 For example, if you have an ET4000 based card you will use the XF86_SVGA
 server:
 
-      # tar -x -z --unlink -f X33SVGA.tgz
+      # tar -x -z --unlink -f X332SVGA.tgz
       # cd /usr/X11R6/bin; rm X; ln -s XF86_SVGA X
 
 2.3  After either Full or Minimal Install above:
@@ -315,14 +323,6 @@ ld.so's cache:
 
       # ldconfig /usr/lib /usr/local/lib /usr/X11R6/lib
 
-If you had already configured X11R6/lib/X11/xinit/xinitrc or
-X11R6/lib/X11/xdm/* omit the xinit-config or xdm-config archive or unpack it
-separately and merge in your customizations.
-
-The fscl and f100 archives are optional and can be omitted if you are short on
-space.	The optional link archive allows you to reconfigure and customize a X
-server binary.	The optional prog archive is needed only for writing or compil-
-ing X applications.  The optional pex archive contains pex clients and
 
 
 
@@ -335,6 +335,14 @@ ing X applications.  The optional pex archive contains pex clients and
 
 
 
+If you had already configured X11R6/lib/X11/xinit/xinitrc or
+X11R6/lib/X11/xdm/* omit the xinit-config or xdm-config archive or unpack it
+separately and merge in your customizations.
+
+The fscl and f100 archives are optional and can be omitted if you are short on
+space.	The optional link archive allows you to reconfigure and customize a X
+server binary.	The optional prog archive is needed only for writing or compil-
+ing X applications.  The optional pex archive contains pex clients and
 libraries for building 3D graphics applications.
 
      NOTE: You don't need to uncompress the font files, but if you uncom-
@@ -380,15 +388,7 @@ XF86Config files from a user's home directory, but requires that it be in
 
 You'll need info on your hardware:
 
-   o Your mouse type, baud rate and its /dev entry.
 
-   o The video card's chipset (e.g. ET4000, S3, etc).
-
-   o Your monitor's sync frequencies.
-
-The easiest way to find which device your mouse is plugged into is to use
-``cat'' or ``kermit'' to look at the output of the mouse.  Connect to it and
-just make sure that it generates output when the mouse is moved or clicked:
 
 
 
@@ -401,10 +401,51 @@ just make sure that it generates output when the mouse is moved or clicked:
 
 
 
+   o Your mouse type, baud rate and its /dev entry.
+
+   o The video card's chipset (e.g. ET4000, S3, etc).
+
+   o Your monitor's sync frequencies.
+
+If you plan to fine tune the screen size or position on your monitor you'll
+need the specs for sync frequencies from your monitor's manual.
+
+When you run the `XF86Setup' utility, do NOT touch the mouse until you are fin-
+ished with mouse set up.  Otherwise, the VGA16 server and the mouse device
+driver may get confused and you may experience mouse and/or keyboard input
+problems.
+
+If you are running ``moused'' (see the man page for moused(8)) in FreeBSD ver-
+sions 2.2.1 or later, you MUST specify SysMouse as the mouse protocol type and
+/dev/sysmouse as the mouse device name, regardless of the brand and model of
+your mouse.
+
+If you are NOT running ``moused'', you need to know the interface type of your
+mouse, /dev entry and the protocol type to use.
+
+The interface type can be determined by looking at the connector of the mouse.
+The serial mouse has a D-Sub female 9- or 25-pin connector.  The bus mouse has
+either a D-Sub male 9-pin connector or a round DIN 9-pin connector.  The PS/2
+mouse is equipped with a small, round DIN 6-pin connector.  Some mice come with
+adapters with which the connector can be converted to another.	If you are to
+use such an adapter, remember the connector at the very end of the
+mouse/adapter pair is what matters.
+
+The next thing to decide is a /dev entry for the given interface.  For the bus
+and PS/2 mice, there is little choice: the bus mouse always use /dev/mse0, and
+the PS/2 mouse is always at /dev/psm0.	There may be more than one serial port
+to which the serial mouse can be attached.  Many people often assign the first,
+built-in serial port /dev/cuaa0 to the mouse.
+
+If you are not sure which serial device your mouse is plugged into, the easiest
+way to find out the device is to use ``cat'' or ``kermit'' to look at the out-
+put of the mouse.  Connect to it and just make sure that it generates output
+when the mouse is moved or clicked:
+
       % cat < /dev/tty00
 
 If you can't find the right mouse device then use ``dmesg|grep sio'' to get a
-list of devices that were detected upon booting:
+list of serial devices that were detected upon booting:
 
       % dmesg|grep sio
       sio0 at 0x3f8-0x3ff irq 4 on isa
@@ -415,8 +456,64 @@ script /dev/MAKEDEV to create entries if they don't already exist:
       % cd /dev
       % sh MAKEDEV tty00
 
-If you plan to fine tune the screen size or position on your monitor you'll
-need the specs for sync frequencies from your monitor's manual.
+
+
+
+
+
+
+
+ README for XFree86 on FreeBSD
+
+
+
+You may want to create a symbolic link /dev/mouse pointing to the real port to
+which the mouse is connected, so that you can easily distinguish which is your
+``mouse'' port later.
+
+The next step is to guess the appropriate protocol type for the mouse.	In
+FreeBSD 2.2.6 or later, the X server may be able to automatically determine the
+appropriate protocol type, unless your mouse is of a relatively old model.  Use
+the ``Auto'' protocol in these versions.
+
+In other versions of FreeBSD or if the ``Auto'' protocol doesn't work in 2.2.6,
+you have to guess a protocol type and try.
+
+There is rule of thumb:
+
+  1.  The bus mice always use the ``BusMouse'' protocol regardless of the brand
+      of the mouse.
+
+  2.  The ``PS/2'' protocol should always be specified for the PS/2 mouse
+      regardless of the brand of the mouse.
+
+	   NOTE: There are quite a few PS/2 mouse protocols listed in the
+	   man page for XF86Config.  But, ``PS/2'' is the only PS/2 mouse
+	   protocol type useful in XF86Config for FreeBSD.  The other PS/2
+	   mouse protocol types are not supported in FreeBSD.  FreeBSD
+	   version 2.2.6 and later directly support these protocol types
+	   in the PS/2 mouse driver psm and it is not necessary to tell
+	   the X server which PS/2 mouse protocol type is to be used;
+	   ``Auto'' should work, otherwise use ``PS/2''.
+
+  3.  The ``Logitech'' protocol is for old mouse models from Logitech.	Modern
+      Logitech mice use either the ``MouseMan'' or ``Microsoft'' protocol.
+
+  4.  Most 2-button serial mice support the ``Microsoft'' protocol.
+
+  5.  3-button serial mice may work with the ``MouseSystems'' protocol. If it
+      doesn't, it may work with the ``Microsoft'' protocol although the third
+      (middle) button won't function.  3-button serial mice may also work with
+      the ``MouseMan'' protocol under which the third button may function as
+      expected.
+
+  6.  3-button serial mice may have a small switch to choose between ``MS'' and
+      ``PC'', or ``2'' and ``3''.  ``MS'' or ``2'' usually mean the
+      ``Microsoft'' protocol.  ``PC'' or ``3'' will choose the ``MouseSystems''
+      protocol.
+
+  7.  If the serial mouse has a roller or a wheel, it may be compatible with
+      the ``IntelliMouse'' protocol.
 
 
 5.  Running X
@@ -424,6 +521,18 @@ need the specs for sync frequencies from your monitor's manual.
 8mb of memory is a recommended minimum for running X.  The server, window man-
 ager, display manager and an xterm take about 8Mb of virtual memory themselves.
 Even if their resident set size is smaller, on a 8Mb system that leaves very
+
+
+
+
+
+
+
+
+ README for XFree86 on FreeBSD
+
+
+
 space for other applications such as gcc that expect a few meg free.  The R6 X
 servers may work with 4Mb of memory, but in practice compilation while running
 X can take 5 or 10 times as long due to constant paging.
@@ -449,11 +558,34 @@ ready-to-print postscript copy of the kernel configuration chapter from the
 system maintainers manual.
 
 If you do decide to reduce your kernel configuration file, do not remove the
-two lines below (in /sys/arch/i386/conf).  They are both required for X sup-
-port:
+line below (in /sys/arch/i386/conf).  It is required for X support:
+
+      options	    UCONSOLE	   #X Console support
+
+The generic FreeBSD kernels are configured by default with the syscons driver.
+To configure your kernel similarly it should have a line like this in
+/usr/src/sys/i386/conf/GENERIC:
+
+      device	    sc0  at isa? port "IO_KBD" tty irq 1 vector scintr
+
+The number of virtual consoles can be set using the MAXCONS option:
+
+      options	    "MAXCONS=4" 	#4 virtual consoles
+
+Otherwise, the default without a line like this is 16.	You must have more VTs
+than gettys as described in the end of section 3, and 4 is a reasonable mini-
+mum.
+
+The server supports two console drivers: syscons and pcvt.  The syscons driver
+is the default in FreeBSD 1.1.5 and higher.  They are detected at runtime and
+no configuration of the server itself is required.
+
+If you intend to use pcvt as the console driver, be sure to include the follow-
+ing option in your kernel configuration file.
 
       options	    XSERVER		#Xserver
-      options	    UCONSOLE	   #X Console support
+
+The number of virtual consoles in pcvt can be set using the following option:
 
 
 
@@ -467,23 +599,20 @@ port:
 
 
 
-The generic FreeBSD kernels are configured by default with the syscons driver.
-To configure your kernel similarly it should have a line like this in
-/usr/src/sys/i386/conf/GENERIC:
+      options	    "PCVT_NSCREENS=10"	#10 virtual consoles
 
-      device	    sc0  at isa? port "IO_KBD" tty irq 1 vector scintr
+The bus mouse driver and the PS/2 mouse driver may not be included, or may be
+included but disabled in your kernel.  If you intend to use these mice, verify
+the following lines in the kernel configuration file:
 
-The number of virtual consoles can be set using the NCONS option:
+      device	    mse0 at isa? port 0x23c tty irq 5 vector mseintr
+      device	    psm0 at isa? port "IO_KBD" conflicts tty irq 12 vector psmintr
 
-      options	    "NCONS=4"	   #4 virtual consoles
-
-Otherwise, the default without a line like this is 12.	You must have more VTs
-than gettys as described in the end of section 3, and 4 is a reasonable mini-
-mum.
-
-The server supports several console drivers: pccons, syscons and pcvt.	The
-syscons driver is the default in FreeBSD 1.1.5 and higher.  They are detected
-at runtime and no configuration of the server itself is required.
+The mse0 device is for the bus mouse and the psm device is for the PS/2 mouse.
+Your bus mouse interface card may allow you to change IRQ and the port address.
+Please refer to the manual of the bus mouse and the manual page for mse(4) for
+details.  There is no provision to change IRQ and the port address of the PS/2
+mouse.
 
 The XFree86 servers include support for the MIT-SHM extension.	The GENERIC
 kernel does not support this, so if you want to make use of this, you will need
@@ -520,7 +649,10 @@ and later releases can use:
 
 To ensure that this symbol is correctly defined, include <sys/param.h> in the
 source that requires it.  Note that the symbol CSRG_BASED is defined for *BSD
-systems in XFree86 3.1.1 and later.  This should be used to protect the
+systems in XFree86 3.1.1 and later.  This should be used to protect the inclu-
+sion of <sys/param.h>.
+
+For code that really is specific to a particular i386 BSD port, use __FreeBSD__
 
 
 
@@ -533,9 +665,6 @@ systems in XFree86 3.1.1 and later.  This should be used to protect the
 
 
 
-inclusion of <sys/param.h>.
-
-For code that really is specific to a particular i386 BSD port, use __FreeBSD__
 for FreeBSD, __NetBSD__ for NetBSD, __OpenBSD__ for OpenBSD, __386BSD__ for
 386BSD, and __bsdi__ for BSD/386.
 
@@ -556,13 +685,16 @@ Many thanks to:
    o Orest Zborowski, Simon Cooper and Dirk Hohndel for ideas from the Linux
      distribution.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/FreeBSD.sgml,v 3.25.2.1 1997/05/17 12:03:29 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/FreeBSD.sgml,v 3.25.2.3 1998/02/26 13:59:06 dawes Exp $
 
 
 
 
 
      $XConsortium: FreeBSD.sgml /main/12 1996/10/28 05:43:08 kaleb $
+
+
+
 
 
 
@@ -680,13 +812,13 @@ Many thanks to:
 
 4. Configuring X for Your Hardware .......................................... 6
 
-5. Running X ................................................................ 7
+5. Running X ................................................................ 8
 
-6. Rebuilding Kernels for X ................................................. 7
+6. Rebuilding Kernels for X ................................................. 9
 
-7. Building X Clients ....................................................... 8
+7. Building X Clients ...................................................... 10
 
-8. Thanks ................................................................... 9
+8. Thanks .................................................................. 11
 
 
 
@@ -725,4 +857,4 @@ Many thanks to:
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/READ.FreeBSD,v 3.31.2.1 1997/05/17 12:25:11 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/READ.FreeBSD,v 3.31.2.3 1998/02/27 02:54:55 dawes Exp $

@@ -11,16 +11,17 @@
 
 			   The XFree86 Project Inc.
 
-				15 January 1996
+			       27 February 1998
 
 
 
 1.  Supported hardware
 
 The current S3 Server supports the following S3 chipsets: 911, 924, 801/805,
-928, 732 (Trio32), 764 (Trio64), 864, 868, 964 and 968.  The S3 server will
-also recognise the 866, but it has not been tested with this chipset.  If you
-have any problems or success with these, please report it to us.
+928, 732 (Trio32), 764, 765, 775, 785 (Trio64*), 864, 868, 964, 968 and M65
+(Aurora64V+).  The S3 server will also recognise the 866, but it has not been
+tested with this chipset.  If you have any problems or success with these,
+please report it to us.
 
 Nevertheless, this is not enough to support every board using one of these
 chipsets. The following list contains some data points on boards that are known
@@ -57,19 +58,20 @@ good it might work for you, too.
 
       S3 801/805, AT&T 20C490 RAMDAC, ICD2061A Clockchip
 
+
+
+
+ Information for S3 Chipset Users
+
+
+
+
+
+ Information for S3 Chipset Users
+
+
+
 	       o STB PowerGraph X.24 S3 (ISA)
-
-
-
- Information for S3 Chipset Users
-
-
-
-
-
- Information for S3 Chipset Users
-
-
 
 	    8 and 15/16 bpp
 
@@ -123,8 +125,6 @@ good it might work for you, too.
 	    RAMDAC probe reportedly causes problems with some of these boards,
 	    and a RamDac entry should be used to avoid the probe.
 
-	    Real AT&T 20C490 or 20C491 RAMDACs work with the "dac_8_bit"
-	    option.  Some clones (like the Winbond 82C490) do not.
 
 
 
@@ -136,6 +136,9 @@ good it might work for you, too.
  Information for S3 Chipset Users
 
 
+
+	    Real AT&T 20C490 or 20C491 RAMDACs work with the "dac_8_bit"
+	    option.  Some clones (like the Winbond 82C490) do not.
 
       S3 928, Sierra SC15025 RAMDAC, ICD2061A Clockchip
 
@@ -188,9 +191,6 @@ good it might work for you, too.
 
       S3 928, Bt485 RAMDAC, ICD2061A Clockchip
 
-	       o #9 GXE Level 10, 11, 12
-
-
 
 
 
@@ -203,6 +203,9 @@ good it might work for you, too.
 
 
 
+	       o #9 GXE Level 10, 11, 12
+
+
 	    8, 15/16 and 24(32) bpp
 
 		  ClockChip "icd2061a"
@@ -212,7 +215,6 @@ good it might work for you, too.
       S3 928, Ti3020 RAMDAC, ICD2061A Clockchip
 
 	       o #9 GXE Level 14, 16
-
 	    8, 15/16 and 24(32) bpp
 
 	    Supports RGB with sync-on-green
@@ -255,8 +257,6 @@ good it might work for you, too.
 	    Clockchip support is still sometimes flaky and on some machines
 	    problems with the first mode after startup of XF86_S3 or after
 	    switching back from VT have been seen; switching to next mode with
-	    CTRL+ALT+``KP+'' and back seems to solve this problem.
-
 
 
 
@@ -268,6 +268,8 @@ good it might work for you, too.
  Information for S3 Chipset Users
 
 
+
+	    CTRL+ALT+``KP+'' and back seems to solve this problem.
 
 	    Interlaced modes don't work correctly.
 
@@ -320,9 +322,7 @@ good it might work for you, too.
 
       S3 964, Bt485 RAMDAC, ICD2061A Clockchip
 
-	       o Diamond Stealth 64
 
-	    8, 15/16, 24(32) bpp
 
 
 
@@ -334,6 +334,10 @@ good it might work for you, too.
  Information for S3 Chipset Users
 
 
+
+	       o Diamond Stealth 64
+
+	    8, 15/16, 24(32) bpp
 
 		  ClockChip "icd2061a"
 
@@ -385,10 +389,6 @@ good it might work for you, too.
 
 	    8/15/16/24 bpp
 
-	    Note: The Trio64 has a builtin RAMDAC and clockchip, so the server
-	    should work with all Trio64 cards, and there is no need to specify
-	    the RAMDAC or clockchip in the XF86Config file.
-
 
 
 
@@ -400,6 +400,10 @@ good it might work for you, too.
  Information for S3 Chipset Users
 
 
+
+	    Note: The Trio64 has a builtin RAMDAC and clockchip, so the server
+	    should work with all Trio64 cards, and there is no need to specify
+	    the RAMDAC or clockchip in the XF86Config file.
 
       S3 732 (Trio32)
 
@@ -450,10 +454,6 @@ good it might work for you, too.
 
       S3 964, IBM RGB 514/524/525/528 RAMDAC & Clockchip
 
-	       o Hercules Graphics Terminator 64
-
-	    8/15/16/24 bpp
-
 
 
 
@@ -466,6 +466,10 @@ good it might work for you, too.
  Information for S3 Chipset Users
 
 
+
+	       o Hercules Graphics Terminator 64
+
+	    8/15/16/24 bpp
 
 		  s3RefClk   50
 		  DACspeed  170
@@ -516,10 +520,6 @@ good it might work for you, too.
 
 		 in each Display subsection.
 
-	       o MIRO 80SV
-
-		       s3RefClk   16
-		       DACspeed  250
 
 
 
@@ -531,6 +531,12 @@ good it might work for you, too.
 
  Information for S3 Chipset Users
 
+
+
+	       o MIRO 80SV
+
+		       s3RefClk   16
+		       DACspeed  250
 
 
 	    8/15/16/24 bpp
@@ -580,12 +586,6 @@ good it might work for you, too.
 	       o Full server startup output.
 
 
-2.  16bpp and 32bpp
-
-On 801/805 + AT&T490 Cards (like the Fahrenheit 1280+ VLB) only 15 and 16bpp
-are supported. 32bpp isn't available on this type of card. (There is a 24 bit
-mode under MS Windows, but it's not a 32bpp sparse mode but a real 3
-bytes/pixel mode).
 
 
 
@@ -597,6 +597,14 @@ bytes/pixel mode).
 
  Information for S3 Chipset Users
 
+
+
+2.  16bpp and 32bpp
+
+On 801/805 + AT&T490 Cards (like the Fahrenheit 1280+ VLB) only 15 and 16bpp
+are supported. 32bpp isn't available on this type of card. (There is a 24 bit
+mode under MS Windows, but it's not a 32bpp sparse mode but a real 3
+bytes/pixel mode).
 
 
 3.  List of Supported Clock Chips
@@ -634,14 +642,6 @@ RAMDACs that are grouped together below are treated as compatible with each
 other as far as the server is concerned. For example, the server will report
 "bt485" when you actually specify RAMDAC "bt9485", or "s3_gendac" when you
 specify RAMDAC "ics5300".
-
-
-
-
-
-
-
-
 
 
 
@@ -870,7 +870,44 @@ so that that this value will be used even if you use another text mode and
 probing fails!
 
 
-7.  How to avoid ``snowing'' display while performing graphics operations
+7.  Hints for LCD configuration (S3 Aurora64V+)
+
+If LCD is active the CRT will always output 1024x768 (or whatever is the _phys-
+ical_ LCD size) and smaller modes are zoomed to fit on the LCD unless you spec-
+ify Option "lcd_center" in the device section.
+
+The pixel clock for this physical size (e.g. 1024x768) mode...
+
+   o ...can explicitly set in the config file (device section) with  e.g.
+     `Set_LCDClk 70' (resulting 70 MHz pixel clock being used for all modes
+     when LCD is on)
+
+   o ...is taken from the _first_ mode in the modes line iff this mode's dis-
+     play size is the same as the physical LCD size
+
+   o ...the default LCD pixel clock of BIOS initialisation setup is used.  This
+     value is output at server startup in the line `LCD size ...' unless you're
+     specifying a value using `Set_LCDClk ...'
+
+If LCD is _not_ active, the normal mode lines and pixel clocks are used for the
+VGA output.
+
+Whenever you switch output sources with Fn-F5, the Xserver won't get informed
+and pixel clock and other settings are wrong.  Because of this you have to
+switch modes _after_ switch output sources!  Then the server will check which
+outputs are active and select the correct clocks etc.  So the recommended key
+sequence to switch output is
+
+Fn-F5  Ctrl-Alt-Plus  Ctrl-Alt-Minus
+
+and everything should be ok..
+
+on the Toshiba keypad you can first hold down Ctrl-Alt, then press `Fn' addi-
+tionally before pressing Plus/Minus too to avoid to explicitly enable/disable
+the numeric keypad for mode switching.
+
+
+8.  How to avoid ``snowing'' display while performing graphics operations
 
 For cards with the S3 Vision864 chip, there is an automatic correction which
 depends on the pixel clock and the memory clock MCLK at which the S3 chip oper-
@@ -879,6 +916,18 @@ reading the MCLK value so far), so this value has to be estimated and specified
 by the user (the default is 60 [MHz]).
 
 With the new `s3MCLK' entry for your XF86Config file, now you can specify e.g.
+
+
+
+
+
+
+
+
+
+ Information for S3 Chipset Users
+
+
 
       s3MCLK 55
 
@@ -902,6 +951,23 @@ running the test script below.
 Running this script will use xbench and/or x11perf to run a test to determine
 the MLCK value, which is printed in MHz. Up to 4 tests are run, so you'll get
 up to 4 estimates (where the first might be the most accurate one).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -966,13 +1032,79 @@ up to 4 estimates (where the first might be the most accurate one).
 
      exit
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3.sgml,v 3.37.2.1 1997/05/27 06:22:23 dawes Exp $
+
+9.  New S3 SVGA driver
+
+There is a new experimental S3 driver for non-ViRGE S3 chipsets in the
+XF86_SVGA server.  This is definitely an ALPHA quality driver and hasn't been
+well tested, and has some known problems.  Because of this, the configuration
+programs will install XF86_S3 by default rather than this one.	But if you're
+adventurous or had some problems with XF86_S3, you might want to give it a try.
+
+The driver includes generic S3 support which should work on all non-ViRGE S3
+chips (in theory, that is).  It also has improved support for chips that sup-
+port S3's new style memory mapped I/O.	These chips include the 868, 968 and
+recent Trio64 variants (not the plain old Trio64s).  Chips that are capable of
+using the new style MMIO will use it automatically.  The option "NO_MMIO" can
+be used to turn this off.
+
+Performance for chips using the new style MMIO is expected to be better than
+
+
+
+
+
+
+
+
+ Information for S3 Chipset Users
+
+
+
+XF86_S3, especially on a PCI bus.  Performance without MMIO, however, is
+expected to be roughly comparable to XF86_S3 (faster in some areas, slower in
+others).
+
+All color depths achievable with XF86_S3 should be possible with these drivers.
+Additionally, packed 24 bpp "sort of" works for the 868 and 968.  Your results
+may vary.
+
+Nearly all the options and features supported by XF86_S3 are supported by this
+driver.  Additionally, the standard XAA/SVGA server options such as NO_ACCEL,
+SW_CURSOR, and NO_PIXMAP_CACHE are also supported.  XF86_S3 features which are
+NOT supported in this driver are DPMS support and gamma correction.
+
+The driver supports the PCI_RETRY option when using MMIO and a PCI card.  This
+option can give large performance boosts for some operations, but has a ten-
+dency to hog the bus.  Because of this, the option is not set by default. Most
+hardware combinations may not have any problems using this option, but sound
+card glitches during intensive graphics operations have been reported on some.
+
+One shortcoming worth noting is that this driver does not yet contain the work-
+around for some S3 PCI BIOSs that report their memory usage incorrectly.  This
+can result in conflicting address spaces.  If this is the case on your hardware
+you should run XF86_S3 once and write down the address that your card is relo-
+cated to (as printed out in the server output).  Then you can force the server
+to use this address with the MemBase field in the XF86Config (see the man page
+on XF86Config).
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3.sgml,v 3.37.2.4 1998/02/27 02:34:38 dawes Exp $
 
 
 
 
 
      $XConsortium: S3.sgml /main/14 1996/02/21 17:45:58 kaleb $
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1067,7 +1199,7 @@ up to 4 estimates (where the first might be the most accurate one).
 
 1. Supported hardware ....................................................... 1
 
-2. 16bpp and 32bpp .......................................................... 9
+2. 16bpp and 32bpp ......................................................... 10
 
 3. List of Supported Clock Chips ........................................... 10
 
@@ -1077,11 +1209,11 @@ up to 4 estimates (where the first might be the most accurate one).
 
 6. Reference clock value for IBM RGB 5xx  RAMDACs .......................... 13
 
-7. How to avoid ``snowing'' display while performing graphics operations ... 14
+7. Hints for LCD configuration (S3 Aurora64V+) ............................. 14
 
+8. How to avoid ``snowing'' display while performing graphics operations ... 14
 
-
-
+9. New S3 SVGA driver ...................................................... 16
 
 
 
@@ -1121,4 +1253,4 @@ up to 4 estimates (where the first might be the most accurate one).
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.S3,v 3.51.2.1 1997/05/27 06:26:58 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.S3,v 3.51.2.3 1998/02/27 02:55:01 dawes Exp $

@@ -3,7 +3,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_cursor.c,v 3.2.2.1 1997/05/31 13:34:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_cursor.c,v 3.2.2.2 1998/01/18 10:35:30 hohndel Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -20,25 +20,27 @@
 #include "xf86_Option.h"
 #include "xf86_OSlib.h"
 #include "vga.h"
+#include "apm.h"
 
-extern Bool vgaUseLinearAddressing;
-
-static Bool ApmRealizeCursor();
-static Bool ApmUnrealizeCursor();
-static void ApmSetCursor();
-static void ApmMoveCursor();
-static void ApmRecolorCursor();
+static void  ApmShowCursor(void);
+static void  ApmHideCursor(void);
+static Bool  ApmRealizeCursor(ScreenPtr pScr, CursorPtr pCurs);
+static Bool  ApmUnrealizeCursor(ScreenPtr pScr, CursorPtr pCurs);
+static void  ApmLoadCursorToCard(ScreenPtr pScr, CursorPtr pCurs, int x, int y);
+static void  ApmLoadCursor(ScreenPtr pScr, CursorPtr pCurs, int x, int y);
+static void  ApmSetCursor(ScreenPtr pScr, CursorPtr pCurs, int x, int y, Bool generateEvent);
+static void  ApmMoveCursor(ScreenPtr pScr, int x, int y);
+static void  ApmRecolorCursor(ScreenPtr pScr, CursorPtr pCurs, Bool displayed);
 
 static miPointerSpriteFuncRec apmPointerSpriteFuncs =
 {
-   ApmRealizeCursor,
-   ApmUnrealizeCursor,
-   ApmSetCursor,
-   ApmMoveCursor,
+  ApmRealizeCursor,
+  ApmUnrealizeCursor,
+  (void(*)())ApmSetCursor,
+  ApmMoveCursor,
 };
 
 /* vga256 interface defines Init, Restore, Warp, QueryBestSize. */
-
 
 extern miPointerScreenFuncRec xf86PointerScreenFuncs;
 extern xf86InfoRec xf86Info;
@@ -56,11 +58,9 @@ int apmCursorHotX;
 int apmCursorHotY;
 int apmCursorWidth;	/* Must be set before calling ApmCursorInit. */
 int apmCursorHeight;
+
 static CursorPtr apmCursorpCurs;
 
-extern void wrxl();
-extern void wrxw();
-extern void wrxb();
 
 /*
  * This is a high-level init function, called once; it passes a local
@@ -68,25 +68,26 @@ extern void wrxb();
  * It is called by the SVGA server.
  */
 
-Bool ApmCursorInit(pm, pScr)
-	char *pm;
-	ScreenPtr pScr;
+Bool 
+ApmCursorInit(char *pm, ScreenPtr pScr)
 {
-	if (apmCursorGeneration != serverGeneration) {
-		if (!(miPointerInitialize(pScr, &apmPointerSpriteFuncs,
-		&xf86PointerScreenFuncs, FALSE)))
-			return FALSE;
+  if (apmCursorGeneration != serverGeneration) {
+    if (!(miPointerInitialize(pScr, &apmPointerSpriteFuncs,
+                              &xf86PointerScreenFuncs, FALSE)))
+      return FALSE;
 
-		apmCursorHotX = 0;
-		apmCursorHotY = 0;
-	}
+    apmCursorHotX = 0;
+    apmCursorHotY = 0;
+  }
 
-	apmCursorGeneration = serverGeneration;
+  apmCursorGeneration = serverGeneration;
 
-	apmCursorControlMode = 0;
-	apmCursorAddress = vga256InfoRec.videoRam * 1024 - 35 * 1024;
+  apmCursorControlMode = 0;
 
-	return TRUE;
+  apmCursorAddress = APM.ChipLinearSize - 34*1024;
+/*  apmCursorAddress = vga256InfoRec.videoRam * 1024 - 35 * 1024; */
+
+  return TRUE;
 }
 
 /*
@@ -94,9 +95,12 @@ Bool ApmCursorInit(pm, pScr)
  * It's a local function, it's not called from outside of the module.
  */
 
-static void ApmShowCursor() {
-	/* Enable the hardware cursor. */
-	wrxb(0x140, apmCursorControlMode | 1);
+static void 
+ApmShowCursor(void) 
+{
+  /* Enable the hardware cursor. */
+  ApmCheckMMIO_Init();
+  WRXB_DYN(0x140, apmCursorControlMode | 1);
 }
 
 /*
@@ -104,9 +108,12 @@ static void ApmShowCursor() {
  * This is also a local function, it's not called from outside.
  */
 
-void ApmHideCursor() {
-	/* Disable the hardware cursor. */
-	wrxb(0x140, apmCursorControlMode);
+static void 
+ApmHideCursor(void) 
+{
+  ApmCheckMMIO_Init();
+  /* Disable the hardware cursor. */
+  WRXB_DYN(0x140, apmCursorControlMode);
 }
 
 /*
@@ -116,51 +123,50 @@ void ApmHideCursor() {
  * can conveniently handle, and store that in system memory.
  */
 
-static Bool ApmRealizeCursor(pScr, pCurs)
-	ScreenPtr pScr;
-	CursorPtr pCurs;
+static Bool 
+ApmRealizeCursor(ScreenPtr pScr, CursorPtr pCurs)
 {
-   register int i, j;
-   unsigned char *pServMsk;
-   unsigned char *pServSrc;
-   int   index = pScr->myNum;
-   pointer *pPriv = &pCurs->bits->devPriv[index];
-   int   w, h, stride;
-   unsigned char *ram, *dst, v;
-   CursorBitsPtr bits = pCurs->bits;
+  register int i, j;
+  unsigned char *pServMsk;
+  unsigned char *pServSrc;
+  int   index = pScr->myNum;
+  pointer *pPriv = &pCurs->bits->devPriv[index];
+  int   w, h, stride;
+  unsigned char *ram, *dst, v;
+  CursorBitsPtr bits = pCurs->bits;
 
-   if (pCurs->bits->refcnt > 1)
-      return TRUE;
+  if (pCurs->bits->refcnt > 1)
+    return TRUE;
 
-   ram = (unsigned char *)xalloc(1024);
-   *pPriv = (pointer) ram;
+  ram = (unsigned char *)xalloc(1024);
+  *pPriv = (pointer) ram;
 
-   if (!ram)
-      return FALSE;
-   memset(ram, 0xaa, 64 * 64 / 4);
+  if (!ram)
+    return FALSE;
+  memset(ram, 0xaa, 64 * 64 / 4);
 
-   pServSrc = (unsigned char *)bits->source;
-   pServMsk = (unsigned char *)bits->mask;
+  pServSrc = (unsigned char *)bits->source;
+  pServMsk = (unsigned char *)bits->mask;
 
 #define MAX_CURS 64
 
-	h = pCurs->bits->height;
-	if (h > MAX_CURS) h = MAX_CURS;
-	w = pCurs->bits->width;
-	if (w > MAX_CURS) w = MAX_CURS;
-	stride = ((pCurs->bits->width + 31) / 32) * 4;
-	for (i = 0; i < h; ++i) {
-		pServSrc = pCurs->bits->source + stride * i;
-		pServMsk = pCurs->bits->mask + stride * i;
-		dst = ram + i * 16;
-		for (j = 0; j < w; ++j) {
-			v = (pServSrc[j / 8] >> (j % 8)) & 1;
-			v |= ((pServMsk[j / 8] >> (j % 8)) & 1) << 1;
-			v <<= (j & 3) * 2;
-			dst[j / 4] ^= v;
-		}
-	}
-   return TRUE;
+  h = pCurs->bits->height;
+  if (h > MAX_CURS) h = MAX_CURS;
+  w = pCurs->bits->width;
+  if (w > MAX_CURS) w = MAX_CURS;
+  stride = ((pCurs->bits->width + 31) / 32) * 4;
+  for (i = 0; i < h; ++i) {
+    pServSrc = pCurs->bits->source + stride * i;
+    pServMsk = pCurs->bits->mask + stride * i;
+    dst = ram + i * 16;
+    for (j = 0; j < w; ++j) {
+      v = (pServSrc[j / 8] >> (j % 8)) & 1;
+      v |= ((pServMsk[j / 8] >> (j % 8)) & 1) << 1;
+      v <<= (j & 3) * 2;
+      dst[j / 4] ^= v;
+    }
+  }
+  return TRUE;
 }
 
 /*
@@ -168,18 +174,17 @@ static Bool ApmRealizeCursor(pScr, pCurs)
  * cursor image storage that we created needs to be deallocated.
  */
 
-static Bool ApmUnrealizeCursor(pScr, pCurs)
-	ScreenPtr pScr;
-	CursorPtr pCurs;
+static Bool 
+ApmUnrealizeCursor(ScreenPtr pScr, CursorPtr pCurs)
 {
-	pointer priv;
+  pointer priv;
 
-	if (pCurs->bits->refcnt <= 1 &&
-	(priv = pCurs->bits->devPriv[pScr->myNum])) {
-		xfree(priv);
-		pCurs->bits->devPriv[pScr->myNum] = 0x0;
-	}
-	return TRUE;
+  if (pCurs->bits->refcnt <= 1 &&
+      (priv = pCurs->bits->devPriv[pScr->myNum])) {
+    xfree(priv);
+    pCurs->bits->devPriv[pScr->myNum] = 0x0;
+  }
+  return TRUE;
 }
 
 /*
@@ -191,35 +196,19 @@ static Bool ApmUnrealizeCursor(pScr, pCurs)
  * module.
  */
 
-extern void ApmSetWrite();
-
-static void ApmLoadCursorToCard(pScr, pCurs, x, y)
-	ScreenPtr pScr;
-	CursorPtr pCurs;
-	int x, y;	/* Not used for APM. */
+static void 
+ApmLoadCursorToCard(ScreenPtr pScr, CursorPtr pCurs, int x, int y)
 {
-	unsigned char *cursor_image;
-	int index = pScr->myNum;
+  unsigned char *cursor_image;
+  int index = pScr->myNum;
 
-	if (!xf86VTSema)
-		return;
+  if (!xf86VTSema)
+    return;
 
-	cursor_image = pCurs->bits->devPriv[index];
+  cursor_image = pCurs->bits->devPriv[index];
 
-	if (vgaUseLinearAddressing)
-		memcpy((unsigned char *)vgaLinearBase + apmCursorAddress,
-			cursor_image, 1024);
-	else {
-		/*
-		 * The cursor can only be in the last 16K of video memory,
-		 * which fits in the last banking window.
-		 */
-		vgaSaveBank();
-		ApmSetWrite(apmCursorAddress >> 16);
-		memcpy((unsigned char *)vgaBase + (apmCursorAddress & 0xFFFF),
-			cursor_image, 1024);
-		vgaRestoreBank();
-	}
+  memcpy((unsigned char *)vgaLinearBase + apmCursorAddress,
+             cursor_image, 1024);
 }
 
 /*
@@ -231,54 +220,49 @@ static void ApmLoadCursorToCard(pScr, pCurs, x, y)
  * function in the Pointer record needs to do).
  */
 
-static void ApmLoadCursor(pScr, pCurs, x, y)
-	ScreenPtr pScr;
-	CursorPtr pCurs;
-	int x, y;
+static void 
+ApmLoadCursor(ScreenPtr pScr, CursorPtr pCurs, int x, int y)
 {
-	if (!xf86VTSema)
-		return;
+  if (!xf86VTSema)
+    return;
 
-	if (!pCurs)
-		return;
+  if (!pCurs)
+    return;
 
-	/* Remember the cursor currently loaded into this cursor slot. */
-	apmCursorpCurs = pCurs;
+  /* Remember the cursor currently loaded into this cursor slot. */
+  apmCursorpCurs = pCurs;
 
-	ApmHideCursor();
+  ApmHideCursor();
 
-	/* Program the cursor image address in video memory. */
-	/* We use the last slot (the last 256 bytes of video memory). */
-	wrxw(0x144, vga256InfoRec.videoRam - 33);
+  /* Program the cursor image address in video memory. */
+  /* We use the last slot (the last 256 bytes of video memory). */
+  WRXW_DYN(0x144, (apmCursorAddress >> 10));
 
-	ApmLoadCursorToCard(pScr, pCurs, x, y);
+  ApmLoadCursorToCard(pScr, pCurs, x, y);
 
-	ApmRecolorCursor(pScr, pCurs, 1);
+  ApmRecolorCursor(pScr, pCurs, 1);
 
-	/* Position cursor */
-	ApmMoveCursor(pScr, x, y);
+  /* Position cursor */
+  ApmMoveCursor(pScr, x, y);
 
-	/* Turn it on. */
-	ApmShowCursor();
+  /* Turn it on. */
+  ApmShowCursor();
 }
 
 /*
  * This function should display a new cursor at a new position.
  */
 
-static void ApmSetCursor(pScr, pCurs, x, y, generateEvent)
-	ScreenPtr pScr;
-	CursorPtr pCurs;
-	int x, y;
-	Bool generateEvent;
+static void 
+ApmSetCursor(ScreenPtr pScr, CursorPtr pCurs, int x, int y, Bool generateEvent)
 {
-	if (!pCurs)
-		return;
+  if (!pCurs)
+    return;
 
-	apmCursorHotX = pCurs->bits->xhot;
-	apmCursorHotY = pCurs->bits->yhot;
+  apmCursorHotX = pCurs->bits->xhot;
+  apmCursorHotY = pCurs->bits->yhot;
 
-	ApmLoadCursor(pScr, pCurs, x, y);
+  ApmLoadCursor(pScr, pCurs, x, y);
 }
 
 /*
@@ -286,14 +270,14 @@ static void ApmSetCursor(pScr, pCurs, x, y, generateEvent)
  * displayed earlier. It is called by the SVGA server.
  */
 
-void ApmRestoreCursor(pScr)
-	ScreenPtr pScr;
+void 
+ApmRestoreCursor(ScreenPtr pScr)
 {
-	int x, y;
+  int x, y;
 
-	miPointerPosition(&x, &y);
+  miPointerPosition(&x, &y);
 
-	ApmLoadCursor(pScr, apmCursorpCurs, x, y);
+  ApmLoadCursor(pScr, apmCursorpCurs, x, y);
 }
 
 /*
@@ -301,43 +285,42 @@ void ApmRestoreCursor(pScr)
  * the graphic chip display the cursor at the new position.
  */
 
-static void ApmMoveCursor(pScr, x, y)
-	ScreenPtr pScr;
-	int x, y;
+static void 
+ApmMoveCursor(ScreenPtr pScr, int x, int y)
 {
-	int xorigin, yorigin;
+  int xorigin, yorigin;
 
-	if (!xf86VTSema)
-		return;
+  if (!xf86VTSema)
+    return;
 
-	x -= vga256InfoRec.frameX0 + apmCursorHotX;
-	y -= vga256InfoRec.frameY0 + apmCursorHotY;
+  x -= vga256InfoRec.frameX0 + apmCursorHotX;
+  y -= vga256InfoRec.frameY0 + apmCursorHotY;
 
-	/*
-	 * If the cursor is partly out of screen at the left or top,
-	 * we need set the origin.
-	 */
-	xorigin = 0;
-	yorigin = 0;
-	if (x < 0) {
-		xorigin = -x;
-		x = 0;
-	}
-	if (y < 0) {
-		yorigin = -y;
-		y = 0;
-	}
+  /*
+   * If the cursor is partly out of screen at the left or top,
+   * we need set the origin.
+   */
+  xorigin = 0;
+  yorigin = 0;
+  if (x < 0) {
+    xorigin = -x;
+    x = 0;
+  }
+  if (y < 0) {
+    yorigin = -y;
+    y = 0;
+  }
 
-	if (XF86SCRNINFO(pScr)->modes->Flags & V_DBLSCAN)
-		y *= 2;
+  if (XF86SCRNINFO(pScr)->modes->Flags & V_DBLSCAN)
+    y *= 2;
 
-	/* Program the cursor origin (offset into the cursor bitmap). */
-	wrxb(0x14c, xorigin);
-	wrxb(0x14d, yorigin);
+  /* Program the cursor origin (offset into the cursor bitmap). */
+  WRXB_DYN(0x14c, xorigin);
+  WRXB_DYN(0x14d, yorigin);
 
-	/* Program the new cursor position. */
-	wrxw(0x148, x);
-	wrxw(0x14a, y);
+  /* Program the new cursor position. */
+  WRXW_DYN(0x148, x);
+  WRXW_DYN(0x14a, y);
 }
 
 /*
@@ -346,36 +329,56 @@ static void ApmMoveCursor(pScr, x, y)
  * Adapted from accel/s3/s3Cursor.c.
  */
 
-static void ApmRecolorCursor(pScr, pCurs, displayed)
-	ScreenPtr pScr;
-	CursorPtr pCurs;
-	Bool displayed;
+static void 
+ApmRecolorCursor(ScreenPtr pScr, CursorPtr pCurs, Bool displayed)
 {
- 	ColormapPtr pmap;
-	unsigned short packedcolfg, packedcolbg;
-	xColorItem sourceColor, maskColor;
+  ColormapPtr pmap;
+  unsigned short packedcolfg, packedcolbg;
+  xColorItem sourceColor, maskColor;
 
-	if (!xf86VTSema)
-		return;
+  if (!xf86VTSema)
+    return;
 
-	switch (vgaBitsPerPixel) {
-	case 8:
-		wrxb(0x141, 0);  /* XXXX Fixed colors, debugging only. */
-		wrxb(0x142, 1);
-		break;
-	case 16:
-	case 32:
-		packedcolfg = ((pCurs->foreRed & 0xe000) >> 8)
-			| ((pCurs->foreGreen & 0xe000) >> 11)
-			| ((pCurs->foreBlue & 0xc000) >> 14);
-		packedcolbg = ((pCurs->backRed & 0xe000) >> 8)
-			| ((pCurs->backGreen & 0xe000) >> 11)
-			| ((pCurs->backBlue  & 0xc000) >> 14);
+  switch (vgaBitsPerPixel) {
+#if 0
+    case 8:
+         WRXB_DYN(0x141, 0);  /* XXXX Fixed colors, debugging only. */
+         WRXB_DYN(0x142, 1);
+         break;
+#endif
+    case 8:
+         /*
+          * Now that GetInstalledColormaps is also added to
+          * vga256/vga/vgacmap.c, we can use the hw cursor at 8bpp.
+          */
+         vgaGetInstalledColormaps(pScr, &pmap);
+         sourceColor.red = pCurs->foreRed;
+         sourceColor.green = pCurs->foreGreen;
+         sourceColor.blue = pCurs->foreBlue;
+         FakeAllocColor(pmap, &sourceColor);
+         maskColor.red = pCurs->backRed;
+         maskColor.green = pCurs->backGreen;
+         maskColor.blue = pCurs->backBlue;
+         FakeAllocColor(pmap, &maskColor);
+         FakeFreeColor(pmap, sourceColor.pixel);
+         FakeFreeColor(pmap, maskColor.pixel);
+                
+         WRXB_DYN(0x141, sourceColor.pixel);
+         WRXB_DYN(0x142, maskColor.pixel);
+         break;
+    case 16:
+    case 32:
+         packedcolfg = ((pCurs->foreRed & 0xe000) >> 8)
+           | ((pCurs->foreGreen & 0xe000) >> 11)
+           | ((pCurs->foreBlue & 0xc000) >> 14);
+         packedcolbg = ((pCurs->backRed & 0xe000) >> 8)
+           | ((pCurs->backGreen & 0xe000) >> 11)
+           | ((pCurs->backBlue  & 0xc000) >> 14);
 
-		wrxb(0x141, packedcolfg);
-		wrxb(0x142, packedcolbg);
-		break;
-	}
+         WRXB_DYN(0x141, packedcolfg);
+         WRXB_DYN(0x142, packedcolbg);
+         break;
+  }
 }
 
 /*
@@ -383,12 +386,11 @@ static void ApmRecolorCursor(pScr, pCurs, displayed)
  * by the SVGA server.
  */
 
-void ApmWarpCursor(pScr, x, y)
-	ScreenPtr pScr;
-	int x, y;
+void 
+ApmWarpCursor(ScreenPtr pScr, int x, int y)
 {
-	miPointerWarpCursor(pScr, x, y);
-	xf86Info.currentScreen = pScr;
+  miPointerWarpCursor(pScr, x, y);
+  xf86Info.currentScreen = pScr;
 }
 
 /*
@@ -397,20 +399,16 @@ void ApmWarpCursor(pScr, x, y)
  * It is called by the SVGA server.
  */
 
-void ApmQueryBestSize(class, pwidth, pheight, pScreen)
-	int class;
-	unsigned short *pwidth;
-	unsigned short *pheight;
-	ScreenPtr pScreen;
+void 
+ApmQueryBestSize(int class, unsigned short *pwidth, unsigned short *pheight, ScreenPtr pScreen)
 {
- 	if (*pwidth > 0) {
- 		if (class == CursorShape) {
-			*pwidth = apmCursorWidth;
-			*pheight = apmCursorHeight;
-		}
-		else
-			(void) mfbQueryBestSize(class, pwidth, pheight, pScreen);
-	}
+  if (*pwidth > 0) {
+    if (class == CursorShape) {
+      *pwidth = apmCursorWidth;
+      *pheight = apmCursorHeight;
+    }
+    else
+      (void) mfbQueryBestSize(class, pwidth, pheight, pScreen);
+  }
 }
-
 

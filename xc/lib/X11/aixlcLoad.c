@@ -23,6 +23,7 @@
  * SOFTWARE.
  *
 */
+/* $XFree86: xc/lib/X11/aixlcLoad.c,v 3.3.2.2 1998/02/01 22:08:10 robin Exp $ */
 /************************************************************************/
 /*	XaixlcLoad.c							*/
 /************************************************************************/
@@ -502,7 +503,7 @@ instantiate_xlcd(lc_name)
 /************************************************************************/
 XLCd
 _XaixOsDynamicLoad(name)
-    char *name;
+    _Xconst char *name;
 {
     return instantiate_xlcd(name);
 }

@@ -1,5 +1,5 @@
 /* $XConsortium: fsio.c,v 1.37 95/04/05 19:58:13 kaleb Exp $ */
-/* $XFree86: xc/lib/font/fc/fsio.c,v 3.5 1997/01/18 06:52:29 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fsio.c,v 3.5.2.1 1998/02/15 16:08:40 hohndel Exp $ */
 /*
  * Copyright 1990 Network Computing Devices
  *
@@ -89,7 +89,11 @@ extern int errno;
 #define ECHECK(err) (WSAGetLastError() == err)
 #define ESET(val) WSASetLastError(val)
 #else
+#ifdef ISC
+#define ECHECK(err) ((errno == err) || ETEST())
+#else
 #define ECHECK(err) (errno == err)
+#endif
 #define ESET(val) errno = val
 #endif
 

@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.man,v 3.52.2.4 1997/05/29 14:01:01 dawes Exp $
-.TH XF86Config 4/5 "Version 3.3"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.man,v 3.52.2.7 1998/02/26 13:58:52 dawes Exp $
+.TH XF86Config 4/5 "Version 3.3.2"  "XFree86"
 .SH NAME
 XF86Config - Configuration File for XFree86
 .SH DESCRIPTION
@@ -288,33 +288,55 @@ available are:
 .sp
 .in 20
 .nf
+.B Auto
 .B BusMouse
+.B GlidePoint
+.B GlidePointPS/2
+.B IntelliMouse
+.B IMPS/2
 .B Logitech
 .B Microsoft
+.B MMHitTab
 .B MMSeries
 .B Mouseman
+.B MouseManPlusPS/2
 .B MouseSystems
-.B PS/2
-.B MMHitTab
-.B GlidePoint
-.B IntelliMouse
-.B Xqueue
+.B NetMousePS/2
+.B NetScrollPS/2
 .B OSMouse
+.B PS/2
+.B SysMouse
+.B ThinkingMouse
+.B ThinkingMousePS/2
+.B Xqueue
 .fi
 .in -20
 .RS 8
 .PP
-One should specify \fBBusMouse\fP for the Logitech bus mouse.
-Also, many newer Logitech serial mice use either the \fBMicrosoft\fP
+One should specify \fBBusMouse\fP for the Logitech bus mouse and
+bus or InPort mice from Microsoft and ATI.
+The \fBLogitech\fP protocol is for old serial mouse models from Logitech.
+Many newer Logitech serial mice use either the \fBMicrosoft\fP
 or \fBMouseMan\fP protocol.  \fBXqueue\fP should be specified here
 if it was used in the \fBKeyboard\fP section.  \fBOSMouse\fP refers
 to the event-driver mouse interface available on SCO's SVR3, and the
 mouse interface provided for OS/2.  This
 may optionally be followed by a number specifying the number of
 buttons the mouse has.
+\fBSysMouse\fP refers to the system mouse device, /dev/sysmouse, in
+FreeBSD.
 .PP
-If you have a mouse connected to a PS/2 port, you should specify \fBPS/2\fP,
-regardless of the type of mouse you are using.
+The \fBPS/2\fP and other \fBXXXXPS/2\fP protocol types are for PS/2 mice.
+\fBPS/2\fP should always work with any PS/2 mouse
+regardless of the model of the PS/2 mouse.
+The other \fBXXXXPS/2\fP protocol types may or may not be supported by
+your OS.
+.PP
+The rest of the protocol types are for serial mice.
+If your serial mouse is of a relatively new model, you may specify
+\fBAuto\fP, then the X server will try to select an appropriate
+protocol type automatically.  The \fBAuto\fP protocol type may
+also work for the PS/2 and bus mice on some OSs.
 .RE
 .TP 8
 .B Device \fI"pointer-dev"\fP
@@ -332,6 +354,16 @@ changed in the mouse.  Otherwise the rate is simply set on the
 computer's side to allow mice with non-standard rates (the standard
 rate is 1200).  For 99% of mice you should not set this to anything
 other than the default (1200).
+.TP 8
+.B Buttons \fIN\fP
+This option tells the X server the number of buttons on the mouse.
+Currently there is no reliable way to automatically detect the correct 
+number. 
+This option is the only means for the X server to obtain it.
+The default value is three.
+Note that if you intend to assign Z axis movement to button events
+using the \fBZAxisMapping\fP option below, you need to take account
+of those buttons into \fIN\fP too.
 .TP 8
 .B Emulate3Buttons
 enables the emulation of the third mouse button for mice which only
@@ -351,6 +383,10 @@ is used (like some Logitech Mouseman mice).
 sets the number of motion/button-events the mouse sends per second.
 This is currently only supported for some Logitech mice.
 .TP 8
+.B Resolution \fIcount\fP
+sets the resolution of the device in counts per inch.
+This is not always supported by all the mice.
+.TP 8
 .B ClearDTR
 This option clears the DTR line on the serial port used by the
 mouse.  This option is only valid for a mouse using the \fBMouseSystems\fP
@@ -366,6 +402,17 @@ mouse.  This option is only valid for a mouse using the \fBMouseSystems\fP
 protocol.  Some dual-protocol mice require both DTR and RTS to be
 cleared to operate in MouseSystems mode.  Both the \fBClearDTR\fP
 and \fBClearRTS\fP options should be used for such mice.
+.TP 8
+.B ZAxisMapping X
+.TP 8
+.B ZAxisMapping Y
+.TP 8
+.B ZAxisMapping \fIN M\fP
+Some mouse devices have a wheel or a roller. Its action is
+reported as the Z (third) axis movement in the X server. 
+The Z axis movement can be assigned to another axis (\fIX\fP or \fIY\fP)
+or a pair of buttons (the button \fIN\fP for negative movement
+and \fIM\fP for positive movement) with this option.
 .PP
 The \fBMonitor\fP sections are used to define the specifications
 of a monitor and a list of video modes suitable for use with a

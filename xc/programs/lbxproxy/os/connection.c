@@ -46,6 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/programs/lbxproxy/os/connection.c,v 1.1.1.2.2.2 1998/02/01 22:08:23 robin Exp $ */
 /*
  *
  * The connection code/ideas for SVR4/Intel environments was contributed by
@@ -315,7 +316,7 @@ open_unix_socket ()
 #endif
     strcpy (unsock.sun_path, X_UNIX_PATH);
     strcat (unsock.sun_path, display);
-#ifdef BSD44SOCKETS
+#if defined(BSD44SOCKETS) && !defined(Lynx)
     unsock.sun_len = strlen(unsock.sun_path);
 #endif
 #ifdef hpux

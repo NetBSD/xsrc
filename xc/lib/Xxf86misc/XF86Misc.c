@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xxf86misc/XF86Misc.c,v 3.4 1997/01/18 06:52:26 dawes Exp $ */
+/* $XFree86: xc/lib/Xxf86misc/XF86Misc.c,v 3.4.2.2 1998/02/24 19:05:45 hohndel Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -123,6 +123,8 @@ Bool XF86MiscGetMouseSettings(dpy, mouseinfo)
     mouseinfo->type = rep.mousetype;
     mouseinfo->baudrate = rep.baudrate;
     mouseinfo->samplerate = rep.samplerate;
+    mouseinfo->resolution = rep.resolution;
+    mouseinfo->buttons = rep.buttons;
     mouseinfo->emulate3buttons = rep.emulate3buttons;
     mouseinfo->emulate3timeout = rep.emulate3timeout;
     mouseinfo->chordmiddle = rep.chordmiddle;
@@ -190,6 +192,8 @@ Bool XF86MiscSetMouseSettings(dpy, mouseinfo)
     req->mousetype = mouseinfo->type;
     req->baudrate = mouseinfo->baudrate;
     req->samplerate = mouseinfo->samplerate;
+    req->resolution = mouseinfo->resolution;
+    req->buttons = mouseinfo->buttons;
     req->emulate3buttons = mouseinfo->emulate3buttons;
     req->emulate3timeout = mouseinfo->emulate3timeout;
     req->chordmiddle = mouseinfo->chordmiddle;

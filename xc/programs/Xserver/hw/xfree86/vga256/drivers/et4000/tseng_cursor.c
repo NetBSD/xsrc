@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_cursor.c,v 1.6.2.4 1997/05/31 13:34:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/tseng_cursor.c,v 1.6.2.5 1998/02/01 16:05:07 robin Exp $ */
 
 /*
  * Hardware cursor handling. Adapted mainly from apm/apm_cursor.c
@@ -17,6 +17,8 @@
 #include "scrnintstr.h"
 #include "servermd.h"
 #include "windowstr.h"
+#include "mfb.h"
+#include "compiler.h"
 #include "xf86.h"
 #include "mipointer.h"
 #include "xf86Priv.h"
@@ -66,10 +68,8 @@ int tsengCursorHeight;
 static CursorPtr tsengCursorpCurs;
 
 /*
- * This is a high-level init function, called once at
- * startup and once every time the server VC is reentered;
- * it passes a local miPointerSpriteFuncRec with
- * additional functions that we need to provide.
+ * This is a high-level init function, called once; it passes a local
+ * miPointerSpriteFuncRec with additional functions that we need to provide.
  * It is called by the SVGA server.
  */
 
@@ -104,7 +104,7 @@ static void TsengShowCursor() {
 	unsigned char tmp;
 
 	/* Enable the hardware cursor. */
-	if (et4000_type >= TYPE_ET6000) {
+	if (Is_ET6K) {
 	    tmp = inb(ET6Kbase+0x46);
 	    outb(ET6Kbase+0x46, (tmp | 0x01));
 	}
@@ -124,7 +124,7 @@ void TsengHideCursor() {
 	unsigned char tmp;
 
 	/* Disable the hardware cursor. */
-	if (et4000_type >= TYPE_ET6000) {
+	if (Is_ET6K) {
 	    tmp = inb(ET6Kbase+0x46);
 	    outb(ET6Kbase+0x46, (tmp & 0xfe));;
 	}
@@ -363,7 +363,7 @@ static void TsengLoadCursor(pScr, pCurs, x, y)
 
 	/* Program the cursor image address in video memory. */
         /* The adress is given in doublewords */
-	if (et4000_type >= TYPE_ET6000) {
+	if (Is_ET6K) {
             /* bits 19:16 */
             outb(vgaIOBase + 0x04, 0x0E);
             tmp = inb(vgaIOBase + 0x05) & 0xF0;
@@ -479,7 +479,7 @@ static void TsengMoveCursor(pScr, x, y)
 
 	/* Program the cursor origin (offset into the cursor bitmap). */
 	/* Program the new cursor position. */
-	if (et4000_type >= TYPE_ET6000) {
+	if (Is_ET6K) {
 	    outb (ET6Kbase + 0x82, xorigin);
 	    outb (ET6Kbase + 0x83, yorigin);
 
@@ -575,7 +575,7 @@ static void TsengRecolorCursor(pScr, pCurs, displayed)
         badColour = 0; 
         fgColour = 0; bgColour = 0;
 
-        if (et4000_type >= TYPE_ET6000) {
+        if (Is_ET6K) {
           /* Extract foreground Cursor Colour, put in position bits 5 and 4 */
           fgColour = get_et6000_color_bits(pCurs->foreRed,   &badColour) << 4
                    | get_et6000_color_bits(pCurs->foreGreen, &badColour) << 2

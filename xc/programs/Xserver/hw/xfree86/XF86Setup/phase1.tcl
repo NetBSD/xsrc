@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase1.tcl,v 3.13.2.1 1997/06/20 09:13:50 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase1.tcl,v 3.13.2.4 1998/02/26 13:58:59 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -19,6 +19,8 @@ set clicks1 [clock clicks]
 
 # load the autoload stuff
 source $tcl_library/init.tcl
+# load language specific library
+source $XF86Setup_library/texts/local_text.tcl
 # load in our library
 source $XF86Setup_library/setuplib.tcl
 source $XF86Setup_library/filelist.tcl
@@ -227,10 +229,20 @@ if { [string length $ConfigFile] > 0 } {
 			configuration with this program" okay
 		    exit 1
 		}
-		if { ![file exists $Xwinhome/bin/XF86_VGA16] } {
-		    mesg "The VGA16 server is required when using\n\
-			this program to set the initial configuration" okay
-		    exit 1
+		if !$pc98 {
+		    if { ![file exists $Xwinhome/bin/XF86_VGA16] } {
+		        mesg "The VGA16 server is required when using\n\
+			    this program to set the initial configuration" okay
+		        exit 1
+		    }
+		} else {
+		    if { ![file exists $Xwinhome/bin/XF98_EGC]
+		      && ![file exists $Xwinhome/bin/XF98_NEC480] } {
+		        mesg "Either the EGC server or the NEC480 server\n\
+			    is required when using this program to set\nn
+			    the initial configuration" okay
+		        exit 1
+		    }
 		}
 		set UseConfigFile [mesg "Would you like to use the\
 		    existing XF86Config file for defaults?" yesno]
@@ -247,9 +259,18 @@ if { [string length $ConfigFile] > 0 } {
 	    mesg "You need to be root to run this program" okay
 	    exit 1
 	}
-	if { !$ReConfig && ![file exists $Xwinhome/bin/XF86_VGA16] } {
-	    mesg "The VGA16 server is required to run this program" okay
-	    exit 1
+	if !$pc98 {
+	    if { !$ReConfig && ![file exists $Xwinhome/bin/XF86_VGA16] } {
+	        mesg "The VGA16 server is required to run this program" okay
+	        exit 1
+	    }
+	} else {
+	    if { !$ReConfig && ![file exists $Xwinhome/bin/XF98_EGC]
+	                    && ![file exists $Xwinhome/bin/XF98_NEC480] } {
+	        mesg "Either the EGC server or the NEC480 server is required\n\
+		    to run this program" okay
+	        exit 1
+	    }
 	}
 	# initialize the configuration variables
 	initconfig $Xwinhome
@@ -333,12 +354,29 @@ set Confname $TmpDir/Config
 
 if $StartServer {
 	# write out a temp XF86Config file
-	writeXF86Config $Confname-1 -vgamode -generic
+	if !$pc98 {
+	    writeXF86Config $Confname-1 -vgamode -generic
+	} else {
+	    writeXF86Config $Confname-1 -vgamode
+	}
 
 	mesg "Press \[Enter\] to switch to graphics mode.\n\
 		\nThis may take a while..." okay
 
-	set ServerPID [start_server VGA16 $Confname-1 ServerOut-1]
+	if !$pc98 {
+	    set ServerPID [start_server VGA16 $Confname-1 ServerOut-1]
+	} else {
+	    if !$pc98_EGC {
+		set ServerPID [start_server NEC480 $Confname-1 ServerOut-1]
+#		if {$ServerPID == 0 || $ServerPID == -1} {
+#		    puts "Unable to start NEC480 server!\n\
+#			    try to start EGC server.\n";
+#		    set pc98_EGC 1;
+#		}
+            } else {
+		set ServerPID [start_server EGC $Confname-1 ServerOut-1]
+	    }
+	}
 
 	if { $ServerPID == 0 } {
 		mesg "Unable to start X server!" info

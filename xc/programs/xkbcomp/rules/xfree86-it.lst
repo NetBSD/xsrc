@@ -4,7 +4,7 @@
 //  Elenco dei modelli e dei lingauggi
 //  Copyright 1996 by Joseph Moss
 //
-// $XFree86: xc/programs/xkbcomp/rules/xfree86-it.lst,v 1.1.1.1.2.1 1997/06/22 10:32:54 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/rules/xfree86-it.lst,v 1.1.1.1.2.2 1998/02/01 16:05:45 robin Exp $
 
 ! model
   microsoft       Microsoft Natural
@@ -16,6 +16,7 @@
   jp106           106-key Giapponese
   everex          Everex STEPnote
   winbook         Winbook Modello XP5
+  pc98            PC-98xx Series
 
 ! layout
   us              Inglese Statunitense
@@ -41,4 +42,4 @@
   ru              Russo
   se              Svedese
   th              Tailandese
-
+  nec/jp          nec/jp(pc98)

@@ -1,0 +1,30 @@
+
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/README.RIVA128,v 1.1.2.2 1998/01/24 00:04:36 robin Exp $
+
+XFree driver for NVidia/SGS-Thomson RIVA128
+===========================================
+
+This driver now accelerates bitblits,filled rectangles and colour expansion.
+It also support a hardware cursor.
+
+Note that requesting 16bpp actually gives 15bpp. This is because the RIVA128
+cannot accelerate many functions at 565 colour depth. If you put 
+"option noaccel" in the config file then 565 will be available - but without 
+acceleration of course.
+
+Known Bugs
+==========
+
+* Pixel noise at high resolution in 32bpp
+
+Thanks
+======
+
+Thanks to Chris Cox of STB systems for supplying a board.
+Also many thanks to Curtis,Dwight and Don at Nvidia for their help and support.
+
+
+Dave McKay
+January 1998
+
+

@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.19.2.1 1997/06/29 08:43:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.19.2.2 1998/01/22 10:47:16 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -75,7 +75,7 @@ OutputDirectory (outdir)
     char* outdir;
 {
 #ifndef WIN32
-    if (getuid() == 0 || geteuid() == 0) {
+    if (getuid() == 0) {
 	/* if server running as root it'll be able to write */
 	(void) strcpy (outdir, XKM_OUTPUT_DIR);
     } else
@@ -187,7 +187,7 @@ char 	cmd[PATH_MAX],file[PATH_MAX],xkm_output_dir[PATH_MAX],*map,*outFile;
 	ErrorF("    \"cmd\"\n");
     }
 #endif
-    if (system(cmd)==0) {
+    if (System(cmd)==0) {
 	if (nameRtrn) {
 	    strncpy(nameRtrn,outFile,nameRtrnLen);
 	    nameRtrn[nameRtrnLen-1]= '\0';
@@ -315,7 +315,7 @@ int i;
 #endif
     }
 #ifndef WIN32
-    out= popen(buf,"w");
+    out= Popen(buf,"w");
 #else
     out= fopen(tmpname, "w");
 #endif
@@ -328,13 +328,13 @@ int i;
 #endif
 	XkbWriteXKBKeymapForNames(out,names,NULL,xkb,want,need);
 #ifndef WIN32
-	if (pclose(out)==0)
+	if (Pclose(out)==0)
 #else
 	if (fclose(out)==0)
 #endif
 	{
 #ifdef WIN32
-	    if (system(buf) < 0)
+	    if (System(buf) < 0)
 		ErrorF("Could not invoke keymap compiler\n");
 	    else {
 #endif

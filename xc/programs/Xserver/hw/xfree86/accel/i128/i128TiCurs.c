@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128TiCurs.c,v 3.4 1996/12/23 06:35:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128TiCurs.c,v 3.4.2.1 1998/01/12 03:02:10 robin Exp $ */
 
 #include "servermd.h"
 
@@ -123,16 +123,17 @@ i128TiRealizeCursor(pScr, pCurs)
 void 
 i128TiCursorOn()
 {
-   unsigned char tmp, tmp1;
+   CARD32 tmp, tmp1;
 
    /* Enable cursor - sprite enable, X11 mode */
-   tmp = i128mem.rbase_g_b[INDEX_TI];
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURS_CONTROL;
-   tmp1 = i128mem.rbase_g_b[DATA_TI] & ~TI_CURS_CTRL_MASK;
-   i128mem.rbase_g_b[DATA_TI] = tmp1 |
+   tmp = i128mem.rbase_g[INDEX_TI] & 0xFF;
+   i128mem.rbase_g[INDEX_TI] = TI_CURS_CONTROL;				MB;
+   tmp1 = (i128mem.rbase_g[DATA_TI] & ~TI_CURS_CTRL_MASK) & 0xFF;
+   i128mem.rbase_g[DATA_TI] = tmp1 |
                               (TI_CURS_SPRITE_ENABLE | TI_CURS_X_WINDOW_MODE);
+									MB;
 
-   i128mem.rbase_g_b[INDEX_TI] = tmp;
+   i128mem.rbase_g[INDEX_TI] = tmp;					MB;
 
    return;
 }
@@ -140,15 +141,15 @@ i128TiCursorOn()
 void
 i128TiCursorOff()
 {
-   unsigned char tmp, tmp1;
+   CARD32 tmp, tmp1;
 
    /* Enable cursor - sprite enable, X11 mode */
-   tmp = i128mem.rbase_g_b[INDEX_TI];
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURS_CONTROL;
-   tmp1 = i128mem.rbase_g_b[DATA_TI] & ~TI_CURS_CTRL_MASK;
-   i128mem.rbase_g_b[DATA_TI] = tmp1;
+   tmp = i128mem.rbase_g[INDEX_TI] & 0xFF;
+   i128mem.rbase_g[INDEX_TI] = TI_CURS_CONTROL;				MB;
+   tmp1 = (i128mem.rbase_g[DATA_TI] & ~TI_CURS_CTRL_MASK) & 0xFF;
+   i128mem.rbase_g[DATA_TI] = tmp1;					MB;
 
-   i128mem.rbase_g_b[INDEX_TI] = tmp;
+   i128mem.rbase_g[INDEX_TI] = tmp;					MB;
 
    return;
 }
@@ -158,7 +159,7 @@ i128TiMoveCursor(pScr, x, y)
      ScreenPtr pScr;
      int   x, y;
 {
-   unsigned char tmp;
+   CARD32 tmp;
    extern int i128AdjustCursorXPos;
 
    if (i128BlockCursor)
@@ -174,17 +175,17 @@ i128TiMoveCursor(pScr, x, y)
 
    /* Output position - "only" 12 bits of location documented */
 
-   tmp = i128mem.rbase_g_b[INDEX_TI];
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURS_X_LOW;
-   i128mem.rbase_g_b[DATA_TI] = x & 0xFF;
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURS_X_HIGH;
-   i128mem.rbase_g_b[DATA_TI] = (x >> 8) & 0x0F;
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURS_Y_LOW;
-   i128mem.rbase_g_b[DATA_TI] = y & 0xFF;
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURS_Y_HIGH;
-   i128mem.rbase_g_b[DATA_TI] = (y >> 8) & 0x0F;
+   tmp = i128mem.rbase_g[INDEX_TI] & 0xFF;
+   i128mem.rbase_g[INDEX_TI] = TI_CURS_X_LOW;				MB;
+   i128mem.rbase_g[DATA_TI] = x & 0xFF;					MB;
+   i128mem.rbase_g[INDEX_TI] = TI_CURS_X_HIGH;				MB;
+   i128mem.rbase_g[DATA_TI] = (x >> 8) & 0x0F;				MB;
+   i128mem.rbase_g[INDEX_TI] = TI_CURS_Y_LOW;				MB;
+   i128mem.rbase_g[DATA_TI] = y & 0xFF;					MB;
+   i128mem.rbase_g[INDEX_TI] = TI_CURS_Y_HIGH;				MB;
+   i128mem.rbase_g[DATA_TI] = (y >> 8) & 0x0F;				MB;
 
-   i128mem.rbase_g_b[INDEX_TI] = tmp;
+   i128mem.rbase_g[INDEX_TI] = tmp;					MB;
    return;
 }
 
@@ -194,7 +195,7 @@ i128TiRecolorCursor(pScr, pCurs, displayed)
      CursorPtr pCurs;
      Bool displayed;
 {
-   unsigned char tmp;
+   CARD32 tmp;
 
    if (!xf86VTSema) {
       miRecolorCursor(pScr, pCurs, displayed);
@@ -204,25 +205,25 @@ i128TiRecolorCursor(pScr, pCurs, displayed)
    if (!displayed)
       return;
 
-   tmp = i128mem.rbase_g_b[INDEX_TI];
+   tmp = i128mem.rbase_g[INDEX_TI] & 0xFF;
 
    /* The TI 3020 cursor is always 8 bits so shift 8, not 10 */
 
    /* Background color */
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURSOR_COLOR_0_RED;
-   i128mem.rbase_g_b[DATA_TI] = (pCurs->backRed >> 8) & 0xFF;
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURSOR_COLOR_0_GREEN;
-   i128mem.rbase_g_b[DATA_TI] = (pCurs->backGreen >> 8) & 0xFF;
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURSOR_COLOR_0_BLUE;
-   i128mem.rbase_g_b[DATA_TI] = (pCurs->backBlue >> 8) & 0xFF;
+   i128mem.rbase_g[INDEX_TI] = TI_CURSOR_COLOR_0_RED;			MB;
+   i128mem.rbase_g[DATA_TI] = (pCurs->backRed >> 8) & 0xFF;		MB;
+   i128mem.rbase_g[INDEX_TI] = TI_CURSOR_COLOR_0_GREEN;			MB;
+   i128mem.rbase_g[DATA_TI] = (pCurs->backGreen >> 8) & 0xFF;		MB;
+   i128mem.rbase_g[INDEX_TI] = TI_CURSOR_COLOR_0_BLUE;			MB;
+   i128mem.rbase_g[DATA_TI] = (pCurs->backBlue >> 8) & 0xFF;		MB;
 
    /* Foreground color */
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURSOR_COLOR_1_RED;
-   i128mem.rbase_g_b[DATA_TI] = (pCurs->foreRed >> 8) & 0xFF;
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURSOR_COLOR_1_GREEN;
-   i128mem.rbase_g_b[DATA_TI] = (pCurs->foreGreen >> 8) & 0xFF;
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURSOR_COLOR_1_BLUE;
-   i128mem.rbase_g_b[DATA_TI] = (pCurs->foreBlue >> 8) & 0xFF;
+   i128mem.rbase_g[INDEX_TI] = TI_CURSOR_COLOR_1_RED;			MB;
+   i128mem.rbase_g[DATA_TI] = (pCurs->foreRed >> 8) & 0xFF;		MB;
+   i128mem.rbase_g[INDEX_TI] = TI_CURSOR_COLOR_1_GREEN;			MB;
+   i128mem.rbase_g[DATA_TI] = (pCurs->foreGreen >> 8) & 0xFF;		MB;
+   i128mem.rbase_g[INDEX_TI] = TI_CURSOR_COLOR_1_BLUE;			MB;
+   i128mem.rbase_g[DATA_TI] = (pCurs->foreBlue >> 8) & 0xFF;		MB;
 
    return;
 }
@@ -236,7 +237,8 @@ i128TiLoadCursor(pScr, pCurs, x, y)
    extern int i128hotX, i128hotY;
    int   index = pScr->myNum;
    register int   i;
-   unsigned char *ram, *p, tmp, tmp1, tmpcurs;
+   unsigned char *ram, *p;
+   CARD32 tmp, tmp1, tmpcurs;
    extern int i128InitCursorFlag;
 
    if (!xf86VTSema)
@@ -245,11 +247,11 @@ i128TiLoadCursor(pScr, pCurs, x, y)
    if (!pCurs)
       return;
 
-   tmp = i128mem.rbase_g_b[INDEX_TI];
+   tmp = i128mem.rbase_g[INDEX_TI] & 0xFF;
 
    /* turn the cursor off */
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURS_CONTROL;
-   if ((tmpcurs = i128mem.rbase_g_b[DATA_TI]) & TI_CURS_SPRITE_ENABLE)
+   i128mem.rbase_g[INDEX_TI] = TI_CURS_CONTROL;				MB;
+   if ((tmpcurs = i128mem.rbase_g[DATA_TI]) & TI_CURS_SPRITE_ENABLE)
       i128TiCursorOff();
 
    /* load colormap */
@@ -259,19 +261,20 @@ i128TiLoadCursor(pScr, pCurs, x, y)
 
    i128BlockCursor = TRUE;
 
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURS_RAM_ADDR_LOW;
-   i128mem.rbase_g_b[DATA_TI] = 0x00;
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURS_RAM_ADDR_HIGH;
-   i128mem.rbase_g_b[DATA_TI] = 0x00;
-   i128mem.rbase_g_b[INDEX_TI] = TI_CURS_RAM_DATA;
+   i128mem.rbase_g[INDEX_TI] = TI_CURS_RAM_ADDR_LOW;			MB;
+   i128mem.rbase_g[DATA_TI] = 0x00;					MB;
+   i128mem.rbase_g[INDEX_TI] = TI_CURS_RAM_ADDR_HIGH;			MB;
+   i128mem.rbase_g[DATA_TI] = 0x00;					MB;
+   i128mem.rbase_g[INDEX_TI] = TI_CURS_RAM_DATA;			MB;
 
    /* 
     * Output the cursor data.  The realize function has put the planes into
     * their correct order, so we can just blast this out.
     */
    p = ram;
-   for (i = 0; i < 1024; i++,p++)
-      i128mem.rbase_g_b[DATA_TI] = *p;
+   for (i = 0; i < 1024; i++,p++) {
+      i128mem.rbase_g[DATA_TI] = (CARD32 )*p;				MB;
+   }
 
    if (i128hotX >= MAX_CURS_WIDTH)
       i128hotX = MAX_CURS_WIDTH - 1;
@@ -282,11 +285,11 @@ i128TiLoadCursor(pScr, pCurs, x, y)
    else if (i128hotY < 0)
       i128hotY = 0;
 
-   i128mem.rbase_g_b[INDEX_TI] = TI_SPRITE_ORIGIN_X;
-   i128mem.rbase_g_b[DATA_TI] = i128hotX;
-   i128mem.rbase_g_b[INDEX_TI] = TI_SPRITE_ORIGIN_Y;
-   i128mem.rbase_g_b[DATA_TI] = i128hotY;
-   i128mem.rbase_g_b[INDEX_TI] = tmp;
+   i128mem.rbase_g[INDEX_TI] = TI_SPRITE_ORIGIN_X;			MB;
+   i128mem.rbase_g[DATA_TI] = i128hotX;					MB;
+   i128mem.rbase_g[INDEX_TI] = TI_SPRITE_ORIGIN_Y;			MB;
+   i128mem.rbase_g[DATA_TI] = i128hotY;					MB;
+   i128mem.rbase_g[INDEX_TI] = tmp;					MB;
 
    i128BlockCursor = FALSE;
 

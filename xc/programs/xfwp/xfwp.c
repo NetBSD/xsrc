@@ -33,7 +33,7 @@ from the X Consortium.
   under contract to X Consortium, Inc.
  */
 
-/* $XFree86: xc/programs/xfwp/xfwp.c,v 1.7.2.1 1997/06/11 12:08:59 dawes Exp $ */
+/* $XFree86: xc/programs/xfwp/xfwp.c,v 1.7.2.2 1998/01/22 23:53:25 robin Exp $ */
 
 #if defined(sun) && defined(i386) && defined(SVR4)
 #define __EXTENSIONS__
@@ -57,7 +57,13 @@ from the X Consortium.
 #endif
 #include <sys/wait.h>
 #include <netdb.h>
+#if defined(_ANSI_SOURCE) && defined(__bsdi__)
+#undef _ANSI_SOURCE
 #include <signal.h>
+#define _ANSI_SOURCE
+#else
+#include <signal.h>
+#endif
 #include <errno.h>
 #ifndef Lynx
 #include <sys/param.h>

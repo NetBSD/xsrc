@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sysv_tty.c,v 3.8 1996/12/23 06:51:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sysv_tty.c,v 3.8.2.1 1998/02/07 14:27:25 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -161,5 +161,12 @@ unsigned cflag;
 #ifdef TCMOUSE
 	ioctl(mouse->mseFd, TCMOUSE, 1);
 #endif
+}
+
+int
+xf86FlushInput(fd)
+int fd;
+{
+	return ioctl(fd, TCFLSH, 0);
 }
 

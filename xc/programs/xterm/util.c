@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: util.c /main/33 1996/12/01 23:47:10 swick $
- *	$XFree86: xc/programs/xterm/util.c,v 3.13.2.3 1997/07/06 07:28:22 dawes Exp $
+ *	$XFree86: xc/programs/xterm/util.c,v 3.13.2.6 1998/03/03 12:51:03 dawes Exp $
  */
 
 /*
@@ -32,12 +32,18 @@
 #include <xtermcfg.h>
 #endif
 
+#include <stdio.h>
+
+#ifndef X_NOT_STDC_ENV
+#include <stdlib.h>
+#else
+extern char *malloc();
+#endif
+
 #include "ptyx.h"
 #include "data.h"
 #include "error.h"
 #include "menu.h"
-
-#include <stdio.h>
 
 #include "xterm.h"
 
@@ -128,7 +134,7 @@ register TScreen *screen;
 	if(refreshheight > 0) {
 		ClearCurBackground(screen,
 		    (int) refreshtop * FontHeight(screen) + screen->border,
-		    (int) screen->border + Scrollbar(screen),
+		    (int) OriginX(screen),
 		    (unsigned) refreshheight * FontHeight(screen),
 		    (unsigned) Width(screen));
 		ScrnRefresh(screen, refreshtop, 0, refreshheight,
@@ -247,7 +253,7 @@ register int amount;
 	if(refreshheight > 0) {
 		ClearCurBackground(screen,
 		    (int) refreshtop * FontHeight(screen) + screen->border,
-		    (int) screen->border + Scrollbar(screen),
+		    (int) OriginX(screen),
 		    (unsigned) refreshheight * FontHeight(screen),
 		    (unsigned) Width(screen));
 		if(refreshheight > shift)
@@ -255,11 +261,13 @@ register int amount;
 	}
     }
 	if(screen->scrollWidget && !screen->alternate && screen->top_marg == 0)
-		ScrnDeleteLine(screen->allbuf, screen->bot_marg +
-		 screen->savelines, 0, amount, screen->max_col + 1);
+		ScrnDeleteLine(screen, screen->allbuf,
+			screen->bot_marg + screen->savelines, 0,
+			amount, screen->max_col + 1);
 	else
-		ScrnDeleteLine(screen->buf, screen->bot_marg, screen->top_marg,
-		 amount, screen->max_col + 1);
+		ScrnDeleteLine(screen, screen->visbuf,
+			screen->bot_marg, screen->top_marg,
+			amount, screen->max_col + 1);
 	if(refreshheight > 0)
 		ScrnRefresh(screen, refreshtop, 0, refreshheight,
 		 screen->max_col + 1, False);
@@ -325,13 +333,13 @@ register int amount;
 	if(refreshheight > 0) {
 		ClearCurBackground(screen,
 		    (int) refreshtop * FontHeight(screen) + screen->border,
-		    (int) screen->border + Scrollbar(screen),
+		    (int) OriginX(screen),
 		    (unsigned) refreshheight * FontHeight(screen),
 		    (unsigned) Width(screen));
 	}
     }
-	ScrnInsertLine (screen->buf, screen->bot_marg, screen->top_marg,
-			amount, screen->max_col + 1);
+    ScrnInsertLine(screen, screen->visbuf, screen->bot_marg, screen->top_marg,
+		   amount, screen->max_col + 1);
 }
 
 /*
@@ -385,14 +393,13 @@ register int n;
 	if(refreshheight > 0) {
 		ClearCurBackground(screen,
 		    (int) refreshtop * FontHeight(screen) + screen->border,
-		    (int) screen->border + Scrollbar(screen),
+		    (int) OriginX(screen),
 		    (unsigned) refreshheight * FontHeight(screen),
 		    (unsigned) Width(screen));
 	}
     }
-	/* adjust screen->buf */
-	ScrnInsertLine(screen->buf, screen->bot_marg, screen->cur_row, n,
-			screen->max_col + 1);
+    ScrnInsertLine(screen, screen->visbuf, screen->bot_marg, screen->cur_row, n,
+		   screen->max_col + 1);
 }
 
 /*
@@ -461,18 +468,20 @@ register int n;
 	if(refreshheight > 0) {
 		ClearCurBackground(screen,
 		    (int) refreshtop * FontHeight(screen) + screen->border,
-		    (int) screen->border + Scrollbar(screen),
+		    (int) OriginX(screen),
 		    (unsigned) refreshheight * FontHeight(screen),
 		    (unsigned) Width(screen));
 	}
     }
 	/* adjust screen->buf */
 	if(screen->scrollWidget && !screen->alternate && screen->cur_row == 0)
-		ScrnDeleteLine(screen->allbuf, screen->bot_marg +
-		 screen->savelines, 0, n, screen->max_col + 1);
+		ScrnDeleteLine(screen, screen->allbuf,
+			screen->bot_marg + screen->savelines, 0,
+			n, screen->max_col + 1);
 	else
-		ScrnDeleteLine(screen->buf, screen->bot_marg, screen->cur_row,
-		 n, screen->max_col + 1);
+		ScrnDeleteLine(screen, screen->visbuf,
+			screen->bot_marg, screen->cur_row,
+			n, screen->max_col + 1);
 }
 
 /*
@@ -488,25 +497,31 @@ InsertChar (screen, n)
 	screen->do_wrap = 0;
 	if(screen->cur_row - screen->topline <= screen->max_row) {
 	    if(!AddToRefresh(screen)) {
+		int col = screen->max_col + 1 - n;
 		if(screen->scroll_amt)
 			FlushScroll(screen);
 
+#if OPT_DEC_CHRSET
+		if (CSET_DOUBLE(SCRN_BUF_CSETS(screen, screen->cur_row)[0])) {
+			col = (screen->max_col + 1) / 2 - n;
+		}
+#endif
 		/*
 		 * prevent InsertChar from shifting the end of a line over
 		 * if it is being appended to
 		 */
-		if (non_blank_line (screen->buf, screen->cur_row, 
+		if (non_blank_line (screen->visbuf, screen->cur_row, 
 				    screen->cur_col, screen->max_col + 1))
 		    horizontal_copy_area(screen, screen->cur_col,
-					 screen->max_col+1 - (screen->cur_col+n),
+					 col - screen->cur_col,
 					 n);
 
 		FillCurBackground(
 			screen,
-			CursorX (screen, screen->cur_col),
+			CurCursorX (screen, screen->cur_row, screen->cur_col),
 			CursorY (screen, screen->cur_row),
-			(unsigned) n * FontWidth(screen),
-			(unsigned) FontHeight(screen));
+			n * CurFontWidth(screen,screen->cur_row),
+			FontHeight(screen));
 	    }
 	}
 	/* adjust screen->buf */
@@ -535,15 +550,20 @@ DeleteChar (screen, n)
 		if(screen->scroll_amt)
 			FlushScroll(screen);
 	
+#if OPT_DEC_CHRSET
+		if (CSET_DOUBLE(SCRN_BUF_CSETS(screen, screen->cur_row)[0])) {
+			col = (screen->max_col + 1) / 2 - n;
+		}
+#endif
 		horizontal_copy_area(screen, screen->cur_col+n,
-				     screen->max_col+1 - (screen->cur_col+n),
+				     col - screen->cur_col,
 				     -n);
-	
+
 		FillCurBackground (
 			screen,
-			CursorX(screen, col),
+			CurCursorX(screen, screen->cur_row, col),
 			CursorY (screen, screen->cur_row),
-			n * FontWidth(screen),
+			n * CurFontWidth(screen,screen->cur_row),
 			FontHeight(screen));
 	    }
 	}
@@ -575,7 +595,7 @@ register TScreen *screen;
 			if((height -= top) > 0) {
 				ClearCurBackground(screen,
 				    top * FontHeight(screen) + screen->border,
-				    screen->border + Scrollbar(screen),
+				    OriginX(screen),
 				    height * FontHeight(screen),
 				    Width(screen));
 			}
@@ -609,7 +629,7 @@ register TScreen *screen;
 			if(++top <= screen->max_row) {
 				ClearCurBackground(screen,
 				    top * FontHeight(screen) + screen->border,
-				    screen->border + Scrollbar(screen),
+				    OriginX(screen),
 				    (screen->max_row - top + 1) * FontHeight(screen),
 				    Width(screen));
 			}
@@ -691,9 +711,9 @@ ClearInLine(screen, row, col, len)
 				FlushScroll(screen);
 			FillCurBackground (
 				screen,
-				CursorX (screen, col),
+				CurCursorX (screen, row, col),
 				CursorY (screen, row),
-				len * FontWidth(screen),
+				len * CurFontWidth(screen,row),
 				FontHeight(screen));
 		}
 	}
@@ -703,6 +723,9 @@ ClearInLine(screen, row, col, len)
 
 	if_OPT_ISO_COLORS(screen,{
 		memset(SCRN_BUF_COLOR(screen, row) + col, xtermColorPair(), len);
+	})
+	if_OPT_DEC_CHRSET({
+		memset(SCRN_BUF_CSETS(screen, row) + col, curXtermChrSet(screen->cur_row), len);
 	})
 
 	return rc;
@@ -730,7 +753,7 @@ int n;
 	(void) ClearInLine(screen, screen->cur_row, screen->cur_col, len);
 
 	/* with the right part cleared, we can't be wrapping */
-	BUF_ATTRS(screen->buf, screen->cur_row)[0] &= ~LINEWRAPPED;
+	ScrnClrWrapped(screen, screen->cur_row);
 }
 
 /*
@@ -767,7 +790,7 @@ register TScreen *screen;
 			FlushScroll(screen);
 		ClearCurBackground(screen,
 		    top * FontHeight(screen) + screen->border,	
-		    screen->border + Scrollbar(screen), 
+		    OriginX(screen), 
 		    (screen->max_row - top + 1) * FontHeight(screen),
 		    Width(screen));
 	}
@@ -947,12 +970,13 @@ horizontal_copy_area(screen, firstchar, nchars, amount)
     int nchars;
     int amount;			/* number of characters to move right */
 {
-    int src_x = CursorX(screen, firstchar);
+    int src_x = CurCursorX(screen, screen->cur_row, firstchar);
     int src_y = CursorY(screen, screen->cur_row);
 
     copy_area(screen, src_x, src_y,
-	      (unsigned)nchars*FontWidth(screen), FontHeight(screen),
-	      src_x + amount*FontWidth(screen), src_y);
+	      (unsigned)nchars * CurFontWidth(screen,screen->cur_row),
+	      FontHeight(screen),
+	      src_x + amount*CurFontWidth(screen,screen->cur_row), src_y);
 }
 
 /*
@@ -966,7 +990,7 @@ vertical_copy_area(screen, firstline, nlines, amount)
     int amount;			/* number of lines to move up (neg=down) */
 {
     if(nlines > 0) {
-	int src_x = screen->border + Scrollbar(screen);
+	int src_x = OriginX(screen);
 	int src_y = firstline * FontHeight(screen) + screen->border;
 
 	copy_area(screen, src_x, src_y,
@@ -1019,9 +1043,9 @@ HandleExposure (screen, event)
 	int both_x1 = Max(screen->copy_src_x, reply->x);
 	int both_y1 = Max(screen->copy_src_y, reply->y);
 	int both_x2 = Min(screen->copy_src_x+screen->copy_width,
-			  reply->x+reply->width);
+			  (unsigned)(reply->x+reply->width));
 	int both_y2 = Min(screen->copy_src_y+screen->copy_height,
-			  reply->y+reply->height);
+			  (unsigned)(reply->y+reply->height));
 	int value = 0;
 
 	/* was anything copied affected? */
@@ -1056,18 +1080,20 @@ handle_translated_exposure (screen, rect_x, rect_y, rect_width, rect_height)
 {
 	register int toprow, leftcol, nrows, ncols;
 
+	TRACE(("handle_translated_exposure (%d,%d) - (%d,%d)\n",
+		rect_y, rect_x, rect_height, rect_width))
+
 	toprow = (rect_y - screen->border) / FontHeight(screen);
 	if(toprow < 0)
 		toprow = 0;
-	leftcol = (rect_x - screen->border - Scrollbar(screen))
-	    / FontWidth(screen);
+	leftcol = (rect_x - OriginX(screen))
+	    / CurFontWidth(screen,screen->cur_row);
 	if(leftcol < 0)
 		leftcol = 0;
 	nrows = (rect_y + rect_height - 1 - screen->border) / 
 		FontHeight(screen) - toprow + 1;
-	ncols =
-	 (rect_x + rect_width - 1 - screen->border - Scrollbar(screen)) /
-			FontWidth(screen) - leftcol + 1;
+	ncols = (rect_x + rect_width - 1 - OriginX(screen)) /
+		FontWidth(screen) - leftcol + 1;
 	toprow -= screen->scrolls;
 	if (toprow < 0) {
 		nrows += toprow;
@@ -1108,9 +1134,13 @@ GetColors(tw,pColors)
 	SET_COLOR_VALUE(pColors,TEXT_CURSOR,	screen->cursorcolor);
 	SET_COLOR_VALUE(pColors,MOUSE_FG,	screen->mousecolor);
 	SET_COLOR_VALUE(pColors,MOUSE_BG,	screen->mousecolorback);
-
+#if OPT_HIGHLIGHT_COLOR
+	SET_COLOR_VALUE(pColors,HIGHLIGHT_BG,	screen->highlightcolor);
+#endif
+#if OPT_TEK4014
 	SET_COLOR_VALUE(pColors,TEK_FG,		screen->Tforeground);
 	SET_COLOR_VALUE(pColors,TEK_BG,		screen->Tbackground);
+#endif
 }
 
 void
@@ -1119,8 +1149,10 @@ ChangeColors(tw,pNew)
 	ScrnColors *pNew;
 {
 	register TScreen *screen = &tw->screen;
-	Window tek = TWindow(screen);
 	Bool	newCursor=	TRUE;
+#if OPT_TEK4014
+	Window tek = TWindow(screen);
+#endif
 
 	if (COLOR_DEFINED(pNew,TEXT_BG)) {
 	    tw->core.background_pixel=	COLOR_VALUE(pNew,TEXT_BG);
@@ -1167,21 +1199,34 @@ ChangeColors(tw,pNew)
 		screen->mousecolor, screen->mousecolorback);
 	    XDefineCursor(screen->display, TextWindow(screen),
 					   screen->pointer_cursor);
+
+#if OPT_HIGHLIGHT_COLOR
+	if (COLOR_DEFINED(pNew,HIGHLIGHT_BG)) {
+	    screen->highlightcolor=	COLOR_VALUE(pNew,HIGHLIGHT_BG);
+	}
+#endif
+
+#if OPT_TEK4014
 	    if(tek)
 		XDefineCursor(screen->display, tek, screen->arrow);
+#endif
 	}
 
+#if OPT_TEK4014
 	if ((tek)&&(COLOR_DEFINED(pNew,TEK_FG)||COLOR_DEFINED(pNew,TEK_BG))) {
 	    ChangeTekColors(screen,pNew);
 	}
+#endif
 	set_cursor_gcs(screen);
 	XClearWindow(screen->display, TextWindow(screen));
 	ScrnRefresh (screen, 0, 0, screen->max_row + 1,
 	 screen->max_col + 1, False);
+#if OPT_TEK4014
 	if(screen->Tshow) {
 	    XClearWindow(screen->display, tek);
 	    TekExpose((Widget)NULL, (XEvent *)NULL, (Region)NULL);
 	}
+#endif
 }
 
 /***====================================================================***/
@@ -1194,8 +1239,10 @@ ReverseVideo (termw)
 {
 	register TScreen *screen = &termw->screen;
 	GC tmpGC;
-	Window tek = TWindow(screen);
 	Pixel tmp;
+#if OPT_TEK4014
+	Window tek = TWindow(screen);
+#endif
 
 	/*
 	 * Swap SGR foreground and background colors.  By convention, these are
@@ -1239,8 +1286,10 @@ ReverseVideo (termw)
 	termw->misc.re_verse = !termw->misc.re_verse;
 
 	XDefineCursor(screen->display, TextWindow(screen), screen->pointer_cursor);
+#if OPT_TEK4014
 	if(tek)
 		XDefineCursor(screen->display, tek, screen->arrow);
+#endif
 
 	if(screen->scrollWidget)
 		ScrollBarReverseVideo(screen->scrollWidget);
@@ -1252,16 +1301,20 @@ ReverseVideo (termw)
 	 */
 	XSetWindowBackground(screen->display, VShellWindow, termw->core.background_pixel);
 
+#if OPT_TEK4014
 	if(tek) {
 	    TekReverseVideo(screen);
 	}
+#endif
 	XClearWindow(screen->display, TextWindow(screen));
 	ScrnRefresh (screen, 0, 0, screen->max_row + 1,
 	 screen->max_col + 1, False);
+#if OPT_TEK4014
 	if(screen->Tshow) {
 	    XClearWindow(screen->display, tek);
 	    TekExpose((Widget)NULL, (XEvent *)NULL, (Region)NULL);
 	}
+#endif
 	ReverseOldColors();
 	update_reversevideo();
 }
@@ -1286,25 +1339,93 @@ recolor_cursor (cursor, fg, bg)
 /*
  * Draws text with the specified combination of bold/underline
  */
-void
-drawXtermText(screen, flags, gc, x, y, text, len)
+int
+drawXtermText(screen, flags, gc, x, y, chrset, text, len)
 	register TScreen *screen;
 	unsigned flags;
 	GC gc;
 	int x;
 	int y;
-	char *text;
+	int chrset;
+	Char *text;
 	int len;
 {
+#if OPT_DEC_CHRSET
+	if (CSET_DOUBLE(chrset)) {
+		Char *temp = (Char *) malloc(2 * len);
+		int n = 0;
+		TRACE(("DRAWTEXT%c[%4d,%4d] (%d) %d:%.*s\n",
+			screen->cursor_state == OFF ? ' ' : '*',
+			y, x, chrset, len, len, text))
+		while (len--) {
+			temp[n++] = *text++;
+			temp[n++] = ' ';
+		}
+		x = drawXtermText(screen, flags, gc, x, y, 0, temp, n);
+		free(temp);
+		return x;
+	}
+#endif
+	/*
+	 * If we're asked to display a proportional font, do this with a fixed
+	 * pitch.  Yes, it's ugly.  But we cannot distinguish the use of xterm
+	 * as a dumb terminal vs its use as in fullscreen programs such as vi.
+	 */
+	if (screen->fnt_prop) {
+		int	adj, width;
+		GC	fillGC = gc;	/* might be cursorGC */
+		XFontStruct *fs = (flags & (BOLD|BLINK))
+				? screen->fnt_bold
+				: screen->fnt_norm;
+		screen->fnt_prop = False;
+
+#define GC_PAIRS(a,b) \
+	if (gc == a) fillGC = b; \
+	if (gc == b) fillGC = a
+
+		/*
+		 * Fill the area where we'll write the characters, otherwise
+		 * we'll get gaps between them.  The cursor is a special case,
+		 * because the XFillRectangle call only uses the foreground,
+		 * while we've set the cursor color in the background.  So we
+		 * need a special GC for that.
+		 */
+		if (gc == screen->cursorGC
+		 || gc == screen->reversecursorGC)
+			fillGC = screen->fillCursorGC;
+		GC_PAIRS(NormalGC(screen),      ReverseGC(screen));
+		GC_PAIRS(NormalBoldGC(screen),  ReverseBoldGC(screen));
+
+		XFillRectangle (screen->display, TextWindow(screen), fillGC,
+			x, y, len * FontWidth(screen), FontHeight(screen));
+
+		while (len-- > 0) {
+			width = XTextWidth(fs, (char *)text, 1);
+			adj = (FontWidth(screen) - width) / 2;
+			(void)drawXtermText(screen, flags, gc, x + adj, y, chrset, text++, 1);
+			x += FontWidth(screen);
+		}
+		screen->fnt_prop = True;
+		return x;
+	}
+
+	TRACE(("drawtext%c[%4d,%4d] (%d) %d:%.*s\n",
+		screen->cursor_state == OFF ? ' ' : '*',
+		y, x, chrset, len, len, text))
 	y += FontAscent(screen);
 	XDrawImageString(screen->display, TextWindow(screen), gc, 
-		x, y,  text, len);
-	if ((flags & BOLD) && screen->enbolden)
+		x, y,  (char *)text, len);
+	if ((flags & (BOLD|BLINK)) && screen->enbolden)
 		XDrawString(screen->display, TextWindow(screen), gc,
-			x+1, y,  text, len);
-	if ((flags & UNDERLINE) && screen->underline) 
+			x+1, y,  (char *)text, len);
+	if ((flags & UNDERLINE) && screen->underline) {
+		if (FontDescent(screen) > 1)
+			y++;
 		XDrawLine(screen->display, TextWindow(screen), gc, 
-			x, y+1, x + len * FontWidth(screen), y+1);
+			x, y, x + len * FontWidth(screen), y);
+	}
+
+	return x + len * FontWidth(screen);
 }
 
 /*
@@ -1313,29 +1434,39 @@ drawXtermText(screen, flags, gc, x, y, text, len)
  * current screen foreground and background colors.
  */
 GC
-updatedXtermGC(screen, flags, fg, bg, hilite)
+updatedXtermGC(screen, flags, fg_bg, hilite)
 	register TScreen *screen;
 	int flags;
-	int fg;
-	int bg;
+	int fg_bg;
 	Bool hilite;
 {
-	Pixel fg_pix = getXtermForeground(flags,fg);
-	Pixel bg_pix = getXtermBackground(flags,bg);
+	Pixel fg_pix = getXtermForeground(flags,extract_fg(fg_bg,flags));
+	Pixel bg_pix = getXtermBackground(flags,extract_bg(fg_bg));
+#if OPT_HIGHLIGHT_COLOR
+	Pixel hi_pix = screen->highlightcolor;
+#endif
 	GC gc;
 
 	if ( (!hilite && (flags & INVERSE) != 0)
 	  ||  (hilite && (flags & INVERSE) == 0) ) {
-		if (flags & BOLD)
+		if (flags & (BOLD|BLINK))
 			gc = ReverseBoldGC(screen);
 		else
 			gc = ReverseGC(screen);
 
+#if OPT_HIGHLIGHT_COLOR
+		if (hi_pix != screen->foreground
+		 && hi_pix != fg_pix
+		 && hi_pix != bg_pix
+		 && hi_pix != 0) {	/* FIXME: need a reliable undef-Pixel */
+			bg_pix = fg_pix;
+			fg_pix = hi_pix;
+		}
+#endif
 		XSetForeground(screen->display, gc, bg_pix);
 		XSetBackground(screen->display, gc, fg_pix);
-
 	} else {
-		if (flags & BOLD)
+		if (flags & (BOLD|BLINK))
 			gc = NormalBoldGC(screen);
 		else
 			gc = NormalGC(screen);
@@ -1363,7 +1494,7 @@ resetXtermGC(screen, flags, hilite)
 
 	if ( (!hilite && (flags & INVERSE) != 0)
 	  ||  (hilite && (flags & INVERSE) == 0) ) {
-		if (flags & BOLD)
+		if (flags & (BOLD|BLINK))
 			gc = ReverseBoldGC(screen);
 		else
 			gc = ReverseGC(screen);
@@ -1372,7 +1503,7 @@ resetXtermGC(screen, flags, hilite)
 		XSetBackground(screen->display, gc, fg_pix);
 
 	} else {
-		if (flags & BOLD)
+		if (flags & (BOLD|BLINK))
 			gc = NormalBoldGC(screen);
 		else
 			gc = NormalGC(screen);
@@ -1385,39 +1516,42 @@ resetXtermGC(screen, flags, hilite)
 #if OPT_ISO_COLORS
 /*
  * Extract the foreground-color index from a one-byte color pair.  If we've got
- * BOLD or UNDERLINE color-mode active, those will be used unless we've got
- * an SGR foreground color active.
+ * BOLD or UNDERLINE color-mode active, those will be used.
  */
-unsigned
+int
 extract_fg (color, flags)
 	unsigned color;
 	unsigned flags;
 {
-	unsigned fg = (color >> 4) & 0xf;
-	if (fg == extract_bg(color))
-	{
+	int fg = (int) ((color >> 4) & 0xf);
+
+	if (term->screen.colorAttrMode 
+	 || (fg == extract_bg(color))) {
 		if (term->screen.colorULMode && (flags & UNDERLINE))
 			fg = COLOR_UL;
 		if (term->screen.colorBDMode && (flags & BOLD))
 			fg = COLOR_BD;
+		if (term->screen.colorBLMode && (flags & BLINK))
+			fg = COLOR_BL;
 	}
 	return fg;
 }
 
-unsigned
+int
 extract_bg (color)
 	unsigned color;
 {
-	return color & 0xf;
+	return (int) (color & 0xf);
 }
 
 /*
  * Combine the current foreground and background into a single 8-bit number.
  * Note that we're storing the SGR foreground, since cur_foreground may be set
- * to COLOR_UL or COLOR_BD, which would make the code larger than 8 bits.
+ * to COLOR_UL, COLOR_BD or COLOR_BL, which would make the code larger than 8
+ * bits.
  *
- * FIXME: I'm using the coincidence of fg/bg values to unmask COLOR_UL/COLOR_BD,
- * which will require more work...
+ * This assumes that fg/bg are equal when we override with one of the special
+ * attribute colors.
  */
 unsigned
 makeColorPair (fg, bg)
@@ -1432,6 +1566,7 @@ makeColorPair (fg, bg)
 unsigned
 xtermColorPair ()
 {
+	/* FIXME? */
 	return makeColorPair(term->sgr_foreground, term->cur_background);
 }
 
@@ -1492,6 +1627,31 @@ void ClearCurBackground(screen, top,left, height,width)
 }
 #endif /* OPT_ISO_COLORS */
 
+#if OPT_DEC_CHRSET
+int
+getXtermChrSet(row, col)
+	int row;
+	int col;
+{
+	TScreen *screen = &term->screen;
+	Char set = SCRN_BUF_CSETS(screen, row)[0];
+	if (!CSET_DOUBLE(set))
+		set = SCRN_BUF_CSETS(screen, row)[col];
+	return set;
+}
+
+int
+curXtermChrSet(row)
+	int row;
+{
+	TScreen *screen = &term->screen;
+	Char set = SCRN_BUF_CSETS(screen, row)[0];
+	if (!CSET_DOUBLE(set))
+		set = screen->chrset;
+	return set;
+}
+#endif /* OPT_DEC_CHRSET */
+
 #ifdef HAVE_CONFIG_H
 #if USE_MY_MEMMOVE
 char *	my_memmove(s1, s2, n)
@@ -1501,18 +1661,18 @@ char *	my_memmove(s1, s2, n)
 {
 	if (n != 0) {
 		if ((s1+n > s2) && (s2+n > s1)) {
-			static	char	*buffer;
+			static	char	*bfr;
 			static	size_t	length;
-			register int	j;
+			register size_t	j;
 			if (length < n) {
 				length = (n * 3) / 2;
-				buffer = (buffer != 0)
-					 ? realloc(buffer, length)
-					 : malloc(length);
+				bfr = (bfr != 0)
+					? realloc(bfr, length)
+					: malloc(length);
 			}
 			for (j = 0; j < n; j++)
-				buffer[j] = s2[j];
-			s2 = buffer;
+				bfr[j] = s2[j];
+			s2 = bfr;
 		}
 		while (n-- != 0)
 			s1[n] = s2[n];

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3init.c,v 3.110.2.6 1997/06/20 09:13:54 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3init.c,v 3.110.2.7 1998/02/07 10:05:14 hohndel Exp $ */
 /*
  * Written by Jake Richter Copyright (c) 1989, 1990 Panacea Inc.,
  * Londonderry, NH - All Rights Reserved
@@ -428,6 +428,8 @@ s3Init(mode)
    else if (S3_864_SERIES(s3ChipId) || S3_805_I_SERIES(s3ChipId))
 	    /* && (DAC_IS_ATT498 || DAC_IS_STG1700) */
       pixMuxShift = -(s3Bpp>>1);  /* for 16/32 bpp */
+   else if (S3_AURORA64VP_SERIES(s3ChipId))
+      pixMuxShift = 0;
    else if (S3_TRIOxx_SERIES(s3ChipId))
       pixMuxShift = -(s3Bpp == 2);
    else if (S3_x64_SERIES(s3ChipId)) /* XXXX Better to test the DAC type? */
@@ -767,8 +769,29 @@ s3Init(mode)
 	    outb(vgaCRReg, 0x35 | pci_disc);
       }
 
-   outb(vgaCRIndex, 0x3b);
-   outb(vgaCRReg, (new->CRTC[0] + new->CRTC[4] + 1) / 2);
+   if (S3_AURORA64VP_SERIES(s3ChipId)) {
+      outb(0x3c4, 0x08);  /* unlock extended SEQ regs */
+      outb(0x3c5, 0x06);
+      if (OFLG_ISSET(OPTION_LCD_CENTER, &s3InfoRec.options)) {
+	 outb(0x3c4, 0x54);  outb(0x3c5, 0x10);
+	 outb(0x3c4, 0x55);  outb(0x3c5, 0x00);
+	 outb(0x3c4, 0x56);  outb(0x3c5, 0x1c);
+	 outb(0x3c4, 0x57);  outb(0x3c5, 0x00);
+      }
+      else {
+	 outb(0x3c4, 0x54);  outb(0x3c5, 0x1f);
+	 outb(0x3c4, 0x55);  outb(0x3c5, 0x1f);
+	 outb(0x3c4, 0x56);  outb(0x3c5, 0x1f);
+	 outb(0x3c4, 0x57);  outb(0x3c5, 0xff);
+      }
+      outb(0x3c4, 0x08);  /* lock extended SEQ regs */
+      outb(0x3c5, 0x00);
+   }
+
+   if (!S3_AURORA64VP_SERIES(s3ChipId)) {
+      outb(vgaCRIndex, 0x3b);
+      outb(vgaCRReg, (new->CRTC[0] + new->CRTC[4] + 1) / 2);
+   }
    outb(vgaCRIndex, 0x3c);
    outb(vgaCRReg, new->CRTC[0]/2);	/* Interlace mode frame offset */
 
@@ -1078,8 +1101,14 @@ s3Init(mode)
 	    else
 	       itmp = new->CRTC[0]+ ((i&0x01)<<8) + 1;
       }
-      outb(vgaCRReg, itmp & 0xff);
-      i |= (itmp&0x100) >> 2;
+      if (S3_AURORA64VP_SERIES(s3ChipId)) {
+      	 outb(vgaCRReg, 0);
+      	 i &= ~0x40;
+      }
+      else {
+    	 outb(vgaCRReg, itmp & 0xff);
+	 i |= (itmp&0x100) >> 2;
+      }
       outb(vgaCRIndex, 0x3c);
       outb(vgaCRReg, (new->CRTC[0] + ((i&0x01)<<8)) /2);	/* Interlace mode frame offset */
 

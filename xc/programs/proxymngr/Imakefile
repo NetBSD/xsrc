@@ -20,5 +20,8 @@ InstallMultipleFlags($(HEADERS),$(INCDIR)/X11/PM,$(INSTINCFLAGS))
 
 ComplexProgramTarget_1(proxymngr,$(LOCAL_LIBRARIES),NullParameter)
 SpecialCObjectRule(main,$(_NOOP_),'-DCONFIG_FILE="'$(PROXYMANAGERDIR)'/pmconfig"')
+
+LinkVarDirectory(proxymngr,.,proxymngr,.)
+
 InstallNonExecFile(pmconfig,$(PROXYMANAGERDIR))
 InstallManPage(proxymngr,$(MANDIR))

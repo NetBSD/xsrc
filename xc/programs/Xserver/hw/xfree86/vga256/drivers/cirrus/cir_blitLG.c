@@ -2,7 +2,7 @@
 /*
  * cir_blitLG.c
  *
- * Copyright 1996 by Corin Anderson, Bellevue, Washington
+ * Copyright 1996 by Corin Anderson, Tukwila, Washington
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,11 +22,11 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  *
- * Author:  Corin Anderson, <corina@bdc.cirrus.com>
+ * Author:  Corin Anderson, <corina@the4cs.com>
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blitLG.c,v 3.3 1996/12/27 07:05:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blitLG.c,v 3.3.2.1 1998/02/15 16:09:33 hohndel Exp $ */
 
 #include "vga256.h"
 #include "cfbrrop.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86xaa.h,v 3.7.2.1 1997/05/18 12:00:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86xaa.h,v 3.7.2.2 1998/02/01 16:05:25 robin Exp $ */
 
 
 /* AccelInfoRec flags */
@@ -25,6 +25,11 @@
 #define HARDWARE_PATTERN_MONO_TRANSPARENCY	0x80000
 #define NO_TEXT_COLOR_EXPANSION		0x100000
 #define HARDWARE_PATTERN_NOT_LINEAR	0x200000
+#define LINE_PATTERN_POWER_OF_2_ONLY	0x400000
+#define LINE_PATTERN_MSBFIRST_MSBJUSTIFIED	0x800000
+#define LINE_PATTERN_MSBFIRST_LSBJUSTIFIED	0x1000000
+#define LINE_PATTERN_ONLY_TRANSPARENCY	0x2000000
+#define DO_NOT_BLIT_STIPPLES		0x4000000
 
 /* Graphics operation flags */
 
@@ -249,6 +254,26 @@ typedef struct {
 #endif
     );
     int CopyAreaFlags;
+    void (*PolyLineDashedZeroWidth)(
+#if NeedNestedPrototypes
+        DrawablePtr	pDrawable,
+        GCPtr		pGC,
+        int		mode,
+        int		npt,
+        DDXPointPtr	pptInit
+#endif
+    );
+    int PolyLineDashedZeroWidthFlags;
+    void (*PolySegmentDashedZeroWidth)(
+#if NeedNestedPrototypes
+        DrawablePtr	pDrawable,
+        GCPtr		pGC,
+        int		nseg,
+        xSegment	*pSeg
+#endif
+    );
+    int PolySegmentDashedZeroWidthFlags;
+    
    
 /*
  * These fall-back functions are set during screen initialization.
@@ -520,6 +545,20 @@ typedef struct {
         int height
 #endif
     );
+    void (*SubsequentFillTrapezoidSolid)(
+#if NeedNestedPrototypes
+        int ytop,
+        int height,
+        int left,
+        int dxL,
+	int dyL,
+	int eL,
+	int right,
+	int dxR,
+	int dyR,
+	int eR
+#endif
+    );
     void (*SetupForScreenToScreenCopy)(
 #if NeedNestedPrototypes
         int xdir,
@@ -734,6 +773,38 @@ typedef struct {
         unsigned long **addrl
 #endif
     );
+    void (*SetupForDashedLine)(
+#if NeedNestedPrototypes
+	int fg,
+	int bg,
+	int rop,
+	unsigned planemask,
+	int size
+#endif
+    );
+    void (*SubsequentDashedBresenhamLine)(
+#if NeedNestedPrototypes
+	int x2,
+	int y1,
+	int octant,
+	int err,
+	int e1,
+	int e2,
+	int length,
+	int offset
+#endif
+    );
+    void (*SubsequentDashedTwoPointLine)(
+#if NeedNestedPrototypes
+        int x1,
+        int y1,
+        int x2,		
+        int y2,
+        int bias,
+	int offset
+#endif
+    );
+
     void (*Sync)();
     int Flags;
     int ColorExpandFlags;
@@ -753,6 +824,8 @@ typedef struct {
     ScrnInfoPtr ServerInfoRec;
     int PixmapCacheMemoryStart;
     int PixmapCacheMemoryEnd;
+    int LinePatternMaxLength;
+    void *LinePatternBuffer;
 } xf86AccelInfoRecType;
 
 extern xf86AccelInfoRecType xf86AccelInfoRec;

@@ -11,7 +11,7 @@
 
 			   The XFree86 Project, Inc
 
-				  1 June 1997
+				  27 Feb 1998
 
 
 
@@ -51,7 +51,7 @@ and the following versions of SVR4.2:
 
    o Consensys
 
-   o Novell UnixWare 1.x and 2.0
+   o Novell/SCO UnixWare 1.x and 2.0
 
 Basically, we believe that XFree86 binaries will run unmodified on any ISA,
 EISA, or MCA platform version version of SVR4.0 (Solaris 2.x is an exception),
@@ -501,11 +501,11 @@ for this problem, and giving us permission to release the information.
 Some accelerated drivers may cause the machine to lockup when starting up the
 server on some versions of SVR4.0.  The problem seems to be related to the ker-
 nel checking for the presence of physical memory when mmaping /dev/pmem.  This
-can cause problems when mapping memory mapped registers.  This is known to be a
-problem with the MGA driver in the SVGA server.  Some other drivers may be
-affected too.  We currently have no workaround for this.
+can cause problems when mapping memory mapped registers.  This was known to be
+a problem with the MGA driver in the SVGA server.  Some other drivers may be
+affected too.  The problem with the MGA driver is now fixed.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SVR4.sgml,v 3.13.2.1 1997/06/01 12:33:36 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SVR4.sgml,v 3.13.2.3 1998/02/28 08:54:11 dawes Exp $
 
 
 
@@ -659,4 +659,4 @@ Information for SVR4 Users
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SVR4,v 3.22.2.1 1997/06/01 12:41:31 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SVR4,v 3.22.2.2 1998/02/28 13:05:35 dawes Exp $

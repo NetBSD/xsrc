@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase5.tcl,v 3.7.2.1 1997/06/20 09:13:50 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase5.tcl,v 3.7.2.3 1998/02/21 06:07:02 robin Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -47,8 +47,10 @@ if { ![getuid] } {
 	    set lastlink $linkname
 	    set linkname [readlink $linkname]
 	}
-        if { [file type $linkname]=="link" && ![file exists $linkname] } {
+	catch {
+            if { [file type $linkname]=="link" && ![file exists $linkname] } {
                 set lastlink [readlink $linkname]
+	    }
 	}
 
 	if { $nlinks < 20 } {
@@ -64,16 +66,25 @@ if { ![getuid] } {
 	set linkdir [file dirname $lastlink]
 	set mklink [mesg "Do you want to create an 'X' link\
 		to the $server server?\n\n(the link will be\
-		created in the directory: $linkdir)" yesno]
+		created in the directory: $linkdir) Okay?" yesno]
 	if $mklink {
 	    set CWD [pwd]
 	    cd $linkdir
 	    catch "unlink X" ret
-	    if [catch "link $Xwinhome/bin/XF86_$server X" ret] {
-		mesg "Link creation failed!\n\
-			You'll have to do it yourself" okay
+	    if !$pc98 {
+	        if [catch "link $Xwinhome/bin/XF86_$server X" ret] {
+		    mesg "Link creation failed!\n\
+			    You'll have to do it yourself" okay
+	        } else {
+		    mesg "Link created successfully." okay
+	        }
 	    } else {
-		mesg "Link created successfully." okay
+	        if [catch "link $Xwinhome/bin/XF98_$server X" ret] {
+		    mesg "Link creation failed!\n\
+			    You'll have to do it yourself" okay
+	        } else {
+		    mesg "Link created successfully." okay
+	        }
 	    }
 	    cd $CWD
 	}

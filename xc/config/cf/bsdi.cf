@@ -1,5 +1,5 @@
 XCOMM platform:  $XConsortium: bsdi.cf /main/22 1996/09/28 16:09:30 rws $
-XCOMM platform:  $XFree86: xc/config/cf/bsdi.cf,v 3.23.2.2 1997/05/24 13:38:07 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/bsdi.cf,v 3.23.2.5 1998/02/09 14:33:21 robin Exp $
 
 #ifndef OSName
 #define OSName            BSD/OS 2.0
@@ -69,6 +69,7 @@ XCOMM xf86site.def
 # define GccGasOption /**/
 #endif
 
+#define HasShm	YES
 #define ServerExtraDefines GccGasOption XFree86ServerDefines
 #define ServerOSDefines XFree86ServerOSDefines -DDDXTIME
 #define XFree86ConsoleDefines /**/
@@ -78,8 +79,9 @@ XCOMM xf86site.def
 
 #define InstallCmd /usr/bin/install
 #define	EqnCmd eqn -Tps
+#define	NeqnCmd eqn -Tascii
           COL = col
-         NEQN = eqn -Tascii
+         NEQN = NeqnCmd
         NROFF = nroff
 
 #define DefaultUserPath		:/bin:/usr/bin:/usr/local/bin:$(BINDIR)

@@ -23,7 +23,7 @@
  * Author:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.c,v 3.17.2.6 1997/06/01 12:33:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.c,v 3.17.2.8 1998/02/15 16:09:03 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -39,6 +39,7 @@
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
 #include "xf86_HWlib.h"
+#include "xf86_PCI.h"
 #include "tga.h"
 #include "tga_presets.h"
 
@@ -131,7 +132,9 @@ ScrnInfoRec tgaInfoRec = {
     0,			/* int textClockFreq */
     NULL,               /* char* DCConfig */
     NULL,               /* char* DCOptions */
-    0			/* int MemClk */
+    0,			/* int MemClk */
+    0			/* int LCDClk */
+
 #ifdef XFreeXDGA
     ,0,			/* int directMode */
     NULL,		/* Set Vid Page */
@@ -232,46 +235,27 @@ tgaProbe()
   pointer Base;
   DisplayModePtr pMode, pEnd;
   OFlagSet validOptions;
-  int found_device = FALSE;
-  char buf[80];
-  char *find_dev = "DEC DC21030"; 
-  char *find_string = "Prefetchable 32 bit memory";
-  int fin = 0;
-  FILE *fd;
+  pciConfigPtr pcrp, *pcrpp;
 
-  /* Find the base address of the TGA chip through /proc/pci */
-  /* Not very elegant, but it does the job for now. */
-  if (tgaInfoRec.MemBase == 0) {
-  fd = fopen("/proc/pci", "r");
-  if (fd != NULL) {
-  	fgets(buf, 80, fd);	/* Grab first line */
-  	do {
-		if (strstr(buf, "Bus"))
-			found_device = FALSE;
-		if (strstr(buf, find_dev))
-			found_device = TRUE;
-		if (found_device)
-	  		if (strstr(buf, find_string))
-	   		    tgaInfoRec.MemBase = 
-				strtoul(strstr(buf,"0x"),(char **)NULL,16);
-		if (!fgets(buf, 80, fd)) fin = 1;	/* End of File */
-  	} while (fin == 0);
-  }
+#define TGA_DEVICE_ID1 0x00041011
+
+  pcrpp = xf86scanpci(tgaInfoRec.scrnIndex);
+
+  if (!pcrpp)
+	return(FALSE);
+
+  i = 0;
+  while ((pcrp = pcrpp[i]) != (pciConfigPtr)NULL) {
+	if (pcrp->_device_vendor == TGA_DEVICE_ID1) 
+		break;
+	i++;
   }
 
-  /*
-   * DEC 21030 TGA is a memory mapped device only.....
-   * Therefore we need to mmap device to do the probe.
-   * We need PCI routines for the Alpha - We don't as yet have them.
-   * Therefore we use MemBase from XF86Config to set base address.
-   * But, if we have found it through /proc/pci - we use this.
-   */
+  if (!pcrp)
+	return(FALSE);
+
   if (tgaInfoRec.MemBase == 0)
-  {
-	FatalError("%s %s: MemBase needed for TGA support - "
-		   "check /proc/pci for base address.\n",
-			XCONFIG_PROBED, tgaInfoRec.name);
-  }	
+      tgaInfoRec.MemBase = pcrp->_base0 & 0xFFFFFF00;
 
   Base = xf86MapVidMem(0,EXTENDED_REGION,(pointer)tgaInfoRec.MemBase,2097152);
 

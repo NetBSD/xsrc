@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.12.2.3 1997/06/22 10:32:21 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.12.2.6 1998/02/01 16:03:19 robin Exp $
 
 #ifdef i386Architecture
 # define OSName			LynxOS AT
@@ -37,6 +37,10 @@ XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.12.2.3 1997/06/22 10:32:21 d
 #define HasShm			YES
 #define HasSockets		YES
 #define HasVFork		NO
+#define HasVarDirectory		NO
+#if OSMajorVersion == 2 && OSMinorVersion > 4
+# define HasBSD44Sockets 	YES
+#endif
 
 #define HasPosixThreads		YES
 #define ThreadedX		YES
@@ -233,7 +237,7 @@ install.man::                                                           @@\
 	@(SUFFIX=`echo $(DESTDIR)destdir/file.* | cut -f2,3 -d.`; \	@@\
 	for i in aliases; do (set -x; \ 				@@\
 	$(RM) $(DESTDIR)destdir/$$i.*; \				@@\
-	(cd $(DESTDIR)destdir; $(LN) -s file.$${SUFFIX} \		@@\
+	(cd $(DESTDIR)destdir; $(LN) file.$${SUFFIX} \			@@\
 	$$i.$${SUFFIX})); \						@@\
 	echo $$i dest $(MANSUFFIX) >> $(DESTDIR)destdir/LIST$(MANSUFFIX); \ @@\
 	done)

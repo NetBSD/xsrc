@@ -1,0 +1,15 @@
+/*
+ * Host.def for building BSDI bindists
+ *
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/BSDI/host.def,v 1.1.2.1 1998/02/07 23:15:37 robin Exp $
+ */
+
+#define InstallEmptyHostDef
+
+#define HasTk			YES
+#define HasTcl			YES
+
+#define TkIncDir	/usr/contrib/include
+#define TkLibDir	/usr/contrib/lib
+#define TclIncDir	/usr/contrib/include
+#define TclLibDir	/usr/contrib/lib

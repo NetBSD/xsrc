@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/regs3.h,v 3.24.2.2 1997/05/09 07:15:13 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/regs3.h,v 3.24.2.3 1998/02/20 14:27:56 robin Exp $ */
 /*
  * regs3.h
  * 
@@ -135,6 +135,19 @@
 #define PCI_ViRGE		0x5631
 #define PCI_ViRGE_VX		0x883d
 #define PCI_ViRGE_DXGX		0x8A01
+
+
+/* and to detect some fraud S3 chips we need .... */
+
+/* SIGMA DESIGNS */
+#define PCI_VENDOR_SIGMADESIGNS 0x1236
+#define PCI_CHIP_SD_REALMAGIG64GX	0x6401
+
+/* Intergraphics */
+#define PCI_VENDOR_INTERGRAPHICS	0x10ea
+#define PCI_CHIP_INTERG_1680	0x1680
+#define PCI_CHIP_INTERG_1682	0x1682
+
 
 /* Chip tags */
 #define S3_UNKNOWN		 0

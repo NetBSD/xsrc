@@ -3,18 +3,19 @@
 
 <title> Information for Trident Chipset Users
 <author> The XFree86 Project, Inc.
-<date> 20 May 1997
+<date> 10th February 1998
 <toc>
 
 <sect> Supported chipsets <p>
-The Trident driver has undergone some more work for XFree86 3.3.
+The Trident driver has undergone some more work for XFree86 3.3.2.
 Because of this work, all of the Trident SVGA chipsets, except
 the very first one, are supported by both the color and monochrome servers.
 <quote><bf>
 8800CS 8200LX
 8900B 8900C 8900CL/D 9000 9000i 9100B
 9200CXr 9320LCD 9400CXi 9420 9420DGi 9430DGi 9440AGi 9660XGi 9680
-9682 9685 Cyber9382 Cyber9385 Cyber9385-1
+ProVidia9682 ProVidia9685 Cyber9382 Cyber9385 Cyber9385-1 Cyber9388
+Cyber9397 3DImage975(PCI) 3DImage985(AGP)
 </bf></quote>
 It must be noted that the 9000i chipset is treated as a 9000 by the server.
 Additionally the 9100B is treated 
@@ -26,21 +27,17 @@ but should work in this way according to the chipset documentation.
 
 <bf> NOTES: </bf>
 <itemize>
-<item>Acceleration is now supported for the 9440/96xx and Cyber938x chips.
-<item>24bpp is supported for the 9440, 32bpp is supported for the 96xx
-and Cyber938x based chips.
-<item>The Cyber 9382/5 chips that have started to appear, have much improved 
-support in XFree86 3.3 and appear to work at 800x600 on the LCD.
-<item>The TGUI9440 and TGUI96xx based cards are supported by the SVGA server.
-<item>16 bits per pixel is now supported for the 8900D, 9200CXr, 9400CXi,
-9420DGi, 9430DGi, 9440AGi, 96xx, but only the 9440AGi and 9400CXi
-have been tested.
-<item>Linear access has been implemented for chipsets that support it.
-It is enabled by default for PCI cards, and disabled by default for other
-cards.
-Additionally Hardware cursor is implemented for the 9430, 9440, 96xx,
-although only the 9440 and 9660 have been tested with the hardware cursor.
-<item>The following options may be specified for the Trident driver:
+<item> The chipset keyword has changed in XFree86 v3.3.2 and now you
+no longer specify 'tgui96xx' as the generic keyword, but you actually
+specify your chip. i.e. Chipset 'tgui9685' will set a ProVidia9685 chip.
+<item> The new Cyber9397, 3DImage975(PCI) and 3DImage985(AGP) cards are
+introduced in XFree86 v3.3.2, but is still experimental, these chipsets
+are currently unaccelerated.
+<item> 24bpp is all drivers remains unaccelerated, this will change in
+a future version, although 32bpp acceleration is supported for all TGUI
+based chipset except the 9440 which doesn't have the capability.
+<item> 24/32bpp is not supported for the 9685, it will be fixed in a future
+version.
 <descrip>
 <tag>Option &dquot;nolinear&dquot;</tag>
 	Turn off linear mapping
@@ -74,17 +71,19 @@ although only the 9440 and 9660 have been tested with the hardware cursor.
 <tag>Option &dquot;noaccel&dquot;</tag>
 	Turn off XAA acceleration.
 <tag>Option &dquot;xaa_no_color_exp&dquot;</tag>
-	Disable color expansion, which is needed for some 9440 cards
-	(and maybe others?).
+	Disable color expansion.
 <tag>Option &dquot;no_stretch&dquot;</tag>
 	Disable LCD stretching on Cyber 938x based chips.
 <tag>Option &dquot;lcd_center&dquot;</tag>
 	Enable LCD centering on Cyber 938x based chips.
+<tag>Option &dquot;cyber_shadow&dquot;</tag>
+	Enable Shadow registers, might be needed for some
+	Cyber chipsets. (laptop machines) 
 <tag>Option &dquot;tgui_mclk_66&quot;</tag>
 	Pushes the Memory Clock from its default value to 66MHz.
 	Increases graphics speed dramatically, but use entirely
 	at your own risk, as it may damage the video card. 
-	If snow appears, disable.
+	If snow appears, disable. Only tested on the 9440.
 </descrip>
 </itemize>
 
@@ -150,7 +149,7 @@ in the <tt>XF86Config</tt> file, these lockups are overcome. But it may
 be worth checking wait states etc. on the card and in the BIOS setup.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.22.2.1 1997/05/21 15:02:40 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.22.2.3 1998/02/24 13:54:23 hohndel Exp $
 
 
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128reg.h,v 3.5.2.2 1997/06/25 08:16:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128reg.h,v 3.5.2.4 1998/02/15 23:31:57 robin Exp $ */
 /*
  * Copyright 1994 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -68,7 +68,6 @@ struct i128mem {
     CARD32 *rbase_a;
     CARD32 *rbase_b;
     CARD32 *rbase_i;
-    unsigned char *rbase_g_b;  /* special byte pointer for ramdac registers */
 };
 
 /* save the registers needed for restoration in this structure */
@@ -85,8 +84,34 @@ typedef struct {
 } i128Registers;
 
 
+/* display list processor instruction formats */
+typedef union {
+	struct {
+		CARD8 aad;
+		CARD8 bad;
+		CARD8 cad;
+		CARD8 control;
+		CARD32 rad;
+		CARD32 rbd;
+		CARD32 rcd;
+	} f0;
+	struct {
+		CARD32 xy0;
+		CARD32 xy2;
+		CARD32 xy3;
+		CARD32 xy1;
+	} f1;
+	CARD32 f4[4];
+} i128dlpu;
+
 #define I128_DEVICE_ID1		0x2309105D
 #define I128_DEVICE_ID2		0x2339105D
+#define I128_DEVICE_ID3		0x493D105D
+
+#define I128_MEMORY_UNKNOWN	0x01
+#define I128_MEMORY_DRAM	0x02
+#define I128_MEMORY_WRAM	0x04
+#define I128_MEMORY_SGRAM	0x08
 
 /* RBASE_I register offsets */
 
@@ -95,16 +120,16 @@ typedef struct {
 
 /* RBASE_G register offsets  (divided by four for double word indexing */
 
-#define WR_ADR   0x0000     /* use rbase_g_b for byte indexing */
-#define PAL_DAT  0x0004     /* use rbase_g_b for byte indexing */
-#define PEL_MASK 0x0008     /* use rbase_g_b for byte indexing */
-#define RD_ADR   0x000C     /* use rbase_g_b for byte indexing */
-#define INDEX_TI 0x0018     /* TI  ramdac use rbase_g_b for byte indexing */
-#define DATA_TI  0x001C     /* TI  ramdac use rbase_g_b for byte indexing */
-#define IDXL_I   0x0010     /* IBM ramdac use rbase_g_b for byte indexing */
-#define IDXH_I   0x0014     /* IBM ramdac use rbase_g_b for byte indexing */
-#define DATA_I   0x0018     /* IBM ramdac use rbase_g_b for byte indexing */
-#define IDXCTL_I 0x001C     /* IBM ramdac use rbase_g_b for byte indexing */
+#define WR_ADR   0x0000/4
+#define PAL_DAT  0x0004/4
+#define PEL_MASK 0x0008/4
+#define RD_ADR   0x000C/4
+#define INDEX_TI 0x0018/4   /* TI  ramdac */
+#define DATA_TI  0x001C/4   /* TI  ramdac */
+#define IDXL_I   0x0010/4   /* IBM ramdac */
+#define IDXH_I   0x0014/4   /* IBM ramdac */
+#define DATA_I   0x0018/4   /* IBM ramdac */
+#define IDXCTL_I 0x001C/4   /* IBM ramdac */
 #define INT_VCNT 0x0020/4
 #define INT_HCNT 0x0024/4
 #define DB_ADR   0x0028/4
@@ -174,6 +199,7 @@ typedef struct {
 #define  BC_MDM_MSK  0x00600000
 #define  BC_MDM_KEY  0x00200000
 #define  BC_MDM_PLN  0x00400000
+#define  BC_BLK_ENA  0x00800000
 #define  BC_PSIZ_MSK 0x03000000
 #define  BC_PSIZ_8B  0x00000000
 #define  BC_PSIZ_16B 0x01000000
@@ -198,7 +224,6 @@ typedef struct {
 #define  CMD_CLP_MSK 0x00E00000
 #define  CMD_PAT_MSK 0x0F000000
 #define  CMD_HDF_MSK 0x70000000
-#define  CMD_BLIT    0x00000C01
 #define CMD_OPC   0x0050/4
 #define  CO_NOOP     0x00
 #define  CO_BITBLT   0x01
@@ -278,6 +303,8 @@ typedef struct {
 #define  XY_X_DATA    0xFFFF0000
 #define  XY_I_DATA1   0x0000FFFF
 #define  XY_I_DATA2   0xFFFF0000
+#define DL_ADR    0x00F8/4
+#define DL_CNTRL  0x00FC/4
 
 #define I128_WAIT_READY 1
 #define I128_WAIT_DONE  2
@@ -290,3 +317,5 @@ typedef struct {
 #define RGB16_565         0
 #define RGB16_555         1
 #define RGB32_888         2
+
+#define MB	mem_barrier()

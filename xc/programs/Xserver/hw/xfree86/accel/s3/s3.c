@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3.c,v 3.155.2.13 1997/07/07 04:11:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3.c,v 3.155.2.17 1998/02/21 10:00:48 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -59,7 +59,6 @@
 #endif
 
 #ifdef PC98
-#include "pc98_vers.h"
 #include "s3pc98.h"
 #endif
 
@@ -153,7 +152,8 @@ ScrnInfoRec s3InfoRec =
    0,				/* int textClockFreq */
    NULL,                        /* char* DCConfig */
    NULL,                        /* char* DCOptions */
-   0				/* int MemClk */
+   0,				/* int MemClk */
+   0				/* int LCDClk */
 #ifdef XFreeXDGA
    ,0,				/* int directMode */
    s3SetVidPage,		/* Set Vid Page */
@@ -382,9 +382,6 @@ s3PrintIdent()
       c += strlen(id);
     }
   ErrorF("\n");
-#ifdef PC98
-  ErrorF("  PC98: Supported Video Boards:\n\t%s\n",PC98_S3_BOARDS);
-#endif
 }
 
 
@@ -472,6 +469,35 @@ s3GetPCIInfo()
       return NULL;
 
    while ((pcrp = pcrpp[i])) {
+      /* check for fake S3 chips :-(( */
+      if (pcrp->_vendor == PCI_VENDOR_SIGMADESIGNS ||
+	  pcrp->_vendor == PCI_VENDOR_INTERGRAPHICS) {
+	char *vendor, chip[80];
+	if (pcrp->_vendor == PCI_VENDOR_SIGMADESIGNS) {
+	  vendor = "Sigma Designs";
+	  if (pcrp->_device == PCI_CHIP_SD_REALMAGIG64GX)
+	    strcpy(chip,"REALmagic64/GX (SD 6425) chip");
+	  else
+	    sprintf(chip,"unknown chip (chip_id 0x%x)",pcrp->_device);
+	}
+	else {
+	  vendor = "Intergraphics";
+	  if (pcrp->_vendor == PCI_CHIP_INTERG_1680)
+	    strcpy(chip,"IGA-1680 chip");
+	  else if (pcrp->_vendor == PCI_CHIP_INTERG_1682)
+	    strcpy(chip,"IGA-1682 chip");
+	  else
+	    sprintf(chip,"unknown chip (chip_id 0x%x)",pcrp->_device);
+	}
+	ErrorF("\n%s %s: WARNING: %s %s detected!\n"
+	   "\tNote: this chip is not a product of S3, Inc., and it is not\n"
+	   "\tcompatible with the XFree86 S3 drivers.  We understand that\n"
+	   "\tsome video cards are being sold with these chips relabeled\n"
+	   "\tas S3 Inc. chips, including S3's logo.  They are NOT S3 chips.\n"
+	   "\tPlease see http://www.s3.com\n\n"
+	       ,XCONFIG_PROBED, s3InfoRec.name);
+      }
+
       if (pcrp->_vendor == PCI_S3_VENDOR_ID) {
 	 found = TRUE;
 	 switch (pcrp->_device) {
@@ -850,9 +876,9 @@ s3Probe()
 	 } else if (S3_TRIO32_SERIES(s3ChipId)) {
 	    chipname = "Trio32";
 	 } else if (S3_TRIO64UVP_SERIES(s3ChipId)) {
-	    chipname = "Trio64UV+ (preliminary support; please report)";
+	    chipname = "Trio64UV+";
 	 } else if (S3_AURORA64VP_SERIES(s3ChipId)) {
-	    chipname = "Aurora64V+ (preliminary support; please report)";
+	    chipname = "Aurora64V+";
 	 } else if (S3_TRIO64V_SERIES(s3ChipId /* , s3ChipRev */)) {
 	    chipname = "Trio64V+";
 	 } else if (S3_TRIO64V2_SERIES(s3ChipId)) {
@@ -1002,6 +1028,9 @@ s3Probe()
    OFLG_SET(OPTION_MIRO_80SV, &validOptions);
    OFLG_SET(OPTION_NO_PCI_DISC, &validOptions);
    OFLG_SET(OPTION_NO_SPLIT_XFER, &validOptions);
+   if (S3_AURORA64VP_SERIES(s3ChipId))
+      OFLG_SET(OPTION_LCD_CENTER, &validOptions);
+      
    xf86VerifyOptions(&validOptions, &s3InfoRec);
 
 #ifdef __alpha__

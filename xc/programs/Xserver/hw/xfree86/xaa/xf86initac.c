@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86initac.c,v 3.10.2.5 1997/07/28 14:17:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86initac.c,v 3.10.2.8 1998/02/21 10:47:12 hohndel Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -61,19 +61,19 @@ xf86InitializeAcceleration(pScreen)
     int CPUToScreenColorExpand = FALSE;
     int ScreenToScreenColorExpand = FALSE;
     int ScanlineScreenToScreenColorExpand = FALSE;
- 
+    char MsgBuf[3200]; /* that's enough for 40 lines */
+    char *MsgPtr = MsgBuf;
+
     if (serverGeneration != 1)
         goto do_not_touch_xf86AccelInfoRec;
-
-    ErrorF("%s %s: Using XAA (XFree86 Acceleration Architecture)\n",
-        XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
 
     if ((xf86AccelInfoRec.Flags & PIXMAP_CACHE) &&
     OFLG_ISSET(OPTION_NO_PIXMAP_CACHE,
     &(xf86AccelInfoRec.ServerInfoRec->options))) {
         xf86AccelInfoRec.Flags &= ~PIXMAP_CACHE;
-        ErrorF("%s %s: Pixmap cache disabled\n",
+        sprintf(MsgPtr,"%s %s: Pixmap cache disabled\n",
             XCONFIG_GIVEN, xf86AccelInfoRec.ServerInfoRec->name);
+	MsgPtr += strlen(MsgPtr);
     }
 
     /*
@@ -84,15 +84,17 @@ xf86InitializeAcceleration(pScreen)
     xf86AccelInfoRec.SubsequentFillRectSolid) {
         SimpleFillRectSolid = TRUE;
         if (xf86Verbose)
-            ErrorF("%s %s: XAA: Solid filled rectangles\n",
+            sprintf(MsgPtr,"%s %s: XAA: Solid filled rectangles\n",
                 XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
+	    MsgPtr += strlen(MsgPtr);
     }
     if (xf86AccelInfoRec.SetupForScreenToScreenCopy &&
     xf86AccelInfoRec.SubsequentScreenToScreenCopy) {
         SimpleScreenToScreenCopy = TRUE;
         if (xf86Verbose)
-            ErrorF("%s %s: XAA: Screen-to-screen copy\n",
+            sprintf(MsgPtr,"%s %s: XAA: Screen-to-screen copy\n",
                 XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
+	    MsgPtr += strlen(MsgPtr);
     }
     if (xf86AccelInfoRec.SetupForCPUToScreenColorExpand &&
     xf86AccelInfoRec.SubsequentCPUToScreenColorExpand &&
@@ -127,31 +129,36 @@ xf86InitializeAcceleration(pScreen)
     if (xf86AccelInfoRec.SetupForFill8x8Pattern &&
     xf86AccelInfoRec.SubsequentFill8x8Pattern) {
         if (xf86Verbose)
-            ErrorF("%s %s: XAA: 8x8 pattern fill",
+            sprintf(MsgPtr,"%s %s: XAA: 8x8 pattern fill",
                 XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
+	    MsgPtr += strlen(MsgPtr);
         if (((xf86AccelInfoRec.Flags & HARDWARE_PATTERN_ALIGN_64) &&
         !(xf86AccelInfoRec.Flags & HARDWARE_PATTERN_PROGRAMMED_ORIGIN))
         || ((xf86AccelInfoRec.Flags & HARDWARE_PATTERN_MOD_64_OFFSET) &&
-        (xf86AccelInfoRec.FramebufferWidth & 63) != 0))
-            ErrorF(" (not usable)");
-        ErrorF("\n");
+        (xf86AccelInfoRec.FramebufferWidth & 63) != 0)) {
+            sprintf(MsgPtr," (not usable)");
+	    MsgPtr += strlen(MsgPtr);
+	}
+        sprintf(MsgPtr,"\n");
+	MsgPtr += strlen(MsgPtr);
     }
     if (xf86AccelInfoRec.SetupFor8x8PatternColorExpand &&
     xf86AccelInfoRec.Subsequent8x8PatternColorExpand) {
         if (xf86Verbose)
-            ErrorF("%s %s: XAA: 8x8 color expand pattern fill\n",
+            sprintf(MsgPtr,"%s %s: XAA: 8x8 color expand pattern fill\n",
                 XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
+	    MsgPtr += strlen(MsgPtr);
     }
 
-    if (!SimpleFillRectSolid && !SimpleScreenToScreenCopy &&
+    if (!(!SimpleFillRectSolid && !SimpleScreenToScreenCopy &&
     !CPUToScreenColorExpand && !ScreenToScreenColorExpand &&
     !ScanlineScreenToScreenColorExpand &&
     !xf86AccelInfoRec.SubsequentTwoPointLine &&
     !xf86AccelInfoRec.SubsequentBresenhamLine &&
     !xf86AccelInfoRec.SubsequentFill8x8Pattern &&
-    !xf86AccelInfoRec.Subsequent8x8PatternColorExpand)
-        ErrorF("%s %s: XAA: No acceleration primitives defined.\n",
-            XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
+    !xf86AccelInfoRec.Subsequent8x8PatternColorExpand))
+        ErrorF("%s %s: Using XAA (XFree86 Acceleration Architecture)\n%s",
+	    XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name,MsgBuf);
 
     /*
      * Set up the higher-level accelerated functions to make use of
@@ -257,12 +264,15 @@ xf86InitializeAcceleration(pScreen)
         if ((!(xf86AccelInfoRec.ColorExpandFlags & ONLY_TRANSPARENCY_SUPPORTED)
         || SimpleFillRectSolid)
         && (xf86AccelInfoRec.ColorExpandFlags & SCANLINE_PAD_DWORD)) {
-            xf86AccelInfoRec.WriteBitmap =
-                xf86WriteBitmapCPUToScreenColorExpand;
-            if (xf86Verbose)
-                ErrorF("bitmap, ");
+	    if(!xf86AccelInfoRec.WriteBitmap) {
+            	xf86AccelInfoRec.WriteBitmap =
+                 	xf86WriteBitmapCPUToScreenColorExpand;
+            	if (xf86Verbose)
+                	ErrorF("bitmap, ");
+	    }
 #ifdef STIPPLE_COLOR_EXPANSION
-            if ((xf86AccelInfoRec.ColorExpandFlags & LEFT_EDGE_CLIPPING) &&
+            if (!xf86AccelInfoRec.FillRectOpaqueStippled &&
+		(xf86AccelInfoRec.ColorExpandFlags & LEFT_EDGE_CLIPPING) &&
             (xf86AccelInfoRec.ColorExpandFlags & LEFT_EDGE_CLIPPING_NEGATIVE_X)
             && !(xf86AccelInfoRec.ColorExpandFlags & TRIPLE_BITS_24BPP)) {
                 xf86AccelInfoRec.FillRectOpaqueStippled =
@@ -277,7 +287,8 @@ xf86InitializeAcceleration(pScreen)
 #endif
         }
 #ifdef STIPPLE_COLOR_EXPANSION
-        if (!(xf86AccelInfoRec.ColorExpandFlags & NO_TRANSPARENCY)
+        if (!xf86AccelInfoRec.FillRectStippled &&
+		!(xf86AccelInfoRec.ColorExpandFlags & NO_TRANSPARENCY)
         && (xf86AccelInfoRec.ColorExpandFlags & SCANLINE_PAD_DWORD) &&
         (xf86AccelInfoRec.ColorExpandFlags & LEFT_EDGE_CLIPPING) &&
         (xf86AccelInfoRec.ColorExpandFlags & LEFT_EDGE_CLIPPING_NEGATIVE_X) &&
@@ -590,6 +601,34 @@ xf86InitializeAcceleration(pScreen)
                     ErrorF("%s %s: XAA: Horizontal and vertical lines and segments\n",
                         XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
             }
+        }
+
+        if ((xf86AccelInfoRec.SubsequentDashedBresenhamLine
+        && ((xf86AccelInfoRec.Flags & HARDWARE_CLIP_LINE) ||
+        xf86AccelInfoRec.ErrorTermBits))
+        || (xf86AccelInfoRec.SubsequentDashedTwoPointLine
+        && (xf86AccelInfoRec.Flags & HARDWARE_CLIP_LINE)) &&
+	     xf86AccelInfoRec.SetupForDashedLine && 
+	     xf86AccelInfoRec.LinePatternBuffer &&
+	    (xf86AccelInfoRec.LinePatternMaxLength > 0)) {
+            if (!xf86GCInfoRec.PolyLineDashedZeroWidth)
+                xf86GCInfoRec.PolyLineDashedZeroWidth = xf86PolyDashedLine;
+            if (!xf86GCInfoRec.PolySegmentDashedZeroWidth)
+                xf86GCInfoRec.PolySegmentDashedZeroWidth = 
+						xf86PolyDashedSegment;
+
+            if (!xf86AccelInfoRec.SubsequentDashedBresenhamLine &&
+            !(xf86AccelInfoRec.Flags & TWO_POINT_LINE_NOT_LAST))
+                /*
+                 * If there's only TwoPointLine, and it doesn't support
+                 * skipping of the last pixel, then PolySegment cannot
+                 * be supported with the CapNotLast line style.
+                 */
+                xf86GCInfoRec.PolySegmentDashedZeroWidthFlags |=
+                    NO_CAP_NOT_LAST;
+            if (xf86Verbose)
+                ErrorF("%s %s: XAA: Dashed lines and segments\n",
+	            XCONFIG_PROBED, xf86AccelInfoRec.ServerInfoRec->name);
         }
 
 do_not_touch_xf86AccelInfoRec:

@@ -5,64 +5,76 @@
 <!-- Title information -->
 <title> XFree86 PC98 Dependent Information
 <author> The XFree86 Project Inc. and X98 CORE TEAM
-<date> 1997年  1月  23日
+<date> 1998年  2月  27日
 <abstract>
 このドキュメントでは、PC98サーバ固有の事項について解説します。
 PC-ATと共通の事項については、共通のドキュメントを参照してください。この
 ドキュメントでも、各サーバごとに参照すべきドキュメントを示していますの
 で参考にしてください。
 </abstract>
-<toc>
+
 <sect>サポートサーバ及び構成<p>
   PC98用サーバは、以下の拡張ビデオボード、内蔵ビデオシステムに対応してい
 ます。個々の対応、動作状況についてはVideoBoard98を参照してください。
 </p>
 <sect1>サポートカード一覧 <p>
 <verb>
-  ベンダー      カード名称                               サーバ
-  ------------- --------------------------------------- ----------------
-  MELCO         WAB-S, WAB-1000, WAB-2000, WSR-E, WSR-G XF98_WABS
-  MELCO         WAP-2000, WAP-4000                      XF98_GANBWAP
-  MELCO         WAB-EP                                  XF98_WABEP
-  MELCO		WSN-A2F                                 XF98_WSNA
-  IO Data	GA-98NB I/C,GA-98NB II, GA-98NB IV      XF98_GANBWAP
-                GA-968V2/PCI, GA-968V4/PCI              XF98_GA968
-                GA-DRV2/98, GA-DRV4/98                  XF98_TGUI
-  NEC	  	ウィンドウアクセラレータボード A/B	XF98_NECS3
-  Canopus       PowerWindow 801, 801+, 928, 928G, 801G, XF98_PWSKB
-                928II, 805i
-  Canopus       PowerWindow 928IILB, 928GLB, 964LB      XF98_PWLB
-  EPSON         PCSKB, PCSKB2, PCSKB3,PCSKB4,PCPKB4     XF98_PWSKB 
+  ベンダー	カード名称					サーバ
+  ------------- ----------------------------------------------- -------------
+  MELCO		WAB-S, WAB-1000, WAB-2000, WSR-E, WSR-G		XF98_WABS
+  MELCO		WAP-2000, WAP-4000				XF98_GANBWAP
+  MELCO		WAB-EP						XF98_WABEP
+  MELCO		WSN-A2F						XF98_WSNA
+  IO Data	GA-98NB I/C,GA-98NB II, GA-98NB IV		XF98_GANBWAP
+		GA-968V2/PCI, GA-968V4/PCI			XF98_GA968
+		GA-DRV2/98, GA-DRV4/98				XF98_TGUI
+  ICM		GI-5434-2M, GI-5434-4M				XF98_GANBWAP
+  NEC		ウィンドウアクセラレータボード A/B		XF98_NECS3
+  NEC		フルカラーウィンドウアクセラレータボード A/B	XF98_NECS3
+  NEC		フルカラーウィンドウアクセラレータボード X2	XF98_MGA
+  Canopus	PowerWindow 801, 801+, 928, 928G, 801G,		XF98_PWSKB
+		928II, 805i
+  Canopus	PowerWindow 928IILB, 928GLB, 964LB		XF98_PWLB
+  EPSON		PCSKB, PCSKB2, PCSKB3, PCSKB4, PCPKB4		XF98_PWSKB 
+  Matrox	MGA Millennium(PC/AT 互換機用)			XF98_MGA
 </verb></p></sect1>
 
 <sect1>サポート内蔵ビデオシステム一覧<p>
 <verb>
-  ベンダー      チップセット                             サーバ
-  ------------- --------------------------------------- ----------------
-  NEC/EPSON     EGC(640x400x16)                         XF98_EGC
-  NEC           PEGC(640x400x256,640x480x256)           XF98_NEC480
-  NEC           S3 928(As2等), S3 864(As3等)            XF98_NECS3
-  NEC           Cirrus CLGD5428/5430(B-Mate,Xe,CanBe等) XF98_NKVNEC
-  NEC           Trident TGUI9680XGi(X-Mate,ValueStar等) XF98_TGUI
-  EPSON         NKV(486MR,MS,MV,586MV等)                XF98_NKVNEC
+  ベンダー	チップセット					サーバ
+  ------------- ----------------------------------------------- -------------
+  NEC/EPSON	EGC(640x400, 4bpp)				XF98_EGC
+  NEC		PEGC(640x400/640x480, 8bpp)			XF98_NEC480
+  NEC		S3 928(As2等), S3 864(As3等)			XF98_NECS3
+  NEC		Cirrus CLGD5428/543x/544x(B-Mate,Xe,CanBe 等)	XF98_NKVNEC
+  NEC		Trident TGUI968xXGi(X-Mate,ValueStar等)		XF98_TGUI
+  NEC		MGA Millennium/Mystique				XF98_MGA
+  NEC		Cirrus CLGD755x(Aile)				XF98_SVGA
+  EPSON		NKV(486MR,MS,MV,586MV等)			XF98_NKVNEC
 </verb></p>
 
 <sect>共通事項<p>
 <descrip>
 <tag>xf86config</tag>
-	PC98用に移植されていません。/usr/X11R6/lib/X11/XF86Config.98を
-	XF86Configとリネームして使用してください。
+	PC98用に移植されていません。XF98Setup を使うか、/usr/X11R6/lib/
+        X11/XF86Config.98をXF86Configとリネームして使用してください。
 <tag>xvidtune</tag>
 	厳格な動作確認を行っていませんが、動作するようです。
 <tag>SuperProbe</tag>
 	移植されていません。ハングアップやビデオボードを壊す恐れがある
 	ので絶対に使用しないでください。
 <tag>XF86Setup</tag>
-	PC98用に移植されていません。
+	PC98用に移植されています。XF98Setup を使用して下さい。デフォルト
+	では、XF98_NEC480 を使用しますが、-egc オプションで XF98_EGC も
+	使用できます。環境変数 LANG に、ja、ja_JP、ja_JP.*、japan、japanese
+	等を指定すると、日本語の画面になります。なお、日本語画面は PC/AT
+	互換機上の XF86Setup でも利用できます。XF98Setup では、キーボード
+	の選択画面は不要なので省略しています。マウスの種類は、各 OS 毎に
+	サポートされるもののみ選択できます。
 <tag>scanpci</tag>
         厳格な動作確認を行っていませんが、動作するようです。
 <tag>デフォルトのコンパイル時の設定</tag>
-	以前のPC98用サーバと異なり、XFree86は、GetValesBC NO,BuildPexExt 
+	以前のPC98用サーバと異なり、XFree86は、GetValuesBC NO,BuildPexExt 
 	YES,BuildXIE YESと定義されています。ご注意ください。xengine等で
 	はGetValuesについてソースの修正が必要です。 
 <tag>16MBシステム空間の設定</tag>
@@ -84,6 +96,7 @@ MELCOのWAB-S,1000/2000,WSR-E/G で動作するVGA256ベースのサーバです。</p>
 <itemize>
       <ITEM>WAB-2000でVRAM 2Mでの動作は未対応です。
       <ITEM>WAB-S/1000/2000におけるIO port の SW は default の 0 です。
+      <ITEM>15/16/24/32bpp は動作しません。
 </itemize>
 <sect2>関連<p>
 	XF86_SVGA manpage,README.cirrus参照。</p>
@@ -104,7 +117,7 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 
 <sect1>XF98_GANBWAP<p>
 	MELCOのWAP2000/4000, IO DataのGA-98NB I/C,II,IV で動作する VGA256
-	ベースのサーバです。ICM GI-5434-2M/4Mでも動作するかもしれません。
+	ベースのサーバです。ICM GI-5434-2M/4Mでも動作します。
 <sect2>XF86Configの設定<p>
 	以下のOptionがPC98用に指定できます。これ以外に、README.cirrus内に
 	解説されているオプションを指定できます。
@@ -112,11 +125,14 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 <tag>Option ``ga98nb1''</tag>
 	GA-98NB I/C 使用時に必ず指定します。
 <tag>Option ``ga98nb2''</tag>
-	GA-98NB II  使用時に必ず指定します。
+	GA-98NB II や GI-5434-2M を使用時に必ず指定します。
 <tag>Option ``ga98nb4''</tag>
-	GA-98NB IV  使用時に必ず指定します。
+	GA-98NB IV や GI-5434-4M を使用時に必ず指定します。
 <tag>Option ``wap''</tag>
 	WAP-2000/4000使用時に必ず指定します。
+<tag>Option ``no_mmio''</tag>
+	PC98用のCLGD543x/544x系では必ず指定して下さい。GANBWAPサーバの
+	場合は必須となります。
 <tag>Option ``epsonmemwin''</tag>    
 	ESPON PC486GRシリーズ以前の機種で、0xf00000へVRAMをマッピング可能
 	にします。FreeBSD(98)ではカーネルconfig時に指定する事で、カーネル
@@ -135,7 +151,7 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 <sect2>その他<p>
 <itemize>
 	<ITEM>GA-98NB, WAP共にIO port の SW は default の 0 です。
-	<ITEM>15/16/32bppは動作しません。
+	<ITEM>15/16/24/32bppは動作しません。
 	<ITEM>ドットクロック85MHz以上では、ハードウェアカーソルは使用でき
 	ません。Option ``sw_cursor''を指定してください。
 	<ITEM>WGN-A2 については、数件動作する旨の報告を受けていますが、
@@ -152,6 +168,9 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 	以下のOptionがPC98用に指定できます。これ以外に、README.cirrus内に
 	解説されているオプションを指定できます。
 <descrip>    
+<tag>Option ``no_mmio''</tag>
+	PC98用のCLGD543x/544x系では必ず指定して下さい。WSNAサーバの場合
+	は必須となります。
 <tag>Option ``epsonmemwin''</tag>    
 	ESPON PC486GRシリーズ以前の機種で、0xf00000へVRAMをマッピング可能
 	にします。FreeBSD(98)ではカーネルconfig時に指定する事で、カーネル
@@ -170,7 +189,7 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 <sect2>その他<p>
 <itemize>
 	<ITEM>GA-98NB, WAP共にIO port の SW は default の 0 です。
-	<ITEM>15/16/32bppは動作しません。
+	<ITEM>15/16/24/32bppは動作しません。
 	<ITEM>ドットクロック85MHz以上では、ハードウェアカーソルは使用でき
 	ません。Option ``sw_cursor''を指定してください。
 </itemize>
@@ -180,7 +199,7 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 
 
 <sect1>XF98_NKVNEC<p>
-	NEC,EPSONの内蔵アクセラレータ(Cirrus Logic CL-GD5428,5429,5430)
+	NEC,EPSONの内蔵アクセラレータ(Cirrus Logic CL-GD5428,5429,5430,5434)
 	で動作する VGA256ベースのサーバです。
 
 <sect2>XF86Configの設定<p>
@@ -189,10 +208,17 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 <descrip>    
 <tag>Option ``nec_cirrus''</tag>
 	NEC機内蔵crrusチップ使用のビデオシステム使用時に必ず指定します。
+<tag>Option ``no_mmio''</tag>
+	CLGD543x/544x 使用のビデオシステム使用時に必ず指定します。実際に
+	は、Xe/BX4/Xe10/Xa7e/Xb/Xc/Cf以降のCanbe/ValueStarのCirrusLogic
+	採用機種等が該当すると思われます。
 </descrip>
 
 <sect2> 報告されている問題<p>
 <itemize>
+	<ITEM>「16MBシステム空間を使用する」に設定して下さい。
+	<ITEM>ウィンドウアクセラレータが使用するメモリを 0xf00000 〜 と
+	なるように指定して下さい。他のアドレスは使用できません。
 	<ITEM>機種によっては、コンソール切り替えがうまくできない場合があ
 	るようです。
 	<ITEM>Xを終了してコンソールに戻ると、キー入力がおかしくなることが
@@ -204,7 +230,7 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 <itemize>
 	<ITEM>PC-586RVでは、システムメニュー【本体の設定】--その他--システ
 	ム設定2をLOWにする必要があります。HIGHの場合は正常に動作しません。
-	<ITEM>15/16/32bppは動作しません。
+	<ITEM>15/16/24/32bppは動作しません。
 </itemize>
 
 <sect2>関連<p>
@@ -230,7 +256,7 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 	かわらず値をチェックします。
 	<ITEM>EPSON NOTEでは、twmなどのプルダウンメニューでカーソル位置に
 	ゴミが生じます。xrefreshなどで除去できますが、解決方法は不明です。
-        <ITEM>PANIX Ver.5.0 for 98では動作しません。
+        <ITEM>PANIX Ver.5.0 for 98、Linux/98 では動作しません。
 </itemize>
 <sect2>その他<p>
 <itemize>
@@ -275,7 +301,7 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 
 <sect2>XF86Configの設定<p>
 	以下のOption等がPC98用に指定できます。これ以外に、README.s3、
-	XF86_Accell man pageで解説されているオプション等を指定できます。
+	XF86_Accel man pageで解説されているオプション等を指定できます。
 	PC98固有以外のOption等についてはXF86_Accel man pageを参照して
 	ください
 <descrip>    
@@ -342,8 +368,8 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 	性によるようです。
 	<ITEM>mmio_928 + nomemaccess を同時に指定するとハングアップし
 	ます。
-	<ITEM>PW805iでは15/16/32bppは使用できません。
-	<ITEM>旧版では動作していたものの、現在、PW801で15/16Bppが動作し
+	<ITEM>PW805iでは15/16/24/32bppは使用できません。
+	<ITEM>旧版では動作していたものの、現在、PW801で15/16bppが動作し
 	ないという報告がありました。
 	<ITEM>PCSKB3/PCSKB4/PCPKB4ではmemaccessは使用できません。
 	<ITEM>PW805iでは初期化に失敗するなど、動作が不安定なようです。
@@ -378,8 +404,8 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 	検出はできません。
 </itemize>
 
-<sect2>参照<p>
-README.s3、XF86_Accell man page
+<sect2>関連<p>
+README.s3、XF86_Accel man page
 
 
 <sect1>XF98_PWLB<p>
@@ -387,7 +413,7 @@ README.s3、XF86_Accell man page
       PowerWindow928GLB/928IILB/964LB で動作するサーバです。
 <sect2>XF86Configの設定<p>
 	以下のOption等がPC98用に指定できます。これ以外に、README.s3、
-	XF86_Accell man pageで解説されているオプション等を指定できます。
+	XF86_Accel man pageで解説されているオプション等を指定できます。
 	PC98固有以外のOption等についてはXF86_Accel man pageを参照して
 	ください
 <descrip>
@@ -440,18 +466,18 @@ README.s3、XF86_Accell man page
 	を0xe000に、DIP SW をE0 にして、サーバーをコンパイルしなおして
 	ください。
 </itemize>
-<sect2>参照<p>
-README.s3、XF86_Accell man page
+<sect2>関連<p>
+README.s3、XF86_Accel man page
 
 
 <sect1>XF98_NECS3<p>
-
-      NEC ウィンドウアクセラレータボードA, 同B, PC-9821Ap2/U8W 内蔵アク
-    セラレータ、PC-9821Ap3、PC-9821Xp等で動作するサーバです。
+	NEC ウィンドウアクセラレータボードA/B、フルカラーウィンドウアクセラ
+	レータボードA/B、PC-9821Ap2/U8W 内蔵アクセラレータ、PC-9821Ap3、
+	PC-9821Xp等で動作するサーバです。
 
 <sect2>XF86Configの設定<p>
 	以下のOption等がPC98用に指定できます。これ以外に、README.S3、
-	XF86_Accell man pageで解説されているオプション等を指定できます。
+	XF86_Accel man pageで解説されているオプション等を指定できます。
 	PC98固有以外のOption等についてはXF86_Accel man pageを参照して
 	ください
 <descrip>
@@ -478,8 +504,8 @@ README.s3、XF86_Accell man page
 <itemize>
 	<ITEM>PC9821Xn(864)では、動作が不安定です。WAITが足りない
 	ことが考えられます。
-	<ITEM>X-MATE,A-MATE(864)では、16Bpp,32Bppが不安定なようです。
-	特に、32Bppはハングアップすることが多いようです。
+	<ITEM>X-MATE,A-MATE(864)では、16bpp,32bppが不安定なようです。
+	特に、32bppはハングアップすることが多いようです。
       	<ITEM>X-MATE,A-MATE(864)で、サーバ起動時に画面が乱れる場合が
 	あります。その場合、解像度を切替えると回復します。
 	(CTRL+GRPH+ +/-)
@@ -493,8 +519,8 @@ README.s3、XF86_Accell man page
 	設定が必要です。
 	<ITEM>IO port は default のDIPスイッチとします。
 </itemize>
-<sect2>参照<p>
-README.s3、XF86_Accell man page
+<sect2>関連<p>
+README.s3、XF86_Accel man page
 
 <sect1>XF98_GA968<p>
 
@@ -502,42 +528,88 @@ README.s3、XF86_Accell man page
 
 <sect2>XF86Configの設定<p>
 	以下のOption等がPC98用に指定できます。これ以外に、README.S3、
-	XF86_Accell man pageで解説されているオプション等を指定できます。
+	XF86_Accel man pageで解説されているオプション等を指定できます。
 	PC98固有以外のOption等についてはXF86_Accel man pageを参照して
 	ください
 <descrip>
-<tag>Chipset ``s3_generic''</tag>
-	常に指定してください。
+<tag>VideoRam 4096</tag>
+	GA-968V4/PCIで指定して下さい。
+<tag>VideoRam 2048</tag>
+	GA-968V2/PCIで指定して下さい。
 </descrip>
-
-<sect2> 報告されている問題<p>
-<itemize>
-	<ITEM>開発後十分なテストが行われていないので動作レポートを
-        お願いします。
-</itemize>
-<sect2>参照<p>
-README.s3、XF86_Accell man page
+<sect2>関連<p>
+README.s3、XF86_Accel man page
 
 <sect1>XF98_TGUI<p>
-	NECの内蔵アクセラレータ(Trident TGUi9680XGi), IO DataのGA-DRV/98 で
+	NECの内蔵アクセラレータ(Trident TGUI9680/9682), IO DataのGA-DRV/98 で
 	動作する VGA256ベースのサーバです。</p>
 <sect2>XF86Configの設定<p>
-	README.trident内に解説されているオプションを指定できます。
-
+	以下のOption等がPC98用に指定できます。これ以外に、README.trident内
+	に解説されているオプションを指定できます。
+<descrip>
+<tag>Option ``xaa_no_color_exp''</tag>
+	アクセラレーションを有効にする場合、指定して下さい。
+<tag>Option ``noaccel''</tag>
+	アクセラレーションを無効にする場合、指定して下さい。
 	アクセラレーション機能には最悪の場合システムのハングアップを伴う
-	不具合が見付かっていますので、Option ``noaccel''を指定して
-	アクセラレーション機能を切り離してください。</p>
+	不具合が見付かっています。
+</descrip>
 <sect2>報告されている問題<p>
 <itemize>
-	<ITEM>GA-DRV/98で、1024x768が正常に表示されない。
+	<ITEM>XFree86 3.2A 以降では、GA-DRV/98 は使用できなくなっています。
+	XFree86 3.2 を使用する場合、アクセラレーションは利用できません。
+	<ITEM>まだ十分なテストが行われていないので動作レポートをお願いし
+	ます。
 </itemize>
 <sect2>その他<p>
 <itemize>
-	<ITEM>GA-DRV/98では16bppは動作しません。
-	<ITEM>15/24/32bppは動作しません。
-	<ITEM>まだ十分なテストが行われていないので動作レポートをお願いします。
+	<ITEM>GA-DRV/98では8bpp以外は動作しません。
 </itemize>
 <sect2>関連<p>
 	README.trident、XF86_SVGA man page</p>
 
+<sect1>XF98_MGA<p>
+	NECの内蔵アクセラレータ(Matrox Millennium/Mystique), PC/AT 互換機用
+	Millennium で動作する VGA256ベースのサーバです。</p>
+<sect2>XF86Configの設定<p>
+	README.MGA内に解説されているオプションを指定できます。通常は特に
+	何も指定する必要無い筈です。
+<sect2>報告されている問題<p>
+<itemize>
+	<ITEM>Millennium では、Modeline の設定によっては 24bpp で縦に線
+	あるいは縞模様のノイズが出ることがあります。
+	<ITEM>Mystique では、使用前に Windows(3.1/95/NT) を使用する色数に
+	合わせて起動しておく必要があります。一旦起動すれば電源をOFFにする
+	までは正常に動作します。ただし 8bpp は色がおかしくなります。
+</itemize>
+<sect2>その他<p>
+<itemize>
+	<ITEM>PC/AT 互換機用の Millennium を使用する場合は、VGA を disable
+	して下さい。
+	<ITEM>PC/AT 互換機用の Millennium II, Mystique は、VGA を disable
+	できないので、使用できません。
+	<ITEM>まだ十分なテストが行われていないので動作レポートをお願いし
+	ます。
+</itemize>
+<sect2>関連<p>
+	README.MGA、XF86_SVGA man page</p>
+
+<sect1>XF98_SVGA<p>
+	NECの内蔵アクセラレータ(Cirrus Logic CL-GD7555,7556)で動作する
+	VGA256ベースのサーバです。</p>
+<sect2>XF86Configの設定<p>
+	README.cirrus内に解説されているオプションを指定できます。
+<sect2>報告されている問題<p>
+<itemize>
+	<ITEM>コンソールへの復帰後の描画が出来なかったり、起動時に640x400部分が
+	表示されない状態になったりします。
+	<ITEM>Option ``noaccel''を指定しない場合、画面にゴミがでる事があります。
+</itemize>
+<sect2>その他<p>
+<itemize>
+	<ITEM>まだ十分なテストが行われていないので動作レポートをお願いし
+	ます。
+</itemize>
+<sect2>関連<p>
+	README.cirrus、XF86_SVGA man page</p>
 </article>

@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclMisc.c,v 1.4 1997/01/12 10:40:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclMisc.c,v 1.4.2.2 1998/01/23 12:35:12 dawes Exp $ */
 
 #if defined(sun) && defined(i386) && defined(SVR4)
 #define __EXTENSIONS__
@@ -146,7 +146,13 @@ GetPropString(
     return (char *)NULL;
 }
 
+#if !defined(_ANSI_SOURCE) || !defined(__bsdi__)
 #include <signal.h>
+#else /* _ANSI_SOURCE && __bsdi__ */
+#undef _ANSI_SOURCE
+#include <signal.h>
+#define _ANSI_SOURCE
+#endif
 
 /* ARGSUSED */
 static void SigchldHndlr (

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_driver.c,v 3.35.2.7 1997/07/19 04:59:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_driver.c,v 3.35.2.8 1998/01/31 14:23:29 hohndel Exp $ */
 /*
  * Copyright 1993 by Jon Block <block@frc.com>
  * Modified by Mike Hollick <hollick@graphics.cis.upenn.edu>
@@ -108,7 +108,6 @@ unsigned char *ctMMIOBase = NULL;
 /* Chip type */
 Bool ctisHiQV32 = FALSE;	  /*New architecture used in 65550 and 65554 */
 Bool ctisWINGINE = FALSE;         /* WINGINE support */
-Bool ctForceVClk1 = FALSE;        /* Use VClk1 as prog clock on HiQV chips */
 
 /* syncronous reset */
 Bool ctSyncResetIgn = FALSE;
@@ -166,8 +165,24 @@ typedef struct {
     unsigned char fr03;
     int Clock;
 } ctClockReg, *ctClockPtr;
+ 
+typedef struct {
+  unsigned int Max;
+  unsigned int ProbedClk;
+  unsigned int Clk;
+  unsigned char M;
+  unsigned char N;
+  unsigned char P;
+  unsigned char PSN;
+  unsigned char xrCC;
+  unsigned char xrCD;
+  unsigned char xrCE;
+} ctMemClockReg, *ctMemClockPtr;
 
+Bool ctForceVClk1 = FALSE;        /* Use VClk1 as prog clock on HiQV chips */
 int ctCurrentClock;
+ctMemClockReg ctMemClkReg;
+ctMemClockPtr ctMemClk = &ctMemClkReg;
 static unsigned char ctClockType;
 static unsigned char ctConsole_clk[3];
 
@@ -182,6 +197,7 @@ static unsigned char ctConsole_clk[3];
 #define GET_STYLE 0xF0
 #define LCD_TEXT_CLK_FREQ 25000	    /* lcd textclock if TYPE_PROGRAMMABLE */
 #define CRT_TEXT_CLK_FREQ 28000     /* crt textclock if TYPE_PROGRAMMABLE */
+#define Fref 14318180               /* The refrence clock in Hertz        */
 
 static void ctClockSave();
 static void ctClockLoad();
@@ -772,8 +788,6 @@ ctClockLoad(Type, Clock)
 #endif
 }
    
-#define Fref 14318180
-
 /* 
  * This is Ken Raeburn's <raeburn@raeburn.org> clock
  * calculation code just modified a little bit to fit in here.
@@ -1186,7 +1200,7 @@ CHIPSProbe()
 	    }
 	    if (CHIPSchipset != 99) {
 		outb(0x3D6, 0x04);
-		temp = inb(0x03D7);
+		temp = inb(0x3D7);
 		ErrorF("%s %s: CHIPS: chip revision: %i\n",
 		    XCONFIG_PROBED, vga256InfoRec.name, temp & 0xFF);
 	    }
@@ -1225,7 +1239,7 @@ CHIPSProbe()
 	ctLinearSupport = FALSE;
 	ctHDepth = FALSE;
 	/* Much of the acceleration code wasn't written in a way that
-	 * is usuable without linear addressing. This is a fault of the
+	 * is usable without linear addressing. This is a fault of the
 	 * code, the chips actually do support acceleration without
 	 * linear addressing */
 	ctAccelSupport = FALSE;
@@ -1546,15 +1560,120 @@ Bool ctProbeHiQV()
 	       XCONFIG_GIVEN, vga256InfoRec.name);
     }
 
+    /* Set the maximum memory clock. */
+    switch (CHIPSchipset) {
+      case CT_550:
+	outb(0x3D6, 0x04);
+	if ((inb(0x3D7) & 0xF) < 6)
+	  ctMemClk->Max = 38000; /* Revision A chips */
+	else
+	  ctMemClk->Max = 50000; /* Revision B chips */
+	break;
+      case CT_554:
+      case CT_555:
+      case CT_8554:
+	ctMemClk->Max = 55000;
+	break;
+    }
+
+    /* Probe the memory clock currently in use */
+    outb(0x3D6,0xCC);
+    ctMemClk->xrCC = inb(0x3D7);
+    ctMemClk->M = (ctMemClk->xrCC  & 0x7F) + 2;
+    outb(0x3D6,0xCD);
+    ctMemClk->xrCD = inb(0x3D7);
+    ctMemClk->N = (ctMemClk->xrCD & 0x7F) + 2;
+    outb(0x3D6,0xCE);
+    ctMemClk->xrCE = inb(0x3D7);
+    ctMemClk->PSN = (ctMemClk->xrCE & 0x1) ? 1 : 4;
+    ctMemClk->P = ((ctMemClk->xrCE & 0x70) >> 4);
+    /* Be careful with the calculation of ProbeClk as it can overflow */ 
+    ctMemClk->ProbedClk = 4 * Fref / ctMemClk->N;
+    ctMemClk->ProbedClk = ctMemClk->ProbedClk * ctMemClk->M /
+      (ctMemClk->PSN * (1 << ctMemClk->P));
+    ctMemClk->ProbedClk = ctMemClk->ProbedClk / 1000;
+    ctMemClk->Clk = ctMemClk->ProbedClk;
+
+    if (OFLG_ISSET(OPTION_FAST_DRAM, &vga256InfoRec.options)) {
+      ctMemClk->M = 0x45;
+      ctMemClk->N = 0x1A;
+      ctMemClk->PSN = 1;
+      ctMemClk->P = 2;
+      ctMemClk->xrCC = 0x43;
+      ctMemClk->xrCD = 0x18;
+      ctMemClk->xrCE = 0xA1;
+      ctMemClk->Clk = 37998;
+      ErrorF("%s %s: CHIPS: using memory clock of %d KHz\n",
+	     XCONFIG_GIVEN, vga256InfoRec.name, ctMemClk->Clk);
+    } else if (vga256InfoRec.MemClk > 0) {
+      if (vga256InfoRec.MemClk <= ctMemClk->Max) {
+	ErrorF("%s %s: CHIPS: using memory clock of %d KHz\n",
+	       XCONFIG_GIVEN, vga256InfoRec.name, vga256InfoRec.MemClk);
+
+	/* Only alter the memory clock if the desired memory clock differs
+	 * by 50kHz from the one currently being used.
+	 */
+	if (abs(vga256InfoRec.MemClk - ctMemClk->ProbedClk) > 50) {
+	  unsigned char vclk[3];
+
+	  ctMemClk->Clk = vga256InfoRec.MemClk;
+	  ctCalcClock(ctMemClk->Clk, vclk);
+	  ctMemClk->M = vclk[1] + 2;
+	  ctMemClk->N = vclk[2] + 2;
+	  ctMemClk->P = (vclk[0] & 0x70) >> 4;
+	  ctMemClk->PSN = (vclk[0] & 0x1) ? 1 : 4;
+	  ctMemClk->xrCC = vclk[1];
+	  ctMemClk->xrCD = vclk[2];
+	  ctMemClk->xrCE = 0x80 || vclk[0];
+	}
+      } else
+	ErrorF("%s %s: CHIPS: memory clock of %d KHz exceeds limit of %d KHz\n",
+	       XCONFIG_GIVEN, vga256InfoRec.name, vga256InfoRec.MemClk,
+	       ctMemClk->Max);
+    } else 
+      ErrorF("%s %s: CHIPS: probed memory clock of %d KHz\n",
+	     XCONFIG_PROBED, vga256InfoRec.name, ctMemClk->ProbedClk);
+    
     /* maximal clock */
-	outb(0x3D0, 0x0A);
-	if (inb(0x3D1) & 2) {
+    switch (CHIPSchipset) {
+      case CT_8554:
+      case CT_555:
+	vga256InfoRec.maxClock = 110000;
+	break;
+      case CT_554:
+	vga256InfoRec.maxClock = 95000;
+      case CT_550:
+	outb(0x3D6, 0x04);
+	if ((inb(0x3D7) & 0xF) < 6) {
+	  outb(0x3D0, 0x0A);
+	  if (inb(0x3D1) & 2) {
 	    /*5V Vcc */
-	    vga256InfoRec.maxClock = 110000;
-	} else {
+	    vga256InfoRec.maxClock = 100000;
+	  } else {
 	    /*3.3V Vcc */
 	    vga256InfoRec.maxClock = 80000;
-	}
+	  }
+	} else
+	  vga256InfoRec.maxClock = 95000; /* Revision B */
+	break;
+    }
+    
+    /* Check if maxClock is limited by the MemClk. Only 70% to allow for */
+    /* RAS/CAS. Extra byte per memory clock needed if framebuffer used */
+    if (ctFrameBufferSize)
+      vga256InfoRec.maxClock = min(vga256InfoRec.maxClock,
+			 ctMemClk->Clk * 4 * 0.7 / (vgaBytesPerPixel + 1));
+    else
+      vga256InfoRec.maxClock = min(vga256InfoRec.maxClock,
+			 ctMemClk->Clk * 4 * 0.7 / vgaBytesPerPixel);
+    
+    if (vga256InfoRec.dacSpeeds[0] > 0) {
+      /* Maximum clock is overridden by a user supplied value */
+      ErrorF("%s %s: CHIPS: user max dot-clock of %d kHz overrides %d kHz limit\n",
+	     XCONFIG_GIVEN, vga256InfoRec.name, vga256InfoRec.dacSpeeds[0],
+	     vga256InfoRec.maxClock);
+      vga256InfoRec.maxClock = vga256InfoRec.dacSpeeds[0];
+    }
 
     /* Set the flags for Colour transparency. This is dependent
      * on the revision on the chip. Until exactly which chips
@@ -1816,6 +1935,14 @@ Bool ctProbeWINGINE()
   case CT_4300:
     vga256InfoRec.maxClock = 85000;
     break;
+  }
+ 
+  if (vga256InfoRec.dacSpeeds[0] > 0) {
+    /* Maximum clock is overridden by a user supplied value */
+    ErrorF("%s %s: CHIPS: user max dot-clock of %d kHz overrides %d kHz limit\n",
+	   XCONFIG_GIVEN, vga256InfoRec.name, vga256InfoRec.dacSpeeds[0],
+	   vga256InfoRec.maxClock);
+    vga256InfoRec.maxClock = vga256InfoRec.dacSpeeds[0];
   }
 
   vga256InfoRec.chipset = CHIPSIdent(CHIPSchipset);
@@ -2273,6 +2400,14 @@ Bool ctProbe()
 	    /*3.3V Vcc */
 	    vga256InfoRec.maxClock = 56000;
 	}
+    }
+ 
+    if (vga256InfoRec.dacSpeeds[0] > 0) {
+      /* Maximum clock is overridden by a user supplied value */
+      ErrorF("%s %s: CHIPS: user max dot-clock of %d kHz overrides %d kHz limit\n",
+	     XCONFIG_GIVEN, vga256InfoRec.name, vga256InfoRec.dacSpeeds[0],
+	     vga256InfoRec.maxClock);
+      vga256InfoRec.maxClock = vga256InfoRec.dacSpeeds[0];
     }
 
     vga256InfoRec.chipset = CHIPSIdent(CHIPSchipset);
@@ -3564,13 +3699,11 @@ CHIPSInitHiQV32(mode)
     new->Port_3D6[0x81] |= 0x2;
     new->Port_3D6[0x80] |= 0x10;       /* Enable cursor output on P0 and P1 */
 
-    if (OFLG_ISSET(OPTION_FAST_DRAM, &vga256InfoRec.options)) {
+    if (abs(vga256InfoRec.MemClk - ctMemClk->ProbedClk) > 50) {
 	/* set mem clk */
-	/* Graphics Modes seem to need a Higher MClk, than at Console
-	 * Force a higher Mclk for now */
-	new->Port_3D6[0xCC] = 0x43;
-	new->Port_3D6[0xCD] = 0x18;
-	new->Port_3D6[0xCE] = 0xA1;
+	new->Port_3D6[0xCC] = ctMemClk->xrCC;
+	new->Port_3D6[0xCD] = ctMemClk->xrCD;
+	new->Port_3D6[0xCE] = ctMemClk->xrCE;
     }
 
     /* linear specific */
@@ -3705,16 +3838,12 @@ CHIPSInitHiQV32(mode)
     if (IS_STN(ctPanelType)) {
 	new->Port_3D0[0x11] &= ~0x03;	/* FRC clear                    */
 	new->Port_3D0[0x11] &= ~0x8C;	/* Dither clear                 */
+	new->Port_3D0[0x11] |= 0x01;	/* 16 frame FRC                 */
+	new->Port_3D0[0x11] |= 0x84;	/* Dither                       */
 	if (ctTMED) {
-	  new->Port_3D0[0x73] |= 0x80;   /* Enable TMED                  */
-	  new->Port_3D0[0x73] &= 0xC8;   /* TMED 33 Shades of RB and 65 G*/
-	  if (vgaBitsPerPixel == 8)
-	     new->Port_3D0[0x73] |= 0x10;/* TMED 65 Shades of RGB */
-	  else if (vgaBitsPerPixel == 24)
-	     new->Port_3D0[0x73] |= 0x30;/* TMED 256 Shades of RGB */
-	} else {
-	  new->Port_3D0[0x11] |= 0x01;	/* 16 frame FRC                 */
-	  new->Port_3D0[0x11] |= 0x84;	/* Dither                       */
+	  new->Port_3D0[0x73] &= 0x4F;   /* Clear TMED                  */
+	  new->Port_3D0[0x73] |= 0x80;   /* Enable TMED                 */
+	  new->Port_3D0[0x73] |= 0x30;   /* TMED 256 Shades of RGB      */
 	}
 	if (ctPanelType == DD)		/* Shift Clock Mask. Use to get */
 	    new->Port_3D0[0x12] |= 0x4;	/* rid of line in DSTN screens  */

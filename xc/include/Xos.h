@@ -1,6 +1,6 @@
 /*
  * $XConsortium: Xos.h /main/70 1996/11/15 16:00:41 kaleb $
- * $XFree86: xc/include/Xos.h,v 3.21 1997/01/18 06:51:16 dawes Exp $
+ * $XFree86: xc/include/Xos.h,v 3.21.2.1 1998/01/23 12:35:11 dawes Exp $
  * 
  * 
 Copyright (c) 1987  X Consortium
@@ -66,6 +66,8 @@ in this Software without prior written authorization from the X Consortium.
  * Just about everyone needs the strings routines.  We provide both forms here,
  * index/rindex and strchr/strrchr, so any systems that don't provide them all
  * need to have #defines here.
+ *
+ * NOTE: The following ISN'T true for this XFree86 version of this file.
  *
  * These macros are defined this way, rather than, e.g.:
  *    #defined index(s,c) strchr(s,c)

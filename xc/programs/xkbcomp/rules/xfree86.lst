@@ -4,7 +4,7 @@
 //  Rules descriptions for XFree86
 //  Copyright 1996 by Joseph Moss
 //
-//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.3.2.1 1997/06/22 10:32:54 dawes Exp $
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.3.2.2 1998/02/01 16:05:45 robin Exp $
 
 ! model
   pc101		Generic 101-key PC
@@ -17,6 +17,7 @@
   omnikey101	Northgate OmniKey 101
   winbook	Winbook Model XP5
   jp106		Japanese 106-key
+  pc98		PC-98xx Series
 
 ! layout
   us		U.S. English
@@ -42,6 +43,7 @@
   ru		Russian
   se		Swedish
   th		Thai
+  nec/jp	PC-98xx Series
 
 ! variant
   nodeadkeys	Eliminate dead keys

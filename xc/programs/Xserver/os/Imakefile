@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/84 1996/12/15 21:26:59 rws $
-XCOMM $XFree86: xc/programs/Xserver/os/Imakefile,v 3.18 1996/12/24 08:49:09 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/os/Imakefile,v 3.18.2.2 1998/02/21 06:07:15 robin Exp $
 #include <Server.tmpl>
 
 /*
@@ -117,7 +117,7 @@ alloca.o:  $(PWLIB)
 	ar x $(PWLIB) alloca.o
 #endif /* NEED_ALLOCA_FROM_LIBPW */
 
-SpecialCObjectRule(access,$(ICONFIGFILES),$(XDMCP_DEFINES))
+SpecialCObjectRule(access,$(ICONFIGFILES),$(SOCK_DEFINES) $(XDMCP_DEFINES))
 SpecialCObjectRule(auth,$(ICONFIGFILES),$(XDMCP_DEFINES))
 SpecialCObjectRule(xdmauth,$(ICONFIGFILES),$(XDMCP_DEFINES))
 SpecialCObjectRule(xdmcp,$(ICONFIGFILES),$(SOCK_DEFINES) $(XDMCP_DEFINES))
@@ -138,6 +138,14 @@ oscolor.o: oscolor.c $(ICONFIGFILES)
 	cc -c $(DBM_DEFINES) $(CDEBUGFLAGS) $(ALLDEFINES) $*.c
 #else
 SpecialCObjectRule(oscolor,$(ICONFIGFILES),$(DBM_DEFINES))
+#endif
+
+#if UseXserverWrapper
+AllTarget(wrapper.o)
+
+       WRAPPER_DEFINES = -DXSERVER_PATH=\"$(BINDIR)/X\"
+
+SpecialCObjectRule(wrapper,NullParameter,$(WRAPPER_DEFINES))
 #endif
 
 #if HasKrb5

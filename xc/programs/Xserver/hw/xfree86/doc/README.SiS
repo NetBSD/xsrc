@@ -11,14 +11,18 @@
 
 		      Xavier Ducoin (xavier@rd.lectra.fr)
 
-				16 January 1997
+				27 February 1998
 
 
 
 1.  Introduction
 
-The driver was primarily written for the SiS86c201.  The driver has almost been
-completed, with many additional features.  These include
+This driver was primarily written for the SiS86c201.  It also works on the 202
+and the 205 chips.  Support for other SiS products is not available in XFree86
+release 3.3.2.	Drivers for the 5597/8 are currently under development and
+should be available in the next release.
+
+The driver supports many advanced features.  These include:
 
    o Linear Addressing
 
@@ -56,22 +60,21 @@ can enable options for all depths by specifying them in the Device section).
 	    This option will disable the use of the XAA and will enable the old
 	    BitBlt acceleration operations. (see below).
 
+
+ Information for SiS Users
+
+
+
+
+
+ Information for SiS Users
+
+
+
       Option "hw_clocks"
 	    On chips 86c202 and later, the default is to use the programmable
-	    clock for all clocks. It is possible to use the fixed clocks
-
-
- Information for SiS Users
-
-
-
-
-
- Information for SiS Users
-
-
-
-	    supported by the chip instead of using this option (manufacturer
+	    clock for all clocks. It is possible to use the fixed clocks sup-
+	    ported by the chip instead of using this option (manufacturer
 	    dependent).
 
       Option "sw_cursor", "hw_cursor"
@@ -118,10 +121,7 @@ the MClk.  I use the default Mclk set by BIOS.	It is hard to reproduce this
 problem (It can take one hour, two or more).  I can't reproduce this problem in
 1024x768 75 MHz or 1280x1024 110 MHz or 1152x900 95 MHz.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SiS.sgml,v 3.3 1997/01/25 03:22:15 dawes Exp $
-
-
-
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SiS.sgml,v 3.3.2.1 1998/02/27 02:45:24 dawes Exp $
 
 
 
@@ -263,4 +263,4 @@ problem (It can take one hour, two or more).  I can't reproduce this problem in
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SiS,v 3.5 1997/01/27 22:12:56 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SiS,v 3.5.2.1 1998/02/27 02:55:02 dawes Exp $

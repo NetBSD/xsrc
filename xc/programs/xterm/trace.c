@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/trace.c,v 3.1.2.1 1997/05/23 09:24:44 dawes Exp $
+ * $XFree86: xc/programs/xterm/trace.c,v 3.1.2.2 1998/02/15 16:10:12 hohndel Exp $
  */
 
 /************************************************************
@@ -35,6 +35,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #endif
 
 #include <stdio.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include "trace.h"
 
 #if __STDC__ || CC_HAS_PROTOS
@@ -59,8 +62,24 @@ va_dcl
 	static	FILE	*fp;
 	va_list ap;
 
-	if (!fp)
+	if (!fp) {
 		fp = fopen("Trace.out", "w");
+		if (fp != 0) {
+#if HAVE_UNISTD_H
+			time_t now;
+			fprintf(fp, "process %d real (%d/%d) effective (%d/%d) -- %s",
+				getpid(),
+				getuid(), getgid(),
+				geteuid(), getegid(),
+				ctime(&now));
+#else
+			time_t now;
+			fprintf(fp, "process %d -- %s",
+				getpid(),
+				ctime(&now));
+#endif
+		}
+	}
 	if (!fp)
 		abort();
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/minix/mnx_init.c,v 3.6 1996/12/23 06:50:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/minix/mnx_init.c,v 3.6.2.1 1998/02/06 22:36:52 hohndel Exp $ */
 /*
  * Copyright 1993 by Vrije Universiteit, The Netherlands
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -57,7 +57,10 @@ void xf86OpenConsole()
 	/* check if we're run with euid==0 */
 	if (setuid(0) != 0)
 	{
-	    FatalError("xf86OpenConsole: Server must be suid root\n");
+	    FatalError("xf86OpenConsole: Server must be running with root "
+	        "permissions\n"
+		"You should be using Xwrapper to start the server or xdm.\n"
+		"We strongly advise against making the server SUID root!\n");
 	}
 	setuid(real_uid);
 

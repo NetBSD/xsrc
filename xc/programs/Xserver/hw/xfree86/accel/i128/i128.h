@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.h,v 3.5 1996/12/23 06:35:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.h,v 3.5.2.1 1998/02/15 23:31:57 robin Exp $ */
 
 #ifndef _I128_H_
 #define _I128_H_
@@ -95,7 +95,7 @@ extern void (*i128ImageFillFunc)(
 #endif
 );
 
-extern short i128alu[];
+extern CARD32 i128alu[];
 extern pointer i128VideoMem;
 extern ScreenPtr i128savepScreen;
 

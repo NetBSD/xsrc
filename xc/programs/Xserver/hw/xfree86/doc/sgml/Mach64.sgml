@@ -5,7 +5,7 @@
 
 <title>Mach64 X Server Release Notes
 <author>Kevin E. Martin (martin@cs.unc.edu)
-<date>23 January 1997
+<date>25 February 1998
 
 <!-- Table of contents -->
 <toc>
@@ -44,9 +44,17 @@ AT&amp;T20C408       135MHz       8      1280x1024             2Mb
 AT&amp;T20C408        80MHz      16       1024x768             2Mb
 AT&amp;T20C408        40MHz      32        800x600             2Mb
     
-3D Rage II (Int) 170MHz       8      1600x1200             4Mb
-3D Rage II (Int) 170MHz      16      1600x1200             4Mb
-3D Rage II (Int) 135MHz      32       1024x768             4Mb
+3D Rage II       170MHz       8      1600x1200             4Mb
+3D Rage II       170MHz      16      1600x1200             4Mb
+3D Rage II       170MHz      32       1024x768             4Mb
+
+3D Rage II+DVD   200MHz       8      1600x1200             4Mb
+3D Rage II+DVD   200MHz      16      1600x1200             4Mb
+3D Rage II+DVD   200MHz      32       1024x768             4Mb
+
+Rage Pro         230MHz       8      1600x1200             8Mb
+Rage Pro         230MHz      16      1600x1200             8Mb
+Rage Pro         230MHz      32      1600x1200             8Mb
 
 Internal         135MHz       8      1280x1024             2Mb
 Internal          80MHz      16       1024x768             2Mb
@@ -82,8 +90,9 @@ The ATI68860 RAMDACs are usually found on ATI Graphics Pro Turbo and
 ATI WinTurbo cards.  The IBM RGB514 RAMDAC is found on the ATI
 Graphics Pro Turbo 1600 card.  The other RAMDACs are usually found on
 ATI Graphics Xpression, ATI Video Xpression and ATI 3d Xpression
-cards.  Mach64 CT, ET, VT, GT (3D Rage) and 3D Rage II chips have an
-"Internal" RAMDAC (i.e., it is built into the Mach64 chip).
+cards.  Mach64 CT, ET, VT, GT (3D Rage), 3D Rage II, 3D Rage II+DVD
+and Rage Pro chips have an "Internal" RAMDAC (i.e., it is built into
+the Mach64 chip).
 
 As advertised, Mach64 graphics cards can use a special 24bpp mode
 (packed pixel mode), but this is not currently supported in the
@@ -95,11 +104,11 @@ properly.  This means that ISA Mach64 cards in systems with more than
 card or a VLB based Mach64 card, then the Mach64 X server will work
 with any amount of main memory.
 
-Accelerated doublescan modes are supported on VT, GT and 3D Rage II
-based Mach64 cards.  Mach64 cards with other chips cannot handle
-accelerated double scan modes due to a hardware limitation.
-Non-accelerated doublescan modes should work with the ATI driver in
-the SVGA X server for all Mach64 cards.
+Accelerated doublescan modes are supported on VT, GT, 3D Rage II, 3D
+Rage II+DVD and Rage Pro based Mach64 cards.  Mach64 cards with other
+chips cannot handle accelerated double scan modes due to a hardware
+limitation.  Non-accelerated doublescan modes should work with the ATI
+driver in the SVGA X server for all Mach64 cards.
 
 <sect>Optimizing the speed of the Mach64 X server<p>
 To maximize the speed of the Mach64 X server, I suggest that you use
@@ -153,7 +162,10 @@ you wish to use the preprogrammed clocks, you can turn off the clock
 programming with the "no_program_clocks" option.  In this case, the
 Mach64 X server reads the Clocks from the BIOS.  The "Clocks" lines in
 the XF86Config file are normally ignored by the Mach64 X server unless
-the "no_bios_clocks" option is given.
+the "no_bios_clocks" option is given.  Note on newer Mach64 cards (CT,
+ET, VT, GT, 3D Rage II, 3D Rage II+DVD and Rage Pro) the "Ramdac",
+"ClockChip" and "Clocks" lines have no meaning and should not be
+included in your XF86Config file.
 
 <descrip>
 <tag>Option &dquot;sw_cursor&dquot;</tag>
@@ -267,7 +279,54 @@ the "no_bios_clocks" option is given.
 		<item>stg1703
 		<item>tlc34075
 		</itemize>
+<tag>DacSpeed &dquot;<it>MHz</it>&dquot;</tag>
+		This entry allows you to override the default maximum
+		dot clock.  Use this option with extreme caution.  If
+		you specify a <it>MHz</it> value too large for your
+		card, you can damage it.
 </descrip>
+
+<sect>Enhancements for this release<p>
+With this release, the following enhancements have been made:
+<itemize>
+<item>Proper identification of all current Mach64 chips
+<item>Support for 16MB boards
+<item>Increased max DAC speed settings for newer chips
+<item>Support for RagePro cards (including AGP cards)
+<item>Block write mode for RagePro based cards
+<item>1600x1200, 1600x1280 and other high resolution mode support for
+       VT and newer chips
+<item>Use of the auxiliary register aperture on chips that support
+       it
+<item>Use of 16MB memory aperture on PCI Mach64s with integrated
+       controllers
+</itemize>
+
+<sect>Cards known to work with this release<p>
+The following is a list of cards that have been tested with this
+release.  Many other cards should work including All-In-Wonder and
+All-In-Wonder Pro cards as well as motherboards with Mach64, 3D Rage
+II and Rage Pro included on them.  If you have a new card that does
+not appear to work, see the Known Problems and Bug Reports section
+below.
+
+<verb>
+ATI Xpert@Play          8MB  3D Rage Pro     (PCI, rev 92)
+ATI Xpert@Work          2MB  3D Rage Pro     (PCI, rev 92)
+ATI Pro Turbo+PC2TV     4MB  3D Rage II+DVD  (rev 154)
+ATI 3D Xpression+       4MB  3D Rage II      (GT-B, SGRAM, rev 65)
+ATI 3D Xpression+       2MB  3D Rage II      (GT-B, SDRAM, rev 65)
+ATI 3D Xpression        2MB  3D Rage         (GT-A, rev 72)
+ATI Video Xpression+    2MB  Mach64 VT-A3    (rev 8)
+ATI Video Xpression     2MB  Mach64 VT-A4    (rev 72)
+ATI Graphics Xpression  2MB  Mach64 CT       (rev 9)
+ATI Graphics Xpression  2MB  Mach64 CT-C     (rev 65)
+ATI Graphics Xpression  2MB  Mach64 CT-D     (rev 10)
+ATI Graphics Xpression  2MB  Mach64 GX       (rev 1) with Chrontel8398 RAMDAC
+ATI Graphics Pro Turbo  2MB  Mach64 GX       (rev 0) with 68860-B RAMDAC
+ATI Graphics Pro Turbo  2MB  Mach64 CX       (rev 1) with AT&T20C408 RAMDAC
+ATI WinTurbo            2MB  Mach64 GX       (rev 1) with 68860-C RAMDAC
+</verb>
 
 <sect>Known Problems and Bug Reports<p>
 There are several known problems with the current version of the
@@ -279,9 +338,10 @@ Mach64 X server.  They include:
        is displayed.  The hardware cursor works fine in all other
        modes.
 <item>Text may not be displayed correctly in certain programs.
-<item>Some RAMDACs are incorrectly reported by the BIOS.  This can be
-       handled by explicitly specifying the RAMDAC in the XF86Config
-       file.  This should no longer be a problem.
+<item>With high refresh rates on certain cards (VT-A3 and CT-D) noise
+       can become a problem in 32bpp mode.  This usually only happens
+       with refresh rates of 85Hz or greater and can be fixed by using
+       a lower refresh rate (e.g., 72Hz or 75Hz).
 <item>ISA cards with more than 12Mb of main memory cannot use the
        server due to the requirement of a video memory aperture.  This
        a major project.
@@ -298,6 +358,8 @@ Second, please check the RELNOTES and README files (as well as the
 other documentation available with the release).  Third, make sure you
 do not have any Ramdac, ClockChip or Clocks lines in your XF86Config
 file (all of these are automatically detected by the Mach64 X server).
+The "Device" section should only contain the Identifier, VendorName
+and BoardName.  All other options should be automatically detected.
 
 If you are still experiencing problems, please send e-mail to
 XFree86@XFree86.org or post to the comp.windows.x.i386unix newsgroup.
@@ -310,7 +372,7 @@ enhancements to the X server.  Thanks!
 <p>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach64.sgml,v 3.15 1997/01/25 03:21:59 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Mach64.sgml,v 3.15.2.2 1998/02/26 23:32:28 dawes Exp $
 
 
 

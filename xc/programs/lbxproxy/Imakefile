@@ -4,7 +4,7 @@ XCOMM $TOG: Imakefile /main/16 1997/05/25 15:12:17 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/lbxproxy/Imakefile,v 1.6.2.3 1997/07/07 04:11:12 dawes Exp $
+XCOMM $XFree86: xc/programs/lbxproxy/Imakefile,v 1.6.2.4 1998/01/23 12:35:18 dawes Exp $
 
 #include <Server.tmpl>
 #define       IHaveSubdirs
@@ -38,6 +38,8 @@ ServerTarget(lbxproxy,$(SUBDIRS),NullParameter,$(LBXLIBS),$(OTHERLIBS))
 #else
 ServerTarget(lbxproxy,$(SUBDIRS),di/main.o,$(LBXLIBS),$(OTHERLIBS))
 #endif
+
+LinkVarDirectory(lbxproxy,.,lbxproxy,.)
 
 DependSubdirs($(SUBDIRS))
 

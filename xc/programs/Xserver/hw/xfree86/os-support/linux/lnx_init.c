@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_init.c,v 3.7.2.2 1997/05/03 13:33:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_init.c,v 3.7.2.3 1998/02/06 22:36:51 hohndel Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -68,7 +68,10 @@ void xf86OpenConsole()
 	/* check if we're run with euid==0 */
 	if (geteuid() != 0)
 	{
-	    FatalError("xf86OpenConsole: Server must be suid root\n");
+	    FatalError("xf86OpenConsole: Server must be running with root "
+	        "permissions\n"
+		"You should be using Xwrapper to start the server or xdm.\n"
+		"We strongly advise against making the server SUID root!\n");
 	}
 
 	/*

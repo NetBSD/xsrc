@@ -1,5 +1,5 @@
 dnl
-dnl $XFree86: xc/programs/xterm/configure.in,v 3.1.2.3 1997/06/11 12:09:05 dawes Exp $
+dnl $XFree86: xc/programs/xterm/configure.in,v 3.1.2.5 1998/02/24 13:54:37 hohndel Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl 
@@ -27,8 +27,7 @@ dnl
 dnl ---------------------------------------------------------------------------
 dnl Process this file with autoconf to produce a configure script.
 dnl
-AC_REVISION($Revision: 1.1.1.2 $)
-AC_PREREQ(2.12)
+AC_PREREQ(2.12.971230)
 AC_INIT(charproc.c)
 AC_CONFIG_HEADER(xtermcfg.h:xtermcfg.hin)
 CF_CHECK_CACHE
@@ -60,36 +59,59 @@ CF_FUNC_MEMMOVE
 CF_FUNC_TGETENT
 
 ###	checks for structures
+CF_TYPE_FD_SET
 
 ###	checks for compiler characteristics
 AC_CONST
-CF_ANSI_CC
+CF_ANSI_CC_CHECK
 
 ###	checks for system services and user specified options
 
-AC_PATH_XTRA
+AC_CHECK_HEADERS(unistd.h)
 
-LDFLAGS="$LDFLAGS $X_LIBS"
-CFLAGS="$CFLAGS $X_CFLAGS"
+CF_X_TOOLKIT
+
+# Change CPPFLAGS temporarily so that checks for X include files will
+# look in any directories specified with `--x-includes=DIR', obtained
+# via xmkmf, or located by AC_PATH_XTRA.  These flags are already in
+# CFLAGS (put there by CF_X_TOOLKIT), but that doesn't help here because
+# AC_CHECK_HEADERS uses cpp, not cc.
+
+if test "${x_includes}" != NONE && test -n "${x_includes}"; then
+	C_SWITCH_X_SITE=-I`echo ${x_includes} | sed -e "s/:/ -I/g"`
+fi
+cf_save_CPPFLAGS="$CPPFLAGS"
+CPPFLAGS="$C_SWITCH_X_SITE $CPPFLAGS"
+
+AC_CHECK_HEADERS( \
+	X11/DECkeysym.h \
+	X11/Xpoll.h \
+	)
 
 CF_X_ATHENA
 
+CPPFLAGS="$cf_save_CPPFLAGS"
+
 LIBS="$LIBS $X_EXTRA_LIBS"
+
+AC_CHECK_FUNCS( \
+	XkbStdBell \
+	)
 
 AC_MSG_CHECKING(if we should use imake to help)
 CF_ARG_DISABLE(imake,
-	[  --without-imake         disable use of imake for definitions],
+	[  --disable-imake         disable use of imake for definitions],
 	[enable_imake=no],
 	[enable_imake=yes])
 AC_MSG_RESULT($enable_imake)
 if test $enable_imake = yes ; then
-	CF_IMAKE_CFLAGS
+	CF_IMAKE_CFLAGS($(MAIN_DEFINES))
 fi
 AC_SUBST(IMAKE_CFLAGS)
 
 AC_MSG_CHECKING(for default terminal-id)
 AC_ARG_WITH(terminal-id,
-	[  --with-terminal-id[=V]  set default decTerminalId (default: vt100)],
+	[  --with-terminal-id[=V]  set default decTerminalID (default: vt100)],
 	[default_termid=$withval],
 	[default_termid=vt100])
 AC_MSG_RESULT($default_termid)
@@ -99,7 +121,25 @@ vt*)	default_termid=`echo $default_termid | sed -e 's/^..//'`
 esac
 AC_DEFINE_UNQUOTED(DFT_DECID,$default_termid)
 
+AC_MSG_CHECKING(for default terminal-type)
+AC_ARG_WITH(terminal-type,
+	[  --with-terminal-type=T  set default \$TERM (default: xterm)],
+	[default_TERM=$withval],
+	[default_TERM=xterm])
+AC_MSG_RESULT($default_TERM)
+AC_DEFINE_UNQUOTED(DFT_TERMTYPE,"$default_TERM")
+
 ###	checks for optional features
+AC_MSG_CHECKING(if you want active-icons)
+CF_ARG_DISABLE(active-icon,
+	[  --disable-active-icon   disable X11R6.3 active-icon feature],
+	[enable_active_icon=no],
+	[enable_active_icon=yes])
+AC_MSG_RESULT($enable_active_icon)
+if test $enable_active_icon = no ; then
+	AC_DEFINE(NO_ACTIVE_ICON)
+fi
+
 AC_MSG_CHECKING(if you want ANSI color)
 CF_ARG_DISABLE(ansi-color,
 	[  --disable-ansi-color    disable ANSI color],
@@ -113,27 +153,102 @@ CF_ARG_DISABLE(16-color,
 	[  --disable-16-color      disable 16-color support],
 	[enable_16_color=no],
 	[enable_16_color=yes])
-AC_MSG_RESULT($enable_ansi_color)
+AC_MSG_RESULT($enable_16_color)
 test $enable_16_color = no && AC_DEFINE(OPT_AIX_COLORS,0)
 
-AC_MSG_CHECKING(for default color-mode)
-CF_ARG_ENABLE(color-mode,
-	[  --enable-color-mode     set default colorMode resource ],
-	[default_colormode=TRUE],
-	[default_colormode=FALSE])
-AC_MSG_RESULT($default_colormode)
-AC_DEFINE_UNQUOTED(DFT_COLORMODE,$default_colormode)
+AC_MSG_CHECKING(if you want bold colors mapped like IBM PC)
+CF_ARG_DISABLE(bold-color,
+	[  --disable-bold-color    disable PC-style mapping of bold colors],
+	[enable_pc_color=no],
+	[enable_pc_color=yes])
+AC_MSG_RESULT($enable_pc_color)
+test $enable_pc_color = no && AC_DEFINE(OPT_PC_COLORS,0)
 
-AC_MSG_CHECKING(if you want debugging traces)
-CF_ARG_ENABLE(trace,
-	[  --enable-trace          set to enable debugging traces],
-	[enable_trace=yes],
-	[enable_trace=no])
-AC_MSG_RESULT($enable_trace)
-if test $enable_trace = yes ; then
-	AC_DEFINE(OPT_TRACE)
-	EXTRASRCS="$EXTRASRCS trace.c"
-	EXTRAOBJS="$EXTRAOBJS trace.o"
+AC_MSG_CHECKING(if you want color-mode enabled by default)
+CF_ARG_DISABLE(color-mode,
+	[  --disable-color-mode    disable default colorMode resource],
+	[default_colormode=no],
+	[default_colormode=yes])
+AC_MSG_RESULT($default_colormode)
+test $default_colormode = no && AC_DEFINE(DFT_COLORMODE,FALSE)
+
+AC_MSG_CHECKING(if you want support for color highlighting)
+CF_ARG_DISABLE(highlighting,
+	[  --disable-highlighting  disable support for color highlighting],
+	[default_highlight=no],
+	[default_highlight=yes])
+AC_MSG_RESULT($default_highlight)
+test $default_highlight = no && AC_DEFINE(OPT_HIGHLIGHT_COLOR,0)
+
+AC_MSG_CHECKING(for doublesize characters)
+CF_ARG_DISABLE(doublechars,
+	[  --disable-doublechars   disable support for double-size chars],
+	[enable_doublechars=no],
+	[enable_doublechars=yes])
+AC_MSG_RESULT($enable_doublechars)
+test $enable_doublechars = no && AC_DEFINE(OPT_DEC_CHRSET,0)
+
+AC_MSG_CHECKING(if you want support for input-method)
+CF_ARG_DISABLE(input-method,
+	[  --disable-input-method  disable input-method],
+	[enable_ximp=no],
+	[enable_ximp=yes])
+AC_MSG_RESULT($enable_ximp)
+if test $enable_ximp = no ; then
+	AC_DEFINE(OPT_INPUT_METHOD,0)
+fi
+
+AC_MSG_CHECKING(if you want support for internationalization)
+CF_ARG_DISABLE(i18n,
+	[  --disable-i18n          disable internationalization],
+	[enable_i18n=no],
+	[enable_i18n=yes])
+AC_MSG_RESULT($enable_i18n)
+if test $enable_i18n = no ; then
+	AC_DEFINE(OPT_I18N_SUPPORT,0)
+fi
+
+AC_MSG_CHECKING(if you want support for logging)
+CF_ARG_ENABLE(logging,
+	[  --enable-logging        enable logging],
+	[enable_logging=yes],
+	[enable_logging=no])
+AC_MSG_RESULT($enable_logging)
+if test $enable_logging = yes ; then
+	AC_DEFINE(ALLOWLOGGING)
+	AC_MSG_CHECKING(if you want to allow logging via a pipe)
+	CF_ARG_ENABLE(logfile-exec,
+		[  --enable-logfile-exec   enable exec'd logfile filter],
+		[enable_log_exec=yes],
+		[enable_log_exec=no])
+	AC_MSG_RESULT($enable_log_exec)
+	if test $enable_log_exec = yes ; then
+		AC_DEFINE(ALLOWLOGFILEEXEC)
+	fi
+fi
+
+AC_MSG_CHECKING(if you want support for right-scrollbar)
+CF_ARG_DISABLE(rightbar,
+	[  --disable-rightbar      disable right-scrollbar support],
+	[enable_rightbar=no],
+	[enable_rightbar=yes])
+AC_MSG_RESULT($enable_rightbar)
+if test $enable_rightbar = yes ; then
+	AC_DEFINE(SCROLLBAR_RIGHT)
+fi
+
+AC_MSG_CHECKING(if you want support for tek4014)
+CF_ARG_DISABLE(tek4014,
+	[  --disable-tek4014       disable tek4014 emulation],
+	[enable_tek4014=no],
+	[enable_tek4014=yes])
+AC_MSG_RESULT($enable_tek4014)
+if test $enable_tek4014 = no ; then
+	AC_DEFINE(OPT_TEK4014,0)
+else
+	EXTRAHDRS="$EXTRAHDRS Tekparse.h"
+	EXTRASRCS="$EXTRASRCS TekPrsTbl.c Tekproc.c"
+	EXTRAOBJS="$EXTRAOBJS TekPrsTbl.o Tekproc.o"
 fi
 
 AC_MSG_CHECKING(if you want VT52 emulation)
@@ -144,20 +259,49 @@ CF_ARG_DISABLE(vt52,
 AC_MSG_RESULT($enable_vt52)
 test $enable_vt52 = no && AC_DEFINE(OPT_VT52_MODE,0)
 
+# development/testing aids
+AC_MSG_CHECKING(if you want debugging traces)
+CF_ARG_ENABLE(trace,
+	[  --enable-trace          test: set to enable debugging traces],
+	[enable_trace=yes],
+	[enable_trace=no])
+AC_MSG_RESULT($enable_trace)
+if test $enable_trace = yes ; then
+	AC_DEFINE(OPT_TRACE)
+	EXTRASRCS="$EXTRASRCS trace.c"
+	EXTRAOBJS="$EXTRAOBJS trace.o"
+fi
+
+CF_DISABLE_ECHO
+
+AC_MSG_CHECKING(if you want magic cookie emulation)
+CF_ARG_ENABLE(xmc-glitch,
+	[  --enable-xmc-glitch     test: enable xmc magic-cookie emulation],
+	[enable_xmc=yes],
+	[enable_xmc=no])
+AC_MSG_RESULT($enable_xmc)
+if test $enable_xmc = yes ; then
+	AC_DEFINE(OPT_XMC_GLITCH,1)
+	EXTRASRCS="$EXTRASRCS testxmc.c"
+	EXTRAOBJS="$EXTRAOBJS testxmc.o"
+fi
+
 if test -n "$GCC" ; then
 AC_MSG_CHECKING(if you want to turn on gcc warnings)
 CF_ARG_ENABLE(warnings,
-	[  --enable-warnings       turn on GCC compiler warnings],
+	[  --enable-warnings       test: turn on GCC compiler warnings],
 	[with_warnings=yes],
 	[with_warnings=no])
 AC_MSG_RESULT($with_warnings)
 if test "$with_warnings" = yes
 then
+	CF_GCC_ATTRIBUTES
 	CF_GCC_WARNINGS
-	CFLAGS="$CFLAGS $cf_warn_CFLAGS"
 fi
 fi
 
+AC_SUBST(EXTRA_CFLAGS)
+AC_SUBST(EXTRAHDRS)
 AC_SUBST(EXTRASRCS)
 AC_SUBST(EXTRAOBJS)
 

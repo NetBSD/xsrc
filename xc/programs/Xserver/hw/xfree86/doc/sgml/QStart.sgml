@@ -5,7 +5,7 @@
  <title>Quick-Start Guide to XFree86 Setup
 
  <author>Joe Moss
- <date>26 August 1996
+ <date>27 February 1998
 
  <abstract>
 	Current releases of XFree86 include several tools that can help
@@ -44,7 +44,9 @@ This guide is for them.
 	  It will help speed up the process, if you know which protocol
 	  is used by your mouse to communicate. Some mice are capable
 	  of using two different protocols, although the method of
-	  switching between them varies.
+	  switching between them varies.  In some cases, with new
+	  Plug-n-Play mice, the protocol can be determined
+	  automatically.
 	</descrip>
 
 <sect>  What to Do - An Overview
@@ -98,6 +100,14 @@ This guide is for them.
 	is found, it will display a message and exit.  Correct the
 	problem (e.g. install the missing files) and run it again.
 
+	XF86Setup is internationalized. If you are Japanese and set
+	the LANG environment variable to ja, japan, japanese, etc.,
+	XF86Setup's screen can be Japanized. But it is necessary that
+	XF86Setup is built with Japanized Tcl/Tk. Other language can
+	be added, if you prepare its own directory under the directory
+	XF86Setup/texts. Please see under the directory
+	XF86Setup/texts/generic.
+
 <sect1>	Initial questions
 <p>
 	If you have an existing XF86Config file, you will be asked if
@@ -120,7 +130,7 @@ This guide is for them.
 <sect1>	Configuration areas
 <p>
 	Once the VGA16 server is started, and once the program has
-	finished loading, you will see a screen with five
+	finished loading, you will see a screen with six
 	buttons along the top and three along the bottom.
 	The buttons along the top correspond to the general categories
 	of configuration settings.  They can be done in any order.
@@ -156,7 +166,7 @@ This guide is for them.
 	If that is not happening, then your mouse is not correctly
 	configured.
 <p>
-	Along the top is a row of buttons corresponding to
+	Along the top are some rows of buttons corresponding to
 	the various possible protocols. There will also be
 	several buttons and a couple of sliders
 	for other settings, a visual representation of the mouse,
@@ -173,7 +183,10 @@ This guide is for them.
 	either the mouse device or the protocol (or both).
 	You can press 'n' followed by a Tab, to move to the list
 	of mouse devices and select a different one.
-	Pressing 'p' will pick the next available protocol on the list.
+	Pressing 'p' will pick the next available protocol on the list
+	(protocols that are not available on your OS will be
+	greyed-out).  If you have a PnP mouse, it may be easiest to
+	just select "Auto" as the protocol.
 	After changing these, press 'a' to apply the changes and try
 	again.  Repeat the process until you are getting some response
 	from your mouse.
@@ -262,6 +275,21 @@ This guide is for them.
 	Additionally, you can also specify the amount of RAM on your
 	card, though the server will usually be able to detect this.
 
+
+<sect2>	Modeselect
+<p>
+	Use this one to pick which depth you prefer to use (this
+	determines how many colors can be displayed at a time)
+	and to select all of the modes you are interested in
+	possibly using.
+<p>
+	Your hardware may not be able to support all
+	of depth and mode combinations that can be selected.
+	Any unsupported combinations will automatically be
+	rejected by the server when it tries to startup.
+	Note also that if you select multiple modes, you will
+	get a virtual screen as large as the largest of the
+	usable modes.
 
 <sect2>	Monitor
 <p>
@@ -391,6 +419,10 @@ This guide is for them.
 	as to which might be most likely) and then see the
 	troubleshooting section if it doesn't work when you run the
 	server.
+
+	The xf86config program has not been updated to allow you to
+	select the latest mouse protocols, so you may have to edit
+	the config file by hand after xf86config has finished.
 	
 <sect1>	Keyboard setup
 <p>
@@ -440,7 +472,7 @@ This guide is for them.
 
 	If you have a card which uses one of the chipsets for which a
 	specific server exists (Mach8, Mach32, Mach64, AGX/XGA,
-	8514/A, S3, ET4000/W32, I128, P9000) you'll want to pick the
+	8514/A, S3, I128, P9000) you'll want to pick the
 	<tt/accel/ option.
 
 	Otherwise you'll probably want to use the SVGA server.
@@ -626,13 +658,8 @@ This guide is for them.
 
 <sect1>	I don't appear to have xf86config or xvidtune on my system
 <p>
-	Hmmm. Three possibilities:
+	Hmmm. A couple of possibilities:
 	<enum>
-	 <item>You have a version of XFree86 that is older than 3.1.2.
-	       If this is the case then you probably aren't reading
-	       this document either, because it wasn't included in
-	       3.1.2 and earlier releases.  Please upgrade to the
-	       latest version.
 	 <item>Your <tt/PATH/ is not set correctly. Make sure it includes
 	       the bin directory for the XFree86 binaries (usually,
 	       <tt>/usr/X11R6/bin</tt>
@@ -644,7 +671,7 @@ This guide is for them.
 <!-- Lots of things still need to be added -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.4 1997/01/25 03:22:04 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.4.2.2 1998/02/28 04:47:08 dawes Exp $
 </verb>
 
 </article>

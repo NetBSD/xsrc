@@ -1,5 +1,5 @@
 XCOMM platform:  $TOG: linux.cf /main/36 1997/06/16 22:21:03 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.10 1997/07/28 14:17:25 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.12 1998/03/01 01:57:10 dawes Exp $
 
 #ifndef LinuxElfDefault
 #define LinuxElfDefault		YES
@@ -86,9 +86,10 @@ XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 #define BinUtilsMajorVersion	LinuxBinUtilsMajorVersion
 #endif
 
-#if LinuxCLibMajorVersion >= 6
+#if LinuxCLibMajorVersion >= 6 || \
+	(LinuxCLibMajorVersion == 5 && LinuxCLibMinorVersion == 99)
 #define LinuxSourceDefines	-D_POSIX_C_SOURCE=199309L \
-				-D_POSIX_SOURCE \
+				-D_POSIX_SOURCE -D_XOPEN_SOURCE=500L \
 				-D_BSD_SOURCE -D_SVID_SOURCE
 #define XawI18nDefines		-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
 #if !defined(AlphaArchitecture)

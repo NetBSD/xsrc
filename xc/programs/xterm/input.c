@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: input.c /main/21 1996/04/17 15:54:23 kaleb $
- *	$XFree86: xc/programs/xterm/input.c,v 3.11.2.2 1997/05/23 09:24:37 dawes Exp $
+ *	$XFree86: xc/programs/xterm/input.c,v 3.11.2.3 1998/02/15 16:10:04 hohndel Exp $
  */
 
 /*
@@ -33,8 +33,12 @@
 #endif
 
 #include "ptyx.h"		/* gets Xt headers, too */
+
 #include <X11/keysym.h>
+#if HAVE_X11_DECKEYSYM_H
 #include <X11/DECkeysym.h>
+#endif
+
 #include <X11/Xutil.h>
 #include <stdio.h>
 
@@ -45,7 +49,7 @@ static char *kypd_num = " XXXXXXXX\tXXX\rXXXxxxxXXXXXXXXXXXXXXXXXXXXX*+,-./01234
 static char *kypd_apl = " ABCDEFGHIJKLMNOPQRSTUVWXYZ??????abcdefghijklmnopqrstuvwxyzXXX";
 static char *cur = "HDACB  FE";
 
-static int funcvalue PROTO((KeySym keycode));
+static int decfuncvalue PROTO((KeySym keycode));
 static int sunfuncvalue PROTO((KeySym keycode));
 static void AdjustAfterInput PROTO((TScreen *screen));
 
@@ -88,8 +92,13 @@ Input (keyboard, screen, event, eightbit)
 	int	nbytes;
 	KeySym  keysym = 0;
 	ANSI	reply;
+	int	dec_code;
 
-#if XtSpecificationRelease >= 6
+	/* Ignore characters typed at the keyboard */
+	if (keyboard->flags & MODE_KAM)
+		return;
+
+#if OPT_I18N_SUPPORT
 	if (screen->xic) {
 	    Status status_return;
 	    nbytes = XmbLookupString (screen->xic, event, strbuf, STRBUFSIZE,
@@ -109,6 +118,14 @@ Input (keyboard, screen, event, eightbit)
 	reply.a_nparam = 0;
 	reply.a_inters = 0;
 
+	/* VT300 & up: backarrow toggle */
+	if ((nbytes == 1)
+	 && !(term->keyboard.flags & MODE_DECBKM)
+	 && (keysym == XK_BackSpace)) {
+		keysym = XK_Delete;
+		strbuf[0] = '\177';
+	}
+
 #ifdef XK_KP_Home
 	if (keysym >= XK_KP_Home && keysym <= XK_KP_Begin) {
 	    keysym += XK_Home - XK_KP_Home;
@@ -125,6 +142,25 @@ Input (keyboard, screen, event, eightbit)
 	if_OPT_VT52_MODE(screen,{ \
 		reply.a_type = ESC; \
 		})
+
+#if OPT_SUNPC_KBD
+	/* make an DEC editing-keypad from a Sun or PC editing-keypad */
+	if (sunKeyboard) {
+		switch (keysym) {
+		case XK_Delete:
+#ifdef DXK_Remove
+			keysym = DXK_Remove;
+#endif
+			break;
+		case XK_Home:
+			keysym = XK_Find;
+			break;
+		case XK_End:
+			keysym = XK_Select;
+			break;
+		}
+	}
+#endif
 
 	if (IsPFKey(keysym)) {
 		reply.a_type = SS3;
@@ -149,13 +185,22 @@ Input (keyboard, screen, event, eightbit)
 	 } else if (IsFunctionKey(keysym) || IsMiscFunctionKey(keysym)
 	 	|| keysym == XK_Prior
 		|| keysym == XK_Next
+#ifdef DXK_Remove
 		|| keysym == DXK_Remove
+#endif
 #ifdef XK_KP_Delete
 		|| keysym == XK_KP_Delete
 		|| keysym == XK_KP_Insert
 #endif
 		) {
-		int dec_code = funcvalue(keysym);
+#if OPT_SUNPC_KBD
+		if ((event->state & ControlMask)
+		 && sunKeyboard
+		 && (keysym >= XK_F1 && keysym <= XK_F12))
+			keysym += 12;
+#endif
+
+		dec_code = decfuncvalue(keysym);
 		if ((event->state & ShiftMask)
 		 && ((string = udk_lookup(dec_code, &nbytes)) != 0)) {
 			while (nbytes-- > 0)
@@ -189,18 +234,19 @@ Input (keyboard, screen, event, eightbit)
 		}
 		key = TRUE;
 	} else if (IsKeypadKey(keysym)) {
-#if OPT_VT52_MODE
+#if OPT_SUNPC_KBD
 		/*
 		 * DEC keyboards don't have keypad(+), but do have keypad(,)
 		 * instead.  Other (Sun, PC) keyboards commonly have keypad(+),
 		 * but no keypad(,) - it's a pain for users to work around.
 		 */
 		if (!sunFunctionKeys
+		 && sunKeyboard
 		 && keysym == XK_KP_Add)
 			keysym = XK_KP_Separator;
 #endif
-	  	if (keyboard->flags & MODE_DECKPAM)	{
-			reply.a_type   = SS3;
+	  	if ((keyboard->flags & MODE_DECKPAM) != 0) {
+			reply.a_type  = SS3;
 			reply.a_final = kypd_apl[keysym-XK_KP_Space];
 			VT52_KEYPAD
 			unparseseq(&reply, pty);
@@ -208,11 +254,13 @@ Input (keyboard, screen, event, eightbit)
 			unparseputc(kypd_num[keysym-XK_KP_Space], pty);
 		key = TRUE;
 	} else if (nbytes > 0) {
+#if OPT_TEK4014
 		if(screen->TekGIN) {
 			TekEnqMouse(*string++);
 			TekGINoff();
 			nbytes--;
 		}
+#endif
 		if ((nbytes == 1) && eightbit) {
 		    if (screen->input_eight_bits)
 		      *string |= 0x80;	/* turn on eighth bit */
@@ -223,7 +271,7 @@ Input (keyboard, screen, event, eightbit)
 			unparseputc(*string++, pty);
 		key = TRUE;
 	}
-	if(key && !screen->TekEmu)
+	if(key && !TEK4014_ACTIVE(screen))
 	        AdjustAfterInput(screen);
 #ifdef ENABLE_PRINT
 	if (keysym == XK_F2) TekPrint();
@@ -239,19 +287,21 @@ StringInput (screen, string, nbytes)
 {
 	int	pty	= screen->respond;
 
+#if OPT_TEK4014
 	if(nbytes && screen->TekGIN) {
 		TekEnqMouse(*string++);
 		TekGINoff();
 		nbytes--;
 	}
+#endif
 	while (nbytes-- != 0)
 		unparseputc(*string++, pty);
-	if(!screen->TekEmu)
+	if (!TEK4014_ACTIVE(screen))
 	        AdjustAfterInput(screen);
 }
 
 /* These definitions are DEC-style (e.g., vt320) */
-static int funcvalue (keycode)
+static int decfuncvalue (keycode)
 	KeySym  keycode;
 {
 	switch (keycode) {
@@ -285,7 +335,9 @@ static int funcvalue (keycode)
 		case XK_KP_Insert: return(2);
 		case XK_KP_Delete: return(3);
 #endif
+#ifdef DXK_Remove
 		case DXK_Remove: return(3);
+#endif
 		case XK_Select:	return(4);
 		case XK_Prior:	return(5);
 		case XK_Next:	return(6);
@@ -344,7 +396,9 @@ static int sunfuncvalue (keycode)
 		case XK_KP_Insert: return(2);
 		case XK_KP_Delete: return(3);
 #endif
+#ifdef DXK_Remove
 		case DXK_Remove: return(3);
+#endif
 		case XK_Select:	return(4);
 		case XK_Prior:	return(5);
 		case XK_Next:	return(6);

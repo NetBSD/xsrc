@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_init.c,v 3.8 1996/12/23 06:49:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_init.c,v 3.8.2.1 1998/02/06 22:36:49 hohndel Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -187,7 +187,10 @@ xf86OpenConsole()
 	/* check if we are run with euid==0 */
 	if (geteuid() != 0)
 	{
-	    FatalError("xf86OpenConsole: Server must be suid root\n");
+	    FatalError("xf86OpenConsole: Server must be running with root "
+	        "permissions\n"
+		"You should be using Xwrapper to start the server or xdm.\n"
+		"We strongly advise against making the server SUID root!\n");
 	}
 
 	if (!KeepTty)

@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/tk.tcl,v 3.2 1996/12/27 06:55:09 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/tk.tcl,v 3.2.2.1 1998/02/15 16:08:59 hohndel Exp $
 #
 # tk.tcl --
 #
@@ -21,12 +21,12 @@
 # Insist on running with compatible versions of Tcl and Tk.
 
 scan [info tclversion] "%d.%d" a b
-if {$a != 7} {
-    error "wrong version of Tcl loaded ([info tclversion]): need 7.x"
+if {$a < 7 || ($a == 7 && $b < 5)} {
+    error "wrong version of Tcl loaded ([info tclversion]): need 7.5 or later"
 }
 scan $tk_version "%d.%d" a b
-if {($a != 4) || ($b < 0)} {
-    error "wrong version of Tk loaded ($tk_version): need 4.x"
+if {($a < 4) || ($a == 4 && $b < 1)} {
+    error "wrong version of Tk loaded ($tk_version): need 4.1 or later"
 }
 unset a b
 

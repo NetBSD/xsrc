@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.24 1996/12/23 06:43:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.24.2.1 1998/02/01 16:04:47 robin Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -154,7 +154,7 @@ extern int xf86ScreenNames[];
 
 extern char xf86ConfigFile[];
 extern int xf86Verbose;
-extern Bool xf86ProbeOnly;
+extern Bool xf86ProbeOnly, xf86ProbeFailed;
 extern unsigned short xf86MouseCflags[];
 extern Bool xf86SupportedMouseTypes[];
 extern int xf86NumMouseTypes;
