@@ -56,7 +56,6 @@ struct pci_config_reg {
     } stat_cmd;
 #define _status_command stat_cmd.status_command
 #define _command stat_cmd.sc.command
-#define _status  stat_cmd.sc.status
     union {
         unsigned long class_revision;
 	struct {
