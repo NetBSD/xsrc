@@ -227,6 +227,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(AlphaArchitecture)
+# define BuildServer		YES
 # define ServerOSDefines	-DDDXOSINIT
 # define ServerExtraDefines	GccGasOption -D_XSERVER64
 # define PexDynamicModule	NO
@@ -516,6 +517,7 @@ install.man:: 								@@\
 /*
  * Definitions for the NetBSD/vax server.
  */
+#if 0				/* XXX XXX XXX */
 #ifdef VaxArchitecture
 #define XvaxMonoServer YES
 #if HasGcc
@@ -527,6 +529,7 @@ install.man:: 								@@\
 #define HasSaberC YES
 #else
 #define BuildServer NO
+#endif
 #endif
 
 #ifdef VaxArchitecture
