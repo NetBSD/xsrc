@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.106 2003/06/24 18:50:51 tshiozak Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.107 2003/10/03 15:47:41 seb Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -155,6 +155,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # if (OSMajorVersion > 1 || (OSMajorVersion == 1 && OSMinorVersion >= 5))
 #  define HasIssetugid          YES
 # endif
+#endif
+
+#if (OSMajorVersion >= 2 || \
+      (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion >= 2))
+# define HasArc4random
 #endif
 
 /*
