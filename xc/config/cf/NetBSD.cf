@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.64 2000/01/22 21:08:49 mycroft Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.65 2000/02/13 01:11:43 mjl Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -371,6 +371,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasZlib			  YES
 #endif
 #endif 
+
+/* 1.4R and later has setusercontext() */
+# if ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion > 4) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 4 && OSTeenyVersion >= 18))
+#define HasSetUserContext  YES
+#endif
 
 #define	AdmDir			/var/log
 
