@@ -72,6 +72,13 @@ XCOMM PowerPC PCI drivers
 PCIDRVRSRC = ppcPci.c
 PCIDRVROBJ = ppcPci.o
 
+#elif defined(NetBSDArchitecture) && defined(CatsArchitecture) 
+
+XCOMM NetBSD/cats
+
+PCIDRVRSRC = netbsdPci.c
+PCIDRVROBJ = netbsdPci.o
+
 #elif defined(LinuxArchitecture) && \
      (defined(i386Architecture) || defined(x86_64Architecture))
 
