@@ -459,7 +459,7 @@ static void ScrollTextUpDownBy(scrollbarWidget, client_data, call_data)
 	XtPointer client_data GCC_UNUSED;
 	XtPointer call_data;
 {
-	int pixels = (int) call_data;
+	int pixels = (int)(long) call_data;
 
 	register TScreen *screen = &term->screen;
 	register int rowOnScreen, newTopLine;
@@ -549,7 +549,7 @@ void HandleScrollForward (gw, event, params, nparams)
     if (IsXtermWidget(gw)) {
     	register TScreen *screen = &((XtermWidget)gw)->screen;
 	ScrollTextUpDownBy (gw, (XtPointer) 0,
-			(XtPointer)(params_to_pixels (screen, params, *nparams)));
+		(XtPointer)(long)(params_to_pixels (screen, params, *nparams)));
     }
     return;
 }
@@ -565,7 +565,7 @@ void HandleScrollBack (gw, event, params, nparams)
     if (IsXtermWidget(gw)) {
     	register TScreen *screen = &((XtermWidget)gw)->screen;
 	ScrollTextUpDownBy (gw, (XtPointer) 0,
-			(XtPointer)(-params_to_pixels (screen, params, *nparams)));
+		(XtPointer)(long)(-params_to_pixels (screen, params, *nparams)));
     }
     return;
 }
