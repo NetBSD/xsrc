@@ -525,7 +525,8 @@ SOFTWARE.
 
 #endif /* SVR4 / BSD / i386 */
 
-#if defined (linux) && defined (__mc68000__)
+#if (defined (linux) && defined (__mc68000__)) || \
+    (defined (__NetBSD__) && defined (__m68k__))
 
 #define IMAGE_BYTE_ORDER       MSBFirst
 #define BITMAP_BIT_ORDER       MSBFirst
@@ -533,7 +534,7 @@ SOFTWARE.
 #define GLYPHPADBYTES          4
 #define GETLEFTBITS_ALIGNMENT  1
 
-#endif /* linux/m68k */
+#endif /* linux/m68k or NetBSD/m68k */
 
 #ifdef sgi
 
