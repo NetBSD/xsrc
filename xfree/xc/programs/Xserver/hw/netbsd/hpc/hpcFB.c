@@ -1,4 +1,4 @@
-/* $NetBSD: hpcFB.c,v 1.2 2004/01/03 01:31:18 takemura Exp $	*/
+/* $NetBSD: hpcFB.c,v 1.3 2004/01/03 01:36:06 takemura Exp $	*/
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -207,14 +207,14 @@ hpcSetDisplayMode(fd, mode, prevmode)
 {
     if (prevmode != NULL) {
 	if (ioctl(fd, WSDISPLAYIO_GMODE, prevmode) < 0) {
-	    hpcError("ioctl(WSDISPLAYIO_GMODE)");
+	    Error("ioctl(WSDISPLAYIO_GMODE)");
 	    return (-1);
 	}
     }
 
     if (prevmode == NULL || *prevmode != mode) {
 	    if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) < 0) {
-		hpcError("ioctl(WSDISPLAYIO_SMODE)");
+		Error("ioctl(WSDISPLAYIO_SMODE)");
 		return (-1);
 	    }
     }
