@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.12 1999/11/26 15:24:13 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.13 2000/11/01 01:52:46 dawes Exp $ */
 
 #include <math.h>
 #include <stdlib.h>
@@ -145,7 +145,14 @@ static NVProbeInfo probeList[]={
   { "RIVA INTEGRATED",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_ITNT2},
   { "GeForce 256",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_GEFORCE256},
   { "GeForce DDR",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_GEFORCEDDR},
-  { "Quadro",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_QUADRO}
+  { "Quadro",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_QUADRO},
+  { "GeForce2 GTS",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_GEFORCE2GTS},
+  { "GeForce2 GTS (rev1)",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_GEFORCE2GTS_1},
+  { "GeForce2 Ultra",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_GEFORCE2ULTRA},
+  { "Quadro 2 Pro",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_QUADRO2PRO},
+  { "GeForce2 MX",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_GEFORCE2MX},
+  { "GeForce2 MX DDR",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_GEFORCE2MXDDR},
+  { "Quadro 2 MXR",NV10,PCI_VENDOR_NVIDIA,PCI_CHIP_QUADRO2MXR}
 };
 
 

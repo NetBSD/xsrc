@@ -1,5 +1,5 @@
 // $XConsortium: se /main/3 1996/08/31 12:20:15 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/se,v 3.3.2.1 1998/10/04 13:37:29 hohndel Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/se,v 3.3.2.2 2000/02/15 00:43:27 dawes Exp $
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 
@@ -27,8 +27,8 @@ xkb_symbols "basic" {
     key <AE11> {	[            plus,        question      ]	};
     key <AC11> {	[      adiaeresis,      Adiaeresis 	]	};
     key <AD11> {	[	    aring,           Aring     	]	};
-    key <AE12> {	[           acute,           grave	]	};
-    key <AD12> {	[       diaeresis,     asciicircum     	]	};
+    key <AE12> {	[      dead_acute,      dead_grave	]	};
+    key <AD12> {	[  dead_diaeresis, dead_circumflex     	]	};
     key <BKSL> {	[      apostrophe,        asterisk	]	};
     key <LSGT> {        [            less,         greater      ],
                         [             bar,       brokenbar      ]       };

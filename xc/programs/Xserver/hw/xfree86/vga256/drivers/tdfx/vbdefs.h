@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tdfx/vbdefs.h,v 1.1.2.5 1999/07/13 07:09:54 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tdfx/vbdefs.h,v 1.1.2.6 2000/01/24 21:07:03 dawes Exp $ */
 /*
    Voodoo Banshee driver version 1.0.2
 
@@ -156,5 +156,9 @@
 
 #define BLIT_LEFT 1
 #define BLIT_UP 2
+
+/* If the displayWidth is greater than this, the hardware cursor
+ * Can't reach the right edge of the screen */
+#define HW_CURSOR_MAX_DISPLAYWIDTH (2048-64)
 
 #endif

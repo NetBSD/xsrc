@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticrtc.c,v 1.1.2.3 1999/10/12 17:18:53 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticrtc.c,v 1.1.2.4 2000/05/14 02:02:14 tsi Exp $ */
 /*
  * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -276,6 +276,12 @@ ATISave(void *data)
     {
         save->pll_vclk_cntl = ATIGetMach64PLLReg(PLL_VCLK_CNTL) |
             PLL_VCLK_RESET;
+        save->pll_vclk_post_div = ATIGetMach64PLLReg(PLL_VCLK_POST_DIV);
+        save->pll_vclk0_fb_div = ATIGetMach64PLLReg(PLL_VCLK0_FB_DIV);
+        save->pll_vclk1_fb_div = ATIGetMach64PLLReg(PLL_VCLK1_FB_DIV);
+        save->pll_vclk2_fb_div = ATIGetMach64PLLReg(PLL_VCLK2_FB_DIV);
+        save->pll_vclk3_fb_div = ATIGetMach64PLLReg(PLL_VCLK3_FB_DIV);
+        save->pll_xclk_cntl = ATIGetMach64PLLReg(PLL_XCLK_CNTL);
         if (ATIChip >= ATI_CHIP_264LT)
             save->pll_ext_vpll_cntl = ATIGetMach64PLLReg(PLL_EXT_VPLL_CNTL);
     }
@@ -288,7 +294,6 @@ ATISave(void *data)
             save->horz_stretching = inl(ATIIOPortHORZ_STRETCHING);
             save->vert_stretching = inl(ATIIOPortVERT_STRETCHING);
             save->lcd_gen_ctrl = inl(ATIIOPortLCD_GEN_CTRL);
-            save->power_management = inl(ATIIOPortPOWER_MANAGEMENT);
 
             /* Setup to save non-shadow registers */
             outl(ATIIOPortLCD_GEN_CTRL, save->lcd_gen_ctrl &
@@ -304,10 +309,6 @@ ATISave(void *data)
             save->horz_stretching = ATIGetLTProLCDReg(LCD_HORZ_STRETCHING);
             save->vert_stretching = ATIGetLTProLCDReg(LCD_VERT_STRETCHING);
             save->ext_vert_stretch = ATIGetLTProLCDReg(LCD_EXT_VERT_STRETCH);
-            save->power_management = ATIGetLTProLCDReg(LCD_POWER_MANAGEMENT);
-            if (ATIChip > ATI_CHIP_264LTPRO)
-                save->power_management_2 =
-                    ATIGetLTProLCDReg(LCD_POWER_MANAGEMENT_2);
 
             /* Setup to save non-shadow registers */
             ATIPutLTProLCDReg(LCD_GEN_CNTL, save->lcd_gen_ctrl &
@@ -585,11 +586,24 @@ ATIInit(DisplayModePtr mode)
                 break;
         }
 
-        /* Ensure proper VPLL clock source */
         if (ATIChip >= ATI_CHIP_264CT)
         {
+            /* Ensure proper VPLL clock source */
             ATINewHWPtr->pll_vclk_cntl = ATIGetMach64PLLReg(PLL_VCLK_CNTL) |
                 (PLL_VCLK_SRC_SEL | PLL_VCLK_RESET);
+
+            /* Set provisional values for certain other PLL registers */
+            ATINewHWPtr->pll_vclk_post_div =
+                ATIGetMach64PLLReg(PLL_VCLK_POST_DIV);
+            ATINewHWPtr->pll_vclk0_fb_div =
+                ATIGetMach64PLLReg(PLL_VCLK0_FB_DIV);
+            ATINewHWPtr->pll_vclk1_fb_div =
+                ATIGetMach64PLLReg(PLL_VCLK1_FB_DIV);
+            ATINewHWPtr->pll_vclk2_fb_div =
+                ATIGetMach64PLLReg(PLL_VCLK2_FB_DIV);
+            ATINewHWPtr->pll_vclk3_fb_div =
+                ATIGetMach64PLLReg(PLL_VCLK3_FB_DIV);
+            ATINewHWPtr->pll_xclk_cntl = ATIGetMach64PLLReg(PLL_XCLK_CNTL);
 
             /* For now disable extended reference and feedback dividers */
             if (ATIChip >= ATI_CHIP_264LT)
@@ -608,7 +622,6 @@ ATIInit(DisplayModePtr mode)
                 ATINewHWPtr->horz_stretching = inl(ATIIOPortHORZ_STRETCHING);
                 ATINewHWPtr->vert_stretching = inl(ATIIOPortVERT_STRETCHING);
                 ATINewHWPtr->lcd_gen_ctrl = inl(ATIIOPortLCD_GEN_CTRL);
-                ATINewHWPtr->power_management = inl(ATIIOPortPOWER_MANAGEMENT);
             }
             else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
                         (ATIChip == ATI_CHIP_264XL) ||
@@ -625,16 +638,6 @@ ATIInit(DisplayModePtr mode)
                     ATIGetLTProLCDReg(LCD_HORZ_STRETCHING);
                 ATINewHWPtr->vert_stretching =
                     ATIGetLTProLCDReg(LCD_VERT_STRETCHING);
-                ATINewHWPtr->power_management =
-                    ATIGetLTProLCDReg(LCD_POWER_MANAGEMENT);
-                if (ATIChip > ATI_CHIP_264LTPRO)
-                    ATINewHWPtr->power_management_2 =
-                        ATIGetLTProLCDReg(LCD_POWER_MANAGEMENT_2) &
-                            ~(LCD_XCLK_DISP_PM_EN | LCD_XCLK_GUI_PM_EN |
-                              LCD_MCLK_PM_EN | LCD_PM_DYN_XCLK_EN |
-                              LCD_PM_XCLK_ALWAYS | LCD_PCI_ACC_DIS |
-                              LCD_PM_DYN_XCLK_DISP | LCD_PM_DYN_XCLK_GUI |
-                              LCD_PM_DYN_XCLK_HOST);
                 outl(ATIIOPortLCD_INDEX, lcd_index);
             }
 
@@ -647,9 +650,6 @@ ATIInit(DisplayModePtr mode)
                   CRTC_RW_SELECT | USE_SHADOWED_VEND | USE_SHADOWED_ROWCUR |
                   SHADOW_EN | SHADOW_RW_EN)) |
                 (DONT_SHADOW_VPAR | LOCK_8DOT);
-
-            /* Disable power-management */
-            ATINewHWPtr->power_management &= ~PWR_MGT_ON;
 
             /*
              * Determine porch data.  The intent here is to produce stretched
@@ -942,10 +942,16 @@ ATIRestore(void *data)
     if (ATIChip >= ATI_CHIP_264CT)
     {
         ATIPutMach64PLLReg(PLL_VCLK_CNTL, restore->pll_vclk_cntl);
-        ATIPutMach64PLLReg(PLL_VCLK_CNTL,
-            restore->pll_vclk_cntl & ~PLL_VCLK_RESET);
+        ATIPutMach64PLLReg(PLL_VCLK_POST_DIV, restore->pll_vclk_post_div);
+        ATIPutMach64PLLReg(PLL_VCLK0_FB_DIV, restore->pll_vclk0_fb_div);
+        ATIPutMach64PLLReg(PLL_VCLK1_FB_DIV, restore->pll_vclk1_fb_div);
+        ATIPutMach64PLLReg(PLL_VCLK2_FB_DIV, restore->pll_vclk2_fb_div);
+        ATIPutMach64PLLReg(PLL_VCLK3_FB_DIV, restore->pll_vclk3_fb_div);
+        ATIPutMach64PLLReg(PLL_XCLK_CNTL, restore->pll_xclk_cntl);
         if (ATIChip >= ATI_CHIP_264LT)
             ATIPutMach64PLLReg(PLL_EXT_VPLL_CNTL, restore->pll_ext_vpll_cntl);
+        ATIPutMach64PLLReg(PLL_VCLK_CNTL,
+            restore->pll_vclk_cntl & ~PLL_VCLK_RESET);
     }
 
     /* Load LCD registers */
@@ -1112,7 +1118,6 @@ ATIRestore(void *data)
             outl(ATIIOPortLCD_GEN_CTRL, restore->lcd_gen_ctrl);
             outl(ATIIOPortHORZ_STRETCHING, restore->horz_stretching);
             outl(ATIIOPortVERT_STRETCHING, restore->vert_stretching);
-            outl(ATIIOPortPOWER_MANAGEMENT, restore->power_management);
         }
         else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
                     (ATIChip == ATI_CHIP_264XL) ||
@@ -1122,10 +1127,6 @@ ATIRestore(void *data)
             ATIPutLTProLCDReg(LCD_HORZ_STRETCHING, restore->horz_stretching);
             ATIPutLTProLCDReg(LCD_VERT_STRETCHING, restore->vert_stretching);
             ATIPutLTProLCDReg(LCD_EXT_VERT_STRETCH, restore->ext_vert_stretch);
-            ATIPutLTProLCDReg(LCD_POWER_MANAGEMENT, restore->power_management);
-            if (ATIChip > ATI_CHIP_264LTPRO)
-                ATIPutLTProLCDReg(LCD_POWER_MANAGEMENT_2,
-                    restore->power_management_2);
             outl(ATIIOPortLCD_INDEX, restore->lcd_index);
         }
     }

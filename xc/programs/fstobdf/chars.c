@@ -1,5 +1,4 @@
 /* $XConsortium: chars.c,v 1.4 94/04/17 20:24:26 gildea Exp $ */
-/* $XFree86: xc/programs/fstobdf/chars.c,v 3.2 1996/08/13 11:32:34 dawes Exp $ */
 /*
  
 Copyright (c) 1990  X Consortium
@@ -45,6 +44,9 @@ in this Software without prior written authorization from the X Consortium.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
+/* $XFree86: xc/programs/fstobdf/chars.c,v 3.2.4.1 2000/06/15 21:58:35 dawes Exp $ */
+
+/* Morten Storgaard Nielsen: chars.c,v 3.2-1 2000/01/30 14:11:19 kat Exp */
 
 #include	<stdio.h>
 #include	<X11/Xlib.h>
@@ -166,19 +168,22 @@ EmitCharacters(outFile, fontServer, fontHeader, fontID)
     unsigned char *glyph;
     unsigned char *glyphs;
     unsigned int nChars;
-    int         firstChar;
-    int         lastChar;
-    int         ch;
+    int         firstCharLow;
+    int         firstCharHigh;
+    int         lastCharLow;
+    int         lastCharHigh;
+    int         chLow;
+    int         chHigh;
     FSBitmapFormat format;
 
     nChars = 0;
 
     format = BYTE_ORDER | BIT_ORDER | SCANLINE_UNIT |
 	SCANLINE_PAD | EXTENTS;
-    firstChar = (fontHeader->char_range.min_char.high << 8)
-	        + fontHeader->char_range.min_char.low;
-    lastChar = (fontHeader->char_range.max_char.high << 8)
-	       + fontHeader->char_range.max_char.low;
+    firstCharLow = fontHeader->char_range.min_char.low; 
+    firstCharHigh = fontHeader->char_range.min_char.high; 
+    lastCharLow = fontHeader->char_range.max_char.low;
+    lastCharHigh = fontHeader->char_range.max_char.high;
 
     (void) FSQueryXExtents16(fontServer, fontID, True, (FSChar2b *) 0, 0,
 			     &extents);
@@ -187,10 +192,12 @@ EmitCharacters(outFile, fontServer, fontHeader, fontID)
 
     charInfo = extents;
     /* calculate the actual number of chars */
-    for (ch = 0; ch <= (lastChar - firstChar); ch++) {
+    for (chHigh = 0; chHigh <= (lastCharHigh-firstCharHigh); chHigh++) {
+      for (chLow = 0; chLow <= (lastCharLow-firstCharLow); chLow++) {
 	if ((charInfo->width != 0) || (charInfo->left != charInfo->right))
 	    nChars++;
 	charInfo++;
+      }
     }
 
     fprintf(outFile, "CHARS %u\n", nChars);
@@ -199,19 +206,19 @@ EmitCharacters(outFile, fontServer, fontHeader, fontID)
      * actually emit the characters
      */
     charInfo = extents;
-    encoding = firstChar;
     glyph = glyphs;
-    for (ch = 0; ch <= (lastChar - firstChar); ch++) {
+    for (chHigh = firstCharHigh; chHigh <= lastCharHigh; chHigh++) {
+      for (chLow = firstCharLow; chLow <= lastCharLow; chLow++) {
 	int         bpr;
 
 	bpr = GLWIDTHBYTESPADDED((charInfo->right - charInfo->left),
 				 SCANLINE_PAD_BYTES);
+  	  encoding=(chHigh << 8)+chLow;
 	if ((charInfo->width != 0) || (charInfo->right != charInfo->left))
 	    EmitBitmap(outFile, fontHeader, charInfo, encoding, bpr, glyph);
 	glyph += (charInfo->descent + charInfo->ascent) * bpr;
-
 	charInfo++;
-	encoding++;
+      }
     }
     FSFree((char *) extents);
     FSFree((char *) glyphs);

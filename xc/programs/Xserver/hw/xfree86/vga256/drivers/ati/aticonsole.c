@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticonsole.c,v 1.1.2.2 1999/10/12 17:18:52 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticonsole.c,v 1.1.2.5 2000/05/14 02:02:14 tsi Exp $ */
 /*
- * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -54,7 +54,7 @@ ATIEnterLeave(const Bool enter)
         saved_crtc_int_cntl, saved_lcd_index;
 
     static Bool entered = LEAVE;
-    CARD32 tmp;
+    CARD32 tmp, lcd_gen_ctrl = 0, saved_lcd_gen_ctrl = 0;
 
 #   ifdef XFreeXDGA
         if ((enter == LEAVE) && !ATIUsing1bppModes &&
@@ -131,19 +131,19 @@ ATIEnterLeave(const Bool enter)
             outl(ATIIOPortGEN_TEST_CNTL, tmp | GEN_GUI_EN);
             outl(ATIIOPortGEN_TEST_CNTL, tmp);
             outl(ATIIOPortGEN_TEST_CNTL, tmp | GEN_GUI_EN);
-            saved_crtc_gen_cntl = inl(ATIIOPortCRTC_GEN_CNTL) &
+            tmp = saved_crtc_gen_cntl = inl(ATIIOPortCRTC_GEN_CNTL) &
                 ~(CRTC_EN | CRTC_LOCK_REGS);
-            tmp = saved_crtc_gen_cntl & ~CRTC_EXT_DISP_EN;
             if (ATIChip >= ATI_CHIP_264XL)
                 tmp = (tmp & ~CRTC_INT_ENS_X) | CRTC_INT_ACKS_X;
             outl(ATIIOPortCRTC_GEN_CNTL, tmp | CRTC_EN);
             outl(ATIIOPortCRTC_GEN_CNTL, tmp);
             outl(ATIIOPortCRTC_GEN_CNTL, tmp | CRTC_EN);
-            if (ATIChip >= ATI_CHIP_264XL)
+            if (ATILCDPanelID >= 0)
             {
                 saved_lcd_index = inl(ATIIOPortLCD_INDEX);
-                outl(ATIIOPortLCD_INDEX,
-                    saved_lcd_index & ~(LCD_MONDET_INT_EN | LCD_MONDET_INT));
+                if (ATIChip >= ATI_CHIP_264XL)
+                    outl(ATIIOPortLCD_INDEX, saved_lcd_index &
+                        ~(LCD_MONDET_INT_EN | LCD_MONDET_INT));
             }
 
             /* Ensure VGA aperture is enabled */
@@ -191,6 +191,31 @@ ATIEnterLeave(const Bool enter)
                 }
             }
 
+            if (ATILCDPanelID >= 0)
+            {
+                if (ATIChip == ATI_CHIP_264LT)
+                {
+                    saved_lcd_gen_ctrl = inl(ATIIOPortLCD_GEN_CTRL);
+
+                    /* Setup to unlock non-shadow registers */
+                    lcd_gen_ctrl = saved_lcd_gen_ctrl &
+                        ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN);
+                    outl(ATIIOPortLCD_GEN_CTRL, lcd_gen_ctrl);
+                }
+                else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                            (ATIChip == ATI_CHIP_264XL) ||
+                            (ATIChip == ATI_CHIP_MOBILITY)) */
+                {
+                    saved_lcd_gen_ctrl = ATIGetLTProLCDReg(LCD_GEN_CNTL);
+
+                    /* Setup to unlock shadow registers */
+                    lcd_gen_ctrl = saved_lcd_gen_ctrl &
+                        ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN);
+                    ATIPutLTProLCDReg(LCD_GEN_CNTL, lcd_gen_ctrl);
+                }
+            }
+
+        UnlockShadowVGA:
             ATISetVGAIOBase(inb(R_GENMO));
 
             /*
@@ -241,17 +266,104 @@ ATIEnterLeave(const Bool enter)
                     VSyncEnd = VBlankEnd - 1;
                 PutReg(CRTX(vgaIOBase), 0x11U, (VSyncEnd & 0x0FU) | 0x20U);
             }
+
+            if (ATILCDPanelID >= 0)
+            {
+                Bool DoShadow = TRUE;
+
+                lcd_gen_ctrl ^= (SHADOW_EN | SHADOW_RW_EN);
+                if (!(lcd_gen_ctrl & (SHADOW_EN | SHADOW_RW_EN)))
+                {
+                    DoShadow = FALSE;
+                    lcd_gen_ctrl = saved_lcd_gen_ctrl;
+                }
+
+                /*
+                 * Setup to unlock shadow registers or restore previous
+                 * selection.
+                 */
+                if (ATIChip == ATI_CHIP_264LT)
+                    outl(ATIIOPortLCD_GEN_CTRL, lcd_gen_ctrl);
+                else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                            (ATIChip == ATI_CHIP_264XL) ||
+                            (ATIChip == ATI_CHIP_MOBILITY)) */
+                {
+                    ATIPutLTProLCDReg(LCD_GEN_CNTL, lcd_gen_ctrl);
+
+                    /* Restore LCD index */
+                    outb(ATIIOPortLCD_INDEX, GetByte(saved_lcd_index, 0));
+                }
+
+                if (DoShadow)
+                    goto UnlockShadowVGA;       /* Unlock shadow registers */
+            }
         }
     }
     else
     {
         if (ATIVGAAdapter != ATI_ADAPTER_NONE)
         {
+            if (ATILCDPanelID >= 0)
+            {
+                if (ATIChip == ATI_CHIP_264LT)
+                {
+                    saved_lcd_gen_ctrl = inl(ATIIOPortLCD_GEN_CTRL);
+
+                    /* Setup to lock non-shadow registers */
+                    lcd_gen_ctrl = saved_lcd_gen_ctrl &
+                        ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN);
+                    outl(ATIIOPortLCD_GEN_CTRL, lcd_gen_ctrl);
+                }
+                else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                            (ATIChip == ATI_CHIP_264XL) ||
+                            (ATIChip == ATI_CHIP_MOBILITY)) */
+                {
+                    saved_lcd_gen_ctrl = ATIGetLTProLCDReg(LCD_GEN_CNTL);
+
+                    /* Setup to lock shadow registers */
+                    lcd_gen_ctrl = saved_lcd_gen_ctrl &
+                        ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN);
+                    ATIPutLTProLCDReg(LCD_GEN_CNTL, lcd_gen_ctrl);
+                }
+            }
+
+        LockShadowVGA:
             ATISetVGAIOBase(inb(R_GENMO));
 
             /* Protect CRTC[0-7] */
             tmp = GetReg(CRTX(vgaIOBase), 0x11U);
             outb(CRTD(vgaIOBase), tmp | 0x80U);
+
+            if (ATILCDPanelID >= 0)
+            {
+                Bool DoShadow = TRUE;
+
+                lcd_gen_ctrl ^= (SHADOW_EN | SHADOW_RW_EN);
+                if (!(lcd_gen_ctrl & (SHADOW_EN | SHADOW_RW_EN)))
+                {
+                    DoShadow = FALSE;
+                    lcd_gen_ctrl = saved_lcd_gen_ctrl;
+                }
+
+                /*
+                 * Setup to lock shadow registers or restore previous
+                 * selection.
+                 */
+                if (ATIChip == ATI_CHIP_264LT)
+                    outl(ATIIOPortLCD_GEN_CTRL, lcd_gen_ctrl);
+                else /* if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                            (ATIChip == ATI_CHIP_264XL) ||
+                            (ATIChip == ATI_CHIP_MOBILITY)) */
+                {
+                    ATIPutLTProLCDReg(LCD_GEN_CNTL, lcd_gen_ctrl);
+
+                    /* Restore LCD index */
+                    outb(ATIIOPortLCD_INDEX, GetByte(saved_lcd_index, 0));
+                }
+
+                if (DoShadow)
+                    goto LockShadowVGA;       /* Lock shadow registers */
+            }
 
             if (ATIChipHasVGAWonder)
             {
@@ -315,7 +427,7 @@ ATIEnterLeave(const Bool enter)
             outl(ATIIOPortDAC_CNTL, saved_dac_cntl);
             if (ATIChip < ATI_CHIP_264CT)
                 outl(ATIIOPortMEM_INFO, saved_mem_info);
-            else if (ATIChip >= ATI_CHIP_264XL)
+            else if (ATILCDPanelID >= 0)
                 outl(ATIIOPortLCD_INDEX, saved_lcd_index);
         }
 

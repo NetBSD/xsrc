@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.11 1999/10/12 17:18:43 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.13 2000/05/14 02:02:11 tsi Exp $ */
 /*
  * Written by Jake Richter
  * Copyright (c) 1989, 1990 Panacea Inc., Londonderry, NH - All Rights Reserved
@@ -109,8 +109,6 @@ static unsigned long old_LCD_GEN_CTRL;
 static unsigned long old_HORZ_STRETCHING;
 static unsigned long old_VERT_STRETCHING;
 static unsigned long old_EXT_VERT_STRETCH;
-static unsigned long old_POWER_MANAGEMENT;
-static unsigned long old_POWER_MANAGEMENT_2;
 
 static int oldClockFreq;
 static unsigned char old_PLL[16];
@@ -1120,7 +1118,7 @@ void mach64SetDSPRegs(depth)
     default:                   bpp =  4; break;
     }
 
-    x = ((double)mach64VRAMMemClk * 64.0) / (current_dot_clock * (double)bpp);
+    x = ((double)mach64XCLK * 64.0) / (current_dot_clock * (double)bpp);
     if (mach64LCDPanelID >= 0)	/* Compensate for horizontal stretching */
 	x *= (double)mach64LCDHorizontal / (double)current_hdisplay;
     bx = ceil(log(floor(x))/log(2));
@@ -1275,7 +1273,7 @@ void mach64SetDSPRegs(depth)
     ErrorF("dsp_on  = %d, ron  = %d, rloop = %d\n", dsp_on, ron, rloop);
     ErrorF("dsp_off = %d, roff = %d\n", dsp_off, roff);
     ErrorF("dsp_xclks_per_qw = %d\n", dsp_xclks_per_qw);
-    ErrorF("mach64VRAMMemClk = %d, ", mach64VRAMMemClk);
+    ErrorF("mach64XCLK = %d, ", mach64XCLK);
     ErrorF("dot_clock = %.3lf, ", current_dot_clock);
     ErrorF("bpp = %d\n", bpp);
     ErrorF("trp = %d, ", trp);
@@ -2431,9 +2429,6 @@ void mach64InitDisplay(screen_idx)
 		regw(LCD_GEN_CTRL, temp);
 		old_HORZ_STRETCHING = regr(HORZ_STRETCHING);
 		old_VERT_STRETCHING = regr(VERT_STRETCHING);
-		old_POWER_MANAGEMENT = regr(POWER_MANAGEMENT);
-		/* Disable panel's APM */
-		regw(POWER_MANAGEMENT, old_POWER_MANAGEMENT & ~PWR_MGT_ON);
 	    } else {
 		/* All others */
 		old_LCD_INDEX = inl(ioLCD_INDEX);
@@ -2458,23 +2453,6 @@ void mach64InitDisplay(screen_idx)
 		old_VERT_STRETCHING = inl(ioLCD_DATA);
 		outb(ioLCD_INDEX, LCD_EXT_VERT_STRETCH);
 		old_EXT_VERT_STRETCH = inl(ioLCD_DATA);
-		outb(ioLCD_INDEX, LCD_POWER_MANAGEMENT);
-		old_POWER_MANAGEMENT = inl(ioLCD_DATA);
-		/* Disable panel's APM */
-		outl(ioLCD_DATA, old_POWER_MANAGEMENT & ~PWR_MGT_ON);
-		if ((mach64ChipType != MACH64_LB_ID) &&
-		    (mach64ChipType != MACH64_LD_ID) &&
-		    (mach64ChipType != MACH64_LI_ID) &&
-		    (mach64ChipType != MACH64_LP_ID)) {
-		    outb(ioLCD_INDEX, LCD_POWER_MANAGEMENT_2);
-		    old_POWER_MANAGEMENT_2 = inl(ioLCD_DATA);
-		    outl(ioLCD_DATA, old_POWER_MANAGEMENT_2 &
-			~(LCD_XCLK_DISP_PM_EN | LCD_XCLK_GUI_PM_EN |
-			  LCD_MCLK_PM_EN | LCD_PM_DYN_XCLK_EN |
-			  LCD_PM_XCLK_ALWAYS | LCD_PCI_ACC_DIS |
-			  LCD_PM_DYN_XCLK_DISP | LCD_PM_DYN_XCLK_GUI |
-			  LCD_PM_DYN_XCLK_HOST));
-		}
 	    }
 	}
 
@@ -2885,7 +2863,6 @@ void mach64CleanUp()
 		regw(LCD_GEN_CTRL, old_LCD_GEN_CTRL);
 		regw(HORZ_STRETCHING, old_HORZ_STRETCHING);
 		regw(VERT_STRETCHING, old_VERT_STRETCHING);
-		regw(POWER_MANAGEMENT, old_POWER_MANAGEMENT);
 	    } else {
 		outb(ioLCD_INDEX, LCD_GEN_CNTL);
 		outl(ioLCD_DATA, old_LCD_GEN_CTRL);
@@ -2895,15 +2872,6 @@ void mach64CleanUp()
 		outl(ioLCD_DATA, old_VERT_STRETCHING);
 		outb(ioLCD_INDEX, LCD_EXT_VERT_STRETCH);
 		outl(ioLCD_DATA, old_EXT_VERT_STRETCH);
-		outb(ioLCD_INDEX, LCD_POWER_MANAGEMENT);
-		outl(ioLCD_DATA, old_POWER_MANAGEMENT);
-		if ((mach64ChipType != MACH64_LB_ID) &&
-		    (mach64ChipType != MACH64_LD_ID) &&
-		    (mach64ChipType != MACH64_LR_ID) &&
-		    (mach64ChipType != MACH64_LS_ID)) {
-		    outb(ioLCD_INDEX, LCD_POWER_MANAGEMENT_2);
-		    outl(ioLCD_DATA, old_POWER_MANAGEMENT_2);
-		}
 		outl(ioLCD_INDEX, old_LCD_INDEX);
 	    }
 	}

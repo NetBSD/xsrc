@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atimach64.c,v 1.1.2.3 1999/07/05 09:07:34 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atimach64.c,v 1.1.2.4 2000/05/14 02:02:16 tsi Exp $ */
 /*
  * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -142,10 +142,12 @@ ATIMach64Init(DisplayModePtr mode)
                 mode->CrtcHSyncEnd = mode->CrtcHSyncStart +
                     MaxBits(CRTC_H_SYNC_WID);
             else if (mode->CrtcHSyncStart == mode->CrtcHSyncEnd)
+            {
                 if (mode->CrtcHDisplay < mode->CrtcHSyncStart)
                     mode->CrtcHSyncStart--;
                 else if (mode->CrtcHSyncEnd < mode->CrtcHTotal)
                     mode->CrtcHSyncEnd++;
+            }
         }
 
         /*

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiwonder.c,v 1.1.2.2 1999/10/12 17:18:58 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiwonder.c,v 1.1.2.3 2000/05/14 02:02:18 tsi Exp $ */
 /*
  * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -20,8 +20,8 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* The ATI x8800 chips use special registers for their extended VGA features.
+/*
+ * The ATI x8800 chips use special registers for their extended VGA features.
  * These registers are accessible through an index I/O port and a data I/O
  * port.  BIOS initialization stores the index port number in the Graphics
  * register bank (0x03CE), indices 0x50 and 0x51.  Unfortunately, for all but
@@ -186,10 +186,12 @@ ATIVGAWonderInit(DisplayModePtr mode)
             }
         }
         if (mode->Flags & V_INTERLACE)  /* Enable interlacing */
+        {
             if (ATIChip <= ATI_CHIP_18800)
                 ATINewHWPtr->b2 |= 0x01U;
             else
                 ATINewHWPtr->be |= 0x02U;
+        }
 #if 0   /* This is no longer needed but is left in for reference */
         if (mode->Flags & V_DBLSCAN)
             ATINewHWPtr->b1 |= 0x08U;   /* Enable double scanning */
@@ -200,6 +202,7 @@ ATIVGAWonderInit(DisplayModePtr mode)
         if (mode->Flags & V_NCSYNC)
             ATINewHWPtr->bd |= 0x09U;   /* Invert csync polarity */
         if (mode->CrtcHSkew > 0)
+        {
             if (mode->CrtcHSkew <= 3)
                 ATINewHWPtr->b5 |= 0x01U;
             else if (ATIChip >= ATI_CHIP_28800_2)
@@ -228,6 +231,7 @@ ATIVGAWonderInit(DisplayModePtr mode)
                 default:
                     break;
             }
+        }
     }
 }
 

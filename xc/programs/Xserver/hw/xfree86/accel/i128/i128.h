@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.h,v 3.5.2.2 1998/12/19 15:40:53 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.h,v 3.5.2.3 2000/09/04 00:42:33 robin Exp $ */
 
 #ifndef _I128_H_
 #define _I128_H_
@@ -715,6 +715,11 @@ void i128IBMLoadCursor(
     CursorPtr,
     int,
     int 
+#endif
+);
+void i128DPMSSet(
+#if NeedFunctionPrototypes
+    int
 #endif
 );
 

@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/os/connection.c,v 3.25.2.7 1999/05/15 13:53:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/connection.c,v 3.25.2.8 2000/06/26 21:44:56 dawes Exp $ */
 /*****************************************************************
  *  Stuff to create connections --- OS dependent
  *
@@ -571,16 +571,26 @@ ClientAuthorized(client, proto_n, auth_proto, string_n, auth_string)
     XID	 		auth_id;
     char	 	*reason = NULL;
     XtransConnInfo	trans_conn;
+    ClientPtr		lbxpc;
+    int			restore_trans_conn = 0;
+
+    priv = (OsCommPtr)client->osPrivate;
+    trans_conn = priv->trans_conn;
+
+#ifdef LBX
+    if (! trans_conn) {
+	lbxpc = LbxProxyClient(priv->proxy);
+	trans_conn = ((OsCommPtr)lbxpc->osPrivate)->trans_conn;
+	priv->trans_conn = trans_conn;
+	restore_trans_conn = 1;
+    }
+#endif
 
     auth_id = CheckAuthorization (proto_n, auth_proto,
 				  string_n, auth_string, client, &reason);
 
-    priv = (OsCommPtr)client->osPrivate;
-    trans_conn = priv->trans_conn;
 #ifdef LBX
-    if (!trans_conn) {
-	ClientPtr lbxpc = LbxProxyClient(priv->proxy);
-	trans_conn = ((OsCommPtr)lbxpc->osPrivate)->trans_conn;
+    if (! priv->trans_conn) {
 	if (auth_id == (XID) ~0L && !GetAccessControl())
 	    auth_id = ((OsCommPtr)lbxpc->osPrivate)->auth_id;
 #ifdef XCSECURITY
@@ -610,7 +620,7 @@ ClientAuthorized(client, proto_n, auth_proto, string_n, auth_string)
 #endif
 	    if (
 #ifdef LBX
-		!priv->trans_conn ||
+		!trans_conn ||
 #endif
 		InvalidHost ((struct sockaddr *) from, fromlen))
 		AuthAudit(client, FALSE, (struct sockaddr *) from,
@@ -627,11 +637,15 @@ ClientAuthorized(client, proto_n, auth_proto, string_n, auth_string)
 	    xfree ((char *) from);
 	}
 
-	if (auth_id == (XID) ~0L)
+	if (auth_id == (XID) ~0L) {
+#ifdef LBX
+	    if (restore_trans_conn) priv->trans_conn = NULL;
+#endif
 	    if (reason)
 		return reason;
 	    else
 		return "Client is not authorized to connect to Server";
+	}
     }
     else if (auditTrailLevel > 1)
     {
@@ -655,12 +669,17 @@ ClientAuthorized(client, proto_n, auth_proto, string_n, auth_string)
     if (ClientStateCallback)
         XagCallClientStateChange (client);
 #endif
+
     /* At this point, if the client is authorized to change the access control
      * list, we should getpeername() information, and add the client to
      * the selfhosts list.  It's not really the host machine, but the
      * true purpose of the selfhosts list is to see who may change the
      * access control list.
      */
+
+#ifdef LBX
+    if (restore_trans_conn) priv->trans_conn = NULL;
+#endif
     return((char *)NULL);
 }
 

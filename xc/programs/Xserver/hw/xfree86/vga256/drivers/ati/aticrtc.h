@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticrtc.h,v 1.1.2.3 1999/10/12 17:18:53 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticrtc.h,v 1.1.2.4 2000/05/14 02:02:15 tsi Exp $ */
 /*
  * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -51,7 +51,10 @@ typedef struct
               b0, b1, b2, b3,     b5, b6,     b8, b9, ba,         bd, be, bf;
 
         /* Mach64 PLL registers */
-        CARD8 pll_vclk_cntl, pll_ext_vpll_cntl;
+        CARD8 pll_vclk_cntl, pll_vclk_post_div,
+              pll_vclk0_fb_div, pll_vclk1_fb_div,
+              pll_vclk2_fb_div, pll_vclk3_fb_div,
+              pll_xclk_cntl, pll_ext_vpll_cntl;
 
         /* Mach64 registers */
         CARD32 crtc_h_total_disp, crtc_h_sync_strt_wid,
@@ -63,8 +66,7 @@ typedef struct
 
         /* LCD registers */
         CARD32 lcd_index, config_panel, lcd_gen_ctrl,
-               horz_stretching, vert_stretching, ext_vert_stretch,
-               power_management, power_management_2;
+               horz_stretching, vert_stretching, ext_vert_stretch;
 
         /* Shadow VGA CRTC registers */
         CARD8 shadow_vga[25];

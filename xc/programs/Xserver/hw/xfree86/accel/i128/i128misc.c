@@ -27,7 +27,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.6 2000/01/08 02:06:34 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.9 2000/09/04 02:08:04 robin Exp $ */
 
 #include "servermd.h"
 
@@ -42,12 +42,24 @@
 #define XCONFIG_FLAGS_ONLY
 #include "xf86_Config.h"
 #include "xf86scrin.h"
+#include "IBMRGB.h"
+
+#ifdef XFreeXDGA
+#include "X.h"
+#include "Xproto.h"
+#include "scrnintstr.h" 
+#include "servermd.h"
+#define _XF86DGA_SERVER_
+#include "extensions/xf86dgastr.h"
+#endif  
+#include "extensions/dpms.h"
 
 extern miPointerScreenFuncRec xf86PointerScreenFuncs;
 
 extern ScreenPtr i128savepScreen;
 static PixmapPtr ppix = NULL;
 extern int i128DisplayWidth;
+extern int i128RamdacType;
 extern pointer vgaBase;
 extern pointer i128VideoMem;
 extern struct i128mem i128mem;
@@ -137,6 +149,11 @@ i128Initialize(scr_index, pScreen, argc, argv)
    xf86PointerScreenFuncs.WarpCursor = i128WarpCursor;
    (void)i128CursorInit(0, pScreen);
 
+#ifdef XFreeXDGA
+   i128InfoRec.physBase = i128InfoRec.MemBase;
+   i128InfoRec.physSize = i128InfoRec.videoRam * 1024;
+#endif
+
    i128savepScreen = pScreen;
    return (cfbCreateDefColormap(pScreen));
 
@@ -154,6 +171,13 @@ i128EnterLeaveVT(enter, screen_idx)
 {
    PixmapPtr pspix;
    ScreenPtr pScreen = i128savepScreen;
+
+#ifdef XFreeXDGA
+   if (i128InfoRec.directMode&XF86DGADirectGraphics && !enter) {
+      i128HideCursor();
+      return;
+   }
+#endif  
 
    if (!xf86Exiting && !xf86Resetting) {
       /* cfbGetScreenPixmap(pScreen) */
@@ -338,3 +362,40 @@ i128AdjustFrame(int x, int y)
       i128RepositionCursor(i128savepScreen);
    }
 }
+
+void
+i128DPMSSet(PowerManagementMode)
+    int PowerManagementMode;
+{
+#ifdef DPMSExtension
+    CARD32 snc;
+
+    if (!xf86VTSema) return;
+
+    snc = i128mem.rbase_g[CRT_1CON] 					MB;
+
+    ErrorF("DPMS mode %d\n", PowerManagementMode);
+
+    switch (PowerManagementMode)
+    {
+    case DPMSModeOn:
+	/* HSync: On, VSync: On */
+	snc = (snc & 0xffffff4f) | 0x30;
+	break;
+    case DPMSModeStandby:
+	/* HSync: Off, VSync: On */
+	snc = (snc & 0xffffff4f) | 0x20;
+	break;
+    case DPMSModeSuspend:
+	/* HSync: On, VSync: Off */
+	snc = (snc & 0xffffff4f) | 0x10;
+	break;
+    case DPMSModeOff:
+	/* HSync: Off, VSync: Off */
+	snc = (snc & 0xffffff4f);
+	break;
+    }
+    i128mem.rbase_g[CRT_1CON] = snc;					MB;
+#endif
+}
+
