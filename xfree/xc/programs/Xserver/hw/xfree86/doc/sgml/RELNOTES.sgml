@@ -6,10 +6,10 @@
 
 <title>Release Notes for XFree86&trade; &relvers;
 <author>The XFree86 Project, Inc
-<date>17 January 2002
+<date>3 September 2002
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.70.2.1 2002/01/21 19:02:04 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.70.2.2 2002/09/04 03:01:48 dawes Exp $
 </ident>
 
 <abstract>
@@ -84,6 +84,29 @@ don't have enough space to cover them all here.
 <![ %updaterel [
 <sect>Summary of updates in &relvers;.
 <p>
+<sect1>Security
+<p>
+<itemize>
+<item> Fix a zlib bug that may have security implications on some platforms.
+<item> MIT-SHM update to not access SHM segments that the client doesn't
+	have sufficient privileges to access.
+<item> Fix an Xlib problem that made it possible to load (and execute)
+	arbitrary code in privileged clients.
+</itemize>
+
+<sect1>Other
+<p>
+<itemize>
+<item>Revert the ATI driver's composite sync default to a safer value.
+<item>Fix Xlib's modular i18n support on Solaris.
+<item>Fix an X server crash when printing some types of modes.
+<item>Startx and xon script fixes.
+<item>Fix a colormap bug with 24+8 overlay mode.
+<item>Update XDarwin support for the Jaguar release.
+<item>Xaw bug fix.
+<item>Fix a vesa driver floating point exception.
+<item>Fix Emulate3Buttons for wsmouse protocol on NetBSD and OpenBSD.
+</itemize>
 
 </sect>
 ]]>
