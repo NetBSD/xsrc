@@ -642,6 +642,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #if defined(AlphaArchitecture)
 # define BuildServer		YES
 # define XalphaNetBSDServer	YES
+# define XdecNetBSDServer	YES
 # define ServerOSDefines 	XFree86ServerOSDefines
 # define ServerExtraDefines	GccGasOption XFree86ServerDefines -D_XSERVER64
 # ifndef XFree86ConsoleDefines
