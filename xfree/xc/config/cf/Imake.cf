@@ -71,7 +71,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.89 2004/01/25 01:12:20 dawes Exp $
 # define UltrixArchitecture
 #endif /* ultrix */
 
-#if defined(vax) && !defined(UltrixArchitecture) && !defined(__OpenBSD__)
+#if defined(vax) && !defined(UltrixArchitecture) && !defined(__OpenBSD__) && !defined(__NetBSD__)
 # define MacroIncludeFile <bsd.cf>
 # define MacroFile bsd.cf
 # undef vax
@@ -199,60 +199,163 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.89 2004/01/25 01:12:20 dawes Exp $
 # undef __NetBSD__
 # define NetBSDArchitecture
 # define KNetBSDArchitecture
-# ifdef __i386__
+ /* MACHINE_CPU specific definitions ("__${MACHINE_CPU}__" is defined by cpp) */
+# if defined(__alpha__) || defined(alpha)
+#  define AlphaArchitecture
+#  define AlphaBsdArchitecture
+#  undef alpha
+# endif
+# if defined(__arm__) || defined(arm)
+#  define armArchitecture
+#  undef arm
+# endif
+# if defined(__hppa__) || defined(hppa)
+#  define HPArchitecture
+#  undef hppa
+# endif
+# if defined(__i386__) || defined(i386)
 #  define i386BsdArchitecture
 #  define i386Architecture
 #  undef i386
 # endif
-# if defined(__sparc64__) || defined(__sparc_v9__) || defined(__arch64__)
-#  define Sparc64Architecture
+# if defined(__m68000__) || defined(m68000)
+#  define m68000Architecture
+#  define Mc68000Architecture
+#  undef m68000
 # endif
-# if defined(__sparc__) || defined(sparc)
+# if defined(__m68k__) || defined(m68k)
+#  define m68kArchitecture
+#  define Mc68020Architecture
+#  undef m68k
+# endif
+# if defined(__mips__) || defined(mips)
+#  define MipsArchitecture
+#  if defined(__MIPSEL__)
+#   define MipselArchitecture
+#  endif
+#  undef mips
+# endif
+# if defined(__ns32k__) || defined(ns32k)
+#  define ns32kArchitecture
+#  undef ns32k
+# endif
+# if defined(__powerpc__) || defined(powerpc)
+#  define PpcArchitecture
+#  undef powerpc
+# endif
+# if defined(__sh__) || defined(sh)
+#  if defined(__BIG_ENDIAN__)
+#   define SuperHebArchitecture
+#  else
+#   define SuperHArchitecture
+#  endif
+#  if defined(__SH5__)
+#   define sh5Architecture
+#  else
+#   define sh3Architecture
+#  endif
+#  undef sh
+# endif
+# if defined(__sparc__)
 #  define SparcArchitecture
 #  undef sparc
 #  if defined(__sparc_v9__) || defined(__arch64__)
-#    define Sparc64Architecture
+#   define Sparc64Architecture
 #  endif
 # endif
-# ifdef __mips__
-#   define MipsArchitecture
-#   define ArcArchitecture
-#   undef __mips__
-#   if defined(__sgimips__)
-#      define SGIMipsArchitecture
-#   endif
+# if defined(__sparc64__) || defined(__sparc_v9__) || defined(sparc64)
+#  define Sparc64Architecture
+#  undef sparc64
 # endif
-# ifdef __alpha__
-#   define AlphaArchitecture
-#   define AlphaBsdArchitecture
-#   undef __alpha__
+# if defined(__vax__) || defined(vax)
+#  define VaxArchitecture
+#  undef vax
 # endif
-# ifdef mc68000
-#   define Mc68020Architecture
+# if defined(__x86_64__) || defined(x86_64)
+#  define x86_64Architecture
+#  undef x86_64
 # endif
-# ifdef __arm32__
-#   define Arm32Architecture
-#   undef __arm32__
+ /* MACHINE specific definitions ("__${MACHINE}__" is defined by imake) */
+# if defined(__acorn32__)
+#  define Arm32Architecture
+#  define acorn32Architecture
 # endif
-# ifdef __cats__
-#   define CatsArchitecture
-#   undef __cats__
-# endif
-# ifdef __vax__
-#   define VaxArchitecture
-#   undef __vax__
-# endif
-# ifdef __powerpc__
-#   define PpcArchitecture
-#   undef __powerpc__
-# endif
-# ifdef __macppc__
-#   define macppcArchitecture
-#   undef __macppc__
-# endif
-# ifdef __x86_64__
+# if defined(__amd64__)
 #  define AMD64Architecture
-#  undef __x86_64__
+# endif
+# if defined(__algor__)
+#  define algorArchitecture
+# endif
+# if defined(__amiga__)
+#  define amigaArchitecture
+# endif
+# if defined(__atari__)
+#  define atariArchitecture
+# endif
+# if defined(__cats__)
+#  define Arm32Architecture
+#  define CatsArchitecture
+# endif
+# if defined(__cobalt__)
+#  define cobaltArchitecture
+# endif
+# if defined(__dreamcast__)
+#  define dreamcastArchitecture
+# endif
+# if defined(__hp300__)
+#  define hp300Architecture
+# endif
+# if defined(__hpcarm__)
+#  define hpcarmArchitecture
+# endif
+# if defined(__hpcmips__)
+#  define hpcmipsArchitecture
+# endif
+# if defined(__mac68k__)
+#  define mac68kArchitecture
+# endif
+# if defined(__macppc__)
+#  define macppcArchitecture
+# endif
+# if defined(__luna68k__)
+#  define luna68kArchitecture
+# endif
+# if defined(__mipsco__)
+#  define mipscoArchitecture
+# endif
+# if defined(__mvme68k__)
+#  define mvme68kArchitecture
+# endif
+# if defined(__next68k__)
+#  define next68kArchitecture
+# endif
+# if defined(__news68k__)
+#  define news68kArchitecture
+# endif
+# if defined(__pc532__)
+#  define pc532Architecture
+# endif
+# if defined(__pmax__)
+#  define pmaxArchitecture
+# endif
+# if defined(__playstation2__)
+#  define playstation2Architecture
+# endif
+# if defined(__prep__)
+#  define prepArchitecture
+# endif
+# if defined(__sgimips__)
+#  define SGIMipsArchitecture
+# endif
+# if defined(__shark__)
+#  define Arm32Architecture
+#  define sharkArchitecture
+# endif
+# if defined(__sun3__)
+#  define Sun3Architecture
+# endif
+# if defined(__x68k__)
+#  define x68kArchitecture
 # endif
 #endif /* NetBSD */
 
