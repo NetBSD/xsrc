@@ -69,7 +69,7 @@
 #define RADEON_DEBUG            0 /* Turn off debugging output               */
 #define RADEON_IDLE_RETRY      16 /* Fall out of idle loops after this count */
 #define RADEON_TIMEOUT    2000000 /* Fall out of wait loops after this count */
-#define RADEON_MMIOSIZE   0x80000
+#define RADEON_MMIOSIZE   0x10000
 
 #define RADEON_VBIOS_SIZE 0x00010000
 #define RADEON_USE_RMX 0x80000000 /* mode flag for using RMX 
