@@ -420,9 +420,9 @@ char	*buf;
     {
 	rnd[i] = arc4random();
     }
-    for (i = 0; i < len % 4; i++)
+    for (i = (len / 4) * 4; i < len; i++)
     {
-	buf[(len / 4) * 4 + i] = arc4random() & 0xff;
+	buf[i] = arc4random() & 0xff;
     }
 #else
     static int seed;
