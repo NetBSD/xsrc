@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.79 2000/08/26 01:30:02 mrg Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.80 2000/11/06 12:58:18 mrg Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -248,12 +248,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #if defined(SparcArchitecture)
 # define ServerOSDefines	-DDDXOSINIT
-# define ServerExtraDefines	GccGasOption
-# define PexDynamicModule	NO
-# define XieDynamicModule	NO
 # if defined(Sparc64Architecture)
 #  define ServerExtraDefines	GccGasOption -D_XSERVER64
+# else
+#  define ServerExtraDefines	GccGasOption
 # endif
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
 #endif
 
 #if defined(Sun3Architecture)
