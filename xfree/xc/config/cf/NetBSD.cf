@@ -41,7 +41,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #define HasNdbm         	YES
 #define HasPutenv       	YES
-#if OSMajorVersion == 1 && OSMinorVersion > 4 || OSMajorVersion > 1
+#if (OSMajorVersion == 1 && OSMinorVersion > 4 || OSMajorVersion > 1)
 # define HasStrlcat		YES
 #endif
 #define HasSnprintf		YES
@@ -55,11 +55,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define HasLibCrypt		YES
 #endif
 #ifndef HasShm
-# if OSMajorVersion == 0 && OSMinorVersion == 9 && OSTeenyVersion == 2
 /*
  * Shm memory was removed in 0.9B because it was encumbered.
  * A free version was added in 0.9C
  */
+# if (OSMajorVersion == 0 && OSMinorVersion == 9 && OSTeenyVersion == 2)
 #  define HasShm          	NO
 # else
 #  define HasShm          	YES
@@ -71,28 +71,31 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  */
 #if ((OSMajorVersion == 1 && OSMinorVersion < 2) || \
      (OSMajorVersion == 1 && OSMinorVersion == 2 && OSTeenyVersion < 2))
-#  define HasDlsymBug		YES
+# define HasDlsymBug		YES
 #endif
 /* Mkstemp is there since 1.2 (at least) */
-#if (!(OSMajorVersion == 0 || \
-       (OSMajorVersion == 1 && OSMinorVersion < 2))) 
-#define HasMkstemp		YES
+#if ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion >= 2)) 
+# define HasMkstemp		YES
 #endif
 /* But the standalone mktemp doesn't exist before NetBSD 1.5*/
-#if (OSMajorVersion ==0 || (OSMajorVersion == 1 && OSMinorVersion <= 4))
+#if ((OSMajorVersion == 0) || \
+     (OSMajorVersion == 1 && OSMinorVersion <= 4))
 # define HasMktemp		NO
 #else
 # define HasMktemp		YES
 #endif
 
 #ifndef HasIssetugid
-# if (OSMajorVersion > 1 || (OSMajorVersion == 1 && OSMinorVersion >= 5))
+# if ((OSMajorVersion > 1) || \
+      (OSMajorVersion == 1 && OSMinorVersion >= 5))
 #  define HasIssetugid          YES
 # endif
 #endif
 
-#if (OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion > 1) 
-#define HasGetIfAddrs		YES
+#if ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion >= 5))
+# define HasGetIfAddrs		YES
 #endif
 
 #define HasUsableFileMmap	YES
@@ -104,8 +107,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #define InstallXloadSetGID	NO
 
-#if OSMajorVersion < 1 || (OSMajorVersion == 1 && OSMinorVersion < 5)
-#define BuildIPv6		NO
+#if ((OSMajorVersion < 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion < 5))
+# define BuildIPv6		NO
 #endif
 
 #define IPv6SocketsAlsoIPv4	NO
@@ -131,6 +135,19 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXNO_MTSAFE_PWDAPI
 #else 
 # define ThreadedX		NO
+#endif
+
+/*
+ * Use rnd(4) under NetBSD from 1.4 to 1.6A and arc4random(3) under 1.6B
+ * and above.
+ */
+#if ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion >= 2))
+# define HasArc4Random		YES
+#elif ((OSMajorVersion > 1) || \
+       (OSMajorVersion == 1 && OSMinorVersion > 3))
+# define HasDevRandom		YES
+# define RandomDeviceFile	/dev/urandom
 #endif
 
 /*
@@ -345,8 +362,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * be a release for 1.4.9.
  */
 # if ((OSMajorVersion > 1) || \
-     (OSMajorVersion == 1 && OSMinorVersion > 4) || \
-     (OSMajorVersion == 1 && OSMinorVersion == 4 && OSTeenyVersion > 9))
+      (OSMajorVersion == 1 && OSMinorVersion > 4) || \
+      (OSMajorVersion == 1 && OSMinorVersion == 4 && OSTeenyVersion > 9))
 #  define UseGnuMalloc		NO
 # else
 #  define UseGnuMalloc		YES
@@ -451,8 +468,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  */
 #if ((OSMajorVersion > 1) || \
      (OSMajorVersion == 1 && OSMinorVersion >= 6) || \
-     (OSMajorVersion == 1 && OSMinorVersion == 5 && \
-      OSTeenyVersion >= 25))
+     (OSMajorVersion == 1 && OSMinorVersion == 5 && OSTeenyVersion >= 25))
 # ifndef HasAgpGart
 #  define HasAgpGart   YES
 # endif
@@ -463,7 +479,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * necessary kernel and toolchain support.
  */
 #if defined(i386Architecture) &&  \
-	((OSMajorVersion > 1) || (OSMajorVersion == 1 && OSMinorVersion > 5))
+	((OSMajorVersion > 1) || \
+	 (OSMajorVersion == 1 && OSMinorVersion > 5))
 # define HasX86Support          YES
 # define HasMMXSupport          YES
 # define Has3DNowSupport        YES
@@ -476,7 +493,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #ifndef HasCookieMaker
-# if OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion >= 2
+# if (OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion >= 2)
    /* NetBSD 1.5 and later have /dev/urandom */
 #  define HasCookieMaker	YES
 #  define MkCookieCmd \
@@ -620,15 +637,19 @@ InstallManPageAliasesBase(file,destdir,aliases)
  * Unresolved references are fatal on NetBSD 1.5 for libGL, which is
  * built with -Bsymbolic.
  */
-#if UseElfFormat && OSMajorVersion == 1 && OSMinorVersion == 5
-#define SharedGLReqs		$(LDPRELIBS) $(XLIB) -lc
+#if UseElfFormat && \
+    (OSMajorVersion == 1 && OSMinorVersion == 5)
+# define SharedGLReqs		$(LDPRELIBS) $(XLIB) -lc
 #endif
 
 #if HasSharedLibraries
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
 
-/* Always build the XInput library, regardless of server support on this plattform */
+/*
+ * Always build the XInput library, regardless of server support
+ * on this plattform
+ */
 #if !defined(BuildXInputLib) && !defined(BuildServersOnly)
 # define BuildXInputLib          YES
 #endif
@@ -769,17 +790,4 @@ InstallManPageAliasesBase(file,destdir,aliases)
 
 #ifndef UseSeparateConfDir
 #define UseSeparateConfDir NO	/* We don't want appdefs in "/etc/X11". */
-#endif
-
-/*
- * Use rnd(4) under NetBSD from 1.4 to 1.6A and arc4random(3) under 1.6B
- * and above.
- */
-#if (OSMajorVersion > 1 || \
-     (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion >= 2))
-# define HasArc4Random		YES
-#elif ((OSMajorVersion > 1) || \
-       (OSMajorVersion == 1 && OSMinorVersion > 3))
-# define HasDevRandom		YES
-# define RandomDeviceFile	/dev/urandom
 #endif
