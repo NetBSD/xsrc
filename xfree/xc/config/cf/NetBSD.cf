@@ -664,12 +664,6 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #endif
 
 /*
- * NetBSD always uses the XFree86 contrib distribution.
- */
-#undef	XF86Contrib
-#define	XF86Contrib	YES
-
-/*
  * Definitions for the SUN server on NetBSD/sparc
  */
 #ifdef	SparcArchitecture
