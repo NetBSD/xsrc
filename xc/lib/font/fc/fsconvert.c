@@ -32,6 +32,7 @@
 #include	"fontmisc.h"
 #include	"fontstruct.h"
 #include	"fservestr.h"
+#include	"fslibos.h"
 
 extern char _fs_glyph_undefined;
 extern char _fs_glyph_requested;
