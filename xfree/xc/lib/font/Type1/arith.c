@@ -215,7 +215,7 @@ DLdiv(doublelong *quotient,  /* also where dividend is, originally     */
        divisor >>= 1;
  
        if ((u1u2 >> (LONGSIZE - shift)) != 0 && shift != 0)
-               abort("DLdiv:  dividend too large");
+               Xabort("DLdiv:  dividend too large");
        u1u2 = (u1u2 << shift) + ((shift == 0) ? 0 : u3u4 >> (LONGSIZE - shift));
        u3u4 <<= shift;
  
@@ -278,7 +278,7 @@ DLdiv(doublelong *quotient,  /* also where dividend is, originally     */
                */
                u1u2 = t;
                if (HIGHDIGIT(u1u2) != 0)
-                       abort("divide algorithm error");
+                       Xabort("divide algorithm error");
                u1u2 = ASSEMBLE(u1u2, LOWDIGIT(u3));
                u3 = LOWDIGIT(u3u4);
                q3q4 = ASSEMBLE(q3q4, qhat);

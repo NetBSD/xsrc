@@ -1395,7 +1395,7 @@ it:
                        break;
                    }
                    default:
-                       abort("xiFill: unknown format");
+                       Xabort("xiFill: unknown format");
                }
        }
  

@@ -306,14 +306,14 @@ t1_Allocate(int size,     /* number of bytes to allocate & initialize     */
        size = (size + sizeof(long) - 1) & -(int)sizeof(long);
        extra = (extra + sizeof(long) - 1) & -(int)sizeof(long);
        if (size + extra <= 0)
-               abort("Non-positive allocate?");
+               Xabort("Non-positive allocate?");
        r = (struct xobject *) xiMalloc(size + extra);
  
        while (r == NULL) {
                if (!GimeSpace()) {
                        IfTrace1(TRUE, "malloc attempted %d bytes.\n",
                                            size + extra);
-                       abort("We have REALLY run out of memory");
+                       Xabort("We have REALLY run out of memory");
                }
                r = (struct xobject *) xiMalloc(size + extra);
        }
@@ -366,7 +366,7 @@ Free(pointer objPtr)
        struct xobject *obj = (struct xobject *)objPtr;  /* structure to free */
 
        if (obj->type == INVALIDTYPE)
-               abort("Free of already freed object?");
+               Xabort("Free of already freed object?");
        obj->type = INVALIDTYPE;
  
        if (MemoryDebug > 1) {
@@ -803,7 +803,7 @@ Pragmatics(char *username,   /* name of the flag                             */
        char name[NAMESIZE];  /* buffer to store my copy of 'username'        */
  
        if (strlen(username) >= (unsigned)NAMESIZE)
-               abort("Pragmatics name too large");
+               Xabort("Pragmatics name too large");
        strcpy(name, username);
        for (p = name; *p != '\0'; p++)
                *p = toupper(*p);
@@ -986,7 +986,7 @@ TypeErr(char *name,          /* Name of routine (for error message)          */
        ObjectPostMortem(obj);
  
        if (MustCrash)
-               abort("Terminating because of CrashOnUserError...");
+               Xabort("Terminating because of CrashOnUserError...");
        else
                ErrorMessage = typemsg;
  
@@ -1064,7 +1064,7 @@ ArgErr(char *string,       /* description of error                         */
        if (obj != NULL)
                ObjectPostMortem(obj);
        if (MustCrash)
-               abort("Terminating because of CrashOnUserError...");
+               Xabort("Terminating because of CrashOnUserError...");
        else
                ErrorMessage = string;
        return(ret);
@@ -1112,7 +1112,7 @@ InitImager(void)
  
  
 /*       if (sizeof(short) != 2 || sizeof(INT32) != 4)
-               abort("Fundamental TYPE1IMAGER assumptions invalid in this port");
+               Xabort("Fundamental TYPE1IMAGER assumptions invalid in this port");
 */
        InitSpaces();
        InitFonts();

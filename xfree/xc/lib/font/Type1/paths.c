@@ -792,7 +792,7 @@ So, we add "dest" instead of subtracting it:
                        break;
  
                    default:
-                       abort("Reverse: bad path segment");
+                       Xabort("Reverse: bad path segment");
                }
 /*
 We need to reverse the order of segments too, so we break this segment
@@ -860,7 +860,7 @@ UnClose(struct segment *p0)
        for (p=p0; p->link->link != NULL; p=p->link) { ; }
  
        if (!LASTCLOSED(p->link->flag))
-               abort("UnClose:  no LASTCLOSED");
+               Xabort("UnClose:  no LASTCLOSED");
  
        Free(SplitPath(p0, p));
        p0->flag &= ~ISCLOSED(ON);
@@ -1025,7 +1025,7 @@ PathTransform(struct segment *p0,      /* path to transform                  */
  
                    default:
                        IfTrace1(TRUE,"path = %z\n", p);
-                       abort("PathTransform:  invalid segment");
+                       Xabort("PathTransform:  invalid segment");
                }
                oldx += savex;
                oldy += savey;
@@ -1177,7 +1177,7 @@ QueryPath(struct segment *path, /* path to check                             */
                break;
  
            default:
-               abort("QueryPath: unknown segment");
+               Xabort("QueryPath: unknown segment");
        }
        if (coerced)
                KillPath(path);
@@ -1319,7 +1319,7 @@ QueryBounds(struct segment *p0, /* object to check for bound                 */
                    case HINTTYPE:
                        break;
                    default:
-                       abort("QueryBounds: unknown type");
+                       Xabort("QueryBounds: unknown type");
                }
  
                if (x < min.x) min.x = x;
