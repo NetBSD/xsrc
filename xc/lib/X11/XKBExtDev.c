@@ -1,4 +1,4 @@
-/* $XConsortium: XKBExtDev.c /main/2 1996/01/14 16:43:11 kaleb $ */
+/* $XConsortium: XKBExtDev.c /main/3 1996/08/31 12:44:26 kaleb $ */
 /************************************************************
 Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,4 +1,4 @@
-/* $XConsortium: UngrabKbd.c,v 11.11 94/04/17 20:21:22 rws Exp $ */
+/* $XConsortium: UngrabKbd.c /main/5 1996/10/22 14:23:34 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 */
 
 #include "Xlibint.h"
+
 XUngrabKeyboard (dpy, time)
         register Display *dpy;
 	Time time;
@@ -37,5 +38,6 @@ XUngrabKeyboard (dpy, time)
         GetResReq(UngrabKeyboard, time, req);
 	UnlockDisplay(dpy);
 	SyncHandle();
+	return 1;
 }
 

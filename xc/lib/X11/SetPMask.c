@@ -1,4 +1,4 @@
-/* $XConsortium: SetPMask.c,v 11.10 94/04/17 20:21:01 rws Exp $ */
+/* $XConsortium: SetPMask.c /main/5 1996/10/22 14:22:28 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -40,4 +40,5 @@ unsigned long planemask; /* CARD32 */
     }
     UnlockDisplay(dpy);	
     SyncHandle();
+    return 1;
 }

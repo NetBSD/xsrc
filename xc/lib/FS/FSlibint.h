@@ -51,6 +51,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/FS/FSlibint.h,v 3.2 1996/12/28 11:12:16 dawes Exp $ */
 
 /*
  * FSlib internal decls
@@ -84,8 +85,8 @@ in this Software without prior written authorization from the X Consortium.
 extern int  errno;		/* Internal system error number. */
 #endif
 
-extern      (*_FSIOErrorFunction) ();
-extern      (*_FSErrorFunction) ();
+extern int (*_FSIOErrorFunction) ();
+extern int (*_FSErrorFunction) ();
 
 extern int  _FGetHostname();
 

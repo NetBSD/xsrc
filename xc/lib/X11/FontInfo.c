@@ -1,4 +1,4 @@
-/* $XConsortium: FontInfo.c,v 11.22 94/04/17 20:19:23 rws Exp $ */
+/* $XConsortium: FontInfo.c /main/16 1996/10/22 14:18:39 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -245,4 +245,5 @@ int actualCount;
 			}
 		Xfree((char *) info);
 	}
+	return 1;
 }

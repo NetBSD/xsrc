@@ -1,4 +1,4 @@
-/* $XConsortium: Border.c,v 11.9 94/04/17 20:18:35 rws Exp $ */
+/* $XConsortium: Border.c /main/6 1996/10/22 14:15:36 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -42,5 +42,6 @@ XSetWindowBorder(dpy, w, pixel)
     OneDataCard32 (dpy, NEXTPTR(req,xChangeWindowAttributesReq), pixel);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: BdrWidth.c,v 11.9 94/04/17 20:18:34 rws Exp $ */
+/* $XConsortium: BdrWidth.c /main/6 1996/10/22 14:15:29 kaleb $ */
 
 /*
 
@@ -47,5 +47,6 @@ unsigned int width;
     OneDataCard32 (dpy, NEXTPTR(req,xConfigureWindowReq), lwidth);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,4 +1,8 @@
-XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.3 1996/04/15 11:13:56 dawes Exp $
+XCOMM $XConsortium: os2Lib.tmpl /main/1 1996/10/31 14:47:31 kaleb $
+
+
+
+XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.5 1997/01/05 11:49:40 dawes Exp $
 
 /*
  * OS2/EMX shared library template
@@ -19,17 +23,19 @@ XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.3 1996/04/15 11:13:56 dawes Exp $
 #define SharedXtstReqs $(LDPRELIB) $(XLIB)
 #define SharedOldXReqs $(LDPRELIB) $(XLIBONLY)
 #define SharedPexReqs $(LDPRELIB) $(XLIBONLY) MathLibrary
+#define SharedXpReqs $(LDPRELIBS) $(XLIB)
 #else
-#define SharedXtReqs ..\\..\\usrlib\\ ICE SM X11
-#define SharedXawReqs ..\\..\\usrlib\\ Xmu Xt X11 Xext
-#define SharedXmuReqs ..\\..\\usrlib\\ Xt X11 Xext
-#define SharedSMReqs ..\\..\\usrlib\\ ICE
-#define SharedXextReqs ..\\..\\usrlib\\ X11
-#define SharedXiReqs ..\\..\\usrlib\\ X11 Xext
-#define SharedXieReqs ..\\..\\usrlib\\ X11 Xext
-#define SharedXtstReqs ..\\..\\usrlib\\ X11 Xext
-#define SharedOldXReqs ..\\..\\usrlib\\ X11 Xext
-#define SharedPexReqs ..\\..\\usrlib\\ X11 m
+#define SharedXtReqs ..\\..\\exports\\lib\\ ICE SM X11
+#define SharedXawReqs ..\\..\\exports\\lib\\ Xmu Xt X11 Xext
+#define SharedXmuReqs ..\\..\\exports\\lib\\ Xt X11 Xext
+#define SharedSMReqs ..\\..\\exports\\lib\\ ICE
+#define SharedXextReqs ..\\..\\exports\\lib\\ X11
+#define SharedXiReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedXieReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedXtstReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedOldXReqs ..\\..\\exports\\lib\\ X11 Xext
+#define SharedPexReqs ..\\..\\exports\\lib\\ X11 m
+#define SharedXpReqs ..\\..\\exports\\lib\\ X11 Xext
 #endif
 
 /*
@@ -50,6 +56,7 @@ XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.3 1996/04/15 11:13:56 dawes Exp $
 #define SDlibXIE -lXIE_s
 #define SDlibXtst -lXtst_s
 #define SDlibPEX5 -lPEX5_s
+#define SDlibXp -lXp_s
 #else
 #define SDlibX11 -lX11
 #define SDlibXExt -lXExt
@@ -60,6 +67,7 @@ XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.3 1996/04/15 11:13:56 dawes Exp $
 #define SDlibXIE -lXIE
 #define SDlibXtst -lXtst
 #define SDlibPEX5 -lPEX5
+#define SDlibXp -lXp
 #endif
 
 /*
@@ -104,4 +112,8 @@ XCOMM $XFree86: xc/config/cf/os2Lib.tmpl,v 3.3 1996/04/15 11:13:56 dawes Exp $
 #if SharedLibPex
       DEPPEXLIB = 
          PEXLIB = _Use(SDlibPEX5,-L$(PEXLIBSRC) SDlibPEX5)
+#endif
+#if SharedLibXp
+ DEPEXTENSIONLIB = 
+    EXTENSIONLIB = _Use(SDlibXp,-L$(EXTENSIONSRC)/lib SDlibXp)
 #endif

@@ -1,4 +1,4 @@
-/* $XConsortium: ChAccCon.c,v 11.10 94/04/17 20:18:38 rws Exp $ */
+/* $XConsortium: ChAccCon.c /main/5 1996/10/22 14:15:42 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -32,14 +32,14 @@ XEnableAccessControl(dpy)
     register Display *dpy;
 
 {
-    XSetAccessControl(dpy, EnableAccess);
+    return XSetAccessControl(dpy, EnableAccess);
 }
 
 XDisableAccessControl(dpy) 
     register Display *dpy;
 
 {
-    XSetAccessControl(dpy, DisableAccess);
+    return XSetAccessControl(dpy, DisableAccess);
 }
 
 XSetAccessControl(dpy, mode)
@@ -54,5 +54,6 @@ XSetAccessControl(dpy, mode)
     req->mode = mode;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

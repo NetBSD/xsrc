@@ -1,5 +1,5 @@
-/* $XConsortium: SetLocale.c,v 1.40 94/11/21 18:23:20 kaleb Exp $ */
-/* $XFree86: xc/lib/X11/SetLocale.c,v 3.3 1995/01/28 17:38:10 dawes Exp $ */
+/* $XConsortium: SetLocale.c /main/35 1996/09/28 16:34:22 rws $ */
+/* $XFree86: xc/lib/X11/SetLocale.c,v 3.4.2.1 1997/05/30 12:58:58 dawes Exp $ */
 
 /*
  * Copyright 1990, 1991 by OMRON Corporation, NTT Software Corporation,
@@ -64,6 +64,8 @@ from the X Consortium.
 #include <X11/Xlocale.h>
 #include <X11/Xos.h>
 
+#define MAXLOCALE	64	/* buffer size of locale name */
+
 #ifdef X_LOCALE
 
 /* alternative setlocale() for when the OS does not provide one */
@@ -71,8 +73,6 @@ from the X Consortium.
 #ifdef X_NOT_STDC_ENV
 extern char *getenv();
 #endif
-
-#define MAXLOCALE	64	/* buffer size of locale name */
 
 #if NeedFunctionPrototypes
 char *
@@ -141,9 +141,15 @@ _XlcMapOSLocaleName(osname, siname)
 {
 #if defined(hpux) || defined(CSRG_BASED) || defined(sun) || defined(SVR4) || defined(sgi) || defined(__osf__) || defined(AIXV3) || defined(ultrix) || defined(WIN32) || defined(__EMX__)
 #ifdef hpux
+#ifndef _LastCategory
+/* HPUX 9 and earlier */
 #define SKIPCOUNT 2
 #define STARTCHAR ':'
 #define ENDCHAR ';'
+#else
+/* HPUX 10 */
+#define ENDCHAR ' '
+#endif
 #else
 #ifdef ultrix
 #define SKIPCOUNT 2
@@ -191,6 +197,8 @@ _XlcMapOSLocaleName(osname, siname)
 #endif
 	if (end = strchr (start, ENDCHAR)) {
 	    len = end - start;
+	    if (len >= MAXLOCALE)
+		len = MAXLOCALE - 1;
 	    strncpy(siname, start, len);
 	    *(siname + len) = '\0';
 #ifdef WHITEFILL
@@ -204,7 +212,11 @@ _XlcMapOSLocaleName(osname, siname)
     }
 #ifdef WHITEFILL
     if (strchr(osname, ' ')) {
-	strcpy(siname, osname);
+	len = strlen(osname);
+	if (len >= MAXLOCALE - 1)
+	    len = MAXLOCALE - 1;
+	strncpy(siname, osname, len);
+	*(siname + len) = '\0';
 	for (start = siname; start = strchr(start, ' '); )
 	    *start++ = '-';
 	return siname;

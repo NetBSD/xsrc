@@ -1,6 +1,6 @@
 /*
- * $XConsortium: Fill.c,v 1.10 94/10/18 14:12:30 kaleb Exp $
- * $XFree86: xc/lib/Xdmcp/Fill.c,v 3.2 1996/01/05 13:12:03 dawes Exp $
+ * $XConsortium: Fill.c /main/11 1996/11/13 14:44:18 lehors $
+ * $XFree86: xc/lib/Xdmcp/Fill.c,v 3.4 1997/01/18 06:52:06 dawes Exp $
  *
  * 
 Copyright (c) 1989  X Consortium
@@ -41,12 +41,14 @@ in this Software without prior written authorization from the X Consortium.
 #include <tiuser.h>
 #else
 #ifdef WIN32
-#define BOOL wBOOL
-#include <winsock.h>
-#undef BOOL
+#include <X11/Xwinsock.h>
 #else
 #ifndef MINIX
+#ifndef Lynx
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif /* !Lynx */
 #endif /* !MINIX */
 #endif
 #endif

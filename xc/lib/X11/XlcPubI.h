@@ -1,4 +1,4 @@
-/* $XConsortium: XlcPubI.h /main/5 1996/04/19 16:00:40 kaleb $ */
+/* $XConsortium: XlcPubI.h /main/6 1996/09/28 16:35:06 rws $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *

@@ -1,4 +1,4 @@
-/* $XConsortium: FreeCols.c,v 11.11 94/04/17 20:19:25 rws Exp $ */
+/* $XConsortium: FreeCols.c /main/7 1996/10/22 14:18:51 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -50,5 +50,6 @@ unsigned long planes; /* CARD32 */
     Data32 (dpy, (long *) pixels, nbytes);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

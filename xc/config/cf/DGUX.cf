@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: DGUX.cf /main/4 1996/01/22 17:35:23 gildea $
+XCOMM platform:  $XConsortium: DGUX.cf /main/5 1996/09/28 16:04:56 rws $
 
 #ifndef OSName
 #define OSName            DG/UX 4.32

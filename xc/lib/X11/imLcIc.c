@@ -1,4 +1,4 @@
-/* $XConsortium: imLcIc.c /main/5 1996/01/21 15:11:50 kaleb $ */
+/* $XConsortium: imLcIc.c /main/6 1996/10/22 14:24:42 kaleb $ */
 /******************************************************************
 
                 Copyright 1992,1993, 1994 by FUJITSU LIMITED
@@ -53,7 +53,7 @@ _XimLocalDestroyIC(xic)
 {
     Xic	 ic = (Xic)xic;
     if(((Xim)ic->core.im)->private.local.current_ic == (XIC)ic) {
-	_XimLocalUnSetFocus(ic);
+	_XimLocalUnSetFocus(xic);
     }
     if(ic->private.local.ic_resources) {
 	Xfree(ic->private.local.ic_resources);

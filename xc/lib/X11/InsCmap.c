@@ -1,4 +1,4 @@
-/* $XConsortium: InsCmap.c,v 11.8 94/04/17 20:20:01 rws Exp $ */
+/* $XConsortium: InsCmap.c /main/5 1996/10/22 14:19:52 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -37,5 +37,6 @@ Colormap cmap;
     GetResReq(InstallColormap, cmap, req);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

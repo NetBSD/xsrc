@@ -1,4 +1,4 @@
-/* $XConsortium: DrRect.c,v 11.16 94/04/17 20:19:12 rws Exp $ */
+/* $XConsortium: DrRect.c /main/8 1996/10/22 14:17:54 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -92,4 +92,5 @@ XDrawRectangle(dpy, d, gc, x, y, width, height)
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

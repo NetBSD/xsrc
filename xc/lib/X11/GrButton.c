@@ -1,4 +1,4 @@
-/* $XConsortium: GrButton.c,v 11.10 94/04/17 20:19:47 rws Exp $ */
+/* $XConsortium: GrButton.c /main/5 1996/10/22 14:19:28 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -54,4 +54,5 @@ Cursor curs;
     req->cursor = curs;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

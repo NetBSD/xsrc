@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile,v 1.6 94/03/27 15:53:33 rws Exp $
+XCOMM $XConsortium: Imakefile /main/7 1996/09/28 16:43:07 rws $
 
 #define DoNormalLib NormalLibXie
 #define DoSharedLib SharedLibXie
@@ -6,7 +6,8 @@ XCOMM $XConsortium: Imakefile,v 1.6 94/03/27 15:53:33 rws Exp $
 #define DoProfileLib ProfileLibXie
 #define LibName XIE
 #define SoRev SOXIEREV
-#define IncSubdir extensions
+#define IncSubdir X11
+#define IncSubSubdir extensions
 
 #include <Threads.tmpl>
 

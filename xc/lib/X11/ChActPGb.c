@@ -1,4 +1,4 @@
-/* $XConsortium: ChActPGb.c,v 11.9 94/04/17 20:18:39 rws Exp $ */
+/* $XConsortium: ChActPGb.c /main/5 1996/10/22 14:15:46 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -43,4 +43,5 @@ Time time;
     req->time = time;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: PeekEvent.c,v 11.16 94/04/17 20:20:24 gildea Exp $ */
+/* $XConsortium: PeekEvent.c /main/7 1996/10/22 14:20:35 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -44,5 +44,6 @@ XPeekEvent (dpy, event)
 	    _XReadEvents(dpy);
 	*event = (dpy->head)->event;
 	UnlockDisplay(dpy);
+	return 1;
 }
 

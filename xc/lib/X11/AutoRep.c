@@ -1,4 +1,4 @@
-/* $XConsortium: AutoRep.c,v 11.10 94/04/17 20:18:33 rws Exp $ */
+/* $XConsortium: AutoRep.c /main/5 1996/10/22 14:15:22 kaleb $ */
 /*
 
 Copyright (c) 1985  X Consortium
@@ -27,12 +27,14 @@ in this Software without prior written authorization from the X Consortium.
 */
 
 #include "Xlibint.h"
+
 XAutoRepeatOn (dpy)
 register Display *dpy;
 {
 	XKeyboardControl values;
 	values.auto_repeat_mode = AutoRepeatModeOn;
 	XChangeKeyboardControl (dpy, KBAutoRepeatMode, &values);
+	return 1;
 }
 
 XAutoRepeatOff (dpy)
@@ -41,6 +43,7 @@ register Display *dpy;
 	XKeyboardControl values;
 	values.auto_repeat_mode = AutoRepeatModeOff;
 	XChangeKeyboardControl (dpy, KBAutoRepeatMode, &values);
+	return 1;
 }
 
 

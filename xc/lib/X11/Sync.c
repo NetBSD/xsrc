@@ -1,4 +1,4 @@
-/* $XConsortium: Sync.c,v 11.17 94/04/17 20:21:15 gildea Exp $ */
+/* $XConsortium: Sync.c /main/7 1996/10/22 14:23:22 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -55,5 +55,6 @@ XSync (dpy, discard)
        dpy->qlen = 0;
     }
     UnlockDisplay(dpy);
+    return 1;
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: FreeCurs.c,v 11.8 94/04/17 20:19:26 rws Exp $ */
+/* $XConsortium: FreeCurs.c /main/5 1996/10/22 14:18:54 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -37,5 +37,6 @@ XFreeCursor(dpy, cursor)
     GetResReq(FreeCursor, cursor, req);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

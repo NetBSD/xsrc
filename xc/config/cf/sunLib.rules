@@ -1,4 +1,4 @@
-XCOMM $XConsortium: sunLib.rules,v 1.14 94/03/28 15:24:43 gildea Exp $
+XCOMM $XConsortium: sunLib.rules /main/15 1996/09/28 16:13:16 rws $
 
 /*
  * SunOS shared library rules
@@ -72,15 +72,15 @@ clean clean.pure::							@@\
 #endif
 
 /*
- * NormalSharedLibraryTarget - generate rules to create a shared library;
- * build it into a different name so that the we do not hose people by having
+ * SharedLibraryTarget - generate rules to create a shared library;
+ * build it into a different name so that we do not hose people by having
  * the library gone for long periods.
  */
 #ifndef SharedLibraryTarget
 #define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
 AllTarget(Concat(lib,libname.so.rev))					@@\
 									@@\
-Concat(lib,libname.so.rev):  solist					@@\
+Concat(lib,libname.so.rev):  solist $(EXTRALIBRARYDEPS)			@@\
 	$(RM) $@~							@@\
 	(cd down; $(LD) -o up/$@~ $(SHLIBLDFLAGS) solist $(REQUIREDLIBS)) @@\
 	$(RM) $@ 							@@\

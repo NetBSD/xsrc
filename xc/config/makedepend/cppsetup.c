@@ -1,4 +1,4 @@
-/* $XConsortium: cppsetup.c /main/16 1996/04/23 13:27:04 kaleb $ */
+/* $XConsortium: cppsetup.c /main/17 1996/09/28 16:15:03 rws $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -25,6 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/config/makedepend/cppsetup.c,v 3.2 1996/12/30 13:57:53 dawes Exp $ */
 
 #include "def.h"
 
@@ -40,7 +41,7 @@ in this Software without prior written authorization from the X Consortium.
 #define QB 16
 #define WB 32
 #define SALT '#'
-#if pdp11 | vax | ns16000 | mc68000 | ibm032
+#if defined(pdp11) || defined(vax) || defined(ns16000) || defined(mc68000) || defined(ibm032)
 #define COFF 128
 #else
 #define COFF 0

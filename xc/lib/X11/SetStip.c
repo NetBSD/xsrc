@@ -1,4 +1,4 @@
-/* $XConsortium: SetStip.c,v 11.15 94/04/17 20:21:05 rws Exp $ */
+/* $XConsortium: SetStip.c /main/6 1996/10/22 14:22:49 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -40,4 +40,5 @@ Pixmap stipple;
     _XFlushGCCache(dpy, gc);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

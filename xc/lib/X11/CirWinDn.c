@@ -1,4 +1,4 @@
-/* $XConsortium: CirWinDn.c,v 11.9 94/04/17 20:18:49 rws Exp $ */
+/* $XConsortium: CirWinDn.c /main/5 1996/10/22 14:16:30 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -40,5 +40,6 @@ XCirculateSubwindowsDown(dpy,w)
     req->direction = LowerHighest;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

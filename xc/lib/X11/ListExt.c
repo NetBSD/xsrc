@@ -1,4 +1,4 @@
-/* $XConsortium: ListExt.c,v 11.11 94/04/17 20:20:08 rws Exp $ */
+/* $XConsortium: ListExt.c /main/8 1996/10/22 14:19:59 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -93,4 +93,5 @@ char **list;
 	    Xfree (list[0]-1);
 	    Xfree ((char *)list);
 	}
+	return 1;
 }

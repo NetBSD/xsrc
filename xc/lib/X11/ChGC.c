@@ -1,4 +1,4 @@
-/* $XConsortium: ChGC.c,v 11.11 94/04/17 20:18:41 rws Exp $ */
+/* $XConsortium: ChGC.c /main/7 1996/10/22 14:15:58 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -44,5 +44,6 @@ XChangeGC (dpy, gc, valuemask, values)
 	_XFlushGCCache(dpy, gc);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

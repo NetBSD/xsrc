@@ -1,4 +1,4 @@
-/* $XConsortium: DrRects.c,v 11.16 94/04/17 20:19:13 rws Exp $ */
+/* $XConsortium: DrRects.c /main/10 1996/10/22 14:17:57 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -59,4 +59,5 @@ int n_rects;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

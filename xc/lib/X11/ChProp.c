@@ -1,4 +1,4 @@
-/* $XConsortium: ChProp.c,v 11.26 94/04/17 20:18:43 kaleb Exp $ */
+/* $XConsortium: ChProp.c /main/16 1996/10/22 14:16:10 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -99,6 +99,7 @@ XChangeProperty (dpy, w, property, type, format, mode, data, nelements)
 
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
     }
 
 

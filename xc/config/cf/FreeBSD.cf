@@ -1,22 +1,22 @@
-XCOMM platform:  $XConsortium: FreeBSD.cf /main/10 1996/01/22 17:35:30 gildea $
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.54 1996/10/16 14:28:22 dawes Exp $
+XCOMM platform:  $XConsortium: FreeBSD.cf /main/13 1996/09/29 20:13:31 kaleb $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.5 1997/05/24 13:38:06 dawes Exp $
 
 #ifndef OSName
-#define OSName			FreeBSD 2.1.5
+#define OSName			DefaultOSName
 #endif
 #ifndef OSVendor
 #define OSVendor		/**/
 #endif
-XCOMM operating system:  OSName
 #ifndef OSMajorVersion
-#define OSMajorVersion		2
+#define OSMajorVersion		DefaultOSMajorVersion
 #endif
 #ifndef OSMinorVersion
-#define OSMinorVersion		1
+#define OSMinorVersion		DefaultOSMinorVersion
 #endif
 #ifndef OSTeenyVersion
-#define OSTeenyVersion		5
+#define OSTeenyVersion		DefaultOSTeenyVersion
 #endif
+XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
 
 #define HasGcc			YES
 #define HasGcc2			YES
@@ -40,7 +40,8 @@ XCOMM operating system:  OSName
 #define AvoidNullMakeCommand	YES
 #define StripInstalledPrograms	YES
 #define CompressAllFonts	YES
-#define Malloc0ReturnsNull	YES
+/* Even when using GNU malloc supplied with FreeBSD 2.1.x, this is true */
+#define Malloc0ReturnsNull	NO
 #define NeedConstPrototypes	YES
 #define NeedFunctionPrototypes	YES
 #define NeedNestedPrototypes	YES
@@ -53,7 +54,7 @@ XCOMM operating system:  OSName
 #define CppCmd			/usr/libexec/cpp
 #define PreProcessCmd		CppCmd
 #define StandardCppDefines	-traditional
-#if UseInstalled
+#if defined(UseInstalled) && (!defined(XF86LinkKit) || !XF86LinkKit)
 #define DefaultCCOptions	/**/
 #else
 #define DefaultCCOptions	-ansi -pedantic -Dasm=__asm
@@ -74,12 +75,66 @@ XCOMM operating system:  OSName
 #define GnuMallocLibrary	-lgnumalloc
 #endif
 
+#if (OSMajorVersion > 2) || (OSMajorVersion == 2 && OSMinorVersion >= 2) \
+	|| (OSMajorVersion == 2 && OSMinorVersion == 1 && OSTeenyVersion >= 6)
+/* 2.1.6 and 2.2 have libz */
+#ifndef HasZlib
+#define HasZlib		YES
+#endif
+#endif
+
+#if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 2)
+/*
+ * Note: the tk-4.1 package for FreeBSD doesn't have the static lib, so
+ * you'll have to build it yourself, or change the definition of
+ * XF86SetupUsesStaticTk.
+ */
+#ifndef TkLibName
+#define TkLibName		tk41
+#endif
+#ifndef TclLibName
+#define TclLibName		tcl
+#endif
+#ifndef TclLibDir
+#define TclLibDir		/usr/lib
+#endif
+#ifndef TclIncDir
+#define TclIncDir		/usr/include
+#endif
+/* FreeBSD 2.2 has libtcl in the base system */
+#ifndef XF86SetupUsesStaticTcl
+#define XF86SetupUsesStaticTcl	NO
+#endif
+
+#else /* ! 2.2 or later */
+
+#if OSMajorVersion == 2 && OSMinorVersion == 1 && OSTeenyVersion >= 6
+
+/*
+ * 2.1.x with x >=6 has tk 4.1 and tcl 7.5 in the packages collection.
+ * Neither packages include the static libs, so you either need to build
+ * them yourself or set XF86SetupUsesStaticTcl and XF86SetupUsesStaticTk
+ * to NO.  This isn't the default because we don't want the XFree86
+ * binaries to have these packages as a dependency.
+ */
+
+#ifndef TkLibName
+#define TkLibName		tk41
+#endif
+#ifndef TclLibName
+#define TclLibName		tcl75
+#endif
+
+#else /* ! 2.1.6 or later */
+
 #ifndef TkLibName
 #define TkLibName		tk40
 #endif
-
 #ifndef TclLibName
 #define TclLibName		tcl74
+#endif
+
+#endif
 #endif
 
 #undef  InstallCmd
@@ -108,6 +163,7 @@ XCOMM operating system:  OSName
 #ifndef ForceNormalLib
 #define ForceNormalLib		YES
 #endif
+#define HasMkstemp		YES
 #else
 #define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME -DXNO_SYSCONF
 #define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
@@ -121,7 +177,7 @@ XCOMM operating system:  OSName
 #endif
 
 #ifdef i386Architecture
-# define OptimizedCDebugFlags -m486 DefaultGcc2i386Opt
+# define OptimizedCDebugFlags DefaultGcc2i386Opt
 #else
 # define OptimizedCDebugFlags -O2
 #endif
@@ -215,18 +271,7 @@ install.man::                                                           @@\
 #endif
 
 #if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 1)
-
-#define MakeHasPosixVariableSubstitutions	YES
-
-/*
- * ForceSubdirs - force make to build subdirectories
- */
-#define ForceSubdirs(dirs)						@@\
-dirs: .EXEC								@@\
-	@cd $@ ; echo "making all in $(CURRENT_DIR)/$@..."; \		@@\
-	$(MAKE) $(MFLAGS) PassCDebugFlags all				@@\
-									@@\
-.EXEC:
+#define HasBsdMake	YES
 #endif
 
 #ifndef StaticLibrary

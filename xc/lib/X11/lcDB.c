@@ -1,5 +1,5 @@
-/* $XConsortium: lcDB.c /main/9 1995/12/01 11:53:25 kaleb $ */
-/* $XFree86: xc/lib/X11/lcDB.c,v 3.2 1996/04/15 11:15:54 dawes Exp $ */
+/* $XConsortium: lcDB.c /main/11 1996/12/05 11:10:38 swick $ */
+/* $XFree86: xc/lib/X11/lcDB.c,v 3.3 1996/12/23 05:59:59 dawes Exp $ */
 /*
  *
  * Copyright IBM Corporation 1993
@@ -24,6 +24,11 @@
  * SOFTWARE.
  *
 */
+/*
+ *  (c) Copyright 1995 FUJITSU LIMITED
+ *  This is source code modified by FUJITSU LIMITED under the Joint
+ *  Development Agreement for the CDE/Motif PST.
+ */
 #ifndef	NOT_X_ENV
 
 #include <X11/Xlib.h>
@@ -41,9 +46,16 @@
 
 /* specifying NOT_X_ENV allows users to just use
    the database parsing routine. */
-
+/* For UDC/VW */
 #ifndef	BUFSIZE
 #define	BUFSIZE	2048
+#endif
+
+#ifdef COMMENT
+#ifdef  BUFSIZE
+#undef BUFSIZE
+#endif
+#define BUFSIZE 6144 /* 2048*3 */
 #endif
 
 #include <stdio.h>
@@ -137,16 +149,38 @@ typedef struct {
     char **value;
     int value_len;
     int value_num;
-    char buf[BUFSIZE];
-    int bufsize;
+    int bufsize;        /* bufMaxSize >= bufsize >= 0 */
+    int bufMaxSize;     /* default : BUFSIZE */
+    char *buf;
 } DBParseInfo;
 
 static DBParseInfo parse_info;
+
+static void init_parse_info()
+{
+    static int first = 1;
+    char *ptr;
+    int  size;
+    if(first == 1){
+	bzero(&parse_info, sizeof(DBParseInfo));
+	parse_info.buf = (char *)Xmalloc(BUFSIZE);
+	parse_info.bufMaxSize = BUFSIZE;
+	first = 0;
+	return ;
+    }
+    ptr = parse_info.buf;
+    size = parse_info.bufMaxSize;
+    bzero(&parse_info, sizeof(DBParseInfo));
+    parse_info.buf = ptr;
+    parse_info.bufMaxSize = size;
+}
 
 static void
 clear_parse_info()
 {
     int i;
+    char *ptr;
+    int size;
     parse_info.pre_state = S_NULL;
     if(parse_info.category != NULL){
 	Xfree(parse_info.category);
@@ -162,9 +196,30 @@ clear_parse_info()
 	}
 	Xfree((char *)parse_info.value);
     }
+    ptr = parse_info.buf;
+    size = parse_info.bufMaxSize;
     bzero(&parse_info, sizeof(DBParseInfo));
+    parse_info.buf = ptr;
+    parse_info.bufMaxSize = size;
 }
 
+static Bool
+realloc_parse_info(len)
+int len;
+{
+    char *p;
+
+
+    parse_info.bufMaxSize = BUFSIZE * 
+	    ((parse_info.bufsize + len)/BUFSIZE + 1);
+    p = (char *)Xrealloc(parse_info.buf, parse_info.bufMaxSize);
+    if(p == NULL){
+        return(False);
+    }
+    parse_info.buf = p;
+
+    return(True);
+}
 /************************************************************************/
 typedef struct _Line {
     char *str;
@@ -281,6 +336,7 @@ read_line(fd, line)
 	    str = line->str;
 	}
 	strncpy(str + cur, p, len);
+
 	cur += len;
 	str[cur] = '\0';
 #ifdef __EMX__  /* Take out carriage returns under OS/2 */
@@ -770,6 +826,12 @@ f_double_quote(str, token, db)
 	if(len < 1){
 	    goto err;
 	}
+	if( (parse_info.bufsize + (int)strlen(word) +1) 
+					>= parse_info.bufMaxSize){
+	    if(realloc_parse_info(strlen(word) +1) == False){
+		goto err;
+	    }
+	}
 	strcpy(&parse_info.buf[parse_info.bufsize], word);
 	parse_info.bufsize += strlen(word);
 	parse_info.pre_state = S_VALUE;
@@ -813,6 +875,12 @@ f_numeric(str, token, db)
 	len = get_word(p, word);
 	if(len < 1){
 	    goto err;
+	}
+	if( (parse_info.bufsize + token_len + (int)strlen(word) +1) 
+					>= parse_info.bufMaxSize){
+	    if(realloc_parse_info(token_len + strlen(word) +1) == False){
+		goto err;
+	    }
 	}
 	strncpy(&parse_info.buf[parse_info.bufsize], str, token_len);
 	strcpy(&parse_info.buf[parse_info.bufsize + token_len], word);
@@ -878,6 +946,12 @@ f_default(str, token, db)
 	break;
     case S_NAME:
     case S_VALUE:
+	if( (parse_info.bufsize + (int)strlen(word) +1 ) 
+					>= parse_info.bufMaxSize){
+	    if(realloc_parse_info(strlen(word) +1) == False){
+		goto err;
+	    }
+	}
 	strcpy(&parse_info.buf[parse_info.bufsize], word);
 	parse_info.bufsize += strlen(word);
 	parse_info.pre_state = S_VALUE;
@@ -973,7 +1047,7 @@ CreateDatabase(dbfile)
     }
 
     bzero(&line, sizeof(Line));
-    bzero(&parse_info, sizeof(DBParseInfo));
+    init_parse_info();
 
     do {
 	int rc = read_line(fd, &line);

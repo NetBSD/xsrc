@@ -1,4 +1,4 @@
-/* $XConsortium: DelProp.c,v 11.7 94/04/17 20:19:04 rws Exp $ */
+/* $XConsortium: DelProp.c /main/5 1996/10/22 14:17:17 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -41,4 +41,5 @@ Atom property;
     req->property = property;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

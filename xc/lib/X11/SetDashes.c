@@ -1,4 +1,4 @@
-/* $XConsortium: SetDashes.c,v 11.13 94/04/17 20:20:54 rws Exp $ */
+/* $XConsortium: SetDashes.c /main/8 1996/10/22 14:21:59 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -57,5 +57,6 @@ XSetDashes (dpy, gc, dash_offset, list, n)
     Data (dpy, list, (long)n);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
     }
     

@@ -3,7 +3,7 @@ Subject: [area]: [synopsis]   [replace with actual area and short description]
 
      VERSION:
 
-R6.1, public-patch-1
+R6.3, public-patch-1
 [X Consortium public patches edit this line to indicate the patch level]
 
      CLIENT MACHINE and OPERATING SYSTEM:
@@ -53,10 +53,10 @@ that do.]
 
      SAMPLE FIX:
 
-[Preferred, but not necessary.  Please send context diffs (diff -c).
-Be sure to include our "XConsortium" ident line in any diffs.  The
-best way to do this is to add your own versioning line immediately
-after ours.]
+[Preferred, but not necessary.  Please send context diffs (`diff 
+-c original-file fixed-file`).  Be sure to include our "XConsortium" 
+ident line in any diffs.  The best way to do this is to add your 
+own versioning line immediately after ours.]
 
 [PLEASE make your Subject: line as descriptive as possible.
 Subjects like "xterm bug" or "bug report" are not helpful!]

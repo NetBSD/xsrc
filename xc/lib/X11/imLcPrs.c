@@ -1,4 +1,4 @@
-/* $XConsortium: imLcPrs.c,v 1.6 94/06/03 17:48:24 rws Exp $ */
+/* $XConsortium: imLcPrs.c /main/7 1996/11/20 18:13:05 kaleb $ */
 /******************************************************************
 
               Copyright 1992 by Oki Technosystems Laboratory, Inc.
@@ -68,17 +68,16 @@ extern int _Xmbstowcs(
  *
  */
 
-static int lastch = 0;
-
 static int
-nextch(fp)
+nextch(fp, lastch)
     FILE *fp;
+    int *lastch;
 {
     int c;
 
-    if (lastch != 0) {
-	c = lastch;
-	lastch = 0;
+    if (*lastch != 0) {
+	c = *lastch;
+	*lastch = 0;
     } else {
 	c = getc(fp);
 	if (c == '\\') {
@@ -95,10 +94,11 @@ nextch(fp)
 }
 
 static void
-putbackch(c)
+putbackch(c, lastch)
     int c;
+    int *lastch;
 {
-    lastch = c;
+    *lastch = c;
 }
 
 #define ENDOFFILE 0
@@ -121,18 +121,18 @@ putbackch(c)
      ('a' <= (c) && (c) <= 'z'))
 #endif
 
-static char tokenbuf[MAXSTRLEN];
-
 static int
-nexttoken(fp)
+nexttoken(fp, tokenbuf, lastch)
     FILE *fp;
+    char *tokenbuf;
+    int *lastch;
 {
     int c;
     int token;
     char *p;
     int i, j;
 
-    while ((c = nextch(fp)) == ' ' || c == '\t') {
+    while ((c = nextch(fp, lastch)) == ' ' || c == '\t') {
     }
     switch (c) {
       case EOF:
@@ -158,13 +158,13 @@ nexttoken(fp)
 	break;
       case '"':
 	p = tokenbuf;
-	while ((c = nextch(fp)) != '"') {
+	while ((c = nextch(fp, lastch)) != '"') {
 	    if (c == '\n' || c == EOF) {
-		putbackch(c);
+		putbackch(c, lastch);
 		token = ERROR;
 		goto string_error;
 	    } else if (c == '\\') {
-		c = nextch(fp);
+		c = nextch(fp, lastch);
 		switch (c) {
 		  case '\\':
 		  case '"':
@@ -179,19 +179,19 @@ nexttoken(fp)
 		  case '6':
 		  case '7':
 		    i = c - '0';
-		    c = nextch(fp);
+		    c = nextch(fp, lastch);
 		    for (j = 0; j < 2 && c >= '0' && c <= '7'; j++) {
 			i <<= 3;
 			i += c - '0';
-			c = nextch(fp);
+			c = nextch(fp, lastch);
 		    }
-		    putbackch(c);
+		    putbackch(c, lastch);
 		    *p++ = (char)i;
 		    break;
 		  case 'X':
 		  case 'x':
 		    i = 0;
-		    c = nextch(fp);
+		    c = nextch(fp, lastch);
 #define ishexch(c) (((c) >= '0' && (c) <= '9') || \
 		    ((c) >= 'A' && (c) <= 'F') || \
 		    ((c) >= 'a' && (c) <= 'f'))
@@ -204,19 +204,19 @@ nexttoken(fp)
 			} else {
 			    i += c - 'a' + 10;
 			}
-			c = nextch(fp);
+			c = nextch(fp, lastch);
 		    }
 		    if (j == 0) {
 		        token = ERROR;
 		        goto string_error;
 		    }
-		    putbackch(c);
+		    putbackch(c, lastch);
 		    *p++ = (char)i;
 #undef ishexch
 		    break;
 		  case '\n':
 		  case EOF:
-		    putbackch(c);
+		    putbackch(c, lastch);
 		    token = ERROR;
 		    goto string_error;
 		  default:
@@ -231,7 +231,7 @@ nexttoken(fp)
 	token = STRING;
 	break;
       case '#':
-	while ((c = nextch(fp)) != '\n' && c != EOF) {
+	while ((c = nextch(fp, lastch)) != '\n' && c != EOF) {
 	}
 	if (c == '\n') {
 	    token = ENDOFLINE;
@@ -243,13 +243,13 @@ nexttoken(fp)
 	if (isalnum(c) || c == '_' || c == '-') {
 	    p = tokenbuf;
 	    *p++ = c;
-	    c = nextch(fp);
+	    c = nextch(fp, lastch);
 	    while (isalnum(c) || c == '_' || c == '-') {
 		*p++ = c;
-		c = nextch(fp);
+		c = nextch(fp, lastch);
 	    }
 	    *p = '\0';
-	    putbackch(c);
+	    putbackch(c, lastch);
 	    token = KEY;
 	} else {
 	    token = ERROR;
@@ -297,9 +297,11 @@ modmask(name)
 #define SEQUENCE_MAX	10
 
 static int
-parseline(fp, top)
+parseline(fp, top, tokenbuf, lastch)
     FILE *fp;
     DefTree **top;
+    char *tokenbuf;
+    int *lastch;
 {
     int token;
     unsigned modifier_mask;
@@ -323,7 +325,7 @@ parseline(fp, top)
     int i, n;
 
     do {
-	token = nexttoken(fp);
+	token = nexttoken(fp, tokenbuf, lastch);
     } while (token == ENDOFLINE);
     
     if (token == ENDOFFILE) {
@@ -335,23 +337,23 @@ parseline(fp, top)
 	if ((token == KEY) && (strcmp("None", tokenbuf) == 0)) {
 	    modifier = 0;
 	    modifier_mask = AllMask;
-	    token = nexttoken(fp);
+	    token = nexttoken(fp, tokenbuf, lastch);
 	} else {
 	    modifier_mask = modifier = 0;
 	    exclam = False;
 	    if (token == EXCLAM) {
 		exclam = True;
-		token = nexttoken(fp);
+		token = nexttoken(fp, tokenbuf, lastch);
 	    }
 	    while (token == TILDE || token == KEY) {
 		tilde = False;
 		if (token == TILDE) {
-		    token = nexttoken(fp);
+		    token = nexttoken(fp, tokenbuf, lastch);
 		    tilde = True;
 		    if (token != KEY)
 			goto error;
 		}
-		token = nexttoken(fp);
+		token = nexttoken(fp, tokenbuf, lastch);
 		tmp = modmask(tokenbuf);
 		if (!tmp) {
 		    goto error;
@@ -372,12 +374,12 @@ parseline(fp, top)
 	    goto error;
 	}
 
-	token = nexttoken(fp);
+	token = nexttoken(fp, tokenbuf, lastch);
 	if (token != KEY) {
 	    goto error;
 	}
 
-	token = nexttoken(fp);
+	token = nexttoken(fp, tokenbuf, lastch);
 	if (token != GREATER) {
 	    goto error;
 	}
@@ -393,22 +395,22 @@ parseline(fp, top)
 	n++;
 	if( n >= SEQUENCE_MAX )
 	    goto error;
-	token = nexttoken(fp);
+	token = nexttoken(fp, tokenbuf, lastch);
     } while (token != COLON);
 
-    token = nexttoken(fp);
+    token = nexttoken(fp, tokenbuf, lastch);
     if (token == STRING) {
 	if( (rhs_string_mb = Xmalloc(strlen(tokenbuf) + 1)) == NULL )
 	    goto error;
 	strcpy(rhs_string_mb, tokenbuf);
-	token = nexttoken(fp);
+	token = nexttoken(fp, tokenbuf, lastch);
 	if (token == KEY) {
 	    rhs_keysym = XStringToKeysym(tokenbuf);
 	    if (rhs_keysym == NoSymbol) {
 		Xfree(rhs_string_mb);
 		goto error;
 	    }
-	    token = nexttoken(fp);
+	    token = nexttoken(fp, tokenbuf, lastch);
 	}
 	if (token != ENDOFLINE && token != ENDOFFILE) {
 	    Xfree(rhs_string_mb);
@@ -419,7 +421,7 @@ parseline(fp, top)
 	if (rhs_keysym == NoSymbol) {
 	    goto error;
 	}
-	token = nexttoken(fp);
+	token = nexttoken(fp, tokenbuf, lastch);
 	if (token != ENDOFLINE && token != ENDOFFILE) {
 	    goto error;
 	}
@@ -480,7 +482,7 @@ parseline(fp, top)
     return(n);
 error:
     while (token != ENDOFLINE && token != ENDOFFILE) {
-	token = nexttoken(fp);
+	token = nexttoken(fp, tokenbuf, lastch);
     }
     return(0);
 }
@@ -491,7 +493,10 @@ XimParseStringFile(fp, ptop)
     DefTree **ptop;
 {
     int max_ev_seq = 0, i;
-    while ((i = parseline(fp, ptop)) >= 0) {
+    char tokenbuf[MAXSTRLEN];
+    int lastch = 0;
+
+    while ((i = parseline(fp, ptop, tokenbuf, &lastch)) >= 0) {
 	if (i > max_ev_seq) max_ev_seq = i;
     }
     return (max_ev_seq);

@@ -1,4 +1,4 @@
-/* $XConsortium: QuColors.c,v 11.21 94/04/17 20:20:34 rws Exp $ */
+/* $XConsortium: QuColors.c /main/10 1996/10/22 14:20:59 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -71,5 +71,6 @@ XQueryColors(dpy, cmap, defs, ncolors)
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

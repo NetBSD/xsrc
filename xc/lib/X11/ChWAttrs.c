@@ -1,4 +1,4 @@
-/* $XConsortium: ChWAttrs.c,v 11.10 94/04/17 20:18:44 rws Exp $ */
+/* $XConsortium: ChWAttrs.c /main/6 1996/10/22 14:16:19 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -41,6 +41,7 @@ XChangeWindowAttributes (dpy, w, valuemask, attributes)
     XSetWindowAttributes *attributes;
 {
     register xChangeWindowAttributesReq *req;
+    extern void _XProcessWindowAttributes();
 
     LockDisplay(dpy);
     GetReq(ChangeWindowAttributes,req);
@@ -50,5 +51,6 @@ XChangeWindowAttributes (dpy, w, valuemask, attributes)
         _XProcessWindowAttributes (dpy, req, valuemask, attributes);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

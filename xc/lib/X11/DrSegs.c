@@ -1,4 +1,4 @@
-/* $XConsortium: DrSegs.c,v 11.15 94/04/17 20:19:13 rws Exp $ */
+/* $XConsortium: DrSegs.c /main/9 1996/10/22 14:18:01 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -59,5 +59,6 @@ XDrawSegments (dpy, d, gc, segments, nsegments)
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: SmeBSB.c,v 1.19 94/04/17 20:12:49 kaleb Exp $ */
+/* $XConsortium: SmeBSB.c /main/20 1996/08/12 13:43:52 kaleb $ */
 
 /*
 Copyright (c) 1989, 1994  X Consortium
@@ -667,6 +667,7 @@ Widget w;
 					    XtParent(w)->core.depth);
     values.graphics_exposures = FALSE;
     mask |= GCTile | GCFillStyle;
+    mask_i18n |= GCTile | GCFillStyle;
     if ( entry->sme.international == True )
         entry->sme_bsb.norm_gray_gc = XtAllocateGC(w, 0, mask_i18n, &values, GCFont, 0 );
     else

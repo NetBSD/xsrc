@@ -1,4 +1,4 @@
-.\" $XConsortium: lndir.man /main/9 1995/12/15 14:00:35 gildea $
+.\" $XConsortium: lndir.man /main/10 1996/09/28 16:16:45 rws $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 

@@ -1,5 +1,5 @@
-/* $XConsortium: connect.c,v 1.31 94/12/20 17:50:13 mor Exp $ */
-/* $XFree86: xc/lib/ICE/connect.c,v 3.1 1995/01/27 04:44:45 dawes Exp $ */
+/* $XConsortium: connect.c /main/32 1996/12/10 15:58:34 swick $ */
+/* $XFree86: xc/lib/ICE/connect.c,v 3.2 1996/12/23 05:59:00 dawes Exp $ */
 /******************************************************************************
 
 
@@ -186,6 +186,7 @@ char 	   *errorStringRet;
 
     _IceTransSetOption (iceConn->trans_conn, TRANS_CLOSEONEXEC, 1);
 
+    iceConn->listen_obj = NULL;
 
     iceConn->connection_status = IceConnectPending;
     iceConn->io_ok = True;
@@ -194,6 +195,21 @@ char 	   *errorStringRet;
     iceConn->my_ice_version_index = 0;
     iceConn->send_sequence = 0;
     iceConn->receive_sequence = 0;
+
+    iceConn->vendor = NULL;
+    iceConn->release = NULL;
+    iceConn->outbuf = NULL;
+
+    iceConn->scratch = NULL;
+    iceConn->scratch_size = 0;
+
+    iceConn->process_msg_info = NULL;
+
+    iceConn->connect_to_you = NULL;
+    iceConn->protosetup_to_you = NULL;
+
+    iceConn->connect_to_me = NULL;
+    iceConn->protosetup_to_me = NULL;
 
     if ((iceConn->inbuf = iceConn->inbufptr =
 	(char *) malloc (ICE_INBUFSIZE)) == NULL)
@@ -215,13 +231,6 @@ char 	   *errorStringRet;
 
     iceConn->outbufmax = iceConn->outbuf + ICE_OUTBUFSIZE;
 
-    iceConn->scratch = NULL;
-    iceConn->scratch_size = 0;
-
-    iceConn->process_msg_info = NULL;
-
-    iceConn->listen_obj = NULL;
-
     iceConn->open_ref_count = 1;
     iceConn->proto_ref_count = 0;
 
@@ -235,11 +244,6 @@ char 	   *errorStringRet;
     iceConn->connect_to_you = (_IceConnectToYouInfo *) malloc (
 	sizeof (_IceConnectToYouInfo));
     iceConn->connect_to_you->auth_active = 0;
-    iceConn->protosetup_to_you = NULL;
-
-    iceConn->connect_to_me = NULL;
-    iceConn->protosetup_to_me = NULL;
-
 
     /*
      * Send our byte order.

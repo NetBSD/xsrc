@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: bsd.cf /main/23 1996/01/22 17:36:14 gildea $
+XCOMM platform:  $XConsortium: bsd.cf /main/24 1996/09/28 16:09:13 rws $
 
 #ifndef OSName
 #define OSName            4.3bsd

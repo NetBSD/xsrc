@@ -1,4 +1,4 @@
-/* $XConsortium: ChCmap.c,v 11.9 94/04/17 20:18:40 rws Exp $ */
+/* $XConsortium: ChCmap.c /main/6 1996/10/22 14:15:54 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -42,5 +42,6 @@ XSetWindowColormap(dpy, w, colormap)
     OneDataCard32 (dpy, NEXTPTR(req,xChangeWindowAttributesReq), colormap);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: DefCursor.c,v 11.9 94/04/17 20:19:03 rws Exp $ */
+/* $XConsortium: DefCursor.c /main/6 1996/10/22 14:17:13 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -42,5 +42,6 @@ XDefineCursor (dpy, w, cursor)
     OneDataCard32 (dpy, NEXTPTR(req,xChangeWindowAttributesReq), cursor);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

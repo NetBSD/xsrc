@@ -1,4 +1,4 @@
-/* $XConsortium: omDefault.c /main/3 1995/09/12 15:17:03 kaleb $ */
+/* $XConsortium: omDefault.c /main/5 1996/12/05 11:10:58 swick $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -22,6 +22,11 @@
  *
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
+ */
+/*
+ *  (c) Copyright 1995 FUJITSU LIMITED
+ *  This is source code modified by FUJITSU LIMITED under the Joint
+ *  Development Agreement for the CDE/Motif PST.
  */
 
 #include "Xlibint.h"

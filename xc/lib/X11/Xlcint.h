@@ -1,5 +1,5 @@
-/* $XConsortium: Xlcint.h /main/24 1995/09/16 08:59:05 kaleb $ */
-/* $XFree86: xc/lib/X11/Xlcint.h,v 3.0 1996/02/09 08:18:45 dawes Exp $ */
+/* $XConsortium: Xlcint.h /main/25 1996/09/28 16:35:19 rws $ */
+/* $XFree86: xc/lib/X11/Xlcint.h,v 3.1 1996/12/23 05:59:45 dawes Exp $ */
 /*
 
 Copyright (c) 1991  X Consortium

@@ -3,8 +3,8 @@
  * that Imakefiles in the server subtree will need.
  */
 
-XCOMM $XConsortium: Server.tmpl,v 1.13 94/04/08 16:59:46 rws Exp $
-XCOMM $XFree86: xc/config/cf/Server.tmpl,v 3.2 1996/10/06 13:09:38 dawes Exp $
+XCOMM $XConsortium: Server.tmpl /main/14 1996/04/30 14:37:27 mw $
+XCOMM $XFree86: xc/config/cf/Server.tmpl,v 3.3.2.1 1997/05/03 09:43:00 dawes Exp $
 
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)" LDSTRIPFLAGS="$(LDSTRIPFLAGS)"
 
@@ -59,6 +59,9 @@ ServerTargetWithFlags(server,subdirs,objects,libs,syslibs,$(INSTUIDFLAGS))
 #ifndef XieDynamicModule
 #define XieDynamicModule	ExtensionsDynamicModules
 #endif
+#ifndef GlxModule
+#define GlxModule	ExtensionsDynamicModules
+#endif
 
          CC = ServerCcCmd
   CCOPTIONS = ServerCCOptions
@@ -68,6 +71,18 @@ SERVER_THREAD_DEFINES = XThreadsDefines ThreadTypeDefines
 STD_DEFINES = ServerDefines $(SERVER_THREAD_DEFINES)
 CDEBUGFLAGS = ServerCDebugFlags
 EXT_DEFINES = ExtensionDefines
+
+#if GlxModule | DoLoadableServer
+GLX_DEFINES = GlxDefines -DGLX_MODULE
+#else
+GLX_DEFINES = GlxDefines
+#endif
+
+#ifndef GlxStaticServerLib
+#define GlxStubLib	YES
+#else
+#define GlxStubLib	NO
+#endif
 
 #ifdef XFree86Version
 #include <xf86.tmpl>

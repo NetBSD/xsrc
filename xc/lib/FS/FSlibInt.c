@@ -1,5 +1,5 @@
-/* $XConsortium: FSlibInt.c /main/18 1995/12/05 16:46:07 mor $ */
-/* $XFree86: xc/lib/FS/FSlibInt.c,v 3.1 1996/01/05 13:10:18 dawes Exp $ */
+/* $XConsortium: FSlibInt.c /main/19 1996/09/28 16:32:39 rws $ */
+/* $XFree86: xc/lib/FS/FSlibInt.c,v 3.2 1996/12/23 05:58:50 dawes Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;

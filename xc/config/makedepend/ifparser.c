@@ -1,6 +1,6 @@
 /*
- * $XConsortium: ifparser.c /main/9 1995/08/09 14:10:57 kaleb $
- * $XFree86: xc/config/makedepend/ifparser.c,v 3.4 1996/08/20 12:07:21 dawes Exp $
+ * $XConsortium: ifparser.c /main/10 1996/09/28 16:15:18 rws $
+ * $XFree86: xc/config/makedepend/ifparser.c,v 3.6 1996/12/30 13:57:55 dawes Exp $
  *
  * Copyright 1992 Network Computing Devices, Inc.
  * 
@@ -32,10 +32,12 @@
  * 
  *     EXPRESSION	:=	VALUE
  * 			 |	VALUE  BINOP	EXPRESSION
+ *			 |	VALUE	'?'	EXPRESSION ':'	EXPRESSION
  * 
  *     VALUE		:=	'('  EXPRESSION  ')'
  * 			 |	'!'  VALUE
  * 			 |	'-'  VALUE
+ *			 |	'~'  VALUE
  * 			 |	'defined'  '('  variable  ')'
  * 			 |	'defined'  variable
  *			 |	# variable '(' variable-list ')'
@@ -47,10 +49,10 @@
  * 			 |	'<<'	|  '>>'
  * 			 |	'<'	|  '>'	|  '<='  |  '>='
  * 			 |	'=='	|  '!='
- * 			 |	'&'	|  '|'
+ * 			 |	'&'	|  '^'  |  '|'
  * 			 |	'&&'	|  '||'
  * 
- * The normal C order of precidence is supported.
+ * The normal C order of precedence is supported.
  * 
  * 
  * External Entry Points:
@@ -414,7 +416,7 @@ parse_band (g, cp, valp)
 
 
 static const char *
-parse_bor (g, cp, valp)
+parse_bxor (g, cp, valp)
     IfParser *g;
     const char *cp;
     long *valp;
@@ -422,6 +424,27 @@ parse_bor (g, cp, valp)
     long rightval;
 
     DO (cp = parse_band (g, cp, valp));
+    SKIPSPACE (cp);
+
+    switch (*cp) {
+      case '^':
+	DO (cp = parse_bxor (g, cp + 1, &rightval));
+	*valp = (*valp ^ rightval);
+	break;
+    }
+    return cp;
+}
+
+
+static const char *
+parse_bor (g, cp, valp)
+    IfParser *g;
+    const char *cp;
+    long *valp;
+{
+    long rightval;
+
+    DO (cp = parse_bxor (g, cp, valp));
     SKIPSPACE (cp);
 
     switch (*cp) {
@@ -482,6 +505,31 @@ parse_lor (g, cp, valp)
 }
 
 
+static const char *
+parse_cond(g, cp, valp)
+    IfParser *g;
+    const char *cp;
+    long *valp;
+{
+    long trueval, falseval;
+
+    DO (cp = parse_lor (g, cp, valp));
+    SKIPSPACE (cp);
+
+    switch (*cp) {
+      case '?':
+	DO (cp = parse_cond (g, cp + 1, &trueval));
+	SKIPSPACE (cp);
+	if (*cp != ':')
+	    return CALLFUNC(g, handle_error) (g, cp, ":");
+	DO (cp = parse_cond (g, cp + 1, &falseval));
+	*valp = (*valp ? trueval : falseval);
+	break;
+    }
+    return cp;
+}
+
+
 /****************************************************************************
 			     External Entry Points
  ****************************************************************************/
@@ -492,7 +540,5 @@ ParseIfExpression (g, cp, valp)
     const char *cp;
     long *valp;
 {
-    return parse_lor (g, cp, valp);
+    return parse_cond (g, cp, valp);
 }
-
-

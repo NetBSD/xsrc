@@ -1,5 +1,5 @@
-/* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
-/* $XFree86: xc/config/util/lndir.c,v 3.4 1996/01/05 13:07:38 dawes Exp $ */
+/* $XConsortium: lndir.c /main/16 1996/09/28 16:16:40 rws $ */
+/* $XFree86: xc/config/util/lndir.c,v 3.6 1997/01/18 06:51:01 dawes Exp $ */
 /* Create shadow link tree (after X11R4 script of the same name)
    Mark Reinhold (mbr@lcs.mit.edu)/3 January 1990 */
 
@@ -48,7 +48,7 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Xfuncproto.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#if !defined(MINIX)
+#if !defined(MINIX) && !defined(Lynx)
 #include <sys/param.h>
 #endif
 #include <errno.h>

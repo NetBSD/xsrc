@@ -1,5 +1,5 @@
-/* $XConsortium: XlibInt.c /main/181 1995/12/05 16:47:01 mor $ */
-/* $XFree86: xc/lib/X11/XlibInt.c,v 3.8 1996/05/13 06:37:11 dawes Exp $ */
+/* $XConsortium: XlibInt.c /main/183 1996/10/22 14:24:21 kaleb $ */
+/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9 1996/12/23 05:59:48 dawes Exp $ */
 /*
 
 Copyright (c) 1985, 1986, 1987  X Consortium
@@ -302,7 +302,7 @@ _XWaitForWritable(dpy
 	    /* round down to an integral number of XReps */
 	    len = (len / SIZEOF(xReply)) * SIZEOF(xReply);
 
-	    _XRead (dpy, buf.buf, (long) len);
+	    (void) _XRead (dpy, buf.buf, (long) len);
 
 	    STARTITERATE(rep,xReply,buf.buf,len > 0) {
 		if (rep->generic.type == X_Reply) {
@@ -563,7 +563,7 @@ int _XSeqSyncFunction(dpy)
 }
 
 #ifdef XTHREADS
-static _XFlushInt();
+static void _XFlushInt();
 #endif
 
 /*
@@ -571,7 +571,7 @@ static _XFlushInt();
  * action is taken.  This routine correctly handles incremental writes.
  * This routine may have to be reworked if int < long.
  */
-_XFlush (dpy)
+void _XFlush (dpy)
 	register Display *dpy;
 {
 #ifdef XTHREADS
@@ -585,7 +585,7 @@ _XFlush (dpy)
  * locking correctly.
  */
 
-static _XFlushInt (dpy, cv)
+static void _XFlushInt (dpy, cv)
 	register Display *dpy;
         register xcondition_t cv;
 {
@@ -596,14 +596,14 @@ static _XFlushInt (dpy, cv)
 	register char *bufindex;
 	_XExtension *ext;
 
-	if (dpy->flags & XlibDisplayIOError) return 0;
+	if (dpy->flags & XlibDisplayIOError) return;
 #ifdef XTHREADS
 	while (dpy->flags & XlibDisplayWriting) {
 	    ConditionWait(dpy, dpy->lock->writers);
 	}
 #endif
 	size = todo = dpy->bufptr - dpy->buffer;
-	if (!size) return 0;
+	if (!size) return;
 #ifdef XTHREADS
 	dpy->flags |= XlibDisplayWriting;
 	/* make sure no one else can put in data */
@@ -668,7 +668,6 @@ static _XFlushInt (dpy, cv)
 #ifdef XTHREADS
 	dpy->flags &= ~XlibDisplayWriting;
 #endif
-	return 0;
 }
 
 int
@@ -809,7 +808,7 @@ _XEventsQueued (dpy, mode)
 	dpy->conn_checker = 0;
 #endif
 
-	_XRead (dpy, read_buf, (long) len);
+	(void) _XRead (dpy, read_buf, (long) len);
 	
 #ifdef XTHREADS
 	/* what did we actually read: reply or event? */
@@ -853,7 +852,7 @@ _XEventsQueued (dpy, mode)
 /* _XReadEvents - Flush the output queue,
  * then read as many events as possible (but at least 1) and enqueue them
  */
-_XReadEvents(dpy)
+void _XReadEvents(dpy)
 	register Display *dpy;
 {
 	_XAlignedBuffer buf;
@@ -1013,7 +1012,7 @@ _XReadEvents(dpy)
  * _XRead - Read bytes from the socket taking into account incomplete
  * reads.  This routine may have to be reworked if int < long.
  */
-_XRead (dpy, data, size)
+int _XRead (dpy, data, size)
 	register Display *dpy;
 	register char *data;
 	register long size;
@@ -1070,7 +1069,7 @@ _XRead (dpy, data, size)
 }
 
 #ifdef LONG64
-_XRead32 (dpy, data, len)
+void _XRead32 (dpy, data, len)
     Display *dpy;
     register long *data;
     long len;
@@ -1079,7 +1078,7 @@ _XRead32 (dpy, data, len)
     register long i;
 
     if (len) {
-	_XRead(dpy, (char *)data, len);
+	(void) _XRead(dpy, (char *)data, len);
 	i = len >> 2;
 	buf = (int *)data + i;
 	data += i;
@@ -1104,7 +1103,7 @@ _XRead32 (dpy, data, len)
  *            into a long (64 bits on a CRAY computer).
  * 
  */
-static _doXRead32 (dpy, data, size, packbuffer)
+static void _doXRead32 (dpy, data, size, packbuffer)
         register Display *dpy;
         register long *data;
         register long size;
@@ -1131,7 +1130,7 @@ static _doXRead32 (dpy, data, size, packbuffer)
         }
 }
 
-_XRead32 (dpy, data, len)
+void _XRead32 (dpy, data, len)
     Display *dpy;
     long *data;
     long len;
@@ -1162,7 +1161,7 @@ static _doXRead16 (dpy, data, size, packbuffer)
 	long mask16 = 0x000000000000ffff;
 	long maskw, nwords, i, bits;
 
-        _XRead(dpy,packbuffer,size);	/* don't do a padded read... */
+        (void) _XRead(dpy,packbuffer,size);	/* don't do a padded read... */
 
         lp = (long *) data;
         lpack = (long *) packbuffer;
@@ -1179,7 +1178,7 @@ static _doXRead16 (dpy, data, size, packbuffer)
         }
 }
 
-_XRead16 (dpy, data, len)
+void _XRead16 (dpy, data, len)
     Display *dpy;
     short *data;
     long len;
@@ -1193,7 +1192,7 @@ _XRead16 (dpy, data, len)
     if (len) _doXRead16 (dpy, data, len, packbuffer);
 }
 
-_XRead16Pad (dpy, data, size)
+void _XRead16Pad (dpy, data, size)
     Display *dpy;
     short *data;
     long size;
@@ -1214,7 +1213,7 @@ _XRead16Pad (dpy, data, size)
  * reads.  If the number of bytes is not 0 mod 4, read additional pad
  * bytes. This routine may have to be reworked if int < long.
  */
-_XReadPad (dpy, data, size)
+void _XReadPad (dpy, data, size)
     	register Display *dpy;	
 	register char *data;
 	register long size;
@@ -1226,7 +1225,7 @@ _XReadPad (dpy, data, size)
         int original_size;
 #endif
 
-	if ((dpy->flags & XlibDisplayIOError) || size == 0) return 0;
+	if ((dpy->flags & XlibDisplayIOError) || size == 0) return;
 	iov[0].iov_len = (int)size;
 	iov[0].iov_base = data;
 	/* 
@@ -1285,7 +1284,6 @@ _XReadPad (dpy, data, size)
 	   }
        }
 #endif /* XTHREADS*/
-	return 0;
 }
 
 /*
@@ -1293,6 +1291,7 @@ _XReadPad (dpy, data, size)
  * transmission is used, if size is not 0 mod 4, extra bytes are transmitted.
  * This routine may have to be reworked if int < long;
  */
+void
 #if NeedFunctionPrototypes
 _XSend (
 	register Display *dpy,
@@ -1312,7 +1311,7 @@ _XSend (dpy, data, size)
 	long skip, dbufsize, padsize, total, todo;
 	_XExtension *ext;
 
-	if (!size || (dpy->flags & XlibDisplayIOError)) return 0;
+	if (!size || (dpy->flags & XlibDisplayIOError)) return;
 	dbufsize = dpy->bufptr - dpy->buffer;
 #ifdef XTHREADS
 	dpy->flags |= XlibDisplayWriting;
@@ -1422,7 +1421,7 @@ _XSend (dpy, data, size)
 #ifdef XTHREADS
 	dpy->flags &= ~XlibDisplayWriting;
 #endif
-	return 0;
+	return;
 }
 
 static void
@@ -1669,7 +1668,7 @@ _XReply (dpy, rep, extra, discard)
 	/* Did another thread's _XReadEvents get our reply by accident? */
 	if (!dpy->lock || !dpy->lock->reply_was_read)
 #endif
-	    _XRead(dpy, (char *)rep, (long)SIZEOF(xReply));
+	    (void) _XRead(dpy, (char *)rep, (long)SIZEOF(xReply));
 #ifdef XTHREADS
 	if (dpy->lock)
 	    dpy->lock->reply_was_read = False;
@@ -1695,7 +1694,7 @@ _XReply (dpy, rep, extra, discard)
 			 * Read the extra data into storage immediately
 			 * following the GenericReply structure. 
 			 */
-			_XRead (dpy, (char *) (NEXTPTR(rep,xReply)),
+			(void) _XRead (dpy, (char *) (NEXTPTR(rep,xReply)),
 				((long)extra) << 2);
 		    if (discard) {
 			if (extra < rep->generic.length)
@@ -1723,7 +1722,7 @@ _XReply (dpy, rep, extra, discard)
 		 * read a reply that's shorter than we expected.  This is an 
 		 * error,  but we still need to figure out how to handle it...
 		 */
-		_XRead (dpy, (char *) (NEXTPTR(rep,xReply)),
+		(void) _XRead (dpy, (char *) (NEXTPTR(rep,xReply)),
 			((long) rep->generic.length) << 2);
 		dpy->flags &= ~XlibDisplayReply;
 		UnlockNextReplyReader(dpy);
@@ -1848,7 +1847,7 @@ _XAsyncReply(dpy, rep, buf, lenp, discard)
 	len = SIZEOF(xReply) - len;
 	nbuf -= len;
 	memmove(nbuf, buf, *lenp);
-	_XRead(dpy, nbuf + *lenp, (long)len);
+	(void) _XRead(dpy, nbuf + *lenp, (long)len);
 	*lenp += len;
     }
     return nbuf;
@@ -2198,7 +2197,7 @@ void _XEatData (dpy, n)
 
     while (n > 0) {
 	register long bytes_read = (n > SCRATCHSIZE) ? SCRATCHSIZE : n;
-	_XRead (dpy, buf, bytes_read);
+	(void) _XRead (dpy, buf, bytes_read);
 	n -= bytes_read;
     }
 #undef SCRATCHSIZE
@@ -2210,7 +2209,7 @@ void _XEatData (dpy, n)
  * note that no squishing of move events in V11, since there
  * is pointer motion hints....
  */
-_XEnq (dpy, event)
+void _XEnq (dpy, event)
 	register Display *dpy;
 	register xEvent *event;
 {
@@ -2245,7 +2244,7 @@ _XEnq (dpy, event)
 /*
  * _XDeq - Remove event packet from the display's queue.
  */
-_XDeq (dpy, prev, qelt)
+void _XDeq (dpy, prev, qelt)
     register Display *dpy;
     register _XQEvent *prev;	/* element before qelt */
     register _XQEvent *qelt;	/* element to be unlinked */
@@ -2675,7 +2674,7 @@ register xEvent *event;	/* wire protocol event */
  * _XDefaultIOError - Default fatal system error reporting routine.  Called 
  * when an X internal system error is encountered.
  */
-_XDefaultIOError (dpy)
+void _XDefaultIOError (dpy)
 	Display *dpy;
 {
 	if (ECHECK(EPIPE)) {
@@ -2980,6 +2979,7 @@ XFree (data)
 #endif
 {
 	Xfree (data);
+	return 1;
 }
 
 #ifdef _XNEEDBCOPYFUNC

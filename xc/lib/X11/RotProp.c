@@ -1,4 +1,4 @@
-/* $XConsortium: RotProp.c,v 11.15 94/04/17 20:20:49 rws Exp $ */
+/* $XConsortium: RotProp.c /main/8 1996/10/22 14:21:37 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -52,6 +52,7 @@ XRotateWindowProperties(dpy, w, properties, nprops, npositions)
 
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
     }
 
 

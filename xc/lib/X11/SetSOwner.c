@@ -1,4 +1,4 @@
-/* $XConsortium: SetSOwner.c,v 11.10 94/04/17 20:21:03 rws Exp $ */
+/* $XConsortium: SetSOwner.c /main/5 1996/10/22 14:22:36 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -43,4 +43,5 @@ Time time;
     req->time = time;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

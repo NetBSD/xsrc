@@ -1,4 +1,4 @@
-/* $XConsortium: SetLStyle.c,v 11.12 94/04/17 20:20:59 rws Exp $ */
+/* $XConsortium: SetLStyle.c /main/5 1996/10/22 14:22:24 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -57,4 +57,5 @@ int joinstyle;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

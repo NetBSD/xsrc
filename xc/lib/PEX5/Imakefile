@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile,v 1.17 94/03/27 15:53:01 rws Exp $
+XCOMM $XConsortium: Imakefile /main/18 1996/09/28 16:33:26 rws $
 
 #define DoNormalLib NormalLibPex
 #define DoSharedLib SharedLibPex
@@ -6,7 +6,8 @@ XCOMM $XConsortium: Imakefile,v 1.17 94/03/27 15:53:01 rws Exp $
 #define DoProfileLib ProfileLibPex
 #define LibName PEX5
 #define SoRev SOPEXREV
-#define IncSubdir PEX5
+#define IncSubdir X11
+#define IncSubSubdir PEX5
 
 #include <Threads.tmpl>
 

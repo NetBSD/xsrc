@@ -1,4 +1,4 @@
-/* $XConsortium: pr.c /main/18 1995/12/08 18:26:47 gildea $ */
+/* $XConsortium: pr.c /main/20 1996/12/04 10:11:41 swick $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -37,6 +37,7 @@ extern boolean	printed;
 extern boolean	verbose;
 extern boolean	show_where_not;
 
+void
 add_include(filep, file, file_red, include, dot, failOK)
 	struct filepointer	*filep;
 	struct inclist	*file, *file_red;
@@ -75,21 +76,7 @@ add_include(filep, file, file_red, include, dot, failOK)
 	}
 }
 
-recursive_pr_include(head, file, base)
-	register struct inclist	*head;
-	register char	*file, *base;
-{
-	register int	i;
-
-	if (head->i_flags & MARKED)
-		return;
-	head->i_flags |= MARKED;
-	if (head->i_file != file)
-		pr(head, file, base);
-	for (i=0; i<head->i_listlen; i++)
-		recursive_pr_include(head->i_list[ i ], file, base);
-}
-
+void
 pr(ip, file, base)
 	register struct inclist  *ip;
 	char	*file, *base;
@@ -124,4 +111,20 @@ pr(ip, file, base)
 	printf("\n# %s includes:", ip->i_file);
 	for (i=0; i<ip->i_listlen; i++)
 		printf("\n#\t%s", ip->i_list[ i ]->i_incstring);
+}
+
+void
+recursive_pr_include(head, file, base)
+	register struct inclist	*head;
+	register char	*file, *base;
+{
+	register int	i;
+
+	if (head->i_flags & MARKED)
+		return;
+	head->i_flags |= MARKED;
+	if (head->i_file != file)
+		pr(head, file, base);
+	for (i=0; i<head->i_listlen; i++)
+		recursive_pr_include(head->i_list[ i ], file, base);
 }

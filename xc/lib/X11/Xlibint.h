@@ -1,5 +1,5 @@
-/* $XConsortium: Xlibint.h /main/111 1996/02/02 14:10:09 kaleb $ */
-/* $XFree86: xc/lib/X11/Xlibint.h,v 3.5 1996/02/09 08:18:51 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlibint.h,v 3.7 1996/12/23 05:59:50 dawes Exp $ */
+/* $XConsortium: Xlibint.h /main/114 1996/10/22 14:24:29 kaleb $ */
 
 /*
 
@@ -38,10 +38,6 @@ from the X Consortium.
  *
  *	Warning, there be dragons here....
  */
-
-#if !defined(NEED_EVENTS) && !NeedFunctionPrototypes
-#define _XEVENT_
-#endif
 
 #include <X11/Xlib.h>
 
@@ -562,6 +558,7 @@ extern int errno;			/* Internal system error number. */
 #define SyncHandle() \
 	if (dpy->synchandler) (*dpy->synchandler)(dpy)
 
+extern void _XFlushGCCache();
 #define FlushGC(dpy, gc) \
 	if ((gc)->dirty) _XFlushGCCache((dpy), (gc))
 /*
@@ -731,6 +728,7 @@ typedef struct _XAsyncEState {
     int error_count;
 } _XAsyncErrorState;
 
+extern void _XDeqAsyncHandler();
 #define DeqAsyncHandler(dpy,handler) { \
     if (dpy->async_handlers == (handler)) \
 	dpy->async_handlers = (handler)->next; \
@@ -872,7 +870,7 @@ extern char *_XGetAsyncReply(
     Bool	/* discard */
 #endif
 );
-extern _XFlush(
+extern void _XFlush(
 #if NeedFunctionPrototypes
     Display*	/* dpy */
 #endif
@@ -883,26 +881,26 @@ extern int _XEventsQueued(
     int 	/* mode */
 #endif
 );
-extern _XReadEvents(
+extern void _XReadEvents(
 #if NeedFunctionPrototypes
     Display*	/* dpy */
 #endif
 );
-extern _XRead(
+extern int _XRead(
 #if NeedFunctionPrototypes
     Display*	/* dpy */,
     char*	/* data */,
     long	/* size */
 #endif
 );
-extern _XReadPad(
+extern void _XReadPad(
 #if NeedFunctionPrototypes
     Display*	/* dpy */,
     char*	/* data */,
     long	/* size */
 #endif
 );
-extern _XSend(
+extern void _XSend(
 #if NeedFunctionPrototypes
     Display*		/* dpy */,
     _Xconst char*	/* data */,
@@ -917,13 +915,13 @@ extern Status _XReply(
     Bool	/* discard */
 #endif
 );
-extern _XEnq(
+extern void _XEnq(
 #if NeedFunctionPrototypes
     Display*	/* dpy */,
     xEvent*	/* event */
 #endif
 );
-extern _XDeq(
+extern void _XDeq(
 #if NeedFunctionPrototypes
     Display*	/* dpy */,
     _XQEvent*	/* prev */,
@@ -1236,5 +1234,21 @@ extern char* __XOS2RedirRoot(
 #endif
 );
 #endif
+
+extern int _XTextHeight(
+#if NeedFunctionPrototypes
+    XFontStruct*	/* font_struct */,
+    _Xconst char*	/* string */,
+    int			/* count */
+#endif
+);
+
+extern int _XTextHeight16(
+#if NeedFunctionPrototypes
+    XFontStruct*	/* font_struct */,
+    _Xconst XChar2b*	/* string */,
+    int			/* count */
+#endif
+);
 
 _XFUNCPROTOEND

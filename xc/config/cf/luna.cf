@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: luna.cf /main/34 1996/01/22 17:37:00 gildea $
+XCOMM platform:  $XConsortium: luna.cf /main/35 1996/09/28 16:11:11 rws $
 /*
  *	Please set the values for OSMajorVerion and OSMinorVersion
  *	before making makefiles.	 
@@ -56,7 +56,8 @@ XCOMM operating system:  OSName
 #define XawI18nDefines		-DHAS_WCHAR_H -DHAS_ISW_FUNCS
 #define BootstrapCFlags		-DUSE_CC_E -DNFS_STDOUT_BUG
 
-#define ThreadsLibraries -lthreads -lmach
+#define ThreadsLibraries		-lthreads -lmach
+#define ThreadsCplusplusLibraries	-lthreads -lmach
 
 #define PrimaryScreenResolution 100
 #define	BuildXKB	YES

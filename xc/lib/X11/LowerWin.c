@@ -1,4 +1,4 @@
-/* $XConsortium: LowerWin.c,v 11.10 94/04/17 20:20:11 rws Exp $ */
+/* $XConsortium: LowerWin.c /main/7 1996/10/22 14:20:02 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -42,5 +42,6 @@ Window w;
     OneDataCard32 (dpy, NEXTPTR(req,xConfigureWindowReq), val);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

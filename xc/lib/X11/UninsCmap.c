@@ -1,4 +1,4 @@
-/* $XConsortium: UninsCmap.c,v 11.8 94/04/17 20:21:25 rws Exp $ */
+/* $XConsortium: UninsCmap.c /main/5 1996/10/22 14:23:48 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -38,4 +38,5 @@ Colormap cmap;
     GetResReq(UninstallColormap, cmap, req);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: SetFore.c,v 11.10 94/04/17 20:20:56 rws Exp $ */
+/* $XConsortium: SetFore.c /main/5 1996/10/22 14:22:10 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -40,4 +40,5 @@ unsigned long foreground; /* CARD32 */
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: omTextEsc.c,v 1.2 94/01/20 18:08:18 rws Exp $ */
+/* $XConsortium: omTextEsc.c /main/4 1996/12/05 10:40:59 swick $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,10 +23,194 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
+/*
+ * Copyright 1995 by FUJITSU LIMITED
+ * This is source code modified by FUJITSU LIMITED under the Joint
+ * Development Agreement for the CDE/Motif PST.
+ */
 
 #include "Xlibint.h"
 #include "XomGeneric.h"
 #include <stdio.h>
+
+/* For VW/UDC start */
+
+#define	VMAP		0
+#define	VROTATE		1
+#define	FONTSCOPE	2
+
+static int
+is_rotate(oc, font)
+    XOC         oc;
+    XFontStruct *font;
+{
+    XOCGenericPart      *gen = XOC_GENERIC(oc);
+    FontSet             font_set;
+    VRotate             vrotate;
+    int                 font_set_count;
+    int                 vrotate_num;
+
+    font_set = gen->font_set;
+    font_set_count = gen->font_set_num;
+    for( ; font_set_count-- ; font_set++) {
+	if((font_set->vrotate_num > 0) && (font_set->vrotate != NULL)) {
+	    vrotate = font_set->vrotate;
+	    vrotate_num = font_set->vrotate_num;
+	    for( ; vrotate_num-- ; vrotate++)
+		if(vrotate->font == font)
+		    return True;
+	}
+    }
+    return False;
+}
+
+static int
+is_codemap(oc, font)
+    XOC         oc;
+    XFontStruct *font;
+{
+    XOCGenericPart      *gen = XOC_GENERIC(oc);
+    FontSet             font_set;
+    FontData            vmap;
+    int                 font_set_count;
+    int                 vmap_num;
+
+    font_set = gen->font_set;
+    font_set_count = gen->font_set_num;
+    for( ; font_set_count-- ; font_set++) {
+	if(font_set->vmap_num > 0) {
+	    vmap = font_set->vmap;
+	    vmap_num = font_set->vmap_num;
+	    for( ; vmap_num-- ; vmap++)
+		if(vmap->font == font)
+		    return True;
+	}
+    }
+    return False;
+}
+
+static int
+escapement_vertical(oc, font, is_xchar2b, text, length)
+    XOC         oc;
+    XFontStruct *font;
+    Bool        is_xchar2b;
+    XPointer    text;
+    int         length;
+{
+    XChar2b	*buf2b;
+    char	*buf;
+    int		escapement = 0, i;
+
+    if(is_xchar2b) {
+	for(i = 0, buf2b = (XChar2b *) text ; i < length ; i++, buf2b++) {
+	    if(is_rotate(oc, font) == True) {
+		escapement += _XTextHeight16(font, buf2b, 1);
+	    } else {
+		escapement += (int) (font->max_bounds.ascent +
+				     font->max_bounds.descent);
+	    }
+	}
+    } else {
+	for(i = 0, buf = (char *)text ; i < length && *buf ; i++, buf++) {
+	    if(is_rotate(oc, font) == True) {
+		escapement += _XTextHeight(font, buf, 1);
+	    } else {
+		escapement += (int) (font->max_bounds.ascent +
+				     font->max_bounds.descent);
+	    }
+	}
+    }
+    return escapement;
+}
+
+
+extern FontData _XomGetFontDataFromFontSet();
+
+static int
+TextWidthWithFontSet(font_set, oc, text, length)
+    FontSet	font_set;
+    XOC		oc;
+    XPointer    text;
+    int         length;
+{
+    FontData		fd;
+    XFontStruct		*font;
+    unsigned char	*ptr = (unsigned char *)text;
+    Bool        	is_xchar2b;
+    int			ptr_len = length;
+    int			escapement = 0, char_len = 0;
+
+    if(font_set == (FontSet) NULL)
+	return escapement;
+
+    is_xchar2b = font_set->is_xchar2b;
+
+    while(length > 0) {
+	fd = _XomGetFontDataFromFontSet(font_set, ptr, length, &ptr_len,
+					       is_xchar2b, FONTSCOPE);
+	if(ptr_len <= 0)
+	    break;
+	if(fd == (FontData) NULL ||
+	   (font = fd->font) == (XFontStruct *) NULL) {
+
+	    if((font = font_set->font) == (XFontStruct *) NULL)
+		break;
+	}
+
+	switch(oc->core.orientation) {
+	  case XOMOrientation_LTR_TTB:
+	  case XOMOrientation_RTL_TTB:
+	    if (is_xchar2b) {
+		char_len = ptr_len / sizeof(XChar2b);
+		escapement += XTextWidth16(font, (XChar2b *)ptr, char_len);
+	    } else {
+		char_len = ptr_len;
+		escapement += XTextWidth(font, (char *)ptr, char_len);
+	    }
+	    break;
+
+	  case XOMOrientation_TTB_LTR:
+	  case XOMOrientation_TTB_RTL:
+	    if(font_set->font == font) {
+		fd = _XomGetFontDataFromFontSet(font_set, ptr, length, &ptr_len,
+						is_xchar2b, VMAP);
+		if(ptr_len <= 0)
+		    break;
+		if(fd == (FontData) NULL ||
+		   (font = fd->font) == (XFontStruct *) NULL)
+		    break;
+
+		if(is_codemap(oc, fd->font) == False) {
+		    fd = _XomGetFontDataFromFontSet(font_set, ptr, length,
+						    &ptr_len, is_xchar2b,
+						    VROTATE);
+		    if(ptr_len <= 0)
+			break;
+		    if(fd == (FontData) NULL ||
+		       (font = fd->font) == (XFontStruct *) NULL)
+			break;
+		}
+	    }
+
+	    if(is_xchar2b)
+		char_len = ptr_len / sizeof(XChar2b);
+	    else
+		char_len = ptr_len;
+	    escapement += escapement_vertical(oc, font, is_xchar2b,
+					      (XPointer) ptr, char_len);
+	}
+
+	if(char_len <= 0)
+	    break;
+
+	length -= char_len;
+	ptr += ptr_len;
+    }
+
+    return escapement;
+}
+
+/* For VW/UDC end */
 
 static int
 _XomGenericTextEscapement(oc, type, text, length)
@@ -38,33 +222,38 @@ _XomGenericTextEscapement(oc, type, text, length)
     XlcConv conv;
     XFontStruct *font;
     Bool is_xchar2b;
-    XPointer args[2];
+/* VW/UDC */
+    XPointer args[3];
+    FontSet font_set;
+/* VW/UDC */
     XChar2b xchar2b_buf[BUFSIZ], *buf;
-    int buf_len, left, width = 0;
+    int escapement = 0;
+    int buf_len = 0, left = 0;
 
     conv = _XomInitConverter(oc, type);
     if (conv == NULL)
-	return width;
+	return escapement;
     
     args[0] = (XPointer) &font;
     args[1] = (XPointer) &is_xchar2b;
+    args[2] = (XPointer) &font_set;
 
     while (length > 0) {
 	buf = xchar2b_buf;
 	left = buf_len = BUFSIZ;
 
 	if (_XomConvert(oc, conv, (XPointer *) &text, &length,
-			(XPointer *) &buf, &left, args, 2) < 0)
+			(XPointer *) &buf, &left, args, 3) < 0)
 	    break;
 	buf_len -= left;
 
-	if (is_xchar2b)
-	    width += XTextWidth16(font, xchar2b_buf, buf_len);
-	else
-	    width += XTextWidth(font, (char *) xchar2b_buf, buf_len);
+/* VW/UDC */
+	escapement += TextWidthWithFontSet(font_set, oc,
+					   (XPointer) xchar2b_buf, buf_len);
+/* VW/UDC */
     }
 
-    return width;
+    return escapement;
 }
 
 int

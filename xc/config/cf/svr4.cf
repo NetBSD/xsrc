@@ -1,4 +1,5 @@
-XCOMM $XFree86: xc/config/cf/svr4.cf,v 3.23 1996/10/06 13:09:51 dawes Exp $
+XCOMM $XConsortium: svr4.cf /main/16 1996/09/28 16:13:41 rws $
+XCOMM $XFree86: xc/config/cf/svr4.cf,v 3.25.2.1 1997/05/24 13:38:09 dawes Exp $
 /*
  * A default OS name
  */
@@ -83,6 +84,36 @@ XCOMM $XFree86: xc/config/cf/svr4.cf,v 3.23 1996/10/06 13:09:51 dawes Exp $
 #endif
 
 #ifndef SunArchitecture
+/*
+ * These come from usl.cf, and at least some are required by other
+ * SVR4 versions
+ */
+#ifndef UseLocalRegex
+#define UseLocalRegex		YES
+#endif
+#ifndef XmDefines
+#define XmDefines		\
+	-DNO_REGCOMP -DNEED_STRCASECMP \
+	-DSUPPORT_ZERO_WIDTH -DHAS_WIDECHAR_FUNCTIONS
+#endif
+#ifndef DtSvcDefines
+#define DtSvcDefines		-DXK_MISCELLANY -DMULTIBYTE -DNO_REGCOMP
+#endif
+#ifndef DtSearchDefines
+#define DtSearchDefines		-DI18N_MSG DtSvcDefines
+#endif
+#ifndef DtWidgetDefines
+#define DtWidgetDefines		DtSearchDefines
+#endif
+#ifndef DtPrintDefines
+#define DtPrintDefines		DtSearchDefines
+#endif
+#ifndef HasStrcasecmp
+#define HasStrcasecmp		NO
+#endif
+#endif
+
+#ifndef SunArchitecture
 #if (OSMinorVersion == 0)
 #ifndef XawI18nDefines
 #define XawI18nDefines		-DUSE_XWCHAR_STRING
@@ -133,9 +164,9 @@ XCOMM $XFree86: xc/config/cf/svr4.cf,v 3.23 1996/10/06 13:09:51 dawes Exp $
 #ifndef DefaultCDebugFlags
 #if HasGcc
 #if HasGcc2
-#define DefaultCDebugFlags DefaultGcc2i386Opt -m486
+#define DefaultCDebugFlags DefaultGcc2i386Opt
 #else
-#define DefaultCDebugFlags -O2 -m486
+#define DefaultCDebugFlags -O2
 #endif
 #else
 #define DefaultCDebugFlags -O

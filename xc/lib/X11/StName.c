@@ -1,4 +1,4 @@
-/* $XConsortium: StName.c,v 11.16 94/04/17 20:21:12 gildea Exp $ */
+/* $XConsortium: StName.c /main/9 1996/10/22 14:23:18 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -41,9 +41,9 @@ XStoreName (dpy, w, name)
     char *name;
 #endif
 {
-    XChangeProperty(dpy, w, XA_WM_NAME, XA_STRING, 
-		8, PropModeReplace, (unsigned char *)name,
-                name ? strlen(name) : 0);
+    return XChangeProperty(dpy, w, XA_WM_NAME, XA_STRING, 
+			   8, PropModeReplace, (unsigned char *)name,
+			   name ? strlen(name) : 0);
 }
 
 #if NeedFunctionPrototypes
@@ -58,7 +58,7 @@ XSetIconName (dpy, w, icon_name)
     char *icon_name;
 #endif
 {
-    XChangeProperty(dpy, w, XA_WM_ICON_NAME, XA_STRING, 
-		8, PropModeReplace, (unsigned char *)icon_name,
-		icon_name ? strlen(icon_name) : 0);
+    return XChangeProperty(dpy, w, XA_WM_ICON_NAME, XA_STRING, 
+			   8, PropModeReplace, (unsigned char *)icon_name,
+			   icon_name ? strlen(icon_name) : 0);
 }

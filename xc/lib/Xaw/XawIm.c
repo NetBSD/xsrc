@@ -1,4 +1,4 @@
-/* $XConsortium: XawIm.c /main/7 1995/12/08 16:34:44 kaleb $ */
+/* $XConsortium: XawIm.c /main/9 1996/11/09 08:20:50 kaleb $ */
 
 /*
  * Copyright 1991 by OMRON Corporation
@@ -402,7 +402,7 @@ static void FreeAllDataOfVendorShell(ve, vw)
     if (ve->im.resources) XtFree((char *)ve->im.resources);
     for (p = ve->ic.ic_table; p; p = next) {
         next = p->next;
-        XtFree((char *)ve->ic.ic_table);
+        XtFree((char *)p);
     }
 }
 
@@ -459,13 +459,13 @@ static void OpenIM(ve)
 	}
     }
     if (xim == NULL) {
-	if ((p = XSetLocaleModifiers("")) != NULL && *p) {
+	if ((p = XSetLocaleModifiers("")) != NULL) {
 	    xim = XOpenIM(XtDisplay(ve->parent), NULL, NULL, NULL);
 	}
     }
     if (xim == NULL) {
 	XtAppWarning(XtWidgetToApplicationContext(ve->parent),
-	    "we can not open any input method");
+	    "Input Method Open Failed");
 	return;
     }
     if (XGetIMValues(xim, XNQueryInputStyle, &xim_styles, NULL)

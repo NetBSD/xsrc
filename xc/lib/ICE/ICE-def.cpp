@@ -60,3 +60,4 @@ EXPORTS
  _IceRead
  _IceReadSkip
  _IceWrite
+/* $XConsortium: ICE-def.cpp /main/6 1996/05/07 13:15:11 kaleb $ */

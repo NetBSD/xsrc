@@ -1,4 +1,4 @@
-/* $XConsortium: FillArcs.c,v 11.17 94/04/17 20:19:19 rws Exp $ */
+/* $XConsortium: FillArcs.c /main/11 1996/10/22 14:18:16 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -61,4 +61,5 @@ int n_arcs;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

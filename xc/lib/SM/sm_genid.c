@@ -1,5 +1,5 @@
-/* $XConsortium: sm_genid.c /main/17 1996/01/12 15:08:38 kaleb $ */
-/* $XFree86: xc/lib/SM/sm_genid.c,v 3.4 1996/05/06 05:53:57 dawes Exp $ */
+/* $XConsortium: sm_genid.c /main/22 1996/12/04 10:22:25 lehors $ */
+/* $XFree86: xc/lib/SM/sm_genid.c,v 3.7 1997/01/18 06:51:43 dawes Exp $ */
 
 /*
 
@@ -54,26 +54,24 @@ extern Time_t time ();
 #ifndef WIN32
 
 #if defined(TCPCONN) || defined(STREAMSCONN)
+#ifndef Lynx
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#ifdef linux
-#include <arpa/inet.h>
+#else
+#include <socket.h>
 #endif
+#include <netinet/in.h>
+#define XOS_USE_NO_LOCKING
+#define X_INCLUDE_NETDB_H
+#include <X11/Xos_r.h>
 #endif
 
 #else /* WIN32 */
 
-#define BOOL wBOOL
-#undef Status
-#define Status wStatus
-#include <winsock.h>
-#undef Status
-#define Status int
-#undef BOOL
+#include <X11/Xwinsock.h>
 #include <X11/Xw32defs.h>
-#undef close
-#define close closesocket
+#define X_INCLUDE_NETDB_H
+#define XOS_USE_MTSAFE_NETDBAPI
+#include <X11/Xos_r.h>
 
 #endif /* WIN32 */
 
@@ -142,48 +140,11 @@ SmsConn smsConn;
     char temp[4], *ptr1, *ptr2;
     unsigned char decimal[4];
     int i, len;
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API)
-#ifdef _POSIX_REENTRANT_FUNCTIONS
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-#if defined(AIXV3) || defined(AIXV4) || defined(__osf__)
-#define _POSIX_THREAD_SAFE_FUNCTIONS 1
-#endif
-#endif
-#endif
-#ifdef sun
-#ifdef _POSIX_THREAD_SAFE_FUNCTIONS     /* Sun lies in Solaris 2.5 */
-#undef _POSIX_THREAD_SAFE_FUNCTIONS
-#endif
-#endif
-#define HostAddr hent.h_addr
-    struct hostent hent;
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-#define Gethostbyname(h) gethostbyname_r((h),&hent,hbuf,sizeof hbuf,&herr)
-#define CallFailed NULL
-    char hbuf[LINE_MAX];
-    int herr;
-#else
-#define Gethostbyname(h) gethostbyname_r((h),&hent,&hdata)
-#define CallFailed -1
-    struct hostent_data hdata;
-#endif
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
+    _Xgethostbynameparams hparams;
     struct hostent *hostp;
-#else
-    int hostp;
-#endif
-#else
-#define Gethostbyname(h) gethostbyname((h))
-#define CallFailed NULL
-#define HostAddr hostp->h_addr
-    struct hostent *hostp;
-#endif
 
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API) && defined(_POSIX_THREAD_SAFE_FUNCTIONS)
-	bzero((char*)&hdata, sizeof hdata);
-#endif
-    if ((hostp = Gethostbyname (hostname)) != CallFailed)
-	inet_addr = (char *) inet_ntoa (*(struct in_addr *)(HostAddr));
+    if ((hostp = _XGethostbyname (hostname,hparams)) != NULL)
+	inet_addr = (char *) inet_ntoa (*(struct in_addr *)(hostp->h_addr));
     else
 	return NULL;
     for (i = 0, ptr1 = inet_addr; i < 3; i++)

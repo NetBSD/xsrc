@@ -1,5 +1,9 @@
-XCOMM $XConsortium: Imakefile /main/192 1996/02/02 16:15:49 kaleb $
-XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.15 1996/08/26 06:23:31 dawes Exp $
+XCOMM $TOG: Imakefile /main/196 1997/05/20 10:06:09 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.19.2.2 1997/05/21 15:02:16 dawes Exp $
 #define DoNormalLib NormalLibX11
 #define DoSharedLib SharedLibX11
 #define DoDebugLib DebugLibX11
@@ -7,6 +11,7 @@ XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.15 1996/08/26 06:23:31 dawes Exp $
 #define LibName X11
 #define SoRev SOXLIBREV
 #define HugeLibrary YES
+#define IncSubdir X11
 
 #include <Threads.tmpl>
 
@@ -24,7 +29,7 @@ XBSDLIB = /**/
 EXTRA_LIBRARIES = /**/
 #endif
 #if Malloc0ReturnsNull
-     MALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+     MALLOC_DEFINES = XMalloc0ReturnsNullDefines
 #endif
 #if HasXdmAuth
         XDMAUTHDEFS = -DHASXDMAUTH
@@ -82,11 +87,9 @@ EXTRA_LIBRARIES = /**/
 #if NeedLibInsideFlag
     LIB_DEFINES = -D_XLIBINT_
 #endif
- LIB_MT_DEFINES = LibraryMTDefines
-
-        DEFINES = $(MALLOC_DEFINES) $(LIB_DEFINES) $(MISC_DEFINES)
+        DEFINES = $(MALLOC_DEFINES) $(LIB_DEFINES)
    OPEN_DEFINES = -I$(EXTINCSRC) $(K5INCL) $(K5DEFS)
- DEPEND_DEFINES = $(OPEN_DEFINES) $(TRANS_INCLUDES) $(CONN_DEFINES) $(THREADS_DEFINES) $(LIB_MT_DEFINES)
+ DEPEND_DEFINES = $(OPEN_DEFINES) $(TRANS_INCLUDES) $(CONN_DEFINES) $(THREADS_DEFINES)
        AUTHOBJS = AuDispose.o AuGetBest.o AuFileName.o AuRead.o
        AUTHSRCS = AuDispose.c AuGetBest.c AuFileName.c AuRead.c
            SRCS = $(SRCS1) $(SRCS2) $(SRCS3) /* try *.c if you have trouble */
@@ -809,6 +812,7 @@ LCSRCS = \
 	lcGenConv.c \
 	lcGeneric.c \
 	lcInit.c \
+	lcJis.c \
 	lcPrTxt.c \
 	lcPubWrap.c \
 	lcPublic.c \
@@ -879,6 +883,7 @@ LCOBJS = \
 	lcGenConv.o \
 	lcGeneric.o \
 	lcInit.o \
+	lcJis.o \
 	lcPrTxt.o \
 	lcPubWrap.o \
 	lcPublic.o \
@@ -899,7 +904,7 @@ LCOBJS = \
 
 OBJS = $(OBJS1) $(OBJS2) $(OBJS3)
 
-#if !BuildServersOnly
+#if !BuildServersOnly || XnestServer
 #include <Library.tmpl>
 
 SpecialCLibObjectRule(ErrDes,$(ICONFIGFILES),$(EDB_DEFINES))
@@ -911,7 +916,7 @@ SpecialCLibObjectRule(ximtrans,$(ICONFIGFILES),$(TRANS_INCLUDES) $(CONN_DEFINES)
 LinkFile(ximtrans.c,$(TRANSCOMMSRC)/transport.c)
 SpecialCLibObjectRule(OpenDis,$(ICONFIGFILES),$(BC_DEFINES) $(OPEN_DEFINES) $(XTRANS_X_DEFINES) $(XKB_DEFINES))
 SpecialCLibObjectRule(Wrap,$(ICONFIGFILES),$(XDMAUTHDEFS))
-SpecialCLibObjectRule(XlibInt,$(ICONFIGFILES),-I$(EXTINCSRC) $(CONN_DEFINES) $(POLL_DEFINES) $(XTRANS_X_DEFINES) $(LIB_MT_DEFINES))
+SpecialCLibObjectRule(XlibInt,$(ICONFIGFILES),-I$(EXTINCSRC) $(CONN_DEFINES) $(POLL_DEFINES) $(XTRANS_X_DEFINES))
 SpecialCLibObjectRule(cmsColNm,$(ICONFIGFILES),$(CMS_DEFINES))
 SpecialCLibObjectRule(globals,$(ICONFIGFILES),$(CONN_DEFINES))
 SpecialCLibObjectRule(Context,$(ICONFIGFILES),$(BC_DEFINES))
@@ -919,11 +924,11 @@ SpecialCLibObjectRule(Xrm,$(_NOOP_),$(RCONST_DEFINES))
 SpecialCLibObjectRule(imTransR,$(ICONFIGFILES),$(CONN_DEFINES) $(XTRANS_XIM_DEFINES))
 SpecialCLibObjectRule(imTrans,$(ICONFIGFILES),$(CONN_DEFINES) $(XTRANS_XIM_DEFINES))
 SpecialCLibObjectRule(lcFile,$(ICONFIGFILES),$(XLC_DEFINES))
-SpecialCLibObjectRule(locking,$(ICONFIGFILES),$(LIB_MT_DEFINES))
 #if BuildXKBlib
 SpecialCLibObjectRule(XKBCvt,$(_NOOP_),$(RCONST_DEFINES))
 SpecialCLibObjectRule(KeyBind,$(ICONFIGFILES),$(XKB_DEFINES))
 SpecialCLibObjectRule(XKBBind,$(ICONFIGFILES),$(XKB_DEFINES))
+SpecialCLibObjectRule(imConv,$(ICONFIGFILES),$(XKB_DEFINES))
 #endif
 #if HasKrb5
 SpecialCLibObjectRule(k5encode,$(_NOOP_),$(K5INCL))
@@ -962,10 +967,10 @@ LinkSourceFile(snprintf.h,../misc)
 
 MAKEKEYS = ./makekeys
 
-ks_tables.h: $(INCLUDESRC)/keysymdef.h util/makekeys.c
+ks_tables.h: $(XINCLUDESRC)/keysymdef.h util/makekeys.c
 	RemoveFiles($@ ProgramTargetName(makekeys) makekeys.Osuf)
 	-HostLinkRule(ProgramTargetName(makekeys),$(CFLAGS) $(LOCAL_LDFLAGS),util/makekeys.c,$(LDLIBS))
-	RunProgram(MAKEKEYS,< $(INCLUDESRC)/keysymdef.h > ks_tables_h)
+	RunProgram(MAKEKEYS,< $(XINCLUDESRC)/keysymdef.h > ks_tables_h)
 	$(MV) ks_tables_h $@
 	RemoveFiles(ProgramTargetName(makekeys) makekeys.Osuf ks_tables_h)
 
@@ -980,5 +985,5 @@ DependTarget3($(SRCS1),$(SRCS2),$(SRCS3))
 #else
 all::
 
-BuildIncludesTop($(HEADERS))
+BuildIncludes($(HEADERS),IncSubdir,..)
 #endif

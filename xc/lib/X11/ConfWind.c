@@ -1,4 +1,4 @@
-/* $XConsortium: ConfWind.c,v 11.12 94/04/17 20:18:52 rws Exp $ */
+/* $XConsortium: ConfWind.c /main/8 1996/10/22 14:16:48 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -63,4 +63,5 @@ unsigned int width, height;
 #endif /* MUSTCOPY */
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: SetBack.c,v 11.10 94/04/17 20:20:51 rws Exp $ */
+/* $XConsortium: SetBack.c /main/5 1996/10/22 14:21:44 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -40,4 +40,5 @@ unsigned long background; /* CARD32 */
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

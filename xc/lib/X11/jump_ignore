@@ -1,5 +1,5 @@
 # $XConsortium: jump_ignore,v 1.3 95/06/06 21:20:40 kaleb Exp $
-# $XFree86: xc/lib/X11/jump_ignore,v 3.6 1996/08/27 03:11:25 dawes Exp $
+# $XFree86: xc/lib/X11/jump_ignore,v 3.8 1997/01/19 12:48:12 dawes Exp $
 # jump_ignore
 00000000 T __XANYSET            libX11         XlibInt
 00000000 T __XlcAddCT           libX11         lcCT
@@ -44,3 +44,20 @@
 00000000 T __XVsnprintf libX11         snprintf
 00000004 D __XkbInternAtomFunc  libX11         XKB
 00000004 D __XkbGetAtomNameFunc libX11         XKB
+00000000 T __XTextHeight        libX11         TextExt
+00000000 T __XTextHeight16      libX11         TextExt16
+00000000 T _default_ct_data_list libX11         lcCT
+00000000 T _default_ct_data_list_num libX11         lcCT
+00000000 T __XlcParsePath       libX11         lcFile
+00000000 T __XlcGetCodeSetFromName libX11         lcGenConv
+00000000 T __XlcParse_scopemaps libX11         lcGeneric
+00000000 T __XlcDbg_printValue  libX11         lcGeneric
+00000000 T _add_conversion      libX11         lcGeneric
+00000000 T __XlcJisLoader       libX11         lcJis
+00000000 T _parse_fontname      libX11         omGeneric
+00000000 T _destroy_fontdata    libX11         omGeneric
+00000000 T _read_EncodingInfo   libX11         omGeneric
+00000000 T __XomGetFontDataFromFontSet libX11         omXChar
+00000000 K __Xcyrillic          libX11         XKBCvt
+00000000 K __Xkoi8              libX11         XKBCvt
+00000000 K __Xgreek             libX11         XKBCvt

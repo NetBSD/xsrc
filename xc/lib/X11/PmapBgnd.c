@@ -1,4 +1,4 @@
-/* $XConsortium: PmapBgnd.c,v 11.9 94/04/17 20:20:26 rws Exp $ */
+/* $XConsortium: PmapBgnd.c /main/6 1996/10/22 14:20:39 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -41,5 +41,6 @@ XSetWindowBackgroundPixmap(dpy, w, pixmap)
     OneDataCard32 (dpy, NEXTPTR(req,xChangeWindowAttributesReq), pixmap);
     UnlockDisplay (dpy);
     SyncHandle();
+    return 1;
 }
 

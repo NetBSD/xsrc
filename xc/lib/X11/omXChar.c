@@ -1,4 +1,4 @@
-/* $XConsortium: omXChar.c,v 1.3 94/02/06 15:10:11 rws Exp $ */
+/* $XConsortium: omXChar.c /main/6 1996/12/05 10:41:05 swick $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,11 +23,210 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
+/*
+ * Copyright 1995 by FUJITSU LIMITED
+ * This is source code modified by FUJITSU LIMITED under the Joint
+ * Development Agreement for the CDE/Motif PST.
+ *
+ * Modifier: Takanori Tateno   FUJITSU LIMITED
+ *
+ */
 
 #include "Xlibint.h"
 #include "XlcPublic.h"
 #include "XomGeneric.h"
 #include <stdio.h>
+
+/* for VW/UDC start */
+static Bool
+ismatch_scopes(fontdata,value, is_shift)
+    FontData      fontdata;
+    unsigned long *value;
+    Bool	  is_shift;
+{
+    register int side, scopes_num = fontdata->scopes_num;
+    FontScope scopes = fontdata->scopes;
+    if (!scopes_num)
+        return False;
+
+    if(fontdata->font == NULL)
+	return False;
+
+    side = fontdata->side;
+
+    for(;scopes_num--;scopes++)
+        if ((scopes->start <= (*value & 0x7f7f)) &&
+                        ((scopes->end) >= (*value & 0x7f7f))){
+	    if(is_shift == True) {
+                if(scopes->shift){
+                    if(scopes->shift_direction == '+'){
+                        *value += scopes->shift ;
+                    } else if( scopes->shift_direction == '-'){
+                        *value -= scopes->shift ;
+                    }
+                }
+            }
+            return True;
+        }
+
+    return False;
+}
+
+static int
+check_vertical_fonttype(name)
+    char	*name;
+{
+    char	*ptr;
+    int		type = 0;
+
+    if(name == (char *)NULL || (int) strlen(name) <= 0)
+	return False;
+
+    /* Obtains the pointer of CHARSET_ENCODING_FIELD. */
+    if((ptr = strchr(name, '-')) == (char *) NULL)
+	return False;
+    ptr++;
+
+    /* Obtains the pointer of vertical_map font type. */
+    if((ptr = strchr(ptr, '.')) == (char *) NULL)
+	return False;
+    ptr++;
+
+    switch(*ptr) {
+      case '1':
+	type = 1;	break;
+      case '2':
+	type = 2;	break;
+      case '3':
+	type = 3;	break;
+    }
+    return type;
+}
+
+/*
+*/
+#define VMAP          0
+#define VROTATE       1
+#define FONTSCOPE     2
+
+FontData
+_XomGetFontDataFromFontSet(fs,str,len,len_ret,is2b,type)
+FontSet fs;
+unsigned char *str;
+int len;
+int *len_ret;
+int is2b;     
+int type;          /* VMAP , VROTATE , else */
+{
+    unsigned long value;
+    int num,i,hit,csize;
+    FontData fontdata;
+    unsigned char *c;
+    int vfont_type;
+    
+    c = str;
+    hit = -1;
+    if(type == VMAP){
+	fontdata = fs->vmap;
+	num      = fs->vmap_num;
+    } else if(type == VROTATE){
+        fontdata = (FontData)fs->vrotate;
+	num      = fs->vrotate_num;
+    } else {
+	if(fs->font_data_count <= 0 || fs->font_data == (FontData)NULL) {
+	    fontdata = fs->substitute;
+	    num      = fs->substitute_num;
+	}else {
+            fontdata = fs->font_data;
+	    num      = fs->font_data_count;
+	}
+	/* CDExc20229 fix */
+	if(fontdata == NULL || num == 0){
+	    return(NULL);
+	}
+    }
+
+
+    if(is2b){
+        csize = 2;
+    } else {
+        csize = 1;
+    }
+
+    for(;len;len--){
+        if(is2b){
+            value = (((unsigned long)*c) << 8)|(unsigned long)*(c + 1);
+        } else {
+            value = (unsigned long)*c;
+        }
+    
+        for (i=0;i<num;i++) {
+	    if(type == VROTATE) {
+		if(fontdata[i].font) {
+		    /* If the num_cr equal zero, all character is rotated. */
+		    if(fontdata[i].scopes_num == 0) {
+			break;
+		    } else {
+			/* The vertical rotate glyph is not have code shift. */
+			if (ismatch_scopes(&(fontdata[i]),&value,False)) {
+			    break;
+			}
+		    }
+		}
+	    } else if(type == VMAP) {
+		if(fontdata[i].font) {
+		    vfont_type = check_vertical_fonttype(fontdata[i].name);
+		    if(vfont_type == 0 || vfont_type == 1) {
+			break;
+		    } else if(vfont_type == 2 || vfont_type == 3) {
+			if(fontdata[i].scopes_num <= 0)
+			    break;
+
+			if (ismatch_scopes(&(fontdata[i]),&value,True)) {
+			    break;
+			}
+		    }
+		}
+	    } else { /* FONTSCOPE */
+		if(fontdata[i].font) {
+		    if(fontdata[i].scopes_num <= 0)
+                        break;
+		    if (ismatch_scopes(&(fontdata[i]),&value,True)){
+		        break;
+                    }
+		}
+	    }
+        }
+        if((hit != -1) && (i != hit)){
+            break;
+        }
+        if(i == num){
+            if( type == VROTATE || type == VMAP){
+		/* Change 1996.01.23 start */
+		if(fs->font_data_count <= 0 ||
+		   fs->font_data == (FontData)NULL)
+		    fontdata = fs->substitute;
+		else
+		    fontdata = fs->font_data;
+		/* Change 1996.01.23 end */
+	    }
+	    hit = 0;
+            c += csize;
+	    break;
+        }
+        if( hit == -1 ) hit = i;
+        if(is2b){
+            *c = (unsigned char)(value >> 8);
+            *(c + 1) = (unsigned char)(value);
+        } else {
+            *c = (unsigned char)value;
+        }
+        c += csize;
+    }
+    *len_ret = (c - str);
+    return(&(fontdata[hit]));
+}
+/* for VW/UDC end   */
 
 static FontSet
 _XomGetFontSetFromCharSet(oc, charset)
@@ -35,7 +234,7 @@ _XomGetFontSetFromCharSet(oc, charset)
     XlcCharSet charset;
 {
     register FontSet font_set = XOC_GENERIC(oc)->font_set;
-    register num = XOC_GENERIC(oc)->font_set_num;
+    register int num = XOC_GENERIC(oc)->font_set_num;
     XlcCharSet *charset_list;
     int charset_count;
 
@@ -94,7 +293,7 @@ cs_to_xchar2b_gr(from, to, length)
 static void
 shift_to_gl(text, length)
     register char *text;
-    register length;
+    register int length;
 {
     while (length-- > 0)
 	*text++ &= 0x7f;
@@ -103,7 +302,7 @@ shift_to_gl(text, length)
 static void
 shift_to_gr(text, length)
     register char *text;
-    register length;
+    register int length;
 {
     while (length-- > 0)
 	*text++ |= 0x80;
@@ -204,13 +403,15 @@ _XomConvert(oc, conv, from, from_left, to, to_left, args, num_args)
 
 	if (font_set->is_xchar2b)
 	    length >>= 1;
-
 	*to = cs;
 	*to_left -= length;
     }
 
     *((XFontStruct **) args[0]) = font_set->font;
     *((Bool *) args[1]) = font_set->is_xchar2b;
+    if(num_args >= 3){
+        *((FontSet *) args[2]) = font_set;
+    }
 
     return ret;
 }

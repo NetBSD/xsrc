@@ -1,4 +1,4 @@
-/* $XConsortium: Xauth.h,v 1.17 95/07/10 21:18:07 gildea Exp $ */
+/* $XConsortium: Xauth.h /main/18 1996/07/31 16:08:18 dpw $ */
 
 /*
 
@@ -30,17 +30,6 @@ in this Software without prior written authorization from the X Consortium.
 #ifndef _Xauth_h
 #define _Xauth_h
 
-# include   <X11/Xfuncproto.h>
-# include   <X11/Xfuncs.h>
-
-# include   <stdio.h>
-
-# define FamilyLocal (256)	/* not part of X standard (i.e. X.h) */
-# define FamilyWild  (65535)
-# define FamilyNetname    (254)   /* not part of X standard */
-# define FamilyKrb5Principal (253) /* Kerberos 5 principal name */
-# define FamilyLocalHost (252)	/* for local non-net authentication */
-
 typedef struct xauth {
     unsigned short   family;
     unsigned short   address_length;
@@ -52,6 +41,20 @@ typedef struct xauth {
     unsigned short   data_length;
     char   	    *data;
 } Xauth;
+
+#ifndef _XAUTH_STRUCT_ONLY
+
+# include   <X11/Xfuncproto.h>
+# include   <X11/Xfuncs.h>
+
+# include   <stdio.h>
+
+# define FamilyLocal (256)	/* not part of X standard (i.e. X.h) */
+# define FamilyWild  (65535)
+# define FamilyNetname    (254)   /* not part of X standard */
+# define FamilyKrb5Principal (253) /* Kerberos 5 principal name */
+# define FamilyLocalHost (252)	/* for local non-net authentication */
+
 
 _XFUNCPROTOBEGIN
 
@@ -172,5 +175,7 @@ _XFUNCPROTOEND
 # define LOCK_SUCCESS	0	/* lock succeeded */
 # define LOCK_ERROR	1	/* lock unexpectely failed, check errno */
 # define LOCK_TIMEOUT	2	/* lock failed, timeouts expired */
+
+#endif /* _XAUTH_STRUCT_ONLY */
 
 #endif /* _Xauth_h */

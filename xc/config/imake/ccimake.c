@@ -1,4 +1,4 @@
-/* XConsortium: ccimake.c,v 1.13 94/04/13 16:45:02 gildea Exp $ */
+/* $XConsortium: ccimake.c /main/15 1996/09/28 16:14:25 rws $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium

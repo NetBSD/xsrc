@@ -1,4 +1,4 @@
-/* $XConsortium: registry /main/114 1996/02/08 12:18:19 matt $ */
+/* $XConsortium: registry /main/119 1996/10/08 12:31:00 swick $ */
 
 				  X Registry
 
@@ -49,6 +49,7 @@ Name						Reference
 "DG"						[48]
 "DME"						[7]
 "Dt"						[114]
+"EFW"						[124]
 "ES"						[75]
 "FXD"						[55]
 "FUJITSU"					[87]
@@ -294,6 +295,7 @@ Name						Reference
 "MIT-KERBEROS-5"				[21]
 "MIT-MAGIC-COOKIE-1"				[8]
 "SUN-DES-1"					[57]
+"XC-QUERY-SECURITY-1"				[8]
 "XDM-AUTHORIZATION-1"				[8], [11]
 
 4. VENDOR STRING FORMATS
@@ -310,6 +312,7 @@ String						Reference
 "Crucible"					[30]
 "Data General Corporation"			[48]
 "Digital Equipment Corporation"			[82]
+"EFW, Inc."					[124]
 "Evans & Sutherland"				[75]
 "FUJITSU LIMITED"				[87]
 "International Business Machines"		[33]
@@ -372,6 +375,7 @@ Name						Reference
 "FUJITSU-VX-DeviceControl"			[87]
 "JUPMISC"					[93]
 "KPC-XPeer"					[98]
+"LBX"						[125]
 "MEX-Metheus-Extension-to-X"			[117]
 "MIT-SCREEN-SAVER"				[96]
 "MIT-SHM"					[8]
@@ -382,6 +386,7 @@ Name						Reference
 "PanasonicDosEmulatorExtension"			[52]
 "PFU-GAOpAttr"					[32]
 "RECORD"					[122]
+"SECURITY"					[126]
 "SGI-GLX"					[6]
 "SGI-XGL"					[6]
 "SGI-MISCELLANEOUS"				[6]
@@ -411,10 +416,13 @@ Name						Reference
 "X/software X/shadowX"				[115]
 "X/software X/translucentX"			[115]
 "X3D-PEX"					[8], [9]
+"XC-APPGROUP"					[127]
 "XC-MISC"					[109]
 "XFree86-VidModeExtension"			[113]
 "XIE"						[110]
+"XInputExtension"				[128]
 "XKEYBOARD"					[111]
+"XPRINT"					[129]
 "XTEST"						[8]
 "XTestExtension1"				[35]
 "XVideo"					[118]
@@ -644,7 +652,7 @@ Name						Reference
 "fujitsu.u90x03.1991-0"				[87]
 "GB2312.1980-0"					[39],[12]
 	China (PRC) Hanzi, GL encoding
-"GB2312.1980-1"					[39],[12]
+"GB2312.1980-1"					[39]
 	(deprecated)
 	China (PRC) Hanzi, GR encoding
 "HP-Arabic8"					[36]
@@ -705,7 +713,7 @@ Name						Reference
 "JISX0208.1990-0"				[71]
 	Japanese Graphic Character Set,
 	GL encoding
-"JISX0208.1983-1"				[40],[12]
+"JISX0208.1983-1"				[40]
 	(deprecated)
 	Japanese Graphic Character Set,
 	GL encoding
@@ -716,7 +724,7 @@ Name						Reference
 "KSC5601.1987-0"				[41],[12]
 	Korean Graphic Character Set,
 	GL encoding
-"KSC5601.1987-1"				[41],[12]
+"KSC5601.1987-1"				[41]
 	(deprecated)
 	Korean Graphic Character Set,
 	GL encoding
@@ -908,6 +916,7 @@ Name						Reference
 ----						---------
 "Acorn"						[49]
 "CRAB"						[84]
+"EFW"						[124]
 "FUJITSU"					[87]
 "HDS"						[70]
 "JCC"						[90]
@@ -1585,6 +1594,36 @@ REFERENCES
 	Cambridge MA 02139-1955
 
 [123]	Double Buffer Extension Specification
+	X Consortium
+	201 Broadway
+	Cambridge MA 02139-1955
+
+[124]	James A. Moulton
+	EFW, Inc
+	4700 Marine Creek Parkway
+	Ft. Worth, Texas 76136
+
+[125]	Low Bandwidth X Extension Specification
+	X Consortium
+	201 Broadway
+	Cambridge MA 02139-1955
+
+[126]	Security Extension Specification
+	X Consortium
+	201 Broadway
+	Cambridge MA 02139-1955
+
+[127]	Application Group Extension Specification
+	X Consortium
+	201 Broadway
+	Cambridge MA 02139-1955
+
+[128]	X11 Input Extension Protocol Specification
+	X Consortium
+	201 Broadway
+	Cambridge MA 02139-1955
+
+[129]	X Print Extension Protocol Specification
 	X Consortium
 	201 Broadway
 	Cambridge MA 02139-1955

@@ -1,4 +1,4 @@
-/* $XConsortium: RepWindow.c,v 11.8 94/04/17 20:20:48 rws Exp $ */
+/* $XConsortium: RepWindow.c /main/5 1996/10/22 14:21:29 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -43,5 +43,6 @@ XReparentWindow(dpy, w, p, x, y)
     req->y = y;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

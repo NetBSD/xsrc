@@ -1,5 +1,5 @@
-/* $XConsortium: GetDflt.c /main/45 1996/02/28 12:16:36 kaleb $ */
-/* $XFree86: xc/lib/X11/GetDflt.c,v 3.9 1996/05/13 06:37:06 dawes Exp $ */
+/* $XConsortium: GetDflt.c /main/55 1996/12/03 19:15:16 kaleb $ */
+/* $XFree86: xc/lib/X11/GetDflt.c,v 3.10 1996/12/23 05:59:31 dawes Exp $ */
 
 /***********************************************************
 
@@ -81,7 +81,9 @@ SOFTWARE.
 #include <X11/Xthreads.h>
 #endif
 #ifndef WIN32
-#include <pwd.h>
+#define X_INCLUDE_PWD_H
+#define XOS_USE_XLIB_LOCKING
+#include <X11/Xos_r.h>
 #endif
 #include <stdio.h>
 #include <ctype.h>
@@ -109,48 +111,8 @@ static char *GetHomeDir (dest, len)
     } else
 	*dest = '\0';
 #else
-#ifdef X_NOT_POSIX
-#ifndef i386
-# ifndef SYSV
-    extern struct passwd *getpwuid(), *getpwnam();
-# endif
-#endif
-#endif
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API)
-#ifdef sun
-#ifdef _POSIX_THREAD_SAFE_FUNCTIONS     /* Sun lies in Solaris 2.5 */
-#undef _POSIX_THREAD_SAFE_FUNCTIONS
-#endif
-#endif
-    struct passwd pws;
-    char pwbuf[LINE_MAX];
-#define PwDir pws.pw_dir
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-/* SVR4 threads, AIX 4.1.4 and earlier and OSF/1 3.2 and earlier pthreads */
-#define Getpwnam(u) getpwnam_r((u),&pws,pwbuf,sizeof pwbuf)
-#define Getpwuid(u) getpwuid_r((u),&pws,pwbuf,sizeof pwbuf)
-#ifndef SVR4
-#define CallFailed -1
-    int pw;
-#else /* SVR4 */
-#define CallFailed NULL
+    _Xgetpwparams pwparams;
     struct passwd *pw;
-#endif /* SVR4 */
-#else /* _POSIX_THREAD_SAFE_FUNCTIONS */
-/* Digital UNIX 4.0, but not (beta) T4.0-1 */
-#define Getpwnam(u) getpwnam_r((u),&pws,pwbuf,sizeof pwbuf,&pwp)
-#define Getpwuid(u) getpwuid_r((u),&pws,pwbuf,sizeof pwbuf,&pwp)
-#define CallFailed -1
-    int pw;
-    struct passwd* pwp;
-#endif /* _POSIX_THREAD_SAFE_FUNCTIONS */
-#else /* XTHREADS && XUSE_MTSAFE_API */
-#define Getpwnam(u) getpwnam((u))
-#define Getpwuid(u) getpwuid((u))
-#define CallFailed NULL
-#define PwDir pw->pw_dir
-    struct passwd *pw;
-#endif /* XTHREADS && XUSE_MTSAFE_API */
     register char *ptr;
 
     if ((ptr = getenv("HOME"))) {
@@ -158,11 +120,11 @@ static char *GetHomeDir (dest, len)
 	dest[len-1] = '\0';
     } else {
 	if (ptr = getenv("USER"))
-	    pw = Getpwnam(ptr);
+	    pw = _XGetpwnam(ptr,pwparams);
 	else
-	    pw = Getpwuid(getuid());
-	if (pw != CallFailed)
-	    (void) strcpy(dest, PwDir);
+	    pw = _XGetpwuid(getuid(),pwparams);
+	if (pw != NULL)
+	    (void) strcpy(dest, pw->pw_dir);
 	else
 	    *dest = '\0';
     }
@@ -190,7 +152,7 @@ static XrmDatabase InitDefaults (dpy)
      */
 
     if (dpy->xdefaults == NULL) {
-	static char slashDotXdefaults[] = "/.Xdefaults";
+	char *slashDotXdefaults = "/.Xdefaults";
 
 	(void) GetHomeDir (fname, PATH_MAX - sizeof slashDotXdefaults - 1);
 	(void) strcat (fname, slashDotXdefaults);
@@ -200,7 +162,7 @@ static XrmDatabase InitDefaults (dpy)
     }
 
     if (!(xenv = getenv ("XENVIRONMENT"))) {
-	static char slashDotXdefaultsDash[] = "/.Xdefaults-";
+	char *slashDotXdefaultsDash = "/.Xdefaults-";
 	int len;
 
 	(void) GetHomeDir (fname, PATH_MAX - sizeof slashDotXdefaultsDash - 1);

@@ -1,4 +1,4 @@
-/* $XConsortium: Region.c,v 11.40 94/04/17 20:20:46 rws Exp $ */
+/* $XConsortium: Region.c /main/30 1996/10/22 14:21:24 kaleb $ */
 /************************************************************************
 
 Copyright (c) 1987, 1988  X Consortium
@@ -117,6 +117,7 @@ XClipBox( r, rect )
     rect->y = r->extents.y1;
     rect->width = r->extents.x2 - r->extents.x1;
     rect->height = r->extents.y2 - r->extents.y1;
+    return 1;
 }
 
 XUnionRectWithRegion(rect, source, dest)
@@ -135,8 +136,7 @@ XUnionRectWithRegion(rect, source, dest)
     region.extents.y2 = rect->y + rect->height;
     region.size = 1;
 
-    XUnionRegion(&region, source, dest);
-    return 0;
+    return XUnionRegion(&region, source, dest);
 }
 
 /*-
@@ -212,6 +212,8 @@ XSetRegion( dpy, gc, r )
     register XRectangle *xr, *pr;
     register BOX *pb;
     unsigned long total;
+    extern void _XSetClipRectangles();
+
     LockDisplay (dpy);
     total = r->numRects * sizeof (XRectangle);
     if (xr = (XRectangle *) _XAllocTemp(dpy, total)) {
@@ -228,6 +230,7 @@ XSetRegion( dpy, gc, r )
 	_XFreeTemp(dpy, (char *)xr, total);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 
 XDestroyRegion( r )
@@ -235,6 +238,7 @@ XDestroyRegion( r )
 {
     Xfree( (char *) r->rects );
     Xfree( (char *) r );
+    return 1;
 }
 
 
@@ -266,6 +270,7 @@ XOffsetRegion(pRegion, x, y)
     pRegion->extents.x2 += x;
     pRegion->extents.y1 += y;
     pRegion->extents.y2 += y;
+    return 1;
 }
 
 /* 
@@ -460,7 +465,7 @@ XIntersectRegion(reg1, reg2, newReg)
      * due to coalescing, so we have to examine fewer rectangles.
      */
     miSetExtents(newReg);
-    return(1);
+    return 1;
 }
 
 static void
@@ -558,14 +563,14 @@ QuickCheck(newReg, reg1, reg2)
     if ( (reg1 == reg2) || (!(reg1->numRects)) )
     {
         miRegionCopy(newReg, reg2);
-        return(TRUE);
+        return TRUE;
     }
 
     /*   if nothing to union   */
     if (!(reg2->numRects))
     {
         miRegionCopy(newReg, reg1);
-        return(TRUE);
+        return TRUE;
     }
 
     /*   could put an extent check to see if add above or below */
@@ -574,9 +579,9 @@ QuickCheck(newReg, reg1, reg2)
         (reg2->extents.y1 >= reg1->extents.y2) )
     {
         combineRegs(newReg, reg1, reg2);
-        return(TRUE);
+        return TRUE;
     }
-    return(FALSE);
+    return FALSE;
 }
 
 /*   TopRects(rects, reg1, reg2)
@@ -619,7 +624,7 @@ TopRects(newReg, rects, reg1, reg2, FirstRect)
             tempRects++;
 	}
     }
-    return(1);
+    return 1;
 }
 #endif
 
@@ -1216,7 +1221,7 @@ XUnionRegion(reg1, reg2, newReg)
     {
         if (newReg != reg2)
             miRegionCopy(newReg, reg2);
-        return(TRUE);
+        return 1;
     }
 
     /*
@@ -1226,7 +1231,7 @@ XUnionRegion(reg1, reg2, newReg)
     {
         if (newReg != reg1)
             miRegionCopy(newReg, reg1);
-        return(TRUE);
+        return 1;
     }
 
     /*
@@ -1240,7 +1245,7 @@ XUnionRegion(reg1, reg2, newReg)
     {
         if (newReg != reg1)
             miRegionCopy(newReg, reg1);
-        return(TRUE);
+        return 1;
     }
 
     /*
@@ -1254,7 +1259,7 @@ XUnionRegion(reg1, reg2, newReg)
     {
         if (newReg != reg2)
             miRegionCopy(newReg, reg2);
-        return(TRUE);
+        return 1;
     }
 
     miRegionOp (newReg, reg1, reg2, (voidProcp) miUnionO, 
@@ -1265,7 +1270,7 @@ XUnionRegion(reg1, reg2, newReg)
     newReg->extents.x2 = max(reg1->extents.x2, reg2->extents.x2);
     newReg->extents.y2 = max(reg1->extents.y2, reg2->extents.y2);
 
-    return(1);
+    return 1;
 }
 
 
@@ -1493,7 +1498,7 @@ XSubtractRegion(regM, regS, regD)
 	(!EXTENTCHECK(&regM->extents, &regS->extents)) )
     {
 	miRegionCopy(regD, regM);
-        return(1);
+        return 1;
     }
  
     miRegionOp (regD, regM, regS, (voidProcp) miSubtractO, 
@@ -1507,7 +1512,7 @@ XSubtractRegion(regM, regS, regD)
      * due to coalescing, so we have to examine fewer rectangles.
      */
     miSetExtents (regD);
-    return(1);
+    return 1;
 }
 
 XXorRegion( sra, srb, dr )
@@ -1533,9 +1538,8 @@ int
 XEmptyRegion( r )
     Region r;
 {
-    if( r->numRects == 0 )
-    return( TRUE );
-    else  return( FALSE );
+    if( r->numRects == 0 ) return TRUE;
+    else  return FALSE;
 }
 
 /*
@@ -1547,19 +1551,19 @@ XEqualRegion( r1, r2 )
 {
     int i;
 
-    if( r1->numRects != r2->numRects ) return( FALSE );
-    else if( r1->numRects == 0 ) return( TRUE );
-    else if ( r1->extents.x1 != r2->extents.x1 ) return( FALSE );
-    else if ( r1->extents.x2 != r2->extents.x2 ) return( FALSE );
-    else if ( r1->extents.y1 != r2->extents.y1 ) return( FALSE );
-    else if ( r1->extents.y2 != r2->extents.y2 ) return( FALSE );
+    if( r1->numRects != r2->numRects ) return FALSE;
+    else if( r1->numRects == 0 ) return TRUE;
+    else if ( r1->extents.x1 != r2->extents.x1 ) return FALSE;
+    else if ( r1->extents.x2 != r2->extents.x2 ) return FALSE;
+    else if ( r1->extents.y1 != r2->extents.y1 ) return FALSE;
+    else if ( r1->extents.y2 != r2->extents.y2 ) return FALSE;
     else for( i=0; i < r1->numRects; i++ ) {
-    	if ( r1->rects[i].x1 != r2->rects[i].x1 ) return( FALSE );
-    	else if ( r1->rects[i].x2 != r2->rects[i].x2 ) return( FALSE );
-    	else if ( r1->rects[i].y1 != r2->rects[i].y1 ) return( FALSE );
-    	else if ( r1->rects[i].y2 != r2->rects[i].y2 ) return( FALSE );
+    	if ( r1->rects[i].x1 != r2->rects[i].x1 ) return FALSE;
+    	else if ( r1->rects[i].x2 != r2->rects[i].x2 ) return FALSE;
+    	else if ( r1->rects[i].y1 != r2->rects[i].y1 ) return FALSE;
+    	else if ( r1->rects[i].y2 != r2->rects[i].y2 ) return FALSE;
     }
-    return( TRUE );
+    return TRUE;
 }
 
 int 
@@ -1570,15 +1574,15 @@ XPointInRegion( pRegion, x, y )
     int i;
 
     if (pRegion->numRects == 0)
-        return(FALSE);
+        return FALSE;
     if (!INBOX(pRegion->extents, x, y))
-        return(FALSE);
+        return FALSE;
     for (i=0; i<pRegion->numRects; i++)
     {
         if (INBOX (pRegion->rects[i], x, y))
-	    return(TRUE);
+	    return TRUE;
     }
-    return(FALSE);
+    return FALSE;
 }
 
 int 

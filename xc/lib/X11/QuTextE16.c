@@ -1,4 +1,4 @@
-/* $XConsortium: QuTextE16.c,v 11.18 94/04/17 20:20:38 rws Exp $ */
+/* $XConsortium: QuTextE16.c /main/13 1996/10/22 14:21:06 kaleb $ */
 /*
 
 Copyright (c) 1986, 1987  X Consortium
@@ -74,7 +74,7 @@ XQueryTextExtents16 (dpy, fid, string, nchars, dir, font_ascent, font_descent,
     if (!_XReply (dpy, (xReply *)&rep, 0, xTrue) || !buf) {
         UnlockDisplay(dpy);
 	SyncHandle();
-	return (0);
+	return 0;
     }
     *dir = rep.drawDirection;
     *font_ascent = cvtINT16toInt (rep.fontAscent);
@@ -87,6 +87,6 @@ XQueryTextExtents16 (dpy, fid, string, nchars, dir, font_ascent, font_descent,
     overall->rbearing = (short) cvtINT32toInt (rep.overallRight);
     UnlockDisplay(dpy);
     SyncHandle();
-    return (1);
+    return 1;
 }
 

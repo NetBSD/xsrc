@@ -1,4 +1,4 @@
-/* $XConsortium: SetTile.c,v 11.15 94/04/17 20:21:07 rws Exp $ */
+/* $XConsortium: SetTile.c /main/6 1996/10/22 14:22:57 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -40,4 +40,5 @@ Pixmap tile;
     _XFlushGCCache(dpy, gc);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
