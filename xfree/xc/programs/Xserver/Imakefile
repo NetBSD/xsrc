@@ -1181,6 +1181,22 @@ Xnon: $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB32DIR) $(DEPDIRS)
 #endif /* XnonServer */
 
 
+#if defined(XvaxMonoServer) && XvaxMonoServer
+XCOMM
+XCOMM NetBSD/vax Monochrome server
+XCOMM
+MFBDIR  = mfb
+DDXDIR1 = hw/netbsd/vax
+VAXDIRS = $(STDDIRS) $(MFBDIR) $(DDXDIR1) $(DEPDIRS)
+VAXOBJS = hw/netbsd/vax/init.o hw/netbsd/vax/mono_io.o hw/netbsd/vax/lk201.o
+VAXLIBS = MFBLibs
+ServerTarget(Xmono,$(VAXDIRS),$(VAXOBJS),$(VAXLIBS),$(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall Xmono
+#endif
+#endif /* XvaxMonoServer */
+
+
 #if defined(XVirtualFramebufferServer) && XVirtualFramebufferServer
 XCOMM
 XCOMM server with Virtual (malloced) framebuffer
