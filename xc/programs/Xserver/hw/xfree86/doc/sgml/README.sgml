@@ -3,9 +3,9 @@
 
 <article>
 
-<title>README for XFree86&tm; 3.3.3.1
+<title>README for XFree86&tm; 3.3.4
 <author>The XFree86 Project, Inc
-<date>20 December 1998
+<date>21 June 1999
 
 
 <abstract>
@@ -20,7 +20,7 @@ including a binary upgrade for XFree86 3.3.3.
 
 </abstract>
 
-<sect>What's new in XFree86 3.3.3.1
+<sect>What's new in XFree86 3.3.4
 <p>
 
 For a summary of new features in this release, please refer to the
@@ -79,9 +79,9 @@ Note: Not all systems listed here have been tested with the current release.
 	<ITEM>Amoeba
 	<ITEM>Minix-386
 -->
-	<ITEM>LynxOS AT 2.3.0, 2.4.0, 2.5.0
-	<ITEM>LynxOS microSPARC 2.4.0, 2.5.0
-	<ITEM>LynxOS PowerPC 2.4.0, 2.5.0
+	<ITEM>LynxOS x86 2.3.0, 2.4.0, 2.5.x, 3.0.x
+	<ITEM>LynxOS microSPARC 2.4.0, 2.5.x, 3.0.x
+	<ITEM>LynxOS PowerPC 2.4.0, 2.5.x, 3.0.x
 	<ITEM>OS/2 Warp 3 FP5/17/22, Warp 4 -/FP1
 	</itemize>	
 
@@ -99,7 +99,7 @@ Note: Not all systems listed here have been tested with the current release.
 <sect> Supported video-card chip-sets
 <p>
 
-At this time, XFree86 3.3.3.1 supports the following chipsets:
+At this time, XFree86 3.3.4 supports the following chipsets:
 
   <DESCRIP>
     <tag/Ark Logic/
@@ -135,11 +135,13 @@ At this time, XFree86 3.3.3.1 supports the following chipsets:
 	GVGA 
     <tag/IBM /
 	8514/A (and true clones), XGA-2
+    <tag/Intel /
+    	i740
     <tag/IIT /
 	AGX-014, AGX-015, AGX-016
     <tag/Matrox/
 	MGA2064W (Millennium), MGA1064SG (Mystique and Mystique 220),
-	MGA2164W (Millennium II PCI and AGP), G100, G200
+	MGA2164W (Millennium II PCI and AGP), G100, G200, G400
     <tag/MX /
 	MX68000(*), MX680010(*)
     <tag/NCR /
@@ -149,7 +151,7 @@ At this time, XFree86 3.3.3.1 supports the following chipsets:
     <tag/Number Nine/
 	I128 (series I, II and IV), Revolution 3D (T2R)
     <tag>NVidia/SGS Thomson </tag>
-	NV1, STG2000, RIVA128, Riva TNT
+	NV1, STG2000, RIVA128, Riva TNT, Riva TNT2
     <tag/OAK /
 	OTI067, OTI077, OTI087
     <tag/RealTek/
@@ -161,8 +163,10 @@ At this time, XFree86 3.3.3.1 supports the following chipsets:
 	86C732, 86C764, 86C765, 86C767, 86C775, 86C785, 86C868, 86C968,
 	86C325, 86C357, 86C375, 86C375, 86C385, 86C988, 86CM65, 86C260
     <tag/SiS/
-	86C201, 86C202, 86C205, 86C215, 86C225, 5597, 5598, 6326
-    <tag/3DLabs/
+	86C201, 86C202, 86C205, 86C215, 86C225, 5597, 5598, 6326, 530, 620
+    <tag/3dfx /
+    	Voodoo Banshee, Voodoo3
+    <tag/3DLabs /
         GLINT 500TX, GLINT MX, Permedia, Permedia 2, Permedia 2v
     <tag/Tseng /
 	ET3000, ET4000AX, ET4000/W32, ET4000/W32i, ET4000/W32p, ET6000, ET6100
@@ -172,7 +176,7 @@ At this time, XFree86 3.3.3.1 supports the following chipsets:
  	TVGA9420, TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi,
 	TGUI9680, ProVidia 9682, ProVidia 9685(*), Cyber 9382,
 	Cyber 9385, Cyber 9388, 3DImage975, 3DImage985, Cyber 9397,
-	Cyber 9520
+	Cyber 9520, Cyber 9525, Blade3D, CyberBlade
     <tag>Video 7/Headland Technologies </tag>
 	HT216-32(*)
     <tag/Weitek /
@@ -210,6 +214,7 @@ Refer to the chipset-specific <tt>README</tt> files (currently for
 <htmlurl name=Rendition url=rendition.html>,
 <htmlurl name=Epson url=epson.html>,
 <htmlurl name=3DLabs url=3DLabs.html>)
+<htmlurl name=i740 url=i740.html>)
 for more information about using those chipsets.
 
 The monochrome server also supports generic VGA cards, using 64k of video
@@ -384,7 +389,7 @@ XFree86 support was integrated into the base X11R6 distribution by:
 	<item>Tsuyoshi Tamaki <it>&lt;tamaki@sail.t.u-tokyo.ac.jp&gt;</it>,
 	<item>Isao Ohishi <it>&lt;ohishi@hf.rim.or.jp&gt;</it>,
 	<item>Kohji Ohishi <it>&lt;atena@njk.co.jp&gt;</it>,
-	<item>Shin'ichi Yairo <it>&lt;QZR00522@niftyserve.or.jp&gt;</it>,
+	<item>Shin'ichi Yairo <it>&lt;QZR00522@nifty.ne.jp&gt;</it>,
 	<item>Kazuo Ito <it>&lt;ft4k-itu@asahi-net.or.jp&gt;</it>,
 	<item>Jun Sakuma <it>&lt;i931361@jks.is.tsukuba.ac.jp&gt;</it>,
 	<item>Shuichi Ueno <it>&lt;uenos@ppp.bekkoame.or.jp&gt;</it>,
@@ -398,7 +403,7 @@ XFree86 support was integrated into the base X11R6 distribution by:
 	<item>Yasuhiro Ichikawa <it>&lt;cs94006@mbox.sist.ac.jp&gt;</it>,
 	<item>Kazunori Ueno <it>&lt;jagarl@creator.club.or.jp&gt;</it>,
 	<item>Yasushi Suzuki <it>&lt;suz@d2.bs1.fc.nec.co.jp&gt;</it>,
-	<item>Satoshi Kimura <it>&lt;KFB03633@niftyserve.or.jp&gt;</it>,
+	<item>Satoshi Kimura <it>&lt;KFB03633@nifty.ne.jp&gt;</it>,
 	<item>Kazuhiko Uno <it>&lt;Kazuhiko.Uno@softvision.co.jp&gt;</it>,
 	<item>Tomiharu Takigami <it>&lt;takigami@elsd.mt.nec.co.jp&gt;</it>,
 	<item>Tomomi Suzuki <it>&lt;suzuki@grelot.elec.ryukoku.ac.jp&gt;</it>,
@@ -529,6 +534,7 @@ XFree86 support was integrated into the base X11R6 distribution by:
 <itemize>
        <item>Alan Hourihane <it>&lt;alanh@fairlite.demon.co.uk&gt;</it>
        <item>Xavier Ducoin <it>&lt;xavier@rd.lectra.fr&gt;</it>
+       <item>Dirk Hohndel <it>&lt;hohndel@XFree86.Org&gt;</it>
 </itemize>
 <tag/DEC 21030 (TGA) server by:  /
 <itemize>
@@ -669,6 +675,17 @@ XFree86 support was integrated into the base X11R6 distribution by:
        <item>Dirk Hohndel <it>&lt;hohndel@XFree86.Org&gt;</it>
        <item>Stefan Dirsch <it>&lt;sndirsch@suse.de&gt;</it>
        <item>Helmut Fahrion <it>&lt;hf@suse.de&gt;</it>
+</itemize>
+
+<tag/3dfx accelerated code by: /
+<itemize>
+       <item>Daryll Strauss <it>&lt;daryll@harlot.rb.ca.us&gt;</it>
+       <item>Scott Bertin
+</itemize>
+
+<tag/Intel i740 accelerated code by: /
+<itemize>
+       <item>Kevin E. Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
 </itemize>
 
 <tag/XFree86-VidModeExtension and xvidtune client by:  /
@@ -1094,7 +1111,7 @@ url="RELNOTES.html"> to find which files you need to take from the
 archive.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.46 1999/01/05 07:15:48 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.51 1999/06/23 12:37:18 hohndel Exp $
 
 
 

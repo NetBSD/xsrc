@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Trident.c,v 3.11.2.5 1998/10/25 09:49:19 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Trident.c,v 3.11.2.6 1999/04/23 17:41:56 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -90,6 +90,11 @@ int *Chipset;
 					case 0x23:
 						*Chipset = CHIP_TVGA9397;
 						break;
+/* Bill Mair */
+					case 0xF3:
+						*Chipset = CHIP_TVGA939A;
+						break;
+
 					case 0x30:
 					case 0x33:
 					case 0x34:
@@ -131,6 +136,11 @@ int *Chipset;
 			case PCI_CHIP_9397:
 				*Chipset = CHIP_TVGA9397;
 				break;
+/*Bill Mair*/
+			case PCI_CHIP_939A:
+				*Chipset = CHIP_TVGA939A;
+				break;
+
 			case PCI_CHIP_9520:
 				*Chipset = CHIP_TVGA9520;
 				break;
@@ -234,6 +244,11 @@ int *Chipset;
 				case 0x23:
 					*Chipset = CHIP_TVGA9397;
 					break;
+/*Bill Mair*/
+				case 0xF3:
+					*Chipset = CHIP_TVGA939A;
+					break;
+
 				case 0x30:
 				case 0x33:
 				case 0x34:
@@ -295,7 +310,11 @@ int Chipset;
 	{
 	case 0:
 	case 4:
-		Mem = 256;
+/* Bill Mair */
+		if (Chipset == CHIP_TVGA939A )
+			Mem = 8192; 
+		else
+		        Mem = 256;
 		break;
 	case 1:
 	case 5: /* New TGUI's don't support less than 1MB */

@@ -23,7 +23,7 @@
  * Author:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.c,v 3.17.2.9 1998/10/19 20:29:39 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga.c,v 3.17.2.10 1999/06/18 13:08:21 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -251,7 +251,9 @@ tgaProbe()
 
   i = 0;
   while ((pcrp = pcrpp[i]) != (pciConfigPtr)NULL) {
-	if (pcrp->_device_vendor == TGA_DEVICE_ID1) 
+	if ((pcrp->_device_vendor == TGA_DEVICE_ID1) &&
+	    (pcrp->_command & PCI_CMD_IO_ENABLE) &&
+	    (pcrp->_command & PCI_CMD_MEM_ENABLE))
 		break;
 	i++;
   }

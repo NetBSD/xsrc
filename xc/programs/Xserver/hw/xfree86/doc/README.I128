@@ -1,26 +1,15 @@
+                   Information for Number Nine I128 Users
 
+                          The XFree86 Project Inc.
 
-
-
-
-
-
-
-
-                    Information for Number Nine I128 Users
-
-                           The XFree86 Project Inc.
-
-                                24 October 1998
-
-
+                               24 October 1998
 
 1.  Supported hardware
 
 The current accelerated I128 server supports
 
-   o Imagine 128 (I128 with Texas Instruments TVP3025 or IBM528 RAMDAC). It has
-     been tested with with 4MB of VRAM.
+   o Imagine 128 (I128 with Texas Instruments TVP3025 or IBM528 RAMDAC). It
+     has been tested with with 4MB of VRAM.
 
    o Imagine 128 Ticket 2 Ride (I128-T2R with IBM526 or 528 RAMDAC). It has
      been tested with 4 MB and 8 MB of VRAM and DRAM.
@@ -28,9 +17,8 @@ The current accelerated I128 server supports
    o Imagine 128 Revolution 3D (I128-R3D with IBM526 RAMDAC).  It has been
      tested with 4 MB, 8 MB, and 16 MB of WRAM or SGRAM.
 
-   o Imagine 128 Revolution IV (I128-R4 with SILVERHAMMER RAMDAC).  It has been
-     tested with 32 MB.
-
+   o Imagine 128 Revolution IV (I128-R4 with SILVERHAMMER RAMDAC).  It has
+     been tested with 32 MB.
 
 2.  Features:
 
@@ -45,31 +33,19 @@ The current accelerated I128 server supports
 
    o Makes use of the graphics accelerator.
 
-
 3.  Configuration:
 
 The I128 driver should auto-detect all supported hardware so you needn't have
 anything other than the Identifier in the Section "Device" of the XF86Config
 file.  When running the XF86Setup or xf86config programs one merely needs to
-select an I128 card so that the correct server will be used.  One need not and
-should not specify a RAMDAC, clockchip or allow the setup program to probe for
-clocks. The driver will auto-detect the amount of video ram present.
+select an I128 card so that the correct server will be used.  One need not
+and should not specify a RAMDAC, clockchip or allow the setup program to
+probe for clocks. The driver will auto-detect the amount of video ram pre-
+sent.
 
 The following Section "Device" options are supported by the MGA driver:
 
    o Option "dac_8_bit"
-
-
-
-Information for Number Nine I128 Users                                        1
-
-
-
-
-
-Information for Number Nine I128 Users                                        2
-
-
 
      Will enable 8-bit DAC support.
 
@@ -82,11 +58,10 @@ Information for Number Nine I128 Users                                        2
      Will enable syncing on green for sync-on-green monitors (these are typi-
      cally fixed frequency workstation monitors).
 
-
 4.  Mode lines for the SiliconGraphics flat panel display:
 
-   o These mode lines are required for use with the T2R4 (Rev 4) and the Sili-
-     conGraphics Flat Panel display.
+   o These mode lines are required for use with the T2R4 (Rev 4) and the Sil-
+     iconGraphics Flat Panel display.
 
    o Modeline "1600x1024d32" 103.125  1600 1600 1656 1664 1024 1024 1029 1030
      HSkew 7 +Hsync +Vsync
@@ -106,7 +81,6 @@ Information for Number Nine I128 Users                                        2
    o Modeline "800x512d08"   54.375   800 800 840 848 512 512 514 515 HSkew 1
      DoubleScan +Hsync +Vsync
 
-
 5.  Author(s)
 
 Robin Cutshaw, robin@XFree86.Org
@@ -115,152 +89,7 @@ and special help from:
 
    o Galen Brooks, galen@nine.com
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/I128.sgml,v 1.1.2.3 1999/01/02 02:32:16 robin Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/I128.sgml,v 1.1.2.2 1998/12/30 00:00:57 robin Exp $
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Information for Number Nine I128 Users                                        3
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                   CONTENTS
-
-
-
-1. Supported hardware ....................................................... 1
-
-2. Features: ................................................................ 1
-
-3. Configuration: ........................................................... 1
-
-4. Mode lines for the SiliconGraphics flat panel display: ................... 2
-
-5. Author(s) ................................................................ 2
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                       i
-
-
-
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.I128,v 1.1.2.5 1999/01/05 12:06:34 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.I128,v 1.1.2.7 1999/06/25 08:56:35 hohndel Exp $

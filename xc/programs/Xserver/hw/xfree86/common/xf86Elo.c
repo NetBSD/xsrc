@@ -1,6 +1,6 @@
 /* $XConsortium: xf86Elo.c /main/13 1996/10/25 14:11:31 kaleb $ */
 /*
- * Copyright 1995, 1998 by Patrick Lecoanet, France. <lecoanet@cena.dgac.fr>
+ * Copyright 1995, 1999 by Patrick Lecoanet, France. <lecoanet@cena.dgac.fr>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Elo.c,v 3.19.2.4 1998/11/12 11:32:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Elo.c,v 3.19.2.5 1999/05/25 06:55:41 hohndel Exp $ */
 
 /*
  *******************************************************************************
@@ -46,6 +46,21 @@
  *******************************************************************************
  */
 
+#include <xf86Version.h>
+#if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(3,9,0,0,0)
+#define XFREE86_V4
+#endif
+
+#ifdef XFREE86_V4
+#include <misc.h>
+#include <xf86.h>
+#include <xf86_ansic.h>
+#include <xf86_OSproc.h>
+#include <xf86Xinput.h>
+#include <exevents.h>
+
+#else /* XFREE86_V4 */
+
 #include "Xos.h"
 #include <signal.h>
 #include <stdio.h>
@@ -65,19 +80,16 @@
 #include <ctype.h>
 
 #include "extio.h"
-#else
+#else /* defined(sun) && !defined(i386) */
 #include "compiler.h"
 
-#ifdef XFree86LOADER
-#include "xf86_libc.h"
-#endif
 #include "xf86.h"
 #include "xf86Procs.h"
 #include "xf86_OSlib.h"
 #include "xf86_Config.h"
 #include "xf86Xinput.h"
 #include "xf86Version.h"
-#endif
+#endif /* defined(sun) && !defined(i386) */
 
 #if !defined(sun) || defined(i386)
 #include "os.h"
@@ -86,8 +98,12 @@
 
 #include "extnsionst.h"
 #include "extinit.h"
-#endif
+#endif /* !defined(sun) || defined(i386) */
 
+#endif /* XFREE86_V4 */
+
+
+#ifndef XFREE86_V4
 #if !defined(sun) || defined(i386)
 /*
  ***************************************************************************
@@ -96,6 +112,7 @@
  *
  ***************************************************************************
  */
+
 #define PORT		1
 #define ELO_DEVICE_NAME	2
 #define SCREEN_NO	3
@@ -141,7 +158,7 @@ static SymTabRec LinkSpeedTab[] = {
   { LS9600,	"b9600" },
   { LS19200,	"b19200" }
 };
-#endif
+#endif /* !defined(sun) || defined(i386) */
 
 /*
  * This struct connects a line speed with
@@ -164,6 +181,7 @@ static LinkParameterStruct	LinkSpeedValues[] = {
   { B9600, 4 },
   { B19200, 2 }
 };
+#endif /* XFREE86_V4 */
 
 
 /*
@@ -253,6 +271,17 @@ static int      debug_level = 0;
 #define DBG(lvl, f)
 #endif
 
+#ifdef XFREE86_V4
+#undef SYSCALL
+#undef read
+#undef write
+#undef close
+#define SYSCALL(call) call
+#define read(fd, ptr, num) xf86ReadSerial(fd, ptr, num)
+#define write(fd, ptr, num) xf86WriteSerial(fd, ptr, num)
+#define close(fd) xf86CloseSerial(fd)
+#endif
+
 
 /*
  ***************************************************************************
@@ -269,8 +298,9 @@ typedef struct _EloPrivateRec {
   int		max_y;			/* Maximum y					*/
   int		untouch_delay;		/* Delay before reporting an untouch (in ms)    */
   int		report_delay;		/* Delay between touch report packets		*/
+#ifndef XFREE86_V4
   int		link_speed;		/* Speed of the RS232 link connecting the ts.	*/
-
+#endif
   int		screen_no;		/* Screen associated with the device		*/
   int		screen_width;		/* Width of the associated X screen		*/
   int		screen_height;		/* Height of the screen				*/
@@ -282,6 +312,7 @@ typedef struct _EloPrivateRec {
 } EloPrivateRec, *EloPrivatePtr;
 
 
+#ifndef XFREE86_V4
 #if !defined(sun) || defined(i386)
 /*
  ***************************************************************************
@@ -305,48 +336,58 @@ xf86EloConfig(LocalDevicePtr    *array,
     switch(token) {
       
     case PORT:
-      if (xf86GetToken(NULL) != STRING)
+      if (xf86GetToken(NULL) != STRING) {
 	xf86ConfigError("Elographics input port expected");
+      }
       priv->input_dev = strdup(val->str);	
-      if (xf86Verbose)
+      if (xf86Verbose) {
 	ErrorF("%s Elographics input port: %s\n",
 	       XCONFIG_GIVEN, priv->input_dev);
+      }
       break;
 
     case ELO_DEVICE_NAME:
-      if (xf86GetToken(NULL) != STRING)
+      if (xf86GetToken(NULL) != STRING) {
 	xf86ConfigError("Elographics device name expected");
+      }
       local->name = strdup(val->str);
-      if (xf86Verbose)
+      if (xf86Verbose) {
 	ErrorF("%s Elographics X device name: %s\n",
-	       XCONFIG_GIVEN, local->name);      
+	       XCONFIG_GIVEN, local->name);
+      }
       break;
 
     case SCREEN_NO:
-      if (xf86GetToken(NULL) != NUMBER)
+      if (xf86GetToken(NULL) != NUMBER) {
 	xf86ConfigError("Elographics screen number expected");
+      }
       priv->screen_no = val->num;
-      if (xf86Verbose)
+      if (xf86Verbose) {
 	ErrorF("%s Elographics associated screen: %d\n",
-	       XCONFIG_GIVEN, priv->screen_no);      
+	       XCONFIG_GIVEN, priv->screen_no);
+      }
       break;
 
     case UNTOUCH_DELAY:
-      if (xf86GetToken(NULL) != NUMBER)
+      if (xf86GetToken(NULL) != NUMBER) {
 	xf86ConfigError("Elographics untouch delay expected");
+      }
       priv->untouch_delay = val->num;
-      if (xf86Verbose)
+      if (xf86Verbose) {
 	ErrorF("%s Elographics untouch delay: %d ms\n",
-	       XCONFIG_GIVEN, priv->untouch_delay*10);      
+	       XCONFIG_GIVEN, priv->untouch_delay*10);
+      }
       break;
 
     case REPORT_DELAY:
-      if (xf86GetToken(NULL) != NUMBER)
+      if (xf86GetToken(NULL) != NUMBER) {
 	xf86ConfigError("Elographics report delay expected");
+      }
       priv->report_delay = val->num;
-      if (xf86Verbose)
+      if (xf86Verbose) {
 	ErrorF("%s Elographics report delay: %d ms\n",
-	       XCONFIG_GIVEN, priv->report_delay*10);      
+	       XCONFIG_GIVEN, priv->report_delay*10);
+      }
       break;
       
     case LINK_SPEED:
@@ -354,81 +395,95 @@ xf86EloConfig(LocalDevicePtr    *array,
 	int	ltoken = xf86GetToken(LinkSpeedTab);
 	if (ltoken == EOF ||
 	    ltoken == STRING ||
-	    ltoken == NUMBER)
+	    ltoken == NUMBER) {
 	  xf86ConfigError("Elographics link speed expected");
+	}
 	priv->link_speed = LinkSpeedValues[ltoken-1].speed;
-	if (xf86Verbose)
+	if (xf86Verbose) {
 	  ErrorF("%s Elographics link speed: %s bps\n",
 		 XCONFIG_GIVEN, (LinkSpeedTab[ltoken-1].name)+1);
+	}
       }
       break;
       
     case MAXX:
-      if (xf86GetToken(NULL) != NUMBER)
+      if (xf86GetToken(NULL) != NUMBER) {
         xf86ConfigError("Elographics maximum x position expected");
+      }
       priv->max_x = val->num;
-      if (xf86Verbose)
+      if (xf86Verbose) {
 	ErrorF("%s Elographics maximum x position: %d\n",
-	       XCONFIG_GIVEN, priv->max_x);      
+	       XCONFIG_GIVEN, priv->max_x);
+      }
      break;
       
     case MAXY:
-      if (xf86GetToken(NULL) != NUMBER)
+      if (xf86GetToken(NULL) != NUMBER) {
         xf86ConfigError("Elographics maximum y position expected");
+      }
       priv->max_y = val->num;
-      if (xf86Verbose)
+      if (xf86Verbose) {
 	ErrorF("%s Elographics maximum y position: %d\n",
-	       XCONFIG_GIVEN, priv->max_y);      
+	       XCONFIG_GIVEN, priv->max_y);
+      }
      break;
       
     case MINX:
-      if (xf86GetToken(NULL) != NUMBER)
+      if (xf86GetToken(NULL) != NUMBER) {
         xf86ConfigError("Elographics minimum x position expected");
+      }
       priv->min_x = val->num;
-      if (xf86Verbose)
+      if (xf86Verbose) {
 	ErrorF("%s Elographics minimum x position: %d\n",
-	       XCONFIG_GIVEN, priv->min_x);      
+	       XCONFIG_GIVEN, priv->min_x);
+      }
      break;
       
     case MINY:
-      if (xf86GetToken(NULL) != NUMBER)
+      if (xf86GetToken(NULL) != NUMBER) {
         xf86ConfigError("Elographics minimum y position expected");
+      }
       priv->min_y = val->num;
-      if (xf86Verbose)
+      if (xf86Verbose) {
 	ErrorF("%s Elographics minimum y position: %d\n",
-	       XCONFIG_GIVEN, priv->min_y);      
+	       XCONFIG_GIVEN, priv->min_y);
+      }
      break;
       
     case DEBUG_LEVEL:
-	if (xf86GetToken(NULL) != NUMBER)
-	    xf86ConfigError("Elographics driver debug level expected");
-	debug_level = val->num;
-	if (xf86Verbose) {
+      if (xf86GetToken(NULL) != NUMBER) {
+	xf86ConfigError("Elographics driver debug level expected");
+      }
+      debug_level = val->num;
+      if (xf86Verbose) {
 #if DEBUG
-	    ErrorF("%s Elographics debug level sets to %d\n", XCONFIG_GIVEN,
-		   debug_level);      
+	ErrorF("%s Elographics debug level sets to %d\n", XCONFIG_GIVEN,
+	       debug_level);      
 #else
-	    ErrorF("%s Elographics debug not available\n",
-		   XCONFIG_GIVEN, debug_level);      
+	ErrorF("%s Elographics debug not available\n",
+	       XCONFIG_GIVEN, debug_level);      
 #endif
-	}
-        break;
+      }
+      break;
 
     case HISTORY_SIZE:
-      if (xf86GetToken(NULL) != NUMBER)
+      if (xf86GetToken(NULL) != NUMBER) {
 	xf86ConfigError("Elographics motion history size expected");
+      }
       local->history_size = val->num;
-      if (xf86Verbose)
+      if (xf86Verbose) {
 	ErrorF("%s EloGraphics motion history size is %d\n", XCONFIG_GIVEN,
-	       local->history_size);      
+	       local->history_size);
+      }
       break;
 	    
     case ALWAYS_CORE:
-	xf86AlwaysCore(local, TRUE);
-	if (xf86Verbose)
-	    ErrorF("%s Elographics device will always stays core pointer\n",
-		   XCONFIG_GIVEN);
-	break;
+      xf86AlwaysCore(local, TRUE);
+      if (xf86Verbose) {
+	ErrorF("%s Elographics device will always stays core pointer\n",
+	       XCONFIG_GIVEN);
+      }
+      break;
 
     case EOF:
       FatalError("Unexpected EOF (missing EndSubSection)");
@@ -453,6 +508,7 @@ xf86EloConfig(LocalDevicePtr    *array,
 
   return Success;
 }
+#endif
 #endif
 
 
@@ -501,7 +557,7 @@ xf86EloGetPacket(unsigned char	*buffer,
   SYSCALL(num_bytes = read(fd,
 			   (char *) (buffer + *buffer_p),
 			   ELO_PACKET_SIZE - *buffer_p));
-      
+
   /*
    * Okay, give up.
    */
@@ -556,8 +612,9 @@ xf86EloGetPacket(unsigned char	*buffer,
      */
     return Success;
   }
-  else
+  else {
     return !Success;
+  }
 }
 
 /*
@@ -587,14 +644,24 @@ xf86EloConvert(LocalDevicePtr	local,
   int		width = priv->max_x - priv->min_x;
   int		height = priv->max_y - priv->min_y;
 
-  if (first != 0 || num != 2)
+  if (first != 0 || num != 2) {
     return FALSE;
-
+  }
+    
   DBG(3, ErrorF("EloConvert: v0(%d), v1(%d)\n",	v0, v1));
 
   *x = (priv->screen_width * (v0 - priv->min_x)) / width;
   *y = (priv->screen_height -
 	(priv->screen_height * (v1 - priv->min_y)) / height);
+
+#ifdef XFREE86_V4
+  /*
+   * Need to check if still on the correct screen.
+   * This call is here so that this work can be done after
+   * calib and before posting the event.
+   */
+  xf86XInputSetScreen(local, priv->screen_no, *x, *y);
+#endif
   
   DBG(3, ErrorF("EloConvert: x(%d), y(%d)\n",	*x, *y));
 
@@ -641,8 +708,9 @@ xf86EloReadInput(LocalDevicePtr	local)
   if (xf86EloGetPacket(priv->packet_buf,
 		       &priv->packet_buf_p,
 		       &priv->checksum,
-		       local->fd) != Success)
+		       local->fd) != Success) {
     return;
+  }
 
   /*
    * Process only ELO_TOUCHs here.
@@ -711,8 +779,9 @@ xf86EloSendPacket(unsigned char	*packet,
     DBG(5, ErrorF("System error while sending to Elographics touchscreen.\n"));
     return !Success;
   }
-  else
+  else {
     return Success;
+  }
 }
 
 
@@ -730,6 +799,25 @@ xf86EloSendPacket(unsigned char	*packet,
  *
  ***************************************************************************
  */
+#ifndef XFREE86_V4
+static int
+xf86WaitForInput(int	fd,
+		 int	timeout)
+{
+  fd_set	readfds;
+  struct	timeval to;
+  int		r;
+  
+  FD_ZERO(&readfds);
+  FD_SET(fd, &readfds);
+  to.tv_sec = 0;
+  to.tv_usec = timeout;
+  
+  SYSCALL(r = select(FD_SETSIZE, &readfds, NULL, NULL, &to));
+  return r;
+}
+#endif
+
 static Bool
 xf86EloWaitReply(unsigned char	type,
 		 unsigned char	*reply,
@@ -739,8 +827,6 @@ xf86EloWaitReply(unsigned char	type,
   int			i, result;
   int			reply_p = 0;
   int			sum = ELO_INIT_CHECKSUM;
-  fd_set		readfds;
-  struct timeval	timeout;
 
   DBG(4, ErrorF("Waiting a '%c' reply\n", type));
   i = ELO_MAX_TRIALS;
@@ -751,14 +837,9 @@ xf86EloWaitReply(unsigned char	type,
      * Wait half a second for the reply. The fuse counts down each
      * timeout and each wrong packet.
      */
-    FD_ZERO(&readfds);
-    FD_SET(fd, &readfds);
-    timeout.tv_sec = 0;
-    timeout.tv_usec = ELO_MAX_WAIT;
     DBG(4, ErrorF("Waiting %d ms for data from port\n", ELO_MAX_WAIT / 1000));
-    SYSCALL(result = select(FD_SETSIZE, &readfds, NULL, NULL, &timeout));
-    if (result > 0 &&
-	FD_ISSET(fd, &readfds)) {
+    result = xf86WaitForInput(fd, ELO_MAX_WAIT);
+    if (result > 0) {
       ok = xf86EloGetPacket(reply, &reply_p, &sum, fd);
       /*
        * Do not report an error on a 'P' query as the controller
@@ -773,8 +854,9 @@ xf86EloWaitReply(unsigned char	type,
       DBG(3, ErrorF("No answer from link : %d\n", result));
     }
     
-    if (result == 0)
+    if (result == 0) {
       i--;
+    }
   } while(ok != Success && i);
 
   return ok;
@@ -797,9 +879,11 @@ xf86EloWaitAck(int	fd)
   int		i, nb_errors;
 
   if (xf86EloWaitReply(ELO_ACK, packet, fd) == Success) {
-    for (i = 0, nb_errors = 0; i < 4; i++)
-      if (packet[2 + i] != '0')
+    for (i = 0, nb_errors = 0; i < 4; i++) {
+      if (packet[2 + i] != '0') {
 	nb_errors++;
+      }
+    }
     if (nb_errors != 0) {
       DBG(2, ErrorF("Elographics acknowledge packet reports %d errors\n",
 		    nb_errors));
@@ -807,8 +891,9 @@ xf86EloWaitAck(int	fd)
     return Success;
     /*    return (nb_errors < 4) ? Success : !Success;*/
   }
-  else
+  else {
     return !Success;
+  }
 }
 
 
@@ -833,12 +918,14 @@ xf86EloSendQuery(unsigned char	*request,
   
   if (xf86EloSendPacket(request, fd) == Success) {
     ok = xf86EloWaitReply(toupper(request[1]), reply, fd);
-    if (ok == Success)
+    if (ok == Success) {
       ok = xf86EloWaitAck(fd);
+    }
     return ok;
   }
-  else
+  else {
     return !Success;
+  }
 }
 
 
@@ -859,8 +946,9 @@ xf86EloSendControl(unsigned char	*control,
   if (xf86EloSendPacket(control, fd) == Success) {
     return xf86EloWaitAck(fd);
   }
-  else
+  else {
     return !Success;
+  }
 }
 
 
@@ -876,6 +964,62 @@ static void
 xf86EloPrintIdent(unsigned char	*packet,
 		  EloPrivatePtr	priv)
 {
+#ifdef XFREE86_V4
+  xf86Msg(X_PROBED, "Elographics touchscreen is a ");
+  switch(packet[2]) {
+  case '0':
+    xf86Msg(X_NONE, "AccuTouch");
+    break;
+  case '1':
+    xf86Msg(X_NONE, "DuraTouch");
+    break;
+  case '2':
+    xf86Msg(X_NONE, "Intellitouch");
+    break;
+  }
+  xf86Msg(X_NONE, ", connected through a ");
+  switch(packet[3]) {
+  case '0':
+    xf86Msg(X_NONE, "serial link.\n");
+    break;
+  case '1':
+    xf86Msg(X_NONE, "PC-Bus port.\n");
+    break;
+  case '2':
+    xf86Msg(X_NONE, "Micro Channel port.\n");
+    break;
+  }
+  xf86Msg(X_PROBED, "The controller is a model ");
+  if (packet[8] & 1) {
+    if (priv->is_a_2310) {
+      xf86Msg(X_NONE, "E281-2310");
+    }
+    else {
+      xf86Msg(X_NONE, "E271-2210");
+    }
+  }
+  else {
+    xf86Msg(X_NONE, "E271-2200");
+  }
+  xf86Msg(X_NONE, ", firmware revision %d.%d.\n", packet[6], packet[5]);
+  
+  if (packet[4]) {
+    xf86Msg(X_PROBED, " Additional features:\n");
+    if (packet[4] & 0x10) {
+      xf86Msg(X_PROBED, "	External A/D converter\n");
+    }
+    if (packet[4] & 0x20) {
+      xf86Msg(X_PROBED, "	32Ko RAM\n");
+    }
+    if (packet[4] & 0x40) {
+      xf86Msg(X_PROBED, "	RAM onboard\n");
+    }
+    if (packet[4] & 0x80) {
+      xf86Msg(X_PROBED, "	Z axis active\n");
+    }
+    xf86Msg(X_NONE, "\n");
+  }
+#else
   ErrorF("%s Elographics touchscreen is a ", XCONFIG_PROBED);
   switch(packet[2]) {
   case '0':
@@ -902,27 +1046,35 @@ xf86EloPrintIdent(unsigned char	*packet,
   }
   ErrorF("%s The controller is a model ", XCONFIG_PROBED);
   if (packet[8] & 1) {
-    if (priv->is_a_2310)
+    if (priv->is_a_2310) {
       ErrorF("E281-2310");
-    else
+    }
+    else {
       ErrorF("E271-2210");
+    }
   }
-  else
+  else {
     ErrorF("E271-2200");
+  }
   ErrorF(", firmware revision %d.%d.\n", packet[6], packet[5]);
   
   if (packet[4]) {
     ErrorF("%s Additional features:\n", XCONFIG_PROBED);
-    if (packet[4] & 0x10)
+    if (packet[4] & 0x10) {
       ErrorF("%s	External A/D converter\n", XCONFIG_PROBED);
-    if (packet[4] & 0x20)
+    }
+    if (packet[4] & 0x20) {
       ErrorF("%s	32Ko RAM\n", XCONFIG_PROBED);
-    if (packet[4] & 0x40)
+    }
+    if (packet[4] & 0x40) {
       ErrorF("%s	RAM onboard\n", XCONFIG_PROBED);
-    if (packet[4] & 0x80)
+    }
+    if (packet[4] & 0x80) {
       ErrorF("%s	Z axis active\n", XCONFIG_PROBED);
+    }
     ErrorF("\n");
   }
+#endif
 }
 
 
@@ -958,7 +1110,6 @@ xf86EloControl(DeviceIntPtr	dev,
   unsigned char		map[] = { 0, 1 };
   unsigned char		req[ELO_PACKET_SIZE];
   unsigned char		reply[ELO_PACKET_SIZE];
-  int			i, result;
 
   switch(mode) {
 
@@ -1000,16 +1151,21 @@ xf86EloControl(DeviceIntPtr	dev,
       if (speed) {
 	/* These tests should be kept in sync with the LinkSpeedValues
 	 * array. */
-	if (strcmp(speed, "B9600") == 0)
+	if (strcmp(speed, "B9600") == 0) {
 	  priv->link_speed = B9600;
-	else if (strcmp(speed, "B19200") == 0)
+	}
+	else if (strcmp(speed, "B19200") == 0) {
 	  priv->link_speed = B19200;
-	else if (strcmp(speed, "B2400") == 0)
+	}
+	else if (strcmp(speed, "B2400") == 0) {
 	  priv->link_speed = B2400;
-	else if (strcmp(speed, "B1200") == 0)
+	}
+	else if (strcmp(speed, "B1200") == 0) {
 	  priv->link_speed = B1200;
-	else if (strcmp(speed, "B300") == 0)
+	}
+	else if (strcmp(speed, "B300") == 0) {
 	  priv->link_speed = B300;
+	}
 	else {
 	  ErrorF("Bogus speed value in ELO_SPEED\n");
 	  return !Success;
@@ -1029,8 +1185,9 @@ xf86EloControl(DeviceIntPtr	dev,
 #endif
       
       if (priv->screen_no >= screenInfo.numScreens ||
-	  priv->screen_no < 0)
+	  priv->screen_no < 0) {
 	priv->screen_no = 0;
+      }
       priv->screen_width = screenInfo.screens[priv->screen_no]->width;
       priv->screen_height = screenInfo.screens[priv->screen_no]->height;
 
@@ -1077,7 +1234,9 @@ xf86EloControl(DeviceIntPtr	dev,
       /*
        * This once has caused the server to crash after doing an xalloc & strcpy ??
        */
+#ifndef XFREE86_V4
       AssignTypeAndName(dev, local->atom, local->name);
+#endif
       
       DBG(2, ErrorF("Done.\n"));
       return Success;
@@ -1087,20 +1246,25 @@ xf86EloControl(DeviceIntPtr	dev,
     DBG(2, ErrorF("Elographics touchscreen on...\n"));
 
     if (local->fd < 0) {
+#ifndef XFREE86_V4
       struct termios termios_tty;
-
-      DBG(2, ErrorF("Elographics touchscreen opening : %s\n",
-		    priv->input_dev));
+      int	     i, result;
+#endif
+      
+      DBG(2, ErrorF("Elographics touchscreen opening : %s\n", priv->input_dev));
+#ifdef XFREE86_V4
+      local->fd = xf86OpenSerial(local->options);
+      if (local->fd < 0) {
+	Error("Unable to open Elographics touchscreen device");
+	return !Success;
+      }
+#else
       SYSCALL(local->fd = open(priv->input_dev, O_RDWR|O_NDELAY, 0));
       if (local->fd < 0) {
 	Error("Unable to open Elographics touchscreen device");
 	return !Success;
       }
 
-      /*
-       * Try to see if the link is at the specified rate and
-       * ask the controller to report various infos.
-       */
       DBG(3, ErrorF("Try to see if the link is at the specified rate\n"));
       memset(&termios_tty, 0, sizeof(termios_tty));
       termios_tty.c_cflag = priv->link_speed | CS8 | CREAD | CLOCAL;
@@ -1110,6 +1274,11 @@ xf86EloControl(DeviceIntPtr	dev,
 	Error("Unable to configure Elographics touchscreen port");
 	goto not_success;
       }
+#endif
+      /*
+       * Try to see if the link is at the specified rate and
+       * ask the controller to report various infos.
+       */
       memset(req, 0, ELO_PACKET_SIZE);
       req[1] = tolower(ELO_PARAMETER);
       if (xf86EloSendQuery(req, reply, local->fd) != Success) {
@@ -1120,16 +1289,14 @@ xf86EloControl(DeviceIntPtr	dev,
       /*
        * Ask the controller to report various infos.
        */
-      if (xf86Verbose) {
-	memset(req, 0, ELO_PACKET_SIZE);
-	req[1] = tolower(ELO_ID);
-	if (xf86EloSendQuery(req, reply, local->fd) == Success) {
-	  xf86EloPrintIdent(reply, priv);
-	}
-	else {
-	  ErrorF("Unable to ask Elographics touchscreen identification\n");
-	  goto not_success;
-	}
+      memset(req, 0, ELO_PACKET_SIZE);
+      req[1] = tolower(ELO_ID);
+      if (xf86EloSendQuery(req, reply, local->fd) == Success) {
+	xf86EloPrintIdent(reply, priv);
+      }
+      else {
+	ErrorF("Unable to ask Elographics touchscreen identification\n");
+	goto not_success;
       }
       
       /*
@@ -1145,6 +1312,7 @@ xf86EloControl(DeviceIntPtr	dev,
 	goto not_success;
       }
 
+#ifndef XFREE86_V4
       /*
        * Check if the report delay is compatible with the selected
        * link speed and reset it otherwise.
@@ -1158,6 +1326,7 @@ xf86EloControl(DeviceIntPtr	dev,
 	  }
 	}
       }
+#endif
       /*
        * Set the touch reports timings from configuration data.
        */
@@ -1189,8 +1358,9 @@ xf86EloControl(DeviceIntPtr	dev,
   case DEVICE_OFF:
     DBG(2, ErrorF("Elographics touchscreen off...\n"));
     dev->public.on = FALSE;
-    if (local->fd >= 0)
+    if (local->fd >= 0) {
       RemoveEnabledDevice(local->fd);
+    }
     SYSCALL(close(local->fd));
     local->fd = -1;
     DBG(2, ErrorF("Done\n"));
@@ -1203,8 +1373,9 @@ xf86EloControl(DeviceIntPtr	dev,
   case DEVICE_CLOSE:
     DBG(2, ErrorF("Elographics touchscreen close...\n"));
     dev->public.on = FALSE;
-    if (local->fd >= 0)
+    if (local->fd >= 0) {
       RemoveEnabledDevice(local->fd);
+    }
     SYSCALL(close(local->fd));
     local->fd = -1;
     DBG(2, ErrorF("Done\n"));
@@ -1224,21 +1395,34 @@ xf86EloControl(DeviceIntPtr	dev,
  ***************************************************************************
  */
 static LocalDevicePtr
-xf86EloAllocate(
-#if NeedFunctionPrototypes
-	void
-#endif
-	)
+xf86EloAllocate(void)
 {
   LocalDevicePtr        local = (LocalDevicePtr) xalloc(sizeof(LocalDeviceRec));
   EloPrivatePtr         priv = (EloPrivatePtr) xalloc(sizeof(EloPrivateRec));
+
+  if (!local) {
+    if (priv) {
+      xfree(priv);
+    }
+    return NULL;
+  }
+  if (!priv) {
+    if (local) {
+      xfree(local);
+    }
+    return NULL;
+  }
   
+#ifdef XFREE86_V4
+  priv->input_dev = strdup(ELO_PORT);
+#else
   priv->input_dev = ELO_PORT;
   priv->link_speed = ELO_LINK_SPEED;
+#endif
   priv->min_x = 0;
-  priv->max_x = 0;
+  priv->max_x = 3000;
   priv->min_y = 0;
-  priv->max_y = 0;
+  priv->max_y = 3000;
   priv->untouch_delay = ELO_UNTOUCH_DELAY;
   priv->report_delay = ELO_REPORT_DELAY;
   priv->screen_no = 0;
@@ -1251,8 +1435,10 @@ xf86EloAllocate(
 
   local->name = XI_TOUCHSCREEN;
   local->flags = XI86_NO_OPEN_ON_INIT;
+#ifndef XFREE86_V4
 #if !defined(sun) || defined(i386)
   local->device_config = xf86EloConfig;
+#endif
 #endif
   local->device_control = xf86EloControl;
   local->read_input   = xf86EloReadInput;
@@ -1271,6 +1457,7 @@ xf86EloAllocate(
   return local;
 }
 
+#ifndef XFREE86_V4
 /*
  ***************************************************************************
  *
@@ -1302,52 +1489,125 @@ init_xf86Elo(unsigned long      server_version)
     xf86AddDeviceAssoc(&elographics_assoc);
 
     if (server_version != XF86_VERSION_CURRENT) {
-	ErrorF("Warning: Elographics module compiled for version%s\n", XF86_VERSION);
-	return 0;
-    } else {
-	return 1;
+      ErrorF("Warning: Elographics module compiled for version%s\n", XF86_VERSION);
+      return 0;
+    }
+    else {
+      return 1;
     }
 }
 #endif
 
-#ifdef XFree86LOADER
-/*
- * Entry point for the loader code
- */
-XF86ModuleVersionInfo xf86EloVersion = {
-    "xf86Elo",
-    MODULEVENDORSTRING,
-    MODINFOSTRING1,
-    MODINFOSTRING2,
-    XF86_VERSION_CURRENT,
-    0x00010000,
-    {0,0,0,0}
+#else /* XFREE86_V4 */
+static const char *default_options[] = {
+  "BaudRate", "9600",
+  "StopBits", "1",
+  "DataBits", "8",
+  "Parity", "None",
+  "Vmin", "10",
+  "Vtime", "1",
+  "FlowControl", "None"
 };
 
-void
-xf86EloModuleInit(data, magic)
-    pointer *data;
-    INT32 *magic;
+static pointer
+Plug(pointer	module,
+     pointer	options,
+     int	*errmaj,
+     int	*errmin)
 {
-    static int cnt = 0;
+  LocalDevicePtr	local;
+  EloPrivatePtr		priv;
+  pointer		defaults, merged;
+  char			*dev;
+  
+  local = xf86EloAllocate();
+  if (!local) {
+    *errmaj = LDR_NOMEM;
+    return NULL;
+  }
+  priv = local->private;
+  
+  defaults = xf86OptionListCreate(default_options,
+				  sizeof(default_options)/sizeof(default_options[0]));
+  merged = xf86OptionListMerge(defaults, options);
+  xf86OptionListReport(merged);
 
-    switch (cnt) {
-      case 0:
-      *magic = MAGIC_VERSION;
-      *data = &xf86EloVersion;
-      cnt++;
-      break;
-      
-      case 1:
-      *magic = MAGIC_ADD_XINPUT_DEVICE;
-      *data = &elographics_assoc;
-      cnt++;
-      break;
+  dev = xf86FindOptionValue(merged, "Device");
+  if (dev) {
+    xfree(priv->input_dev);
+    priv->input_dev = strdup(dev);
+  }
 
-      default:
-      *magic = MAGIC_DONE;
-      *data = NULL;
-      break;
-    } 
-}
+  local->name = xf86SetStrOption(merged, "DeviceName", XI_TOUCHSCREEN);
+  xf86Msg(X_CONFIG, "Elographics X device name: %s\n", local->name);  
+  priv->screen_no = xf86SetIntOption(merged, "ScreenNo", 0);
+  xf86Msg(X_CONFIG, "Elographics associated screen: %d\n", priv->screen_no);  
+  priv->untouch_delay = xf86SetIntOption(merged, "UntouchDelay", ELO_UNTOUCH_DELAY);
+  xf86Msg(X_CONFIG, "Elographics untouch delay: %d ms\n", priv->untouch_delay*10);
+  priv->report_delay = xf86SetIntOption(merged, "ReportDelay", ELO_REPORT_DELAY);
+  xf86Msg(X_CONFIG, "Elographics report delay: %d ms\n", priv->report_delay*10);
+  priv->max_x = xf86SetIntOption(merged, "MaximumXPosition", 3000);
+  xf86Msg(X_CONFIG, "Elographics maximum x position: %d\n", priv->max_x);
+  priv->min_x = xf86SetIntOption(merged, "MinimumXPosition", 0);
+  xf86Msg(X_CONFIG, "Elographics minimum x position: %d\n", priv->min_x);
+  priv->max_y = xf86SetIntOption(merged, "MaximumYPosition", 3000);
+  xf86Msg(X_CONFIG, "Elographics maximum y position: %d\n", priv->max_y);
+  priv->min_y = xf86SetIntOption(merged, "MinimumYPosition", 0);
+  xf86Msg(X_CONFIG, "Elographics minimum y position: %d\n", priv->min_y);
+  debug_level = xf86SetIntOption(merged, "DebugLevel", 0);
+  if (debug_level) {
+#if DEBUG
+    xf86Msg(X_CONFIG, "Elographics debug level sets to %d\n", debug_level);      
+#else
+    xf86Msg(X_INFO, "Elographics debug not available\n");      
 #endif
+  }
+
+  if (priv->max_x - priv->min_x <= 0) {
+    xf86Msg(X_INFO, "Elographics: swap x mode (minimum x position >= maximum x position)\n");
+  }  
+  if (priv->max_y - priv->min_y <= 0) {
+    xf86Msg(X_INFO, "Elographics: swap y mode (minimum y position >= maximum y position)\n");
+  }
+
+  xf86AddLocalDevice(local, merged);
+
+  return local;
+}
+
+static void
+Unplug(pointer	p)
+{
+  LocalDevicePtr	local = (LocalDevicePtr) p;
+  EloPrivatePtr		priv = (EloPrivatePtr) local->private;
+  
+  xf86EloControl(local->dev, DEVICE_OFF);
+  xf86RemoveLocalDevice(local);
+
+  xfree(priv->input_dev);
+  xfree(priv);
+  xfree(local->name);
+  xfree(local);
+}
+
+static XF86ModuleVersionInfo version_rec = {
+  "elographics",
+  MODULEVENDORSTRING,
+  MODINFOSTRING1,
+  MODINFOSTRING2,
+  XF86_VERSION_CURRENT,
+  1, 0, 0,
+  ABI_CLASS_XINPUT,
+  ABI_XINPUT_VERSION,
+  MOD_CLASS_XINPUT,
+  { 0, 0, 0, 0 }
+};
+
+/*
+ * This is the entry point in the module. The name
+ * is setup after the pattern <module_name>ModuleData.
+ * Do not change it.
+ */
+XF86ModuleData elographicsModuleData = { &version_rec, Plug, Unplug };
+
+#endif /* XFREE86_V4 */

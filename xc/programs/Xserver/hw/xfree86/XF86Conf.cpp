@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.cpp,v 3.29.2.2 1998/11/04 15:19:01 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Conf.cpp,v 3.29.2.3 1999/06/02 07:50:27 hohndel Exp $
 XCOMM
 XCOMM Copyright (c) 1994 by The XFree86 Project, Inc.
 XCOMM
@@ -272,6 +272,15 @@ XCOMM        # CenterX 700
 XCOMM        # CenterY 600
 XCOMM        Delta 20
 XCOMM    EndSubSection
+XCOMM
+XCOMM    Subsection "AceCad"
+XCOMM        Port "/dev/ttyS1"
+XCOMM        Devicename "AceCad"
+XCOMM        AlwaysCore
+XCOMM        Mode Absolute
+XCOMM        Cursor Stylus
+XCOMM        Model Flair
+XCOMM    Endsubsection
 XCOMM
 XCOMM The Mouse Subsection contains the same type of entries as the
 XCOMM standard Pointer Section (see above), with the addition of the

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.c,v 3.66.2.29 1998/12/29 10:57:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/t89_driver.c,v 3.66.2.35 1999/07/05 09:07:41 hohndel Exp $ */
 /*
  * Copyright 1992 by Alan Hourihane, Wigan, England.
  *
@@ -198,6 +198,7 @@ int tridentHWCursorType = 0;
 int tridentDisplayWidth;
 int tridentDACtype = -1;
 int GE_OP = 0;
+Bool SETUPCHIP = FALSE;
 Bool tridentHasAcceleration = FALSE;
 Bool tridentUseLinear = FALSE;
 Bool tridentTGUIProgrammableClocks = FALSE;
@@ -396,7 +397,8 @@ TVGA8900Ident(n)
 				   "tgui9660", "tgui9680", "tgui9682",
 				   "tgui9685", "cyber9382", "cyber9385",
 				   "cyber9388", "cyber9397", "cyber9520",
-				   "3dimage975", "3dimage985"
+				   "cyber9525", "3dimage975", "3dimage985",
+				   "cyber9397dvd", "blade3d", "cyberblade",
 				  };
 
 	if (n + 1 > sizeof(chipsets) / sizeof(char *))
@@ -620,12 +622,35 @@ TVGA8900Probe()
 		}
 		else if (!StrCaseCmp(vga256InfoRec.chipset, TVGA8900Ident(25)))
 		{
-			TVGAchipset = IMAGE975;
+			TVGAchipset = CYBER9525;
+			IsCyber = TRUE;
 			NewClockCode = TRUE;
 		}
 		else if (!StrCaseCmp(vga256InfoRec.chipset, TVGA8900Ident(26)))
 		{
+			TVGAchipset = IMAGE975;
+			NewClockCode = TRUE;
+		}
+		else if (!StrCaseCmp(vga256InfoRec.chipset, TVGA8900Ident(27)))
+		{
 			TVGAchipset = IMAGE985;
+			NewClockCode = TRUE;
+		}
+		else if (!StrCaseCmp(vga256InfoRec.chipset, TVGA8900Ident(28)))
+		{
+			TVGAchipset = CYBER939A;
+			IsCyber = TRUE;
+			NewClockCode = TRUE;
+		}
+		else if (!StrCaseCmp(vga256InfoRec.chipset, TVGA8900Ident(29)))
+		{
+			TVGAchipset = BLADE3D;
+			NewClockCode = TRUE;
+		}
+		else if (!StrCaseCmp(vga256InfoRec.chipset, TVGA8900Ident(30)))
+		{
+			TVGAchipset = CYBERBLADE;
+			IsCyber = TRUE;
 			NewClockCode = TRUE;
 		}
 		else
@@ -777,9 +802,17 @@ TVGA8900Probe()
 				TVGAchipset = CYBER9397;
 				TVGAName = "Cyber9397";
 				break;
+			case PCI_CHIP_9397_DVD:
+				TVGAchipset = CYBER939A;
+				TVGAName = "cyber9397dvd";
+				break;
 			case PCI_CHIP_9520:
 				TVGAchipset = CYBER9520;
 				TVGAName = "Cyber9520";
+				break;
+			case PCI_CHIP_9525:
+				TVGAchipset = CYBER9525;
+				TVGAName = "Cyber9525";
 				break;
 			case PCI_CHIP_9750:
 				TVGAchipset = IMAGE975;
@@ -788,6 +821,22 @@ TVGA8900Probe()
 			case PCI_CHIP_9850:
 				TVGAchipset = IMAGE985;
 				TVGAName = "3DImage985";
+				break;
+			case PCI_CHIP_9880:
+				TVGAchipset = BLADE3D;
+				TVGAName = "Blade3D";
+				break;
+			case PCI_CHIP_8400:
+				TVGAchipset = CYBERBLADE;
+				TVGAName = "CyberBlade/i7";
+				break;
+			case PCI_CHIP_8420:
+				TVGAchipset = CYBERBLADE;
+				TVGAName = "CyberBlade/i7/DSTN";
+				break;
+			case PCI_CHIP_8500:
+				TVGAchipset = CYBERBLADE;
+				TVGAName = "CyberBlade/i1";
 				break;
 		}
 	}
@@ -894,9 +943,14 @@ TVGA8900Probe()
 	case CYBER9385:
 	case CYBER9388:
 	case CYBER9397:
+	case CYBER939A:
 	case CYBER9520:
+	case CYBER9525:
 		if(((TVGAchipset != CYBER9388) &&
-		    (TVGAchipset != CYBER9397)) ||
+		    (TVGAchipset != CYBER9397) &&
+		    (TVGAchipset != CYBER939A) &&
+		    (TVGAchipset != CYBER9520) &&
+		    (TVGAchipset != CYBER9525)) ||
 		   OFLG_ISSET(OPTION_ACCEL, &vga256InfoRec.options))
 			tridentHasAcceleration = TRUE;
 		TVGA8900.ChipHas16bpp = TRUE;
@@ -906,7 +960,8 @@ TVGA8900Probe()
 		TVGA8900.ChipHas32bpp = TRUE;
 		/* We've found a 96xx graphics engine */
 		/* Let's probe furthur */
-		switch (revision) {
+		if (vga256InfoRec.chipset == NULL)
+		    switch (revision) {
 			case 0x00:
 				REV = "9660";
 				TVGAchipset = TGUI9660;
@@ -932,6 +987,12 @@ TVGA8900Probe()
 				TVGAchipset = CYBER9397;
 				NewClockCode = TRUE;
 				IsCyber = TRUE;
+/* Bill Mair - Guess - Rev 42 ?? */
+			case 0x2A:
+				REV = "Cyber 9397 DVD";
+				TVGAchipset = CYBER939A;
+				NewClockCode = TRUE;
+				IsCyber = TRUE;
 				break;
 			case 0x30:
 			case 0x33: /* Guessing */
@@ -951,11 +1012,16 @@ TVGA8900Probe()
 				IsCyber = TRUE;
 				break;
 			case 0x40:
-			case 0x41: /* Guessing */
 			case 0x42: /* Guessing */
 			case 0x43:
 				REV = "9382";
 				TVGAchipset = CYBER9382;
+				NewClockCode = TRUE;
+				IsCyber = TRUE;
+				break;
+			case 0x41: 
+				REV = "Cyber 9525 DVD";
+				TVGAchipset = CYBER9525;
 				NewClockCode = TRUE;
 				IsCyber = TRUE;
 				break;
@@ -974,7 +1040,7 @@ TVGA8900Probe()
 			default:
 				REV = "Unknown ID - Please report to trident@xfree86.org";
 				break;
-		}
+		    }
 		outb(vgaIOBase + 4, 0xCF);
 		temp = inb(vgaIOBase + 5);
 		ErrorF("%s %s: BIOS reports Clock Control Bits 0x%x\n",
@@ -993,6 +1059,38 @@ TVGA8900Probe()
 	case IMAGE975:
 	case IMAGE985:
 		ClearTV = TRUE;
+		tridentHasAcceleration = TRUE;
+		NewClockCode = TRUE;
+		if (vgaBitsPerPixel == 24) 
+			tridentHasAcceleration = FALSE;
+		tridentIsTGUI = TRUE;
+		tridentLinearOK = TRUE;
+		tridentTGUIProgrammableClocks = TRUE;
+		tridentDACtype = TGUIDAC;
+		tridentHWCursorType = 1;
+		TVGA8900.ChipHas16bpp = TRUE;
+		TVGA8900.ChipHas24bpp = TRUE;
+		TVGA8900.ChipHas32bpp = TRUE;
+		break;
+	case CYBERBLADE:
+		IsCyber = TRUE;
+		if(OFLG_ISSET(OPTION_ACCEL, &vga256InfoRec.options))
+			tridentHasAcceleration = TRUE;
+		ClearTV = FALSE;
+		NewClockCode = TRUE;
+		if (vgaBitsPerPixel == 24) 
+			tridentHasAcceleration = FALSE;
+		tridentIsTGUI = TRUE;
+		tridentLinearOK = TRUE;
+		tridentTGUIProgrammableClocks = TRUE;
+		tridentDACtype = TGUIDAC;
+		tridentHWCursorType = 1;
+		TVGA8900.ChipHas16bpp = TRUE;
+		TVGA8900.ChipHas24bpp = TRUE;
+		TVGA8900.ChipHas32bpp = TRUE;
+		break;
+	case BLADE3D:
+		ClearTV = FALSE;
 		tridentHasAcceleration = TRUE;
 		NewClockCode = TRUE;
 		if (vgaBitsPerPixel == 24) 
@@ -1109,12 +1207,14 @@ TVGA8900Probe()
 
 		outb(vgaIOBase + 4, 0x1F); 
 		temp = inb(vgaIOBase + 5);
-
 		switch (temp & 0x07) 
 		{
 		case 0: 
 		case 4:
-			vga256InfoRec.videoRam = 256; 
+		        if (Is3Dchip)
+			        vga256InfoRec.videoRam = 8192; 
+			else
+			        vga256InfoRec.videoRam = 256; 
 			break;
 		case 1: 
 		case 5:	/* New TGUI's don't support less than 1MB */
@@ -2429,6 +2529,7 @@ TVGA8900Init(mode)
 	}
 
 	if (Is3Dchip) {
+		new->MiscExtFunc |= 0x10;
     		switch (vga256InfoRec.depth) {
 		case 8:
 	    		GE_OP = 0;

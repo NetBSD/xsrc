@@ -1,0 +1,264 @@
+  NeoMagic ドライバ バージョン 2.0.0 NeoMagic ユーザ向けの情報
+  The XFree86 Project Inc.
+  4 November 1998
+  The X Japanese Documentation Project
+  3 December 1998
+  ____________________________________________________________
+
+  目次
+
+
+  1. サポートされているハードウェア
+  2. 機能
+  3. 技術的な事柄
+  4. 動作が報告されたノートPC
+  5. 設定
+  6. ドライバオプション
+  7. 知られている制限
+  8. 作者
+  9. 日本語訳について
+
+
+  ______________________________________________________________________
+
+  1.  サポートされているハードウェア
+
+
+  o  NeoMagic 2200 (MagicMedia256AV)
+
+  o  NeoMagic 2160 (MagicGraph128XD)
+
+  o  NeoMagic 2097 (MagicGraph128ZV+)
+
+  o  NeoMagic 2093 (MagicGraph128ZV)
+
+  o  NeoMagic 2090 (MagicGraph128V)
+
+  o  NeoMagic 2070 (MagicGraph128)
+
+
+  2.  機能
+
+
+  o  内部液晶画面での表示、外部モニタへの表示、外部/内部同時表示を完全に
+     サポートしています。
+
+  o  液晶の全ての組合せの解像度をサポートしています。これは、解像度が固
+     定の液晶において低い解像度の表示に使う拡大モードや中心表示モードを
+     含みます。
+
+
+  o  8, 15, 16, 24bpp をサポートしています。
+
+  o  スプライトのちらつきが少ないハードウェアカーソルをサポートしていま
+     す。
+
+  o   8, 15, 16 bpp ではハードウェアのアクセラレーション機能が有効な描画
+     エンジンを利用できます。
+
+  o  外部モニタ専用モードでは、完全にプログラマブルなクロックをサポート
+     しています。
+
+  o  仮想画面切替えの際のテキストモード復元が頑健です。
+
+
+
+
+  3.  技術的な事柄
+
+
+  o  液晶/CRT を同時にサポートするには、内部用の "intern_disp" と外部用
+     の "extern_disp" を両方指定してください。
+
+
+  4.  動作が報告されたノートPC
+
+
+
+  o  Acer Travelmate 7120T
+
+  o  Acer Extensa 367, 367D, 710TE
+
+  o  Actebis TN559Pro
+
+  o  Asus P6300
+
+  o  CTX EzBook 700, 77X シリーズ
+
+  o  Compaq Presario 1080, 1210, 1215, 1220, 1610, 1611, 1620, 1621,
+     1640
+
+  o  Dell Inspiron 3000, 3200
+
+  o  Dell Latitude CP, CPi, LM, XPi
+
+  o  Digital VP HiNote 575, 703, 717, 720
+
+  o  FIC DESIGNote 5550
+
+  o  Fujitsu LifeBook 420D, 656Tx
+
+  o  Gateway 2000 Solo 2300XL, 2500LS, 5150
+
+  o  Highscreen XD Advance II 21,1" TFT
+
+  o  Hi-Grade Notino AS6000 pII/266Mhz
+
+  o  Hitachi VisionBook Plus 5000
+
+  o  HP Omnibook 800, 3000, 3100, 4100, Sojourn
+
+  o  IBM ThinkPad 380D, 380E, 380ED, 380XD, 385XD, 560X, 600
+
+  o  LEO DESIGNote 5550
+
+  o  Micron Transport XKE
+
+  o  NEC Ready 330T
+
+  o  NEC Versa 2780 MT, 5060X, 5080X, 6060, 6230
+
+  o  NEC MB12C/UV (mobio NX)
+
+  o  OPTI Phoenix
+
+  o  Panasonic CF_S21, CF-25 MKIII, CF-35
+
+  o  Quantex H-1330
+
+  o  Sceptre 4500
+
+  o  SEH DESIGNote 5550
+
+  o  Siemens Nixdorf Scenic 510
+
+  o   Sony PCG-505, PCG-705, PCG-717, PCG-719, PCG-731
+
+  o  TI Extensa 660 CDT
+
+  o  Toshiba Libretto 100CT
+
+  o  Toshiba Protege SS3000
+
+  o  UMAX 520T
+
+
+  5.  設定
+
+  このドライバはメモリサイズを含む全てのデバイス情報を自動検出するので、
+  XF86Config ファイルのデバイスセクションでは以下のような 設定を用いてく
+  ださい。
+
+
+          Section "Device"
+                  Identifier      "NeoMagic"
+          EndSection
+
+
+  xf86config や XF86Setup を使えばこの設定が行われます。
+
+  しかし自動検出で問題が起きた場合には、以下の項目を直接指定することがで
+  きます:
+
+        VideoRam  - キロバイト単位
+        DacSpeed  - MHz 単位
+        MemBase   - リニアフレームバッファの物理アドレス
+        MMIOBase  - メモリマップI/Oレジスタの物理アドレス
+
+
+
+
+  6.  ドライバオプション
+
+
+  o  "linear"        - リニアフレームバッファモード(デフォルト)
+
+  o  "no_linear"     - バンクフレームバッファモード
+
+  o  "no_accel"      - ソフトウェア描画だけを使用
+
+  o  "hw_cursor"     - ハードウェアカーソルを使用 (デフォルト)
+
+  o  "sw_cursor"     - ソフトウェアカーソルだけを使用
+
+  o  "mmio"          - メモリマップを通じて I/O 空間を利用する (デフォル
+     ト)
+
+  o  "no_mmio"       - I/O 空間を直接利用する
+
+  o  "intern_disp"   - 内部ディスプレイを有効にする (デフォルト)
+
+  o  "extern_disp"   - 外部ディスプレイを有効にする
+
+  o  "no_stretch"    - 液晶における低解像度での拡大表示を無効にする
+
+  o  "lcd_center"    - 液晶における低い解像度での中心表示モード
+
+     注意: 液晶画面の拡大は、解像度が低い場合にデフォルトで有効になりま
+     す。
+  特別なLCDモード設定で便利なオプション(必要ではありません):
+
+  o  "prog_lcd_mode_regs"       - 特別なLCDモードレジスタをセットする
+     (デフォルト値は 2070)
+
+  o  "no_prog_lcd_mode_regs"    - LCD モードレジスタをセットしない(デ
+     フォルト値は 2070以外)
+
+  o  "prog_lcd_mode_stretch"    - 拡大表示が有効ならば LCD モードレジス
+     タを強制的に設定する
+
+  o  "no_prog_lcd_mode_stretch" - 拡大表示が有効でも LCD モードレジスタ
+     を強制的に設定する
+
+     サブノートPC 等、液晶のサイズが一般的でないマシンのためのオプショ
+     ン:
+
+  o  "override_validate_mode" - LCD モードのチェックを無効にする
+
+  警告: モードのチェックを無効にすると、LCD を壊すような不正なモードも指
+  定できてしまいます。
+
+
+  7.  知られている制限
+
+
+  o   NM2070 における外部モニタのサポート。
+
+  o   NM2070 におけるバンクフレームバッファモード(つまり no_linear モー
+     ド)。
+
+  o   NM2070 における、画面の解像度が液晶画面より低い場合の水平方向の位
+     置合わせ。
+
+
+  8.  作者
+
+  Jens Owen jens@precisioninsight.com Kevin E. Martin
+  kevin@precisioninsight.com
+
+  このドライバは Precision Insight, Inc. (Cedar Park, TX  USA)が XFree86
+  プロジェクトに寄付したものです。
+
+  http://www.precisioninsight.com
+
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.neo,v 1.1.2.1 1999/06/02 07:51:02 hohndel Exp $
+
+
+
+
+  9.  日本語訳について
+
+  日本語訳は X Japanese Documentation Project の藤原輝嘉
+  <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp> が行いました。問
+  題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 プ
+  ロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+  Project にあります。
+
+
+
+
+
+
+
+

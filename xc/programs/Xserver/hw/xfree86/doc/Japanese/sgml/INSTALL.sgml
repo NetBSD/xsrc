@@ -324,9 +324,9 @@
   さい。
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/INSTALL.sgml,v 3.2 1997/01/26 04:34:18 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/INSTALL.sgml,v 3.2.2.1 1999/06/02 07:51:41 hohndel Exp $
 </verb>
-<hrule>
+<code></code>
 
 このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/INSTALL.sgml,v 3.17 1
 996/10/26 09:38:49   を、岡本  一幸 
@@ -338,7 +338,7 @@ name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.2 を
 原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
 XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
 電子メールで送って下さい。
-<hrule>
+<code></code>
 &lsqb;EOF&rsqb;
 </article>
 

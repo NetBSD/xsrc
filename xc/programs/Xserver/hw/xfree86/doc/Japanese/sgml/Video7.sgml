@@ -1,0 +1,209 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+<article>
+
+<!-- TitleS information -->
+
+<title>README.VIDEO7
+<author>Craig Struble
+<date>17 May 1994
+<trans>The X Japanese Documentation Project
+<tdate>14 January 1999
+
+<!-- Table of contents -->
+<toc>
+
+<!-- Begin the document -->
+
+<!-- <sect>The Driver:<p> -->
+<sect>ドライバ:<p>
+<!--
+The Video7 driver has only been tested on a Headland Technologies HT216-32
+chip, but should work on other Video 7/Headland Technologies chips as
+well.<p>
+-->
+Video7 ドライバは Headland Technologies 製 HT216-32 チップだけでしかテ
+ストされていません。しかし、他の Video 7/Headland Technologies 製チッ
+プでもきっと動作するでしょう。<p>
+
+<!--
+Currently this implementation of the video7 driver only supports single bank
+mode, which can cause performance degradation, and makes no attempt to
+distinguish between the different video7 chips.<p>
+-->
+video7 ドライバの現在の実装では、シングルバンクモードしかサポートして
+いません(このモードは性能が落ちることがあります)し、異なる video7 系チッ
+プの区別は行っていません。<p>
+
+<!--
+It also does not probe for memory, so in your <tt>XF86Config</tt> file, 
+make sure that you use the following line:<p>
+-->
+また、現在の実装ではメモリの検出も行いません。したがって、
+<tt>XF86Config</tt> ファイルで以下の指定を行わなければなりません:<p>
+<verb>
+	Videoram XXX
+</verb>
+<!--
+Where XXX is the amount of RAM in your card. Most of them have at least
+512k, so this is a good value to start with.<p>
+Also, the clock probing function of XFree86 doesn't seem to correctly
+get the clocks. The documentation I used (vgadoc3) suggests using the
+following values for the <tt>Clocks line</tt> in your 
+<tt>XF86Config</tt> file:
+-->
+ここで XXX はカードに載っている RAM の量です。カードのほとんどは少なく
+とも 512k はメモリがあるので、最初はこの値を使うとよいでしょう。<p>
+また、XFree86 のクロック検出機能もうまくクロックを取得できないようです。
+筆者が調べたドキュメント(vgadoc3)には、<tt>XF86Config</tt> ファイルの
+<tt>Clocks 行</tt> に以下の値を使うように書いてありました。
+<verb>
+	Clocks        25.175 28.322 30.000 32.514 34.000 36.000 38.000 40.000
+</verb>
+<!--
+For 800x600 mode, use a dot clock of 38 instead of 36 or 40 as suggested in
+most of the sample <tt>XF86Config</tt> files and <tt>modeDB.txt.</tt> 
+This seems to be what is
+used in the BIOS mode (0x69) which is the 800x600 in 256 colors.
+-->
+800x600 モードで使うドットクロック値は、36 や 40 ではなく 38 にします。
+このことは <tt>XF86Config</tt> のほとんどのサンプルや
+<tt>modeDB.txt</tt> で述べられています。これは BIOS モード(0x69)で使わ
+れる値のようです。BIOS モードは 800x600, 256 色です。
+
+<!-- <sect>Known bugs and What's been tested:<p> -->
+<sect>既知のバグとテストした項目:<p>
+<!-- <sect1>Known bugs:<p> -->
+<sect1>既知のバグ:<p>
+<enum>
+<!--
+<item>No video ram probing. Only known way to get this info is through
+an INT 10 call, but you can't do this in a user process.<p>
+-->
+<item>ビデオ RAM の検出機能がありません。この情報を得るための方法とし
+て INT 10 コールを使う方法だけが知られていますが、このコールはユーザプ
+ロセスでは実行できません。<p>
+<!--
+<item>Clock probing. I'm not sure the docs in vgadoc3 are correct.<p>
+-->
+<item>クロックの検出機能。vgadoc3 ドキュメントが正しいのかどうか筆者に
+はわかりません。<p>
+<!--
+<item>Random lockups with the SVGA server<p>
+-->
+<item>SVGA サーバでつかうと不意にシステムが固まることがあります。<p>
+</enum>
+<!-- <sect1>What's been tested:<p> -->
+<sect1>テストされた項目:<p>
+<enum>
+<!--
+<item>An HT216-32 chip.<p>
+-->
+<item>HT216-32 チップ<p>
+<!--
+<item>800x600 mode and 640x480 mode<p>
+-->
+<item>800x600 モードと 640x480 モード<p>
+<!--
+<item>Mode switching and switching to text mode through <tt>CTRL-ALT-F1</tt><p>
+-->
+<item><tt>CTRL-ALT-F1</tt> を使ったモード切替えとテキストモードへの切替え<p>
+<!--
+<item>Only been tested on Linux.<p>
+-->
+<item>Linux でしかテストを行っていません。<p>
+</enum>
+
+<!--
+<sect>Who to contact:<p>
+-->
+<sect>連絡先:<p>
+	<bf>Craig Struble</bf> (<em/cstruble@acm.vt.edu/) Video 7 driver<p>
+<!-- <sect>Acknowledgments<p> -->
+<sect>謝辞<p>
+<!-- <sect1>Thanks to:<p> -->
+<sect1>以下の方々に感謝します:<p>
+<itemize>
+<!--
+<item><bf/Cara Cocking/ for loving me and supporting me. Without her I'd
+          be a bowl of jello.<p>
+-->
+<item>私を愛し、支えてくれた <bf/Cara Cocking/。彼女がいなければ、私は
+何もできませんでした。<p>
+<!--
+<item><bf/XFree86 team/ for the great stub code that allowed me to get this
+	  going.<p>
+-->
+<item><bf/XFree86 チーム/。土台となる素晴らしいコードのおかげで、私は
+この作業を行うことができました。<p>
+<!--
+<item><bf/Finn Thoegersen/ for compiling vgadoc3. Without this I would not
+	  have had a clue.<p>
+-->
+<item>vgadoc3 ドキュメントを編集してくださった <bf/Finn Thoegersen/ さ
+ん。このドキュメントが無ければ、私は手がかりを得ることができませんでし
+た。<p>
+<!--
+<item><bf/Harm Hanemaayer/ for the vga.c program in svgalib. Without this I
+	  would not have had the breakthroughs I needed to get the thing
+          up and running.<p>
+-->
+<item>svgalib の vga.c を作成された <bf/Harm Hanemaayer/ さん。これが
+無ければ、サーバを起動・実行するために必要なブレイクスルーはありません
+でした。<p>
+</itemize>
+<!-- <sect1>Other things I've already done:<p> -->
+<sect1>筆者が既に行っている別の作業:<p>
+<quote>
+<!--
+	For Linux, I have a small patch to get the extended text modes to
+	work on the Video 7 card.<p>
+-->
+拡張テキストモードを Video 7 カードで動作させるための、Linux 用の簡単
+なパッチを作成しました。<p>
+</quote>
+
+<!-- <sect1>Things to do:<p> -->
+<sect1>残っている課題:<p>
+<itemize>
+<!--
+<item>	Try dual banking mode.<p>
+<item>	Write an svgalib driver.<p>
+<item>	Go back to graduate school. (I'm a glutton for punishment.)<p>
+-->
+<item>	デュアルバンキングモード<p>
+<item>	svgalib 用のドライバ作成<p>
+<item>	大学院に戻る(私はそんなところでも我慢できるんです)<p>
+</itemize>
+
+<!-- <sect1>Disclaimer:<p> -->
+<sect1>免責事項:<p>
+<quote>
+	CRAIG STRUBLE DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+	INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
+	NO EVENT SHALL CRAIG STRUBLE BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+	CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+	OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+	OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
+	USE OR PERFORMANCE OF THIS SOFTWARE.<p>
+</quote>
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Video7.sgml,v 1.1.2.1 1999/05/25 06:39:25 hohndel Exp $
+
+
+
+
+
+$XConsortium: Video7.sgml /main/3 1996/02/21 17:46:22 kaleb $
+</verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました
+(翻訳: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;">,
+校正: 金田浩司  <url url="mailto:vanitas@ma3.seikyou.ne.jp"
+name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">)。
+問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 
+プロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+Project にあります。
+</article>

@@ -4,7 +4,7 @@
 //  Rules for resolving XKB components for use with XFree86
 //  Copyright 1996 by Joseph Moss
 //
-//  $XFree86: xc/programs/xkbcomp/rules/xfree86,v 3.5.2.3 1998/11/04 08:02:12 hohndel Exp $
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86,v 3.5.2.5 1999/06/21 09:45:30 hohndel Exp $
 //
 
 ! model 	=	keycodes	geometry
@@ -20,6 +20,7 @@
   everex	=	xfree86		everex(STEPnote)
   winbook	=	xfree86		winbook(XP5)
   pc98		=	xfree86		nec(pc98)
+  abnt2		=	xfree86(abnt2)	pc(abnt2)
 
 ! model		layout	=	symbols
   microsoft	us	=	us(pc104)
@@ -36,6 +37,8 @@
   *		en_US	=	en_US(pc102)
   *		*	=	en_US(pc102)+%l%(v)
   *		jp	=	jp
+  pc101		us_intl	=	us(pc101)+us_intl
+  abnt2		br	=	us(pc101)+br
 
 ! model		layout	=	compat		types
   *		*	=	complete	complete
@@ -45,6 +48,7 @@
   grp:toggle		=	+group(toggle)
   grp:shift_toggle	=	+group(shift_toggle)
   grp:ctrl_shift_toggle	=	+group(ctrl_shift_toggle)
+  grp:caps_toggle	=	+group(caps_toggle)
   grp:ctrl_alt_toggle	=	+group(ctrl_alt_toggle)
   ctrl:nocaps		=	+ctrl(nocaps)
   ctrl:swapcaps		=	+ctrl(swapcaps)

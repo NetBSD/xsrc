@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/TMstate.c,v 1.1.1.3.6.3 1998/10/19 20:57:06 hohndel Exp $ */
+/* $XFree86: xc/lib/Xt/TMstate.c,v 1.1.1.3.6.4 1999/04/19 07:30:07 dawes Exp $ */
 
 /*
 
@@ -609,10 +609,17 @@ static void HandleActions(w, event, stateTree, accelWidget, procs, actions)
 	if (procs[actions->idx] != NULL) {
 	    if (actionHookList) {
 		ActionHook hook;
+		ActionHook next_hook;
 		String procName =
 		    XrmQuarkToString(stateTree->quarkTbl[actions->idx] );
 	    
-		for (hook = actionHookList; hook != NULL; hook = hook->next) {
+		for (hook = actionHookList; hook != NULL; ) {
+		    /*
+		     * Need to cache hook->next because the following action 
+		     * proc may free hook via XtRemoveActionHook making
+		     * hook->next invalid upon return from the action proc.
+		     */
+		    next_hook = hook->next;
 		    (*hook->proc)(bindWidget,
 				  hook->closure,
 				  procName,
@@ -620,6 +627,7 @@ static void HandleActions(w, event, stateTree, accelWidget, procs, actions)
 				  actions->params,
 				  &actions->num_params
 				  );
+		    hook = next_hook;
 		}
 	    }
 	    (*(procs[actions->idx]))

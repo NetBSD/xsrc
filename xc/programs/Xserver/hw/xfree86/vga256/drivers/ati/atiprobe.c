@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiprobe.c,v 1.1.2.3 1998/10/20 20:51:18 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiprobe.c,v 1.1.2.6 1999/07/05 09:07:35 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -384,23 +384,25 @@ ATIProbe(void)
     static const CARD8 ATISignature[] = " 761295520";
 #   define Signature_Size   10
 #   define Prefix_Size      1024                /* 1kB */
-#   define BIOS_SIZE        0x008000            /* 32kB */
+#   define BIOS_SIZE        0x010000            /* 64kB */
 #   define BIOS_Signature   0x30U
 #   define No_Signature     (Prefix_Size + 1 - Signature_Size)
     CARD8 BIOS[BIOS_SIZE];
 #   define BIOSByte(_n)     (*((CARD8  *)(BIOS + (_n))))
 #   define BIOSWord(_n)     (*((CARD16 *)(BIOS + (_n))))
     CARD32 IO_Value = 0, IO_Value2;
+    unsigned int BIOSSize = 0;
     unsigned int Signature = No_Signature;
     int saved_BIOSbase = vga256InfoRec.BIOSbase;
-    int MachvideoRam = 0;
-    int VGAvideoRam = 0;
+    int MachvideoRam = 0, VGAvideoRam = 0;
     unsigned int WindowSize;
     CARD8 ATIMachChip = ATI_CHIP_NONE;
     CARD16 ClockDac;
     static const int videoRamSizes[] =
         {0, 256, 512, 1024, 2*1024, 4*1024, 6*1024, 8*1024, 12*1024, 16*1024, 0};
-    int ROMTable = 0, ClockTable = 0, FrequencyTable = 0, Index;
+    int Index;
+    unsigned int ROMTable = 0, ClockTable = 0, FrequencyTable = 0;
+    unsigned int LCDTable = 0, LCDPanelInfo = 0;
     const DACRec *DAC;
     pciConfigPtr PCIDevice;
 
@@ -411,6 +413,7 @@ ATIProbe(void)
     /* Enable the I/O ports needed for probing */
     xf86EnableIOPorts(vga256InfoRec.scrnIndex);
 
+#if 0
     /*
      * It is quite possible for a system to preclude the existence of a mix of
      * sparse I/O and block I/O devices.  Scan PCI configuration space, if
@@ -441,6 +444,7 @@ ATIProbe(void)
             }
         }
     }
+#endif
 
     /*
      * Save register value to be modified, just in case there is no 8514/A
@@ -520,7 +524,9 @@ ATIProbe(void)
         outw(SUBSYS_CNTL, IO_Value);
     }
 
+#if 0
 Skip8514Probe:
+#endif
     if (ATIAdapter == ATI_ADAPTER_NONE)
     {
         /*
@@ -546,6 +552,10 @@ Skip8514Probe:
                 if (PCIDevice->_vendor != PCI_VENDOR_ATI)
                     continue;
                 if (PCIDevice->_device == PCI_CHIP_MACH32)
+                    continue;
+                if ((PCIDevice->_command &
+                     (PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE)) !=
+                    (PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE))
                     continue;
                 ATIMach64Probe(PCIDevice->_base1 & BLOCK_IO_BASE, BLOCK_IO,
                     PCIDevice->_device);
@@ -643,6 +653,9 @@ Skip8514Probe:
             IO_Value2 = inl(ATIIOPort(CONFIG_STATUS64_0));
             ATIDac = GetBits(inl(ATIIOPortDAC_CNTL), DAC_TYPE);
 
+            vga256InfoRec.BIOSbase = 0x000C0000U +
+                (GetBits(IO_Value, BIOS_BASE_SEGMENT) << 11);
+
             if (ATIChip < ATI_CHIP_264CT)
             {
                 ATIBusType = GetBits(IO_Value2, CFG_BUS_TYPE);
@@ -684,6 +697,44 @@ Skip8514Probe:
                     ATIVGAAdapter = ATI_ADAPTER_MACH64;
 
                 ATIMemoryType = GetBits(IO_Value2, CFG_MEM_TYPE_T);
+
+                /* Set LCD and TV I/O port numbers */
+                if (ATIChip == ATI_CHIP_264LT)
+                {
+                    ATILCDPanelID = GetBits(IO_Value2, CFG_PANEL_ID);
+
+                    ATIIOPortHORZ_STRETCHING = ATIIOPort(HORZ_STRETCHING);
+                    ATIIOPortVERT_STRETCHING = ATIIOPort(VERT_STRETCHING);
+                    ATIIOPortLCD_GEN_CTRL = ATIIOPort(LCD_GEN_CTRL);
+                    ATIIOPortPOWER_MANAGEMENT = ATIIOPort(POWER_MANAGEMENT);
+
+                    /*
+                     * Don't bother with panel support if it's not enabled by
+                     * BIOS initialization.
+                     */
+                    if (!(inl(ATIIOPortLCD_GEN_CTRL) & LCD_ON))
+                        ATILCDPanelID = -1;
+                }
+                else if ((ATIChip == ATI_CHIP_264LTPRO) ||
+                         (ATIChip == ATI_CHIP_264XL))
+                {
+                    ATILCDPanelID = GetBits(IO_Value2, CFG_PANEL_ID);
+
+                    ATIIOPortTV_OUT_INDEX = ATIIOPort(TV_OUT_INDEX);
+                    ATIIOPortTV_OUT_DATA = ATIIOPort(TV_OUT_DATA);
+                    ATIIOPortLCD_INDEX = ATIIOPort(LCD_INDEX);
+                    ATIIOPortLCD_DATA = ATIIOPort(LCD_DATA);
+
+                    /*
+                     * Don't bother with panel support if it's not enabled by
+                     * BIOS initialization.
+                     */
+                    IO_Value = inl(ATIIOPortLCD_INDEX);
+                    IO_Value2 = ATIGetLTProLCDReg(LCD_GEN_CNTL);
+                    outl(ATIIOPortLCD_INDEX, IO_Value);
+                    if (!(IO_Value2 & LCD_ON))
+                        ATILCDPanelID = -1;
+                }
             }
 
             /*
@@ -692,9 +743,6 @@ Skip8514Probe:
              */
             if (ATIDac < ATI_DAC_ATI68875)
                 ATIDac += ATI_DAC_INTERNAL;
-
-            vga256InfoRec.BIOSbase = 0x000C0000U +
-                (GetBits(IO_Value, BIOS_BASE_SEGMENT) << 11);
             break;
 
         default:
@@ -709,6 +757,9 @@ Skip8514Probe:
         Index = 0;
     for (;  Index < BIOS_SIZE;  Index++)
         BIOS[Index] = 0;
+
+    if ((BIOSByte(0) == 0x55U) && (BIOSByte(1) == 0xAAU))
+        BIOSSize = BIOSByte(2) << 9;
 
     /*
      * Attempt to find the ATI signature in the first 1024 bytes of the video
@@ -871,18 +922,18 @@ Skip8514Probe:
     if (ATIChip >= ATI_CHIP_88800GXC)
     {
         ROMTable = BIOSWord(0x48U);
-        if ((ROMTable + 0x12U) > BIOS_SIZE)
+        if ((ROMTable + 0x12U) > BIOSSize)
             ROMTable = 0;
         if (ROMTable > 0)
         {
             ClockTable = BIOSWord(ROMTable + 0x10U);
-            if ((ClockTable + 0x0CU) > BIOS_SIZE)
+            if ((ClockTable + 0x0CU) > BIOSSize)
                 ClockTable = 0;
         }
         if (ClockTable > 0)
         {
             FrequencyTable = BIOSWord(ClockTable - 0x02U);
-            if ((FrequencyTable + 0x20U) > BIOS_SIZE)
+            if ((FrequencyTable + 0x20U) > BIOSSize)
                 FrequencyTable = 0;
             if (FrequencyTable > 0)
                 for (Index = 0;  Index < 16;  Index++)
@@ -1013,8 +1064,45 @@ Skip8514Probe:
                 if ((xf86weight.red == 5) && (xf86weight.blue == 5) &&
                     (xf86weight.green >= 5) && (xf86weight.green <= 6))
                     ATI.ChipHas16bpp = TRUE;
-                ATI.ChipHas24bpp = 
+                ATI.ChipHas24bpp =
                     ATI.ChipHas32bpp = TRUE;
+            }
+        }
+
+        /*
+         * For LT's and LT Pro's, determine panel dimensions and driving clock.
+         */
+        if (ATILCDPanelID >= 0)
+        {
+            LCDTable = BIOSWord(0x78U);
+            if (((LCDTable + 0x1AU) > BIOSSize) ||
+                (BIOSByte(LCDTable + 5) != 0x1AU))
+                LCDTable = 0;
+
+            if (LCDTable > 0)
+            {
+                LCDPanelInfo = BIOSWord(LCDTable + 0x0AU);
+                if (((LCDPanelInfo + 0x1DU) > BIOSSize) ||
+                    (BIOSByte(LCDPanelInfo) != ATILCDPanelID))
+                    LCDPanelInfo = 0;
+            }
+
+            if (LCDPanelInfo > 0)
+            {
+                ATILCDHorizontal = BIOSWord(LCDPanelInfo + 0x19U);
+                ATILCDVertical = BIOSWord(LCDPanelInfo + 0x1BU);
+
+                /* Assume clock 0 */
+                ATILCDClock = 2 * ATIGetMach64PLLReg(PLL_VCLK0_FB_DIV);
+                ATILCDClock *= ATIReferenceNumerator;
+                ATILCDClock /= ATIClockDescriptor->MinM;
+                ATILCDClock /= ATIReferenceDenominator;
+                Index =
+                    GetBits(ATIGetMach64PLLReg(PLL_XCLK_CNTL), PLL_VCLK0_XDIV);
+                Index *= MaxBits(PLL_VCLK0_POST_DIV) + 1;
+                Index |= GetBits(ATIGetMach64PLLReg(PLL_VCLK_POST_DIV),
+                    PLL_VCLK0_POST_DIV);
+                ATILCDClock /= ATIClockDescriptor->PostDividers[Index];
             }
         }
 
@@ -1187,6 +1275,23 @@ Skip8514Probe:
         {
             ErrorF("Unknown RAMDAC type (0x%02X) detected.\n", ATIDac);
             break;
+        }
+    }
+
+    if (ATILCDPanelID >= 0)
+    {
+        if (LCDPanelInfo <= 0)
+        {
+            ErrorF("Unable to determine dimensions of panel (ID %d)!\n",
+                   ATILCDPanelID);
+            ATILCDPanelID = -1;         /* Revert to unsupported status */
+        }
+        else if (xf86Verbose)
+        {
+            ErrorF("%dx%d panel (ID %d) detected;  '%.24s'.\n",
+                   ATILCDHorizontal, ATILCDVertical, ATILCDPanelID,
+                   BIOS + LCDPanelInfo + 1);
+            ErrorF("Panel clock is %.3f MHz.\n", (double)ATILCDClock / 1000.0);
         }
     }
 
@@ -1499,7 +1604,7 @@ Skip8514Probe:
 
             if ((ATIChip >= ATI_CHIP_264VTB) && (ATIChip != ATI_CHIP_Mach64))
             {
-                if (ATIChip >= ATI_CHIP_264GTPRO)
+                if (ATIChip >= ATI_CHIP_264VT4)
                     DefaultmaxClock = 230000;
                 else if (ATIChip >= ATI_CHIP_264VT3)
                     DefaultmaxClock = 200000;
@@ -1663,6 +1768,10 @@ Skip8514Probe:
             ATIPrintBIOS(BIOS, ROMTable, ROMTable + 0x16U);
         if (ClockTable > 0)
             ATIPrintBIOS(BIOS, ClockTable - 0x06U, ClockTable + 0x1EU);
+        if (LCDTable > 0)
+            ATIPrintBIOS(BIOS, LCDTable, LCDTable + 0x1AU);
+        if (LCDPanelInfo > 0)
+            ATIPrintBIOS(BIOS, LCDPanelInfo - 0x60U, LCDPanelInfo + 0x40U);
 
         if (xf86Verbose > 2)
         {

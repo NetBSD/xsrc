@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/19 1996/10/25 21:24:28 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.7 1998/12/23 13:36:30 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.8 1999/06/21 09:45:25 hohndel Exp $
 
 
 
@@ -48,6 +48,9 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.7 1998/
 # if ElographicsSupport
    ELOGRAPHICS_SRC = xf86Elo.c
 # endif
+# if DynaproSupport
+   DYNAPRO_SRC = xf86Dyna.c
+# endif
 # if MicroTouchSupport
     MICROTOUCH_SRC = xf86MuTouch.c
 # endif
@@ -60,8 +63,11 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.7 1998/
 # if DialBoxSupport
         DIALBOX_SRC = xf86Dial.c
 # endif
+# if CalcompSupport
+        CALCOMP_SRC = xf86Calcomp.c
+# endif
 # if ! BuildDynamicLoading
-    XINPUT_DEVICES = JoystickDefines WacomDefines ElographicsDefines MicroTouchDefines SummaSketchDefines AceCadDefines DialBoxDefines
+    XINPUT_DEVICES = JoystickDefines WacomDefines ElographicsDefines DynaproDefines MicroTouchDefines SummaSketchDefines AceCadDefines DialBoxDefines CalcompDefines
 #  if JoystickSupport
       JOYSTICK_OBJ = xf86Jstk.o
 #  endif
@@ -70,6 +76,9 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.7 1998/
 #  endif
 #  if ElographicsSupport
    ELOGRAPHICS_OBJ = xf86Elo.o
+#  endif
+#  if DynaproSupport
+   DYNAPRO_OBJ = xf86Dyna.o
 #  endif
 #  if MicroTouchSupport
     MICROTOUCH_OBJ = xf86MuTouch.o
@@ -82,6 +91,9 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.7 1998/
 #  endif
 #  if DialBoxSupport
         DIALBOX_OBJ = xf86Dial.o
+#  endif
+#  if CalcompSupport
+        CALCOMP_OBJ = xf86Calcomp.o
 #  endif
 # else
  SHARED_CFLAGS = PositionIndependentCFlags $(MODULEDEFINES)
@@ -156,19 +168,23 @@ XINPUT_DEV_SRCS = \
 	$(JOYSTICK_SRC) \
 	$(WACOM_SRC) \
 	$(ELOGRAPHICS_SRC) \
+	$(DYNAPRO_SRC) \
 	$(MICROTOUCH_SRC) \
 	$(SUMMASKETCH_SRC) \
 	$(ACECAD_SRC) \
-	$(DIALBOX_SRC)
+	$(DIALBOX_SRC) \
+	$(CALCOMP_SRC)
 
 XINPUT_DEV_OBJS = \
 	$(JOYSTICK_OBJ) \
 	$(WACOM_OBJ) \
 	$(ELOGRAPHICS_OBJ) \
+	$(DYNAPRO_OBJ) \
 	$(MICROTOUCH_OBJ) \
 	$(SUMMASKETCH_OBJ) \
 	$(ACECAD_OBJ) \
-	$(DIALBOX_OBJ)
+	$(DIALBOX_OBJ) \
+	$(CALCOMP_OBJ)
 #endif
 
 SRCS =	\
@@ -262,6 +278,13 @@ DynamicModuleTarget(xf86Elo.so,xf86Elo.o)
 InstallDynamicModule(xf86Elo.so,$(MODULEDIR))
 #   endif
 #  endif
+#  if DynaproSupport
+SpecialObjectRule(xf86Dyna.o,xf86Dyna.c,$(SHARED_CFLAGS))
+DynamicModuleTarget(xf86Dyna.so,xf86Dyna.o)
+#   ifndef DontInstallPC98Version
+InstallDynamicModule(xf86Dyna.so,$(MODULEDIR))
+#   endif
+#  endif
 #  if MicroTouchSupport
 SpecialObjectRule(xf86MuTouch.o,xf86MuTouch.c,$(SHARED_CFLAGS))
 DynamicModuleTarget(xf86MuTouch.so,xf86MuTouch.o)
@@ -288,6 +311,13 @@ SpecialObjectRule(xf86Dial.o,xf86Dial.c,$(SHARED_CFLAGS))
 DynamicModuleTarget(xf86Dial.so,xf86Dial.o)
 #   ifndef DontInstallPC98Version
 InstallDynamicModule(xf86Dial.so,$(MODULEDIR))
+#   endif
+#  endif
+#  if CalcompSupport
+SpecialObjectRule(xf86Calcomp.o,xf86Calcomp.c,$(SHARED_CFLAGS))
+DynamicModuleTarget(xf86Calcomp.so,xf86Calcomp.o)
+#   ifndef DontInstallPC98Version
+InstallDynamicModule(xf86Calcomp.so,$(MODULEDIR))
 #   endif
 #  endif
 # endif
@@ -350,11 +380,13 @@ LinkSourceFile(xf86Dial.c,$(XF86SRC)/common)
 #if NeedXF86Beta
 LinkSourceFile(xf86Beta.c,$(XF86SRC)/common)
 #endif
+LinkSourceFile(xf86Calcomp.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Config.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Cursor.c,$(XF86SRC)/common)
 LinkSourceFile(xf86DCConf.c,$(XF86SRC)/common)
 LinkSourceFile(xf86DCConf.h,$(XF86SRC)/common)
 LinkSourceFile(xf86Dl.c,$(XF86SRC)/common)
+LinkSourceFile(xf86Dyna.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Elo.c,$(XF86SRC)/common)
 LinkSourceFile(xf86Events.c,$(XF86SRC)/common)
 LinkSourceFile(xf86ExtInit.h,$(XF86SRC)/common)

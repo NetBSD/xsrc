@@ -1,5 +1,5 @@
 /* $XConsortium: xkbcomp.c /main/12 1996/12/27 21:17:23 kaleb $ */
-/* $XFree86: xc/programs/xkbcomp/xkbcomp.c,v 3.8.2.1 1998/02/26 08:29:28 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/xkbcomp.c,v 3.8.2.2 1999/05/15 13:53:34 dawes Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -305,8 +305,8 @@ register int i,tmp;
 	else if ((strncmp(argv[i],"-I",2)==0)&&(!xkblist)) {
 	    if (!XkbAddDirectoryToPath(&argv[i][2])) {
 		ACTION("Exiting\n");
+		exit(1);
 	    }
-	    exit(1);
 	}
 	else if ((strncmp(argv[i],"-l",2)==0)&&(!xkblist)) {
 	    if (outputFormat!=WANT_DEFAULT) {

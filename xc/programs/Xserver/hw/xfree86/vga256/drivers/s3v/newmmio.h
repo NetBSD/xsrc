@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/newmmio.h,v 1.1.2.1 1997/05/14 07:52:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/newmmio.h,v 1.1.2.2 1999/05/10 13:09:53 hohndel Exp $ */
 
 /* Copied over from accel/s3_virge */
 
@@ -416,6 +416,7 @@ typedef struct {
 #define SETB_SRC_BG_CLR(val)	((mmtr)s3vMmioMem)->bltfill_regs.regs.src_bg_clr = (val)
 #define SETB_SRC_FG_CLR(val)	((mmtr)s3vMmioMem)->bltfill_regs.regs.src_fg_clr = (val)
 #define SETB_CMD_SET(val)	do { write_mem_barrier(); ((mmtr)s3vMmioMem)->bltfill_regs.regs.cmd_set = (val); write_mem_barrier(); } while (0)
+#define GETB_CMD_SET()		((mmtr)s3vMmioMem)->bltfill_regs.regs.cmd_set
 #define SETB_RWIDTH_HEIGHT(w,h)	((mmtr)s3vMmioMem)->bltfill_regs.regs.rwidth_height = ((w)<<16 | (h))
 #define SETB_RSRC_XY(x,y)	((mmtr)s3vMmioMem)->bltfill_regs.regs.rsrc_xy = ((x)<<16 | (y))
 #define SETB_RDEST_XY(x,y)	do { write_mem_barrier(); ((mmtr)s3vMmioMem)->bltfill_regs.regs.rdest_xy = ((x)<<16 | (y)); write_mem_barrier(); } while (0)
@@ -430,8 +431,7 @@ typedef struct {
 #define CACHE_SETB_MONO_PAT1(val)	do { if (s3vCached_MONO_PATTERN1 != val) { ((mmtr)s3vMmioMem)->bltfill_regs.regs.mono_pat1 = val; s3vCached_MONO_PATTERN1 = val; s3vCacheMiss++;} else s3vCacheHit++;} while(0)
 #define CACHE_SETB_PAT_FG_CLR(val)	do { if (s3vCached_PAT_FGCLR != val) { ((mmtr)s3vMmioMem)->bltfill_regs.regs.pat_fg_clr = val; s3vCached_PAT_FGCLR = val; s3vCacheMiss++;} else s3vCacheHit++;} while(0)
 #define CACHE_SETB_PAT_BG_CLR(val)	do { if (s3vCached_PAT_BGCLR != val) { ((mmtr)s3vMmioMem)->bltfill_regs.regs.pat_bg_clr = val; s3vCached_PAT_BGCLR = val; s3vCacheMiss++;} else s3vCacheHit++;} while(0)
-#define CACHE_SETB_CMD_SET(val)		do { if (s3vCached_CMD_SET != val) { write_mem_barrier(); ((mmtr)s3vMmioMem)->bltfill_regs.regs.cmd_set = val; s3vCached_CMD_SET = val; s3vCacheMiss++; write_mem_barrier(); } else s3vCacheHit++;} while(0)
-
+#define CACHE_SETB_CMD_SET(val)		do { if ((s3vCached_CMD_SET != val) || (s3vCached_CMD_SET == CMD_NOP)) { write_mem_barrier(); ((mmtr)s3vMmioMem)->bltfill_regs.regs.cmd_set = val; s3vCached_CMD_SET = val; s3vCacheMiss++; write_mem_barrier(); } else s3vCacheHit++;} while(0)
 
 #define SETL_SRC_BASE(val)	((mmtr)s3vMmioMem)->line_regs.regs.src_base = (val)
 #define SETL_DEST_BASE(val)	((mmtr)s3vMmioMem)->line_regs.regs.dest_base = (val)
@@ -440,6 +440,7 @@ typedef struct {
 #define SETL_DEST_SRC_STR(d,s)	((mmtr)s3vMmioMem)->line_regs.regs.dest_src_str = ((d)<<16 | (s))
 #define SETL_PAT_FG_CLR(val)	((mmtr)s3vMmioMem)->line_regs.regs.pat_fg_clr = (val)
 #define SETL_CMD_SET(val)	do { write_mem_barrier(); ((mmtr)s3vMmioMem)->line_regs.regs.cmd_set = (val); write_mem_barrier(); } while (0)
+#define GETL_CMD_SET()		((mmtr)s3vMmioMem)->line_regs.regs.cmd_set
 #define SETL_LXEND0_END1(e0,e1)	((mmtr)s3vMmioMem)->line_regs.regs.lxend0_end1 = ((e0)<<16 | (e1))
 #define SETL_LDX(val)	((mmtr)s3vMmioMem)->line_regs.regs.ldx = (val)
 #define SETL_LXSTART(val)	((mmtr)s3vMmioMem)->line_regs.regs.lxstart = (val)
@@ -447,8 +448,7 @@ typedef struct {
 #define SETL_LYCNT(val)	do { write_mem_barrier(); ((mmtr)s3vMmioMem)->line_regs.regs.lycnt = (val); write_mem_barrier(); } while (0)
 
 /* Cache version */
-#define CACHE_SETL_CMD_SET(val)		do { if (s3vCached_CMD_SET != val) { write_mem_barrier(); ((mmtr)s3vMmioMem)->line_regs.regs.cmd_set = val; s3vCached_CMD_SET = val; s3vCacheMiss++; write_mem_barrier(); } else s3vCacheHit++;} while(0)
-
+#define CACHE_SETL_CMD_SET(val)		do { if ((s3vCached_CMD_SET !=val) || (s3vCached_CMD_SET == CMD_NOP)) { write_mem_barrier(); ((mmtr)s3vMmioMem)->line_regs.regs.cmd_set = val; s3vCached_CMD_SET = val; s3vCacheMiss++; write_mem_barrier(); } else s3vCacheHit++;} while(0)
 
 
 #define SETP_SRC_BASE(val)	((mmtr)s3vMmioMem)->polyfill_regs.regs.src_base = (val)
@@ -461,6 +461,7 @@ typedef struct {
 #define SETP_PAT_BG_CLR(val)	((mmtr)s3vMmioMem)->polyfill_regs.regs.pat_bg_clr = (val)
 #define SETP_PAT_FG_CLR(val)	((mmtr)s3vMmioMem)->polyfill_regs.regs.pat_fg_clr = (val)
 #define SETP_CMD_SET(val)	do { write_mem_barrier(); ((mmtr)s3vMmioMem)->polyfill_regs.regs.cmd_set = (val); write_mem_barrier(); } while (0)
+#define GETP_CMD_SET()		((mmtr)s3vMmioMem)->polyfill_regs.regs.cmd_set
 #define SETP_RWIDTH_HEIGHT(w,h)	((mmtr)s3vMmioMem)->polyfill_regs.regs.rwidth_height = ((w)<<16 | (h))
 #define SETP_PRDX(val)	((mmtr)s3vMmioMem)->polyfill_regs.regs.prdx = (val)
 #define SETP_PRXSTART(val)	((mmtr)s3vMmioMem)->polyfill_regs.regs.prxstart = (val)
@@ -470,8 +471,7 @@ typedef struct {
 #define SETP_PYCNT(val)	do { write_mem_barrier(); ((mmtr)s3vMmioMem)->polyfill_regs.regs.pycnt = (val); write_mem_barrier(); } while (0)
 
 /* Cache version */
-#define CACHE_SETP_CMD_SET(val)		do { if (s3vCached_CMD_SET != val) { write_mem_barrier(); ((mmtr)s3vMmioMem)->polyfill_regs.regs.cmd_set = val; s3vCached_CMD_SET = val; s3vCacheMiss++; write_mem_barrier(); } else s3vCacheHit++;} while(0)
-
+#define CACHE_SETP_CMD_SET(val)		do { if ((s3vCached_CMD_SET !=val) || (s3vCached_CMD_SET == CMD_NOP)){ write_mem_barrier(); ((mmtr)s3vMmioMem)->polyfill_regs.regs.cmd_set = val; s3vCached_CMD_SET = val; s3vCacheMiss++; write_mem_barrier(); } else s3vCacheHit++;} while(0)
 
 #define SETL3_Z_BASE(val)	((mmtr)s3vMmioMem)->line3d_regs.regs.z_base = (val)
 #define SETL3_DEST_BASE(val)	((mmtr)s3vMmioMem)->line3d_regs.regs.dest_base = (val)
@@ -481,6 +481,7 @@ typedef struct {
 #define SETL3_Z_STRIDE(val)	((mmtr)s3vMmioMem)->line3d_regs.regs.z_stride = (val)
 #define SETL3_FOG_CLR(val)	((mmtr)s3vMmioMem)->line3d_regs.regs.fog_clr = (val)
 #define SETL3_CMD_SET(val)	do { write_mem_barrier(); ((mmtr)s3vMmioMem)->line3d_regs.regs.cmd_set = (val); write_mem_barrier(); } while (0)
+#define GETL3_CMD_SET()		((mmtr)s3vMmioMem)->line3d_regs.regs.cmd_set
 #define SETL3_DGDY_DBDY(dg,db)	((mmtr)s3vMmioMem)->line3d_regs.regs.dgdy_dbdy = ((dg)<<16 | (db))
 #define SETL3_DADY_DRDY(da,dr)	((mmtr)s3vMmioMem)->line3d_regs.regs.dady_drdy = ((da)<<16 | (dr))
 #define SETL3_GS_BS(gs,bs)	((mmtr)s3vMmioMem)->line3d_regs.regs.gs_bs = ((gs)<<16 | (bs))
@@ -507,6 +508,7 @@ typedef struct {
 #define SETT3_COLOR0(val)	((mmtr)s3vMmioMem)->triangle3d_regs.regs.color0 = (val)
 #define SETT3_COLOR1(val)	((mmtr)s3vMmioMem)->triangle3d_regs.regs.color1 = (val)
 #define SETT3_CMD_SET(val)	do { write_mem_barrier(); ((mmtr)s3vMmioMem)->triangle3d_regs.regs.cmd_set = (val); write_mem_barrier(); } while (0)
+#define GETT3_CMD_SET()		((mmtr)s3vMmioMem)->triangle3d_regs.regs.cmd_set
 #define SETT3_BV(val)	((mmtr)s3vMmioMem)->triangle3d_regs.regs.bv = (val)
 #define SETT3_BU(val)	((mmtr)s3vMmioMem)->triangle3d_regs.regs.bu = (val)
 #define SETT3_DWDX(val)	((mmtr)s3vMmioMem)->triangle3d_regs.regs.dwdx = (val)

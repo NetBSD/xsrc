@@ -1,850 +1,792 @@
-  XFree86[TM] 3.2 リリースノート
-  The XFree86 プロジェクト社
+  XFree86(TM) 3.3.3.1 リリースノート
+  XFree86 プロジェクト社
+  30 December 1998
+  X Japanese Documentation Project
+  1999/01/21
 
-  著
-  岡本 一幸 Kazuyuki      Okamoto (ikko-@pacific.rim.or.jp) 訳
-  1996/10/26
-
-  この文書は XFree86 3.2 について前回の完全バージョン 3.1.2 と比べて新し
-  い機能を説明するものです。また、バイナリ配布物の組み込み手順も含まれて
-  います。
+  この文書は XFree86 3.3.3.1 で追加された新機能および修正されたバグにつ
+  いてリリース 3.3.2 および 3.3.3 と比較して説明したものです。また、バイ
+  ナリパッケージのインストール手順についても説明しています。 XFree86 の
+  すべての利用者に対して、バージョン 3.3.3.1 にアップデートすることを強
+  く推奨します。
   ______________________________________________________________________
 
-  Table of Contents:
+  目次
 
-  1.      XFree86 と X11R6.1
 
-  2.      OS に由来する項目
+  1. XFree86 と X11R6.3
+  2. X11R6.4
+  3. OS に関連する項目
+  4. 3.3.3.1 で何が新しくなったか ?
+  5. 3.3.3 で何が新しくなったか ?
+     5.1 セキュリティの修正
+     5.2 修正したバグ
+     5.3 新機能
+     5.4 既知の問題
 
-  3.      3.2 での新機能
+  6. XFree86 とオープンソースソフトウェア
+  7. XFree86 3.3.3.1 の導入
 
-  3.1.    全般
 
-  3.2.    X サーバ 全般の変更項目
-
-  3.3.    XF86Setup について
-
-  3.4.    PC98 のサポート
-
-  3.5.    XInput 機能拡張
-
-  3.6.    S3 サーバ
-
-  3.7.    Mach64 サーバ
-
-  3.8.    Mach32 サーバ
-
-  3.9.    W32 サーバ
-
-  3.10.   AGX サーバ
-
-  3.11.   I128 サーバ
-
-  3.12.   TGA サーバ
-
-  3.13.   SVGA/VGA16/Mono サーバ
-
-  3.14.   VGA16 サーバ
-
-  3.15.   ET3000 ドライバ (VGA16 サーバ)
-
-  3.16.   Trident ドライバ (SVGA サーバ)
-
-  3.17.   Ark ドライバ (SVGA サーバ)
-
-  3.18.   ET6000 ドライバ (SVGA サーバ)
-
-  3.19.   Alliance ProMotion ドライバ (SVGA サーバ)
-
-  3.20.   NVidia NV1 / SGS Thomson STG2000 ドライバ (SVGA サーバ)
-
-  3.21.   Matrox Millennium ドライバ (SVGA サーバ)
-
-  3.22.   Cirrus ドライバ (SVGA サーバ)
-
-  3.23.   SiS ドライバ (SVGA サーバ)
-
-  3.24.   Chips と Technologies ドライバ (SVGA サーバ)
-
-  3.25.   ALI ドライバ (SVGA サーバ)
-
-  3.26.   ATI ドライバ (SVGA サーバ)
-
-  3.27.   WD90C24 ドライバ (SVGA サーバ)
-
-  3.28.   Compaq AVGA ドライバ (SVGA サーバ)
-
-  3.29.   Hercules mono ドライバ
-
-  3.30.   クライアント/ライブラリの変更点
-
-  3.31.   xf86config ユーティリティ
-
-  3.32.   SuperProbe
-
-  3.33.   フォント
-
-  4.      XFree86 3.2 の導入
   ______________________________________________________________________
 
-  1.  XFree86 と X11R6.1
+  1.  XFree86 と X11R6.3
 
-  X コンソーシアムの X11R6.1 を基にした XFree86 3.1.2D ベータ版 から始ま
-  りました。 R6.1 は R6 の最新版で、ソースとプロトコルで R6 と互換性があ
-  ります。バイナリは上位互換です。 X11R6.1 は DOUBLE-BUFFER, XKEYBOARD
-  と RECORD という新しい X サーバ機能拡張を含んでいます。LBX は R6.1 か
-  ら無くなりました。従って XFree86 からも無くなりました。将来何かの形で
-  の再登場を期待します。
+  3.2A ベータ版以降の XFree86 のリリースは、 X コンソーシアム X11R6.3 (X
+  コンソーシアムからの最新版) を基にしています。 (訳注：現時点での最新版
+  は X11R6.4 です。)
 
-  2.  OS に由来する項目
+  R6.3 は R6.1 の更新版であり、ソースとプロトコルの両方のレベルで R6.1
+  および R6 と互換性があるように開発されています。バイナリは上位互換で
+  す。 X11R6.3 では以下のような拡張が X サーバーに取り込まれました：
+  SECURITY, XC-APPGROUP, XpExtension (表示機能の拡張), そして更新されて
+  標準版となった LBX などです。また X11R6.3 には、新しい標準である RX (X
+  Remote Execution MIME type) とプロクシー管理プロトコルが含まれていま
+  す。さらに X11R6.3 は gzip したフォントをサポートします。
 
-  特別な要求事項や警告に関する OS 特有の README ファイルを常に確認してく
-  ださい。
+  R6.1 は R6 の更新版であり、ソースとプロトコルの両方のレベルで R6 と互
+  換性があるように開発されています。バイナリは上位互換です。 X11R6.1 で
+  は以下のような拡張が X サーバーに取り込まれました： DOUBLE-BUFFER,
+  XKEYBOARD, そして RECORD です。
 
-  インテル上で Linux/Elf を稼働させる場合は ld.so-1.7.14 を入手する必要
-  があることに注意してください。このライブラリは
-  tsx-11.mit.edu:pub/linux/packages/GCC
-  <ftp://tsx-11.mit.edu/pub/linux/packages/GCC> にあります。
+  R6.2 はどうしたのかって ? X11R6.2 は X11R6.3 のサブセットに与えられた
+  名称で、 R6.1 にユーザー定義文字のサポートと縦書き機能を追加して Xlib
+  に実装し、さらにプリント機能拡張を加えたものです。
 
-  3.  3.2 での新機能
 
-  さい。
 
-  3.1.  全般
+  2.  X11R6.4
 
-  o  XFree86 3.2 は X コンソーシアムの X11R6.1 を含んでいます。
+  1998 年の 9 月に、 The Open Group は X11R6.4 の copyright をその最初の
+  リリースのために使用されていた non-free なものから以前の free な X コ
+  ンソーシアムスタイルの copyright に変更しました。我々は現在
+  XFree86-4.0 の開発に主力を注いでおり、 3.3.3 リリースはいくつかのバグ
+  修正と、最近追加された新しいドライバーを一般に提供するためのものとして
+  考えていたため、 XFree86-3.3.3 には X11R6.4 を含めないことにしました。
+  XFree86-3.3.3.1 は単に XFree86-3.3.3 のバグを迅速に修正することだけを
+  意図したリリースであるため、これについても上記は同様にあてはまります。
 
-  o  XFree86-3.2 Linux/m68k 用の全配布物を含んでいます。
+  XFree86-4.0 は X11R6.4 ベースとなる予定です。
 
-  o  XFree86-3.2 Linux/Alpha 用の全配布物を含んでいます。
 
-  o  XFree86-3.2 OS/2 用の全配布物を含んでいます。
+  3.  OS に関連する項目
 
-  3.2.  X サーバ 全般の変更項目
+  特定の OS に関する特別な要求事項や警告などはその OS のための README
+  ファイルに書かれています。忘れずに確認して下さい。
 
-  o  `DefaultColorDepth' という項目を XF86Config ファイルの Screen 節に
-     bpp の標準値が指定出来るように追加しました。
-  o  `-nolock' という X サーバのオプションがサーバの画面ロック機構を無効
-     にします。
+  Linux 上では現在 Elf 形式が唯一のサポートされたバイナリ形式であること
+  に注意して下さい。これはこの版には ix86/a.out および AXP/ECOFF 形式が
+  用意されていないことを意味します。
 
-  o  分離クロックチップセット (ClockChip でも ClockProg でもなく) を搭載
-     している全ての VGA ビデオカードで clocks 行で 2 で割ったクロック周
-     波数を指定できるようにもなりました。これによりサーバで倍のクロック
-     指定形式を選択できます。 XF86Config ファイルの "Device" 節に
-     "clkdiv2" オプションを追加すると可能になります。
+  この版では FreeBSD 3.0 用として ELF バイナリだけが提供されていることに
+  注意して下さい。ただし互換性のために a.out 形式の共有ライブラリも含ま
+  れています。
 
-  o  ハードウェアカーソルを使っているサーバのカラー化したカーソルのバグ
-     を修正しました。
 
-  o  X サーバのロックファイルに関する保安上の問題を修正しました。
 
-  o  今回、標準で (xvidtune で使用している) VidMode 機構拡張はローカル接
-     続のクライアントからビデオモードを変更出来るようになりました。
 
-  o  今回 "XFree86-Misc" と呼ぶ新しいサーバの機能拡張を追加しました。こ
-     の機能拡張の主たる目的はサーバの稼働中にいくつかのパラメータを再構
-     成出来るようにするものです。以前の VidMode 機能拡張のいくつかの (ス
-     リーンセーバ機能の様な) 機能はこの新しい機能拡張に移動しました。
+  4.  3.3.3.1 で何が新しくなったか ?
 
-  o  ALPS GlidePoint をサポートしました。パッドをタップする事を第４のボ
-     タンとして使用出来ます。訳注 : タップとはポンポンと叩く事
 
-  o  X11R6.1 の一部である XKEYBOARD 機能拡張をサーバに含めました。標準で
-     使用可能ですが、コマンド行から (Xserver オンラインマニュアルを参照)
-     または XF86Config ファイルから (XF86Config オンラインマニュアルの
-     XkbDisable を参照) 無効に出来ます。この機能拡張を有効にすると、キー
-     ボードのキー割り付けがいくつか異なる事が分かるでしょう。
-
-  o  今回、XFree86-DGA と呼ばれる新しい機能拡張を提供します。この機能拡
-     張によってクライアントプログラムが直接ビデオカードのメモリにアクセ
-     ス出来ます。殆どのサーバ/クライアントで利用可能です。ローカル接続型
-     (例えば DISPLAY=":0") のクライアントのみです。クライアント側の API
-     の詳細については、XF86DGA(3) のオンラインマニュアルと README.DGA を
-     参照してください。
-
-  o  今回、XInput 機能拡張の実装を含めました。この機能拡張は次のデバイス
-     をサポートしました。:
-
-  o  ジョイスティック (Linux, FreeBSD, NetBSD と OpenBSD のみ)
-
-  o  Wacom タブレット (Wacom IV プロトコル のみ)
-
-  o  Elographics タッチスクリーン
-
-  o  SummaSketch タブレット
-
-  o  マウス
-
-     構成定義については XF86Config(4/5) と xinput document を参照してく
-     ださい。
-
-  o  今回、標準の黒と白のピクセルの数値は全てのサーバで黒 = 0 と白 = 1
-     です。これを入れ替えるには `-flipPixels' のコマンド行オプションを使
-     いましょう。
-
-  o  今回、下線文字は XF86Config ファイル内の Options と キーワードでは
-     無視されます。
-
-  o  標準で X サーバ内蔵の malloc を使います。
-
-  o  ビットマップフォントパス要素に ":unscaled" を追加するとフォントを拡
-     大縮小出来ない様に出来ます。これはフォントサーバ (xfs) でも動作しま
-     す。
-  o  *今回、PEX と XIE サーバ機能拡張が Linux/ELF, FreeBSD, NetBSD と
-     OpenBSD では動的にロード出来るようになりました。
-
-  3.3.  XF86Setup について
-
-  o  `XF86Setup' と呼ぶ X サーバの構成情報定義の新しいグラフィックインタ
-     フェースのユーティリティを 3.2 に含みました。注意事項: VGA サーバが
-     導入済でビデオカードに合わせて設定済が前提です。
-
-  3.4.  PC98 のサポート
-
-  o  PC98 パソコンを追加サポートしました。このパソコンはインテルを使った
-     パソコンで日本で普及しています。
-
-  o  PANIX-PC98 SVR4.0 という OS 対応で追加しました。
-
-  o  次の PC-98 特有の X サーバが含まれています。
-
-  o  XF98_NECS3 PC98 NEC(S3) サーバ。
-
-  o  XF98_PWSKB SKB-PowerWindow(S3) サーバ。
-
-  o  XF98_PWLB  PC98 PowerWindowLB(S3) サーバ。
-
-  o  XF98_GA968 GA-968V4/PCI(S3 968)。
-
-  o  XF98_TGUI Cyber9320 and TGUI9680。
-
-  o  XF98_NKVNEC NKV-NEC(cirrus) サーバ。
-
-  o  XF98_WABS WABS(cirrus) サーバ。
-
-  o  XF98_GANBWAP GANB-WAP(cirrus) サーバ。
-
-  o  XF98_WABEP WAB-EP(cirrus) サーバ。
-
-  o  XF98_WSNA WSN-A2F(cirrus) サーバ。
-
-  o  XF98_EGC EGC(generic vga16) サーバ。
-
-  o  XF98_NEC480 PEGC-480(generic vga256) サーバ。
-
-  3.5.  XInput 機能拡張
-
-  o  XInput デバイス対応の映像型の操作履歴(モーションヒストリ: motion
-     history) をサポートしました。
-
-  o  今回、XInput デバイスドライバは Linux/ELF, FreeBSD と NetBSDでは動
-     的にローディングされます。
-
-  o  複数の XInput デバイスを指定できます。
-
-  3.6.  S3 サーバ
-
-  o  S3 Trio64V+ をサポートします。
-
-  o  *S3 ViRGE と ViRGE/VX 対応の新しいサーバ (XF86_S3V) 。このサーバは
-     大変新しいので "ベータ版" と思って注意してください。これで起きたど
-     んな問題でも報告してください。
-
-  o  AT&T 20C409 と 20C499 RAMDAC 対応の S3 サーバ。
-
-  o  アクセラレータで発生しうる潜在的な問題を修正しました。
-
-  o  新しい MMIO モードを使う 868/968/Trio64V+ 対応の新しいドライバを S3
-     サーバに追加しました。この新しいドライバはインテル機のこれらのチッ
-     プ対応で標準に使います。アルファ機対応では次のように指定すると使用
-     できます。
-
-             Chipset "NewMMio"
-
-  新しいドライバで何か問題が起きたら、私たちにお知らせください。この新し
-  いドライバが使えない場合とか古いドライバでは以下のように Device 節で指
-  定してください。:
-
-          Chipset "mmio_928"
-
-  新しいドライバを無効に設定する前にテストしてください。何か問題が起きた
-  ら、古いドライバでも問題が再現するか試してみてください。結果を私たちに
-  教えてください。(古いドライバでは問題は修正しているはずなのですが！)
-
-  o  いくつかの VideoLogic ビデオカードで発生する初期化の問題を修正しま
-     した。
-
-  o  ELSA Winner 2000PRO/X rev G と ELSA Gloria-8 (GLint 300SX 3D チップ
-     を除く) をサポートしました。
-
-  o  S3 サーバの細かな線の問題を修正しました。
-
-  o  いくつかのイカれたビデオカードで表示上のピクセルエラーを回避するた
-     め "slow_dram" と "slow_edodram" オプションを追加しました。
-
-  o  いくつかの SPEA ビデオカードで発生する Ti3026 のクロックの問題を修
-     正しました。
-
-  o  フォントキャッシュの問題を起こす Trio32 のバグを自動的に検出するプ
-     ログラムを追加しました。検出した場合、回復作業が活動します。
-
-  o  いくつかの 1MB Trio64 VLB ビデオカードでのフレームバッファアドレス
-     の問題を修正しました。
-
-  o  ICS5342 クロックの下限の制限を無くしました。
-
-  o  Diamond S3 ビデオカードの探知を改良しました。以前のバージョンで発生
-     していた画面の廻り込みを回避する "diamond" オプションを使う必要が無
-     い場合は取り除いてみてください。何か問題がある場合は私たちに連絡を
-     ください。
-
-  o  2MB Trio64 ビデオカード用のメモリパラメタの計算を修正しました。以前
-     のバージョンで XF86Config ファイルに追加する必要があった "S3MClk
-     170" の様なパラメタは、今回から取り除いてください。
-
-  o  IBM の Ramdac を使っているビデオカードの XF86Config の設定での
-     S3RefClk の取扱を修正しました。
-
-  o  ダブルスキャンモードでの S3 と Bt485 のハードウェアカーソルをサポー
-     トしました。
-
-  o  インターレースモードとダブルスキャンモードでの IBM RGB Ramdac のハ
-     ードウェアカーソルの位置決めをサポートしました(カーソルの形状はまだ
-     正しくないけど)。
-
-  o  PCI ビデオカード対応のリニアフレームバッファの検出が進歩しました。
-     今まで一杯鍵が掛かっていて使えないと報告されている、リニアフレーム
-     バッファを使っている殆どの Trio64V+ で使えます。
-
-  o  ICS9161A クロックチップのみならず Ti3026 RAMDAC を搭載した ELSA
-     Elsa Winner2000PRO/X-2,4 Rev.G をサポートします(未だ倍クロック技術
-     はサポートしていません)。
-
-  o  #9 Motion 771 ビデオカードと Hercules Terminator 64 Pro ビデオカー
-     ド対応の標準 InvertVCLK の設定を変更しました。バージョン 3.1.2 で画
-     面の廻り込みを防止するために Invert_VCLK 行を XF86Config ファイルに
-     追加してしている場合に、このバージョンをテストする時は取り除いてく
-     ださい。新しい標準値で何か問題があったら、私たちに報告してくださ
-     い。
-
-  o  *テキスト切り取り(クリッピング) の性能を向上しました。
-
-  3.7.  Mach64 サーバ
-
-  o  block_write の取り扱いの殆どの問題を修正しました。それにもかかわら
-     ず、BIOS のチップセットの初期化が正しく行われない場合は、相変わらず
-     XF86Config に "no_block_write" オプションを追加する必要があるかもし
-     れません。
-
-  o  16bpp と 32bpp モードで Mach64 CT ビデオカードを稼働する場合、画面
-     が暗くなる問題を修正しました。CT クロックチップのいくつかの改訂版で
-     は問題が残っています。
-
-  o  Mach64 サーバは VT と GT チップセットをサポートしました。GT チップ
-     セットは "3D Rage" としても知られています。より新しい 3D Rage II は
-     未だサポートしていません。
-
-  o  olvwm のアイコンの問題を修正しました。
-
-  o  ghostview のスクロールバーの問題を修正しました。この修正は報告が
-     あったいくつかの Netscape のフォントの問題も解決します。
-
-  o  (264CT または 215CT22200 として知られている) Mach64 CT チップセット
-     をサポートしました。このチップセットは RAMDAC とクロックチップを統
-     合したもので、いくつかの Graphics Xpression と WinBoost ビデオカー
-     ドが搭載しています。
-
-  o  今回、Mach64 GX-F (GX rev 3) をサポートしました。
-
-  o  今回、(ATI Graphics Turbo Pro 1600 が搭載している) IBM RGB514
-     RAMDAC をサポートしました。
-
-  o  今回、VLB ビデオカードのメモリ基底アドレスを正しく探知するようにな
-     りました。前のバージョンで XF86Config に `MemBase' 行を追加する必要
-     があった場合、削除してみて、問題があれば私たちに教えてください。
-
-  o  いくつかの RAMDAC を 16bpp/32bpp で動作させたときのカーソルの色の問
-     題を修正しました。
-
-  o  今回、CH8398 のようないくつかの RAMDAC の探知の時のエラーを修正しま
-     した。
-
-  o  RAMDAC が 8bpp で実行したときの RGB 当たり 8 ビットのモードをサポー
-     トしているときはそのモードを標準値にしました。
-
-  o  ハードウェアカーソルマスクの問題を修正しました。
-
-  o  AT&T 20C408 RAMDAC/チップセット を追加しました。
-
-  o  任意のクロック周波数が可能なクロックチップを搭載している殆どのビデ
-     オカードのクロックをサポートします。
-
-  o  16bpp と 32bpp モードでの Mach64 CT, VT と GT チップセットのハード
-     ウェアカーソルの色の問題を修正しました。
-
-  o  VT と GT チップセットでダブルスキャンモードをサポートしました。ダブ
-     ルスキャンモードではハードウェアカーソルは正しく表示されませんが、
-     機能は正しく動作します。その他の Mach64 チップセットはアクセラレー
-     タダブルスキャンモードをサポートしていません。
-
-  o  殆どのビデオボードの某 CT, VT と GT チップセットのビデオノイズは除
-     去、または某 CT チップセットを搭載したビデオボードでは可能な限り軽
-     減しました。
-
-  o  CT, ET, VT と GT を搭載したビデオボードでクロックチッププログラム方
-     法の精度が向上しました。この方法では以前の方法は表示出来ないモード
-     を表示するように設定出来ます。xvidtune プログラムでは、今回の正しい
-     クロックプログラム方法により、稼働するような画面を調整出来ます。
-
-  o  *Mach64 の探査プログラムの信頼性が向上しました。
-
-  3.8.  Mach32 サーバ
-
-  o  ハードウェアカーソルマスクの問題を修正しました。
-
-  o  *AT&T 20C490 と Bt481 RAMDAC に 16bpp モードをサポートしました。
-
-  o  *いくつかの VT 切り替えの問題を修正しました。
-
-  3.9.  W32 サーバ
-
-  o  ET6000 をサポートしました。
-
-  o  (Diamond Stealth 32 で使用されている)ICD2061A クロックチップをサポ
-     ートしました。
-
-  o  サーバが報告する RGB 当たりの bit 数の解像度を修正しました。
-
-  o  STG1703 RAMDAC/クロックチップをサポートしました。クロックを 135MHz
-     まで上げることが出来ます。プログラマブルクロックを使うには
-     XF86Config の Device 節に次の行を追加してください。
-
-                ClockChip "stg1703"
-
-  o  PCI バーストモードと W32 インターリーブを入れたり切ったりするオプ
-     ションを追加しました。XF86Config の Device 節に次の項目を指定出来ま
-     す。
-
-                Option "pci_burst_on"
-                Option "pci_burst_off"
-                Option "w32_interleave_on"
-                Option "w32_interleave_off"
-
-  o  ICS5341 プログラマブルクロックをサポートしました。これを有効にする
-     ならば XF86Config ファイルの Device 節に次の項目を追加してくださ
-     い。:
-
-                Ramdac    "ics5341"
-                ClockChip "ics5341"
-
-  o  W32 サーバの開始時及び終了時に固まってしまう問題を修正しました。
-
-  o  *いくつかの描画のバグを修正しました。
-
-  3.10.  AGX サーバ
-
-  o  AGX-010 チップセットのクロックの探査を修正しました。
-
-  3.11.  I128 サーバ
-
-  o  Number Nine Imagine 128 ビデオボード対応の新しいサーバを追加しまし
-     た。このサーバは現在高速化していません。
-
-  o  Series 2 のビデオボードを追加しました。
-
-  o  8MB のビデオボードを追加しました。
-
-  3.12.  TGA サーバ
-
-  o  *DEC 21030 (TGA) 対応の新しいサーバを追加しました。このサーバは
-     Alpha パソコンでのみ使用可能です。このサーバは現在高速化していませ
-     ん。
-
-  3.13.  SVGA/VGA16/Mono サーバ
-
-  o  これらのサーバに PCI を探知することを追加しました。問題が生じた場合
-     は次の行を XF86Config ファイルの Device 節に追加してください。:
-
-             Option "no_pci_probe"
-
-  3.14.  VGA16 サーバ
-
-  o  StaticGray 表示が出来なかった問題を修正しました。
-
-  3.15.  ET3000 ドライバ (VGA16 サーバ)
-
-  o  ET3000 ドライバ を VGA16 サーバに追加しました。
-
-  3.16.  Trident ドライバ (SVGA サーバ)
-
-  o  今回、SVGA サーバ で TGUI9440 を完全にサポートしました。
-
-  o  trident 系統のチップセットの殆どに大幅な変更をしました。
-
-  o  今回、TGUI9660/9680 チップセットを完全にサポートしました。
-
-  o  この版の詳細については README.trident をご覧ください。
-
-  3.17.  Ark ドライバ (SVGA サーバ)
-
-  o  Ark ドライバが今回 ARK2000MT を探知するようになりましたが、
-     ARK2000PV とみなしています。
-
-  o  XF86Config ファイルに Ramdac の指定がないときにサーバが動作しない問
-     題を修正しました。
-
-  o  Diamond Stealth64 Graphics 2001 シリーズが要求してする ICS5342 ク
-     ロックチップセットを追加しました。これを有効にするには XF86Config
-     ファイルの Device 節に次の行を追加してください。:
-
-                Ramdac    "ics5342"
-                ClockChip "ics5342"
-
-     XF86Config ファイルに Clocks 行を入れないでください。
-
-  o  2MB のビデオメモリを搭載している ARK2000PV ビデオカードで画面が上下
-     左右に動く問題を修正しました。
-
-  o  *基本的な BitBlt アクセラレータを追加しました。
-
-  o  *いくつかのビデオカード/RAMDAC に 24bpp のパックトピクセルを追加し
-     ました。
-
-  o  *メモリの帯域幅の問題を修正しました。
-
-  o  *ハードウェアカーソルを追加しました。
-
-  3.18.  ET6000 ドライバ (SVGA サーバ)
-
-  o  *このドライバはリニアメモリと16bpp, 24bpp と 32bpp をサポートしまし
-     た。現在 W32 アクセラレータサーバではサポートしていないことに注意し
-     てください。。
-
-  3.19.  Alliance ProMotion ドライバ (SVGA サーバ)
-
-  o  (Alliance Semiconductor が) Alliance ProMotion 6442 ドライバを追加
-     しました。通してテストした訳ではありません。
-
-  3.20.  NVidia NV1 / SGS Thomson STG2000 ドライバ (SVGA サーバ)
-
-  o  *NV1/STG2000 ドライバを追加しました。このチップセットは Diamond
-     Edge 3D ビデオカードに搭載しています。このドライバはとても新しいた
-     め "ベータ版" と思ってください。 8bpp と 16bpp をサポートしていま
-     す。
-
-  3.21.  Matrox Millennium ドライバ (SVGA サーバ)
-
-  o  *Matrox Millennium (mga2064w) ドライバを追加しました。このドライバ
-     はとても新しいため "ベータ版" と思ってください。8bpp, 16bpp, 24bpp
-     と 32bpp をサポートしています。この段階ではこのチップセットの高速化
-     機能のとても限定した機能だけを使っています。
-
-  3.22.  Cirrus ドライバ (SVGA サーバ)
-
-  o  CL-GD5446, CL-GD5462 と CL-GD5464 を追加しました。
-
-  o  CL-GD7543 を追加しました。
-
-  o  ラップトップ用のチップセットの CL-GD754x 系統をサポートしましたがこ
-     の版では動かないかもしれません。
-
-  o  不安定な設定を避けるためにプログラマブルクロックのプログラムを性能
-     向上しました。
-
-  o  *いくつかの FIFO の設定の問題を修正しました。
-
-  o  *54xx 対応にパックトピクセル 24bpp を追加しました。
-
-  o  *1MB 5434 対応の 16bpp で生じていたいくつかの問題を修正しました。
-
-  3.23.  SiS ドライバ (SVGA サーバ)
-
-  o  SiS 86C201 PCI グラフィックビデオカードをサポートしました。
-
-  o  256 色をサポートしました。
-
-  o  チップセットに "sis86c201" と指定した場合に SiS 86c202 と 86c205 は
-     なんとか動作します。
-
-  3.24.  Chips と Technologies ドライバ (SVGA サーバ)
-
-  o  このドライバはかなり著しく作り直しました。
-
-  o  65546, 65548, 65550 と 65554 をサポートしました。
-
-  o  65530 と上記チップセットのリニアアドレッシングをサポートしました。
-
-  o  65545 と上記チップセットの 16bpp と 24bpp (パックトピクセル) をサポ
-     ートしました。
-
-  o  65545, 65546, 65548 と 65550 の BitBLT とその他の高速化を行いまし
+  o  3Dlabs ドライバーによりシステムクロックが遅れる現象は修正されまし
      た。
 
-  3.25.  ALI ドライバ (SVGA サーバ)
+  o  C&T HiQV チップの描画に関するバグは修正されました。
 
-  o  今回、このドライバでインタレースモードが動作します。
+  o  Cyrix ドライバーの描画に関する問題は修正されました。
 
-  3.26.  ATI ドライバ (SVGA サーバ)
+  o  Matrox G100/G200 の PCI 版は完全にサポートされました。
 
-  o  Mach64 のサポートを改良しました。
+  o  Mach64 サーバーはガンマ補正をサポートします。
 
-  o  ドライバ名称を "vgawonder" から "ati" に戻しました。
+  o  オープンソース定義に従う NVIDIA ドライバーコードが提供されました。
 
-  o  殆どの 最近の Mach64 ビデオカードをサポートしました。
+  o  I128 Rev IV のサポートが追加されました。
 
-  o  "undoc_clocks" オプションを削除しました。このオプションを使用してい
-     る場合は XF86Config ファイルから削除してください。
+  o  S3V のロックアップ問題がまたひとつ修正されました。
 
-  o  VGA Wonder V3 ビデオボードのカラーマップの問題を修正しました。
+  o  cfb24 の描画に関するバグが修正されました。
 
-  3.27.  WD90C24 ドライバ (SVGA サーバ)
+  o  ある種の Trident カードに関連するロックアップ問題が修正されました。
 
-  o  高いクロックで起こる雪の降る問題を修正しました。
+  o  SCO, FreeBSD, Linux などの glibc OS に対するサポートが更新されまし
+     た。
 
-  3.28.  Compaq AVGA ドライバ (SVGA サーバ)
+  o  DG/ux のサポートが追加されました。
 
-  o  この版では Compaq AVGA ドライバは使用出来ません。というのは動作しな
-     いのと、誰もこの問題を修正したがらないからです。
+  o  GNU/Hurd のサポートが追加されました。
 
-  3.29.  Hercules mono ドライバ
+  o  いくつかの XINPUT に関する問題は対処されました。
 
-  o  Hercules mono ドライバ は使用出来ません。というのは問題があって、す
-     ぐに修正出来る見込みがないからです。
+  o  XINPUT が定義された際の DGA 相対マウス運動イベントは修正されまし
+     た。また NVIDIA および S3V ドライバーの DGA に関連する問題も修正さ
+     れました。
 
-  3.30.  クライアント/ライブラリの変更点
+  o  X サーバーは真のユーザー ID を使用して Xauthority ファイルを読むよ
+     うになりました。
 
-  o  xterm に vt220/vt320 の殆どのエスケープシーケンスを追加しました。
+  o  コアクライアントに対して、いくつかの細かな修正が行われました。
 
-  o  xterm に ddterm のエスケープシーケンスを追加しました。
+  o  KOI8-R の扱いに関する Xlib のバグは修正されました。
 
-  o  新機能の行の為に xterm の termcap と terminfo の項目を更新しまし
-     た。これらの項目は以前の xterm と完全な互換性はありません。
 
-  o  BSD OS での xdm セッションの取り扱いについて修正しました。
+  o  PC98 用のカードデータベース、 config ファイルのサンプル、および XKB
+     の扱いなどが修正されました。
 
-  o  libXt と libX11 で保安上の問題を引き起こすバッファのあふれの問題を
-     修正しました。これらの問題の内の１つは setuid xterm を利用すること
-     です。
 
-  o  殆どの BSD システムで xterm に POSIX termios を追加しました。これに
-     より COMPAT_4 オプションを付けて BSD カーネルを生成する必要が無くな
-     ります。
+  5.  3.3.3 で何が新しくなったか ?
 
-  o  X11R6.1 の変更点の一部である libX11, libXaw, libXext と libXtst の
-     共有ライブラリの版を 6.1 に増やしました。
 
-  o  XFree86 機能拡張とスクリーンセーバー機能拡張のクライアント側ライブ
-     ラリは外部ライブラリに移動しました。古い libXExExt は削除しました。
+  5.1.  セキュリティの修正
 
-  o  今回、xterm に標準でカラー表示をサポートしました。xterm に (X11R6.1
-     の部分として) I18N 機能が向上しました。以前の色々な "color_xterm"の
-     派生の１つを使っている場合は、この xterm を試して問題があった時に私
-     たちにお知らせください。
 
-  o  xdpyinfo を Xinput 機能拡張と XFree86 機能拡張に関するより詳細な情
-     報を提供するように更新しました。
+  o  XFree86-3.3.2 のリリース後に発見されたいくつかのバッファ溢れに関す
+     る問題を修正しました。
 
-  o  拡張したスクリーンセーバーのパラメータの設定/テストを xset に追加し
-     ました(xvidtune で使いました)。今回、xset はキーボードの繰り返し入
-     力のパラメータの設定にも使用出来ます。
+  o  DISPLAY 変数の sanity チェック
 
-  o  次の新しいクライアントを追加しました、
+  o  X 接続ハイジャック防止の仕掛け (/tmp/.X11-unix のスティッキービッ
+     ト) これは単に一時的かつ部分的な解決方法であり、またある種の SYSV
+     ベースな OS (例えば Solaris 2.x) 上では、まったく役に立たないという
+     ことに注意して下さい。
 
-  o  dga -- XFree86-DGA 機能拡張のテスト用プログラム。
+  5.2.  修正したバグ
 
-  o  xsetmode, xsetpointer -- XInput 機能拡張と共に使用するプログラム。
 
-  o  X コンソーシアムの R6 fix-13 からの xdm の保安上の修正を取り入れま
+  o  初期化していない変数を使うという LBX に関する重大なバグを修正しまし
+     た。
+
+  o  XKB を (latin2 のような) ある種のロケールで使用した時に問題を起こす
+     Xlib のバグを修正し、また iso8859-15 に対するサポートを追加して
+     iso8859-15 の基本的なフォントをいくつか含めました。
+
+  o  10 以上のモードを扱えるよう xf86config を修正し、 XFCom / XBF サー
+     バーについても考慮しました。
+
+  o  xterm について多くの変更があります。ソースファイル中の
+     xterm.log.html を参照して下さい。
+
+  o  Riva128 上で多くの色深度と高いドットクロックを使用した場合の問題点
+     を修正しました。
+
+  o  S3 カードを使用する際、ボード上の S3 チップを無効にした場合に生じる
+     S3 ドライバーの問題を修正しました。
+
+  o  高解像度時の Cirrus 5480 についての問題と、546x で BitBLT エンジン
+     を使用した際に生じるジッターの問題を修正しました。
+
+  o  Tseng ドライバーに関するクロック制限の問題を修正しました。
+
+  o  ViRGE チップに関するロックアップの問題を修正しました。
+
+  o  Mach64 X サーバーのビデオ FIFO 時間調整計算を改善しました。
+
+  o  Mach64 X サーバーのフォントレンダリングコードにあったバグを修正しま
      した。
 
-  o  Unixware 2.x 対応に xconsole を更新しました。
+  o  Mach64 X サーバーの終了時に発生した VGA フォント復元に関するバグを
+     修正しました。
 
-  o  XNLS に KOI8-R を追加しました。
+  o  XF68_FBDev に関するいくつかの問題を修正しました。
 
-  o  xrdb は文字列領域を領域あふれを避けるように動的割り当てします。
+  o  S3 Trio64V+ に関する間違ったクロック制限の問題を修正しました。
 
-  o  xterm のメモリあふれの問題を修正しました。
+  o  cfb および vga コード中の一般的なレンダリングエラーを修正しました。
 
-  o  "AllowNullPasswd" リソースを xdm に追加しました。
+  o  MGA ドライバーにおけるテキスト復元問題を修正し、高解像度 32bpp モー
+     ドの表示を改善しました。 24bpp および 32bpp モードでの表示に関する
+     問題を修正しました。特定の MGA チップセット上でのメモリー検出を無効
+     にしました。最大 blit サイズを修正しました。 Mystique 上での sync
+     on green を修正しました。
 
-  o  X コンソーシアムの R6 fix-13 からの libXt のバグを修正しました。
+  o  visual が多すぎると Xnest がクラッシュする問題を修正しました。
 
-  3.31.  xf86config ユーティリティ
+  o  64bit アーキテクチャに対応するよう修正しました。
 
-  o  IBM Ramdac の正しくない取り扱いを修正しました。
+  o  S3V サーバーのカーソルに関するバグを修正しました。
 
-  3.32.  SuperProbe
+  o  C&T チップセット上でのメモリー検出、最高ドットクロック検出、および
+     DPMS 表示オフなどの問題を修正しました。
 
-  o  C&T 65548, Cirrus CL-GD7543/1, AT&T20C409, AT&T20C499 の探知を追加
-     し、正しくない ET4000/W32 の探査の問題を修正しました。
+  o  cirrus ドライバーを改良し、 CLGD755x 上の LCD 検出問題、二重マウス
+     バグおよびブランキングバグを修正しました。
 
-  o  Mach64 ビデオカードの探知を多いに向上しました。
+  o  -quiet フラッグに関するいくつかの問題 (ある種の変数が初期化されな
+     い) を修正しました。
 
-  o  Trident ビデオカードの探知を向上しました。
+  o  SuperProbe は、非 PCI バス接続の場合を除いて、 C&T HiQV チップを正
+     しく検出できるようになりました。この場合、SuperProbe に "-no_bios"
+     オプションを付けることで検出できるようになります。
 
-  o  SiS, ARK, S3 ViRGE ビデオカードの探知を追加しました。
+  o  C&T チップセットは特定の状況に発生するいくつかの小さな問題を避ける
+     ため、標準ではソフトウェアカーソルを使用します。 XF86Config に
+     "hw_cursor" オプションを追加することによって従来どおりハードウェア
+     カーソルを使用することも可能です。
 
-  3.33.  フォント
+  o  EGC サーバーは Linux/98 上で動作するようになりました。また
+     XF98Setup も使用可能です。
 
-  o  キリル文字フォントを更新しました。
+  o  Linux/98 上の MGA サーバーにおける VT 切り換え問題を修正しました。
 
-  4.  XFree86 3.2 の導入
+  5.3.  新機能
 
-  XFree86 3.2 バイナリ版は改訂版としてではなく完全版として配布します。
 
-  XFree86 3.2 の構成要素の一覧は次の通りです。いくつかの OS 毎に相違があ
-  るでしょう。
+  o  Cyrix MediaGX ベースのマザーボードに対する新しいドライバーが追加さ
+     れました。
 
-  次は全てを導入するのに必要です。:
+  o  Rendition V1000 および V2x00 チップセットに対する (アクセラレータ非
+     対応の) 新しいドライバーが追加されました。
 
-        preinst.sh      導入前スクリプト
-        postinst.sh     導入後スクリプト
-        X32bin.tgz      クライアント、ランタイムライブラリとアプリケーションの
-                                        標準値ファイル
-        X32doc.tgz      文書
-        X32fnts.tgz     75dpi, 周辺ファイルと PEX フォント
-        X32lib.tgz      実行時に必要なデータファイル
-        X32man.tgz      オンラインマニュアル
-        X32set.tgz      XF86Setup ユーティリティ
-        X32VG16.tgz     16 色 VGA サーバ(XF86Setup がこのサーバを必要としています)
+  o  Weitek P9100 ベースのカードに対する新しいドライバーが追加されまし
+     た。
 
-  初めての導入には次が必要で、既に導入している場合には追加作業がありま
-  す。:
+  o  SiS 5597/98 および SiS 6326 に対する新しいドライバーが追加されまし
+     た。また SiS 6215 および 6225 を 6205 として扱うようになりました。
 
-        X32cfg.tgz     xinit, xdm の設定ファイルの例題
+  o  (IBM RAMDAC と共に) GLINT 500TX および MX, Permedia, Permedia 2 お
+     よび Permedia 2v を使用する 3Dlabs ベースのカードに対する新しいドラ
+     イバーが追加されました。
 
-  注意：xinit や xdm の設定ファイルを変更している既に導入している所に
-  X32cfg.tgz を上書きするときは十分注意してください。X32cfg.tgz を導入す
-  ると既に存在するファイルを書き換えてしまいます。ファイルを変更している
-  場合は X32cfg.tgz を導入する必要はありません。
+  o  Matrox G100 および G200 ベースのカードに対するサポートが MGA ドライ
+     バーに追加されました。
 
-  次の X サーバは PC/AT 機用です。機材に一致するものを VGA16 サーバ若く
-  はいづれか１つ選択してください。VGA16 サーバは新しい構成情報設定ユー
-  ティリティ(XF86Setup) に必要です。
+  o  C&T 69000 に対するサポートが追加され、また 65550 以降での 32bpp 表
+     示が可能になりました。
 
-        X328514.tgz     8514/A サーバ
-        X32AGX.tgz      AGX サーバ
-        X32I128.tgz     I128 サーバ
-        X32Ma32.tgz     Mach 32 サーバ
-        X32Ma64.tgz     Mach 64 サーバ
-        X32Ma8.tgz      Mach 8 サーバ
-        X32Mono.tgz     Mono サーバ
-        X32P9K.tgz      P9000 サーバ
-        X32S3.tgz       S3 サーバ
-        X32S3V.tgz      S3 ViRGE サーバ
-        X32SVGA.tgz     SVGA サーバ
-        X32VG16.tgz     16 colour VGA サーバ (XF86Setup はこのサーバが必要です)
-        X32W32.tgz      ET4000/W32, ET6000 サーバ
+  o  NeoMagic 社製のノートブック PC 用チップセットがサポートされました。
 
-  次は Alpha 機用 X サーバです。
+  o  EPSON SPC8110 がサポートされました。
 
-        X32TGA.tgz      DEC 21030 (TGA) サーバ
+  o  NVidia Riva TNT がサポートされました。
 
-  次は PC98 機用の X サーバです。PC98 機をもっている場合はお手元の機材に
-  合っているものを選択してください。PC98 機が何か知らない場合は、いずれ
-  も必要ありません。
+  o  Trident Image975, Image985, Cyber9397, Cyber9388 についてアクセラレ
+     ータ対応コードが追加されました。 (訳注：Cyber 系の対応はまだ不完全
+     なため、標準では無効にされました。)
+  o  新しい ATI Rage Pro, VT4 および Rage IIC ベースのカードに対するサポ
+     ートが追加されました。
 
-        X329NS3.tgz     PC98 NEC(S3) サーバ
-        X329SPW.tgz     PC98 PCSKB-PowerWindow(S3) サーバ
-        X329LPW.tgz     PC98 PowerWindowLB(S3) サーバ
-        X329EGC.tgz     PC98 EGC(generic) サーバ
-        X329GA9.tgz     PC98 GA-968V4/PCI(S3 968) サーバ
-        X329GAN.tgz     PC98 GANB-WAP(cirrus) サーバ
-        X329480.tgz     PC98 PEGC-480(generic) サーバ
-        X329NKV.tgz     PC98 NKV-NEC(cirrus) サーバ
-        X329WS.tgz      PC98 WABS(cirrus) サーバ
-        X329WEP.tgz     PC98 WAB-EP(cirrus) サーバ
-        X329WSN.tgz     PC98 WSN-A2F(cirrus) サーバ
-        X329TGU.tgz     PC98 TGUI サーバ
+  o  24-plane TGA がサポートされました。
 
-  次はオプションです。
+  o  DECnet transport を使用可能な Linux 上で XFree86 を構築するための
+     Config がサポートされました。
 
-        X32f100.tgz    100dpi フォント
-        X32fcyr.tgz    キリル文字フォント
-        X32fnon.tgz    その他のフォント (中国語, 日本語, 韓国語, ヘブライ語)
-        X32fscl.tgz    スケーラブルフォント (Speedo と Type1)
-        X32fsrv.tgz    フォントサーバと設定ファイル
-        X32prog.tgz    X ヘッダファイル, 設定ファイルとコンパイルに必要なライブラリ
-        X32lkit.tgz    X サーバリンクキット
-        X32lk98.tgz    PC98 X サーバリンクキット
-        X32nest.tgz    ネストした X サーバ
-        X32vfb.tgz     仮想フレームバッファを使う X サーバ
-        X32ps.tgz      文書のポストスクリプト版
-        X32html.tgz    文書の HTML 版
+  o  FreeBSD/ELF 上での XFree86 構築がサポートされました。
 
-  既に XFree86 のいずれかを導入済みの場合は、他の事を行う前に /usr/X11R6
-  のバックアップを取ってください。標準の導入手順では、そこにある XFree86
-  を上書きします。
+  o  Linux/x86 上での vesafb がサポートされました。
 
-  新規に導入する場合は /usr/X11R6 というディレクトリを作成して、そして
-  .tgz ファイルを伸張 (extract) してください。新規導入を行うのに /usr に
-  十分な空がない場合は、どこか他にディレクトリを作成して /usr/ にシンボ
-  リックリンクを作成してください。例えば、/home にディレクトリを作成する
-  場合は次のようにしてください。:
+  o  LynxOS 3.0 がサポートされました。
 
-                mkdir /home/X11R6
-                ln -s /home/X11R6 /usr
+  o  SuperProbe がアップデートされました。
 
-  次の段階は導入前スクリプトを実行してください。このスクリプトはシステム
-  のいくつかの予備調査を行います。いくつかの OS では導入前スクリプトが新
-  しいシステム構成要素を導入するか導入前に聞いてきます。このスクリプトは
-  問題を起こしそうな、古くなったファイルとシンボリックリンクを以前の導入
-  したものから削除します。 preinst.sh を /var/tmp にコピーして、それから
-  /usr/X11R6 に移動してスクリプトを実行してください。:
+  o  AceCad ADVANCEDigitizer, MicroTouch TouchPen, SGI dial box に対する
+     新しい XInput ドライバーが追加されました。
 
-                cd /usr/X11R6
-                sh /var/tmp/preinst.sh
+  o  local フォントディレクトリが追加されました。
 
-  を伸張したら /usr/X11R6 に移動して root になって次の必要なファイルを実
-  行してください。
+  5.4.  既知の問題
 
-                gzip -d < X32file.tgz | tar vxf -
+  ここに挙げられている問題は、リリース時に判明していたものです。最新の情
+  報は XFree86 FAQ を参照して下さい。
 
-  いくつかの OS では、いくつか "Broken Pipe" というメッセージが出力され
-  ます。このメッセージに関連した他のメッセージがない場合、無視しても結構
-  です。注意事項: この導入作業中に X を起動しないでください。導入に支障
-  をきたす様々な事が起こったり、X セッションが終了したりします。
 
-  NetBSD または FreeBSD を使用している場合は、より確実な(かつ強くお勧め
-  する) 導入方法は .tgz ファイルを次のように伸張することです。:
+  o  幾つかの Cirrus ラップトップ用チップセット (75xx) で問題がありま
+     す。このチップセットのドライバがうまく動作している人もいますが、
+     ちゃんと使えていない人もいます。該当する機器について誰かが問題を確
+     認するまで、これらの問題が修正される見込みはありません。この問題解
+     決について作業したい場合は、我々に連絡をしてください。我々はテスタ
+     ーではなく問題を修正してくれる方たちを必要としています。
 
-                gzip -d < X32file.tgz | tar -v -x --unlink -f -
+  o  幾つかの Trident ラップトップ用チップセットで問題があります。この
+     チップセットのドライバを曲りなりにも使えている人もいますが、まった
+     く使えない人もいます。該当する機器について誰かが問題を確認するま
+     で、これらの問題が修正される見込みはありません。この問題解決につい
+     て作業したい場合は、我々に連絡をしてください。我々はテスターではな
+     く問題を修正してくれる方たちを必要としています。
 
-  GNU cpio (Linux は持っています) または SVR4 cpio を持っているならば、
-  より確実な(かつ強くお勧めする) 導入方法は .tgz ファイルを次のように伸
-  張することです。:
+  o  新規にサポートされたチップには SuperProbe コマンドによって検出でき
+     ないものがあります。現在のところ、特に最近になってサポートされた
+     チップについては、SuperProbe による検出結果よりも、適切に設定された
+     XF86Config を (おそらく "-probeonly" オプションと共に) 使用した X
+     サーバー自身による検出結果のほうが信頼できると言えます。 SuperProbe
+     のコードデザインを改良することに興味があるなら、 XFree86 の「開発者
+     チーム」に参加して下さい。
 
-                gzip -d < X32file.tgz | cpio -i -v -d -u -H ustar
 
-  必要な .tgz ファイルが伸張できたら、postinst.sh スクリプトを /var/tmp
-  にコピーして、そして /usr/X11R6 に移動してスクリプトを実行してくださ
-  い。:
+  6.  XFree86 とオープンソースソフトウェア
 
-                cd /usr/X11R6
-                sh /var/tmp/postinst.sh
+  XFree86 のパブリックリリースは、一般的には
+  http://www.opensource.org/osd.html によって規定されているオープンソー
+  スソフトウェア定義に従っています。この定義は実際、我々の要求条件のサブ
+  セットになっています。
 
-  Linux, FreeBSD と NetBSD のような ldconfig を使用する OS で
-  は、ldconfig を実行するか再立ち上げを行えば導入は完了します。特に、最
-  低 /usr/lib と /usr/X11R6/lib をコマンドラインから追加してください。起
-  動時にどのように ldconfig を実行しているか /etc/rc を調査してくださ
+  XFree86 3.3.3.1 のすべてのコードは、オープンソース定義を満たしていま
+  す。
+
+
+
+  7.  XFree86 3.3.3.1 の導入
+
+  XFree86 3.3.3.1 バイナリは完全版として配布されます。
+
+  注意：X サーバーはもはや setuid root としてインストールされません。 X
+  サーバーを startx/xinit 経由、またはそれに類似した方法で起動する場合に
+  は、 setuid された Xwrapper のコピーと更新された xinit が必要です。こ
+  れらは Xbin.tgz 中にあります。
+
+  XFree86 3.3.3 の構成要素一覧は次のとおりです。 OS によって多少の相違が
+  あります。
+
+  新規導入または 3.3 より前の版からの移行導入には、次の構成要素が必要で
+  す：
+
+
+       <!--
+       preinst.sh      Pre-installation script
+       postinst.sh     Post-installation script
+       extract         XFree86 extraction utility
+       Xbin.tgz        Clients, run-time libs, and app-defaults files
+       Xdoc.tgz        Documentation
+       Xfnts.tgz       75dpi, misc and PEX fonts
+       Xlib.tgz        Data files required at run-time
+       Xman.tgz        Manual pages
+       Xset.tgz        XF86Setup utility
+       Xjset.tgz       XF86Setup utility (if you prefer the Japanese version)
+       XVG16.tgz       16 colour VGA server (XF86Setup needs this server)
+       Xcfg.tgz        sample config files for xinit, xdm
+       -->
+       preinst.sh      導入前スクリプト
+       postinst.sh     導入後スクリプト
+       extract         XFree86 伸長ユーティリティ
+       Xbin.tgz        クライアント、実行時ライブラリ、および
+                       アプリケーションの標準値ファイル
+       Xdoc.tgz        文書
+       Xfnts.tgz       75dpi, misc および PEX フォント
+       Xlib.tgz        実行時に必要なデータファイル
+       Xman.tgz        オンラインマニュアル
+       Xset.tgz        XF86Setup ユーティリティ
+       Xjset.tgz       XF86Setup ユーティリティ (日本語版)
+       XVG16.tgz       16 色 VGA サーバー (XF86Setup のためにこのサーバーが必要です)
+       Xcfg.tgz        xinit, xdm のための設定ファイルサンプル
+
+
+
+
+  3.3 以降の版からの移行導入には次の構成要素が必要です：
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <!--
+  preinst.sh      Pre-installation script
+  postinst.sh     Post-installation script
+  extract         XFree86 extraction utility
+  Xbin.tgz        Clients, run-time libs, and app-defaults files
+  Xdoc.tgz        Documentation
+  Xlib.tgz        Data files required at run-time
+  Xman.tgz        Manual pages
+  Xset.tgz        XF86Setup utility
+  Xjset.tgz       XF86Setup utility (if you prefer the Japanese version)
+  XVG16.tgz       16 colour VGA server (XF86Setup needs this server)
+  -->
+  preinst.sh      導入前スクリプト
+  postinst.sh     導入後スクリプト
+  extract         XFree86 伸長ユーティリティ
+  Xbin.tgz        クライアント、実行時ライブラリ、および
+                  アプリケーションの標準値ファイル
+  Xdoc.tgz        文書
+  Xlib.tgz        実行時に必要なデータファイル
+  Xman.tgz        オンラインマニュアル
+  Xset.tgz        XF86Setup ユーティリティ
+  Xjset.tgz       XF86Setup ユーティリティ (日本語版)
+  XVG16.tgz       16 色 VGA サーバー (XF86Setup のためにこのサーバーが必要です)
+
+
+
+
+  標準フォントの更新は不可欠ではありませんが、この版には 2 つの基本的な
+  ISO 8859-15 フォントが追加されている他、いくつかの小さな修正が含まれて
+  います。標準フォントを更新する場合には次の構成要素も必要です：
+
+
+
+       <!--
+       Xfnts.tgz       75dpi, misc and PEX fonts
+       -->
+       Xfnts.tgz       75dpi, misc および PEX フォント
+
+
+
+
+  注意： xinit や xdm の設定ファイルを自分の環境に合わせて変更している場
+  合、既に導入されている場所に Xcfg.tgz を重ねて導入する場合には充分注意
+  してください。 Xcfg.tgz の導入によって、既存のファイルはすべて上書きさ
+  れてしまいます。設定を自分に合わせて変更している場合、 Xcfg.tgz を導入
+  する必要はありません。
+
+  この版で提供されているビットマップフォントは compress ではなく gzip を
+  使って圧縮されています。たぶん、これを導入すると (バックアップを取って
+  から) 古いフォントを削除したくなるでしょう。 3.2A より前の版の X サー
+  バーとフォントサーバーは gzip 圧縮されたフォントを読み込めません。これ
+  らの古いサーバーを動作させたい場合には古いフォントを削除しないようにし
+  てください。
+
+  次の X サーバーは PC/AT 機 (例えば、 Intel ix86 ベースの PC) 用です。
+  ハードウェアに合わせたサーバーを最低ひとつ、 VGA16 サーバーと一緒に選
+  択してください。 VGA16 サーバーは新しい構成情報設定ユーティリティ
+  (XF86Setup) のために必要です。必要な X サーバーをビデオカード別に示し
+  たリストが http://www.xfree86.org/cardlist.html にあります。
+
+
+
+
+
+
+
+  <!--
+  X3DL.tgz        3Dlabs server
+  X8514.tgz       8514/A server
+  XAGX.tgz        AGX server
+  XI128.tgz       I128 server
+  XMa32.tgz       Mach 32 server
+  XMa64.tgz       Mach 64 server
+  XMa8.tgz        Mach 8 server
+  XMono.tgz       Mono server
+  XP9K.tgz        P9000 server
+  XS3.tgz         S3 server
+  XS3V.tgz        old S3 ViRGE server (please use SVGA server)
+  XSVGA.tgz       SVGA server
+  XVG16.tgz       16 colour VGA server (XF86Setup needs this server)
+  XW32.tgz        ET4000/W32, ET6000 server
+  -->
+  X3DL.tgz        3Dlabs サーバー
+  X8514.tgz       8514/A サーバー
+  XAGX.tgz        AGX サーバー
+  XI128.tgz       I128 サーバー
+  XMa32.tgz       Mach 32 サーバー
+  XMa64.tgz       Mach 64 サーバー
+  XMa8.tgz        Mach 8 サーバー
+  XMono.tgz       Mono サーバー
+  XP9K.tgz        P9000 サーバー
+  XS3.tgz         S3 サーバー
+  XS3V.tgz        古い S3 ViRGE サーバー (なるべく SVGA サーバーを使ってください)
+  XSVGA.tgz       SVGA サーバー
+  XVG16.tgz       16 色 VGA server (XF86Setup のためにこのサーバーが必要です)
+  XW32.tgz        ET4000/W32, ET6000 サーバー
+
+
+
+
+  次は Alpha 機用 X サーバーです：
+
+
+       <!--
+       <verb>
+       XMa64.tgz       Mach 64 server
+       XMono.tgz       Mono server (generic driver only)
+       XP9K.tgz        P9000 server
+       XTGA.tgz        DEC 21030 (TGA) server
+       XS3.tgz         S3 server
+       XS3V.tgz        old S3 ViRGE server (please use SVGA server)
+       XSVGA.tgz       SVGA server (Matrox Millennium and S3 ViRGE drivers only)
+
+
+       -->
+
+       XMa64.tgz       Mach 64 サーバー
+       XMono.tgz       Mono サーバー (汎用ドライバーのみ)
+       XP9K.tgz        P9000 サーバー
+       XTGA.tgz        DEC 21030 (TGA) サーバー
+       XS3.tgz         S3 サーバー
+       XS3V.tgz        古い S3 ViRGE サーバー (なるべく SVGA サーバーを使ってください)
+       XSVGA.tgz       SVGA server (Matrox Millennium および S3 ViRGE ドライバーのみ)
+
+
+
+
+  次は PC98 機用の X サーバーです。ここで言う PC98 とは日本のコンピュー
+  タ標準機であって、 Win98 または Intel と Microsoft による PC98 仕様と
+  は何の関係も無いことに注意してください。PC98 機を所有している場合に
+  は、ハードウェアに合わせたサーバーを選択してください。もし PC98 機とは
+  何かわからなければ、ここにあるどれも必要ありません。これらのサーバーは
+  「普通の」 PC 上では 動作しません。日本製の PC98 機を所有していないの
+  なら、これらのサーバーを試してみようとはしないでください。必要な X サ
+  ーバーを PC98 のビデオカード別に示したリストが
+  http://www.xfree86.org/cardlist98.html にあります。
+
+
+       <!--
+       X9NS3.tgz       PC98 NEC(S3) server
+       X9SPW.tgz       PC98 PCSKB-PowerWindow(S3) server
+       X9LPW.tgz       PC98 PowerWindowLB(S3) server
+       X9EGC.tgz       PC98 EGC(generic) server
+       X9GA9.tgz       PC98 GA-968V4/PCI(S3 968) server
+       X9GAN.tgz       PC98 GANB-WAP(cirrus) server
+       X9480.tgz       PC98 PEGC-480(generic) server
+       X9NKV.tgz       PC98 NKV-NEC(cirrus) server
+       X9WS.tgz        PC98 WABS(cirrus) server
+       X9WEP.tgz       PC98 WAB-EP(cirrus) server
+       X9WSN.tgz       PC98 WSN-A2F(cirrus) server
+       X9TGU.tgz       PC98 TGUI server
+       X9MGA.tgz       PC98 MGA server
+       X9SVG.tgz       PC98 CLGD755x server
+       X9set.tgz       PC98 XF98Setup utility
+       -->
+       X9NS3.tgz       PC98 NEC(S3) サーバー
+       X9SPW.tgz       PC98 PCSKB-PowerWindow(S3) サーバー
+       X9LPW.tgz       PC98 PowerWindowLB(S3) サーバー
+       X9EGC.tgz       PC98 EGC(generic) サーバー
+       X9GA9.tgz       PC98 GA-968V4/PCI(S3 968) サーバー
+       X9GAN.tgz       PC98 GANB-WAP(cirrus) サーバー
+       X9480.tgz       PC98 PEGC-480(generic) サーバー
+       X9NKV.tgz       PC98 NKV-NEC(cirrus) サーバー
+       X9WS.tgz        PC98 WABS(cirrus) サーバー
+       X9WEP.tgz       PC98 WAB-EP(cirrus) サーバー
+       X9WSN.tgz       PC98 WSN-A2F(cirrus) サーバー
+       X9TGU.tgz       PC98 TGUI サーバー
+       X9MGA.tgz       PC98 MGA サーバー
+       X9SVG.tgz       PC98 CLGD755x サーバー
+       X9set.tgz       PC98 XF98Setup ユーティリティ
+
+
+
+
+  次に挙げるものはオプションです。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <!--
+  Xf100.tgz       100dpi fonts
+  Xfcyr.tgz       Cyrillic fonts
+  Xfnon.tgz       Other fonts (Chinese, Japanese, Korean, Hebrew)
+  Xfscl.tgz       Scalable fonts (Speedo and Type1)
+  Xfsrv.tgz       Font server and config files
+  Xprog.tgz       X header files, config files and compile-time libs
+  Xnest.tgz       Nested X server
+  Xvfb.tgz        Virtual framebuffer X server
+  Xprt.tgz        X Print server
+  Xps.tgz         PostScript version of the documentation
+  Xhtml.tgz       HTML version of the documentation
+  Xjdoc.tgz       Documentation in Japanese (for version 3.2)
+  Xjhtm.tgz       HTML version of the documentation in Japanese (3.2)
+  Xlkit.tgz       X server LinkKit
+  Xlk98.tgz       X server LinkKit for PC98 servers
+  -->
+  Xf100.tgz       100dpi フォント
+  Xfcyr.tgz       キリル文字フォント
+  Xfnon.tgz       その他のフォント (中国語、日本語、韓国語、ヘブライ語)
+  Xfscl.tgz       スケーラブルフォント (Speedo と Type1)
+  Xfsrv.tgz       フォントサーバと設定ファイル
+  Xprog.tgz       X ヘッダファイル、設定ファイルとコンパイルに必要なライブラリ
+  Xnest.tgz       ネストした X サーバー
+  Xvfb.tgz        仮想フレームバッファを使う X サーバー
+  Xprt.tgz        X プリントサーバー
+  Xps.tgz         ポストスクリプト版の文書
+  Xhtml.tgz       HTML 版の文書
+  Xjdoc.tgz       日本語文書 (3.2 版用)
+  Xjhtm.tgz       HTML 版の日本語文書 (3.2版)
+  Xlkit.tgz       X サーバーリンクキット
+  Xlk98.tgz       PC98 サーバー用の X サーバーリンクキット
+
+
+
+
+  既にある版の XFree86 を導入済みの場合は、他の事を行う前に /usr/X11R6の
+  バックアップを取ってください。標準の導入手順では、既存の版の XFree86
+  を上書きしてしまいます。
+
+  新規導入の場合は /usr/X11R6 というディレクトリを作成して、必要な .tgz
+  ファイルを伸長 (extract) してください。 /usr に充分な空きスペースが無
+  ければ、どこか他の場所にディレクトリを作成して、そこへのシンボリックリ
+  ンクを作成してください。例えば、 /home にディレクトリを作成する場合は
+  次のようにします：
+
+
+               mkdir /home/X11R6
+               ln -s /home/X11R6 /usr
+
+
+
+
+  次の段階は導入前スクリプトの実行です。このスクリプトはシステムについて
+  いくつかの予備調査を行います。いくつかの OS では、このスクリプトを実行
+  すると、 XFree86 を導入する前にいくつかのシステム構成要素についてその
+  新バージョンを導入する必要があると報告してきます。このスクリプトはまた
+  以前の版で導入され、古くなったファイルとシンボリックリンクについて問題
+  を起こしそうなものを発見し、削除します。
+
+  以降の導入手順では /var/tmp ディレクトリにすべてのファイルをダウンロー
+  ドしてあると仮定しています。他のディレクトリにファイルを置く場合には、
+  以下の記述にある「/var/tmp」をそのディレクトリ名に読み替えてください。
+
+  /usr/X11R6 に移動して、導入前スクリプトを実行します：
+
+          cd /usr/X11R6
+          sh /var/tmp/preinst.sh
+
+
+
+
+  次の作業は導入ユーティリティを実行可能にすることです。このためには、
+  「extract」ファイルがすべての X*.tgz ファイルと同じディレクトリ内に存
+  在することを確認し、そのディレクトリから次の手順を実行します：
+
+
+
+               chmod 755 extract
+
+
+
+
+  導入ユーティリティ「extract」は XFree86 パッケージを構成する .tgz ファ
+  イルを展開するために使用されます。 .tgz ファイルは gzip 圧縮された tar
+  ファイルですが、ほとんどの OS 上での標準的な「tar」コマンドは XFree86
+  の導入作業に向いていません。 extract ユーティリティは XFree86 の導入に
+  必要なオプションを付けて作成した GNU tar 1.12 の変更版です。 extract
+  のソースコードは XFree86 パッケージと同じ所から入手可能です。
+
+  XFree86 パッケージの展開には我々が提供している extract ユーティリティ
+  の使用を強く勧めます。これを無視して他の方法を利用した場合、問題が起き
+  ても我々は質問を受けつけません。また extract ユーティリティの名前を変
+  更しないことも重要です。名前を変更すると、通常の GNU tar として動作し
+  ます。
+
+  XFree86 バイナリを伸長するには、 root になって次の手順を実行します：
+
+
+               cd /usr/X11R6
+               /var/tmp/extract /var/tmp/X*.tgz
+
+
+
+
+  必要な .tgz ファイルを伸長したら、導入後スクリプトを実行します：
+
+
+               cd /usr/X11R6
+               sh /var/tmp/postinst.sh
+
+
+
+
+  ldconfig を使用する OS では、導入を完了するために ldconfig の実行また
+  は再起動が必要です。 Linux, FreeBSD, NetBSD または OpenBSD を使用して
+  いる場合には、 postinst.sh スクリプトが ldconfig を正しく実行するはず
+  です。 ldconfig を使用する他の OS では、起動時に ldconfig が正常に実行
+  されることを確認してください。
+
+  導入を完了したら、 X サーバーを設定するために設定ユーティリティのひと
+  つ (XF86Setup または xf86config) を実行しましょう。これは新規導入の場
+  合不可欠な作業ですが、移行導入の場合にはかならず必要というわけではあり
+  ません。設定作業に関する詳細は QuickStart document を参照してくださ
   い。
 
-  XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.47 1996/10/26 09:38:54 dawes Exp
+
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/RELNOTES,v 3.1.2.1 1999/06/02 07:51:03 hohndel Exp $
+
+
 
   ______________________________________________________________________
+  ______________________________________________________________________
+
 
   このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v
-  3.47 1996/10/26 09:38:54 を、岡本  一幸 ( Kazuyuki Okamoto
-  <ikko-@pacific.rim.or.jp> <mailto:ikko-@pacific.rim.or.jp> ) が
-  XFree86 3.2 を日本でインストールする人向けに和訳したものです。ここがお
-  かしいとか、ここはこうしたほうがいいといったご意見がありましたら、電子
-  メールでお知らせ下さい。原文の著作権は XFree86 プロジェクト社にありま
-  す。この和訳の著作権は XFree86 プロジェクト社と岡本 一幸にありますが、
-  この和訳の不具合は私に、電子メールで送って下さい。
+  3.59.2.68 1998/12/30 10:22:34 を佐野 武俊 ( Taketoshi Sano
+  <kgh12351@nifty.ne.jp> <mailto:kgh12351@nifty.ne.jp> が岡本 一幸さんに
+  よる XFree86 3.3.2 の日本語訳文書をもとに和訳したものです。ここがおか
+  しいとか、ここはこうしたほうがいいといったご意見がありましたら、翻訳者
+  または xjman プロジェクトまで電子メールでお知らせ下さい。原文の著作権
+  は XFree86 プロジェクト社にあります。この和訳の著作権は xjman プロジェ
+  クトにあります。 xjman プロジェクトについては http://xjman.dsl.gr.jp/
+  <http://xjman.dsl.gr.jp/> を参照してください。
 
-  XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Japanese/RELNOTE.sgml,v 3.48 1996/11/26 23:06:30 dawes Exp
 
-  ______________________________________________________________________
 
-  [EOF]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

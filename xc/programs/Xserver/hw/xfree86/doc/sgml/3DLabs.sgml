@@ -3,7 +3,7 @@
 <article>
 <title>Information for 3DLabs Chipset Users
 <author>The XFree86 Project Inc.
-<date>5 November 1998
+<date>25 Juni 1999
 <toc>
 
 <sect>Supported hardware <p>
@@ -11,7 +11,8 @@
 This server supports the following 3DLabs chipsets:
 <itemize>
 <item>GLINT 500TX with IBM RGB526 RAMDAC
-<item>GLINT MX with IBM RGB526 and IBM RGB640 RAMDAC
+<item>GLINT MX plus Delta with IBM RGB526 and IBM RGB640 RAMDAC
+<item>GLINT MX plus Gamma with IBM RGB526 and IBM RGB640 RAMDAC
 <item>Permedia with IBM RGB526 RAMDAC
 <item>Permedia 2 (classic, 2a, 2v)
 </itemize>
@@ -76,7 +77,7 @@ server.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/3DLabs.sgml,v 1.1.2.3 1998/11/07 13:52:41 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/3DLabs.sgml,v 1.1.2.4 1999/06/25 08:57:12 hohndel Exp $
 </verb>
 
 </article>

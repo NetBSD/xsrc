@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdLnx.c,v 3.12 1996/12/23 06:43:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdLnx.c,v 3.12.2.1 1999/04/15 12:04:28 hohndel Exp $ */
 /*
  * Linux version of keymapping setup. The kernel (since 0.99.14) has support
  * for fully remapping the keyboard, but there are some differences between
@@ -640,9 +640,11 @@ readKernelMapping(KeySymsPtr pKeySyms, CARD8 *pModMap)
 	  special = KEY_BackSpace;
 	  break;
 	case K_PMINUS:
+	case K_PGDN:
 	  special = KEY_KP_Minus;
 	  break;
 	case K_PPLUS:
+	case K_PGUP:
 	  special = KEY_KP_Plus;
 	  break;
 	case K_F1:

@@ -5,13 +5,14 @@ XCOMM	Each alias name is described within one line.
 XCOMM	The first word is the alias name (simplified locale name)
 XCOMM	the second word is full locale name.
 XCOMM
-XCOMM	$XFree86: xc/nls/locale.alias,v 1.4.2.5 1998/11/01 07:51:00 dawes Exp $
+XCOMM	$XFree86: xc/nls/locale.alias,v 1.4.2.7 1999/06/02 07:50:05 hohndel Exp $
 XCOMM
 POSIX						C
 POSIX-UTF2					C
 C_C.C						C
 C.en						C
 C.iso88591					en_US.ISO8859-1
+C.iso885915					en_US.ISO8859-15
 Cextend						en_US.ISO8859-1
 Cextend.en					en_US.ISO8859-1
 English_United-States.437			C
@@ -31,19 +32,29 @@ cz_CZ						cz_CZ.ISO8859-2
 da						da_DK.ISO8859-1
 da_DK						da_DK.ISO8859-1
 da_DK.88591					da_DK.ISO8859-1
+da_DK.885915					da_DK.ISO8859-15
 da_DK.88591.en					da_DK.ISO8859-1
+da_DK.885915.en					da_DK.ISO8859-15
 da_DK.iso88591					da_DK.ISO8859-1
+da_DK.iso885915					da_DK.ISO8859-15
 da_DK.ISO_8859-1				da_DK.ISO8859-1
+da_DK.ISO_8859-15				da_DK.ISO8859-15
 de						de_DE.ISO8859-1
 de_AT						de_AT.ISO8859-1
 de_AT.ISO_8859-1				de_AT.ISO8859-1
+de_AT.ISO_8859-15				de_AT.ISO8859-15
 de_CH						de_CH.ISO8859-1
 de_CH.ISO_8859-1				de_CH.ISO8859-1
+de_CH.ISO_8859-15				de_CH.ISO8859-15
 de_DE						de_DE.ISO8859-1
 de_DE.88591					de_DE.ISO8859-1
+de_DE.885915					de_DE.ISO8859-15
 de_DE.88591.en					de_DE.ISO8859-1
+de_DE.885915.en					de_DE.ISO8859-15
 de_DE.iso88591					de_DE.ISO8859-1
+de_DE.iso885915					de_DE.ISO8859-15
 de_DE.ISO_8859-1				de_DE.ISO8859-1
+de_DE.ISO_8859-15				de_DE.ISO8859-15
 GER_DE.8859					de_DE.ISO8859-1
 GER_DE.8859.in					de_DE.ISO8859-1
 ee						ee_EE.ISO8859-4
@@ -53,13 +64,19 @@ el_GR.iso88597					el_GR.ISO8859-7
 en						en_US.ISO8859-1
 en_AU						en_AU.ISO8859-1
 en_AU.ISO_8859-1				en_AU.ISO8859-1
+en_AU.ISO_8859-15				en_AU.ISO8859-15
 en_CA						en_CA.ISO8859-1
 en_CA.ISO_8859-1				en_CA.ISO8859-1
+en_CA.ISO_8859-15				en_CA.ISO8859-15
 en_GB						en_GB.ISO8859-1
 en_GB.88591					en_GB.ISO8859-1
+en_GB.885915					en_GB.ISO8859-15
 en_GB.88591.en					en_GB.ISO8859-1
+en_GB.885915.en					en_GB.ISO8859-15
 en_GB.iso88591					en_GB.ISO8859-1
+en_GB.iso885915					en_GB.ISO8859-15
 en_GB.ISO_8859-1				en_GB.ISO8859-1
+en_GB.ISO_8859-15				en_GB.ISO8859-15
 en_UK						en_GB.ISO8859-1
 ENG_GB.8859					en_GB.ISO8859-1
 ENG_GB.8859.in					en_GB.ISO8859-1
@@ -67,9 +84,13 @@ en_IE						en_IE.ISO8859-1
 en_NZ						en_NZ.ISO8859-1
 en_US						en_US.ISO8859-1
 en_US.88591					en_US.ISO8859-1
+en_US.885915					en_US.ISO8859-15
 en_US.88591.en					en_US.ISO8859-1
+en_US.885915.en					en_US.ISO8859-15
 en_US.iso88591					en_US.ISO8859-1
+en_US.iso885915					en_US.ISO8859-15
 en_US.ISO_8859-1				en_US.ISO8859-1
+en_US.ISO_8859-15				en_US.ISO8859-15
 en_US.UTF-8					en_US.utf
 es						es_ES.ISO8859-1
 es_AR						es_AR.ISO8859-1
@@ -80,9 +101,13 @@ es_CR						es_CR.ISO8859-1
 es_EC						es_EC.ISO8859-1
 es_ES						es_ES.ISO8859-1
 es_ES.88591					es_ES.ISO8859-1
+es_ES.885915					es_ES.ISO8859-15
 es_ES.88591.en					es_ES.ISO8859-1
+es_ES.885915.en					es_ES.ISO8859-15
 es_ES.iso88591					es_ES.ISO8859-1
+es_ES.iso885915					es_ES.ISO8859-15
 es_ES.ISO_8859-1				es_ES.ISO8859-1
+es_ES.ISO_8859-15				es_ES.ISO8859-15
 es_GT						es_GT.ISO8859-1
 es_MX						es_MX.ISO8859-1
 es_NI						es_NI.ISO8859-1
@@ -101,28 +126,46 @@ et_EE						et_EE.ISO8859-4
 fi						fi_FI.ISO8859-1
 fi_FI						fi_FI.ISO8859-1
 fi_FI.88591					fi_FI.ISO8859-1
+fi_FI.885915					fi_FI.ISO8859-15
 fi_FI.88591.en					fi_FI.ISO8859-1
+fi_FI.885915.en					fi_FI.ISO8859-15
 fi_FI.iso88591					fi_FI.ISO8859-1
+fi_FI.iso885915					fi_FI.ISO8859-15
 fi_FI.ISO_8859-1				fi_FI.ISO8859-1
+fi_FI.ISO_8859-15				fi_FI.ISO8859-15
 fr						fr_FR.ISO8859-1
 fr_BE						fr_BE.ISO8859-1
 fr_BE.88591					fr_BE.ISO8859-1
+fr_BE.885915					fr_BE.ISO8859-15
 fr_BE.88591.en					fr_BE.ISO8859-1
+fr_BE.885915.en					fr_BE.ISO8859-15
 fr_BE.ISO_8859-1				fr_BE.ISO8859-1
+fr_BE.ISO_8859-15				fr_BE.ISO8859-15
 fr_CA						fr_CA.ISO8859-1
 fr_CA.88591					fr_CA.ISO8859-1
+fr_CA.885915					fr_CA.ISO8859-15
 fr_CA.88591.en					fr_CA.ISO8859-1
+fr_CA.885915.en					fr_CA.ISO8859-15
 fr_CA.iso88591					fr_CA.ISO8859-1
+fr_CA.iso885915					fr_CA.ISO8859-15
 fr_CA.ISO_8859-1				fr_CA.ISO8859-1
+fr_CA.ISO_8859-15				fr_CA.ISO8859-15
 fr_CH						fr_CH.ISO8859-1
 fr_CH.88591					fr_CH.ISO8859-1
+fr_CH.885915					fr_CH.ISO8859-15
 fr_CH.88591.en					fr_CH.ISO8859-1
+fr_CH.885915.en					fr_CH.ISO8859-15
 fr_CH.ISO_8859-1				fr_CH.ISO8859-1
+fr_CH.ISO_8859-15				fr_CH.ISO8859-15
 fr_FR						fr_FR.ISO8859-1
 fr_FR.88591					fr_FR.ISO8859-1
+fr_FR.885915					fr_FR.ISO8859-15
 fr_FR.88591.en					fr_FR.ISO8859-1
+fr_FR.885915.en					fr_FR.ISO8859-15
 fr_FR.iso88591					fr_FR.ISO8859-1
+fr_FR.iso885915					fr_FR.ISO8859-15
 fr_FR.ISO_8859-1				fr_FR.ISO8859-1
+fr_FR.ISO_8859-15				fr_FR.ISO8859-15
 FRE_FR.8859					fr_FR.ISO8859-1
 FRE_FR.8859.in					fr_FR.ISO8859-1
 hr						hr_HR.ISO8859-2
@@ -135,15 +178,22 @@ hu_HU.iso88592					hu_HU.ISO8859-2
 is						is_IS.ISO8859-1
 is_IS						is_IS.ISO8859-1
 is_IS.iso88591					is_IS.ISO8859-1
+is_IS.iso885915					is_IS.ISO8859-15
 is_IS.ISO_8859-1				is_IS.ISO8859-1
+is_IS.ISO_8859-15				is_IS.ISO8859-15
 it						it_IT.ISO8859-1
 it_CH						it_CH.ISO8859-1
 it_CH.ISO_8859-1				it_CH.ISO8859-1
+it_CH.ISO_8859-15				it_CH.ISO8859-15
 it_IT						it_IT.ISO8859-1
 it_IT.88591					it_IT.ISO8859-1
+it_IT.885915					it_IT.ISO8859-15
 it_IT.88591.en					it_IT.ISO8859-1
+it_IT.885915.en					it_IT.ISO8859-15
 it_IT.iso88591					it_IT.ISO8859-1
+it_IT.iso885915					it_IT.ISO8859-15
 it_IT.ISO_8859-1				it_IT.ISO8859-1
+it_IT.ISO_8859-15				it_IT.ISO8859-15
 iw						iw_IL.ISO8859-8
 iw_IL						iw_IL.ISO8859-8
 iw_IL.iso88598					iw_IL.ISO8859-8
@@ -177,6 +227,7 @@ XCOMM generic latin-1 locale name. N.B. "lt" is a bad code to use for a
 XCOMM generic Latin-1 locale anyway because it is the country code for 
 XCOMM Lithuania, which by default uses Latin-4.
 lt_LN.ISO_8859-1				lt_LN.ISO8859-1
+lt_LN.ISO_8859-15				lt_LN.ISO8859-15
 #endif
 lt						lt_LT.ISO8859-4
 lv						lv_LV.ISO8859-4
@@ -185,19 +236,30 @@ mk_MK						mk_MK.ISO8859-5
 nl						nl_NL.ISO8859-1
 nl_BE						nl_BE.ISO8859-1
 nl_BE.88591					nl_BE.ISO8859-1
+nl_BE.885915					nl_BE.ISO8859-15
 nl_BE.88591.en					nl_BE.ISO8859-1
+nl_BE.885915.en					nl_BE.ISO8859-15
 nl_BE.ISO_8859-1				nl_BE.ISO8859-1
+nl_BE.ISO_8859-15				nl_BE.ISO8859-15
 nl_NL						nl_NL.ISO8859-1
 nl_NL.88591					nl_NL.ISO8859-1
+nl_NL.885915					nl_NL.ISO8859-15
 nl_NL.88591.en					nl_NL.ISO8859-1
+nl_NL.885915.en					nl_NL.ISO8859-15
 nl_NL.iso88591					nl_NL.ISO8859-1
+nl_NL.iso885915					nl_NL.ISO8859-15
 nl_NL.ISO_8859-1				nl_NL.ISO8859-1
+nl_NL.ISO_8859-15				nl_NL.ISO8859-15
 no						no_NO.ISO8859-1
 no_NO						no_NO.ISO8859-1
 no_NO.88591					no_NO.ISO8859-1
+no_NO.885915					no_NO.ISO8859-15
 no_NO.88591.en					no_NO.ISO8859-1
+no_NO.885915.en					no_NO.ISO8859-15
 no_NO.iso88591					no_NO.ISO8859-1
+no_NO.iso885915					no_NO.ISO8859-15
 no_NO.ISO_8859-1				no_NO.ISO8859-1
+no_NO.ISO_8859-15				no_NO.ISO8859-15
 pl						pl_PL.ISO8859-2
 pl_PL						pl_PL.ISO8859-2
 pl_PL.iso88592					pl_PL.ISO8859-2
@@ -205,18 +267,25 @@ pt						pt_PT.ISO8859-1
 pt_BR						pt_BR.ISO8859-1
 pt_PT						pt_PT.ISO8859-1
 pt_PT.88591					pt_PT.ISO8859-1
+pt_PT.885915					pt_PT.ISO8859-15
 pt_PT.88591.en					pt_PT.ISO8859-1
+pt_PT.885915.en					pt_PT.ISO8859-15
 pt_PT.iso88591					pt_PT.ISO8859-1
+pt_PT.iso885915					pt_PT.ISO8859-15
 pt_PT.ISO_8859-1				pt_PT.ISO8859-1
+pt_PT.ISO_8859-15				pt_PT.ISO8859-15
 ro						ro_RO.ISO8859-2
 ro_RO						ro_RO.ISO8859-2
 ro_RO.iso88592					ro_RO.ISO8859-2
 ru						ru_RU.ISO8859-5
 ru_RU						ru_RU.ISO8859-5
 ru_RU.iso88595					ru_RU.ISO8859-5
+#if defined(INCLUDE_ru_SU)
+XCOMM ru_SU is redundant now
 ru_SU						ru_RU.ISO8859-5
 ru_SU.ISO8859-5					ru_RU.ISO8859-5
 ru_SU.KOI8-R					ru_RU.KOI8-R
+#endif
 sh						sh_YU.ISO8859-2
 sh_HR.iso88592					sh_HR.ISO8859-2
 sh_YU						sh_YU.ISO8859-2
@@ -234,9 +303,13 @@ sr_SP						sr_SP.ISO8859-2
 sv						sv_SE.ISO8859-1
 sv_SE						sv_SE.ISO8859-1
 sv_SE.88591					sv_SE.ISO8859-1
+sv_SE.885915					sv_SE.ISO8859-15
 sv_SE.88591.en					sv_SE.ISO8859-1
+sv_SE.885915.en					sv_SE.ISO8859-15
 sv_SE.iso88591					sv_SE.ISO8859-1
+sv_SE.iso885915					sv_SE.ISO8859-15
 sv_SE.ISO_8859-1				sv_SE.ISO8859-1
+sv_SE.ISO_8859-15				sv_SE.ISO8859-15
 th_TH						th_TH.TACTIS
 th_TH.tis620					th_TH.TACTIS
 tr						tr_TR.ISO8859-9
@@ -258,24 +331,34 @@ portuguese_brazil.8859				pt_BR.ISO8859-1
 spanish_spain.8859				es_ES.ISO8859-1
 XCOMM The following locale names are used in HPUX 9.x
 american.iso88591				en_US.ISO8859-1
+american.iso885915				en_US.ISO8859-15
 arabic.iso88596					ar_AA.ISO8859-6
 bulgarian					bg_BG.ISO8859-5
 c-french.iso88591				fr_CA.ISO8859-1
+c-french.iso885915				fr_CA.ISO8859-15
 chinese-s					zh_CN.eucCN
 chinese-t					zh_TW.eucTW
 croatian					hr_HR.ISO8859-2
 czech						cs_CS.ISO8859-2
 danish.iso88591					da_DK.ISO8859-1
+danish.iso885915				da_DK.ISO8859-15
 dutch.iso88591					nl_BE.ISO8859-1
+dutch.iso885915					nl_BE.ISO8859-15
 english.iso88591				en_EN.ISO8859-1
+english.iso885915				en_EN.ISO8859-15
 finnish.iso88591				fi_FI.ISO8859-1
+finnish.iso885915				fi_FI.ISO8859-15
 french.iso88591					fr_CH.ISO8859-1
+french.iso885915				fr_CH.ISO8859-15
 german.iso88591					de_CH.ISO8859-1
+german.iso885915				de_CH.ISO8859-15
 greek.iso88597					el_GR.ISO8859-7
 hebrew.iso88598					iw_IL.ISO8859-8
 hungarian					hu_HU.ISO8859-2
 icelandic.iso88591				is_IS.ISO8859-1
+icelandic.iso885915				is_IS.ISO8859-15
 italian.iso88591				it_IT.ISO8859-1
+italian.iso885915				it_IT.ISO8859-15
 #if ! (defined(SVR4) && defined(sun))
 japanese					ja_JP.SJIS
 #else
@@ -284,15 +367,19 @@ japanese					ja_JP.eucJP
 japanese.euc					ja_JP.eucJP
 korean						ko_KR.eucKR
 norwegian.iso88591				no_NO.ISO8859-1
+norwegian.iso885915				no_NO.ISO8859-15
 polish						pl_PL.ISO8859-2
 portuguese.iso88591				pt_PT.ISO8859-1
+portuguese.iso885915				pt_PT.ISO8859-15
 rumanian					ro_RO.ISO8859-2
-russian						ru_SU.ISO8859-5
+russian						ru_RU.ISO8859-5
 serbocroatian					sh_YU.ISO8859-2
 slovak						sk_SK.ISO8859-2
 slovene						sl_CS.ISO8859-2
 spanish.iso88591				es_ES.ISO8859-1
+spanish.iso885915				es_ES.ISO8859-15
 swedish.iso88591				sv_SE.ISO8859-1
+swedish.iso885915				sv_SE.ISO8859-15
 turkish.iso88599				tr_TR.ISO8859-9
 univ.utf8					en_US.utf
 XCOMM Digital Unix utf
@@ -301,9 +388,12 @@ XCOMM Solaris 2.6
 en_US.UTF-8					en_US.utf
 XCOMM Solaris and SunOS have iso_8859_1 LC_CTYPES to augment LANG=C
 iso_8859_1					en_US.ISO8859-1
+iso_8859_15					en_US.ISO8859-15
 XCOMM Other miscellaneous locale names
 ISO8859-1					en_US.ISO8859-1
+ISO8859-15					en_US.ISO8859-15
 ISO-8859-1					en_US.ISO8859-1
+ISO-8859-15					en_US.ISO8859-15
 #ifndef __uxp__
 japan						ja_JP.eucJP
 #else

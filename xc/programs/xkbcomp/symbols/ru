@@ -1,20 +1,10 @@
 // $TOG: ru /main/4 1997/06/10 06:56:17 kaleb $
+//
+// russian standard keyboard 
+// AEN <aen@logic.ru>
+//
+// $XFree86: xc/programs/xkbcomp/symbols/ru,v 3.3.2.4 1999/04/23 17:42:05 hohndel Exp $
 
-
-
-// $XFree86: xc/programs/xkbcomp/symbols/ru,v 3.3.2.2 1997/07/05 15:55:54 dawes Exp $
-
-partial alphanumeric_keys 
-xkb_symbols "toggle" {
-    include "ru(basic)"
-    key	<CAPS> {	[  ISO_Next_Group,	 Caps_Lock	]	};
-};
-partial alphanumeric_keys 
-xkb_symbols "shift_toggle" {
-    include "ru(basic)"
-    key <LFSH>	{	[	Shift_L,	ISO_Prev_Group ]	};
-    key <RTSH>	{	[	Shift_R,	ISO_Next_Group ]	};
-};
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 
@@ -31,7 +21,7 @@ xkb_symbols "basic" {
     key	<AD01> {	[		q,		 Q	],
 			[ Cyrillic_shorti, Cyrillic_SHORTI	]	};
     key	<AE01> {	[		1,	    exclam	],
-			[		exclam,		 1	]	};
+			[		1,	    exclam 	]	};
     key	<AB01> {	[		z,		 Z	],
 			[     Cyrillic_ya,     Cyrillic_YA	]	};
     key	<AC02> {	[		s,		 S	],
@@ -41,7 +31,7 @@ xkb_symbols "basic" {
     key	<AD02> {	[		w,		 W	],
 			[    Cyrillic_tse,    Cyrillic_TSE	]	};
     key	<AE02> {	[		2,		at	],
-			[		quotedbl,	 2	]	};
+			[		2,        quotedbl	]	};
     key	<AB03> {	[		c,		 C	],
 			[     Cyrillic_es,     Cyrillic_ES	]	};
     key	<AB02> {	[		x,		 X	],
@@ -51,9 +41,9 @@ xkb_symbols "basic" {
     key	<AD03> {	[		e,		 E	],
 			[      Cyrillic_u,	Cyrillic_U	]	};
     key	<AE04> {	[		4,	    dollar	],
-			[		asterisk,	 4	]	};
+			[		4,        asterisk	]	};
     key	<AE03> {	[		3,	numbersign	],
-			[		apostrophe,	 3	]	};
+			[		3,      apostrophe	]	};
     key	<AB04> {	[		v,		 V	],
 			[     Cyrillic_em,     Cyrillic_EM	]	};
     key	<AC04> {	[		f,		 F	],
@@ -63,7 +53,7 @@ xkb_symbols "basic" {
     key	<AD04> {	[		r,		 R	],
 			[     Cyrillic_ka,     Cyrillic_KA	]	};
     key	<AE05> {	[		5,	   percent	],
-			[		colon,		 5	]	};
+			[		5,	     colon	]	};
     key	<AB06> {	[		n,		 N	],
 			[     Cyrillic_te,     Cyrillic_TE	]	};
     key	<AB05> {	[		b,		 B	],
@@ -75,7 +65,7 @@ xkb_symbols "basic" {
     key	<AD06> {	[		y,		 Y	],
 			[     Cyrillic_en,     Cyrillic_EN	]	};
     key	<AE06> {	[		6,     asciicircum	],
-			[		comma,		 6	]	};
+			[		6,	     comma	]	};
     key	<AB07> {	[		m,		 M	],
 			[Cyrillic_softsign,Cyrillic_SOFTSIGN	]	};
     key	<AC07> {	[		j,		 J	],
@@ -83,9 +73,9 @@ xkb_symbols "basic" {
     key	<AD07> {	[		u,		 U	],
 			[    Cyrillic_ghe,    Cyrillic_GHE	]	};
     key	<AE07> {	[		7,	 ampersand	],
-			[		period,		 7	]	};
+			[		7,	    period	]	};
     key	<AE08> {	[		8,	  asterisk	],
-			[		semicolon,	 8	]	};
+			[		8,	 semicolon	]	};
     key	<AB08> {	[	    comma,	      less	],
 			[     Cyrillic_be,     Cyrillic_BE	]	};
     key	<AC08> {	[		k,		 K	],
@@ -95,9 +85,9 @@ xkb_symbols "basic" {
     key	<AD09> {	[		o,		 O	],
 			[  Cyrillic_shcha,  Cyrillic_SHCHA	]	};
     key	<AE10> {	[		0,	parenright	],
-			[		parenright,	 0	]	};
+			[		0,	parenright	]	};
     key	<AE09> {	[		9,	 parenleft	],
-			[		parenleft,	 9	]	};
+			[		9,	 parenleft	]	};
     key	<AB09> {	[	   period,	   greater	],
 			[     Cyrillic_yu,     Cyrillic_YU	]	};
     key	<AB10> {	[	    slash,	  question	],
@@ -129,5 +119,26 @@ xkb_symbols "basic" {
     modifier_map Lock   { Caps_Lock, ISO_Lock };
     modifier_map Control{ Control_L };
     modifier_map Mod3   { Mode_switch };
+};
+
+partial alphanumeric_keys
+xkb_symbols "winkeys" {
+    include "ru(basic)"
+    key	<AE04> {	[		4,	    dollar	],
+			[		4,       semicolon	]	};
+    key	<AE03> {	[		3,	numbersign	],
+			[		3,      numbersign	]	};
+    key	<AE05> {	[		5,	   percent	],
+			[		5,	   percent	]	};
+    key	<AE06> {	[		6,     asciicircum	],
+			[		6,	     colon	]	};
+    key	<AE07> {	[		7,	 ampersand	],
+			[		7,	  question	]	};
+    key	<AE08> {	[		8,	  asterisk	],
+			[		8,	  asterisk	]	};
+    key	<AB10> {	[	    slash,	  question	],
+			[	   period,	     comma	]	};
+    key	<BKSL> {	[	backslash,	       bar	],
+			[	    slash,             bar	]	};
 };
 

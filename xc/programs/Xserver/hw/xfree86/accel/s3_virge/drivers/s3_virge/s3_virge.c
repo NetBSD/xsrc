@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/drivers/s3_virge/s3_virge.c,v 3.2 1996/12/27 07:03:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/drivers/s3_virge/s3_virge.c,v 3.2.2.1 1999/05/07 00:52:02 dawes Exp $ */
 /*
- * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
+ * Copyright 1993 by David Dawes <dawes@xfree86.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/lnxdoc.rules,v 3.9.2.1 1998/04/29 04:18:27 dawes Exp $
+XCOMM $XFree86: xc/config/cf/lnxdoc.rules,v 3.9.2.3 1999/05/25 06:55:07 hohndel Exp $
 XCOMM
 XCOMM Rules for formatting Linuxdoc-SGML documentation
 XCOMM
@@ -122,8 +122,8 @@ textfile: sgmlfile							@@\
 	@(BASE=`basename sgmlfile .sgml`;\				@@\
 	  set -x;\							@@\
 	  RemoveFile($$BASE.latin1);\					@@\
-	  $(SGMLFMTCMD) -f latin1 -b sgmlfile; \			@@\
-	  $(XFREE86IDENTFIX) < $$BASE.latin1 > _$@ && $(MV) _$@ $@; \	@@\
+	  $(SGMLFMTCMD) -f latin1 -b -n sgmlfile && \			@@\
+	  $(XFREE86IDENTFIX) < $$BASE.latin1 > _$@ && $(MV) _$@ $@ && \	@@\
 	  RemoveFile($$BASE.latin1))					@@\
 									@@\
 LinuxDocInstall(textfile,$(XFREE86DOCDIR))				@@\

@@ -1,0 +1,97 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/jp/Imakefile,v 1.1.2.1 1999/01/09 14:19:01 dawes Exp $
+#include <Server.tmpl>
+
+#if !BuildXKB || !BuildXF86MiscExt || !BuildXF86VidModeExt
+all::
+	@echo This program requires that you build with XKB, XF86MiscExt, and XF86VidModeExt
+	@exit 1
+
+depend::
+	@echo This program requires that you build with XKB, XF86MiscExt, and XF86VidModeExt
+	@exit 1
+
+includes::
+	@echo This program requires that you build with XKB, XF86MiscExt, and XF86VidModeExt
+	@exit 1
+
+#else
+            SRCS = main.c tclmisc.c tclvidmode.c tclcards.c tclother.c \
+		   tclkbd.c tclxfconf.c xf86Config.c cards.c tclxkbui.c \
+		   tkother.c
+            OBJS = main.o tclmisc.o tclvidmode.o tclcards.o tclother.o \
+		   tclkbd.o tclxfconf.o xf86Config.o cards.o tclxkbui.o \
+		   tkother.o
+
+#if BuildServersOnly && !defined(UseInstalled)
+/* Use installed X libraries and headers */
+ USEINSTALLEDLIB = -L$(USRLIBDIR)
+     USEBUILTLIB = -L$(BUILDLIBDIR)
+ USEINSTALLEDINC = -I$(INCROOT)
+        LDPRELIB = 
+#undef XawClientDepLibs
+#define XawClientDepLibs /**/
+#endif
+
+#if defined(SVR4Architecture) || (defined(LinuxArchitecture) && UseElfFormat) || defined(BSD386Architecture)
+/* Some OSs need this, and it should(?) be harmless when not needed */
+/* Not available for Linux x86/a.out and Linux AXP/ECOFF */
+    EXTRASYSLIBS = -ldl
+#endif
+
+#if XF86SetupUsesStaticTk
+     JPTKLIBRARY = StaticLibrary($(JPTKLIBDIR),$(JPTKLIBNAME))
+#endif
+#if XF86SetupUsesStaticTcl
+    JPTCLLIBRARY = StaticLibrary($(JPTCLLIBDIR),$(JPTCLLIBNAME))
+#endif
+ TCLTK_LIBRARIES = $(JPTKLIBRARY) $(JPTCLLIBRARY)
+
+ LOCAL_LIBRARIES = $(USEBUILTLIB) $(XKBUILIB) $(XKBFILELIB) \
+		   $(TCLTK_LIBRARIES) $(XXF86VMLIB) $(XXF86MISCLIB) \
+		   $(USEINSTALLEDLIB) XawClientLibs MathLibrary
+         DEPLIBS = XawClientDepLibs $(DEPXXF86VMLIB)
+      CARDDBFILE = $(LIBDIR)/Cards
+      XCONFIGSRC = xf86Config
+     XCONFIGFILE = XF86Config
+
+ XCONFIG_DEFINES = $(EXT_DEFINES) -DXF86SETUP \
+		   '-DPROJECTROOT="$(PROJECTROOT)"' \
+		   '-DSERVER_CONFIG_FILE="$(LIBDIR)/$(XCONFIGFILE)"'
+
+ XF86SETUPLIBDIR = $(LIBDIR)/XF86Setup
+         DEFINES = -DCARD_DATABASE_FILE='"$(CARDDBFILE)"' \
+		   $(XCONFIG_DEFINES)
+        INCLUDES = -I.. -I../../os-support -I../../common \
+		   -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(INCLUDESRC) \
+		   -I$(EXTINCSRC) $(USEINSTALLEDINC) \
+		   -I$(JPTCLINCDIR) -I$(JPTKINCDIR)
+
+#if HasLdRunPath
+       CCENVSETUP = LD_RUN_PATH=$(USRLIBDIR):$(TCLLIBDIR)
+           CCLINK = $(CCENVSETUP) $(CC)
+#endif
+
+AllTarget(ProgramTargetName(XF86Setup_jp))
+
+LinkSourceFile(Cards,../../xf86config)
+LinkSourceFile(cards.h,../../xf86config)
+LinkSourceFile(cards.c,../../xf86config)
+LinkSourceFile(xf86Config.c,../../common)
+LinkSourceFile(xf86_Config.h,../../common)
+
+LinkSourceFile(main.c,..)
+LinkSourceFile(tclmisc.c,..)
+LinkSourceFile(tclvidmode.c,..)
+LinkSourceFile(tclcards.c,..)
+LinkSourceFile(tclother.c,..)
+LinkSourceFile(tclkbd.c,..)
+LinkSourceFile(tclxfconf.c,..)
+LinkSourceFile(tclxkbui.c,..)
+LinkSourceFile(tkother.c,..)
+
+NormalProgramTarget(XF86Setup_jp,$(OBJS),$(DEPLIBS),$(LOCAL_LIBRARIES) $(SYSTEM_LIBRARIES) $(EXTRASYSLIBS),NullParameter)
+InstallProgram(XF86Setup_jp,$(BINDIR))
+DependTarget()
+
+#endif
+

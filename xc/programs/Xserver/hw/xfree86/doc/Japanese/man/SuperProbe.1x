@@ -1,0 +1,405 @@
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/man/SuperProbe.1x,v 1.1.2.1 1999/05/25 06:10:58 hohndel Exp $
+.\"
+.\" Copyright (c) 1998 The X Japanese Documentation Project.$)B
+.\" 
+.\" Permission is hereby granted, free of charge, to any person obtaining a
+.\" copy of this software and associated documentation files (the
+.\" "Software"), to deal in the Software without restriction, including
+.\" without limitation the rights to use, copy, modify, merge, publish, dis-
+.\" tribute, sublicense, and/or sell copies of the Software, and to permit
+.\" persons to whom the Software is furnished to do so, subject to the fol-
+.\" lowing conditions:
+.\" 
+.\" The above copyright notice and this permission notice shall be included
+.\" in all copies or substantial portions of the Software.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABIL-
+.\" ITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT
+.\" SHALL  THE X JAPANESE DOCUMENTATION PROJECT  BE  LIABLE  FOR  ANY CLAIM,
+.\" DAMAGES OR OTHER LIABILITY,  WHETHER IN AN ACTION OF CONTRACT,  TORT OR
+.\" OTHERWISE,  ARISING FROM,  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+.\" THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+.\" 
+.\" Except as contained in this notice, the name of The X Japanese
+.\" Documentation Project shall not be used in advertising or otherwise to
+.\" promote the sale, use or other dealings in this Software without prior
+.\" written authorization from The X Japanese Documentation Project.
+.\" 
+.\" X Window System is a trademark of The Open Group.
+.\"
+.\" Translated Mon Nov 23 06:34:48 JST 1998
+.\"         by Taketoshi Sano <xlj06203@nifty.ne.jp>
+.\"
+.TH SuperProbe 1 "Release 6.3 (XFree86 3.3.3/SuperProbe 2.17)" "X Version 11"
+.SH Ì¾Á°
+.\"0 SuperProbe - probe for and identify installed video hardware.
+SuperProbe \- ¥¤¥ó¥¹¥È¡¼¥ë¤µ¤ì¤Æ¤¤¤ë¥Ó¥Ç¥ª¥Ï¡¼¥É¥¦¥§¥¢¤ÎÄ´ºº¤È¸¡½Ð
+.SH ½ñ¼°
+.B SuperProbe
+	[-verbose] [-no16] [-excl \fIlist\fP] [-mask10] 
+.if n .br
+	[-order \fIlist\fP] [-noprobe \fIlist\fP] [-bios \fIbase\fP] 
+.br
+	[-no_bios] [-no_dac] [-no_mem] [-info]
+.SH ÀâÌÀ
+.PP
+.\"0 .I SuperProbe
+.\"0 is a a program that will attempt to determine the type of video hardware
+.\"0 installed in an EISA/ISA/VLB-bus system by checking for known registers 
+.\"0 in various combinations at various locations (MicroChannel and PCI machines 
+.\"0 may not be fully supported; many work with the use of the
+.\"0 .B -no_bios
+.\"0 option).  This is an error-prone process, especially on Unix (which 
+.\"0 usually has a lot more esoteric hardware installed than MS-DOS system do), so 
+.\"0 SuperProbe may likely need help from the user.
+.I SuperProbe
+¤Ï¤¤¤í¤¤¤í¤Ê¥¢¥É¥ì¥¹¤ËÂ¸ºß¤¹¤ë´ûÃÎ¤Î¥ì¥¸¥¹¥¿¤ò¤µ¤Þ¤¶¤Þ¤ÊÁÈ¤ß¹ç¤ï¤»¤Ç
+Ä´¤Ù¤ë¤³¤È¤Ë¤è¤ê¡¢ EISA/ISA/VLB ¥Ð¥¹¤òÄÌ¤¸¤Æ¥·¥¹¥Æ¥à¤Ë¥¤¥ó¥¹¥È¡¼¥ë
+¤µ¤ì¤Æ¤¤¤ë¥Ó¥Ç¥ª¥Ï¡¼¥É¥¦¥§¥¢¤Î¼ïÎà¤òÈ½Äê¤¹¤ë¤¿¤á¤Î¥×¥í¥°¥é¥à¤Ç¤¢¤ë¡£
+(¥Þ¥¤¥¯¥í¥Á¥ã¥ó¥Í¥ë¤ª¤è¤Ó PCI ¤Î¥·¥¹¥Æ¥à¤Ï¤Þ¤À´°Á´¤Ë¤Ï¥µ¥Ý¡¼¥È¤µ¤ì¤Æ
+¤¤¤Ê¤¤¡£¤¿¤À¤·¡¢
+.B -no_bios
+¥ª¥×¥·¥ç¥ó¤ò»ÈÍÑ¤¹¤ë¤³¤È¤Ç¡¢Â¿¤¯¤Î¾ì¹çÂÐ±þ²ÄÇ½¤Ç¤¢¤ë¡£) ¤³¤ì¤ÏÆÃ¤Ë
+ Unix ¥·¥¹¥Æ¥à (ÄÌ¾ï MS-DOS ¥·¥¹¥Æ¥à¤ËÈæ³Ó¤·¤Æ¤è¤êÂ¿¤¯¤Î±£¤µ¤ì¤¿
+¥Ï¡¼¥É¥¦¥§¥¢¤ò»ý¤Ä) ¤Î¾ì¹ç¡¢´Ö°ã¤¤¤òÀ¸¤¸¤ä¤¹¤¤½èÍý¤Ç¤¢¤ê¡¢¤³¤Î¤¿¤á
+ SuperProbe ¤Î»ÈÍÑ¤Ë¤ÏÃí°Õ¤¬É¬Í×¤Ç¤¢¤ë¡£
+.PP
+.\"0 .I SuperProbe 
+.\"0 runs on SVR3, SVR4, Linux, 386BSD/FreeBSD/NetBSD, Minix-386, and Mach.  It
+.\"0 should be trivial to extend it to work on any other Unix-like operating 
+.\"0 system, and even non-Unix operating systems.  All of the OS dependencies 
+.\"0 are isolated to a single file for each OS.
+.I SuperProbe 
+¥×¥í¥°¥é¥à¤Ï SVR3, SVR4, Linux, 386BSD/FreeBSD/NetBSD, Minix-386, ¤ª¤è¤Ó
+ Mach ¾å¤ÇÆ°ºî¤¹¤ë¡£¤½¤ÎÂ¾¤Î Unix-like ¤Ê¥ª¥Ú¥ì¡¼¥Æ¥£¥ó¥°¥·¥¹¥Æ¥à¡¢¤Þ¤¿
+ Unix °Ê³°¤Î¥ª¥Ú¥ì¡¼¥Æ¥£¥ó¥°¥·¥¹¥Æ¥à¤Ç¤¢¤Ã¤Æ¤â¡¢¤½¤ì¤é¤Î¾å¤ÇÆ°ºî¤¹¤ë¤è¤¦¤Ë
+³ÈÄ¥¤¹¤ëÊýË¡¤Ï¤¹¤°¤Ë¤ï¤«¤ë¤Ï¤º¤Ç¤¢¤ë¡£ OS ¤Ë°ÍÂ¸¤¹¤ë¥³¡¼¥É¤Ï¤¹¤Ù¤Æ¡¢³Æ OS ¤Ë
+¤½¤ì¤¾¤ìÍÑ°Õ¤µ¤ì¤¿¤Ò¤È¤Ä¤ÎÀìÍÑ¥Õ¥¡¥¤¥ë¤Ë¼ý¤á¤é¤ì¡¢Â¾¤Î¥³¡¼¥É¤ÈÊ¬Î¥¤µ¤ì¤Æ¤¤¤ë¡£
+.PP
+.\"0 At this time,
+.\"0 .I SuperProbe
+.\"0 can identify MDA, Hercules, CGA, MCGA, EGA, VGA, and an entire horde of
+.\"0 SVGA chipsets (see the
+.\"0 .I -info
+.\"0 option, below).  It can also identify several HiColor/True-color RAMDACs
+.\"0 in use on SVGA boards, and the amount of video memory installed (for many
+.\"0 chipsets).  It can identify 8514/A and some derivatives, but
+.\"0 not XGA, or PGC (although the author intends to add those capabilities).
+.\"0 Nor can it identify other esoteric video hardware (like Targa, TIGA, or 
+.\"0 Microfield boards).
+¸½»þÅÀ¤Ç¤Ï¡¢
+.I SuperProbe
+¥×¥í¥°¥é¥à¤Ë¤è¤ê MDA, Hercules, CGA, MCGA, EGA, VGA, ¤ª¤è¤Ó
+³Æ¼ï¤Î SVGA ¥Á¥Ã¥×¥»¥Ã¥È (²¼µ­¤Î
+.I -info
+¥ª¥×¥·¥ç¥ó¤ò»²¾È) ¤ò¼±ÊÌ²ÄÇ½¤Ç¤¢¤ë¡£¤Þ¤¿ SVGA ¥Ü¡¼¥É¾å¤Ç»ÈÍÑ¤µ¤ì¤ë¤¤¤¯¤Ä¤«¤Î
+¼ïÎà¤Î HiColor/True-color RAMDACs ¤ª¤è¤Ó (¥Á¥Ã¥×¥»¥Ã¥È¤Ë¤è¤ë¤¬¡¢Â¿¤¯¤Î¾ì¹ç)
+¥¤¥ó¥¹¥È¡¼¥ë¤µ¤ì¤Æ¤¤¤ë¥Ó¥Ç¥ª¥á¥â¥ê¡¼¤ÎÎÌ¤â¼±ÊÌ¤Ç¤­¤ë¡£¾Ü¤·¤¯¸À¤¦¤È 8514/A 
+¤ª¤è¤Ó¤½¤ÎÇÉÀ¸ÉÊ¤Ï¼±ÊÌ¤Ç¤­¤ë¤¬ XGA ¤¢¤ë¤¤¤Ï PGC ¤Ï (¥³¡¼¥É³«È¯¼Ô¤Ï¤³¤ì¤é¤Î
+µ¡Ç½¤òÄÉ²Ã¤·¤è¤¦¤È¤·¤Æ¤Ï¤¤¤ë¤¬) ¤Þ¤ÀÇ§¼±¤Ç¤­¤Ê¤¤¡£¤Þ¤¿ ( Targa, TIGA, 
+¤¢¤ë¤¤¤Ï Microfield ¤Ê¤É¤Î¥Ü¡¼¥É¤Î¤è¤¦¤Ë) ¤½¤ÎÂ¾¤Î¾ðÊó¤¬¸ø³«¤µ¤ì¤Æ¤¤¤Ê¤¤¥Ó¥Ç¥ª
+¥Ï¡¼¥É¥¦¥§¥¢¤Ë¤Ä¤¤¤Æ¤â¼±ÊÌÉÔ²ÄÇ½¤Ç¤¢¤ë¡£
+.SH ¥ª¥×¥·¥ç¥ó
+.TP 8
+.B "-verbose"
+.\"0 .I SuperProbe
+.\"0 will be verbose and provide lots of information as it does its work.
+.I SuperProbe
+¥×¥í¥°¥é¥àÆ°ºî»þ¤Î½ÐÎÏ¤ò¾éÄ¹¤Ë¤·¡¢ÄÌ¾ï¤è¤êÂ¿¤¯¤Î¾ðÊó¤òÉ½¼¨¤¹¤ë¡£
+.TP 8
+.B "-no16"
+.\"0 .I SuperProbe
+.\"0 will not attempt to use any ports that require 16-bit I/O address decoding.  
+.\"0 The original ISA bus only specified that I/O ports be decoded to 10 bits.
+.\"0 Therefore some old cards (including many 8-bit cards) will mis-decode 
+.\"0 references to ports that use the upper 6 bits, and may get into funny states
+.\"0 because they think that they are being addressed when they are not.
+.\"0 It is recommended that this option be used initially if any 8-bit cards
+.\"0 are present in the system.
+.I SuperProbe
+¥×¥í¥°¥é¥à¤Ï I/O ¥¢¥É¥ì¥¹¤ò 16 ¥Ó¥Ã¥È¤È¤·¤Æ²òÆÉ¤¹¤ëÉ¬Í×¤Î¤¢¤ë¥Ý¡¼¥È¤ò»ÈÍÑ¤·¤Ê¤¤¡£
+¥ª¥ê¥¸¥Ê¥ë ISA ¥Ð¥¹¤Ï I/O ¥Ý¡¼¥È¤ò 10 ¥Ó¥Ã¥È¤È¤·¤Æ²òÆÉ¤¹¤ë¤è¤¦¤Ë¤Î¤ßµ¬Äê¤·¤Æ
+¤¤¤¿¡£¤³¤Î¤¿¤á¡¢ (Â¿¤¯¤Î 8 ¥Ó¥Ã¥È¥«¡¼¥É¤ò´Þ¤à) ¤¤¤¯¤Ä¤«¤Î¸Å¤¤¥«¡¼¥É¤Ï
+¾å°Ì 6 ¥Ó¥Ã¥È¤ò»ÈÍÑ¤¹¤ë¥Ý¡¼¥È¤Ø¤Î»²¾È¤ò²ò¼á¤Ç¤­¤º¡¢¸Æ¤Ó½Ð¤µ¤ì¤Æ¤¤¤Ê¤¤»þ¤Ë
+¼«Ê¬¤¬¸Æ¤Ð¤ì¤¿¤â¤Î¤È¸íÇ§¼±¤·¤Æ¤·¤Þ¤¤¡¢·ë²Ì¤È¤·¤ÆÌ¯¤Ê¾õÂÖ¤Ë´Ù¤Ã¤Æ¤·¤Þ¤¦¡£
+¥·¥¹¥Æ¥àÃæ¤Ë 8 ¥Ó¥Ã¥È¥«¡¼¥É¤¬Â¸ºß¤¹¤ë¾ì¹ç¤Ë¤Ï¡¢µ¯Æ°»þ¤Ë¤³¤Î¥ª¥×¥·¥ç¥ó¤ò»ØÄê¤·¤Æ
+¤ª¤¯¤³¤È¡£
+.TP 8
+.BI "-excl" "\ list"
+.\"0 .I SuperProbe
+.\"0 will not attempt to access any I/O ports on the specified exclusion list.
+.\"0 Some video cards use rather non-standard I/O ports that may conflict with
+.\"0 other cards installed in your system.  By specifying to
+.\"0 .I SuperProbe
+.\"0 a list of ports already in use, it will know that there cannot be any video
+.\"0 cards that use those ports, and hence will not probe them (which could
+.\"0 otherwise confuse your hardware).  The exclusion list is specified as
+.\"0 a comma-separated list of I/O ports or port ranges.  A range is specified
+.\"0 as "low-high", and is inclusive.  The ports can be specified in decimal,
+.\"0 in octal (numbers begin with '0'), or hexadecimal (numbers begin with '0x').
+.I SuperProbe
+¥×¥í¥°¥é¥à¤Ï»ØÄê¤µ¤ì¤¿½ü³°¥ê¥¹¥È¤Ë´Þ¤Þ¤ì¤ë I/O ¥Ý¡¼¥È¤Ø¥¢¥¯¥»¥¹¤·¤Ê¤¤¡£
+¤¢¤ë¼ï¤Î¥Ó¥Ç¥ª¥«¡¼¥É¤Ï¡¢¥·¥¹¥Æ¥à¤Ë¥¤¥ó¥¹¥È¡¼¥ë¤µ¤ì¤¿Â¾¤Î¥«¡¼¥É¤È¾×ÆÍ¤¹¤ë¤è¤¦¤Ê
+°ìÈÌÅª¤Ç¤Ê¤¤ I/O ¥Ý¡¼¥È¤ò»ÈÍÑ¤¹¤ë¡£
+´û¤Ë»È¤ï¤ì¤Æ¤¤¤ë¥Ý¡¼¥È¤Î¥ê¥¹¥È¤ò»ØÄê¤¹¤ë¤³¤È¤Ë¤è¤ê¡¢
+.I SuperProbe
+¥×¥í¥°¥é¥à¤Ë¤½¤ì¤é¤Î¥Ý¡¼¥È¤ò»ÈÍÑ¤¹¤ë¥Ó¥Ç¥ª¥«¡¼¥É¤¬Â¸ºß¤·¤Ê¤¤¤³¤È¤ò¶µ¤¨¡¢
+¤½¤ì¤é¤Î¥Ý¡¼¥È¤ËÂÐ¤¹¤ëÃµºº (¤³¤ì¤ò¼Â¹Ô¤¹¤ë¤È¥Ï¡¼¥É¥¦¥§¥¢¤¬º®Íð¤¹¤ë) ¤ò
+¤µ¤»¤Ê¤¤¤è¤¦¤Ë¤Ç¤­¤ë¡£½ü³°¥ê¥¹¥È¤Ï¥³¥ó¥Þ¤Ç¶èÀÚ¤é¤ì¤¿ I/O ¥Ý¡¼¥È¤Þ¤¿¤Ï
+¥Ý¡¼¥ÈÈÏ°Ï¤Î¥ê¥¹¥È¤È¤·¤Æ»ØÄê¤¹¤ë¡£¥Ý¡¼¥ÈÈÏ°Ï¤Ï "²¼¸Â-¾å¸Â" ¤È¤·¤Æ»ØÄê¤¹¤ë¡£
+»ØÄê¤µ¤ì¤¿Î¾Ã¼¤Î¥¢¥É¥ì¥¹¤Î´Ö¤Ë¤¢¤ë¥Ý¡¼¥È¤Ï¤¹¤Ù¤Æ½ü³°¤µ¤ì¤ë¡£
+¥Ý¡¼¥È¥¢¥É¥ì¥¹¤Ï 10¿Ê¿ô¡¢ 8¿Ê¿ô ( '0' ¤Ç»Ï¤Þ¤ë¿ôÃÍ)¡¢¤Þ¤¿¤Ï 16¿Ê¿ô
+ ( '0x' ¤Ç»Ï¤Þ¤ë¿ôÃÍ) ¤Î¤¤¤º¤ì¤«¤Ë¤è¤ê»ØÄê²ÄÇ½¤Ç¤¢¤ë¡£
+.TP 8
+.B "-mask10"
+.\"0 This option is used in combination with
+.\"0 .I -excl.
+.\"0 It tells
+.\"0 .I SuperProbe
+.\"0 that when comparing an I/O port under test against the exclusion list, the
+.\"0 port address should be masked to 10 bits.  This is important with older
+.\"0 8-bit cards that only do 10 bit decoding, and for some cheap 16-bit cards
+.\"0 as well.  This option is simply a less-drastic form of the
+.\"0 .I -no16
+.\"0 option.
+¤³¤Î¥ª¥×¥·¥ç¥ó¤Ï
+.I -excl
+¥ª¥×¥·¥ç¥ó¤ÈÁÈ¤ß¹ç¤ï¤»¤Æ»ÈÍÑ¤¹¤ë¡£
+¤³¤Î¥ª¥×¥·¥ç¥ó¤ò»ØÄê¤¹¤ë¤È¡¢
+.I SuperProbe
+¥×¥í¥°¥é¥à¤¬ I/O ¥Ý¡¼¥È¤ò½ü³°¥ê¥¹¥È¤Ë»ØÄê¤µ¤ì¤¿¤â¤Î¤ÈÈæ³Ó¤¹¤ëºÝ¡¢
+¥Ý¡¼¥È¥¢¥É¥ì¥¹¤ò 10 ¥Ó¥Ã¥È¤Ë¥Þ¥¹¥¯¤¹¤ë¡£¤³¤Î¥ª¥×¥·¥ç¥ó¤Ï¥¢¥É¥ì¥¹¤ò
+ 10 ¥Ó¥Ã¥È¤È¤·¤Æ¤Î¤ß²ò¼á¤¹¤ë¤è¤¦¤Ê¡¢¸Å¤¤ 8 ¥Ó¥Ã¥È¥«¡¼¥É¤ª¤è¤Ó¤¤¤¯¤Ä¤«¤Î
+°Â²Á¤Ê 16 ¥Ó¥Ã¥È¥«¡¼¥É¤ËÂÐ¤·¤ÆÍ­¸ú¤Ç¤¢¤ë¡£¤³¤Î¥ª¥×¥·¥ç¥ó¤ÏÃ±½ã¤Ë
+.I -no16
+¥ª¥×¥·¥ç¥ó¤Îµ¡Ç½¤ò¸ÂÄê¤·¤¿¤â¤Î¤Ç¤¢¤ë¡£
+.TP 8
+.BI "-order" "\ list"
+.\"0 This option specifies which chipsets
+.\"0 .I SuperProbe
+.\"0 should test, and in which order.  The
+.\"0 .I list
+.\"0 parameter is a comma-separated list of chipset names.  This list overrides
+.\"0 the built-in default testing order.  To find the list of acceptable names,
+.\"0 use the
+.\"0 .I -info
+.\"0 option described below.  Note that items displayed as "Standard video
+.\"0 hardware" are not usable with the
+.\"0 .I -order
+.\"0 option.
+¤³¤Î¥ª¥×¥·¥ç¥ó¤Ï
+.I SuperProbe
+¥×¥í¥°¥é¥à¤¬Ä´ºº¤ÎÂÐ¾Ý¤È¤¹¤ë¥Á¥Ã¥×¥»¥Ã¥È¤Î¼ïÎà¤È¤½¤Î½çÈÖ¤ò»ØÄê¤¹¤ë¡£
+.I list
+¥Ñ¥é¥á¡¼¥¿¤Ï¥³¥ó¥Þ¤Ç¶èÀÚ¤é¤ì¤¿¥Á¥Ã¥×¥»¥Ã¥ÈÌ¾¤«¤é¤Ê¤ë¥ê¥¹¥È¤Ç¤¢¤ë¡£
+¤³¤Î¥ê¥¹¥È¤Ë¤è¤ë»ØÄê¤Ï¡¢¥×¥í¥°¥é¥à¤ËÆâÂ¢¤µ¤ì¤¿¥Ç¥Õ¥©¥ë¥È¤ÎÀßÄê¤Ë
+Í¥Àè¤¹¤ë¡£¸å¤ÇÀâÌÀ¤¹¤ë
+.I -info
+¥ª¥×¥·¥ç¥ó¤Ë¤è¤ê¡¢¤³¤Î¥ª¥×¥·¥ç¥ó¤Ç»ØÄê²ÄÇ½¤Ê¥Á¥Ã¥×Ì¾¤Î¥ê¥¹¥È¤ò¸«¤ë
+¤³¤È¤¬¤Ç¤­¤ë¡£¤¿¤À¤·¡¢ "Standard video hardware" ¤È¤·¤ÆÉ½¼¨¤µ¤ì¤ë
+¹àÌÜ¤Ï
+.I -order
+¥ª¥×¥·¥ç¥ó¤Î¥Ñ¥é¥á¡¼¥¿¤È¤·¤Æ¤Ï»È¤¨¤Ê¤¤¤Î¤ÇÃí°Õ¤¹¤ë¤³¤È¡£
+.TP 8
+.BI "-noprobe" "\ list"
+.\"0 This options specifies which chipsets
+.\"0 .I SuperProbe
+.\"0 should
+.\"0 .B not
+.\"0 test.  The order of testing will either be the default order, or that
+.\"0 specified with the
+.\"0 .I -order
+.\"0 option described above.  The
+.\"0 .I list
+.\"0 parameter is a comma-separated list of chipset names.  To find the list
+.\"0 of acceptable names, use the
+.\"0 .I -info
+.\"0 option described below.  Note that items displayed as "Standard video
+.\"0 hardware" are not usable with the
+.\"0 .I -noprobe
+.\"0 option.
+¤³¤Î¥ª¥×¥·¥ç¥ó¤Ï
+.I SuperProbe
+¥×¥í¥°¥é¥à¤¬Ä´ººÂÐ¾Ý¤È
+.B ¤·¤Ê¤¤
+¥Á¥Ã¥×¥»¥Ã¥È¤Î¼ïÎà¤ò»ØÄê¤¹¤ë¡£Ä´ºº¤Î½çÈÖ¤Ï¥Ç¥Õ¥©¥ë¥È¤ÎÀßÄê¤«¡¢¤Þ¤¿¤ÏÀè¤Ë
+ÀâÌÀ¤·¤¿
+.I -order
+¥ª¥×¥·¥ç¥ó¤Ë¤è¤ë»ØÄê¤Ë½¾¤¦¡£
+.I list
+¥Ñ¥é¥á¡¼¥¿¤Ï¥³¥ó¥Þ¤Ç¶èÀÚ¤é¤ì¤¿¥Á¥Ã¥×¥»¥Ã¥ÈÌ¾¤«¤é¤Ê¤ë¥ê¥¹¥È¤Ç¤¢¤ë¡£
+¸å¤ÇÀâÌÀ¤¹¤ë
+.I -info
+¥ª¥×¥·¥ç¥ó¤Ë¤è¤ê¡¢¤³¤Î¥ª¥×¥·¥ç¥ó¤Ç»ØÄê²ÄÇ½¤Ê¥Á¥Ã¥×Ì¾¤Î¥ê¥¹¥È¤ò¸«¤ë
+¤³¤È¤¬¤Ç¤­¤ë¡£¤¿¤À¤·¡¢ "Standard video hardware" ¤È¤·¤ÆÉ½¼¨¤µ¤ì¤ë
+¹àÌÜ¤Ï
+.I -noprobe
+¥ª¥×¥·¥ç¥ó¤Î¥Ñ¥é¥á¡¼¥¿¤È¤·¤Æ¤Ï»È¤¨¤Ê¤¤¤Î¤ÇÃí°Õ¤¹¤ë¤³¤È¡£
+.TP 8
+.BI "-bios" "\ base"
+.\"0 This option specifies the base address for the graphics-hardware BIOS.
+.\"0 By default,
+.\"0 .I SuperProbe
+.\"0 will attempt to locate the BIOS base on its own (the normal address is
+.\"0 0xC0000).  If it fails to correctly locate the BIOS (an error message will
+.\"0 be printed if this occurs), the
+.\"0 .I -bios
+.\"0 option can be used to specify the base.
+¤³¤Î¥ª¥×¥·¥ç¥ó¤Ï¥°¥é¥Õ¥£¥Ã¥¯¡¦¥Ï¡¼¥É¥¦¥§¥¢¤Î BIOS ¥Ù¡¼¥¹¥¢¥É¥ì¥¹¤ò»ØÄê¤¹¤ë¡£
+¥Ç¥Õ¥©¥ë¥È¤Ç¤Ï
+.I SuperProbe
+¥×¥í¥°¥é¥à¤¬¼«Ê¬¼«¿È¤Ç BIOS ¥Ù¡¼¥¹¥¢¥É¥ì¥¹¤ò¸«¤Ä¤±¤è¤¦¤È¤¹¤ë (ÄÌ¾ï¤Î¥¢¥É¥ì¥¹¤Ï
+ 0xC0000 ¤Ç¤¢¤ë)¡£¥×¥í¥°¥é¥à¤¬ BIOS ¤Î°ÌÃÖ¤òÀµ¤·¤¯¸«¤Ä¤±¤é¤ì¤Ê¤¤¾ì¹ç (¤³¤Î»þ
+¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸¤¬É½¼¨¤µ¤ì¤ë¡£) ¥Ù¡¼¥¹¥¢¥É¥ì¥¹¤ò»ØÄê¤¹¤ë¤¿¤á¤Ë¡¢¤³¤Î
+.I -bios
+¥ª¥×¥·¥ç¥ó¤ò»ÈÍÑ¤¹¤ë¤³¤È¤¬¤Ç¤­¤ë¡£
+.TP 8
+.B "-no_bios"
+.\"0 Disallow reading of the video BIOS and assume that an EGA or later 
+.\"0 (VGA, SVGA) board is present as the primary video hardware.  
+¥Ó¥Ç¥ª BIOS ¤ÎÆÉ¤ß¼è¤ê¤ò¶Ø»ß¤·¡¢¼çÍ×¤Ê¥Ó¥Ç¥ª¥Ï¡¼¥É¥¦¥§¥¢¤È¤·¤Æ EGA ¤Þ¤¿¤Ï
+ (VGA, SVGA ¤Ê¤É¤Î) ¤½¤ì°Ê¹ß¤Î¥Ü¡¼¥É¤¬Â¸ºß¤¹¤ë¤â¤Î¤È¤·¤Æ½èÍý¤ò¼Â¹Ô¤¹¤ë¡£
+.TP 8
+.B "-no_dac"
+.\"0 Skip probing for the RAMDAC type when an (S)VGA is identified.
+(S)VGA ¥Ü¡¼¥É¤¬Ç§¼±¤µ¤ì¤¿¾ì¹ç¤Ë RAMDAC ¤Î¸¡½Ð¤ò¤·¤Ê¤¤¡£
+.TP 8
+.B "-no_mem"
+.\"0 Skip probing for the amount of installed video memory.
+¥¤¥ó¥¹¥È¡¼¥ë¤µ¤ì¤Æ¤¤¤ë¥Ó¥Ç¥ª¥á¥â¥ê¡¼¤ÎÎÌ¤ò¸¡½Ð¤·¤Ê¤¤¡£
+.TP 8
+.B "-info"
+.\"0 .I SuperProbe
+.\"0 will print out a listing of all the video hardware that it knows how to
+.\"0 identify.
+.I SuperProbe
+¥×¥í¥°¥é¥à¤Ï¸¡½Ð²ÄÇ½¤Ê¤¹¤Ù¤Æ¤Î¼ïÎà¤Î¥Ó¥Ç¥ª¥Ï¡¼¥É¥¦¥§¥¢¤Î¥ê¥¹¥È¤òÉ½¼¨¤¹¤ë¡£
+.SH Îã
+.PP
+.\"0 To run 
+.\"0 .I SuperProbe 
+.\"0 in its most basic and automated form, simply enter:
+.\"0 .sp
+.\"0 .ce
+.\"0 .B SuperProbe
+.I SuperProbe
+¥×¥í¥°¥é¥à¤Î¼«Æ°Ç§¼±µ¡Ç½¤òºÇÂç¸ÂÍøÍÑ¤¹¤ë¤¿¤á¤ÎºÇ¤â´ðËÜÅª¤Ê¼Â¹ÔÊýË¡¤Ï¡¢
+Ã±¤Ë°Ê²¼¤Î¥³¥Þ¥ó¥É¤òÆþÎÏ¤¹¤ë¤³¤È¤Ç¤¢¤ë¡§
+.sp
+.ce
+.B SuperProbe
+.PP
+.\"0 Note - you may want to redirect 
+.\"0 .I stdout
+.\"0 to a file when you run
+.\"0 .I SuperProbe
+.\"0 (especially if your OS does not support Virtual Terminals on the console).
+Ãí°Õ -
+.I SuperProbe
+¥×¥í¥°¥é¥à¤ò¼Â¹Ô¤¹¤ëºÝ¤Ë¤Ï (ÆÃ¤Ë¥³¥ó¥½¡¼¥ë¾å¤Î²¾ÁÛÃ¼Ëöµ¡Ç½¤ò¥µ¥Ý¡¼¥È¤·¤Æ
+¤¤¤Ê¤¤ OS ¤ò»È¤Ã¤Æ¤¤¤ë¾ì¹ç)¡¢
+.I É¸½à½ÐÎÏ
+¤ò¥Õ¥¡¥¤¥ë¤Ë¥ê¥À¥¤¥ì¥¯¥È¤¹¤ë¤ÈÎÉ¤¤¡£ 
+.PP
+.\"0 However, if you have any 8-bit cards installed, you should initially run
+.\"0 .I SuperProbe
+.\"0 as:
+.\"0 .sp
+.\"0 .ce
+.\"0 .B SuperProbe -verbose -no16
+¤¿¤À¤·¡¢ 8 ¥Ó¥Ã¥È¤Î¥«¡¼¥É¤¬¥¤¥ó¥¹¥È¡¼¥ë¤µ¤ì¤Æ¤¤¤ë¾ì¹ç¤Ë¤ÏºÇ½é¤Ë
+.I SuperProbe
+¥×¥í¥°¥é¥à¤Ë°Ê²¼¤Î¥ª¥×¥·¥ç¥ó¤ò»ØÄê¤·¤Æ¼Â¹Ô¤¹¤ë¤ÈÎÉ¤¤¡§
+.sp
+.ce
+.B SuperProbe -verbose -no16
+.PP
+.\"0 (the
+.\"0 .I -verbose
+.\"0 option is included so you can see what
+.\"0 .I SuperProbe
+.\"0 is skipping).
+(¤³¤³¤Ç
+.I -verbose
+¥ª¥×¥·¥ç¥ó¤ò»ØÄê¤·¤Æ¤¤¤ë¤Î¤Ï
+.I SuperProbe
+¥×¥í¥°¥é¥à¤¬¥¹¥­¥Ã¥×¤·¤¿½èÍý¤ò³ÎÇ§¤¹¤ë¤¿¤á¤Ç¤¢¤ë¡£)
+.PP
+.\"0 Finer granularity can be obtained with an exclusion list, for example:
+.\"0 .sp
+.\"0 .ce
+.\"0 .B SuperProbe -verbose -excl 0x200,0x220-0x230,0x250
+¼¡¤ÎÎã¤Î¤è¤¦¤Ë½ü³°¥ê¥¹¥È¤ò»ÈÍÑ¤¹¤ë¤³¤È¤Ë¤è¤Ã¤Æ¡¢¸¡½ÐÈÏ°Ï¤ò¤µ¤é¤Ë¹Ê¤ë¤³¤È¤¬
+²ÄÇ½¤Ç¤¢¤ë¡§
+.sp
+.ce
+.B SuperProbe -verbose -excl 0x200,0x220-0x230,0x250
+.PP
+.\"0 which will not test for any device that use port 0x200, ports 0x220 through
+.\"0 0x230, inclusive, or port 0x250.  If you have any 8-bit cards installed,
+.\"0 you should add
+.\"0 .I -mask10
+.\"0 to the list of options.
+¤³¤ì¤é¤Î¥ª¥×¥·¥ç¥ó¤ò»ØÄê¤·¤¿¾ì¹ç¡¢ 0x200¡¢0x220 ¤«¤é 0x230 ¤Þ¤Ç¤ÎÈÏ°Ï¤Î
+¤¤¤º¤ì¤«¡¢¤Þ¤¿¤Ï 0x250 ¤ò¥¢¥É¥ì¥¹¤Ë¤â¤Ä¥Ý¡¼¥È¤ò»È¤¦¥Ç¥Ð¥¤¥¹¤ËÂÐ¤·¤Æ¤Ï
+¸¡½Ð¤ò¹Ô¤Ê¤ï¤Ê¤¤¡£¤Ê¤ª 8 ¥Ó¥Ã¥È¤Î¥«¡¼¥É¤¬¥¤¥ó¥¹¥È¡¼¥ë¤µ¤ì¤Æ¤¤¤ë¾ì¹ç¤Ë¤Ï¡¢
+.I -mask10
+¤ò¾åµ­¤Î¥ª¥×¥·¥ç¥ó¤ËÄÉ²Ã¤¹¤ë¤ÈÎÉ¤¤¡£
+.PP
+.\"0 To restrict the search to Western Digital, Tseng, and Cirrus chipset,
+.\"0 run
+.\"0 .I SuperProbe
+.\"0 as follows:
+.\"0 .sp
+.\"0 .ce
+.\"0 .B SuperProbe -order WD,Tseng,Cirrus
+¸¡½Ð¤¹¤ë¥Á¥Ã¥×¥»¥Ã¥È¤Î¼ïÎà¤ò Western Digital¡¢ Tseng¡¢ ¤ª¤è¤Ó Cirrus ¤Ë
+À©¸Â¤¹¤ë¤Ë¤Ï¡¢
+.I SuperProbe
+¥×¥í¥°¥é¥à¤Ë¼¡¤Î¥ª¥×¥·¥ç¥ó¤ò»ØÄê¤¹¤ë¡§
+.sp
+.ce
+.B SuperProbe -order WD,Tsend,Cirrus
+.SH ¥Ð¥°
+.PP
+.\"0 Probably a lot at this point.  Please report any bugs or incorrect
+.\"0 identifications to the author.
+¤ª¤½¤é¤¯¸½»þÅÀ¤Ç¤Ï¤¿¤¯¤µ¤ó¤Î¥Ð¥°¤¬Â¸ºß¤·¤Æ¤¤¤ë¤â¤Î¤È»×¤ï¤ì¤ë¡£
+¸¡½Ð·ë²Ì¤¬¼ÂºÝ¤Î¥Ï¡¼¥É¥¦¥§¥¢¹½À®¤È°Û¤Ê¤ë¾ì¹ç¤ä¥×¥í¥°¥é¥à¤Î¥Ð¥°¤Ëµ¤¤¬¤Ä¤¤¤¿
+¾ì¹ç¤Ï¡¢¤¹¤Ù¤Æ³«È¯¼Ô¤ËÊó¹ð¤·¤ÆÍß¤·¤¤¡£
+.PP
+.\"0 \fBIt is possible that SuperProbe can lock up your machine.  Be sure to
+.\"0 narrow the search by using the \fI-no16\fB, \fI-excl\fB, and \fI-mask10\fB
+.\"0 options provided to keep SuperProbe from conflicting with other installed
+.\"0 hardware.\fR
+\fB SuperProbe ¥×¥í¥°¥é¥à¤Î¼Â¹Ô¤Ë¤è¤ê¥Þ¥·¥ó¤¬¥í¥Ã¥¯¥¢¥Ã¥×¤·¤Æ¤·¤Þ¤¦¾ì¹ç¤¬
+¤¢¤ë¡£¤³¤Î¤è¤¦¤Ê¾ì¹ç¤Ë¤Ï SuperProbe ¥×¥í¥°¥é¥à¤ò¥·¥¹¥Æ¥à¤Ë¥¤¥ó¥¹¥È¡¼¥ë¤µ¤ì¤Æ
+¤¤¤ëÊÌ¤Î¥Ï¡¼¥É¥¦¥§¥¢¤È¾×ÆÍ¤µ¤»¤Ê¤¤¤¿¤á¤ËÍÑ°Õ¤µ¤ì¤Æ¤¤¤ë \fI-no16\fB¡¢
+ \fI-excl\fB¡¢ \fI-mask10\fB ¤Ê¤É¤Î¥ª¥×¥·¥ç¥ó¤ò»ÈÍÑ¤·¤Æ¸¡½ÐÈÏ°Ï¤ò¹Ê¤ë¤è¤¦
+Ãí°Õ¤¹¤ë¤³¤È¡£ \fR
+.SH ´ØÏ¢¹àÌÜ
+.PP
+.\"0 The
+.\"0 .I vgadoc3.zip
+.\"0 documentation package by Finn Thoegersen, available in the MS-DOS archives
+.\"0 of many FTP repositories.
+.I vgadoc3.zip
+: Finn Thoegersen ¤Ë¤è¤ë»ñÎÁ½¸¤Ç¤¢¤ê¡¢Â¿¤¯¤Î FTP ¥µ¥¤¥È¾å¤Î MS-DOS ¥¢¡¼¥«¥¤¥Ö
+Ãæ¤ËÂ¸ºß¤¹¤ë¡£
+.PP
+.\"0 \fIProgrammer's Guide to the EGA and VGA Cards, 2nd Ed\fP, by Richard
+.\"0 Ferraro.
+\fIProgrammer's Guide to the EGA and VGA Cards, 2nd Ed\fP
+: Richard Ferraro Ãø¡£
+.SH Ãø¼Ô
+.\"0 David E. Wexelblat <dwex@xfree86.org>
+.\"0 .br
+.\"0 with help from David Dawes <dawes@xfree86.org> and the XFree86 
+.\"0 development team.
+¤³¤Î¥½¥Õ¥È¥¦¥§¥¢¤Ï David Dawes <dawes@xfree86.org> ¤ª¤è¤Ó¤½¤ÎÂ¾¤Î XFree86
+³«È¯¥Á¡¼¥à¤Î¥á¥ó¥Ð¤Ë¤è¤ë±ç½õ¤ò¼õ¤±¤Æ
+.br
+David E. Wexelblat <dwex@xfree86.org>
+¤¬³«È¯¤·¤¿¡£
+.\" $XConsortium: SuperProbe.man /main/6 1996/12/09 17:37:44 kaleb $

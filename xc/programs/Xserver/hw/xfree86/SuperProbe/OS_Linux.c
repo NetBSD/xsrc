@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Linux.c,v 3.10.2.1 1997/05/06 13:24:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Linux.c,v 3.10.2.2 1999/06/17 16:23:59 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by Orest Zborowski <orestz@eskimo.com>
  *
@@ -139,7 +139,9 @@ int OpenVideo()
 	/*
 	 * Get IOPL so we can get at all the I/O ports.
 	 */
+#ifndef __sparc__	 
 	iopl(3);
+#endif
 	return(VT_fd);
 }
 
@@ -153,7 +155,9 @@ void CloseVideo()
 {
 	int fd;
 
+#ifndef __sparc__
 	iopl(0);
+#endif
 	if (VT_fd > 0)
 	{
 		close(VT_fd);

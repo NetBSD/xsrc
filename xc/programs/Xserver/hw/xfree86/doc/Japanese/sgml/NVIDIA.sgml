@@ -1,0 +1,117 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+
+<article>
+
+<!-- Title information -->
+<title> NVidia NV1 / SGS-Thomson STG2000, Riva 128, Riva TNT ユーザ向けの情報
+<!-- Information for NVidia NV1 / SGS-Thomson STG2000, Riva 128 and Riva TNT Users -->
+<author>David McKay, Dirk Hohndel
+<date>5 November 1998
+<trans>The X Japanese Documentation Project
+<tdate>3 December 1998
+
+<!-- Table of contents -->
+<toc>
+
+<sect>サポートしているハードウェア
+<!-- Supported hardware -->
+<p>
+<!--
+This driver supports good acceleration for both the NV1/STG2000 as well as
+the Riva128. It is known to work on PCI and AGP versions of the Riva128.
+The Riva TNT was added to this driver and is not yet as well accelerated as
+it could be. Still, the server is very usable.
+-->
+このドライバは NV1/STG2000 と Riva128 の両者についてはアクセラレーショ
+ンをうまくサポートしています。Riva128 は PCI 版と AGP 版で動作します。
+今回のドライバから Riva TNT のサポートも追加されましたが、アクセラレー
+ションではまだ性能を生かし切れていません。しかし、利用については問題あ
+りません。
+
+<sect>注意事項
+<!-- Notes -->
+<p>
+<itemize>
+  <item><!-- On the NV1/STG2000, the driver does not support the virtual desktop 
+        features of xfree86.
+	This is because the NV1 does not have the necessary hardware to
+	support this
+	feature. If you want to change resolutions, you will have
+	to modify your config file. Comment out all but the mode you wish
+	to use. -->
+	NV1/STG2000 については、ドライバは XFree86 の仮想デスクトップ
+	機能をサポートしていません。その理由は、仮想デスクトップ機能を
+	サポートするには NV1 のハードウェア機能が十分でないことです。
+	したがって、解像度を変更するためには、設定ファイルを変更しなけ
+	ればなりません。利用したいモード以外の全てのモードをコメントア
+	ウトしてください。
+  <item><!--The generic VGA16 server will not work with the NV1.  For this reason
+	<tt>XF86Setup</tt> cannot be used to configure the server for NV1
+	based cards.  Use
+	<tt>xf86config</tt> instead.  Select `Diamond Edge 3D' as your board,
+	and select only <bf>ONE</bf> mode for each of 8bpp and 16bpp.  Do
+	not select a virtual desktop.  Also, make sure you don't select
+	a RAMDAC or clock chip. This does not apply if you own a Riva128
+	or RIVA TNT card, as the VGA16 server works just fine on that.
+	-->
+	generic VGA16 サーバは NV1 では動作しません。したがって、NV1 
+	ベースのカードでは <tt>XF86Setup </tt>を使ってサーバの設定を行
+	うことはできません。この場合には <tt>xf86config</tt> を使って
+	ください。そしてボードとしては `Diamond Edge 3D' を選択し、
+	8bpp と 16bpp それぞれに対して<bf>1つずつ</bf>モードを選択しま
+	す。仮想デスクトップを選択してはいけません。また、RAMDAC やク
+	ロックチップを選択しないようにしてください。Riva128 や RIVA
+	TNT を使用している場合にはこの注意は適用されません。これらのカー
+	ドでは VGA16 サーバがうまく動作します。
+  <item><!-- Both the NV1 and the Riva128 only support a 555 RGB Weight in 16 bpp, 
+        the hardware does
+	not do 565. If you run into problems with some window managers in
+	16bpp, try putting a Weight 555 in the Display section. -->
+	NV1 と Riva128 のいずれにおいても、16bpp でサポートしている 
+	RGB の重み付けは 555 だけであり、565 はハードウェアがサポート
+	していません。16bpp 時に問題を起こすウィンドウマネージャがある
+	場合には、Display セクションで Weight 555 を指定してください。
+  <item><!-- 24 bpp is not supported. -->
+	24bpp はサポートされていません。
+  <item><!-- In some modes the hardware cursor gets out of sync with the display.
+        Use Option "sw_cursor" to work around this problem. -->
+	モードによっては、ハードウェアカーソルがディスプレイと同期しな
+	いことがあります。この問題を回避するには "sw_cursor" オプショ
+	ンを指定してください。
+  <item><!-- There are modelines that confuse the Riva128 chip. This results in
+        a greenish display. Slightly modifying the modeline usually fixes 
+	the problem. In most cases all that is needed is to reduce the
+	HTotal. You can use xvidtune to do that. -->
+	Riva128 チップの動作がおかしくなるモード行がいくつかあり、その
+	結果、ディスプレイが緑っぽくなってしまうことがあります。普通は
+	少しモード行を変えればこの問題を回避できます。ほとんどの場合は 
+	HTotal を減らせば大丈夫です。xvidtune を使ってこの操作を行うこ
+	とができます。
+  <item><!-- The low maximum dot clocks for the Riva 128 have been fixed. The
+        driver should now utilize the Riva 128 to its full capabilities. -->
+	Riva128 について、最大ドットクロックが上がり切っていない問題は
+	修正されました。現在のドライバは Riva128 の性能を全て引き出す
+	ことができます。
+</itemize>
+
+<sect>作者
+<!-- Authors -->
+<p>
+<itemize>
+<item>David McKay
+<item>David Schmenk <it>&lt;dschmenk@nvidia.com&gt;</it>
+<item>Dirk Hohndel <it>&lt;hohndel@XFree86.org&gt;</it>
+</itemize>
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/NVIDIA.sgml,v 1.1.2.1 1999/05/25 06:39:16 hohndel Exp $
+</verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project の藤原輝嘉 <url
+url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;"> が行いました。問題点の指摘やご意
+見は藤原まで御連絡ください。
+原文の著作権は XFree86 プロジェクト社にあり、日本語訳の著作権は
+X Japanese Documentation Project にあります。
+</article>

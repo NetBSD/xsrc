@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/messages.tcl,v 1.1.2.5 1998/11/12 10:34:57 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/messages.tcl,v 1.1.2.6 1999/04/26 07:23:33 hohndel Exp $
 #
 # messages in done.tcl :
 set messages(done.1)	"\n\
@@ -132,9 +132,8 @@ set messages(card.27) "詳細設定"
 set messages(card.28) "選択されたグラフィックカード: "
 set messages(card.29) "終了"
 set messages(card.30) \
-	" まず、サーバーが正しいかどうかたしかめてから、\n\
-	必要なら設定を変更して下さい。チップセット、RamDac 、\n\
-	クロックチップが空欄の場合、自動認識されます。"
+	" まず、サーバーが正しいかどうか確かめてから、必要なら設定を変更して下さい。\n\
+	チップセット、RamDac 、クロックチップが空欄の場合、自動認識されます。"
 set messages(card.31) \
 	" リストから使っているグラフィックカードを選んで下さい。\n\
 	もし、使っているカードがリストにない場合、詳細設定の \n\

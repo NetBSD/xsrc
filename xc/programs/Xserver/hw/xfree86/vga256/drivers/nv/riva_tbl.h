@@ -1,6 +1,6 @@
  /***************************************************************************\
 |*                                                                           *|
-|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*       Copyright 1993-1999 NVIDIA, Corporation.  All rights reserved.      *|
 |*                                                                           *|
 |*     NOTICE TO USER:   The source code  is copyrighted under  U.S. and     *|
 |*     international laws.  Users and possessors of this source code are     *|
@@ -11,7 +11,7 @@
 |*     tion and  internal comments to the code,  notices to the end user     *|
 |*     as follows:                                                           *|
 |*                                                                           *|
-|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*       Copyright 1993-1999 NVIDIA, Corporation.  All rights reserved.      *|
 |*                                                                           *|
 |*     NVIDIA, CORPORATION MAKES NO REPRESENTATION ABOUT THE SUITABILITY     *|
 |*     OF  THIS SOURCE  CODE  FOR ANY PURPOSE.  IT IS  PROVIDED  "AS IS"     *|
@@ -36,7 +36,7 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
  \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_tbl.h,v 1.1.2.2 1998/12/22 16:33:20 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_tbl.h,v 1.1.2.3 1999/04/21 07:21:18 hohndel Exp $ */
 /*
  * RIVA Fixed Functionality Init Tables.
  */
@@ -182,9 +182,11 @@ static unsigned nv3TablePRAMIN[][2] =
 };
 static unsigned nv3TablePRAMIN_8BPP[][2] =
 {
+    /*           0xXXXXX3XX For  MSB mono format */
+    /*           0xXXXXX2XX For  LSB mono format */
     {0x00000D04, 0x10110203},
     {0x00000D08, 0x10110203},
-    {0x00000D0C, 0x10110203},
+    {0x00000D0C, 0x1011020B},
     {0x00000D10, 0x10118203},
     {0x00000D14, 0x10110203},
     {0x00000D18, 0x10110203},
@@ -192,9 +194,11 @@ static unsigned nv3TablePRAMIN_8BPP[][2] =
 };
 static unsigned nv3TablePRAMIN_15BPP[][2] =
 {
+    /*           0xXXXXX2XX For  MSB mono format */
+    /*           0xXXXXX3XX For  LSB mono format */
     {0x00000D04, 0x10110200},
     {0x00000D08, 0x10110200},
-    {0x00000D0C, 0x10110200},
+    {0x00000D0C, 0x10110208},
     {0x00000D10, 0x10118200},
     {0x00000D14, 0x10110200},
     {0x00000D18, 0x10110200},
@@ -202,9 +206,11 @@ static unsigned nv3TablePRAMIN_15BPP[][2] =
 };
 static unsigned nv3TablePRAMIN_32BPP[][2] =
 {
+    /*           0xXXXXX3XX For  MSB mono format */
+    /*           0xXXXXX2XX For  LSB mono format */
     {0x00000D04, 0x10110201},
     {0x00000D08, 0x10110201},
-    {0x00000D0C, 0x10110201},
+    {0x00000D0C, 0x10110209},
     {0x00000D10, 0x10118201},
     {0x00000D14, 0x10110201},
     {0x00000D18, 0x10110201},
@@ -273,45 +279,43 @@ static unsigned nv4TablePGRAPH[][2] =
     {0x0000005A, 0x00000000},
     {0x0000005B, 0x00000000},
     {0x00000196, 0x00000000},
-    {0x000001A1, 0x00FFFFFF},
+    {0x000001A1, 0x01FFFFFF},
     {0x00000197, 0x00000000},
-    {0x000001A2, 0x00FFFFFF},
+    {0x000001A2, 0x01FFFFFF},
     {0x00000198, 0x00000000},
-    {0x000001A3, 0x00FFFFFF},
+    {0x000001A3, 0x01FFFFFF},
     {0x00000199, 0x00000000},
-    {0x000001A4, 0x00FFFFFF},
+    {0x000001A4, 0x01FFFFFF},
     {0x00000050, 0x00000000},
     {0x00000040, 0xFFFFFFFF},
     {0x0000005C, 0x10010100},
-    {0x000001C8, 0x00000001}
+    {0x000001C4, 0xFFFFFFFF},
+    {0x000001C8, 0x00000001},
+    {0x00000204, 0x00000000}
 };
 static unsigned nv4TablePGRAPH_8BPP[][2] =
 {
-    {0x000001C4, 0xFFFFFFFF},
     {0x000001C9, 0x00111111},
     {0x00000186, 0x00001010},
-    {0x0000020C, 0x01010101}
+    {0x0000020C, 0x03020202}
 };
 static unsigned nv4TablePGRAPH_15BPP[][2] =
 {
-    {0x000001C4, 0xFFFFFFFF},
     {0x000001C9, 0x00226222},
     {0x00000186, 0x00002071},
-    {0x0000020C, 0x09090909}
+    {0x0000020C, 0x09080808}
 };
 static unsigned nv4TablePGRAPH_16BPP[][2] =
 {
-    {0x000001C4, 0xFFFFFFFF},
     {0x000001C9, 0x00556555},
     {0x00000186, 0x000050C2},
-    {0x0000020C, 0x0C0C0C0C}
+    {0x0000020C, 0x0C0B0B0B}
 };
 static unsigned nv4TablePGRAPH_32BPP[][2] =
 {
-    {0x000001C4, 0xFFFFFFFF},
     {0x000001C9, 0x0077D777},
     {0x00000186, 0x000070E5},
-    {0x0000020C, 0x07070707}
+    {0x0000020C, 0x0E0D0D0D}
 };
 static unsigned nv4TablePRAMIN[][2] =
 {
@@ -323,6 +327,10 @@ static unsigned nv4TablePRAMIN[][2] =
     {0x00000005, 0x80011147},
     {0x00000006, 0x80000013},
     {0x00000007, 0x80011148},
+    {0x00000008, 0x80000014},
+    {0x00000009, 0x80011149},
+    {0x0000000A, 0x80000015},
+    {0x0000000B, 0x8001114A},
     {0x00000020, 0x80000000},
     {0x00000021, 0x80011142},
     {0x00000022, 0x80000001},
@@ -330,7 +338,7 @@ static unsigned nv4TablePRAMIN[][2] =
     {0x00000024, 0x80000002},
     {0x00000025, 0x80011144}, 
     {0x00000500, 0x00003000},
-    {0x00000501, 0x02FFFFFF},
+    {0x00000501, 0x01FFFFFF},
     {0x00000502, 0x00000002},
     {0x00000503, 0x00000002},
     {0x00000508, 0x01008043},
@@ -339,7 +347,11 @@ static unsigned nv4TablePRAMIN[][2] =
     {0x0000050C, 0x01008019},
     {0x0000050E, 0x00000000},
     {0x0000050F, 0x00000000},
+#if 1
     {0x00000510, 0x01008018},
+#else
+    {0x00000510, 0x01008044},
+#endif
     {0x00000512, 0x00000000},
     {0x00000513, 0x00000000},
     {0x00000514, 0x0100A033},
@@ -348,48 +360,68 @@ static unsigned nv4TablePRAMIN[][2] =
     {0x00000518, 0x0100805F},
     {0x0000051A, 0x00000000},
     {0x0000051B, 0x00000000},
+#if 1
     {0x0000051C, 0x0100804B},
+#else
+    {0x0000051C, 0x0100804A},
+#endif
     {0x0000051E, 0x00000000},
     {0x0000051F, 0x00000000},
     {0x00000520, 0x0100A048},
     {0x00000521, 0x00000D01},
     {0x00000522, 0x11401140},
-    {0x00000523, 0x00000000}
+    {0x00000523, 0x00000000},
+    {0x00000524, 0x0100A054},
+    {0x00000525, 0x00000D01},
+    {0x00000526, 0x11401140},
+    {0x00000527, 0x00000000},
+    {0x00000528, 0x0100A055},
+    {0x00000529, 0x00000D01},
+    {0x0000052A, 0x11401140},
+    {0x0000052B, 0x00000000}
 };
 static unsigned nv4TablePRAMIN_8BPP[][2] =
 {
-    {0x00000509, 0x00000301},
-    {0x0000050D, 0x00000301},
-    {0x00000511, 0x00000301},
-    {0x00000515, 0x00000301},
-    {0x00000519, 0x00000301},
-    {0x0000051D, 0x00000301}
+    /*           0xXXXXXX01 For  MSB mono format */
+    /*           0xXXXXXX02 For  LSB mono format */
+    {0x00000509, 0x00000302},
+    {0x0000050D, 0x00000302},
+    {0x00000511, 0x00000202},
+    {0x00000515, 0x00000302},
+    {0x00000519, 0x00000302},
+    {0x0000051D, 0x00000302}
 };
 static unsigned nv4TablePRAMIN_15BPP[][2] =
 {
-    {0x00000509, 0x00000901},
-    {0x0000050D, 0x00000901},
-    {0x00000511, 0x00000901},
-    {0x00000515, 0x00000901},
-    {0x00000519, 0x00000901},
-    {0x0000051D, 0x00000901}
+    /*           0xXXXXXX01 For  MSB mono format */
+    /*           0xXXXXXX02 For  LSB mono format */
+    {0x00000509, 0x00000902},
+    {0x0000050D, 0x00000902},
+    {0x00000511, 0x00000802},
+    {0x00000515, 0x00000902},
+    {0x00000519, 0x00000902},
+    {0x0000051D, 0x00000902}
 };
 static unsigned nv4TablePRAMIN_16BPP[][2] =
 {
-    {0x00000509, 0x00000C01},
-    {0x0000050D, 0x00000C01},
-    {0x00000511, 0x00000C01},
-    {0x00000515, 0x00000C01},
-    {0x00000519, 0x00000C01},
-    {0x0000051D, 0x00000C01}
+    /*           0xXXXXXX01 For  MSB mono format */
+    /*           0xXXXXXX02 For  LSB mono format */
+    {0x00000509, 0x00000C02},
+    {0x0000050D, 0x00000C02},
+    {0x00000511, 0x00000B02},
+    {0x00000515, 0x00000C02},
+    {0x00000519, 0x00000C02},
+    {0x0000051D, 0x00000C02}
 };
 static unsigned nv4TablePRAMIN_32BPP[][2] =
 {
-    {0x00000509, 0x00000E01},
-    {0x0000050D, 0x00000E01},
-    {0x00000511, 0x00000E01},
-    {0x00000515, 0x00000E01},
-    {0x00000519, 0x00000E01},
-    {0x0000051D, 0x00000E01}
+    /*           0xXXXXXX01 For  MSB mono format */
+    /*           0xXXXXXX02 For  LSB mono format */
+    {0x00000509, 0x00000E02},
+    {0x0000050D, 0x00000E02},
+    {0x00000511, 0x00000D02},
+    {0x00000515, 0x00000E02},
+    {0x00000519, 0x00000E02},
+    {0x0000051D, 0x00000E02}
 };
 

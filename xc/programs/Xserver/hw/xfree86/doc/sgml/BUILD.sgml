@@ -3,7 +3,7 @@
 <article>
 <title>Building XFree86
 <author>David Dawes
-<Date>7 November 1998
+<Date>25 June 1999
 
 <abstract>
 This document describes how to build XFree86 from the <bf>source</bf>
@@ -33,34 +33,35 @@ Note that both gcc-2.8.0 and egcs have been proven to break the code
 multiple times.  Especially egcs seems to fail in several modules when
 optimizing.
 
-<sect1>How to get the XFree86 3.3.3 source
+<sect1>How to get the XFree86 3.3.4 source
 <p>
 There are a few starting points for getting the XFree86 source.  One option
-is to start directly with the XFree86 3.3.3 source distribution.  In this
+is to start directly with the XFree86 3.3.4 source distribution.  In this
 case, the procedure is as follows:
 <itemize>
-  <item>The XFree86 3.3.3 source is contained in files <tt>X333src-1.tgz</tt>,
-	<tt>X333src-2.tgz</tt> and <tt>X333src-3.tgz</tt>.  These can be found
-	at <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"
-	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"> and similar
-	locations on XFree86 mirror sites.  <tt>X333src-2.tgz</tt> contains
-	the fonts and documentation source.  <tt>X333src-3.tgz</tt> contains
-	the hardcopy documentation.  <tt>X333src-1.tgz</tt> contains
+  <item>The XFree86 3.3.4 source is contained in files <tt>X334src-1.tgz</tt>,
+	<tt>X334src-2.tgz</tt> and <tt>X334src-3.tgz</tt>.  These can be found
+	at <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"> and similar
+	locations on XFree86 mirror sites.  <tt>X334src-2.tgz</tt> contains
+	the fonts and documentation source.  <tt>X334src-3.tgz</tt> contains
+	the hardcopy documentation.  <tt>X334src-1.tgz</tt> contains
 	everything else.  If you don't need the docs or fonts you can get
-	by with only <tt>X333src-1.tgz</tt>.
+	by with only <tt>X334src-1.tgz</tt>.
   <item>Extract each of these files by running the following from a directory
 	on a filesystem containing enough space (the full source requires
 	around 140MB, and a similar amount is required in addition to this
 	for the compiled binaries):
 	<quote><verb>
-	gzip -d < X333src-1.tgz | tar vxf -
-	gzip -d < X333src-2.tgz | tar vxf -
-	gzip -d < X333src-3.tgz | tar vxf -
+	gzip -d < X334src-1.tgz | tar vxf -
+	gzip -d < X334src-2.tgz | tar vxf -
+	gzip -d < X334src-3.tgz | tar vxf -
 	</verb></quote>
 </itemize>
 
 Another option is to start with the X11R6.3 source distribution and patch
-it up to XFree86 3.3.3.  In this case you need to do the following:
+it up to XFree86 3.3.3 and then patch that to XFree86 3.3.4 (see below).  
+In this case you need to do the following:
 <itemize>
   <item>Start with the X Consortium's X11R6.3 distribution with public
 	patches 1 and 2 (but not 3) applied.  This can be obtained by
@@ -85,19 +86,20 @@ it up to XFree86 3.3.3.  In this case you need to do the following:
 	don't some patches may fail.
 </itemize>
 
-A further option is to start with the XFree86 3.3.2 source, and patch
-it up to XFree86 3.3.3.  In this case you need to do the following:
+A further option is to start with the XFree86 3.3.3 source, and patch
+it up to XFree86 3.3.4.  In this case you need to do the following:
 <itemize>
-  <item>If using this option, you would already have the XFree86 3.3.2
-	source.  If you have applied any of the public patches to 3.3.2,		back them out before starting the upgrade to 3.3.3.
-  <item>Get the file <tt>3.3.2-3.3.3.diff.gz</tt>
-	from <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/patches/"
-	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/patches/"> (or a similar
-	location on mirror sites).  To upgrade the source to XFree86 3.3.3,
+  <item>If using this option, you would already have the XFree86 3.3.3
+	source.  If you have applied any of the public patches to 3.3.3,
+	back them out before starting the upgrade to 3.3.4.
+  <item>Get the file <tt>3.3.3-3.3.4.diff.gz</tt>
+	from <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/patches/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/patches/"> (or a similar
+	location on mirror sites).  To upgrade the source to XFree86 3.3.4,
 	run the following from directory containing the <tt>xc</tt>
-	directory of the XFree86 3.3.2 source tree:
+	directory of the XFree86 3.3.3 source tree:
 	<quote><verb>
-	gzip -d < 3.3.2-3.3.3.diff.gz | patch -p0 -E
+	gzip -d < 3.3.3-3.3.4.diff.gz | patch -p0 -E
 	</verb></quote>
 	Be sure to do this with a clean unmodified source tree.  If you
 	don't some patches may fail.
@@ -107,13 +109,13 @@ If you only want to build the XFree86 X servers, you can use a cut-down
 version of the XFree86 source tree called the ``servers only'' distribution.
 If you choose this option, do the following:
 <itemize>
-  <item>Get the <tt>X333servonly.tgz</tt> file from
-	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"
-	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/"> (or a similar
+  <item>Get the <tt>X334servonly.tgz</tt> file from
+	<htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/3.3.4/source/"> (or a similar
 	locations on mirror sites.
   <item>Extract this by running the following:
 	<quote><verb>
-	gzip -d < X333servonly.tgz | tar vxf -
+	gzip -d < X334servonly.tgz | tar vxf -
 	</verb></quote>
 </itemize>
 
@@ -172,7 +174,7 @@ Unlike previous versions, imake can now automatically detect and set
 the various <bf>OS*Version</bf> parameters, so you shouldn't need to
 enter those settings explicitly.
 
-If you are using just the <tt>X333src-1.tgz</tt> part of the source dist,
+If you are using just the <tt>X334src-1.tgz</tt> part of the source dist,
 you will need to define <bf>BuildFonts</bf> to <bf>NO</bf>.
 
 If you are using the ``servers only'' distribution, you will need to
@@ -244,7 +246,7 @@ details of how to do this, please refer to the <htmlurl url="LinkKit.html"
 name="README.LinkKit"> file.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.1.2.9 1998/11/07 13:37:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.1.2.10 1999/06/25 08:57:13 hohndel Exp $
 </verb>
 
 </article>

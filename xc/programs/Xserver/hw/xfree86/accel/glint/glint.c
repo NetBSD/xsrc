@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint.c,v 1.32.2.5 1998/10/31 14:40:53 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint.c,v 1.32.2.11 1999/07/01 16:23:28 hohndel Exp $ */
 /*
  * Copyright 1997 by Alan Hourihane, Wigan, England.
  *
@@ -300,6 +300,7 @@ extern int pprod;
 extern int partprod500TX[];
 extern int partprodPermedia[];
 Bool VGAcore;
+Bool gamma = FALSE;
 ScreenPtr savepScreen = NULL;
 Bool glintReloadCursor, glintBlockCursor;
 unsigned char glintSwapBits[256];
@@ -379,7 +380,9 @@ glintProbe()
 
   i = -1;
   while ((pcrp = pcrpp[++i]) != (pciConfigPtr)NULL) {
-    if (pcrp->_vendor == PCI_VENDOR_3DLABS) 
+    if ((pcrp->_vendor == PCI_VENDOR_3DLABS) &&
+	(pcrp->_command & PCI_CMD_IO_ENABLE) &&
+	(pcrp->_command & PCI_CMD_MEM_ENABLE))
     {
         switch (pcrp->_device)
 	{
@@ -390,7 +393,8 @@ glintProbe()
 		coprotype = PCI_CHIP_3DLABS_300SX;
 		if( cardnum == -1 )
 			cardnum = pcrp->_cardnum;
-		else if( cardnum != pcrp->_cardnum )
+		else if( (cardnum != pcrp->_cardnum) && 
+			 (pcrp->_command & PCI_CMD_IO_ENABLE) )
 		{
 			ErrorF("%s %s: found second board based on GLINT "
 			       "will use information from there\n",
@@ -413,7 +417,8 @@ glintProbe()
 		coprotype = PCI_CHIP_3DLABS_500TX;
 		if( cardnum == -1 )
 			cardnum = pcrp->_cardnum;
-		else if( cardnum != pcrp->_cardnum )
+		else if( (cardnum != pcrp->_cardnum) && 
+			 (pcrp->_command & PCI_CMD_IO_ENABLE) )
 		{
 			ErrorF("%s %s: found second board based on GLINT "
 			       "will use information from there\n",
@@ -436,7 +441,8 @@ glintProbe()
 		coprotype = PCI_CHIP_3DLABS_MX;
 		if( cardnum == -1 )
 			cardnum = pcrp->_cardnum;
-		else if( cardnum != pcrp->_cardnum )
+		else if( (cardnum != pcrp->_cardnum) && 
+			 (pcrp->_command & PCI_CMD_IO_ENABLE) )
 		{
 			ErrorF("%s %s: found second board based on GLINT "
 			       "will use information from there\n",
@@ -459,7 +465,8 @@ glintProbe()
 		coprotype = PCI_CHIP_3DLABS_PERMEDIA;
 		if( cardnum == -1 )
 			cardnum = pcrp->_cardnum;
-		else if( cardnum != pcrp->_cardnum )
+		else if( (cardnum != pcrp->_cardnum) && 
+			 (pcrp->_command & PCI_CMD_IO_ENABLE) )
 		{
 			ErrorF("%s %s: found second board based on GLINT "
 			       "will use information from there\n",
@@ -482,7 +489,8 @@ glintProbe()
 		coprotype = PCI_CHIP_3DLABS_PERMEDIA2;
 		if( cardnum == -1 )
 			cardnum = pcrp->_cardnum;
-		else if( cardnum != pcrp->_cardnum )
+		else if( (cardnum != pcrp->_cardnum) && 
+			 (pcrp->_command & PCI_CMD_IO_ENABLE) )
 		{
 			ErrorF("%s %s: found second board based on GLINT "
 			       "will use information from there\n",
@@ -504,7 +512,8 @@ glintProbe()
 		coprotype = PCI_CHIP_3DLABS_PERMEDIA2V;
 		if( cardnum == -1 )
 			cardnum = pcrp->_cardnum;
-		else if( cardnum != pcrp->_cardnum )
+		else if( (cardnum != pcrp->_cardnum) && 
+			 (pcrp->_command & PCI_CMD_IO_ENABLE) )
 		{
 			ErrorF("%s %s: found second board based on GLINT "
 			       "will use information from there\n",
@@ -518,6 +527,32 @@ glintProbe()
 			ErrorF("%s %s: found GLINT Permedia 2v at card #%d func #%d with "
 			       "base 0x%x\n",XCONFIG_PROBED, glintInfoRec.name,
 			       pcrp->_cardnum,pcrp->_func,basecopro);
+		}
+		break;
+	case PCI_CHIP_3DLABS_GAMMA:
+		glintdelta = pcibusTag(pcrp->_bus, pcrp->_cardnum, pcrp->_func);
+		basedelta = pcrp->_base0;
+		delta_pci_basep = &(pcrp->_base0);
+		pcrpdelta = pcrp;
+		if( cardnum == -1 )
+			cardnum = pcrp->_cardnum;
+		else if( (cardnum != pcrp->_cardnum) && 
+			 (pcrp->_command & PCI_CMD_IO_ENABLE) )
+		{
+			ErrorF("%s %s: found second board based on GLINT "
+			       "will use information from there\n",
+			       XCONFIG_PROBED, glintInfoRec.name);
+			coprotype = -1;
+			glintcopro = pcibusTag(0,0,0);
+			pcrpglint = NULL;
+			cardnum = pcrp->_cardnum;
+		}
+		if( xf86Verbose ) 
+		{
+			ErrorF("%s %s: found GLINT Gamma at card #%d func #%d with "
+			       "base 0x%x\n",XCONFIG_PROBED, glintInfoRec.name,
+			       pcrp->_cardnum,pcrp->_func,basedelta);
+			gamma = TRUE;
 		}
 		break;
 	case PCI_CHIP_3DLABS_DELTA:
@@ -546,7 +581,9 @@ glintProbe()
 		break;
 	}
     }
-    else if (pcrp->_vendor == PCI_VENDOR_TI) /* TI is producing the PM2 */
+    else if ((pcrp->_vendor == PCI_VENDOR_TI) && /* TI is producing the PM2 */
+	     (pcrp->_command & PCI_CMD_IO_ENABLE) &&
+	     (pcrp->_command & PCI_CMD_MEM_ENABLE))
     {
         switch (pcrp->_device)
 	{
@@ -557,7 +594,8 @@ glintProbe()
 		coprotype = PCI_CHIP_3DLABS_PERMEDIA;
 		if( cardnum == -1 )
 			cardnum = pcrp->_cardnum;
-		else if( cardnum != pcrp->_cardnum )
+		else if( (cardnum != pcrp->_cardnum) && 
+			 (pcrp->_command & PCI_CMD_IO_ENABLE) )
 		{
 			ErrorF("%s %s: found second board based on GLINT "
 			       "will use information from there\n",
@@ -580,7 +618,8 @@ glintProbe()
 		coprotype = PCI_CHIP_TI_PERMEDIA2;
 		if( cardnum == -1 )
 			cardnum = pcrp->_cardnum;
-		else if( cardnum != pcrp->_cardnum )
+		else if( (cardnum != pcrp->_cardnum) && 
+			 (pcrp->_command & PCI_CMD_IO_ENABLE) )
 		{
 			ErrorF("%s %s: found second board based on GLINT "
 			       "will use information from there\n",
@@ -894,6 +933,10 @@ glintProbe()
   OFLG_SET(OPTION_OVERCLOCK_MEM, &validOptions);
   OFLG_SET(OPTION_POWER_SAVER, &validOptions);
 
+  if (IS_3DLABS_PM2_CLASS(coprotype))
+      if (coprotype != PCI_CHIP_3DLABS_PERMEDIA2V)
+	  OFLG_SET(OPTION_SYNC_ON_GREEN, &validOptions);
+
   OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &glintInfoRec.clockOptions);
 
   if (OFLG_ISSET(OPTION_PCI_RETRY, &glintInfoRec.options))
@@ -972,7 +1015,7 @@ glintProbe()
 		break;
 	case 32:
 		glintInfoRec.bitsPerPixel = 32;
-		glintInfoRec.depth = 32;
+		glintInfoRec.depth = 24;
 		xf86weight.red = xf86weight.blue = xf86weight.green = 8;
 		if (glintInfoRec.defaultVisual < 0)
 			glintInfoRec.defaultVisual = TrueColor;
@@ -1113,7 +1156,7 @@ glintProbe()
   }
 
 #ifdef XFreeXDGA
-  glintInfoRec.directMode = XF86DGADirectPresent;
+  glintInfoRec.directMode = XF86DGADirectPresent | XF86DGAAccelPresent;
 #endif
 
 #ifdef DPMSExtension
@@ -1182,7 +1225,7 @@ glintInitialize (int scr_index, ScreenPtr pScreen, int argc, char **argv)
 		}
 	}
 
-	switch (glintInfoRec.depth) {
+	switch (glintInfoRec.bitsPerPixel) {
 		case 8:
 			ScreenInitFunc = &xf86XAAScreenInit8bpp;
 			break;
@@ -1286,6 +1329,27 @@ glintEnterLeaveVT(Bool enter, int screen_idx)
             break;
         }
     }
+
+#ifdef XFreeXDGA
+    /*
+     * Patch up things to allow a graphics operations to go to the screen
+     * while remaining in direct graphics mode.
+     */
+    if (glintInfoRec.directMode & XF86DGADoAccel) {
+	if (enter) {
+	    /* XXX doesn't really do anything */
+	    xf86MapDisplay(screen_idx, LINEAR_REGION);
+	    pspix->devPrivate.ptr = glintVideoMem;
+	} else {
+	    if (xf86AccelInfoRec.Sync != NULL)
+		xf86AccelInfoRec.Sync();	/* XXX */
+	    pspix->devPrivate.ptr = ppix->devPrivate.ptr;
+	    /* XXX doesn't really do anything */
+	    xf86UnMapDisplay(screen_idx, LINEAR_REGION);
+	}
+	return;
+    }
+#endif /* XFreeXDGA */
 
     if (pScreen && !xf86Exiting && !xf86Resetting)
         WalkTree(pScreen, glintNewSerialNumber, 0);

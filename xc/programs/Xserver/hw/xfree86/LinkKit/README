@@ -1,19 +1,8 @@
+                    Readme for the XFree86 3.3.3 LinkKit
 
+                          The XFree86 Project, Inc.
 
-
-
-
-
-
-
-
-                     Readme for the XFree86 3.3.3 LinkKit
-
-                           The XFree86 Project, Inc.
-
-                                22 October 1998
-
-
+                               22 October 1998
 
 1.  Readme for the XFree86 3.3.3 LinkKit
 
@@ -21,12 +10,11 @@
       the binary distribution you are using was built with gcc-2.
 
   2.  Make sure that you have the XFree86 3.3.3 libraries installed under
-      /usr/X11R6 if you will be linking Xnest with the LinkKit.  The LinkKit is
-      now self-contained for the other servers.
+      /usr/X11R6 if you will be linking Xnest with the LinkKit.  The LinkKit
+      is now self-contained for the other servers.
 
-  3.  Edit the xf86site.def file to define which servers you want to build, and
-      the drivers and extensions you want included.
-
+  3.  Edit the xf86site.def file to define which servers you want to build,
+      and the drivers and extensions you want included.
 
          o Set HasGcc and HasGcc2 to match the compiler you are using if the
            defaults aren't correct.
@@ -58,19 +46,6 @@
 
          o To build the I128 server: set XF86I128Server to YES.
 
-
-
-
-Readme for the XFree86 3.3.3 LinkKit                                          1
-
-
-
-
-
-Readme for the XFree86 3.3.3 LinkKit                                          2
-
-
-
          o To build the GLINT server: set XF86GLINTServer to YES.
 
          o To build the TGA server: set XF86TGAServer to YES.
@@ -79,8 +54,8 @@ Readme for the XFree86 3.3.3 LinkKit                                          2
 
          o To build the NEC480 server: set XF98NEC480Server to YES.
 
-         o To build the NEC-CIRRUS/EPSON NKV/NKV2 server: set XF98NKVNECServer
-           to YES.
+         o To build the NEC-CIRRUS/EPSON NKV/NKV2 server: set XF98NKVNEC-
+           Server to YES.
 
          o To build the WAB-S server: set XF98WABSServer to YES.
 
@@ -91,8 +66,8 @@ Readme for the XFree86 3.3.3 LinkKit                                          2
          o To build the Trident Cyber9320/9680 server: set XF98TGUIServer to
            YES.
 
-         o To build the Matrox Millennium/Mystique Server: set XF98MGAServer to
-           YES.
+         o To build the Matrox Millennium/Mystique Server: set XF98MGAServer
+           to YES.
 
          o To build the Cirrus Logic CLGD7555 Server: set XF98SVGAServer to
            YES.
@@ -109,9 +84,10 @@ Readme for the XFree86 3.3.3 LinkKit                                          2
 
          o To build the Xnest server: set XnestServer to YES.
 
-         o If you are building more than one Xserver, uncomment the ServerToIn-
-           stall line and set it to the name of the Xserver you want to be the
-           default server (i.e., the one that the ``X'' sym-link points to).
+         o If you are building more than one Xserver, uncomment the Server-
+           ToInstall line and set it to the name of the Xserver you want to
+           be the default server (i.e., the one that the ``X'' sym-link
+           points to).
 
          o Set XF86SvgaDrivers to the list of drivers you want to include in
            the SVGA server.
@@ -122,28 +98,17 @@ Readme for the XFree86 3.3.3 LinkKit                                          2
          o Set XF86Vga2Drivers to the list of drivers you want to include in
            the monochrome vga server.
 
-         o Set XF86MonoDrivers to the list of non-vga mono drivers you want to
-           include in the mono or VGA16 servers (when building dual-headed
+         o Set XF86MonoDrivers to the list of non-vga mono drivers you want
+           to include in the mono or VGA16 servers (when building dual-headed
            servers).
-
-
-
-
-
-
-
-
-Readme for the XFree86 3.3.3 LinkKit                                          3
-
-
 
          o Note: the ordering of drivers determines the order in which the
            probing is done.  The `generic' driver should be the last one
            included in the Mono and VGA16 and SVGA servers because its probe
            always succeeds.
 
-         o To use dynamically loadable modules(e.g. PEX, XIE): set Extensions-
-           DynamicModules to YES.
+         o To use dynamically loadable modules(e.g. PEX, XIE): set Exten-
+           sionsDynamicModules to YES.
 
          o To include the PEX extension: set BuildPexExt to YES.
 
@@ -163,15 +128,14 @@ Readme for the XFree86 3.3.3 LinkKit                                          3
            size are not appreciable, or the resulting server might even be
            crippled in some way.
 
-
-  4.  If you are including a driver that it not part of the standard distribu-
-      tion, make a directory in drivers/vga256 (drivers/vga2 if it is for the
-      VGA2 part of the Mono server, drivers/vga16 if it is for the 16 colour
-      server, or drivers/mono non-VGA part of the Mono and VGA16 servers) and
-      copy either the source or .o file and a suitable Imakefile into that
-      directory.  The name of the directory should be the same as the name of
-      the driver (refer to the documentation in the VGADriverDoc directory for
-      more details).
+  4.  If you are including a driver that it not part of the standard distri-
+      bution, make a directory in drivers/vga256 (drivers/vga2 if it is for
+      the VGA2 part of the Mono server, drivers/vga16 if it is for the 16
+      colour server, or drivers/mono non-VGA part of the Mono and VGA16
+      servers) and copy either the source or .o file and a suitable Imakefile
+      into that directory.  The name of the directory should be the same as
+      the name of the driver (refer to the documentation in the VGADriverDoc
+      directory for more details).
 
   5.  To build the Makefile, run
 
@@ -181,218 +145,21 @@ Readme for the XFree86 3.3.3 LinkKit                                          3
 
   7.  Run `make install' to install the new server(s).
 
-  8.  Run `make clean' to remove the files that were created by this procedure.
+  8.  Run `make clean' to remove the files that were created by this proce-
+      dure.
 
   9.  If you edit the xf86site.def file and change the selection of servers
-      being built or the drivers included in them, repeat the above procedure.
-      If changing the selection of Xserver extensions being included it is suf-
-      ficient to run `make Makefile' instead of `./mkmf'.
+      being built or the drivers included in them, repeat the above proce-
+      dure.  If changing the selection of Xserver extensions being included
+      it is sufficient to run `make Makefile' instead of `./mkmf'.
 
  10.  It is possible to see which drivers are included in the Xserver by run-
       ning it with the `-showconfig' flag.  To check which extensions are
       included, start the Xserver and run `xdpyinfo'.
 
-
-
-
-
-
-
-
-Readme for the XFree86 3.3.3 LinkKit                                          4
-
-
-
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v 3.14.2.5 1998/10/22 04:31:03 hohndel Exp $
-
-
-
-
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v 3.14.2.4 1998/10/18 20:42:19 hohndel Exp $
 
      $XConsortium: LinkKit.sgml /main/8 1996/10/27 11:05:58 kaleb $
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Readme for the XFree86 3.3.3 LinkKit                                          5
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                   CONTENTS
-
-
-
-1. Readme for the XFree86 3.3.3 LinkKit  .................................... 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                       i
-
-
-
-$XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/README,v 3.21.2.6 1998/11/14 06:46:36 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/README,v 3.21.2.8 1999/06/25 08:56:23 hohndel Exp $

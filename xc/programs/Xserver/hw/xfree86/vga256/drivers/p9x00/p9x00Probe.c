@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
  * SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/p9x00/p9x00Probe.c,v 1.1.2.4 1998/10/31 14:41:02 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/p9x00/p9x00Probe.c,v 1.1.2.5 1999/04/23 17:41:58 hohndel Exp $ */
 
 #define P9X00PROBE_C
 
@@ -31,6 +31,12 @@
 #include "p9x00VGA.h"
 
 #include "vgaPCI.h"
+
+/*
+ * it seems that the DPMS code breaks the server on several cards
+ * so let's simply disable it here (990324 hohndel@XFree86.org)
+ */
+#undef DPMSExtension
 
 #ifdef DPMSExtension
 #include "extensions/dpms.h"

@@ -1,0 +1,43 @@
+Date: May 29 1999
+
+ここには、XFree86 3.3.3.1 の附属資料の日本語訳が含まれています。
+
+原文資料のうち、今回のリリースでは日本語訳されなかったものを以下に示します。
+
+# なお XF86Config 中に設定する Device 節に関しては、特に SVGA サーバーの
+# 場合 /usr/X11R6/lib/X11/Cards も参考にすると良いでしょう。
+
+BetaReport: 
+
+ 過去のベータリリース時に使われた XFree86 へ動作報告を送る時のための書式
+
+CODING:
+
+ コード開発者のための資料 (GNU indent options)
+
+README.DGA:
+
+ XFree86-DGA 拡張 (クライアントからビデオフレームバッファーへの
+ ダイレクトアクセス) API に関するコード開発者のための資料
+
+Devices:
+
+ XF86Config で設定する Device 節に関するデータベース 
+
+Monitors
+
+ XF86Config で設定する Monitor 節に関するデータベース
+
+modeDB.txt:
+
+ XF86Config で設定する Modeline に関するデータベース
+
+LbxProxyOnly:
+
+ lbxproxyserver の構築に必要なソースツリーのリスト、
+ ただし内容が古く、現状に合っていない (out of date)
+
+ServerOnly:
+
+ Xserver のみを構築するために必要なソースツリーのリスト
+

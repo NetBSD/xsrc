@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/neo/neo_driver.c,v 1.1.2.4 1998/10/11 15:23:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/neo/neo_driver.c,v 1.1.2.5 1999/06/18 13:08:27 hohndel Exp $ */
 /**********************************************************************
 Copyright 1998 by Precision Insight, Inc., Cedar Park, Texas.
 
@@ -508,7 +508,9 @@ NeoProbe()
     i = 0;
     if (vgaPCIInfo && vgaPCIInfo->AllCards) {
 	while (pcr = vgaPCIInfo->AllCards[i++]) {
-	    if (pcr->_vendor == PCI_VENDOR_NEOMAGIC) {
+	    if ((pcr->_vendor == PCI_VENDOR_NEOMAGIC) &&
+	        (pcr->_command & PCI_CMD_IO_ENABLE) &&
+		(pcr->_command & PCI_CMD_MEM_ENABLE)) {
 
 		/* This logic is broken for a multifunction device like the 
                  * NM2200.  Hack around the NM2200 for now by ignoring the 

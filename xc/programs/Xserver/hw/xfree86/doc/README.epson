@@ -1,33 +1,21 @@
+                     Information for EPSON SPC8110 Users
 
+                     Thomas Mueller (tmueller@sysgo.de)
 
-
-
-
-
-
-
-
-                      Information for EPSON SPC8110 Users
-
-                      Thomas Mueller (tmueller@sysgo.de)
-
-                                October 15, 1998
-
-
+                               October 15, 1998
 
 1.  General Notes
 
-This server provides support for the Seiko/EPSON SPC8110F0A LCD VGA controller
-chip.
+This server provides support for the Seiko/EPSON SPC8110F0A LCD VGA con-
+troller chip.
 
-The driver was developed and tested using an EPSON 486D4 CardPC using CRT dis-
-play mode. LCD operation was successfully tested using an earlier release of
-this driver.
+The driver was developed and tested using an EPSON 486D4 CardPC using CRT
+display mode. LCD operation was successfully tested using an earlier release
+of this driver.
 
-The current driver has support for linear mapping of the frame buffer, supports
-the hardware cursor and uses the Bitblt engine for basic operations such as
-CopyArea and solid fills.
-
+The current driver has support for linear mapping of the frame buffer, sup-
+ports the hardware cursor and uses the Bitblt engine for basic operations
+such as CopyArea and solid fills.
 
 2.  XF86Config options
 
@@ -38,8 +26,8 @@ screen section.
 Device Section Entries and Options Currently Supported:
 
       Chipset "spc8110"
-            May be specified if probing fails or to accelerate server startup.
-            The value must be "spc8110".
+            May be specified if probing fails or to accelerate server
+            startup. The value must be "spc8110".
 
       VideoRam kilobytes
             If specified the value (in kilobytes) will be used, otherwise the
@@ -47,65 +35,52 @@ Device Section Entries and Options Currently Supported:
 
       Option "sw_cursor"
             Disables the use of the hardware cursor. The hardware cursor
-            requires one Kbyte of video memory as pattern storage area. If you
-            need the full amount of video memory you may want to disable the
-            hardware cursor using this option. Also the hardware cursor code
-            was not tested with cursor images larger than 64 pixels (high or
-            wide), so if you use large images you may have to disable the hard-
-            ware cursor.
+            requires one Kbyte of video memory as pattern storage area. If
+            you need the full amount of video memory you may want to disable
+            the hardware cursor using this option. Also the hardware cursor
+            code was not tested with cursor images larger than 64 pixels
+            (high or wide), so if you use large images you may have to dis-
+            able the hardware cursor.
 
       Option "no_linear"
-            Disables the use of the linear aperture. If this option is set the
-            driver will use the standard VGA memory window at 0xa0000 otherwise
-            it will map the whole video memory.
-
-
-
- Information for EPSON SPC8110 Users                                          1
-
-
-
-
-
- Information for EPSON SPC8110 Users                                          2
-
-
+            Disables the use of the linear aperture. If this option is set
+            the driver will use the standard VGA memory window at 0xa0000
+            otherwise it will map the whole video memory.
 
       Membase baseaddress
-            In VLB/486LB configuration the linear aperture address will be set
-            to 0x03E0.0000, in PCI configuration the address will be read from
-            the PCI configuration space. The base address in VLB/486LB systems
-            may be set to any value using the "Membase" definition.
+            In VLB/486LB configuration the linear aperture address will be
+            set to 0x03E0.0000, in PCI configuration the address will be read
+            from the PCI configuration space. The base address in VLB/486LB
+            systems may be set to any value using the "Membase" definition.
 
       Option "noaccel"
-            Disables the use of the Bitblt engine. Normally the driver acceler-
-            ates screen-to-screen copy operations and solid fills.
+            Disables the use of the Bitblt engine. Normally the driver accel-
+            erates screen-to-screen copy operations and solid fills.
 
-            Since the SPC8110 puts certain restrictions on the use of the Bit-
-            blt engine you will notice different performance between certain
-            operations (eg window movement). If this is a problem for your
-            application you may want to disable the accelerator.
+            Since the SPC8110 puts certain restrictions on the use of the
+            Bitblt engine you will notice different performance between cer-
+            tain operations (eg window movement). If this is a problem for
+            your application you may want to disable the accelerator.
 
       Option "fifo_moderate"
 
       Option "fifo_conservative"
             Usually the driver computes the FIFO threshold values for the
-            SPC8110's write buffer correctly. However for certain modes (eg the
-            832x624 mode shown below) the FIFO is programmed too aggressively
-            which leads to streaks in the display during screen updates. With
-            option "fifo_moderate" the computed FIFO low  request level is
-            incremented by one with "fifo_conservative" it is incremented by
-            two.
-
+            SPC8110's write buffer correctly. However for certain modes (eg
+            the 832x624 mode shown below) the FIFO is programmed too aggres-
+            sively which leads to streaks in the display during screen
+            updates. With option "fifo_moderate" the computed FIFO low
+            request level is incremented by one with "fifo_conservative" it
+            is incremented by two.
 
 3.  Video modes
 
-The driver probes wether the chip is configured for CRT only or LCD/simultane-
-ous mode of operation. In the former case it will enable clock programming and
-will support any mode which is within the limits of the hardware. If the chip
-is configured for LCD/simultaneous operation mode the driver will respect the
-settings of the BIOS and allow only one video mode conforming with the panel
-size.
+The driver probes wether the chip is configured for CRT only or LCD/simulta-
+neous mode of operation. In the former case it will enable clock programming
+and will support any mode which is within the limits of the hardware. If the
+chip is configured for LCD/simultaneous operation mode the driver will
+respect the settings of the BIOS and allow only one video mode conforming
+with the panel size.
 
 The driver does not support interlaced or double scan modes.
 
@@ -113,29 +88,17 @@ The driver does not support interlaced or double scan modes.
 
 Probing is supported, but of course the usual warnings and disclaimers apply.
 Probing may momentarily subject your monitor/panel to sweep frequencies in
-excess of its rating.  The cautious may wish to turn off the monitor while the
-probe is running. In CRT mode the driver may produce video timings inadequate
-for your monitor, handle with care!
+excess of its rating.  The cautious may wish to turn off the monitor while
+the probe is running. In CRT mode the driver may produce video timings inade-
+quate for your monitor, handle with care!
 
 As with many integrated designs the speed of the graphics operations depend
-very much of the refresh rate you use. Higher refresh rates yield lower perfor-
-mance.
+very much of the refresh rate you use. Higher refresh rates yield lower per-
+formance.
 
 3.2  Example Modes
 
 The following XF86Config "Device" section should work for all configurations:
-
-
-
-
-
-
-
-
-
- Information for EPSON SPC8110 Users                                          3
-
-
 
        Section "Device"
            Identifier "CardPC"
@@ -160,173 +123,12 @@ These Modelines were tested in a CRT configuration:
        ModeLine "832x624" 40      832 873 1001 1090  624 625 627 651
        Modeline "640x400" 25.175  640 664  760  800  400 409 411 450
 
-
 4.  Acknowledgments
 
 Thanks to Epson Europe Electronics and ProBIT GmbH, Berlin for providing a
 loaner system and documentation to get things started.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/epson.sgml,v 1.1.2.3 1998/11/13 13:00:46 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/epson.sgml,v 1.1.2.2 1998/11/07 13:52:45 dawes Exp $
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- Information for EPSON SPC8110 Users                                          4
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                   CONTENTS
-
-
-
-1. General Notes  ........................................................... 1
-
-2. XF86Config options  ...................................................... 1
-
-3. Video modes  ............................................................. 2
-   3.1 Clocks  .............................................................. 2
-   3.2 Example Modes  ....................................................... 2
-
-4. Acknowledgments  ......................................................... 3
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                       i
-
-
-
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.epson,v 1.1.2.4 1998/11/14 06:47:02 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.epson,v 1.1.2.6 1999/06/25 08:56:52 hohndel Exp $

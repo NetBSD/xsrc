@@ -26,7 +26,7 @@
  * accel/s3/s3Cursor.c, and ark/ark_cursor.c
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_curs.c,v 3.4.2.2 1998/07/28 13:57:15 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_curs.c,v 3.4.2.6 1999/05/15 13:53:32 dawes Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -46,6 +46,9 @@
 
 #include "sis_driver.h"
 #include "sis_Blitter.h"
+
+#include "vga256.h"
+#include "xf86xaa.h"
 
 extern int sisHWCursorType;
 
@@ -122,17 +125,27 @@ Bool SISCursorInit(pm, pScr)
 	/* Program the cursor address in the chipset, because if the user 
 	   specify a less amount of memory in XF86Config than in the BIOS,
 	   the calculated address don't match with the BIOS config */
-	if ( (SISchipset == SIS5597) || (SISchipset == SIS6326) )
+	if ( (SISchipset == SIS5597) || 
+	     (SISchipset == SIS6326) || 
+	     (SISchipset == SIS530))
         {
-	        temp = SISCursorAddress / 262144; 
-                outb(0x3C4, 0x38);
-                temp2 = (inb(0x3C5) & 0x0F) | (temp << 4);
+		/* bits [22:18] of the address */
+	        temp = SISCursorAddress >> 18;
+		/* copy bits [21:18] into the top bits of SR38 */
+                temp2 = (rdinx(0x3C4,0x38) & 0x0F) | (temp << 4);
 #ifdef DEBUG
-                ErrorF ("Programming Cursor address in chipset: %d SR38=0x%X\n",SISCursorAddress, temp2);
+                ErrorF ("Programming Cursor address: %d SR38=0x%X\n",
+			SISCursorAddress, temp2);
 #endif	
                 outb(0x3C5, temp2);
-                outb(0x3C4, 0x1E);
-                temp2 = inb(0x3C5);
+		/* if set, store bit [22] to SR3E */
+		if (temp & 0x10)
+		{
+			temp2 = rdinx(0x3C4,0x3E);
+			outb(0x3C5, temp2 | 0x04);
+		}
+		/* disable the hardware cursor side pattern */
+                temp2 = rdinx(0x3C4,0x1E);
                 outb(0x3C5, (temp2 & 0xF7) );
 	}
 	return TRUE;
@@ -145,8 +158,7 @@ Bool SISCursorInit(pm, pScr)
 static void SISShowCursor() {
 	unsigned char temp;
 
-	outb(0x3C4, 0x06);
-	temp = inb(0x3C5);
+	temp = rdinx(0x3C4, 0x06);
 	outb(0x3C5, temp | 0x40);
 }
 
@@ -157,8 +169,7 @@ static void SISShowCursor() {
 void SISHideCursor() {
 	unsigned char temp;
 
-	outb(0x3C4, 0x06);
-	temp = inb(0x3C5);
+	temp = rdinx(0x3C4, 0x06);
 	outb(0x3C5, temp & 0xBF);
 }
 
@@ -272,9 +283,12 @@ static void SISLoadCursorToCard(pScr, pCurs, x, y)
 
 	if (!xf86VTSema)
 		return;
-	/* Check if blitter is active. Mustn't touch the video ram till it is finished */
+#if 0
+	/* Check if blitter is active. Mustn't touch the video ram
+           till it is finished */
 	if ( sisUseMMIO )
-	    sisBLTWAIT;
+	  xf86AccelInfoRec.Sync();
+#endif
 
 	cursor_image = pCurs->bits->devPriv[index];
 
@@ -330,8 +344,10 @@ static void SISLoadCursor(pScr, pCurs, x, y)
 	/* Position cursor */
 	SISMoveCursor(pScr, x, y);
 
+#if 0
 	if ( sisUseMMIO )
-	    sisBLTWAIT;
+	  xf86AccelInfoRec.Sync();
+#endif
 
 	/* Turn it on. */
 	SISShowCursor();

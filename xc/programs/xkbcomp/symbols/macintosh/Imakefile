@@ -1,0 +1,11 @@
+XCOMM $XConsortium: Imakefile /main/1 1996/01/23 06:59:52 kaleb $
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/programs/xkbcomp/symbols/macintosh/Imakefile,v 1.1.2.1 1999/05/23 05:30:14 dawes Exp $
+
+     DATAFILES = us
+
+all::
+
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/symbols/macintosh)
+DependTarget()

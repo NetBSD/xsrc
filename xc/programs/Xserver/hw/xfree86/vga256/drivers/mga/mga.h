@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga.h,v 3.8.2.9 1998/12/27 13:10:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga.h,v 3.8.2.10 1999/06/02 07:51:53 hohndel Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *
@@ -60,7 +60,9 @@ void dbg_outreg32(int,int);
 			   ((chip) == PCI_CHIP_MGAG100_PCI))
 #define MGA_IS_G200(chip) (((chip) == PCI_CHIP_MGAG200) || \
 			   ((chip) == PCI_CHIP_MGAG200_PCI))
-#define MGA_IS_GCLASS(chip) (MGA_IS_G100(chip) || MGA_IS_G200(chip))
+#define MGA_IS_G400(chip) ((chip) == PCI_CHIP_MGAG400)
+#define MGA_IS_GCLASS(chip) (MGA_IS_G100(chip) || MGA_IS_G200(chip) \
+				|| MGA_IS_G400(chip))
 
 typedef struct {
     Bool	isHwCursor;

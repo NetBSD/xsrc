@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86frect.c,v 3.10.2.2 1997/05/18 12:00:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86frect.c,v 3.10.2.3 1999/05/10 13:09:57 hohndel Exp $ */
 
 /*
  * Fill rectangles.
@@ -40,7 +40,7 @@ in this Software without prior written authorization from the X Consortium.
 */
 
 /* $XConsortium: cfbfillrct.c,v 5.18 94/04/17 20:28:47 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86frect.c,v 3.10.2.2 1997/05/18 12:00:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86frect.c,v 3.10.2.3 1999/05/10 13:09:57 hohndel Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -65,16 +65,6 @@ in this Software without prior written authorization from the X Consortium.
 
 #define NUM_STACK_RECTS	1024
 
-
-static void
-xf86FillRectTileCached(
-#if NeedFunctionPrototypes
-    DrawablePtr pDrawable,
-    register GCPtr pGC,
-    int		nBox,
-    BoxPtr	pBoxInit
-#endif
-);
 
 /* For performance: if only one box, see if it needs to be cached. */
 /* Don't cache if area being filled is smaller than the pattern.   */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.c,v 3.80.2.18 1998/11/05 19:18:58 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.c,v 3.80.2.21 1999/06/18 13:08:23 hohndel Exp $ */
 /*
  * cir_driver.c,v 1.10 1994/09/14 13:59:50 scooper Exp
  *
@@ -23,7 +23,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  * Author:  Bill Reynolds, bill@goshawk.lanl.gov
- * Modifications: David Dawes, <dawes@physics.su.oz.au>
+ * Modifications: David Dawes, <dawes@xfree86.org>
  * Modifications: Piercarlo Grandi, Aberystwyth (pcg@aber.ac.uk)
  * Modifications: Simon P. Cooper, <scooper@vizlab.rutgers.edu>
  * Modifications: Wolfgang Jung, <wong@cs.tu-berlin.de>
@@ -274,6 +274,7 @@ typedef struct {
   unsigned char BCLK;           /* Rambus clock (546X) */
   unsigned short cursorX;
   unsigned short cursorY;
+  unsigned char SR2D;
 } vgacirrusRec, *vgacirrusPtr;
 
 unsigned char SavedExtSeq;
@@ -1115,7 +1116,9 @@ cirrusProbe()
 		 int card = 0;
 		 pciConfigPtr pcr;
 		 while (NULL != (pcr = vgaPCIInfo->AllCards[card++])) {
-		   if (pcr->_vendor == PCI_VENDOR_CIRRUS) {
+		   if ((pcr->_vendor == PCI_VENDOR_CIRRUS) &&
+		       (pcr->_command & PCI_CMD_IO_ENABLE) &&
+		       (pcr->_command & PCI_CMD_MEM_ENABLE)){
 		     /* Yep, it's a Cirrus chip.  What one? */
 		     switch (pcr->_device) {
 		     case PCI_CHIP_GD5462:
@@ -2253,7 +2256,9 @@ cirrusFbInit()
 		  cirrusUseLinear = FALSE;
 
 		  while (NULL != (pcr = vgaPCIInfo->AllCards[card++])) {
-		    if (pcr->_vendor == PCI_VENDOR_CIRRUS) {
+		    if ((pcr->_vendor == PCI_VENDOR_CIRRUS) &&
+		        (pcr->_command & PCI_CMD_IO_ENABLE) &&
+		        (pcr->_command & PCI_CMD_MEM_ENABLE)){
 		      /* Found a Cirrus video card.
 			 !!! We should really do something to be sure
 			 that the card we just found is really the same
@@ -2958,8 +2963,29 @@ cirrusRestore(restore)
   outb(0x3C4,0x0F);		/* Restoring this registers avoids */
   outb(0x3C5,restore->SRF);	/* textmode corruption on 2Mb cards. */
 
-  outb(0x3C4,0x07);		/* This will disable linear addressing */
-  outb(0x3C5,restore->SR7);	/* if enabled. */
+  /* -- SZG -- */
+  if (cirrusChip == CLGD7543 && cirrusUseLinear) {
+    if ((restore->SR7 & 0xF0) == 0) {
+      /* going to banked framebuffer */
+      /* Clear SR7 */
+      outb(0x3C4,0x07);
+      outb(0x3C5,restore->SR7);
+      /* Clear SR2D */
+      outb(0x3C4,0x2D);
+      outb(0x3C5,restore->SR2D);
+    } else {
+      /* going to linear framebuffer */
+      /* Set SR2D to high bits */
+      outb(0x3C4,0x2D);
+      outb(0x3C5,restore->SR2D);
+      /* Set SR7 to low bits */
+      outb(0x3C4,0x07);
+      outb(0x3C5,restore->SR7);
+    }
+  } else {
+    outb(0x3C4,0x07);		/* This will disable linear addressing */
+    outb(0x3C5,restore->SR7);	/* if enabled. */
+  }
 
 #ifndef MONOVGA
 #ifdef ALLOW_8BPP_MULTIPLEXING
@@ -3295,6 +3321,10 @@ cirrusSave(save)
 
   outb(0x3C4,0x07);
   save->SR7 = inb(0x3C5);
+
+  /* SZG */
+  outb(0x3C4,0x2D);
+  save->SR2D = inb(0x3C5);
 
   outb(0x3C4,0x0E);
   save->SRE = inb(0x3C5);
@@ -3981,6 +4011,7 @@ cirrusInit(mode)
 #ifdef MONOVGA
     new->SR7 = 0x00;		/* Use 16 color mode. */
 #else
+
       /*
        * There are two 16bpp clocking modes.
        * 'Clock / 2 for 16-bit/Pixel Data' clocking mode (0x03).
@@ -4035,6 +4066,10 @@ cirrusInit(mode)
 #ifdef CIRRUS_SUPPORT_LINEAR
       if (cirrusUseLinear && !HAVE546X())
 	new->SR7 |= 0x0E << 4;	/* Map at 14Mb. */
+      /* Map at 62Mb */
+      if (cirrusUseLinear && cirrusChip == CLGD7543) {
+	new->SR2D |= 0xC0;
+      }
 #endif
 
       if (mode->VTotal >= 1024 && !(mode->Flags & V_INTERLACE))

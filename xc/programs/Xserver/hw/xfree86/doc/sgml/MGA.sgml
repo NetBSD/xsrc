@@ -22,6 +22,7 @@ TVP3026 RAMDAC). It has been tested with 4 MB, 8 MB and 16 MB WRAM.
 <item>Mystique G200 (but no TVout support)
 <item>Productiva G100 with SGRAM and SDRAM.  4MB and 8MB versions have been
 tested.
+<item>Matrox G400 (only the first head and no TVout support).
 </itemize>
 
 <sect1>What's not supported
@@ -178,7 +179,7 @@ and:
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.15 1998/12/30 09:14:45 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/MGA.sgml,v 3.4.2.16 1999/06/23 12:37:18 hohndel Exp $
 </verb>
 
 </article>

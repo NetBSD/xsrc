@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_accel.c,v 3.1.2.4 1998/11/04 08:02:06 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_accel.c,v 3.1.2.5 1999/06/02 07:51:56 hohndel Exp $ */
 
 
 /*
@@ -268,6 +268,27 @@ static int sisALUConv[] =
     0xFF,		       /* dest = 0xFF; GXset, 0xF */
 };
 
+/* alu to sis conversion for use with pattern data */
+static int sisALUConv2[] =
+{
+    0x00,                              /* dest = 0; GXclear, 0 */
+    0xA0,                              /* dest &= src; GXand, 0x1 */
+    0x50,                              /* dest = src & ~dest; GXandReverse, 0x2 */
+    0xF0,                              /* dest = src; GXcopy, 0x3 */
+    0x0A,                              /* dest &= ~src; GXandInverted, 0x4 */
+    0xAA,                              /* dest = dest; GXnoop, 0x5 */
+    0x5A,                              /* dest = ^src; GXxor, 0x6 */
+    0xFA,                              /* dest |= src; GXor, 0x7 */
+    0x05,                              /* dest = ~src & ~dest;GXnor, 0x8 */
+    0xA5,                              /*?? dest ^= ~src ;GXequiv, 0x9 */
+    0x55,                              /* dest = ~dest; GXInvert, 0xA */
+    0xF5,                              /* dest = src|~dest ;GXorReverse, 0xB */
+    0x0F,                              /* dest = ~src; GXcopyInverted, 0xC */
+    0xAF,                              /* dest |= ~src; GXorInverted, 0xD */
+    0x5F,                              /*?? dest = ~src|~dest ;GXnand, 0xE */
+    0xFF,                              /* dest = 0xFF; GXset, 0xF */
+};
+
 /*
  * This is the implementation of the SetupForFillRectSolid function
  * that sets up the coprocessor for a subsequent batch of solid
@@ -427,13 +448,13 @@ void SISSetupForScreenToScreenColorExpand(bg, fg, rop, planemask)
     /* becareful with rop */
     if (isTransparent) {
 	sisSETFGCOLOR(fg);
-	sisSETROPFG(0xf0); 	/* pat copy */
+	sisSETROPFG(sisALUConv2[rop & 0xF]);
 	sisSETROPBG(0xAA); 	/* dst */
 	op |= sisPATFG | sisSRCBG ; 
     } else {
 	sisSETBGCOLOR(bg);
 	sisSETFGCOLOR(fg);
-	sisSETROPFG(0xf0);	/* pat copy */
+	sisSETROPFG(sisALUConv2[rop & 0xF]);
 	sisSETROPBG(0xcc); 	/* copy */
 	op |= sisPATFG | sisSRCBG ;
     }
@@ -488,7 +509,7 @@ planemask)
     int	op ;
     int pitch = vga256InfoRec.displayWidth * vgaBytesPerPixel ;
     int destaddr = y * pitch + x * vgaBytesPerPixel;
-
+    
     op  = sisCMDCOLEXP | sisTOP2BOTTOM | sisLEFT2RIGHT | 
 	sisPATFG | sisSRCBG | sisCMDENHCOLEXP ;
     /*
@@ -497,12 +518,12 @@ planemask)
     /* becareful with rop */
     if (isTransparent) {
 	sisSETFGCOLOR(fg);
-	sisSETROPFG(0xf0); 	/* pat copy */
+	sisSETROPFG(sisALUConv2[rop & 0xF]);
 	sisSETROPBG(0xAA); 	/* dst */
     } else {
 	sisSETBGCOLOR(bg);
 	sisSETFGCOLOR(fg);
-	sisSETROPFG(0xf0);	/* pat copy */
+	sisSETROPFG(sisALUConv2[rop & 0xF]);
 	sisSETROPBG(0xcc); 	/* copy */
     }
     sisColExp_op = op ;
@@ -571,12 +592,12 @@ void SISSetupFor8x8PatternColorExpand(patternx, patterny, bg, fg,
     /* becareful with rop */
     if (isTransparent) {
 	sisSETFGCOLOR(fg);
-	sisSETROPFG(0xf0); 	/* pat copy */
+	sisSETROPFG(sisALUConv2[rop & 0xF]);
 	sisSETROPBG(0xAA); 	/* dst */
     } else {
 	sisSETBGCOLOR(bg);
 	sisSETFGCOLOR(fg);
-	sisSETROPFG(0xf0);	/* pat copy */
+	sisSETROPFG(sisALUConv2[rop & 0xF]);
 	sisSETROPBG(0xcc); 	/* copy */
     }
     sisBLTWAIT; 

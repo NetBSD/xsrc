@@ -1,25 +1,98 @@
 XCOMM $XConsortium: Imakefile /main/6 1996/02/21 17:41:56 kaleb $
 
-
-
-
-
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/Imakefile,v 3.8.2.2 1998/11/08 04:06:56 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/Imakefile,v 3.8.2.3 1999/06/02 07:50:37 hohndel Exp $
 #include <Server.tmpl>
 
-#if defined(LinuxArchitecture) || BuildAllDocs
+#if !BuildLinuxDocText
+/* FreeBSD's README is handled separately because of name length limits */
+#ifdef BSD386Architecture
+OSREADME = /* README.Bsdi */
+#endif
+#ifdef FreeBSDArchitecture
+OSREADME = README.FreeBSD
+#endif
+#ifdef NetBSDArchitecture
+OSREADME = README.NetBSD
+#endif
+#ifdef OpenBSDArchitecture
+OSREADME = README.OpenBSD
+#endif
+#ifdef i386MachArchitecture
+OSREADME = /* README.Mach */
+#endif
+#ifdef LinuxArchitecture
 OSREADME = README.Linux
 #endif
+#ifdef LynxOSArchitecture
+OSREADME = README.LynxOS
+#endif
+#ifdef MinixArchitecture
+OSREADME = /* README.Minix */
+#endif
+#ifdef AmoebaArchitecture
+OSREADME = /* README.Amoeba */
+#endif
+#ifdef SVR3Architecture
+# ifdef i386ScoArchitecture
+OSREADME = README.SCO /* README.SVR3 */
+# else
+#  ifdef i386IscArchitecture
+OSREADME = README.isc /* README.SVR3 */
+#  else
+OSREADME = /* README.SVR3 */
+#  endif
+# endif
+#endif
+#ifdef SVR4Architecture
+# ifdef SunArchitecture
+OSREADME = README.SOLX86
+# else
+OSREADME = README.SVR4
+# endif
+#endif
+#ifdef OS2Architecture
+OSREADME = README.OS2
+#endif
+#endif /* !BuildLinuxDocText */
 
-MAINDOCS = COPYRIGHT QuickStart.doc README README.Config INSTALL AccelCards \
-	   /*VideoModes.doc*/ README.S3 README.Mach64 README.ati BUILD \
-	   README.chips README.cirrus RELNOTES LinkKit VGADriver.doc
-
-FILES = $(MAINDOCS) $(OSREADME)
+#if XFree86Version % 10
+REPORTFORM = BetaReport
+#endif
 
 all::
 
+#if !BuildLinuxDocText
+HWREADME =  README.ati README.trident README.tseng README.WstDig \
+            README.DECtga  README.apm README.rendition README.epson \
+            README.chips README.cirrus README.Video7 README.P9000 README.agx \
+            README.S3 README.S3V README.SiS README.W32 README.Oak \
+            README.I128 README.Mach32 \
+            README.Mach64 README.ark README.MGA README.NVIDIA README.mouse \
+	    README.neo README.rendition README.3DLabs README.cyrix
+
+MAINDOCS = COPYRIGHT README README.Config BUILD RELNOTES
+
+OTHERDOCS = VideoModes.doc QuickStart.doc README.clkprog xinput
+#endif
+
+## MISCDOCS = ServersOnly /*LbxproxyOnly*/ $(REPORTFORM) README.DGA
+MISCDOCS = VGADriver.doc modelines.txt
+
+## DATABASE = /*modeDB.txt*/ AccelCards Monitors Devices
+DATABASE = 
+
+FILES = $(MAINDOCS) $(OSREADME) $(HWREADME) $(OTHERDOCS) $(MISCDOCS) $(DATABASE)
+
 InstallMultipleDest(install,$(FILES),$(XFREE86JAPANESEDOCDIR))
 
+LinkFile(README.Mach32,READ.Mach32)
 LinkFile(README.Mach64,READ.Mach64)
+LinkFile(README.FreeBSD,READ.FreeBSD)
+LinkFile(README.Riva128,README.NVIDIA)
 
+#ifdef IHaveSubdirs
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
+
+all::

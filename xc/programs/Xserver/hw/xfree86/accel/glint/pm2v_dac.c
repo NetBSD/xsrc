@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/pm2v_dac.c,v 1.1.2.2 1998/08/07 09:43:44 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/pm2v_dac.c,v 1.1.2.3 1999/04/15 14:28:58 hohndel Exp $ */
 /*
  * Copyright 1998 The XFree86 Project, Inc
  *
@@ -87,7 +87,7 @@ PM2VDACInit(int clock)
     GLINT_WRITE_REG(CC & 0xFFFFFFFD, ChipConfig); /* Disable VGA */
     glintOutPM2IndReg(PM2VDACRDMiscControl, 0x00, 0x01); /* 8bit DAC */
   
-    switch (glintInfoRec.depth)
+    switch (glintInfoRec.bitsPerPixel)
     {
     case 8:
     	glintOutPM2IndReg(PM2VDACRDPixelSize,0x00,0x00);

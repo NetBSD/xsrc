@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_driver.h,v 1.1.2.3 1998/11/04 08:02:06 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_driver.h,v 1.1.2.5 1999/05/15 13:53:32 dawes Exp $ */
 
 /*
  *
@@ -35,14 +35,15 @@
 #define SIS5597   5
 #define SIS5598   6 /* treated as SIS5597 */
 #define SIS6326   7
-
+#define SIS530    8 /* 2nd generation graphics engine */
+#define SIS620    9 /* treated as SIS530 */
 
 extern int SISchipset;
 
 extern Bool sisLinearSupport;	       /*linear addressing enable */
 
 extern Bool sisUseMMIO;
-extern unsigned char *sisMMIOBase;
+extern volatile unsigned char *sisMMIOBase;
 extern unsigned int sisBLTPatternAddress;
 extern int sisBLTPatternOffscreenSize;
 extern Bool sisAvoidImageBLT;
@@ -57,7 +58,8 @@ extern int sisAluConv[];		       /* Map Alu to SIS ROP source data  */
  * Definitions for IO access to 32 bit ports
  */
 extern int sisReg32MMIO[];
-#define BR(x) sisReg32MMIO[x]
+extern int sis2Reg32MMIO[];
+
 
 
 /*

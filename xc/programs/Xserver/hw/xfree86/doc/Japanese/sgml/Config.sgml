@@ -5,30 +5,39 @@
 <article>
 
 <!--
- <title>Configuring XFree86: A Step-By-Step Guide
- <author>David Wexelblat and The XFree86 Project, Inc
- <date>5 October 1994
+<title>Configuring XFree86: A Step-By-Step Guide
 -->
-<title>XFree86 の設定について: 段階的ガイド
-<author> David Wexelblat と XFree86 プロジェクト社
-<date> 1994 年 10 年 05 日
-
-<trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
-<tdate> 1997 年 8 年 1 日
+<title>XFree86 の設定について: ステップ・バイ・ステップのガイド
+<author>David Wexelblat and The XFree86 Project, Inc
+<date>5 October 1994
+<trans>The X Japanese Documentation Project
+<tdate>12 January 1998
 
 <abstract>
-この文書は XFree86 サーバをどうやって設定するかについてと、 
-<tt>XF86Config</tt> ファイルを機器構成に一致させる事について書いています。
-この文書の手順どおりに作業すれば、問題無くサーバが準備でき、
-すぐに実行できるようになります。
+<!--
+	This document describes how to set up your XFree86 server and
+the corresponding <tt>XF86Config</tt> configuration file.  If you follow the
+procedures in this document, you should have no problems getting your
+server up and running quickly.
+-->
+この文書では XFree86 サーバと、これに対応する<tt>XF86Config</tt> 設定
+ファイルの設定方法について説明します。この文書の手順どおりに作業すれば、
+サーバがは問題無く準備でき、すぐ実行できるはずです。
 
-この文書は汎用になるように設計されています。設定対象 OS 固有の 
-<tt>README</tt> ファイル（例えば、
-<tt>README.SVR4</tt>）と、設定対象ビデオカード/チップセット固有の 
-<tt>README</tt>ファイル（例えば、 <tt>README.trident</tt>）
-を必ず参照して下さい。これら固有のファイルと汎用になっているファイルとで
-矛盾を生じる場合は（全部の場合がそうであるとは限りませんが）、
-固有のファイルの手順に従って下さい。
+<!--
+	This document is designed to be generic.  Be certain to refer
+to the operating system specific <tt>README</tt> file for your OS (e.g.
+<tt>README.SVR4</tt>) and the card/chipset specific <tt>README</tt>
+file for you video card (e.g. <tt>README.trident</tt>).
+Where these specific files contradict this generic file, you should
+follow the specific instructions (there shouldn't be much of that, though).
+-->
+この文書は汎用部分について書いています。お使いの OS 固有の事情を書いた
+<tt>README</tt> ファイル(例えば <tt>README.SVR4</tt>)やビデオカード/チッ
+プセット固有の事情を書いた <tt>README</tt>ファイル(例えば 
+<tt>README.trident</tt>)を必ず参照してください。これら固有部分のファイ
+ルの内容と汎用部分に関する本文書の内容が矛盾している場合(あまりないは
+ずですが)には、固有のファイルの手順に従ってください。
 </abstract>
 
 
@@ -36,303 +45,645 @@
 <toc>
 
 
-<sect>手順概要
+<!-- <sect>Procedure Overview -->
+<sect>手順の概要
 <p>
-準備と実行は２つの段階で行ないます。まず最初に、使用したい適切なサーバを
-選択して、初期値のまま設定します。次に、 <tt>XF86Config</tt>
-ファイルを設定します。このファイルはサーバに、画面指示装置
-（例えば、マウスやトラックボール）、
-ビデオカードやモニター等、その他少しの機器について設定するものです。
+<!--
+	There are two steps to getting things up and running.  The first
+is to select the appropriate server that you will be using and set it up
+as the default server.  The second step is to set up the <tt>XF86Config</tt>
+file.  This file is used to configure the server for your pointer device
+(e.g. mouse, trackball), video card, and monitor, as well as a few other
+things.
+-->
+準備と実行は2つの段階で行ないます。まず最初に使用したい適切なサーバを
+選択して、これをデフォルトのサーバとして設定します。次に 
+<tt>XF86Config</tt> ファイルを設定します。このファイルは、ポインタデバ
+イス(例えば、マウスやトラックボール)やビデオカード、モニタ等の機器に
+ついてはサーバの設定を行うためのものです。
 
-<tt>XF86Config</tt> ファイルはいくつかの項目で構成されています。これらの手
-続きはそれぞれの部分を書き込むことで、自然に導いてくれるでしょう。
-/usr/X11R6/lib/X11/XF86Config.sample という、初期値のサンプルとして 
-<tt>XF86Config</tt> ファイルがあります。このファイルを 
-<tt>/usr/X11R6/lib/X11/XF86Config.sample</tt> にコピーして設定対象機器構成
-に固有な部分を修正して下さい。<it>XF86Config（4 章 / 5 章）</it>
-のオンラインマニュアルに <tt>XF86Config</tt> ファイルの中身とオプションの詳
-細が書かれてます。お手元の <tt>XF86Config</tt> ファイルを書き込むために、
-オンラインマニュアルを通読して下さい。
+<!--
+	The <tt>XF86Config</tt> file contains several sections; these
+procedures will lead you through filling out each part.
+There is a default/sample <tt>XF86Config</tt> file in
+<tt>/usr/X11R6/lib/X11/XF86Config.sample</tt>; you should copy 
+this to <tt>/usr/X11R6/lib/X11/XF86Config</tt>, and edit that file to your
+specific configuration.  
+The <it>XF86Config(4/5)</it> manual page describes the
+<tt>XF86Config</tt> file contents and options in detail.  
+Be sure to read through that manual page as you fill in your
+<tt>XF86Config</tt> file. 
+-->
+<tt>XF86Config</tt> ファイルはいくつかのセクションで構成されています。
+ここで説明する設定作業を行なうと、それぞれのセクションが埋まってゆきます。
+デフォルト用や設定例のファイルとしては、
+<tt>/usr/X11R6/lib/X11/XF86Config.sample </tt>があります。
+このファイルを <tt>/usr/X11R6/lib/X11/XF86Config</tt> にコピーして、編
+集を行い、読者の皆さんの独自の設定にしてください。
+<tt>XF86Config</tt> ファイルの内容とオプションについては、
+<it>XF86Config(4/5)</it>のオンラインマニュアルに詳しい説明があります。
+<tt>XF86Config</tt> ファイルを編集する前には必ずオンラインマニュアルを
+通読してください。
+
  
-<tt>XF86Config</tt> ファイルの各節は次の通りです。:
+<!--
+The sections of the <tt>XF86Config</tt> file are:
+-->
+<tt>XF86Config</tt> ファイルの各セクションは次の通りです:
  <descrip>
+<!--
+	<tag> Files </tag> 
+	  Sets the default font and RGB paths.
+-->
 	<tag> Files </tag> 
 	  標準フォントと RGB データベースのパスを設定します。
+<!--
 	<tag> Server Flags</tag> 
-	  一般的なサーバの少量のオプションを設定します。これらについて勉
-	  強したい場合は、オンラインマニュアルを参照して下さい。
+	  Sets a few general server options.  Refer to the
+	  manual page to learn about these.
+-->
+	<tag> Server Flags</tag> 
+	  一般的なサーバ用オプションをいくつか設定します。これらについ
+	  て知りたい場合は、オンラインマニュアルを参照してください。
+<!--
 	<tag> Keyboard</tag> 
-	  キーボード装置を設定します。少量のオプションパラメータを設定しま
-	  す。
+	  Sets up keyboard devices, and sets a few optional
+	  parameters.
+-->
+	<tag> Keyboard</tag> 
+	  キーボードデバイスを設定します。オプションパラメータをいくつ
+	  か設定します。
+<!--
 	<tag> Pointer</tag> 
-	  画面指示装置を設定します。少量のオプションパラメータを設定しま
-	  す。
+	  Sets up the pointer devices, and sets a few optional
+	  parameters.
+-->
+	  ポインタデバイスを設定します。オプションパラメータをいくつか
+	  設定します。
+<!--
 	<tag> Monitor</tag> 
-	  サーバに対してモニター（複数）を記述します。
+	  Describes your monitor(s) to the server.
+-->
+	<tag> Monitor</tag> 
+	  サーバに対してモニタ(複数可)を記述します。
+<!--
+	<tag> Graphics Device</tag> 
+	  Describes your video hardware to the server.
+-->
 	<tag> Graphics Device</tag> 
 	  サーバに対してビデオカードを記述します。
+<!--
 	<tag> Screen.</tag>
-	  モニターとビデオカードどのように使用するべきか記述します。
+	  Describes how the monitor and video hardware should
+	  be used.
+-->
+	<tag> Screen</tag>
+	  モニタとビデオカードの使い方を記述します。
  </descrip>
 
-
-<sect>正しい標準サーバの設定
+<!-- <sect>Setting Up The Correct Default Server -->
+<sect>デフォルトサーバの正しい設定
 <p>
+<!--
+The default server name is <tt>/usr/X11R6/bin/X</tt>.
+This is a link to a specific server binary <tt>XF86_xxxx</tt>, located
+in <tt>/usr/X11R6/bin/</tt>.  
+You should check which server the X link is connected to.  
+If it is not correct, remove it and make a new link to the correct
+binary. 
+-->
+デフォルトサーバの名前は <tt>/usr/X11R6/bin/X</tt>です。これは
+<tt>/usr/X11R6/bin/</tt>にある特定のサーバのバイナリファイルである
+<tt>XF86_xxxx</tt> へのリンクです。X が、使いたいサーバのリンクファイ
+ルになっているか確認してください。リンクが正しくないときは、X を削除し
+て正しいサーバへの新しいリンク作ってください。
 
-標準サーバの名前は <tt>/usr/X11R6/bin/X</tt>です。
-これは<tt>/usr/X11R6/bin/</tt>にある特定のサーバのバイナリファイルである
-<tt>XF86_xxxx</tt> リンクファイルです。
-X が使いたいサーバのリンクファイルになっているか確認して下さい。
-正しいリンクファイルになっていないときは、X を削除して正しい
-サーバの新しいリンクファイルを作って下さい。サーバのバイナリファイルは
-  次の通りです。:
+<!--
+The server binaries are:
+-->
+サーバのバイナリファイルは次の通りです:
  <descrip>
+<!--
+	<tag>XF86_SVGA:</tag>   
+	  Super-VGA server.  Contains accelerated support for
+	  Cirrus 542{0,2,4,6,8,9}, 543{0,4} and Western
+	  Digital 90C3{1,3} and Oak Technologies Inc. OTI087 chipsets,
+	  unaccelerated for the rest of the supported chipsets.
+-->
 	<tag>XF86_SVGA:</tag>  
-	Super-VGA サーバ。  Cirrus 542{0,2,4,6,8,9}、543{0,4} とWestern 
-	Digital 90C3{1,3} と Oak Technologies Inc. OTI087 のチップセット対
-	応のアクセラレータと残りのチップセット対応の非アクセラレータを含ん
-	でいます。
-	<tag>XF86_Mono:</tag>  オプションで Hercules または他の白黒ビデオ
-	カードをサポートする (S)VGA 白黒サーバが入っています。
+	Super-VGA サーバ。  Cirrus 542{0,2,4,6,8,9}、543{0,4} と Western 
+	Digital 90C3{1,3} と Oak Technologies Inc. OTI087 のチップセッ
+	トに対してはアクセラレーション対応で、残りのチップセットに対し
+	てはアクセラレーション対応ではありません。
+<!--
+ 	<tag>XF86_Mono:</tag>   (S)VGA monochrome, optionally Hercules
+	  or other monochrome hardware support is linked in.
+-->
+	<tag>XF86_Mono:</tag>  オプションとして Hercules 等の白黒ビデ
+	オカードをサポートする (S)VGA モノクロサーバが入っています。
+<!--
+	<tag>XF86_VGA16:</tag>  Generic VGA 16-color server.
+-->
 	<tag>XF86_VGA16:</tag>  汎用 VGA 16 色サーバ。
-	<tag>XF86_S3:</tag>     S3 アクセラレータサーバ。
-	<tag>XF86_Mach32:</tag> ATI Mach32 アクセラレータサーバ。
-	<tag>XF86_Mach64:</tag> ATI Mach64 アクセラレータサーバ。
-	<tag>XF86_Mach8:</tag>  ATI Mach8 アクセラレータサーバ。
-	<tag>XF86_8514:</tag>   8514/A アクセラレータサーバ。
-	<tag>XF86_P9000:</tag>  P9000 アクセラレータサーバ。
-	<tag>XF86_AGX:</tag>    AGX アクセラレータサーバ。
-	<tag>XF86_W32:</tag>    ET4000/W32 とET6000 アクセラレータサーバ。
+<!--
+	<tag>XF86_S3:</tag>     S3 accelerated server.
+-->
+	<tag>XF86_S3:</tag>     S3 用アクセラレーション対応サーバ。
+<!--
+	<tag>XF86_Mach32:</tag> ATI Mach32 accelerated server.
+-->
+	<tag>XF86_Mach32:</tag> ATI Mach32 用アクセラレーション対応サーバ。
+<!--
+	<tag>XF86_Mach64:</tag> ATI Mach64 accelerated server.
+-->
+	<tag>XF86_Mach64:</tag> ATI Mach64 用アクセラレーション対応サーバ。
+<!--
+	<tag>XF86_Mach8:</tag>  ATI Mach8 accelerated server.
+-->
+	<tag>XF86_Mach8:</tag>  ATI Mach8 用アクセラレーション対応サーバ。
+<!--
+	<tag>XF86_8514:</tag>   8514/A accelerated server.
+-->
+	<tag>XF86_8514:</tag>   8514/A 用アクセラレーション対応サーバ。
+<!--
+	<tag>XF86_P9000:</tag>  P9000 accelerated server.
+-->
+	<tag>XF86_P9000:</tag>  P9000 用アクセラレーション対応サーバ。
+<!--
+	<tag>XF86_AGX:</tag>    AGX accelerated server.
+-->
+	<tag>XF86_AGX:</tag>    AGX 用アクセラレーション対応サーバ。
+<!--
+	<tag>XF86_W32:</tag>    ET4000/W32 and ET6000 accelerated server.
+-->
+	<tag>XF86_W32:</tag>    ET4000/W32, ET6000 用アクセラレーション対応サーバ。
  </descrip>
 
-それぞれのサーバ対応のオンラインマニュアルがありますので、サポートしてい
-るチップセット固有の詳細とサーバ固有の構成のオプションはオンラインマニュ
-アルを参照して下さい。
+<!--
+There is a manual page for each of these servers; refer to the manual
+page for specific details on supported chipsets and server-specific
+configuration options.
+-->
+それぞれのサーバ対応のオンラインマニュアルがあります。サポートしてい
+るチップセットやサーバ固有の設定オプションに関する細かい点については、
+オンラインマニュアルを参照してください。
 
-LinkKit にてサーバにドライバーを組み込み、変更する場合に注意事項がありま
-す。配付物がどうゆう風に組み立てられているかによりますが、サーバのバイナ
-リファイルには使用可能な全てのドライバーは含まれていません。組み込まれてい
-るドライバーの一覧を得るには、 <tt>/usr/X11R6/bin/X -showconfig</tt> 
-を実行して下さい。サーバを再リンクする必要がある場合は、固有の情報について 
-LinkKit の
-<url url="LinkKit.html" name="<tt>README.LinkKit</tt>"> を参照して下さい。
+<!--
+	Note that it is possible to modify the drivers configured into
+a server via the LinkKit; the server binary may not contain all of
+the possible drivers, depending on how the distribution was assembled.
+You can run <tt>/usr/X11R6/bin/X -showconfig</tt> to get a printout of the
+configured drivers.  If you need to relink your server, refer to the
+<tt>README</tt> file in the LinkKit for specific information.
+-->
+LinkKit を使ってサーバにドライバを組み込み、変更できることに注意してく
+ださい。配布物の構成にもよりますが、サーバのバイナリファイルにはあらゆ
+るドライバが含まれているわけではないでしょう。組み込まれているドライバ
+の一覧を得るには、 <tt>/usr/X11R6/bin/X -showconfig</tt> を実行してく
+ださい。サーバをリンクし直す必要がある場合は、
+<url url="LinkKit.html" name="<tt>README.LinkKit</tt>"> を参照して
+LinkKit 固有の情報について調べてください。
 
-<sect>XF86Config の易しい部分
+<!-- <sect>The Easy Parts of XF86Config -->
+<sect>XF86Config の簡単な部分
 <p>
 
-<tt>XF86Config</tt> ファイルの &dquot;Files&dquot; の節は、RGB (赤緑青) のデ
-ータベース
-ファイル（一般に、これを変更するべきではありません）へのパスと、標準フォン
-トのパスを内蔵させることです。複数の FontPath 行を <tt>XF86Config</tt> に書
-いてある場合は、FontPath を結合して使用できます。それぞれの FontPath のディ
-レクトリが存在することと、ちゃんとフォントが使えることを確認して下さい。
-サーバが 
-&dquot;Can't open default font 'fixed'&dquot;（標準の'固定幅'フォントが有り
-ません）と
-言ってきたら、それはフォントの登録が正しくないからです。それぞれのフォント
-の登録を正しくしたいなら、それぞれのフォントのディレクトリの所で 
-`mkfontdir' コマンドを実行してみて下さい。<it>XF86Config</it> のオンライン
-マニュアルの 4 章 / 5 章に、<tt>XF86Config</tt> ファイルの最初の部分の他の
-パラメタについて記述しています。
+<!--
+The "Files" section of the <tt>XF86Config</tt> file contains the path to
+the RGB database file (which should, in general, never need to be
+changed), and the default font path.  You can have multiple FontPath
+lines in your <tt>XF86Config</tt>; they are concatenated.  Ensure that each
+directory listed exists and is a valid font directory.  If the server
+complains about "Can't open default font 'fixed'", it is because there
+is an invalid entry in your font path.  Try running the 'mkfontdir'
+command in each directory if you are certain that each one is correct.
+The <it>XF86Config(4/5)</it> manual page describes other parameters that may be
+in this section of the file.
+-->
+<tt>XF86Config</tt> ファイルの &dquot;Files&dquot; セクションには、RGB
+(色)のデータベースファイル(一般には、これを変更するべきではありません)
+へのパスと、標準フォントのパスが記述されます。複数の FontPath 行を 
+<tt>XF86Config</tt> に書くことができます。この場合には、全て繋げられて
+1つのパスになります。それぞれの FontPath のディレクトリが存在すること
+と、有効なフォントディレクトリであることを確認してください。
+サーバが &dquot;Can't open default font 'fixed'&dquot; (標準の'固定幅'
+フォントがありません)とエラーを出力してきたら、それはフォントパスの設
+定がおかしいからです。フォントディレクトリは間違いないつもりであれば、
+それぞれのディレクトリで `mkfontdir' コマンドを実行してみてください。
+オンラインマニュアルの <it>XF86Config(4/5)</it> には、このセクションの
+他のパラメータについての説明があります。
 
-次は &dquot;Keyboard&dquot; の節です。 この節には、キーボードの通信手順（Xqu
-eue または
-Normal）、キーの繰り返しの速度やいくつかの修飾キーの標準的な割り付けについ
-て設定できます。一般にここは変更する必要は無いでしょう。英語用でないキーボ
-ードのユーザーは修飾キーの定義を変えたいことでしょう。
-詳細は <it>XF86Config</it> のオンラインマニュアルの 4 章 / 5 章を見て下さ
-い。
-&lsqb; 訳注：修飾キー = 他のキーと一緒に押す、オルタネイトキー(Alt)、コントロー
-ルキー(Cntl)やシフトキー(Shift) 等押しても字の出ないキーの事でしょう &rsqb;
+<!--
+	Next comes the "Keyboard" section.  In this section, you can
+specify the keyboard protocol (Xqueue or Normal), the repeat rate, and
+the default mapping of some of the modifier keys.  In general, nothing
+will need to be modified here. Users of non-English keyboards might want
+to change the definitions of the modifier keys. See the
+<it>XF86Config(4/5)</it> man page for details.
+-->
+次は &dquot;Keyboard&dquot; セクションです。 このセクションでは、キー
+ボードのプロトコル(Xqueue または Normal)やキーの繰り返しの速度、いくつ
+かの修飾キーの標準的な割り付けについて設定します。一般には、ここを変更
+する必要はないでしょう。英語用でないキーボードのユーザであれば、修飾キー
+の定義を変えたいことがあるかもしれません。
+詳しくはオンラインマニュアルの <it>XF86Config(4/5)</it> を参照してくだ
+さい。
 
-次は &dquot;Pointer&dquot; の節です。この節では画面指示装置の通信手順と装置
-について指
-定できます。通信手順名称は製造者名称ではないことに注意して下さい。例えば、
-いくつかの Logitech のマウス（特に新しいもの）の場合、Logitech の通信手順
-名称ではなく MouseMan または Microsoft の通信手順名称を用います。その他の
-マウスのパラメタはこの節で、調整できます。２ボタンマウスを使っているとき
-は、Emulate3Buttons というキーワードをコメントにしないで下さい。
-Emulate3Buttons モードで使うときは、同時に２つのボタンを押すことで、サーバ
-ーに真ん中のボタンを押したことを知らせることになります。
+<!--
+	After this comes the "Pointer" section.  In this section you can
+specify the pointer protocol and device.  Note that the protocol name
+does not always match the manufacturer's name.  For example, some
+Logitech mice (especially newer ones) require either the MouseMan or
+Microsoft protocols, not the Logitech protocol.  Some other mouse
+parameters can be adjusted here.  If you are using a two-button mouse,
+uncomment the Emulate3Buttons keyword - in this mode, pressing both
+mouse buttons simultaneously causes the server to report a middle button
+press.
+-->
+次は &dquot;Pointer&dquot; セクションです。このセクションでは、ポイン
+タデバイスのプロトコルとデバイスを指定します。プロトコル名は必ずしもメー
+カ名と同じではない点に注意してください。例えば、Logitech のマウス(特に
+新しいもの)の場合、Logitech プロトコルではなく MouseMan プロトコルや
+Microsoft プロトコルを必要とするものもあります。
 
-サーバがマウスデバイスを認識しない、と文句を言うときはそれはサーバの問
-題ではないことに注意して下さい。それはよく起こる設定ミスであり、99.999% の
-確率で OS にデバイスが正しく設定されていない事が理由で、いくつかの OS では
-エラーとなるでしょう。それ故、OS レベルでのサポートが正しいことをよく調べ
-るまでは、我々にバグ報告をしないで下さい。
+その他のマウスのパラメータもこのセクションで調整できます。2ボタンマウ
+スを使っているときは、Emulate3Buttons というキーワードのコメントを外し
+ましょう。Emulate3Buttons モードで使った場合、同時に2つのボタンを押す
+と、サーバには真ん中のボタンを押されたことが通知されます。
 
+<!--
+	Note that if the server complains about being unable to open
+your mouse device, this is NOT a server problem.  It has been a very
+common misconfiguration error on several of the OSs, and 99.999&percnt; of the
+time it is because the device is not correctly configured in the OS.
+Hence don't bug us until after you prove that your OS level support
+is correct.
+-->
+「マウスデバイスを認識できない」とサーバが文句を言うときは、サーバの問
+題では「ない」ことに注意してください。OS によっては、これは大変ありが
+ちな設定ミスであり、99.999&percnt; の確率で原因は OS のデバイス設定の
+間違いにあります。したがって、OS レベルでのサポートが正しいことをちゃ
+んと確認するまでは、我々にバグ報告をしないでください。
+
+<!-- <sect>Configuring the Video Hardware -->
 <sect>ビデオボードの設定について
 <p>
 
-&dquot;Device&dquot; の節ではビデオボードについて記述します。複数の機器の節
-を書くこと
-を許しており、それぞれの節ごとに１つのビデオカードを記述します。
+<!--
+The video hardware is described in the "Device" sections.
+Multiple device sections are permitted, and each section describes a
+single graphics board.
+-->
+&dquot;Device&dquot; セクションではビデオボードについての記述を行いま
+す。複数のデバイスに関するセクションを書くことができ、セクションごとに
+1つのビデオカードに関する記述を行います。
 
-設定しようとしている汎用でない情報について、サーバのオンラインマニュア
-ルとチップセット固有の <tt>README</tt> ファイルを読んで確認して下さい。
+<!--
+	Be sure to read the server manual pages and the chipset-specific
+<tt>README</tt> files for any non-generic information that may apply to your
+setup.
+-->
+汎用でないけれど設定に使えるかもしれない情報を知っておくために、サーバ
+のオンラインマニュアルとチップセット固有の <tt>README</tt> ファイルを
+必ず読んでください。
 
-Device の節を書くために、設定対象装置のデータを集める必要があり、設定方針
-を決めて下さい。必要な装置のデータは次のとおりです。:
+<!--
+To create a Device section you need to collect the data for your
+hardware, and make some configuration decisions.  The hardware data you
+need is:
+-->
+Device セクションを書くためには、ハードウェアに関するデータを集めて
+設定に関していくつかのことを決める必要があります。ハードウェアに関し
+て必要なデータは次の通りです:
+<!--
 <itemize>
-	<item>チップセットの種別
-	<item>表示用メモリの量
-	<item>使用可能なドットクロックの値（プログラム可能な場合）
-	<item>Ramdac の種別（幾つかのサーバ用）
+	<item>Chipset
+	<item>Amount of video memory
+	<item>Dot-clocks available or clock chip used (if programmable)
+	<item>Ramdac type (for some servers)
 </itemize>
-<tt>XF86Config</tt> ファイルの中で全て指定の値を埋め込んでおくよりは、通常、
-サーバ
-ーに自分自身で装置のデータを取り込ませたほうがいいでしょう。その方が間違い
-なく設定できます。'Chipset' は設定しているドライバ（'X -showconfig'を実行
-すれば表示できます）対応のキーワードの１つです。アクセラレータサーバで
-は、現在、いくつかのサーバがチップセットドライバを持っています。メモリの
-量はキロバイト単位で指定しますので、１メガバイトのメモリの場合は 1024 と指
-定します。
+-->
+<itemize>
+	<item>チップセットの種類
+	<item>ビデオメモリの量
+	<item>使用可能なドットクロックの値または使っているクロックチップ(プログラム可能な場合)
+	<item>Ramdac の種類(一部のサーバ用)
+</itemize>
+<!--
+The server, in general, is capable of filling these on its own, but it
+is best to fully specify things in the <tt>XF86Config</tt> file, so that no
+mistakes are made.  The 'Chipset' is one of the keyword strings for a
+configured driver (which can be displayed by running 'X -showconfig').
+Of the accelerated servers, only some have chipset drivers currently.
+The amount of memory is specified in KBytes, so 1M of memory would be
+specified as 1024.
+-->
+一般的にはサーバは自力でこれらの値を調べることができますが、
+<tt>XF86Config</tt> ファイル中で全ての値を指定する方がよいでしょう。
+そうすれば間違いが起こらないからです。'Chipset' は設定するドライバ
+('X -showconfig'を実行すれば表示できます)を表すキーワードの1つです。
+現在のところ、アクセラレーション対応のサーバのうち、ごく一部のサーバだ
+けがチップセットドライバを持っています。メモリの量はキロバイト単位で指
+定しますので、1メガバイトのメモリがある場合は 1024 を指定します。
 
-ドットクロックはグラフィックボードの設定において一番複雑な部分です。幸運に
-もドットクロックを集めた大きなデータベースが利用可能です。いくつかのグラフ
-ィクボード対応の Device のデータの一覧が `Devices' ファイルにあります。あ
-なたのグラフィックボードが見つかれば、そのデータから始めることが出来ます。
-<tt>modeDB.txt</tt> ファイルの最初の部分は無数の SVGA カードの情報が一覧になって
-います。アクセラレータカードでは、`AccelCards' ファイルを見て下さい。幸運
-ならば、自分のカードが何処かに見つかるでしょう。もしカードが見つかったら、
-<tt>XF86Config</tt> ファイルの Clocks 行にデータベースから数列を、データベー
-スに表
-示されているそのままを並べ替えたりしないで残さずコピーしましょう。新しいア
-クセラレータカードはプログラマブルクロックジェネレータを使っているので 
-<tt>XF86Config</tt> ファイルの ClockChip 行に引用符（&dquot;）付きでクロック
-ジェネレータ
-の型式が書いてあることに注意して下さい。（例えば、&num;9 GXe を使うならば、 
-`ClockChip &dquot;icd2061a&dquot;' の様に書いてあるでしょう）。
+<!--
+	The dot-clocks are the trickiest part of card configuration.
+Fortunately a large database of collected dot-clocks is available.  A
+list of Device entries for some graphics boards can be found in the
+`Devices' file.  If you find one for your card, you can start with that.
+Also, the first part of the <tt>modeDB.txt</tt> file lists information for a
+myriad of SVGA cards.  For accelerated cards, you can also look in the
+`AccelCards' file.  If you are fortunate, your card is listed in one
+place or the other.  If you find your card, copy the numbers from the
+database to the Clocks line in your <tt>XF86Config</tt> file, exactly as they
+appear in the database, without sorting, and leaving any duplicates.
+Note that some of the newer accelerated cards use a programmable clock
+generator, in which case a ClockChip line is used in your <tt>XF86Config</tt>
+file to identify the type of clock generator.  (e.g. 'ClockChip
+"icd2061a"', which would be used for a &num;9 GXe board).
+-->
+ドットクロックはグラフィックボードの設定において一番わかりにくい部分で
+す。ですが幸運なことに、ドットクロックをたくさん集めたデータベースを利
+用することができます。いくつかのグラフィックボード用の Device のエント
+リの一覧が `Devices' ファイルにあります。ここに読者の皆さんが使ってい
+るグラフィックボードがあれば、最初はそのデータを使うことができます。
+<tt>modeDB.txt</tt> ファイルの最初の部分には、SVGA カードの情報がたく
+さんあります。アクセラレータカードについては、`AccelCards' ファイルも
+見てください。運が良ければ、お使いのカードがどこかにあることでしょう。
+もしカードが見つかったら、その数値をデータベースから 
+<tt>XF86Config</tt> ファイルの Clocks 行にコピーします。
+その際には、データベースに書かれているそのままの数値をコピーしなければ
+なりません。並べ変えたり、重複を取り除いたりしてはいけません。
+新しいアクセラレータカードにはプログラマブルクロックジェネレータを使って
+いるものがありますが、この場合には <tt>XF86Config</tt> ファイルの 
+ClockChip 行を使ってクロックジェネレータの型を識別する点に注意してくだ
+さい。(例えば、'ClockChip "icd2061a"' は &num;9 GXe のために使います。)
 
-グラフィックボードが一覧に見つからないときは、サーバにグラフィックボード
-の検出を任せてしまいましょう。sh 又は ksh の場合は、
-`X -probeonly &gt;/tmp/out 2&gt;&amp;1'、csh の場合は、`X -probeonly &gt;&amp;/tmp/out' と
-コマンドを実行しましょう。この時、<tt>XF86Config</tt> ファイルに Clocks 行
-を<bf>書かない</bf>でおいて下さい。コマンドを実行したら、サーバが素速くク
-ロックを巡回して調べる間、数秒間画面が暗くなります。調べることでモニターを
-痛めることはありませんが、表示仕様以上で検査をする場合があるため、新しいモ
-ニターの場合は自動的にそれ自身でモニターの電源を落としてしまう場合がありま
-す。とにかく、調査が終わったら、ドットクロックの検出結果の/tmp/out ファイル
-を見ましょう。/tmp/out の数列をそのまま <tt>XF86Config</tt> ファイルの 
-Clocks 行にコピーしましょう。並び変えたり、いかなる変更もしてはいけません。
+<!--
+	If you can't find a listing for your board, you can attempt to
+have the server detect them.  Run the command 'X -probeonly >/tmp/out 2>&amp;1'
+(for sh or ksh) or 'X -probeonly >&amp;/tmp/out' (for csh). Be sure that the
+<tt>XF86Config</tt> file does <bf>not</bf> contain a Clocks line at
+this point. Running this 
+will cause your monitor to freak out for a couple of seconds, as the
+server cycles through the clocks rapidly.  It should not damage your
+monitor, but some newer monitors may shut themselves off because
+things may go out of spec.  Anyhow, when this gets done, look in the
+file /tmp/out for the detected dot-clocks.  Copy these to the Clocks
+line in your <tt>XF86Config</tt> file, exactly as they appear in
+/tmp/out.  
+Don't sort them or rearrange them in any way.
+-->
+お使いのグラフィックボードが一覧にないときは、グラフィックボードの検
+出はサーバに任せてしまいましょう。sh または ksh の場合は、
+`X -probeonly &gt;/tmp/out 2&gt;&amp;1'、csh の場合は、
+`X -probeonly &gt;&amp;/tmp/out' とコマンドを実行しましょう。この時点
+では、<tt>XF86Config</tt> ファイルに Clocks 行は<bf>書かない</bf>よう
+にします。このコマンドを実行すると数秒間画面がおかしくなります。これは、
+サーバが素速くクロックを変更するためです。調べることでモニタを痛めるこ
+とはないはずですが、新しいモニターの場合は自動的に電源が落ちてしまうか
+もしれません。これは仕様を越えた動作を行なうこともあるために起こります。
+とにかく、調査が終わったら/tmp/out ファイルを見てドットクロックの検出
+結果を調べましょう。そして、/tmp/out の数値を変更せずにそのまま 
+<tt>XF86Config</tt> ファイルの Clocks 行にコピーしましょう。どんな種類
+であれ、ソートや並び変えをしてはいけません。
 
-グラフィックボードがプログラマブルクロックジェネレータを持っている可能性が
-あります。この場合は、2、3個のクロックだけ値を持ち、残りが全てゼロになって
-いることでしょう。もし、ボードがデータベースの中に見当たらなかったら、
-XFree86 チームに連絡を取るか、 comp.windows.x.i386unix にメッセージをポス
-トして下さい。殆どの場合 Diamond 社の装置がこの種の分類になりますが、
-Diamond 社 はプログラムの詳細を公開してくれませんので、我々は助けることが
-出来ません。ネットニュースでは、倫理的に問題のある解決策が利用可能ですが、
-我々はこの方法を提唱出来ませんので、この方法について我々に連絡しないで下さ
-い。
+<!--
+	It is possible that your board has a programmable clock
+generator.  A symptom of this will be a printout of only 2 or 3 clock
+values, with the rest all zeros.  If you run into this, and your board
+is not listed in the databases, contact the XFree86 team for help, or
+post a message to comp.windows.x.i386unix.  Note that most current
+Diamond hardware falls into this category, and Diamond will not
+release the programming details, so we can't help you.  There are some
+ethically questionable solutions available that you can inquire about
+on netnews; we do not advocate these methods, so do not contact us
+about them.
+-->
+グラフィックボードはプログラマブルクロックジェネレータを持っていること
+があります。この場合は、2、3個のクロックだけ値を持ち、残りが全てゼロに
+なっていることでしょう。このような状態になった場合でボードがデータベー
+スの中に見当たらなければ、XFree86 チームに連絡を取るか、
+comp.windows.x.i386unix にメッセージを投稿してください。ただし、現在の 
+Diamond 社のハードウェアのほとんどはこれにあてはまるのですが、Diamond 
+社 がプログラムの詳細を公開してくれないために、我々が助けることはでき
+ません。この問題には倫理的に問題のある解決策があって、それをネットニュー
+スでは聞くことができるでしょう。ですが、我々はこの方法を提唱できないの
+で、この方法については我々に問い合わせないでください。
 
-いくつかのサーバ (S3 と AGX) には RAMDAC の型式と速度が、その他の装置の
-情報を取り出すために必要になります。この指定は 'Ramdac' と 'DacSpeec' とい
-う記載を追加して行ないます。サポートしている RAMDAC の詳細は、適切なサーバ
-ーのオンラインマニュアルを参照して下さい。以前の XFree86 のバージョンで
-は、RAMDAC の型式はオプションフラグで設定していたことに注意して下さい。
+<!--
+	Some servers (S3 and AGX) require you to identify the type and
+speed of the RAMDAC your board uses in order to get the most out of the
+hardware.  This is done by adding 'Ramdac' and 'DacSpeec' entries.  For
+details of the supported RAMDACs, refer to the appropriate server manual
+page.  Note, in previous versions of XFree86 the RAMDAC type was
+specified with an Option flag.
+-->
+サーバによっては(S3 と AGX)、ハードウェアを使い切るために、ボードに載っ
+ている RAMDAC の型式と速度をユーザが指定する必要があります。
+この指定は 'Ramdac' と 'DacSpeec' エントリを追加して行ないます。サポー
+トしている RAMDAC の詳細は、適切なサーバのオンラインマニュアルを参照し
+てください。以前の XFree86 のバージョンでは、RAMDAC の型式は Option フ
+ラグで設定していたことに注意してください。
 
-自分の装置に合わせて、いくつかのオプションフラグを指定する必要があるでしょ
-う。サーバのオンラインマニュアルにこれらのオプションについて記述があり、
-チップセット固有の <tt>README</tt> ファイルにお手元のボードの為になにが必要
-か書いて
-ります。
+<!--
+	You may need to specify some Option flags for your hardware The
+server manual pages will describe these options, and the
+chipset-specific <tt>README</tt> files will tell you if any are required for your
+board.
+-->
+お使いのデバイスに合わせて、Option フラグをいくつか指定する必要がある
+かもしれません。サーバのオンラインマニュアルにこれらのオプションについ
+ての記述がありますし、お使いのボードが必要とするものがあれば、これはチッ
+プセット固有の <tt>README</tt> ファイルで説明されているでしょう。
 
-<sect>モニターとそのモードの設定について
+<!-- <sect>Configuring the Monitor and its Modes -->
+<sect>モニタとそのモードの設定について
 <p>
 
-モニターモードの設定は、モニター装置の標準化が十分でないので、残念ながら、
-実験の繰り返しで決定します。特定のモニター情報をデータベースに収集すること
-により、この実験作業を簡単にする事と、殆どのモニターにかなり一致する機能を
-集め、汎用モードの組み合わせをまとめる事を試みています。血のにじむような努
-力で出来た全てのモニターモードの作成と改良についての詳細は、Eric Raymond 
-氏が書いた <url url="VidModes.html" name="VideoModes.doc"> を参照して下さい。
+<!--
+	Configuring monitor modes can be a trying experience,
+unfortunately, because of the lack of standardization in monitor
+hardware.  We have attempted to simplify this by collecting databases
+of specific monitor information, and assembling a set of "generic"
+modes that should get pretty much any monitor up and functional.
+For all the gory details of mode generation and tuning, refer to the
+`VideoModes.doc' document by Eric Raymond.
+-->
+モニタのモード設定は、よく試行錯誤になってしまいます。残念ながら、モニ
+タデバイスの標準化は十分でないからです。この作業を簡単にするために、
+特定のモニタ情報をデータベースに収集することや、たいていのモニタをうま
+く動かして機能させるような「汎用的」なモードを集めることを行っています。
+全てのモニタモードの作成と改良についての、血のにじむような努力でできた
+詳細な設定方法については、Eric Raymond 氏が書いた <url
+url="VidModes.html" name="VideoModes.doc"> を参照してください。
 
-<tt>XF86Config</tt> ファイルの &dquot;Monitor&dquot; 節にモニターの仕様とビ
-デオのモードを記述し
-ます。Monitor の節を書くために、自分のモニターの仕様を知る必要があります。
-特に、モニターのサポートしている水平同期信号と垂直リフレッシュ信号の速度と
-ビデオ信号の帯域について知る必要があります。この情報はモニターのユーザ ー
-マニュアルに書いてあるでしょう。また、 自分のモニターの記載があるかもしれ
-ないので 'Monitors' ファイルを見て、確認して下さい。Moniter の節にこの情報
-をどうやって登録するかの詳細は <it>XF86Config</it> のオンラインマニュアルの 
-4 章 / 
-5 章を見て下さい。
+<!--
+	The monitor specs and video modes are described in the "Monitor"
+sections in the <tt>XF86Config</tt> file.  To create a Monitor section, you need
+to know your monitor's specifications.  In particular, you need to know
+what range of horizontal sync and vertical sync (refresh) rates it supports and
+what its video bandwidth is.  This information should be available in
+the monitor's user manual.  Also check the 'Monitors' file to see if it
+has an entry for your monitor.  See the <it>XF86Config(4/5)</it>
+manual page for details of how this information is entered into the
+Monitor section. 
+-->
+<tt>XF86Config</tt> ファイルの &dquot;Monitor&dquot; セクションにモニ
+タの仕様とビデオのモードを記述します。Monitor セクションを書くためには、
+自分のモニタの仕様を知る必要があります。特にモニタがサポートしている水
+平同期と垂直同期(書き換え)のレートの範囲と、ビデオ信号の帯域について知
+る必要があります。この情報はモニタのユーザマニュアルに書いてあるでしょ
+う。また 'Monitors' ファイルを調べて、お使いのモニタのエントリがあるか
+どうか確認してください。この情報の Moniter セクションへの記述の仕方に
+ついては、オンラインマニュアルの <it>XF86Config(4/5)</it> を参照してく
+ださい。
 
-次に、モニターに合わせたビデオのモードの組を与える必要があります。まず最初
-に'Monitors' と <tt>modeDB.txt</tt> ファイルの中に自分の指定するモニターに
-対応するモードが一覧にあるか確認して下さい。あった場合は、<tt>XF86Config</tt>
-ファイルの ModeDB の節にそれらのモードをコピーして下さい。<tt>XF86Config</tt>
-ファイルの Clocks 行にあるクロックと、各モードの行の２番目のパラメータの
-ドットクロックが一致しているか確認して、自分のカードのクロックと一致しない
-モードの行は消して下さい。そしてモードが残った時は、良い状態になります。
+<!--
+	Next, you need to provide a set of video modes that are suitable
+for the monitor.  The first step is to check in the 'Monitors' and
+<tt>modeDB.txt</tt> files to see if there is a listing of modes for your
+specific monitor.  If there is, copy those modes to the Monitor section
+of your <tt>XF86Config</tt> file.  Verify that there is a clock listed on the
+Clocks line in your <tt>XF86Config</tt> that matches the dot-clock in the 2nd
+parameter of each mode line; delete any mode line that does not have a
+matching clock on your card.  If you still have modes left, you are in
+good shape.
+-->
+次に、モニタに合わせたビデオのモードの組を指定する必要があります。まず最初
+に 'Monitors' と <tt>modeDB.txt</tt> ファイル中に、自分の指定するモニタに
+対応するモード一覧があるかどうかを確認してください。あった場合は、
+<tt>XF86Config</tt> ファイルの Monitor セクションにそれらのモードをコ
+ピーします。<tt>XF86Config</tt> ファイルの Clocks 行に、各モード行の2
+番目のパラメータのドットクロックに合うクロック値があることを確認してく
+ださい。カードのクロックに合わないモード行は削除します。その後に残って
+いるモードがあれば良い状態と言えます。
 
-特定のモードが見つからないか、もっと使いたい解像度のモードが知りたいとき
-は、後述する汎用ビデオモードの一覧を参照して下さい。モニターの仕様に対して
-設定するモードの仕様を合わせましょう; 仕様内で一番高いリフレッシュモードを
-取り出して、Clocks 行のドットクロックに合っていることを確認して下さい。解
-像度が一致する交代 (Alternate) モードに切り替える前に VESA モードを試して
-みて下さい。設定を合わせたモードを <tt>XF86Config</tt> ファイルの Monitor の
-節にコ
-ピーして下さい。これらのモードは最適な値ではない事に注意して下さい。これら
-は完璧な画面サイズではないでしょうし、真ん中に表示されてはいないでしょう。
-しかし、調整可能です。設定対象のモニターに合わせてモードを微調整したい場合
-は、VideoModes.doc ファイルの '表示の問題修正' の節を読んで下さい。
+<!--
+	If you don't find any specific modes, or need more modes for the
+resolutions you want to use, refer to the Generic Video Modes listing
+below.  Match the mode specification against your monitor's
+specifications; pick the highest-refresh mode that is within specs, and
+make sure you have a matching dot-clock on your Clocks line.  Try the
+VESA modes before any corresponding alternate mode setting.  Copy the
+mode specification to the Monitor section of your <tt>XF86Config</tt>
+file.
+Note that these modes are likely not optimal; they may not be sized
+perfectly, or may not be correctly centered.  But they should get you up
+and running.  If you want to tune the mode to your monitor, you can read
+the 'Fixing Problems with the Image' section of the VideoModes.doc file.
+-->
+特定のモードが見つからないか、使いたい解像度に対するモードをもっと多く
+知りたいときは、後述の「汎用的なビデオモード一覧」を参照してください。
+モニタの仕様に対して設定するモードの仕様を合わせましょう。まずは仕様内
+で一番高いリフレッシュモードを抜きだし、これが Clocks 行のドットクロッ
+クに合っていることを確認します。対応する別のモード設定を試す前には、
+VESA モードを試してみましょう。そして、モード指定を 
+<tt>XF86Config</tt> ファイルの Monitor セクションにコピーします。これ
+らのモードは最適な値ではないことも多い点に注意してください。これらは完
+璧な画面サイズではないかもしれませんし、表示も画面中央でないかもしれま
+せん。しかし、きっと起動と動作はするでしょう。モードをモニタに合わせて
+調整したければ、VideoModes.doc ファイルの '表示の問題の修正' の節を読
+んでください。
 
-微調整を行なうにあたり、注意事項があります。<tt>XF86Config</tt> ファイルの M
-onitor 
-の節に同じモードの名前が２つ以上定義されている場合に、サーバはクロックの
-一致する最初のモードを使用します。一般的に、<tt>XF86Config</tt> ファイルに同
-じモー
-ドの名前を２つ以上定義することは悪い考えだと思います。
+<!--
+	A note before you are done.  If the same mode name occurs more
+than once in the Monitor section of the <tt>XF86Config</tt> file, the
+server will use the first mode with a matching clock.  
+It is generally considered a bad idea to have more than one mode with
+the same name in your <tt>XF86Config</tt> file.
+-->
+作業を終える前に注意があります。<tt>XF86Config</tt> ファイルの Monitor 
+セクションに同じモード名が複数回現われる場合、サーバはクロックの一致す
+る最初のモードを使用します。一般的に、<tt>XF86Config</tt> ファイルに同
+じモード名を複数回定義することはよくないことだと考えられています。
 
-<sect>ビデオボードとモニターデータの組み合わせについて
+<!-- <sect>Combining the Video Hardware and Monitor Data -->
+<sect>ビデオボードとモニタデータの組み合わせについて
 <p>
+<!--
+	Once you have given a description of your monitor and graphics
+hardware you need to specify how they are to be used by the servers.
+This is done with the "Screen" sections in the <tt>XF86Config</tt>
+file.  You need to supply a Screen section for each of the server
+driver types you will be using.  
+The driver types are "SVGA" (XF86_SVGA), "VGA16" (XF86_VGA16), "VGA2"
+(XF86_Mono), "MONO" (XF86_Mono, XF86_VGA16), and "ACCEL" (XF86_S3,
+XF86_Mach32, XF86_Mach8, XF86_Mach64, XF86_8514, XF86_P9000, XF86_AGX,
+XF86_W32).
+Each Screen section specifies which Monitor description and Device
+description are to be used. 
+-->
+モニタとグラフィックスハードウェアの記述を行ったら、サーバがこれらをど
+のように使うかを指定する必要があります。これは <tt>XF86Config</tt> ファ
+イルの&dquot;Screen&dquot; セクションで行ないます。使用したいタイプの
+サーバのドライバそれぞれについて Screen セクションを1つ指定します。ド
+ライバのタイプには &dquot;SVGA&dquot; (XF86_SVGA), &dquot;VGA16&dquot; 
+(XF86_VGA16), &dquot;VGA2&dquot; (XF86_Mono), &dquot;MONO&dquot;
+(XF86_Mono, XF86_VGA16), &dquot;ACCEL&dquot; (XF86_S3, XF86_Mach32,
+XF86_Mach8, XF86_Mach64, XF86_8514, XF86_P9000, XF86_AGX, XF86_W32)が
+あります。それぞれの Screen セクションには使用するモニタとデバイスの記
+述を行います。
 
-一旦、サーバが設定対象のモニターとグラフィックボードをどのように使うか記述
-して指定する必要があります。これを <tt>XF86Config</tt> ファイルの
-&dquot;Screen&dquot; の節で行ないます。使用したいサーバのドライバーの型式の
-それぞれを Screen 節で与えます。ドライバーの型式は &dquot;SVGA&dquot; の
-節では (XF86_SVGA)、 &dquot;VGA16&dquot; の節では 
-(XF86_VGA16)、&dquot;VGA2&dquot; の節では (XF86_Mono)、&dquot;MONO&dquot;
-の節では (XF86_Mono, XF86_VGA16) と &dquot;ACCEL&dquot; の節では
-(XF86_S3, XF86_Mach32, XF86_Mach8, XF86_Mach64, XF86_8514, XF86_P9000,
-XF86_AGX, XF86_W32) です。それぞれの Screen 節は使用するモニター(Monitor)
-の記述とデバイス(Device) の記述を指定します。
-
-Screen 節は１つまたは複数の &dquot;Display&dquot; の項を含んでいます。１つの
-Display 
-項はサーバがサポートしているそれぞれの深さを与えるでしょう。
+<!--
+	The Screen sections include one or more "Display" subsections.
+One Display subsection may be provided for each depth that the server
+supports.  In the Display subsection you can specify the size of the
+virtual screen the server will use.  The virtual screen allows you to
+have a "root window" larger than can be displayed on your monitor (e.g.
+you can have an 800x600 display, but a 1280x1024 virtual size).  The
+Virtual keyword is used to specify this size.  Note that many of the new
+accelerated server use non-displayed memory for caching.  It is not
+desirable to use all of your memory for virtual display, as this leaves
+none for caching, and this can cost as much as 30-40&percnt; of your server
+performance.
+-->
+Screen セクションは1つ以上の &dquot;Display&dquot; サブセクションを含
+みます。サーバがサポートしているそれぞれの深さに対して 1 つの Display 
+セクションを与えることができます。
 &lsqb; 訳注：深さとは色数や階調数を表わすのに必要なビット数です。&rsqb;
-Display 項では、使いたいサーバの仮想スクリーンの大きさを指定できます。仮
-想スクリーンはモニターに表示できるスクリーンの大きさよりも、大きいルートウ
-ィンドウ (&dquot;root window&dquot;)を持つことが出来ます（例えば 800x600 の
-ディスプ
-レイで1280x1024 の大きさの仮想スクリーンを使えます）。Virtual というキーワ
-ードを仮想スクリーンの大きさを指定するのに使います。多くの新しいアクセラレ
-ータサーバは表示に使われないメモリをキャッシュに使うことに注意して下さい。
-キャッシュはメモリの全てを仮想ディスプレイに使うような魅力はありませんが、
-キャッシュにメモリを残さないようにして、メモリの全てを仮想ディスプレイに使
-うとサーバの性能の 30 から 40&percnt; ほどを消費します。
+Display サブセクションでは、サーバが使う仮想スクリーンの大きさを指定で
+きます。仮想スクリーンを使うと、モニタが表示できるスクリーンの大きさよ
+りも大きいルートウィンドウを持つことができます(例えば 800x600 のディス
+プレイで1280x1024 の大きさの仮想スクリーンを使えます)。Virtual という
+キーワードを使って仮想スクリーンの大きさを指定します。新しいアクセラレー
+タサーバの多くは、表示に使われないメモリをキャッシュに使うことに注意し
+てください。メモリを全て仮想ディスプレイに使うことは望ましくありません。
+キャッシュの分のメモリが無くなるので、サーバの性能が30-40&percnt; 悪
+くなってしまいます。
 
-最後に、Display 節の設定はディスプレイのモード設定です。サーバの使用しよ
-うとしている物理的なディスプレイの解像度の指定があります。その名前は任意で
-すが、Monitor 節にあるどれかと一致していなければいけません。一般に、これら
-の名前はディスプレイの解像度（例えば &dquot;1024x768&dquot; ）になっているで
-しょうが、
-その通りでなければいけない訳ではありません。必要な数だけ一覧形式で指定しま
-す。まず最初の定義が標準で起動される画面になり、解像度の一覧はコントロール
-キー (Ctrl) 、オルタネイトキー (Alt) 、テンキーの + を同時に押すか、コント
-ロールキー (Ctrl) 、オルタネイトキー (Alt) 、テンキーの - を同時に押すこと
-で巡回できる画面の定義になります。
+<!--
+	The last thing you specify in Display subsection is the display
+modes.  These are the physical display resolutions that the server will
+use.  The name is arbitrary, but must match something in the appropriate
+Monitor section.  In general, these names are the display resolution
+(e.g. "1024x768"), but need not be.  You can list as many as desired;
+the first is the default/starting display, and you can cycle through the
+list with Ctrl-Alt-Keypad+ or Ctrl-Alt-Keypad- hotkey sequences.
+-->
+Display サブセクションで最後に指定するのは、ディスプレイのモードです。
+ここでは、サーバが使おうとする物理的なディスプレイ解像度を指定します。
+ディスプレイの名前は自由に決められますが、Monitor セクションのどれかと
+一致していなければいけません。一般には、これらの名前はディスプレイの解像
+度(例えば &dquot;1024x768&dquot;)が使われますが、必ずしもそうである必
+要はありません。必要な数だけ設定を並べることができます。最初に指定した
+ものがデフォルトの起動されるディスプレイになり、Ctrl-Alt-Keypad+ と 
+Ctrl-Alt-Keypad- のホットキーシーケンスを使って、リスト中の設定を順番
+に切替えていくことができます。
 
-以上で設定は終わりです。さあ、新しい XFree86 の導入テストをする準備が出来
-ました。
+<!--
+	That's it.  Now you're ready to test out your new XFree86
+installation.
+-->
+以上で設定は終わりです。さあ、新しくインストールした XFree86 を試して
+みましょう!
 
-<sect>汎用ビデオモードについて
+<!-- <sect>Generic Video Modes -->
+<sect>汎用的なビデオモード一覧
 <p>
-&lsqb; 訳注 : ここはデータの再利用のために翻訳はしません。 たとえ、コメント
-にでも漢字が混じって誤動作を起こすことは無いと、信じていますがちょっと怖い:-)
+&lsqb; 訳注 : ここはデータの再利用のために翻訳はしません。 コメントに
+漢字が混じっていても誤動作を起こすことは無いと信じていますが、やっぱり
+ちょっと怖いです :-)
 &rsqb;
 
 <code>
@@ -533,7 +884,7 @@ Display 項では、使いたいサーバの仮想スクリーンの大きさを指定できます。仮
 </code>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Config.sgml,v 3.2.2.1 1997/08/02 13:48:13 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Config.sgml,v 3.2.2.2 1999/05/25 06:39:10 hohndel Exp $ 
 
 
 
@@ -541,20 +892,13 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Config.sgml,v 3.2.2.1
 
 $XConsortium: Config.sgml /main/7 1996/10/19 18:03:03 kaleb $
 </verb>
-<hrule>
 
-このファイルは
-xc/programs/Xserver/hw/xfree86/doc/sgml/Config.sgml,v 3.11 1997/01/25 03:21:50 
-を、岡本  一幸 
-( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
-name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.3 を
-日本でインストールする人向けに和訳したものです。ここがおかしいとか、
-ここはこうしたほうがいいといったご意見がありましたら、電子メールで
-お知らせ下さい。
-原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
-XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
-電子メールで送って下さい。
-<hrule>
-&lsqb;EOF&rsqb;
+<sect>日本語訳について<p>
+このファイルは、岡本一幸<url url="mailto:ikko-@pacific.rim.or.jp"
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> の翻訳(XFree86 3.3.2 版)をベース
+に藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;"> が XFree86 3.3.3 に合わせて更新を
+行ったものです。問題点の指摘やご意見は藤原まで御連絡ください。
+原文の著作権は XFree86 プロジェクト社にあり、日本語訳の著作権は X
+Japanese Documentation Project にあります。
 </article>
-

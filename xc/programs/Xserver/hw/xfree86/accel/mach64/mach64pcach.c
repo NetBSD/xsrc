@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64pcach.c,v 3.14 1997/01/05 11:53:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64pcach.c,v 3.14.2.1 1999/05/25 06:55:35 hohndel Exp $ */
 /*
  * Copyright 1992,1993,1994 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -169,7 +169,10 @@ mach64CacheInit(w, h)
     static Bool first = TRUE;
 
 
-    if (OFLG_ISSET(OPTION_NO_PIXMAP_CACHE, &mach64InfoRec.options)) {
+#ifndef NO_PIXMAP_CACHE
+    if (OFLG_ISSET(OPTION_NO_PIXMAP_CACHE, &mach64InfoRec.options))
+#endif
+    {
 	if (first) {
 	    ErrorF("%s %s: Pixmap cache disabled\n", XCONFIG_GIVEN,
 	           mach64InfoRec.name);

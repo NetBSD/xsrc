@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_SYSV.c,v 3.15.2.2 1998/10/21 10:44:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_SYSV.c,v 3.15.2.4 1999/06/17 16:24:00 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,6 +26,11 @@
  *
  */
 /* $XConsortium: OS_SYSV.c /main/13 1996/10/25 11:33:20 kaleb $ */
+
+#if defined(sun)
+/* Fix for Solaris */
+#define __EXTENSIONS__
+#endif
 
 #include "Probe.h"
 
@@ -73,7 +78,9 @@
 #  include <sys/seg.h>
 # endif
 #endif
-#include <sys/v86.h>
+#ifndef V86SC_IOPL
+#  include <sys/v86.h>
+#endif
 #if defined(sun)
 # include <sys/psw.h>
 #endif

@@ -77,13 +77,14 @@ The server supports the following extended devices :
 	<item>Wacom stylus. Features :
 	<itemize>
 		<item>Absolute or relative modes.
-		<item>5 valuators :
+		<item>6 valuators :
 		<enum>
 			<item>X axis.
 			<item>Y axis.
 			<item>pressure.
 			<item>X tilt.
 			<item>Y tilt.
+			<item>wheel.
 		</enum>
 		<item>3 buttons.
 		<item>Proximity report.
@@ -94,13 +95,14 @@ The server supports the following extended devices :
 	<item>Wacom eraser. Features :
 	<itemize>
 		<item>Absolute or relative modes.
-		<item>5 valuators :
+		<item>6 valuators :
 		<enum>
 			<item>X axis.
 			<item>Y axis.
 			<item>pressure.
 			<item>X tilt.
 			<item>Y tilt.
+			<item>wheel.
 		</enum>
 		<item>1 button.
 		<item>Proximity report.
@@ -111,13 +113,14 @@ The server supports the following extended devices :
 	<item>Wacom cursor. Features :
 	<itemize>
 		<item>Absolute or relative modes.
-		<item>5 valuators :
+		<item>6 valuators :
 		<enum>
 			<item>X axis.
 			<item>Y axis.
 			<item>pressure.
 			<item>X tilt.
 			<item>Y tilt.
+			<item>wheel.
 		</enum>
 		<item>16 buttons.
 		<item>Proximity report.
@@ -129,7 +132,7 @@ The server supports the following extended devices :
 	<itemize>
 		<item>Absolute or relative modes.
 		<item>2 valuators (x and y axis).
-		<item>2 button stylus or 4 button puck.
+		<item>2 buttons stylus or 4 buttons puck.
 		<item>Proximity report.
 		<item>Motion history capability.
 	</itemize>
@@ -138,7 +141,16 @@ The server supports the following extended devices :
 	<itemize>
 		<item>Absolute or relative modes.
 		<item>2 valuators (x and y axis).
-		<item>2 button stylus or 4 button puck.
+		<item>2 buttons stylus or 4 buttons puck.
+		<item>Proximity report.
+		<item>Motion history capability.
+	</itemize>
+
+	<item>Calcomp DrawingBoard tablet. Features :
+	<itemize>
+		<item>Absolute or relative modes.
+		<item>2 valuators (x and y axis).
+		<item>4 buttons stylus or 16 buttons puck.
 		<item>Proximity report.
 		<item>Motion history capability.
 	</itemize>
@@ -186,7 +198,7 @@ Consult the man pages for details.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/xinput.sgml,v 3.6.2.1 1998/11/04 15:19:07 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/xinput.sgml,v 3.6.2.3 1999/06/30 13:00:30 hohndel Exp $
 
 
 

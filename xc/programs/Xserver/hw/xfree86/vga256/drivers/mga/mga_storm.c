@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_storm.c,v 1.1.2.15 1998/10/31 14:41:00 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_storm.c,v 1.1.2.16 1999/06/02 07:51:54 hohndel Exp $ */
 
 #include "compiler.h"
 #include "vga256.h"
@@ -60,7 +60,8 @@ void MGANAME(AccelInit)()
     				!MGA_IS_GCLASS(MGAchipset));
 
     MGATranscSolidFill =       (MGA_IS_G200(MGAchipset) ||
-				MGA_IS_2164(MGAchipset));
+				MGA_IS_2164(MGAchipset) ||
+				MGA_IS_G400(MGAchipset));
 
     xf86AccelInfoRec.Flags = 	BACKGROUND_OPERATIONS | 
 				COP_FRAMEBUFFER_CONCURRENCY |

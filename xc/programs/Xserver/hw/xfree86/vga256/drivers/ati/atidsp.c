@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atidsp.c,v 1.1.2.2 1998/10/20 20:51:18 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atidsp.c,v 1.1.2.3 1999/07/05 09:07:33 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -96,7 +96,7 @@ ATIDSPProbe(void)
         ATIXCLKMaxRASDelay += 3;
         ATIDisplayFIFODepth = 24;
     }
-        
+
     switch (ATIMemoryType)
     {
         case MEM_264_DRAM:
@@ -172,24 +172,34 @@ ATIDSPSave(ATIHWPtr save)
  * than DSP_CONFIG.
  */
 void
-ATIDSPInit(void)
+ATIDSPInit(DisplayModePtr mode)
 {
     int Multiplier, Divider;
     int dsp_precision, dsp_on, dsp_off, dsp_xclks;
     int tmp, vshift, xshift;
+    int RASMultiplier = ATIXCLKMaxRASDelay, RASDivider = 1;
 
 #   define Maximum_DSP_PRECISION ((int)GetBits(DSP_PRECISION, DSP_PRECISION))
 
     /* Compute a memory-to-screen bandwidth ratio */
-    Multiplier = ATINewHWPtr->ReferenceDivider * ATIXCLKFeedbackDivider *
+    Multiplier = /* ATINewHWPtr->ReferenceDivider * */ ATIXCLKFeedbackDivider *
         ATIClockDescriptor->PostDividers[ATINewHWPtr->PostDivider];
-    Divider = ATINewHWPtr->FeedbackDivider * ATIXCLKReferenceDivider;
+    Divider = ATINewHWPtr->FeedbackDivider /* * ATIXCLKReferenceDivider */;
     if (!ATIUsingPlanarModes)
         Divider *= vga256InfoRec.bitsPerPixel / 4;
     /* Start by assuming a display FIFO width of 32 bits */
     vshift = (5 - 2) - ATIXCLKPostDivider;
     if (ATINewHWPtr->crtc != ATI_CRTC_VGA)
         vshift++;               /* Nope, it's 64 bits wide */
+
+    if (ATILCDPanelID >= 0)
+    {
+        /* Compensate for horizontal stretching */
+        Multiplier *= ATILCDHorizontal;
+        Divider *= mode->HDisplay & ~7;
+        RASMultiplier *= ATILCDHorizontal;
+        RASDivider *= mode->HDisplay & ~7;
+    }
 
     /* Determine dsp_precision first */
     tmp = ATIDivide(Multiplier * ATIDisplayFIFODepth, Divider, vshift, 1);
@@ -205,7 +215,7 @@ ATIDSPInit(void)
 
     /* Move on to dsp_off */
     dsp_off = ATIDivide(Multiplier * (ATIDisplayFIFODepth - 1), Divider,
-        vshift, 1);
+        vshift, -1) - ATIDivide(1, 1, vshift - xshift, 1);
 
     /* Next is dsp_on */
     if ((ATINewHWPtr->crtc == ATI_CRTC_VGA) && (dsp_precision < 3))
@@ -214,15 +224,15 @@ ATIDSPInit(void)
          * TODO:  I don't yet know why something like this appears necessary.
          *        But I don't have time to explore this right now.
          */
-        dsp_on = ATIDivide(Multiplier * 5, Divider, vshift + 2, -1);
+        dsp_on = ATIDivide(Multiplier * 5, Divider, vshift + 2, 1);
     }
     else
     {
-        dsp_on = ATIDivide(Multiplier, Divider, vshift, -1);
-        tmp = ATIDivide(ATIXCLKMaxRASDelay, 1, xshift, 1);
+        dsp_on = ATIDivide(Multiplier, Divider, vshift, 1);
+        tmp = ATIDivide(RASMultiplier, RASDivider, xshift, 1);
         if (dsp_on < tmp)
             dsp_on = tmp;
-        dsp_on += tmp + ATIDivide(ATIXCLKPageFaultDelay, 1, xshift, 1);
+        dsp_on += (tmp * 2) + ATIDivide(ATIXCLKPageFaultDelay, 1, xshift, 1);
     }
 
     /* Last but not least:  dsp_xclks */

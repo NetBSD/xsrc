@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.12.2.9 1998/11/08 09:06:28 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/lynx.cf,v 3.12.2.11 1999/05/25 06:55:08 hohndel Exp $
 
 #ifndef OSName
 #define OSName			DefaultOSName
@@ -83,6 +83,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define NeedNestedPrototypes	YES
 #define NeedVarargsPrototypes	YES
 #define NeedWidePrototypes	NO
+
+#define MkdirHierCmd		mkdir -p
 
 #if HasGcc2
 # if OSMajorVersion == 2 && OSMinorVersion == 3

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64gc.c,v 3.4 1996/12/23 06:39:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64gc.c,v 3.4.2.1 1999/05/25 06:55:34 hohndel Exp $ */
 /***********************************************************
 Copyright (c) 1987  X Consortium
 
@@ -92,6 +92,7 @@ void mach64ValidateGC(
 #endif
 );
 
+#ifndef FBDEV_SERVER
 void
 cfbValidateGC(pGC, changes, pDrawable)
     register GCPtr pGC;
@@ -127,6 +128,7 @@ cfb16CreateGC(pGC) GCPtr pGC; {return mach64CreateGC(pGC);}
 
 Bool
 cfb32CreateGC(pGC) GCPtr pGC; {return mach64CreateGC(pGC);}
+#endif
 
 /* Pointers to cfb routines. */
 static int  (*pcfbReduceRasterOp)();
@@ -182,7 +184,11 @@ static GCOps	mach64Ops = {
     cfbSetSpans,
     cfbPutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfbCopyPlane,
+#endif
     cfbPolyPoint,
     miWideLine,
     miPolySegment,
@@ -208,7 +214,11 @@ static GCOps	mach64Ops16 = {
     cfb16SetSpans,
     cfb16PutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfb16CopyPlane,
+#endif
     cfb16PolyPoint,
     miWideLine,
     miPolySegment,
@@ -234,7 +244,11 @@ static GCOps	mach64Ops32 = {
     cfb32SetSpans,
     cfb32PutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfb32CopyPlane,
+#endif
     cfb32PolyPoint,
     miWideLine,
     miPolySegment,
@@ -260,7 +274,11 @@ static GCOps	cfbTEOps1Rect = {
     cfbSetSpans,
     cfbPutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfbCopyPlane,
+#endif
     cfbPolyPoint,
     cfb8LineSS1Rect,
     cfb8SegmentSS1Rect,
@@ -286,7 +304,11 @@ static GCOps	cfb16TEOps1Rect = {
     cfb16SetSpans,
     cfb16PutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfb16CopyPlane,
+#endif
     cfb16PolyPoint,
     cfb16LineSS1Rect,
     cfb16SegmentSS1Rect,
@@ -312,7 +334,11 @@ static GCOps	cfb32TEOps1Rect = {
     cfb32SetSpans,
     cfb32PutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfb32CopyPlane,
+#endif
     cfb32PolyPoint,
     cfb32LineSS1Rect,
     cfb32SegmentSS1Rect,
@@ -338,7 +364,11 @@ static GCOps	cfbTEOps = {
     cfbSetSpans,
     cfbPutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfbCopyPlane,
+#endif
     cfbPolyPoint,
     cfbLineSS,
     cfbSegmentSS,
@@ -364,7 +394,11 @@ static GCOps	cfb16TEOps = {
     cfb16SetSpans,
     cfb16PutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfb16CopyPlane,
+#endif
     cfb16PolyPoint,
     cfb16LineSS,
     cfb16SegmentSS,
@@ -390,7 +424,11 @@ static GCOps	cfb32TEOps = {
     cfb32SetSpans,
     cfb32PutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfb32CopyPlane,
+#endif
     cfb32PolyPoint,
     cfb32LineSS,
     cfb32SegmentSS,
@@ -416,7 +454,11 @@ static GCOps	cfbNonTEOps1Rect = {
     cfbSetSpans,
     cfbPutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfbCopyPlane,
+#endif
     cfbPolyPoint,
     cfb8LineSS1Rect,
     cfb8SegmentSS1Rect,
@@ -442,7 +484,11 @@ static GCOps	cfb16NonTEOps1Rect = {
     cfb16SetSpans,
     cfb16PutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfb16CopyPlane,
+#endif
     cfb16PolyPoint,
     cfb16LineSS1Rect,
     cfb16SegmentSS1Rect,
@@ -468,7 +514,11 @@ static GCOps	cfb32NonTEOps1Rect = {
     cfb32SetSpans,
     cfb32PutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfb32CopyPlane,
+#endif
     cfb32PolyPoint,
     cfb32LineSS1Rect,
     cfb32SegmentSS1Rect,
@@ -494,7 +544,11 @@ static GCOps	cfbNonTEOps = {
     cfbSetSpans,
     cfbPutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfbCopyPlane,
+#endif
     cfbPolyPoint,
     cfbLineSS,
     cfbSegmentSS,
@@ -520,7 +574,11 @@ static GCOps	cfb16NonTEOps = {
     cfb16SetSpans,
     cfb16PutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfb16CopyPlane,
+#endif
     cfb16PolyPoint,
     cfb16LineSS,
     cfb16SegmentSS,
@@ -546,7 +604,11 @@ static GCOps	cfb32NonTEOps = {
     cfb32SetSpans,
     cfb32PutImage,
     mach64CopyArea,
+#ifndef NO_COPY_PLANE
     mach64CopyPlane,
+#else
+    cfb32CopyPlane,
+#endif
     cfb32PolyPoint,
     cfb32LineSS,
     cfb32SegmentSS,
@@ -759,8 +821,25 @@ mach64CreateGC(pGC)
     if (PixmapWidthPaddingInfo[pGC->depth].padPixelsLog2 == LOG2_BITMAP_PAD)
 	return (mfbCreateGC(pGC));
     if (pGC->depth != mach64InfoRec.depth) {
+#ifndef NO_CREATE_GC
 	ErrorF("mach64CreateGC: unsupported depth: %d\n", pGC->depth);
 	return FALSE;
+#else
+	ErrorF("mach64CreateGC: unsupported depth: %d. "
+	       "Using cfbCreateGC instead.\n", pGC->depth);
+	switch (pGC->depth) {
+	    case 8:
+		return cfbCreateGC(pGC);
+	    case 15:
+	    case 16:
+		return cfb16CreateGC(pGC);
+	    case 24:
+	    case 32:
+		return cfb32CreateGC(pGC);
+	    default:
+		return FALSE;
+	}
+#endif
     }
     pGC->clientClip = NULL;
     pGC->clientClipType = CT_NONE;
@@ -1439,7 +1518,11 @@ mach64ValidateGC(pGC, changes, pDrawable)
     if (pGC->ops->devPrivate.val == 2) {
 	if (xf86VTSema) {
 	    pGC->ops->CopyArea = mach64CopyArea;
+#ifndef NO_COPY_PLANE
 	    pGC->ops->CopyPlane = mach64CopyPlane;
+#else
+	    pGC->ops->CopyPlane = pcfbCopyPlane;
+#endif
 	    pGC->ops->ImageText8 = mach64ImageText8;
 	    pGC->ops->PolyPoint = pcfbPolyPoint;
 	    pGC->ops->PolyText8 = mach64PolyText8;

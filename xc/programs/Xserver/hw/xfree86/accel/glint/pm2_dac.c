@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/pm2_dac.c,v 1.6.2.2 1998/08/25 10:54:05 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/pm2_dac.c,v 1.6.2.4 1999/07/01 16:23:29 hohndel Exp $ */
 /*
  * Copyright 1997 The XFree86 Project, Inc
  *
@@ -175,10 +175,13 @@ PM2DACInit(int clock)
      * set up the RAMDAC in the right mode
      */
     GLINT_WRITE_REG(CC & 0xFFFFFFFD, ChipConfig); /* Disable VGA */
-    glintOutPM2IndReg(PM2DACIndexMCR,0x00, 0x02); /* 8bit DAC */
+    /* 8bit DAC */
+    glintOutPM2IndReg(PM2DACIndexMCR, 0x00,  
+                      OFLG_ISSET (OPTION_SYNC_ON_GREEN, 
+                                  &glintInfoRec.options) ? 0x3e : 0x02);
     glintOutPM2IndReg(PM2DACIndexMDCR, 0x00, 0x00); /* Disable Overlay */
   
-    switch (glintInfoRec.depth)
+    switch (glintInfoRec.bitsPerPixel)
     {
     case 8:
     	glintOutPM2IndReg(PM2DACIndexCMR,0x00,

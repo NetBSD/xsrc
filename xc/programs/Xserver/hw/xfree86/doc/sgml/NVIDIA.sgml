@@ -3,19 +3,17 @@
 <article>
 
 <!-- Title information -->
-<title>Information for NVidia NV1 / SGS-Thomson STG2000, Riva 128 and Riva TNT Users
+<title>Information for NVidia NV1 / SGS-Thomson STG2000, Riva 128 and Riva TNT and TNT2 Users
 <author>David McKay, Dirk Hohndel
-<date>5 November 1998
+<date>June 25 1999
 
 <!-- Table of contents -->
 <toc>
 
 <sect>Supported hardware
 <p>
-This driver supports good acceleration for both the NV1/STG2000 as well as
-the Riva128. It is known to work on PCI and AGP versions of the Riva128.
-The Riva TNT was added to this driver and is not yet as well accelerated as
-it could be. Still, the server is very usable.
+This driver supports good acceleration for the NV1/STG2000 as well as
+the Riva128, Riva TNT and Riva TNT2.
 
 <sect>Notes
 <p>
@@ -59,7 +57,7 @@ it could be. Still, the server is very usable.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NVIDIA.sgml,v 1.1.2.1 1998/11/13 13:00:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NVIDIA.sgml,v 1.1.2.2 1999/06/25 08:57:14 hohndel Exp $
 </verb>
 
 </article>

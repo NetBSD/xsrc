@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: resize.c,v 1.34 95/05/24 22:12:04 gildea Exp $
- *	$XFree86: xc/programs/xterm/resize.c,v 3.18.2.7 1998/10/20 20:51:51 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/resize.c,v 3.18.2.8 1999/05/25 06:55:52 hohndel Exp $
  */
 
 /*
@@ -79,6 +79,11 @@
 #define USE_TERMIOS
 #define USE_TERMINFO
 #define USE_SYSV_UTMP
+#endif
+
+#ifdef __OpenBSD__
+#define USE_TERMINFO
+#include <term.h>
 #endif
 
 #if defined(SYSV) || defined(Lynx) || defined(__CYGWIN32__)

@@ -1,0 +1,387 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+ 
+<article>
+
+<!-- Title information -->
+<!--
+<title> Information for SiS Users
+-->
+<title> SiS ユーザ向けの情報
+<author> Xavier Ducoin (<it>xavier@rd.lectra.fr</it>)
+<date> 27 February 1998
+<trans>The X Japanese Documentation Project
+<tdate> 15 January 1999
+
+<!-- Table of contents -->
+<toc>
+
+<!-- <sect> Introduction <p> -->
+<sect> はじめに <p>
+
+<!--
+This driver was primarily written for the SiS86c201.  It also works
+on the 202 , 205 and 5597/5598 chips. Support for 6326 is currently 
+enabled, but tested only on few cards. 
+Some support for SiS86c215 and 225 was added as well. This support consists
+simply in 
+identify it as 205, so probably 86c215 won't work with acceleration 
+(is a cheap 205 without some features).
+-->
+このドライバは当初 SiS86c201 用に作成されました。そしてこのドライバは 
+SiS86c202, SiS86c205, SiS5597/5598 チップでも動作します。現在は 
+SiS6326 をサポートするようになりましたが、テストはほとんど行っていませ
+ん。また、SiS86c215 と SiS86c225 のサポートもいくらか追加しました。サ
+ポートと言っても単にチップを SiS86c205 として識別するだけですから、お
+そらく 86c215 はアクセラレーションモードでは動作しないでしょう(機能を
+いくつか取り除いた安物の 205 ということになります)。
+
+<!--
+The driver supports many advanced features.  These include:
+-->
+このドライバは先進的な機能をたくさんサポートしています。これを以下に列
+挙します:
+<itemize>
+<!--
+  <item>Linear Addressing
+  <item>8/15/16/24 bits per pixel
+  <item>Fully programmable clocks are supported
+  <item>H/W cursor support
+  <item>BitBLT acceleration of many operations
+  <item>XAA support (XFree86 Acceleration Architecture)
+-->
+  <item>リニアアドレッシング
+  <item>8/15/16/24 bpp
+  <item>完全にプログラマブルなクロックのサポート
+  <item>ハードウェアカーソル
+  <item>多くの機能の BitBLT アクセラレーション
+  <item>XAA (XFree86 Acceleration Architecture)のサポート
+</itemize>
+
+<!-- <sect> Supported chips <p> -->
+<sect> サポートしているチップ <p>
+
+<descrip>
+<!--
+<tag>SiS 86c201</tag>
+	(External hardware clock)
+<tag>SiS 86c202, SiS 86c2x5, SiS 5597/5598, SiS 6326</tag>
+	(Internal clock synthesizer)
+-->
+<tag>SiS 86c201</tag>
+	(外部ハードウェアクロック)
+<tag>SiS 86c202, SiS 86c2x5, SiS 5597/5598, SiS 6326</tag>
+	(内部クロックシンセサイザ)
+</descrip>
+
+<!--
+Color expansion is not supported by the engine in 16M-color graphic mode.
+-->
+1600万色のグラフィックスモードでは、アクセラレーションエンジンは色展開
+をサポートしていません。
+
+<!-- <sect> XF86Config Options <p> -->
+<sect> XF86Config のオプション <p>
+
+<!--
+The following options are of particular interest for the SiS driver. Each of
+them must be specified in the `svga' driver section of the XF86Config file,
+within the Screen subsections of the depths to which they are applicable
+(you can enable options for all depths by specifying them in the Device
+section).
+-->
+以下のオプションは SiS ドライバ専用です。各項目は XF86Config ファイルの 
+`svga' ドライバセクションの、適用する色の深さについての Screen サブセ
+クションで指定しなければなりません(オプションを全ての色の深さに対して
+有効にするには、Device セクションでオプションを指定します)。
+
+<descrip>
+<!--
+<tag>Option "set_mclk"</tag>
+        This option lets you to modify the memory clocking of your card.
+        (only for 5597 and 6326) Modifying the memory timings can destroy the 
+	device, but usually the only ill effects of overclocking is to 
+	have some noise an drawing errors, but BE CAREFUL. Usually a little 
+	increment can improve the drawing speed, and allows also higher dotclocks. 
+	The server reports default memclock on starting messages, so take it
+	as a base. Units are in MHZ.
+-->
+<tag>Option &dquot;set_mclk&dquot;</tag>
+このオプションを使うとお使いのカードのメモリクロックを変更できます
+(5597 と 6326 の場合のみ)。メモリのタイミングを変更するとハードウェア
+を壊す可能性もありますが、オーバークロッキングの悪影響は普通は描画時に
+ノイズが乗ることくらいです。それでも気をつけてください。普通は少しクロッ
+クを上げると描画速度が向上し、ドットクロックも高くすることができるよう
+になります。サーバは起動メッセージでデフォルトのメモリクロック値を出力
+するので、この値を基本値として使うと良いでしょう。単位は MHz です。
+<!--
+<tag>Option "dac_speed"</tag>
+        This option lets you to modify the maximum allowed dotclock (only for
+	5597 and 6326).	Without it, the server makes a conservative guess 
+	based on memory clock, speed and number of banks. If your monitor 
+	supports higher dotclocks and you know that your card can do it, give a 
+	try. If the speed is too high for your configuration (but not for your
+	monitor), the effects can vary from some noise on screen to a black 
+	screen. Don't use speeds greater than 135 Mhz, (175 for 6326), even 
+	if your monitor supports the dot-clock. 
+-->
+<tag>Option &dquot;dac_speed&dquot;</tag>
+このオプションを使うと、設定可能なドットクロックの最大値を変更することが
+できます(5597 と 6326 の場合のみ)。この指定をしなかった場合、サーバは
+メモリのクロックと速度、バンク数に基づいて安全側に寄った推定を行います。
+モニタがより高いドットクロックをサポートしており、カードも高いドットク
+ロックをサポートできることが分かっている場合は、このオプションを試して
+ください。(モニタに対してではなく)設定に対して速度が速すぎた場合、画面にノイズ
+が乗ったり画面が表示されない等の色々な影響が出ます。モニタがサポートして
+いるドットクロックであっても、135MHz 以上(6326 の場合には 175MHz 以上)
+の速度を指定しないでください。
+<!--
+<tag>Option "noaccel"</tag>
+	By default the XAA (XFree86 Acceleration Architecture) is used.
+	This option will disable the use of the XAA and will enable the old
+	BitBlt acceleration operations. (see below).
+-->
+<tag>Option &dquot;noaccel&dquot;</tag>
+デフォルトでは XAA(XFree86 Acceleration Architecture) が使用されます。
+このオプションは XAA の使用を無効にし、古い BitBlt アクセラレーション
+操作を有効にします(後述)。
+<!--
+<tag>Option "hw_clocks"</tag>
+	On chips 86c202 and later, the default is to use the programmable
+	clock for all clocks. It is possible to use the fixed clocks
+	supported by the chip instead of using this option (manufacturer
+	dependent).
+-->
+<tag>Option &dquot;hw_clocks&dquot;</tag>
+86c202 以降のチップでは、デフォルトで全てのクロックに対してプログラマ
+ブルクロックが使われます。このオプションを使わないで、チップがサポート
+している固定のクロック値を使うこともできます(メーカー依存)。
+(訳注:
+動作的には「このオプションを使って、チップがサポートしている固定のクロッ
+ク値を使うこともできます(メーカー依存)。」が正しいのでは?)
+<!--
+<tag>Option "sw_cursor", "hw_cursor"</tag>
+	The default is for using the hardware cursor.
+-->
+<tag>Option &dquot;sw_cursor&dquot;, &dquot;hw_cursor&dquot;</tag>
+デフォルトではハードウェアカーソルを使用します。
+<!--
+<tag>Option "no_linear"</tag>
+	By default linear addressing is used on all chips.
+	However this might be broken in some implementations. It is
+	possible to turn the linear addressing off with this option.
+	Note that H/W acceleration and 16/24bpp are only supported with
+	linear addressing.
+-->
+<tag>Option &dquot;no_linear&dquot;</tag>
+デフォルトでは、全てのチップにおいてリニアアドレッシングが使用されます。
+しかし、実装によってはリニアアドレッシングに不具合があります。このオプ
+ションでリニアアドレッシングを無効にすることができます。ハードウェアア
+クセラレーションと 16/24 bpp はリニアアドレッシングが有効な時だけサポー
+トされる点に注意してください。
+<!--
+<tag>Option "no_bitblt"</tag>
+	This option will disable the use of all the BitBLT engine.
+	It is useful for problems related to acceleration problems.
+	In general this will result in a reduced performance.
+-->
+<tag>Option &dquot;no_bitblt&dquot;</tag>
+このオプションは BitBLT エンジンの使用を全て無効にします。アクセラレー
+ション関係の問題に対処する時に役立ちます。一般には、このオプションを使
+うと性能が低下します。
+<!--
+<tag>Option "no_imageblt"</tag>                                              
+	It is useful for problems related to image writing, and possible                 
+	stipple acceleration problems. In general this will result in a reduced          
+        performance.                                                                     
+-->
+<tag>Option &dquot;no_imageblt&dquot;</tag>
+イメージ書き込みに関する問題と、たぶんスティプルのアクセラレーションの問
+題に対処する際に役立ちます。一般には、このオプションを使うと性能が低下
+するでしょう。
+<!--
+<tag>Option "ext_eng_queue"</tag>
+	5597/8 and 6326 have the option to extend the engine command queue on
+	VRAM. With extended queue length, the driver only checks queue status 
+	on some color-expansion commands. This gives some performance improvement, 
+	but is possible to lose some commands, corrupting screen output. As the 
+	size of extended command queue is 16-32K, the probability is very low, but
+	exists. The performance gain observed is around 8-10%. Currently, using
+	this option with xaa_benchmark freezes the acceleration engine, causing 
+	weird image display.
+-->
+<tag>Option &dquot;ext_eng_queue&dquot;</tag>
+5597/8 と 6326 には VRAM 上にあるエンジンのコマンドキューを拡張するオ
+プションがあります。キューの長さを拡張すると、ドライバは一部の色展開コ
+マンドのキューの状態チェックだけを行います。このオプションを使うと性能
+は向上しますが、コマンドが消えてしまい、画面表示がおかしくなる可能性が
+あります。拡張されるコマンドキューのサイズは 16-32K なので、その確率は非常
+に低いですがゼロではありません。実験では性能の向上は約 8-10% です。現
+時点では、このオプションの使用時に xaa_benchmark オプションを使うとアクセラレー
+ションエンジンが止まってしまい、イメージ表示がおかしくなります。
+<!--
+<tag>Option "pci_burst_on"</tag>
+        This set a bit on some registers. Although documented, the utility of 
+	this option is unknown for me. I can't see any difference on stability 
+	or performance.
+-->
+<tag>Option &dquot;pci_burst_on&dquot;</tag>
+このオプションは、いくつかのレジスタをちょっとを設定します。ドキュメ
+ントには記述されていますが、筆者はこのオプションが役に立つのか知りませ
+ん。安定性や性能にどんな違いが出るのかもわかりません。
+
+<!--
+<tag>Option "fast_vram"</tag>
+        Enables 1 cycle memory access. Try it. Increased memory bandwidth reduces
+	the possibility of glitches and noise on high resolution modes. 
+-->
+<tag>Option &dquot;fast_vram&dquot;</tag>
+1サイクルメモリアクセスを有効にします。このオプションを試してください。
+メモリのバンド幅が増えるので、高解像度モードで画面が乱れてノイズが出る
+可能性が減ります。
+<!--
+<tag>Option "fifo_moderate","fifo_conservative","fifo_aggressive"</tag>
+        These options modify the arbitration thresholds on CRT FIFO. Fifo_aggressive
+	gives more time to CPU for accessing the VRAM. Fifo_conservative reduces 
+	the possibility of noise caused when the CRT tries to read memory when 
+	it is used by CPU, but reduces performance. The default is between 
+	aggressive and moderate (more aggressive than moderate).
+-->	 
+<tag>Option &dquot;fifo_moderate&dquot;,&dquot;fifo_conservative&dquot;,&dquot;fifo_aggressive&dquot;</tag>
+このオプションは CRT の FIFO を調停するための閾値を変更します。
+fifo_aggressive を指定すると、CPU が VRAM に長い間アクセスできるように
+なります。fifo_conservative を指定すると CPU がメモリを使っている時に 
+CRT がメモリを読み出そうとしてノイズが乗ってしまう可能性が小さくなり
+ます。ただし、性能は悪くなります。デフォルト値は aggressive と 
+moderate の間です(moderate より agressive 寄りです)。
+</descrip>
+
+
+<!-- <sect> Modelines <p> -->
+<sect> モード行 <p>
+
+<!--
+When constructing a modeline for use with the Sis
+driver you'll need to consider several points:
+-->
+SiS ドライバで使うモード行を作る時には、以下の点を考慮する必要がありま
+す:
+<itemize>
+<!--
+  <item>H/W Acceleration.  The H/W cursor, and fill operations
+	currently allocate memory of the video ram for there own use.
+	If this is not available these functions will automatically be
+	disabled. Also, ext_eng_queue allocate 32k of Vram. 
+-->
+  <item>ハードウェアアクセラレーション。ハードウェアカーソル機能と塗り
+  つぶし操作のアクセラレーションは一般に、使用するメモリをビデオ RAM か
+  ら割り当てます。このメモリ割り当てに失敗した場合、これらの機能は自動的
+  に無効にされます。また、ext_eng_queue オプションを指定すると、ビデオ 
+  RAM から 32k のメモリが割り当てられます。
+<!--
+  <item>Dot Clock. SiS documents the following video modes to work with 
+        6326. The max dot clock allowable for your 6326 based board depends 
+	also on the memory installed on it. Option fast_vram can be needed 
+	for high dot clocks to work. Of course, the memory installed must
+	allow 1 cycle R/W. The server tries to avoid problems with high 
+	dotclocks, limiting the maximum based on estimated memory bandwidth.
+	Overriding the limits with dac_speed and modelines can damage the 
+	card if you exceed the card limits. Values between driver guess and
+	chipset limits are acceptable, but can cause bad image quality, noise 
+	or no image displayed. 
+-->
+  <item>ドットクロック。SiS のドキュメントによると、6326 は以下に挙げ
+  るビデオモードで動作します。6326 ベースのボードで設定可能なドットクロッ
+  クの最大値は、ボードにインストールされているメモリにも依存します。高
+  いドットクロックで動作させるためには、オプション fast_vram が必要に
+  なるかもしれません。当然ながら、インストールされているメモリは 1 サ
+  イクルの読み書きができなければなりません。サーバは高いドットクロック
+  に伴う問題を回避するために、推定したメモリのバンド幅に基づいて最大値
+  を制限します。この制限を dac_speed で上書きすると、モード行の指定に
+  よってはカードの制限を越えた時にカードを壊すことがあります。ドライバ
+  の推定値とチップセットの制限の間にある値は設定可能ですが、表示の質が悪
+  かったり、ノイズが乗ったり、全然表示がされなかったりすることがありま
+  す。
+<!--
+   <itemize>
+        <item>SiS recommended video modes for 6326: 
+        <item>   640x480  : 4, 8, 15, 16, 24 bpp at 85Hz Non-interlaced
+        <item>   800x600  : 4, 8, 15, 16, 24 bpp at 85Hz Non-interlaced 
+        <item>  1024x768  : 4, 8, 15, 16, 24 bpp at 85Hz Non-interlaced
+        <item> 1280x1024  : 4, 8, 15, 16, 24 bpp at 75Hz Non-interlaced
+        <item> 1600x1200  : 4, 8  bpp at 65Hz Non-interlaced
+   </itemize>	 
+-->
+   <itemize>
+        <item>6326 向けの SiS 推奨ビデオモード: 
+        <item>   640x480  : 4, 8, 15, 16, 24 bpp, 85Hz ノンインタレース
+        <item>   800x600  : 4, 8, 15, 16, 24 bpp, 85Hz ノンインタレース
+        <item>  1024x768  : 4, 8, 15, 16, 24 bpp, 85Hz ノンインタレース
+        <item> 1280x1024  : 4, 8, 15, 16, 24 bpp, 75Hz ノンインタレース
+        <item> 1600x1200  : 4, 8  bpp, 65Hz ノンインタレース
+   </itemize>	 
+</itemize>
+
+<!-- <sect> Troubleshooting <p> -->
+<sect> トラブルシューティング <p>
+
+<!--
+The generic VGA driver doesn't work with 6326, so XF86Setup can't be used
+for this card. Please use xf86config instead.
+-->
+汎用 VGA ドライバは 6326 では動作しません。したがって、このカードでは 
+XF86Setup は使えません。代わりに xf86config を使ってください。
+
+<!--
+With intensive generation there is a snow phenomenon on the screen.
+Can't remove it even if I used the fifo low/high water mark dumped
+from W95. 
+-->
+スクリーンに雪のようなものが激しく出てきます。Windows95 からダンプした
+FIFO の最大値と最小値を使っても、これを無くすことはできませんでした。
+
+<!--
+The latter point is changed. Now we use calculated values for the fifo
+settings, and this appears to be stable until the bandwidth required for CRT
+is near the memory bandwidth (dotclock*depth/8 near Mclk*32 or Mclk*64 ). 
+In that case, you could try to use fifo_moderate, fifo_conservative or a lower
+dotclock.
+-->
+後者については状況が変わりました。現在 FIFO の設定には計算された値を
+使います。そしてこの設定は、CRT が必要とするバンド幅(dotclock*depth/8)が
+メモリのバンド幅(Mclk*32 または Mclk*64)に接近するまでは安定しているよう
+です。もし2つの値が接近して画面表示が不安定になってしまう場合は、
+fifo_moderate, fifo_conservative を使うかドットクロックを小さくしてみる
+とよいでしょう。
+
+<!--
+Some video modes with high dot-clocks don't work at all, resulting on black 
+screen. We are tracing now this problem. Lowering dotclock in that case could 
+solve the problem. 
+-->
+一部のビデオモードは高いドットクロックでは全く動作せず、画面に何も
+表示されません。この問題を現在追跡中です。この場合、ドットクロックを
+下げれば問題が解決するでしょう。
+
+<verb>
+Updated October 12, 1998 by Juanjo Santamarta, covering changes for 5597 and 6326.
+Updated November 6, 1998 by Juanjo Santamarta, covering changes for 5597, 86c2x5 and 6326.
+</verb>
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/SiS.sgml,v 1.1.2.2 1999/05/25 12:00:33 hohndel Exp $
+</verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました
+(翻訳: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;">,
+校正: 金田浩司  <url url="mailto:vanitas@ma3.seikyou.ne.jp"
+name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">,
+岡崎哲朗 <url url="mailto:okazaki@be.to"
+name="&lt;okazaki@be.to&gt;">,
+山下純司  <url url="mailto:ys_jyunji@teleweb.or.jp"
+name="&lt;ys_jyunji@teleweb.or.jp&gt;">)。
+問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 
+プロジェクト社にあり、日本語訳に関する権利は X Japanese Documentation
+Project にあります。
+</article>

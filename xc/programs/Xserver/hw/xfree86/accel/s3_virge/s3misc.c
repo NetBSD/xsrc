@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3misc.c,v 3.14.2.4 1997/05/28 13:12:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3misc.c,v 3.14.2.5 1999/04/15 12:37:00 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -453,6 +453,28 @@ s3EnterLeaveVT(enter, screen_idx)
             break;
 	}
    }
+
+#ifdef XFreeXDGA
+    /*
+     * Patch up things to allow a graphics operations to go to the screen
+     * while remaining in direct graphics mode.
+     */
+    if (s3InfoRec.directMode & XF86DGADoAccel) {
+	if (enter) {
+	    if (s3VideoMem != vgaBase)	/* XXX doesn't really do anything */
+		xf86MapDisplay(screen_idx, LINEAR_REGION);
+	    pspix->devPrivate.ptr = s3VideoMem;
+	} else {
+	    /* XXX
+	    WaitIdleEmpty();
+	    */
+	    pspix->devPrivate.ptr = ppix->devPrivate.ptr;
+	    if (s3VideoMem != vgaBase)	/* XXX doesn't really do anything */
+		xf86UnMapDisplay(screen_idx, LINEAR_REGION);
+	}
+	return;
+    }
+#endif /* XFreeXDGA */
 
    if (enter) {
 #ifdef PC98

@@ -1,6 +1,7 @@
-XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.1.1.3.2.4 1998/12/28 12:00:46 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.1.1.3.2.7 1999/07/17 05:00:46 dawes Exp $
 /* Copyright Takis Psarogiannakopoulos <takis@dpmms.cam.ac.uk>
- * This is the DG/ux configuration file of X11R6.3 
+ * This is the DG/ux configuration file of X11R6.3
+ * XFree86 Version 3.3.4 ix86 DG/ux Release 4.20 MU04
  */
 #ifndef OSName
 #define OSName			DefaultOSName
@@ -17,7 +18,7 @@ XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.1.1.3.2.4 1998/12/28 12:00:4
 
 /* Fallbacks */
 #ifndef OSName
-#define	OSName	DG/ux R4.20MU03
+#define	OSName	DG/ux R4.20MU04
 #endif
 #ifndef OSMajorVersion
 #define	OSMajorVersion	4
@@ -26,7 +27,7 @@ XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.1.1.3.2.4 1998/12/28 12:00:4
 #define	OSMinorVersion	20
 #endif
 #ifndef OSTeenyVersion
-#define	OSTeenyVersion	3
+#define	OSTeenyVersion	4
 #endif
 
 #ifndef OSVendor
@@ -55,6 +56,10 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 
 /*
  * Here are the default paths to use tools for building.
+ * Adjust as in your system , or link then to the locations
+ * below and dont change nothing in this section
+ * You could use DG-gcc 2.7.2.9 but I strongly suggest 2.8.1
+ * Remember: cpp below is pointing to elink !
  */
 
 #define ArCmdBase       /usr/bin/ar
@@ -68,7 +73,7 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #define YaccCmd         /usr/bin/yacc
 #define InstallCmd      /usr/bin/install   /* I use gnu install-sh */
 #define LnCmd           ln -s
-#define RanlibCmd true                         /* Or make a link ranlib->true */ 
+#define RanlibCmd true                         /* Or make a link ranlib->true */
 #define CplusplusCmd    /usr/local/bin/g++
 
 
@@ -118,7 +123,7 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 
 #define ExtraLibraries -lelf -lgen -lresolv -lsocket -lnsl -lw
 
-#define StandardDefines -DDGUX -DSVR4 -Di386 -D__ix86 -D_DGUX_SOURCE -D_LITTLE_ENDIAN -D_PENTIUM_CHANGE
+#define StandardDefines -DDGUX -DSVR4 -Di386 -D__ix86 -D_DGUX_SOURCE -D_LITTLE_ENDIAN -DPENTIUM_CHANGE
 
 #ifndef HasGcc2
 #define HasGcc2 YES     /* We suppose that your DG/ux has gcc-dg.2.7.2.88 */
@@ -165,7 +170,7 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 
 
 
-/* Manual pages installed under their full names */ 
+/* Manual pages installed under their full names */
 
 #define ExpandManNames          YES
 #define CompressManPages        YES
@@ -191,11 +196,8 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #define ServerExtraSysLibs -ldl
 #endif
 
-/*
- * The TLI interface is more robust on most SVR4s, so it will be the default.
- */
 #ifndef ConnectionFlags
-#define ConnectionFlags	-DSTREAMSCONN -DUNIXCONN -DLOCALCONN
+#define ConnectionFlags	-DTCPCONN -DUNIXCONN -DLOCALCONN
 #endif
 
 #ifndef ManSuffix

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atidsp.h,v 1.1.2.1 1998/02/01 16:41:51 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atidsp.h,v 1.1.2.2 1999/07/05 09:07:33 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -28,7 +28,7 @@
 
 extern Bool ATIDSPProbe   FunctionPrototype((void));
 extern void ATIDSPSave    FunctionPrototype((ATIHWPtr));
-extern void ATIDSPInit    FunctionPrototype((void));
+extern void ATIDSPInit    FunctionPrototype((DisplayModePtr));
 extern void ATIDSPRestore FunctionPrototype((ATIHWPtr));
 
 #endif /* ___ATIDSP_H___ */

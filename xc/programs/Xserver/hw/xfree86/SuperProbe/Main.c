@@ -28,7 +28,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Main.c,v 3.17.2.10 1998/12/18 11:56:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Main.c,v 3.17.2.11 1999/06/17 16:23:58 hohndel Exp $ */
 
 #include "Probe.h"
 #include "PatchLevel.h"
@@ -70,6 +70,7 @@ static Chip_Descriptor *SVGA_Descriptors[] = {
     &Epson_Descriptor,	/* is detected as Tseng (has 0x3cd as Segment too) */
     &Tseng_Descriptor,
     &RealTek_Descriptor,
+    &Rendition_Descriptor,
     &Primus_Descriptor,
     &Yamaha_Descriptor,
     &Oak_Descriptor,
@@ -550,7 +551,7 @@ char *argv[];
 #endif
     if (f != (FILE *)NULL)
     {
-#if !defined(DGUX)  /* It craches SuperProbe in DG/ux */
+#if !defined(DGUX)  /* It crashes SuperProbe in DG/ux */
         putc('\007', f);
         putc('\007', f);
         putc('\007', f);
@@ -559,7 +560,7 @@ char *argv[];
         fprintf(f, "          READ THE SuperProbe.1 MANUAL PAGE BEFORE\n");
         fprintf(f, "          RUNNING THIS PROGRAM.\n\n");
         fprintf(f, "          INTERRUPT WITHIN FIVE SECONDS TO ABORT!\n\n");
-#if !defined(DGUX)  /* It craches SuperProbe in DG/ux */
+#if !defined(DGUX)  /* It crashes SuperProbe in DG/ux */
         putc('\007', f);
         putc('\007', f);
         putc('\007', f);

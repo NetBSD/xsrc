@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.32.2.11 1998/11/08 09:06:27 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.tmpl,v 3.32.2.12 1999/01/09 14:18:57 dawes Exp $
 XCOMM ----------------------------------------------------------------------
 
 /*
@@ -400,6 +400,73 @@ TCLIBDIR = TclLibDir
 #define TclLibrary Concat(-L,$(TCLLIBDIR)) Concat(-l,$(TCLLIBNAME))
 #else
 #define TclLibrary
+#endif
+#endif
+/* Japanese version of Tk anc Tcl */
+#ifndef HasJpTk
+#define HasJpTk NO
+#endif
+#ifndef JpTkLibName
+#if HasJpTk
+#define JpTkLibName tkjp
+#else
+#define JpTkLibName
+#endif
+#endif
+JPTKLIBNAME = JpTkLibName
+#ifndef JpTkLibDir
+#if HasJpTk
+#define JpTkLibDir /usr/local/lib
+#else
+#define JpTkLibDir
+#endif
+#endif
+JPTKLIBDIR = JpTkLibDir
+#ifndef JpTkIncDir
+#if HasJpTk
+#define JpTkIncDir /usr/local/include/jp
+#else
+#define JpTkIncDir
+#endif
+#endif
+#ifndef JpTkLibrary
+#ifdef HasJpTk
+#define JpTkLibrary Concat(-L,$(JPTKLIBDIR)) Concat(-l,$(JPTKLIBNAME))
+#else
+#define JpTkLibrary
+#endif
+#endif
+#ifndef HasJpTcl
+#define HasJpTcl NO
+#endif
+#ifndef JpTclLibName
+#if HasJpTcl
+#define JpTclLibName tcljp
+#else
+#define JpTclLibName
+#endif
+#endif
+JPTCLLIBNAME = JpTclLibName
+#ifndef JpTclLibDir
+#if HasJpTcl
+#define JpTclLibDir /usr/local/lib
+#else
+#define JpTclLibDir
+#endif
+#endif
+JPTCLIBDIR = JpTclLibDir
+#ifndef JpTclIncDir
+#if HasJpTcl
+#define JpTclIncDir /usr/local/include/jp
+#else
+#define JpTclIncDir
+#endif
+#endif
+#ifndef JpTclLibrary
+#ifdef HasJpTcl
+#define JpTclLibrary Concat(-L,$(JPTCLLIBDIR)) Concat(-l,$(JPTCLLIBNAME))
+#else
+#define JpTclLibrary
 #endif
 #endif
 #ifndef NeedConstPrototypes
@@ -1291,6 +1358,14 @@ XCOMM Not sure this belongs here
         TCLINCDIR = TclIncDir
        TCLLIBNAME = TclLibName
        TCLLIBRARY = TclLibrary
+       JPTKLIBDIR = JpTkLibDir
+       JPTKINCDIR = JpTkIncDir
+      JPTKLIBNAME = JpTkLibName
+      JPTKLIBRARY = JpTkLibrary
+      JPTCLLIBDIR = JpTclLibDir
+      JPTCLINCDIR = JpTclIncDir
+     JPTCLLIBNAME = JpTclLibName
+     JPTCLLIBRARY = JpTclLibrary
 
         MACROFILE = MacroFile
            RM_CMD = $(RM)

@@ -4,7 +4,7 @@
 
 <title>README for XFree86 on LynxOS
 <author>Thomas Mueller
-<date>Last modified on: 29 December 1998
+<date>Last modified on: 30 May 1999
 <toc>
 
 <sect>What and Where is XFree86?<p>
@@ -28,8 +28,9 @@ Binaries of XFree86 for LynxOS AT are available from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS">
  
-The binaries were built on `LynxOS x86 3.0.0'. Because of changes
-made to the object format they don't run on earlier LynxOS versions.
+The binaries were built on `LynxOS x86 3.0.1'. Because of changes
+made to the object format they don't run on LynxOS versions earlier
+than 3.0.0.
 
 Building of this XFree86 version has never been tested on LynxOS versions
 earlier than 2.4.0. Binaries built on LynxOS 2.4.0 are expected to run
@@ -51,15 +52,14 @@ this file and we'll revise it.
 
 <sect>Installing the Binaries
 <p>
-Please refer to section "Installing the XFree86 3.3.3.1 Release" of the 
+Please refer to section "Installing the XFree86 3.3.4 Release" of the 
 <htmlurl url="RELNOTES.html" name="Release Notes"> for detailed 
 installation instructions.
 
 If you plan to install XF86Setup you'll have to install
 <tt/X333prog/ as well since XF86Setup checks for the existence of
 a certain file name pattern which is satisfied only if you install
-the library files from <tt/X333prog/. This restriction will be
-fixed in future XFree86 releases for LynxOS.
+the library files from <tt/X333prog/.
 
 It may be necessary to increase the process stack limit in order to
 run XFree86 on your system. Edit <tt>/etc/startab</tt> and reboot your
@@ -89,7 +89,7 @@ your hardware.
 <sect2>Tunable parameters<p>
   To reasonably run XFree86 you may have to adjust a few system parameters.
 
-  On LynxOS 2.5.0 and 3.0.0 include a line
+  On LynxOS 2.5.x and 3.0.x include a line
 <verb>
   #define X_WINDOWS
 </verb>
@@ -109,6 +109,12 @@ your hardware.
 
   The new values are those suggested by the LynxOS documentation for
   their X Window package.
+
+<sect2>Adjustment for Riva 128 and Riva TNT driver>
+
+If you're using the nVidia driver (Riva 128, TNT, TNT2) of the SVGA
+server, you will have to increase the value of the SMEMS parameter in 
+<tt>/sys/lynx.os/uparam.h</tt> from 10 to 20.
 
 <sect2>Increase number of ptys<p>
 
@@ -535,7 +541,7 @@ few little adjustments to your system:
   <tt>lynx.cf</tt> but it has never been tested (reports are welcome).
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.9 1998/12/29 07:54:27 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.10 1999/06/02 07:51:49 hohndel Exp $
 
 
 

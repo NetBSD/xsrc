@@ -6,6 +6,8 @@
 // uses the punctuation keys configurations common on PC 
 // keyboards (e.g. key <ABO9> is { [ period greater ] })
 
+// $XFree86: xc/programs/xkbcomp/symbols/dvorak,v 3.1.2.1 1999/01/15 03:23:30 dawes Exp $
+
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 
@@ -27,7 +29,7 @@ xkb_symbols "basic" {
     key <AE09> {	[	    9,	parenleft	]	};
     key <AE10> {	[	    0,	parenright	]	};
     key <AE11> {	[ bracketleft,	braceleft	]	};
-    key <AE12> {	[       equal,	plus		]	};
+    key <AE12> {	[ bracketright,	braceright	]	};
     key <BKSP> {	[   BackSpace,	Delete 		]	};
 
     key  <TAB> {	[ 	  Tab,	ISO_Left_Tab	]	};
@@ -42,7 +44,7 @@ xkb_symbols "basic" {
     key <AD09> {	[	    r,	R		]	};
     key <AD10> {	[	    l,	L		]	};
     key <AD11> {	[       slash,	question	]	};
-    key <AD12> {	[ bracketright,	braceright	]	};
+    key <AD12> {	[       equal,	plus		]	};
     key <RTRN> {	[ Return			]	};
 
     key <CAPS> {	[	Caps_Lock		]	};

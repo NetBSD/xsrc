@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.h,v 3.14.2.3 1998/10/18 20:42:05 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.h,v 3.14.2.5 1999/07/05 09:07:25 hohndel Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -48,9 +48,11 @@
 #include "windowstr.h"
 #include "misc.h"
 #include "xf86.h"
+#ifndef FBDEV_SERVER
 #include "regionstr.h"
 #include "xf86_OSlib.h"
 #include "xf86Procs.h"
+#endif
 
 #include "regionstr.h"
 #include "regmach64.h"
@@ -85,6 +87,11 @@ extern int mach64DRAMMemClk;
 extern int mach64VRAMMemClk;
 extern int mach64MemCycle;
 
+extern int mach64LCDPanelID;
+extern int mach64LCDClock;
+extern int mach64LCDHorizontal;
+extern int mach64LCDVertical;
+
 extern Bool mach64IntegratedController;
 extern Bool mach64HasDSP;
 extern Bool mach64HasBlockWrite;
@@ -95,6 +102,12 @@ extern unsigned long mach64ApertureAddr;
 extern unsigned long mach64RegisterAddr;
 
 extern short mach64WeightMask;
+
+#ifdef FBDEV_SERVER
+#define mach64InfoRec	fbdevInfoRec
+#define MemToBus	memcpy
+#define BusToMem	memcpy
+#endif
 
 extern ScrnInfoRec mach64InfoRec;
 extern int mach64ValidTokens[];
@@ -134,6 +147,7 @@ extern void (*mach64ImageWriteFunc)(
 
 /* Function Prototypes */
 
+#ifndef FBDEV_SERVER
 /* mach64.c */
 Bool mach64Probe(
 #if NeedFunctionPrototypes
@@ -222,6 +236,8 @@ void mach64RestoreColor0(
     ScreenPtr pScreen
 #endif
 );
+#endif
+
 /* mach64gc.c */
 void mach64InitGC(
 #if NeedFunctionPrototypes
@@ -283,6 +299,8 @@ void mach64CopyWindow(
 #endif
 );
 /* mach64init.c */
+
+#ifndef FBDEV_SERVER
 void mach64CalcCRTCRegs(
 #if NeedFunctionPrototypes
     mach64CRTCRegPtr crtcRegs,
@@ -307,6 +325,11 @@ void mach64RestoreLUT(
 void mach64InitLUT(
 #if NeedFunctionPrototypes
     void
+#endif
+);
+int mach64GetCTClock(
+#if NeedFunctionPrototypes
+    int
 #endif
 );
 void mach64InitEnvironment(
@@ -347,6 +370,8 @@ void mach64CleanUp(
     void
 #endif
 );
+#endif
+
 /* mach64im.c */
 void mach64ImageInit(
 #if NeedFunctionPrototypes
@@ -370,6 +395,8 @@ void mach64ImageStippleFunc(
     int opaque
 #endif
 );
+
+#ifndef FBDEV_SERVER
 /* mach64bstor.c */
 void mach64SaveAreas(
 #if NeedFunctionPrototypes
@@ -401,6 +428,8 @@ Bool mach64ScreenInit(
     int width
 #endif
 );
+#endif
+
 /* mach64blt.c */
 RegionPtr mach64CopyArea(
 #if NeedFunctionPrototypes
@@ -602,6 +631,8 @@ void mach64PaintWindow(
     int what
 #endif
 );
+
+#ifndef FBDEV_SERVER
 /* ativga.c */
 void mach64SaveVGAInfo(
 #if NeedFunctionPrototypes
@@ -702,6 +733,8 @@ extern void mach64BlockHandler(
     pointer pReadmask
 #endif
 );
+#endif
+
 /* mach64gtimg.c */
 void mach64GetImage(
 #if NeedFunctionPrototypes

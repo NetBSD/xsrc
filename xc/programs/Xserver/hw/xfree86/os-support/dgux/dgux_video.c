@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/dgux_video.c,v 1.1.2.1 1998/12/18 11:56:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/dgux_video.c,v 1.1.2.2 1999/07/17 05:00:57 dawes Exp $ */
 /*
- * INTEL DG/UX RELEASE 4.20 MU03
- * Copyright 1997 Takis Psarogiannakopoulos Cambridge,UK
+ * INTEL DG/UX RELEASE 4.20 MU04
+ * Copyright 1997-1999 Takis Psarogiannakopoulos Cambridge,UK
  * <takis@dpmms.cam.ac.uk>
  *
  *
@@ -28,44 +28,27 @@
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
 
-/* Stuff for the SET_IOPL() ,RESET_IOPL() */
-/* #include <fcntl.h> */
-static int io_takis;
-int set_takis;
-
-
 /***************************************************************************/
-/* SET_IOPL() and RESET_IOPL() section for ix86 DG/ux 4.20MU03             */
+/* SET_IOPL() and RESET_IOPL() section for ix86 DG/ux 4.20MU04             */
 /***************************************************************************/
 
+#include <sys/sysi86.h>
+#define SI86IOPL 112  /* Definition of SI86IOPL for DG/ux */
 
-int SET_IOPL()
-{
-    io_takis=open("/dev/console", O_RDWR,0);
-    if ((io_takis) < 0)
-    {
-        return(-1);
-    }
-    set_takis = ioctl(io_takis,KDENABIO,0);
+      asm("sysi86:_sysi86:pushl %ebp");
+      asm("movl %esp,%ebp");
+      asm("pushl 12(%ebp)");
+      asm("pushl 8(%ebp)");
+      asm("pushl 4(%ebp)");
+      asm("movl $50,%eax");
+      asm("lcall $7,$0");
+      asm("addl $12,%esp");
+      asm("leave");
+      asm("ret");
 
-    if (set_takis < 0)
-    {
-        return(-1);
-    }
-    return(1);
-}
+#define SET_IOPL() sysi86(SI86IOPL ,3)
+#define RESET_IOPL() sysi86(SI86IOPL,0)
 
-
-
-
-void RESET_IOPL()
-{
-
-    ioctl(io_takis,KDDISABIO,0);
-    close(io_takis);
-    return;
-
-}
 
 /***************************************************************************/
 /* DG/ux Video Memory Mapping part                                         */

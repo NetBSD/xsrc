@@ -31,7 +31,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
                                 fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imConv.c,v 1.5.2.6 1998/12/06 05:40:33 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imConv.c,v 1.5.2.7 1999/04/10 05:44:38 dawes Exp $ */
 
 #define NEED_EVENTS
 #include <stdio.h>
@@ -413,8 +413,8 @@ static struct CodesetRec CodesetTable[] = {
     {sLatin2,	"ISO8859-2",	"\033-B"},
     {sLatin3,	"ISO8859-3",	"\033-C"},
     {sLatin4,	"ISO8859-4",	"\033-D"},
-    {sArabic,	"ISO8859-5",	"\033-G"},
-    {sCyrillic,	"ISO8859-6",	"\033-L"},
+    {sCyrillic,	"ISO8859-5",	"\033-L"},
+    {sArabic,	"ISO8859-6",	"\033-G"},
     {sGreek,	"ISO8859-7",	"\033-F"},
     {sHebrew,	"ISO8859-8",	"\033-H"},
     {sLatin5,	"ISO8859-9",	"\033-M"},
