@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.1 2004/01/18 04:15:18 rtr Exp $	*/
+/*	$NetBSD: vidc.c,v 1.2 2004/03/07 11:21:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -353,8 +353,7 @@ static int vidc_kbd(DevicePtr dev, int what)
 						vidc_modmap[cnt].modifiers;
 			}
 			InitKeyboardDeviceStruct(dev, &keysims, modmap,
-			    private.wskbd_fd == -1 ? vidc_bell : wscons_bell,
-			    vidc_kbdctrl);
+			    wscons_bell, vidc_kbdctrl);
 			break;
 		case DEVICE_ON:
 			dev->on = TRUE;
@@ -436,10 +435,6 @@ void InitInput(int argc, char *argv[])
 		private.kbd_fd = rpc_init_kbd();
 		if (private.kbd_fd == -1)
 			FatalError("Cannot open kbd device\n");
-		/* Try and init the old rpc beep device */
-		private.beep_fd = rpc_init_bell();
-		if (private.beep_fd == -1)
-			ErrorF("Cannot open beep device\n");
 	}
 
 	/* Add the input devices */
