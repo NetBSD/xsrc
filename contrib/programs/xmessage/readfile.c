@@ -28,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: contrib/programs/xmessage/readfile.c,v 1.1.1.3.2.2 1997/05/17 13:49:15 dawes Exp $ */
 
 #include <X11/Xos.h>			/* for types.h */
 #include <sys/stat.h>
@@ -95,11 +96,15 @@ static char *get_data_from_stdin (len)
     char *cp;
 
     strcpy (filename, "/tmp/xmsg-XXXXXX");
+#ifndef HAS_MKSTEMP
     mktemp (filename);
     if (!filename[0])
 	return NULL;
 
     mfile = creat(filename, 0600);
+#else
+    mfile = mkstemp(filename);
+#endif
     if (mfile < 0) return NULL;
     while ((n = fread (buf, 1, BUFSIZ, stdin)) > 0) {
 	(void) write (mfile, buf, n);
