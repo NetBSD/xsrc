@@ -1,5 +1,5 @@
 /* $XConsortium: Xtransint.h /main/25 1995/12/05 16:51:28 mor $ */
-/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.15 1996/10/03 08:29:47 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.18 1997/01/18 06:52:40 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -75,7 +75,11 @@ from the X Consortium.
  */
 
 #ifndef __EMX__
-#define XTRANSDEBUG 1
+#ifdef JKJ
+#  define XTRANSDEBUG 5
+#else
+#  define XTRANSDEBUG 1
+#endif
 #else
 #define XTRANSDEBUG 1
 #endif
@@ -97,7 +101,11 @@ extern int  errno;		/* Internal system error number. */
 
 #ifndef WIN32
 #ifndef MINIX
+#ifndef Lynx
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif
 #endif
 #ifdef __EMX__
 #include <sys/ioctl.h>
@@ -390,6 +398,7 @@ typedef struct _Xtransport_table {
 #define TRANS_ALIAS	(1<<0)	/* record is an alias, don't create server */
 #define TRANS_LOCAL	(1<<1)	/* local transport */
 #define TRANS_DISABLED	(1<<2)	/* Don't open this one */
+#define TRANS_NOLISTEN  (1<<3)  /* Don't listen on this one */
 
 
 /*
@@ -397,7 +406,7 @@ typedef struct _Xtransport_table {
  * systems, so they may be emulated.
  */
 
-#if defined(CRAY) || (defined(SYSV) && defined(i386) && !defined(SCO)) || defined(WIN32) || defined(__sxg__) || defined(__EMX__)
+#if defined(CRAY) || (defined(SYSV) && defined(i386) && !defined(SCO325)) || defined(WIN32) || defined(__sxg__) || defined(__EMX__)
 
 #define READV(ciptr, iov, iovcnt)	TRANS(ReadV)(ciptr, iov, iovcnt)
 
@@ -416,7 +425,7 @@ static	int TRANS(ReadV)(
 #endif /* CRAY || (SYSV && i386) || WIN32 || __sxg__ || */
 
 
-#if defined(CRAY) || defined(WIN32) || defined(__sxg__) || defined(__EMX__)
+#if defined(CRAY) || (defined(SYSV) && defined(i386) && !defined(SCO325)) || defined(WIN32) || defined(__sxg__) || defined(__EMX__)
 
 #define WRITEV(ciptr, iov, iovcnt)	TRANS(WriteV)(ciptr, iov, iovcnt)
 

@@ -1,4 +1,4 @@
-/* $XConsortium: VarGet.c,v 1.20 94/04/17 20:15:02 kaleb Exp $ */
+/* $TOG: VarGet.c /main/21 1997/05/15 17:32:13 kaleb $ */
 /*
 
 Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
@@ -268,7 +268,7 @@ void XtVaGetValues(widget, va_alist)
     _XtCountVaList(var, &total_count, &typed_count);
 
     if (total_count != typed_count) {
-        args = (ArgList)XtMalloc((unsigned)((total_count - typed_count) 
+        args = (ArgList)__XtMalloc((unsigned)((total_count - typed_count) 
 				* sizeof(Arg)));
     }
     else args = NULL;		/* for lint; really unused */

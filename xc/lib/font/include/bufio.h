@@ -1,4 +1,4 @@
-/* $XConsortium: bufio.h,v 1.4 94/04/17 20:17:27 gildea Exp $ */
+/* $XConsortium: bufio.h /main/5 1996/11/03 19:32:07 kaleb $ */
 
 /*
 
@@ -55,6 +55,9 @@ typedef struct _buffile {
 extern BufFilePtr   BufFileCreate ();
 extern BufFilePtr   BufFileOpenRead (), BufFileOpenWrite ();
 extern BufFilePtr   BufFilePushCompressed ();
+#ifdef X_GZIP_FONT_COMPRESSION
+extern BufFilePtr   BufFilePushZIP ();
+#endif
 extern int	    BufFileClose ();
 extern int	    BufFileFlush ();
 #define BufFileGet(f)	((f)->left-- ? *(f)->bufp++ : (*(f)->io) (f))

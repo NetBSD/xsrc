@@ -1,5 +1,5 @@
-/* $XConsortium: fontutil.c,v 1.10 94/04/17 20:17:33 dpw Exp $ */
-/* $XFree86: xc/lib/font/util/fontutil.c,v 3.0 1996/04/15 11:17:51 dawes Exp $ */
+/* $XConsortium: fontutil.c /main/11 1996/09/12 10:08:59 kaleb $ */
+/* $XFree86: xc/lib/font/util/fontutil.c,v 3.1 1996/12/23 06:02:33 dawes Exp $ */
 
 /*
 
@@ -140,15 +140,15 @@ QueryTextExtents(pFont, count, chars, info)
     unsigned char *chars;
     ExtentInfoRec *info;
 {
-    xCharInfo **charinfo;
-    unsigned long n;
-    FontEncoding encoding;
-    int         cm;
-    int		i;
+    xCharInfo     **charinfo;
+    unsigned long   n;
+    FontEncoding    encoding;
+    int             cm;
+    int             i;
     unsigned long   t;
-    xCharInfo	*defaultChar = 0;
-    unsigned char defc[2];
-    int		firstReal;
+    xCharInfo      *defaultChar = 0;
+    unsigned char   defc[2];
+    int             firstReal;
 
     charinfo = (xCharInfo **) xalloc(count * sizeof(xCharInfo *));
     if (!charinfo)

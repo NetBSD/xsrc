@@ -1,5 +1,5 @@
-/* $XConsortium: fontxlfd.c,v 1.19 94/06/05 14:42:48 rws Exp $ */
-/* $XFree86: xc/lib/font/util/fontxlfd.c,v 3.4 1996/05/06 05:55:03 dawes Exp $ */
+/* $XConsortium: fontxlfd.c /main/20 1996/09/28 16:49:26 rws $ */
+/* $XFree86: xc/lib/font/util/fontxlfd.c,v 3.5 1996/12/23 06:02:34 dawes Exp $ */
 
 /*
 
@@ -50,6 +50,7 @@ from the X Consortium.
 #include	<locale.h>
 #endif
 #include	<ctype.h>
+#include	<stdio.h>	/* for sprintf() */
 
 static char *
 GetInt(ptr, val)

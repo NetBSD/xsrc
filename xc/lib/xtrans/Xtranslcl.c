@@ -1,5 +1,5 @@
-/* $XConsortium: Xtranslcl.c /main/26 1996/02/06 14:12:08 mor $ */
-/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.19 1996/10/03 08:29:48 dawes Exp $ */
+/* $XConsortium: Xtranslcl.c /main/27 1996/09/28 16:50:14 rws $ */
+/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21 1996/12/23 06:04:16 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -606,7 +606,7 @@ int		*status;
 #endif /* TRANS_SERVER */
 
 
-#ifdef SVR4
+#if defined(SVR4) && !defined(SCO325)
 
 /* NAMED */
 
@@ -821,7 +821,7 @@ int		*status;
 
 #endif /* TRANS_SERVER */
 
-#endif /* SVR4 */
+#endif /* SVR4  && !SCO325 */
 
 
 
@@ -1673,7 +1673,7 @@ static LOCALtrans2dev LOCALtrans2devtab[] = {
 #endif /* TRANS_SERVER */
 },
 
-#ifdef SVR4
+#if defined(SVR4) && !defined(SCO325)
 {"named",
 #ifdef TRANS_CLIENT
      TRANS(NAMEDOpenClient),
@@ -1695,7 +1695,7 @@ static LOCALtrans2dev LOCALtrans2devtab[] = {
      TRANS(NAMEDAccept)
 #endif /* TRANS_SERVER */
 },
-#endif /* SVR4 */
+#endif /* SVR4  && !SCO325 */
 
 {"isc",
 #ifdef TRANS_CLIENT
@@ -1765,11 +1765,7 @@ char *protocol;
     else {
 	XLOCAL=(char *)getenv("XLOCAL");
 	if(XLOCAL==NULL)
-#ifdef SCO
-            XLOCAL="PTS:NAMED:SCO:UNIX";
-#else
 	    XLOCAL="UNIX:PTS:NAMED:ISC:SCO";
-#endif
 	workingXLOCAL=freeXLOCAL=(char *)xalloc (strlen (XLOCAL) + 1);
 	if (workingXLOCAL)
 	    strcpy (workingXLOCAL, XLOCAL);
@@ -2354,9 +2350,13 @@ BytesReadable_t *pend;
 
 {
     PRMSG(2,"LocalBytesReadable(%x->%d,%x)\n", ciptr, ciptr->fd, pend);
-    
+
+#ifndef JKJ
 #if defined(SCO) || defined(sco) || defined(ISC)
     return ioctl(ciptr->fd, I_NREAD, (char *)pend);
+#else
+    return ioctl(ciptr->fd, FIONREAD, (char *)pend);
+#endif
 #else
     return ioctl(ciptr->fd, FIONREAD, (char *)pend);
 #endif

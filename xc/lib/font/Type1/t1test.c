@@ -1,4 +1,4 @@
-/* $XConsortium: t1test.c,v 1.3 93/09/17 18:27:01 gildea Exp $ */
+/* $XConsortium: t1test.c /main/4 1996/09/28 16:47:53 rws $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -171,7 +171,7 @@ static void Display(glyph)
 T1FillVals(vals)
     FontScalablePtr vals;
 {
-    fsResolution *res;
+    FontResolutionPtr res;
     int         x_res = DEFAULTRES;
     int         y_res = DEFAULTRES;
     int         pointsize = DEFAULTPOINTSIZE;  /* decipoints */
@@ -179,7 +179,7 @@ T1FillVals(vals)
  
     /* Must have x, y, and pixel */
     if (!vals->x || !vals->y || !vals->pixel) {
-        res = (fsResolution *) GetClientResolutions(&num_res);
+        res = GetClientResolutions(&num_res);
         if (num_res) {
             if (res->x_resolution)
                 x_res = res->x_resolution;
@@ -217,7 +217,9 @@ char *MakeAtom(p)
 {
        return p;
 }
-GetClientResolutions(resP)
+
+
+FontResolutionPtr GetClientResolutions(resP)
        int *resP;
 {
        *resP = 0;

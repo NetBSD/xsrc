@@ -1,4 +1,5 @@
 /* $XConsortium: XTest.h,v 1.9 94/04/17 20:11:18 rws Exp $ */
+/* $XFree86: xc/include/extensions/XTest.h,v 3.0 1996/12/12 09:12:53 dawes Exp $ */
 /*
 
 Copyright (c) 1992  X Consortium
@@ -76,7 +77,7 @@ Bool XTestCompareCurrentCursorWithWindow(
 #endif
 );
 
-extern XTestFakeKeyEvent(
+extern int XTestFakeKeyEvent(
 #if NeedFunctionPrototypes
     Display*		/* dpy */,
     unsigned int	/* keycode */,
@@ -85,7 +86,7 @@ extern XTestFakeKeyEvent(
 #endif
 );
 
-extern XTestFakeButtonEvent(
+extern int XTestFakeButtonEvent(
 #if NeedFunctionPrototypes
     Display*		/* dpy */,
     unsigned int	/* button */,
@@ -94,7 +95,7 @@ extern XTestFakeButtonEvent(
 #endif
 );
 
-extern XTestFakeMotionEvent(
+extern int XTestFakeMotionEvent(
 #if NeedFunctionPrototypes
     Display*		/* dpy */,
     int			/* screen */,
@@ -104,7 +105,7 @@ extern XTestFakeMotionEvent(
 #endif
 );
 
-extern XTestFakeRelativeMotionEvent(
+extern int XTestFakeRelativeMotionEvent(
 #if NeedFunctionPrototypes
     Display*		/* dpy */,
     int			/* x */,
@@ -113,7 +114,7 @@ extern XTestFakeRelativeMotionEvent(
 #endif
 );
 
-extern XTestFakeDeviceKeyEvent(
+extern int XTestFakeDeviceKeyEvent(
 #if NeedFunctionPrototypes
     Display*		/* dpy */,
     XDevice*		/* dev */,
@@ -125,7 +126,7 @@ extern XTestFakeDeviceKeyEvent(
 #endif
 );
 
-extern XTestFakeDeviceButtonEvent(
+extern int XTestFakeDeviceButtonEvent(
 #if NeedFunctionPrototypes
     Display*		/* dpy */,
     XDevice*		/* dev */,
@@ -137,7 +138,7 @@ extern XTestFakeDeviceButtonEvent(
 #endif
 );
 
-extern XTestFakeProximityEvent(
+extern int XTestFakeProximityEvent(
 #if NeedFunctionPrototypes
     Display*		/* dpy */,
     XDevice*		/* dev */,
@@ -148,7 +149,7 @@ extern XTestFakeProximityEvent(
 #endif
 );
 
-extern XTestFakeDeviceMotionEvent(
+extern int XTestFakeDeviceMotionEvent(
 #if NeedFunctionPrototypes
     Display*		/* dpy */,
     XDevice*		/* dev */,
@@ -160,7 +161,7 @@ extern XTestFakeDeviceMotionEvent(
 #endif
 );
 
-extern XTestGrabControl(
+extern int XTestGrabControl(
 #if NeedFunctionPrototypes
     Display*		/* dpy */,
     Bool		/* impervious */

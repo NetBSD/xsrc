@@ -1,6 +1,6 @@
 XCOMM
-XCOMM $XConsortium: Imakefile /main/12 1996/01/24 16:32:03 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/PEX5/dipex/objects/Imakefile,v 3.6 1996/10/03 08:30:29 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/13 1996/09/28 16:54:53 rws $
+XCOMM $XFree86: xc/programs/Xserver/PEX5/dipex/objects/Imakefile,v 3.7 1996/12/23 06:26:26 dawes Exp $
 XCOMM
 XCOMM 
 XCOMM Copyright 1989, 1990, 1991 by Sun Microsystems, Inc. and the X Consortium
@@ -43,7 +43,7 @@ XCOMM PERFORMANCE OF THIS SOFTWARE.
 
 
    PEXSRVINC = ../../include
-    INCLUDES = -I. -I$(PEXSRVINC) -I$(INCLUDESRC) -I$(SERVERSRC)/include
+    INCLUDES = -I. -I$(PEXSRVINC) -I$(XINCLUDESRC) -I$(SERVERSRC)/include
 
 
 SRCS =  pexRndr.c pexFont.c pexLut.c pexNs.c pexStr.c \

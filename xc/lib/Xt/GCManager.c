@@ -1,4 +1,4 @@
-/* $XConsortium: GCManager.c,v 1.48 94/04/17 20:14:05 kaleb Exp $ */
+/* $TOG: GCManager.c /main/39 1997/05/15 17:29:36 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988, 1990 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -239,7 +239,7 @@ GC XtAllocateGC(widget, depth, valueMask, values, dynamicMask, unusedMask)
     if (!drawable) {
 	if (!pd->pixmap_tab) {
 	    int n;
-	    pd->pixmap_tab = (Drawable **)XtMalloc((unsigned)ScreenCount(dpy) *
+	    pd->pixmap_tab = (Drawable **)__XtMalloc((unsigned)ScreenCount(dpy) *
 						   sizeof(Drawable *));
 	    for (n = 0; n < ScreenCount(dpy); n++)
 		pd->pixmap_tab[n] = NULL;
@@ -255,7 +255,7 @@ GC XtAllocateGC(widget, depth, valueMask, values, dynamicMask, unusedMask)
 		    max = depths[n];
 	    }
 	    XFree((char *)depths);
-	    pixmaps = (Drawable *)XtCalloc((unsigned)max, sizeof(Drawable));
+	    pixmaps = (Drawable *)__XtCalloc((unsigned)max, sizeof(Drawable));
 	    pd->pixmap_tab[cur->screen] = pixmaps;
 	}
 	drawable = pixmaps[cur->depth - 1];

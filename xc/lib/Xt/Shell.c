@@ -1,5 +1,4 @@
-/* $XConsortium: Shell.c /main/172 1995/09/13 19:55:40 kaleb $ */
-/* $XFree86: xc/lib/Xt/Shell.c,v 3.5 1996/05/13 06:37:27 dawes Exp $ */
+/* $TOG: Shell.c /main/177 1997/05/15 17:31:03 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -33,6 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/Shell.c,v 3.6.2.1 1997/05/17 12:24:57 dawes Exp $ */
 
 /*
 
@@ -77,6 +77,10 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Xlocale.h>
 #include <X11/ICE/ICElib.h>
 #include <stdio.h>
+
+#ifdef EDITRES
+#include <X11/Xmu/Editres.h>
+#endif
 
 /***************************************************************************
  *
@@ -1001,6 +1005,11 @@ static void Initialize(req, new, args, num_args)
 
 	XtAddEventHandler(new, (EventMask) StructureNotifyMask,
 		TRUE, EventHandler, (XtPointer) NULL);
+
+#ifdef EDITRES
+	XtAddEventHandler(new, (EventMask) 0, TRUE, 
+			  _XEditResCheckMessages, NULL);
+#endif
 }
 
 /* ARGSUSED */
@@ -1419,7 +1428,8 @@ static void _popup_set_prop(w)
 	    copied_wname = True;
 	} else {
 	    window_name.value = (unsigned char*)wmshell->wm.title;
-	    window_name.encoding = wmshell->wm.title_encoding;
+	    window_name.encoding = wmshell->wm.title_encoding ?
+		wmshell->wm.title_encoding : XA_STRING;
 	    window_name.format = 8;
 	    window_name.nitems = strlen((char *)window_name.value);
 	}
@@ -1433,7 +1443,8 @@ static void _popup_set_prop(w)
 		copied_iname = True;
 	    } else {
 		icon_name.value = (unsigned char*)tlshell->topLevel.icon_name;
-		icon_name.encoding = tlshell->topLevel.icon_name_encoding;
+		icon_name.encoding = tlshell->topLevel.icon_name_encoding ?
+		    tlshell->topLevel.icon_name_encoding : XA_STRING;
 		icon_name.format = 8;
 		icon_name.nitems = strlen((char *)icon_name.value);
 	    }
@@ -1600,12 +1611,21 @@ static void EventHandler(wid, closure, event, continue_to_dispatch)
 	        }
 		return;
 
+              case MapNotify:
+                if (XtIsTopLevelShell(wid)) {
+                    ((TopLevelShellWidget)wid)->topLevel.iconic = FALSE;
+                }
+                return;
+
 	      case UnmapNotify:
 		{
 		    XtPerDisplayInput	pdi;
 		    XtDevice		device;
 		    Widget		p;
 
+                    if (XtIsTopLevelShell(wid))
+                        ((TopLevelShellWidget)wid)->topLevel.iconic = TRUE;
+  
 		    pdi = _XtGetPerDisplayInput(event->xunmap.display);
 
 		    device = &pdi->pointer;
@@ -1640,8 +1660,12 @@ static void EventHandler(wid, closure, event, continue_to_dispatch)
 	resize = XtClass(wid)->core_class.resize;
 	UNLOCK_PROCESS;
 
-	if (sizechanged && resize)
+	if (sizechanged && resize) {
+	    CALLGEOTAT(_XtGeoTrace((Widget)w,
+			   "Shell \"%s\" is being resized to %d %d.\n", 
+			   XtName(wid), wid->core.width, wid->core.height ));
 	    (*resize)(wid);
+	 }
 	}
 }
 
@@ -1967,6 +1991,8 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
     int oldx, oldy, oldwidth, oldheight, oldborder_width;
     unsigned long request_num;
 
+    CALLGEOTAT(_XtGeoTab(1));
+  
     if (XtIsWMShell(gw)) {
 	wm = True;
 	hintp = &((WMShellWidget)w)->wm.size_hints;
@@ -2050,9 +2076,30 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 	    values.sibling = XtWindow(request->sibling);
     }
 
-    if (!XtIsRealized((Widget)w)) return XtGeometryYes;
+    if (!XtIsRealized((Widget)w)) {
+	CALLGEOTAT(_XtGeoTrace((Widget)w,
+		      "Shell \"%s\" is not realized, return XtGeometryYes.\n", 
+		       XtName((Widget)w)));
+    	CALLGEOTAT(_XtGeoTab(-1));
+	return XtGeometryYes;
+    }
 
     request_num = NextRequest(XtDisplay(w));
+
+    CALLGEOTAT(_XtGeoTrace((Widget)w,"XConfiguring the Shell X window :\n"));
+    CALLGEOTAT(_XtGeoTab(1));
+#ifdef XT_GEO_TATTLER
+    if (mask & CWX) { CALLGEOTAT(_XtGeoTrace((Widget)w,"x = %d\n",values.x));}
+    if (mask & CWY) { CALLGEOTAT(_XtGeoTrace((Widget)w,"y = %d\n",values.y));}
+    if (mask & CWWidth) { CALLGEOTAT(_XtGeoTrace((Widget)w,
+					       "width = %d\n",values.width));}
+    if (mask & CWHeight) { CALLGEOTAT(_XtGeoTrace((Widget)w,
+					    "height = %d\n",values.height));}
+    if (mask & CWBorderWidth) { CALLGEOTAT(_XtGeoTrace((Widget)w,
+				  "border_width = %d\n",values.border_width));}
+#endif
+    CALLGEOTAT(_XtGeoTab(-1));
+    
     XConfigureWindow(XtDisplay((Widget)w), XtWindow((Widget)w), mask,&values);
 
     if (wm && !w->shell.override_redirect
@@ -2060,7 +2107,12 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 	_SetWMSizeHints((WMShellWidget)w);
     }
 
-    if (w->shell.override_redirect) return XtGeometryYes;
+    if (w->shell.override_redirect) {
+	CALLGEOTAT(_XtGeoTrace((Widget)w,"Shell \"%s\" is override redirect, return XtGeometryYes.\n", XtName((Widget)w)));
+    	CALLGEOTAT(_XtGeoTab(-1));
+	return XtGeometryYes;
+    }
+
 
     /* If no non-stacking bits are set, there's no way to tell whether
        or not this worked, so assume it did */
@@ -2074,8 +2126,12 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 	     * or the current one recovers
 	     * my size requests will be visible
 	     */
-	    PutBackGeometry();
-	    return XtGeometryNo;
+	CALLGEOTAT(_XtGeoTrace((Widget)w,"Shell \"%s\" has wait_for_wm == FALSE, return XtGeometryNo.\n", 
+		       XtName((Widget)w)));
+    	CALLGEOTAT(_XtGeoTab(-1));
+
+	PutBackGeometry();
+	return XtGeometryNo;
     }
 
     if (_wait_for_response(w, &event, request_num)) {
@@ -2088,6 +2144,33 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 		NEQ(width, CWWidth) ||
 		NEQ(height, CWHeight) ||
 		NEQ(border_width, CWBorderWidth)) {
+#ifdef XT_GEO_TATTLER
+		if (NEQ(x, CWX)) {
+		    CALLGEOTAT(_XtGeoTrace((Widget)w,
+					   "received Configure X %d\n", 
+					   event.xconfigure.x));
+		}
+		if (NEQ(y, CWY)) {
+		    CALLGEOTAT(_XtGeoTrace((Widget)w,
+					   "received Configure Y %d\n", 
+					   event.xconfigure.y));
+		}
+		if (NEQ(width, CWWidth)) {
+		    CALLGEOTAT(_XtGeoTrace((Widget)w,
+					   "received Configure Width %d\n", 
+					   event.xconfigure.width));
+		}
+		if (NEQ(height, CWHeight)) {
+		    CALLGEOTAT(_XtGeoTrace((Widget)w,
+					   "received Configure Height %d\n", 
+					   event.xconfigure.height));
+		}
+		if (NEQ(border_width, CWBorderWidth)) {
+		    CALLGEOTAT(_XtGeoTrace((Widget)w,
+				        "received Configure BorderWidth %d\n", 
+					event.xconfigure.border_width));
+		}
+#endif
 #undef NEQ
 		XPutBackEvent(XtDisplay(w), &event);
 		PutBackGeometry();
@@ -2098,6 +2181,10 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 		 * will know the new true state of the world sooner
 		 * this way.
 		 */
+		CALLGEOTAT(_XtGeoTrace((Widget)w,
+			   "ConfigureNotify failed, return XtGeometryNo.\n"));
+		CALLGEOTAT(_XtGeoTab(-1));
+
 		return XtGeometryNo;
 	    }
 	    else {
@@ -2112,10 +2199,16 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
 		    w->shell.client_specified |= _XtShellPositionValid;
 		}
 		else w->shell.client_specified &= ~_XtShellPositionValid;
+		CALLGEOTAT(_XtGeoTrace((Widget)w,
+			 "ConfigureNotify succeed, return XtGeometryYes.\n"));
+		CALLGEOTAT(_XtGeoTab(-1));
 		return XtGeometryYes;
 	    }
 	} else if (!wm) {
 	    PutBackGeometry();
+	    CALLGEOTAT(_XtGeoTrace((Widget)w,
+				   "Not wm, return XtGeometryNo.\n"));
+	    CALLGEOTAT(_XtGeoTab(-1));
 	    return XtGeometryNo;
 	} else XtAppWarningMsg(XtWidgetToApplicationContext((Widget)w),
 			       "internalError", "shell", XtCXtToolkitError,
@@ -2126,8 +2219,11 @@ static XtGeometryResult RootGeometryManager(gw, request, reply)
     }
     PutBackGeometry();
 #undef PutBackGeometry
+    CALLGEOTAT(_XtGeoTrace((Widget)w,
+			   "Timeout passed?, return XtGeometryNo.\n"));
+    CALLGEOTAT(_XtGeoTab(-1));
     return XtGeometryNo;
-}
+		}
 
 /* ARGSUSED */
 static Boolean SetValues(old, ref, new, args, num_args)
@@ -2227,7 +2323,8 @@ static Boolean WMSetValues(old, ref, new, args, num_args)
 		copied = True;
 	    } else {
 		title.value = (unsigned char*)nwmshell->wm.title;
-		title.encoding = nwmshell->wm.title_encoding;
+		title.encoding = nwmshell->wm.title_encoding ?
+		    nwmshell->wm.title_encoding : XA_STRING;
 		title.format = 8;
 		title.nitems = strlen(nwmshell->wm.title);
 	    }
@@ -2364,7 +2461,8 @@ static Boolean TopLevelSetValues(oldW, refW, newW, args, num_args)
 		copied = True;
 	    } else {
 		icon_name.value = (unsigned char *)new->topLevel.icon_name;
-		icon_name.encoding = new->topLevel.icon_name_encoding;
+		icon_name.encoding = new->topLevel.icon_name_encoding ?
+		    new->topLevel.icon_name_encoding : XA_STRING;
 		icon_name.format = 8;
 		icon_name.nitems = strlen((char *)icon_name.value);
 	    }
@@ -2393,7 +2491,7 @@ static String * NewArgv(count, str)
 	nbytes++;
     }
     num = (count+1) * sizeof(String);
-    new = newarray = (String *) XtMalloc(num + nbytes);
+    new = newarray = (String *) __XtMalloc(num + nbytes);
     sptr = ((char *) new) + num;
 
     for (str = strarray; count--; str++) {
@@ -2767,7 +2865,7 @@ static String * NewStringArray(str)
 	nbytes++;
     }
     num = (num + 1) * sizeof(String);
-    new = newarray = (String *) XtMalloc(num + nbytes);
+    new = newarray = (String *) __XtMalloc(num + nbytes);
     sptr = ((char *) new) + num;
 
     for (str = strarray; *str; str++) {
@@ -2797,7 +2895,7 @@ static SmProp * CardPack(name, closure)
     unsigned char *prop = (unsigned char *) closure;
     SmProp *p;
 
-    p = (SmProp *) XtMalloc(sizeof(SmProp) + sizeof(SmPropValue));
+    p = (SmProp *) __XtMalloc(sizeof(SmProp) + sizeof(SmPropValue));
     p->vals = (SmPropValue *) (((char *) p) + sizeof(SmProp));
     p->num_vals = 1;
     p->type = SmCARD8;
@@ -2814,7 +2912,7 @@ static SmProp * ArrayPack(name, closure)
     String prop = *(String *) closure;
     SmProp *p;
 
-    p = (SmProp *) XtMalloc(sizeof(SmProp) + sizeof(SmPropValue));
+    p = (SmProp *) __XtMalloc(sizeof(SmProp) + sizeof(SmPropValue));
     p->vals = (SmPropValue *) (((char *) p) + sizeof(SmProp));
     p->num_vals = 1;
     p->type = SmARRAY8;
@@ -2836,7 +2934,7 @@ static SmProp * ListPack(name, closure)
 
     for (ptr = prop; *ptr; ptr++)
 	n++;
-    p = (SmProp*) XtMalloc(sizeof(SmProp) + (Cardinal)(n*sizeof(SmPropValue)));
+    p = (SmProp*) __XtMalloc(sizeof(SmProp) + (Cardinal)(n*sizeof(SmPropValue)));
     p->vals = (SmPropValue *) (((char *) p) + sizeof(SmProp));
     p->num_vals = n;
     p->type = SmLISTofARRAY8;
@@ -3139,7 +3237,7 @@ static XtCheckpointToken GetToken(widget, type)
     else 
 	return (XtCheckpointToken) NULL;
 
-    token = (XtCheckpointToken) XtMalloc(sizeof(XtCheckpointTokenRec));
+    token = (XtCheckpointToken) __XtMalloc(sizeof(XtCheckpointTokenRec));
     token->save_type = save->save_type;
     token->interact_style = save->interact_style;
     token->shutdown = save->shutdown;
@@ -3308,7 +3406,7 @@ static String* EditCommand(str, src1, src2)
 	count++;
 
     if (want) {
-	s = new = (String *) XtMalloc((Cardinal)(count+3) * sizeof(String*));
+	s = new = (String *) __XtMalloc((Cardinal)(count+3) * sizeof(String*));
 	*s = *sarray;		s++; sarray++;
 	*s = "-xtsessionID";	s++;
 	*s = str;		s++;
@@ -3318,7 +3416,7 @@ static String* EditCommand(str, src1, src2)
     } else {
 	if (count < 3)
 	    return NewStringArray(sarray);
-	s = new = (String *) XtMalloc((Cardinal)(count-1) * sizeof(String*));
+	s = new = (String *) __XtMalloc((Cardinal)(count-1) * sizeof(String*));
 	for (; --count >= 0; sarray++) {
 	    if (strcmp(*sarray, "-xtsessionID") == 0) {
 		sarray++;

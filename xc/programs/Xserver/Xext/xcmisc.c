@@ -1,5 +1,5 @@
-/* $XConsortium: xcmisc.c,v 1.4 94/04/17 20:32:59 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/Xext/xcmisc.c,v 3.1 1996/05/06 05:55:36 dawes Exp $ */
+/* $XConsortium: xcmisc.c /main/5 1996/08/01 19:23:23 dpw $ */
+/* $XFree86: xc/programs/Xserver/Xext/xcmisc.c,v 3.2 1996/12/23 06:29:03 dawes Exp $ */
 /*
 
 Copyright (c) 1993  X Consortium
@@ -67,6 +67,7 @@ XCMiscExtensionInit()
 				ProcXCMiscDispatch, SProcXCMiscDispatch,
 				XCMiscResetProc, StandardMinorOpcode)) != 0)
 	XCMiscCode = (unsigned char)extEntry->base;
+    DeclareExtensionSecurity(XCMiscExtensionName, TRUE);
 }
 
 /*ARGSUSED*/

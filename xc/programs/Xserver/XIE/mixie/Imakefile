@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/6 1995/12/07 21:15:34 gildea $
-XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/Imakefile,v 3.6 1996/10/03 08:31:00 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/Imakefile,v 3.6.4.1 1997/05/03 09:44:48 dawes Exp $
 #include <Server.tmpl>
 
 #if BuildDIS
@@ -19,6 +19,10 @@ DONES = control/DONE fax/DONE import/DONE jpeg/DONE process/DONE export/DONE
 #if HasParallelMake
 MakeMutex($(SUBDIRS) $(OBJS) $(DONES))
 #endif
+#endif
+
+#if HasGnuMake
+$(DONES): $(SUBDIRS)
 #endif
 
 #ifdef OS2Architecture

@@ -28,11 +28,16 @@ in this Software without prior written authorization from the X Consortium.
 /* THIS IS NOT AN X CONSORTIUM STANDARD */
 
 /* $XConsortium: shm.c,v 1.25 95/04/06 16:00:55 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/Xext/shm.c,v 3.7 1996/10/16 14:37:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/shm.c,v 3.8 1997/01/18 06:52:59 dawes Exp $ */
 
 #include <sys/types.h>
+#ifndef Lynx
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#else
+#include <ipc.h>
+#include <shm.h>
+#endif
 #define NEED_REPLIES
 #define NEED_EVENTS
 #include "X.h"

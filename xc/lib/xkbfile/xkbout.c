@@ -1,4 +1,4 @@
-/* $XConsortium: xkbout.c /main/4 1996/01/23 10:10:56 kaleb $ */
+/* $XConsortium: xkbout.c /main/6 1996/12/27 20:53:20 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -148,6 +148,8 @@ Display *		dpy;
 	 fprintf(file,"xkb_keycodes \"%s\" {\n",
 					XkbAtomText(dpy,kcName,XkbXKBFile));
     else fprintf(file,"xkb_keycodes {\n");
+    fprintf(file,"    minimum = %d;\n",xkb->min_key_code);
+    fprintf(file,"    maximum = %d;\n",xkb->max_key_code);
     for (i=xkb->min_key_code;i<=xkb->max_key_code;i++) {
 	if (xkb->names->keys[i].name[0]!='\0') {
 	    fprintf(file,"    %6s = %d;\n",

@@ -1,5 +1,5 @@
-/* $XConsortium: cout.c /main/3 1996/01/01 10:52:28 kaleb $ */
-/* $XFree86: xc/lib/xkbfile/cout.c,v 3.1 1996/10/13 11:18:10 dawes Exp $ */
+/* $XConsortium: cout.c /main/4 1996/08/31 12:45:09 kaleb $ */
+/* $XFree86: xc/lib/xkbfile/cout.c,v 3.2 1996/12/23 06:04:00 dawes Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

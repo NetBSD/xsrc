@@ -1,5 +1,6 @@
 /*
- * $XConsortium: Xthreads.h /main/30 1995/12/06 20:18:34 kaleb $
+ * $XConsortium: Xthreads.h /main/35 1996/12/04 10:23:02 lehors $
+ * $XFree86: xc/include/Xthreads.h,v 3.3 1996/12/23 05:58:11 dawes Exp $
  *
  * 
 Copyright (c) 1993  X Consortium
@@ -63,7 +64,7 @@ typedef struct mutex xmutex_rec;
 #define xcondition_broadcast(cv) condition_broadcast(cv)
 #define xcondition_set_name(cv,str) condition_set_name(cv,str)
 #else /* !CTHREADS */
-#ifdef SVR4
+#if defined(SVR4) && !defined(__sgi)
 #include <thread.h>
 #include <synch.h>
 #ifndef LINE_MAX
@@ -85,6 +86,7 @@ typedef mutex_t xmutex_rec;
 #endif
 #define xthread_set_specific(k,v) thr_setspecific(k,v)
 #define xthread_get_specific(k,vp) thr_getspecific(k,vp)
+#define XMUTEX_INITIALIZER {0}
 #define xmutex_init(m) mutex_init(m,USYNC_THREAD,0)
 #define xmutex_clear(m) mutex_destroy(m)
 #define xmutex_lock(m) mutex_lock(m)
@@ -176,7 +178,7 @@ extern struct _xthread_waiter *_Xthread_waiter();
  */
 #include <tis.h>
 typedef pthread_t xthread_t;
-#define pthread_key_t xthread_key_t;
+typedef pthread_key_t xthread_key_t;
 typedef pthread_cond_t xcondition_rec;
 typedef pthread_mutex_t xmutex_rec;
 #define xthread_self tis_self
@@ -184,7 +186,11 @@ typedef pthread_mutex_t xmutex_rec;
         pthread_create(&_tmpxthr,NULL,func,closure); }
 #define xthread_yield() pthread_yield_np()
 #define xthread_exit(v) pthread_exit(v)
-#define xthread_set_specific(k,v) pthread_setspecific(k,v)
+#define xthread_key_create(kp,d) tis_key_create(kp,d)
+#define xthread_key_delete(k) tis_key_delete(k)
+#define xthread_set_specific(k,v) tis_setspecific(k,v)
+#define xthread_get_specific(k,vp) *(vp) = tis_getspecific(k)
+#define XMUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 #define xmutex_init(m) tis_mutex_init(m)
 #define xmutex_clear(m) tis_mutex_destroy(m)
 #define xmutex_lock(m) tis_mutex_lock(m)
@@ -200,11 +206,13 @@ typedef pthread_mutex_t xmutex_rec;
 #define LINE_MAX 2048
 #endif
 typedef pthread_t xthread_t;
+typedef pthread_key_t xthread_key_t;
 typedef pthread_cond_t xcondition_rec;
 typedef pthread_mutex_t xmutex_rec;
 #define xthread_self pthread_self
 #define xthread_yield() pthread_yield()
 #define xthread_exit(v) pthread_exit(v)
+#define xthread_set_specific(k,v) pthread_setspecific(k,v)
 #define xmutex_clear(m) pthread_mutex_destroy(m)
 #define xmutex_lock(m) pthread_mutex_lock(m)
 #define xmutex_unlock(m) pthread_mutex_unlock(m)
@@ -214,6 +222,7 @@ typedef pthread_mutex_t xmutex_rec;
 #define xthread_get_specific(k,vp) *(vp) = pthread_getspecific(k)
 #define xthread_fork(func,closure) { pthread_t _tmpxthr; \
 	pthread_create(&_tmpxthr,NULL,func,closure); }
+#define XMUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 #define xmutex_init(m) pthread_mutex_init(m, NULL)
 #define xcondition_init(c) pthread_cond_init(c, NULL)
 #else /* XPRE_STANDARD_API */
@@ -229,12 +238,12 @@ typedef pthread_mutex_t xmutex_rec;
 #define xcondition_wait(c,m) pthread_cond_wait(c,m)
 #define xcondition_signal(c) pthread_cond_signal(c)
 #define xcondition_broadcast(c) pthread_cond_broadcast(c)
-#ifdef _DECTHREADS_
+#if defined(_DECTHREADS_) || defined(linux)
 static xthread_t _X_no_thread_id;
 #define xthread_have_id(id) !pthread_equal(id, _X_no_thread_id)
 #define xthread_clear_id(id) id = _X_no_thread_id
 #define xthread_equal(id1,id2) pthread_equal(id1, id2)
-#endif /* _DECTHREADS_ */
+#endif /* _DECTHREADS_ || linux */
 #if _CMA_VENDOR_ == _CMA__IBM
 #ifdef DEBUG			/* too much of a hack to enable normally */
 /* see also cma__obj_set_name() */

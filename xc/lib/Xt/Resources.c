@@ -1,4 +1,4 @@
-/* $XConsortium: Resources.c /main/111 1996/02/01 16:32:22 converse $ */
+/* $TOG: Resources.c /main/112 1997/05/15 17:30:38 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -453,7 +453,7 @@ void _XtDependencies(class_resp, class_num_resp, super_res, super_num_res,
 
     /* Allocate and initialize new_res with superclass resource pointers */
     new_num_res = super_num_res + class_num_res;
-    new_res = (XrmResourceList *) XtMalloc(new_num_res*sizeof(XrmResourceList));
+    new_res = (XrmResourceList *) __XtMalloc(new_num_res*sizeof(XrmResourceList));
     if (super_num_res > 0)
 	XtMemmove(new_res, super_res, super_num_res * sizeof(XrmResourceList));
     
@@ -542,7 +542,7 @@ XrmResourceList* _XtCreateIndirectionTable (resources, num_resources)
     register int idx;
     XrmResourceList* table;
 
-    table = (XrmResourceList*)XtMalloc(num_resources * sizeof(XrmResourceList));
+    table = (XrmResourceList*)__XtMalloc(num_resources * sizeof(XrmResourceList));
     for (idx = 0; idx < num_resources; idx++)
         table[idx] = (XrmResourceList)(&(resources[idx]));
     return table;
@@ -818,7 +818,7 @@ static XtCacheRef *GetResources(widget, base, names, classes,
 		     */
 
 		    if(rx->xrm_size > sizeof(XtArgVal)) {
-			arg->value = (XtArgVal) XtMalloc(rx->xrm_size);
+			arg->value = (XtArgVal) __XtMalloc(rx->xrm_size);
 			arg->size = -(arg->size);
 		    } else { /* will fit - copy directly into value field */
 			arg->value = (XtArgVal) NULL;
@@ -972,7 +972,7 @@ static XtCacheRef *GetResources(widget, base, names, classes,
     if (cache_ptr && cache_ptr != cache_ref) {
 	int cache_ref_size = cache_ptr - cache_ref;
 	XtCacheRef *refs = (XtCacheRef*)
-	    XtMalloc((unsigned)sizeof(XtCacheRef)*(cache_ref_size + 1));
+	    __XtMalloc((unsigned)sizeof(XtCacheRef)*(cache_ref_size + 1));
 	(void) memmove(refs, cache_ref, sizeof(XtCacheRef)*cache_ref_size );
 	refs[cache_ref_size] = NULL;
 	return refs;
@@ -999,7 +999,7 @@ static void CacheArgs(args, num_args, typed_args, num_typed_args, quark_cache,
     count = (args != NULL) ? num_args : num_typed_args;
 
     if (num_quarks < count) {
-	quarks = (XrmQuarkList) XtMalloc(count * sizeof(XrmQuark));
+	quarks = (XrmQuarkList) __XtMalloc(count * sizeof(XrmQuark));
     } else {
 	quarks = quark_cache;
     }

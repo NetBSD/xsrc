@@ -1,5 +1,4 @@
-/* $XConsortium: fserve.c,v 1.44 95/04/05 19:58:07 kaleb Exp $ */
-/* $XFree86: xc/lib/font/fc/fserve.c,v 3.3 1996/04/15 11:17:34 dawes Exp $ */
+/* $TOG: fserve.c /main/47 1997/05/28 08:44:49 barstow $ */
 /*
 
 Copyright (c) 1990  X Consortium
@@ -26,6 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/font/fc/fserve.c,v 3.4.2.1 1997/05/29 14:00:58 dawes Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices
@@ -182,7 +182,7 @@ _fs_client_resolution(conn)
 {
     fsSetResolutionReq srreq;
     int         num_res;
-    fsResolution *res, *GetClientResolutions();
+    FontResolutionPtr res;
 
     res = GetClientResolutions(&num_res);
 
@@ -218,8 +218,7 @@ fs_send_init_packets(conn)
                *sp,
                *end;
     int         num_res;
-    fsResolution *res;
-    extern fsResolution *GetClientResolutions();
+    FontResolutionPtr res;
     int         err = Successful;
 
 #define	CATALOGUE_SEP	'+'
@@ -1235,6 +1234,14 @@ fs_wakeup(fpe, LastSelectMask)
     fsGenericReply rep;
 
     /* see if there's any data to be read */
+
+    /* 
+     * Don't continue if the fd is -1 (which will be true when the
+     * font server terminates
+     */
+    if (conn->fs_fd == -1)
+	return FALSE;
+
     if (FD_ISSET(conn->fs_fd, LastSelectMask)) {
 
 #if defined(NOTDEF) || defined(__EMX__)		/* bogus - doesn't deal with EOF very well,
@@ -2717,6 +2724,94 @@ fs_register_fpe_functions()
 					fs_list_fonts,
 					fs_start_list_with_info,
 					fs_next_list_with_info,
+					fs_wakeup,
+					fs_client_died,
+					_fs_load_glyphs,
+					(int (*))0,
+					(int (*))0,
+					(void (*))0);
+}
+
+static int
+check_fs_open_font(client, fpe, flags, name, namelen, format, fmask, id, ppfont,
+	     alias, non_cachable_font)
+    pointer     client;
+    FontPathElementPtr fpe;
+    Mask        flags;
+    char       *name;
+    fsBitmapFormat format;
+    fsBitmapFormatMask fmask;
+    int         namelen;
+    XID         id;
+    FontPtr    *ppfont;
+    char      **alias;
+    FontPtr     non_cachable_font;	/* Not used in this FPE */
+{
+    if (XpClientIsBitmapClient(client))
+	return (fs_open_font(client, fpe, flags, name, namelen, format, 
+			fmask, id, ppfont, alias, non_cachable_font) );
+    return BadFontName;
+}
+
+static int
+check_fs_list_fonts(client, fpe, pattern, patlen, maxnames, newnames)
+    pointer     client;
+    FontPathElementPtr fpe;
+    char       *pattern;
+    int         patlen;
+    int         maxnames;
+    FontNamesPtr newnames;
+{
+    if (XpClientIsBitmapClient(client))
+	return (fs_list_fonts(client, fpe, pattern, patlen, maxnames, 
+		newnames));
+    return BadFontName;
+}
+
+static int
+check_fs_start_list_with_info(client, fpe, pattern, len, maxnames, pdata)
+    pointer     client;
+    FontPathElementPtr fpe;
+    char       *pattern;
+    int         len;
+    int         maxnames;
+    pointer    *pdata;
+{
+    if (XpClientIsBitmapClient(client))
+	return (fs_start_list_with_info(client, fpe, pattern, len, maxnames,
+		pdata));
+    return BadFontName;
+}
+
+static int
+check_fs_next_list_with_info(client, fpe, namep, namelenp, pFontInfo, numFonts,
+		       private)
+    pointer     client;
+    FontPathElementPtr fpe;
+    char      **namep;
+    int        *namelenp;
+    FontInfoPtr *pFontInfo;
+    int        *numFonts;
+    pointer     private;
+{
+    if (XpClientIsBitmapClient(client))
+	return (fs_next_list_with_info(client, fpe, namep, namelenp, pFontInfo, 
+		numFonts,private));
+    return BadFontName;
+}
+
+void
+check_fs_register_fpe_functions()
+{
+    fs_font_type = RegisterFPEFunctions(fs_name_check,
+					fs_init_fpe,
+					fs_free_fpe,
+					fs_reset_fpe,
+					check_fs_open_font,
+					fs_close_font,
+					check_fs_list_fonts,
+					check_fs_start_list_with_info,
+					check_fs_next_list_with_info,
 					fs_wakeup,
 					fs_client_died,
 					_fs_load_glyphs,

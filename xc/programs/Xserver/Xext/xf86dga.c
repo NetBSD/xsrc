@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86dga.c,v 3.6 1996/10/18 14:58:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86dga.c,v 3.8 1997/01/18 06:53:01 dawes Exp $ */
 
 /*
 
@@ -27,7 +27,11 @@ Copyright (c) 1995, 1996  XFree86 Inc
 #include "../os/osdep.h"
 #include <X11/Xauth.h>
 #ifndef ESIX
+#ifndef Lynx
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif
 #else
 #include <lan/socket.h>
 #endif
@@ -36,7 +40,6 @@ extern int xf86ScreenIndex;
 
 static int DGAErrorBase;
 
-static DISPATCH_PROC(LocalClient);
 static DISPATCH_PROC(ProcDGAQueryVersion);
 static DISPATCH_PROC(ProcXF86DGADirectVideo);
 static DISPATCH_PROC(ProcXF86DGADispatch);
@@ -301,28 +304,6 @@ ProcXF86DGASetVidPage(client)
 	vptr->setBank(stuff->vpage);
     }
     return (client->noClientException);
-}
-
-/* 
- * lifted from xc/programs/Xserver/os/access.c.
- */
-static int
-LocalClient(client)
-    ClientPtr client;
-{
-    int    		alen, notused;
-    struct sockaddr	*from = NULL;
-
-    if (!_XSERVTransGetPeerAddr (((OsCommPtr)client->osPrivate)->trans_conn,
-	&notused, &alen, (Xtransaddr*)&from)) {
-	if (alen == 0 || 
-	    from->sa_family == AF_UNSPEC || from->sa_family == AF_UNIX) {
-	    xfree ((char *) from);
-	    return TRUE;
-	}
-	xfree ((char *) from);
-    }
-    return FALSE;
 }
 
 

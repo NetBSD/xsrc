@@ -48,7 +48,7 @@ SOFTWARE.
 #ifndef XMD_H
 #define XMD_H 1
 /* $XConsortium: Xmd.h,v 1.49 95/06/08 23:20:39 gildea Exp $ */
-/* $XFree86: xc/include/Xmd.h,v 3.3 1995/07/08 10:23:10 dawes Exp $ */
+/* $XFree86: xc/include/Xmd.h,v 3.4 1996/12/31 04:15:20 dawes Exp $ */
 /*
  *  Xmd.h: MACHINE DEPENDENT DECLARATIONS.
  */
@@ -59,7 +59,7 @@ SOFTWARE.
 #ifdef CRAY
 #define WORD64				/* 64-bit architecture */
 #endif
-#ifdef __alpha
+#if defined(__alpha) || defined(__alpha__)
 #define LONG64				/* 32/64-bit architecture */
 #endif
 #ifdef __sgi

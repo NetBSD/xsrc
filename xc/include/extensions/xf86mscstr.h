@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86mscstr.h,v 3.4 1996/03/04 04:19:47 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86mscstr.h,v 3.5 1997/01/18 06:51:27 dawes Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -14,7 +14,7 @@
 #define XF86MISCNAME		"XFree86-Misc"
 
 #define XF86MISC_MAJOR_VERSION	0	/* current version numbers */
-#define XF86MISC_MINOR_VERSION	2
+#define XF86MISC_MINOR_VERSION	3
 
 typedef struct _XF86MiscQueryVersion {
     CARD8	reqType;		/* always XF86MiscReqCode */
@@ -38,6 +38,7 @@ typedef struct {
 } xXF86MiscQueryVersionReply;
 #define sz_xXF86MiscQueryVersionReply	32
 
+#ifdef _XF86MISC_SAVER_COMPAT_
 typedef struct _XF86MiscGetSaver {
     CARD8       reqType;                /* always XF86MiscReqCode */
     CARD8       xf86miscReqType;     /* always X_XF86MiscGetSaver */
@@ -71,6 +72,7 @@ typedef struct {
     CARD32	pad5 B32;
 } xXF86MiscGetSaverReply;
 #define sz_xXF86MiscGetSaverReply	32
+#endif
 
 typedef struct _XF86MiscGetMouseSettings {
     CARD8	reqType;		/* always XF86MiscReqCode */

@@ -1,5 +1,4 @@
-/* $XConsortium: Create.c,v 1.105 94/04/17 20:13:54 converse Exp $ */
-/* $XFree86: xc/lib/Xt/Create.c,v 3.1 1995/01/07 04:00:59 dawes Exp $ */
+/* $TOG: Create.c /main/81 1997/05/15 17:28:48 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -33,6 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/Create.c,v 3.1.8.1 1997/05/17 12:24:52 dawes Exp $ */
 
 /*
 
@@ -288,7 +288,7 @@ xtWidgetAlloc(widget_class, parent_constraint_class, parent, name,
 		    wsize = (wsize + sizeof(double) - 1) & ~(sizeof(double)-1);
 	    }
 	}
-	widget = (Widget) XtMalloc((unsigned)(wsize + csize));
+	widget = (Widget) __XtMalloc((unsigned)(wsize + csize));
 	widget->core.constraints =
 	    (csize ? (XtPointer)((char *)widget + wsize) : NULL);
     }

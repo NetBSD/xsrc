@@ -1,5 +1,5 @@
-/* $XConsortium: maprules.c /main/5 1996/03/22 12:52:33 kaleb $ */
-/* $XFree86: xc/lib/xkbfile/maprules.c,v 3.5 1996/10/13 11:18:11 dawes Exp $ */
+/* $XConsortium: maprules.c /main/11 1996/12/05 10:21:52 kaleb $ */
+/* $XFree86: xc/lib/xkbfile/maprules.c,v 3.8 1996/12/24 08:47:02 dawes Exp $ */
 /************************************************************
  Copyright (c) 1996 by Silicon Graphics Computer Systems, Inc.
 
@@ -32,6 +32,9 @@
 #include <stdlib.h>
 #endif
 
+#define X_INCLUDE_STRING_H
+#define XOS_USE_NO_LOCKING
+#include <X11/Xos_r.h>
 
 #ifndef XKB_IN_SERVER
 
@@ -148,7 +151,7 @@ static Bool
 #if NeedFunctionPrototypes
 GetInputLine(FILE *file,InputLine *line,Bool checkbang)
 #else
-GetInputLine(file,line)
+GetInputLine(file,line,checkbang)
     FILE *	file;
     InputLine *	line;
     Bool	checkbang;
@@ -277,11 +280,12 @@ register int	i;
 #ifdef DEBUG
 Bool		found;
 #endif
+_Xstrtokparams	strtok_buf;
 
    present= 0;
    str= &line->line[1];
    bzero((char *)remap,sizeof(RemapSpec));
-   while ((tok=strtok(str," \t"))!=NULL) {
+   while ((tok=_XStrtok(str," ",strtok_buf))!=NULL) {
 #ifdef DEBUG
 	found= False;
 #endif
@@ -392,6 +396,7 @@ CheckLine(line,remap,rule)
 char *		str,*tok;
 register int	nread;
 FileSpec	tmp;
+_Xstrtokparams	strtok_buf;
 
     if (line->line[0]=='!') {
 	SetUpRemap(line,remap);
@@ -404,7 +409,7 @@ FileSpec	tmp;
     }
     bzero((char *)&tmp,sizeof(FileSpec));
     str= line->line;
-    for (nread= 0;(tok=strtok(str," \t"))!=NULL;nread++) {
+    for (nread= 0;(tok=_XStrtok(str," ",strtok_buf))!=NULL;nread++) {
 	str= NULL;
 	if (strcmp(tok,"=")==0) {
 	    nread--;
@@ -910,7 +915,7 @@ XkbRF_VarDescPtr
 #if NeedFunctionPrototypes
 XkbRF_AddVarDescCopy(XkbRF_DescribeVarsPtr vars,XkbRF_VarDescPtr from)
 #else
-XkbRF_AddVarDesc(vars,from)
+XkbRF_AddVarDescCopy(vars,from)
     XkbRF_DescribeVarsPtr 	vars;
     XkbRF_VarDescPtr		from;
 #endif
@@ -928,7 +933,7 @@ XkbRF_DescribeVarsPtr
 #if NeedFunctionPrototypes
 XkbRF_AddVarToDescribe(XkbRF_RulesPtr rules,char *name)
 #else
-XkbRF_AddVarToDescribe(rules)
+XkbRF_AddVarToDescribe(rules,name)
     XkbRF_RulesPtr	rules;
     char *		name;
 #endif
@@ -1240,14 +1245,14 @@ XkbRF_GetNamesProp(Display *dpy,char **rf_rtrn,XkbRF_VarDefsPtr vd_rtrn)
 #else
 XkbRF_GetNamesProp(dpy,rf_rtrn,vd_rtrn)
    Display *		dpy;
-   char **		rf_rtrn;
+   char **	rf_rtrn;
    XkbRF_VarDefsPtr	vd_rtrn;
 #endif
 {
 Atom		rules_atom,actual_type;
 int		fmt,len;
 unsigned long	nitems,bytes_after;
-char		*data, *out;
+char *		data,*out;
 Status		rtrn;
 
     rules_atom= XInternAtom(dpy,_XKB_RF_NAMES_PROP_ATOM,True);
@@ -1255,8 +1260,8 @@ Status		rtrn;
 	return False; 
     rtrn= XGetWindowProperty(dpy,DefaultRootWindow(dpy),rules_atom,
 				0L,_XKB_RF_NAMES_PROP_MAXLEN,False,
-				XA_STRING, &actual_type,
-				&fmt, &nitems, &bytes_after,
+				XA_STRING,&actual_type,
+				&fmt,&nitems,&bytes_after,
 				(unsigned char **)&data);
     if (rtrn!=Success)
 	return False;
@@ -1368,7 +1373,7 @@ char *	pval;
     }
 
     XChangeProperty(dpy,DefaultRootWindow(dpy),name,XA_STRING,8,PropModeReplace,
-                   (unsigned char *)pval,len);
+                                      (unsigned char *)pval,len);
     _XkbFree(pval);
     return True;
 }

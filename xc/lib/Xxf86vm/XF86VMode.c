@@ -1,5 +1,5 @@
 /* $XConsortium: XF86VMode.c /main/2 1995/11/14 18:17:58 kaleb $ */
-/* $XFree86: xc/lib/Xxf86vm/XF86VMode.c,v 3.19 1996/10/16 14:30:54 dawes Exp $ */
+/* $XFree86: xc/lib/Xxf86vm/XF86VMode.c,v 3.20.2.2 1997/05/26 14:36:11 dawes Exp $ */
 /*
 
 Copyright (c) 1995  Kaleb S. KEITHLEY
@@ -45,6 +45,10 @@ from Kaleb S. KEITHLEY.
 #include "include/extensions/xf86vmstr.h"
 #include "include/extensions/Xext.h"
 #include "include/extensions/extutil.h"
+#endif
+
+#ifdef DEBUG
+#include <stdio.h>
 #endif
 
 #ifndef MODE_BAD
@@ -196,9 +200,27 @@ Bool XF86VidModeGetAllModeLines(dpy, screen, modecount, modelinesPtr)
     XF86VidModeModeInfo *mdinfptr, **modelines;
     xXF86VidModeModeInfo xmdline;
     int i;
+    int majorVersion, minorVersion;
+    Bool protocolBug = False;
 
     XF86VidModeCheckExtension (dpy, info, False);
 
+    /*
+     * Note: There was a bug in the protocol implementation in versions
+     * 0.x with x < 8 (the .private field wasn't being passed over the wire).
+     * Check the server's version, and accept the old format if appropriate.
+     */
+
+    XF86VidModeQueryVersion(dpy, &majorVersion, &minorVersion);
+    if (majorVersion == 0 && minorVersion < 8) {
+	protocolBug = True;
+#ifdef DEBUG
+	fprintf(stderr, "XF86VidModeGetAllModeLines: Warning: Xserver is"
+		"running an old version (%d.%d)\n", majorVersion,
+		minorVersion);
+#endif
+    }
+    
     LockDisplay(dpy);
     GetReq(XF86VidModeGetAllModeLines, req);
     req->reqType = info->codes->major_opcode;
@@ -237,8 +259,24 @@ Bool XF86VidModeGetAllModeLines(dpy, screen, modecount, modelinesPtr)
         modelines[i]->vsyncend   = xmdline.vsyncend;
         modelines[i]->vtotal     = xmdline.vtotal;
         modelines[i]->flags      = xmdline.flags;
-        modelines[i]->privsize   = xmdline.privsize;
-        modelines[i]->private    = NULL;
+	if (protocolBug) {
+	    modelines[i]->privsize = 0;
+	    modelines[i]->private = NULL;
+	} else {
+            modelines[i]->privsize   = xmdline.privsize;
+	    if (xmdline.privsize > 0) {
+	        if (!(modelines[i]->private =
+			    Xcalloc(xmdline.privsize, sizeof(INT32)))) {
+		    _XEatData(dpy, (xmdline.privsize) * sizeof(INT32));
+		    Xfree(modelines[i]->private);
+	        } else {
+		    _XRead32(dpy, modelines[i]->private,
+			     xmdline.privsize * sizeof(INT32));
+	        }
+	    } else {
+                modelines[i]->private = NULL;
+	    }
+	}
     }
     *modelinesPtr = modelines;
     UnlockDisplay(dpy);
@@ -447,9 +485,28 @@ Bool XF86VidModeSwitchToMode(dpy, screen, modeline)
 {
     XExtDisplayInfo *info = find_display (dpy);
     xXF86VidModeSwitchToModeReq *req;
+    int majorVersion, minorVersion;
+    Bool protocolBug = False;
 
     XF86VidModeCheckExtension (dpy, info, False);
 
+    /*
+     * Note: There was a bug in the protocol implementation in versions
+     * 0.x with x < 8 (the .private field wasn't expected to be sent over
+     * the wire).  Check the server's version, and accept the old format
+     * if appropriate.
+     */
+
+    XF86VidModeQueryVersion(dpy, &majorVersion, &minorVersion);
+    if (majorVersion == 0 && minorVersion < 8) {
+	protocolBug = True;
+#ifdef DEBUG
+	fprintf(stderr, "XF86VidModeSwitchToMode: Warning: Xserver is"
+		"running an old version (%d.%d)\n", majorVersion,
+		minorVersion);
+#endif
+    }
+    
     LockDisplay(dpy);
     GetReq(XF86VidModeSwitchToMode, req);
     req->reqType = info->codes->major_opcode;
@@ -465,11 +522,15 @@ Bool XF86VidModeSwitchToMode(dpy, screen, modeline)
     req->vsyncend =	modeline->vsyncend;
     req->vtotal =	modeline->vtotal;
     req->flags =	modeline->flags;
-    req->privsize =	modeline->privsize;
-    if (modeline->privsize) {
-	req->length += modeline->privsize;
-	Data32(dpy, (long *) modeline->private,
-	       modeline->privsize * sizeof(INT32));
+    if (protocolBug) {
+	req->privsize = 0;
+    } else {
+	req->privsize =	modeline->privsize;
+	if (modeline->privsize) {
+	    req->length += modeline->privsize;
+	    Data32(dpy, (long *) modeline->private,
+	           modeline->privsize * sizeof(INT32));
+	}
     }
     UnlockDisplay(dpy);
     SyncHandle();
@@ -522,7 +583,9 @@ Bool XF86VidModeGetMonitor(dpy, screen, monitor)
     }
     monitor->nhsync = rep.nhsync;
     monitor->nvsync = rep.nvsync;
+#if 0
     monitor->bandwidth = (float)rep.bandwidth / 1e6;
+#endif
     if (rep.vendorLength) {
 	if (!(monitor->vendor = (char *)Xcalloc(rep.vendorLength + 1, 1))) {
 	    _XEatData(dpy, (rep.nhsync + rep.nvsync) * 4 +
@@ -597,18 +660,43 @@ Bool XF86VidModeGetViewPort(dpy, screen, x, y)
     xXF86VidModeGetViewPortReq *req;
     CARD32 syncrange;
     int i;
+    int majorVersion, minorVersion;
+    Bool protocolBug = False;
 
     XF86VidModeCheckExtension (dpy, info, False);
 
+    /*
+     * Note: There was a bug in the protocol implementation in versions
+     * 0.x with x < 8 (no reply was sent, so the client would hang)
+     * Check the server's version, and don't wait for a reply with older
+     * versions.
+     */
+
+    XF86VidModeQueryVersion(dpy, &majorVersion, &minorVersion);
+    if (majorVersion == 0 && minorVersion < 8) {
+	protocolBug = True;
+#ifdef DEBUG
+	fprintf(stderr, "XF86VidModeGetViewPort: Warning: Xserver is"
+		"running an old version (%d.%d)\n", majorVersion,
+		minorVersion);
+#endif
+    }
     LockDisplay(dpy);
     GetReq(XF86VidModeGetViewPort, req);
     req->reqType = info->codes->major_opcode;
     req->xf86vidmodeReqType = X_XF86VidModeGetViewPort;
     req->screen = screen;
-    if (!_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
-	UnlockDisplay(dpy);
-	SyncHandle();
-	return False;
+    if (protocolBug) {
+	*x = 0;
+	*y = 0;
+    } else {
+	if (!_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
+	    UnlockDisplay(dpy);
+	    SyncHandle();
+	    return False;
+	}
+	*x = rep.x;
+	*y = rep.y;
     }
 
     UnlockDisplay(dpy);
@@ -633,6 +721,8 @@ Bool XF86VidModeSetViewPort(dpy, screen, x, y)
     req->reqType = info->codes->major_opcode;
     req->xf86vidmodeReqType = X_XF86VidModeSetViewPort;
     req->screen = screen;
+    req->x = x;
+    req->y = y;
 
     UnlockDisplay(dpy);
     SyncHandle();

@@ -1,5 +1,5 @@
-/* $XConsortium: CvtStdSel.c /main/37 1996/01/12 15:08:34 kaleb $ */
-/* $XFree86: xc/lib/Xmu/CvtStdSel.c,v 3.6 1996/05/06 05:54:30 dawes Exp $ */
+/* $XConsortium: CvtStdSel.c /main/42 1996/12/04 10:26:05 lehors $ */
+/* $XFree86: xc/lib/Xmu/CvtStdSel.c,v 3.9 1997/01/18 06:52:13 dawes Exp $ */
 
 /*
  
@@ -53,24 +53,19 @@ in this Software without prior written authorization from the X Consortium.
 
 #ifndef SYSVNET
 #ifdef WIN32
-#define BOOL wBOOL
-#undef Status
-#define Status wStatus
-#include <winsock.h>
-#undef Status
-#define Status int
-#undef BOOL
+#include <X11/Xwinsock.h>
+#define XOS_USE_MTSAFE_NETDBAPI
 #else
-#ifndef MINIX
-#ifdef Lynx
-#include <sys/types.h>
-#endif
-#include <netdb.h>
+#ifndef Lynx
 #include <sys/socket.h>
 #else
-#include <net/gen/netdb.h>
-#endif /* !MINIX */
+#include <sys/types.h>
+#include <socket.h>
 #endif
+#define XOS_USE_XT_LOCKING
+#endif
+#define X_INCLUDE_NETDB_H
+#include <X11/Xos_r.h>
 #endif
 
 #include <X11/Xos.h>
@@ -221,60 +216,19 @@ Boolean XmuConvertStandardSelection(w, time, selection, target,
 #if defined(TCPCONN) || defined(MNX_TCPCONN)
     if (*target == XA_IP_ADDRESS(d)) {
 	char hostname[1024];
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API)
-#ifdef _POSIX_REENTRANT_FUNCTIONS
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-#if defined(AIXV3) || defined(AIXV4) || defined(__osf__)
-#define _POSIX_THREAD_SAFE_FUNCTIONS 1
-#endif
-#endif
-#endif
-#ifdef sun
-#ifdef _POSIX_THREAD_SAFE_FUNCTIONS     /* Sun lies in Solaris 2.5 */
-#undef _POSIX_THREAD_SAFE_FUNCTIONS
-#endif
-#endif
-	struct hostent hent;
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-#define Gethostbyname(h) gethostbyname_r((h),&hent,hbuf,sizeof hbuf,&herr)
-#define HostAddrType hent.h_addrtype
-#define HostAddr hent.h_addr
-#define HostLength hent.h_length
-#define CallFailed NULL
-	char hbuf[LINE_MAX];
-	int herr;
+	_Xgethostbynameparams hparams;
 	struct hostent *hostp;
-#else
-#define Gethostbyname(h) gethostbyname_r((h),&hent,&hdata)
-#define HostAddrType hent.h_addrtype
-#define HostAddr hent.h_addr
-#define HostLength hent.h_length
-#define CallFailed -1
-	struct hostent_data hdata;
-	int hostp;
-#endif
-#else
-#define Gethostbyname(h) gethostbyname((h))
-#define HostAddrType hostp->h_addrtype
-#define HostAddr hostp->h_addr
-#define HostLength hostp->h_length
-#define CallFailed NULL
-	struct hostent *hostp;
-#endif
 
 	hostname[0] = '\0';
 	(void) XmuGetHostname (hostname, sizeof hostname);
 
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API) && defined(_POSIX_THREAD_SAFE_FUNCTIONS)
-	bzero((char*)&hdata, sizeof hdata);
-#endif
-	if ((hostp = Gethostbyname (hostname)) == CallFailed)
+	if ((hostp = _XGethostbyname (hostname,hparams)) == NULL)
 	    return False;
 
-	if (HostAddrType != AF_INET) return False;
-	*length = HostLength;
+	if (hostp->h_addrtype != AF_INET) return False;
+	*length = hostp->h_length;
 	*value = XtMalloc(*length);
-	(void) memmove (*value, HostAddr, *length);
+	(void) memmove (*value, hostp->h_addr, *length);
 	*type = XA_NET_ADDRESS(d);
 	*format = 8;
 	return True;

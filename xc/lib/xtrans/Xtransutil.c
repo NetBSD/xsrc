@@ -1,5 +1,5 @@
-/* $XConsortium: Xtransutil.c /main/29 1996/01/12 15:08:56 kaleb $ */
-/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.8 1996/05/10 06:55:55 dawes Exp $ */
+/* $XConsortium: Xtransutil.c /main/32 1996/12/04 10:22:57 lehors $ */
+/* $XFree86: xc/lib/xtrans/Xtransutil.c,v 3.9 1996/12/23 06:04:18 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -346,40 +346,8 @@ XtransConnInfo  ciptr;
     case AF_INET:
     {
 	struct sockaddr_in *saddr = (struct sockaddr_in *) peer_addr;
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API)
-#ifdef _POSIX_REENTRANT_FUNCTIONS
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-#if defined(AIXV3) || defined(AIXV4) || defined(__osf__)
-#define _POSIX_THREAD_SAFE_FUNCTIONS 1
-#endif
-#endif
-#endif
-#ifdef sun
-#ifdef _POSIX_THREAD_SAFE_FUNCTIONS     /* Sun lies in Solaris 2.5 */
-#undef _POSIX_THREAD_SAFE_FUNCTIONS
-#endif
-#endif
-    struct hostent      hent;
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-#define Gethostbyaddr(a,l,t) gethostbyaddr_r((a),(l),(t),&hent,hbuf,sizeof hbuf,&herr)
-#define HostName hent.h_name
-#define CallFailed NULL
-    char                hbuf[LINE_MAX];
-    struct hostent      *hostp;
-    int                 herr;
-#else
-#define Gethostbyaddr(a,l,t) gethostbyaddr_r((a),(l),(t),&hent,&hdata)
-#define CallFailed -1
-#define HostName hent.h_name
-    struct hostent_data hdata;
-    int                 hostp;
-#endif
-#else /* !XTHREADS etc */
-#define Gethostbyaddr(a,l,t) gethostbyaddr((a),(l),(t))
-#define CallFailed NULL
-#define HostName hostp->h_name
-    struct hostent      *hostp;
-#endif
+	_Xgethostbynameparams hparams;
+	struct hostent * hostp;
 
 #ifndef WIN32
  	char *inet_ntoa();
@@ -399,17 +367,14 @@ XtransConnInfo  ciptr;
 	alarm (4);
 	if (setjmp(env) == 0) {
 #endif
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API) && defined(_POSIX_THREAD_SAFE_FUNCTIONS)
-	    bzero ((char*)&hdata, sizeof hdata);
-#endif
-	    hostp = Gethostbyaddr ((char *) &saddr->sin_addr,
-		sizeof (saddr->sin_addr), AF_INET);
+	    hostp = _XGethostbyaddr ((char *) &saddr->sin_addr,
+		sizeof (saddr->sin_addr), AF_INET, hparams);
 #ifdef SIGALRM
 	}
 	alarm (0);
 #endif
-	if (hostp != CallFailed)
-	  addr = HostName;
+	if (hostp != NULL)
+	  addr = hostp->h_name;
 	else
 	  addr = inet_ntoa (saddr->sin_addr);
 	break;

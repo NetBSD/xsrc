@@ -1,4 +1,4 @@
-/* $XConsortium: XIproto.h /main/25 1995/12/05 11:19:05 dpw $ */
+/* $XConsortium: XIproto.h /main/26 1996/03/20 15:30:59 mor $ */
 
 /************************************************************
 
@@ -50,12 +50,6 @@ SOFTWARE.
 #ifndef _XIPROTO_H
 #define _XIPROTO_H
 
-#ifndef NEED_EVENTS
-#define  NEED_EVENTS
-#endif
-#ifndef NEED_REPLIES
-#define  NEED_REPLIES
-#endif
 #include <X11/Xproto.h>
 #include <X11/X.h>
 

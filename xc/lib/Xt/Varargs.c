@@ -1,4 +1,4 @@
-/* $XConsortium: Varargs.c /main/31 1995/12/07 14:26:13 converse $ */
+/* $TOG: Varargs.c /main/32 1997/05/15 17:32:20 kaleb $ */
 
 /*
 
@@ -160,7 +160,7 @@ XtTypedArgList _XtVaCreateTypedArgList(var, count)
     XtTypedArgList  avlist;
 
     avlist = (XtTypedArgList)
-		XtCalloc((int)count + 1, (unsigned)sizeof(XtTypedArg));
+		__XtCalloc((int)count + 1, (unsigned)sizeof(XtTypedArg));
 
     for(attr = va_arg(var, String), count = 0; attr != NULL; 
 		attr = va_arg(var, String)) {
@@ -264,7 +264,7 @@ _XtTypedArgToArg(widget, typed_arg, arg_return, resources, num_resources,
 	else if (to_val.size == sizeof(XtArgVal))
 	    arg_return->value = *(XtArgVal *)to_val.addr;
 	else if (to_val.size > sizeof(XtArgVal)) {
-	    arg_return->value = (XtArgVal) XtMalloc(to_val.size);
+	    arg_return->value = (XtArgVal) __XtMalloc(to_val.size);
 	    memory_return->value = (XtArgVal)
 		memcpy((void *)arg_return->value, to_val.addr, to_val.size);
 	}
@@ -399,7 +399,7 @@ _XtVaToArgList(widget, var, max_count, args_return, num_args_return)
     }
 
     max_count *= 2;
-    args = (ArgList)XtMalloc((unsigned)(max_count * sizeof(Arg)));
+    args = (ArgList)__XtMalloc((unsigned)(max_count * sizeof(Arg)));
     for (count = max_count; --count >= 0; )
 	args[count].value = (XtArgVal) NULL;
     max_count /= 2;
@@ -539,7 +539,7 @@ _XtVaToTypedArgList(var, max_count, args_return, num_args_return)
     int			count;
 
     args = (XtTypedArgList)
-	XtMalloc((unsigned)(max_count * sizeof(XtTypedArg))); 
+	__XtMalloc((unsigned)(max_count * sizeof(XtTypedArg))); 
 
     for(attr = va_arg(var, String), count = 0 ; attr != NULL;
 		    attr = va_arg(var, String)) {

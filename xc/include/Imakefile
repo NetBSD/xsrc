@@ -1,9 +1,13 @@
-XCOMM $XConsortium: Imakefile /main/88 1995/10/04 07:48:56 dpw $
-XCOMM $XFree86: xc/include/Imakefile,v 3.8 1996/09/24 13:49:12 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/92 1996/11/30 10:09:25 lehors $
+XCOMM $XFree86: xc/include/Imakefile,v 3.9 1996/12/23 05:58:06 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags /**/
 
 SUBDIRS = bitmaps extensions fonts
+
+#ifdef Win32Architecture
+EXTRA_HEADERS = Xw32defs.h Xwinsock.h
+#endif
 
 HEADERS = DECkeysym.h \
 	Sunkeysym.h \
@@ -15,21 +19,22 @@ HEADERS = DECkeysym.h \
 	Xfuncs.h \
 	Xmd.h \
 	Xos.h \
+	Xos_r.h \
 	Xosdefs.h \
 	Xpoll.h \
 	Xproto.h \
 	Xprotostr.h \
 	Xthreads.h \
-	Xw32defs.h \
 	ap_keysym.h \
 	keysym.h \
-	keysymdef.h 
+	keysymdef.h \
+	$(EXTRA_HEADERS)
 
 all::
 
-BuildIncludesTop($(HEADERS))
+BuildIncludes($(HEADERS),X11,..)
 
-InstallMultipleFlags($(HEADERS),$(INCDIR),$(INSTINCFLAGS))
+InstallMultipleFlags($(HEADERS),$(INCDIR)/X11,$(INSTINCFLAGS))
 MakeSubdirs($(SUBDIRS))
 
 InstallLinkKitNonExecFile(X.h,$(LINKKITDIR)/include/X11)

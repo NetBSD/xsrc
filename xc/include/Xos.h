@@ -1,6 +1,6 @@
 /*
- * $XConsortium: Xos.h,v 1.68 95/06/02 16:51:21 gildea Exp $
- * $XFree86: xc/include/Xos.h,v 3.18 1996/10/03 08:28:55 dawes Exp $
+ * $XConsortium: Xos.h /main/70 1996/11/15 16:00:41 kaleb $
+ * $XFree86: xc/include/Xos.h,v 3.21 1997/01/18 06:51:16 dawes Exp $
  * 
  * 
 Copyright (c) 1987  X Consortium
@@ -66,6 +66,13 @@ in this Software without prior written authorization from the X Consortium.
  * Just about everyone needs the strings routines.  We provide both forms here,
  * index/rindex and strchr/strrchr, so any systems that don't provide them all
  * need to have #defines here.
+ *
+ * These macros are defined this way, rather than, e.g.:
+ *    #defined index(s,c) strchr(s,c)
+ * because someone might be using them as function pointers, and such
+ * a change would break compatibility for anyone who's relying on them
+ * being the way they currently are. So we're stuck with them this way,
+ * which can be really inconvenient. :-(
  */
 
 #ifndef X_NOT_STDC_ENV
@@ -107,7 +114,7 @@ in this Software without prior written authorization from the X Consortium.
 /*
  * strerror()
  */
-#if defined(X_NOT_STDC_ENV) || (defined(sun) && !defined(SVR4)) || defined(macII)
+#if (defined(X_NOT_STDC_ENV) || (defined(sun) && !defined(SVR4)) || defined(macII)) && !defined(__GLIBC__)
 #ifndef strerror
 extern char *sys_errlist[];
 extern int sys_nerr;
@@ -220,7 +227,11 @@ struct timeval {
 #ifdef MINIX
 #include <time.h>
 #else /* !MINIX */
+#ifndef Lynx
 #include <sys/time.h>
+#else
+#include <time.h>
+#endif /* Lynx */
 #endif /* MINIX */
 #endif /* AMOEBA */
 #endif /* _SEQUENT_ */

@@ -1,7 +1,7 @@
 #ifndef _XKBCONFIG_H_
 #define	_XKBCONFIG_H_ 1
 
-/* $XConsortium: XKBconfig.h /main/3 1996/01/01 10:52:09 kaleb $ */
+/* $XConsortium: XKBconfig.h /main/4 1996/08/31 12:44:53 kaleb $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,5 +1,5 @@
-/* $XConsortium: bitmapfunc.c,v 1.8 94/04/17 20:17:12 gildea Exp $ */
-/* $XFree86: xc/lib/font/bitmap/bitmapfunc.c,v 3.3 1995/11/30 12:48:55 dawes Exp $ */
+/* $XConsortium: bitmapfunc.c /main/10 1996/11/03 19:31:55 kaleb $ */
+/* $XFree86: xc/lib/font/bitmap/bitmapfunc.c,v 3.4 1996/12/23 06:01:49 dawes Exp $ */
 
 /*
 
@@ -43,10 +43,12 @@ typedef struct _BitmapFileFunctions {
 extern int  pcfReadFont(), pcfReadFontInfo();
 extern int  snfReadFont(), snfReadFontInfo();
 extern int  bdfReadFont(), bdfReadFontInfo();
+extern int  pmfReadFont();
 int	    BitmapOpenBitmap ();
 extern int  BitmapOpenScalable ();
 int	    BitmapGetInfoBitmap ();
 extern int  BitmapGetInfoScalable ();
+int	    BitmapGetRenderIndex ();
 
 /*
  * these two arrays must be in the same order
@@ -54,13 +56,23 @@ extern int  BitmapGetInfoScalable ();
 static BitmapFileFunctionsRec readers[] = {
     pcfReadFont, pcfReadFontInfo,
     pcfReadFont, pcfReadFontInfo,
+#ifdef X_GZIP_FONT_COMPRESSION
+    pcfReadFont, pcfReadFontInfo,
+#endif
 #ifdef __EMX__
     pcfReadFont, pcfReadFontInfo,
 #endif
     snfReadFont, snfReadFontInfo,
     snfReadFont, snfReadFontInfo,
+#ifdef X_GZIP_FONT_COMPRESSION
+    snfReadFont, snfReadFontInfo,
+#endif
     bdfReadFont, bdfReadFontInfo,
     bdfReadFont, bdfReadFontInfo,
+#ifdef X_GZIP_FONT_COMPRESSION
+    bdfReadFont, bdfReadFontInfo,
+#endif
+    pmfReadFont, pcfReadFontInfo,
 };
 
 
@@ -75,6 +87,12 @@ static FontRendererRec	renderers[] = {
     BitmapOpenBitmap, BitmapOpenScalable,
 	BitmapGetInfoBitmap, BitmapGetInfoScalable, 0,
 	CAPABILITIES,
+#ifdef X_GZIP_FONT_COMPRESSION
+    ".pcf.gz", 7,
+    BitmapOpenBitmap, BitmapOpenScalable,
+	BitmapGetInfoBitmap, BitmapGetInfoScalable, 0,
+	CAPABILITIES,
+#endif
 #ifdef __EMX__
     ".pcz", 4,
     BitmapOpenBitmap, BitmapOpenScalable,
@@ -89,6 +107,12 @@ static FontRendererRec	renderers[] = {
     BitmapOpenBitmap, BitmapOpenScalable,
 	BitmapGetInfoBitmap, BitmapGetInfoScalable, 0,
 	CAPABILITIES,
+#ifdef X_GZIP_FONT_COMPRESSION
+    ".snf.gz", 7,
+    BitmapOpenBitmap, BitmapOpenScalable,
+	BitmapGetInfoBitmap, BitmapGetInfoScalable, 0,
+	CAPABILITIES,
+#endif
     ".bdf", 4,
     BitmapOpenBitmap, BitmapOpenScalable,
 	BitmapGetInfoBitmap, BitmapGetInfoScalable, 0,
@@ -97,6 +121,16 @@ static FontRendererRec	renderers[] = {
     BitmapOpenBitmap, BitmapOpenScalable,
 	BitmapGetInfoBitmap, BitmapGetInfoScalable, 0,
 	CAPABILITIES,
+#ifdef X_GZIP_FONT_COMPRESSION
+    ".bdf.gz", 7,
+    BitmapOpenBitmap, BitmapOpenScalable,
+	BitmapGetInfoBitmap, BitmapGetInfoScalable, 0,
+	CAPABILITIES,
+#endif
+    ".pmf", 4,
+      BitmapOpenBitmap, BitmapOpenScalable,
+	BitmapGetInfoBitmap, BitmapGetInfoScalable, 0,
+	CAPABILITIES 
 };
 
 BitmapOpenBitmap (fpe, ppFont, flags, entry, fileName, format, fmask,
@@ -120,11 +154,7 @@ BitmapOpenBitmap (fpe, ppFont, flags, entry, fileName, format, fmask,
                 scan,
 		image;
 
-    /*
-     * compute offset into renderers array - same offset is
-     * useful in the file functions array
-     */
-    i = entry->u.bitmap.renderer - renderers;
+    i = BitmapGetRenderIndex(entry->u.bitmap.renderer);
     file = FontFileOpen (fileName);
     if (!file)
 	return BadFontName;
@@ -167,7 +197,7 @@ BitmapGetInfoBitmap (fpe, pFontInfo, entry, fileName)
     renderer = FontFileMatchRenderer (fileName);
     if (!renderer)
 	return BadFontName;
-    i = renderer - renderers;
+    i = BitmapGetRenderIndex(renderer);
     file = FontFileOpen (fileName);
     if (!file)
 	return BadFontName;
@@ -184,4 +214,15 @@ BitmapRegisterFontFileFunctions ()
 
     for (i = 0; i < numRenderers; i++)
 	FontFileRegisterRenderer (&renderers[i]);
+}
+
+/*
+ * compute offset into renderers array - used to find the font reader,
+ * the font info reader, and the bitmap scaling routine.  All users
+ * of this routine must be kept in step with the renderer array.
+ */
+BitmapGetRenderIndex(renderer)
+    FontRendererPtr renderer;
+{
+    return renderer - renderers;
 }

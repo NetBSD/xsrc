@@ -1,4 +1,4 @@
-/* $XConsortium: SetWMCW.c,v 1.9 94/04/17 20:14:46 kaleb Exp $ */
+/* $TOG: SetWMCW.c /main/10 1997/05/15 17:30:56 kaleb $ */
 
 /*
  * Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.
@@ -78,7 +78,7 @@ Cardinal count;
 	return;
     }
 
-    top = checked = (Widget *) XtMalloc( (Cardinal) sizeof(Widget) * count);
+    top = checked = (Widget *) __XtMalloc( (Cardinal) sizeof(Widget) * count);
 
 
 /*
@@ -122,7 +122,7 @@ Cardinal count;
  * windows and set the property.
  */
 
-    data = (Window *) XtMalloc( (Cardinal) sizeof(Window) * checked_count);
+    data = (Window *) __XtMalloc( (Cardinal) sizeof(Window) * checked_count);
 
     for ( i = 0 ; i < checked_count ; i++)
 	data[i] = XtWindow(top[i]);

@@ -1,4 +1,4 @@
-/* $XConsortium: TMstate.c,v 1.176 95/06/22 17:19:25 kaleb Exp $ */
+/* $TOG: TMstate.c /main/152 1997/05/15 17:31:46 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -122,7 +122,7 @@ static TMShortCard GetBranchHead(parseTree, typeIndex, modIndex, isDummy)
 	  newSize = (parseTree->branchHeadTblSize * sizeof(TMBranchHeadRec));
 	  if (parseTree->isStackBranchHeads) {
 	      TMBranchHead	oldBranchHeadTbl = parseTree->branchHeadTbl;
-	      parseTree->branchHeadTbl = (TMBranchHead) XtMalloc(newSize);
+	      parseTree->branchHeadTbl = (TMBranchHead) __XtMalloc(newSize);
 	      XtMemmove(parseTree->branchHeadTbl, oldBranchHeadTbl, newSize);
 	      parseTree->isStackBranchHeads = False;
 	  }
@@ -175,7 +175,7 @@ TMShortCard _XtGetQuarkIndex(parseTree, quark)
 
 		if (parseTree->isStackQuarks) {
 		    XrmQuark	*oldquarkTbl = parseTree->quarkTbl;
-		    parseTree->quarkTbl = (XrmQuark *) XtMalloc(newSize);
+		    parseTree->quarkTbl = (XrmQuark *) __XtMalloc(newSize);
 		    XtMemmove(parseTree->quarkTbl, oldquarkTbl, newSize);
 		    parseTree->isStackQuarks = False;
 		}
@@ -217,7 +217,7 @@ static TMShortCard GetComplexBranchIndex(parseTree, typeIndex, modIndex)
 	if (parseTree->isStackComplexBranchHeads) {
 	    StatePtr *oldcomplexBranchHeadTbl 
 	      = parseTree->complexBranchHeadTbl;
-	    parseTree->complexBranchHeadTbl = (StatePtr *) XtMalloc(newSize);
+	    parseTree->complexBranchHeadTbl = (StatePtr *) __XtMalloc(newSize);
 	    XtMemmove(parseTree->complexBranchHeadTbl, 
 		      oldcomplexBranchHeadTbl, newSize);
 	    parseTree->isStackComplexBranchHeads = False;
@@ -268,7 +268,7 @@ TMShortCard _XtGetTypeIndex(event)
 	}
 	_XtGlobalTM.typeMatchSegmentTbl[_XtGlobalTM.numTypeMatchSegments++] = 
 	  segment = (TMTypeMatch)
-	    XtMalloc(TM_TYPE_SEGMENT_SIZE * sizeof(TMTypeMatchRec));
+	    __XtMalloc(TM_TYPE_SEGMENT_SIZE * sizeof(TMTypeMatchRec));
 	j = 0;
     }
     typeMatch = &segment[j];
@@ -362,7 +362,7 @@ TMShortCard _XtGetModifierIndex(event)
 	}
 	_XtGlobalTM.modMatchSegmentTbl[_XtGlobalTM.numModMatchSegments++] = 
 	  segment = (TMModifierMatch)
-	    XtMalloc(TM_MOD_SEGMENT_SIZE * sizeof(TMModifierMatchRec));
+	    __XtMalloc(TM_MOD_SEGMENT_SIZE * sizeof(TMModifierMatchRec));
 	j = 0;
     }
     modMatch = &segment[j];
@@ -1399,7 +1399,7 @@ XtTranslations _XtCreateXlations(stateTrees, numStateTrees, first, second)
     TMShortCard i;
 
     xlations = (XtTranslations)
-      XtMalloc(sizeof(TranslationData) +
+      __XtMalloc(sizeof(TranslationData) +
 	       (numStateTrees-1) * sizeof(TMStateTree));
 #ifdef TRACE_TM
     LOCK_PROCESS;
@@ -1441,7 +1441,7 @@ TMStateTree _XtParseTreeToStateTree(parseTree)
 	complexTree->isSimple = False;
 	tableSize = parseTree->numComplexBranchHeads * sizeof(StatePtr); 
 	complexTree->complexBranchHeadTbl = (StatePtr *)
-	  XtMalloc(tableSize);
+	  __XtMalloc(tableSize);
 	XtMemmove(complexTree->complexBranchHeadTbl,
 		  parseTree->complexBranchHeadTbl, tableSize);
 	complexTree->numComplexBranchHeads = 
@@ -1458,12 +1458,12 @@ TMStateTree _XtParseTreeToStateTree(parseTree)
 
     tableSize = parseTree->numBranchHeads * sizeof(TMBranchHeadRec);
     simpleTree->branchHeadTbl = (TMBranchHead)
-      XtMalloc(tableSize);
+      __XtMalloc(tableSize);
     XtMemmove(simpleTree->branchHeadTbl, parseTree->branchHeadTbl, tableSize);
     simpleTree->numBranchHeads = parseTree->numBranchHeads;
 
     tableSize = parseTree->numQuarks * sizeof(XrmQuark);
-    simpleTree->quarkTbl = (XrmQuark *) XtMalloc(tableSize);
+    simpleTree->quarkTbl = (XrmQuark *) __XtMalloc(tableSize);
     XtMemmove(simpleTree->quarkTbl, parseTree->quarkTbl, tableSize);
     simpleTree->numQuarks = parseTree->numQuarks;
 
@@ -1882,7 +1882,7 @@ static TMBindData MakeBindData(bindings, numBindings, oldBindData)
 	       ((numBindings - 1) * 
 		sizeof(TMSimpleBindProcsRec)));
 
-    bindData = (TMBindData) XtCalloc(sizeof(char), bytes);
+    bindData = (TMBindData) __XtCalloc(sizeof(char), bytes);
     bindData->simple.isComplex = isComplex;
     if (isComplex) {
 	TMComplexBindData cBindData = (TMComplexBindData)bindData;
@@ -2079,7 +2079,7 @@ XtTranslations _XtGetTranslationValue(w)
 	Cardinal	numBindings = xlations->numStateTrees;
 
 	(*aXlationsPtr) = aXlations = (ATranslations)
-	    XtMalloc(sizeof(ATranslationData) + 
+	    __XtMalloc(sizeof(ATranslationData) + 
 		     (numBindings - 1) * sizeof(TMComplexBindProcsRec));
 
 	aXlations->hasBindings = True;
