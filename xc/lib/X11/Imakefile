@@ -3,7 +3,7 @@ XCOMM $TOG: Imakefile /main/196 1997/05/20 10:06:09 kaleb $
 
 
 
-XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.19.2.2 1997/05/21 15:02:16 dawes Exp $
+XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.19.2.3 1998/05/23 13:38:55 dawes Exp $
 #define DoNormalLib NormalLibX11
 #define DoSharedLib SharedLibX11
 #define DoDebugLib DebugLibX11
@@ -87,7 +87,7 @@ EXTRA_LIBRARIES = /**/
 #if NeedLibInsideFlag
     LIB_DEFINES = -D_XLIBINT_
 #endif
-        DEFINES = $(MALLOC_DEFINES) $(LIB_DEFINES)
+        DEFINES = $(MALLOC_DEFINES) $(LIB_DEFINES) $(MISC_DEFINES)
    OPEN_DEFINES = -I$(EXTINCSRC) $(K5INCL) $(K5DEFS)
  DEPEND_DEFINES = $(OPEN_DEFINES) $(TRANS_INCLUDES) $(CONN_DEFINES) $(THREADS_DEFINES)
        AUTHOBJS = AuDispose.o AuGetBest.o AuFileName.o AuRead.o

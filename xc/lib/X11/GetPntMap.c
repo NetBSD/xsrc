@@ -26,6 +26,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/X11/GetPntMap.c,v 1.1.1.1.12.1 1998/05/19 02:55:08 dawes Exp $ */
+
 #define NEED_REPLIES
 #include "Xlibint.h"
 
@@ -50,6 +52,13 @@ int XGetPointerMapping (dpy, map, nmaps)
     (void) _XReply(dpy, (xReply *)&rep, 0, xFalse);
 
     nbytes = (long)rep.length << 2;
+    /* Don't count on the server returning a valid value */
+    if (nbytes > 256) {
+	    _XEatData(dpy, (unsigned long) nbytes);
+	    UnlockDisplay(dpy);
+	    SyncHandle();
+	    return 0;
+    }
     _XRead (dpy, (char *)mapping, nbytes);
     /* don't return more data than the user asked for. */
     if (rep.nElts) {

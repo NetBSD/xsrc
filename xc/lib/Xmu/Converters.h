@@ -27,6 +27,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/Xmu/Converters.h,v 1.1.1.1.12.1 1998/05/16 09:05:25 dawes Exp $ */
+
 /*
  * The interfaces described by this header file are for miscellaneous utilities
  * and are not part of the Xlib standard.
@@ -142,6 +144,9 @@ typedef enum {
     XtJustifyCenter,     /* justify text in center of button      */
     XtJustifyRight       /* justify text to right side of button  */
 } XtJustify;
+#ifndef XtRJustify
+#define XtRJustify "Justify"
+#endif
 #define XtEleft "left"
 #define XtEcenter "center"
 #define XtEright "right"

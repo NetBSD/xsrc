@@ -31,7 +31,7 @@
  * Modifier: Takanori Tateno   FUJITSU LIMITED
  *
  */
-/* $XFree86: xc/lib/X11/omGeneric.c,v 3.5.2.2 1997/07/19 04:59:11 dawes Exp $ */
+/* $XFree86: xc/lib/X11/omGeneric.c,v 3.5.2.7 1998/05/19 14:36:46 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XomGeneric.h"
@@ -493,7 +493,6 @@ static char
     char *pattern = NULL, *ptr = NULL;
     char *fields[CHARSET_ENCODING_FIELD];
     char str_pixel[32], str_point[4];
-    char rotate_font[256];
     char *rotate_font_ptr = NULL;
     int pixel_size = 0;
     int field_num = 0, len = 0;
@@ -546,20 +545,30 @@ static char
     strcpy(str_point, "*");
     fields[POINT_SIZE_FIELD - 1] = str_point;
 
-    rotate_font[0] = '\0';
+    len = 0;
+    for (field_num = 0; field_num < CHARSET_ENCODING_FIELD &&
+			fields[field_num]; field_num++) {
+	len += 1 + strlen(fields[field_num]);
+    }
+
+    /* Max XLFD length is 255 */
+    if (len > 255) 
+	return NULL;
+
+    rotate_font_ptr = (char *)Xmalloc(len + 1);
+    if(!rotate_font_ptr)
+	return NULL;
+
+    rotate_font_ptr[0] = '\0';
+
     for(field_num = 0 ; field_num < CHARSET_ENCODING_FIELD &&
 			fields[field_num] ; field_num++) {
-	sprintf(rotate_font, "%s-%s", rotate_font, fields[field_num]);
+	sprintf(rotate_font_ptr, "%s-%s", rotate_font_ptr, fields[field_num]);
     }
 
     if(pattern)
 	Xfree(pattern);
 
-    rotate_font_ptr = (char *)Xmalloc(strlen(rotate_font) + 1);
-    if(!rotate_font_ptr)
-	return NULL;
-    strcpy(rotate_font_ptr, rotate_font);
-	
     return rotate_font_ptr;
 }
 
@@ -646,6 +655,10 @@ parse_omit_name(oc, font_data, pattern)
     char	buf[BUFSIZE];
     int		length = 0;
     int		num_fields;
+    char	*end;
+
+    if (strlen(pattern) >= sizeof(buf))
+	return -1;
 
     if(is_match_charset(font_data, pattern) == True) {
 	strcpy(buf, pattern);
@@ -665,7 +678,9 @@ parse_omit_name(oc, font_data, pattern)
     strcpy(buf, pattern);
     length = strlen(pattern);
     last = buf + length - 1;
+    end = buf + sizeof(buf) - 1;
 
+#define CHECK_SPACE(n) if (end - last <= (n)) return -1; else
     /* 
      * Plug in the charset/encoding specified in the XLC_LOCALE file
      * into the *right* place in the XLFD name.
@@ -676,6 +691,7 @@ parse_omit_name(oc, font_data, pattern)
     switch (num_fields) {
     case 12:
 	/* this is the best way to have specifed the fontset */
+	CHECK_SPACE(1);
 	*++last = '-';
 	break;
     case 13:
@@ -698,12 +714,14 @@ parse_omit_name(oc, font_data, pattern)
 	    else
 		last--;
 	} else {
+	    CHECK_SPACE(1);
 	    *++last = '-';
 	}
 	break;
     }
     last++;
 
+    CHECK_SPACE(strlen(font_data->name));
     strcpy(last, font_data->name);
     if (font_name = get_font_name(oc, buf)) {
 	font_data->xlfd_name = (char *)Xmalloc(strlen(font_name) + 1);
@@ -717,6 +735,7 @@ parse_omit_name(oc, font_data, pattern)
     }
 
     while (num_fields < 12) {
+	CHECK_SPACE(2 + strlen(font_data->name));
 	*last = '*';
 	*(last + 1) = '-';
 	strcpy(last + 2, font_data->name);
@@ -1024,7 +1043,9 @@ parse_fontname(oc)
     return found_num;
 
 err:
-    XFreeStringList(name_list);		
+    XFreeStringList(name_list);
+    /* Prevent this from being freed twice */
+    oc->core.base_name_list = NULL;
 
     return -1;
 }

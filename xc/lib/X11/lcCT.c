@@ -31,7 +31,7 @@
  * Modifier: Takanori Tateno   FUJITSU LIMITED
  *
  */
-/* $XFree86: xc/lib/X11/lcCT.c,v 3.5.2.2 1998/01/25 06:11:05 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcCT.c,v 3.5.2.3 1998/05/19 02:55:11 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"
@@ -400,6 +400,9 @@ _XlcParseCharSet(charset)
     int length;
 
     if (charset->ct_sequence == NULL)
+	return False;
+
+    if (charset->name && strlen(charset->name) >= sizeof(buf))
 	return False;
 
     ptr = charset->ct_sequence;

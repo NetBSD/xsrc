@@ -27,7 +27,7 @@
  *
  * Much code taken from X11R3 String and Disk Sources.
  */
-/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.1.1.2.8.1 1997/05/11 05:04:09 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.1.1.2.8.3 1998/05/16 09:05:20 dawes Exp $ */
 
 /*
 
@@ -1439,13 +1439,19 @@ CvtStringToMultiType(args, num_args, fromVal, toVal)
     XtQEfile   = XrmPermStringToQuark(XtEfile);
   }
 
+  if (strlen((char *) fromVal->addr) >= sizeof(lowerName)) {
+    XtStringConversionWarning((char *) fromVal->addr, XtRAsciiType);
+    return;
+  }
   XmuCopyISOLatin1Lowered(lowerName, (char *) fromVal->addr);
   q = XrmStringToQuark(lowerName);
 
   if (q == XtQEstring) type = XawAsciiString;
   if (q == XtQEfile)  type = XawAsciiFile;
-
-  (*toVal).size = sizeof(XawAsciiType);
-  (*toVal).addr = (XPointer) &type;
-  return;
+  if (q == XtQEstring || q == XtQEfile) {
+    (*toVal).size = sizeof(XawAsciiType);
+    (*toVal).addr = (XPointer) &type;
+    return;
+  }
+  XtStringConversionWarning((char *) fromVal->addr, XtRAsciiType);
 }

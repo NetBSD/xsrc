@@ -26,6 +26,7 @@ in this Software without prior written authorization from the X Consortium.
  *
  */
 
+/* $XFree86: xc/lib/Xaw/MenuButton.c,v 3.0.6.2 1998/05/20 05:06:17 dawes Exp $ */
 
 /***********************************************************************
  *
@@ -52,6 +53,8 @@ in this Software without prior written authorization from the X Consortium.
 
 #include <X11/Xaw/XawInit.h>
 #include <X11/Xaw/MenuButtoP.h>
+
+#include "XawAlloc.h"
 
 static void ClassInitialize();
 static void PopupMenu();
@@ -176,9 +179,16 @@ Cardinal * num_params;
 
   if (menu == NULL) {
     char error_buf[BUFSIZ];
-    (void) sprintf(error_buf, "MenuButton: %s %s.",
-	    "Could not find menu widget named", mbw->menu_button.menu_name);
-    XtAppWarning(XtWidgetToApplicationContext(w), error_buf);
+    char *err1 = "MenuButton: Could not find menu widget named ";
+    char *perr;
+    int len;
+
+    len = strlen(err1) + strlen(mbw->menu_button.menu_name) + 1 + 1;
+    perr = XtStackAlloc(len, error_buf);
+    if (perr == NULL) return;
+    sprintf(perr, "%s%s.", err1, mbw->menu_button.menu_name);
+    XtAppWarning(XtWidgetToApplicationContext(w), perr);
+    XtStackFree(perr, error_buf);
     return;
   }
   if (!XtIsRealized(menu))

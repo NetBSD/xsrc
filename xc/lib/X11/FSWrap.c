@@ -58,6 +58,8 @@ from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/X11/FSWrap.c,v 1.1.1.3.2.2 1998/05/18 14:08:38 dawes Exp $ */
+
 #include "Xlibint.h"
 #include "Xlcint.h"
 #include <ctype.h>
@@ -89,7 +91,7 @@ _XParseBaseFontNameList(str, num)
     }
     strcpy(ptr, str);
 
-    while (1) {
+    while (*num < sizeof(plist) / sizeof(plist[0])) {
 	char	*back;
 
 	plist[*num] = ptr;

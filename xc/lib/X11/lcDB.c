@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcDB.c,v 3.3.2.2 1997/07/06 07:28:03 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcDB.c,v 3.3.2.3 1998/05/19 02:55:12 dawes Exp $ */
 
 
 
@@ -401,10 +401,14 @@ get_token(str)
     }
 }
 
+#define CHECKWORD(n) \
+	if (w - word + (n) >= size - 1) {*word = 0; return 0;} else
+
 static int
-get_word(str, word)
+get_word(str, word, size)
     char *str;
     char *word;
+    int size;
 {
     char *p = str, *w = word;
     Token token;
@@ -424,6 +428,7 @@ get_word(str, word)
 		 token != T_DEFAULT){
 	    break;
 	}
+	CHECKWORD(token_len);
 	strncpy(w, p, token_len);
 	p += token_len; w += token_len;
     }
@@ -432,9 +437,10 @@ get_word(str, word)
 }
 
 static int
-get_quoted_word(str, word)
+get_quoted_word(str, word, size)
     char *str;
     char *word;
+    int size;
 {
     char *p = str, *w = word;
     Token token;
@@ -458,6 +464,7 @@ get_quoted_word(str, word)
 	    token = get_token(p);
 	    token_len = token_tbl[token].len;
 	}
+	CHECKWORD(token_len);
 	strncpy(w, p, token_len);
 	p += token_len; w += token_len;
     }
@@ -541,8 +548,9 @@ append_value_list()
 }
 
 static int 
-construct_name(name)
+construct_name(name, size)
     char *name;
+    int size;
 {
     register int i, len = 0;
     char *p = name;
@@ -550,6 +558,8 @@ construct_name(name)
     for(i = 0; i <= parse_info.nest_depth; ++i){
 	len += strlen(parse_info.name[i]) + 1;
     }
+    if (len >= size)
+	return 0;
 
     strcpy(p, parse_info.name[0]);
     p += strlen(parse_info.name[0]);
@@ -590,7 +600,7 @@ store_to_database(db)
     }
     strcpy(new->category, parse_info.category);
 
-    if(! construct_name(name)){
+    if(! construct_name(name, sizeof(name))){
 	goto err;
     }
     new->name = (char *)Xmalloc(strlen(name) + 1);
@@ -825,7 +835,7 @@ f_double_quote(str, token, db)
 	goto err;
     case S_NAME:
     case S_VALUE:
-	len = get_quoted_word(str, word);
+	len = get_quoted_word(str, word, sizeof(word));
 	if(len < 1){
 	    goto err;
 	}
@@ -875,7 +885,7 @@ f_numeric(str, token, db)
     case S_VALUE:
 	token_len = token_tbl[token].len;
 	p = str + token_len;
-	len = get_word(p, word);
+	len = get_word(p, word, sizeof(word));
 	if(len < 1){
 	    goto err;
 	}
@@ -908,7 +918,7 @@ f_default(str, token, db)
     char word[BUFSIZE], *p;
     int len;
 
-    len = get_word(str, word);
+    len = get_word(str, word, sizeof(word));
     if(len < 1){
 	goto err;
     }

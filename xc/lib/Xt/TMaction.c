@@ -1,4 +1,4 @@
-/* $TOG: TMaction.c /main/28 1997/05/15 17:31:14 kaleb $ */
+/* $TOG: TMaction.c /main/28.0 1998/05/12 11:19:24 kaleb $ */
 /*LINTLIBRARY*/
 
 /***********************************************************
@@ -148,40 +148,63 @@ static void ReportUnboundActions(xlations, bindData)
     TMBindData		bindData;
 {
     TMSimpleStateTree	stateTree = (TMSimpleStateTree)xlations->stateTreeTbl[0];
-    Cardinal num_unbound;
-    char     message[10000];
-    register Cardinal num_chars;
+    Cardinal num_unbound = 0;
+    Cardinal num_params = 1;
+    char* message;
+    char messagebuf[1000];
+    String params[1];
+    register Cardinal num_chars = 0;
     register Cardinal i, j;
     XtActionProc *procs;
-    num_unbound = 0;
-    (void) strcpy(message, "Actions not found: ");
-    num_chars = strlen(message);
 
-    for (i=0; 
-	 i < xlations->numStateTrees; 
-	 i++) {
+    for (i=0; i < xlations->numStateTrees; i++) {
 	if (bindData->simple.isComplex)
 	  procs = TMGetComplexBindEntry(bindData, i)->procs;
 	else
 	  procs = TMGetSimpleBindEntry(bindData, i)->procs;
+
 	stateTree = (TMSimpleStateTree)xlations->stateTreeTbl[i];
 	for (j=0; j < stateTree->numQuarks; j++) {
 	    if (procs[j] == NULL) {
 		String s = XrmQuarkToString(stateTree->quarkTbl[j]);
-		if (num_unbound != 0) {
-		    (void) strcpy(&message[num_chars], ", ");
-		    num_chars = num_chars + 2;
-		}
-		(void) strcpy(&message[num_chars], s);
+		if (num_unbound != 0)
+		    num_chars += 2;
 		num_chars += strlen(s);
 		num_unbound++;
 	    }
 	}
     }
-    message[num_chars] = '\0';
-    if (num_unbound != 0)
-      XtWarningMsg(XtNtranslationError,"unboundActions",XtCXtToolkitError,
-		   message, (String *)NULL, (Cardinal *)NULL);
+    if (num_unbound == 0)
+	return;
+    message = XtStackAlloc (num_chars + 1, messagebuf);
+    if (message != NULL) {
+	*message = '\0';
+	num_unbound = 0;
+	stateTree = (TMSimpleStateTree)xlations->stateTreeTbl[0];
+	for (i=0; i < xlations->numStateTrees; i++) {
+	    if (bindData->simple.isComplex)
+		procs = TMGetComplexBindEntry(bindData, i)->procs;
+	    else
+		procs = TMGetSimpleBindEntry(bindData, i)->procs;
+
+	    stateTree = (TMSimpleStateTree)xlations->stateTreeTbl[i];
+	    for (j=0; j < stateTree->numQuarks; j++) {
+		if (procs[j] == NULL) {
+		    String s = XrmQuarkToString(stateTree->quarkTbl[j]);
+		    if (num_unbound != 0)
+			(void) strcat(message, ", ");
+		    (void) strcat(message, s);
+		    num_unbound++;
+		}
+	    }
+	}
+	message[num_chars] = '\0';
+	params[0] = message;
+	XtWarningMsg(XtNtranslationError,"unboundActions",XtCXtToolkitError,
+		     "Actions not found: %s", 
+		     params, &num_params);
+	XtStackFree (message, messagebuf);
+    }
 }
 
 

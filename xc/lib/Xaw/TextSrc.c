@@ -26,6 +26,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/Xaw/TextSrc.c,v 1.1.1.1.12.2 1998/05/16 09:05:22 dawes Exp $ */
+
 /*
  * Author:  Chris Peterson, MIT X Consortium.
  * Much code taken from X11R3 String and Disk Sources.
@@ -323,6 +325,10 @@ XrmValuePtr	toVal;
     inited = TRUE;
   }
 
+  if (strlen((char *)fromVal->addr) >= sizeof(lowerName)) {
+    XtStringConversionWarning((char *) fromVal->addr, XtREditMode);
+    return;
+  }
   XmuCopyISOLatin1Lowered (lowerName, (char *)fromVal->addr);
   q = XrmStringToQuark(lowerName);
 
@@ -330,7 +336,7 @@ XrmValuePtr	toVal;
   else if (q == QAppend)         editType = XawtextAppend;
   else if (q == QEdit)           editType = XawtextEdit;
   else {
-    done(NULL, 0);
+    XtStringConversionWarning((char *) fromVal->addr, XtREditMode);
     return;
   }
   done(&editType, XawTextEditType);

@@ -1,5 +1,5 @@
 LIBRARY X11
-DESCRIPTION "$XFree86: xc/lib/X11/X11os2.def,v 3.5.4.3 1997/08/04 02:10:34 dawes Exp $"
+DESCRIPTION "$XFree86: xc/lib/X11/X11os2.def,v 3.5.4.4 1998/05/23 13:38:56 dawes Exp $"
 CODE	
 	PRELOAD
 DATA	
@@ -917,7 +917,7 @@ EXPORTS
 	_XomConvert  @ 907
 	_XomInitConverter  @ 908
 	_Xmblen  @ 909
-	_XimGetResourceName  @ 910
+;;Removed 3.3.2.2	_XimGetResourceName  @ 910
 	_XimGetResourceListRecByQuark  @ 911
 	_XimSetIMValueData  @ 912
 	_XimGetIMValueData  @ 913

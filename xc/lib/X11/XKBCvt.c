@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/lib/X11/XKBCvt.c,v 3.13.2.1 1997/06/22 10:32:25 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBCvt.c,v 3.13.2.3 1998/05/19 14:13:42 dawes Exp $ */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -569,6 +569,13 @@ Strcmp(str1, str2)
     char str[256];
     char c, *s;
 
+    /*
+     * unchecked strings from the environment can end up here, so check
+     * the length before copying.
+     */
+    if (strlen(str1) >= sizeof(str))
+	return 1;
+
     for (s = str; c = *str1++; ) {
 	if (isupper(c))
 	    c = tolower(c);
@@ -665,6 +672,9 @@ _XkbGetCharset()
     locale = setlocale(LC_CTYPE,NULL);
 
     if ( locale == NULL )
+	return NULL;
+
+    if (strlen(locale) >= sizeof(lang))
 	return NULL;
 
     for (tmp = lang; *tmp = *locale++; tmp++) {

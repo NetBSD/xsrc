@@ -30,7 +30,7 @@ PERFORMANCE OF THIS SOFTWARE.
 			       makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/Ximint.h,v 3.0.4.2 1997/07/05 15:55:33 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Ximint.h,v 3.0.4.4 1998/05/19 14:36:45 dawes Exp $ */
 
 #ifndef _XIMINT_H
 #define _XIMINT_H
@@ -1001,14 +1001,6 @@ extern Bool _XimCbDispatch(
     INT16 len, 
     XPointer data, 
     XPointer call_data
-#endif
-);
-
-extern void _XimGetResourceName(
-#if NeedFunctionPrototypes
-    Xim im, 
-    char *res_name,
-    char *res_class
 #endif
 );
 

@@ -22,7 +22,7 @@ SOFTWARE.
 ************************************************************************/
 
 /* $XConsortium: dixfonts.c /main/58 1996/09/28 17:11:55 rws $ */
-/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6 1996/12/23 06:29:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6.2.2 1998/05/18 13:51:25 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "X.h"
@@ -834,6 +834,8 @@ ListFonts(client, pattern, length, max_names)
     int         i;
     LFclosurePtr c;
 
+    if (length > sizeof(c->current.pattern))
+	return BadAlloc;
     if (!(c = (LFclosurePtr) xalloc(sizeof *c)))
 	return BadAlloc;
     c->fpe_list = (FontPathElementPtr *)
@@ -1097,6 +1099,8 @@ StartListFontsWithInfo(client, length, pattern, max_names)
     int		    i;
     LFWIclosurePtr  c;
 
+    if (length > sizeof(c->current.pattern))
+	goto badAlloc;
     if (!(c = (LFWIclosurePtr) xalloc(sizeof *c)))
 	goto badAlloc;
     c->fpe_list = (FontPathElementPtr *)

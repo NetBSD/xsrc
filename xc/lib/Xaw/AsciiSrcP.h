@@ -50,6 +50,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xaw/AsciiSrcP.h,v 1.1.1.1.12.1 1998/05/19 07:31:43 dawes Exp $ */
 
 /*
  * AsciiSrcP.h - Private Header for Ascii Text Source.
@@ -85,7 +86,11 @@ SOFTWARE.
 #ifdef L_tmpnam
 #define TMPSIZ L_tmpnam
 #else
-#define TMPSIZ 32		/* bytes to allocate for tmpnam */
+#ifdef PATH_MAX
+#define TMPSIZ PATH_MAX
+#else
+#define TMPSIZ 1024		/* bytes to allocate for tmpnam */
+#endif
 #endif
 
 #define MAGIC_VALUE ((XawTextPosition) -1) /* Magic value. */

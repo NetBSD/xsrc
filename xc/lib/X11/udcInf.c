@@ -34,6 +34,9 @@ from the X Consortium.
  * Modifier: Takanori Tateno   FUJITSU LIMITED
  *
  */
+
+/* $XFree86: xc/lib/X11/udcInf.c,v 1.1.1.1.2.1 1998/05/19 07:31:42 dawes Exp $ */
+
 #include <stdio.h>
 #include <locale.h>
 #include <Xlib.h>
@@ -135,6 +138,8 @@ int  *num_codeset;
             break ;
         }
         for(i=0;i<count;i++){
+	    if (strlen(value[i]) >= sizeof(buf))
+		continue;
             strcpy(buf,value[i]);
             ptr = (char *)strchr(buf,(int)':');
             *ptr = 0;
@@ -304,7 +309,8 @@ int  *num_gr;
  *
  */
 
-int _xudc_gi_to_vgi(lcd,locale,charset_str,codeset,gi,vgi,charsetname)
+static int
+_xudc_gi_to_vgi(lcd,locale,charset_str,codeset,gi,vgi,charsetname,size)
 XLCd 	lcd;
 char 	*locale;
 char 	*charset_str;
@@ -312,6 +318,7 @@ int 	codeset;
 unsigned long 	gi;
 unsigned long 	*vgi;
 char    *charsetname;
+int	size;
 {
     _XUDCGlyphRegion *udc;
     int num = 0,count,num_ret=0;
@@ -325,6 +332,8 @@ char    *charsetname;
     if(count > 0){
         strcpy(charsetname,value[0]);
     }
+    if (count >= size)
+	return False;
     sprintf(buf, "fs%d.font.primary", codeset-1);
     _XlcGetLocaleDataBase(lcd, "XLC_FONTSET", buf, &value, &count);
     if(count > 0){
@@ -369,20 +378,26 @@ XlcCharSet 	charset;
 	}
     }
 }
-make_none_standard(from,charset,src)
+
+static Bool
+make_none_standard(from,charset,src,size)
 char *from;
 XlcCharSet 	charset;
 char *src;
+int size;
 {
     int name_len,seq_len,i;
     name_len = 2 + strlen(charset->encoding_name) + 1;
     seq_len = strlen(charset->ct_sequence);
+    if (name_len + seq_len + strlen(src) >= size)
+	return False;
     strcpy(from,charset->ct_sequence);
     from[seq_len]    = name_len / 128 + 128;
     from[seq_len+1]  = name_len % 128 + 128;
     strcpy(&from[seq_len + 2],charset->encoding_name);
     from[seq_len+name_len-1]  = 0x02;  /* STX */
     strcpy(&from[seq_len + name_len],src);
+    return True;
 }
 int 
 _xudc_glyph_to_code(locale,charset_str,codeset,glyph_index,codepoint)
@@ -400,7 +415,7 @@ unsigned long 	*codepoint;
     unsigned long from32[25];
     unsigned long to32[25];
     int	     i,j;
-    char tmp[256],charsetname[256],src[10];
+    char charsetname[256],src[10];
     XlcConv 	conv;
     XlcCharSet 	charset;
     XPointer args[2];
@@ -413,8 +428,9 @@ unsigned long 	*codepoint;
 	
     lcd = (XLCd)_XlcGenericLoader(locale);
 
-    _xudc_gi_to_vgi(lcd,locale,charset_str,codeset,
-	glyph_index,&glyph_index,charsetname);
+    if (!_xudc_gi_to_vgi(lcd,locale,charset_str,codeset,
+	glyph_index,&glyph_index,charsetname,sizeof(charsetname)))
+	return(_XUDC_ERROR);
 
     for(i=0,j=0;i<4;i++){
 	byte = getbyte(glyph_index,i);
@@ -438,8 +454,11 @@ unsigned long 	*codepoint;
     }
     /* make ct */
     if( non_standard(lcd,charset)) {
-        make_none_standard(from,charset,src);
+        if (!make_none_standard(from,charset,src,sizeof(from32)))
+	    return(_XUDC_ERROR);
     } else if(charset->ct_sequence){
+	if (strlen(charset->ct_sequence) + strlen(src) >= sizeof(from32))
+	    return(_XUDC_ERROR);
         sprintf((char *)from,"%s%s",charset->ct_sequence,src);
     } else {
         sprintf((char *)from,"%s\0",src);
@@ -564,13 +583,14 @@ FontScope	scope;
  *
  */
 static Bool  
-_xudc_vgi_to_gi(lcd,locale,vglyph,glyph,charset,charsetname)
+_xudc_vgi_to_gi(lcd,locale,vglyph,glyph,charset,charsetname,size)
 XLCd    lcd;
 char    *locale;
 unsigned long   vglyph;
 unsigned long   *glyph;
 XlcCharSet	charset;
 char    *charsetname;
+int	size;
 {
     int num = 0,count,num_ret=0;
     int i,j,k;
@@ -606,6 +626,8 @@ char    *charsetname;
         for(i=0;i<count;i++){
             for(k=0;k<font_data[i].scopes_num;k++){
 	        if( vgi_to_gi(glyph,vglyph,&(font_data[i].scopes[k])) == True){
+		    if (strlen(font_data[i].name) >= size)
+			return(False);
 		    strcpy(charsetname,font_data[i].name);
 		    return(True);
                 }
@@ -630,7 +652,7 @@ int 		*num_gi;
     unsigned int from32[25];
     unsigned int to32[25];
     int      i,j;
-    char tmp[256],charsetname[256],src[10];
+    char charsetname[256],src[10];
     XlcConv     conv;
     XlcCharSet  charset;
     XPointer args[2];
@@ -664,7 +686,8 @@ int 		*num_gi;
     for(i=0;dst[i];i++){
         vglyph = ((vglyph << 8) | dst[i]) ;
     }
-    if(_xudc_vgi_to_gi(lcd,locale,vglyph,&glyph,charset,charsetname)==False){
+    if(_xudc_vgi_to_gi(lcd,locale,vglyph,&glyph,charset,charsetname,
+			sizeof(charsetname))==False){
         _XlcCloseConverter(conv);
 	_XlcDestroyLC(lcd);
         *num_gi = 0;

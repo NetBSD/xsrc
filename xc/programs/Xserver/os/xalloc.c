@@ -25,7 +25,7 @@ dealings in this Software without prior written authorization from
 Pascal Haible.
 */
 
-/* $XFree86: xc/programs/Xserver/os/xalloc.c,v 3.12.2.1 1997/05/10 07:03:02 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/os/xalloc.c,v 3.12.2.2 1998/04/07 11:32:12 dawes Exp $ */
 
 /* Only used if INTERNAL_MALLOC is defined
  * - otherwise xalloc() in utils.c is used
@@ -678,15 +678,20 @@ OsInitAllocator ()
     beenhere = TRUE;
 
 #if defined(HAS_MMAP_ANON) || defined (MMAP_DEV_ZERO)
+    pagesize = -1;
 #if defined(_SC_PAGESIZE) /* || defined(linux) */
     pagesize = sysconf(_SC_PAGESIZE);
-#else
+#endif
 #ifdef HAS_GETPAGESIZE
-    pagesize = getpagesize();
-#else
-    pagesize = PAGE_SIZE;
+    if (pagesize == -1)
+	pagesize = getpagesize();
 #endif
+#ifdef PAGE_SIZE
+    if (pagesize == -1)
+	pagesize = PAGE_SIZE;
 #endif
+    if (pagesize == -1)
+	FatalError("OsInitAllocator: Cannot determine page size\n");
 #endif
 
     /* set up linked lists of free blocks */

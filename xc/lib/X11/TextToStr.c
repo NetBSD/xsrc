@@ -26,6 +26,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/X11/TextToStr.c,v 1.1.1.1.12.2 1998/05/18 14:08:39 dawes Exp $ */
+
 #include <X11/Xlibint.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
@@ -111,6 +113,7 @@ void XFreeStringList (list)
     if (list) {
 	if (list[0]) Xfree (list[0]);
 	Xfree ((char *) list);
+	list = NULL;
     }
 }
 

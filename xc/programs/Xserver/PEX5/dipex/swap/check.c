@@ -133,7 +133,7 @@ pexContext *cntxtPtr;
 checkStdHeader *strmPtr;
 {
 /* HACK ALERT ON */
-extern INT16 lastfp[];
+extern INT16 lastfp[MAXCLIENTS];
 /* HACK ALERT OFF */
 
     pexEnumTypeIndex fp;
@@ -193,7 +193,7 @@ HackFloat( cntxtPtr, strmPtr )
 pexContext *cntxtPtr;
 checkStdHeader *strmPtr;
 {
-extern INT16 lastfp[];
+extern INT16 lastfp[MAXCLIENTS];
 
     pexEnumTypeIndex fp;
 
