@@ -250,7 +250,7 @@ _XEventsQueued (Display *dpy, int mode)
 void _XReadEvents(Display *dpy)
 {
 	char buf[BUFSIZE];
-	long pend_not_register; /* because can't "&" a register variable */
+	BytesReadable_t pend_not_register; /* because can't "&" a register variable */
 	register long pend;
 	register xEvent *ev;
 	Bool not_yet_flushed = True;
