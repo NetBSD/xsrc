@@ -817,7 +817,7 @@ XpmCreateImageFromXpmImage(display, image,
 
     ErrorStatus = XpmSuccess;
 
-    if (image->ncolors >= SIZE_MAX / sizeof(Pixel)) 
+    if (image->ncolors >= UINT_MAX / sizeof(Pixel)) 
 	return (XpmNoMemory);
 
     /* malloc pixels index tables */
@@ -992,7 +992,7 @@ CreateXImage(display, visual, depth, format, width, height, image_return)
 	return (XpmNoMemory);
 
 #if !defined(FOR_MSW) && !defined(AMIGA)
-    if (height != 0 && (*image_return)->bytes_per_line >= SIZE_MAX / height)
+    if (height != 0 && (*image_return)->bytes_per_line >= UINT_MAX / height)
 	return XpmNoMemory;
     /* now that bytes_per_line must have been set properly alloc data */
     (*image_return)->data =
@@ -2061,7 +2061,7 @@ xpmParseDataAndCreate(display, data, image_return, shapeimage_return,
 	xpmGetCmt(data, &colors_cmt);
 
     /* malloc pixels index tables */
-    if (ncolors >= SIZE_MAX / sizeof(Pixel)) 
+    if (ncolors >= UINT_MAX / sizeof(Pixel)) 
 	return XpmNoMemory;
 
     image_pixels = (Pixel *) XpmMalloc(sizeof(Pixel) * ncolors);
