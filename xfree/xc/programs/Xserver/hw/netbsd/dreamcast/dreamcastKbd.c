@@ -134,11 +134,6 @@ dreamcastKbdProc(device, what)
 		workingKeySyms->maxKeyCode += MIN_KEYCODE;
 	    }
 #endif
-#if 0
-   /* Always false due to limited range of data type (maxKeyCode = CARD8) */
-	    if (workingKeySyms->maxKeyCode > MAX_KEYCODE)
-		workingKeySyms->maxKeyCode = MAX_KEYCODE;
-#endif
 	}
 
 	if (!workingModMap) {
