@@ -453,7 +453,11 @@ xf86KbdGetMapping (pKeySyms, pModMap)
   break;
 #endif
 
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
+/*
+ * XXX Need to find a way to make this work with wscons.
+ * XXX --thorpej@netbsd.org, 2-26-2000
+ */
+#if (defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)) && defined(GIO_KEYMAP)
   case SYSCONS:
   case PCVT:
     {
@@ -480,7 +484,7 @@ xf86KbdGetMapping (pKeySyms, pModMap)
       }
     }
     break;
-#endif /* SYSCONS || PCVT */
+#endif /* (SYSCONS || PCVT) && GIO_KEYMAP */
     
 #ifdef CODRV_SUPPORT
   case CODRV011:
