@@ -20,7 +20,7 @@ LOCAL_LIBRARIES = XawClientLibs
 	   	  XFontName.o DviChar.o
 
 ComplexProgramTarget(xditview)
-BuildIncludes($(BITMAPS),bitmaps,..)
+BuildIncludes($(BITMAPS),X11/bitmaps,..)
 InstallAppDefaults(Xditview)
 InstallAppDefaultsLong(Xdit-chrtr,Xditview-chrtr)
-InstallMultipleFlags($(BITMAPS),$(INCDIR)/bitmaps,$(INSTINCFLAGS))
+InstallMultipleFlags($(BITMAPS),$(INCDIR)/X11/bitmaps,$(INSTINCFLAGS))
