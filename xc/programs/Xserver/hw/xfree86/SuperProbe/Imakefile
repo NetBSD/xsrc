@@ -69,7 +69,7 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Imakefile,v 3.23.2.10 
 #ifdef i386Architecture
   IOPERMDEFINES = -DUSE_I386_IOPL
   SYS_LIBRARIES = -li386
-#elif defined(arm32Architecture)
+#elif defined(sharkArchitecture)
 # define OSModule OS_386BSD
   IOPERMDEFINES = -DUSE_ARM32_MMAP
 #endif
