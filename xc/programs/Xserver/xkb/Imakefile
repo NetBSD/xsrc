@@ -16,7 +16,7 @@ XKBXI_OBJS = xkbPrOtherEv.o
 #endif
 #endif
 
-#ifdef DfltDisableXKB
+#if DfltDisableXKB
 XKB_DISABLE = -DXKB_DFLT_DISABLED=1
 #else
 XKB_DISABLE = -DXKB_DFLT_DISABLED=0
