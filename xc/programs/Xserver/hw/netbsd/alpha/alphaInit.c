@@ -1,4 +1,4 @@
-/* $NetBSD: alphaInit.c,v 1.13 2000/08/24 16:25:16 elric Exp $ */
+/* $NetBSD: alphaInit.c,v 1.14 2000/12/19 01:33:53 perseant Exp $ */
 
 #include    "alpha.h"
 #include    "gcstruct.h"
@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #define TGASUPPORT
+#define SFBSUPPORT
 
 #ifdef TGASUPPORT
 extern Bool alphaTGAInit(
@@ -22,6 +23,20 @@ extern Bool alphaTGAInit(
 #define TGAI alphaTGAInit
 #else /* }{ */
 #define TGAI NULL
+#endif /* } */
+
+#ifdef SFBSUPPORT
+extern Bool alphaSFBInit(
+#if NeedFunctionPrototypes
+    int /* screen */,
+    ScreenPtr /* pScreen */,
+    int /* argc */,
+    char** /* argv */
+#endif
+);
+#define SFBI alphaSFBInit
+#else /* }{ */
+#define SFBI NULL
 #endif /* } */
 
 #if 0 /* XXX */
@@ -49,6 +64,7 @@ alphaKbdPrivRec alphaKbdPriv = {
     -1,		/* layout */
     0,		/* click */
     (Leds)0,	/* leds */
+    { -1, -1, -1, -1, -1, -1, -1, -1 }, /* keys_down */
 };
 
 alphaPtrPrivRec alphaPtrPriv = {
@@ -66,7 +82,7 @@ alphaFbDataRec alphaFbData[FBTYPE_LASTPLUSONE] = {
   { NULL, "CFB            " },
   { NULL, "XCFB           " },
   { NULL, "MFB            " },
-  { NULL, "SFB            " },
+  { SFBI, "SFB            " },
   { NULL, "VGA            " },
   { NULL, "PCIVGA         " },
   { TGAI, "TGA            " },
@@ -84,6 +100,7 @@ static char *fallbackList[] = {
 
 fbFd alphaFbs[MAXSCREENS];
 Bool alphaTgaAccelerate = 1;
+Bool alphaSfbAccelerate = 1;
 
 static PixmapFormatRec	formats[] = {
     { 1, 1, BITMAP_SCANLINE_PAD},
@@ -262,8 +279,14 @@ void OsVendorInit(
 	/* warn(3) isn't X11 API, but we know we are on NetBSD */
 	if((alphaKbdPriv.fd = open (kbd, O_RDWR, 0)) == -1)
 		warn("Keyboard device %s", kbd);
-	else if((alphaPtrPriv.fd = open ("/dev/wsmouse0", O_RDWR, 0)) == -1)
+	else if((alphaPtrPriv.fd = open (ptr, O_RDWR, 0)) == -1)
 		warn("Pointer device %s", ptr);
+#ifdef USE_WSCONS
+	(void) ioctl (alphaKbdPriv.fd, WSKBDIO_GTYPE, &alphaKbdPriv.type);
+#else
+	alphaKbdPriv.type = 4; /* XXX assume PC/AT */
+#endif
+
 	inited = 1;
     }
 }

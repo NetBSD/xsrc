@@ -450,7 +450,7 @@ int alphaKbdProc (device, what)
 	}
 	    
 	if (!workingKeySyms) {
-	    workingKeySyms = &alphaKeySyms[0/*alphaKbdPriv.type XXX*/];
+	    workingKeySyms = &alphaKeySyms[alphaKbdPriv.type];
 
 #if 0
 	    if (alphaKbdPriv.type == KB_SUN4 && alphaSwapLkeys)
@@ -463,16 +463,18 @@ int alphaKbdProc (device, what)
 		workingKeySyms->maxKeyCode += MIN_KEYCODE;
 	    }
 #endif
-	    if (workingKeySyms->maxKeyCode > MAX_KEYCODE)
+	    if (workingKeySyms->maxKeyCode > MAX_KEYCODE ||
+		workingKeySyms->maxKeyCode < workingKeySyms->minKeyCode)
 		workingKeySyms->maxKeyCode = MAX_KEYCODE;
 	}
 
 	if (!workingModMap) {
 	    workingModMap=(CARD8 *)xalloc(MAP_LENGTH);
 	    (void) memset(workingModMap, 0, MAP_LENGTH);
-	    for(i=0; alphaModMaps[0 /*alphaKbdPriv.type XXX*/][i].key != 0; i++)
-		workingModMap[alphaModMaps[0/*alphaKbdPriv.type XXX*/][i].key + MIN_KEYCODE] = 
-		alphaModMaps[0 /*alphaKbdPriv.type XXX*/][i].modifiers;
+	    for(i=0; alphaModMaps[alphaKbdPriv.type][i].key != 0; i++)
+		workingModMap[alphaModMaps[alphaKbdPriv.type][i].key +
+			      MIN_KEYCODE] = 
+		alphaModMaps[alphaKbdPriv.type][i].modifiers;
 	}
 
 	(void) memset ((void *) defaultKeyboardControl.autoRepeats,
@@ -718,11 +720,18 @@ void alphaKbdEnqueueEvent (device, fe)
     xEvent		xE;
     BYTE		keycode;
     CARD8		keyModifiers;
+    int			i;
 
 #ifdef USE_WSCONS
-    keycode = (fe->value & 0x7f) + MIN_KEYCODE;
+    if (alphaKbdPriv.type < 3) /* XXX magic 3: lk201, lk401 are 1, 2 respectively */
+	    keycode = (fe->value) + MIN_KEYCODE;
+    else
+	    keycode = (fe->value & 0x7f) + MIN_KEYCODE;
 #else
-    keycode = (fe->id & 0x7f) + MIN_KEYCODE;
+    if (alphaKbdPriv.type < 3) /* XXX magic 3: lk201, lk401 are 1, 2 respectively */
+	    keycode = (fe->id) + MIN_KEYCODE;
+    else
+	    keycode = (fe->id & 0x7f) + MIN_KEYCODE;
 #endif
 
     keyModifiers = device->key->modifierMap[keycode];
@@ -733,9 +742,9 @@ void alphaKbdEnqueueEvent (device, fe)
     if (autoRepeatKeyDown && (keyModifiers == 0) &&
 #ifdef USE_WSCONS
 	((fe->type == WSCONS_EVENT_KEY_DOWN) || (keycode == autoRepeatEvent.u.u.detail))) {
-#else
+#else /* ! USE_WSCONE */
 	((fe->value == VKEY_DOWN) || (keycode == autoRepeatEvent.u.u.detail))) {
-#endif
+#endif /* ! USE_WSCONS */
 	/*
 	 * Kill AutoRepeater on any real non-modifier key down, or auto key up
 	 */
@@ -746,6 +755,36 @@ void alphaKbdEnqueueEvent (device, fe)
 #endif
 #endif /* 0 XXX */
 #ifdef USE_WSCONS
+    /*
+     * For lk201, we need to keep track of which keys are down so we can
+     * process "all keys up" events.
+     */
+    if (alphaKbdPriv.type < 3) {
+	    if (fe->type == WSCONS_EVENT_KEY_DOWN) {
+		    for (i = 0; i < LK_KLL; i++)
+			    if (alphaKbdPriv.keys_down[i] == (KeyCode)-1) {
+				    alphaKbdPriv.keys_down[i] = keycode;
+				    break;
+			    }
+	    } else if (fe->type == WSCONS_EVENT_KEY_UP) {
+		    for (i = 0; i < LK_KLL; i++)
+			    if (alphaKbdPriv.keys_down[i] == keycode) {
+				    alphaKbdPriv.keys_down[i] = (KeyCode)-1;
+				    break;
+			    }
+	    } else if (fe->type == WSCONS_EVENT_ALL_KEYS_UP) {
+		    /* Recursively send all key up events */
+		    fe->type = WSCONS_EVENT_KEY_UP;
+		    for (i = 0; i < LK_KLL; i++) {
+			    if (alphaKbdPriv.keys_down[i] != (KeyCode)-1) {
+				    fe->value = alphaKbdPriv.keys_down[i] -
+					    MIN_KEYCODE;
+				    alphaKbdEnqueueEvent(device, fe);
+			    }
+		    }
+		    return;
+	    }
+    }
     xE.u.keyButtonPointer.time = TSTOMILLI(fe->time);
     xE.u.u.type = ((fe->type == WSCONS_EVENT_KEY_UP) ? KeyRelease : KeyPress);
 #else

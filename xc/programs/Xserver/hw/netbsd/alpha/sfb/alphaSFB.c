@@ -1,4 +1,4 @@
-/* $NetBSD: alphaTGA.c,v 1.4 2000/12/19 01:34:05 perseant Exp $ */
+/* $NetBSD: alphaSFB.c,v 1.1 2000/12/19 01:33:57 perseant Exp $ */
 
 /* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
@@ -88,7 +88,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include "alpha.h"
 #include "cfb.h"
-#include <dev/pci/tgareg.h>
+#include <dev/tc/sfbreg.h>
 
 /* XXX */
 #include <stdio.h>
@@ -123,7 +123,7 @@ static void CGUpdateColormap(pScreen, dex, count, rmap, gmap, bmap)
 #endif
 }
 
-void alphaTgaInstallColormap(cmap)
+void alphaSfbInstallColormap(cmap)
     ColormapPtr	cmap;
 {
     SetupScreen(cmap->pScreen);
@@ -177,7 +177,7 @@ void alphaTgaInstallColormap(cmap)
     WalkTree(cmap->pScreen, TellGainedMap, (pointer) &(cmap->mid));
 }
 
-void alphaTgaUninstallColormap(cmap)
+void alphaSfbUninstallColormap(cmap)
     ColormapPtr	cmap;
 {
     SetupScreen(cmap->pScreen);
@@ -196,7 +196,7 @@ void alphaTgaUninstallColormap(cmap)
     }
 }
 
-int alphaTgaListInstalledColormaps(pScreen, pCmapList)
+int alphaSfbListInstalledColormaps(pScreen, pCmapList)
     ScreenPtr	pScreen;
     Colormap	*pCmapList;
 {
@@ -236,9 +236,9 @@ static void CGScreenInit (pScreen)
 {
 #ifndef STATIC_COLOR /* { */
     SetupScreen (pScreen);
-    pScreen->InstallColormap = alphaTgaInstallColormap;
-    pScreen->UninstallColormap = alphaTgaUninstallColormap;
-    pScreen->ListInstalledColormaps = alphaTgaListInstalledColormaps;
+    pScreen->InstallColormap = alphaSfbInstallColormap;
+    pScreen->UninstallColormap = alphaSfbUninstallColormap;
+    pScreen->ListInstalledColormaps = alphaSfbListInstalledColormaps;
     pScreen->StoreColors = CGStoreColors;
     pPrivate->UpdateColormap = CGUpdateColormap;
     if (/*alphaFlipPixels ||*/ 1) {			/* XXX */
@@ -249,7 +249,7 @@ static void CGScreenInit (pScreen)
 #endif /* } */
 }
 
-Bool alphaTGAInit (screen, pScreen, argc, argv)
+Bool alphaSFBInit (screen, pScreen, argc, argv)
     int	    	  screen;    	/* what screen am I going to be */
     ScreenPtr	  pScreen;  	/* The Screen to initialize */
     int	    	  argc;	    	/* The number of the Server's arguments. */
@@ -258,7 +258,7 @@ Bool alphaTGAInit (screen, pScreen, argc, argv)
 	unsigned char *fb = fb = alphaFbs[screen].fb;
 	unsigned char *fbr;
 	int fb_off, realwidth, rowsize;
-	volatile tga_reg_t *tgaregs;
+	volatile sfb_reg_t *sfbregs;
 
 	alphaFbs[screen].EnterLeave = (void (*)())NoopDDA;
 
@@ -273,35 +273,23 @@ Bool alphaTGAInit (screen, pScreen, argc, argv)
 
 	/*
 	 * Frame buffer RAM always starts at core space size / 2.
-	 * TGA Registers always start at offset 1M into core space.
+	 * SFB Registers always start at offset 1M into core space.
 	 *
 	 * The actual offset of the displayed screen may vary, because
 	 * of cursor ram location.  Also, pixel-width of the frame buffer
 	 * may not be the same as the displayed width.  To figure these
-	 * things out, we have to look at the TGA registers.
+	 * things out, we have to look at the SFB registers.
 	 */ 
-	tgaregs = (tga_reg_t *)(fb + (1 * 1024 * 1024));
+	sfbregs = (sfb_reg_t *)(fb + (1 * 1024 * 1024));
 	fb_off = (int)alphaFbs[screen].info.fb_size / 2;
 	fbr = fb + ( 1 * 1024 * 1024 );
-	alphaFbs[screen].tgaregs0 = (tga_reg_t *)(fbr + 0 * 64 * 1024);
-	alphaFbs[screen].tgaregs1 = (tga_reg_t *)(fbr + 1 * 64 * 1024);
-	alphaFbs[screen].tgaregs2 = (tga_reg_t *)(fbr + 2 * 64 * 1024);
-	alphaFbs[screen].tgaregs3 = (tga_reg_t *)(fbr + 3 * 64 * 1024);
+	alphaFbs[screen].regs.sfbregs[0] = (sfb_reg_t *)(fbr + 0 * 64 * 1024);
+	alphaFbs[screen].regs.sfbregs[1] = (sfb_reg_t *)(fbr + 1 * 64 * 1024);
+	alphaFbs[screen].regs.sfbregs[2] = (sfb_reg_t *)(fbr + 2 * 64 * 1024);
+	alphaFbs[screen].regs.sfbregs[3] = (sfb_reg_t *)(fbr + 3 * 64 * 1024);
 
 	/* Find out real pixel width of the display. */
-        switch (tgaregs[TGA_REG_VHCR] & 0x1ff) {            /* XXX */
-        case 0:
-                realwidth = 8192;
-                break;
-
-        case 1:
-                realwidth = 8196;
-                break;
-
-        default:
-                realwidth = (tgaregs[TGA_REG_VHCR] & 0x1ff) * 4; /* XXX */
-                break;
-        }
+	realwidth = (sfbregs[SFB_REG_VHCR] & 0x1ff) * 4;
 
 	/*
 	 * Find out how big one 'row' of video is, so that we can tell
@@ -310,25 +298,25 @@ Bool alphaTGAInit (screen, pScreen, argc, argv)
 	rowsize = 2 * 1024;			/* 2k for 128K VRAMs, 8BPP */
 	if (alphaFbs[screen].info.fb_depth == 32)
 		rowsize *= 4;			/* increase by 4x for 32BPP */
-	if ((tgaregs[TGA_REG_GDER] & 0x200) == 0) /* 256K VRAMs */
+	if ((sfbregs[SFB_REG_GDER] & 0x200) == 0) /* 256K VRAMs */
 		rowsize *= 2;			/* increase by 2x */
 
 	/*
 	 * Finally, calcluate real displayed frame buffer offset.
 	 */
 #if 0	/* VVBR is write only, but we always write it as 1. */
-	fb_off += rowsize * (tgaregs[TGA_REG_VVBR] & 0x1ff);
+	fb_off += rowsize * (sfbregs[SFB_REG_VVBR] & 0x1ff);
 #else
 	fb_off += rowsize * 1;
 #endif
 
-	if (!alphaTgaScreenInit(pScreen, fb + fb_off,
+	if (!alphaSfbScreenInit(pScreen, fb + fb_off,
 	    alphaFbs[screen].info.fb_width,
 	    alphaFbs[screen].info.fb_height,
 	    monitorResolution, monitorResolution,
 	    realwidth,
 	    alphaFbs[screen].info.fb_depth)) {
-fprintf(stderr, "alphaTgaScreenInit failed\n");
+fprintf(stderr, "alphaSfbScreenInit failed\n");
             return FALSE;
 	}
 
@@ -342,7 +330,7 @@ fprintf(stderr, "alphaScreenInit failed\n");
 }
 
 Bool
-alphaTgaSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
+alphaSfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
     register ScreenPtr pScreen;
     pointer pbits;		/* pointer to screen bitmap */
     int xsize, ysize;		/* in pixels */
@@ -360,19 +348,19 @@ alphaTgaSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
 	if (!cfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy,
 	  width))
 	    return FALSE;
-	if (alphaTgaAccelerate) {
-	    pScreen->CopyWindow = alphaTgaCopyWindow;
-	    pScreen->CreateGC = alphaTgaCreateGC;
+	if (alphaSfbAccelerate) {
+	    pScreen->CopyWindow = alphaSfbCopyWindow;
+	    pScreen->CreateGC = alphaSfbCreateGC;
 	}
 	return TRUE;
     default:
-	fprintf(stderr, "alphaTgaSetupScreen:  unsupported bpp = %d\n", bpp);
+	fprintf(stderr, "alphaSfbSetupScreen:  unsupported bpp = %d\n", bpp);
 	return FALSE;
     }
 }
 
 Bool
-alphaTgaFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
+alphaSfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
     register ScreenPtr pScreen;
     pointer pbits;		/* pointer to screen bitmap */
     int xsize, ysize;		/* in pixels */
@@ -409,7 +397,7 @@ alphaTgaFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
 }
 
 Bool
-alphaTgaScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
+alphaSfbScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
     register ScreenPtr pScreen;
     pointer pbits;		/* pointer to screen bitmap */
     int xsize, ysize;		/* in pixels */
@@ -417,9 +405,9 @@ alphaTgaScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
     int width;			/* pixel width of frame buffer */
     int bpp;			/* bits per pixel of root */
 {
-    if (!alphaTgaSetupScreen(pScreen, pbits, xsize, ysize, dpix,
+    if (!alphaSfbSetupScreen(pScreen, pbits, xsize, ysize, dpix,
 	dpiy, width, bpp))
 	    return FALSE;
-    return alphaTgaFinishScreenInit(pScreen, pbits, xsize, ysize, dpix,
+    return alphaSfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix,
 	  dpiy, width, bpp);
 }

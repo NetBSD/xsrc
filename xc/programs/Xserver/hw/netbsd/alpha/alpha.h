@@ -62,6 +62,8 @@ extern int errno;
 #endif
 
 #include <dev/pci/tgareg.h>
+#include <dev/tc/sfbreg.h>
+#define LK_KLL 8 /* from dev/dec/lk201var.h XXX */
 
 #include <machine/fbio.h>
 #if 0 /* XXX */
@@ -118,6 +120,7 @@ typedef struct {
     int		layout;		/* The layout of the keyboard */
     int		click;		/* kbd click save state */
     Leds	leds;		/* last known LED state */
+    KeyCode     keys_down[LK_KLL]; /* which keys are down */
 } alphaKbdPrivRec, *alphaKbdPrivPtr;
 
 extern alphaKbdPrivRec alphaKbdPriv;
@@ -159,10 +162,14 @@ typedef struct {
     int		    fd;		/* frame buffer for ioctl()s, */
     struct fbtype   info;	/* Frame buffer characteristics */
     int		    offset;	/* offset into the fb */
-    tga_reg_t       *tgaregs0;  /* Registers, and... */
-    tga_reg_t       *tgaregs1;  /* their aliases */
-    tga_reg_t       *tgaregs2;
-    tga_reg_t       *tgaregs3;
+    union {
+	    tga_reg_t       *tgaregs[4];  /* Registers, and their aliases */
+	    sfb_reg_t       *sfbregs[4];  /* Registers, and their aliases */
+    } regs;
+#define tgaregs0 regs.tgaregs[0]
+#define tgaregs1 regs.tgaregs[1]
+#define tgaregs2 regs.tgaregs[2]
+#define tgaregs3 regs.tgaregs[3]
     void	    (*EnterLeave)();/* screen switch */
 } fbFd;
 
@@ -205,6 +212,7 @@ extern int*		sunProtected;
 #endif
 
 extern Bool		alphaTgaAccelerate;
+extern Bool		alphaSfbAccelerate;
 
 extern Bool alphaCursorInitialize(
 #if NeedFunctionPrototypes
@@ -544,4 +552,107 @@ alphaTga32FillSpans(
 #endif
 );
 
+void 
+alphaSfbCopyWindow(
+#if NeedFunctionPrototypes
+    WindowPtr /* pWin */,
+    DDXPointRec /* ptOldOrg */,
+    RegionPtr /* prgnSrc */
+#endif
+);
+
+void 
+alphaSfb32CopyWindow(
+#if NeedFunctionPrototypes
+    WindowPtr /* pWin */,
+    DDXPointRec /* ptOldOrg */,
+    RegionPtr /* prgnSrc */
+#endif
+);
+
+Bool
+alphaSfbCreateGC(
+#if NeedFunctionPrototypes
+    register GCPtr /* pGC */
+#endif
+);
+
+Bool
+alphaSfb32CreateGC(
+#if NeedFunctionPrototypes
+    register GCPtr /* pGC */
+#endif
+);
+
+void
+alphaSfbValidateGC(
+#if NeedFunctionPrototypes
+    register GCPtr  /* pGC */,
+    unsigned long   /* changes */,
+    DrawablePtr	    /* pDrawable */
+#endif
+);
+
+void
+alphaSfb32ValidateGC(
+#if NeedFunctionPrototypes
+    register GCPtr  /* pGC */,
+    unsigned long   /* changes */,
+    DrawablePtr	    /* pDrawable */
+#endif
+);
+
+RegionPtr
+alphaSfbCopyArea(
+#if NeedFunctionPrototypes
+    register DrawablePtr /* pSrcDrawable */,
+    register DrawablePtr /* pDstDrawable */,
+    GCPtr /* pGC */,
+    int /* srcx */,
+    int /* srcy */,
+    int /* width */,
+    int /* height */,
+    int /* dstx */,
+    int /* dsty */
+#endif
+);
+
+RegionPtr
+alphaSfb32CopyArea(
+#if NeedFunctionPrototypes
+    register DrawablePtr /* pSrcDrawable */,
+    register DrawablePtr /* pDstDrawable */,
+    GCPtr /* pGC */,
+    int /* srcx */,
+    int /* srcy */,
+    int /* width */,
+    int /* height */,
+    int /* dstx */,
+    int /* dsty */
+#endif
+);
+
+void
+alphaSfbFillSpans(
+#if NeedFunctionPrototypes
+    DrawablePtr /* pDrawable */,
+    GCPtr	/* pGC */,
+    int		/* nInit */,
+    DDXPointPtr /* pptInit */,
+    int*	/* pwidthInit */,
+    int 	/* fSorted */
+#endif
+);
+
+void
+alphaSfb32FillSpans(
+#if NeedFunctionPrototypes
+    DrawablePtr /* pDrawable */,
+    GCPtr	/* pGC */,
+    int		/* nInit */,
+    DDXPointPtr /* pptInit */,
+    int*	/* pwidthInit */,
+    int 	/* fSorted */
+#endif
+);
 #endif
