@@ -234,7 +234,8 @@ static void alphaBell (percent, device, ctrl, unused)
     }
 }
 
-static void EnqueueEvent (xEp, dip, count)
+#if 0	/* XXX */
+static void localEnqueueEvent (xEp, dip, count)
     xEventPtr xEp;
     DeviceIntPtr dip;
     int count;
@@ -257,6 +258,7 @@ static void EnqueueEvent (xEp, dip, count)
     sigsetmask (oldmask);
 #endif
 }
+#endif
 
 #if 0 /* XXX */
 #define XLED_NUM_LOCK    0x1
@@ -457,10 +459,12 @@ fflush(stderr);
 		SwapLKeys(workingKeySyms);
 #endif
 
+#if MIN_KEYCODE > 0
 	    if (workingKeySyms->minKeyCode < MIN_KEYCODE) {
 		workingKeySyms->minKeyCode += MIN_KEYCODE;
 		workingKeySyms->maxKeyCode += MIN_KEYCODE;
 	    }
+#endif
 	    if (workingKeySyms->maxKeyCode > MAX_KEYCODE)
 		workingKeySyms->maxKeyCode = MAX_KEYCODE;
 	}
@@ -757,9 +761,9 @@ void sunEnqueueAutoRepeat ()
      * hold off any more inputs while we get these safely queued up
      * further SIGIO are 
      */
-    EnqueueEvent (&autoRepeatEvent);
+    localEnqueueEvent (&autoRepeatEvent);
     autoRepeatEvent.u.u.type = KeyPress;
-    EnqueueEvent (&autoRepeatEvent);
+    localEnqueueEvent (&autoRepeatEvent);
 
     /* Update time of last key down */
     tvplus(autoRepeatLastKeyDownTv, autoRepeatLastKeyDownTv, 
