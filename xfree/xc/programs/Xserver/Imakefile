@@ -647,7 +647,7 @@ ServerTarget(Xmacppc,$(MACPPCDIRS),$(MACPPCOBJS), \
 #endif
 #endif /* XmacppcServer */
 
-#if X68kServer
+#if defined(X68kServer) && X68kServer
 XCOMM
 XCOMM NetBSD/x68k server
 XCOMM
