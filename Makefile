@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2001/04/13 15:07:56 tron Exp $
+#	$NetBSD: Makefile,v 1.26 2001/04/13 17:01:47 wiz Exp $
 #
 # Targets & Variables
 #
@@ -112,7 +112,7 @@ release snapshot: build
 .endif # INSTALL_DONE or BUILD_DONE
 #
 	${INSTALL} -d -m 755 -o root -g wheel ${RELEASEDIR}/binary/sets
-.if (${MACHINE} == "amiga")) && !(defined(USE_XF86_4) && (${USE_XF86_4} != no))
+.if (${MACHINE} == "amiga") && !(defined(USE_XF86_4) && (${USE_XF86_4} != no))
 	cd ${XCDIR}/programs/Xserver/hw/netbsd/amiga && \
 		${INSTALL} -c -m 644 INSTALL.X11 ${RELEASEDIR}
 .endif
