@@ -983,7 +983,8 @@ DisplayModePtr pMode, pEnd;
             s3vPriv.MemOffScreen   = 4 * 1024;
             break;
          case 1:    /* 32 bit interface -- yuck */
-	    ErrorF("%s %s: found 32 bit interface for video memory -- yuck:(\n");
+	    ErrorF("%s %s: found 32 bit interface for video memory -- yuck:(\n",
+		  XCONFIG_PROBED, vga256InfoRec.name);
          case 2:
             vga256InfoRec.videoRam = 4 * 1024;
             break;
