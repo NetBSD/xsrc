@@ -129,7 +129,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Ex
 #  define SparcArchitecture
 #  undef sparc
 # endif
-# if defined(__mips__)
+# if defined(__mips__) || defined(mips)
 #   define MipsArchitecture
 # endif
 # ifdef mc68000
