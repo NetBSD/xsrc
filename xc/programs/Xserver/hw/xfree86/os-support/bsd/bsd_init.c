@@ -78,6 +78,10 @@ static int initialVT = -1;
 #else
 #  define PCVT_CONSOLE_DEV "/dev/ttyC0"
 #endif
+#ifdef __NetBSD__
+/* Temporary while we don't have a wscons driver for XFree86. */
+#  define WSCONS_PCVT_COMPAT_CONSOLE_DEV "/dev/ttyE0"
+#endif
 #define PCVT_CONSOLE_MODE O_RDWR|O_NDELAY
 #endif
 
@@ -584,11 +588,27 @@ xf86OpenPcvt()
     /* This looks much like syscons, since pcvt is API compatible */
     int fd = -1;
     vtmode_t vtmode;
-    char vtname[12];
+    char vtname[12], *vtprefix;
     struct stat status;
     struct pcvtid pcvt_version;
 
-    if ((fd = open(PCVT_CONSOLE_DEV, PCVT_CONSOLE_MODE, 0)) >= 0)
+#ifndef __OpenBSD__
+    vtprefix = "/dev/ttyv";
+#else
+    vtprefix = "/dev/ttyC";
+#endif
+
+    fd = open(PCVT_CONSOLE_DEV, PCVT_CONSOLE_MODE, 0);
+
+#ifdef WSCONS_PCVT_COMPAT_CONSOLE_DEV
+    if (fd < 0)
+    {
+	fd = open(WSCONS_PCVT_COMPAT_CONSOLE_DEV, PCVT_CONSOLE_MODE, 0);
+	vtprefix = "/dev/ttyE";
+    }
+#endif
+
+    if (fd >= 0)
     {
 	if (ioctl(fd, VGAPCVTID, &pcvt_version) >= 0)
 	{
@@ -639,11 +659,7 @@ xf86OpenPcvt()
 	    }
 
 	    close(fd);
-#ifndef __OpenBSD__
-	    sprintf(vtname, "/dev/ttyv%01x", xf86Info.vtno - 1);
-#else
-	    sprintf(vtname, "/dev/ttyC%01x", xf86Info.vtno - 1);
-#endif
+	    sprintf(vtname, "%s%01x", vtprefix, xf86Info.vtno - 1);
 	    if ((fd = open(vtname, PCVT_CONSOLE_MODE, 0)) < 0)
 	    {
 		FatalError("xf86OpenPcvt: Cannot open %s (%s)\n",
