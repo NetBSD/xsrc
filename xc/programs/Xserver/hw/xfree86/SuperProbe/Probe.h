@@ -611,6 +611,11 @@ extern struct RamDac_Name RamDac_Names[];
 #define CHIP_S3_Trio3D_2X	SVGA_TYPE(V_S3,40)	/* S3 Trio3D/2X	*/
 #define CHIP_S3_Savage4 SVGA_TYPE(V_S3,41)	/* S3 Savage4		*/
 #define CHIP_S3_Savage2000 SVGA_TYPE(V_S3,42)	/* S3 Savage2000        */
+#define CHIP_S3_SavageMX_MV SVGA_TYPE(V_S3,43)	/* S3 Savage/MX-MV      */
+#define CHIP_S3_SavageMX SVGA_TYPE(V_S3,44)	/* S3 Savage/MX         */
+#define CHIP_S3_SavageIX_MV SVGA_TYPE(V_S3,45)	/* S3 Savage/IX-MV      */
+#define CHIP_S3_SavageIX SVGA_TYPE(V_S3,46)	/* S3 Savage/IX         */
+#define CHIP_S3_SavageNB SVGA_TYPE(V_S3,47)	/* S3 Savage/NB         */
 #define CHIP_TVGA_UNK	SVGA_TYPE(V_TRIDENT,0)	/* Trident unknown	*/
 #define CHIP_TVGA8200	SVGA_TYPE(V_TRIDENT,1)	/* Trident LX8200	*/
 #define CHIP_TVGA8800BR	SVGA_TYPE(V_TRIDENT,2)	/* Trident 8800BR	*/

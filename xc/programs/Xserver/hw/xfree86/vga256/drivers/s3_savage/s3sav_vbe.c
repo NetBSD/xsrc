@@ -45,6 +45,8 @@
 #include "vbe.h"
 
 #ifdef USEBIOS
+unsigned short
+S3SAVGetBIOSModes( int, S3VMODEENTRY* );
 
 #if defined(__NetBSD__)
 /*
@@ -146,16 +148,24 @@ restore_state(void *buffer)
 void
 S3SAVSetTextMode(void)
 {
-   struct LRMI_regs r;
+    struct LRMI_regs r;
 
-   memset(&r, 0, sizeof(r));
+    ioperm( 0x80, 1, 1 );
+    ioperm( 0x61, 1, 1 );
+    ioperm( 0x40, 4, 1 );
 
-   r.eax = 3;
+    memset(&r, 0, sizeof(r));
 
-   if (!LRMI_int(0x10, &r))
-   {
-      ErrorF("Can't set text mode (vm86 failure)\n");
-   }
+    r.eax = 0x83;
+
+    if (!LRMI_int(0x10, &r))
+    {
+	ErrorF("Can't set text mode (vm86 failure)\n");
+    }
+
+    ioperm( 0x40, 4, 0 );
+    ioperm( 0x61, 1, 0 );
+    ioperm( 0x80, 1, 1 );
 }
 
 
@@ -165,10 +175,12 @@ S3SAVSetVESAMode( int n, int Refresh )
     struct LRMI_regs r;
 
     /* 
-     * The Savage BIOS also writes to a debug card on port 80h.  It 
-     * shouldn't, but we can work around it here.
+     * The Savage BIOS writes to a debug card on port 80h and to the
+     * timer chip at port 61.
      */
     ioperm( 0x80, 1, 1 );
+    ioperm( 0x61, 1, 1 );
+    ioperm( 0x40, 4, 1 );
 
     /* First, establish the refresh rate for this mode. */
 
@@ -185,13 +197,6 @@ S3SAVSetVESAMode( int n, int Refresh )
     }
 
     /* Now, make this mode current. */
-
-    /*
-     * The Savage BIOS reprograms the timer chip.  One could argue that
-     * these ports should be virtualized rather than laid wide open.
-     */
-    ioperm( 0x40, 4, 1 );
-    ioperm( 0x61, 1, 1 );
 
     memset(&r, 0, sizeof(r));
 
@@ -213,15 +218,43 @@ S3SAVSetVESAMode( int n, int Refresh )
 }
 
 
-unsigned short
-S3SAVGetBIOSModeCount( int iDepth )
+void
+S3SAVFreeBIOSModeTable( S3VMODETABLE** ppTable )
 {
-    return S3SAVGetBIOSModeTable( iDepth, NULL );
+    int i;
+    PS3VMODEENTRY pMode = (*ppTable)->Modes;
+
+    for( i = (*ppTable)->NumModes; i--; )
+    {
+	if( pMode->RefreshRate )
+	{
+	    xfree( pMode->RefreshRate );
+	    pMode->RefreshRate = NULL;
+	}
+    }
+
+    xfree( *ppTable );
 }
 
+S3VMODETABLE*
+S3SAVGetBIOSModeTable( int iDepth )
+{
+    int nModes = S3SAVGetBIOSModes( iDepth, NULL );
+    PS3VMODETABLE pTable;
+
+    pTable = (PS3VMODETABLE) 
+	xcalloc( 1, sizeof(S3VMODETABLE) + (nModes-1) * sizeof(S3VMODEENTRY) );
+    if( !pTable )
+	return NULL;
+
+    pTable->NumModes = nModes;
+    S3SAVGetBIOSModes( iDepth, pTable->Modes );
+
+    return pTable;
+}
 
 unsigned short
-S3SAVGetBIOSModeTable( int iDepth, S3VMODETABLE* s3vModeTable )
+S3SAVGetBIOSModes( int iDepth, S3VMODEENTRY* s3vModeTable )
 {
     struct LRMI_regs r;
     short int *mode_list;
@@ -334,6 +367,26 @@ S3SAVGetBIOSModeTable( int iDepth, S3VMODETABLE* s3vModeTable )
 
 		do
 		{
+		    if( (iRefresh % 8) == 0 )
+		    {
+			if( s3vModeTable->RefreshRate )
+			{
+			    s3vModeTable->RefreshRate = (unsigned char *)
+				xrealloc( 
+				    s3vModeTable->RefreshRate,
+				    (iRefresh+8) * sizeof(unsigned char)
+				);
+			}
+			else
+			{
+			    s3vModeTable->RefreshRate = (unsigned char *)
+				xcalloc( 
+				    sizeof(unsigned char),
+				    (iRefresh+8)
+				);
+			}
+		    }
+
 		    r.eax = 0x4f14;
 		    r.ebx = 0x0201;		/* query refresh rates */
 		    if( !LRMI_int(0x10, &r) )

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_driver.c,v 1.1.2.4 1999/12/01 12:49:34 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_driver.c,v 1.1.2.1 1999/07/30 11:21:33 hohndel Exp $ */
 
 /*
  *
@@ -13,20 +13,15 @@
  * Tim Roberts, 21-June-1999.
  */
 
-/* This is an intial version of the ViRGE driver for XAA 
+/* This is an intial version of the Savage driver for XAA 
  * Started 09/03/97 by S. Marineau
  *
  * What works: 
- * - Supports PCI hardware, ViRGE and ViRGE/VX, probably ViRGE/DXGX
- * - Supports 8bpp, 16bpp and 24bpp. There is some support for 32bpp.
+ * - Supports PCI or AGP hardware, Savage3D, 4 or 2000.
+ * - Supports 8bpp, 16bpp and 32. There is no support for 24bpp.
  * - VT switching seems to work well, no corruption. 
- * - A whole slew of XConfig options for memory, PCI and acceleration
  * - Acceleration is quite complete
  * 
- * 
- * What does not work:
- * - None of this doublescan stuff
- *
  * 
  * What I attempt to do here:
  *
@@ -77,6 +72,8 @@
 /* S3V internal includes */
 #include "s3sav_driver.h"
 #include "regs3sav.h"
+
+static const char S3SAVVersionId[] = "$Version: s3_savage 1.0.11 $";
 
 /*
  * If the symbol USEBIOS is defined, we try to use the onboard BIOS to do
@@ -173,10 +170,8 @@ SymTabRec s3savChipTable[] = {
    { S3_SAVAGE3D_MV,  "Savage3D/MV"},
    { S3_SAVAGE4,      "Savage4"},
    { S3_SAVAGE2000,   "Savage2000"},
-   { S3_SAVAGE_MX_MV, "Savage/MX-MV"},
    { S3_SAVAGE_MX,    "Savage/MX"},
-   { S3_SAVAGE_IX_MV, "Savage/IX-MV"},
-   { S3_SAVAGE_IX,    "Savage/IX"},
+   { S3_SAVAGE_370,   "Savage/NB"},
    { -1,              ""},
    };
 
@@ -189,6 +184,9 @@ S3VPRIV s3vPriv;
 
 int vgaCRIndex, vgaCRReg;
 pointer s3savMmioMem = NULL;   /* MMIO base address */
+#ifdef __alpha__
+pointer s3savMmioMemSparse = NULL;
+#endif
 extern vgaHWCursorRec vgaHWCursor;
 
 #ifdef USEBIOS
@@ -196,7 +194,6 @@ extern vgaHWCursorRec vgaHWCursor;
 /* Information about the current BIOS modes. */
 #define iabs(a)	((int)(a)>0?(a):(-(a)))
 S3VMODETABLE * s3vModeTable = NULL;
-unsigned short s3vModeCount = 0;
 
 #endif
 
@@ -222,6 +219,27 @@ int n;
  * three chips, and even the idle vs busy state flipped in the Sav2K
  */
 
+static void
+ResetBCI2K()
+{
+    CARD32 cob = S3_IN32( 0x48c18 );
+    /* if BCI is enabled and BCI is busy... */
+
+    if( 
+	(cob & 0x00000008) &&
+	! (ALT_STATUS_WORD0 & 0x00200000)
+    )
+    {
+	ErrorF( "Resetting BCI, stat = %08x...\n", ALT_STATUS_WORD0);
+	/* Turn off BCI */
+	S3_OUT32( 0x48c18, cob & ~8 );
+	usleep(10000);
+	/* Turn it back on */
+	S3_OUT32( 0x48c18, cob );
+	usleep(10000);
+    }
+}
+
 /* Wait until "v" queue entries are free */
 
 static int
@@ -231,6 +249,7 @@ WaitQueue3D( int v )
     int slots = MAXFIFO - v;
 
     mem_barrier();
+    loop &= STATUS_WORD0;
     while( ((STATUS_WORD0 & 0x0000ffff) > slots) && (loop++ < MAXLOOP))
 	;
     return loop >= MAXLOOP;
@@ -245,7 +264,7 @@ WaitQueue4( int v )
     if( !s3vPriv.NoPCIRetry )
 	return;
     mem_barrier();
-    while( ((ALT_STATUS_WORD0 & 0x0001ffff) > slots) && (loop++ < MAXLOOP))
+    while( ((ALT_STATUS_WORD0 & 0x001fffff) > slots) && (loop++ < MAXLOOP))
 	;
     return loop >= MAXLOOP;
 }
@@ -261,6 +280,8 @@ WaitQueue2K( int v )
     mem_barrier();
     while( ((ALT_STATUS_WORD0 & 0x000fffff) > slots) && (loop++ < MAXLOOP))
 	;
+    if( loop >= MAXLOOP )
+	ResetBCI2K();
     return loop >= MAXLOOP;
 }
 
@@ -271,6 +292,7 @@ WaitIdleEmpty3D()
 {
     int loop = 0;
     mem_barrier();
+    loop &= STATUS_WORD0;
     while( ((STATUS_WORD0 & 0x0008ffff) != 0x80000) && (loop++ < MAXLOOP) )
 	;
     return loop >= MAXLOOP;
@@ -281,7 +303,7 @@ WaitIdleEmpty4()
 {
     int loop = 0;
     mem_barrier();
-    while( ((ALT_STATUS_WORD0 & 0x0081ffff) != 0x00800000) && (loop++ < MAXLOOP) )
+    while( ((ALT_STATUS_WORD0 & 0x00a1ffff) != 0x00a00000) && (loop++ < MAXLOOP) )
 	;
     return loop >= MAXLOOP;
 }
@@ -291,8 +313,13 @@ WaitIdleEmpty2K()
 {
     int loop = 0;
     mem_barrier();
+    /* CAUTION!  How do we insure this read isn't optimized away? */
+    /* Is the "volatile" enough to do that? */
+    loop &= ALT_STATUS_WORD0;
     while( ((ALT_STATUS_WORD0 & 0x009fffff) != 0) && (loop++ < MAXLOOP) )
 	;
+    if( loop >= MAXLOOP )
+	ResetBCI2K();
     return loop >= MAXLOOP;
 }
 
@@ -323,6 +350,7 @@ WaitIdle2K()
 {
     int loop = 0;
     mem_barrier();
+    loop &= ALT_STATUS_WORD0;
     while( (ALT_STATUS_WORD0 & 0x00900000) && (loop++ < MAXLOOP) )
 	;
     return loop >= MAXLOOP;
@@ -355,6 +383,8 @@ WaitCommandEmpty2K() {
     mem_barrier();
     while( (ALT_STATUS_WORD0 & 0x001fffff) && (loop++ < MAXLOOP) )
 	;
+    if( loop >= MAXLOOP )
+	ResetBCI2K();
     return loop >= MAXLOOP;
 }
 
@@ -392,10 +422,12 @@ Bool enter;
       outb(vgaCRIndex, 0x38);      /* for register CR38, (REG_LOCK1) */
       outb(vgaCRReg, 0x48);        /* unlock S3 register set for read/write */
       outb(vgaCRIndex, 0x39);    
-      outb(vgaCRReg, 0xa5);
+      outb(vgaCRReg, 0xa0);
+      #if 0
       outb(vgaCRIndex, 0x40);
       tmp = inb(vgaCRReg);
       outb(vgaCRReg, tmp & ~0x01);   /* avoid lockups when reading I/O port 0x92e8 */
+      #endif
       enterCalled = TRUE;
       }
 
@@ -512,49 +544,52 @@ unsigned int width;
 
 	/* Patch CR79.  These values are magical. */
 
-	outb(vgaCRIndex, 0x6d);
-	cr6d = inb(vgaCRReg);
-
-	cr79 = 0x04;
-
-	if( vga256InfoRec.displayWidth >= 1024 )
+	if( s3vPriv.chip != S3_SAVAGE_MX )
 	{
-	    if( vgaBitsPerPixel == 32 )
+	    outb(vgaCRIndex, 0x6d);
+	    cr6d = inb(vgaCRReg);
+
+	    cr79 = 0x04;
+
+	    if( vga256InfoRec.displayWidth >= 1024 )
 	    {
-		if( restore->refresh >= 130 )
-		    cr79 = 0x03;
-		else if( vga256InfoRec.displayWidth >= 1280 )
-		    cr79 = 0x02;
-		else if(
-		    (vga256InfoRec.displayWidth == 1024) &&
-		    (restore->refresh >= 75)
-		)
+		if( vgaBitsPerPixel == 32 )
 		{
-		    if( cr6d && LCD_ACTIVE )
-			cr79 = 0x05;
-		    else
-			cr79 = 0x08;
+		    if( restore->refresh >= 130 )
+			cr79 = 0x03;
+		    else if( vga256InfoRec.displayWidth >= 1280 )
+			cr79 = 0x02;
+		    else if(
+			(vga256InfoRec.displayWidth == 1024) &&
+			(restore->refresh >= 75)
+		    )
+		    {
+			if( cr6d && LCD_ACTIVE )
+			    cr79 = 0x05;
+			else
+			    cr79 = 0x08;
+		    }
 		}
-	    }
-	    else if( vgaBitsPerPixel == 16)
-	    {
-/* The windows driver uses 0x13 for 16-bit 130Hz, but I see terrible
- * screen artifacts with that value.  Let's keep it low for now.
- *		if( restore->refresh >= 130 )
- *		    cr79 = 0x13;
- *		else
- */
-		if( vga256InfoRec.displayWidth == 1024 )
+		else if( vgaBitsPerPixel == 16)
 		{
-		    if( cr6d && LCD_ACTIVE )
-			cr79 = 0x08;
-		    else
-			cr79 = 0x0e;
+    /* The windows driver uses 0x13 for 16-bit 130Hz, but I see terrible
+     * screen artifacts with that value.  Let's keep it low for now.
+     *		if( restore->refresh >= 130 )
+     *		    cr79 = 0x13;
+     *		else
+     */
+		    if( vga256InfoRec.displayWidth == 1024 )
+		    {
+			if( cr6d && LCD_ACTIVE )
+			    cr79 = 0x08;
+			else
+			    cr79 = 0x0e;
+		    }
 		}
 	    }
 	}
 
-        if( s3vPriv.chip != S3_SAVAGE2000)
+        if( (s3vPriv.chip != S3_SAVAGE2000) && (s3vPriv.chip != S3_SAVAGE_MX) )
 	    outw(vgaCRIndex, (cr79 << 8) | 0x79);
 
 	/* Make sure 16-bit memory access is enabled. */
@@ -584,7 +619,7 @@ unsigned int width;
 	    outb(vgaCRIndex, 0x73);
 	    outb(vgaCRReg, inb(vgaCRReg) & 0xdf );
 	}
-	else
+	else if( s3vPriv.chip != S3_SAVAGE_MX )
 	{
 	    outb(vgaCRIndex, 0x68);
 	    if( !(inb(vgaCRReg) & 0x80) )
@@ -616,6 +651,18 @@ unsigned int width;
       S3SAVDisableSTREAMS();     /* If STREAMS was running, disable it */
       }
 
+#ifdef USEBIOS
+   /*
+    * Some Savage/MX and /IX systems go nuts when trying to exit the
+    * server after WindowMaker has displayed a gradient background.  I
+    * haven't been able to find what causes it, but a non-destructive
+    * switch to mode 3 here seems to eliminate the issue.
+    */
+
+   if( s3vPriv.chip == S3_SAVAGE_MX )
+      S3SAVSetTextMode();
+#endif
+
    /* Restore S3 extended regs */
    outb(vgaCRIndex, 0x66);             
    outb(vgaCRReg, restore->CR66);
@@ -623,6 +670,8 @@ unsigned int width;
    outb(vgaCRReg, restore->CR3A);
    outb(vgaCRIndex, 0x31);    
    outb(vgaCRReg, restore->CR31);
+   outb(vgaCRIndex, 0x32);    
+   outb(vgaCRReg, restore->CR32);
    outb(vgaCRIndex, 0x58);             
    outb(vgaCRReg, restore->CR58);
 
@@ -636,6 +685,19 @@ unsigned int width;
    outb(0x3c5, restore->SR29);
    outb(0x3c4, 0x15);
    outb(0x3c5, restore->SR15); 
+
+   /* Restore flat panel expansion regsters. */
+   if( s3vPriv.chip == S3_SAVAGE_MX ) {
+      int i;
+      for( i = 0; i < 8; i++ ) {
+         outb(0x3c4, 0x54+i);
+	 outb(0x3c5, restore->SR54[i]);
+      }
+   }
+
+   outb(vgaCRIndex, 0x67);             
+   cr67 = inb(vgaCRReg) & 0xf; /* Possible hardware bug on VX? */
+   outb(vgaCRReg, 0);
 
    /* Restore the standard VGA registers */
    vgaHWRestore((vgaHWPtr)restore);
@@ -660,7 +722,9 @@ unsigned int width;
    /* Restore the desired video mode with CR67 */
         
    outb(vgaCRIndex, 0x67);             
+#if 0
    cr67 = inb(vgaCRReg) & 0xf; /* Possible hardware bug on VX? */
+#endif
    outb(vgaCRReg, 0x50 | cr67); 
    usleep(10000);
    outb(vgaCRIndex, 0x67);             
@@ -702,6 +766,9 @@ unsigned int width;
    outb(vgaCRReg, restore->CR91);
    outb(vgaCRIndex, 0xB0); /* Savage4 config3 */
    outb(vgaCRReg, restore->CRB0);
+
+   outb(vgaCRIndex, 0x32);
+   outb(vgaCRReg, restore->CR32);
 
    /* Unlock extended sequencer regs */
    outb(0x3c4, 0x08);
@@ -890,13 +957,15 @@ unsigned char cr3a, cr53, cr66;
    outb(0x3c5, 0x06); 
 
    /* Now we save all the s3 extended regs we need */
-   outb(vgaCRIndex, 0x31);             
+   outb(vgaCRIndex, 0x31);
    save->CR31 = inb(vgaCRReg);
-   outb(vgaCRIndex, 0x34);             
+   outb(vgaCRIndex, 0x32);
+   save->CR32 = inb(vgaCRReg);
+   outb(vgaCRIndex, 0x34);
    save->CR34 = inb(vgaCRReg);
-   outb(vgaCRIndex, 0x36);             
+   outb(vgaCRIndex, 0x36);
    save->CR36 = inb(vgaCRReg);
-   outb(vgaCRIndex, 0x3a);             
+   outb(vgaCRIndex, 0x3a);
    save->CR3A = inb(vgaCRReg);
    outb(vgaCRIndex, 0x40);
    save->CR40 = inb(vgaCRReg);
@@ -908,15 +977,15 @@ unsigned char cr3a, cr53, cr66;
    save->CR50 = inb(vgaCRReg);
    outb(vgaCRIndex, 0x51);
    save->CR51 = inb(vgaCRReg);
-   outb(vgaCRIndex, 0x53);             
+   outb(vgaCRIndex, 0x53);
    save->CR53 = inb(vgaCRReg);
-   outb(vgaCRIndex, 0x58);             
+   outb(vgaCRIndex, 0x58);
    save->CR58 = inb(vgaCRReg);
-   outb(vgaCRIndex, 0x66);             
+   outb(vgaCRIndex, 0x66);
    save->CR66 = inb(vgaCRReg);
-   outb(vgaCRIndex, 0x67);             
+   outb(vgaCRIndex, 0x67);
    save->CR67 = inb(vgaCRReg);
-   outb(vgaCRIndex, 0x68);             
+   outb(vgaCRIndex, 0x68);
    save->CR68 = inb(vgaCRReg);
    outb(vgaCRIndex, 0x69);
    save->CR69 = inb(vgaCRReg);
@@ -971,6 +1040,15 @@ unsigned char cr3a, cr53, cr66;
    outb(0x3c4, 0x18);
    save->SR18 = inb(0x3c5);
 
+   /* Save flat panel expansion regsters. */
+
+   if( s3vPriv.chip == S3_SAVAGE_MX ) {
+      int i;
+      for( i = 0; i < 8; i++ ) {
+         outb(0x3c4, 0x54+i);
+	 save->SR54[i] = inb(0x3c5);
+      }
+   }
 
    /* And if streams is to be used, save that as well */
 
@@ -1066,58 +1144,58 @@ static unsigned char *find_bios_string(int BIOSbase, char *match1, char *match2)
 static Bool
 S3SAVProbe()
 {
-S3PCIInformation *pciInfo = NULL;
-unsigned char config1, m, n, n1, n2, cr66, sr8;
-int mclk;
-DisplayModePtr pMode, pEnd;
+    S3PCIInformation *pciInfo = NULL;
+    unsigned char config1, m, n, n1, n2, cr66, sr8;
+    int mclk;
+    DisplayModePtr pMode, pEnd;
 
-   if (vga256InfoRec.chipset) {
-      if (StrCaseCmp(vga256InfoRec.chipset,S3SAVIdent(0)))
-      return(FALSE);
-   } 
+    if (vga256InfoRec.chipset) {
+	if (StrCaseCmp(vga256InfoRec.chipset,S3SAVIdent(0)))
+	    return(FALSE);
+    } 
 
-   /* Start with PCI probing, this should get us quite far already */
+    /* Start with PCI probing, this should get us quite far already */
 
-   pciInfo = S3SAVGetPCIInfo();
-   if (!pciInfo)
-      return FALSE;
+    pciInfo = S3SAVGetPCIInfo();
+    if (!pciInfo)
+	return FALSE;
+ 
+    if( !S3_SAVAGE_SERIES(pciInfo->ChipType) ) {
+       if (xf86Verbose > 1)
+	  ErrorF("%s %s: Unsupported (non-Savage) S3 chipset detected!\n", 
+	     XCONFIG_PROBED, vga256InfoRec.name);
+       return FALSE;
+    }
+    else {
+	s3vPriv.chip = pciInfo->ChipType;
+	ErrorF("%s %s: Detected S3 %s\n", XCONFIG_PROBED, vga256InfoRec.name, 
+	    xf86TokenToString(s3savChipTable, s3vPriv.chip));
+	ErrorF("%s %s: using driver for chipset \"%s\"\n",XCONFIG_PROBED, 
+	    vga256InfoRec.name, S3SAVIdent(0));
+    }
 
-   if (pciInfo && pciInfo->MemBase && !vga256InfoRec.MemBase) {
-      if (pciInfo->ChipType >= S3_SAVAGE4) {
-	 s3vPriv.MmioBase = pciInfo->MemBase + S3_NEWMMIO_REGBASE_S4;
-	 s3vPriv.FrameBufferBase = pciInfo->MemBase1;
-      }
-      else {
+    if( vgaBitsPerPixel == 24 ) {
+	ErrorF("%s %s: %s: This server cannot do depth 24.  Use depth 32.",
+	    XCONFIG_GIVEN, vga256InfoRec.name, vga256InfoRec.chipset
+	);
+	return FALSE;
+    }
+ 
+   if( pciInfo->MemBase && !vga256InfoRec.MemBase) {
+      if( S3_SAVAGE3D_SERIES(pciInfo->ChipType) ) {
 	 s3vPriv.MmioBase = pciInfo->MemBase + S3_NEWMMIO_REGBASE_S3;
 	 s3vPriv.FrameBufferBase = pciInfo->MemBase;
       }
-      vga256InfoRec.MemBase = s3vPriv.FrameBufferBase;
-   }
-   if (pciInfo)
-      if(pciInfo->ChipType != S3_SAVAGE3D && 
-	 pciInfo->ChipType != S3_SAVAGE3D_MV &&
-	 pciInfo->ChipType != S3_SAVAGE4 &&
-	 pciInfo->ChipType != S3_SAVAGE2000){
-          if (xf86Verbose > 1)
-             ErrorF("%s %s: Unsupported (non-Savage) S3 chipset detected!\n", 
-                XCONFIG_PROBED, vga256InfoRec.name);
-          return FALSE;
-          }
       else {
-         s3vPriv.chip = pciInfo->ChipType;
-         ErrorF("%s %s: Detected S3 %s\n",XCONFIG_PROBED,
-            vga256InfoRec.name, xf86TokenToString(s3savChipTable, s3vPriv.chip));
-         ErrorF("%s %s: using driver for chipset \"%s\"\n",XCONFIG_PROBED, 
-            vga256InfoRec.name, S3SAVIdent(0));
-	 }
+	 s3vPriv.MmioBase = pciInfo->MemBase + S3_NEWMMIO_REGBASE_S4;
+	 s3vPriv.FrameBufferBase = pciInfo->MemBase1;
+      }
+   }
 
    vga256InfoRec.chipset = S3SAVIdent(0);
 
-#ifdef __alpha__
-   if (xf86bpp > 16)
-     FatalError("%s %s: %d bpp not yet supported for Alpha/AXP\n",
-		XCONFIG_GIVEN, vga256InfoRec.name, xf86bpp);
-#endif
+   if( s3vPriv.FrameBufferBase && !vga256InfoRec.MemBase )
+      vga256InfoRec.MemBase = (CARD32)s3vPriv.FrameBufferBase;
 
    /* Add/enable IO ports to list: call EnterLeave */
    S3SAVEnterLeave(ENTER);
@@ -1139,48 +1217,34 @@ DisplayModePtr pMode, pEnd;
    /* And compute the amount of video memory and offscreen memory */
    s3vPriv.MemOffScreen = 0;
    if (!vga256InfoRec.videoRam) {
-      if( (s3vPriv.ChipId == PCI_SAVAGE4) ||
-      	  (s3vPriv.ChipId == PCI_SAVAGE2000)
-      ) {
-	 switch (config1 >> 5) {
-	 case 0:
-	    vga256InfoRec.videoRam = 2;
+      static unsigned char RamSavage3D[] = { 8, 4, 4, 2 };
+      static unsigned char RamSavage4[] =  { 2, 4, 8, 12, 16, 32, 64, 2 };
+      static unsigned char RamSavageMX[] = { 2, 8, 4, 16, 8, 16, 4, 16 };
+      static unsigned char RamSavageNB[] = { 0, 2, 4, 8, 16, 32, 2, 2 };
+
+      switch( s3vPriv.chip ) {
+         case S3_SAVAGE3D:
+         case S3_SAVAGE3D_MV:
+	    vga256InfoRec.videoRam = RamSavage3D[ (config1 & 0xC0) >> 6 ];
 	    break;
-	 case 1:
-	    vga256InfoRec.videoRam = 4;
+
+         case S3_SAVAGE4:
+         case S3_SAVAGE2000:
+	    vga256InfoRec.videoRam = RamSavage4[ (config1 & 0xE0) >> 5 ];
 	    break;
-	 case 2:
-	    vga256InfoRec.videoRam = 8;
+
+	 case S3_SAVAGE_MX:
+	    vga256InfoRec.videoRam = RamSavageMX[ (config1 & 0x0E) >> 1 ];
 	    break;
-	 case 3:
-	    vga256InfoRec.videoRam = 12;
+
+	 case S3_SAVAGE_370:
+	    vga256InfoRec.videoRam = RamSavageNB[ (config1 & 0xE0) >> 5 ];
 	    break;
-	 case 4:
-	    vga256InfoRec.videoRam = 16;
-	    break;
-	 case 5:
-	    vga256InfoRec.videoRam = 32;
-	    break;
-	 case 6:
-	    vga256InfoRec.videoRam = 64;
-	    break;
+
 	 default:
-	    vga256InfoRec.videoRam = 2;
-         }  
-      }
-      else {
-	 switch((config1 & 0xC0) >> 6) {
-	 case 0:
-	    vga256InfoRec.videoRam = 8;
+	    /* How did we get here? */
+	    vga256InfoRec.videoRam = 0;
 	    break;
-	 case 1:
-	 case 2:
-	    vga256InfoRec.videoRam = 4;
-	    break;
-	 case 3:
-	 default:
-	    vga256InfoRec.videoRam = 2;
-	 }
       }
 
       vga256InfoRec.videoRam *= 1024;
@@ -1217,27 +1281,17 @@ DisplayModePtr pMode, pEnd;
    if (vga256InfoRec.dacSpeeds[3] <= 0 && vga256InfoRec.dacSpeeds[2] > 0)
       vga256InfoRec.dacSpeeds[3] = vga256InfoRec.dacSpeeds[2];
 
-   if (s3vPriv.chip == S3_SAVAGE3D ||
-       s3vPriv.chip == S3_SAVAGE3D_MV ||
-       s3vPriv.chip == S3_SAVAGE4 ||
-       s3vPriv.chip == S3_SAVAGE2000) {
-      if (vga256InfoRec.dacSpeeds[0] <= 0) vga256InfoRec.dacSpeeds[0] = 250000;
-      if (vga256InfoRec.dacSpeeds[1] <= 0) vga256InfoRec.dacSpeeds[1] = 250000;
-      if (vga256InfoRec.dacSpeeds[2] <= 0) vga256InfoRec.dacSpeeds[2] = 220000;
-      if (vga256InfoRec.dacSpeeds[3] <= 0) vga256InfoRec.dacSpeeds[3] = 220000;
-   }
-   else {
-      if (vga256InfoRec.dacSpeeds[0] <= 0) vga256InfoRec.dacSpeeds[0] = 250000;
-      if (vga256InfoRec.dacSpeeds[1] <= 0) vga256InfoRec.dacSpeeds[1] = 250000;
-      if (vga256InfoRec.dacSpeeds[2] <= 0) vga256InfoRec.dacSpeeds[2] = 220000;
-      if (vga256InfoRec.dacSpeeds[3] <= 0) vga256InfoRec.dacSpeeds[3] = 220000;
-   }
+   if (vga256InfoRec.dacSpeeds[0] <= 0) vga256InfoRec.dacSpeeds[0] = 250000;
+   if (vga256InfoRec.dacSpeeds[1] <= 0) vga256InfoRec.dacSpeeds[1] = 250000;
+   if (vga256InfoRec.dacSpeeds[2] <= 0) vga256InfoRec.dacSpeeds[2] = 220000;
+   if (vga256InfoRec.dacSpeeds[3] <= 0) vga256InfoRec.dacSpeeds[3] = 220000;
 
    /* Set status word positions based on chip type. */
 
    switch( s3vPriv.chip ) {
       case S3_SAVAGE3D:
       case S3_SAVAGE3D_MV:
+      case S3_SAVAGE_MX:
          s3vPriv.WaitQueue = WaitQueue3D;
 	 s3vPriv.WaitIdle = WaitIdle3D;
 	 s3vPriv.WaitIdleEmpty = WaitIdleEmpty3D;
@@ -1245,6 +1299,7 @@ DisplayModePtr pMode, pEnd;
 	 break;
 
       case S3_SAVAGE4:
+      case S3_SAVAGE_370:
          s3vPriv.WaitQueue = WaitQueue4;
 	 s3vPriv.WaitIdle = WaitIdle4;
 	 s3vPriv.WaitIdleEmpty = WaitIdleEmpty4;
@@ -1325,7 +1380,7 @@ DisplayModePtr pMode, pEnd;
       s3vPriv.HorizScaleFactor = 1;
       }
    else if (vgaBitsPerPixel == 16){
-      s3vPriv.HorizScaleFactor = 2;
+      s3vPriv.HorizScaleFactor = 1;
       }
    else {     
       s3vPriv.HorizScaleFactor = 1;
@@ -1333,8 +1388,14 @@ DisplayModePtr pMode, pEnd;
 
 
    /* And map MMIO memory, abort if we cannot */
-   s3savMmioMem = xf86MapVidMem(vga256InfoRec.scrnIndex, MMIO_REGION,
-	     (pointer) s3vPriv.MmioBase, S3_NEWMMIO_REGSIZE);
+#ifdef __alpha__
+   s3savMmioMemSparse = xf86MapVidMemSparse(
+      vga256InfoRec.scrnIndex, MMIO_REGION,
+      s3vPriv.MmioBase, S3_NEWMMIO_REGSIZE);
+#endif
+   s3savMmioMem = xf86MapVidMem(
+      vga256InfoRec.scrnIndex, MMIO_REGION,
+      s3vPriv.MmioBase, S3_NEWMMIO_REGSIZE);
    s3vPriv.MmioMem = s3savMmioMem;
    s3vPriv.BciMem = (char*)s3vPriv.MmioMem + 0x10000;
 
@@ -1352,38 +1413,31 @@ DisplayModePtr pMode, pEnd;
 #ifdef	USEBIOS
    /* Go probe the BIOS for all the modes and refreshes at this depth. */
 
-   /*
-    * What I want here is an array of all mode numbers valid for this
-    * depth, and the list of valid refresh rates to go with them.  
-    *
-    * x, y, mode, array[8] of refresh
-    */
-
    if( s3vModeTable )
    {
-      xfree( s3vModeTable );
+      S3SAVFreeBIOSModeTable( &s3vModeTable );
    }
    
-   s3vModeCount = S3SAVGetBIOSModeCount( vgaBitsPerPixel );
+   s3vModeTable = S3SAVGetBIOSModeTable( vgaBitsPerPixel );
 
-   if( !s3vModeCount ) {
+   if( !s3vModeTable || !s3vModeTable->NumModes ) {
      FatalError("%s %s: Failed to fetch any BIOS modes.\n",
        XCONFIG_PROBED, vga256InfoRec.name
      );
    }
 
-   s3vModeTable = (S3VMODETABLE*)xcalloc(sizeof(S3VMODETABLE), s3vModeCount);
-   S3SAVGetBIOSModeTable( vgaBitsPerPixel, s3vModeTable );
-
    if( xf86Verbose )
    {
       int i;
-      S3VMODETABLE* pmt;
+      PS3VMODEENTRY pmt;
 
-      ErrorF("%s %s: Found %d modes at this depth:\n", 
-         XCONFIG_PROBED, vga256InfoRec.name, s3vModeCount);
+      ErrorF( "%s %s: Found %d modes at this depth:\n", 
+         XCONFIG_PROBED, vga256InfoRec.name, s3vModeTable->NumModes);
       
-      for( i = 0, pmt = s3vModeTable; i < s3vModeCount; i++, pmt++ )
+      for(
+	  i = 0, pmt = s3vModeTable->Modes; 
+	  i < s3vModeTable->NumModes; 
+	  i++, pmt++ )
       {
          int j;
          ErrorF( "[%03x] %d x %d", pmt->VesaMode, pmt->Width, pmt->Height );
@@ -1480,9 +1534,7 @@ int flag;
          ErrorF("%s %s: %s: Horizontal mode timing overflow (%d)\n",
             XCONFIG_PROBED, vga256InfoRec.name,
             vga256InfoRec.chipset, mode->HTotal);
-#ifndef	USEBIOS
          return MODE_BAD;
-#endif
          }
    if (mode->VTotal > 2047) {
       if(verbose)
@@ -1530,7 +1582,8 @@ int Base, hwidth;
 unsigned char tmp;
 
    if(s3vPriv.STREAMSRunning == FALSE) {
-      Base = ((y * vga256InfoRec.displayWidth + x)
+      /* We can only adjust to even x's. */
+      Base = ((y * vga256InfoRec.displayWidth + (x & ~1))
 		* (vgaBitsPerPixel / 8)) >> 2;
       if (vgaBitsPerPixel == 24) 
 	Base = Base+2 - (Base+2) % 3;
@@ -1538,8 +1591,7 @@ unsigned char tmp;
       /* Now program the start address registers */
       outw(vgaCRIndex, (Base & 0x00FF00) | 0x0C);
       outw(vgaCRIndex, ((Base & 0x00FF) << 8) | 0x0D);
-      outb(vgaCRIndex, 0x69);
-      outb(vgaCRReg, (Base & 0xFF0000) >> 16);   
+      outw(vgaCRIndex, ((Base & 0xFF0000) >> 8) | 0x69);
       }
    else {          /* Change start address for STREAMS case */
       VerticalRetraceWait();
@@ -1643,7 +1695,7 @@ int width,dclk;
 int i, j;
 unsigned int Refresh;
 #ifdef USEBIOS
-S3VMODETABLE * pmt;
+S3VMODEENTRY * pmt;
 #endif
 
    /* First we adjust the horizontal timings if needed */
@@ -1678,7 +1730,9 @@ S3VMODETABLE * pmt;
    ErrorF( "Desired refresh rate = %dHz\n", Refresh );
 #endif
 
-   for( i = 0, pmt = s3vModeTable; i < s3vModeCount; i++, pmt++ )
+   for( i = 0, pmt = s3vModeTable->Modes; 
+      i < s3vModeTable->NumModes;
+      i++, pmt++ )
    {
       if( (pmt->Width == mode->HDisplay) && (pmt->Height == mode->VDisplay) )
       {

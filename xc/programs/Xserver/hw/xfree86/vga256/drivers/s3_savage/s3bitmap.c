@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3bitmap.c,v 1.1.2.4 1999/12/28 12:14:04 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3bitmap.c,v 1.1.2.1 1999/07/30 11:21:30 hohndel Exp $ */
 
 void SavageWriteBitmapScreenToScreenColorExpand
 (
@@ -13,7 +13,7 @@ void SavageWriteBitmapScreenToScreenColorExpand
 {
     BCI_GET_PTR;
     unsigned int cmd;
-    unsigned int bd_offset;
+    unsigned char * bd_offset;
     unsigned int bd;
     
     cmd = BCI_CMD_RECT | BCI_CMD_RECT_XP | BCI_CMD_RECT_YP
@@ -25,11 +25,11 @@ void SavageWriteBitmapScreenToScreenColorExpand
     bd |= BCI_BD_BW_DISABLE;
     BCI_BD_SET_BPP(bd, 1);
     BCI_BD_SET_STRIDE(bd, srcwidth);
-    bd_offset = srcwidth * srcy + (srcx >> 3) + (int) src;
+    bd_offset = srcwidth * srcy + (srcx >> 3) + src;
 
     WaitQueue(10);
     BCI_SEND(cmd);
-    BCI_SEND(bd_offset);
+    BCI_SEND((unsigned int)bd_offset);
     BCI_SEND(bd);
     BCI_SEND(fg);
     BCI_SEND((bg != -1) ? bg : 0);
@@ -62,7 +62,7 @@ void SavageWriteBitmapCPUToScreenColorExpand
     cmd |= s3vAlu[rop];
 
     if( !srcwidth )
-        return;
+	return;
 
     BCI_SEND(cmd);
     BCI_SEND(BCI_CLIP_LR(x, x+w-1));
@@ -84,19 +84,19 @@ void SavageWriteBitmapCPUToScreenColorExpand
     
     for (j = 0; j < h; j ++) {
         BCI_SEND(BCI_X_Y(x, y+j));
-	BCI_SEND(BCI_W_H(w, 1));
-	srcp = (unsigned int*) src;
-	for (i = count; i > 0; srcp ++, i --) {
-	    /* We have to invert the bits in each byte. */
-	    unsigned long u = *srcp;
-	    u = ((u & 0x0f0f0f0f) << 4) | ((u & 0xf0f0f0f0) >> 4);
-	    u = ((u & 0x33333333) << 2) | ((u & 0xcccccccc) >> 2);
-	    u = ((u & 0x55555555) << 1) | ((u & 0xaaaaaaaa) >> 1);
-	    BCI_SEND(u);
-	}
-	src += srcwidth;
+        BCI_SEND(BCI_W_H(w, 1));
+        srcp = (unsigned int*) src;
+        for (i = count; i > 0; srcp ++, i --) {
+            /* We have to invert the bits in each byte. */
+            unsigned long u = *srcp;
+            u = ((u & 0x0f0f0f0f) << 4) | ((u & 0xf0f0f0f0) >> 4);
+            u = ((u & 0x33333333) << 2) | ((u & 0xcccccccc) >> 2);
+            u = ((u & 0x55555555) << 1) | ((u & 0xaaaaaaaa) >> 1);
+            BCI_SEND(u);
+        }
+        src += srcwidth;
         if( !--reset ) {
-            bci_ptr = s3vPriv.BciMem;
+	    BCI_RESET;
             reset = 65536 / srcwidth;
         }
     }
@@ -144,6 +144,6 @@ void SavageImageWrite
     }
 
     for (i = count; i > 0; srcp ++, i --) {
-	BCI_SEND(*srcp);
+        BCI_SEND(*srcp);
     }
 }
