@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2001/08/19 17:26:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2001/10/14 23:56:18 jwise Exp $
 #
 # Targets & Variables
 #
@@ -33,7 +33,11 @@ XCDIR=	xc
 .endif
 
 .MAIN: all
+.if defined(USE_XF86_4) && (${USE_XF86_4} != no)
+all: all-xc all-local
+.else
 all: all-xc all-contrib all-local
+.endif
 
 all-xc:
 .if exists(${XCDIR}/xmakefile) && defined(UPDATE)
@@ -59,7 +63,11 @@ all-local:
 	fi
 	@cd local && ${MAKE}
 
+.if defined(USE_XF86_4) && (${USE_XF86_4} != no)
+install: install-xc install-local
+.else
 install: install-xc install-contrib install-local
+.endif
 
 install-xc:
 	@cd ${XCDIR} && \
@@ -77,9 +85,14 @@ install-local:
 	  ${MAKE} DESTDIR="${DESTDIR}" install.man
 
 clean:
+.if defined(USE_XF86_4) && (${USE_XF86_4} != no)
+	@-cd ${XCDIR} && ${MAKE} clean
+	@-cd local && ${MAKE} clean
+.else
 	@-cd ${XCDIR} && ${MAKE} clean
 	@-cd contrib && ${MAKE} clean
 	@-cd local && ${MAKE} clean
+.endif
 
 cleandir distclean: clean
 	find ${XCDIR} contrib local -name .depend | xargs rm
