@@ -146,7 +146,7 @@ void mac68k_getkbd(
 
 
 void mac68k_processkbd(
-	DevicePtr	kbd,
+	DeviceIntPtr	kbd,
 	adb_event_t	*event)
 {
 	xEvent	xev;

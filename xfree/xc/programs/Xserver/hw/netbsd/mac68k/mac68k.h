@@ -70,8 +70,8 @@ extern int mac_adbfd;
 
 extern Time mac_lasteventtime;
 
-extern DevicePtr mac68k_mouse;
-extern DevicePtr mac68k_kbd;
+extern DeviceIntPtr mac68k_mouse;
+extern DeviceIntPtr mac68k_kbd;
 
 
 typedef struct fbinfo_s {
