@@ -14,7 +14,7 @@ XCOMM 		NetBSD/sparc	client/server
 XCOMM 		NetBSD/sun3	client/server
 XCOMM 		NetBSD/hp300	client
 XCOMM 		NetBSD/mac68k	client/server
-XCOMM 		NetBSD/pmax	client
+XCOMM 		NetBSD/pmax	client/server
 XCOMM		NetBSD/amiga	client/server
 XCOMM		NetBSD/alpha	client/server
 XCOMM		NetBSD/arm32	client
@@ -474,7 +474,20 @@ install.man:: 								@@\
 #endif
 #define XdecServer NO
 
+#ifndef XpmaxServer
 #define XpmaxServer YES
+#endif
+
+#ifdef PexDynamicModule
+#undef PexDynamicModule
+#endif
+
+#ifdef XieDynamicModule
+#undef XieDynamicModule
+#endif
+
+#define PexDynamicModule	NO
+#define XieDynamicModule	NO
 
 #ifdef UseElfFormat
 #undef UseElfFormat
