@@ -425,7 +425,7 @@ int read_line(FILE *fp, char **buffer)
 {
 	int buffer_size = 1;
 	int eof = 0;
-	char c;
+	signed char c;
 
 	zstrcpy(buffer, "");
 
@@ -697,7 +697,7 @@ int main(int argc, char *argv[])
 				zstrcat(&header, "COMMENT ");
 				zstrcat(&header, match(l, 1));
 				zstrcat(&header, "\n");
-			} else if (regex(l, "^COMMENT[[:space:]]+$Id: ucs2any.c,v 1.1 2003/06/12 22:49:27 tron Exp $[[:space:]]*$"))
+			} else if (regex(l, "^COMMENT[[:space:]]+$Id: ucs2any.c,v 1.2 2003/06/27 12:30:15 scw Exp $[[:space:]]*$"))
 			{
 				zstrcat(&header, "COMMENT Derived from ");
 				zstrcat(&header, match(l, 1));
