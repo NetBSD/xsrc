@@ -202,6 +202,14 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Ex
 #  define news68kArchitecture
 #  undef news68k
 # endif
+# if defined(__cobalt__) || defined(cobalt)
+#  define cobaltArchitecture
+#  undef cobalt
+# endif
+# if defined(__sgimips__) || defined(sgimips)
+#  define sgimipsArchitecture
+#  undef sgimips
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__
