@@ -4,7 +4,6 @@ XCOMM $XFree86: xc/programs/Imakefile,v 3.15.2.2 1998/02/15 16:08:40 hohndel Exp
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
 
 #if BuildServer
-       RGBSRCDIR = rgb
         XSSRCDIR = Xserver
 #endif
 #ifndef Win32Architecture
@@ -55,7 +54,7 @@ SUBDIRS = \
 	appres bdftopcf bitmap $(SCREENSAVESRCDIR) editres fsinfo \
 	fslsfonts fstobdf \
 	iceauth mkfontdir oclock $(PROXYMGRSRCDIR) \
-	$(RGBSRCDIR) $(RSTARTSRCDIR) $(SMPROXYSRCDIR) $(TWMSRCDIR) x11perf \
+	rgb $(RSTARTSRCDIR) $(SMPROXYSRCDIR) $(TWMSRCDIR) x11perf \
 	xauth xclipboard xclock xcmsdb $(XCONSOLESRCDIR) $(XDMSRCDIR) \
 	xdpyinfo $(XF86DGASRCDIR) xfd $(XFSSRCDIR) $(XFINDPROXYSRCDIR) \
 	$(XFWPSRCDIR) \
