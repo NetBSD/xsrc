@@ -42,5 +42,14 @@ else
 	if [ -r "$resources" ]; then
 		xrdb -load "$resources"
 	fi
+
+	case $# in
+	1)
+		case $1 in
+		kde)
+			exec $SHELL -c startkde
+			;;
+		esac
+	esac
 	exec xsm
 fi
