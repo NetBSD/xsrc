@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.2 2001/12/17 23:59:49 bjh21 Exp $	*/
+/*	$NetBSD: vidc.c,v 1.3 2001/12/18 00:06:14 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -66,7 +66,7 @@
 #include "colormapst.h"
 #include "resource.h"
 
-#define DEBUG
+/* #define DEBUG */
 
 #ifdef DEBUG
 #define DPRINTF(x) ErrorF x
