@@ -164,6 +164,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.9 1998/11/12 10:34:47 dawes Exp $
 #  define arm32Architecture
 #  undef arm32
 # endif
+# if defined(__atari__) || defined(atari)
+#  define atariArchitecture
+#  undef atari
+# endif
 # if defined(__vax__) || defined(vax)
 #  define VaxArchitecture
 #  undef vax
