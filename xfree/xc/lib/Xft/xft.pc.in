@@ -11,5 +11,5 @@ Name: Xft
 Description: X FreeType library
 Version: @PACKAGE_VERSION@
 Requires: fontconfig
-Libs: -L${libdir} -lXft ${freetypelibs} ${xrenderlibs}
+Libs: -Wl,-R${libdir} -L${libdir} -lXft ${freetypelibs} ${xrenderlibs}
 Cflags: -I${includedir} ${freetypecflags} ${xrendercflags}
