@@ -31,8 +31,8 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.138 2001/10/
 #endif
 
 #ifdef SparcArchitecture
-	SBUSSRC = xf86sbusBus.c
-	SBUSOBJ = xf86sbusBus.o
+     SBUSSRC = xf86sbusBus.c
+     SBUSOBJ = xf86sbusBus.o
 #endif
 
 #if BuildXKB
