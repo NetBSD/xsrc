@@ -260,7 +260,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
 #  define XF68FBDevServer	YES
 #  define XF68SVGAServer	NO
 #  define XF68W32Server		NO
-# elif defined(NetBSDArchitecture)
+# elif defined(NetBSDArchitecture) && defined(atariArchitecture)
 #  define XF68FBDevServer	YES
 #  define XF68SVGAServer	YES
 #  define XF68W32Server		YES
