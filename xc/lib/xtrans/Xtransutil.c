@@ -465,3 +465,32 @@ char *str;
 
     return (1);
 }
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+
+static int 
+trans_mkdir(char *path, int mode)
+{
+    struct stat buf;
+
+    if (mkdir(path, mode) == 0) {
+	/* I don't know why this is done, but  it was in the original 
+	   xtrans code */
+	chmod(path, mode);
+	return 0;
+    }
+    /* If mkdir failed with EEXIST, test if it is a directory with 
+       the right modes, else fail */
+    if (errno == EEXIST) {
+	if (stat(path, &buf) != 0) {
+	    return -1;
+	}
+	if (S_ISDIR(buf.st_mode) && ((buf.st_mode & ~S_IFMT) == mode)) {
+	    return 0;
+	}
+    }
+    /* In all other cases, fail */
+    return -1;
+}

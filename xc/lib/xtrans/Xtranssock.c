@@ -946,8 +946,11 @@ char *port;
 #else
     mode = 0777;
 #endif
-    mkdir (UNIX_DIR, mode);
-    chmod (UNIX_DIR, mode);
+    if (trans_mkdir(UNIX_DIR, mode) == -1) {
+	PRMSG (1, "SocketUNIXCreateListener: mkdir(%s) failed, errno = %d\n",
+	       UNIX_DIR, errno, 0);
+	return TRANS_CREATE_LISTENER_FAILED;
+    }
 #endif
 
     sockname.sun_family = AF_UNIX;
@@ -1041,8 +1044,11 @@ XtransConnInfo ciptr;
 #else
 	mode = 0777;
 #endif
-	mkdir (UNIX_DIR, mode);
-	chmod (UNIX_DIR, mode);
+        if (trans_mkdir(UNIX_DIR, mode) == -1) {
+            PRMSG (1, "SocketUNIXResetListener: mkdir(%s) failed, errno = %d\n",
+	    UNIX_DIR, errno, 0);
+	    return TRANS_RESET_FAILURE;
+        }
 #endif
 
 	close (ciptr->fd);
