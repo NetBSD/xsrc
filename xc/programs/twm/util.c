@@ -284,7 +284,7 @@ char *name;
 
     if (name[0] != '~') return name;
 
-    asnprintf(&newname, "%s/%s", Home, &name[1]);
+    asprintf(&newname, "%s/%s", Home, &name[1]);
     if (!newname) {
 	fprintf (stderr, 
 		 "%s:  unable to allocate %d bytes to expand filename %s/%s\n",
@@ -388,7 +388,7 @@ Pixmap FindBitmap (name, widthp, heightp)
 	/*
 	 * Attempt to find icon in old IconDirectory (now obsolete)
 	 */
-	asnprintf(&bigname, "%s/%s", Scr->IconDirectory, name);
+	asprintf(&bigname, "%s/%s", Scr->IconDirectory, name);
 	if (!bigname) {
 	    fprintf (stderr,
 		     "%s:  unable to allocate memory for \"%s/%s\"\n",
@@ -437,6 +437,7 @@ InsertRGBColormap (a, maps, nmaps, replace)
 		     ProgramName, sizeof (StdCmap));
 	    return;
 	}
+	memset(sc, 0, sizeof(StdCmap));
     }
 
     if (replace) {			/* just update contents */
@@ -699,9 +700,9 @@ putenv(s)
 	register i;
 
 	newenv = (char **) malloc((unsigned) ((idx + 2) * sizeof(char*)));
-	if(newenv == 0)
+	if (newenv == 0)
 	    return -1;
-	for(i = idx-1; i >= 0; --i)
+	for (i = idx-1; i >= 0; --i)
 	    newenv[i] = environ[i];
 	virgin = 0;     /* you're not a virgin anymore, sweety */
     } else {

@@ -208,6 +208,11 @@ Bool AddFuncKey (name, cont, mods, func, win_name, action)
     if (tmp == NULL)
     {
 	tmp = (FuncKey *) malloc(sizeof(FuncKey));
+	if (!tmp)
+	{
+	    return False;
+	}
+	memset(tmp, 0, sizeof(FuncKey));
 	tmp->next = Scr->FuncKeyRoot.next;
 	Scr->FuncKeyRoot.next = tmp;
     }
@@ -242,6 +247,7 @@ int CreateTitleButton (name, func, action, menuroot, rightside, append)
 		 ProgramName, (unsigned long)sizeof(TitleButton));
 	return 0;
     }
+    memset(tb, 0, sizeof(TitleButton));
 
     tb->next = NULL;
     tb->name = name;			/* note that we are not copying */
@@ -652,6 +658,7 @@ NewMenuRoot(name)
 #define UNUSED_PIXEL ((unsigned long) (~0))	/* more than 24 bits */
 
     tmp = (MenuRoot *) malloc(sizeof(MenuRoot));
+    memset(tmp, 0, sizeof(MenuRoot));
     tmp->hi_fore = UNUSED_PIXEL;
     tmp->hi_back = UNUSED_PIXEL;
     tmp->name = name;
@@ -729,6 +736,7 @@ AddToMenu(menu, item, action, sub, func, fore, back)
 #endif
 
     tmp = (MenuItem *) malloc(sizeof(MenuItem));
+    memset(tmp, 0, sizeof(MenuItem));
     tmp->root = menu;
 
     if (menu->first == NULL)
@@ -1041,7 +1049,8 @@ PopUpMenu (menu, x, y, center)
         if (WindowNameCount != 0)
         {
             WindowNames =
-              (TwmWindow **)malloc(sizeof(TwmWindow *)*WindowNameCount);
+              (TwmWindow **)malloc(sizeof(TwmWindow *) * WindowNameCount);
+	    memset(WindowNames, 0, sizeof(TwmWindow *) * WindowNameCount);
             WindowNames[0] = Scr->TwmRoot.next;
             for(tmp_win = Scr->TwmRoot.next->next , WindowNameCount=1;
                 tmp_win != NULL;

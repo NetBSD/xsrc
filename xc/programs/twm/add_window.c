@@ -347,7 +347,7 @@ IconMgr *iconp;
 		  tmp_win->squeeze_info = &default_squeeze;
 	    }
 	}
-      }
+    }
 
     tmp_win->old_bw = tmp_win->attr.border_width;
 
@@ -375,6 +375,11 @@ IconMgr *iconp;
 	if (!tmp_win->wmhints)
 	{
 	    tmp_win->wmhints = (XWMHints *)malloc(sizeof(XWMHints));
+	    if (!tmp_win->wmhints)
+	    {
+		return NULL;
+	    }
+	    memset(tmp_win->wmhints, 0, sizeof(XWMHints));
 	    tmp_win->wmhints->flags = 0;
 	}
 	tmp_win->wmhints->initial_state = IconicState;
@@ -1340,6 +1345,7 @@ static void CreateWindowTitlebarButtons (tmp_win)
 	    int boxwidth = (Scr->TBInfo.width + Scr->TBInfo.pad);
 	    unsigned int h = (Scr->TBInfo.width - Scr->TBInfo.border * 2);
 
+	    memset(tmp_win->titlebuttons, 0, nb * sizeof(TBWindow));
 	    for (tb = Scr->TBInfo.head, tbw = tmp_win->titlebuttons; tb;
 		 tb = tb->next, tbw++) {
 		int x;
@@ -1420,6 +1426,7 @@ CreateTwmColormap(c)
 	if (cmap) free((char *) cmap);
 	return (NULL);
     }
+    memset(cmap, 0, sizeof(TwmColormap));
     cmap->c = c;
     cmap->state = 0;
     cmap->install_req = 0;
@@ -1440,6 +1447,7 @@ CreateColormapWindow(w, creating_parent, property_window)
 
     cwin = (ColormapWindow *) malloc(sizeof(ColormapWindow));
     if (cwin) {
+	memset(cwin, 0, sizeof(ColormapWindow));
 	if (!XGetWindowAttributes(dpy, w, &attributes) ||
 	    XSaveContext(dpy, w, ColormapContext, (caddr_t) cwin)) {
 	    free((char *) cwin);
@@ -1526,6 +1534,8 @@ FetchWmColormapWindows (tmp)
 			ProgramName, number_cmap_windows+1);
 		goto done;
 	    }
+	    memset(new_cmap_windows, 0,
+	        sizeof(Window) * (number_cmap_windows + 1));
 	    new_cmap_windows[0] = tmp->w;  /* add to front */
 	    for (i = 0; i < number_cmap_windows; i++) {	 /* append rest */
 		new_cmap_windows[i+1] = cmap_windows[i];
@@ -1539,6 +1549,7 @@ FetchWmColormapWindows (tmp)
 	cwins = (ColormapWindow **) malloc(sizeof(ColormapWindow *) *
 		number_cmap_windows);
 	if (cwins) {
+	    memset(cwins, 0, sizeof(ColormapWindow *) * number_cmap_windows);
 	    for (i = 0; i < number_cmap_windows; i++) {
 
 		/*
@@ -1583,6 +1594,8 @@ FetchWmColormapWindows (tmp)
 	number_cmap_windows = 1;
 
 	cwins = (ColormapWindow **) malloc(sizeof(ColormapWindow *));
+	if (!cwins)
+	    goto done;
 	if (XFindContext(dpy, tmp->w, ColormapContext, (caddr_t *)&cwins[0]) ==
 		XCNOENT)
 	    cwins[0] = CreateColormapWindow(tmp->w,

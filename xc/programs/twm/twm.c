@@ -401,6 +401,7 @@ main(argc, argv, environ)
 	Scr->TwmRoot.cmaps.number_cwins = 1;
 	Scr->TwmRoot.cmaps.cwins =
 		(ColormapWindow **) malloc(sizeof(ColormapWindow *));
+	memset(Scr->TwmRoot.cmaps.cwins, 0, sizeof(ColormapWindow *));
 	Scr->TwmRoot.cmaps.cwins[0] =
 		CreateColormapWindow(Scr->Root, True, False);
 	Scr->TwmRoot.cmaps.cwins[0]->visibility = VisibilityPartiallyObscured;

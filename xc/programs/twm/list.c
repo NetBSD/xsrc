@@ -111,6 +111,7 @@ char *ptr;
 		 sizeof(name_list));
 	Done();
     }
+    memset(nptr, 0, sizeof(name_list));
 
     nptr->next = *list_head;
     nptr->name = name;

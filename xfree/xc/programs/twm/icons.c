@@ -65,6 +65,7 @@ splitEntry (ie, grav1, grav2, w, h)
 	    splitEntry (ie, grav2, grav1, w, ie->h);
 	if (h != ie->h) {
 	    new = (IconEntry *)malloc (sizeof (IconEntry));
+	    memset(new, 0, sizeof(IconEntry));
 	    new->twm_win = 0;
 	    new->used = 0;
 	    new->next = ie->next;
@@ -86,6 +87,7 @@ splitEntry (ie, grav1, grav2, w, h)
 	    splitEntry (ie, grav2, grav1, ie->w, h);
 	if (w != ie->w) {
 	    new = (IconEntry *)malloc (sizeof (IconEntry));
+	    memset(new, 0, sizeof(IconEntry));
 	    new->twm_win = 0;
 	    new->used = 0;
 	    new->next = ie->next;
@@ -286,6 +288,7 @@ int stepx, stepy;
     int mask;
 
     ir = (IconRegion *)malloc(sizeof(IconRegion));
+    memset(ir, 0, sizeof(IconRegion));
     ir->next = NULL;
     if (Scr->LastRegion)
 	Scr->LastRegion->next = ir;
@@ -312,6 +315,7 @@ int stepx, stepy;
     if (mask & YNegative)
 	ir->y += Scr->MyDisplayHeight - ir->h;
     ir->entries = (IconEntry *)malloc(sizeof(IconEntry));
+    memset(ir->entries, 0, sizeof(IconEntry));
     ir->entries->next = 0;
     ir->entries->x = ir->x;
     ir->entries->y = ir->y;
