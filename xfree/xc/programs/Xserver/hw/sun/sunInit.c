@@ -963,9 +963,3 @@ Bool DPMSSupported ()
     return FALSE;
 }
 #endif
-
-/* XF86 compatibility */
-void OsVendorFatalError ()
-{
-	return;
-}
