@@ -1,4 +1,4 @@
-/* $NetBSD: hpcMouse.c,v 1.3 2001/06/24 14:46:54 takemura Exp $	*/
+/* $NetBSD: hpcMouse.c,v 1.4 2003/06/29 08:17:48 shin Exp $	*/
 /* $XConsortium: sunMouse.c,v 5.21 94/04/17 20:29:47 kaleb Exp $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -106,7 +106,7 @@ hpcMouseProc(device, what)
     DevicePtr	  pMouse = (DevicePtr) device;
     int	    	  format;
     static int	  oformat;
-    BYTE    	  map[4];
+    BYTE    	  map[6];
     char	  *dev;
 
     switch (what) {
@@ -122,6 +122,8 @@ hpcMouseProc(device, what)
 	    map[1] = 1;
 	    map[2] = 2;
 	    map[3] = 3;
+	    map[4] = 4;
+	    map[5] = 5;
 	    InitPointerDeviceStruct(
 		pMouse, map, 5, miPointerGetMotionEvents,
  		hpcMouseCtrl, miPointerGetMotionBufferSize());
