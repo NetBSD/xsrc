@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfb8line.c,v 3.2 1996/01/05 06:28:29 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfb8line.c,v 3.3 1996/12/23 06:34:41 dawes Exp $
  *
 Copyright (c) 1990  X Consortium
 
@@ -24,7 +24,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
  *
- * $XConsortium: cfb8line.c /main/3 1995/11/12 16:17:17 kaleb $
+ * $XConsortium: cfb8line.c /main/4 1996/02/21 17:20:02 kaleb $
  * Author:  Keith Packard, MIT X Consortium
  */
 

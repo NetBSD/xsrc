@@ -47,8 +47,8 @@ SOFTWARE.
 ******************************************************************/
 #ifndef SERVERMD_H
 #define SERVERMD_H 1
-/* $XConsortium: servermd.h /main/56 1996/01/04 17:19:24 gildea $ */
-/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.15 1996/10/16 14:44:23 dawes Exp $ */
+/* $XConsortium: servermd.h /main/58 1996/12/02 10:22:09 lehors $ */
+/* $XFree86: xc/programs/Xserver/include/servermd.h,v 3.19.2.1 1997/05/12 12:52:39 hohndel Exp $ */
 
 /*
  * Machine dependent values:
@@ -140,11 +140,28 @@ SOFTWARE.
 
 #endif /* vax */
 
+#if (defined(Lynx) && defined(__powerpc__))
+
+/* For now this is for Xvfb only */
+#define IMAGE_BYTE_ORDER        MSBFirst
+#define BITMAP_BIT_ORDER        MSBFirst
+#define GLYPHPADBYTES           4
+#define GETLEFTBITS_ALIGNMENT   1
+
+#define LARGE_INSTRUCTION_CACHE
+#define FAST_CONSTANT_OFFSET_MODE
+#define PLENTIFUL_REGISTERS
+#define AVOID_MEMORY_READ
+
+#define FAST_MEMCPY
+
+#endif /* LynxOS PowerPC */
+
 #if (defined(sun) && !(defined(i386) && defined(SVR4))) || \
-	(defined(AMOEBA) && (defined(sparc) || defined(mc68000))) || \
-	(defined(__NetBSD__) && (defined(__sparc__) || defined(mc68000))) || \
-	(defined(__OpenBSD__) && (defined(__sparc__) || defined(mc68000))) || \
-	(defined(Lynx) && defined(__sparc__))
+    (defined(AMOEBA) && (defined(sparc) || defined(mc68000))) || \
+    (defined(__uxp__) && (defined(sparc) || defined(mc68000))) || \
+    (defined(Lynx) && defined(__sparc__)) || \
+    (defined(__NetBSD__) && (defined(__sparc__) || defined(mc68000)))
 
 #if defined(sun386) || defined(sun5)
 # define IMAGE_BYTE_ORDER	LSBFirst        /* Values for the SUN only */
@@ -273,21 +290,30 @@ SOFTWARE.
 
 #endif /* mips */
 
-#if defined(__alpha) || defined(__alphaCross) || defined(__alpha__)
+#if defined(__alpha) || defined(__alpha__) || defined(__alphaCross)
 # define IMAGE_BYTE_ORDER	LSBFirst	/* Values for the Alpha only */
-# define BITMAP_BIT_ORDER	LSBFirst
+
+# if defined(XF86MONOVGA) || defined(XF86VGA16) || defined(XF86MONO)
+#  define BITMAP_BIT_ORDER      MSBFirst
+# else
+#  define BITMAP_BIT_ORDER      LSBFirst
+# endif
+
+# if defined(XF86MONOVGA) || defined(XF86VGA16)
+#  define BITMAP_SCANLINE_UNIT  8
+# else
+   /* pad scanline to a longword */
+#  define BITMAP_SCANLINE_UNIT			64
+# endif
+
+# define BITMAP_SCANLINE_PAD 			64
+# define LOG2_BITMAP_PAD			6
+# define LOG2_BYTES_PER_SCANLINE_PAD		3
 # define GLYPHPADBYTES		4
 # define GETLEFTBITS_ALIGNMENT	1
 # define FAST_CONSTANT_OFFSET_MODE
 # define LARGE_INSTRUCTION_CACHE
 # define PLENTIFUL_REGISTERS
-
-/* pad scanline to a longword */
-#define BITMAP_SCANLINE_UNIT			64
-
-#define BITMAP_SCANLINE_PAD 			64
-#define LOG2_BITMAP_PAD				6
-#define LOG2_BYTES_PER_SCANLINE_PAD		3
 
 /* Add for handling protocol XPutImage and XGetImage; see comment below */
 #define INTERNAL_VS_EXTERNAL_PADDING
