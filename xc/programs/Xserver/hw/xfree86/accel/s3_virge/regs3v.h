@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/regs3v.h,v 3.2 1996/10/18 15:01:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/regs3v.h,v 3.4.2.1 1997/05/06 13:26:29 dawes Exp $ */
 /*
  * regs3v.h
  *
@@ -19,7 +19,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: regs3.h /main/8 1996/01/31 10:04:28 kaleb $ */
+/* $XConsortium: regs3v.h /main/6 1996/10/27 18:06:49 kaleb $ */
 
 #ifndef _REGS3V_H
 #define _REGS3V_H
@@ -39,22 +39,25 @@
 				   outb(vgaCRReg, 0xa5); } while (0)
 
 
-#define S3_ViRGE_SERIES(chip)     ((chip&0xfff0)==0x31e0)
-#define S3_ViRGE_VX_SERIES(chip)  ((chip&0xfff0)==0x3de0)
+#define S3_ViRGE_SERIES(chip)      (chip==PCI_ViRGE)
+#define S3_ViRGE_VX_SERIES(chip)   (chip==PCI_ViRGE_VX)
+#define S3_ViRGE_DXGX_SERIES(chip) (chip==PCI_ViRGE_DXGX)
 #define S3_ANY_ViRGE_SERIES(chip) (    S3_ViRGE_SERIES(chip)		\
-				    || S3_ViRGE_VX_SERIES(chip))
-#define S3_ANY_SERIES(chip)       (    S3_ViRGE_SERIES(chip)		\
-				    || S3_ViRGE_VX_SERIES(chip))
+				    || S3_ViRGE_VX_SERIES(chip)		\
+				    || S3_ViRGE_DXGX_SERIES(chip))
+#define S3_ANY_SERIES(chip)       (    S3_ANY_ViRGE_SERIES(chip)  )
 
 /* PCI data */
 #define PCI_S3_VENDOR_ID	0x5333
 #define PCI_ViRGE		0x5631
 #define PCI_ViRGE_VX		0x883D
+#define PCI_ViRGE_DXGX		0x8A01
 
 /* Chip tags */
 #define S3_UNKNOWN		 0
 #define S3_ViRGE		 1
 #define S3_ViRGE_VX		 2
+#define S3_ViRGE_DXGX		 3
 
 /* VESA Approved Register Definitions */
 #define	DAC_MASK	0x03c6
@@ -308,13 +311,13 @@ typedef struct {
 LUTENTRY;
 
 /* Wait until "v" queue entries are free */
-#define	WaitQueue(v)	 while (((IN_SUBSYS_STAT()) & 0x1f00) < (((v)+2) << 8))
+#define	WaitQueue(v)	 do { mem_barrier(); while (((IN_SUBSYS_STAT()) & 0x1f00) < (((v)+2) << 8)); } while (0)
 
 /* Wait until GP is idle and queue is empty */
-#define	WaitIdleEmpty()  while ((IN_SUBSYS_STAT() & 0x3f00) != 0x3000)
+#define	WaitIdleEmpty()  do { mem_barrier(); while ((IN_SUBSYS_STAT() & 0x3f00) != 0x3000); } while (0)
 
 /* Wait until GP is idle */
-#define WaitIdle()       while (!(IN_SUBSYS_STAT() & 0x2000))
+#define WaitIdle()       do { mem_barrier(); while (!(IN_SUBSYS_STAT() & 0x2000)); } while (0)
 
 #ifndef NULL
 #define NULL	0

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_teblt8.c,v 3.20 1996/09/29 13:39:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_teblt8.c,v 3.23.2.1 1997/05/10 09:10:23 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -31,7 +31,7 @@ in this Software without prior written authorization from the X Consortium.
  * We accelerate straightforward text writing for fonts with widths up to 32
  * pixels.
  */
-/* $XConsortium: cir_teblt8.c /main/9 1995/11/13 08:21:30 kaleb $ */
+/* $XConsortium: cir_teblt8.c /main/14 1996/10/26 11:17:14 kaleb $ */
 /*
  * TEGblt - ImageText expanded glyph fonts only.  For
  * 8 bit displays, in Copy mode with no clipping.
@@ -51,6 +51,7 @@ in this Software without prior written authorization from the X Consortium.
 #include "cirBlitter.h"
 #endif
 #include "cir_inline.h"
+
 
 void CirrusTransferTextWidth8();
 void CirrusTransferTextWidth6();
@@ -118,6 +119,8 @@ void CirrusImageGlyphBlt(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 	int shift, line;
 	unsigned dworddata;
 	int destaddr, blitwidth;
+
+
 
 	glyphWidth = FONTMAXBOUNDS(pfont,characterWidth);
 	glyphWidthBytes = GLYPHWIDTHBYTESPADDED(*ppci);
@@ -247,7 +250,7 @@ void CirrusImageGlyphBlt(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 	SETDESTADDR(destaddr);
 	SETDESTPITCH(widthDst);
 	SETSRCADDR(0);
-	SETSRCPITCH(0);
+/*	SETSRCPITCH(0); */
 	blitwidth = (glyphWidth * nglyph) << (vgaBitsPerPixel >> 4);
 	SETWIDTH(blitwidth);
 	SETHEIGHT(h);
@@ -296,7 +299,8 @@ void CirrusImageGlyphBlt(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 	else
 #if 0
 		if (glyphWidth > 16 || HAVE543X() ||
-		    HAVE754X() || cirrusChip == CLGD5446)
+		    HAVE755X() || cirrusChip == CLGD5446 ||
+		    cirrusChip == CLGD5480)
 			CirrusTransferText32bit(nglyph, h, glyphp, glyphWidth,
 				CIRRUSBASE());
 		else
@@ -353,7 +357,11 @@ void CirrusPolyGlyphBlt(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 
 	void (*PolyGlyph)();
 
-	cfbGetLongWidthAndPointer(pDrawable, widthDst, pdstBase)
+
+    /* I don't think that we can use this function in multiple pixel
+       depths modes w/o compiling this file multiple times.  The fix
+       is to not allow CirrusPolyGlyphBlt() be called when bpp > 8. */
+    cfbGetLongWidthAndPointer(pDrawable, widthDst, pdstBase);
 
 	if (!CHECKSCREEN(pdstBase)) {
 		cfbPolyGlyphBlt8(pDrawable, pGC, xInit, yInit, nglyph, ppci,
@@ -428,7 +436,7 @@ void CirrusPolyGlyphBlt(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 		 * transparency in the BitBLT engine is 'fixed' to be
 		 * similar to write mode 4.
 		 * On the 5426/8, it turns out it can also work.
-		 * Same with a 5446.
+		 * Same with a 5446 or a 5480.
 		 */
 		int destaddr, blitwidth;
 		unsigned int color;
@@ -439,7 +447,7 @@ void CirrusPolyGlyphBlt(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 		SETDESTADDR(destaddr);
 		SETDESTPITCH(widthDst);
 		SETSRCADDR(0);
-		SETSRCPITCH(0);
+/*		SETSRCPITCH(0); */
 		blitwidth = glyphWidth * nglyph;
 		SETWIDTH(blitwidth);
 		SETHEIGHT(h);
@@ -448,7 +456,7 @@ void CirrusPolyGlyphBlt(pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 		 * color registers must be loaded, and the background color
 		 * registers must be loaded with the bitwise complement of
 		 * the foreground color.
-		 * MMIO implies a 5429 or 543x or 5446.
+		 * MMIO implies a 5429 or 543x or 5446 or 5480.
 		 */
 		if (cirrusChip == CLGD5434) {
 			color = (~pGC->fgPixel) & 0xff;

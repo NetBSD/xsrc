@@ -1,5 +1,5 @@
-/* $XConsortium: pixmap.c,v 1.3 94/04/17 20:26:41 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/dix/pixmap.c,v 3.0 1996/04/15 11:19:52 dawes Exp $ */
+/* $XConsortium: pixmap.c /main/4 1996/08/12 22:04:49 dpw $ */
+/* $XFree86: xc/programs/Xserver/dix/pixmap.c,v 3.1 1996/12/23 06:29:47 dawes Exp $ */
 /*
 
 Copyright (c) 1993  X Consortium
@@ -85,6 +85,7 @@ FreeScratchPixmapHeader(pPixmap)
     {
 	ScreenPtr pScreen = pPixmap->drawable.pScreen;
 
+	pPixmap->devPrivate.ptr = NULL; /* lest ddx chases bad ptr */
 	if (pScreen->pScratchPixmap)
 	    (*pScreen->DestroyPixmap)(pPixmap);
 	else

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/etc/et4000clock.c,v 3.4 1996/10/03 08:37:45 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/et4000clock.c,v 3.5 1996/12/23 06:47:09 dawes Exp $
  *
  * This is a sample clock setting program.  It will not work with all
  * ET4000 cards.  To work correctly the clocks line in XF86Config must
@@ -12,7 +12,7 @@
  * David Dawes  <dawes@physics.su.oz.au>
  * 19 December 1992
  */
-/* $XConsortium: et4000clock.c /main/5 1995/11/12 20:16:56 kaleb $ */
+/* $XConsortium: et4000clock.c /main/7 1996/10/25 11:37:41 kaleb $ */
 
 #include <stdio.h>
 

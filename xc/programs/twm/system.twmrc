@@ -1,5 +1,5 @@
 #
-# $XConsortium: system.twmrc,v 1.8 91/04/23 21:10:58 gildea Exp $
+# $XConsortium: system.twmrc /main/9 1996/10/16 16:14:38 kaleb $
 # 
 # Default twm configuration file; needs to be kept small to conserve string
 # space in systems whose compilers don't handle medium-sized strings.
@@ -23,18 +23,18 @@ IconManagerFont "-adobe-helvetica-bold-r-normal--*-100-*-*-*"
 Color
 {
     BorderColor "slategrey"
-    DefaultBackground "maroon"
+    DefaultBackground "rgb:2/a/9"
     DefaultForeground "gray85"
-    TitleBackground "maroon"
+    TitleBackground "rgb:2/a/9"
     TitleForeground "gray85"
-    MenuBackground "maroon"
+    MenuBackground "rgb:2/a/9"
     MenuForeground "gray85"
     MenuTitleBackground "gray70"
-    MenuTitleForeground "maroon"
-    IconBackground "maroon"
+    MenuTitleForeground "rgb:2/a/9"
+    IconBackground "rgb:2/a/9"
     IconForeground "gray85"
     IconBorderColor "gray85"
-    IconManagerBackground "maroon"
+    IconManagerBackground "rgb:2/a/9"
     IconManagerForeground "gray85"
 }
 

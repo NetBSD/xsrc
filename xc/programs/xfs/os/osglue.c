@@ -1,5 +1,4 @@
-/* $XConsortium: osglue.c,v 1.12 95/04/07 19:42:57 kaleb Exp $ */
-/* $XFree86: xc/programs/xfs/os/osglue.c,v 3.6 1996/03/10 12:13:18 dawes Exp $ */
+/* $TOG: osglue.c /main/13 1997/05/22 10:04:48 barstow $ */
 /*
 Copyright (c) 1987  X Consortium
 
@@ -49,6 +48,7 @@ in this Software without prior written authorization from the X Consortium.
  * $NCDId: @(#)osglue.c,v 4.6 1991/07/09 14:07:30 lemke Exp $
  *
  */
+/* $XFree86: xc/programs/xfs/os/osglue.c,v 3.6.4.1 1997/05/23 12:19:49 dawes Exp $ */
 
 /*
  * this is miscellaneous OS specific stuff.
@@ -298,6 +298,8 @@ CloneMyself()
     char	*arg_ptr = old_listen_arg;
     int         i, j;
     int         lastfdesc;
+    char	portnum[20];
+    extern int	ListenPort;
 
     assert(!drone_server);	/* a drone shouldn't hit this */
 
@@ -375,10 +377,12 @@ CloneMyself()
 	    }
 	}
 
+	sprintf (portnum, "%d", ListenPort);
 	if (*old_listen_arg != '\0')
 	    execlp(progname, progname,
 		   "-ls", old_listen_arg,
 		   "-cf", configfilename,
+		   "-port", portnum,
 		   NULL);
 
 	InitErrors();		/* reopen errors, since we don't want to lose

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3fcach.c,v 3.25 1996/10/10 14:03:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3fcach.c,v 3.28 1997/01/12 10:41:40 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  * 
@@ -26,7 +26,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  * 
  */
-/* $XConsortium: s3fcach.c /main/8 1995/12/29 10:11:14 kaleb $ */
+/* $XConsortium: s3fcach.c /main/15 1996/10/25 16:22:52 kaleb $ */
 
 
 #include	"X.h"
@@ -63,7 +63,7 @@ void
 s3FontCache8Init()
 {
    static int first = TRUE;
-   int x, y, w, h, pmwidth = 0, pmx, pmy;
+   int x, y, w, h, pmwidth = 0, pmx = 0, pmy = 0;
    int x2, y2, w2, h2;
    int BitPlane;
    CachePool FontPool;
@@ -212,11 +212,11 @@ Dos3CPolyText8(x, y, count, chars, fentry, pGC, pBox)
    unsigned short height = 0;
    unsigned short width = 0;
    Pixel pmsk = 0;
+   short xoff = 0;
 
    BLOCK_CURSOR;
    for (;count > 0; count--, chars++) {
       CharInfoPtr pci;
-      short xoff;
 
       pci = fentry->pci[(int)*chars];
 

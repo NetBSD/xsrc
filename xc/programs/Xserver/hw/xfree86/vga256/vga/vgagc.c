@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgagc.c,v 3.4 1996/02/04 09:15:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgagc.c,v 3.7 1996/12/23 06:59:46 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,12 +46,12 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: vgagc.c /main/5 1995/11/13 09:26:37 kaleb $ */
+/* $XConsortium: vgagc.c /main/6 1996/02/21 18:11:05 kaleb $ */
 
 #include "vga256.h"
 #include "migc.h"
 
-static void vga256ValidateGC();
+void vga256ValidateGC();
 
 static GCFuncs vga256Funcs = {
     vga256ValidateGC,
@@ -159,7 +159,7 @@ GCOps	vga256NonTEOps = {
     NULL,
 };
 
-static GCOps *
+GCOps *
 vga256matchCommon (pGC, devPriv)
     GCPtr	    pGC;
     cfbPrivGCPtr    devPriv;
@@ -179,7 +179,7 @@ vga256matchCommon (pGC, devPriv)
     {
 
 	if (TERMINALFONT(pGC->font)
-	    && FONTMAXBOUNDS(pGC->font,characterWidth) >= 4
+	    && FONTMAXBOUNDS(pGC->font,characterWidth) >= PGSZB
 	)
 	    if (devPriv->oneRect)
 		return &vga256TEOps1Rect;
@@ -244,7 +244,7 @@ vga256CreateGC(pGC)
 	    CT_other ==> pCompositeClip is the pixmap bounding box
 */
 
-static void
+void
 vga256ValidateGC(pGC, changes, pDrawable)
     register GCPtr  pGC;
     Mask	    changes;
@@ -424,7 +424,7 @@ vga256ValidateGC(pGC, changes, pDrawable)
 	    {
 		int width = pGC->stipple->drawable.width;
 
-		if ((width <= 32) && !(width & (width - 1)))
+		if ((width <= PGSZ) && !(width & (width - 1)))
 		{
 		    mfbCopyRotatePixmap(pGC->stipple,
 					&devPriv->pRotatedPixmap, xrot, yrot);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/text.c,v 3.1 1996/10/10 14:01:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/text.c,v 3.2 1996/12/23 06:38:06 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  * 
@@ -26,7 +26,7 @@
  * Extracted from s3text.c
  * Modified for 8514, Hans Nasten. (nasten@everyware.se)
  */
-/* $XConsortium: text.c /main/2 1995/11/12 16:55:04 kaleb $ */
+/* $XConsortium: text.c /main/5 1996/10/25 16:22:31 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

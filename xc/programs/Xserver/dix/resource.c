@@ -46,8 +46,8 @@ SOFTWARE.
 
 ********************************************************/
 
-/* $XConsortium: resource.c,v 1.95 94/04/17 20:26:43 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/dix/resource.c,v 3.0 1996/04/15 11:19:57 dawes Exp $ */
+/* $XConsortium: resource.c /main/39 1996/10/30 11:17:56 rws $ */
+/* $XFree86: xc/programs/Xserver/dix/resource.c,v 3.1 1996/12/23 06:29:51 dawes Exp $ */
 
 /*	Routines to manage various kinds of resources:
  *
@@ -86,6 +86,7 @@ SOFTWARE.
 #include "dixgrabs.h"
 #include "colormap.h"
 #include "cursor.h"
+#include <assert.h>
 
 extern WindowPtr *WindowTable;
 
@@ -582,6 +583,44 @@ ChangeResourceValue (id, rtype, value)
     return FALSE;
 }
 
+/* Note: if func adds or deletes resources, then func can get called
+ * more than once for some resources.  If func adds new resources,
+ * func might or might not get called for them.  func cannot both
+ * add and delete an equal number of resources!
+ */
+
+void
+FindClientResourcesByType(client, type, func, cdata)
+    ClientPtr client;
+    RESTYPE type;
+    FindResType func;
+    pointer cdata;
+{
+    register ResourcePtr *resources;
+    register ResourcePtr this, next;
+    int i, elements;
+    register int *eltptr;
+
+    if (!client)
+	client = serverClient;
+
+    resources = clientTable[client->index].resources;
+    eltptr = &clientTable[client->index].elements;
+    for (i = 0; i < clientTable[client->index].buckets; i++) 
+    {
+        for (this = resources[i]; this; this = next)
+	{
+	    next = this->next;
+	    if (!type || this->type == type) {
+		elements = *eltptr;
+		(*func)(this->value, this->id, cdata);
+		if (*eltptr != elements)
+		    next = resources[i]; /* start over */
+	    }
+	}
+    }
+}
+
 void
 FreeClientNeverRetainResources(client)
     ClientPtr client;
@@ -683,6 +722,105 @@ LegalNewID(id, client)
 	     !LookupIDByClass(id, RC_ANY)));
 }
 
+#ifdef XCSECURITY
+
+/* SecurityLookupIDByType and SecurityLookupIDByClass:
+ * These are the heart of the resource ID security system.  They take
+ * two additional arguments compared to the old LookupID functions:
+ * the client doing the lookup, and the access mode (see resource.h).
+ * The resource is returned if it exists and the client is allowed access,
+ * else NULL is returned.
+ */
+
+pointer
+SecurityLookupIDByType(client, id, rtype, mode)
+    ClientPtr client;
+    XID id;
+    RESTYPE rtype;
+    Mask mode;
+{
+    int    cid;
+    register    ResourcePtr res;
+    pointer retval = NULL;
+
+    assert(client == NullClient ||
+     (client->index <= currentMaxClients && clients[client->index] == client));
+    assert( (rtype & TypeMask) <= lastResourceType);
+
+    if (((cid = CLIENT_ID(id)) < MAXCLIENTS) &&
+	clientTable[cid].buckets)
+    {
+	res = clientTable[cid].resources[Hash(cid, id)];
+
+	for (; res; res = res->next)
+	    if ((res->id == id) && (res->type == rtype))
+	    {
+		retval = res->value;
+		break;
+	    }
+    }
+    if (retval && client && client->CheckAccess)
+	retval = (* client->CheckAccess)(client, id, rtype, mode, retval);
+    return retval;
+}
+
+
+pointer
+SecurityLookupIDByClass(client, id, classes, mode)
+    ClientPtr client;
+    XID id;
+    RESTYPE classes;
+    Mask mode;
+{
+    int    cid;
+    register    ResourcePtr res;
+    pointer retval = NULL;
+
+    assert(client == NullClient ||
+     (client->index <= currentMaxClients && clients[client->index] == client));
+    assert (classes >= lastResourceClass);
+
+    if (((cid = CLIENT_ID(id)) < MAXCLIENTS) &&
+	clientTable[cid].buckets)
+    {
+	res = clientTable[cid].resources[Hash(cid, id)];
+
+	for (; res; res = res->next)
+	    if ((res->id == id) && (res->type & classes))
+	    {
+		retval = res->value;
+		break;
+	    }
+    }
+    if (retval && client && client->CheckAccess)
+	retval = (* client->CheckAccess)(client, id, classes, mode, retval);
+    return retval;
+}
+
+/* We can't replace the LookupIDByType and LookupIDByClass functions with
+ * macros because of compatibility with loadable servers.
+ */
+
+pointer
+LookupIDByType(id, rtype)
+    XID id;
+    RESTYPE rtype;
+{
+    return SecurityLookupIDByType(NullClient, id, rtype,
+				  SecurityUnknownAccess);
+}
+
+pointer
+LookupIDByClass(id, classes)
+    XID id;
+    RESTYPE classes;
+{
+    return SecurityLookupIDByClass(NullClient, id, classes,
+				   SecurityUnknownAccess);
+}
+
+#else /* not XCSECURITY */
+
 /*
  *  LookupIDByType returns the object with the given id and type, else NULL.
  */ 
@@ -694,7 +832,8 @@ LookupIDByType(id, rtype)
     int    cid;
     register    ResourcePtr res;
 
-    if (((cid = CLIENT_ID(id)) < MAXCLIENTS) && clientTable[cid].buckets)
+    if (((cid = CLIENT_ID(id)) < MAXCLIENTS) &&
+	clientTable[cid].buckets)
     {
 	res = clientTable[cid].resources[Hash(cid, id)];
 
@@ -717,7 +856,8 @@ LookupIDByClass(id, classes)
     int    cid;
     register    ResourcePtr res;
 
-    if (((cid = CLIENT_ID(id)) < MAXCLIENTS) && clientTable[cid].buckets)
+    if (((cid = CLIENT_ID(id)) < MAXCLIENTS) &&
+	clientTable[cid].buckets)
     {
 	res = clientTable[cid].resources[Hash(cid, id)];
 
@@ -727,3 +867,5 @@ LookupIDByClass(id, classes)
     }
     return (pointer)NULL;
 }
+
+#endif /* XCSECURITY */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxFont.c,v 3.2 1996/02/04 08:58:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxFont.c,v 3.3 1996/12/23 06:32:42 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  * Copyright 1994 by Henry A. Worth, Sunnyvale, California.
@@ -26,7 +26,7 @@
  * Modified for the AGX by Henry A. Worth (haw30@eng.amdahl.com)
  * 
  */
-/* $XConsortium: agxFont.c /main/4 1995/11/13 10:06:48 kaleb $ */
+/* $XConsortium: agxFont.c /main/5 1996/02/21 17:17:32 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

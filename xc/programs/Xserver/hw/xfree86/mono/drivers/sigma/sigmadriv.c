@@ -1,5 +1,4 @@
-/* $XConsortium: sigmadriv.c,v 1.2 95/06/19 18:14:25 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/sigma/sigmadriv.c,v 3.4 1996/09/14 13:10:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/sigma/sigmadriv.c,v 3.5 1996/12/23 06:48:30 dawes Exp $ */
 /*
  * MONO: Driver family for interlaced and banked monochrome video adaptors
  * Pascal Haible 8/93, 3/94, 4/94 haible@IZFM.Uni-Stuttgart.DE
@@ -15,6 +14,7 @@
  *
  * see mono/COPYRIGHT for copyright and disclaimers.
  */
+/* $XConsortium: sigmadriv.c /main/4 1996/10/23 18:46:02 kaleb $ */
 
 
 #include "X.h"

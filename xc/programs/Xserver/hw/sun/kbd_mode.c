@@ -1,5 +1,5 @@
-/* $XConsortium: kbd_mode.c /main/12 1995/10/05 07:36:41 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/sun/kbd_mode.c,v 3.4 1996/10/16 14:38:14 dawes Exp $ */
+/* $XConsortium: kbd_mode.c /main/13 1996/10/31 14:23:46 kaleb $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/kbd_mode.c,v 3.5 1996/12/23 06:30:12 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -53,7 +53,7 @@ static  char sccsid[] = "@(#)kbd_mode.c 7.1 87/04/13";
 #include </sys/sparc/dev/kbd.h>
 #endif
 #else
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
+#ifndef CSRG_BASED
 #include <sundev/kbio.h>
 #include <sundev/kbd.h>
 #else

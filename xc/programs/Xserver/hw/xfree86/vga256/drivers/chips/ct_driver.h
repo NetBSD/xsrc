@@ -1,3 +1,4 @@
+/* $XConsortium: ct_driver.h /main/3 1996/10/27 11:49:29 kaleb $ */
 /*
  * Modified 1996 by Egbert Eich <Egbert.Eich@Physik.TH-Darmstadt.DE>
  * Modified 1996 by David Bateman <dbateman@ee.uts.edu.au>
@@ -21,7 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_driver.h,v 3.4 1996/10/17 15:20:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_driver.h,v 3.8.2.1 1997/05/03 09:48:05 dawes Exp $ */
 
 /*#define DEBUG
 #define CT_HW_DEBUG */
@@ -30,6 +31,7 @@
 extern Bool ctLinearSupport;	       /*linear addressing enable */
 extern Bool ctAccelSupport;	       /*acceleration enable */
 extern Bool ctisHiQV32;		       /*New architecture used in 65550 and 65554 */
+extern Bool ctisWINGINE;
 extern Bool ctHDepth;		       /*Chip has 16/24bpp */
 extern Bool ctDSTN;
 extern Bool ctLCD;
@@ -42,6 +44,7 @@ extern unsigned int ctCursorAddress;   /* The address in video ram of cursor */
 extern unsigned int ctBLTPatternAddress;
 extern Bool ctUseMMIO;
 extern Bool ctAvoidImageBLT;
+extern Bool ctColorTransparency;
 extern unsigned char *ctMMIOBase;
 extern unsigned char *ctBltDataWindow;
 
@@ -49,18 +52,33 @@ extern int ctAluConv[];		       /* Map Alu to Chips ROP source data  */
 extern int ctAluConv2[];       	       /* Map Alu to Chips ROP pattern data */
 
 extern unsigned long ctFrameBufferSize;		/* Frame buffer size */
+extern unsigned int ctCacheEnd;			/* Pixmap Cache End */
+extern unsigned int ctColorExpandScratchAddr;	/* Ping-pong buffer */
+extern unsigned int ctColorExpandScratchSize;
+
 
 /* Byte reversal functions */
 extern unsigned char byte_reversed[];
 extern unsigned int byte_reversed3[];
 
 /* 
+ * Definitions for IO access to ports
+ */
+#define write_xr(num,val) {outb(0x3D6, num);outb(0x3D7, val);}
+#define read_xr(num,var) {outb(0x3D6, num);var=inb(0x3D7);}
+#define write_fr(num,val) {outb(0x3D0, num);outb(0x3D1, val);}
+#define read_fr(num,var) {outb(0x3D0, num);var=inb(0x3D1);}
+
+/* 
  * Definitions for IO access to 32 bit ports
  */
 extern int ctReg32MMIO[];
 extern int ctReg32HiQV[];
-#define DR(x) ctReg32MMIO[x]
+#define MR(x) ctReg32MMIO[x]
 #define BR(x) ctReg32HiQV[x]
+
+extern unsigned int CHIPS_ExtPorts32[];
+#define DR(x) CHIPS_ExtPorts32[x] 
 
 /*
  * Forward definitions for the functions that make up the driver.    See
@@ -84,6 +102,8 @@ extern void ctMMIOFillRectSolid();
 extern void ctMMIOFillSolidSpansGeneral();
 extern void ctHiQVFillRectSolid();
 extern void ctHiQVFillSolidSpansGeneral();
+extern void ctcfbFillRectSolid24();
+extern void ctMMIOFillRectSolid24();
 
 /* in ct_blt16.c */
 extern RegionPtr ctcfb16CopyArea();
@@ -128,13 +148,19 @@ extern void ctcfbBLTWriteBitmap();
 extern void ctMMIOBLTWriteBitmap();
 extern void ctHiQVBLTWriteBitmap();
 
-#define MMIOmeml(x) *(unsigned int *)(ctMMIOBase + x)
-#define MMIOmemw(x) *(unsigned short *)(ctMMIOBase + x)
+/* in ct_accel.c */
+extern void ctAccelInit();
+extern void ctMMIOAccelInit();
+extern void ctHiQVAccelInit();
+
+
+#define MMIOmeml(x) *(unsigned int *)(ctMMIOBase + (x))
+#define MMIOmemw(x) *(unsigned short *)(ctMMIOBase + (x))
 
 /* To aid debugging of 32 bit register access we make the following defines */
 #if defined(DEBUG) & defined(CT_HW_DEBUG)
 extern void ctHWDebug();
-#define HW_DEBUG(x) ctHWDebug(x)
+#define HW_DEBUG(x) ctHWDebug((x))
 #else
 #define HW_DEBUG(x)
 #endif

@@ -1,4 +1,4 @@
-/* $XConsortium: scanpci.c /main/8 1996/01/30 15:20:27 kaleb $ */
+/* $XConsortium: scanpci.c /main/25 1996/10/27 11:48:40 kaleb $ */
 /*
  *  name:             scanpci.c
  *
@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.29 1996/10/17 15:19:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.3 1997/05/19 08:06:57 dawes Exp $ */
 
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
@@ -136,15 +136,7 @@ unsigned inb(unsigned port);
 
 #if defined(__GNUC__)
 
-#if defined(linux) && defined(__alpha__)
-/* link to the LIBC routines */
-#define inb _inb
-#define inw _inw
-#define inl _inl
-#define outb(p,v) _outb((v),(p))
-#define outw(p,v) _outw((v),(p))
-#define outl(p,v) _outl((v),(p))
-#else /* defined(linux) && defined(__alpha__) */
+#if !defined(__alpha__)
 #if defined(GCCUSESGAS)
 #define OUTB_GCC "outb %0,%1"
 #define OUTL_GCC "outl %0,%1"
@@ -166,7 +158,7 @@ static unsigned char inb(unsigned short port) { unsigned char ret;
 static unsigned long inl(unsigned short port) { unsigned long ret;
      __asm__ __volatile__(INL_GCC : "=a" (ret) : "d" (port)); return ret; }
 
-#endif /* defined(linux) && defined(__alpha__) */
+#endif /* !defined(__alpha__) */
 #else  /* __GNUC__ */
 
 #if defined(__STDC__) && (__STDC__ == 1)
@@ -239,6 +231,35 @@ static unsigned long inl(unsigned short port) { unsigned long ret;
 
 #endif /* __GNUC__ */
 #endif /* __WATCOMC__ */
+
+
+#if defined(__alpha__)
+#if defined(linux)
+#include <asm/unistd.h>
+#define BUS(tag) (((tag)>>16)&0xff)
+#define DFN(tag) (((tag)>>8)&0xff)
+int pciconfig_read(
+          unsigned char bus,
+          unsigned char dfn,
+          unsigned char off,
+          unsigned char len,
+          void * buf)
+{
+  return __syscall(__NR_pciconfig_read, bus, dfn, off, len, buf);
+}
+int pciconfig_write(
+          unsigned char bus,
+          unsigned char dfn,
+          unsigned char off,
+          unsigned char len,
+          void * buf)
+{
+  return __syscall(__NR_pciconfig_write, bus, dfn, off, len, buf);
+}
+#else
+Generate compiler error - scanpci unsupported on non-linux alpha platforms
+#endif /* linux */
+#endif /* __alpha__ */
 
 
 struct pci_config_reg {
@@ -375,16 +396,28 @@ struct pci_config_reg {
     unsigned long _cardnum;       /* config type 2 - private card number */
 };
 
-extern void identify_card(struct pci_config_reg *);
+extern void identify_card(struct pci_config_reg *, int);
 extern void print_i128(struct pci_config_reg *);
 extern void print_mach64(struct pci_config_reg *);
 extern void print_pcibridge(struct pci_config_reg *);
 extern void enable_os_io();
 extern void disable_os_io();
 
-#define MAX_DEV_PER_VENDOR 16
-#define MAX_PCI_DEVICES    64
+#define MAX_DEV_PER_VENDOR_CFG1 32
+#define MAX_DEV_PER_VENDOR_CFG2 16
+#define MAX_PCI_DEVICES         64
 #define NF ((void (*)())NULL)
+#define PCI_MULTIFUNC_DEV	0x80
+#if defined(__alpha__)
+#define PCI_ID_REG              0x00
+#define PCI_CMD_STAT_REG        0x04
+#define PCI_CLASS_REG           0x08
+#define PCI_HEADER_MISC         0x0C
+#define PCI_MAP_REG_START       0x10
+#define PCI_MAP_ROM_REG         0x30
+#define PCI_INTERRUPT_REG       0x3C
+#define PCI_REG_USERCONFIG      0x40
+#endif
 
 struct pci_vendor_device {
     unsigned short vendor_id;
@@ -393,7 +426,7 @@ struct pci_vendor_device {
         unsigned short device_id;
         char *devicename;
 	void (*print_func)(struct pci_config_reg *);
-    } device[MAX_DEV_PER_VENDOR];
+    } device[MAX_DEV_PER_VENDOR_CFG1];
 } pvd[] = {
         { 0x0e11, "Compaq", {
                             { 0x0000, (char *)NULL, NF } } },
@@ -428,8 +461,8 @@ struct pci_vendor_device {
         { 0x100C, "Tseng Labs", {
                             { 0x3202, "ET4000w32p rev A", NF },
                             { 0x3205, "ET4000w32p rev B", NF },
-                            { 0x3206, "ET4000w32p rev C", NF },
-                            { 0x3207, "ET4000w32p rev D", NF },
+                            { 0x3206, "ET4000w32p rev D", NF },
+                            { 0x3207, "ET4000w32p rev C", NF },
                             { 0x3208, "ET6000", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x100E, "Weitek", {
@@ -483,6 +516,8 @@ struct pci_vendor_device {
                             { 0x0000, (char *)NULL, NF } } },
         { 0x102B, "Matrox", {
                             { 0x0518, "MGA-2 Atlas PX2085", NF },
+                            { 0x0519, "MGA Millennium", NF },
+                            { 0x051a, "MGA Mystique", NF },
                             { 0x0D10, "MGA Impression", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x102C, "CT", {
@@ -531,6 +566,7 @@ struct pci_vendor_device {
                             { 0x0000, (char *)NULL, NF } } },
         { 0x105D, "Number Nine", {
                             { 0x2309, "Imagine-128", print_i128 },
+                            { 0x2339, "Imagine-128-II", print_i128 },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1060, "UMC", {
                             { 0x0101, "UM8673F", NF },
@@ -617,6 +653,7 @@ struct pci_vendor_device {
         { 0x1142, "Alliance", {
                             { 0x3210, "ProMotion 6410", NF },
                             { 0x6422, "ProMotion 6422", NF },
+                            { 0x6424, "ProMotion AT24", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x114A, "VMIC", {
                             { 0x0000, (char *)NULL, NF } } },
@@ -636,6 +673,9 @@ struct pci_vendor_device {
                             { 0x0000, (char *)NULL, NF } } },
         { 0x120E, "Cyclades", {
                             { 0x0000, (char *)NULL, NF } } },
+        { 0x1236, "Sigma Designs", {
+                            { 0x6401, "REALmagic64/GX (SD 6425)", NF },
+                            { 0x0000, (char *)NULL, NF } } },
         { 0x1281, "YOKOGAWA", {
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1C1C, "Symphony", {
@@ -646,11 +686,17 @@ struct pci_vendor_device {
                             { 0x0000, (char *)NULL, NF } } },
         { 0x3D3D, "3Dlabs", {
                             { 0x0001, "GLINT 300SX", NF },
+                            { 0x0002, "GLINT 500TX", NF },
+                            { 0x0003, "GLINT Delta", NF },
 			    { 0x0000, (char *)NULL, NF } } } ,
         { 0x4005, "Avance", {
                             { 0x0000, (char *)NULL, NF } } },
         { 0x5333, "S3", {
                             { 0x8811, "Trio32/64", NF },
+                            { 0x8812, "Aurora64V+", NF },
+                            { 0x8814, "Trio64UV+", NF },
+                            { 0x8901, "Trio64V2/DX or /GX", NF },
+                            { 0x8902, "PLATO/PX", NF },
                             { 0x8880, "868", NF },
                             { 0x88B0, "928", NF },
                             { 0x88C0, "864-0", NF },
@@ -660,13 +706,14 @@ struct pci_vendor_device {
                             { 0x88F0, "968", NF },
 			    { 0x5631, "ViRGE", NF },
 			    { 0x883D, "ViRGE/VX", NF },
+			    { 0x8A01, "ViRGE/DX or /GX", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x8086, "Intel", {
                             { 0x0482, "82375EB pci-eisa bridge", NF },
                             { 0x0483, "82424ZX cache dram controller", NF },
-                            { 0x0484, "82378IB pci-isa bridge", NF },
+                            { 0x0484, "82378IB/ZB pci-isa bridge", NF },
                             { 0x0486, "82430ZX Aries", NF },
-                            { 0x04A3, "82434LX pci cache mem controller", NF },
+                            { 0x04A3, "82434LX/NX pci cache mem controller", NF },
                             { 0x1230, "82371 bus-master IDE controller", NF },
                             { 0x1223, "SAA7116", NF },
                             { 0x122D, "82437 Triton", NF },
@@ -697,11 +744,18 @@ struct pci_vendor_device {
                             { 0xA0A1, "2000MT", NF },
                             { 0xA0A9, "2000MI", NF },
                             { 0x0000, (char *)NULL, NF } } },
+        { 0x109E, "Brooktree", {
+                           { 0x0350, "BT-848", NF},
+                           { 0x0000, (char *)NULL, NF } } },
         { 0x0000, (char *)NULL, {
                             { 0x0000, (char *)NULL, NF } } }
 };
 
+#if defined(__alpha__)
+#define PCI_EN 0x00000000
+#else
 #define PCI_EN 0x80000000
+#endif
 
 #define	PCI_MODE1_ADDRESS_REG		0xCF8
 #define	PCI_MODE1_DATA_REG		0xCFC
@@ -714,27 +768,26 @@ struct pci_vendor_device {
 #endif
 
 
-int f_flag=0;
-
 main(int argc, unsigned char *argv[])
 {
     unsigned long tmplong1, tmplong2, config_cmd;
     unsigned char tmp1, tmp2;
     unsigned int idx;
     struct pci_config_reg pcr;
-    int ch;
+    int ch, verbose;
+    int func;
 
     if (argc > 2) {
-	printf("Usage: %s [-f] \n", argv[0]);
+	printf("Usage: %s [-v] \n", argv[0]);
 	exit(1);
     }
-    while((ch = getopt(argc, argv, "f")) != EOF) {
+    while((ch = getopt(argc, argv, "v")) != EOF) {
      	switch((char)ch) {
-	case 'f':
-		f_flag = 1;
+	case 'v':
+		verbose = 1;
 		break;
 	default :
-		printf("Usage: %s [-f] \n", argv[0]);
+		printf("Usage: %s [-v] \n", argv[0]);
 		exit(1);
         }
     }
@@ -747,6 +800,7 @@ main(int argc, unsigned char *argv[])
 
     enable_os_io();
 
+#if !defined(__alpha__)
     pcr._configtype = 0;
 
     outb(PCI_MODE2_ENABLE_REG, 0x00);
@@ -770,6 +824,9 @@ main(int argc, unsigned char *argv[])
 	    exit(1);
 	}
     }
+#else
+    pcr._configtype = 1;
+#endif
 
     /* Try pci config 1 probe first */
 
@@ -785,20 +842,29 @@ main(int argc, unsigned char *argv[])
     do {
         printf("Probing for devices on PCI bus %d:\n\n", pcr._pcibusidx);
 
-        for (pcr._cardnum = 0x0; pcr._cardnum < 0x20; pcr._cardnum += 0x1) {
+        for (pcr._cardnum = 0x0; pcr._cardnum < MAX_DEV_PER_VENDOR_CFG1;
+		pcr._cardnum += 0x1) {
+	  func = 0;
+	  do { /* loop over the different functions, if present */
+#if !defined(__alpha__)
 	    config_cmd = PCI_EN | (pcr._pcibuses[pcr._pcibusidx]<<16) |
-                                  (pcr._cardnum<<11);
+                                  (pcr._cardnum<<11) | (func<<8);
 
             outl(PCI_MODE1_ADDRESS_REG, config_cmd);         /* ioreg 0 */
             pcr._device_vendor = inl(PCI_MODE1_DATA_REG);
+#else
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+		PCI_ID_REG, 4, &pcr._device_vendor);
+#endif
 
             if ((pcr._vendor == 0xFFFF) || (pcr._device == 0xFFFF))
-                continue;   /* nothing there */
+                break;   /* nothing there */
 
-	    printf("\npci bus 0x%x cardnum 0x%02x, vendor 0x%04x device 0x%04x\n",
-	        pcr._pcibuses[pcr._pcibusidx], pcr._cardnum, pcr._vendor,
-                pcr._device);
+	    printf("\npci bus 0x%x cardnum 0x%02x function 0x%04x: vendor 0x%04x device 0x%04x\n",
+	        pcr._pcibuses[pcr._pcibusidx], pcr._cardnum, func,
+		pcr._vendor, pcr._device);
 
+#if !defined(__alpha__)
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x04);
 	    pcr._status_command  = inl(PCI_MODE1_DATA_REG);
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x08);
@@ -823,6 +889,32 @@ main(int argc, unsigned char *argv[])
 	    pcr._max_min_ipin_iline = inl(PCI_MODE1_DATA_REG);
             outl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x40);
 	    pcr._user_config = inl(PCI_MODE1_DATA_REG);
+#else
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_CMD_STAT_REG, 4, &pcr._status_command);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_CLASS_REG, 4, &pcr._class_revision);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_HEADER_MISC, 4, &pcr._bist_header_latency_cache);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_MAP_REG_START, 4, &pcr._base0);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_MAP_REG_START + 0x04, 4, &pcr._base1);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_MAP_REG_START + 0x08, 4, &pcr._base2);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_MAP_REG_START + 0x0C, 4, &pcr._base3);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_MAP_REG_START + 0x10, 4, &pcr._base4);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_MAP_REG_START + 0x14, 4, &pcr._base5);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_MAP_ROM_REG, 4, &pcr._baserom);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_INTERRUPT_REG, 4, &pcr._max_min_ipin_iline);
+	    pciconfig_read(pcr._pcibuses[pcr._pcibusidx], pcr._cardnum<<3,
+			PCI_REG_USERCONFIG, 4, &pcr._user_config);
+#endif
 
             /* check for pci-pci bridges */
 #define PCI_CLASS_MASK 		0xff000000
@@ -838,14 +930,22 @@ main(int argc, unsigned char *argv[])
 		default:
 			break;
 	    }
+	    if((func==0) && ((pcr._header_type & PCI_MULTIFUNC_DEV) == 0)) {
+	        /* not a multi function device */
+		func = 8;
+	    } else {
+	        func++;
+	    }
 
 	    if (idx++ >= MAX_PCI_DEVICES)
 	        continue;
 
-	    identify_card(&pcr);
+	    identify_card(&pcr, verbose);
+	  } while( func < 8 );
         }
     } while (++pcr._pcibusidx < pcr._pcinumbus);
 
+#if !defined(__alpha__)
     /* Now try pci config 2 probe (deprecated) */
 
     outb(PCI_MODE2_ENABLE_REG, 0xF1);
@@ -896,18 +996,20 @@ main(int argc, unsigned char *argv[])
 	    if (idx++ >= MAX_PCI_DEVICES)
 	        continue;
 
-	    identify_card(&pcr);
+	    identify_card(&pcr, verbose);
 	}
     } while (++pcr._pcibusidx < pcr._pcinumbus);
 
     outb(PCI_MODE2_ENABLE_REG, 0x00);
+
+#endif /* __alpha__ */
 
     disable_os_io();
 }
 
 
 void
-identify_card(struct pci_config_reg *pcr)
+identify_card(struct pci_config_reg *pcr, int verbose)
 {
 
 	int i = 0, j, foundit = 0;
@@ -934,7 +1036,7 @@ identify_card(struct pci_config_reg *pcr)
 		printf(" Device unknown\n");
 	else {
 	    printf("\n");
-	    if (f_flag) {
+	    if (verbose) {
 	        if (pvd[i].device[j].print_func != (void (*)())NULL) {
                     pvd[i].device[j].print_func(pcr);
 		    return;
@@ -942,7 +1044,7 @@ identify_card(struct pci_config_reg *pcr)
 	    }
 	}
 
-	if (f_flag) {
+	if (verbose) {
             if (pcr->_status_command)
                 printf("  STATUS    0x%04x  COMMAND 0x%04x\n",
                     pcr->_status, pcr->_command);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8.h,v 3.7 1996/02/04 09:03:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8.h,v 3.8 1996/12/23 06:39:42 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -25,7 +25,7 @@
  * Further modifications by Scott Laird (lair@kimbark.uchicago.edu)
  * and Tiago Gons (tiago@comosjn.hobby.nl)
  */
-/* $XConsortium: mach8.h /main/7 1995/11/12 17:59:53 kaleb $ */
+/* $XConsortium: mach8.h /main/8 1996/02/21 17:29:38 kaleb $ */
 
 #ifndef MACH8_H
 #define MACH8_H

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxGC16.c,v 3.2 1996/02/04 08:58:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxGC16.c,v 3.3 1996/12/23 06:32:44 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -51,7 +51,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 Modified for the AGX    by Henry A. Worth
 
 */
-/* $XConsortium: agxGC16.c /main/2 1995/11/13 10:06:53 kaleb $ */
+/* $XConsortium: agxGC16.c /main/3 1996/02/21 17:17:40 kaleb $ */
 
 /*
  * Modified by Amancio Hasty and Jon Tombs

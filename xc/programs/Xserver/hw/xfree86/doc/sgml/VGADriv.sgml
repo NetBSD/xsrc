@@ -1,4 +1,4 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
 
@@ -205,7 +205,7 @@ that must be followed:
 <item>	 Create your driver directories:
 
 	 <itemize>
-	 <item>   If you are working in the source tree, create the
+	 <item>If you are working in the source tree, create the
 		  following directories:
 
 <verb>
@@ -214,7 +214,7 @@ that must be followed:
    xc/programs/Xserver/hw/xfree86/vga2/drivers/sdc
 </verb>
 
-	<item>    If you are working in the Link Kit, create the
+	<item>If you are working in the Link Kit, create the
 		  following directories:
 			
 <verb>
@@ -228,9 +228,9 @@ that must be followed:
 	   built:
 
 	 <itemize>
-	 <item>    If you are working in the source tree:
+	 <item>If you are working in the source tree:
 		   <enum>
-		   <item>  Edit the file xc/config/cf/xfree86.cf,
+		   <item>Edit the file xc/config/cf/xfree86.cf,
 			   and add 
 			   `sdc' to the list for the definitions for 
 			   `XF86Vga256Drivers', `XF86Vga16Drivers' and
@@ -239,25 +239,25 @@ that must be followed:
 			   list (i.e. second last), to ensure that none of the
 			   other driver's probe functions incorrectly detect
 			   the `sdc' chipset .
-		   <item>  Edit the file xc/config/cf/xf86site.def,
+		   <item>Edit the file xc/config/cf/xf86site.def,
 			   and add
 			   the same entries in this file (this is just a
 			   comment that shows the default values).
-		   <item>  Edit the site.def.LK file in
+		   <item>Edit the site.def.LK file in
 			   xc/programs/Xserver/hw/xfree86/LinkKit/,
 			   and add the same entries in this file.  This is
 			   the prototype `site.def' file that will be
 			   installed in the Link Kit.
 		   </enum>
 		
-	<item>    If you are working in the Link Kit, edit the file
+	<item>If you are working in the Link Kit, edit the file
 		  /usr/X11R6/lib/Server/site.def, and add `sdc' to
 		  the `XF86Vga256Drivers', `XF86Vga16Drivers' and
 		  `XF86Vga2Drivers' definitions as described in (a) above.
 	 </itemize>
 <item>	 Now copy the prototype files into your new directories:
 	 <itemize>
-	 <item> If you are working in the source tree, copy the `stub' 
+	 <item>If you are working in the source tree, copy the `stub' 
 		  files as follows (directories are below xc/programs/Xserver):
 		<descrip>
 		<tag>Imakefile.stub =&gt;</tag>
@@ -275,7 +275,7 @@ that must be followed:
 		      (then edit this Imakefile and make the changes
 		       described in the comments).
 		</descrip>
-	  <item>  If you are working in the Link Kit, copy the `stub' files
+	  <item>If you are working in the Link Kit, copy the `stub' files
 		  as follows:
 		<descrip>
 		<tag>Imakefile.stub =&gt; </tag>
@@ -721,18 +721,18 @@ As in the setup work, the steps for building the server depend whether
 you are working in the source tree or in the Link Kit.  Here are the
 steps for the initial build after installing your new driver files:
 <itemize>
-	<item> If you are working in the source tree, follow these steps:
+	<item>If you are working in the source tree, follow these steps:
 
 		Go to xc/programs/Xserver, and enter
 	        `<tt>make Makefile</tt>', then
 		`<tt>make Makefiles depend all</tt>'
 
-	<item> If you are working in the Link Kit, follow these steps:
+	<item>If you are working in the Link Kit, follow these steps:
 
 	<enum>
-	<item> Go to /usr/X11R6/lib/Server, and enter
+	<item>Go to /usr/X11R6/lib/Server, and enter
 	       `<tt>./mkmf</tt>'
-	<item> In the same directory, enter `<tt>make</tt>'
+	<item>In the same directory, enter `<tt>make</tt>'
 	</enum>
 </itemize>
 To rebuild the server after the initial build (e.g. after making changes
@@ -782,8 +782,8 @@ grow VERY large with debugging enabled.  It is very simple to rebuild
 your driver for debugging, though.  Do the following:
 
 <enum>
-	<item> Go to the driver directory.
-	<item> Edit the Makefile.  Look for the SECOND definition of 
+	<item>Go to the driver directory.
+	<item>Edit the Makefile.  Look for the SECOND definition of 
 	   `<tt>CDEBUGFLAGS</tt>'.  Change this definition to 
 		
 	<verb>
@@ -792,8 +792,8 @@ your driver for debugging, though.  Do the following:
 
 	   (this will enable debugging symbols and disable inlining of
 	   functions, which can make single-stepping a nightmare).
-	<item> Remove the `sdc_driver.o' file.
-	<item> Now follow the steps above for rebuilding the server.
+	<item>Remove the `sdc_driver.o' file.
+	<item>Now follow the steps above for rebuilding the server.
 
 	(Alternatively, instead of editing the Makefile, you can simply
 	do `<tt>make CDEBUGFLAGS="-g -DNO_INLINE"</tt>' after removing the
@@ -828,14 +828,14 @@ development/beta-testing team if you need to be working in these areas.
 
 <sect> References <p>
 <itemize>
-<item> Programmer's Guide to the EGA and VGA Cards, 3rd ed. <newline>
+<item>Programmer's Guide to the EGA and VGA Cards, 3rd ed. <newline>
    Richard Ferraro <newline>
    Addison-Wesley, 1994 <newline>
    ISBN 0-201-62490-7 <newline>
    (This is the bible of SVGA programming - it has a few errors, so watch out.
    The third edition also covers several accelerated video cards.)
 
-<item> vgadoc4.zip <newline>
+<item>vgadoc4.zip <newline>
    Finn Thoegersen <newline>
    (This is a collection of SVGA and other chipset documentation.  It is
    available on most MS-DOS/Windows related FTP archives, including wuarchive.
@@ -904,13 +904,13 @@ Sunnyvale, CA  94086 <newline>
 </descrip>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/VGADriv.sgml,v 3.10 1996/10/23 13:10:05 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/VGADriv.sgml,v 3.13 1997/01/25 03:22:16 dawes Exp $
 
 
 
 
 
-$XConsortium: VGADriv.sgml /main/6 1996/01/10 11:12:02 kaleb $
+$XConsortium: VGADriv.sgml /main/9 1996/10/28 05:13:22 kaleb $
 </verb>
 
 </article>

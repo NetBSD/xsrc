@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/I2061Acal.c,v 3.0 1996/05/06 05:57:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/I2061Acal.c,v 3.1 1996/12/23 06:44:08 dawes Exp $ */
 /* Based on the number 9 Inc code */
 /* Copyright (c) 1992, Number Nine Computer Corp.  All Rights Reserved.
  *
@@ -21,7 +21,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: I2061Acal.c /main/2 1995/11/12 19:29:55 kaleb $ */
+/* $XConsortium: I2061Acal.c /main/4 1996/05/07 17:13:16 kaleb $ */
 
 #include "Xfuncproto.h"
 #include "compiler.h"

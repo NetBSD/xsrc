@@ -46,8 +46,8 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XConsortium: os.h /main/55 1995/12/08 13:34:38 dpw $ */
-/* $XFree86: xc/programs/Xserver/include/os.h,v 3.14 1996/05/13 06:44:25 dawes Exp $ */
+/* $XConsortium: os.h /main/60 1996/12/15 21:25:13 rws $ */
+/* $XFree86: xc/programs/Xserver/include/os.h,v 3.16 1996/12/23 07:09:30 dawes Exp $ */
 
 #ifndef OS_H
 #define OS_H
@@ -112,11 +112,20 @@ extern int WaitForSomething(
 #endif
 );
 
+#ifdef LBX
+#define ReadRequestFromClient(client)   ((client)->readRequest(client))
+extern int StandardReadRequestFromClient(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/
+#endif
+);
+#else
 extern int ReadRequestFromClient(
 #if NeedFunctionPrototypes
     ClientPtr /*client*/
 #endif
 );
+#endif /* LBX */
 
 extern Bool InsertFakeRequest(
 #if NeedFunctionPrototypes
@@ -173,6 +182,13 @@ extern void CreateWellKnownSockets(
 extern void ResetWellKnownSockets(
 #if NeedFunctionPrototypes
     void
+#endif
+);
+
+extern XID
+AuthorizationIDOfClient(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/
 #endif
 );
 
@@ -313,6 +329,12 @@ extern void TimerCheck(
 #endif
 );
 
+extern void TimerCancel(
+#if NeedFunctionPrototypes
+    OsTimerPtr /* pTimer */
+#endif
+);
+
 extern void TimerFree(
 #if NeedFunctionPrototypes
     OsTimerPtr /* pTimer */
@@ -401,6 +423,8 @@ extern OsSigHandlerPtr OsSignal(
 #endif
 );
 
+extern int auditTrailLevel;
+
 extern void AuditF(
 #if NeedVarargsPrototypes
     char* /*f*/,
@@ -458,6 +482,12 @@ extern void OsInit(
 );
 
 extern void OsCleanup(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+
+extern void OsVendorFatalError(
 #if NeedFunctionPrototypes
     void
 #endif
@@ -525,12 +555,25 @@ extern int InvalidHost(
 #endif
 );
 
+extern int LocalClient(
+#if NeedFunctionPrototypes
+    ClientPtr /* client */
+#endif
+);
+
 extern int ChangeAccessControl(
 #if NeedFunctionPrototypes
     ClientPtr /*client*/,
     int /*fEnabled*/
 #endif
 );
+
+extern int GetAccessControl(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+
 
 extern void AddLocalHosts(
 #if NeedFunctionPrototypes
@@ -619,6 +662,17 @@ extern int AddAuthorization(
 #endif
 );
 
+extern XID GenerateAuthorization(
+#if NeedFunctionPrototypes
+    unsigned int   /* name_length */,
+    char	*  /* name */,
+    unsigned int   /* data_length */,
+    char	*  /* data */,
+    unsigned int * /* data_length_return */,
+    char	** /* data_return */
+#endif
+);
+
 extern void ExpandCommandLine(
 #if NeedFunctionPrototypes
     int * /*pargc*/,
@@ -633,18 +687,6 @@ extern int ddxProcessArgument(
     int /*i*/
 #endif
 );
-
-#ifdef LBX
-extern ClientPtr AllocPiggybackConnection(
-#if NeedFunctionPrototypes
-    ClientPtr /* client */,
-    int (* /* read */ )(),
-    int (* /* write*/)(),
-    void (* /* close */)()
-#endif
-);
-
-#endif /* LBX */
 
 /*
  *  idiom processing stuff

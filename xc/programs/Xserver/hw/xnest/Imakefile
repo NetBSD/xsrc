@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile /main/6 1995/11/16 14:41:07 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/xnest/Imakefile,v 3.6 1996/05/13 06:44:18 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/8 1996/12/02 10:21:32 lehors $
+XCOMM $XFree86: xc/programs/Xserver/hw/xnest/Imakefile,v 3.7 1996/12/23 07:09:15 dawes Exp $
 #include <Server.tmpl>
 
 #ifdef OS2Architecture
@@ -54,10 +54,9 @@ INCLUDES = -I$(BUILDINCDIR) -I$(FONTINCSRC) \
 
 all:: $(OBJS)
 
-#ifdef OS2Architecture
-LinkFile(os2GC.h,GC.h)
-LinkFile(os2Font.h,Font.h)
-#endif
+INCLUDES = -I. -I$(XBUILDINCDIR) -I$(FONTINCSRC) \
+	   -I../../mi -I../../include -I../../os  \
+           -I$(EXTINCSRC) -I$(XINCLUDESRC)
 
 LinkSourceFile(stubs.c,../../Xi)
 SpecialCObjectRule(Init,$(ICONFIGFILES),$(EXT_DEFINES))

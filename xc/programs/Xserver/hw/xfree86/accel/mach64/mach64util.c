@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64util.c,v 3.4 1996/05/06 05:57:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64util.c,v 3.5 1996/12/23 06:39:29 dawes Exp $ */
 /*
  * Copyright 1994 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -22,7 +22,7 @@
  *
  * Modified for the Mach64 by Kevin E. Martin (martin@cs.unc.edu)
  */
-/* $XConsortium: mach64util.c /main/3 1995/12/17 08:19:07 kaleb $ */
+/* $XConsortium: mach64util.c /main/5 1996/05/07 17:11:09 kaleb $ */
 
 #include "X.h"
 #include "input.h"

@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/newmmio.h,v 3.2 1996/10/03 08:33:11 dawes Exp $ */
+/* $XConsortium: newmmio.h /main/3 1996/10/25 11:33:55 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/newmmio.h,v 3.6 1997/01/20 12:35:47 dawes Exp $ */
 /***************************************************************************
  *
  * typedefs and macros for MMIO mode, S3 ViRGE
@@ -77,7 +82,6 @@ typedef struct  {
 } streams_proc_regs;
 
 typedef struct {
-   int32  second_window_size;
    int32  fifo_control;
    int32  miu_control;
    int32  streams_timeout;
@@ -386,7 +390,7 @@ typedef struct {
  * reads from SUBSYS_STAT
  */
 #define IN_SUBSYS_STAT() 	((((mmtr)s3MmioMem)->subsys_regs.regs.subsystem_csr))
-#define SET_SUBSYS_CRTL(val) 	((((mmtr)s3MmioMem)->subsys_regs.regs.subsystem_csr)) = (val)
+#define SET_SUBSYS_CRTL(val) 	do { write_mem_barrier(); ((((mmtr)s3MmioMem)->subsys_regs.regs.subsystem_csr)) = (val); write_mem_barrier(); } while (0)
 
 
 #define SET_DAC_W_INDEX(index)  outb(DAC_W_INDEX, index)
@@ -406,10 +410,10 @@ typedef struct {
 #define SETB_PAT_FG_CLR(val)	((mmtr)s3MmioMem)->bltfill_regs.regs.pat_fg_clr = (val)
 #define SETB_SRC_BG_CLR(val)	((mmtr)s3MmioMem)->bltfill_regs.regs.src_bg_clr = (val)
 #define SETB_SRC_FG_CLR(val)	((mmtr)s3MmioMem)->bltfill_regs.regs.src_fg_clr = (val)
-#define SETB_CMD_SET(val)	((mmtr)s3MmioMem)->bltfill_regs.regs.cmd_set = (val)
+#define SETB_CMD_SET(val)	do { write_mem_barrier(); ((mmtr)s3MmioMem)->bltfill_regs.regs.cmd_set = (val); write_mem_barrier(); } while (0)
 #define SETB_RWIDTH_HEIGHT(w,h)	((mmtr)s3MmioMem)->bltfill_regs.regs.rwidth_height = ((w)<<16 | (h))
 #define SETB_RSRC_XY(x,y)	((mmtr)s3MmioMem)->bltfill_regs.regs.rsrc_xy = ((x)<<16 | (y))
-#define SETB_RDEST_XY(x,y)	((mmtr)s3MmioMem)->bltfill_regs.regs.rdest_xy = ((x)<<16 | (y))
+#define SETB_RDEST_XY(x,y)	do { write_mem_barrier(); ((mmtr)s3MmioMem)->bltfill_regs.regs.rdest_xy = ((x)<<16 | (y)); write_mem_barrier(); } while (0)
 
 
 
@@ -419,12 +423,12 @@ typedef struct {
 #define SETL_CLIP_T_B(t,b)	((mmtr)s3MmioMem)->line_regs.regs.clip_t_b = ((t)<<16 | (b))
 #define SETL_DEST_SRC_STR(d,s)	((mmtr)s3MmioMem)->line_regs.regs.dest_src_str = ((d)<<16 | (s))
 #define SETL_PAT_FG_CLR(val)	((mmtr)s3MmioMem)->line_regs.regs.pat_fg_clr = (val)
-#define SETL_CMD_SET(val)	((mmtr)s3MmioMem)->line_regs.regs.cmd_set = (val)
+#define SETL_CMD_SET(val)	do { write_mem_barrier(); ((mmtr)s3MmioMem)->line_regs.regs.cmd_set = (val); write_mem_barrier(); } while (0)
 #define SETL_LXEND0_END1(e0,e1)	((mmtr)s3MmioMem)->line_regs.regs.lxend0_end1 = ((e0)<<16 | (e1))
 #define SETL_LDX(val)	((mmtr)s3MmioMem)->line_regs.regs.ldx = (val)
 #define SETL_LXSTART(val)	((mmtr)s3MmioMem)->line_regs.regs.lxstart = (val)
 #define SETL_LYSTART(val)	((mmtr)s3MmioMem)->line_regs.regs.lystart = (val)
-#define SETL_LYCNT(val)	((mmtr)s3MmioMem)->line_regs.regs.lycnt = (val)
+#define SETL_LYCNT(val)	do { write_mem_barrier(); ((mmtr)s3MmioMem)->line_regs.regs.lycnt = (val); write_mem_barrier(); } while (0)
 
 
 
@@ -437,14 +441,14 @@ typedef struct {
 #define SETP_MONO_PAT1(val)	((mmtr)s3MmioMem)->polyfill_regs.regs.mono_pat1 = (val)
 #define SETP_PAT_BG_CLR(val)	((mmtr)s3MmioMem)->polyfill_regs.regs.pat_bg_clr = (val)
 #define SETP_PAT_FG_CLR(val)	((mmtr)s3MmioMem)->polyfill_regs.regs.pat_fg_clr = (val)
-#define SETP_CMD_SET(val)	((mmtr)s3MmioMem)->polyfill_regs.regs.cmd_set = (val)
+#define SETP_CMD_SET(val)	do { write_mem_barrier(); ((mmtr)s3MmioMem)->polyfill_regs.regs.cmd_set = (val); write_mem_barrier(); } while (0)
 #define SETP_RWIDTH_HEIGHT(w,h)	((mmtr)s3MmioMem)->polyfill_regs.regs.rwidth_height = ((w)<<16 | (h))
 #define SETP_PRDX(val)	((mmtr)s3MmioMem)->polyfill_regs.regs.prdx = (val)
 #define SETP_PRXSTART(val)	((mmtr)s3MmioMem)->polyfill_regs.regs.prxstart = (val)
 #define SETP_PLDX(val)	((mmtr)s3MmioMem)->polyfill_regs.regs.pldx = (val)
 #define SETP_PLXSTART(val)	((mmtr)s3MmioMem)->polyfill_regs.regs.plxstart = (val)
 #define SETP_PYSTART(val)	((mmtr)s3MmioMem)->polyfill_regs.regs.pystart = (val)
-#define SETP_PYCNT(val)	((mmtr)s3MmioMem)->polyfill_regs.regs.pycnt = (val)
+#define SETP_PYCNT(val)	do { write_mem_barrier(); ((mmtr)s3MmioMem)->polyfill_regs.regs.pycnt = (val); write_mem_barrier(); } while (0)
 
 
 
@@ -455,7 +459,7 @@ typedef struct {
 #define SETL3_DEST_SRC_STR(d,s)	((mmtr)s3MmioMem)->line3d_regs.regs.dest_src_str = ((d)<<16 | (s))
 #define SETL3_Z_STRIDE(val)	((mmtr)s3MmioMem)->line3d_regs.regs.z_stride = (val)
 #define SETL3_FOG_CLR(val)	((mmtr)s3MmioMem)->line3d_regs.regs.fog_clr = (val)
-#define SETL3_CMD_SET(val)	((mmtr)s3MmioMem)->line3d_regs.regs.cmd_set = (val)
+#define SETL3_CMD_SET(val)	do { write_mem_barrier(); ((mmtr)s3MmioMem)->line3d_regs.regs.cmd_set = (val); write_mem_barrier(); } while (0)
 #define SETL3_DGDY_DBDY(dg,db)	((mmtr)s3MmioMem)->line3d_regs.regs.dgdy_dbdy = ((dg)<<16 | (db))
 #define SETL3_DADY_DRDY(da,dr)	((mmtr)s3MmioMem)->line3d_regs.regs.dady_drdy = ((da)<<16 | (dr))
 #define SETL3_GS_BS(gs,bs)	((mmtr)s3MmioMem)->line3d_regs.regs.gs_bs = ((gs)<<16 | (bs))
@@ -466,7 +470,7 @@ typedef struct {
 #define SETL3_DX(val)	((mmtr)s3MmioMem)->line3d_regs.regs.dx = (val)
 #define SETL3_XSTART(val)	((mmtr)s3MmioMem)->line3d_regs.regs.xstart = (val)
 #define SETL3_YSTART(val)	((mmtr)s3MmioMem)->line3d_regs.regs.ystart = (val)
-#define SETL3_YCNT(val)	((mmtr)s3MmioMem)->line3d_regs.regs.ycnt = (val)
+#define SETL3_YCNT(val)	do { write_mem_barrier(); ((mmtr)s3MmioMem)->line3d_regs.regs.ycnt = (val); write_mem_barrier(); } while (0)
 
 
 
@@ -481,7 +485,7 @@ typedef struct {
 #define SETT3_FOG_CLR(val)	((mmtr)s3MmioMem)->triangle3d_regs.regs.fog_clr = (val)
 #define SETT3_COLOR0(val)	((mmtr)s3MmioMem)->triangle3d_regs.regs.color0 = (val)
 #define SETT3_COLOR1(val)	((mmtr)s3MmioMem)->triangle3d_regs.regs.color1 = (val)
-#define SETT3_CMD_SET(val)	((mmtr)s3MmioMem)->triangle3d_regs.regs.cmd_set = (val)
+#define SETT3_CMD_SET(val)	do { write_mem_barrier(); ((mmtr)s3MmioMem)->triangle3d_regs.regs.cmd_set = (val); write_mem_barrier(); } while (0)
 #define SETT3_BV(val)	((mmtr)s3MmioMem)->triangle3d_regs.regs.bv = (val)
 #define SETT3_BU(val)	((mmtr)s3MmioMem)->triangle3d_regs.regs.bu = (val)
 #define SETT3_DWDX(val)	((mmtr)s3MmioMem)->triangle3d_regs.regs.dwdx = (val)
@@ -512,7 +516,7 @@ typedef struct {
 #define SETT3_DXDY02(val)	((mmtr)s3MmioMem)->triangle3d_regs.regs.dxdy02 = (val)
 #define SETT3_XSTART02(val)	((mmtr)s3MmioMem)->triangle3d_regs.regs.xstart02 = (val)
 #define SETT3_YSTART(val)	((mmtr)s3MmioMem)->triangle3d_regs.regs.ystart = (val)
-#define SETT3_Y01_Y12(y01,y12)	((mmtr)s3MmioMem)->triangle3d_regs.regs.y01_y12 = ((y01)<<16 | (y12))
+#define SETT3_Y01_Y12(y01,y12)	do { write_mem_barrier(); ((mmtr)s3MmioMem)->triangle3d_regs.regs.y01_y12 = ((y01)<<16 | (y12)); write_mem_barrier(); } while (0)
 
 
 

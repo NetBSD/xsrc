@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/pvga1/pvgapntwin.c,v 3.5 1996/02/04 09:14:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/pvga1/pvgapntwin.c,v 3.6 1996/12/23 06:58:08 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: pvgapntwin.c /main/6 1995/11/13 08:36:39 kaleb $ */
+/* $XConsortium: pvgapntwin.c /main/7 1996/02/21 18:06:49 kaleb $ */
 
 /* WD90C31 code: Mike Tierney <floyd@eng.umd.edu> */
 /* WD90C33 accel code: Bill Morgart <wsm@morticia.ssw.com> */

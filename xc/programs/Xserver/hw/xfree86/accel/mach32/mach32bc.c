@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32bc.c,v 3.5 1996/02/04 09:02:18 dawes Exp $$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32bc.c,v 3.6 1996/12/23 06:38:22 dawes Exp $$ */
 /*
  * Copyright 1993 by Jon Tombs. Oxford University
  * 
@@ -27,7 +27,7 @@
  * Adapted to Mach8, Hans Nasten. (nasten@everyware.se).
  * Adapted to Mach32, Hans Nasten. (mike@mbsun.mlb.org).
  */
-/* $XConsortium: mach32bc.c /main/3 1995/11/12 17:24:27 kaleb $ */
+/* $XConsortium: mach32bc.c /main/4 1996/02/21 17:26:05 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Minix.c,v 3.3 1996/02/04 08:56:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Minix.c,v 3.4.2.1 1997/05/06 13:24:22 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by Philip Homburg <philip@cs.vu.nl>
  *
@@ -25,7 +25,7 @@
  * in this Software without prior written authorization from Philip Homburg.
  *
  */
-/* $XConsortium: OS_Minix.c /main/4 1995/11/13 11:12:50 kaleb $ */
+/* $XConsortium: OS_Minix.c /main/5 1996/02/21 17:11:16 kaleb $ */
 
 #include "Probe.h"
 
@@ -52,7 +52,7 @@ int OpenVideo()
 	if (geteuid() != 0)
 	{
 		fprintf(stderr, 
-			"%s: Must be run as root or installed suid-root\n", 
+			"%s: Must be run as root\n", 
 			MyName);
 		return(-1);
 	}
@@ -111,6 +111,13 @@ Byte *MapVGA()
         return((Byte *)0);
 }
 
+Byte *MapMem(adress,size)
+	unsigned long address;
+	unsigned long size;
+{
+	return((Byte*)0);
+}
+
 /*
  * UnMapVGA --
  *
@@ -120,6 +127,13 @@ void UnMapVGA(base)
 Byte *base;
 {
         return;
+}
+
+void UnMapMem(base,size)
+	Byte *base;
+	unsigned long size;
+{
+	return;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxGC32.c,v 3.2 1996/02/04 08:58:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxGC32.c,v 3.3 1996/12/23 06:32:45 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -50,7 +50,7 @@ PERFORMANCE OF THIS SOFTWARE.
 Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 
 */
-/* $XConsortium: agxGC32.c /main/2 1995/11/13 10:06:56 kaleb $ */
+/* $XConsortium: agxGC32.c /main/3 1996/02/21 17:17:45 kaleb $ */
 
 /*
  * Modified by Amancio Hasty and Jon Tombs

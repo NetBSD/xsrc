@@ -20,7 +20,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64fifo.c,v 3.0 1996/10/18 15:00:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64fifo.c,v 3.1 1996/12/28 08:14:40 dawes Exp $ */
 
 #include "mach64.h"
 
@@ -1307,7 +1307,7 @@ int mach64FIFOdepthDefault(cdepth, clock, width)
 
     if (fifo_depth < defaultFIFOVals[index])
 	fifo_depth = defaultFIFOVals[index];
-    if (fifo_depth < defaultFIFOVals[index+1])
+    if (fifo_depth > defaultFIFOVals[index+1])
 	fifo_depth = defaultFIFOVals[index+1];
 
     return(fifo_depth);
@@ -1669,7 +1669,7 @@ int mach64FIFOdepthCT(cdepth, clock, width)
 
     if (fifo_depth < CT_FIFOVals[index])
 	fifo_depth = CT_FIFOVals[index];
-    if (fifo_depth < CT_FIFOVals[index+1])
+    if (fifo_depth > CT_FIFOVals[index+1])
 	fifo_depth = CT_FIFOVals[index+1];
 
     return(fifo_depth);

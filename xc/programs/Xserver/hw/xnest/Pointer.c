@@ -1,4 +1,4 @@
-/* $XConsortium: Pointer.c,v 1.2 95/07/10 17:42:22 ray Exp $ */
+/* $XConsortium: Pointer.c /main/3 1996/09/28 17:13:56 rws $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -26,6 +26,7 @@ is" without express or implied warranty.
 #include "Display.h"
 #include "Screen.h"
 #include "Pointer.h"
+#include "Args.h"
 
 void xnestChangePointerControl(pDev, ctrl)
      DeviceIntPtr pDev;
@@ -57,12 +58,12 @@ int xnestPointerProc(pDev, onoff, argc, argv)
       break;
     case DEVICE_ON: 
       xnestEventMask |= XNEST_POINTER_EVENT_MASK;
-      for (i = 0; i < screenInfo.numScreens; i++)
+      for (i = 0; i < xnestNumScreens; i++)
 	XSelectInput(xnestDisplay, xnestDefaultWindows[i], xnestEventMask);
       break;
     case DEVICE_OFF: 
       xnestEventMask &= ~XNEST_POINTER_EVENT_MASK;
-      for (i = 0; i < screenInfo.numScreens; i++)
+      for (i = 0; i < xnestNumScreens; i++)
 	XSelectInput(xnestDisplay, xnestDefaultWindows[i], xnestEventMask);
       break;
     case DEVICE_CLOSE: 

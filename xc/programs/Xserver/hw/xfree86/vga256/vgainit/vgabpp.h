@@ -1,5 +1,11 @@
-/* $XConsortium: vgabpp.h,v 1.2 95/06/19 19:33:39 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vgainit/vgabpp.h,v 3.2 1996/06/29 09:09:30 dawes Exp $ */
+/* $XConsortium: vgabpp.h /main/4 1996/10/19 18:14:51 kaleb $ */
+
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vgainit/vgabpp.h,v 3.3 1996/12/23 07:04:34 dawes Exp $ */
 
 extern Bool vga16bppScreenInit(
 #if NeedFunctionPrototypes

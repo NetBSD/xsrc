@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/10 1996/01/03 14:21:14 matt $
+XCOMM $XConsortium: Imakefile /main/11 1996/09/28 17:13:06 rws $
 
 #include <Server.tmpl>
 
@@ -30,7 +30,7 @@ OBJS =	 	skyInfo.o       \
 		skyFill.o	\
 		copyword.o
 
-INCLUDES = -I../ -I../OPERATING_SYSTEM -I../../../mfb -I../../../cfb -I../../../include -I$(INCLUDESRC) -I../common -I../../../mi -I$(FONTINCSRC) -I$(EXTINCSRC)
+INCLUDES = -I../ -I../OPERATING_SYSTEM -I../../../mfb -I../../../cfb -I../../../include -I$(XINCLUDESRC) -I../common -I../../../mi -I$(FONTINCSRC) -I$(EXTINCSRC)
 STD_DEFINES = ServerDefines -DPSZ=8
 
 NormalRelocatableTarget(skyway,$(OBJS))

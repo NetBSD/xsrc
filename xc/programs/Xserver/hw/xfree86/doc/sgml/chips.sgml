@@ -1,4 +1,4 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
  
 <article>
 
@@ -6,7 +6,7 @@
 <title> Information for Chips and Technologies Users
 <author> David Bateman (<it>dbateman@ee.uts.edu.au</it>),
          Egbert Eich (<it>Egbert.Eich@Physik.TH-Darmstadt.DE</it>)
-<date> 3rd October 1996
+<date> 22nd April 1997
 
 <!-- Table of contents -->
 <toc>
@@ -20,27 +20,43 @@ a few "<tt>Green</tt>" video cards for desktop machines. Prior to
 the release of XFree 3.2, XFree contained only limited support for
 these chipsets. The support that was introduced in XFree3.1.1 was not
 capable of linear addressing or using the programmable clocks in the
-ct65540 and later chips.
+ct65535 and later chips. In addition to these chipsets the new driver
+supports the WinGine ct643xx series of chips and gives limited support
+to the WinGine ct642xx chips.
 
-Support for the ct655xx has been almost completely rewritten,
-with many additional features added. These include
+The driver has been almost completely rewritten, with many additional
+features added. These include
+
 <itemize>
-<item> Linear Addressing
-<item> 16/ 24 bits per pixel
-<item> Fully programmable clocks are supported
-<item> H/W cursor support
-<item> BitBLT acceleration of many operations
+<item>Linear Addressing
+<item>16/ 24 bits per pixel
+<item>Fully programmable clocks are supported
+<item>H/W cursor support
+<item>BitBLT acceleration of many operations
 </itemize>
+
+With the latest release of XFree, the Chips and Technologies driver 
+supports the new XAA acceleration interface. This should improve
+the graphics performance particularly at higher depths or for the
+newer chips.
 
 <sect> Supported Chips <p>
 <descrip>
 <tag>ct65520</tag>
 	(Max Ram: 1Mb, Max Dclk: 68MHz@5V)
+<tag>ct65525</tag>
+        This chip is basically identical to the 65530. It has the same
+	ID and is identified as a 65530 when probed. See ct65530 for
+	details.
 <tag>ct65530</tag>
 	This is a very similar chip to the 65520. However it additionally
 	has the ability for mixed 5V and 3.3V operation and linear addressing
 	of the video memory.
 	(Max Ram: 1Mb, Max Dclk: 56MHz@3.3V, 68MHz@5V)
+<tag>ct65535</tag>
+	This is the first chip of the ct655xx series to support fully
+	programmable clocks. Otherwise it has the the same properties
+	as the 65530.
 <tag>ct65540</tag>
 	This is the first version of the of the ct655xx that was capable
 	of supporting Hi-Color and True-Color. It also includes a fully
@@ -66,12 +82,24 @@ with many additional features added. These include
 	chips. They include many new features, including improved BitBLT
 	support (24bpp color expansion, wider maximum pitch, etc), Multimedia
 	unit (video capture, zoom video port, etc) and 24bpp uncompressed true
-	color (i.e 32bpp mode). It also appears that memory mapped I/O
-	is possible on all bus configurations. Support for these chips are
-	new to the server and currently quite limited. Testing with these
-	chips has only been done on Toshiba 720CDT's. There is only limited
-	support for H/W acceleration at this point.
+	color (i.e 32bpp mode). Also memory mapped I/O is possible on all bus
+	configurations. There is only limited support for H/W acceleration at
+	this point.
 	(Max Ram: 4Mb, Max Dclk: 80MHz@3.3V,110MHz@5V)
+<tag>ct64200</tag>
+	This chip, also known as the WinGine, is used in video cards
+        for desktop systems. It often uses external DAC's and programmable
+	clock chips to supply additional functionally. None of these are
+	currently supported within the driver itself, so many cards will only
+	have limited support. Linear addressing is not supported for this
+	card in the driver.
+	(Max Ram: 2Mb, Max Dclk: 80MHz)
+<tag>ct64300</tag>
+	This is a more advanced version of the WinGine chip, with specification
+	very similar to the 6554x series of chips. However there are many
+	difference at a register level. A similar level of acceleration to
+	the 65545 is included for this driver.
+	(Max Ram: 2Mb, Max Dclk: 80MHz)
 </descrip>
 
 <sect> XF86Config Options <p>
@@ -98,13 +126,20 @@ Option &dquot;no_bitblt&dquot; (Chips 65545 and later)
 	to correct a problem, then this option might be better to use.
 	It still allows the use of generic speedups.
 <tag>
-Option &dquot;no_imageblt&dquot; (Chips 65545 and later)
+Option &dquot;xaa_no_color_exp&dquot; (Chips 65545 and later)
 </tag>
-	This option will have the effect of disabling the use of BitBLT
-	functions that go from system memory to video memory. It is
-	useful for problems related to image writes, and possible
-	acceleration problems. In general this will result in a reduced
-	performance.
+	This option will have the effect of disabling the use
+	of monochrome colour expansion. In particular this effects
+	text and bitmaps. It is useful for problems related to image writes,
+	and possible acceleration problems. In general this will result in
+	a reduced performance. Note that this option replaces the 
+	"<tt>no_imageblt</tt>" option used in XFree 3.2.
+<tag>
+Option &dquot;xaa_benchmark&dquot; (Chips 65545 and later)
+</tag>
+	Turns on the XAA acceleration benchmarks. Information regarding
+	what graphics primitives are accelerated and their relatives
+	speeds will be printed when the X server starts.
 <tag>
 videoram 1024 (or another value)
 </tag>
@@ -126,6 +161,10 @@ MemBase 0x03b00000 (or a different address)
         This sets the physical memory base address of the linear
         framebuffer. Typically this is probed correctly, but if
 	you believe it to be mis-probed, this option might help.
+	Also for non PCI machines specifying this force the linear base
+	address to be this value, reprogramming the video processor
+	to suit. Note that for the 65530 this is required as the
+	base address can't be correctly probed.
 <tag>
 Option &dquot;sw_cursor&dquot; (Chips 65545 and later)
 </tag>
@@ -137,12 +176,6 @@ Option &dquot;STN&dquot;
 	The server is unable to differentiate between SS STN 
  	and TFT displays. This forces it to identify the display
 	as a SS STN rather than a TFT.
-<tag>
-Option &dquot;ext_fram_buf&dquot; (DSTN machines only)
-</tag>
-	In case the chipset uses a separate framebuffer (one that is
-	not part of the vram) this option makes all of the vram available
-	to video memory.
 <tag>
 Option &dquot;use_modeline&dquot;
 </tag>
@@ -180,15 +213,28 @@ Option &dquot;lcd_center&dquot;
 	have problems with some machines at 16/24bpp, the effect of which
 	is that the right-hand edge of the mode will be pushed off the screen.
 <tag>
-Option &dquot;hw_clocks&dquot; (Chips 65540 and later)
+Option &dquot;hw_clocks&dquot; (Chips 65535 and later)
 </tag>
-	On chips 65540 and later, the default is to use the programmable
+	On chips 65535 and later, the default is to use the programmable
 	clock for all clocks. It is possible to use the fixed clocks
 	supported by the chip instead by using this option. Typically
 	this will give you some or all of the clocks 25.175, 28.322,
-	31.000 and 36.000MHz. Note that many flat panels will need a dot
-	clock that is lower than 25.175MHz to synchronise. The programmable
-	clock makes this option obsolete and so it's use isn't recommended.
+	31.000 and 36.000MHz. The current programmable clock will be
+	given as the last clock in the list. On a cold-booted system this
+	might be the appropriate value to use at the text console (see the 
+	"<tt>TextClockFreq</tt>" option), as many flat panels will need a
+	dot clock different than the default to synchronise. The
+	programmable clock makes this option obsolete and so it's use
+	isn't recommended.
+<tag>
+Option &dquot;use_vclk1&dquot; (Chips 65550 and later)
+</tag>
+	The HiQV series of chips have three programmable clocks. The
+	first two are usually loaded with 25.175 and 28.322MHz for
+	VGA backward compatibility, and the third is used as a fully
+	programmable clock. On at least one system (the Inside 686 LCD/S
+	single board computer) the third clock is unusable. This option
+	forces the use of VClk1 as the programmable clock.
 <tag>
 TextClockFreq 25.175
 </tag>
@@ -205,10 +251,11 @@ Option &dquot;mmio&dquot;
         This enables the use of memory-mapped I/O to talk to the BitBLT
         engine. By default memory-mapped I/O is not enabled on the
 	6554x series of chips, and is only usable on 6554x's with PCI
-	buses. It also enables additional acceleration using memory-mapped
-	I/O. This option has no effect when not using the BitBLT engine
+	buses. This option has no effect when not using the BitBLT engine
 	(e.g. when using "<tt>no_bitblt</tt>"), or for the 65550 which can
-	only use MMIO for access to the BitBLT engine.
+	only use MMIO for access to the BitBLT engine. On 65545 PCI
+	machines MMIO is enabled by default because the blitter can not
+	be used otherwise.
 <tag>
 Option &dquot;suspend_hack&dquot;
 </tag>
@@ -229,13 +276,7 @@ Chipset &dquot;ct65546&dquot; (or some other chip)
 	It is possible that the chip could be misidentified, particular
 	due to interactions with other drivers in the server. It is
 	possible to force the server to identify a particular chip with
-	this option.  Some later releases of the ct65545, in particular the
-	ct65545A1 and ct65545B1, are believed to have limitations very similar
-	to those of the 65546. The server is currently configured to use
-	the 65545 bandwidth, etc for these chips. So the user might wish to
-	force the server to identify their chip as a ct65546 and so have a
-	larger maximum bandwidth. Note that this forces the server to exceed
-	the documented limitations of the chip, so take care.
+	this option.
 <tag>
 Option &dquot;sync_on_green&dquot; (Chips 65550/54)
 </tag>
@@ -243,6 +284,15 @@ Option &dquot;sync_on_green&dquot; (Chips 65550/54)
 	old workstation monitor. The 65550/54 internal RAMDAC's support
 	this mode of operation, but whether a particular machine does
 	depends on the manufacturer. 
+<tag>
+Option &dquot;fast_dram&dquot; (Chips 65550/54)
+</tag>
+	This option sets the internal memory clock (MCLK) register to
+	another value. The default value programmed by the BIOS is
+	usually OK, but some machines can accept a faster MClk to achieve
+	a better performance. One machine known to work well with this
+	option is the Toshiba 720CDT. This option is generally not
+	recommended.
 </descrip>
 
 <sect> Modelines <p>
@@ -251,6 +301,15 @@ When constructing a modeline for use with the Chips and Technologies
 driver you'll needed to considered several points
 
 <descrip>
+<tag> * Virtual Screen Size </tag>
+		It is the virtual screen size that determines the amount
+	of memory used by a mode. So if you have a virtual screen size
+	set to 1024x768 using a 800x600 at 8bpp, you use 768kB for the
+	mode. Further to this some of the XAA acceleration requires that
+	the display pitch is a multiple of 64 pixels. So the driver will
+	attempt to round-up the virtual X dimension to a multiple of 64,
+	but leave the virtual resolution untouched. This might further
+	reduce the available memory.
 <tag> * 16/24 Bits Per Pixel </tag>
 		Chips later than the ct65540 are capable of supporting
 	Hi-Color and True-Color modes. These are implemented in the current
@@ -272,14 +331,16 @@ driver you'll needed to considered several points
 	The amount of ram required for the framebuffer will vary depending
 	on the size of the screen, and will reduce the amount of video
 	ram available to the modes. Typical values for the size of the
-	framebuffer will be 57600 bytes (640x480 panel), 90000 bytes
-	(800x600 panel) and 147456 bytes (1024x768 panel). For systems
-	with external framebuffers the option "<tt>ext_fram_buf</tt>" can be
-	used to make all the vram available to video memory.
+	framebuffer will be 61440 bytes (640x480 panel), 96000 bytes
+	(800x600 panel) and 157287 bytes (1024x768 panel).
 <tag> * H/W Acceleration </tag>
-		The H/W cursor, and fill operations currently allocate 2kB
-	of the video ram for there own use. If this is not available these
-	functions will automatically be disabled.
+		The H/W cursor will need 1kB for the 6554x and 4kb for the
+	65550. On the 64300 chips the H/W cursors is stored in registers and
+	so no allowance is needed for the H/W cursor. In addition to this
+	many graphics operations are speeded up using a
+	"<tt>pixmap cache</tt>". Leaving too little memory available for
+	the cache will only have a detrimental effect on the graphics
+	performance.
 <tag> * VESA like modes </tag>
 		We recommend that you try and pick a mode that is similar
 	to a standard VESA mode. If you don't a suspend/resume or LCD/CRT
@@ -295,68 +356,37 @@ driver you'll needed to considered several points
 </descrip>
 
 The ct655xx driver is capable of driving both a CRT and a flat panel
-display. Generally most modelines that work with CRT's will also work
-with the ct655xx driver. If the "<tt>use_modeline</tt>" or 
-"<tt>fix_panel_size</tt>" options are not specified, only the clock,
-polarities, vertical and horizontal sizes are used in the mode calculations
-on an LCD. Hence a mode like
+display. In fact the timing for the flat panel are dependent on the
+specification of the panel itself and are independent of the particular
+mode chosen. For this reason it is recommended to use one of the programs
+that automatically generate XF86Config files, such as "<tt>xf86config</tt>"
+or "<tt>XF86Setup</tt>".
 
-<quote><verb>
-Modeline "640x480@8bpp"   21.000  640    0    0    0   480    0    0    0
-</verb></quote>
-
-will often be sufficient for a laptop screen. Just program the zeroed
-values above to those you would use for a CRT. It should also be noted that
-flat panels often prefer dot clocks that are much slower than CRT's. Below
-you'll find listed a set of modelines that are in use of a variety of
-machines. These can be used as starting points for new modelines.
-
-<quote><verb>
-Modeline "640x480@8bpp"   21.000  640  688  704  776   480  480  481  486
-Tested on a Sharp PC3020, (640x480 DSTN, 65545A1, 512kByte)
-
-Modeline "640x480@8bpp"   16.000  640  688  704  776   480  480  481  486
-Modeline "640x480@16bpp"  16.000  640  688  704  776   480  480  481  486
-Modeline "640x480@24bpp"  16.330  640  664  760  800   480  490  502  525
-Tested on a Toshiba Satellite T2135CS (640x480 DSTN, 65545??, 1MByte)
-
-Modeline "640x480@8bpp"	  25.175  640  664  760  800   480  491  493  525
-ModeLine "640x480@8bpp"   28.322  640  680  720  864   480  488  491  521
-Modeline "640x480@16bpp"  38.000  640  648  668  808   480  490  502  525
-Modeline "640x480@24bpp"  23.000  640  648  756  809   480  490  502  525
-Tested on a Toshiba 400CDT, (640x480 TFT, 65546 1Mbyte)
-
-Modeline "800x600@8bpp"   40.000  800  840  968 1056   600  601  605  628
-Modeline "800x600@16bpp"  36.000  800  840  968 1056   600  601  605  628
-Tested on a Sager Narval86 (800x600 DSTN, 65548, 1Mbyte)
-
-Modeline "1024x768@8bpp"  65.000 1024 1032 1176 1344   768  771  777  806
-Modeline "1024x768@16bpp" 65.000 1024 1032 1176 1344   768  771  777  806
-Tested on a Toshiba 720CDT, (1024x768 TFT, 65550, 2Mbyte)
-</verb></quote>
-
-Note that there are some machines that are known to need the panel timings
-reprogrammed for use with XFree using the "<tt>use_modeline</tt>" option.
-One such machine is the "<tt>Prostar 8200</tt>" with a 640x480 TFT. For
-this machine a modeline that is known to work is
+However there are many machines, particular those with 800x600 screen or
+larger, that need to reprogram the panel timings. The reason for this is
+that the manufacturer has used the panel timings to get a standard EGA
+mode to work on flat panel, and these same timings don't work for an SVGA
+mode. For these machines the "<tt>use_modeline</tt>" and/or possibly the
+"<tt>fix_panel_size</tt>" option might be needed. Some machines that 
+are known to need these options include.
 
 <quote><verb>
 Modeline "640x480@8bpp"	  25.175  640  672  728  816   480  489  501  526
 Modeline "640x480@16bpp"  25.175  640  672  728  816   480  489  501  526
+Options: "use_modeline"
 Tested on a Prostar 8200, (640x480, 65548, 1Mbyte)
 </verb></quote>
 
-Also there are some machines that are known to report the LCD panel size
-incorrectly. The correct panel size can be forced into registers from the
-modeline values using the "<tt>fix_panel_size</tt>" option. Two machines
-that are know to need this option are the HP OmniBook 5000CTS and the
-NEC Versa 4080 800x600 TFT machines. A modeline that is known to work
-with the OmniBook in conjunction with the "<tt>use_modeline</tt>" and
-"<tt>fix_panel_size</tt>" options is
-
 <quote><verb>
 Modeline "800x600@8bpp"	  28.322  800  808  848  936   600  600  604  628
+Options: "fix_panel_size", "use_modeline"
 Tested on a HP OmniBook 5000CTS (800x600 TFT, 65548, 1Mbyte)
+</verb></quote>
+
+<quote><verb>
+Modeline "800x600@8bpp"	  30.150  800  896  960 1056   600  600  604  628
+Options: "fix_panel_size", "use_modeline"
+Test on a Zeos Meridan 850c (800x600 DSTN, 65545, 1Mbyte)
 </verb></quote>
 
 The NEC Versa 4080 just needs the "fix_panel_size" option.
@@ -364,12 +394,18 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
 <sect> Troubleshooting <p>
 
 <descrip>
-<tag> The Cursor Appears as a white box, after switching modes</tag>
+<tag> The cursor appears as a white box, after switching modes</tag>
 	There is a known bug in the H/W cursor, that sometimes causes
 	the cursor to be redrawn as a white box, when the mode is changed.
 	This can be fixed by moving the cursor to a different region,
 	switching to the console and back again, or if it is too annoying
 	the H/W cursor can be disabled with the "<tt>sw_cursor</tt>" option.
+<tag> The cursor hot-spot isn't at the same point as the cursor</tag>
+ 	With modes on the 6555x machines that are stretched to fill the
+	flat panel, the H/W cursor is not correspondingly stretched. This
+	is a small and long-standing bug in the current server. You can
+	avoid this by either using the "<tt>no_stretch</tt>" or
+	<tt>sw_cursor</tt>" options.
 <tag> The lower part of the screen is corrupted</tag>
 	Many DSTN screens use the top of video ram to implement a frame
 	accelerator. This reduces the amount of video ram available to
@@ -394,8 +430,8 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
         (independent from drawing operations).  You are probably using a
         dot clock that is too high (or too low); it is also possible that
 	there is interference with a close MCLK. Try a lower dot clock.
-	You can also try to tweak the mode timings; try increasing the
-        second horizontal value somewhat.
+	For CRT's you can also try to tweak the mode timings; try increasing
+        the second horizontal value somewhat.
 <tag> Crash or hang after start-up (probably with a black screen).</tag>
         Try the "<tt>noaccel</tt>" or "<tt>no_bitblt</tt>" options. Check
         that the BIOS settings are OK; in particular, disable caching of
@@ -410,6 +446,13 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
 <tag> Chipset is not detected.</tag>
         Try forcing the chipset to a type that is most similar to what
         you have.
+<tag>The screen is blank when starting X</tag>
+	One possible cause of this problem is if the kernel has been 
+	compiled with the "APM_DISPLAY_BLANK" option. It appears that
+	this option doesn't work as specified and can cause the Xserver
+	to blank when starting X. In all cases the kernel should be compiled
+	without this option. If the problem remains a CRT/LCD or switch to
+	and from the virtual console will often fix it.
 <tag> Textmode is not properly restored</tag>
         This has been reported on some configurations. Many laptops
 	use the programmable clock of the 6554x chips at the console.
@@ -420,7 +463,9 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
 	problems. Usually this is fixed by switching between the LCD
 	and CRT. Alternatively the user can use the "<tt>TextClockFreq</tt>"
 	option described above to select a different clock for the
-	text console.
+	text console. Another possible cause of this problem is if the kernel
+	is compiled with the "APM_DISPLAY_BLANK" option. As mentioned
+	before, this option should be disabled.
 <tag> I can't display 640x480 on my 800x600 LCD</tag>
 	The problem here is that the flat panel needs timings that
 	are related to the panel size, and not the mode size. There is
@@ -430,6 +475,14 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
 	"<tt>fix_panel_size</tt>" options the panel timings are derived
 	from the mode, which can be different than the panel size. Try
 	deleting theses options	from XF86Config or using an LCD/CRT switch.
+<tag> I can't get a 320x240 mode to occupy the whole 640x480 LCD</tag>
+	There is a bug in the 6554x's H/W cursor for modes that are
+	doubled vertically. The lower half of the screen is not accessible.
+	The servers solution to this problem is not to do doubling vertically.
+	Which results in the 320x240 mode only expanded to 640x360. If this
+	is a problem, a work around is to use the "<tt>sw_cursor</tt>"
+	option. The server will then allow the mode to occupy the whole
+	640x480 LCD.
 <tag> After a suspend/resume my screen is messed up</tag>
 	During a suspend/resume, the BIOS controls what is read and 
 	written back to the registers. If the screen is using a mode
@@ -454,7 +507,7 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
 	true then the screen will appear to have a reddish tint. This can
 	be fixed by using the "<tt>use_18bit_bus</tt>" option. Note that
 	the reverse is also true. If the "<tt>use_18bit_bus</tt>" is used
-	at the TFT bus width is 24bpp, the the screen will appear reddish.
+	and the TFT bus width is 24bpp, then the screen will appear reddish.
 	Note that this option only has an effect on TFT screens. 
 <tag> I can't start X-windows with 16 or 24bpp</tag>
 	Firstly, is your machine capable of 16/24bpp with the mode
@@ -471,6 +524,18 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
 	although the 65550 is capable of this.
 </descrip>
 
+
+  A general problem with the server that can manifested in many way such
+  as drawing errors, wavy screens, etc is related to the programmable
+  clock. Many potential programmable clock register setting are unstable.
+  However luckily there are many different clock register setting that
+  can give the same or very similar clocks. The clock code can be fooled
+  into giving a different and perhaps more stable clock by simply changing
+  the clock value slightly. For example 65.00MHz might be unstable while
+  65.10MHz is not. So for unexplained problems not addressed above, please
+  try to alter the clock you are using slightly, say in steps of 0.05MHz
+  and see if the problem goes away.
+
   For other screen drawing related problems, try the "<tt>noaccel</tt>" or
   "<tt>no_bitblt</tt>" options. A useful trick for all laptop computers is to
   switch between LCD/CRT (usually with something like Fn-F5), if the
@@ -479,7 +544,7 @@ The NEC Versa 4080 just needs the "fix_panel_size" option.
   If you are having driver-related problems that are not addressed by this
   document, or if you have found bugs in accelerated functions, you can
   try contacting the XFree86 team (the current driver maintainer can be
-  reached at <it>dbateman@ee.uts.edu.au</it> or 
+  reached at <it>dbateman@eng.uts.edu.au</it> or 
   <it>Egbert.Eich@Physik.TH-Darmstadt.DE)</it>,
   or post in the Usenet newsgroup "<it>comp.windows.x.i386unix</it>".
 
@@ -520,7 +585,7 @@ We also thank the many people on the net who have contributed by reporting
 bugs and extensively testing this server before its inclusion in XFree 3.2
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.9 1996/10/24 12:30:26 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/chips.sgml,v 3.12.2.4 1997/05/23 12:19:43 dawes Exp $
 </verb>
 
 </article>

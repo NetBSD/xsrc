@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_SYSV.c,v 3.13 1996/10/03 08:32:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_SYSV.c,v 3.15.2.1 1997/05/06 13:24:27 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -25,7 +25,7 @@
  * in this Software without prior written authorization from David Wexelblat.
  *
  */
-/* $XConsortium: OS_SYSV.c /main/9 1995/11/13 11:12:55 kaleb $ */
+/* $XConsortium: OS_SYSV.c /main/13 1996/10/25 11:33:20 kaleb $ */
 
 #if defined(sun)
 /* Fix for Solaris */
@@ -139,7 +139,7 @@ int OpenVideo()
 	if (geteuid() != 0)
 	{
 		fprintf(stderr,
-			"%s: Must be run as root or installed suid-root\n",
+			"%s: Must be run as root\n",
 			MyName);
 		return(-1);
 	}
@@ -261,6 +261,13 @@ Byte *MapVGA()
 	return(base);
 }
 
+Byte *MapMem(address,size)
+	unsigned long address;
+	unsigned long size;
+{
+	return((Byte*)0);
+}
+
 /*
  * UnMapVGA --
  *
@@ -277,6 +284,13 @@ Byte *base;
 # endif
 	ioctl(VT_fd, KDSETMODE, KD_TEXT);
 #endif
+}
+
+void UnMapMem(base,size)
+	Byte *base;
+	unsigned long size;
+{
+	return;
 }
 
 /*

@@ -18,11 +18,7 @@ is" without express or implied warranty.
 #include "pixmapstr.h"
 #include "scrnintstr.h"
 #include "regionstr.h"
-#ifndef __EMX__
 #include "gc.h"
-#else
-#include "../../include/gc.h"
-#endif
 #include "servermd.h"
 #include "mi.h"
 

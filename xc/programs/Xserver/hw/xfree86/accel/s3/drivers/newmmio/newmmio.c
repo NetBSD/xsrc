@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/drivers/newmmio/newmmio.c,v 3.3 1996/09/22 05:03:55 dawes Exp $ */
+/* $XConsortium: newmmio.c /main/5 1996/10/24 07:11:34 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/drivers/newmmio/newmmio.c,v 3.5.2.1 1997/05/06 13:26:23 dawes Exp $ */
 /*
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
  *
@@ -33,7 +38,6 @@ extern void newmmio_s3EnterLeaveVT();
 extern Bool newmmio_s3Initialize();
 extern void newmmio_s3AdjustFrame();
 extern Bool newmmio_s3SwitchMode();
-extern int s3ChipRev;
 extern Bool s3NewMmio;
 
 /*
@@ -91,7 +95,9 @@ NEWMMIO_Probe()
       }
    }
 
-   if ((S3_x68_SERIES(s3ChipId) ||  S3_TRIO64V_SERIES(s3ChipId))
+   if ((S3_x68_SERIES(s3ChipId) ||
+       S3_TRIO64V_SERIES(s3ChipId) ||
+       S3_TRIO64V2_SERIES(s3ChipId))
        && xf86LinearVidMem()
        && !OFLG_ISSET(OPTION_NOLINEAR_MODE, &s3InfoRec.options)) {
       s3InfoRec.chipset = NEWMMIO_Ident(0);

@@ -1,5 +1,4 @@
-/* $XConsortium: al_driver.c /main/6 1996/01/12 12:16:15 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/al2101/al_driver.c,v 3.14 1996/10/16 14:42:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/al2101/al_driver.c,v 3.16.2.2 1997/05/09 07:15:25 hohndel Exp $ */
 /*
  * Copyright 1994 by Paolo Severini, Italy.
  *
@@ -24,6 +23,7 @@
  * Author:  Paolo Severini, lendl@dist.dist.unige.it
  *
  */
+/* $XConsortium: al_driver.c /main/12 1996/10/27 11:06:44 kaleb $ */
 
 
 #include "X.h"
@@ -102,6 +102,7 @@ vgaVideoChipRec AL2101 = {
   FALSE,
   NULL,
   1,
+  1
 };
 
 
@@ -283,6 +284,8 @@ static void
 AL2101Restore(restore)
   vgaAL2101Ptr restore;
 {
+  vgaProtect(TRUE);
+
   outb(0x3D6,0x00);outb(0x3D7,0x00);
 
   outw(0x3CE, (restore->AbilReadBank  << 8) | 0x0F);
@@ -294,6 +297,8 @@ AL2101Restore(restore)
   vgaHWRestore((vgaHWPtr)restore);
 
   outw(0x3C4, 0x0300); /* now reenable the timing sequencer */
+
+  vgaProtect(FALSE);
 }
 
 
@@ -379,9 +384,10 @@ AL2101Adjust(x, y)
  *
  */
 static int
-AL2101ValidMode(mode, verbose)
+AL2101ValidMode(mode, verbose, flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxLine.c,v 3.8 1996/02/04 08:58:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxLine.c,v 3.9 1996/12/23 06:32:53 dawes Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts,
 and the Massachusetts Institute of Technology, Cambridge, Massachusetts.
@@ -28,7 +28,7 @@ Further modifications by Tiago Gons (tiago@comosjn.hobby.nl)
 Modified for the AGX by Henry A. Worth (haw30@eng.amdahl.com)
 
 ******************************************************************/
-/* $XConsortium: agxLine.c /main/5 1996/01/11 12:28:04 kaleb $  */
+/* $XConsortium: agxLine.c /main/6 1996/02/21 17:18:11 kaleb $  */
 
 #include "X.h"
 

@@ -47,6 +47,11 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: mfb.h,v 5.31 94/04/17 20:28:15 dpw Exp $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/mfb/mfb.h,v 1.2 1997/01/14 22:22:44 dawes Exp $ */
 /* Monochrome Frame Buffer definitions 
    written by drewry, september 1986
 */
@@ -93,7 +98,20 @@ extern RegionPtr mfbCopyArea(
 extern Bool mfbRegisterCopyPlaneProc(
 #if NeedFunctionPrototypes
     ScreenPtr /*pScreen*/,
-    RegionPtr (* /*proc*/)()
+    RegionPtr (* /*proc*/)(
+#if NeedNestedPrototypes
+	DrawablePtr         /* pSrcDrawable */,
+	DrawablePtr         /* pDstDrawable */,
+	GCPtr               /* pGC */,
+	int                 /* srcx */,
+	int                 /* srcy */,
+	int                 /* width */,
+	int                 /* height */,
+	int                 /* dstx */,
+	int                 /* dsty */,
+	unsigned long       /* bitPlane */
+#endif
+	)
 #endif
 );
 
@@ -1015,7 +1033,15 @@ typedef struct {
     PixmapPtr	pRotatedPixmap;		/* tile/stipple rotated to align */
     RegionPtr	pCompositeClip;		/* free this based on freeCompClip
 					   flag rather than NULLness */
-    void 	(* FillArea)();		/* fills regions; look at the code */
+    void 	(* FillArea)(		/* fills regions; look at the code */
+#if NeedNestedPrototypes
+		DrawablePtr /*pDraw*/,
+		int /*nbox*/,
+		BoxPtr /*pbox*/,
+		int /*alu*/,
+		PixmapPtr /*nop*/
+#endif
+		);
     } mfbPrivGC;
 typedef mfbPrivGC	*mfbPrivGCPtr;
 

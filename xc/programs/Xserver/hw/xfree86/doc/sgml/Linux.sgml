@@ -1,19 +1,20 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
  
 <article>
  
-<title> Information for Linux Users
-<author> Orest Zborowski, Dirk Hohndel
-<date> 20 October, 1996
+<title>Information for Linux Users
+<author>Orest Zborowski, Dirk Hohndel
+<date>May 13, 1997
 <toc>
 
-<sect> Linux versions on which XFree86 has been tested <p>
-XFree86 has been tested with Linux version 2.0.19. It should work
+<sect>Linux versions on which XFree86 has been tested <p>
+XFree86 has been tested with Linux version 2.0.30. It should work
 with any version since 1.0 without change. The binaries and libraries are
-based on the 5.2.18 Elf C libraries, and the 1.7.14 dynamic linker
-<tt>ld.so</tt>. 
+based on the 5.4.7 Elf C libraries, and the 1.7.14 dynamic linker
+<tt>ld.so</tt>. You will at least need the 5.2.x Elf C libraries to
+successfully use the servers.
 
-<sect> Backwards Compatibility <p>
+<sect>Backwards Compatibility <p>
 X11R6 is considered a major update from X11R5, so the shared
 libraries in XFree86 3.1 and later are not compatible with XFree86 2.1.1
 and older libraries. To continue to run X11R5 applications, you must keep
@@ -25,31 +26,23 @@ X11R6.1 is yet another update to X11R6. While the minor number for some
 libraries has been increased to '1' it is believed to be fully
 compatible with X11R6 based applications.
 
+X11R6.3 is yet another update to X11R6.1. While the minor number for some
+libraries has been increased to '3' it is believed to be fully
+compatible with X11R6 based applications.
+
 Very old binaries (linked to XFree86-1.2, XFree86-1.3 or
 XFree86-2.0 libraries) will continue to work, but may need an explicit
 symlink from <tt>/lib/libX{11,t,aw}.so.3</tt> to
 <tt>/usr/X386/lib/libX{11,t,aw}.so.3</tt>.
-Linking with <tt>ld.so</tt> against the XView3L5 distribution will give
-problems
-with pre-1.3 versions of <tt>ld.so</tt>, since the XView libraries contain the
-absolute path to the shared images, which is discouraged with <tt>ld.so</tt>.
-A temporary fix is including <tt>/</tt> in <tt>/etc/ld.so.config</tt>,
-better recompile XView with relative library names or get a newer
-<tt>ld.so</tt>.
 
-<sect> Installing XFree86 <p>
-Starting with version 3.0, XFree86 is installed in <tt>/usr/X11R6</tt>. If
-you don't have enough space for both X11R5 and X11R6, you'll have to make
-space by discarding unnecessary parts of X11R5. In particular, the fonts
-and old X11R5 binaries can be removed. The shared libraries must be
-retained in order to run dynamically-linked X11R5 binaries.
-
+<sect>Installing XFree86 <p>
+Starting with version 3.0, XFree86 is installed in <tt>/usr/X11R6</tt>. 
 Each binary distribution of XFree86 3.X comes with a detailed
 installation document relevant to that release. The most up-to-date
 information is kept there, while this document describes basic features
 of XFree86 3.X on Linux and how to compile the sources.
 
-<sect> Running XFree86 <p>
+<sect>Running XFree86 <p>
 XFree86 requires about 4mb of virtual memory to run, although
 having 8mb of RAM is probably the minimum comfortable configuration. A 387
 coprocessor is helpful for 386 machines, although greater gains in
@@ -61,18 +54,14 @@ in <tt>/etc/ld.so.conf</tt> (where it should already be by default) or in your
 <tt>LD_LIBRARY_PATH</tt> environment variable. Also, the configuration file
 <tt>/etc/XF86Config</tt> or <tt>/usr/X11R6/lib/X11/XF86Config</tt> 
 <em>must</em> be properly filled out
-based on the host
-setup using <tt>XF86Config.eg</tt> as a starting point and
-<tt>README.Config</tt> as
+based on the host setup. Ideally this is done using <tt>XF86Setup</tt> or (if
+for some reason this doesn't work) using <tt>xf86config</tt>. If you really
+insist in hand-creating your config file use <tt>XF86Config.eg</tt> as a 
+starting point and <tt>README.Config</tt> as
 guideline.  You may damage your hardware if you use a wrong
 <tt>XF86Config</tt> file, so <em>read the docs</em>,
 especially the man pages and the other <tt>README</tt> files in
 <tt>/usr/X11R6/lib/X11/doc</tt>.
-
-Starting with XFree86-3.1.2F a new interactive setup utility
-<tt>XF86Setup</tt> has been included in the distribution. We recommend
-using this tool to setup the <tt>XF86Config</tt> file. Please read the
-corresponding documentation.
 
 XFree86 has the ability to perform VT switching to and from the X
 server. When first started, XFree86 will automatically locate the first
@@ -81,7 +70,9 @@ VT.  If there isn't one available, XFree86 will terminate with an error
 message.  The server can be run on a specific VT by using the
 ``vt&lt;nn&gt;'' option, where
  &lt;nn&gt; is the number of an available VT (starting from 1). If
-you don't have a free VT XFree86 cannot run. You can increase the number of
+you don't have a free VT XFree86 cannot run. Normally you can simply disable 
+one of the <tt>getty</tt> programs in <tt>/etc/inittab</tt>, but if this is
+not an option, you can increase the number of
 available VTs by increasing the value of <tt>NR_CONSOLES</tt> in
 <tt>include/linux/tty.h</tt> and recompiling the kernel.
 
@@ -120,23 +111,7 @@ XFree86 will read those tables into its keymaps.  This means if you use
 certain keys, like left-Control, for Linux modeswitch, that will not be
 mappable to X.
 
-There are some quirks that may need some fixing depending on your
-configuration. In the past, Linux xload used the BSD method of obtaining
-the load average from the running kernel. In the XFree86-1.3 release, that
-has been replaced by reading the information from <tt>/proc/loadavg</tt>
-instead,
-which should be forward-compatible with future kernel releases. Xman has
-also been changed to support the GNU groff family instead of the BSD nroff
-family. A quick edit and recompile restores BSD conventions. The server has
-been modified to provide better console redirection support for clients,
-which includes changing the ownership of <tt>/dev/console</tt> and
-<tt>/dev/tty0</tt> as well
-as the VT used to run on. Unfortunately, the kernel requires that a process
-be setuid root to perform console redirection, so <tt>xterm</tt> and
-<tt>xconsole</tt> must be setuid root.  As <tt>xconsole</tt> is not designed
-with running setuid root in mind, this opens a big security problem.
-
-<sect> Installing Xdm, the display manager
+<sect>Installing Xdm, the display manager
 <p>
 
 Since xdm is dynamically linked, there's no issue on
@@ -145,7 +120,7 @@ does not contain the DES encryption code. So it's now included in the
 bin package.
 
 However the file <tt>xc/lib/Xdmcp/WrapHelp.c</tt> is not included in the
-XFree86-3.2 source, so support for
+XFree86-3.3 source, so support for
 XDM-AUTHORIZATION-1 is not included here. You'll have to get
 WrapHelp.c and rebuild xdm after having set <tt/HasXdmAuth/ in
 <tt/xf86site.def/.
@@ -166,7 +141,7 @@ systems.
 
 <sect>xterm
 <p>
-The XFree86-3.2 binary release contains an xterm binary that has been linked
+The XFree86-3.3 binary release contains an xterm binary that has been linked
 statically against libtermcap. This was done to make sure that it will
 correctly work with all distributions, regardless whether they rely on
 libtermcap or libncurses. Contrary to the xterm binaries in some beta version
@@ -179,10 +154,10 @@ XFree86 now support the dynamic loading of drivers for external
 input devices using the <tt/XInput/ extension. Currently supported
 devices are:
 <itemize>
-<item> Joystick (<tt/xf86Jstk.so/)
-<item> Wacom tablets (Wacom IV protocol only, <tt/xf86Wacom.so/)
-<item> SummaSketch tablets (<tt/xf86Summa.so/)
-<item> Elographics touchscreen (<tt/xf86Elo.so/)
+<item>Joystick (<tt/xf86Jstk.so/)
+<item>Wacom tablets (Wacom IV protocol only, <tt/xf86Wacom.so/)
+<item>SummaSketch tablets (<tt/xf86Summa.so/)
+<item>Elographics touchscreen (<tt/xf86Elo.so/)
 </itemize>
 
 To use a specific device, add the line
@@ -201,22 +176,21 @@ You can then change the device used to drive the X pointer with the
 For joystick support, you'll need to install the joystick device
 driver in the kernel. 
 
-<sect1>Configuring PEX and XIE extensions
+<sect1>Configuring PEX, XIE and GLX extensions
 <p>
-The PEX and XIE extensions are now supported as external modules.
+The PEX, XIE and GLX extensions are now supported as external modules.
 If you want to have access to these extensions, add the following
 lines to the <bf/Module/ section of <tt/XF86Config/:
 <tscreen><verb>
    load    "pex5.so"
    load    "xie.so"
 </verb></tscreen>
+For GLX you need to get the appropriate GLX modules, first. They are, at this
+time, not part of the XFree86 distribution.
 
 <sect> Compiling XFree86 <p>
-Only the sources for full releases of XFree86 are freely available. The
-last full release of XFree86 is 3.2.
-
 There are no special instructions required for compiling XFree86.
-This version was compiled with gcc-2.7.2, the 5.2.18 Elf libraries and the
+This version was compiled with gcc-2.7.2.1, the 5.4.7 Elf libraries and the
 1.7.14 shared, dynamic linker ld.so. 
 The server has been
 compiled with <tt>-m486</tt>, which optimizes it for the 486 processor, but
@@ -237,7 +211,7 @@ create
 the Makefiles, then stop the make and run each piece individually. It is
 not necessary to run ``<tt>make depend</tt>'' as well, which saves some
 space.  Having
-100mb available makes compiling XFree86 a lot easier. You will need about
+150mb available makes compiling XFree86 a lot easier. You will need about
 10mb of virtual memory to compile the entire server.
 
 If an aout version of XFree86 is to be built and patches are applied which 
@@ -251,23 +225,18 @@ used to compile external X shared libraries, like Xaw3d. Detailed
 instructions are provided in <tt>/usr/X11R6/lib/X11/config/lnxLib.rules</tt>,
 where the X library definitions are provided, as an example.
 
-Thanks to Dirk Hohndel (<it>hohndel@aib.com</it>) for working out all the
-details and doing all the work in creating the first set of XFree86 DLL
-libs, on which the current method (developed by Orest Zborowski
-(<it>orestz@eskimo.com</it>)) is based.
-
-<sect> Bug Notification <p>
+<sect>Bug Notification <p>
 Bug reports should be sent to <it>XFree86@XFree86.org</it> or posted
 to the <it>comp.windows.x.i386unix</it> newsgroup.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.9 1996/10/20 13:33:12 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.3 1997/05/23 12:19:40 dawes Exp $
 
 
 
 
 
-$XConsortium: Linux.sgml /main/3 1995/11/12 19:59:39 kaleb $
+$XConsortium: Linux.sgml /main/6 1996/10/28 04:47:37 kaleb $
 </verb>
 
 </article>

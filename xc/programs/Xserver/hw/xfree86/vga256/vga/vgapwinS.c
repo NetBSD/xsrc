@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgapwinS.c,v 3.2 1996/02/04 09:15:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgapwinS.c,v 3.4 1996/12/23 06:59:56 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: vgapwinS.c /main/2 1995/11/13 09:27:02 kaleb $ */
+/* $XConsortium: vgapwinS.c /main/3 1996/02/21 18:11:43 kaleb $ */
 
 #include "vga256.h"
 
@@ -77,6 +77,6 @@ speedupvga256FillBoxSolid (pDrawable, nBox, pBox, pixel1, pixel2, alu)
     	h = pBox->y2 - pBox->y1;
 	w = pBox->x2 - pBox->x1;
 
-        SpeedUpBox(pdstb, fill1, h, w, widthDst << 2);
+        SpeedUpBox(pdstb, fill1, h, w, widthDst << PWSH);
     }
 }

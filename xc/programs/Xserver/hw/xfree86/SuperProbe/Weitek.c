@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Weitek.c,v 3.4 1996/09/24 13:52:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Weitek.c,v 3.5 1996/12/23 06:31:46 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: Weitek.c /main/4 1995/11/13 11:13:39 kaleb $ */
+/* $XConsortium: Weitek.c /main/6 1996/10/25 06:19:09 kaleb $ */
 
 #include "Probe.h"
 

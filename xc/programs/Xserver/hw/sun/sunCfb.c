@@ -1,6 +1,6 @@
 
-/* $XConsortium: sunCfb.c /main/18 1995/10/05 07:36:45 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.4 1996/10/16 14:38:16 dawes Exp $ */
+/* $XConsortium: sunCfb.c /main/20 1996/10/31 14:24:08 kaleb $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.5 1996/12/23 06:30:14 dawes Exp $ */
 
 /*
 Copyright (c) 1990  X Consortium
@@ -270,12 +270,25 @@ Bool sunCG3Init (screen, pScreen, argc, argv)
 	cfbCreateDefColormap, sunSaveScreen, 0);
 }
 
+Bool sunTCXInit (screen, pScreen, argc, argv)
+    int	    	  screen;    	/* what screen am I going to be */
+    ScreenPtr	  pScreen;  	/* The Screen to initialize */
+    int	    	  argc;	    	/* The number of the Server's arguments. */
+    char    	  **argv;   	/* The arguments themselves. Don't change! */
+{
+    checkMono (argc, argv);
+    sunFbs[screen].EnterLeave = (void (*)())NoopDDA;
+    return sunInitCommon (screen, pScreen, (off_t) 0,
+	sunCfbScreenInit, CGScreenInit,
+	cfbCreateDefColormap, sunSaveScreen, 0);
+}
+
 #if !defined(i386) && !defined(__bsdi__) /* { */
 
 #ifdef SVR4
 #include <sys/cg2reg.h>
 #else
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
+#ifndef CSRG_BASED
 #include <pixrect/cg2reg.h>
 #else
 #include <machine/cgtworeg.h>

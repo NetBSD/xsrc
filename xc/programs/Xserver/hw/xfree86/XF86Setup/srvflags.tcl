@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/srvflags.tcl,v 3.3 1996/09/29 12:51:15 dawes Exp $
+# $XConsortium: srvflags.tcl /main/2 1996/10/25 10:21:38 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/srvflags.tcl,v 3.4 1996/12/27 06:54:14 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

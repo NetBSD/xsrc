@@ -1,5 +1,5 @@
-// $XConsortium: xfree86 /main/3 1996/01/27 18:08:52 kaleb $
-// $XFree86: xc/programs/xkbcomp/keycodes/xfree86,v 3.2 1996/08/13 11:33:59 dawes Exp $
+// $XConsortium: xfree86 /main/4 1996/08/31 12:16:59 kaleb $
+// $XFree86: xc/programs/xkbcomp/keycodes/xfree86,v 3.3 1996/12/23 07:12:23 dawes Exp $
 default xkb_keycodes "xfree86" {
 
     minimum= 8;

@@ -1,4 +1,4 @@
-.\" $XConsortium: bitmap.man /main/17 1995/12/15 13:59:37 gildea $
+.\" $XConsortium: bitmap.man /main/18 1996/12/09 17:06:36 kaleb $
 .\" Copyright (c) 1993  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -24,7 +24,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH BITMAP 1 "Release 6.1" "X Version 11"
+.TH BITMAP 1 "Release 6.3" "X Version 11"
 .SH NAME
 bitmap, bmtoa, atobm \- bitmap editor and converter utilities for the X Window System
 .SH SYNOPSIS

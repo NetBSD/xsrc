@@ -1,4 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/mRegs.c,v 3.1 1996/10/17 15:20:51 dawes Exp $ */
+/* $XConsortium: mRegs.c /main/2 1996/10/27 11:49:43 kaleb $ */
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/mRegs.c,v 3.2 1996/12/27 07:05:14 dawes Exp $ */
 
 #ifdef __NetBSD__
 /*

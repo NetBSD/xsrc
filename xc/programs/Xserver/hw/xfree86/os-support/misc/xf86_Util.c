@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/misc/xf86_Util.c,v 3.3 1996/09/03 04:14:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/misc/xf86_Util.c,v 3.4 1996/12/23 06:50:25 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86_Util.c /main/3 1995/11/13 06:06:02 kaleb $ */
+/* $XConsortium: xf86_Util.c /main/5 1996/10/23 13:13:10 kaleb $ */
 
 /*
  * This file is for utility functions that will be shared by other pieces

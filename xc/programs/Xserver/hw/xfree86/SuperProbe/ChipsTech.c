@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ChipsTech.c,v 3.9 1996/10/19 15:14:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ChipsTech.c,v 3.10 1996/12/23 06:31:06 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: ChipsTech.c /main/5 1995/11/13 11:12:00 kaleb $ */
+/* $XConsortium: ChipsTech.c /main/8 1996/10/28 04:23:17 kaleb $ */
 
 #include "Probe.h"
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/line.c,v 3.3 1996/02/04 09:01:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/line.c,v 3.4 1996/12/23 06:37:59 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -52,7 +52,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 Further modifications by Tiago Gons (tiago@comosjn.hobby.nl)
 
 */
-/* $XConsortium: line.c /main/4 1996/01/11 12:28:31 kaleb $ */
+/* $XConsortium: line.c /main/5 1996/02/21 17:25:07 kaleb $ */
 
 #include "X.h"
 

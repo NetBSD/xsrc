@@ -1,9 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree98/accel/s3nec/s3pc98.h,v 3.4 1996/09/03 15:24:31 dawes Exp $ */
+/* $XConsortium: s3pc98.h /main/6 1996/10/23 13:22:40 kaleb $ */
 
 
 
 
-/* $XConsortium: s3pc98.h /main/2 1995/12/29 11:49:07 kaleb $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree98/accel/s3nec/s3pc98.h,v 3.5 1996/12/23 07:05:52 dawes Exp $ */
+
+
 
 #define	PW	0x10
 #define	PW805I	0x20

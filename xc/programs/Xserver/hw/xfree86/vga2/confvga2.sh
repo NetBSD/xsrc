@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# $XConsortium: confvga2.sh /main/1 1995/09/04 19:41:31 kaleb $
-# $XFree86: xc/programs/Xserver/hw/xfree86/vga2/confvga2.sh,v 3.1 1996/02/04 09:11:53 dawes Exp $
+# $XConsortium: confvga2.sh /main/2 1996/02/21 17:59:48 kaleb $
+# $XFree86: xc/programs/Xserver/hw/xfree86/vga2/confvga2.sh,v 3.2 1996/12/23 06:54:11 dawes Exp $
 #
 # This script generates vga2Conf.c
 #

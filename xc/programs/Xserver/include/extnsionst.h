@@ -1,5 +1,5 @@
-/* $XConsortium: extnsionst.h,v 1.14 94/04/17 20:25:42 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/include/extnsionst.h,v 3.1 1996/05/06 06:00:21 dawes Exp $ */
+/* $XConsortium: extnsionst.h /main/15 1996/08/01 19:18:11 dpw $ */
+/* $XFree86: xc/programs/Xserver/include/extnsionst.h,v 3.2 1996/12/23 07:09:27 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -76,6 +76,9 @@ typedef struct _ExtensionEntry {
 	ClientPtr /* client */
 #endif
 );
+#ifdef XCSECURITY
+    Bool secure;		/* extension visible to untrusted clients? */
+#endif
 } ExtensionEntry;
 
 /* any attempt to declare the types of the parameters to the functions
@@ -177,6 +180,13 @@ extern Bool RegisterScreenProc(
     char* /*name*/,
     ScreenPtr /*pScreen*/,
     ExtensionLookupProc /*proc*/
+#endif
+);
+
+extern void DeclareExtensionSecurity(
+#if NeedFunctionPrototypes
+    char * /*extname*/,
+    Bool /*secure*/
 #endif
 );
 

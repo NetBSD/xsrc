@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/linearline.h,v 3.2 1996/02/04 09:13:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/linearline.h,v 3.3 1996/12/23 06:57:00 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: linearline.h /main/2 1995/11/13 08:21:38 kaleb $ */
+/* $XConsortium: linearline.h /main/3 1996/02/21 18:04:29 kaleb $ */
 
 /* linearline.c */
 extern void LinearFramebufferVerticalLine(

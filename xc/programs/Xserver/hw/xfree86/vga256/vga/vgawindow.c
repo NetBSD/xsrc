@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgawindow.c,v 3.2 1996/02/04 09:15:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgawindow.c,v 3.4 1997/01/12 10:45:37 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: vgawindow.c /main/2 1995/11/13 09:27:26 kaleb $ */
+/* $XConsortium: vgawindow.c /main/3 1996/02/21 18:12:18 kaleb $ */
 
 #include "vga256.h"
 
@@ -94,7 +94,7 @@ vga256CopyWindow(pWin, ptOldOrg, prgnSrc)
 
     (*vga256LowlevFuncs.doBitbltCopy)((DrawablePtr)pwinRoot,
 		(DrawablePtr)pwinRoot,
-		GXcopy, &rgnDst, pptSrc, ~0L);
+		GXcopy, &rgnDst, pptSrc, ~0L, ~0L);
     DEALLOCATE_LOCAL(pptSrc);
     REGION_UNINIT(pWin->drawable.pScreen, &rgnDst);
 }

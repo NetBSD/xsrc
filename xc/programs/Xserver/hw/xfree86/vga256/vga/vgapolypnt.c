@@ -1,4 +1,4 @@
-/* $XConsortium: vgapolypnt.c /main/3 1996/01/13 13:15:40 kaleb $ */
+/* $XConsortium: vgapolypnt.c /main/4 1996/02/21 18:11:36 kaleb $ */
 /************************************************************
 
 Copyright (c) 1989  X Consortium
@@ -26,7 +26,7 @@ in this Software without prior written authorization from the X Consortium.
 
 ********************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgapolypnt.c,v 3.4 1996/02/09 08:21:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgapolypnt.c,v 3.6 1996/12/23 06:59:54 dawes Exp $ */
 
 #include "vga256.h"
 
@@ -37,9 +37,9 @@ in this Software without prior written authorization from the X Consortium.
 	 --nbox >= 0; \
 	 pbox++) \
     { \
-	c1 = *((long *) &pbox->x1) - off; \
-	c2 = *((long *) &pbox->x2) - off - 0x00010001; \
-	for (ppt = (long *) pptInit, i = npt; --i >= 0;) \
+	c1 = *((INT32 *) &pbox->x1) - off; \
+	c2 = *((INT32 *) &pbox->x2) - off - 0x00010001; \
+	for (ppt = (INT32 *) pptInit, i = npt; --i >= 0;) \
 	{ \
 	    pt = *ppt++; \
 	    if (!isClipped(pt,c1,c2)) { \
@@ -57,8 +57,8 @@ vga256PolyPoint(pDrawable, pGC, mode, npt, pptInit)
     int npt;
     xPoint *pptInit;
 {
-    register long   pt;
-    register long   c1, c2;
+    register INT32   pt;
+    register INT32   c1, c2;
 #if defined(PC98_WAB) || defined(PC98_WABEP)
     register unsigned long   ClipMask = 0x40004000;
 #else
@@ -68,12 +68,12 @@ vga256PolyPoint(pDrawable, pGC, mode, npt, pptInit)
     register unsigned char   *addrb;
     register int    nbwidth;
     unsigned char   *addrbt;
-    register long   *ppt;
+    register INT32  *ppt;
     RegionPtr	    cclip;
     int		    nbox;
     register int    i;
     register BoxPtr pbox;
-    long	    and;
+    unsigned long   and;
     int		    rop = pGC->alu;
     int		    off;
     cfbPrivGCPtr    devPriv;

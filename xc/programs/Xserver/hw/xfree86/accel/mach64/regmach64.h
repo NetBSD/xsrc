@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.13 1996/10/18 15:00:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15 1997/01/05 11:53:46 dawes Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -25,7 +25,7 @@
  * Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
  * Modified for the Mach64 by Kevin E. Martin (martin@cs.unc.edu)
  */
-/* $XConsortium: regmach64.h /main/8 1996/01/28 07:59:15 kaleb $ */
+/* $XConsortium: regmach64.h /main/13 1996/10/27 18:06:41 kaleb $ */
 
 #ifndef REGMACH64_H
 #define REGMACH64_H
@@ -70,6 +70,11 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define CRTC_OFF_PITCH          0x0014  /* Dword offset 05 */
 #define CRTC_INT_CNTL           0x0018  /* Dword offset 06 */
 #define CRTC_GEN_CNTL           0x001C  /* Dword offset 07 */
+
+#define DSP_CONFIG              0x0020  /* Dword offset 08 */
+#define DSP_ON_OFF              0x0024  /* Dword offset 09 */
+
+#define SHARED_CNTL             0x0038  /* Dword offset 0E */
 
 #define OVR_CLR                 0x0040  /* Dword offset 10 */
 #define OVR_WID_LEFT_RIGHT      0x0044  /* Dword offset 11 */
@@ -272,6 +277,18 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define GUI_ENGINE_ENABLE       0x100
 #define BLOCK_WRITE_ENABLE      0x200
 
+/* DSP_CONFIG register constants */
+#define DSP_XCLKS_PER_QW        0x00003fff
+#define DSP_LOOP_LATENCY        0x000f0000
+#define DSP_PRECISION           0x00700000
+
+/* DSP_ON_OFF register constants */
+#define DSP_OFF                 0x000007ff
+#define DSP_ON                  0x07ff0000
+
+/* SHARED_CNTL register constants */
+#define CTD_FIFO5               0x01000000
+
 /* CLOCK_CNTL register constants */
 #define CLOCK_SEL		0x0f
 #define CLOCK_DIV		0x30
@@ -342,10 +359,11 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define EnhancedVRAMx16ssr	6
 
 /* Memory types for CT, ET, VT, GT */
-#define DRAM			0
-#define EDO_DRAM		1
-#define PSEUDO_EDO		2
-#define SDRAM			3
+#define DRAM			1
+#define EDO_DRAM		2
+#define PSEUDO_EDO		3
+#define SDRAM			4
+#define SGRAM			5
 
 #define DAC_INTERNAL		0x00
 #define DAC_IBMRGB514		0x01

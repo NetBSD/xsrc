@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_io.c,v 3.2 1996/08/10 13:07:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_io.c,v 3.3 1996/12/23 06:50:01 dawes Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: lnx_io.c /main/3 1995/11/13 05:58:41 kaleb $ */
+/* $XConsortium: lnx_io.c /main/8 1996/10/19 18:06:28 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

@@ -1,5 +1,4 @@
-/* $XConsortium: dispatch.c,v 1.24 94/04/17 19:56:13 gildea Exp $ */
-/* $XFree86: xc/programs/xfs/difs/dispatch.c,v 3.0 1995/06/02 10:32:38 dawes Exp $ */
+/* $TOG: dispatch.c /main/25 1997/05/29 15:13:56 barstow $ */
 /*
  * protocol dispatcher
  */
@@ -48,6 +47,7 @@ in this Software without prior written authorization from the X Consortium.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
+/* $XFree86: xc/programs/xfs/difs/dispatch.c,v 3.0.6.2 1997/05/31 13:34:47 dawes Exp $ */
 
 #include	"FS.h"
 #include	"FSproto.h"
@@ -389,25 +389,31 @@ SendErrToClient(client, error, data)
     case FSBadAccessContext:
     case FSBadIDChoice:
     case FSBadEventMask:
-	if (client->swapped)
-	    SwapLongs((long *) data, 1);
-	extralen = 4;
+	if (data) {
+	    if (client->swapped)
+	        SwapLongs((long *) data, 1);
+	    extralen = 4;
+	}
 	break;
     case FSBadRange:
 	extralen = SIZEOF(fsRange);
 	break;
     case FSBadResolution:
-	if (client->swapped)
-	    SwapShorts((short *) data, 1);
-	/* note sneaky hack */
-	rep.pad = *(CARD16 *) data;
-	data += 2;
-	extralen = 4;
+	if (data) {
+	    if (client->swapped)
+	        SwapShorts((short *) data, 1);
+	    /* note sneaky hack */
+	    rep.pad = *(CARD16 *) data;
+	    data += 2;
+	    extralen = 4;
+	}
 	break;
     case FSBadLength:
-	if (client->swapped)
-	    SwapLongs((long *) data, 1);
-	extralen = 4;
+	if (data) {
+	    if (client->swapped)
+	        SwapLongs((long *) data, 1);
+	    extralen = 4;
+	}
 	break;
     default:
 	/* nothing else to send */

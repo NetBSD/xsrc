@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_HWlib.h,v 3.28 1996/10/21 05:27:40 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_HWlib.h,v 3.31.2.1 1997/05/06 13:27:29 dawes Exp $ */ 
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -28,7 +28,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86_HWlib.h /main/10 1995/12/17 08:26:57 kaleb $ */
+/* $XConsortium: xf86_HWlib.h /main/21 1996/10/28 04:55:29 kaleb $ */
 
 #ifndef _XF86_HWLIB_H
 #define _XF86_HWLIB_H
@@ -202,6 +202,13 @@ extern int ET6000SetClock(
 #endif
 );     
 
+extern int ARK2000gendacSetClock(
+#if NeedFunctionPrototypes
+	long,
+	int
+#endif
+);
+
 extern int ICS5342SetClock(
 #if NeedFunctionPrototypes
 	long,
@@ -216,10 +223,45 @@ extern int S3TrioSetClock(
 #endif
 );
 
+extern int S3Trio64V2SetClock(
+#if NeedFunctionPrototypes
+	long,
+	int
+#endif
+);
+
 extern int S3ViRGE_VXSetClock(
 #if NeedFunctionPrototypes
 	long,
 	int
+#endif
+);
+
+extern int S3AuroraSetClock(
+#if NeedFunctionPrototypes
+	long,
+	int
+#endif
+);
+
+/*
+ * Gendac clock calculator: needed for those that want to get
+ * clock params without actually programming them (e.g. W32 driver)
+ */
+extern int commonCalcClock(
+#if NeedFunctionPrototypes
+	long,
+	int, int, int, int, int,
+	long, long,
+	unsigned char *,
+	unsigned char *
+#endif
+);
+
+extern int gendacMNToClock(
+#if NeedFunctionPrototypes
+	unsigned char,
+	unsigned char
 #endif
 );
 
@@ -343,20 +385,6 @@ extern int  s3IBMRGB_Probe(
 extern void s3IBMRGB_Init(
 #if NeedFunctionPrototypes
 	void
-#endif
-);
-
-/*
- * Gendac clock calculator: needed for those that want to get
- * clock params without actually programming them (e.g. W32 driver)
- */
-extern int commonCalcClock(
-#if NeedFunctionPrototypes
-   long,
-   int, int, int, int,
-   long, long,
-   unsigned char *,
-   unsigned char *
 #endif
 );
 

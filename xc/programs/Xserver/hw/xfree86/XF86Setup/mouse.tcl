@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mouse.tcl,v 3.18 1996/10/26 09:35:23 dawes Exp $
+# $XConsortium: mouse.tcl /main/6 1996/10/28 05:42:22 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mouse.tcl,v 3.19.2.2 1997/05/21 15:02:28 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -11,7 +16,7 @@
 #
 
 set mseTypeList { Microsoft MouseSystems MMSeries Logitech BusMouse
-		MouseMan PS/2 MMHitTab GlidePoint Xqueue OSMouse }
+		MouseMan PS/2 MMHitTab GlidePoint IntelliMouse Xqueue OSMouse }
 
 set msePatterns [list {tty[0-9A-Za-o]*} cua* *bm *mse* *mouse* \
                       ps*x psm* m320 pms* com* gpmdata ]
@@ -108,14 +113,18 @@ proc Mouse_create_widgets { win } {
 	label $w.mouse.top.title -text "Select the mouse protocol"
 	frame $w.mouse.type
 	pack $w.mouse.top.title $w.mouse.type -in $w.mouse.top -side top
+	set i 0
 	foreach Type $mseTypeList {
 		set type [string tolower $Type]
 		radiobutton $w.mouse.type.$type -text $Type \
+			-width 12 \
 			-indicatoron false \
 			-variable mseType -value $Type \
 			-highlightthickness 1 \
 			-command [list Mouse_proto_select $win]
-		pack $w.mouse.type.$type -side left -anchor n
+		grid $w.mouse.type.$type -column [expr $i % 6] \
+			-row [expr $i / 6]
+		incr i
 	}
 
 	frame $w.mouse.mid.left
@@ -148,7 +157,7 @@ proc Mouse_create_widgets { win } {
 
 	frame $w.mouse.mid.left.buttons
 	pack $w.mouse.mid.left.buttons -in $w.mouse.mid.left \
-		-side top -fill x -pady 3m
+		-side top -fill x -pady 2m
 	checkbutton $w.mouse.em3but -text Emulate3Buttons \
 		-indicatoron no -variable emulate3Buttons \
 		-command [list Mouse_set_em3but $win]
@@ -159,7 +168,7 @@ proc Mouse_create_widgets { win } {
 		-side top -fill x -padx 3m -anchor w
 
 	frame $w.mouse.brate
-	pack  $w.mouse.brate -in $w.mouse.mid.left -side top -pady 3m
+	pack  $w.mouse.brate -in $w.mouse.mid.left -side top -pady 2m
 	label $w.mouse.brate.title -text "Baud Rate"
 	pack  $w.mouse.brate.title -side top
 	frame $w.mouse.brate.left
@@ -344,7 +353,7 @@ proc Mouse_nextprotocol { win } {
 	set idx [lsearch -exact $mseTypeList $mseType]
 	do {
 		incr idx
-		if { $idx >= [llength $mseTypeList] } {
+		if { from: idx >= [llength mseTypeList] } {
 			set idx 0
 		}
 		set mseType [lindex $mseTypeList $idx]

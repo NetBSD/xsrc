@@ -1,4 +1,4 @@
-/* $XConsortium: Print.c /main/13 1996/01/26 13:30:26 kaleb $ */ 
+/* $XConsortium: Print.c /main/25 1996/10/28 04:46:33 kaleb $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.42 1996/10/20 13:32:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.46.2.4 1997/05/22 14:00:34 dawes Exp $ */
 
 #include "Probe.h"
 
@@ -42,7 +42,9 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "ATI 88800GX-C", "ATI 88800GX-D", "ATI 88800GX-E",
 		  "ATI 88800GX-F",
 		  "ATI 88800CX",
-		  "ATI 264CT", "ATI 264ET", "ATI 264VT or 264VT2", "ATI 264GT" },
+		  "ATI 264CT", "ATI 264ET", "ATI 264LT",
+		  "ATI 264VT", "ATI 264VT-B",
+		  "ATI 264GT (3D Rage I)", "ATI 264GT-B (3D Rage II)" },
 /* AL */	{ "Avance Logic (chipset unknown)",
 		  "Avance Logic 2101", "Avance Logic 2228" },
 /* CT */	{ "Chips & Tech (chipset unknown)",
@@ -119,6 +121,13 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "S3 Vision968 & 3Dlabs (unknown)",
 		  "S3 ViRGE",
 		  "S3 ViRGE/VX",
+		  "S3 Aurora64V+",
+		  "S3 Trio64UV+",
+		  "S3 Trio64V2/DX",
+		  "S3 Trio64V2/GX",
+		  "S3 ViRGE/DX",
+		  "S3 ViRGE/GX",
+		  "S3 PLATO/PX",
 	       },
 /* Trident */	{ "Trident (chipset unknown)",
 		  "Trident LX8200",
@@ -128,7 +137,10 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "Trident LCD9100B", "Trident 9200CXr", "Trident LCD9320", 
 		  "Trident 9400CXi", "Trident GUI 9420", "Trident GUI 9420DGi",
                   "Trident GUI 9440AGi", "Trident GUI 9660", 
-                  "Trident GUI 9680", "Trident GUI 9682 (3D)"},
+                  "Trident GUI 9680", "Trident ProVidia 9682",
+		  "Trident ProVidia 9685", "Trident ProVidia 9692",
+		  "Trident Cyber9382", "Trident Cyber9385",
+		  "Trident Cyber9385-1", },
 /* Tseng */	{ "Tseng (chipset unknown)",
 		  "Tseng ET3000", "Tseng ET4000", 
 		  "Tseng ET4000/W32", "Tseng ET4000/W32i", 
@@ -168,6 +180,16 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "ARK Logic ARK2000PV",
 		  "ARK Logic ARK2000MT",
 		  "ARK Logic ARK2000MI (Quadro64)" },
+/* Alliance */	{ "Alliance Semiconductor (chipset unknown)",
+		  "Alliance Semiconductor ProMotion 6410",
+		  "Alliance Semiconductor ProMotion 6422",
+		  "Alliance Semiconductor ProMotion AT24" },
+/* Matrox */	{ "Matrox (chipset unknown)",
+		  "Matrox Atlas",
+		  "Matrox Millennium",
+		  "Matrox Mystique" },
+/* Sigma Designs */	{ "Sigma Designs (chipset unknown)",
+		  "Sigma Designs REALmagic64/GX (SD 6425)" },
 };
 
 static CONST char *Herc_Names[] = 
@@ -242,6 +264,14 @@ struct RamDac_Name RamDac_Names[] =
 	  "Tseng Labs ET6000 built-in 15/16/24-bit DAC w/pixel-mux,clock" },
 	{ "w30C516",
 	  "IC Works w30C516 ZOOMDAC 15/16/24-bit DAC or AT&T 20C498" },
+	{ "PM642x",
+	  "Alliance ProMotion built-in 15/16/24-bit DAC w/clock" },
+	{ "ICS5341",
+	  "ICS5341 SDAC 15/16/24-bit DAC w/pixel-mux w/clock-PLL" },
+	{ "ICS5301",
+	  "ICS5301 GENDAC 15/16/24-bit DAC w/clock-PLL" },
+	{ "MGA1064SG",
+	  "Matrox Mystique built-in DAC w/clock" },
 };
 
 static CONST char *CoProc_Names[NUM_CP_TYPES][CHPS_PER_CPTYPE] = 
@@ -252,6 +282,9 @@ static CONST char *CoProc_Names[NUM_CP_TYPES][CHPS_PER_CPTYPE] =
 /* XGA */	{ "" },
 /* Mach64 */	{ "ATI Mach64" },
 /* Number9 */	{ "Number Nine Imagine I128" },
+/* GLINT */	{ "","GLINT 300SX","GLINT 500TX","GLINT 300SX & 500TX",
+		  "GLINT Delta","GLINT Delta & 300SX","GLINT Delta & 500TX",
+		  "GLINT Delta & 300SX & 500TX" },
 };
 
 void Print_SVGA_Name(Chipset)

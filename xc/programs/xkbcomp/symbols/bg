@@ -1,4 +1,4 @@
-// $XConsortium: bg /main/2 1995/12/07 21:41:04 kaleb $
+// $XConsortium: bg /main/3 1996/08/31 12:19:08 kaleb $
 partial default alphanumeric_keys 
 xkb_symbols "typewriter" {
 

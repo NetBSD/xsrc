@@ -1,9 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/I2061Aalt.c,v 3.11 1996/05/06 05:57:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/I2061Aalt.c,v 3.12 1996/12/23 06:44:07 dawes Exp $ */
 
 /*
  * This code is derived from code available from the STB bulletin board
  */
-/* $XConsortium: I2061Aalt.c /main/5 1995/12/28 17:15:59 kaleb $ */
+/* $XConsortium: I2061Aalt.c /main/12 1996/10/19 18:00:05 kaleb $ */
 
 /*#define EXTENDED_DEBUG*/
 

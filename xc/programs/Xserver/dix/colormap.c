@@ -46,8 +46,8 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XConsortium: colormap.c,v 5.33 95/05/18 21:08:14 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/dix/colormap.c,v 3.0 1996/04/15 11:19:33 dawes Exp $ */
+/* $XConsortium: colormap.c /main/71 1996/06/17 11:01:33 mor $ */
+/* $XFree86: xc/programs/Xserver/dix/colormap.c,v 3.1 1996/12/23 06:29:34 dawes Exp $ */
 
 #include "X.h"
 #define NEED_EVENTS
@@ -270,6 +270,7 @@ CreateColormap (mid, pScreen, pVisual, ppcmap, alloc, client)
     register	EntryPtr	pent;
     int		i;
     register	Pixel	*ppix, **pptr;
+    extern int colormapPrivateCount;
 
     class = pVisual->class;
     if(!(class & DynamicClass) && (alloc != AllocNone) && (client != SERVER_ID))
@@ -393,6 +394,26 @@ CreateColormap (mid, pScreen, pVisual, ppcmap, alloc, client)
      * this is it.  In specific, if this is a Static colormap, this is the
      * time to fill in the colormap's values */
     pmap->flags |= BeingCreated;
+
+
+    /*
+     * Allocate the array of devPrivate's for this colormap.
+     */
+
+    if (colormapPrivateCount == 0)
+	pmap->devPrivates = NULL;
+    else
+    {
+	pmap->devPrivates = (DevUnion *) xalloc (
+	    colormapPrivateCount * sizeof(DevUnion));
+
+	if (!pmap->devPrivates)
+	{
+	    FreeResource (mid, RT_NONE);
+	    return BadAlloc;
+	}
+    }
+
     if (!(*pScreen->CreateColormap)(pmap))
     {
 	FreeResource (mid, RT_NONE);
@@ -453,6 +474,10 @@ FreeColormap (value, mid)
             xfree(pmap->clientPixelsBlue[i]);
         }
     }
+
+    if (pmap->devPrivates)
+	xfree(pmap->devPrivates);
+
     xfree(pmap);
     return(Success);
 }
@@ -1457,12 +1482,67 @@ FreePixels(pmap, client)
     register Pixel		*ppix, *ppixStart;
     register int 		n;
     int				class;
+#ifdef LBX
+    Bool			grabbed;
+    Bool			zeroRefCount;
+    Bool			anyRefCountReachedZero = 0;
+#endif
 
     class = pmap->class;
     ppixStart = pmap->clientPixelsRed[client];
     if (class & DynamicClass)
-	for (ppix = ppixStart, n = pmap->numPixelsRed[client]; --n >= 0; )
-	    FreeCell(pmap, *ppix++, REDMAP);
+    {
+	n = pmap->numPixelsRed[client];
+#ifdef LBX
+	grabbed = LbxCheckCmapGrabbed (pmap);
+	if (grabbed)
+	{
+	    /*
+	     * If the colormap is grabbed by a proxy, the server must
+	     * notify the proxy of all cells that are freed (the refcount
+	     * has reached zero on these cells).
+	     */
+
+	    LbxBeginFreeCellsEvent (pmap);
+	    LbxSortPixelList (ppixStart, n);
+	}
+#endif
+	for (ppix = ppixStart; --n >= 0; )
+	{
+	    FreeCell(pmap, *ppix, REDMAP);
+#ifdef LBX
+	    /*
+	     * Only PSEUDO colormaps are grabbed by LBX proxies.
+	     * Check if the ref count reached zero on this pixel.
+	     */
+
+	    zeroRefCount = pmap->red[*ppix].refcnt == 0;
+	    if (zeroRefCount)
+		anyRefCountReachedZero = 1;
+	    
+	    if (grabbed && zeroRefCount)
+		LbxAddFreeCellToEvent (pmap, *ppix);
+#endif
+	    ppix++;
+	}
+#ifdef LBX
+	if (grabbed)
+	    LbxEndFreeCellsEvent (pmap);
+	else if (anyRefCountReachedZero)
+	{
+	    /*
+	     * We only send LbxFreeCell events to a proxy that has the colormap
+	     * grabbed.  If the colormap is not grabbed, the proxy that last
+	     * had the colormap grabbed will not be able to do a smart grab
+	     * in the future.  A smart grab can only occur if the proxy is kept
+	     * up to date on every alloc/free change in the colormap.
+	     */
+
+	    LbxDisableSmartGrab (pmap);
+	}
+#endif
+    }
+
     xfree(ppixStart);
     pmap->clientPixelsRed[client] = (Pixel *) NULL;
     pmap->numPixelsRed[client] = 0;
@@ -2232,6 +2312,11 @@ FreeCo (pmap, client, color, npixIn, ppixIn, mask)
     int 	n, zapped;
     int		errVal = Success;
     int		offset, numents;
+#ifdef LBX
+    Bool	grabbed;
+    Bool	zeroRefCount;
+    Bool	anyRefCountReachedZero = 0;
+#endif
 
     if (npixIn == 0)
         return (errVal);
@@ -2276,6 +2361,22 @@ FreeCo (pmap, client, color, npixIn, ppixIn, mask)
 	break;
     }
 
+#ifdef LBX
+    grabbed = LbxCheckCmapGrabbed (pmap);
+
+    if (grabbed)
+    {
+	/*
+	 * If the colormap is grabbed by a proxy, the server must
+	 * notify the proxy of all cells that are freed (the refcount
+	 * has reached zero on these cells).
+	 */
+
+	LbxBeginFreeCellsEvent (pmap);
+	LbxSortPixelList (ppixIn, npixIn);
+    }
+#endif
+
     /* zap all pixels which match */
     while (1)
     {
@@ -2298,7 +2399,22 @@ FreeCo (pmap, client, color, npixIn, ppixIn, mask)
 	    if (npix >= 0)
 	    {
 		if (pmap->class & DynamicClass)
+		{
 		    FreeCell(pmap, pixTest, color);
+#ifdef LBX
+		    /*
+		     * Only PSEUDO colormaps are grabbed by LBX proxies.
+		     * Check if the ref count reached zero on this pixel.
+		     */
+
+		    zeroRefCount = pmap->red[pixTest].refcnt == 0;
+		    if (zeroRefCount)
+			anyRefCountReachedZero = 1;
+
+		    if (grabbed && zeroRefCount)
+			LbxAddFreeCellToEvent (pmap, pixTest);
+#endif
+		}
 		*cptr = ~((Pixel)0);
 		zapped++;
 	    }
@@ -2308,6 +2424,23 @@ FreeCo (pmap, client, color, npixIn, ppixIn, mask)
         /* generate next bits value */
 	GetNextBitsOrBreak(bits, mask, base);
     }
+
+#ifdef LBX
+    if (grabbed)
+	LbxEndFreeCellsEvent (pmap);
+    else if (anyRefCountReachedZero)
+    {
+	/*
+	 * We only send LbxFreeCell events to a proxy that has the colormap
+	 * grabbed.  If the colormap is not grabbed, the proxy that last
+	 * had the colormap grabbed will not be able to do a smart grab
+	 * in the future.  A smart grab can only occur if the proxy is kept
+	 * up to date on every alloc/free change in the colormap.
+	 */
+	
+	LbxDisableSmartGrab (pmap);
+    }
+#endif
 
     /* delete freed pixels from client pixel list */
     if (zapped)

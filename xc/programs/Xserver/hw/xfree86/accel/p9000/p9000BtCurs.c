@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000BtCurs.c,v 3.8 1996/03/05 05:42:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000BtCurs.c,v 3.9 1996/12/23 06:40:34 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -23,7 +23,7 @@
  * Modified by Erik Nygren (nygren@mit.edu) for use with P9000
  *
  */
-/* $XConsortium: p9000BtCurs.c /main/3 1995/11/12 18:18:39 kaleb $ */
+/* $XConsortium: p9000BtCurs.c /main/5 1996/03/09 11:17:21 kaleb $ */
 
 #define NEED_EVENTS
 #include <X.h>

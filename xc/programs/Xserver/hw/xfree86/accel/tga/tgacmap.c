@@ -1,3 +1,4 @@
+/* $XConsortium: tgacmap.c /main/2 1996/10/24 10:56:00 kaleb $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -23,7 +24,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgacmap.c,v 3.0 1996/09/22 05:04:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgacmap.c,v 3.1 1996/12/27 07:03:47 dawes Exp $ */
 
 /*
  * Modified by Amancio Hasty and Jon Tombs

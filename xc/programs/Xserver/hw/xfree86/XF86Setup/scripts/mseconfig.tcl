@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/mseconfig.tcl,v 3.2 1996/08/27 03:23:49 dawes Exp $
+# $XConsortium: mseconfig.tcl /main/1 1996/09/21 14:14:40 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/mseconfig.tcl,v 3.3 1996/12/27 06:54:48 dawes Exp $
 
 set clicks1 [clock clicks]
 

@@ -1,44 +1,56 @@
-XCOMM $XConsortium: Imakefile /main/3 1996/01/26 14:30:30 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/Imakefile,v 3.10 1996/10/17 15:20:39 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/13 1996/10/27 11:49:09 kaleb $
 
-XCOMM Some possible options to include in the defines below
-XCOMM
-XCOMM CT_LINE_ACCL:     This enables the use of the line acceleration
-XCOMM                   code.
-XCOMM CT_POST_312F_ACCL:There is also some additional acceleration in the 
-XCOMM                   server for Glyph's, Stipples and Bitmap copies. Also
-XCOMM                   some of the accelerated code has been ported to the
-XCOMM                   HiQV architecture. These were written after the feature
-XCOMM                   freeze for XFree 3.2. If they cause a problem this new
-XCOMM                   code can be completely removed by deleting this option
-XCOMM CT_24BPP_TEXT:    This is an extremely late addition to the acceleration
-XCOMM                   code. It has been tested on only a few machines.
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/Imakefile,v 3.15.2.1 1997/05/03 09:47:55 dawes Exp $
 
 #include <Server.tmpl>
 
+XCOMM To use the old acceleration code you must define OLD_ACCL here.
+XCOMM This allows only the relevant parts of the code to be compiled
+XCOMM
+XCOMM #define OLD_ACCL
+
+#ifdef OLD_ACCL
 SRCS = ct_driver.c ct_bank.s ct_BitBlt.c ct_cursor.c ct_FillRct.c ct_blt16.c \
        ct_blitter.c ct_blitmm.c ct_blithi.c ct_line.c ct_seg.c ct_linehi.c \
        ct_seghi.c ct_lline.c ct_lline16.c ct_lline24.c ct_solid.c \
        ct_solidmm.c ct_solidhi.c ct_FillSt.c ct_alloc.c ct_pci.c ct_teblt8.c \
        ct_teblt8mm.c ct_teblt8hi.c ct_textblt.s ct_colexp.c ct_colexpmm.c \
-       ct_colexphi.c
+       ct_colexphi.c ct_accel.c ct_accelmm.c ct_accelhi.c
 
 OBJS = ct_driver.o ct_bank.o ct_BitBlt.o ct_cursor.o ct_FillRct.o ct_blt16.o \
        ct_blitter.o ct_blitmm.o ct_blithi.o ct_line.o ct_seg.o ct_linehi.o \
        ct_seghi.o ct_lline.o ct_lline16.o ct_lline24.o ct_solid.o \
        ct_solidmm.o ct_solidhi.o ct_FillSt.o ct_alloc.o ct_pci.o ct_teblt8.o \
        ct_teblt8mm.o ct_teblt8hi.o ct_textblt.o ct_colexp.o ct_colexpmm.o \
-       ct_colexphi.o
+       ct_colexphi.o ct_accel.o ct_accelmm.o ct_accelhi.o
+#else
+SRCS = ct_driver.c ct_bank.s ct_cursor.c ct_alloc.c ct_pci.c ct_accel.c \
+       ct_accelmm.c ct_accelhi.c
 
-DEFINES = -DPSZ=8 -DCT_LINE_ACCL -DCT_POST_312F_ACCL -DCT_24BPP_TEXT
+OBJS = ct_driver.o ct_bank.o ct_cursor.o ct_alloc.o ct_pci.o ct_accel.o \
+       ct_accelmm.o ct_accelhi.o
+#endif
+
+#ifdef OLD_ACCL
+XCOMM The old (pre-XAA) accel code can be used by adding -DCT_OLD_ACCL_CODE
+XCOMM to DEFINES. However only do this if OLD_ACCL is defined
+DEFINES = -DPSZ=8 -DCT_OLD_ACCL_CODE
+#else
+DEFINES = -DPSZ=8
+#endif
 
 #if XF86LinkKit
 INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
 #else
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
            -I$(SERVERSRC)/cfb -I$(SERVERSRC)/mfb \
-           -I$(SERVERSRC)/mi -I../../vga -I$(SERVERSRC)/include \
-	   -I$(INCLUDESRC) -I$(FONTINCSRC)
+           -I$(SERVERSRC)/mi -I../../vga -I../../../xaa \
+           -I$(SERVERSRC)/include \
+	   -I$(XINCLUDESRC) -I$(FONTINCSRC)
 #endif
 
 #if MakeHasPosixVariableSubstitutions
@@ -50,6 +62,7 @@ NormalAsmObjectRule()
 
 NormalRelocatableTarget(ct_drv,$(OBJS))
 
+#ifdef OLD_ACCL
 ObjectFromSpecialSource(ct_seg, ct_line, -DPOLYSEGMENT)
 ObjectFromSpecialSource(ct_blitmm, ct_blitter, -DCHIPS_MMIO)
 ObjectFromSpecialSource(ct_solidmm, ct_solid, -DCHIPS_MMIO)
@@ -63,6 +76,10 @@ ObjectFromSpecialSource(ct_blithi, ct_blitter, -DCHIPS_MMIO -DCHIPS_HIQV)
 ObjectFromSpecialSource(ct_solidhi, ct_solid, -DCHIPS_MMIO -DCHIPS_HIQV)
 ObjectFromSpecialSource(ct_teblt8hi, ct_teblt8, -DCHIPS_MMIO -DCHIPS_HIQV)
 ObjectFromSpecialSource(ct_colexphi, ct_colexp, -DCHIPS_MMIO -DCHIPS_HIQV)
+#else
+ObjectFromSpecialSource(ct_accelmm, ct_accel, -DCHIPS_MMIO)
+ObjectFromSpecialSource(ct_accelhi, ct_accel, -DCHIPS_MMIO -DCHIPS_HIQV)
+#endif
 
 InstallLinkKitNonExecFile(ct_driver.c,$(LINKKITDIR)/drivers/vga256/chips)
 InstallLinkKitNonExecFile(ct_bank.s,$(LINKKITDIR)/drivers/vga256/chips)
@@ -86,6 +103,9 @@ InstallLinkKitNonExecFile(ct_lline.h,$(LINKKITDIR)/drivers/vga256/chips)
 InstallLinkKitNonExecFile(ct_teblt8.c,$(LINKKITDIR)/drivers/vga256/chips)
 InstallLinkKitNonExecFile(ct_textblt.s,$(LINKKITDIR)/drivers/vga256/chips)
 InstallLinkKitNonExecFile(ct_colexp.c,$(LINKKITDIR)/drivers/vga256/chips)
+InstallLinkKitNonExecFile(ct_accel.c,$(LINKKITDIR)/drivers/vga256/chips)
 
+#ifndef OS2Architecture
 DependTarget()
+#endif
 

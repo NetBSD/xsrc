@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_video.c,v 3.12 1996/10/03 08:38:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_video.c,v 3.14.2.1 1997/05/03 09:47:11 dawes Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: bsd_video.c /main/6 1995/12/28 17:16:32 kaleb $ */
+/* $XConsortium: bsd_video.c /main/10 1996/10/25 11:37:57 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -42,7 +42,9 @@
 /* Video Memory Mapping section                                            */
 /***************************************************************************/
 
+#ifndef __mips__
 #define _386BSD_MMAP_BUG
+#endif
 
 #ifdef _386BSD_MMAP_BUG
 /*
@@ -96,33 +98,27 @@ Bool warn;
 		useDevMem = TRUE;
 		return;
 	    } else {
+		/* This should not happen */
 		if (warn)
 		{
-		     ErrorF("%s checkDevMem: warning: failed to mmap %s (%s)\n",
-			    XCONFIG_PROBED, DEV_MEM, strerror(errno));
+		    ErrorF("%s checkDevMem: warning: failed to mmap %s (%s)\n",
+			   XCONFIG_PROBED, DEV_MEM, strerror(errno));
 		}
-	    }
-	} else {
-	    if (warn)
-	    { 
-		ErrorF("%s checkDevMem: warning: failed to open %s (%s)\n",
-		       XCONFIG_PROBED, DEV_MEM, strerror(errno));
+		useDevMem = FALSE;
+		return;
 	    }
 	}
 #ifndef HAS_APERTURE_DRV
-	if (warn) 
-	{
-	    ErrorF("\tlinear fb access unavailable\n");
+	if (warn)
+	{ 
+	    ErrorF("%s checkDevMem: warning: failed to open %s (%s)\n",
+		   XCONFIG_PROBED, DEV_MEM, strerror(errno));
+	    ErrorF("\tlinear framebuffer access unavailable\n");
 	} 
 	useDevMem = FALSE;
 	return;
 #else
-	/* Failed to mmap /dev/mem, try the aperture driver */
-	if (warn)
-	{
-	    ErrorF("\ttrying aperture driver\n");
-	}
-
+	/* Failed to open /dev/mem, try the aperture driver */
 	if ((fd = open(DEV_APERTURE, O_RDWR)) >= 0)
 	{
 	    /* Try to map a page at the VGA address */
@@ -134,6 +130,8 @@ Bool warn;
 		munmap((caddr_t)base, 4096);
 		devMemFd = fd;
 		useDevMem = TRUE;
+		ErrorF("%s checkDevMem: using aperture driver %s\n",
+		       XCONFIG_PROBED, DEV_APERTURE);
 		return;
 	    } else {
 
@@ -146,14 +144,14 @@ Bool warn;
 	} else {
 	    if (warn)
 	    {
-		ErrorF("%s checkDevMem: warning: failed to open %s (%s)\n",
-		   XCONFIG_PROBED, DEV_APERTURE, strerror(errno));
+		ErrorF("%s checkDevMem: warning: failed to open %s and %s\n\t(%s)\n",
+		   XCONFIG_PROBED, DEV_MEM, DEV_APERTURE, strerror(errno));
 	    }
 	}
 	
 	if (warn)
 	{
-	    ErrorF("\tlinear fb access unavailable\n");
+	    ErrorF("\tlinear framebuffer access unavailable\n");
 	}
 	useDevMem = FALSE;
 	return;
@@ -237,7 +235,11 @@ unsigned long Size;
 	}
 	base = (pointer)mmap(0, Size, PROT_READ|PROT_WRITE, MAP_FILE,
 			     xf86Info.screenFd,
+#ifdef __mips__
+			     (unsigned long)Base);
+#else
 			     (unsigned long)Base - 0xA0000);
+#endif
 	if (base == (pointer)-1)
 	{
 	    FatalError("xf86MapVidMem: Could not mmap /dev/vga (%s)\n",
@@ -384,6 +386,89 @@ void xf86DisableIOPrivs()
 
 #endif /* USE_I386_IOPL */
 
+
+#ifdef USE_ARC_MMAP
+
+static Bool ScreenEnabled[MAXSCREENS];
+static Bool ExtendedEnabled = FALSE;
+static Bool InitDone = FALSE;
+
+void
+xf86ClearIOPortList(ScreenNum)
+int ScreenNum;
+{
+	if (!InitDone)
+	{
+		int i;
+		for (i = 0; i < MAXSCREENS; i++)
+			ScreenEnabled[i] = FALSE;
+		InitDone = TRUE;
+	}
+	return;
+}
+
+void
+xf86AddIOPorts(ScreenNum, NumPorts, Ports)
+int ScreenNum;
+int NumPorts;
+unsigned *Ports;
+{
+	return;
+}
+
+void
+xf86EnableIOPorts(ScreenNum)
+int ScreenNum;
+{
+	int i;
+	int fd;
+	pointer base;
+
+	ScreenEnabled[ScreenNum] = TRUE;
+
+	if (ExtendedEnabled)
+		return;
+
+	if ((fd = open("/dev/ttyC0", O_RDWR)) >= 0) {
+		/* Try to map a page at the pccons I/O space */
+		base = (pointer)mmap((caddr_t)0, 65536, PROT_READ|PROT_WRITE,
+				MAP_FILE, fd, (off_t)0x0000);
+
+		if (base != (pointer)-1) {
+			IOPortBase = base;
+		}
+		else {
+			ErrorF("EnableIOPorts: failed to mmap %s (%s)\n",
+				"/dev/ttyC0", strerror(errno));
+		}
+	}
+	else {
+		ErrorF("EnableIOPorts: failed to open %s (%s)\n",
+			"/dev/ttyC0", strerror(errno));
+	}
+	
+	ExtendedEnabled = TRUE;
+
+	return;
+}
+
+void
+xf86DisableIOPorts(ScreenNum)
+int ScreenNum;
+{
+	int i;
+
+	ScreenEnabled[ScreenNum] = FALSE;
+
+	return;
+}
+
+void xf86DisableIOPrivs()
+{
+}
+
+#endif /* USE_ARC_MMAP */
+
 /***************************************************************************/
 /* Interrupt Handling section                                              */
 /***************************************************************************/
@@ -391,11 +476,13 @@ void xf86DisableIOPrivs()
 Bool xf86DisableInterrupts()
 {
 
+#if !defined(__mips__)
 #ifdef __GNUC__
 	__asm__ __volatile__("cli");
 #else 
 	asm("cli");
 #endif /* __GNUC__ */
+#endif /* __mips__ */
 
 	return(TRUE);
 }
@@ -403,11 +490,13 @@ Bool xf86DisableInterrupts()
 void xf86EnableInterrupts()
 {
 
+#if !defined(__mips__)
 #ifdef __GNUC__
 	__asm__ __volatile__("sti");
 #else 
 	asm("sti");
 #endif /* __GNUC__ */
+#endif /* __mips__ */
 
 	return;
 }

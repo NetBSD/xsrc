@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/hgc1280/hgc1280HW.h,v 3.1 1996/02/04 09:09:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/hgc1280/hgc1280HW.h,v 3.2 1996/12/23 06:48:19 dawes Exp $ */
 /*
  * MONO: Driver family for interlaced and banked monochrome video adaptors
  * Pascal Haible 8/93, 3/94, 4/94 haible@IZFM.Uni-Stuttgart.DE
@@ -7,7 +7,7 @@
  *
  * see mono/COPYRIGHT for copyright and disclaimers.
  */
-/* $XConsortium: hgc1280HW.h /main/3 1995/11/12 20:20:26 kaleb $ */
+/* $XConsortium: hgc1280HW.h /main/4 1996/02/21 17:49:41 kaleb $ */
 
 
 #include "compiler.h"	/*	void outb(port,val);

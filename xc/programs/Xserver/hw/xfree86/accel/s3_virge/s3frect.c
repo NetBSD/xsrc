@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3frect.c,v 3.5 1996/10/18 15:01:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3frect.c,v 3.7.2.3 1997/05/24 08:35:59 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -43,7 +43,7 @@ PERFORMANCE OF THIS SOFTWARE.
  * Snarfed Hans Nasten's simple pixmap expansion cache from Mach-8 server
  * -- David Wexelblat <dwex@xfree86.org>, July 12, 1994
  */
-/* $XConsortium: s3frect.c /main/5 1995/12/29 10:30:58 kaleb $ */
+/* $XConsortium: s3frect.c /main/6 1996/10/27 18:06:58 kaleb $ */
 
 
 /*
@@ -113,13 +113,13 @@ DoCacheExpandPixmap(pci)
    SETB_CMD_SET(s3_gcmd | CMD_BITBLT | CMD_AUTOEXEC |
 		INC_Y | INC_X | ROP_S );
 
-   while (cur_w * 2 <= pci->w) {
+   while ((cur_w << 1) /*cur_w * 2*/ <= pci->w) {
       SETB_BLT(pci->x, pci->y,
 	       pci->x + cur_w, pci->y,
 	       cur_w - 1, cur_h,
 	       INC_X);
 
-      cur_w *= 2;
+      cur_w <<= 1 /*cur_w *= 2*/;
    }
    if (cur_w != pci->w) {
       SETB_BLT(pci->x, pci->y,
@@ -131,13 +131,13 @@ DoCacheExpandPixmap(pci)
    }
 
    /* Expand in the y direction */
-   while (cur_h * 2 <= pci->h) {
+   while ((cur_h << 1) /*cur_h * 2*/ <= pci->h) {
       SETB_BLT(pci->x, pci->y,
 	       pci->x, pci->y + cur_h,
 	       cur_w - 1, cur_h,
 	       INC_X);
 
-      cur_h *= 2;
+      cur_h <<= 1 /*cur_h *= 2*/;
    }
    if (cur_h != pci->h) {
       SETB_BLT(pci->x, pci->y,
@@ -146,7 +146,7 @@ DoCacheExpandPixmap(pci)
 	       INC_X);
    }
 
-   WaitQueue(1);
+   WaitIdle();
    SETB_CMD_SET(CMD_NOP);
    UNBLOCK_CURSOR;
 }
@@ -380,7 +380,7 @@ DoCacheImageFill(pci, x, y, w, h, pox, poy, fgalu, bgalu,
 	       INC_X);
    }
 
-   WaitQueue(1);
+   WaitIdle();
    SETB_CMD_SET(CMD_NOP);
    UNBLOCK_CURSOR;
 }
@@ -478,7 +478,7 @@ s3PolyFillRect(pDrawable, pGC, nrectFill, prectInit)
    int   xrot, yrot;
    CacheInfoPtr pci;
 
-   if (!xf86VTSema || ((pGC->planemask & s3BppPMask) != s3BppPMask))
+   if (!xf86VTSema /*|| ((pGC->planemask & s3BppPMask) != s3BppPMask)*/)
    {
       if (xf86VTSema) WaitIdleEmpty();
       switch (s3InfoRec.bitsPerPixel) {
@@ -636,7 +636,7 @@ s3PolyFillRect(pDrawable, pGC, nrectFill, prectInit)
 	      pboxClipped++;
 	   }
 
-	   WaitQueue(1);
+	   WaitIdle();
 	   SETB_CMD_SET(CMD_NOP);
 	   UNBLOCK_CURSOR;
 	   break;

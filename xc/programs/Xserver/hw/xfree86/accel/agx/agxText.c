@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxText.c,v 3.6 1996/02/04 08:58:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxText.c,v 3.7 1996/12/23 06:33:02 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  * Copyright 1994 by Henry A. Worth, Sunnyvale, California.
@@ -25,7 +25,7 @@
  * Modified for the AGX by Henry A. Worth (haw30@eng.amdahl.com)
  * 
  */
-/* $XConsortium: agxText.c /main/5 1995/11/13 10:07:31 kaleb $ */
+/* $XConsortium: agxText.c /main/6 1996/02/21 17:18:34 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

@@ -1,12 +1,13 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/S3gendac.c,v 3.17 1996/10/06 13:16:31 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/S3gendac.c,v 3.23.2.2 1997/05/11 02:56:20 dawes Exp $ */ 
 /*
  * Progaming of the S3 gendac programable clocks, from the S3 Gendac
  * programing documentation by S3 Inc. 
  * Jon Tombs <jon@esix2.us.es>
  * Also used for GenDAC and GenDAC-like chips on non-S3 chipsets.
  */
-/* $XConsortium: S3gendac.c /main/9 1995/12/28 17:16:09 kaleb $ */
+/* $XConsortium: S3gendac.c /main/16 1996/10/25 14:11:48 kaleb $ */
  
+#include <math.h>
 #include "Xfuncproto.h"
 #include "S3gendac.h" 
 #include "compiler.h"
@@ -14,7 +15,6 @@
 #include "xf86.h"
 #include "xf86_OSlib.h"
 #include "xf86_HWlib.h"
-#include <math.h>
 
 #define CLK_MCLK         10
 
@@ -62,7 +62,7 @@ int reg, unsigned char data1, unsigned char data2
 static int commonSetClock( 
 #if NeedFunctionPrototypes
    long freq, int clock,
-   int min_m, int min_n, int min_n2, int max_n2, int pll_type,
+   int min_m, int min_n1, int max_n1, int min_n2, int max_n2, int pll_type,
    long freq_min, long freq_max
 #endif
 );     
@@ -72,7 +72,7 @@ S3gendacSetClock(freq, clk)
 long freq;
 int clk;
 {
-   return commonSetClock(freq, clk, 1, 1, 0, 3, PLL_S3GENDAC, 100000, 250000);
+   return commonSetClock(freq, clk, 1, 1, 31, 0, 3, PLL_S3GENDAC, 100000, 250000);
 }
 
 int
@@ -80,7 +80,7 @@ ET4000gendacSetClock(freq, clk)
 long freq;
 int clk;
 {
-   return commonSetClock(freq, clk, 1, 1, 0, 3, PLL_ET4000GENDAC, 100000, 270000);
+   return commonSetClock(freq, clk, 1, 1, 31, 0, 3, PLL_ET4000GENDAC, 100000, 270000);
 }
 
 int
@@ -88,7 +88,7 @@ ET6000SetClock(freq, clk)
 long freq;
 int clk;
 {
-   return commonSetClock(freq, clk, 1, 1, 0, 3, PLL_ET6000, 100000, 270000);
+   return commonSetClock(freq, clk, 1, 1, 31, 0, 3, PLL_ET6000, 100000, 270000);
 }
 
 int
@@ -96,7 +96,7 @@ ET4000gendacSetpixmuxClock(freq, clk)
 long freq;
 int clk;
 {
-   return commonSetClock(freq, clk, 1, 1, 2, 3, PLL_ET4000GENDAC, 100000, 270000);
+   return commonSetClock(freq, clk, 1, 1, 31, 2, 3, PLL_ET4000GENDAC, 100000, 270000);
 }
 
 int
@@ -104,7 +104,7 @@ ARK2000gendacSetClock(freq, clk)
 long freq;
 int clk;
 {
-   return commonSetClock(freq, clk, 1, 1, 0, 3, PLL_ARK2000GENDAC, 100000, 270000);
+   return commonSetClock(freq, clk, 1, 1, 31, 0, 3, PLL_ARK2000GENDAC, 100000, 270000);
 }
 
 int
@@ -112,7 +112,7 @@ ICS5342SetClock(freq, clk)
 long freq;
 int clk;
 {
-   return commonSetClock(freq, clk, 1, 1, 1, 3, PLL_S3GENDAC, 100000, 250000);
+   return commonSetClock(freq, clk, 1, 1, 31, 1, 3, PLL_S3GENDAC, 100000, 270000);
 }
 
 int
@@ -120,7 +120,15 @@ S3TrioSetClock(freq, clk)
 long freq;
 int clk;
 {
-   return commonSetClock(freq, clk, 1, 1, 0, 3, PLL_S3TRIO, 135000, 270000);
+   return commonSetClock(freq, clk, 1, 1, 31, 0, 3, PLL_S3TRIO, 135000, 270000);
+}
+
+int
+S3Trio64V2SetClock(freq, clk)
+long freq;
+int clk;
+{
+   return commonSetClock(freq, clk, 1, 1, 31, 0, 4, PLL_S3TRIO, 170000, 340000);
 }
 
 int
@@ -129,21 +137,32 @@ long freq;
 int clk;
 {
    if (clk != CLK_MCLK)
-      return commonSetClock(freq, clk, 0, 0, 0, 4, PLL_S3TRIO, 220000, 440000);
+      return commonSetClock(freq, clk, 0, 0, 31, 0, 4, PLL_S3TRIO, 220000, 440000);
    else
-      return commonSetClock(freq, clk, 0, 0, 0, 3, PLL_S3TRIO, 220000, 440000);
+      return commonSetClock(freq, clk, 0, 0, 31, 0, 3, PLL_S3TRIO, 220000, 440000);
+}
+
+int
+S3AuroraSetClock(freq, clk)
+long freq;
+int clk;
+{
+   if (clk == CLK_MCLK)
+      return commonSetClock(freq, clk, 1, 1, 31, 0, 3, PLL_S3TRIO, 135000, 270000);
+   else
+      return commonSetClock(freq, clk, 1, 1, 63, 0, 3, PLL_S3TRIO, 135000, 270000);
 }
 
 int
 #if NeedFunctionPrototypes
-commonCalcClock(long freq, int min_m, int min_n, int min_n2, int max_n2, 
+commonCalcClock(long freq, int min_m, int min_n1, int max_n1, int min_n2, int max_n2, 
 		long freq_min, long freq_max,
 		unsigned char * mdiv, unsigned char * ndiv)
 #else
-commonCalcClock(freq, min_m, min_n, min_n2, max_n2, 
+commonCalcClock(freq, min_m, min_n1, max_n1, min_n2, max_n2, 
 		freq_min, freq_max, mdiv, ndiv)
 long freq;
-int min_m, min_n, min_n2, max_n2;
+int min_m, min_n1, max_n1, min_n2, max_n2;
 long freq_min, freq_max;
 unsigned char *mdiv, *ndiv;
 #endif
@@ -174,7 +193,7 @@ unsigned char *mdiv, *ndiv;
    best_diff = ffreq;
    
    for (n2=min_n2; n2<=max_n2; n2++) {
-      for (n1 = min_n+2; n1 <= 31+2; n1++) {
+      for (n1 = min_n1+2; n1 <= max_n1+2; n1++) {
 	 m = (int)(ffreq * n1 * (1<<n2) + 0.5) ;
 	 if (m < min_m+2 || m > 127+2) 
 	    continue;
@@ -200,26 +219,29 @@ unsigned char *mdiv, *ndiv;
 	  best_m-2, best_n1-2, best_n2);
 #endif
   
-   *ndiv = (best_n1 - 2) | (best_n2 << 5);
+   if (max_n1 == 63)
+      *ndiv = (best_n1 - 2) | (best_n2 << 6);
+   else
+      *ndiv = (best_n1 - 2) | (best_n2 << 5);
    *mdiv = best_m - 2;
 }
   
 static int
 #if NeedFunctionPrototypes
-commonSetClock(long freq, int clk, int min_m, int min_n, int min_n2, 
+commonSetClock(long freq, int clk, int min_m, int min_n1, int max_n1, int min_n2, 
 	       int max_n2, int pll_type, long freq_min, long freq_max)
 #else
-commonSetClock(freq, clk, min_m, min_n, min_n2, max_n2, pll_type, 
+commonSetClock(freq, clk, min_m, min_n1, max_n1, min_n2, max_n2, pll_type, 
 	       freq_min, freq_max)
 long freq;
 int clk;
-int min_m, min_n, min_n2, max_n2, pll_type;
+int min_m, min_n1, max_n1, min_n2, max_n2, pll_type;
 long freq_min, freq_max;
 #endif
 {
    unsigned char m, n;
 
-   commonCalcClock(freq, min_m, min_n, min_n2, max_n2, freq_min, 
+   commonCalcClock(freq, min_m, min_n1, max_n1, min_n2, max_n2, freq_min, 
 		   freq_max, &m, &n);
 
    switch(pll_type)
@@ -417,6 +439,12 @@ settriopll(clk, m, n)
 	 outb(0x3c5, n);
 	 outb(0x3c4, 0x13);
 	 outb(0x3c5, m);
+
+	 outb(0x3c4, 0x15);
+	 tmp = inb(0x3c5) & ~0x21;
+	 outb(0x3c5, tmp | 0x02);
+	 outb(0x3c5, tmp | 0x22);
+	 outb(0x3c5, tmp | 0x02);
       }
       else {		/* MCLK */
 	 index2 = 0x10;
@@ -426,13 +454,14 @@ settriopll(clk, m, n)
 	 outb(0x3c5, m);
 	 outb(0x3c4, 0x1a);
 	 outb(0x3c5, n);
-      }
 
-      outb(0x3c4, 0x15);
-      tmp = inb(0x3c5);
-      outb(0x3c4, tmp & ~0x20);
-      outb(0x3c4, tmp |  0x20);
-      outb(0x3c4, tmp & ~0x20);
+	 outb(0x3c4, 0x15);
+	 tmp = inb(0x3c5) & ~0x21;
+	 outb(0x3c5, tmp | 0x01);
+	 outb(0x3c5, tmp | 0x21);
+	 outb(0x3c5, tmp | 0x01);
+	 outb(0x3c5, tmp);
+      }
 
       outb(0x3c4, 0x08);
       outb(0x3c5, 0x00);  /* lock extended CR9-CR18 */
@@ -445,14 +474,15 @@ int
 #if NeedFunctionPrototypes
 gendacMNToClock(unsigned char m,unsigned char n)
 #else
-gendacMNToClockValue(m,n)
+gendacMNToClock(m,n)
      unsigned char m;
      unsigned char n;
 #endif
 {
 	int rtn;
 
-	rtn = 14318 * (m + 2) / ((n & 0x1f)+2) / (1 << ((n & 0x60) >> 5)) ;
+	rtn = (1431818 * (m + 2) / ((n & 0x1f)+2) /
+		(1 << ((n & 0x60) >> 5))) / 100;
 
 	return rtn;
 }

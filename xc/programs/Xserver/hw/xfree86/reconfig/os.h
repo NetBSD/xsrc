@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/os.h,v 3.5 1996/08/11 13:02:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/os.h,v 3.6 1996/12/23 06:51:43 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: os.h /main/3 1995/11/13 06:28:56 kaleb $ */
+/* $XConsortium: os.h /main/5 1996/10/19 18:08:25 kaleb $ */
 
 /* from <X11/Xosdefs.h> */
 #ifdef NOSTDHDRS

@@ -1,3 +1,10 @@
+/* $XConsortium: tclxkbui.c /main/2 1996/10/19 19:06:46 kaleb $ */
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxkbui.c,v 3.2 1996/12/27 06:54:25 dawes Exp $ */
 /* 
  * tkXkbUIWin.c --
  *
@@ -379,7 +386,8 @@ XkbUIWinEventProc(clientData, eventPtr)
 	if (xkbuiPtr->updatePending) {
 	    Tk_CancelIdleCall(XkbUIWinDisplay, (ClientData) xkbuiPtr);
 	}
-	Tk_EventuallyFree((ClientData) xkbuiPtr, XkbUIWinDestroy);
+	Tk_EventuallyFree((ClientData) xkbuiPtr,
+			  (Tcl_FreeProc *)XkbUIWinDestroy);
     }
 }
 

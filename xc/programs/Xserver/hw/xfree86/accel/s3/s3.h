@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3.h,v 3.41 1996/09/14 13:09:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3.h,v 3.48.2.1 1997/05/06 13:25:37 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -26,7 +26,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  *
 */
-/* $XConsortium: s3.h /main/17 1996/01/31 10:04:41 kaleb $ */
+/* $XConsortium: s3.h /main/23 1996/10/23 18:42:39 kaleb $ */
 
 
 #ifndef _S3_H_
@@ -126,17 +126,46 @@
 #endif
 
 typedef struct {
-   Bool (*ChipProbe)();
-   char *(*ChipIdent)();
-   void (*ChipEnterLeaveVT)();
-   Bool (*ChipInitialize)();
-   void (*ChipAdjustFrame)();
-   Bool (*ChipSwitchMode)();
+   Bool (*ChipProbe)(
+#if NeedNestedPrototypes
+	void
+#endif
+   );
+   char *(*ChipIdent)(
+#if NeedNestedPrototypes
+	int
+#endif
+   );
+   void (*ChipEnterLeaveVT)(
+#if NeedNestedPrototypes
+	int,
+	int
+#endif
+   );
+   Bool (*ChipInitialize)(
+#if NeedNestedPrototypes
+	int		/* scr_index */,
+	ScreenPtr	/* pScreen */,
+	int		/* argc */,
+	char **		/* argv */
+#endif
+   );
+   void (*ChipAdjustFrame)(
+#if NeedNestedPrototypes
+	int		/* x */,
+	int		/* y */
+   );
+#endif
+   Bool (*ChipSwitchMode)(
+#if NeedNestedPrototypes
+	DisplayModePtr	/* modes */
+   );
+#endif
 } s3VideoChipRec, *s3VideoChipPtr;
 
 extern ScrnInfoRec s3InfoRec;
-extern short s3ChipId;
-extern int s3ChipRev;
+extern unsigned short s3ChipId;
+extern unsigned int s3ChipRev;
 
 #ifndef LINKKIT
 _XFUNCPROTOBEGIN
@@ -187,31 +216,66 @@ extern int s3_968_DashBug;
 
 #define UNKNOWN_DAC       -1
 #define NORMAL_DAC         0
-#define BT485_DAC          1
-#define ATT20C505_DAC      2
-#define TI3020_DAC         3
-#define ATT498_DAC         4
+#define S3_TRIO32_DAC      1
+#define S3_TRIO64_DAC      2
+#define TI3026_DAC         3
+#define TI3030_DAC         4
+#define TI3020_DAC         5
+#define TI3025_DAC         6
+#define BT485_DAC          7
+#define ATT20C505_DAC      8
+#define ATT22C498_DAC      9
+#define ATT498_DAC        10
 #define ATT20C498_DAC      ATT498_DAC
-#define TI3025_DAC         5
-#define ATT20C490_DAC      6
-#define SC15025_DAC        7
-#define STG1700_DAC        8
-#define S3_SDAC_DAC        9
-#define S3_GENDAC_DAC     10
-#define ATT22C498_DAC     11
-#define S3_TRIO32_DAC     12
-#define S3_TRIO64_DAC     13
-#define TI3026_DAC        14
-#define IBMRGB52x_DAC     15
-#define IBMRGB524_DAC     16
-#define IBMRGB525_DAC     17
-#define IBMRGB528_DAC     18
-#define STG1703_DAC       19
-#define SC1148x_M2_DAC    20
-#define SC1148x_M3_DAC    21
-#define ATT20C409_DAC     22
-#define TI3030_DAC        23
-#define	SS2410_DAC	  24
+#define ATT20C409_DAC     11
+#define SC15025_DAC       12
+#define STG1700_DAC       13
+#define STG1703_DAC       14
+#define IBMRGB524_DAC     15
+#define IBMRGB525_DAC     16
+#define IBMRGB528_DAC     17
+#define S3_SDAC_DAC       18
+#define S3_GENDAC_DAC     19
+#define ATT20C490_DAC     20
+#define	SS2410_DAC	  21
+#define SC1148x_M2_DAC    22
+#define S3_TRIO64V2_DAC   23
+
+
+#define SC1148x_M3_DAC    SC1148x_M2_DAC
+
+typedef struct {
+    char *DacName;
+    int DacSpeed;
+    Bool (*DacProbe)(
+#if NeedNestedPrototypes
+	void
+#endif
+    );
+    int (*PreInit)(
+#if NeedNestedPrototypes
+	void
+#endif
+    );
+    void (*DacRestore)(
+#if NeedNestedPrototypes
+	void
+#endif
+    );
+    void (*DacSave)(
+#if NeedNestedPrototypes
+	void
+#endif
+    );
+    int (*DacInit)(
+#if NeedNestedPrototypes
+	DisplayModePtr
+#endif
+	);
+} s3RamdacInfo;
+
+extern s3RamdacInfo s3Ramdacs[];
+
 
 #define DAC_IS_BT485_SERIES	(s3RamdacType == BT485_DAC || \
 				 s3RamdacType == ATT20C505_DAC)
@@ -232,7 +296,8 @@ extern int s3_968_DashBug;
 #define DAC_IS_GENDAC           (s3RamdacType == S3_GENDAC_DAC)
 #define DAC_IS_TRIO32           (s3RamdacType == S3_TRIO32_DAC)
 #define DAC_IS_TRIO64           (s3RamdacType == S3_TRIO64_DAC)
-#define DAC_IS_TRIO             (DAC_IS_TRIO32 || DAC_IS_TRIO64)
+#define DAC_IS_TRIO64V2         (s3RamdacType == S3_TRIO64V2_DAC)
+#define DAC_IS_TRIO             (DAC_IS_TRIO32 || DAC_IS_TRIO64 || DAC_IS_TRIO64V2)
 #define DAC_IS_IBMRGB524        (s3RamdacType == IBMRGB524_DAC)
 #define DAC_IS_IBMRGB525        (s3RamdacType == IBMRGB525_DAC)
 #define DAC_IS_IBMRGB528        (s3RamdacType == IBMRGB528_DAC)
@@ -315,6 +380,11 @@ Bool s3SaveScreen(
 Bool s3SwitchMode(
 #if NeedFunctionPrototypes
     DisplayModePtr 
+#endif
+);
+void s3DPMSSet(
+#if NeedFunctionPrototypes
+    int PowerManagementMode
 #endif
 );
 void s3AdjustFrame(

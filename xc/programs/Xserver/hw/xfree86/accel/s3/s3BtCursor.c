@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3BtCursor.c,v 3.11 1996/03/31 11:48:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3BtCursor.c,v 3.14 1997/01/08 20:33:40 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: s3BtCursor.c /main/6 1995/12/17 08:23:42 kaleb $ */
+/* $XConsortium: s3BtCursor.c /main/8 1996/04/01 18:06:23 kaleb $ */
 
 #define NEED_EVENTS
 #include <X.h>
@@ -44,6 +44,10 @@
 
 static unsigned short s3BtLowBits[] = { 0x3C8, 0x3C9, 0x3C6, 0x3C7 };
 static unsigned char s3BtYPosMask = 0xFF;
+
+#define MAX_CURS 64
+
+extern Bool tmp_useSWCursor;
 
 #ifndef __GNUC__
 # define __inline__ /**/
@@ -161,10 +165,17 @@ unsigned char s3InBtStatReg()
  * These three functions partition the work so it can be done more
  * efficiently.
  */
+#if NeedFunctionPrototypes
+static __inline__ void s3StartBtData(
+	unsigned short addr_reg,
+	unsigned char addr,
+	unsigned short data_reg)
+#else
 static __inline__ void s3StartBtData(addr_reg, addr, data_reg)
 unsigned short addr_reg;
 unsigned char addr;
 unsigned short data_reg;
+#endif
 {
    unsigned char tmp;
 
@@ -175,14 +186,26 @@ unsigned short data_reg;
    tmp = inb(vgaCRReg) & 0xFC;
    outb(vgaCRReg, tmp | ((data_reg & 0x0C) >> 2));
 }
+
+#if NeedFunctionPrototypes
+static __inline__ void s3OutBtData(
+	unsigned short reg,
+	unsigned char data)
+#else
 static __inline__ void s3OutBtData(reg, data)
 unsigned short reg;
 unsigned char data;
+#endif
 {
    /* Output data to RAMDAC */
    outb(s3BtLowBits[reg & 0x03], data);
 }
+
+#if NeedFunctionPrototypes
+static __inline__ void s3EndBtData(void)
+#else
 static __inline__ void s3EndBtData()
+#endif
 {
    unsigned char tmp;
 
@@ -204,11 +227,16 @@ s3BtRealizeCursor(pScr, pCurs)
    register int i, j;
    unsigned char *pServMsk;
    unsigned char *pServSrc;
-   int   index = pScr->myNum;
-   pointer *pPriv = &pCurs->bits->devPriv[index];
+   int   indx2 = pScr->myNum;
+   pointer *pPriv = &pCurs->bits->devPriv[indx2];
    int   wsrc, h;
    unsigned char *ram, *plane0, *plane1;
    CursorBitsPtr bits = pCurs->bits;
+
+   if (bits->height > MAX_CURS || bits->width > MAX_CURS) {
+      extern miPointerSpriteFuncRec miSpritePointerFuncs;
+      return (miSpritePointerFuncs.RealizeCursor)(pScr, pCurs);
+   }
 
    if (pCurs->bits->refcnt > 1)
       return TRUE;
@@ -223,8 +251,6 @@ s3BtRealizeCursor(pScr, pCurs)
 
    pServSrc = (unsigned char *)bits->source;
    pServMsk = (unsigned char *)bits->mask;
-
-#define MAX_CURS 64
 
    h = bits->height;
    if (h > MAX_CURS)
@@ -317,6 +343,12 @@ s3BtMoveCursor(pScr, x, y)
    if (!xf86VTSema)
       return;
 
+   if (tmp_useSWCursor) {
+      extern miPointerSpriteFuncRec miSpritePointerFuncs;
+      (miSpritePointerFuncs.MoveCursor)(pScr, x, y);
+      return;
+   }
+
    if (s3BlockCursor)
       return;
    
@@ -402,7 +434,7 @@ s3BtLoadCursor(pScr, pCurs, x, y)
      CursorPtr pCurs;
      int x, y;
 {
-   int   index = pScr->myNum;
+   int   indx2 = pScr->myNum;
    register int   i, j;
    unsigned char *ram, *p, tmpcurs;
    extern int s3InitCursorFlag;
@@ -420,7 +452,7 @@ s3BtLoadCursor(pScr, pCurs, x, y)
    /* load colormap */
    s3BtRecolorCursor(pScr, pCurs);
 
-   ram = (unsigned char *)pCurs->bits->devPriv[index];
+   ram = (unsigned char *)pCurs->bits->devPriv[indx2];
 
    UNLOCK_SYS_REGS;
    BLOCK_CURSOR;

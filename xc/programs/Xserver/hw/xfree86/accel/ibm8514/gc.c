@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/gc.c,v 3.3 1996/02/04 09:01:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/gc.c,v 3.4 1996/12/23 06:37:49 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -51,7 +51,7 @@ PERFORMANCE OF THIS SOFTWARE.
 Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 
 */
-/* $XConsortium: gc.c /main/3 1995/11/12 17:02:57 kaleb $ */
+/* $XConsortium: gc.c /main/4 1996/02/21 17:24:26 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

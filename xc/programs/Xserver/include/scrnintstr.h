@@ -1,4 +1,4 @@
-/* $XConsortium: scrnintstr.h,v 5.24 94/04/17 20:26:06 dpw Exp $ */
+/* $XConsortium: scrnintstr.h /main/32 1996/09/28 17:14:32 rws $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -918,6 +918,7 @@ typedef struct _ScreenInfo {
     int		arraySize;
     int		numScreens;
     ScreenPtr	screens[MAXSCREENS];
+    int		numVideoScreens;
 } ScreenInfo;
 
 extern ScreenInfo screenInfo;

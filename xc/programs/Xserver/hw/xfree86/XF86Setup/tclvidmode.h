@@ -1,4 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclvidmode.h,v 3.1 1996/06/30 10:44:15 dawes Exp $ */
+/* $XConsortium: tclvidmode.h /main/2 1996/10/19 19:06:34 kaleb $ */
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclvidmode.h,v 3.3 1996/12/28 08:13:06 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/Xmd.h>
@@ -16,6 +22,33 @@ int TCL_XF86VidModeQueryVersion(
 );
 
 int TCL_XF86VidModeQueryExtension(
+#if NeedNestedPrototypes
+    ClientData	clientData,
+    Tcl_Interp	*interp,
+    int		argc,
+    char	**argv
+#endif
+);
+
+int TCL_XF86VidModeAddModeLine(
+#if NeedNestedPrototypes
+    ClientData	clientData,
+    Tcl_Interp	*interp,
+    int		argc,
+    char	**argv
+#endif
+);
+
+int TCL_XF86VidModeValidateModeLine(
+#if NeedNestedPrototypes
+    ClientData	clientData,
+    Tcl_Interp	*interp,
+    int		argc,
+    char	**argv
+#endif
+);
+
+int TCL_XF86VidModeDeleteModeLine(
 #if NeedNestedPrototypes
     ClientData	clientData,
     Tcl_Interp	*interp,
@@ -68,3 +101,13 @@ int TCL_XF86VidModeSwitchMode(
     char	**argv
 #endif
 );
+
+int TCL_XF86VidModeSwitchToMode(
+#if NeedNestedPrototypes
+    ClientData	clientData,
+    Tcl_Interp	*interp,
+    int		argc,
+    char	**argv
+#endif
+);
+

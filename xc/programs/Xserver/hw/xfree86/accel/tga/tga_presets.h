@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga_presets.h,v 3.0 1996/09/22 05:04:38 dawes Exp $ */
+/* $XConsortium: tga_presets.h /main/2 1996/10/24 10:56:25 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga_presets.h,v 3.1 1996/12/27 07:03:45 dawes Exp $ */
 
 /*
  * Copyright 1995,96 by Alan Hourihane, Wigan, England.

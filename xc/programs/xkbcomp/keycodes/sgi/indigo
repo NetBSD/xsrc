@@ -1,4 +1,4 @@
-// $XConsortium: sgi /main/4 1995/12/07 21:36:27 kaleb $
+// $XConsortium: indigo /main/1 1996/08/31 12:17:12 kaleb $
 default xkb_keycodes "pc101" {
     minimum= 10;
     maximum= 118;

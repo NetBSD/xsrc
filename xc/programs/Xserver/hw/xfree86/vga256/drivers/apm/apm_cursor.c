@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_cursor.c,v 3.1 1996/09/25 14:18:03 dawes Exp $ */
+/* $XConsortium: apm_cursor.c /main/3 1996/10/25 07:01:53 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_cursor.c,v 3.2.2.1 1997/05/31 13:34:41 dawes Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -67,13 +72,14 @@ Bool ApmCursorInit(pm, pScr)
 	char *pm;
 	ScreenPtr pScr;
 {
-	apmCursorHotX = 0;
-	apmCursorHotY = 0;
-
-	if (apmCursorGeneration != serverGeneration)
+	if (apmCursorGeneration != serverGeneration) {
 		if (!(miPointerInitialize(pScr, &apmPointerSpriteFuncs,
 		&xf86PointerScreenFuncs, FALSE)))
 			return FALSE;
+
+		apmCursorHotX = 0;
+		apmCursorHotY = 0;
+	}
 
 	apmCursorGeneration = serverGeneration;
 

@@ -1,3 +1,4 @@
+/* $XConsortium: tgainit.c /main/9 1996/10/27 18:07:33 kaleb $ */
 /*
  * Copyright 1995 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -21,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgainit.c,v 3.7 1996/10/18 15:02:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgainit.c,v 3.8 1996/12/27 07:03:52 dawes Exp $ */
 
 #include "tga.h"
 #include "tga_presets.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/xqueue.c,v 3.7 1996/08/14 14:32:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/xqueue.c,v 3.8 1996/12/23 06:51:28 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xqueue.c /main/2 1995/11/13 06:21:54 kaleb $ */
+/* $XConsortium: xqueue.c /main/8 1996/10/19 18:08:11 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

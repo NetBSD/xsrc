@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000vga.c,v 3.9 1996/03/10 12:03:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000vga.c,v 3.10 1996/12/23 06:40:56 dawes Exp $ */
 /*
  * Copyright 1994, Erik Nygren (nygren@mit.edu)
  *
@@ -19,7 +19,7 @@
  * Bank switching code added by David Moews (dmoews@xraysgi.ims.uconn.edu)
  *
  */
-/* $XConsortium: p9000vga.c /main/4 1995/11/12 18:19:40 kaleb $ */
+/* $XConsortium: p9000vga.c /main/6 1996/03/11 10:44:00 kaleb $ */
 
 #include "X.h"
 #include "input.h"

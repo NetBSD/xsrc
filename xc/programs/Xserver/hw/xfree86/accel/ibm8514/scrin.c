@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/scrin.c,v 3.4 1996/02/04 09:02:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/scrin.c,v 3.5 1996/12/23 06:38:04 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -37,7 +37,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XConsortium: scrin.c /main/5 1995/12/29 10:08:48 kaleb $ */
+/* $XConsortium: scrin.c /main/6 1996/02/21 17:25:23 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# $XConsortium: cvga16.sh /main/1 1995/09/04 19:40:40 kaleb $
-# $XFree86: xc/programs/Xserver/hw/xfree86/vga16/cvga16.sh,v 3.1 1996/02/04 09:10:44 dawes Exp $
+# $XConsortium: cvga16.sh /main/2 1996/02/21 17:55:24 kaleb $
+# $XFree86: xc/programs/Xserver/hw/xfree86/vga16/cvga16.sh,v 3.2 1996/12/23 06:51:51 dawes Exp $
 #
 # This script generates vga16Conf.c
 #

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsdi/bsdi_io.c,v 3.6 1996/08/10 13:07:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsdi/bsdi_io.c,v 3.7 1996/12/23 06:49:51 dawes Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: bsdi_io.c /main/5 1995/11/13 05:55:41 kaleb $ */
+/* $XConsortium: bsdi_io.c /main/10 1996/10/19 18:06:13 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

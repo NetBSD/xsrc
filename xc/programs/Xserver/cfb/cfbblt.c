@@ -31,7 +31,7 @@ Author: Keith Packard
 
 */
 /* $XConsortium: cfbblt.c,v 1.13 94/04/17 20:28:44 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/cfb/cfbblt.c,v 3.0 1996/06/29 09:05:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbblt.c,v 3.1 1996/12/09 11:50:52 dawes Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"
@@ -279,8 +279,8 @@ MROP_NAME(cfbDoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
 #else
 	    	memcpy(pdst, psrc, w);
 #endif
-		pdst += widthDst << 2;
-		psrc += widthSrc << 2;
+		pdst += widthDst << PWSH;
+		psrc += widthSrc << PWSH;
 	    }
 	}
 #else /* ! DO_MEMCPY */

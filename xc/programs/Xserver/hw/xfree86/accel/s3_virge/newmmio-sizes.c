@@ -1,6 +1,9 @@
+/* $XConsortium: newmmio-sizes.c /main/2 1996/10/25 11:33:52 kaleb $ */
 /* compile with
-   cc -I../../common -I../../../../../../X11 newmmio-sizes.c
+   cc -I../../common -I../../../../../../exports/include/X11 newmmio-sizes.c
    */
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/newmmio-sizes.c,v 3.2.2.2 1997/05/11 02:56:13 dawes Exp $ */
 
 #include "regs3v.h"
 
@@ -143,5 +146,5 @@ main()
    P(triangle3d,y01_y12);
    printf("%08x\n",CMD_RECT |
 /*MIX_MONO_PATT |*/
-                        INC_Y | INC_X | DRAW | MIX_PATT /*s3alu[pGC->alu]*/ );
+                        INC_Y | INC_X | DRAW   /*s3alu[pGC->alu]*/ );
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/vgaCmap.c,v 3.5 1996/02/04 09:00:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/vgaCmap.c,v 3.8 1997/01/18 06:54:01 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: vgaCmap.c /main/3 1995/11/12 16:37:36 kaleb $ */
+/* $XConsortium: vgaCmap.c /main/4 1996/02/21 17:22:09 kaleb $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -31,6 +31,13 @@
 #include "xf86.h"
 #include "vga.h"
 #include "w32.h"
+
+#ifdef XFreeXDGA
+#include "scrnintstr.h"
+#include "servermd.h"
+#define _XF86DGA_SERVER_
+#include "extensions/xf86dgastr.h"
+#endif
 
 #define NOMAPYET        (ColormapPtr) 0
 
@@ -125,7 +132,13 @@ vgaStoreColors(pmap, ndef, pdefs)
         cmap[1] = pdefs[i].green >> RamdacShift;
         cmap[2] = pdefs[i].blue  >> RamdacShift;
 
-        if (xf86VTSema && (!W32Blanked || pdefs[i].pixel != overscan))
+        if ((xf86VTSema 
+#ifdef XFreeXDGA
+	     || ((vga256InfoRec.directMode & XF86DGADirectGraphics)
+		 && !(vga256InfoRec.directMode & XF86DGADirectColormap))
+	     || (vga256InfoRec.directMode & XF86DGAHasColormap)
+#endif
+	    ) && (!W32Blanked || pdefs[i].pixel != overscan))
 	{
 	    outb(0x3C8, pdefs[i].pixel);
 	    GlennsIODelay();
@@ -184,7 +197,13 @@ vgaStoreColors(pmap, ndef, pdefs)
 	        overscan = tmp_overscan;
 	    }
 	    ((vgaHWPtr)vgaNewVideoState)->Attribute[OVERSCAN] = overscan;
-            if (xf86VTSema)
+            if (xf86VTSema
+#ifdef XFreeXDGA
+		|| ((vga256InfoRec.directMode & XF86DGADirectGraphics)
+		    && !(vga256InfoRec.directMode & XF86DGADirectColormap))
+		|| (vga256InfoRec.directMode & XF86DGAHasColormap)
+#endif
+	       )
 	    {
 		if (W32Blanked)
 		    set_clu_entry(overscan, black_cmap);
@@ -295,7 +314,6 @@ W32SaveScreen (pScreen, on)
     unsigned char state;
     unsigned char *cmap;
     unsigned char overscan; 
-    extern vgaPowerSaver;
 
     if (on)
 	SetTimeSinceLastInputEvent();
@@ -318,13 +336,15 @@ W32SaveScreen (pScreen, on)
 
 	    set_clu_entry(overscan, cmap);
 
-	    if (vgaPowerSaver && W32pCAndLater)
+#ifdef DPMSExtension
+	    if (DPMSEnabled && W32pCAndLater)
 	    {
 		outb(vgaIOBase + 4, 0x34);
 		GlennsIODelay();
 		outb(vgaIOBase + 5, state);
 		GlennsIODelay();
 	    }
+#endif
 	} else {
 	    state |= 0x21;
 	    W32Blanked = TRUE; 
@@ -337,13 +357,15 @@ W32SaveScreen (pScreen, on)
 	    outb(0x3C0, 0x00);         
 	    GlennsIODelay();
 
-	    if (vgaPowerSaver && W32pCAndLater)
+#ifdef DPMSExtension
+	    if (DPMSEnabled && W32pCAndLater)
 	    {
 		outb(vgaIOBase + 4, 0x34);
 		GlennsIODelay();
 		outb(vgaIOBase + 5, state);
 		GlennsIODelay();
 	    }
+#endif
 	}
     }
     return(TRUE);

@@ -66,8 +66,8 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: misc.h,v 1.69 95/03/03 01:54:22 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/include/misc.h,v 3.4 1996/04/15 11:34:33 dawes Exp $ */
+/* $XConsortium: misc.h /main/28 1996/12/02 10:22:01 lehors $ */
+/* $XFree86: xc/programs/Xserver/include/misc.h,v 3.5 1996/12/23 07:09:29 dawes Exp $ */
 #ifndef MISC_H
 #define MISC_H 1
 /*
@@ -183,10 +183,12 @@ typedef struct _xReq *xReqPtr;
  */
 #define lowbit(x) ((x) & (~(x) + 1))
 
-#undef MAXSHORT
+#ifndef MAXSHORT
 #define MAXSHORT 32767
-#undef MINSHORT
+#endif
+#ifndef MINSHORT
 #define MINSHORT -MAXSHORT 
+#endif
 
 
 /* some macros to help swap requests, replies, and events */

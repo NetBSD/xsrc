@@ -46,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: cfbhrzvert.c,v 1.8 94/04/17 20:28:51 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/cfb/cfbhrzvert.c,v 3.1 1996/08/25 14:05:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbhrzvert.c,v 3.2 1996/11/24 09:51:43 dawes Exp $ */
 #include "X.h"
 
 #include "gc.h"
@@ -331,6 +331,7 @@ int len;		/* length of line */
 
 /* vertical solid line */
 
+void
 cfbVertS(rop, and, xor, addrl, nlwidth, x1, y1, len)
 int rop;
 register unsigned long and, xor;

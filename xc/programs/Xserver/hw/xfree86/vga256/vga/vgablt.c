@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgablt.c,v 3.2 1996/02/04 09:15:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgablt.c,v 3.5 1997/01/12 10:45:33 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -27,7 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 Author: Keith Packard
 
 */
-/* $XConsortium: vgablt.c /main/3 1995/11/13 09:26:16 kaleb $ */
+/* $XConsortium: vgablt.c /main/4 1996/02/21 18:10:30 kaleb $ */
 /*
  * cfb copy area
  */
@@ -37,9 +37,14 @@ Author: Keith Packard
 #include	"fastblt.h"
 #include	"mergerop.h"
 
+#if PGSZ == 32
+#define LEFTSHIFT_AMT (5 - PWSH)
+#else /* PGSZ == 64 */
+#define LEFTSHIFT_AMT (6 - PWSH)
+#endif /* PGSZ */
 
 #ifdef notdef /* XXX fails right now, walks off end of pixmaps */
-#if defined (FAST_UNALIGNED_READS) && (PPW == 4)
+#if defined (FAST_UNALIGNED_READS) && (PSZ == 8)
 #define DO_UNALIGNED_BITBLT
 #endif
 #endif
@@ -47,17 +52,21 @@ Author: Keith Packard
 #if (MROP == Mcopy)
 #ifdef SPEEDUP
 void
-speedupvga256DoBitbltCopy(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
+speedupvga256DoBitbltCopy(pSrc, pDst, alu, prgnDst, pptSrc, planemask, bitPlane)
+#else
+void
+MROP_NAME(vga256DoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask, bitPlane)
 #endif
 #else
 void
-MROP_NAME(vga256DoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
+MROP_NAME(vga256DoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask, bitPlane)
 #endif
     DrawablePtr	    pSrc, pDst;
     int		    alu;
     RegionPtr	    prgnDst;
     DDXPointPtr	    pptSrc;
     unsigned long   planemask;
+    unsigned long   bitPlane;
 {
     unsigned long *psrcBase, *pdstBase;	
 				/* start of src and dst bitmaps */
@@ -98,7 +107,7 @@ MROP_NAME(vga256DoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
     void SpeedUpBitBlt();
 #endif
 
-#ifndef SPEEUP
+#ifndef SPEEDUP
 #if 0
     /*
      * If nothing is going to touch the frame buffer, then just use
@@ -262,8 +271,8 @@ MROP_NAME(vga256DoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
 	}
 	if ((pbox->x1 & PIM) + w <= PPW)
 	{
-	    maskpartialbits (pbox->x1, w, startmask);
-	    endmask = 0;
+	    maskpartialbits (pbox->x1, w, endmask);
+	    startmask = 0;
 	    nlMiddle = 0;
 	}
 	else
@@ -318,13 +327,13 @@ MROP_NAME(vga256DoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
 	    {
 		if (xoffSrc > xoffDst)
 		{
-		    leftShift = (xoffSrc - xoffDst) << (5 - PWSH);
-		    rightShift = 32 - leftShift;
+		    leftShift = (xoffSrc - xoffDst) << LEFTSHIFT_AMT;
+		    rightShift = PGSZ - leftShift;
 		}
 		else
 		{
-		    rightShift = (xoffDst - xoffSrc) << (5 - PWSH);
-		    leftShift = 32 - rightShift;
+		    rightShift = (xoffDst - xoffSrc) << LEFTSHIFT_AMT;
+		    leftShift = PGSZ - rightShift;
 		}
 		while (h--)
 		{
@@ -429,13 +438,13 @@ MROP_NAME(vga256DoBitblt)(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
 	    {
 		if (xoffDst > xoffSrc)
 		{
-		    rightShift = (xoffDst - xoffSrc) << (5 - PWSH);
-		    leftShift = 32 - rightShift;
+		    rightShift = (xoffDst - xoffSrc) << LEFTSHIFT_AMT;
+		    leftShift = PGSZ - rightShift;
 		}
 		else
 		{
-		    leftShift = (xoffSrc - xoffDst) << (5 - PWSH);
-		    rightShift = 32 - leftShift;
+		    leftShift = (xoffSrc - xoffDst) << LEFTSHIFT_AMT;
+		    rightShift = PGSZ - leftShift;
 		}
 		while (h--)
 		{

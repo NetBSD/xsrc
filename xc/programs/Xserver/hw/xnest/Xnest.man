@@ -1,4 +1,4 @@
-.\" $XConsortium: Xnest.man /main/4 1995/12/15 14:05:16 gildea $
+.\" $XConsortium: Xnest.man /main/6 1996/12/09 17:33:26 kaleb $
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -24,7 +24,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH XNEST 1 "Release 6.1" "X Version 11"
+.TH XNEST 1 "Release 6.3" "X Version 11"
 .SH NAME
 Xnest \- a nested X server
 .SH SYNOPSIS
@@ -148,6 +148,11 @@ have to be the case, window managers should look primarily at the
 associated with the top level \fIXnest\fP window.  Unfortunately,
 window managers are not very good at doing that yet so this option
 might come in handy.
+.TP 4
+.B \-parent \fIwindow_id\fP
+This option tells \fIXnest\fP to use the \fIwindow_id\fP as the
+root window instead of creating a window. This option is used
+by the xrx xnestplugin.
 .SH USAGE 
 Starting up \fIXnest\fP is as simple as starting up \fIxclock\fP from
 a terminal emulator.  If a user wishes to run \fIXnest\fP on the same

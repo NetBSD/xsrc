@@ -1,3 +1,4 @@
+/* $XConsortium: ct_BitBlt.c /main/3 1996/10/25 10:28:24 kaleb $ */
 /*
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -22,7 +23,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_BitBlt.c,v 3.2 1996/09/29 13:39:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_BitBlt.c,v 3.3 1996/12/27 07:04:59 dawes Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"

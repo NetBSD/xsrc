@@ -1,14 +1,22 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
  
 <article>
  
-<title> XFree86 3.2 P9000 Server Release Notes
-<author> Erik Nygren (<it>nygren@mit.edu</it>)
-<date> 1996 March 31
+<title>XFree86 3.3 P9000 Server Release Notes
+<author>Erik Nygren (<it>nygren@mit.edu</it>)
+<date>1996 March 31
 <toc>
  
-<sect> Change Log <p>
+<sect>Change Log <p>
 <descrip>
+<tag/1997.01.30:/
+	<itemize>
+	<item>
+	  Added probing for MemBase and IOBase on Diamond Viper PCI cards
+          (Karl Anders Øygard)
+	<item>
+	  Added support for DPMI screen saving (Karl Anders Øygard)
+	</itemize>
 <tag/1996.03.31:/
 	<itemize>
 	<item>
@@ -193,64 +201,40 @@
 	</itemize>
 </descrip>
 
-<sect> Supported Cards <p> 
+<sect>Supported Cards <p> 
 
-<sect1> Diamond Viper VLB <p>
+<sect1>Diamond Viper VLB <p>
  All Viper VLB's should work with this server, hopefully&hellip;  :-) Due
 to Diamond's putting the same BIOS in some Viper VLB's as are used in
 Viper PCI's, the probe may detect you have a Viper PCI when you really
 have a Viper VLB.  If this happens, put <tt>chipset "vipervlb"</tt>
 into your <tt>XF86Config</tt> file.
 
-<sect1> Diamond Viper PCI <p>
-For Diamond Viper PCI owners, you'll need to use <tt>scanpci</tt>
-to find the values to fill in for <tt>MemBase</tt> and <tt>IOBase</tt> in the
-<tt>Device</tt> section of <tt>XF86Config</tt>.  These values will change
-whenever you move cards around or add cards.
-This should now work, thanks to help from Bob Hollinger and Matt Thomas.
+<sect1>Diamond Viper PCI <p>
+
 You may need to specify the chipset <tt>"viperpci"</tt> in your 
 <tt>XF86Config</tt> file.
-You'll also need to specify an <tt>IOBase</tt> and a <tt>memBase</tt>.
-These values may be obtained by running the <tt>scanpci</tt>
-program available
-via anonymous ftp from <url name="ftp.xfree86.org:/pub/XFree86/3.1.1/ScanPCI"
-url="ftp://ftp.xfree86.org/pub/XFree86/3.1.1/ScanPCI">
-Part of the output of this program will look like:
 
-<verb>
-pci slot at 0xce00, vendor 0x100e device 0x9001
- Diamond Viper/PCI
-  STATUS    0x0400  COMMAND 0x0003
-  CLASS     0x03 0x00 0x00  REVISION 0x03
-  BASE0     0xa0000000  addr 0xa0000000  MEM
-  BASE1     0x0000e001  addr 0x0000e000  I/O
-  BASEROM   0xff800000  addr 0xff800000  not-decode-enabled
-</verb>
+Previously you had to find out the values for <tt>MemBase</tt> and
+<tt>IOBase</tt> by yourself.  These are now autodetected.
 
-In this case, you would specify <tt>0xe000</tt> as the <tt>IOBase</tt>
-and <tt>0xa0000000</tt> as the <tt>memBase</tt>.
-
-Eventually we would like to autodetect the <tt>IOBase</tt> and
-<tt>memBase</tt>, but this doesn't yet work.
-
-<sect> Orchid P9000 and random clones <p>
+<sect>Orchid P9000 and random clones <p>
 The Orchid P9000 and other cards based on the Weitek board design
 (such as the STAR 2000) should now work.  Talk to
 <it>harry@brain.jpl.nasa.gov</it>
 if you have problems with this.  Specify the chipset <tt>"orchid_p9000"</tt> in
 the <tt>Device</tt> section of <tt>XF86Config</tt>
 
-<sect> Viper Pro and other P9100 and P9130 cards (UNSUPPORTED!!!) <p>
+<sect>Viper Pro and other P9100 and P9130 cards (UNSUPPORTED!!!) <p>
 These are NOT supported yet.  We don't have the hardware to write and
 or test drivers for them on.  The docs I have says the P9100 has a
 different interface than the P9000.  As a result, they may need an
 entirely new server.  If you need support for one of these cards, you
 should look into XInside's AcceleratedX.  It's a commercial product
 that costs about &dollar;99.  Send email to <it>info@xinside.com</it>
-for more information.  Their P9000 server is also much faster than
-ours at present (but then this server is free :-)
+for more information.
 
-<sect> Acceleration <p>
+<sect>Acceleration <p>
 Some of the acceleration code is working, but
 there are probably still bugs.  Only a very small number of
 accelerated features have been implemented.  Before working on any
@@ -264,7 +248,7 @@ The following things are now accelerated:
 </itemize>
 
 
-<sect> XFree86-DGA Extension Support <p>
+<sect>XFree86-DGA Extension Support <p>
 
 The XFree86-DGA extension is now supported.  Note that
 XF86DGASetViewPort command is not fully implemented due to hardware
@@ -293,7 +277,7 @@ and which use two vertically adjacent banks should
 work with no P9000-specific changes. 
 
 
-<sect> High Color and TrueColor <p>
+<sect>High Color and TrueColor <p>
 Support for 16 and 24 bit truecolor is now supported.  Note that 24
 bit color is really 32 bits per pixel.  Use the <tt>-bpp</tt> option when
 starting the server.  Examples:
@@ -321,7 +305,7 @@ Example problems:
 		     I think later versions may have fixed this.
 </descrip>
 
-<sect> Random Notes <p>
+<sect>Random Notes <p>
 Text restoration should now be fixed.  Color restoration should
 also be fixed.  You can now even run the server at the same time as svgalib
 programs!!!
@@ -339,18 +323,18 @@ that all Vipers have 135MHz bt485's or compatibles.  If you have
 something slower, call their tech support and they will send you
 a RMA to get the board replaced.
 
-<sect> Operating System Notes <p>
+<sect>Operating System Notes <p>
 Any operating system that can memory map linear regions in really
 high memory should work.  This should include Linux, FreeBSD, SVR4,
 and more.
 
-<sect1> NetBSD <p>
+<sect1>NetBSD <p>
 If you have NetBSD, you will need to install the aperture driver.
 Extract the file <tt>apNetBSD.shar</tt>
 (in <tt>xc/programs/Xserver/hw/xfree86/etc/apNetBSD.shar</tt>) and read
 the <tt>README</tt> contained therein.
 
-<sect> XF86Config <p>
+<sect>XF86Config <p>
 The <tt>modes</tt> line in the <tt>XF86Config</tt> file is now handled
 differently.
 The virtual line is now ignored entirely.  Each mode on the mode
@@ -438,7 +422,7 @@ Section "Screen"
 EndSection
 </verb>
 
-<sect> Known Bugs <p>
+<sect>Known Bugs <p>
 There are currently problems with the server when used in conjunction
 with xdm, olvwm, and VT switching under Linux.  
 
@@ -452,13 +436,13 @@ amount of memory you have.  If you have a 1 MB card, try put
 <tt>XF86Config</tt> file.  If this doesn't work, try adding
 <tt>Option "vram_128"</tt> to the <tt>Device</tt> section.
 
-<sect> Credits <p>
+<sect>Credits <p>
 Major contributors to P9000 code:
 <itemize>
-<item> Erik Nygren (<it>nygren@mit.edu</it>)
-<item> Harry Langenbacher (<it>harry@brain.jpl.nasa.gov</it>)
-<item> Chris Mason (<it>clmtch@osfmail.isc.rit.edu</it>) 
-<item> Henrik Harmsen (<it>harmsen@eritel.se</it>)
+<item>Erik Nygren (<it>nygren@mit.edu</it>)
+<item>Harry Langenbacher (<it>harry@brain.jpl.nasa.gov</it>)
+<item>Chris Mason (<it>clmtch@osfmail.isc.rit.edu</it>) 
+<item>Henrik Harmsen (<it>harmsen@eritel.se</it>)
 </itemize>
 Thanks to Matt Thomas (<it>thomas@lkg.dec.com</it>) and Bob Hollinger
 (<it>bob@interaccess.com</it>) for helping to get the Viper PCI server working.
@@ -473,13 +457,13 @@ During the course of the next few months, people will be working on
 acceleration, etc.  Please send any patches to me (<it>nygren@mit.edu</it>).
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/P9000.sgml,v 3.15 1996/05/12 12:36:34 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/P9000.sgml,v 3.18.2.4 1997/05/17 12:03:30 dawes Exp $
 
 
 
 
 
-$XConsortium: P9000.sgml /main/6 1995/11/12 19:59:55 kaleb $
+$XConsortium: P9000.sgml /main/9 1996/05/12 20:58:05 kaleb $
 </verb>
 
 </article>

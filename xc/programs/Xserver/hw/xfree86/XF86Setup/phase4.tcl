@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase4.tcl,v 3.7 1996/08/26 10:47:46 dawes Exp $
+# $XConsortium: phase4.tcl /main/1 1996/09/21 14:17:41 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase4.tcl,v 3.8 1996/12/27 06:54:11 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

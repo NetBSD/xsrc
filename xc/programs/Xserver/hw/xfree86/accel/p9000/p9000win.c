@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000win.c,v 3.3 1996/02/04 09:04:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000win.c,v 3.4 1996/12/23 06:40:59 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -58,7 +58,7 @@ Modified for the P9000 by Chris Mason (mason@mail.csh.rit.edu)
 Further modified for the P9000 by Erik Nygren (nygren@mit.edu)
 
 */
-/* $XConsortium: p9000win.c /main/4 1995/11/12 18:19:48 kaleb $ */
+/* $XConsortium: p9000win.c /main/5 1996/02/21 17:33:29 kaleb $ */
 
 #include "X.h"
 #include "scrnintstr.h"

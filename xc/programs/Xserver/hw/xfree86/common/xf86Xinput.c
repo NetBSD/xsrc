@@ -1,4 +1,4 @@
-/* $XConsortium: xf86Xinput.c /main/3 1996/01/14 19:01:42 kaleb $ */
+/* $XConsortium: xf86Xinput.c /main/14 1996/10/27 11:05:25 kaleb $ */
 /*
  * Copyright 1995,1996 by Frederic Lepied, France. <fred@sugix.frmug.fr.net>
  *                                                                            
@@ -22,18 +22,22 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.18 1996/10/16 14:40:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.c,v 3.22.2.5 1997/05/27 09:27:48 dawes Exp $ */
 
 #include "Xmd.h"
 #include "XI.h"
 #include "XIproto.h"
 #include "xf86.h"
-#include "osdep.h"
+#include "Xpoll.h"
 #include "xf86Priv.h"
 #include "xf86_Config.h"
 #include "xf86Xinput.h"
 #include "xf86Procs.h"
 #include "mipointer.h"
+
+#ifdef DPMSExtension
+#include "extensions/dpms.h"
+#endif
 
 #include "exevents.h"	/* AddInputDevice */
 
@@ -58,6 +62,9 @@ extern DeviceAssocRec   wacom_eraser_assoc;
 #ifdef ELOGRAPHICS_SUPPORT
 extern DeviceAssocRec	elographics_assoc;
 #endif
+#ifdef SUMMASKETCH_SUPPORT
+extern DeviceAssocRec summasketch_assoc;
+#endif
 #endif
 
 extern DeviceAssocRec	mouse_assoc;
@@ -76,16 +83,81 @@ static SymTabRec XinputTab[] = {
   { -1,		"" },
 };
 
+/***********************************************************************
+ *
+ * xf86AlwaysCoreControl --
+ *	
+ *	Control proc for the integer feedback that controls the always
+ * core feature.
+ *
+ ***********************************************************************
+ */
+static void
+xf86AlwaysCoreControl(DeviceIntPtr	device,
+		      IntegerCtrl	*control)
+{
+}
+
+/***********************************************************************
+ *
+ * Core devices functions --
+ *	
+ *	Test if device is the core device by checking the
+ * value of always core feedback and the inputInfo struct.
+ *
+ ***********************************************************************
+ */
 int
 xf86IsCorePointer(DeviceIntPtr	device)
 {
-  return(device == inputInfo.pointer);
+    LocalDevicePtr	local = (LocalDevicePtr) device->public.devicePrivate;
+    
+    return((local->always_core_feedback &&
+	    local->always_core_feedback->ctrl.integer_displayed) ||
+	   (device == inputInfo.pointer));
 }
 
 int
 xf86IsCoreKeyboard(DeviceIntPtr	device)
 {
-  return(device == inputInfo.keyboard);
+    LocalDevicePtr	local = (LocalDevicePtr) device->public.devicePrivate;
+    
+    return((local->flags & XI86_ALWAYS_CORE) ||
+	   (device == inputInfo.keyboard));
+}
+
+void
+xf86AlwaysCore(LocalDevicePtr	local,
+	       Bool		always)
+{
+    if (always) {
+	local->flags |= XI86_ALWAYS_CORE;
+    } else {
+	local->flags &= ~XI86_ALWAYS_CORE;
+    }
+}
+
+/***********************************************************************
+ *
+ * xf86CheckButton --
+ *	
+ *	Test if the core pointer button state is coherent with
+ * the button event to send.
+ *
+ ***********************************************************************
+ */
+Bool
+xf86CheckButton(int	button,
+		int	down)
+{
+    int	state = (inputInfo.pointer->button->state & 0x1f00) >> 8;
+    int	check = (state & (1 << (button - 1)));
+    
+    if ((check && down) && (!check && !down)) {
+	return FALSE;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -103,21 +175,22 @@ ReadInput(pointer	block_data,
 {
   int			i;
   LocalDevicePtr	local_dev;
-  long			devices_with_input[mskcnt];
-  extern long		EnabledDevices[];
+  fd_set*		LastSelectMask = (fd_set*) read_mask;
+  fd_set		devices_with_input;
+  extern fd_set		EnabledDevices;
 
   if (select_status < 1)
     return;
 
-  MASKANDSETBITS(devices_with_input, ((long *) read_mask), EnabledDevices);
-  if (!ANYSET(devices_with_input))
+  XFD_ANDSET(&devices_with_input, LastSelectMask, &EnabledDevices);
+  if (!XFD_ANYSET(&devices_with_input))
     return;
 
   for (i = 0; i < num_devices; i++) {
     local_dev = localDevices[i];
     if (local_dev->read_input &&
 	(local_dev->fd >= 0) &&
-        (GETBIT(((long *) read_mask), local_dev->fd) != 0)) {
+        (FD_ISSET(local_dev->fd, ((fd_set *) read_mask)) != 0)) {
       (*local_dev->read_input)(local_dev);
       break;
     }
@@ -148,6 +221,9 @@ xf86ConfigExtendedInputSection(LexPtr       val)
 # endif
 # ifdef ELOGRAPHICS_SUPPORT
   xf86AddDeviceAssoc(&elographics_assoc);
+# endif
+# ifdef SUMMASKETCH_SUPPORT
+  xf86AddDeviceAssoc(&summasketch_assoc);
 # endif
 #endif
 
@@ -193,7 +269,7 @@ xf86ConfigExtendedInputSection(LexPtr       val)
             xf86ConfigError("Invalid SubSection name");
         }
       else
-        xf86ConfigError("Xinput keyword section expected");        
+        xf86ConfigError("XInput keyword section expected");        
     }
 }
 
@@ -224,6 +300,29 @@ xf86AddDeviceAssoc(DeviceAssocPtr	assoc)
 
 /***********************************************************************
  *
+ * xf86XinputFinalizeInit --
+ * 
+ *	Create and initialize an integer feedback to control the always
+ * core feature.
+ *
+ ***********************************************************************
+ */
+void
+xf86XinputFinalizeInit(DeviceIntPtr	dev)
+{
+    LocalDevicePtr        local = (LocalDevicePtr)dev->public.devicePrivate;
+    
+    if (InitIntegerFeedbackClassDeviceStruct(dev, xf86AlwaysCoreControl) == FALSE) {
+	ErrorF("Unable to init integer feedback for always core feature\n");
+    } else {
+	local->always_core_feedback = dev->intfeed;
+	dev->intfeed->ctrl.integer_displayed = (local->flags & XI86_ALWAYS_CORE) ? 1 : 0;
+    }
+}
+
+
+/***********************************************************************
+ *
  * InitExtInput --
  * 
  *	Initialize any extended devices we might have. It is called from
@@ -235,28 +334,40 @@ xf86AddDeviceAssoc(DeviceAssocPtr	assoc)
 void
 InitExtInput()
 {
-  DeviceIntPtr	dev;
-  int		i;
+    DeviceIntPtr	dev;
+    int		i;
 
-  /* Register a Wakeup handler to handle input when generated */
-  RegisterBlockAndWakeupHandlers((BlockHandlerProcPtr) NoopDDA, ReadInput,
-                                 NULL);
+    /* Register a Wakeup handler to handle input when generated */
+    RegisterBlockAndWakeupHandlers((BlockHandlerProcPtr) NoopDDA, ReadInput,
+				   NULL);
 
-  /* Add each device */
-  for (i = 0; i < num_devices; i++) {
-    if (localDevices[i]->flags & XI86_CONFIGURED) {
-      dev = AddInputDevice(localDevices[i]->device_control,
-			   (localDevices[i]->flags & XI86_NO_OPEN_ON_INIT) ? FALSE : TRUE);
-      if (dev == NULL)
-        FatalError("Too many input devices");
-      localDevices[i]->atom = MakeAtom(localDevices[i]->name, strlen(localDevices[i]->name), TRUE);
-      dev->public.devicePrivate = (pointer) localDevices[i];
-      localDevices[i]->dev = dev;
-      RegisterOtherDevice(dev);
-      ErrorF("%s Adding extended device \"%s\" (type: %s)\n", XCONFIG_GIVEN,
-	     localDevices[i]->name, localDevices[i]->type_name);
+    /* Add each device */
+    for (i = 0; i < num_devices; i++) {
+	if (localDevices[i]->flags & XI86_CONFIGURED) {
+	    int	open_on_init;
+
+	    open_on_init = !(localDevices[i]->flags & XI86_NO_OPEN_ON_INIT) ||
+		(localDevices[i]->flags & XI86_ALWAYS_CORE);
+	    
+	    dev = AddInputDevice(localDevices[i]->device_control,
+				 open_on_init);
+	    if (dev == NULL)
+		FatalError("Too many input devices");
+	    
+	    localDevices[i]->atom = MakeAtom(localDevices[i]->name,
+					     strlen(localDevices[i]->name),
+					     TRUE);
+	    dev->public.devicePrivate = (pointer) localDevices[i];
+	    localDevices[i]->dev = dev;      
+
+	    xf86XinputFinalizeInit(dev);
+      
+	    RegisterOtherDevice(dev);
+	    if (serverGeneration == 1) 
+		ErrorF("%s Adding extended device \"%s\" (type: %s)\n", XCONFIG_GIVEN,
+		       localDevices[i]->name, localDevices[i]->type_name);
+	}
     }
-  }
 }
 
 
@@ -550,11 +661,13 @@ ChangeDeviceControl (client, dev, control)
      DeviceIntPtr	dev;
      xDeviceCtl		*control;
 {
-  switch (control->control) {
-  case DEVICE_RESOLUTION:
-    return (BadMatch);
-  default:
-    return (BadMatch);
+  LocalDevicePtr        local = (LocalDevicePtr)dev->public.devicePrivate;
+
+  if (!local->control_proc) {
+      return (BadMatch);
+  }
+  else {
+      return (*local->control_proc)(local, control);
   }
 }
 
@@ -698,6 +811,10 @@ xf86eqProcessInputEvents ()
     {
 	if (screenIsSaved == SCREEN_SAVER_ON)
 	    SaveScreens (SCREEN_SAVER_OFF, ScreenSaverReset);
+#ifdef DPMSExtension
+	if (DPMSPowerLevel != DPMSModeOn)
+	    DPMSSet(DPMSModeOn);
+#endif
 
 	e = &xf86EventQueue.events[xf86EventQueue.head];
 	/*
@@ -938,6 +1055,13 @@ xf86PostButtonEvent(DeviceIntPtr	device,
     deviceKeyButtonPointer	*xev	        = (deviceKeyButtonPointer*) xE;
     deviceValuator		*xv	        = (deviceValuator*) xev+1;
     int				is_core_pointer = xf86IsCorePointer(device);
+
+    /* Check the core pointer button state not to send an inconsistent
+     * event. This can happen with the AlwaysCore feature.
+     */
+    if (is_core_pointer && !xf86CheckButton(button, is_down)) {
+	return;
+    }
     
     va_start(var, num_valuators);
 

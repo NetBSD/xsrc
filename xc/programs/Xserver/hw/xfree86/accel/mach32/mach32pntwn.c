@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32pntwn.c,v 3.7 1996/02/04 09:02:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32pntwn.c,v 3.8 1996/12/23 06:38:45 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -52,7 +52,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XConsortium: mach32pntwn.c /main/5 1995/11/12 17:25:21 kaleb $ */
+/* $XConsortium: mach32pntwn.c /main/6 1996/02/21 17:27:22 kaleb $ */
 
 #include "X.h"
 

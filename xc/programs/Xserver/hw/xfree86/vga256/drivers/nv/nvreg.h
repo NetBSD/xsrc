@@ -1,3 +1,4 @@
+/* $XConsortium: nvreg.h /main/2 1996/10/28 05:13:41 kaleb $ */
  /***************************************************************************\
 |*                                                                           *|
 |*          Copyright (c) 1996 NVIDIA, Corp.  All rights reserved.           *|
@@ -31,7 +32,7 @@
 |*                                                                           *|
  \***************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvreg.h,v 3.1 1996/10/23 13:10:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvreg.h,v 3.2 1996/12/27 07:05:43 dawes Exp $ */
 
 #ifndef __NVREG_H_
 #define __NVREG_H_

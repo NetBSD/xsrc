@@ -1,12 +1,17 @@
-XCOMM $XConsortium: Imakefile /main/4 1995/09/04 19:41:24 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga2/misc/Imakefile,v 3.6 1996/02/04 09:12:18 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/6 1996/09/28 17:28:17 rws $
+
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga2/misc/Imakefile,v 3.7 1996/12/23 06:55:28 dawes Exp $
 #include <Server.tmpl>
 
 SRCS =	 dixfonts.c mibitblt.c
 OBJS =	 dixfonts.o mibitblt.o
 
 INCLUDES = -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
-           -I$(INCLUDESRC) -I$(FONTINCSRC)
+           -I$(XINCLUDESRC) -I$(FONTINCSRC)
 
 DEFINES = -DXF86MONOVGA $(LBX_DEFINES)
 

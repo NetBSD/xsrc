@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Tseng.c,v 3.6 1996/08/10 13:04:34 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Tseng.c,v 3.7.2.1 1997/05/06 13:24:52 dawes Exp $ */ 
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: Tseng.c /main/5 1995/11/16 10:10:46 kaleb $ */
+/* $XConsortium: Tseng.c /main/7 1996/10/19 17:48:18 kaleb $ */
 
 #include "Probe.h"
 
@@ -56,7 +56,12 @@ int *Chipset;
 	Byte old, old1, ver;
 	int i=0;
 
-        /* check PCI config first, for ET6000 */
+	/* Add CRTC to enabled ports */
+	Ports[0] = CRTC_IDX;
+	Ports[1] = CRTC_REG;
+	Ports[2] = inp(MISC_OUT_R) & 0x01 ? 0x3D8 : 0x3B8;
+
+        /* check PCI config first */
 	if (!NoPCI)
 	{
 	    while ((pcrp = pci_devp[i]) != (struct pci_config_reg *)NULL) {
@@ -68,6 +73,22 @@ int *Chipset;
 				*Chipset = CHIP_ET6K;
 				ET6Kbase = pcrp->_base1 & ~0xFF;
 				break;
+                        case PCI_CHIP_ET4000_W32P_A:
+				*Chipset = CHIP_ET4KW32P_A;
+				break;
+                        case PCI_CHIP_ET4000_W32P_B:
+				*Chipset = CHIP_ET4KW32P_B;
+				break;
+                        case PCI_CHIP_ET4000_W32P_C:
+				*Chipset = CHIP_ET4KW32P_C;
+				break;
+                        case PCI_CHIP_ET4000_W32P_D:
+				*Chipset = CHIP_ET4KW32P_D;
+				break;
+			default: 
+				Chip_data = pcrp->_device;
+				*Chipset = CHIP_TSENG_UNK;
+				break;
 			}
 			PCIProbed = TRUE;
 			return(TRUE);
@@ -76,10 +97,6 @@ int *Chipset;
 	    }
 	}
 
-	/* Add CRTC to enabled ports */
-	Ports[0] = CRTC_IDX;
-	Ports[1] = CRTC_REG;
-	Ports[2] = inp(MISC_OUT_R) & 0x01 ? 0x3D8 : 0x3B8;
 	EnableIOPorts(NUMPORTS, Ports);
 
 	old = inp(0x3BF);
@@ -213,6 +230,7 @@ int Chipset;
 			    Mem = 2048;
 			break;
 		}
+		break;
 	case CHIP_ET6K:
 		switch (rdinx(CRTC_IDX, 0x34) & 0x80)
 		{

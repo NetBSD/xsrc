@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxBStor.c,v 3.4 1996/02/04 08:57:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxBStor.c,v 3.5 1996/12/23 06:32:30 dawes Exp $ */
 /*-
  * agxbstore.c --
  *	Functions required by the backing-store implementation in MI.
@@ -25,7 +25,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XConsortium: agxBStor.c /main/3 1995/11/13 10:06:15 kaleb $ */
+/* $XConsortium: agxBStor.c /main/4 1996/02/21 17:16:29 kaleb $ */
 
 /*
  * Modified by Amancio Hasty and Jon Tombs

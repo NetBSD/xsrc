@@ -1,7 +1,7 @@
-XCOMM $XConsortium: Imakefile,v 1.16 94/01/06 15:34:08 gildea Exp $
-XCOMM $XFree86: xc/programs/xauth/Imakefile,v 3.1 1994/12/02 05:49:51 dawes Exp $
-DEPLIBS = $(DEPXAUTHLIB) $(DEPXMULIB)
-LOCAL_LIBRARIES = $(XAUTHLIB) $(XMULIB)
+XCOMM $XConsortium: Imakefile /main/17 1996/09/25 00:58:20 dpw $
+XCOMM $XFree86: xc/programs/xauth/Imakefile,v 3.2 1996/12/23 07:10:50 dawes Exp $
+DEPLIBS = $(DEPXAUTHLIB) $(DEPXMULIB) $(DEPXLIB)
+LOCAL_LIBRARIES = $(XAUTHLIB) $(XMULIB) $(XLIB)
            SRCS = xauth.c gethost.c process.c parsedpy.c
            OBJS = xauth.o gethost.o process.o parsedpy.o
    CONN_DEFINES = ConnectionFlags

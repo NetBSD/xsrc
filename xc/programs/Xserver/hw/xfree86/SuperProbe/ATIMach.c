@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ATIMach.c,v 3.8 1996/09/25 14:15:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ATIMach.c,v 3.9.2.2 1997/05/22 14:00:33 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: ATIMach.c /main/7 1995/11/13 11:11:44 kaleb $ */
+/* $XConsortium: ATIMach.c /main/10 1996/10/25 07:00:15 kaleb $ */
 
 #include "Probe.h"
 
@@ -277,33 +277,46 @@ int Chipset;
 	}
 	else if (Chipset == CHIP_MACH64)
 	{
+		extern Bool Mach64xTB;
+		int tmp;
+
 		EnableIOPorts(1, &ATIMach64MEM_INFO);
-		switch (inpl(ATIMach64MEM_INFO) & 0x00000007)
-		{
-		case 0x00:
-			Mem = 512;
-			break;
-		case 0x01:
-			Mem = 1024;
-			break;
-		case 0x02:
-			Mem = 2048;
-			break;
-		case 0x03:
-			Mem = 4096;
-			break;
-		case 0x04:
-			Mem = 6144;
-			break;
-		case 0x05:
-			Mem = 8192;
-			break;
-		case 0x06:
-			Mem = 12288;
-			break;
-		case 0x07:
-			Mem = 8192;
-			break;
+		tmp = inpl(ATIMach64MEM_INFO);
+		if (!Mach64xTB) {
+			switch (tmp & 0x00000007)
+			{
+			case 0x00:
+				Mem = 512;
+				break;
+			case 0x01:
+				Mem = 1024;
+				break;
+			case 0x02:
+				Mem = 2048;
+				break;
+			case 0x03:
+				Mem = 4096;
+				break;
+			case 0x04:
+				Mem = 6144;
+				break;
+			case 0x05:
+				Mem = 8192;
+				break;
+			case 0x06:
+				Mem = 12288;
+				break;
+			case 0x07:
+				Mem = 16384;
+				break;
+			}
+		} else {
+			if ((tmp &= 0x0000000F) < 8)
+				Mem = (tmp + 1) * 512;
+			else if (tmp < 12)
+				Mem = (tmp - 3) * 1024;
+			else
+				Mem = (tmp - 7) * 2048;
 		}
 		DisableIOPorts(1, &ATIMach64MEM_INFO);
 	}

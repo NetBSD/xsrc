@@ -1,11 +1,11 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/drivers/s3_virge/Imakefile,v 3.1 1996/10/08 12:23:03 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/drivers/s3_virge/Imakefile,v 3.3 1996/12/27 07:03:36 dawes Exp $
 
 
 
 
 
 
-XCOMM $XConsortium: Imakefile /main/4 1995/11/12 18:23:50 kaleb $
+XCOMM $XConsortium: Imakefile /main/4 1996/10/25 15:38:19 kaleb $
 
 #include <Server.tmpl>
 
@@ -18,7 +18,7 @@ INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
 #else
 INCLUDES = -I. -I../.. -I$(XF86COMSRC) -I$(XF86HWSRC) \
 	   -I$(XF86OSSRC) -I$(SERVERSRC)/mi \
-           -I$(XF86SRC)/vga256/vga -I$(SERVERSRC)/include -I$(INCLUDESRC) \
+           -I$(XF86SRC)/vga256/vga -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
 	   -I$(XF86SRC)/accel/cache
 #endif
 

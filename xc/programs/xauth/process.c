@@ -1,5 +1,5 @@
-/* $XConsortium: process.c,v 1.49 94/12/16 22:21:13 gildea Exp $ */
-/* $XFree86: xc/programs/xauth/process.c,v 3.1 1996/01/05 13:20:39 dawes Exp $ */
+/* $XConsortium: process.c /main/51 1996/10/07 15:37:05 dpw $ */
+/* $XFree86: xc/programs/xauth/process.c,v 3.2 1996/12/23 07:10:52 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -43,6 +43,9 @@ extern int errno;
 
 #include <signal.h>
 #include <X11/X.h>			/* for Family constants */
+
+#include <X11/Xlib.h>
+#include <X11/extensions/security.h>
 
 extern char *get_hostname();
 extern Bool nameserver_timedout;
@@ -101,7 +104,7 @@ static char *No = "no";			/* for messages */
 
 static int do_list(), do_merge(), do_extract(), do_add(), do_remove();
 static int do_help(), do_source(), do_info(), do_exit();
-static int do_quit(), do_questionmark();
+static int do_quit(), do_questionmark(), do_generate();
 
 static CommandTable command_table[] = {	/* table of known commands */
     { "add",      2, 3, do_add,
@@ -132,6 +135,15 @@ static CommandTable command_table[] = {	/* table of known commands */
 	"source filename                read commands from file" },
     { "?",        1, 1, do_questionmark,
 	"?                              list available commands" },
+    { "generate", 1, 8, do_generate,
+	"generate dpyname protoname [options]  use server to generate entry\n" 
+        "    options are:\n"
+        "      timeout n    authorization expiration time in seconds\n"
+        "      trusted      clients using this entry are trusted\n"
+        "      untrusted    clients using this entry are untrusted\n"
+        "      group n      clients using this entry belong to application group n\n"
+        "      data hexkey  auth protocol specific data needed to generate the entry\n"
+    }, 
     { NULL,       0, 0, NULL, NULL },
 };
 
@@ -863,19 +875,36 @@ int process_command (inputfilename, lineno, argc, argv)
  * utility routines
  */
 
+static char * bintohex(len, bindata)
+    unsigned int len;
+    unsigned char *bindata;
+{
+    char *hexdata, *starthex;
+
+    /* two chars per byte, plus null termination */
+    starthex = hexdata = (char *)malloc(2*len + 1); 
+    if (!hexdata)
+	return NULL;
+
+    for (; len > 0; len--, bindata++) {
+	register char *s = hex_table[*bindata];
+	*hexdata++ = s[0];
+	*hexdata++ = s[1];
+    }
+    *hexdata = '\0';
+    return starthex;
+}
+
 static void fprintfhex (fp, len, cp)
     register FILE *fp;
     unsigned int len;
     char *cp;
 {
-    unsigned char *ucp = (unsigned char *) cp;
+    char *hex;
 
-    for (; len > 0; len--, ucp++) {
-	register char *s = hex_table[*ucp];
-	putc (s[0], fp);
-	putc (s[1], fp);
-    }
-    return;
+    hex = bintohex(len, cp, hex);
+    fprintf(fp, hex);
+    free(hex);
 }
 
 dump_numeric (fp, auth)
@@ -1654,4 +1683,171 @@ static int do_source (inputfilename, lineno, argc, argv)
 	(void) fclose (fp);
     }
     return errors;
+}
+
+static int x_protocol_error;
+static int
+catch_x_protocol_error(dpy, errevent)
+Display *dpy;
+XErrorEvent *errevent;
+{
+    char buf[80];
+    XGetErrorText(dpy, errevent->error_code, buf, sizeof (buf));
+    fprintf(stderr, "%s\n", buf);
+    x_protocol_error = errevent->error_code;
+    return 1;
+}
+
+/*
+ * generate
+ */
+static int do_generate (inputfilename, lineno, argc, argv)
+    char *inputfilename;
+    int lineno;
+    int argc;
+    char **argv;
+{
+    char *displayname;
+    int major_version, minor_version;
+    XSecurityAuthorization id_return;
+    Xauth *auth_in, *auth_return;
+    XSecurityAuthorizationAttributes attributes;
+    unsigned long attrmask = 0;
+    Display *dpy;
+    int status;
+    char *args[4];
+    char *protoname = ".";
+    int i;
+    int authdatalen = 0;
+    char *hexdata;
+    char *authdata = NULL;
+
+    if (argc < 2 || !argv[1]) {
+	prefix (inputfilename, lineno);
+	badcommandline (argv[0]);
+	return 1;
+    }
+
+    displayname = argv[1];
+
+    if (argc > 2) {
+	protoname = argv[2];
+    }
+
+    for (i = 3; i < argc; i++) {
+	if (0 == strcmp(argv[i], "timeout")) {
+	    if (++i == argc) {
+		prefix (inputfilename, lineno);
+		badcommandline (argv[i-1]);
+		return 1;
+	    } 
+	    attributes.timeout = atoi(argv[i]);
+	    attrmask |= XSecurityTimeout;
+
+	} else if (0 == strcmp(argv[i], "trusted")) {
+	    attributes.trust_level = XSecurityClientTrusted;
+	    attrmask |= XSecurityTrustLevel;
+
+	} else if (0 == strcmp(argv[i], "untrusted")) {
+	    attributes.trust_level = XSecurityClientUntrusted;
+	    attrmask |= XSecurityTrustLevel;
+
+	} else if (0 == strcmp(argv[i], "group")) {
+	    if (++i == argc) {
+		prefix (inputfilename, lineno);
+		badcommandline (argv[i-1]);
+		return 1;
+	    } 
+	    attributes.group = atoi(argv[i]);
+	    attrmask |= XSecurityGroup;
+
+	} else if (0 == strcmp(argv[i], "data")) {
+	    if (++i == argc) {
+		prefix (inputfilename, lineno);
+		badcommandline (argv[i-1]);
+		return 1;
+	    } 
+	    hexdata = argv[i];
+	    authdatalen = strlen(hexdata);
+	    if (hexdata[0] == '"' && hexdata[authdatalen-1] == '"') {
+		authdata = malloc(authdatalen-1);
+		strncpy(authdata, hexdata+1, authdatalen-2);
+		authdatalen -= 2;
+	    } else {
+		authdatalen = cvthexkey (hexdata, &authdata);
+		if (authdatalen < 0) {
+		    prefix (inputfilename, lineno);
+		    fprintf (stderr,
+			     "data contains odd number of or non-hex characters\n");
+		    return 1;
+		}
+	    }
+	} else {
+	    prefix (inputfilename, lineno);
+	    badcommandline (argv[i]);
+	    return 1;
+	}
+    }
+
+    /* generate authorization using the Security extension */
+
+    dpy = XOpenDisplay (displayname);
+    if (!dpy) {
+	prefix (inputfilename, lineno);
+	fprintf (stderr, "unable to open display \"%s\".\n", displayname);
+	return 1;
+    }
+
+    status = XSecurityQueryExtension(dpy, &major_version, &minor_version);
+    if (!status)
+    {
+	prefix (inputfilename, lineno);
+	fprintf (stderr, "couldn't query Security extension on display \"%s\"\n",
+		 displayname);
+        return 1;
+    }
+
+    /* fill in input Xauth struct */
+
+    auth_in = XSecurityAllocXauth();
+    if (strcmp (protoname, DEFAULT_PROTOCOL_ABBREV) == 0) {
+	 auth_in->name = DEFAULT_PROTOCOL;
+    }
+    else
+	auth_in->name = protoname;
+    auth_in->name_length = strlen(auth_in->name);
+    auth_in->data = authdata;
+    auth_in->data_length = authdatalen;
+
+    x_protocol_error = 0;
+    XSetErrorHandler(catch_x_protocol_error);
+    auth_return = XSecurityGenerateAuthorization(dpy, auth_in, attrmask,
+						 &attributes, &id_return);
+    XSync(dpy, False);
+
+    if (!auth_return || x_protocol_error)
+    {
+	prefix (inputfilename, lineno);
+	fprintf (stderr, "couldn't generate authorization\n");
+	return 1;
+    }
+
+    if (verbose)
+	printf("authorization id is %d\n", id_return);
+
+    /* create a fake input line to give to do_add */
+
+    args[0] = "add";
+    args[1] = displayname;
+    args[2] = auth_in->name;
+    args[3] = bintohex(auth_return->data_length, auth_return->data);
+
+    status = do_add(inputfilename, lineno, 4, args);
+
+    if (authdata) free(authdata);
+    XSecurityFreeXauth(auth_in);
+    XSecurityFreeXauth(auth_return);
+    free(args[3]); /* hex data */
+    XCloseDisplay(dpy);
+    return status;
 }

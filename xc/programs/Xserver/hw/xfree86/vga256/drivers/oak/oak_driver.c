@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/oak/oak_driver.c,v 3.26 1996/10/26 09:41:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/oak/oak_driver.c,v 3.28.2.2 1997/05/09 07:15:44 hohndel Exp $ */
 
 /*
  * Copyright 1994 by Jorge Delgado <ernar@dit.upm.es>
@@ -22,7 +22,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XConsortium: oak_driver.c /main/9 1996/01/12 12:18:32 kaleb $ */
+/* $XConsortium: oak_driver.c /main/16 1996/10/28 05:43:48 kaleb $ */
 
 /* 
  * XF86_SVGA driver for Oak Technologies Inc. chipsets. 
@@ -238,7 +238,8 @@ vgaVideoChipRec OAK = {
   FALSE,
   FALSE,
   NULL,
-  1,
+  1,            /* ClockMulFactor */
+  1             /* ClockDivFactor */
 };
 
 /* 
@@ -812,6 +813,8 @@ OAKRestore(restore)
      vgaOAKPtr restore;
 {
   unsigned char temp;
+
+  vgaProtect(TRUE);
       
   /* Go to bank 0 */
 
@@ -977,6 +980,7 @@ OAKRestore(restore)
 
   outw(0x3C4, 0x0300); /* now reenable the timing sequencer */
 
+  vgaProtect(FALSE);
 }
 
 /*
@@ -1513,9 +1517,10 @@ OAKAdjust(x, y)
  *
  */
 static int
-OAKValidMode(mode, verbose)
+OAKValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

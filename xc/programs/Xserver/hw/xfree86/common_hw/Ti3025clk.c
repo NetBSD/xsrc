@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Ti3025clk.c,v 3.12 1996/05/06 05:58:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Ti3025clk.c,v 3.13 1996/12/23 06:44:21 dawes Exp $ */
 
 /*
  * Copyright 1994 The XFree86 Project, Inc
@@ -8,7 +8,7 @@
  * Dirk Hohndel <hohndel@aib.com>
  * Robin Cutshaw <robin@XFree86.org>
  */
-/* $XConsortium: Ti3025clk.c /main/7 1995/12/02 08:59:20 kaleb $ */
+/* $XConsortium: Ti3025clk.c /main/9 1996/05/07 17:14:16 kaleb $ */
 
 #include "Xfuncproto.h"
 #include "Ti302X.h" 

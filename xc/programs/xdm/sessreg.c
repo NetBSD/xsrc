@@ -1,6 +1,6 @@
 /*
  * $XConsortium: sessreg.c /main/18 1996/01/25 18:45:57 kaleb $
- * $XFree86: xc/programs/xdm/sessreg.c,v 3.8 1996/08/25 14:14:24 dawes Exp $
+ * $XFree86: xc/programs/xdm/sessreg.c,v 3.9 1997/01/18 07:02:23 dawes Exp $
  *
  * Copyright (c) 1990  X Consortium
  * 
@@ -131,7 +131,7 @@ int	utmp_none, wtmp_none;
  * maintainers, these arguments are accepted but ignored for sysV
  */
 int	hflag, sflag, xflag, tflag;
-char	*host_name;
+char	*host_name = NULL;
 int	slot_number;
 char	*xservers_file, *ttys_file;
 char	*user_name;
@@ -390,7 +390,8 @@ Time_t		date;
 		u->ut_pid = 0;
 		u->ut_type = DEAD_PROCESS;
 	}
-#else
+#endif
+#if !defined(SYSV) || defined(linux)
 	if (addp && host)
 		(void) strncpy (u->ut_host, host, sizeof (u->ut_host));
 	else

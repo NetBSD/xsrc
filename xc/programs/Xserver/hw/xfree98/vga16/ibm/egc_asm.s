@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree98/vga16/ibm/egc_asm.s,v 3.3 1996/05/13 08:33:55 dawes Exp $ */
+/* $XConsortium: egc_asm.s /main/4 1996/05/13 16:38:54 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree98/vga16/ibm/egc_asm.s,v 3.4 1996/12/23 07:08:12 dawes Exp $ */
 
 #include "assyntax.h"
 

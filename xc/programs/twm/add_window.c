@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/twm/add_window.c,v 1.1.1.2.8.1 1997/05/11 05:04:28 dawes Exp $ */
 /*****************************************************************************/
 /*
 
@@ -176,6 +177,7 @@ IconMgr *iconp;
     int restoredFromPrevSession;
     Bool width_ever_changed_by_user;
     Bool height_ever_changed_by_user;
+    char *name;
 
 #ifdef DEBUG
     fprintf(stderr, "AddWindow: w = 0x%x\n", w);
@@ -199,7 +201,7 @@ IconMgr *iconp;
 
     XGetWindowAttributes(dpy, tmp_win->w, &tmp_win->attr);
 
-    XFetchName(dpy, tmp_win->w, &tmp_win->name);
+    XFetchName(dpy, tmp_win->w, &name);
     tmp_win->class = NoClass;
     XGetClassHint(dpy, tmp_win->w, &tmp_win->class);
     FetchWmProtocols (tmp_win);
@@ -273,14 +275,18 @@ IconMgr *iconp;
     tmp_win->transient = Transient(tmp_win->w, &tmp_win->transientfor);
 
     tmp_win->nameChanged = 0;
-    if (tmp_win->name == NULL)
-	tmp_win->name = NoName;
+    if (name == NULL)
+	tmp_win->name = strdup(NoName);
+    else {
+      tmp_win->name = strdup(name);
+      XFree(name);
+    }
     if (tmp_win->class.res_name == NULL)
     	tmp_win->class.res_name = NoName;
     if (tmp_win->class.res_class == NULL)
     	tmp_win->class.res_class = NoName;
 
-    tmp_win->full_name = tmp_win->name;
+    tmp_win->full_name = strdup(tmp_win->name);
     namelen = strlen (tmp_win->name);
 
     tmp_win->highlight = Scr->Highlight && 
@@ -724,11 +730,16 @@ IconMgr *iconp;
 
     if (XGetWindowProperty (dpy, tmp_win->w, XA_WM_ICON_NAME, 0L, 200L, False,
 			    XA_STRING, &actual_type, &actual_format, &nitems,
-			    &bytesafter,(unsigned char **)&tmp_win->icon_name))
-	tmp_win->icon_name = tmp_win->name;
-
-    if (tmp_win->icon_name == NULL)
-	tmp_win->icon_name = tmp_win->name;
+			    &bytesafter,(unsigned char **)&name)) {
+	tmp_win->icon_name = strdup(tmp_win->name);
+    } else {
+	if (name == NULL) {
+	    tmp_win->icon_name = strdup(tmp_win->name);
+	} else {
+	    tmp_win->icon_name = strdup(name);
+	    XFree(name);
+	}
+    }
 
     tmp_win->iconified = FALSE;
     tmp_win->icon = FALSE;

@@ -1,5 +1,5 @@
-/* $XConsortium: verify.c,v 1.35 95/07/07 21:54:42 gildea Exp $ */
-/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.3 1996/01/05 13:21:07 dawes Exp $ */
+/* $XConsortium: verify.c /main/36 1996/04/18 14:56:15 gildea $ */
+/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.4.2.1 1997/05/27 06:22:28 dawes Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -43,6 +43,9 @@ from the X Consortium.
 # include	<pwd.h>
 #ifdef USESHADOW
 # include	<shadow.h>
+#if defined(SHADOWSUITE) && defined(linux)
+#define crypt pw_encrypt
+#endif
 # include	<errno.h>
 #ifdef X_NOT_STDC_ENV
 extern int errno;
@@ -56,6 +59,7 @@ char *getenv();
 #endif
 
 static char *envvars[] = {
+    "TZ",			/* SYSV and SVR4, but never hurts */
 #if defined(sony) && !defined(SYSTYPE_SYSV) && !defined(_SYSTYPE_SYSV)
     "bootdev",
     "boothowto",
@@ -66,10 +70,8 @@ static char *envvars[] = {
     "CONSDEVTYPE",
     "SYS_LANGUAGE",
     "SYS_CODE",
-    "TZ",
 #endif
 #if (defined(SVR4) || defined(SYSV)) && defined(i386) && !defined(sun)
-    "TZ",
     "XLOCAL",
 #endif
     NULL
@@ -89,20 +91,20 @@ char	*user, *home, *shell;
     env = defaultEnv ();
     env = setEnv (env, "DISPLAY", d->name);
     env = setEnv (env, "HOME", home);
-    env = setEnv (env, "USER", user);
-#if defined(SYSV) || defined(SVR4)
-    env = setEnv (env, "LOGNAME", user);
-#endif
+    env = setEnv (env, "LOGNAME", user); /* POSIX, System V */
+    env = setEnv (env, "USER", user);    /* BSD */
     env = setEnv (env, "PATH", useSystemPath ? d->systemPath : d->userPath);
     env = setEnv (env, "SHELL", shell);
     for (envvar = envvars; *envvar; envvar++)
     {
-	if (str = getenv(*envvar))
+	str = getenv(*envvar);
+	if (str)
 	    env = setEnv (env, *envvar, str);
     }
     return env;
 }
 
+int
 Verify (d, greet, verify)
 struct display		*d;
 struct greet_info	*greet;

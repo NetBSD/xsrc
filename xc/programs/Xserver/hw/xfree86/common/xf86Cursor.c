@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.12 1996/08/23 11:03:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.13 1996/12/23 06:43:22 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86Cursor.c /main/7 1996/01/28 07:57:03 kaleb $ */
+/* $XConsortium: xf86Cursor.c /main/10 1996/10/19 17:58:23 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

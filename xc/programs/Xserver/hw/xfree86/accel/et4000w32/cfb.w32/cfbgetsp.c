@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbgetsp.c,v 3.2 1996/02/04 08:59:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbgetsp.c,v 3.3 1996/12/23 06:34:46 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: cfbgetsp.c /main/3 1995/11/13 11:16:05 kaleb $ */
+/* $XConsortium: cfbgetsp.c /main/4 1996/02/21 17:20:30 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

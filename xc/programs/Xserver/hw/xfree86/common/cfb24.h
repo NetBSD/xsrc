@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/cfb24.h,v 3.0 1996/06/29 09:07:33 dawes Exp $ */
+/* $XConsortium: cfb24.h /main/1 1996/09/21 12:55:08 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/cfb24.h,v 3.3 1997/01/08 20:34:26 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -225,7 +230,16 @@ extern RegionPtr cfb24BitBlt(
     int /*height*/,
     int /*dstx*/,
     int /*dsty*/,
-    void (* /*doBitBlt*/)(),
+    void (* /*doBitBlt*/)(
+#if NeedNestedPrototypes
+	DrawablePtr /*pSrc*/,
+	DrawablePtr /*pDst*/,
+	int /*alu*/,
+	RegionPtr /*prgnDst*/,
+	DDXPointPtr /*pptSrc*/,
+	unsigned long /*planemask*/
+#endif
+	),
     unsigned long /*bitPlane*/
 #endif
 );
@@ -530,7 +544,7 @@ extern int cfb24HorzS(
 #endif
 );
 
-extern int cfb24VertS(
+extern void cfb24VertS(
 #if NeedFunctionPrototypes
     int /*rop*/,
     unsigned long /*and*/,

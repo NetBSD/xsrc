@@ -1,6 +1,6 @@
 /*
- * $XConsortium: cfbply1rct.c,v 1.15 94/11/21 18:29:57 kaleb Exp $
- * $XFree86: xc/programs/Xserver/cfb/cfbply1rct.c,v 3.2 1996/06/29 09:05:44 dawes Exp $
+ * $XConsortium: cfbply1rct.c /main/16 1996/08/12 22:07:31 dpw $
+ * $XFree86: xc/programs/Xserver/cfb/cfbply1rct.c,v 3.3 1996/12/23 06:29:21 dawes Exp $
  *
 Copyright (c) 1990  X Consortium
 
@@ -93,11 +93,11 @@ RROP_NAME(cfbFillPoly1Rect) (pDrawable, pGC, shape, mode, count, ptsIn)
     }
 #endif
     origin = *((int *) &pDrawable->x);
-    origin -= (origin & 0x8000) << 1;
+    vertex2 = origin - ((origin & 0x8000) << 1);
     extents = &devPriv->pCompositeClip->extents;
     RROP_FETCH_GCPRIV(devPriv);
-    vertex1 = *((int *) &extents->x1) - origin;
-    vertex2 = *((int *) &extents->x2) - origin - 0x00010001;
+    vertex1 = *((int *) &extents->x1) - vertex2;
+    vertex2 = *((int *) &extents->x2) - vertex2 - 0x00010001;
     clip = 0;
     y = 32767;
     maxy = 0;

@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxBCach.h,v 3.4 1996/02/04 08:57:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxBCach.h,v 3.5 1996/12/23 06:32:27 dawes Exp $ */
 /*
  * Jon's cache malloc rubbish
  *
  * Rewritten for the AGX by Henry A. Worth (haw30@eng.amdahl.com)
  */
-/* $XConsortium: agxBCach.h /main/4 1995/11/13 10:06:12 kaleb $ */
+/* $XConsortium: agxBCach.h /main/5 1996/02/21 17:16:24 kaleb $ */
 
 #include "agx.h"
 

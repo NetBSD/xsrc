@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Lock.c,v 3.8 1996/03/29 22:16:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Lock.c,v 3.11 1997/01/18 06:55:34 dawes Exp $ */
 
 /*
  * Explicit support for a server lock file like the ones used for UUCP.
@@ -6,7 +6,7 @@
  * server at a time.  This keeps the servers from stomping on each other
  * if the user forgets to give them different display numbers.
  */
-/* $XConsortium: xf86Lock.c /main/7 1996/01/31 10:06:37 kaleb $ */
+/* $XConsortium: xf86Lock.c /main/9 1996/04/01 18:07:58 kaleb $ */
 
 #define LOCK_PATH "/tmp/.X"
 #define LOCK_TMPPATH "/tmp/.tX"
@@ -26,7 +26,11 @@
 #endif
 
 #ifndef PATH_MAX
+#ifndef Lynx
 #include <sys/param.h>
+#else
+#include <param.h>
+#endif
 #ifndef PATH_MAX
 #ifdef MAXPATHLEN
 #define PATH_MAX MAXPATHLEN
@@ -103,7 +107,12 @@ xf86LockServer()
   (void) sprintf(pid_str, "%10d\n", getpid());
   (void) write(lfd, pid_str, 11);
 #ifndef __EMX__
+#ifndef USE_CHMOD
   (void) fchmod(lfd, 0444);
+#else
+/* ISC prior Version 4.1 doesn't have fchmod :-( */
+  (void) chmod(tmp, 0444);
+#endif
 #endif
   (void) close(lfd);
 

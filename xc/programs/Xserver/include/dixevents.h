@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/dixevents.h,v 3.1 1996/04/15 11:34:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/dixevents.h,v 3.2 1996/12/24 02:27:27 dawes Exp $ */
 /************************************************************
 
 Copyright 1996 by Thomas E. Dickey <dickey@clark.net>
@@ -27,29 +27,21 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef DIXEVENTS_H
 #define DIXEVENTS_H
 
-Mask
+extern Mask
 GetNextEventMask(
 #if NeedFunctionPrototypes
 	void
 #endif
 	);
 
-void
-SetMaskForEvent(
-#if NeedFunctionPrototypes
-	Mask                   /* mask */,
-	int                    /* event */
-#endif
-	);
-
-void
+extern void
 SetCriticalEvent(
 #if NeedFunctionPrototypes
 	int                    /* event */
 #endif
 	);
 
-void
+extern void
 ConfineCursorToWindow(
 #if NeedFunctionPrototypes
 	WindowPtr              /* pWin */,
@@ -58,141 +50,21 @@ ConfineCursorToWindow(
 #endif
 	);
 
-Bool
-PointerConfinedToScreen(
-#if NeedFunctionPrototypes
-	void
-#endif
-	);
-
-Bool
-IsParent(
-#if NeedFunctionPrototypes
-	WindowPtr              /* a */,
-	WindowPtr              /* b */
-#endif
-	);
-
-WindowPtr
-GetCurrentRootWindow(
-#if NeedFunctionPrototypes
-	void
-#endif
-	);
-
-WindowPtr
-GetSpriteWindow(
-#if NeedFunctionPrototypes
-	void
-#endif
-	);
-
-CursorPtr
+extern CursorPtr
 GetSpriteCursor(
 #if NeedFunctionPrototypes
 	void
 #endif
 	);
 
-void
-GetSpritePosition(
-#if NeedFunctionPrototypes
-	int *                  /* px */,
-	int *                  /* py */
-#endif
-	);
-
-void
-NoticeEventTime(
-#if NeedFunctionPrototypes
-	xEvent *               /* xE */
-#endif
-	);
-
-void
-EnqueueEvent(
-#if NeedFunctionPrototypes
-	xEvent *               /* xE */,
-	DeviceIntPtr           /* device */,
-	int                    /* count */
-#endif
-	);
-
-void
-ComputeFreezes(
-#if NeedFunctionPrototypes
-	void
-#endif
-	);
-
-void
-CheckGrabForSyncs(
-#if NeedFunctionPrototypes
-	DeviceIntPtr           /* thisDev */,
-	Bool                   /* thisMode */,
-	Bool                   /* otherMode */
-#endif
-	);
-
-void
-ActivatePointerGrab(
-#if NeedFunctionPrototypes
-	DeviceIntPtr           /* mouse */,
-	GrabPtr                /* grab */,
-	TimeStamp              /* time */,
-	Bool                   /* autoGrab */
-#endif
-	);
-
-void
-DeactivatePointerGrab(
-#if NeedFunctionPrototypes
-	DeviceIntPtr           /* mouse */
-#endif
-	);
-
-void
-ActivateKeyboardGrab(
-#if NeedFunctionPrototypes
-	DeviceIntPtr           /* keybd */,
-	GrabPtr                /* grab */,
-	TimeStamp              /* time */,
-	Bool                   /* passive */
-#endif
-	);
-
-void
-DeactivateKeyboardGrab(
-#if NeedFunctionPrototypes
-	DeviceIntPtr           /* keybd */
-#endif
-	);
-
-void
-AllowSome(
-#if NeedFunctionPrototypes
-	ClientPtr              /* client */,
-	TimeStamp              /* time */,
-	DeviceIntPtr           /* thisDev */,
-	int                    /* newState */
-#endif
-	);
-
-int
+extern int
 ProcAllowEvents(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-void
-ReleaseActiveGrabs(
-#if NeedFunctionPrototypes
-	ClientPtr              /* client */
-#endif
-	);
-
-int
+extern int
 TryClientEvents (
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */,
@@ -204,19 +76,7 @@ TryClientEvents (
 #endif
 	);
 
-int
-DeliverEventsToWindow(
-#if NeedFunctionPrototypes
-	WindowPtr              /* pWin */,
-	xEvent *               /* pEvents */,
-	int                    /* count */,
-	Mask                   /* filter */,
-	GrabPtr                /* grab */,
-	int                    /* mskidx */
-#endif
-	);
-
-int
+extern int
 MaybeDeliverEventsToClient(
 #if NeedFunctionPrototypes
 	WindowPtr              /* pWin */,
@@ -227,50 +87,14 @@ MaybeDeliverEventsToClient(
 #endif
 	);
 
-int
-DeliverDeviceEvents(
-#if NeedFunctionPrototypes
-	WindowPtr              /* pWin */,
-	xEvent *               /* xE */,
-	GrabPtr                /* grab */,
-	WindowPtr              /* stopAt */,
-	DeviceIntPtr           /* dev */,
-	int                    /* count */
-#endif
-	);
-
-int
-DeliverEvents(
-#if NeedFunctionPrototypes
-	WindowPtr              /* pWin */,
-	xEvent *               /* xE */,
-	int                    /* count */,
-	WindowPtr              /* otherParent */
-#endif
-	);
-
-void
+extern void
 WindowsRestructured(
 #if NeedFunctionPrototypes
 	void
 #endif
 	);
 
-void
-DefineInitialRootWindow(
-#if NeedFunctionPrototypes
-	WindowPtr              /* win */
-#endif
-	);
-
-void
-WindowHasNewCursor(
-#if NeedFunctionPrototypes
-	WindowPtr              /* pWin */
-#endif
-	);
-
-void
+extern void
 NewCurrentScreen(
 #if NeedFunctionPrototypes
 	ScreenPtr              /* newScreen */,
@@ -279,44 +103,14 @@ NewCurrentScreen(
 #endif
 	);
 
-int
+extern int
 ProcWarpPointer(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-Bool
-CheckDeviceGrabs(
-#if NeedFunctionPrototypes
-	DeviceIntPtr           /* device */,
-	xEvent *               /* xE */,
-	int                    /* checkFirst */,
-	int                    /* count */
-#endif
-	);
-
-void
-DeliverFocusedEvent(
-#if NeedFunctionPrototypes
-	DeviceIntPtr           /* keybd */,
-	xEvent *               /* xE */,
-	WindowPtr              /* window */,
-	int                    /* count */
-#endif
-	);
-
-void
-DeliverGrabbedEvent(
-#if NeedFunctionPrototypes
-	xEvent *               /* xE */,
-	DeviceIntPtr           /* thisDev */,
-	Bool                   /* deactivateGrab */,
-	int                    /* count */
-#endif
-	);
-
-void
+extern void
 #ifdef XKB
 CoreProcessKeyboardEvent (
 #else
@@ -329,7 +123,7 @@ ProcessKeyboardEvent (
 #endif
 	);
 
-void
+extern void
 #ifdef XKB
 CoreProcessPointerEvent (
 #else
@@ -342,22 +136,7 @@ ProcessPointerEvent (
 #endif
 	);
 
-void
-RecalculateDeliverableEvents(
-#if NeedFunctionPrototypes
-	WindowPtr              /* pWin */
-#endif
-	);
-
-int
-OtherClientGone(
-#if NeedFunctionPrototypes
-	pointer                /* value */,
-	XID                    /* id */
-#endif
-	);
-
-int
+extern int
 EventSelectForWindow(
 #if NeedFunctionPrototypes
 	WindowPtr              /* pWin */,
@@ -366,7 +145,7 @@ EventSelectForWindow(
 #endif
 	);
 
-int
+extern int
 EventSuppressForWindow(
 #if NeedFunctionPrototypes
 	WindowPtr              /* pWin */,
@@ -376,177 +155,101 @@ EventSuppressForWindow(
 #endif
 	);
 
-void
-DoFocusEvents(
-#if NeedFunctionPrototypes
-	DeviceIntPtr           /* dev */,
-	WindowPtr              /* fromWin */,
-	WindowPtr              /* toWin */,
-	int                    /* mode */
-#endif
-	);
-
-int
-SetInputFocus(
-#if NeedFunctionPrototypes
-	ClientPtr              /* client */,
-	DeviceIntPtr           /* dev */,
-	Window                 /* focusID */,
-	CARD8                  /* revertTo */,
-	Time                   /* ctime */,
-	Bool                   /* followOK */
-#endif
-	);
-
-int
+extern int
 ProcSetInputFocus(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
+extern int
 ProcGetInputFocus(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
+extern int
 ProcGrabPointer(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
+extern int
 ProcChangeActivePointerGrab(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
+extern int
 ProcUngrabPointer(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
-GrabDevice(
-#if NeedFunctionPrototypes
-	ClientPtr              /* client */,
-	DeviceIntPtr           /* dev */,
-	unsigned               /* this_mode */,
-	unsigned               /* other_mode */,
-	Window                 /* grabWindow */,
-	unsigned               /* ownerEvents */,
-	Time                   /* ctime */,
-	Mask                   /* mask */,
-	CARD8 *                /* status */
-#endif
-	);
-
-int
+extern int
 ProcGrabKeyboard(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
+extern int
 ProcUngrabKeyboard(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
+extern int
 ProcQueryPointer(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-void
-InitEvents(
-#if NeedFunctionPrototypes
-	void
-#endif
-	);
-
-int
+extern int
 ProcSendEvent(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
+extern int
 ProcUngrabKey(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
+extern int
 ProcGrabKey(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
+extern int
 ProcGrabButton(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-int
+extern int
 ProcUngrabButton(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
 #endif
 	);
 
-void
-DeleteWindowFromAnyEvents(
-#if NeedFunctionPrototypes
-	WindowPtr              /* pWin */,
-	Bool                   /* freeResources */
-#endif
-	);
-
-void
-CheckCursorConfinement(
-#if NeedFunctionPrototypes
-	WindowPtr              /* pWin */
-#endif
-	);
-
-Mask
-EventMaskForClient(
-#if NeedFunctionPrototypes
-	WindowPtr              /* pWin */,
-	ClientPtr              /* client */
-#endif
-	);
-
-int
+extern int
 ProcRecolorCursor(
 #if NeedFunctionPrototypes
 	ClientPtr              /* client */
-#endif
-	);
-
-void
-WriteEventsToClient(
-#if NeedFunctionPrototypes
-	ClientPtr              /* pClient */,
-	int                    /* count */,
-	xEvent *               /* events */
 #endif
 	);
 

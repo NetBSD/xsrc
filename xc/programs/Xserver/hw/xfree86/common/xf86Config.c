@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.104 1996/10/16 14:40:45 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.9 1997/06/01 12:33:32 dawes Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XConsortium: xf86Config.c /main/34 1996/01/31 10:06:24 kaleb $ */
+/* $XConsortium: xf86Config.c /main/58 1996/12/28 14:46:17 kaleb $ */
 
 #ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
@@ -38,10 +38,12 @@ extern char *getenv();
 #include "servermd.h"
 #include "scrnintstr.h"
 
-#include "compiler.h"
+#ifdef DPMSExtension
+#include "opaque.h"
+#endif
 
+#define NO_COMPILER_H_EXTRAS
 #include "xf86Procs.h"
-
 #include "xf86_OSlib.h"
 
 #define INIT_CONFIG
@@ -82,7 +84,7 @@ static char   *fontPath = NULL;           /* font path */
 static char   *modulePath = NULL;	  /* module path */
 static int    pushToken = LOCK_TOKEN;
 static LexRec val;                        /* global return value */
-
+static char   DCerr;  
 static int scr_index = 0;
 
 #ifdef XF86SETUP
@@ -153,6 +155,24 @@ static CONFIG_RETURN_TYPE configMonitorSection(
 static CONFIG_RETURN_TYPE configDynamicModuleSection(
 #if NeedFunctionPrototypes
     void
+#endif
+);
+static char *xf86DCSaveLine(
+#if NeedFunctionPrototypes
+char *,
+int
+#endif
+);
+static char *xf86DCOption(
+#if NeedFunctionPrototypes
+char *,
+LexRec
+#endif
+);
+static char * xf86DCConcatOption(
+#if NeedFunctionPrototypes
+char *,
+char *
 #endif
 );
 #ifndef XF86SETUP
@@ -1108,8 +1128,18 @@ xf86Config (vtopen)
   xf86ScreensOpen = TRUE;
   for ( i=0; i < xf86MaxScreens; i++ )
     if (xf86Screens[i] && xf86Screens[i]->configured &&
-	(xf86Screens[i]->configured = (xf86Screens[i]->Probe)()))
+	(xf86Screens[i]->configured = (xf86Screens[i]->Probe)())){
+      /* if driver doesn't report error do it here */
+      if(xf86DCGetToken(xf86Screens[i]->DCConfig,NULL,DeviceTab) != EOF){
+	xf86DCConfigError("Unknown device section keyword");
+	FatalError("\n");
+      }
+      if(xf86Screens[i]->DCOptions){
+	xf86DCGetOption(xf86Screens[i]->DCOptions,NULL);
+	FatalError("\n");
+      }
       xf86InitViewport(xf86Screens[i]);
+    }
 
   /*
    * Now sort the drivers to match the order of the ScreenNumbers
@@ -1270,6 +1300,18 @@ configServerFlagsSection()
 #endif
     case ALLOWMOUSEOPENFAIL:
       xf86AllowMouseOpenFail = TRUE;
+      break;
+    case PCIPROBE1:
+      xf86PCIFlags = PCIProbe1;
+      break;
+    case PCIPROBE2:
+      xf86PCIFlags = PCIProbe2;
+      break;
+    case PCIFORCECONFIG1:
+      xf86PCIFlags = PCIForceConfig1;
+      break;
+    case PCIFORCECONFIG2:
+      xf86PCIFlags = PCIForceConfig2;
       break;
     case EOF:
       FatalError("Unexpected EOF (missing EndSection?)");
@@ -1700,6 +1742,14 @@ configPointerSection(MouseDevPtr	mouse_dev,
 	*devicename = strdup(val.str);
 	break;
 
+#ifndef XF86SETUP
+#ifdef XINPUT
+    case ALWAYSCORE:
+	xf86AlwaysCore(mouse_dev->local, TRUE);
+	break;
+#endif
+#endif
+	
     case EOF:
       FatalError("Unexpected EOF (missing EndSection?)");
       break; /* :-) */
@@ -1774,7 +1824,8 @@ configDeviceSection()
   /* Pre-init the newly created device */
   devp->chipset = NULL;
   devp->ramdac = NULL;
-  devp->dacSpeed = 0;
+  for (i=0; i<MAXDACSPEEDS; i++)
+     devp->dacSpeeds[i] = 0;
   OFLG_ZERO(&(devp->options));
   OFLG_ZERO(&(devp->xconfigFlag));
   devp->videoRam = 0;
@@ -1798,10 +1849,16 @@ configDeviceSection()
   devp->s3Madjust = 0;
   devp->s3Nadjust = 0;
   devp->s3MClk = 0;
+  devp->chipID = 0;
+  devp->chipRev = 0;
   devp->s3RefClk = 0;
   devp->s3BlankDelay = -1;
+  devp->DCConfig = NULL;
+  devp->DCOptions = NULL;
+  devp->MemClk = 0;
 
   while ((token = xf86GetToken(DeviceTab)) != ENDSECTION) {
+    devp->DCConfig = xf86DCSaveLine(devp->DCConfig, token);
     switch (token) {
 
     case IDENTIFIER:
@@ -1832,8 +1889,20 @@ configDeviceSection()
       break;
 
     case DACSPEED:
-      if (xf86GetToken(NULL) != NUMBER) xf86ConfigError("DAC speed expected");
-      devp->dacSpeed = (int)(val.realnum * 1000.0 + 0.5);
+      for (i=0; i<MAXDACSPEEDS; i++) 
+	 devp->dacSpeeds[i] = 0;
+      if (xf86GetToken(NULL) != NUMBER) xf86ConfigError("DAC speed(s) expected");
+      else {
+	 devp->dacSpeeds[0] = (int)(val.realnum * 1000.0 + 0.5);
+	 for(i=1; i<MAXDACSPEEDS; i++) {
+	    if (xf86GetToken(NULL) == NUMBER) 
+	       devp->dacSpeeds[i] = (int)(val.realnum * 1000.0 + 0.5);
+	    else {
+	       pushToken = token;
+	       break;
+	    }
+	 }
+      }
       OFLG_SET(XCONFIG_DACSPEED,&(devp->xconfigFlag));
       break;
 
@@ -1904,7 +1973,8 @@ configDeviceSection()
 	i++;
       }
       if (xf86_OptionTab[i].token == -1)
-        xf86ConfigError("Unknown option string");
+        /*xf86ConfigError("Unknown option string");*/
+	devp->DCOptions = xf86DCOption(devp->DCOptions,val);
       break;
 
     case VIDEORAM:
@@ -2046,6 +2116,22 @@ configDeviceSection()
       devp->s3MClk = (int)(val.realnum * 1000.0 + 0.5);
       break;
 
+    case MEMCLOCK:
+      if (xf86GetToken(NULL) != NUMBER) xf86ConfigError("Memory Clock value in MHz expected");
+      devp->MemClk = (int)(val.realnum * 1000.0 + 0.5);
+      OFLG_SET(XCONFIG_MEMCLOCK,&(devp->xconfigFlag));
+      break;
+
+    case CHIPID:
+      if (xf86GetToken(NULL) != NUMBER) xf86ConfigError("ChipID expected");
+      devp->chipID = val.num;
+      break;
+
+    case CHIPREV:
+      if (xf86GetToken(NULL) != NUMBER) xf86ConfigError("ChipRev expected");
+      devp->chipRev = val.num;
+      break;
+
     case VGABASEADDR:
       if (xf86GetToken(NULL) != NUMBER) 
          xf86ConfigError("VGA aperature base address expected");
@@ -2079,7 +2165,8 @@ configDeviceSection()
       FatalError("Unexpected EOF (missing EndSection?)");
       break; /* :-) */
     default:
-      xf86ConfigError("Device section keyword expected");
+      if(DCerr)
+	xf86ConfigError("Device section keyword expected");
       break;
     }
   }
@@ -2228,8 +2315,10 @@ configMonitorSection()
       monp->Last = pNew; /* GJA */
       break;
     case BANDWIDTH:
+      /* This should be completely removed at some point */
       if ((token = xf86GetToken(NULL)) != NUMBER)
         xf86ConfigError("Bandwidth number expected");
+#if 0
       monp->bandwidth = val.realnum;
       /* Handle optional scaler */
       token = xf86GetToken(UnitTab);
@@ -2240,6 +2329,7 @@ configMonitorSection()
       default: multiplier = 1.0; pushToken = token;
       }
       monp->bandwidth *= multiplier;
+#endif
       break;
     case HORIZSYNC:
       if ((token = xf86GetToken(NULL)) != NUMBER)
@@ -2393,7 +2483,7 @@ configDynamicModuleSection()
 		xf86LoadModule(val.str, modulePath);
 #else
 		ErrorF("Dynamic modules not supported. \"%s\" not loaded\n",
-		       modulePath);
+		       val.str);
 #endif
 	    }
 	    break;
@@ -2587,8 +2677,6 @@ configScreenSection()
     screen->whiteColour.red = 0x3F;
     screen->whiteColour.green = 0x3F;
     screen->whiteColour.blue = 0x3F;
-    screen->suspendTime = DEFAULT_SUSPEND_TIME * MILLI_PER_SECOND;
-    screen->offTime = DEFAULT_OFF_TIME * MILLI_PER_SECOND;
   }
   screen->clocks = 0;
 
@@ -2632,6 +2720,7 @@ configScreenSection()
       dispp->defaultVisual = -1;
       OFLG_ZERO(&(dispp->options));
       OFLG_ZERO(&(dispp->xconfigFlag));
+      dispp->DCOptions = NULL;
 
       configDisplaySubsection(dispp);
       break;
@@ -2655,7 +2744,9 @@ configScreenSection()
           }
           screen->chipset = device_list[i].chipset;
           screen->ramdac = device_list[i].ramdac;
-          screen->dacSpeed = device_list[i].dacSpeed;
+	  for (j=0; j<MAXDACSPEEDS; j++)
+	     screen->dacSpeeds[j] = device_list[i].dacSpeeds[j];
+	  screen->dacSpeedBpp = 0;
           screen->options = device_list[i].options;
           screen->clockOptions = device_list[i].clockOptions;
           screen->xconfigFlag = device_list[i].xconfigFlag;
@@ -2680,11 +2771,16 @@ configScreenSection()
           screen->s3Madjust = device_list[i].s3Madjust;
           screen->s3Nadjust = device_list[i].s3Nadjust;
 	  screen->s3MClk = device_list[i].s3MClk;
+	  screen->MemClk = device_list[i].MemClk;
+	  screen->chipID = device_list[i].chipID;
+	  screen->chipRev = device_list[i].chipRev;
 	  screen->s3RefClk = device_list[i].s3RefClk;
 	  screen->s3BlankDelay = device_list[i].s3BlankDelay;
 	  screen->textClockFreq = device_list[i].textClockValue;
 	  if (OFLG_ISSET(XCONFIG_VGABASE, &screen->xconfigFlag))
 	    screen->VGAbase = device_list[i].VGAbase;
+	  screen->DCConfig = device_list[i].DCConfig;
+	  screen->DCOptions = device_list[i].DCOptions;
 #ifdef XF86SETUP
 	  screen->device = (void *) &device_list[i];
 #endif
@@ -2728,16 +2824,28 @@ configScreenSection()
 	defaultScreenSaverTime = ScreenSaverTime = val.num * MILLI_PER_MIN;
       break;
 
+    case STANDBYTIME:
+      if (xf86GetToken(NULL) != NUMBER)
+	xf86ConfigError("Screensaver standby time expected");
+#ifdef DPMSExtension
+      defaultDPMSStandbyTime = DPMSStandbyTime = val.num * MILLI_PER_MIN;
+#endif
+      break;
+
     case SUSPENDTIME:
       if (xf86GetToken(NULL) != NUMBER)
 	xf86ConfigError("Screensaver suspend time expected");
-      screen->suspendTime = val.num * MILLI_PER_MIN;
+#ifdef DPMSExtension
+      defaultDPMSSuspendTime = DPMSSuspendTime = val.num * MILLI_PER_MIN;
+#endif
       break;
 
     case OFFTIME:
       if (xf86GetToken(NULL) != NUMBER)
 	xf86ConfigError("Screensaver off time expected");
-      screen->offTime = val.num * MILLI_PER_MIN;
+#ifdef DPMSExtension
+      defaultDPMSOffTime = DPMSOffTime = val.num * MILLI_PER_MIN;
+#endif
       break;
 
     default:
@@ -2770,6 +2878,7 @@ configScreenSection()
 #endif
           dispIndex = 0;
         } else {
+          xf86bpp = screen->depth;
           /* Look for a section which matches the driver's default depth */
           for (dispIndex = 0; dispIndex < numDisps; dispIndex++) {
             if (dispList[dispIndex].depth == screen->depth)
@@ -2830,8 +2939,14 @@ configScreenSection()
       }
       /* Now copy the info across to the screen rec */
       dispp = dispList + dispIndex;
-      if (dispp->depth > 0) screen->depth = dispp->depth;
-      if (dispp->weight.red > 0) screen->weight = dispp->weight;
+      if (xf86bpp > 0) screen->depth = xf86bpp;
+      else if (dispp->depth > 0) screen->depth = dispp->depth;
+      if (xf86weight.red || xf86weight.green || xf86weight.blue)
+	 screen->weight = xf86weight;
+      else if (dispp->weight.red > 0) {
+	 screen->weight = dispp->weight;
+	 xf86weight = dispp->weight;
+      }
       screen->frameX0 = dispp->frameX0;
       screen->frameY0 = dispp->frameY0;
       screen->virtualX = dispp->virtualX;
@@ -2847,6 +2962,7 @@ configScreenSection()
         if (OFLG_ISSET(i, &(dispp->xconfigFlag)))
           OFLG_SET(i, &(screen->xconfigFlag));
       }
+	screen->DCOptions = xf86DCConcatOption(screen->DCOptions,dispp->DCOptions);
 #ifdef XF86SETUP
       xf86setup_scrn_ndisps[driverno-SVGA] = numDisps;
       xf86setup_scrn_displays[driverno-SVGA] = dispList;
@@ -2874,13 +2990,15 @@ configScreenSection()
 
     if (driver->clockprog && !driver->clocks)
     {
-      FatalError(
-        "%s: When ClockProg is specified a Clocks line is required\n",
-        driver->name);
+       if (!OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &(screen->clockOptions))){
+       ErrorF("%s: No clock line specified: assuming programmable clocks\n");
+       OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &(screen->clockOptions));}
+       driver->textclock = textClockValue;
     }
 
     /* Find the Index of the Text Clock for the ClockProg */
-    if (driver->clockprog && textClockValue > 0)
+    if (driver->clockprog && textClockValue > 0
+ 	&& !OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &(screen->clockOptions)))
     {
       driver->textclock = xf86GetNearestClock(driver, textClockValue);
       if (abs(textClockValue - driver->clock[driver->textclock]) >
@@ -3076,7 +3194,7 @@ DispPtr disp;
 	i++;
       }
       if (xf86_OptionTab[i].token == -1)
-        xf86ConfigError("Unknown option string");
+      disp->DCOptions = xf86DCOption(disp->DCOptions,val);
       break;
 
     /* The following should really go in the S3 server */
@@ -3197,7 +3315,7 @@ xf86LookupMode(target, driver, flags)
     if (!strcmp(p->name, target->name))		/* names equal ? */
     {
       /* First check if the driver objects to the mode */
-      if ((driver->ValidMode)(p, xf86Verbose) != MODE_OK)
+      if ((driver->ValidMode)(p, xf86Verbose, MODE_USED) != MODE_OK)
       {
          ErrorF("%s %s: Mode \"%s\" rejected by driver.  Deleted.\n",
                 XCONFIG_PROBED,driver->name, target->name );
@@ -3365,7 +3483,7 @@ xf86LookupMode(target, driver, flags)
      * new XF86Config organization. - SRA
      */
     if (found_mode)
-      if ((driver->ValidMode)(target, xf86Verbose) != MODE_OK)
+      if ((driver->ValidMode)(target, xf86Verbose, MODE_USED) != MODE_OK)
         {
          ErrorF("%s %s: Unable to support mode \"%s\"\n",
               XCONFIG_GIVEN,driver->name, target->name );
@@ -3447,7 +3565,8 @@ xf86PruneModes(monp, allmodes, scrp, card)
 	 */
 	while (dispmp &&
 	       (card ?
-		 ((scrp->ValidMode)(dispmp, xf86Verbose) != MODE_OK) :
+		 ((scrp->ValidMode)(dispmp, xf86Verbose, MODE_SUGGESTED) 
+		 	!= MODE_OK) :
 		 (xf86CheckMode(scrp, dispmp, monp, xf86Verbose) != MODE_OK))) {
 		olddispmp = dispmp;
 		dispmp = dispmp->next;
@@ -3461,7 +3580,8 @@ xf86PruneModes(monp, allmodes, scrp, card)
 	remainder = dispmp;
 	while ( dispmp->next ) {
 		if (card ?
-		     ((scrp->ValidMode)(dispmp->next, xf86Verbose) != MODE_OK) :
+		     ((scrp->ValidMode)(dispmp->next,xf86Verbose,MODE_SUGGESTED)
+		     		!= MODE_OK) :
 		     (xf86CheckMode(scrp, dispmp->next, monp, xf86Verbose) !=
                       MODE_OK)) {
 			olddispmp = dispmp->next;
@@ -3490,6 +3610,29 @@ xf86CheckMode(scrp, dispmp, monp, verbose)
 	float dotclock, hsyncfreq, vrefreshrate;
 	char *scrname = scrp->name;
 
+	/* Sanity checks */
+	if ((0 >= dispmp->HDisplay) ||
+	    (dispmp->HDisplay > dispmp->HSyncStart) ||
+	    (dispmp->HSyncStart >= dispmp->HSyncEnd) ||
+	    (dispmp->HSyncEnd >= dispmp->HTotal))
+	{
+		ErrorF(
+                  "%s %s: Invalid horizontal timing for mode \"%s\". Deleted.\n",
+		  XCONFIG_PROBED, scrname, dispmp->name);
+		return MODE_HSYNC;
+	}
+
+	if ((0 >= dispmp->VDisplay) ||
+	    (dispmp->VDisplay > dispmp->VSyncStart) ||
+	    (dispmp->VSyncStart >= dispmp->VSyncEnd) ||
+	    (dispmp->VSyncEnd >= dispmp->VTotal))
+	{
+		ErrorF(
+		  "%s %s: Invalid vertical timing for mode \"%s\". Deleted.\n",
+		  XCONFIG_PROBED, scrname, dispmp->name);
+		return MODE_VSYNC;
+	}
+
 	/* Deal with the dispmp->Clock being a frequency or index */
 	if (dispmp->Clock > MAXCLOCKS) {
 		dotclock = (float)dispmp->Clock;
@@ -3497,21 +3640,11 @@ xf86CheckMode(scrp, dispmp, monp, verbose)
 		dotclock = (float)scrp->clock[dispmp->Clock];
 	}
 	hsyncfreq = dotclock / (float)(dispmp->HTotal);
-	for ( i = 0 ; i < monp->n_hsync ; i++ ) {
-		if ( monp->hsync[i].hi == monp->hsync[i].lo ) {
-			if ( (hsyncfreq > 0.999 * monp->hsync[i].hi) &&
-			     (hsyncfreq < 1.001 * monp->hsync[i].hi) )
-			{
-				break; /* Matches close enough. */
-			}
-		} else {
-			if ( (hsyncfreq > 0.999 * monp->hsync[i].lo) &&
-			     (hsyncfreq < 1.001 * monp->hsync[i].hi) )
-			{
-				break; /* In range. */
-			}
-		}
-	}
+	for ( i = 0 ; i < monp->n_hsync ; i++ )
+		if ( (hsyncfreq > 0.999 * monp->hsync[i].lo) &&
+		     (hsyncfreq < 1.001 * monp->hsync[i].hi) )
+			break; /* In range. */
+
 	/* Now see whether we ran out of sync frequencies */
 	if ( i == monp->n_hsync ) {
 	    if (verbose) {
@@ -3526,21 +3659,11 @@ xf86CheckMode(scrp, dispmp, monp, verbose)
 			((float)(dispmp->HTotal) * (float)(dispmp->VTotal)) ;
 	if ( dispmp->Flags & V_INTERLACE ) vrefreshrate *= 2.0;
 	if ( dispmp->Flags & V_DBLSCAN ) vrefreshrate /= 2.0;
-	for ( i = 0 ; i < monp->n_vrefresh ; i++ ) {
-		if ( monp->vrefresh[i].hi == monp->vrefresh[i].lo ) {
-			if ( (vrefreshrate > 0.999 * monp->vrefresh[i].hi) &&
-			     (vrefreshrate < 1.001 * monp->vrefresh[i].hi) )
-			{
-				break; /* Matches close enough. */
-			}
-		} else {
-			if ( (vrefreshrate > 0.999 * monp->vrefresh[i].lo) &&
-			     (vrefreshrate < 1.001 * monp->vrefresh[i].hi) )
-			{
-				break; /* In range. */
-			}
-		}
-	}
+	for ( i = 0 ; i < monp->n_vrefresh ; i++ )
+		if ( (vrefreshrate > 0.999 * monp->vrefresh[i].lo) &&
+		     (vrefreshrate < 1.001 * monp->vrefresh[i].hi) )
+			break; /* In range. */
+
 	/* Now see whether we ran out of refresh rates */
 	if ( i == monp->n_vrefresh ) {
 	    if (verbose) {
@@ -3559,3 +3682,126 @@ xf86CheckMode(scrp, dispmp, monp, verbose)
 	return MODE_OK;
 }
 
+/*
+ * Save entire line from config file in memory area, if memory area
+ * does not exist allocate it. Set DCerr according to value of token.
+ * Return address of memory area.
+ */
+static char *xf86DCSaveLine(DCPointer,token)
+     char *DCPointer;
+     int token;
+{
+  static int len = 0; /* length of memory area where to store strings */
+  static int pos = 0; /* current position */
+  char *currpointer;  /* pointer to current position in memory area */
+  static int currline; /* lineno of line currently interpreted */
+  int addlen;         /* len to add to pos */
+
+  if(DCPointer == NULL){   /* initialize */
+    DCPointer = (char *)xalloc(4096);  /* initial size 4kB */
+    len = 4096;  
+    strcpy(DCPointer,configPath);
+    pos = strlen(DCPointer) + 1;
+    currline = -1;  /* no line yet */
+  }
+
+    if(configLineNo != currline)  /* new line */
+      {
+	currline = configLineNo; 
+	addlen = strlen(configBuf) + 1 + sizeof(int); /* string + lineno */
+	while ( (pos + addlen) >= len ){  /* not enough space? */
+	  DCPointer = (char *)xrealloc(DCPointer, (len + 4096));
+	  len += 4096;
+	}
+	currpointer = DCPointer + pos;  /* find current position */
+	memcpy(currpointer, &currline, sizeof(int)); /* Grrr unaligned ints.. */
+	strcpy((currpointer + sizeof(int)),configBuf); /* store complete line*/
+	pos += addlen;                      /* goto end */
+	currpointer += addlen;
+	*(currpointer) = EOF;               /* mark end */
+      }
+  switch(token){
+  case STRING:
+  case DASH:
+  case NUMBER:
+  case COMMA:
+    break;
+  case ERROR_TOKEN:    /* if unknown token unset DCerr to ignore it  */
+    DCerr = 0;         /* and subsequent STRING, DASH, NUMBER, COMMA */
+    break;
+  default:             /* set to complain if a valid token is        */
+    DCerr = 1;         /* followed by an unwanted STRING etc.        */
+  }
+  return(DCPointer);      
+}
+
+/* 
+ * Store any unknown Option strings (contained in val.str)
+ * in a  memory are pointed to by pointer. If it doesn't 
+ * exist allocate it and return a pointer pointing to it
+ */
+
+static char *
+xf86DCOption(DCPointer, val)
+     char *DCPointer;
+     LexRec val;
+{
+  static int len = 0;
+  static int pos = 0;
+  int addlen;
+  char *currpointer;                   /* current position */
+
+  if (DCPointer == NULL){              /* First time: initialize */
+    DCPointer = (char *)xalloc(4096);       /* allocate enough space  */
+    strcpy(DCPointer,configPath);
+    pos = strlen(DCPointer) + 1;
+    len = 4096;                      /* and total length       */
+  } 
+
+  addlen = sizeof(int) + strlen(val.str) + 1;  /* token, lineno */  
+  while( (pos + addlen) >= len ){              /* reallocate if not enough */
+    DCPointer = (char *)xrealloc(DCPointer, (len + 4096));
+    len += 4096;
+  }
+  currpointer = DCPointer + pos;        
+  *(int *)currpointer=configLineNo;
+  strcpy(currpointer + sizeof(int),val.str);         /* store string */
+  pos += addlen;
+  *(currpointer + addlen) = EOF;                     /* mark end     */
+  return(DCPointer);
+}
+
+static char 
+* xf86DCConcatOption(Pointer1, Pointer2)
+char *Pointer1;
+char *Pointer2;
+{
+  int s1 = 0;
+  int s2 = 0;
+  int s3;
+  char *ptmp;
+
+  if(Pointer1)
+    while(*(Pointer1 + s1) != EOF){s1++;}
+  else if (Pointer2)
+    return Pointer2;
+  else return NULL;
+  if(Pointer2)
+    while(*(Pointer2 + s2) != EOF){s2++;}
+  else if (Pointer1)
+    return Pointer1;
+  else return NULL;
+  s3 = strlen(Pointer2) + 1;
+  s2 -= s3;
+
+  Pointer1 = (char *)xrealloc(Pointer1,s1+s2+1); 
+  ptmp = Pointer1 + s1;
+  Pointer2 += s3;
+  do{
+    *ptmp = *Pointer2;
+    *ptmp++;
+    *Pointer2++;
+  } while(s2--);
+  return Pointer1;
+}
+    

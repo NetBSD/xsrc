@@ -45,8 +45,8 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: mibitblt.c,v 5.24 94/04/17 20:27:19 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/mi/mibitblt.c,v 3.0 1996/06/10 09:17:25 dawes Exp $ */
+/* $XConsortium: mibitblt.c /main/55 1996/08/01 19:25:20 dpw $ */
+/* $XFree86: xc/programs/Xserver/mi/mibitblt.c,v 3.1 1996/12/23 07:09:43 dawes Exp $ */
 /* Author: Todd Newman  (aided and abetted by Mr. Drewry) */
 
 #include "X.h"
@@ -388,7 +388,7 @@ miOpqStipDrawable(pDraw, pGC, prgnSrc, pbits, srcx, w, h, dstx, dsty)
     int		oldfill, i;
     unsigned long oldfg;
     int		*pwidth, *pwidthFirst;
-    pointer	gcv[6];
+    ChangeGCVal	gcv[6];
     PixmapPtr	pStipple, pPixmap;
     DDXPointRec	oldOrg;
     GCPtr	pGCT;
@@ -409,8 +409,8 @@ miOpqStipDrawable(pDraw, pGC, prgnSrc, pbits, srcx, w, h, dstx, dsty)
 	return;
     }
     /* First set the whole pixmap to 0 */
-    gcv[0] = (pointer)0;
-    DoChangeGC(pGCT, GCBackground, (XID *)gcv, 1);
+    gcv[0].val = 0;
+    dixChangeGC(NullClient, pGCT, GCBackground, NULL, gcv);
     ValidateGC((DrawablePtr)pPixmap, pGCT);
     miClearDrawable((DrawablePtr)pPixmap, pGCT);
     ppt = pptFirst = (DDXPointPtr)ALLOCATE_LOCAL(h * sizeof(DDXPointRec));
@@ -456,14 +456,14 @@ miOpqStipDrawable(pDraw, pGC, prgnSrc, pbits, srcx, w, h, dstx, dsty)
     oldOrg = pGC->patOrg;
 
     /* Set a new stipple in the drawable */
-    gcv[0] = (pointer)FillStippled;
-    gcv[1] = (pointer)pPixmap;
-    gcv[2] = (pointer)(dstx - srcx);
-    gcv[3] = (pointer)dsty;
+    gcv[0].val = FillStippled;
+    gcv[1].ptr = pPixmap;
+    gcv[2].val = dstx - srcx;
+    gcv[3].val = dsty;
 
-    DoChangeGC(pGC,
+    dixChangeGC(NullClient, pGC,
              GCFillStyle | GCStipple | GCTileStipXOrigin | GCTileStipYOrigin,
-	     (XID *)gcv, 1);
+	     NULL, gcv);
     ValidateGC(pDraw, pGC);
 
     /* Fill the drawable with the stipple.  This will draw the
@@ -478,8 +478,8 @@ miOpqStipDrawable(pDraw, pGC, prgnSrc, pbits, srcx, w, h, dstx, dsty)
 
     /* Invert the tiling pixmap. This sets 0s for 1s and 1s for 0s, only
      * within the clipping region, the part outside is still all 0s */
-    gcv[0] = (pointer)GXinvert;
-    DoChangeGC(pGCT, GCFunction, (XID *)gcv, 1);
+    gcv[0].val = GXinvert;
+    dixChangeGC(NullClient, pGCT, GCFunction, NULL, gcv);
     ValidateGC((DrawablePtr)pPixmap, pGCT);
     (*pGCT->ops->CopyArea)((DrawablePtr)pPixmap, (DrawablePtr)pPixmap,
 			   pGCT, 0, 0, w + srcx, h, 0, 0);
@@ -488,10 +488,11 @@ miOpqStipDrawable(pDraw, pGC, prgnSrc, pbits, srcx, w, h, dstx, dsty)
      * Now when we fill the drawable, we will fill in the "Background"
      * values */
     oldfg = pGC->fgPixel;
-    gcv[0] = (pointer)pGC->bgPixel;
-    gcv[1] = (pointer)oldfg;
-    gcv[2] = (pointer)pPixmap;
-    DoChangeGC(pGC, GCForeground | GCBackground | GCStipple, (XID *)gcv, 1);
+    gcv[0].val = pGC->bgPixel;
+    gcv[1].val = oldfg;
+    gcv[2].ptr = pPixmap;
+    dixChangeGC(NullClient, pGC, GCForeground | GCBackground | GCStipple,
+		NULL, gcv);
     ValidateGC(pDraw, pGC);
     /* PolyFillRect might have bashed the rectangle */
     rect.x = dstx;
@@ -503,15 +504,15 @@ miOpqStipDrawable(pDraw, pGC, prgnSrc, pbits, srcx, w, h, dstx, dsty)
     /* Now put things back */
     if(pStipple)
         pStipple->refcnt--;
-    gcv[0] = (pointer)oldfg;
-    gcv[1] = (pointer)pGC->fgPixel;
-    gcv[2] = (pointer)oldfill;
-    gcv[3] = (pointer)pStipple;
-    gcv[4] = (pointer)(unsigned long) oldOrg.x;
-    gcv[5] = (pointer)(unsigned long) oldOrg.y;
-    DoChangeGC(pGC, 
+    gcv[0].val = oldfg;
+    gcv[1].val = pGC->fgPixel;
+    gcv[2].val = oldfill;
+    gcv[3].ptr = pStipple;
+    gcv[4].val = oldOrg.x;
+    gcv[5].val = oldOrg.y;
+    dixChangeGC(NullClient, pGC, 
         GCForeground | GCBackground | GCFillStyle | GCStipple | 
-	GCTileStipXOrigin | GCTileStipYOrigin, (XID *)gcv, 1);
+	GCTileStipXOrigin | GCTileStipYOrigin, NULL, gcv);
 
     ValidateGC(pDraw, pGC);
     /* put what we hope is a smaller clip region back in the scratch gc */

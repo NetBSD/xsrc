@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/postinst.sh,v 3.11 1996/10/26 09:41:16 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/postinst.sh,v 3.13.2.3 1997/05/27 09:13:04 dawes Exp $
 #
-# postinst.sh (for XFree86 3.2)
+# postinst.sh (for XFree86 3.3)
 #
 # This script should be run after installing a new version of XFree86.
 #
@@ -106,11 +106,33 @@ if [ -d $TINFODIR ]; then
 	esac
 fi
 
+if [ -f /usr/X11R6/bin/rstartd ]; then
+	echo ""
+	echo "If you are going to use rstart and /usr/X11R6/bin isn't in the"
+	echo "default path for commands run remotely via rsh, you will need"
+	echo "a link to rstartd installed in /usr/bin."
+	echo ""
+	echo "Do you wish to have this link installed (y/n)?"
+	read Resp
+	case "$Resp" in
+	[yY]*)
+		echo "Creating link from /usr/X11R6/bin/rstartd to /usr/bin/rstartd"
+		rm -f /usr/bin/rstartd
+		ln -s /usr/X11R6/bin/rstartd /usr/bin/rstartd
+		;;
+	esac
+fi
+
 case `uname` in
-	Linux|FreeBSD|NetBSD|OpenBSD)
+	FreeBSD|NetBSD|OpenBSD)
 		echo ""
-		echo "You may need to reboot (or run ldconfig) before the"
-		echo "newly installed shared libraries can be used."
+		echo "Running ldconfig"
+		/sbin/ldconfig -m /usr/X11R6/lib
+		;;
+	Linux)
+		echo ""
+		echo "Running ldconfig"
+		/sbin/ldconfig /usr/X11R6/lib
 		;;
 esac
 

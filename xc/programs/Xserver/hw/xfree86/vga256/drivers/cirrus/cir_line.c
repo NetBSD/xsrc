@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_line.c,v 3.7 1996/10/13 11:20:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_line.c,v 3.8 1996/12/23 06:56:51 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: cir_line.c /main/5 1995/11/13 08:21:15 kaleb $ */
+/* $XConsortium: cir_line.c /main/9 1996/10/25 21:22:06 kaleb $ */
 
 /*
  * Modified: Harm Hanemaayer (hhanemaa@cs.ruu.nl)

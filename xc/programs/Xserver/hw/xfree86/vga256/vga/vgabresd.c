@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgabresd.c,v 3.2 1996/02/04 09:15:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgabresd.c,v 3.4 1996/12/23 06:59:37 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: vgabresd.c /main/3 1995/11/13 09:26:21 kaleb $ */
+/* $XConsortium: vgabresd.c /main/4 1996/02/21 18:10:38 kaleb $ */
 
 #include "vga256.h"
 #include "miline.h"
@@ -102,7 +102,7 @@ int len;		/* length of line */
 	dashRemaining -= len;
     }
     /* point to first point */
-    nlwidth <<= 2;
+    nlwidth <<= PWSH;
     addrb = (unsigned char *)(addrl) + (y1 * nlwidth) + x1;
     SETRW(addrb);
     signdy *= nlwidth;

@@ -1,9 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/sun.tinfo,v 3.2 1996/02/04 09:09:04 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/sun.tinfo,v 3.3 1996/12/23 06:47:20 dawes Exp $
 #
 #
 #
 #
-# $XConsortium: sun.tinfo /main/2 1995/11/12 20:17:39 kaleb $
+# $XConsortium: sun.tinfo /main/3 1996/02/21 17:48:23 kaleb $
 #
 sun|Sun Microsystems Workstation console,
 	am, km, mir, msgr, xon,

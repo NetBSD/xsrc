@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3_driver.c,v 3.15 1996/09/29 14:02:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3_driver.c,v 3.17.2.2 1997/05/09 07:15:47 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -22,7 +22,7 @@
  * 
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  */
-/* $XConsortium: s3_driver.c /main/6 1995/12/03 09:42:56 kaleb $ */
+/* $XConsortium: s3_driver.c /main/11 1996/10/25 10:33:45 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -137,7 +137,8 @@ vgaVideoChipRec S3_SVGA =
    FALSE,
    FALSE,
    NULL,
-   1,
+   1,			/* int ChipClockMulFactor */
+   1			/* int ChipClockDivFactor */
 };
 
 #define new ((vgaS3Ptr)vgaNewVideoState)
@@ -490,6 +491,8 @@ void S3CleanUp()
 {
    unsigned char tmp;
 
+   vgaProtect(TRUE);
+
    /* Restore S3 Trio32/64 ext. sequenzer (PLL) registers */
    if (S3_TRIOxx_SERIES) {
       outb(0x3c2, oldS3->Trio[0]);
@@ -518,6 +521,8 @@ void S3CleanUp()
       outb(0x3c4, 0x08); outb(0x3c5, oldS3->Trio[1]);
    }
    AlreadyInited = 1;
+
+   vgaProtect(FALSE);
 }
 
 
@@ -855,9 +860,10 @@ go_linear()
 #endif
 
 static int
-S3ValidMode(mode, verbose)
+S3ValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
   return MODE_OK;
 }

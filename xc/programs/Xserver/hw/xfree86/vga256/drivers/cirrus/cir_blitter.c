@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blitter.c,v 3.13 1996/02/20 14:35:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blitter.c,v 3.15 1996/12/23 06:56:33 dawes Exp $ */
 /*
  *
  * Copyright 1994 by H. Hanemaayer, Utrecht, The Netherlands
@@ -24,7 +24,7 @@
  * Author:  H. Hanemaayer, <hhanemaa@cs.ruu.nl>
  *
  */
-/* $XConsortium: cir_blitter.c /main/6 1996/01/13 13:13:32 kaleb $ */
+/* $XConsortium: cir_blitter.c /main/7 1996/02/21 18:03:10 kaleb $ */
 
 
 /*
@@ -378,6 +378,43 @@ void _CirrusBLTWaitUntilFinished() {
     int busy;
     BLTBUSY(busy);
     if (!busy)
+    	return;
+    count++;
+    if (count == 10000000) {
+    	ErrorF("Cirrus: BitBLT engine time-out.\n");
+    	*(unsigned long *)CIRRUSBASE() = 0;
+    	count = 9990000;
+    	timeout++;
+    	if (timeout == 8) {
+    		/* Reset BitBLT engine. */
+    		BLTRESET();
+    		return;
+    	}
+    }
+  }
+}
+
+#ifdef CIRRUS_MMIO
+#define _CirrusBLTWaitEmpty CirrusMMIOBLTWaitEmpty
+#else
+#define _CirrusBLTWaitEmpty CirrusBLTWaitEmpty
+#endif
+
+void _CirrusBLTWaitEmpty() {
+  int count, timeout;
+#ifndef CIRRUS_MMIO  
+  if (cirrusUseMMIO) {
+  	/* If we have MMIO, better use it. */
+  	CirrusMMIOBLTWaitEmpty();
+  	return;
+  }
+#endif
+  count = 0;
+  timeout = 0;
+  for (;;) {
+    int empty;
+    BLTEMPTY(empty);
+    if (empty)
     	return;
     count++;
     if (count == 10000000) {

@@ -1,4 +1,8 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/ICS1562.c,v 3.0 1996/10/18 15:02:55 dawes Exp $ */
+/* $XConsortium: ICS1562.c /main/1 1996/10/27 18:07:40 kaleb $ */
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/ICS1562.c,v 3.1 1996/12/27 07:04:01 dawes Exp $ */
 
 #ifdef TEST
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3line.c,v 3.10 1996/09/01 04:15:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3line.c,v 3.13.2.1 1997/05/03 09:46:17 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -55,7 +55,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
  * Modified by Amancio Hasty and Jon Tombs
  * 
  */
-/* $XConsortium: s3line.c /main/6 1996/01/11 12:26:36 kaleb $ */
+/* $XConsortium: s3line.c /main/9 1996/10/23 11:45:19 kaleb $ */
 
 
 #include "X.h"
@@ -108,7 +108,6 @@ s3Line(pDrawable, pGC, mode, npt, pptInit)
    unsigned int bias = miGetZeroLineBias(pDrawable->pScreen);
    short cmd = CMD_LINE | DRAW | PLANAR | WRTDATA | LASTPIX;
    short cmd2;
-   short fix;
 
  /* a bunch of temporaries */
    int   tmp;
@@ -177,11 +176,11 @@ s3Line(pDrawable, pGC, mode, npt, pptInit)
         * semantics
         */
 	 if (y1 > y2) {
-	    register int tmp;
+	    register int tmp2;
 
-	    tmp = y2;
+	    tmp2 = y2;
 	    y2 = y1 + 1;
-	    y1 = tmp + 1;
+	    y1 = tmp2 + 1;
 	 }
        /* get to first band that might contain part of line */
 	 while ((nbox) && (pbox->y2 <= y1)) {
@@ -217,11 +216,11 @@ s3Line(pDrawable, pGC, mode, npt, pptInit)
         * force line from left to right, keeping endpoint semantics
         */
 	 if (x1 > x2) {
-	    register int tmp;
+	    register int tmp2;
 
-	    tmp = x2;
+	    tmp2 = x2;
 	    x2 = x1 + 1;
-	    x1 = tmp + 1;
+	    x1 = tmp2 + 1;
 	 }
        /* find the correct band */
 	 while ((nbox) && (pbox->y2 <= y1)) {
@@ -250,11 +249,18 @@ s3Line(pDrawable, pGC, mode, npt, pptInit)
 	       x1t = max(x1, pbox->x1);
 	       x2t = min(x2, pbox->x2);
 	       if (x1t != x2t) {
+#if 0
 		  WaitQueue(4);
 		  SET_CURPT((short)x1t, (short)y1);
 		  SET_MAJ_AXIS_PCNT((short)(x2t - x1t - 1));
 		  SET_CMD(CMD_LINE | DRAW | LINETYPE | PLANAR |
 			WRTDATA);
+#else
+    		  WaitQueue(5);
+    		  SET_CURPT((short)x1t, (short)y1);
+    		  SET_AXIS_PCNT(x2t - x1t - 1,0);
+    		  SET_CMD(CMD_RECT | INC_Y | INC_X | DRAW | PLANAR | WRTDATA);
+#endif
 	       }
 	       nbox--;
 	       pbox++;
@@ -263,11 +269,8 @@ s3Line(pDrawable, pGC, mode, npt, pptInit)
 	 x2 = ppt->x + xorg;
       } else {			/* sloped line */
 	 cmd2 = cmd;
-	 if ((adx = x2 - x1) < 0) {
-	    fix = 0;
-	 } else {
+	 if ((adx = x2 - x1) >= 0) {
 	    cmd2 |= INC_X;
-	    fix = -1;
 	 }
 	 if ((ady = y2 - y1) >= 0) {
 	    cmd2 |= INC_Y;
@@ -318,7 +321,7 @@ s3Line(pDrawable, pGC, mode, npt, pptInit)
 	      */
 	       WaitQueue(7);
 	       SET_CURPT((short)x1, (short)y1);
-	       SET_ERR_TERM((short)(e + fix));
+	       SET_ERR_TERM((short)e);
 	       SET_DESTSTP((short)e2, (short)e1);
 	       SET_MAJ_AXIS_PCNT((short)len);
 	       SET_CMD(cmd2);
@@ -405,7 +408,7 @@ s3Line(pDrawable, pGC, mode, npt, pptInit)
 		     }
 		     WaitQueue(7);
 		     SET_CURPT((short)new_x1, (short)new_y1);
-		     SET_ERR_TERM((short)(err + fix));
+		     SET_ERR_TERM((short)err);
 		     SET_DESTSTP((short)e2, (short)e1);
 		     SET_MAJ_AXIS_PCNT((short)len);
 		     SET_CMD(cmd2);

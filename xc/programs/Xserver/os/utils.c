@@ -1,5 +1,5 @@
-/* $XConsortium: utils.c /main/122 1996/01/14 16:45:32 kaleb $ */
-/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.21 1996/10/23 13:12:56 dawes Exp $ */
+/* $XConsortium: utils.c /main/127 1996/12/02 10:23:20 lehors $ */
+/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.27 1997/01/18 06:58:03 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -53,6 +53,9 @@ OR PERFORMANCE OF THIS SOFTWARE.
 
 */
 
+#ifdef WIN32
+#include <X11/Xwinsock.h>
+#endif
 #include "Xos.h"
 #include <stdio.h>
 #include "misc.h"
@@ -72,7 +75,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
 #undef _POSIX_SOURCE
 #endif
 #endif
-#if !defined(SYSV) && !defined(AMOEBA) && !defined(_MINIX)
+#if !defined(SYSV) && !defined(AMOEBA) && !defined(_MINIX) && !defined(WIN32) && !defined(Lynx)
 #include <sys/resource.h>
 #endif
 #include <time.h>
@@ -129,6 +132,8 @@ extern Bool defeatAccessControl;
 #ifdef SERVER_LOCK
 static Bool nolock = FALSE;
 #endif
+
+extern char* protNoListen;
 
 Bool CoreDump;
 Bool noTestExtensions;
@@ -209,7 +214,11 @@ OsSignal(sig, handler)
 #endif
 
 #ifndef PATH_MAX
+#ifndef Lynx
 #include <sys/param.h>
+#else
+#include <param.h>
+#endif
 #ifndef PATH_MAX
 #ifdef MAXPATHLEN
 #define PATH_MAX MAXPATHLEN
@@ -284,7 +293,11 @@ LockServer()
   (void) sprintf(pid_str, "%10d\n", getpid());
   (void) write(lfd, pid_str, 11);
 #ifndef __EMX__
+#ifndef USE_CHMOD
   (void) fchmod(lfd, 0444);
+#else
+  (void) chmod(tmp, 0444);
+#endif
 #endif
   (void) close(lfd);
 
@@ -511,16 +524,20 @@ void UseMsg()
     ErrorF("-alloc int             chance alloc should fail\n");
 #endif
     ErrorF("-audit int             set audit trail level\n");	
-    ErrorF("-auth string           select authorization file\n");	
+    ErrorF("-auth file             select authorization file\n");	
     ErrorF("bc                     enable bug compatibility\n");
     ErrorF("-bs                    disable any backing store support\n");
     ErrorF("-c                     turns off key-click\n");
     ErrorF("c #                    key-click volume (0-100)\n");
     ErrorF("-cc int                default color visual class\n");
-    ErrorF("-co string             color database file\n");
-    ErrorF("-config string         read options from file\n");
+    ErrorF("-co file               color database file\n");
+    ErrorF("-config file           read options from file\n");
     ErrorF("-core                  generate core dump on fatal error\n");
     ErrorF("-dpi int               screen resolution in dots per inch\n");
+#ifdef DPMSExtension
+    ErrorF("dpms                   enables VESA DPMS monitor control\n");
+    ErrorF("-dpms                  disables VESA DPMS monitor control\n");
+#endif
     ErrorF("-deferglyphs [none|all|16] defer loading of [no|all|16-bit] glyphs\n");
     ErrorF("-f #                   bell base (0-100)\n");
     ErrorF("-fc string             cursor font\n");
@@ -544,12 +561,16 @@ void UseMsg()
     ErrorF("-logo                  enable logo in screen saver\n");
     ErrorF("nologo                 disable logo in screen saver\n");
 #endif
+    ErrorF("-nolisten string       don't listen on protocol\n");
     ErrorF("-p #                   screen-saver pattern duration (minutes)\n");
     ErrorF("-pn                    accept failure to listen on all ports\n");
     ErrorF("-nopn                  reject failure to listen on all ports\n");
     ErrorF("-r                     turns off auto-repeat\n");
     ErrorF("r                      turns on auto-repeat \n");
     ErrorF("-s #                   screen-saver timeout (minutes)\n");
+#ifdef XCSECURITY
+    ErrorF("-sp file               security policy file\n");
+#endif
     ErrorF("-su                    disable any save under support\n");
     ErrorF("-t #                   mouse threshold (pixels)\n");
     ErrorF("-terminate             terminate at server reset\n");
@@ -700,6 +721,12 @@ char	*argv[];
 	    else
 		UseMsg();
 	}
+#ifdef DPMSExtension
+	else if ( strcmp( argv[i], "dpms") == 0)
+	    DPMSEnabledSwitch = TRUE;
+	else if ( strcmp( argv[i], "-dpms") == 0)
+	    DPMSDisabledSwitch = TRUE;
+#endif
 	else if ( strcmp( argv[i], "-deferglyphs") == 0)
 	{
 	    if(++i >= argc || !ParseGlyphCachingMode(argv[i]))
@@ -801,6 +828,13 @@ char	*argv[];
 	    logoScreenSaver = 0;
 	}
 #endif
+	else if ( strcmp( argv[i], "-nolisten") == 0)
+	{
+            if(++i < argc)
+	        protNoListen = argv[i];
+	    else
+		UseMsg();
+	}
 	else if ( strcmp( argv[i], "-p") == 0)
 	{
 	    if(++i < argc)
@@ -877,6 +911,18 @@ char	*argv[];
 	}
 #ifdef XDMCP
 	else if ((skip = XdmcpOptions(argc, argv, i)) != i)
+	{
+	    i = skip - 1;
+	}
+#endif
+#ifdef XPRINT
+	else if ((skip = XprintOptions(argc, argv, i)) != i)
+	{
+	    i = skip - 1;
+	}
+#endif
+#ifdef XCSECURITY
+	else if ((skip = XSecurityOptions(argc, argv, i)) != i)
 	{
 	    i = skip - 1;
 	}
@@ -1020,7 +1066,9 @@ pointer client;
 {
 #define AUTHORIZATION_NAME "hp-hostname-1"
 #if defined(TCPCONN) || defined(STREAMSCONN)
+#ifndef WIN32
 #include <netdb.h>
+#endif
     static char result[1024];
     static char *p = NULL;
 
@@ -1221,19 +1269,11 @@ OsInitAllocator ()
 	been_here = 1;
 #endif
 }
-
-#endif /* old version */
-
-/*VARARGS1*/
-void
-AuditF(
-#if NeedVarargsPrototypes
-    char * f, ...)
-#else
- f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) /* limit of ten args */
-    char *f;
-    char *s0, *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
 #endif
+
+void
+AuditPrefix(f)
+    char *f;
 {
 #ifdef X_NOT_STDC_ENV
     long tm;
@@ -1241,10 +1281,6 @@ AuditF(
     time_t tm;
 #endif
     char *autime, *s;
-#if NeedVarargsPrototypes
-    va_list args;
-#endif
-
     if (*f != ' ')
     {
 	time(&tm);
@@ -1257,6 +1293,25 @@ AuditF(
 	    s = argvGlobal[0];
 	ErrorF("AUDIT: %s: %d %s: ", autime, getpid(), s);
     }
+}
+
+/*VARARGS1*/
+void
+AuditF(
+#if NeedVarargsPrototypes
+    char * f, ...)
+#else
+    f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) /* limit of ten args */
+    char *f;
+    char *s0, *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
+#endif
+{
+#if NeedVarargsPrototypes
+    va_list args;
+#endif
+
+    AuditPrefix(f);
+
 #if NeedVarargsPrototypes
     va_start(args, f);
     VErrorF(f, args);
@@ -1289,6 +1344,9 @@ f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9) /* limit of ten args */
     ErrorF(f, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9);
 #endif
     ErrorF("\n");
+#ifdef DDXOSFATALERROR
+    OsVendorFatalError();
+#endif
     AbortServer();
     /*NOTREACHED*/
 }

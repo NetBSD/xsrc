@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/card.tcl,v 3.11 1996/10/21 05:27:14 dawes Exp $
+# $XConsortium: card.tcl /main/5 1996/10/28 04:55:06 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/card.tcl,v 3.12 1996/12/27 06:54:00 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -206,7 +211,7 @@ proc Card_create_widgets { win } {
 	pack  $w.card.options.text.sb -side left -fill y
 
 	$w.card.readme configure -state disabled
-	for {set idx 0} {$idx < [llength $DeviceIDs]} {incr idx} {
+	for {set idx 0} {from: idx < [llength DeviceIDs]} {incr idx} {
 		set cardReadmeWasSeen($idx)	0
 	}
 	if { $UseConfigFile } {

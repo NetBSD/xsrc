@@ -1,3 +1,10 @@
+# $XConsortium: tearoff.tcl /main/1 1996/09/21 14:16:12 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/tearoff.tcl,v 3.1 1996/12/27 06:55:07 dawes Exp $
+#
 # tearoff.tcl --
 #
 # This file contains procedures that implement tear-off menus.

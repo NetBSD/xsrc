@@ -1,5 +1,5 @@
-/* $XConsortium: ddxList.c /main/1 1996/01/14 16:45:55 kaleb $ */
-/* $XFree86: xc/programs/Xserver/xkb/ddxList.c,v 3.2 1996/08/13 11:32:20 dawes Exp $ */
+/* $XConsortium: ddxList.c /main/5 1996/12/02 10:23:46 lehors $ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxList.c,v 3.3 1996/12/23 07:10:07 dawes Exp $ */
 /************************************************************
 Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -135,6 +135,9 @@ FILE 	*in;
 Status	status;
 int	rval;
 Bool	haveDir;
+#ifdef WIN32
+char tmpname[32];
+#endif    
 
     if ((list->pattern[what]==NULL)||(list->pattern[what][0]=='\0'))
 	return Success;
@@ -152,6 +155,10 @@ Bool	haveDir;
 
     in= NULL;
     haveDir= True;
+#ifdef WIN32
+    strcpy(tmpname, "\\temp\\xkb_XXXXXX");
+    (void) mktemp(tmpname);
+#endif
     if (XkbBaseDirectory!=NULL) {
 	if (strlen(XkbBaseDirectory)+strlen(componentDirs[what])+6 > PATH_MAX)
 	    return BadImplementation;
@@ -164,10 +171,17 @@ Bool	haveDir;
 	    if (strlen(XkbBaseDirectory)*2+strlen(componentDirs[what])
 		    +(xkbDebugFlags>9?2:1)+strlen(file)+31 > PATH_MAX)
 		return BadImplementation;
+#ifndef WIN32
 	    sprintf(buf,"%s/xkbcomp -R%s/%s -w %d -l -vlfhpR '%s'",
 		XkbBaseDirectory,XkbBaseDirectory,componentDirs[what],
 		((xkbDebugFlags<2)?1:((xkbDebugFlags>10)?10:xkbDebugFlags)),
 		file);
+#else
+	    sprintf(buf,"%s/xkbcomp -R%s/%s -w %d -l -vlfhpR '%s' %s",
+		XkbBaseDirectory,XkbBaseDirectory,componentDirs[what],
+		((xkbDebugFlags<2)?1:((xkbDebugFlags>10)?10:xkbDebugFlags)),
+		file, tmpname);
+#endif
 	}
     }
     else {
@@ -182,15 +196,31 @@ Bool	haveDir;
 	    if (strlen(componentDirs[what])
 		    +(xkbDebugFlags>9?2:1)+strlen(file)+29 > PATH_MAX)
 		return BadImplementation;
+#ifndef WIN32
 	    sprintf(buf,"xkbcomp -R%s -w %d -l -vlfhpR '%s'",
 		componentDirs[what],
 		((xkbDebugFlags<2)?1:((xkbDebugFlags>10)?10:xkbDebugFlags)),
 		file);
+#else
+	    sprintf(buf,"xkbcomp -R%s -w %d -l -vlfhpR '%s' %s",
+		componentDirs[what],
+		((xkbDebugFlags<2)?1:((xkbDebugFlags>10)?10:xkbDebugFlags)),
+		file, tmpname);
+#endif
 	}
     }
     status= Success;
     if (!haveDir)
+#ifndef WIN32
 	in= popen(buf,"r");
+#else
+    {
+	if (system(buf) < 0)
+	    ErrorF("Could not invoke keymap compiler\n");
+	else
+	    in= fopen(tmpname, "r");
+    }
+#endif
     if (!in)
 	return BadImplementation;
     list->nFound[what]= 0;
@@ -235,12 +265,16 @@ Bool	haveDir;
 	}
 	status= _AddListComponent(list,what,flags,tmp,client);
     }
+#ifndef WIN32
     if (haveDir)
 	fclose(in);
     else if ((rval=pclose(in))!=0) {
 	if (xkbDebugFlags)
 	    ErrorF("xkbcomp returned exit code %d\n",rval);
     }
+#else
+    fclose(in);
+#endif
     return status;
 }
 

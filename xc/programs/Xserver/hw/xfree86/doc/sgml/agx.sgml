@@ -1,4 +1,4 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
 
 <!-- Title information -->
@@ -55,27 +55,27 @@
 <sect> Known Problems
 <p>
 <itemize>
-<item>  The accelerated line routines don't match lines written
+<item>The accelerated line routines don't match lines written
         by the mi/cfb routines. This is noticeable when switching 
         between virtual consoles while running routines that draw 
         and erase lines. Seems to have been reduced/fixed in previous
         releases but need more testing.<p>
 
-<item>  Some special-case speedup added to cached font rendering
+<item>Some special-case speedup added to cached font rendering
         in 3.1.1 has been disabled as is over-aggressive in some
         cases. This cuts the performance on terminal-fonts in half,
         and font performance is already low for the AGX chips compared
         to their contemporaries.<p>
 
-<item>  As in all software, needs more testing.<p>.<p>
+<item>As in all software, needs more testing.<p>
 
 </itemize>
 <sect> ToDo
 <p>
  <itemize>
-<item>  Address the above known problems.<p>
+<item>Address the above known problems.<p>
 
-<item>  Additional acceleration routines and general performance 
+<item>Additional acceleration routines and general performance 
         improvements. Many existing acceleration routines are Q&amp;D 
         adaptations of existing routines from other servers that support
         graphics chips that differ significantly, architecturally, from
@@ -83,19 +83,19 @@
         some of the general per-operation overhead to set-up the
         graphics context should be moved to the ValidateGC() routines.<p>
 
-<item>  Complete HW cursor support, most of the code is done (or
+<item>Complete HW cursor support, most of the code is done (or
         borrowed from other servers). There just remains a little
         setup code and then finding a lot of time to debug and test
         the numerous permutations.<p>
 
-<item>  Complete support for the Graphite Pro's 84-pin RAMDAC.
+<item>Complete support for the Graphite Pro's 84-pin RAMDAC.
         (the 2MB version of the Graphite Pro has both RAMDACs, 
         the 1Mb only the 44-pin RAMDAC). Currently, the 84-pin RAMDAC 
         is only supported in clock-doubled pixmux mode, the server
         will switch between RAMDACs as required by the video mode
         In >8bpp modes this switching does not occur. <p>
 
-<item>  Implement more HW probing, this will be difficult as it
+<item>Implement more HW probing, this will be difficult as it
         appears some (all?) AGX-based vendors don't implement 
         the VESA VXE POS registers, although the AGX chip does 
         support it (and some vendors claim VXE compliance&hellip). 
@@ -105,7 +105,7 @@
         supported for the XGA chips and some code for EISA POS 
         is also included but not tested.<p>
 
-<item>  Micro-optimizations, in particularly reducing processing overhead 
+<item>Micro-optimizations, in particularly reducing processing overhead 
         for common special cases that don't require full generality. <p>
 </itemize>
 <sect> XF86Config
@@ -603,13 +603,13 @@ Set or clear CPU access wait state, default is the POST setting.
 <p>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/agx.sgml,v 3.16 1996/08/10 13:06:41 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/agx.sgml,v 3.19 1997/01/25 03:22:19 dawes Exp $
 
 
 
 
 
-$XConsortium: agx.sgml /main/7 1995/12/29 15:59:45 kaleb $
+$XConsortium: agx.sgml /main/9 1996/10/19 18:03:50 kaleb $
 </verb>
 
 </article>

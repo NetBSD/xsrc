@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.c,v 3.61 1996/09/29 13:41:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.c,v 3.71.2.10 1997/06/01 12:33:41 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -23,7 +23,7 @@
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  *
  */
-/* $XConsortium: vga.c /main/18 1996/01/12 13:10:23 kaleb $ */
+/* $XConsortium: vga.c /main/29 1996/10/25 10:34:12 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -61,7 +61,10 @@
 #include "cfb16.h"
 #include "cfb24.h"
 #include "cfb32.h"
-#include "vgabpp.h"
+#include "xf86scrin.h"
+#include "xf86xaa.h"
+#else
+#include "windowstr.h"
 #endif
 
 #ifdef PC98_EGC
@@ -88,9 +91,15 @@ void (*ourmfbDoBitbltCopyInverted)();
 #endif
 #else
 unsigned long useSpeedUp = 0;
+#if !defined(__alpha__)
 extern void speedupvga256TEGlyphBlt8();
 extern void speedupvga2568FillRectOpaqueStippled32();
 extern void speedupvga2568FillRectTransparentStippled32();
+#else /* !__alpha__ */
+extern void vga256TEGlyphBlt8();
+extern void vga2568FillRectOpaqueStippled32();
+extern void vga2568FillRectTransparentStippled32();
+#endif /* !__alpha__ */
 extern void OneBankvgaBitBlt();
 #endif /* MONOVGA */
 #endif /* !XF86VGA16 */
@@ -111,22 +120,24 @@ ScrnInfoRec vga256InfoRec = {
   (void (*)())NoopDDA,	/* void (* EnterLeaveCursor)() */
   vgaAdjustFrame,	/* void (* AdjustFrame)() */
   vgaSwitchMode,	/* Bool (* SwitchMode)() */
+  vgaDPMSSet,		/* void (* DPMSSet)() */
   vgaPrintIdent,        /* void (* PrintIdent)() */
 #ifdef MONOVGA
   1,			/* int depth */
-  {0, 0, 0},            /* xrgb weight */
-  1,			/* int bitsPerPixel */
-  StaticGray,		/* int defaultVisual */
 #else
 #ifdef XF86VGA16
   4,			/* int depth */
 #else
   8,			/* int depth */
 #endif
-  {5, 6, 5},            /* xrgb weight */
-  8,			/* int bitsPerPixel */
-  PseudoColor,		/* int defaultVisual */
 #endif
+  {0, 0, 0},            /* xrgb weight */
+#ifdef MONOVGA
+  1,			/* int bitsPerPixel */
+#else
+  8,			/* int bitsPerPixel */
+#endif
+  -1,			/* int defaultVisual */
   -1, -1,		/* int virtualX,virtualY */
   -1,                   /* int displayWidth */
   -1, -1, -1, -1,	/* int frameX0, frameY0, frameX1, frameY1 */
@@ -135,7 +146,8 @@ ScrnInfoRec vga256InfoRec = {
   {0, },                /* OFlagSet xconfigFlag */
   NULL,			/* char *chipset */
   NULL,			/* char *ramdac */
-  0,			/* int dacSpeed */
+  {0, 0, 0, 0},		/* int dacSpeeds[MAXDACSPEEDS] */
+  0,			/* int dacSpeedBpp */
   0,			/* int clocks */
   {0, },		/* int clock[MAXCLOCKS] */
   DEFAULT_MAX_CLOCK,	/* int maxClock */
@@ -184,17 +196,20 @@ ScrnInfoRec vga256InfoRec = {
   0,			/* int s3Madjust */
   0,			/* int s3Nadjust */
   0,			/* int s3MClk */
+  0,			/* int chipID */
+  0,			/* int chipRev */
   0,			/* unsigned long VGAbase */
   0,			/* int s3RefClk */
-  0,			/* int suspendTime */
-  0,			/* int offTime */
   -1,			/* int s3BlankDelay */
   0,			/* int textClockFreq */
+  NULL,			/* char* DCConfig */
+  NULL,			/* char* DCOptions */
+  0			/* int MemClk */
 #ifdef XFreeXDGA
-  0,                    /* int directMode */
+  ,0,                   /* int directMode */
   NULL,                 /* Set Vid Page */
   0,                    /* unsigned long physBase */
-  0,                    /* int physSize */
+  0                     /* int physSize */
 #endif
 };
 
@@ -203,6 +218,7 @@ pointer vgaNewVideoState = NULL;
 pointer vgaBase = NULL;
 pointer vgaVirtBase = NULL;
 pointer vgaLinearBase = NULL;
+pointer vgaLinearOrig = NULL;
 vgaPCIInformation *vgaPCIInfo = NULL;
 Bool vgaDAC8BitComponents = FALSE;
 
@@ -219,7 +235,8 @@ Bool (* vgaInitFunc)(
 int (* vgaValidModeFunc)(
 #if NeedFunctionPrototypes
     DisplayModePtr,
-    Bool
+    Bool,
+    int
 #endif
 ) = (Bool (*)())NoopDDA;
 void * (* vgaSaveFunc)(
@@ -242,6 +259,7 @@ void (* vgaSaveScreenFunc)() = vgaHWSaveScreen;
 void (* vgaFbInitFunc)() = (void (*)())NoopDDA;
 Bool (* vgaScrInitFunc)() = (Bool (*)())NoopDDA;
 int (* vgaPitchAdjustFunc)() = (int (*)())NoopDDA;
+int (* vgaLinearOffsetFunc)() = (int (*)())NoopDDA;
 void (* vgaSetReadFunc)() = (void (*)())NoopDDA;
 void (* vgaSetWriteFunc)() = (void (*)())NoopDDA;
 void (* vgaSetReadWriteFunc)() = (void (*)())NoopDDA;
@@ -258,7 +276,6 @@ Bool vgaWriteFlag;
 Bool vgaUse2Banks;
 int  vgaInterlaceType;
 OFlagSet vgaOptionFlags;
-extern Bool vgaPowerSaver;
 extern Bool clgd6225Lcd;
 Bool vgaUseLinearAddressing;
 int vgaPhysLinearBase;
@@ -300,19 +317,6 @@ extern int defaultColorVisualClass;
 #define Drivers vgaDrivers
 
 extern vgaVideoChipPtr Drivers[];
-
-/*
- * vgaRestore -- 
- *	Wrap the chip-level restore function in a protect/unprotect.
- */
-void
-vgaRestore(mode)
-     pointer mode;
-{
-  vgaProtect(TRUE);
-  (vgaRestoreFunc)(mode);
-  vgaProtect(FALSE);
-}
 
 /*
  * vgaPrintIdent --
@@ -391,83 +395,154 @@ vgaProbe()
   int            maxX, maxY;
   int            needmem, rounding;
   int            tx,ty;
+  Bool           defaultVisualGiven = FALSE;
 
-#if !defined(MONOVGA) && !defined(XF86VGA16)
   /*
-   * Chipsets that don't support 16bpp/32bpp must have ChipHas16bpp/
-   * ChipHas32bpp in the ChipRec structure set to FALSE after a
-   * successful probe.
+   * At this point xf86bpp is what's given as -bpp on the command
+   * line, or what is specified as DefaultColorDepth in the XF86Config
+   * file.  The true depth/bits-per-pixel are yet to be determined.
+   * At this point, the weights are uninitialized unless specifically
+   * given by the user. Here we determine good defaults if weights haven't
+   * been explicitly given.
    */
-  if (xf86bpp < 0) {
-      xf86bpp = vga256InfoRec.depth;
-  }
-  if (xf86weight.red == 0 || xf86weight.green == 0 || xf86weight.blue == 0) {
-      xf86weight = vga256InfoRec.weight;
-  }
-  vgaBitsPerPixel = xf86bpp;
-  vgaBytesPerPixel = xf86bpp >> 3;
 
-  if (vgaBitsPerPixel != 8) {
-      if (vgaBitsPerPixel != 16 && vgaBitsPerPixel != 24 && vgaBitsPerPixel != 32) {
-          ErrorF("\n%s %s: Unsupported bpp for SVGA server (%d)\n",
-              XCONFIG_GIVEN, vga256InfoRec.name, vgaBitsPerPixel);
-	  return(FALSE);
-      }
-      /*
-       * First override a few entries in the ScrnInfoRec structure for
-       * 16/32bpp (which may not be entirely necessary).
-       *
-       * With 5-5-5 RGB, we don't want to use a depth of 15; depth 16 works
-       * and is much faster with cfb16.
-       */
-      vga256InfoRec.depth = vgaBitsPerPixel;
-      if (vgaBitsPerPixel == 32 || vgaBitsPerPixel == 24)
-          xf86weight.red = xf86weight.green = xf86weight.blue = 8;
-      vga256InfoRec.weight = xf86weight;
-      vga256InfoRec.bitsPerPixel = vgaBitsPerPixel;
-      vga256InfoRec.blackColour.red = 0;
-      vga256InfoRec.blackColour.green = 0;
-      vga256InfoRec.blackColour.blue = 0;
-      if (xf86weight.green == 5) {
-          vga256InfoRec.whiteColour.red = 0x1f;
-          vga256InfoRec.whiteColour.green = 0x1f;
-          vga256InfoRec.whiteColour.blue = 0x1f;
-      }
-      if (xf86weight.green == 6) {
-          vga256InfoRec.whiteColour.red = 0x1f;
-          vga256InfoRec.whiteColour.green = 0x3f;
-          vga256InfoRec.whiteColour.blue = 0x1f;
-      }
-      if (xf86weight.green == 8) {
-          vga256InfoRec.whiteColour.red = 0xff;
-          vga256InfoRec.whiteColour.green = 0xff;
-          vga256InfoRec.whiteColour.blue = 0xff;
-      }
-      ErrorF("%s %s: Using %d bpp.  Color weight: %d%d%d\n",
-          XCONFIG_GIVEN, vga256InfoRec.name, vgaBitsPerPixel,
-          vga256InfoRec.weight.red, vga256InfoRec.weight.green,
-          vga256InfoRec.weight.blue);
-      /* Handle the default visual setting. */
-      if (vga256InfoRec.defaultVisual < 0)
-          vga256InfoRec.defaultVisual = TrueColor;
-      if (defaultColorVisualClass < 0)
-          defaultColorVisualClass = vga256InfoRec.defaultVisual;
-      if (defaultColorVisualClass != TrueColor) {
-	  ErrorF("Invalid default visual type: %d (%s)\n",
-		 defaultColorVisualClass,
-		 xf86VisualNames[defaultColorVisualClass]);
-	  return(FALSE);
-      }
-  }
+  if(vga256InfoRec.defaultVisual >= 0)
+    defaultVisualGiven = TRUE;
+
+  if (xf86bpp <= 0)
+#ifdef MONOVGA
+    xf86bpp = 1;
 #else
-  if (vga256InfoRec.depth != validDepth) {
-    ErrorF("\n%s %s: Unsupported bpp for %s server (%d)\n",
-           XCONFIG_GIVEN, vga256InfoRec.name, vga256InfoRec.name,
-           vga256InfoRec.depth);
-	  return(FALSE);
-  }
+#ifdef XF86VGA16
+    xf86bpp = 4;
+#else
+    xf86bpp = 8;
+#endif
 #endif
 
+  switch (xf86bpp) {
+#ifdef MONOVGA
+  case 1:
+    vga256InfoRec.depth = 1;
+    vga256InfoRec.bitsPerPixel = 1;
+    if (!defaultVisualGiven)
+      vga256InfoRec.defaultVisual = StaticGray;
+    xf86weight.red = 1;
+    xf86weight.green = 1;
+    xf86weight.blue = 1;
+    break;
+#else
+#ifdef XF86VGA16
+  case 4:
+    vga256InfoRec.depth = 4;
+    vga256InfoRec.bitsPerPixel = 8;	/* This is a special case though */
+    if (!defaultVisualGiven)
+      vga256InfoRec.defaultVisual = StaticColor;
+    xf86weight.red = 6;
+    xf86weight.green = 6;
+    xf86weight.blue = 6;
+    break;
+#else
+  case 8:
+    vga256InfoRec.depth = 8;
+    vga256InfoRec.bitsPerPixel = 8;
+    xf86weight.red = 6;
+    xf86weight.green = 6;
+    xf86weight.blue = 6;
+    break;
+  case 15:
+    vga256InfoRec.depth = 15;
+    vga256InfoRec.bitsPerPixel = 16;
+    if (!defaultVisualGiven)
+      vga256InfoRec.defaultVisual = TrueColor;
+    xf86weight.red = 5;
+    xf86weight.green = 5;
+    xf86weight.blue = 5;
+    break;
+  case 16:
+    vga256InfoRec.bitsPerPixel = 16;
+    if (!defaultVisualGiven)
+      vga256InfoRec.defaultVisual = TrueColor;
+    if (xf86weight.red && xf86weight.green && xf86weight.blue) {
+      vga256InfoRec.depth = xf86weight.red + xf86weight.green +
+                            xf86weight.blue;
+      if (vga256InfoRec.depth != 15 && vga256InfoRec.depth != 16) {
+	ErrorF("\nError: Invalid weight specified for bpp 16: %d%d%d\n",
+		xf86weight.red, xf86weight.green, xf86weight.blue);
+	return FALSE;
+      }
+    } else {
+      vga256InfoRec.depth = 16;
+      xf86weight.red = 5;
+      xf86weight.green = 6;
+      xf86weight.blue = 5;
+    }
+    break;
+  case 24:
+    vga256InfoRec.depth = 24;
+    vga256InfoRec.bitsPerPixel = 24;
+    if (!defaultVisualGiven)
+      vga256InfoRec.defaultVisual = TrueColor;
+    xf86weight.red = 8;
+    xf86weight.green = 8;
+    xf86weight.blue = 8;
+    break;
+  case 32:
+    vga256InfoRec.depth = 24;
+    vga256InfoRec.bitsPerPixel = 32;
+    if (!defaultVisualGiven)
+      vga256InfoRec.defaultVisual = TrueColor;
+    xf86weight.red = 8;
+    xf86weight.green = 8;
+    xf86weight.blue = 8;
+    break;
+#endif
+#endif
+  default:
+    ErrorF("\nError: Unsupported bpp \"%i\"\n", xf86bpp);
+    return FALSE;
+  }
+    
+#if !defined(MONOVGA) && !defined(XF86VGA16)
+  vgaBitsPerPixel = vga256InfoRec.bitsPerPixel;
+  vgaBytesPerPixel = vga256InfoRec.bitsPerPixel >> 3;
+#endif
+
+  if (defaultColorVisualClass < 0)
+    defaultColorVisualClass = vga256InfoRec.defaultVisual;
+
+  switch (vga256InfoRec.depth) {
+  case 1:
+    if (defaultColorVisualClass != StaticGray) {
+      ErrorF("\nError: Visual \"%s\" isn't supported at depth %d\n",
+	     xf86VisualNames[defaultColorVisualClass], vga256InfoRec.depth);
+      return FALSE;
+    }
+  case 4:
+    switch (defaultColorVisualClass) {
+    case StaticGray:
+    case GrayScale:
+    case StaticColor:
+    case PseudoColor:
+      break; /* these are OK */
+    default:
+      ErrorF("\nError: Visual \"%s\" isn't supported at depth %d\n",
+	     xf86VisualNames[defaultColorVisualClass],
+	     vga256InfoRec.depth);
+      return FALSE;
+    }
+    break;
+  case 8:
+    break; /* all visuals supported at 8bpp */
+  default:
+    if (defaultColorVisualClass != TrueColor) {
+      ErrorF("\nError: Visual \"%s\" isn't supported at depth %d\n",
+	      xf86VisualNames[defaultColorVisualClass],
+	      vga256InfoRec.depth);
+      return FALSE;
+    }
+  }
+      
 #if !defined(PC98) || defined(PC98_TGUI)
   /* First do a general PCI probe (unless disabled) */
   if (!OFLG_ISSET(OPTION_NO_PCI_PROBE, &vga256InfoRec.options)) {
@@ -489,17 +564,17 @@ vgaProbe()
          * with < 256K there should be fewer planes.
          */
         if (vga256InfoRec.videoRam <= 256 || !vga256InfoRec.bankedMono)
-            needmem = Drivers[i]->ChipMapSize * 8;
+            needmem = Drivers[i]->ChipSegmentSize * 8;
         else
 	    needmem = vga256InfoRec.videoRam / 4 * 1024 * 8;
 #else /* BANKEDMONOVGA */
-	needmem = Drivers[i]->ChipMapSize * 8;
+	needmem = Drivers[i]->ChipSegmentSize * 8;
 #endif /* BANKEDMONOVGA */
 	rounding = 32;
 #else /* MONOVGA */
 #ifdef XF86VGA16
 #ifdef PC98_EGC
-	needmem = Drivers[i]->ChipMapSize * 8;
+	needmem = Drivers[i]->ChipSegmentSize * 8;
 #else
 	needmem = vga256InfoRec.videoRam / 4 * 1024 * 8;
 #endif
@@ -558,10 +633,14 @@ vgaProbe()
         }
 
 	/* Scale raw clocks to give pixel clocks if driver requires it */
-	if (Drivers[i]->ChipClockScaleFactor > 1) {
-	  for (j = 0; j < vga256InfoRec.clocks; j++)
-	    vga256InfoRec.clock[j] /= Drivers[i]->ChipClockScaleFactor;
-	  vga256InfoRec.maxClock /= Drivers[i]->ChipClockScaleFactor;
+	if ((Drivers[i]->ChipClockMulFactor > 1)
+	 || (Drivers[i]->ChipClockDivFactor > 1)) {
+	  for (j = 0; j < vga256InfoRec.clocks; j++) {
+	    vga256InfoRec.clock[j] *= Drivers[i]->ChipClockDivFactor;
+	    vga256InfoRec.clock[j] /= Drivers[i]->ChipClockMulFactor;
+	  }
+	  vga256InfoRec.maxClock *= Drivers[i]->ChipClockDivFactor;
+	  vga256InfoRec.maxClock /= Drivers[i]->ChipClockMulFactor;
 	  if (xf86Verbose) {
 	    ErrorF("%s %s: Effective pixel clocks available:\n",
 		   XCONFIG_PROBED, vga256InfoRec.name);
@@ -582,7 +661,7 @@ vgaProbe()
 
 #if !defined(MONOVGA) && !defined(XF86VGA16)
         /*
-         * If bpp is 16 or 32, make sure the driver supports it.
+         * If bpp is > 8, make sure the driver supports it.
          */
         if ((vgaBitsPerPixel == 16 && !Drivers[i]->ChipHas16bpp)
         || (vgaBitsPerPixel == 24 && !Drivers[i]->ChipHas24bpp)
@@ -610,10 +689,10 @@ vgaProbe()
 	vgaSegmentSize = Drivers[i]->ChipSegmentSize;
 	vgaSegmentShift = Drivers[i]->ChipSegmentShift;
 	vgaSegmentMask = Drivers[i]->ChipSegmentMask;
-	vgaReadBottom = (pointer)Drivers[i]->ChipReadBottom;
-	vgaReadTop = (pointer)Drivers[i]->ChipReadTop;
-	vgaWriteBottom = (pointer)Drivers[i]->ChipWriteBottom;
-	vgaWriteTop = (pointer)Drivers[i]->ChipWriteTop;
+	vgaReadBottom = (pointer)((unsigned long)Drivers[i]->ChipReadBottom);
+	vgaReadTop = (pointer)((unsigned long)Drivers[i]->ChipReadTop);
+	vgaWriteBottom = (pointer)((unsigned long)Drivers[i]->ChipWriteBottom);
+	vgaWriteTop = (pointer)((unsigned long)Drivers[i]->ChipWriteTop);
 	vgaUse2Banks = Drivers[i]->ChipUse2Banks;
 	vgaInterlaceType = Drivers[i]->ChipInterlaceType;
 	vgaOptionFlags = Drivers[i]->ChipOptionFlags;
@@ -621,13 +700,12 @@ vgaProbe()
 	OFLG_SET(OPTION_CLGD6225_LCD, &vgaOptionFlags);
 	OFLG_SET(OPTION_NO_PCI_PROBE, &vgaOptionFlags);
 	OFLG_SET(OPTION_CLKDIV2, &vgaOptionFlags);
+	/* For XAA */
+	OFLG_SET(OPTION_XAA_BENCHMARK, &vgaOptionFlags);
+	OFLG_SET(OPTION_XAA_NO_COL_EXP, &vgaOptionFlags);
+	OFLG_SET(OPTION_NO_PIXMAP_CACHE, &vgaOptionFlags);
 
 	xf86VerifyOptions(&vgaOptionFlags, &vga256InfoRec);
-
-	if (OFLG_ISSET(OPTION_POWER_SAVER, &vga256InfoRec.options))
-	    vgaPowerSaver = TRUE;
-	if (OFLG_ISSET(OPTION_CLGD6225_LCD, &vga256InfoRec.options))
-	    clgd6225Lcd = TRUE;
 
 #if !defined(MONOVGA) && !defined(XF86VGA16)
 	/* We do this after the option has been verified. */
@@ -636,11 +714,36 @@ vgaProbe()
             ErrorF("%s %s: Using 8 bits per color component\n",
                 XCONFIG_GIVEN, vga256InfoRec.name);
 	    vgaDAC8BitComponents = TRUE;
-            vga256InfoRec.whiteColour.red = 0xff;
-            vga256InfoRec.whiteColour.green = 0xff;
-            vga256InfoRec.whiteColour.blue = 0xff;
+	    xf86weight.red = xf86weight.green = xf86weight.blue = 8;
 	}
+	vga256InfoRec.blackColour.red = 0;
+	vga256InfoRec.blackColour.green = 0;
+	vga256InfoRec.blackColour.blue = 0;
+
+	vga256InfoRec.weight.red = xf86weight.red;
+	vga256InfoRec.weight.green = xf86weight.green;
+	vga256InfoRec.weight.blue = xf86weight.blue;
+
+	vga256InfoRec.whiteColour.red =  (0x0001 << xf86weight.red) - 1;
+	vga256InfoRec.whiteColour.green = (0x0001 << xf86weight.green) - 1;
+	vga256InfoRec.whiteColour.blue = (0x0001 << xf86weight.blue) - 1;
+
+	ErrorF("%s %s: Using %d bpp, Depth %d, Color weight: %d%d%d\n",
+		XCONFIG_GIVEN, vga256InfoRec.name, vgaBitsPerPixel,
+		vga256InfoRec.depth, vga256InfoRec.weight.red,
+		vga256InfoRec.weight.green, vga256InfoRec.weight.blue);
 #endif
+
+#ifdef DPMSExtension
+	if (DPMSEnabledSwitch ||
+	    (OFLG_ISSET(OPTION_POWER_SAVER, &vga256InfoRec.options) &&
+	     !DPMSDisabledSwitch))
+	    defaultDPMSEnabled = DPMSEnabled = TRUE;
+#endif
+
+	if (OFLG_ISSET(OPTION_CLGD6225_LCD, &vga256InfoRec.options))
+	    clgd6225Lcd = TRUE;
+
 
 	/* if Virtual given: is the virtual size too big? */
 #ifdef BANKEDMONOVGA
@@ -650,9 +753,15 @@ vgaProbe()
 		vgaEnterLeaveFunc(LEAVE);
 		return(FALSE);
 	}
-	if (vga256InfoRec.virtualX*vga256InfoRec.virtualY <= 8*vgaMapSize)
-		/* may be unbanked */
-		vga256InfoRec.displayWidth = vga256InfoRec.virtualX;
+	vga256InfoRec.displayWidth = ((vga256InfoRec.virtualX + rounding - 1) /
+		rounding) * rounding;
+	if (vga256InfoRec.displayWidth*vga256InfoRec.virtualY <= 8*vgaSegmentSize)
+	{	/* may be unbanked */
+		if (vga256InfoRec.displayWidth > vga256InfoRec.virtualX)
+			ErrorF("%s %s: Display width set to %d (a multiple of"
+			       " %d)\n", XCONFIG_PROBED, vga256InfoRec.name,
+			       vga256InfoRec.displayWidth, rounding);
+	}
 	else if (vga256InfoRec.virtualX > (1024))
 		vga256InfoRec.displayWidth=2048;
 	     else vga256InfoRec.displayWidth=1024;
@@ -806,19 +915,19 @@ vgaProbe()
 	}
 	/* Now that modes are resolved and max. extents are found,
 	 * test size again */
-	if (vga256InfoRec.virtualX*vga256InfoRec.virtualY <= 8*vgaMapSize)
-		/* may be unbanked */
-		vga256InfoRec.displayWidth = vga256InfoRec.virtualX;
-	else 
+	vga256InfoRec.displayWidth = ((vga256InfoRec.virtualX + rounding - 1) /
+		rounding) * rounding;
+	if (vga256InfoRec.displayWidth*vga256InfoRec.virtualY > 8*vgaSegmentSize)
 	  {
              if (vga256InfoRec.virtualX > (1024))
 		vga256InfoRec.displayWidth=2048;
 	     else vga256InfoRec.displayWidth=1024;
-	     if (xf86Verbose)
-		ErrorF("%s %s: Display width set to %i\n",
-			XCONFIG_PROBED, vga256InfoRec.name,
-		        vga256InfoRec.displayWidth);
           }
+	if ((xf86Verbose) &&
+	    (vga256InfoRec.displayWidth != vga256InfoRec.virtualX))
+		ErrorF("%s %s: Display width set to %d (a multiple of %d)\n",
+			XCONFIG_PROBED, vga256InfoRec.name,
+		        vga256InfoRec.displayWidth, rounding);
 #endif
 
 #ifndef BANKEDMONOVGA
@@ -956,17 +1065,30 @@ vgaProbe()
         /* We deal with the generic speedups here */
 	if (useSpeedUp & SPEEDUP_TEGBLT8)
 	{
+#if !defined(__alpha__)
 	  vga256LowlevFuncs.teGlyphBlt8 = speedupvga256TEGlyphBlt8;
 	  vga256TEOps1Rect.ImageGlyphBlt = speedupvga256TEGlyphBlt8;
 	  vga256TEOps.ImageGlyphBlt = speedupvga256TEGlyphBlt8;
+#else /* !__alpha__ */
+	  vga256LowlevFuncs.teGlyphBlt8 = vga256TEGlyphBlt8;
+	  vga256TEOps1Rect.ImageGlyphBlt = vga256TEGlyphBlt8;
+	  vga256TEOps.ImageGlyphBlt = vga256TEGlyphBlt8;
+#endif /* !__alpha__ */
 	}
 
 	if (useSpeedUp & SPEEDUP_RECTSTIP)
 	{
+#if !defined(__alpha__)
 	  vga256LowlevFuncs.fillRectOpaqueStippled32 = 
 	    speedupvga2568FillRectOpaqueStippled32;
 	  vga256LowlevFuncs.fillRectTransparentStippled32 = 
 	    speedupvga2568FillRectTransparentStippled32;
+#else /* !__alpha__ */
+	  vga256LowlevFuncs.fillRectOpaqueStippled32 = 
+	    vga2568FillRectOpaqueStippled32;
+	  vga256LowlevFuncs.fillRectTransparentStippled32 = 
+	    vga2568FillRectTransparentStippled32;
+#endif /* !__alpha__ */
 	}
 
 	if (!vgaUse2Banks)
@@ -989,7 +1111,7 @@ vgaProbe()
 #ifdef XFreeXDGA
 	if (vgaUseLinearAddressing) {
 	    vga256InfoRec.physBase = vgaPhysLinearBase;
-	    vga256InfoRec.physSize = vgaLinearSize;
+	    vga256InfoRec.physSize = vga256InfoRec.videoRam * 1024;
 	} else {
 	    vga256InfoRec.physBase = 0xA0000 + Drivers[i]->ChipWriteBottom;
 	    vga256InfoRec.physSize = Drivers[i]->ChipSegmentSize;
@@ -1062,12 +1184,19 @@ void vgaSetPitchAdjustHook(int (* ChipPitchAdjust)())
 }
 
 
+/* Allow each driver to optionally set an offset of the
+   frame buffer data from the linear base address. */
+void vgaSetLinearOffsetHook(int (* ChipLinearOffset)())
+{
+  vgaLinearOffsetFunc = ChipLinearOffset;
+}
+
+
 /* Allow each driver to hook the ScreenInit function */
 void vgaSetScreenInitHook(Bool (* ChipScrInit)())
 {
   vgaScrInitFunc = ChipScrInit;
 }
-
 
 
 /*
@@ -1111,13 +1240,16 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
 #endif /* PC98_TGUI */
 #endif /* PC98_GANB_WAP || PC98_WSNA || PC98_NKVNEC */
 #endif /* PC98_WAB || PC98_WABEP */
-    if (vgaUseLinearAddressing)
+    if (vgaUseLinearAddressing) {
         vgaLinearBase = xf86MapVidMem(scr_index, LINEAR_REGION,
-        			      (pointer)vgaPhysLinearBase,
+        			      (pointer)
+				       ((unsigned long)vgaPhysLinearBase),
         			      vgaLinearSize);
 
+        vgaLinearOrig = vgaLinearBase; /* save copy of original base */
+    }
 #ifdef MONOVGA
-    if (vga256InfoRec.displayWidth * vga256InfoRec.virtualY >= vgaMapSize * 8)
+    if (vga256InfoRec.displayWidth * vga256InfoRec.virtualY >= vgaSegmentSize * 8)
     {                                                     /* ^ mfb bug */
       ErrorF("%s %s: Using banked mono vga mode\n", 
           XCONFIG_PROBED, vga256InfoRec.name);
@@ -1140,6 +1272,9 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
     /* This doesn't mean anything yet for SVGA 16/32bpp (no banking). */
     if (vgaUseLinearAddressing)
     {
+      if (vgaLinearOffsetFunc != (int (*)())NoopDDA)
+	vgaLinearBase = (void *)((unsigned long)vgaLinearBase
+				 + (*vgaLinearOffsetFunc)());
       vgaReadBottom = vgaLinearBase;
       vgaReadTop = (void *)((unsigned int)vgaLinearSize
       			    + (unsigned long)vgaLinearBase);
@@ -1165,7 +1300,7 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
     }
   }
 
-  if (!(vgaInitFunc)(vga256InfoRec.modes))
+  if (!(*vgaInitFunc)(vga256InfoRec.modes))
     FatalError("%s: hardware initialisation failed\n", vga256InfoRec.name);
 
 
@@ -1176,12 +1311,12 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
    * DHD Dec 1991.
    */
   if (!vgaOrigVideoState)
-    vgaOrigVideoState = (pointer)(vgaSaveFunc)(vgaOrigVideoState);
-  vgaRestore(vgaNewVideoState);
+    vgaOrigVideoState = (pointer)(*vgaSaveFunc)(vgaOrigVideoState);
+  (*vgaRestoreFunc)(vgaNewVideoState);
 #ifndef DIRTY_STARTUP
   vgaSaveScreen(NULL, FALSE); /* blank the screen */
 #endif
-  (vgaAdjustFunc)(vga256InfoRec.frameX0, vga256InfoRec.frameY0);
+  (*vgaAdjustFunc)(vga256InfoRec.frameX0, vga256InfoRec.frameY0);
 
   /*
    * Take display resolution from the -dpi flag if specified
@@ -1202,8 +1337,9 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
 		     displayResolution, displayResolution,
 		     vga256InfoRec.displayWidth))
 #else
+  xf86AccelInfoRec.ServerInfoRec = &vga256InfoRec;
   if (vgaBitsPerPixel == 8)
-      if (!vga256ScreenInit(pScreen,
+      if (!xf86XAAScreenInitvga256(pScreen,
 		     (pointer) vgaVirtBase,
 		     vga256InfoRec.virtualX,
 		     vga256InfoRec.virtualY,
@@ -1211,7 +1347,7 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
 		     vga256InfoRec.displayWidth))
           return(FALSE);
   if (vgaBitsPerPixel == 16)
-      if (!vga16bppScreenInit(pScreen,
+      if (!xf86XAAScreenInit16bpp(pScreen,
 		     vgaLinearBase,
 		     vga256InfoRec.virtualX,
 		     vga256InfoRec.virtualY,
@@ -1219,7 +1355,7 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
 		     vga256InfoRec.displayWidth))
           return(FALSE);
   if (vgaBitsPerPixel == 24)
-      if (!vga24bppScreenInit(pScreen,
+      if (!xf86XAAScreenInit24bpp(pScreen,
 		     vgaLinearBase,
 		     vga256InfoRec.virtualX,
 		     vga256InfoRec.virtualY,
@@ -1227,7 +1363,7 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
 		     vga256InfoRec.displayWidth))
           return(FALSE);
   if (vgaBitsPerPixel == 32)
-      if (!vga32bppScreenInit(pScreen,
+      if (!xf86XAAScreenInit32bpp(pScreen,
 		     vgaLinearBase,
 		     vga256InfoRec.virtualX,
 		     vga256InfoRec.virtualY,
@@ -1330,11 +1466,12 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
     pointer    vgaPhysPtr;
 
 #if !defined(BANKEDMONOVGA)
-    if (vgaBitsPerPixel > 8){
-        /* Currently 16/32bpp uses linear addressing. */
-        memset(vgaLinearBase, 0, vga256InfoRec.videoRam * 1024);
+    if (vgaUseLinearAddressing) {
+        /* use original linear base from MapVidMem() */
+        memset(vgaLinearOrig, pScreen->blackPixel,
+	       vga256InfoRec.videoRam * 1024);
       }
-    else /* 8bpp: */
+    else /* banked: */
 #endif
 
     for (vgaVirtPtr = vgaVirtBase;
@@ -1374,6 +1511,22 @@ vgaScreenInit (scr_index, pScreen, argc, argv)
 static void saveDummy() {}
 
 /*
+ *      Assign a new serial number to the window.
+ *      Used to force GC validation on VT switch.
+ */
+
+/*ARGSUSED*/
+static int
+vgaNewSerialNumber(pWin, data)
+    WindowPtr pWin;
+    pointer data;
+{
+    pWin->drawable.serialNumber = NEXT_SERIAL_NUMBER;
+    return WT_WALKCHILDREN;
+}
+
+
+/*
  * vgaEnterLeaveVT -- 
  *      grab/ungrab the current VT completely.
  */
@@ -1409,6 +1562,10 @@ vgaEnterLeaveVT(enter, screen_idx)
 #endif
     }
 
+  /* Force every GC writing to the screen to be validated.  */
+  if (pScreen && !xf86Exiting && !xf86Resetting)
+      WalkTree(pScreen, vgaNewSerialNumber, 0);
+
   if (enter)
     {
       vgaInitFunc = saveInitFunc;
@@ -1424,16 +1581,16 @@ vgaEnterLeaveVT(enter, screen_idx)
       if (vgaUseLinearAddressing)
         xf86MapDisplay(screen_idx, LINEAR_REGION);
 
-      (vgaEnterLeaveFunc)(ENTER);
+      (*vgaEnterLeaveFunc)(ENTER);
 #ifdef XFreeXDGA
       if (vga256InfoRec.directMode & XF86DGADirectGraphics) {
 	/* Should we do something here or not ? */
       } else
 #endif
       {
-        vgaOrigVideoState = (pointer)(vgaSaveFunc)(vgaOrigVideoState);
+        vgaOrigVideoState = (pointer)(*vgaSaveFunc)(vgaOrigVideoState);
       }
-      vgaRestore(vgaNewVideoState);
+      (*vgaRestoreFunc)(vgaNewVideoState);
 #ifdef SCO
       /*
        * This is a temporary fix for et4000's, it shouldn't affect the other
@@ -1505,7 +1662,7 @@ vgaEnterLeaveVT(enter, screen_idx)
       if (vgaUseLinearAddressing)
         xf86MapDisplay(screen_idx, LINEAR_REGION);
 
-      (vgaEnterLeaveFunc)(ENTER);
+      (*vgaEnterLeaveFunc)(ENTER);
 
       /*
        * Create a dummy pixmap to write to while VT is switched out.
@@ -1513,8 +1670,8 @@ vgaEnterLeaveVT(enter, screen_idx)
        */
       if (!xf86Exiting)
       {
-        ppix = (pScreen->CreatePixmap)(pScreen, pScreen->width,
-                                        pScreen->height, pScreen->rootDepth);
+        ppix = (pScreen->CreatePixmap)(pScreen, vga256InfoRec.displayWidth,
+				       pScreen->height, pScreen->rootDepth);
         if (ppix)
         {
 #ifndef XF86VGA16
@@ -1541,7 +1698,11 @@ vgaEnterLeaveVT(enter, screen_idx)
 #endif /* XF86VGA16 */
 	  pspix->devPrivate.ptr = ppix->devPrivate.ptr;
         }
-        (vgaSaveFunc)(vgaNewVideoState);
+        (*vgaSaveFunc)(vgaNewVideoState);
+
+#if !defined(MONOVGA) && !defined(XF86VGA16)
+	xf86InvalidatePixmapCache();
+#endif
       }
       /*
        * We come here in many cases, but one is special: When the server aborts
@@ -1552,14 +1713,14 @@ vgaEnterLeaveVT(enter, screen_idx)
       if (vga256InfoRec.directMode & XF86DGADirectGraphics) {      
          /* make sure we are in linear mode */
          /* hide any harware cursors */
-         (vgaEnterLeaveFunc)(LEAVE);
+         (*vgaEnterLeaveFunc)(LEAVE);
       } else
 #endif
       {
          if (vgaOrigVideoState)
-            vgaRestore(vgaOrigVideoState);
+            (*vgaRestoreFunc)(vgaOrigVideoState);
 
-            (vgaEnterLeaveFunc)(LEAVE);
+            (*vgaEnterLeaveFunc)(LEAVE);
 
             xf86UnMapDisplay(screen_idx, VGA_REGION);
             if (vgaUseLinearAddressing)
@@ -1664,7 +1825,7 @@ void
 vgaAdjustFrame(x, y)
      int x, y;
 {
-  (vgaAdjustFunc)(x, y);
+  (*vgaAdjustFunc)(x, y);
 }
 
 /*
@@ -1675,9 +1836,9 @@ Bool
 vgaSwitchMode(mode)
      DisplayModePtr mode;
 {
-  if ((vgaInitFunc)(mode))
+  if ((*vgaInitFunc)(mode))
   {
-    vgaRestore(vgaNewVideoState);
+    (*vgaRestoreFunc)(vgaNewVideoState);
     if (vgaHWCursor.Initialized)
     {
       vgaHWCursor.Restore(savepScreen);
@@ -1697,9 +1858,10 @@ vgaSwitchMode(mode)
  *     to see if the mode can be supported.
  */
 int
-vgaValidMode(mode, verbose)
+vgaValidMode(mode, verbose, flag)
      DisplayModePtr mode;
      Bool verbose;
+     int flag;
 {
-  return (vgaValidModeFunc)(mode, verbose);
+  return (*vgaValidModeFunc)(mode, verbose, flag);
 }

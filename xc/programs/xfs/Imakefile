@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile /main/27 1996/01/15 12:19:01 gildea $
-XCOMM $XFree86: xc/programs/xfs/Imakefile,v 3.5 1996/09/01 04:50:08 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/28 1996/11/03 19:33:19 kaleb $
+XCOMM $XFree86: xc/programs/xfs/Imakefile,v 3.7.2.1 1997/05/03 09:50:59 dawes Exp $
 #undef ServerDefines
 #include <Server.tmpl>
 #define	IHaveSubdirs
@@ -10,6 +10,9 @@ DIFSDIR = difs
 OSLIB = $(OSDIR)/LibraryTargetName(os)
 DIFSLIB = $(DIFSDIR)/LibraryTargetName(difs)
 SYSLIBS = MathLibrary
+#if GzipFontCompression
+ZLIB = GzipLibrary
+#endif
 #ifdef i386SVR3Architecture
 #ifndef i386Sco325Architecture
 BSDEMUL = $(DEPXBSDLIB)
@@ -30,12 +33,16 @@ SITE_CONFIG = -DDEFAULTFONTPATH=$(DEFAULTFONTPATH) -DFSERRORS=$(FSERRORS)
 MakeMutex(config $(FSDIRS) $(FSLIBS))
 #endif
 
+#if HasGnuMake
+$(FSLIBS): config $(SUBDIRS)
+#endif
+
 all:: config
 
 #ifndef LynxOSArchitecture
-ServerTarget(xfs,$(FSDIRS),NullParameter,$(FSLIBS),$(SYSLIBS))
+ServerTarget(xfs,$(FSDIRS),NullParameter,$(FSLIBS),$(SYSLIBS) $(ZLIB))
 #else
-ServerTarget(xfs,$(FSDIRS),difs/main.o,$(FSLIBS),$(SYSLIBS))
+ServerTarget(xfs,$(FSDIRS),difs/main.o,$(FSLIBS),$(SYSLIBS) $(ZLIB))
 #endif
 
 CppFileTarget(config,config.cpp,$(SITE_CONFIG),$(ICONFIGFILES))

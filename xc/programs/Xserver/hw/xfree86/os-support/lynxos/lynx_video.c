@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_video.c,v 3.2 1996/09/29 13:38:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_video.c,v 3.2.4.1 1997/05/09 07:15:24 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -41,6 +41,7 @@ typedef struct
 	pointer	Base;
 	long	Size;
 	char	*ptr;
+	int	RefCnt;
 }
 _SMEMS;
 
@@ -61,6 +62,7 @@ smemCleanup()
 			smems[i].ptr = NULL;
 			smems[i].Base = NULL;
 			smems[i].Size = 0;
+			smems[i].RefCnt = 0;
 		}
 	}
 }
@@ -84,8 +86,10 @@ unsigned long Size;
 	{
 		if (!*smems[i].name && free_slot == -1)
 			free_slot = i;
-		if (smems[i].Base == Base && smems[i].Size == Size)
+		if (smems[i].Base == Base && smems[i].Size == Size && *smems[i].name) {
+			smems[i].RefCnt++;
 			return smems[i].ptr;
+		}
 	}
 	if (i == MAX_SMEMS && free_slot == -1)
 	{
@@ -98,6 +102,7 @@ unsigned long Size;
 	smems[i].Base = Base;
 	smems[i].Size = Size;
 	smems[i].ptr = smem_create(smems[i].name, Base, Size, SM_READ|SM_WRITE);
+	smems[i].RefCnt = 1;
 	if (smems[i].ptr == NULL)
 	{
 		/* check if there is a stale segment around */
@@ -128,9 +133,12 @@ unsigned long Size;
 	{
 		if (*smems[i].name && smems[i].ptr == Base && smems[i].Size == Size)
 		{
+			if (--smems[i].RefCnt > 0)
+				return;
 			(void)smem_create(NULL, smems[i].ptr, 0, SM_DETACH);
 			(void)smem_remove(smems[i].name);
 			*smems[i].name = '\0';
+			smems[i].RefCnt = 0;
 			return;
 		}
 	}

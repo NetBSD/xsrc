@@ -47,8 +47,8 @@ SOFTWARE.
 ********************************************************/
 
 
-/* $XConsortium: devices.c /main/52 1996/01/14 16:44:49 kaleb $ */
-/* $XFree86: xc/programs/Xserver/dix/devices.c,v 3.9 1996/10/03 08:31:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/devices.c,v 3.11 1996/12/24 02:23:43 dawes Exp $ */
+/* $XConsortium: devices.c /main/54 1996/09/25 00:45:00 dpw $ */
 
 #include "X.h"
 #include "misc.h"
@@ -66,15 +66,14 @@ SOFTWARE.
 #ifdef XKB
 #include "XKBsrv.h"
 #endif
+#ifdef XCSECURITY
+#define _SECURITY_SERVER
+#include "extensions/security.h"
+#endif
 
 #include "dispatch.h"
 #include "swaprep.h"
 #include "dixevents.h"
-
-extern InputInfo inputInfo;
-#ifdef XKB
-extern Bool noXkbExtension;
-#endif
 
 DeviceIntPtr
 _AddInputDevice(deviceProc, autoStart)
@@ -369,6 +368,12 @@ _RegisterPointerDevice(device)
 #endif
     device->ActivateGrab = ActivatePointerGrab;
     device->DeactivateGrab = DeactivatePointerGrab;
+    if (!device->name)
+    {
+	char *p = "pointer";
+	device->name = (char *)xalloc(strlen(p) + 1);
+	strcpy(device->name, p);
+    }
 }
 
 void
@@ -390,6 +395,12 @@ _RegisterKeyboardDevice(device)
 #endif
     device->ActivateGrab = ActivateKeyboardGrab;
     device->DeactivateGrab = DeactivateKeyboardGrab;
+    if (!device->name)
+    {
+	char *k = "keyboard";
+	device->name = (char *)xalloc(strlen(k) + 1);
+	strcpy(device->name, k);
+    }
 }
 
 DevicePtr
@@ -993,6 +1004,12 @@ ProcSetModifierMapping(client)
 	    return BadValue;
 	}
     }
+
+#ifdef XCSECURITY
+    if (!SecurityCheckDeviceAccess(client, keybd, TRUE))
+	return BadAccess;
+#endif 
+
 #ifdef LBX
     LbxFlushModifierMapTag();
 #endif
@@ -1110,6 +1127,11 @@ ProcChangeKeyboardMapping(client)
 	    client->errorValue = stuff->keySymsPerKeyCode;
 	    return BadValue;
     }
+#ifdef XCSECURITY
+    if (!SecurityCheckDeviceAccess(client, inputInfo.keyboard,
+				   TRUE))
+	return BadAccess;
+#endif 
     keysyms.minKeyCode = stuff->firstKeyCode;
     keysyms.maxKeyCode = stuff->firstKeyCode + stuff->keyCodes - 1;
     keysyms.mapWidth = stuff->keySymsPerKeyCode;
@@ -1264,6 +1286,10 @@ ProcChangeKeyboardControl (client)
     vmask = stuff->mask;
     if (client->req_len != (sizeof(xChangeKeyboardControlReq)>>2)+Ones(vmask))
 	return BadLength;
+#ifdef XCSECURITY
+    if (!SecurityCheckDeviceAccess(client, keybd, TRUE))
+	return BadAccess;
+#endif 
     vlist = (XID *)&stuff[1];		/* first word of values */
     ctrl = keybd->kbdfeed->ctrl;
     while (vmask)
@@ -1591,7 +1617,7 @@ ProcGetMotionEvents(client)
     REQUEST(xGetMotionEventsReq);
 
     REQUEST_SIZE_MATCH(xGetMotionEventsReq);
-    pWin = LookupWindow(stuff->window, client);
+    pWin = SecurityLookupWindow(stuff->window, client, TRUE);
     if (!pWin)
 	return BadWindow;
     if (mouse->valuator->motionHintWindow)
@@ -1657,6 +1683,13 @@ ProcQueryKeymap(client)
     rep.type = X_Reply;
     rep.sequenceNumber = client->sequence;
     rep.length = 2;
+#ifdef XCSECURITY
+    if (!SecurityCheckDeviceAccess(client, inputInfo.keyboard, TRUE))
+    {
+	bzero((char *)&rep.map[0], 32);
+    }
+    else
+#endif
     for (i = 0; i<32; i++)
 	rep.map[i] = down[i];
     WriteReplyToClient(client, sizeof(xQueryKeymapReply), &rep);

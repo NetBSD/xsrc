@@ -1,11 +1,16 @@
+.\" $XConsortium: XF86VM.man /main/5 1996/12/09 17:45:43 kaleb $
+.\"
+.\"
+.\"
+.\"
 .\" Copyright (c) 1996  Joe Moss, The XFree86 Project
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86VM.man,v 3.4 1996/10/26 09:38:04 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86VM.man,v 3.6.2.2 1997/05/25 14:13:42 dawes Exp $
 .\" 
 .de ZN
 .ie t \fB\^\\$1\^\fR\\$2
 .el \fI\^\\$1\^\fP\\$2
 ..
-.TH XF86VIDMODE 3X11 "3.2" "XFree86" "X FUNCTIONS"
+.TH XF86VIDMODE 3X11 "3.3" "XFree86" "X FUNCTIONS"
 .SH NAME
 XF86VidModeQueryExtension, XF86VidModeQueryVersion, XF86VidModeGetModeLine, XF86VidModeGetAllModeLines, XF86VidModeDeleteModeLine, XF86VidModeModModeLine, XF86VidModeValidateModeLine, XF86VidModeSwitchMode, XF86VidModeSwitchToMode, XF86VidModeLockModeSwitch, XF86VidModeGetMonitor, XF86VidModeGetViewPort, XF86VidModeSetViewPort \- XFree86-VidMode extension interface functions
 .SH SYNTAX
@@ -274,7 +279,7 @@ video mode. The
 .ZN XF86VidModeSwitchToMode
 function can be used to switch directly to the specified mode.
 Matching is as specified in the description of the
-.ZN XF86VidModeAddModeLine
+.ZN XF86VidModeDeleteModeLine
 function above.
 The
 .ZN XF86VidModeLockModeSwitch

@@ -1,3 +1,4 @@
+/* $XConsortium: os2_select.h /main/1 1996/05/13 16:38:30 kaleb $ */
 /*
  * (c) Copyright 1996 by Sebastien Marineau
  *			<marineau@genie.uottawa.ca>
@@ -26,7 +27,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_select.h,v 3.0 1996/05/13 06:40:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_select.h,v 3.1 1996/12/27 07:04:31 dawes Exp $ */
 
 /* Header file for os2_select.c */
 

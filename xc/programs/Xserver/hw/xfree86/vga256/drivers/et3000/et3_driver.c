@@ -1,5 +1,4 @@
-/* $XConsortium: et3_driver.c /main/6 1996/01/12 12:17:02 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et3000/et3_driver.c,v 3.17 1996/10/16 14:42:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et3000/et3_driver.c,v 3.19.2.2 1997/05/09 07:15:36 hohndel Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -25,6 +24,7 @@
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  *
  */
+/* $XConsortium: et3_driver.c /main/14 1996/10/27 11:07:35 kaleb $ */
 
 
 #include "X.h"
@@ -110,7 +110,8 @@ vgaVideoChipRec ET3000 = {
   FALSE,
   FALSE,
   NULL,
-  1,
+  1,     /* ClockMulFactor */
+  1      /* ClockDivFactor */
 };
 
 #define new ((vgaET3000Ptr)vgaNewVideoState)
@@ -286,6 +287,8 @@ ET3000Restore(restore)
 {
   unsigned char i;
 
+  vgaProtect(TRUE);
+
   outb(0x3CD, restore->SegSel);
 
   outw(0x3C4, (restore->ZoomControl << 8)   | 0x06);
@@ -298,6 +301,8 @@ ET3000Restore(restore)
   outw(vgaIOBase + 4, (restore->Overflow << 8)    | 0x25);
 
   vgaHWRestore((vgaHWPtr)restore);
+
+  vgaProtect(FALSE);
 }
 
 
@@ -477,9 +482,10 @@ ET3000Adjust(x, y)
  *
  */
 static int
-ET3000ValidMode(mode, verbose)
+ET3000ValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

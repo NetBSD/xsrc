@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.h,v 3.12 1996/10/18 15:00:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.h,v 3.14 1997/01/18 06:54:36 dawes Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -24,7 +24,7 @@
  * Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
  * Modified for the Mach64 by Kevin E. Martin (martin@cs.unc.edu)
  */
-/* $XConsortium: mach64.h /main/6 1995/12/17 08:17:52 kaleb $ */
+/* $XConsortium: mach64.h /main/9 1996/10/27 18:06:13 kaleb $ */
 
 #ifndef MACH64
 #define MACH64_H
@@ -177,6 +177,11 @@ void mach64AdjustFrame(
 Bool mach64SwitchMode(
 #if NeedFunctionPrototypes
     DisplayModePtr mode
+#endif
+);
+void mach64DPMSSet(
+#if NeedFunctionPrototypes
+    int PowerManagementMode
 #endif
 );
 /* mach64cmap.c */

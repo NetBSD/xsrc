@@ -1,4 +1,4 @@
-/* $XConsortium: i128gc.c /main/1 1995/12/09 15:31:39 kaleb $ */
+/* $XConsortium: i128gc.c /main/2 1996/02/21 17:23:13 kaleb $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -52,7 +52,7 @@ Support for I128 added by Robin Cutshaw <robin@XFree86.Org>
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128gc.c,v 3.1 1996/02/04 09:01:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128gc.c,v 3.2 1996/12/23 06:35:41 dawes Exp $ */
 
 
 #include "X.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcBitmap.c,v 3.3 1996/02/04 09:11:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcBitmap.c,v 3.4 1996/12/23 06:52:53 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -22,7 +22,7 @@
  *
 */
 
-/* $XConsortium: ppcBitmap.c /main/3 1995/11/13 07:04:49 kaleb $ */
+/* $XConsortium: ppcBitmap.c /main/4 1996/02/21 17:57:13 kaleb $ */
 
 #include "X.h"
 #include "pixmap.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/regmach32.h,v 3.6 1996/08/11 12:45:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/regmach32.h,v 3.7 1996/12/23 06:38:51 dawes Exp $ */
 /* regmach32.h
  *
  * Written by Jake Richter
@@ -21,7 +21,7 @@
  * Modified for the Mach-8 by Rickard E. Faith (faith@cs.unc.edu)
  * Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
  */
-/* $XConsortium: regmach32.h /main/3 1995/11/12 17:25:37 kaleb $ */
+/* $XConsortium: regmach32.h /main/5 1996/10/19 17:53:05 kaleb $ */
 
 #ifndef REGMACH32_H
 #define REGMACH32_H

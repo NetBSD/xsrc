@@ -1,4 +1,4 @@
-/* $XConsortium: screenint.h,v 1.5 94/04/17 20:26:05 rws Exp $ */
+/* $XConsortium: screenint.h /main/6 1996/06/17 10:55:15 mor $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,6 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/programs/Xserver/include/screenint.h,v 1.2 1997/01/14 22:22:40 dawes Exp $ */
 #ifndef SCREENINT_H
 #define SCREENINT_H
 
@@ -146,5 +147,25 @@ extern Bool AllocatePixmapPrivate(
 );
 
 #endif /* PIXPRIV */
+
+extern void ResetColormapPrivates(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+
+
+typedef struct _ColormapRec *ColormapPtr;
+typedef int (*InitCmapPrivFunc)(
+#if NeedNestedPrototypes
+	ColormapPtr
+#endif
+);
+
+extern int AllocateColormapPrivateIndex(
+#if NeedFunctionPrototypes
+    InitCmapPrivFunc /* initPrivFunc */
+#endif
+);
 
 #endif /* SCREENINT_H */

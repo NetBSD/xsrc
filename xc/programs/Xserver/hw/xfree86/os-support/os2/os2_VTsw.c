@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_VTsw.c,v 3.7 1996/05/13 06:40:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_VTsw.c,v 3.8 1996/12/23 06:50:32 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  * Modified 1996 by Sebastien Marineau <marineau@genie.uottawa.ca>
@@ -22,7 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: VTsw_noop.c /main/2 1995/11/13 06:14:57 kaleb $ */
+/* $XConsortium: os2_VTsw.c /main/7 1996/05/13 16:37:55 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

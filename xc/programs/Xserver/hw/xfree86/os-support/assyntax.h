@@ -1,5 +1,4 @@
-/* $XConsortium: assyntax.h /main/4 1996/01/26 14:27:41 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/assyntax.h,v 3.6 1996/02/04 09:09:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/assyntax.h,v 3.7.2.2 1997/05/11 02:56:22 dawes Exp $ */
 #ifndef __ASSYNTAX_H__
 #define	__ASSYNTAX_H__
 
@@ -24,6 +23,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XConsortium: assyntax.h /main/5 1996/02/21 17:50:49 kaleb $ */
 
  /*
  * assyntax.h
@@ -212,7 +212,7 @@
 #endif /* ACK_ASSEMBLER */
 
 
-#if defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || defined(linux) && defined(__ELF__)
+#if defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || (defined(linux) || defined(__OS2ELF__)) && defined(__ELF__)
 #define GLNAME(a)       a
 #else
 #define GLNAME(a)       CONCAT(_,a)

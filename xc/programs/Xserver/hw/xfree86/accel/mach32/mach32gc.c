@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32gc.c,v 3.8 1996/10/18 14:59:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32gc.c,v 3.9 1996/12/23 06:38:35 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -57,7 +57,7 @@ Modified for 16 bpp and VTSema-dependent validation by
   Craig E. Groeschel (craig@adikia.sccsi.com)
 
 */
-/* $XConsortium: mach32gc.c /main/4 1995/11/12 17:24:58 kaleb $ */
+/* $XConsortium: mach32gc.c /main/6 1996/10/27 18:05:55 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/cmap.c,v 1.1.1.3 1996/01/03 07:12:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/cmap.c,v 3.1 1996/12/23 06:37:41 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -24,7 +24,7 @@
  * Modified by Tiago Gons (tiago@comosjn.hobby.nl)
  *
  */
-/* $XConsortium: cmap.c /main/2 1995/11/12 16:53:57 kaleb $ */
+/* $XConsortium: cmap.c /main/3 1996/02/21 17:23:57 kaleb $ */
 
 
 #include "X.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.18 1996/10/13 11:21:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.5 1997/05/22 14:00:45 dawes Exp $ */
 /*
  * PCI Probe
  *
@@ -7,7 +7,7 @@
  * A lot of this comes from Robin Cutshaw's scanpci
  *
  */
-/* $XConsortium: vgaPCI.h /main/2 1996/01/13 13:15:15 kaleb $ */
+/* $XConsortium: vgaPCI.h /main/16 1996/10/25 21:22:32 kaleb $ */
 
 #ifndef _VGA_PCI_H
 #define _VGA_PCI_H
@@ -51,8 +51,8 @@
 /* Tseng */
 #define PCI_CHIP_ET4000_W32P_A	0x3202
 #define PCI_CHIP_ET4000_W32P_B	0x3205
-#define PCI_CHIP_ET4000_W32P_C	0x3206
-#define PCI_CHIP_ET4000_W32P_D	0x3207
+#define PCI_CHIP_ET4000_W32P_D	0x3206
+#define PCI_CHIP_ET4000_W32P_C	0x3207
 #define PCI_CHIP_ET6000		0x3208
 
 /* Weitek */
@@ -66,8 +66,11 @@
 #define PCI_CHIP_GD5434_8	0x00A8
 #define PCI_CHIP_GD5436		0x00AC
 #define PCI_CHIP_GD5446         0x00B8
+#define PCI_CHIP_GD5480         0x00BC
 #define PCI_CHIP_GD5462		0x00D0
 #define PCI_CHIP_GD5464		0x00D4
+#define PCI_CHIP_GD5464BD	0x00D5
+#define PCI_CHIP_GD5465		0x00D6
 #define PCI_CHIP_GD7541		0x1204
 #define PCI_CHIP_GD7542		0x1200
 #define PCI_CHIP_GD7543		0x1202
@@ -83,7 +86,9 @@
 #endif
 
 /* Matrox */
+#define PCI_CHIP_MGA2085	0x0518
 #define PCI_CHIP_MGA2064	0x0519
+#define PCI_CHIP_MGA1064	0x051a
 
 /* Chips & Tech */
 #define PCI_CHIP_65545		0x00D8
@@ -111,14 +116,23 @@
 /* Alliance Semiconductor */
 #define PCI_CHIP_AP6410		0x3210
 #define PCI_CHIP_AP6422		0x6422
+#define PCI_CHIP_AT24		0x6424
 
 /* 3Dlabs */
 #define PCI_CHIP_300SX		0x0001
+#define PCI_CHIP_500TX		0x0002
+#define PCI_CHIP_DELTA		0x0003
+#define PCI_CHIP_PERMEDIA	0x0004
 
 /* S3 */
 #define PCI_CHIP_VIRGE		0x5631
 #define PCI_CHIP_TRIO		0x8811
+#define PCI_CHIP_AURORA64VP	0x8812
+#define PCI_CHIP_TRIO64UVP	0x8814
+#define PCI_CHIP_TRIO64V2_DXGX	0x8901
+#define PCI_CHIP_PLATO_PX	0x8902
 #define PCI_CHIP_VIRGE_VX	0x883D
+#define PCI_CHIP_VIRGE_DXGX	0x8A01
 #define PCI_CHIP_868		0x8880
 #define PCI_CHIP_928		0x88B0
 #define PCI_CHIP_864_0		0x88C0
@@ -140,8 +154,9 @@ typedef struct vgaPCIInformation {
     int Vendor;
     int ChipType;
     int ChipRev;
-    unsigned long MemBase;
-    unsigned long IOBase;
+    CARD32 MemBase;
+    CARD32 MMIOBase;
+    CARD32 IOBase;
     int Bus;
     int Card;
     int Func;
@@ -203,8 +218,11 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_GD5434_8,	"GD5434"},
 				{PCI_CHIP_GD5436,	"GD5436"},
 				{PCI_CHIP_GD5446,       "GD5446"},
+				{PCI_CHIP_GD5480,       "GD5480"},
 				{PCI_CHIP_GD5462,       "GD5462"},
 				{PCI_CHIP_GD5464,       "GD5464"},
+				{PCI_CHIP_GD5464BD,     "GD5464BD"},
+				{PCI_CHIP_GD5465,       "GD5465"},
 				{PCI_CHIP_GD7541,	"GD7541"},
 				{PCI_CHIP_GD7542,	"GD7542"},
 				{PCI_CHIP_GD7543,	"GD7543"},
@@ -223,7 +241,9 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 #endif
 				{0x0000,		NULL}}},
     {PCI_VENDOR_MATROX,	"Matrox", {
+				{PCI_CHIP_MGA2085,	"MGA 2085PX"},
 				{PCI_CHIP_MGA2064,	"MGA 2064W"},
+				{PCI_CHIP_MGA1064,	"MGA 1064SG"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_CHIPSTECH, "C&T", {
 				{PCI_CHIP_65545,	"65545"},
@@ -251,14 +271,23 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
     {PCI_VENDOR_ALLIANCE, "Alliance Semiconductor", {
 				{PCI_CHIP_AP6410,	"ProMotion 6410"},
 				{PCI_CHIP_AP6422,	"ProMotion 6422"},
+				{PCI_CHIP_AT24,		"ProMotion AT24"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_3DLABS, "3Dlabs", {
 				{PCI_CHIP_300SX,	"GLINT 300SX"},
+				{PCI_CHIP_500TX,	"GLINT 500TX"},
+				{PCI_CHIP_DELTA,	"GLINT Delta"},
+				{PCI_CHIP_PERMEDIA,	"GLINT Permedia"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_S3,	"S3",	{
 				{PCI_CHIP_VIRGE,	"ViRGE"},
 				{PCI_CHIP_TRIO,		"Trio32/64"},
+				{PCI_CHIP_AURORA64VP,	"Aurora64V+"},
+				{PCI_CHIP_TRIO64UVP,	"Trio64UV+"},
+				{PCI_CHIP_TRIO64V2_DXGX,"Trio64V2/DX or /GX"},
+				{PCI_CHIP_PLATO_PX,	"PLATO/PX"},
 				{PCI_CHIP_VIRGE_VX,	"ViRGE/VX"},
+				{PCI_CHIP_VIRGE_DXGX,	"ViRGE/DX or /GX"},
 				{PCI_CHIP_868,		"868"},
 				{PCI_CHIP_928,		"928"},
 				{PCI_CHIP_864_0,	"864"},

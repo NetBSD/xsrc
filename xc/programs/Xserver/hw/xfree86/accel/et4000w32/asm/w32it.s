@@ -1,5 +1,4 @@
-/* $XConsortium: w32it.s /main/3 1995/11/12 15:49:41 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/asm/w32it.s,v 3.3 1996/02/04 08:59:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/asm/w32it.s,v 3.4 1996/12/23 06:34:11 dawes Exp $ */
 /*******************************************************************************
                         Copyright 1994 by Glenn G. Lai
 
@@ -27,6 +26,7 @@ Austin, Tx 78765
 glenn@cs.utexas.edu
 9/8/94
 *******************************************************************************/
+/* $XConsortium: w32it.s /main/4 1996/02/21 17:19:42 kaleb $ */
 /*
  *	W32ImageText[1-4](h, char1)
  */

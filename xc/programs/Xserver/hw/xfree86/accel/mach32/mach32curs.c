@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32curs.c,v 3.10 1996/03/05 05:42:10 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32curs.c,v 3.12.2.1 1997/05/31 13:34:37 dawes Exp $
  * 
  * Copyright 1991 MIPS Computer Systems, Inc.
  * 
@@ -27,7 +27,7 @@
  * Modified for VTs and oversized cursors by Mark_Weaver@brown.edu
  *
  */
-/* $XConsortium: mach32curs.c /main/6 1995/11/12 17:24:38 kaleb $ */
+/* $XConsortium: mach32curs.c /main/10 1996/10/22 10:33:32 kaleb $ */
 
 #include <signal.h>
 
@@ -47,7 +47,6 @@
 #include "inputstr.h"
 #include "xf86Priv.h"
 #include "xf86_Option.h"
-#include "xf86_OSlib.h"
 #include "xf86_HWlib.h"
 #include "mach32.h"
 
@@ -155,13 +154,14 @@ mach32CursorInit(pm, pScr)
      char *pm;
      ScreenPtr pScr;
 {
-  xhot = 0;
-  yhot = 0;
   
   if (mach32CursGeneration != serverGeneration) {
       if (!(miPointerInitialize(pScr, &mach32PointerSpriteFuncs,
 				&xf86PointerScreenFuncs, FALSE)))
 	  return FALSE;
+
+      xhot = 0;
+      yhot = 0;
       pScr->RecolorCursor = mach32RecolorCursor;
       mach32CursGeneration = serverGeneration;
   }

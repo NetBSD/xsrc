@@ -31,6 +31,7 @@ Author: Keith Packard, MIT X Consortium
 */
 
 /* $XConsortium: cfbrctstp8.c,v 1.17 94/04/17 20:28:59 dpw Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbrctstp8.c,v 3.0 1996/12/09 11:50:55 dawes Exp $ */
 
 #if PSZ == 8
 
@@ -109,6 +110,7 @@ cfb8FillRectOpaqueStippled32 (pDrawable, pGC, nBox, pBox)
 	rot = (pBox->x1 & ((PGSZ-1) & ~PIM));
 	pBox++;
 	y = y % stippleHeight;
+#if PPW == 4
 	if (cfb8StippleRRop == GXcopy)
 	{
 	    if (w < PGSZ*2)
@@ -204,6 +206,7 @@ cfb8FillRectOpaqueStippled32 (pDrawable, pGC, nBox, pBox)
 	    }
 	}
 	else
+#endif /* PPW == 4 */
 	{
 	    while (h--)
 	    {
@@ -290,6 +293,7 @@ cfb8FillRectTransparentStippled32 (pDrawable, pGC, nBox, pBox)
     	h = pBox->y2 - y;
 	pBox++;
 	y %= stippleHeight;
+#if PPW == 4
 	if (cfb8StippleRRop == GXcopy)
 	{
 	    xor = devPriv->xor;
@@ -419,6 +423,7 @@ cfb8FillRectTransparentStippled32 (pDrawable, pGC, nBox, pBox)
 	    }
 	}
 	else
+#endif /* PPW == 4 */
 	{
 	    while (h--)
 	    {

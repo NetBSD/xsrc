@@ -1,10 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/8 1996/01/26 13:53:46 kaleb $
+XCOMM $XConsortium: Imakefile /main/9 1996/02/21 17:59:53 kaleb $
 
 
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga2/drivers/Imakefile,v 3.9 1996/02/09 08:21:02 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga2/drivers/Imakefile,v 3.10.2.2 1997/05/18 12:00:13 dawes Exp $
 #include <Server.tmpl>
 #define IHaveSubdirs
 
@@ -15,15 +15,15 @@ SRCS = */?*.c
 
 OBJS = */?*_drv.o 
 #else
-SRCS = ati/?*.c cirrus/?*.c cl64xx/?*.c et3000/?*.c \
+SRCS = ati/?*.c cl64xx/?*.c et3000/?*.c \
        et4000/?*.c generic/?*.c gvga/?*.c ncr77c22/?*.c oak/?*.c \
-       pvga1/?*.c tvga8900/?*.c sis/?*.c
+       pvga1/?*.c tvga8900/?*.c sis/?*.c cirrus/?*.c
 XCOMM compaq/?*.c
 
-OBJS = ati/?*_drv.o cirrus/?*_drv.o cl64xx/?*_drv.o \
+OBJS = ati/?*_drv.o cl64xx/?*_drv.o \
        et3000/?*_drv.o et4000/?*_drv.o generic/?*_drv.o gvga/?*_drv.o \
        ncr77c22/?*_drv.o oak/?*_drv.o pvga1/?*_drv.o tvga8900/?*_drv.o \
-       sis/?*_drv.o
+       sis/?*_drv.o cirrus/?*_drv.o
 XCOMM compaq/?*_drv.o
 #endif
 

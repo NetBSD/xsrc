@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_Mono.man,v 3.21 1996/09/25 14:14:59 dawes Exp $
-.TH XF86_Mono 1 "Version 3.2"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_Mono.man,v 3.23.2.1 1997/05/21 15:02:21 dawes Exp $
+.TH XF86_Mono 1 "Version 3.3"  "XFree86"
 .SH NAME
 XF86_Mono - 1 bit non-accelerated X Window System servers for UNIX on
 x86 platforms
@@ -276,4 +276,4 @@ to the address listed below.
 Refer to the
 .I XFree86(1)
 manual page.
-.\" $XConsortium: XF86_Mono.man /main/9 1996/01/14 18:59:11 kaleb $
+.\" $XConsortium: XF86_Mono.man /main/15 1996/12/09 17:33:09 kaleb $

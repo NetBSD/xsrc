@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_W32.c,v 3.2 1996/02/04 09:05:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_W32.c,v 3.3 1996/12/23 06:43:12 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: XF86_W32.c /main/3 1995/11/12 19:20:57 kaleb $ */
+/* $XConsortium: XF86_W32.c /main/4 1996/02/21 17:37:26 kaleb $ */
 
 #include "X.h"
 #include "os.h"

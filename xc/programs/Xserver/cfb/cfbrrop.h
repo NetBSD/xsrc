@@ -1,6 +1,6 @@
 /*
  * $XConsortium: cfbrrop.h,v 1.10 95/06/08 23:20:39 gildea Exp $
- * $XFree86: xc/programs/Xserver/cfb/cfbrrop.h,v 3.1 1996/06/29 09:05:48 dawes Exp $
+ * $XFree86: xc/programs/Xserver/cfb/cfbrrop.h,v 3.2 1997/01/08 20:32:41 dawes Exp $
  *
 Copyright (c) 1989  X Consortium
 
@@ -71,6 +71,8 @@ in this Software without prior written authorization from the X Consortium.
 #define RROP_DECLARE	register unsigned long	rrop_xor;
 #define RROP_SOLID(dst)	    (*(dst) = (rrop_xor))
 #define RROP_SOLID_MASK(dst,mask) (*(dst) = (*(dst) & ~(mask)) | ((rrop_xor) & (mask)))
+#define RROP_SOLID_lu(dst)	    stl_u(rrop_xor, dst)
+#define RROP_SOLID_MASK_lu(dst,mask) stl_u((ldl_u(dst) & ~(mask)) | ((rrop_xor) & (mask)), dst)
 #endif
 #define RROP_NAME(prefix)   RROP_NAME_CAT(prefix,Copy)
 #endif /* GXcopy */
@@ -316,6 +318,11 @@ in this Software without prior written authorization from the X Consortium.
 #define RROP_SPAN(pdst,nmiddle) \
     while (--(nmiddle) >= 0) { \
 	RROP_SOLID((unsigned long *) (pdst)); \
+	(pdst) += sizeof (unsigned long) / sizeof (*pdst); \
+    }
+#define RROP_SPAN_lu(pdst,nmiddle) \
+    while (--(nmiddle) >= 0) { \
+	RROP_SOLID_lu((unsigned long *) (pdst)); \
 	(pdst) += sizeof (unsigned long) / sizeof (*pdst); \
     }
 #endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_bank.s,v 3.1 1996/02/04 09:14:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_bank.s,v 3.2 1996/12/23 06:58:30 dawes Exp $ */
 /*
  * Copyright 1995 by Alan Hourihane, Wigan, England.
  *
@@ -22,7 +22,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XConsortium: sis_bank.s /main/1 1995/12/17 08:36:44 kaleb $ */
+/* $XConsortium: sis_bank.s /main/2 1996/02/21 18:07:50 kaleb $ */
 
 /*
  * These are here the very lowlevel VGA bankswitching routines.

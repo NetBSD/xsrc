@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgacurs.h,v 3.1 1996/10/17 15:18:18 dawes Exp $ */
+/* $XConsortium: tgacurs.h /main/3 1996/10/27 11:47:39 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgacurs.h,v 3.2 1996/12/27 07:03:49 dawes Exp $ */
 
 /*
  * Copyright 1995,96 by Alan Hourihane, Wigan, England.

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaHW.c,v 3.37 1996/10/21 05:28:05 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaHW.c,v 3.50.2.1 1997/05/10 07:03:00 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -23,7 +23,7 @@
  *
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  */
-/* $XConsortium: vgaHW.c /main/10 1996/01/11 12:25:13 kaleb $ */
+/* $XConsortium: vgaHW.c /main/19 1996/10/28 04:55:33 kaleb $ */
 
 #ifdef ISC202
 #include <sys/types.h>
@@ -38,7 +38,7 @@
 #include <sys/wait.h>
 #undef _POSIX_SOURCE
 #else
-#if defined(MINIX) || defined(AMOEBA) || (defined(ISC) && defined(_POSIX_SOURCE))
+#if defined(MINIX) || defined(AMOEBA) || (defined(ISC) && defined(_POSIX_SOURCE)) || defined(Lynx)
 #include <sys/types.h>
 #endif
 #include <sys/wait.h>
@@ -56,7 +56,11 @@
 
 #include "xf86.h"
 #include "xf86Priv.h"
+#if 0
+#include <errno.h>
+#else
 #include "xf86_OSlib.h"
+#endif
 #include "xf86_HWlib.h"
 #include "vga.h"
 #ifdef PC98_EGC
@@ -67,15 +71,10 @@
 #define		EGC_LENGTH	0x4ae	/* EGC Bit length          */
 #endif
 
-#ifndef MONOVGA
-#ifndef SCO
-#ifndef PC98_NEC480
-#ifndef PC98_EGC
+#if !defined(PC98_NEC480) && !defined(PC98_EGC)
+#if !defined(MONOVGA) && !defined(SCO)
 #ifndef SAVE_FONT1
 #define SAVE_FONT1
-#endif
-#endif
-#endif
 #endif
 #endif
 
@@ -83,8 +82,6 @@
 #ifndef NEED_SAVED_CMAP
 #define NEED_SAVED_CMAP
 #endif
-#ifndef PC98_NEC480
-#ifndef PC98_EGC
 #ifndef MONOVGA
 #ifndef SAVE_TEXT
 #define SAVE_TEXT
@@ -94,8 +91,6 @@
 #define SAVE_FONT2
 #endif
 #endif
-#endif
-#endif /* PC98_NEC480 */
 
 /* bytes per plane to save for text */
 #if defined(Lynx) || defined(linux) || defined(MINIX)
@@ -106,6 +101,7 @@
 
 /* bytes per plane to save for font data */
 #define FONT_AMOUNT 8192
+#endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) */
 
 #if defined(CSRG_BASED) || defined(MACH386)
 #include <sys/time.h>
@@ -116,8 +112,6 @@
 #define WTERMSIG(x) (x.w_termsig)
 #define WSTOPSIG(x) (x.w_stopsig)
 #endif
-
-extern void SetTimeSinceLastInputEvent();
 
 /* This the only where the definition seems to work (out of
  * vga.c/vgaHW.c/vgaCmap.c).
@@ -131,27 +125,50 @@ Bool clgd6225Lcd= FALSE;
 #define OVERSCAN_VALUE 0x01
 #endif
 
+static CARD32
+vgaOffMode(
+#if NeedFunctionPrototypes
+     OsTimerPtr	/* timer */,
+     CARD32	/* now */,
+     pointer	/* arg */
+#endif
+);
+
+static CARD32
+vgaSuspendMode(
+#if NeedFunctionPrototypes
+     OsTimerPtr	/* timer */,
+     CARD32	/* now */,
+     pointer	/* arg */
+#endif
+);
+
+static Bool
+setExternClock(
+#if NeedFunctionPrototypes
+     int	/* clock */
+#endif
+);
+
 static int currentGraphicsClock = -1;
 static int currentExternClock = -1;
 
 int vgaRamdacMask = 0x3F;
-Bool vgaPowerSaver = FALSE;
 
 #define new ((vgaHWPtr)vgaNewVideoState)
 
 unsigned VGA_IOPorts[] = {
-#if !defined(PC98_EGC) && !defined(PC98_NEC480)
-	0x3B4, 0x3B5, 0x3BA, 0x3C0, 0x3C1, 0x3C2, 0x3C4, 0x3C5, 0x3C6, 0x3C7, 
-	0x3C8, 0x3C9, 0x3CA, 0x3CB, 0x3CC, 0x3CE, 0x3CF, 0x3D4, 0x3D5, 0x3DA,
+#ifdef PC98_NEC480
+	0x60,  0x62,  0x6a,  0x7c,  0x7e,  0x80,  0xa0,  0xa2,  0x3c0, 0x3c2,
+	0x3c4, 0x3c6, 0x3c7, 0x3c8, 0x3c9, 0x3cc, 0x3ce, 0x3d0, 0x9a0, 0x9a8,
 #else
-#if defined(PC98_EGC)
+#ifdef PC98_EGC
 /* I/O port address define Normal & Hireso mode */
 	0xa8,  0xaa,  0xac,  0xae,  0x4a0, 0x4a1, 0x4a2, 0x4a3, 0x4a4, 0x4a5,
 	0x4a6, 0x4a7, 0x4a8, 0x4a9, 0x4aa, 0x4ab, 0x4ac, 0x4ad, 0x4ae, 0x4af,
-#endif
-#if defined(PC98_NEC480)
-	0x60,  0x62,  0x6a,  0x7c,  0x7e,  0x80,  0xa0,  0xa2,  0x3c0, 0x3c2,
-	0x3c4, 0x3c6, 0x3c7, 0x3c8, 0x3c9, 0x3cc, 0x3ce, 0x3d0, 0x9a0, 0x9a8,
+#else
+	0x3B4, 0x3B5, 0x3BA, 0x3C0, 0x3C1, 0x3C2, 0x3C4, 0x3C5, 0x3C6, 0x3C7, 
+	0x3C8, 0x3C9, 0x3CA, 0x3CB, 0x3CC, 0x3CE, 0x3CF, 0x3D4, 0x3D5, 0x3DA,
 #endif
 #endif
 };
@@ -230,38 +247,17 @@ unsigned char defaultDAC[768] =
 #endif /* NEED_SAVED_CMAP */
 
 /*
- * With USE_ASM_SLOWBCOPY, the version in common_hw/SlowBcopy.s is used.
+ * With Intel, the version in common_hw/SlowBcopy.s is used.
  * This avoids port I/O during the copy (which causes problems with
- * some hardware.
+ * some hardware).
  */
 #ifdef __alpha__
-#undef USE_ASM_SLOWBCOPY
+#define slowbcopy_tobus(src,dst,count) SlowBCopyToBus(src,dst,count)
+#define slowbcopy_frombus(src,dst,count) SlowBCopyFromBus(src,dst,count)
 #else /* __alpha__ */
-#define USE_ASM_SLOWBCOPY
+#define slowbcopy_tobus(src,dst,count) SlowBcopy(src,dst,count)
+#define slowbcopy_frombus(src,dst,count) SlowBcopy(src,dst,count)
 #endif /* __alpha__ */
-
-#ifdef USE_ASM_SLOWBCOPY
-#define slowbcopy SlowBcopy
-#else
-/*
- * slowbcopy --
- *	slow version of bcopy for save/restore of font and text data.
- */
-static void
-slowbcopy(src, dst, count)
-     char *src, *dst;
-     int count;
-{
-  int i;
-  unsigned char temp;
-
-  for (i = 0; i < count; i++)
-  {
-    *dst++ = *src++;
-    outb(0x80, 0x00);
-  }
-}
-#endif
 
 /*
  * vgaProtect --
@@ -271,33 +267,24 @@ void
 vgaProtect(on)
      Bool on;
 {
+#if !defined(PC98_NEC480) && !defined(PC98_EGC)
   unsigned char tmp;
 
   if (xf86VTSema) {
     if (on) {
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
       /*
        * Turn off screen and disable sequencer.
        */
       outb(0x3C4, 0x01);
       tmp = inb(0x3C5);
-#endif
-#endif /* PC98_NEC480 */
 
       (*vgaSaveScreenFunc)(SS_START);		/* start synchronous reset */
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
       outw(0x3C4, ((tmp | 0x20) << 8) | 0x01);	/* disable the display */
 
       tmp = inb(vgaIOBase + 0x0A);
       outb(0x3C0, 0x00);			/* enable pallete access */
-#endif
-#endif /* PC98_NEC480 */
     }
     else {
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
       /*
        * Reenable sequencer, then turn on screen.
        */
@@ -309,99 +296,9 @@ vgaProtect(on)
 
       tmp = inb(vgaIOBase + 0x0A);
       outb(0x3C0, 0x20);			/* disable pallete access */
-#endif
-#endif /* PC98_NEC480 */
     }
   }
-  return;
-}
-
-static OsTimerPtr suspendTimer = NULL, offTimer = NULL;
-extern CARD32 ScreenSaverTime;
-
-/*
- * vgaOffMode -- put the screen into power off mode.
- */
-
-static CARD32
-vgaOffMode(timer, now, arg)
-     OsTimerPtr timer;
-     CARD32 now;
-     pointer arg;
-{
-   unsigned char sync;
-   Bool on = (Bool)arg;
-
-   if (!vgaPowerSaver) return(0);
-
-   if (xf86VTSema) {
-      /* the server is running on the current vt */
-      /* so just go for it */
-
-      outb(vgaIOBase + 4, 0x17);
-      sync = inb(vgaIOBase + 5);
-
-      if (on) {
-	 sync |= 0x80;			/* enable sync   */
-      } else {
-	 sync &= ~0x80;			/* disable sync */
-      }
-
-      usleep(10000);
-      outb(vgaIOBase + 5, sync);
-   }
-   if (offTimer) {
-      TimerFree(offTimer);
-      offTimer = NULL;
-   }
-   return(0);
-}
-
-/*
- * vgaSuspendMode -- put the screen into suspend mode.
- */
-
-static CARD32
-vgaSuspendMode(timer, now, arg)
-     OsTimerPtr timer;
-     CARD32 now;
-     pointer arg;
-{
-   Bool on = (Bool)arg;
-
-   if (!vgaPowerSaver) return(0);
-
-   if (xf86VTSema) {
-      /* the server is running on the current vt */
-      /* so just go for it */
-
-      /* not supported yet */
-      /* Code to enter suspend mode should go here */
-
-      if (!on && vga256InfoRec.offTime != 0) {
-	 if (vga256InfoRec.offTime > vga256InfoRec.suspendTime &&
-	     vga256InfoRec.offTime > ScreenSaverTime) {
-
-	    int timeout;
-
-	    /* Setup timeout for vgaOffMode() */
-	    if (vga256InfoRec.suspendTime < ScreenSaverTime)
-	       timeout = vga256InfoRec.offTime - ScreenSaverTime;
-	    else
-	       timeout = vga256InfoRec.offTime - vga256InfoRec.suspendTime;
-
-	    offTimer = TimerSet(offTimer, 0, timeout,
-			        vgaOffMode, (pointer)FALSE);
-	 } else {
-	    vgaOffMode(NULL, 0, (pointer)FALSE);
-	 }
-      }
-   }
-   if (suspendTimer) {
-      TimerFree(suspendTimer);
-      suspendTimer = NULL;
-   }
-   return(0);
+#endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) */
 }
 
 /*
@@ -432,43 +329,11 @@ vgaSaveScreen(pScreen, on)
 	 scrn |= 0x20;			/* blank screen */
       }
 
-      /* Turn off Off and Suspend mode */
-      if (vgaPowerSaver && on) {
-	 vgaOffMode(NULL, 0, (pointer)TRUE);
-	 vgaSuspendMode(NULL, 0, (pointer)TRUE);
-      }
-
       (*vgaSaveScreenFunc)(SS_START);
       outw(0x3C4, (scrn << 8) | 0x01); /* change mode */
       (*vgaSaveScreenFunc)(SS_FINISH);
-
-      if (vgaPowerSaver && !on) {
-	 if (vga256InfoRec.suspendTime != 0) {
-	    if (vga256InfoRec.suspendTime > ScreenSaverTime) {
-	       suspendTimer = TimerSet(suspendTimer, 0,
-				       vga256InfoRec.suspendTime -
-				       ScreenSaverTime,
-				       vgaSuspendMode, (pointer)FALSE);
-	    } else {
-	      vgaSuspendMode(NULL, 0, (pointer)FALSE);
-	    }
-	 } else if (vga256InfoRec.offTime != 0) {
-	    if (vga256InfoRec.offTime > ScreenSaverTime) {
-	       offTimer = TimerSet(offTimer, 0,
-				   vga256InfoRec.offTime - ScreenSaverTime,
-				   vgaOffMode, (pointer)FALSE);
-	    } else {
-	       vgaOffMode(NULL, 0, (pointer)FALSE);
-	    }
-	 }
-      }
    }
 #else /* PC98_EGC || PC98_NEC480 */
-  int i;
-  unsigned char *cmap;
-  
-  cmap = &((vgaHWPtr)vgaNewVideoState)->DAC[0];
-  
   if (on)
     SetTimeSinceLastInputEvent();
   
@@ -484,6 +349,56 @@ vgaSaveScreen(pScreen, on)
 }
 
 /*
+ * vgaDPMSSet -- Sets VESA Display Power Management Signaling (DPMS) Mode
+ *
+ * This generic VGA function can only set the Off and On modes.  If the
+ * Standby and Suspend modes are to be supported, a chip specific replacement
+ * for this function must be written.
+ */
+
+void
+vgaDPMSSet(PowerManagementMode)
+    int PowerManagementMode;
+{
+#ifdef DPMSExtension
+  unsigned char seq1, crtc17;
+  if (!xf86VTSema) return;
+  switch (PowerManagementMode)
+  {
+  case DPMSModeOn:
+    /* Screen: On; HSync: On, VSync: On */
+    seq1 = 0x00;
+    crtc17 = 0x80;
+    break;
+  case DPMSModeStandby:
+    /* Screen: Off; HSync: Off, VSync: On -- Not Supported */
+    seq1 = 0x20;
+    crtc17 = 0x80;
+    break;
+  case DPMSModeSuspend:
+    /* Screen: Off; HSync: On, VSync: Off -- Not Supported */
+    seq1 = 0x20;
+    crtc17 = 0x80;
+    break;
+  case DPMSModeOff:
+    /* Screen: Off; HSync: Off, VSync: Off */
+    seq1 = 0x20;
+    crtc17 = 0x00;
+    break;
+  }
+  outw(0x3C4, 0x0100);	/* Synchronous Reset */
+  outb(0x3C4, 0x01);	/* Select SEQ1 */
+  seq1 |= inb(0x3C5) & ~0x20;
+  outb(0x3C5, seq1);
+  outb(vgaIOBase+4, 0x17); /* Select CRTC17 */
+  crtc17 |= inb(vgaIOBase+5) & ~0x80;
+  usleep(10000);
+  outb(vgaIOBase+5, crtc17);
+  outw(0x3C4, 0x0300);	/* End Reset */
+#endif
+}
+
+/*
  * vgaHWSaveScreen
  *      perform a sequencer reset.
  */
@@ -492,17 +407,11 @@ void
 vgaHWSaveScreen(start)
     Bool start;
 {
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
+#if !defined(PC98_NEC480) && !defined(PC98_EGC)
   if (start == SS_START)
-  {
     outw(0x3C4, 0x0100);        /* synchronous reset */
-  }
   else
-  {
     outw(0x3C4, 0x0300);        /* end reset */
-  }
-#endif
 #endif
 }
 
@@ -513,8 +422,8 @@ vgaHWSaveScreen(start)
  */
 
 static Bool
-setExternClock(clock)
-     int clock;       /* the Clock index */
+setExternClock(clock2)
+     int clock2;       /* the Clock index */
 {
     int i;
 #ifdef MACH386
@@ -523,7 +432,7 @@ setExternClock(clock)
     int exit_status;
 #endif
 
-    if (clock == currentExternClock)
+    if (clock2 == currentExternClock)
       return(TRUE);
     switch(fork())
     {
@@ -552,14 +461,19 @@ setExternClock(clock)
         }
 #endif
         {
-          char *progname, clockarg[8], clockindex[3];
+          char *progname, clockarg[8], clockindex[4];
 
-          if ((progname = rindex(vga256InfoRec.clockprog, '/')))
+          if ((progname = strrchr(vga256InfoRec.clockprog, '/')))
             progname++;
           else
             progname = vga256InfoRec.clockprog;
-          sprintf(clockarg, "%.3f", vga256InfoRec.clock[clock] / 1000.0);
-          sprintf(clockindex, "%d", clock);
+ 	  if(clock2 < MAXCLOCKS){
+ 	    sprintf(clockarg, "%.3f", vga256InfoRec.clock[clock2] / 1000.0);
+ 	    sprintf(clockindex, "%d", clock2 );
+ 	  } else {
+ 	    sprintf(clockarg, "%.3f", clock2 / 1000.0);
+ 	    sprintf(clockindex, "%d",255 );
+ 	  }
           execl(vga256InfoRec.clockprog, progname, clockarg, clockindex, NULL);
           ErrorF("Exec failed for ClockProg command \"%s\" (%s)\n",
                  vga256InfoRec.clockprog, strerror(errno));
@@ -603,7 +517,7 @@ setExternClock(clock)
           return(FALSE);
         }
     }
-    currentExternClock = clock;
+    currentExternClock = clock2;
     return(TRUE);
 }
 
@@ -619,12 +533,10 @@ vgaHWRestore(restore)
 {
   int i,tmp;
 
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
+#if !defined(PC98_NEC480) && !defined(PC98_EGC)
   tmp = inb(vgaIOBase + 0x0A);		/* Reset flip-flop */
   outb(0x3C0, 0x00);			/* Enables pallete access */
 #endif
-#endif /* PC98_NEC480 */
 
   /*
    * This here is a workaround a bug in the kd-driver. We MUST explicitely
@@ -637,6 +549,7 @@ vgaHWRestore(restore)
    */
   
   vgaSaveScreen(NULL, FALSE);
+#if defined(SAVE_TEXT) || defined(SAVE_FONT1) || defined(SAVE_FONT2)
   if(restore->FontInfo1 || restore->FontInfo2 || restore->TextInfo) {
     /*
      * here we switch temporary to 16 color-plane-mode, to simply
@@ -651,59 +564,57 @@ vgaHWRestore(restore)
     outw(0x3CE,0xFF08); /* GJA - write all bits in a byte */
     outw(0x3CE,0x0001); /* GJA - all planes come from CPU */
 #endif
+#ifdef SAVE_FONT1
     if (restore->FontInfo1) {
       outw(0x3C4, 0x0402);    /* write to plane 2 */
       outw(0x3C4, 0x0604);    /* enable plane graphics */
       outw(0x3CE, 0x0204);    /* read plane 2 */
       outw(0x3CE, 0x0005);    /* write mode 0, read mode 0 */
       outw(0x3CE, 0x0506);    /* set graphics */
-      slowbcopy(restore->FontInfo1, vgaBase, FONT_AMOUNT);
+      slowbcopy_tobus(restore->FontInfo1, vgaBase, FONT_AMOUNT);
     }
+#endif
+#ifdef SAVE_FONT2
     if (restore->FontInfo2) {
       outw(0x3C4, 0x0802);    /* write to plane 3 */
       outw(0x3C4, 0x0604);    /* enable plane graphics */
       outw(0x3CE, 0x0304);    /* read plane 3 */
       outw(0x3CE, 0x0005);    /* write mode 0, read mode 0 */
       outw(0x3CE, 0x0506);    /* set graphics */
-      slowbcopy(restore->FontInfo2, vgaBase, FONT_AMOUNT);
+      slowbcopy_tobus(restore->FontInfo2, vgaBase, FONT_AMOUNT);
     }
+#endif
+#ifdef SAVE_TEXT
     if (restore->TextInfo) {
       outw(0x3C4, 0x0102);    /* write to plane 0 */
       outw(0x3C4, 0x0604);    /* enable plane graphics */
       outw(0x3CE, 0x0004);    /* read plane 0 */
       outw(0x3CE, 0x0005);    /* write mode 0, read mode 0 */
       outw(0x3CE, 0x0506);    /* set graphics */
-      slowbcopy(restore->TextInfo, vgaBase, TEXT_AMOUNT);
+      slowbcopy_tobus(restore->TextInfo, vgaBase, TEXT_AMOUNT);
       outw(0x3C4, 0x0202);    /* write to plane 1 */
       outw(0x3C4, 0x0604);    /* enable plane graphics */
       outw(0x3CE, 0x0104);    /* read plane 1 */
       outw(0x3CE, 0x0005);    /* write mode 0, read mode 0 */
       outw(0x3CE, 0x0506);    /* set graphics */
-      slowbcopy((char *)restore->TextInfo + TEXT_AMOUNT, vgaBase, TEXT_AMOUNT);
+      slowbcopy_tobus((char *)restore->TextInfo + TEXT_AMOUNT, vgaBase, TEXT_AMOUNT);
     }
+#endif
   }
+#endif /* defined(SAVE_TEXT) || defined(SAVE_FONT1) || defined(SAVE_FONT2) */
   vgaSaveScreen(NULL, TRUE);
 
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
+#if !defined(PC98_NEC480) && !defined(PC98_EGC)
+
   tmp = inb(vgaIOBase + 0x0A);			/* Reset flip-flop */
   outb(0x3C0, 0x00);				/* Enables pallete access */
-#endif
-#endif /* PC98_NEC480 */
-
 
   /* Don't change the clock bits when using an external clock program */
   if (restore->NoClock < 0)
   {
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
     tmp = inb(0x3CC);
     restore->MiscOutReg = (restore->MiscOutReg & 0xF3) | (tmp & 0x0C);
-#endif
-#endif /* PC98_NEC480 */
   }
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
   if (vgaIOBase == 0x3B0)
     restore->MiscOutReg &= 0xFE;
   else
@@ -741,16 +652,12 @@ vgaHWRestore(restore)
      outb(0x3C9, restore->DAC[i]);
      DACDelay;
   }
-#endif	/* PC98_EGC */
-#endif /* PC98_NEC480 */
 
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
   /* Turn on PAS bit */
   tmp = inb(vgaIOBase + 0x0A);
   outb(0x3C0, 0x20);
-#endif
-#endif /* PC98_NEC480 */
+
+#endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) */
 
   /* If restoring text mode, and a text clock is specified with clkprog */
   if (((restore->Attribute[0x10] & 0x01) == 0))
@@ -802,16 +709,14 @@ vgaHWSave(save, size)
     first_time = TRUE;
     if (vga256InfoRec.clockprog && vga256InfoRec.textclock >= 0)
       save->NoClock = -1;
+#if !defined(PC98_NEC480) && !defined(PC98_EGC)
     else
       /* This isn't very useful -- it ignores the high order CS bits */
       save->NoClock = (inb(0x3CC) >> 2) & 3;
+#endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) */
   }
 
-  /*
-   * now get the fuck'in register
-   */
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
+#if !defined(PC98_NEC480) && !defined(PC98_EGC)
   save->MiscOutReg = inb(0x3CC);
 #ifdef PC98
   save->MiscOutReg |= 0x01;
@@ -820,8 +725,6 @@ vgaHWSave(save, size)
 
   tmp = inb(vgaIOBase + 0x0A); /* reset flip-flop */
   outb(0x3C0, 0x00);
-#endif	/* PC98_EGC */
-#endif /* PC98_NEC480 */
 
 #ifdef NEED_SAVED_CMAP
   /*
@@ -845,34 +748,29 @@ vgaHWSave(save, size)
   {
     int read_error = 0;
 
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
     outb(0x3C6,0xFF);
     /*
      * check if we can read the lookup table
      */
     outb(0x3C7,0x00);
     for (i=0; i<3; i++) save->DAC[i] = inb(0x3C9);
-#if defined(PC98_PW)||defined(PC98_XKB)||defined(PC98_NEC)||defined(PC98_PWLB)
+#if defined(PC98_PW) || defined(PC98_XKB) || defined(PC98_NEC) || defined(PC98_PWLB)
     for (i=0; i<300; i++) inb(vgaIOBase + 4);
 #endif
     outb(0x3C8,0x00);
     for (i=0; i<3; i++) outb(0x3C9, ~save->DAC[i] & vgaRamdacMask);
-#if defined(PC98_PW)||defined(PC98_XKB)||defined(PC98_NEC)||defined(PC98_PWLB)
+#if defined(PC98_PW) || defined(PC98_XKB) || defined(PC98_NEC) || defined(PC98_PWLB)
     for (i=0; i<300; i++) inb(vgaIOBase + 4);
 #endif
     outb(0x3C7,0x00);
     for (i=0; i<3; i++)
     {
-      unsigned char tmp = inb(0x3C9);
-#if defined(PC98_PW)||defined(PC98_XKB)||defined(PC98_NEC)||defined(PC98_PWLB)
-      if ((tmp != (~save->DAC[i] & vgaRamdacMask)) && (tmp != (~save->DAC[i]&0xFF))) read_error++;
-#else
-      if (tmp != (~save->DAC[i] & vgaRamdacMask)) read_error++;
+      unsigned char tmp2 = inb(0x3C9);
+#if defined(PC98_PW) || defined(PC98_XKB) || defined(PC98_NEC) || defined(PC98_PWLB)
+      if (tmp2 != (~save->DAC[i]&0xFF))
 #endif
+      if (tmp2 != (~save->DAC[i] & vgaRamdacMask)) read_error++;
     }
-#endif	/* PC98_EGC */
-#endif /* PC98_NEC480 */
   
     if (read_error)
     {
@@ -888,22 +786,16 @@ vgaHWSave(save, size)
       /*			 
        * save the colorlookuptable 
        */
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
       outb(0x3C7,0x01);
       for (i=3; i<768; i++)
       {
 	save->DAC[i] = inb(0x3C9); 
 	DACDelay;
       }
-#endif	/* PC98_EGC */
-#endif /* PC98_NEC480 */
     }
   }
 #endif /* NEED_SAVED_CMAP */
 
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
   for (i=0; i<25; i++) { outb(vgaIOBase + 4,i);
 			 save->CRTC[i] = inb(vgaIOBase + 5); }
 
@@ -916,19 +808,17 @@ vgaHWSave(save, size)
   for (i=0; i<9;  i++) { outb(0x3CE,i); save->Graphics[i]  = inb(0x3CF); }
 
   for (i=0; i<5;  i++) { outb(0x3C4,i); save->Sequencer[i]   = inb(0x3C5); }
-#endif	/* PC98_EGC */
-#endif /* PC98_NEC480 */
+
+#endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) */
 
   vgaSaveScreen(NULL, FALSE);
   
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
+#if !defined(PC98_NEC480) && !defined(PC98_EGC)
   /* XXXX Still not sure if this is needed.  It isn't done in the Restore */
   outb(0x3C2, save->MiscOutReg | 0x01);		/* shift to colour emulation */
   /* Since forced to colour mode, must use 0x3Dx instead of (vgaIOBase + x) */
-#endif	/* PC98_EGC */
-#endif /* PC98_NEC480 */
 
+#if defined(SAVE_TEXT) || defined(SAVE_FONT1) || defined(SAVE_FONT2)
   /*
    * get the character sets, and text screen if required
    */
@@ -949,7 +839,7 @@ vgaHWSave(save, size)
       outw(0x3CE, 0x0204);    /* read plane 2 */
       outw(0x3CE, 0x0005);    /* write mode 0, read mode 0 */
       outw(0x3CE, 0x0506);    /* set graphics */
-      slowbcopy(vgaBase, save->FontInfo1, FONT_AMOUNT);
+      slowbcopy_frombus(vgaBase, save->FontInfo1, FONT_AMOUNT);
     }
 #endif /* SAVE_FONT1 */
 #ifdef SAVE_FONT2
@@ -962,7 +852,7 @@ vgaHWSave(save, size)
       outw(0x3CE, 0x0304);    /* read plane 3 */
       outw(0x3CE, 0x0005);    /* write mode 0, read mode 0 */
       outw(0x3CE, 0x0506);    /* set graphics */
-      slowbcopy(vgaBase, save->FontInfo2, FONT_AMOUNT);
+      slowbcopy_frombus(vgaBase, save->FontInfo2, FONT_AMOUNT);
     }
 #endif /* SAVE_FONT2 */
 #ifdef SAVE_TEXT
@@ -979,32 +869,28 @@ vgaHWSave(save, size)
       outw(0x3CE, 0x0004);    /* read plane 0 */
       outw(0x3CE, 0x0005);    /* write mode 0, read mode 0 */
       outw(0x3CE, 0x0506);    /* set graphics */
-      slowbcopy(vgaBase, save->TextInfo, TEXT_AMOUNT);
+      slowbcopy_frombus(vgaBase, save->TextInfo, TEXT_AMOUNT);
       outw(0x3C4, 0x0202);    /* write to plane 1 */
       outw(0x3C4, 0x0604);    /* enable plane graphics */
       outw(0x3CE, 0x0104);    /* read plane 1 */
       outw(0x3CE, 0x0005);    /* write mode 0, read mode 0 */
       outw(0x3CE, 0x0506);    /* set graphics */
-      slowbcopy(vgaBase, (char *)save->TextInfo + TEXT_AMOUNT, TEXT_AMOUNT);
+      slowbcopy_frombus(vgaBase, (char *)save->TextInfo + TEXT_AMOUNT, TEXT_AMOUNT);
     }
 #endif /* SAVE_TEXT */
   }
+#endif /* defined(SAVE_TEXT) || defined(SAVE_FONT1) || defined(SAVE_FONT2) */
 
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
   outb(0x3C2, save->MiscOutReg);		/* back to original setting */
-#endif
-#endif /* PC98_NEC480 */
+#endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) */
   
   vgaSaveScreen(NULL, TRUE);
 
+#if !defined(PC98_NEC480) && !defined(PC98_EGC)
   /* Turn on PAS bit */
-#ifndef PC98_NEC480
-#ifndef	PC98_EGC
   tmp = inb(vgaIOBase + 0x0A);
   outb(0x3C0, 0x20);
-#endif
-#endif /* PC98_NEC480 */
+#endif /* !defined(PC98_NEC480) && !defined(PC98_EGC) */
   
   return ((void *) save);
 }
@@ -1174,7 +1060,7 @@ vgaHWInit(mode, size)
   new->CRTC[19] = vga256InfoRec.displayWidth >> 4;  /* just a guess */
   new->CRTC[20] = 0x00;
   new->CRTC[21] = mode->CrtcVSyncStart & 0xFF; 
-  new->CRTC[22] = (mode->CrtcVSyncStart +1) & 0xFF;
+  new->CRTC[22] = (mode->CrtcVSyncEnd + 1) & 0xFF;
 #if defined(MONOVGA) || defined(XF86VGA16)
   new->CRTC[23] = 0xE3;
 #else

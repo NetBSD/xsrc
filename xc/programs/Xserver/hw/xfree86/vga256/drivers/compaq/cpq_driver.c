@@ -1,7 +1,10 @@
-/* $XConsortium: cpq_driver.c /main/6 1996/01/12 12:16:57 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/compaq/cpq_driver.c,v 3.15 1996/10/16 14:42:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/compaq/cpq_driver.c,v 3.17.2.3 1997/05/09 07:15:35 hohndel Exp $ */
 /*
  * Copyright 1993 Hans Oey <hans@mo.hobby.nl>
+ * Copyright 1997 Ming Yu <yum@itp.ac.cn>, Gerry Toll <gtoll@tc.cornell.edu>, 
+ *                and The XFree86 Project, Inc.
+ *
+ * Current Maintainer: Gerry Toll
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,6 +25,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XConsortium: cpq_driver.c /main/12 1996/10/27 11:07:31 kaleb $ */
 
 
 /*
@@ -34,7 +38,7 @@
   and only gave me a boring X screen.
 
   The software was based on the other XFree86 drivers. I am
-  very gratefull to Thomas Roell and the XFree86 team, but
+  very grateful to Thomas Roell and the XFree86 team, but
   stacking up all copyright notices for the next twenty
   years seems a waste of disk space.
 */
@@ -47,20 +51,8 @@
 #include "compiler.h"
 
 #include "xf86.h"
-#include "xf86Priv.h"
-#include "xf86_OSlib.h"
 #include "xf86_HWlib.h"
 #include "vga.h"
-
-#ifdef XFreeXDGA
-#include "X.h"
-#include "Xproto.h"
-#include "extnsionst.h"
-#include "scrnintstr.h"
-#include "servermd.h"
-#define _XF86DGA_SERVER_
-#include "extensions/xf86dgastr.h"
-#endif
 
 typedef struct {
 	vgaHWRec std;               /* good old IBM VGA */
@@ -118,7 +110,8 @@ vgaVideoChipRec COMPAQ = {
 	FALSE,
 	FALSE,
 	NULL,
-	1,
+	1,                                    /* ClockMulFactor */
+	1                                     /* ClockDivFactor */
 };
 
 #define new ((vgaCOMPAQPtr)vgaNewVideoState)
@@ -162,19 +155,14 @@ int no;
 
 
 /*
-   COMPAQProbe() checks for a Compaq VGC
-   Returns TRUE or FALSE on exit.
-
-   Makes sure the following are set in vga256InfoRec:
-     chipset
-     videoRam
-     clocks
-*/
-#define VGABIOS_START vga256InfoRec.BIOSbase
-#define SIGNATURE_LENGTH 6
-#define ATI_SIGNATURE_LENGTH 9
-#define BUFSIZE ATI_SIGNATURE_LENGTH	/* but at least 3 bytes */
-
+ * COMPAQProbe() checks for a Compaq VGC
+ *    Returns TRUE or FALSE on exit.
+ *
+ * Makes sure the following are set in vga256InfoRec:
+ *    chipset
+ *    videoRam
+ *    clocks
+ */
 static Bool
 COMPAQProbe()
 {
@@ -205,6 +193,7 @@ COMPAQProbe()
 				case 0x06:	/* QVision/1024 */
 				case 0x0E:	/* QVision/1024 or /1280 */
 				case 0x10:	/* AVGA Portable */
+				case 0x11:	/* AVGA Portable (Concerto) */
 					found = TRUE;
 					break;
 				case 0x03:	/* IVGS */
@@ -223,10 +212,10 @@ COMPAQProbe()
     
 	/* Detect how much memory is installed, that's easy :-) */
 	if (!vga256InfoRec.videoRam) {
-		if ((rdinx(0x3ce, 0x0c) & 0xb8) == 0x30) {
+	        temp = rdinx(0x3ce, 0x0f);
+	        wrinx(0x3ce, 0x0f, 0x05);
+		if ((rdinx(0x3ce, 0x0c) & 0xb0) == 0x30) {
 			/* QVision */
-			temp = rdinx(0x3ce, 0x0f);
-			wrinx(0x3ce, 0x0f, 0x05);
 			switch(rdinx(0x3ce, 0x54)) {
 			case 0x00:
 				vga256InfoRec.videoRam = 1024;
@@ -257,32 +246,20 @@ COMPAQProbe()
 
 	vga256InfoRec.chipset = COMPAQIdent(0);
 	vga256InfoRec.bankedMono = FALSE;     /* who cares ;-) */
-#ifndef MONOVGA
-#ifdef XFreeXDGA
-	vga256InfoRec.directMode = XF86DGADirectPresent;
-#endif
-#endif
 
 	return TRUE;
 }
 
 /*
-   COMPAQEnterLeave() -- enable/disable io-mapping
-
-   This routine is used when entering or leaving X (i.e., when starting or
-   exiting an X session, or when switching to or from a vt which does not
-   have an X session running.
-*/
+ * COMPAQEnterLeave() -- enable/disable io-mapping
+ *
+ * This routine is used when entering or leaving X (i.e., when starting or
+ * exiting an X session, or when switching to or from a vt which does not
+ * have an X session running.
+ */
 static void COMPAQEnterLeave(enter)
 Bool enter;
 {
-#ifndef MONOVGA
-#ifdef XFreeXDGA 
-	if (vga256InfoRec.directMode&XF86DGADirectGraphics && !enter)
-		return;
-#endif
-#endif
-
 	if (enter) {
 		xf86EnableIOPorts(vga256InfoRec.scrnIndex);
 		vgaIOBase = (inb(0x3CC) & 0x01) ? 0x3D0 : 0x3B0; 
@@ -299,6 +276,8 @@ Bool enter;
 static void COMPAQRestore(restore)
 vgaCOMPAQPtr restore;
 {
+	vgaProtect(TRUE);
+
 	if (restore->EnvironmentReg == 0x0f)
 		outw(0x3ce, 0 << 8 | 0x0f);		/* lock */
 	else
@@ -316,6 +295,8 @@ vgaCOMPAQPtr restore;
 	 * Don't need to do any clock stuff - the bits are in MiscOutReg,
 	 * which is handled by vgaHWRestore.
 	 */
+
+	vgaProtect(FALSE);				/* Turn on screen */
 }
 
 /*
@@ -356,7 +337,6 @@ DisplayModePtr mode;
 		mode->CrtcHDisplay <<= 1;
 		mode->CrtcHSyncStart <<= 1;
 		mode->CrtcHSyncEnd <<= 1;
-		mode->CrtcHSkew <<= 1;
 		mode->CrtcHAdjusted = TRUE;
 	}
 #endif
@@ -365,7 +345,7 @@ DisplayModePtr mode;
 		return(FALSE);
 #ifndef MONOVGA
 	new->std.Sequencer[0x02] = 0xff; /* write plane mask for 256 colors */
-	new->std.CRTC[0x13] = vga256InfoRec.displayWidth >> 3;
+	new->std.CRTC[0x13] = vga256InfoRec.virtualX >> 3;
 	new->std.CRTC[0x14] = 0x40;
 #endif
 
@@ -401,79 +381,44 @@ COMPAQAdjust(x, y)
 	outw(vgaIOBase + 4, (Base & 0x00FF00) | 0x0C);
 	outw(vgaIOBase + 4, ((Base & 0x00FF) << 8) | 0x0D);
 	outw(0x3ce, ((Base & 0x030000) >> 6) | 0x42);
-
-#ifdef XFreeXDGA
-	if (vga256InfoRec.directMode & XF86DGADirectGraphics) {
-		/* Wait until vertical retrace is in progress. */
-		while (inb(vgaIOBase + 0xA) & 0x08);
-		while (!(inb(vgaIOBase + 0xA) & 0x08));
-	}
-#endif
 }
 
-/*
+
+/* 
  * COMPAQSaveScreen --
- *	Save registers that can be disrupted by a synchronous reset
+ *   Save registers that can be disrupted by a synchronous reset
  */
 static void
-COMPAQSaveScreen(mode)
-int mode;
+COMPAQSaveScreen(const Bool start)
 {
+     static unsigned char save1, save2, save3;
 
-	/*
-	 * Allow pairs of calls to COMPAWSaveScreen() to be nested.
-	 * It may be sufficient to ignore all but the outer-most pair,
-	 * but this method is probably safest for now.
-	 */
+     static Bool started = SS_FINISH;
 
-#define MAX_NEST_DEPTH 2
-#ifdef CR0
-#undef CR0
-#endif
+     if (start == started)
+	  return;
+     started = start;
 
-	static struct save {
-		unsigned char PR0, PR1, CR0;
-	} regsave[MAX_NEST_DEPTH + 1];
-
-	static int nest_depth = 0;
-
-	if (mode == SS_START)
-	{
-		if (nest_depth > MAX_NEST_DEPTH)
-		{
-		    ErrorF("COMPAQSaveScreen: Warning: too much nesting\n");
-		    nest_depth++;
-		    return;
-		}
-		outb(0x3ce, 0x45);
-		regsave[nest_depth].PR0 = inb(0x3cf);  /* Page Register 0 */
-		outb(0x3ce, 0x46);
-		regsave[nest_depth].PR1 = inb(0x3cf);  /* Page Register 1 */
-		outb(0x3ce, 0x40);
-		regsave[nest_depth].CR0 = inb(0x3cf);  /* Control Register 0 */
-		nest_depth++;
-		outb(0x3c4, 0x0100);		       /* Start reset */
-	}
-	else
-	{
-		outb(0x3c4, 0x0300);		       /* End reset */
-		nest_depth--;
-		if (nest_depth > MAX_NEST_DEPTH)
-			return;
-		outw(0x3ce, regsave[nest_depth].CR0 << 8 | 0x40);
-		outw(0x3ce, regsave[nest_depth].PR1 << 8 | 0x46);
-		outw(0x3ce, regsave[nest_depth].PR0 << 8 | 0x45);
-	}
+     if (start == SS_START) {                 /* Start synchronous reset */
+	  outb(0x3ce, 0x45); save1 = inb(0x3cf);  /* Page Register 0 */
+	  outb(0x3ce, 0x46); save2 = inb(0x3cf);  /* Page Register 1 */
+	  outb(0x3ce, 0x40); save3 = inb(0x3cf);  /* Control Register 0 */
+	  outw(0x3c4, 0x0100); 
+     } else {                                 /* End synchronous reset */   
+	  outw(0x3c4, 0x0300);
+	  outw(0x3ce, save3 << 8 | 0x40);
+	  outw(0x3ce, save2 << 8 | 0x46);
+	  outw(0x3ce, save1 << 8 | 0x45);
+     }
 }
+
 
 /*
  * COMPAQValidMode --
- *
  */
 static int
-COMPAQValidMode(mode, verbose)
-DisplayModePtr mode;
-Bool verbose;
+COMPAQValidMode(DisplayModePtr mode, Bool verbose, int flag)
 {
-return MODE_OK;
+     return (MODE_OK);
 }
+

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/seg.c,v 3.1 1996/02/04 09:02:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/seg.c,v 3.2 1996/12/23 06:38:05 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -52,7 +52,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 Further modifications by Tiago Gons (tiago@comosjn.hobby.nl)
 
 */
-/* $XConsortium: seg.c /main/3 1996/01/11 12:28:36 kaleb $ */
+/* $XConsortium: seg.c /main/4 1996/02/21 17:25:26 kaleb $ */
 
 
 #include "X.h"

@@ -1,5 +1,5 @@
-/* $XConsortium: dixfont.h,v 1.20 94/04/17 20:25:38 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/include/dixfont.h,v 3.0 1996/04/15 11:34:25 dawes Exp $ */
+/* $XConsortium: dixfont.h /main/21 1996/09/28 17:14:16 rws $ */
+/* $XFree86: xc/programs/Xserver/include/dixfont.h,v 3.1 1996/12/23 07:09:25 dawes Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -202,7 +202,7 @@ extern int GetDefaultPointSize(
 #endif
 );
 
-extern struct resolution *GetClientResolutions(
+extern FontResolutionPtr GetClientResolutions(
 #if NeedFunctionPrototypes
     int * /*num*/
 #endif

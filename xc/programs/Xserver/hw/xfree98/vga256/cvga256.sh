@@ -1,12 +1,12 @@
 #!/bin/sh
 
-# $XFree86: xc/programs/Xserver/hw/xfree98/vga256/cvga256.sh,v 3.1 1996/02/04 09:16:59 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree98/vga256/cvga256.sh,v 3.2 1996/12/23 07:08:28 dawes Exp $
 #
 # This script generates vga256Conf.c
 #
 # usage: confvga256.sh driver1 driver2 ...
 #
-# $XConsortium: cvga256.sh /main/2 1995/12/29 11:51:14 kaleb $
+# $XConsortium: cvga256.sh /main/3 1996/02/21 18:16:35 kaleb $
 
 VGACONF=./vga256Conf.c
 

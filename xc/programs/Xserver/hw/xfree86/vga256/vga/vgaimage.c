@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaimage.c,v 3.2 1996/02/04 09:15:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaimage.c,v 3.3 1996/12/23 06:59:49 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: vgaimage.c /main/2 1995/11/13 09:26:44 kaleb $ */
+/* $XConsortium: vgaimage.c /main/3 1996/02/21 18:11:16 kaleb $ */
 
 #include "vga256.h"
 

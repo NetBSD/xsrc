@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3im.c,v 3.9 1996/10/24 12:29:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3im.c,v 3.12.2.4 1997/05/28 13:12:51 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -26,7 +26,7 @@
  * Modified by Amancio Hasty and extensively by Jon Tombs & Phil Richards.
  *
  */
-/* $XConsortium: s3im.c /main/10 1995/12/29 15:55:19 kaleb $ */
+/* $XConsortium: s3im.c /main/10 1996/10/28 05:22:54 kaleb $ */
 
 
 #include "misc.h"
@@ -93,6 +93,7 @@ extern ScrnInfoRec s3InfoRec;
 int s3Bpp;
 int s3BppDisplayWidth;
 Pixel s3BppPMask;
+int realS3Bpp;
 
 void
 s3ImageInit ()
@@ -106,9 +107,12 @@ s3ImageInit ()
 
    reEntry = TRUE;
    s3Bpp = s3InfoRec.bitsPerPixel / 8;
+   realS3Bpp = s3Bpp;
+   if (s3Bpp == 4) realS3Bpp = 3;
 
-   s3BppDisplayWidth = s3Bpp * s3DisplayWidth;
+   s3BppDisplayWidth = realS3Bpp * s3DisplayWidth;
    s3BppPMask = (1UL << s3InfoRec.depth) - 1;
+   if (s3Bpp == 4) s3BppPMask = 0x00ffFFff;
 
    for (i = 0; i < 256; i++) {
       reorder (i, s3SwapBits[i]);
@@ -139,6 +143,108 @@ s3ImageInit ()
 #define outw(p,v)     do { /* noting*/ } while (0)
 #define outw32(p,v)   do { /* noting*/ } while (0)
 
+static void 
+copy32to24(char *d, char *s, int n)
+{  /* depends on byte sex, LE only !! */
+  CARD32 *s32, *d32;
+
+  for ( ; n>0 && ((long)(d) & 3); n--) {
+    if ((long)(d) & 1) {
+      *d++ = *s++;
+      *((CARD16 *)d++) = ldw_u((CARD16*)(s++));
+      d++; s++;
+      s++;
+    }
+    else {
+      *((CARD16 *)d++) = ldw_u((CARD16*)(s++));
+      d++; s++;
+      *d++ = *s++;
+      s++;
+    }
+  }
+
+  s32 = (CARD32*)s;
+  d32 = (CARD32*)d;
+  for ( ;n >= 4; n -= 4) {
+    CARD32 p1,p2,p3,p4;
+    p1 = ldl_u(s32++);
+    p2 = ldl_u(s32++);
+    p3 = ldl_u(s32++);
+    p4 = ldl_u(s32++);
+    *d32++ =  (p1 & 0xffffff)        | (p2 << 24);
+    *d32++ = ((p2 & 0xffffff) >>  8) | (p3 << 16);
+    *d32++ = ((p3 & 0xffffff) >> 16) | (p4 <<  8);
+  }
+  s = (char*)s32;
+  d = (char*)d32;
+
+  for ( ;n>0; n--) {
+    if ((long)(d) & 1) {
+      *d++ = *s++;
+      *((CARD16 *)(d++)) = ldw_u((CARD16*)(s++));
+      d++; s++;
+      s++;
+    }
+    else {
+      *((CARD16 *)(d++)) = ldw_u((CARD16*)(s++));
+      d++; s++;
+      *d++ = *s++;
+      s++;
+    }
+  }
+}
+
+static void
+copy24to32(char *d, char *s, int n)
+{  /* depends on byte sex, LE only !! */
+  CARD32 *s32, *d32;
+
+  for ( ; n>0 && ((long)(s) & 3); n--) {
+    if ((long)(d) & 1) {
+      *d++ = *s++;
+      *((CARD16 *)(d++)) = ldw_u((CARD16*)(s++));
+      d++; s++;
+      d++;
+    }
+    else { 
+      *((CARD16 *)(d++)) = ldw_u((CARD16*)(s++));
+      d++; s++;
+      *d++ = *s++;
+      d++;
+    }
+  }
+
+  s32 = (CARD32*)s;
+  d32 = (CARD32*)d;
+  for (;n >= 4; n -= 4) {
+    CARD32 p1,p2,p3;
+    p1 = ldl_u(s32++);
+    p2 = ldl_u(s32++);
+    p3 = ldl_u(s32++);
+    *d32++ =    p1 & 0xffffff;
+    *d32++ =  ((p1 >> 24) | (p2 <<  8)) & 0xffffff;
+    *d32++ =  ((p2 >> 16) | (p3 << 16)) & 0xffffff;
+    *d32++ =    p3 >>  8;
+  }
+  s = (char*)s32;
+  d = (char*)d32;
+
+  for ( ;n>0; n--) {
+    if ((long)(d) & 1) {
+      *d++ = *s++;
+      *((CARD16 *)(d++)) = ldw_u((CARD16*)(s++));
+      d++; s++;
+      d++;
+    }
+    else {
+      *((CARD16 *)(d++)) = ldw_u((CARD16*)(s++));
+      d++; s++;
+      *d++ = *s++;
+      d++;
+    }
+  }
+}
+
 static void
 #if NeedFunctionPrototypes
 s3ImageWrite (
@@ -168,6 +274,7 @@ s3ImageWrite (x, y, w, h, psrc, pwidth, px, py, alu, planemask)
 {
    int   j, offset;
    char *videobuffer;
+   int k;
 
    if (alu == ROP_D)
       return;
@@ -177,21 +284,31 @@ s3ImageWrite (x, y, w, h, psrc, pwidth, px, py, alu, planemask)
       return;
    }
 
-   videobuffer = (char *) s3VideoMem;
-
    if (w == 0 || h == 0)
       return;
 
-   BLOCK_CURSOR;
+   videobuffer = (char *) s3VideoMem;
 
    psrc += pwidth * py + px * s3Bpp;
-   offset = (y * s3BppDisplayWidth) + x *s3Bpp;
+   offset = (y * s3BppDisplayWidth) + x * realS3Bpp /*s3Bpp*/;
+   videobuffer += offset;
 
-   w *= s3Bpp;
+   /* set 'w' to either number of bytes per row, or number of pixels
+    * per row, to copy; depending on pixel size.
+   */
+   if (realS3Bpp < 3) w *= s3Bpp;
+
+   BLOCK_CURSOR;
    WaitIdleEmpty();
 
-   for (j = 0; j < h; j++, psrc += pwidth, offset += s3BppDisplayWidth) {
-      MemToBus (&videobuffer[offset], psrc, w);
+   for (j = 0; j < h; j++, psrc += pwidth) {
+
+     if (realS3Bpp < 3)
+       MemToBus (videobuffer, psrc, w);
+     else
+       copy32to24(videobuffer, psrc, w);
+
+     videobuffer += s3BppDisplayWidth;
    }
 
    UNBLOCK_CURSOR;
@@ -225,7 +342,7 @@ s3ImageRead (x, y, w, h, psrc, pwidth, px, py, planemask)
    int   j;
    int   offset;
    char *videobuffer;
-
+   int k;
 
    if (w == 0 || h == 0)
       return;
@@ -237,16 +354,23 @@ s3ImageRead (x, y, w, h, psrc, pwidth, px, py, planemask)
 
    videobuffer = (char *) s3VideoMem;
 
-
    psrc += pwidth * py + px * s3Bpp;
-   offset = (y * s3BppDisplayWidth) + x * s3Bpp;
-   w *= s3Bpp;
+   offset = (y * s3BppDisplayWidth) + x * realS3Bpp /*s3Bpp*/;
+   videobuffer += offset;
+
+   if (realS3Bpp < 3) w *= s3Bpp;
 
    BLOCK_CURSOR;
    WaitIdleEmpty ();
 
-   for (j = 0; j < h; j++, psrc += pwidth, offset += s3BppDisplayWidth) {
-      BusToMem (psrc, &videobuffer[offset], w);
+   for (j = 0; j < h; j++, psrc += pwidth) {
+
+     if (realS3Bpp < 3)
+       BusToMem (psrc, videobuffer, w);
+     else
+       copy24to32(psrc, videobuffer, w);
+
+     videobuffer += s3BppDisplayWidth;
    }
 
    UNBLOCK_CURSOR;
@@ -287,10 +411,11 @@ s3ImageFill (x, y, w, h, psrc, pwidth, pw, ph, pox, poy, alu, planemask)
    char *pline;
    int   ypix, xpix, offset0;
    int   cxpix;
-   char *videobuffer;
+   char *videobuffer, *sp;
+   int k;
 
-   if (alu == ROP_D)
-      return;
+   if (w == 0 || h == 0) return;
+   if (alu == ROP_D) return;
 
    if ((alu != ROP_S) || ((planemask & s3BppPMask) != s3BppPMask)) {
      s3ImageFillNoMem(x, y, w, h, psrc, pwidth,
@@ -300,39 +425,60 @@ s3ImageFill (x, y, w, h, psrc, pwidth, pw, ph, pox, poy, alu, planemask)
 
    videobuffer = (char *) s3VideoMem;
 
-   if (w == 0 || h == 0)
-      return;
-
-
-   w  *= s3Bpp;
-   pw *= s3Bpp;
-
-   modulus ((x - pox) * s3Bpp, pw, xpix);
+   if (s3Bpp <= 3) {
+     w  *= s3Bpp;
+     pw *= s3Bpp;
+     modulus ((x - pox) * s3Bpp, pw, xpix);
+   }
+   else modulus ((x - pox), pw, xpix);
    cxpix = pw - xpix ;
 
    modulus (y - poy, ph, ypix);
    pline = psrc + pwidth * ypix;
 
-   offset0 = (y * s3BppDisplayWidth) + x * s3Bpp;
+   offset0 = (y * s3BppDisplayWidth) + x * realS3Bpp /*s3Bpp*/;
+   videobuffer += offset0;
 
    BLOCK_CURSOR;
    WaitIdleEmpty();
 
-   for (j = 0; j < h; j++, offset0 += s3BppDisplayWidth) {
+   for (j = 0; j < h; j++ /*, offset0 += s3BppDisplayWidth*/) {
       if (w <= cxpix) {
-	 MemToBus (&videobuffer[offset0], pline + xpix, w);
+	if (realS3Bpp < 3)
+	  MemToBus (videobuffer /*&videobuffer[offset0]*/, pline + xpix, w);
+	else
+	  copy32to24(videobuffer /*+ offset0*/, pline + xpix * s3Bpp, w);
       } else {
 	 int   width, offset;
 
-	 MemToBus (&videobuffer[offset0], pline + xpix, cxpix);
-
+	 if (realS3Bpp < 3)
+	   MemToBus (videobuffer/*&videobuffer[offset0]*/, pline + xpix, cxpix);
+	 else
+	   copy32to24(videobuffer /*+ offset0*/, pline + xpix * s3Bpp, cxpix);
+/*
 	 offset = offset0 + cxpix;
-	 for (width = w - cxpix; width >= pw; width -= pw, offset += pw)
-	    MemToBus (&videobuffer[offset], pline, pw);
+*/
+	 if (realS3Bpp < 3) sp = videobuffer + cxpix;
+	 else sp = videobuffer + cxpix * realS3Bpp;
 
-       /* at this point: 0 <= width < pw */
-	 if (width > 0)
-	    MemToBus (&videobuffer[offset], pline, width);
+	 for (width = w - cxpix; width >= pw; width -= pw) {
+	   if (realS3Bpp < 3) {
+	     MemToBus (sp /*&videobuffer[offset]*/, pline, pw);
+	     sp += pw /*offset += pw*/;
+	   }
+	   else {
+	     copy32to24(sp, pline , pw);
+	     sp += pw * realS3Bpp;
+	   }
+	 }
+
+         /* at this point: 0 <= width < pw */
+	 if (width > 0) {
+	   if (realS3Bpp < 3)
+	     MemToBus (sp /*&videobuffer[offset]*/, pline, width);
+	   else
+	     copy32to24(sp, pline , width);
+	 }
       }
 
       if ((++ypix) == ph) {
@@ -340,6 +486,8 @@ s3ImageFill (x, y, w, h, psrc, pwidth, pw, ph, pox, poy, alu, planemask)
 	 pline = psrc;
       } else
 	 pline += pwidth;
+
+      videobuffer += s3BppDisplayWidth;
    }
 
    UNBLOCK_CURSOR;
@@ -401,14 +549,16 @@ s3ImageWriteNoMem (x, y, w, h, psrc, pwidth, px, py, alu, planemask)
    SETB_CMD_SET(s3_gcmd | CMD_BITBLT | INC_X | INC_Y | alu
 		| CMD_ITA_DWORD | MIX_CPUDATA);
 
-   w *= s3Bpp;
+   w *= realS3Bpp /*s3Bpp*/;
    psrc += pwidth * py;
 
    if (alu != ROP_0 && alu != ROP_1 && alu != ROP_D && alu != ROP_Dn)
       for ( ; h--; ) {
 	 CARD32 *psrcs = (CARD32 *)(psrc + px * s3Bpp);
-	 for (i = 0; i < w; i+=4)
+	 for (i = 0; i < w; i+=4) {
 	    *IMG_TRANS = ldl_u(psrcs++);
+	    write_mem_barrier();
+	 }
 	 psrc += pwidth;
       }
    WaitIdle();
@@ -564,35 +714,40 @@ s3ImageFillNoMem (x, y, w, h, psrc, pwidth, pw, ph, pox, poy, alu, planemask)
       pline = (unsigned char *)(psrc + pwidth * mod);
       pend = (CARD32 *)(pline + pw * s3Bpp);
 
-      wrapped1 = (ldl_u(pline) << 8) | (pline[pw - 1] << 0);
+      wrapped1 = (ldl_u((CARD32 *)pline) << 8) | (pline[pw - 1] << 0);
       pnext1 = (CARD32 *)(pline + 3);
-      wrapped2 = (ldw_u(pline) << 16) | (ldw_u(pline + pw - 2) << 0);
+      wrapped2 = (ldw_u((CARD16 *)pline) << 16) | (ldw_u((CARD16*)(pline + pw - 2)) << 0);
       pnext2 = (CARD32 *)(pline + 2);
-      wrapped3 = (pline[0] << 24) | ((ldl_u(pline + pw - 3) & 0xffffff) << 0);
+      wrapped3 = (pline[0] << 24) | ((ldl_u((CARD32*)(pline + pw - 3)) & 0xffffff) << 0);
       pnext3 = (CARD32 *)(pline + 1);
 
       modulus (x - pox, pw, mod);
       plines = (CARD32 *)(pline + mod * s3Bpp);
 
-      for (i=0; i < w * s3Bpp; i+=4)  {
+      for (i=0; i < w * realS3Bpp /*s3Bpp*/; i+=4)  {
          /* we need to check for wrap round */
          if (plines + 1 > pend) {
 	    switch ((unsigned char *)(pend) - (unsigned char *)(plines)) {
 	    case 1:
 	       *IMG_TRANS = wrapped1;
+	       write_mem_barrier();
 	       plines = pnext1;
 	       break;
 	    case 2:
 	       *IMG_TRANS = wrapped2;
+	       write_mem_barrier();
 	       plines = pnext2;
 	       break;
 	    case 3:
+	    case 4:
 	       *IMG_TRANS = wrapped3;
+	       write_mem_barrier();
 	       plines = pnext3;
 	       break;
 	    }
 	 } else {
 	    *IMG_TRANS = ldl_u(plines++);
+	    write_mem_barrier();
 	 }
 	 if (plines == pend)
 	    plines = (CARD32 *)pline;
@@ -606,7 +761,7 @@ s3ImageFillNoMem (x, y, w, h, psrc, pwidth, pw, ph, pox, poy, alu, planemask)
    UNBLOCK_CURSOR;
 }
 
-static int _internal_s3_mskbits[33] =
+static unsigned int _internal_s3_mskbits[33] =
 {
    0x0,
    0x1, 0x3, 0x7, 0xf,
@@ -641,7 +796,6 @@ s3RealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
    int		srcx, srch, dstw;
    CARD32	*ptmp;
    int 		origwidth;
-
 
    if (alu == ROP_D || w == 0 || h == 0)
       return;
@@ -695,6 +849,7 @@ s3RealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
 	           | (s3SwapBits[ ( pix >>  8 ) & 0xff ] <<  8)
 		   | (s3SwapBits[ ( pix >> 16 ) & 0xff ] << 16)
 		   | (s3SwapBits[ ( pix >> 24 ) & 0xff ] << 24);
+	 write_mem_barrier();
 	 pnt += pwidth;
       }
    }
@@ -711,7 +866,7 @@ s3RealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
 	       /*
 		* Assemble 32 bits and feed them to the draw engine.
 		*/
-	       np = pw - srcx;	/* No. pixels left in bitmap.*/
+	       np = pw - srcx;	/* number of pixels left in bitmap.*/
 	       pnt =(CARD32 *)((unsigned char *)(ptmp) + (srcx >> 3));
 	       x2 = srcx & 7;	/* Offset within byte. */
 	       if (np >= 32) {
@@ -726,12 +881,12 @@ s3RealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
 	       else if (pw >= 32) {
 #ifdef __alpha__
 		  pix = (CARD32)((ldq_u((unsigned long *)(pnt)) >> x2)
-				 & MSKBIT(np)) | (*ptmp << np);
+				 & MSKBIT(np)) | (ldl_u(ptmp) << np);
 #else
 		  pix =   (CARD32)(  ldl_u((unsigned int *)(pnt)) >> x2 );
 		  if (x2 > 0)
 		     pix |= (CARD32)(ldl_u((unsigned int *)(pnt+1)) << (32-x2));
-		  pix = (pix  & MSKBIT(np)) | (*ptmp << np);
+		  pix = (pix  & MSKBIT(np)) | (ldl_u(ptmp) << np);
 #endif
 	       }
 	       else if (pw >= 16) {
@@ -742,9 +897,9 @@ s3RealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
 			| (ldl_u(ptmp) << (np+pw));
 	       }
 	       else {
-		  pix = (*ptmp >> x2) & MSKBIT(np);
+		  pix = (ldl_u(pnt) >> x2) & MSKBIT(np);
 		  while( np < 32 && np < dstw ) {
-		     pix |= (*ptmp & MSKBIT(pw)) << np;
+		     pix |= (ldl_u(ptmp) & MSKBIT(pw)) << np;
 		     np += pw;
 		  }
 	       }
@@ -752,6 +907,7 @@ s3RealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
 		         | (s3SwapBits[ ( pix >>  8 ) & 0xff ] <<  8)
 			 | (s3SwapBits[ ( pix >> 16 ) & 0xff ] << 16)
 			 | (s3SwapBits[ ( pix >> 24 ) & 0xff ] << 24);
+	       write_mem_barrier();
 	       srcx += 32;
 	       while (srcx >= pw)
 		  srcx -= pw;

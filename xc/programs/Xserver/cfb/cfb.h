@@ -1,4 +1,5 @@
 /* $XConsortium: cfb.h,v 5.37 94/04/17 20:28:38 dpw Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfb.h,v 3.3.2.2 1997/05/30 13:50:37 hohndel Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -331,7 +332,17 @@ extern RegionPtr cfbBitBlt(
     int /*height*/,
     int /*dstx*/,
     int /*dsty*/,
-    void (* /*doBitBlt*/)(),
+    void (* /*doBitBlt*/)(
+#if NeedNestedPrototypes
+	DrawablePtr /*pSrc*/,
+	DrawablePtr /*pDst*/,
+	int /*alu*/,
+	RegionPtr /*prgnDst*/,
+	DDXPointPtr /*pptSrc*/,
+	unsigned long /*planemask*/,
+	unsigned long /*bitPlane*/
+#endif
+	),
     unsigned long /*bitPlane*/
 #endif
 );
@@ -741,7 +752,7 @@ extern int cfbHorzS(
 #endif
 );
 
-extern int cfbVertS(
+extern void cfbVertS(
 #if NeedFunctionPrototypes
     int /*rop*/,
     unsigned long /*and*/,
@@ -1398,8 +1409,10 @@ extern void cfbZeroPolyArcSS8Xor(
  */
 
 #define BitsPerPixel(d) (\
-    (1 << PixmapWidthPaddingInfo[d].padBytesLog2) * 8 / \
-    (PixmapWidthPaddingInfo[d].padRoundUp+1))
+    PixmapWidthPaddingInfo[d].notPower2 ? \
+    (PixmapWidthPaddingInfo[d].bytesPerPixel * 8) : \
+    ((1 << PixmapWidthPaddingInfo[d].padBytesLog2) * 8 / \
+    (PixmapWidthPaddingInfo[d].padRoundUp+1)))
 
 /* Common macros for extracting drawing information */
 
@@ -1475,7 +1488,7 @@ extern int cfbScreenPrivateIndex;
  * forcing as to use div instead of shift.  Let's be explicit.
  */
 
-#if defined(mips) || defined(sparc) || defined(__alpha)
+#if defined(mips) || defined(sparc) || defined(__alpha) || defined(__alpha__) || defined(__i386__) || defined(i386)
 #define GetHighWord(x) (((int) (x)) >> 16)
 #else
 #define GetHighWord(x) (((int) (x)) / 65536)

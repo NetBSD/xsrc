@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000.c,v 3.41 1996/10/16 14:40:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000.c,v 3.44.2.5 1997/06/01 12:33:28 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1994 by Erik Nygren <nygren@mit.edu>
@@ -33,7 +33,7 @@
  * Bank switching code for P9000 by David Moews (dmoews@xraysgi.ims.uconn.edu)
  *
  */
-/* $XConsortium: p9000.c /main/12 1995/12/17 08:20:39 kaleb $ */
+/* $XConsortium: p9000.c /main/18 1996/10/27 11:04:43 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -43,6 +43,7 @@
 #include "scrnintstr.h"
 #include "mipointer.h"
 #include "cursorstr.h"
+#include "opaque.h"
 
 #include "compiler.h"
 
@@ -67,6 +68,10 @@
 #include "extensions/xf86dgastr.h"
 #endif
 
+#ifdef DPMSExtension
+#include "extensions/dpms.h"
+#endif
+
 #define XCONFIG_FLAGS_ONLY
 #include "xf86_Config.h"
 
@@ -79,7 +84,8 @@ extern int defaultColorVisualClass;
 static int p9000ValidMode(
 #if NeedFunctionPrototypes 
    DisplayModePtr,
-   Bool
+   Bool,
+   int
 #endif
 );
 
@@ -95,6 +101,7 @@ ScrnInfoRec p9000InfoRec = {
     (void (*)())NoopDDA,/* void (* EnterLeaveCursor)() */
     p9000AdjustFrame,   /* void (* AdjustFrame)() */
     p9000SwitchMode,	/* Bool (* SwitchMode)() */
+    p9000DPMSSet,	/* void (* DPMSSet)() */
     p9000PrintIdent,	/* void (* PrintIdent)() */
     8,			/* int depth */
     {5, 6, 5},		/* xrgb weight */
@@ -108,7 +115,8 @@ ScrnInfoRec p9000InfoRec = {
     {0, },              /* OFlagSet xconfigFlag */
     NULL,	       	/* char *chipset */
     NULL,	       	/* char *ramdac */
-    0,			/* int dacSpeed */
+    {0, 0, 0, 0},	/* int dacSpeeds[MAXDACSPEEDS] */
+    0,			/* int dacSpeedBpp */
     0,			/* int clocks */
     {0, },		/* int clock[MAXCLOCKS] */
     0,			/* int maxClock */
@@ -135,20 +143,23 @@ ScrnInfoRec p9000InfoRec = {
     0,			/* int s3Madjust */
     0,			/* int s3Nadjust */
     0,			/* int s3MClk */
+    0,			/* int chipID */
+    0,			/* int chipRev */
     0,			/* unsigned long VGAbase */
     0,			/* int s3RefClk */
-    0,			/* int suspendTime */
-    0,			/* int offTime */
     -1,			/* int s3BlankDelay */
     0,			/* int textClockFreq */
+    NULL,               /* char* DCConfig */
+    NULL,               /* char* DCOptions */
+    0			/* int MemClk */
 #ifdef XFreeXDGA
     /* Note that the double buffered support is 
      * a hack in the P9000 server.  See the README.P9000
      * file for more details.  */
-    0,			/* int directMode */
+    ,0,			/* int directMode */
     p9000SetVidPage,    /* Set Vid Page */
     0,			/* unsigned long physBase */
-    0,			/* int physSize */
+    0			/* int physSize */
 #endif
 };
 
@@ -315,6 +326,7 @@ p9000Probe()
     OFLG_SET(OPTION_SW_CURSOR, &validOptions);
     OFLG_SET(OPTION_NOACCEL, &validOptions);
     OFLG_SET(OPTION_SYNC_ON_GREEN, &validOptions);
+    OFLG_SET(OPTION_POWER_SAVER, &validOptions);
     OFLG_SET(OPTION_VRAM_128, &validOptions);
     OFLG_SET(OPTION_VRAM_256, &validOptions);
     xf86VerifyOptions(&validOptions, &p9000InfoRec);
@@ -414,14 +426,13 @@ p9000Probe()
 
     if (xf86Verbose)
     {
-        ErrorF("%s %s: (mem: %dk numclocks: %d vendor: %s membase: 0x%lx)\n",
+        ErrorF("%s %s: (mem: %dk numclocks: %d vendor: %s)\n",
                OFLG_ISSET(XCONFIG_VIDEORAM,&p9000InfoRec.xconfigFlag) ?
                XCONFIG_GIVEN : XCONFIG_PROBED,
                p9000InfoRec.name,
                p9000InfoRec.videoRam,
                p9000InfoRec.clocks,
-	       p9000VendorPtr->Vendor,
-	       p9000InfoRec.MemBase);
+	       p9000VendorPtr->Vendor);
       }
 
     /* All modes must have the same width and height as the first valid mode.
@@ -552,6 +563,13 @@ p9000Probe()
 	  ErrorF("%s %s: Putting RAMDAC into sync-on-green mode\n",
 		 XCONFIG_GIVEN, p9000InfoRec.name);
       }
+
+#ifdef DPMSExtension
+    if (DPMSEnabledSwitch ||
+	(OFLG_ISSET(OPTION_POWER_SAVER, &p9000InfoRec.options) &&
+	 !DPMSDisabledSwitch))
+	defaultDPMSEnabled = DPMSEnabled = TRUE;
+#endif
 
     if (OFLG_ISSET(OPTION_NOACCEL, &p9000InfoRec.options))
       {
@@ -950,22 +968,49 @@ p9000SaveScreen (pScreen, on)
   if (on) 
     {
       SetTimeSinceLastInputEvent();
-#if 0  /* This shouldn't be needed because we turn off the RAMDAC to blank */
-      if (xf86VTSema && !p9000SWCursor)
-	p9000BtCursorOn();
-#endif
-      p9000UnblankScreen(pScreen);
+      /* Power the RAMDAC back up. */
+      p9000OutBtReg(BT_COMMAND_REG_0, 0xFE, 0x0 /* ~BT_CR0_POWERDOWN */);
     }
   else
     {
-#if 0  /* This shouldn't be needed because we turn off the RAMDAC to blank */
-      if (xf86VTSema && !p9000SWCursor)
-	p9000BtCursorOff();
-#endif
-      p9000BlankScreen(pScreen);
+      /* Power down the RAMDAC output to blank the screen.  No data
+       * will be lost and MPU reads and writes should continue to work. */
+      p9000OutBtReg(BT_COMMAND_REG_0, 0xFE, BT_CR0_POWERDOWN);
     }
   return(TRUE);
 }
+
+/*
+ * p9000DPMSSet -- Sets VESA Display Power Management Signaling (DPMS) Mode
+ */
+
+#ifdef DPMSExtension
+void
+p9000DPMSSet(PowerManagementMode)
+     int PowerManagementMode;
+{
+    if (!xf86VTSema) return;
+
+    switch (PowerManagementMode) {
+    case DPMSModeOn:
+    case DPMSModeStandby:
+    case DPMSModeSuspend:
+	/* enable video (1e5, 1e4, or 1c4) */
+	p9000Store(SRTCTL,CtlBase, p9000MiscReg.srtctl);
+	/* Power the RAMDAC back up. */
+	p9000OutBtReg(BT_COMMAND_REG_0, 0xFE, 0x0 /* ~BT_CR0_POWERDOWN */);
+	break;
+    case DPMSModeOff:
+	/* Power down the RAMDAC output to blank the screen.  No data
+	 * will be lost and MPU reads and writes should continue to work. */
+	p9000OutBtReg(BT_COMMAND_REG_0, 0xFE, BT_CR0_POWERDOWN);
+	usleep(10000);
+	/* disable video in the video controller */
+	p9000Store(SRTCTL,CtlBase,0x01C4L);
+	break;
+    }
+}
+#endif
 
 /*
  * p9000SwitchMode --
@@ -987,9 +1032,10 @@ p9000SwitchMode(mode)
  *
  */
 static int
-p9000ValidMode(mode, verbose)
+p9000ValidMode(mode, verbose, flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: hp7lc2m.c,v 1.1 94/05/28 14:32:48 dpw Exp $ */
+/* $XConsortium: hp7lc2m.c /main/2 1996/12/04 10:23:42 lehors $ */
 /************************************************************
 
 Copyright (c) 1992 by Hewlett-Packard Company, Palo Alto, California
@@ -95,15 +95,9 @@ typedef struct ps2_4 ps2_buffer_t;
  *
  */
 
-#ifdef _NO_PROTO
-static int
-hp7lc2mconfigure (d)
-    HPInputDeviceHeader *d;
-#else
 static int
 hp7lc2mconfigure (
     HPInputDeviceHeader *d)
-#endif
     {
     int ret;
     ps2_buffer_t mousebuf;
@@ -160,16 +154,9 @@ hp7lc2mconfigure (
  *
  */
 
-#ifdef _NO_PROTO
-static int
-hp7lc2mread (fd, data, data_type, pending)
-    int fd, *pending;
-    unsigned char *data, *data_type;
-#else
 static int
 hp7lc2mread (
     int fd, unsigned char *data, unsigned char *data_type, int *pending)
-#endif
     {
     int button, data_read=0;
     unsigned int buttonmask;
@@ -249,13 +236,8 @@ hp7lc2mread (
 #define hp7lc2_BUTTON3	0x02
 #define NUM_BUTTONS	3
 
-#ifdef _NO_PROTO
-static int process_button(buttonmask)
-    unsigned int buttonmask;
-#else
 static int process_button(
     unsigned int buttonmask)
-#endif
     {
     int i, button, bit, down, up;
 
@@ -306,13 +288,8 @@ static int process_button(
  *
  */
 
-#ifdef _NO_PROTO
-static int get_more_data(fd)
-    int fd;
-#else
 static int get_more_data(
     int fd)
-#endif
     {
     int count;
 
@@ -355,15 +332,9 @@ static int get_more_data(
 
 int ignore1, ignore2, ignorecnt;
 
-#ifdef _NO_PROTO
-static int  do_button_chording(fd, buttonmask)
-    int fd;
-    unsigned int *buttonmask;
-#else
 static int  do_button_chording(
     int fd,
     unsigned int *buttonmask)
-#endif
     {
     int button, ret;
     unsigned char *tptr;
@@ -458,13 +429,8 @@ static int  do_button_chording(
  * button chording.  If only one button is down, we need more data.
  */
 
-#ifdef _NO_PROTO
-static int check_combo (buttonmask)
-    int buttonmask;
-#else
 static int check_combo (
     int buttonmask)
-#endif
     {				
     if ((buttonmask & BUTTON1_AND_3) == BUTTON1_AND_3) /* illegal combo   */
 	return (ILLEGAL_COMBO);
@@ -502,16 +468,9 @@ static int check_combo (
  *
  */
 
-#ifdef _NO_PROTO
-static int
-hp7lc2mwrite (fd, request, data)
-    int fd, request;
-    char *data;
-#else
 static int
 hp7lc2mwrite (
     int fd, int request, char *data)
-#endif
     {
     int i;
     HPPointerFeedbackControl *ctrl;
@@ -541,15 +500,9 @@ hp7lc2mwrite (
  *
  */
 
-#ifdef _NO_PROTO
-static int
-hp7lc2mclose (fd)
-    int fd;
-#else
 static int
 hp7lc2mclose (
     int fd)
-#endif
     {
     close (fd);
     return (CLOSE_SUCCESS);
@@ -562,15 +515,9 @@ hp7lc2mclose (
  *
  */
 
-#ifdef _NO_PROTO
-int
-hp7lc2m_Init(serialproc)                     /* default entry point name */
-    SerialProcs *serialproc;
-#else
 int
 hp7lc2m_Init(
     SerialProcs *serialproc)
-#endif
     {
     serialproc->configure = hp7lc2mconfigure;/* routine to init device   */
     serialproc->read = hp7lc2mread;          /* routine to read from dev */

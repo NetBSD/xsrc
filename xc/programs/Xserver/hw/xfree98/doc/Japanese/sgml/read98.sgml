@@ -5,7 +5,7 @@
 <!-- Title information -->
 <title> XFree86 PC98 Dependent Information
 <author> The XFree86 Project Inc. and X98 CORE TEAM
-<date> 1996年 10 月  9日
+<date> 1997年  1月  23日
 <abstract>
 このドキュメントでは、PC98サーバ固有の事項について解説します。
 PC-ATと共通の事項については、共通のドキュメントを参照してください。この
@@ -524,12 +524,11 @@ README.s3、XF86_Accell man page
 <sect2>XF86Configの設定<p>
 	README.trident内に解説されているオプションを指定できます。
 
-	DRAMスピードに関するオプション(fast_dram,med_dram,slow_dram)が
-	指定されないときは、XF98_TGUI独自のデータベースによる自動設定が
-	なされます。</p>
+	アクセラレーション機能には最悪の場合システムのハングアップを伴う
+	不具合が見付かっていますので、Option ``noaccel''を指定して
+	アクセラレーション機能を切り離してください。</p>
 <sect2>報告されている問題<p>
 <itemize>
-	<ITEM>9821Xaシリーズの 16bppでは、hw_cursorが正しく働かない。
 	<ITEM>GA-DRV/98で、1024x768が正常に表示されない。
 </itemize>
 <sect2>その他<p>

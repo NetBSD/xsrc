@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ATI.c,v 3.10 1996/09/25 14:15:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ATI.c,v 3.11.2.2 1997/05/22 14:00:33 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: ATI.c /main/6 1995/11/13 11:11:41 kaleb $ */
+/* $XConsortium: ATI.c /main/10 1996/10/25 07:00:11 kaleb $ */
 
 #include "Probe.h"
 
@@ -47,7 +47,8 @@ Chip_Descriptor ATI_Descriptor = {
 };
 
 Bool Crippled_Mach32 = FALSE,
-     Crippled_Mach64 = FALSE;
+     Crippled_Mach64 = FALSE,
+     Mach64xTB = FALSE;
 
 extern Chip_Descriptor ATIMach_Descriptor;
 
@@ -100,13 +101,30 @@ int chip, *Chipset;
 		case 0x4554:
 			*Chipset = CHIP_ATI264ET;
 			break;
+		case 0x0166:
+		case 0x4C47:
+			*Chipset = CHIP_ATI264LT;
+			Mach64xTB = TRUE;
+			break;
 		case 0x02B3:
 		case 0x5654:
-			*Chipset = CHIP_ATI264VT;
+			if (chip & 0x40000000)
+			{
+				Mach64xTB = TRUE;
+				*Chipset = CHIP_ATI264VTB;
+			}
+			else
+				*Chipset = CHIP_ATI264VT;
 			break;
 		case 0x00D3:
 		case 0x4754:
-			*Chipset = CHIP_ATI264GT;
+			if (chip & 0x40000000)
+			{
+				Mach64xTB = TRUE;
+				*Chipset = CHIP_ATI264GTB;
+			}
+			else
+				*Chipset = CHIP_ATI264GT;
 			break;
 		default:
 			Chip_data = chip;

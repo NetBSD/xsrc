@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/sysv_io.c,v 3.3 1996/08/10 13:07:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/sysv_io.c,v 3.4 1996/12/23 06:51:26 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: sysv_io.c /main/2 1995/11/13 06:21:49 kaleb $ */
+/* $XConsortium: sysv_io.c /main/8 1996/10/19 18:08:06 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

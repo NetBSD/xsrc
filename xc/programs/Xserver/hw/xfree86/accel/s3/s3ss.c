@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3ss.c,v 3.7 1996/06/29 09:07:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3ss.c,v 3.8 1996/12/23 06:42:07 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -55,7 +55,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
  * Modified by Amancio Hasty and Jon Tombs
  * 
  */
-/* $XConsortium: s3ss.c /main/4 1995/11/12 19:07:13 kaleb $ */
+/* $XConsortium: s3ss.c /main/6 1996/10/19 17:57:38 kaleb $ */
 
 
 #include "X.h"

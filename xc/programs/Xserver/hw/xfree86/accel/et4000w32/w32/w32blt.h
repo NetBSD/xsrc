@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/w32blt.h,v 3.6 1996/09/14 13:08:35 dawes Exp $ */  
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/w32blt.h,v 3.7 1996/12/23 06:35:22 dawes Exp $ */  
 /*******************************************************************************
                         Copyright 1994 by Glenn G. Lai
 
@@ -26,7 +26,7 @@ Austin, Tx 78765
 glenn@cs.utexas.edu)
 4/6/94
 *******************************************************************************/
-/* $XConsortium: w32blt.h /main/4 1995/11/12 16:37:41 kaleb $ */
+/* $XConsortium: w32blt.h /main/7 1996/10/23 18:41:06 kaleb $ */
 
 #ifndef W32BLT_H
 #define W32BLT_H

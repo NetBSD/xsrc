@@ -1,5 +1,5 @@
-/* $XConsortium: Display.c,v 1.3 95/07/10 17:42:22 ray Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Display.c,v 3.0 1996/04/15 11:34:04 dawes Exp $ */
+/* $XConsortium: Display.c /main/4 1996/08/20 11:31:58 kaleb $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Display.c,v 3.1 1996/12/23 07:09:11 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -58,6 +58,7 @@ void xnestOpenDisplay(argc, argv)
   XVisualInfo vi;
   long mask;
   int i, j;
+  extern Window xnestParentWindow;
 
   if (!xnestDoFullGeneration) return;
   
@@ -118,7 +119,10 @@ void xnestOpenDisplay(argc, argv)
   xnestBlackPixel = BlackPixel(xnestDisplay, DefaultScreen(xnestDisplay));
   xnestWhitePixel = WhitePixel(xnestDisplay, DefaultScreen(xnestDisplay));
 
-  xnestEventMask = 0L;
+  if (xnestParentWindow != (Window) 0)
+    xnestEventMask = StructureNotifyMask;
+  else
+    xnestEventMask = 0L;
   
   for (i = 0; i <= MAXDEPTH; i++)
     xnestDefaultDrawables[i] = None;
@@ -147,13 +151,15 @@ void xnestOpenDisplay(argc, argv)
   if (!(xnestUserGeometry & YValue))
     xnestY = 0;
   
-  if (!(xnestUserGeometry & WidthValue))
-    xnestWidth = 3 * DisplayWidth(xnestDisplay, 
-				  DefaultScreen(xnestDisplay)) / 4;
-  
-  if (!(xnestUserGeometry & HeightValue))
-    xnestHeight = 3 * DisplayHeight(xnestDisplay, 
+  if (xnestParentWindow == 0) {
+    if (!(xnestUserGeometry & WidthValue))
+      xnestWidth = 3 * DisplayWidth(xnestDisplay, 
 				    DefaultScreen(xnestDisplay)) / 4;
+  
+    if (!(xnestUserGeometry & HeightValue))
+      xnestHeight = 3 * DisplayHeight(xnestDisplay, 
+				      DefaultScreen(xnestDisplay)) / 4;
+  }
 
   if (!xnestUserBorderWidth)
     xnestBorderWidth = 1;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3scrin.c,v 3.12 1996/08/13 11:29:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3scrin.c,v 3.14 1997/01/08 20:34:03 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -42,7 +42,7 @@ Modified for the Mach-8 by Rickard E. Faith (faith@cs.unc.edu)
 Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
 Modified for the S3 by Jon N. Tombs (jon@esix2.us.es)
 */
-/* $XConsortium: s3scrin.c /main/7 1995/12/29 10:11:52 kaleb $ */
+/* $XConsortium: s3scrin.c /main/9 1996/10/19 17:57:25 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -50,6 +50,7 @@ Modified for the S3 by Jon N. Tombs (jon@esix2.us.es)
 #include "servermd.h"
 #include "scrnintstr.h"
 #include "pixmapstr.h"
+#include "regionstr.h"
 #include "resource.h"
 #include "colormap.h"
 #include "colormapst.h"
@@ -66,21 +67,40 @@ Modified for the S3 by Jon N. Tombs (jon@esix2.us.es)
 #include "regs3.h"
 #include "xf86Priv.h"
 
-extern RegionPtr mfbPixmapToRegion();
-extern Bool mfbRegisterCopyPlaneProc();
+extern Bool mfbRegisterCopyPlaneProc(
+#if NeedFunctionPrototypes
+	ScreenPtr	/* pScreen */,
+	RegionPtr (*proc)(
+#if NeedNestedPrototypes
+		DrawablePtr	/* pSrcDrawable */,
+		DrawablePtr	/* pDstDrawable */,
+		GCPtr		/* pGC */,
+		int		/* srcx */,
+		int		/* srcy */,
+		int		/* width */,
+		int		/* height */,
+		int		/* dstx */,
+		int		/* dsty */,
+		unsigned long	/* bitPlane */
+#endif
+		)
+#endif
+	);
 
 extern int defaultColorVisualClass;
 extern xrgb xf86weight;
-
-extern RegionPtr miCopyPlane();
-
 
 static unsigned long cfbGeneration = 0;
 
 miBSFuncRec s3BSFuncRec = {
     s3SaveAreas,
     s3RestoreAreas,
-    (void (*)()) 0,
+    (void (*)(
+#if NeedNestedPrototypes
+	GCPtr /*pBackingGC*/,
+	RegionPtr /*pbackingCompositeClip*/
+#endif
+	)) 0,
     (PixmapPtr (*)()) 0,
     (PixmapPtr (*)()) 0,
 };
@@ -104,7 +124,7 @@ s3ScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width)
     int	i;
     Bool Rstatus;
     VisualPtr visual;
-    pointer oldDevPrivate;
+    pointer oldDevPrivate = 0;
 
     rootdepth = 0;
     bitsPerRGB = 6;

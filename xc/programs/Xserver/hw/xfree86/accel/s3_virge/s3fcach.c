@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3fcach.c,v 3.3 1996/10/08 13:11:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3fcach.c,v 3.5.2.2 1997/05/24 08:35:59 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -26,7 +26,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  *
  */
-/* $XConsortium: s3fcach.c /main/8 1995/12/29 10:11:14 kaleb $ */
+/* $XConsortium: s3fcach.c /main/3 1996/10/25 15:37:16 kaleb $ */
 
 
 #include	"X.h"
@@ -80,7 +80,7 @@ s3FontCache8Init()
       }
    }
 
-   /* y now includes the cursor space */
+   /* y now excludes the cursor space */
    x = x2 = 0;
    y = y2 = s3CursorStartY + s3CursorLines;
    h = h2 = s3ScissB + 1 - y;
@@ -206,10 +206,12 @@ Dos3CPolyText8(x, y, count, chars, fentry, pGC, pBox)
      BoxPtr pBox;
 {
    int   gHeight;
+   int   w = fentry->w;
    int blocki = 255;
    unsigned short height = 0;
    unsigned short width = 0;
    Pixel pmsk = 0;
+   bitMapBlockPtr block;
 
    BLOCK_CURSOR;
    for (;count > 0; count--, chars++) {
@@ -224,7 +226,6 @@ Dos3CPolyText8(x, y, count, chars, fentry, pGC, pBox)
 	 if (gHeight) {
 
 	    if ((int) (*chars / 32) != blocki) {
-	       bitMapBlockPtr block;
 
 	       blocki = (int) (*chars / 32);
 	       block = fentry->fblock[blocki];
@@ -233,9 +234,17 @@ Dos3CPolyText8(x, y, count, chars, fentry, pGC, pBox)
 		   * Reset the GE context to a known state before calling
 		   * the xf86loadfontblock function.
 		   */
-		  WaitQueue16_32(5,6);
-		  SET_SCISSORS(0,0,(s3DisplayWidth - 1), s3ScissB);
-		  SET_RD_MASK(~0);
+                  WaitQueue(6);
+                  SETB_CLIP_L_R(0, (s3DisplayWidth - 1));
+                  SETB_CLIP_T_B(0, s3ScissB);
+                  SETB_RSRC_XY(0,0);
+                  SETB_RDEST_XY(0,0);
+                  SETB_RWIDTH_HEIGHT(0,1);
+                  SETB_CMD_SET(s3_gcmd | CMD_BITBLT | ROP_S);
+                  WaitIdle();
+		  ;WaitQueue16_32(5,6);
+		  ;SET_SCISSORS(0,0,(s3DisplayWidth - 1), s3ScissB);
+		  ;SET_RD_MASK(~0);
 
 		  xf86loadFontBlock(fentry, blocki);
 		  block = fentry->fblock[blocki];
@@ -244,52 +253,44 @@ Dos3CPolyText8(x, y, count, chars, fentry, pGC, pBox)
 		   * Restore the GE context.
 		   */
 		  WaitQueue(4);
-		  SET_SCISSORS((short)pBox->x1,(short)pBox->y1,(short)(pBox->x2 - 1),
-							(short)(pBox->y2 - 1));
-		  WaitQueue16_32(6,8);
-		  SET_FRGD_COLOR(pGC->fgPixel);
-		  SET_PIX_CNTL(MIXSEL_EXPBLT | COLCMPOP_F);
-		  SET_FRGD_MIX(FSS_FRGDCOL | s3alu[pGC->alu]);
-		  if (s3Trio32FCBug) {
-		     SET_BKGD_MIX(BSS_BKGDCOL | ROP_DSo);
-		     SET_WRT_MASK(pGC->planemask);
-
-		     WaitQueue16_32(1,2);
-		     SET_BKGD_COLOR(0);
-		  } else {
-		     SET_BKGD_MIX(BSS_BKGDCOL | ROP_D);
-		     SET_WRT_MASK(pGC->planemask);
-		  }
+                  SETB_CLIP_L_R((short)pBox->x1, (short)(pBox->x2 - 1));
+                  SETB_CLIP_T_B((short)pBox->y1, (short)(pBox->y2 - 1));
+                 
+                  SETB_SRC_FG_CLR(pGC->fgPixel); 
+		  ;WaitQueue16_32(6,8);
+		  ;SET_FRGD_COLOR(pGC->fgPixel);
+		  ;SET_PIX_CNTL(MIXSEL_EXPBLT | COLCMPOP_F);
+		  ;SET_FRGD_MIX(FSS_FRGDCOL | s3alu[pGC->alu]);
+		  ;SET_BKGD_MIX(BSS_BKGDCOL | ROP_D);
+		  ;SET_WRT_MASK(pGC->planemask);
 		  height = width = pmsk = 0;
 	       }
-	       WaitQueue16_32(2,3);
-	       SET_CUR_Y(block->y);
 
 	       /*
 		* Is the readmask altered
 		*/
 	       if (!pmsk || pmsk != block->id) {
 		  pmsk = block->id;
-	       	  SET_RD_MASK(pmsk);
+	       	  SETB_PAT_FG_CLR(pmsk);
 	       }
 	       xoff = block->x;
 	       block->lru = NEXT_FONT_AGE;
    	    }
 
-	    WaitQueue(6);
+	    WaitQueue(4);
 
-	    SET_CUR_X((short) (xoff + (*chars & 0x1f) * w));
-		SET_DESTSTP((short)(x + pci->metrics.leftSideBearing),
-	    							(short)(y - pci->metrics.ascent));
 	    if (!width || (short)(GLYPHWIDTHPIXELS(pci) - 1) != width) {
 	       width = (short)(GLYPHWIDTHPIXELS(pci) - 1);
-	       SET_MAJ_AXIS_PCNT(width);
+	       ;SET_MAJ_AXIS_PCNT(width);
 	    }
 	    if (!height || (short)(gHeight - 1) != height) {
 	       height = (short)(gHeight - 1);
-	       SET_MIN_AXIS_PCNT(height);
+	       ;SET_MIN_AXIS_PCNT(height);
 	    }
-	    SET_CMD(CMD_BITBLT | INC_X | INC_Y | DRAW | PLANAR | WRTDATA);
+            SETB_RSRC_XY((short) (xoff + (*chars & 0x1f) * w), block->y);
+            SETB_RWIDTH_HEIGHT(width, height + 1);
+            SETB_RDEST_XY((short)(x + pci->metrics.leftSideBearing), (short)(y - pci->metrics.ascent));
+            SETB_CMD_SET(s3_gcmd | CMD_BITBLT | MIX_MONO_PATT | INC_X | INC_Y | s3alu_pat[pGC->alu]);
 	 }
 	 x += pci->metrics.characterWidth;
       }
@@ -313,36 +314,39 @@ s3GlyphWrite(x, y, count, chars, fentry, pGC, pBox, numRects)
      int numRects;
 {
    BLOCK_CURSOR;
-   WaitQueue16_32(6,8);
-   SET_FRGD_COLOR(pGC->fgPixel);
-   SET_PIX_CNTL(MIXSEL_EXPBLT | COLCMPOP_F);
-   SET_FRGD_MIX(FSS_FRGDCOL | s3alu[pGC->alu]);
-   if (s3Trio32FCBug) {
-      SET_BKGD_MIX(BSS_BKGDCOL | ROP_DSo);
-      SET_WRT_MASK(pGC->planemask);
-
-      WaitQueue16_32(1,2);
-      SET_BKGD_COLOR(0);
-   } else {
-      SET_BKGD_MIX(BSS_BKGDCOL | ROP_D);
-      SET_WRT_MASK(pGC->planemask);
-   }
+   WaitQueue(3);
+   SETB_PAT_FG_CLR(pGC->fgPixel);
+   SETB_MONO_PAT0(~0);  /* set all pattern bits to use planemask */
+   SETB_MONO_PAT1(~0);  /* for all pixels */
+   ;WaitQueue16_32(6,8);
+   ;SET_FRGD_COLOR(pGC->fgPixel);
+   ;SET_PIX_CNTL(MIXSEL_EXPBLT | COLCMPOP_F);
+   ;SET_FRGD_MIX(FSS_FRGDCOL | s3alu[pGC->alu]);
+   ;SET_BKGD_MIX(BSS_BKGDCOL | ROP_D);
+   ;SET_WRT_MASK(pGC->planemask);
 
    for (; --numRects >= 0; ++pBox) {
-      WaitQueue(4);
-	  SET_SCISSORS((short)pBox->x1, (short)pBox->y1, (short)(pBox->x2 - 1),
-      												(short)(pBox->y2 - 1));
-
+      WaitQueue(2);
+      SETB_CLIP_L_R((short)pBox->x1, (short)(pBox->x2 - 1));
+      SETB_CLIP_T_B((short)pBox->y1, (short)(pBox->y2 - 1));
       Dos3CPolyText8(x, y, count, chars, fentry, pGC, pBox);
    }
 
-   WaitQueue(4);
-   SET_SCISSORS(0,0,(s3DisplayWidth - 1), s3ScissB);
+   WaitQueue(6);
+   SETB_CLIP_L_R(0, (s3DisplayWidth - 1));
+   SETB_CLIP_T_B(0, s3ScissB);
+   SETB_RSRC_XY(0,0);
+   SETB_RDEST_XY(0,0);
+   SETB_RWIDTH_HEIGHT(0,1);
+   SETB_CMD_SET(s3_gcmd | CMD_BITBLT | ROP_S);
+   WaitIdle();
 
-   WaitQueue16_32(5,6);
-   SET_RD_MASK(~0);
-   SET_PIX_CNTL(MIXSEL_FRGDMIX | COLCMPOP_F);
-   SET_MIX(FSS_FRGDCOL | ROP_S, BSS_BKGDCOL | ROP_S);
+   ;SET_SCISSORS(0,0,(s3DisplayWidth - 1), s3ScissB);
+
+   ;WaitQueue16_32(5,6);
+   ;SET_RD_MASK(~0);
+   ;SET_PIX_CNTL(MIXSEL_FRGDMIX | COLCMPOP_F);
+   ;SET_MIX(FSS_FRGDCOL | ROP_S, BSS_BKGDCOL | ROP_S);
    UNBLOCK_CURSOR;
 
    return;

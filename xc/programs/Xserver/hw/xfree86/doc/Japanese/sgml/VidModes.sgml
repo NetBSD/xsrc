@@ -4,11 +4,11 @@
 <title>X386/XFree86 のビデオ情報調整を自分で行なうための手引き
 <subtitle>(または趣味と実益のためのモニター調整の手引き)
 <author> Eric S. Raymond <em/esr@snark.thyrsus.com/ 
-<thanks>(原著は Chin Fang <em/fangchin@leland.stanford.edu/; 氏が書きました。
+	 (原著は Chin Fang <em/fangchin@leland.stanford.edu/; 氏が書きました。
 	 Bob Crosson <em/crosson@cam.nist.gov/,氏がハウツーから派生部分を書き
 	 ました。)
 
-</thanks>
+
 <date>
 これはバージョン 1.0, 1993 年 1 月 8 日 です。
 </date>
@@ -465,7 +465,7 @@ S3 カードで SGCS X が動作していて、かつ 16 色（ 1 ピクセル当たり 4 ビット）
 警告 : この方法はマルチシンクモニターのために開発しました。多分、この方法
 は固定周波数モニターでうまく行くかも知れませんが、保証できません。
 
-最初に最大の使用可能な HSF で DCF を割って、１秒あたりの水平走査可能回数を
+最初に最大の使用可能な HSF で DCF を割って、水平走査可能回数を
 計算して下さい。
 
 例えば、 65MHz のドットクロックの Sigma Legend SVGA カードと、55KHz の水平
@@ -477,7 +477,7 @@ S3 カードで SGCS X が動作していて、かつ 16 色（ 1 ピクセル当たり 4 ビット）
 11 ビットの値を得るような SVGA と S3 の VGA 制御装置において有効です。 ATI
 8514/A のような他のカードではこのような要求はないかも知れませんが、我々は
 正確な知識を持ち合わせてはいませんし、丸めによって不都合なことが生じること
-はありません。従って１秒あたりの水平走査可能回数を 1176 に丸めます。
+はありません。従って水平走査可能回数を 1176 に丸めます。
 
 この数字（DCF / HSF を 8 の倍数に丸めたもの）は最小の HFL として用いること
 が出来ます。より低い HSF で同期信号を設定すれば、もっと長い HFL （つまり、
@@ -1123,21 +1123,20 @@ Xconfig では、線上で輝いているドットの数、輝いているドットから同期信号の開
 最後に、フレーム長のどちらかの数値を増やせば再描画速度が低下してしまうこと、
 またその逆も言えることを覚えておいて下さい。
 
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/VidModes.sgml,v 3.2 1997/01/26 04:34:27 dawes Exp $
+</verb>
 <hrule>
 
-このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/VidModes.sgml,v 3.6
- 1995/07/21 14:40:58 を、 岡本  一幸 
+このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/VidModes.sgml,v 3.8 1996/02/04 09:08:28 を、 岡本  一幸 
 ( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
-name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.1.2 を
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.2 を
 日本でインストールする人向けに和訳したものです。ここがおかしいとか、
 ここはこうしたほうがいいといったご意見がありましたら、電子メールで
 お知らせ下さい。
 原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
 XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
 電子メールで送って下さい。
-<verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/VidModes.sgml,v 3.1 1995/10/22 10:44:39 dawes Exp $
-</verb>
 <hrule>
 &lsqb;EOF&rsqb;
 </article>

@@ -1,5 +1,5 @@
-/* $XConsortium: Window.c,v 1.6 95/07/10 17:42:22 ray Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Window.c,v 3.2 1996/01/24 22:04:18 dawes Exp $ */
+/* $XConsortium: Window.c /main/8 1996/12/02 10:21:53 lehors $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Window.c,v 3.4 1996/12/27 07:07:53 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -16,11 +16,7 @@ is" without express or implied warranty.
 #include "X.h"
 #include "Xproto.h"
 #include "gcstruct.h"
-#ifdef __EMX__
-#include "../../include/window.h"
-#else
 #include "window.h"
-#endif
 #include "windowstr.h"
 #include "pixmapstr.h"
 #include "colormapst.h"
@@ -31,15 +27,12 @@ is" without express or implied warranty.
 
 #include "Display.h"
 #include "Screen.h"
-#ifdef __EMX__
-#include "os2GC.h"
-#else
-#include "GC.h"
-#endif
+#include "XNGC.h"
 #include "Drawable.h"
 #include "Color.h"
 #include "Visual.h"
 #include "Events.h"
+#include "Args.h"
 
 int xnestWindowPrivateIndex;
 
@@ -65,7 +58,7 @@ WindowPtr xnestWindowPtr(window)
   wm.pWin = NullWindow;
   wm.window = window;
 
-  for (i = 0; i < screenInfo.numScreens; i++) {
+  for (i = 0; i < xnestNumScreens; i++) {
     WalkTree(screenInfo.screens[i], xnestFindWindowMatch, (pointer) &wm);
     if (wm.pWin) break;
   }

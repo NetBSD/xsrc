@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blt16.c,v 3.5 1996/10/13 11:20:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blt16.c,v 3.6 1996/12/23 06:56:35 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -27,7 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 Author: Keith Packard
 
 */
-/* $XConsortium: cir_blt16.c /main/3 1995/11/13 08:20:46 kaleb $ */
+/* $XConsortium: cir_blt16.c /main/8 1996/10/26 11:16:53 kaleb $ */
 
 /*
  * Harm Hanemaayer <hhanemaa@cs.ruu.nl>:

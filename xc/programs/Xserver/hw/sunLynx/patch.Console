@@ -1,10 +1,10 @@
-diff -cPr --exclude-from=Excl.include /mnt/DEV_OS.microSPARC/usr/include/kbd.h /usr/include/kbd.h
-*** /mnt/DEV_OS.microSPARC/usr/include/kbd.h
---- /usr/include/kbd.h	Wed Jul 24 09:37:49 1996
+diff -crP /cdrom/usr/include/kbd.h /usr/include/kbd.h
+*** /cdrom/usr/include/kbd.h	Wed Dec 31 16:00:00 1969
+--- /usr/include/kbd.h	Sun May 11 23:22:45 1997
 ***************
 *** 0 ****
 --- 1,90 ----
-+ /*	$NetBSD: patch.Console,v 1.1.1.1 1997/03/15 06:11:32 scottr Exp $ */
++ /*	$NetBSD: patch.Console,v 1.1.1.2 1997/06/30 12:56:07 mrg Exp $ */
 + 
 + /*
 +  * Copyright (c) 1992, 1993
@@ -94,13 +94,13 @@ diff -cPr --exclude-from=Excl.include /mnt/DEV_OS.microSPARC/usr/include/kbd.h /
 + #endif
 + #define	LED_SCROLL_LOCK	0x4
 + #define	LED_CAPS_LOCK	0x8
-diff -cPr --exclude-from=Excl.include /mnt/DEV_OS.microSPARC/usr/include/kbio.h /usr/include/kbio.h
-*** /mnt/DEV_OS.microSPARC/usr/include/kbio.h
---- /usr/include/kbio.h	Wed Aug 14 16:29:26 1996
+diff -crP /cdrom/usr/include/kbio.h /usr/include/kbio.h
+*** /cdrom/usr/include/kbio.h	Wed Dec 31 16:00:00 1969
+--- /usr/include/kbio.h	Sun May 11 23:22:46 1997
 ***************
 *** 0 ****
 --- 1,115 ----
-+ /*	$NetBSD: patch.Console,v 1.1.1.1 1997/03/15 06:11:32 scottr Exp $ */
++ /*	$NetBSD: patch.Console,v 1.1.1.2 1997/06/30 12:56:07 mrg Exp $ */
 + 
 + /*
 +  * Copyright (c) 1992, 1993
@@ -215,49 +215,32 @@ diff -cPr --exclude-from=Excl.include /mnt/DEV_OS.microSPARC/usr/include/kbio.h 
 + #define	TR_ASCII		1	/* X compat, unsupported */
 + #define	TR_EVENT		2	/* X compat, unsupported */
 + #define	TR_UNTRANS_EVENT	3
-diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/Makefile sys/drivers/console/Makefile
-*** /mnt/DEV_OS.microSPARC/sys/drivers/console/Makefile	Fri Apr 26 23:27:51 1996
---- sys/drivers/console/Makefile	Fri Aug  2 09:03:05 1996
+diff -crP /cdrom/sys/drivers/console/Makefile /sys/drivers/console/Makefile
+*** /cdrom/sys/drivers/console/Makefile	Sun Feb  9 04:43:06 1997
+--- /sys/drivers/console/Makefile	Sun May 11 23:24:04 1997
 ***************
-*** 31,37 ****
-  # (keyboard) duart.  The mouse is attached to this port.  It must be
-  # defined for the X server to work.
-  #
-! SPECIAL_CFLAGS = -DMOUSESUPPORT -O
+*** 24,30 ****
   
-  FILES = atcdrvr.xxx gfont.xxx atkey.xxx atbeep.xxx atterm.xxx atutils.xxx 
-  HFILES = 
---- 31,37 ----
-  # (keyboard) duart.  The mouse is attached to this port.  It must be
-  # defined for the X server to work.
-  #
-! SPECIAL_CFLAGS = -DMOUSESUPPORT -DXSERVERSUPPORT -O
+  LIBRARY= drivers
   
-  FILES = atcdrvr.xxx gfont.xxx atkey.xxx atbeep.xxx atterm.xxx atutils.xxx 
-  HFILES = 
+! SPECIAL_CFLAGS=-DMOUSESUPPORT
+  
+  include	../../OBJ_RULES
+  
+--- 24,30 ----
+  
+  LIBRARY= drivers
+  
+! SPECIAL_CFLAGS=-DMOUSESUPPORT -DXSERVERSUPPORT
+  
+  include	../../OBJ_RULES
+  
+diff -crP /cdrom/sys/drivers/console/atc.h /sys/drivers/console/atc.h
+*** /cdrom/sys/drivers/console/atc.h	Sun Feb  9 04:43:06 1997
+--- /sys/drivers/console/atc.h	Sun May 11 23:22:46 1997
 ***************
-*** 117,122 ****
---- 117,130 ----
-  
-  # Just Do It.
-  FORCE:
-+ 
-+ atkey.kdb.o : atkey.c
-+ 	$(KERN_CC) -c -o atkey.kdb.o $(SPECIAL_CFLAGS) $(KERN_CFLAGS) \
-+ 		$(SPECIAL_INCLUDES) $(KERN_INCLUDES)  -DSKDB atkey.c
-+ 
-+ atkey.nokdb.o : atkey.c
-+ 	$(KERN_CC) -c -o atkey.kdb.o $(SPECIAL_CFLAGS) $(KERN_CFLAGS) \
-+ 		$(SPECIAL_INCLUDES) $(KERN_INCLUDES)  atkey.c
-  
-  # Dependencies as of 5/20/1992
-  
-diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atc.h sys/drivers/console/atc.h
-*** /mnt/DEV_OS.microSPARC/sys/drivers/console/atc.h	Fri Apr 26 23:27:51 1996
---- sys/drivers/console/atc.h	Wed Jul 24 11:49:21 1996
-***************
-*** 191,196 ****
---- 191,202 ----
+*** 108,113 ****
+--- 108,119 ----
   #ifdef	MOUSESUPPORT
   	struct ttystatics mousechannel;
   #endif	/* MOUSESUPPORT	*/
@@ -270,12 +253,12 @@ diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atc.h sys/
   };
   
   struct kbd_registers_type {
-diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atcdrvr.c sys/drivers/console/atcdrvr.c
-*** /mnt/DEV_OS.microSPARC/sys/drivers/console/atcdrvr.c	Fri Apr 26 23:27:51 1996
---- sys/drivers/console/atcdrvr.c	Wed Aug 14 16:28:23 1996
+diff -crP /cdrom/sys/drivers/console/atcdrvr.c /sys/drivers/console/atcdrvr.c
+*** /cdrom/sys/drivers/console/atcdrvr.c	Sun Feb  9 04:43:06 1997
+--- /sys/drivers/console/atcdrvr.c	Sun May 11 23:25:15 1997
 ***************
-*** 270,275 ****
---- 270,279 ----
+*** 38,43 ****
+--- 38,47 ----
   #ifdef	MOUSESUPPORT
   #include "am8530.h"
   #endif	/* MOUSESUPPORT	*/
@@ -287,8 +270,8 @@ diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atcdrvr.c 
   char *screen_address;		/* is this supposed to be in the driver info? */
   
 ***************
-*** 537,542 ****
---- 541,550 ----
+*** 305,310 ****
+--- 309,318 ----
   	int m;
   	int ps;
   	extern int set_kb_lights();
@@ -300,20 +283,8 @@ diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atcdrvr.c 
   if (!atc_flag){ pseterr(EIO); return(SYSERR);}
   #ifdef	MOUSESUPPORT
 ***************
-*** 586,597 ****
-  #ifdef TIOLED
-  		case TIOLED:
-  #endif
-  			h->curled = *arg;
-  			if (h->ledstate == -1) {
-  				if (timeout(set_kb_lights,h,1) != -1)
-  					h->ledstate = 0;
-  			}
-! 			break;
-  		case VT_OPENQRY:
-  			if (h->multimode == SCM_ONE) {
-  				if (!(h->open & 1)) {
---- 594,630 ----
+*** 354,365 ****
+--- 362,398 ----
   #ifdef TIOLED
   		case TIOLED:
   #endif
@@ -325,35 +296,35 @@ diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atcdrvr.c 
   				if (timeout(set_kb_lights,h,1) != -1)
   					h->ledstate = 0;
   			}
-! 			return OK;
-! #ifdef XSERVERSUPPORT
-! 		case KIOCTYPE:
-! 			if (wbounds(arg) < sizeof(int)) {
-! 				pseterr(EFAULT);
-! 				return SYSERR;
-! 			}
-! 			*(int *)arg = h->kbd_id;
-! 			return OK;
-! 		case KIOCLAYOUT:
-! 			if (wbounds(arg) < sizeof(int)) {
-! 				pseterr(EFAULT);
-! 				return SYSERR;
-! 			}
-! 			*(int *)arg = h->kbd_layout;
-! 			return OK;
-! 		case KIOCCMD:
-! 			if (err = kbd_docmd(h, *(int *)arg)) {
-! 				pseterr(err);
-! 				return SYSERR;
-! 			}
-! 			return OK;
-! #endif
+  			return 0;
++ #ifdef XSERVERSUPPORT
++ 		case KIOCTYPE:
++ 			if (wbounds(arg) < sizeof(int)) {
++ 				pseterr(EFAULT);
++ 				return SYSERR;
++ 			}
++ 			*(int *)arg = h->kbd_id;
++ 			return OK;
++ 		case KIOCLAYOUT:
++ 			if (wbounds(arg) < sizeof(int)) {
++ 				pseterr(EFAULT);
++ 				return SYSERR;
++ 			}
++ 			*(int *)arg = h->kbd_layout;
++ 			return OK;
++ 		case KIOCCMD:
++ 			if (err = kbd_docmd(h, *(int *)arg)) {
++ 				pseterr(err);
++ 				return SYSERR;
++ 			}
++ 			return OK;
++ #endif
   		case VT_OPENQRY:
   			if (h->multimode == SCM_ONE) {
   				if (!(h->open & 1)) {
 ***************
-*** 810,815 ****
---- 843,854 ----
+*** 578,583 ****
+--- 611,622 ----
   	h->open = 0;
   	h->break_code = 0;
   	h->info = info;
@@ -366,12 +337,12 @@ diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atcdrvr.c 
   #ifdef	MOUSESUPPORT
   	tmgr_install(&h->mousechannel, &info->sg, 0, mouse_xmit_ena, h);
   #endif	/* MOUSESUPPORT	*/
-diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atkey.c sys/drivers/console/atkey.c
-*** /mnt/DEV_OS.microSPARC/sys/drivers/console/atkey.c	Fri Apr 26 23:27:51 1996
---- sys/drivers/console/atkey.c	Mon Sep 23 09:19:36 1996
+diff -crP /cdrom/sys/drivers/console/atkey.c /sys/drivers/console/atkey.c
+*** /cdrom/sys/drivers/console/atkey.c	Sun Feb  9 04:43:07 1997
+--- /sys/drivers/console/atkey.c	Sun May 11 23:22:46 1997
 ***************
-*** 162,167 ****
---- 162,171 ----
+*** 26,31 ****
+--- 26,35 ----
   #ifdef	MOUSESUPPORT
   #include "am8530.h"
   #endif	/* MOUSESUPPORT	*/
@@ -382,47 +353,11 @@ diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atkey.c sy
   
   #define	NOTHING_USEFUL	-1
   #define FILL		NOTHING_USEFUL
+diff -crP /cdrom/sys/drivers/console/atutils.c /sys/drivers/console/atutils.c
+*** /cdrom/sys/drivers/console/atutils.c	Sun Feb  9 04:43:07 1997
+--- /sys/drivers/console/atutils.c	Sun May 11 23:22:46 1997
 ***************
-*** 474,480 ****
-  #undef DEBUG
-  
-  	j = *(volatile unsigned char *)KV_KBD_DATA;
-! 
-  	/* Do the quick scan mode check first.  If scanning, stuff and exit */
-  	screen_num = (h->g - &h->screen[0]);
-  	if (h->screen[screen_num].scan_mode) {
---- 478,503 ----
-  #undef DEBUG
-  
-  	j = *(volatile unsigned char *)KV_KBD_DATA;
-! #ifdef XSERVERSUPPORT
-! 	if (h->kbd_pending == KBD_RESET) {
-! 		h->kbd_pending = 0;
-! 		h->kbd_id = j;
-! 		if (j == KB_SUN4) {
-! 			extern int byte_to_keyboard();
-! 			timeout(byte_to_keyboard, KBD_CMD_GLAYOUT, 1);
-! 		}
-! 		goto EOIandExit;
-! 	}
-! 	if (h->kbd_pending == KBD_LAYOUT) {
-! 		h->kbd_pending = 0;
-! 		h->kbd_layout = j;
-! 		goto EOIandExit;
-! 	}
-! 	if (j == KBD_RESET || j == KBD_LAYOUT) {
-! 		h->kbd_pending = j;
-! 		goto EOIandExit;
-! 	}
-! #endif
-  	/* Do the quick scan mode check first.  If scanning, stuff and exit */
-  	screen_num = (h->g - &h->screen[0]);
-  	if (h->screen[screen_num].scan_mode) {
-diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atutils.c sys/drivers/console/atutils.c
-*** /mnt/DEV_OS.microSPARC/sys/drivers/console/atutils.c	Fri Apr 26 23:27:51 1996
---- sys/drivers/console/atutils.c	Tue Aug 13 11:54:38 1996
-***************
-*** 456,462 ****
+*** 361,367 ****
   }
   
   
@@ -430,7 +365,7 @@ diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atutils.c 
   unsigned char byt;
   {
   	int i;
---- 456,465 ----
+--- 361,370 ----
   }
   
   
@@ -442,8 +377,8 @@ diff -cPr --exclude=*.[oa] /mnt/DEV_OS.microSPARC/sys/drivers/console/atutils.c 
   {
   	int i;
 ***************
-*** 495,497 ****
---- 498,544 ----
+*** 400,402 ****
+--- 403,449 ----
   			break;
   	}
   }

@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_bank.s,v 3.0 1996/09/01 04:47:26 dawes Exp $ */
+/* $XConsortium: apm_bank.s /main/2 1996/10/23 13:23:59 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_bank.s,v 3.1 1996/12/27 07:04:45 dawes Exp $ */
 
 #include "assyntax.h"
 

@@ -1,4 +1,4 @@
-/* $XConsortium: nec480_dr.c /main/2 1995/12/29 11:49:25 kaleb $ */
+/* $XConsortium: nec480_dr.c /main/6 1996/10/23 18:51:20 kaleb $ */
 /*
  * Id: nec480_driver.c,v 1.6 1995/06/25 00:28:39 ueno Exp
  *
@@ -6,7 +6,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/nec480/nec480_dr.c,v 3.5 1996/09/14 13:14:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/nec480/nec480_dr.c,v 3.6.2.3 1997/05/09 09:31:45 hohndel Exp $ */
 
 /*
  * These are X and server generic header files.
@@ -134,7 +134,8 @@ vgaVideoChipRec NEC480 = {
 	FALSE,
 	FALSE,
 	NULL,
-	1,
+	1,                         /* ChipClockMulFactor */
+	1                          /* ChipClockDivFactor */
 };
 
 unsigned short *vramwindow_r;
@@ -365,7 +366,7 @@ NEC480Init(DisplayModePtr mode)
  *
  */
 static int
-NEC480ValidMode(DisplayModePtr mode, Bool verbose)
+NEC480ValidMode(DisplayModePtr mode, Bool verbose, int flag)
 {
 	return(MODE_OK);
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: cfbgc.c /main/3 1995/11/12 16:17:32 kaleb $ */
+/* $XConsortium: cfbgc.c /main/5 1996/10/23 18:40:13 kaleb $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -47,7 +47,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbgc.c,v 3.4 1996/09/14 13:07:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbgc.c,v 3.5 1996/12/23 06:34:45 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

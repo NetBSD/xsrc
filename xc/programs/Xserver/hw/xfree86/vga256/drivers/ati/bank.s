@@ -1,5 +1,4 @@
-/* $XConsortium: bank.s,v 1.5 95/06/19 18:59:11 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/bank.s,v 3.6 1996/02/22 05:12:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/bank.s,v 3.8 1996/12/28 08:16:47 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -43,7 +42,7 @@
  * V3 adapters use a 18800 chip and are single-banked.  Bank selection is done
  * with bits 1-4 of extended register 1CE, index B2.
  *
- * Adapters V4 and V5 have the 18800-1 chip.  Adapters Plus and XL have the
+ * V4 and V5 adapters have the 18800-1 chip.  Plus and XL adapters have the
  * 28800 chip.  Page selection is done with Extended Register 1CE, Index B2.
  * The format is:
  *
@@ -53,6 +52,9 @@
  * D3-D1 = Page select bits 2-0
  * D0    = Reserved (18800-1)
  * D0    = Read page select bit 3 (28800)
+ *
+ * For 18800-1, 28800, 68800 and 88800 adapters, a shadow of this register is
+ * held in memory (ATIB2Reg) to improve speed.
  *
  * Also, for those adapters with more than 1M of video memory (such as some
  * Mach32's), additional page select bits are defined in Extended Register 1CE,
@@ -66,39 +68,35 @@
  * dual paged apertures.  These functions are used to emulate a standard VGA
  * aperture.
  */
+/* $XConsortium: bank.s /main/7 1996/02/22 10:47:09 kaleb $ */
 
 #include "assyntax.h"
 
 	FILE("ati_bank.s")
 	AS_BEGIN
 
-/**
- ** Please read the notes in driver.c !!!
- **/
-
-	SEG_DATA
-
-/*
- * We have a mirror for the segment register because an I/O read costs so much
- * more time, that it is better to keep the value of it in memory.  However,
- * this won't do for a V3 adapter because there are other bits in the segment
- * select register to worry about.  Also, the driver needs to reset this mirror
- * during mode save and restore functions.
- */
-	GLOBL	GLNAME(ATIB2Reg)
-GLNAME(ATIB2Reg):
-Segment:
-	D_BYTE 0
-
-/*
- * The functions ...
- */
-
 	SEG_TEXT
 
 /*
- * Start with the functions used with all controllers in the 28800 and 68800
- * series, and some in the 88800 series.
+ * Start with an interface routine to allow calling the banking functions
+ * directly from C code.
+ */
+
+	ALIGNTEXT4
+	GLOBL	GLNAME(ATISelectBank)
+GLNAME(ATISelectBank):
+	PUSH_L	(EAX)
+	MOV_L	(REGOFF(8,ESP),EAX)
+	PUSH_L	(EDX)
+	MOV_L	(CONTENT(GLNAME(ATISelectBankFunction)),EDX)
+	CALL	(CODEPTR(EDX))
+	POP_L	(EDX)
+	POP_L	(EAX)
+	RET
+
+/*
+ * The functions used with all controllers in the 28800, 68800 and 88800
+ * series.
  */
 
 	ALIGNTEXT4
@@ -106,11 +104,11 @@ Segment:
 GLNAME(ATISetRead):
 	SHL_L	(CONST(12),EAX)
 	SHR_W	(CONST(12),AX)
-	MOV_B	(CONTENT(Segment),AH)
+	MOV_B	(CONTENT(GLNAME(ATIB2Reg)),AH)
 	AND_B	(CONST(0x1E),AH)
 	ROR_B	(CONST(3),AL)
 	OR_B	(AL,AH)
-	MOV_B	(AH,CONTENT(Segment))
+	MOV_B	(AH,CONTENT(GLNAME(ATIB2Reg)))
 	MOV_W	(CONTENT(GLNAME(ATIVGAPort)),DX)
 	MOV_B	(CONST(0xB2),AL)
 	OUT_W
@@ -132,11 +130,11 @@ GLNAME(ATISetRead):
 GLNAME(ATISetWrite):
 	SHL_L	(CONST(12),EAX)
 	SHR_W	(CONST(12),AX)
-	MOV_B	(CONTENT(Segment),AH)
+	MOV_B	(CONTENT(GLNAME(ATIB2Reg)),AH)
 	AND_B	(CONST(0xE1),AH)
 	SHL_B	(CONST(1),AL)
 	OR_B	(AL,AH)
-	MOV_B	(AH,CONTENT(Segment))
+	MOV_B	(AH,CONTENT(GLNAME(ATIB2Reg)))
 	MOV_W	(CONTENT(GLNAME(ATIVGAPort)),DX)
 	MOV_B	(CONST(0xB2),AL)
 	OUT_W
@@ -162,7 +160,7 @@ GLNAME(ATISetReadWrite):
 	SHL_B	(CONST(1),AH)
 	ROR_B	(CONST(3),AL)
 	OR_B	(AL,AH)
-	MOV_B   (AH,CONTENT(Segment))
+	MOV_B	(AH,CONTENT(GLNAME(ATIB2Reg)))
 	MOV_W	(CONTENT(GLNAME(ATIVGAPort)),DX)
 	MOV_B	(CONST(0xB2),AL)
 	OUT_W
@@ -190,11 +188,11 @@ GLNAME(ATISetReadWrite):
 	GLOBL	GLNAME(ATIV4V5SetRead)
 GLNAME(ATIV4V5SetRead):
 	AND_L	(CONST(0x0F),EAX)
-	MOV_B	(CONTENT(Segment),AH)
+	MOV_B	(CONTENT(GLNAME(ATIB2Reg)),AH)
 	AND_B	(CONST(0x1E),AH)
 	ROR_B	(CONST(3),AL)
 	OR_B	(AL,AH)
-	MOV_B	(AH,CONTENT(Segment))
+	MOV_B	(AH,CONTENT(GLNAME(ATIB2Reg)))
 	MOV_W	(CONTENT(GLNAME(ATIVGAPort)),DX)
 	MOV_B	(CONST(0xB2),AL)
 	OUT_W
@@ -204,11 +202,11 @@ GLNAME(ATIV4V5SetRead):
 	GLOBL	GLNAME(ATIV4V5SetWrite)
 GLNAME(ATIV4V5SetWrite):
 	AND_L	(CONST(0x0F),EAX)
-	MOV_B	(CONTENT(Segment),AH)
+	MOV_B	(CONTENT(GLNAME(ATIB2Reg)),AH)
 	AND_B	(CONST(0xE1),AH)
 	SHL_B	(CONST(1),AL)
 	OR_B	(AL,AH)
-	MOV_B	(AH,CONTENT(Segment))
+	MOV_B	(AH,CONTENT(GLNAME(ATIB2Reg)))
 	MOV_W	(CONTENT(GLNAME(ATIVGAPort)),DX)
 	MOV_B	(CONST(0xB2),AL)
 	OUT_W
@@ -222,7 +220,7 @@ GLNAME(ATIV4V5SetReadWrite):
 	SHL_B	(CONST(1),AH)
 	ROR_B	(CONST(3),AL)
 	OR_B	(AL,AH)
-	MOV_B   (AH,CONTENT(Segment))
+	MOV_B	(AH,CONTENT(GLNAME(ATIB2Reg)))
 	MOV_W	(CONTENT(GLNAME(ATIVGAPort)),DX)
 	MOV_B	(CONST(0xB2),AL)
 	OUT_W
@@ -255,65 +253,76 @@ GLNAME(ATIV3SetReadWrite):
 	RET
 
 /*
- * The functions used with a Mach64's small dual paged apertures.
+ * The functions used with a Mach64's small dual paged apertures.  There are
+ * two sets of these:  one for planar pixel modes and one for packed pixel
+ * modes.  They are both always compiled in because the video mode on server
+ * entry and the one(s) used by the server itself are not necessarily both
+ * planar or both packed.
  */
 
+#define ATIMach64MassagePackedBankNumber	\
+	AND_W	(CONST(0x7F),AX)	;	\
+	SHL_W	(CONST(1),AX)		;	\
+	MOV_W	(AX,DX)			;	\
+	INC_W	(AX)			;	\
+	SHL_L	(CONST(16),EAX)		;	\
+	MOV_W	(DX,AX)
+
 	ALIGNTEXT4
-	GLOBL	GLNAME(ATIMach64SetRead)
-GLNAME(ATIMach64SetRead):
-#	if defined(MONOVGA) || defined(XF86VGA16)
-		AND_W	(CONST(0x1F),AX)
-#	else
-		AND_W	(CONST(0x7F),AX)
-#	endif
-	SHL_W	(CONST(1),AX)
-	PUSH_W	(AX)
-	INC_W	(AX)
-	SHL_L	(CONST(16),EAX)
-	POP_W	(AX)
-#	if defined(MONOVGA) || defined(XF86VGA16)
-		SHL_L	(CONST(2),EAX)
-#	endif
+	GLOBL	GLNAME(ATIMach64SetReadPacked)
+GLNAME(ATIMach64SetReadPacked):
+	ATIMach64MassagePackedBankNumber
 	MOV_W	(CONTENT(GLNAME(ATIMach64RPPort)),DX)
 	OUT_L
 	RET
 
 	ALIGNTEXT4
-	GLOBL	GLNAME(ATIMach64SetWrite)
-GLNAME(ATIMach64SetWrite):
-#	if defined(MONOVGA) || defined(XF86VGA16)
-		AND_W	(CONST(0x1F),AX)
-#	else
-		AND_W	(CONST(0x7F),AX)
-#	endif
-	SHL_W	(CONST(1),AX)
-	PUSH_W	(AX)
-	INC_W	(AX)
-	SHL_L	(CONST(16),EAX)
-	POP_W	(AX)
-#	if defined(MONOVGA) || defined(XF86VGA16)
-		SHL_L	(CONST(2),EAX)
-#	endif
+	GLOBL	GLNAME(ATIMach64SetWritePacked)
+GLNAME(ATIMach64SetWritePacked):
+	ATIMach64MassagePackedBankNumber
 	MOV_W	(CONTENT(GLNAME(ATIMach64WPPort)),DX)
 	OUT_L
 	RET
 
 	ALIGNTEXT4
-	GLOBL	GLNAME(ATIMach64SetReadWrite)
-GLNAME(ATIMach64SetReadWrite):
-#	if defined(MONOVGA) || defined(XF86VGA16)
-		AND_W	(CONST(0x1F),AX)
-#	else
-		AND_W	(CONST(0x7F),AX)
-#	endif
-	SHL_W	(CONST(1),AX)
-	PUSH_W	(AX)
-	INC_W	(AX)
-	SHL_L	(CONST(16),EAX)
-	POP_W	(AX)
-#	if defined(MONOVGA) || defined(XF86VGA16)
-		SHL_L	(CONST(2),EAX)
-#	endif
+	GLOBL	GLNAME(ATIMach64SetReadWritePacked)
+GLNAME(ATIMach64SetReadWritePacked):
+	ATIMach64MassagePackedBankNumber
+	MOV_W	(CONTENT(GLNAME(ATIMach64RPPort)),DX)
+	OUT_L
+	MOV_W	(CONTENT(GLNAME(ATIMach64WPPort)),DX)
+	OUT_L
+	RET
+
+#define ATIMach64MassagePlanarBankNumber	\
+	AND_W	(CONST(0x1F),AX)	;	\
+	SHL_W	(CONST(1),AX)		;	\
+	MOV_W	(AX,DX)			;	\
+	INC_W	(AX)			;	\
+	SHL_L	(CONST(16),EAX)		;	\
+	MOV_W	(DX,AX)			;	\
+	SHL_L	(CONST(2),EAX)
+
+	ALIGNTEXT4
+	GLOBL	GLNAME(ATIMach64SetReadPlanar)
+GLNAME(ATIMach64SetReadPlanar):
+	ATIMach64MassagePlanarBankNumber
+	MOV_W	(CONTENT(GLNAME(ATIMach64RPPort)),DX)
+	OUT_L
+	RET
+
+	ALIGNTEXT4
+	GLOBL	GLNAME(ATIMach64SetWritePlanar)
+GLNAME(ATIMach64SetWritePlanar):
+	ATIMach64MassagePlanarBankNumber
+	MOV_W	(CONTENT(GLNAME(ATIMach64WPPort)),DX)
+	OUT_L
+	RET
+
+	ALIGNTEXT4
+	GLOBL	GLNAME(ATIMach64SetReadWritePlanar)
+GLNAME(ATIMach64SetReadWritePlanar):
+	ATIMach64MassagePlanarBankNumber
 	MOV_W	(CONTENT(GLNAME(ATIMach64RPPort)),DX)
 	OUT_L
 	MOV_W	(CONTENT(GLNAME(ATIMach64WPPort)),DX)

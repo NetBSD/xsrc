@@ -1,8 +1,10 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common_hw/ga968/Imakefile,v 3.1 1996/10/08 12:42:23 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/3 1996/10/25 15:41:54 kaleb $
 
 
 
 
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common_hw/ga968/Imakefile,v 3.3 1996/12/27 07:07:00 dawes Exp $
 
 
 
@@ -28,7 +30,7 @@ OBJS = I2061Acal.o I2061Aset.o I2061Aalt.o xf86_ClkPr.o \
        STG1703clk.o $(XOBJS)
 
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) \
-	   -I$(SERVERSRC)/include -I$(INCLUDESRC) -I$(XF86SRC)/accel/s3
+	   -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(XF86SRC)/accel/s3
 
 DEFINES = -DPC98 -DPC98_GA968
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fLineH.s,v 3.5 1996/02/04 09:14:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fLineH.s,v 3.6 1996/12/23 06:59:05 dawes Exp $ */
 /* Copyright 1992 by James Tsillas, Arlington, Massachusetts.
 
 		All Rights Reserved
@@ -17,7 +17,7 @@ USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 */
-/* $XConsortium: fLineH.s /main/4 1995/11/13 08:46:03 kaleb $ */
+/* $XConsortium: fLineH.s /main/5 1996/02/21 18:08:54 kaleb $ */
 
 #include "assyntax.h"
 #include "vgaAsm.h"

@@ -1,7 +1,7 @@
 /* $XConsortium: ps2io.h,v 1.1 94/05/28 14:32:49 dpw Exp $ */
 /*
- * @(#)ps2io.h: $Revision: 1.1.1.1 $ $Date: 1997/03/15 06:11:21 $
- * $Locker:  $
+ * @(#)ps2io.h: Revision: 1.1 $ $Date: 94/12/15 09:22:14
+ * Locker:  
  */
 
 #ifndef _SYS_PS2IO_INCLUDED /* allows multiple inclusion */

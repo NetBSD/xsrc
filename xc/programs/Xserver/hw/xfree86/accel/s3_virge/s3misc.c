@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3misc.c,v 3.7 1996/10/17 15:17:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3misc.c,v 3.14.2.4 1997/05/28 13:12:51 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -30,7 +30,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  *
  */
-/* $XConsortium: s3misc.c /main/19 1996/01/26 14:26:42 kaleb $ */
+/* $XConsortium: s3misc.c /main/8 1996/10/27 11:47:15 kaleb $ */
 
 
 #include "cfb.h"
@@ -79,7 +79,6 @@ extern pointer s3MmioMem;
 extern unsigned char s3Port59;
 extern unsigned char s3Port5A;
 extern unsigned char s3Port31;
-extern Bool s3PowerSaver;
 
 extern Bool xf86Exiting, xf86Resetting, xf86ProbeFailed;
 extern int xf86Verbose;
@@ -186,8 +185,24 @@ s3Initialize(scr_index, pScreen, argc, argv)
 	 }
 	 else if (s3MemBase != 0)  /* checked in s3.c */
 	    base0 = s3MemBase;
-	 else if (s3NewMmio)
-	    base0 = 0xf0000000;
+	 else if (s3NewMmio) {
+	    unsigned long orig_base0;
+	    outb(vgaCRIndex, 0x59);
+	    base0 = inb(vgaCRReg) << 24;
+	    outb(vgaCRIndex, 0x5a);
+	    base0 |= inb(vgaCRReg) << 16;
+	    orig_base0 = base0;
+	    base0 &= 0xfc000000;
+	    if (base0 == 0 || base0 != orig_base0) {
+	       /* the aligned address may clash with other devices,
+		  so use a pretty random base address... */
+	       base0 = 0xb4000000;  /* last resort */
+	       ErrorF("%s %s: PCI: base address not correctly aligned\n",
+		      XCONFIG_PROBED, s3InfoRec.name);
+	       ErrorF("\t      base address changed from 0x%08lx to 0x%08lx\n",
+		      orig_base0, base0);
+	    }
+	 }
 	 else
 	    base0 = 0xf3000000;  /* old default, not good for newmmio */
       }
@@ -353,7 +368,9 @@ s3Initialize(scr_index, pScreen, argc, argv)
 	ErrorF("new mmio linear mode doesn't work ltmp %x\n",ltmp);
    }
    /* end BL */
-
+   				    
+   			/* new - KJB */
+   s3InitSTREAMS( s3InfoRec.modes );
    s3InitEnvironment();
    AlreadyInited = TRUE;
 
@@ -376,10 +393,6 @@ s3Initialize(scr_index, pScreen, argc, argv)
 		     s3DisplayWidth))
       return (FALSE);
 
-   pScreen->CloseScreen = s3CloseScreen;
-   pScreen->SaveScreen = s3SaveScreen;
-
-
    switch (s3InfoRec.bitsPerPixel) {
    case 8:
       pScreen->InstallColormap = s3InstallColormap;
@@ -398,6 +411,9 @@ s3Initialize(scr_index, pScreen, argc, argv)
    pScreen->QueryBestSize = s3QueryBestSize;
    xf86PointerScreenFuncs.WarpCursor = s3WarpCursor;
    (void)s3CursorInit(0, pScreen);
+
+   pScreen->CloseScreen = s3CloseScreen;
+   pScreen->SaveScreen = s3SaveScreen;
 
    s3savepScreen = pScreen;
    return (cfbCreateDefColormap(pScreen));
@@ -451,6 +467,7 @@ s3EnterLeaveVT(enter, screen_idx)
 
          s3Unlock();
 	 s3Init(s3InfoRec.modes);
+         s3InitSTREAMS(s3InfoRec.modes);
          s3InitEnvironment();
 	 AlreadyInited = TRUE;
 	 s3RestoreDACvalues();
@@ -545,106 +562,6 @@ s3CloseScreen(screen_idx, pScreen)
    return (TRUE);
 }
 
-static OsTimerPtr suspendTimer = NULL, offTimer = NULL;
-extern CARD32 ScreenSaverTime;
-
-/*
- * s3OffMode -- put the screen into power off mode.
- */
-
-static CARD32
-s3OffMode(timer, now, arg)
-     OsTimerPtr timer;
-     CARD32 now;
-     pointer arg;
-{
-   unsigned char sync;
-   Bool on = (Bool)arg;
-
-   if (!s3PowerSaver) return(0);
-
-   if (xf86VTSema) {
-      /* the server is running on the current vt */
-      /* so just go for it */
-
-      outb(vgaCRIndex, 0x17);
-      sync = inb(vgaCRReg);
-
-      if (on) {
-	 sync |= 0x80;			/* enable sync   */
-      } else {
-	 sync &= ~0x80;			/* disable sync */
-      }
-
-      usleep(10000);
-      outb(vgaCRReg, sync);
-   }
-   if (offTimer) {
-      TimerFree(offTimer);
-      offTimer = NULL;
-   }
-   return(0);
-}
-
-/*
- * s3SuspendMode -- put the screen into suspend mode.
- */
-
-static CARD32
-s3SuspendMode(timer, now, arg)
-     OsTimerPtr timer;
-     CARD32 now;
-     pointer arg;
-{
-   unsigned char extsync;
-   Bool on = (Bool)arg;
-
-   if (!s3PowerSaver) return(0);
-
-   if (xf86VTSema) {
-      /* the server is running on the current vt */
-      /* so just go for it */
-
-      /* We assume that the screen is already blanked */
-      outw(0x3C4, 0x0608);		/* unlock SRD */
-      outb(0x3C4, 0x0D);
-      extsync = inb(0x3C5);
-
-      if (on) {
-	 extsync &= 0x0F;			/* enable both syncs */
-      } else {
-	 extsync = (extsync & 0x0F) | 0x10;	/* turn off hsync only */
-      }
-      usleep(10000);
-      outw(0x3C4, (extsync << 8) | 0x0D);
-      outw(0x3C4, 0x0008);		/* lock SRD */
-
-      if (!on && s3InfoRec.offTime != 0) {
-	 if (s3InfoRec.offTime > s3InfoRec.suspendTime &&
-	     s3InfoRec.offTime > ScreenSaverTime) {
-
-	    int timeout;
-
-	    /* Setup timeout for s3OffMode() */
-	    if (s3InfoRec.suspendTime < ScreenSaverTime)
-	       timeout = s3InfoRec.offTime - ScreenSaverTime;
-	    else
-	       timeout = s3InfoRec.offTime - s3InfoRec.suspendTime;
-
-	    offTimer = TimerSet(offTimer, 0, timeout,
-			        s3OffMode, (pointer)FALSE);
-	 } else {
-	    s3OffMode(NULL, 0, (pointer)FALSE);
-	 }
-      }
-   }
-   if (suspendTimer) {
-      TimerFree(suspendTimer);
-      suspendTimer = NULL;
-   }
-   return(0);
-}
-
 /*
  * s3SaveScreen -- blank the screen.
  */
@@ -672,37 +589,59 @@ s3SaveScreen(pScreen, on)
 	 scrn |= 0x20;			/* blank screen */
       }
 
-      /* Turn off Off and Suspend mode */
-      if (s3PowerSaver && on) {
-	 s3OffMode(NULL, 0, (pointer)TRUE);
-	 s3SuspendMode(NULL, 0, (pointer)TRUE);
-      }
-
       outw(0x3C4, 0x0100);              /* syncronous reset */
       outw(0x3C4, (scrn << 8) | 0x01); /* change mode */
       outw(0x3C4, 0x0300);              /* end reset */
-
-      if (s3PowerSaver && !on) {
-	 if (s3InfoRec.suspendTime != 0) {
-	    if (s3InfoRec.suspendTime > ScreenSaverTime) {
-	       suspendTimer = TimerSet(suspendTimer, 0,
-				       s3InfoRec.suspendTime - ScreenSaverTime,
-				       s3SuspendMode, (pointer)FALSE);
-	    } else {
-	      s3SuspendMode(NULL, 0, (pointer)FALSE);
-	    }
-	 } else if (s3InfoRec.offTime != 0) {
-	    if (s3InfoRec.offTime > ScreenSaverTime) {
-	       offTimer = TimerSet(offTimer, 0,
-				   s3InfoRec.offTime - ScreenSaverTime,
-				   s3OffMode, (pointer)FALSE);
-	    } else {
-	       s3OffMode(NULL, 0, (pointer)FALSE);
-	    }
-	 }
-      }
    }
    return (TRUE);
+}
+
+/*
+ * s3DPMSSet -- Sets VESA Display Power Management Signaling (DPMS) Mode
+ */
+
+void
+s3DPMSSet(PowerManagementMode)
+    int PowerManagementMode;
+{
+#ifdef DPMSExtension
+  unsigned char seq1, extsync;
+  if (!xf86VTSema) return;
+  switch (PowerManagementMode)
+    {
+    case DPMSModeOn:
+      /* Screen: On; HSync: On, VSync: On */
+      seq1 = 0x00;
+      extsync = 0x00;
+      break;
+    case DPMSModeStandby:
+      /* Screen: Off; HSync: Off, VSync: On */
+      seq1 = 0x20;
+      extsync = 0x10;
+      break;
+    case DPMSModeSuspend:
+      /* Screen: Off; HSync: On, VSync: Off */
+      seq1 = 0x20;
+      extsync = 0x40;
+      break;
+    case DPMSModeOff:
+      /* Screen: Off; HSync: Off, VSync: Off */
+      seq1 = 0x20;
+      extsync = 0x50;
+      break;
+    }
+  outw(0x3C4, 0x0608);	/* Unlock SRD */
+  outw(0x3C4, 0x0100);	/* Synchronous Reset */
+  outb(0x3C4, 0x01);	/* Select SEQ1 */
+  seq1 |= inb(0x3C5) & ~0x20;
+  outb(0x3C5, seq1);
+  outb(0x3C4, 0x0D);	/* Select SEQD */
+  extsync |= inb(0x3C5) & ~0xF0;
+  usleep(10000);
+  outb(0x3C5, extsync);
+  outw(0x3C4, 0x0300);	/* End Reset */
+  outw(0x3C4, 0x0008);	/* Lock SRD */
+#endif
 }
 
 static debugcache = 0;
@@ -721,7 +660,9 @@ s3SwitchMode(mode)
       }
    }
 
-   if (s3Init(mode)) {
+   if (s3Init(mode)) {	  
+   			/* new - KJB */
+      s3InitSTREAMS(mode);
       s3ModeSwitched = TRUE;
 #if notyet
       s3Restore(vgaNewVideoState);
@@ -757,25 +698,51 @@ s3AdjustFrame(int x, int y)
     * to catch them all only even base values will be used.
     */
 
-   origBase = (y * s3DisplayWidth + x) * s3Bpp;
+   origBase = (y * s3DisplayWidth + x) * realS3Bpp /*s3Bpp*/;
    Base = (origBase >> 2) & ~1;
 
-   outb(vgaCRIndex, 0x31);
-   outb(vgaCRReg, ((Base & 0x030000) >> 12) | s3Port31);
-   s3Port51 &= ~0x03;
-   s3Port51 |= ((Base & 0x0c0000) >> 18);
-   outb(vgaCRIndex, 0x51);
-   /* Don't override current bank selection */
-   tmp = (inb(vgaCRReg) & ~0x03) | (s3Port51 & 0x03);
-   outb(vgaCRReg, tmp);
-
-   outw(vgaCRIndex, (Base & 0x00FF00) | 0x0C);
-   outw(vgaCRIndex, ((Base & 0x00FF) << 8) | 0x0D);
+    /* STREAMS handler */
+    if ( s3InfoRec.bitsPerPixel == 32 || 
+         s3InfoRec.bitsPerPixel == 24 ) { 
+      if ( s3MmioMem != NULL ) {
+         #if 0
+				/* Wait for VSYNC */
+         /* while ((inb(vgaIOBase + 0x0A) & 0x08) == 0x00) ; */
+ 				/* X and Y start coords + 1. */
+  	   #if 1
+         ((mmtr)s3MmioMem)->streams_regs.regs.prim_start_coord = /* 0x00010001; */
+           ( (x + 1) << 16 ) | (y + 1) & 0xf800f800;
+	   #else
+         ((mmtr)s3MmioMem)->streams_regs.regs.second_start_coord = 
+           ( (0x7ff - x) << 16 ) | (0x7ff - y) & 0xf800f800;
+	   #endif
+	 #else
+	 if (S3_ViRGE_VX_SERIES(s3ChipId))
+	   ((mmtr)s3MmioMem)->streams_regs.regs.prim_fbaddr0 = 
+	     ((y * s3DisplayWidth + (x & ~7)) * realS3Bpp/*s3Bpp*/);
+	 else
+	   ((mmtr)s3MmioMem)->streams_regs.regs.prim_fbaddr0 = 
+	     ((y * s3DisplayWidth + (x & ~3)) * realS3Bpp/*s3Bpp*/) /* & ~3 */;
+         #endif
+         }
+    } else {
+	   outb(vgaCRIndex, 0x31);
+	   outb(vgaCRReg, ((Base & 0x030000) >> 12) | s3Port31);
+	   s3Port51 &= ~0x03;
+	   s3Port51 |= ((Base & 0x0c0000) >> 18);
+	   outb(vgaCRIndex, 0x51);
+	   /* Don't override current bank selection */
+	   tmp = (inb(vgaCRReg) & ~0x03) | (s3Port51 & 0x03);
+	   outb(vgaCRReg, tmp);
+	
+	   outw(vgaCRIndex, (Base & 0x00FF00) | 0x0C);
+	   outw(vgaCRIndex, ((Base & 0x00FF) << 8) | 0x0D);
+    } /* if!(24bpp) */
 
 #ifdef XFreeXDGA
    if (!(s3InfoRec.directMode & XF86DGADirectMouse)) {
 #endif
-      s3AdjustCursorXPos = (origBase - (Base << 2)) / s3Bpp;
+      s3AdjustCursorXPos = (origBase - (Base << 2)) / realS3Bpp/*s3Bpp*/;
 
       if (s3ModeSwitched) {
          s3ModeSwitched = FALSE;

@@ -1,5 +1,5 @@
-/* $XConsortium: xdmcp.c /main/33 1995/12/08 13:54:21 kaleb $ */
-/* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.7 1996/01/05 13:20:07 dawes Exp $ */
+/* $XConsortium: xdmcp.c /main/34 1996/12/02 10:23:29 lehors $ */
+/* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.9 1997/01/18 06:58:04 dawes Exp $ */
 /*
  * Copyright 1989 Network Computing Devices, Inc., Mountain View, California.
  *
@@ -15,13 +15,31 @@
  *
  */
 
+#ifdef WIN32
+/* avoid conflicting definitions */
+#define BOOL wBOOL
+#define ATOM wATOM
+#define FreeResource wFreeResource
+#include <winsock.h>
+#undef BOOL
+#undef ATOM
+#undef FreeResource
+#undef CreateWindowA
+#undef RT_FONT
+#undef RT_CURSOR
+#endif
 #include "Xos.h"
-#ifndef MINIX
+#if !defined(MINIX) && !defined(WIN32)
+#ifndef Lynx
 #include <sys/param.h>
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif
 #include <netinet/in.h>
 #include <netdb.h>
 #else
+#if defined(MINIX)
 #include <net/hton.h>
 #include <net/netlib.h>
 #include <net/gen/netdb.h>
@@ -29,6 +47,7 @@
 #include <net/gen/udp_io.h>
 #include <sys/nbio.h>
 #include <sys/ioctl.h>
+#endif
 #endif
 #include <stdio.h>
 #include "X.h"
@@ -1193,25 +1212,25 @@ static void
 recv_decline_msg(length)
     unsigned		length;
 {
-    ARRAY8  Status, DeclineAuthenticationName, DeclineAuthenticationData;
+    ARRAY8  status, DeclineAuthenticationName, DeclineAuthenticationData;
 
-    Status.data = 0;
+    status.data = 0;
     DeclineAuthenticationName.data = 0;
     DeclineAuthenticationData.data = 0;
-    if (XdmcpReadARRAY8 (&buffer, &Status) &&
+    if (XdmcpReadARRAY8 (&buffer, &status) &&
 	XdmcpReadARRAY8 (&buffer, &DeclineAuthenticationName) &&
 	XdmcpReadARRAY8 (&buffer, &DeclineAuthenticationData))
     {
-    	if (length == 6 + Status.length +
+    	if (length == 6 + status.length +
 		      	  DeclineAuthenticationName.length +
  		      	  DeclineAuthenticationData.length &&
 	    XdmcpCheckAuthentication (&DeclineAuthenticationName,
 				      &DeclineAuthenticationData, DECLINE))
     	{
-	    XdmcpFatal ("Session declined", &Status);
+	    XdmcpFatal ("Session declined", &status);
     	}
     }
-    XdmcpDisposeARRAY8 (&Status);
+    XdmcpDisposeARRAY8 (&status);
     XdmcpDisposeARRAY8 (&DeclineAuthenticationName);
     XdmcpDisposeARRAY8 (&DeclineAuthenticationData);
 }
@@ -1259,21 +1278,21 @@ recv_failed_msg(length)
     unsigned		length;
 {
     CARD32  FailedSessionID;
-    ARRAY8  Status;
+    ARRAY8  status;
 
     if (state != XDM_AWAIT_MANAGE_RESPONSE)
 	return;
-    Status.data = 0;
+    status.data = 0;
     if (XdmcpReadCARD32 (&buffer, &FailedSessionID) &&
-	XdmcpReadARRAY8 (&buffer, &Status))
+	XdmcpReadARRAY8 (&buffer, &status))
     {
-    	if (length == 6 + Status.length &&
+    	if (length == 6 + status.length &&
 	    SessionID == FailedSessionID)
 	{
-	    XdmcpFatal ("Session failed", &Status);
+	    XdmcpFatal ("Session failed", &status);
 	}
     }
-    XdmcpDisposeARRAY8 (&Status);
+    XdmcpDisposeARRAY8 (&status);
 }
 
 static void

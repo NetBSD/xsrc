@@ -21,8 +21,8 @@ SOFTWARE.
 
 ************************************************************************/
 
-/* $XConsortium: dixfonts.c,v 1.55 95/05/19 19:35:35 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.5 1996/05/06 05:56:17 dawes Exp $ */
+/* $XConsortium: dixfonts.c /main/58 1996/09/28 17:11:55 rws $ */
+/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6 1996/12/23 06:29:40 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "X.h"
@@ -499,21 +499,21 @@ CloseFont(value, fid)
 
 void
 QueryFont(pFont, pReply, nProtoCCIStructs)
-    FontPtr     pFont;
+    FontPtr          pFont;
     xQueryFontReply *pReply;	/* caller must allocate this storage */
-    int         nProtoCCIStructs;
+    int              nProtoCCIStructs;
 {
-    FontPropPtr pFP;
-    int         r,
-                c,
-                i;
-    xFontProp  *prFP;
-    xCharInfo  *prCI;
-    xCharInfo  *charInfos[256];
-    unsigned char chars[512];
-    int         ncols;
-    int         ninfos;
-    unsigned long count;
+    FontPropPtr      pFP;
+    int              r,
+                     c,
+                     i;
+    xFontProp       *prFP;
+    xCharInfo       *prCI;
+    xCharInfo       *charInfos[256];
+    unsigned char    chars[512];
+    int              ninfos;
+    unsigned long    ncols;
+    unsigned long    count;
 
     /* pr->length set in dispatch */
     pReply->minCharOrByte2 = pFont->info.firstCol;
@@ -540,7 +540,7 @@ QueryFont(pFont, pReply, nProtoCCIStructs)
     }
 
     ninfos = 0;
-    ncols = pFont->info.lastCol - pFont->info.firstCol + 1;
+    ncols = (unsigned long) (pFont->info.lastCol - pFont->info.firstCol + 1);
     prCI = (xCharInfo *) (prFP);
     for (r = pFont->info.firstRow;
 	    ninfos < nProtoCCIStructs && r <= (int)pFont->info.lastRow;
@@ -553,7 +553,7 @@ QueryFont(pFont, pReply, nProtoCCIStructs)
 	(*pFont->get_metrics) (pFont, ncols, chars, TwoD16Bit,
 			       &count, charInfos);
 	i = 0;
-	for (i = 0; i < count && ninfos < nProtoCCIStructs; i++) {
+	for (i = 0; i < (int) count && ninfos < nProtoCCIStructs; i++) {
 	    *prCI = *charInfos[i];
 	    prCI++;
 	    ninfos++;
@@ -749,20 +749,6 @@ doListFontsAndAliases(client, c)
 	    err = Successful;
 	    if (c->haveSaved)
 	    {
-		/* If we're searching for an alias, limit the search to
-		   FPE's of the same type as the one the alias came
-		   from.  This is unnecessarily restrictive, but if we
-		   have both fontfile and fs FPE's, this restriction can
-		   drastically reduce network traffic to the fs -- else
-		   we could poll the fs for *every* local alias found;
-		   on a typical system enabling FILE_NAMES_ALIASES, this
-		   is significant.  */
-
-		while (c->current.current_fpe < c->num_fpes &&
-		       c->fpe_list[c->current.current_fpe]->type !=
-		       c->fpe_list[c->saved.current_fpe]->type)
-		c->current.current_fpe++;
-
 		if (c->names->nnames == c->current.max_names ||
 			c->current.current_fpe == c->num_fpes) {
 		    c->haveSaved = FALSE;
@@ -1185,7 +1171,8 @@ doPolyText(client, c)
     /* Make sure our drawable hasn't disappeared while we slept. */
     if (c->slept &&
 	c->pDraw &&
-	c->pDraw != (DrawablePtr)LookupIDByClass(c->did, RC_DRAWABLE))
+	c->pDraw != (DrawablePtr)SecurityLookupIDByClass(client, c->did,
+					RC_DRAWABLE, SecurityWriteAccess))
     {
 	/* Our drawable has disappeared.  Treat like client died... ask
 	   the FPE code to clean up after client and avoid further
@@ -1214,7 +1201,8 @@ doPolyText(client, c)
 		 | ((Font)*(c->pElt+3)) << 8
 		 | ((Font)*(c->pElt+2)) << 16
 		 | ((Font)*(c->pElt+1)) << 24;
-	    pFont = (FontPtr)LookupIDByType(fid, RT_FONT);
+	    pFont = (FontPtr)SecurityLookupIDByType(client, fid, RT_FONT,
+						    SecurityReadAccess);
 	    if (!pFont)
 	    {
 		client->errorValue = fid;
@@ -1475,7 +1463,8 @@ doImageText(client, c)
     /* Make sure our drawable hasn't disappeared while we slept. */
     if (c->slept &&
 	c->pDraw &&
-	c->pDraw != (DrawablePtr)LookupIDByClass(c->did, RC_DRAWABLE))
+	c->pDraw != (DrawablePtr)SecurityLookupIDByClass(client, c->did,
+					RC_DRAWABLE, SecurityWriteAccess))
     {
 	/* Our drawable has disappeared.  Treat like client died... ask
 	   the FPE code to clean up after client. */
@@ -1922,8 +1911,15 @@ void
 InitFonts ()
 {
     patternCache = MakeFontPatternCache();
-    FontFileRegisterFpeFunctions();
-    fs_register_fpe_functions();
+
+    if (screenInfo.numScreens > screenInfo.numVideoScreens) {
+	PrinterFontRegisterFpeFunctions();
+	FontFileCheckRegisterFpeFunctions();
+	check_fs_register_fpe_functions();
+    } else {
+	FontFileRegisterFpeFunctions();
+	fs_register_fpe_functions();
+    }
 }
 
 int
@@ -1932,37 +1928,39 @@ GetDefaultPointSize ()
     return 120;
 }
 
-struct resolution {
-    CARD16 x_resolution B16;
-    CARD16 y_resolution B16;
-    CARD16 point_size B16;
-};
 
-struct resolution *
+FontResolutionPtr
 GetClientResolutions (num)
     int        *num;
 {
-    static struct resolution res;
-    ScreenPtr   pScreen;
+    if (requestingClient && requestingClient->fontResFunc != NULL &&
+	!requestingClient->clientGone)
+    {
+	return (*requestingClient->fontResFunc)(requestingClient, num);
+    }
+    else {
+	static struct _FontResolution res;
+	ScreenPtr   pScreen;
 
-    pScreen = screenInfo.screens[0];
-    res.x_resolution = (pScreen->width * 25.4) / pScreen->mmWidth;
-    /*
-     * XXX - we'll want this as long as bitmap instances are prevalent so that
-     * we can match them from scalable fonts
-     */
-    if (res.x_resolution < 88)
-	res.x_resolution = 75;
-    else
-	res.x_resolution = 100;
-    res.y_resolution = (pScreen->height * 25.4) / pScreen->mmHeight;
-    if (res.y_resolution < 88)
-	res.y_resolution = 75;
-    else
-	res.y_resolution = 100;
-    res.point_size = 120;
-    *num = 1;
-    return &res;
+	pScreen = screenInfo.screens[0];
+	res.x_resolution = (pScreen->width * 25.4) / pScreen->mmWidth;
+	/*
+	 * XXX - we'll want this as long as bitmap instances are prevalent 
+	 so that we can match them from scalable fonts
+	 */
+	if (res.x_resolution < 88)
+	    res.x_resolution = 75;
+	else
+	    res.x_resolution = 100;
+	res.y_resolution = (pScreen->height * 25.4) / pScreen->mmHeight;
+	if (res.y_resolution < 88)
+	    res.y_resolution = 75;
+	else
+	    res.y_resolution = 100;
+	res.point_size = 120;
+	*num = 1;
+	return &res;
+    }
 }
 
 /*
@@ -2141,7 +2139,8 @@ FontPtr
 find_old_font(id)
     XID         id;
 {
-    return (FontPtr) LookupIDByType(id, RT_NONE);
+    return (FontPtr) SecurityLookupIDByType(NullClient, id, RT_NONE,
+					    SecurityUnknownAccess);
 }
 
 Font

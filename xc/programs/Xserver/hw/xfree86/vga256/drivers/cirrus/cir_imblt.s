@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_imblt.s,v 3.8 1996/09/14 13:11:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_imblt.s,v 3.9 1996/12/23 06:56:49 dawes Exp $ */
 /*
  *
  * Copyright 1993 by H. Hanemaayer, Utrecht, The Netherlands
@@ -24,7 +24,7 @@
  * Author:  H. Hanemaayer, <hhanemaa@cs.ruu.nl>
  *
  */
-/* $XConsortium: cir_imblt.s /main/5 1995/11/13 08:21:10 kaleb $ */
+/* $XConsortium: cir_imblt.s /main/7 1996/10/23 18:48:21 kaleb $ */
 
 
 /*

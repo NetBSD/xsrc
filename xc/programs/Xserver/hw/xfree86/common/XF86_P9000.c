@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_P9000.c,v 3.5 1996/02/04 09:05:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_P9000.c,v 3.6 1996/12/23 06:43:08 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: XF86_P9000.c /main/3 1995/11/12 19:20:46 kaleb $ */
+/* $XConsortium: XF86_P9000.c /main/4 1996/02/21 17:37:11 kaleb $ */
 /* Id: XF86_P9000.c,v 4.0 1994/05/28 01:26:10 nygren Exp */
 
 #include "X.h"

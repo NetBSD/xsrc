@@ -1,5 +1,10 @@
-XCOMM $XConsortium: site.def.LK /main/7 1995/12/17 08:46:10 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.23 1996/10/19 15:14:22 dawes Exp $
+XCOMM $XConsortium: site.def.LK /main/12 1996/10/28 04:23:14 kaleb $
+
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.25.2.3 1997/05/17 12:25:09 dawes Exp $
 
 /* Configuration file for Server Link Kit */
 
@@ -160,13 +165,13 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.23 1996/1
 				cirrus ncr77c22 mga oak al2101 ali cl64xx \
 				video7 chips ark mx realtek apm generic
 
-#define XF86Vga16Drivers	et4000 et3000 ncr77c22 ati sis tvga8900 oak \
+#define XF86Vga16Drivers	/*et4000*/ et3000 ncr77c22 ati sis tvga8900 oak \
 				cl64xx generic 
 
-#define XF86Vga2Drivers		et4000 et3000 pvga1 gvga ati sis tvga8900 \
-				cirrus ncr77c22 oak cl64xx generic
+#define XF86Vga2Drivers		/*et4000*/ et3000 pvga1 gvga ati sis tvga8900 \
+				/*cirrus*/ ncr77c22 oak cl64xx generic
 
-#define XF86MonoDrivers		hgc1280 sigma apollo
+#define XF86MonoDrivers		hgc1280 sigma apollo hercules
 
 #define XF86W32Drivers		et4000w32
 
@@ -201,6 +206,11 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.23 1996/1
  * If you want XIE, set the following to YES
  */
 #define BuildXIE		NO
+
+/*
+ * If you want GLX, set the following to YES
+ */
+#define BuildGlxExt		NO
 
 /*
  * If you don't want DBE, uncomment the following

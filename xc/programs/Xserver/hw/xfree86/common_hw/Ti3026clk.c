@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Ti3026clk.c,v 3.9 1996/06/29 09:07:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Ti3026clk.c,v 3.11 1996/12/23 06:44:22 dawes Exp $ */
 /*
  * Copyright 1995 The XFree86 Project, Inc
  *
@@ -6,7 +6,7 @@
  * S3 gendac code by Jon Tombs
  * Harald Koenig <koenig@tat.physik.uni-tuebingen.de>
  */
-/* $XConsortium: Ti3026clk.c /main/5 1996/01/10 10:21:09 kaleb $ */
+/* $XConsortium: Ti3026clk.c /main/10 1996/10/19 18:00:22 kaleb $ */
 
 #include "Xfuncproto.h"
 #include "Ti302X.h" 
@@ -15,6 +15,8 @@
 #include "xf86_OSlib.h"
 #include <math.h>
 
+void (* dacOutTi3026IndReg)(unsigned char,unsigned char,unsigned char) = NULL;
+unsigned char (* dacInTi3026IndReg)(unsigned char) = NULL;
 
 #if NeedFunctionPrototypes
 static void
@@ -39,94 +41,94 @@ char which;
    /*
     * Reset the clock data index
     */
-   s3OutTi3026IndReg(TI_PLL_CONTROL, 0x00, 0x00);
+   (*dacOutTi3026IndReg)(TI_PLL_CONTROL, 0x00, 0x00);
 
    if (clk != TI_MCLK_PLL_DATA) {
       if (which == TI_BOTH_CLOCKS) {
          /*
           * If we are using the Ti PLL clock output the clock frequency
           */
-         s3OutTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (n & 0x3f) | 0x80);
-         s3OutTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (m & 0x3f) );
-         tmp = s3InTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA) & 0x40;
-         s3OutTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (p & 3) | tmp | 0xb0);
+         (*dacOutTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (n & 0x3f) | 0x80);
+         (*dacOutTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (m & 0x3f) );
+         tmp = (*dacInTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA) & 0x40;
+         (*dacOutTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (p & 3) | tmp | 0xb0);
    
          /* wait until PLL is locked */
          for (tmp=0; tmp<10000; tmp++) 
-   	 if (s3InTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA) & 0x40) 
+   	 if ((*dacInTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA) & 0x40) 
    	    break;
       }
    
       /*
        * And now set up the loop clock for RCLK
        */
-      s3OutTi3026IndReg(TI_LOOP_CLOCK_PLL_DATA, 0x00, ln);
-      s3OutTi3026IndReg(TI_LOOP_CLOCK_PLL_DATA, 0x00, lm);
-      s3OutTi3026IndReg(TI_LOOP_CLOCK_PLL_DATA, 0x00, lp);
-      s3OutTi3026IndReg(TI_MCLK_LCLK_CONTROL, 0xc8, (lq & 0x0f) | 0x10);
+      (*dacOutTi3026IndReg)(TI_LOOP_CLOCK_PLL_DATA, 0x00, ln);
+      (*dacOutTi3026IndReg)(TI_LOOP_CLOCK_PLL_DATA, 0x00, lm);
+      (*dacOutTi3026IndReg)(TI_LOOP_CLOCK_PLL_DATA, 0x00, lp);
+      (*dacOutTi3026IndReg)(TI_MCLK_LCLK_CONTROL, 0xc8, (lq & 0x0f) | 0x10);
 
       if (which == TI_BOTH_CLOCKS) {
          /* select pixel clock PLL as dot clock soure */
-         s3OutTi3026IndReg(TI_INPUT_CLOCK_SELECT, 0x00, TI_ICLK_PLL);
+         (*dacOutTi3026IndReg)(TI_INPUT_CLOCK_SELECT, 0x00, TI_ICLK_PLL);
       }
    }
    else {
       int pn, pm, pp, csr;
 
       /* select pixel clock PLL as dot clock soure */
-      csr = s3InTi3026IndReg(TI_INPUT_CLOCK_SELECT);
-      s3OutTi3026IndReg(TI_INPUT_CLOCK_SELECT, 0x00, TI_ICLK_PLL);
+      csr = (*dacInTi3026IndReg)(TI_INPUT_CLOCK_SELECT);
+      (*dacOutTi3026IndReg)(TI_INPUT_CLOCK_SELECT, 0x00, TI_ICLK_PLL);
 
       /* save the old dot clock PLL settings */
-      s3OutTi3026IndReg(TI_PLL_CONTROL, 0x00, 0x00);
-      pn = s3InTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA);
-      s3OutTi3026IndReg(TI_PLL_CONTROL, 0x00, 0x01);
-      pm = s3InTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA);
-      s3OutTi3026IndReg(TI_PLL_CONTROL, 0x00, 0x02);
-      pp = s3InTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA);
+      (*dacOutTi3026IndReg)(TI_PLL_CONTROL, 0x00, 0x00);
+      pn = (*dacInTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA);
+      (*dacOutTi3026IndReg)(TI_PLL_CONTROL, 0x00, 0x01);
+      pm = (*dacInTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA);
+      (*dacOutTi3026IndReg)(TI_PLL_CONTROL, 0x00, 0x02);
+      pp = (*dacInTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA);
 
       /* programm dot clock PLL to new MCLK frequency */
-      s3OutTi3026IndReg(TI_PLL_CONTROL, 0x00, 0x00);
-      s3OutTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (n & 0x3f) | 0x80);
-      s3OutTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (m & 0x3f) );
-      tmp = s3InTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA) & 0x40;
-      s3OutTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (p & 3) | tmp | 0xb0);
+      (*dacOutTi3026IndReg)(TI_PLL_CONTROL, 0x00, 0x00);
+      (*dacOutTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (n & 0x3f) | 0x80);
+      (*dacOutTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (m & 0x3f) );
+      tmp = (*dacInTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA) & 0x40;
+      (*dacOutTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA, 0x00, (p & 3) | tmp | 0xb0);
 
       /* wait until PLL is locked */
       for (tmp=0; tmp<10000; tmp++)
-	 if (s3InTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA) & 0x40) 
+	 if ((*dacInTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA) & 0x40) 
 	    break;
 
       /* switch to output dot clock on the MCLK terminal */
-      s3OutTi3026IndReg(0x39, 0xe7, 0x00);
-      s3OutTi3026IndReg(0x39, 0xe7, 0x08);
+      (*dacOutTi3026IndReg)(0x39, 0xe7, 0x00);
+      (*dacOutTi3026IndReg)(0x39, 0xe7, 0x08);
       
       /* Set MCLK */
-      s3OutTi3026IndReg(TI_PLL_CONTROL, 0x00, 0x00);
-      s3OutTi3026IndReg(TI_MCLK_PLL_DATA, 0x00, (n & 0x3f) | 0x80);
-      s3OutTi3026IndReg(TI_MCLK_PLL_DATA, 0x00, (m & 0x3f));
-      s3OutTi3026IndReg(TI_MCLK_PLL_DATA, 0x00, (p & 3) | 0xb0);
+      (*dacOutTi3026IndReg)(TI_PLL_CONTROL, 0x00, 0x00);
+      (*dacOutTi3026IndReg)(TI_MCLK_PLL_DATA, 0x00, (n & 0x3f) | 0x80);
+      (*dacOutTi3026IndReg)(TI_MCLK_PLL_DATA, 0x00, (m & 0x3f));
+      (*dacOutTi3026IndReg)(TI_MCLK_PLL_DATA, 0x00, (p & 3) | 0xb0);
 
       /* wait until PLL is locked */
       for (tmp=0; tmp<10000; tmp++) 
-	 if (s3InTi3026IndReg(TI_MCLK_PLL_DATA) & 0x40) 
+	 if ((*dacInTi3026IndReg)(TI_MCLK_PLL_DATA) & 0x40) 
 	    break;
 
       /* switch to output MCLK on the MCLK terminal */
-      s3OutTi3026IndReg(0x39, 0xe7, 0x10);
-      s3OutTi3026IndReg(0x39, 0xe7, 0x18);
+      (*dacOutTi3026IndReg)(0x39, 0xe7, 0x10);
+      (*dacOutTi3026IndReg)(0x39, 0xe7, 0x18);
 
       /* restore dot clock PLL */
-      s3OutTi3026IndReg(TI_PLL_CONTROL, 0x00, 0x00);
-      s3OutTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA, 0x00, pn);
-      s3OutTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA, 0x00, pm);
-      s3OutTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA, 0x00, pp);
+      (*dacOutTi3026IndReg)(TI_PLL_CONTROL, 0x00, 0x00);
+      (*dacOutTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA, 0x00, pn);
+      (*dacOutTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA, 0x00, pm);
+      (*dacOutTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA, 0x00, pp);
 
       /* wait until PLL is locked */
       for (tmp=0; tmp<10000; tmp++) 
-	 if (s3InTi3026IndReg(TI_PIXEL_CLOCK_PLL_DATA) & 0x40) 
+	 if ((*dacInTi3026IndReg)(TI_PIXEL_CLOCK_PLL_DATA) & 0x40) 
 	    break;
-      s3OutTi3026IndReg(TI_INPUT_CLOCK_SELECT, 0x00, csr);
+      (*dacOutTi3026IndReg)(TI_INPUT_CLOCK_SELECT, 0x00, csr);
    }
 }
 

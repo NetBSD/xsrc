@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/bios_devmem.c,v 3.1 1996/08/20 12:29:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/bios_devmem.c,v 3.3 1996/12/23 06:50:58 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: bios_devmem.c /main/2 1995/11/13 06:15:02 kaleb $ */
+/* $XConsortium: bios_devmem.c /main/5 1996/10/19 18:07:41 kaleb $ */
 
 #include "X.h"
 #include "input.h"
@@ -59,8 +59,27 @@ int Len;
    * NOTE: there prolly ought to be more validity checks and all
    *  re: boundaries and sizes and such...
    */
-	extern unsigned long _bus_base() __attribute__((const));
-#define BUS_BASE _bus_base()
+
+/*
+ * The Jensen lacks dense memory, thus we have to address the bus via
+ * the sparse addressing scheme.
+ *
+ * Martin Ostermann (ost@comnets.rwth-aachen.de) - Apr.-Sep. 1996
+ */
+
+#ifdef TEST_JENSEN_CODE /* define to test the Sparse addressing on a non-Jensen */
+#define SPARSE (5)
+#define isJensen (1)
+#else
+#define isJensen (!_bus_base())
+#define SPARSE (7)
+#endif
+
+extern unsigned long _bus_base(void);
+extern unsigned long _bus_base_sparse(void);
+#define BUS_BASE (isJensen ? _bus_base_sparse() : _bus_base())
+#define JENSEN_SHIFT(x) (isJensen ? ((long)x<<SPARSE) : (long)x)
+
 #define SIZE (64*1024)
 
 	caddr_t base;
@@ -73,8 +92,8 @@ int Len;
 		return(-1);
 	}
 
-	base = mmap((caddr_t)0, SIZE, PROT_READ,
-		    MAP_SHARED, fd, (off_t)(Base + BUS_BASE));
+	base = mmap((caddr_t)0, JENSEN_SHIFT(SIZE), PROT_READ,
+		    MAP_SHARED, fd, (off_t)(JENSEN_SHIFT(Base) + BUS_BASE));
 
 	if (base == (caddr_t)-1UL)
 	{
@@ -83,9 +102,9 @@ int Len;
 		return(-1);
 	}
 
-	memcpy(Buf, base+Offset, Len);
+	SlowBCopyFromBus(base+JENSEN_SHIFT(Offset), Buf, Len);
 
-	munmap(base, SIZE);
+	munmap((caddr_t)JENSEN_SHIFT(base), JENSEN_SHIFT(SIZE));
 	close(fd);
 	return(Len);
 

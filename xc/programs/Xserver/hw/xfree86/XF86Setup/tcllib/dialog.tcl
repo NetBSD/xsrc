@@ -1,3 +1,10 @@
+# $XConsortium: dialog.tcl /main/1 1996/09/21 14:15:10 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/dialog.tcl,v 3.1 1996/12/27 06:54:55 dawes Exp $
+#
 # dialog.tcl --
 #
 # This file defines the procedure tk_dialog, which creates a dialog

@@ -1,4 +1,4 @@
-/* $XConsortium: pvgablt.c /main/9 1996/01/14 19:03:12 kaleb $ */
+/* $XConsortium: pvgablt.c /main/10 1996/02/21 18:06:45 kaleb $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -27,7 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 Author: Keith Packard
 
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/pvga1/pvgablt.c,v 3.7 1996/02/04 09:14:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/pvga1/pvgablt.c,v 3.8 1996/12/23 06:58:07 dawes Exp $ */
 /*
  * cfb copy area
  */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8gtimg.c,v 3.3 1996/02/04 09:03:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8gtimg.c,v 3.4 1996/12/23 06:39:57 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -25,7 +25,7 @@
  * Stolen from the S3 server and adapted to the Mach8 server.
  * Hans Nasten. (nasten@everyware.se).
  */
-/* $XConsortium: mach8gtimg.c /main/3 1995/11/12 18:00:34 kaleb $ */
+/* $XConsortium: mach8gtimg.c /main/4 1996/02/21 17:30:36 kaleb $ */
 
 #include "X.h"
 #include "windowstr.h"

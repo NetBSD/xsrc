@@ -1,5 +1,9 @@
-/*	$NetBSD: btreg.h,v 1.1.1.1 1997/03/15 06:11:32 scottr Exp $ */
-/*	$XFree86: xc/programs/Xserver/hw/sunLynx/btreg.h,v 3.0 1996/09/29 12:47:16 dawes Exp $ */
+/* $XConsortium: btreg.h /main/1 1996/10/31 14:20:32 kaleb $ */
+
+
+
+/*	$NetBSD: btreg.h,v 1.1.1.2 1997/06/30 12:56:04 mrg Exp $ */
+/*	$XFree86: xc/programs/Xserver/hw/sunLynx/btreg.h,v 3.1 1996/12/27 06:51:31 dawes Exp $ */
 
 /*
  * Copyright (c) 1993

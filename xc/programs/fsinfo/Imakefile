@@ -1,9 +1,9 @@
-XCOMM $XConsortium: Imakefile,v 1.7 93/09/04 17:40:56 rws Exp $
+XCOMM $XConsortium: Imakefile /main/8 1996/09/28 17:16:50 rws $
 LOCAL_LIBRARIES = $(FSLIB)
 DEPLIBS = $(DEPFSLIB)
 SRCS = fsinfo.c
 OBJS = fsinfo.o
-INCLUDES = -I$(BUILDINCDIR)/fonts -I$(FONTINCSRC)
+INCLUDES = -I$(XBUILDINCDIR)/fonts -I$(FONTINCSRC)
 
 ComplexProgramTarget(fsinfo)
 

@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000curs.h,v 3.2 1996/02/04 09:04:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000curs.h,v 3.3 1996/12/23 06:40:39 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: p9000curs.h /main/3 1995/11/12 18:18:52 kaleb $ */
+/* $XConsortium: p9000curs.h /main/4 1996/02/21 17:32:18 kaleb $ */
 
 extern Bool p9000BlockCursor;
 extern Bool p9000ReloadCursor;

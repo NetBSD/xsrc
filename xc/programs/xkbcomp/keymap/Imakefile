@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile /main/8 1996/03/01 14:32:19 kaleb $
-XCOMM $XFree86: xc/programs/xkbcomp/keymap/Imakefile,v 3.4 1996/08/18 01:55:41 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/10 1996/09/03 19:45:50 kaleb $
+XCOMM $XFree86: xc/programs/xkbcomp/keymap/Imakefile,v 3.5 1996/12/23 07:12:35 dawes Exp $
 #define IHaveSubdirs
 
      DATAFILES = amiga ataritt sony xfree86 xfree98

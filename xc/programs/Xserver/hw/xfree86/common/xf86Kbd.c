@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Kbd.c,v 3.12 1996/02/04 09:06:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Kbd.c,v 3.14 1997/01/05 11:58:08 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86Kbd.c /main/9 1996/01/26 13:36:58 kaleb $ */
+/* $XConsortium: xf86Kbd.c /main/10 1996/02/21 17:38:32 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -238,14 +238,14 @@ xf86KbdGetMapping (pKeySyms, pModMap)
      CARD8      *pModMap;
 {
   KeySym        *k;
-#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__)
+#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__)
   keymap_t      keymap;
 #endif /* !Lynx && !AMOEBA && !MINIX && !__OSF__ && !__EMX__ */
   char          type;
   int           i, j;
   KeySym        *pMap;
   
-#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__)
+#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__)
   xf86Info.kbdType =
     ioctl(xf86Info.consoleFd, KDGKBTYPE, &type) != -1 ? type : KB_101;
   if (xf86Info.kbdType == KB_84)
@@ -257,7 +257,7 @@ xf86KbdGetMapping (pKeySyms, pModMap)
   pMap = map;
 #endif
 
-#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__)
+#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__)
   /*
    * use the keymap, which can be gotten from our oringinal vt??.
    * ( ttymap(1) !!!! )
@@ -386,7 +386,7 @@ xf86KbdGetMapping (pKeySyms, pModMap)
 
     }
   
-#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__)
+#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__)
   xf86Info.kbdType =
     ioctl(xf86Info.consoleFd, KDGKBTYPE, &type) != -1 ? type : KB_101;
 #else

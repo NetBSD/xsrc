@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.14 1996/10/13 11:19:13 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.3 1997/05/22 14:00:34 dawes Exp $ */ 
 /*
  * PCI Probe
  *
@@ -167,10 +167,12 @@ struct pci_config_reg {
     unsigned short _configtype;   /* config type found                   */
     unsigned short _ioaddr;       /* config type 1 - private I/O addr    */
     unsigned long _cardnum;       /* config type 2 - private card number */
+    unsigned short _funcnum;	  /* private function number */
 };
 
 #define PCI_EN 0x80000000
 #define MAX_PCI_DEVICES 64
+#define PCI_MULTIFUNC_DEV 0x80
 
 /* Registers */
 #define PCI_REG_USERCONFIG 0x40
@@ -182,6 +184,7 @@ struct pci_config_reg {
 /* Sub Classes */
 #define PCI_SUBCLASS_PREHISTORIC_VGA	0x01
 #define PCI_SUBCLASS_DISPLAY_VGA	0x00
+#define PCI_SUBCLASS_DISPLAY_OTHER	0x80
 
 /* PCI Configuration address */
 #define	PCI_MODE1_ADDRESS_REG		0xCF8
@@ -219,10 +222,16 @@ void xf86writepci(
 #define PCI_VENDOR_SIS		0x1039
 #define PCI_VENDOR_NUMNINE	0x105D
 #define PCI_VENDOR_UMC		0x1060
+#define PCI_VENDOR_ALLIANCE	0x1142
+#define PCI_VENDOR_SIGMADESIGNS	0x1236
 #define PCI_VENDOR_S3		0x5333
 #define PCI_VENDOR_ARK		0xEDD8
 #define PCI_VENDOR_3DLABS	0x3D3D
 
+/* Matrox */
+#define PCI_CHIP_MGA2085PX	0x0518
+#define PCI_CHIP_MGA2064W	0x0519
+#define PCI_CHIP_MGA1064SG	0x051A
 
 /* ATI */
 #define PCI_CHIP_MACH32		0x4158
@@ -239,8 +248,8 @@ void xf86writepci(
 /* Tseng */
 #define PCI_CHIP_ET4000_W32P_A	0x3202
 #define PCI_CHIP_ET4000_W32P_B	0x3205
-#define PCI_CHIP_ET4000_W32P_C	0x3206
-#define PCI_CHIP_ET4000_W32P_D	0x3207
+#define PCI_CHIP_ET4000_W32P_D	0x3206
+#define PCI_CHIP_ET4000_W32P_C	0x3207
 #define PCI_CHIP_ET6000		0x3208
 
 /* Weitek */
@@ -280,8 +289,20 @@ void xf86writepci(
 #define PCI_CHIP_I128		0x2309
 #define PCI_CHIP_I128_2		0x2339
 
+/* Alliance Semiconductor */
+#define PCI_CHIP_PM6410		0x3210
+#define PCI_CHIP_PM6422		0x6422
+#define PCI_CHIP_PMAT24		0x6424
+
+/* SIGMA DESIGNS */
+#define PCI_CHIP_SD_REALMAGIG64GX	0x6401
+
 /* S3 */
 #define PCI_CHIP_TRIO		0x8811
+#define PCI_CHIP_AURORA64VP	0x8812
+#define PCI_CHIP_TRIO64UVP	0x8814
+#define PCI_CHIP_TRIO64V2_DXGX	0x8901
+#define PCI_CHIP_PLATO_PX	0x8902
 #define PCI_CHIP_868		0x8880
 #define PCI_CHIP_928		0x88B0
 #define PCI_CHIP_864_0		0x88C0
@@ -291,6 +312,7 @@ void xf86writepci(
 #define PCI_CHIP_968		0x88F0
 #define PCI_CHIP_ViRGE		0x5631
 #define PCI_CHIP_ViRGE_VX	0x883D
+#define PCI_CHIP_ViRGE_DXGX	0x8A01
 
 /* ARK Logic */
 #define PCI_CHIP_1000PV		0xA091
@@ -300,6 +322,9 @@ void xf86writepci(
 
 /* 3Dlabs */
 #define PCI_CHIP_3DLABS_300SX      0x0001
+#define PCI_CHIP_3DLABS_500TX      0x0002
+#define PCI_CHIP_3DLABS_DELTA      0x0003
+#define PCI_CHIP_3DLABS_PERMEDIA   0x0004
 
 /* Increase this as required */
 #define MAX_DEV_PER_VENDOR 16

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/init.c,v 3.4 1996/08/10 13:05:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/init.c,v 3.5 1996/12/23 06:37:59 dawes Exp $ */
 /*
  * Written by Jake Richter
  * Copyright (c) 1989, 1990 Panacea Inc., Londonderry, NH - All Rights Reserved
@@ -18,7 +18,7 @@
  *
  * Modified by Tiago Gons (tiago@comosjn.hobby.nl)
  */
-/* $XConsortium: init.c /main/3 1995/11/12 17:03:12 kaleb $ */
+/* $XConsortium: init.c /main/5 1996/10/19 17:52:31 kaleb $ */
 
 
 #include "X.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8.c,v 3.31 1996/09/14 13:09:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8.c,v 3.34.2.3 1997/05/11 02:56:08 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -29,7 +29,7 @@
  * and Tiago Gons (tiago@comosjn.hobby.nl)
  *
  */
-/* $XConsortium: mach8.c /main/13 1995/12/17 08:19:59 kaleb $ */
+/* $XConsortium: mach8.c /main/17 1996/10/23 18:42:06 kaleb $ */
 
 
 #include "X.h"
@@ -65,7 +65,8 @@ extern Bool xf86Exiting, xf86Resetting, xf86ProbeFailed;
 static int mach8ValidMode(
 #if NeedFunctionPrototypes 
     DisplayModePtr,
-    Bool
+    Bool,
+    int
 #endif
 );
 
@@ -81,6 +82,7 @@ ScrnInfoRec mach8InfoRec = {
     (void (*)())NoopDDA,/* void (* EnterLeaveCursor)() */
     mach8Adjust,	/* void (* AdjustFrame)() */
     mach8SwitchMode,	/* Bool (* SwitchMode)() */
+    (void (*)())NoopDDA,/* void (* DPMSSet)() */
     mach8PrintIdent,	/* void (* PrintIdent)() */
     8,			/* int depth */
     {0, 0, 0},          /* xrgb weight */
@@ -94,7 +96,8 @@ ScrnInfoRec mach8InfoRec = {
     {0, },              /* OFlagSet xconfigFlag */
     NULL,	       	/* char *chipset */
     NULL,	       	/* char *ramdac */
-    0,			/* int dacSpeed */
+    {0, 0, 0, 0},	/* int dacSpeeds[MAXDACSPEEDS] */
+    0,			/* int dacSpeedBpp */
     0,			/* int clocks */
     {0, },		/* int clock[MAXCLOCKS] */
     0,			/* int maxClock */
@@ -121,17 +124,20 @@ ScrnInfoRec mach8InfoRec = {
     0,			/* int s3Madjust */
     0,			/* int s3Nadjust */
     0,			/* int s3MClk */
+    0,			/* int chipID */
+    0,			/* int chipRev */
     0,			/* unsigned long VGAbase */
     0,			/* int s3RefClk */
-    0,			/* int suspendTime */
-    0,			/* int offTime */
     -1,			/* int s3BlankDelay */
     0,			/* int textClockFreq */
+    NULL,               /* char* DCConfig */
+    NULL,               /* char* DCOptions */
+    0			/* int MemClk */
 #ifdef XFreeXDGA
-    0,			/* int directMode */
+    ,0,			/* int directMode */
     NULL,		/* Set Vid Page */
     0,			/* unsigned long physBase */
-    0,			/* int physSize */
+    0			/* int physSize */
 #endif
 };
 
@@ -832,9 +838,10 @@ mach8ClockSelect(no)
  *
  */
 static int
-mach8ValidMode(mode, verbose)
+mach8ValidMode(mode, verbose, flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

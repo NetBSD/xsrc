@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128reg.h,v 3.3 1996/05/12 11:57:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128reg.h,v 3.5.2.1 1997/05/23 12:19:39 dawes Exp $ */
 /*
  * Copyright 1994 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -21,40 +21,40 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: i128reg.h /main/2 1995/12/17 08:13:20 kaleb $ */
+/* $XConsortium: i128reg.h /main/4 1996/05/12 20:56:19 kaleb $ */
 
 
 struct i128pci {
-    unsigned long devicevendor;
-    unsigned long statuscommand;
-    unsigned long classrev;
-    unsigned long bhlc;
-    unsigned long base0;
-    unsigned long base1;
-    unsigned long base2;
-    unsigned long base3;
-    unsigned long base4;
-    unsigned long base5;
-    unsigned long rsvd0;
-    unsigned long rsvd1;
-    unsigned long baserom;
-    unsigned long rsvd2;
-    unsigned long rsvd3;
-    unsigned long lgii;
+    CARD32 devicevendor;
+    CARD32 statuscommand;
+    CARD32 classrev;
+    CARD32 bhlc;
+    CARD32 base0;
+    CARD32 base1;
+    CARD32 base2;
+    CARD32 base3;
+    CARD32 base4;
+    CARD32 base5;
+    CARD32 rsvd0;
+    CARD32 rsvd1;
+    CARD32 baserom;
+    CARD32 rsvd2;
+    CARD32 rsvd3;
+    CARD32 lgii;
 };
 
 struct i128io {
-    unsigned long rbase_g;
-    unsigned long rbase_w;
-    unsigned long rbase_a;
-    unsigned long rbase_b;
-    unsigned long rbase_i;
-    unsigned long rbase_e;
-    unsigned long id;
-    unsigned long config1;
-    unsigned long config2;
-    unsigned long rsvd1;
-    unsigned long soft_sw;
+    CARD32 rbase_g;
+    CARD32 rbase_w;
+    CARD32 rbase_a;
+    CARD32 rbase_b;
+    CARD32 rbase_i;
+    CARD32 rbase_e;
+    CARD32 id;
+    CARD32 config1;
+    CARD32 config2;
+    CARD32 rsvd1;
+    CARD32 soft_sw;
 };
 
 struct i128mem {
@@ -62,11 +62,11 @@ struct i128mem {
     unsigned char *mw1_ad;
     unsigned char *xyw_ada;
     unsigned char *xyw_adb;
-    unsigned long *rbase_g;
-    unsigned long *rbase_w;
-    unsigned long *rbase_a;
-    unsigned long *rbase_b;
-    unsigned long *rbase_i;
+    CARD32 *rbase_g;
+    CARD32 *rbase_w;
+    CARD32 *rbase_a;
+    CARD32 *rbase_b;
+    CARD32 *rbase_i;
     unsigned char *rbase_g_b;  /* special byte pointer for ramdac registers */
 };
 
@@ -183,8 +183,8 @@ struct i128mem {
 #define  CMD_CLP_MSK 0x00E00000
 #define  CMD_PAT_MSK 0x0F000000
 #define  CMD_HDF_MSK 0x70000000
+#define  CMD_BLIT    0x00000C01
 #define CMD_OPC   0x0050/4
-#define  CMD_OPC_MSK 0x000000FF
 #define  CO_NOOP     0x00
 #define  CO_BITBLT   0x01
 #define  CO_LINE     0x02
@@ -249,11 +249,16 @@ struct i128mem {
 #define CLPBR     0x0084/4
 #define  CLPBRY_MSK   0x0000FFFF
 #define  CLPBRX_MSK   0xFFFF0000
-#define XY0         0x0088/4
-#define XY1         0x008C/4      /* trigger */
-#define XY2         0x0090/4
-#define XY3         0x0094/4
-#define XY4         0x0098/4
+#define XY0_SRC   0x0088/4
+#define XY1_DST   0x008C/4      /* trigger */
+#define XY2_WH    0x0090/4
+#define XY3_DIR   0x0094/4
+#define  DIR_LR_TB    0x00000000
+#define  DIR_LR_BT    0x00000001
+#define  DIR_RL_TB    0x00000002
+#define  DIR_RL_BT    0x00000003
+#define XY4_ZM    0x0098/4
+#define  ZOOM_NONE    0x00000000
 #define  XY_Y_DATA    0x0000FFFF
 #define  XY_X_DATA    0xFFFF0000
 #define  XY_I_DATA1   0x0000FFFF
@@ -261,16 +266,6 @@ struct i128mem {
 
 #define I128_WAIT_READY 1
 #define I128_WAIT_DONE  2
-
-#define i128_engine_wait(forwhat) switch(forwhat) {                           \
-		case I128_WAIT_READY:                                         \
-			while (i128mem.rbase_a[BUSY] & BUSY_BUSY);            \
-			break;                                                \
-		case I128_WAIT_DONE:                                          \
-		default:                                                      \
-			while (i128mem.rbase_a[FLOW] & (FLOW_DEB | FLOW_MCB));\
-			break;                                                \
-						  }
 
 typedef struct {
 	unsigned char r, b, g;

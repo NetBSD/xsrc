@@ -1,5 +1,5 @@
-/* $XConsortium: session.c /main/76 1996/01/25 18:45:51 kaleb $ */
-/* $XFree86: xc/programs/xdm/session.c,v 3.10 1996/08/11 13:04:27 dawes Exp $ */
+/* $XConsortium: session.c /main/77 1996/11/24 17:32:33 rws $ */
+/* $XFree86: xc/programs/xdm/session.c,v 3.11 1996/12/23 07:10:57 dawes Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -702,7 +702,6 @@ runAndWait (args, environ)
     char	**environ;
 {
     int	pid;
-    extern int	errno;
     waitType	result;
 
     switch (pid = fork ()) {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3scrin.c,v 3.2 1996/10/08 13:12:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3scrin.c,v 3.3.2.1 1997/05/24 08:36:03 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -42,7 +42,7 @@ Modified for the Mach-8 by Rickard E. Faith (faith@cs.unc.edu)
 Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
 Modified for the S3 by Jon N. Tombs (jon@esix2.us.es)
 */
-/* $XConsortium: s3scrin.c /main/7 1995/12/29 10:11:52 kaleb $ */
+/* $XConsortium: s3scrin.c /main/4 1996/10/25 15:37:52 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -124,7 +124,7 @@ s3ScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width)
     }
 
     if (cfbGeneration != serverGeneration) {
-	/* Only TrueColor for 16/32bpp */
+	/* Only TrueColor for 16/24/32bpp */
 	if (s3InfoRec.bitsPerPixel > 8) {
 	    if (!cfbSetVisualTypes(s3InfoRec.depth, 1 << TrueColor,
 				   bitsPerRGB))
@@ -254,17 +254,17 @@ s3ScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width)
 			rootdepth, ndepths, depths,
 			defaultVisual, nvisuals, visuals,
 			&s3BSFuncRec);
-    if (xf86bpp > 24) {
+    if (xf86bpp == 32 /*> 24*/) {
 	pScreen->CreateScreenResources = cfb32CreateScreenResources;
 	pScreen->devPrivates[cfb32ScreenPrivateIndex].ptr = pScreen->devPrivate;
 	pScreen->devPrivate = oldDevPrivate;
     }
-    else if (xf86bpp > 16) {
+    else if (xf86bpp == 24 /*> 16*/) {
 	pScreen->CreateScreenResources = cfb24CreateScreenResources;
 	pScreen->devPrivates[cfb24ScreenPrivateIndex].ptr = pScreen->devPrivate;
 	pScreen->devPrivate = oldDevPrivate;
     }
-    else if (xf86bpp > 8) {
+    else if (xf86bpp == 16 /*> 8*/) {
 	pScreen->CreateScreenResources = cfb16CreateScreenResources;
 	pScreen->devPrivates[cfb16ScreenPrivateIndex].ptr = pScreen->devPrivate;
 	pScreen->devPrivate = oldDevPrivate;

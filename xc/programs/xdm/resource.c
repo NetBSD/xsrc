@@ -1,5 +1,5 @@
 /* $XConsortium: resource.c,v 1.47 94/04/17 20:03:43 gildea Exp $ */
-/* $XFree86: xc/programs/xdm/resource.c,v 3.1 1994/12/29 10:22:27 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/resource.c,v 3.1.8.1 1997/05/10 07:03:03 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -50,6 +50,7 @@ char	*errorLogFile;
 int	daemonMode;
 char	*pidFile;
 int	lockPidFile;
+int	sourceAddress;
 char	*authDir;
 int	autoRescan;
 int	removeDomainname;
@@ -221,6 +222,8 @@ struct dmResources {
 				DEF_GREETER_LIB,
 "choiceTimeout","ChoiceTimeout",DM_INT,		(char **) &choiceTimeout,
 				"15",
+"sourceAddress","SourceAddress",DM_BOOL,	(char **) &sourceAddress,
+				"false",
 };
 
 # define NUM_DM_RESOURCES	(sizeof DmResources / sizeof DmResources[0])

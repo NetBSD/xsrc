@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/Imakefile,v 3.9 1996/09/14 13:07:01 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/Imakefile,v 3.10 1996/12/23 06:34:39 dawes Exp $
 #include <Server.tmpl>
 
 #ifndef PixelSize
@@ -62,7 +62,7 @@ OBJS =	 cfbgc.o cfbwindow.o \
 
    INCLUDES = -I. -I$(SERVERSRC)/cfb -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
 	      -I$(SERVERSRC)/include \
-	      -I$(INCLUDESRC) -I$(FONTINCSRC) \
+	      -I$(XINCLUDESRC) -I$(FONTINCSRC) \
 	      -I$(XF86ACCELSRC)/et4000w32/w32 \
 	      -I$(XF86SRC)/vga256/vga
 	
@@ -226,4 +226,4 @@ InstallLinkKitNamedLibrary(cfb,w32cfb,$(LINKKITDIR)/drivers)
 #ifndef OS2Architecture
 DependTarget()
 #endif
-XCOMM $XConsortium: Imakefile /main/5 1995/11/12 16:17:10 kaleb $
+XCOMM $XConsortium: Imakefile /main/10 1996/10/23 18:40:04 kaleb $

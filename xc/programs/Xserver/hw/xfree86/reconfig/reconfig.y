@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/reconfig.y,v 3.7 1996/02/04 09:10:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/reconfig.y,v 3.8 1996/12/23 06:51:45 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: reconfig.y /main/4 1995/11/13 11:33:03 kaleb $ */
+/* $XConsortium: reconfig.y /main/5 1996/02/21 17:55:14 kaleb $ */
 
 %{
 #include <stdio.h>

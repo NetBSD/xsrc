@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxIm.h,v 3.2 1996/02/04 08:58:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxIm.h,v 3.3 1996/12/23 06:32:50 dawes Exp $ */
 /*
  * Copyright 1992,1993 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: agxIm.h /main/4 1995/11/13 10:07:08 kaleb $ */
+/* $XConsortium: agxIm.h /main/5 1996/02/21 17:18:03 kaleb $ */
 
 #ifndef AGXIM_H
 #define AGXIM_H

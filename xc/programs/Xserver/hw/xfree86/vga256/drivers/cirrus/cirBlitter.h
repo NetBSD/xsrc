@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cirBlitter.h,v 3.10 1996/09/29 13:39:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cirBlitter.h,v 3.12 1996/12/23 06:56:27 dawes Exp $ */
 
 
 /* Definitions for BitBLT engine communication. */
 
 
-/* $XConsortium: cirBlitter.h /main/3 1995/11/13 08:20:25 kaleb $ */
+/* $XConsortium: cirBlitter.h /main/5 1996/10/25 10:30:37 kaleb $ */
 
 /* BitBLT modes. */
 
@@ -19,6 +19,11 @@
 #define PATTERNCOPY		0x40
 #define COLOREXPAND		0x80
 
+/* Extended BitBLT modes (36/46 only). */
+
+#define SOURCEDWORDGRANULARITY	0x01
+#define INVERTSOURCESENSE	0x02
+#define SOLIDCOLORFILL		0x04
 
 /* Address: the 5426 adresses 2MBytes, the 5434 can address 4MB. */
 
@@ -126,10 +131,20 @@
   tmp = inb(0x3cf); \
   outb(0x3cf, tmp | 0x02); \
   }
+
+#define SETBLTSTATUS(v) { \
+  unsigned char tmp; \
+  outw(0x3ce, 0x31 | (v << 8)); \
+  }
   
 #define BLTBUSY(s) { \
   outb(0x3ce, 0x31); \
   s = inb(0x3cf) & 1; \
+  }
+
+#define BLTEMPTY(s) { \
+  outb(0x3ce, 0x31); \
+  s = (inb(0x3cf) & 0x10) == 0; \
   }
 
 #define BLTRESET() { \
@@ -141,3 +156,22 @@
   }
 
 #define WAITUNTILFINISHED() CirrusBLTWaitUntilFinished()
+
+/*
+ * Extra definitions added for XAA driver. These are most useful for MMIO,
+ * but we must still provide them to allow for a regular I/O XAA driver.
+ */
+
+#define SETBLTMODEEXT(m) outw(0x3ce, ((m) << 8) | 0x33);
+
+/*
+ * Don't set the BLT mode extensions. They are only used on recent chips
+ * when MMIO is enabled.
+ */
+#define SETBLTMODEANDROP(m, mext, rop) \
+    SETBLTMODE(m) \
+    SETROP(rop)
+
+#define SETWIDTHANDHEIGHT(w, h) \
+    SETWIDTH(w) \
+    SETHEIGHT(h)

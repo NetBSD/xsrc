@@ -76,7 +76,7 @@ SOFTWARE.
 ******************************************************************/
 
 /* $XConsortium: cfbfillsp.c,v 5.24 94/04/17 20:28:48 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/cfb/cfbfillsp.c,v 3.0 1996/06/29 09:05:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbfillsp.c,v 3.1 1996/12/09 11:50:54 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -681,6 +681,7 @@ cfb8Stipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 	}
 	bits = src[y % stippleHeight];
 	RotBitsLeft (bits, (x & ((PGSZ-1) & ~PIM)));
+#if PPW == 4
 	if (cfb8StippleRRop == GXcopy)
 	{
 	    xor = devPriv->xor;
@@ -788,6 +789,7 @@ cfb8Stipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 	    }
 	}
 	else
+#endif /* PPW == 4 */
 	{
 	    if (startmask)
 	    {
@@ -895,6 +897,7 @@ cfb8OpaqueStipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 	}
 	bits = src[y % stippleHeight];
 	RotBitsLeft (bits, (x & ((PGSZ-1) & ~PIM)));
+#if PPW == 4
 	if (cfb8StippleRRop == GXcopy)
 	{
 	    xor = devPriv->xor;
@@ -969,6 +972,7 @@ cfb8OpaqueStipple32FS (pDrawable, pGC, nInit, pptInit, pwidthInit, fSorted)
 	    }
 	}
 	else
+#endif /* PPW == 4 */
 	{
 	    if (startmask)
 	    {

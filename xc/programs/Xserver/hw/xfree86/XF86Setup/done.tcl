@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/done.tcl,v 3.6 1996/09/29 12:51:09 dawes Exp $
+# $XConsortium: done.tcl /main/4 1996/10/25 10:21:11 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/done.tcl,v 3.7 1996/12/27 06:54:02 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #

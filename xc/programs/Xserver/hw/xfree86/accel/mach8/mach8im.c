@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8im.c,v 3.8 1996/10/24 14:24:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8im.c,v 3.9 1996/12/23 06:39:58 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -25,7 +25,7 @@
  * Further modifications by Tiago Gons (tiago@comosjn.hobby.nl)
  * A few speedups by Hans Nasten (nasten@everyware.se)
  */
-/* $XConsortium: mach8im.c /main/7 1995/11/12 18:00:37 kaleb $ */
+/* $XConsortium: mach8im.c /main/9 1996/10/28 05:30:56 kaleb $ */
 
 #include "os.h"
 #include "regmach8.h"

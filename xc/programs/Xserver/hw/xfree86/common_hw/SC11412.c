@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/SC11412.c,v 3.6 1996/05/06 05:58:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/SC11412.c,v 3.7 1996/12/23 06:44:18 dawes Exp $ */
 
 
 /* Norbert Distler ndistler@physik.tu-muenchen.de  */
 
 
-/* $XConsortium: SC11412.c /main/5 1995/11/12 19:30:22 kaleb $ */
+/* $XConsortium: SC11412.c /main/7 1996/05/07 17:14:02 kaleb $ */
 
 #include "Xfuncproto.h"
 #include "SC11412.h" 

@@ -1,4 +1,4 @@
-/* $XConsortium: resource.h,v 1.21 94/04/17 20:26:02 dpw Exp $ */
+/* $XConsortium: resource.h /main/23 1996/10/30 11:18:23 rws $ */
 /***********************************************************
 
 Copyright (c) 1987, 1989  X Consortium
@@ -107,6 +107,14 @@ typedef int (*DeleteType)(
 #endif
 );
 
+typedef void (*FindResType)(
+#if NeedNestedPrototypes
+    pointer /*value*/,
+    XID /*id*/,
+    pointer /*cdata*/
+#endif
+);
+
 extern RESTYPE CreateNewResourceType(
 #if NeedFunctionPrototypes
     DeleteType /*deleteFunc*/
@@ -162,6 +170,15 @@ extern Bool ChangeResourceValue(
 #endif
 );
 
+extern void FindClientResourcesByType(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/,
+    RESTYPE /*type*/,
+    FindResType /*func*/,
+    pointer /*cdata*/
+#endif
+);
+
 extern void FreeClientNeverRetainResources(
 #if NeedFunctionPrototypes
     ClientPtr /*client*/
@@ -201,6 +218,49 @@ extern pointer LookupIDByClass(
 #endif
 );
 
+/* These are the access modes that can be passed in the last parameter
+ * to SecurityLookupIDByType/Class.  The Security extension doesn't
+ * currently make much use of these; they're mainly provided as an
+ * example of what you might need for discretionary access control.
+ * You can or these values together to indicate multiple modes
+ * simultaneously.
+ */
+
+#define SecurityUnknownAccess	0	/* don't know intentions */
+#define SecurityReadAccess	(1<<0)	/* inspecting the object */
+#define SecurityWriteAccess	(1<<1)	/* changing the object */
+#define SecurityDestroyAccess	(1<<2)	/* destroying the object */
+
+#ifdef XCSECURITY
+
+extern pointer SecurityLookupIDByType(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/,
+    XID /*id*/,
+    RESTYPE /*rtype*/,
+    Mask /*access_mode*/
+#endif
+);
+
+extern pointer SecurityLookupIDByClass(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/,
+    XID /*id*/,
+    RESTYPE /*classes*/,
+    Mask /*access_mode*/
+#endif
+);
+
+#else /* not XCSECURITY */
+
+#define SecurityLookupIDByType(client, id, rtype, access_mode) \
+        LookupIDByType(id, rtype)
+
+#define SecurityLookupIDByClass(client, id, classes, access_mode) \
+        LookupIDByClass(id, classes)
+
+#endif /* XCSECURITY */
+
 extern void GetXIDRange(
 #if NeedFunctionPrototypes
     int /*client*/,
@@ -212,7 +272,7 @@ extern void GetXIDRange(
 
 extern unsigned int GetXIDList(
 #if NeedFunctionPrototypes
-    ClientPtr /*pClient*/,
+    ClientPtr /*client*/,
     unsigned int /*count*/,
     XID * /*pids*/
 #endif

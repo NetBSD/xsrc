@@ -1,3 +1,10 @@
+# $XConsortium: scrollbar.tcl /main/1 1996/09/21 14:16:08 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/scrollbar.tcl,v 3.1 1996/12/27 06:55:05 dawes Exp $
+#
 # scrollbar.tcl --
 #
 # This file defines the default bindings for Tk scrollbar widgets.

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxPntWin.c,v 3.9 1996/02/04 08:58:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxPntWin.c,v 3.10 1996/12/23 06:32:55 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -53,7 +53,7 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XConsortium: agxPntWin.c /main/7 1995/11/13 10:07:20 kaleb $ */
+/* $XConsortium: agxPntWin.c /main/8 1996/02/21 17:18:19 kaleb $ */
 
 #include "X.h"
 

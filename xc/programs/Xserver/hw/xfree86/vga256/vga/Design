@@ -1,4 +1,4 @@
-$XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/Design,v 3.1 1996/02/04 09:14:46 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/Design,v 3.3 1996/12/28 08:19:11 dawes Exp $
 
 This new frame buffer code is designed to rely on the cfb code more than
 the previous cfb.banked code. This frame buffer eliminates the need to
@@ -92,7 +92,6 @@ fFillSet.s
 			Optimized assembler for fast Solid Fill.
 
 vga.c
-	vgaRestore()
 	vgaPrintIdent()
 	vgaProbe()
 	vgaScreenInit()
@@ -387,4 +386,4 @@ vgaFasm.h
 	Some inline assembler to speed up some operations.
 
 
-$XConsortium: Design /main/3 1995/11/13 09:25:41 kaleb $
+$XConsortium: Design /main/4 1996/02/21 18:09:34 kaleb $

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgabitblt.c,v 3.2 1996/02/04 09:15:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgabitblt.c,v 3.5 1997/01/12 10:45:32 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -27,7 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 Author: Keith Packard
 
 */
-/* $XConsortium: vgabitblt.c /main/2 1995/11/13 09:26:13 kaleb $ */
+/* $XConsortium: vgabitblt.c /main/3 1996/02/21 18:10:26 kaleb $ */
 
 /*
  * vga256 copy area
@@ -313,6 +313,7 @@ DrawablePtr,
 int,
 RegionPtr,
 DDXPointPtr,
+unsigned long,
 unsigned long
 #endif
 ) = vga256DoBitbltGeneral;
@@ -329,7 +330,7 @@ unsigned long
 	    break;
 	}
     }
-    (*blt) (pSrc, pDst, alu, prgnDst, pptSrc, planemask);
+    (*blt) (pSrc, pDst, alu, prgnDst, pptSrc, planemask, ~0L);
     return;
 }
 
@@ -350,6 +351,7 @@ DrawablePtr,
 int,
 RegionPtr,
 DDXPointPtr,
+unsigned long,
 unsigned long
 #endif
 );
@@ -548,14 +550,23 @@ vga256CopyPlane1to8 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc, planemask
 # define StoreBits(o,c)	StoreBitsPlain(o,c)
 # define StoreRopBits(o,c)  StoreRopBitsPlain(o,c)
 # define FirstStep(c)	Step(c)
-#else
-# define StoreBits(o,c)	StorePixels(pdst,o,*((unsigned long *)\
-			    (((char *) cfb8Pixels) + (c & 0x3c))))
+#else /* BITMAP_BIT_ORDER == LSBFirst */
+#if PGSZ == 64
+# define StoreBits(o,c) StorePixels(pdst,o, (cfb8Pixels[c & 0xff]))
 # define StoreRopBits(o,c)  StoreRopPixels(pdst,o, \
-	    *((unsigned long *) (((char *) cfb8StippleAnd) + (c & 0x3c))), \
-	    *((unsigned long *) (((char *) cfb8StippleXor) + (c & 0x3c))))
-# define FirstStep(c)	c = BitLeft (c, 2);
-#endif
+    (cfb8StippleAnd[c & 0xff]), \
+    (cfb8StippleXor[c & 0xff]))
+# define FirstStep(c)   c = BitLeft (c, 8);
+#else
+/* 0x3c is 0xf << 2 (4 bits, long word) */
+# define StoreBits(o,c) StorePixels(pdst,o,*((unsigned long *)\
+                            (((char *) cfb8Pixels) + (c & 0x3c))))
+# define StoreRopBits(o,c)  StoreRopPixels(pdst,o, \
+    *((unsigned long *) (((char *) cfb8StippleAnd) + (c & 0x3c))), \
+    *((unsigned long *) (((char *) cfb8StippleXor) + (c & 0x3c))))
+# define FirstStep(c)   c = BitLeft (c, 2);
+#endif /* PGSZ */
+#endif /* BITMAP_BIT_ORDER */
 
 		    StoreBits0(tmp);	FirstStep(tmp);
 		    StoreBits(1,tmp);	Step(tmp);
@@ -597,7 +608,7 @@ vga256CopyPlane1to8 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc, planemask
 			StoreBitsPlain(-1,tmp);	Step(tmp);
 		    }
 		    if (endmask)
-		    	*pdst = *pdst & ~endmask | GetPixelGroup(tmp) & endmask;
+		    	*pdst = (*pdst & ~endmask) | GetPixelGroup(tmp) & endmask;
 	    	}
 	    }
 	}

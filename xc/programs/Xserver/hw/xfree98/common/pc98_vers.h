@@ -1,10 +1,10 @@
-/* $XConsortium: pc98_vers.h /main/4 1996/01/26 10:50:10 kaleb $ */
+/* $XConsortium: pc98_vers.h /main/7 1996/10/19 18:21:30 kaleb $ */
 
 
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree98/common/pc98_vers.h,v 3.7 1996/08/14 14:36:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree98/common/pc98_vers.h,v 3.8 1996/12/23 07:06:37 dawes Exp $ */
 
 #ifndef _PC98_VERSION_H
 #define _PC98_VERSION_H

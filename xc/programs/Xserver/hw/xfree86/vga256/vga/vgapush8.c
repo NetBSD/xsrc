@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgapush8.c,v 3.2 1996/02/04 09:15:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgapush8.c,v 3.4 1996/12/23 06:59:55 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -24,7 +24,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 */
-/* $XConsortium: vgapush8.c /main/2 1995/11/13 09:26:59 kaleb $ */
+/* $XConsortium: vgapush8.c /main/3 1996/02/21 18:11:39 kaleb $ */
 
 /*
  * Push Pixels for 8 bit displays.
@@ -90,7 +90,7 @@ vga256PushPixels8 (pGC, pBitmap, pDrawable, dx, dy, xOrg, yOrg)
     pixel = devPriv->xor;
     xoff = xOrg & PIM;
     nBitmapLongs = (dx + xoff) >> MFB_PWSH;
-    nPixmapLongs = (dx + 3 + xoff) >> PWSH;
+    nPixmapLongs = (dx + PGSZB + xoff) >> PWSH;
 
     rightMask = ~cfb8BitLenMasks[((dx + xoff) & MFB_PIM)];
 

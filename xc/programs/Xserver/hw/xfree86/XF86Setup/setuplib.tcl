@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/setuplib.tcl,v 3.12 1996/09/29 12:51:14 dawes Exp $
+# $XConsortium: setuplib.tcl /main/3 1996/10/25 10:21:33 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/setuplib.tcl,v 3.13 1996/12/27 06:54:13 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -264,7 +269,7 @@ proc writeXF86Config {filename args} {
 			set id [format "%dx%d" \
 			    [lindex $modeline 1] [lindex $modeline 5]]
 			puts $fd [format "   Modeline  %-11s %s" \
-			    "\"$id\""  $modeline]
+			    "\"from: id\""  modeline]
 			lappend modeNames $id
 		}
 	    } else {
@@ -280,7 +285,7 @@ proc writeXF86Config {filename args} {
 			set id [format "%dx%d" \
 			    [lindex $modeline 1] [lindex $modeline 5]]
 			puts $fd [format "   Modeline  %-11s %s" \
-			    "\"$id\""  $modeline]
+			    "\"from: id\""  modeline]
 			lappend modeNames $id
 		}
 	    }

@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/trident/pc98_tgui.c,v 3.3 1996/09/29 13:47:45 dawes Exp $ */
+/* $XConsortium: pc98_tgui.c /main/5 1996/10/25 10:35:19 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/trident/pc98_tgui.c,v 3.7.2.1 1997/05/16 11:35:24 hohndel Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -33,6 +38,8 @@
 
 #ifndef MONOVGA
 #include "tgui_drv.h"
+#include "tgui_ger.h"
+#include "tgui_mmio.h"
 #include "vga256.h"
 extern vgaHWCursorRec vgaHWCursor;
 #endif
@@ -47,13 +54,41 @@ static int hsync31;
 PC98TGUiTable *pc98TGUi;
 
 Bool BoardInit(void);
+Bool ChipInit(void);
 void crtswNECGen(short);
 void crtswTGUiGen(short);
-void crtswNEC9680(short);
+void crtswNEC96xx(short);
 void crtswNEC9320(short);
-void crtswDRV9680(short);
+void crtswDRV96xx(short);
 Bool testTRUE();
 Bool testDRV();
+
+static PC98TGUiTable pc98TGUiTab[]={
+  {"NEC Trident TGUi96xx(PCI Bus Type)",
+     PC98NEC96xx, PC98PCIBus, PC98LINEAR,
+     0x20000000, 0, 0x20400000,
+     45, 0x00af, {108000, 58500, 0, 31500},
+     crtswNEC96xx, testTRUE, ChipInit}
+  ,{"NEC Trident TGUi96xx(PCI Bus Type)",
+      PC98NEC96xx, PC98PCIBus, PC98LINEAR,
+      0x21000000, 0, 0x21400000,
+      45, 0x00af, {108000, 58500, 0, 31500},
+      crtswNEC96xx, testTRUE, ChipInit}
+  ,{"NEC Trident Cyber9320(PCI Bus Type)", 
+      PC98NEC9320, PC98PCIBus, PC98LINEAR,
+      0xffc00000, 0, 0xffe00000,
+      45, 0x00af, {108000, 58500, 0, 25175},
+      crtswNEC9320, testTRUE, ChipInit}
+  ,{"I/O-Data GA-DRV/98,GA-DR/98(C Bus Type)",
+      PC98DRV96xx, PC98CBus, PC98PAGE,
+      0, 0x00f20000, 0x00f00000,
+      45, 0x00af, {108000, 58500, 0, 25175},
+      crtswDRV96xx, testDRV, ChipInit}
+  ,{"End of Data Base",
+      PC98NoExist, PC98Unknown, PC98PAGE,
+      0, 0, 0,
+      0, 0, {0, 0, 0, 0},
+      NULL, NULL, NULL}};
 
 static unsigned char seqreg_data[ 0x05 ] = {
 	0x03, 0x31, 0x0f, 0x00, 0x0e
@@ -70,21 +105,6 @@ static unsigned char vgareg_data[ 0x20 ] = {
 	0xff, 0x4a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x67, /* 18 - 1F */
 };
 
-static PC98TGUiTable pc98TGUiTab[]={
-  {PC98NEC9680, PC98PCIBus, 0x20000000, 0x20400000
-     , 45, 0x00af, {108000, 58500, 0, 31500}
-   , crtswNEC9680, testTRUE}
-  ,{PC98NEC9320, PC98PCIBus, 0xffc00000, 0xffe00000
-      , 45, 0x00af, {108000, 58500, 0, 25175}
-    , crtswNEC9320, testTRUE}
-  ,{PC98DRV9680, PC98CBus,   0x00f20000, 0x00f00000
-      , 45, 0x00af, {108000, 58500, 0, 25175}
-    , crtswDRV9680, testDRV}
-  ,{PC98NoExist, PC98Unknown, 0, 0
-      , 0, 0, {0, 0, 0, 0}
-    , NULL, NULL}};
-
-Bool ChipInit(void);
 void VideoEnable(void);
 void CRTCwrite(unsigned char,unsigned char);
 unsigned char CRTCread(unsigned char);
@@ -110,10 +130,10 @@ Bool BoardInit(void)
     switch(pc98TGUiTab[i].BusType){
     case PC98PCIBus: /* Serach mmioBase on PCI Bus */ 
       if(vgaPCIInfo && vgaPCIInfo->Vendor == PCI_VENDOR_TRIDENT
-	 && vgaPCIInfo->MemBase == pc98TGUiTab[i].vramBase){
+	 && vgaPCIInfo->MemBase == pc98TGUiTab[i].pciBase){
 	mmioBase  = xf86MapVidMem(0, VGA_REGION,
 				  (pointer)(pc98TGUiTab[i].mmioBase), 0x10000);
-	if(!pc98TGUiTab[i].chiptest()){
+	if(!pc98TGUiTab[i].test()){
 	  xf86UnMapVidMem(0, VGA_REGION, mmioBase, 0x10000);
 	  mmioBase = NULL;
 	}
@@ -122,10 +142,13 @@ Bool BoardInit(void)
     case PC98CBus:  /* Serach mmioBase on C Bus */ 
       mmioBase  = xf86MapVidMem(0, VGA_REGION,
 				(pointer)(pc98TGUiTab[i].mmioBase), 0x10000);
-      if(!pc98TGUiTab[i].chiptest()){
+      if(!pc98TGUiTab[i].test()){
 	xf86UnMapVidMem(0, VGA_REGION, mmioBase, 0x10000);
 	mmioBase = NULL;
       }
+      break;
+    default:
+      FatalError("PC98: Server DataBase Error\n");
       break;
     }
     if(mmioBase != NULL)break;
@@ -134,20 +157,26 @@ Bool BoardInit(void)
   pc98TGUi = &pc98TGUiTab[i];
 
   if(pc98TGUi->TGUiType != PC98NoExist){
-    switch(pc98TGUi->BusType){
-    case PC98PCIBus:
-      ErrorF("%s %s: PC98: Found Trident MMIO port on PCI Bus @ 0x%08X\n",
-	     XCONFIG_PROBED, vga256InfoRec.name, pc98TGUi->mmioBase);
+    switch(pc98TGUi->VramType){
+    case PC98LINEAR:
+      pc98PvramBase = (pointer)(NULL);
       break;
-    case PC98CBus:
-      pc98PvramBase = (pointer)(pc98TGUi->vramBase);
-      ErrorF("%s %s: PC98: Found Trident MMIO port on C Bus @ 0x%08X\n",
-	     XCONFIG_PROBED, vga256InfoRec.name, pc98TGUi->mmioBase);
+
+    case PC98PAGE:
+    case PC98BOTH:
+      pc98PvramBase = (pointer)(pc98TGUi->vgaBase);
+      break;
+
+    default:
+      FatalError("PC98: Server DataBase Error\n");
       break;
     }
-    ChipInit();
+    ErrorF("%s %s: Config for %s MMIO @ 0x%08X\n",
+	   XCONFIG_PROBED, vga256InfoRec.name, pc98TGUi->info,
+	   pc98TGUi->mmioBase);
+    pc98TGUi->init();
   } else {
-    FatalError("PC98: Not found Trident MMIO port\n");
+    FatalError("No Data Base Entry for this Trident Chip\n");
   }
 
   return TRUE;
@@ -213,15 +242,15 @@ void crtswTGUiGen(short crtmod)
   return;
 }
 
-void crtswNEC9680(short crtmod)
+void crtswNEC96xx(short crtmod)
 {
   if(crtmod != 0){
     crtswNECGen(crtmod);
+    crtswTGUiGen(crtmod);
     _outb(0xfac, 0x02);
-    crtswTGUiGen(crtmod);
   } else {
-    crtswTGUiGen(crtmod);
     _outb(0xfac, 0x00);
+    crtswTGUiGen(crtmod);
     crtswNECGen(crtmod);
   }
   return;
@@ -231,33 +260,33 @@ void crtswNEC9320(short crtmod)
 {
   if( crtmod != 0 ){
     crtswNECGen(crtmod);
-    _outb(0xfaa, 0x03);
-    _outb(0xfab, 0xff);
     reg_unlock();
     GCwrite(0x30,0x02 | GCread(0x30));
     reg_lock();
     crtswTGUiGen(crtmod);
+    _outb(0xfaa, 0x03);
+    _outb(0xfab, 0xff);
   } else {
+    _outb(0xfaa, 0x03);
+    _outb(0xfab, 0xfd);
     crtswTGUiGen(crtmod);
     reg_unlock();
     GCwrite(0x30,~0x02 & GCread(0x30));
     reg_lock();
-    _outb(0xfaa, 0x03);
-    _outb(0xfab, 0xfd);
     crtswNECGen(crtmod);
   }
   return;
 }
 
-void crtswDRV9680(short crtmod)
+void crtswDRV96xx(short crtmod)
 {
   if(crtmod != 0){
     crtswNECGen(crtmod);
+    crtswTGUiGen(crtmod);
     _outw(0x5ee8, 0xdb30);
-    crtswTGUiGen(crtmod);
   } else {
-    crtswTGUiGen(crtmod);
     _outw(0x5ee8, 0x5b30);
+    crtswTGUiGen(crtmod);
     crtswNECGen(crtmod);
   }
   return;
@@ -268,27 +297,61 @@ void crtswDRV9680(short crtmod)
  */
 Bool ChipInit(void)
 {
-  int tmp;
+  unsigned int tmp;
   
+  /* Video SubSystem Enable */
+  outb(0x3c2, inb(0x3cc) | 0xc3);
   VideoEnable();
-
-  outb(0x3c2, 0xc3);
 
   inb(0x3da);
   outb(0x3c0,0x10);
   outb(0x3c0,0x41);
   
   reg_unlock();
-  
+
+  SEQwrite(0x0f, SEQread(0x0f) & 0xef);
+
+  /* Bus & DRAM Setup */
+  CRTCwrite(0x2a, CRTCread(0x2a) | 0x40); /* Local Bus / DRAM Select */
+  CRTCwrite(0x20, 0x30); /* Command FIFO Register */
+  CRTCwrite(0x23, 0xe8); /* DRAM Timing Control */
+  CRTCwrite(0x25, 0x0a); /* RAMDAC R/W Timing Control */
+  CRTCwrite(0x2f, 0x27); /* Performance Tuning */
+  CRTCwrite(0x30, 0x0f); /* Display Queue Latency Control */
+  CRTCwrite(0x33, 0x01); /* Read Cache Control */
+  CRTCwrite(0x3b, 0x21); /* Clock and Tuning */
+  CRTCwrite(0x3c, 0x00); /* Miscellaneous Control */
+
+  outb(0x43C6, pc98TGUi->MCLK & 0x00ff);
+  outb(0x43C7, (pc98TGUi->MCLK & 0xff00) >> 8);
+
+  /* Enable Graphic Engine */
+  CRTCwrite(0x34, ((pc98TGUi->mmioBase & 0x00ff0000L) >> 16));
+  CRTCwrite(0x35, ((pc98TGUi->mmioBase & 0xff000000L) >> 24));
+  CRTCwrite(0x36, 0x83);
+
+  /* Clear Graphic Engine Register */
+  outb(GER_STATUS, 0);    /* Reset Graphic Engine */
+  outw(GER_OPERMODE, 0);
+  outb(GER_FMIX, 0);
+  outl(GER_DRAWFLAG, 0);
+  outl(GER_FCOLOUR, 0);
+  outl(GER_BCOLOUR, 0);
+  outw(GER_PATLOC, 0);
+  outl(GER_DEST_XY, 0);
+  outl(GER_SRC_XY,  0);
+  outl(GER_DIM_XY,  0);
+  outl(GER_SRCCLIP_XY, XY_MERGE(0x0000, 0x0000));
+  outl(GER_DSTCLIP_XY, XY_MERGE(0x0fff, 0x07ff));
+  /* Clear Pattern Register */
+  for(tmp=0x00; 0x80>tmp; tmp++)outb(GER_PATTERN+tmp, 0x00);
+
   SYNCDACwrite(0x00,0x01);
-  GCwrite(0x2f,0x80);
+  GCwrite(0x2f,0x20);
+  GCwrite(0x5e,0x88);
+  GCwrite(0x5f,0x48);
 
   SetRegisters(seqreg_data,grctrl_data,vgareg_data);
-  
-  CRTCwrite(0x2f,0x07);
-  CRTCwrite(0x33,0x01);
-  CRTCwrite(0x3b,0x21);
-  CRTCwrite(0x3c,0x00);
 
   reg_lock();
   return TRUE;
@@ -301,20 +364,19 @@ void VideoEnable(void)
   sw_old();
 
   tmp=SEQread(0x0e);
-  SEQwrite(0x0e,(tmp | 0x20)); /* select Configuration port 1 */ 
+  SEQwrite(0x0e, (tmp | 0x20)); /* select Configuration port 1 */ 
 
-  if((SEQread(0x0c) & 0x10)==0x10){
-    SEQwrite(0x0e,tmp);
-    outb(0x94,0x00);
-    outb(0x102,0x01);
-    outb(0x94,0x20);
-    tmp=inb(0x3c3);
-    outb(0x3c3,tmp | 0x01);
+  if((SEQread(0x0c) & 0x10) == 0x10){
+    SEQwrite(0x0e, tmp);
+    outb(0x94,  0x00);
+    outb(0x102, 0x01);
+    outb(0x94,  0x20);
+    outb(0x3c3, inb(0x3c3) | 0x01);
   }else{
-    SEQwrite(0x0e,tmp);
-    outb(0x46e8,0x10);
-    outb(0x102,0x01);
-    outb(0x46e8,0x08);
+    SEQwrite(0x0e, tmp);
+    outb(0x46e8, 0x10);
+    outb(0x102,  0x01);
+    outb(0x46e8, 0x08);
   }
 }
 

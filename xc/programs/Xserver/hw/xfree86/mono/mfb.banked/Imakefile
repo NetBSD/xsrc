@@ -1,5 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/2 1995/09/04 19:45:31 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/mono/mfb.banked/Imakefile,v 3.3 1996/02/04 09:09:36 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/6 1996/09/28 17:23:11 rws $
+
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/mono/mfb.banked/Imakefile,v 3.5 1997/01/05 11:59:01 dawes Exp $
 #include <Server.tmpl>
 
 SRCS1 =	 mfbgc.c mfbwindow.c mfbfont.c \
@@ -30,7 +35,7 @@ OBJS =   mfbgc.o mfbwindow.o mfbfont.o \
          mfbplywhite.o mfbplyblack.o mfbplyinv.o
 
 INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
-           -I$(INCLUDESRC) -I$(FONTINCSRC) -I../mono
+           -I$(XINCLUDESRC) -I$(FONTINCSRC) -I../mono
 LINTDEFS = -DMFBPOLYGLYPHBLT=mfbPolyGlyphBltWhite \
 	   -DMFBIMAGEGLYPHBLT=mfbImageGlyphBltWhite \
 	   -DEQWHOLEWORD=\=\~0 -DOPEQ=\|=
@@ -119,4 +124,6 @@ ObjectFromSpecialSource(mfbtileC,mfbtile,-DMROP=Mcopy)
 
 ObjectFromSpecialSource(mfbtileG,mfbtile,-DMROP=0)
 
+#ifndef OS2Architecture
 DependTarget()
+#endif

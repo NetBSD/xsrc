@@ -1,8 +1,14 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_driver.c,v 3.3 1996/09/29 14:01:45 dawes Exp $ */
+/* $XConsortium: apm_driver.c /main/5 1996/10/25 10:27:55 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/apm_driver.c,v 3.7.2.2 1997/05/09 07:15:27 hohndel Exp $ */
 
 /*
  * These are X and server generic header files.
  */
+#include <math.h>
 #include "X.h"
 #include "input.h"
 #include "screenint.h"
@@ -203,7 +209,8 @@ vgaVideoChipRec APM = {
 	 * to pixel clocks.  This is rarely used, and in most cases, set
 	 * it to 1.
 	 */
-	1,
+	1,       /* ClockMulFactor */
+	1        /* ClockDivFactor */
 };
 
 /*
@@ -234,9 +241,7 @@ static int apmDisplayableMemory;
 
 static SymTabRec chipsets[] = {
 	{ AP6422,  "AP6422"},
-#if 0
 	{ AT24,    "AT24" },
-#endif
 	{ -1,		"" },
 };
 
@@ -305,7 +310,6 @@ unsigned long val;
 	outl(apm_xbase, val);
 }
 
-#include <math.h>
 #define WITHIN(v,c1,c2) (((v) > (c1)) && ((v) < (c2)))
 static unsigned
 comp_lmn(clock)
@@ -501,7 +505,7 @@ ApmProbe()
 			apmChip = AP6422;
 			break;
 		case '4':
-			apmChip = AP6422;
+			apmChip = AT24;
 			break;
 		default:
 			ApmEnterLeave(LEAVE);
@@ -725,6 +729,8 @@ static void
 ApmRestore(restore)
 vgaApmPtr restore;
 {
+	vgaProtect(TRUE);
+
 	/*
 	 * Whatever code is needed to get things back to bank zero should be
 	 * placed here.  Things should be in the same state as when the
@@ -764,6 +770,7 @@ vgaApmPtr restore;
 	 */
 	vgaHWRestore((vgaHWPtr)restore);
 
+	vgaProtect(FALSE);
 }
 
 /*
@@ -991,9 +998,10 @@ int x, y;
  *
  */
 static int
-ApmValidMode(mode, verbose)
+ApmValidMode(mode, verbose, flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 	/* Check for CRTC timing bits overflow. */
 	if (mode->VTotal > 2047) {

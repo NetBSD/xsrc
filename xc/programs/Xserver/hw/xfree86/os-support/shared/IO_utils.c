@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/IO_utils.c,v 1.1.1.2 1996/01/03 07:20:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/IO_utils.c,v 3.1 1996/12/23 06:50:55 dawes Exp $ */
 /*
- * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
+ * Copyright 1993 by David Dawes <dawes@XFree86.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,7 +22,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: IO_utils.c /main/2 1995/11/13 06:14:53 kaleb $ */
+/* $XConsortium: IO_utils.c /main/3 1996/02/21 17:53:21 kaleb $ */
 
 #include "X.h"
 #include "input.h"
