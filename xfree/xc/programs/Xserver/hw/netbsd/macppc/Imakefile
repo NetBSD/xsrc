@@ -8,7 +8,8 @@ SRCS =	macppcInit.c \
 	macppcKbd.c \
 	macppcMouse.c \
 	macppcOFB.c \
-	macppcKeyMap.c
+	macppcKeyMap.c \
+	GetTime.c
 
 OBJS =	macppcInit.o \
 	macppcFbs.o \
@@ -16,7 +17,8 @@ OBJS =	macppcInit.o \
 	macppcKbd.o \
 	macppcMouse.o \
 	macppcOFB.o \
-	macppcKeyMap.o
+	macppcKeyMap.o \
+	GetTime.o
 
 INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
 	   -I$(SERVERSRC)/include -I$(SERVERSRC)/os \
