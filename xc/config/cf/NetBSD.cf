@@ -142,22 +142,30 @@ XCOMM operating system:  OSName
 #if defined(SparcArchitecture)
 # define ServerOSDefines	-DDDXOSINIT
 # define ServerExtraDefines	GccGasOption
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
 #endif
 
 #if defined(Sun3Architecture)
 # define ServerOSDefines	-DDDXOSINIT
 # define ServerExtraDefines	GccGasOption -D__sun3__
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
 #endif
 
 #if defined(hp300Architecture)
 # define BuildServer		NO		/* XXX */
 # define ServerOSDefines	-DDDXOSINIT
 # define ServerExtraDefines	GccGasOption
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
 #endif
 
 #if defined(mac68kArchitecture)
 # define ServerOSDefines	-DDDXOSINIT
 # define ServerExtraDefines	GccGasOption -D__mac68k__
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
 #endif
 
 #ifndef OptimizedCDebugFlags
@@ -332,6 +340,7 @@ sed 's/\.[0-9]*$$//'`
 #ifndef XsunMonoServer
 #define XsunMonoServer	YES
 #endif
+#endif
   
 /*
  * Definitions for the NetBSD/mac68k server.
@@ -360,5 +369,4 @@ sed 's/\.[0-9]*$$//'`
  */
 #ifndef UseRgbTxt
 #define UseRgbTxt	NO
-#endif
 #endif
