@@ -1,5 +1,4 @@
-/* $XConsortium: SetLocale.c /main/35 1996/09/28 16:34:22 rws $ */
-/* $XFree86: xc/lib/X11/SetLocale.c,v 3.4.2.1 1997/05/30 12:58:58 dawes Exp $ */
+/* $TOG: SetLocale.c /main/37 1997/06/02 17:27:45 kaleb $ */
 
 /*
  * Copyright 1990, 1991 by OMRON Corporation, NTT Software Corporation,
@@ -58,6 +57,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/lib/X11/SetLocale.c,v 3.4.2.2 1997/06/08 15:41:18 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"
@@ -103,7 +103,7 @@ _Xsetlocale(category, name)
 	name = getenv("LC_CTYPE");
     if (!name || !*name)
 	name = getenv("LANG");
-    if (!name || !*name)
+    if (!name || !*name || !_XOpenLC(name))
 	name = "C";
     old_name = xsl_name;
     xsl_name = (char *)name;

@@ -1,4 +1,4 @@
-/* $TOG: XKBBind.c /main/26 1997/05/28 11:42:32 kaleb $ */
+/* $TOG: XKBBind.c /main/27 1997/06/10 06:53:17 kaleb $ */
 /*
 
 Copyright (c) 1985, 1987, 1994  X Consortium
@@ -545,11 +545,14 @@ XRefreshKeyboardMapping(event)
 	    register struct _XKeytrans *p;
 	    for (p = dpy->key_bindings; p; p = p->next) {
 		register int i;
-		p->state = AnyModifier;
-		for (i = 0; i < p->mlen; i++) {
-		    p->state|= XkbKeysymToModifiers(dpy,p->modifiers[i]);
+		p->state= 0;
+	  	if (p->mlen>0) {
+		    for (i = 0; i < p->mlen; i++) {
+			p->state|= XkbKeysymToModifiers(dpy,p->modifiers[i]);
+		    }
+		    if (p->state)	p->state &= AllMods;
+		    else		p->state = AnyModifier;
 		}
-		p->state &= AllMods;
 	    }
 	}
 	UnlockDisplay(dpy);

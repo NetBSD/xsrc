@@ -1,4 +1,4 @@
-/* $TOG: Error.c /main/39 1997/05/30 11:41:07 root $ */
+/* $TOG: Error.c /main/42 1997/07/24 09:15:36 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Error.c,v 3.3.2.2 1997/05/31 13:34:31 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Error.c,v 3.3.2.5 1997/07/26 06:30:41 dawes Exp $ */
 
 /*
 
@@ -283,9 +283,9 @@ in this environment. You may get a more descriptive message by running the\n\
 program as a non-root user or by removing the suid bit on the executable.");
 	    (*fn)(buffer); /* if *fn is an ErrorHandler it should exit */
 	}
-    } else
+    }
 #endif
-    {
+    else {
 	/*
 	 * If you have snprintf the worst thing that could happen is you'd
 	 * lose some information. Without snprintf you're probably going to 
@@ -321,9 +321,10 @@ program as a non-root user or by removing the suid bit on the executable.");
 #endif
 	    (*fn)(message);
 	    XtFree(message);
-	} else
+	} else {
 	    XtWarning ("Memory allocation failed, arguments in the following message were lost");
 	    (*fn)(buffer);
+	}
     }
 }
 
@@ -540,9 +541,8 @@ XtErrorMsgHandler XtAppSetWarningMsgHandler(app,handler)
 void _XtDefaultError(message)
     String message;
 {
-    extern void exit();
-
-    (void)fprintf(stderr, "%sError: %s\n", XTERROR_PREFIX, message);
+    if (message && *message)
+	(void)fprintf(stderr, "%sError: %s\n", XTERROR_PREFIX, message);
     exit(1);
 }
 

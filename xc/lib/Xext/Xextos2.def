@@ -1,5 +1,5 @@
 LIBRARY XEXT
-DESCRIPTION "X11R6 XFree86 3.3 libXEXT.dll for OS/2 EMX09C VERSION=6.3"
+DESCRIPTION "$XFree86: xc/lib/Xext/Xextos2.def,v 3.5.2.2 1997/08/04 02:10:35 dawes Exp $"
 CODE	
 	PRELOAD
 DATA	
@@ -105,4 +105,13 @@ EXPORTS
 	XLbxQueryExtension @ 97
 	XLbxGetEventBase @ 98
 	XLbxQueryVersion @ 99
-	
+	XShmQueryExtension @ 100
+	XShmGetEventBase @ 101
+	XShmQueryVersion @ 102
+	XShmPixmapFormat @ 103
+	XShmAttach @ 104
+	XShmDetach @ 105
+	XShmCreateImage @ 106
+	XShmPutImage @ 107
+	XShmGetImage @ 108
+	XShmCreatePixmap @ 109

@@ -1,9 +1,4 @@
 /* $TOG: imInt.c /main/4 1997/04/28 16:39:57 barstow $ */
-
-
-
-
-/* $XFree86: xc/lib/X11/imInt.c,v 3.0.4.1 1997/05/03 09:43:41 dawes Exp $ */
 /******************************************************************
 
            Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -31,6 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/imInt.c,v 3.0.4.2 1997/07/05 15:55:34 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>

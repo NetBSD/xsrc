@@ -47,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/Vendor.c,v 1.1.1.1.12.2 1997/07/19 07:07:12 dawes Exp $ */
 
 /* Make sure all wm properties can make it out of the resource manager */
 
@@ -63,6 +64,24 @@ SOFTWARE.
  * Vendor shell class record
  *
  ***************************************************************************/
+
+#ifdef __EMX__
+/* to fix the EditRes problem because of wrong linker semantics */
+extern WidgetClass vendorShellWidgetClass;
+unsigned long _DLL_InitTerm(unsigned long mod,unsigned long flag)
+{
+        switch (flag) {
+        case 0: /*called on init*/
+                _CRT_init();
+                vendorShellWidgetClass = (WidgetClass)(&vendorShellClassRec);
+                return 1;
+        case 1: /*called on exit*/
+                return 1;
+        default:
+                return 0;
+        }
+}
+#endif
 
 externaldef(vendorshellclassrec) VendorShellClassRec vendorShellClassRec = {
   {

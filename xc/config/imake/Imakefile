@@ -1,5 +1,9 @@
-XCOMM $XConsortium: Imakefile /main/8 1996/09/28 16:14:12 rws $
-XCOMM $XFree86: xc/config/imake/Imakefile,v 3.6 1996/12/23 05:50:56 dawes Exp $
+XCOMM $TOG: Imakefile /main/10 1997/04/30 15:39:17 kaleb $
+XCOMM
+XCOMM
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/config/imake/Imakefile,v 3.6.2.1 1997/06/11 12:08:33 dawes Exp $
 
 XCOMM Some compilers generate fatal errors if an -L directory does
 XCOMM not exist.  Since BUILDLIBDIR may not exist yet suppress its use.
@@ -8,7 +12,7 @@ XCOMM not exist.  Since BUILDLIBDIR may not exist yet suppress its use.
 
 DEPLIBS = 
 
-INCLUDES = -I$(TOP)/include -I$(TOP)/imports/x11/include/X11
+INCLUDES = -I$(TOP)/include $(TOP_X_INCLUDES)/X11
 CPP_PROGRAM = CppCmd
 CPP_DEFINES = -DCPP_PROGRAM="\"$(CPP_PROGRAM)\""
 DEFINES = $(SIGNAL_DEFINES) $(BOOTSTRAPCFLAGS) $(CPP_DEFINES)

@@ -1,7 +1,6 @@
 XCOMM!/bin/sh
 XCOMM
-XCOMM $XConsortium: mdepend.cpp,v 1.12 94/12/09 22:50:34 gildea Exp $
-XCOMM $XFree86: xc/config/util/mdepend.cpp,v 3.1 1995/01/28 15:41:10 dawes Exp $
+XCOMM $TOG: mdepend.cpp /main/13 1997/06/20 21:12:18 kaleb $
 XCOMM
 XCOMM	Do the equivalent of the 'makedepend' program, but do it right.
 XCOMM
@@ -23,6 +22,9 @@ XCOMM	work on both USG and BSD systems.  However, when System V.4 comes out,
 XCOMM	USG users will probably have to change "silent" to "-s" instead of
 XCOMM	"-" (at least, that is what the documentation implies).
 XCOMM
+XCOMM $XFree86: xc/config/util/mdepend.cpp,v 3.1.8.1 1997/06/29 08:43:27 dawes Exp $
+XCOMM
+
 CC=PREPROC
 
 silent='-'
@@ -82,9 +84,13 @@ do
 			    magic_string="$2"
 			    shift
 			    ;;
-			-f)
-			    makefile="$2"
-			    shift
+			-f*)
+			    if [ "$1" = "-f-" ]; then
+				makefile="-"
+			    else
+				makefile="$2"
+				shift
+			    fi
 			    ;;
 			-o)
 			    objsuffix="$2"

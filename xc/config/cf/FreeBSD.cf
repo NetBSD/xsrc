@@ -1,5 +1,5 @@
-XCOMM platform:  $XConsortium: FreeBSD.cf /main/13 1996/09/29 20:13:31 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.5 1997/05/24 13:38:06 dawes Exp $
+XCOMM platform:  $TOG: FreeBSD.cf /main/18 1997/06/12 07:40:35 kaleb $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.7 1997/06/29 08:43:25 dawes Exp $
 
 #ifndef OSName
 #define OSName			DefaultOSName
@@ -40,8 +40,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define AvoidNullMakeCommand	YES
 #define StripInstalledPrograms	YES
 #define CompressAllFonts	YES
-/* Even when using GNU malloc supplied with FreeBSD 2.1.x, this is true */
-#define Malloc0ReturnsNull	NO
+#define Malloc0ReturnsNull	YES
 #define NeedConstPrototypes	YES
 #define NeedFunctionPrototypes	YES
 #define NeedNestedPrototypes	YES
@@ -68,6 +67,45 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define UseGnuMalloc		YES
 #else
 #define UseGnuMalloc		NO
+#endif
+#endif
+
+/* 
+ * This doesn't work the way it does on every other system. On FreeBSD it's
+ * only a "hint, not a demand", whatever that means. Note that this is not 
+ * what it says in the ld and ld.so man pages, which are rather vague on the
+ * matter.
+ *
+ * But we do know that if a) you do what the X Project team does and set your 
+ * ProjectRoot to something like "/X11", and b) you have other X libraries, 
+ * e.g. in /usr/X11R6/lib, and you have added /usr/X11R6/lib to your 
+ * ld.so.cache with ldconfig, then any programs linked with this "hint" will
+ * find that ld.so ignores the "hint" at runtime and loads the libraries in 
+ * the ld.so.cache, * i.e.the wrong ones, instead! Empirically we find that
+ * the run-path is only used as a last resort to find the libraries, after
+ * the LD_LIBRARY_PATH and ld.so.cache.
+ *
+ * N. B. to FreeBSD users who are not familiar with the semantics of the run-
+ * path on other systems. The run-path is akin to a per-program ld.so.cache. 
+ * If a program is linked with a run-path, that run-path should take 
+ * precedence over _everything_ else! In my opinion ldconfig and the 
+ * ld.so.cache should be deprecated immediately now that FreeBSD has run-
+ * paths. Any program that needs libraries that are outside the "well known" 
+ * locations should be linked with a run-path.
+ *
+ * All of which begs the question: If this option doesn't work in any useful
+ * way, why did they (FreeBSD) bother to add it? It would be nice if FreeBSD
+ * would fix ld.so so that run-paths are truly useful.
+ *
+ * Using run-paths is added with the intent that vendors who ship X for 
+ * FreeBSD should use it too. Once everyone uses it then there will be no 
+ * reason for FreeBSD to assume that it knows where X libraries are installed 
+ * and they can remove it from the list of directories they add to ld.so.cache 
+ * in their /etc/rc file.
+ */
+#if OSMajorVersion > 2 || (OsMajorVersion == 2 && OSMinorVersion >= 2)
+#ifndef ExtraLoadFlags
+#define ExtraLoadFlags		-Wl,-R,$(USRLIBDIRPATH)
 #endif
 #endif
 

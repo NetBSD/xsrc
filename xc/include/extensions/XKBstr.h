@@ -1,4 +1,4 @@
-/* $XConsortium: XKBstr.h /main/15 1996/03/01 14:29:15 kaleb $ */
+/* $TOG: XKBstr.h /main/16 1997/06/10 06:53:12 kaleb $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -295,7 +295,12 @@ typedef struct _XkbServerMapRec {
 
 	XkbBehavior		*behaviors;
 	unsigned short		*key_acts;
+#if defined(__cplusplus) || defined(c_plusplus)
+	/* explicit is a C++ reserved word */
+	unsigned char		*c_explicit;
+#else
 	unsigned char		*explicit;
+#endif
 	unsigned char		 vmods[XkbNumVirtualMods];
 	unsigned short		*vmodmap;
 } XkbServerMapRec, *XkbServerMapPtr;

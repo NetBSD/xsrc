@@ -1,4 +1,4 @@
-/* $XConsortium: xkbout.c /main/6 1996/12/27 20:53:20 kaleb $ */
+/* $TOG: xkbout.c /main/8 1997/06/13 05:59:04 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -59,14 +59,19 @@
 
 #endif
 
+#define	VMOD_HIDE_VALUE	0
+#define	VMOD_SHOW_VALUE	1
+#define	VMOD_COMMENT_VALUE 2
+
 static Bool
 #if NeedFunctionPrototypes
-WriteXKBVModDecl(FILE *file,Display *dpy,XkbDescPtr xkb)
+WriteXKBVModDecl(FILE *file,Display *dpy,XkbDescPtr xkb,int showValue)
 #else
-WriteXKBVModDecl(file,dpy,xkb)
+WriteXKBVModDecl(file,dpy,xkb,showValue)
     FILE *	file;
     Display *	dpy;
     XkbDescPtr	xkb;
+    int		showValue;
 #endif
 {
 register int 	i,nMods;
@@ -83,6 +88,17 @@ Atom *		vmodNames;
 	    if (nMods==0)	fprintf(file,"    virtual_modifiers ");
 	    else		fprintf(file,",");
 	    fprintf(file,"%s",XkbAtomText(dpy,vmodNames[i],XkbXKBFile));
+	    if ((showValue!=VMOD_HIDE_VALUE)&&
+		(xkb->server)&&(xkb->server->vmods[i]!=XkbNoModifierMask)) {
+		if (showValue==VMOD_COMMENT_VALUE) {
+		    fprintf(file,"/* = %s */",
+			XkbModMaskText(xkb->server->vmods[i],XkbXKBFile));
+		}
+		else  {
+		    fprintf(file,"= %s",
+			XkbModMaskText(xkb->server->vmods[i],XkbXKBFile));
+		}
+	    }
 	    nMods++;
 	}
     }
@@ -136,6 +152,7 @@ Atom			kcName;
 register unsigned 	i;
 XkbDescPtr		xkb;
 Display *		dpy;
+char *			alternate;
 
     xkb= result->xkb;
     dpy= xkb->dpy;
@@ -152,7 +169,10 @@ Display *		dpy;
     fprintf(file,"    maximum = %d;\n",xkb->max_key_code);
     for (i=xkb->min_key_code;i<=xkb->max_key_code;i++) {
 	if (xkb->names->keys[i].name[0]!='\0') {
-	    fprintf(file,"    %6s = %d;\n",
+	    if (XkbFindKeycodeByName(xkb,xkb->names->keys[i].name,True)!=i)
+		 alternate= "alternate ";
+	    else alternate= "";
+	    fprintf(file,"    %s%6s = %d;\n",alternate,
 			XkbKeyNameText(xkb->names->keys[i].name,XkbXKBFile),
 			i);
 	}
@@ -222,7 +242,8 @@ XkbDescPtr		xkb;
 	 fprintf(file,"xkb_types {\n\n");
     else fprintf(file,"xkb_types \"%s\" {\n\n",
 			XkbAtomText(dpy,xkb->names->types,XkbXKBFile));
-    WriteXKBVModDecl(file,dpy,xkb);
+    WriteXKBVModDecl(file,dpy,xkb,
+			(showImplicit?VMOD_COMMENT_VALUE:VMOD_HIDE_VALUE));
 
     type= xkb->map->types;
     for (i=0;i<xkb->map->num_types;i++,type++) {
@@ -349,7 +370,8 @@ XkbDescPtr		xkb;
 	 fprintf(file,"xkb_compatibility {\n\n");
     else fprintf(file,"xkb_compatibility \"%s\" {\n\n",
 			XkbAtomText(dpy,xkb->names->compat,XkbXKBFile));
-    WriteXKBVModDecl(file,dpy,xkb);
+    WriteXKBVModDecl(file,dpy,xkb,
+			(showImplicit?VMOD_COMMENT_VALUE:VMOD_HIDE_VALUE));
 
     fprintf(file,"    interpret.useModMapMods= AnyLevel;\n");
     fprintf(file,"    interpret.repeat= False;\n");
@@ -457,6 +479,8 @@ Bool			showActions;
     for (i=xkb->min_key_code;i<=xkb->max_key_code;i++) {
 	Bool	simple;
 	if ((int)XkbKeyNumSyms(xkb,i)<1)
+	    continue;
+	if (XkbFindKeycodeByName(xkb,xkb->names->keys[i].name,True)!=i)
 	    continue;
 	simple= True;
 	fprintf(file,"    key %6s {",

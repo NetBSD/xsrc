@@ -1,4 +1,4 @@
-/* $XConsortium: FS.h,v 1.8 94/04/17 20:11:05 dpw Exp $ */
+/* $TOG: FS.h /main/9 1997/06/13 13:01:10 barstow $ */
 
 /*
  * Copyright 1990, 1991 Network Computing Devices;
@@ -55,7 +55,7 @@ in this Software without prior written authorization from the X Consortium.
 #ifndef _FS_H_
 #define	_FS_H_
 
-#include <fsmasks.h>
+#include "fsmasks.h"
 
 #define	FS_PROTOCOL		2
 #define	FS_PROTOCOL_MINOR	0

@@ -13,7 +13,7 @@
  * (c) Copyright 1996 FUJITSU LIMITED.
  * (c) Copyright 1996 Hitachi.
  */ 
-XCOMM $XConsortium: Motif.rules /main/2 1996/12/04 10:12:49 swick $
+XCOMM $TOG: Motif.rules /main/3 1997/03/24 09:10:35 mgreess $
 
 /* Note whether we are the top level project. */
 #ifndef SeenTopLevelProject
@@ -611,7 +611,7 @@ clean::									@@\
 #ifndef Real_MessageCatalogRule
 #define Real_MessageCatalogRule(prefix)					@@\
 prefix.cat Concat(prefix,MsgCatI.h):					@@\
-	$(RM) Concat(prefix,MsgCatI.h) prefix.cat			@@\
+	$(RM) Concat(prefix,MsgCatI.h) prefix.cat $(MLOCSRC)/C/msg/prefix.msg	@@\
 	$(MKCATTOOL) Concat(prefix,MsgCatI.h) prefix.msg > $(MLOCSRC)/C/msg/prefix.msg	@@\
 	$(GENCAT) prefix.cat $(MLOCSRC)/C/msg/prefix.msg		@@\
 									@@\

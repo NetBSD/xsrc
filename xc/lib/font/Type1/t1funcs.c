@@ -1,5 +1,4 @@
-/* $XConsortium: t1funcs.c /main/22 1996/09/28 16:47:46 rws $ */
-/* $XFree86: xc/lib/font/Type1/t1funcs.c,v 3.4 1996/12/28 08:09:50 dawes Exp $ */
+/* $TOG: t1funcs.c /main/23 1997/06/09 14:55:44 barstow $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -55,6 +54,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XFree86: xc/lib/font/Type1/t1funcs.c,v 3.4.2.1 1997/07/05 15:55:35 dawes Exp $ */
 
 /*
 
@@ -212,6 +212,8 @@ int Type1OpenScalable (fpe, ppFont, flags, entry, fileName, vals, format,
        /* load font if not already loaded */
        if (!fontfcnA(fileName, &rc)) {
          delmemory();
+	 xfree(type1);
+	 xfree(pFont);
          xfree(pool);
          return Type1ReturnCodeToXReturnCode(rc);
        }

@@ -1,5 +1,4 @@
-/* $XConsortium: imDefLkup.c /main/16 1995/12/06 11:23:31 kaleb $ */
-/* $XFree86: xc/lib/X11/imDefLkup.c,v 3.3 1996/02/09 08:18:53 dawes Exp $ */
+/* $TOG: imDefLkup.c /main/17 1997/06/21 21:30:12 kaleb $ */
 /******************************************************************
 
            Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -27,6 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/imDefLkup.c,v 3.3.4.1 1997/06/22 10:32:26 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #define  NEED_EVENTS
@@ -762,6 +762,7 @@ _XimCommitRecv(im, ic, buf)
     ev.display = im->core.display;
     ev.window = ic->core.focus_window;
     ev.keycode = 0;
+    ev.state = 0;
 
     XPutBackEvent(im->core.display, (XEvent *)&ev);
 

@@ -31,7 +31,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
                                 fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imConv.c,v 1.5.2.3 1997/05/24 08:35:55 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imConv.c,v 1.5.2.4 1997/07/05 15:55:34 dawes Exp $ */
 
 #define NEED_EVENTS
 #include <stdio.h>
@@ -39,8 +39,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "Xlcint.h"
 #include "Ximint.h"
 #include "XlcPubI.h"
-#include "XlcPubI.h"
-  
+
 #ifdef XKB
 #include "XKBlib.h"
 #define	XLOOKUPSTRING lookup_string
@@ -227,10 +226,6 @@ _XimLookupMBText(ic, event, buffer, nbytes, keysym, status)
 	    (strcmp (XLC_PUBLIC(lcd,encoding_name),"KOI8-R") == 0)) {
 	    cset = &koi8codeset;
 	}
-	if (kset == sCyrillic &&
-	    (strcmp (XLC_PUBLIC(lcd,encoding_name),"KOI8-R") == 0)) {
-	    cset = &koi8codeset;
-	}
 	if ((cset) && (c = (*cset->char_code)(symbol))) {
 	    strcpy(local_buf, cset->designator);
 	    local_count = strlen(cset->designator);
@@ -289,10 +284,6 @@ _XimLookupWCText(ic, event, buffer, nbytes, keysym, status)
 		cset = &codeset[i];
 		break;
 	    }
-	}
-	if (kset == sCyrillic &&
-	    (strcmp (XLC_PUBLIC(lcd,encoding_name),"KOI8-R") == 0)) {
-	    cset = &koi8codeset;
 	}
 	if (kset == sCyrillic &&
 	    (strcmp (XLC_PUBLIC(lcd,encoding_name),"KOI8-R") == 0)) {

@@ -1,5 +1,4 @@
-/* $XConsortium: XKBCvt.c /main/25 1996/12/27 15:12:44 kaleb $ */
-/* $XFree86: xc/lib/X11/XKBCvt.c,v 3.13 1997/01/08 20:32:10 dawes Exp $ */
+/* $TOG: XKBCvt.c /main/28 1997/06/10 06:53:20 kaleb $ */
 /*
 
 Copyright (c) 1988, 1989  X Consortium
@@ -29,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/lib/X11/XKBCvt.c,v 3.13.2.1 1997/06/22 10:32:25 dawes Exp $ */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -622,7 +622,8 @@ _XkbGetConverters(encoding_name, cvt_rtrn)
 	     *cvt_rtrn = cvt_X0201;
 	else if (Strcmp(encoding_name, "kana")==0) /* ??? */
 	     *cvt_rtrn = cvt_kana;
-	else if (Strcmp(encoding_name, "tactis")==0)
+	else if ((Strcmp(encoding_name, "tactis")==0)||
+		 (Strcmp(encoding_name, "tis620.2533-1")==0))
 	     *cvt_rtrn = cvt_Thai;
 	else if (Strcmp(encoding_name, "koi8-r")==0)
 	     *cvt_rtrn = cvt_Koi8;

@@ -1,4 +1,4 @@
-/* $XConsortium: KeysymStr.c,v 11.10 95/06/08 23:20:39 gildea Exp $ */
+/* $TOG: KeysymStr.c /main/12 1997/06/22 15:31:42 kaleb $ */
 
 /*
 
@@ -93,7 +93,7 @@ char *XKeysymToString(ks)
     unsigned char val1, val2;
     XrmDatabase keysymdb;
 
-    if (!ks)
+    if (!ks || (ks & ((unsigned long) ~0x1fffffff)) != 0)
 	return ((char *)NULL);
     if (ks == XK_VoidSymbol)
 	ks = 0;

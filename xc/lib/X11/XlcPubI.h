@@ -1,4 +1,4 @@
-/* $XConsortium: XlcPubI.h /main/6 1996/09/28 16:35:06 rws $ */
+/* $TOG: XlcPubI.h /main/8 1997/06/03 15:52:40 kaleb $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -207,17 +207,7 @@ extern void _XwcFreeStringList(
 extern int _XlcResolveLocaleName(
 #if NeedFunctionPrototypes
     char*		/* lc_name */,
-    char*		/* full_name */,
-    char*		/* language */,
-    char*		/* territory */,
-    char*		/* codeset */
-#endif
-);
-
-extern int _XlcResolveDBName(
-#if NeedFunctionPrototypes
-    char*		/* lc_name */,
-    char*		/* file_name */
+    XLCdPublicPart*	/* pub */
 #endif
 );
 

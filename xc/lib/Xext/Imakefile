@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/57 1996/09/28 16:43:46 rws $
+XCOMM $TOG: Imakefile /main/58 1997/06/08 20:52:39 kaleb $
 #define DoNormalLib NormalLibXext
 #define DoSharedLib SharedLibXext
 #define DoDebugLib DebugLibXext
@@ -18,22 +18,17 @@ REQUIREDLIBS = SharedXextReqs
       SHMOBJS = XShm.o
 #endif
 
-#if BuildLBX
-      LBXSRCS = XLbx.c
-      LBXOBJS = XLbx.o
-#endif
-
 #if Malloc0ReturnsNull
-ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+ALLOC_DEFINES = Malloc0ReturnsNullDefines
 #endif
 
       DEFINES = $(ALLOC_DEFINES)
      INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC)
          SRCS = globals.c extutil.c XMultibuf.c XShape.c $(SHMSRCS)  \
-		MITMisc.c XTestExt1.c XSync.c Xdbe.c $(LBXSRCS) \
+		MITMisc.c XTestExt1.c XSync.c Xdbe.c XLbx.c \
 		XSecurity.c XAppgroup.c
          OBJS = globals.o extutil.o XMultibuf.o XShape.o $(SHMOBJS) \
-		MITMisc.o XTestExt1.o XSync.o Xdbe.o $(LBXOBJS) \
+		MITMisc.o XTestExt1.o XSync.o Xdbe.o XLbx.o \
 		XSecurity.o XAppgroup.o
      LINTLIBS = $(LINTXLIB)
 

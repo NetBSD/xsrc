@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86vmode.h,v 3.20 1996/12/23 05:58:20 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86vmode.h,v 3.20.2.1 1997/07/13 14:44:57 dawes Exp $ */
 /*
 
 Copyright (c) 1995  Kaleb S. KEITHLEY
@@ -86,7 +86,12 @@ typedef struct {
     unsigned short	vtotal;
     unsigned int	flags;
     int			privsize;
+#if defined(__cplusplus) || defined(c_plusplus)
+    /* private is a C++ reserved word */
+    INT32		*c_private;
+#else
     INT32		*private;
+#endif
 } XF86VidModeModeLine;
 
 typedef struct {
@@ -101,7 +106,12 @@ typedef struct {
     unsigned short	vtotal;
     unsigned int	flags;
     int			privsize;
+#if defined(__cplusplus) || defined(c_plusplus)
+    /* private is a C++ reserved word */
+    INT32		*c_private;
+#else
     INT32		*private;
+#endif
 } XF86VidModeModeInfo;
 
 typedef struct {

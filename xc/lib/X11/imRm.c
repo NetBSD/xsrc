@@ -1,5 +1,4 @@
-/* $XConsortium: imRm.c /main/10 1995/11/18 16:08:18 kaleb $ */
-/* $XFree86: xc/lib/X11/imRm.c,v 3.1 1996/12/24 02:22:46 dawes Exp $ */
+/* $TOG: imRm.c /main/11 1997/06/22 18:26:20 kaleb $ */
 /******************************************************************
 
 	  Copyright 1990, 1991, 1992,1993, 1994 by FUJITSU LIMITED
@@ -31,6 +30,7 @@ PERFORMANCE OF THIS SOFTWARE.
 			       makoto@sm.sony.co.jp
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/imRm.c,v 3.1.2.1 1997/06/29 08:43:30 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xlib.h>
@@ -2927,9 +2927,11 @@ _XimDecodeLocalICAttr(res, top, val, mode)
     if(mode & XIM_PREEDIT_ATTR) {
 	info = ic_pre_attr_info;
 	num  = XIMNumber(ic_pre_attr_info);
+	top = (XPointer) &((XimDefICValues *)top)->preedit_attr;
     } else if(mode & XIM_STATUS_ATTR) {
 	info = ic_sts_attr_info;
 	num  = XIMNumber(ic_sts_attr_info);
+	top = (XPointer) &((XimDefICValues *)top)->status_attr;
     } else {
 	info = ic_attr_info;
 	num  = XIMNumber(ic_attr_info);
