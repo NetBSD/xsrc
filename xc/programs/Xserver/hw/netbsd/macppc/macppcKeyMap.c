@@ -265,15 +265,15 @@ static KeySym usbmap[] = {
 	XK_F10,		NoSymbol,		/* 0x43 */
 	XK_F11,		NoSymbol,		/* 0x44 */
 	XK_F12,		NoSymbol,		/* 0x45 */
-	NoSymbol,	NoSymbol,		/* 0x46 */
-	NoSymbol,	NoSymbol,		/* 0x47 */
-	NoSymbol,	NoSymbol,		/* 0x48 */
-	XK_Help,	NoSymbol,		/* 0x49 */
-	XK_KP_Home,	NoSymbol,		/* 0x4a */
-	XK_KP_Page_Up,	NoSymbol,		/* 0x4b */
-	NoSymbol,	NoSymbol,		/* 0x4c */
-	NoSymbol,	NoSymbol,		/* 0x4d */
-	XK_KP_Page_Down,NoSymbol,		/* 0x4e */
+	XK_F13,		XK_Print,		/* 0x46 */
+	XK_F14,		XK_Scroll_Lock,		/* 0x47 */
+	XK_F15,		XK_Pause,		/* 0x48 */
+	XK_Help,	XK_Insert,		/* 0x49 */
+	XK_Home,	NoSymbol,		/* 0x4a */
+	XK_Page_Up,	NoSymbol,		/* 0x4b */
+	XK_Delete,	NoSymbol,		/* 0x4c */
+	XK_End,		NoSymbol,		/* 0x4d */
+	XK_Page_Down,	NoSymbol,		/* 0x4e */
 	XK_Right,	NoSymbol,		/* 0x4f */
 	XK_Left,	NoSymbol,		/* 0x50 */
 	XK_Down,	NoSymbol,		/* 0x51 */
@@ -447,6 +447,7 @@ static macppcModmapRec usbModMap[] = {
 	0xe5,	ShiftMask,	/* Shift_R */
 	0x39,	LockMask,	/* Caps_Lock */
 	0xe0,	ControlMask,	/* Control_L */
+	0xe4,	ControlMask,	/* Control_R */
 	0xe2,	Mod1Mask,	/* Alt_L */
 	0xe6,	Mod1Mask,	/* Alt_R */
 	0,	0
