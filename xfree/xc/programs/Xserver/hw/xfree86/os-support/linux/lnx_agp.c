@@ -17,7 +17,7 @@
 #if defined(linux)
 #include <asm/ioctl.h>
 #include <linux/agpgart.h>
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
 #include <sys/ioctl.h>
 #include <sys/agpio.h>
 #endif
