@@ -498,7 +498,7 @@ ScreenDialog(XF86SetupInfo *info)
 		strcmp(drv_opts->name, screen->scrn_device->dev_driver) == 0) {
 		OptionInfoPtr opts = drv_opts->option;
 
-		while (opts->name) {
+		while (opts && opts->name) {
 		    if (xf86nameCompare(opts->name, "Rotate") == 0) {
 			foundRotate = True;
 			break;
