@@ -67,6 +67,11 @@ SOFTWARE.
 #define LONG64
 #endif
 #endif
+#if defined(__sparc_v9__) || defined(__sparcv9__)
+#define LONG64
+#elif ((defined(__sparc) || defined(__sparc__)) && defined(__arch64__)
+#define LONG64
+#endif
 
 /*
  * Stuff to handle large architecture machines; the constants were generated
