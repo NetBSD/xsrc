@@ -55,22 +55,12 @@ extern char *getenv();
 extern int errno;
 #endif
 
-#ifdef USE_WSCONS
 #include <dev/wscons/wsconsio.h>
-#else
-#include <machine/wsconsio.h>
-#endif
 
 #include <dev/pci/tgareg.h>
 #include <dev/tc/sfbreg.h>
 #define LK_KLL 8 /* from dev/dec/lk201var.h XXX */
 
-#include <machine/fbio.h>
-#if 0 /* XXX */
-#include <machine/kbd.h>
-#include <machine/kbio.h>
-#endif
-#include <machine/vuid_event.h>
 extern int gettimeofday();
 
 /* 
@@ -160,7 +150,9 @@ typedef struct {
 typedef struct {
     unsigned char*  fb;		/* Frame buffer itself */
     int		    fd;		/* frame buffer for ioctl()s, */
-    struct fbtype   info;	/* Frame buffer characteristics */
+    struct wsdisplay_fbinfo info; /* Frame buffer characteristics */
+    int		    type;	/* Frame buffer type */
+    int		    size;	/* Frame buffer size */
     int		    offset;	/* offset into the fb */
     union {
 	    tga_reg_t       *tgaregs[4];  /* Registers, and their aliases */
@@ -197,6 +189,7 @@ extern long		sunAutoRepeatInitiate;
 extern long		sunAutoRepeatDelay;
 #endif
 extern alphaFbDataRec	alphaFbData[];
+extern int		NalphaFbData;
 extern fbFd		alphaFbs[];
 #if 0
 extern Bool		sunSwapLkeys;
@@ -300,7 +293,6 @@ extern Bool alphaInitCommon(
 #endif
 );
 
-#ifdef USE_WSCONS
 extern struct wscons_event* alphaKbdGetEvents(
 #if NeedFunctionPrototypes
     int /* fd */,
@@ -308,17 +300,7 @@ extern struct wscons_event* alphaKbdGetEvents(
     Bool* /* pAgain */
 #endif
 );
-#else
-extern Firm_event* alphaKbdGetEvents(
-#if NeedFunctionPrototypes
-    int /* fd */,
-    int* /* pNumEvents */,
-    Bool* /* pAgain */
-#endif
-);
-#endif
 
-#ifdef USE_WSCONS
 extern struct wscons_event* alphaMouseGetEvents(
 #if NeedFunctionPrototypes
     int /* fd */,
@@ -326,35 +308,18 @@ extern struct wscons_event* alphaMouseGetEvents(
     Bool* /* pAgain */
 #endif
 );
-#else
-extern Firm_event* alphaMouseGetEvents(
-#if NeedFunctionPrototypes
-    int /* fd */,
-    int* /* pNumEvents */,
-    Bool* /* pAgain */
-#endif
-);
-#endif
 
 extern void alphaKbdEnqueueEvent(
 #if NeedFunctionPrototypes
     DeviceIntPtr /* device */,
-#ifdef USE_WSCONS
     struct wscons_event * /* fe */
-#else
-    Firm_event* /* fe */
-#endif
 #endif
 );
 
 extern void alphaMouseEnqueueEvent(
 #if NeedFunctionPrototypes
     DeviceIntPtr /* device */,
-#ifdef USE_WSCONS
     struct wscons_event * /* fe */
-#else
-    Firm_event* /* fe */
-#endif
 #endif
 );
 
