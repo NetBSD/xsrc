@@ -346,10 +346,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #if defined(i386Architecture)
 # ifndef HasNetBSDApertureDriver
 #  define HasNetBSDApertureDriver	YES
-   /* Where the aperture driver is installed */
-#  ifndef NetBSDApertureDir
-#   define NetBSDApertureDir		/usr/local/aperture
-#  endif
 # endif
 
 /*
