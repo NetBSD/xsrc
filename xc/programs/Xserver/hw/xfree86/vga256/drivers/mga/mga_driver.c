@@ -749,10 +749,16 @@ MGAProbe()
 			"Assuming 4 Meg.\tPlease specify the correct amount "
 			"in the XF86Config file.\tSee the file README.MGA "
 			"for details.\n", vga256InfoRec.name);
-	   } else if (MGA_IS_G200(MGAchipset) || MGA_IS_G400(MGAchipset)) {
+	   } else if (MGA_IS_G200(MGAchipset)) {
 		vga256InfoRec.videoRam = 8192;
 		ErrorF("(!!) %s: Unable to probe for video memory size.  "
 			"Assuming 8 Meg.\tPlease specify the correct amount "
+			"in the XF86Config file.\tSee the file README.MGA "
+			"for details.\n", vga256InfoRec.name);
+	   } else if (MGA_IS_G400(MGAchipset)) {
+		vga256InfoRec.videoRam = 16384;
+		ErrorF("(!!) %s: Unable to probe for video memory size.  "
+			"Assuming 16 Meg.\tPlease specify the correct amount "
 			"in the XF86Config file.\tSee the file README.MGA "
 			"for details.\n", vga256InfoRec.name);
 	   } else
