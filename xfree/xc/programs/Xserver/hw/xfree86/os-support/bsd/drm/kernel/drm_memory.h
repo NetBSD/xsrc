@@ -164,7 +164,7 @@ DRM(mtrr_add)(unsigned long offset, size_t size, int flags)
 	mtrrmap.base = offset;
 	mtrrmap.len = size;
 	mtrrmap.type = flags;
-	mtrrmap.flags = MTRR_VALID;
+	mtrrmap.flags = MTRR_VALID | MTRR_PRIVATE;
 	return mtrr_set(&mtrrmap, &one, NULL, MTRR_GETSET_KERNEL);
 }
 
