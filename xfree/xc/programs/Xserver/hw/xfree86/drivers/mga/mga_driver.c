@@ -3480,6 +3480,8 @@ MGAEnterVT(int scrnIndex, int flags)
     }
 #endif
 
+    MGASave(pScrn);
+
     if (!MGAModeInit(pScrn, pScrn->currentMode))
 	return FALSE;
     MGAAdjustFrame(scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
