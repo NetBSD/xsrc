@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.42 2000/08/10 17:40:34 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.44 2001/04/23 12:08:14 alanh Exp $
 
 
 
@@ -33,10 +33,6 @@ OS_SUBDIR = sco
 # else
 OS_SUBDIR = sysv
 # endif
-#endif
-
-#if defined(cygwinArchitecture)
-OS_SUBDIR = cygwin
 #endif
 
 #if defined(SVR4Architecture) 

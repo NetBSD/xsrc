@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsdResource.c,v 1.1 2000/03/05 16:59:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsdResource.c,v 1.6 2001/02/16 14:45:10 tsi Exp $ */
 
 /* Resource information code */
 
@@ -25,10 +25,10 @@ xf86BusAccWindowsFromOS(void)
     resPtr ret = NULL;
     resRange range;
 
-    RANGE(range,0,0xffffffff,ResExcMemBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    RANGE(range,0,0xffffffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcIoBlock);
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
@@ -46,10 +46,10 @@ xf86PciBusAccWindowsFromOS(void)
      * region 0x40000000-0xbfffffff for DMA but this only matters if
      * the bios screws up the pci region mappings.
      */
-    RANGE(range,0x80000000,0xffffffff,ResExcMemBlock);
+    RANGE(range, 0x80000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    RANGE(range,0,0xffffffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcIoBlock);
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
@@ -60,10 +60,10 @@ xf86IsaBusAccWindowsFromOS(void)
     resPtr ret = NULL;
     resRange range;
 
-    RANGE(range,0,0xffffffff,ResExcMemBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    RANGE(range,0,0xffffffff,ResExcIoBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcIoBlock);
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
@@ -76,17 +76,33 @@ xf86AccResFromOS(resPtr ret)
     /*
      * Fallback is to claim the following areas:
      *
-     * 0x000C0000 - 0x000EFFFF  location of VGA and other extensions ROMS
+     * 0x000c0000 - 0x000effff  location of VGA and other extensions ROMS
      */
 
-    RANGE(range,0xc0000,0xeffff,ResExcMemBlock);
+    RANGE(range, 0x000c0000, 0x000effff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    /* Fallback is to claim well known ports in the 0x0 - 0x3ff range */
-    /* Possibly should claim some of them as sparse ranges */
-
-    RANGE(range,0,0x1ff,ResExcIoBlock | ResEstimated);
+    /*
+     * Fallback would be to claim well known ports in the 0x0 - 0x3ff range
+     * along with their sparse I/O aliases, but that's too imprecise.  Instead
+     * claim a bare minimum here.
+     */
+    RANGE(range, 0x00000000, 0x000000ff, ResExcIoBlock); /* For mainboard */
     ret = xf86AddResToList(ret, &range, -1);
+
+    /*
+     * At minimum, the top and bottom resources must be claimed, so that
+     * resources that are (or appear to be) unallocated can be relocated.
+     */
+    RANGE(range, 0x00000000, 0x00000000, ResExcMemBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+    RANGE(range, 0xffffffff, 0xffffffff, ResExcMemBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+/*  RANGE(range, 0x00000000, 0x00000000, ResExcIoBlock);
+    ret = xf86AddResToList(ret, &range, -1); */
+    RANGE(range, 0xffffffff, 0xffffffff, ResExcIoBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+
     /* XXX add others */
     return ret;
 }
@@ -101,10 +117,10 @@ xf86BusAccWindowsFromOS(void)
     resPtr ret = NULL;
     resRange range;
 
-    RANGE(range, 0, 0xffffffff, ResExcMemBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    RANGE(range, 0, 0x0000ffff, ResExcIoBlock);
+    RANGE(range, 0x00000000, 0x0000ffff, ResExcIoBlock);
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
@@ -115,10 +131,24 @@ xf86PciBusAccWindowsFromOS(void)
     resPtr ret = NULL;
     resRange range;
 
-    RANGE(range, 0, 0xffffffff, ResExcMemBlock);
+    RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
     ret = xf86AddResToList(ret, &range, -1);
 
-    RANGE(range, 0, 0x0000ffff, ResExcIoBlock);
+    RANGE(range, 0x00000000, 0x0000ffff, ResExcIoBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+    return ret;
+}
+
+resPtr
+xf86IsaBusAccWindowsFromOS(void)
+{
+    resPtr ret = NULL;
+    resRange range;
+
+    RANGE(range, 0x00000000, 0xffffffff, ResExcMemBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+
+    RANGE(range, 0x00000000, 0x0000ffff, ResExcIoBlock);
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
@@ -126,6 +156,21 @@ xf86PciBusAccWindowsFromOS(void)
 resPtr
 xf86AccResFromOS(resPtr ret)
 {
+    resRange range;
+
+    /*
+     * At minimum, the top and bottom resources must be claimed, so that
+     * resources that are (or appear to be) unallocated can be relocated.
+     */
+    RANGE(range, 0x00000000, 0x00000000, ResExcMemBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+    RANGE(range, 0xffffffff, 0xffffffff, ResExcMemBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+    RANGE(range, 0x00000000, 0x00000000, ResExcIoBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+    RANGE(range, 0x0000ffff, 0x0000ffff, ResExcIoBlock);
+    ret = xf86AddResToList(ret, &range, -1);
+
     return ret;
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: curves.c,v 1.4 92/07/07 17:14:55 gildea Exp $ */
+/* $Xorg: curves.c,v 1.3 2000/08/17 19:46:29 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991              */
 /* All Rights Reserved                                               */
  
@@ -29,7 +29,7 @@
 /* CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT        */
 /* OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS           */
 /* SOFTWARE.                                                         */
-/* $XFree86: xc/lib/font/Type1/curves.c,v 1.4 1999/08/22 08:58:50 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/curves.c,v 1.6 2001/01/17 19:43:22 dawes Exp $ */
 
 /*
 :h1.CURVES Module - Stepping Beziers

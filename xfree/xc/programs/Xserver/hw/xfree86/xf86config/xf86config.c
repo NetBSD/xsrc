@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.54 2000/10/27 18:31:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.57 2001/04/23 17:15:58 dawes Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -100,7 +100,7 @@
  * have been added since XFree86 3.1 (e.g. DoubleScan modes).
  * or to 311 to remove certain new modelines
  */
-#define XFREE86_VERSION 399
+#define XFREE86_VERSION 400
 
 /*
  * This is the filename of the temporary XF86Config file that is written
@@ -147,18 +147,38 @@
 /* some more vars to make path names in texts more flexible. OS/2 users
  * may be more irritated than Unix users
  */
-#ifndef __EMX__
-#define TREEROOT "/usr/X11R6"
-#define TREEROOTLX "/usr/X11R6/lib/X11"
-#define TREEROOTCFG "/usr/X11R6/etc/X11"
-#define MODULEPATH "/usr/X11R6/lib/modules"
-#else
-#define TREEROOT "/XFree86"
-#define TREEROOTLX "/XFree86/lib/X11"
-#define TREEROOTCFG "/XFree86/lib/X11"
-#define MODULEPATH "/XFree86/lib/modules"
+#ifndef PROJECTROOT
+#define PROJECTROOT		"/usr/X11R6"
 #endif
-#define CONFIGNAME "XF86Config"
+#ifndef __EMX__
+#define TREEROOT		PROJECTROOT
+#define TREEROOTLX		TREEROOT "/lib/X11"
+#define TREEROOTCFG		TREEROOT "/etc/X11"
+#define MODULEPATH		TREEROOT "/lib/modules"
+#else
+#define TREEROOT		"/XFree86"
+#define TREEROOTLX		TREEROOT "/lib/X11"
+#define TREEROOTCFG		TREEROOT "/lib/X11"
+#define MODULEPATH		TREEROOT "/lib/modules"
+#endif
+
+#ifndef XCONFIGFILE
+#define XCONFIGFILE		"XF86Config"
+#endif
+#define CONFIGNAME		XCONFIGFILE
+
+#ifndef XF86_VERSION_MAJOR
+#ifdef XVERSION
+#if XVERSION > 40000000
+#define XF86_VERSION_MAJOR	(XVERSION / 10000000)
+#else
+#define XF86_VERSION_MAJOR	(XVERSION / 1000)
+#endif
+#else
+#define XF86_VERSION_MAJOR	4
+#endif
+#endif
+
 
 int config_mousetype;		/* Mouse. */
 int config_emulate3buttons;
@@ -248,7 +268,7 @@ static char *finalcomment_text =
 "alt and backspace simultaneously immediately exits the server (use if\n"
 "the monitor doesn't sync for a particular mode).\n"
 "\n"
-"For further configuration, refer to " TREEROOTLX "/doc/README.Config.\n"
+"For further configuration, refer to the " XCONFIGFILE "(5) manual page.\n"
 "\n";
 
 static void *
@@ -261,6 +281,15 @@ Malloc(int i) {
                exit(-1);
        }
        return p;
+}
+
+static char *
+Strdup(const char *s){
+	char *d;
+
+	d = Malloc(strlen(s) + 1);
+	strcpy(d, s);
+	return d;
 }
 
 static void 
@@ -335,10 +364,10 @@ static char *mousetype_identifier[] = {
 	"MMHitTab",
 	"IntelliMouse",
 #if defined(__EMX__) || defined(QNX4)
-	"OSMOUSE"
+	"OSMOUSE",
 #endif
-#if defined(__NetBSD__)
-	"WSMouse"
+#ifdef WSCONS_SUPPORT
+    	"wsmouse",
 #endif
 };
 
@@ -356,17 +385,18 @@ static char *mousetype_name[] = {
 	"Logitech MouseMan (Microsoft compatible)",
 	"MM Series",	/* XXXX These descriptions should be improved. */
 	"MM HitTablet",
-#ifdef	__NetBSD__
 	"Microsoft IntelliMouse",
-	"NetBSD WSCONS Mouse"
-#else
-	"Microsoft IntelliMouse"
+#ifdef WSCONS_SUPPORT
+        "wsmouse protocol",
 #endif
 };
 
 static char *mousedev_text =
 "Now give the full device name that the mouse is connected to, for example\n"
 "/dev/tty00. Just pressing enter will use the default, /dev/mouse.\n"
+#ifdef WSCONS_SUPPORT
+"On systems with wscons, the default is /dev/wsmouse.\n"
+#endif
 "\n";
 
 static char *mousecomment_text =
@@ -376,6 +406,11 @@ static char *mousecomment_text =
 "protocol, and mice that default to 1 and require a button to be held at\n"
 "boot-time to select protocol 2. Some mice can be convinced to do 2 by sending\n"
 "a special sequence to the serial port (see the ClearDTR/ClearRTS options).\n"
+#ifdef WSCONS_SUPPORT
+"\n"
+"If your system uses the wscons console driver, with a PS/2 type mouse, select\n"
+"10.\n"
+#endif
 "\n";
 
 static char *twobuttonmousecomment_text =
@@ -418,11 +453,15 @@ mouse_configuration(void) {
 	char s[80];
 	printf("%s", mouseintro_text);
 	
+<<<<<<< xf86config.c
 #ifdef __NetBSD__
 	for (i = 0; i < 10; i++)
 #else
 	for (i = 0; i < 9; i++)
 #endif
+=======
+	for (i = 0; i < sizeof(mousetype_name)/sizeof(char *); i++)
+>>>>>>> 1.1.1.3
 		printf("%2d.  %s\n", i + 1, mousetype_name[i]);
 
 	printf("\n");
@@ -509,7 +548,11 @@ mouse_configuration(void) {
 	printf("Mouse device: ");
 	getstring(s);
 	if (strlen(s) == 0)
+#ifndef WSCONS_SUPPORT
 		config_pointerdevice = "/dev/mouse";
+#else
+		config_pointerdevice = "/dev/wsmouse";
+#endif
 	else {
 		config_pointerdevice = Malloc(strlen(s) + 1);
 		strcpy(config_pointerdevice, s);
@@ -2489,6 +2532,23 @@ write_XF86Config(char *filename)
         fclose(f);
 }
 
+static char *
+append_version(char *name)
+{
+#ifdef APPEND_VERSION_TO_CONFIG_NAME
+	char *ret = NULL;
+
+	if (XF86_VERSION_MAJOR > 9 || XF86_VERSION_MAJOR < 0)
+		return name;
+
+	ret = Malloc(strlen(name) + 2 + 1);
+	sprintf(ret, "%s-%d", name, XF86_VERSION_MAJOR);
+	free(name);
+	return ret;
+#else
+	return name;
+#endif
+}
 
 /*
  * Ask where to write XF86Config to. Returns filename.
@@ -2497,7 +2557,7 @@ write_XF86Config(char *filename)
 static char *
 ask_XF86Config_location(void) {
 	char s[80];
-	char *filename;
+	char *filename = NULL;
 
 	printf(
 "I am going to write the XF86Config file now. Make sure you don't accidently\n"
@@ -2506,26 +2566,36 @@ ask_XF86Config_location(void) {
 #ifndef __EMX__
 	if (getuid() == 0) {
 #ifdef PREFER_XF86CONFIG_IN_ETC
-		printf("Shall I write it to /etc/X11/XF86Config? ");
+		filename = Strdup("/etc/X11/" XCONFIGFILE);
+		filename = append_version(filename);
+		printf("Shall I write it to %s? ", filename);
 		getstring(s);
 		printf("\n");
 		if (answerisyes(s))
-			return "/etc/X11/XF86Config";
+			return filename;
 #endif
 
+		if (filename)
+			free(filename);
+		filename = Strdup(TREEROOTCFG "/" XCONFIGFILE);
+		filename = append_version(filename);
 		printf("Please answer the following question with either 'y' or 'n'.\n");
-		printf("Shall I write it to the default location, /usr/X11R6/etc/X11/XF86Config? ");
+		printf("Shall I write it to the default location, %s? ", filename);
 		getstring(s);
 		printf("\n");
 		if (answerisyes(s))
-			return "/usr/X11R6/etc/X11/XF86Config";
+			return filename;
 
 #ifndef PREFER_XF86CONFIG_IN_ETC
-		printf("Shall I write it to /etc/X11/XF86Config? ");
+		if (filename)
+			free(filename);
+		filename = Strdup("/etc/X11/" XCONFIGFILE);
+		filename = append_version(filename);
+		printf("Shall I write it to %s? ", filename);
 		getstring(s);
 		printf("\n");
 		if (answerisyes(s))
-			return "/etc/X11/XF86Config";
+			return filename;
 #endif
 #else /* __EMX__ */
 	{
@@ -2539,21 +2609,23 @@ ask_XF86Config_location(void) {
 #endif /* __EMX__ */
 	}
 
-	printf("Do you want it written to the current directory as 'XF86Config'? ");
+	if (filename)
+		free(filename);
+	filename = Strdup(XCONFIGFILE);
+	filename = append_version(filename);
+	printf("Do you want it written to the current directory as '%s'? ", filename);
 	getstring(s);
 	printf("\n");
-	if (answerisyes(s))
-#ifndef __EMX__
-		return "XF86Config";
-#else
-		return "XConfig";
-#endif
+	if (answerisyes(s)) {
+		return filename;
+	}
 
 	printf("Please give a filename to write to: ");
 	getstring(s);
 	printf("\n");
-	filename = Malloc(strlen(s) + 1);
-	strcpy(filename, s);
+	if (filename)
+		free(filename);
+	filename = Strdup(s);
 	return filename;
 }
 
@@ -2624,7 +2696,7 @@ path_check(void) {
 
 
 static void
-configdir_check()
+configdir_check(void)
 {
 	/* /etc/X11 may not exist on some systems */
 #ifndef __EMX__

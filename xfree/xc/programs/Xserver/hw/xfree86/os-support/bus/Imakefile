@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile /main/16 1996/10/27 18:07:43 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Imakefile,v 1.14 2000/11/06 19:24:09 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Imakefile,v 1.16 2001/04/20 17:02:43 tsi Exp $
 
 #include <Server.tmpl>
 
@@ -14,16 +14,20 @@ XCOMM Alpha (Linux) PCI driver
 PCIDRVRSRC = axpPci.c
 PCIDRVROBJ = axpPci.o
 
-#elif defined(LinuxArchitecture) && defined(SparcArchitecture)
+#elif (defined(LinuxArchitecture) || defined(SunArchitecture)) && \
+      defined(SparcArchitecture)
 
-XCOMM Sparc (Linux) PCI driver
+XCOMM Sparc PCI driver
 
 PCIDRVRSRC = sparcPci.c
 PCIDRVROBJ = sparcPci.o
-SBUSDRVSRC = linuxSbus.c
-SBUSDRVOBJ = linuxSbus.o
+SBUSDRVSRC = Sbus.c
+SBUSDRVOBJ = Sbus.o
 
-#elif defined(LinuxArchitecture) && (defined(PpcArchitecture) || defined(MipsArchitecture) || defined(ia64Architecture))
+#elif defined(LinuxArchitecture) && \
+      (defined(PpcArchitecture) || \
+       defined(MipsArchitecture) || \
+       defined(ia64Architecture))
 
 XCOMM generic linux PCI driver (using /proc/bus/pci, requires kernel 2.2)
 

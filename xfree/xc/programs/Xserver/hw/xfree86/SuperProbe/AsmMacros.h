@@ -57,10 +57,16 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/AsmMacros.h,v 3.14 1999/09/25 14:36:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/AsmMacros.h,v 3.18 2001/04/01 14:00:07 tsi Exp $ */
 
 #if defined(__GNUC__)
 #if defined(linux) && (defined(__alpha__) || defined(__ia64__))
+#undef	inb
+#undef	inw
+#undef	inl
+#undef	outb
+#undef	outw
+#undef	outl
 #define inb _inb
 #define inw _inw
 #define inl _inl
