@@ -1,5 +1,5 @@
 .\" $XConsortium: xset.man /main/29 1996/12/09 17:10:30 kaleb $
-.\" $XFree86: xc/programs/xset/xset.man,v 3.5 1997/01/22 11:18:54 dawes Exp $
+.\" $XFree86: xc/programs/xset/xset.man,v 3.5.2.2 1998/11/12 13:50:35 dawes Exp $
 .\" Copyright (c) 1988  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3cmap.c,v 3.5 1996/12/27 07:02:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3cmap.c,v 3.5.2.1 1998/10/01 12:19:39 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -270,16 +270,18 @@ s3RestoreColor0(pScreen)
 
    QueryColors(InstalledMaps[pScreen->myNum], 1, &pix, &rgb);
 
-   BLOCK_CURSOR;
-   outb(DAC_W_INDEX, 0);
-   if (s3DAC8Bit) {
-      outb(DAC_DATA, xf86rGammaMap[rgb.red   >> 8]);
-      outb(DAC_DATA, xf86gGammaMap[rgb.green >> 8]);
-      outb(DAC_DATA, xf86bGammaMap[rgb.blue  >> 8]);
-   } else {
-      outb(DAC_DATA, xf86rGammaMap[rgb.red   >> 8] >> 2);
-      outb(DAC_DATA, xf86gGammaMap[rgb.green >> 8] >> 2);
-      outb(DAC_DATA, xf86bGammaMap[rgb.blue  >> 8] >> 2);
+   if (xf86VTSema) {
+      BLOCK_CURSOR;
+      outb(DAC_W_INDEX, 0);
+      if (s3DAC8Bit) {
+        outb(DAC_DATA, xf86rGammaMap[rgb.red   >> 8]);
+        outb(DAC_DATA, xf86gGammaMap[rgb.green >> 8]);
+        outb(DAC_DATA, xf86bGammaMap[rgb.blue  >> 8]);
+      } else {
+        outb(DAC_DATA, xf86rGammaMap[rgb.red   >> 8] >> 2);
+        outb(DAC_DATA, xf86gGammaMap[rgb.green >> 8] >> 2);
+        outb(DAC_DATA, xf86bGammaMap[rgb.blue  >> 8] >> 2);
+      }
+      UNBLOCK_CURSOR;
    }
-   UNBLOCK_CURSOR;
 }

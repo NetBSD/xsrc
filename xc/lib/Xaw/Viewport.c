@@ -47,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xaw/Viewport.c,v 1.1.1.1.12.2 1998/10/04 15:22:52 hohndel Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
@@ -771,7 +772,7 @@ static void ScrollUpDownProc(widget, closure, call_data)
 {
     ViewportWidget w = (ViewportWidget)closure;
     Widget child = w->viewport.child;
-    int pix = (int)call_data;
+    int pix = (int)(long)call_data;
     Position x, y;
 
     if (child == NULL) return;	/* no child to scroll. */

@@ -1,5 +1,5 @@
 /* $XConsortium: Xtranssock.c /main/58 1996/12/04 10:22:50 lehors $ */
-/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.25.2.4 1998/02/01 16:04:34 robin Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.25.2.6 1998/11/05 14:03:08 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -931,6 +931,7 @@ char *port;
     int			namelen;
     int			oldUmask;
     int			status;
+    unsigned int	mode;
 
     PRMSG (2, "SocketUNIXCreateListener(%s)\n",
 	port ? port : "NULL", 0, 0);
@@ -940,8 +941,13 @@ char *port;
     oldUmask = umask (0);
 
 #ifdef UNIX_DIR
-    if (!mkdir (UNIX_DIR, 0777))
-        chmod (UNIX_DIR, 0777);
+#ifdef HAS_STICKY_DIR_BIT
+    mode = 01777;
+#else
+    mode = 0777;
+#endif
+    mkdir (UNIX_DIR, mode);
+    chmod (UNIX_DIR, mode);
 #endif
 
     sockname.sun_family = AF_UNIX;
@@ -1015,6 +1021,7 @@ XtransConnInfo ciptr;
     struct stat		statb;
     int 		status = TRANS_RESET_NOOP;
     void 		TRANS(FreeConnInfo) ();
+    unsigned int	mode;
 
     PRMSG (3, "SocketUNIXResetListener(%x,%d)\n", ciptr, ciptr->fd, 0);
 
@@ -1029,8 +1036,13 @@ XtransConnInfo ciptr;
 	int oldUmask = umask (0);
 
 #ifdef UNIX_DIR
-	if (!mkdir (UNIX_DIR, 0777))
-	    chmod (UNIX_DIR, 0777);
+#ifdef HAS_STICKY_DIR_BIT
+	mode = 01777;
+#else
+	mode = 0777;
+#endif
+	mkdir (UNIX_DIR, mode);
+	chmod (UNIX_DIR, mode);
 #endif
 
 	close (ciptr->fd);

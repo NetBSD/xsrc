@@ -1,5 +1,5 @@
 /* $XConsortium: dm.c,v 1.71 95/07/10 21:18:07 gildea Exp $ */
-/* $XFree86: xc/programs/xdm/dm.c,v 3.4 1996/10/06 13:18:56 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/dm.c,v 3.4.4.3 1998/10/25 05:35:11 dawes Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -405,10 +405,11 @@ WaitForChild ()
     sigaddset(&mask, SIGCHLD);
     sigaddset(&mask, SIGHUP);
     sigprocmask(SIG_BLOCK, &mask, &omask);
+    Debug ("signals blocked\n");
 #else
     omask = sigblock (sigmask (SIGCHLD) | sigmask (SIGHUP));
-#endif
     Debug ("signals blocked, mask was 0x%x\n", omask);
+#endif
     if (!ChildReady && !Rescan)
 #ifndef X_NOT_POSIX
 	sigsuspend(&omask);
@@ -740,7 +741,7 @@ StorePid ()
     int		oldpid;
 
     if (pidFile[0] != '\0') {
-	pidFd = open (pidFile, 2);
+	pidFd = open (pidFile, O_RDWR);
 	if (pidFd == -1 && errno == ENOENT)
 	    pidFd = open (pidFile, O_RDWR|O_CREAT, 0666);
 	if (pidFd == -1 || !(pidFilePtr = fdopen (pidFd, "r+")))

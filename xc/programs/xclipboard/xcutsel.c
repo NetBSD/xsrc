@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
  * *
  * Author:  Ralph Swick, DEC/Project Athena
  */
+/* $XFree86: xc/programs/xclipboard/xcutsel.c,v 1.1.1.3.4.2 1998/10/04 15:23:10 hohndel Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>
@@ -267,7 +268,7 @@ static void GetBuffer(w, closure, callData)
 }
 
 
-void main(argc, argv)
+int main(argc, argv)
     int argc;
     char *argv[];
 {

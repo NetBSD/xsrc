@@ -22,7 +22,7 @@ SOFTWARE.
 ************************************************************************/
 
 /* $XConsortium: dixfonts.c /main/58 1996/09/28 17:11:55 rws $ */
-/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6 1996/12/23 06:29:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6.2.7 1998/11/08 08:45:26 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "X.h"
@@ -379,7 +379,7 @@ OpenFont(client, fid, flags, lenfname, pfontname)
     ErrorF("OpenFont: fontname is \"%s\"\n", f);
     xfree(f);
 #endif
-    if (!lenfname)
+    if (!lenfname || lenfname > XLFDMAXFONTNAMELEN)
 	return BadName;
     if (patternCache)
     {
@@ -693,7 +693,7 @@ doListFontsAndAliases(client, c)
 	     * old state
 	     */
 	    else if (err == FontNameAlias) {
-		char	tmp_pattern[256];
+		char	tmp_pattern[XLFDMAXFONTNAMELEN];
 		/*
 		 * when an alias recurses, we need to give
 		 * the last FPE a chance to clean up; so we call
@@ -834,6 +834,8 @@ ListFonts(client, pattern, length, max_names)
     int         i;
     LFclosurePtr c;
 
+    if (length > XLFDMAXFONTNAMELEN)
+	return BadAlloc;
     if (!(c = (LFclosurePtr) xalloc(sizeof *c)))
 	return BadAlloc;
     c->fpe_list = (FontPathElementPtr *)
@@ -1097,6 +1099,8 @@ StartListFontsWithInfo(client, length, pattern, max_names)
     int		    i;
     LFWIclosurePtr  c;
 
+    if (length > XLFDMAXFONTNAMELEN)
+	goto badAlloc;
     if (!(c = (LFWIclosurePtr) xalloc(sizeof *c)))
 	goto badAlloc;
     c->fpe_list = (FontPathElementPtr *)
@@ -1648,9 +1652,11 @@ FreeFontPath(list, n, force)
 		    found++;
 	    }
 	    if (list[i]->refcount != found) {
+#if 0
 		ErrorF("FreeFontPath: FPE \"%.*s\" refcount is %d, should be %d; fixing.\n",
 		       list[i]->name_length, list[i]->name,
 		       list[i]->refcount, found);
+#endif
 		list[i]->refcount = found; /* ensure it will get freed */
 	    }
 	}

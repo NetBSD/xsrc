@@ -2,26 +2,26 @@
 /*
  * Copyright 1996-1997  David J. McKay
  *
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL 
- * DAVID J. MCKAY BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF 
- * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * DAVID J. MCKAY BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+ * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.5 1998/02/07 09:23:34 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.6 1998/10/19 07:33:48 hohndel Exp $ */
 
 #include <math.h>
 #include <stdlib.h>
@@ -80,33 +80,33 @@ vgaVideoChipRec NV =
   NULL, /* GetMode */
   NULL, /* FbInit */
   (void (*)(int))NoopDDA, /* We always assume linear memory */
-  (void (*)(int))NoopDDA, 
-  (void (*)(int))NoopDDA, 
+  (void (*)(int))NoopDDA,
+  (void (*)(int))NoopDDA,
   0x10000,/* This is the size of the mapped memory window, usually 64k    */
   0x10000,/* This is the size of a video memory bank for this chipset     */
   16,     /* Number of bits to shift addressto determine the bank number  */
   0xFFFF, /* Bitmask used to determine the address within a specific bank */
   0x00000, 0x10000,   /* Bottom and top addresses for reads inside a bank */
-  0x00000, 0x10000,   /* Same for writes */         
+  0x00000, 0x10000,   /* Same for writes */
   FALSE, /* True if chipset seperate read and write bank registers */
-  VGA_NO_DIVIDE_VERT,  /* VGA_DIVIDE_VERT if vertical timing numbers 
+  VGA_NO_DIVIDE_VERT,  /* VGA_DIVIDE_VERT if vertical timing numbers
                           to be divided by two for interlaced modes */
-  {0,},  /* Option flags */	
+  {0,},  /* Option flags */
   8,     /* Multiple to which the virtual width rounded */
-  TRUE,  /* Support linear-mapped frame buffer */	
-  0,     /* Physical base address of the linear-mapped frame buffer */	
-  0  ,   /* Size  of the linear-mapped frame buffer */		
+  TRUE,  /* Support linear-mapped frame buffer */
+  0,     /* Physical base address of the linear-mapped frame buffer */
+  0  ,   /* Size  of the linear-mapped frame buffer */
   TRUE,  /* 16 bpp */
-  FALSE, /* 24 bpp */ 
-  FALSE, /* 32 bpp */	
-  NULL,  /* Pointer to a list of builtin driver modes */   
+  FALSE, /* 24 bpp */
+  FALSE, /* 32 bpp */
+  NULL,  /* Pointer to a list of builtin driver modes */
   1,      /* Scale factor used to scale the raw clocks to pixel clocks */
   1
 };
 
 static NVChipType chipis=NV1;
 
-NVChipType GetChipType(void) 
+NVChipType GetChipType(void)
 {
   return chipis;
 }
@@ -115,24 +115,27 @@ typedef Bool (*NVProbeFuncType)(vgaVideoChipRec *rec,void *base0,void *base1);
 
 Bool NV1Probe(vgaVideoChipRec *rec,void *base0,void *base1);
 Bool NV3Probe(vgaVideoChipRec *rec,void *base0,void *base1);
+Bool NV4Probe(vgaVideoChipRec *rec,void *base0,void *base1);
 
 static NVProbeFuncType NVProbeFuncList[NumNVChips]= {
   NV1Probe,
-  NV3Probe
+  NV3Probe,
+  NV4Probe
 };
 
 
 typedef struct {
   char *name;
   NVChipType type;
-  int vendor; 
+  int vendor;
   int device;
 }NVProbeInfo;
 
 static NVProbeInfo probeList[]={
   { "NV1",NV1,PCI_VENDOR_NVIDIA,PCI_CHIP_DAC64},
   { "STG2000",NV1,PCI_VENDOR_SGS,PCI_CHIP_STG1764},
-  { "RIVA128",NV3,PCI_VENDOR_NVIDIA_SGS,PCI_CHIP_RIVA128}
+  { "RIVA128",NV3,PCI_VENDOR_NVIDIA_SGS,PCI_CHIP_RIVA128},
+  { "RIVATNT",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_TNT}
 };
 
 
@@ -171,14 +174,14 @@ static Bool NVProbe(void)
     while((pcrp=pciList[idx++]) && (!found)) {
       for(i=0;i<NUM_PROBE_ENTRIES && !found;i++) {
         if((pcrp->_vendor==probeList[i].vendor) &&
-	   ( ((pcrp->_device & 0xFFFB)==probeList[i].device) || 
-             (vga256InfoRec.chipset && 
+           ( ((pcrp->_device & 0xFFFB)==probeList[i].device) ||
+             (vga256InfoRec.chipset &&
              !StrCaseCmp(vga256InfoRec.chipset,probeList[i].name)))) {
-	  base0=(void*) (pcrp->_base0 & 0xFF800000);
-	  base1=(void*) (pcrp->_base1 & 0xFF800000);
-	  chipis=probeList[i].type;
+          base0=(void*) (pcrp->_base0 & 0xFF800000);
+          base1=(void*) (pcrp->_base1 & 0xFF800000);
+          chipis=probeList[i].type;
           vga256InfoRec.chipset=probeList[i].name;
-	  found=1;
+          found=1;
         }
       }
     }

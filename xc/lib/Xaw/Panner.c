@@ -1,6 +1,6 @@
 /*
  * $XConsortium: Panner.c,v 1.52 95/01/10 14:31:26 kaleb Exp $
- * $XFree86: xc/lib/Xaw/Panner.c,v 3.2 1995/01/28 15:43:27 dawes Exp $
+ * $XFree86: xc/lib/Xaw/Panner.c,v 3.2.8.1 1998/11/10 11:55:28 dawes Exp $
  *
 Copyright (c) 1989, 1994  X Consortium
 
@@ -36,6 +36,9 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Xos.h>
 #include <X11/Xmu/Misc.h>		/* for Min */
 #include <X11/Xmu/Drawing.h>
+#if defined(sun) && defined(SVR4)
+#define __EXTENSIONS__
+#endif
 #include <ctype.h>			/* for isascii() etc. */
 #include <math.h>			/* for atof() */
 

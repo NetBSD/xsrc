@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line2.c,v 3.2.2.1 1997/07/19 04:59:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line2.c,v 3.2.2.2 1998/07/30 06:24:21 hohndel Exp $ */
 
 /***********************************************************
 
@@ -48,7 +48,7 @@ SOFTWARE.
 
 ******************************************************************/
 /* $XConsortium: cfbline.c,v 1.24 94/07/28 14:33:33 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line2.c,v 3.2.2.1 1997/07/19 04:59:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86line2.c,v 3.2.2.2 1998/07/30 06:24:21 hohndel Exp $ */
 
 /*
  * Accelerated general lines for chips that cannot hardware accelerate
@@ -164,7 +164,6 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
     unsigned int bias = miGetZeroLineBias(pDrawable->pScreen);
     int usevline;
     Bool UseTwoPointLine;
-    Bool blit;
     int needs_setup;            /* Call the Setup function only if we're
 				   really going to call a Subsequent function.
 				   This is an issue for sloped lines when
@@ -194,7 +193,7 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
      * sloped lines.
      */
     UseTwoPointLine = FALSE;
-    if (xf86AccelInfoRec.SubsequentTwoPointLine) {
+    if (xf86AccelInfoRec.Flags & USE_TWO_POINT_LINE) {
 #ifdef POLYSEGMENT
         if (xf86AccelInfoRec.Flags & TWO_POINT_LINE_NOT_LAST ||
         pGC->capStyle != CapNotLast)
@@ -220,7 +219,6 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
     }
 
     xf86AccelInfoRec.xf86GetLongWidthAndPointer(pDrawable, &nlwidth, &addrl);
-    blit = FALSE;
  
     alu = devPriv->rop;
     xor = devPriv->xor;
@@ -311,22 +309,24 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 
 			        xf86AccelInfoRec.SubsequentTwoPointLine(
 			            x1, y1t, x1, y2t - 1, bias);
-			        blit = TRUE;
+				if(xf86AccelInfoRec.Flags &
+		                			BACKGROUND_OPERATIONS)
+			        	xf86AccelInfoRec.Sync();
 			    }
 			    else
+#if 0
+	/* Newer chipsets have block fill which negates this */
+	/* We may lose on older chipsets, but what the heck! */
                             if ((usevline == VLINE_FRAMEBUFFER)
                             && length > 30) {
-                                /* This can only happen for GXcopy. */
-		                if (blit && (xf86AccelInfoRec.Flags &
-		                BACKGROUND_OPERATIONS)) {
-                                    xf86AccelInfoRec.Sync();
-                                    blit = FALSE;
-                                }
+				xf86AccelInfoRec.Sync();
+
 		                xf86AccelInfoRec.VerticalLineGXcopyFallBack(
   		                    pGC->alu, 0, pGC->fgPixel, addrl, nlwidth,
 		                    x1, y1t, length);
-		            }
-		            else {
+		            } else
+#endif
+		            {
 			      if (needs_setup) {
 				xf86AccelInfoRec.SetupForFillRectSolid(
 				     pGC->fgPixel, pGC->alu, pGC->planemask);
@@ -335,7 +335,9 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 
 	                        xf86AccelInfoRec.SubsequentFillRectSolid(
 	                            x1, y1t, 1, length);
-	                        blit = TRUE;
+				if(xf86AccelInfoRec.Flags &
+		                			BACKGROUND_OPERATIONS)
+			        	xf86AccelInfoRec.Sync();
 	                    }
 			}
 		    }
@@ -404,15 +406,20 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 		    x2t = min(x2, pbox->x2);
 		    if (x1t != x2t)
 		    {
-		      if (needs_setup) {
-			xf86AccelInfoRec.SetupForFillRectSolid(
-			    pGC->fgPixel, pGC->alu, pGC->planemask);
-			needs_setup = 0;
-		      }
+		        if (needs_setup) {
+		  	  xf86AccelInfoRec.SetupForFillRectSolid(
+			      pGC->fgPixel, pGC->alu, pGC->planemask);
+			  needs_setup = 0;
+		        }
 
-		        xf86AccelInfoRec.SubsequentFillRectSolid(
-		            x1t, y1, x2t - x1t, 1);
-		        blit = TRUE;
+			/* if (xf86AccelInfoRec.Flags & HORIZONTAL_TWOPOINTLINE)
+				xf86AccelInfoRec.SubsequentTwoPointLine(
+			    		x1t, y1, x2t, y1, 0);
+			else */
+		        	xf86AccelInfoRec.SubsequentFillRectSolid(
+		            		x1t, y1, x2t - x1t, 1);
+			if(xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS)
+			    xf86AccelInfoRec.Sync();
 		    }
 		    nbox--;
 		    pbox++;
@@ -472,7 +479,8 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 
 		        xf86AccelInfoRec.SubsequentTwoPointLine(
 		            x1, y1, x2, y2, bias);
-		        blit = TRUE;
+			if(xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS)
+			    xf86AccelInfoRec.Sync();
 		        break;
 		    }
 		    if (!(octant & YMAJOR)) {
@@ -485,11 +493,8 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 		    if (pGC->capStyle != CapNotLast)
 			len++;
 #endif
-		    if (blit && (xf86AccelInfoRec.Flags &
-		    BACKGROUND_OPERATIONS)) {
-                        xf86AccelInfoRec.Sync();
-                        blit = FALSE;
-                    }
+		    xf86AccelInfoRec.Sync();
+
 		    xf86AccelInfoRec.BresenhamLineFallBack(alu, and, xor,
 		        addrl, nlwidth, signdx, signdy, axis, x1, y1,
 		        e, e1, e2, len);
@@ -540,11 +545,9 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 			}
 			else
 			    err = e;
-		        if (blit && (xf86AccelInfoRec.Flags &
-		        BACKGROUND_OPERATIONS)) {
-                            xf86AccelInfoRec.Sync();
-                            blit = FALSE;
-                        }
+			
+			xf86AccelInfoRec.Sync();
+
 		        xf86AccelInfoRec.BresenhamLineFallBack(alu, and, xor,
 		            addrl, nlwidth, signdx, signdy, axis,
 		            new_x1, new_y1, err, e1, e2, len);
@@ -583,6 +586,8 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
 	      }
 	      
 		xf86AccelInfoRec.SubsequentFillRectSolid(x2, y2, 1, 1);
+    		if (xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS)
+        		xf86AccelInfoRec.Sync();
 		break;
 	    }
 	    else
@@ -591,7 +596,5 @@ xf86PolyLine2(pDrawable, pGC, mode, npt, pptInit)
     }
 #endif
 
-    if (xf86AccelInfoRec.Flags & BACKGROUND_OPERATIONS)
-        xf86AccelInfoRec.Sync();
 }
 

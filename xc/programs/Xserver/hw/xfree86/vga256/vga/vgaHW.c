@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaHW.c,v 3.50.2.3 1998/02/01 16:05:17 robin Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaHW.c,v 3.50.2.5 1998/11/08 10:03:50 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -324,6 +324,15 @@ Bool vgaBlankScreen(ScreenPtr ptr, Bool on)
 
   (*vgaSaveScreenFunc)(SS_START);
   outw(0x3C4, (scrn << 8) | 0x01); /* change mode */
+#if defined(Lynx) && defined(__i386__) && (defined(MONOVGA) || defined(XF86VGA16))
+  /* This helps to fix a complete system lockup using CT69000 VGA
+   * on LynxOS. I've seen this on two totally different systems.
+   * In each case there were no problems with VGA16 or VGA2 on
+   * FreeBSD while LynxOS alway crashed. Don't know what's going on
+   * with LynxOS....
+   */
+  usleep(1000);
+#endif
   (*vgaSaveScreenFunc)(SS_FINISH);
 #else
   if(on) 
@@ -1158,6 +1167,9 @@ vgaHWInit(mode, size)
      outw (EGC_READ ,0x40ff) ;
      outw (EGC_ADD, 0x0000) ;
      outw (EGC_LENGTH, 0x000f) ;
+#ifdef __linux__
+     outb(0x62, 0x0c);
+#endif /* __linux__ */
 #endif /* PC98_EGC */
   return(TRUE);
 }

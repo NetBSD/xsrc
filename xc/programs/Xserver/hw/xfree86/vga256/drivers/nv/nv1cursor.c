@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv1cursor.c,v 1.1.2.2 1998/01/24 00:04:37 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv1cursor.c,v 1.1.2.3 1998/10/21 10:44:43 dawes Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -33,12 +33,12 @@
 #include "windowstr.h"
 
 #include "compiler.h"
-#include "vga256.h"
 #include "xf86.h"
 #include "mipointer.h"
 #include "xf86Priv.h"
 #include "xf86_Option.h"
 #include "xf86_OSlib.h"
+#include "vga256.h"
 #include "vga.h"
 
 #include "miline.h"

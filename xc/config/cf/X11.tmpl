@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.8.2.4 1998/01/23 12:35:08 dawes Exp $
+XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.8.2.8 1998/11/08 09:06:28 dawes Exp $
 
 /***************************************************************************
  *                                                                         *
@@ -209,6 +209,16 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.8.2.4 1998/01/23 12:35:08 dawes Exp $
 #define BuildDPMSLibrary	BuildDPMSExt
 #endif
 
+#ifndef BuildMiscDocs
+#define BuildMiscDocs		NO
+#endif
+#ifndef BuildSpecsDocs
+#define BuildSpecsDocs		NO
+#endif
+#ifndef BuildAllSpecsDocs
+#define BuildAllSpecsDocs	NO
+#endif
+
 #ifndef InstallLibManPages
 #define InstallLibManPages	YES
 #endif
@@ -292,6 +302,14 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.8.2.4 1998/01/23 12:35:08 dawes Exp $
 #endif
 #endif
 #endif
+#ifndef ExtraConnectionDefs
+#if HasStickyDirBit
+#define ExtraConnectionDefs -DHAS_STICKY_DIR_BIT
+#else
+#define ExtraConnectionDefs /**/
+#endif
+#endif
+CONNECTION_FLAGS = ConnectionFlags ExtraConnectionDefs
 #ifndef ProjectThreadsDefines
 #define ProjectThreadsDefines -DXTHREADS
 #endif
@@ -665,6 +683,15 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.8.2.4 1998/01/23 12:35:08 dawes Exp $
 #ifndef ConfigDir
 #define ConfigDir $(LIBDIR)/config
 #endif
+#ifndef DocDir
+#define DocDir $(LIBDIR)/doc
+#endif
+#ifndef DocHtmlDir
+#define DocHtmlDir $(DOCDIR)/html
+#endif
+#ifndef DocPsDir
+#define DocPsDir $(DOCDIR)/PostScript
+#endif
 #ifndef FontDir
 #define FontDir $(LIBDIR)/fonts
 #endif
@@ -805,6 +832,9 @@ XCOMM X Window System make variables; these need to be coordinated with rules
            VARDIR = VarDirectory
 #endif
 
+           DOCDIR = DocDir
+       DOCHTMLDIR = DocHtmlDir
+         DOCPSDIR = DocPsDir
           FONTDIR = FontDir		/* font directories */
          XINITDIR = XinitDir		/* xinit config files */
            XDMDIR = XdmDir		/* xdm config files */
@@ -1692,7 +1722,7 @@ FontBaseObj(basename).Z:  FontSrc(basename)				@@\
 #endif /* CompressedFontTarget */
 
 #if !defined(FontTarget) && !defined(FontObj)
-#ifdef CompressAllFonts
+#if CompressAllFonts
 #define FontTarget(basename) CompressedFontTarget(basename)
 #if GzipFontCompression
 #define FontObj(basename) FontBaseObj(basename).gz
@@ -1734,10 +1764,10 @@ all:: file.PS								@@\
 file.PS: srcs								@@\
 	-$(TROFF) $(MSMACROS) $(XDOCMACROS) srcs 2> index.raw > file.nPS \@@\
 	&& PostProcessTroffPS(file.nPS,$@)				@@\
-	@if grep '^[^1-9.]' index.raw; then exit 1; else test $$? = 1; fi @@\
+	@if grep '^[^1-9.]' index.raw; then exit 1; else test $$? -le 1; fi @@\
 									@@\
 file.txt: srcs								@@\
-	$(NROFF) $(MSMACROS) $(XDOCMACROS) srcs 2> index.raw > $@	@@\
+	$(NROFF) $(MSMACROS) $(XDOCMACROS) srcs 2> index.raw | $(COL) $(COLFLAGS) > $@ @@\
 									@@\
 clean::									@@\
 	$(RM) index.raw file.nPS file.PS file.txt
@@ -1751,10 +1781,10 @@ all:: file.PS								@@\
 file.PS: srcs								@@\
 	-$(TBL) $(XDOCMACROS) srcs | $(TROFF) $(MSMACROS) 2> index.raw > file.nPS \@@\
 	&& PostProcessTroffPS(file.nPS,$@)				@@\
-	@if grep '^[^1-9.]' index.raw; then exit 1; else test $$? = 1; fi @@\
+	@if grep '^[^1-9.]' index.raw; then exit 1; else test $$? -le 1; fi @@\
 									@@\
 file.txt: srcs								@@\
-	$(TBL) $(XDOCMACROS) srcs | $(NROFF) $(MSMACROS) 2> index.raw | $(COL) > $@	@@\
+	$(TBL) $(XDOCMACROS) srcs | $(NROFF) $(MSMACROS) 2> index.raw | $(COL) $(COLFLAGS) > $@	@@\
 									@@\
 clean::									@@\
 	$(RM) index.raw file.nPS file.PS file.txt
@@ -1768,10 +1798,10 @@ all:: file.PS								@@\
 file.PS: srcs								@@\
 	-$(TBL) $(XDOCMACROS) srcs | $(EQN) | $(TROFF) $(MSMACROS) 2> index.raw > file.nPS \@@\
 	&& PostProcessTroffPS(file.nPS,$@)				@@\
-	@if grep '^[^1-9.]' index.raw; then exit 1; else test $$? = 1; fi @@\
+	@if grep '^[^1-9.]' index.raw; then exit 1; else test $$? -le 1; fi @@\
 									@@\
 file.txt: srcs								@@\
-	$(TBL) $(XDOCMACROS) srcs | $(NEQN) | $(NROFF) $(MSMACROS) 2> index.raw | $(COL) > $@ @@\
+	$(TBL) $(XDOCMACROS) srcs | $(NEQN) | $(NROFF) $(MSMACROS) 2> index.raw | $(COL) $(COLFLAGS) > $@ @@\
 									@@\
 clean::									@@\
 	$(RM) index.raw file.nPS file.PS file.txt
@@ -1813,3 +1843,20 @@ file.PS: src								@@\
 	@echo "cannot make file.PS: no latex on this system"; exit 1
 #endif /* HasLatex (else) */
 #endif /* MakeLatexDoc */
+
+#ifndef InstallDoc
+#define InstallDoc(name,deps)					@@\
+install:: deps								@@\
+	MakeDir($(DESTDIR)$(DOCPSDIR))					@@\
+	@if [ -f name.PS ]; then set -x; \				@@\
+	  $(INSTALL) $(INSTALLFLAGS) $(INSTDATFLAGS) name.PS $(DESTDIR)$(DOCPSDIR); \ @@\
+	fi								@@\
+	MakeDir($(DESTDIR)$(DOCDIR))					@@\
+	@if [ -f name.txt ]; then set -x; \				@@\
+	  $(INSTALL) $(INSTALLFLAGS) $(INSTDATFLAGS) name.txt $(DESTDIR)$(DOCDIR)/name.TXT; \ @@\
+	fi
+#endif
+
+#ifndef InstallRoffDoc
+#define InstallRoffDoc(name) InstallDoc(name,name.PS name.txt)
+#endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3.c,v 3.155.2.17 1998/02/21 10:00:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3.c,v 3.155.2.19 1998/10/19 04:09:32 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -495,10 +495,11 @@ s3GetPCIInfo()
 	   "\tsome video cards are being sold with these chips relabeled\n"
 	   "\tas S3 Inc. chips, including S3's logo.  They are NOT S3 chips.\n"
 	   "\tPlease see http://www.s3.com\n\n"
-	       ,XCONFIG_PROBED, s3InfoRec.name);
+	       ,XCONFIG_PROBED, s3InfoRec.name
+	       ,vendor, chip);
       }
 
-      if (pcrp->_vendor == PCI_S3_VENDOR_ID) {
+      if (pcrp->_vendor == PCI_S3_VENDOR_ID && pcrp->_command != 0) {
 	 found = TRUE;
 	 switch (pcrp->_device) {
 	 case PCI_TRIO_32_64:

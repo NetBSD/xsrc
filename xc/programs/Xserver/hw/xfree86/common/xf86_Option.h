@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Option.h,v 3.65.2.12 1998/02/24 19:05:57 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Option.h,v 3.65.2.16 1998/09/27 12:58:54 hohndel Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -156,6 +156,7 @@ typedef struct {
 #define OPTION_NO_PCI_DISC	138 /* Disable PCI disconnect (S3) */
 #define OPTION_NO_SPLIT_XFER	139 /* Disable split VRAM transfers to avoid pixel wrapping (S3) */
 #define OPTION_MGA_24BPP_FIX	140 /* change PLL for higher clocks at 24bpp */
+#define OPTION_MGA_SDRAM	141 /* MGA equipped with SDRAM */
 
 /* Debugging options */
 #define OPTION_SHOWCACHE	150 /* Allow cache to be seen (S3) */
@@ -224,6 +225,23 @@ typedef struct {
 /* XAA options */
 #define OPTION_XAA_BENCHMARK	230 /* Perform start-up benchmarks */
 #define OPTION_XAA_NO_COL_EXP	231 /* Disable color expansion. */
+  
+/* options for Glint server */
+#define OPTION_FIREGL3000       232 /* Assume a Fire GL 3000 card */
+#define OPTION_OVERCLOCK_MEM	233 /* run the memory faster than it should */
+
+/* options for sis server */
+#define OPTION_HOST_BUS		240
+#define OPTION_EXT_ENG_QUEUE	241
+
+/* NeoMagic options */
+#define OPTION_PROG_LCD_MODE_REGS       245 /* Enable lcd mode programming */
+#define OPTION_NO_PROG_LCD_MODE_REGS    246 /* Disable lcd mode programming */
+#define OPTION_PROG_LCD_MODE_STRETCH    247 /* Enable lcd mode programming when */
+					    /* stretch mode is enabled */
+#define OPTION_NO_PROG_LCD_MODE_STRETCH 248 /* Disable lcd mode programming when */
+					    /* stretch mode is enabled */
+#define OPTION_OVERRIDE_VALIDATE_MODE   249 /* Skip mode validation for LCD panels */
 
 /*
  *  MAX flag value is 256.  If larger is needed, remember to update
@@ -382,6 +400,7 @@ OptFlagRec xf86_OptionTab[] = {
   { "no_pci_disconnect",	OPTION_NO_PCI_DISC },
   { "no_split_xfer",	OPTION_NO_SPLIT_XFER },
   { "mga_24bpp_fix",	OPTION_MGA_24BPP_FIX },
+  { "mga_sdram",	OPTION_MGA_SDRAM },
 
   { "showcache",	OPTION_SHOWCACHE },
   { "fb_debug",		OPTION_FB_DEBUG },
@@ -430,7 +449,15 @@ OptFlagRec xf86_OptionTab[] = {
   { "read_wait",        OPTION_READ_WAIT },
   { "all_wait",         OPTION_ALL_WAIT },
   { "enable_bitblt",    OPTION_ENABLE_BITBLT },
-
+  { "firegl_3000",      OPTION_FIREGL3000 },
+  { "overclock_mem",    OPTION_OVERCLOCK_MEM },
+  { "ext_eng_queue",    OPTION_EXT_ENG_QUEUE },
+  { "host_bus",    	OPTION_HOST_BUS },
+  { "prog_lcd_mode_regs",       OPTION_PROG_LCD_MODE_REGS },
+  { "no_prog_lcd_mode_regs",    OPTION_NO_PROG_LCD_MODE_REGS },
+  { "prog_lcd_mode_stretch",    OPTION_PROG_LCD_MODE_STRETCH },
+  { "no_prog_lcd_mode_stretch", OPTION_NO_PROG_LCD_MODE_STRETCH },
+  { "override_validate_mode",   OPTION_OVERRIDE_VALIDATE_MODE },
   { "",			-1 },
 };
 

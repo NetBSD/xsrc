@@ -2,7 +2,7 @@ XCOMM $XConsortium: os2Lib.rules /main/1 1996/10/31 14:47:29 kaleb $
 
 
 
-XCOMM $XFree86: xc/config/cf/os2Lib.rules,v 3.7 1997/01/27 06:12:49 dawes Exp $
+XCOMM $XFree86: xc/config/cf/os2Lib.rules,v 3.7.2.1 1998/10/11 12:34:49 hohndel Exp $
 
 /*
  * OS2/EMX shared library rules (DLL version)
@@ -121,7 +121,7 @@ AllTarget(libname.dll)							@@\
 	LBRRSP = Concat3(libname,os2,.rsp)				@@\
 									@@\
 link.rsp: $(LBRRSP) $(LBRDEF)						@@\
-	@echo $(LBRPATH)"\\dll0.obj+" >link.rsp				@@\
+	@echo $(LBRPATH)\\dll0.obj+ >link.rsp				@@\
 	@cat $(LBRRSP) >>link.rsp					@@\
 	@echo $(LBRPATH)\\mt\\ $(LBRPATH)\\ $(REQUIREDLIBS) bsd socket c_alias c_static c_import os2 emx2 end >>link.rsp	@@\
 	@echo $(LBRDEF) >>link.rsp					@@\

@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imInt.c,v 3.0.4.2 1997/07/05 15:55:34 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imInt.c,v 3.0.4.3 1998/05/19 02:55:10 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
@@ -189,6 +189,9 @@ _XimMakeImName(lcd)
     char	  *ret;
 
     buf[0] = '\0';
+    if (lcd->core->modifiers != (char *)NULL &&
+	strlen(lcd->core->modifiers) >= sizeof(buf))
+	return NULL;
     if(lcd->core->modifiers != (char *)NULL && *lcd->core->modifiers != '\0') {
 	mod = _XimStrstr(lcd->core->modifiers, XIMMODIFIER);
 	if(mod) {

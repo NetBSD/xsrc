@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.11 1998/02/20 14:28:02 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.23 1998/11/04 08:02:07 hohndel Exp $ */
 /*
  * PCI Probe
  *
@@ -25,13 +25,17 @@
 #define PCI_VENDOR_TRIDENT	0x1023
 #define PCI_VENDOR_MATROX	0x102B
 #define PCI_VENDOR_CHIPSTECH	0x102C
+#define PCI_VENDOR_NEC		0x1033
 #define PCI_VENDOR_SIS		0x1039
 #define PCI_VENDOR_SGS		0x104A
 #define PCI_VENDOR_NUMNINE	0x105D
 #define PCI_VENDOR_UMC		0x1060
+#define PCI_VENDOR_CYRIX	0x1078
+#define PCI_VENDOR_NEOMAGIC	0x10C8
 #define PCI_VENDOR_NVIDIA	0x10DE
 #define PCI_VENDOR_INTERGRAPHICS	0x10ea
 #define PCI_VENDOR_ALLIANCE	0x1142
+#define PCI_VENDOR_3DFX		0x121a
 #define PCI_VENDOR_NVIDIA_SGS	0x12d2
 #define PCI_VENDOR_SIGMADESIGNS 0x1236
 #define PCI_VENDOR_RENDITION	0x1163
@@ -42,20 +46,28 @@
 
 /* ATI */
 #define PCI_CHIP_MACH32		0x4158
-#define PCI_CHIP_MACH64GX	0x4758
-#define PCI_CHIP_MACH64CX	0x4358
 #define PCI_CHIP_MACH64CT	0x4354
+#define PCI_CHIP_MACH64CX	0x4358
 #define PCI_CHIP_MACH64ET	0x4554
-#define PCI_CHIP_MACH64VT	0x5654
-#define PCI_CHIP_MACH64VU	0x5655
-#define PCI_CHIP_MACH64GT	0x4754
-#define PCI_CHIP_MACH64GU	0x4755
-#define PCI_CHIP_MACH64LT	0x4C47
 #define PCI_CHIP_MACH64GB	0x4742
 #define PCI_CHIP_MACH64GD	0x4744
 #define PCI_CHIP_MACH64GI	0x4749
 #define PCI_CHIP_MACH64GP	0x4750
 #define PCI_CHIP_MACH64GQ	0x4751
+#define PCI_CHIP_MACH64GT	0x4754
+#define PCI_CHIP_MACH64GU	0x4755
+#define PCI_CHIP_MACH64GV	0x4756
+#define PCI_CHIP_MACH64GW	0x4757
+#define PCI_CHIP_MACH64GX	0x4758
+#define PCI_CHIP_MACH64GZ	0x475A
+#define PCI_CHIP_MACH64LB	0x4C42
+#define PCI_CHIP_MACH64LD	0x4C44
+#define PCI_CHIP_MACH64LG	0x4C47
+#define PCI_CHIP_MACH64LI	0x4C49
+#define PCI_CHIP_MACH64LP	0x4C50
+#define PCI_CHIP_MACH64VT	0x5654
+#define PCI_CHIP_MACH64VU	0x5655
+#define PCI_CHIP_MACH64VV	0x5656
 
 /* Avance Logic */
 #define PCI_CHIP_ALG2301	0x2301
@@ -75,6 +87,7 @@
 /* Cirrus Logic */
 #define PCI_CHIP_GD7548		0x0038
 #define PCI_CHIP_GD7555		0x0040
+#define PCI_CHIP_GD7556		0x004C
 #define PCI_CHIP_GD5430		0x00A0
 #define PCI_CHIP_GD5434_4	0x00A4
 #define PCI_CHIP_GD5434_8	0x00A8
@@ -107,6 +120,10 @@
 #define PCI_CHIP_MGA1064	0x051a
 #define PCI_CHIP_MGA2164	0x051b
 #define PCI_CHIP_MGA2164_AGP	0x051f
+#define PCI_CHIP_MGAG200_PCI	0x0520
+#define PCI_CHIP_MGAG200	0x0521
+#define PCI_CHIP_MGAG100_PCI	0x1000
+#define PCI_CHIP_MGAG100	0x1001
 
 /* Chips & Tech */
 #define PCI_CHIP_65545		0x00D8
@@ -115,11 +132,20 @@
 #define PCI_CHIP_65554		0x00E4
 #define PCI_CHIP_65555		0x00E5
 #define PCI_CHIP_68554		0x00F4
+#define PCI_CHIP_69000		0x00C0
+
+/* NEC */
+#define PCI_CHIP_PC98CORE	0x0009
 
 /* SiS */
 #define PCI_CHIP_SG86C201	0x0001
 #define PCI_CHIP_SG86C202	0x0002
 #define PCI_CHIP_SG86C205	0x0205
+#define PCI_CHIP_SG86C215	0x0215
+#define PCI_CHIP_SG86C225	0x0225
+#define PCI_CHIP_SIS5598	0x0200	
+#define PCI_CHIP_SIS5597	0x0200
+#define PCI_CHIP_SIS6326	0x6326
 
 /* SGS */
 #define PCI_CHIP_STG2000	0x0008
@@ -129,9 +155,23 @@
 #define PCI_CHIP_I128		0x2309
 #define PCI_CHIP_I128_2		0x2339
 
+/* Cyrix */
+#define PCI_CHIP_MEDIAGX	0x0001
+#define PCI_CHIP_CYRIX_5520	0x0002
+#define PCI_CHIP_CYRIX_5530	0x0104
+
+/* NeoMagic */
+#define PCI_CHIP_NM2070		0x0001
+#define PCI_CHIP_NM2090		0x0002
+#define PCI_CHIP_NM2093		0x0003
+#define PCI_CHIP_NM2097		0x0083
+#define PCI_CHIP_NM2160		0x0004
+#define PCI_CHIP_NM2200		0x0005
+
 /* NVIDIA */
 #define PCI_CHIP_NV1		0x0008
 #define PCI_CHIP_DAC64		0x0009
+#define PCI_CHIP_TNT		0x0020
 
 /* NVIDIA & SGS */
 #define PCI_CHIP_RIVA128        0x0018
@@ -141,8 +181,12 @@
 #define PCI_CHIP_AP6422		0x6422
 #define PCI_CHIP_AT24		0x6424
 
+/* 3Dfx */
+#define PCI_CHIP_BANSHEE	0x0003
+
 /* Rendition */
 #define PCI_CHIP_V1000		0x0001
+#define PCI_CHIP_V2x00		0x2000
 
 /* 3Dlabs */
 #define PCI_CHIP_300SX		0x0001
@@ -161,6 +205,7 @@
 #define PCI_CHIP_VIRGE_DXGX	0x8A01
 #define PCI_CHIP_VIRGE_GX2	0x8A10
 #define PCI_CHIP_VIRGE_MX	0x8C01
+#define PCI_CHIP_VIRGE_MXP	0x8C03
 #define PCI_CHIP_868		0x8880
 #define PCI_CHIP_928		0x88B0
 #define PCI_CHIP_864_0		0x88C0
@@ -183,7 +228,7 @@
 #define PCI_CHIP_INTERG_1682	0x1682
 
 /* Increase this as required */
-#define MAX_DEV_PER_VENDOR 20
+#define MAX_DEV_PER_VENDOR 32
 
 typedef struct vgaPCIInformation {
     int Vendor;
@@ -229,15 +274,23 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_MACH64CT,	"Mach64 CT"},
 				{PCI_CHIP_MACH64ET,	"Mach64 ET"},
 				{PCI_CHIP_MACH64VT,	"Mach64 VT"},
-				{PCI_CHIP_MACH64VU,	"Mach64 VT"},
+				{PCI_CHIP_MACH64VU,	"Mach64 VT3"},
+				{PCI_CHIP_MACH64VV,	"Mach64 VT4"},
 				{PCI_CHIP_MACH64GT,	"Mach64 GT"},
-				{PCI_CHIP_MACH64GU,	"Mach64 GT"},
-				{PCI_CHIP_MACH64LT,	"Mach64 LT"},
-				{PCI_CHIP_MACH64GB,	"Mach64 GT"},
-				{PCI_CHIP_MACH64GD,	"Mach64 GT"},
-				{PCI_CHIP_MACH64GI,	"Mach64 GT"},
-				{PCI_CHIP_MACH64GP,	"Mach64 GT"},
-				{PCI_CHIP_MACH64GQ,	"Mach64 GT"},
+				{PCI_CHIP_MACH64GU,	"Mach64 GT-B"},
+				{PCI_CHIP_MACH64GV,	"Mach64 GT IIc"},
+				{PCI_CHIP_MACH64GW,	"Mach64 GT IIc"},
+				{PCI_CHIP_MACH64GZ,	"Mach64 GT IIc"},
+				{PCI_CHIP_MACH64GB,	"Mach64 GT Pro"},
+				{PCI_CHIP_MACH64GD,	"Mach64 GT Pro"},
+				{PCI_CHIP_MACH64GI,	"Mach64 GT Pro"},
+				{PCI_CHIP_MACH64GP,	"Mach64 GT Pro"},
+				{PCI_CHIP_MACH64GQ,	"Mach64 GT Pro"},
+				{PCI_CHIP_MACH64LG,	"Mach64 LT"},
+				{PCI_CHIP_MACH64LB,	"Mach64 LT Pro"},
+				{PCI_CHIP_MACH64LD,	"Mach64 LT Pro"},
+				{PCI_CHIP_MACH64LI,	"Mach64 LT Pro"},
+				{PCI_CHIP_MACH64LP,	"Mach64 LT Pro"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_AVANCE,	"Avance Logic",	{
 				{PCI_CHIP_ALG2301,	"ALG2301"},
@@ -292,6 +345,10 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_MGA1064,	"MGA 1064SG"},
 				{PCI_CHIP_MGA2164,	"MGA 2164W"},
 				{PCI_CHIP_MGA2164_AGP,	"MGA 2164W AGP"},
+				{PCI_CHIP_MGAG100,	"MGA G100 AGP"},
+				{PCI_CHIP_MGAG100_PCI,	"MGA G100 PCI"},
+				{PCI_CHIP_MGAG200,	"MGA G200 AGP"},
+				{PCI_CHIP_MGAG200_PCI,	"MGA G200 PCI"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_CHIPSTECH, "C&T", {
 				{PCI_CHIP_65545,	"65545"},
@@ -300,11 +357,19 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_65554,	"65554"},
 				{PCI_CHIP_65555,	"65555"},
 				{PCI_CHIP_68554,	"68554"},
+				{PCI_CHIP_69000,	"69000"},
+				{0x0000,		NULL}}},
+    {PCI_VENDOR_NEC,	"NEC",	{
+				{PCI_CHIP_PC98CORE,	"PC-98 PCI to Core Graph Bridge"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_SIS,	"SiS",	{
 				{PCI_CHIP_SG86C201,	"SG86C201"},
 				{PCI_CHIP_SG86C202,	"SG86C202"},
 				{PCI_CHIP_SG86C205,	"SG86C205"},
+				{PCI_CHIP_SG86C215,	"SG86C215"},
+				{PCI_CHIP_SG86C225,	"SG86C225"},
+				{PCI_CHIP_SIS5597,	"5597/98"},
+				{PCI_CHIP_SIS6326,	"6326"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_SGS,	"SGS-Thomson",	{
 				{PCI_CHIP_STG2000,	"STG2000"},
@@ -317,17 +382,35 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{0x0000,		NULL}}},
     {PCI_VENDOR_NVIDIA,	"NVidia",	{
 				{PCI_CHIP_NV1,		"NV1"},
+				{PCI_CHIP_TNT,		"Riva TNT"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_NVIDIA_SGS,	"NVidia/SGS-Thomson",	{
 				{PCI_CHIP_RIVA128,	"Riva128"},
+				{0x0000,		NULL}}},
+    {PCI_VENDOR_CYRIX,	"Cyrix",{
+				{PCI_CHIP_MEDIAGX,	"MediaGX CPU"},
+				{PCI_CHIP_CYRIX_5520,	"5520 companion chip"},
+				{PCI_CHIP_CYRIX_5530,	"5530 companion chip"},
+				{0x0000,		NULL}}},
+    {PCI_VENDOR_NEOMAGIC, "NeoMagic",  {
+    				{PCI_CHIP_NM2070,	"NM2070"},
+				{PCI_CHIP_NM2090,	"NM2090"},
+				{PCI_CHIP_NM2093,	"NM2093"},
+				{PCI_CHIP_NM2097,	"NM2097"},
+				{PCI_CHIP_NM2160,	"NM2160"},
+				{PCI_CHIP_NM2200,	"NM2200"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_ALLIANCE, "Alliance Semiconductor", {
 				{PCI_CHIP_AP6410,	"ProMotion 6410"},
 				{PCI_CHIP_AP6422,	"ProMotion 6422"},
 				{PCI_CHIP_AT24,		"ProMotion AT24"},
 				{0x0000,		NULL}}},
+    {PCI_VENDOR_3DFX, "3Dfx", {
+				{PCI_CHIP_BANSHEE,	"Banshee"},
+				{0x0000,		NULL}}},
     {PCI_VENDOR_RENDITION, "Rendition", {
 				{PCI_CHIP_V1000,	"Verite 1000"},
+				{PCI_CHIP_V2x00,	"Verite 2x00"},
 				{0x0000,		NULL}}},
      {PCI_VENDOR_3DLABS, "3Dlabs", {
 				{PCI_CHIP_300SX,	"GLINT 300SX"},
@@ -346,6 +429,7 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_VIRGE_DXGX,	"ViRGE/DX or /GX"},
 				{PCI_CHIP_VIRGE_GX2,	"ViRGE/GX2"},
 				{PCI_CHIP_VIRGE_MX,	"ViRGE/MX"},
+				{PCI_CHIP_VIRGE_MXP,	"ViRGE/MX+"},
 				{PCI_CHIP_868,		"868"},
 				{PCI_CHIP_928,		"928"},
 				{PCI_CHIP_864_0,	"864"},

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/34 1996/11/13 14:45:44 lehors $
-XCOMM $XFree86: xc/programs/rgb/Imakefile,v 3.7 1996/12/23 07:10:45 dawes Exp $
+XCOMM $XFree86: xc/programs/rgb/Imakefile,v 3.7.2.1 1998/10/04 13:37:15 hohndel Exp $
 
 #if UseRgbTxt
    RGB_DEFINES = -DUSE_RGB_TXT
@@ -21,7 +21,7 @@ XCOMM $XFree86: xc/programs/rgb/Imakefile,v 3.7 1996/12/23 07:10:45 dawes Exp $
          OBJS = $(OBJS1) $(OBJS2)
      PROGRAMS = $(RGB_PROG) ProgramTargetName(showrgb)
 #if !UseRgbTxt
-#if defined(BSD386Architecture) || defined(NetBSDArchitecture)
+#if defined(BSD386Architecture) || defined(NetBSDArchitecture) || defined(OpenBSDArchitecture)
     DATAFILES = rgb.db
       DATADEP = rgb.db
 #else

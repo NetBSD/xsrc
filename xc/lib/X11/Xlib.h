@@ -1,5 +1,5 @@
 /* $XConsortium: Xlib.h /main/119 1996/09/28 16:35:29 rws $ */
-/* $XFree86: xc/lib/X11/Xlib.h,v 3.10.2.1 1998/02/15 16:08:37 hohndel Exp $ */
+/* $XFree86: xc/lib/X11/Xlib.h,v 3.10.2.2 1998/11/04 08:01:35 hohndel Exp $ */
 /* 
 
 Copyright (c) 1985, 1986, 1987, 1991  X Consortium
@@ -4547,6 +4547,12 @@ extern Status XCloseIM(
 );
 
 extern char *XGetIMValues(
+#if NeedVarargsPrototypes
+    XIM /* im */, ...
+#endif
+);
+
+extern char *XSetIMValues(
 #if NeedVarargsPrototypes
     XIM /* im */, ...
 #endif

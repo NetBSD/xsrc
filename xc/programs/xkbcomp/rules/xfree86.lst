@@ -4,12 +4,13 @@
 //  Rules descriptions for XFree86
 //  Copyright 1996 by Joseph Moss
 //
-//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.3.2.2 1998/02/01 16:05:45 robin Exp $
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.3.2.3 1998/11/04 08:02:12 hohndel Exp $
 
 ! model
   pc101		Generic 101-key PC
   pc102		Generic 102-key (Intl) PC
   pc104		Generic 104-key PC
+  pc105		Generic 105-key (Intl) PC
   dell101	Dell 101-key PC
   everex	Everex STEPnote
   flexpro	Keytronic FlexPro

@@ -37,6 +37,7 @@ This module is responsible for handling the TYPE1IMAGER "XYspace" object.
  
 :h3.Include Files
 */
+/* $XFree86: xc/lib/font/Type1/spaces.c,v 3.0.6.2 1998/10/04 15:22:56 hohndel Exp $ */
 #include "objects.h"
 #include "spaces.h"
 #include "paths.h"
@@ -44,6 +45,7 @@ This module is responsible for handling the TYPE1IMAGER "XYspace" object.
 #include "fonts.h"
 #include "arith.h"
 #include "trig.h"
+#include "X11/Xos.h"
 
 static void FindFfcn();
 static void FindIfcn();

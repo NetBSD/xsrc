@@ -7,12 +7,12 @@
 
 
 
-		  Information for W32 and ET6000 Chipset Users
+                  Information for W32 and ET6000 Chipset Users
 
 Glenn G. Lai <glenn@cs.utexas.edu>, Dirk H. Hohndel <hohndel@XFree86.Org>, Koen
-		       Gadeyne <koen.gadeyne@barco.com>
+                       Gadeyne <koen.gadeyne@barco.com>
 
-				 May 16, 1997
+                                 May 16, 1997
 
 
 
@@ -43,14 +43,14 @@ plete list, see the sign-on message printed by XF86_W32.  The server only sup-
 ports 256 colors.
 
 Just as with XF86_SVGA, you can specify a virtual world that has a width that
-is a multiple of four.	The size of the virtual world is constrained by the
+is a multiple of four.  The size of the virtual world is constrained by the
 amount of the available video RAM.  XF86_W32 can use more than 1 M of video
 RAM, but it reserves 1 K for internal use.  If you have 1 M, XF86_W32 claims
 you have 1023 K; you get to specify the virtual world as 1152x900, but not
 1152x910.
 
 For most cards the maximum clock is set to 86 MHz according to the Tseng data-
-books.	For a non-interlaced 1280x1024x(256 colors) at say 135-MHz, you need a
+books.  For a non-interlaced 1280x1024x(256 colors) at say 135-MHz, you need a
 w32p (with its 16-bit RAMDAC bus) with a multiplexing RAMDAC so that the w32p
 sees only (135/2 = 67.5) MHz, not 135 MHz.  This requires special code only
 provided for cards using the ICS5341 GENDAC or the STG1703. This code seems to
@@ -61,13 +61,13 @@ If you have problems with the server.  Try the following:
 
 
 
- Information for W32 and ET6000 Chipset Users
+ Information for W32 and ET6000 Chipset Users                                 1
 
 
 
 
 
- Information for W32 and ET6000 Chipset Users
+ Information for W32 and ET6000 Chipset Users                                 2
 
 
 
@@ -95,7 +95,7 @@ If you have problems with the server.  Try the following:
    o Try XF86_SVGA.  If it works, put the following in your XF86Config:
 
 
-	  Ramdac "generic"
+          Ramdac "generic"
 
 
  Note that the built-in power saver (for a "green" monitor) has not been
@@ -110,13 +110,13 @@ DPMS, and doesn't corrupt the screen.
 Even though the GENDAC provides a set of standard clocks that can be found with
 the normal clock probing procedure, it is mandatory to put a
 
-     ClockChip	"ics5341"
+     ClockChip  "ics5341"
 
 
 line into the Device Section to be able to use the programmable clocks that the
 ICS5341 can produce. You can also add a
 
-     Ramdac	"ics5341"
+     Ramdac     "ics5341"
 
 
 line, but the RAMDAC should be auto-probed correctly.  Even though the server
@@ -133,7 +133,7 @@ as well as lower clocks work just fine. I'm working on it. (DHH)
 
 
 
- Information for W32 and ET6000 Chipset Users
+ Information for W32 and ET6000 Chipset Users                                 3
 
 
 
@@ -142,13 +142,13 @@ as well as lower clocks work just fine. I'm working on it. (DHH)
 Even though the STG1703 provides a set of standard clocks that can be found
 with the normal clock probing procedure, it is mandatory to put a
 
-     ClockChip	"stg1703"
+     ClockChip  "stg1703"
 
 
 line into the Device Section to be able to use the programmable clocks that the
 STG1703 can produce. You can also add a
 
-     Ramdac	"stg1703"
+     Ramdac     "stg1703"
 
 
 line, but the RAMDAC should be auto-probed correctly.
@@ -160,7 +160,7 @@ The ET6000 driver code was developed on top of the existing ET4000/W32 code,
 because of the many similarities between both devices. As with the other W32
 (external) clockchip/RAMDAC devices, the ET6000's built-in clockchip/RAMDAC
 provides a set of 8 standard clocks, which could be probed with the normal
-XFree clock probing procedure.	In spite of that, XF86_W32 will always use the
+XFree clock probing procedure.  In spite of that, XF86_W32 will always use the
 built-in programmable clockchip and RAMDAC. So there is no need for a
 
       ClockChip "et6000"
@@ -199,7 +199,7 @@ higher color depths with some cards. On the downside, some special RAMDACs and
 
 
 
- Information for W32 and ET6000 Chipset Users
+ Information for W32 and ET6000 Chipset Users                                 4
 
 
 
@@ -245,19 +245,17 @@ gize for my failure to keep track of the people who tested X_W32, but the names
 of the people involved with the XF86_W32 testing are listed below:
 
       Linux:
-	    bf11620@coewl.cen.uiuc.edu (Byron Thomas Faber)
+            bf11620@coewl.cen.uiuc.edu (Byron Thomas Faber)
 
-	    dlj0@chern.math.lehigh.edu (David Johnson)
+            dlj0@chern.math.lehigh.edu (David Johnson)
 
-	    peterc@a3.ph.man.ac.uk (Peter Chang)
+            peterc@a3.ph.man.ac.uk (Peter Chang)
 
-	    dmm0t@rincewind.mech.virginia.edu (David Meyer)
+            dmm0t@rincewind.mech.virginia.edu (David Meyer)
 
-	    nrh@philabs.Philips.COM (Nikolaus R. Haus)
+            nrh@philabs.Philips.COM (Nikolaus R. Haus)
 
-	    jdooley@dbp.caltech.edu (James Dooley)
-
-
+            jdooley@dbp.caltech.edu (James Dooley)
 
 
 
@@ -265,30 +263,32 @@ of the people involved with the XF86_W32 testing are listed below:
 
 
 
- Information for W32 and ET6000 Chipset Users
+
+
+ Information for W32 and ET6000 Chipset Users                                 5
 
 
 
-	    thumper@hitchcock.eng.uiowa.edu (Timothy Paul Schlie)
+            thumper@hitchcock.eng.uiowa.edu (Timothy Paul Schlie)
 
-	    klatta@pkdla5.syntex.com (Ken Latta)
+            klatta@pkdla5.syntex.com (Ken Latta)
 
-	    robinson@cnj.digex.net (Andrew Robinson)
+            robinson@cnj.digex.net (Andrew Robinson)
 
-	    reggie@phys.washington.edu (Reginald S. Perry)
+            reggie@phys.washington.edu (Reginald S. Perry)
 
-	    sjm@cs.tut.fi (M{kinen Sami J)
+            sjm@cs.tut.fi (M{kinen Sami J)
 
-	    engel@yacc.central.de (C. Engelmann) use cengelm@gwdg.de
+            engel@yacc.central.de (C. Engelmann) use cengelm@gwdg.de
 
-	    postgate@cafe.net (Richard Postgate)
+            postgate@cafe.net (Richard Postgate)
 
-	    are1@cec.wustl.edu (Andy Ellsworth)
+            are1@cec.wustl.edu (Andy Ellsworth)
 
-	    bill@celtech.com (Bill Foster)
+            bill@celtech.com (Bill Foster)
 
       FreeBSD:
-	    ljo@ljo-slip.DIALIN.CWRU.Edu (L Jonas Olsson)
+            ljo@ljo-slip.DIALIN.CWRU.Edu (L Jonas Olsson)
 
      Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/W32.sgml,v 3.16.2.4 1997/06/01 12:33:36 dawes Exp $
 
@@ -331,7 +331,7 @@ of the people involved with the XF86_W32 testing are listed below:
 
 
 
- Information for W32 and ET6000 Chipset Users
+ Information for W32 and ET6000 Chipset Users                                 6
 
 
 
@@ -401,7 +401,7 @@ of the people involved with the XF86_W32 testing are listed below:
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
@@ -457,8 +457,8 @@ of the people involved with the XF86_W32 testing are listed below:
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.W32,v 3.27.2.4 1997/06/01 12:41:31 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.W32,v 3.27.2.6 1998/11/14 06:46:56 dawes Exp $

@@ -2,7 +2,7 @@ XCOMM $TOG: Imakefile /main/235 1997/05/25 15:12:21 kaleb $
 /*
  * Server Master Makefile
  */
-XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.85.2.8 1998/02/07 00:44:33 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.85.2.11 1998/10/11 12:35:08 hohndel Exp $
 
 #include <Server.tmpl>
 
@@ -513,11 +513,17 @@ XF86AGX = XF86_AGX
 #if XF86I128Server
 XF86I128 = XF86_I128
 #endif
+#if XF86GLINTServer
+XF86GLINT = XF86_3DLabs
+#endif
 #if XF86TGAServer
 XF86TGA = XF86_TGA
 #endif
 #if XF68FBDevServer
 XF68FBDEV = XF68_FBDev
+#endif
+#if XF86FBDevServer
+XF68FBDEV = XF86_FBDev
 #endif
 #if XF98GANBWAPServer
 XF98GANBWAP = XF98_GANBWAP
@@ -581,7 +587,7 @@ XVFB = Xvfb
     defined(XF86Mach32Server) || defined(XF86Mach64Server) || \
     defined(XF86P9000Server) || defined(XF86AGXServer) || \
     defined(XF86I128Server) || defined(XF86TGAServer) || \
-    defined(XF68FBDevServer) || \
+    defined(XF86FBDevServer) || defined(XF68FBDevServer) || \
     defined(XnestServer) || defined(XVirtualFramebufferServer)
 MakeMutex($(XF86SVGA) $(XF98GANBWAP) $(XF98NEC480) $(XF98NKVNEC) $(XF98WABS) \
 	  $(XF98WABEP) $(XF98WSNA) $(XF98TGUI) $(XF98MGA) $(XF98SVGA) \
@@ -1488,6 +1494,41 @@ InstallLinkKitNonExecFile(I128.def,$(LINKKITDIR))
 #endif
 #endif        /* XF86I128Server */
 
+#if XF86GLINTServer
+XCOMM
+XCOMM XFree86 Glint Server
+XCOMM
+MFBDIR   = mfb
+CFB8DIR  = cfb
+CFB16DIR = cfb16
+CFB24DIR = cfb24
+CFB32DIR = cfb32
+DDXDIR1  = hw/xfree86
+XF86GLINTSUBDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB24DIR) \
+                  $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
+XF86GLINTOBJS = $(XF86COMSRC)/XF86_GLINT.o \
+	       $(XF86SRC)/xaa/xaa8/xaa8.o $(XF86SRC)/xaa/xaa16/xaa16.o \
+	       $(XF86SRC)/xaa/xaa24/xaa24.o $(XF86SRC)/xaa/xaa32/xaa32.o
+XF86GLINTLIBS = $(XF86ACCELSRC)/glint/LibraryTargetName(glint) \
+	       $(XF86SRC)/xaa/LibraryTargetName(xaa) $(XF86LIBS) \
+               CFBLibs $(XF86ACCELSRC)/cache/LibraryTargetName(xf86cache)
+XF86GLINTSYSLIBS = $(SYSLIBS)
+#if HasParallelMake
+MakeMutex($(XF86GLINTSUBDIRS) $(XF86GLINTOBJS) $(XF86GLINTLIBS) $(XF86GLINTSYSLIBS))
+#endif
+#if HasGnuMake
+$(XF86GLINTOBJS) $(XF86GLINTLIBS) $(XF86GLINTSYSLIBS):: $(XF86GLINTSUBDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+SetUIDServerTarget(XF86_3DLabs,$(XF86GLINTSUBDIRS),$(XF86GLINTOBJS),$(XF86GLINTLIBS),$(XF86GLINTSYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XSuSETargetServer
+#endif
+#ifdef OS2Architecture
+LinkFile(XF86_3DLabs.def,3DLabs.def)
+InstallLinkKitNonExecFile(3DLabs.def,$(LINKKITDIR))
+#endif
+#endif        /* XF86GLINTServer */
 
 #if XF86TGAServer
 XCOMM
@@ -1525,8 +1566,49 @@ InstallLinkKitNonExecFile(TGA.def,$(LINKKITDIR))
 #endif
 #endif
 
+#if XF86FBDevServer
+XCOMM
+XCOMM XFree86 Linux/x86 (post 2.1.115) Frame Buffer Device Server
+XCOMM
+MFBDIR  = mfb
+#if XF68FBDevCFB8
+CFB8DIR = cfb
+FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB8)
+#endif
+#if XF68FBDevCFB16
+CFB16DIR = cfb16
+FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB16)
+#endif
+#if XF68FBDevCFB24
+CFB24DIR = cfb24
+FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB24)
+#endif
+#if XF68FBDevCFB32
+CFB32DIR = cfb32
+FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB32)
+#endif
+XF68FBDevSUBDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) \
+                   $(CFB16DIR) $(CFB24DIR) $(CFB32DIR) $(DEPDIRS)
+XF68FBDevOBJS = $(XF86COMSRC)/XF68_FBDev.o
+XF68FBDevLIBS = $(XF86SRC)/fbdev/LibraryTargetName(fbdev) $(XF86LIBS) \
+                PreFbLibs $(FBDEVFBLIBS) PostFbLibs
+XF68FBDevSYSLIBS = $(SYSLIBS)
+#if HasParallelMake
+MakeMutex($(XF68FBDevSUBDIRS) $(XF68FBDevOBJS) $(XF68FBDevLIBS) $(XF68FBDevSYSLIBS))
+#endif
+#if HasGnuMake
+$(XF68FBDevOBJS) $(XF68FBDevLIBS) $(XF68FBDevSYSLIBS):: $(XF68FBDevSUBDIRS)
+	@if [ -f $@ ]; then touch $@; fi
+#endif
+#if XF86FBDevServer
+SetUIDServerTarget(XF86_FBDev,$(XF68FBDevSUBDIRS),$(XF68FBDevOBJS),$(XF68FBDevLIBS),$(XF68FBDevSYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XF86_FBDev
+#endif
+#endif
 
-#if XF68FBDevServer
+#endif /* XF68FBDevServer */
+#if XF68FBDevServer 
 XCOMM
 XCOMM XFree68 Linux/m68k Frame Buffer Device Server
 XCOMM
@@ -1560,13 +1642,17 @@ FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB8)
 CFB16DIR = cfb16
 FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB16)
 #endif
+#if XF68FBDevCFB24
+CFB24DIR = cfb24
+FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB24)
+#endif
 #if XF68FBDevCFB32
 CFB32DIR = cfb32
 FBDEVFBLIBS:= $(FBDEVFBLIBS) $(CFB32)
 #endif
 XF68FBDevSUBDIRS = $(STDDIRS) $(MFBDIR) $(IPLAN2P2DIR) $(IPLAN2P4DIR) \
                    $(IPLAN2P8DIR) $(ILBMDIR) $(AFBDIR) $(CFB8DIR) \
-                   $(CFB16DIR) $(CFB32DIR) $(DDXDIR3) $(DEPDIRS)
+                   $(CFB16DIR) $(CFB24DIR) $(CFB32DIR) $(DDXDIR3) $(DEPDIRS)
 XF68FBDevOBJS = $(XF68COMSRC)/XF68_FBDev.o
 XF68FBDevLIBS = $(XF68SRC)/fbdev/LibraryTargetName(fbdev) $(XF68LIBS) \
                 PreFbLibs $(FBDEVFBLIBS) PostFbLibs
@@ -1578,9 +1664,11 @@ MakeMutex($(XF68FBDevSUBDIRS) $(XF68FBDevOBJS) $(XF68FBDevLIBS) $(XF68FBDevSYSLI
 $(XF68FBDevOBJS) $(XF68FBDevLIBS) $(XF68FBDevSYSLIBS):: $(XF68FBDevSUBDIRS)
 	@if [ -f $@ ]; then touch $@; fi
 #endif
+#if XF68FBDevServer
 SetUIDServerTarget(XF68_FBDev,$(XF68FBDevSUBDIRS),$(XF68FBDevOBJS),$(XF68FBDevLIBS),$(XF68FBDevSYSLIBS))
 #ifndef ServerToInstall
 #define ServerToInstall XF68_FBDev
+#endif
 #endif
 #endif /* XF68FBDevServer */
 

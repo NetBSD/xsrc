@@ -1,5 +1,5 @@
 /* $XConsortium: Xtranslcl.c /main/27 1996/09/28 16:50:14 rws $ */
-/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21.2.3 1998/02/01 16:04:34 robin Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21.2.6 1998/11/05 14:03:07 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -416,6 +416,7 @@ char		*port;
 {
     int fd, server;
     char server_path[64], *slave;
+    int mode;
 
     PRMSG(2,"PTSOpenServer(%s)\n", port, 0,0 );
 
@@ -433,8 +434,14 @@ char		*port;
 	(void) sprintf(server_path, "%s%d", PTSNODENAME, getpid());
     }
 
-    mkdir(X_STREAMS_DIR, 0777);
-    chmod(X_STREAMS_DIR, 0777);
+#ifdef HAS_STICKY_DIR_BIT
+    mode = 01777;
+#else
+    mode = 0777;
+#endif
+
+    mkdir(X_STREAMS_DIR, mode);
+    chmod(X_STREAMS_DIR, mode);
 
     if( (fd=open(server_path, O_RDWR)) >= 0 ) {
 #if 0
@@ -689,6 +696,7 @@ char		*port;
     int			fd, pipefd[2];
     char		server_path[64];
     struct stat		sbuf;
+    int			mode;
 
     PRMSG(2,"NAMEDOpenServer(%s)\n", port, 0,0 );
 
@@ -706,8 +714,14 @@ char		*port;
 	(void) sprintf(server_path, "%s%d", NAMEDNODENAME, getpid());
     }
 
-    mkdir(X_STREAMS_DIR, 0777);
-    chmod(X_STREAMS_DIR, 0777);
+#ifdef HAS_STICKY_DIR_BIT
+    mode = 01777;
+#else
+    mode = 0777;
+#endif
+
+    mkdir(X_STREAMS_DIR, mode);
+    chmod(X_STREAMS_DIR, mode);
 
     if(stat(server_path, &sbuf) != 0) {
 	if (errno == ENOENT) {
@@ -1008,6 +1022,7 @@ char		*port;
 {
     int	fd = -1,fds = -1;
     char	server_path[64],server_unix_path[64];
+    unsigned int mode = 0;
     
     PRMSG(2,"ISCOpenServer(%s)\n", port, 0,0 );
     
@@ -1018,10 +1033,16 @@ char		*port;
     (void) sprintf(server_path, ISCDEVNODENAME, port);
     (void) sprintf(server_unix_path, ISCTMPNODENAME, port);
     
-    mkdir(X_STREAMS_DIR, 0777); /* "/dev/X" */
-    chmod(X_STREAMS_DIR, 0777);
-    mkdir(X_ISC_DIR, 0777); /* "/dev/X/ISCCONN" */
-    chmod(X_ISC_DIR, 0777);
+#ifdef HAS_STICKY_DIR_BIT
+    mode = 01777;
+#else
+    mode = 0777;
+#endif
+
+    mkdir(X_STREAMS_DIR, mode); /* "/dev/X" */
+    chmod(X_STREAMS_DIR, mode);
+    mkdir(X_ISC_DIR, mode); /* "/dev/X/ISCCONN" */
+    chmod(X_ISC_DIR, mode);
     
     unlink(server_path);
     
@@ -1046,8 +1067,8 @@ char		*port;
      */
 #define X_UNIX_DIR	"/tmp/.X11-unix"
     
-    if (!mkdir(X_UNIX_DIR, 0777))
-	chmod(X_UNIX_DIR, 0777);
+    mkdir(X_UNIX_DIR, mode);
+    chmod(X_UNIX_DIR, mode);
     
     unlink(server_unix_path);
     

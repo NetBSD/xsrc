@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.17 1998/02/24 19:05:54 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Config.c,v 3.113.2.19 1998/10/18 20:42:11 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -822,7 +822,7 @@ findConfigFile(filename, fp)
      */
     xwinhome = getenv("X11ROOT"); /* get drive letter */
     if (!xwinhome) FatalError("X11ROOT environment variable not set\n");
-    strcpy(configPaths[pcount], __XOS2RedirRoot("/XFree86/lib/X11/XConfig"));
+    strcpy(configPaths[pcount], __XOS2RedirRoot("/XFree86/lib/X11/XF86Config"));
 #endif
 
     if ((configFile = fopen( configPaths[pcount], "r" )) != 0) break;
@@ -2402,7 +2402,8 @@ configMonitorSection()
               (token == TT_NHSYNC) || (token == TT_PVSYNC) ||
               (token == TT_NVSYNC) || (token == TT_CSYNC) ||
               (token == TT_PCSYNC) || (token == TT_NCSYNC) ||
-              (token == TT_DBLSCAN) || (token == TT_HSKEW) )
+              (token == TT_DBLSCAN) || (token == TT_HSKEW) ||
+              (token == TT_BCAST) )
       {
         switch(token) {
               
@@ -2415,6 +2416,7 @@ configMonitorSection()
         case TT_PCSYNC:    pNew->Flags |= V_PCSYNC;     break;
         case TT_NCSYNC:    pNew->Flags |= V_NCSYNC;     break;
         case TT_DBLSCAN:   pNew->Flags |= V_DBLSCAN;    break;
+        case TT_BCAST:     pNew->Flags |= V_BCAST;      break;
 	case TT_HSKEW:
 	  if (xf86GetToken(NULL) != NUMBER)
 	    xf86ConfigError("Horizontal skew expected");
@@ -2703,6 +2705,7 @@ MonPtr monp;
         case TT_PCSYNC:    pNew->Flags |= V_PCSYNC;     break;
         case TT_NCSYNC:    pNew->Flags |= V_NCSYNC;     break;
         case TT_DBLSCAN:   pNew->Flags |= V_DBLSCAN;    break;
+        case TT_BCAST:     pNew->Flags |= V_BCAST;      break;
         default:
           xf86ConfigError("Unknown flag string"); break;
         }

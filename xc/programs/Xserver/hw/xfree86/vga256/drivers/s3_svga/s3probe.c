@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3probe.c,v 1.1.2.4 1998/02/24 13:54:26 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3probe.c,v 1.1.2.6 1998/10/18 20:42:32 hohndel Exp $ */
 /*
  *
  * Copyright 1995-1997 The XFree86 Project, Inc.
@@ -72,6 +72,7 @@ static SymTabRec s3DacTable[] = {
    { ATT20C409_DAC,	"att20c409" },
    { SS2410_DAC,	"ss2410" },
    { S3_TRIO64V2_DAC,	"s3_trio64v2" },
+   { S3_TRIO64V_DAC,	"s3_trio64v+" },
    { -1,		"" }
 };
 
@@ -351,7 +352,8 @@ Bool S3Probe()
       return(FALSE);
    }
 
-   if((!S3_TRIO64V_SERIES(s3ChipId) && !S3_x68_SERIES(s3ChipId)) ||
+   if((!S3_TRIO64V_SERIES(s3ChipId) && !S3_x68_SERIES(s3ChipId)) 
+      && !S3_TRIO64V2_SERIES(s3ChipId) && !S3_AURORA64VP_SERIES(s3ChipId) ||
 	OFLG_ISSET(OPTION_NO_MMIO, &vga256InfoRec.options)){
       ErrorF("%s %s: Using Port I/O\n",
 		   XCONFIG_PROBED, vga256InfoRec.name);

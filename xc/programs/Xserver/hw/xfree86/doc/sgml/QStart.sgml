@@ -1,13 +1,13 @@
 <!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
- <article>
+<article>
 
- <title>Quick-Start Guide to XFree86 Setup
+<title>Quick-Start Guide to XFree86 Setup
 
- <author>Joe Moss
- <date>27 February 1998
+<author>Joe Moss
+<date>27 February 1998
 
- <abstract>
+<abstract>
 	Current releases of XFree86 include several tools that can help
 to automate the process of server configuration. Much of the existing
 documentation, however, describes how to do the job manually, including
@@ -18,7 +18,7 @@ get their hands dirty under the hood, this is great, but many users are
 using common hardware and just want to get X up and running quickly.
 This guide is for them.
 
- </abstract>
+</abstract>
 
 <toc>
 
@@ -671,7 +671,7 @@ This guide is for them.
 <!-- Lots of things still need to be added -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.4.2.2 1998/02/28 04:47:08 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/QStart.sgml,v 3.4.2.3 1998/04/29 04:18:31 dawes Exp $
 </verb>
 
 </article>

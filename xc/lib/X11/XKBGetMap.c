@@ -25,6 +25,8 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
 
+/* $XFree86: xc/lib/X11/XKBGetMap.c,v 1.1.1.4.4.3 1998/10/04 13:36:21 hohndel Exp $ */
+
 #define NEED_REPLIES
 #define NEED_EVENTS
 #define	NEED_MAP_READERS
@@ -69,10 +71,14 @@ XkbKeyTypePtr	type;
 	    lastMapCount= type->map_count;
 	    if ( desc->nMapEntries>0 ) {
 		if ((type->map==NULL)||(desc->nMapEntries>type->map_count)) {
+		    XkbKTMapEntryRec *prev_map = type->map;
+
 		    type->map= _XkbTypedRealloc(type->map,desc->nMapEntries,
 							      XkbKTMapEntryRec);
-		    if (type->map==NULL)
+		    if (type->map==NULL) {
+			_XkbFree(prev_map);
 			return BadAlloc;
+		    }
 		}
 	    }
 	    else if (type->map!=NULL) {
@@ -84,11 +90,15 @@ XkbKeyTypePtr	type;
 	    if ( desc->preserve && (desc->nMapEntries>0) ) {
 		if ((!type->preserve)||
 		    (desc->nMapEntries>lastMapCount)) {
+		    XkbModsRec *prev_preserve = type->preserve;
+
 		    type->preserve= _XkbTypedRealloc(type->preserve,
 							desc->nMapEntries,
 							XkbModsRec);
-		    if (type->preserve==NULL)
+		    if (type->preserve==NULL) {
+			_XkbFree(prev_preserve);
 			return BadAlloc;
+		    }
 		}
 	    }
 	    else if (type->preserve!=NULL) {
@@ -187,9 +197,12 @@ XkbClientMapPtr	map;
 	    oldMap->offset= offset;
 	    if (offset+newMap->nSyms>=map->size_syms) {
 		register int sz;
+		KeySym *prev_syms = map->syms;
+
 		sz= map->size_syms+128;
 		map->syms= _XkbTypedRealloc(map->syms,sz,KeySym);
 		if (map->syms==NULL) {
+		    _XkbFree(prev_syms);
 		    map->size_syms= 0;
 		    return BadAlloc;
 		}
@@ -253,6 +266,9 @@ _XkbReadKeyActions(buf,info,rep)
 int		i;
 CARD8		numDesc[248];
 register int	nKeyActs;
+
+    if (rep->nKeyActs > sizeof(numDesc))
+	return BadLength;
 
     if ( (nKeyActs=rep->nKeyActs)>0 ) {
 	XkbSymMapPtr	symMap;

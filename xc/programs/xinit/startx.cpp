@@ -1,7 +1,7 @@
 XCOMM!/bin/sh
 
 XCOMM $XConsortium: startx.cpp,v 1.4 91/08/22 11:41:29 rws Exp $
-XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.0.8.2 1998/02/07 10:39:11 dawes Exp $
+XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.0.8.3 1998/11/08 02:16:43 dawes Exp $
 XCOMM 
 XCOMM This is just a sample implementation of a slightly less primitive 
 XCOMM interface than xinit.  It looks for user .xinitrc and .xserverrc
@@ -106,6 +106,6 @@ Xrepair
 screenrestore
 #endif
 
-#ifdef sun
+#if defined(sun) && !defined(i386)
 kbd_mode -a
 #endif

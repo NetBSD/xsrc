@@ -2,16 +2,16 @@
 
 <article>
 
-<title>Readme for the XFree86 3.3.2 LinkKit
+<title>Readme for the XFree86 3.3.3 LinkKit
 <author>The XFree86 Project, Inc.
-<date>26 February 1998
+<date>22 October 1998
 
-<sect>Readme for the XFree86 3.3.2 LinkKit <p>
+<sect>Readme for the XFree86 3.3.3 LinkKit <p>
 <enum>
 <item>For systems which don't use gcc-2, you may need to install libgcc.a if
    the binary distribution you are using was built with gcc-2.
 
-<item>Make sure that you have the XFree86 3.3.2 libraries
+<item>Make sure that you have the XFree86 3.3.3 libraries
    installed under <tt>/usr/X11R6</tt> if you will be linking Xnest with
    the LinkKit.  The LinkKit is now self-contained for the other servers.
 
@@ -48,6 +48,8 @@
 	set <tt>XF86I8514Server</tt> to <tt>YES</tt>.
     <item>To build the I128 server:
 	set <tt>XF86I128Server</tt> to <tt>YES</tt>.
+    <item>To build the GLINT server:
+    	set <tt>XF86GLINTServer</tt> to <tt>YES</tt>.
     <item>To build the TGA server:
 	set <tt>XF86TGAServer</tt> to <tt>YES</tt>.
     <item>To build the GA-98NB/WAP server:
@@ -154,7 +156,7 @@
 </enum>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v 3.14.2.3 1998/02/26 20:11:26 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v 3.14.2.5 1998/10/22 04:31:03 hohndel Exp $
 
 
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.h,v 3.23.2.6 1998/02/01 16:05:16 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga.h,v 3.23.2.7 1998/07/30 06:24:18 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -554,6 +554,12 @@ void vgaUninstallColormap(
     ColormapPtr pmap
 #endif
 );
+
+/* Blanks screen */
+Bool vgaBlankScreen(ScreenPtr pScreen,Bool On);
+
+/* Checks if color map already installed ? */
+int vgaCheckColorMap(ColormapPtr pmap);
 
 /* Blanks screen */
 Bool vgaBlankScreen(ScreenPtr pScreen,Bool On);

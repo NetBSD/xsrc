@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Convert.c,v 3.0.4.1 1997/05/17 12:24:51 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Convert.c,v 3.0.4.2 1998/10/04 13:36:33 hohndel Exp $ */
 
 /*
 
@@ -617,7 +617,8 @@ static void ComputeArgs(widget, convert_args, num_args, args)
 	    args[i].addr =
 		(XPointer)((int)widget + (int)convert_args[i].address_id);
 #else
-	    args[i].addr = (XPointer)((char *)widget + (int)convert_args[i].address_id);
+	    args[i].addr =
+		(XPointer)((char *)widget + (long)convert_args[i].address_id);
 #endif
 	    break;
 
@@ -634,7 +635,7 @@ static void ComputeArgs(widget, convert_args, num_args, args)
 		(XPointer)((int)ancestor + (int)convert_args[i].address_id);
 #else
 	    args[i].addr =
-		(XPointer)((char *)ancestor + (int)convert_args[i].address_id);
+		(XPointer)((char *)ancestor + (long)convert_args[i].address_id);
 #endif
 	    break;
 
@@ -651,14 +652,14 @@ static void ComputeArgs(widget, convert_args, num_args, args)
 	    /* Convert in place for next usage */
 	    convert_args[i].address_mode = XtResourceQuark;
 	    convert_args[i].address_id =
-	       (XtPointer)XrmStringToQuark((String)convert_args[i].address_id);
+	       (XtPointer)(long)XrmStringToQuark((String)convert_args[i].address_id);
 	    /* Fall through */
 
 	case XtResourceQuark:
 	    if (! ResourceQuarkToOffset(widget->core.widget_class,
-		    (XrmQuark) convert_args[i].address_id, &offset)) {
+		    (XrmQuark)(long) convert_args[i].address_id, &offset)) {
 		params[0]=
-                  XrmQuarkToString((XrmQuark) convert_args[i].address_id);
+                  XrmQuarkToString((XrmQuark)(long) convert_args[i].address_id);
                XtAppWarningMsg(XtWidgetToApplicationContext(widget),
 		    "invalidResourceName","computeArgs",XtCXtToolkitError,
 		    "Cannot find resource name %s as argument to conversion",
@@ -696,7 +697,7 @@ void XtDirectConvert(converter, args, num_args, from, to)
 
     LOCK_PROCESS;
     /* Try to find cache entry for conversion */
-    hash = ((int)(converter) >> 2) + from->size + *((char *) from->addr);
+    hash = ((long) converter >> 2) + from->size + *((char *) from->addr);
     if (from->size > 1) hash += ((char *) from->addr)[1];
     
     for (p = cacheHashTable[hash & CACHEHASHMASK]; p; p = p->next) {
@@ -794,7 +795,7 @@ CallConverter(dpy, converter,
 
     LOCK_PROCESS;
     /* Try to find cache entry for conversion */
-    hash = ((int)(converter) >> 2) + from->size + *((char *) from->addr);
+    hash = ((long)(converter) >> 2) + from->size + *((char *) from->addr);
     if (from->size > 1) hash += ((char *) from->addr)[1];
     
     if (cP->cache_type != XtCacheNone) {

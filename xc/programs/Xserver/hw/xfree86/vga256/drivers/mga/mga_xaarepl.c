@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_xaarepl.c,v 1.1.2.1 1998/02/01 16:05:14 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_xaarepl.c,v 1.1.2.3 1998/11/10 11:55:41 dawes Exp $ */
 
 
 #define PSZ 8
@@ -67,17 +67,17 @@ void MGAWriteBitmap(x, y, w, h, src, srcwidth, srcx, srcy,
     srcx &= 0x07;
     if(skipleft = (int)srcp & 0x03) {
         skipleft = (skipleft << 3) + srcx;
-        maxlines = MAX_BLIT_PIXELS / (w + skipleft);
+        maxlines = MAX_BLIT_PIXELS / ((w + skipleft + 31) & ~31);
         if(maxlines < h) {
-            int newmax = MAX_BLIT_PIXELS / (w + srcx);
+            int newmax = MAX_BLIT_PIXELS / ((w + srcx +31) & ~31);
             if(newmax >= h) { /* do byte alignment to avoid the split */
                 skipleft = srcx;
                 maxlines = newmax;
-            } else srcp = (unsigned char*)((int)srcp & ~0x03);
-        } else srcp = (unsigned char*)((int)srcp & ~0x03);
+            } else srcp = (unsigned char*)((long)srcp & ~0x03L);
+        } else srcp = (unsigned char*)((long)srcp & ~0x03L);
     } else {
         skipleft = srcx; 
-        maxlines = MAX_BLIT_PIXELS / (w + skipleft);
+        maxlines = MAX_BLIT_PIXELS / ((w + skipleft + 31) & ~31);
     }
     
     w += skipleft; 
@@ -331,7 +331,7 @@ MGAFillRectStippled(pDrawable, pGC, nBoxInit, pBoxInit)
 	    if (yoffset < 0)
 	        yoffset += pPixmap->drawable.height;
 
-	    maxlines = MAX_BLIT_PIXELS / rectWidth;
+	    maxlines = MAX_BLIT_PIXELS / ((rectWidth + 31) & ~31);
 
 	    while(rectHeight > maxlines) {
     		xf86AccelInfoRec.SubsequentCPUToScreenColorExpand(

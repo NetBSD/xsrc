@@ -26,6 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/Xmu/Xct.c,v 1.1.1.1.12.2 1998/10/04 15:22:53 hohndel Exp $ */
 
 #include <X11/Xfuncs.h>
 #include "Xct.h"
@@ -306,11 +307,17 @@ HandleExtended(data, c)
 	(void) memmove((char *)ptr, (char *)enc, len);
 	ptr[len] = 0x00;
 	priv->enc_count++;
-	if (priv->encodings)
-	    priv->encodings = (char **)realloc(
-					    (char *)priv->encodings,
-					    priv->enc_count * sizeof(char *));
-	else
+	if (priv->encodings) {
+	    char **tmp_encodings = (char **)
+				   realloc((char *)priv->encodings,
+					   priv->enc_count * sizeof(char *));
+	    if (tmp_encodings) 
+		priv->encodings = tmp_encodings;
+	    else {
+		free(priv->encodings);
+		priv->encodings = NULL;
+	    }
+	} else 
 	    priv->encodings = (char **)malloc(sizeof(char *));
 	priv->encodings[i] = (char *)ptr;
     }
@@ -329,10 +336,16 @@ ShiftGRToGL(data, hasCdata)
 
     if (data->item_length > priv->buf_count) {
 	priv->buf_count = data->item_length;
-	if (priv->itembuf)
-	    priv->itembuf = (XctString)realloc((char *)priv->itembuf,
-					       priv->buf_count);
-	else
+	if (priv->itembuf) {
+	    XctString tmpbuf = (XctString)realloc((char *)priv->itembuf,
+						   priv->buf_count);
+	    if (tmpbuf) 
+		priv->itembuf = tmpbuf;
+	    else {
+		free(priv->itembuf);
+		priv->itembuf = NULL;
+	    }
+	} else
 	    priv->itembuf = (XctString)malloc(priv->buf_count);
     }
     (void) memmove((char *)priv->itembuf, (char *)data->item, 

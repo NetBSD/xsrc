@@ -20,7 +20,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgacurs.c,v 3.3 1996/12/27 07:03:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tgacurs.c,v 3.3.2.1 1998/10/19 20:29:40 hohndel Exp $ */
 
 /*
  * Modified by Amancio Hasty and Jon Tombs and Erik Nygren
@@ -78,13 +78,11 @@ extern Bool tgaBtRealizeCursor(
 #endif
 );
 
-#if 0
 extern Bool tgaDECRealizeCursor(
 #if NeedFunctionPrototypes
     ScreenPtr, CursorPtr
 #endif
 );
-#endif
 
 extern void tgaBtCursorOn(
 #if NeedFunctionPrototypes
@@ -110,15 +108,12 @@ extern void tgaBtMoveCursor(
 #endif
 );
 
-#if 0
 extern void tgaDECMoveCursor(
 #if NeedFunctionPrototypes
    ScreenPtr, int, int
 #endif
 );
-#endif
 
-#if 0
 static miPointerSpriteFuncRec tgaDECPointerSpriteFuncs =
 {
    tgaDECRealizeCursor,
@@ -126,7 +121,6 @@ static miPointerSpriteFuncRec tgaDECPointerSpriteFuncs =
    tgaSetCursor,
    tgaDECMoveCursor,
 };
-#endif
 
 static miPointerSpriteFuncRec tgaBtPointerSpriteFuncs =
 {
@@ -178,7 +172,6 @@ tgaCursorInit(pm, pScr)
 	return FALSE;
 	pScr->RecolorCursor = tgaBtRecolorCursor;
      }
-#if 0
      else
      if (OFLG_ISSET(OPTION_HW_CURSOR, &tgaInfoRec.options))
      {
@@ -186,7 +179,6 @@ tgaCursorInit(pm, pScr)
 				&xf86PointerScreenFuncs, FALSE)))
 	return FALSE;
      }
-#endif
      tgaCursGeneration = serverGeneration;
    }
    
@@ -198,11 +190,9 @@ tgaShowCursor()
 {
   if (OFLG_ISSET(OPTION_BT485_CURS, &tgaInfoRec.options))
   	tgaBtCursorOn();
-#if 0
   else
   if (OFLG_ISSET(OPTION_HW_CURSOR, &tgaInfoRec.options))
 	tgaDECCursorOn();
-#endif
 }
 
 void
@@ -210,11 +200,9 @@ tgaHideCursor()
 {
   if (OFLG_ISSET(OPTION_BT485_CURS, &tgaInfoRec.options))
   	tgaBtCursorOff();
-#if 0
   else
   if (OFLG_ISSET(OPTION_HW_CURSOR, &tgaInfoRec.options))
 	tgaDECCursorOff();
-#endif
 }
 
 static Bool
@@ -248,11 +236,9 @@ tgaSetCursor(pScr, pCurs, x, y)
    if (!tgaBlockCursor) {
      if (OFLG_ISSET(OPTION_BT485_CURS, &tgaInfoRec.options))
      	tgaBtLoadCursor(pScr, pCurs, x, y);
-#if 0
      else
      if (OFLG_ISSET(OPTION_HW_CURSOR, &tgaInfoRec.options))
 	tgaDECLoadCursor(pScr, pCurs, x , y);
-#endif
    } else
       tgaReloadCursor = TRUE;
 }
@@ -268,11 +254,9 @@ tgaRestoreCursor(pScr)
   miPointerPosition(&x, &y);
   if (OFLG_ISSET(OPTION_BT485_CURS, &tgaInfoRec.options))
   	tgaBtLoadCursor(pScr, tgaSaveCursors[index], x, y);
-#if 0
   else
   if (OFLG_ISSET(OPTION_HW_CURSOR, &tgaInfoRec.options))
 	tgaDECLoadCursor(pScr, tgaSaveCursors[index], x, y);
-#endif
 }
 
 void
@@ -284,11 +268,9 @@ tgaRepositionCursor(pScr)
    miPointerPosition(&x, &y);
    if (OFLG_ISSET(OPTION_BT485_CURS, &tgaInfoRec.options))
    	tgaBtMoveCursor(pScr, x, y);
-#if 0
    else
    if (OFLG_ISSET(OPTION_HW_CURSOR, &tgaInfoRec.options))
 	tgaDECMoveCursor(pScr, x, y);
-#endif
 }
 
 void

@@ -7,15 +7,15 @@
 
 
 
-			  Information for SVR4 Users
+                          Information for SVR4 Users
 
-			   The XFree86 Project, Inc
+                           The XFree86 Project, Inc
 
-				  27 Feb 1998
+                                  27 Feb 1998
 
 
 
-				   Abstract
+                                   Abstract
 
      NOTE: If you intend to use any of the accelerated servers, read sec-
      tion 10 and follow the instructions.  Otherwise the X server will
@@ -61,13 +61,13 @@ list, please let us know about it.
 
 
 
-Information for SVR4 Users
+Information for SVR4 Users                                                    1
 
 
 
 
 
-Information for SVR4 Users
+Information for SVR4 Users                                                    2
 
 
 
@@ -81,37 +81,37 @@ for X applications.  So you want to switch back to the standard 3-key sequences
 while you are running X.  Here's how to do it:
 
       Microport
-	    Microport makes this very simple.  The 2-key mode is called "Micro-
-	    port Mode", and the 3-key mode is called "Compatible Mode".  You
-	    enter Microport Mode by pressing Alt-SysReq-m.  You enter Compati-
-	    ble Mode by pressing Alt-SysReq-c.	So all you need to do is press
-	    Alt-SysReq-c after starting the X server to allow X clients access
-	    to the Alt-Fn sequences.
+            Microport makes this very simple.  The 2-key mode is called "Micro-
+            port Mode", and the 3-key mode is called "Compatible Mode".  You
+            enter Microport Mode by pressing Alt-SysReq-m.  You enter Compati-
+            ble Mode by pressing Alt-SysReq-c.  So all you need to do is press
+            Alt-SysReq-c after starting the X server to allow X clients access
+            to the Alt-Fn sequences.
 
       Esix
-	    Esix has no keyboard-driven way to switch modes.  There are two
-	    levels at which this can be handled:
+            Esix has no keyboard-driven way to switch modes.  There are two
+            levels at which this can be handled:
 
-	      1.  There is a kernel tunable that determines which mode is the
-		  default.  The tunable is the initialisation of kd_2keysw in
-		  /etc/conf/pack.d/kd/space.c.	When set to 1 (the default),
-		  2-key mode is enabled.  When set to 0 it is disabled.
+              1.  There is a kernel tunable that determines which mode is the
+                  default.  The tunable is the initialisation of kd_2keysw in
+                  /etc/conf/pack.d/kd/space.c.  When set to 1 (the default),
+                  2-key mode is enabled.  When set to 0 it is disabled.
 
-	      2.  The mode can be changed for individual VTs programatically by
-		  an ioctl().  To make life easier for XFree86 users, a program
-		  called `2key' is provided (in xc/pro-
-		  grams/Xserver/hw/xfree86/etc/ in the source tree, and in
-		  /usr/X11R6/lib/X11/etc/ in the binary kit).  You can compile
-		  and install this program.  Then to make use of it, add the
-		  line `VTInit "2key off"' to the Keyboard section of your
-		  XF86Config file to cause the program to be run automatically
-		  when the server starts up.  Doing this means that 2-key
-		  switching will be turned off while in the server's VT, but
-		  will still be on for the other VTs.
+              2.  The mode can be changed for individual VTs programatically by
+                  an ioctl().  To make life easier for XFree86 users, a program
+                  called `2key' is provided (in xc/pro-
+                  grams/Xserver/hw/xfree86/etc/ in the source tree, and in
+                  /usr/X11R6/lib/X11/etc/ in the binary kit).  You can compile
+                  and install this program.  Then to make use of it, add the
+                  line `VTInit "2key off"' to the Keyboard section of your
+                  XF86Config file to cause the program to be run automatically
+                  when the server starts up.  Doing this means that 2-key
+                  switching will be turned off while in the server's VT, but
+                  will still be on for the other VTs.
 
-	    For further details, refer to the keyboard(7) man page included
-	    with the release notes (the on-line man page doesn't have this
-	    information).
+            For further details, refer to the keyboard(7) man page included
+            with the release notes (the on-line man page doesn't have this
+            information).
 
 
 3.  Running SVR3 binaries on SVR4.0.4 and SVR4.2
@@ -133,7 +133,7 @@ ISC SVR3 binaries.  This is not a failing of XFree86, but of SVR4 itself.  One
 
 
 
-Information for SVR4 Users
+Information for SVR4 Users                                                    3
 
 
 
@@ -170,11 +170,11 @@ just have to worry about base-OS compatibility.
 
   3.  The BOOTSTRAPCFLAGS required are:
 
-	   For Unixware:     "-DUSL"
+           For Unixware:     "-DUSL"
 
-	   For NCR:	     "-DNCR"
+           For NCR:          "-DNCR"
 
-	   For other SVR4:   "-DSVR4 -Di386"
+           For other SVR4:   "-DSVR4 -Di386"
 
 
 5.  Notes for running XFree86 on SVR4
@@ -199,43 +199,43 @@ restarting, or switching VTs.
 
 
 
-Information for SVR4 Users
+Information for SVR4 Users                                                    4
 
 
 
-	   [HS]FNOLIM	      hard/soft limit for number of open files
+           [HS]FNOLIM         hard/soft limit for number of open files
 
-	   MAXUP	      max number of processes per user
+           MAXUP              max number of processes per user
 
-	   ARG_MAX	      max length of an arg list
+           ARG_MAX            max length of an arg list
 
-	   SHMMAX	      max size of shared memory segment(in bytes)
+           SHMMAX             max size of shared memory segment(in bytes)
 
   3.  Choose which mouse driver you will use.  For SVR4 the best choice depends
       on which version you are using.  If you have a bus mouse then Xqueue is
       probably the only option.  For a serial mouse the options are as follows:
 
-	    Esix 4.0.3
-		  Xqueue works.  It is also possible to use the standard asy
-		  driver directly, but the mouse operation is "jerky".
+            Esix 4.0.3
+                  Xqueue works.  It is also possible to use the standard asy
+                  driver directly, but the mouse operation is "jerky".
 
-	    Microport SVR4 [34].1
-		  Xqueue works fine, and the asy driver can also be used
-		  directly giving smooth mouse operation.
+            Microport SVR4 [34].1
+                  Xqueue works fine, and the asy driver can also be used
+                  directly giving smooth mouse operation.
 
       To use Xqueue, set the Protocol to Xqueue in both the Keyboard and
       Pointer sections of your XF86Config file, and You must have the mouse
       driver package installed, and must run mouseadmin to set it up for your
       mouse.  If mouseadmin won't work try doing `touch /dev/gmse' before run-
-      ning it.	(Note that mouseadmin will need to be rerun after rebuilding a
+      ning it.  (Note that mouseadmin will need to be rerun after rebuilding a
       kernel unless you add an appropriate entry to /etc/conf/node.d/gmse.)
 
       NOTE: Many of the accelerated server/drivers have problems when using a
       HW cursor and Xqueue together.  If you have a serial mouse, you can work
-      around this by not using Xqueue.	Otherwise the only workaround is to
+      around this by not using Xqueue.  Otherwise the only workaround is to
       disable the HW cursor.  This is done by adding the line:
 
-	      Option "sw_cursor"
+              Option "sw_cursor"
 
 
       to the Device section of your XF86Config file.  The S3 server is the only
@@ -252,7 +252,7 @@ Information for SVR4 Users
 
       - An example of the line you should add to /etc/ap/chan.ap is:
 
-		 MAJOR	  0	  255	  ldterm ttcompat
+                 MAJOR    0       255     ldterm ttcompat
 
 
       where MAJOR is replaced by the major number used for SAS devices.  To
@@ -265,7 +265,7 @@ Information for SVR4 Users
 
 
 
-Information for SVR4 Users
+Information for SVR4 Users                                                    5
 
 
 
@@ -274,10 +274,10 @@ Information for SVR4 Users
 
       - The installation instructions omit the following:
 
-	   3a) Disable the asy driver by either running `kconfig' or edit-
-	   ing /etc/conf/sdevice.d/asy.
+           3a) Disable the asy driver by either running `kconfig' or edit-
+           ing /etc/conf/sdevice.d/asy.
 
-	   3b) Rebuild the kernel by running /etc/conf/bin/idbuild
+           3b) Rebuild the kernel by running /etc/conf/bin/idbuild
 
   4.  If you want to use xdm with SVR4, extract the files from the shar file in
       /usr/X11R6/lib/X11/etc/XdmConf.svr4 into a temporary directory.  The
@@ -307,7 +307,7 @@ Information for SVR4 Users
       "PTS" (old-stype USL streams pipe), "SCO" (SCO Xsight streams pipe), and
       "ISC" (ISC streams pipe).  The XLOCAL environment variable can be used to
       set which types of local connection should be used in order of prefer-
-      ence.  The default setting is PTS:NAMED:ISC:SCO.	It is recommended that
+      ence.  The default setting is PTS:NAMED:ISC:SCO.  It is recommended that
       NAMED be used in most cases because it is faster than the default PTS,
       and because using PTS can cause you to run out of /dev/pts/ devices (each
       client using PTS requires a /dev/pts device).  To set up the default
@@ -319,7 +319,7 @@ Information for SVR4 Users
 6.  Building non-core clients with SVR4
 
   1.  A lot of clients (even some which have explicit SVR4 support) require
-      -DSYSV when building under SVR4.	This will not be set when using the
+      -DSYSV when building under SVR4.  This will not be set when using the
       default configuration.  A quick fix is to add something like the follow-
       ing to the client's Imakefile:
 
@@ -331,13 +331,13 @@ Information for SVR4 Users
 
 
 
-Information for SVR4 Users
+Information for SVR4 Users                                                    6
 
 
 
-		 #if SystemV4
-		      DEFINES = -DSYSV OTHER_CLIENT_DEPENDENT_DEFINES
-		 #endif
+                 #if SystemV4
+                      DEFINES = -DSYSV OTHER_CLIENT_DEPENDENT_DEFINES
+                 #endif
 
 
       The best solution is to modify the code so it compiles correctly without
@@ -367,25 +367,25 @@ that are specific to the XFree86 servers.  Here are the things you need to do:
       to the directory where these files are located, and execute the following
       (using `sh' or `ksh'):
 
-		for i in *pc???.bdf
-		do
-		    /usr/X11R6/bin/bdftopcf $i > \
-			  /usr/X11R6/lib/X11/fonts/misc/`basename $i .bdf`.pcf
-		done
-		cd /usr/X11R6/lib/X11/fonts/misc
-		/usr/X11R6/bin/mkfontdir
-		# Do this only if the server is already running.
-		/usr/X11R6/bin/xset fp rehash
+                for i in *pc???.bdf
+                do
+                    /usr/X11R6/bin/bdftopcf $i > \
+                          /usr/X11R6/lib/X11/fonts/misc/`basename $i .bdf`.pcf
+                done
+                cd /usr/X11R6/lib/X11/fonts/misc
+                /usr/X11R6/bin/mkfontdir
+                # Do this only if the server is already running.
+                /usr/X11R6/bin/xset fp rehash
 
   4.  The `dos' client program uses a translation table to map from an internal
       key representation to the X keymap.  It is likely that the table supplied
-      with Merge 2.2 use the mapping for SCO's server.	A correct mapping table
+      with Merge 2.2 use the mapping for SCO's server.  A correct mapping table
       is available in /usr/X11R6/lib/X11/etc/xcode.xfree86.  This file should
       be installed in /usr/lib/merge/xc.  In addition, you must add the follow-
       ing resource to the `dos' client's application-defaults file (usually in
       /usr/lib/X11/app-defaults/DOS):
 
-		dos*xcodetable: /usr/lib/merge/xc/xcode.xfree86
+                dos*xcodetable: /usr/lib/merge/xc/xcode.xfree86
 
 
       It will be obvious if this new code table is needed, as the arrow keys on
@@ -397,7 +397,7 @@ that are specific to the XFree86 servers.  Here are the things you need to do:
 
 
 
-Information for SVR4 Users
+Information for SVR4 Users                                                    7
 
 
 
@@ -410,16 +410,16 @@ Information for SVR4 Users
       ter.  Hence it is probably a good idea to replace the `dos' program with
       something like this:
 
-		#!/usr/bin/ksh
-		if [ "X${DISPLAY}" != "X" ]
-		then
-		     case ${DISPLAY} in
-		     :*)
-			  DISPLAY=unix${DISPLAY}
-			  ;;
-		     esac
-		fi
-		/usr/bin/dos.real "$@"
+                #!/usr/bin/ksh
+                if [ "X${DISPLAY}" != "X" ]
+                then
+                     case ${DISPLAY} in
+                     :*)
+                          DISPLAY=unix${DISPLAY}
+                          ;;
+                     esac
+                fi
+                /usr/bin/dos.real "$@"
 
 
 8.  Keyboard mapping problems with some Esix systems
@@ -447,11 +447,11 @@ occurs with 106 Japanese keyboard in XFree86.  To avoid it, specify the keyword
 "panix106" in XF86Config like this:
 
        Section "Keyboard"
-	 Protocol    "Standard"
-	 Autorepeat  500 5
-	 XkbModel    "jp106"
-	 XkbLayout   "jp"
-	 panix106
+         Protocol    "Standard"
+         Autorepeat  500 5
+         XkbModel    "jp106"
+         XkbLayout   "jp"
+         panix106
        EndSection
 
 
@@ -463,7 +463,7 @@ occurs with 106 Japanese keyboard in XFree86.  To avoid it, specify the keyword
 
 
 
-Information for SVR4 Users
+Information for SVR4 Users                                                    8
 
 
 
@@ -473,12 +473,12 @@ SVR4.0 has a bug handling programs that access extended I/O registers (above
 0x3FF).  Boards like S3 and 8514/A use these extended I/O registers.  XFree86
 supports boards that tickle this bug.  In preparation for using these servers,
 we have produced a kernel patch that works around the problem, and provided
-scripts for you that will both install and back out the patch.	You must
+scripts for you that will both install and back out the patch.  You must
 install this if you intend to use the S3, 8514, Mach8, Mach32, P9000, AGX or
 W32 servers.
 
 Dell 2.2 is known to not need the patch, because Thomas Roell found and fixed
-the bug while he was working for Dell.	Microport has fixed this in their 4.0
+the bug while he was working for Dell.  Microport has fixed this in their 4.0
 v4.2 release.  Also, SVR4.2 does not need this patch, as the problem has been
 fixed by USL.
 
@@ -529,7 +529,7 @@ affected too.  The problem with the MGA driver is now fixed.
 
 
 
-Information for SVR4 Users
+Information for SVR4 Users                                                    9
 
 
 
@@ -599,7 +599,7 @@ Information for SVR4 Users
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
@@ -655,8 +655,8 @@ Information for SVR4 Users
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SVR4,v 3.22.2.2 1998/02/28 13:05:35 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SVR4,v 3.22.2.4 1998/11/14 06:46:55 dawes Exp $

@@ -1,8 +1,9 @@
 XCOMM $XConsortium: Imakefile /main/21 1996/11/29 13:30:33 swick $
-XCOMM $XFree86: xc/lib/ICE/Imakefile,v 3.2 1996/12/23 05:58:58 dawes Exp $
+XCOMM $XFree86: xc/lib/ICE/Imakefile,v 3.2.2.2 1998/11/06 13:54:21 dawes Exp $
 
 #define DoNormalLib NormalLibICE
 #define DoSharedLib SharedLibICE
+#define DoExtraLib SharedLibICE
 #define DoDebugLib DebugLibICE
 #define DoProfileLib ProfileLibICE
 #define LibName ICE
@@ -21,7 +22,7 @@ CONN_DEFINES = -DTCPCONN -DICE_t -DTRANS_CLIENT -DTRANS_SERVER
 /* XXX temporary hack, PTS is failing on UnixWare */
 CONN_DEFINES = -DSTREAMSCONN -DUNIXCONN -DICE_t -DTRANS_CLIENT -DTRANS_SERVER
 #else
-CONN_DEFINES = ConnectionFlags -DICE_t -DTRANS_CLIENT -DTRANS_SERVER
+CONN_DEFINES = $(CONNECTION_FLAGS) -DICE_t -DTRANS_CLIENT -DTRANS_SERVER
 #endif
 #endif
 

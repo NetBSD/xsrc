@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.5 1998/01/18 10:35:23 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.7 1998/11/13 05:14:57 dawes Exp $ */
 /*
  * Written by Jake Richter
  * Copyright (c) 1989, 1990 Panacea Inc., Londonderry, NH - All Rights Reserved
@@ -40,6 +40,8 @@
 #ifdef CSRG_BASED
 #include <machine/param.h>
 #endif
+
+#include <math.h>
 
 /* Defaults for i386 */
 #ifndef PAGE_SIZE
@@ -110,6 +112,7 @@ static unsigned char old_STG170X[4];
 static unsigned char old_ATT20C408;
 static unsigned char old_IBMRGB514[0x100];
 
+static double current_dot_clock = -1; /* Only used by SetDSPRegs */
 
 /*
  * mach64CalcCRTCRegs --
@@ -866,6 +869,8 @@ void mach64ProgramClkMach64CT(clkCntl, MHz100)
     }
     N = (int)(Q * postDiv + 0.5);
 
+    current_dot_clock = (2.0 * R * N)/(M * postDiv);
+
 #ifdef DEBUG
     ErrorF("Q = %f N = %d P = %d, postDiv = %d R = %d M = %d\n", Q, N, P, postDiv, R, M);
     ErrorF("New freq: %.2f\n", (double)((2 * R * N)/(M * postDiv)) / 100.0);
@@ -1048,78 +1053,201 @@ void mach64ProgramClk(clkCntl, MHz100)
  * mach64SetDSPRegs --
  *	Initializes the DSP registers.
  */
-void mach64SetDSPRegs(crtcRegs)
-     mach64CRTCRegPtr crtcRegs;
+void mach64SetDSPRegs(depth)
+     int depth;
 {
-    int color_depth, t, fifo_size, page_size;
-    float x, fifo_on, fifo_off, z;
-    unsigned short loop_latency, y, temp, dsp_on, dsp_off, dsp_xclks_per_qw;
+    int bpp, bx, bt, p, roff, rloop, n, tmp, page_size;
+    int trp, trcd, tcrd, tras;
+    int pfc, rcc, ron;
+    int fifo_depth;
+    double x, t, f;
+    unsigned short dsp_on, dsp_off, dsp_xclks_per_qw;
 
-    switch (crtcRegs->color_depth) {
-    case CRTC_PIX_WIDTH_8BPP:  color_depth =  8; break;
-    case CRTC_PIX_WIDTH_15BPP: color_depth = 16; break;
-    case CRTC_PIX_WIDTH_16BPP: color_depth = 16; break;
-    case CRTC_PIX_WIDTH_24BPP: color_depth = 24; break;
-    case CRTC_PIX_WIDTH_32BPP: color_depth = 32; break;
-    default:                   color_depth =  4; break;
+    switch (depth) {
+    case CRTC_PIX_WIDTH_8BPP:  bpp =  8; break;
+    case CRTC_PIX_WIDTH_15BPP: bpp = 16; break;
+    case CRTC_PIX_WIDTH_16BPP: bpp = 16; break;
+    case CRTC_PIX_WIDTH_24BPP: bpp = 24; break;
+    case CRTC_PIX_WIDTH_32BPP: bpp = 32; break;
+    default:                   bpp =  4; break;
     }
 
-    x = ((float)mach64VRAMMemClk * 64.0) /
-	((float)crtcRegs->dot_clock * (float)color_depth);
-    t = 0;
-    y = (unsigned short)(x * 24.0) + 1;
+    x = ((double)mach64VRAMMemClk * 64.0) / (current_dot_clock * (double)bpp);
+    bx = ceil(log(floor(x))/log(2));
 
-    while (y) {
-	y >>= 1;
-	t++;
-    }
-    fifo_size = 24;
-    fifo_off = x * (fifo_size - 1) + 1;
-
-    if (mach64MemorySize > MEM_SIZE_1M) {
-	if (mach64MemType >= SDRAM) {
-	    loop_latency = 8;
-	    page_size    = 8;
-	} else {
-	    loop_latency = 6;
-	    page_size    = 9;
-	}
+    if (mach64ChipType == MACH64_GT_ID ||
+	mach64ChipType == MACH64_GU_ID ||
+	mach64ChipType == MACH64_VT_ID ||
+	mach64ChipType == MACH64_VU_ID ||
+	mach64ChipType == MACH64_GV_ID ||
+	mach64ChipType == MACH64_GW_ID ||
+	mach64ChipType == MACH64_GZ_ID ||
+	OFLG_ISSET(OPTION_FIFO_CONSERV, &mach64InfoRec.options)) {
+	rloop = 0;
+	fifo_depth = 24;
     } else {
-	if (mach64MemType >= SDRAM) {
-	    loop_latency = 9;
-	    page_size    = 10;
-	} else {
-	    loop_latency = 8;
-	    page_size    = 10;
-	}
+	rloop = 2;
+	fifo_depth = 32;
     }
 
-    if (x >= page_size) fifo_on = 2 * page_size + 1 + (int)x;
-    else                fifo_on = 3 * page_size;
+    t = x * fifo_depth;
+    bt = ceil(log(floor(t))/log(2));
 
-    dsp_on  = (unsigned short)fifo_on  << (6 - (t - 5));
-    dsp_off = (unsigned short)fifo_off << (6 - (t - 5));
-    dsp_xclks_per_qw = x * (1 << (11 - (t - 5)));
+    p = (bt-5 > bx-3) ? bt-5 : bx-3;
+
+    f = floor((1 << (5 + p))/x);
+    if (f > fifo_depth) f = fifo_depth;
+
+    roff = ceil(x*(f-1));
+
+    switch (mach64MemType) {
+    case DRAM:
+	if (mach64MemorySize > MEM_SIZE_1M) {
+	    rloop += 6;
+	    n = 1;
+	} else {
+	    rloop += 8;
+	    n = 3;
+	}
+	break;
+    case EDO_DRAM:
+    case PSEUDO_EDO:
+	if (mach64MemorySize > MEM_SIZE_1M) {
+	    rloop += 6;
+	    n = 1;
+	} else {
+	    rloop += 7;
+	    n = 2;
+	}
+	break;
+    case SDRAM:
+    case SGRAM:
+	if (mach64MemorySize > MEM_SIZE_1M) {
+	    rloop += 8;
+	    n = 1;
+	} else {
+	    rloop += 9;
+	    n = 2;
+	}
+	break;
+    default:
+	/* Max values from tables */
+	rloop += 9; /* For SDRAM */
+	n = 4;      /* For WRAM  */
+	break;
+    }
+
+    tmp = regr(MEM_CNTL);
+    trp  = ((tmp & MEM_TRP)  >>  8) + 1;
+    trcd = ((tmp & MEM_TRCD) >> 10) + 1;
+    tcrd = ((tmp & MEM_TCRD) >> 12);
+    tras = ((tmp & MEM_TRAS) >> 16) + 1;
+
+    pfc = trp + trcd + tcrd;
+
+    rcc = (trp+tras > pfc+n) ? trp+tras : pfc+n;
+
+    ron = (rcc > floor(x)) ? rcc : floor(x);
+    ron += rcc - 1 + pfc + n;
+
+#if 1
+    /*
+     * The calculation for max random access cycles (rcc) does not
+     * seem to be large enough.  The sample code uses a much larger
+     * number, so I am going to use the greater of the two values
+     * since that seems to work for all of the cards I have access to.
+     */
+    switch (mach64MemType) {
+    case DRAM:
+    case EDO_DRAM:
+    case PSEUDO_EDO:
+	if (mach64MemorySize > MEM_SIZE_1M)
+	    page_size = 9;
+	else
+	    page_size = 10;
+	break;
+    case SDRAM:
+    case SGRAM:
+	if (mach64MemorySize > MEM_SIZE_1M)
+	    page_size = 8;
+	else
+	    page_size = 10;
+	break;
+    default:
+	/* Max values from tables */
+	page_size = 10;
+	break;
+    }
+
+    if (x >= page_size) tmp = 2*page_size + 1 + floor(x);
+    else                tmp = 3*page_size;
+
+    if (tmp > ron) ron = tmp;
+
+    switch (mach64MemType) {
+    case DRAM:
+	break;
+    case EDO_DRAM:
+	if (mach64MemorySize > MEM_SIZE_1M)
+	    if (depth == CRTC_PIX_WIDTH_32BPP)
+		if (current_dot_clock > 4200)
+		    ron += 1;
+	break;
+    case PSEUDO_EDO:
+	if (mach64MemorySize > MEM_SIZE_1M)
+	    roff -= 2;
+	break;
+    case SDRAM:
+    case SGRAM:
+	if (mach64ChipType == MACH64_GT_ID ||
+	    mach64ChipType == MACH64_GU_ID ||
+	    mach64ChipType == MACH64_VT_ID ||
+	    mach64ChipType == MACH64_VU_ID ||
+	    OFLG_ISSET(OPTION_FIFO_CONSERV, &mach64InfoRec.options)) {
+	    if (depth == CRTC_PIX_WIDTH_15BPP || depth == CRTC_PIX_WIDTH_16BPP)
+		ron += 1;
+	}
+	break;
+    default:
+	break;
+    }
+#endif
+
+    dsp_on  = ron  << (6 - p);
+    dsp_off = roff << (6 - p);
+    dsp_xclks_per_qw = x * (1 << (11 - p));
+
+    if (ron+rloop >= roff)
+	ErrorF("Warning: Ron = %d, Rloop = %d, Roff = %d\n", ron, rloop, roff);
 
 #ifdef DEBUG
-    ErrorF("dsp_on  = %d, fifo_on  = %f\n", dsp_on, fifo_on);
-    ErrorF("dsp_off = %d, fifo_off = %f\n", dsp_off, fifo_off);
-    ErrorF("dsp_xclks_per_qw = %d, x = %f, t = %d\n", dsp_xclks_per_qw, x, t);
+    ErrorF("t = %f, bt = %d, x = %lf, bx = %d, p = %d\n", t, bt, x, bx, p);
+    ErrorF("dsp_on  = %d, ron  = %d, rloop = %d\n", dsp_on, ron, rloop);
+    ErrorF("dsp_off = %d, roff = %d\n", dsp_off, roff);
+    ErrorF("dsp_xclks_per_qw = %d\n", dsp_xclks_per_qw);
+    ErrorF("mach64VRAMMemClk = %d, ", mach64VRAMMemClk);
+    ErrorF("dot_clock = %.3lf, ", current_dot_clock);
+    ErrorF("bpp = %d\n", bpp);
+    ErrorF("trp = %d, ", trp);
+    ErrorF("trcd = %d, ", trcd);
+    ErrorF("tcrd = %d, ", tcrd);
+    ErrorF("tras = %d\n", tras);
+    ErrorF("pfc = %d, ", pfc);
+    ErrorF("rcc = %d\n", rcc);
 #endif
 
     regw(DSP_ON_OFF,
 	 ((dsp_on << 16) & DSP_ON) |
 	 (dsp_off & DSP_OFF));
     regw(DSP_CONFIG,
-	 (((t - 5) << 20) & DSP_PRECISION) |
-	 ((loop_latency << 16) & DSP_LOOP_LATENCY) |
+	 ((p << 20) & DSP_PRECISION) |
+	 ((rloop << 16) & DSP_LOOP_LATENCY) |
 	 (dsp_xclks_per_qw & DSP_XCLKS_PER_QW));
 }
 
 /*
  * mach64SetCRTCRegs --
- *	Initializes the Mach64 for the currently selected CRTC parameters.
- */
+ * Initializes the Mach64 for the currently selected CRTC parameters.  */
 void mach64SetCRTCRegs(crtcRegs)
      mach64CRTCRegPtr crtcRegs;
 {
@@ -1134,10 +1262,6 @@ void mach64SetCRTCRegs(crtcRegs)
     WaitIdleEmpty();
     crtcGenCntl = regr(CRTC_GEN_CNTL);
     regw(CRTC_GEN_CNTL, crtcGenCntl & ~(CRTC_EXT_EN | CRTC_LOCK_REGS));
-
-    /* Set the DSP registers on the VT-B and GT-B */
-    if (mach64HasDSP)
-	mach64SetDSPRegs(crtcRegs);
 
     /* Check to see if we need to program the clock chip */
     if (mach64ClockType != 0 && mach64Ramdac != DAC_IBMRGB514 &&
@@ -1166,6 +1290,10 @@ void mach64SetCRTCRegs(crtcRegs)
 	mach64ProgramClkRGB514(mach64CXClk, crtcRegs->dot_clock);
 	crtcRegs->clock_cntl = mach64CXClk;
     }
+
+    /* Set the DSP registers on the VT-B and GT-B */
+    if (mach64HasDSP)
+	mach64SetDSPRegs(crtcRegs->color_depth);
 
     WaitQueue(12);
     /* Horizontal CRTC registers */
@@ -1352,11 +1480,7 @@ void mach64ResetEngine()
     /* On RagePro chips we can enable auto block write and auto fast fill
      * modes if block write mode is not initialized by the BIOS.
      */
-    if (mach64ChipType == MACH64_GB_ID ||
-	mach64ChipType == MACH64_GD_ID ||
-	mach64ChipType == MACH64_GI_ID ||
-	mach64ChipType == MACH64_GP_ID ||
-	mach64ChipType == MACH64_GQ_ID) {
+    if (mach64IntegratedController && mach64HasBlockWrite) {
 	temp = regr(HW_DEBUG);
 	if (OFLG_ISSET(OPTION_BLOCK_WRITE, &mach64InfoRec.options)) {
 	    temp &= ~(AUTO_FF_DIS | AUTO_BLKWRT_DIS);
@@ -2314,11 +2438,7 @@ void mach64InitDisplay(screen_idx)
 	regw(BUS_CNTL, old_BUS_CNTL | BUS_APER_REG_DIS);
 
     /* Save the HW_DEBUG register if on a RagePro */
-    if (mach64ChipType == MACH64_GB_ID ||
-        mach64ChipType == MACH64_GD_ID ||
-        mach64ChipType == MACH64_GI_ID ||
-        mach64ChipType == MACH64_GP_ID ||
-        mach64ChipType == MACH64_GQ_ID)
+    if (mach64IntegratedController && mach64HasBlockWrite)
 	old_HW_DEBUG = regr(HW_DEBUG);
 
 #ifdef DEBUG
@@ -2484,11 +2604,7 @@ void mach64CleanUp()
 
     WaitIdleEmpty();
     /* Restore the HW_DEBUG register if on a RagePro */
-    if (mach64ChipType == MACH64_GB_ID ||
-        mach64ChipType == MACH64_GD_ID ||
-        mach64ChipType == MACH64_GI_ID ||
-        mach64ChipType == MACH64_GP_ID ||
-        mach64ChipType == MACH64_GQ_ID)
+    if (mach64IntegratedController && mach64HasBlockWrite)
 	regw(HW_DEBUG, old_HW_DEBUG);
 
     /* Was getting set to 0x00020200 */

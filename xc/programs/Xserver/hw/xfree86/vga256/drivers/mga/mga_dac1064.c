@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dac1064.c,v 1.1.2.10 1998/02/07 10:05:26 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga_dac1064.c,v 1.1.2.15 1998/10/31 14:40:59 hohndel Exp $ */
 
 
 /*
@@ -43,12 +43,14 @@
 #include "xf86Priv.h"
 #include "xf86_OSlib.h"
 #include "xf86_HWlib.h"
+#include "xf86cursor.h"
 #include "vga.h"
 #include "vgaPCI.h"
 
 #include "mga_reg.h"
 #include "mga_bios.h"
 #include "mga.h"
+#include "xf86_Config.h"
 
 /*
  * exported functions
@@ -98,7 +100,7 @@ static unsigned char MGADACbpp24[] = {
 
 static unsigned char MGADACbpp32[] = {
         0xFF, 0x0F, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00,
-	0x4B, 0xE4, 0xF9, 0x80, 0x07, 0x09, 0x20, 0x1F, 
+	0x4B, 0xE4, 0xF9, 0x80, 0x07, 0xC9, 0x20, 0x1F, 
 	0x00, 0x1A, 0x40, 0x00, 0x07,
 	0x00, 0x00, 0x0D, 0xCA, 0x33, 0x58, 0xC2
 };
@@ -120,7 +122,7 @@ static unsigned char PC98_MGADACbpp16[] = {
 
 static unsigned char PC98_MGADACbpp32[] = {
 	0xFE, 0x07, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF,
-	0x2A, 0x02, 0x10, 0x00, 0x07, 0x09, 0x20, 0x19, 
+	0x2A, 0x02, 0x10, 0x00, 0x07, 0xC9, 0x20, 0x19, 
 	0x10, 0x3f, 0x40, 0x00, 0x07,
 	0x00, 0x00, 0x00, 0x0E, 0x9A, 0x80, 0x5A
 };
@@ -484,30 +486,6 @@ MGA1064SGSetPCLK( f_out, bpp )
 	ErrorF( "MGA1064SGSetPCLK: MISC Reg %x (apres ecriture)\n",inb(MGAREG_MISC_READ));
 #endif
 
-/* Set the new PCLK frequency  */
-	/* see page 4.184 */	
-	outMGA1064( MGA1064_PIX_PLLC_M, ( m & 0x1f ));
-	/* see page 4.185 */	
-	outMGA1064( MGA1064_PIX_PLLC_N, n & 0x7f );
-	/* see page 4.186 */	
-	/* adjust filter also */	
-	outMGA1064( MGA1064_PIX_PLLC_P, ( (p & 0x07) | ((s & 0x03) << 3 )) );
-
-	/* Wait for PIX PLL to lock on frequency */
-	while (( inMGA1064( MGA1064_PIX_PLL_STAT ) & 0x40 ) == 0 ) {
-		;
-	}
-	/* Start PCLK (pixclkdis = 0) according doc p 5.77 */
-	pclk_ctrl = inMGA1064(MGA1064_PIX_CLK_CTL);
-	pclk_ctrl &= ~MGA1064_PIX_CLK_CTL_CLK_DIS;
-	pclk_ctrl &= ~MGA1064_PIX_CLK_CTL_SEL_MSK;
-	pclk_ctrl |= MGA1064_PIX_CLK_CTL_SEL_PLL;
-	outMGA1064(MGA1064_PIX_CLK_CTL,pclk_ctrl);
-	 if ( vgaBitsPerPixel == 24 ) {
-	}
-	else {
-	}
-
 #ifdef DEBUG
 	ErrorF( "MGA1064SGSetPCLK: pixpll_m=%x pixpll_n=%x pixpll_p=%x, misc_ctrl=%x\n"
 		,inMGA1064( MGA1064_PIX_PLLC_M )
@@ -803,10 +781,14 @@ DisplayModePtr mode;
 	}
 #endif
 	if (OFLG_ISSET(OPTION_SYNC_ON_GREEN, &vga256InfoRec.options)) {
-	    newVS->DACreg[index_1d] |= 0x20;
-		ErrorF("synchro dans le vert\n");
+		ErrorF("%s %s: sync on green\n",
+		    XCONFIG_GIVEN, vga256InfoRec.name);
+		newVS->DACreg[index_1d] &= ~0x20;
+		newVS->ExtVga[3] |= 0x40;
 	}
 	newVS->DAClong = 0x5F094F21;
+        if(!OFLG_ISSET(OPTION_PCI_RETRY, &vga256InfoRec.options))
+	    newVS->DAClong |= (1 << 29);
 
 #ifdef	PC98_MGA
 	MGA1064PC98Init();
@@ -863,6 +845,11 @@ DisplayModePtr mode;
 	for (i=0; i<6; i++) ErrorF(" %02X", newVS->ExtVga[i]);
 	ErrorF("\n");
 #endif
+
+	/* Set adress of cursor image */
+	newVS->DACreg[0] = (vga256InfoRec.videoRam-1) & 0xFF;
+	newVS->DACreg[1] = (vga256InfoRec.videoRam-1) >> 8;
+
 	return(TRUE);
 }
 
@@ -997,10 +984,101 @@ vgaMGAPtr save;
 	return((void *) save);
 }
 
+
+void MGA1064SetCursorColors(bg, fg)
+	int bg, fg;
+{
+	/* Background color */
+	outMGA1064(MGA1064_CURSOR_COL0_RED,   (bg & 0x00FF0000) >> 16);
+	outMGA1064(MGA1064_CURSOR_COL0_GREEN, (bg & 0x0000FF00) >> 8);
+	outMGA1064(MGA1064_CURSOR_COL0_BLUE,  (bg & 0x000000FF));
+
+	/* Foreground color */
+	outMGA1064(MGA1064_CURSOR_COL1_RED,   (fg & 0x00FF0000) >> 16);
+	outMGA1064(MGA1064_CURSOR_COL1_GREEN, (fg & 0x0000FF00) >> 8);
+	outMGA1064(MGA1064_CURSOR_COL1_BLUE,  (fg & 0x000000FF));
+}
+
+void MGA1064SetCursorPosition(x, y, xorigin, yorigin)
+	int x, y, xorigin, yorigin;
+{
+	unsigned long curpos;
+
+	x += 64-xorigin;
+	y += 64-yorigin;
+
+	curpos = ((y & 0xFFF) << 16) | (x & 0xFFF);
+
+	/* Wait for end of vertical retrace */
+	while (INREG8(MGAREG_Status) & 0x08)
+	{
+		/* Wait */
+	}
+
+	/* Set new position */
+	OUTREG(RAMDAC_OFFSET + MGA1064_CUR_XLOW, curpos);
+}
+
+void MGA1064LoadCursorImage(src, xorigin, yorigin)
+	register unsigned char *src;
+	int xorigin, yorigin;
+{
+        register int   i;
+        unsigned char *dest = (unsigned char *)vgaLinearBase
+                - (MGAydstorg * vgaBitsPerPixel >> 3) 	
+		+ ((vga256InfoRec.videoRam-1)*1024);
+
+        for (i=0; i<1024; i+=16)
+        {
+                dest[i]    = src[i+14];
+                dest[i+1]  = src[i+12];
+                dest[i+2]  = src[i+10];
+                dest[i+3]  = src[i+8];
+                dest[i+4]  = src[i+6];
+                dest[i+5]  = src[i+4];
+                dest[i+6]  = src[i+2];
+                dest[i+7]  = src[i];
+                dest[i+8]  = src[i+15];
+                dest[i+9]  = src[i+13];
+                dest[i+10] = src[i+11];
+                dest[i+11] = src[i+9];
+                dest[i+12] = src[i+7];
+                dest[i+13] = src[i+5];
+                dest[i+14] = src[i+3];
+                dest[i+15] = src[i+1];
+        }
+}
+
+void MGA1064HideCursor()
+{
+	/* Disable cursor */
+	outMGA1064(MGA1064_CURSOR_CTL, 0);
+}
+
+void MGA1064ShowCursor()
+{
+	/* Enable cursor, X11 mode */
+	outMGA1064(MGA1064_CURSOR_CTL, 0x03);
+}
+
 void
 MGA1064RamdacInit()
 {
-    MGAdac.isHwCursor = FALSE;
+    MGAdac.isHwCursor        = TRUE;
+	MGAdac.CursorMaxWidth    = 64;
+	MGAdac.CursorMaxHeight   = 64;
+	MGAdac.SetCursorColors   = MGA1064SetCursorColors;
+	MGAdac.SetCursorPosition = MGA1064SetCursorPosition;
+	MGAdac.LoadCursorImage   = MGA1064LoadCursorImage;
+	MGAdac.HideCursor        = MGA1064HideCursor;
+	MGAdac.ShowCursor        = MGA1064ShowCursor;
+	MGAdac.CursorFlags       = USE_HARDWARE_CURSOR |
+	                           HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
+	                           HARDWARE_CURSOR_TRUECOLOR_AT_8BPP |
+	                           HARDWARE_CURSOR_PROGRAMMED_ORIGIN |
+	                           HARDWARE_CURSOR_CHAR_BIT_FORMAT |
+				   HARDWARE_CURSOR_SWAP_SOURCE_AND_MASK |
+	                           HARDWARE_CURSOR_PROGRAMMED_BITS;
 
     if ( MGABios2.PinID )
     {

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/lnxdoc.tmpl,v 3.5 1997/01/26 05:10:26 dawes Exp $
+XCOMM $XFree86: xc/config/cf/lnxdoc.tmpl,v 3.5.2.2 1998/11/07 12:00:45 dawes Exp $
 XCOMM
 
 #ifndef HasLinuxDoc
@@ -7,6 +7,10 @@ XCOMM
 
 #ifndef HasSgmlFmt
 #define HasSgmlFmt		NO
+#endif
+
+#ifndef DoSgmlDocs
+#define DoSgmlDocs		(HasLinuxDoc || HasSgmlFmt)
 #endif
 
 #ifndef LinuxDocDir
@@ -66,15 +70,15 @@ XCOMM
 #endif
 
 #ifndef BuildLinuxDocText
-#define BuildLinuxDocText	HasLinuxDoc
+#define BuildLinuxDocText	(HasLinuxDoc || HasSgmlFmt)
 #endif
 
 #ifndef BuildLinuxDocHtml
-#define BuildLinuxDocHtml	NO
+#define BuildLinuxDocHtml	HasSgmlFmt
 #endif
 
 #ifndef BuildLinuxDocPS
-#define BuildLinuxDocPS		(HasLatex && HasDvips) || HasSgmlFmt
+#define BuildLinuxDocPS		((HasLatex && HasDvips) || HasSgmlFmt)
 #endif
 
 

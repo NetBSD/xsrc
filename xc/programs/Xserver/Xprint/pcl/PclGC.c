@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclGC.c,v 1.3.2.1 1997/06/15 07:25:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclGC.c,v 1.3.2.2 1998/10/04 13:36:44 hohndel Exp $ */
 
 #include "gcstruct.h"
 
@@ -994,7 +994,7 @@ PclComputeCompositeClip(pGC, pDrawable)
 void
 PclValidateGC( pGC, changes, pDrawable )
      GCPtr pGC;
-     Mask changes;
+     unsigned long changes;
      DrawablePtr pDrawable;
 {
     XpContextPtr pCon;

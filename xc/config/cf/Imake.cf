@@ -1,5 +1,5 @@
 XCOMM $TOG: Imake.cf /main/28 1997/06/25 08:31:36 barstow $
-XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.3 1997/07/27 02:41:02 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.9 1998/11/12 10:34:47 dawes Exp $
 /*
  * To add support for another platform:
  * 
@@ -41,7 +41,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.3 1997/07/27 02:41:02 dawes Exp $
 # define UltrixArchitecture
 #endif /* ultrix */
 
-#if defined(vax) && !defined(UltrixArchitecture)
+#if defined(vax) && !defined(UltrixArchitecture) && !defined(__NetBSD__)
 # define MacroIncludeFile <bsd.cf>
 # define MacroFile bsd.cf
 # undef vax
@@ -141,6 +141,12 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.3 1997/07/27 02:41:02 dawes Exp $
 # endif
 # ifdef mc68000
 #   define Mc68020Architecture
+#   undef mc68000
+# endif
+# if defined(arm32) || defined(__arm32__)
+#   define Arm32Architecture
+#   undef arm32
+#   undef __arm32__
 # endif
 #endif /* NetBSD */
 
@@ -548,14 +554,28 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.3 1997/07/27 02:41:02 dawes Exp $
 #  define i386Architecture
 #  undef i386
 # endif /* i386 */
+# ifdef __i386__
+#  ifndef i386Architecture
+#   define i386Architecture
+#  endif
+#  undef __i386__
+# endif /* __i386__ */
 # ifdef __alpha
 #  define AlphaArchitecture
 #  undef __alpha
 # endif /* __alpha */
+# ifdef __alpha__
+#  define AlphaArchitecture
+#  undef __alpha__
+# endif /* __alpha__ */
 # ifdef mc68000
 #  define Mc68020Architecture
 #  undef mc68000
 # endif /* mc68000 */
+# ifdef powerpc
+#  define PowerPCArchitecture
+#  undef powerpc
+# endif
 #endif /* linux */
 
 #if (defined(__Lynx__) || defined(Lynx)) && (defined(i386) || defined(__i386__) || defined(__x86__) || defined(__powerpc__) || defined(__sparc__) || defined(sparc))

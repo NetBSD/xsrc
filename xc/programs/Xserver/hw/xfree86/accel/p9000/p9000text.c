@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000text.c,v 3.3 1996/12/23 06:40:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000text.c,v 3.3.2.1 1998/10/21 10:44:38 dawes Exp $ */
 /*
  * Copyright 1992,1993 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -38,8 +38,8 @@
 #include	"fontstruct.h"
 #include	"dixfontstr.h"
 #include	"mi.h"
-#include	"p9000reg.h"
 #include	"p9000.h"
+#include	"p9000reg.h"
 
 __inline__ static int
 p9000NoCPolyText() ;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_accel.c,v 3.5.2.1 1997/05/03 09:47:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_accel.c,v 3.5.2.2 1998/09/27 12:59:01 hohndel Exp $ */
 
 
 #include "vga256.h"
@@ -34,6 +34,9 @@ void CTNAME(24SetupForFillRectSolid)();
 void CTNAME(SubsequentFillRectSolid)();
 #ifndef CHIPS_HIQV
 void CTNAME(24SubsequentFillRectSolid)();
+#else
+void CTNAME(32SetupForFillRectSolid)(int, int, unsigned);
+void CTNAME(32SubsequentFillRectSolid)(int, int, int, int);
 #endif
 void CTNAME(SetupForScreenToScreenCopy)();
 void CTNAME(SubsequentScreenToScreenCopy)();
@@ -142,7 +145,22 @@ void _ctAccelInit() {
 	xf86GCInfoRec.PolyFillRectSolidFlags |= GXCOPY_ONLY;
 #endif
         break;
+#ifdef CHIPS_HIQV
+    case 32:
+        if (ctBLTPatternAddress > 0) {
+	    xf86AccelInfoRec.SetupForFillRectSolid = 
+		CTNAME(32SetupForFillRectSolid);
+	    xf86AccelInfoRec.SubsequentFillRectSolid =
+		CTNAME(32SubsequentFillRectSolid);      
+	}
+        break;
+#endif
     }
+
+#ifdef CHIPS_HIQV
+    /* At 32bpp we can't use the other acceleration */
+    if (vga256InfoRec.bitsPerPixel == 32) goto chips_pixmap;
+#endif
 
     /*
      * Setup the functions that perform monochrome colour expansion
@@ -204,6 +222,7 @@ void _ctAccelInit() {
             CTNAME(Subsequent8x8PatternColorExpand);
     }
 
+chips_pixmap:
     xf86InitPixmapCache(&vga256InfoRec, vga256InfoRec.virtualY *
         vga256InfoRec.displayWidth * vga256InfoRec.bitsPerPixel / 8,
         ctCacheEnd);
@@ -253,6 +272,30 @@ void CTNAME(24SetupForFillRectSolid)(color, rop, planemask)
     ctSETFGCOLOR24(color);
     ctSETBGCOLOR24(color);
     ctSETPITCH(0, vga256InfoRec.displayWidth * vgaBytesPerPixel);
+}
+
+void CTNAME(32SetupForFillRectSolid)(color, rop, planemask)
+    int color, rop;
+    unsigned planemask;
+{
+    ctBLTWAIT;
+    memset((unsigned char *)vgaLinearBase + ctBLTPatternAddress, 0xAA, 8);
+    ctSETFGCOLOR16((color & 0xFFFF));
+    ctSETBGCOLOR16(((color >> 16) & 0xFFFF));
+    ctSETROP(ctAluConv2[rop & 0xF] | ctTOP2BOTTOM | ctLEFT2RIGHT |
+      ctPATMONO);
+    ctSETPATSRCADDR(ctBLTPatternAddress);
+    ctSETPITCH(1,(vga256InfoRec.displayWidth << 2));
+}
+
+void CTNAME(32SubsequentFillRectSolid)(x, y, w, h)
+    int x, y, w, h;
+{
+    unsigned int destaddr;
+    destaddr = (y * vga256InfoRec.displayWidth + x) << 2;
+    ctBLTWAIT;
+    ctSETDSTADDR(destaddr);
+    ctSETHEIGHTWIDTHGO(h, (w << 2));
 }
 #else
 

@@ -1,0 +1,52 @@
+XFree86 3.3.2 X Server for NVIDIA NV1, RIVA 128/ZX (NV3), RIVA TNT(NV4)
+
+This is simply the X server compiled only for NV acceleration (to reduce 
+binary image size) with the XFree86 version 3.3.2 distribution for Linux 
+w/glibc.  The server is Dave McKay's code with fixes for the video noise 
+along with support for the TNT.  If you aren't running the latest version 
+of XFree86, get that installed first using the XF86_SVGA server.  I've 
+been building and running this on RedHat 5.1, kernel version 2.0.34.  I 
+want to first get some feedback before releasing the source to make sure I 
+really did fix the video noise problems.  I've tried it up to 
+1280x1024x32, but I'm sure others push harder or use higher refresh rates.  
+128ZX users especially try the higher resolutions.  The SDRAM 128ZX parts 
+are more susceptible to the video noise.  I've tested this server using 
+both RIVA 128/ZX and TNT on my PPro 200 PCI and K6-2 AGP systems.  (The 
+K6-2 system really rocks on Linux - whats the corollary to Wintel?  
+LinAMD?).  If you still use an NV1, I'd like to hear from you - you must 
+be a real trooper.  
+
+Update:
+
+10/16/98
+
+The video clock was indeed being programmed wrong.  Thanks to everyone who 
+pointed this out.  If you had to make changes to your XF86Config file to 
+get the display correct, you may have to undo it.  Sorry.  
+
+Many people mentioned text was slow and the display update was a little 
+erratic.  I was trying to be clever and yield the CPU when the graphics 
+engine was busy, but it really didn't work well.  I've gone back to being 
+a CPU hog.  It probably doesn't slow apps down too much, and it keeps the 
+display responsive.  
+
+
+	Dave Schmenk
+	NVIDIA Corp.
+
+11/18/98
+
+After we already finalized XFree86-3.3.3 NVIDIA forced The XFree86 Project
+to replace the sources we had with sources that were partly run through the
+C preprocessor in order to remove some of the names that NVIDIA thought
+might give away IP from NVIDIA. This resulted in unreadable and unmaintainable
+code.
+
+The XFree86 Project is strongly opposed to such obfuscated code. We do not
+regard this as free software according to our standards. Due to the extremely
+late date of this decision from NVIDIA we decided to include the code as
+offered by NVIDIA. We are considering to remove support for the later NVIDIA
+chips in a future release, though.
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/README.RIVATNT,v 1.1.2.3 1998/11/18 16:38:43 hohndel Exp $

@@ -47,7 +47,7 @@ in this Software without prior written authorization from the X Consortium.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/events.c,v 3.0.6.1 1997/05/29 14:01:07 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/events.c,v 3.0.6.2 1998/10/04 13:37:25 hohndel Exp $ */
 
 #include	"clientstr.h"
 #include	"FSproto.h"
@@ -84,7 +84,7 @@ ProcSetEventMask(client)
     REQUEST_AT_LEAST_SIZE(fsSetEventMaskReq);
 
     if (stuff->event_mask & ~AllEventMasks) {
-	SendErrToClient(client, FSBadEventMask, (pointer) stuff->event_mask);
+	SendErrToClient(client, FSBadEventMask, (pointer) &stuff->event_mask);
 	return FSBadEventMask;
     }
     client->eventmask = stuff->event_mask;

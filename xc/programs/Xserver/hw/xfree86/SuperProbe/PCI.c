@@ -7,7 +7,9 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.c,v 3.7.4.1 1997/05/06 13:24:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.c,v 3.7.4.2 1998/10/25 14:15:10 hohndel Exp $ */
+
+/* #define DEBUGPCI */
 
 #include "Probe.h"
 
@@ -29,6 +31,7 @@ xf86scanpci()
     int Num_PCI_CtrlIOPorts = 3;
     unsigned PCI_DevIOAddrPorts[16*16];
     int Num_PCI_DevIOAddrPorts = 16*16;
+    int hostbridges = 0;
 
     for (i=0; i<16; i++) {
         for (j=0; j<16; j++)
@@ -129,10 +132,33 @@ xf86scanpci()
 
 	    pcr._funcnum = func;
 
+#if 1
+            /* check for pci-pci bridges */
+#define PCI_CLASS_MASK 		0xff000000
+#define PCI_SUBCLASS_MASK 	0x00ff0000
+#define PCI_CLASS_BRIDGE 	0x06000000
+#define PCI_SUBCLASS_BRIDGE_PCI	0x00040000
+	    switch(pcr._class_revision & (PCI_CLASS_MASK|PCI_SUBCLASS_MASK)) {
+		case PCI_CLASS_BRIDGE|PCI_SUBCLASS_BRIDGE_PCI:
+		    if (pcr._secondary_bus_number > 0) {
+		        pcr._pcibuses[pcr._pcinumbus++] = pcr._secondary_bus_number;
+		    }
+			break;
+		case PCI_CLASS_BRIDGE:
+		    if ( ++hostbridges > 1) {
+			pcr._pcibuses[pcr._pcinumbus] = pcr._pcinumbus;
+			pcr._pcinumbus++;
+		    }
+			break;
+		default:
+			break;
+	    }
+#else
             /* check for pci-pci bridges (currently we only know Digital) */
             if ((pcr._vendor == 0x1011) && (pcr._device == 0x0001))
                 if (pcr._secondary_bus_number > 0)
                     pcr._pcibuses[pcr._pcinumbus++] = pcr._secondary_bus_number;
+#endif
 
 	    if (idx >= MAX_PCI_DEVICES)
 	        break;;

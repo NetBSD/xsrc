@@ -1,4 +1,4 @@
-/* $XConsortium: XlcUTF.h,v 1.5 94/03/31 21:59:49 rws Exp $ */
+/* $TOG: XlcUTF.h /main/10 1998/05/20 14:47:44 kaleb $ */
 /******************************************************************
 
               Copyright 1993 by SunSoft, Inc.
@@ -25,6 +25,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
   Author: Hiromu Inukai (inukai@Japan.Sun.COM) SunSoft, inc.
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/XlcUTF.h,v 1.1.1.1.12.2 1998/10/24 08:48:22 hohndel Exp $ */
 #include "Xlibint.h"
 #include "XlcGeneric.h"
 #include <X11/Xos.h>
@@ -52,58 +53,60 @@ typedef unsigned short Rune;		/* 16 bits */
 #define		tab8859_7	"tab8859_7"
 #define		tab8859_8	"tab8859_8"
 #define		tab8859_9	"tab8859_9"
+#define		tab8859_10	"tab8859_10"
+#define		tab8859_15	"tab8859_15"
 #define		jis0208		"jis0208"
 #define		ksc5601		"ksc5601"
 #define		gb2312		"gb2312"
+#define		tabkoi8_r	"tabkoi8_r"
 
 #define emit(x)    *r = (Rune)x;
 
 typedef enum {
-	N11n_none,		/* No need to normalize (1byte) */
-	N11n_ja,		/* Normalize for ja */
-	N11n_ko,		/* Normalize for ko */
-	N11n_zh			/* Normalize for zh */
+    N11n_none,		/* No need to normalize (1byte) */
+    N11n_ja,		/* Normalize for ja */
+    N11n_ko,		/* Normalize for ko */
+    N11n_zh		/* Normalize for zh */
 } NormalizeType;
 
 typedef struct  _UtfDataRec {
-	XlcCharSet		charset;
-	void			(*initialize)( /* Table Initializer */
+    XlcCharSet	charset;
+    void		(*initialize)( /* Table Initializer */
 #if NeedNestedPrototypes
-					      long *tbl,
-					      long fallback
+	int*,
+	wchar_t
 #endif
-						);
-	long			*fromtbl;	/* UTF -> CharSet */
-	NormalizeType		type;		/* Normalize type */
-	void			(*cstorune)(   /* CharSet -> UTF */
+    );
+    int*		fromtbl;	/* UTF -> CharSet */
+    NormalizeType	type;		/* Normalize type */
+    void		(*cstorune)(	/* CharSet -> UTF */
 #if NeedNestedPrototypes
-					    unsigned char c,
-					    Rune *r
+	unsigned char,
+	Rune*
 #endif
-					    );
-	Bool			already_init;
-        struct _UtfDataRec	*next;		/* next entry     */
+    );
+    Bool			already_init;
+    struct _UtfDataRec	*next;		/* next entry     */
 } UtfDataRec, *UtfData;
 
 typedef struct _XlcUTFDataRec {
     char	*name;
     XlcSide	side;
-    void	(*initialize)();
+    void	(*initialize)(
+#if NeedNestedPrototypes
+	int*,
+	wchar_t
+#endif
+    );
     void	(*cstorune)(
 #if NeedNestedPrototypes
-			    unsigned char c,
-			    Rune *r
+	unsigned char,
+	Rune*
 #endif
-			    );
+    );
     NormalizeType	type;
-    long		fallback_value;
+    wchar_t		fallback_value;
 } XlcUTFDataRec, *XlcUTFData;
-
-typedef struct _StateRec {
-    XlcCharSet charset;
-    XlcCharSet GL_charset;
-    XlcCharSet GR_charset;
-} StateRec, *State;
 
 #define MAX_UTF_CHARSET	(sizeof(default_utf_data)/sizeof(XlcUTFDataRec))
 

@@ -42,6 +42,7 @@ of this software for any purpose.  It is provided "as is" without express or
 implied warranty.
 
 ******************************************************************/
+/* $XFree86: xc/programs/Xserver/mi/mibstore.c,v 1.1.1.2.4.2 1998/10/04 15:23:04 hohndel Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -2306,8 +2307,8 @@ miBSClearBackingStore(pWin, x, y, w, h, generateExposures)
 		    gcvalues[1] = (pointer) background.pixmap;
 		    gcmask = GCFillStyle|GCTile;
 		}
-		gcvalues[2] = (pointer)(ts_x_origin - pBackingStore->x);
-		gcvalues[3] = (pointer)(ts_y_origin - pBackingStore->y);
+		gcvalues[2] = (pointer)(long)(ts_x_origin - pBackingStore->x);
+		gcvalues[3] = (pointer)(long)(ts_y_origin - pBackingStore->y);
 		gcmask |= GCTileStipXOrigin|GCTileStipYOrigin;
 		DoChangeGC(pGC, gcmask, (XID *)gcvalues, TRUE);
 		ValidateGC((DrawablePtr)pBackingStore->pBackingPixmap, pGC);
@@ -2450,12 +2451,12 @@ miBSFillVirtualBits (pDrawable, pGC, pRgn, x, y, state, pixunion, planeMask)
 	}
 	if (pGC->patOrg.x != x)
 	{
-	    gcval[i++] = (pointer)x;
+	    gcval[i++] = (pointer)(long)x;
 	    gcmask |= GCTileStipXOrigin;
 	}
 	if (pGC->patOrg.y != y)
 	{
-	    gcval[i++] = (pointer)y;
+	    gcval[i++] = (pointer)(long)y;
 	    gcmask |= GCTileStipYOrigin;
 	}
     }

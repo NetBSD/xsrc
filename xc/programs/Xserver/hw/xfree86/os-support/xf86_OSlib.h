@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.36.2.5 1998/02/15 16:09:30 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.36.2.6 1998/09/27 12:58:58 hohndel Exp $ */
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1992 by David Dawes <dawes@XFree86.org>
@@ -228,6 +228,13 @@ extern int errno;
 
 # include <termios.h>
 # define POSIX_TTY
+
+/* LynxOS 2.5.1 has these */
+# ifdef LED_NUMLOCK
+#  define LED_CAP     LED_CAPSLOCK
+#  define LED_NUM     LED_NUMLOCK
+#  define LED_SCR     LED_SCROLLOCK
+# endif
 
 #endif /* Lynx */
 

@@ -60,6 +60,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/Xt/Resources.c,v 1.1.1.2.4.4 1998/10/04 13:36:35 hohndel Exp $ */
+
 /*LINTLIBRARY*/
 #include "IntrinsicI.h"
 #include "VarargsI.h"
@@ -414,7 +416,7 @@ static void BadSize(size, name)
     String params[2];
     Cardinal num_params = 2;
 
-    params[0] = (String) size;
+    params[0] = (String)(long) size;
     params[1] = XrmQuarkToString(name);
     XtWarningMsg("invalidSizeOverride", "xtDependencies", XtCXtToolkitError,
 	"Representation size %d must match superclass's to override %s",
@@ -569,6 +571,7 @@ static XtCacheRef *GetResources(widget, base, names, classes,
  * assert: num_args == 0 if *pNumTypedArgs > 0
  */
 #define SEARCHLISTLEN 100
+#define MAXRESOURCES 400
 
     XrmValue	    value;
     XrmQuark	    rawType;
@@ -576,9 +579,9 @@ static XtCacheRef *GetResources(widget, base, names, classes,
     XrmHashTable    stackSearchList[SEARCHLISTLEN];
     XrmHashTable    *searchList = stackSearchList;
     unsigned int    searchListSize = SEARCHLISTLEN;
-    Boolean	    found[400];
-    int		    typed[400];
-    XtCacheRef	    cache_ref[400];
+    Boolean	    found[MAXRESOURCES];
+    int		    typed[MAXRESOURCES];
+    XtCacheRef	    cache_ref[MAXRESOURCES];
     XtCacheRef      *cache_ptr, *cache_base;
     Boolean	    persistent_resources = True;
     Boolean	    found_persistence = False;
@@ -593,7 +596,7 @@ static XtCacheRef *GetResources(widget, base, names, classes,
                    (String *)NULL, (Cardinal *)NULL);
 	num_args = 0;
     }
-    if (num_resources == 0) {
+    if (num_resources == 0 || num_resources >= MAXRESOURCES) {
 	return NULL;
     } else if (table == NULL) {
     	XtAppWarningMsg(XtWidgetToApplicationContext(widget),

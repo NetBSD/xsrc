@@ -12,6 +12,7 @@ the suitability of this software for any purpose.  It is provided "as
 is" without express or implied warranty.
 
 */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Display.h,v 1.1.1.1.12.2 1998/10/04 15:23:02 hohndel Exp $ */
 
 #ifndef XNESTCOMMON_H
 #define XNESTCOMMON_H
@@ -19,7 +20,7 @@ is" without express or implied warranty.
 #define UNDEFINED -1
 
 #define MAXDEPTH 32
-#define MAXVISUALSPERDEPTH 6
+#define MAXVISUALSPERDEPTH 32
 
 extern Display *xnestDisplay;
 extern XVisualInfo *xnestVisuals;       

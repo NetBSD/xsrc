@@ -45,6 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
+/* $XFree86: xc/programs/Xserver/include/inputstr.h,v 1.1.1.4.2.2 1998/10/19 20:57:13 hohndel Exp $ */
 
 /* $XConsortium: inputstr.h /main/28 1996/09/25 00:51:24 dpw $ */
 
@@ -60,7 +61,7 @@ SOFTWARE.
 #define SameClient(obj,client) \
 	(CLIENT_BITS((obj)->resource) == (client)->clientAsMask)
 
-#define MAX_DEVICES	9
+#define MAX_DEVICES	20
 
 #define EMASKSIZE	MAX_DEVICES
 

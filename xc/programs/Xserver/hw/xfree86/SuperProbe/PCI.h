@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.7 1998/02/15 23:31:54 robin Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.h,v 3.17.2.10 1998/10/25 14:15:11 hohndel Exp $ */ 
 /*
  * PCI Probe
  *
@@ -266,8 +266,10 @@ void xf86writepci(
 #define PCI_CHIP_GD5434_8	0x00A8
 #define PCI_CHIP_GD5436		0x00AC
 #define PCI_CHIP_GD5446		0x00B8
+#define PCI_CHIP_GD5480		0x00BC
 #define PCI_CHIP_GD5462		0x00D0
 #define PCI_CHIP_GD5464		0x00D4
+#define PCI_CHIP_GD5465		0x00D6
 #define PCI_CHIP_GD7542		0x1200
 #define PCI_CHIP_GD7543		0x1202
 #define PCI_CHIP_GD7541		0x1204
@@ -279,6 +281,11 @@ void xf86writepci(
 #define PCI_CHIP_9660		0x9660
 #define PCI_CHIP_9680		0x9680
 #define PCI_CHIP_9682		0x9682
+#define PCI_CHIP_9388		0x9388
+#define PCI_CHIP_9397		0x9397
+#define PCI_CHIP_9520		0x9520
+#define PCI_CHIP_9750		0x9750
+#define PCI_CHIP_9850		0x9850
 
 /* Chips & Tech */
 #define PCI_CHIP_65545		0x00D8
@@ -318,6 +325,7 @@ void xf86writepci(
 #define PCI_CHIP_ViRGE_DXGX	0x8A01
 #define PCI_CHIP_ViRGE_GX2	0x8A10
 #define PCI_CHIP_ViRGE_MX	0x8C01
+#define PCI_CHIP_ViRGE_MXP	0x8C03
 
 /* ARK Logic */
 #define PCI_CHIP_1000PV		0xA091

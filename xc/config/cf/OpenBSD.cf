@@ -1,5 +1,7 @@
-XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.11 1998/02/15 16:08:33 hohndel Exp $
-XCOMM $OpenBSD: OpenBSD.cf,v 1.11 1997/12/09 03:03:48 gene Exp $
+XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.12 1998/10/04 13:36:13 hohndel Exp $
+XCOMM
+XCOMM $OpenBSD: OpenBSD.cf,v 1.33 1998/09/27 04:52:48 rahnds Exp $
+XCOMM
 
 #ifndef OSName
 #define OSName			DefaultOSName OSBinaryType
@@ -34,6 +36,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasShm          	YES
 #define HasWChar32		YES
 #define HasMkstemp		YES
+#define HasZlib			YES
 
 /*
  * Compiler Features
@@ -73,11 +76,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define GccGasOption 		-DGCCUSESGAS
 #define AsmDefines 		-DUSE_GAS
 
-
 #ifdef i386Architecture
 # define OptimizedCDebugFlags 	DefaultGcc2i386Opt
 # define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
 # define ServerExtraSysLibs	-li386
+# define LdPostLib		/**/
 #else
 # define OptimizedCDebugFlags 	-O2
 # if defined(SparcArchitecture) || defined(AlphaArchitecture) || defined(AmigaArchitecture) || defined(Sun3Architecture)
@@ -114,8 +117,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #define UseGnuMalloc		NO
 
-#define HasZlib			YES
-
 #define	AdmDir			/var/log
 
 /*
@@ -125,10 +126,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasBsdMake		YES
 
 #define StripInstalledPrograms	YES
-#define CompressAllFonts	YES
+#define BuildCyrillicFonts	YES
 #define GzipFontCompression	YES
 #define DefaultUserPath		/bin:/usr/bin:/usr/local/bin:$(BINDIR)
 #define DefaultSystemPath	/sbin:/usr/sbin:/bin:/usr/bin:$(BINDIR)
+
+#define InstUidFlags		-m 4755
 
 #ifdef  InstallCmd
 # undef  InstallCmd
@@ -157,10 +160,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 
-
-XCOMM Man pages need to be formatted when installed, so override the default
-XCOMM imake rules.
-
+/*
+ * Man pages need to be formatted when installed, so override the default
+ * imake rules.
+ */
 #define ManSuffix	1
 #define FileManSuffix	5
 #define ManSourcePath	$(MANPATH)/cat
@@ -181,7 +184,10 @@ install.man::                                                           @@\
 	-@if [ -f file.0 ]; \						@@\
 	then \								@@\
 	$(INSTALL) -c $(INSTMANFLAGS) file.0 $(DESTDIR)destdir/dest.0; \@@\
-	fi
+	fi								@@\
+									@@\
+clean::									@@\
+	RemoveFile(file.0)
 
 #define InstallGenManPageLong(file,destdir,dest,suffix)			@@\
 	InstallManPageLong(file,destdir,dest)
@@ -213,7 +219,27 @@ install.man:: 								@@\
 #define InstallGenManPageAliases(file,destdir,suffix,aliases)		@@\
 	InstallManPageAliases(file,destdir,aliases)
 
+/*
+ * InstallFontAliases - generate rules to install font aliases
+ *                      databases without comments for X11R5 servers
+ */
+#ifndef InstallFontAliasesNoComment
+#define InstallFontAliasesNoComment(dest)				@@\
+install:: fonts.alias							@@\
+	$(RM) _fonts.alias 						@@\
+	sed -e '/^!/d' -e '/^$$/d' < fonts.alias > _fonts.alias		@@\
+	MakeDir($(DESTDIR)dest)						@@\
+	$(INSTALL) $(INSTALLFLAGS) $(INSTALLDATFLAGS) _fonts.alias \	@@\
+	$(DESTDIR)dest/fonts.alias					@@\
+	$(RM) _fonts.alias
+#endif /* InstallFontAliasesNoComment */
 
+/* We now only use the XFree86 tree - thus we can define this
+ * independent of the architecture
+ */
+#ifndef XF86Contrib
+#define XF86Contrib
+#endif
 
 /*
  * Architecture specific sections - put all architecture dependent
@@ -225,11 +251,14 @@ install.man:: 								@@\
  */
 #ifdef AlphaArchitecture
 
-# define XF86Contrib
-# include <xf86.rules>
-# define BuildServer		NO
-# define XnestServer		NO
-# define XVirtualFramebufferServer	NO
+ /*
+  * The code for an Alpha XF86_TGA server compiles, but it DOES NOT work
+  */
+# define BuildAlphaXF86		NO
+
+# if BuildAlphaXF86
+#  include <xf86.rules>
+# endif
 
  /*
   * For the current ECOFF system
@@ -244,6 +273,55 @@ install.man:: 								@@\
 #  define HasSharedLibraries	YES
 #  define UseElfFormat		YES
 #  define BuildDynamicLoading	YES
+# endif
+
+# define BuildServer		YES
+# define XnestServer		YES
+# define XVirtualFramebufferServer	YES
+
+# define BuildDPMSLibrary	NO
+# define BuildDPMSExt		NO
+
+# define BuildXF86DGALibrary	NO
+# define BuildXF86DGA		NO
+
+# ifndef XF86S3Server
+#  define XF86S3Server		NO
+# endif
+# ifndef XF86S3VServer
+#  define XF86S3VServer		NO
+# endif
+# ifndef XF86Mach64Server
+#  define XF86Mach64Server	NO
+# endif
+# ifndef XF86P9000Server
+#  define XF86P9000Server	NO
+# endif
+# ifndef XF86I128Server
+#  define XF86I128Server	NO
+# endif
+# if BuildAlphaXF86
+#  ifndef XF86TGAServer
+#   define XF86TGAServer	YES
+#  endif
+# else
+#  define XF86TGAServer		NO
+# endif
+# ifndef XF86SVGAServer
+#  define XF86SVGAServer	NO
+# endif
+# ifndef XF86MonoServer
+#  define XF86MonoServer	NO
+# endif
+# ifndef XF86SvgaDrivers
+#  define XF86SvgaDrivers	mga s3v
+# endif
+# ifndef XF86Vga2Drivers
+#  define XF86Vga2Drivers	generic
+# endif
+
+# if BuildAlphaXF86
+#  include <xfree86.cf>
 # endif
 
 #endif /* AlphaArchitecture */
@@ -275,7 +353,7 @@ install.man:: 								@@\
 /*
  * Function CSE makes gas -k not recognize external function calls as lazily
  * resolvable symbols, thus sometimes making ld.so report undefined symbol
- * errors on symbols found in shared library members that would never be 
+ * errors on symbols found in shared library members that would never be
  * called.  Ask niklas@openbsd.org for details.
  */
 # define PositionIndependentCFlags -fpic -fno-function-cse
@@ -288,7 +366,6 @@ install.man:: 								@@\
  */
 #ifdef AmigaArchitecture
 
-# define XF86Contrib
 # include <xf86.rules>
 # define BuildServer		NO
 
@@ -302,6 +379,10 @@ install.man:: 								@@\
 
 # include <xf86.rules>
 # define BuildServer		NO
+/* For the X11R5 server */
+# define CompressAllFonts	NO
+# define InstallFontAliases	InstallFontAliasesNoComment
+# define UseRgbTxt		NO
 
 #endif /* Hp300Architecture */
 
@@ -314,7 +395,7 @@ install.man:: 								@@\
 # include <xf86.rules>
 # define BuildServer		NO
 
-#endif /* Mac68kArchitecture */
+#endif /* mac68kArchitecture */
 
 
 /*
@@ -338,20 +419,23 @@ install.man:: 								@@\
 # define OptimizedCDebugFlags  -O2
 # define ServerOSDefines       -DDDXOSINIT
 # define BootstrapCFlags       -Dsun3
-# define UnalignedReferencesAllowed YES /* changes _XtCopyArgs() */
+# define UnalignedReferencesAllowed	YES /* changes _XtCopyArgs() */
 /* Note: -ansi turns off -Dmc68000 */
 # define ServerExtraDefines    GccGasOption -Dmc68000 -Dmc68020
 
 # ifndef Xsun24Server
-#  define Xsun24Server		NO
+#  define Xsun24Server		YES
 # endif
 # ifndef XsunServer
-#  define XsunServer		NO
+#  define XsunServer		YES
 # endif
 # ifndef XsunMonoServer
 #  define XsunMonoServer	YES
 # endif
 
+#define XkbServerDefines  -DXKB_ALWAYS_USES_SOFT_REPEAT
+
+#if 0
 # ifndef BuildXKB
 #  define BuildXKB        	NO
 # endif
@@ -363,6 +447,7 @@ install.man:: 								@@\
 # ifndef BuildPexExt
 #  define BuildPexExt 		(XsunServer || Xsun24Server)
 # endif
+#endif
 
 #endif /* Sun3Architecture */
 
@@ -400,9 +485,18 @@ install.man:: 								@@\
 
 # include <xf86.rules>
 # define BuildServer		NO
+/* For the X11R5 server */
+# define CompressAllFonts	NO
+# define InstallFontAliases	InstallFontAliasesNoComment
+# define UseRgbTxt		NO
 
 #endif /* PmaxArchitecture */
 
+#ifdef ppcArchitecture
+# define HasSharedLibraries	NO
+# define UseElfFormat		YES
+# define BuildDynamicLoading	NO
+#endif
 
 /*
  * Definitions for the sparc architecture
@@ -412,13 +506,13 @@ install.man:: 								@@\
 # include <xf86.rules>
 
 # ifndef Xsun24Server
-# define Xsun24Server	YES
+# define Xsun24Server		YES
 # endif
 # ifndef XsunServer
-# define XsunServer	YES
+# define XsunServer		YES
 # endif
 # ifndef XsunMonoServer
-# define XsunMonoServer	YES
+# define XsunMonoServer		YES
 # endif
 
 #define XkbServerDefines  -DXKB_ALWAYS_USES_SOFT_REPEAT
@@ -459,11 +553,15 @@ install.man:: 								@@\
 # define BuildDynamicLoading		NO
 #endif
 
+#ifndef CompressAllFonts
+# define CompressAllFonts		YES
+#endif
+
 /*
- * XFree86 uses its own (more portable) database routines to speed up 
+ * XFree86 uses its own (more portable) database routines to speed up
  * the RGB database lookups
- * However, if you want to use ndbm anyway, you can set that to NO in 
- * site.def
+ * However, if you want to use ndbm anyway, you can set that to NO in
+ * host.def
  */
 #ifndef UseRgbTxt
 # define UseRgbTxt			YES
@@ -472,7 +570,7 @@ install.man:: 								@@\
 #ifndef OSBinaryType
 # if UseElfFormat
 #  define OSBinaryType			[ELF]
-# else 
+# else
 #  define OSBinaryType			/**/
 # endif
 #endif

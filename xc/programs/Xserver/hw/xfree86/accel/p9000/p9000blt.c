@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000blt.c,v 3.10 1996/12/23 06:40:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000blt.c,v 3.10.2.1 1998/10/21 10:44:37 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -59,8 +59,8 @@ Further modifications by Henrik Harmsen (harmsen@eritel.se)
 #include	"cfb8bit.h"
 #include	"fastblt.h"
 
-#include	"p9000reg.h"
 #include	"p9000.h"
+#include	"p9000reg.h"
 #include	"cfb16.h"
 #include	"cfb32.h"
 

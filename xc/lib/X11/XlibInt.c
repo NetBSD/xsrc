@@ -1,5 +1,4 @@
 /* $XConsortium: XlibInt.c /main/183 1996/10/22 14:24:21 kaleb $ */
-/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9 1996/12/23 05:59:48 dawes Exp $ */
 /*
 
 Copyright (c) 1985, 1986, 1987  X Consortium
@@ -29,6 +28,8 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+
+/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9.2.2 1998/05/18 14:08:39 dawes Exp $ */
 
 /*
  *	XlibInt.c - Internal support routines for the C subroutine
@@ -3185,12 +3186,18 @@ int _XGetHostname (buf, maxlen)
 #ifdef NEED_UTSNAME
     struct utsname name;
 
+    if (maxlen <= 0 || buf == NULL)
+	return 0;
+
     uname (&name);
     len = strlen (name.nodename);
     if (len >= maxlen) len = maxlen - 1;
     strncpy (buf, name.nodename, len);
     buf[len] = '\0';
 #else
+    if (maxlen <= 0 || buf == NULL)
+	return 0;
+
     buf[0] = '\0';
     (void) gethostname (buf, maxlen);
     buf [maxlen - 1] = '\0';

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86initac.c,v 3.10.2.8 1998/02/21 10:47:12 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xf86initac.c,v 3.10.2.9 1998/07/28 13:57:18 hohndel Exp $ */
 
 /*
  * Copyright 1996  The XFree86 Project
@@ -67,6 +67,9 @@ xf86InitializeAcceleration(pScreen)
     if (serverGeneration != 1)
         goto do_not_touch_xf86AccelInfoRec;
 
+   /* Juanjo Santamarta. Init MsgBuf for -quiet flag */    
+    if (!xf86Verbose) sprintf(MsgPtr,""); 
+    
     if ((xf86AccelInfoRec.Flags & PIXMAP_CACHE) &&
     OFLG_ISSET(OPTION_NO_PIXMAP_CACHE,
     &(xf86AccelInfoRec.ServerInfoRec->options))) {

@@ -8,11 +8,11 @@
 
 
  Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/VX
-				     Users
+                                     Users
 
-			   The XFree86 Project Inc.
+                           The XFree86 Project Inc.
 
-				 1 March 1998
+                                 1 March 1998
 
 
 
@@ -61,13 +61,13 @@ the appropriate bug report sheet.
 
 
 
- Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/VX Users
+ Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/V1 Users
 
 
 
 
 
- Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/VX Users
+ Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/V2 Users
 
 
 
@@ -133,7 +133,7 @@ XFree86@Xfree86.org using the appropriate bug report sheet.
 
 
 
- Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/VX Users
+ Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/V3 Users
 
 
 
@@ -199,7 +199,7 @@ Memory options:
 
 
 
- Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/VX Users
+ Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/V4 Users
 
 
 
@@ -223,7 +223,7 @@ PCI options:
      few "broken" PCI chipsets, and will increase performance.
 
    o "pci_retry" will allow the driver to rely on PCI Retry to program the
-     ViRGE registers. "pci_burst_on" must be enabled for this to work.	This
+     ViRGE registers. "pci_burst_on" must be enabled for this to work.  This
      will increase performance, especially for small fills/blits, because the
      driver does not have to poll the ViRGE before sending it commands to make
      sure it is ready. It should work on most recent PCI chipsets. A possible
@@ -265,7 +265,7 @@ The pixel clock for this physical size (e.g. 1024x768) mode...
 
 
 
- Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/VX Users
+ Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/V5 Users
 
 
 
@@ -284,7 +284,7 @@ If LCD is _not_ active, the normal mode lines and pixel clocks are used for the
 VGA output.
 
 Whenever you switch output sources with Fn-F5 or similar, the Xserver won't get
-informed and pixel clock and other settings are wrong.	Because of this you
+informed and pixel clock and other settings are wrong.  Because of this you
 have to switch modes _after_ switch output sources!  Then the server will check
 which outputs are active and select the correct clocks etc.  So the recommended
 key sequence to switch output is
@@ -331,7 +331,7 @@ and:
 
 
 
- Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/VX Users
+ Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/V6 Users
 
 
 
@@ -397,7 +397,7 @@ and:
 
 
 
- Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/VX Users
+ Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX and ViRGE/V7 Users
 
 
 
@@ -467,7 +467,7 @@ and:
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
@@ -523,8 +523,8 @@ and:
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.S3V,v 3.5.2.7 1998/02/27 05:00:05 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.S3V,v 3.5.2.9 1998/11/14 06:46:53 dawes Exp $

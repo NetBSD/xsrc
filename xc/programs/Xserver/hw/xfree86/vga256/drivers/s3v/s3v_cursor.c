@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_cursor.c,v 1.1.2.3 1998/02/07 10:05:46 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_cursor.c,v 1.1.2.5 1998/10/21 10:44:46 dawes Exp $ */
 
 /*
  *
@@ -45,13 +45,13 @@
 #include "windowstr.h"
 
 #include "compiler.h"
-#include "vga256.h"
 #include "xf86.h"
+#include "xf86_OSlib.h"
 #include "mipointer.h"
 #include "inputstr.h"
 #include "xf86Priv.h"
 #include "xf86_Option.h"
-#include "xf86_OSlib.h"
+#include "vga256.h"
 #include "vga.h"
 #include "xf86xaa.h"
 #include "regs3v.h"
@@ -400,7 +400,7 @@ S3VRecolorCursor(pScr, pCurs, displayed)
 
    switch (vgaBitsPerPixel) {
    case 8:
-     if (!(s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX)) {
+     if (!(S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_ViRGE_MX_SERIES(s3vPriv.chip))) {
       vgaGetInstalledColormaps(pScr, &pmap);
       sourceColor.red = pCurs->foreRed;
       sourceColor.green = pCurs->foreGreen;
@@ -426,7 +426,7 @@ S3VRecolorCursor(pScr, pCurs, displayed)
       break;
      }  /* else fall through for ViRGE/MX... */
    case 16:
-     if (!(s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX)) {
+     if (!(S3_ViRGE_GX2_SERIES(s3vPriv.chip) || S3_ViRGE_MX_SERIES(s3vPriv.chip))) {
       if (vga256InfoRec.weight.green == 5 && s3vPriv.chip != S3_ViRGE_VX) {
 	 packedcolfg = ((pCurs->foreRed   & 0xf800) >>  1)
 	    | ((pCurs->foreGreen & 0xf800) >>  6)

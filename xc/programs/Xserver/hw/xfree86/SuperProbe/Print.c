@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.46.2.9 1998/02/15 23:31:55 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.46.2.15 1998/10/25 14:15:13 hohndel Exp $ */
 
 #include "Probe.h"
 
@@ -43,10 +43,11 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "ATI 88800GX-F",
 		  "ATI 88800CX",
 		  "ATI 264CT", "ATI 264ET",
-		  "ATI 264VT", "ATI 264VT-B",
-		  "ATI 264GT (3D Rage I)", "ATI 264GT-B (3D Rage II or II+)",
-		  "ATI 264LT",
-		  "ATI 264GT3 (3D Rage III)" },
+		  "ATI 264VT", "ATI 264VT-B", "ATI 264VT3", "ATI 264VT4",
+		  "ATI 264GT (3D Rage I)", "ATI 264GT-B (3D Rage II)",
+		  "ATI 264GT-B+DVD (3D Rage II+DVD)",
+		  "ATI 264GT-IIc (3D Rage IIc)", "ATI 264GT3 (3D Rage III)",
+		  "ATI 264LT", "ATI 264LT Pro" },
 /* AL */	{ "Avance Logic (chipset unknown)",
 		  "Avance Logic 2101", "Avance Logic 2228" },
 /* CT */	{ "Chips & Tech (chipset unknown)",
@@ -58,7 +59,9 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "Chips & Tech F65540", "Chips & Tech F65545",
 		  "Chips & Tech F65548", "Chips & Tech F65546",
 		  "Chips & Tech F65550", "Chips & Tech F65554",
-		  "Chips & Tech F65555", "Chips & Tech F68554" },
+		  "Chips & Tech F65555", "Chips & Tech F68554",
+		  "Chips & Tech F69000", "Chips & Tech 64200 WinGine",
+		  "Chips & Tech F64300 WinGine" },
 /* Cirrus */	{ "Cirrus (chipset unknown)",
 		  "Cirrus CL-GD 510/520", "Cirrus CL-GD 610/620",
 		  "Cirrus Video7 OEM",
@@ -82,6 +85,8 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "Cirrus CL-GD5462",
 		  "Cirrus CL-GD7548",
 		  "Cirrus CL-GD5464",
+		  "Cirrus CL-GD5480",
+		  "Cirrus CL-GD5465",
 		},
 /* Compaq */	{ "Compaq (chipset unknown)",
 		  "Compaq Int. Vid. Graphics Sys.",
@@ -133,6 +138,7 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 		  "S3 PLATO/PX",
 		  "S3 ViRGE/GX2",
 		  "S3 ViRGE/MX",
+		  "S3 ViRGE/MXP",
 	       },
 /* Trident */	{ "Trident (chipset unknown)",
 		  "Trident LX8200",
@@ -145,7 +151,10 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
                   "Trident GUI 9680", "Trident ProVidia 9682",
 		  "Trident ProVidia 9685", "Trident ProVidia 9692",
 		  "Trident Cyber9382", "Trident Cyber9385",
-		  "Trident Cyber9385-1", },
+		  "Trident Cyber9385-1",
+		  "Trident Cyber9388", "Trident Cyber9388-1",
+		  "Trident Cyber9397", "Trident Cyber9520",
+                  "Trident 3DImage975", "Trident 3DImage985", },
 /* Tseng */	{ "Tseng (chipset unknown)",
 		  "Tseng ET3000", "Tseng ET4000", 
 		  "Tseng ET4000/W32", "Tseng ET4000/W32i", 
@@ -199,6 +208,7 @@ static CONST char *SVGA_Names[NUM_VENDORS+1][CHPS_PER_VENDOR] =
 /* Intergraphcis */	{ "Intergraphics (chipset unknown)",
 		  "Intergraphics IGA-1680",
 		  "Intergraphics IGA-1682" },
+/* Epson */	{ "Epson SPC8110" },
 };
 
 static CONST char *Herc_Names[] = 

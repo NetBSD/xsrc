@@ -1,5 +1,5 @@
 /* $XConsortium: XKBAlloc.c /main/6 1996/02/02 14:09:14 kaleb $ */
-/* $XFree86: xc/lib/X11/XKBAlloc.c,v 3.2 1996/10/13 11:17:24 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBAlloc.c,v 3.2.4.1 1998/10/04 13:36:20 hohndel Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -65,6 +65,7 @@ XkbAllocCompatMap(xkb,which,nSI)
 #endif
 {
 XkbCompatMapPtr	compat;
+XkbSymInterpretRec *prev_interpret;
 
     if (!xkb)
 	return BadMatch;
@@ -75,9 +76,11 @@ XkbCompatMapPtr	compat;
 	compat->size_si= nSI;
 	if (compat->sym_interpret==NULL)
 	    compat->num_si= 0;
+	prev_interpret = compat->sym_interpret;
 	compat->sym_interpret= _XkbTypedRealloc(compat->sym_interpret,
 						     nSI,XkbSymInterpretRec);
 	if (compat->sym_interpret==NULL) {
+	    _XkbFree(prev_interpret);
 	    compat->size_si= compat->num_si= 0;
 	    return BadAlloc;
 	}
@@ -187,11 +190,15 @@ XkbNamesPtr	names;
 	    names->key_aliases= _XkbTypedCalloc(nTotalAliases,XkbKeyAliasRec);
 	}
 	else if (nTotalAliases>names->num_key_aliases) {
+	    XkbKeyAliasRec *prev_aliases = names->key_aliases;
+
 	    names->key_aliases= _XkbTypedRealloc(names->key_aliases,
 						nTotalAliases,XkbKeyAliasRec);
 	    if (names->key_aliases!=NULL) {
 		_XkbClearElems(names->key_aliases,names->num_key_aliases,
 						nTotalAliases-1,XkbKeyAliasRec);
+	    } else {
+		_XkbFree(prev_aliases);
 	    }
 	}
 	if (names->key_aliases==NULL) {
@@ -205,11 +212,15 @@ XkbNamesPtr	names;
 	    names->radio_groups= _XkbTypedCalloc(nTotalRG,Atom);
 	}
 	else if (nTotalRG>names->num_rg) {
+	    Atom *prev_radio_groups = names->radio_groups;
+
 	    names->radio_groups= _XkbTypedRealloc(names->radio_groups,nTotalRG,
 									Atom);
 	    if (names->radio_groups!=NULL) {
 		_XkbClearElems(names->radio_groups,names->num_rg,nTotalRG-1,
 									Atom);
+	    } else {
+		_XkbFree(prev_radio_groups);
 	    }
 	}
 	if (names->radio_groups==NULL)
@@ -420,11 +431,14 @@ register int		i;
 	    return devli;
     }
     if (devi->num_leds>=devi->sz_leds) {
+	XkbDeviceLedInfoRec *prev_leds = devi->leds;
+	
 	if (devi->sz_leds>0)	devi->sz_leds*= 2;
 	else			devi->sz_leds= 1;
 	devi->leds= _XkbTypedRealloc(devi->leds,devi->sz_leds,
 							XkbDeviceLedInfoRec);
 	if (!devi->leds) {
+	    _XkbFree(prev_leds);
 	    devi->sz_leds= devi->num_leds= 0;
 	    return NULL;
 	}
@@ -451,6 +465,8 @@ XkbResizeDeviceButtonActions(devi,newTotal)
     unsigned		newTotal;
 #endif
 {
+    XkbAction *prev_btn_acts;
+
     if ((!devi)||(newTotal>255))
 	return BadValue;
     if ((devi->btn_acts!=NULL)&&(newTotal==devi->num_btns))
@@ -463,8 +479,10 @@ XkbResizeDeviceButtonActions(devi,newTotal)
 	devi->num_btns= 0;
 	return Success;
     }
+    prev_btn_acts = devi->btn_acts;
     devi->btn_acts= _XkbTypedRealloc(devi->btn_acts,newTotal,XkbAction);
     if (devi->btn_acts==NULL) {
+	_XkbFree(prev_btn_acts);
 	devi->num_btns= 0;
 	return BadAlloc;
     }

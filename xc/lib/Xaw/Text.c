@@ -48,6 +48,8 @@ SOFTWARE.
 
 ******************************************************************/
 
+/* $XFree86: xc/lib/Xaw/Text.c,v 3.2.4.3 1998/10/04 13:36:29 hohndel Exp $ */
+
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
@@ -71,6 +73,8 @@ SOFTWARE.
 
 #include <X11/Xfuncs.h>
 #include <ctype.h>		/* for isprint() */
+
+#include "XawAlloc.h"
 
 #ifndef MAX_LEN_CT
 #define MAX_LEN_CT 6		/* for sequence: ESC $ ( A \xx \xx */
@@ -203,6 +207,10 @@ XrmValuePtr	toVal;
     inited = TRUE;
   }
 
+  if (strlen((char *)fromVal->addr) >= sizeof(lowerName)) {
+    XtStringConversionWarning((char *) fromVal->addr, XtRScrollMode);
+    return;
+  }
   XmuCopyISOLatin1Lowered (lowerName, (char *)fromVal->addr);
   q = XrmStringToQuark(lowerName);
 
@@ -210,7 +218,7 @@ XrmValuePtr	toVal;
   else if (q == QScrollWhenNeeded)     scrollMode = XawtextScrollWhenNeeded;
   else if (q == QScrollAlways)         scrollMode = XawtextScrollAlways;
   else {
-    done(NULL, 0);
+    XtStringConversionWarning((char *) fromVal->addr, XtRScrollMode);
     return;
   }
   done(&scrollMode, XawTextScrollMode);
@@ -238,6 +246,10 @@ XrmValuePtr	toVal;
     inited = TRUE;
   }
 
+  if (strlen((char *)fromVal->addr) >= sizeof(lowerName)) {
+    XtStringConversionWarning((char *) fromVal->addr, XtRWrapMode);
+    return;
+  }
   XmuCopyISOLatin1Lowered (lowerName, (char *)fromVal->addr);
   q = XrmStringToQuark(lowerName);
 
@@ -245,7 +257,7 @@ XrmValuePtr	toVal;
   else if (q == QWrapLine)      wrapMode = XawtextWrapLine;
   else if (q == QWrapWord)      wrapMode = XawtextWrapWord;
   else {
-    done(NULL, 0);
+    XtStringConversionWarning((char *) fromVal->addr, XtRWrapMode);
     return;
   }
   done(&wrapMode, XawTextWrapMode);
@@ -274,6 +286,10 @@ XrmValuePtr	toVal;
     inited = TRUE;
   }
 
+  if (strlen((char *)fromVal->addr) >= sizeof(lowerName)) {
+    XtStringConversionWarning((char *) fromVal->addr, XtRResizeMode);
+    return;
+  }
   XmuCopyISOLatin1Lowered (lowerName, (char *)fromVal->addr);
   q = XrmStringToQuark(lowerName);
 
@@ -282,7 +298,7 @@ XrmValuePtr	toVal;
   else if (q == QResizeHeight)         resizeMode = XawtextResizeHeight;
   else if (q == QResizeBoth)           resizeMode = XawtextResizeBoth;
   else {
-    done(NULL, 0);
+    XtStringConversionWarning((char *) fromVal->addr, XtRResizeMode);
     return;
   }
   done(&resizeMode, XawTextResizeMode);
@@ -487,6 +503,8 @@ Cardinal *num_args;		/* unused */
 {
   TextWidget ctx = (TextWidget) new;
   char error_buf[BUFSIZ];
+  char *perr;
+  int len;
 
   ctx->text.lt.lines = 0;
   ctx->text.lt.info = NULL;
@@ -523,10 +541,17 @@ Cardinal *num_args;		/* unused */
   if (ctx->text.scroll_vert != XawtextScrollNever) 
     if ( (ctx->text.resize == XawtextResizeHeight) ||
      	 (ctx->text.resize == XawtextResizeBoth) ) {
-      (void) sprintf(error_buf, "Xaw Text Widget %s:\n %s %s.", ctx->core.name,
-	      "Vertical scrolling not allowed with height resize.\n",
-	      "Vertical scrolling has been DEACTIVATED.");
-      XtAppWarning(XtWidgetToApplicationContext(new), error_buf);
+      char *err1 = "Xaw Text Widget ";
+      char *err2 = ":\nVertical scrolling not allowed with height resize.\n";
+      char *err3 = "Vertical scrolling has been DEACTIVATED.";
+      len = strlen(err1) + strlen(err2) + strlen(err3) +
+		strlen(ctx->core.name) + 1;
+      perr = XtStackAlloc(len, error_buf);
+      if (perr != NULL) {
+	(void) sprintf(perr, "%s%s%s%s", err1, ctx->core.name, err2, err3);
+	XtAppWarning(XtWidgetToApplicationContext(new), perr);
+	XtStackFree(perr, error_buf);
+      }
       ctx->text.scroll_vert = XawtextScrollNever;
     }
     else if (ctx->text.scroll_vert == XawtextScrollAlways)
@@ -534,18 +559,32 @@ Cardinal *num_args;		/* unused */
 
   if (ctx->text.scroll_horiz != XawtextScrollNever) 
     if (ctx->text.wrap != XawtextWrapNever) {
-      (void) sprintf(error_buf, "Xaw Text Widget %s:\n %s %s.", ctx->core.name,
-	      "Horizontal scrolling not allowed with wrapping active.\n",
-	      "Horizontal scrolling has been DEACTIVATED.");
-      XtAppWarning(XtWidgetToApplicationContext(new), error_buf);
+      char *err1 = "Xaw Text Widget ";
+      char *err2 = ":\nHorizontal scrolling not allowed with wrapping active.";
+      char *err3 = "\nHorizontal scrolling has been DEACTIVATED.";
+      len = strlen(err1) + strlen(err2) + strlen(err3) +
+		strlen(ctx->core.name) + 1;
+      perr = XtStackAlloc(len, error_buf);
+      if (perr != NULL) {
+	(void) sprintf(perr, "%s%s%s%s", err1, ctx->core.name, err2, err3);
+	XtAppWarning(XtWidgetToApplicationContext(new), perr);
+	XtStackFree(perr, error_buf);
+      }
       ctx->text.scroll_horiz = XawtextScrollNever;
     }
     else if ( (ctx->text.resize == XawtextResizeWidth) ||
 	      (ctx->text.resize == XawtextResizeBoth) ) {
-      (void) sprintf(error_buf, "Xaw Text Widget %s:\n %s %s.", ctx->core.name,
-	      "Horizontal scrolling not allowed with width resize.\n",
-	      "Horizontal scrolling has been DEACTIVATED.");
-      XtAppWarning(XtWidgetToApplicationContext(new), error_buf);
+      char *err1 = "Xaw Text Widget ";
+      char *err2 = ":\nHorizontal scrolling not allowed with width resize.\n";
+      char *err3 = "Horizontal scrolling has been DEACTIVATED.";
+      len = strlen(err1) + strlen(err2) + strlen(err3) +
+		strlen(ctx->core.name) + 1;
+      perr = XtStackAlloc(len, error_buf);
+      if (perr != NULL) {
+	(void) sprintf(perr, "%s%s%s%s", err1, ctx->core.name, err2, err3);
+	XtAppWarning(XtWidgetToApplicationContext(new), perr);
+	XtStackFree(perr, error_buf);
+      }
       ctx->text.scroll_horiz = XawtextScrollNever;
     }
     else if (ctx->text.scroll_horiz == XawtextScrollAlways)
@@ -1228,7 +1267,7 @@ XtPointer callData;		/* #pixels */
 {
   TextWidget ctx = (TextWidget) closure;
   Widget tw = (Widget) ctx;
-  Position old_left, pixels = (Position)(int) callData;
+  Position old_left, pixels = (Position)(long) callData;
   XRectangle rect, t_rect;
   
   _XawTextPrepareToUpdate(ctx);
@@ -1392,7 +1431,7 @@ XtPointer closure;		/* TextWidget */
 XtPointer callData;		/* #pixels */
 {
   TextWidget ctx = (TextWidget)closure;
-  int height, lines = (int) callData;
+  int height, lines = (long) callData;
 
   height = ctx->core.height - VMargins(ctx);
   if (height < 1)

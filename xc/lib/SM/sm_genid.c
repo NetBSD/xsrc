@@ -1,5 +1,5 @@
 /* $XConsortium: sm_genid.c /main/22 1996/12/04 10:22:25 lehors $ */
-/* $XFree86: xc/lib/SM/sm_genid.c,v 3.7 1997/01/18 06:51:43 dawes Exp $ */
+/* $XFree86: xc/lib/SM/sm_genid.c,v 3.7.2.2 1998/10/04 13:36:18 hohndel Exp $ */
 
 /*
 
@@ -60,6 +60,7 @@ extern Time_t time ();
 #include <socket.h>
 #endif
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #define XOS_USE_NO_LOCKING
 #define X_INCLUDE_NETDB_H
 #include <X11/Xos_r.h>
@@ -144,7 +145,7 @@ SmsConn smsConn;
     struct hostent *hostp;
 
     if ((hostp = _XGethostbyname (hostname,hparams)) != NULL)
-	inet_addr = (char *) inet_ntoa (*(struct in_addr *)(hostp->h_addr));
+	inet_addr = inet_ntoa (*(struct in_addr *)(hostp->h_addr));
     else
 	return NULL;
     for (i = 0, ptr1 = inet_addr; i < 3; i++)

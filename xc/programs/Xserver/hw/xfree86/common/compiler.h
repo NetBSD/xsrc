@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/compiler.h,v 3.24.2.2 1998/02/07 00:44:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/compiler.h,v 3.24.2.4 1998/10/18 20:42:10 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -88,7 +88,8 @@ extern int testinx();
 
 #ifdef __GNUC__
 
-#if defined(linux) && defined(__alpha__)
+#if defined(__alpha__)
+# if defined(linux)
 /* for Linux on Alpha, we use the LIBC _inx/_outx routines */
 /* note that the appropriate setup via "ioperm" needs to be done */
 /*  *before* any inx/outx is done. */
@@ -144,6 +145,16 @@ inl(port)
   return _inl(port);
 }
 
+# else /* defined(linux) */
+
+#define outb(a, b)             /* NOP */
+#define outw(a, b)             /* NOP */
+#define outl(a, b)             /* NOP */
+#define inb(a)         0       /* NOP */
+#define inw(a)         0       /* NOP */
+#define inl(a)         0       /* NOP */
+
+# endif 
 
 /*
  * inline functions to do unaligned accesses
@@ -262,7 +273,7 @@ static __inline__ void stw_u(unsigned long r5, unsigned short * r11)
 #define write_mem_barrier()  mem_barrier()
 #endif
 
-#else /* defined(linux) && defined(__alpha__) */
+#else /* defined(__alpha__) */
 #if defined(__mips__)
 
 unsigned int IOPortBase;  /* Memory mapped I/O port area */
@@ -371,7 +382,7 @@ static __inline__ unsigned long ldw_u(unsigned short * r11)
 #define mem_barrier()   /* NOP */
 #define write_mem_barrier()   /* NOP */
 
-#if !defined(FAKEIT) && !defined(__mc68000__)
+#if !defined(FAKEIT) && !defined(__mc68000__) && !defined(__powerpc__)
 #ifdef GCCUSESGAS
 
 /*
@@ -896,7 +907,7 @@ unsigned short int port;
 
 #endif /* GCCUSESGAS */
 
-#else /* !defined(FAKEIT) && !defined(__mc68000__) */
+#else /* !defined(FAKEIT) && !defined(__mc68000__) && !defined(__powerpc__) */
 
 static __inline__ void
 #if NeedFunctionPrototypes

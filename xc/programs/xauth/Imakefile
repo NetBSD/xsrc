@@ -1,10 +1,10 @@
 XCOMM $XConsortium: Imakefile /main/17 1996/09/25 00:58:20 dpw $
-XCOMM $XFree86: xc/programs/xauth/Imakefile,v 3.2 1996/12/23 07:10:50 dawes Exp $
+XCOMM $XFree86: xc/programs/xauth/Imakefile,v 3.2.2.1 1998/11/04 13:18:01 hohndel Exp $
 DEPLIBS = $(DEPXAUTHLIB) $(DEPXMULIB) $(DEPXLIB)
 LOCAL_LIBRARIES = $(XAUTHLIB) $(XMULIB) $(XLIB)
            SRCS = xauth.c gethost.c process.c parsedpy.c
            OBJS = xauth.o gethost.o process.o parsedpy.o
-   CONN_DEFINES = ConnectionFlags
+   CONN_DEFINES = $(CONNECTION_FLAGS)
 
 ComplexProgramTarget(xauth)
 

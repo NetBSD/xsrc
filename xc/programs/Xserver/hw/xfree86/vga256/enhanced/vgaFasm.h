@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/vgaFasm.h,v 3.9 1996/12/23 06:59:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/vgaFasm.h,v 3.9.2.1 1998/10/21 06:40:53 dawes Exp $ */
 /* Copyright 1992 by James Tsillas, Arlington, Massachusetts.
 
 		All Rights Reserved
@@ -74,7 +74,9 @@ PERFORMANCE OF THIS SOFTWARE.
 
 /* The in-line assembler here only works for gcc2 */
 #if __GNUC__ > 1 && defined(__STDC__) && defined(i386)
+#undef ESI
 #define ESI __asm__ ("esi")
+#undef EDI
 #define EDI __asm__ ("edi")
 
 #define fBitBltC(xdir, dst, src, w, count, sP, dP) \

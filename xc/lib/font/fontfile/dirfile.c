@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/font/fontfile/dirfile.c,v 3.3 1997/01/27 06:56:28 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/dirfile.c,v 3.3.2.1 1998/07/12 09:53:00 dawes Exp $ */
 #ifndef lint
 static char *rid=
     "$XConsortium: dirfile.c /main/12 1995/12/08 19:02:23 gildea $";
@@ -57,11 +57,11 @@ FontFileReadDirectory (directory, pdir)
     char		*directory;
     FontDirectoryPtr	*pdir;
 {
-    char        file_name[MAXFONTNAMELEN];
+    char        file_name[MAXFONTFILENAMELEN];
     char        font_name[MAXFONTNAMELEN];
-    char        dir_file[MAXFONTNAMELEN];
+    char        dir_file[MAXFONTFILENAMELEN];
 #ifdef FONTDIRATTRIB
-    char	dir_path[MAXFONTNAMELEN];
+    char	dir_path[MAXFONTFILENAMELEN];
     char	*ptr;
 #endif
     FILE       *file;
@@ -69,6 +69,7 @@ FontFileReadDirectory (directory, pdir)
                 i,
                 status;
     struct stat	statb;
+    static char format[24] = "";
 
     FontDirectoryPtr	dir = NullFontDirectory;
 
@@ -107,7 +108,10 @@ FontFileReadDirectory (directory, pdir)
 	    return BadFontPath;
 	}
 	dir->dir_mtime = statb.st_mtime;
-	while ((count = fscanf(file, "%s %[^\n]\n", file_name, font_name)) != EOF) {
+	if (format[0] == '\0')
+	    sprintf(format, "%%%ds %%%d[^\n]\n",
+		MAXFONTFILENAMELEN-1, MAXFONTNAMELEN-1);
+	while ((count = fscanf(file, format, file_name, font_name)) != EOF) {
 #ifdef __EMX__
 	    /* strip any existing trailing CR */
 	    for (i=0; i<strlen(font_name); i++) {
@@ -153,7 +157,7 @@ Bool
 FontFileDirectoryChanged(dir)
     FontDirectoryPtr	dir;
 {
-    char	dir_file[MAXFONTNAMELEN];
+    char	dir_file[MAXFONTFILENAMELEN];
     struct stat	statb;
 
     strcpy (dir_file, dir->directory);
@@ -188,7 +192,7 @@ AddFileNameAliases(dir)
     FontDirectoryPtr	dir;
 {
     int		    i;
-    char	    copy[MAXFONTNAMELEN];
+    char	    copy[MAXFONTFILENAMELEN];
     char	    *fileName;
     FontTablePtr    table;
     FontRendererPtr renderer;
@@ -251,7 +255,7 @@ ReadFontAlias(directory, isFile, pdir)
 {
     char		alias[MAXFONTNAMELEN];
     char		font_name[MAXFONTNAMELEN];
-    char		alias_file[MAXFONTNAMELEN];
+    char		alias_file[MAXFONTFILENAMELEN];
     FILE		*file;
     FontDirectoryPtr	dir;
     int			token;

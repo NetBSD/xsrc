@@ -30,7 +30,7 @@ PERFORMANCE OF THIS SOFTWARE.
 			       makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imRm.c,v 3.1.2.1 1997/06/29 08:43:30 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imRm.c,v 3.1.2.5 1998/10/04 13:36:23 hohndel Exp $ */
 
 #include <stdio.h>
 #include <X11/Xlib.h>
@@ -38,6 +38,7 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "Xlcint.h"
 #include "Ximint.h"
 #include "Xresource.h"
+#include "snprintf.h"
 
 #ifndef	isalnum
 #define	isalnum(c)	\
@@ -67,26 +68,23 @@ typedef struct _XimValueOffsetInfo {
 			 );
 } XimValueOffsetInfoRec, *XimValueOffsetInfo;
 
-void
-_XimGetResourceName(im, res_name, res_class)
+static void
+_XimGetResourceName(im, res_name, res_class, size)
     Xim		 im;
     char	*res_name;
     char	*res_class;
+    int		size;
 {
     if(im->core.res_name == NULL) {
-	strcpy(res_name, "*");
+	strcpy(res_name, "*xim.");
     } else {
-	strcpy(res_name, im->core.res_name);
-	strcat(res_name, ".");
+	_XSnprintf(res_name, size, "%s.xim.", im->core.res_name);
     }
     if(im->core.res_class == NULL) {
-	strcpy(res_class, "*");
+	strcpy(res_class, "*Xim.");
     } else {
-	strcpy(res_class, im->core.res_class);
-	strcat(res_class, ".");
+	_XSnprintf(res_class, size, "%s.Xim.", im->core.res_class);
     }
-    strcat(res_name, "xim.");
-    strcat(res_class, "Xim.");
 }
 
 #ifdef XIM_CONNECTABLE
@@ -118,7 +116,7 @@ _XimSetProtoResource(im)
     if (!im->core.rdb)
 	return;
 
-    _XimGetResourceName(im, xim_res_name, xim_res_class);
+    _XimGetResourceName(im, xim_res_name, xim_res_class, 256);
 
     _XSnprintf(res_name, sizeof(res_name), "%s%s", xim_res_name, "useAuth");
     _XSnprintf(res_class, sizeof(res_class), "%s%s", xim_res_class, "UseAuth");
@@ -952,7 +950,7 @@ _XimEncodeLineSpace(info, top, val)
     int			*out;
 
     out = (int *)((char *)top + info->offset);
-    *out = (int)val;
+    *out = (long)val;
     return True;
 }
 

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/lnxdoc.rules,v 3.9 1997/01/26 05:10:25 dawes Exp $
+XCOMM $XFree86: xc/config/cf/lnxdoc.rules,v 3.9.2.1 1998/04/29 04:18:27 dawes Exp $
 XCOMM
 XCOMM Rules for formatting Linuxdoc-SGML documentation
 XCOMM
@@ -102,12 +102,13 @@ base.ps: sgmlfile							@@\
 	@(BASE=`basename sgmlfile .sgml`;\				@@\
 	  set -x;\							@@\
 	  RemoveFile($$BASE.ps);\					@@\
-	  $(SGMLFMTCMD) -f ps sgmlfile && $(MV) $$BASE.ps $@)		@@\
+	  $(SGMLFMTCMD) -f ps sgmlfile && \				@@\
+		$(MV) $$BASE.ps _$@ && $(MV) _$@ $@)			@@\
 									@@\
 LinuxDocInstall(base.ps,$(XFREE86PSDOCDIR))				@@\
 									@@\
 clean::									@@\
-	RemoveFile(base.ps)
+	RemoveFile(Concat(_,base.ps) base.ps)
 #else
 #define LinuxDocSgmlToPs(sgmlfile,base) /**/
 #endif
@@ -121,8 +122,9 @@ textfile: sgmlfile							@@\
 	@(BASE=`basename sgmlfile .sgml`;\				@@\
 	  set -x;\							@@\
 	  RemoveFile($$BASE.latin1);\					@@\
-	  $(SGMLFMTCMD) -f latin1 sgmlfile; \				@@\
-	  $(XFREE86IDENTFIX) < $$BASE.latin1 > _$@ && $(MV) _$@ $@)	@@\
+	  $(SGMLFMTCMD) -f latin1 -b sgmlfile; \			@@\
+	  $(XFREE86IDENTFIX) < $$BASE.latin1 > _$@ && $(MV) _$@ $@; \	@@\
+	  RemoveFile($$BASE.latin1))					@@\
 									@@\
 LinuxDocInstall(textfile,$(XFREE86DOCDIR))				@@\
 									@@\

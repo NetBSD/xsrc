@@ -27,6 +27,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/Xmu/WidgetNode.c,v 1.1.1.1.12.2 1998/05/16 09:05:28 dawes Exp $ */
+
 /*
  * Author:  Jim Fulton, MIT X Consortium
  */
@@ -286,13 +288,17 @@ XmuWidgetNode *XmuWnNameToNode (nodelist, nnodes, name)
 {
     int i;
     XmuWidgetNode *wn;
-    char tmp[1024];
+    char *tmp;
 
+    tmp = (char *)XtMalloc(strlen(name) + 1);
     XmuCopyISOLatin1Lowered (tmp, name);
     for (i = 0, wn = nodelist; i < nnodes; i++, wn++) {
 	if (strcmp (tmp, wn->lowered_label) == 0 ||
-	    strcmp (tmp, wn->lowered_classname) == 0)
+	    strcmp (tmp, wn->lowered_classname) == 0) {
+	  XtFree(tmp);
 	  return wn;
+	}
     }
+    XtFree(tmp);
     return NULL;
 }

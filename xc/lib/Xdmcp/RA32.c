@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
  * *
  * Author:  Keith Packard, MIT X Consortium
  */
+/* $XFree86: xc/lib/Xdmcp/RA32.c,v 1.1.1.1.12.1 1998/05/20 10:30:29 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/X.h>
@@ -55,6 +56,7 @@ XdmcpReadARRAY32 (buffer, array)
 	if (!XdmcpReadCARD32 (buffer, &array->data[i]))
 	{
 	    Xfree (array->data);
+	    array->data = 0;
 	    return FALSE;
 	}
     }

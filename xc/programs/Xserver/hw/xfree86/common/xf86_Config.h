@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Config.h,v 3.59.2.8 1998/02/24 19:05:56 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Config.h,v 3.59.2.9 1998/10/18 20:42:13 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -185,8 +185,9 @@ static SymTabRec DriverTab[] = {
 #define NETSCROLLPS2	1036
 #define SYSMOUSE	1037
 #define AUTOMOUSE	1038
-#define XQUE      	1039
-#define OSMOUSE   	1040
+#define ACECAD		1039
+#define XQUE      	1040
+#define OSMOUSE   	1041
 
 #ifdef INIT_CONFIG
 static SymTabRec MouseTab[] = {
@@ -209,6 +210,7 @@ static SymTabRec MouseTab[] = {
   { NETSCROLLPS2,"netscrollps/2" },
   { SYSMOUSE,	"sysmouse" },
   { AUTOMOUSE,	"auto" },
+  { ACECAD,	"acecad" },
   { XQUE,	"xqueue" },
   { OSMOUSE,	"osmouse" },
   { -1,		"" },
@@ -344,6 +346,7 @@ static SymTabRec ScreenTab[] = {
 #define TT_NCSYNC	1137
 #define TT_DBLSCAN	1138
 #define TT_HSKEW	1139
+#define TT_BCAST	1140
 
 #ifdef INIT_CONFIG
 SymTabRec TimingTab[] = {
@@ -357,6 +360,7 @@ SymTabRec TimingTab[] = {
   { TT_NCSYNC,		"-csync"},
   { TT_DBLSCAN,		"doublescan"},
   { TT_HSKEW,		"hskew"},
+  { TT_BCAST,		"bcast"},
   { -1,			"" },
 };
 #else  /* defined(INIT_CONFIG) */
@@ -549,6 +553,7 @@ static SymTabRec KeyboardTab[] = {
 #define P_NETSCROLLPS2	16		/* Genius PS/2 NetScroll */
 #define P_SYSMOUSE	17		/* SysMouse */
 #define P_AUTO		18		/* automatic */
+#define P_ACECAD	19		/* ACECAD protocol */
 
 #define EMULATE3	50
 #define BAUDRATE	51

@@ -22,8 +22,9 @@
  * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
  * OF THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/lbxutil/image/dfaxg42d.c,v 1.2 1996/12/30 13:58:37 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/image/dfaxg42d.c,v 1.2.2.1 1998/10/04 13:36:38 hohndel Exp $ */
 
+#include <X11/Xos.h>
 #include <X11/Xfuncproto.h>
 #include <X11/Xfuncs.h>
 #include "g3states.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_Blitter.h,v 1.2 1997/01/18 06:56:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_Blitter.h,v 1.2.2.3 1998/11/04 08:02:06 hohndel Exp $ */
 
 
 /* Definitions for the SIS engine communication. */
@@ -36,9 +36,22 @@
 
 
 /* Macros to do useful things with the SIS BitBLT engine */
-#define sisBLTWAIT \
+
+#define sisBLTSync \
   while(*(volatile unsigned short *)(sisMMIOBase + BR(10)+2) & \
 	(0x4000)){}
+
+/* According to SiS 6326 2D programming guide, 16 bits position at   */
+/* 0x82A8 returns queue free. But this don't work, so don't wait     */
+/* anything when turbo-queue is enabled. If there are frequent syncs */
+/* (as XAA does) this should work. But not for xaa_benchmark :-(     */
+
+#define sisBLTWAIT \
+  if (!sisTurboQueue) {\
+    while(*(volatile unsigned short *)(sisMMIOBase + BR(10)+2) & \
+	(0x4000)){}} /* \
+    else {while(*(volatile unsigned short *)(sisMMIOBase + BR(10)) < \
+	63){}} */
 
 #define sisSETPATREG()\
    ((unsigned char *)(sisMMIOBase + BR(11)))

@@ -1,3 +1,41 @@
+ /***************************************************************************\
+|*                                                                           *|
+|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*                                                                           *|
+|*     NOTICE TO USER:   The source code  is copyrighted under  U.S. and     *|
+|*     international laws.  Users and possessors of this source code are     *|
+|*     hereby granted a nonexclusive,  royalty-free copyright license to     *|
+|*     use this code in individual and commercial software.                  *|
+|*                                                                           *|
+|*     Any use of this source code must include,  in the user documenta-     *|
+|*     tion and  internal comments to the code,  notices to the end user     *|
+|*     as follows:                                                           *|
+|*                                                                           *|
+|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*                                                                           *|
+|*     NVIDIA, CORPORATION MAKES NO REPRESENTATION ABOUT THE SUITABILITY     *|
+|*     OF  THIS SOURCE  CODE  FOR ANY PURPOSE.  IT IS  PROVIDED  "AS IS"     *|
+|*     WITHOUT EXPRESS OR IMPLIED WARRANTY OF ANY KIND.  NVIDIA, CORPOR-     *|
+|*     ATION DISCLAIMS ALL WARRANTIES  WITH REGARD  TO THIS SOURCE CODE,     *|
+|*     INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGE-     *|
+|*     MENT,  AND FITNESS  FOR A PARTICULAR PURPOSE.   IN NO EVENT SHALL     *|
+|*     NVIDIA, CORPORATION  BE LIABLE FOR ANY SPECIAL,  INDIRECT,  INCI-     *|
+|*     DENTAL, OR CONSEQUENTIAL DAMAGES,  OR ANY DAMAGES  WHATSOEVER RE-     *|
+|*     SULTING FROM LOSS OF USE,  DATA OR PROFITS,  WHETHER IN AN ACTION     *|
+|*     OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,  ARISING OUT OF     *|
+|*     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOURCE CODE.     *|
+|*                                                                           *|
+|*     U.S. Government  End  Users.   This source code  is a "commercial     *|
+|*     item,"  as that  term is  defined at  48 C.F.R. 2.101 (OCT 1995),     *|
+|*     consisting  of "commercial  computer  software"  and  "commercial     *|
+|*     computer  software  documentation,"  as such  terms  are  used in     *|
+|*     48 C.F.R. 12.212 (SEPT 1995)  and is provided to the U.S. Govern-     *|
+|*     ment only as  a commercial end item.   Consistent with  48 C.F.R.     *|
+|*     12.212 and  48 C.F.R. 227.7202-1 through  227.7202-4 (JUNE 1995),     *|
+|*     all U.S. Government End Users  acquire the source code  with only     *|
+|*     those rights set forth herein.                                        *|
+|*                                                                           *|
+ \***************************************************************************/
 /*
  * Copyright 1996-1997  David J. McKay
  *
@@ -19,146 +57,139 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
  * SOFTWARE.
  */
-
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv3setup.c,v 1.1.2.4 1998/01/24 11:55:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv3setup.c,v 1.1.2.7 1998/11/18 16:38:46 hohndel Exp $ */
 
 #include <stdlib.h>
 
 
 #include "nvuser.h"
-#include "nv3ref.h"
 #include "nvreg.h"
 
-
-typedef struct {
-  UINT32 id;
-  UINT32 context;
+typedef struct
+{
+    UINT32 id;
+    UINT32 context;
 }HashTableEntry;
 
-#if 0
-typedef struct {
-  UINT32 context; /* Configuration for graphics pipe */
-  UINT32 dmaNotifyInst; /* Pointers to DMA and notify instance data */
-  UINT32 memFormatInst; /* Not sure what the hell this is */
-  UINT32 unknown; /* Don't know what the 4th word does */
+typedef struct
+{
+    UINT32 context;  
+    UINT32 dmaNotifyInst;  
+    UINT32 memFormatInst;  
+    UINT32 unknown;  
 }ObjInstEntry;
-  
-/* Low level hardware representation of object */
-typedef struct {
-  HashTableEntry hash;
-  ObjInstEntry inst;
-}NVObject;
-#endif
 
 typedef struct {
-  char patchConfig;  /* How H/W is configured */
-  char zwrite;       /* Write to Z buffer */
-  char chroma;       /* Chroma keying enabled */
-  char plane;        /* Plane mask enabled */
-  char clip;         /* User clip enabled */
-  char colourFormat; /* 555RGB 888RGB etc */
-  char alpha;        /* Alpha enabled */ 
+  char patchConfig;   
+  char zwrite;        
+  char chroma;        
+  char plane;         
+  char clip;          
+  char colourFormat;  
+  char alpha;          
 }ObjectProperties;
 
 typedef struct {
-  int chid;                    /* Channel ID  (always 0 in this driver) */
-  int id;                      /* Unique number for this object */
-  int device;                  /* Which hardware device this object will use */
-  int instance;                /* Instance number (if it has one) */
-  ObjectProperties properties; /* Enabled for this object */
+  int chid;                     
+  int id;                       
+  int device;                   
+  int instance;                 
+  ObjectProperties properties;  
 }NVObject;
 
 extern int ErrorF(const char *fmt,...);
 
-#define Info ErrorF
+
 
 static int graphicsEngineOk;
 
-#define WaitForIdle() while(PGRAPH_Read(STATUS)&1)
 
 static void EnableOptimisations(void)
 {
-  /* Forget about this for the moment */
-  /* Most of the opts are to do with 3D anyway */
+   
+   
 
- PGRAPH_Write(DEBUG_0,PGRAPH_Def(DEBUG_0_BULK_READS,ENABLED)|
-                      PGRAPH_Def(DEBUG_0_WRITE_ONLY_ROPS_2D,ENABLED)|
-                      PGRAPH_Def(DEBUG_0_DRAWDIR_AUTO,ENABLED));
+ nvPGRAPHPort[((4194432    )- (4194304) )/4] =(  (( 1    ) << (4))   |
+                      (( 1    ) << (20))   |
+                      (( 1    ) << (24))     )  ;
             
- PGRAPH_Write(DEBUG_1,PGRAPH_Def(DEBUG_1_INSTANCE,ENABLED)|
-                      PGRAPH_Def(DEBUG_1_CTX,ENABLED));
+ nvPGRAPHPort[((4194436    )- (4194304) )/4] =(  (( 1    ) << (16))   |
+                      (( 1    ) << (20))     )  ;
 
- PGRAPH_Write(DEBUG_2,PGRAPH_Def(DEBUG_2_DPWR_FIFO, ENABLED)|
-                      PGRAPH_Def(DEBUG_2_VOLATILE_RESET,ENABLED)|
-                      PGRAPH_Def(DEBUG_2_AVOID_RMW_BLEND,ENABLED)|
-                      PGRAPH_Def(DEBUG_2_DPWR_FIFO,ENABLED));
+ nvPGRAPHPort[((4194440    )- (4194304) )/4] =(  (( 1    ) << (8))   |
+                      (( 1    ) << (28))   |
+                      (( 1    ) << (0))   |
+                      (( 1    ) << (8))     )  ;
 
- PGRAPH_Write(DEBUG_3,PGRAPH_Def(DEBUG_3_HONOR_ALPHA, ENABLED));
+ nvPGRAPHPort[((4194444    )- (4194304) )/4] =(  (( 1    ) << (24))     )  ;
 }
 
 static void InitDMAInstance(void)
 {
-  PGRAPH_Write(DMA,0);
-  PGRAPH_Write(NOTIFY,0);
+  nvPGRAPHPort[((4195968    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195972    )- (4194304) )/4] =(  0  )  ;
 }
-
-
 
 static void DisableFifo(void)
 {
-  /* Disable CACHE1 first */
-  PFIFO_Write(CACHES,PFIFO_Def(CACHES_REASSIGN,DISABLED));
-  PFIFO_Write(CACHE1_PUSH0,PFIFO_Def(CACHE1_PUSH0_ACCESS,DISABLED));
-  PFIFO_Write(CACHE1_PULL0,PFIFO_Def(CACHE1_PULL0_ACCESS,DISABLED));
-  PFIFO_Write(CACHE0_PUSH0,PFIFO_Def(CACHE1_PUSH0_ACCESS,DISABLED));
-  PFIFO_Write(CACHE0_PULL0,PFIFO_Def(CACHE1_PULL0_ACCESS,DISABLED));
+   
+  nvPFIFOPort[((9472    )- (8192) )/4] =(  (( 0    ) << (0))     )  ;
+  nvPFIFOPort[((12800    )- (8192) )/4] =(  (( 0    ) << (0))     )  ;
+  nvPFIFOPort[((12864    )- (8192) )/4] =(  (( 0    ) << (0))     )  ;
+  nvPFIFOPort[((12288    )- (8192) )/4] =(  (( 0    ) << (0))     )  ;
+  nvPFIFOPort[((12352    )- (8192) )/4] =(  (( 0    ) << (0))     )  ;
 }
 
 static void EnableFifo(void)
 {
-  /* Enable CACHE1 first */
-  PFIFO_Write(CACHE1_PUSH0,PFIFO_Def(CACHE1_PUSH0_ACCESS,ENABLED));
-  PFIFO_Write(CACHE1_PULL0,PFIFO_Def(CACHE1_PULL0_ACCESS,ENABLED));
-  PFIFO_Write(CACHE0_PUSH0,PFIFO_Def(CACHE0_PUSH0_ACCESS,DISABLED));
-  PFIFO_Write(CACHE0_PULL0,PFIFO_Def(CACHE0_PULL0_ACCESS,DISABLED));
-  PFIFO_Write(CACHES,PFIFO_Def(CACHES_REASSIGN,ENABLED));
+     
+
+
+    nvPTIMERPort[((37376    )- (36864) )/4] =(   8  )  ;
+    nvPTIMERPort[((37392    )- (36864) )/4] =(   3  )  ;
+     
+
+
+    nvPFIFOPort[((12800    )- (8192) )/4] =(  (( 1    ) << (0))     )  ;
+    nvPFIFOPort[((12864    )- (8192) )/4] =(  (( 1    ) << (0))     )  ;
+    nvPFIFOPort[((9472    )- (8192) )/4] =(  (( 1    ) << (0))     )  ;
 }
 
-#define HASH_TABLE_ADDR (0/4)
-#define HASH_TABLE_SIZE (4096/4)
 
-#define HASH_TABLE_NUM_COLS 2
-#define HASH_TABLE_NUM_ROWS 256
 
-/* All sizes in words */
-#define FIFO_CTX_ADDR (4608/4)
-#define FIFO_CTX_SIZE (512/4)
 
-#define RUN_OUT_ADDR (4096/4)
-#define RUN_OUT_SIZE (512/4)
 
-#define FREE_INSTANCE_ADDR (5120/4)
 
-#define FREE_INST (FREE_INSTANCE_ADDR/16)
 
-#define PRIVILEGED_RAM_SIZE 8192
+ 
 
-#define PRAMINRead nvPRAMINPort(addr) nvPRAMINPort[addr]
-#define PRAMINWrite(addr,val) nvPRAMINPort[addr]=(val)
 
-/* Clear out channel 0 fifo context */
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
 static void ClearOutFifoContext(void)
 {
   int i;
 
-  for(i=FIFO_CTX_ADDR;i<FIFO_CTX_SIZE;i++) {
-   PRAMINWrite(i,0);
+  for(i= (4608/4) ;i< (512/4) ;i++) {
+   nvPRAMINPort[ i ]=( 0 ) ;
   }
 }  
 
 int NV3KbRamUsedByHW(void)
 {
-   return (PRIVILEGED_RAM_SIZE);
+   return (8192 );
 }
 
 
@@ -167,60 +198,60 @@ static void ClearOutContext(void)
 {
   int i;
 
-  /* Init context register */
-  PGRAPH_Write(CTX_SWITCH,0);
-  PGRAPH_Write(CTX_USER,0);
+   
+  nvPGRAPHPort[((4194688    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4194708    )- (4194304) )/4] =(  0  )  ;
 
   ClearOutFifoContext();
 
-  /* Set PUT and GET pointers to address 0*/
-  PFIFO_Write(CACHE1_PUT,0);PFIFO_Write(CACHE1_GET,0);
+   
+  nvPFIFOPort[((12816    )- (8192) )/4] =(  0  )  ;nvPFIFOPort[((12912    )- (8192) )/4] =(  0  )  ;
 
-  /* Make sure there is no runout data */
-  PFIFO_Write(RUNOUT_PUT,0);
-  PFIFO_Write(RUNOUT_GET,0);
-  PFIFO_Write(RUNOUT_STATUS,0);
+   
+  nvPFIFOPort[((9232    )- (8192) )/4] =(  0  )  ;
+  nvPFIFOPort[((9248    )- (8192) )/4] =(  0  )  ;
+  nvPFIFOPort[((9216    )- (8192) )/4] =(  0  )  ;
 
-  /* Clear out CACHED CONTEXT registers */
-  for(i=0;i<NV_PFIFO_CACHE1_CTX__SIZE_1;i++) {
-    PFIFO_Write(CACHE1_CTX(i),0);
+   
+  for(i=0;i< 8 ;i++) {
+    nvPFIFOPort[(((12928+( i )*16)    )- (8192) )/4] =(  0  )  ;
   }
-  for(i=0;i<NV_PGRAPH_CTX_CACHE__SIZE_1;i++) {
-    PGRAPH_Write(CTX_CACHE(i),0);
+  for(i=0;i< 8 ;i++) {
+    nvPGRAPHPort[(((4194720+( i )*4)    )- (4194304) )/4] =(  0  )  ;
   }
 
 }
 
-static HashTableEntry   localHash[HASH_TABLE_NUM_ROWS][HASH_TABLE_NUM_COLS];
-static HashTableEntry *realHash=NULL;
+static HashTableEntry   localHash[256 ][2 ];
+static HashTableEntry *realHash= ((void *)0) ;
 
 
-#define HASH_FIFO(h,c) ((((h)^((h)>>8)^((h)>>16)^((h)>>24))&0xFF)^((c)&0x7F))
 
-#define HASH_ENTRY(row,col) ((((row)*HASH_TABLE_NUM_COLS)+(col))*2)
+
+
 
 static void ClearOutHashTables(void)
 {
   int i,j;
 
 
-  /*  if(!realHash) realHash=(HashTableEntry *) nvPRAMINPort;*/
+   
 
-  /* Clear out host copy of hash table */
-  for(i=0;i<HASH_TABLE_NUM_ROWS;i++) {
-    for(j=0;j<HASH_TABLE_NUM_COLS;j++) {
+   
+  for(i=0;i< 256 ;i++) {
+    for(j=0;j< 2 ;j++) {
       localHash[i][j].id=0;
       localHash[i][j].context=0;
-      PRAMINWrite(HASH_ENTRY(i,j),0);
-      PRAMINWrite(HASH_ENTRY(i,j)+1,0);
+      nvPRAMINPort[ (((( i )* 2 )+( j ))*2)  ]=( 0 ) ;
+      nvPRAMINPort[ (((( i )* 2 )+( j ))*2) +1 ]=( 0 ) ;
     }
   }
 }
 
-/* Defaults the context for the channel to be something sensible. 
- * This code is the basis of what needs to be context switched if this 
- * driver ever expands to cope with multiple channels at the same time.
- */
+ 
+
+
+
 
 static void LoadChannelContext(int screenWidth,int screenHeight,int bpp)
 {
@@ -229,165 +260,165 @@ static void LoadChannelContext(int screenWidth,int screenHeight,int bpp)
   int pitch=((bpp+1)/8)*screenWidth;
 
 
-  /* Force Cache 0 and Cache 1 to be set for channel 0 */
+   
 
-  PFIFO_Write(CACHE0_PUSH1,0);
-  PFIFO_Write(CACHE1_PUSH1,0);
+  nvPFIFOPort[((12292    )- (8192) )/4] =(  0  )  ;
+  nvPFIFOPort[((12804    )- (8192) )/4] =(  0  )  ;
 
-  /* Disable DMA FIFO pusher */
-  PFIFO_Write(CACHE1_DMA0,0);
-  PFIFO_Write(CONFIG_0,0);
+   
+  nvPFIFOPort[((12832    )- (8192) )/4] =(  0  )  ;
+  nvPFIFOPort[((8704    )- (8192) )/4] =(  0  )  ;
 
-  PFIFO_Write(CACHE1_PULL1, 0);
-  read=PFIFO_Read(CACHE1_PULL1);
-  PFIFO_Write(CACHE1_PULL1,read|PFIFO_Def(CACHE1_PULL1_CTX,DIRTY));
-  read=PFIFO_Read(CACHE1_PULL1);
-  /*  PFIFO_Write(CACHE1_PULL1,read|PFIFO_Def(CACHE1_PULL1_OBJECT,CHANGED));*/
+  nvPFIFOPort[((12880    )- (8192) )/4] =(   0  )  ;
+  read= nvPFIFOPort[((12880    )- (8192) )/4]   ;
+  nvPFIFOPort[((12880    )- (8192) )/4] =(  read| (( 1    ) << (4))     )  ;
+  read= nvPFIFOPort[((12880    )- (8192) )/4]   ;
+   
 
-  /* Set context control. Don't enable channel yet */
-  PGRAPH_Write(CTX_CONTROL,PGRAPH_Def(CTX_CONTROL_MINIMUM_TIME,2MS) |
-		           PGRAPH_Def(CTX_CONTROL_TIME,EXPIRED) |
-		           PGRAPH_Def(CTX_CONTROL_CHID,INVALID) |
-		           PGRAPH_Def(CTX_CONTROL_SWITCHING,IDLE) |
-		           PGRAPH_Def(CTX_CONTROL_DEVICE,ENABLED));
+   
+  nvPGRAPHPort[((4194704    )- (4194304) )/4] =(  (( 2    ) << (0))    |
+		           (( 0    ) << (8))    |
+		           (( 0    ) << (16))    |
+		           (( 0    ) << (24))    |
+		           (( 1    ) << (28))     )  ;
 
 
-  /* Make sure FIFO can access engines */
-  PGRAPH_Write(FIFO,PGRAPH_Def(FIFO_ACCESS,ENABLED));
+   
+  nvPGRAPHPort[((4196004    )- (4194304) )/4] =(  (( 1    ) << (0))     )  ;
  
-  /* NV3 has src and dest canvases */  
-  PGRAPH_Write(SRC_CANVAS_MIN,0);
-  PGRAPH_Write(SRC_CANVAS_MAX,PACK_UINT16(MAX_UINT16,MAX_UINT16));
+     
+  nvPGRAPHPort[((4195664    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195668    )- (4194304) )/4] =(  (((( 65535  )<<16))|( 65535  ))   )  ;
 
-  PGRAPH_Write(DST_CANVAS_MIN,0);
-  PGRAPH_Write(DST_CANVAS_MAX,PACK_UINT16(MAX_UINT16,MAX_UINT16));
+  nvPGRAPHPort[((4195672    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195676    )- (4194304) )/4] =(  (((( 65535  )<<16))|( 65535  ))   )  ;
 
-  /* May as well init this lot. Not sure though */
-  PGRAPH_Write(DMA,0);
-  PGRAPH_Write(NOTIFY,0);
-  PGRAPH_Write(INSTANCE,0);
-  PGRAPH_Write(MEMFMT,0);
+   
+  nvPGRAPHPort[((4195968    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195972    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195976    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195980    )- (4194304) )/4] =(  0  )  ;
 
-  /* Set BOFFSET */
-  /* I don't understand how these interact with the canvas registers. 
-   * They do not seem to provide the same degree of functionality as 
-   * pixel addressing is not possible. Shame really, as it looks like 
-   * SGI style direct rendering is out. Perhaps I am missing something, 
-   * as if you can't do this there seems to be no purpose served by 
-   * having multiple channels!
-   */
-  PGRAPH_Write(BOFFSET0,0);PGRAPH_Write(BOFFSET1,0);
-  PGRAPH_Write(BOFFSET2,0);PGRAPH_Write(BOFFSET3,0);
+   
+   
 
-  /* Pitch is the length of a line in bytes */
-  PGRAPH_Write(BPITCH0,pitch);PGRAPH_Write(BPITCH1,pitch);
-  PGRAPH_Write(BPITCH2,pitch);PGRAPH_Write(BPITCH3,pitch);
+
+
+
+
+
+  nvPGRAPHPort[((4195888    )- (4194304) )/4] =(  0  )  ;nvPGRAPHPort[((4195892    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195896    )- (4194304) )/4] =(  0  )  ;nvPGRAPHPort[((4195900    )- (4194304) )/4] =(  0  )  ;
+
+   
+  nvPGRAPHPort[((4195920    )- (4194304) )/4] =(  pitch  )  ;nvPGRAPHPort[((4195924    )- (4194304) )/4] =(  pitch  )  ;
+  nvPGRAPHPort[((4195928    )- (4194304) )/4] =(  pitch  )  ;nvPGRAPHPort[((4195932    )- (4194304) )/4] =(  pitch  )  ;
 
 
   switch(bpp) { 
     case 8:
-      PGRAPH_Write(BPIXEL,PGRAPH_Def(BPIXEL_DEPTH0_FMT,BITS_8)|
-                          PGRAPH_Def(BPIXEL_DEPTH1_FMT,BITS_8)|
-                          PGRAPH_Def(BPIXEL_DEPTH2_FMT,BITS_8)|
-                          PGRAPH_Def(BPIXEL_DEPTH3_FMT,BITS_8));
+      nvPGRAPHPort[((4196008    )- (4194304) )/4] =(  (( 1    ) << (0))   |
+                          (( 1    ) << (4))   |
+                          (( 1    ) << (8))   |
+                          (( 1    ) << (12))     )  ;
       break;
     case 15:
     case 16:
-      PGRAPH_Write(BPIXEL,PGRAPH_Def(BPIXEL_DEPTH0_FMT,BITS_16)|
-                          PGRAPH_Def(BPIXEL_DEPTH1_FMT,BITS_16)|
-                          PGRAPH_Def(BPIXEL_DEPTH2_FMT,BITS_16)|
-                          PGRAPH_Def(BPIXEL_DEPTH3_FMT,BITS_16));
+      nvPGRAPHPort[((4196008    )- (4194304) )/4] =(  (( 2    ) << (0))   |
+                          (( 2    ) << (4))   |
+                          (( 2    ) << (8))   |
+                          (( 2    ) << (12))     )  ;
       break; 
     case 32:
-      PGRAPH_Write(BPIXEL,PGRAPH_Def(BPIXEL_DEPTH0_FMT,BITS_32)|
-                          PGRAPH_Def(BPIXEL_DEPTH1_FMT,BITS_32)|
-                          PGRAPH_Def(BPIXEL_DEPTH2_FMT,BITS_32)|
-                          PGRAPH_Def(BPIXEL_DEPTH3_FMT,BITS_32));
+      nvPGRAPHPort[((4196008    )- (4194304) )/4] =(  (( 3    ) << (0))   |
+                          (( 3    ) << (4))   |
+                          (( 3    ) << (8))   |
+                          (( 3    ) << (12))     )  ;
       break;  
     default:
       break;
   }
 
 
-  PGRAPH_Write(CLIP_MISC,0);
-  PGRAPH_Write(CLIP0_MIN,0);
-  PGRAPH_Write(CLIP1_MIN,0);
-  PGRAPH_Write(CLIP0_MAX,0);
-  PGRAPH_Write(CLIP1_MAX,0);
+  nvPGRAPHPort[((4196000    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195984    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195992    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195988    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195996    )- (4194304) )/4] =(  0  )  ;
 
-  PGRAPH_Write(ABS_UCLIP_XMIN,0);
-  PGRAPH_Write(ABS_UCLIP_YMIN,0);
-  PGRAPH_Write(ABS_UCLIP_XMAX,0x7fff);
-  PGRAPH_Write(ABS_UCLIP_YMAX,0x7fff);
+  nvPGRAPHPort[((4195644    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195648    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195652    )- (4194304) )/4] =(  32767  )  ;
+  nvPGRAPHPort[((4195656    )- (4194304) )/4] =(  32767  )  ;
 
-  /* Used for the win95 text class */
-  PGRAPH_Write(ABS_UCLIPA_XMIN,0);
-  PGRAPH_Write(ABS_UCLIPA_YMIN,0);
-  PGRAPH_Write(ABS_UCLIPA_XMAX,0);
-  PGRAPH_Write(ABS_UCLIPA_YMAX,0);
+   
+  nvPGRAPHPort[((4195680    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195684    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195688    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195692    )- (4194304) )/4] =(  0  )  ;
  
-  PGRAPH_Write(CLIPX_0,0);
-  PGRAPH_Write(CLIPX_1,0);
-  PGRAPH_Write(CLIPY_0,0);
-  PGRAPH_Write(CLIPY_1,0);
+  nvPGRAPHPort[((4195620    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195624    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195628    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195632    )- (4194304) )/4] =(  0  )  ;
 
-  PGRAPH_Write(SOURCE_COLOR,0);
-  /* These are dubious. Probable doc error
-     
-  PGRAPH_Write(MONO_COLOR0,0);
-  PGRAPH_Write(MONO_COLOR1,0);
-  */
-  PGRAPH_Write(CHROMA,0);
+  nvPGRAPHPort[((4195596    )- (4194304) )/4] =(  0  )  ;
+   
+
+
+
+
+  nvPGRAPHPort[((4195884    )- (4194304) )/4] =(  0  )  ;
     
-  PGRAPH_Write(CONTROL_OUT,0);
+  nvPGRAPHPort[((4195908    )- (4194304) )/4] =(  0  )  ;
  
-  /* Beta and Plane Mask */
-  PGRAPH_Write(PLANE_MASK,0xffffffff);
-  PGRAPH_Write(BETA,0);
+   
+  nvPGRAPHPort[((4195880    )- (4194304) )/4] =(  -1  )  ;
+  nvPGRAPHPort[((4195904    )- (4194304) )/4] =(  0  )  ;
 
-  for(i=0;i<NV_PGRAPH_ABS_X_RAM__SIZE_1;i++) {
-    PGRAPH_Write(ABS_X_RAM(i),0);
+  for(i=0;i< 32 ;i++) {
+    nvPGRAPHPort[(((4195328+( i )*4)    )- (4194304) )/4] =(  0  )  ;
 
   }
-  for(i=0;i<NV_PGRAPH_ABS_Y_RAM__SIZE_1;i++) {
-    PGRAPH_Write(ABS_Y_RAM(i),0);
+  for(i=0;i< 32 ;i++) {
+    nvPGRAPHPort[(((4195456+( i )*4)    )- (4194304) )/4] =(  0  )  ;
   }
 
-  PGRAPH_Write(ABS_ICLIP_XMAX,0);PGRAPH_Write(ABS_ICLIP_YMAX,0);
+  nvPGRAPHPort[((4195636    )- (4194304) )/4] =(  0  )  ;nvPGRAPHPort[((4195640    )- (4194304) )/4] =(  0  )  ;
 
-  PGRAPH_Write(XY_LOGIC_MISC0,0);PGRAPH_Write(XY_LOGIC_MISC1,0);
-  PGRAPH_Write(XY_LOGIC_MISC2,0);PGRAPH_Write(XY_LOGIC_MISC3,0);
-  PGRAPH_Write(X_MISC,0);PGRAPH_Write(Y_MISC,0);
+  nvPGRAPHPort[((4195604    )- (4194304) )/4] =(  0  )  ;nvPGRAPHPort[((4195608    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195612    )- (4194304) )/4] =(  0  )  ;nvPGRAPHPort[((4195616    )- (4194304) )/4] =(  0  )  ;
+  nvPGRAPHPort[((4195584    )- (4194304) )/4] =(  0  )  ;nvPGRAPHPort[((4195588    )- (4194304) )/4] =(  0  )  ;
 
-  /* Pattern registers . Initialise to something sensible */
-  PGRAPH_Write(PATT_COLOR0_0,0);PGRAPH_Write(PATT_COLOR0_1,0xff);
-  PGRAPH_Write(PATT_COLOR1_0,1);PGRAPH_Write(PATT_COLOR1_1,0xff);
-  PGRAPH_Write(PATTERN(0),0xffffffff);PGRAPH_Write(PATTERN(1),0xffffffff);
-  PGRAPH_Write(PATTERN_SHAPE,0);
+   
+  nvPGRAPHPort[((4195840    )- (4194304) )/4] =(  0  )  ;nvPGRAPHPort[((4195844    )- (4194304) )/4] =(  255  )  ;
+  nvPGRAPHPort[((4195848    )- (4194304) )/4] =(  1  )  ;nvPGRAPHPort[((4195852    )- (4194304) )/4] =(  255  )  ;
+  nvPGRAPHPort[(((4195856+( 0 )*4)    )- (4194304) )/4] =(  -1  )  ;nvPGRAPHPort[(((4195856+( 1 )*4)    )- (4194304) )/4] =(  -1  )  ;
+  nvPGRAPHPort[((4195864    )- (4194304) )/4] =(  0  )  ;
 
-  /* Set the ROP to be COPY (Uses Microshaft raster op codes) */
-  PGRAPH_Write(ROP3,0xcc);
+   
+  nvPGRAPHPort[((4195876    )- (4194304) )/4] =(  204  )  ;
 
-  PGRAPH_Write(EXCEPTIONS,0);
+  nvPGRAPHPort[((4195592    )- (4194304) )/4] =(  0  )  ;
 
 }
 
-/* Will need to define here what all this lot actually does */
+ 
 
-#define COLOR_CONTEXT_R5G5B5     0x0
-#define COLOR_CONTEXT_R8G8B8     0x1
-#define COLOR_CONTEXT_R10G10B10  0x2
-#define COLOR_CONTEXT_Y8         0x3
-#define COLOR_CONTEXT_Y16        0x4
+
+
+
+
+
 
   
-/* This value does SRC & PATTERN */
-/* The pattern is disabled/enabled by the ROP code we set up */
-#define PATCH_CONTEXT 0x10
+ 
+ 
 
-/* All contexts will be generated at run time as we need to set the color
- * format dynamically
- */
+
+ 
+
+
 static NVObject ropObject;
 static NVObject clipObject;
 static NVObject patternObject;
@@ -396,6 +427,7 @@ static NVObject blitObject;
 static NVObject colourExpandObject;
 static NVObject lineObject;
 static NVObject linObject;
+static NVObject glyphObject;
 
 
 static void PlaceObjectInHashTable(NVObject *object)
@@ -404,34 +436,34 @@ static void PlaceObjectInHashTable(NVObject *object)
   UINT32 context;
   int i;
 
-  /* Will put an entry into the hash table */
-  /* Always use channel0 for now !! */
-  hash=HASH_FIFO(object->id,object->chid);
+   
+   
+  hash= (((( object->id )^(( object->id )>>8)^(( object->id )>>16)^(( object->id )>>24))&255)^(( object->chid )&127)) ;
   
-  for(i=0;i<HASH_TABLE_NUM_COLS;i++) {
-    if(localHash[hash][i].id==0) break; /* Found an empty slot!!! */
-    /* is object already in cache? */
+  for(i=0;i< 2 ;i++) {
+    if(localHash[hash][i].id==0) break;  
+     
     if(localHash[hash][i].context==object->id) return;
   }
-  if(i==HASH_TABLE_NUM_COLS) {
-    /* There is no room at the inn. Since we can't cope with reloading
-     * context we had better abort here!!
-     */
-    Info("**** NO ROOM FOR OBJECT %08lx IN HASH TABLE ****\n",object->id);
-    graphicsEngineOk=0; /* Set flag so that we won't use accel */
+  if(i== 2 ) {
+     
+
+
+    ErrorF ("**** NO ROOM FOR OBJECT %08lx IN HASH TABLE ****\n",object->id);
+    graphicsEngineOk=0;  
     return;
   }
 
-  context=((object->device)<<16)|SetBF(23:23,1)|SetBF(15:0,object->instance)|
-          SetBF(30:24,object->chid);
-#ifdef DEBUG
-  ErrorF("Placing object %x instance %x in hash\n",object->id,context);
-#endif
-  /* Ok, bung entry in at appropriate place */
+  context=((object->device)<<16)| (( 1 ) << (23)) | (( object->instance ) << (0)) |
+          (( object->chid ) << (24)) ;
+
+
+
+   
   localHash[hash][i].id=object->id;
   localHash[hash][i].context=context;
-  PRAMINWrite(HASH_ENTRY(hash,i),object->id);
-  PRAMINWrite(HASH_ENTRY(hash,i)+1,context);
+  nvPRAMINPort[ (((( hash )* 2 )+( i ))*2)  ]=( object->id ) ;
+  nvPRAMINPort[ (((( hash )* 2 )+( i ))*2) +1 ]=( context ) ;
 }
 
 
@@ -442,34 +474,34 @@ static void PlaceObjectInInstTable(NVObject *object)
   ObjectProperties *p=&(object->properties);
   UINT32 context;
 
-  /* This DEFINATELY needs to be symbolic !!!! */
-  context=SetBF(28:24,p->patchConfig)|SetBF(13:13,p->chroma)|
-          SetBF(14:14,p->plane)|SetBF(15:15,p->clip)|
-          SetBF(2:0,p->colourFormat)|SetBF(3:3,p->alpha)|(1<<20);
+   
+  context= (( p->patchConfig ) << (24)) | (( p->chroma ) << (13)) |
+          (( p->plane ) << (14)) | (( p->clip ) << (15)) |
+          (( p->colourFormat ) << (0)) | (( p->alpha ) << (3)) |(1<<20);
 
-#ifdef DEBUG
-  ErrorF("Object %x instance %x context %x\n",object->id,object->instance,
-         context);
-#endif
-  PRAMINWrite((object->instance<<2)+0,context);
-  PRAMINWrite((object->instance<<2)+1,0);
-  PRAMINWrite((object->instance<<2)+2,0);
-  PRAMINWrite((object->instance<<2)+3,0);
+
+
+
+
+  nvPRAMINPort[ (object->instance<<2)+0 ]=( context ) ;
+  nvPRAMINPort[ (object->instance<<2)+1 ]=( 0 ) ;
+  nvPRAMINPort[ (object->instance<<2)+2 ]=( 0 ) ;
+  nvPRAMINPort[ (object->instance<<2)+3 ]=( 0 ) ;
   
 }
 
 
-/* Not exactly terribly complex at the moment, but if we ever get 
- * round to destroying objects ....
- */
+ 
+
+
 static int AllocateFreeInstance(void)
 {
-  static int freeInstance=FREE_INST;
+  static int freeInstance= ((5120/4) /16) ;
 
   return freeInstance++;
 }
 
-static int defaultColourFormat=COLOR_CONTEXT_R8G8B8;
+static int defaultColourFormat= 1 ;
 
 static void InitObject(NVObject *o,int id,int device)
 {
@@ -480,7 +512,7 @@ static void InitObject(NVObject *o,int id,int device)
   o->instance=AllocateFreeInstance();
   o->device=device;
 
-  p->patchConfig=PATCH_CONTEXT;
+  p->patchConfig= 16 ;
   p->zwrite=0; 
   p->chroma=0; 
   p->plane=0;
@@ -490,39 +522,44 @@ static void InitObject(NVObject *o,int id,int device)
 }
 
 
-#define OBJECT_CLASS(dev) ((DEVICE_BASE(dev)&0x007f0000)>>16)
+
 
 static void SetUpObjects(int bpp)
 {
-  defaultColourFormat=(bpp==16) ? COLOR_CONTEXT_R5G5B5 : COLOR_CONTEXT_R8G8B8;
+  defaultColourFormat=(bpp==16) ? 0  : 1 ;
 
-  InitObject(&ropObject,ROP_OBJECT_ID,OBJECT_CLASS(UROP));
+  InitObject(&ropObject,-1728053248 ,(((4325376) &8323072)>>16) );
   PlaceObjectInHashTable(&ropObject);
   PlaceObjectInInstTable(&ropObject);
 
-  InitObject(&clipObject,CLIP_OBJECT_ID,OBJECT_CLASS(UCLIP));
+  InitObject(&clipObject,-1728053247 ,(((4521984) &8323072)>>16) );
   PlaceObjectInHashTable(&clipObject);
   PlaceObjectInInstTable(&clipObject);
 
-  InitObject(&rectObject,RECT_OBJECT_ID,OBJECT_CLASS(URECT));
+  InitObject(&rectObject,-2013265920 ,(((4653056) &8323072)>>16) );
   PlaceObjectInHashTable(&rectObject);
   PlaceObjectInInstTable(&rectObject);
 
-  InitObject(&blitObject,BLIT_OBJECT_ID,OBJECT_CLASS(UBLIT));
+  InitObject(&blitObject,-2013265919 ,(((5242880) &8323072)>>16) );
   PlaceObjectInHashTable(&blitObject);
   PlaceObjectInInstTable(&blitObject);
 
-  InitObject(&colourExpandObject,COLOUR_EXPAND_OBJECT_ID,
-             OBJECT_CLASS(UBITMAP));
-  colourExpandObject.properties.alpha=1; /* Alpha on for transparency */
+  InitObject(&colourExpandObject,-2013265918 ,
+             (((5373952) &8323072)>>16) );
+  colourExpandObject.properties.alpha=1;  
   PlaceObjectInHashTable(&colourExpandObject);
   PlaceObjectInInstTable(&colourExpandObject);
 
-  InitObject(&lineObject,LINE_OBJECT_ID,OBJECT_CLASS(ULINE));
+  InitObject(&glyphObject,-2013265915 ,(((4980736) &8323072)>>16) );
+  glyphObject.properties.clip = 0;  
+  PlaceObjectInHashTable(&glyphObject);
+  PlaceObjectInInstTable(&glyphObject);
+
+  InitObject(&lineObject,-2013265917 ,(((4784128) &8323072)>>16) );
   PlaceObjectInHashTable(&lineObject);
   PlaceObjectInInstTable(&lineObject);
 
-  InitObject(&linObject,LIN_OBJECT_ID,OBJECT_CLASS(ULIN));
+  InitObject(&linObject,-2013265916 ,(((4849664) &8323072)>>16) );
   PlaceObjectInHashTable(&linObject);
   PlaceObjectInInstTable(&linObject);
 
@@ -533,94 +570,97 @@ static void SetUpObjects(int bpp)
 static void ClearAndEnableInterrupts(void)
 {
 
-  PGRAPH_Write(INTR_0,PGRAPH_Def(INTR_0_RESERVED,RESET)|
-                      PGRAPH_Def(INTR_0_CONTEXT_SWITCH,RESET)|
-                      PGRAPH_Def(INTR_0_VBLANK,RESET)|
-                      PGRAPH_Def(INTR_0_RANGE,RESET)|
-                      PGRAPH_Def(INTR_0_METHOD_COUNT,RESET)|
-                      PGRAPH_Def(INTR_0_FORMAT,RESET)|
-                      PGRAPH_Def(INTR_0_COMPLEX_CLIP,RESET)|
-                      PGRAPH_Def(INTR_0_NOTIFY,RESET));
+  nvPGRAPHPort[((4194560    )- (4194304) )/4] =(  (( 1    ) << (0))   |
+                      (( 1    ) << (4))   |
+                      (( 1    ) << (8))   |
+                      (( 1    ) << (12))   |
+                      (( 1    ) << (16))   |
+                      (( 1    ) << (20))   |
+                      (( 1    ) << (24))   |
+                      (( 1    ) << (28))     )  ;
     
-  PGRAPH_Write(INTR_EN_0,0xffffffff);
+  nvPGRAPHPort[((4194624    )- (4194304) )/4] =(  -1  )  ;
 
-  PGRAPH_Write(INTR_1,PGRAPH_Def(INTR_1_METHOD,RESET)|
-                      PGRAPH_Def(INTR_1_DATA,RESET)|
-                      PGRAPH_Def(INTR_1_DOUBLE_NOTIFY,RESET)|
-                      PGRAPH_Def(INTR_1_CTXSW_NOTIFY,RESET));
+  nvPGRAPHPort[((4194564    )- (4194304) )/4] =(  (( 1    ) << (0))   |
+                      (( 1    ) << (4))   |
+                      (( 1    ) << (12))   |
+                      (( 1    ) << (16))     )  ;
 
-  /* Don't care about any of this lot */
-  PGRAPH_Write(INTR_EN_1,0xffffffff);
+   
+  nvPGRAPHPort[((4194628    )- (4194304) )/4] =(  -1  )  ;
 
-  PGRAPH_Write(DMA_INTR_0,0xffffffff);
-  PGRAPH_Write(DMA_INTR_EN_0,0xffffffff);
+  nvPGRAPHPort[((4198656    )- (4194304) )/4] =(  -1  )  ;
+  nvPGRAPHPort[((4198720    )- (4194304) )/4] =(  -1  )  ;
 
   
-  /* Reset the FIFO interrupt state */
-  PFIFO_Write(INTR_0, PFIFO_Def(INTR_0_CACHE_ERROR,RESET)|
-                      PFIFO_Def(INTR_0_RUNOUT,RESET)|
-                      PFIFO_Def(INTR_0_RUNOUT_OVERFLOW,RESET)|
-                      PFIFO_Def(INTR_0_DMA_PUSHER,RESET)|
-                      PFIFO_Def(INTR_0_DMA_PTE,RESET));
+   
+  nvPFIFOPort[((8448    )- (8192) )/4] =(   (( 1    ) << (0))   |
+                      (( 1    ) << (4))   |
+                      (( 1    ) << (8))   |
+                      (( 1    ) << (12))   |
+                      (( 1    ) << (16))     )  ;
 
-  PFIFO_Write(INTR_EN_0, PFIFO_Def(INTR_EN_0_CACHE_ERROR,ENABLED)|
-                         PFIFO_Def(INTR_EN_0_RUNOUT,ENABLED)|
-                         PFIFO_Def(INTR_EN_0_RUNOUT_OVERFLOW,ENABLED));
+  nvPFIFOPort[((8512    )- (8192) )/4] =(   (( 1    ) << (0))   |
+                         (( 1    ) << (4))   |
+                         (( 1    ) << (8))     )  ;
 
-  /* Switch on all the user devices in the master control */
-  PMC_Write(ENABLE,0xffffffff);
+   
+  nvPMCPort[((512    )- (0) )/4] =(  -1  )  ;
 
-  PMC_Write(INTR_EN_0,PMC_Def(INTR_EN_0_INTA,HARDWARE));
+   
+
+
+
 }
 
 static void ResetEngine(void)
 {
-  PMC_Write(ENABLE,0xffff00ff);
-  PMC_Write(ENABLE,0xffffffff);
-  /* Reset the graphics engine state machine */
-  PGRAPH_Write(DEBUG_1,PGRAPH_Def(DEBUG_1_VOLATILE_RESET,LAST));
-  PGRAPH_Write(DEBUG_0,PGRAPH_Def(DEBUG_0_STATE,RESET));
+  nvPMCPort[((512    )- (0) )/4] =(  -65281  )  ;
+  nvPMCPort[((512    )- (0) )/4] =(  -1  )  ;
+   
+  nvPGRAPHPort[((4194436    )- (4194304) )/4] =(  (( 1    ) << (0))     )  ;
+  nvPGRAPHPort[((4194432    )- (4194304) )/4] =(  (( 1    ) << (0))     )  ;
 
 }  
 
 static void EnableChannel(void)
 {
 
-  /* Set context control */
-  PGRAPH_Write(CTX_CONTROL,PGRAPH_Def(CTX_CONTROL_MINIMUM_TIME,2MS) |
-		           PGRAPH_Def(CTX_CONTROL_TIME,EXPIRED) |
-		           PGRAPH_Def(CTX_CONTROL_CHID,VALID) |
-		           PGRAPH_Def(CTX_CONTROL_SWITCHING,IDLE) |
-		           PGRAPH_Def(CTX_CONTROL_DEVICE,ENABLED));
+   
+  nvPGRAPHPort[((4194704    )- (4194304) )/4] =(  (( 2    ) << (0))    |
+		           (( 0    ) << (8))    |
+		           (( 1    ) << (16))    |
+		           (( 0    ) << (24))    |
+		           (( 1    ) << (28))     )  ;
 }  
 
-/* This function sets up instance memory to be layed out as follows 
- *
- *          4K hash Table
- */
+ 
+
+
+
 static void InitInstanceMemory(void)
 {
   int i;
-  /* This will set the hash table to be 4K, located at address 0 
-   * in instance memory
-   */
-  PFIFO_Write(RAMHT,PFIFO_Val(RAMHT_BASE_ADDRESS,0)| 
-                    PFIFO_Def(RAMHT_SIZE,4K));
+   
+
+
+  nvPFIFOPort[((8720    )- (8192) )/4] =(  ((   0   ) << (12))   | 
+                    (( 0    ) << (16))     )  ;
   
-  /* NB, these values must be aligned on a 512 byte boundary !! */
-  PFIFO_Write(RAMRO,PFIFO_Val(RAMRO_BASE_ADDRESS,16)|
-                    PFIFO_Def(RAMRO_SIZE,512));
+   
+  nvPFIFOPort[((8728    )- (8192) )/4] =(  ((   16   ) << (9))   |
+                    (( 0    ) << (16))     )  ;
                       
-  /* Set FIFO context. Need 32 bytes per channel . Smallest size is 
-   * 512 bytes which is more than enough for this driver
-   */
-  PFIFO_Write(RAMFC,PFIFO_Val(RAMFC_BASE_ADDRESS,17));
+   
+
+
+  nvPFIFOPort[((8724    )- (8192) )/4] =(  ((   17   ) << (9))     )  ;
   
-  /* This means that the first FREE instance memory starts at address 
-   * 320 (in 16 byte lumps !!)
-   */   
+   
+
+   
   for(i=0;i<(1024*1024)/4;i++) {
-     PRAMINWrite(i,0x0);
+     nvPRAMINPort[ i ]=( 0 ) ;
   }
 }
 
@@ -662,68 +702,66 @@ int NV3SetupGraphicsEngine(int screenWidth,int screenHeight,int bpp)
 
 void NV3Sync(void)
 {
-  WaitForIdle();
+  while(nvPGRAPHPort[((4196016    )- (4194304) )/4]   &1) ;
 }
 
-/* This function checks to see if an interrupt has been raised, then
- * prints out the appropriate registers so that you can attempt to 
- * figure out what is going on
- * if you start mucking around with this chip this will happen a lot 
- */
+ 
 
 
 
-#define CheckBit(var,device,bitfield) \
-if(var & device##_Mask(bitfield)) {\
-  Info("<%s %d> "#device"_"#bitfield" Set\n",fileName,lineNo);\
-}
+
+
+
+
+
+
 
 
 void NV3CheckForErrors(char *fileName,int lineNo) 
 {
-  UINT32 val=PMC_Read(INTR_0);
-  /* Has an interrupt been raised ???? */  
-  /*if(val==0) return;*/
-  /*  Info("An Interrupt has been raised.\n");*/
-  CheckBit(val,PMC,INTR_0_PAUDIO);
-  CheckBit(val,PMC,INTR_0_PFIFO);
-  CheckBit(val,PMC,INTR_0_PGRAPH0);
-  CheckBit(val,PMC,INTR_0_PGRAPH1);
-  CheckBit(val,PMC,INTR_0_PVIDEO);
-  CheckBit(val,PMC,INTR_0_PTIMER);
-  CheckBit(val,PMC,INTR_0_PFB);
-  CheckBit(val,PMC,INTR_0_PBUS);
-  CheckBit(val,PMC,INTR_0_SOFTWARE);
+  UINT32 val= nvPMCPort[((256    )- (0) )/4]   ;
+     
+   
+   
+  if( val  &  (((unsigned)(1U << ((( 0)-( 0)+1)))-1)  << ( 0))    ) { ErrorF ("<%s %d> ""PMC""_""INTR_0_PAUDIO"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 8)-( 8)+1)))-1)  << ( 8))    ) { ErrorF ("<%s %d> ""PMC""_""INTR_0_PFIFO"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 12)-( 12)+1)))-1)  << ( 12))    ) { ErrorF ("<%s %d> ""PMC""_""INTR_0_PGRAPH0"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 13)-( 13)+1)))-1)  << ( 13))    ) { ErrorF ("<%s %d> ""PMC""_""INTR_0_PGRAPH1"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 16)-( 16)+1)))-1)  << ( 16))    ) { ErrorF ("<%s %d> ""PMC""_""INTR_0_PVIDEO"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 20)-( 20)+1)))-1)  << ( 20))    ) { ErrorF ("<%s %d> ""PMC""_""INTR_0_PTIMER"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 24)-( 24)+1)))-1)  << ( 24))    ) { ErrorF ("<%s %d> ""PMC""_""INTR_0_PFB"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 28)-( 28)+1)))-1)  << ( 28))    ) { ErrorF ("<%s %d> ""PMC""_""INTR_0_PBUS"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 31)-( 31)+1)))-1)  << ( 31))    ) { ErrorF ("<%s %d> ""PMC""_""INTR_0_SOFTWARE"" Set\n",fileName,lineNo);} ;
 
-  val=PGRAPH_Read(INTR_0);
-  CheckBit(val,PGRAPH,INTR_0_RESERVED);
-  CheckBit(val,PGRAPH,INTR_0_CONTEXT_SWITCH);
-  CheckBit(val,PGRAPH,INTR_0_VBLANK);
-  CheckBit(val,PGRAPH,INTR_0_RANGE);
-  CheckBit(val,PGRAPH,INTR_0_METHOD_COUNT);
-  CheckBit(val,PGRAPH,INTR_0_COMPLEX_CLIP);
-  CheckBit(val,PGRAPH,INTR_0_NOTIFY);
+  val= nvPGRAPHPort[((4194560    )- (4194304) )/4]   ;
+  if( val  &  (((unsigned)(1U << ((( 0)-( 0)+1)))-1)  << ( 0))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_0_RESERVED"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 4)-( 4)+1)))-1)  << ( 4))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_0_CONTEXT_SWITCH"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 8)-( 8)+1)))-1)  << ( 8))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_0_VBLANK"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 12)-( 12)+1)))-1)  << ( 12))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_0_RANGE"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 16)-( 16)+1)))-1)  << ( 16))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_0_METHOD_COUNT"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 24)-( 24)+1)))-1)  << ( 24))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_0_COMPLEX_CLIP"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 28)-( 28)+1)))-1)  << ( 28))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_0_NOTIFY"" Set\n",fileName,lineNo);} ;
 
-  val=PGRAPH_Read(INTR_1);
-  CheckBit(val,PGRAPH,INTR_1_METHOD);
-  CheckBit(val,PGRAPH,INTR_1_DATA);
-  CheckBit(val,PGRAPH,INTR_1_DOUBLE_NOTIFY);
-  CheckBit(val,PGRAPH,INTR_1_CTXSW_NOTIFY);
+  val= nvPGRAPHPort[((4194564    )- (4194304) )/4]   ;
+  if( val  &  (((unsigned)(1U << ((( 0)-( 0)+1)))-1)  << ( 0))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_1_METHOD"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 4)-( 4)+1)))-1)  << ( 4))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_1_DATA"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 12)-( 12)+1)))-1)  << ( 12))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_1_DOUBLE_NOTIFY"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 16)-( 16)+1)))-1)  << ( 16))    ) { ErrorF ("<%s %d> ""PGRAPH""_""INTR_1_CTXSW_NOTIFY"" Set\n",fileName,lineNo);} ;
 
-  val=PFIFO_Read(INTR_0);
-  CheckBit(val,PFIFO,INTR_0_CACHE_ERROR);
-  CheckBit(val,PFIFO,INTR_0_RUNOUT);
-  CheckBit(val,PFIFO,INTR_0_RUNOUT_OVERFLOW);
-  CheckBit(val,PFIFO,INTR_0_DMA_PUSHER);
-  CheckBit(val,PFIFO,INTR_0_DMA_PTE);
+  val= nvPFIFOPort[((8448    )- (8192) )/4]   ;
+  if( val  &  (((unsigned)(1U << ((( 0)-( 0)+1)))-1)  << ( 0))    ) { ErrorF ("<%s %d> ""PFIFO""_""INTR_0_CACHE_ERROR"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 4)-( 4)+1)))-1)  << ( 4))    ) { ErrorF ("<%s %d> ""PFIFO""_""INTR_0_RUNOUT"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 8)-( 8)+1)))-1)  << ( 8))    ) { ErrorF ("<%s %d> ""PFIFO""_""INTR_0_RUNOUT_OVERFLOW"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 12)-( 12)+1)))-1)  << ( 12))    ) { ErrorF ("<%s %d> ""PFIFO""_""INTR_0_DMA_PUSHER"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 16)-( 16)+1)))-1)  << ( 16))    ) { ErrorF ("<%s %d> ""PFIFO""_""INTR_0_DMA_PTE"" Set\n",fileName,lineNo);} ;
 
 
-  val=PGRAPH_Read(DMA_INTR_0);
-  CheckBit(val,PGRAPH,DMA_INTR_0_INSTANCE);
-  CheckBit(val,PGRAPH,DMA_INTR_0_PRESENT);
-  CheckBit(val,PGRAPH,DMA_INTR_0_PROTECTION);
-  CheckBit(val,PGRAPH,DMA_INTR_0_LINEAR);
-  CheckBit(val,PGRAPH,DMA_INTR_0_NOTIFY);
+  val= nvPGRAPHPort[((4198656    )- (4194304) )/4]   ;
+  if( val  &  (((unsigned)(1U << ((( 0)-( 0)+1)))-1)  << ( 0))    ) { ErrorF ("<%s %d> ""PGRAPH""_""DMA_INTR_0_INSTANCE"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 4)-( 4)+1)))-1)  << ( 4))    ) { ErrorF ("<%s %d> ""PGRAPH""_""DMA_INTR_0_PRESENT"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 8)-( 8)+1)))-1)  << ( 8))    ) { ErrorF ("<%s %d> ""PGRAPH""_""DMA_INTR_0_PROTECTION"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 12)-( 12)+1)))-1)  << ( 12))    ) { ErrorF ("<%s %d> ""PGRAPH""_""DMA_INTR_0_LINEAR"" Set\n",fileName,lineNo);} ;
+  if( val  &  (((unsigned)(1U << ((( 16)-( 16)+1)))-1)  << ( 16))    ) { ErrorF ("<%s %d> ""PGRAPH""_""DMA_INTR_0_NOTIFY"" Set\n",fileName,lineNo);} ;
 
 
 }

@@ -1,0 +1,266 @@
+
+
+
+
+
+
+
+
+
+                      Information for Cyrix Chipset Users
+
+                           The XFree86 Project Inc.
+
+                                6 November 1998
+
+
+
+1.  Supported hardware
+
+This driver (as used in the SVGA (VGA256), VGA16 and VGA_Mono servers) supports
+a single chipset `mediagx' that should work on the following Cyrix CPUs with
+integrated graphics:
+
+   o MediaGX
+
+   o MediaGXi
+
+   o MediaGXm
+
+
+2.  Features
+
+   o accelerated
+
+   o hardware cursor
+
+   o support color depths 1, 4, 8 and 16
+
+
+3.  XF86Config Option
+
+      Option "sw_cursor"
+            disable the hardware cursor.
+
+      Option "no_accel"
+            completely disables acceleration. Usually not recommended.
+
+
+4.  Bugs and Limitations
+
+   o On some older chipsets, the driver may trigger an illegal instruction just
+     after probing for the ``scratchpad size''.  If this is the case, email to
+     Annius.Groenink@cwi.nl with the output of
+
+          XF86_SVGA -probeonly -verbose
+
+
+     and this will be fixed.
+
+   o There are limitations to the modeline values that can be specified.  Par-
+     ticularly, the difference between the first two horizontal timings (e.g.
+
+
+Information for Cyrix Chipset Users                                           1
+
+
+
+
+
+Information for Cyrix Chipset Users                                           2
+
+
+
+     640 656, 1024 1048) must be at least 16 and at most 24.
+
+   o The 4 colour server is slow due to the VGA banking mode used.  Moreover,
+     it does not work the way it is run by XF86Setup, which is probably due to
+     the timing limitations.
+
+
+5.  Authors
+
+   o Annius Groenink <Annius.Groenink@cwi.nl>
+
+   o Dirk Hohndel <hohndel@XFree86.org>
+
+   o Special thanks to Cyrix and Wyse for helping us with the development of
+     this server.
+
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/cyrix.sgml,v 1.1.2.3 1998/11/07 13:37:52 dawes Exp $
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Information for Cyrix Chipset Users                                           3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                   CONTENTS
+
+
+
+1. Supported hardware  ...................................................... 1
+
+2. Features  ................................................................ 1
+
+3. XF86Config Option  ....................................................... 1
+
+4. Bugs and Limitations ..................................................... 1
+
+5. Authors .................................................................. 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                       i
+
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.cyrix,v 1.1.2.5 1998/11/14 06:47:02 dawes Exp $

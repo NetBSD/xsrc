@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/xqueue.c,v 3.8.2.1 1997/07/13 14:45:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/xqueue.c,v 3.8.2.2 1998/11/01 07:51:15 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  *
@@ -267,6 +267,27 @@ xf86XqueMseProc(pPointer, what)
 			      miPointerGetMotionEvents, 
 			      (PtrCtrlProcPtr)xf86MseCtrl, 
 			      miPointerGetMotionBufferSize());
+#ifdef XINPUT
+      InitValuatorAxisStruct(pPointer,
+			     0,
+			     0, /* min val */
+			     screenInfo.screens[0]->width, /* max val */
+			     1, /* resolution */
+			     0, /* min_res */
+			     1); /* max_res */
+      InitValuatorAxisStruct(pPointer,
+			     1,
+			     0, /* min val */
+			     screenInfo.screens[0]->height, /* max val */
+			     1, /* resolution */
+			     0, /* min_res */
+			     1); /* max_res */
+      /* Initialize valuator values in synch
+       * with dix/event.c DefineInitialRootWindow
+       */
+      *pPointer->valuator->axisVal = screenInfo.screens[0]->width / 2;
+      *(pPointer->valuator->axisVal+1) = screenInfo.screens[0]->height / 2;
+#endif
       break;
       
     case DEVICE_ON:

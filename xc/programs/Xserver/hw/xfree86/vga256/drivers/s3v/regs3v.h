@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.3 1998/01/31 14:23:30 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/regs3v.h,v 1.1.2.6 1998/11/08 10:03:45 hohndel Exp $ */
 
 /* regs3v.h
  *
@@ -57,6 +57,9 @@
 
 
 #define S3_ViRGE_SERIES(chip)     ((chip&0xfff0)==0x31e0)
+#define S3_ViRGE_GX2_SERIES(chip) (chip == S3_ViRGE_GX2)
+#define S3_ViRGE_MX_SERIES(chip)  (chip == S3_ViRGE_MX || chip == S3_ViRGE_MXP)
+#define S3_ViRGE_MXP_SERIES(chip) (chip == S3_ViRGE_MXP)
 #define S3_ViRGE_VX_SERIES(chip)  ((chip&0xfff0)==0x3de0)
 #define S3_ANY_ViRGE_SERIES(chip) (    S3_ViRGE_SERIES(chip)		\
 				    || S3_ViRGE_VX_SERIES(chip))
@@ -70,6 +73,7 @@
 #define PCI_ViRGE_DXGX 		0x8A01
 #define PCI_ViRGE_GX2 		0x8A10
 #define PCI_ViRGE_MX 		0x8C01
+#define PCI_ViRGE_MXP 		0x8C03
 
 /* Chip tags */
 #define S3_UNKNOWN		 0
@@ -78,6 +82,7 @@
 #define S3_ViRGE_DXGX		 3
 #define S3_ViRGE_GX2		 4
 #define S3_ViRGE_MX		 5
+#define S3_ViRGE_MXP		 6
 
 
 /* VESA Approved Register Definitions */
@@ -367,25 +372,46 @@ typedef struct {
 }
 LUTENTRY;
 
+#define MAXLOOP 0xffffff /* timeout value for engine waits, ~6 secs */
+void S3VGEReset(int from_timeout, int line, char *file);
+
 /* Wait until "v" queue entries are free */
-#define	WaitQueue(v)	 if (s3vPriv.NoPCIRetry) { do { mem_barrier(); while (((IN_SUBSYS_STAT()) & 0x1f00) < (((v)+2) << 8)); } while (0); }
+#define	WaitQueue(v) \
+  if (s3vPriv.NoPCIRetry) { \
+    do { int loop=0; mem_barrier(); \
+         while ((((IN_SUBSYS_STAT()) & 0x1f00) < (((v)+2) << 8)) && (loop++<MAXLOOP)); \
+         if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__); \
+    } while (0); }
 
 /* Wait until GP is idle and queue is empty */
-#define	WaitIdleEmpty()  do { mem_barrier(); while ((IN_SUBSYS_STAT() & 0x3f00) != 0x3000); } while (0)
+#define	WaitIdleEmpty()  \
+  do { int loop=0; mem_barrier(); \
+       while (((IN_SUBSYS_STAT() & 0x3f00) != 0x3000) && (loop++<MAXLOOP)); \
+       if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__); \
+  } while (0)
 
 /* Wait until GP is idle */
-#define WaitIdle()       do { mem_barrier(); while (!(IN_SUBSYS_STAT() & 0x2000)); } while (0)
+#define WaitIdle() \
+  do { int loop=0; mem_barrier(); \
+       while ((!(IN_SUBSYS_STAT() & 0x2000)) && (loop++<MAXLOOP)); \
+         if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__); \
+  } while (0)
 
 /* Wait until Command FIFO is empty */
-#define WaitCommandEmpty()       do { mem_barrier(); 					\
-	if (s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX) 		\
-	     while (!(((((mmtr)s3vMmioMem)->subsys_regs.regs.adv_func_cntl)) & 0x400));	\
+#define WaitCommandEmpty()       do { int loop=0; mem_barrier(); 			\
+	if (s3vPriv.chip == S3_ViRGE_GX2 || s3vPriv.chip == S3_ViRGE_MX || s3vPriv.chip == S3_ViRGE_MXP) 		\
+	     while ((!(((((mmtr)s3vMmioMem)->subsys_regs.regs.adv_func_cntl)) & 0x400)) && (loop++<MAXLOOP));	\
 	  else 										\
-	     while (!(((((mmtr)s3vMmioMem)->subsys_regs.regs.adv_func_cntl)) & 0x200));	\
+	     while ((!(((((mmtr)s3vMmioMem)->subsys_regs.regs.adv_func_cntl)) & 0x200)) && (loop++<MAXLOOP));	\
+          if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__); \
 	} while (0)
 
 /* Wait until a DMA transfer is done */ 
-#define WaitDMAEmpty()    do { mem_barrier(); while  ((((mmtr)s3vMmioMem)->dma_regs.regs.cmd.write_pointer) != (((mmtr)s3vMmioMem)->dma_regs.regs.cmd.read_pointer)); } while(0)
+#define WaitDMAEmpty() \
+  do { int loop=0; mem_barrier(); \
+       while  (((((mmtr)s3vMmioMem)->dma_regs.regs.cmd.write_pointer) != (((mmtr)s3vMmioMem)->dma_regs.regs.cmd.read_pointer)) && (loop++<MAXLOOP)); \
+       if (loop >= MAXLOOP) S3VGEReset(1,__LINE__,__FILE__); \
+  } while(0)
 
 #ifndef NULL
 #define NULL	0

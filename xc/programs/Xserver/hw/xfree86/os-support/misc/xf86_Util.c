@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/misc/xf86_Util.c,v 3.4 1996/12/23 06:50:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/misc/xf86_Util.c,v 3.4.2.1 1998/10/20 20:51:16 hohndel Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -40,11 +40,15 @@ const char *s1, *s2;
 {
 	char c1, c2;
 
-	if (*s1 == 0)
-		if (*s2 == 0)
+        /* Consider null pointers to be pointers to null strings */
+	if (!s1 || (*s1 == 0)) {
+		if (!s2 || (*s2 == 0))
 			return(0);
 		else
 			return(1);
+	}
+	if (!s2 || (*s2 == 0))
+		return(1);
 
 	while (*s1 == '_' || *s1 == ' ' || *s1 == '\t')
 		s1++;

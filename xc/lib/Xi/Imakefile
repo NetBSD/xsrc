@@ -1,6 +1,10 @@
 XCOMM $XConsortium: Imakefile,v 1.17 94/03/27 15:54:53 rws Exp $
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/lib/Xi/Imakefile,v 1.1.1.1.12.2 1998/11/06 16:54:36 hohndel Exp $
 #define DoNormalLib NormalLibXi
 #define DoSharedLib SharedLibXi
+#define DoExtraLib SharedLibXi
 #define DoDebugLib DebugLibXi
 #define DoProfileLib ProfileLibXi
 #define LibName Xi

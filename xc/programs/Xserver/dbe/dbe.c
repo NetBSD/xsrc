@@ -1,5 +1,5 @@
 /* $XConsortium: dbe.c /main/4 1996/08/01 19:24:47 dpw $ */
-/* $XFree86: xc/programs/Xserver/dbe/dbe.c,v 3.2 1996/12/23 06:29:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dbe/dbe.c,v 3.2.2.1 1998/10/04 13:36:47 hohndel Exp $ */
 /******************************************************************************
  * 
  * Copyright (c) 1994, 1995  Hewlett-Packard Company
@@ -1501,8 +1501,8 @@ DbeSetupBackgroundPainter(pWin, pGC)
         case BackgroundPixmap:
             gcvalues[0] = (pointer)FillTiled;
             gcvalues[1] = (pointer)background.pixmap;
-            gcvalues[2] = (pointer)ts_x_origin;
-            gcvalues[3] = (pointer)ts_y_origin;
+            gcvalues[2] = (pointer)(long)ts_x_origin;
+            gcvalues[3] = (pointer)(long)ts_y_origin;
             gcmask = GCFillStyle|GCTile|GCTileStipXOrigin|GCTileStipYOrigin;
             break;
 

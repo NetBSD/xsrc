@@ -3,9 +3,10 @@ XCOMM $TOG: Imakefile /main/119 1997/05/20 10:06:20 kaleb $
 
 
 
-XCOMM $XFree86: xc/lib/Xt/Imakefile,v 3.8.2.1 1997/05/21 15:02:18 dawes Exp $
+XCOMM $XFree86: xc/lib/Xt/Imakefile,v 3.8.2.2 1998/11/06 13:54:31 dawes Exp $
 #define DoNormalLib NormalLibXt
 #define DoSharedLib SharedLibXt
+#define DoExtraLib SharedLibXt
 #define DoDebugLib DebugLibXt
 #define DoProfileLib ProfileLibXt
 #define HasSharedData YES

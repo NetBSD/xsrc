@@ -48,6 +48,8 @@ SOFTWARE.
 
 ******************************************************************/
 
+/* $XFree86: xc/lib/Xaw/Form.c,v 1.1.1.1.12.2 1998/05/16 09:05:19 dawes Exp $ */
+
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>
 #include <X11/Xmu/Converters.h>
@@ -185,6 +187,10 @@ static void _CvtStringToEdgeType(args, num_args, fromVal, toVal)
     XrmQuark q;
     char lowerName[1000];
 
+    if (strlen((char*)fromVal->addr) >= sizeof(lowerName)) {
+	XtStringConversionWarning(fromVal->addr, "edgeType");
+	return;
+    }
     XmuCopyISOLatin1Lowered (lowerName, (char*)fromVal->addr);
     q = XrmStringToQuark(lowerName);
     if (q == XtQChainLeft) {

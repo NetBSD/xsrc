@@ -4,7 +4,7 @@
 //  Rules for resolving XKB components for use with XFree86
 //  Copyright 1996 by Joseph Moss
 //
-//  $XFree86: xc/programs/xkbcomp/rules/xfree86,v 3.5.2.2 1998/02/01 16:05:44 robin Exp $
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86,v 3.5.2.3 1998/11/04 08:02:12 hohndel Exp $
 //
 
 ! model 	=	keycodes	geometry
@@ -15,6 +15,7 @@
   pc101		=	xfree86		pc(pc101)
   pc102		=	xfree86		pc(pc102)
   pc104		=	xfree86		pc(pc104)
+  pc105		=	xfree86		pc(pc105)
   jp106		=	xfree86(jp106)	pc(jp106)
   everex	=	xfree86		everex(STEPnote)
   winbook	=	xfree86		winbook(XP5)
@@ -27,6 +28,9 @@
   pc104		us	=	us(pc104)
   pc104		en_US	=	en_US(pc104)
   pc104		*	=	en_US(pc104)+%l%(v)
+  pc105		us	=	us(pc105)
+  pc105		en_US	=	en_US(pc105)
+  pc105		*	=	en_US(pc105)+%l%(v)
   pc98		nec/jp	=	nec/jp(pc98)
   *		us	=	us(pc101)
   *		en_US	=	en_US(pc102)

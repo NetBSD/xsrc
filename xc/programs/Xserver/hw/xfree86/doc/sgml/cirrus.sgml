@@ -7,7 +7,7 @@
 <author> Harm Hanemaayer (<it>H.Hanemaayer@inter.nl.net</it>),
 Randy Hendry (<it>randy@sgi.com</it>) (64xx),
 Corin Anderson (<it>corina@the4cs.com</it>)
-<date> 24 May 1997
+<date> 5 November 1998
 
 <!-- Table of contents -->
 <toc>
@@ -172,7 +172,7 @@ timings in the <tt>Monitor</tt> section that better fit your monitor
 (e.g 1152x900 modes). The driver options are described in detail in
 the next section; here the basic options are hinted at.
 
-For all chipsets, a <tt>Clockchip &dquot;cirrus&dquot;</tt> line in the
+For all chipsets, a <tt>Clockchip "cirrus"</tt> line in the
 <tt>Device</tt> section can be useful. This allows the use of any dot
 clocks, instead of one out of the fixed set of dot clocks supported
 by the driver. This is required if you want a 12.6 MHz dot clock for
@@ -183,8 +183,8 @@ required.
 For any chip with a BitBLT engine, the new XAA (XFree86 Acceleration
 Architecture) is used. This code is new and still in a beta stage.
 If graphics redrawing goes wrong, try the
-<tt>&dquot;noaccel&dquot;</tt> option; if it is using memory-mapped I/O,
-<tt>&dquot;no_mmio&dquot;</tt> might be sufficient.
+<tt>"noaccel"</tt> option; if it is using memory-mapped I/O,
+<tt>"no_mmio"</tt> might be sufficient.
 
 In order to be able to run at a depth of 16bpp, 24bpp, or 32bpp, and to improve
 performance at 8bpp, linear addressing must be enabled. This is generally
@@ -192,15 +192,15 @@ performance at 8bpp, linear addressing must be enabled. This is generally
 In order to be able to run at a depth of 16bpp, 24bpp or 32bpp, and to improve
 performance at 8bpp, linear addressing must be enabled. Linear addressing
 is the default mode of operation on any PCI-bus configuration; use
-<tt>&dquot;nolinear&dquot;</tt> to disable it.
+<tt>"nolinear"</tt> to disable it.
 For other bus types, it is generally
 possible on 543x local bus cards, and if you have less than 16Mb of system
 memory, on local bus 542x cards and ISA 543x cards. You must specify
-the <tt>&dquot;linear&dquot;</tt> option and possibly a <tt>Membase</tt>
+the <tt>"linear"</tt> option and possibly a <tt>Membase</tt>
 address. See the following sections for a detailed description.
 
 Memory-mapped I/O is the default mode of operation for any Alpine family
-chip. For the 5429, the <tt>&dquot;mmio&dquot;</tt> option may be used
+chip. For the 5429, the <tt>"mmio"</tt> option may be used
 to enable it, but it has not been tested.
 
 Finally, if you have 546X chip, it will be on either a PCI or AGP bus.
@@ -208,8 +208,8 @@ As such, there
 is no problem about memory mapped I/O or linear frame buffer address spaces
 running into system memory.  The PCI spaces are mapped way up near the 4GB
 point.  Because the mmio and linear frame buffer don't conflict at all on 
-the system, the <tt>&dquot;linear&dquot;</tt>, <tt>Membase</tt>, and 
-<tt>&dquot;mmio&dquot;</tt> options are ignored (memory mapped I/O  and linear
+the system, the <tt>"linear"</tt>, <tt>Membase</tt>, and 
+<tt>"mmio"</tt> options are ignored (memory mapped I/O  and linear
 addressing are always used).
 
 <sect> XF86Config options <p>
@@ -225,13 +225,13 @@ file, within the <tt>Screen</tt> subsections of the depths to which they are
 applicable (you can enable options for all depths by specifying them in the
 Device section).
 <descrip>
-<tag>Option &dquot;noaccel&dquot;</tag>
+<tag>Option "noaccel"</tag>
 	This option will disable the use of any accelerated functions. This
 	is likely to help with problems related to bugs in acceleration
 	functions, and perhaps high dot clocks and DRAM timing, at the cost
 	of performance (which will still be reasonable on a local bus).
-<tag>Option &dquot;fast_dram&dquot; &dquot;med_dram&dquot;
-&dquot;slow_dram&dquot; (5424/6/8/9, 543x, 5446, 546x)
+<tag>Option "fast_dram" "med_dram"
+"slow_dram" (5424/6/8/9, 543x, 5446, 546x)
 </tag>
         These options set the internal memory clock (MCLK, or BCLK for
 	the 546x) register to
@@ -305,7 +305,7 @@ Device section).
 	or stability at high dot clocks), it is best not to use any of
 	the DRAM options.
 <tag>
-Option &dquot;no_bitblt&dquot;
+Option "no_bitblt"
 </tag>
 	This option, when used with a 5426/28/29/3x/46/6x/754x, will have the 
 	effect of
@@ -314,12 +314,12 @@ Option &dquot;no_bitblt&dquot;
         problems related to functions that use the BitBLT engine.
 	Performance is significantly decreased.
 <tag>
-Option &dquot;no_imageblt&dquot;
+Option "no_imageblt"
 </tag>
-        This option is now obsolete. The "xaa_no_col_exp" option has a
+        This option is now obsolete. The "xaa_no_color_exp" option has a
         somewhat similar effect.
 <tag>
-chipset &dquot;clgd54xx&dquot;
+chipset "clgd54xx"
 </tag>
 	Force detection of the given chipset. Useful if you have a supported
         chipset that is not properly detected, or if you have an unsupported
@@ -334,7 +334,7 @@ videoram 1024 (or another value)
         memory, or if the memory detection goes wrong. It must be specified
 	in the Device section.
 <tag>
-Option &dquot;fifo_conservative&dquot; (5424/6/8/9/3x/46/6x/754x)
+Option "fifo_conservative" (5424/6/8/9/3x/46/6x/754x)
 </tag>
 	This option will set the CRT FIFO threshold to a conservative value
 	for high dot clocks (&gt;= 65 MHz), reducing performance but hopefully
@@ -343,14 +343,17 @@ Option &dquot;fifo_conservative&dquot; (5424/6/8/9/3x/46/6x/754x)
 	screen (especially when	a BitBLT operation is in progress, e.g.
 	scrolling).
 <tag>
-Option &dquot;fifo_aggressive&dquot; (5424/6/8/9/3x/46/6x/754x)
+Option "fifo_aggressive" (5424/6/8/9/3x/46/6x/754x)
 </tag>
 	This option will set the CRT FIFO threshold to an aggressive value;
 	it will be the same as that used for lower dot clocks.
         Theoretically it improves performance at high dot clocks, but
-        it does not help in the vast majority of cases.
+        it does not help in the vast majority of cases.  In some
+	cases with 546x chips, however, this option can help
+	reduce horizontal streaks or otherwise fix abnormal
+	display problems (display shifted to the left, etc.).
 <tag>
-Option &dquot;no_2mb_banksel&dquot; (542x)
+Option "no_2mb_banksel" (542x)
 </tag>
 	This option will cause the driver not to set the `DRAM bank select'
 	bit to enable the upper megabyte of memory on a 2Mbyte card. This
@@ -358,13 +361,13 @@ Option &dquot;no_2mb_banksel&dquot; (542x)
 	to 256Kx4/16 DRAMs, when using a virtual screen configuration that
 	uses more than 1Mbyte of memory.
 <tag>
-Option &dquot;probe_clocks&dquot;
+Option "probe_clocks"
 </tag>
 	This option will force probing of dot clocks on the card. This
         should not be necessary, since the clocks are fixed and the same for
         all Cirrus chipsets.
 <tag>
-Clockchip &dquot;cirrus&dquot;
+Clockchip "cirrus"
 </tag>
 	This enables programmable clocks. It must be specified in the
 	Device section. With this option, the clocks the modes use will
@@ -375,7 +378,7 @@ Clockchip &dquot;cirrus&dquot;
 	and tested frequencies (like the default clocks) are guaranteed
 	to be stable.
 <tag>
-Option &dquot;linear&dquot;  (542x/6/8/9/3x/754x on VL-bus)
+Option "linear"  (542x/6/8/9/3x/754x on VL-bus)
 </tag>
 	This enables linear addressing, which is the mapping of the entire
         framebuffer to a high address beyond system memory, so that SVGA
@@ -383,7 +386,7 @@ Option &dquot;linear&dquot;  (542x/6/8/9/3x/754x on VL-bus)
         colors, and is currently required for 16bpp, 24bpp, and 32bpp. See 
 	section 4 for details.
   <tag>
-Option &dquot;nolinear&dquot;  (542x/6/8/9/3x/754x on PCI bus)
+Option "nolinear"  (542x/6/8/9/3x/754x on PCI bus)
 </tag>
         Linear addressing is the default mode of operation on any
         PCI-bus chip. For these configurations, this option disables
@@ -395,53 +398,53 @@ Membase 0x00e00000 (or a different address) (542x/6/8/9/3x/46/754x)
         framebuffer. It must be specified in the Device section. It is
 	required for non-PCI linear addressing configurations.
 <tag>
-Option &dquot;favour_bitblt&dquot; (5426 only)
+Option "favour_bitblt" (5426 only)
 </tag>
 	This option is now obsolete.
 <tag>
-Option &dquot;mmio&dquot; (5429, 7548)
+Option "mmio" (5429, 7548)
 </tag>
 	This enables the use of memory-mapped I/O to talk to the BitBLT
         engine on the 543x/5429, which is a bit faster. This is option
 	has no effect when not using the BitBLT engine (e.g. when using
 	"no_bitblt").
 <tag>
-Option &dquot;no_mmio&dquot; (543x/4x)
+Option "no_mmio" (543x/4x)
 </tag>
 	This disables the use of memory-mapped I/O to talk to the BitBLT
         engine on any chip for which it is the default mode of
         operation. 
 <tag>
-Option &dquot;sw_cursor&dquot; (542x/3x/46/6x)
+Option "sw_cursor" (542x/3x/46/6x)
 </tag>
 	This disables use of the hardware cursor provided by the chip. Try
         this if the cursor seems to have problems. In particular, use this
 	when using dot clocks greater than 85 MHz on the 5434/6 since those
 	chips don't fully support the hardware cursor at those clocks.
 <tag>
-Option &dquot;clgd6225_lcd&dquot;
+Option "clgd6225_lcd"
 </tag>
 	Provides a work-around for problems on the LCD screen of some
 	62x5 laptop chipsets with maximum white colors.
 <tag>
-Option &dquot;no_pixmap_cache&dquot;
+Option "no_pixmap_cache"
 </tag>
 	When XAA is used (on any BitBLT chip), this option disables
 	the use of a pixmap cache in XAA. It could help with certain
 	drawing bugs.
 <tag>
-Option &dquot;xaa_no_col_exp&dquot;
+Option "xaa_no_color_exp"
 </tag>
 	When XAA is used, this option disables the use of hardware color
 	expansion features by XAA. Again, this might help with certain
 	drawing bugs.
 <tag>
-Option &dquot;no_stretch&dquot; (754x)
+Option "no_stretch" (754x)
 </tag>
 	Disable automatic stretching (horizontal and vertical expansion)
 	of 640x480 on a 800x600 LCD.
 <tag>
-Option &dquot;pci_retry&dquot; (546x)
+Option "pci_retry" (546x)
 </tag>
         Enables a performance feature for PCI based cards.  When this
 	feature is enabled, the driver code will attempt to transmit
@@ -463,7 +466,7 @@ On older chips,
 the use of a higher dot clock frequencies has a negative effect on the
 performance of graphics operations, especially BitBlt, when little
 video memory bandwidth is left for drawing (the amount is displayed
-during start-up for 542x/3x/46 chips).  For the 542x/3x chips, with
+during start-up for 542x/3x/46/6x chips).  For the 542x/3x chips, with
 default MCLK setting (0x1c) and a 32-bit memory interface, performance
 with a 65 MHz dot clock can be half of that with a dot clock of 25
 MHz.  So if you are short on memory bandwidth and experience blitting
@@ -480,10 +483,7 @@ same goes for the 544x.
 
 Currently the framebuffer code 16-bit, 24-bit, and 32-bit pixels  in 
 the SVGA
-server requires linear addressing. (This restriction may be
-removed in a future version, but with nearly all new cards using the PCI bus
-(where linear addressing poses no problem), removing the linear addressing
-requirement presently has a lower priority than other features.)  Option 
+server requires linear addressing.  Option 
 "linear" can be specified in a
 depth-specific screen section to enable linear addressing; a MemBase
 setting (in the device section) is probably also required (although they
@@ -563,7 +563,7 @@ The 16bpp and 32bpp modes are now fully accelerated, thanks to XAA. On
 more recent chips like the 5436/46 and the 546X, 24bpp is also fully
 accelerated.
 So although 
-there are now 4 up to times as many bits to display, the X server shouldn't
+there are now up to 4 times as many bits to display, the X server shouldn't
 feel overly sluggish.  Note also that the 24bpp and 32bpp modes are only 
 supported on a limited set of cards, and with at least 2Mb of memory.
 
@@ -687,7 +687,9 @@ all of the horizontal timing parameters).
 	<tt>"fifo_conservative"</tt> 
 	option. Failing that, you can try the <tt>"fast_dram"</tt> option, 
 	or use a lower dot clock.  If that is not sufficient, the 
-	<tt>"noaccel"</tt> option or <tt>"no_bitblt"</tt> will probably help.
+	<tt>"noaccel"</tt> option or <tt>"no_bitblt"</tt> will
+	probably help.  When using a 546x, option
+	<tt>"fifo_aggressive"</tt> can also be tried.
 <tag>`Wavy' screen.</tag>
 	Horizontal waving or jittering of the whole screen, continuously
 	(independent from drawing operations).
@@ -773,15 +775,42 @@ No mouse cursor, or cursor appears twice on screen
         With high dot clocks, the graphics card's hardware cursor
 	doesn't operate correctly.  Try option <tt>"sw_cursor"</tt> or
 	use a lower screen refresh.
+
+<tag>
+Random/garbage pixels on far right or bottom of screen (546x)
+</tag>
+        This problem is usually associated with using a virtual
+	screen size larger than the screen display size.  The
+	garbage pixels are unused portions of the frame buffer
+	that result from padding each scanline to an integral
+	number of memory tiles.  To eliminate the extra pixels,
+	use a screen display mode whose pixel width is evenly
+	divisible by 128 / bits per pixel.
+
+<tag>
+Screen is wrapped horizontally on right side (546x)
+</tag>
+        Same as above entry.
+
+<tag>
+The screen is initially displayed correctly, but then turns all
+white. (546x)
+</tag>
+        This problem usually happens at high bit depths and while
+	the screen is changing rapidly (catting a long file or
+	dragging a large window around).  The RamBus memory is
+	being overdriven.  Use Option <tt>"med_dram"</tt>, or, if
+	the problem persists, Option <tt>"slow_dram"</tt>.
+
 </descrip>
 For other screen drawing related problems, try the <tt>"noaccel"</tt>
 option (if <tt>"no_bitblt"</tt> doesn't help).
 
 If are having driver-related problems that are not addressed by this document,
 or if you have found bugs in accelerated functions, you can try contacting
-the XFree86 team (the current driver maintainer can be reached at
-<it>H.Hanemaayer@inter.nl.net</it>), or post in the Usenet newsgroup
-"<it>comp.windows.x.i386unix</it>".
+the XFree86 team (the current driver maintainer, Corin Anderson,
+can be reached at <it>corina@the4cs.com</it>), or post in the
+Usenet newsgroup "<it>comp.windows.x.i386unix</it>".
 
 In fact, reports (success or failure) are very welcome, especially
 on configurations that have not been tested. You can do this
@@ -789,6 +818,21 @@ via the BetaReport form (mail to report@XFree86.org). You may want to
 keep an eye on forthcoming beta releases at <it>www.xfree86.org</it>.
 
 <sect> Tested Configurations <p>
+
+Version 3.3.3 has had the following configurations tested:
+
+<descrip>
+<tag>CL-GD5446 with 2MB memory on PCI bus</tag>
+
+<tag>CL-GD5464 with 2MB memory on PCI bus</tag>
+
+<tag>CL-GD5465 with 4MB memory on PCI bus</tag>
+
+<tag>CL-GD5480 with 4MB memory on PCI bus</tag>
+
+<tag>CL-GD5465 with 4MB memory on AGP bus</tag>
+
+</descrip>
 
 For version 3.3, the following configurations have received a
 certain amount of testing:
@@ -884,6 +928,19 @@ Some configurations for which no up-to-date testing data is available:
 
 <sect> Driver Changes <p>
 
+Changes since XFree86 3.3.2:
+<itemize>
+<item>Fix transparent screen-to-screen copies on 546x.
+<item>The built-in screen saver now correctly blanks the screen
+on 546x chips.
+<item>Driver prevents the use of the HW cursor on the 546x when
+the screen height is greater than 1023 scanlines (fix to double
+pointer problem).
+<item>CPU-to-screen BitBLT transfers disabled on the 5465.  This
+fix should prevent 5465 AGP lockups.
+<item>Fixed mode display problem with 5480 at high resolutions.
+</itemize>
+
 Changes since XFree86 3.2A:
 <itemize>
 <item>A bug that caused a server crash with memory-mapped I/O operation
@@ -907,7 +964,7 @@ Changes since XFree86 3.2:
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/cirrus.sgml,v 3.23.2.3 1998/02/20 23:10:31 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/cirrus.sgml,v 3.23.2.6 1998/11/07 13:37:51 dawes Exp $
 
 
 

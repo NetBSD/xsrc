@@ -1,5 +1,5 @@
 /* $XConsortium: server.c,v 1.20 94/10/17 18:29:34 converse Exp $ */
-/* $XFree86: xc/programs/xdm/server.c,v 3.2 1996/01/05 13:21:01 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/server.c,v 3.2.4.1 1998/10/04 13:37:20 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -96,6 +96,10 @@ struct display	*d;
     switch (pid = fork ()) {
     case 0:
 	CleanUpChild ();
+#ifdef XDMCP
+	/* The chooser socket is not closed by CleanUpChild() */
+	DestroyWellKnownSockets();
+#endif
 	if (d->authFile) {
 	    sprintf (arg, "-auth %s", d->authFile);
 	    argv = parseArgs (argv, arg);

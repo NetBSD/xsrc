@@ -1,4 +1,4 @@
-/* $TOG: TMparse.c /main/119 1997/05/15 17:31:29 kaleb $ */
+/* $TOG: TMparse.c /main/119.0 1998/05/12 11:19:31 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/TMparse.c,v 3.0.4.1 1997/05/17 12:24:59 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/TMparse.c,v 3.0.4.6 1998/05/16 04:47:40 dawes Exp $ */
 
 /*
 
@@ -476,22 +476,17 @@ static String PanicModeRecovery(str)
 }
 
 
-static void Syntax(str,str1)
-    String str,str1;
+static void Syntax(str0,str1)
+    String str0,str1;
 {
     Cardinal numChars;
-    Cardinal num_params = 1;
-    String params[1];
-    char message[1000];
+    Cardinal num_params = 2;
+    String params[2];
 
-    (void)strcpy(message,str);
-    numChars = strlen(message);
-    (void) strcpy(&message[numChars], str1);
-    numChars += strlen(str1);
-    message[numChars] = '\0';
-    params[0] = message;
+    params[0] = str0;
+    params[1] = str1;
     XtWarningMsg(XtNtranslationParseError,"parseError",XtCXtToolkitError,
-		 "translation table syntax error: %s",params,&num_params);
+		 "translation table syntax error: %s %s",params,&num_params);
 }
 
 
@@ -565,9 +560,11 @@ static void StoreLateBindings(keysymL,notL,keysymR,notR,lateBindings)
         if (keysymR){
             temp[count].knot = notR;
             temp[count].pair = FALSE;
+	    temp[count].ref_count = 0;
             temp[count++].keysym = keysymR;
         }
-        temp[count].knot = FALSE;
+        temp[count].knot = temp[count].pair = FALSE;
+        temp[count].ref_count = 0;
         temp[count].keysym = 0;
     }
 } 
@@ -664,10 +661,15 @@ static String FetchModifierToken(str, token_return)
     }
     str = ScanIdent(str);
     if (start != str) {
-	char modStr[100];
+	char modStrbuf[100];
+	char* modStr;
+
+	modStr = XtStackAlloc (str - start + 1, modStrbuf);
+	if (modStr == NULL) _XtAllocError (NULL);
 	(void) memmove(modStr, start, str-start);
 	modStr[str-start] = '\0';
 	*token_return = XrmStringToQuark(modStr);
+	XtStackFree (modStr, modStrbuf);
 	return str;
     }
     return str;
@@ -762,12 +764,16 @@ static String ParseXtEventType(str, event, tmEventP,error)
     Boolean* error;
 {
     String start = str;
-    char eventTypeStr[100];
+    char eventTypeStrbuf[100];
+    char* eventTypeStr;
 
     ScanAlphanumeric(str);
+    eventTypeStr = XtStackAlloc (str - start + 1, eventTypeStrbuf);
+    if (eventTypeStr == NULL) _XtAllocError (NULL);
     (void) memmove(eventTypeStr, start, str-start);
     eventTypeStr[str-start] = '\0';
     *tmEventP = LookupTMEventType(eventTypeStr,error);
+    XtStackFree (eventTypeStr, eventTypeStrbuf);
     if (*error) 
         return PanicModeRecovery(str);
     event->event.eventType = events[*tmEventP].eventType;
@@ -948,12 +954,14 @@ static String ParseKeySym(str, closure, event,error)
     Boolean* error;
 {
     char *start;
-    char keySymName[100];
+    char keySymNamebuf[100];
+    char *keySymName;
 
     ScanWhitespace(str);
 
     if (*str == '\\') {
 	str++;
+	keySymName = keySymNamebuf;
 	keySymName[0] = *str;
 	if (*str != '\0' && !IsNewline(*str)) str++;
 	keySymName[1] = '\0';
@@ -964,6 +972,7 @@ static String ParseKeySym(str, closure, event,error)
               * for backwards compatibility
               */
              (*str == '(' && *(str+1) >= '0' && *(str+1) <= '9')) {
+	keySymName = keySymNamebuf; /* just so we can stackfree it later */
 	/* no detail */
 	event->event.eventCode = 0L;
         event->event.eventCodeMask = 0L;
@@ -977,12 +986,15 @@ static String ParseKeySym(str, closure, event,error)
                 && !IsNewline(*str)
                 && (*str != '(' || *(str+1) <= '0' || *(str+1) >= '9')
 		&& *str != '\0') str++;
+	keySymName = XtStackAlloc (str - start + 1, keySymNamebuf);
+	if (keySymName == NULL) _XtAllocError(NULL);
 	(void) memmove(keySymName, start, str-start);
 	keySymName[str-start] = '\0';
 	event->event.eventCode = StringToKeySym(keySymName, error);
 	event->event.eventCodeMask = ~0L;
     }
     if (*error) {
+	/* We never get here when keySymName hasn't been allocated */
 	if (keySymName[0] == '<') {
 	    /* special case for common error */
 	    XtWarningMsg(XtNtranslationParseError, "missingComma",
@@ -990,12 +1002,15 @@ static String ParseKeySym(str, closure, event,error)
 		     "... possibly due to missing ',' in event sequence.",
 		     (String*)NULL, (Cardinal*)NULL);
 	}
+	XtStackFree (keySymName, keySymNamebuf);
 	return PanicModeRecovery(str);
     }
     if (event->event.standard)
 	event->event.matchEvent = _XtMatchUsingStandardMods;
     else 
 	event->event.matchEvent = _XtMatchUsingDontCareMods;
+
+    XtStackFree (keySymName, keySymNamebuf);
 
     return str;
 }
@@ -1687,6 +1702,7 @@ static String ParseParamSeq(str, paramSeqP, paramNumP)
 	if (newStr != NULL) {
 	    ParamPtr temp = (ParamRec*)
 		ALLOCATE_LOCAL( (unsigned)sizeof(ParamRec) );
+	    if (temp == NULL) _XtAllocError(NULL);
 
 	    num_params++;
 	    temp->next = params;
@@ -1785,21 +1801,26 @@ static void ShowProduction(currentProduction)
 {
     Cardinal num_params = 1;
     String params[1];
-    int len = 499;
-    char *eol, production[500];
+    int len;
+    char *eol, *production, productionbuf[500];
 
 #ifdef __EMX__
     eol = strchr(currentProduction, '\r');
     if (!eol) /* try '\n' as well below */
 #endif
         eol = strchr(currentProduction, '\n');
-    if (eol) len = MIN(499, eol - currentProduction);
+    if (eol) len = eol - currentProduction;
+    else len = strlen (currentProduction);
+    production = XtStackAlloc (len + 1, productionbuf);
+    if (production == NULL) _XtAllocError (NULL);
     (void) memmove(production, currentProduction, len);
     production[len] = '\0';
 
     params[0] = production;
     XtWarningMsg(XtNtranslationParseError, "showLine", XtCXtToolkitError,
 		 "... found while parsing '%s'", params, &num_params);
+
+    XtStackFree (production, productionbuf);
 }
 
 /***********************************************************************

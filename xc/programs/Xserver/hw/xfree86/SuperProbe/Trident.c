@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Trident.c,v 3.11.2.1 1997/05/24 13:38:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Trident.c,v 3.11.2.5 1998/10/25 09:49:19 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -86,26 +86,62 @@ int *Chipset;
 					case 0x21:
 						*Chipset = CHIP_TVGA9685;
 						break;
+					case 0x22:
+					case 0x23:
+						*Chipset = CHIP_TVGA9397;
+						break;
 					case 0x30:
 					case 0x33:
 					case 0x34:
+					case 0x35:
+					case 0xB3:
 						*Chipset = CHIP_TVGA9385;
 						break;
 					case 0x38:
+					case 0x3A:
 						*Chipset = CHIP_TVGA9385_1;
 						break;
+					case 0x4A:
+						*Chipset = CHIP_TVGA9388_1;
+						break;
 					case 0x40:
-					case 0x42:
-					case 0xB3:
+					case 0x41: /* Guessing */
+					case 0x42: /* Guessing */
+					case 0x43:
 						*Chipset = CHIP_TVGA9382;
 						break;
 					case 0x50:
 						*Chipset = CHIP_TVGA9692;
 						break;
+					default:
+						Chip_data = temp;
+						*Chipset = CHIP_TVGA_UNK;
+						break;
 				}
 				break;
+			case PCI_CHIP_9680:
+				*Chipset = CHIP_TVGA9680;
+				break;
+			case PCI_CHIP_9682:
+				*Chipset = CHIP_TVGA9682;
+				break;
+			case PCI_CHIP_9388:
+				*Chipset = CHIP_TVGA9388;
+				break;
+			case PCI_CHIP_9397:
+				*Chipset = CHIP_TVGA9397;
+				break;
+			case PCI_CHIP_9520:
+				*Chipset = CHIP_TVGA9520;
+				break;
+			case PCI_CHIP_9750:
+				*Chipset = CHIP_TVGA9750;
+				break;
+			case PCI_CHIP_9850:
+				*Chipset = CHIP_TVGA9850;
+				break;
 			default:
-				Chip_data = chip;
+				Chip_data = pcrp->_device_vendor;
 				*Chipset = CHIP_TVGA_UNK;
 				break;
 			}
@@ -194,17 +230,36 @@ int *Chipset;
 				case 0x21:
 					*Chipset = CHIP_TVGA9685;
 					break;
+				case 0x22:
+				case 0x23:
+					*Chipset = CHIP_TVGA9397;
+					break;
 				case 0x30:
+				case 0x33:
+				case 0x34:
+				case 0x35:
+				case 0xB3:
 					*Chipset = CHIP_TVGA9385;
 					break;
 				case 0x38:
+				case 0x3A:
 					*Chipset = CHIP_TVGA9385_1;
 					break;
+				case 0x4A:
+					*Chipset = CHIP_TVGA9388_1;
+					break;
 				case 0x40:
+				case 0x41: /* Guessing */
+				case 0x42: /* Guessing */
+				case 0x43:
 					*Chipset = CHIP_TVGA9382;
 					break;
 				case 0x50:
 					*Chipset = CHIP_TVGA9692;
+					break;
+				default:
+					Chip_data = chip*256+temp;
+					*Chipset = CHIP_TVGA_UNK;
 					break;
 			}
 			break;
@@ -231,41 +286,38 @@ static int MemProbe_Trident(Chipset)
 int Chipset;
 {
 	int Mem = 0;
+	unsigned char temp;
 
         EnableIOPorts(NUMPORTS, Ports);
+	temp = rdinx(CRTC_IDX, 0x1F);
 
-	switch (Chipset)
+	switch (temp & 0x07)
 	{
-	case CHIP_TVGA8800BR:
-	case CHIP_TVGA8800CS:
-		if (rdinx(CRTC_IDX, 0x1F) & 0x02)
-		{
-			Mem = 512;
-		}
-		else
-		{
-			Mem = 256;
-		}
+	case 0:
+	case 4:
+		Mem = 256;
 		break;
-	default:
-		switch (rdinx(CRTC_IDX, 0x1F) & 0x07)
-		{
-		case 0x00:
-			Mem = 256;
-			break;
-		case 0x01:
+	case 1:
+	case 5: /* New TGUI's don't support less than 1MB */
+		if (Chipset >= CHIP_TVGA9660)
+			Mem = 4096;
+		else
 			Mem = 512;
-			break;
-		case 0x02:
-			Mem = 768;
-			break;
-		case 0x03:
-			Mem = 1024;
-			break;
-		case 0x07:
+		break;
+	case 2:
+	case 6:
+		Mem = 768;
+		break;
+	case 3:
+		Mem = 1024;
+		break;
+	case 7:
+
+		if (((temp & 0x0F)==0x0F) && (Chipset >= CHIP_TVGA9685))
+			/* This is for the 9685 */
+			Mem = 4096;
+		else
 			Mem = 2048;
-			break;
-		}
 		break;
 	}
 

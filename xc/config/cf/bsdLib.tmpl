@@ -1,11 +1,17 @@
 XCOMM $XConsortium: bsdLib.tmpl /main/3 1996/09/28 16:09:25 rws $
-XCOMM $XFree86: xc/config/cf/bsdLib.tmpl,v 3.3.2.1 1997/07/27 02:41:03 dawes Exp $
+XCOMM $XFree86: xc/config/cf/bsdLib.tmpl,v 3.3.2.2 1998/11/06 13:54:16 dawes Exp $
 
 /*
  * NetBSD/FreeBSD/OpenBSD shared library template
  */
 
 #if !UseElfFormat
+
+#ifndef FixupLibReferences
+#define FixupLibReferences()						@@\
+XMULIBONLY = -lXmu							@@\
+XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
+#endif
 
 #ifndef SharedXtReqs
 #define SharedXtReqs /**/

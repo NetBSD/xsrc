@@ -1,0 +1,67 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+
+<article>
+<title>Information for Cyrix Chipset Users
+<author>The XFree86 Project Inc.
+<date>6 November 1998
+<toc>
+
+<sect>Supported hardware <p>
+
+This driver (as used in the SVGA (VGA256), VGA16 and VGA_Mono servers) 
+supports a single chipset `mediagx' that should work on the following Cyrix
+CPUs with integrated graphics:
+
+<itemize>
+<item>MediaGX
+<item>MediaGXi
+<item>MediaGXm
+</itemize>
+
+<sect>Features <p>
+<itemize>
+<item>accelerated
+<item>hardware cursor
+<item>support color depths 1, 4, 8 and 16
+</itemize>
+
+<sect>XF86Config Option <p>
+<descrip>
+<tag>Option "sw_cursor"</tag>
+disable the hardware cursor.
+<tag>Option "no_accel"</tag>
+completely disables acceleration. Usually not recommended.
+</descrip>
+
+<sect>Bugs and Limitations<p>
+<itemize>
+<item>On some older chipsets, the driver may trigger an illegal instruction
+just after probing for the ``scratchpad size''.  If this is the case,
+email to Annius.Groenink@cwi.nl with the output of 
+<verb>
+XF86_SVGA -probeonly -verbose
+</verb>
+and this will be fixed.
+<item>There are limitations to the modeline values that can be specified.
+Particularly, the difference between the first two horizontal
+timings (e.g. 640 656, 1024 1048) must be at least 16 and at most 24.
+<item>The 4 colour server is slow due to the VGA banking mode used.
+Moreover,
+it does not work the way it is run by XF86Setup, which is probably
+due to the timing limitations.
+</itemize>
+
+<sect>Authors<p>
+<itemize>
+<item>Annius Groenink <it>&lt;Annius.Groenink@cwi.nl&gt;</it>
+<item>Dirk Hohndel <it>&lt;hohndel@XFree86.org&gt;</it>
+<item>Special thanks to Cyrix and Wyse for helping us with the development of
+this server.
+</itemize>
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/cyrix.sgml,v 1.1.2.3 1998/11/07 13:37:52 dawes Exp $
+</verb>
+
+</article>
+

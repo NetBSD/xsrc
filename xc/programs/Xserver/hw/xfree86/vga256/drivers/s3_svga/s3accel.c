@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3accel.c,v 1.1.2.1 1998/02/07 10:05:38 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3accel.c,v 1.1.2.4 1998/10/21 13:38:00 dawes Exp $ */
 
 /*
  *
@@ -11,11 +11,12 @@
 
 #define PSZ 8
 
-#include "vga256.h"
 #include "xf86.h"
+#include "xf86_OSlib.h"
+#include "vga256.h"
 #include "vga.h"
-
 #include "xf86xaa.h"
+
 
 #include "s3.h"
 #include "s3reg.h"
@@ -798,7 +799,7 @@ void S3SubsequentDashedBresenhamLine16(x1, y1, octant, err, e1, e2, length,
 
 #if defined(__GNUC__) && defined(__i386__)
 static __inline__ CARD32 reverse_bitorder(CARD32 data) {
-#if defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || (defined(linux) || defined (__OS2ELF__)) && defined(__ELF__)
+#if defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || defined(__ELF__)
 	__asm__(
 		"movl $0,%%ecx\n"
 		"movb %%al,%%cl\n"

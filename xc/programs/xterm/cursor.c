@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: cursor.c,v 1.14 93/09/20 17:42:23 hersh Exp $
- *	$XFree86: xc/programs/xterm/cursor.c,v 3.7 1998/06/04 16:43:56 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/cursor.c,v 3.3.4.3 1998/10/20 20:51:44 hohndel Exp $
  */
 
 /*
@@ -28,14 +28,8 @@
 
 /* cursor.c */
 
-#ifdef HAVE_CONFIG_H
-#include <xtermcfg.h>
-#endif
-
-#include "ptyx.h"		/* also gets Xlib.h */
-
-#include "data.h"
-#include "xterm.h"
+#include <xterm.h>
+#include <data.h>
 
 static void _CheckSelection (register TScreen *screen)
 {

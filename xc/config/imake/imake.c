@@ -8,7 +8,7 @@
  * be passed to the template file.                                         *
  *                                                                         *
  ***************************************************************************/
-/* $XFree86: xc/config/imake/imake.c,v 3.13.2.16 1998/03/01 00:34:54 dawes Exp $ */
+/* $XFree86: xc/config/imake/imake.c,v 3.13.2.19 1998/11/06 13:54:19 dawes Exp $ */
 
 /*
  * 
@@ -285,6 +285,10 @@ extern int sys_nerr;
 # endif
 #endif
 
+#if defined(__NetBSD__)		/* see code clock in init() below */
+#include <sys/utsname.h>
+#endif
+
 #define	TRUE		1
 #define	FALSE		0
 
@@ -466,6 +470,27 @@ init()
 	while (cpp_argv[ cpp_argindex ] != NULL)
 		cpp_argindex++;
 
+#if defined(__NetBSD__)
+	{
+		struct utsname uts;
+		static char argument[512];
+
+		/*
+		 * Sharable imake configurations require a
+		 * machine identifier.
+		 */
+		if (uname(&uts) != 0)
+			LogFatal("uname(3) failed; can't tell what %s",
+			    "kind of machine you have.");
+
+		memset(argument, 0, sizeof(argument));
+		(void)snprintf(argument, sizeof(argument) - 1,
+		    "-D__%s__", uts.machine);
+
+		AddCppArg(argument);
+	}
+#endif /* __NetBSD__ */
+
 	/*
 	 * See if the standard include directory is different than
 	 * the default.  Or if cpp is not the default.  Or if the make
@@ -533,6 +558,8 @@ SetOpts(argc, argv)
 		if (argv[0][1] == 'D') {
 		    AddCppArg(argv[0]);
 		} else if (argv[0][1] == 'I') {
+		    AddCppArg(argv[0]);
+		} else if (argv[0][1] == 'U') {
 		    AddCppArg(argv[0]);
 		} else if (argv[0][1] == 'f') {
 		    if (argv[0][2])
@@ -952,7 +979,7 @@ static void get_ld_version(inFile)
   FILE* inFile;
 {
   FILE* ldprog = popen ("ld -v", "r");
-  char c;
+  signed char c;
   int ldmajor, ldminor;
 
   if (ldprog) {
@@ -965,6 +992,33 @@ static void get_ld_version(inFile)
 	    ldmajor * 10 + ldminor);    
     pclose (ldprog);
   }
+}
+#endif
+
+#ifdef __FreeBSD__
+static void
+get_binary_format(FILE *inFile)
+{
+  int mib[2];
+  size_t len;
+  int osrel = 0;
+  FILE *objprog = NULL;
+  int iself = 0;
+  char buf[10];
+
+  mib[0] = CTL_KERN;
+  mib[1] = KERN_OSRELDATE;
+  len = sizeof(osrel);
+  sysctl(mib, 2, &osrel, &len, NULL, 0);
+  if (osrel >= 300004 &&
+      (objprog = popen("objformat", "r")) != NULL &&
+      fgets(buf, sizeof(buf), objprog) != NULL &&
+      strncmp(buf, "elf", 3) == 0)
+    iself = 1;
+  if (objprog)
+    pclose(objprog);
+
+  fprintf(inFile, "#define DefaultToElfFormat %s\n", iself ? "YES" : "NO");
 }
 #endif
 
@@ -1074,6 +1128,9 @@ define_os_defaults(inFile)
     get_ld_version(inFile);
 #endif
     get_gcc_incdir(inFile);
+#ifdef __FreeBSD__
+    get_binary_format(inFile);
+#endif
 #endif /* WIN32 */
 	return FALSE;
 }

@@ -1,8 +1,8 @@
 #!/bin/sh
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/postinst.sh,v 3.13.2.6 1998/02/26 20:41:52 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/postinst.sh,v 3.13.2.7 1998/11/01 11:19:28 hohndel Exp $
 #
-# postinst.sh (for XFree86 3.3.2)
+# postinst.sh (for XFree86 3.3.3)
 #
 # This script should be run after installing a new version of XFree86.
 #
@@ -12,6 +12,15 @@ RUNDIR=/usr/X11R6
 if [ ! -d $RUNDIR/. ]; then
 	echo $RUNDIR does not exist
 	exit 1
+fi
+
+# Make sure that the local fonts dir exists and create an empty
+# fonts.dir file if there is none
+if [ ! -d $RUNDIR/lib/X11/fonts/local ]; then
+	mkdir -p $RUNDIR/lib/X11/fonts/local
+fi
+if [ ! -f $RUNDIR/lib/X11/fonts/local/fonts.dir ]; then
+	echo "0" > $RUNDIR/lib/X11/fonts/local/fonts.dir
 fi
 
 # Since the misc fonts are distributed in two parts, make sure that the

@@ -59,6 +59,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/Xt/Object.c,v 1.1.1.1.12.3 1998/10/04 15:22:54 hohndel Exp $ */
 
 #define OBJECT
 #include "IntrinsicI.h"
@@ -144,7 +145,7 @@ static void ConstructCallbackOffsets(widgetClass)
 	superTable = (CallbackTable)
 	    ((ObjectClass) objectClass->object_class.superclass)->
 		object_class.callback_private;
-	tableSize = (int) superTable[0];
+	tableSize = (int)(long) superTable[0];
     } else { 
 	superTable = (CallbackTable) NULL;
 	tableSize = 0;
@@ -164,10 +165,10 @@ static void ConstructCallbackOffsets(widgetClass)
     newTable = (CallbackTable)
 	__XtMalloc(sizeof(XrmResource *) * (tableSize + 1));
 	
-    newTable[0] = (XrmResource *) tableSize;
+    newTable[0] = (XrmResource *)(long) tableSize;
 
     if (superTable)
-	tableSize -= (int) superTable[0];
+	tableSize -= (int)(long) superTable[0];
     resourceList = (XrmResourceList) objectClass->object_class.resources;
     for (i=1; tableSize > 0; resourceList++)
 	if (resourceList->xrm_type == QCallback) {
@@ -176,7 +177,8 @@ static void ConstructCallbackOffsets(widgetClass)
 	}
 
     if (superTable)
-	for (tableSize = (int) *superTable++; --tableSize >= 0; superTable++)
+	for (tableSize = (int)(long) *superTable++;
+	    --tableSize >= 0; superTable++)
 	    newTable[i++] = *superTable;
     
     objectClass->object_class.callback_private = (XtPointer) newTable;
@@ -253,7 +255,7 @@ static Boolean ObjectSetValues(old, request, widget, args, num_args)
     /* Compile any callback lists into internal form */
     offsets = (CallbackTable) XtClass(widget)->core_class.callback_private;
 
-    for (i= (int) *(offsets++); --i >= 0; offsets++) {
+    for (i= (int)(long) *(offsets++); --i >= 0; offsets++) {
 	ol = (InternalCallbackList *)
 	    ((char *) old - (*offsets)->xrm_offset - 1);
 	nl = (InternalCallbackList *)
@@ -282,7 +284,7 @@ static void ObjectDestroy (widget)
     offsets = (CallbackTable)
 	widget->core.widget_class->core_class.callback_private;
 
-    for (i = (int) *(offsets++); --i >= 0; offsets++) {
+    for (i = (int)(long) *(offsets++); --i >= 0; offsets++) {
 	cl = *(InternalCallbackList *)
 	    ((char *) widget - (*offsets)->xrm_offset - 1);
 	if (cl) XtFree((char *) cl);

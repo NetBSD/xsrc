@@ -3,7 +3,7 @@
 
 <title>Notes on Rebuilding XFree86/OS2 from Scratch
 <author>Holger Veit
-<date>Last modified 26 Mar 1998
+<date>Last modified 04 October 1998
 
 <toc>
 
@@ -20,16 +20,16 @@ from scratch under OS/2.
 Please also read <htmlurl name=README.OS2 url=OS2.html> for end-user
 information, and set at least the environment variables described there.
 <p>
-At the current time, the most recent version available is XFree86-3.3.2.
+At the current time, the most recent version available is XFree86-3.3.3.
 This is a full and unrestricted version which comes with complete source 
-code. 3.3.2 is not only a bugfix release, but also supports new hardware,
+code. 3.3.3 is not only a bugfix release, but also supports new hardware,
 some of which might not even supported by OS/2 itself. See the RELEASE NOTES
 document for details.
 
 If you want to join the XFree86 developer team, e.g. to add support for
 certain hardware, please send a request to BOD@XFree86.org. Please
 think about such a step carefully before, though, since much work is 
-involved. Please use the XFree86-3.3.2 source code as a test example how
+involved. Please use the XFree86-3.3.3 source code as a test example how
 to compile the system. The ability to manage that is a basic requirement
 for becoming a developer.
 
@@ -197,7 +197,7 @@ Well, you see, this was quite easy :-)
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.3 1998/02/26 20:11:29 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.4.2.4 1998/10/11 12:35:56 hohndel Exp $
 
 
 

@@ -1,5 +1,5 @@
 /* $XConsortium: pexFont.c /main/8 1996/12/02 10:19:08 lehors $ */
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexFont.c,v 3.1 1996/12/23 06:26:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/objects/pexFont.c,v 3.1.2.2 1998/07/12 15:12:21 dawes Exp $ */
 
 /***********************************************************
 
@@ -122,6 +122,9 @@ pexOpenFontReq  *strmPtr;
     /* oh, who cares if it's already been opened under this id */
 	if (!LegalNewID(strmPtr->font,  cntxtPtr->client)) 
 	    PEX_ERR_EXIT(BadIDChoice,strmPtr->font,cntxtPtr);
+
+	if (strmPtr->numBytes > PATH_MAX - 1)
+	    PEX_ERR_EXIT(BadLength,0,cntxtPtr);
 
 	/* has this server already loaded this font */
 	CopyISOLatin1Lowered(	fName, (unsigned char *)(strmPtr+1),

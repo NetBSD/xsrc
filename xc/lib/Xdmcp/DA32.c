@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
  * *
  * Author:  Keith Packard, MIT X Consortium
  */
+/* $XFree86: xc/lib/Xdmcp/DA32.c,v 1.1.1.1.12.1 1998/05/20 10:30:28 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/X.h>
@@ -37,7 +38,8 @@ void
 XdmcpDisposeARRAY32 (array)
     ARRAY32Ptr	array;
 {
-    Xfree (array->data);
+    if (array->data != 0) 
+	Xfree (array->data);
     array->length = 0;
     array->data = 0;
 }

@@ -27,6 +27,8 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
+/* $XFree86: xc/lib/Xaw/TextPop.c,v 1.1.1.2.4.4 1998/10/04 13:36:30 hohndel Exp $ */
+
 /************************************************************
  *
  * This file is broken up into three sections one dealing with
@@ -63,6 +65,8 @@ in this Software without prior written authorization from the X Consortium.
 #include <stdio.h>
 #include <X11/Xos.h>		/* for O_RDONLY */
 #include <errno.h>
+
+#include "XawAlloc.h"
 
 #ifdef X_NOT_STDC_ENV
 extern int errno;
@@ -805,6 +809,8 @@ DoSearch(search)
 struct SearchAndReplace * search;
 {
   char msg[BUFSIZ];
+  char *pmsg;
+  int len;
   Widget tw = XtParent(search->search_popup);
   XawTextPosition pos;
   XawTextScanDirection dir;
@@ -819,7 +825,7 @@ struct SearchAndReplace * search;
       text.length = strlen(text.ptr);
   text.firstPos = 0;
   
-  dir = (XawTextScanDirection)(int) ((XPointer)XawToggleGetCurrent(search->left_toggle) -
+  dir = (XawTextScanDirection)(long) ((XPointer)XawToggleGetCurrent(search->left_toggle) -
 				R_OFFSET);
   
   pos = XawTextSearch( tw, dir, &text);
@@ -828,9 +834,20 @@ struct SearchAndReplace * search;
    /* The Raw string in find.ptr may be WC I can't use here, so I re - call 
    GetString to get a tame version. */
 
-  if (pos == XawTextSearchError) 
-    (void) sprintf( msg, "Could not find string ``%s''.", GetString( search->search_text ) );
-  else {
+  if (pos == XawTextSearchError) {
+    char *msg1 = "Could not find string ``";
+    char *msg2 = "''.";
+    len = strlen(msg1) + strlen(msg2) +
+		strlen(GetString( search->search_text )) + 1;
+    pmsg = XtStackAlloc(len, msg);
+    if (pmsg != NULL) {
+      (void) sprintf( pmsg, "%s%s%s", msg1, GetString( search->search_text ),
+			msg2);
+    } else {
+      pmsg = msg;
+      (void) sprintf( pmsg, "Could not find string");
+    }
+  } else {
     if (dir == XawsdRight)
       XawTextSetInsertionPoint( tw, pos + text.length);
     else
@@ -842,7 +859,8 @@ struct SearchAndReplace * search;
   }
   
   XawTextUnsetSelection(tw);
-  SetSearchLabels(search, msg, "", TRUE);
+  SetSearchLabels(search, pmsg, "", TRUE);
+  XtStackFree(pmsg, msg);
   return(FALSE);
 }
 
@@ -959,7 +977,7 @@ Boolean once_only, show_current;
   else
       replace.length = strlen(replace.ptr);
     
-  dir = (XawTextScanDirection)(int) ((XPointer)XawToggleGetCurrent(search->left_toggle) -
+  dir = (XawTextScanDirection)(long) ((XPointer)XawToggleGetCurrent(search->left_toggle) -
 				R_OFFSET);
   /* CONSTCOND */
   while (TRUE) {
@@ -969,13 +987,26 @@ Boolean once_only, show_current;
       if ( (new_pos == XawTextSearchError) ) {
 	if (count == 0) {
 	  char msg[BUFSIZ];
+	  char *pmsg;
+	  int len;
+	  char *msg1 = "*** Error: Could not find string ``";
+	  char *msg2 = "''. ***";
 
              /* The Raw string in find.ptr may be WC I can't use here, 
 		so I call GetString to get a tame version.*/
 
-	  (void) sprintf( msg, "%s %s %s", "*** Error: Could not find string ``",
-		  GetString( search->search_text ), "''. ***");
-	  SetSearchLabels(search, msg, "", TRUE);
+	  len = strlen(msg1) + strlen(msg2) +
+		strlen(GetString( search->search_text )) + 1;
+	  pmsg = XtStackAlloc(len, msg);
+	  if (pmsg != NULL) {
+	    (void) sprintf( pmsg, "%s%s%s", msg1,
+				GetString( search->search_text ), msg2);
+	  } else {
+	    pmsg = msg;
+	    (void) sprintf(pmsg, "*** Error: Could not find string ***");
+	  }
+	  SetSearchLabels(search, pmsg, "", TRUE);
+	  XtStackFree(pmsg, msg);
 	  return(FALSE);
 	}
 	else
@@ -998,9 +1029,22 @@ Boolean once_only, show_current;
 
     if (XawTextReplace(tw, pos, end_pos, &replace) != XawEditDone) {
       char msg[BUFSIZ];
-      
-      (void) sprintf( msg, "'%s' with '%s'. ***", find.ptr, replace.ptr);
-      SetSearchLabels(search, "*** Error while replacing", msg, TRUE);
+      char *pmsg;
+      int len;
+      char *msg1 = "' with '";
+      char *msg2 = "'. ***";
+
+      len = 1 + strlen(msg1) + strlen(msg2) + strlen(find.ptr) +
+		strlen(replace.ptr) + 1;
+      pmsg = XtStackAlloc(len, msg);
+      if (pmsg != NULL) {
+	(void) sprintf( pmsg, "`%s%s%s%s", find.ptr, msg1, replace.ptr, msg2);
+      } else {
+	pmsg = msg;
+	(void) sprintf(pmsg, "string ***");
+      }
+      SetSearchLabels(search, "*** Error while replacing", pmsg, TRUE);
+      XtStackFree(pmsg, msg);
       return(FALSE);
     }      
 
@@ -1151,13 +1195,20 @@ XtArgVal value;
 {
   Widget temp_widget;
   char buf[BUFSIZ];
+  char *pbuf;
+  int len;
 
-  (void) sprintf(buf, "%s.%s", FORM_NAME, name);
+  len = strlen(FORM_NAME) + strlen(name) + 2;
+  pbuf = XtStackAlloc(len, buf);
+  if (pbuf == NULL) return FALSE;
+  (void) sprintf(pbuf, "%s.%s", FORM_NAME, name);
 
-  if ( (temp_widget = XtNameToWidget(shell, buf)) != NULL) {
+  if ( (temp_widget = XtNameToWidget(shell, pbuf)) != NULL) {
     SetResource(temp_widget, res_name, value);
+    XtStackFree(pbuf, buf);
     return(TRUE);
   }
+  XtStackFree(pbuf, buf);
   return(FALSE);
 }
 

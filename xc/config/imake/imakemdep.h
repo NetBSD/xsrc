@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.24.2.3 1997/07/27 02:41:05 dawes Exp $ */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.24.2.9 1998/11/12 10:34:48 dawes Exp $ */
 
 
 /* 
@@ -270,6 +270,15 @@ in this Software without prior written authorization from the X Consortium.
 #define DEFAULT_CPP "cpp"
 #endif
 
+#if defined(Lynx)
+/* On LynxOS 2.4.0 imake gets built with the old "legacy"
+ * /bin/cc which has a rather pedantic builtin preprocessor.
+ * Using a macro which is not #defined (as in Step 5
+ * below) flags an *error*
+ */
+#define __NetBSD_Version__ 0
+#endif
+
 /*
  * Step 5:  cpp_argv
  *     The following table contains the flags that should be passed
@@ -291,12 +300,20 @@ in this Software without prior written authorization from the X Consortium.
 char *cpp_argv[ARGUMENTS] = {
 	"cc",		/* replaced by the actual program to exec */
 	"-I.",		/* add current directory to include path */
+#if !defined(__NetBSD_Version__) || __NetBSD_Version__ < 103080000
 #ifdef unix
 	"-Uunix",	/* remove unix symbol so that filename unix.c okay */
 #endif
-#if defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__) || defined(MACH)
+#endif
+#if defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__) || defined(MACH) || defined(linux)
 # ifdef __i386__
 	"-D__i386__",
+# endif
+# ifdef __sparc__
+	"-D__sparc__",
+# endif
+# ifdef __m68k__
+	"-D__m68k__",
 # endif
 # ifdef __GNUC__
 	"-traditional",
@@ -458,6 +475,9 @@ char *cpp_argv[ARGUMENTS] = {
 # endif
 # ifdef __alpha
 	"-D__alpha",
+# endif
+# ifdef __amiga__
+	"-D__amiga__",
 # endif
 # ifdef __alpha__
 	"-D__alpha__",
@@ -672,6 +692,14 @@ char *cpp_argv[ARGUMENTS] = {
 	if ((__sp = strchr((buf), ' ')) != NULL)			\
 		*__sp = '/';						\
     } while (0)
+#else
+# if defined(__Lynx__) || defined(Lynx)
+/* Lynx 2.4.0 /bin/cc doesn't like #elif */
+#  define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
+#  define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
+#  define DEFAULT_OS_TEENY_REV   "r %*d.%*d.%[0-9]" 
+#  define DEFAULT_OS_NAME        "srm %[^\n]"
+# endif
 #endif
 
 #else /* else MAKEDEPEND */
@@ -805,6 +833,9 @@ struct symtab	predefs[] = {
 #ifdef m68k
         {"m68k", "1"},
 #endif
+#ifdef __m68k__
+	{"__m68k__", "1"},
+#endif
 #ifdef m88k
         {"m88k", "1"},
 #endif
@@ -831,6 +862,9 @@ struct symtab	predefs[] = {
 #endif
 #ifdef __osf__
 	{"__osf__", "1"},
+#endif
+#ifdef __amiga__
+	{"__amiga__", "1"},
 #endif
 #ifdef __alpha
 	{"__alpha", "1"},

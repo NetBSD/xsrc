@@ -4,7 +4,7 @@ XCOMM $XConsortium: site.def.LK /main/12 1996/10/28 04:23:14 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.25.2.6 1998/02/26 13:58:57 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.25.2.8 1998/10/22 04:31:00 hohndel Exp $
 
 /* Configuration file for Server Link Kit */
 
@@ -129,6 +129,9 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.25.2.6 19
 /* The I128 server */
 #define XF86I128Server		YES
 
+/* The GLINT server */
+#define XF86GLINTServer               YES
+
 /* The TGA server */
 #define XF86TGAServer		NO
 
@@ -165,8 +168,9 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/site.def.LK,v 3.25.2.6 19
 
 #define XF86SvgaDrivers		nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
 				cirrus ncr77c22 compaq mga oak al2101 \
-				ali cl64xx video7 ark mx realtek apm \
-				s3v s3_svga chips generic
+				ali cl64xx video7 ark mx realtek s3v apm \
+				s3_svga neo chips cyrix rendition p9x00 \
+				spc8110 generic
 
 #define XF86Vga16Drivers	et4000 et3000 ncr77c22 ati sis tvga8900 oak \
 				cl64xx generic 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_misc.c,v 1.1.2.6 1998/02/09 14:27:40 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_misc.c,v 1.1.2.8 1998/10/19 04:09:35 hohndel Exp $ */
 
 /*
  *
@@ -68,7 +68,7 @@ s3vGetPCIInfo()
 
    if (vgaPCIInfo && vgaPCIInfo->AllCards) {
       while (pcrp = vgaPCIInfo->AllCards[i]) {
-         if (pcrp->_vendor == PCI_S3_VENDOR_ID) {
+         if (pcrp->_vendor == PCI_S3_VENDOR_ID && pcrp->_command != 0) {
 	    int ChipId = pcrp->_device;
 	    if (vga256InfoRec.chipID) {
 	      ErrorF("%s %s: S3 chipset override, using chip_id = 0x%04x instead of 0x%04x\n",
@@ -92,6 +92,9 @@ s3vGetPCIInfo()
 	       break;
 	    case PCI_ViRGE_MX:
 	       info.ChipType = S3_ViRGE_MX;
+	       break;
+	    case PCI_ViRGE_MXP:
+	       info.ChipType = S3_ViRGE_MXP;
 	       break;
 	    default:
 	       info.ChipType = S3_UNKNOWN;
@@ -134,17 +137,11 @@ s3vGetPCIInfo()
       for (j=0; (pcrp = vgaPCIInfo->AllCards[j]); j++) {
 	 if (i != j) {
 	    map_64m[ (pcrp->_base0 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base0+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base1 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base1+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base2 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base2+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base3 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base3+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base4 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base4+0x3ffffff) >> 26) & 0x3f] = 1;
 	    map_64m[ (pcrp->_base5 >> 26) & 0x3f] = 1;
-	    map_64m[((pcrp->_base5+0x3ffffff) >> 26) & 0x3f] = 1;
 	 }
       }
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.h,v 3.12 1996/12/23 06:44:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.h,v 3.12.2.1 1998/10/20 20:51:13 hohndel Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -26,6 +26,8 @@
 
 #ifndef _XF86_PCI_H
 #define _XF86_PCI_H 1
+
+#include "Xmd.h"
 
 #if 0
 #define USE_OLD_PCI_CODE

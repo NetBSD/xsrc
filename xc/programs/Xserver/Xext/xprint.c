@@ -64,9 +64,10 @@ copyright holders.
 **    *********************************************************
 **
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/xprint.c,v 1.4 1997/01/02 04:05:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xprint.c,v 1.4.2.1 1998/10/04 13:36:42 hohndel Exp $ */
 
 #include "X.h"
+#include "Xos.h"
 #define NEED_EVENTS
 #include "Xproto.h"
 #undef NEED_EVENTS

@@ -22,7 +22,9 @@
  * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
  * OF THIS SOFTWARE.
  */
+/* $XFree86: xc/lib/lbxutil/image/dpackbits.c,v 1.1.1.1.2.2 1998/10/04 15:22:56 hohndel Exp $ */
 
+#include <X11/Xos.h>
 #include <X11/Xfuncproto.h>
 #include "lbximage.h"
 

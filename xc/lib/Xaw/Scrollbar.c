@@ -47,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xaw/Scrollbar.c,v 1.1.1.1.12.2 1998/10/04 15:22:51 hohndel Exp $ */
 
 /* ScrollBar.c */
 /* created by weissman, Mon Jul  7 13:20:03 1986 */
@@ -670,7 +671,8 @@ static void NotifyScroll( gw, event, params, num_params   )
         case 'b':    call_data = -call_data;
 	  	     /* fall through */
         case 'F':
-	case 'f':    XtCallCallbacks( gw, XtNscrollProc, (XtPointer)call_data);
+	case 'f':    XtCallCallbacks( gw, XtNscrollProc,
+					(XtPointer)(long)call_data);
 	             break;
 
         case 'C':

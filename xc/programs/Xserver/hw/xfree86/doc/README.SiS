@@ -7,20 +7,21 @@
 
 
 
-			   Information for SiS Users
+                           Information for SiS Users
 
-		      Xavier Ducoin (xavier@rd.lectra.fr)
+                      Xavier Ducoin (xavier@rd.lectra.fr)
 
-				27 February 1998
+                                27 February 1998
 
 
 
 1.  Introduction
 
 This driver was primarily written for the SiS86c201.  It also works on the 202
-and the 205 chips.  Support for other SiS products is not available in XFree86
-release 3.3.2.	Drivers for the 5597/8 are currently under development and
-should be available in the next release.
+, 205 and 5597/5598 chips. Support for 6326 is currently enabled, but tested
+only on few cards. Also we added for 3.3.3 version some support for SiS86c215
+and 225. This support consist simply in identify it as 205, so probably 86c215
+won't work with acceleration (is a cheap 205 without some features).
 
 The driver supports many advanced features.  These include:
 
@@ -40,10 +41,10 @@ The driver supports many advanced features.  These include:
 2.  Supported chips
 
       SiS 86c201
-	    (External hardware clock)
+            (External hardware clock)
 
-      SiS 86c202, SiS 86c205
-	    (Internal clock synthesizer)
+      SiS 86c202, SiS 86c2x5, SiS 5597/5598, SiS 6326
+            (Internal clock synthesizer)
 
 Color expansion is not supported by the engine in 16M-color graphic mode.
 
@@ -55,46 +56,107 @@ them must be specified in the `svga' driver section of the XF86Config file,
 within the Screen subsections of the depths to which they are applicable (you
 can enable options for all depths by specifying them in the Device section).
 
+      Option "set_mclk"
+            This option lets you to modify the memory clocking of your card.
+            (only for 5597 and 6326) Modifying the memory timings can destroy
+
+
+ Information for SiS Users                                                    1
+
+
+
+
+
+ Information for SiS Users                                                    2
+
+
+
+            the device, but usually the only ill effects of overclocking is to
+            have some noise an drawing errors, but BE CAREFUL. Usually a little
+            increment can improve the drawing speed, and allows also higher
+            dotclocks.  The server reports default memclock on starting mes-
+            sages, so take it as a base. Units are in MHZ.
+
+      Option "dac_speed"
+            This option lets you to modify the maximum allowed dotclock (only
+            for 5597 and 6326).     Without it, the server makes a conservative
+            guess based on memory clock, speed and number of banks. If your
+            monitor supports higher dotclocks and you know that your card can
+            do it, give a try. If the speed is too high for your configuration
+            (but not for your monitor), the effects can vary from some noise on
+            screen to a black screen. Don't use speeds greater than 135 Mhz,
+            (175 for 6326), even if your monitor supports the dot-clock.
+
       Option "noaccel"
-	    By default the XAA (XFree86 Acceleration Architecture) is used.
-	    This option will disable the use of the XAA and will enable the old
-	    BitBlt acceleration operations. (see below).
-
-
- Information for SiS Users
-
-
-
-
-
- Information for SiS Users
-
-
+            By default the XAA (XFree86 Acceleration Architecture) is used.
+            This option will disable the use of the XAA and will enable the old
+            BitBlt acceleration operations. (see below).
 
       Option "hw_clocks"
-	    On chips 86c202 and later, the default is to use the programmable
-	    clock for all clocks. It is possible to use the fixed clocks sup-
-	    ported by the chip instead of using this option (manufacturer
-	    dependent).
+            On chips 86c202 and later, the default is to use the programmable
+            clock for all clocks. It is possible to use the fixed clocks sup-
+            ported by the chip instead of using this option (manufacturer
+            dependent).
 
       Option "sw_cursor", "hw_cursor"
-	    The default is for using the hardware cursor.
+            The default is for using the hardware cursor.
 
       Option "no_linear"
-	    By default linear addressing is used on all chips.	However this
-	    might be broken in some implementations. It is possible to turn the
-	    linear addressing off with this option.  Note that H/W acceleration
-	    and 16/24bpp are only supported with linear addressing.
+            By default linear addressing is used on all chips.  However this
+            might be broken in some implementations. It is possible to turn the
+            linear addressing off with this option.  Note that H/W acceleration
+            and 16/24bpp are only supported with linear addressing.
 
       Option "no_bitblt"
-	    This option will disable the use of all the BitBLT engine.	It is
-	    useful for problems related to acceleration problems.  In general
-	    this will result in a reduced performance.
+            This option will disable the use of all the BitBLT engine.  It is
+            useful for problems related to acceleration problems.  In general
+            this will result in a reduced performance.
 
       Option "no_imageblt"
-	    It is useful for problems related to image writing, and possible
-	    stipple acceleration problems. In general this will result in a
-	    reduced performance.
+            It is useful for problems related to image writing, and possible
+            stipple acceleration problems. In general this will result in a
+            reduced performance.
+
+      Option "ext_eng_queue"
+            5597/8 and 6326 have the option to extend the engine command queue
+            on VRAM. With extended queue length, the driver only checks queue
+            status on some color-expansion commands. This gives some perfor-
+            mance improvement, but is possible to lose some commands, corrupt-
+            ing screen output. As the size of extended command queue is 16-32K,
+            the probability is very low, but exists. The performance gain
+            observed is around 8-10%. Currently, using this option with
+
+
+
+
+
+
+
+
+ Information for SiS Users                                                    3
+
+
+
+            xaa_benchmark freezes the acceleration engine, causing weird image
+            display.
+
+      Option "pci_burst_on"
+            This set a bit on some registers. Although documented, the utility
+            of this option is unknown for me. I can't see any difference on
+            stability or performance.
+
+      Option "fast_vram"
+            Enables 1 cycle memory access. Try it. Increased memory bandwidth
+            reduces the possibility of glitches and noise on high resolution
+            modes.
+
+      Option "fifo_moderate","fifo_conservative","fifo_aggressive"
+            These options modify the arbitration thresholds on CRT FIFO.
+            Fifo_aggressive gives more time to CPU for accessing the VRAM.
+            Fifo_conservative reduces the possibility of noise caused when the
+            CRT tries to read memory when it is used by CPU, but reduces per-
+            formance. The default is between aggressive and moderate (more
+            aggressive than moderate).
 
 
 4.  Modelines
@@ -102,28 +164,67 @@ can enable options for all depths by specifying them in the Device section).
 When constructing a modeline for use with the Sis driver you'll need to con-
 sider several points:
 
-   o H/W Acceleration.	The H/W cursor, and fill operations currently allocate
+   o H/W Acceleration.  The H/W cursor, and fill operations currently allocate
      memory of the video ram for there own use.  If this is not available these
-     functions will automatically be disabled.
+     functions will automatically be disabled. Also, ext_eng_queue allocate 32k
+     of Vram.
 
-   o Dot Clock
+   o Dot Clock. SiS documents the following video modes to work with 6326. The
+     max dot clock allowable for your 6326 based board depends also on the mem-
+     ory installed on it. Option fast_vram can be needed for high dot clocks to
+     work. Of course, the memory installed must allow 1 cycle R/W. The server
+     tries to avoid problems with high dotclocks, limiting the maximum based on
+     estimated memory bandwidth.  Overriding the limits with dac_speed and mod-
+     elines can damage the card if you exceed the card limits. Values between
+     driver guess and chipset limits are acceptable, but can cause bad image
+     quality, noise or no image displayed.
+
+        o SiS recommended video modes for 6326:
+
+        o    640x480  : 4, 8, 15, 16, 24 bpp at 85Hz Non-interlaced
+
+        o    800x600  : 4, 8, 15, 16, 24 bpp at 85Hz Non-interlaced
+
+        o   1024x768  : 4, 8, 15, 16, 24 bpp at 85Hz Non-interlaced
+
+        o  1280x1024  : 4, 8, 15, 16, 24 bpp at 75Hz Non-interlaced
+
+        o  1600x1200  : 4, 8  bpp at 65Hz Non-interlaced
+
+
+
+
+
+
+
+
+
+ Information for SiS Users                                                    4
+
 
 
 5.  Troubleshooting
 
+The generic VGA driver doesn't work with 6326, so XF86Setup can't be used for
+this card. Please use xf86config instead.
+
 With intensive generation there is a snow phenomenon on the screen.  Can't
 remove it even if I used the fifo low/high water mark dumped from W95.
 
-With intensive generation in 1024x768 65 Mhz sometimes some points (rubbish,
-fuzz... hard to explain) appear in memory, like memory violations or memory
-corruption.  It looks like an electronic refresh not well done or VClk too near
-the MClk.  I use the default Mclk set by BIOS.	It is hard to reproduce this
-problem (It can take one hour, two or more).  I can't reproduce this problem in
-1024x768 75 MHz or 1280x1024 110 MHz or 1152x900 95 MHz.
+The latter point is changed. Now we use calculated values for the fifo set-
+tings, and this appears to be stable until the bandwidth required for CRT is
+near the memory bandwidth (dotclock*depth/8 near Mclk*32 or Mclk*64 ).  In that
+case, you could try to use fifo_moderate, fifo_conservative or a lower dot-
+clock.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SiS.sgml,v 3.3.2.1 1998/02/27 02:45:24 dawes Exp $
+Some video modes with high dot-clocks don't work at all, resulting on black
+screen. We are tracing now this problem. Lowering dotclock in that case could
+solve the problem.
 
+     Updated October 12, 1998 by Juanjo Santamarta, covering changes for 5597 and 6326.
+     Updated November 6, 1998 by Juanjo Santamarta, covering changes for 5597, 86c2x5 and 6326.
 
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SiS.sgml,v 3.3.2.5 1998/11/08 10:03:43 hohndel Exp $
 
 
 
@@ -133,7 +234,6 @@ problem (It can take one hour, two or more).  I can't reproduce this problem in
 
 
 
- Information for SiS Users
 
 
 
@@ -165,6 +265,7 @@ problem (It can take one hour, two or more).  I can't reproduce this problem in
 
 
 
+ Information for SiS Users                                                    5
 
 
 
@@ -203,7 +304,38 @@ problem (It can take one hour, two or more).  I can't reproduce this problem in
 
 
 
-				   CONTENTS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                   CONTENTS
 
 
 
@@ -213,11 +345,9 @@ problem (It can take one hour, two or more).  I can't reproduce this problem in
 
 3. XF86Config Options  ...................................................... 1
 
-4. Modelines  ............................................................... 2
+4. Modelines  ............................................................... 3
 
-5. Troubleshooting  ......................................................... 2
-
-
+5. Troubleshooting  ......................................................... 4
 
 
 
@@ -259,8 +389,10 @@ problem (It can take one hour, two or more).  I can't reproduce this problem in
 
 
 
-				       i
+
+
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SiS,v 3.5.2.1 1998/02/27 02:55:02 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.SiS,v 3.5.2.6 1998/11/14 06:46:56 dawes Exp $

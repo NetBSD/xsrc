@@ -29,6 +29,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/imLcLkup.c,v 3.0.6.1 1998/10/24 12:39:03 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/Xatom.h>
@@ -79,8 +80,7 @@ _XimLocalMbLookupString(xic, ev, buffer, bytes, keysym, status)
 	}
 	return (ret);
     } else { /* Throughed Event */
-	ret = _XimLookupMBText(ic, ev, (unsigned char *)buffer, bytes, keysym,
-			       NULL);
+	ret = _XimLookupMBText(ic, ev, buffer, bytes, keysym, NULL);
 	if(ret > 0) {
 	    if(keysym && *keysym != NoSymbol) {
 		if(status) *status = XLookupBoth;

@@ -51,6 +51,8 @@ SOFTWARE.
 
 ******************************************************************/
 
+/* $XFree86: xc/lib/Xmu/StrToCurs.c,v 1.1.1.1.12.3 1998/05/20 05:06:19 dawes Exp $ */
+
 #include	<X11/Intrinsic.h>
 #include	<X11/StringDefs.h>
 #include	<X11/Xmu/Converters.h>
@@ -153,13 +155,18 @@ void XmuCvtStringToCursor(args, num_args, fromVal, toVal)
 	XrmValue cvtArg;
 	Boolean success;
 	Display *dpy = DisplayOfScreen(screen);
+        char *strspec = NULL;
 #ifdef XMU_KLUDGE
 	Cardinal num;
 #endif
 
-	fields = sscanf(name, "FONT %s %d %s %d",
+	strspec = XtMalloc(strlen("FONT %s %d %s %d") + 21);
+	sprintf(strspec, "FONT %%%ds %%d %%%ds %%d", sizeof(source_name) - 1,
+		sizeof(mask_name) - 1);
+	fields = sscanf(name, strspec,
 			source_name, &source_char,
 			mask_name, &mask_char);
+	XtFree(strspec);
 	if (fields < 2) {
 	    XtStringConversionWarning(name, XtRCursor);
 	    return;

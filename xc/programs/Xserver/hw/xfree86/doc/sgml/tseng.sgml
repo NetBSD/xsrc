@@ -5,7 +5,7 @@
 <title> Information for Tseng Chipset Users
 <author> The XFree86 Project, Inc.
 Dirk H. Hohndel, Koen Gadeyne and others.
-<date> 02 Feb 1998
+<date> 03 Nov 1998
 <toc>
  
 <sect> Supported chipsets <p>
@@ -87,11 +87,11 @@ specify that in the <tt>XF86Config</tt> file. Please read the section on
 linear memory below: it contains some vital information on how to avoid
 serious problems.
 
-To force linear memory mode in 8bpp modes (where "banked" mode is the
+To force "banked" mode in 8bpp modes (where linear memory mode is the
 default), put the following in the Device section of your
 <tt>XF86Config</tt>:
 <verb>
-  Option "linear"
+  Option "no_linear"
 </verb>
 
 Acceleration support is present, and enabled by default, for all W32 and
@@ -105,14 +105,25 @@ putting the following in the Device section of your
   Option "noaccel"
 </verb>
 
-On some (fast) systems, acceleration may cause occasional font corruption. Until
-this problem is fixed, font acceleration may be disabled using the following
+On some PCI systems (i.e. only on the ET6000 and the ET4000W32p),
+acceleration may cause occasional font corruption. This is probably caused
+by a badly written system BIOS that ignores the fact that the Tseng PCI
+devices have their "non-prefetchable" attribute set. On such a BIOS, a PCI
+feature called "write combining" (or "byte merging") is enabled for the
+Tseng video card, although it is not permitted. Some systems allow you to
+manually enable or disable the Write Combining feature in the BIOS setup
+(sometimes abbreviated to WC). Make sure WC is disabled for the VGA memory
+aperture.
+
+If you experience font corruption on your system and are unable to manually
+disable WC in your BIOS, font acceleration may be disabled using the following
 in the Device section of your
 <tt>XF86Config</tt>:
 <verb>
   Option "xaa_no_color_exp"
 </verb>
 
+Note that this will reduce the performance of the X server.
 
 <sect> ET6000 driver features <p>
 In addition to the features in the ET4000 driver, the SVGA ET6000 server
@@ -121,7 +132,8 @@ supports all possible color depths in the SVGA server: 8bpp, 16bpp (both at
 
 Linear memory mode (as opposed to the VGA default, banked memory layout) is
 supported. It is required and enabled by default for the 16/24/32 bpp modes.
-For 8bpp, the default is banked mode.
+For 8bpp, the default is linear mode for PCI cards and banked mode for
+ISA/VLB cards.
 
 To force linear memory at 8bpp, put the following in the SVGA section of your
 <tt>XF86Config</tt>:
@@ -158,9 +170,11 @@ hardware cursor. Most recent ET6000 cards and the ET6100 do not exhibit this
 problem.
 
 
-On some fast systems, acceleration may cause occasional font corruption. Until
-this problem is fixed, font acceleration may be disabled using the following
-in the Device section of your
+On some PCI systems, acceleration may cause occasional font corruption. As
+described above, this is caused by a bug in your system BIOS or a wrong
+setting of the write combining feature in that BIOS. If you are unable to
+fix the BIOS or force the option off, font acceleration may be disabled
+using the following in the Device section of your
 <tt>XF86Config</tt>:
 <verb>
   Option "xaa_no_color_exp"
@@ -231,7 +245,7 @@ timings in the <tt>Monitor</tt> section that better fit your monitor
 the next section; here the basic options are hinted at.
 
 If graphics redrawing goes wrong on accelerated chips (ET4000W32 and
-ET6000), first try the <tt>&dquot;noaccel&dquot</tt>; option, which disables
+ET6000), first try the <tt>"noaccel"</tt> option, which disables
 all accelerated functions.
 
 
@@ -244,14 +258,14 @@ file, within the <tt>Screen</tt> subsections of the depths to which they are
 applicable (you can enable options for all depths by specifying them in the
 Device section).
 <descrip>
-<tag>Option &dquot;noaccel&dquot;</tag>   (ET4000W32p, et6000)
+<tag>Option "noaccel"</tag>   (ET4000W32p, et6000)
         This option will disable the use of any accelerated functions. This
         is likely to help with some problems related to DRAM timing, high
         dot clocks, and bugs in accelerated functions, at the cost of
         performance (which will still be reasonable on a local or PCI bus).
         This option applies only to those chips where acceleration is
         supported.
-<tag>Option &dquot;fast_dram&dquot; &dquot;slow_dram&dquot; </tag>
+<tag>Option "fast_dram" "slow_dram" </tag>
         These options set the DRAM speed of certain cards where it applies. 
 
         The <tt>"slow_dram"</tt> option is always enabled on ET4000, and
@@ -268,7 +282,7 @@ Device section).
         crash your machine as soon as you start the server. Use them with
         caution.
 <tag>
-option &dquot;w32_interleave_off&dquot; &dquot;w32_interleave_on&dquot;   (W32i, W32p)
+option "w32_interleave_off" "w32_interleave_on"   (W32i, W32p)
 </tag>
 	Force memory interleaving off or on. W32i and W32p chips can
 	increase memory bandwidth when they have 2MB or more video memory.
@@ -279,7 +293,7 @@ option &dquot;w32_interleave_off&dquot; &dquot;w32_interleave_on&dquot;   (W32i,
 	server will use the correct value automatically. Setting this option
 	the wrong way will result in a completely distorted display.
 <tag>
-option &dquot;pci_burst_off&dquot; &dquot;pci_burst_on&dquot;   (W32p)
+option "pci_burst_off" "pci_burst_on"   (W32p)
 </tag>
 	This option disables or enables PCI bursts on the W32p chip if it's
 	a PCI card. Normally, a good BIOS will set the motherboard and the
@@ -297,7 +311,7 @@ videoram 1024 (or another value)   (all chips)
         memory, or if the memory detection goes wrong. It must be specified
         in the Device section.
 <tag>
-Clockchip &dquot;et6000&dquot;  (et6000)
+Clockchip "et6000"  (et6000)
 </tag>
         This enables programmable clocks, but obviously only on the et6000.
         It must be specified in the Device section. Normally the server will
@@ -310,7 +324,7 @@ Clockchip &dquot;et6000&dquot;  (et6000)
         should still be capable of syncing to this frequency, but the
         clockchip may already be outside an unstable region.
 <tag>
-Option &dquot;linear&dquot;  (ET4000W32i, ET4000W32p, ET6000)
+Option "linear"  (ET4000W32i, ET4000W32p, ET6000)
 </tag>
         This enables linear addressing, which is the mapping of the entire
         framebuffer to a high address beyond system memory, making the full
@@ -336,7 +350,7 @@ MemBase 0xE0000000. (or a different address) (ET4000W32, ET6000)
         used by the server, or if the server explicitly states that you must
         provide one.
 <tag>
-Option &dquot;pci_retry&dquot; (ET4000W32p on PCI bus, ET6000)
+Option "pci_retry" (ET4000W32p on PCI bus, ET6000)
 </tag>
         This enables the PCI bus retry function, which is a performance
         enhancing mode for local bus or PCI bus-based systems, where the VGA
@@ -977,6 +991,8 @@ provided an ET6100 evaluation board.
 Heiko Eissfeldt provided an ET4000W32p_rev_b board which allowed us to get
 better support for those rev_a and rev_b boards.
 
+Gyorgy Krajcsovits donated an ET4000W32p + CH8398 board. A Really Good Move!
+
 Numerous testers have given me feedback for <tt>X_W32</tt> and later
 <tt>XF86_W32</tt>.  I
 apologize for my failure to keep track of the people who tested
@@ -1025,7 +1041,7 @@ incomplete):
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/tseng.sgml,v 3.15.2.13 1998/02/20 23:10:32 dawes Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/tseng.sgml,v 3.15.2.18 1998/11/13 13:00:48 dawes Exp $ 
 
 
 

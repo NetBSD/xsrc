@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.3 1998/01/18 10:35:24 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.4 1998/10/18 20:42:06 hohndel Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -419,6 +419,10 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define MEM_SIZE_6M_GTB		0x00000009
 #define MEM_SIZE_8M_GTB		0x0000000B
 #define MEM_SIZE_16M_GTB	0x0000000F
+#define MEM_TRP			0x00000300
+#define MEM_TRCD		0x00000C00
+#define MEM_TCRD		0x00001000
+#define MEM_TRAS		0x00070000
 #define MEM_BNDRY               0x00030000
 #define MEM_BNDRY_0K            0x00000000
 #define MEM_BNDRY_256K          0x00010000
@@ -441,6 +445,15 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define PCI_MACH64_GI_ID	0x4749
 #define PCI_MACH64_GP_ID	0x4750
 #define PCI_MACH64_GQ_ID	0x4751
+#define PCI_MACH64_VV_ID	0x5656
+#define PCI_MACH64_GV_ID	0x4756
+#define PCI_MACH64_GW_ID	0x4757
+#define PCI_MACH64_GZ_ID	0x475A
+#define PCI_MACH64_LD_ID	0x4C44
+#define PCI_MACH64_LG_ID	0x4C47
+#define PCI_MACH64_LB_ID	0x4C42
+#define PCI_MACH64_LI_ID	0x4C49
+#define PCI_MACH64_LP_ID	0x4C50
 
 /* CONFIG_CHIP_ID register constants */
 #define CFG_CHIP_TYPE		0x0000FFFF
@@ -464,6 +477,15 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define MACH64_GI_ID		0x4749
 #define MACH64_GP_ID		0x4750
 #define MACH64_GQ_ID		0x4751
+#define MACH64_VV_ID		0x5656
+#define MACH64_GV_ID		0x4756
+#define MACH64_GW_ID		0x4757
+#define MACH64_GZ_ID		0x475A
+#define MACH64_LD_ID		0x4C44
+#define MACH64_LG_ID		0x4C47
+#define MACH64_LB_ID		0x4C42
+#define MACH64_LI_ID		0x4C49
+#define MACH64_LP_ID		0x4C50
 #define MACH64_UNKNOWN_ID	0x0000
 
 /* DST_CNTL register constants */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atimach64.c,v 1.1.2.1 1998/02/01 16:41:57 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atimach64.c,v 1.1.2.2 1998/10/20 20:51:18 hohndel Exp $ */
 /*
  * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -94,7 +94,8 @@ ATIMach64Init(DisplayModePtr mode)
             ATINewHWPtr->config_cntl |= CFG_MEM_VGA_AP_EN;
         else
             ATINewHWPtr->config_cntl &= ~CFG_MEM_VGA_AP_EN;
-        if (ATI.ChipUseLinearAddressing && (ATIBusType != ATI_BUS_PCI))
+        if (ATI.ChipUseLinearAddressing &&
+            (ATIBusType != ATI_BUS_PCI) && (ATIBusType != ATI_BUS_AGP))
         {
             /* Replace linear aperture size and address */
             ATINewHWPtr->config_cntl &= ~(CFG_MEM_AP_LOC | CFG_MEM_AP_SIZE);

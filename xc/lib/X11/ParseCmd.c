@@ -47,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/ParseCmd.c,v 1.1.1.1.12.2 1998/10/04 15:22:49 hohndel Exp $ */
 
 /* XrmParseCommand()
 
@@ -209,7 +210,7 @@ void XrmParseCommand(pdb, options, num_options, prefix, argc, argv)
 
 		case XrmoptionSkipNArgs:
 		    {
-			register int j = 1 + (int) options[i].value;
+			register int j = 1 + (long) options[i].value;
 
 			if (j > myargc) j = myargc;
 			for (; j > 0; j--) {

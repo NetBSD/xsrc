@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xhost/xhost.c,v 3.6.2.1 1997/07/06 07:28:20 dawes Exp $ */
+/* $XFree86: xc/programs/xhost/xhost.c,v 3.6.2.2 1998/09/05 03:32:09 dawes Exp $ */
 
 #if defined(TCPCONN) || defined(STREAMSCONN) || defined(AMTCPCONN)
 #define NEEDSOCKETS
@@ -85,9 +85,9 @@ typedef long sign32;
 #endif
 #endif /* NEEDSOCKETS */
 
-#ifdef notdef
+#ifdef __FreeBSD__
 #include <arpa/inet.h>
-	bogus definition of inet_makeaddr() in BSD 4.2 and Ultrix
+	/* bogus definition of inet_makeaddr() in BSD 4.2 and Ultrix */
 #else
 #if !defined(hpux) && !defined(NCR) && !defined(__EMX__)
 extern unsigned long inet_makeaddr();

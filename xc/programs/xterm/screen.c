@@ -25,20 +25,15 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/xterm/screen.c,v 3.27 1998/06/04 16:44:01 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/screen.c,v 3.12.2.3 1998/10/20 20:51:52 hohndel Exp $ */
 
 /* screen.c */
 
-#ifdef HAVE_CONFIG_H
-#include <xtermcfg.h>
-#endif
+#include <xterm.h>
+#include <error.h>
+#include <data.h>
+#include <xcharmouse.h>
 
-#include "ptyx.h"
-#include "error.h"
-#include "data.h"
-#include "xterm.h"
-
-#include <stdio.h>
 #include <signal.h>
 #ifdef SVR4
 #define SYSV
@@ -349,9 +344,9 @@ ScrnPointers (TScreen *screen, size_t len)
 
 	if (len > screen->save_len) {
 		if (screen->save_len)
-			screen->save_ptr = realloc(screen->save_ptr, len);
+			screen->save_ptr = (Char **)realloc(screen->save_ptr, len);
 		else
-			screen->save_ptr = malloc(len);
+			screen->save_ptr = (Char **)malloc(len);
 		screen->save_len = len;
 		if (screen->save_ptr == 0)
 			SysError (ERROR_SAVE_PTR);
@@ -486,7 +481,6 @@ ScrnDeleteChar (
 	register Char *ptr = BUF_CHARS(sb, row);
 	register Char *attrs = BUF_ATTRS(sb, row);
 	register size_t nbytes = (size - n - col);
-	int wrappedbit = ScrnTstWrapped(screen, row);
 
 	memmove (ptr   + col, ptr   + col + n, nbytes);
 	memmove (attrs + col, attrs + col + n, nbytes);
@@ -503,10 +497,7 @@ ScrnDeleteChar (
 	    memmove(csets + col, csets + col + n, nbytes);
 	    memset(csets + size - n, curXtermChrSet(row), n);
 	})
-	if (wrappedbit)
-	    ScrnSetWrapped(screen, row);
-	else
-	    ScrnClrWrapped(screen, row);
+	ScrnClrWrapped(screen, row);
 }
 
 /*
@@ -643,7 +634,7 @@ ScrnRefresh (
 		* apparent).
 	        */
 	       if (screen->highlight_selection
-		&& screen->send_mouse_pos != 3) {
+		&& screen->send_mouse_pos != VT200_HIGHLIGHT_MOUSE) {
 		   hi_col = screen->max_col;
 	           while (hi_col > 0 && !(attrs[hi_col] & CHARDRAWN))
                        hi_col--;
@@ -770,6 +761,7 @@ ClearBufRows (
 
 	TRACE(("ClearBufRows %d..%d\n", first, last))
 	for (row = first; row <= last; row++) {
+	    ScrnClrWrapped(screen, row);
 	    bzero (BUF_CHARS(buf, row), len);
 	    memset(BUF_ATTRS(buf, row), flags, len);
 	    if_OPT_ISO_COLORS(screen,{

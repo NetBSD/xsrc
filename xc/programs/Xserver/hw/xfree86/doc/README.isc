@@ -7,11 +7,11 @@
 
 
 
-			   Information for ISC Users
+                           Information for ISC Users
 
-			       Michael Rohleder
+                               Michael Rohleder
 
-				11 January 1998
+                                11 January 1998
 
 
 
@@ -42,60 +42,60 @@ ties provided in the X11R6 Libraries against them.
 2.  Things needed for compiling the sources
 
       gcc
-	    Use the highest number for x you found.  Fresco will only build
-	    2.6.3 and later.  I'd tried gcc Version 2.5.8, 2.6.0, 2.6.2, 2.6.3
-	    and 2.7.2.	Current: 2.7.2.3
+            Use the highest number for x you found.  Fresco will only build
+            2.6.3 and later.  I'd tried gcc Version 2.5.8, 2.6.0, 2.6.2, 2.6.3
+            and 2.7.2.  Current: 2.7.2.3
 
-	    Since 2.6.3 the current source tree should be able to compile with
-	    a little bit more Optimization:
-	     #define DefaultCDebugFlags -O3 -fomit-frame-pointer inside
-	    xf86site.def to overwrite the default -O2.
+            Since 2.6.3 the current source tree should be able to compile with
+            a little bit more Optimization:
+             #define DefaultCDebugFlags -O3 -fomit-frame-pointer inside
+            xf86site.def to overwrite the default -O2.
 
-	    With 2.7.x you must specify #define UsePosix	       YES
-	    inside xf86site.def.  This is necessary to build the sources suc-
-	    cessfully.	Versions prior to 2.7.0 could define it, but don't need
-	    it for a clean build.
+            With 2.7.x you must specify #define UsePosix               YES
+            inside xf86site.def.  This is necessary to build the sources suc-
+            cessfully.  Versions prior to 2.7.0 could define it, but don't need
+            it for a clean build.
 
       libg++-2.x.x
-	    The needed g++ Libraries for use with g++ 2.x.x. As this is only
-	    necessary for Fresco, it isn't needed anymore since X11R6.1.
+            The needed g++ Libraries for use with g++ 2.x.x. As this is only
+            necessary for Fresco, it isn't needed anymore since X11R6.1.
 
 
- Information for ISC Users
+ Information for ISC Users                                                    1
 
 
 
 
 
- Information for ISC Users
+ Information for ISC Users                                                    2
 
 
 
       binutils
-	    You could use the assembler and linker the assembler is most pre-
-	    ferred,and the linker is needed at least if you want to link
-	    libFresco.a within a Program.  Don't use strip and ar/ranlib, the
-	    first generates buggy binaries when stripping (at least on my
-	    machines) and the last requires the use of ranlib after creating an
-	    archive, this is not configured.  Current: 2.8.1.0.15 (Used: as,
-	    ld, ar, strip)
+            You could use the assembler and linker the assembler is most pre-
+            ferred,and the linker is needed at least if you want to link
+            libFresco.a within a Program.  Don't use strip and ar/ranlib, the
+            first generates buggy binaries when stripping (at least on my
+            machines) and the last requires the use of ranlib after creating an
+            archive, this is not configured.  Current: 2.8.1.0.15 (Used: as,
+            ld, ar, strip)
 
       gnu-malloc
-	    Due to better memory usage we should use GNU's malloc library on
-	    systems where possible.
+            Due to better memory usage we should use GNU's malloc library on
+            systems where possible.
 
-	    Enable #define UseGnuMalloc YES inside xf86site.def or within the
-	    Linkkit site.def.
+            Enable #define UseGnuMalloc YES inside xf86site.def or within the
+            Linkkit site.def.
 
-	    Enable and set #define GnuMallocLibrary to your needs, if it isn't
-	    like the default -L/usr/local/lib -lgmalloc.
+            Enable and set #define GnuMallocLibrary to your needs, if it isn't
+            like the default -L/usr/local/lib -lgmalloc.
 
       inline-math (optional)
-	    This is the "original" inline-math package available at your
-	    favorite Linux Mirror.
+            This is the "original" inline-math package available at your
+            favorite Linux Mirror.
 
-	    Use #define UseInlineMath YES inside host.def to enable it. Please
-	    note the changes section what else to do, to use this package.
+            Use #define UseInlineMath YES inside host.def to enable it. Please
+            note the changes section what else to do, to use this package.
 
 
 
@@ -115,13 +115,13 @@ referred to as "gcc-lib"
 
 and gcc-lib/include/sys/limits.h
 
-	       #ifndef OPEN_MAX
-	       #ifdef ISC
-	       #define OPEN_MAX        256
-	       #else
-	       #define OPEN_MAX        20
-	       #endif
-	       #endif
+               #ifndef OPEN_MAX
+               #ifdef ISC
+               #define OPEN_MAX        256
+               #else
+               #define OPEN_MAX        20
+               #endif
+               #endif
 
 
 
@@ -133,7 +133,7 @@ and gcc-lib/include/sys/limits.h
 
 
 
- Information for ISC Users
+ Information for ISC Users                                                    3
 
 
 
@@ -144,10 +144,10 @@ reached).
 
 surrounded by
 
-	     #ifndef _IOCTL_H
-	     #define _IOCTL_H
-	     ...
-	     #endif
+             #ifndef _IOCTL_H
+             #define _IOCTL_H
+             ...
+             #endif
 
 
 
@@ -157,17 +157,17 @@ to prevent multiple includes.
 
 (and the corresponding gcc-include-file) add
 
-	     #include <net/errno.h>
+             #include <net/errno.h>
 
 
 
 because of EWOULDBLOCK undefined in several places regarding lbx.  Surround
 /usr/include/net/errno.h with
 
-	     #ifndef _NET_ERRNO_H
-	     #define _NET_ERRNO_H
-	     ...
-	     #endif
+             #ifndef _NET_ERRNO_H
+             #define _NET_ERRNO_H
+             ...
+             #endif
 
 
 to prevent multiple includes were <net/errno.h> is explicit included from the
@@ -178,9 +178,9 @@ sources.
 copy this file to gcc-lib/include/rpc/types.h and change the declaration of
 malloc() to
 
-	      #if !defined(__cplusplus)
-	      extern char *malloc();
-	      #endif
+              #if !defined(__cplusplus)
+              extern char *malloc();
+              #endif
 
 
 Note that this is only necessary if you want to build Fresco
@@ -199,18 +199,18 @@ cessfully.
 
 
 
- Information for ISC Users
+ Information for ISC Users                                                    4
 
 
 
 You could use the following to produce it:
 
-	      #ifndef X_NO_SYS_UN
-	      struct  sockaddr_un {
-		      short   sun_family;	      /* AF_UNIX */
-		      char    sun_path[108];	      /* path name (gag) */
-	      };
-	      #endif
+              #ifndef X_NO_SYS_UN
+              struct  sockaddr_un {
+                      short   sun_family;             /* AF_UNIX */
+                      char    sun_path[108];          /* path name (gag) */
+              };
+              #endif
 
 
 3.6  /usr/include/math.h
@@ -255,8 +255,8 @@ Please add the following at the bottom of math.h, before the last #endif
      BOOTSTRAPCFLAGS="-DISC [-DISC30 | -DISC40] -DSYSV [-Di386]"
 
       -DISC -DISC30
-	    these two defines are necessary to build the release I don't know
-	    if the build will succeed for ISC versions prior than 3.x
+            these two defines are necessary to build the release I don't know
+            if the build will succeed for ISC versions prior than 3.x
 
 
 
@@ -265,36 +265,36 @@ Please add the following at the bottom of math.h, before the last #endif
 
 
 
- Information for ISC Users
+ Information for ISC Users                                                    5
 
 
 
       -DISC40
-	    are only for getting the ISC version and therefore set the HasSym-
-	    Links to Yes ('cause symbolic linking were only supported from Ver-
-	    sion 4.x using the S5L Filesystem)
+            are only for getting the ISC version and therefore set the HasSym-
+            Links to Yes ('cause symbolic linking were only supported from Ver-
+            sion 4.x using the S5L Filesystem)
 
-	    If you could use long filenames, you could enable the installation
-	    of expanded Manual Pages by including
-	     #define ExpandManNames  YES inside xf86site.def.
+            If you could use long filenames, you could enable the installation
+            of expanded Manual Pages by including
+             #define ExpandManNames  YES inside xf86site.def.
 
-	    A build on ISC 4.x only needs -DISC40 defined in the BOOT-
-	    STRAPCFLAGS ( -DISC30 will be included automatically ).
+            A build on ISC 4.x only needs -DISC40 defined in the BOOT-
+            STRAPCFLAGS ( -DISC30 will be included automatically ).
 
-	    Note: due to some incompatibilities between ISC 4.0 and 4.1, the
-	    default is to build for ISC4.0, even if you build on 4.1.  If you
-	    want to build only for 4.1 you should set  #define IscCompileVer-
-	    sion       410  inside your host.def.
+            Note: due to some incompatibilities between ISC 4.0 and 4.1, the
+            default is to build for ISC4.0, even if you build on 4.1.  If you
+            want to build only for 4.1 you should set  #define IscCompileVer-
+            sion       410  inside your host.def.
 
-	    (the fchmod function isn't available on 4.0, so it won't compile,
-	    and binaries from 4.1 won't run cause of the unsupported System
-	    call The libraries build for 4.1 couldn't be used with 4.0 Systems,
-	    due to some functions not available on 4.0)
+            (the fchmod function isn't available on 4.0, so it won't compile,
+            and binaries from 4.1 won't run cause of the unsupported System
+            call The libraries build for 4.1 couldn't be used with 4.0 Systems,
+            due to some functions not available on 4.0)
 
       -DSYSV [-Di386]
-	    standard defines for SystemV Release3 on x86 platform.  You don't
-	    need to explicitly define -Di386 because this is pre-defined in
-	    /lib/cpp.
+            standard defines for SystemV Release3 on x86 platform.  You don't
+            need to explicitly define -Di386 because this is pre-defined in
+            /lib/cpp.
 
 
 5.  linear Addressing
@@ -304,7 +304,7 @@ Please add the following at the bottom of math.h, before the last #endif
      If you want to include support for linear addressing into the server bina-
      ries, you have to define
 
-	  #define HasSVR3mmapDrv	YES
+          #define HasSVR3mmapDrv        YES
 
 
      in xf86site.def.  This is necessary to get the correct setup to be defined
@@ -314,12 +314,12 @@ Please add the following at the bottom of math.h, before the last #endif
      have the mmap-2.2.3 driver installed, you could use the driver source in
      the file
 
-	  xc/programs/Xserver/hw/xfree86/etc/mmapSVR3.shar
+          xc/programs/Xserver/hw/xfree86/etc/mmapSVR3.shar
 
 
      or
 
-	  /usr/X11R6/lib/X11/etc/mmapSVR3.shar
+          /usr/X11R6/lib/X11/etc/mmapSVR3.shar
 
 
      Build and install the driver as instructed. You'll need the file
@@ -331,7 +331,7 @@ Please add the following at the bottom of math.h, before the last #endif
 
 
 
- Information for ISC Users
+ Information for ISC Users                                                    6
 
 
 
@@ -345,7 +345,7 @@ Please add the following at the bottom of math.h, before the last #endif
      have installed it, most servers will use linear addressing by default.
      Others may require setting the
 
-	  Option "linear"
+          Option "linear"
 
 
      in your XF86Config.   Check the appropriate manual pages for details.
@@ -356,40 +356,38 @@ Please add the following at the bottom of math.h, before the last #endif
 
      I could only test these cards against the linear addressing.
 
-	o Spea/V7 Vega - clgd5428 - VLB
+        o Spea/V7 Vega - clgd5428 - VLB
 
-	  with 32MB MainMemory installed I couldn't use it.  My tests with dif-
-	  ferent mappings into the address space results in no Graphics dis-
-	  played or a spontaneous reboot.
+          with 32MB MainMemory installed I couldn't use it.  My tests with dif-
+          ferent mappings into the address space results in no Graphics dis-
+          played or a spontaneous reboot.
 
-	o ATI GUP      - mach32   - VLB
+        o ATI GUP      - mach32   - VLB
 
-	  with 32MB MainMemory installed I could map the CardMemory at MemBase
-	  0x07c00000. I could work with all clients until I try to activate a
-	  Motif 1.1.1 InputField inside a Motif Client like Mosaic-2.4 or
-	  xplan. This results in a crash of the XServer.
+          with 32MB MainMemory installed I could map the CardMemory at MemBase
+          0x07c00000. I could work with all clients until I try to activate a
+          Motif 1.1.1 InputField inside a Motif Client like Mosaic-2.4 or
+          xplan. This results in a crash of the XServer.
 
-			  !!! You could work around this !!!
-
-
-
-	  Expand your .Xdefaults with
-
-			  *blinkRate:		  0
-			  *cursorPositionVisible: false
+                          !!! You could work around this !!!
 
 
-	  This bug seems to be fixed since 3.1.2, and therefore the workaround
-	  is not needed anymore.
 
-	o ELSA Winner 2000PRO/X Revision G
+          Expand your .Xdefaults with
 
-	  if you experience a Problem with this Card you could try to use the
-	  older Chipset Driver instead "newmmio".
-
-	  If you declare
+                          *blinkRate:             0
+                          *cursorPositionVisible: false
 
 
+          This bug seems to be fixed since 3.1.2, and therefore the workaround
+          is not needed anymore.
+
+        o ELSA Winner 2000PRO/X Revision G
+
+          if you experience a Problem with this Card you could try to use the
+          older Chipset Driver instead "newmmio".
+
+          If you declare
 
 
 
@@ -397,17 +395,19 @@ Please add the following at the bottom of math.h, before the last #endif
 
 
 
- Information for ISC Users
+
+
+ Information for ISC Users                                                    7
 
 
 
-			  Chipset "mmio_928"
+                          Chipset "mmio_928"
 
 
 
-	  inside your XF86Config, it may be alright again.
+          inside your XF86Config, it may be alright again.
 
-	  With the current XF86_S3 I don't encounter any problem.
+          With the current XF86_S3 I don't encounter any problem.
 
 
 6.  XKeyboard Extension
@@ -417,27 +417,27 @@ Please add the following at the bottom of math.h, before the last #endif
      Here is a sample XKeyboard Definition to include inside the Keyboard Sec-
      tion of your XF86Config File.
 
-	      Xkbkeycodes "xfree86"
-	  /*	XkbSymbols  "us(pc101)+de_nodead"  */
-	  /*	This has changed between 3.1.2E and 3.1.2F */
-	  /*	it is now:				   */
-	      XkbSymbols  "us(pc102)+de(nodeadkeys)"
-	      XkbTypes	  "default"
-	      XkbCompat   "default"
-	      XkbGeometry "pc"
+              Xkbkeycodes "xfree86"
+          /*    XkbSymbols  "us(pc101)+de_nodead"  */
+          /*    This has changed between 3.1.2E and 3.1.2F */
+          /*    it is now:                                 */
+              XkbSymbols  "us(pc102)+de(nodeadkeys)"
+              XkbTypes    "default"
+              XkbCompat   "default"
+              XkbGeometry "pc"
 
      or you could use this one with the new Options:
 
-	     XkbRules	     "xfree86"
-	     XkbModel	     "pc102"
-	     XkbLayout	     "de"
-	     XkbVariant      "nodeadkeys"
+             XkbRules        "xfree86"
+             XkbModel        "pc102"
+             XkbLayout       "de"
+             XkbVariant      "nodeadkeys"
 
 
 7.  Multibuffer Extension
 
 This is an obsolete Extension. Anyway, if you want to include this Extension
-inside your build, you have to add: #define BuildMultibuffer	    YES inside
+inside your build, you have to add: #define BuildMultibuffer        YES inside
 xf86site.def Please note, this Extension should be disabled when building the
 Loader Server.
 
@@ -463,54 +463,54 @@ necessary in xf86site.def, either it isn't to bad to have a look inside it ;-)
 
 
 
- Information for ISC Users
+ Information for ISC Users                                                    8
 
 
 
      #ifdef BeforeVendorCF
 
      /* ISC 4.1Mu - build only for 4.1
-     #define IscCompileVersion	     410
+     #define IscCompileVersion       410
      */
 
      /* Use inline Math from linux ;-) package inline-math-2.6.tar.gz */
-     /* should be available on your favorite linux ftp		      */
-     # define UseInlineMath	   YES
+     /* should be available on your favorite linux ftp                */
+     # define UseInlineMath        YES
 
      /* Use cbrt from liboptm.a (Interactive icc Compiler) */
      /*
      */
-     # define HasCbrt	      YES
+     # define HasCbrt         YES
 
-     /* Use GNUs MallocLibrary (and the Location for the Lib)		  */
-     # define UseGnuMalloc	   YES
-     # define GnuMallocLibrary	   -L/usr/local/lib -lgnumalloc
+     /* Use GNUs MallocLibrary (and the Location for the Lib)             */
+     # define UseGnuMalloc         YES
+     # define GnuMallocLibrary     -L/usr/local/lib -lgnumalloc
 
-     /* Build Xvfb							  */
+     /* Build Xvfb                                                        */
      # define XVirtualFramebufferServer YES
 
-     /* Use mmap Driver 						  */
-     # define HasSVR3mmapDrv	   YES
+     /* Use mmap Driver                                                   */
+     # define HasSVR3mmapDrv       YES
 
-     /* Expand Manual Pages (needs S5L) 				  */
-     # define ExpandManNames	   YES
+     /* Expand Manual Pages (needs S5L)                                   */
+     # define ExpandManNames       YES
 
      /* Has LinuxDoc (and the Location for LinuxDoc / only HTML and Text) */
-     # define HasLinuxDoc	   YES
+     # define HasLinuxDoc          YES
      # define BuildLinuxDocHtml    YES
-     # define BuildAllDocs	   YES
-     # define LinuxDocDir	   /usr/local/lib/linuxdoc-sgml
+     # define BuildAllDocs         YES
+     # define LinuxDocDir          /usr/local/lib/linuxdoc-sgml
 
      /* Install Config's for xdm, xfs, and xinit */
      # define InstallXinitConfig    YES
-     # define InstallXdmConfig	    YES
-     # define InstallFSConfig		    YES
+     # define InstallXdmConfig      YES
+     # define InstallFSConfig               YES
 
-     #define BuildChooser	   YES
+     #define BuildChooser          YES
 
      /* for the new XF86Setup Util */
-     #define HasTk	      YES
-     #define HasTcl	      YES
+     #define HasTk            YES
+     #define HasTcl           YES
 
      #endif /* BeforeVendorCF */
 
@@ -529,7 +529,7 @@ After your make World BOOTSTRAPCFLAGS="... succeed,
 
 
 
- Information for ISC Users
+ Information for ISC Users                                                    9
 
 
 
@@ -548,21 +548,21 @@ to install the compressed nroff versions of the manual pages into
 
 to install the server binary LinkKit into /usr/X11R6/lib/Server.
 
-	    You could tune the Kernel using the command-file
+            You could tune the Kernel using the command-file
 
-	    /usr/X11R6/lib/X11/etc/xf86install
+            /usr/X11R6/lib/X11/etc/xf86install
 
-	    This will increase the available pseudo devices,
-	    some Tunable Parameters and install some files
-	    to use inside sysadm. You could also install
-	    some additional Fonts and Terminal files.
+            This will increase the available pseudo devices,
+            some Tunable Parameters and install some files
+            to use inside sysadm. You could also install
+            some additional Fonts and Terminal files.
 
 You also should increase MAXUMEM to its maximum, else programs may die with:
 
      X Error of failed request:  BadAlloc (insufficient resources for operation)
-       Major opcode of failed request:	53 (X_CreatePixmap)
+       Major opcode of failed request:  53 (X_CreatePixmap)
        Serial number of failed request:  37791
-       Current serial number in output stream:	37822
+       Current serial number in output stream:  37822
        Widget hierarchy of resource: unknown
 
 
@@ -578,11 +578,11 @@ You also should increase MAXUMEM to its maximum, else programs may die with:
      You don't need any modmap-File to get your keyboard working with any
      iso-8859-1 Font. Simply enable
 
-	o LeftAlt  Meta
+        o LeftAlt  Meta
 
-	o RightAlt ModeShift
+        o RightAlt ModeShift
 
-	o RightCtl Compose
+        o RightCtl Compose
 
      in your XF86Config - Section "Keyboard"
 
@@ -595,7 +595,7 @@ You also should increase MAXUMEM to its maximum, else programs may die with:
 
 
 
- Information for ISC Users
+ Information for ISC Users                                                   10
 
 
 
@@ -605,16 +605,16 @@ You also should increase MAXUMEM to its maximum, else programs may die with:
      term when you are using the ega/vga font. Set up the user's .Xdefaults to
      contain:
 
-		   XEga*AT386.Translations: #override \
-			     Shift<Key>odiaeresis: string(0x99) \n\
-				  <Key>odiaeresis: string(0x94) \n\
-			     Shift<Key>adiaeresis: string(0x8e) \n\
-				  <Key>adiaeresis: string(0x84) \n\
-			     Shift<Key>udiaeresis: string(0x9a) \n\
-				  <Key>udiaeresis: string(0x81) \n\
-			     Shift<Key>ssharp: string(0x3f) \n\
-			      Meta<Key>ssharp: string(0x5c)  \n\
-				  <Key>ssharp: string(0xe1)
+                   XEga*AT386.Translations: #override \
+                             Shift<Key>odiaeresis: string(0x99) \n\
+                                  <Key>odiaeresis: string(0x94) \n\
+                             Shift<Key>adiaeresis: string(0x8e) \n\
+                                  <Key>adiaeresis: string(0x84) \n\
+                             Shift<Key>udiaeresis: string(0x9a) \n\
+                                  <Key>udiaeresis: string(0x81) \n\
+                             Shift<Key>ssharp: string(0x3f) \n\
+                              Meta<Key>ssharp: string(0x5c)  \n\
+                                  <Key>ssharp: string(0xe1)
 
 
      The only disadvantage is that you have to use Alt instead of AltGr to get
@@ -642,17 +642,15 @@ You also should increase MAXUMEM to its maximum, else programs may die with:
 
    o Warnings you may see:
 
-	o Since 3.2A, you could see a warning from pre X11R6.3 clients.
+        o Since 3.2A, you could see a warning from pre X11R6.3 clients.
 
-			  Warning: Unable to load any usable fontset
-
-
-
-	  The case are the new gzipped fonts, but the Warning isn't serious.
-
-	o If you start a server you may see the following message:
+                          Warning: Unable to load any usable fontset
 
 
+
+          The case are the new gzipped fonts, but the Warning isn't serious.
+
+        o If you start a server you may see the following message:
 
 
 
@@ -661,17 +659,19 @@ You also should increase MAXUMEM to its maximum, else programs may die with:
 
 
 
- Information for ISC Users
+
+
+ Information for ISC Users                                                   11
 
 
 
-		       _XSERVTransOpen: transport open failed for named/enigma:0
-		       _XSERVTransMakeAllCOTSServerListeners: failed to open listener for named
+                       _XSERVTransOpen: transport open failed for named/enigma:0
+                       _XSERVTransMakeAllCOTSServerListeners: failed to open listener for named
 
 
 
-	  This message either isn't critical. Interactive doesn't support this
-	  kind of connection.
+          This message either isn't critical. Interactive doesn't support this
+          kind of connection.
 
 
 11.  Acknowledgements
@@ -727,7 +727,7 @@ tribute to this excellent piece of free software.
 
 
 
- Information for ISC Users
+ Information for ISC Users                                                   12
 
 
 
@@ -797,7 +797,7 @@ tribute to this excellent piece of free software.
 
 
 
-				   CONTENTS
+                                   CONTENTS
 
 
 
@@ -813,7 +813,7 @@ tribute to this excellent piece of free software.
     3.5 /usr/include/sys/un.h ............................................... 3
     3.6 /usr/include/math.h ................................................. 4
 
-4.  make World	............................................................. 4
+4.  make World  ............................................................. 4
 
 5.  linear Addressing  ...................................................... 5
 
@@ -821,7 +821,7 @@ tribute to this excellent piece of free software.
 
 7.  Multibuffer Extension  .................................................. 7
 
-8.  Sample Definitions	..................................................... 7
+8.  Sample Definitions  ..................................................... 7
 
 9.  Installation  ........................................................... 8
 
@@ -853,8 +853,8 @@ tribute to this excellent piece of free software.
 
 
 
-				       i
+                                       i
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.isc,v 3.28.2.1 1998/02/20 23:14:30 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.isc,v 3.28.2.3 1998/11/14 06:47:02 dawes Exp $

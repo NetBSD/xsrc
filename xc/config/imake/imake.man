@@ -24,11 +24,14 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
+.\" $XFree86: xc/config/imake/imake.man,v 1.1.1.3.2.1 1998/11/06 13:54:19 dawes Exp $
+.\"
 .TH IMAKE 1 "Release 6.1" "X Version 11"
 .SH NAME
 imake \- C preprocessor interface to the make utility
 .SH SYNOPSIS
 \fBimake\fP [ \fB\-D\fP\fIdefine\fP ] [ \fB\-I\fP\fIdir\fP ]
+[ \fB\-U\fP\fIdefine\fP ] 
 [ \fB\-T\fP\fItemplate\fP ]
 [ \fB\-f\fP \fIfilename\fP ] [ \fB\-C\fP \fIfilename\fP ]
 [ \fB\-s\fP \fIfilename\fP ] [ \fB\-e\fP ]
@@ -55,6 +58,10 @@ directory, relative to the top.
 This option is passed directly to \fIcpp\fP.  It is typically used to 
 indicate the directory in which the \fIimake\fP template and configuration
 files may be found.
+.TP 8
+.B \-U\fIdefine\fP
+This option is passed directly to \fIcpp\fP.  It is typically used to
+unset variables when debugging \fIimake\fP configuration files.
 .TP 8
 .B \-T\fItemplate\fP
 This option specifies the name of the master template file (which is usually

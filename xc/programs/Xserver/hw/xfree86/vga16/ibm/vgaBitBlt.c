@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/vgaBitBlt.c,v 3.7 1996/12/23 06:53:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/vgaBitBlt.c,v 3.7.2.1 1998/11/08 10:03:44 hohndel Exp $ */
 /* GJA -- span move routines */
 
 
@@ -620,6 +620,9 @@ int x_direction, y_interval ;
 int	src_off, dst_off ;
 register int k, i ;
 unsigned short ROP_value;
+#if defined(__linux__)
+unsigned src_top3bits, dst_top3bits;
+#endif
 
 src = (unsigned char *)SCREENADDRESS( pWin, 0, y0);
 dst = (unsigned char *)SCREENADDRESS( pWin, 0, y1);
@@ -674,8 +677,15 @@ else {
 	y_interval = BYTES_PER_LINE(pWin) * 8 ;
 }
 
+#if !defined(__linux__)
 src = (unsigned char *)((int)src << 3) ;
 dst = (unsigned char *)((int)dst << 3) ;
+#else
+src_top3bits = (unsigned) src & 0xe0000000;
+dst_top3bits = (unsigned) dst & 0xe0000000;
+src = (unsigned char *)((unsigned)src << 3) ;
+dst = (unsigned char *)((unsigned)dst << 3) ;
+#endif
 
 if ( y1 > y0) {
 	x_direction = 0x1000 ;
@@ -709,6 +719,11 @@ for ( ; h-- ; ) {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	src_x   = (unsigned short *)(((unsigned int)src >> 4 ) << 1) ;
 	dst_x   = (unsigned short *)(((unsigned int)dst >> 4 ) << 1) ;
+#elif defined(__linux__)
+	src_x   = (unsigned short *)((((unsigned int)src >> 4 ) << 1) + src_top3bits) ;
+	  	
+	dst_x   = (unsigned short *)((((unsigned int)dst >> 4 ) << 1 )+ dst_top3bits) ;
+		
 #else
 	src_x   = (unsigned short *)(((int)src >> 4 ) << 1) ;
 	dst_x   = (unsigned short *)(((int)dst >> 4 ) << 1) ;

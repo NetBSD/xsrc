@@ -1,6 +1,6 @@
 /*
  * $XConsortium: xlogo.c /main/21 1996/01/14 16:51:25 kaleb $
- * $XFree86: xc/programs/xlogo/xlogo.c,v 3.1 1996/01/16 15:09:23 dawes Exp $
+ * $XFree86: xc/programs/xlogo/xlogo.c,v 3.1.4.1 1998/10/04 13:37:30 hohndel Exp $
  *
 Copyright (c) 1989  X Consortium
 
@@ -100,8 +100,7 @@ static void Syntax(toplevel, call)
     exit(1);
 }
 
-void 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

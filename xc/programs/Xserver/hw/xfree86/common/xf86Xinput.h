@@ -1,6 +1,6 @@
 /* $XConsortium: xf86Xinput.h /main/11 1996/10/27 11:05:29 kaleb $ */
 /*
- * Copyright 1995,1996 by Frederic Lepied, France. <fred@sugix.frmug.fr.net>
+ * Copyright 1995-1998 by Frederic Lepied, France. <Frederic.Lepied@sugix.frmug.org>
  *                                                                            
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is  hereby granted without fee, provided that
@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.14.2.1 1997/05/12 12:52:29 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.14.2.3 1998/11/12 11:32:07 dawes Exp $ */
 
 #ifndef _xf86Xinput_h
 #define _xf86Xinput_h
@@ -91,6 +91,21 @@ typedef struct _LocalDeviceRec {
     int /*mode*/
 #endif
     );
+  Bool           (*conversion_proc)(
+#if NeedNestedPrototypes
+    struct _LocalDeviceRec* /*local*/,
+    int	/* first */,
+    int /* num */,
+    int /* v0 */,
+    int /* v1 */,
+    int /* v2 */,
+    int /* v3 */,
+    int /* v4 */,
+    int /* v5 */,
+    int* /* x */,
+    int* /* y */
+#endif
+    );
     int			fd;
     Atom		atom;
     DeviceIntPtr	dev;
@@ -101,8 +116,18 @@ typedef struct _LocalDeviceRec {
     unsigned int	history_size;	/* only for configuration purpose */
     unsigned int	first;
     unsigned int	last;
+    int			old_x;
+    int			old_y;
     char		*type_name;
     IntegerFeedbackPtr	always_core_feedback;
+    Bool           (*reverse_conversion_proc)(
+#if NeedNestedPrototypes
+    struct _LocalDeviceRec* /*local*/,
+    int /* x */,
+    int /* y */,
+    int* /* valuators */
+#endif
+    );
 } LocalDeviceRec, *LocalDevicePtr;
 
 typedef struct _DeviceAssocRec 
@@ -114,15 +139,6 @@ typedef struct _DeviceAssocRec
 #endif
 );
 } DeviceAssocRec, *DeviceAssocPtr;
-
-extern	int		DeviceKeyPress;
-extern	int		DeviceKeyRelease;
-extern	int		DeviceButtonPress;
-extern	int		DeviceButtonRelease;
-extern	int		DeviceMotionNotify;
-extern	int		DeviceValuator;
-extern	int		ProximityIn;
-extern	int		ProximityOut;
 
 extern int
 xf86IsCorePointer(
@@ -274,6 +290,14 @@ xf86CheckButton(
 #if NeedFunctionPrototypes
 		int	button,
 		int	down
+#endif
+);
+
+void
+xf86SwitchCoreDevice(
+#if NeedFunctionPrototypes
+		LocalDevicePtr	device,
+		DeviceIntPtr	core
 #endif
 );
 

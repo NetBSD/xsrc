@@ -51,7 +51,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/lib/X11/Xrm.c,v 3.3.4.3 1997/06/22 12:19:25 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xrm.c,v 3.3.4.4 1998/10/04 13:36:22 hohndel Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>
@@ -975,10 +975,15 @@ static void PutEntry(db, bindings, quarks, type, value)
     if (q > maxResourceQuark) {
 	unsigned oldsize = (maxResourceQuark + 1) >> 3;
 	unsigned size = ((q | 0x7f) + 1) >> 3; /* reallocate in chunks */
-	if (resourceQuarks)
+	if (resourceQuarks) {
+	    unsigned char *prevQuarks = resourceQuarks;
+
 	    resourceQuarks = (unsigned char *)Xrealloc((char *)resourceQuarks,
 						       size);
-	else
+	    if (!resourceQuarks) {
+		Xfree(prevQuarks);
+	    }
+	} else
 	    resourceQuarks = (unsigned char *)Xmalloc(size);
 	if (resourceQuarks) {
 	    bzero((char *)&resourceQuarks[oldsize], size - oldsize);

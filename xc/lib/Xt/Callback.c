@@ -59,6 +59,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/Xt/Callback.c,v 1.1.1.1.12.3 1998/10/04 15:22:54 hohndel Exp $ */
 
 #include "IntrinsicI.h"
 
@@ -85,7 +86,7 @@ static InternalCallbackList* FetchInternalList(widget, name)
     offsets = (CallbackTable) 
 	widget->core.widget_class->core_class.callback_private;
 
-    for (n = (int) *(offsets++); --n >= 0; offsets++)
+    for (n = (int)(long) *(offsets++); --n >= 0; offsets++)
 	if (quark == (*offsets)->xrm_name) {
 	    retval = (InternalCallbackList *) 
 		((char *) widget - (*offsets)->xrm_offset - 1);

@@ -47,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/programs/Xserver/mfb/mfbtegblt.c,v 1.1.1.1.12.2 1998/10/04 15:23:03 hohndel Exp $ */
 #include	"X.h"
 #include	"Xmd.h"
 #include	"Xproto.h"
@@ -99,6 +100,12 @@ two times:
 #else
 #define ShiftAmnt   16
 #endif
+
+/*
+ * XXX XXX XXX There is something horribly, massively wrong here. There are
+ * hardcoded shifts by 64 below; these cannot work on any present-day
+ * architecture.
+ */
 
 /*
  * Note: for BITMAP_BIT_ORDER != IMAGE_BYTE_ORDER, SCRRIGHT() evaluates its

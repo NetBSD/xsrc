@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/et4_driver.c,v 3.45.2.22 1998/02/28 11:11:42 dawes Exp $ 
+ * $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/et4000/et4_driver.c,v 3.45.2.25 1998/11/06 13:54:42 dawes Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -947,19 +947,47 @@ ET4000Probe()
    * Defaults: banked addressing in 8bpp modes,
    *           linear addressing in >8bpp modes.
    *
+   *           On PCI-bus cards, linear mode is always the default. This is
+   *           an attempt to work around a problem in many PCI BIOS where
+   *           Write Combining is enabled on the banked accelerator aperture
+   *           at 0xB8000 despite the fact that Tseng cards announce their
+   *           memory (which includes the accelerator MMIO registers in this
+   *           case) as non-prefetchable. This causes acceleration problems
+   *           (especially in color expansion).
+   *
    * unless of course it is overridden from XF86Config.
    */
 
   if (vgaBitsPerPixel >= 8) {
 
-  /* enable option "linear" in XF86Config */
+  /* enable option "linear" and "nolinear" in XF86Config */
   if (CHIP_SUPPORTS_LINEAR) {
     OFLG_SET(OPTION_LINEAR, &ET4000.ChipOptionFlags);
+    OFLG_SET(OPTION_NOLINEAR_MODE, &ET4000.ChipOptionFlags);
+  }
+
+  /* now check for option conflicts */
+  if ( OFLG_ISSET(OPTION_LINEAR, &vga256InfoRec.options)
+      && (OFLG_ISSET(OPTION_NOLINEAR_MODE, &vga256InfoRec.options))
+     )
+  {
+    FatalError("%s %s: option \"nolinear\" conflicts with option \"linear\"\n",
+           XCONFIG_PROBED, vga256InfoRec.name);
+  }
+  if ((vgaBitsPerPixel > 8)
+      && (OFLG_ISSET(OPTION_NOLINEAR_MODE, &vga256InfoRec.options))
+     )
+  {
+    FatalError("%s %s: option \"nolinear\" conflicts with color depth requirement\n\t(linear mode is required for %dbpp modes)\n",
+           XCONFIG_PROBED, vga256InfoRec.name, vgaBitsPerPixel);
   }
 
   /* check if linear memory is supported and check for a suitable MemBase */
   /* for >8bpp, linear memory is _required_ */
-  if (OFLG_ISSET(OPTION_LINEAR, &vga256InfoRec.options) || (vgaBitsPerPixel > 8))
+  if (OFLG_ISSET(OPTION_LINEAR, &vga256InfoRec.options)
+      || (vgaBitsPerPixel > 8)
+      || ((Tseng_bus == BUS_PCI) && (!OFLG_ISSET(OPTION_NOLINEAR_MODE, &vga256InfoRec.options)))
+     )
   {
     ET4000LinMem(autodetect);
   }
@@ -1869,7 +1897,10 @@ ET4000Init(mode)
      new->VSConf1 = initialVSConf1;
      new->VSConf2 = initialVSConf2;
      new->IMAPortCtrl = initialIMAPortCtrl;
-     if ((vga256InfoRec.clock[mode->Clock] * tseng_bytesperpixel) > 80000)
+     temp1 = vga256InfoRec.clock[mode->Clock];
+     if (mode->Flags & V_PIXMUX)
+       temp1 *= 2;
+     if ((temp1 * tseng_bytesperpixel) > 80000)
        new->VSConf2 = (new->VSConf2 & 0x7f) | 0x80;
    }
 
@@ -2236,6 +2267,13 @@ int flag;
        (!(mode->Flags & V_INTERLACE)) ) {
            mode->Flags |= V_PIXMUX;
            mode->Flags |= V_DBLCLK;
+           if (mode->Clock > vga256InfoRec.dacSpeeds[0]) {
+               if (verbose)
+                   ErrorF("%s %s: mode \"%s\": PixMux Mode Clock too high (real clock is %1.3f, max is %1.3f)\n",
+                           XCONFIG_PROBED, vga256InfoRec.name, mode->name,
+                           mode->Clock/1000.0, vga256InfoRec.dacSpeeds[0]/1000.0);
+               return MODE_BAD;
+           }
            mode->Clock /= 2;
            if (verbose)
                ErrorF("%s %s: Mode \"%s\" will use pixel multiplexing (clock will be reported as 1/2 of clock in modeline).\n",

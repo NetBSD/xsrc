@@ -20,7 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.3 1997/01/18 07:18:54 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.3.2.1 1998/10/04 13:37:14 hohndel Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>
@@ -1236,7 +1236,7 @@ StartProxyReply(server, rep)
 		      lbxNegOpt.serverDeltaMaxLen);
     LBXInitDeltaCache(&server->outdeltas, lbxNegOpt.proxyDeltaN,
 		      lbxNegOpt.proxyDeltaMaxLen);
-    QueueWorkProc(ProxyWorkProc, NULL, (pointer) server->index);
+    QueueWorkProc(ProxyWorkProc, NULL, (pointer)(long) server->index);
 
 #ifdef OPTDEBUG
     fprintf(stderr, "squishing = %d\n", lbxNegOpt.squish);

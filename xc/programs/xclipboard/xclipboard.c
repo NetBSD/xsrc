@@ -29,6 +29,7 @@ in this Software without prior written authorization from the X Consortium.
  * Updated for R4:  Chris D. Peterson,  MIT X Consortium.
  * Reauthored by: Keith Packard, MIT X Consortium.
  */
+/* $XFree86: xc/programs/xclipboard/xclipboard.c,v 1.1.1.3.4.2 1998/10/04 15:23:09 hohndel Exp $ */
 
 #include <stdio.h>
 #include <X11/Intrinsic.h>
@@ -653,8 +654,7 @@ XtResource resources[] = {
 
 #undef Offset
 
-void
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {

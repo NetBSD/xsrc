@@ -39,6 +39,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
+/* $XFree86: xc/programs/Xserver/hw/sun/sunKbd.c,v 1.1.1.10.2.3 1998/10/04 15:22:59 hohndel Exp $ */
 
 #define NEED_EVENTS
 #include "sun.h"
@@ -473,6 +474,29 @@ static void sunInitKbdNames (names, pKbd)
 	(void) strcat (names->symbols, "us(sun3)");
 	break;
     case KB_SUN4:
+	/* First, catch "fully known" models */
+	switch (pKbd->layout) {	
+	case 11:		/* type4, Sweden */
+	    (void) strcat (names->geometry, "sun(type4_se)");
+	    (void) strcat (names->keycodes,
+			   "sun(type4_se_swapctl)");
+	    (void) strcat (names->symbols,
+			   "sun/se(sun4)+se(fixdollar)");
+	    return;
+	    break;
+	case 43:		/* type5/5c, Sweden */
+	    (void) strcat (names->geometry, "sun(type5c_se)");
+	    (void) strcat (names->keycodes, "sun(type5_se)");
+	    (void) strcat (names->symbols,
+			   "sun/se(sun5)+se(fixdollar)");
+	    return;
+	    break;
+	case 90:		/* "Compact 1", Sweden (???) */
+	    break;		/* No specific mapping, yet */
+	default:
+	    break;
+	}
+
 	if (pKbd->layout == 19) {
 	    (void) strcat (names->keycodes, "sun(US101A)");
 	    (void) strcat (names->geometry, "pc101-NG"); /* XXX */
@@ -522,7 +546,7 @@ static void sunInitKbdNames (names, pKbd)
 	case  8: case 40: case 87: 
 	case  9: case 41: case 88: 
 	case 10: case 42: case 89: 
-	case 11: case 43: case 90: 
+/*	case 11: case 43: case 90: */ /* handled earlier */
 	case 12: case 44: case 91: 
 	case 13: case 45: case 92: 
 	case 14: case 46: case 93: 
@@ -548,8 +572,9 @@ static void sunInitKbdNames (names, pKbd)
 	    (void) strcat (names->symbols, "+pt"); break;
 	case 10: case 42: case 89: 
 	    (void) strcat (names->symbols, "+es"); break;
-	case 11: case 43: case 90: 
-	    (void) strcat (names->symbols, "+se"); break;
+	    /* case 11: case 43: */ /* handled earlier */
+	case 90: 
+	    (void) strcat (names->symbols, "+se"); break; 
 	case 12: case 44: case 91: 
 	    (void) strcat (names->symbols, "+fr_CH"); break;
 	case 13: case 45: case 92: 

@@ -1,5 +1,5 @@
 /* $XConsortium: Xtransint.h /main/25 1995/12/05 16:51:28 mor $ */
-/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.18.2.2 1997/07/19 04:59:16 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransint.h,v 3.18.2.3 1998/09/05 03:31:59 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -102,6 +102,8 @@ extern int  errno;		/* Internal system error number. */
 #else
 #include <socket.h>
 #endif
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #endif
 #ifdef __EMX__
 #include <sys/ioctl.h>

@@ -5,7 +5,7 @@ XCOMM $XConsortium: Imakefile /main/10 1996/10/25 10:34:08 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/Imakefile,v 3.16 1996/12/28 08:19:12 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/Imakefile,v 3.16.2.2 1998/10/11 13:43:45 hohndel Exp $
 #include <Server.tmpl>
 
 #ifdef i386Architecture
@@ -110,8 +110,8 @@ LinkSourceFile(vgaBltFillc.c,../enhanced)
 LinkSourceFile(vgaLinec.c,../enhanced)
 #endif
 LinkFile(vgaBitBlt1.c,../enhanced/vgaBitBlt.c)
-LinkSourceFile(SpeedUpBlt.c,../enhanced)
-LinkSourceFile(vgaFasm.h,../enhanced)
+LinkFile(SpeedUpBlt.c,../enhanced/SpeedUpBlt.c)
+LinkFile(vgaFasm.h,../enhanced/vgaFasm.h)
 
 ObjectFromSpecialSource(vgaseg,vgaline,-DPOLYSEGMENT)
 ObjectFromSpecialSource(vgasegd,vgalined,-DPOLYSEGMENT)

@@ -1,5 +1,5 @@
 /* $XConsortium: session.c,v 1.6 94/04/17 20:33:58 rws Exp $ */
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/session.c,v 3.2.4.1 1997/05/22 14:00:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/session.c,v 3.2.4.2 1998/10/04 13:36:41 hohndel Exp $ */
 /**** session.c ****/
 /****************************************************************************
 
@@ -250,7 +250,9 @@ ProcQueryImageExtension(client)
   reply.majorVersion = xieMajorVersion;
   
   if (stuff->majorVersion != xieMajorVersion || 
+#if xieEarliestMinorVersion > 0		/* squelch compiler warning */
       stuff->minorVersion < xieEarliestMinorVersion ||
+#endif
       stuff->minorVersion > xieLatestMinorVersion) 
     reply.minorVersion = xieMinorVersion;
   else 

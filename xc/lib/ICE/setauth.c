@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
+/* $XFree86: xc/lib/ICE/setauth.c,v 1.1.1.1.12.2 1998/10/19 20:57:04 hohndel Exp $ */
 
 #include <X11/ICE/ICElib.h>
 #include "ICElibint.h"
@@ -49,7 +50,11 @@ Author: Ralph Mor, X Consortium
  */
 
 int		 _IcePaAuthDataEntryCount = 0;
+#ifndef __EMX__
 IceAuthDataEntry _IcePaAuthDataEntries[ICE_MAX_AUTH_DATA_ENTRIES];
+#else
+IceAuthDataEntry _IcePaAuthDataEntries[ICE_MAX_AUTH_DATA_ENTRIES] = {0};
+#endif
 
 
 void

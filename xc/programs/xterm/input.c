@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: input.c /main/21 1996/04/17 15:54:23 kaleb $
- *	$XFree86: xc/programs/xterm/input.c,v 3.21 1998/07/04 14:48:27 robin Exp $
+ *	$XFree86: xc/programs/xterm/input.c,v 3.11.2.4 1998/10/20 20:51:46 hohndel Exp $
  */
 
 /*
@@ -28,11 +28,7 @@
 
 /* input.c */
 
-#ifdef HAVE_CONFIG_H
-#include <xtermcfg.h>
-#endif
-
-#include "ptyx.h"		/* gets Xt headers, too */
+#include <xterm.h>
 
 #include <X11/keysym.h>
 #if HAVE_X11_DECKEYSYM_H
@@ -40,10 +36,8 @@
 #endif
 
 #include <X11/Xutil.h>
-#include <stdio.h>
 
-#include "xterm.h"
-#include "data.h"
+#include <data.h>
 
 static char *kypd_num = " XXXXXXXX\tXXX\rXXXxxxxXXXXXXXXXXXXXXXXXXXXX*+,-./0123456789XXX=";
 static char *kypd_apl = " ABCDEFGHIJKLMNOPQRSTUVWXYZ??????abcdefghijklmnopqrstuvwxyzXXX";
@@ -96,6 +90,15 @@ IsEditFunctionKey(KeySym keysym)
 	}
 }
 
+/*
+ * Modifiers other than shift, control and numlock should be reserved for the
+ * user.  We use the first two explicitly to support VT220 keyboard, and the
+ * third is used implicitly in keyboard configuration to make the keypad work.
+ */
+#define isModified(event) \
+    (event->state & \
+    	(Mod1Mask | Mod2Mask | Mod3Mask | Mod4Mask | Mod5Mask ))
+
 void
 Input (
 	register TKeyboard *keyboard,
@@ -141,7 +144,9 @@ Input (
 
 	/* VT300 & up: backarrow toggle */
 	if ((nbytes == 1)
-	 && !(term->keyboard.flags & MODE_DECBKM)
+	 && !isModified(event)
+	 && (((term->keyboard.flags & MODE_DECBKM) == 0)
+	   ^ ((event->state & ControlMask) != 0))
 	 && (keysym == XK_BackSpace)) {
 		strbuf[0] = '\177';
 	}
@@ -165,7 +170,7 @@ Input (
 
 #if OPT_SUNPC_KBD
 	/* make an DEC editing-keypad from a Sun or PC editing-keypad */
-	if (sunKeyboard) {
+	if (sunKeyboard && !isModified(event)) {
 		switch (keysym) {
 		case XK_Delete:
 #ifdef DXK_Remove
@@ -229,7 +234,8 @@ Input (
 		/*
 		 * Interpret F1-F4 as PF1-PF4 for VT52, VT100
 		 */
-		else if (screen->old_fkeys == False
+		else if (!sunFunctionKeys
+		 && screen->old_fkeys == False
 		 && (dec_code >= 11 && dec_code <= 14))
 		{
 			reply.a_type = SS3;
@@ -260,6 +266,7 @@ Input (
 		 * but no keypad(,) - it's a pain for users to work around.
 		 */
 		if (!sunFunctionKeys
+		 && !isModified(event)
 		 && sunKeyboard
 		 && keysym == XK_KP_Add)
 			keysym = XK_KP_Separator;

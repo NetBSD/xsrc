@@ -1,19 +1,18 @@
 .\" $XConsortium: XF68_FBDev.man /main/2 1996/12/09 17:32:57 kaleb $
-.\" $XFree86: xc/programs/Xserver/hw/xfree68/XF68_FBDev.man,v 3.4.2.1 1997/05/16 11:35:05 hohndel Exp $
-.TH XF68_FBDev 1 "Version 3.2A"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree68/XF68_FBDev.man,v 3.4.2.3 1998/11/08 09:06:31 dawes Exp $
+.TH XF68_FBDev 1 "Version 3.3.3"  "XFree86"
 .SH NAME
-XF68_FBDev - X Window System server for the Linux/m68k Frame Buffer Device
+XF68_FBDev - X Window System server for the Linux frame buffer device
 .SH SYNOPSIS
 .B XF68_FBDev
 [:displaynumber] [ option ] ...
 .SH DESCRIPTION
 .I XF68_FBDev
-is a generic server for a Linux/m68k Frame Buffer Device. It contains
-all available drivers (mfb, ipl2p2, ipl2p4, ipl2p8, ilbm, afb and cfb).
+is a generic server for a frame buffer device.
 .PP
-The servers use the \fB/dev/fb*\fP special device nodes for connection to the
+The server uses the \fB/dev/fb*\fP special device nodes for connection to the
 hardware. The \fB/dev/fb*\fP node to use can be set via an environment
-variable or if this is absent, \fB/dev/fb0current\fP is used.
+variable, or if this is absent, \fB/dev/fb0\fP is used.
 .SH CONFIGURATIONS
 .PP
 The servers currently support the following pixel formats:
@@ -22,7 +21,7 @@ The servers currently support the following pixel formats:
 mfb:
 Monochrome,
 .TP 4
-ipl2p{2|4|8}:
+iplan2p{2|4|8}:
 Interleaved planes with 2 bytes interleave and 2, 4 or 8 planes (Atari),
 .TP 4
 ilbm:
@@ -31,8 +30,17 @@ Interleaved bitplanes (Amiga),
 afb:
 Normal bitplanes (Amiga),
 .TP 4
-cfb:
-Packed Pixels with 8 Bits per Pixel.
+cfb8:
+Packed Pixels with 8 bits per pixel,
+.TP 4
+cfb16:
+Packed Pixels with 16 Bits per pixel,
+.TP 4
+cfb24:
+Packed Pixels with 24 bits per pixel (little endian platforms only),
+.TP 4
+cfb32:
+Packed Pixels with 32 bits per pixel.
 .SH OPTIONS
 In addition to the normal server options described in the \fIXserver(1)\fP
 manual page, \fIXF68_FBDev\fP accept some more command line switches, as
@@ -51,18 +59,20 @@ specific parts are explained.
 Normally the X server will use videomodes as defined in the \fBModes\fP
 section, unless you specify the special videomode `\fBdefault\fP'. In that case
 the X server will use the video mode that is associated with the used
-framebuffer device node, and mode switching will be disabled.
+framebuffer device node, and mode switching will be disabled. You still have to
+specify the display depth (\fBDepth\fP keyword) and virtual resolution
+(\fBVirtual\fP keyword) though.
 .PP
 The environment variable \fBFRAMEBUFFER\fP holds the filename for the
-framebuffer to use. If it isn't set, /dev/fb0current is used as default.
+framebuffer to use. If it isn't set, /dev/fb0 is used as default.
 /dev/ should contain at least the following file:
 (major and minor number in parentheses)
 .TP 4
-fb0current (29,0): The current resolution
+fb0 (29,0): The first frame buffer device
 .SH FILES
 .TP 30
 <XRoot>/bin/XF68_FBDev
-The X server for a generic Linux/m68k Frame Buffer Device
+The X server for a generic Frame Buffer Device
 .TP 30
 /etc/XF86Config
 Server configuration file
@@ -71,10 +81,10 @@ Server configuration file
 Server configuration file (secondary location)
 .TP 30
 /dev/fb*
-The files which represents framebuffers and their resolutions
+The files which represents frame buffer devices
 .TP 30
 <XRoot>/lib/X11/doc/README.fbdev
-Extra documentation about the Frame Buffer Device
+Extra documentation about the frame buffer device
 .LP
 Note: <XRoot> refers to the root of the X11 install tree.
 .SH "SEE ALSO"
@@ -91,8 +101,8 @@ major work to this server:
 Martin Schaller
 .fi
 .RS 8
-Developed the concept of the Linux/m68k Frame Buffer Device and wrote the
-support for Atari (Please no mail > 16000 bytes to this address).
+Developed the concept of the frame buffer device and wrote the
+support for Atari.
 .RE
 .PP
 .nf
@@ -124,7 +134,8 @@ See also the
 manual page.
 .SH BUGS
 .PP
-The support for visuals other than monochrome and pseudo color is incomplete.
+The support for visuals other than monochrome, pseudocolor and
+truecolor/directcolor is incomplete.
 .sp
 The drivers for interleaved and normal planes are slow.
 .sp

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/add_window.c,v 1.1.1.2.8.2 1998/02/22 10:17:46 hohndel Exp $ */
+/* $XFree86: xc/programs/twm/add_window.c,v 1.1.1.2.8.3 1998/10/04 13:37:16 hohndel Exp $ */
 /*****************************************************************************/
 /*
 
@@ -290,18 +290,18 @@ IconMgr *iconp;
     namelen = strlen (tmp_win->name);
 
     tmp_win->highlight = Scr->Highlight && 
-	(!(short)(int) LookInList(Scr->NoHighlight, tmp_win->full_name, 
+	(!(short)(long) LookInList(Scr->NoHighlight, tmp_win->full_name, 
 	    &tmp_win->class));
 
     tmp_win->stackmode = Scr->StackMode &&
-	(!(short)(int) LookInList(Scr->NoStackModeL, tmp_win->full_name, 
+	(!(short)(long) LookInList(Scr->NoStackModeL, tmp_win->full_name, 
 	    &tmp_win->class));
 
     tmp_win->titlehighlight = Scr->TitleHighlight && 
-	(!(short)(int) LookInList(Scr->NoTitleHighlight, tmp_win->full_name, 
+	(!(short)(long) LookInList(Scr->NoTitleHighlight, tmp_win->full_name, 
 	    &tmp_win->class));
 
-    tmp_win->auto_raise = (short)(int) LookInList(Scr->AutoRaise, 
+    tmp_win->auto_raise = (short)(long) LookInList(Scr->AutoRaise, 
 						  tmp_win->full_name,
 					    &tmp_win->class);
     if (tmp_win->auto_raise) Scr->NumAutoRaises++;
@@ -309,11 +309,11 @@ IconMgr *iconp;
     if (Scr->IconifyByUnmapping)
     {
 	tmp_win->iconify_by_unmapping = iconm ? FALSE :
-	    !(short)(int) LookInList(Scr->DontIconify, tmp_win->full_name,
+	    !(short)(long) LookInList(Scr->DontIconify, tmp_win->full_name,
 		&tmp_win->class);
     }
     tmp_win->iconify_by_unmapping |= 
-	(short)(int) LookInList(Scr->IconifyByUn, tmp_win->full_name,
+	(short)(long) LookInList(Scr->IconifyByUn, tmp_win->full_name,
 	    &tmp_win->class);
 
     if (LookInList(Scr->WindowRingL, tmp_win->full_name, &tmp_win->class)) {

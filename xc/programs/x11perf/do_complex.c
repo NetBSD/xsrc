@@ -21,6 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
+/* $XFree86: xc/programs/x11perf/do_complex.c,v 1.1.1.1.12.2 1998/10/04 15:23:09 hohndel Exp $ */
 
 #include "x11perf.h"
 
@@ -140,7 +141,7 @@ int InitGeneralPoly (xp,p,reps)
 
     pgc = xp->fggc;
     size = p->special;
-    nsides = (int) p->font;
+    nsides = (long) p->font;
     phi = 0.0;
     delta = 2.0 * PI / ((double) nsides);
     phiinc = delta / 10.0;
@@ -184,8 +185,8 @@ void DoGeneralPoly(xp,p,reps)
     int	    mode;
     XPoint  *curPoint;
 
-    nsides = (int) p->font;
-    mode = (int) p->bfont;
+    nsides = (long) p->font;
+    mode = (long) p->bfont;
     for (i = 0; i != reps; i++) {
         curPoint = points;
         for (j = 0; j != p->objects; j++) {
