@@ -1,5 +1,5 @@
 /*
- * $TOG: Alloc.c /main/3 1998/02/06 14:38:48 kaleb $
+ * $Xorg: Alloc.c,v 1.3 2000/08/17 19:45:47 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/lib/Xdmcp/Alloc.c,v 3.1 1998/10/03 08:42:50 dawes Exp $ */
+/* $XFree86: xc/lib/Xdmcp/Alloc.c,v 3.3 2001/01/17 19:42:43 dawes Exp $ */
 
 /* stubs for use when Xalloc, Xrealloc and Xfree are not defined */
 

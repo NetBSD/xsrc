@@ -1,9 +1,14 @@
-XCOMM $TOG: Imakefile /main/39 1997/02/26 18:09:44 kaleb $
-XCOMM $XFree86: xc/lib/Imakefile,v 3.41.2.1 2001/03/12 16:03:23 keithp Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:44:00 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/lib/Imakefile,v 3.52 2001/04/03 17:36:28 dawes Exp $
+
 #define IHaveSubdirs
 #define PassCDebugFlags
 
-#if BuildXaw6
+#if BuildXaw6 && BuildLibraries
 XAW6LIBDIR = Xaw6
 #endif
 
@@ -23,8 +28,20 @@ XKBLIBDIR = xkbfile
 XKBUILIBDIR = xkbui
 #endif
 
-#if BuildThreadStubLibrary
+#if BuildThreadStubLibrary && BuildLibraries
 THRSTUBLIBDIR = XThrStub
+#endif
+
+#if BuildXIElib
+XIELIBDIR = XIE
+#endif
+
+#if BuildPexLib
+PEX5LIBDIR = PEX5
+#endif
+
+#if BuildXInputLib
+XINPUTLIBDIR = Xi
 #endif
 
 #if BuildScreenSaverLibrary
@@ -49,6 +66,7 @@ XF86RUSHLIBDIR = Xxf86rush
 
 #if BuildXvLibrary
 XVLIBDIR = Xv
+XVMCLIBDIR = XvMC
 #endif
 
 #if BuildXineramaLibrary
@@ -58,6 +76,10 @@ XINERAMADIR=Xinerama
 #if BuildGLXLibrary
 GLXLIBDIR = GL
 GLWLIBDIR = GLw
+#endif
+
+#if BuildGLULibrary
+GLULIBDIR = GLU
 #endif
 
 #if BuildDPSLibrary
@@ -103,31 +125,49 @@ REGEXDIR = regex
 XALIBDIR = Xa
 #endif
 
+#if BuildXprintLib
+XPRINTLIBDIR = Xp
+#endif
+
 #if BuildFontCacheLib
 FONTCACHELIBDIR = Xfontcache
 #endif
 
 FONTSUBDIR = font
 
-#if !BuildServersOnly
-LINTSUBDIRS = Xau Xdmcp $(THRSTUBLIBDIR) X11 oldX ICE SM Xext Xt \
-	     $(SSLIBDIR) $(XF86MISCLIBDIR) $(XF86VMLIBDIR) $(XF86DGALIBDIR) \
-	     $(XF86RUSHLIBDIR) Xmu Xpm Xaw $(XAW6LIBDIR) XIE Xi Xtst FS \
-	     PEX5 $(XKBLIBDIR) $(XKBUILIBDIR) $(LBXUTILDIR) $(XALIBDIR) \
-	     Xp $(XVLIBDIR) $(GLXLIBDIR) $(GLWLIBDIR) $(DPSLIBDIR) \
-	     $(DPSTKLIBDIR) $(PSRESLIBDIR) $(XINERAMADIR) \
-	     $(ZLIBDIR) $(REGEXDIR) $(RENDERLIBDIR) $(FREETYPE2BUILDDIR) \
-	     $(XFTLIBDIR)
-#else
-#if XnestServer || BuildGLXLibrary
-XEXTDIR = Xext
+XAULIBDIR = Xau
+XDMCPLIBDIR = Xdmcp
+X11LIBDIR = X11
+
+#if BuildLibraries || XnestServer || BuildGLXLibrary
+XEXTLIBDIR = Xext
 #endif
 
-LINTSUBDIRS = Xau Xdmcp X11 $(XINERAMADIR) $(XEXTDIR) $(XKBLIBDIR) \
-	      $(XKBUILIBDIR) $(LBXUTILDIR) $(XF86EXTLIBS) $(XVLIBDIR) \
-	      $(GLXLIBDIR) $(GLWLIBDIR) $(ZLIBDIR) $(REGEXDIR) $(RENDERLIBDIR) \
-	      $(FREETYPE2BUILDDIR) $(XFTLIBDIR)
+#if BuildLibraries
+OLDXLIBDIR = oldX
+ICELIBDIR = ICE
+SMLIBDIR = SM
+XTLIBDIR = Xt
+XMULIBDIR = Xmu
+XMUULIBDIR = Xmuu
+XPMLIBDIR = Xpm
+XAWLIBDIR = Xaw
+XTSTLIBDIR = Xtst
+FSLIBDIR = FS
 #endif
+
+
+LINTSUBDIRS = $(XAULIBDIR) $(XDMCPLIBDIR) $(THRSTUBLIBDIR) $(X11LIBDIR) \
+	     $(OLDXLIBDIR) $(ICELIBDIR) $(SMLIBDIR) $(XEXTLIBDIR) $(XTLIBDIR) \
+	     $(SSLIBDIR) $(XF86MISCLIBDIR) $(XF86VMLIBDIR) $(XF86DGALIBDIR) \
+	     $(XF86RUSHLIBDIR) $(XMULIBDIR) $(XMUULIBDIR) $(XPMLIBDIR) \
+	     $(XAWLIBDIR) $(XAW6LIBDIR) $(XIELIBDIR) $(XINPUTLIBDIR) \
+	     $(XTSTLIBDIR) $(FSLIBDIR) $(PEX5LIBDIR) $(XKBLIBDIR) \
+	     $(XKBUILIBDIR) $(LBXUTILDIR) $(XALIBDIR) $(XPRINTLIBDIR) \
+	     $(XVLIBDIR) $(GLXLIBDIR) $(GLULIBDIR) $(GLWLIBDIR) \
+	     $(DPSLIBDIR) $(DPSTKLIBDIR) $(PSRESLIBDIR) $(XINERAMADIR) \
+	     $(ZLIBDIR) $(REGEXDIR) $(RENDERLIBDIR) $(FREETYPE2BUILDDIR) \
+	     $(XFTLIBDIR) $(XVMCLIBDIR)
 
 SUBDIRS = $(BERKDIR) xtrans $(LINTSUBDIRS) $(FONTSUBDIR) $(FONTCACHELIBDIR)
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/config/cf/nto.cf,v 1.2 1999/12/27 00:45:43 robin Exp $ */
+/* $XFree86: xc/config/cf/nto.cf,v 1.3 2000/07/07 20:06:56 tsi Exp $ */
 /* Get X to build using the gcc toolchain, from QNX4 */
 /* Let us try to separate the x86 stuff out of here as well... */ 
 

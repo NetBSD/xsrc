@@ -1,4 +1,4 @@
-/* $TOG: XUngrDvK.c /main/7 1998/02/06 15:05:24 kaleb $ */
+/* $Xorg: XUngrDvK.c,v 1.3 2000/08/17 19:45:58 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XUngrDvK.c,v 3.0 1996/08/25 13:53:13 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XUngrDvK.c,v 3.2 2001/01/17 19:42:51 dawes Exp $ */
 
 /***********************************************************************
  *

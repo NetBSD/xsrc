@@ -1,11 +1,11 @@
 #ifndef __GLX_glx_h__
 #define __GLX_glx_h__
 
-/* $XFree86: xc/include/GL/glx.h,v 1.6 2000/06/17 00:02:46 martin Exp $ */
+/* $XFree86: xc/include/GL/glx.h,v 1.8 2001/03/21 15:51:38 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
-** Software License B, Version 1.0 (the "License"), the contents of this
+** Software License B, Version 1.1 (the "License"), the contents of this
 ** file are subject only to the provisions of the License. You may not use
 ** this file except in compliance with the License. You may obtain a copy
 ** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600

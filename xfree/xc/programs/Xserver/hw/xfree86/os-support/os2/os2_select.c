@@ -3,7 +3,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_select.c,v 3.7 1999/04/29 09:13:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_select.c,v 3.8 2000/04/05 18:13:53 dawes Exp $ */
 
 /*
  * (c) Copyright 1996 by Sebastien Marineau

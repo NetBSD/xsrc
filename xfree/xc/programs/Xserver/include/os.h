@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/os.h,v 3.35 2000/08/02 15:30:36 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/include/os.h,v 3.37 2001/01/17 22:36:57 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: os.h /main/62 1998/02/09 14:29:17 kaleb $ */
+/* $Xorg: os.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 
 #ifndef OS_H
 #define OS_H

@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_axp.c,v 1.4 2001/02/15 19:46:03 eich Exp $ */
 
 #include <stdio.h>
 #include "X.h"
@@ -8,6 +8,13 @@
 #include "xf86Axp.h"
 
 axpDevice lnxGetAXP(void);
+
+typedef struct 
+ { char* sysName; 
+   char* sysVari; 
+   char* cpu; 
+   axpDevice sys; }
+AXP;
 
 static AXP axpList[] = {
   { "Tsunami", NULL, NULL, TSUNAMI },
@@ -26,9 +33,9 @@ static AXP axpList[] = {
   {"Mikasa",NULL,NULL,APECS},
   {"EB164","EB164",NULL,CIA},
   {"EB164","PC164", NULL,CIA},
-  {"EB164","RX164",NULL, POLARIS},
-  {"EB164","SX164",NULL, PYXIS},
   {"EB164","LX164",NULL, PYXIS},
+  {"EB164","SX164",NULL, PYXIS},
+  {"EB164","RX164",NULL, POLARIS},
   {"Alcor",NULL,NULL,CIA},
   {"Takara",NULL,NULL,CIA},
   {"Sable",NULL, "EV5",T2_GAMMA},

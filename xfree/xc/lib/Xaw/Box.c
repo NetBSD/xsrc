@@ -1,4 +1,4 @@
-/* $TOG: Box.c /main/50 1998/02/06 12:44:59 kaleb $ */
+/* $Xorg: Box.c,v 1.3 2000/08/17 19:45:31 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Box.c,v 1.12 1999/05/09 10:51:36 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Box.c,v 1.14 2001/01/17 19:42:25 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

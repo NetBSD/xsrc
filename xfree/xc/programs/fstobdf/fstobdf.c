@@ -1,4 +1,4 @@
-/* $TOG: fstobdf.c /main/6 1998/02/09 13:43:32 kaleb $ */
+/* $Xorg: fstobdf.c,v 1.3 2000/08/17 19:53:52 cpqbld Exp $ */
 /*
  
 Copyright 1990, 1998  The Open Group
@@ -39,9 +39,10 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: $ */
+/* $XFree86: xc/programs/fstobdf/fstobdf.c,v 1.5 2001/04/01 14:00:18 tsi Exp $ */
 
 #include	<stdio.h>
+#include	<stdlib.h>
 #include        <string.h>
 #include	"fstobdf.h"
 static void

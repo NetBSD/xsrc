@@ -1,4 +1,4 @@
-/* $TOG: zlib.h /main/4 1998/02/04 14:34:35 kaleb $ */
+/* $Xorg: zlib.h,v 1.3 2000/08/17 19:46:48 cpqbld Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.0.8, Jan 27th, 1998

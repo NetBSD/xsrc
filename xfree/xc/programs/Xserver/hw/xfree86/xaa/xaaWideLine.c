@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaWideLine.c,v 1.5 1999/03/29 12:17:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaWideLine.c,v 1.7 1999/10/31 23:52:57 mvojkovi Exp $ */
 
 /*
 

@@ -1,4 +1,4 @@
-/* $TOG: closure.h /main/4 1998/02/09 14:27:54 kaleb $ */
+/* $Xorg: closure.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

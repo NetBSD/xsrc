@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mipolygen.c /main/9 1998/02/09 14:47:51 kaleb $ */
+/* $Xorg: mipolygen.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 #include "X.h"
 #include "gcstruct.h"
 #include "miscanfill.h"

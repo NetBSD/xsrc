@@ -1,4 +1,4 @@
-.\" $TOG: bitmap.man /main/20 1998/02/09 13:40:30 kaleb $
+.\" $Xorg: bitmap.man,v 1.3 2000/08/17 19:53:50 cpqbld Exp $
 .\" Copyright 1993, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH BITMAP 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/bitmap/bitmap.man,v 1.6 2001/01/27 18:21:01 dawes Exp $
+.\"
+.TH BITMAP 1 __xorgversion__
 .SH NAME
 bitmap, bmtoa, atobm \- bitmap editor and converter utilities for the X Window System
 .SH SYNOPSIS

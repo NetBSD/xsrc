@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DoProbe.c,v 1.8 2000/02/24 05:36:50 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DoProbe.c,v 1.9 2000/03/01 16:00:51 tsi Exp $ */
 /*
  * finish setting up the server
  * Load the driver modules and call their probe functions.

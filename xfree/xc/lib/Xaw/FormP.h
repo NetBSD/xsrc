@@ -1,4 +1,4 @@
-/* $TOG: FormP.h /main/23 1998/02/06 12:45:46 kaleb $ */
+/* $Xorg: FormP.h,v 1.3 2000/08/17 19:45:33 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/FormP.h,v 1.10 1999/06/13 13:47:19 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/FormP.h,v 1.12 2001/01/17 19:42:26 dawes Exp $ */
 
 /* Form widget private definitions */
 

@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/trident/tridentdraw.c,v 1.6 2000/10/11 06:04:40 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/trident/tridentdraw.c,v 1.7 2000/11/29 08:42:25 keithp Exp $ */
 
 #include "trident.h"
 #include "tridentdraw.h"

@@ -1,4 +1,4 @@
-/* $XConsortium: xkbconfig.c /main/5 1996/12/27 20:52:56 kaleb $ */
+/* $Xorg: xkbconfig.c,v 1.4 2000/08/17 19:46:43 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/xkbfile/xkbconfig.c,v 3.5 2001/01/17 19:43:42 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -354,7 +354,7 @@ AddAXTimeoutOptByName(rtrn,name,opts_rtrn)
     else if (_XkbStrCaseCmp(name,"slowkeysreject")==0)
 	*opts_rtrn= XkbAX_SKRejectFBMask;
     else if (_XkbStrCaseCmp(name,"bouncekeysreject")==0)
-	*opts_rtrn= XkbAX_SKRejectFBMask;
+	*opts_rtrn= XkbAX_BKRejectFBMask;
     else if (_XkbStrCaseCmp(name,"dumbbell")==0)
 	*opts_rtrn= XkbAX_DumbBellFBMask;
     else {

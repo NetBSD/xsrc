@@ -1,4 +1,4 @@
-/* $TOG: SetValues.c /main/24 1998/02/06 13:25:58 kaleb $ */
+/* $Xorg: SetValues.c,v 1.3 2000/08/17 19:46:17 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts

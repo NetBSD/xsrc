@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.h,v 1.33 2000/12/08 09:05:16 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.h,v 1.40 2001/05/15 10:19:41 eich Exp $ */
 
 #ifndef _TRIDENT_H_
 #define _TRIDENT_H_
@@ -61,9 +61,6 @@ typedef struct {
     CARD32		IOAddress;
     unsigned long	FbAddress;
     unsigned char *     IOBase;
-#ifdef __alpha__
-    unsigned char *     IOBaseDense;
-#endif
     unsigned char *	FbBase;
     long		FbMapSize;
     Bool		NoAccel;
@@ -78,6 +75,7 @@ typedef struct {
     Bool		MUX;
     Bool		IsCyber;
     Bool		CyberShadow;
+    Bool		CyberStretch;
     Bool		NoMMIO;
     Bool                MMIOonly;
     Bool		ShadowFB;
@@ -108,6 +106,8 @@ typedef struct {
     int			w;
     int			y;
     int                 lcdMode;
+    Bool                lcdActive;
+    Bool                doInit;
 #ifdef READOUT
     Bool                DontSetClock;
 #endif
@@ -138,11 +138,13 @@ typedef struct {
     int			hsync;
     int			vsync;
 #endif
+    OptionInfoPtr	Options;
 } TRIDENTRec, *TRIDENTPtr;
 
 typedef struct {
     CARD8 mode;
-    char* display;
+    int display_x;
+    int display_y;
     int clock;
     int shadow_0;
     int shadow_3;
@@ -185,6 +187,7 @@ Bool TridentHWCursorInit(ScreenPtr pScreen);
 int TridentFindMode(int xres, int yres, int depth);
 void TGUISetClock(ScrnInfoPtr pScrn, int clock, unsigned char *a, unsigned char *b);
 void TGUISetMCLK(ScrnInfoPtr pScrn, int clock, unsigned char *a, unsigned char *b);
+void tridentSetModeBIOS(ScrnInfoPtr pScrn, DisplayModePtr mode);
 void TridentOutIndReg(ScrnInfoPtr pScrn,
 		     CARD32 reg, unsigned char mask, unsigned char data);
 unsigned char TridentInIndReg(ScrnInfoPtr pScrn, CARD32 reg);
@@ -253,7 +256,9 @@ typedef enum {
     CYBERBLADEI1D,
     CYBERBLADEAI1,
     CYBERBLADEAI1D,
-    CYBERBLADEE4
+    CYBERBLADEE4,
+    CYBERBLADEXP,
+    CYBERBLADEXPm
 } TRIDENTType;
 
 #define UseMMIO		(pTrident->NoMMIO == FALSE)
@@ -279,7 +284,9 @@ typedef enum {
 			 (pTrident->Chipset == CYBERBLADEI1D)  || \
 			 (pTrident->Chipset == CYBERBLADEAI1)  || \
 			 (pTrident->Chipset == CYBERBLADEAI1D)  || \
-			 (pTrident->Chipset == BLADE3D))
+			 (pTrident->Chipset == BLADE3D) || \
+			 (pTrident->Chipset == CYBERBLADEXP) || \
+			 (pTrident->Chipset == CYBERBLADEXPm))
 
 /*
  * Trident DAC's

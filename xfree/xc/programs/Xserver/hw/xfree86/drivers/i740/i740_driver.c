@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_driver.c,v 1.25 2000/10/09 23:37:13 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_driver.c,v 1.30 2001/05/15 10:19:38 eich Exp $ */
 
 /*
  * Authors:
@@ -71,6 +71,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "micmap.h"
 
+#define USE_FB
+
+#ifdef USE_FB
+#include "fb.h"
+#else
 /* Drivers using cfb need: */
 
 #define PSZ 8
@@ -82,6 +87,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "cfb16.h"
 #include "cfb24.h"
 #include "cfb32.h"
+#endif
 
 /* The driver's own header file: */
 
@@ -95,7 +101,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vbe.h"
 
 /* Required Functions: */
-static OptionInfoPtr I740AvailableOptions(int chipid, int busid);
+static const OptionInfoRec * I740AvailableOptions(int chipid, int busid);
 
 /* Print a driver identifying message. */
 static void I740Identify(int flags);
@@ -133,11 +139,11 @@ static void I740FreeScreen(int scrnIndex, int flags);
 static int I740ValidMode(int scrnIndex, DisplayModePtr mode, Bool
 		       verbose, int flags);
 
-#ifdef DPMSExtension
 /* Switch to various Display Power Management System levels */
 static void I740DisplayPowerManagementSet(ScrnInfoPtr pScrn, 
 					int PowerManagermentMode, int flags);
-#endif
+
+static void I740ProbeDDC(ScrnInfoPtr pScrn, int index);
 
 #define VERSION 4000
 #define I740_NAME "I740"
@@ -149,9 +155,6 @@ static void I740DisplayPowerManagementSet(ScrnInfoPtr pScrn,
 DriverRec I740 = {
   VERSION,
   I740_DRIVER_NAME,
-#if 0
-  "Accelerated driver for Intel i740 cards",
-#endif
   I740Identify,
   I740Probe,
   I740AvailableOptions,
@@ -182,7 +185,7 @@ typedef enum {
   OPTION_USE_PIO
 } I740Opts;
 
-static OptionInfoRec I740Options[] = {
+static const OptionInfoRec I740Options[] = {
   { OPTION_NOACCEL, "NoAccel", OPTV_BOOLEAN, {0}, FALSE },
   { OPTION_SW_CURSOR, "SWcursor", OPTV_BOOLEAN, {0}, FALSE },
   { OPTION_SDRAM, "SDRAM", OPTV_BOOLEAN, {0}, FALSE},
@@ -210,11 +213,16 @@ static const char *vgahwSymbols[] = {
     0
 };
 
-static const char *cfbSymbols[] = {
+static const char *fbSymbols[] = {
+#ifdef USE_FB
+    "fbScreenInit",
+    "fbPictureInit",
+#else
     "cfbScreenInit",
     "cfb16ScreenInit",
     "cfb24ScreenInit",
     "cfb32ScreenInit",
+#endif
     "cfb8_32ScreenInit",
     "cfb24_32ScreenInit",
     NULL
@@ -289,7 +297,7 @@ i740Setup(pointer module, pointer opts, int *errmaj, int *errmin)
 	 * Tell the loader about symbols from other modules that this module
 	 * might refer to.
 	 */
-	LoaderRefSymLists(vgahwSymbols, cfbSymbols, xaaSymbols, 
+	LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols, 
 			  xf8_32bppSymbols, ramdacSymbols, vbeSymbols,
 			  NULL /* ddcsymbols */, NULL /* i2csymbols */, NULL /* shadowSymbols */,
 			  NULL /* fbdevsymbols */, NULL);
@@ -330,8 +338,7 @@ I740FreeRec(ScrnInfoPtr pScrn) {
   pScrn->driverPrivate=0;
 }
 
-static
-OptionInfoPtr
+static const OptionInfoRec *
 I740AvailableOptions(int chipid, int busid) 
 {
     return I740Options;
@@ -445,7 +452,7 @@ I740Probe(DriverPtr drv, int flags) {
   return foundScreen;
 }
 
-void
+static void
 I740ProbeDDC(ScrnInfoPtr pScrn, int index)
 {
     vbeInfoPtr pVbe;
@@ -470,7 +477,9 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
   int i;
   MessageType from;
   int temp;
+#ifndef USE_FB
   char *mod=0, *reqSym=0;
+#endif
   int flags24;
   rgb defaultWeight = {0, 0, 0};
 
@@ -532,7 +541,7 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
   xf86PrintDepthBpp(pScrn);
 
   pScrn->rgbBits=8;
-  if (xf86ReturnOptValBool(I740Options, OPTION_DAC_6BIT, FALSE))
+  if (xf86ReturnOptValBool(pI740->Options, OPTION_DAC_6BIT, FALSE))
     pScrn->rgbBits=6;
   if (!xf86SetWeight(pScrn, defaultWeight, defaultWeight))
     return FALSE;
@@ -557,13 +566,16 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
 
   /* Process the options */
   xf86CollectOptions(pScrn, NULL);
-  xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, I740Options);
+  if (!(pI740->Options = xalloc(sizeof(I740Options))))
+    return FALSE;
+  memcpy(pI740->Options, I740Options, sizeof(I740Options));
+  xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pI740->Options);
 
   /* 6-BIT dac isn't reasonable for modes with > 8bpp */
-  if (xf86ReturnOptValBool(I740Options, OPTION_DAC_6BIT, FALSE) &&
+  if (xf86ReturnOptValBool(pI740->Options, OPTION_DAC_6BIT, FALSE) &&
       pScrn->bitsPerPixel>8) {
     OptionInfoPtr ptr;
-    ptr=xf86TokenToOptinfo(I740Options, OPTION_DAC_6BIT);
+    ptr=xf86TokenToOptinfo(pI740->Options, OPTION_DAC_6BIT);
     ptr->found=FALSE;
   }
 
@@ -642,24 +654,24 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
 
   temp=pI740->readControl(pI740, XRX, DRAM_ROW_CNTL_LO);
   pI740->HasSGRAM = !((temp&DRAM_RAS_TIMING)||(temp&DRAM_RAS_PRECHARGE));
-  if (xf86IsOptionSet(I740Options, OPTION_SDRAM)) {
-    if (xf86IsOptionSet(I740Options, OPTION_SGRAM)) {
+  if (xf86IsOptionSet(pI740->Options, OPTION_SDRAM)) {
+    if (xf86IsOptionSet(pI740->Options, OPTION_SGRAM)) {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
 		 "It is nonsensical to set both SDRAM and SGRAM options\n");
       return FALSE;
     }
-    if (xf86ReturnOptValBool(I740Options, OPTION_SDRAM, FALSE)) {
+    if (xf86ReturnOptValBool(pI740->Options, OPTION_SDRAM, FALSE)) {
       pI740->HasSGRAM = FALSE;
     } else {
       pI740->HasSGRAM = TRUE;
     }
   } else {
-    if (xf86IsOptionSet(I740Options, OPTION_SDRAM)) {
+    if (xf86IsOptionSet(pI740->Options, OPTION_SDRAM)) {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR, 
 		 "It is nonsensical to set both SDRAM and SGRAM options\n");
       return FALSE;
     }
-    if (xf86ReturnOptValBool(I740Options, OPTION_SGRAM, FALSE)) {
+    if (xf86ReturnOptValBool(pI740->Options, OPTION_SGRAM, FALSE)) {
       pI740->HasSGRAM = TRUE;
     } else {
       pI740->HasSGRAM = FALSE;
@@ -756,6 +768,13 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
 
   xf86SetDpi(pScrn, 0, 0);
 
+#ifdef USE_FB
+  if (!xf86LoadSubModule(pScrn, "fb")) {
+    I740FreeRec(pScrn);
+    return FALSE;
+  }
+  xf86LoaderReqSymbols("fbScreenInit","fbPictureInit", NULL);
+#else
   switch (pScrn->bitsPerPixel) {
   case 8:
     mod = "cfb";
@@ -779,15 +798,16 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
     return FALSE;
   }
   xf86LoaderReqSymbols(reqSym, NULL);
+#endif
 
-  if (!xf86ReturnOptValBool(I740Options, OPTION_NOACCEL, FALSE)) {
+  if (!xf86ReturnOptValBool(pI740->Options, OPTION_NOACCEL, FALSE)) {
     if (!xf86LoadSubModule(pScrn, "xaa")) {
       I740FreeRec(pScrn);
       return FALSE;
     }
   }
 
-  if (!xf86ReturnOptValBool(I740Options, OPTION_SW_CURSOR, FALSE)) {
+  if (!xf86ReturnOptValBool(pI740->Options, OPTION_SW_CURSOR, FALSE)) {
     if (!xf86LoadSubModule(pScrn, "ramdac")) {
       I740FreeRec(pScrn);
       return FALSE;
@@ -796,7 +816,7 @@ I740PreInit(ScrnInfoPtr pScrn, int flags) {
   }
 
   /*  We wont be using the VGA access after the probe */
-  if (!xf86ReturnOptValBool(I740Options, OPTION_USE_PIO, FALSE)) {
+  if (!xf86ReturnOptValBool(pI740->Options, OPTION_USE_PIO, FALSE)) {
     resRange vgaio[] = { {ResShrIoBlock,0x3B0,0x3BB},
 			 {ResShrIoBlock,0x3C0,0x3DF},
 			 _END };
@@ -1289,7 +1309,7 @@ I740SetMode(ScrnInfoPtr pScrn, DisplayModePtr mode) {
   }
 
   /* Turn on 8 bit dac if requested */
-  if (xf86ReturnOptValBool(I740Options, OPTION_DAC_6BIT, FALSE))
+  if (xf86ReturnOptValBool(pI740->Options, OPTION_DAC_6BIT, FALSE))
     i740Reg->PixelPipeCfg0 = DAC_6_BIT;
   else
     i740Reg->PixelPipeCfg0 = DAC_8_BIT;
@@ -1306,7 +1326,7 @@ I740SetMode(ScrnInfoPtr pScrn, DisplayModePtr mode) {
   i740Reg->DisplayControl = HIRES_MODE;
 
   /* Set the MCLK freq */
-  if (xf86ReturnOptValBool(I740Options, OPTION_SLOW_RAM, FALSE))
+  if (xf86ReturnOptValBool(pI740->Options, OPTION_SLOW_RAM, FALSE))
     i740Reg->PLLControl = PLL_MEMCLK__66667KHZ; /*  66 MHz */
   else
     i740Reg->PLLControl = PLL_MEMCLK_100000KHZ; /* 100 MHz -- use as default */
@@ -1317,7 +1337,15 @@ I740SetMode(ScrnInfoPtr pScrn, DisplayModePtr mode) {
   i740Reg->ExtVertSyncStart = mode->CrtcVSyncStart >> 8;
   i740Reg->ExtVertBlankStart = mode->CrtcVBlankStart >> 8;
   i740Reg->ExtHorizTotal = ((mode->CrtcHTotal >> 3) - 5) >> 8;
-  i740Reg->ExtHorizBlank = ((mode->CrtcHSyncEnd >> 3) & 0x40) >> 6;
+  /*
+   * the KGA fix in vgaHW.c results in the first
+   * scanline and the first character clock (8 pixels)
+   * of each scanline thereafter on display with an i740
+   * to be blank. Restoring CRTC 3, 5, & 22 to their
+   * "theoretical" values corrects the problem. KAO.
+   */
+  i740Reg->ExtHorizBlank = vgaHWHBlankKGA(mode, pVga, 7, 0) << 6;
+  vgaHWVBlankKGA(mode, pVga, 8, 0);
 
   /* Turn on interlaced mode if necessary */
   if (mode->Flags & V_INTERLACE)
@@ -1351,7 +1379,6 @@ I740ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
   vgaHWPtr hwp;
   I740Ptr pI740;
-  vgaRegPtr pVga;
 
   hwp = VGAHWPTR(pScrn);
   pI740 = I740PTR(pScrn);
@@ -1359,18 +1386,6 @@ I740ModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
   vgaHWUnlock(hwp);
 
   if (!vgaHWInit(pScrn, mode)) return FALSE;
-  /*
-   * the KGA fix in vgaHW.c results in the first
-   * scanline and the first character clock (8 pixels)
-   * of each scanline thereafter on display with an i740
-   * to be blank. Restoring CRTC 3, 5, & 22 to their
-   * "theoretical" values corrects the problem. KAO.
-   */
-  pVga = &VGAHWPTR(pScrn)->ModeReg;
-  pVga->CRTC[3]  = (((mode->CrtcHBlankEnd >> 3) - 1) & 0x1F) | 0x80;
-  pVga->CRTC[5]  = ((((mode->CrtcHBlankEnd >> 3) - 1) & 0x20) << 2)
-        | (((mode->CrtcHSyncEnd >> 3)) & 0x1F);
-  pVga->CRTC[22] = (mode->CrtcVBlankEnd - 1) & 0xFF;
 
   pScrn->vtSema = TRUE;
 
@@ -1466,8 +1481,23 @@ I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
   if (!miSetVisualTypes(pScrn->depth, miGetDefaultVisualMask(pScrn->depth),
 			pScrn->rgbBits, pScrn->defaultVisual))
     return FALSE;
+#ifdef USE_FB
+	if (!miSetPixmapDepths ()) return FALSE;
+#endif
 
   switch (pScrn->bitsPerPixel) {
+#ifdef USE_FB
+  case 8:
+  case 16:
+  case 24:
+  case 32:
+    if (!fbScreenInit(pScreen, pI740->FbBase, 
+		       pScrn->virtualX, pScrn->virtualY,
+		       pScrn->xDpi, pScrn->yDpi,
+		       pScrn->displayWidth,pScrn->bitsPerPixel))
+      return FALSE;
+    break;
+#else
   case 8:
     if (!cfbScreenInit(pScreen, pI740->FbBase, 
 		       pScrn->virtualX, pScrn->virtualY,
@@ -1496,12 +1526,16 @@ I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
 			 pScrn->displayWidth))
       return FALSE;
     break;
+#endif
   default:
     xf86DrvMsg(scrnIndex, X_ERROR,
 	       "Internal error: invalid bpp (%d) in I740ScrnInit\n",
 	       pScrn->bitsPerPixel);
     return FALSE;
   }
+#ifdef USE_FB
+  fbPictureInit(pScreen,0,0);
+#endif
 
   xf86SetBlackWhitePixels(pScreen);
 
@@ -1537,9 +1571,7 @@ I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
       return FALSE;
   }
 
-#ifdef DPMSExtension
   xf86DPMSInit(pScreen, I740DisplayPowerManagementSet, 0);
-#endif
 
 #ifdef XvExtension
   {
@@ -1563,14 +1595,14 @@ I740ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv) {
     return FALSE;
   }
 
-  if (!xf86ReturnOptValBool(I740Options, OPTION_NOACCEL, FALSE)) {
+  if (!xf86ReturnOptValBool(pI740->Options, OPTION_NOACCEL, FALSE)) {
     if (!I740AccelInit(pScreen)) {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		 "Hardware acceleration initialization failed\n");
     }
   }
 
-  if (!xf86ReturnOptValBool(I740Options, OPTION_SW_CURSOR, FALSE)) {
+  if (!xf86ReturnOptValBool(pI740->Options, OPTION_SW_CURSOR, FALSE)) {
     if (!I740CursorInit(pScreen)) {
       xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		 "Hardware cursor initialization failed\n");
@@ -1715,7 +1747,6 @@ I740SaveScreen(ScreenPtr pScreen, int mode)
   return vgaHWSaveScreen(pScreen, mode);
 }
 
-#ifdef DPMSExtension
 static void
 I740DisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode, 
 			      int flags) {
@@ -1754,4 +1785,3 @@ I740DisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
   /* Set the DPMS mode */
   pI740->writeControl(pI740, XRX, DPMS_SYNC_SELECT, DPMSSyncSelect);
 }
-#endif

@@ -1,4 +1,4 @@
-/* $TOG: lbxcmap.c /main/13 1998/03/11 16:28:54 barstow $ */
+/* $Xorg: lbxcmap.c,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
@@ -21,7 +21,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/lbx/lbxcmap.c,v 1.5 1998/11/15 11:11:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxcmap.c,v 1.8 2001/02/16 13:24:10 eich Exp $ */
 
 #include <sys/types.h>
 #define NEED_REPLIES
@@ -48,6 +48,7 @@ static int lbxColormapPrivIndex;	/* lbx colormap private index */
 typedef struct {			/* lbx screen private */
     CreateColormapProcPtr CreateColormap;
     DestroyColormapProcPtr DestroyColormap;
+  CloseScreenProcPtr CloseScreen;
 } LbxScreenPriv;
 
 typedef struct _LbxStalled {
@@ -140,6 +141,20 @@ LbxDestroyColormap (ColormapPtr pmap)
     pScreen->DestroyColormap = LbxDestroyColormap;
 }
 
+static Bool
+LbxCloseScreen(int i, ScreenPtr pScreen)
+{
+    LbxScreenPriv* pLbxScrPriv = ((LbxScreenPriv *) 
+			     (pScreen->devPrivates[lbxScreenPrivIndex].ptr));
+    
+    pScreen->CloseScreen = pLbxScrPriv->CloseScreen;
+
+    xfree(pScreen->devPrivates[lbxScreenPrivIndex].ptr);
+    pScreen->devPrivates[lbxScreenPrivIndex].ptr = NULL;
+
+    return pScreen->CloseScreen(i, pScreen);
+}
+
 /*
  * Initialize LBX colormap private.
  */
@@ -181,12 +196,13 @@ LbxCmapInit (void)
 	pScreen->CreateColormap = LbxCreateColormap;
 	pScreenPriv->DestroyColormap = pScreen->DestroyColormap;
 	pScreen->DestroyColormap = LbxDestroyColormap;
+	pScreenPriv->CloseScreen = pScreen->CloseScreen;
+	pScreen->CloseScreen = LbxCloseScreen;
 	pScreen->devPrivates[lbxScreenPrivIndex].ptr = (pointer) pScreenPriv;
     }
 
     return 1;
 }
-
 
 /*
  * Return the number of allocated cells in the PSEUDO colormap.

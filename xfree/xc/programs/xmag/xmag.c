@@ -1,4 +1,4 @@
-/* $TOG: xmag.c /main/30 1998/02/09 14:11:03 kaleb $ */
+/* $Xorg: xmag.c,v 1.3 2000/08/17 19:54:54 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xmag/xmag.c,v 1.6 1999/01/31 12:22:29 dawes Exp $ */
+/* $XFree86: xc/programs/xmag/xmag.c,v 1.8 2001/01/17 23:46:20 dawes Exp $ */
 
 
 #ifndef X_NOT_STDC_ENV

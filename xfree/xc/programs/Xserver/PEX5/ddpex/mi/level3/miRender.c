@@ -1,4 +1,4 @@
-/* $TOG: miRender.c /main/22 1998/02/10 12:43:12 kaleb $ */
+/* $Xorg: miRender.c,v 1.3 2000/08/17 19:47:08 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level3/miRender.c,v 3.4 1998/07/26 13:14:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level3/miRender.c,v 3.6 2001/01/17 22:12:27 dawes Exp $ */
 
 #include "miLUT.h"
 #include "dipex.h"

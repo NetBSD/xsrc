@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xfs/include/difs.h,v 1.1 1999/03/07 11:40:59 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/difs.h,v 1.2 1999/08/21 13:48:50 dawes Exp $ */
 /*
  * Copyright (C) 1999 The XFree86 Project, Inc.  All Rights Reserved.
  *

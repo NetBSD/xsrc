@@ -1,5 +1,5 @@
 /*
- * Copyright 1997,1998 by Alan Hourihane <alanh@fairlite.demon.co.uk>
+ * Copyright 1997-2001 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@
  * this work is sponsored by S.u.S.E. GmbH, Fuerth, Elsa GmbH, Aachen and
  * Siemens Nixdorf Informationssysteme
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm_dac.c,v 1.6 1999/02/12 22:52:06 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm_dac.c,v 1.9.2.1 2001/05/24 20:12:48 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -40,61 +40,23 @@
 #include "glint_regs.h"
 #include "glint.h"
 
-static int
-Shiftbpp(ScrnInfoPtr pScrn, int value)
-{
-    GLINTPtr pGlint = GLINTPTR(pScrn);
-    /* shift horizontal timings for 64bit VRAM's or 32bit SGRAMs */
-    int logbytesperaccess = 2;
-	
-    switch (pScrn->bitsPerPixel) {
-    case 8:
-	value >>= logbytesperaccess;
-	pGlint->BppShift = logbytesperaccess;
-	break;
-    case 16:
-	if (pGlint->DoubleBuffer) {
-	    value >>= (logbytesperaccess-2);
-	    pGlint->BppShift = logbytesperaccess-2;
-	} else {
-	    value >>= (logbytesperaccess-1);
-	    pGlint->BppShift = logbytesperaccess-1;
-	}
-	break;
-    case 24:
-	value *= 3;
-	value >>= logbytesperaccess;
-	pGlint->BppShift = logbytesperaccess;
-	break;
-    case 32:
-	value >>= (logbytesperaccess-2);
-	pGlint->BppShift = logbytesperaccess-2;
-	break;
-    }
-    return (value);
-}
-
 Bool
 PermediaInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
     GLINTPtr pGlint = GLINTPTR(pScrn);
-    GLINTRegPtr pReg = &pGlint->ModeReg;
+    GLINTRegPtr pReg = &pGlint->ModeReg[0];
     RamDacHWRecPtr pIBM = RAMDACHWPTR(pScrn);
     RamDacRegRecPtr ramdacReg = &pIBM->ModeReg;
     CARD32 temp1, temp2, temp3, temp4;
 
-    pReg->glintRegs[Aperture0 >> 3] = 0;
-    pReg->glintRegs[Aperture1 >> 3] = 0;
+    STOREREG(Aperture0, 0x00000000);
+    STOREREG(Aperture1, 0x00000000);
+
     pReg->glintRegs[PMFramebufferWriteMask >> 3] = 0xFFFFFFFF;
     pReg->glintRegs[PMBypassWriteMask >> 3] = 0xFFFFFFFF;
 
-    if (pGlint->UsePCIRetry) {
-	pReg->glintRegs[DFIFODis >> 3] = 1;
-	pReg->glintRegs[FIFODis >> 3] = 3;
-    } else {
-	pReg->glintRegs[DFIFODis >> 3] = 0;
-	pReg->glintRegs[FIFODis >> 3] = 1;
-    }
+    pReg->glintRegs[DFIFODis >> 3] = 1;
+    pReg->glintRegs[FIFODis >> 3] = 3;
 
     temp1 = mode->CrtcHSyncStart - mode->CrtcHDisplay;
     temp2 = mode->CrtcVSyncStart - mode->CrtcVDisplay;
@@ -104,6 +66,8 @@ PermediaInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     pReg->glintRegs[PMHTotal >> 3] = Shiftbpp(pScrn,mode->CrtcHTotal);
     pReg->glintRegs[PMHsEnd >> 3] = Shiftbpp(pScrn, temp1 + temp3);
     pReg->glintRegs[PMHsStart >> 3] = Shiftbpp(pScrn, temp1);
+    pReg->glintRegs[PMHbEnd >> 3] = Shiftbpp(pScrn, mode->CrtcHTotal - 
+							mode->CrtcHDisplay);
     pReg->glintRegs[PMHgEnd >> 3] = Shiftbpp(pScrn, mode->CrtcHTotal - 
 							mode->CrtcHDisplay);
     pReg->glintRegs[PMScreenStride >> 3] = 
@@ -158,6 +122,7 @@ PermediaInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	ramdacReg->DacRegs[IBMRGB_misc2] |= PCLK_SEL_LCLK;
     else 
 	ramdacReg->DacRegs[IBMRGB_misc2] |= PCLK_SEL_PLL;
+    ramdacReg->DacRegs[IBMRGB_misc3] = 0;
     ramdacReg->DacRegs[IBMRGB_misc_clock] = 1;
     ramdacReg->DacRegs[IBMRGB_sync] = 0;
     ramdacReg->DacRegs[IBMRGB_hsync_pos] = 0;
@@ -175,6 +140,11 @@ PermediaSave(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
 {
     GLINTPtr pGlint = GLINTPTR(pScrn);
 
+    /* We can't rely on the vgahw layer copying the font information
+     * back properly, due to problems with MMIO access to VGA space
+     * so we memcpy the information using the slow routines */
+    xf86SlowBcopy((CARD8*)pGlint->FbBase, (CARD8*)pGlint->VGAdata, 65536);
+
     glintReg->glintRegs[Aperture0 >> 3]  = GLINT_READ_REG(Aperture0);
     glintReg->glintRegs[Aperture1 >> 3]  = GLINT_READ_REG(Aperture1);
     glintReg->glintRegs[PMFramebufferWriteMask] = 
@@ -185,7 +155,7 @@ PermediaSave(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
     glintReg->glintRegs[FIFODis >> 3]  = GLINT_READ_REG(FIFODis);
 
     glintReg->glintRegs[PMHTotal >> 3] = GLINT_READ_REG(PMHTotal);
-    glintReg->glintRegs[PMHgEnd >> 3] = GLINT_READ_REG(PMHbEnd);
+    glintReg->glintRegs[PMHbEnd >> 3] = GLINT_READ_REG(PMHbEnd);
     glintReg->glintRegs[PMHgEnd >> 3] = GLINT_READ_REG(PMHgEnd);
     glintReg->glintRegs[PMScreenStride >> 3] = GLINT_READ_REG(PMScreenStride);
     glintReg->glintRegs[PMHsStart >> 3] = GLINT_READ_REG(PMHsStart);
@@ -201,40 +171,34 @@ PermediaSave(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
 }
 
 void
-PermediaRestore(ScrnInfoPtr pScrn, GLINTRegPtr glintReg)
+PermediaRestore(ScrnInfoPtr pScrn, GLINTRegPtr pReg)
 {
     GLINTPtr pGlint = GLINTPTR(pScrn);
 
-#if 0
-    GLINT_SLOW_WRITE_REG(0, ResetStatus);
-    while(GLINT_READ_REG(ResetStatus) != 0) {
-	xf86MsgVerb(X_INFO, 2, "Resetting Engine - Please Wait.\n");
-    };
-#endif
+    /* We can't rely on the vgahw layer copying the font information
+     * back properly, due to problems with MMIO access to VGA space
+     * so we memcpy the information using the slow routines */
+    if (pGlint->STATE)
+	xf86SlowBcopy((CARD8*)pGlint->VGAdata, (CARD8*)pGlint->FbBase, 65536);
 
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[ChipConfig >> 3], ChipConfig);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[DFIFODis >> 3], DFIFODis);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[FIFODis >> 3], FIFODis);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[Aperture0 >> 3], Aperture0);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[Aperture1 >> 3], Aperture1);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMFramebufferWriteMask >> 3], 
-							PMFramebufferWriteMask);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMBypassWriteMask >> 3], 
-							PMBypassWriteMask);
-
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMVideoControl >> 3], 
-								PMVideoControl);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMHgEnd >> 3], PMHgEnd);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[VClkCtl >> 3], VClkCtl);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMHTotal >> 3], PMHTotal);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMHgEnd >> 3], PMHbEnd);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMHsStart >> 3], PMHsStart);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMHsEnd >> 3], PMHsEnd);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMVTotal >> 3], PMVTotal);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMVbEnd >> 3], PMVbEnd);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMVsStart >> 3], PMVsStart);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMVsEnd >> 3], PMVsEnd);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMScreenBase >> 3], PMScreenBase);
-    GLINT_SLOW_WRITE_REG(glintReg->glintRegs[PMScreenStride >> 3], 
-								PMScreenStride);
+    RESTOREREG(ChipConfig);
+    RESTOREREG(DFIFODis);
+    RESTOREREG(FIFODis);
+    RESTOREREG(Aperture0);
+    RESTOREREG(Aperture1);
+    RESTOREREG(PMFramebufferWriteMask);
+    RESTOREREG(PMBypassWriteMask);
+    RESTOREREG(PMVideoControl);
+    RESTOREREG(PMHgEnd);
+    RESTOREREG(VClkCtl);
+    RESTOREREG(PMHTotal);
+    RESTOREREG(PMHbEnd);
+    RESTOREREG(PMHsStart);
+    RESTOREREG(PMHsEnd);
+    RESTOREREG(PMVTotal);
+    RESTOREREG(PMVbEnd);
+    RESTOREREG(PMVsStart);
+    RESTOREREG(PMVsEnd);
+    RESTOREREG(PMScreenBase);
+    RESTOREREG(PMScreenStride);
 }

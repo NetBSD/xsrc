@@ -1,4 +1,4 @@
-/* $TOG: pl_struct.c /main/13 1998/02/06 16:12:21 kaleb $ */
+/* $Xorg: pl_struct.c,v 1.4 2000/08/17 19:44:27 cpqbld Exp $ */
 
 /******************************************************************************
 
@@ -676,7 +676,7 @@ OUTPUT char		**ocsReturn;
 	 */
 
 	*sizeReturn = repSize = rep.length << 2;
-	if (*ocsReturn = (char *) Xmalloc ((unsigned) repSize))
+	if ((*ocsReturn = (char *) Xmalloc ((unsigned) repSize)))
 	    _XRead (display, *ocsReturn, (long) repSize);
     }
 

@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/defs.h,v 1.1 2000/02/12 03:55:15 dawes Exp $ */
+/* $XFree86: xc/programs/xman/defs.h,v 1.3 2001/04/19 19:54:51 dawes Exp $ */
 
 /*
  * xman - X window system manual page display program.
@@ -98,12 +98,16 @@ from the X Consortium.
 
 #define NO_SECTION_DEFAULTS ("no default sections")
 
-#if !defined(linux)
-# define TBL "tbl"
-#else
-# define TBL "gtbl"
+/*
+ * Define HANDLE_ROFFSEQ to enable parsing of '\" <string>
+ * sequences in source files to set the format pipeline.
+ * This is necessary because the default pipeline causes incorrect
+ * display of ascii(7) on Linux.
+ * This depends on GNU roff.
+ */
+#ifdef HAS_GROFF
+#define HANDLE_ROFFSEQ
 #endif
-
 
 #define DEFAULT_WIDTH 500	/* The default width of xman. */
 #define SECTALLOC  8		/* The number of entries allocated

@@ -1,7 +1,7 @@
 /* polyinfo.h
  * This is the description of one polyhedron file
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/ico/polyinfo.h,v 1.3 2000/02/17 14:00:32 dawes Exp $ */
 
 #define MAXVERTS 120
 	/* great rhombicosidodecahedron has 120 vertices */

@@ -1,5 +1,5 @@
 XCOMM!/bin/sh -f
-XCOMM $TOG: elistgen.sun /main/7 1997/10/24 15:16:44 bill $
+XCOMM $Xorg: elistgen.sun,v 1.3 2000/08/17 19:41:52 cpqbld Exp $
 XCOMM
 XCOMM ########################################################################
 XCOMM Construct shared-library scoping mapfile for Solaris based on standardized
@@ -15,7 +15,7 @@ XCOMM    linker to reconstruct the shared library, libfoo.so.
 XCOMM
 XCOMM ########################################################################
 XCOMM
-XCOMM $XFree86$
+XCOMM $XFree86: xc/config/util/elistgen.sun,v 1.7 2001/01/17 16:39:01 dawes Exp $
 
 XCOMM Utility programs
 FILTER=CXXFILT			# C++ symbol demangler

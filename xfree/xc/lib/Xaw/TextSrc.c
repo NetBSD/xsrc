@@ -1,4 +1,4 @@
-/* $TOG: TextSrc.c /main/21 1998/05/25 08:17:30 kaleb $ */
+/* $Xorg: TextSrc.c,v 1.4 2000/08/17 19:45:41 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1994, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xaw/TextSrc.c,v 1.25 2000/09/26 15:56:55 tsi Exp $ */
+/* $XFree86: xc/lib/Xaw/TextSrc.c,v 1.27 2001/01/30 15:03:34 paulo Exp $ */
 
 /*
  * Author:  Chris Peterson, MIT X Consortium.

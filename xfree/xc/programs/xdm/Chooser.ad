@@ -1,3 +1,5 @@
+! $XFree86: xc/programs/xdm/Chooser.ad,v 1.2 2001/04/06 02:16:25 dawes Exp $
+!
 *ShapeStyle:		Oval
 *cursor:		left_ptr
 *allowShellResize:	true
@@ -18,7 +20,7 @@
 	<BtnDown>:	Set() CheckWilling() \n\
 	<BtnUp>(2):	Accept()
 *list.defaultColumns:	1
-*list.forceFolumns:	true
+*list.forceColumns:	true
 
 *box.skipAdjust:	true
 *cancel.fromHoriz:	viewport

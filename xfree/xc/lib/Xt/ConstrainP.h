@@ -1,4 +1,4 @@
-/* $TOG: ConstrainP.h /main/16 1998/02/06 13:20:19 kaleb $ */
+/* $Xorg: ConstrainP.h,v 1.3 2000/08/17 19:46:09 cpqbld Exp $ */
 /* $oHeader: ConstrainP.h,v 1.2 88/08/18 15:54:15 asente Exp $ */
 /***********************************************************
 

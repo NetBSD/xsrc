@@ -1,4 +1,4 @@
-/* $TOG: validate.h /main/6 1998/02/09 14:30:17 kaleb $ */
+/* $Xorg: validate.h,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 
 /*
 
@@ -20,7 +20,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/include/validate.h,v 1.4 2001/01/17 22:36:58 dawes Exp $ */
 
 #ifndef VALIDATE_H
 #define VALIDATE_H

@@ -33,23 +33,13 @@
   /*************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftcalc.h>
-#include <freetype/internal/ftobjs.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/internal/t1errors.h>
-#include <freetype/internal/psaux.h>
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_CALC_H
+#include FT_INTERNAL_STREAM_H
+#include FT_INTERNAL_TYPE1_ERRORS_H
+#include FT_INTERNAL_POSTSCRIPT_AUX_H
 #include "t1parse.h"
-
-#else
-
-#include <type1/t1parse.h>
-
-#endif
-
 
 #include <string.h>     /* for strncmp() */
 
@@ -387,7 +377,7 @@
       /* dictionary.  We overwrite the base dictionary for disk-based */
       /* resources and allocate a new block otherwise                 */
 
-      size = parser->base_len - ( cur - parser->base_dict);
+      size = (FT_Long)( parser->base_len - ( cur - parser->base_dict ) );
 
       if ( parser->in_memory )
       {
@@ -450,7 +440,7 @@
         }
 
         /* put a safeguard */
-        parser->private_len = write - parser->private_dict;
+        parser->private_len = (FT_Int)( write - parser->private_dict );
         *write++ = 0;
       }
     }

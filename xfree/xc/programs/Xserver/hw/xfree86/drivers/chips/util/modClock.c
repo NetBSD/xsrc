@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/modClock.c,v 1.3 1999/04/04 08:46:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/util/modClock.c,v 1.5 2001/05/09 19:57:06 dbateman Exp $ */
 
 #ifdef __NetBSD__
 #  include <sys/types.h>
@@ -60,12 +60,39 @@
 
 #define tolerance 0.01 /* +/- 1% */
 
+
+#define CT65520 0x1
+#define CT65525 0x2
+#define CT65530 0x3
+#define CT64200 0x4
+
+#define CT65535 0x11
+#define CT65540 0x12
+#define CT65545 0x13
+#define CT65546 0x14
+#define CT65548 0x15
+#define CT64300 0x16
+
+#define CT65550 0x31
+#define CT65554 0x32
+#define CT65555 0x33
+#define CT68554 0x34
+#define CT69000 0x35
+#define CT69030 0x36
+
+#define IS_Programmable(X) X&0x10
+#define IS_HiQV(X) X&0x20
+
+#define DotClk 0
+#define MemClk 1
+#define IS_MemClk(X) X&0x1
+
 int compute_clock (
+		   unsigned int ChipType,
 		   double target,
 		   double Fref,
 		   unsigned int ClkMaxN,
 		   unsigned int ClkMaxM,
-		   unsigned int PStart,
 		   unsigned int *bestM,
 		   unsigned int *bestN,
 		   unsigned int *bestP,
@@ -104,7 +131,8 @@ int compute_clock (
      they should be set to 0 on the 65548, and left untouched on
      earlier chips.  */
 
-  for (PSNx = 0; PSNx <= 1; PSNx++) {
+  for (PSNx = ((ChipType == CT69000) || (ChipType == CT69030)) ? 1 : 0; 
+       PSNx <= 1; PSNx++) {
     unsigned int low_N, high_N;
     double Fref4PSN;
 
@@ -113,7 +141,8 @@ int compute_clock (
     low_N = 3;
     high_N = ClkMaxN;
 
-    while (Fref / (PSN * low_N) > 2.0e6)
+    while (Fref / (PSN * low_N) > (((ChipType == CT69000) || 
+				    (ChipType == CT69030)) ? 5.0e6 : 2.0e6))
       low_N++;
     while (Fref / (PSN * high_N) < 150.0e3)
       high_N--;
@@ -121,7 +150,9 @@ int compute_clock (
     Fref4PSN = Fref * 4 / PSN;
     for (N = low_N; N <= high_N; N++) {
       double tmp = Fref4PSN / N;
-      for (P = PStart; P <= 5; P++) {
+
+      for (P = (IS_HiQV(ChipType) && (ChipType != CT69000) &&
+		(ChipType != CT69030)) ? 1 : 0; P <= 5; P++) {
 	double Fvco_desired = target * (1 << P);
 	double M_desired = Fvco_desired / tmp;
 	/* Which way will M_desired be rounded?  Do all three just to
@@ -139,7 +170,8 @@ int compute_clock (
 
 	for (M = M_low; M <= M_hi; M++) {
 	  Fvco = tmp * M;
-	  if (Fvco <= 48.0e6)
+	  if (Fvco <= ((ChipType == CT69000) || (ChipType == CT69030) ?
+		       100e6 : 48.0e6))
 	    continue;
 	  if (Fvco > 220.0e6)
 	    break;
@@ -180,35 +212,10 @@ int compute_clock (
   return 1;
 }
 
-#define CT65520 0x1
-#define CT65525 0x2
-#define CT65530 0x3
-#define CT64200 0x4
-
-#define CT65535 0x11
-#define CT65540 0x12
-#define CT65545 0x13
-#define CT65546 0x14
-#define CT65548 0x15
-#define CT64300 0x16
-
-#define CT65550 0x31
-#define CT65554 0x32
-#define CT65555 0x33
-#define CT68554 0x34
-#define CT69000 0x35
-#define CT69030 0x36
-
-#define IS_Programmable(X) X&0x10
-#define IS_HiQV(X) X&0x20
-
-#define DotClk 0
-#define MemClk 1
-#define IS_MemClk(X) X&0x1
-
 int set_clock(
 	      unsigned int ChipType,
 	      unsigned int ClockType,
+	      unsigned int ProgClock,
 	      unsigned int M,
 	      unsigned int N,
 	      unsigned int P,
@@ -235,18 +242,18 @@ int set_clock(
       outb(0x3D6, 0xCE);
       outb(0x3D7, (0x80 | (P * 16 + (PSN == 1))));
     } else {
-      printf ("XRC8 = 0x%02X\n", M - 2);
-      printf ("XRC9 = 0x%02X\n", N - 2);
-      printf ("XRCA = 0x%02X\n", 0);
-      printf ("XRCB = 0x%02X\n", P * 16 + (PSN == 1));
+      printf ("XR%X = 0x%02X\n", 0xC0 + 4 * ProgClock, M - 2);
+      printf ("XR%X = 0x%02X\n",  0xC1 + 4 * ProgClock, N - 2);
+      printf ("XR%X = 0x%02X\n",  0xC2 + 4 * ProgClock, 0);
+      printf ("XR%X = 0x%02X\n",  0xC3 + 4 * ProgClock, P * 16 + (PSN == 1));
 
-      outb(0x3D6, 0xC8);
+      outb(0x3D6, 0xC0 + 4 * ProgClock);
       outb(0x3D7, (M - 2));
-      outb(0x3D6, 0xC9);
+      outb(0x3D6, 0xC1 + 4 * ProgClock);
       outb(0x3D7, (N - 2));
-      outb(0x3D6, 0xCA);
+      outb(0x3D6, 0xC2 + 4 * ProgClock);
       outb(0x3D7, 0x0);
-      outb(0x3D6, 0xCB);
+      outb(0x3D6, 0xC3 + 4 * ProgClock);
       outb(0x3D7, (P * 16 + (PSN == 1)));
     }
    } else {
@@ -355,10 +362,19 @@ unsigned int probe_chip(void) {
 int main (int argc, char *argv[]) {
   double target;
   double Fref = 14318180;
-  unsigned int M, N, P, PSN, ChipType, ClockType;
+  unsigned int M, N, P, PSN, ChipType, ClockType, progclock;
 
-  if (argc != 2) {
-    fprintf (stderr, "usage: %s freq\n", argv[0]);
+  switch (argc) {
+  case 2:
+    progclock = 2;
+    target = atof (argv[1]);
+    break;
+  case 3:
+    progclock = abs(atof (argv[1]));
+    target = atof (argv[2]);
+    break;
+  default:
+    fprintf (stderr, "usage: %s [-0|-1|-2] freq\n", argv[0]);
     return 1;
   }
 
@@ -371,8 +387,6 @@ int main (int argc, char *argv[]) {
     ClockType = MemClk;
   }
 
-  target = atof (argv[1]);
-
   ChipType = probe_chip();
   if (!ChipType) {
     return 1;
@@ -384,14 +398,14 @@ int main (int argc, char *argv[]) {
   }
   
   if (IS_HiQV(ChipType)) {
-    if (! compute_clock(target, Fref, 63, 127, 1, &M, &N, &P, &PSN)) {
-      return set_clock(ChipType, ClockType, M, N, P, PSN);
+    if (! compute_clock(ChipType, target, Fref, 63, 127, &M, &N, &P, &PSN)) {
+      return set_clock(ChipType, ClockType, progclock, M, N, P, PSN);
     } else {
       return 1;
     }
   } else {
-    if (! compute_clock(target, Fref, 127, 127, 0, &M, &N, &P, &PSN)) {
-      return set_clock(ChipType, ClockType, M, N, P, PSN);
+    if (! compute_clock(ChipType, target, Fref, 127, 127, &M, &N, &P, &PSN)) {
+      return set_clock(ChipType, ClockType, progclock, M, N, P, PSN);
     } else {
       return 1;
     }

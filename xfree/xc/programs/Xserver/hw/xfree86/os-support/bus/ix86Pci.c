@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/ix86Pci.c,v 1.6 1999/01/26 10:40:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/ix86Pci.c,v 1.8 2000/06/09 07:53:25 eich Exp $ */
 /*
  * ix86Pci.c - x86 PCI driver
  *

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/PEX5/include/pexos.h,v 1.1 1998/07/26 13:14:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/include/pexos.h,v 1.2 1999/01/31 12:21:33 dawes Exp $ */
 
 /*
  * This file contains all external OS/ANSI header includes, prototypes and

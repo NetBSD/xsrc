@@ -1,4 +1,4 @@
-/* $TOG: extentst.h /main/5 1998/02/11 10:03:59 kaleb $ */
+/* $Xorg: extentst.h,v 1.3 2000/08/17 19:54:22 cpqbld Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)extentst.h	4.1	91/05/02
  *
  */
-/* $XFree86: xc/programs/xfs/include/extentst.h,v 1.3 1998/10/25 12:48:04 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/include/extentst.h,v 1.5 2001/01/17 23:45:31 dawes Exp $ */
 
 #ifndef _EXTENTST_H_
 #define _EXTENTST_H_

@@ -1,4 +1,4 @@
-/* $TOG: pl_lut.h /main/5 1998/02/06 16:10:34 kaleb $ */
+/* $Xorg: pl_lut.h,v 1.3 2000/08/17 19:44:24 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

@@ -1,4 +1,4 @@
-# $TOG: magic /main/3 1998/02/06 15:24:51 kaleb $
+# $Xorg: magic,v 1.3 2000/08/17 19:46:43 cpqbld Exp $
 # Here are some lines you can add to /etc/magic
 # to identify XKM (compiled X keymap) files
 # and determine their version and the byte ordering

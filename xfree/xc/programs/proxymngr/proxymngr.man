@@ -1,4 +1,4 @@
-.\" $TOG: proxymngr.man /main/5 1998/02/09 13:46:03 kaleb $
+.\" $Xorg: proxymngr.man,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 .\" Copyright 1996, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -19,7 +19,10 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.TH PROXYMNGR 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/proxymngr/proxymngr.man,v 1.6 2001/01/27 18:21:04 dawes Exp $
+.\"
+.TH PROXYMNGR 1 __xorgversion__
 .SH NAME
 proxymngr - proxy manager service
 .SH SYNOPSIS

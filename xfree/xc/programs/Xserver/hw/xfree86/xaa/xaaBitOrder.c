@@ -1,14 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaBitOrder.c,v 1.4 1998/08/29 14:34:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaBitOrder.c,v 1.7 2001/05/18 20:22:31 tsi Exp $ */
 
-#include "xf86.h"
-#include "xf86_ansic.h"
-#ifndef RAMDAC_MODULE
-#include "xaa.h"
-#include "xaalocal.h"
-#else
-#include "xf86CursorPriv.h"
-#endif
-
+#include "Xmd.h"
 
 CARD32
 XAAReverseBitOrder(CARD32 v)

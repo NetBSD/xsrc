@@ -1,5 +1,5 @@
 /*
- * $TOG: utils.c /main/24 1998/02/09 13:42:52 kaleb $
+ * $Xorg: utils.c,v 1.3 2000/08/17 19:53:52 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/editres/utils.c,v 1.5 2001/04/01 14:00:17 tsi Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/Xutil.h>
@@ -31,9 +31,8 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xaw/Dialog.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <X11/Xmu/Error.h>
-
-#include <stdio.h>
 
 #include "editresP.h"
 

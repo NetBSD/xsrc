@@ -1,5 +1,5 @@
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DoScanPci.c,v 1.10 2000/02/21 20:34:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DoScanPci.c,v 1.11 2000/02/24 05:36:50 tsi Exp $ */
 /*
  * finish setting up the server
  * call the functions from the scanpci module

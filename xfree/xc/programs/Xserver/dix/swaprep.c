@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/swaprep.c,v 3.3 1998/10/04 09:38:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/swaprep.c,v 3.6 2001/01/17 22:36:44 dawes Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ SOFTWARE.
 
 ********************************************************/
 
-/* $TOG: swaprep.c /main/26 1998/02/09 14:20:38 kaleb $ */
+/* $Xorg: swaprep.c,v 1.3 2000/08/17 19:48:19 cpqbld Exp $ */
 
 #include "X.h"
 #define NEED_REPLIES

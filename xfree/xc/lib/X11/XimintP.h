@@ -1,4 +1,4 @@
-/* $XConsortium: XimintP.h,v 1.6 94/03/26 16:57:21 rws Exp $ */
+/* $Xorg: XimintP.h,v 1.3 2000/08/17 19:45:05 cpqbld Exp $ */
 /******************************************************************
 
            Copyright 1991, 1992 by Sun Microsystems, Inc.
@@ -35,7 +35,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                  miyamoto@jrd.dec.com
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/XimintP.h,v 1.5 2000/11/28 18:49:26 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XimintP.h,v 1.7 2001/01/17 19:41:49 dawes Exp $ */
 
 #ifndef _XIMINTP_H
 #define _XIMINTP_H

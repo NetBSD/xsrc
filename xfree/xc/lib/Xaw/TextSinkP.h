@@ -1,5 +1,5 @@
 /*
-* $TOG: TextSinkP.h /main/7 1998/02/06 12:51:22 kaleb $
+* $Xorg: TextSinkP.h,v 1.3 2000/08/17 19:45:41 cpqbld Exp $
 */
 
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/TextSinkP.h,v 1.9 1999/08/28 09:00:28 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextSinkP.h,v 1.11 2001/01/17 19:42:35 dawes Exp $ */
 
 #ifndef _XawTextSinkP_h
 #define _XawTextSinkP_h

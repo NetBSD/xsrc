@@ -16,11 +16,12 @@
 /***************************************************************************/
 
 
-#include <freetype/cache/ftcchunk.h>
-#include <freetype/ftlist.h>
-#include <freetype/fterrors.h>
-#include <freetype/internal/ftobjs.h>
-#include <freetype/fterrors.h>
+#include <ft2build.h>
+#include FT_CACHE_H
+#include FT_CACHE_INTERNAL_CHUNK_H
+#include FT_LIST_H
+#include FT_ERRORS_H
+#include FT_INTERNAL_OBJECTS_H
 
 
   /*************************************************************************/
@@ -299,7 +300,7 @@
     if ( !error )
     {
       /* good, now set the set index within the set object */
-      cset->cset_index = node - lru->nodes;
+      cset->cset_index = (FT_UInt)( node - lru->nodes );
       node->root.data  = cset;
     }
 

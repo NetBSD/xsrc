@@ -1,4 +1,4 @@
-/* $TOG: input.h /main/23 1998/02/09 14:28:58 kaleb $ */
+/* $Xorg: input.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/include/input.h,v 3.4 1996/12/23 07:09:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/input.h,v 3.6 2001/01/17 22:36:57 dawes Exp $ */
 
 #ifndef INPUT_H
 #define INPUT_H

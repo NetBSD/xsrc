@@ -1,4 +1,4 @@
-# $XConsortium: Xservers.fs,v 1.3 93/09/28 14:30:31 gildea Exp $
+# $Xorg: Xservers.fs,v 1.3 2000/08/17 19:54:17 cpqbld Exp $
 #
 # Xservers file, fileserver prototype (any machine without a display)
 #

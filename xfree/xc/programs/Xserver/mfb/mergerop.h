@@ -1,5 +1,5 @@
 /*
- * $TOG: mergerop.h /main/12 1998/02/09 14:38:03 kaleb $
+ * $Xorg: mergerop.h,v 1.3 2000/08/17 19:53:34 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/mfb/mergerop.h,v 3.9 2000/02/12 03:40:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mergerop.h,v 3.11 2001/01/17 22:37:02 dawes Exp $ */
 
 #ifndef _MERGEROP_H_
 #define _MERGEROP_H_

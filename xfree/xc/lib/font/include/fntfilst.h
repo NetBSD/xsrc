@@ -1,4 +1,4 @@
-/* $TOG: fntfilst.h /main/9 1998/02/09 10:49:09 kaleb $ */
+/* $Xorg: fntfilst.h,v 1.4 2000/08/17 19:46:38 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/fntfilst.h,v 3.4 1998/10/03 09:07:30 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/fntfilst.h,v 3.6 2001/01/17 19:43:32 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -33,7 +33,9 @@ in this Software without prior written authorization from The Open Group.
 #ifndef FONTMODULE
 #include <X11/Xos.h>
 #endif
+#ifndef XP_PSTEXT
 #include "fontmisc.h"
+#endif
 #include "fontstruct.h"
 #include "fontxlfd.h"
 #include "fntfil.h"

@@ -1,7 +1,7 @@
 /*
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgaBankc.c,v 1.1.2.1 1997/07/16 10:36:47 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgaBankc.c,v 1.2 1998/07/25 16:58:14 dawes Exp $ */
 
 /*
  * Because a modern VGA has more than 128kBytes (which are mappable into the

@@ -13,7 +13,7 @@ written prior permission.  M.I.T. makes no representations about the
 suitability of this software for any purpose.  It is provided "as is"
 without express or implied warranty.
 */
-/* $XFree86: xc/lib/dps/Xlibnet.h,v 1.4 2000/04/05 18:13:20 dawes Exp $ */
+/* $XFree86: xc/lib/dps/Xlibnet.h,v 1.5 2000/05/18 23:46:12 dawes Exp $ */
 /*
  * Xlibnet.h - Xlib networking include files for UNIX Systems.
  */

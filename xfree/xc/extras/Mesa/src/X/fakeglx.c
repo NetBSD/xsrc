@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.4.2
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -64,7 +64,7 @@
 #define SERVER_MINOR_VERSION 3
 
 /* This is appended onto the glXGetClient/ServerString version strings. */
-#define MESA_GLX_VERSION "Mesa 3.4"
+#define MESA_GLX_VERSION "Mesa 3.4.2"
 
 /* Who implemented this GLX? */
 #define VENDOR "Brian Paul"
@@ -336,22 +336,40 @@ create_glx_visual( Display *dpy, XVisualInfo *visinfo )
                             );
    }
    else if (is_usable_visual( visinfo )) {
-      /* Configure this visual as RGB, double-buffered, depth-buffered. */
-      /* This is surely wrong for some people's needs but what else */
-      /* can be done?  They should use glXChooseVisual(). */
-      return save_glx_visual( dpy, visinfo,
-                              GL_TRUE,   /* rgb */
-                              GL_FALSE,  /* alpha */
-                              GL_TRUE,   /* double */
-                              GL_FALSE,  /* stereo */
-                              DEFAULT_SOFTWARE_DEPTH_BITS,
-                              8 * sizeof(GLstencil),
-                              8 * sizeof(GLaccum), /* r */
-                              8 * sizeof(GLaccum), /* g */
-                              8 * sizeof(GLaccum), /* b */
-                              8 * sizeof(GLaccum), /* a */
-                              0          /* level */
-                            );
+      if (getenv("MESA_GLX_FORCE_CI")) {
+         /* Configure this visual as a COLOR INDEX visual. */
+         return save_glx_visual( dpy, visinfo,
+                                 GL_FALSE,   /* rgb */
+                                 GL_FALSE,  /* alpha */
+                                 GL_TRUE,   /* double */
+                                 GL_FALSE,  /* stereo */
+                                 DEFAULT_SOFTWARE_DEPTH_BITS,
+                                 8 * sizeof(GLstencil),
+                                 0 * sizeof(GLaccum), /* r */
+                                 0 * sizeof(GLaccum), /* g */
+                                 0 * sizeof(GLaccum), /* b */
+                                 0 * sizeof(GLaccum), /* a */
+                                 0          /* level */
+                               );
+      }
+      else {
+         /* Configure this visual as RGB, double-buffered, depth-buffered. */
+         /* This is surely wrong for some people's needs but what else */
+         /* can be done?  They should use glXChooseVisual(). */
+         return save_glx_visual( dpy, visinfo,
+                                 GL_TRUE,   /* rgb */
+                                 GL_FALSE,  /* alpha */
+                                 GL_TRUE,   /* double */
+                                 GL_FALSE,  /* stereo */
+                                 DEFAULT_SOFTWARE_DEPTH_BITS,
+                                 8 * sizeof(GLstencil),
+                                 8 * sizeof(GLaccum), /* r */
+                                 8 * sizeof(GLaccum), /* g */
+                                 8 * sizeof(GLaccum), /* b */
+                                 8 * sizeof(GLaccum), /* a */
+                                 0          /* level */
+                               );
+      }
    }
    else {
       fprintf(stderr,"Mesa: error in glXCreateContext: bad visual\n");

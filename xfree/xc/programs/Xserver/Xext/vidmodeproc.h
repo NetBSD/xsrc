@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/vidmodeproc.h,v 1.3 1999/12/03 19:17:18 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/vidmodeproc.h,v 1.5 2001/05/06 00:51:19 mvojkovi Exp $ */
 
 /* Prototypes for DGA functions that the DDX must provide */
 
@@ -65,6 +65,9 @@ void VidModeCopyMode(pointer modefrom, pointer modeto);
 int VidModeGetModeValue(pointer mode, int valtyp);
 void VidModeSetModeValue(pointer mode, int valtyp, int val);
 vidMonitorValue VidModeGetMonitorValue(pointer monitor, int valtyp, int indx);
+Bool VidModeSetGammaRamp(int, int, CARD16 *, CARD16 *, CARD16 *);
+Bool VidModeGetGammaRamp(int, int, CARD16 *, CARD16 *, CARD16 *);
+int VidModeGetGammaRampSize(int scrnIndex);
 
 #endif
 

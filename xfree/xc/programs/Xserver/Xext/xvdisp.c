@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/Xext/xvdisp.c,v 1.15 2000/06/10 22:00:26 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xvdisp.c,v 1.19 2001/03/07 19:37:51 mvojkovi Exp $ */
 
 /*
 ** File: 
@@ -74,11 +74,14 @@ SOFTWARE.
 #include "panoramiX.h"
 #include "panoramiXsrv.h"
 
-XvAdaptorPtr XineramaAdaptors[MAXSCREENS];
+unsigned long XvXRTPort;
+
 #ifdef MITSHM
 static int XineramaXvShmPutImage(ClientPtr);
 #endif
 static int XineramaXvPutImage(ClientPtr);
+static int XineramaXvPutVideo(ClientPtr);
+static int XineramaXvPutStill(ClientPtr);
 static int XineramaXvSetPortAttribute(ClientPtr);
 static int XineramaXvStopVideo(ClientPtr);
 #endif
@@ -226,8 +229,20 @@ ProcXvDispatch(ClientPtr client)
     case xv_QueryExtension: return(ProcXvQueryExtension(client));
     case xv_QueryAdaptors: return(ProcXvQueryAdaptors(client));
     case xv_QueryEncodings: return(ProcXvQueryEncodings(client));
-    case xv_PutVideo: return(ProcXvPutVideo(client));
-    case xv_PutStill: return(ProcXvPutStill(client));
+    case xv_PutVideo:
+#ifdef PANORAMIX
+        if(!noPanoramiXExtension)
+            return(XineramaXvPutVideo(client));
+        else
+#endif
+            return(ProcXvPutVideo(client));
+    case xv_PutStill:
+#ifdef PANORAMIX
+        if(!noPanoramiXExtension)
+            return(XineramaXvPutStill(client));
+        else
+#endif
+    	    return(ProcXvPutStill(client));
     case xv_GetVideo: return(ProcXvGetVideo(client));
     case xv_GetStill: return(ProcXvGetStill(client));
     case xv_GrabPort: return(ProcXvGrabPort(client));
@@ -1068,6 +1083,9 @@ ProcXvPutImage(ClientPtr client)
 			pPort, pImage, &width, &height, NULL, NULL);
   size += sizeof(xvPutImageReq);
   size = (size + 3) >> 2;
+  
+  if((width < stuff->width) || (height < stuff->height))
+     return BadValue;
 
   if(client->req_len < size)
      return BadLength;
@@ -1160,6 +1178,9 @@ ProcXvShmPutImage(ClientPtr client)
   if((size_needed + stuff->offset) > shmdesc->size)
       return BadAccess;
 
+  if((width < stuff->width) || (height < stuff->height))
+     return BadValue;
+     
   status = XVCALL(diPutImage)(client, pDraw, pPort, pGC, 
 			    stuff->src_x, stuff->src_y,
 			    stuff->src_w, stuff->src_h,
@@ -1834,45 +1855,51 @@ SWriteListImageFormatsReply(
 #ifdef PANORAMIX
 
 
+
+
 static int
 XineramaXvStopVideo(ClientPtr client)
 {
-  int result, i, portoffset;
-  PanoramiXRes *draw;
-  XvPortPtr pPort;
-  REQUEST(xvStopVideoReq);
-  REQUEST_SIZE_MATCH(xvStopVideoReq);
+   int result = Success, i;
+   PanoramiXRes *draw, *port;
+   REQUEST(xvStopVideoReq);
+   REQUEST_SIZE_MATCH(xvStopVideoReq);
 
-  if(!(draw = (PanoramiXRes *)SecurityLookupIDByClass(
+   if(!(draw = (PanoramiXRes *)SecurityLookupIDByClass(
                 client, stuff->drawable, XRC_DRAWABLE, SecurityWriteAccess)))
         return BadDrawable;
 
-  portoffset = stuff->port - XineramaAdaptors[0]->base_id;
+   if(!(port = (PanoramiXRes *)SecurityLookupIDByType(
+                client, stuff->port, XvXRTPort, SecurityReadAccess)))
+        return _XvBadPort;
 
-  FOR_NSCREENS_BACKWARD(i) {
-     if(XineramaAdaptors[i]) {
-	stuff->drawable = draw->info[i].id;
-        stuff->port = XineramaAdaptors[i]->base_id + portoffset;
-	result = ProcXvStopVideo(client);
-     }
-  }
+   FOR_NSCREENS_BACKWARD(i) {
+	if(port->info[i].id) {
+	   stuff->drawable = draw->info[i].id;
+	   stuff->port = port->info[i].id;
+	   result = ProcXvStopVideo(client);
+     	}
+   }
 
-  return result;
+   return result;
 }
 
 static int
 XineramaXvSetPortAttribute(ClientPtr client)
 {
     REQUEST(xvSetPortAttributeReq);
-    int result, i, portoffset;
+    PanoramiXRes *port;
+    int result = Success, i;
 
     REQUEST_SIZE_MATCH(xvSetPortAttributeReq);
 
-    portoffset = stuff->port - XineramaAdaptors[0]->base_id;
+    if(!(port = (PanoramiXRes *)SecurityLookupIDByType(
+                client, stuff->port, XvXRTPort, SecurityReadAccess)))
+        return _XvBadPort;
 
     FOR_NSCREENS_BACKWARD(i) {
-	if(XineramaAdaptors[i]) {
-	   stuff->port = XineramaAdaptors[i]->base_id + portoffset;
+	if(port->info[i].id) {
+	   stuff->port = port->info[i].id;
 	   result = ProcXvSetPortAttribute(client);
 	}
     }
@@ -1885,10 +1912,10 @@ static int
 XineramaXvShmPutImage(ClientPtr client)
 {
     REQUEST(xvShmPutImageReq);
-    PanoramiXRes *draw, *gc;
+    PanoramiXRes *draw, *gc, *port;
     Bool send_event = stuff->send_event;
     Bool isRoot;
-    int result, i, x, y, portoffset;
+    int result = Success, i, x, y;
 
     REQUEST_SIZE_MATCH(xvShmPutImageReq);
 
@@ -1899,6 +1926,10 @@ XineramaXvShmPutImage(ClientPtr client)
     if(!(gc = (PanoramiXRes *)SecurityLookupIDByType(
                 client, stuff->gc, XRT_GC, SecurityReadAccess)))
         return BadGC;    
+
+    if(!(port = (PanoramiXRes *)SecurityLookupIDByType(
+                client, stuff->port, XvXRTPort, SecurityReadAccess)))
+        return _XvBadPort;
  
     isRoot = (draw->type == XRT_WINDOW) &&
                 (stuff->drawable == WindowTable[0]->drawable.id);
@@ -1906,12 +1937,10 @@ XineramaXvShmPutImage(ClientPtr client)
     x = stuff->drw_x;
     y = stuff->drw_y;
 
-    portoffset = stuff->port - XineramaAdaptors[0]->base_id;
-
     FOR_NSCREENS_BACKWARD(i) {
-	if(XineramaAdaptors[i]) {
+	if(port->info[i].id) {
 	   stuff->drawable = draw->info[i].id;
-	   stuff->port = XineramaAdaptors[i]->base_id + portoffset;
+	   stuff->port = port->info[i].id;
 	   stuff->gc = gc->info[i].id;
 	   stuff->drw_x = x;
 	   stuff->drw_y = y;
@@ -1922,7 +1951,6 @@ XineramaXvShmPutImage(ClientPtr client)
 	   stuff->send_event = (send_event && !i) ? 1 : 0;
 
 	   result = ProcXvShmPutImage(client);
-	   if(result != Success) break;
 	}
     }
     return result;
@@ -1933,9 +1961,9 @@ static int
 XineramaXvPutImage(ClientPtr client)
 {
     REQUEST(xvPutImageReq);
-    PanoramiXRes *draw, *gc;
+    PanoramiXRes *draw, *gc, *port;
     Bool isRoot;
-    int result, i, x, y, portoffset;
+    int result = Success, i, x, y;
 
     REQUEST_AT_LEAST_SIZE(xvPutImageReq);
 
@@ -1946,6 +1974,10 @@ XineramaXvPutImage(ClientPtr client)
     if(!(gc = (PanoramiXRes *)SecurityLookupIDByType(
                 client, stuff->gc, XRT_GC, SecurityReadAccess)))
         return BadGC;    
+
+    if(!(port = (PanoramiXRes *)SecurityLookupIDByType(
+		client, stuff->port, XvXRTPort, SecurityReadAccess)))
+	return _XvBadPort;
  
     isRoot = (draw->type == XRT_WINDOW) &&
                 (stuff->drawable == WindowTable[0]->drawable.id);
@@ -1953,12 +1985,10 @@ XineramaXvPutImage(ClientPtr client)
     x = stuff->drw_x;
     y = stuff->drw_y;
 
-    portoffset = stuff->port - XineramaAdaptors[0]->base_id;
-
     FOR_NSCREENS_BACKWARD(i) {
-	if(XineramaAdaptors[i]) {
+	if(port->info[i].id) {
 	   stuff->drawable = draw->info[i].id;
-	   stuff->port = XineramaAdaptors[i]->base_id + portoffset;
+	   stuff->port = port->info[i].id;
 	   stuff->gc = gc->info[i].id;
 	   stuff->drw_x = x;
 	   stuff->drw_y = y;
@@ -1968,8 +1998,99 @@ XineramaXvPutImage(ClientPtr client)
 	   }
 
 	   result = ProcXvPutImage(client);
-	   if(result != Success) break;
 	}
+    }
+    return result;
+}
+
+static int
+XineramaXvPutVideo(ClientPtr client)
+{
+    REQUEST(xvPutImageReq);
+    PanoramiXRes *draw, *gc, *port;
+    Bool isRoot;
+    int result = Success, i, x, y;
+
+    REQUEST_AT_LEAST_SIZE(xvPutVideoReq);
+
+    if(!(draw = (PanoramiXRes *)SecurityLookupIDByClass(
+                client, stuff->drawable, XRC_DRAWABLE, SecurityWriteAccess)))
+        return BadDrawable;
+
+    if(!(gc = (PanoramiXRes *)SecurityLookupIDByType(
+                client, stuff->gc, XRT_GC, SecurityReadAccess)))
+        return BadGC;
+
+    if(!(port = (PanoramiXRes *)SecurityLookupIDByType(
+                client, stuff->port, XvXRTPort, SecurityReadAccess)))
+        return _XvBadPort;
+
+    isRoot = (draw->type == XRT_WINDOW) &&
+                (stuff->drawable == WindowTable[0]->drawable.id);
+
+    x = stuff->drw_x;
+    y = stuff->drw_y;
+
+    FOR_NSCREENS_BACKWARD(i) {
+        if(port->info[i].id) {
+           stuff->drawable = draw->info[i].id;
+           stuff->port = port->info[i].id;
+           stuff->gc = gc->info[i].id;
+           stuff->drw_x = x;
+           stuff->drw_y = y;
+           if(isRoot) {
+                stuff->drw_x -= panoramiXdataPtr[i].x;
+                stuff->drw_y -= panoramiXdataPtr[i].y;
+           }
+
+           result = ProcXvPutVideo(client);
+        }
+    }
+    return result;
+}
+
+static int
+XineramaXvPutStill(ClientPtr client)
+{
+    REQUEST(xvPutImageReq);
+    PanoramiXRes *draw, *gc, *port;
+    Bool isRoot;
+    int result = Success, i, x, y;
+
+    REQUEST_AT_LEAST_SIZE(xvPutImageReq);
+
+    if(!(draw = (PanoramiXRes *)SecurityLookupIDByClass(
+                client, stuff->drawable, XRC_DRAWABLE, SecurityWriteAccess)))
+        return BadDrawable;
+
+    if(!(gc = (PanoramiXRes *)SecurityLookupIDByType(
+                client, stuff->gc, XRT_GC, SecurityReadAccess)))
+        return BadGC;
+
+    if(!(port = (PanoramiXRes *)SecurityLookupIDByType(
+                client, stuff->port, XvXRTPort, SecurityReadAccess)))
+        return _XvBadPort;
+
+    isRoot = (draw->type == XRT_WINDOW) &&
+                (stuff->drawable == WindowTable[0]->drawable.id);
+
+    x = stuff->drw_x;
+    y = stuff->drw_y;
+
+    FOR_NSCREENS_BACKWARD(i) {
+        if(port->info[i].id) {
+           stuff->drawable = draw->info[i].id;
+           stuff->port = port->info[i].id;
+           stuff->gc = gc->info[i].id;
+           stuff->drw_x = x;
+           stuff->drw_y = y;
+           if(isRoot) {
+                stuff->drw_x -= panoramiXdataPtr[i].x;
+                stuff->drw_y -= panoramiXdataPtr[i].y;
+           }
+
+           result = ProcXvPutStill(client);
+        }
     }
     return result;
 }
@@ -1977,82 +2098,107 @@ XineramaXvPutImage(ClientPtr client)
 
 void XineramifyXv(void)
 {
-  ScreenPtr pScreen;
-  XvScreenPtr pxvs;
-  XvAdaptorPtr pAdapt, refAdapt;
-  XvImagePtr refImage;
-  int imageHeads = 0;
-  Bool match, blast;
-  int max_w = 0, max_h = 0;
-  int i, j, k, n;
+   ScreenPtr pScreen, screen0 = screenInfo.screens[0];
+   XvScreenPtr xvsp0 = (XvScreenPtr)screen0->devPrivates[XvScreenIndex].ptr;
+   XvAdaptorPtr refAdapt, pAdapt;
+   XvAttributePtr pAttr;
+   XvScreenPtr xvsp;
+   Bool isOverlay, hasOverlay;
+   PanoramiXRes *port;
+   XvAdaptorPtr MatchingAdaptors[MAXSCREENS];
+   int i, j, k, l;
 
-  /* find which heads can do images */
-  for(i = 0; i < PanoramiXNumScreens; i++) {
-     pScreen = screenInfo.screens[i];
-     XineramaAdaptors[i] = NULL;
-     pxvs = (XvScreenPtr)pScreen->devPrivates[XvScreenIndex].ptr;
-     if(pxvs) {
-        for(j = 0; j < pxvs->nAdaptors; j++) {
-           pAdapt = pxvs->pAdaptors + j;
-           if((pAdapt->type & XvImageMask) && (pAdapt->nImages > 0)) {
-              imageHeads++;
-              XineramaAdaptors[i] = pAdapt;
-              break;  /* assuming only one XvImage capable adaptor per head */
-           }
-        }
-     }
-  }
+   XvXRTPort = CreateNewResourceType(XineramaDeleteResource);
+   
+   for(i = 0; i < xvsp0->nAdaptors; i++) {
+      refAdapt = xvsp0->pAdaptors + i;
 
-  if(!imageHeads || !XineramaAdaptors[0]) return;
-
-  /* filter out image types not common on all */
-  refAdapt = XineramaAdaptors[0];
-
-  for(i = 0; i < refAdapt->nEncodings; i++) {
-      if(!strcmp(refAdapt->pEncodings[i].name, "XV_IMAGE")) {
-          max_w = refAdapt->pEncodings[i].width;
-          max_h = refAdapt->pEncodings[i].height;
-	  break;
+      bzero(MatchingAdaptors, sizeof(XvAdaptorPtr) * MAXSCREENS);
+      
+      MatchingAdaptors[0] = refAdapt;
+   
+      if(!(refAdapt->type & XvInputMask)) continue;
+      
+      isOverlay = FALSE;
+      for(j = 0; j < refAdapt->nAttributes; j++) {
+         pAttr = refAdapt->pAttributes + j;
+         if(!strcmp(pAttr->name, "XV_COLORKEY")) {
+	    isOverlay = TRUE;
+	    break;
+	 }
       }
-  }
+   
+      for(j = 1; j < PanoramiXNumScreens; j++) {
+         pScreen = screenInfo.screens[j];
+	 xvsp = (XvScreenPtr)pScreen->devPrivates[XvScreenIndex].ptr;
 
-  for(i = 0; i < refAdapt->nImages; i++) {
-     refImage = refAdapt->pImages + i;
+         /* Do not try to go on if xv is not supported on this screen */
+         if (xvsp==NULL) continue ;
+	 
+         /* if the adaptor has the same name it's a perfect match */
+	 for(k = 0; k < xvsp->nAdaptors; k++) {
+	   pAdapt = xvsp->pAdaptors + k;
+           if(!strcmp(refAdapt->name, pAdapt->name)) {
+	       MatchingAdaptors[j] = pAdapt;
+	       break;
+	   }
+         }
+	 if(MatchingAdaptors[j]) continue; /* found it */
+	 
+	 /* otherwise we only look for XvImage adaptors */
+	 if(!(refAdapt->type & XvImageMask)) continue;
+	 if(refAdapt->nImages <= 0) continue;
+	 
+	 /* prefer overlay/overlay non-overlay/non-overlay pairing */
+	 for(k = 0; k < xvsp->nAdaptors; k++) {
+	    pAdapt = xvsp->pAdaptors + k;
+	    if((pAdapt->type & XvImageMask) & (pAdapt->nImages > 0)) {
+	      hasOverlay = FALSE;
+              for(l = 0; l < pAdapt->nAttributes; l++) {
+	         if(!strcmp(pAdapt->name, "XV_COLORKEY")) {
+		   hasOverlay = TRUE;
+		   break;
+		 }
+	      }
+	      if(isOverlay && hasOverlay) {
+	      	 MatchingAdaptors[j] = pAdapt;
+		 break;
+	      }
+              else if(!isOverlay && !hasOverlay) {
+	      	 MatchingAdaptors[j] = pAdapt;
+		 break;
+	      }
+	    }
+         }
+	 
+	 if(MatchingAdaptors[j]) continue; /* found it */
+	 
+	 /* but we'll take any XvImage pairing if we can get it */
+	 	 
+	 for(k = 0; k < xvsp->nAdaptors; k++) {
+	    pAdapt = xvsp->pAdaptors + k;
+	    if((pAdapt->type & XvImageMask) & (pAdapt->nImages > 0)) {
+	      	 MatchingAdaptors[j] = pAdapt;
+		 break;
+	    }
+         }
+      }
 
-     blast = FALSE;
-     for(j = 0; j < PanoramiXNumScreens; j++) {
-	match = FALSE;
-	if((pAdapt = XineramaAdaptors[j])) {
-           for(k = 0; k < pAdapt->nImages; k++) {
-               if(pAdapt->pImages[k].id == refImage->id) {
-                   match = TRUE;
-                   for(n = 0; n < pAdapt->nEncodings; n++) {
-                      if(!strcmp(pAdapt->pEncodings[n].name, "XV_IMAGE")) {
-                          if(max_w > pAdapt->pEncodings[n].width)
-                             max_w = pAdapt->pEncodings[n].width;
-                          if(max_h > pAdapt->pEncodings[n].height)
-                             max_h = pAdapt->pEncodings[n].height;
-                          break;
-                      }
-                   }
-                   break;
-               }
-           }
-	}
-	if(!match) {
-           blast = TRUE;
-           break;
-        }
-     }
-     if(blast) {
-        if(i < (refAdapt->nImages - 1))
-            memcpy(refAdapt->pImages + i, refAdapt->pImages + i + 1,
-                      (refAdapt->nImages - 1 - i) * sizeof(XvImageRec));
-        refAdapt->nImages--;
-     }
-  }
+      /* now create a resource for each port */
+      for(j = 0; j < refAdapt->nPorts; j++) {
+         if(!(port = xalloc(sizeof(PanoramiXRes))))
+	    break;
+	 port->info[0].id = MatchingAdaptors[0]->base_id + j;
+	 AddResource(port->info[0].id, XvXRTPort, port);
 
-  if(!refAdapt->nImages) /* no image formats in common between heads */
-     refAdapt->type &= ~XvImageMask;
+	 for(k = 1; k < PanoramiXNumScreens; k++) {
+	    if(MatchingAdaptors[k] && (MatchingAdaptors[k]->nPorts > j)) 
+		port->info[k].id = MatchingAdaptors[k]->base_id + j;
+	    else
+		port->info[k].id = 0;
+	 } 
+      }
+   }
 }
+
 #endif

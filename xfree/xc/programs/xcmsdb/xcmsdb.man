@@ -1,4 +1,4 @@
-.\" $TOG: xcmsdb.man /main/13 1998/02/09 13:53:54 kaleb $
+.\" $Xorg: xcmsdb.man,v 1.3 2000/08/17 19:54:13 cpqbld Exp $
 .\" Copyright 1990, Tektronix Inc.
 .\" Copyright 1993, 1998  The Open Group
 .\" 
@@ -19,7 +19,10 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" The Open Group.
-.TH XCMSDB 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xcmsdb/xcmsdb.man,v 1.6 2001/01/27 18:21:09 dawes Exp $
+.\"
+.TH XCMSDB 1 __xorgversion__
 .SH NAME
 xcmsdb \- Device Color Characterization utility for X Color Management System
 .SH SYNOPSIS

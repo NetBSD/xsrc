@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/iplan2p4/ipl.h,v 3.3 1998/04/05 16:42:25 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/iplan2p4/ipl.h,v 3.5 2001/01/30 22:06:21 tsi Exp $ */
 /* $XConsortium: ipl.h,v 5.37 94/04/17 20:28:38 dpw Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
@@ -1408,7 +1408,7 @@ extern void iplZeroPolyArcSS8Xor(
 
 /* Common macros for extracting drawing information */
 
-#if !defined(SINGLEDEPTH) && PSZ != 8 || defined(FORCE_SEPARATE_PRIVATE)
+#if (!defined(SINGLEDEPTH) && PSZ != 8) || defined(FORCE_SEPARATE_PRIVATE)
 
 #define CFB_NEED_SCREEN_PRIVATE
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/fontsym.c,v 1.5 1999/06/13 13:47:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/fontsym.c,v 1.6 2000/02/13 06:15:41 dawes Exp $ */
 
 #include "font.h"
 #include "sym.h"

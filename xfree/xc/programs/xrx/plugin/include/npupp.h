@@ -1,4 +1,4 @@
-/* $XConsortium: npupp.h /main/2 1996/11/13 09:25:15 kaleb $ */
+/* $Xorg: npupp.h,v 1.3 2000/08/17 19:55:02 cpqbld Exp $ */
 /* -*- Mode: C; tab-width: 4; -*- */
 /*
  *  npupp.h Revision: 1.37

@@ -1,4 +1,4 @@
-/* $TOG: Login.h /main/10 1998/02/11 10:00:41 kaleb $ */
+/* $Xorg: Login.h,v 1.3 2000/08/17 19:54:17 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/Login.h,v 3.3 1999/03/14 03:22:26 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/Login.h,v 3.5 2001/01/17 23:45:25 dawes Exp $ */
 
 /*
  * xdm - display manager daemon

@@ -1,4 +1,4 @@
-/* $TOG: GetHColor.c /main/5 1998/02/06 17:26:07 kaleb $ */
+/* $Xorg: GetHColor.c,v 1.3 2000/08/17 19:44:34 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

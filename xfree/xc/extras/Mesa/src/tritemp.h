@@ -1,20 +1,20 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ * Version:  3.4.1
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -56,7 +56,7 @@
  *
  * Optionally, one may provide one-time setup code per triangle:
  *    SETUP_CODE    - code which is to be executed once per triangle
- * 
+ *
  * The following macro MUST be defined:
  *    INNER_LOOP(LEFT,RIGHT,Y) - code to write a span of pixels.
  *        Something like:
@@ -97,6 +97,7 @@
    GLfloat oneOverArea;
    int vMin, vMid, vMax;       /* vertex indexes:  Y(vMin)<=Y(vMid)<=Y(vMax) */
    float bf = ctx->backface_sign;
+   GLboolean tiny;
 
    /* find the order of the 3 vertices along the Y axis */
    {
@@ -153,10 +154,14 @@
          return;
 
       /* check for very tiny triangle */
-      if (area * area < 0.0025F)  /* square it to ensure positive value */
+      if (area * area < 0.0025F) {  /* square it to ensure positive value */
          oneOverArea = 1.0F / 0.0025F;  /* a close-enough value */
-      else
+         tiny = GL_TRUE;
+      }
+      else {
          oneOverArea = 1.0F / area;
+         tiny = GL_FALSE;
+      }
    }
 
 #ifndef DO_OCCLUSION_TEST
@@ -221,7 +226,7 @@
     * By stepping rasterization parameters along the major edge,
     * we can avoid recomputing them at the discontinuity where
     * the top and bottom edges meet.  However, this forces us to
-    * be able to scan both left-to-right and right-to-left. 
+    * be able to scan both left-to-right and right-to-left.
     * Also, we must determine whether the major edge is at the
     * left or right side of the triangle.  We do this by
     * computing the magnitude of the cross-product of the major
@@ -309,26 +314,37 @@
       }
 #endif
 #ifdef INTERP_RGB
-      {
+      if (tiny) {
+         /* This is kind of a hack to eliminate RGB color over/underflow
+          * problems when rendering very tiny triangles.  We're not doing
+          * anything with alpha or specular color at this time.
+          */
+         drdx = drdy = 0.0;  fdrdx = 0;
+         dgdx = dgdy = 0.0;  fdgdx = 0;
+         dbdx = dbdy = 0.0;  fdbdx = 0;
+      }
+      else {
          GLfloat eMaj_dr, eBot_dr;
-         eMaj_dr = (GLint) VB->ColorPtr->data[vMax][0] - (GLint) VB->ColorPtr->data[vMin][0];
-         eBot_dr = (GLint) VB->ColorPtr->data[vMid][0] - (GLint) VB->ColorPtr->data[vMin][0];
+         GLfloat eMaj_dg, eBot_dg;
+         GLfloat eMaj_db, eBot_db;
+         eMaj_dr = (GLint) VB->ColorPtr->data[vMax][0]
+                 - (GLint) VB->ColorPtr->data[vMin][0];
+         eBot_dr = (GLint) VB->ColorPtr->data[vMid][0]
+                 - (GLint) VB->ColorPtr->data[vMin][0];
          drdx = oneOverArea * (eMaj_dr * eBot.dy - eMaj.dy * eBot_dr);
          fdrdx = SignedFloatToFixed(drdx);
          drdy = oneOverArea * (eMaj.dx * eBot_dr - eMaj_dr * eBot.dx);
-      }
-      {
-         GLfloat eMaj_dg, eBot_dg;
-         eMaj_dg = (GLint) VB->ColorPtr->data[vMax][1] - (GLint) VB->ColorPtr->data[vMin][1];
-	 eBot_dg = (GLint) VB->ColorPtr->data[vMid][1] - (GLint) VB->ColorPtr->data[vMin][1];
+         eMaj_dg = (GLint) VB->ColorPtr->data[vMax][1]
+                 - (GLint) VB->ColorPtr->data[vMin][1];
+	 eBot_dg = (GLint) VB->ColorPtr->data[vMid][1]
+                 - (GLint) VB->ColorPtr->data[vMin][1];
          dgdx = oneOverArea * (eMaj_dg * eBot.dy - eMaj.dy * eBot_dg);
          fdgdx = SignedFloatToFixed(dgdx);
          dgdy = oneOverArea * (eMaj.dx * eBot_dg - eMaj_dg * eBot.dx);
-      }
-      {
-         GLfloat eMaj_db, eBot_db;
-         eMaj_db = (GLint) VB->ColorPtr->data[vMax][2] - (GLint) VB->ColorPtr->data[vMin][2];
-         eBot_db = (GLint) VB->ColorPtr->data[vMid][2] - (GLint) VB->ColorPtr->data[vMin][2];
+         eMaj_db = (GLint) VB->ColorPtr->data[vMax][2]
+                 - (GLint) VB->ColorPtr->data[vMin][2];
+         eBot_db = (GLint) VB->ColorPtr->data[vMid][2]
+                 - (GLint) VB->ColorPtr->data[vMin][2];
          dbdx = oneOverArea * (eMaj_db * eBot.dy - eMaj.dy * eBot_db);
          fdbdx = SignedFloatToFixed(dbdx);
 	 dbdy = oneOverArea * (eMaj.dx * eBot_db - eMaj_db * eBot.dx);
@@ -428,7 +444,7 @@
 	    dtdy = oneOverArea * (eMaj.dx * eBot_dt - eMaj_dt * eBot.dx);
 	 } else {
 	    dtdx = 0;
-	    dtdy = 0; 
+	    dtdy = 0;
 	 }
 
 	 if (VB->TexCoordPtr[0]->size > 2)
@@ -536,7 +552,7 @@
        * inside the triangle.
        *
        * Next we creep down the major edge until we reach that y,
-       * and compute the corresponding x coordinate on the edge. 
+       * and compute the corresponding x coordinate on the edge.
        * Then we find the half-integral x that lies on or just
        * inside the edge.  This is the first pixel that might lie in
        * the interior of the triangle.  (We won't know for sure
@@ -767,7 +783,7 @@
 		     t0 = VB->TexCoordPtr[0]->data[vLower][1] * T_SCALE;
 		     ft = (GLfixed)(t0 * FIXED_SCALE + dtdx * adjx + dtdy * adjy) + FIXED_HALF;
 		     fdtOuter = SignedFloatToFixed(dtdy + dxOuter * dtdx);
-		  } 
+		  }
 		  else
 		  {
 		     t0 = 0;
@@ -784,7 +800,7 @@
                   sLeft = s0 + (dsdx * adjx + dsdy * adjy) * (1.0F/FIXED_SCALE);
                   dsOuter = dsdy + dxOuter * dsdx;
 		  if (VB->TexCoordPtr[0]->size > 1)
-		  {		  
+		  {
 		     t0 = VB->TexCoordPtr[0]->data[vLower][1] * invW;
 		     tLeft = t0 + (dtdx * adjx + dtdy * adjy) * (1.0F/FIXED_SCALE);
 		     dtOuter = dtdy + dxOuter * dtdx;
@@ -792,7 +808,7 @@
 		     tLeft = dtOuter = 0;
 		  }
 		  if (VB->TexCoordPtr[0]->size > 2)
-		  {		  
+		  {
 		     u0 = VB->TexCoordPtr[0]->data[vLower][2] * invW;
 		     uLeft = u0 + (dudx * adjx + dudy * adjy) * (1.0F/FIXED_SCALE);
 		     duOuter = dudy + dxOuter * dudx;
@@ -800,7 +816,7 @@
 		     uLeft = duOuter = 0;
 		  }
 		  if (VB->TexCoordPtr[0]->size > 3)
-		  {		  
+		  {
 		     v0 = VB->TexCoordPtr[0]->data[vLower][3] * invW;
 		  } else {
 		     v0 = invW;
@@ -817,7 +833,7 @@
                   s1Left = s0 + (ds1dx * adjx + ds1dy * adjy) * (1.0F/FIXED_SCALE);
                   ds1Outer = ds1dy + dxOuter * ds1dx;
 		  if (VB->TexCoordPtr[0]->size > 1)
-		  {		  
+		  {
 		     t0 = VB->TexCoordPtr[1]->data[vLower][1] * invW;
 		     t1Left = t0 + (dt1dx * adjx + dt1dy * adjy) * (1.0F/FIXED_SCALE);
 		     dt1Outer = dt1dy + dxOuter * dt1dx;
@@ -825,7 +841,7 @@
 		     t1Left = dt1Outer = 0;
 		  }
 		  if (VB->TexCoordPtr[0]->size > 2)
-		  {		  
+		  {
 		     u0 = VB->TexCoordPtr[1]->data[vLower][2] * invW;
 		     u1Left = u0 + (du1dx * adjx + du1dy * adjy) * (1.0F/FIXED_SCALE);
 		     du1Outer = du1dy + dxOuter * du1dx;
@@ -833,7 +849,7 @@
 		     u1Left = du1Outer = 0;
 		  }
 		  if (VB->TexCoordPtr[0]->size > 3)
-		  {		  
+		  {
 		     v0 = VB->TexCoordPtr[1]->data[vLower][3] * invW;
 		  } else {
 		     v0 =  invW;

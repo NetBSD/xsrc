@@ -1,7 +1,7 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4.1
  * 
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
  * 
@@ -76,6 +76,15 @@ _mesa_unpack_polygon_stipple( const GLubyte *pattern, GLuint dest[32],
 extern void
 _mesa_pack_polygon_stipple( const GLuint pattern[32], GLubyte *dest,
                             const struct gl_pixelstore_attrib *packing );
+
+
+extern void
+_mesa_pack_float_rgba_span( GLcontext *ctx,
+                            GLuint n, CONST GLfloat rgba[][4],
+                            GLenum dstFormat, GLenum dstType,
+                            GLvoid *dstAddr,
+                            const struct gl_pixelstore_attrib *dstPacking,
+                            GLboolean applyTransferOps );
 
 
 extern void

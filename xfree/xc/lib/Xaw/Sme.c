@@ -1,4 +1,4 @@
-/* $TOG: Sme.c /main/14 1998/02/11 14:55:31 kaleb $ */
+/* $Xorg: Sme.c,v 1.3 2000/08/17 19:45:38 cpqbld Exp $ */
 
 /*
 Copyright 1989, 1994, 1998  The Open Group
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/lib/Xaw/Sme.c,v 1.4 1998/10/03 08:42:20 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Sme.c,v 1.6 2001/01/17 19:42:31 dawes Exp $ */
 
 /*
  * Date:    September 26, 1989

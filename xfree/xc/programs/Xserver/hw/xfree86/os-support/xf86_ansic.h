@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_ansic.h,v 3.43 2000/10/24 22:45:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_ansic.h,v 3.47 2001/05/18 20:22:30 tsi Exp $ */
 
 #ifndef _XF86_ANSIC_H
 #define _XF86_ANSIC_H
@@ -179,7 +179,7 @@ extern int xf86fputs(const char*,XF86FILE*);
 extern xf86size_t xf86fread(void*,xf86size_t,xf86size_t,XF86FILE*);
 extern void xf86free(void*);
 extern XF86FILE* xf86freopen(const char*,const char*,XF86FILE*);
-#ifdef HAVE_VFSCANF
+#if defined(HAVE_VFSCANF) || !defined(NEED_XF86_PROTOTYPES)
 extern int xf86fscanf(XF86FILE*,const char*,...);
 #else
 extern int xf86fscanf(/*XF86FILE*,const char*,char *,char *,char *,char *,
@@ -226,7 +226,7 @@ extern double xf86sin(double);
 extern int xf86sprintf(char*,const char*,...);
 extern int xf86snprintf(char*,xf86size_t,const char*,...);
 extern double xf86sqrt(double);
-#ifdef HAVE_VSSCANF
+#if defined(HAVE_VSSCANF) || !defined(NEED_XF86_PROTOTYPES)
 extern int xf86sscanf(char*,const char*,...);
 #else
 extern int xf86sscanf(/*char*,const char*,char *,char *,char *,char *,
@@ -303,7 +303,7 @@ unsigned int xf86sleep(unsigned int seconds);
 extern int xf86shmget(xf86key_t key, int size, int xf86shmflg);
 extern char * xf86shmat(int id, char *addr, int xf86shmflg);
 extern int xf86shmdt(char *addr);
-extern int xf86shmctl(int id, int xf86cmd, pointer *buf);
+extern int xf86shmctl(int id, int xf86cmd, pointer buf);
 extern int xf86setjmp(xf86jmp_buf env);
 extern void xf86longjmp(xf86jmp_buf env, int val);
 
@@ -318,6 +318,8 @@ extern void xf86longjmp(xf86jmp_buf env, int val);
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #endif
+#include <sys/stat.h>
+#define stat_t struct stat
 #endif /* XFree86LOADER || NEED_XF86_PROTOTYPES */
 
 /*

@@ -1,4 +1,4 @@
-/* $TOG: GetUrl.c /main/4 1998/02/10 18:29:29 kaleb $ */
+/* $Xorg: GetUrl.c,v 1.3 2000/08/17 19:54:57 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998 The Open Group

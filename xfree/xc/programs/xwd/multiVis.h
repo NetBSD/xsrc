@@ -1,4 +1,4 @@
-/* $TOG: multiVis.h /main/5 1998/02/09 14:20:24 kaleb $ */
+/* $Xorg: multiVis.h,v 1.3 2000/08/17 19:55:13 cpqbld Exp $ */
 /** ------------------------------------------------------------------------
 	This file contains routines for manipulating generic lists.
 	Lists are implemented with a "harness".  In other words, each

@@ -1,4 +1,4 @@
-/* $TOG: chars.c /main/5 1998/02/09 13:43:27 kaleb $ */
+/* $Xorg: chars.c,v 1.3 2000/08/17 19:53:52 cpqbld Exp $ */
 /*
  
 Copyright 1990, 1998  The Open Group
@@ -39,7 +39,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/fstobdf/chars.c,v 3.4 1999/02/19 21:27:08 hohndel Exp $ */
+/* $XFree86: xc/programs/fstobdf/chars.c,v 3.7 2001/03/04 00:16:31 tsi Exp $ */
 
 /* Morten Storgaard Nielsen: chars.c,v 3.2-1 2000/01/30 14:11:19 kat Exp */
 
@@ -115,7 +115,7 @@ EmitBitmap(FILE *outFile,
 	    charInfo->left,
 	    -charInfo->descent);
     if (charInfo->attributes)
-	fprintf(outFile, "ATTRIBUTES 0x%04x\n", charInfo->attributes);
+	fprintf(outFile, "ATTRIBUTES %04x\n", charInfo->attributes);
 
     /*
      * emit the bitmap

@@ -1,4 +1,4 @@
-/* $XConsortium: ddxDevBtn.c /main/2 1996/03/01 14:30:47 kaleb $ */
+/* $Xorg: ddxDevBtn.c,v 1.3 2000/08/17 19:53:45 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,4 +1,4 @@
-/* $XConsortium: xkbLEDs.c /main/3 1996/08/31 12:44:48 kaleb $ */
+/* $Xorg: xkbLEDs.c,v 1.3 2000/08/17 19:53:47 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

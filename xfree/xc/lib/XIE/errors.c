@@ -1,4 +1,4 @@
-/* $TOG: errors.c /main/6 1998/02/06 15:12:00 kaleb $ */
+/* $Xorg: errors.c,v 1.5 2000/08/17 19:45:26 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/XIE/errors.c,v 3.4 2001/01/17 19:42:21 dawes Exp $ */
 
 #define NEED_EVENTS	/* so XErrorEvent will get pulled in */
 

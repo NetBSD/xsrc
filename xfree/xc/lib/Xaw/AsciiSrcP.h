@@ -1,5 +1,5 @@
 /*
-* $TOG: AsciiSrcP.h /main/13 1998/06/24 11:53:13 kaleb $
+* $Xorg: AsciiSrcP.h,v 1.3 2000/08/17 19:45:31 cpqbld Exp $
 */
 
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/AsciiSrcP.h,v 1.6 1999/06/06 08:47:52 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSrcP.h,v 1.8 2001/01/17 19:42:25 dawes Exp $ */
 
 /*
  * AsciiSrcP.h - Private Header for Ascii Text Source.

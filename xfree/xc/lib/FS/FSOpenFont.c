@@ -1,4 +1,4 @@
-/* $TOG: FSOpenFont.c /main/8 1998/05/17 16:30:48 kaleb $ */
+/* $Xorg: FSOpenFont.c,v 1.3 2000/08/17 19:44:04 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/FS/FSOpenFont.c,v 1.3 1999/02/20 15:07:12 hohndel Exp $ */
+/* $XFree86: xc/lib/FS/FSOpenFont.c,v 1.5 2001/01/17 19:41:28 dawes Exp $ */
 
 /*
 

@@ -1,4 +1,4 @@
-/* $XConsortium: Pixmap.h,v 1.1 93/07/12 15:28:41 rws Exp $ */
+/* $Xorg: Pixmap.h,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

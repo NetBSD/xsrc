@@ -1,4 +1,4 @@
-! $XFree86: xc/programs/xedit/Xedit.ad,v 1.17 1999/08/28 09:01:20 dawes Exp $
+! $XFree86: xc/programs/xedit/Xedit.ad,v 1.19 2001/02/05 22:38:04 paulo Exp $
 
 *geometry:				590x440
 *input:					TRUE
@@ -153,12 +153,12 @@ m<Key>I:	no-op(r)
 
 *search.translations: #override \
 <Create>:get-values(my, $w, width, $h, height)\
-	set-values(1, minWidth, $w, minHeight, $h, maxHeight, $h)
+	set-values(1, minWidth, $w, minHeight, $h, maxHeight, $h, allowShellResize, False)
 
 *insertFile.title:			Insert File
 *insertFile.translations: #override \
 <Create>:get-values(my, $w, width, $h, height)\
-	set-values(1, minWidth, $w, minHeight, $h, maxHeight, $h)
+	set-values(1, minWidth, $w, minHeight, $h, maxHeight, $h, allowShellResize, False)
 
 *baseTranslations: #override \
 <Ctrl>X,<Ctrl>C:quit()\n\

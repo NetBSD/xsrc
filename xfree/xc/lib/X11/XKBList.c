@@ -1,4 +1,4 @@
-/* $XConsortium: XKBList.c /main/3 1996/02/05 06:00:46 kaleb $ */
+/* $Xorg: XKBList.c,v 1.3 2000/08/17 19:45:02 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

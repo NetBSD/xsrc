@@ -1,5 +1,5 @@
 /*
-* $TOG: Paned.h /main/17 1998/02/11 14:54:05 kaleb $
+* $Xorg: Paned.h,v 1.4 2000/08/17 19:45:35 cpqbld Exp $
 */
 
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Paned.h,v 1.4 1998/10/03 08:42:13 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Paned.h,v 1.6 2001/01/17 19:42:28 dawes Exp $ */
 
 /*
  * Paned.h - Paned Composite Widget's public header file.
@@ -62,7 +62,7 @@ SOFTWARE.
 #ifndef _XawPaned_h
 #define _XawPaned_h
 
-#include <X11/Constraint.h>
+#include <X11/Intrinsic.h>
 #include <X11/Xmu/Converters.h>
 
 /* RESOURCES:

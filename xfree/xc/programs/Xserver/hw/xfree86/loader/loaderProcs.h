@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loaderProcs.h,v 1.16 2000/01/29 17:17:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loaderProcs.h,v 1.17 2000/11/13 23:09:57 dawes Exp $ */
 
 /*
  *

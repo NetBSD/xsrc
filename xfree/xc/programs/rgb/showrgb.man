@@ -1,4 +1,4 @@
-.\" $TOG: showrgb.man /main/9 1998/02/09 13:46:21 kaleb $
+.\" $Xorg: showrgb.man,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 .\" Copyright 1993, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH SHOWRGB 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/rgb/showrgb.man,v 1.6 2001/01/27 18:21:05 dawes Exp $
+.\"
+.TH SHOWRGB 1 __xorgversion__
 .SH NAME
 showrgb \- uncompile an rgb color-name database
 .SH SYNOPSIS

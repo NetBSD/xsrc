@@ -1,4 +1,4 @@
-/* $TOG: XpPrinter.c /main/4 1997/05/28 11:41:47 kaleb $ */
+/* $Xorg: XpPrinter.c,v 1.4 2000/08/17 19:46:07 cpqbld Exp $ */
 /******************************************************************************
  ******************************************************************************
  **
@@ -34,7 +34,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpPrinter.c,v 1.5 2000/01/25 18:37:34 dawes Exp $ */
+/* $XFree86: xc/lib/Xp/XpPrinter.c,v 1.8 2001/04/01 14:00:02 tsi Exp $ */
 
 #define NEED_REPLIES
 
@@ -58,7 +58,7 @@ XpGetPrinterList (
     char        *locale;
 
     /* For decoding the variable portion of Reply */
-    CARD32	dataLenVR;
+    long	dataLenVR;
     CARD8	*dataVR;	/* aka STRING8 */
 
     XPPrinterList ptr_list;
@@ -66,8 +66,7 @@ XpGetPrinterList (
     XExtDisplayInfo *info = (XExtDisplayInfo *) xp_find_display (dpy);
 
     /* For converting root winID to corresponding ScreenPtr */
-    Screen *checkScr;
-    int    i,j;
+    int    i;
 
 
     if (XpCheckExtInit(dpy, XP_DONT_CHECK) == -1)
@@ -147,7 +146,7 @@ XpGetPrinterList (
 	    /*
 	     * Pull printer length and then name.
 	     */
-	    _XRead32 (dpy, (long *) &dataLenVR, (long) sizeof(dataLenVR) );
+	    _XRead32 (dpy, &dataLenVR, (long) sizeof(CARD32) );
 
 	    if (dataLenVR) {
 		dataVR = (CARD8 *) Xmalloc( (unsigned) dataLenVR + 1 );
@@ -169,7 +168,7 @@ XpGetPrinterList (
 	    /*
 	     * Pull localized description length and then description.
 	     */
-	    _XRead32 (dpy, (long *) &dataLenVR, (long) sizeof(dataLenVR) );
+	    _XRead32 (dpy, &dataLenVR, (long) sizeof(CARD32) );
 
 	    if (dataLenVR) {
 		dataVR = (CARD8 *) Xmalloc( (unsigned) dataLenVR + 1 );

@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/tridenthelper.c,v 1.15 2000/12/14 19:29:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/tridenthelper.c,v 1.18 2001/05/15 10:19:41 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -116,6 +116,8 @@ TGUISetClock(ScrnInfoPtr pScrn, int clock, CARD8 *a, CARD8 *b)
 		/* first 4bits are rest of M, 1bit for K value */
 		*b = (((q & 0xFE) >> 1) | (r << 4));
 	}
+	xf86DrvMsgVerb(pScrn->scrnIndex,X_INFO,3,"Found Clock %6.2f n=%i m=%i"
+		       " k=%i\n",clock/1000.,p,q,r);
 }
 
 static void
@@ -332,3 +334,7 @@ TGUISetMCLK(ScrnInfoPtr pScrn, int clock, CARD8 *a, CARD8 *b)
 	}
     }
 }
+
+
+
+

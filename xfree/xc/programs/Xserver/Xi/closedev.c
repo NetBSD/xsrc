@@ -1,4 +1,4 @@
-/* $TOG: closedev.c /main/8 1998/02/09 15:28:29 kaleb $ */
+/* $Xorg: closedev.c,v 1.3 2000/08/17 19:48:00 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/closedev.c,v 3.0 1996/03/29 22:13:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/closedev.c,v 3.2 2001/01/17 22:13:24 dawes Exp $ */
 
 /***********************************************************************
  *

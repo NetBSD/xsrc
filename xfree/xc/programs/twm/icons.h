@@ -18,11 +18,11 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  * */
-/* $XFree86: $ */
+/* $XFree86: xc/programs/twm/icons.h,v 1.4 2001/01/17 23:45:06 dawes Exp $ */
 
 /**********************************************************************
  *
- * $TOG: icons.h /main/6 1998/02/09 13:48:29 kaleb $
+ * $Xorg: icons.h,v 1.3 2000/08/17 19:54:07 cpqbld Exp $
  *
  * Icon releated definitions
  *

@@ -1,4 +1,4 @@
-/* $TOG: closestr.h /main/9 1998/05/17 15:40:19 kaleb $ */
+/* $Xorg: closestr.h,v 1.3 2000/08/17 19:54:21 cpqbld Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
@@ -40,7 +40,7 @@ in this Software without prior written authorization from The Open Group.
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $NCDId: @(#)closestr.h,v 4.1 1991/05/02 04:15:46 lemke Exp $
+ * $NCDXorg: @(#)closestr.h,v 4.1 1991/05/02 04:15:46 lemke Exp $
  *
  */
 

@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: midash.c /main/14 1998/02/09 14:46:34 kaleb $ */
+/* $Xorg: midash.c,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
 #include "miscstruct.h"
 #include "mistruct.h"
 #include "mifpoly.h"

@@ -1,4 +1,4 @@
-/* $XConsortium: Xdmcp.h,v 1.9 95/06/07 18:30:59 gildea Exp $ */
+/* $Xorg: Xdmcp.h,v 1.6 2000/08/17 19:45:50 cpqbld Exp $ */
 /*
  * Copyright 1989 Network Computing Devices, Inc., Mountain View, California.
  *
@@ -13,7 +13,7 @@
  * without express or implied warranty.
  *
  */
-/* $XFree86: xc/lib/Xdmcp/Xdmcp.h,v 3.2 1998/10/10 15:25:18 dawes Exp $ */
+/* $XFree86: xc/lib/Xdmcp/Xdmcp.h,v 3.4 2001/01/17 19:42:44 dawes Exp $ */
 
 #ifndef _XDMCP_H_
 #define _XDMCP_H_

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atilock.c,v 1.7 2000/08/04 21:07:14 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atilock.c,v 1.10 2001/03/25 05:32:07 tsi Exp $ */
 /*
- * Copyright 1999 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1999 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -133,6 +133,11 @@ ATIUnlock
                     ~(LCD_MONDET_INT_EN | LCD_MONDET_INT));
         }
 
+        pATI->LockData.mem_cntl = inr(MEM_CNTL);
+        if (pATI->Chip < ATI_CHIP_264CT)
+            outr(MEM_CNTL, pATI->LockData.mem_cntl &
+                ~(CTL_MEM_BNDRY | CTL_MEM_BNDRY_EN));
+
 #ifndef AVOID_CPIO
 
         /* Ensure VGA aperture is enabled */
@@ -140,21 +145,7 @@ ATIUnlock
         pATI->LockData.dac_cntl = inr(DAC_CNTL);
         outr(DAC_CNTL, pATI->LockData.dac_cntl | DAC_VGA_ADR_EN);
         outr(CONFIG_CNTL, pATI->LockData.config_cntl & ~CFG_VGA_DIS);
-
-#endif /* AVOID_CPIO */
-
-        pATI->LockData.mem_cntl = inr(MEM_CNTL);
-        if (pATI->Chip < ATI_CHIP_264CT)
-            outr(MEM_CNTL, pATI->LockData.mem_cntl &
-                ~(CTL_MEM_BNDRY | CTL_MEM_BNDRY_EN));
-        else if (pATI->Chip >= ATI_CHIP_264VTB)
-            outr(MEM_CNTL, (pATI->LockData.mem_cntl &
-                 ~(CTL_MEM_LOWER_APER_ENDIAN | CTL_MEM_UPPER_APER_ENDIAN)) |
-                (SetBits(CTL_MEM_APER_BYTE_ENDIAN, CTL_MEM_LOWER_APER_ENDIAN) |
-                 SetBits(CTL_MEM_APER_LONG_ENDIAN, CTL_MEM_UPPER_APER_ENDIAN)));
     }
-
-#ifndef AVOID_CPIO
 
     if (pATI->VGAAdapter != ATI_ADAPTER_NONE)
     {
@@ -346,10 +337,10 @@ ATIUnlock
                 out8(LCD_INDEX, GetByte(pATI->LockData.lcd_index, 0));
             }
         }
-    }
 
 #endif /* AVOID_CPIO */
 
+    }
 }
 
 /*
@@ -508,7 +499,8 @@ ATILock
 
 #endif /* AVOID_CPIO */
 
-        outr(MEM_CNTL, pATI->LockData.mem_cntl);
+        if (pATI->Chip < ATI_CHIP_264CT)
+            outr(MEM_CNTL, pATI->LockData.mem_cntl);
         if ((pATI->LCDPanelID >= 0) && (pATI->Chip != ATI_CHIP_264LT))
             outr(LCD_INDEX, pATI->LockData.lcd_index);
     }

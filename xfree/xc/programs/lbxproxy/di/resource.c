@@ -1,4 +1,4 @@
-/* $TOG: resource.c /main/14 1998/02/11 09:49:00 kaleb $ */
+/* $Xorg: resource.c,v 1.4 2000/08/17 19:53:56 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
@@ -365,7 +365,7 @@ FreeResource(client, id, skipDeleteFuncType)
 	eltptr = &clients[cid]->server->clientTable[cid].elements;
 
 	prev = head;
-	while (res = *prev)
+	while ((res = *prev))
 	{
 	    if (res->id == id)
 	    {

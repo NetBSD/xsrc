@@ -1,4 +1,4 @@
-/* $TOG: spfont.c /main/26 1998/05/07 14:45:21 kaleb $ */
+/* $Xorg: spfont.c,v 1.3 2000/08/17 19:46:27 cpqbld Exp $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -21,7 +21,7 @@
  *
  * Author: Dave Lemke, Network Computing Devices Inc
  */
-/* $XFree86: xc/lib/font/Speedo/spfont.c,v 3.8 1999/03/14 11:17:43 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spfont.c,v 3.10 2001/01/17 19:43:20 dawes Exp $ */
 
 /*
 

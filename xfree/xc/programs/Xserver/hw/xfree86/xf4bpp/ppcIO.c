@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcIO.c,v 1.3 1998/11/22 10:37:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcIO.c,v 1.4 1999/06/06 08:48:59 dawes Exp $ */
 /*
 
 Copyright (c) 1990  X Consortium

@@ -22,7 +22,6 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/extras/Mesa/src/glheader.h,v 1.11 2000/10/26 17:57:48 dawes Exp $ */
 
 
 #ifndef GLHEADER_H
@@ -39,7 +38,11 @@
  * If you touch this file, everything gets recompiled!
  *
  * This file should be included before any other header in the .c files.
+ *
+ * Put compiler/OS/assembly pragmas and macros here to avoid
+ * cluttering other source files.
  */
+
 
 
 #ifdef XFree86LOADER
@@ -69,19 +72,6 @@
 #endif
 
 
-
-
-/*
- * Put compiler/OS/assembly pragmas and macros here to avoid
- * cluttering other source files.
- */
-
-
-
-/*
- * XXX move as many of these pragma's and MS Windows-isms into
- * the new src/glheader.h file.
- */
 
 #if defined(_WIN32) && !defined(__WIN32__) && !defined(__CYGWIN__)
 #	define __WIN32__
@@ -164,7 +154,7 @@ typedef unsigned long COLORREF;
 typedef struct tagLAYERPLANEDESCRIPTOR LAYERPLANEDESCRIPTOR, *PLAYERPLANEDESCRIPTOR, *LPLAYERPLANEDESCRIPTOR;
 typedef struct _GLYPHMETRICSFLOAT GLYPHMETRICSFLOAT, *PGLYPHMETRICSFLOAT, *LPGLYPHMETRICSFLOAT;
 typedef struct tagPIXELFORMATDESCRIPTOR PIXELFORMATDESCRIPTOR, *PPIXELFORMATDESCRIPTOR, *LPPIXELFORMATDESCRIPTOR;
-#if 0
+#if !defined(GLX_USE_MESA)
 #include <gl/mesa_wgl.h>
 #endif
 #endif

@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86$
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/tearoff.tcl,v 3.1 1996/12/27 06:55:07 dawes Exp $
 #
 # tearoff.tcl --
 #

@@ -1,133 +1,161 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/glx/vertarr.c,v 1.4 2001/03/25 05:32:00 tsi Exp $ */
 /*
-** The contents of this file are subject to the GLX Public License Version 1.0
-** (the "License"). You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
-** attn: Legal Services, 2011 N. Shoreline Blvd., Mountain View, CA 94043
-** or at http://www.sgi.com/software/opensource/glx/license.html.
+** License Applicability. Except to the extent portions of this file are
+** made subject to an alternative license as permitted in the SGI Free
+** Software License B, Version 1.1 (the "License"), the contents of this
+** file are subject only to the provisions of the License. You may not use
+** this file except in compliance with the License. You may obtain a copy
+** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
+** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
+** 
+** http://oss.sgi.com/projects/FreeB
+** 
+** Note that, as provided in the License, the Software is distributed on an
+** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
+** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
+** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
+** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+** 
+** Original Code. The Original Code is: OpenGL Sample Implementation,
+** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
+** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Copyright in any portions created by third parties is as indicated
+** elsewhere herein. All Rights Reserved.
+** 
+** Additional Notice Provisions: The application programming interfaces
+** established by SGI in conjunction with the Original Code are The
+** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
+** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
+** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
+** Window System(R) (Version 1.3), released October 19, 1998. This software
+** was created using the OpenGL(R) version 1.2.1 Sample Implementation
+** published by SGI, but has not been independently verified as being
+** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** Software distributed under the License is distributed on an "AS IS"
-** basis. ALL WARRANTIES ARE DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY
-** IMPLIED WARRANTIES OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR
-** PURPOSE OR OF NON- INFRINGEMENT. See the License for the specific
-** language governing rights and limitations under the License.
-**
-** The Original Software is GLX version 1.2 source code, released February,
-** 1999. The developer of the Original Software is Silicon Graphics, Inc.
-** Those portions of the Subject Software created by Silicon Graphics, Inc.
-** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
-**
-** $SGI$
 */
 
-#include "packrender.h"
+#define NEED_GL_FUNCS_WRAPPED
 #include "glxclient.h"
+#include "packrender.h"
 #include <string.h>
+#include <limits.h>		/* INT_MAX */
 
 /* macros for setting function pointers */
 #define __GL_VERTEX_FUNC(NAME, let) \
     case GL_##NAME: \
       if (size == 2) \
-	va->vertexCall = (void (*)(const char *))glVertex2##let##v; \
+	vertexPointer->proc = (void (*)(const void *))glVertex2##let##v; \
       else if (size == 3) \
-	va->vertexCall = (void (*)(const char *))glVertex3##let##v; \
+	vertexPointer->proc = (void (*)(const void *))glVertex3##let##v; \
       else if (size == 4) \
-	va->vertexCall = (void (*)(const char *))glVertex4##let##v; \
+	vertexPointer->proc = (void (*)(const void *))glVertex4##let##v; \
       break
 
 #define __GL_NORMAL_FUNC(NAME, let) \
     case GL_##NAME: \
-      va->normalCall = (void (*)(const char *))glNormal3##let##v; \
+      normalPointer->proc = (void (*)(const void *))glNormal3##let##v; \
       break
 
 #define __GL_COLOR_FUNC(NAME, let) \
     case GL_##NAME: \
       if (size == 3) \
-	va->colorCall = (void (*)(const char *))glColor3##let##v; \
+	colorPointer->proc = (void (*)(const void *))glColor3##let##v; \
       else if (size == 4)\
-	va->colorCall = (void (*)(const char *))glColor4##let##v; \
+	colorPointer->proc = (void (*)(const void *))glColor4##let##v; \
       break
 
 #define __GL_INDEX_FUNC(NAME, let) \
     case GL_##NAME: \
-      va->indexCall = (void (*)(const char *))glIndex##let##v; \
+      indexPointer->proc = (void (*)(const void *))glIndex##let##v; \
       break
 
 #define __GL_TEXTURE_FUNC(NAME, let) \
     case GL_##NAME: \
       if (size == 1) \
-	va->texCoordCall = (void (*)(const char *))glTexCoord1##let##v; \
+	texCoordPointer->proc = (void (*)(const void *))glTexCoord1##let##v; \
       else if (size == 2) \
-	va->texCoordCall = (void (*)(const char *))glTexCoord2##let##v; \
+	texCoordPointer->proc = (void (*)(const void *))glTexCoord2##let##v; \
       else if (size == 3) \
-	va->texCoordCall = (void (*)(const char *))glTexCoord3##let##v; \
+	texCoordPointer->proc = (void (*)(const void *))glTexCoord3##let##v; \
       else if (size == 4) \
-	va->texCoordCall = (void (*)(const char *))glTexCoord4##let##v; \
+	texCoordPointer->proc = (void (*)(const void *))glTexCoord4##let##v; \
       break
 
 static GLuint __glXTypeSize(GLenum enm)
 {
-  switch (enm) {
-    case __GL_BOOLEAN_ARRAY:	return sizeof(GLboolean);
-    case GL_BYTE: 		return sizeof(GLbyte); 	
-    case GL_UNSIGNED_BYTE: 	return sizeof(GLubyte);
-    case GL_SHORT: 		return sizeof(GLshort); 	
-    case GL_UNSIGNED_SHORT: 	return sizeof(GLushort);
-    case GL_INT: 		return sizeof(GLint); 		
-    case GL_UNSIGNED_INT: 	return sizeof(GLint);
-    case GL_FLOAT: 		return sizeof(GLfloat);
-    case GL_DOUBLE:	 	return sizeof(GLdouble);
-    default:			return 0;
-  }
+    switch (enm) {
+      case __GL_BOOLEAN_ARRAY:	return sizeof(GLboolean);
+      case GL_BYTE: 		return sizeof(GLbyte); 	
+      case GL_UNSIGNED_BYTE: 	return sizeof(GLubyte);
+      case GL_SHORT: 		return sizeof(GLshort); 	
+      case GL_UNSIGNED_SHORT: 	return sizeof(GLushort);
+      case GL_INT: 		return sizeof(GLint); 		
+      case GL_UNSIGNED_INT: 	return sizeof(GLint);
+      case GL_FLOAT: 		return sizeof(GLfloat);
+      case GL_DOUBLE:	 	return sizeof(GLdouble);
+      default:			return 0;
+    }
 }
 
 void __glXInitVertexArrayState(__GLXcontext *gc)
 {
     __GLXvertArrayState *va = &gc->state.vertArray;
+    GLint i;
 
-    va->vertexEnable = GL_FALSE;
-    va->vertexCall = NULL;
-    va->vertexSkip = 0;
-    va->vertexPtr = 0;
-    va->vertexSize = 4;
-    va->vertexType = GL_FLOAT;
-    va->vertexStride = 0;
+    va->vertex.enable = GL_FALSE;
+    va->vertex.proc = NULL;
+    va->vertex.skip = 0;
+    va->vertex.ptr = 0;
+    va->vertex.size = 4;
+    va->vertex.type = GL_FLOAT;
+    va->vertex.stride = 0;
 
-    va->normalEnable = GL_FALSE;
-    va->normalCall = NULL;
-    va->normalSkip = 0;
-    va->normalPtr = 0;
-    va->normalType = GL_FLOAT;
-    va->normalStride = 0;
+    va->normal.enable = GL_FALSE;
+    va->normal.proc = NULL;
+    va->normal.skip = 0;
+    va->normal.ptr = 0;
+    va->normal.size = 3;
+    va->normal.type = GL_FLOAT;
+    va->normal.stride = 0;
 
-    va->colorEnable = GL_FALSE;
-    va->colorCall = NULL;
-    va->colorSkip = 0;
-    va->colorPtr = 0;
-    va->colorSize = 4;
-    va->colorType = GL_FLOAT;
-    va->colorStride = 0;
+    va->color.enable = GL_FALSE;
+    va->color.proc = NULL;
+    va->color.skip = 0;
+    va->color.ptr = 0;
+    va->color.size = 4;
+    va->color.type = GL_FLOAT;
+    va->color.stride = 0;
 
-    va->indexEnable = GL_FALSE;
-    va->indexCall = NULL;
-    va->indexSkip = 0;
-    va->indexPtr = 0;
-    va->indexType = GL_FLOAT;
-    va->indexStride = 0;
+    va->index.enable = GL_FALSE;
+    va->index.proc = NULL;
+    va->index.skip = 0;
+    va->index.ptr = 0;
+    va->index.size = 1;
+    va->index.type = GL_FLOAT;
+    va->index.stride = 0;
 
-    va->texCoordEnable = GL_FALSE;
-    va->texCoordCall = NULL;
-    va->texCoordSkip = 0;
-    va->texCoordPtr = 0;
-    va->texCoordSize = 4;
-    va->texCoordType = GL_FLOAT;
-    va->texCoordStride = 0;
+    for (i=0; i<__GLX_MAX_TEXTURE_UNITS; ++i) {
+        __GLXvertexArrayPointerState *texCoord = &va->texCoord[i];
 
-    va->edgeFlagEnable = GL_FALSE;
-    va->edgeFlagCall = NULL;
-    va->edgeFlagSkip = 0;
-    va->edgeFlagPtr = 0;
-    va->edgeFlagStride = 0;
+	texCoord->enable = GL_FALSE;
+	texCoord->proc = NULL;
+	texCoord->skip = 0;
+	texCoord->ptr = 0;
+	texCoord->size = 4;
+	texCoord->type = GL_FLOAT;
+	texCoord->stride = 0;
+    }
+
+    va->edgeFlag.enable = GL_FALSE;
+    va->edgeFlag.proc = NULL;
+    va->edgeFlag.skip = 0;
+    va->edgeFlag.ptr = 0;
+    va->edgeFlag.size = 1;
+    va->edgeFlag.type = GL_UNSIGNED_BYTE;
+    va->edgeFlag.stride = 0;
+
+    va->maxElementsVertices = INT_MAX;
+    va->maxElementsIndices = INT_MAX;
 }
 
 /*****************************************************************************/
@@ -136,7 +164,7 @@ void glVertexPointer(GLint size, GLenum type, GLsizei stride,
 		     const GLvoid *pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
-    __GLXvertArrayState *va = &gc->state.vertArray;
+    __GLXvertexArrayPointerState *vertexPointer = &gc->state.vertArray.vertex;
 
     /* Check arguments */
     if (size < 2 || size > 4 || stride < 0) {
@@ -144,7 +172,7 @@ void glVertexPointer(GLint size, GLenum type, GLsizei stride,
         return;
     }
 
-    /* Choose appropriate api call */
+    /* Choose appropriate api proc */
     switch(type) {
         __GL_VERTEX_FUNC(SHORT, s);
         __GL_VERTEX_FUNC(INT, i);
@@ -155,23 +183,23 @@ void glVertexPointer(GLint size, GLenum type, GLsizei stride,
         return;
     }
 
-    va->vertexSize = size;
-    va->vertexType = type;
-    va->vertexStride = stride;
-    va->vertexPtr = pointer;
+    vertexPointer->size = size;
+    vertexPointer->type = type;
+    vertexPointer->stride = stride;
+    vertexPointer->ptr = pointer;
 
     /* Set internal state */
     if (stride == 0) {
-	va->vertexSkip = __glXTypeSize(type) * size;
+	vertexPointer->skip = __glXTypeSize(type) * size;
     } else {
-	va->vertexSkip = stride;
+	vertexPointer->skip = stride;
     }
 }
 
 void glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
-    __GLXvertArrayState *va = &gc->state.vertArray;
+    __GLXvertexArrayPointerState *normalPointer = &gc->state.vertArray.normal;
 
     /* Check arguments */
     if (stride < 0) {
@@ -179,7 +207,7 @@ void glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer)
 	return;
     } 
 
-    /* Choose appropriate api call */
+    /* Choose appropriate api proc */
     switch(type) {
 	__GL_NORMAL_FUNC(BYTE, b);
 	__GL_NORMAL_FUNC(SHORT, s);
@@ -191,15 +219,15 @@ void glNormalPointer(GLenum type, GLsizei stride, const GLvoid *pointer)
         return;
     }
 
-    va->normalType = type;
-    va->normalStride = stride;
-    va->normalPtr = pointer;
+    normalPointer->type = type;
+    normalPointer->stride = stride;
+    normalPointer->ptr = pointer;
 
     /* Set internal state */
     if (stride == 0) {
-	va->normalSkip = 3 * __glXTypeSize(type);
+	normalPointer->skip = 3 * __glXTypeSize(type);
     } else {
-	va->normalSkip = stride;
+	normalPointer->skip = stride;
     }
 }
 
@@ -207,7 +235,7 @@ void glColorPointer(GLint size, GLenum type, GLsizei stride,
 		    const GLvoid *pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
-    __GLXvertArrayState *va = &gc->state.vertArray;
+    __GLXvertexArrayPointerState *colorPointer = &gc->state.vertArray.color;
 
     /* Check arguments */
     if (stride < 0) {
@@ -215,7 +243,7 @@ void glColorPointer(GLint size, GLenum type, GLsizei stride,
 	return;
     } 
 
-    /* Choose appropriate api call */
+    /* Choose appropriate api proc */
     switch(type) {
 	__GL_COLOR_FUNC(BYTE, b);
 	__GL_COLOR_FUNC(UNSIGNED_BYTE, ub);
@@ -229,23 +257,24 @@ void glColorPointer(GLint size, GLenum type, GLsizei stride,
         __glXSetError(gc, GL_INVALID_ENUM);
         return;
     }
-    va->colorSize = size;
-    va->colorType = type;
-    va->colorStride = stride;
-    va->colorPtr = pointer;
+
+    colorPointer->size = size;
+    colorPointer->type = type;
+    colorPointer->stride = stride;
+    colorPointer->ptr = pointer;
 
     /* Set internal state */
     if (stride == 0) {
-        va->colorSkip = size * __glXTypeSize(type);
+        colorPointer->skip = size * __glXTypeSize(type);
     } else {
-        va->colorSkip = stride;
+        colorPointer->skip = stride;
     }
 }
 
 void glIndexPointer(GLenum type, GLsizei stride, const GLvoid *pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
-    __GLXvertArrayState *va = &gc->state.vertArray;
+    __GLXvertexArrayPointerState *indexPointer = &gc->state.vertArray.index;
 
     /* Check arguments */
     if (stride < 0) {
@@ -253,7 +282,7 @@ void glIndexPointer(GLenum type, GLsizei stride, const GLvoid *pointer)
         return;
     }
 
-    /* Choose appropriate api call */
+    /* Choose appropriate api proc */
     switch(type) {
 	__GL_INDEX_FUNC(UNSIGNED_BYTE, ub);
         __GL_INDEX_FUNC(SHORT, s);
@@ -265,15 +294,15 @@ void glIndexPointer(GLenum type, GLsizei stride, const GLvoid *pointer)
         return;
     }
 
-    va->indexType = type;
-    va->indexStride = stride;
-    va->indexPtr = pointer;
+    indexPointer->type = type;
+    indexPointer->stride = stride;
+    indexPointer->ptr = pointer;
 
     /* Set internal state */
     if (stride == 0) {
-	va->indexSkip = __glXTypeSize(type);
+	indexPointer->skip = __glXTypeSize(type);
     } else {
-	va->indexSkip = stride;
+	indexPointer->skip = stride;
     }
 }
 
@@ -281,7 +310,8 @@ void glTexCoordPointer(GLint size, GLenum type, GLsizei stride,
 		       const GLvoid *pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
-    __GLXvertArrayState *va = &gc->state.vertArray;
+    __GLXvertexArrayPointerState *texCoordPointer =
+    	&gc->state.vertArray.texCoord[gc->state.vertArray.activeTexture];
 
     /* Check arguments */
     if (size < 1 || size > 4 || stride < 0) {
@@ -289,7 +319,7 @@ void glTexCoordPointer(GLint size, GLenum type, GLsizei stride,
 	return;
     } 
 
-    /* Choose appropriate api call */
+    /* Choose appropriate api proc */
     switch(type) {
 	__GL_TEXTURE_FUNC(SHORT, s);
 	__GL_TEXTURE_FUNC(INT, i);
@@ -300,23 +330,23 @@ void glTexCoordPointer(GLint size, GLenum type, GLsizei stride,
         return;
     }
 
-    va->texCoordSize = size;
-    va->texCoordType = type;
-    va->texCoordStride = stride;
-    va->texCoordPtr = pointer;
+    texCoordPointer->size = size;
+    texCoordPointer->type = type;
+    texCoordPointer->stride = stride;
+    texCoordPointer->ptr = pointer;
 
     /* Set internal state */
     if (stride == 0) {
-	va->texCoordSkip = __glXTypeSize(type) * size;
+	texCoordPointer->skip = __glXTypeSize(type) * size;
     } else {
-	va->texCoordSkip = stride;
+	texCoordPointer->skip = stride;
     }
 }
 
 void glEdgeFlagPointer(GLsizei stride, const GLvoid *pointer)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
-    __GLXvertArrayState *va = &gc->state.vertArray;
+    __GLXvertexArrayPointerState *edgeFlagPointer = &gc->state.vertArray.edgeFlag;
 
     /* Check arguments */
     if (stride < 0) {
@@ -324,18 +354,18 @@ void glEdgeFlagPointer(GLsizei stride, const GLvoid *pointer)
 	return;
     } 
 
-    va->edgeFlagStride = stride;
-    va->edgeFlagPtr = pointer;
+    /* Choose appropriate api proc */
+    edgeFlagPointer->proc = (void (*)(const void *))glEdgeFlagv;
+
+    edgeFlagPointer->stride = stride;
+    edgeFlagPointer->ptr = pointer;
 
     /* Set internal state */
     if (stride == 0) {
-	va->edgeFlagSkip = sizeof(GLboolean);
+	edgeFlagPointer->skip = sizeof(GLboolean);
     } else {
-	va->edgeFlagSkip = stride;
+	edgeFlagPointer->skip = stride;
     }
-
-    /* Choose appropriate api call */
-    va->edgeFlagCall = glEdgeFlagv;
 
 }
 
@@ -506,29 +536,32 @@ void glArrayElement(GLint i)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXvertArrayState *va = &gc->state.vertArray;
+    GLint j;
 
-    if (va->edgeFlagEnable == GL_TRUE) {
-	(*va->edgeFlagCall)(va->edgeFlagPtr+i*va->edgeFlagSkip);
+    if (va->edgeFlag.enable == GL_TRUE) {
+	(*va->edgeFlag.proc)(va->edgeFlag.ptr+i*va->edgeFlag.skip);
     }
 
-    if (va->texCoordEnable == GL_TRUE) {
-	(*va->texCoordCall)(va->texCoordPtr+i*va->texCoordSkip);
+    for (j=0; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
+	if (va->texCoord[j].enable == GL_TRUE) {
+	    (*va->texCoord[j].proc)(va->texCoord[j].ptr+i*va->texCoord[j].skip);
+	}
     }
 
-    if (va->colorEnable == GL_TRUE) {
-	(*va->colorCall)(va->colorPtr+i*va->colorSkip);
+    if (va->color.enable == GL_TRUE) {
+	(*va->color.proc)(va->color.ptr+i*va->color.skip);
     }
 
-    if (va->indexEnable == GL_TRUE) {
-	(*va->indexCall)(va->indexPtr+i*va->indexSkip);
+    if (va->index.enable == GL_TRUE) {
+	(*va->index.proc)(va->index.ptr+i*va->index.skip);
     }
 
-    if (va->normalEnable == GL_TRUE) {
-	(*va->normalCall)(va->normalPtr+i*va->normalSkip);
+    if (va->normal.enable == GL_TRUE) {
+	(*va->normal.proc)(va->normal.ptr+i*va->normal.skip);
     }
 
-    if (va->vertexEnable == GL_TRUE) {
-	(*va->vertexCall)(va->vertexPtr+i*va->vertexSkip);
+    if (va->vertex.enable == GL_TRUE) {
+	(*va->vertex.proc)(va->vertex.ptr+i*va->vertex.skip);
     }
 }
 
@@ -536,10 +569,10 @@ void glDrawArrays(GLenum mode, GLint first, GLsizei count)
 {
     __GLXcontext *gc = __glXGetCurrentContext();
     __GLXvertArrayState *va = &gc->state.vertArray;
-    const char *vaPtr = NULL, *naPtr = NULL, *caPtr = NULL, 
-               *iaPtr = NULL, *tcaPtr = NULL;
+    const GLubyte *vaPtr = NULL, *naPtr = NULL, *caPtr = NULL, 
+                  *iaPtr = NULL, *tcaPtr[__GLX_MAX_TEXTURE_UNITS];
     const GLboolean *efaPtr = NULL;
-    GLint i;
+    GLint i, j;
 
     switch(mode) {
       case GL_POINTS:
@@ -566,44 +599,48 @@ void glDrawArrays(GLenum mode, GLint first, GLsizei count)
     /*
     ** Set up pointers for quick array traversal.
     */
-    if (va->normalEnable == GL_TRUE) 
-	naPtr = va->normalPtr + first * va->normalSkip;
-    if (va->colorEnable == GL_TRUE) 
-	caPtr = va->colorPtr + first * va->colorSkip;
-    if (va->indexEnable == GL_TRUE) 
-	iaPtr = va->indexPtr + first * va->indexSkip;
-    if (va->texCoordEnable == GL_TRUE) 
-	tcaPtr = va->texCoordPtr + first * va->texCoordSkip;
-    if (va->edgeFlagEnable == GL_TRUE) 
-	efaPtr = va->edgeFlagPtr + first * va->edgeFlagSkip;
-    if (va->vertexEnable == GL_TRUE)
-	vaPtr = va->vertexPtr + first * va->vertexSkip;
+    if (va->normal.enable == GL_TRUE) 
+	naPtr = va->normal.ptr + first * va->normal.skip;
+    if (va->color.enable == GL_TRUE) 
+	caPtr = va->color.ptr + first * va->color.skip;
+    if (va->index.enable == GL_TRUE) 
+	iaPtr = va->index.ptr + first * va->index.skip;
+    for (j=0; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
+	if (va->texCoord[j].enable == GL_TRUE) 
+	    tcaPtr[j] = va->texCoord[j].ptr + first * va->texCoord[j].skip;
+    }
+    if (va->edgeFlag.enable == GL_TRUE) 
+	efaPtr = va->edgeFlag.ptr + first * va->edgeFlag.skip;
+    if (va->vertex.enable == GL_TRUE)
+	vaPtr = va->vertex.ptr + first * va->vertex.skip;
 
     glBegin(mode);
         for (i = 0; i < count; i++) {
-            if (va->edgeFlagEnable == GL_TRUE) {
-                (*va->edgeFlagCall)(efaPtr);
-                efaPtr += va->edgeFlagSkip;
+            if (va->edgeFlag.enable == GL_TRUE) {
+                (*va->edgeFlag.proc)(efaPtr);
+                efaPtr += va->edgeFlag.skip;
             }
-            if (va->texCoordEnable == GL_TRUE) {
-                (*va->texCoordCall)(tcaPtr);
-                tcaPtr += va->texCoordSkip;
+	    for (j=0; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
+		if (va->texCoord[j].enable == GL_TRUE) {
+		    (*va->texCoord[j].proc)(tcaPtr[j]);
+		    tcaPtr[j] += va->texCoord[j].skip;
+		}
+	    }
+            if (va->color.enable == GL_TRUE) {
+                (*va->color.proc)(caPtr);
+                caPtr += va->color.skip;
             }
-            if (va->colorEnable == GL_TRUE) {
-                (*va->colorCall)(caPtr);
-                caPtr += va->colorSkip;
+            if (va->index.enable == GL_TRUE) {
+                (*va->index.proc)(iaPtr);
+                iaPtr += va->index.skip;
             }
-            if (va->indexEnable == GL_TRUE) {
-                (*va->indexCall)(iaPtr);
-                iaPtr += va->indexSkip;
+            if (va->normal.enable == GL_TRUE) {
+                (*va->normal.proc)(naPtr);
+                naPtr += va->normal.skip;
             }
-            if (va->normalEnable == GL_TRUE) {
-                (*va->normalCall)(naPtr);
-                naPtr += va->normalSkip;
-            }
-            if (va->vertexEnable == GL_TRUE) {
-                (*va->vertexCall)(vaPtr);
-                vaPtr += va->vertexSkip;
+            if (va->vertex.enable == GL_TRUE) {
+                (*va->vertex.proc)(vaPtr);
+                vaPtr += va->vertex.skip;
         }
     }
     glEnd();
@@ -617,7 +654,7 @@ void glDrawElements(GLenum mode, GLsizei count, GLenum type,
     const GLubyte *iPtr1 = NULL;
     const GLushort *iPtr2 = NULL;
     const GLuint *iPtr3 = NULL;
-    GLint i, offset = 0;
+    GLint i, j, offset = 0;
 
     switch (mode) {
       case GL_POINTS:
@@ -669,24 +706,53 @@ void glDrawElements(GLenum mode, GLsizei count, GLenum type,
 		offset = (GLint)(*iPtr3++);
 		break;
 	    }
-            if (va->edgeFlagEnable == GL_TRUE) {
-                (*va->edgeFlagCall)(va->edgeFlagPtr+(offset*va->edgeFlagSkip));
+            if (va->edgeFlag.enable == GL_TRUE) {
+                (*va->edgeFlag.proc)(va->edgeFlag.ptr+(offset*va->edgeFlag.skip));
             }
-            if (va->texCoordEnable == GL_TRUE) {
-                (*va->texCoordCall)(va->texCoordPtr+(offset*va->texCoordSkip));
+	    for (j=0; j<__GLX_MAX_TEXTURE_UNITS; ++j) {
+		if (va->texCoord[j].enable == GL_TRUE) {
+		    (*va->texCoord[j].proc)(va->texCoord[j].ptr+
+		    				(offset*va->texCoord[j].skip));
+		}
+	    }
+            if (va->color.enable == GL_TRUE) {
+                (*va->color.proc)(va->color.ptr+(offset*va->color.skip));
             }
-            if (va->colorEnable == GL_TRUE) {
-                (*va->colorCall)(va->colorPtr+(offset*va->colorSkip));
+            if (va->index.enable == GL_TRUE) {
+                (*va->index.proc)(va->index.ptr+(offset*va->index.skip));
             }
-            if (va->indexEnable == GL_TRUE) {
-                (*va->indexCall)(va->indexPtr+(offset*va->indexSkip));
+            if (va->normal.enable == GL_TRUE) {
+                (*va->normal.proc)(va->normal.ptr+(offset*va->normal.skip));
             }
-            if (va->normalEnable == GL_TRUE) {
-                (*va->normalCall)(va->normalPtr+(offset*va->normalSkip));
-            }
-            if (va->vertexEnable == GL_TRUE) {
-                (*va->vertexCall)(va->vertexPtr+(offset*va->vertexSkip));
+            if (va->vertex.enable == GL_TRUE) {
+                (*va->vertex.proc)(va->vertex.ptr+(offset*va->vertex.skip));
         }
     }
     glEnd();
+}
+
+void glDrawRangeElements(GLenum mode, GLuint start, GLuint end,
+			 GLsizei count, GLenum type,
+			 const GLvoid *indices)
+{
+    __GLXcontext *gc = __glXGetCurrentContext();
+
+    if (end < start) {
+	__glXSetError(gc, GL_INVALID_VALUE);
+	return;
+    }
+
+    glDrawElements(mode,count,type,indices);
+}
+
+void glClientActiveTextureARB(GLenum texture)
+{
+    __GLXcontext *gc = __glXGetCurrentContext();
+    GLint unit = (GLint) texture - GL_TEXTURE0_ARB;
+
+    if (unit < 0 || __GLX_MAX_TEXTURE_UNITS <= unit) {
+	__glXSetError(gc, GL_INVALID_ENUM);
+	return;
+    }
+    gc->state.vertArray.activeTexture = unit;
 }

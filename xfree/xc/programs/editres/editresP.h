@@ -1,6 +1,6 @@
 
 /*
- * $TOG: editresP.h /main/15 1998/02/09 13:42:05 kaleb $
+ * $Xorg: editresP.h,v 1.3 2000/08/17 19:53:51 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Chris D. Peterson, MIT X Consortium
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/editres/editresP.h,v 1.5 2001/01/17 23:44:52 dawes Exp $ */
 
 #include <X11/Xmu/EditresP.h>
 #include <X11/Xresource.h>

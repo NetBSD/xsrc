@@ -1,4 +1,4 @@
-/* $TOG: mibstore.c /main/95 1998/02/09 14:46:13 kaleb $ */
+/* $Xorg: mibstore.c,v 1.3 2000/08/17 19:53:36 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -38,7 +38,7 @@ implied warranty.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/Xserver/mi/mibstore.c,v 1.4 1998/12/20 11:57:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mibstore.c,v 1.6 2001/01/17 22:37:05 dawes Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"

@@ -28,12 +28,18 @@
 #define __FTIMAGE_H__
 
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
+#include <ft2build.h>
+
 
 FT_BEGIN_HEADER
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Section>                                                             */
+  /*    basic_types                                                        */
+  /*                                                                       */
+  /*************************************************************************/
 
 
   /*************************************************************************/
@@ -69,6 +75,33 @@ FT_BEGIN_HEADER
     FT_Pos  y;
 
   } FT_Vector;
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Struct>                                                              */
+  /*    FT_BBox                                                            */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    A structure used to hold an outline's bounding box, i.e., the      */
+  /*    coordinates of its extrema in the horizontal and vertical          */
+  /*    directions.                                                        */
+  /*                                                                       */
+  /* <Fields>                                                              */
+  /*    xMin :: The horizontal minimum (left-most).                        */
+  /*                                                                       */
+  /*    yMin :: The vertical minimum (bottom-most).                        */
+  /*                                                                       */
+  /*    xMax :: The horizontal maximum (right-most).                       */
+  /*                                                                       */
+  /*    yMax :: The vertical maximum (top-most).                           */
+  /*                                                                       */
+  typedef struct  FT_BBox_
+  {
+    FT_Pos  xMin, yMin;
+    FT_Pos  xMax, yMax;
+
+  } FT_BBox;
 
 
   /*************************************************************************/
@@ -230,6 +263,14 @@ FT_BEGIN_HEADER
 
   /*************************************************************************/
   /*                                                                       */
+  /* <Section>                                                             */
+  /*    outline_processing                                                 */
+  /*                                                                       */
+  /*************************************************************************/
+
+
+  /*************************************************************************/
+  /*                                                                       */
   /* <Struct>                                                              */
   /*    FT_Outline                                                         */
   /*                                                                       */
@@ -348,7 +389,8 @@ FT_BEGIN_HEADER
 
   } FT_Outline_Flags;
 
-
+  /* */
+  
 #define FT_CURVE_TAG( flag )  ( flag & 3 )
 
 #define FT_Curve_Tag_On           1
@@ -520,6 +562,14 @@ FT_BEGIN_HEADER
 
   /*************************************************************************/
   /*                                                                       */
+  /* <Section>                                                             */
+  /*    basic_types                                                        */
+  /*                                                                       */
+  /*************************************************************************/
+
+
+  /*************************************************************************/
+  /*                                                                       */
   /* <Macro>                                                               */
   /*    FT_IMAGE_TAG                                                       */
   /*                                                                       */
@@ -599,6 +649,23 @@ FT_BEGIN_HEADER
 
   /*************************************************************************/
   /*                                                                       */
+  /* <Section>                                                             */
+  /*    Raster                                                             */
+  /*                                                                       */
+  /* <Title>                                                               */
+  /*    Scanline converter                                                 */
+  /*                                                                       */
+  /* <Abstract>                                                            */
+  /*    How vectorial outlines are converted into bitmaps and pixmaps.     */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    This section contains technical definitions.                       */
+  /*                                                                       */
+  /*************************************************************************/
+
+
+  /*************************************************************************/
+  /*                                                                       */
   /* <Type>                                                                */
   /*    FT_Raster                                                          */
   /*                                                                       */
@@ -637,9 +704,9 @@ FT_BEGIN_HEADER
   /*                                                                       */
   typedef struct  FT_Span_
   {
-    short          x;
-    unsigned short len;
-    unsigned char  coverage;
+    short           x;
+    unsigned short  len;
+    unsigned char   coverage;
 
   } FT_Span;
 
@@ -749,23 +816,40 @@ FT_BEGIN_HEADER
   /* <Fields>                                                              */
   /*    ft_raster_flag_default :: This value is 0.                         */
   /*                                                                       */
-  /*    ft_raster_flag_aa      :: Requests the rendering of an             */
-  /*                              anti-aliased glyph bitmap.  If unset, a  */
-  /*                              monchrome bitmap will be rendered.       */
+  /*    ft_raster_flag_aa      :: This flag is set to indicate that an     */
+  /*                              anti-aliased glyph image should be       */
+  /*                              generated.  Otherwise, it will be        */
+  /*                              monochrome (1-bit)                       */
   /*                                                                       */
-  /*    ft_raster_flag_direct  :: Requests direct rendering over the       */
-  /*                              target bitmap.  Direct rendering uses    */
-  /*                              user-provided callbacks in order to      */
-  /*                              perform direct drawing or composition    */
-  /*                              over an existing bitmap.  If this bit is */
-  /*                              unset, the content of the target bitmap  */
-  /*                              *must be zeroed*!                        */
+  /*    ft_raster_flag_direct  :: This flag is set to indicate direct      */
+  /*                              rendering.  In this mode, client         */
+  /*                              applications must provide their own span */
+  /*                              callback.  This lets them directly       */
+  /*                              draw or compose over an existing bitmap. */
+  /*                              If this bit is not set, the target       */
+  /*                              pixmap's buffer _must_ be zeroed before  */
+  /*                              rendering.                               */
+  /*                                                                       */
+  /*                              Note that for now, direct rendering is   */
+  /*                              only possible with anti-aliased glyphs.  */
+  /*                                                                       */
+  /*    ft_raster_flag_clip    :: This flag is only used in direct         */
+  /*                              rendering mode.  If set, the output will */
+  /*                              be clipped to a box specified in the     */
+  /*                              "clip_box" field of the FT_Raster_Params */
+  /*                              structure.                               */
+  /*                                                                       */
+  /*                              Note that by default, the glyph bitmap   */
+  /*                              is clipped to the target pixmap, except  */
+  /*                              in direct rendering mode where all spans */
+  /*                              are generated if no clipping box is set. */
   /*                                                                       */
   typedef  enum
   {
     ft_raster_flag_default = 0,
     ft_raster_flag_aa      = 1,
-    ft_raster_flag_direct  = 2
+    ft_raster_flag_direct  = 2,
+    ft_raster_flag_clip    = 4
 
   } FT_Raster_Flag;
 
@@ -798,6 +882,9 @@ FT_BEGIN_HEADER
   /*    user        :: User-supplied data that is passed to each drawing   */
   /*                   callback.                                           */
   /*                                                                       */
+  /*    clip_box    :: an optional clipping box. It is only used in        */
+  /*                   direct rendering mode                               */
+  /*                                                                       */
   /* <Note>                                                                */
   /*    An anti-aliased glyph bitmap is drawn if the ft_raster_flag_aa bit */
   /*    flag is set in the `flags' field, otherwise a monochrome bitmap    */
@@ -825,6 +912,7 @@ FT_BEGIN_HEADER
     FT_Raster_BitTest_Func  bit_test;
     FT_Raster_BitSet_Func   bit_set;
     void*                   user;
+    FT_BBox                 clip_box;
 
   } FT_Raster_Params;
 
@@ -995,8 +1083,10 @@ FT_BEGIN_HEADER
   } FT_Raster_Funcs;
 
 
-FT_END_HEADER
+  /* */
 
+
+FT_END_HEADER
 
 #endif /* __FTIMAGE_H__ */
 

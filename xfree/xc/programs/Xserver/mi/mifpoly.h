@@ -1,4 +1,4 @@
-/* $TOG: mifpoly.h /main/10 1998/02/09 14:47:09 kaleb $ */
+/* $Xorg: mifpoly.h,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/bstore.h,v 1.0tsi Exp $*/
+/* $XFree86: xc/programs/Xserver/include/bstore.h,v 1.2 2001/01/06 20:58:12 tsi Exp $*/
 /*
  * Copyright (c) 1987 by the Regents of the University of California
  *
@@ -12,7 +12,7 @@
 
 /*
  * Moved here from mi to allow wrapping of lower level backing store functions.
- * -- 1997.10.27  Marc Aurele La France (tsi@ualberta.ca)
+ * -- 1997.10.27  Marc Aurele La France (tsi@xfree86.org)
  */
 
 #ifndef _BSTORE_H_

@@ -1,4 +1,4 @@
-/* $TOG: locking.h /main/16 1998/02/06 17:42:38 kaleb $ */
+/* $Xorg: locking.h,v 1.3 2000/08/17 19:45:20 cpqbld Exp $ */
 /* 
 
 Copyright 1992, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: grabs.c /main/23 1998/02/09 14:19:51 kaleb $ */
+/* $Xorg: grabs.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/dix/grabs.c,v 3.0 1996/04/15 11:19:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/grabs.c,v 3.2 2001/01/17 22:36:43 dawes Exp $ */
 
 #include "X.h"
 #include "misc.h"

@@ -1,4 +1,4 @@
-/* $TOG: Init.c /main/6 1997/06/12 09:59:34 samborn $ */
+/* $Xorg: Init.c,v 1.4 2000/08/17 19:48:05 cpqbld Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -50,7 +50,7 @@ copyright holders.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/Init.c,v 1.7 1999/12/13 02:12:46 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/Init.c,v 1.9 2001/01/17 22:36:28 dawes Exp $ */
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -142,7 +142,7 @@ const char *LIST_QUEUES = "LANG=C lpstat -v | "
   const char *LIST_QUEUES = "LANG=C lpstat -v | "
                             "nawk '"
                             " $2 == \"for\"    "
-                            "   { print $10 }' "
+                            "   { print $4 }' "
                             "   | sort";
 #else
 #ifdef __uxp__

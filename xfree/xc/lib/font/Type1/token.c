@@ -1,4 +1,4 @@
-/* $TOG: token.c /main/5 1998/05/08 08:46:01 kaleb $ */
+/* $Xorg: token.c,v 1.4 2000/08/17 19:46:34 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -27,7 +27,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/token.c,v 1.3 1999/03/02 11:49:22 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/token.c,v 1.5 2001/01/17 19:43:24 dawes Exp $ */
 /* Authors: Sig Nin & Carol Thompson IBM Almaden Research Laboratory */
 #include "t1stdio.h"
 #include "util.h"
@@ -106,7 +106,8 @@ P10(long exponent)
   if (exponent < 0) {
     power = 0.1;
     value = (exponent & 1 ? power : 1.0);
-    exponent = -((exponent + 1) >> 1);
+    exponent++;
+    exponent = -(exponent >> 1); /* portable C for -(exponent/2) */
   }
   else {
     power = 10.0;

@@ -1,4 +1,4 @@
-/* $TOG: xdmauth.c /main/16 1998/02/09 15:13:11 kaleb $ */
+/* $Xorg: xdmauth.c,v 1.3 2000/08/17 19:53:42 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group

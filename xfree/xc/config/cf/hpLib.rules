@@ -1,10 +1,10 @@
-XCOMM $XConsortium: hpLib.rules /main/16 1996/12/04 11:44:35 swick $
+XCOMM $Xorg: hpLib.rules,v 1.3 2000/08/17 19:41:47 cpqbld Exp $
 
 /*
  * HP shared library rules
  */
 
-XCOMM $XFree86$
+XCOMM $XFree86: xc/config/cf/hpLib.rules,v 3.4 2001/01/17 16:22:31 dawes Exp $
 
 #ifndef HasSharedLibraries
 # define HasSharedLibraries YES

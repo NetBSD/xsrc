@@ -1,4 +1,4 @@
-/* $TOG: medraw.c /main/7 1998/02/09 16:13:05 kaleb $ */
+/* $Xorg: medraw.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module medraw.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/medraw.c,v 3.3 1998/10/05 13:22:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/medraw.c,v 3.5 2001/01/17 22:13:02 dawes Exp $ */
 
 #define _XIEC_MEDRAW
 #define _XIEC_EDRAW

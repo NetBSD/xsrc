@@ -1,4 +1,4 @@
-/* $TOG: WidgetNode.c /main/7 1998/06/23 11:51:04 kaleb $ */
+/* $Xorg: WidgetNode.c,v 1.4 2000/08/17 19:46:04 cpqbld Exp $ */
 
 /*
  
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/WidgetNode.c,v 1.6 1999/03/21 07:34:39 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/WidgetNode.c,v 1.9 2001/04/01 14:00:01 tsi Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
@@ -31,6 +31,7 @@ in this Software without prior written authorization from The Open Group.
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <X11/Xos.h>
 #include <X11/IntrinsicP.h>
 #include <X11/Xaw/Cardinals.h>

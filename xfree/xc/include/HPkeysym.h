@@ -1,4 +1,4 @@
-/* $TOG: HPkeysym.h /main/5 1998/06/29 08:53:32 kaleb $ */
+/* $Xorg: HPkeysym.h,v 1.4 2000/08/18 04:05:43 coskrey Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
@@ -51,6 +51,10 @@ consequential damages in connection with the furnishing,
 performance, or use of this material.
 
 */
+
+#ifndef _HPKEYSYM_H
+
+#define _HPKEYSYM
 
 #define hpXK_ClearLine		0x1000FF6F
 #define hpXK_InsertLine		0x1000FF70
@@ -153,3 +157,5 @@ performance, or use of this material.
 #define XK_IO                   0x100000ee
 #define XK_longminus            0x100000f6
 #define XK_block                0x100000fc
+
+#endif /* _HPKEYSYM_H */

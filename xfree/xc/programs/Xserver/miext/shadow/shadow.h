@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/shadow/shadow.h,v 1.2 2000/09/08 21:46:45 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/shadow/shadow.h,v 1.3 2000/09/12 19:40:13 keithp Exp $
  *
  * Copyright © 2000 Keith Packard
  *

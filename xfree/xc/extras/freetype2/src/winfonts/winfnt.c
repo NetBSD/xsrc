@@ -16,22 +16,13 @@
 /***************************************************************************/
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_ERRORS_H
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_STREAM_H
+#include FT_INTERNAL_OBJECTS_H
+#include FT_INTERNAL_FNT_TYPES_H
 #include "winfnt.h"
-
-#else
-
-#include <winfonts/winfnt.h>
-
-#endif
-
-
-#include <freetype/fterrors.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftobjs.h>
-#include <freetype/internal/fnttypes.h>
 
 
   /*************************************************************************/
@@ -251,7 +242,8 @@
           if ( type_id == 0x8008 )
           {
             font_count  = count;
-            font_offset = FILE_Pos() + 4 + ( stream->cursor - stream->limit );
+            font_offset = (FT_ULong)( FILE_Pos() + 4 +
+                                      ( stream->cursor - stream->limit ) );
             break;
           }
 
@@ -478,16 +470,16 @@
 
   static
   FT_UInt  FNT_Get_Char_Index( FT_CharMap  charmap,
-                               FT_ULong    char_code )
+                               FT_Long     char_code )
   {
-    FT_UInt  result = char_code;
+    FT_Long  result = char_code;
 
 
     if ( charmap )
     {
       FNT_Font*  font  = ((FNT_Face)charmap->face)->fonts;
-      FT_UInt    first = font->header.first_char;
-      FT_UInt    count = font->header.last_char - first + 1;
+      FT_Long    first = font->header.first_char;
+      FT_Long    count = font->header.last_char - first + 1;
 
 
       char_code -= first;
@@ -584,6 +576,7 @@
     slot->metrics.horiBearingY = slot->bitmap_top << 6;
 
     slot->linearHoriAdvance    = (FT_Fixed)bitmap->width << 16;
+    slot->format               = ft_glyph_format_bitmap;
 
   Exit:
     return error;

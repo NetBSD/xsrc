@@ -1,4 +1,4 @@
-/* $XConsortium: regions.h,v 1.6 94/04/02 15:49:51 rws Exp $ */
+/* $Xorg: regions.h,v 1.3 2000/08/17 19:46:32 cpqbld Exp $ */
 /* Copyright International Business Machines, Corp. 1991
  * All Rights Reserved
  * Copyright Lexmark International, Inc. 1991
@@ -26,7 +26,7 @@
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/lib/font/Type1/regions.h,v 1.5 2000/04/28 18:19:20 eich Exp $ */
+/* $XFree86: xc/lib/font/Type1/regions.h,v 1.7 2001/01/17 19:43:23 dawes Exp $ */
 /*SHARED*/
  
 #define   Interior(p,rule)        t1_Interior(p,rule)

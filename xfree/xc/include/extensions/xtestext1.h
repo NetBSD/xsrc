@@ -1,4 +1,4 @@
-/* $TOG: xtestext1.h /main/7 1998/02/15 16:20:42 kaleb $ */
+/* $Xorg: xtestext1.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
 /*
  * xtestext1.h
  *

@@ -1,4 +1,4 @@
-/* $TOG: cursorfont.h /main/5 1998/02/06 17:15:54 kaleb $ */
+/* $Xorg: cursorfont.h,v 1.3 2000/08/17 19:45:10 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group

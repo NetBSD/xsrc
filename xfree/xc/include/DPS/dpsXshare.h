@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86$ */
+/* $XFree86: xc/include/DPS/dpsXshare.h,v 1.2 2000/06/07 22:02:55 tsi Exp $ */
 
 #ifndef DPS_X_SHARE_H
 #define DPS_X_SHARE_H

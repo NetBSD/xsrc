@@ -1,23 +1,37 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxscreens.c,v 1.3 2000/04/05 18:13:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxscreens.c,v 1.6 2001/03/21 16:29:36 dawes Exp $ */
 /*
-** The contents of this file are subject to the GLX Public License Version 1.0
-** (the "License"). You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
-** attn: Legal Services, 2011 N. Shoreline Blvd., Mountain View, CA 94043
-** or at http://www.sgi.com/software/opensource/glx/license.html.
+** License Applicability. Except to the extent portions of this file are
+** made subject to an alternative license as permitted in the SGI Free
+** Software License B, Version 1.1 (the "License"), the contents of this
+** file are subject only to the provisions of the License. You may not use
+** this file except in compliance with the License. You may obtain a copy
+** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
+** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
+** 
+** http://oss.sgi.com/projects/FreeB
+** 
+** Note that, as provided in the License, the Software is distributed on an
+** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
+** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
+** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
+** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+** 
+** Original Code. The Original Code is: OpenGL Sample Implementation,
+** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
+** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Copyright in any portions created by third parties is as indicated
+** elsewhere herein. All Rights Reserved.
+** 
+** Additional Notice Provisions: The application programming interfaces
+** established by SGI in conjunction with the Original Code are The
+** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
+** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
+** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
+** Window System(R) (Version 1.3), released October 19, 1998. This software
+** was created using the OpenGL(R) version 1.2.1 Sample Implementation
+** published by SGI, but has not been independently verified as being
+** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** Software distributed under the License is distributed on an "AS IS"
-** basis. ALL WARRANTIES ARE DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY
-** IMPLIED WARRANTIES OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR
-** PURPOSE OR OF NON- INFRINGEMENT. See the License for the specific
-** language governing rights and limitations under the License.
-**
-** The Original Software is GLX version 1.2 source code, released February,
-** 1999. The developer of the Original Software is Silicon Graphics, Inc.
-** Those portions of the Subject Software created by Silicon Graphics, Inc.
-** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
-**
-** $SGI$
 */
 
 #ifdef IN_MODULE
@@ -32,6 +46,15 @@
 #include "glxserver.h"
 #include "glxutil.h"
 
+static char GLServerExtensions[] = 
+			"GL_ARB_multitexture "
+			"GL_ARB_imaging "
+			"GL_EXT_abgr "
+			"GL_EXT_blend_color "
+			"GL_EXT_blend_minmax "
+			"GL_EXT_blend_subtract "
+			;
+
 /*
 ** We have made the simplifying assuption that the same extensions are 
 ** supported across all screens in a multi-screen system.
@@ -41,7 +64,8 @@ static char GLXServerVersion[] = "1.2";
 static char GLXServerExtensions[] = 
 			"GLX_EXT_visual_info "
 			"GLX_EXT_visual_rating "
-			"GLX_EXT_import_context ";
+			"GLX_EXT_import_context "
+			;
 
 /*
 ** This comes from the GL library that the server will link with.  Right
@@ -259,6 +283,7 @@ void __glXScreenInit(GLint numscreens)
 #else
 		__glXActiveScreens[i].numUsableVisuals = __glXActiveScreens[i].numVisuals;
 #endif
+		__glXActiveScreens[i].GLextensions = __glXStrdup(GLServerExtensions);
 		__glXActiveScreens[i].GLXvendor = __glXStrdup(GLXServerVendorName);
 		__glXActiveScreens[i].GLXversion = __glXStrdup(GLXServerVersion);
 		__glXActiveScreens[i].GLXextensions = __glXStrdup(GLXServerExtensions);
@@ -273,4 +298,18 @@ void __glXScreenInit(GLint numscreens)
 	}
     }
     __glXNumActiveScreens = numscreens;
+}
+
+void __glXScreenReset(void)
+{
+  int i;
+
+  for (i = 0; i < __glXNumActiveScreens; i++) {
+      __glXFree(__glXActiveScreens[i].GLXvendor);
+      __glXFree(__glXActiveScreens[i].GLXversion);
+      __glXFree(__glXActiveScreens[i].GLXextensions);
+  }
+  xfree(__glXActiveScreens);
+  __glXActiveScreens = NULL;
+  __glXNumActiveScreens = 0;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_misc.c,v 1.1.2.1 1998/06/05 16:23:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/solx86/solx86_misc.c,v 1.2 1998/07/25 16:57:05 dawes Exp $ */
 
 /*
  * Copyright 1995-1997 by The XFree86 Project, Inc

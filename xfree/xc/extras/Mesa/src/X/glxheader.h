@@ -27,6 +27,10 @@
 #ifndef GLX_HEADER_H
 #define GLX_HEADER_H
 
+#ifdef VMS
+#include <vms_x_fix.h>
+#endif
+
 
 #ifdef HAVE_CONFIG_H
 #include "conf.h"

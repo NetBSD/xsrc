@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.1 2000/08/09 23:40:09 dawes Exp $
+XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.5 2001/04/27 12:32:42 alanh Exp $
 
 #define CPPOnlyAsm(basename,options) RemoveFile(basename.i)		@@\
 	$(CPP) AsmDefines $(DEFINES) $(INCLUDES) options  basename.S | grep -v '^\#' > basename.i
@@ -30,7 +30,8 @@ XCOMM $XFree86: xc/config/cf/cygwin.rules,v 3.1 2000/08/09 23:40:09 dawes Exp $
 #define SharedLibgetsurf NO 
 #define SharedLibDps	YES
 #define SharedLibDpsTk	YES
-
+#define NormalLibGlu	YES
+#define SharedLibGlu	YES
 
 #ifndef SharedDataSeparation
 #define SharedDataSeparation NO
@@ -120,8 +121,8 @@ CppFileTarget(libname.def,libname-def.cpp,-DLIBRARY_VERSION=rev,$(ICONFIGFILES))
                                                                         @@\
 junk.c:                                                                                 @@\
 	echo "#include <cygwin/cygwin_dll.h>"		>junk.c		@@\
-	echo "/*DECLARE_CYGWIN_DLL(dll_main);*/"		>>junk.c	@@\
-	echo "int WINAPI dll_main(HANDLE a, DWORD reason, void *q)" >>junk.c  @@\
+	echo "DECLARE_CYGWIN_DLL(dll_main);"		>>junk.c	@@\
+	echo "int WINAPI dll_main(HINSTANCE a, DWORD reason, void *q)" >>junk.c  @@\
 	echo "{ return 1; }"				>>junk.c	@@\
 Concat3(lib,libname,.dll): solist junk.o libname.def			@@\
 	RemoveFile(LibraryTargetName(libname))				@@\
@@ -143,15 +144,6 @@ InstallTarget(install,Concat3(lib,libname,.dll),$(INSTLIBFLAGS),$(BINDIR))
 #define ProgramTargetName(target)target.exe
 
 /*
- * LinkBuildBinary - export a *.exe to exports/bin.
- */
-#define LinkBuildBinary(program)					@@\
-all:: $(BUILDBINDIR)/program program					@@\
-	$(BUILDBINDIR)/program: program					 @@\
-	RemoveFile$(@)				@@\
-	cd $(BUILDBINDIR) && $(CP) $(BUILDBINTOP)/$(CURRENT_DIR)/program .
-
-/*
  * LinkBuildDLL - export a .dll to exports/bin.
  */
 #ifdef UseInstalled
@@ -168,13 +160,11 @@ all:: $(BUILDBINDIR)/program program					@@\
 
 
 #ifndef LinkBuildBinary
-#define LinkBuildBinary
-all:: $(BUILDBINDIR)/ProgramTargetName(binary) ProgramTargetName(binary) @@\
-									@@\
-$(BUILDBINDIR)/ProgramTargetName(binary): ProgramTargetName(binary)	@@\
+#define LinkBuildBinary(program)	@@\
+all:: program  @@\
 	MakeDir($(BUILDBINDIR))					@@\
-	RemoveFile($(BUILDBINDIR)/ProgramTargetName(binary)))	@@\
-	cd $(BUILDBINDIR) && $(LN) $(BUILDBINTOP)/$(CURRENT_DIR)/ProgramTargetName(binary) .
+	RemoveFile($(BUILDBINDIR)/program)	@@\
+	$(CP) $(BUILDBINTOP)/$(CURRENT_DIR)/program $(BUILDBINDIR)
 #endif /* LinkBuildBinary */
 
 /* This is to replace an ugly hack in /xc/nls/XLC_LOCALE */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Monitor.c,v 1.19 2001/01/31 20:52:18 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Monitor.c,v 1.20 2001/02/21 23:37:04 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -391,6 +391,8 @@ xf86parseMonitorSection (void)
 		case IDENTIFIER:
 			if (xf86getToken (NULL) != STRING)
 				Error (QUOTE_MSG, "Identifier");
+			if (has_ident == TRUE)
+				Error (MULTIPLE_MSG, "Identifier");
 			ptr->mon_identifier = val.str;
 			has_ident = TRUE;
 			break;
@@ -437,7 +439,10 @@ xf86parseMonitorSection (void)
 						    (float)val.realnum < ptr->mon_hsync[ptr->mon_n_hsync].lo)
 							Error (HORIZSYNC_MSG, NULL);
 						ptr->mon_hsync[ptr->mon_n_hsync].hi = val.realnum;
-						break;
+						if (token = xf86getToken (NULL) == COMMA)
+							break;
+						ptr->mon_n_hsync++;
+						goto HorizDone;
 					default:
 						/* We cannot currently know if a '\n' was found,
 						 * or this is a real error
@@ -471,7 +476,10 @@ HorizDone:
 						    (float)val.realnum < ptr->mon_vrefresh[ptr->mon_n_vrefresh].lo)
 							Error (VERTREFRESH_MSG, NULL);
 						ptr->mon_vrefresh[ptr->mon_n_vrefresh].hi = val.realnum;
-						break;
+						if (token = xf86getToken (NULL) == COMMA)
+							break;
+						ptr->mon_n_vrefresh++;
+						goto VertDone;
 					default:
 						/* We cannot currently know if a '\n' was found,
 						 * or this is a real error
@@ -589,6 +597,8 @@ xf86parseModesSection (void)
 		case IDENTIFIER:
 			if (xf86getToken (NULL) != STRING)
 				Error (QUOTE_MSG, "Identifier");
+			if (has_ident == TRUE)
+				Error (MULTIPLE_MSG, "Identifier");
 			ptr->modes_identifier = val.str;
 			has_ident = TRUE;
 			break;

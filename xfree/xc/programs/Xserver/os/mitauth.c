@@ -1,4 +1,4 @@
-/* $TOG: mitauth.c /main/12 1998/02/09 15:12:34 kaleb $ */
+/* $Xorg: mitauth.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/os/mitauth.c,v 1.4 2001/01/17 22:37:11 dawes Exp $ */
 
 /*
  * MIT-MAGIC-COOKIE-1 authorization scheme

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XConsortium: mkdirhier.sh,v 1.7 94/03/24 15:46:34 gildea Exp $
+# $Xorg: mkdirhier.sh,v 1.3 2000/08/17 19:41:53 cpqbld Exp $
 # Courtesy of Paul Eggert
 
 newline='

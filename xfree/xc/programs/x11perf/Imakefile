@@ -1,5 +1,10 @@
-XCOMM $XConsortium: Imakefile,v 2.31 93/09/04 19:58:26 rws Exp $
-XCOMM $XFree86: xc/programs/x11perf/Imakefile,v 3.2 2000/11/29 08:58:19 keithp Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:08 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/programs/x11perf/Imakefile,v 3.6 2001/05/01 17:23:27 alanh Exp $
+
 #ifndef X11perfcompLib
 #define X11perfcompLib $(LIBDIR)/x11perfcomp
 #endif
@@ -27,9 +32,13 @@ XCOMM $XFree86: xc/programs/x11perf/Imakefile,v 3.2 2000/11/29 08:58:19 keithp E
 		  do_dots.o do_windows.o do_movewin.o do_text.o \
 		  do_blt.o do_arcs.o \
 		  do_tris.o do_complex.o do_traps.o
-LOCAL_LIBRARIES = $(XFTLIBS) $(XMULIB) $(XLIB)
-        DEPLIBS = $(XFTDEPS) $(DEPXMULIB) $(DEPXLIB)
+LOCAL_LIBRARIES = $(XFTLIBS) $(XMUULIB) $(XLIB)
+        DEPLIBS = $(XFTDEPS) $(DEPXMUULIB) $(DEPXLIB)
   SYS_LIBRARIES = MathLibrary
+
+#if UseCygIPC
+EXTRA_LIBRARIES = -lcygipc
+#endif
 
 #ifndef OS2Architecture
 ComplexProgramTarget(x11perf)

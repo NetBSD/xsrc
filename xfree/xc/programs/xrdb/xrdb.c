@@ -1,8 +1,7 @@
 /*
  * xrdb - X resource manager database utility
  *
- * $XConsortium: xrdb.c,v 11.76 95/05/12 18:36:46 mor Exp $
- * $XFree86: xc/programs/xrdb/xrdb.c,v 3.11 1999/03/07 11:41:18 dawes Exp $
+ * $Xorg: xrdb.c,v 1.6 2000/08/17 19:54:56 cpqbld Exp $
  */
 
 /*
@@ -31,6 +30,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xrdb/xrdb.c,v 3.13 2001/01/17 23:46:22 dawes Exp $ */
 
 /*
  * this program is used to load, or dump the resource manager database
@@ -57,7 +57,7 @@ char *malloc();
 char *realloc();
 #endif
 
-#if defined(X_NOT_STDC_ENV)
+#if defined(X_NOT_STDC_ENV) && !defined(__EMX__)
 extern int errno;
 #endif
 

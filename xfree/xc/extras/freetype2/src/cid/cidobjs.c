@@ -16,25 +16,13 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftstream.h>
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_STREAM_H
 #include "cidgload.h"
 #include "cidload.h"
-
-#else
-
-#include <cid/cidgload.h>
-#include <cid/cidload.h>
-
-#endif
-
-
-#include <freetype/internal/psnames.h>
-#include <freetype/internal/psaux.h>
+#include FT_INTERNAL_POSTSCRIPT_NAMES_H
+#include FT_INTERNAL_POSTSCRIPT_AUX_H
 
 
   /*************************************************************************/
@@ -43,8 +31,8 @@
   /* parameter of the FT_TRACE() and FT_ERROR() macros, used to print/log  */
   /* messages during execution.                                            */
   /*                                                                       */
-#undef   FT_COMPONENT
-#define  FT_COMPONENT  trace_cidobjs
+#undef  FT_COMPONENT
+#define FT_COMPONENT  trace_cidobjs
 
 
   /*************************************************************************/
@@ -234,9 +222,11 @@
         root->available_sizes = 0;
 
         root->bbox         = face->cid.font_bbox;
-        root->units_per_EM = 1000;
-        root->ascender     = (FT_Short)face->cid.font_bbox.yMax;
-        root->descender    = (FT_Short)face->cid.font_bbox.yMin;
+        if ( !root->units_per_EM )
+          root->units_per_EM  = 1000;
+
+        root->ascender     = (FT_Short)( face->cid.font_bbox.yMax >> 16 );
+        root->descender    = (FT_Short)( face->cid.font_bbox.yMin >> 16 );
         root->height       = ( ( root->ascender + root->descender ) * 12 )
                              / 10;
 

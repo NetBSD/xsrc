@@ -1,4 +1,4 @@
-.\" $TOG: XtAppInit.man /main/9 1997/11/04 20:31:11 kaleb $
+.\" $Xorg: XtAppInit.man,v 1.3 2000/08/17 19:41:58 cpqbld Exp $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -24,6 +24,9 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
+.\"
+.\" $XFree86: xc/doc/man/Xt/XtAppInit.man,v 1.4 2001/03/04 00:04:25 tsi Exp $
+.\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xI Intrinsics
@@ -123,15 +126,15 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAppInitialize 3Xt "Release 6.4" "X Version 11" "XT FUNCTIONS"
+.TH XtAppInitialize 3Xt __xorgversion__ "XT FUNCTIONS"
 .SH NAME
 XtAppInitialize, XtVaAppInitialize \- initialize, open, or close a display
 .SH SYNTAX
-Widget XtAppInitialize(\fIapp_context_return\fP, \fIapplication_class\fP, \
-\fIoptions\fP, \fInum_options\fP, \fIargc_in_out\fP, \fIargv_in_out\fP, \
+Widget XtAppInitialize(\fIapp_context_return\fP, \fIapplication_class\fP,
+\fIoptions\fP, \fInum_options\fP, \fIargc_in_out\fP, \fIargv_in_out\fP,
 \fIfallback_resources\fP, \fIargs\fP, \fInum_args\fP)
 .br
-      XtAppContext \fIapp_context_return\fP;
+      XtAppContext* \fIapp_context_return\fP;
 .br
       String \fIapplication_class\fP;
 .br
@@ -149,11 +152,11 @@ Widget XtAppInitialize(\fIapp_context_return\fP, \fIapplication_class\fP, \
 .br
       Cardinal \fInum_args\fP;
 .LP
-Widget XtVaAppInitialize(\fIapp_context_return\fP, \fIapplication_class\fP, \
-\fIoptions\fP, \fInum_options\fP, \fIargc_in_out\fP, \fIargv_in_out\fP, \
+Widget XtVaAppInitialize(\fIapp_context_return\fP, \fIapplication_class\fP,
+\fIoptions\fP, \fInum_options\fP, \fIargc_in_out\fP, \fIargv_in_out\fP,
 \fIfallback_resources\fP, ...)
 .br
-      XtAppContext \fIapp_context_return\fP;
+      XtAppContext* \fIapp_context_return\fP;
 .br
       String \fIapplication_class\fP;
 .br
@@ -207,7 +210,7 @@ then calls
 with \fIdisplay_string\fP NULL and \fIapplication_name\fP NULL, and
 finally calls
 .ZN XtAppCreateShell
-with \fIappcation_name\fP NULL, \fIwidget_class\fP
+with \fIapplication_name\fP NULL, \fIwidget_class\fP
 .ZN applicationShellWidgetClass ,
 and the specified \fIargs\fP and \fInum_args\fP and returns the
 created shell. The modified \fIargc\fP and \fIargv\fP returned by

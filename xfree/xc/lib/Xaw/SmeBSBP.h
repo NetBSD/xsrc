@@ -1,5 +1,5 @@
 /*
- * $TOG: SmeBSBP.h /main/10 1998/02/11 14:55:01 kaleb $
+ * $Xorg: SmeBSBP.h,v 1.3 2000/08/17 19:45:38 cpqbld Exp $
  *
 Copyright 1989, 1994, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Chris D. Peterson, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xaw/SmeBSBP.h,v 1.6 1999/06/06 08:48:11 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/SmeBSBP.h,v 1.8 2001/01/17 19:42:31 dawes Exp $ */
 
 #ifndef _XawSmeBSBP_h
 #define _XawSmeBSBP_h

@@ -1,4 +1,4 @@
-/* $TOG: miscstruct.h /main/11 1998/02/09 14:29:04 kaleb $ */
+/* $Xorg: miscstruct.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/include/miscstruct.h,v 3.0 1996/02/18 03:45:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/miscstruct.h,v 3.2 2001/01/17 22:36:57 dawes Exp $ */
 
 #ifndef MISCSTRUCT_H
 #define MISCSTRUCT_H 1

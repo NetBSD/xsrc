@@ -1,4 +1,4 @@
-/* $XConsortium: lbxstr.h /main/27 1996/12/15 21:24:11 rws $ */
+/* $Xorg: lbxstr.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /*
  * Copyright 1992 Network Computing Devices
  *

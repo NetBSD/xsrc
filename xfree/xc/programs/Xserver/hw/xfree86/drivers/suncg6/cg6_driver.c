@@ -20,9 +20,8 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_driver.c,v 1.3 2000/12/01 00:24:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_driver.c,v 1.6 2001/05/16 06:48:11 keithp Exp $ */
 
-#define PSZ 8
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86_ansic.h"
@@ -31,11 +30,11 @@
 #include "mibstore.h"
 #include "micmap.h"
 
-#include "cfb.h"
+#include "fb.h"
 #include "xf86cmap.h"
 #include "cg6.h"
 
-static OptionInfoPtr CG6AvailableOptions(int chipid, int busid);
+static const OptionInfoRec * CG6AvailableOptions(int chipid, int busid);
 static void	CG6Identify(int flags);
 static Bool	CG6Probe(DriverPtr drv, int flags);
 static Bool	CG6PreInit(ScrnInfoPtr pScrn, int flags);
@@ -89,7 +88,7 @@ typedef enum {
     OPTION_NOACCEL
 } CG6Opts;
 
-static OptionInfoRec CG6Options[] = {
+static const OptionInfoRec CG6Options[] = {
     { OPTION_SW_CURSOR,		"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_NOACCEL,		"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -174,8 +173,7 @@ CG6FreeRec(ScrnInfoPtr pScrn)
     return;
 }
 
-static 
-OptionInfoPtr
+static const OptionInfoRec *
 CG6AvailableOptions(int chipid, int busid)
 {
     return CG6Options;
@@ -350,7 +348,10 @@ CG6PreInit(ScrnInfoPtr pScrn, int flags)
     /* Collect all of the relevant option flags (fill in pScrn->options) */
     xf86CollectOptions(pScrn, NULL);
     /* Process the options */
-    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, CG6Options);
+    if (!(pCg6->Options = xalloc(sizeof(CG6Options))))
+	return FALSE;
+    memcpy(pCg6->Options, CG6Options, sizeof(CG6Options));
+    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pCg6->Options);
     
     if (!xf86SetDefaultVisual(pScrn, -1))
 	return FALSE;
@@ -373,9 +374,9 @@ CG6PreInit(ScrnInfoPtr pScrn, int flags)
     /* determine whether we use hardware or software cursor */
     
     pCg6->HWCursor = TRUE;
-    if (xf86GetOptValBool(CG6Options, OPTION_HW_CURSOR, &pCg6->HWCursor))
+    if (xf86GetOptValBool(pCg6->Options, OPTION_HW_CURSOR, &pCg6->HWCursor))
 	from = X_CONFIG;
-    if (xf86ReturnOptValBool(CG6Options, OPTION_SW_CURSOR, FALSE)) {
+    if (xf86ReturnOptValBool(pCg6->Options, OPTION_SW_CURSOR, FALSE)) {
 	from = X_CONFIG;
 	pCg6->HWCursor = FALSE;
     }
@@ -383,12 +384,12 @@ CG6PreInit(ScrnInfoPtr pScrn, int flags)
     xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		pCg6->HWCursor ? "HW" : "SW");
 
-    if (xf86ReturnOptValBool(CG6Options, OPTION_NOACCEL, FALSE)) {
+    if (xf86ReturnOptValBool(pCg6->Options, OPTION_NOACCEL, FALSE)) {
 	pCg6->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
     }
         
-    if (xf86LoadSubModule(pScrn, "cfb") == NULL) {
+    if (xf86LoadSubModule(pScrn, "fb") == NULL) {
 	CG6FreeRec(pScrn);
 	return FALSE;
     }
@@ -477,16 +478,22 @@ CG6ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			  pScrn->rgbBits, pScrn->defaultVisual))
 	return FALSE;
 
+    miSetPixmapDepths ();
+	
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
      * pScreen fields.
      */
 
-    ret = cfbScreenInit(pScreen, pCg6->fb, pScrn->virtualX,
-			pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
-			pScrn->virtualX);
+    ret = fbScreenInit(pScreen, pCg6->fb, pScrn->virtualX,
+		       pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
+		       pScrn->virtualX, 8);
     if (!ret)
 	return FALSE;
+
+#ifdef RENDER
+    fbPictureInit (pScreen, 0, 0);
+#endif
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);

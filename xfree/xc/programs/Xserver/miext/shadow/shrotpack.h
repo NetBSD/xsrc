@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/shadow/shrotpack.h,v 1.1 2000/09/08 21:46:46 keithp Exp $
+ * $XFree86: xc/programs/Xserver/miext/shadow/shrotpack.h,v 1.2 2000/09/13 23:20:13 keithp Exp $
  *
  * Copyright © 2000 Keith Packard
  *

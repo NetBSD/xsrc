@@ -1,4 +1,4 @@
-/* $XConsortium: hyperScrn.c,v 1.1 95/01/25 16:14:36 gildea Exp $ */
+/* $Xorg: hyperScrn.c,v 1.3 2000/08/17 19:48:27 cpqbld Exp $ */
 /*************************************************************************
  * 
  * (c)Copyright 1992 Hewlett-Packard Co.,  All Rights Reserved.

@@ -1,4 +1,4 @@
-/* $TOG: bdfutils.c /main/14 1998/05/01 17:52:09 kaleb $ */
+/* $Xorg: bdfutils.c,v 1.3 2000/08/17 19:46:34 cpqbld Exp $ */
 /************************************************************************
 Copyright 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bdfutils.c,v 1.5 1999/07/17 08:55:11 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bdfutils.c,v 1.7 2001/01/17 19:43:27 dawes Exp $ */
 
 #ifndef FONTMODULE
 #include <ctype.h>

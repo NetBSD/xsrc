@@ -1,4 +1,4 @@
-/* $TOG: choose.c /main/26 1998/02/09 14:13:08 kaleb $ */
+/* $Xorg: choose.c,v 1.3 2000/08/17 19:55:04 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1993, 1998  The Open Group
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xsm/choose.c,v 1.4 2001/01/17 23:46:28 dawes Exp $ */
 
 #include "xsm.h"
 #include "saveutil.h"

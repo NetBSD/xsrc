@@ -1,16 +1,29 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/common/stenciltmp.h,v 1.3 2001/03/21 16:14:20 dawes Exp $ */
 
 #ifndef DBG
 #define DBG 0
 #endif
 
+#ifndef HW_WRITE_LOCK
+#define HW_WRITE_LOCK()		HW_LOCK()
+#endif
+#ifndef HW_WRITE_UNLOCK
+#define HW_WRITE_UNLOCK()	HW_UNLOCK()
+#endif
+
+#ifndef HW_READ_LOCK
+#define HW_READ_LOCK()		HW_LOCK()
+#endif
+#ifndef HW_READ_UNLOCK
+#define HW_READ_UNLOCK()	HW_UNLOCK()
+#endif
 
 static void TAG(WriteStencilSpan)( GLcontext *ctx,
 				   GLuint n, GLint x, GLint y,
 				   const GLstencil *stencil, 
 				   const GLubyte mask[] )
 {
-   HW_LOCK()
+   HW_WRITE_LOCK()
       {
 	 GLint x1;
 	 GLint n1;
@@ -40,7 +53,7 @@ static void TAG(WriteStencilSpan)( GLcontext *ctx,
 	    }
 	 HW_ENDCLIPLOOP();
       }
-   HW_UNLOCK();
+   HW_WRITE_UNLOCK();
 }
 
 
@@ -51,7 +64,7 @@ static void TAG(WriteStencilPixels)( GLcontext *ctx,
 				     const GLstencil stencil[], 
 				     const GLubyte mask[] )
 {
-   HW_LOCK()
+   HW_WRITE_LOCK()
       {
 	 GLint i;
 	 LOCAL_STENCIL_VARS;
@@ -71,7 +84,7 @@ static void TAG(WriteStencilPixels)( GLcontext *ctx,
 	    }
 	 HW_ENDCLIPLOOP();
       }
-   HW_UNLOCK();
+   HW_WRITE_UNLOCK();
 }
 
 
@@ -81,7 +94,7 @@ static void TAG(ReadStencilSpan)( GLcontext *ctx,
 				  GLuint n, GLint x, GLint y,
 				  GLstencil stencil[])
 {
-   HW_LOCK()
+   HW_READ_LOCK()
       {
 	 GLint x1,n1;
 	 LOCAL_STENCIL_VARS;
@@ -99,14 +112,14 @@ static void TAG(ReadStencilSpan)( GLcontext *ctx,
 	    }
 	 HW_ENDCLIPLOOP();
       }
-   HW_UNLOCK();
+   HW_READ_UNLOCK();
 }
 
 static void TAG(ReadStencilPixels)( GLcontext *ctx, GLuint n, 
 				    const GLint x[], const GLint y[],
 				    GLstencil stencil[] )
 {
-   HW_LOCK()
+   HW_READ_LOCK()
       {
 	 GLint i;
 	 LOCAL_STENCIL_VARS;
@@ -123,7 +136,7 @@ static void TAG(ReadStencilPixels)( GLcontext *ctx, GLuint n,
 	    }
 	 HW_ENDCLIPLOOP();
       }
-   HW_UNLOCK();
+   HW_READ_UNLOCK();
 }
 
 

@@ -5,7 +5,7 @@
 //
 // Created by Cristian Gafton, <gafton@redhat.com> (C) 2000
 // 
-// $XFree86$
+// $XFree86: xc/programs/xkbcomp/symbols/ro,v 3.1.6.1 2001/05/23 18:32:19 dawes Exp $
 
 partial hidden alphanumeric_keys modifier_keys
 xkb_symbols "basic" {
@@ -13,7 +13,7 @@ xkb_symbols "basic" {
 
     key <TLDE> { [], [ acircumflex,     acircumflex	] };
     key <AC01> { [], [ atilde,		acircumflex	] };   
-    key <AC02> { [], [ scedilla,	Scedilla	] };
+    key <AC02> { [], [ masculine,      ordfeminine     ] };
     key <AD05> { [], [ thorn,		Thorn		] };
     key <AD08> { [], [ icircumflex,	Icircumflex	] };
 };

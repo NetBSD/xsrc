@@ -1,4 +1,4 @@
-/* $TOG: session.c /main/20 1998/02/09 13:49:25 kaleb $ */
+/* $Xorg: session.c,v 1.4 2000/08/17 19:54:07 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1994, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author:  Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/programs/twm/session.c,v 3.4 1999/02/20 15:07:25 hohndel Exp $ */
+/* $XFree86: xc/programs/twm/session.c,v 3.6 2001/01/17 23:45:08 dawes Exp $ */
 
 #include <X11/Xos.h>
 

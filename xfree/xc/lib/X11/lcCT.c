@@ -1,4 +1,4 @@
-/* $TOG: lcCT.c /main/17 1998/06/18 13:17:06 kaleb $ */
+/* $Xorg: lcCT.c,v 1.4 2000/08/17 19:45:16 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -36,7 +36,7 @@
  *  Modifier: Ivan Pascal     The XFree86 Project
  *  Modifier: Bruno Haible    The XFree86 Project
  */
-/* $XFree86: xc/lib/X11/lcCT.c,v 3.21 2000/12/04 18:49:25 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcCT.c,v 3.24 2001/02/09 00:02:53 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"
@@ -78,7 +78,7 @@ static CTDataRec default_ct_data[] =
     { "ISO8859-16:GR",      /* ISO-8859-16         226   */  "\033-f" },
     { "JISX0201.1976-0:GL", /* ISO-646-JP           14   */  "\033(J" },
     { "JISX0201.1976-0:GR",                                  "\033)I" },
-    { "TIS620.2533-1:GR",   /* TIS-620             166   */  "\033-T" },
+    { "TIS620-0:GR",        /* TIS-620             166   */  "\033-T" },
 
     /* Registered character sets with two byte per character */
     { "GB2312.1980-0:GL",   /* GB_2312-80           58   */ "\033$(A" },

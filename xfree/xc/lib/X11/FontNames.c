@@ -1,4 +1,4 @@
-/* $TOG: FontNames.c /main/14 1998/05/17 09:16:03 kaleb $ */
+/* $Xorg: FontNames.c,v 1.3 2000/08/17 19:44:33 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/X11/FontNames.c,v 1.3 1998/10/03 08:41:17 dawes Exp $ */
+/* $XFree86: xc/lib/X11/FontNames.c,v 1.5 2001/01/17 19:41:35 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"

@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SiliconMotion.c,v 1.1 2000/11/28 20:59:16 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  * (c) Copyright 2000 by Silicon Motion <frido@siliconmotion.com>

@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mifpolycon.c /main/13 1998/02/09 14:47:05 kaleb $ */
+/* $Xorg: mifpolycon.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 #include <math.h>
 #include "X.h"
 #include "gcstruct.h"

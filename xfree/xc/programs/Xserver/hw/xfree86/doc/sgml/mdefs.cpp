@@ -1,4 +1,4 @@
-<!-- $XFree86$ -->
+<!-- $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mdefs.cpp,v 1.1 2000/03/21 19:57:11 dawes Exp $ -->
 
 <!-- entity definitions for man pages -->
 

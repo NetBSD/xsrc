@@ -1,11 +1,11 @@
 XCOMM ----------------------------------------------------------------------
 XCOMM X Window System Build Parameters and Rules
-XCOMM $TOG: X11.tmpl /main/308 1998/06/16 15:14:24 msr $
+XCOMM $Xorg: X11.tmpl,v 1.6 2000/08/17 19:41:46 cpqbld Exp $
 XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp $
+XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.115.2.3 2001/06/01 02:24:14 dawes Exp $
 
 /***************************************************************************
  *                                                                         *
@@ -23,10 +23,12 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
  * InstallAppDefaults		(class)
  * InstallAppDefaultsLong	(file,class)
  * MakeFontsDir			(deplist)
+ * MakeXftCache			(deplist)
  * MakeFonts			()
  * InstallFontObjs		(objs,dest)
  * InstallFonts			(dest)
  * InstallFontAliases		(dest)
+ * InstallXftCache		(dest)
  * FontSrc			(basename)
  * FontBaseObj			(basename)
  * InstallFontScale		(dest)
@@ -36,6 +38,36 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
  * FontObj			(basename)
  * MakeXkbDir			(basedir,subdir)
  */
+
+/* X.Org release string */
+#ifndef XOrgReleaseString
+#define XOrgReleaseString	Release 6.5
+#endif
+
+#ifndef XOrgManNameString
+#define XOrgManNameString	X Version 11
+#endif
+
+XORGRELSTRING = XOrgReleaseString
+XORGMANNAME = XOrgManNameString
+
+#ifndef XOrgManDefs
+#define XOrgManDefs -D__xorgversion__='"$(XORGRELSTRING)" "$(XORGMANNAME)"'
+#endif
+
+#ifndef XVendorManNameString
+#define XVendorManNameString XOrgManNameString
+#endif
+#ifndef XVendorManVersionString
+#define XVendorManVersionString XOrgReleaseString
+#endif
+
+VENDORMANNAME = XVendorManNameString
+VENDORMANVERSION = XVendorManVersionString
+
+#ifndef VendorManDefs
+#define VendorManDefs -D__vendorversion__='"$(VENDORMANVERSION)" "$(VENDORMANNAME)"'
+#endif
 
 /*
  * X-specific things
@@ -48,6 +80,15 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
 #endif
 #ifndef BuildServersOnly
 #define BuildServersOnly	NO
+#endif
+#ifndef BuildClients
+#define BuildClients		!BuildServersOnly
+#endif
+#ifndef BuildDocs
+#define BuildDocs		!BuildServersOnly
+#endif
+#ifndef BuildLibraries
+#define BuildLibraries		(!BuildServersOnly || BuildClients)
 #endif
 #ifndef BuildFontServer
 #define BuildFontServer		YES
@@ -91,14 +132,93 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
 #ifndef BuildCIDFonts
 #define BuildCIDFonts		YES
 #endif
+/* Not used now */
 #ifndef BuildLatin2Fonts
-#define BuildLatin2Fonts	NO
+#define BuildLatin2Fonts	YES
 #endif
 #ifndef BuildCyrillicFonts
-#define BuildCyrillicFonts	NO
+#define BuildCyrillicFonts	YES
 #endif
 #ifndef UseKoi8RForCyrillic
-#define UseKoi8RForCyrillic	NO
+#define UseKoi8RForCyrillic	YES
+#endif
+/* Some bdf font generation details.  The scripts for this require perl. */
+#ifndef TruncateUCSFonts
+#define TruncateUCSFonts	HasPerl5
+#endif
+#ifndef MaxUCSChar
+#define MaxUCSChar		0x3200
+#endif
+#ifndef DerivedUCSFonts
+#define DerivedUCSFonts		HasPerl5
+#endif
+/* These primarily control generation of derived 8-bit fonts. */
+#ifndef BuildUCSFonts
+#define BuildUCSFonts		YES
+#endif
+/* Setting BuildISO8859_1Fonts to NO may result in problems. */
+#ifndef BuildISO8859_1Fonts
+#define BuildISO8859_1Fonts	YES
+#endif
+#ifndef BuildISO8859_2Fonts
+#define BuildISO8859_2Fonts	YES
+#endif
+#ifndef BuildISO8859_3Fonts
+#define BuildISO8859_3Fonts	YES
+#endif
+#ifndef BuildISO8859_4Fonts
+#define BuildISO8859_4Fonts	YES
+#endif
+#ifndef BuildISO8859_5Fonts
+#define BuildISO8859_5Fonts	BuildCyrillicFonts
+#endif
+#ifndef BuildArabicFonts
+#define BuildArabicFonts	YES
+#endif
+#ifndef BuildISO8859_6Fonts
+#define BuildISO8859_6Fonts	BuildArabicFonts
+#endif
+#ifndef BuildGreekFonts
+#define BuildGreekFonts		YES
+#endif
+#ifndef BuildISO8859_7Fonts
+#define BuildISO8859_7Fonts	BuildGreekFonts
+#endif
+#ifndef BuildHebrewFonts
+#define BuildHebrewFonts	YES
+#endif
+#ifndef BuildISO8859_8Fonts
+#define BuildISO8859_8Fonts	BuildHebrewFonts
+#endif
+#ifndef BuildISO8859_9Fonts
+#define BuildISO8859_9Fonts	YES
+#endif
+#ifndef BuildISO8859_10Fonts
+#define BuildISO8859_10Fonts	YES
+#endif
+#ifndef BuildISO8859_13Fonts
+#define BuildISO8859_13Fonts	YES
+#endif
+#ifndef BuildISO8859_14Fonts
+#define BuildISO8859_14Fonts	YES
+#endif
+#ifndef BuildISO8859_15Fonts
+#define BuildISO8859_15Fonts	YES
+#endif
+#ifndef BuildKOI8_RFonts
+#define BuildKOI8_RFonts	BuildCyrillicFonts
+#endif
+#ifndef BuildJapaneseFonts
+#define BuildJapaneseFonts	YES
+#endif
+#ifndef BuildJISX0201Fonts
+#define BuildJISX0201Fonts	BuildJapaneseFonts
+#endif
+#ifndef BuildKoreanFonts
+#define BuildKoreanFonts	YES
+#endif
+#ifndef BuildChineseFonts
+#define BuildChineseFonts	YES
 #endif
 #ifndef HasXAudio
 #define HasXAudio		NO
@@ -136,8 +256,14 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
 #ifndef BuildPexExt
 #define BuildPexExt		NO
 #endif
+#ifndef BuildPexLib
+#define BuildPexLib		(BuildPexExt && !BuildServersOnly)
+#endif
 #ifndef BuildXInputExt
 #define BuildXInputExt		NO
+#endif
+#ifndef BuildXInputLib
+#define BuildXInputLib		(BuildXInputExt && !BuildServersOnly)
 #endif
 #ifndef BuildEVI
 #define BuildEVI		YES
@@ -158,7 +284,7 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
 #define BuildFontCache		YES
 #endif
 #ifndef BuildFontCacheLib
-#define BuildFontCacheLib	BuildFontCache
+#define BuildFontCacheLib	(BuildFontCache && !BuildServersOnly)
 #endif
 #ifndef BuildLowMem
 #define BuildLowMem		NO
@@ -178,16 +304,16 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
 #endif
 #endif
 #ifndef BuildXIElib
-#define BuildXIElib		BuildXIE
+#define BuildXIElib		(BuildXIE && !BuildServersOnly)
 #endif
 #ifndef BuildXKB
 #define BuildXKB		YES
 #endif
 #ifndef BuildXKBlib
-#define BuildXKBlib		BuildXKB
+#define BuildXKBlib		(BuildXKB && !BuildServersOnly)
 #endif
 #ifndef BuildXKBuilib
-#define BuildXKBuilib		BuildXKB
+#define BuildXKBuilib		(BuildXKB && !BuildServersOnly)
 #endif
 	/*
 	 * WARNING: Setting UseXKBInClients to YES cause incompatibilities
@@ -210,7 +336,7 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
 #define BuildXinerama		NO
 #endif
 #ifndef BuildXineramaLibrary
-#define BuildXineramaLibrary	BuildXinerama
+#define BuildXineramaLibrary	(BuildXinerama && !BuildServersOnly)
 #endif
 #ifndef BuildXCSecurity
 #define BuildXCSecurity		YES
@@ -244,23 +370,26 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
 #define BuildXprint		NO
 #endif
 #endif
+#ifndef BuildXprintLib
+#define BuildXprintLib		(BuildXprint && !BuildServersOnly)
+#endif
 #ifndef BuildScreenSaverExt
 #define BuildScreenSaverExt	NO
 #endif
 #ifndef BuildScreenSaverLibrary
-#define BuildScreenSaverLibrary	BuildScreenSaverExt
+#define BuildScreenSaverLibrary	(BuildScreenSaverExt && !BuildServersOnly)
 #endif
 #ifndef BuildXF86VidModeExt
 #define BuildXF86VidModeExt	NO
 #endif
 #ifndef BuildXF86VidModeLibrary
-#define BuildXF86VidModeLibrary BuildXF86VidModeExt
+#define BuildXF86VidModeLibrary (BuildXF86VidModeExt && !BuildServersOnly)
 #endif
 #ifndef BuildXF86MiscExt
 #define BuildXF86MiscExt	NO
 #endif
 #ifndef BuildXF86MiscLibrary
-#define BuildXF86MiscLibrary	BuildXF86MiscExt
+#define BuildXF86MiscLibrary	(BuildXF86MiscExt && !BuildServersOnly)
 #endif
 #ifndef BuildXF86BigfontExt
 #define BuildXF86BigfontExt	NO
@@ -269,28 +398,31 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
 #define BuildXF86DGA		NO
 #endif
 #ifndef BuildXF86DGALibrary
-#define BuildXF86DGALibrary	BuildXF86DGA
+#define BuildXF86DGALibrary	(BuildXF86DGA && !BuildServersOnly)
 #endif
 #ifndef BuildXvExt
 #define BuildXvExt		NO
 #endif
 #ifndef BuildXvLibrary
-#define BuildXvLibrary		BuildXvExt
+#define BuildXvLibrary		(BuildXvExt && !BuildServersOnly)
 #endif
 #ifndef BuildGlxExt
 #define BuildGlxExt		NO
 #endif
 #ifndef BuildGLXLibrary
-#define BuildGLXLibrary		BuildGlxExt
+#define BuildGLXLibrary		(BuildGlxExt && !BuildServersOnly)
+#endif
+#ifndef BuildGLULibrary
+#define BuildGLULibrary		(BuildGLXLibrary && HasCplusplus)
 #endif
 #ifndef BuildXF86RushExt
 #define BuildXF86RushExt	NO
 #endif
 #ifndef BuildXF86RushLibrary
-#define BuildXF86RushLibrary	BuildXF86RushExt
+#define BuildXF86RushLibrary	(BuildXF86RushExt && !BuildServersOnly)
 #endif
 #ifndef BuildDPSLibraries
-#define BuildDPSLibraries	YES
+#define BuildDPSLibraries	!BuildServersOnly
 #endif
 #ifndef BuildDPSLibrary
 #define BuildDPSLibrary		BuildDPSLibraries
@@ -301,17 +433,23 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
 #ifndef BuildPSResLibrary
 #define BuildPSResLibrary	BuildDPSLibraries
 #endif
+#ifndef BuildDPSClients
+#define BuildDPSClients         BuildDPSLibraries
+#endif
 #ifndef BuildRender
 #define BuildRender		NO
 #endif
 #ifndef BuildRenderLibrary
-#define BuildRenderLibrary	YES
+#define BuildRenderLibrary	!BuildServersOnly
 #endif
 #ifndef BuildXftLibrary
 #define BuildXftLibrary		BuildRenderLibrary
 #endif
+#ifndef UseFreetype2
+#define UseFreetype2		BuildXftLibrary
+#endif
 #ifndef BuildFreetype2Library
-#define BuildFreetype2Library	BuildXftLibrary
+#define BuildFreetype2Library	(UseFreetype2 && !HasFreetype2)
 #endif
 
 #ifndef BuildMiscDocs
@@ -382,6 +520,9 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.93.2.2 2001/03/12 16:03:22 keithp Exp 
 #endif
 #ifndef ThreadedProject
 #define ThreadedProject ThreadedX
+#endif
+#ifndef BuildThreadStubLibrary
+#define BuildThreadStubLibrary	NO
 #endif
 #ifndef HasWChar32
 #define HasWChar32		SystemV4
@@ -495,7 +636,7 @@ FCHOWN_DEFINES = -DHAS_FCHOWN
 #define XMalloc0ReturnsNullDefines Malloc0ReturnsNullDefines
 #endif
 #ifndef XtMalloc0ReturnsNullDefines
-#define XtMalloc0ReturnsNullDefines Malloc0ReturnsNullDefines
+#define XtMalloc0ReturnsNullDefines Malloc0ReturnsNullDefines -DXTMALLOC_BC
 #endif
 #endif
 #ifndef ExtensionOSDefines
@@ -1207,6 +1348,7 @@ XCOMM X Window System make variables; these need to be coordinated with rules
               RGB = $(BINDIR)/rgb
             FONTC = $(BINDIR)/bdftopcf
         MKFONTDIR = $(BINDIR)/mkfontdir
+         XFTCACHE = $(BINDIR)/xftcache
       MKHTMLINDEX = $(BINDIR)/mkhtmlindex
           UCS2ANY = $(BINDIR)/ucs2any.pl
       BDFTRUNCATE = $(BINDIR)/bdftruncate.pl
@@ -1215,6 +1357,7 @@ XCOMM X Window System make variables; these need to be coordinated with rules
               RGB = $(CLIENTENVSETUP) $(XBUILDBINDIR)/rgb
             FONTC = $(CLIENTENVSETUP) $(XBUILDBINDIR)/bdftopcf
         MKFONTDIR = $(CLIENTENVSETUP) $(XBUILDBINDIR)/mkfontdir
+         XFTCACHE = $(CLIENTENVSETUP) XFT_CONFIG=$(XFTLIBSRC)/XftConfig $(XBUILDBINDIR)/xftcache
 #if HasPerl
       MKHTMLINDEX = RunPerlScript($(CONFIGSRC)/util/mkhtmlindex.pl,)
 #else
@@ -1259,6 +1402,10 @@ XCOMM X Window System make variables; these need to be coordinated with rules
 #ifdef X11ProjectRoot
      XPROJECTROOT = X11ProjectRoot
 #endif
+
+      XORGMANDEFS = XOrgManDefs
+    VENDORMANDEFS = VendorManDefs
+
 #if HasSharedLibraries
 #ifndef DontUseLibPathVar
 #ifndef BuildLibPathVar
@@ -1500,6 +1647,21 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #endif
 #endif
 
+#if BuildGLULibrary
+#ifndef SharedLibGlu
+#define SharedLibGlu		HasSharedLibraries
+#endif
+#ifndef NormalLibGlu
+#define NormalLibGlu		(!SharedLibX11 | ForceNormalLib)
+#endif
+#ifndef DebugLibGlu
+#define DebugLibGlu		NO
+#endif
+#ifndef ProfileLibGlu
+#define ProfileLibGlu		NO
+#endif
+#endif
+
 #if BuildGLXLibrary
 #ifndef SharedLibGlx
 #define SharedLibGlx		HasSharedLibraries
@@ -1512,6 +1674,12 @@ ProjectUnsharedLibReferences(XTHRSTUB,XThrStub,$(XTHRSTUBSRC),XBuildLibDir)
 #endif
 #ifndef ProfileLibGlx
 #define ProfileLibGlx		NO
+#endif
+#ifndef BuildLibGlxWithoutPIC
+#define BuildLibGlxWithoutPIC	NO
+#endif
+#if BuildLibGlxWithoutPIC && SharedLibGlx
+#define SharedLibGlxWithoutPIC	YES
 #endif
 #ifndef LinkGLToUsrLib
 #define LinkGLToUsrLib		NO
@@ -1659,18 +1827,6 @@ ProjectUnsharedLibReferences(XINERAMA,Xinerama,$(XINERAMALIBSRC),XBuildLibDir)
 #endif
 #endif
 
-#if BuildXineramaLibrary
-    XINERAMALIBSRC = $(LIBSRC)/Xinerama
-#if SharedLibXinerama
-#ifndef SharedXineramaRev
-#define SharedXineramaRev 1.0
-#endif
-SharedLibReferences(XINERAMA,Xinerama,$(XINERAMALIBSRC),SOXINERAMAREV,SharedXineramaRev)
-#else
-ProjectUnsharedLibReferences(XINERAMA,Xinerama,$(XINERAMALIBSRC),XBuildLibDir)
-#endif
-#endif
-
 #if BuildDPSLibrary
     DPSLIBSRC = $(LIBSRC)/dps
 #if SharedLibDps
@@ -1704,6 +1860,18 @@ ProjectUnsharedLibReferences(DPSTK,dpstk,$(DPSTKLIBSRC),XBuildLibDir)
 SharedLibReferences(PSRES,psres,$(PSRESLIBSRC),SOPSRESREV,SharedPSResRev)
 #else
 ProjectUnsharedLibReferences(PSRES,psres,$(PSRESLIBSRC),XBuildLibDir)
+#endif
+#endif
+
+#if BuildGLULibrary
+    GLULIBSRC = $(LIBSRC)/GLU
+#if SharedLibGlu
+#ifndef SharedGluRev
+#define SharedGluRev 1.3
+#endif
+SharedLibReferences(GLU,GLU,$(GLULIBSRC),SOGLUREV,SharedGluRev)
+#else
+ProjectUnsharedLibReferences(GLU,GLU,$(GLULIBSRC),XBuildLibDir)
 #endif
 #endif
 
@@ -1828,6 +1996,28 @@ ProjectUnsharedLibReferences(XDMCP,Xdmcp,$(XDMCPLIBSRC),XBuildLibDir)
 SharedDSLibReferences(XMU,Xmu,$(XMUSRC),SOXMUREV,SharedXmuRev)
 #else
 ProjectUnsharedLibReferences(XMU,Xmu,$(XMUSRC),XBuildLibDir)
+#endif
+
+#ifndef SharedLibXmuu
+#define SharedLibXmuu HasSharedLibraries
+#endif
+#ifndef NormalLibXmuu
+#define NormalLibXmuu 		(!SharedLibXmuu | ForceNormalLib)
+#endif
+#ifndef DebugLibXmuu
+#define DebugLibXmuu		NO	/* debugged Xmuu library */
+#endif
+#ifndef ProfileLibXmuu
+#define ProfileLibXmuu		NO	/* profiled Xmuu library */
+#endif
+           XMUUSRC = $(LIBSRC)/Xmuu
+#if SharedLibXmuu
+#ifndef SharedXmuuRev
+#define SharedXmuuRev 1.0
+#endif
+SharedLibReferences(XMUU,Xmuu,$(XMUUSRC),SOXMUUREV,SharedXmuuRev)
+#else
+ProjectUnsharedLibReferences(XMUU,Xmuu,$(XMUUSRC),XBuildLibDir)
 #endif
 
 #ifndef SharedOldX
@@ -2239,15 +2429,18 @@ SharedLibReferences(FREETYPE2,freetype,$(FREETYPE2LIBSRC),SOFREETYPE2REV,SharedF
 ProjectUnsharedLibReferences(FREETYPE2,freetype,$(FREETYPE2LIBSRC),XBuildLibDir)
 #endif
 
+#if UseFreetype2
+
 #if BuildFreetype2Library
 FREETYPE2INCLUDES=$(TOP_X_INCLUDES)/freetype2
 FREETYPE2DEFINES=-DFREETYPE2
-#define HasFreetype2	YES
 #else
 
-#ifdef Freetype2Dir
+#if HasFreetype2
 
-#define HasFreetype2	YES
+#ifndef Freetype2Dir
+#define Freetype2Dir /usr
+#endif
 
 #ifndef Freetype2LibDir
 #define Freetype2LibDir Freetype2Dir/lib
@@ -2266,9 +2459,6 @@ FREETYPE2DEFINES = -DFREETYPE2
 #endif
 
 #endif
-
-#ifndef HasFreetype2
-#define HasFreetype2	NO
 #endif
 
 #ifndef SharedLibXft
@@ -2293,36 +2483,33 @@ SharedLibReferences(XFT,Xft,$(XFTLIBSRC),SOXFTREV,SharedXftRev)
 ProjectUnsharedLibReferences(XFT,Xft,$(XFTLIBSRC),XBuildLibDir)
 #endif
 
-#ifdef Freetype2Dir
-#ifndef Freetype2LibDir
-#define Freetype2LibDir Freetype2Dir/lib
-#endif
-
-#ifndef Freetype2IncDir
-#define Freetype2IncDir Freetype2Dir/include/freetype2
-#endif
-
-FREETYPE2DIR = Freetype2Dir
-FREETYPE2LIBDIR = Freetype2LibDir
-FREETYPE2INCDIR = Freetype2IncDir
-FREETYPE2INCLUDES = -I$(FREETYPE2INCDIR)
-FREETYPE2LIB = -L$(FREETYPE2LIBDIR) -lfreetype
-FREETYPE2DEFINES = -DFREETYPE2
-
-#endif
-
 #ifndef XftClientDepLibs
+#if UseFreetype2
+#define XftClientDepLibs $(DEPXFTLIB) $(DEPFREETYPE2LIB) $(DEPXRENDERLIB)
+#else
 #define XftClientDepLibs $(DEPXFTLIB) $(DEPXRENDERLIB)
 #endif
+#endif
 #ifndef XftClientLibs
+#if UseFreetype2
 #define XftClientLibs $(XFTLIB) $(FREETYPE2LIB) $(XRENDERLIB)
+#else
+#define XftClientLibs $(XFTLIB) $(XRENDERLIB)
+#endif
+#endif
+
+#ifndef XmuuClientDepLibs
+#define XmuuClientDepLibs $(DEPXMUULIB) $(DEPXLIB)
+#endif
+#ifndef XmuuClientLibs
+#define XmuuClientLibs $(XMUULIB) $(XLIB)
 #endif
 
 #ifndef LdLibraryPath
 #define LdLibraryPath LD_LIBRARY_PATH
 #endif
 
-#ifdef BuildXKBlib
+#if BuildXKBlib
     XKBFILELIBSRC = $(LIBSRC)/xkbfile
 ProjectUnsharedLibReferences(XKBFILE,xkbfile,$(XKBFILELIBSRC),XBuildLibDir)
 #ifndef XkbClientDepLibs
@@ -2354,7 +2541,7 @@ ProjectUnsharedLibReferences(XKBFILE,xkbfile,$(XKBFILELIBSRC),XBuildLibDir)
 #endif
 #endif /* BuildXKBlib */
 
-#ifdef BuildXKBuilib
+#if BuildXKBuilib
     XKBUILIBSRC = $(LIBSRC)/xkbui
 ProjectUnsharedLibReferences(XKBUI,xkbui,$(XKBUILIBSRC),XBuildLibDir)
 #ifndef XkbuiLibs
@@ -2437,6 +2624,41 @@ InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class
 #endif /* InstallAppDefFiles */
 #endif /* UseConfDirForAppDefaults */
 #endif /* InstallAppDefaultsLong */
+
+/*
+ * MakeXftCache - generate rules to build XftCache database
+ */
+
+#ifdef UseFreetype2
+
+#ifndef MakeXftCache
+#define MakeXftCache(deplist)						@@\
+all:: XftCache								@@\
+									@@\
+XftCache: deplist							@@\
+	RunProgram(XFTCACHE, $(XFTCACHEOPTS) .)				@@\
+									@@\
+clean::									@@\
+	RemoveFile(XftCache)
+#endif /* MakeXftCache */
+
+#ifndef InstallXftCache
+#define InstallXftCache(dest)						@@\
+InstallTarget(install,XftCache,$(INSTDATFLAGS),dest)
+#endif /* InstallXftCache */
+
+#else
+
+#ifndef MakeXftCache
+#define MakeXftCache(deplist)
+#endif
+
+#ifndef InstallXftCache
+#define InstallXftCache(dest)
+#endif
+
+#endif
+
 
 /*
  * MakeFontsDir - generate rules to build fonts.dir database.
@@ -2642,7 +2864,7 @@ InstallNamedTarget(install,edir/encodings.dir,$(INSTDATFLAGS),fdir,encodings.dir
 
 
 #ifndef MakeBdfFontFromUCSMaster
-#if HasPerl
+#if HasPerl5
 #define MakeBdfFontFromUCSMaster(font,enc)				@@\
 includes:: font-enc.bdf							@@\
 									@@\
@@ -2656,7 +2878,7 @@ clean::									@@\
 #endif
 
 #ifndef MakeTruncatedUCSBdfFont
-#if HasPerl
+#if HasPerl5
 #define MakeTruncatedUCSBdfFont(font,trunc,name)			@@\
 includes:: name.bdf							@@\
 									@@\
@@ -2695,21 +2917,25 @@ clean::									@@\
 #define PostProcessTroffPS(temp,real) $(MV) temp real
 #endif
 
-#ifndef MakeSimpleDoc
-#define MakeSimpleDoc(file,srcs)					@@\
+#ifndef MakeDepSimpleDoc
+#define MakeDepSimpleDoc(file,deps,srcs)				@@\
 all:: file.PS file.txt							@@\
 .PRECIOUS: file.PS							@@\
 									@@\
-file.PS: srcs								@@\
+file.PS: deps								@@\
 	-$(TROFF) $(MSMACROS) $(XDOCMACROS) srcs 2> index.raw > file.nPS \@@\
 	&& PostProcessTroffPS(file.nPS,$@)				@@\
 	@if grep '^[^1-9.]' index.raw; then exit 1; else test $$? -le 1; fi @@\
 									@@\
-file.txt: srcs								@@\
+file.txt: deps								@@\
 	$(NROFF) $(MSMACROS) $(XDOCMACROS) srcs 2> index.raw | $(COL) $(COLFLAGS) > $@ @@\
 									@@\
 clean::									@@\
 	$(RM) index.raw file.nPS file.PS file.txt
+#endif
+
+#ifndef MakeSimpleDoc(file,srcs)
+#define MakeSimpleDoc(file,srcs) MakeDepSimpleDoc(file,srcs,srcs)
 #endif
 
 #ifndef MakeTblDoc
@@ -2800,6 +3026,14 @@ install:: deps								@@\
 #define InstallRoffDoc(name) InstallDoc(name,name.PS name.txt)
 #endif
 
+#ifndef InstallLatexDoc
+#if HasLatex
+#define InstallLatexDoc(name) InstallDoc(name,name.PS)
+#else
+#define InstallLatexDoc(name)
+#endif
+#endif
+
 #ifndef InstallHardcopyDoc
 #define InstallHardcopyDoc(name,deps)					@@\
 all:: deps								@@\
@@ -2814,5 +3048,35 @@ clean::									@@\
 	fi								@@\
 									@@\
 InstallDoc(name,deps)
+#endif
+
+
+/*
+ * Rule for maintainers to use to updated generated copies of fonts in the
+ * source tree.  Use with care.
+ */
+
+#ifndef UpdateDerivedFont
+#define UpdateDerivedFont(src,dst)					@@\
+update.fonts:: src							@@\
+	-@if [ -f dst ]; then \						@@\
+	    if [ "$(FORCEUPDATE)" = yes ]; then \			@@\
+		if [ "$(FOLLOWLINK)" = no ]; then \			@@\
+			(set -x; $(RM) dst); \				@@\
+		fi; \							@@\
+		set -x; cp src dst; \					@@\
+	    else \							@@\
+		grep -v "XFree86:" src > __tmp1__; \			@@\
+		grep -v "XFree86:" dst > __tmp2__; \			@@\
+		if diff __tmp1__ __tmp2__ > /dev/null 2>&1; then :; \	@@\
+		else \							@@\
+			if [ "$(FOLLOWLINK)" = no ]; then \		@@\
+				(set -x; $(RM) dst); \			@@\
+			fi; \						@@\
+			set -x; cp src dst; \					@@\
+		fi; \							@@\
+	    fi; \							@@\
+	fi								@@\
+	@$(RM) __tmp1__ __tmp2__
 #endif
 

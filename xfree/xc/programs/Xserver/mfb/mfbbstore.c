@@ -1,4 +1,4 @@
-/* $TOG: mfbbstore.c /main/14 1998/02/09 14:38:34 kaleb $ */
+/* $Xorg: mfbbstore.c,v 1.3 2000/08/17 19:53:34 cpqbld Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /*
 

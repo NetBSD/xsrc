@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_mouse.c,v 3.15 1999/04/29 09:13:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_mouse.c,v 3.16 2000/04/05 18:13:53 dawes Exp $ */
 /*
  * (c) Copyright 1994,1999,2000 by Holger Veit
  *			<Holger.Veit@gmd.de>

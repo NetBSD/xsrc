@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/dix.h,v 3.13 2000/05/18 23:46:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/include/dix.h,v 3.16 2001/02/16 13:24:09 eich Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: dix.h /main/45 1998/02/09 14:28:31 kaleb $ */
+/* $Xorg: dix.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 
 #ifndef DIX_H
 #define DIX_H
@@ -890,6 +890,8 @@ extern void InitEvents(
     void
 #endif
 );
+
+extern void CloseDownEvents(void);
 
 extern void DeleteWindowFromAnyEvents(
 #if NeedFunctionPrototypes

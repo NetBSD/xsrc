@@ -1,4 +1,4 @@
-.\" $TOG: xfd.man /main/30 1998/02/09 13:57:36 kaleb $
+.\" $Xorg: xfd.man,v 1.3 2000/08/17 19:54:18 cpqbld Exp $
 .\" Copyright 1989, 1994, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH XFD 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xfd/xfd.man,v 1.7 2001/01/27 18:21:12 dawes Exp $
+.\"
+.TH XFD 1 __xorgversion__
 .SH NAME
 xfd \- display all the characters in an X font
 .SH SYNOPSIS
@@ -173,7 +176,7 @@ character does not exist.  The default is "no such character
 0x%02x%02x (%u,%u) (%#o,%#o)".  The arguments that will come after the
 format string are the same as for the \fBselectFormat\fP resource.
 .SH "SEE ALSO"
-X(1), xlsfonts(1), xrdb(1), xfontsel(1),
+X(__miscmansuffix__), xlsfonts(1), xrdb(1), xfontsel(1),
 .I "X Logical Font Description Conventions"
 .SH "BUGS"
 The program should skip over pages full of non-existent characters.

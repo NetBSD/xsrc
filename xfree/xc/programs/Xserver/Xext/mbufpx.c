@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/mbufpx.c,v 3.0 1994/05/08 05:17:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/mbufpx.c,v 3.2 2001/01/17 22:13:15 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $TOG: mbufpx.c /main/6 1998/02/09 15:24:22 kaleb $ */
+/* $Xorg: mbufpx.c,v 1.3 2000/08/17 19:47:57 cpqbld Exp $ */
 #define NEED_REPLIES
 #define NEED_EVENTS
 #include <stdio.h>

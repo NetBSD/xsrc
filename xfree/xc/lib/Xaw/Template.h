@@ -1,4 +1,4 @@
-/* $TOG: Template.h /main/7 1998/02/06 12:50:56 kaleb $ */
+/* $Xorg: Template.h,v 1.4 2000/08/17 19:45:40 cpqbld Exp $ */
 
 /*
 
@@ -21,10 +21,18 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/Template.h,v 1.3 1998/08/20 13:59:14 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Template.h,v 1.5 2001/01/17 19:42:32 dawes Exp $ */
 
 #ifndef _Template_h
 #define _Template_h
+
+#include <X11/Intrinsic.h>
+
+/****************************************************************
+ *
+ * Template widget
+ *
+ ****************************************************************/
 
 /* Resources:
 

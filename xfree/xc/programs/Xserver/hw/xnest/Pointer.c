@@ -1,4 +1,4 @@
-/* $XConsortium: Pointer.c /main/3 1996/09/28 17:13:56 rws $ */
+/* $Xorg: Pointer.c,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

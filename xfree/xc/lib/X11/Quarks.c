@@ -1,4 +1,4 @@
-/* $TOG: Quarks.c /main/43 1998/02/06 17:48:19 kaleb $ */
+/* $Xorg: Quarks.c,v 1.4 2000/08/17 19:44:51 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988, 1990 by Digital Equipment Corporation, Maynard,
@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/Quarks.c,v 1.3 2001/01/17 19:41:42 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xresource.h>
@@ -159,7 +159,7 @@ char *Xpermalloc(length)
 	if ((sizeof(TestType1) !=
 	     (sizeof(TestType2) - sizeof(unsigned long) + sizeof(double))) &&
 	    !(length & (DALIGN-1)) &&
-	    (i = (NEVERFREETABLESIZE - neverFreeTableSize) & (DALIGN-1))) {
+	    ((i = (NEVERFREETABLESIZE - neverFreeTableSize) & (DALIGN-1)))) {
 	    neverFreeTableSize -= DALIGN - i;
 	    neverFreeTable += DALIGN - i;
 	} else

@@ -1,4 +1,4 @@
-/* $TOG: jdhuff.c /main/6 1998/02/09 16:19:31 kaleb $ */
+/* $Xorg: jdhuff.c,v 1.3 2000/08/17 19:47:47 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /* Module jdhuff.c */
 

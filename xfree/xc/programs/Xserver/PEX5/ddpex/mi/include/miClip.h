@@ -1,4 +1,4 @@
-/* $TOG: miClip.h /main/4 1998/02/10 12:38:18 kaleb $ */
+/* $Xorg: miClip.h,v 1.3 2000/08/17 19:47:02 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group

@@ -1,9 +1,4 @@
-/* $TOG: sunLyKbd.c /main/2 1998/02/10 13:22:54 kaleb $ */
-
-
-
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyKbd.c,v 3.3 1997/06/03 14:11:10 hohndel Exp $ */
-
+/* $Xorg: sunLyKbd.c,v 1.3 2000/08/17 19:48:37 cpqbld Exp $ */
 /*
  * This is sunKbd.c modified for LynxOS
  * Copyright 1996 by Thomas Mueller
@@ -27,6 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sunLyKbd.c,v 3.5 2001/01/17 22:36:53 dawes Exp $ */
 
 /*-
  * Copyright 1987 by the Regents of the University of California

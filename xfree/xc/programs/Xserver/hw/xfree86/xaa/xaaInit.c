@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInit.c,v 1.30 2000/09/24 18:28:56 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInit.c,v 1.33 2001/05/15 18:22:23 paulo Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -47,29 +47,6 @@ static unsigned long XAAGeneration = 0;
 
 /* temp kludge */
 static Bool SwitchedOut = FALSE;
-
-
-#ifdef XFree86LOADER
-
-static XF86ModuleVersionInfo xaaVersRec =
-{
-	"xaa",
-	MODULEVENDORSTRING,
-	MODINFOSTRING1,
-	MODINFOSTRING2,
-	XF86_VERSION_CURRENT,
-	1, 0, 0,
-	ABI_CLASS_VIDEODRV,		/* requires the video driver ABI */
-	ABI_VIDEODRV_VERSION,
-	MOD_CLASS_NONE,
-	{0,0,0,0}
-};
-
-
-XF86ModuleData xaaModuleData = { &xaaVersRec, NULL, NULL };
-
-#endif
-
 
 XAAInfoRecPtr
 XAACreateInfoRec()

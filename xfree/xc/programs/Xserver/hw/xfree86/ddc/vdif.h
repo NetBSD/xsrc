@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/vdif.h,v 1.2 1999/12/03 19:17:26 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/vdif.h,v 1.3 2000/04/14 12:16:04 tsi Exp $ */
 
 #ifndef _VDIF_H
 #define _VDIF_H

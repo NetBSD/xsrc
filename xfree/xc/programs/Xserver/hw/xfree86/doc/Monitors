@@ -1383,5 +1383,5 @@ Section "Monitor"
 EndSection
 
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/doc/Monitors,v 3.18 1999/11/19 13:54:25 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/doc/Monitors,v 3.19 2000/02/12 02:54:39 dawes Exp $
 # $XConsortium: Monitors /main/13 1996/10/25 14:11:55 kaleb $

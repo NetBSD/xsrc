@@ -1,4 +1,4 @@
-/* $TOG: PclGC.c /main/3 1997/06/11 17:53:43 samborn $ */
+/* $Xorg: PclGC.c,v 1.4 2000/08/17 19:48:08 cpqbld Exp $ */
 /*******************************************************************
 **
 **    *********************************************************
@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclGC.c,v 1.6 1998/12/20 11:57:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclGC.c,v 1.9 2001/01/19 18:34:28 dawes Exp $ */
 
 #include "gcstruct.h"
 
@@ -107,14 +107,13 @@ PclCreateGC(GCPtr pGC)
 	  if( mfbCreateGC( pGC ) == FALSE )
 	    return FALSE;
       }
-    else if( pGC->depth <= 8 )
-      {
-	  if( cfbCreateGC( pGC ) == FALSE )
-	    return FALSE;
-      }
     else if( pGC->depth <= 32 )
       {
+#if PSZ == 8 
+	  if( cfbCreateGC( pGC ) == FALSE )
+#else
 	  if( cfb32CreateGC( pGC ) == FALSE )
+#endif
 	    return FALSE;
       }
     else
@@ -671,6 +670,7 @@ PclUpdateDrawableGC(
 		PclSendPattern( bits, sz, 8, h, w, 100, *outFile );
 		xfree( bits );
 	    }
+#if PSZ == 32
 	  else
 	    {
 		sz = h * PixmapBytePad( w, 24 );
@@ -680,6 +680,7 @@ PclUpdateDrawableGC(
 		PclSendPattern( bits, sz, 24, h, w, 100, *outFile );
 		xfree( bits );
 	    }
+#endif
       }
 
     if( changeMask & ( GCTileStipXOrigin | GCTileStipYOrigin ) )
@@ -763,8 +764,9 @@ PclUpdateDrawableGC(
 		      mfbGetImage( &(scratchPix->drawable), 0, 0, w, h, XYPixmap, ~0,
 				  bits );
 		  }
-		else if( pGC->depth <= 8 )
+		else if( pGC->depth <= 32 )
 		  {
+#if PSZ == 8
 		      cfbValidateGC( scratchGC, ~0L,
 				    (DrawablePtr)scratchPix );
 		      cfbCopyPlane( &(pGC->stipple->drawable),
@@ -772,16 +774,15 @@ PclUpdateDrawableGC(
 				   0, w, h, 0, 0, 1 );
 		      cfbGetImage( &(scratchPix->drawable), 0, 0, w, h, ZPixmap, ~0, 
 				  bits );
-		  }
-		else if( pGC->depth <= 32 )
-		  {
+#else
 		      cfb32ValidateGC( scratchGC, ~0L,
-				    (DrawablePtr)scratchPix );
-		      cfb32CopyPlane( &(pGC->stipple->drawable),
-				   (DrawablePtr)scratchPix, scratchGC, 0,
-				   0, w, h, 0, 0, 1 );
-		      cfb32GetImage( &(scratchPix->drawable), 0, 0, w, h, ZPixmap, ~0, 
-				  bits );
+				      (DrawablePtr)scratchPix );
+		      cfb32CopyPlane( pGC->stipple,
+				     (DrawablePtr)scratchPix, scratchGC, 0,
+				     0, w, h, 0, 0, 1 );
+		      cfb32GetImage( scratchPix, 0, 0, w, h, ZPixmap, ~0,
+				    bits );
+#endif
 		  }
 		PclSendPattern( bits, sz, pGC->depth, h, w, 101, *outFile );
 		FreeScratchGC( scratchGC );
@@ -996,13 +997,13 @@ PclValidateGC(
 	    {
 		mfbValidateGC( pGC, ~0, pDrawable );
 	    }
-	  else if( pDrawable->depth <= 8 )
-	    {
-		cfbValidateGC( pGC, ~0, pDrawable );
-	    }
 	  else if( pDrawable->depth <= 32 )
 	    {
+#if PSZ == 8
+		cfbValidateGC( pGC, ~0, pDrawable );
+#else
 		cfb32ValidateGC( pGC, ~0, pDrawable );
+#endif
 	    }
 	  return;
       }

@@ -1,5 +1,5 @@
 XCOMM! /bin/sh
-XCOMM $XConsortium: server.cpp,v 1.4 94/02/06 19:52:05 mor Exp $
+XCOMM $Xorg: server.cpp,v 1.3 2000/08/17 19:54:01 cpqbld Exp $
 XCOMM
 
 XCOMM Copyright (c) 1993 Quarterdeck Office Systems
@@ -24,6 +24,6 @@ XCOMM PROFITS, EVEN IF ADVISED OF THE POSSIBILITY THEREOF, AND REGARDLESS
 XCOMM OF WHETHER IN AN ACTION IN CONTRACT, TORT OR NEGLIGENCE, ARISING OUT
 XCOMM OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 XCOMM
-XCOMM $XFree86: xc/programs/rstart/server.cpp,v 3.0 1995/03/11 14:20:38 dawes Exp $
+XCOMM $XFree86: xc/programs/rstart/server.cpp,v 3.2 2001/01/17 23:45:03 dawes Exp $
 
 exec LIBDIR/SERVERNAME.real -c LIBDIR/config

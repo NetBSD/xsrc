@@ -1,4 +1,4 @@
-/* $TOG: fontxlfd.c /main/22 1998/05/07 14:25:20 kaleb $ */
+/* $Xorg: fontxlfd.c,v 1.3 2000/08/17 19:46:39 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/fontxlfd.c,v 3.8 2000/08/23 22:10:04 tsi Exp $ */
+/* $XFree86: xc/lib/font/util/fontxlfd.c,v 3.10 2001/01/17 19:43:33 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

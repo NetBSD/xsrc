@@ -1,4 +1,4 @@
-/* $TOG: zeropad.c /main/3 1998/02/11 09:49:36 kaleb $ */
+/* $Xorg: zeropad.c,v 1.3 2000/08/17 19:53:56 cpqbld Exp $ */
 
 /*
 

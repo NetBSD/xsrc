@@ -16,21 +16,11 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/tterrors.h>
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_TRUETYPE_ERRORS_H
 #include "ttload.h"
 #include "ttcmap.h"
-
-#else
-
-#include <sfnt/ttload.h>
-#include <sfnt/ttcmap.h>
-
-#endif
 
 
   /*************************************************************************/
@@ -503,10 +493,10 @@
     else
     {
       /* otherwise, we must use the glyphIdArray to do it */
-      index1 = seg4->idRangeOffset / 2
-               + ( charCode - seg4->startCount )
-               + ( seg4 - cmap4->segments )
-               - segCount;
+      index1 = (FT_UInt)( seg4->idRangeOffset / 2
+                          + ( charCode - seg4->startCount )
+                          + ( seg4 - cmap4->segments )
+                          - segCount );
 
       if ( index1 < (FT_UInt)cmap4->numGlyphId       &&
            cmap4->glyphIdArray[index1] != 0 )

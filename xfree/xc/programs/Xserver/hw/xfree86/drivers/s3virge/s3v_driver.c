@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_driver.c,v 1.70 2000/12/14 00:55:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_driver.c,v 1.74.2.2 2001/05/28 08:40:10 eich Exp $ */
 
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
@@ -52,11 +52,9 @@ in this Software without prior written authorization from the XFree86 Project.
 #include	"s3v.h"
 		
 
-#ifdef DPMSExtension
 #include "globals.h"
 #define DPMS_SERVER
 #include "extensions/dpms.h"
-#endif /* DPMSExtension */
 
 /*
  * Internals
@@ -69,7 +67,7 @@ static void S3VDisableMmio(ScrnInfoPtr pScrn);
  */
 
 /* Mandatory functions */
-static OptionInfoPtr S3VAvailableOptions(int chipid, int busid);
+static const OptionInfoRec * S3VAvailableOptions(int chipid, int busid);
 static void S3VIdentify(int flags);
 static Bool S3VProbe(DriverPtr drv, int flags);
 static Bool S3VPreInit(ScrnInfoPtr pScrn, int flags);
@@ -97,11 +95,9 @@ static void S3VInitSTREAMS(ScrnInfoPtr pScrn, unsigned int *streams, DisplayMode
 /* s3v.h - static Bool S3VSwitchMode(int scrnIndex, DisplayModePtr mode, int flags); */
 static void S3VLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies, LOCO *colors, VisualPtr pVisual);
 
-#ifdef DPMSExtension
 static void S3VDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 					 int PowerManagementMode,
 					 int flags);
-#endif
 static Bool S3Vddc1(int scrnIndex);
 static Bool S3Vddc2(int scrnIndex);
 
@@ -214,7 +210,7 @@ typedef enum {
    OPTION_FB_DRAW
 } S3VOpts;
 
-static OptionInfoRec S3VOptions[] =
+static const OptionInfoRec S3VOptions[] =
 {  
    { OPTION_SLOW_EDODRAM, 	"slow_edodram",	OPTV_BOOLEAN,	{0}, FALSE },
    { OPTION_SLOW_DRAM, 		"slow_dram",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -319,9 +315,7 @@ static const char *vbeSymbols[] = {
 static const char *fbSymbols[] = {
   "fbScreenInit",
   "fbBres",
-#ifdef RENDER
   "fbPictureInit",
-#endif
   NULL
 };
 
@@ -475,8 +469,7 @@ S3VFreeRec(ScrnInfoPtr pScrn)
     pScrn->driverPrivate = NULL;
 }
 
-static 
-OptionInfoPtr
+static const OptionInfoRec *
 S3VAvailableOptions(int chipid, int busid)
 {
     return S3VOptions;
@@ -690,10 +683,13 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
     }
     
     /* Process the options */
-    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, S3VOptions);
+    if (!(ps3v->Options = xalloc(sizeof(S3VOptions))))
+	return FALSE;
+    memcpy(ps3v->Options, S3VOptions, sizeof(S3VOptions));
+    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, ps3v->Options);
 
 
-    if (xf86ReturnOptValBool(S3VOptions, OPTION_PCI_BURST, FALSE)) {
+    if (xf86ReturnOptValBool(ps3v->Options, OPTION_PCI_BURST, FALSE)) {
 	ps3v->pci_burst = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: pci_burst - PCI burst read enabled\n");
     } else
@@ -701,8 +697,8 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
 					/* default */
     ps3v->NoPCIRetry = 1;
    					/* Set option */
-    if (xf86ReturnOptValBool(S3VOptions, OPTION_PCI_RETRY, FALSE)) {
-      if (xf86ReturnOptValBool(S3VOptions, OPTION_PCI_BURST, FALSE)) {
+    if (xf86ReturnOptValBool(ps3v->Options, OPTION_PCI_RETRY, FALSE)) {
+      if (xf86ReturnOptValBool(ps3v->Options, OPTION_PCI_BURST, FALSE)) {
       	ps3v->NoPCIRetry = 0;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: pci_retry\n");
 	}
@@ -711,85 +707,85 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
 		"\"pci_retry\" option requires \"pci_burst\".\n");
 	}
     }
-    if (xf86IsOptionSet(S3VOptions, OPTION_FIFO_CONSERV)) {
+    if (xf86IsOptionSet(ps3v->Options, OPTION_FIFO_CONSERV)) {
 	ps3v->fifo_conservative = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: fifo_conservative set\n");
     } else
    	ps3v->fifo_conservative = FALSE;
 
-    if (xf86IsOptionSet(S3VOptions, OPTION_FIFO_MODERATE)) {
+    if (xf86IsOptionSet(ps3v->Options, OPTION_FIFO_MODERATE)) {
 	ps3v->fifo_moderate = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: fifo_moderate set\n");
     } else
    	ps3v->fifo_moderate = FALSE;
 
-    if (xf86IsOptionSet(S3VOptions, OPTION_FIFO_AGGRESSIVE)) {
+    if (xf86IsOptionSet(ps3v->Options, OPTION_FIFO_AGGRESSIVE)) {
 	ps3v->fifo_aggressive = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: fifo_aggressive set\n");
     } else
    	ps3v->fifo_aggressive = FALSE;
 
-    if (xf86IsOptionSet(S3VOptions, OPTION_SLOW_EDODRAM)) {
+    if (xf86IsOptionSet(ps3v->Options, OPTION_SLOW_EDODRAM)) {
 	ps3v->slow_edodram = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: slow_edodram set\n");
     } else
    	ps3v->slow_edodram = FALSE;
 
-    if (xf86IsOptionSet(S3VOptions, OPTION_SLOW_DRAM)) {
+    if (xf86IsOptionSet(ps3v->Options, OPTION_SLOW_DRAM)) {
 	ps3v->slow_dram = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: slow_dram set\n");
     } else
    	ps3v->slow_dram = FALSE;
 
-    if (xf86IsOptionSet(S3VOptions, OPTION_FAST_DRAM)) {
+    if (xf86IsOptionSet(ps3v->Options, OPTION_FAST_DRAM)) {
 	ps3v->fast_dram = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: fast_dram set\n");
     } else
    	ps3v->fast_dram = FALSE;
 
-    if (xf86IsOptionSet(S3VOptions, OPTION_FPM_VRAM)) {
+    if (xf86IsOptionSet(ps3v->Options, OPTION_FPM_VRAM)) {
 	ps3v->fpm_vram = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: fpm_vram set\n");
     } else
    	ps3v->fpm_vram = FALSE;
 
-    if (xf86ReturnOptValBool(S3VOptions, OPTION_NOACCEL, FALSE)) {
+    if (xf86ReturnOptValBool(ps3v->Options, OPTION_NOACCEL, FALSE)) {
 	ps3v->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: NoAccel - Acceleration disabled\n");
     } else
    	ps3v->NoAccel = FALSE;
 
-    if (xf86ReturnOptValBool(S3VOptions, OPTION_EARLY_RAS_PRECHARGE, FALSE)) {
+    if (xf86ReturnOptValBool(ps3v->Options, OPTION_EARLY_RAS_PRECHARGE, FALSE)) {
 	ps3v->early_ras_precharge = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: early_ras_precharge set\n");
     } else
    	ps3v->early_ras_precharge = FALSE;
 
-    if (xf86ReturnOptValBool(S3VOptions, OPTION_LATE_RAS_PRECHARGE, FALSE)) {
+    if (xf86ReturnOptValBool(ps3v->Options, OPTION_LATE_RAS_PRECHARGE, FALSE)) {
 	ps3v->late_ras_precharge = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: late_ras_precharge set\n");
     } else
    	ps3v->late_ras_precharge = FALSE;
 	       	   
-    if (xf86ReturnOptValBool(S3VOptions, OPTION_LCD_CENTER, FALSE)) {
+    if (xf86ReturnOptValBool(ps3v->Options, OPTION_LCD_CENTER, FALSE)) {
 	ps3v->lcd_center = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: lcd_center set\n");
     } else
    	ps3v->lcd_center = FALSE;
 
-    if (xf86ReturnOptValBool(S3VOptions, OPTION_SHOWCACHE, FALSE)) {
+    if (xf86ReturnOptValBool(ps3v->Options, OPTION_SHOWCACHE, FALSE)) {
 	ps3v->ShowCache = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: show_cache set\n");
     } else
    	ps3v->ShowCache = FALSE;
 
-    if (xf86GetOptValInteger(S3VOptions, OPTION_LCDCLOCK, &ps3v->LCDClk)) {
+    if (xf86GetOptValInteger(ps3v->Options, OPTION_LCDCLOCK, &ps3v->LCDClk)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: lcd_setclk set to %1.3f Mhz\n",
 		ps3v->LCDClk / 1000.0 );
     } else
    	ps3v->LCDClk = 0;
 	
-    if (xf86GetOptValFreq(S3VOptions, OPTION_MCLK, OPTUNITS_MHZ, &real)) {
+    if (xf86GetOptValFreq(ps3v->Options, OPTION_MCLK, OPTUNITS_MHZ, &real)) {
 	ps3v->MCLK = (int)(real * 1000.0);
     	if (ps3v->MCLK <= 100000) {
 	  xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: set_mclk set to %1.3f Mhz\n",
@@ -803,7 +799,7 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
     } else
    	ps3v->MCLK = 0;
 
-    if (xf86GetOptValFreq(S3VOptions, OPTION_REFCLK, OPTUNITS_MHZ, &real)) {
+    if (xf86GetOptValFreq(ps3v->Options, OPTION_REFCLK, OPTUNITS_MHZ, &real)) {
 	ps3v->REFCLK = (int)(real * 1000.0);
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Option: set_refclk set to %1.3f Mhz\n",
 		   ps3v->REFCLK / 1000.0 );
@@ -812,20 +808,20 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
 
     from = X_DEFAULT;
     ps3v->hwcursor = TRUE;
-    if (xf86GetOptValBool(S3VOptions, OPTION_HWCURSOR, &ps3v->hwcursor))
+    if (xf86GetOptValBool(ps3v->Options, OPTION_HWCURSOR, &ps3v->hwcursor))
 	  from = X_CONFIG;
-    if (xf86ReturnOptValBool(S3VOptions, OPTION_SWCURSOR, FALSE)) {
+    if (xf86ReturnOptValBool(ps3v->Options, OPTION_SWCURSOR, FALSE)) {
 	  ps3v->hwcursor = FALSE;
 	  from = X_CONFIG;
     }
     xf86DrvMsg(pScrn->scrnIndex, from, "Using %s Cursor\n",
 		ps3v->hwcursor ? "HW" : "SW");
 
-    if (xf86GetOptValBool(S3VOptions, OPTION_SHADOW_FB,&ps3v->shadowFB))
+    if (xf86GetOptValBool(ps3v->Options, OPTION_SHADOW_FB,&ps3v->shadowFB))
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "ShadowFB %s.\n",
 		   ps3v->shadowFB ? "enabled" : "disabled");
 
-    if ((s = xf86GetOptValString(S3VOptions, OPTION_ROTATE))) {
+    if ((s = xf86GetOptValString(ps3v->Options, OPTION_ROTATE))) {
 	if(!xf86NameCmp(s, "CW")) {
 	    /* accel is disabled below for shadowFB */
 	    ps3v->shadowFB = TRUE;
@@ -857,9 +853,9 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
 	ps3v->hwcursor = FALSE;
     }
 
-    if (xf86IsOptionSet(S3VOptions, OPTION_FB_DRAW)) 
+    if (xf86IsOptionSet(ps3v->Options, OPTION_FB_DRAW)) 
       {
-	if (xf86GetOptValBool(S3VOptions, OPTION_FB_DRAW ,&ps3v->UseFB))
+	if (xf86GetOptValBool(ps3v->Options, OPTION_FB_DRAW ,&ps3v->UseFB))
 	  xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Using %s.\n",
 		     ps3v->UseFB ? "fb (not cfb)" : "cfb (not fb)");
       }
@@ -944,11 +940,15 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
     if (pScrn->chipset == NULL) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "ChipID 0x%04X is not recognised\n", ps3v->Chipset);
+	vbeFree(ps3v->pVbe);
+	ps3v->pVbe = NULL;
 	return FALSE;
     }
     if (ps3v->Chipset < 0) {
 	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
 		   "Chipset \"%s\" is not recognised\n", pScrn->chipset);
+	vbeFree(ps3v->pVbe);
+	ps3v->pVbe = NULL;
 	return FALSE;
     }
 
@@ -993,9 +993,10 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
 	   S3Vddc2(pScrn->scrnIndex);
        }
    }
-   if (ps3v->pVbe)
+   if (ps3v->pVbe) {
        vbeFree(ps3v->pVbe);
-   
+       ps3v->pVbe = NULL;
+   }
    
    /*
     * If the driver can do gamma correction, it should call xf86SetGamma()
@@ -1302,9 +1303,7 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
 
 
 #if 0
-#ifdef XFreeXDGA
    vga256InfoRec.directMode = XF86DGADirectPresent;
-#endif
 #endif
 
 
@@ -1450,8 +1449,8 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
       {
 	if( xf86LoadSubModule(pScrn, "fb") == NULL )
 	  {
-	    S3VFreeRec(pScrn);
-	    return FALSE;
+	      S3VFreeRec(pScrn);
+	      return FALSE;
 	  }	       
 	xf86LoaderReqSymLists(fbSymbols, NULL);       
       }
@@ -1481,8 +1480,8 @@ S3VPreInit(ScrnInfoPtr pScrn, int flags)
 	  break;
 	}
 	if (mod && xf86LoadSubModule(pScrn, mod) == NULL) {
-	  S3VFreeRec(pScrn);
-	  return FALSE;
+	    S3VFreeRec(pScrn);
+	    return FALSE;
 	}	       
     
 	xf86LoaderReqSymbols(reqSym, NULL);
@@ -2544,10 +2543,8 @@ S3VScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
   ps3v->CloseScreen = pScreen->CloseScreen;
   pScreen->CloseScreen = S3VCloseScreen;
 
-#ifdef DPMSExtension
   if(xf86DPMSInit(pScreen, S3VDisplayPowerManagementSet, 0) == FALSE)
     xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "DPMS initialization failed!\n");
-#endif
   
 #ifndef XvExtension
     {
@@ -2633,10 +2630,8 @@ S3VInternalScreenInit( int scrnIndex, ScreenPtr pScreen)
 	  ret = FALSE;
 	  break;
 	}
-#ifdef RENDER
       if (ret)
 	fbPictureInit (pScreen, 0, 0);
-#endif
     }
   else
     {
@@ -3759,7 +3754,6 @@ print_subsys_stat(void *s3vMmioMem)
  *
  * Sets VESA Display Power Management Signaling (DPMS) Mode.
  */
-#ifdef DPMSExtension
 static void
 S3VDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 			     int flags)
@@ -3808,7 +3802,6 @@ S3VDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 
   return;
 }
-#endif /* DPMSExtension */
 
 static unsigned int
 S3Vddc1Read(ScrnInfoPtr pScrn)
@@ -3874,6 +3867,7 @@ S3VProbeDDC(ScrnInfoPtr pScrn, int index)
     if (xf86LoadSubModule(pScrn, "vbe")) {
         pVbe = VBEInit(NULL,index);
         ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
+	vbeFree(pVbe);
     }
 }
 

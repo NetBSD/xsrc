@@ -1,4 +1,4 @@
-/* $TOG: pexAccBuf.c /main/2 1998/02/10 12:35:56 kaleb $ */
+/* $Xorg: pexAccBuf.c,v 1.3 2000/08/17 19:47:13 cpqbld Exp $ */
 /*
 
 Copyright 1994, 1998  The Open Group

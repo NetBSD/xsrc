@@ -1,5 +1,5 @@
 
-/* $XConsortium: sun.h /main/3 1996/10/31 14:15:43 kaleb $ */
+/* $Xorg: sun.h,v 1.3 2000/08/17 19:48:33 cpqbld Exp $ */
 
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -13,7 +13,7 @@
  * express or implied warranty.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/sunAmoeba/sun.h,v 1.0tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunAmoeba/sun.h,v 1.3 2001/01/17 22:36:52 dawes Exp $ */
 
 #ifndef _SUN_H_ 
 #define _SUN_H_

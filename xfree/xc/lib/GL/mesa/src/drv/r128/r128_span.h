@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_span.h,v 1.1 2000/06/17 00:03:07 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_span.h,v 1.3 2001/01/08 01:07:21 martin Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -28,17 +28,17 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
  *
  */
 
-#ifndef _R128_SPAN_H_
-#define _R128_SPAN_H_
+#ifndef __R128_SPAN_H__
+#define __R128_SPAN_H__
 
 #ifdef GLX_DIRECT_RENDERING
 
-extern void r128DDInitSpanFuncs(GLcontext *ctx);
+extern void r128DDInitSpanFuncs( GLcontext *ctx );
 
 #endif
-#endif /* _R128_SPAN_H_ */
+#endif

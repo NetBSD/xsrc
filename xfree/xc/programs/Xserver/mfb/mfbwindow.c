@@ -1,4 +1,4 @@
-/* $TOG: mfbwindow.c /main/33 1998/02/09 14:40:29 kaleb $ */
+/* $Xorg: mfbwindow.c,v 1.3 2000/08/17 19:53:36 cpqbld Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 

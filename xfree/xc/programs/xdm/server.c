@@ -1,4 +1,4 @@
-/* $TOG: server.c /main/21 1998/02/09 13:56:13 kaleb $ */
+/* $Xorg: server.c,v 1.4 2000/08/17 19:54:15 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/server.c,v 3.7 1999/02/28 11:20:12 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/server.c,v 3.9 2001/01/17 23:45:22 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -40,6 +40,7 @@ from The Open Group.
 # include	<stdio.h>
 # include	<signal.h>
 # include	<errno.h>
+# include 	<sys/socket.h>
 
 #ifdef MINIX
 #include <sys/ioctl.h>

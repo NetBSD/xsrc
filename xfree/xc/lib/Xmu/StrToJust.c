@@ -1,4 +1,4 @@
-/* $TOG: StrToJust.c /main/11 1998/05/14 14:56:23 kaleb $ */
+/* $Xorg: StrToJust.c,v 1.3 2000/08/17 19:46:03 cpqbld Exp $ */
 
 /* 
  
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/StrToJust.c,v 1.4 1998/08/16 10:25:19 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/StrToJust.c,v 1.6 2001/01/17 19:42:57 dawes Exp $ */
 
 #include <string.h>
 #include <X11/Intrinsic.h>

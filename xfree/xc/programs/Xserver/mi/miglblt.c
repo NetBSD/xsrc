@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/miglblt.c,v 1.2 1998/04/27 03:14:54 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miglblt.c,v 1.4 2001/01/17 22:37:06 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: miglblt.c /main/19 1998/02/09 14:47:22 kaleb $ */
+/* $Xorg: miglblt.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"

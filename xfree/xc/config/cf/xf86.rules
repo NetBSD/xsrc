@@ -1,5 +1,9 @@
-XCOMM $XConsortium: xf86.rules /main/9 1996/10/31 14:54:26 kaleb $
-XCOMM $XFree86: xc/config/cf/xf86.rules,v 3.31 2000/03/31 22:55:15 dawes Exp $
+XCOMM $Xorg: xf86.rules,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/config/cf/xf86.rules,v 3.33 2001/01/17 16:38:51 dawes Exp $
 
 /*
  * These rules are needed to build the XFree86 X Servers

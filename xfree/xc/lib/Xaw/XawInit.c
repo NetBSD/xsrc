@@ -1,5 +1,5 @@
 /*
- * $TOG: XawInit.c /main/4 1998/02/06 12:53:40 kaleb $
+ * $Xorg: XawInit.c,v 1.3 2000/08/17 19:45:44 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -28,7 +28,7 @@ in this Software without prior written authorization from The Open Group.
  * call this routine from their ClassInitialize procs (this routine may be
  * used as the class init proc).
  */
-/* $XFree86: xc/lib/Xaw/XawInit.c,v 1.7 1998/10/03 08:42:33 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/XawInit.c,v 1.9 2001/01/17 19:42:36 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/Vendor.h>

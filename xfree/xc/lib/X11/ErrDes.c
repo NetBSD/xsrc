@@ -1,5 +1,5 @@
 /*
- * $TOG: ErrDes.c /main/44 1998/04/28 17:17:38 kaleb $
+ * $Xorg: ErrDes.c,v 1.3 2000/08/17 19:44:33 cpqbld Exp $
  */
 
 /***********************************************************
@@ -44,7 +44,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/ErrDes.c,v 3.6 1998/10/03 08:41:16 dawes Exp $ */
+/* $XFree86: xc/lib/X11/ErrDes.c,v 3.8 2001/01/17 19:41:34 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xos.h>

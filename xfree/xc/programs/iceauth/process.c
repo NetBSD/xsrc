@@ -1,5 +1,5 @@
 /*
- * $TOG: process.c /main/8 1998/02/09 13:44:16 kaleb $
+ * $Xorg: process.c,v 1.4 2000/08/17 19:53:53 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -24,7 +24,7 @@ in this Software without prior written authorization from The Open Group.
  * Modified into "iceauth"    : Ralph Mor, X Consortium
  */
 
-/* $XFree86: xc/programs/iceauth/process.c,v 3.1 1998/10/04 09:40:08 dawes Exp $ */
+/* $XFree86: xc/programs/iceauth/process.c,v 3.3 2001/01/17 23:44:54 dawes Exp $ */
 
 #include "iceauth.h"
 #include <ctype.h>

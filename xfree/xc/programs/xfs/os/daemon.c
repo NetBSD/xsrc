@@ -27,17 +27,18 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xfs/os/daemon.c,v 1.1 2000/11/30 23:30:10 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/daemon.c,v 1.5 2001/04/26 20:26:31 alanh Exp $ */
 
 #include <X11/Xos.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #if defined(SVR4) || defined(USG)
 #include <termios.h>
 #else
 #include <sys/ioctl.h>
 #endif
-#if defined(__osf__) || defined(linux) || defined(MINIX) || defined(__GNU__)
+#if defined(__osf__) || defined(linux) || defined(MINIX) || defined(__GNU__) || defined(__CYGWIN__)
 #define setpgrp setpgid
 #endif
 #ifdef hpux
@@ -127,7 +128,7 @@ BecomeDaemon ()
     close (1);
     close (2);
 
-#ifndef __EMX__
+#if !defined(__EMX__) && !defined(__CYGWIN__)
 #ifdef MINIX
 #if 0
     /* Use setsid() to get rid of our controlling tty, this requires an extra

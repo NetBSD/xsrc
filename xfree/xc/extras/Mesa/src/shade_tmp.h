@@ -2,19 +2,19 @@
 /*
  * Mesa 3-D graphics library
  * Version:  3.4
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -38,7 +38,7 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
 
    GLuint  vstride = VB->Unprojected->stride;
    const GLfloat *vertex = VB->Unprojected->start;
-   GLuint  nstride = VB->NormalPtr->stride; 
+   GLuint  nstride = VB->NormalPtr->stride;
    const GLfloat *normal = VB->NormalPtr->start;
    CONST GLfloat (*first_normal)[3] = (CONST GLfloat (*)[3]) VB->NormalPtr->start;
 
@@ -49,7 +49,7 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
    GLubyte (*Fcolor)[4] = (GLubyte (*)[4])VB->LitColor[0]->start;
    GLubyte (*Bcolor)[4] = (GLubyte (*)[4])VB->LitColor[1]->start;
    GLubyte (*Fspec)[4] = VB->Spec[0] + VB->Start;
-   GLubyte (*Bspec)[4] = VB->Spec[1] + VB->Start; 
+   GLubyte (*Bspec)[4] = VB->Spec[1] + VB->Start;
    GLubyte *mask = VB->CullMask + VB->Start;
    GLubyte *cullmask = mask;
    GLuint *flags = VB->Flag + VB->Start;
@@ -68,7 +68,7 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
    if (ctx->Light.ColorMaterialEnabled) {
       cm_flags = VERT_RGBA;
 
-      if (VB->ColorPtr->flags & VEC_BAD_STRIDE) 
+      if (VB->ColorPtr->flags & VEC_BAD_STRIDE)
 	 gl_clean_color(VB);
 
       CMcolor =  (GLubyte (*)[4])VB->ColorPtr->start;
@@ -79,20 +79,19 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
    VB->ColorPtr = VB->LitColor[0];
    VB->Specular = VB->Spec[0];
 
-
    for ( j=0 ; j<nr ; j++,STRIDE_F(vertex,vstride),NEXT_VERTEX_NORMAL) {
       GLfloat sum[2][3], spec[2][3];
       struct gl_light *light;
-	 
-      if ( flags[j] & cm_flags ) 
+
+      if ( flags[j] & cm_flags )
 	 gl_update_color_material( ctx, CMcolor[j] );
-	 
+
       if ( flags[j] & VERT_MATERIAL )
 	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
 
-      if ( CULL(*mask) ) 
+      if ( CULL(*mask) )
 	 continue;
-      
+
       if (LIGHT_FRONT(*mask)) {
 	 COPY_3V(sum[0], base[0]);
 	 ZERO_3V(spec[0]);
@@ -102,12 +101,12 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
 	 COPY_3V(sum[1], base[1]);
 	 ZERO_3V(spec[1]);
       }
-      
+
       /* Add contribution from each enabled light source */
       foreach (light, &ctx->Light.EnabledList) {
 	 GLfloat n_dot_h;
 	 GLfloat correction;
-	 GLint side; 
+	 GLint side;
 	 GLfloat contrib[3];
 	 GLfloat attenuation;
 	 GLfloat VP[3];  /* unit vector from vertex to light */
@@ -132,15 +131,15 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
 	       GLfloat invd = 1.0F / d;
 	       SELF_SCALE_SCALAR_3V(VP, invd);
 	    }
-	    
-	    attenuation = 1.0F / (light->ConstantAttenuation + d * 
-				  (light->LinearAttenuation + d * 
+
+	    attenuation = 1.0F / (light->ConstantAttenuation + d *
+				  (light->LinearAttenuation + d *
 				   light->QuadraticAttenuation));
 
 	    /* spotlight attenuation */
 	    if (light->Flags & LIGHT_SPOT) {
 	       GLfloat PV_dot_dir = - DOT3(VP, light->NormDirection);
-	       
+
 	       if (PV_dot_dir<light->CosCutoff) {
 		  continue; /* this light makes no contribution */
 	       }
@@ -155,7 +154,7 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
 	 }
 
 
-	 if (attenuation < 1e-3) 
+	 if (attenuation < 1e-3)
 	    continue;		/* this light makes no contribution */
 
 	 /* Compute dot product or normal and vector from V to light pos */
@@ -176,13 +175,13 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
          else {
 	    if (LIGHT_REAR(*mask)) {
 	       ACC_SCALE_SCALAR_3V( sum[1], attenuation, light->MatAmbient[1]);
-	    } 
+	    }
 	    if (!LIGHT_FRONT(*mask)) {
 	       continue;
 	    }
 	    side = 0;
 	    correction = 1;
-	 } 
+	 }
 
 	 /* diffuse term */
 	 COPY_3V(contrib, light->MatAmbient[side]);
@@ -210,7 +209,7 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
 	    h = light->h_inf_norm;
 	    normalized = 1;
 	 }
-	 
+
 	 n_dot_h = correction * DOT3(normal, h);
 
 	 if (n_dot_h > 0.0F) {
@@ -222,7 +221,7 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
 	       n_dot_h /= LEN_SQUARED_3FV( h );
 	       tab = ctx->ShineTable[side+2];
 	    }
-	    
+
 	    GET_SHINE_TAB_ENTRY( tab, n_dot_h, spec_coef );
 
 	    if (spec_coef > 1.0e-10) {
@@ -244,11 +243,11 @@ static void TAG(shade_rgba_spec)( struct vertex_buffer *VB )
 	 FLOAT_RGB_TO_UBYTE_RGB( Bspec[j], spec[1] );
 	 Bcolor[j][3] = sumA[1];
       }
-   } 
+   }
 
-   if ( flags[j] & cm_flags ) 
+   if ( flags[j] & cm_flags )
       gl_update_color_material( ctx, CMcolor[j] );
-   
+
    if ( flags[j] & VERT_MATERIAL )
       gl_update_material( ctx, new_material[j], new_material_mask[j] );
 }
@@ -264,7 +263,7 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
 
    GLuint  vstride = VB->Unprojected->stride;
    const GLfloat *vertex = (GLfloat *)VB->Unprojected->start;
-   GLuint  nstride = VB->NormalPtr->stride; 
+   GLuint  nstride = VB->NormalPtr->stride;
    const GLfloat *normal = VB->NormalPtr->start;
    CONST GLfloat (*first_normal)[3] = (CONST GLfloat (*)[3])VB->NormalPtr->start;
 
@@ -288,7 +287,7 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
    if (ctx->Light.ColorMaterialEnabled) {
       cm_flags = VERT_RGBA;
 
-      if (VB->ColorPtr->flags & VEC_BAD_STRIDE) 
+      if (VB->ColorPtr->flags & VEC_BAD_STRIDE)
 	 gl_clean_color(VB);
 
       CMcolor =  (GLubyte (*)[4])VB->ColorPtr->start;
@@ -297,31 +296,32 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
    VB->ColorPtr = VB->LitColor[0];
    VB->Color[0] = VB->LitColor[0];
    VB->Color[1] = VB->LitColor[1];
+   VB->Specular = VB->Spec[0];
 
    for ( j=0 ; j<nr ; j++,STRIDE_F(vertex,vstride),NEXT_VERTEX_NORMAL) {
       GLfloat sum[2][3];
       struct gl_light *light;
 
-      if ( flags[j] & cm_flags ) 
+      if ( flags[j] & cm_flags )
 	 gl_update_color_material( ctx, CMcolor[j] );
-	 
+
       if ( flags[j] & VERT_MATERIAL )
 	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
 
-      if ( CULL(*mask) ) 
-	 continue;      
+      if ( CULL(*mask) )
+	 continue;
 
       COPY_3V(sum[0], base[0]);
-      
-      if ( NR_SIDES == 2 ) 
+
+      if ( NR_SIDES == 2 )
 	 COPY_3V(sum[1], base[1]);
-      
+
       /* Add contribution from each enabled light source */
       foreach (light, &ctx->Light.EnabledList) {
 
 	 GLfloat n_dot_h;
 	 GLfloat correction;
-	 GLint side; 
+	 GLint side;
 	 GLfloat contrib[3];
 	 GLfloat attenuation = 1.0;
 	 GLfloat VP[3];          /* unit vector from vertex to light */
@@ -348,8 +348,8 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
 	       SELF_SCALE_SCALAR_3V(VP, invd);
 	    }
 
-            attenuation = 1.0F / (light->ConstantAttenuation + d * 
-                                  (light->LinearAttenuation + d * 
+            attenuation = 1.0F / (light->ConstantAttenuation + d *
+                                  (light->LinearAttenuation + d *
                                    light->QuadraticAttenuation));
 
 	    /* spotlight attenuation */
@@ -369,8 +369,8 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
 	    }
 	 }
 
-	 
-	 if (attenuation < 1e-3) 
+
+	 if (attenuation < 1e-3)
 	    continue;		/* this light makes no contribution */
 
 
@@ -383,7 +383,7 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
 	       ACC_SCALE_SCALAR_3V(sum[0], attenuation, light->MatAmbient[0]);
 	    }
 	    if (!LIGHT_REAR(*mask))
-	       continue; 
+	       continue;
 
 	    side = 1;
 	    correction = -1;
@@ -392,13 +392,13 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
          else {
 	    if (LIGHT_REAR(*mask)) {
 	       ACC_SCALE_SCALAR_3V( sum[1], attenuation, light->MatAmbient[1]);
-	    } 
+	    }
 	    if (!LIGHT_FRONT(*mask))
-	       continue; 
+	       continue;
 	    side = 0;
 	    correction = 1;
-	 } 
-      
+	 }
+
 	 COPY_3V(contrib, light->MatAmbient[side]);
 
 	 /* diffuse term */
@@ -423,10 +423,10 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
 	       h = light->h_inf_norm;
 	       normalized = 1;
 	    }
-	 
+
 	    n_dot_h = correction * DOT3(normal, h);
 
-	    if (n_dot_h > 0.0F) 
+	    if (n_dot_h > 0.0F)
 	    {
 	       GLfloat spec_coef;
 	       struct gl_shine_tab *tab = ctx->ShineTable[side];
@@ -436,7 +436,7 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
 		  n_dot_h /= LEN_SQUARED_3FV( h );
 		  tab = ctx->ShineTable[side+2];
 	       }
-	       	       
+
 	       GET_SHINE_TAB_ENTRY( tab, n_dot_h, spec_coef );
 
 	       ACC_SCALE_SCALAR_3V( contrib, spec_coef,
@@ -445,7 +445,7 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
 	 }
 
 	 ACC_SCALE_SCALAR_3V( sum[side], attenuation, contrib );
-      } 
+      }
 
       if (LIGHT_FRONT(*mask)) {
 	 FLOAT_RGB_TO_UBYTE_RGB( Fcolor[j], sum[0] );
@@ -456,11 +456,11 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
 	 FLOAT_RGB_TO_UBYTE_RGB( Bcolor[j], sum[1] );
 	 Bcolor[j][3] = sumA[1];
       }
-   } 
+   }
 
-   if ( flags[j] & cm_flags ) 
+   if ( flags[j] & cm_flags )
       gl_update_color_material( ctx, CMcolor[j] );
-   
+
    if ( flags[j] & VERT_MATERIAL )
       gl_update_material( ctx, new_material[j], new_material_mask[j] );
 }
@@ -473,9 +473,9 @@ static void TAG(shade_rgba)( struct vertex_buffer *VB )
 static void TAG(shade_fast_rgba_single)( struct vertex_buffer *VB )
 {
    GLcontext *ctx = VB->ctx;
-   GLuint  nstride = VB->NormalPtr->stride; 
+   GLuint  nstride = VB->NormalPtr->stride;
    const GLfloat *normal = VB->NormalPtr->start;
-   CONST GLfloat (*first_normal)[3] = 
+   CONST GLfloat (*first_normal)[3] =
       (CONST GLfloat (*)[3])VB->NormalPtr->start;
    GLubyte (*Fcolor)[4] = (GLubyte (*)[4])VB->LitColor[0]->start;
    GLubyte (*Bcolor)[4] = (GLubyte (*)[4])VB->LitColor[1]->start;
@@ -493,7 +493,7 @@ static void TAG(shade_fast_rgba_single)( struct vertex_buffer *VB )
    (void) first_normal;
    (void) nstride;
 
-   if ( flags[j] & VERT_MATERIAL ) 
+   if ( flags[j] & VERT_MATERIAL )
       gl_update_material( ctx, new_material[j], new_material_mask[j] );
 
    /* No attenuation, so incoporate MatAmbient into base color.
@@ -515,12 +515,13 @@ static void TAG(shade_fast_rgba_single)( struct vertex_buffer *VB )
    VB->ColorPtr = VB->LitColor[0];
    VB->Color[0] = VB->LitColor[0];
    VB->Color[1] = VB->LitColor[1];
+   VB->Specular = VB->Spec[0];
 
    do {
       do {
 	 if ( !CULL(*mask) ) {
 	    GLfloat n_dot_VP = DOT3(normal, light->VP_inf_norm);
-	    
+
 	    COPY_4UBV(Fcolor[j], baseubyte[0]);
 	    if (NR_SIDES == 2) COPY_4UBV(Bcolor[j], baseubyte[1]);
 
@@ -534,13 +535,13 @@ static void TAG(shade_fast_rgba_single)( struct vertex_buffer *VB )
 		     ACC_SCALE_SCALAR_3V(sum, -n_dot_VP, light->MatDiffuse[1]);
 		     ACC_SCALE_SCALAR_3V(sum, spec, light->MatSpecular[1]);
 		     FLOAT_RGB_TO_UBYTE_RGB(Bcolor[j], sum );
-		  } 
+		  }
 	       }
 	    } else {
 	       if (LIGHT_FRONT(*mask)) {
 		  GLfloat n_dot_h = DOT3(normal, light->h_inf_norm);
 		  if (n_dot_h > 0.0F) {
-		     GLfloat spec, sum[3];		     
+		     GLfloat spec, sum[3];
 		     GET_SHINE_TAB_ENTRY( ctx->ShineTable[0], n_dot_h, spec );
 		     COPY_3V(sum, base[0]);
 		     ACC_SCALE_SCALAR_3V(sum, n_dot_VP, light->MatDiffuse[0]);
@@ -549,17 +550,17 @@ static void TAG(shade_fast_rgba_single)( struct vertex_buffer *VB )
 		  }
 	       }
 	    }
-	 }	 
+	 }
 	 j++;
 	 NEXT_NORMAL;
       } while ((flags[j] & (VERT_MATERIAL|VERT_END_VB|VERT_NORM)) == VERT_NORM);
 
-      
+
       if (COMPACTED) {
 	 GLuint last = j-1;
 	 for ( ; !(flags[j] & (VERT_MATERIAL|VERT_END_VB|VERT_NORM)) ; j++ ) {
 	    COPY_4UBV(Fcolor[j], Fcolor[last]);
-	    if (NR_SIDES==2) 
+	    if (NR_SIDES==2)
 	       COPY_4UBV(Bcolor[j], Bcolor[last]);
 	 }
 	 NEXT_NORMAL;
@@ -582,17 +583,17 @@ static void TAG(shade_fast_rgba_single)( struct vertex_buffer *VB )
       }
 
    } while (!(flags[j] & VERT_END_VB));
-} 
+}
 
 
-/* Vertex size doesn't matter - yay! 
+/* Vertex size doesn't matter - yay!
  */
 static void TAG(shade_fast_rgba)( struct vertex_buffer *VB )
 {
    GLcontext *ctx = VB->ctx;
    GLfloat (*base)[3] = ctx->Light.BaseColor;
    GLubyte *sumA = ctx->Light.BaseAlpha;
-   GLuint  nstride = VB->NormalPtr->stride; 
+   GLuint  nstride = VB->NormalPtr->stride;
    const GLfloat *normal = VB->NormalPtr->start;
    CONST GLfloat (*first_normal)[3] = (CONST GLfloat (*)[3])VB->NormalPtr->start;
    GLubyte (*CMcolor)[4] = 0;
@@ -613,29 +614,27 @@ static void TAG(shade_fast_rgba)( struct vertex_buffer *VB )
    (void) flags;
    (void) nstride;
 
-   if (ctx->Light.ColorMaterialEnabled) 
+   if (ctx->Light.ColorMaterialEnabled)
    {
       cm_flags = VERT_RGBA;
 
-      if (VB->ColorPtr->flags & VEC_BAD_STRIDE) 
+      if (VB->ColorPtr->flags & VEC_BAD_STRIDE)
 	 gl_clean_color(VB);
 
       CMcolor =  (GLubyte (*)[4])VB->ColorPtr->start;
-      if ( *flags & VERT_RGBA ) 
+      if ( *flags & VERT_RGBA )
 	 gl_update_color_material( ctx, *CMcolor );
-   
+
    }
 
-   if ( flags[j] & VERT_MATERIAL ) 
+   if ( flags[j] & VERT_MATERIAL )
       gl_update_material( ctx, new_material[j], new_material_mask[j] );
-
-   COPY_3V(base[0], ctx->Light.BaseColor[0]);
-   if (NR_SIDES == 2) COPY_3V(base[1], ctx->Light.BaseColor[1]);
 
    interesting = cm_flags | VERT_MATERIAL | VERT_END_VB | VERT_NORM;
    VB->ColorPtr = VB->LitColor[0];
    VB->Color[0] = VB->LitColor[0];
    VB->Color[1] = VB->LitColor[1];
+   VB->Specular = VB->Spec[0];
 
    do {
       do {
@@ -672,14 +671,14 @@ static void TAG(shade_fast_rgba)( struct vertex_buffer *VB )
 		  ACC_SCALE_SCALAR_3V(sum[0], n_dot_VP, light->MatDiffuse[0]);
 		  if (!light->IsMatSpecular[0]) continue;
 		  n_dot_h = DOT3(normal, light->h_inf_norm);
-	       } 
-	          
+	       }
+
 	       if (n_dot_h > 0.0F) {
 		  struct gl_shine_tab *tab = ctx->ShineTable[side];
 		  GET_SHINE_TAB_ENTRY( tab, n_dot_h, spec );
-		  ACC_SCALE_SCALAR_3V( sum[side], spec, 
+		  ACC_SCALE_SCALAR_3V( sum[side], spec,
 				       light->MatSpecular[side]);
-	       } 
+	       }
 	    }
 	    if (LIGHT_FRONT(*mask)) {
 	       FLOAT_RGB_TO_UBYTE_RGB( Fcolor[j], sum[0] );
@@ -690,22 +689,22 @@ static void TAG(shade_fast_rgba)( struct vertex_buffer *VB )
 	       FLOAT_RGB_TO_UBYTE_RGB( Bcolor[j], sum[1] );
 	       Bcolor[j][3] = sumA[1];
 	    }
-	 }	 
+	 }
 	 j++;
 	 NEXT_NORMAL;
       } while ((flags[j] & interesting) == VERT_NORM);
 
-      
+
       if (COMPACTED) {
 	 GLuint last = j-1;
 
-	 for ( ; !(flags[j] & interesting) ; j++ ) 
+	 for ( ; !(flags[j] & interesting) ; j++ )
 	 {
 	    COPY_4UBV(Fcolor[j], Fcolor[last]);
 	    if (NR_SIDES==2)
 	       COPY_4UBV(Bcolor[j], Bcolor[last]);
 	 }
-	 
+
 	 NEXT_NORMAL;
       }
 
@@ -716,7 +715,7 @@ static void TAG(shade_fast_rgba)( struct vertex_buffer *VB )
 	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
 
    } while (!(flags[j] & VERT_END_VB));
-} 
+}
 
 
 
@@ -738,7 +737,7 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
    GLcontext *ctx = VB->ctx;
    GLuint  vstride = VB->Unprojected->stride;
    const GLfloat *vertex = (GLfloat *)VB->Unprojected->start;
-   GLuint  nstride = VB->NormalPtr->stride; 
+   GLuint  nstride = VB->NormalPtr->stride;
    const GLfloat *normal = VB->NormalPtr->start;
    CONST GLfloat (*first_normal)[3] = (CONST GLfloat (*)[3])VB->NormalPtr->start;
 
@@ -770,7 +769,7 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
    if (ctx->Light.ColorMaterialEnabled) {
       cm_flags = VERT_RGBA;
 
-      if (VB->ColorPtr->flags & VEC_BAD_STRIDE) 
+      if (VB->ColorPtr->flags & VEC_BAD_STRIDE)
 	 gl_clean_color(VB);
 
       CMcolor =  (GLubyte (*)[4])VB->ColorPtr->start;
@@ -780,15 +779,15 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
       GLfloat diffuse[2], specular[2];
       GLuint side = 0;
       struct gl_light *light;
-	 
-      if ( flags[j] & cm_flags ) 
+
+      if ( flags[j] & cm_flags )
 	 gl_update_color_material( ctx, CMcolor[j] );
-	 
+
       if ( flags[j] & VERT_MATERIAL )
 	 gl_update_material( ctx, new_material[j], new_material_mask[j] );
 
-      if ( CULL(*mask) ) 
-	 continue;      
+      if ( CULL(*mask) )
+	 continue;
 
       diffuse[0] = specular[0] = 0.0F;
 
@@ -812,7 +811,7 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
 	 }
 	 else {
 	    GLfloat d;     /* distance from vertex to light */
-	    
+
 	    SUB_3V(VP, light->Position, vertex);
 
 	    d = LEN_3FV( VP );
@@ -821,8 +820,8 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
 	       SELF_SCALE_SCALAR_3V(VP, invd);
 	    }
 
-	    attenuation = 1.0F / (light->ConstantAttenuation + d * 
-				  (light->LinearAttenuation + d * 
+	    attenuation = 1.0F / (light->ConstantAttenuation + d *
+				  (light->LinearAttenuation + d *
 				   light->QuadraticAttenuation));
 
 	    /* spotlight attenuation */
@@ -841,14 +840,14 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
 	    }
 	 }
 
-	 if (attenuation < 1e-3) 
+	 if (attenuation < 1e-3)
 	    continue;		/* this light makes no contribution */
 
 	 n_dot_VP = DOT3( normal, VP );
 
 	 /* which side are we lighting? */
 	 if (n_dot_VP < 0.0F) {
-	    if (!LIGHT_REAR(*mask)) 
+	    if (!LIGHT_REAR(*mask))
 	       continue;
 	    side = 1;
 	    correction = -1;
@@ -865,7 +864,7 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
 	 /* specular term */
 	 if (!(light->Flags & LIGHT_SPECULAR))
 	    continue;
-	    
+
 	 if (ctx->Light.Model.LocalViewer) {
 	    GLfloat v[3];
 	    COPY_3V(v, vertex);
@@ -886,7 +885,7 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
 
 	 n_dot_h = correction * DOT3(normal, h);
 
-	 if (n_dot_h > 0.0F) 
+	 if (n_dot_h > 0.0F)
 	 {
 	    GLfloat spec_coef;
 	    struct gl_shine_tab *tab = ctx->ShineTable[side];
@@ -896,7 +895,7 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
 	       n_dot_h /= LEN_SQUARED_3FV( h );
 	       tab = ctx->ShineTable[side+2];
 	    }
-	    
+
 	    GET_SHINE_TAB_ENTRY( tab, n_dot_h, spec_coef);
 
 	    specular[side] += spec_coef * light->sli * attenuation;
@@ -918,7 +917,7 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
 	 else {
 	    GLfloat d_a = mat->DiffuseIndex - mat->AmbientIndex;
 	    GLfloat s_a = mat->SpecularIndex - mat->AmbientIndex;
-	       
+
 	    index = mat->AmbientIndex
 	       + diffuse[side] * (1.0F-specular[side]) * d_a
 	       + specular[side] * s_a;
@@ -930,9 +929,9 @@ static void TAG(shade_ci)( struct vertex_buffer *VB )
       }
    } /*for vertex*/
 
-   if ( flags[j] & cm_flags ) 
+   if ( flags[j] & cm_flags )
       gl_update_color_material( ctx, CMcolor[j] );
-	 
+
    if ( flags[j] & VERT_MATERIAL )
       gl_update_material( ctx, new_material[j], new_material_mask[j] );
 }
@@ -951,9 +950,9 @@ static void TAG(init_shade_tab)( void )
 
 #undef TAG
 #undef INVALID
-#undef IDX 
+#undef IDX
 #undef LIGHT_FRONT
 #undef LIGHT_REAR
 #undef LIGHT_SIDE
-#undef NR_SIDES 
+#undef NR_SIDES
 #undef CULL

@@ -44,12 +44,12 @@ in this Software without prior written authorization from The Open Group.
 /**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
-/* $XFree86: xc/programs/twm/gc.c,v 1.3 1999/02/20 15:07:22 hohndel Exp $ */
+/* $XFree86: xc/programs/twm/gc.c,v 1.5 2001/01/17 23:45:06 dawes Exp $ */
 
 
 /**********************************************************************
  *
- * $TOG: gc.c /main/14 1998/02/09 13:48:01 kaleb $
+ * $Xorg: gc.c,v 1.3 2000/08/17 19:54:06 cpqbld Exp $
  *
  * Open the fonts and create the GCs
  *

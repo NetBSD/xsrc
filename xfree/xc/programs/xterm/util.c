@@ -1,10 +1,11 @@
 /*
- *	$XConsortium: util.c /main/33 1996/12/01 23:47:10 swick $
- *	$XFree86: xc/programs/xterm/util.c,v 3.61 2000/12/01 03:27:58 keithp Exp $
+ *	$Xorg: util.c,v 1.3 2000/08/17 19:55:10 cpqbld Exp $
  */
 
+/* $XFree86: xc/programs/xterm/util.c,v 3.67 2001/05/16 18:06:38 keithp Exp $ */
+
 /*
- * Copyright 1999-2000 by Thomas E. Dickey
+ * Copyright 1999,2000,2001 by Thomas E. Dickey
  *
  *                         All Rights Reserved
  *
@@ -663,7 +664,7 @@ ClearInLine(TScreen *screen, int row, int col, int len)
 	 * so this has the effect of suppressing trailing blanks from a
 	 * selection.
 	 */
-	if (col + len + 1 < screen->max_col) {
+	if (col + len < screen->max_col + 1) {
 		flags |= CHARDRAWN;
 	} else {
 		len = screen->max_col + 1 - col;
@@ -1466,10 +1467,31 @@ drawXtermText(
 		     len * FontWidth(screen), FontHeight(screen));
 			
 	y += font->ascent;
-	XftDrawString8 (screen->renderDraw,
-			getColor (values.foreground),
-			font,
-			x, y, (unsigned char *) text, len);
+	if (text2)
+	{
+	    static XftChar16    *sbuf;
+	    static int		slen;
+	    int			n;
+
+	    if (slen < len)
+	    {
+		slen = (len + 1) * 2;
+		sbuf = (XftChar16 *) XtRealloc ((char *) sbuf, slen * sizeof (XftChar16));
+	    }
+	    for (n = 0; n < len; n++)
+		sbuf[n] = *text++| (*text2++ << 8);
+	    XftDrawString16 (screen->renderDraw,
+			     getColor (values.foreground),
+			     font,
+			     x, y, sbuf, len);
+	}
+	else
+	{
+	    XftDrawString8 (screen->renderDraw,
+			    getColor (values.foreground),
+			    font,
+			    x, y, (unsigned char *) text, len);
+	}
 
 	return x + len * FontWidth(screen);
     }
@@ -1774,10 +1796,11 @@ drawXtermText(
 #if OPT_WIDE_CHARS
 			if (text2 != 0)
 				ch |= (text2[last] << 8);
-			isMissing = xtermMissingChar(ch,
+			isMissing = (ch != HIDDEN_CHAR)
+				&& (xtermMissingChar(ch,
 					((on_wide || iswide(ch)) && screen->fnt_dwd)
 					? screen->fnt_dwd
-					: font);
+					: font));
 #else
 			isMissing = xtermMissingChar(ch, font);
 #endif
@@ -1941,8 +1964,8 @@ extract_bg (
 unsigned
 makeColorPair (int fg, int bg)
 {
-	unsigned my_bg = (bg >= 0) && (bg < NUM_ANSI_COLORS) ? bg : 0;
-	unsigned my_fg = (fg >= 0) && (fg < NUM_ANSI_COLORS) ? fg : my_bg;
+	unsigned my_bg = (bg >= 0) && (bg < NUM_ANSI_COLORS) ? (unsigned) bg : 0;
+	unsigned my_fg = (fg >= 0) && (fg < NUM_ANSI_COLORS) ? (unsigned) fg : my_bg;
 #if OPT_EXT_COLORS
 	return (my_fg << 8) | my_bg;
 #else

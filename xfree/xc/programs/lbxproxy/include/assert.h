@@ -1,4 +1,4 @@
-/* $XConsortium: assert.h,v 1.3 94/02/20 11:12:26 dpw Exp $ */
+/* $Xorg: assert.h,v 1.3 2000/08/17 19:53:57 cpqbld Exp $ */
 /*
  * Copyright 1994 Network Computing Devices, Inc.
  *

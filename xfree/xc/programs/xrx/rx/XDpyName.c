@@ -1,4 +1,4 @@
-/* $TOG: XDpyName.c /main/14 1998/02/25 14:00:14 barstow $ */
+/* $Xorg: XDpyName.c,v 1.4 2000/08/17 19:55:02 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -192,7 +192,7 @@ static int findproxy (proxyname, manager, server, name)
     char			*release = NULL;
     pmGetProxyAddrMsg		*pMsg;
     char 			*pData;
-    int				len, i;
+    int				len;
     IceReplyWaitInfo		replyWait;
     GetProxyAddrReply		reply;
     int				majorVersion, minorVersion;
@@ -449,10 +449,14 @@ GetXPrintDisplayName(char **printer_return)
 char *
 GetXFwpDisplayName(char *dpy_name)
 {
+#if 0
     char *fwp_dpy_name, *ptr, *limit;
-    char buf[MAXLEN];
     FILE *in;
     int c, status;
+#else
+    char *fwp_dpy_name;
+#endif
+    char buf[MAXLEN];
     char *proxy_mngr;
 
     /* first, let's figure out where the proxy manager should be */

@@ -1,4 +1,4 @@
-/* $TOG: XKBlib.h /main/18 1997/12/12 09:03:32 kaleb $ */
+/* $Xorg: XKBlib.h,v 1.6 2000/08/17 19:45:03 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -28,6 +28,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef _XKBLIB_H_
 #define _XKBLIB_H_
 
+#include <X11/Xlib.h>
 #include <X11/extensions/XKBstr.h>
 
 typedef struct _XkbAnyEvent {

@@ -1,4 +1,4 @@
-! $XConsortium: rgb.txt,v 10.41 94/02/20 18:39:36 rws Exp $
+! $Xorg: rgb.txt,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 255 250 250		snow
 248 248 255		ghost white
 248 248 255		GhostWhite

@@ -20,12 +20,11 @@
 #ifndef __PSAUX_H__
 #define __PSAUX_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H  <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_INTERNAL_OBJECTS_H
-#include   FT_INTERNAL_TYPE1_TYPES_H
+
+#include <ft2build.h>
+#include FT_INTERNAL_OBJECTS_H
+#include FT_INTERNAL_TYPE1_TYPES_H
+
 
 FT_BEGIN_HEADER
 
@@ -588,7 +587,7 @@ FT_BEGIN_HEADER
     FT_UInt              num_glyphs;
     FT_Byte**            glyph_names;
 
-    FT_UInt              lenIV;        /* internal for sub routine calls */
+    FT_Int               lenIV;        /* internal for sub routine calls */
     FT_UInt              num_subrs;
     FT_Byte**            subrs;
     FT_Int*              subrs_len;    /* array of subrs length (optional) */

@@ -1,4 +1,4 @@
-/* $TOG: xdmshell.c /main/17 1998/02/09 13:56:54 kaleb $ */
+/* $Xorg: xdmshell.c,v 1.3 2000/08/17 19:54:16 cpqbld Exp $ */
 /*
  * xdmshell - simple program for running xdm from login
  *
@@ -32,7 +32,7 @@ in this Software without prior written authorization from The Open Group.
  * bring down X when you are finished.
  */
 
-/* $XFree86: xc/programs/xdm/xdmshell.c,v 3.3 1998/10/04 09:41:00 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/xdmshell.c,v 3.5 2001/01/17 23:45:23 dawes Exp $ */
 
 #include <stdio.h>
 #include "dm.h"

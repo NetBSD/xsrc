@@ -1,4 +1,4 @@
-/* $TOG: FSlibint.h /main/17 1998/05/01 12:50:43 kaleb $ */
+/* $Xorg: FSlibint.h,v 1.3 2000/08/17 19:44:06 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -46,7 +46,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/FS/FSlibint.h,v 3.3 1998/10/03 08:41:07 dawes Exp $ */
+/* $XFree86: xc/lib/FS/FSlibint.h,v 3.5 2001/01/17 19:41:28 dawes Exp $ */
 
 /*
  * FSlib internal decls

@@ -1,4 +1,4 @@
-/* $TOG: k5encode.c /main/7 1998/02/06 14:15:31 kaleb $ */
+/* $Xorg: k5encode.c,v 1.3 2000/08/17 19:45:29 cpqbld Exp $ */
 
 /*
 

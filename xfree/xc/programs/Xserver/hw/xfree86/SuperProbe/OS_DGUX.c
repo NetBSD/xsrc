@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_DGUX.c,v 1.2 1999/08/01 07:57:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_DGUX.c,v 1.3 1999/09/25 14:36:59 dawes Exp $ */
 /*
  * INTEL DG/UX RELEASE 4.20 MU04
  * Copyright Takis Psarogiannakopoulos

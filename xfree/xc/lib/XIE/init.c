@@ -1,4 +1,4 @@
-/* $TOG: init.c /main/12 1998/02/06 15:12:25 kaleb $ */
+/* $Xorg: init.c,v 1.5 2000/08/17 19:45:27 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/XIE/init.c,v 3.3 1999/06/13 16:18:10 dawes Exp $ */
+/* $XFree86: xc/lib/XIE/init.c,v 3.5 2001/01/17 19:42:21 dawes Exp $ */
 
 #define NEED_EVENTS	/* so XErrorEvent will get pulled in */
 

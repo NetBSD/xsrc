@@ -1,5 +1,5 @@
 LIBRARY XEXT
-DESCRIPTION "@#XFREE86:4.0#@ $XFree86: xc/lib/Xext/Xextos2.def,v 3.8 1999/04/29 09:13:31 dawes Exp $"
+DESCRIPTION "@#XFREE86:4.0#@ $XFree86: xc/lib/Xext/Xextos2.def,v 3.9 2000/04/05 18:13:18 dawes Exp $"
 CODE
 	PRELOAD
 DATA

@@ -1,4 +1,4 @@
-/* $TOG: GCManager.c /main/40 1998/02/06 13:22:01 kaleb $ */
+/* $Xorg: GCManager.c,v 1.4 2000/08/17 19:46:11 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988, 1990 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -201,7 +201,7 @@ GC XtAllocateGC(widget, depth, valueMask, values, dynamicMask, unusedMask)
     readOnlyMask = ~(dynamicMask | unusedMask);
 
     /* Search for existing GC that matches exactly */
-    for (prev = &pd->GClist; cur = *prev; prev = &cur->next) {
+    for (prev = &pd->GClist; (cur = *prev); prev = &cur->next) {
 	if (cur->depth == depth &&
 	    ScreenOfDisplay(dpy, cur->screen) == screen &&
 	    Matches(dpy, cur, valueMask, values, readOnlyMask, dynamicMask)) {
@@ -295,7 +295,7 @@ void  XtReleaseGC(widget, gc)
     dpy = XtDisplayOfObject(widget);
     pd = _XtGetPerDisplay(dpy);
     
-    for (prev = &pd->GClist; cur = *prev; prev = &cur->next) {
+    for (prev = &pd->GClist; (cur = *prev); prev = &cur->next) {
 	if (cur->gc == gc) {
 	    if (--(cur->ref_count) == 0) {
 		*prev = cur->next;
@@ -329,7 +329,7 @@ void XtDestroyGC(gc)
 	for (i = app->count; i ;) {
 	    Display *dpy = app->list[--i];
 	    XtPerDisplay pd = _XtGetPerDisplay(dpy);
-	    for (prev = &pd->GClist; cur = *prev; prev = &cur->next) {
+	    for (prev = &pd->GClist; (cur = *prev); prev = &cur->next) {
 		if (cur->gc == gc) {
 		    if (--(cur->ref_count) == 0) {
 			*prev = cur->next;

@@ -1,5 +1,5 @@
 /*
- * $TOG: cfbply1rct.c /main/17 1998/02/09 14:06:45 kaleb $
+ * $Xorg: cfbply1rct.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfbply1rct.c,v 3.5 1998/10/04 09:37:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbply1rct.c,v 3.7 2001/01/17 22:36:36 dawes Exp $ */
 
 #include "X.h"
 

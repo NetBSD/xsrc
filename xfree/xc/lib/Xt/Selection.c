@@ -1,4 +1,4 @@
-/* $TOG: Selection.c /main/99 1998/02/06 13:25:43 kaleb $ */
+/* $Xorg: Selection.c,v 1.3 2000/08/17 19:46:16 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,

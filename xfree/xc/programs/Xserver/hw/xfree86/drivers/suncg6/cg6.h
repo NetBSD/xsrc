@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6.h,v 1.1 2000/05/23 04:47:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6.h,v 1.3 2001/05/04 19:05:45 dawes Exp $ */
 
 #ifndef CG6_H
 #define CG6_H
@@ -72,6 +72,7 @@ typedef struct {
 	unsigned int	CursorXY;
 	int		CursorBg, CursorFg;
 	Bool		CursorEnabled;
+	OptionInfoPtr	Options;
 } Cg6Rec, *Cg6Ptr;
 
 extern int  Cg6ScreenPrivateIndex;

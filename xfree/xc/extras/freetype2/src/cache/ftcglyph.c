@@ -16,11 +16,13 @@
 /***************************************************************************/
 
 
-#include <freetype/cache/ftcglyph.h>
-#include <freetype/fterrors.h>
-#include <freetype/ftlist.h>
-#include <freetype/internal/ftobjs.h>
-#include <freetype/internal/ftdebug.h>
+#include <ft2build.h>
+#include FT_CACHE_H
+#include FT_CACHE_INTERNAL_GLYPH_H
+#include FT_ERRORS_H
+#include FT_LIST_H
+#include FT_INTERNAL_OBJECTS_H
+#include FT_INTERNAL_DEBUG_H
 
 
   /*************************************************************************/
@@ -325,7 +327,7 @@
     if ( !error )
     {
       /* good, now set the gset index within the gset object */
-      gset->gset_index = node - lru->nodes;
+      gset->gset_index = (FT_UInt)( node - lru->nodes );
       node->root.data  = gset;
     }
 

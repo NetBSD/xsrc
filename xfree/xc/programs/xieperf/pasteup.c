@@ -1,4 +1,4 @@
-/* $TOG: pasteup.c /main/10 1998/02/09 14:01:15 kaleb $ */
+/* $Xorg: pasteup.c,v 1.3 2000/08/17 19:54:27 cpqbld Exp $ */
 
 /**** module pasteup.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/pasteup.c,v 1.5 2001/01/17 23:45:38 dawes Exp $ */
 
 #include "xieperf.h"
 #include <stdio.h>

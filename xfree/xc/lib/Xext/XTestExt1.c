@@ -1,4 +1,4 @@
-/* $TOG: XTestExt1.c /main/10 1998/02/15 16:19:21 kaleb $ */
+/* $Xorg: XTestExt1.c,v 1.3 2000/08/17 19:45:52 cpqbld Exp $ */
 /*
  *	File:  xtestext1lib.c
  *
@@ -47,7 +47,7 @@ Telephone and Telegraph Company or of the Regents of the
 University of California.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xext/XTestExt1.c,v 1.3 2001/01/17 19:42:46 dawes Exp $ */
 
 /******************************************************************************
  * include files

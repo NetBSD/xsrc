@@ -1,5 +1,9 @@
-# $XConsortium: jump_vars,v 1.2 94/12/07 10:46:47 kaleb Exp $
-# $XFree86: xc/lib/Xaw/jump_vars,v 3.0 1994/04/28 12:31:54 dawes Exp $
+# $Xorg: jump_vars,v 1.3 2000/08/17 19:45:45 cpqbld Exp $
+#
+#
+#
+#
+# $XFree86: xc/lib/Xaw/jump_vars,v 3.2 2001/01/17 19:42:36 dawes Exp $
 #
 00001400 D _XawWidgetArray      libXaw         AllWidgets
 00000004 D _XawWidgetCount      libXaw         AllWidgets

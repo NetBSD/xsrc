@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Mode.c,v 1.33 2000/09/26 15:57:08 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Mode.c,v 1.40 2001/05/10 10:17:39 alanh Exp $ */
 
 /*
  * Copyright (c) 1997,1998 by The XFree86 Project, Inc.
@@ -1305,16 +1305,16 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 	        q->status = MODE_OK;
 	    } else {
 		if (p->type & M_T_BUILTIN)
-		    xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			       "Built-in mode \"%s\" deleted (%s)\n", p->name,
-			       xf86ModeStatusToString(status));
+		    xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			       "Not using built-in mode \"%s\" (%s)\n",
+			       p->name, xf86ModeStatusToString(status));
 		else if (p->type & M_T_DEFAULT)
-		    xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			       "Default mode \"%s\" deleted (%s)\n", p->name,
+		    xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			       "Not using default mode \"%s\" (%s)\n", p->name,
 			       xf86ModeStatusToString(status));
 		else
-		    xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			       "Mode \"%s\" deleted (%s)\n", p->name,
+		    xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			       "Not using mode \"%s\" (%s)\n", p->name,
 			       xf86ModeStatusToString(status));
 	    }
 	}
@@ -1401,16 +1401,16 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 	status = xf86LookupMode(scrp, p, clockRanges, strategy);
 	if (status != MODE_OK) {
 		if (p->type & M_T_BUILTIN)
-		    xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			       "Built-in mode \"%s\" deleted (%s)\n", p->name,
-			       xf86ModeStatusToString(status));
+		    xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			       "Not using built-in mode \"%s\" (%s)\n",
+			       p->name, xf86ModeStatusToString(status));
 		else if (p->type & M_T_DEFAULT)
-		    xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			       "Default mode \"%s\" deleted (%s)\n", p->name,
+		    xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			       "Not using default mode \"%s\" (%s)\n", p->name,
 			       xf86ModeStatusToString(status));
 		else
-		    xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			       "Mode \"%s\" deleted (%s)\n", p->name,
+		    xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			       "Not using mode \"%s\" (%s)\n", p->name,
 			       xf86ModeStatusToString(status));
 	}
 	if (status == MODE_ERROR) {
@@ -1493,16 +1493,16 @@ xf86ValidateModes(ScrnInfoPtr scrp, DisplayModePtr availModes,
 
 	   if (p->status != MODE_OK) {
 	        if (p->type & M_T_BUILTIN)
-		    xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			       "Built-in mode \"%s\" deleted (%s)\n", p->name,
-			       xf86ModeStatusToString(p->status));
+		    xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			       "Not using built-in mode \"%s\" (%s)\n",
+			       p->name, xf86ModeStatusToString(p->status));
 		else if (p->type & M_T_DEFAULT)
-		    xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			       "Default mode \"%s\" deleted (%s)\n", p->name,
+		    xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			       "Not using default mode \"%s\" (%s)\n", p->name,
 			       xf86ModeStatusToString(p->status));
 		else
-		    xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			       "Mode \"%s\" deleted (%s)\n", p->name,
+		    xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			       "Not using mode \"%s\" (%s)\n", p->name,
 			       xf86ModeStatusToString(p->status));
 
 	        goto lookupNext;
@@ -1607,17 +1607,17 @@ xf86PruneDriverModes(ScrnInfoPtr scrp)
 	if (p->status != MODE_OK) {
 #if 0
 	    if (p->type & M_T_BUILTIN)
-		xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			   "Built-in mode \"%s\" deleted (%s)\n", p->name,
+		xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			   "Not using built-in mode \"%s\" (%s)\n", p->name,
 			   xf86ModeStatusToString(p->status));
 	    else if (p->type & M_T_DEFAULT)
-		    xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			       "Default mode \"%s\" deleted (%s)\n", p->name,
-			       xf86ModeStatusToString(p->status));
+		xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			   "Not using default mode \"%s\" (%s)\n", p->name,
+			   xf86ModeStatusToString(p->status));
 	    else
-	      xf86DrvMsg(scrp->scrnIndex, X_WARNING,
-			 "Mode \"%s\" deleted (%s)\n", p->name,
-			 xf86ModeStatusToString(p->status));
+	        xf86DrvMsg(scrp->scrnIndex, X_INFO,
+			   "Not using mode \"%s\" (%s)\n", p->name,
+			   xf86ModeStatusToString(p->status));
 #endif
 	    xf86DeleteMode(&(scrp->modes), p);
 	}
@@ -1668,11 +1668,57 @@ xf86SetCrtcForModes(ScrnInfoPtr scrp, int adjustFlags)
 }
 
 
+static void
+add(char **p, char *new)
+{
+    if (!*p) {
+        *p = xnfalloc(strlen(new) + 1);
+	strcpy(*p,new);
+    } else {
+        *p = xnfrealloc(*p,((*p)?strlen(*p):0) + strlen(new) + 2);
+	strcat(*p," ");
+	strcat(*p,new);
+    }
+}
+
+static void
+PrintModeline(int scrnIndex,DisplayModePtr mode)
+{
+    char tmp[256];
+    char *flags = NULL;
+
+    if (mode->HSkew) { 
+        snprintf(tmp,256,"hskew %i",mode->HSkew); 
+	add(&flags,tmp);
+    }
+    if (mode->VScan) { 
+        snprintf(tmp,256,"vscan %i",mode->VScan); 
+	add(&flags,tmp);
+    }
+    if (mode->Flags & V_INTERLACE) add(&flags,"interlace");
+    if (mode->Flags & V_CSYNC) add(&flags,"composite");
+    if (mode->Flags & V_DBLSCAN) add(&flags,"doublescan");
+    if (mode->Flags & V_BCAST) add(&flags,"bcast");
+    if (mode->Flags & V_PHSYNC) add(&flags,"+hsync");
+    if (mode->Flags & V_NHSYNC) add(&flags,"-hsync");
+    if (mode->Flags & V_PVSYNC) add(&flags,"+vsync");
+    if (mode->Flags & V_NVSYNC) add(&flags,"-vsync");
+    if (mode->Flags & V_PCSYNC) add(&flags,"+csync");
+    if (mode->Flags & V_NCSYNC) add(&flags,"-csync");
+    xf86DrvMsgVerb(scrnIndex,X_INFO,3,
+		   "Modeline \"%s\"  %6.2f  %i %i %i %i  %i %i %i %i %s\n",
+		   mode->name,mode->Clock/1000., mode->HDisplay,
+		   mode->HSyncStart,mode->HSyncEnd,mode->HTotal,
+		   mode->VDisplay,mode->VSyncStart,mode->VSyncEnd,
+		   mode->VTotal,flags);
+    xfree(flags);
+}
+
 void
 xf86PrintModes(ScrnInfoPtr scrp)
 {
     DisplayModePtr p;
-    float hsync, refresh;
+    float hsync, refresh = 0;
     char *desc, *desc2, *prefix;
 
     if (scrp == NULL)
@@ -1690,9 +1736,12 @@ xf86PrintModes(ScrnInfoPtr scrp)
 	desc = desc2 = "";
 	if (p->HSync > 0.0)
 	    hsync = p->HSync;
-	else
+	else if (p->HTotal > 0)
 	    hsync = (float)p->Clock / (float)p->HTotal;
-	refresh = hsync * 1000.0 / p->VTotal;
+	else
+	    hsync = 0.0;
+	if (p->VTotal > 0)
+	    refresh = hsync * 1000.0 / p->VTotal;
 	if (p->Flags & V_INTERLACE) {
 	    refresh *= 2.0;
 	    desc = " (I)";
@@ -1713,7 +1762,10 @@ xf86PrintModes(ScrnInfoPtr scrp)
 	    prefix = "Default mode";
 	else
 	    prefix = "Mode";
-	if (p->Clock == p->SynthClock) {
+	if (hsync == 0 || refresh == 0) {
+	    xf86DrvMsg(scrp->scrnIndex, X_CONFIG,
+			"%s \"%s\"\n", prefix, p->name);
+	} else if (p->Clock == p->SynthClock) {
 	    xf86DrvMsg(scrp->scrnIndex, X_CONFIG,
 			"%s \"%s\": %.1f MHz, %.1f kHz, %.1f Hz%s%s\n",
 			prefix, p->name, p->Clock / 1000.0, hsync, refresh,
@@ -1725,6 +1777,8 @@ xf86PrintModes(ScrnInfoPtr scrp)
 			prefix, p->name, p->Clock / 1000.0,
 			p->SynthClock / 1000.0, hsync, refresh, desc, desc2);
 	}
+	if (hsync != 0 && refresh != 0)
+	    PrintModeline(scrp->scrnIndex,p);
 	p = p->next;
     } while (p != NULL && p != scrp->modes);
 }

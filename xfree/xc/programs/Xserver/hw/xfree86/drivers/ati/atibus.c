@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atibus.c,v 1.11 2000/10/11 22:52:54 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atibus.c,v 1.14 2001/02/12 03:27:03 tsi Exp $ */
 /*
- * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -102,12 +102,8 @@ ATIClaimResources
         }
     }
 
-#endif /* AVOID_CPIO */
-
     if (!Active && pATI->SharedAccelerator)
         return;
-
-#ifndef AVOID_CPIO
 
     /* Claim 8514/A resources */
     if (pATI->ChipHasSUBSYS_CNTL)
@@ -129,12 +125,17 @@ ATIClaimResources
         xf86ClaimFixedResources(Resources, pATI->iEntity);
     }
 
-#endif /* AVOID_CPIO */
-
-    /* Register relocatable resources for inactive adapters */
     if (Active)
         return;
 
+#else /* AVOID_CPIO */
+
+    if (pATI->SharedAccelerator)
+        return;
+
+#endif /* AVOID_CPIO */
+
+    /* Register unshared relocatable resources for inactive adapters */
     pResources = xf86RegisterResources(pATI->iEntity, NULL, ResExclusive);
     pResources = xf86ReallocatePciResources(pATI->iEntity, pResources);
     if (!pResources)

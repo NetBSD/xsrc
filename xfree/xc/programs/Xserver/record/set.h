@@ -1,4 +1,4 @@
-/* $TOG: set.h /main/2 1998/02/09 15:17:23 kaleb $ */
+/* $Xorg: set.h,v 1.3 2000/08/17 19:53:45 cpqbld Exp $ */
 
 /*
 

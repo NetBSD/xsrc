@@ -1,4 +1,4 @@
-/* $TOG: greet.h /main/5 1998/02/09 13:55:28 kaleb $ */
+/* $Xorg: greet.h,v 1.3 2000/08/17 19:54:15 cpqbld Exp $ */
 /*
 
 Copyright 1994, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greet.h,v 1.5 2000/05/31 07:15:11 eich Exp $ */
+/* $XFree86: xc/programs/xdm/greet.h,v 1.7 2001/01/17 23:45:21 dawes Exp $ */
 
 /*
  * greet.h - interface to xdm's dynamically-loadable modular greeter

@@ -1,4 +1,30 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaspan.c,v 1.4 2000/08/28 02:43:12 tsi Exp $ */
+/*
+ * Copyright 2000-2001 VA Linux Systems, Inc.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
+ * VA LINUX SYSTEMS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
+ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaspan.c,v 1.8 2001/04/10 16:07:51 dawes Exp $ */
 
 #include "types.h"
 #include "mgadd.h"
@@ -9,58 +35,58 @@
 #define DBG 0
 
 
-#define LOCAL_VARS					\
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;	\
-   mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;	\
-   __DRIscreenPrivate *sPriv = mmesa->driScreen;	\
-   GLuint pitch = mgaScreen->frontPitch;		\
-   GLuint height = dPriv->h;				\
-   char *read_buf = (char *)(sPriv->pFB +		\
-			mmesa->readOffset +		\
-			dPriv->x * mgaScreen->cpp +	\
-			dPriv->y * pitch);		\
-   char *buf = (char *)(sPriv->pFB +			\
-			mmesa->drawOffset +		\
-			dPriv->x * mgaScreen->cpp +	\
-			dPriv->y * pitch);		\
-   GLushort p = MGA_CONTEXT( ctx )->MonoColor;		\
+#define LOCAL_VARS							\
+   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
+   mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;			\
+   __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
+   GLuint pitch = mgaScreen->frontPitch;				\
+   GLuint height = dPriv->h;						\
+   char *read_buf = (char *)(sPriv->pFB +				\
+			mmesa->readOffset +				\
+			dPriv->x * mgaScreen->cpp +			\
+			dPriv->y * pitch);				\
+   char *buf = (char *)(sPriv->pFB +					\
+			mmesa->drawOffset +				\
+			dPriv->x * mgaScreen->cpp +			\
+			dPriv->y * pitch);				\
+   GLuint p = MGA_CONTEXT( ctx )->MonoColor;				\
    (void) read_buf; (void) buf; (void) p
-   
 
 
-#define LOCAL_DEPTH_VARS				\
-   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;	\
-   mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;	\
-   __DRIscreenPrivate *sPriv = mmesa->driScreen;	\
-   GLuint pitch = mgaScreen->frontPitch;		\
-   GLuint height = dPriv->h;				\
-   char *buf = (char *)(sPriv->pFB +			\
-			mgaScreen->depthOffset +	\
-			dPriv->x * 2 +			\
+#define LOCAL_DEPTH_VARS						\
+   __DRIdrawablePrivate *dPriv = mmesa->driDrawable;			\
+   mgaScreenPrivate *mgaScreen = mmesa->mgaScreen;			\
+   __DRIscreenPrivate *sPriv = mmesa->driScreen;			\
+   GLuint pitch = mgaScreen->frontPitch;				\
+   GLuint height = dPriv->h;						\
+   char *buf = (char *)(sPriv->pFB +					\
+			mgaScreen->depthOffset +			\
+			dPriv->x * mgaScreen->cpp +			\
 			dPriv->y * pitch)
 
-#define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS 
+#define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
 
-#define INIT_MONO_PIXEL(p) 
+#define INIT_MONO_PIXEL(p)
 
 #define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx && \
 			  _y >= miny && _y < maxy)
 
-
-#define CLIPSPAN(_x,_y,_n,_x1,_n1,_i)				\
-	 if (_y < miny || _y >= maxy) _n1 = 0, _x1 = x;		\
-         else {							\
-            _n1 = _n;						\
-	    _x1 = _x;						\
-	    if (_x1 < minx) _i += (minx - _x1), _x1 = minx;	\
-	    if (_x1 + _n1 >= maxx) n1 -= (_x1 + n1 - maxx) + 1;	\
-         }
-
+#define CLIPSPAN( _x, _y, _n, _x1, _n1, _i )				\
+   if ( _y < miny || _y >= maxy ) {					\
+      _n1 = 0, _x1 = x;							\
+   } else {								\
+      _n1 = _n;								\
+      _x1 = _x;								\
+      if ( _x1 < minx ) _i += (minx-_x1), n1 -= (minx-_x1), _x1 = minx; \
+      if ( _x1 + _n1 >= maxx ) n1 -= (_x1 + n1 - maxx);		        \
+   }
 
 
 #define HW_LOCK()				\
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);	\
+   FLUSH_BATCH(mmesa);				\
    LOCK_HARDWARE_QUIESCENT(mmesa);
+
 
 #define HW_CLIPLOOP()						\
   do {								\
@@ -98,9 +124,9 @@
 #define READ_RGBA( rgba, _x, _y )				\
 do {								\
    GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);	\
-   rgba[0] = (p >> 8) & 0xf8;					\
-   rgba[1] = (p >> 3) & 0xfc;					\
-   rgba[2] = (p << 3) & 0xf8;					\
+   rgba[0] = (((p >> 11) & 0x1f) * 255) / 31;			\
+   rgba[1] = (((p >>  5) & 0x3f) * 255) / 63;			\
+   rgba[2] = (((p >>  0) & 0x1f) * 255) / 31;			\
    rgba[3] = 255;						\
 } while(0)
 
@@ -128,7 +154,7 @@ do {								\
 	rgba[0] = (p >> 16) & 0xff;				\
 	rgba[1] = (p >> 8)  & 0xff;				\
 	rgba[2] = (p >> 0)  & 0xff;				\
-	rgba[3] = (p >> 24) & 0xff;				\
+	rgba[3] = 0xff;						\
     } while (0)
 
 #define TAG(x) mga##x##_8888
@@ -143,7 +169,7 @@ do {								\
    *(GLushort *)(buf + _x*2 + _y*pitch) = d;
 
 #define READ_DEPTH( d, _x, _y )		\
-   d = *(GLushort *)(buf + _x*2 + _y*pitch);	
+   d = *(GLushort *)(buf + _x*2 + _y*pitch);
 
 #define TAG(x) mga##x##_16
 #include "depthtmp.h"
@@ -157,7 +183,7 @@ do {								\
    *(GLuint *)(buf + _x*4 + _y*pitch) = d;
 
 #define READ_DEPTH( d, _x, _y )		\
-   d = *(GLuint *)(buf + _x*4 + _y*pitch);	
+   d = *(GLuint *)(buf + _x*4 + _y*pitch);
 
 #define TAG(x) mga##x##_32
 #include "depthtmp.h"
@@ -169,13 +195,13 @@ do {								\
 #define WRITE_DEPTH( _x, _y, d ) {			\
    GLuint tmp = *(GLuint *)(buf + _x*4 + _y*pitch);	\
    tmp &= 0xff;						\
-   tmp |= (d) & 0xffffff00;				\
+   tmp |= (d) << 8;					\
    *(GLuint *)(buf + _x*4 + _y*pitch) = tmp;		\
 }
 
-#define READ_DEPTH( d, _x, _y )		\
-   d = *(GLuint *)(buf + _x*4 + _y*pitch) >> 8;	
-
+#define READ_DEPTH( d, _x, _y )	{				\
+   d = (*(GLuint *)(buf + _x*4 + _y*pitch) & ~0xff) >> 8;	\
+}
 
 #define TAG(x) mga##x##_24_8
 #include "depthtmp.h"
@@ -188,7 +214,7 @@ do {								\
 }
 
 #define READ_STENCIL( d, _x, _y )		\
-   d = *(GLuint *)(buf + _x*4 + _y*pitch) & 0xff;	
+   d = *(GLuint *)(buf + _x*4 + _y*pitch) & 0xff;
 
 #define TAG(x) mga##x##_24_8
 #include "stenciltmp.h"
@@ -224,8 +250,8 @@ void mgaDDInitSpanFuncs( GLcontext *ctx )
       ctx->Driver.WriteMonoRGBAPixels = mgaWriteMonoRGBAPixels_8888;
       ctx->Driver.ReadRGBASpan = mgaReadRGBASpan_8888;
       ctx->Driver.ReadRGBAPixels = mgaReadRGBAPixels_8888;
-      
-      if (mmesa->hw_stencil) {
+
+      if (!mmesa->hw_stencil) {
 	 ctx->Driver.ReadDepthSpan = mgaReadDepthSpan_32;
 	 ctx->Driver.WriteDepthSpan = mgaWriteDepthSpan_32;
 	 ctx->Driver.ReadDepthPixels = mgaReadDepthPixels_32;
@@ -243,13 +269,4 @@ void mgaDDInitSpanFuncs( GLcontext *ctx )
       }
       break;
    }
-
-
-   ctx->Driver.WriteCI8Span = 0;
-   ctx->Driver.WriteCI32Span = 0;
-   ctx->Driver.WriteMonoCISpan = 0;
-   ctx->Driver.WriteCI32Pixels = 0;
-   ctx->Driver.WriteMonoCIPixels = 0;
-   ctx->Driver.ReadCI32Span = 0;
-   ctx->Driver.ReadCI32Pixels = 0;
 }

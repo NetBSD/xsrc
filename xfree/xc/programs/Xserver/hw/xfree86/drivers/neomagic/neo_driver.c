@@ -22,7 +22,7 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_driver.c,v 1.46 2000/12/06 18:08:54 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_driver.c,v 1.52 2001/05/15 10:19:39 eich Exp $ */
 
 /*
  * The original Precision Insight driver for
@@ -87,10 +87,6 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /* Needed for Device Data Channel (DDC) support */
 #include "xf86DDC.h"
 
-#ifdef RENDER
-#include "picturestr.h"
-#endif
-
 #include "picturestr.h"
 
 #ifdef XvExtension
@@ -106,17 +102,15 @@ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "neo_macros.h"
 
 /* These need to be checked */
-#ifdef XFreeXDGA 
 #include "X.h"
 #include "Xproto.h"
 #include "scrnintstr.h"
 #include "servermd.h"
 #define _XF86DGA_SERVER_
 #include "extensions/xf86dgastr.h"
-#endif
 
 /* Mandatory functions */
-static OptionInfoPtr	NEOAvailableOptions(int chipid, int busid);
+static const OptionInfoRec *	NEOAvailableOptions(int chipid, int busid);
 static void     NEOIdentify(int flags);
 static Bool     NEOProbe(DriverPtr drv, int flags);
 static Bool     NEOPreInit(ScrnInfoPtr pScrn, int flags);
@@ -209,9 +203,6 @@ static biosMode bios24[] = {
 DriverRec NEOMAGIC = {
     VERSION,
     NEO_DRIVER_NAME,
-#if 0
-    "Driver for the Neomagic chipsets",
-#endif
     NEOIdentify,
     NEOProbe,
     NEOAvailableOptions,
@@ -274,7 +265,7 @@ typedef enum {
     OPTION_ROTATE
 } NEOOpts;
 
-static OptionInfoRec NEO_2070_Options[] = {
+static const OptionInfoRec NEO_2070_Options[] = {
     { OPTION_NOACCEL,	"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_SW_CURSOR,	"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_NO_MMIO,	"noMMIO",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -294,7 +285,7 @@ static OptionInfoRec NEO_2070_Options[] = {
     { -1,                  NULL,           OPTV_NONE,	{0}, FALSE }
 };
 
-static OptionInfoRec NEOOptions[] = {
+static const OptionInfoRec NEOOptions[] = {
     { OPTION_NOLINEAR_MODE,"NoLinear",  OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_NOACCEL,	"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_SW_CURSOR,	"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -373,6 +364,8 @@ static const char *ddcSymbols[] = {
 
 static const char *vbeSymbols[] = {
     "VBEInit",
+    "vbeDoEDID",
+    "vbeFree",
     NULL
 };
 
@@ -467,8 +460,7 @@ NEOFreeRec(ScrnInfoPtr pScrn)
     pScrn->driverPrivate = NULL;
 }
 
-static
-OptionInfoPtr
+static const OptionInfoRec *
 NEOAvailableOptions(int chipid, int busid)
 {
     int chip = (chipid & 0x0000ffff);
@@ -915,10 +907,15 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
     /* Collect all of the relevant option flags (fill in pScrn->options) */
     xf86CollectOptions(pScrn, NULL);
     /* Process the options */
-    if (nPtr->NeoChipset == NM2070)
-	nPtr->Options = (OptionInfoPtr)NEO_2070_Options;
-    else
-	nPtr->Options = (OptionInfoPtr)NEOOptions;
+    if (nPtr->NeoChipset == NM2070) {
+	if (!(nPtr->Options = xalloc(sizeof(NEO_2070_Options))))
+	    return FALSE;
+	memcpy(nPtr->Options, NEO_2070_Options, sizeof(NEO_2070_Options));
+    } else {
+	if (!(nPtr->Options = xalloc(sizeof(NEOOptions))))
+	    return FALSE;
+	memcpy(nPtr->Options, NEOOptions, sizeof(NEOOptions));
+    }
 
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, nPtr->Options);
 
@@ -1193,10 +1190,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	RETURN;
     }
 
-    xf86LoaderReqSymbols("fbScreenInit", NULL);
-#ifdef RENDER
-    xf86LoaderReqSymbols("fbPictureInit", NULL);
-#endif
+    xf86LoaderReqSymbols("fbScreenInit", "fbPictureInit", NULL);
 
     if (!nPtr->noLinear) {
 	if (!xf86LoadSubModule(pScrn, "xaa")) 
@@ -1344,7 +1338,7 @@ NEOScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 		      pScrn->rgbBits, pScrn->defaultVisual))
          return FALSE;
 
-    miSetPixmapDepths ();
+    if (!miSetPixmapDepths ()) return FALSE;
 
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
@@ -1373,12 +1367,10 @@ NEOScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			    width, height,
 			    pScrn->xDpi, pScrn->yDpi,
 			    displayWidth, pScrn->bitsPerPixel);
-#ifdef RENDER
-	if (ret) 
-	    fbPictureInit (pScreen, 0, 0);
-#endif
     if (!ret)
 	return FALSE;
+
+    fbPictureInit(pScreen, 0, 0);
 
     if (pScrn->depth > 8) {
         /* Fixup RGB ordering */
@@ -1564,12 +1556,10 @@ NEOScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     pScreen->SaveScreen = vgaHWSaveScreen;
 
-#ifdef DPMSExtension
     /* Setup DPMS mode */
     if (nPtr->NeoChipset != NM2070)
 	xf86DPMSInit(pScreen, (DPMSSetProcPtr)NeoDisplayPowerManagementSet,
 		     0);
-#endif
 
     if (!nPtr->noLinear) {
         pScrn->memPhysBase = (unsigned long)nPtr->NeoFbBase;
@@ -2616,7 +2606,6 @@ neoCalcVCLK(ScrnInfoPtr pScrn, long freq)
  *
  * Sets VESA Display Power Management Signaling (DPMS) Mode.
  */
-#ifdef DPMSExtension
 static void
 NeoDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 			     int flags)
@@ -2674,7 +2663,6 @@ NeoDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
     LogicPowerMgmt |= VGArGR(0x01) & ~0xF0;
     VGAwGR(0x01,LogicPowerMgmt);
 }
-#endif
 
 static unsigned int
 neo_ddc1Read(ScrnInfoPtr pScrn)
@@ -2815,7 +2803,9 @@ neoProbeDDC(ScrnInfoPtr pScrn, int index)
     vbeInfoPtr pVbe;
 
     if (xf86LoadSubModule(pScrn, "vbe")) {
-        pVbe = VBEInit(NULL,index);
-        ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
+        if ((pVbe = VBEInit(NULL,index))) {
+	    ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
+	    vbeFree(pVbe);
+	}
     }
 }

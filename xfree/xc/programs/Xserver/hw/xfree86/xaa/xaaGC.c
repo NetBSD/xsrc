@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaGC.c,v 1.17 2000/09/25 23:56:13 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaGC.c,v 1.19 2001/02/19 22:19:50 mvojkovi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -369,19 +369,33 @@ XAACopyAreaPixmap(
     XAAInfoRecPtr infoRec = GET_XAAINFORECPTR_FROM_GC(pGC);
     RegionPtr ret;
 
-    XAA_PIXMAP_OP_PROLOGUE(pGC, pDst);
-
     if(infoRec->pScrn->vtSema && 
-	((pSrc->type == DRAWABLE_WINDOW) || IS_OFFSCREEN_PIXMAP(pSrc))){
+	((pSrc->type == DRAWABLE_WINDOW) || IS_OFFSCREEN_PIXMAP(pSrc))) 
+    {
+	if(infoRec->ReadPixmap && (pGC->alu == GXcopy) &&
+           (pSrc->bitsPerPixel == pDst->bitsPerPixel) &&
+          ((pGC->planemask & infoRec->FullPlanemasks[pSrc->depth - 1])
+              == infoRec->FullPlanemasks[pSrc->depth - 1]))
+        {
+            XAAPixmapPtr pixPriv = XAA_GET_PIXMAP_PRIVATE((PixmapPtr)(pDst));
+	    pixPriv->flags |= DIRTY; 
+
+            return (XAABitBlt( pSrc, pDst, pGC,
+                srcx, srcy, width, height, dstx, dsty,
+                XAADoImageRead, 0L));
+        } else
 	if(infoRec->NeedToSync) {
 	   (*infoRec->Sync)(infoRec->pScrn);
 	    infoRec->NeedToSync = FALSE;
 	}
     }    
 
-    ret = (*pGC->ops->CopyArea)(pSrc, pDst,
+    {
+	XAA_PIXMAP_OP_PROLOGUE(pGC, pDst);
+	ret = (*pGC->ops->CopyArea)(pSrc, pDst,
             pGC, srcx, srcy, width, height, dstx, dsty);
-    XAA_PIXMAP_OP_EPILOGUE(pGC);
+	XAA_PIXMAP_OP_EPILOGUE(pGC);
+    }
     return ret;
 }
 

@@ -1,4 +1,4 @@
-/* $TOG: ListP.h /main/13 1998/02/06 12:46:36 kaleb $ */
+/* $Xorg: ListP.h,v 1.3 2000/08/17 19:45:34 cpqbld Exp $ */
 
 /*
 Copyright 1989, 1994, 1998  The Open Group
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/lib/Xaw/ListP.h,v 1.6 1999/06/20 08:41:02 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/ListP.h,v 1.8 2001/01/17 19:42:27 dawes Exp $ */
 
 
 /* 

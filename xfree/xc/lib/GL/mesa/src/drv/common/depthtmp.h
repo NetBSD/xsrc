@@ -1,8 +1,9 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/common/depthtmp.h,v 1.3 2000/12/04 21:00:59 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/common/depthtmp.h,v 1.5 2001/03/21 16:14:20 dawes Exp $ */
 
 #ifndef DBG
 #define DBG 0
 #endif
+
 
 #ifndef HAVE_HW_DEPTH_SPANS
 #define HAVE_HW_DEPTH_SPANS 0
@@ -11,13 +12,19 @@
 #define HAVE_HW_DEPTH_PIXELS 0
 #endif
 
+#ifndef HW_READ_LOCK
+#define HW_READ_LOCK()		HW_LOCK()
+#endif
+#ifndef HW_READ_UNLOCK
+#define HW_READ_UNLOCK()	HW_UNLOCK()
+#endif
 
 static void TAG(WriteDepthSpan)( GLcontext *ctx,
-				 GLuint n, GLint x, GLint y,
+                             GLuint n, GLint x, GLint y,
 				 const GLdepth *depth,
 				 const GLubyte mask[] )
 {
-   HW_LOCK()
+   HW_WRITE_LOCK()
       {
 	 GLint x1;
 	 GLint n1;
@@ -54,7 +61,7 @@ static void TAG(WriteDepthSpan)( GLcontext *ctx,
 	 HW_ENDCLIPLOOP();
 #endif
       }
-   HW_UNLOCK();
+   HW_WRITE_UNLOCK();
 }
 
 static void TAG(WriteDepthPixels)( GLcontext *ctx,
@@ -64,7 +71,7 @@ static void TAG(WriteDepthPixels)( GLcontext *ctx,
 				   const GLdepth depth[],
 				   const GLubyte mask[] )
 {
-   HW_LOCK()
+   HW_WRITE_LOCK()
       {
 	 GLint i;
 	 LOCAL_DEPTH_VARS;
@@ -89,7 +96,7 @@ static void TAG(WriteDepthPixels)( GLcontext *ctx,
 	 HW_ENDCLIPLOOP();
 #endif
       }
-   HW_UNLOCK();
+   HW_WRITE_UNLOCK();
 }
 
 
@@ -99,7 +106,7 @@ static void TAG(ReadDepthSpan)( GLcontext *ctx,
 				GLuint n, GLint x, GLint y,
 				GLdepth depth[] )
 {
-   HW_LOCK()
+   HW_READ_LOCK()
       {
 	 GLint x1, n1;
 	 LOCAL_DEPTH_VARS;
@@ -123,14 +130,14 @@ static void TAG(ReadDepthSpan)( GLcontext *ctx,
 	 HW_ENDCLIPLOOP();
 #endif
       }
-   HW_UNLOCK();
+   HW_READ_UNLOCK();
 }
 
 static void TAG(ReadDepthPixels)( GLcontext *ctx, GLuint n,
 				  const GLint x[], const GLint y[],
 				  GLdepth depth[] )
 {
-   HW_LOCK()
+   HW_READ_LOCK()
       {
 	 GLint i;
 	 LOCAL_DEPTH_VARS;
@@ -153,8 +160,9 @@ static void TAG(ReadDepthPixels)( GLcontext *ctx, GLuint n,
 	 HW_ENDCLIPLOOP();
 #endif
       }
-   HW_UNLOCK();
+   HW_READ_UNLOCK();
 }
+
 
 #if HAVE_HW_DEPTH_SPANS
 #undef WRITE_DEPTH_SPAN

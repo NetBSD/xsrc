@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_span.c,v 1.3 2000/12/04 19:21:47 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_span.c,v 1.6 2001/03/21 16:14:23 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -28,9 +28,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
- *   Keith Whitwell <keithw@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Keith Whitwell <keithw@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
  *
  */
 
@@ -47,59 +47,61 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define HAVE_HW_DEPTH_PIXELS	1
 
 #define LOCAL_VARS							\
-   r128ContextPtr r128ctx = R128_CONTEXT(ctx);				\
-   r128ScreenPtr r128scrn = r128ctx->r128Screen;			\
-   __DRIdrawablePrivate *dPriv = r128ctx->driDrawable;			\
-   GLuint pitch = r128scrn->fbStride;					\
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
+   r128ScreenPtr r128scrn = rmesa->r128Screen;				\
+   __DRIscreenPrivate *sPriv = rmesa->driScreen;			\
+   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
+   GLuint pitch = r128scrn->frontPitch * r128scrn->cpp;			\
    GLuint height = dPriv->h;						\
-   char *buf = (char *)(r128scrn->fb +					\
-			r128ctx->drawOffset +				\
-			(dPriv->x * r128scrn->bpp/8) +			\
+   char *buf = (char *)(sPriv->pFB +					\
+			rmesa->drawOffset +				\
+			(dPriv->x * r128scrn->cpp) +			\
 			(dPriv->y * pitch));				\
-   char *read_buf = (char *)(r128scrn->fb +				\
-			     r128ctx->readOffset +			\
-			     (dPriv->x * r128scrn->bpp/8) +		\
+   char *read_buf = (char *)(sPriv->pFB +				\
+			     rmesa->readOffset +			\
+			     (dPriv->x * r128scrn->cpp) +		\
 			     (dPriv->y * pitch));			\
-   GLushort p;								\
+   GLuint p;								\
    (void) read_buf; (void) buf; (void) p
 
 #define LOCAL_DEPTH_VARS						\
-   r128ContextPtr r128ctx = R128_CONTEXT(ctx);				\
-   __DRIdrawablePrivate *dPriv = r128ctx->driDrawable;			\
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
+   r128ScreenPtr r128scrn = rmesa->r128Screen;				\
+   __DRIscreenPrivate *sPriv = rmesa->driScreen;			\
+   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
    GLuint height = dPriv->h;						\
-   (void) height
+   (void) r128scrn; (void) sPriv; (void) height
 
 #define LOCAL_STENCIL_VARS	LOCAL_DEPTH_VARS
 
-#define INIT_MONO_PIXEL( p )						\
-   p = r128ctx->Color
+#define INIT_MONO_PIXEL( p )	p = rmesa->Color
 
 #define CLIPPIXEL( _x, _y )						\
    ((_x >= minx) && (_x < maxx) && (_y >= miny) && (_y < maxy))
 
 
 #define CLIPSPAN( _x, _y, _n, _x1, _n1, _i )				\
-   if (( _y < miny) || (_y >= maxy)) {					\
+   if ( _y < miny || _y >= maxy ) {					\
       _n1 = 0, _x1 = x;							\
    } else {								\
       _n1 = _n;								\
       _x1 = _x;								\
-      if (_x1 < minx) _i += (minx - _x1), _x1 = minx;			\
-      if (_x1 + _n1 >= maxx) n1 -= (_x1 + n1 - maxx) + 1;		\
+      if ( _x1 < minx ) _i += (minx-_x1), n1 -= (minx-_x1), _x1 = minx; \
+      if ( _x1 + _n1 >= maxx ) n1 -= (_x1 + n1 - maxx);		        \
    }
 
-#define Y_FLIP( _y )	(height - _y - 1)
+#define Y_FLIP( _y )		(height - _y - 1)
 
 
 #define HW_LOCK()							\
-   r128ContextPtr r128ctx = R128_CONTEXT(ctx);				\
-   FLUSH_BATCH( r128ctx );						\
-   LOCK_HARDWARE( r128ctx );						\
-   r128WaitForIdleLocked( r128ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);				\
+   FLUSH_BATCH( rmesa );						\
+   LOCK_HARDWARE( rmesa );						\
+   r128WaitForIdleLocked( rmesa );
 
 #define HW_CLIPLOOP()							\
    do {									\
-      __DRIdrawablePrivate *dPriv = r128ctx->driDrawable;		\
+      __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
       int _nc = dPriv->numClipRects;					\
 									\
       while ( _nc-- ) {							\
@@ -113,7 +115,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
    } while (0)
 
 #define HW_UNLOCK()							\
-   UNLOCK_HARDWARE( r128ctx )						\
+   UNLOCK_HARDWARE( rmesa )
 
 
 
@@ -122,27 +124,32 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 /* 16 bit, RGB565 color spanline and pixel functions
- */			\
+ */
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    *(GLushort *)(buf + _x*2 + _y*pitch) = ((((int)r & 0xf8) << 8) |	\
 					   (((int)g & 0xfc) << 3) |	\
 					   (((int)b & 0xf8) >> 3))
 
 #define WRITE_PIXEL( _x, _y, p )					\
-    *(GLushort *)(buf + _x*2 + _y*pitch) = p
+   *(GLushort *)(buf + _x*2 + _y*pitch) = p
 
 #define READ_RGBA( rgba, _x, _y )					\
-    do {								\
-	GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
-	rgba[0] = (p >> 8) & 0xf8;					\
-	rgba[1] = (p >> 3) & 0xfc;					\
-	rgba[2] = (p << 3) & 0xf8;					\
-	rgba[3] = 0xff;							\
-    } while (0)
+   do {									\
+      GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
+      rgba[0] = (p >> 8) & 0xf8;					\
+      rgba[1] = (p >> 3) & 0xfc;					\
+      rgba[2] = (p << 3) & 0xf8;					\
+      rgba[3] = 0xff;							\
+      if ( rgba[0] & 0x08 ) rgba[0] |= 0x07;				\
+      if ( rgba[1] & 0x04 ) rgba[1] |= 0x03;				\
+      if ( rgba[2] & 0x08 ) rgba[2] |= 0x07;				\
+   } while (0)
 
 #define TAG(x) r128##x##_RGB565
 #include "spantmp.h"
 
+#define READ_DEPTH(d, _x, _y)                                                 \
+    d = *(GLushort *)(buf + _x*2 + _y*pitch)
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
@@ -168,6 +175,23 @@ do {									\
 #include "spantmp.h"
 
 
+/* 24 bit, RGB888 color spanline and pixel functions */
+#define WRITE_RGBA(_x, _y, r, g, b, a)                                        \
+    *(GLuint *)(buf + _x*3 + _y*pitch) = ((r << 16) |                         \
+					  (g << 8)  |                         \
+					  (b << 0))
+
+#define WRITE_PIXEL(_x, _y, p)                                                \
+    *(GLuint *)(buf + _x*3 + _y*pitch) = p
+
+#define READ_RGBA(rgba, _x, _y)                                               \
+    do {                                                                      \
+	GLuint p = *(GLuint *)(read_buf + _x*3 + _y*pitch);                   \
+	rgba[0] = (p >> 16) & 0xff;                                           \
+	rgba[1] = (p >> 8)  & 0xff;                                           \
+	rgba[2] = (p >> 0)  & 0xff;                                           \
+	rgba[3] = 0xff;                                                       \
+    } while (0)
 
 /* ================================================================
  * Depth buffer
@@ -175,9 +199,8 @@ do {									\
 
 /* 16-bit depth buffer functions
  */
-
 #define WRITE_DEPTH_SPAN()						\
-   r128WriteDepthSpanLocked( r128ctx, n,				\
+   r128WriteDepthSpanLocked( rmesa, n,					\
 			     x + dPriv->x,				\
 			     y + dPriv->y,				\
 			     depth, mask );
@@ -192,20 +215,19 @@ do {									\
    for ( i = 0 ; i < n ; i++ ) {					\
       oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
    }									\
-   r128WriteDepthPixelsLocked( r128ctx, n, ox, oy, depth, mask );	\
+   r128WriteDepthPixelsLocked( rmesa, n, ox, oy, depth, mask );		\
 } while (0)
 
 #define READ_DEPTH_SPAN()						\
 do {									\
-   r128ScreenPtr r128scrn = r128ctx->r128Screen;			\
-   GLushort *buf = (GLushort *)((GLubyte *)r128scrn->fb +		\
+   GLushort *buf = (GLushort *)((GLubyte *)sPriv->pFB +			\
 				r128scrn->spanOffset);			\
    GLint i;								\
 									\
-   r128ReadDepthSpanLocked( r128ctx, n,					\
+   r128ReadDepthSpanLocked( rmesa, n,					\
 			    x + dPriv->x,				\
 			    y + dPriv->y );				\
-   r128WaitForIdleLocked( r128ctx );					\
+   r128WaitForIdleLocked( rmesa );					\
 									\
    for ( i = 0 ; i < n ; i++ ) {					\
       depth[i] = buf[i];						\
@@ -214,8 +236,7 @@ do {									\
 
 #define READ_DEPTH_PIXELS()						\
 do {									\
-   r128ScreenPtr r128scrn = r128ctx->r128Screen;			\
-   GLushort *buf = (GLushort *)((GLubyte *)r128scrn->fb +		\
+   GLushort *buf = (GLushort *)((GLubyte *)sPriv->pFB +			\
 				r128scrn->spanOffset);			\
    GLint i, remaining = n;						\
 									\
@@ -236,8 +257,8 @@ do {									\
 	 oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
       }									\
 									\
-      r128ReadDepthPixelsLocked( r128ctx, count, ox, oy );		\
-      r128WaitForIdleLocked( r128ctx );					\
+      r128ReadDepthPixelsLocked( rmesa, count, ox, oy );		\
+      r128WaitForIdleLocked( rmesa );					\
 									\
       for ( i = 0 ; i < count ; i++ ) {					\
 	 depth[i] = buf[i];						\
@@ -256,7 +277,7 @@ do {									\
 /* 24-bit depth, 8-bit stencil buffer functions
  */
 #define WRITE_DEPTH_SPAN()						\
-   r128WriteDepthSpanLocked( r128ctx, n,				\
+   r128WriteDepthSpanLocked( rmesa, n,					\
 			     x + dPriv->x,				\
 			     y + dPriv->y,				\
 			     depth, mask );
@@ -271,20 +292,19 @@ do {									\
    for ( i = 0 ; i < n ; i++ ) {					\
       oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
    }									\
-   r128WriteDepthPixelsLocked( r128ctx, n, ox, oy, depth, mask );	\
+   r128WriteDepthPixelsLocked( rmesa, n, ox, oy, depth, mask );		\
 } while (0)
 
 #define READ_DEPTH_SPAN()						\
 do {									\
-   r128ScreenPtr r128scrn = r128ctx->r128Screen;			\
-   GLuint *buf = (GLuint *)((GLubyte *)r128scrn->fb +			\
+   GLuint *buf = (GLuint *)((GLubyte *)sPriv->pFB +			\
 			    r128scrn->spanOffset);			\
    GLint i;								\
 									\
-   r128ReadDepthSpanLocked( r128ctx, n,					\
+   r128ReadDepthSpanLocked( rmesa, n,					\
 			    x + dPriv->x,				\
 			    y + dPriv->y );				\
-   r128WaitForIdleLocked( r128ctx );					\
+   r128WaitForIdleLocked( rmesa );					\
 									\
    for ( i = 0 ; i < n ; i++ ) {					\
       depth[i] = buf[i] & 0x00ffffff;					\
@@ -293,8 +313,7 @@ do {									\
 
 #define READ_DEPTH_PIXELS()						\
 do {									\
-   r128ScreenPtr r128scrn = r128ctx->r128Screen;			\
-   GLuint *buf = (GLuint *)((GLubyte *)r128scrn->fb +			\
+   GLuint *buf = (GLuint *)((GLubyte *)sPriv->pFB +			\
 			    r128scrn->spanOffset);			\
    GLint i, remaining = n;						\
 									\
@@ -315,8 +334,8 @@ do {									\
 	 oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
       }									\
 									\
-      r128ReadDepthPixelsLocked( r128ctx, count, ox, oy );		\
-      r128WaitForIdleLocked( r128ctx );					\
+      r128ReadDepthPixelsLocked( rmesa, count, ox, oy );		\
+      r128WaitForIdleLocked( rmesa );					\
 									\
       for ( i = 0 ; i < count ; i++ ) {					\
 	 depth[i] = buf[i] & 0x00ffffff;				\
@@ -341,13 +360,16 @@ do {									\
  */
 
 
+/* 32 bit depthbuffer functions */
+#define WRITE_DEPTH(_x, _y, d)                                                \
+    *(GLuint *)(buf + _x*4 + _y*pitch) = d
 
 void r128DDInitSpanFuncs( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT(ctx);
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
-   switch ( r128ctx->r128Screen->bpp ) {
-   case 16:
+   switch ( rmesa->r128Screen->cpp ) {
+   case 2:
       ctx->Driver.WriteRGBASpan		= r128WriteRGBASpan_RGB565;
       ctx->Driver.WriteRGBSpan		= r128WriteRGBSpan_RGB565;
       ctx->Driver.WriteMonoRGBASpan	= r128WriteMonoRGBASpan_RGB565;
@@ -357,7 +379,7 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
       ctx->Driver.ReadRGBAPixels	= r128ReadRGBAPixels_RGB565;
       break;
 
-   case 32:
+   case 4:
       ctx->Driver.WriteRGBASpan		= r128WriteRGBASpan_ARGB8888;
       ctx->Driver.WriteRGBSpan		= r128WriteRGBSpan_ARGB8888;
       ctx->Driver.WriteMonoRGBASpan	= r128WriteMonoRGBASpan_ARGB8888;
@@ -371,7 +393,7 @@ void r128DDInitSpanFuncs( GLcontext *ctx )
       break;
    }
 
-   switch ( r128ctx->DepthSize ) {
+   switch ( rmesa->glCtx->Visual->DepthBits ) {
    case 16:
       ctx->Driver.ReadDepthSpan		= r128ReadDepthSpan_16;
       ctx->Driver.WriteDepthSpan	= r128WriteDepthSpan_16;

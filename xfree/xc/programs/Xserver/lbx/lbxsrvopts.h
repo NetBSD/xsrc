@@ -1,4 +1,4 @@
-/* $XConsortium: lbxsrvopts.h /main/6 1996/11/15 21:14:37 rws $ */
+/* $Xorg: lbxsrvopts.h,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 /*
  * Copyright 1994 Network Computing Devices, Inc.
  *
@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxsrvopts.h,v 1.3 2001/01/17 22:37:00 dawes Exp $ */
 
 #ifndef _LBX_SRVOPTS_H_
 #define _LBX_SRVOPTS_H_

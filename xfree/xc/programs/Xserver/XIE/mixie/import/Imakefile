@@ -1,5 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/5 1996/09/28 16:56:13 rws $
-XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/import/Imakefile,v 3.4.2.1 1998/06/03 15:49:41 dawes Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:47:44 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/import/Imakefile,v 3.6 2001/01/17 22:13:04 dawes Exp $
+
 XCOMM build device dependent machine independent import element objects
 
 #define IHaveModules

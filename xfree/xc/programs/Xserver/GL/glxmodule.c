@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/GL/glxmodule.c,v 1.8 2000/02/18 16:23:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glxmodule.c,v 1.10 2001/04/10 16:07:54 dawes Exp $ */
 
 /*
  * Authors:
@@ -74,6 +74,7 @@ XF86ModuleData glxModuleData = { &VersRec, glxSetup, NULL };
 static pointer
 glxSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 {
+    static Bool setupDone = FALSE;
     pointer GLcore  = NULL;
 #ifdef GLX_USE_SGI_SI
     char GLcoreName[] = "GL";
@@ -81,18 +82,24 @@ glxSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     char GLcoreName[] = "GLcore";
 #endif
 
-    LoadExtension(&GLXExt, FALSE);
+    if (!setupDone) {
+    	setupDone = TRUE;
 
-    /* Wrap the init visuals routine in micmap.c */
-    GlxWrapInitVisuals(&miInitVisualsProc);
-    /* Make sure this gets wrapped each time InitVisualWrap is called. */
-    miHookInitVisuals(NULL, GlxWrapInitVisuals);
-
-    GLcore = LoadSubModule(module, GLcoreName, NULL, NULL, NULL, NULL, 
+    	GLcore = LoadSubModule(module, GLcoreName, NULL, NULL, NULL, NULL, 
 			   errmaj, errmin);
-    if (!GLcore)
-	ErrorF("Cannot load the GL core library: %s\n", GLcoreName);
+    	if (!GLcore) {
+	    ErrorF("Cannot load the GL core library: %s\n", GLcoreName);
+    	} else {
+    	    LoadExtension(&GLXExt, FALSE);
 
+    	    /* Wrap the init visuals routine in micmap.c */
+    	    GlxWrapInitVisuals(&miInitVisualsProc);
+    	    /* Make sure this gets wrapped each time InitVisualWrap is called */
+    	    miHookInitVisuals(NULL, GlxWrapInitVisuals);
+	}
+    }
+
+    if (errmaj) *errmaj = LDR_ONCEONLY;
     /* Need a non-NULL return value to indicate success */
     return GLcore;
 }

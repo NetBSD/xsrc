@@ -1,4 +1,4 @@
-/* $TOG: miregion.c /main/5 1998/02/09 16:17:10 kaleb $ */
+/* $Xorg: miregion.c,v 1.3 2000/08/17 19:47:45 cpqbld Exp $ */
 /**** module miregion.c ****/
 /******************************************************************************
 
@@ -117,7 +117,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/miregion.c,v 3.4 1998/10/05 13:22:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/miregion.c,v 3.6 2001/01/17 22:13:05 dawes Exp $ */
 
 #define _XIEC_MIREGION
 

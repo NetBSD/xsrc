@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128.h,v 1.7 2000/12/07 15:43:42 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128.h,v 1.13 2001/05/15 10:19:36 eich Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -193,7 +193,6 @@ typedef struct {
     unsigned long     LinearAddr;   /* Frame buffer physical address         */
     unsigned long     MMIOAddr;     /* MMIO region physical address          */
     unsigned long     BIOSAddr;     /* BIOS physical address                 */
-    Bool              BIOSFromPCI;  /* BIOS is read from PCI space           */
 
     unsigned char     *MMIO;        /* Map of MMIO region                    */
     unsigned char     *FB;          /* Map of frame buffer                   */
@@ -203,8 +202,9 @@ typedef struct {
     unsigned long     FbMapSize;    /* Size of frame buffer, in bytes        */
     int               Flags;        /* Saved copy of mode flags              */
 
+    CARD8             BIOSDisplay;  /* Device the BIOS is set to display to  */
+
     Bool              HasPanelRegs; /* Current chip can connect to a FP      */
-    Bool              CRTOnly;      /* Only use External CRT instead of FP   */
     CARD8             *VBIOS;       /* Video BIOS for mode validation on FPs */
     int               FPBIOSstart;  /* Start of the flat panel info          */
 
@@ -273,6 +273,9 @@ typedef struct {
     drmHandle         registerHandle;
 
     Bool              IsPCI;            /* Current card is a PCI card */
+    drmSize           pciSize;
+    drmHandle         pciMemHandle;
+    unsigned char     *PCI;             /* Map */
 
     drmSize           agpSize;
     drmHandle         agpMemHandle;     /* Handle from drmAgpAlloc */
@@ -348,6 +351,7 @@ typedef struct {
     void              (*VideoTimerCallback)(ScrnInfoPtr, Time);
     int               videoKey;
     Bool              showCache;
+    OptionInfoPtr     Options;
 } R128InfoRec, *R128InfoPtr;
 
 #define R128WaitForFifo(pScrn, entries)                                      \
@@ -400,7 +404,8 @@ do {									\
 
 #define R128CCE_RESET(pScrn, info)					\
 do {									\
-    if (R128CCE_USE_RING_BUFFER(info->CCEMode)) {			\
+    if (info->directRenderingEnabled					\
+	&& R128CCE_USE_RING_BUFFER(info->CCEMode)) {			\
 	int _ret = drmR128ResetCCE(info->drmFD);			\
 	if (_ret) {							\
 	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,			\

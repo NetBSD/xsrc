@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbfillrct.c,v 1.2 1998/03/20 21:08:12 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbfillrct.c,v 1.4 2001/01/17 22:37:02 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbfillrct.c /main/19 1998/02/09 14:38:50 kaleb $ */
+/* $Xorg: mfbfillrct.c,v 1.3 2000/08/17 19:53:34 cpqbld Exp $ */
 #include "X.h"
 #include "Xprotostr.h"
 #include "pixmapstr.h"

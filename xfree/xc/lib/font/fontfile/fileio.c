@@ -1,4 +1,4 @@
-/* $TOG: fileio.c /main/7 1998/05/01 16:42:56 kaleb $ */
+/* $Xorg: fileio.c,v 1.3 2000/08/17 19:46:37 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/fileio.c,v 3.6 1999/07/17 05:30:41 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fileio.c,v 3.8 2001/01/17 19:43:30 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

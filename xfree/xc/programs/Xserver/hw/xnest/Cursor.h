@@ -1,4 +1,4 @@
-/* $XConsortium: Cursor.h,v 1.1 93/07/12 15:28:04 rws Exp $ */
+/* $Xorg: Cursor.h,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

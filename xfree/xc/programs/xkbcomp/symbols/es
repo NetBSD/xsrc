@@ -1,6 +1,10 @@
-// $XConsortium: es /main/3 1996/08/31 12:19:38 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/es,v 3.3 1996/12/23 07:13:22 dawes Exp $
+// $Xorg: es,v 1.3 2000/08/17 19:54:42 cpqbld Exp $
+
+
+
 // Modified for a real Spanish Keyboard by Jon Tombs
+// $XFree86: xc/programs/xkbcomp/symbols/es,v 3.5 2001/01/17 23:45:58 dawes Exp $
+
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 

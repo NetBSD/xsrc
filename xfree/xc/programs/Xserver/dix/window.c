@@ -1,4 +1,4 @@
-/* $TOG: window.c /main/215 1998/04/22 16:33:01 msr $ */
+/* $Xorg: window.c,v 1.3 2000/08/17 19:48:19 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
@@ -66,7 +66,7 @@ SOFTWARE.
 *                                                               *
 *****************************************************************/
 
-/* $XFree86: xc/programs/Xserver/dix/window.c,v 3.14 1999/09/27 06:29:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/window.c,v 3.22 2001/01/17 22:36:44 dawes Exp $ */
 
 #include "misc.h"
 #include "scrnintstr.h"

@@ -1,6 +1,6 @@
 #ifndef X_HIL_H
 #define X_HIL_H
-/* $TOG: x_hil.h /main/5 1998/02/10 13:11:44 kaleb $ */
+/* $Xorg: x_hil.h,v 1.3 2000/08/17 19:48:23 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: LocBitmap.c /main/22 1998/06/24 10:18:20 kaleb $ */
+/* $Xorg: LocBitmap.c,v 1.6 2000/08/17 19:46:02 cpqbld Exp $ */
 
 /*
  
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/LocBitmap.c,v 3.4 1998/08/16 10:25:15 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/LocBitmap.c,v 3.6 2001/01/17 19:42:56 dawes Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium

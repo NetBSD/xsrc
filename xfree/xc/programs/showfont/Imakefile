@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.8 94/06/09 17:23:09 gildea Exp $
-XCOMM $XFree86: xc/programs/showfont/Imakefile,v 1.1 2000/02/13 03:26:15 dawes Exp $
+XCOMM $XFree86: xc/programs/showfont/Imakefile,v 1.2 2000/02/14 20:24:46 dawes Exp $
 LOCAL_LIBRARIES = $(FSLIB)
 DEPLIBS = $(DEPFSLIB)
 SRCS = showfont.c

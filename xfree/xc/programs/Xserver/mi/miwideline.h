@@ -1,4 +1,4 @@
-/* $TOG: miwideline.h /main/12 1998/02/09 14:49:26 kaleb $ */
+/* $Xorg: miwideline.h,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/mi/miwideline.h,v 1.6 1998/08/02 09:27:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miwideline.h,v 1.9 2001/04/05 17:42:35 dawes Exp $ */
 
 /* Author:  Keith Packard, MIT X Consortium */
 
@@ -154,8 +154,7 @@ typedef struct _LineFace {
 #define ICEIL(x) ((int)ceil(x))
 #else
 #ifdef __GNUC__
-static __inline int ICEIL(x)
-    double x;
+static __inline int ICEIL(double x)
 {
     int _cTmp = x;
     return ((x == _cTmp) || (x < 0.0)) ? _cTmp : _cTmp+1;

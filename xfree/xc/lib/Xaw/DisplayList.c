@@ -27,7 +27,7 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/lib/Xaw/DisplayList.c,v 3.15 1999/08/28 09:00:26 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/DisplayList.c,v 3.16 2000/09/26 15:56:54 tsi Exp $ */
 
 #include <ctype.h>
 #include <string.h>

@@ -16,22 +16,12 @@
 /***************************************************************************/
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "cidload.h"
 #include "cidgload.h"
-
-#else
-
-#include <cid/cidload.h>
-#include <cid/cidgload.h>
-
-#endif
-
-
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/ftoutln.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_STREAM_H
+#include FT_OUTLINE_H
 
 
   /*************************************************************************/
@@ -79,7 +69,6 @@
       CID_FontDict*  dict;
       CID_Subrs*     cid_subrs = face->subrs + fd_select;
       FT_Byte*       charstring;
-      FT_UInt        lenIV;
       FT_Memory      memory = face->root.memory;
 
 
@@ -90,10 +79,10 @@
 
       /* setup font matrix */
       dict                 = cid->font_dicts + fd_select;
-      lenIV                = dict->private_dict.lenIV;
 
       decoder->font_matrix = dict->font_matrix;
       decoder->font_offset = dict->font_offset;
+      decoder->lenIV       = dict->private_dict.lenIV;
 
       /* the charstrings are encoded (stupid!)  */
       /* load the charstrings, then execute it  */
@@ -103,10 +92,19 @@
 
       if ( !FILE_Read_At( cid->data_offset + off1, charstring, glyph_len ) )
       {
-        cid_decrypt( charstring, glyph_len, 4330 );
+        FT_Int cs_offset;
+
+
+        /* Adjustment for seed bytes. */
+        cs_offset = ( decoder->lenIV >= 0 ? decoder->lenIV : 0 );
+
+        /* Decrypt only if lenIV >= 0. */
+        if ( decoder->lenIV >= 0 )
+          cid_decrypt( charstring, glyph_len, 4330 );
+
         error = decoder->funcs.parse_charstrings( decoder,
-                                                  charstring + lenIV,
-                                                  glyph_len  - lenIV );
+                                                  charstring + cs_offset,
+                                                  glyph_len  - cs_offset  );
       }
 
       FREE( charstring );

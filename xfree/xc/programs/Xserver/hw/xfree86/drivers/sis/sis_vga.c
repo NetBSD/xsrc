@@ -25,7 +25,7 @@
  *           Mitani Hiroshi <hmitani@drl.mei.co.jp> 
  *           David Thomas <davtom@dream.org.uk>. 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vga.c,v 1.5 2000/09/22 11:35:46 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vga.c,v 1.7 2001/04/19 12:40:33 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -34,12 +34,9 @@
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
 
-#include "vgaHW.h"
-
 #include "sis.h"
 #include "sis_regs.h"
-#include "sis_vb.h"
-
+#include "sis_dac.h"
 
 #define Midx    0
 #define Nidx    1
@@ -56,9 +53,9 @@
 #define TOLERANCE 0.01  /* search smallest M and N in this tolerance */
 
 
+void SISVGAPreInit(ScrnInfoPtr pScrn);
 static  Bool    SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
 static  Bool    SIS300Init(ScrnInfoPtr pScrn, DisplayModePtr mode);
-
 
 static Bool
 SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
@@ -162,48 +159,48 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
         case PCI_CHIP_SIS6326:
             pReg->sisRegs3C4[LinearAdd0] = (pSiS->FbAddress & 0x07F80000) >> 19;
             pReg->sisRegs3C4[LinearAdd1] =((pSiS->FbAddress & 0xF8000000) >> 27)
-                                      | temp; /* Enable linear with max 4M */
+                                        | temp; /* Enable linear with max 4M */
             break;
         case PCI_CHIP_SIS530:
             pReg->sisRegs3C4[LinearAdd0] = (pSiS->FbAddress & 0x07F80000) >> 19;
             pReg->sisRegs3C4[LinearAdd1] =((pSiS->FbAddress & 0xF8000000) >> 27)
-                                      | temp; /* Enable linear with max 8M */
+                                        | temp; /* Enable linear with max 8M */
             break;
     }
 
-        /* Screen Offset */
-        vgaReg->CRTC[0x13] = offset & 0xFF;
-        pReg->sisRegs3C4[CRTCOff] = ((offset & 0xF00) >> 4) | 
-                                (((mode->CrtcVTotal-2)     & 0x400) >> 10 ) |
-                                (((mode->CrtcVDisplay-1)   & 0x400) >> 9 ) |
-                                (((mode->CrtcVSyncStart-1) & 0x400) >> 8 ) |
-                                (((mode->CrtcVSyncStart)   & 0x400) >> 7 ) ;
+    /* Screen Offset */
+    vgaReg->CRTC[0x13] = offset & 0xFF;
+    pReg->sisRegs3C4[CRTCOff] = ((offset & 0xF00) >> 4) | 
+                (((mode->CrtcVTotal-2)     & 0x400) >> 10 ) |
+                (((mode->CrtcVDisplay-1)   & 0x400) >> 9 ) |
+                (((mode->CrtcVSyncStart-1) & 0x400) >> 8 ) |
+                (((mode->CrtcVSyncStart)   & 0x400) >> 7 ) ;
 
-        /* Extended Horizontal Overflow Register */
-        pReg->sisRegs3C4[0x12] &= 0xE0;
-        pReg->sisRegs3C4[0x12] |= (
-                (((mode->CrtcHTotal >> 3) - 5)     & 0x100) >> 8 |
-                (((mode->CrtcHDisplay >> 3) - 1)   & 0x100) >> 7 |
-                (((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 6 |
-                ((mode->CrtcHSyncStart >> 3)       & 0x100) >> 5 |
-                (((mode->CrtcHBlankEnd >> 3) -1)   & 0x40)  >> 2);
-/*              ((mode->CrtcHSyncEnd >> 3)         & 0x40)  >> 2); */
+    /* Extended Horizontal Overflow Register */
+    pReg->sisRegs3C4[0x12] &= 0xE0;
+    pReg->sisRegs3C4[0x12] |= (
+        (((mode->CrtcHTotal >> 3) - 5)     & 0x100) >> 8 |
+        (((mode->CrtcHDisplay >> 3) - 1)   & 0x100) >> 7 |
+        (((mode->CrtcHSyncStart >> 3) - 1) & 0x100) >> 6 |
+        ((mode->CrtcHSyncStart >> 3)       & 0x100) >> 5 |
+        (((mode->CrtcHBlankEnd >> 3) -1)   & 0x40)  >> 2);
+/*      ((mode->CrtcHSyncEnd >> 3)         & 0x40)  >> 2); */
 
-        if (mode->CrtcVDisplay > 1024)
-                /* disable line compare */
-                pReg->sisRegs3C4[0x38] |= 0x04;
-        else
-                pReg->sisRegs3C4[0x38] &= 0xFB;
+    if (mode->CrtcVDisplay > 1024)
+        /* disable line compare */
+        pReg->sisRegs3C4[0x38] |= 0x04;
+    else
+        pReg->sisRegs3C4[0x38] &= 0xFB;
 
-        if (( pScrn->depth == 24) || (pScrn->depth == 32) ||
-                                        (mode->CrtcHDisplay >= 1280))
-                /* Enable high speed DCLK */
-                pReg->sisRegs3C4[0x3E] |= 1;
-        else
-                pReg->sisRegs3C4[0x3E] &= 0xFE;
+    if (( pScrn->depth == 24) || (pScrn->depth == 32) ||
+                    (mode->CrtcHDisplay >= 1280))
+        /* Enable high speed DCLK */
+        pReg->sisRegs3C4[0x3E] |= 1;
+    else
+        pReg->sisRegs3C4[0x3E] &= 0xFE;
 
 
-    /* Set vclk */      
+    /* Set vclk */  
     if (compute_vclk(clock, &num, &denum, &div, &sbit, &scale)) {
         switch  (pSiS->Chipset)  {
             case PCI_CHIP_SIS5597:
@@ -218,7 +215,7 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
                     pReg->sisRegs3C4[ClockBase] |= 0x40;
                 else 
                     pReg->sisRegs3C4[ClockBase] &= 0xBF;
-            
+                    
                 break;
         }
     }
@@ -249,10 +246,10 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
         }
     } /* end of set vclk */
 
-        if (clock > 135000)
-                pReg->sisRegs3C4[ClockReg] |= 0x02;
+    if (clock > 135000)
+        pReg->sisRegs3C4[ClockReg] |= 0x02;
 
-    /*pReg->sisRegs3C2 = inb(0x3CC) | 0x0C;*/ /* Programmable Clock */
+    /* pReg->sisRegs3C2 = inb(0x3CC) | 0x0C;*/ /* Programmable Clock */
     pReg->sisRegs3C2 = inb(pSiS->RelIO+0x4c) | 0x0C; /* Programmable Clock */
 
     if (pSiS->FastVram && ((pSiS->Chipset == PCI_CHIP_SIS530) ||
@@ -304,7 +301,7 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
                 pReg->sisRegs3C4[GraphEng] |= 0x40;
                 if (pSiS->TurboQueue) {
                     pReg->sisRegs3C4[GraphEng] |= 0x80;
-                                                        /* All Queue for 2D */
+                                /* All Queue for 2D */
                     pReg->sisRegs3C4[ExtMiscCont9] &= 0xFC;
                     if (pSiS->HWCursor)
                         pReg->sisRegs3C4[TurboQueueBase] = (pScrn->videoRam/32) - 2;
@@ -324,7 +321,7 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
   
           pReg->sisRegs3C4[MemClock0] = (vclk[Midx] - 1) & 0x7f ;
           pReg->sisRegs3C4[MemClock0] |= ((vclk[VLDidx] == 2 ) ? 1 : 0 ) << 7 ;
-          pReg->sisRegs3C4[MemClock1]  = (vclk[Nidx] -1) & 0x1f ;       /* bits [4:0] contain denumerator -MC */
+          pReg->sisRegs3C4[MemClock1]  = (vclk[Nidx] -1) & 0x1f ;   /* bits [4:0] contain denumerator -MC */
           if (vclk[Pidx] <= 4){
             pReg->sisRegs3C4[MemClock1] |= (vclk[Pidx] -1 ) << 5 ; /* postscale 1,2,3,4 */
             pReg->sisRegs3C4[ClockBase] &= 0x7F;
@@ -352,41 +349,42 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     /* set threshold value */
     switch  (pSiS->Chipset)  {
-    case PCI_CHIP_SIS5597:
-    case PCI_CHIP_SIS6326:
-        MemBand = sisMemBandWidth(pScrn) / 10 ;
-        safetymargin = 1; 
-        gap          = 4;
+        case PCI_CHIP_SIS5597:
+        case PCI_CHIP_SIS6326:
+            MemBand = SiSMemBandWidth(pScrn) / 10 ;
+            safetymargin = 1; 
+            gap          = 4;
 
-        CRT_ENGthreshold = 0x0F;
-        CRT_CPUthresholdLow = ((pScrn->depth*clock) / MemBand)+safetymargin;
-        CRT_CPUthresholdHigh =((pScrn->depth*clock) / MemBand)+gap+safetymargin;
+            CRT_ENGthreshold = 0x0F;
+            CRT_CPUthresholdLow = ((pScrn->depth*clock) / 
+                                    MemBand)+safetymargin;
+            CRT_CPUthresholdHigh =((pScrn->depth*clock) / 
+                                    MemBand)+gap+safetymargin;
 
-        if ( CRT_CPUthresholdLow > (pScrn->depth < 24 ? 0xe:0x0d) ) { 
-            CRT_CPUthresholdLow = (pScrn->depth < 24 ? 0xe:0x0d); 
-        }
+            if ( CRT_CPUthresholdLow > (pScrn->depth < 24 ? 0xe:0x0d) ) { 
+                CRT_CPUthresholdLow = (pScrn->depth < 24 ? 0xe:0x0d); 
+            }
 
-        if ( CRT_CPUthresholdHigh > (pScrn->depth < 24 ? 0x10:0x0f) ) {
-            CRT_CPUthresholdHigh = (pScrn->depth < 24 ? 0x10:0x0f);
-        }
+            if ( CRT_CPUthresholdHigh > (pScrn->depth < 24 ? 0x10:0x0f) ) {
+                CRT_CPUthresholdHigh = (pScrn->depth < 24 ? 0x10:0x0f);
+            }
 
-        pReg->sisRegs3C4[CPUThreshold] =  (CRT_ENGthreshold & 0x0F) | 
-                                        (CRT_CPUthresholdLow & 0x0F)<<4 ;
-        pReg->sisRegs3C4[CRTThreshold] = CRT_CPUthresholdHigh & 0x0F;
+            pReg->sisRegs3C4[CPUThreshold] =  (CRT_ENGthreshold & 0x0F) | 
+                            (CRT_CPUthresholdLow & 0x0F)<<4 ;
+            pReg->sisRegs3C4[CRTThreshold] = CRT_CPUthresholdHigh & 0x0F;
 
-        break;
-    case PCI_CHIP_SIS530:
-        (*pSiS->SetThreshold)(pScrn, mode, &CRT_CPUthresholdLow,
-                                        &CRT_CPUthresholdHigh);
-        pReg->sisRegs3C4[8] = (CRT_CPUthresholdLow & 0xf) << 4 | 0xF;
-        pReg->sisRegs3C4[9] &= 0xF0;
-        pReg->sisRegs3C4[9] |= (CRT_CPUthresholdHigh & 0xF);
-        /*pReg->sisRegs3C4[0x3F] &= 0xE3;*/
-        pReg->sisRegs3C4[0x3F] &= 0xE3;
-        pReg->sisRegs3C4[0x3F] |= (CRT_CPUthresholdHigh & 0x10) |
-                                        (CRT_CPUthresholdLow & 0x10) >> 2 |
-                                        0x08;
-        break;
+            break;
+        case PCI_CHIP_SIS530:
+            (*pSiS->SetThreshold)(pScrn, mode, &CRT_CPUthresholdLow,
+                            &CRT_CPUthresholdHigh);
+            pReg->sisRegs3C4[8] = (CRT_CPUthresholdLow & 0xf) << 4 | 0xF;
+            pReg->sisRegs3C4[9] &= 0xF0;
+            pReg->sisRegs3C4[9] |= (CRT_CPUthresholdHigh & 0xF);
+            pReg->sisRegs3C4[0x3F] &= 0xE3;
+            pReg->sisRegs3C4[0x3F] |= (CRT_CPUthresholdHigh & 0x10) |
+                            (CRT_CPUthresholdLow & 0x10) >> 2 |
+                            0x08;
+            break;
     }
 
     return(TRUE);
@@ -395,227 +393,225 @@ SISInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 Bool
 SIS300Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
-        SISPtr  pSiS = SISPTR(pScrn);
-        SISRegPtr       pReg = &pSiS->ModeReg;
-        vgaRegPtr       vgaReg = &VGAHWPTR(pScrn)->ModeReg;
-        int     vgaIOBase;
-        unsigned short  temp;
-        int     offset;
-        int     clock = mode->Clock;
-        unsigned int    vclk[5];
+    SISPtr  pSiS = SISPTR(pScrn);
+    SISRegPtr   pReg = &pSiS->ModeReg;
+    vgaRegPtr   vgaReg = &VGAHWPTR(pScrn)->ModeReg;
+    int vgaIOBase;
+    unsigned short  temp;
+    int offset;
+    int clock = mode->Clock;
+    unsigned int    vclk[5];
 
-        int num, denum, div, sbit, scale;
-        unsigned short  Threshold_Low, Threshold_High;
-        
-        xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4, "SIS300Init()\n");
-        xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4,
-                "virtualX = %d depth = %d Logical width = %d\n",
-                pScrn->virtualX, pScrn->bitsPerPixel,
-                pScrn->virtualX * pScrn->bitsPerPixel/8);
+    int num, denum, div, sbit, scale;
+    unsigned short  Threshold_Low, Threshold_High;
 
-        vgaHWGetIOBase(VGAHWPTR(pScrn));
-        vgaIOBase = VGAHWPTR(pScrn)->IOBase;
+    xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4, "SIS300Init()\n");
+    xf86DrvMsgVerb(pScrn->scrnIndex, X_INFO, 4,
+        "virtualX = %d depth = %d Logical width = %d\n",
+        pScrn->virtualX, pScrn->bitsPerPixel,
+        pScrn->virtualX * pScrn->bitsPerPixel/8);
 
-        (*pSiS->SiSSave)(pScrn, pReg);  
+    vgaHWGetIOBase(VGAHWPTR(pScrn));
+    vgaIOBase = VGAHWPTR(pScrn)->IOBase;
 
-        outw(VGA_SEQ_INDEX, 0x8605);
+    (*pSiS->SiSSave)(pScrn, pReg);
 
-        pReg->sisRegs3C4[6] &= ~GENMASK(4:2);
+    outw(VGA_SEQ_INDEX, 0x8605);
 
-        switch (pScrn->bitsPerPixel) {
+    pReg->sisRegs3C4[6] &= ~GENMASK(4:2);
+
+    switch (pScrn->bitsPerPixel) {
         case 8:
-                pSiS->DstColor = 0x0000;
-                pReg->sisRegs3C4[6] |= 0x03;
-                break;
+            pSiS->DstColor = 0x0000;
+            pReg->sisRegs3C4[6] |= 0x03;
+            break;
         case 16:
-                if (pScrn->depth==15)  {
-                        pSiS->DstColor = 0x4000;
-                        pReg->sisRegs3C4[6] |= ((1 << 2) | 0x03);
-                } else {
-                        pSiS->DstColor = (short) 0x8000;
-                        pReg->sisRegs3C4[6] |= ((2 << 2) | 0x03);
-                }
-                break;
+            if (pScrn->depth==15)  {
+                pSiS->DstColor = 0x4000;
+                pReg->sisRegs3C4[6] |= ((1 << 2) | 0x03);
+            } else {
+                pSiS->DstColor = (short) 0x8000;
+                pReg->sisRegs3C4[6] |= ((2 << 2) | 0x03);
+            }
+            break;
         case 24:
-                pReg->sisRegs3C4[6] |= ((3 << 2) | 0x03);
-                break;
+            pReg->sisRegs3C4[6] |= ((3 << 2) | 0x03);
+            break;
         case 32:
-                pSiS->DstColor = (short) 0xC000;
-                pReg->sisRegs3C4[6] |= ((4 << 2) | 0x03);
-                break;
-        } 
-
-        pSiS->scrnOffset = pScrn->displayWidth * ((pScrn->bitsPerPixel+7)/8);
-
-        pReg->sisRegs3D4[0x19] = 0;
-        pReg->sisRegs3D4[0x1A] &= 0xFC;  
-
-        if (mode->Flags & V_INTERLACE)  {
-                offset = pSiS->scrnOffset >> 2;
-                pReg->sisRegs3C4[0x06] |= 0x20;
-                if (pSiS->Chipset != PCI_CHIP_SIS300)  {
-                        temp = (mode->CrtcHSyncStart >> 3) -
-                                (mode->CrtcHTotal >> 3)/2;
-                        pReg->sisRegs3D4[0x19] = GETVAR8(temp);
-                        pReg->sisRegs3D4[0x1A] |= GETBITS(temp, 9:8);
-                }
-        } else  {
-                offset = pSiS->scrnOffset >> 3;
-                pReg->sisRegs3C4[0x06] &= ~0x20;
-        }  
-
-        pReg->sisRegs3C4[0x07] |= 0x10; /* enable High Speed DAC */
-        pReg->sisRegs3C4[0x07] &= 0xFC;
-        if (clock < 100000)
-                pReg->sisRegs3C4[0x07] |= 0x03;
-        else if (clock < 200000)
-                pReg->sisRegs3C4[0x07] |= 0x02;
-        else if (clock < 250000)
-                pReg->sisRegs3C4[0x07] |= 0x01; 
-
-        /* Extended Vertical Overflow */
-        pReg->sisRegs3C4[0x0A] = 
-                        GETBITSTR(mode->CrtcVTotal     -2, 10:10, 0:0) |
-                        GETBITSTR(mode->CrtcVDisplay   -1, 10:10, 1:1) |
-                        GETBITSTR(mode->CrtcVBlankStart  , 10:10, 2:2) |
-                        GETBITSTR(mode->CrtcVSyncStart   , 10:10, 3:3) |
-                        GETBITSTR(mode->CrtcVBlankEnd    ,   8:8, 4:4) |
-                        GETBITSTR(mode->CrtcVSyncEnd     ,   4:4, 5:5) ;  
-
-        /* Extended Horizontal Overflow */
-        pReg->sisRegs3C4[0x0B] = 
-                        GETBITSTR((mode->CrtcHTotal      >> 3) - 5, 9:8, 1:0) |
-                        GETBITSTR((mode->CrtcHDisplay    >> 3) - 1, 9:8, 3:2) |
-                        GETBITSTR((mode->CrtcHBlankStart >> 3)    , 9:8, 5:4) |
-                        GETBITSTR((mode->CrtcHSyncStart  >> 3)    , 9:8, 7:6) ;
-
-        pReg->sisRegs3C4[0x0C] &= 0xF8;
-        pReg->sisRegs3C4[0x0C] |= 
-                        GETBITSTR(mode->CrtcHBlankEnd >> 3, 7:6, 1:0) |
-                        GETBITSTR(mode->CrtcHSyncEnd  >> 3, 5:5, 2:2) ;  
-
-        /* Screen Offset */
-        vgaReg->CRTC[0x13] = GETVAR8(offset);
-        pReg->sisRegs3C4[0x0E] &= 0xF0;
-        pReg->sisRegs3C4[0x0E] |= GETBITS(offset, 11:8); 
-
-        /* line compare */
-        if (mode->CrtcHDisplay > 0)
-                pReg->sisRegs3C4[0x0F] |= 0x08;
-        else
-                pReg->sisRegs3C4[0x0F] &= 0xF7;
-
-        pReg->sisRegs3C4[0x10] = 
-                ((mode->CrtcHDisplay *((pScrn->bitsPerPixel+7)/8) + 63) >> 6)+1;
-
-        /* Enable Linear */
-        pReg->sisRegs3C4[0x20] |= 0x81; 
-
-
-    /* Set vclk */      
-    if (compute_vclk(clock, &num, &denum, &div, &sbit, &scale)) {
-                pReg->sisRegs3C4[0x2B] = (num -1) & 0x7f;
-                if (div == 2)
-                    pReg->sisRegs3C4[0x2B] |= 0x80;
-                pReg->sisRegs3C4[0x2C] = ((denum -1) & 0x1f);
-                pReg->sisRegs3C4[0x2C] |= (((scale-1)&3) << 5);
-                if (sbit)
-                    pReg->sisRegs3C4[0x2C] |= 0x80;
-                pReg->sisRegs3C4[0x2D] = 0x80;
+            pSiS->DstColor = (short) 0xC000;
+            pReg->sisRegs3C4[6] |= ((4 << 2) | 0x03);
+            break;
     }
-    else  {  
+
+    pSiS->scrnOffset = pScrn->displayWidth * ((pScrn->bitsPerPixel+7)/8);
+
+    pReg->sisRegs3D4[0x19] = 0;
+    pReg->sisRegs3D4[0x1A] &= 0xFC;
+
+    if (mode->Flags & V_INTERLACE)  {
+        offset = pSiS->scrnOffset >> 2;
+        pReg->sisRegs3C4[0x06] |= 0x20;
+        if (pSiS->Chipset != PCI_CHIP_SIS300)  {
+            temp = (mode->CrtcHSyncStart >> 3) -
+                (mode->CrtcHTotal >> 3)/2;
+            pReg->sisRegs3D4[0x19] = GETVAR8(temp);
+            pReg->sisRegs3D4[0x1A] |= GETBITS(temp, 9:8);
+        }
+    } else  {
+        offset = pSiS->scrnOffset >> 3;
+        pReg->sisRegs3C4[0x06] &= ~0x20;
+    }
+
+    pReg->sisRegs3C4[0x07] |= 0x10;     /* enable High Speed DAC */
+    pReg->sisRegs3C4[0x07] &= 0xFC;
+    if (clock < 100000)
+        pReg->sisRegs3C4[0x07] |= 0x03;
+    else if (clock < 200000)
+        pReg->sisRegs3C4[0x07] |= 0x02;
+    else if (clock < 250000)
+        pReg->sisRegs3C4[0x07] |= 0x01;
+
+    /* Extended Vertical Overflow */
+    pReg->sisRegs3C4[0x0A] = 
+            GETBITSTR(mode->CrtcVTotal     -2, 10:10, 0:0) |
+            GETBITSTR(mode->CrtcVDisplay   -1, 10:10, 1:1) |
+            GETBITSTR(mode->CrtcVBlankStart  , 10:10, 2:2) |
+            GETBITSTR(mode->CrtcVSyncStart   , 10:10, 3:3) |
+            GETBITSTR(mode->CrtcVBlankEnd    ,   8:8, 4:4) |
+            GETBITSTR(mode->CrtcVSyncEnd     ,   4:4, 5:5) ;
+
+    /* Extended Horizontal Overflow */
+    pReg->sisRegs3C4[0x0B] = 
+            GETBITSTR((mode->CrtcHTotal      >> 3) - 5, 9:8, 1:0) |
+            GETBITSTR((mode->CrtcHDisplay    >> 3) - 1, 9:8, 3:2) |
+            GETBITSTR((mode->CrtcHBlankStart >> 3)    , 9:8, 5:4) |
+            GETBITSTR((mode->CrtcHSyncStart  >> 3)    , 9:8, 7:6) ;
+
+    pReg->sisRegs3C4[0x0C] &= 0xF8;
+    pReg->sisRegs3C4[0x0C] |= 
+            GETBITSTR(mode->CrtcHBlankEnd >> 3, 7:6, 1:0) |
+            GETBITSTR(mode->CrtcHSyncEnd  >> 3, 5:5, 2:2) ;
+
+    /* Screen Offset */
+    vgaReg->CRTC[0x13] = GETVAR8(offset);
+    pReg->sisRegs3C4[0x0E] &= 0xF0;
+    pReg->sisRegs3C4[0x0E] |= GETBITS(offset, 11:8);
+
+    /* line compare */
+    if (mode->CrtcHDisplay > 0)
+        pReg->sisRegs3C4[0x0F] |= 0x08;
+    else
+        pReg->sisRegs3C4[0x0F] &= 0xF7;
+
+    pReg->sisRegs3C4[0x10] = 
+        ((mode->CrtcHDisplay *((pScrn->bitsPerPixel+7)/8) + 63) >> 6)+1;
+
+    /* Enable Linear */
+    pReg->sisRegs3C4[0x20] |= 0x81;
+
+    /* Set vclk */  
+    if (compute_vclk(clock, &num, &denum, &div, &sbit, &scale)) {
+        pReg->sisRegs3C4[0x2B] = (num -1) & 0x7f;
+        if (div == 2)
+            pReg->sisRegs3C4[0x2B] |= 0x80;
+        pReg->sisRegs3C4[0x2C] = ((denum -1) & 0x1f);
+        pReg->sisRegs3C4[0x2C] |= (((scale-1)&3) << 5);
+        if (sbit)
+            pReg->sisRegs3C4[0x2C] |= 0x80;
+        pReg->sisRegs3C4[0x2D] = 0x80;
+    }
+    else  {
     /* if compute_vclk cannot handle the request clock try sisCalcClock! */
         SiSCalcClock(pScrn, clock, 2, vclk);
-                pReg->sisRegs3C4[0x2B] = (vclk[Midx] - 1) & 0x7f ;
-                pReg->sisRegs3C4[0x2B] |= ((vclk[VLDidx] == 2 ) ? 1 : 0 ) << 7 ;
+        pReg->sisRegs3C4[0x2B] = (vclk[Midx] - 1) & 0x7f ;
+        pReg->sisRegs3C4[0x2B] |= ((vclk[VLDidx] == 2 ) ? 1 : 0 ) << 7 ;
 
-                /* bits [4:0] contain denumerator -MC */
-                pReg->sisRegs3C4[0x2C] = (vclk[Nidx] -1) & 0x1f ;
+        /* bits [4:0] contain denumerator -MC */
+        pReg->sisRegs3C4[0x2C] = (vclk[Nidx] -1) & 0x1f ;
 
-                if (vclk[Pidx] <= 4)  {  
-                /* postscale 1,2,3,4 */
-                    pReg->sisRegs3C4[0x2C] |= (vclk[Pidx] -1 ) << 5 ;
-                    pReg->sisRegs3C4[0x2C] &= 0x7F;
-                } else  {  
-                /* postscale 6,8 */
-                    pReg->sisRegs3C4[0x2C] |= ((vclk[Pidx] / 2) -1 ) << 5 ;
-                    pReg->sisRegs3C4[0x2C] |= 0x80;
-                }
-                pReg->sisRegs3C4[0x2D] = 0x80;
+        if (vclk[Pidx] <= 4)  {
+        /* postscale 1,2,3,4 */
+            pReg->sisRegs3C4[0x2C] |= (vclk[Pidx] -1 ) << 5 ;
+            pReg->sisRegs3C4[0x2C] &= 0x7F;
+        } else  {
+        /* postscale 6,8 */
+            pReg->sisRegs3C4[0x2C] |= ((vclk[Pidx] / 2) -1 ) << 5 ;
+            pReg->sisRegs3C4[0x2C] |= 0x80;
+        }
+        pReg->sisRegs3C4[0x2D] = 0x80;
     } /* end of set vclk */
 
-        if (clock > 150000)  {  /* enable two-pixel mode */
-                pReg->sisRegs3C4[0x07] |= 0x80;
-                pReg->sisRegs3C4[0x32] |= 0x08;
-        } else  {
-                pReg->sisRegs3C4[0x07] &= 0x7F;
-                pReg->sisRegs3C4[0x32] &= 0xF7;
-        }  
+    if (clock > 150000)  {  /* enable two-pixel mode */
+        pReg->sisRegs3C4[0x07] |= 0x80;
+        pReg->sisRegs3C4[0x32] |= 0x08;
+    } else  {
+        pReg->sisRegs3C4[0x07] &= 0x7F;
+        pReg->sisRegs3C4[0x32] &= 0xF7;
+    }
 
-        /*pReg->sisRegs3C2 = inb(0x3CC) | 0x0C;*/ /* Programmable Clock */
-        pReg->sisRegs3C2 = inb(pSiS->RelIO+0x4c) | 0x0C; /*Programmable Clock*/
+    pReg->sisRegs3C2 = inb(0x3CC) | 0x0C; /* Programmable Clock */
 
-        if (!pSiS->NoAccel) {
-                pReg->sisRegs3C4[0x1E] |= 0x42;
-                if (pSiS->TurboQueue)  {  /* set Turbo Queue as 512k */
-                        temp = ((pScrn->videoRam/64)-4);
-                        pReg->sisRegs3C4[0x26] = temp & 0xFF;
-                        pReg->sisRegs3C4[0x27] = ((temp >> 8) & 3) || 0xF0;
-                }
-        }  
+    if (!pSiS->NoAccel) {
+        pReg->sisRegs3C4[0x1E] |= 0x42;
+        if (pSiS->TurboQueue)  {    /* set Turbo Queue as 512k */
+            temp = ((pScrn->videoRam/64)-4);
+            pReg->sisRegs3C4[0x26] = temp & 0xFF;
+            pReg->sisRegs3C4[0x27] = ((temp >> 8) & 3) || 0xF0;
+        }
+    }
 
-        /* set threshold value */
-        (*pSiS->SetThreshold)(pScrn, mode, &Threshold_Low, &Threshold_High);
-        pReg->sisRegs3C4[0x08] = GETBITSTR(Threshold_Low, 3:0, 7:4) | 0xF;
-        pReg->sisRegs3C4[0x0F] &= ~GENMASK(5:5);
-        pReg->sisRegs3C4[0x0F] |= GETBITSTR(Threshold_Low, 4:4, 5:5);
-        pReg->sisRegs3C4[0x09] &= ~GENMASK(3:0);
-        pReg->sisRegs3C4[0x09] |= GETBITS(Threshold_High, 3:0);   
+    /* set threshold value */
+    (*pSiS->SetThreshold)(pScrn, mode, &Threshold_Low, &Threshold_High);
+    pReg->sisRegs3C4[0x08] = GETBITSTR(Threshold_Low, 3:0, 7:4) | 0xF;
+    pReg->sisRegs3C4[0x0F] &= ~GENMASK(5:5);
+    pReg->sisRegs3C4[0x0F] |= GETBITSTR(Threshold_Low, 4:4, 5:5);
+    pReg->sisRegs3C4[0x09] &= ~GENMASK(3:0);
+    pReg->sisRegs3C4[0x09] |= GETBITS(Threshold_High, 3:0);
 
-        return(TRUE);
+    return(TRUE);
 }
 
 void SISVGAPreInit(ScrnInfoPtr pScrn)
 {
-        SISPtr  pSiS = SISPTR(pScrn);
-        int     temp;
-        unsigned short usOffsetHigh, usOffsetLow, vBiosVersion;
-        unsigned long   ROMAddr  = (unsigned long) SISPTR(pScrn)->BIOS;
+    SISPtr  pSiS = SISPTR(pScrn);
+    int     temp;
+    unsigned short usOffsetHigh, usOffsetLow, vBiosVersion;
+    unsigned long   ROMAddr  = (unsigned long) SISPTR(pScrn)->BIOS;
 
-        usOffsetHigh = *((unsigned char *)(ROMAddr+0x08)) - 0x30;     
-        usOffsetLow  = *((unsigned char *)(ROMAddr+0x09)) - 0x30;     
-        vBiosVersion = usOffsetHigh << 4 | usOffsetLow;
-        if(vBiosVersion < 0x02)
-        {
-            outSISIDXREG(pSiS->RelIO+CROFFSET, 0x37, 0);
-            inSISIDXREG(pSiS->RelIO+CROFFSET, 0x36, temp);
-            temp &= 0x07;
-            outSISIDXREG(pSiS->RelIO+CROFFSET, 0x36, temp);
-        }    
-        outb(SISPART4, 0x00);
-        temp = inb(SISPART4+1) & 0x0F;
-        pSiS->VBFlags = 0; /*reset*/
-        if (temp == 1) 
-                pSiS->VBFlags|=VB_301;  /*301*/
-        else if (temp == 2)
-                pSiS->VBFlags|=VB_302;  /*302*/
-        else if (temp == 3)
-                pSiS->VBFlags|=VB_303;  /*303*/
-        else 
-        {       
-                outb(SISCR, 0x37);
-                temp = ((inb(SISCR+1))>>1) & 0x07;      
-                if ((temp==2) || (temp==3) || (temp==4)) pSiS->VBFlags|=VB_LVDS;        
-                if (temp==4) pSiS->VBFlags |= VB_CHRONTEL;
-        }               
- 
-        switch (pSiS->Chipset)  {
+    usOffsetHigh = *((unsigned char *)(ROMAddr+0x08)) - 0x30;     
+    usOffsetLow  = *((unsigned char *)(ROMAddr+0x09)) - 0x30;     
+    vBiosVersion = usOffsetHigh << 4 | usOffsetLow;
+    if (vBiosVersion < 0x02) {
+        outSISIDXREG(pSiS->RelIO+CROFFSET, 0x37, 0);
+        inSISIDXREG(pSiS->RelIO+CROFFSET, 0x36, temp);
+        temp &= 0x07;
+        outSISIDXREG(pSiS->RelIO+CROFFSET, 0x36, temp);
+    }
+    outb(SISPART4, 0x00);
+    temp = inb(SISPART4+1) & 0x0F;
+    pSiS->VBFlags = 0; /*reset*/
+    if (temp == 1) 
+        pSiS->VBFlags|=VB_301;  /*301*/
+    else if (temp == 2)
+        pSiS->VBFlags|=VB_302;  /*302*/
+    else if (temp == 3)
+        pSiS->VBFlags|=VB_303;  /*303*/
+    else {
+        outb(SISCR, 0x37);
+        temp = ((inb(SISCR+1))>>1) & 0x07;
+        if ((temp == 2) || (temp == 3) || (temp == 4))
+            pSiS->VBFlags |= VB_LVDS;
+        if (temp == 4)
+            pSiS->VBFlags |= VB_CHRONTEL;
+    }
+
+    switch (pSiS->Chipset) {
         case PCI_CHIP_SIS300:
         case PCI_CHIP_SIS630:
         case PCI_CHIP_SIS540:
-                pSiS->ModeInit = SIS300Init;
-                break;
+            pSiS->ModeInit = SIS300Init;
+            break;
         default:
-                pSiS->ModeInit = SISInit;
-        }
+            pSiS->ModeInit = SISInit;
+    }
 }

@@ -1,4 +1,4 @@
-/* $TOG: XDevBell.c /main/6 1998/02/06 15:02:38 kaleb $ */
+/* $Xorg: XDevBell.c,v 1.3 2000/08/17 19:45:54 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xi/XDevBell.c,v 3.0 1996/08/25 13:52:32 dawes Exp $ */
+/* $XFree86: xc/lib/Xi/XDevBell.c,v 3.2 2001/01/17 19:42:48 dawes Exp $ */
 
 /***********************************************************************
  *

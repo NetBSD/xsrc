@@ -69,13 +69,13 @@
   /*                                                                       */
   /*************************************************************************/
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H  <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_FREETYPE_H
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 
 FT_BEGIN_HEADER
+
 
   typedef struct FT_AutoHinterRec_  *FT_AutoHinter;
 

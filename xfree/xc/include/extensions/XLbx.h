@@ -1,4 +1,4 @@
-/* $XConsortium: XLbx.h /main/21 1996/12/15 21:23:54 rws $ */
+/* $Xorg: XLbx.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /*
  * Copyright 1992 Network Computing Devices
  *

@@ -1,4 +1,4 @@
-/* $TOG: infcodes.c /main/4 1998/02/04 14:33:41 kaleb $ */
+/* $Xorg: infcodes.c,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* infcodes.c -- process literals and length/distance pairs
  * Copyright (C) 1995-1998 Mark Adler

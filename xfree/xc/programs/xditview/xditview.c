@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xditview/xditview.c,v 1.2 2000/05/11 18:14:41 tsi Exp $ */
 /*
  * xditview -- 
  *

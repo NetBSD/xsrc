@@ -16,12 +16,12 @@
 /***************************************************************************/
 
 
-#include <freetype/ftlist.h>
-#include <freetype/internal/ftobjs.h>
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftstream.h>
-
-#include <freetype/tttables.h>
+#include <ft2build.h>
+#include FT_LIST_H
+#include FT_INTERNAL_OBJECTS_H
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_STREAM_H
+#include FT_TRUETYPE_TABLES_H
 
 #include <string.h>     /* for strcmp() */
 
@@ -2079,10 +2079,10 @@
   }
 
 
-  FT_LOCAL_DEF
-  FT_Error  FT_Render_Glyph_Internal( FT_Library    library,
-                                      FT_GlyphSlot  slot,
-                                      FT_UInt       render_mode )
+  FT_EXPORT_DEF( FT_Error )  FT_Render_Glyph_Internal(
+                               FT_Library    library,
+                               FT_GlyphSlot  slot,
+                               FT_UInt       render_mode )
   {
     FT_Error     error = FT_Err_Ok;
     FT_Renderer  renderer;

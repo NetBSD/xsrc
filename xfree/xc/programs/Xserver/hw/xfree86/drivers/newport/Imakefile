@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/Imakefile,v 1.1 2000/12/01 19:47:56 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/Imakefile,v 1.4 2001/05/16 06:48:09 keithp Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -14,10 +14,9 @@ INCLUDES = -I. -I../../include
 #else
 INCLUDES = -I. \
 	   -I$(XF86COMSRC) -I$(XF86OSSRC) \
-	   -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
-	   -I$(SERVERSRC)/mfb -I$(XF86SRC)/shadowfb \
+	   -I$(SERVERSRC)/mi -I$(SERVERSRC)/fb \
+	   -I$(XF86SRC)/shadowfb \
 	   -I$(XF86SRC)/xaa -I$(XF86SRC)/ramdac \
-	   -I$(XF86SRC)/xf24_32bpp \
 	   -I$(EXTINCSRC) -I$(SERVERSRC)/Xext -I$(SERVERSRC)/render \
 	   -I$(SERVERSRC)/include -I$(FONTINCSRC) -I$(XINCLUDESRC)
 #endif
@@ -34,7 +33,6 @@ InstallObjectModule(newport,$(MODULEDIR),drivers)
 InstallNamedNonExec($(XF86CONFIG),$(XF86CONFIG),$(LIBDIR))
 
 #if !defined(XF86DriverSDK)
-CppManTarget(newport,)
 InstallModuleManPage(newport)
 #endif
 

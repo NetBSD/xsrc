@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.40 2000/08/10 17:40:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Io.c,v 3.42 2001/04/20 16:32:30 tsi Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -396,7 +396,7 @@ xf86KbdProc (pKeyboard, what)
   return (Success);
 }
 
-#if !defined(AMOEBA) && !(defined (sun) && defined(i386) && defined (SVR4)) && !defined(MINIX) && !(defined(__mips__) && !defined(linux)) && !defined(QNX4)
+#if defined(DDXTIME) && !defined(QNX4)
 /*
  * These are getting tossed in here until I can think of where
  * they really belong
@@ -409,7 +409,7 @@ GetTimeInMillis()
     gettimeofday(&tp, 0);
     return(tp.tv_sec * 1000) + (tp.tv_usec / 1000);
 }
-#endif /* !AMOEBA && !(sun || SVR4) && !MINIX */
+#endif /* DDXTIME && !QNX4 */
 
 #ifdef WSCONS_SUPPORT
 

@@ -110,4 +110,4 @@ EXPORTS
  XieTecWhiteAdjustCIELabShift
  XieTecYCCToRGB
  XieTecYCbCrToRGB
-/* $XConsortium: XIE-def.cpp /main/3 1996/05/07 13:15:28 kaleb $ */
+/* $Xorg: XIE-def.cpp,v 1.3 2000/08/17 19:45:25 cpqbld Exp $ */

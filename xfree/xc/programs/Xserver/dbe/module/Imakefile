@@ -1,6 +1,6 @@
 XCOMM $XConsortium: Imakefile /main/2 1996/09/28 17:06:40 rws $
 
-XCOMM $XFree86: xc/programs/Xserver/dbe/Imakefile,v 3.7 1999/08/14 10:49:27 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/dbe/module/Imakefile,v 1.1 2000/04/06 15:35:03 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>

@@ -1,4 +1,4 @@
-/* $TOG: tex.h /main/5 1998/02/09 16:18:29 kaleb $ */
+/* $Xorg: tex.h,v 1.3 2000/08/17 19:47:46 cpqbld Exp $ */
 /**** module tex.h ****/
 /****************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. April 1993
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/include/tex.h,v 1.4 2001/01/17 22:13:07 dawes Exp $ */
 
 #ifndef _XIEH_TEX
 #define _XIEH_TEX

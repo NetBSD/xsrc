@@ -1,4 +1,4 @@
-/* $TOG: SetRGBCMap.c /main/6 1998/02/06 17:52:57 kaleb $ */
+/* $Xorg: SetRGBCMap.c,v 1.3 2000/08/17 19:44:54 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group

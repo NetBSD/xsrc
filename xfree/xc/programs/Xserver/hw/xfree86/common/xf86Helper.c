@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Helper.c,v 1.107 2000/12/08 20:13:33 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Helper.c,v 1.111.2.1 2001/05/24 19:43:39 dawes Exp $ */
 
 /*
  * Copyright (c) 1997-1998 by The XFree86 Project, Inc.
@@ -69,6 +69,7 @@ xf86DeleteDriver(int drvIndex)
 	&& (!xf86DriverHasEntities(xf86DriverList[drvIndex]))) {
 	if (xf86DriverList[drvIndex]->module)
 	    UnloadModule(xf86DriverList[drvIndex]->module);
+	xfree(xf86DriverList[drvIndex]);
 	xf86DriverList[drvIndex] = NULL;
     }
 }
@@ -100,7 +101,38 @@ xf86DeleteInputDriver(int drvIndex)
 {
     if (xf86InputDriverList[drvIndex] && xf86InputDriverList[drvIndex]->module)
 	UnloadModule(xf86InputDriverList[drvIndex]->module);
+    xfree(xf86InputDriverList[drvIndex]);
     xf86InputDriverList[drvIndex] = NULL;
+}
+
+void
+xf86AddModuleInfo(ModuleInfoPtr info, pointer module)
+{
+    /* Don't add null entries */
+    if (!module)
+	return;
+
+    if (xf86ModuleInfoList == NULL)
+	xf86NumModuleInfos = 0;
+
+    xf86NumModuleInfos++;
+    xf86ModuleInfoList = xnfrealloc(xf86ModuleInfoList,
+				    xf86NumModuleInfos * sizeof(ModuleInfoPtr));
+    xf86ModuleInfoList[xf86NumModuleInfos - 1] = xnfalloc(sizeof(ModuleInfoRec));
+    *xf86ModuleInfoList[xf86NumModuleInfos - 1] = *info;
+    xf86ModuleInfoList[xf86NumModuleInfos - 1]->module = module;
+    xf86ModuleInfoList[xf86NumModuleInfos - 1]->refCount = 0;
+}
+
+void
+xf86DeleteModuleInfo(int idx)
+{
+    if (xf86ModuleInfoList[idx]) {
+	if (xf86ModuleInfoList[idx]->module)
+	    UnloadModule(xf86ModuleInfoList[idx]->module);
+	xfree(xf86ModuleInfoList[idx]);
+	xf86ModuleInfoList[idx] = NULL;
+    }
 }
 #endif
 
@@ -947,8 +979,8 @@ xf86SetRootClip (ScreenPtr pScreen, BOOL enable)
     WindowPtr	pWin = WindowTable[pScreen->myNum];
     WindowPtr	pChild;
     Bool	WasViewable = (Bool)(pWin->viewable);
-    Bool	anyMarked;
-    RegionPtr	pOldClip, bsExposed;
+    Bool	anyMarked = FALSE;
+    RegionPtr	pOldClip = NULL, bsExposed;
 #ifdef DO_SAVE_UNDERS
     Bool	dosave = FALSE;
 #endif
@@ -1218,6 +1250,9 @@ xf86VDrvMsgVerb(int scrnIndex, MessageType type, int verb, const char *format,
 	case X_INFO:
 	    s = X_INFO_STRING;
 	    break;
+	case X_NOT_IMPLEMENTED:
+	    s = X_NOT_IMPLEMENTED_STRING;
+	    break;
 	case X_NONE:
 	    s = NULL;
 	    break;
@@ -1333,8 +1368,10 @@ xf86LogInit()
     if ((logfile = fopen(xf86LogFile, "w")) == NULL)
 	FatalError("Cannot open log file \"%s\"\n", xf86LogFile);
     setvbuf(logfile, NULL, _IONBF, 0);
+#ifdef DDXOSVERRORF
     if (!OsVendorVErrorFProc)
 	OsVendorVErrorFProc = OsVendorVErrorF;
+#endif
 
     /* Flush saved log information */
     if (saveBuffer && size > 0) {
@@ -1997,7 +2034,6 @@ xf86GetClocks(ScrnInfoPtr pScrn, int num, Bool (*ClockFunc)(ScrnInfoPtr, int),
 {
     register int status = vertsyncreg;
     unsigned long i, cnt, rcnt, sync;
-    int saved_nice;
 
     /* First save registers that get written on */
     (*ClockFunc)(pScrn, CLK_REG_SAVE);
@@ -2386,12 +2422,10 @@ typedef enum {
    OPTION_BACKING_STORE
 } BSOpts;
 
-static OptionInfoRec BSOptions[] = {
+static const OptionInfoRec BSOptions[] = {
    { OPTION_BACKING_STORE, "BackingStore", OPTV_BOOLEAN, {0}, FALSE },
    { -1,                   NULL,           OPTV_NONE,    {0}, FALSE }
 };
-
-#define nBSOptions (sizeof(BSOptions) / sizeof(BSOptions[0]))
 
 void 
 xf86SetBackingStore(ScreenPtr pScreen)
@@ -2399,8 +2433,9 @@ xf86SetBackingStore(ScreenPtr pScreen)
     Bool useBS = FALSE;
     MessageType from = X_DEFAULT;
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-    OptionInfoRec options[nBSOptions];
+    OptionInfoPtr options;
 
+    options = xnfalloc(sizeof(BSOptions));
     (void)memcpy(options, BSOptions, sizeof(BSOptions));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, options);
 
@@ -2415,6 +2450,7 @@ xf86SetBackingStore(ScreenPtr pScreen)
 	if (xf86GetOptValBool(options, OPTION_BACKING_STORE, &useBS))
 	    from = X_CONFIG;
     }
+    xfree(options);
     pScreen->backingStoreSupport = useBS ? Always : NotUseful;
     if (serverGeneration == 1)
 	xf86DrvMsg(pScreen->myNum, from, "Backing store %s\n",
@@ -2426,12 +2462,10 @@ typedef enum {
    OPTION_SILKEN_MOUSE
 } SMOpts;
 
-static OptionInfoRec SMOptions[] = {
+static const OptionInfoRec SMOptions[] = {
    { OPTION_SILKEN_MOUSE, "SilkenMouse",   OPTV_BOOLEAN, {0}, FALSE },
    { -1,                   NULL,           OPTV_NONE,    {0}, FALSE }
 };
-
-#define nSMOptions (sizeof(SMOptions) / sizeof(SMOptions[0]))
 
 void 
 xf86SetSilkenMouse (ScreenPtr pScreen)
@@ -2439,8 +2473,9 @@ xf86SetSilkenMouse (ScreenPtr pScreen)
     Bool useSM = TRUE;
     MessageType from = X_DEFAULT;
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
-    OptionInfoRec options[nSMOptions];
+    OptionInfoPtr options;
 
+    options = xnfalloc(sizeof(SMOptions));
     (void)memcpy(options, SMOptions, sizeof(SMOptions));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, options);
     
@@ -2459,6 +2494,7 @@ xf86SetSilkenMouse (ScreenPtr pScreen)
 	if (xf86GetOptValBool(options, OPTION_SILKEN_MOUSE, &useSM))
 	    from = X_CONFIG;
     }
+    xfree(options);
     /*
      * XXX quick hack to report correctly for OSs that can't do SilkenMouse
      * yet.  Should handle this differently so that alternate async methods

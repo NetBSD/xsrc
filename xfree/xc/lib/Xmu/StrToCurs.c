@@ -1,4 +1,4 @@
-/* $TOG: StrToCurs.c /main/23 1998/06/24 15:07:36 kaleb $ */
+/* $Xorg: StrToCurs.c,v 1.3 2000/08/17 19:46:03 cpqbld Exp $ */
 
 /*
 
@@ -46,7 +46,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/lib/Xmu/StrToCurs.c,v 1.5 1998/08/16 10:25:19 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/StrToCurs.c,v 1.7 2001/01/17 19:42:57 dawes Exp $ */
 
 #include	<X11/Intrinsic.h>
 #include	<X11/StringDefs.h>

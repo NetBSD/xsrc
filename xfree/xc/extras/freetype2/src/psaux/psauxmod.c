@@ -16,9 +16,10 @@
 /***************************************************************************/
 
 
-#include <psaux/psauxmod.h>
-#include <psaux/psobjs.h>
-#include <psaux/t1decode.h>
+#include <ft2build.h>
+#include "psauxmod.h"
+#include "psobjs.h"
+#include "t1decode.h"
 
 
   FT_CALLBACK_TABLE_DEF

@@ -1,4 +1,4 @@
-/* $TOG: swaprep.c /main/12 1998/02/11 10:03:25 kaleb $ */
+/* $Xorg: swaprep.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
  * font server reply swapping
  */
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xfs/difs/swaprep.c,v 1.4 2001/01/17 23:45:29 dawes Exp $ */
 
 #include	<swaprep.h>
 #include	<swapreq.h>

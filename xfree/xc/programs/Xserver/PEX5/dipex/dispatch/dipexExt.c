@@ -1,4 +1,4 @@
-/* $TOG: dipexExt.c /main/12 1998/02/10 12:34:41 kaleb $ */
+/* $Xorg: dipexExt.c,v 1.3 2000/08/17 19:47:12 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/dipexExt.c,v 3.17 1998/10/04 09:34:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/dipexExt.c,v 3.20 2001/02/16 13:24:06 eich Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"
@@ -146,6 +146,7 @@ PexExtensionInit()
 	   in the SI but maybe some vendors versions might...
 	*/
   	diFreePEXBuffer(pPEXBuffer);
+	pPEXBuffer = NULL;
 	return; 
     }
 
@@ -156,6 +157,7 @@ PexExtensionInit()
     if (!pPEXFont) {
 	ErrorF("PEXExtensionInit: Memory error--could not allocate default PEX font\n");
   	diFreePEXBuffer(pPEXBuffer);
+	pPEXBuffer = NULL;
 	return; 
     }
 	
@@ -186,6 +188,7 @@ PexExtensionInit()
 	xfree(pPEXFont);
 	defaultPEXFont = 0; 
   	diFreePEXBuffer(pPEXBuffer);
+	pPEXBuffer = NULL;
 	return; 
     }
     
@@ -205,6 +208,7 @@ PexExtensionInit()
 	xfree(pPEXFont);
 	defaultPEXFont = 0; 
   	diFreePEXBuffer(pPEXBuffer);
+	pPEXBuffer = NULL;
 	return;
     }
 
@@ -216,6 +220,7 @@ PexExtensionInit()
 	xfree(pPEXFont);
 	defaultPEXFont = 0; 
   	diFreePEXBuffer(pPEXBuffer);
+	pPEXBuffer = NULL;
 	return; 
     }
 
@@ -312,6 +317,7 @@ void PEXResetProc()
 
     ddpexReset();
     diFreePEXBuffer(pPEXBuffer);
+    pPEXBuffer = NULL;
 }
 
 

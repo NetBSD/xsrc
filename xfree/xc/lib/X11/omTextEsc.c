@@ -1,4 +1,4 @@
-/* $XConsortium: omTextEsc.c /main/4 1996/12/05 10:40:59 swick $ */
+/* $Xorg: omTextEsc.c,v 1.3 2000/08/17 19:45:22 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/omTextEsc.c,v 1.3 2000/08/25 21:51:00 dawes Exp $ */
+/* $XFree86: xc/lib/X11/omTextEsc.c,v 1.5 2001/01/17 19:41:56 dawes Exp $ */
 /*
  * Copyright 1995 by FUJITSU LIMITED
  * This is source code modified by FUJITSU LIMITED under the Joint

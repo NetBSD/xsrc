@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbline.c,v 1.4 1999/04/11 13:11:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbline.c,v 1.6 2001/01/17 22:37:03 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbline.c /main/28 1998/02/09 14:39:27 kaleb $ */
+/* $Xorg: mfbline.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
 #include "X.h"
 
 #include "gcstruct.h"

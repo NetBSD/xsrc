@@ -1,5 +1,4 @@
-/* $XConsortium: imInsClbk.c /main/4 1995/11/18 16:08:11 kaleb $ */
-/* $XFree86$ */
+/* $Xorg: imInsClbk.c,v 1.3 2000/08/17 19:45:13 cpqbld Exp $ */
 /******************************************************************
 
            Copyright 1993, 1994 by Sony Corporation
@@ -27,6 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                makoto@sm.sony.co.jp
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/imInsClbk.c,v 3.1 2001/01/17 19:41:51 dawes Exp $ */
 
 #include	<X11/Xatom.h>
 #define NEED_EVENTS

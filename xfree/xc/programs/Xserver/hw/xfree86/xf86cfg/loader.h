@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86$
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loader.h,v 1.4 2001/05/18 20:22:31 tsi Exp $
  */
 #ifdef USE_MODULES
 #include "config.h"
@@ -149,15 +149,65 @@ typedef struct _DriverRec {
     void *		module;
     int			refCount;
 } DriverRec, *DriverPtr;
+
+typedef struct _InputDriverRec {
+    int			    driverVersion;
+    char *		    driverName;
+    void		    (*Identify)(int flags);
+    struct _LocalDeviceRec *(*PreInit)(struct _InputDriverRec *drv,
+				       void *dev, int flags);
+    void		    (*UnInit)(struct _InputDriverRec *drv,
+				      void *pInfo,
+				      int flags);
+    pointer		    module;
+    int			    refCount;
+} InputDriverRec, *InputDriverPtr;
+
+typedef struct _loader_item *itemPtr;
+typedef struct _loader_item {
+	char	*name ;
+	void	*address ;
+	itemPtr	next ;
+	int	handle ;
+	int	module ;
+	itemPtr	exports;
+#if defined(__powerpc__)
+	/*
+	 * PowerPC file formats require special routines in some circumstances
+	 * to assist in the linking process. See the specific loader for
+	 * more details.
+	 */
+	union {
+		unsigned short	plt[8];		/* ELF */
+		unsigned short	glink[14];	/* XCOFF */
+	} code ;
+#endif
+	} itemRec ;
+
+typedef struct _ModuleInfoRec {
+    int			moduleVersion;
+    char *		moduleName;
+    pointer		module;
+    int			refCount;
+    OptionInfoRec *	(*AvailableOptions)(void *unused);
+    pointer		unused[2];	/* leave some space for more fields */
+} ModuleInfoRec, *ModuleInfoPtr;
 #endif /* LOADER_PRIVATE */
 
-typedef struct _xf86cfgDriverOptions {
-    char *name;
-    OptionInfoPtr option;
-    struct _xf86cfgDriverOptions *next;
-} xf86cfgDriverOptions;
+typedef enum {
+    VideoModule,
+    InputModule,
+    GenericModule
+} ModuleType;
 
-extern xf86cfgDriverOptions *video_driver_info;
+typedef struct _xf86cfgModuleOptions {
+    char *name;
+    ModuleType type;
+    OptionInfoPtr option;
+    struct _xf86cfgModuleOptions *next;
+} xf86cfgModuleOptions;
+
+extern xf86cfgModuleOptions *module_options;
 
 Bool LoaderInitializeOptions(void);
 #endif /* USE_MODULES */

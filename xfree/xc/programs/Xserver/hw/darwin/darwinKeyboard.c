@@ -36,7 +36,7 @@
 //
 //=============================================================================
 
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/darwinKeyboard.c,v 1.5 2001/04/25 02:23:47 torrey Exp $ */
 
 /*
 ===========================================================================
@@ -61,9 +61,13 @@
 
 #include <drivers/event_status_driver.h>
 #include <IOKit/hidsystem/ev_keymap.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 #include "darwin.h"
-extern DarwinFramebufferRec dfb;
-extern unsigned char darwinKeyCommandL, darwinKeyOptionL;
+#include "xfIOKit.h"
+#include "bundle/quartzAudio.h"
+#include "bundle/quartzShared.h"
 
 #define XK_TECHNICAL		// needed to get XK_Escape
 #include "keysym.h"
@@ -191,16 +195,15 @@ static darwinKeyPad_t const normal_to_keypad[] = {
 };
 int const NUM_KEYPAD = sizeof(normal_to_keypad) / sizeof(normal_to_keypad[0]);
 
-static void DarwinBell( int loud, DeviceIntPtr pDevice, pointer ctrl, int fbclass) {
-    // FIXME
-}
-
 static void DarwinChangeKeyboardControl( DeviceIntPtr device, KeybdCtrl *ctrl ) {
     // keyclick, bell volume / pitch, autorepead, LED's
 }
 
 static	CARD8 modMap[MAP_LENGTH];
 static	KeySym map[256 * GLYPHS_PER_KEY];
+static  unsigned char modifierKeycodes[NX_NUMMODIFIERS][2];
+static  FILE *fref = NULL;
+static  char *inBuffer = NULL;
 
 //-----------------------------------------------------------------------------
 // Data Stream Object
@@ -308,6 +311,102 @@ static void parse_next_char_code(
 }
 
 /*
+ * DarwinReadKeymapFile
+ *      Read the appropriate keymapping from a keymapping file.
+ */
+Bool DarwinReadKeymapFile(
+    NXKeyMapping        *keyMap )
+{
+    struct stat         st;
+    NXEventSystemDevice info[20];
+    int                 interface = 0, handler_id = 0;
+    int                 map_interface, map_handler_id, map_size = 0;
+    unsigned int        i, size;
+    Boolean             hasMatch = FALSE;
+    union km_tag {
+        int             *intP;
+        char            *charP;
+    } km;
+
+    fref = fopen( darwinKeymapFile, "rb" );
+    if (fref == 0) {
+        ErrorF("Unable to open keymapping file %s.\n", darwinKeymapFile);
+        return FALSE;
+    }
+    assert( !fstat(fileno(fref), &st) );
+
+    // check to make sure we don't crash later
+    if (st.st_size <= 16*sizeof(int)) {
+        ErrorF("Invalid keymapping file.\n");
+        return FALSE;
+    }
+
+    inBuffer = (char*) xalloc( st.st_size );
+    assert( fread(inBuffer, st.st_size, 1, fref) );
+
+    // find the keyboard interface and handler id
+    size = sizeof( info ) / sizeof( int );
+    if (!NXEventSystemInfo( dfb.hidParam, NX_EVS_DEVICE_INFO,
+                            (NXEventSystemInfoType) info, &size )) {
+        ErrorF("Error reading event status driver info.\n");
+        return FALSE;
+    }
+    size = size * sizeof( int ) / sizeof( info[0] );
+    for( i = 0; i < size; i++) {
+        if (info[i].dev_type == NX_EVS_DEVICE_TYPE_KEYBOARD) {
+            interface = info[i].interface;
+            handler_id = info[i].id;
+            break;
+        }
+    }
+
+    // Find the appropriate keymapping:
+    // The first time through we try to match both interface and handler_id.
+    // If we can't match both, we take the first match for interface.
+    if (strncmp( inBuffer, "KYM1", 4 ) == 0) {
+        Bool hasInterface = FALSE;
+        int *bufferEnd = (int *) (inBuffer + st.st_size);
+        do {
+            km.charP = inBuffer;
+            km.intP++;
+            while (km.intP+3 < bufferEnd) {
+                map_interface = *(km.intP++);
+                map_handler_id = *(km.intP++);
+                map_size = *(km.intP++);
+                if (map_interface == interface) {
+                    if (map_handler_id == handler_id || hasInterface) {
+                        hasMatch = TRUE;
+                        break;
+                    } else {
+                        hasInterface = TRUE;
+                    }
+                }
+                km.charP += map_size;
+            }
+            if (hasMatch) break;
+        } while (hasInterface);
+    } else if (strncmp( inBuffer, "KYMP", 4 ) == 0) {
+        ErrorF("This old style keymapping file is intended for use with the original NeXT keyboards.\n");
+        return FALSE;        
+    } else {
+        ErrorF("The keymapping file has a bad magic number.\n");
+        return FALSE;
+    }
+
+    if (hasMatch) {
+        // fill in NXKeyMapping structure
+        keyMap->size = map_size;
+        keyMap->mapping = (char*) xalloc(map_size);
+        memcpy(keyMap->mapping, km.charP, map_size);
+    } else {
+        ErrorF("Keymapping file did not contain appropriate keyboard interface.\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/*
  * DarwinKeyboardInit
  *      Get the Darwin keyboard map and compute an equivalent
  *      X keyboard map and modifier map. Set the new keyboard
@@ -318,24 +417,43 @@ void DarwinKeyboardInit(
 {
     KeySym              *k;
     int                 i;
-    short		numMods, numKeys, numPadKeys = 0;
+    short               numMods, numKeys, numPadKeys = 0;
     KeySymsRec          keySyms;
     NXKeyMapping        keyMap;
-    DataStream		*keyMapStream;
+    DataStream          *keyMapStream;
     unsigned char const *numPadStart = 0;
+    BellProcPtr         bellProc;
+    Bool                haveKeymap = FALSE;
 
     memset( modMap, NoSymbol, sizeof( modMap ) );
     memset( map, 0, sizeof( map ) );
+    for (i = 0; i < NX_NUMMODIFIERS; i++) {
+        modifierKeycodes[i][0] = modifierKeycodes[i][1] = 0;
+    }
 
     // Open a shared connection to the HID System.
     // Note that the Event Status Driver is really just a wrapper
     // for a kIOHIDParamConnectType connection.
     assert( dfb.hidParam = NXOpenEventStatus() );
 
-    // get the Darwin keyboard map
-    keyMap.size = NXKeyMappingLength( dfb.hidParam );
-    keyMap.mapping = (char*) xalloc( keyMap.size );
-    assert( NXGetKeyMapping( dfb.hidParam, &keyMap ));
+    if (darwinKeymapFile) {
+        haveKeymap = DarwinReadKeymapFile(&keyMap);
+        if (fref)
+            fclose(fref);
+        if (inBuffer)
+            xfree(inBuffer);
+        if (!haveKeymap) {
+            ErrorF("Reverting to kernel keymapping.\n");
+        }
+    }
+
+    if (!haveKeymap) {
+        // get the Darwin keyboard map
+        keyMap.size = NXKeyMappingLength( dfb.hidParam );
+        keyMap.mapping = (char*) xalloc( keyMap.size );
+        assert( NXGetKeyMapping( dfb.hidParam, &keyMap ));
+    }
+
     keyMapStream = new_data_stream( (unsigned char const*)keyMap.mapping,
                                     keyMap.size );
 
@@ -347,9 +465,10 @@ void DarwinKeyboardInit(
 
     // Compute the modifier map and
     // insert X modifier KeySyms into keyboard map.
+    // Store modifier keycodes in modifierKeycodes.
     numMods = get_number(keyMapStream);
     while (numMods-- > 0) {
-        int	    	left = 1;                   // first keycode is left
+        int	            left = 1;                   // first keycode is left
         short const     charCode = get_number(keyMapStream);
         short           numKeyCodes = get_number(keyMapStream);
         if (charCode == NX_MODIFIERKEY_NUMERICPAD) {
@@ -361,32 +480,32 @@ void DarwinKeyboardInit(
             if (charCode == NX_MODIFIERKEY_ALPHALOCK) {
                 modMap[keyCode + MIN_KEYCODE] = LockMask;
                 map[keyCode * GLYPHS_PER_KEY] = XK_Caps_Lock;
+                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
             } else if (charCode == NX_MODIFIERKEY_SHIFT) {
                 modMap[keyCode + MIN_KEYCODE] = ShiftMask;
                 map[keyCode * GLYPHS_PER_KEY] =
                         (left ? XK_Shift_L : XK_Shift_R);
+                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
             } else if (charCode == NX_MODIFIERKEY_CONTROL) {
                 modMap[keyCode + MIN_KEYCODE] = ControlMask;
                 map[keyCode * GLYPHS_PER_KEY] =
                         (left ? XK_Control_L : XK_Control_R);
+                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
             } else if (charCode == NX_MODIFIERKEY_ALTERNATE) {
                 modMap[keyCode + MIN_KEYCODE] = AltMask;
-                if (left) {
-                    map[keyCode * GLYPHS_PER_KEY] = XK_Alt_L;
-                    darwinKeyOptionL = keyCode + MIN_KEYCODE;
-                } else
-                    map[keyCode * GLYPHS_PER_KEY] = XK_Alt_R;
+                map[keyCode * GLYPHS_PER_KEY] =
+                        (left ? XK_Alt_L : XK_Alt_R);
+                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
             } else if (charCode == NX_MODIFIERKEY_COMMAND) {
                 modMap[keyCode + MIN_KEYCODE] = MetaMask;
-                if (left) {
-                    map[keyCode * GLYPHS_PER_KEY] = XK_Meta_L;
-                    darwinKeyCommandL = keyCode + MIN_KEYCODE;
-                } else
-                    map[keyCode * GLYPHS_PER_KEY] = XK_Meta_R;
+                map[keyCode * GLYPHS_PER_KEY] =
+                        (left ? XK_Meta_L : XK_Meta_R);
+                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
             } else if (charCode == NX_MODIFIERKEY_NUMERICPAD) {
                 continue;
             } else if (charCode == NX_MODIFIERKEY_HELP) {
                 map[keyCode * GLYPHS_PER_KEY] = XK_Help;
+                modifierKeycodes[charCode][1-left] = keyCode + MIN_KEYCODE;
             } else {
                 break;
             }
@@ -486,9 +605,24 @@ void DarwinKeyboardInit(
     keySyms.minKeyCode = MIN_KEYCODE;
     keySyms.maxKeyCode = MAX_KEYCODE;
 
+    if (quartz)
+        bellProc = QuartzBell;
+    else
+        bellProc = XFIOKitBell;
+
     assert( InitKeyboardDeviceStruct( (DevicePtr)pDev, &keySyms, modMap,
-                                      DarwinBell,
+                                      bellProc,
                                       DarwinChangeKeyboardControl ));
+}
+
+/*
+ * DarwinModifierKeycode
+ * Return the keycode + MIN_KEYCODE for an NX_MODIFIERKEY_* modifier.
+ * side = 0 for left or 1 for right.
+ */
+int DarwinModifierKeycode(int modifier, int side)
+{
+    return modifierKeycodes[modifier][side];
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/globals.c,v 1.6 1998/10/04 09:38:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/globals.c,v 1.8 2001/01/17 22:36:43 dawes Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -42,7 +42,7 @@ SOFTWARE.
 
 ********************************************************/
 
-/* $TOG: globals.c /main/21 1998/02/09 14:19:40 kaleb $ */
+/* $Xorg: globals.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

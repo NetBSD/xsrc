@@ -22,7 +22,7 @@
  *
  * Author:  Keith Packard, SuSE, Inc.
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/savage/s3clock.c,v 1.3 2000/02/23 20:30:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/savage/s3clock.c,v 1.4 2000/05/06 22:17:45 keithp Exp $ */
 
 #include "s3.h"
 

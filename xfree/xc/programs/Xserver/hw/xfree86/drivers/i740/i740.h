@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740.h,v 1.2 1999/12/03 19:17:34 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740.h,v 1.4 2001/05/04 19:05:39 dawes Exp $ */
 
 /*
  * Authors:
@@ -113,6 +113,7 @@ typedef struct _I740Rec {
   I740ReadIndexedByteFunc readControl;
   I740WriteByteFunc writeStandard;
   I740ReadByteFunc readStandard;
+  OptionInfoPtr Options;
 } I740Rec;
 
 #define I740PTR(p) ((I740Ptr)((p)->driverPrivate))

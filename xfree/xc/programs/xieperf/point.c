@@ -1,4 +1,4 @@
-/* $TOG: point.c /main/11 1998/02/09 14:01:20 kaleb $ */
+/* $Xorg: point.c,v 1.3 2000/08/17 19:54:27 cpqbld Exp $ */
 
 /**** module point.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/point.c,v 1.5 2001/01/17 23:45:38 dawes Exp $ */
 
 
 #include "xieperf.h"

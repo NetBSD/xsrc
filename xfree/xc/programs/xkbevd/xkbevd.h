@@ -1,4 +1,4 @@
-/* $XConsortium: xkbevd.h /main/3 1996/09/28 17:18:35 rws $ */
+/* $Xorg: xkbevd.h,v 1.3 2000/08/17 19:54:49 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xkbevd/xkbevd.h,v 3.4 2001/01/17 23:46:09 dawes Exp $ */
 
 #ifndef XKBEVD_H
 #define	XKBEVD_H 1

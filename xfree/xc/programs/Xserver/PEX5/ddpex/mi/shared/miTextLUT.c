@@ -1,4 +1,4 @@
-/* $TOG: miTextLUT.c /main/3 1998/02/10 12:45:30 kaleb $ */
+/* $Xorg: miTextLUT.c,v 1.3 2000/08/17 19:47:12 cpqbld Exp $ */
 
 /*
 
@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miTextLUT.c,v 1.6 1998/07/26 13:14:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/shared/miTextLUT.c,v 1.8 2001/01/17 22:12:34 dawes Exp $ */
 
 #include "miLUT.h"
 #include "miWks.h"

@@ -21,23 +21,12 @@
 
 #define FT_MAKE_OPTION_SINGLE_OBJECT
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ahangles.c"
 #include "ahglyph.c"
 #include "ahglobal.c"
 #include "ahhint.c"
 #include "ahmodule.c"
-
-#else
-
-#include <autohint/ahangles.c>
-#include <autohint/ahglyph.c>
-#include <autohint/ahglobal.c>
-#include <autohint/ahhint.c>
-#include <autohint/ahmodule.c>
-
-#endif
 
 
 /* END */

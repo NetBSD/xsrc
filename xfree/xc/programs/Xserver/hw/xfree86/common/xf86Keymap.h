@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Keymap.h,v 3.12 1999/04/29 05:12:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Keymap.h,v 3.15 2001/05/01 22:31:30 alanh Exp $ */
 /*
  *
  * For Scancodes see notes in atKeynames.h  !!!!
@@ -22,7 +22,7 @@ static KeySym map[NUM_KEYCODES * GLYPHS_PER_KEY] = {
     /* 0x0c */  XK_minus,       XK_underscore,	NoSymbol,	NoSymbol,
     /* 0x0d */  XK_equal,       XK_plus,	NoSymbol,	NoSymbol,
     /* 0x0e */  XK_BackSpace,   NoSymbol,	NoSymbol,	NoSymbol,
-    /* 0x0f */  XK_Tab,         NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x0f */  XK_Tab,         XK_ISO_Left_Tab,NoSymbol,	NoSymbol,
     /* 0x10 */  XK_Q,           NoSymbol,	NoSymbol,	NoSymbol,
     /* 0x11 */  XK_W,           NoSymbol,	NoSymbol,	NoSymbol,
     /* 0x12 */  XK_E,           NoSymbol,	NoSymbol,	NoSymbol,
@@ -118,26 +118,27 @@ static KeySym map[NUM_KEYCODES * GLYPHS_PER_KEY] = {
     /* 0x6b */  XK_Meta_L,	NoSymbol,	NoSymbol,	NoSymbol,
     /* 0x6c */  XK_Meta_R,	NoSymbol,	NoSymbol,	NoSymbol,
     /* 0x6d */  XK_Menu,	NoSymbol,	NoSymbol,	NoSymbol,
-    /* 0x6e */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-    /* 0x6f */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-    /* 0x70 */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-    /* 0x71 */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-    /* 0x72 */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-    /* 0x73 */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x6e */  XK_F13,		NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x6f */  XK_F14,		NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x70 */  XK_F15,		NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x71 */  XK_F16,		NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x72 */  XK_F17,		NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x73 */  XK_backslash,	XK_underscore,	NoSymbol,	NoSymbol,
     /* 0x74 */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
     /* 0x75 */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
     /* 0x76 */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
     /* 0x77 */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
     /* 0x78 */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-    /* 0x79 */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x79 */  XK_Henkan,	XK_Mode_switch,	NoSymbol,	NoSymbol,
     /* 0x7a */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-    /* 0x7b */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x7b */  XK_Muhenkan,	NoSymbol,	NoSymbol,	NoSymbol,
     /* 0x7c */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
-    /* 0x7d */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x7d */  XK_backslash,	XK_bar,		NoSymbol,	NoSymbol,
     /* 0x7e */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+    /* 0x7f */  NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
 };
 
-#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && !defined(linux) && !defined(CSRG_BASED)
+#if !defined(Lynx) && !defined(AMOEBA) && !defined(MINIX) && !defined(__OSF__) && !defined(__EMX__) && !defined(__mips__) && !defined(linux) && !defined(CSRG_BASED) && !defined(__CYGWIN__)
 static KeySym map84[NUM_KEYCODES * GLYPHS_PER_KEY] = {
     /* 0x00 */  NoSymbol,       NoSymbol,	NoSymbol,	NoSymbol,
     /* 0x01 */  XK_Escape,      NoSymbol,	NoSymbol,	NoSymbol,

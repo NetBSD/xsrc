@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Alliance.c,v 3.2 1999/08/28 09:00:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Alliance.c,v 3.4 1999/11/19 13:54:13 hohndel Exp $ */
 
 #include "Probe.h"
 

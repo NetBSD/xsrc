@@ -1,4 +1,4 @@
-/* $XConsortium: XKBMisc.c /main/3 1996/03/01 14:29:50 kaleb $ */
+/* $Xorg: XKBMisc.c,v 1.4 2000/08/17 19:45:02 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKBMisc.c,v 3.1 1999/03/14 03:21:03 dawes Exp $ */
+/* $XFree86: xc/lib/X11/XKBMisc.c,v 3.3 2001/01/17 19:41:48 dawes Exp $ */
 
 #ifndef XKB_IN_SERVER
 
@@ -474,7 +474,7 @@ KeySym *		syms;
 unsigned char 		explicit,mods;
 XkbSymInterpretPtr	*interps,ibuf[IBUF_SIZE]; 
 int			n,nSyms,found;
-unsigned		changed,tmp; 
+unsigned		changed,tmp;
 
     if ((!xkb)||(!xkb->map)||(!xkb->map->key_sym_map)||
     			(!xkb->compat)||(!xkb->compat->sym_interpret)||

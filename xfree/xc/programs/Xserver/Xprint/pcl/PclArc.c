@@ -1,4 +1,4 @@
-/* $XConsortium: PclArc.c /main/1 1996/09/28 17:00:23 rws $ */
+/* $Xorg: PclArc.c,v 1.3 2000/08/17 19:48:07 cpqbld Exp $ */
 /*******************************************************************
 **
 **    *********************************************************
@@ -45,7 +45,7 @@ dealings in this Software without prior written authorization from said
 copyright holders.
 */
 
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclArc.c,v 1.3 1999/09/25 14:36:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclArc.c,v 1.5 2001/01/17 22:36:30 dawes Exp $ */
 
 #include <stdio.h>
 #include <math.h>

@@ -20,7 +20,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $TOG: shapestr.h /main/14 1998/02/09 11:23:26 kaleb $ */
+/* $Xorg: shapestr.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
 
 #ifndef _SHAPESTR_H_
 #define _SHAPESTR_H_

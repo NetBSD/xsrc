@@ -24,7 +24,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb.h,v 1.4 2000/06/23 19:29:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb.h,v 1.7 2001/05/04 19:05:46 dawes Exp $ */
 
 #ifndef FFB_H
 #define FFB_H
@@ -212,6 +212,8 @@ typedef struct {
 	Bool dri_enabled;
 	ffb_dri_state_t *pFfbSarea;
 #endif
+
+	OptionInfoPtr Options;
 } FFBRec, *FFBPtr;
 
 /* Acceleration */
@@ -289,8 +291,6 @@ extern int  CreatorWindowPrivateIndex;
 #undef DEBUG_FFB
 
 #ifdef DEBUG_FFB
-
-#include <stdio.h>
 
 extern FILE *FDEBUG_FD;
 

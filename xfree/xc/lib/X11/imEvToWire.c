@@ -1,4 +1,4 @@
-/* $XConsortium: imEvToWire.c,v 1.4 94/04/17 20:22:04 rws Exp $ */
+/* $Xorg: imEvToWire.c,v 1.3 2000/08/17 19:45:12 cpqbld Exp $ */
 /***********************************************************
 Copyright 1993 by Digital Equipment Corporation, Maynard, Massachusetts,
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/cir.h,v 1.17 2000/12/06 15:35:15 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/cir.h,v 1.19 2001/05/04 19:05:35 dawes Exp $ */
 
 /* (c) Itai Nahshon */
 
@@ -13,9 +13,6 @@
 #define CIRPTR(p) ((CirPtr)((p)->driverPrivate))
 struct lgRec;
 struct alpRec;
-
-typedef enum {
-  LCD_NONE, LCD_DUAL_MONO, LCD_UNKNOWN, LCD_DSTN, LCD_TFT } LCDType;
 
 typedef struct {
 	ScrnInfoPtr			pScrn;
@@ -45,9 +42,11 @@ typedef struct {
 	Bool				UseMMIO;
 	XAAInfoRecPtr		AccelInfoRec;
 	xf86CursorInfoPtr	CursorInfoRec;
-#if 0
-	DGAInfoPtr			DGAInfo;
-#endif
+        int                             DGAnumModes;
+	DGAModePtr			DGAModes;
+        Bool                            DGAactive;
+  Bool                                  (*DGAModeInit)(ScrnInfoPtr, DisplayModePtr);
+        int                             DGAViewportStatus;
 	I2CBusPtr			I2CPtr1;
 	I2CBusPtr			I2CPtr2;
 	CloseScreenProcPtr	CloseScreen;
@@ -61,9 +60,10 @@ typedef struct {
         int                     pitch;
 
         unsigned char **        ScanlineColorExpandBuffers;
-
-        LCDType                 lcdType;
-        int                     lcdWidth, lcdHeight;
+        void                    (* InitAccel)(ScrnInfoPtr);
+        int                     offscreen_size;
+        int                     offscreen_offset;
+	OptionInfoPtr		Options;
 } CirRec, *CirPtr;
 
 /* CirrusClk.c */
@@ -77,6 +77,9 @@ extern PciChipsets CIRPciChipsets[];
 extern Bool CirMapMem(CirPtr pCir, int scrnIndex);
 extern Bool CirUnmapMem(CirPtr pCir, int scrnIndex);
 extern void cirProbeDDC(ScrnInfoPtr pScrn, int index);
+
+/* cir_dga.c */
+extern Bool CirDGAInit(ScreenPtr pScreen);
 
 /* in cir_shadow.c */
 void cirPointerMoved(int index, int x, int y);

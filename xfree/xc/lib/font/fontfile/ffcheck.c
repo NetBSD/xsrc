@@ -1,4 +1,4 @@
-/* $TOG: ffcheck.c /main/7 1998/05/07 14:59:15 kaleb $ */
+/* $Xorg: ffcheck.c,v 1.3 2000/08/17 19:46:37 cpqbld Exp $ */
 
 /*
 
@@ -21,12 +21,12 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/ffcheck.c,v 1.12 1999/08/21 13:48:02 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/ffcheck.c,v 1.14 2001/01/17 19:43:30 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $NCDId: @(#)fontfile.c,v 1.6 1991/07/02 17:00:46 lemke Exp $ */
+/* $NCDXorg: @(#)fontfile.c,v 1.6 1991/07/02 17:00:46 lemke Exp $ */
 
 #include "fntfilst.h"
 #include "bitmap.h"

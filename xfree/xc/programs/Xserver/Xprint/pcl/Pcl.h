@@ -1,4 +1,4 @@
-/* $XConsortium: Pcl.h /main/3 1996/12/30 14:56:18 kaleb $ */
+/* $Xorg: Pcl.h,v 1.3 2000/08/17 19:48:07 cpqbld Exp $ */
 /*******************************************************************
 **
 **    *********************************************************
@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/Pcl.h,v 1.4 1998/12/20 11:57:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/Pcl.h,v 1.7 2001/01/19 17:10:50 dawes Exp $ */
 
 #ifndef _PCL_H_
 #define _PCL_H_
@@ -554,7 +554,6 @@ extern Bool PclPositionWindow(
     register WindowPtr pWin,
     int x,
     int y);
-extern Bool PclUnmapWindow(WindowPtr pWindow);
 extern Bool PclUnmapWindow(WindowPtr pWindow);
 extern void PclCopyWindow(
     WindowPtr pWin,

@@ -1,4 +1,4 @@
-/* $TOG: Lower.c /main/9 1998/02/06 15:44:31 kaleb $ */
+/* $Xorg: Lower.c,v 1.3 2000/08/17 19:46:02 cpqbld Exp $ */
 
 /* 
  
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xmu/Lower.c,v 1.8 1999/04/28 15:04:50 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Lower.c,v 1.10 2001/01/17 19:42:56 dawes Exp $ */
 
 #define  XK_LATIN1
 #include <X11/keysymdef.h>

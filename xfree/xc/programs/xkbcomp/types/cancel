@@ -1,4 +1,4 @@
-// $XConsortium: cancel /main/1 1996/02/02 14:22:30 kaleb $
+// $Xorg: cancel,v 1.3 2000/08/17 19:54:48 cpqbld Exp $
 partial default xkb_types "Shift_Cancels_Caps" {
 
 override type "TWO_LEVEL" {

@@ -1,4 +1,4 @@
-/* $TOG: jconfig.h /main/5 1998/02/09 16:19:03 kaleb $ */
+/* $Xorg: jconfig.h,v 1.3 2000/08/17 19:47:47 cpqbld Exp $ */
 /* Module jconfig.h */
 
 /****************************************************************************
@@ -66,7 +66,7 @@ terms and conditions:
 	Gary Rogers, AGE Logic, Inc., January 1994
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jconfig.h,v 1.3 1998/10/04 09:36:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jconfig.h,v 1.6 2001/01/17 22:13:08 dawes Exp $ */
 
 /*
  * jconfig.h

@@ -1,4 +1,4 @@
-/* $TOG: connection.c /main/159 1998/02/09 15:11:54 kaleb $ */
+/* $Xorg: connection.c,v 1.5 2000/08/17 19:53:40 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1989, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/os/connection.c,v 3.41 2000/08/10 17:40:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/connection.c,v 3.46 2001/04/27 12:51:07 alanh Exp $ */
 /*****************************************************************
  *  Stuff to create connections --- OS dependent
  *
@@ -74,9 +74,7 @@ extern int errno;
 #include <stdio.h>
 
 #ifndef WIN32
-#if defined(__CYGWIN__)
-#include <cygwin/socket.h>
-#elif defined(MINIX) || defined(Lynx)
+#if defined(MINIX) || defined(Lynx)
 #include <socket.h>
 #else
 #include <sys/socket.h>
@@ -117,7 +115,7 @@ extern __const__ int _nfiles;
 #if defined(TCPCONN) || defined(STREAMSCONN)
 # include <netinet/in.h>
 # include <arpa/inet.h>
-# if !defined(hpux) && !defined(__CYGWIN__)
+# if !defined(hpux)
 #  ifdef apollo
 #   ifndef NO_TCP_H
 #    include <netinet/tcp.h>
@@ -139,7 +137,7 @@ extern __const__ int _nfiles;
 #include <server/ip/gen/inet.h>
 #endif
 
-#if !defined(AMOEBA) && !defined(_MINIX) && !defined(__EMX__) && !defined(__CYGWIN__)
+#if !defined(AMOEBA) && !defined(_MINIX) && !defined(__EMX__)
 #ifndef Lynx
 #include <sys/uio.h>
 #else
@@ -148,8 +146,8 @@ extern __const__ int _nfiles;
 #endif
 #endif /* WIN32 */
 #include "misc.h"		/* for typedef of pointer */
-#include <X11/Xpoll.h>
 #include "osdep.h"
+#include <X11/Xpoll.h>
 #include "opaque.h"
 #include "dixstruct.h"
 #ifdef XAPPGROUP
@@ -205,7 +203,7 @@ static fd_set SavedClientsWithInput;
 int GrabInProgress = 0;
 
 int *ConnectionTranslation = NULL;
-#if defined(WIN32) || defined(__CYGWIN__)
+#if defined(WIN32)
 /* SPAM ALERT !!!
  * On NT fds are not between 0 and MAXSOCKS, they are unrelated, and there is
  * not even a known maximum value, so use something quite arbitrary for now.
@@ -310,7 +308,7 @@ InitConnectionLimits()
     ErrorF("InitConnectionLimits: MaxClients = %d\n", MaxClients);
 #endif
 
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#if !defined(WIN32)
     ConnectionTranslation = (int *)xnfalloc(sizeof(int)*(lastfdesc + 1));
 #else
     ConnectionTranslation = (int *)xnfalloc(sizeof(int)*(MAXFD));
@@ -335,7 +333,7 @@ CreateWellKnownSockets()
     FD_ZERO(&LastSelectMask);
     FD_ZERO(&ClientsWithInput);
 
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#if !defined(WIN32)
     for (i=0; i<MaxClients; i++) ConnectionTranslation[i] = 0;
 #else
     for (i=0; i<MAXFD; i++) ConnectionTranslation[i] = 0;
@@ -380,7 +378,7 @@ CreateWellKnownSockets()
 
     if (!XFD_ANYSET (&WellKnownConnections))
         FatalError ("Cannot establish any listening sockets - Make sure an X server isn't already running");
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#if !defined(WIN32)
     OsSignal (SIGPIPE, SIG_IGN);
     OsSignal (SIGHUP, AutoResetServer);
 #endif
@@ -403,7 +401,7 @@ CreateWellKnownSockets()
      * in the second case, the signal will be quite
      * useful
      */
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#if !defined(WIN32)
     if (OsSignal (SIGUSR1, SIG_IGN) == SIG_IGN)
 	RunFromSmartParent = TRUE;
     ParentProcess = getppid ();
@@ -464,7 +462,7 @@ ResetWellKnownSockets ()
     /*
      * See above in CreateWellKnownSockets about SIGUSR1
      */
-#if !defined(WIN32) && !defined(__CYGWIN__)
+#if !defined(WIN32)
     if (RunFromSmartParent) {
 	if (ParentProcess > 0) {
 	    kill (ParentProcess, SIGUSR1);
@@ -923,6 +921,14 @@ EstablishNewConnections(clientUnused, closure)
 	    continue;
 
 	newconn = _XSERVTransGetConnectionNumber (new_trans_conn);
+
+	if (newconn < lastfdesc)
+	{
+		int clientid;
+  		clientid = ConnectionTranslation[newconn];
+		if(clientid && (client = clients[clientid]))
+ 			CloseDownClient(client);
+	}
 
 	_XSERVTransSetOption(new_trans_conn, TRANS_NONBLOCKING, 1);
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xsetpointer/xsetpointer.c,v 3.4 1996/01/30 15:28:11 dawes Exp $ */
+/* $XFree86: xc/programs/xsetpointer/xsetpointer.c,v 3.6 2001/04/01 14:00:23 tsi Exp $ */
 
 /*
  * Copyright 1995 by Frederic Lepied, France. <fred@sugix.frmug.fr.net>       
@@ -24,6 +24,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <X11/Xproto.h>
 #include <X11/extensions/XInput.h>

@@ -28,6 +28,7 @@
  */
 
 
+#undef COPY_FUNC
 #define COPY_FUNC( BITS )						\
 static void TAG2(copy, BITS)(GLvector4f *to, const GLvector4f *f,	\
 			     const GLubyte mask[] )			\

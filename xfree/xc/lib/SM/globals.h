@@ -1,4 +1,4 @@
-/* $TOG: globals.h /main/13 1998/02/06 14:09:11 kaleb $ */
+/* $Xorg: globals.h,v 1.3 2000/08/17 19:44:29 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/SM/globals.h,v 1.1.1.1.12.2 1998/10/19 20:57:05 hohndel Exp $ */
+/* $XFree86: xc/lib/SM/globals.h,v 1.3 2001/01/17 19:41:31 dawes Exp $ */
 
 /*
  * Author: Ralph Mor, X Consortium

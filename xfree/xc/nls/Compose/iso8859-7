@@ -1,15 +1,15 @@
-# $TOG: iso8859-7 /main/7 1998/05/20 15:33:23 kaleb $
-#
-# ISO 8859-7 (Greek) Compose Sequence
-#
-#
-# $XFree86: xc/nls/Compose/iso8859-7,v 1.1.1.1.2.3 1999/06/25 10:40:24 hohndel Exp $
-#
-# Sequence Definition
-#
-# <Multi_key> Means <Compose>
-# Special Character
-<Multi_key> <plus> <plus>               : "#"   numbersign
+XCOMM $TOG: iso8859-7 /main/7 1998/05/20 15:33:23 kaleb $
+XCOMM
+XCOMM ISO 8859-7 (Greek) Compose Sequence
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/nls/Compose/iso8859-7,v 1.4 2001/04/26 21:09:40 dawes Exp $
+XCOMM
+XCOMM Sequence Definition
+XCOMM
+XCOMM <Multi_key> Means <Compose>
+XCOMM Special Character
+<Multi_key> <plus> <plus>		: "#"	numbersign
 <Multi_key> <apostrophe> <space>	: "'"	apostrophe
 <Multi_key> <space> <apostrophe>	: "'"	apostrophe
 <Multi_key> <A> <T>			: "@"	at
@@ -47,14 +47,6 @@
 <Multi_key> <equal> <l>			: "\243"	sterling
 <Multi_key> <L> <equal>			: "\243"	sterling
 <Multi_key> <equal> <L>			: "\243"	sterling
-<Multi_key> <y> <minus>			: "\245"	yen
-<Multi_key> <minus> <y>			: "\245"	yen
-<Multi_key> <Y> <minus>			: "\245"	yen
-<Multi_key> <minus> <Y>			: "\245"	yen
-<Multi_key> <y> <equal>			: "\245"	yen
-<Multi_key> <equal> <y>			: "\245"	yen
-<Multi_key> <Y> <equal>			: "\245"	yen
-<Multi_key> <equal> <Y>			: "\245"	yen
 <Multi_key> <s> <o>			: "\247"	section
 <Multi_key> <o> <s>			: "\247"	section
 <Multi_key> <S> <O>			: "\247"	section
@@ -67,18 +59,6 @@
 <Multi_key> <0> <S>			: "\247"	section
 <Multi_key> <s> <0>			: "\247"	section
 <Multi_key> <0> <s>			: "\247"	section
-<Multi_key> <x> <o>			: "\244"	currency
-<Multi_key> <o> <x>			: "\244"	currency
-<Multi_key> <X> <O>			: "\244"	currency
-<Multi_key> <O> <X>			: "\244"	currency
-<Multi_key> <x> <O>			: "\244"	currency
-<Multi_key> <O> <x>			: "\244"	currency
-<Multi_key> <X> <o>			: "\244"	currency
-<Multi_key> <o> <X>			: "\244"	currency
-<Multi_key> <x> <0>			: "\244"	currency
-<Multi_key> <0> <x>			: "\244"	currency
-<Multi_key> <X> <0>			: "\244"	currency
-<Multi_key> <0> <X>			: "\244"	currency
 <Multi_key> <c> <o>			: "\251"	copyright
 <Multi_key> <o> <c>			: "\251"	copyright
 <Multi_key> <C> <O>			: "\251"	copyright
@@ -92,10 +72,6 @@
 <Multi_key> <C> <0>			: "\251"	copyright
 <Multi_key> <0> <C>			: "\251"	copyright
 <Multi_key> <parenleft> <c>		: "\251"	copyright
-<Multi_key> <a> <underscore>		: "\252"	ordfeminine
-<Multi_key> <underscore> <a>		: "\252"	ordfeminine
-<Multi_key> <A> <underscore>		: "\252"	ordfeminine
-<Multi_key> <underscore> <A>		: "\252"	ordfeminine
 <Multi_key> <less> <less>		: "\253"	guillemotleft
 <Multi_key> <greater> <greater>		: "\273"	guillemotright
 <Multi_key> <0> <asciicircum>		: "\260"	degree
@@ -136,12 +112,12 @@
 <Multi_key> <underscore> <asciicircum>	: "\257"	macron
 <Multi_key> <asciicircum> <underscore>	: "\257"	macron
 <Multi_key> <underscore> <underscore>	: "\257"	macron
-# should be Greek tonos but not defined in X11
+XCOMM should be Greek tonos but not defined in X11
 <Multi_key> <apostrophe> <apostrophe>	: "\264"	acute
-# should be Greek dialitika but not defined in X11
+XCOMM should be Greek dialytika but not defined in X11
 <Multi_key> <quotedbl> <quotedbl>	: "\250"	diaeresis
 
-# Accented Alphabet
+XCOMM Accented Alphabet
 <Multi_key> <Greek_ALPHA> <apostrophe>	: "\266" Greek_ALPHAaccent
 <Multi_key> <apostrophe> <Greek_ALPHA>	: "\266" Greek_ALPHAaccent
 <Multi_key> <Greek_EPSILON> <apostrophe>: "\270" Greek_EPSILONaccent
@@ -182,15 +158,10 @@
 <Multi_key> <Greek_upsilon> <quotedbl>	: "\373" Greek_upsilondieresis
 <Multi_key> <quotedbl> <Greek_upsilon>	: "\373" Greek_upsilondieresis
 
-<Multi_key> <Greek_iota> <asciicircum>	: "\300" Greek_iotaaccentdieresis
-<Multi_key> <asciicircum> <Greek_iota>	: "\300" Greek_iotaaccentdieresis
-<Multi_key> <Greek_upsilon> <asciicircum>: "\340" Greek_upsilonaccentdieresis
-<Multi_key> <asciicircum> <Greek_upsilon>: "\340" Greek_upsilonaccentdieresis
-
-#
-#
-# dead key accent keysyms
-# Special Character
+XCOMM
+XCOMM
+XCOMM dead key accent keysyms
+XCOMM Special Character
 <dead_circumflex>  <slash>		: "|"	bar
 <dead_grave> <space>			: "`"	grave
 <dead_acute> <space>			: "'"	apostrophe
@@ -214,34 +185,42 @@
 <dead_acute> <apostrophe>		: "\264"	acute
 <dead_diaeresis> <quotedbl>		: "\250"	diaeresis
 
-# Accented Alphabet
-<dead_acute> <Greek_ALPHA>		: "\266" Greek_ALPHAaccent
-<dead_acute> <Greek_EPSILON>		: "\270" Greek_EPSILONaccent
-<dead_acute> <Greek_ETA>		: "\271" Greek_ETAaccent
-<dead_acute> <Greek_IOTA>		: "\272" Greek_IOTAaccent
-<dead_acute> <Greek_OMICRON>		: "\274" Greek_OMICRONaccent
-<dead_acute> <Greek_UPSILON>		: "\276" Greek_UPSILONaccent
-<dead_acute> <Greek_OMEGA>		: "\277" Greek_OMEGAaccent
-<dead_diaeresis> <Greek_IOTA>		: "\332" Greek_IOTAdiaeresis
-<dead_diaeresis> <Greek_IOTA>		: "\332" Greek_IOTAdieresis
-<dead_diaeresis> <Greek_UPSILON>	: "\333" Greek_UPSILONdieresis
+XCOMM Accented Alphabet (plus some more symbols)
+<dead_acute> <Greek_alpha>		: "\334"	Greek_alphaaccent
+<dead_acute> <Greek_epsilon>		: "\335"	Greek_epsilonaccent
+<dead_acute> <Greek_eta>		: "\336"	Greek_etaaccent
+<dead_acute> <Greek_iota>		: "\337"	Greek_iotaaccent
+<dead_acute> <Greek_omicron>		: "\374"	Greek_omicronaccent
+<dead_acute> <Greek_upsilon>		: "\375"	Greek_upsilonaccent
+<dead_acute> <Greek_omega>		: "\376"	Greek_omegaaccent
+<dead_acute> <Greek_ALPHA>		: "\266"	Greek_ALPHAaccent
+<dead_acute> <Greek_EPSILON>		: "\270"	Greek_EPSILONaccent
+<dead_acute> <Greek_ETA>		: "\271"	Greek_ETAaccent
+<dead_acute> <Greek_IOTA>		: "\272"	Greek_IOTAaccent
+<dead_acute> <Greek_OMICRON>		: "\274"	Greek_OMICRONaccent
+<dead_acute> <Greek_UPSILON>		: "\276"	Greek_UPSILONaccent
+<dead_acute> <Greek_OMEGA>		: "\277"	Greek_OMEGAaccent
+<dead_acute> <space>			: "\264"	acute
+<dead_acute> <dead_acute>		: "\264"	acute
+<dead_acute> <period>			: "\267"	periodcentered
+<dead_acute> <less>			: "\253"	guillemotleft
+<dead_acute> <greater>			: "\273"	guillemotright
 
-<dead_acute> <Greek_alpha>		: "\334" Greek_alphaaccent
-<dead_acute> <Greek_epsilon>		: "\335" Greek_epsilonaccent
-<dead_acute> <Greek_eta>		: "\336" Greek_etaaccent
-<dead_acute> <Greek_iota>		: "\337" Greek_iotaaccent
-<dead_acute> <Greek_omicron>		: "\374" Greek_omicronaccent
-<dead_acute> <Greek_upsilon>		: "\375" Greek_upsilonaccent
-<dead_acute> <Greek_omega>		: "\376" Greek_omegaaccent
-<dead_diaeresis> <Greek_iota>		: "\372" Greek_iotadieresis
-<dead_diaeresis> <Greek_upsilon>	: "\373" Greek_upsilondieresis
+<dead_diaeresis> <Greek_iota>		: "\372"	Greek_iotadieresis
+<dead_diaeresis> <Greek_upsilon>	: "\373"	Greek_upsilondieresis
+<dead_diaeresis> <Greek_IOTA>		: "\332"	Greek_IOTAdiaeresis
+<dead_diaeresis> <Greek_IOTA>		: "\332"	Greek_IOTAdieresis
+<dead_diaeresis> <Greek_UPSILON>	: "\333"	Greek_UPSILONdieresis
+<dead_diaeresis> <space>		: "\250"	diaeresis
+<dead_diaeresis> <dead_diaeresis>	: "\250"	diaeresis
+<dead_diaeresis> <period>		: "\267"	periodcentered
+<dead_diaeresis> <less>			: "\253"	guillemotleft
+<dead_diaeresis> <greater>		: "\273"	guillemotright
 
-<dead_circumflex> <Greek_iota>		: "\300" Greek_iotaaccentdieresis
-<dead_circumflex> <Greek_upsilon>	: "\340" Greek_upsilonaccentdieresis
+<dead_acute> <dead_diaeresis> <Greek_iota>	: "\300"	Greek_iotaaccentdieresis
+<dead_acute> <dead_diaeresis> <Greek_upsilon>	: "\340"	Greek_upsilonaccentdieresis
+<dead_acute> <dead_diaeresis> <space>		: "\265"	Greek_accentdieresis
 
-<dead_acute> <dead_diaeresis> <Greek_iota>	: "\300" Greek_iotaaccentdieresis
-<dead_acute> <dead_diaeresis> <Greek_upsilon>	: "\340" Greek_upsilonaccentdieresis
-
-<dead_acute> <Greek_sigma>		: "\362" Greek_finalsmallsigma
-<dead_diaeresis> <Greek_sigma>		: "\362" Greek_finalsmallsigma
-
+<dead_diaeresis> <dead_acute> <Greek_iota>	: "\300"	Greek_iotaaccentdieresis
+<dead_diaeresis> <dead_acute> <Greek_upsilon>	: "\340"	Greek_upsilonaccentdieresis
+<dead_diaeresis> <dead_acute> <space>		: "\265"	Greek_accentdieresis

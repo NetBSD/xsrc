@@ -1,4 +1,4 @@
-/* $TOG: Xlocale.h /main/11 1998/02/06 18:02:56 kaleb $ */
+/* $Xorg: Xlocale.h,v 1.3 2000/08/17 19:45:07 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1998  The Open Group

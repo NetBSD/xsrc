@@ -1,4 +1,4 @@
-/* $TOG: RegstFlt.c /main/12 1998/02/06 17:50:36 kaleb $ */
+/* $Xorg: RegstFlt.c,v 1.4 2000/08/17 19:44:52 cpqbld Exp $ */
 
  /*
   * Copyright 1990, 1991 by OMRON Corporation
@@ -48,7 +48,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/RegstFlt.c,v 1.3 2001/01/17 19:41:42 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

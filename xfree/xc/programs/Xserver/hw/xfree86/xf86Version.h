@@ -1,23 +1,31 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86Version.h,v 3.460.2.3 2001/03/15 18:59:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86Version.h,v 3.472.2.5 2001/06/02 15:27:52 dawes Exp $ */
 
-#define XF86_VERSION " 4.0.3 "
+#ifndef XF86_VERSION_CURRENT
 
-/* The finer points in versions... */
 #define XF86_VERSION_MAJOR	4
-#define XF86_VERSION_MINOR	0
-#define XF86_VERSION_SUBMINOR	3
-#define XF86_VERSION_BETA	0	/* 0="", 1="A", 2="B", etc... */
-#define XF86_VERSION_ALPHA	0	/* 0="", 1="a", 2="b", etc... */
+#define XF86_VERSION_MINOR	1
+#define XF86_VERSION_PATCH	0
+#define XF86_VERSION_SNAP	0
 
-#define XF86_VERSION_NUMERIC(major,minor,subminor,beta,alpha)	\
-   ((((((((major << 7) | minor) << 7) | subminor) << 5) | beta) << 5) | alpha)
+/* This has five arguments for compatibilty reasons */
+#define XF86_VERSION_NUMERIC(major,minor,patch,snap,dummy) \
+	(((major) * 10000000) + ((minor) * 100000) + ((patch) * 1000) + snap)
+
+/* Define these for compatibility.  They'll be removed at some point. */
+#define XF86_VERSION_SUBMINOR	XF86_VERSION_PATCH
+#define XF86_VERSION_BETA	0
+#define XF86_VERSION_ALPHA	XF86_VERSION_SNAP
+
 #define XF86_VERSION_CURRENT					\
    XF86_VERSION_NUMERIC(XF86_VERSION_MAJOR,			\
 			XF86_VERSION_MINOR,			\
-			XF86_VERSION_SUBMINOR,			\
-			XF86_VERSION_BETA,			\
-			XF86_VERSION_ALPHA)
+			XF86_VERSION_PATCH,			\
+			XF86_VERSION_SNAP,			\
+			0)
 
-#define XF86_DATE	"16 March 2001"
+
+#define XF86_DATE	"2 June 2001"
+
+#endif
 
 /* $XConsortium: xf86Version.h /main/78 1996/10/28 05:42:10 kaleb $ */

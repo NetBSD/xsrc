@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mifillarc.h,v 3.2 1995/01/28 16:15:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mifillarc.h,v 3.4 2001/01/17 22:37:06 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $TOG: mifillarc.h /main/11 1998/02/09 14:46:57 kaleb $ */
+/* $Xorg: mifillarc.h,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
 
 #define FULLCIRCLE (360 * 64)
 

@@ -1,4 +1,4 @@
-/* $TOG: ddxLoad.c /main/21 1997/06/18 07:33:24 kaleb $ */
+/* $Xorg: ddxLoad.c,v 1.3 2000/08/17 19:53:46 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.25 2000/06/15 22:04:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/ddxLoad.c,v 3.27 2001/01/17 22:37:14 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

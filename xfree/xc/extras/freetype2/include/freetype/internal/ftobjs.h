@@ -26,17 +26,16 @@
 #ifndef __FTOBJS_H__
 #define __FTOBJS_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
 
-#include FT_BUILD_H
+#include <ft2build.h>
 #include FT_RENDER_H
 #include FT_INTERNAL_MEMORY_H
 #include FT_INTERNAL_DRIVER_H
 #include FT_INTERNAL_AUTOHINT_H
 
+
 FT_BEGIN_HEADER
+
 
   /*************************************************************************/
   /*                                                                       */

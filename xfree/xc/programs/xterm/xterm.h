@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xterm/xterm.h,v 3.64 2000/11/01 01:12:43 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/xterm.h,v 3.70 2001/04/12 01:02:51 dickey Exp $ */
 
 /************************************************************
 
@@ -38,8 +38,8 @@ authorization.
  * This is also where we put the fallback definitions if we do not build using
  * the configure script.
  */
-#ifndef	included_xterm_h
-#define	included_xterm_h
+#ifndef included_xterm_h
+#define included_xterm_h
 
 #ifdef HAVE_CONFIG_H
 #include <xtermcfg.h>
@@ -83,9 +83,17 @@ authorization.
 #define USE_POSIX_TERMIOS 1
 #endif
 
+#if defined(hpux) && !defined(__hpux)
+#define __hpux 1	/* HPUX 11.0 does not define this */
+#endif
+
 #ifdef USE_POSIX_TERMIOS
 #define HAVE_TERMIOS_H 1
 #define HAVE_TCGETATTR 1
+#endif
+
+#if defined(__EMX__) || defined(__CYGWIN__) || defined(SCO) || defined(sco)
+#define USE_TERMCAP 1
 #endif
 
 #if defined(UTMP)
@@ -150,6 +158,18 @@ authorization.
 
 /***====================================================================***/
 
+/* if compiling with gcc -ansi -pedantic, we must fix POSIX definitions */
+#if defined(__GNUC__) && defined(SVR4) && defined(sun)
+#ifndef __EXTENSIONS__
+#define __EXTENSIONS__ 1
+#endif
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 1
+#endif
+#endif
+
+/***====================================================================***/
+
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #else
@@ -199,9 +219,20 @@ extern int errno;
 #else
 #define Select(n,r,w,e,t) select(n,(fd_set*)r,(fd_set*)w,(fd_set*)e,(struct timeval *)t)
 #define XFD_COPYSET(src,dst) memcpy((dst)->fds_bits, (src)->fds_bits, sizeof(fd_set))
-#ifdef __MVS__
-#include <sys/time.h>
+#if defined(__MVS__) && !defined(TIME_WITH_SYS_TIME)
+#define TIME_WITH_SYS_TIME
 #endif
+#endif
+
+#ifdef TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
 #endif
 
 #ifdef USE_SYS_SELECT_H
@@ -233,6 +264,7 @@ extern int errno;
 #define XtNboldColors		"boldColors"
 #define XtNboldFont		"boldFont"
 #define XtNboldMode		"boldMode"
+#define XtNbrokenSelections	"brokenSelections"
 #define XtNc132			"c132"
 #define XtNcacheDoublesize	"cacheDoublesize"
 #define XtNcharClass		"charClass"
@@ -276,13 +308,14 @@ extern int errno;
 #define XtNeightBitControl	"eightBitControl"
 #define XtNeightBitInput	"eightBitInput"
 #define XtNeightBitOutput	"eightBitOutput"
-#define XtNfontDoublesize	"fontDoublesize"
-#define XtNfontStyle		"fontStyle"
 #define XtNfaceName		"faceName"
 #define XtNfaceSize		"faceSize"
+#define XtNfontDoublesize	"fontDoublesize"
+#define XtNfontStyle		"fontStyle"
 #define XtNhighlightColor	"highlightColor"
 #define XtNhighlightSelection	"highlightSelection"
 #define XtNhpLowerleftBugCompat	"hpLowerleftBugCompat"
+#define XtNi18nSelections	"i18nSelections"
 #define XtNinternalBorder	"internalBorder"
 #define XtNjumpScroll		"jumpScroll"
 #define XtNkeyboardDialect	"keyboardDialect"
@@ -303,6 +336,7 @@ extern int errno;
 #define XtNpointerColor		"pointerColor"
 #define XtNpointerColorBackground "pointerColorBackground"
 #define XtNpointerShape		"pointerShape"
+#define XtNpopOnBell		"popOnBell"
 #define XtNprintAttributes	"printAttributes"
 #define XtNprinterAutoClose	"printerAutoClose"
 #define XtNprinterCommand	"printerCommand"
@@ -318,7 +352,7 @@ extern int errno;
 #define XtNscrollLines		"scrollLines"
 #define XtNscrollPos		"scrollPos"
 #define XtNscrollTtyOutput	"scrollTtyOutput"
-#define XtNshiftKeys		"shiftKeys"
+#define XtNshiftFonts		"shiftFonts"
 #define XtNsignalInhibit	"signalInhibit"
 #define XtNtekGeometry		"tekGeometry"
 #define XtNtekInhibit		"tekInhibit"
@@ -329,9 +363,9 @@ extern int errno;
 #define XtNunderLine		"underLine"
 #define XtNutf8			"utf8"
 #define XtNvisualBell		"visualBell"
+#define XtNwideBoldFont		"wideBoldFont"
 #define XtNwideChars		"wideChars"
 #define XtNwideFont		"wideFont"
-#define XtNwideBoldFont		"wideBoldFont"
 #define XtNxmcAttributes	"xmcAttributes"
 #define XtNxmcGlitch		"xmcGlitch"
 #define XtNxmcInline		"xmcInline"
@@ -349,6 +383,7 @@ extern int errno;
 #define XtCBellSuppressTime	"BellSuppressTime"
 #define XtCBoldFont		"BoldFont"
 #define XtCBoldMode		"BoldMode"
+#define XtCBrokenSelections	"BrokenSelections"
 #define XtCC132			"C132"
 #define XtCCacheDoublesize	"CacheDoublesize"
 #define XtCCharClass		"CharClass"
@@ -373,6 +408,7 @@ extern int errno;
 #define XtCFontStyle		"FontStyle"
 #define XtCHighlightSelection	"HighlightSelection"
 #define XtCHpLowerleftBugCompat	"HpLowerleftBugCompat"
+#define XtCI18nSelections	"I18nSelections"
 #define XtCJumpScroll		"JumpScroll"
 #define XtCKeyboardDialect	"KeyboardDialect"
 #define XtCLimitResize		"LimitResize"
@@ -388,6 +424,7 @@ extern int errno;
 #define XtCMultiScroll		"MultiScroll"
 #define XtCNumLock		"NumLock"
 #define XtCOldXtermFKeys	"OldXtermFKeys"
+#define XtCPopOnBell		"PopOnBell"
 #define XtCPrintAttributes	"PrintAttributes"
 #define XtCPrinterAutoClose	"PrinterAutoClose"
 #define XtCPrinterCommand	"PrinterCommand"
@@ -402,7 +439,7 @@ extern int errno;
 #define XtCScrollCond		"ScrollCond"
 #define XtCScrollLines		"ScrollLines"
 #define XtCScrollPos		"ScrollPos"
-#define XtCShiftKeys		"ShiftKeys"
+#define XtCShiftFonts		"ShiftFonts"
 #define XtCSignalInhibit	"SignalInhibit"
 #define XtCTekInhibit		"TekInhibit"
 #define XtCTekSmall		"TekSmall"
@@ -412,9 +449,9 @@ extern int errno;
 #define XtCUnderLine		"UnderLine"
 #define XtCUtf8			"Utf8"
 #define XtCVisualBell		"VisualBell"
+#define XtCWideBoldFont		"WideBoldFont"
 #define XtCWideChars		"WideChars"
 #define XtCWideFont		"WideFont"
-#define XtCWideBoldFont		"WideBoldFont"
 #define XtCXmcAttributes	"XmcAttributes"
 #define XtCXmcGlitch		"XmcGlitch"
 #define XtCXmcInline		"XmcInline"
@@ -426,12 +463,12 @@ extern int errno;
 #endif
 
 #ifdef VMS
-#define	XtCbackground		"background"
-#define	XtCbordercolor		"borderColor"
-#define	XtCborderwidth		"borderWidth"
-#define	XtCforeground		"foreground"
-#define	XtCfont			"font"
-#define	XtCiconic		"iconic"
+#define XtCbackground		"background"
+#define XtCbordercolor		"borderColor"
+#define XtCborderwidth		"borderWidth"
+#define XtCforeground		"foreground"
+#define XtCfont			"font"
+#define XtCiconic		"iconic"
 #endif
 
 /***====================================================================***/

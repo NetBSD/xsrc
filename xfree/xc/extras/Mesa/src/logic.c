@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  3.4.1
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -94,7 +94,7 @@ static void index_logicop( GLcontext *ctx, GLuint n,
       case GL_SET:
          for (i=0;i<n;i++) {
 	    if (mask[i]) {
-	       index[i] = 1;
+	       index[i] = ~0;
 	    }
 	 }
 	 break;
@@ -259,7 +259,7 @@ static void rgba_logicop( const GLcontext *ctx, GLuint n,
       case GL_SET:
          for (i=0;i<n;i++) {
             if (mask[i]) {
-               src[i] = 0xffffffff;
+               src[i] = ~0;
             }
          }
          break;
@@ -297,7 +297,7 @@ static void rgba_logicop( const GLcontext *ctx, GLuint n,
       case GL_NAND:
          for (i=0;i<n;i++) {
             if (mask[i]) {
-               src[i] = ~(src[i] & src[i]);
+               src[i] = ~(src[i] & dest[i]);
             }
          }
          break;

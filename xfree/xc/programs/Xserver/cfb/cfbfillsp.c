@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbfillsp.c,v 3.3 1998/10/04 09:37:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbfillsp.c,v 3.5 2001/01/17 22:36:35 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -71,7 +71,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: cfbfillsp.c /main/47 1998/02/09 14:05:23 kaleb $ */
+/* $Xorg: cfbfillsp.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
 
 #include "X.h"
 #include "Xmd.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_sarea.h,v 1.4 2000/12/04 19:21:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_sarea.h,v 1.6 2001/01/08 01:07:35 martin Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -76,11 +76,7 @@
 
 /* Vertex/indirect buffer size
  */
-#if 1
 #define R128_BUFFER_SIZE		16384
-#else
-#define R128_BUFFER_SIZE		(128 * 1024)
-#endif
 
 /* Byte offsets for indirect buffer data
  */
@@ -94,14 +90,16 @@
 /* There are 2 heaps (local/AGP).  Each region within a heap is a
  * minimum of 64k, and there are at most 64 of them per heap.
  */
-#define R128_LOCAL_TEX_HEAP		0
-#define R128_AGP_TEX_HEAP		1
+#define R128_CARD_HEAP			0
+#define R128_AGP_HEAP			1
 #define R128_NR_TEX_HEAPS		2
 #define R128_NR_TEX_REGIONS		64
 #define R128_LOG_TEX_GRANULARITY	16
 
 #define R128_NR_CONTEXT_REGS		12
-#define R128_TEX_MAXLEVELS		11
+
+#define R128_MAX_TEXTURE_LEVELS		11
+#define R128_MAX_TEXTURE_UNITS		2
 
 #endif /* __R128_SAREA_DEFINES__ */
 
@@ -146,14 +144,14 @@ typedef struct {
     unsigned int tex_cntl;
     unsigned int tex_combine_cntl;
     unsigned int tex_size_pitch;
-    unsigned int tex_offset[R128_TEX_MAXLEVELS];
+    unsigned int tex_offset[R128_MAX_TEXTURE_LEVELS];
     unsigned int tex_border_color;
 } r128_texture_regs_t;
 
 typedef struct {
     unsigned char next, prev;	/* indices to form a circular LRU  */
     unsigned char in_use;	/* owned by a client, or free? */
-    int           age;		/* tracked by clients to update local LRU's */
+    int age;			/* tracked by clients to update local LRU's */
 } r128_tex_region_t;
 
 typedef struct {
@@ -161,20 +159,20 @@ typedef struct {
      * on firing a vertex buffer.
      */
     r128_context_regs_t	ContextState;
-    r128_texture_regs_t	TexState[R128_NR_TEX_HEAPS];
-    unsigned int	dirty;
-    unsigned int	vertsize;
-    unsigned int	vc_format;
+    r128_texture_regs_t	TexState[R128_MAX_TEXTURE_UNITS];
+    unsigned int dirty;
+    unsigned int vertsize;
+    unsigned int vc_format;
 
     /* The current cliprects, or a subset thereof.
      */
-    XF86DRIClipRectRec	boxes[R128_NR_SAREA_CLIPRECTS];
-    unsigned int	nbox;
+    XF86DRIClipRectRec boxes[R128_NR_SAREA_CLIPRECTS];
+    unsigned int nbox;
 
     /* Counters for throttling of rendering clients.
      */
-    unsigned int	last_frame;
-    unsigned int	last_dispatch;
+    unsigned int last_frame;
+    unsigned int last_dispatch;
 
     /* Maintain an LRU of contiguous regions of texture space.  If you
      * think you own a region of texture memory, and it has an age
@@ -191,11 +189,11 @@ typedef struct {
      * else's - simply eject them all in LRU order.
      */
 				/* Last elt is sentinal */
-    r128_tex_region_t	texList[R128_NR_TEX_HEAPS][R128_NR_TEX_REGIONS+1];
+    r128_tex_region_t texList[R128_NR_TEX_HEAPS][R128_NR_TEX_REGIONS+1];
 				/* last time texture was uploaded */
-    int			texAge[R128_NR_TEX_HEAPS];
+    int texAge[R128_NR_TEX_HEAPS];
 
-    int			ctxOwner;	/* last context to upload state */
+    int ctxOwner;		/* last context to upload state */
 } R128SAREAPriv, *R128SAREAPrivPtr;
 
 #endif

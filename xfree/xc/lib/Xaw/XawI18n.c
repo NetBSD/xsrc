@@ -1,4 +1,4 @@
-/* $TOG: XawI18n.c /main/7 1998/02/06 12:53:18 kaleb $ */
+/* $Xorg: XawI18n.c,v 1.3 2000/08/17 19:45:44 cpqbld Exp $ */
 
 /* Copyright 1991 NCR Corporation - Dayton, Ohio, USA */
 
@@ -49,7 +49,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/XawI18n.c,v 1.5 1999/05/03 12:15:47 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/XawI18n.c,v 1.7 2001/01/17 19:42:36 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include "XawI18n.h"

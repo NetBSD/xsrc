@@ -1,4 +1,4 @@
-/* $TOG: import.c /main/9 1998/02/09 14:00:51 kaleb $ */
+/* $Xorg: import.c,v 1.3 2000/08/17 19:54:26 cpqbld Exp $ */
 
 /**** module import.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/import.c,v 1.5 2001/01/17 23:45:38 dawes Exp $ */
 
 #include "xieperf.h"
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/* $TOG: iphoto.c /main/6 1998/02/09 16:09:07 kaleb $ */
+/* $Xorg: iphoto.c,v 1.3 2000/08/17 19:47:24 cpqbld Exp $ */
 /**** module iphoto.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/import/iphoto.c,v 3.2 1998/10/05 13:22:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/import/iphoto.c,v 3.4 2001/01/17 22:12:51 dawes Exp $ */
 
 #define _XIEC_IPHOTO
 

@@ -1,26 +1,39 @@
 #ifndef _GLX_glxproto_h_
 #define _GLX_glxproto_h_
 
-/* $XFree86$ */
+/* $XFree86: xc/include/GL/glxproto.h,v 1.4 2001/04/10 16:07:49 dawes Exp $ */
 /*
-** The contents of this file are subject to the GLX Public License Version 1.0
-** (the "License"). You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
-** attn: Legal Services, 2011 N. Shoreline Blvd., Mountain View, CA 94043
-** or at http://www.sgi.com/software/opensource/glx/license.html.
+** License Applicability. Except to the extent portions of this file are
+** made subject to an alternative license as permitted in the SGI Free
+** Software License B, Version 1.1 (the "License"), the contents of this
+** file are subject only to the provisions of the License. You may not use
+** this file except in compliance with the License. You may obtain a copy
+** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
+** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
 **
-** Software distributed under the License is distributed on an "AS IS"
-** basis. ALL WARRANTIES ARE DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY
-** IMPLIED WARRANTIES OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR
-** PURPOSE OR OF NON- INFRINGEMENT. See the License for the specific
-** language governing rights and limitations under the License.
+** http://oss.sgi.com/projects/FreeB
 **
-** The Original Software is GLX version 1.2 source code, released February,
-** 1999. The developer of the Original Software is Silicon Graphics, Inc.
-** Those portions of the Subject Software created by Silicon Graphics, Inc.
-** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
+** Note that, as provided in the License, the Software is distributed on an
+** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
+** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
+** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
+** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
 **
-** $SGI$
+** Original Code. The Original Code is: OpenGL Sample Implementation,
+** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
+** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Copyright in any portions created by third parties is as indicated
+** elsewhere herein. All Rights Reserved.
+**
+** Additional Notice Provisions: The application programming interfaces
+** established by SGI in conjunction with the Original Code are The
+** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
+** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
+** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
+** Window System(R) (Version 1.3), released October 19, 1998. This software
+** was created using the OpenGL(R) version 1.2.1 Sample Implementation
+** published by SGI, but has not been independently verified as being
+** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
 
 #include "GL/glxmd.h"
@@ -29,19 +42,32 @@
 
 /*
 ** Errrors.
-*/   
-#define GLXBadContext		0 
+*/
+#define GLXBadContext		0
 #define GLXBadContextState	1
 #define GLXBadDrawable		2
 #define GLXBadPixmap		3
 #define GLXBadContextTag	4
 #define GLXBadCurrentWindow	5
-#define GLXBadRenderRequest	6 
-#define GLXBadLargeRequest 	7
+#define GLXBadRenderRequest	6
+#define GLXBadLargeRequest	7
 #define GLXUnsupportedPrivateRequest	8
+#define GLXBadFBConfig		9
+#define GLXBadPbuffer		10
+#define GLXBadCurrentDrawable	11
+#define GLXBadWindow		12
 
-#define __GLX_NUMBER_ERRORS 8 
-#define __GLX_NUMBER_EVENTS 1
+#define __GLX_NUMBER_ERRORS 12
+
+/*
+** Events.
+** __GLX_NUMBER_EVENTS is set to 17 to account for the BufferClobberSGIX
+**  event - this helps initialization if the server supports the pbuffer
+**  extension and the client doesn't.
+*/
+#define GLX_PbufferClobber	0
+
+#define __GLX_NUMBER_EVENTS 17
 
 #define GLX_EXTENSION_NAME	"GLX"
 #define GLX_EXTENSION_ALIAS	"SGI-GLX"
@@ -62,6 +88,11 @@
 #define GLXContextID CARD32
 #define GLXPixmap CARD32
 #define GLXDrawable CARD32
+#define GLXPbuffer CARD32
+#define GLXWindow CARD32
+#define GLXFBConfigID CARD32
+#define GLXFBConfigIDSGIX CARD32
+#define GLXPbufferSGIX CARD32
 
 /*
 ** ContextTag is not exposed to the API.
@@ -106,7 +137,7 @@ typedef struct GLXRender {
 
 /*
 ** Large render command request.  A single large rendering command
-** is output in multiple X extension requests.  The first packet
+** is output in multiple X extension requests.	The first packet
 ** contains an opcode dependent header (see below) that describes
 ** the data that follows.
 */
@@ -122,7 +153,7 @@ typedef struct GLXRenderLarge {
 #define sz_xGLXRenderLargeReq 16
 
 /*
-** GLX single request.  Commands that go over as single GLX protocol
+** GLX single request.	Commands that go over as single GLX protocol
 ** requests use this structure.  The glxCode will be one of the X_GLsop
 ** opcodes.
 */
@@ -192,7 +223,7 @@ typedef struct GLXMakeCurrent {
     CARD8	reqType;
     CARD8	glxCode;
     CARD16	length B16;
-    GLXDrawable	drawable B32;
+    GLXDrawable drawable B32;
     GLXContextID context B32;
     GLXContextTag oldContextTag B32;
 } xGLXMakeCurrentReq;
@@ -242,7 +273,7 @@ typedef struct GLXSwapBuffers {
     CARD8	glxCode;
     CARD16	length B16;
     GLXContextTag contextTag B32;
-    GLXDrawable	drawable B32;
+    GLXDrawable drawable B32;
 } xGLXSwapBuffersReq;
 #define sz_xGLXSwapBuffersReq 12
 
@@ -331,10 +362,10 @@ typedef struct GLXVendorPrivateWithReply {
 ** glXQueryExtensionsString request
 */
 typedef struct GLXQueryExtensionsString {
-    CARD8       reqType;
-    CARD8       glxCode;
-    CARD16      length B16;
-    CARD32      screen B32;
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    CARD32	screen B32;
 } xGLXQueryExtensionsStringReq;
 #define sz_xGLXQueryExtensionsStringReq 8
 
@@ -342,11 +373,11 @@ typedef struct GLXQueryExtensionsString {
 ** glXQueryServerString request
 */
 typedef struct GLXQueryServerString {
-    CARD8       reqType;
-    CARD8       glxCode;
-    CARD16      length B16;
-    CARD32      screen  B32;
-    CARD32      name B32;
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    CARD32	screen	B32;
+    CARD32	name B32;
 } xGLXQueryServerStringReq;
 #define sz_xGLXQueryServerStringReq 12
 
@@ -354,29 +385,174 @@ typedef struct GLXQueryServerString {
 ** glXClientInfo request
 */
 typedef struct GLXClientInfo {
-    CARD8       reqType;
-    CARD8       glxCode;
-    CARD16      length B16;
-    CARD32      major B32;
-    CARD32      minor B32;
-    CARD32      numbytes B32;
-} xGLXClientInfoReq;
-#define sz_xGLXClientInfoReq 16
-
-/*
-** glXQueryContextInfoEXT request
-*/
-typedef struct GLXQueryContextInfoEXT {
     CARD8	reqType;
     CARD8	glxCode;
     CARD16	length B16;
-    CARD32	vendorCode B32;		/* vendor-specific opcode */
-    CARD32 	pad1 B32;   /* unused; corresponds to contextTag in header */
-    GLXContextID context B32;
-} xGLXQueryContextInfoEXTReq;
-#define sz_xGLXQueryContextInfoEXTReq 16 
+    CARD32	major B32;
+    CARD32	minor B32;
+    CARD32	numbytes B32;
+} xGLXClientInfoReq;
+#define sz_xGLXClientInfoReq 16
 
-/************************************************************************/
+/*** Start of GLX 1.3 requests */
+
+/*
+** glXGetFBConfigs request
+*/
+typedef struct GLXGetFBConfigs {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    CARD32	screen B32;
+} xGLXGetFBConfigsReq;
+#define sz_xGLXGetFBConfigsReq 8
+
+/*
+** glXCreatePixmap request
+*/
+typedef struct GLXCreatePixmap {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    CARD32	screen B32;
+    GLXFBConfigID fbconfig B32;
+    CARD32	pixmap B32;
+    GLXPixmap	glxpixmap B32;
+    CARD32	numAttribs B32;
+    /* followed by attribute list */
+} xGLXCreatePixmapReq;
+#define sz_xGLXCreatePixmapReq 24
+
+/*
+** glXDestroyPixmap request
+*/
+typedef struct GLXDestroyPixmap {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    GLXPixmap	glxpixmap B32;
+} xGLXDestroyPixmapReq;
+#define sz_xGLXDestroyPixmapReq 8
+
+/*
+** glXCreateNewContext request
+*/
+typedef struct GLXCreateNewContext {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    GLXContextID context B32;
+    GLXFBConfigID fbconfig B32;
+    CARD32	screen B32;
+    CARD32	renderType;
+    GLXContextID shareList B32;
+    BOOL	isDirect;
+    CARD8	reserved1;
+    CARD16	reserved2 B16;
+} xGLXCreateNewContextReq;
+#define sz_xGLXCreateNewContextReq 28
+
+/*
+** glXQueryContext request
+*/
+typedef struct GLXQueryContext {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    GLXContextID context B32;
+} xGLXQueryContextReq;
+#define sz_xGLXQueryContextReq 8
+
+/*
+** glXMakeContextCurrent request
+*/
+typedef struct GLXMakeContextCurrent {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    GLXContextTag oldContextTag B32;
+    GLXDrawable drawable B32;
+    GLXDrawable readdrawable B32;
+    GLXContextID context B32;
+} xGLXMakeContextCurrentReq;
+#define sz_xGLXMakeContextCurrentReq 20
+
+/*
+** glXCreatePbuffer request
+*/
+typedef struct GLXCreatePbuffer {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    CARD32	screen B32;
+    GLXFBConfigID fbconfig B32;
+    GLXPbuffer	pbuffer B32;
+    CARD32	numAttribs B32;
+    /* followed by attribute list */
+} xGLXCreatePbufferReq;
+#define sz_xGLXCreatePbufferReq 20
+
+/*
+** glXDestroyPbuffer request
+*/
+typedef struct GLXDestroyPbuffer {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    GLXPbuffer	pbuffer B32;
+} xGLXDestroyPbufferReq;
+#define sz_xGLXDestroyPbufferReq 8
+
+/*
+** glXGetDrawableAttributes request
+*/
+typedef struct GLXGetDrawableAttributes {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    GLXDrawable drawable B32;
+} xGLXGetDrawableAttributesReq;
+#define sz_xGLXGetDrawableAttributesReq 8
+
+/*
+** glXChangeDrawableAttributes request
+*/
+typedef struct GLXChangeDrawableAttributes {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    GLXDrawable drawable B32;
+    CARD32	numAttribs B32;
+    /* followed by attribute list */
+} xGLXChangeDrawableAttributesReq;
+#define sz_xGLXChangeDrawableAttributesReq 12
+
+/*
+** glXCreateWindow request
+*/
+typedef struct GLXCreateWindow {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    CARD32	screen B32;
+    GLXFBConfigID fbconfig B32;
+    CARD32	window B32;
+    GLXWindow	glxwindow B32;
+    CARD32	numAttribs B32;
+    /* followed by attribute list */
+} xGLXCreateWindowReq;
+#define sz_xGLXCreateWindowReq 24
+
+/*
+** glXDestroyWindow request
+*/
+typedef struct GLXDestroyWindow {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    GLXWindow	glxwindow B32;
+} xGLXDestroyWindowReq;
+#define sz_xGLXDestroyWindowReq 8
 
 /* Replies */
 
@@ -431,10 +607,66 @@ typedef struct {
     CARD32	pad2 B32;
     CARD32	width B32;
     CARD32	height B32;
-    CARD32	pad5 B32;
+    CARD32	depth B32;
     CARD32	pad6 B32;
 } xGLXGetTexImageReply;
 #define sz_xGLXGetTexImageReply 32
+
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	pad1 B32;
+    CARD32	pad2 B32;
+    CARD32	width B32;
+    CARD32	height B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXGetSeparableFilterReply;
+#define sz_xGLXGetSeparableFilterReply 32
+
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	pad1 B32;
+    CARD32	pad2 B32;
+    CARD32	width B32;
+    CARD32	height B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXGetConvolutionFilterReply;
+#define sz_xGLXGetConvolutionFilterReply 32
+
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	pad1 B32;
+    CARD32	pad2 B32;
+    CARD32	width B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXGetHistogramReply;
+#define sz_xGLXGetHistogramReply 32
+
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	pad1 B32;
+    CARD32	pad2 B32;
+    CARD32	pad3 B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXGetMinmaxReply;
+#define sz_xGLXGetMinmaxReply 32
 
 typedef struct {
     BYTE	type;			/* X_Reply */
@@ -520,16 +752,16 @@ typedef struct {
 ** the number of words of data which follow the header.
 */
 typedef struct {
-    BYTE        type;                   /* X_Reply */
-    CARD8       unused;                 /* not used */
-    CARD16      sequenceNumber B16;
-    CARD32      length B32;
-    CARD32      retval B32;
-    CARD32      size B32;
-    CARD32      pad3 B32;
-    CARD32      pad4 B32;
-    CARD32      pad5 B32;
-    CARD32      pad6 B32;
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	retval B32;
+    CARD32	size B32;
+    CARD32	pad3 B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
 } xGLXVendorPrivReply;
 #define sz_xGLXVendorPrivReply 32
 
@@ -538,16 +770,16 @@ typedef struct {
 **  n indicates the number of bytes to be returned.
 */
 typedef struct {
-    BYTE        type;                   /* X_Reply */
-    CARD8       unused;                 /* not used */
-    CARD16      sequenceNumber B16;
-    CARD32      length B32;
-    CARD32      pad1 B32;
-    CARD32      n B32;
-    CARD32      pad3 B32;
-    CARD32      pad4 B32;
-    CARD32      pad5 B32;
-    CARD32      pad6 B32;
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	pad1 B32;
+    CARD32	n B32;
+    CARD32	pad3 B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
 } xGLXQueryExtensionsStringReply;
 #define sz_xGLXQueryExtensionsStringReply 32
 
@@ -556,18 +788,141 @@ typedef struct {
 ** n indicates the number of bytes to be returned.
 */
 typedef struct {
-    BYTE        type;                   /* X_Reply */
-    CARD8       unused;                 /* not used */
-    CARD16      sequenceNumber B16;
-    CARD32      length B32;
-    CARD32      pad1 B32;
-    CARD32      n B32;
-    CARD32      pad3 B32;               /* NOTE: may hold a single value */
-    CARD32      pad4 B32;               /* NOTE: may hold half a double */
-    CARD32      pad5 B32;
-    CARD32      pad6 B32;
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	pad1 B32;
+    CARD32	n B32;
+    CARD32	pad3 B32;		/* NOTE: may hold a single value */
+    CARD32	pad4 B32;		/* NOTE: may hold half a double */
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
 } xGLXQueryServerStringReply;
 #define sz_xGLXQueryServerStringReply 32
+
+/*** Start of GLX 1.3 replies */
+
+/*
+** glXGetFBConfigs reply
+*/
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	numFBConfigs B32;
+    CARD32	numAttribs B32;
+    CARD32	pad3 B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXGetFBConfigsReply;
+#define sz_xGLXGetFBConfigsReply 32
+
+/*
+** glXQueryContext reply
+*/
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	n B32;			/* number of attribute/value pairs */
+    CARD32	pad2 B32;
+    CARD32	pad3 B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXQueryContextReply;
+#define sz_xGLXQueryContextReply 32
+
+/*
+** glXMakeContextCurrent reply
+*/
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    GLXContextTag contextTag B32;
+    CARD32	pad2 B32;
+    CARD32	pad3 B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXMakeContextCurrentReply;
+#define sz_xGLXMakeContextCurrentReply 32
+
+/*
+** glXCreateGLXPbuffer reply
+** This is used only in the direct rendering case on SGIs - otherwise
+**  CreateGLXPbuffer has no reply. It is not part of GLX 1.3.
+*/
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	success;
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	pad1 B32;
+    CARD32	pad2 B32;
+    CARD32	pad3 B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXCreateGLXPbufferReply;
+#define sz_xGLXCreateGLXPbufferReply 32
+
+/*
+** glXGetDrawableAttributes reply
+*/
+typedef struct {
+    BYTE	type;			/* X_Reply */
+    CARD8	unused;			/* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	numAttribs B32;
+    CARD32	pad2 B32;
+    CARD32	pad3 B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXGetDrawableAttributesReply;
+#define sz_xGLXGetDrawableAttributesReply 32
+
+/*
+** glXGetColorTable reply
+*/
+typedef struct {
+    BYTE	type;		       /* X_Reply */
+    CARD8	unused;		       /* not used */
+    CARD16	sequenceNumber B16;
+    CARD32	length B32;
+    CARD32	pad1 B32;
+    CARD32	pad2 B32;
+    CARD32	width B32;
+    CARD32	pad4 B32;
+    CARD32	pad5 B32;
+    CARD32	pad6 B32;
+} xGLXGetColorTableReply;
+#define sz_xGLXGetColorTableReply 32
+
+/************************************************************************/
+
+/* GLX extension requests and replies */
+
+/*
+** glXQueryContextInfoEXT request
+*/
+typedef struct GLXQueryContextInfoEXT {
+    CARD8	reqType;
+    CARD8	glxCode;
+    CARD16	length B16;
+    CARD32	vendorCode B32;		/* vendor-specific opcode */
+    CARD32	pad1 B32;   /* unused; corresponds to contextTag in header */
+    GLXContextID context B32;
+} xGLXQueryContextInfoEXTReq;
+#define sz_xGLXQueryContextInfoEXTReq 16
 
 /*
 ** glXQueryContextInfoEXT reply
@@ -577,7 +932,7 @@ typedef struct {
     CARD8	unused;			/* not used */
     CARD16	sequenceNumber B16;
     CARD32	length B32;
-    CARD32	n B32;  		/* number of attribute/value pairs */
+    CARD32	n B32;			/* number of attribute/value pairs */
     CARD32	pad2 B32;
     CARD32	pad3 B32;
     CARD32	pad4 B32;
@@ -585,6 +940,29 @@ typedef struct {
     CARD32	pad6 B32;
 } xGLXQueryContextInfoEXTReply;
 #define sz_xGLXQueryContextInfoEXTReply 32
+
+/************************************************************************/
+
+/*
+** Events
+*/
+
+typedef struct {
+    BYTE type;
+    BYTE pad;
+    CARD16 sequenceNumber B16;
+    CARD16 event_type B16;  /*** was clobber_class */
+    CARD16 draw_type B16;
+    CARD32 drawable B32;
+    CARD32 buffer_mask B32; /*** was mask */
+    CARD16 aux_buffer B16;
+    CARD16 x B16;
+    CARD16 y B16;
+    CARD16 width B16;
+    CARD16 height B16;
+    CARD16 count B16;
+    CARD32 unused2 B32;
+} xGLXPbufferClobberEvent;
 
 /************************************************************************/
 
@@ -617,7 +995,8 @@ typedef struct {
 /*
 ** The glBitmap, glPolygonStipple, glTexImage[12]D, glTexSubImage[12]D
 ** and glDrawPixels calls all have a pixel header transmitted after the
-** Render or RenderLarge header and before their own opcode specific headers.
+** Render or RenderLarge header and before their own opcode specific
+** headers.
 */
 #define __GLX_PIXEL_HDR		\
     BOOL	swapBytes;	\
@@ -626,7 +1005,7 @@ typedef struct {
     CARD8	reserved1;	\
     CARD32	rowLength B32;	\
     CARD32	skipRows B32;	\
-    CARD32	skipPixels B32;	\
+    CARD32	skipPixels B32; \
     CARD32	alignment B32
 
 #define __GLX_PIXEL_HDR_SIZE 20
@@ -634,6 +1013,27 @@ typedef struct {
 typedef struct {
     __GLX_PIXEL_HDR;
 } __GLXpixelHeader;
+
+/*
+** glTexImage[34]D and glTexSubImage[34]D calls
+** all have a pixel header transmitted after the Render or RenderLarge
+** header and before their own opcode specific headers.
+*/
+#define __GLX_PIXEL_3D_HDR		\
+    BOOL	swapBytes;		\
+    BOOL	lsbFirst;		\
+    CARD8	reserved0;		\
+    CARD8	reserved1;		\
+    CARD32	rowLength B32;		\
+    CARD32	imageHeight B32;	\
+    CARD32	imageDepth B32;		\
+    CARD32	skipRows B32;		\
+    CARD32	skipImages B32;		\
+    CARD32	skipVolumes B32;	\
+    CARD32	skipPixels B32;		\
+    CARD32	alignment B32
+
+#define __GLX_PIXEL_3D_HDR_SIZE 36
 
 /*
 ** Data that is specific to a glBitmap call.  The data is sent in the
@@ -683,19 +1083,18 @@ typedef struct {
 #define __GLX_POLYGONSTIPPLE_CMD_HDR_SIZE \
     (__GLX_RENDER_HDR_SIZE + __GLX_PIXEL_HDR_SIZE)
 
-
 /*
 ** Data that is specific to a glTexImage1D or glTexImage2D call.  The
 ** data is sent in the following order:
-** 	Render or RenderLarge header
-** 	Pixel header
-** 	TexImage header
+**	Render or RenderLarge header
+**	Pixel header
+**	TexImage header
 ** When a glTexImage1D call the height field is unexamined by the server.
 */
 #define __GLX_TEXIMAGE_HDR	\
     CARD32	target B32;	\
     CARD32	level B32;	\
-    CARD32	components B32;	\
+    CARD32	components B32; \
     CARD32	width B32;	\
     CARD32	height B32;	\
     CARD32	border B32;	\
@@ -728,12 +1127,62 @@ typedef struct {
 } __GLXdispatchTexImageHeader;
 
 /*
-** Data that is specific to a glTexSubImage1D or glTexSubImage2D call.  The
+** Data that is specific to a glTexImage3D or glTexImage4D call.  The
 ** data is sent in the following order:
-** 	Render or RenderLarge header
-** 	Pixel header
-** 	TexSubImage header
-** When a glTexSubImage1D call is made, the yoffset and height fields 
+**	Render or RenderLarge header
+**	Pixel 3D header
+**	TexImage 3D header
+** When a glTexImage3D call the size4d and woffset fields are unexamined
+** by the server.
+** Could be used by all TexImage commands and perhaps should be in the
+** future.
+*/
+#define __GLX_TEXIMAGE_3D_HDR \
+    CARD32	target B32;	\
+    CARD32	level B32;	\
+    CARD32	internalformat B32;	\
+    CARD32	width B32;	\
+    CARD32	height B32;	\
+    CARD32	depth B32;	\
+    CARD32	size4d B32;	\
+    CARD32	border B32;	\
+    CARD32	format B32;	\
+    CARD32	type B32;	\
+    CARD32	nullimage B32
+
+#define __GLX_TEXIMAGE_3D_HDR_SIZE 44
+
+#define __GLX_TEXIMAGE_3D_CMD_HDR_SIZE \
+    (__GLX_RENDER_HDR_SIZE + __GLX_PIXEL_3D_HDR_SIZE + \
+		__GLX_TEXIMAGE_3D_HDR_SIZE)
+
+#define __GLX_TEXIMAGE_3D_CMD_DISPATCH_HDR_SIZE \
+    (__GLX_PIXEL_3D_HDR_SIZE + __GLX_TEXIMAGE_3D_HDR_SIZE)
+
+typedef struct {
+    __GLX_RENDER_HDR;
+    __GLX_PIXEL_3D_HDR;
+    __GLX_TEXIMAGE_3D_HDR;
+} __GLXtexImage3DHeader;
+
+typedef struct {
+    __GLX_RENDER_LARGE_HDR;
+    __GLX_PIXEL_3D_HDR;
+    __GLX_TEXIMAGE_3D_HDR;
+} __GLXtexImage3DLargeHeader;
+
+typedef struct {
+    __GLX_PIXEL_3D_HDR;
+    __GLX_TEXIMAGE_3D_HDR;
+} __GLXdispatchTexImage3DHeader;
+
+/*
+** Data that is specific to a glTexSubImage1D or glTexSubImage2D call.	The
+** data is sent in the following order:
+**	Render or RenderLarge header
+**	Pixel header
+**	TexSubImage header
+** When a glTexSubImage1D call is made, the yoffset and height fields
 ** are unexamined by the server and are  considered to be padding.
 */
 #define __GLX_TEXSUBIMAGE_HDR	\
@@ -773,11 +1222,61 @@ typedef struct {
 } __GLXdispatchTexSubImageHeader;
 
 /*
+** Data that is specific to a glTexSubImage3D and 4D calls.  The
+** data is sent in the following order:
+**	Render or RenderLarge header
+**	Pixel 3D header
+**	TexSubImage 3D header
+** When a glTexSubImage3D call is made, the woffset and size4d fields
+** are unexamined by the server and are considered to be padding.
+*/
+#define __GLX_TEXSUBIMAGE_3D_HDR	\
+    CARD32	target B32;	\
+    CARD32	level B32;	\
+    CARD32	xoffset B32;	\
+    CARD32	yoffset B32;	\
+    CARD32	zoffset B32;	\
+    CARD32	woffset B32;	\
+    CARD32	width B32;	\
+    CARD32	height B32;	\
+    CARD32	depth B32;	\
+    CARD32	size4d B32;	\
+    CARD32	format B32;	\
+    CARD32	type B32;	\
+    CARD32	nullImage	\
+
+#define __GLX_TEXSUBIMAGE_3D_HDR_SIZE 52
+
+#define __GLX_TEXSUBIMAGE_3D_CMD_HDR_SIZE \
+    (__GLX_RENDER_HDR_SIZE + __GLX_PIXEL_3D_HDR_SIZE + \
+		__GLX_TEXSUBIMAGE_3D_HDR_SIZE)
+
+#define __GLX_TEXSUBIMAGE_3D_CMD_DISPATCH_HDR_SIZE \
+    (__GLX_PIXEL_3D_HDR_SIZE + __GLX_TEXSUBIMAGE_3D_HDR_SIZE)
+
+typedef struct {
+    __GLX_RENDER_HDR;
+    __GLX_PIXEL_3D_HDR;
+    __GLX_TEXSUBIMAGE_3D_HDR;
+} __GLXtexSubImage3DHeader;
+
+typedef struct {
+    __GLX_RENDER_LARGE_HDR;
+    __GLX_PIXEL_3D_HDR;
+    __GLX_TEXSUBIMAGE_3D_HDR;
+} __GLXtexSubImage3DLargeHeader;
+
+typedef struct {
+    __GLX_PIXEL_3D_HDR;
+    __GLX_TEXSUBIMAGE_3D_HDR;
+} __GLXdispatchTexSubImage3DHeader;
+
+/*
 ** Data that is specific to a glDrawPixels call.  The data is sent in the
 ** following order:
 **	Render or RenderLarge header
 **	Pixel header
-**	Bitmap header
+**	DrawPixels header
 */
 #define __GLX_DRAWPIXELS_HDR \
     CARD32	width B32;   \
@@ -811,6 +1310,46 @@ typedef struct {
 } __GLXdispatchDrawPixelsHeader;
 
 /*
+** Data that is specific to a glConvolutionFilter1D or glConvolutionFilter2D
+** call.  The data is sent in the following order:
+**	Render or RenderLarge header
+**	Pixel header
+**	ConvolutionFilter header
+** When a glConvolutionFilter1D call the height field is unexamined by the server.
+*/
+#define __GLX_CONV_FILT_HDR	\
+    CARD32	target B32;	\
+    CARD32	internalformat B32;	\
+    CARD32	width B32;	\
+    CARD32	height B32;	\
+    CARD32	format B32;	\
+    CARD32	type B32
+
+#define __GLX_CONV_FILT_HDR_SIZE 24
+
+#define __GLX_CONV_FILT_CMD_HDR_SIZE \
+    (__GLX_RENDER_HDR_SIZE + __GLX_PIXEL_HDR_SIZE + __GLX_CONV_FILT_HDR_SIZE)
+
+#define __GLX_CONV_FILT_CMD_DISPATCH_HDR_SIZE \
+    (__GLX_PIXEL_HDR_SIZE + __GLX_CONV_FILT_HDR_SIZE)
+typedef struct {
+    __GLX_RENDER_HDR;
+    __GLX_PIXEL_HDR;
+    __GLX_CONV_FILT_HDR;
+} __GLXConvolutionFilterHeader;
+
+typedef struct {
+    __GLX_RENDER_LARGE_HDR;
+    __GLX_PIXEL_HDR;
+    __GLX_CONV_FILT_HDR;
+} __GLXConvolutionFilterLargeHeader;
+
+typedef struct {
+    __GLX_PIXEL_HDR;
+    __GLX_CONV_FILT_HDR;
+} __GLXdispatchConvolutionFilterHeader;
+
+/*
 ** Data that is specific to a glDrawArraysEXT call.  The data is sent in the
 ** following order:
 **	Render or RenderLarge header
@@ -822,7 +1361,7 @@ typedef struct {
 #define __GLX_DRAWARRAYS_HDR \
     CARD32	numVertexes B32; \
     CARD32	numComponents B32; \
-    CARD32	primType B32 
+    CARD32	primType B32
 
 #define __GLX_DRAWARRAYS_HDR_SIZE 12
 
@@ -846,13 +1385,88 @@ typedef struct {
 #define __GLX_COMPONENT_HDR \
     CARD32	datatype B32; \
     INT32	numVals B32; \
-    CARD32	component B32 
+    CARD32	component B32
 
 typedef struct {
     __GLX_COMPONENT_HDR;
 } __GLXdispatchDrawArraysComponentHeader;
 
 #define __GLX_COMPONENT_HDR_SIZE 12
+
+/*
+** Data that is specific to a glColorTable call
+**	The data is sent in the following order:
+**	Render or RenderLarge header
+**	Pixel header
+**	ColorTable header
+*/
+
+#define __GLX_COLOR_TABLE_HDR	     \
+    CARD32	target B32;	    \
+    CARD32	internalformat B32; \
+    CARD32	width B32;	    \
+    CARD32	format B32;	    \
+    CARD32	type   B32
+
+#define __GLX_COLOR_TABLE_HDR_SIZE 20
+
+#define __GLX_COLOR_TABLE_CMD_HDR_SIZE \
+    (__GLX_RENDER_HDR_SIZE + __GLX_PIXEL_HDR_SIZE + __GLX_COLOR_TABLE_HDR_SIZE)
+
+typedef struct {
+    __GLX_RENDER_HDR;
+    __GLX_PIXEL_HDR;
+    __GLX_COLOR_TABLE_HDR;
+} __GLXColorTableHeader;
+
+typedef struct {
+    __GLX_RENDER_LARGE_HDR;
+    __GLX_PIXEL_HDR;
+    __GLX_COLOR_TABLE_HDR;
+} __GLXColorTableLargeHeader;
+
+typedef struct {
+    __GLX_PIXEL_HDR;
+    __GLX_COLOR_TABLE_HDR;
+} __GLXdispatchColorTableHeader;
+
+/*
+** Data that is specific to a glColorSubTable call
+**	The data is sent in the following order:
+**	Render or RenderLarge header
+**	Pixel header
+**	ColorTable header
+*/
+
+#define __GLX_COLOR_SUBTABLE_HDR    \
+    CARD32	target B32;	    \
+    CARD32	start B32; 	    \
+    CARD32	count B32;	    \
+    CARD32	format B32;	    \
+    CARD32	type   B32
+
+#define __GLX_COLOR_SUBTABLE_HDR_SIZE 20
+
+#define __GLX_COLOR_SUBTABLE_CMD_HDR_SIZE \
+    (__GLX_RENDER_HDR_SIZE + __GLX_PIXEL_HDR_SIZE + \
+     __GLX_COLOR_SUBTABLE_HDR_SIZE)
+
+typedef struct {
+    __GLX_RENDER_HDR;
+    __GLX_PIXEL_HDR;
+    __GLX_COLOR_SUBTABLE_HDR;
+} __GLXColorSubTableHeader;
+
+typedef struct {
+    __GLX_RENDER_LARGE_HDR;
+    __GLX_PIXEL_HDR;
+    __GLX_COLOR_SUBTABLE_HDR;
+} __GLXColorSubTableLargeHeader;
+
+typedef struct {
+    __GLX_PIXEL_HDR;
+    __GLX_COLOR_SUBTABLE_HDR;
+} __GLXdispatchColorSubTableHeader;
 
 
 /*****************************************************************************/
@@ -863,6 +1477,11 @@ typedef struct {
 #undef GLXContextID
 #undef GLXPixmap
 #undef GLXDrawable
+#undef GLXPbuffer
+#undef GLXWindow
+#undef GLXFBConfigID
+#undef GLXFBConfigIDSGIX
+#undef GLXPbufferSGIX
 
 
 /* Opcodes for GLX commands */
@@ -933,6 +1552,23 @@ typedef struct {
 #define X_GLsop_GetTexLevelParameteriv     139
 #define X_GLsop_IsEnabled                  140
 #define X_GLsop_IsList                     141
+#define X_GLsop_AreTexturesResident        143
+#define X_GLsop_DeleteTextures             144
+#define X_GLsop_GenTextures                145
+#define X_GLsop_IsTexture                  146
+#define X_GLsop_GetColorTable              147
+#define X_GLsop_GetColorTableParameterfv   148
+#define X_GLsop_GetColorTableParameteriv   149
+#define X_GLsop_GetConvolutionFilter       150
+#define X_GLsop_GetConvolutionParameterfv  151
+#define X_GLsop_GetConvolutionParameteriv  152
+#define X_GLsop_GetSeparableFilter         153
+#define X_GLsop_GetHistogram               154
+#define X_GLsop_GetHistogramParameterfv    155
+#define X_GLsop_GetHistogramParameteriv    156
+#define X_GLsop_GetMinmax                  157
+#define X_GLsop_GetMinmaxParameterfv       158
+#define X_GLsop_GetMinmaxParameteriv       159
 
 
 /* Opcodes for rendering commands */
@@ -1127,8 +1763,8 @@ typedef struct {
 #define X_GLrop_Translated                 189
 #define X_GLrop_Translatef                 190
 #define X_GLrop_Viewport                   191
-#define X_GLrop_DrawArrays                 4116
-#define X_GLrop_PolygonOffset              4098
+#define X_GLrop_DrawArrays                 193
+#define X_GLrop_PolygonOffset              192
 #define X_GLrop_CopyTexImage1D             4119
 #define X_GLrop_CopyTexImage2D             4120
 #define X_GLrop_CopyTexSubImage1D          4121
@@ -1138,14 +1774,56 @@ typedef struct {
 #define X_GLrop_BindTexture                4117
 #define X_GLrop_PrioritizeTextures         4118
 #define X_GLrop_Indexubv                   194
+#define X_GLrop_BlendColor                 4096
+#define X_GLrop_BlendEquation              4097
+#define X_GLrop_ColorTable                 2053
+#define X_GLrop_ColorTableParameterfv      2054
+#define X_GLrop_ColorTableParameteriv      2055
+#define X_GLrop_CopyColorTable             2056
+#define X_GLrop_ColorSubTable              195
+#define X_GLrop_CopyColorSubTable          196
+#define X_GLrop_ConvolutionFilter1D        4101
+#define X_GLrop_ConvolutionFilter2D        4102
+#define X_GLrop_ConvolutionParameterf      4103
+#define X_GLrop_ConvolutionParameterfv     4104
+#define X_GLrop_ConvolutionParameteri      4105
+#define X_GLrop_ConvolutionParameteriv     4106
+#define X_GLrop_CopyConvolutionFilter1D    4107
+#define X_GLrop_CopyConvolutionFilter2D    4108
+#define X_GLrop_SeparableFilter2D          4109
+#define X_GLrop_Histogram                  4110
+#define X_GLrop_Minmax                     4111
+#define X_GLrop_ResetHistogram             4112
+#define X_GLrop_ResetMinmax                4113
+#define X_GLrop_TexImage3D                 4114
+#define X_GLrop_TexSubImage3D              4115
+#define X_GLrop_CopyTexSubImage3D          4123
+#define X_GLrop_ActiveTextureARB           197
+#define X_GLrop_MultiTexCoord1dvARB        198
+#define X_GLrop_MultiTexCoord1fvARB        199
+#define X_GLrop_MultiTexCoord1ivARB        200
+#define X_GLrop_MultiTexCoord1svARB        201
+#define X_GLrop_MultiTexCoord2dvARB        202
+#define X_GLrop_MultiTexCoord2fvARB        203
+#define X_GLrop_MultiTexCoord2ivARB        204
+#define X_GLrop_MultiTexCoord2svARB        205
+#define X_GLrop_MultiTexCoord3dvARB        206
+#define X_GLrop_MultiTexCoord3fvARB        207
+#define X_GLrop_MultiTexCoord3ivARB        208
+#define X_GLrop_MultiTexCoord3svARB        209
+#define X_GLrop_MultiTexCoord4dvARB        210
+#define X_GLrop_MultiTexCoord4fvARB        211
+#define X_GLrop_MultiTexCoord4ivARB        212
+#define X_GLrop_MultiTexCoord4svARB        213
+#define X_GLrop_DrawArraysEXT              4116
 
 
 /* Opcodes for Vendor Private commands */
 
-#define X_GLvop_AreTexturesResident         11
-#define X_GLvop_DeleteTextures              12
-#define X_GLvop_GenTextures                 13
-#define X_GLvop_IsTexture                   14
+#define X_GLvop_AreTexturesResidentEXT      11
+#define X_GLvop_DeleteTexturesEXT           12
+#define X_GLvop_GenTexturesEXT              13
+#define X_GLvop_IsTextureEXT                14
 
 
 /* Opcodes for GLX vendor private commands */

@@ -1,0 +1,19 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/darwin/bundle/Japanese.lproj/Imakefile,v 1.1.2.1 2001/05/21 04:56:07 torrey Exp $
+
+#include <Server.tmpl>
+
+INCLUDES = -I$(SERVERSRC)/include
+
+VERS = XFree86VersionString
+DATE = XFree86DateString
+XF86_DEFS = $(INCLUDES) -DXF86_VERSION=$(VERS) -DXF86_REL_DATE=$(DATE) \
+    -DXF86_COPYRIGHT='"XFree86 $(VERS)\nCopyright 2001 XFree86 Project, Inc."'
+
+AllTarget(XDarwinHelp.html)
+CppFileTarget(XDarwinHelp.html,XDarwinHelp.html.cpp,$(XF86_DEFS), \
+	NullParameter)
+
+AllTarget(InfoPlist.strings)
+CppFileTarget(InfoPlist.strings,InfoPlist.strings.cpp,$(XF86_DEFS), \
+	NullParameter)
+

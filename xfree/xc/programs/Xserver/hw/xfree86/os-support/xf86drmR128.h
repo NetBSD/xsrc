@@ -23,9 +23,11 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
- * Author: Kevin E. Martin <kevin@precisioninsight.com>
+ * Author:
+ *   Gareth Hughes <gareth@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drmR128.h,v 3.4 2000/12/07 15:43:45 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86drmR128.h,v 3.11 2001/04/16 15:02:13 tsi Exp $
  *
  */
 
@@ -44,10 +46,10 @@
 #define DRM_R128_DEPTH		0x4
 
 typedef struct {
-   int sarea_priv_offset;
+   unsigned long sarea_priv_offset;
    int is_pci;
    int cce_mode;
-   int cce_secure;
+   int cce_secure;		/* FIXME: Deprecated, we should remove this */
    int ring_size;
    int usec_timeout;
 
@@ -58,12 +60,12 @@ typedef struct {
    unsigned int depth_offset, depth_pitch;
    unsigned int span_offset;
 
-   unsigned int fb_offset;
-   unsigned int mmio_offset;
-   unsigned int ring_offset;
-   unsigned int ring_rptr_offset;
-   unsigned int buffers_offset;
-   unsigned int agp_textures_offset;
+   unsigned long fb_offset;
+   unsigned long mmio_offset;
+   unsigned long ring_offset;
+   unsigned long ring_rptr_offset;
+   unsigned long buffers_offset;
+   unsigned long agp_textures_offset;
 } drmR128Init;
 
 extern int drmR128InitCCE( int fd, drmR128Init *info );
@@ -76,11 +78,12 @@ extern int drmR128WaitForIdleCCE( int fd );
 
 extern int drmR128EngineReset( int fd );
 
+extern int drmR128FullScreen( int fd, int enable );
+
 extern int drmR128SwapBuffers( int fd );
 extern int drmR128Clear( int fd, unsigned int flags,
-			 int x, int y, int w, int h,
-			 unsigned int clear_color,
-			 unsigned int clear_depth );
+			 unsigned int clear_color, unsigned int clear_depth,
+			 unsigned int color_mask, unsigned int depth_mask );
 
 extern int drmR128FlushVertexBuffer( int fd, int prim, int indx,
 				     int count, int discard );
@@ -104,7 +107,7 @@ extern int drmR128ReadDepthPixels( int fd, int n,
 
 extern int drmR128PolygonStipple( int fd, unsigned int *mask );
 
-extern int drmR128SubmitPacket( int fd, void *buffer,
-				int *count, int flags );
+extern int drmR128FlushIndirectBuffer( int fd, int indx,
+				       int start, int end, int discard );
 
 #endif

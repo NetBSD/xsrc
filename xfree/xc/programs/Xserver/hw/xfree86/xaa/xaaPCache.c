@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPCache.c,v 1.29 2000/06/13 02:51:24 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaPCache.c,v 1.30 2000/09/25 23:56:14 mvojkovi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"

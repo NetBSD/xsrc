@@ -1,5 +1,5 @@
-.TH XvGrabPort 3X
-.\" $XFree86$
+.TH XvGrabPort 3X __vendorversion__
+.\" $XFree86: xc/doc/man/Xv/XvGrabPort.man,v 1.5 2001/01/27 18:20:36 dawes Exp $
 .SH Name
 XvGrabPort \- lock port for exclusive use by client
 .\"

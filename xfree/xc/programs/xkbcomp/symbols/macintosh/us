@@ -1,5 +1,5 @@
 // $XConsortium: macintosh /main/10 1996/01/29 19:54:54 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/macintosh/us,v 1.1.2.1 1999/05/23 05:30:15 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/macintosh/us,v 1.4 2001/04/23 20:31:09 dawes Exp $
 
 
 // some symbols need a special charset, most symbols not added yet
@@ -35,7 +35,7 @@ xkb_symbols "extended" {
     key <AE11> {	[     minus,	underscore	]	};
     key <AE12> {	[     equal,	plus		],
 			[  notequal,    plusminus	]	};
-    key <BKSP> {	[ BackSpace,    Delete		]	};
+    key <BKSP> {	[ BackSpace			]	};
 
     key  <TAB> {	[ 	Tab,	ISO_Left_Tab	]	};
     key <AD01> {	[	  q,	Q 		],

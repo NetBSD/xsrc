@@ -1,4 +1,4 @@
-/* $TOG: locking.c /main/37 1998/02/06 17:42:31 kaleb $ */
+/* $Xorg: locking.c,v 1.4 2000/08/17 19:45:20 cpqbld Exp $ */
 /*
  
 Copyright 1992, 1998  The Open Group
@@ -315,7 +315,7 @@ static void _XPopReader(dpy, list, tail)
     }
 
     /* signal new front after it is in place */
-    if (dpy->lock->reply_first = (dpy->lock->reply_awaiters != NULL)) {
+    if ((dpy->lock->reply_first = (dpy->lock->reply_awaiters != NULL))) {
 	ConditionSignal(dpy, dpy->lock->reply_awaiters->cv);
     } else if (dpy->lock->event_awaiters) {
 	ConditionSignal(dpy, dpy->lock->event_awaiters->cv);
@@ -429,7 +429,7 @@ static void _XFreeDisplayLock(dpy)
 	    xcondition_clear(dpy->lock->writers);
 	    xcondition_free(dpy->lock->writers);
 	}
-	while (cvl = dpy->lock->free_cvls) {
+	while ((cvl = dpy->lock->free_cvls)) {
 	    dpy->lock->free_cvls = cvl->next;
 	    xcondition_clear(cvl->cv);
 	    Xfree((char *)cvl->cv);

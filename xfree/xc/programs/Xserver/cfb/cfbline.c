@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbline.c,v 3.2 1998/10/04 09:37:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbline.c,v 3.4 2001/01/17 22:36:35 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: cfbline.c /main/25 1998/02/09 14:06:12 kaleb $ */
+/* $Xorg: cfbline.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
 #include "X.h"
 
 #include "gcstruct.h"

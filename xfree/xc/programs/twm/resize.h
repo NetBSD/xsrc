@@ -44,12 +44,12 @@ in this Software without prior written authorization from The Open Group.
 /**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
-/* $XFree86: $ */
+/* $XFree86: xc/programs/twm/resize.h,v 1.4 2001/01/17 23:45:08 dawes Exp $ */
 
 
 /**********************************************************************
  *
- * $TOG: resize.h /main/8 1998/02/09 13:49:16 kaleb $
+ * $Xorg: resize.h,v 1.3 2000/08/17 19:54:07 cpqbld Exp $
  *
  * resize function externs
  *

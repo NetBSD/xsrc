@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/Imakefile,v 1.8 1999/06/14 07:32:08 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/Imakefile,v 1.10 2001/04/23 16:17:11 tsi Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -20,7 +20,7 @@ OBJS = $(MODOBJ) xf86RamDac.o xf86RamDacCmap.o xf86Cursor.o xf86HWCurs.o \
    LINTLIBS = ../../../dix/llib-ldix.ln ../../../os/llib-los.ln \
 	     ../../mfb/llib-lmfb.ln ../../mi/llib-lmi.ln
 
-DEPEND_DEFINES = -DRAMDAC_MODULE
+DEPEND_DEFINES = -DRAMDAC_MODULE DependDefines
 
 ModuleObjectRule()
 

@@ -1,4 +1,4 @@
-/* $XConsortium: dbestruct.h /main/3 1995/09/22 10:21:05 dpw $ */
+/* $Xorg: dbestruct.h,v 1.3 2000/08/17 19:48:16 cpqbld Exp $ */
 /******************************************************************************
  * 
  * Copyright (c) 1994, 1995  Hewlett-Packard Company

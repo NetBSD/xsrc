@@ -1,4 +1,4 @@
-/* $TOG: StrToBmap.c /main/14 1998/02/06 15:45:20 kaleb $ */
+/* $Xorg: StrToBmap.c,v 1.3 2000/08/17 19:46:03 cpqbld Exp $ */
 
 /*
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xmu/StrToBmap.c,v 1.3 1998/08/20 13:59:39 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/StrToBmap.c,v 1.5 2001/01/17 19:42:57 dawes Exp $ */
 
 #include	<X11/Intrinsic.h>
 #include	<X11/StringDefs.h>

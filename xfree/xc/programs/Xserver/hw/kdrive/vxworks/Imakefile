@@ -1,4 +1,4 @@
-XCOMM $XFree86: $
+XCOMM $XFree86: xc/programs/Xserver/hw/kdrive/vxworks/Imakefile,v 1.1 1999/12/30 03:03:21 robin Exp $
 #include <Server.tmpl>
 
 SRCS = vxworks.c vxkbd.c vxkmouse.c

@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/vidmode.c,v 1.3 2000/10/20 14:59:08 alanh Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/vidmode.c,v 1.4 2000/11/14 21:59:24 dawes Exp $
  */
 
 /*

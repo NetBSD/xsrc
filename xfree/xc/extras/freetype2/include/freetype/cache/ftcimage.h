@@ -1,6 +1,6 @@
 /***************************************************************************/
 /*                                                                         */
-/*  ftcimage.c                                                             */
+/*  ftcimage.h                                                             */
 /*                                                                         */
 /*    FreeType Image cache (body).                                         */
 /*                                                                         */
@@ -26,16 +26,23 @@
 #ifndef __FTCIMAGE_H__
 #define __FTCIMAGE_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_CACHE_H
-#include   FT_CACHE_INTERNAL_GLYPH_H
+
+#include <ft2build.h>
+#include FT_CACHE_H
+#include FT_CACHE_INTERNAL_GLYPH_H
+
 
 FT_BEGIN_HEADER
 
 
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Section>                                                             */
+  /*    cache_subsystem                                                    */
+  /*                                                                       */
+  /*************************************************************************/
+
+   
   /*************************************************************************/
   /*************************************************************************/
   /*************************************************************************/
@@ -47,25 +54,25 @@ FT_BEGIN_HEADER
   /*************************************************************************/
 
 
-#define  FTC_IMAGE_FORMAT( x )  ( (x) & 7 )
+#define FTC_IMAGE_FORMAT( x )  ( (x) & 7 )
 
 
-#define  ftc_image_format_bitmap      0
-#define  ftc_image_format_outline     1
+#define ftc_image_format_bitmap      0
+#define ftc_image_format_outline     1
 
-#define  ftc_image_flag_monochrome   16
-#define  ftc_image_flag_unhinted     32
-#define  ftc_image_flag_autohinted   64
-#define  ftc_image_flag_unscaled    128
-#define  ftc_image_flag_no_sbits    256
+#define ftc_image_flag_monochrome   16
+#define ftc_image_flag_unhinted     32
+#define ftc_image_flag_autohinted   64
+#define ftc_image_flag_unscaled    128
+#define ftc_image_flag_no_sbits    256
 
   /* monochrome bitmap */
-#define  ftc_image_mono             ftc_image_format_bitmap | \
-                                    ftc_image_flag_monochrome
+#define ftc_image_mono             ftc_image_format_bitmap | \
+                                   ftc_image_flag_monochrome
   /* anti-aliased bitmap */
-#define  ftc_image_grays            ftc_image_format_bitmap
+#define ftc_image_grays            ftc_image_format_bitmap
   /* scaled outline */
-#define  ftc_image_outline          ftc_image_format_outline
+#define ftc_image_outline          ftc_image_format_outline
 
 
   /*************************************************************************/
@@ -159,6 +166,9 @@ FT_BEGIN_HEADER
                                                  FTC_Image_Desc*  desc,
                                                  FT_UInt          gindex,
                                                  FT_Glyph        *aglyph );
+
+
+  /* */
 
 
 FT_END_HEADER

@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dac.c,v 1.1 2000/05/23 04:47:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dac.c,v 1.3 2001/04/05 17:42:33 dawes Exp $ */
 
 #include "ffb.h"
 #include "ffb_rcache.h"
@@ -348,6 +348,9 @@ init_dac_flags(FFBPtr pFfb)
 	unsigned int did, manuf_rev, partnum;
 	char *device;
 
+	/* Fetch kernel WID. */
+	p->kernel_wid = *((volatile unsigned char *)pFfb->dfb8x);
+
 	/* For AFB, assume it is PAC2 which also implies not having
 	 * the inverted cursor control attribute.
 	 */
@@ -425,7 +428,9 @@ static void
 restore_kernel_xchannel(FFBPtr pFfb)
 {
 	ffb_fbcPtr ffb = pFfb->regs;
-	unsigned int fbc, ppc, ppc_mask, drawop;
+	unsigned int fbc, ppc, ppc_mask, drawop, wid;
+
+	wid = pFfb->dac_info.kernel_wid;
 
 	if (pFfb->has_double_buffer)
 		fbc = FFB_FBC_WB_AB;
@@ -443,7 +448,7 @@ restore_kernel_xchannel(FFBPtr pFfb)
 
 	FFB_ATTR_RAW(pFfb, ppc, ppc_mask, ~0,
 		     (FFB_ROP_EDIT_BIT | GXcopy)|(FFB_ROP_NEW<<8),
-		     drawop, 0x0, fbc, 0xff);
+		     drawop, 0x0, fbc, wid);
 
 	FFBFifo(pFfb, 4);
 	FFB_WRITE64(&ffb->by, 0, 0);

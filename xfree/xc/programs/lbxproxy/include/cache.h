@@ -1,4 +1,4 @@
-/* $TOG: cache.h /main/10 1998/02/10 18:17:09 kaleb $ */
+/* $Xorg: cache.h,v 1.3 2000/08/17 19:53:57 cpqbld Exp $ */
 /*
 Copyright 1994, 1998  The Open Group
 

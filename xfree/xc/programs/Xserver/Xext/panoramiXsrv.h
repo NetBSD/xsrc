@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/panoramiXsrv.h,v 1.3 1999/09/06 11:27:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/panoramiXsrv.h,v 1.7 2001/01/03 02:54:17 keithp Exp $ */
 
 #ifndef _PANORAMIXSRV_H_
 #define _PANORAMIXSRV_H_

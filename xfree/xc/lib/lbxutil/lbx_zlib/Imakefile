@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/4 1996/11/03 19:32:10 kaleb $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:46:41 cpqbld Exp $
 
 #include <Library.tmpl>
 

@@ -1,4 +1,4 @@
-/* $XConsortium: nglecopy.h,v 1.1 93/08/08 12:57:01 rws Exp $ */
+/* $Xorg: nglecopy.h,v 1.3 2000/08/17 19:48:27 cpqbld Exp $ */
 /*************************************************************************
  * 
  * (c)Copyright 1992 Hewlett-Packard Co.,  All Rights Reserved.

@@ -1,4 +1,4 @@
-/* $TOG: cfb8bit.c /main/14 1998/02/09 14:03:59 kaleb $ */
+/* $Xorg: cfb8bit.c,v 1.3 2000/08/17 19:48:12 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1994, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/cfb/cfb8bit.c,v 1.4 2001/01/17 22:36:34 dawes Exp $ */
 
 /*
  * cfb8bit.c

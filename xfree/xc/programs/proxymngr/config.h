@@ -1,4 +1,4 @@
-/* $TOG: config.h /main/5 1998/02/09 13:45:26 kaleb $ */
+/* $Xorg: config.h,v 1.3 2000/08/17 19:54:00 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group

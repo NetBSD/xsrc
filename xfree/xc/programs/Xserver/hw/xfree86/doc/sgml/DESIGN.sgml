@@ -27,7 +27,7 @@
 
 <title>XFree86 X server ``New Design'' (DRAFT)
 <author>The XFree86 Project, Inc
-<date>Last modified 2 December 2000
+<date>Last modified 1 May 2001
 
 
 
@@ -36,7 +36,7 @@
 
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DESIGN.sgml,v 1.39 2000/12/04 18:49:54 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DESIGN.sgml,v 1.44 2001/05/19 00:40:30 dawes Exp $
 </ident>
 
 
@@ -2561,7 +2561,7 @@ Next, the higher level functions that most drivers would use.
 
     </quote>
 
-    &s.code;OptionInfoPtr xf86TokenToOptinfo(OptionInfoPtr table, int token)&e.code;
+    &s.code;OptionInfoPtr xf86TokenToOptinfo(const OptionInfoRec *table, int token)&e.code;
     <quote><p>
       Returns a pointer to the &s.code;OptionInfoRec&e.code; in
       &s.code;table&e.code; with a token field matching
@@ -2570,7 +2570,7 @@ Next, the higher level functions that most drivers would use.
 
     </quote>
 
-    &s.code;Bool xf86IsOptionSet(OptionInfoPtr table, int token)&e.code;
+    &s.code;Bool xf86IsOptionSet(const OptionInfoRec *table, int token)&e.code;
     <quote><p>
       Returns the &s.code;found&e.code; field of the
       &s.code;OptionInfoRec&e.code; in &s.code;table&e.code; with a
@@ -2582,7 +2582,7 @@ Next, the higher level functions that most drivers would use.
 
     </quote>
 
-    &s.code;char *xf86GetOptValString(OptionInfoPtr table, int token)&e.code;
+    &s.code;char *xf86GetOptValString(const OptionInfoRec *table, int token)&e.code;
     <quote><p>
       Returns the &s.code;value.str&e.code; field of the
       &s.code;OptionInfoRec&e.code; in &s.code;table&e.code; with a
@@ -2591,7 +2591,7 @@ Next, the higher level functions that most drivers would use.
 
     </quote>
 
-    &s.code;Bool xf86GetOptValInteger(OptionInfoPtr table, int token,
+    &s.code;Bool xf86GetOptValInteger(const OptionInfoRec *table, int token,
 			&f.indent;int *value)&e.code;
     <quote><p>
       Returns via &s.code;*value&e.code; the &s.code;value.num&e.code;
@@ -2604,7 +2604,7 @@ Next, the higher level functions that most drivers would use.
 
     </quote>
 
-    &s.code;Bool xf86GetOptValULong(OptionInfoPtr table, int token,
+    &s.code;Bool xf86GetOptValULong(const OptionInfoRec *table, int token,
 			&f.indent;unsigned long *value)&e.code;
     <quote><p>
       Like &s.code;xf86GetOptValInteger()&e.code;, except the value is
@@ -2612,7 +2612,7 @@ Next, the higher level functions that most drivers would use.
 
     </quote>
 
-    &s.code;Bool xf86GetOptValReal(OptionInfoPtr table, int token,
+    &s.code;Bool xf86GetOptValReal(const OptionInfoRec *table, int token,
 			&f.indent;double *value)&e.code;
     <quote><p>
       Like &s.code;xf86GetOptValInteger()&e.code;, except that
@@ -2620,7 +2620,7 @@ Next, the higher level functions that most drivers would use.
 
     </quote>
 
-    &s.code;Bool xf86GetOptValFreq(OptionInfoPtr table, int token,
+    &s.code;Bool xf86GetOptValFreq(const OptionInfoRec *table, int token,
 			&f.indent;OptFreqUnits expectedUnits, double *value)&e.code;
     <quote><p>
       Like &s.code;xf86GetOptValInteger()&e.code;, except that the
@@ -2636,7 +2636,7 @@ Next, the higher level functions that most drivers would use.
 
     </quote>
 
-    &s.code;Bool xf86GetOptValBool(OptionInfoPtr table, int token, Bool *value)&e.code;
+    &s.code;Bool xf86GetOptValBool(const OptionInfoRec *table, int token, Bool *value)&e.code;
     <quote><p>
       This function is used to check boolean options
       (&s.code;OPTV_BOOLEAN&e.code;).  If the function return value is
@@ -2654,7 +2654,7 @@ Next, the higher level functions that most drivers would use.
 
     </quote>
 
-    &s.code;Bool xf86ReturnOptValBool(OptionInfoPtr table, int token, Bool def)&e.code;
+    &s.code;Bool xf86ReturnOptValBool(const OptionInfoRec *table, int token, Bool def)&e.code;
     <quote><p>
       This function is used to check boolean options
       (&s.code;OPTV_BOOLEAN&e.code;).  If the option is set, its value
@@ -5774,7 +5774,15 @@ programming the standard VGA registers, and for handling VGA colourmaps.
       &s.code;hwp&e.code; with the standard VGA set of functions.  This
       is called by &s.code;vgaHWGetHWRec()&e.code;, so there is usually
       no need to call this explicitly.  The register access functions
-      are described below.
+      are described below.  If the registers are shadowed in some other
+      port I/O space (for example a PCI I/O region), these functions
+      can be used to access the shadowed registers if
+      &s.code;hwp-&gt;PIOOffset&e.code; is initialised with
+      &s.code;offset&e.code;, calculated in such a way that when the
+      standard VGA I/O port value is added to it the correct offset into
+      the PIO area results.  This value is initialised to zero in
+      &s.code;vgaHWGetHWRec()&e.code;.  (Note: the PIOOffset functionality
+      is present in XFree86 4.1.0 and later.)
 
     </quote>
 
@@ -5858,6 +5866,20 @@ programming the standard VGA registers, and for handling VGA colourmaps.
       &s.code;vgaHW.h&e.code; that does the same thing, and this may be
       used when the vgahw module is not loaded (for example, in the
       &s.code;ChipProbe()&e.code; function).
+
+    </quote>
+
+    &s.code;void vgaHWEnable(vgaHWPtr hwp)&e.code;
+    <quote><p>
+      This function enables the VGA subsystem.  (Note, this function is
+      present in XFree86 4.1.0 and later.).
+
+    </quote>
+
+    &s.code;void vgaHWDisable(vgaHWPtr hwp)&e.code;
+    <quote><p>
+      This function disables the VGA subsystem.  (Note, this function is
+      present in XFree86 4.1.0 and later.).
 
     </quote>
 
@@ -6188,6 +6210,20 @@ programming the standard VGA registers, and for handling VGA colourmaps.
       Return the value read from the DAC Data register.
 
     </quote>
+
+    &s.code;CARD8 readEnable(vgaHWptr hwp)&e.code;
+    <quote><p>
+      Return the value read from the VGA Enable register.  (Note: This
+      function is present in XFree86 4.1.0 and later.)
+
+    </quote>
+
+    &s.code;void writeEnable(vgaHWPtr hwp, CARD8 value)&e.code;
+    <quote><p>
+      Write &s.code;value&e.code; to the VGA Enable register.  (Note: This
+      function is present in XFree86 4.1.0 and later.)
+
+    </quote>
   </quote>
 
 <sect>Some notes about writing a driver<label id="sample">
@@ -6409,6 +6445,7 @@ typedef struct {
     Bool   noAccel;
     Bool   hwCursor;
     CloseScreenProcPtr CloseScreen;
+    OptionInfoPtr Options;
     ...
 } ZZZRec, *ZZZPtr;
     </code>
@@ -6425,15 +6462,13 @@ typedef enum {
     OPTION_NOACCEL
 } ZZZOpts;
 
-static OptionInfoRec ZZZOptions[] = {
+static const OptionInfoRec ZZZOptions[] = {
   { OPTION_FOO_HACK,  "FooHack",   OPTV_INTEGER, {0}, FALSE },
   { OPTION_PCI_RETRY, "PciRetry",  OPTV_BOOLEAN, {0}, FALSE },
   { OPTION_HW_CURSOR, "HWcursor",  OPTV_BOOLEAN, {0}, FALSE },
   { OPTION_NOACCEL,   "NoAccel",   OPTV_BOOLEAN, {0}, FALSE },
   { -1,               NULL,        OPTV_NONE,    {0}, FALSE }
 };
-
-#define nZZZOptions (sizeof(ZZZOptions) / sizeof(ZZZOptions[0]))
     </code>
 <p>
 </itemize>
@@ -6721,8 +6756,6 @@ ZZZProbe(DriverPtr drv, int flags)
 static Bool
 ZZZPreInit(ScrnInfoPtr pScrn, int flags)
 {
-    OptionInfoRec options[nZZZOptions];
-
     /* Fill in the monitor field */
     pScrn->monitor = pScrn->confScreen->monitor;
 
@@ -6801,10 +6834,14 @@ ZZZPreInit(ScrnInfoPtr pScrn, int flags)
 
     /*
      * Process the options based on the information in ZZZOptions.
-     * The results are written to options.
+     * The results are written to pZzz->Options.  If all of the options
+     * processing is done within this function a local variable "options"
+     * can be used instead of pZzz->Options.
      */
-    (void)memcpy(options, ZZZOptions, sizeof(ZZZOptions));
-    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, options);
+    if (!(pZzz->Options = xalloc(sizeof(ZZZOptions))))
+        return FALSE;
+    (void)memcpy(pZzz->Options, ZZZOptions, sizeof(ZZZOptions));
+    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pZzz->Options);
 
     /*
      * Set various fields of ScrnInfoRec and/or ZZZRec based on
@@ -6812,25 +6849,25 @@ ZZZPreInit(ScrnInfoPtr pScrn, int flags)
      */
     from = X_DEFAULT;
     pZzz->hwCursor = FALSE;
-    if (xf86IsOptionSet(options, OPTION_HW_CURSOR)) {
+    if (xf86IsOptionSet(pZzz->Options, OPTION_HW_CURSOR)) {
         from = X_CONFIG;
         pZzz->hwCursor = TRUE;
     }
     xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
                pZzz->hwCursor ? "HW" : "SW");
-    if (xf86IsOptionSet(options, OPTION_NOACCEL)) {
+    if (xf86IsOptionSet(pZzz->Options, OPTION_NOACCEL)) {
         pZzz->noAccel = TRUE;
         xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
                    "Acceleration disabled\n");
     } else {
         pZzz->noAccel = FALSE;
     }
-    if (xf86IsOptionSet(options, OPTION_PCI_RETRY)) {
+    if (xf86IsOptionSet(pZzz->Options, OPTION_PCI_RETRY)) {
         pZzz->UsePCIRetry = TRUE;
         xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "PCI retry enabled\n");
     }
     pZzz->fooHack = 0;
-    if (xf86GetOptValInteger(options, OPTION_FOO_HACK,
+    if (xf86GetOptValInteger(pZzz->Options, OPTION_FOO_HACK,
                              &amp;pZzz->fooHack)) {
         xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Foo Hack set to %d\n",
                    pZzz->fooHack);

@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.78 2000/03/24 18:12:38 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.81 2001/01/06 20:19:12 tsi Exp $ */
 
 #include "X.h"
 #include "os.h"
@@ -47,6 +47,8 @@
 extern char *optarg;
 extern int optind, opterr;
 #endif
+
+pciVideoPtr *xf86PciVideoInfo = NULL;
 
 void usage(void);
 void identify_card(pciConfigPtr pcr, int verbose);

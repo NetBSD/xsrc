@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810ioctl.c,v 1.5 2001/03/21 16:14:21 dawes Exp $ */
 
 #include <stdio.h>
 #include <unistd.h>
@@ -200,7 +200,6 @@ void i810DmaFinish( i810ContextPtr imesa  )
    FLUSH_BATCH( imesa );
 
    if (imesa->sarea->last_quiescent != imesa->sarea->last_enqueue) {
-     
       if (I810_DEBUG&DEBUG_VERBOSE_IOCTL) 
 	 fprintf(stderr, "i810DmaFinish\n");
 
@@ -214,14 +213,22 @@ void i810DmaFinish( i810ContextPtr imesa  )
 
 void i810RegetLockQuiescent( i810ContextPtr imesa  ) 
 {
+   /* XXX I disabled this conditional.  Doing so fixes all the readpixels
+    * problems.  The problem was that we'd sometimes read from the frame
+    * buffer (via the span functions) before rendering was completed.
+    * Taking out this conditional solves that problem.  (BrianP)
+    *
    if (imesa->sarea->last_quiescent != imesa->sarea->last_enqueue) {
+   */
       if (I810_DEBUG&DEBUG_VERBOSE_IOCTL)
 	 fprintf(stderr, "i810RegetLockQuiescent\n");
 
       drmUnlock(imesa->driFd, imesa->hHWContext);
       i810GetLock( imesa, DRM_LOCK_QUIESCENT ); 
       imesa->sarea->last_quiescent = imesa->sarea->last_enqueue;
+   /*
    }
+   */
 }
 
 void i810WaitAgeLocked( i810ContextPtr imesa, int age  ) 

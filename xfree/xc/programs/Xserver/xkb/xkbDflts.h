@@ -1,4 +1,4 @@
-/* $XConsortium: xkbDflts.h /main/6 1995/12/07 21:22:44 kaleb $ */
+/* $Xorg: xkbDflts.h,v 1.3 2000/08/17 19:53:47 cpqbld Exp $ */
 /* This file generated automatically by xkbcomp */
 /* DO  NOT EDIT */
 #ifndef DEFAULT_H

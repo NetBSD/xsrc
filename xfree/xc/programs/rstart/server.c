@@ -1,4 +1,4 @@
-/* $XConsortium: server.c /main/14 1996/12/09 17:58:29 kaleb $ */
+/* $Xorg: server.c,v 1.5 2000/08/17 19:54:01 cpqbld Exp $ */
 
 /************************************************************************/
 /* Copyright (c) 1993 Quarterdeck Office Systems			*/
@@ -23,7 +23,7 @@
 /* OF WHETHER IN AN ACTION IN CONTRACT, TORT OR NEGLIGENCE, ARISING OUT	*/
 /* OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.	*/
 /************************************************************************/
-/* $XFree86: $ */
+/* $XFree86: xc/programs/rstart/server.c,v 1.4 2001/01/17 23:45:03 dawes Exp $ */
 
 /* Extended rsh "helper" program */
 #include <stdio.h>

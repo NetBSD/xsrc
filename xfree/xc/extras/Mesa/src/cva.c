@@ -612,7 +612,7 @@ void gl_prepare_arrays_cva( struct vertex_buffer *VB )
       if (enable & VERT_INDEX) 
       {
 	 GLvector1ui *index = VB->IndexPtr = &cva->v.Index; 
-	 VB->Index[0] = VB->Index[1] = VB->IndexPtr;
+	 VB->Index[0] = VB->Index[1] = VB->IndexPtr = &cva->v.Index;
 
 #ifdef VAO
 	 client_data = &ctx->Array.Current->Index;

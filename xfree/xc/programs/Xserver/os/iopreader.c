@@ -1,4 +1,4 @@
-/* $XConsortium: iopreader.c,v 1.2 94/04/12 17:24:33 dpw Exp $ */
+/* $Xorg: iopreader.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
 
 /* Copyright (c) 1987 by the Regents of the University of California
  * Copyright (c) 1994 by the Vrije Universiteit, Amsterdam.

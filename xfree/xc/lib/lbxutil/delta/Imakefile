@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/4 1996/12/04 10:23:49 lehors $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:46:40 cpqbld Exp $
 
 #define IncSubdir X11
 #include <Library.tmpl>

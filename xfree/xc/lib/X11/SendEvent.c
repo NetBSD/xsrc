@@ -1,4 +1,4 @@
-/* $TOG: SendEvent.c /main/9 1998/02/06 17:51:10 kaleb $ */
+/* $Xorg: SendEvent.c,v 1.3 2000/08/17 19:44:52 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

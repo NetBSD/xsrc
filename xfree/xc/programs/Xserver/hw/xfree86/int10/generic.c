@@ -1,11 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/generic.c,v 1.12 2000/10/12 11:15:41 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/generic.c,v 1.22.2.1 2001/05/28 14:23:39 eich Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
  *                 Copyright 1999 Egbert Eich
  */
 #include "xf86.h"
-#include "xf86str.h"
 #include "xf86_OSproc.h"
 #include "xf86_ansic.h"
 #include "xf86Pci.h"
@@ -57,24 +56,32 @@ xf86Int10InfoPtr
 xf86InitInt10(int entityIndex)
 {
     xf86Int10InfoPtr pInt;
-    int screen, cs;
+    int screen;
     void* base = 0;
     void* vbiosMem = 0;
+    void* options = NULL;
     legacyVGARec vga;
+    xf86int10BiosLocation bios;
     
+#ifdef _PC
+    CARD32 cs;
+#endif
     screen = (xf86FindScreenForEntity(entityIndex))->scrnIndex;
-    
-    if (int10skip(xf86Screens[screen],entityIndex))
-	return NULL;
 
-    pInt = (xf86Int10InfoPtr)xnfcalloc(1,sizeof(xf86Int10InfoRec));
+    options = xf86HandleInt10Options(xf86Screens[screen],entityIndex);
+    
+    if (int10skip(options)) {
+	xfree(options);
+	return NULL;
+    }
+    
+    pInt = (xf86Int10InfoPtr)xnfcalloc(1, sizeof(xf86Int10InfoRec));
     pInt->entityIndex = entityIndex;
     if (!xf86Int10ExecSetup(pInt))
 	goto error0;
     pInt->mem = &genericMem;
-    pInt->private = (pointer)xnfcalloc(1,sizeof(genericInt10Priv));
-    INTPriv(pInt)->alloc = 
-	(pointer)xnfcalloc(1,ALLOC_ENTRIES(getpagesize()));
+    pInt->private = (pointer)xnfcalloc(1, sizeof(genericInt10Priv));
+    INTPriv(pInt)->alloc = (pointer)xnfcalloc(1, ALLOC_ENTRIES(getpagesize()));
     pInt->scrnIndex = screen;
     base = INTPriv(pInt)->base = xnfalloc(SYS_BIOS);
 
@@ -85,11 +92,11 @@ xf86InitInt10(int entityIndex)
     MapVRam(pInt);
 #ifdef _PC
     if (!sysMem)
-	sysMem = xf86MapVidMem(screen,VIDMEM_FRAMEBUFFER,SYS_BIOS,BIOS_SIZE);
+	sysMem = xf86MapVidMem(screen, VIDMEM_FRAMEBUFFER, SYS_BIOS, BIOS_SIZE);
     INTPriv(pInt)->sysMem = sysMem;
-    
-    if (xf86ReadBIOS(0,0,(unsigned char *)base,LOW_PAGE_SIZE) < 0) {
-	xf86DrvMsg(screen,X_ERROR,"Cannot read int vect\n");
+
+    if (xf86ReadBIOS(0, 0, base, LOW_PAGE_SIZE) < 0) {
+	xf86DrvMsg(screen, X_ERROR, "Cannot read int vect\n");
 	goto error1;
     }
 
@@ -105,78 +112,200 @@ xf86InitInt10(int entityIndex)
 	    xf86DrvMsg(screen, X_WARNING,
 		"Unable to retrieve all of segment 0x%06X.\n", cs);
 
-    if (xf86IsEntityPrimary(entityIndex)) {
-	cs = MEM_RW(pInt,((0x10<<2)+2));
+    xf86int10ParseBiosLocation(options,&bios);
+    
+    if (xf86IsEntityPrimary(entityIndex) 
+	&& !(initPrimary(options))) {
 
-	vbiosMem = (unsigned char *)base + (cs << 4);
-	if (!int10_check_bios(screen, cs, vbiosMem)) {
-	    cs = MEM_RW(pInt,((0x42<<2)+2));
+	if (bios.bus == BUS_ISA && bios.location.legacy) {
+	    xf86DrvMsg(screen, X_CONFIG,
+			   "Overriding BIOS location: 0x%lx\n",
+		       bios.location.legacy);
+	    cs = bios.location.legacy >> 4;
 	    vbiosMem = (unsigned char *)base + (cs << 4);
 	    if (!int10_check_bios(screen, cs, vbiosMem)) {
-		cs = V_BIOS >> 4;
+		xf86DrvMsg(screen, X_ERROR,
+			   "No V_BIOS at specified address 0x%x\n",cs << 4);
+		goto error1;
+	    }
+	} else {
+	    if (bios.bus == BUS_PCI) {
+		xf86DrvMsg(screen, X_WARNING,
+			   "Option BiosLocation for primary device ignored: "
+			   "It points to PCI.\n");
+		xf86DrvMsg(screen, X_WARNING,
+			   "You must set Option InitPrimary also\n");
+	    }
+	    
+	    cs = MEM_RW(pInt,((0x10<<2)+2));
+
+	    vbiosMem = (unsigned char *)base + (cs << 4);
+	    if (!int10_check_bios(screen, cs, vbiosMem)) {
+		cs = MEM_RW(pInt, (0x42 << 2) + 2);
 		vbiosMem = (unsigned char *)base + (cs << 4);
 		if (!int10_check_bios(screen, cs, vbiosMem)) {
-		    xf86DrvMsg(screen,X_ERROR,"No V_BIOS found\n");
-		    goto error1;
+		    cs = V_BIOS >> 4;
+		    vbiosMem = (unsigned char *)base + (cs << 4);
+		    if (!int10_check_bios(screen, cs, vbiosMem)) {
+			xf86DrvMsg(screen, X_ERROR, "No V_BIOS found\n");
+			goto error1;
+		    }
 		}
 	    }
 	}
-	xf86DrvMsg(screen,X_INFO,"Primary V_BIOS segment is: 0x%x\n",cs);
 	
+	xf86DrvMsg(screen, X_INFO, "Primary V_BIOS segment is: 0x%x\n", cs);
+
 	set_return_trap(pInt);
 	pInt->BIOSseg = cs;
     } else {
+	BusType location_type;
+	int bios_location = V_BIOS;
+	int pci_entity;
+	
+        EntityInfoPtr pEnt = xf86GetEntityInfo(pInt->entityIndex);
         reset_int_vect(pInt);
 	set_return_trap(pInt);
-	vbiosMem = (unsigned char *)base + V_BIOS;
-	if (!mapPciRom(pInt,(unsigned char *)(vbiosMem))) {
-	    xf86DrvMsg(screen,X_ERROR,"Cannot read V_BIOS (3)\n");
+
+	if (bios.bus != BUS_NONE) {
+	    switch (location_type = bios.bus) {
+	    case BUS_PCI:
+		xf86DrvMsg(screen,X_CONFIG,"Overriding bios location: "
+			   "PCI:%i:%i%i\n",bios.location.pci.bus,
+			   bios.location.pci.dev,bios.location.pci.func);
+		break;
+	    case BUS_ISA:
+		bios_location = bios.location.legacy;
+		if (bios.location.legacy)
+		    xf86DrvMsg(screen,X_CONFIG,"Overriding bios location: "
+			       "Legacy:0x%x\n",bios.location.legacy);
+		else
+		    xf86DrvMsg(screen,X_CONFIG,"Overriding bios location: "
+			       "Legacy\n");
+		break;
+	    default:
+		break;
+	    }
+	} else
+	    location_type = pEnt->location.type;
+	
+	vbiosMem = (unsigned char *)base + bios_location;
+	
+	switch (location_type) {
+	case BUS_PCI:
+	    if (bios.bus == BUS_PCI)
+		pci_entity = xf86GetPciEntity(bios.location.pci.bus,
+					      bios.location.pci.dev,
+					      bios.location.pci.func);
+	    else 
+		pci_entity = pInt->entityIndex;
+	    if (!mapPciRom(pci_entity,(unsigned char *)(vbiosMem))) {
+		xf86DrvMsg(screen,X_ERROR,"Cannot read V_BIOS (3)\n");
+		goto error1;
+	    }
+	    break;
+	case BUS_ISA:
+#if 0
+	    (void)memset(vbiosMem, 0, V_BIOS_SIZE);
+	    if (xf86ReadBIOS(bios_location, 0, vbiosMem, V_BIOS_SIZE)
+		< V_BIOS_SIZE)
+		xf86DrvMsg(screen, X_WARNING,
+		    "Unable to retrieve all of segment 0x%x.\n",bios_location);
+#endif
+	    if (!int10_check_bios(screen, bios_location >> 4, vbiosMem)) {
+	        xf86DrvMsg(screen,X_ERROR,"Cannot read V_BIOS (4)\n");
+		goto error1;
+	    }
+	default:
 	    goto error1;
 	}
+	xfree(pEnt);
 	pInt->BIOSseg = V_BIOS >> 4;
 	pInt->num = 0xe6;
-	LockLegacyVGA(screen, &vga); 
+	LockLegacyVGA(screen, &vga);
 	xf86ExecX86int10(pInt);
 	UnlockLegacyVGA(screen, &vga);
     }
 #else
     if (!sysMem) {
 	sysMem = xnfalloc(BIOS_SIZE);
-	setup_system_bios((memType)sysMem);
+	setup_system_bios(sysMem);
     }
     INTPriv(pInt)->sysMem = sysMem;
     setup_int_vect(pInt);
     set_return_trap(pInt);
-    vbiosMem = (unsigned char *)base + V_BIOS;
+
+    /*
+     * Retrieve two segments:  one at V_BIOS, the other 64kB beyond the first.
+     * This'll catch any BIOS that might have been initialised before server
+     * entry.
+     */
+    vbiosMem = (char *)base + V_BIOS;
+    (void)memset(vbiosMem, 0, 2 * V_BIOS_SIZE);
+    if (xf86ReadBIOS(V_BIOS, 0, vbiosMem, V_BIOS_SIZE) < V_BIOS_SIZE)
+	xf86DrvMsg(screen, X_WARNING,
+	    "Unable to retrieve all of segment 0x0C0000.\n");
+    else if (((unsigned char *)vbiosMem)[2] > 0x80)
+    if (xf86ReadBIOS(V_BIOS + V_BIOS_SIZE, 0,
+	    (unsigned char *)vbiosMem + V_BIOS_SIZE, V_BIOS_SIZE) < V_BIOS_SIZE)
+	xf86DrvMsg(screen, X_WARNING,
+	    "Unable to retrieve all of segment 0x0D0000.\n");
+
+    /*
+     * If this adapter is the primary, use its post-init BIOS (if we can find
+     * it).
+     */
+    xf86int10ParseBiosLocation(options,&bios);
+    
     {
-        EntityInfoPtr pEnt = xf86GetEntityInfo(pInt->entityIndex);
-	switch (pEnt->location.type) {
-	case BUS_PCI:
-	    if (!mapPciRom(pInt,(unsigned char *)(vbiosMem))) {
-	      xf86DrvMsg(screen,X_ERROR,"Cannot read V_BIOS (4)\n");
-	      goto error1;
+	int bios_location = V_BIOS;
+	Bool done = FALSE;
+	vbiosMem = (unsigned char *)base + bios_location;
+	
+	if ((bios.bus == BUS_ISA)
+	    || (bios.bus != BUS_PCI && xf86IsEntityPrimary(entityIndex))) {
+		if (bios.bus == BUS_ISA && bios.location.legacy) {
+		    xf86DrvMsg(screen, X_CONFIG,"Looking for legacy V_BIOS "
+			       "at 0x%x for %sprimary device\n",
+			       bios.location.legacy,
+			       xf86IsEntityPrimary(entityIndex) ? "" : "non-");
+		    bios_location = bios.location.legacy;
+		    vbiosMem = (unsigned char *)base + bios_location;
+		}
+		if (int10_check_bios(screen, bios_location >> 4, vbiosMem)) 
+		    done = TRUE;
+		else 
+		    xf86DrvMsg(screen,X_INFO,
+			       "No legacy BIOS found -- trying PCI\n");
+	} 
+	if (!done) {
+	    int pci_entity;
+	    
+	    if (bios.bus == BUS_PCI) {
+		xf86DrvMsg(screen,X_CONFIG,"Looking for BIOS at PCI:%i%i%i\n",
+			   bios.location.pci.bus,bios.location.pci.dev,
+			   bios.location.pci.func);		
+		pci_entity = xf86GetPciEntity(bios.location.pci.bus,
+					      bios.location.pci.dev,
+					      bios.location.pci.func);
+	    } else 
+		pci_entity = pInt->entityIndex;
+
+	    if (!mapPciRom(pci_entity, vbiosMem)) {
+		    xf86DrvMsg(screen, X_ERROR, "Cannot read V_BIOS (5)\n");
+		    goto error1;
 	    }
-	    break;
-	case BUS_ISA:  
-	    (void)memset(vbiosMem, 0, V_BIOS_SIZE);
-	    if (xf86ReadBIOS(V_BIOS, 0, vbiosMem, V_BIOS_SIZE) < V_BIOS_SIZE)
-		xf86DrvMsg(screen, X_WARNING,
-		    "Unable to retrieve all of segment 0x0C0000.\n");
-	    if (!int10_check_bios(screen, V_BIOS >> 4, vbiosMem)) {
-	        xf86DrvMsg(screen,X_ERROR,"Cannot read V_BIOS (5)\n");
-		goto error1;
-	    }
-	    break;
-	default:
-	    goto error1;
-	}
+	} 
+
     }
+
     pInt->BIOSseg = V_BIOS >> 4;
     pInt->num = 0xe6;
-    LockLegacyVGA(screen, &vga);	   
+    LockLegacyVGA(screen, &vga);
     xf86ExecX86int10(pInt);
     UnlockLegacyVGA(screen, &vga);
 #endif
+    xfree(options);
     return pInt;
 
  error1:
@@ -186,7 +315,8 @@ xf86InitInt10(int entityIndex)
     xfree(pInt->private);
  error0:
     xfree(pInt);
-
+    xfree(options);
+    
     return NULL;
 }
 
@@ -197,23 +327,24 @@ MapVRam(xf86Int10InfoPtr pInt)
     int pagesize = getpagesize();
     int size = ((VRAM_SIZE + pagesize - 1)/pagesize) * pagesize;
 
-    INTPriv(pInt)->vRam = xf86MapVidMem(screen,VIDMEM_MMIO,V_RAM,size);
+    INTPriv(pInt)->vRam = xf86MapVidMem(screen, VIDMEM_MMIO, V_RAM, size);
 }
 
-static void 
+static void
 UnmapVRam(xf86Int10InfoPtr pInt)
 {
     int screen = pInt->scrnIndex;
     int pagesize = getpagesize();
     int size = ((VRAM_SIZE + pagesize - 1)/pagesize) * pagesize;
 
-    xf86UnMapVidMem(screen,INTPriv(pInt)->vRam,size);
+    xf86UnMapVidMem(screen, INTPriv(pInt)->vRam, size);
 }
 
-void
+Bool
 MapCurrentInt10(xf86Int10InfoPtr pInt)
 {
-  /* nothing to do here */
+    /* nothing to do here */
+    return TRUE;
 }
 
 void
@@ -221,7 +352,7 @@ xf86FreeInt10(xf86Int10InfoPtr pInt)
 {
     if (!pInt)
       return;
-    if (Int10Current == pInt) 
+    if (Int10Current == pInt)
 	Int10Current = NULL;
     xfree(INTPriv(pInt)->base);
     UnmapVRam(pInt);
@@ -231,83 +362,79 @@ xf86FreeInt10(xf86Int10InfoPtr pInt)
 }
 
 void *
-xf86Int10AllocPages(xf86Int10InfoPtr pInt,int num, int *off)
+xf86Int10AllocPages(xf86Int10InfoPtr pInt, int num, int *off)
 {
     int pagesize = getpagesize();
     int num_pages = ALLOC_ENTRIES(pagesize);
     int i,j;
 
-    for (i=0;i<num_pages - num;i++) {
+    for (i = 0; i < (num_pages - num); i++) {
 	if (INTPriv(pInt)->alloc[i] == 0) {
-	    for (j=i;j < num + i;j++)
+	    for (j = i; j < (num + i); j++)
 		if (INTPriv(pInt)->alloc[j] != 0)
 		    break;
-	    if (j == num + i)
+	    if (j == (num + i))
 		break;
-	    else
-		i = i + num;
+	    i += num;
 	}
     }
-    if (i == num_pages - num)
+    if (i == (num_pages - num))
 	return NULL;
-    
-    for (j = i; j < i + num; j++)
+
+    for (j = i; j < (i + num); j++)
 	INTPriv(pInt)->alloc[j] = 1;
 
     *off = (i + 1) * pagesize;
-    
-    return (void *)
-	((char*)INTPriv(pInt)->base + (i + 1) * pagesize);
+
+    return (char *)INTPriv(pInt)->base + *off;
 }
 
 void
 xf86Int10FreePages(xf86Int10InfoPtr pInt, void *pbase, int num)
 {
     int pagesize = getpagesize();
-    int first = ((unsigned long)pbase
-		 - (unsigned long)INTPriv(pInt)->base)
-	/ pagesize - 1;
+    int first = (((char *)pbase - (char *)INTPriv(pInt)->base) / pagesize) - 1;
     int i;
 
-    for (i = first; i < first + num; i++)
+    for (i = first; i < (first + num); i++)
 	INTPriv(pInt)->alloc[i] = 0;
 }
 
 #define OFF(addr) ((addr) & 0xffff)
 #define SYS(addr) ((addr) >= SYS_BIOS)
 #define V_ADDR(addr) \
-          (SYS(addr) ? ((char*)INTPriv(pInt)->sysMem) + (addr - SYS_BIOS) \
-           : ((char*)(INTPriv(pInt)->base) + addr))
+	  (SYS(addr) ? ((char*)INTPriv(pInt)->sysMem) + (addr - SYS_BIOS) \
+	   : ((char*)(INTPriv(pInt)->base) + addr))
 #define VRAM_ADDR(addr) (addr - V_RAM)
 #define VRAM_BASE (INTPriv(pInt)->vRam)
 
 #define VRAM(addr) ((addr >= V_RAM) && (addr < (V_RAM + VRAM_SIZE)))
 #define V_ADDR_RB(addr) \
-        (VRAM(addr)) ? MMIO_IN8((CARD8*)VRAM_BASE,VRAM_ADDR(addr)) \
-           : *(CARD8*) V_ADDR(addr)
+	(VRAM(addr)) ? MMIO_IN8((CARD8*)VRAM_BASE,VRAM_ADDR(addr)) \
+	   : *(CARD8*) V_ADDR(addr)
 #define V_ADDR_RW(addr) \
-        (VRAM(addr)) ? MMIO_IN16((CARD16*)VRAM_BASE,VRAM_ADDR(addr)) \
-           : ldw_u((pointer)V_ADDR(addr))
+	(VRAM(addr)) ? MMIO_IN16((CARD16*)VRAM_BASE,VRAM_ADDR(addr)) \
+	   : ldw_u((pointer)V_ADDR(addr))
 #define V_ADDR_RL(addr) \
-        (VRAM(addr)) ? MMIO_IN32((CARD32*)VRAM_BASE,VRAM_ADDR(addr)) \
-           : ldl_u((pointer)V_ADDR(addr))
+	(VRAM(addr)) ? MMIO_IN32((CARD32*)VRAM_BASE,VRAM_ADDR(addr)) \
+	   : ldl_u((pointer)V_ADDR(addr))
 
 #define V_ADDR_WB(addr,val) \
-        if(VRAM(addr)) \
-            MMIO_OUT8((CARD8*)VRAM_BASE,VRAM_ADDR(addr),val); \
-        else \
-            *(CARD8*) V_ADDR(addr) = val;
+	if(VRAM(addr)) \
+	    MMIO_OUT8((CARD8*)VRAM_BASE,VRAM_ADDR(addr),val); \
+	else \
+	    *(CARD8*) V_ADDR(addr) = val;
 #define V_ADDR_WW(addr,val) \
-        if(VRAM(addr)) \
-            MMIO_OUT16((CARD16*)VRAM_BASE,VRAM_ADDR(addr),val); \
-        else \
-            stw_u((val),(pointer)(V_ADDR(addr)));
+	if(VRAM(addr)) \
+	    MMIO_OUT16((CARD16*)VRAM_BASE,VRAM_ADDR(addr),val); \
+	else \
+	    stw_u((val),(pointer)(V_ADDR(addr)));
 
 #define V_ADDR_WL(addr,val) \
-        if (VRAM(addr)) \
-            MMIO_OUT32((CARD32*)VRAM_BASE,VRAM_ADDR(addr),val); \
-        else \
-            stl_u(val,(pointer)(V_ADDR(addr)));
+	if (VRAM(addr)) \
+	    MMIO_OUT32((CARD32*)VRAM_BASE,VRAM_ADDR(addr),val); \
+	else \
+	    stl_u(val,(pointer)(V_ADDR(addr)));
 
 static CARD8
 read_b(xf86Int10InfoPtr pInt, int addr)
@@ -318,37 +445,24 @@ read_b(xf86Int10InfoPtr pInt, int addr)
 static CARD16
 read_w(xf86Int10InfoPtr pInt, int addr)
 {
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-    return ((V_ADDR_RB(addr))
-	    || ((V_ADDR_RB(addr + 1)) << 8));
-#else
-    if (OFF(addr + 1) > 0) {
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+    if (OFF(addr + 1) > 0)
 	return V_ADDR_RW(addr);
-    } else
-	return ((V_ADDR_RB(addr + 1))
-		|| ((V_ADDR_RB(addr)) << 8));
-
 #endif
+    return V_ADDR_RB(addr) | (V_ADDR_RB(addr + 1) << 8);
 }
 
 static CARD32
 read_l(xf86Int10InfoPtr pInt, int addr)
 {
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-    return ((V_ADDR_RB(addr))
-	    || ((V_ADDR_RB(addr + 1)) << 8)
-	    || ((V_ADDR_RB(addr + 2)) << 16)
-	    || ((V_ADDR_RB(addr + 3)) << 24));
-#else
-    if (OFF(addr + 3)  > 2) {
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+    if (OFF(addr + 3) > 2)
 	return V_ADDR_RL(addr);
-    } else {
-	return ((V_ADDR_RB(addr + 3))
-		|| ((V_ADDR_RB(addr + 2)) << 8)
-		|| ((V_ADDR_RB(addr + 1)) << 16)
-		|| ((V_ADDR_RB(addr)) << 24));
-    }
 #endif
+    return V_ADDR_RB(addr) |
+	   (V_ADDR_RB(addr + 1) << 8) |
+	   (V_ADDR_RB(addr + 2) << 16) |
+	   (V_ADDR_RB(addr + 3) << 24);
 }
 
 static void
@@ -360,49 +474,29 @@ write_b(xf86Int10InfoPtr pInt, int addr, CARD8 val)
 static void
 write_w(xf86Int10InfoPtr pInt, int addr, CARD16 val)
 {
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-    V_ADDR_WB(addr,val);
-    V_ADDR_WB(addr + 1,val >> 8);
-#else
-    if (OFF(addr + 1) > 0) {
-	V_ADDR_WW(addr,val);
-    } else {
-	V_ADDR_WB(addr + 1,val);
-	V_ADDR_WB(addr,val >> 8);
-    }
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+    if (OFF(addr + 1) > 0)
+      { V_ADDR_WW(addr, val); }
 #endif
+    V_ADDR_WB(addr, val);
+    V_ADDR_WB(addr + 1, val >> 8);
 }
 
 static void
 write_l(xf86Int10InfoPtr pInt, int addr, CARD32 val)
 {
-#if X_BYTE_ORDER == X_BIG_ENDIAN
-    V_ADDR_WB(addr,val);
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+    if (OFF(addr + 3) > 2)
+      { V_ADDR_WL(addr, val); }
+#endif
+    V_ADDR_WB(addr, val);
     V_ADDR_WB(addr + 1, val >> 8);
     V_ADDR_WB(addr + 2, val >> 16);
     V_ADDR_WB(addr + 3, val >> 24);
-#else
-    if (OFF(addr + 3) > 2) {
-	V_ADDR_WL(addr,val);
-    } else {
-	V_ADDR_WB(addr + 3, val);
-	V_ADDR_WB(addr + 2, val >> 8);
-	V_ADDR_WB(addr + 1, val >> 16);
-	V_ADDR_WB(addr, val >> 24);
-    }
-#endif
 }
 
 pointer
 xf86int10Addr(xf86Int10InfoPtr pInt, CARD32 addr)
 {
-    return (pointer) V_ADDR(addr);
+    return V_ADDR(addr);
 }
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-/* $TOG: Xutil.h /main/45 1998/02/06 18:03:35 kaleb $ */
+/* $Xorg: Xutil.h,v 1.7 2000/08/17 19:45:08 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,12 +42,13 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/Xutil.h,v 3.1 1998/10/03 08:41:31 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xutil.h,v 3.3 2001/01/17 19:41:50 dawes Exp $ */
 
 #ifndef _XUTIL_H_
 #define _XUTIL_H_
 
 /* You must include <X11/Xlib.h> before including this file */
+#include <X11/Xlib.h>
 
 /* 
  * Bitmask returned by XParseGeometry().  Each bit tells if the corresponding

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbzerarc.c,v 3.3 1998/10/04 09:39:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbzerarc.c,v 3.5 2001/01/17 22:37:03 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $TOG: mfbzerarc.c /main/22 1998/02/09 14:40:34 kaleb $ */
+/* $Xorg: mfbzerarc.c,v 1.3 2000/08/17 19:53:36 cpqbld Exp $ */
 
 /* Derived from:
  * "Algorithm for drawing ellipses or hyperbolae with a digital plotter"

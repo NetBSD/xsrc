@@ -16,22 +16,23 @@
 /***************************************************************************/
 
 
-#ifndef PSAUXMOD_H
-#define PSAUXMOD_H
+#ifndef __PSAUXMOD_H__
+#define __PSAUXMOD_H__
 
-#include <freetype/ftmodule.h>
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+#include <ft2build.h>
+#include FT_MODULE_H
+
+
+FT_BEGIN_HEADER
+
 
   FT_EXPORT_VAR( const FT_Module_Class )  psaux_driver_class;
 
-#ifdef __cplusplus
-  }
-#endif
 
-#endif /* PSAUXMOD_H */
+FT_END_HEADER
+
+#endif /* __PSAUXMOD_H__ */
 
 
 /* END */

@@ -1,4 +1,4 @@
-/* $XConsortium: lcCharSet.c,v 1.3 95/02/22 22:02:59 kaleb Exp $ */
+/* $Xorg: lcCharSet.c,v 1.3 2000/08/17 19:45:16 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/lcCharSet.c,v 3.6 2000/11/28 18:49:40 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcCharSet.c,v 3.8 2001/01/17 19:41:53 dawes Exp $ */
 
 #include <stdio.h>
 #include "Xlibint.h"

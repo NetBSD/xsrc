@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/dri/dri_mesa.h,v 1.3 2000/03/02 16:07:33 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/dri/dri_mesa.h,v 1.4 2000/06/17 00:02:50 martin Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/scoasm.h,v 3.0 1996/10/03 08:34:06 dawes Exp $ */
 
 /*
  * scoasm.h - used to define inline versions of certain functions which

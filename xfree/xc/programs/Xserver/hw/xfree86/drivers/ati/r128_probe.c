@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_probe.c,v 1.6 2000/12/13 02:45:00 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_probe.c,v 1.10 2001/05/04 19:05:33 dawes Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -48,13 +48,39 @@
 #include "xf86_ansic.h"
 #include "xf86Resources.h"
 
+#ifdef XFree86LOADER
+
+/*
+ * The following exists to prevent the compiler from considering entry points
+ * defined in a separate module from being constants.
+ */
+static xf86PreInitProc     * const volatile PreInitProc     = R128PreInit;
+static xf86ScreenInitProc  * const volatile ScreenInitProc  = R128ScreenInit;
+static xf86SwitchModeProc  * const volatile SwitchModeProc  = R128SwitchMode;
+static xf86AdjustFrameProc * const volatile AdjustFrameProc = R128AdjustFrame;
+static xf86EnterVTProc     * const volatile EnterVTProc     = R128EnterVT;
+static xf86LeaveVTProc     * const volatile LeaveVTProc     = R128LeaveVT;
+static xf86FreeScreenProc  * const volatile FreeScreenProc  = R128FreeScreen;
+static xf86ValidModeProc   * const volatile ValidModeProc   = R128ValidMode;
+
+#define R128PreInit     PreInitProc
+#define R128ScreenInit  ScreenInitProc
+#define R128SwitchMode  SwitchModeProc
+#define R128AdjustFrame AdjustFrameProc
+#define R128EnterVT     EnterVTProc
+#define R128LeaveVT     LeaveVTProc
+#define R128FreeScreen  FreeScreenProc
+#define R128ValidMode   ValidModeProc
+
+#endif
+
 SymTabRec R128Chipsets[] = {
     { PCI_CHIP_RAGE128RE, "ATI Rage 128 RE (PCI)" },
     { PCI_CHIP_RAGE128RF, "ATI Rage 128 RF (AGP)" },
     { PCI_CHIP_RAGE128RG, "ATI Rage 128 RG (AGP)" },
     { PCI_CHIP_RAGE128RK, "ATI Rage 128 RK (PCI)" },
     { PCI_CHIP_RAGE128RL, "ATI Rage 128 RL (AGP)" },
-    { PCI_CHIP_RAGE128PD, "ATI Rage 128 Pro PD (AGP)" },
+    { PCI_CHIP_RAGE128PD, "ATI Rage 128 Pro PD (PCI)" },
     { PCI_CHIP_RAGE128PF, "ATI Rage 128 Pro PF (AGP)" },
     { PCI_CHIP_RAGE128LE, "ATI Rage 128 Mobility LE (PCI)" },
     { PCI_CHIP_RAGE128LF, "ATI Rage 128 Mobility LF (AGP)" },
@@ -79,7 +105,7 @@ PciChipsets R128PciChipsets[] = {
 };
 
 /* Return the options for supported chipset 'n'; NULL otherwise */
-OptionInfoPtr
+const OptionInfoRec *
 R128AvailableOptions(int chipid, int busid)
 {
     int i;
@@ -88,6 +114,8 @@ R128AvailableOptions(int chipid, int busid)
      * Return options defined in the r128 submodule which will have been
      * loaded by this point.
      */
+    if ((chipid >> 16) == PCI_VENDOR_ATI)
+	chipid -= PCI_VENDOR_ATI << 16;
     for (i = 0; R128PciChipsets[i].PCIid > 0; i++) {
 	if (chipid == R128PciChipsets[i].PCIid)
 	    return R128Options;
@@ -161,9 +189,10 @@ R128Probe(DriverPtr drv, int flags)
 	pEnt = xf86GetEntityInfo(usedChips[i]);
 
 	if (pEnt->active) {
-	    ScrnInfoPtr pScrn    = xf86AllocateScreen(drv, 0);
+	    ScrnInfoPtr pScrn = xf86AllocateScreen(drv, 0);
 
 #ifdef XFree86LOADER
+
 	    if (!xf86LoadSubModule(pScrn, "r128")) {
 		xf86Msg(X_ERROR,
 		    R128_NAME ":  Failed to load \"r128\" module.\n");
@@ -172,24 +201,6 @@ R128Probe(DriverPtr drv, int flags)
 	    }
 
 	    xf86LoaderReqSymLists(R128Symbols, NULL);
-
-	    /* Workaround for possible loader bug */
-#	    define R128PreInit     \
-		(xf86PreInitProc*)    LoaderSymbol("R128PreInit")
-#	    define R128ScreenInit  \
-		(xf86ScreenInitProc*) LoaderSymbol("R128ScreenInit")
-#	    define R128SwitchMode  \
-		(xf86SwitchModeProc*) LoaderSymbol("R128SwitchMode")
-#	    define R128AdjustFrame \
-		(xf86AdjustFrameProc*)LoaderSymbol("R128AdjustFrame")
-#	    define R128EnterVT     \
-		(xf86EnterVTProc*)    LoaderSymbol("R128EnterVT")
-#	    define R128LeaveVT     \
-		(xf86LeaveVTProc*)    LoaderSymbol("R128LeaveVT")
-#	    define R128FreeScreen  \
-		(xf86FreeScreenProc*) LoaderSymbol("R128FreeScreen")
-#	    define R128ValidMode   \
-		(xf86ValidModeProc*)  LoaderSymbol("R128ValidMode")
 
 #endif
 

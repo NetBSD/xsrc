@@ -1,4 +1,4 @@
-/* $TOG: main.c /main/86 1998/03/25 08:17:50 kaleb $ */
+/* $Xorg: main.c,v 1.3 2000/08/17 19:41:51 cpqbld Exp $ */
 /*
 
 Copyright (c) 1993, 1994, 1998 The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/main.c,v 3.16 1999/03/21 07:34:26 dawes Exp $ */
+/* $XFree86: xc/config/makedepend/main.c,v 3.20 2001/04/29 23:25:02 tsi Exp $ */
 
 #include "def.h"
 #ifdef hpux
@@ -72,6 +72,7 @@ char	*directives[] = {
 	"elif",
 	"eject",
 	"warning",
+	"include_next",
 	NULL
 };
 
@@ -81,10 +82,12 @@ char	*directives[] = {
 
 struct	inclist inclist[ MAXFILES ],
 		*inclistp = inclist,
+		*inclistnext = inclist,
 		maininclist;
 
 char	*filelist[ MAXFILES ];
-char	*includedirs[ MAXDIRS + 1 ];
+char	*includedirs[ MAXDIRS + 1 ],
+	**includedirsnext = includedirs;
 char	*notdotdot[ MAXDIRS ];
 char	*objprefix = "";
 char	*objsuffix = OBJSUFFIX;
@@ -570,10 +573,7 @@ char *getnextline(struct filepointer *filep)
 			*p++ = ' ', *p++ = ' ';
 			while (*p && *p != '\n')
 				*p++ = ' ';
-			if (*p == '\n') {
-				lineno++;
-				*p++ = ' ';
-			}
+			if (*p == '\n') --p;
 			continue;
 		}
 		else if (*p == '\\') {
@@ -593,6 +593,7 @@ char *getnextline(struct filepointer *filep)
 				for (cp = bol+1; 
 				     *cp && (*cp == ' ' || *cp == '\t'); cp++);
 				if (*cp) goto done;
+				--p;
 			}
 			bol = p+1;
 		}

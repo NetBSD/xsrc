@@ -1,4 +1,4 @@
-/* $TOG: fontnames.c /main/3 1998/02/09 10:55:16 kaleb $ */
+/* $Xorg: fontnames.c,v 1.3 2000/08/17 19:46:39 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/util/fontnames.c,v 1.4 2001/01/17 19:43:33 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/imstt/imstt.h,v 1.2 2000/08/01 20:05:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/imstt/imstt.h,v 1.5 2001/05/16 06:48:09 keithp Exp $ */
 
 #ifndef _IMSTT_H
 #define _IMSTT_H
@@ -34,6 +34,7 @@ typedef struct _IMSTTRec {
 	Bool			FBDev;
 	int			Chipset, ChipRev;
 	int			ydir;
+	int			color;
 	unsigned long		pitch;
 	unsigned long		ll;
 	unsigned long		screen_width;
@@ -58,9 +59,11 @@ typedef struct _IMSTTRec {
 } IMSTTRec, *IMSTTPtr;
 
 #if 0
-#define IMSTTTRACE	ErrorF
+#define IMSTTTRACE(s)	ErrorF(s)
+#define IMSTTTRACE1(s,a)	ErrorF(s,a)
 #else
-#define IMSTTTRACE
+#define IMSTTTRACE(s)
+#define IMSTTTRACE1(s,a)
 #endif
 
 #define IMSTTPTR(p)	((IMSTTPtr)((p)->driverPrivate))
@@ -71,4 +74,6 @@ typedef struct _IMSTTRec {
 #define RAMDAC_IBM	1
 #define RAMDAC_TVP	2
 
+Bool IMSTTAccelInit(ScreenPtr pScreen);
+    
 #endif /* _IMSTT_H */

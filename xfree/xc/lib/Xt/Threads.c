@@ -1,4 +1,4 @@
-/* $TOG: Threads.c /main/19 1998/02/06 13:26:39 kaleb $ */
+/* $Xorg: Threads.c,v 1.3 2000/08/17 19:46:19 cpqbld Exp $ */
 
 /************************************************************
 Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.

@@ -1,10 +1,4 @@
-/* $XConsortium: cgsixreg.h /main/1 1996/10/31 14:20:36 kaleb $ */
-
-
-
-/*	$NetBSD: cgsixreg.h,v 1.1.1.2 2001/03/18 17:23:07 veego Exp $ */
-/*	$XFree86: xc/programs/Xserver/hw/sunLynx/cgsixreg.h,v 3.0 1996/09/29 12:47:18 dawes Exp $ */
-
+/* $Xorg: cgsixreg.h,v 1.3 2000/08/17 19:48:36 cpqbld Exp $ */
 /*
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,6 +42,8 @@
  *
  *	@(#)cgsixreg.h	8.4 (Berkeley) 1/21/94
  */
+/*	$NetBSD: cgsixreg.h,v 1.1.1.3 2001/06/09 15:03:09 tron Exp $ */
+/*	$XFree86: xc/programs/Xserver/hw/sunLynx/cgsixreg.h,v 3.2 2001/01/17 22:36:52 dawes Exp $ */
 
 /*
  * CG6 display registers.  (Note, I got tired of writing `cgsix' about

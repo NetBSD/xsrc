@@ -1,4 +1,4 @@
-/* $TOG: saveutil.h /main/4 1998/02/09 14:15:19 kaleb $ */
+/* $Xorg: saveutil.h,v 1.3 2000/08/17 19:55:06 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1993, 1998  The Open Group
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86: xc/programs/xsm/saveutil.h,v 1.3 1999/03/07 14:23:44 dawes Exp $ */
+/* $XFree86: xc/programs/xsm/saveutil.h,v 1.5 2001/01/17 23:46:31 dawes Exp $ */
 
 extern void set_session_save_file_name(char *session_name);
 extern int ReadSave(char *session_name, char **sm_id);

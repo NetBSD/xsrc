@@ -1,4 +1,4 @@
-/* $TOG: TemplateP.h /main/8 1998/02/06 12:50:46 kaleb $ */
+/* $Xorg: TemplateP.h,v 1.4 2000/08/17 19:45:40 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/TemplateP.h,v 1.4 1998/10/03 08:42:24 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TemplateP.h,v 1.6 2001/01/17 19:42:32 dawes Exp $ */
 
 #ifndef _TemplateP_h
 #define _TemplateP_h
@@ -54,7 +54,11 @@ typedef struct {
 
 typedef struct _TemplateRec {
     CorePart		core;
+#if defined(__cplusplus) || defined(c_plusplus)
+    TemplatePart	c_template;
+#else
     TemplatePart	template;
+#endif
 } TemplateRec;
 
 #endif /* _TemplateP_h */

@@ -1,4 +1,4 @@
-.\" $TOG: editres.man /main/16 1998/02/09 13:42:19 kaleb $
+.\" $Xorg: editres.man,v 1.3 2000/08/17 19:53:51 cpqbld Exp $
 .\" Copyright 1993, 1994, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH EDITRES 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/editres/editres.man,v 1.7 2001/01/27 18:21:01 dawes Exp $
+.\"
+.TH EDITRES 1 __xorgversion__
 .SH NAME
 editres \- a dynamic resource editor for X Toolkit applications
 .SH SYNTAX
@@ -26,7 +29,7 @@ editres \- a dynamic resource editor for X Toolkit applications
 .SH OPTIONS
 .I Editres
 accepts all of the standard X Toolkit command line
-options (see \fIX(1)\fP).  The order of the command line options is
+options (see \fIX(__miscmansuffix__)\fP).  The order of the command line options is
 not important.
 .SH DESCRIPTION
 Editres is a tool that allows users and application developers to view
@@ -419,7 +422,7 @@ stored in the RESOURCE_MANAGER property.
 .SH FILES
 <XRoot>/lib/X11/app-defaults/Editres - specifies required resources
 .SH SEE ALSO
-X(1), xrdb(1), Athena Widget Set
+X(__miscmansuffix__), xrdb(1), Athena Widget Set
 .SH RESTRICTIONS
 This is a prototype, there are lots of nifty features I would love to add,
 but I hope this will give you some ideas about what a resource editor

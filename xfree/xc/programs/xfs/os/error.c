@@ -1,4 +1,4 @@
-/* $TOG: error.c /main/10 1998/02/11 10:06:39 kaleb $ */
+/* $Xorg: error.c,v 1.3 2000/08/17 19:54:22 cpqbld Exp $ */
 /*
  * error message handling
  */
@@ -40,9 +40,10 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/error.c,v 1.5 1998/10/25 12:48:07 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/error.c,v 1.8 2001/04/01 14:00:21 tsi Exp $ */
 
 #include	<stdio.h>
+#include	<stdlib.h>
 #include	<stdarg.h>
 #include	<X11/Xos.h>
 

@@ -48,14 +48,14 @@ in this Software without prior written authorization from The Open Group.
 
 /***********************************************************************
  *
- * $TOG: lex.l /main/48 1998/02/09 13:48:34 kaleb $
+ * $Xorg: lex.l,v 1.3 2000/08/17 19:54:07 cpqbld Exp $
  *
  * .twmrc lex file
  *
  * 12-Nov-87 Thomas E. LaStrange		File created
  *
  ***********************************************************************/
-/* $XFree86: xc/programs/twm/lex.l,v 3.10 1999/02/19 21:27:28 hohndel Exp $ */
+/* $XFree86: xc/programs/twm/lex.l,v 3.12 2001/01/17 23:45:06 dawes Exp $ */
 
 /* #include <stdio.h> */		/* lex already includes stdio.h */
 #include "twm.h"

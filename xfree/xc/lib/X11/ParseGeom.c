@@ -1,4 +1,4 @@
-/* $TOG: ParseGeom.c /main/11 1998/02/06 17:46:27 kaleb $ */
+/* $Xorg: ParseGeom.c,v 1.3 2000/08/17 19:44:47 cpqbld Exp $ */
 
 /*
 

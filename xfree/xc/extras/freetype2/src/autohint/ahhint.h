@@ -19,24 +19,15 @@
 /***************************************************************************/
 
 
-#ifndef AHHINT_H
-#define AHHINT_H
+#ifndef __AHHINT_H__
+#define __AHHINT_H__
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ahglobal.h"
 
-#else
 
-#include <autohint/ahglobal.h>
-
-#endif
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
 #define AH_HINT_DEFAULT        0
@@ -76,12 +67,9 @@
                                      void*       global_hints );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* AHHINT_H */
+#endif /* __AHHINT_H__ */
 
 
 /* END */

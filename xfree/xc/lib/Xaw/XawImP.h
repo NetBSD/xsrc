@@ -1,4 +1,4 @@
-/* $TOG: XawImP.h /main/8 1998/04/21 09:44:31 kaleb $ */
+/* $Xorg: XawImP.h,v 1.3 2000/08/17 19:45:44 cpqbld Exp $ */
 
 /*
  * Copyright 1991 by OMRON Corporation
@@ -47,7 +47,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/XawImP.h,v 3.6 1999/03/14 03:21:13 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/XawImP.h,v 3.8 2001/01/17 19:42:36 dawes Exp $ */
 
 #ifndef _XawImP_h
 #define _XawImP_h

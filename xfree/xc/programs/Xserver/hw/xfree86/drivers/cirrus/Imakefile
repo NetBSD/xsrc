@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/Imakefile,v 1.30 2000/12/06 15:35:14 eich Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/Imakefile,v 1.32 2001/02/15 17:39:28 eich Exp $
 XCOMM
 XCOMM This is an Imakefile for the Cirrus Logic driver.  
 XCOMM
@@ -6,8 +6,8 @@ XCOMM
 #define IHaveModules
 #include <Server.tmpl>
 
-CSRCS = cir_driver.c CirrusClk.c cir_shadow.c
-COBJS = cir_driver.o CirrusClk.o cir_shadow.o
+CSRCS = cir_driver.c CirrusClk.c cir_shadow.c cir_dga.c
+COBJS = cir_driver.o CirrusClk.o cir_shadow.o cir_dga.o
 ASRCS = alp_driver.c alp_xaa.c alp_hwcurs.c alp_i2c.c alp_xaam.c 
 AOBJS = alp_driver.o alp_xaa.o alp_hwcurs.o alp_i2c.o alp_xaam.o 
 LSRCS = lg_driver.c lg_i2c.c lg_xaa.c lg_hwcurs.c
@@ -88,7 +88,6 @@ SubDriverObjectModuleTarget(cirrus_laguna,$(LOBJS))
 InstallSubDriverObjectModule(cirrus_laguna,$(MODULEDIR),drivers)
 
 #if !defined(XF86DriverSDK)
-CppManTarget(cirrus,)
 InstallModuleManPage(cirrus)
 #endif
 
@@ -98,6 +97,7 @@ InstallDriverSDKNonExecFile(Imakefile,$(DRIVERSDKDIR)/drivers/cirrus)
 InstallDriverSDKNonExecFile(CirrusClk.c,$(DRIVERSDKDIR)/drivers/cirrus)
 InstallDriverSDKNonExecFile(cir_driver.c,$(DRIVERSDKDIR)/drivers/cirrus)
 InstallDriverSDKNonExecFile(cir_shadow.c,$(DRIVERSDKDIR)/drivers/cirrus)
+InstallDriverSDKNonExecFile(cir_dga.c,$(DRIVERSDKDIR)/drivers/cirrus)
 InstallDriverSDKNonExecFile(cir.h,$(DRIVERSDKDIR)/drivers/cirrus)
 InstallDriverSDKNonExecFile(alp.h,$(DRIVERSDKDIR)/drivers/cirrus)
 InstallDriverSDKNonExecFile(alp_driver.c,$(DRIVERSDKDIR)/drivers/cirrus)

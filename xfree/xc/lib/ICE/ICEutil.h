@@ -1,4 +1,4 @@
-/* $TOG: ICEutil.h /main/6 1998/02/06 13:56:49 kaleb $ */
+/* $Xorg: ICEutil.h,v 1.4 2000/08/17 19:44:11 cpqbld Exp $ */
 /******************************************************************************
 
 
@@ -27,6 +27,7 @@ Author: Ralph Mor, X Consortium
 #define _ICEUTIL_H_
 
 #include <stdio.h>
+#include <X11/Xlib.h>
 
 /*
  * Data structure for entry in ICE authority file

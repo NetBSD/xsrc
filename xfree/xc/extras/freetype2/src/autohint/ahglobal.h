@@ -20,26 +20,16 @@
 /***************************************************************************/
 
 
-#ifndef AHGLOBAL_H
-#define AHGLOBAL_H
+#ifndef __AHGLOBAL_H__
+#define __AHGLOBAL_H__
 
-#ifdef FT_FLAT_COMPILE
 
+#include <ft2build.h>
 #include "ahtypes.h"
-
-#else
-
-#include <autohint/ahtypes.h>
-
-#endif
+#include FT_INTERNAL_OBJECTS_H
 
 
-#include <freetype/internal/ftobjs.h>  /* for FT_LOCAL/FT_LOCAL_DEF */
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
 #define AH_IS_TOP_BLUE( b )  ( (b) == ah_blue_capital_top || \
@@ -51,12 +41,9 @@
   FT_Error  ah_hinter_compute_globals( AH_Hinter*  hinter );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* AHGLOBAL_H */
+#endif /* __AHGLOBAL_H__ */
 
 
 /* END */

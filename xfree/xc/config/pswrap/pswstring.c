@@ -35,7 +35,7 @@
  * 
  * Author:  Adobe Systems Incorporated
  */
-/* $XFree86$ */
+/* $XFree86: xc/config/pswrap/pswstring.c,v 1.3 2000/09/26 15:56:28 tsi Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

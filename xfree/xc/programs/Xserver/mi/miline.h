@@ -1,4 +1,4 @@
-/* $TOG: miline.h /main/7 1998/02/09 14:47:30 kaleb $ */
+/* $Xorg: miline.h,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/Xserver/mi/miline.h,v 1.3 1998/10/04 09:39:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/miline.h,v 1.5 2001/01/17 22:37:06 dawes Exp $ */
 
 #ifndef MILINE_H
 

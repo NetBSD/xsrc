@@ -25,6 +25,7 @@
  * without specific, written prior permission.
  *
  */
+/* $XFree86: xc/programs/xmh/init.c,v 1.1.1.3.18.1 2001/05/25 18:50:15 dawes Exp $ */
 
 /* Init.c - Handle start-up initialization. */
 
@@ -384,7 +385,8 @@ char **argv;
 
     theDisplay = XtDisplay(toplevel);
 
-    homeDir = XtNewString(getenv("HOME"));
+    homeDir = getenv("HOME");
+    homeDir = XtNewString(homeDir);
 
     XtGetApplicationResources( toplevel, (XtPointer)&app_resources,
 			       resources, XtNumber(resources),

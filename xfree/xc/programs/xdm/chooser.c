@@ -1,5 +1,5 @@
 /*
- * $TOG: chooser.c /main/28 1998/02/09 13:54:31 kaleb $
+ * $Xorg: chooser.c,v 1.3 2000/08/17 19:54:14 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xdm/chooser.c,v 3.19 2000/05/31 07:15:11 eich Exp $ */
+/* $XFree86: xc/programs/xdm/chooser.c,v 3.22 2001/03/06 17:31:39 dawes Exp $ */
 
 /*
  * Chooser - display a menu of names and let the user select one
@@ -65,6 +65,10 @@ in this Software without prior written authorization from The Open Group.
 #include    <sys/types.h>
 #include    <stdio.h>
 #include    <ctype.h>
+
+#ifdef USE_XINERAMA
+#include    <X11/extensions/Xinerama.h>
+#endif
 
 #if defined(SVR4) && !defined(SCO325)
 #include    <sys/sockio.h>
@@ -1135,6 +1139,11 @@ main (int argc, char **argv)
     Arg		position[3];
     Dimension   width, height;
     Position	x, y;
+#ifdef USE_XINERAMA
+    XineramaScreenInfo *screens;
+    int                 s_num;
+#endif
+
 
     toplevel = XtInitialize (argv[0], "Chooser", options, XtNumber(options), &argc, argv);
 
@@ -1162,8 +1171,23 @@ main (int argc, char **argv)
     XtSetArg (position[0], XtNwidth, &width);
     XtSetArg (position[1], XtNheight, &height);
     XtGetValues (toplevel, position, (Cardinal) 2);
-    x = (Position)(WidthOfScreen (XtScreen (toplevel)) - width) / 2;
-    y = (Position)(HeightOfScreen (XtScreen (toplevel)) - height) / 3;
+#ifdef USE_XINERAMA
+    if (
+	XineramaIsActive(XtDisplay(toplevel)) &&
+	(screens = XineramaQueryScreens(XtDisplay(toplevel), &s_num)) != NULL
+       )
+    {
+	x = (Position)(screens[0].x_org + (screens[0].width - width) / 2);
+	y = (Position)(screens[0].y_org + (screens[0].height - height) / 3);
+	
+	XFree(screens);
+    }
+    else
+#endif
+    {
+	x = (Position)(WidthOfScreen (XtScreen (toplevel)) - width) / 2;
+	y = (Position)(HeightOfScreen (XtScreen (toplevel)) - height) / 3;
+    }
     XtSetArg (position[0], XtNx, x);
     XtSetArg (position[1], XtNy, y);
     XtSetValues (toplevel, position, (Cardinal) 2);

@@ -20,15 +20,8 @@
 /***************************************************************************/
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ahangles.h"
-
-#else
-
-#include <autohint/ahangles.h>
-
-#endif
 
 
   /* the following table has been automatically generated with */

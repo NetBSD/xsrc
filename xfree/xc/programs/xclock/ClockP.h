@@ -1,5 +1,5 @@
 /*
-* $TOG: ClockP.h /main/24 1998/02/09 13:53:06 kaleb $
+* $Xorg: ClockP.h,v 1.3 2000/08/17 19:54:12 cpqbld Exp $
 */
 
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/xclock/ClockP.h,v 1.3 2000/01/21 18:41:51 dawes Exp $ */
+/* $XFree86: xc/programs/xclock/ClockP.h,v 1.5 2001/01/17 23:45:18 dawes Exp $ */
 
 #ifndef _XawClockP_h
 #define _XawClockP_h

@@ -1,4 +1,4 @@
-/* $XConsortium: spdo_prv.h,v 1.4 94/02/10 11:06:01 gildea Exp $ */
+/* $Xorg: spdo_prv.h,v 1.3 2000/08/17 19:46:27 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spdo_prv.h,v 1.3tsi Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spdo_prv.h,v 1.5 2001/01/17 19:43:18 dawes Exp $ */
 
 
 

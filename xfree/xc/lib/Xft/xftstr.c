@@ -1,5 +1,5 @@
 /*
- * $XFree86$
+ * $XFree86: xc/lib/Xft/xftstr.c,v 1.6 2001/04/01 14:00:01 tsi Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 #include "xftint.h"
 
 char *
@@ -31,6 +32,8 @@ _XftSaveString (const char *s)
 {
     char    *r;
 
+    if (!s)
+	return 0;
     r = (char *) malloc (strlen (s) + 1);
     if (!r)
 	return 0;
@@ -149,4 +152,108 @@ _XftStrCmpIgnoreCase (const char *s1, const char *s2)
 	    break;
     }
     return (int) c2 - (int) c1;
+}
+
+int
+XftUtf8ToUcs4 (XftChar8    *src_orig,
+	       XftChar32   *dst,
+	       int	    len)
+{
+    XftChar8	*src = src_orig;
+    XftChar8	s;
+    int		extra;
+    XftChar32	result;
+
+    if (len == 0)
+	return 0;
+    
+    s = *src++;
+    len--;
+    
+    if (!(s & 0x80))
+    {
+	result = s;
+	extra = 0;
+    } 
+    else if (!(s & 0x40))
+    {
+	return -1;
+    }
+    else if (!(s & 0x20))
+    {
+	result = s & 0x1f;
+	extra = 1;
+    }
+    else if (!(s & 0x10))
+    {
+	result = s & 0xf;
+	extra = 2;
+    }
+    else if (!(s & 0x08))
+    {
+	result = s & 0x07;
+	extra = 3;
+    }
+    else if (!(s & 0x04))
+    {
+	result = s & 0x03;
+	extra = 4;
+    }
+    else if ( ! (s & 0x02))
+    {
+	result = s & 0x01;
+	extra = 5;
+    }
+    else
+    {
+	return -1;
+    }
+    if (extra > len)
+	return -1;
+    
+    while (extra--)
+    {
+	result <<= 6;
+	s = *src++;
+	
+	if ((s & 0xc0) != 0x80)
+	    return -1;
+	
+	result |= s & 0x3f;
+    }
+    *dst = result;
+    return src - src_orig;
+}
+
+Bool
+XftUtf8Len (XftChar8	*string,
+	    int		len,
+	    int		*nchar,
+	    int		*wchar)
+{
+    int		n;
+    int		clen;
+    int		width = 1;
+    XftChar32	c;
+    
+    n = 0;
+    while (len)
+    {
+	clen = XftUtf8ToUcs4 (string, &c, len);
+	if (clen <= 0)	/* malformed UTF8 string */
+	    return False;
+	if (c >= 0x10000)
+	    width = 4;
+	else if (c >= 0x100)
+	{
+	    if (width == 1)
+		width = 2;
+	}
+	string += clen;
+	len -= clen;
+	n++;
+    }
+    *nchar = n;
+    *wchar = width;
+    return True;
 }

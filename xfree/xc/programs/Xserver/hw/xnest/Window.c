@@ -1,5 +1,4 @@
-/* $XConsortium: Window.c /main/8 1996/12/02 10:21:53 lehors $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Window.c,v 3.3 1996/12/23 07:09:20 dawes Exp $ */
+/* $Xorg: Window.c,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -13,6 +12,8 @@ the suitability of this software for any purpose.  It is provided "as
 is" without express or implied warranty.
 
 */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Window.c,v 3.5 2001/01/17 22:36:55 dawes Exp $ */
+
 #include "X.h"
 #include "Xproto.h"
 #include "gcstruct.h"

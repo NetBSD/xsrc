@@ -1,4 +1,4 @@
-/* $TOG: difloat.h /main/5 1998/02/10 10:27:23 kaleb $ */
+/* $Xorg: difloat.h,v 1.3 2000/08/17 19:47:32 cpqbld Exp $ */
 /**** module difloat.h ****/
 /******************************************************************************
 
@@ -67,7 +67,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April 1993
 
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/include/difloat.h,v 1.4 2001/01/17 22:12:57 dawes Exp $ */
 
 #ifndef _XIE_DIFLOAT
 #define _XIE_DIFLOAT

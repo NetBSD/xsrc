@@ -1300,17 +1300,27 @@ static void lambda_multitextured_triangle1( GLcontext *ctx, GLuint v0,
 
 #define SETUP_CODE							\
    const struct gl_texture_object *obj0 = ctx->Texture.Unit[0].Current;	\
-   const GLint baseLevel0 = obj0->BaseLevel;				\
-   const struct gl_texture_image *texImage0 = obj0->Image[baseLevel0];	\
-   const GLfloat twidth0 = (GLfloat) texImage0->Width;			\
-   const GLfloat theight0 = (GLfloat) texImage0->Height;		\
    const struct gl_texture_object *obj1 = ctx->Texture.Unit[1].Current;	\
-   const GLint baseLevel1 = obj1->BaseLevel;				\
-   const struct gl_texture_image *texImage1 = obj1->Image[baseLevel1];	\
-   const GLfloat twidth1 = (GLfloat) texImage1->Width;			\
-   const GLfloat theight1 = (GLfloat) texImage1->Height;		\
+   const struct gl_texture_image *texImage0, *texImage1;		\
+   GLfloat twidth0, theight0, twidth1, theight1;			\
    const GLboolean flat_shade = (ctx->Light.ShadeModel==GL_FLAT);	\
    GLint r, g, b, a;							\
+   if (obj0) {								\
+      texImage0 = obj0->Image[obj0->BaseLevel];				\
+      twidth0 = texImage0->Width;					\
+      theight0 = texImage0->Height;					\
+   }									\
+   else {								\
+      twidth0 = theight0 = 1;						\
+   }									\
+   if (obj1) {								\
+      texImage1 = obj1->Image[obj1->BaseLevel];				\
+      twidth1 = texImage1->Width;					\
+      theight1 = texImage1->Height;					\
+   }									\
+   else {								\
+      twidth1 = theight1 = 1;						\
+   }									\
    if (flat_shade) {							\
       r = VB->ColorPtr->data[pv][0];					\
       g = VB->ColorPtr->data[pv][1];					\

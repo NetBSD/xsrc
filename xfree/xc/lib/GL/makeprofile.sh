@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XFree86$
+# $XFree86: xc/lib/GL/makeprofile.sh,v 1.3 2000/08/28 02:43:11 tsi Exp $
 
 libname=$1
 

@@ -1,4 +1,4 @@
-/* $TOG: set_trns.c /main/8 1998/05/07 15:13:53 kaleb $ */
+/* $Xorg: set_trns.c,v 1.3 2000/08/17 19:46:27 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/Speedo/set_trns.c,v 1.3 2001/01/17 19:43:18 dawes Exp $ */
 
 
 

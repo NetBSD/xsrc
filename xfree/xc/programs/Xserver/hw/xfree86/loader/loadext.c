@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loadext.c,v 1.5 2000/02/08 13:13:27 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/loadext.c,v 1.6 2000/02/08 17:19:19 dawes Exp $ */
 
 /* Copyright 2000 by The XFree86 Project, Inc */
 

@@ -1,4 +1,4 @@
-/* $TOG: sync.c /main/14 1998/02/09 15:25:33 kaleb $ */
+/* $Xorg: sync.c,v 1.3 2000/08/17 19:47:59 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1993, 1998  The Open Group
@@ -46,7 +46,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/Xext/sync.c,v 3.6 1998/10/04 09:36:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/sync.c,v 3.8 2001/01/17 22:13:18 dawes Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS

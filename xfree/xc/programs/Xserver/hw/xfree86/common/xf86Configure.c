@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Configure.c,v 3.51 2001/01/16 23:46:29 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Configure.c,v 3.55 2001/05/07 21:38:51 tsi Exp $ */
 /*
  * Copyright 2000 by Alan Hourihane, Sychdyn, North Wales.
  *
@@ -161,10 +161,10 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
     i = nDevToConfig++;
     DevToConfig =
 	xnfrealloc(DevToConfig, nDevToConfig * sizeof(DevToConfigRec));
-#if 0   /* Doesn't work when a driver detects more than one adapter */
-    if (i > 0 && isPrimary) {
+#if 1   /* Doesn't work when a driver detects more than one adapter */
+    if ((i > 0) && isPrimary) {
         memmove(DevToConfig + 1,DevToConfig,
-	       (nDevToConfig - 1) * sizeof(DevToConfigRec));
+		(nDevToConfig - 1) * sizeof(DevToConfigRec));
 	i = 0;
     } 
 #endif
@@ -213,7 +213,7 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
 #	undef CardName
 
 	if (chipset < 0)
-	    chipset = (pVideo->vendor << 16) || pVideo->chipType;
+	    chipset = (pVideo->vendor << 16) | pVideo->chipType;
 	}
 	break;
     case BUS_ISA:
@@ -246,7 +246,7 @@ xf86AddBusDeviceToConfigure(const char *driver, BusType bus, void *busData, int 
 
     /* Get driver's available options */
     if (xf86DriverList[CurrentDriver]->AvailableOptions)
-	NewDevice.GDev.options =
+	NewDevice.GDev.options = (OptionInfoPtr)
 	    (*xf86DriverList[CurrentDriver]->AvailableOptions)(chipset,
 							       bus);
 
@@ -366,6 +366,29 @@ configureScreenSection (int screennum)
     return ptr;
 }
 
+static char* 
+optionTypeToSting(OptionValueType type)
+{
+    switch (type) {
+    case OPTV_NONE:
+        return "";
+    case OPTV_INTEGER:
+        return "<i>";
+    case OPTV_STRING:
+        return "<str>";
+    case OPTV_ANYSTR:
+       return "[<str>]";
+    case OPTV_REAL:
+        return "<f>";
+    case OPTV_BOOLEAN:
+        return "[<bool>]";
+    case OPTV_FREQ:
+        return "<freq>";
+    default:
+        return "";
+    }
+}
+
 static XF86ConfDevicePtr
 configureDeviceSection (int screennum)
 {
@@ -403,14 +426,23 @@ configureDeviceSection (int screennum)
     /* Make sure older drivers don't segv */
     if (DevToConfig[screennum].GDev.options) {
     	/* Fill in the available driver options for people to use */
-    	ptr->dev_comment = xnfalloc(32 + 1);
+    	ptr->dev_comment = xnfalloc(240 + 1);
     	strcpy(ptr->dev_comment, "Available Driver options are:-\n");
+    	strcat(ptr->dev_comment, "        ### Values: <i>: integer, <f>: "
+	                         "float, <bool>: \"True\"/\"False\",\n"
+                                 "        ### <string>: \"String\", "
+                                 "<freq>: \"<f> Hz/kHz/MHz\"\n");
+	strcat(ptr->dev_comment, "        ### [arg]: arg optional\n");
     	for (p = DevToConfig[screennum].GDev.options; p->name != NULL; p++) {
+	    char *optname = xnfalloc(strlen(p->name) + 6);
+	    char *p_e; 
     	    ptr->dev_comment = xrealloc(ptr->dev_comment, 
-			strlen(ptr->dev_comment) + strlen(p->name) + 24 + 1);
-	    strcat(ptr->dev_comment, "        #Option     \"");
-	    strcat(ptr->dev_comment, p->name);
-	    strcat(ptr->dev_comment, "\"\n");
+			strlen(ptr->dev_comment) + 80 + 1);
+	    p_e = ptr->dev_comment + strlen(ptr->dev_comment);
+	    sprintf(optname,"\"%s\"",p->name);
+	    sprintf(p_e, "        #Option     %-20s \t# %s\n",
+                    optname, optionTypeToSting(p->type));
+	    xfree(optname);
     	}
     }
 
@@ -554,7 +586,9 @@ configureModuleSection (void)
     	    module = xf86confmalloc(sizeof(XF86LoadRec));
     	    memset((XF86LoadPtr)module,0,sizeof(XF86LoadRec));
     	    module->load_name = *el;
-	    ptr->mod_load_lst = (XF86LoadPtr)xf86addListItem(
+	    /* HACK, remove GLcore, glx, loads it as a submodule */
+	    if (strcmp(*el, "GLcore"))
+	    	ptr->mod_load_lst = (XF86LoadPtr)xf86addListItem(
 					(glp)ptr->mod_load_lst, (glp)module);
     	}
 	xfree(elist);
@@ -611,7 +645,12 @@ configureDDCMonitorSection (int screennum)
 	    case DT:
 	    case DS_STD_TIMINGS:
 	    case DS_WHITE_P:
+	      break;
 	    case DS_NAME:
+	      xfree(ptr->mon_modelname);
+	      ptr->mon_modelname = 
+		strdup((char*)(ConfiguredMonitor->det_mon[i].section.name));
+	      break;
 	    case DS_ASCII_STR:
 	    case DS_SERIAL:
 		break;
@@ -641,6 +680,7 @@ DoConfigure()
     char *filename = NULL;
     XF86ConfigPtr xf86config = NULL;
     char **vlist, **vl;
+    int *dev2screen;
 
     vlist = xf86DriverlistFromCompile();
 
@@ -747,16 +787,48 @@ DoConfigure()
 
     xf86DoConfigurePass1 = FALSE;
     
+    dev2screen = xnfcalloc(1,xf86NumDrivers*sizeof(int));
+
     {
 	Bool *driverProbed = xnfcalloc(1,xf86NumDrivers*sizeof(Bool));
 	for (screennum = 0;  screennum < nDevToConfig;  screennum++) {
+	    int k,l,n,oldNumScreens;
+
 	    i = DevToConfig[screennum].iDriver;
-	    
+
 	    if (driverProbed[i]) continue;
 	    driverProbed[i] = TRUE;
+	    
+	    oldNumScreens = xf86NumScreens;
 
 	    (*xf86DriverList[i]->Probe)(xf86DriverList[i], 0);
 
+	    /* reorder */
+	    k = screennum > 0 ? screennum : 1;
+	    for (l = oldNumScreens; l < xf86NumScreens; l++) {
+	        /* is screen primary? */
+	        Bool primary = FALSE;
+		for (n = 0; n<xf86Screens[l]->numEntities; n++) {
+	            if (xf86IsEntityPrimary(xf86Screens[l]->entityList[n])) {
+		        dev2screen[0] = l;
+			primary = TRUE;
+			break;
+		    }
+		}
+		if (primary) continue;
+		/* not primary: assign it to next device of same driver */
+		/* 
+		 * NOTE: we assume that devices in DevToConfig 
+		 * and xf86Screens[] have the same order except
+		 * for the primary device which always comes first.
+		 */
+		for (; k < nDevToConfig; k++) {
+		    if (DevToConfig[k].iDriver == i) {
+		        dev2screen[k++] = l;
+			break;
+		    }
+		}
+	    }
 	    xf86SetPciVideo(NULL,NONE);
 	}
 	xfree(driverProbed);
@@ -786,8 +858,9 @@ DoConfigure()
 
 	ConfiguredMonitor = NULL;
 
-	xf86EnableAccess(xf86Screens[j]);
-	if ((*xf86Screens[j]->PreInit)(xf86Screens[j], PROBE_DETECT) &&
+	xf86EnableAccess(xf86Screens[dev2screen[j]]);
+	if ((*xf86Screens[dev2screen[j]]->PreInit)(xf86Screens[dev2screen[j]], 
+						   PROBE_DETECT) &&
 	    ConfiguredMonitor) {
 	    MonitorPtr = configureDDCMonitorSection(j);
 	} else {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/shape.c,v 3.11 2000/03/03 20:50:25 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/shape.c,v 3.13.2.1 2001/05/31 16:33:38 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $TOG: shape.c /main/39 1998/02/09 15:25:16 kaleb $ */
+/* $Xorg: shape.c,v 1.3 2000/08/17 19:47:58 cpqbld Exp $ */
 #define NEED_REPLIES
 #define NEED_EVENTS
 #include "X.h"
@@ -206,7 +206,31 @@ RegionOperate (client, pWin, kind, destRgnp, srcRgn, op, xoff, yoff, create)
 	    REGION_DESTROY(pScreen, srcRgn);
 	return Success;
     }
-    switch (op) {
+
+    /* May/30/2001:
+     * The shape.PS specs say if src is None, existing shape is to be
+     * removed (and so the op-code has no meaning in such removal);
+     * see shape.PS, page 3, ShapeMask.
+     */
+    if (srcRgn == NULL) {
+      if (*destRgnp != NULL) {
+	REGION_DESTROY (pScreen, *destRgnp);
+	*destRgnp = 0;
+	/* go on to remove shape and generate ShapeNotify */
+      }
+      else {
+	/* May/30/2001:
+	 * The target currently has no shape in effect, so nothing to
+	 * do here.  The specs say that ShapeNotify is generated whenever
+	 * the client region is "modified"; since no modification is done
+	 * here, we do not generate that event.  The specs does not say
+	 * "it is an error to request removal when there is no shape in
+	 * effect", so we return good status.
+	 */
+	return Success;
+      }
+    }
+    else switch (op) {
     case ShapeSet:
 	if (*destRgnp)
 	    REGION_DESTROY(pScreen, *destRgnp);

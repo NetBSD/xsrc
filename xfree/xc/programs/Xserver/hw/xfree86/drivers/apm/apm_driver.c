@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_driver.c,v 1.45 2000/11/22 04:32:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_driver.c,v 1.50 2001/05/04 19:05:31 dawes Exp $ */
 
-
+#define COMPILER_H_EXTRAS
 #include "apm.h"
 #include "xf86cmap.h"
 #include "shadowfb.h"
@@ -9,10 +9,9 @@
 #include "xf86RAC.h"
 #include "vbe.h"
 
-#ifdef DPMSExtension
 #include "opaque.h"
+#define DPMS_SERVER
 #include "extensions/dpms.h"
-#endif
 
 #define VERSION			4000
 #define APM_NAME		"APM"
@@ -28,7 +27,7 @@
 #define TEXT_AMOUNT 32768
 
 /* Mandatory functions */
-static OptionInfoPtr	ApmAvailableOptions(int chipid, int busid);
+static const OptionInfoRec *	ApmAvailableOptions(int chipid, int busid);
 static void     ApmIdentify(int flags);
 static Bool     ApmProbe(DriverPtr drv, int flags);
 static Bool     ApmPreInit(ScrnInfoPtr pScrn, int flags);
@@ -47,17 +46,14 @@ static void	ApmRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg,
 			    ApmRegPtr ApmReg);
 static void	ApmLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
 				LOCO *colors, VisualPtr pVisual);
-#ifdef DPMSExtension
 static void	ApmDisplayPowerManagementSet(ScrnInfoPtr pScrn,
 					     int PowerManagementMode,
 					     int flags);
-#endif
 static void	ApmProbeDDC(ScrnInfoPtr pScrn, int index);
 
 
 int ApmPixmapIndex = -1;
 static int ApmGeneration = -1;
-static int pix24bpp = 0;
 
 DriverRec APM = {
 	VERSION,
@@ -99,7 +95,7 @@ typedef enum {
     OPTION_PCI_RETRY
 } ApmOpts;
 
-static OptionInfoRec ApmOptions[] =
+static const OptionInfoRec ApmOptions[] =
 {
     {OPTION_SET_MCLK, "SetMclk", OPTV_FREQ,
 	{0}, FALSE},
@@ -199,14 +195,11 @@ static const char *shadowSymbols[] = {
 
 #ifdef XFree86LOADER
 
-static const char *cfbSymbols[] = {
+static const char *fbSymbols[] = {
     "xf1bppScreenInit",
     "xf4bppScreenInit",
-    "cfbScreenInit",
-    "cfb16ScreenInit",
-    "cfb24ScreenInit",
-    "cfb32ScreenInit",
-    "cfb24_32ScreenInit",
+    "fbScreenInit",
+    "fbPictureInit",
     NULL
 };
 
@@ -240,7 +233,7 @@ apmSetup(pointer module, pointer opts, int *errmaj, int *errmain)
 	setupDone = TRUE;
 	xf86AddDriver(&APM, module, 0);
 
-	LoaderRefSymLists(vgahwSymbols, cfbSymbols, xaaSymbols, 
+	LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols, 
 			  /*xf8_32bppSymbols,*/ ramdacSymbols, vbeSymbols,
 			  ddcSymbols, i2cSymbols, shadowSymbols, NULL);
 
@@ -301,8 +294,7 @@ ApmIdentify(int flags)
 		      ApmChipsets);
 }
 
-static
-OptionInfoPtr
+static const OptionInfoRec *
 ApmAvailableOptions(int chipid, int busid)
 {
     return ApmOptions;
@@ -482,8 +474,6 @@ ddc1Read(ScrnInfoPtr pScrn)
     return (STATUS_IOP() & STATUS_SDA) != 0;
 }
 
-extern xf86MonPtr ConfiguredMonitor;
-
 static void
 ApmProbeDDC(ScrnInfoPtr pScrn, int index)
 {
@@ -621,7 +611,10 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
     xf86CollectOptions(pScrn, NULL);
 
     /* Process the options */
-    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, ApmOptions);
+    if (!(pApm->Options = xalloc(sizeof(ApmOptions))))
+	return FALSE;
+    memcpy(pApm->Options, ApmOptions, sizeof(ApmOptions));
+    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pApm->Options);
 
     pApm->scrnIndex = pScrn->scrnIndex;
     /* Set the bits per RGB for 8bpp mode */
@@ -629,16 +622,16 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 	/* Default to 8 */
 	pScrn->rgbBits = 8;
     }
-    if (xf86ReturnOptValBool(ApmOptions, OPTION_NOLINEAR, FALSE)) {
+    if (xf86ReturnOptValBool(pApm->Options, OPTION_NOLINEAR, FALSE)) {
 	pApm->noLinear = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "No linear framebuffer\n");
     }
     from = X_DEFAULT;
     pApm->hwCursor = FALSE;
-    if (xf86GetOptValBool(ApmOptions, OPTION_HW_CURSOR, &pApm->hwCursor))
+    if (xf86GetOptValBool(pApm->Options, OPTION_HW_CURSOR, &pApm->hwCursor))
 	from = X_CONFIG;
     if (pApm->noLinear ||
-	xf86ReturnOptValBool(ApmOptions, OPTION_SW_CURSOR, FALSE)) {
+	xf86ReturnOptValBool(pApm->Options, OPTION_SW_CURSOR, FALSE)) {
 	from = X_CONFIG;
 	pApm->hwCursor = FALSE;
     }
@@ -647,24 +640,24 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
     from = X_DEFAULT;
     if (pScrn->bitsPerPixel < 8)
 	pApm->NoAccel = TRUE;
-    if (xf86ReturnOptValBool(ApmOptions, OPTION_NOACCEL, FALSE)) {
+    if (xf86ReturnOptValBool(pApm->Options, OPTION_NOACCEL, FALSE)) {
 	from = X_CONFIG;
 	pApm->NoAccel = TRUE;
     }
     if (pApm->NoAccel)
 	xf86DrvMsg(pScrn->scrnIndex, from, "Acceleration disabled\n");
-    if (xf86GetOptValFreq(ApmOptions, OPTION_SET_MCLK, OPTUNITS_MHZ, &real)) {
+    if (xf86GetOptValFreq(pApm->Options, OPTION_SET_MCLK, OPTUNITS_MHZ, &real)) {
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "MCLK used is %.1f MHz\n", real);
 	pApm->MemClk = (int)(real * 1000.0);
     }
-    if (xf86ReturnOptValBool(ApmOptions, OPTION_SHADOW_FB, FALSE)) {
+    if (xf86ReturnOptValBool(pApm->Options, OPTION_SHADOW_FB, FALSE)) {
 	pApm->ShadowFB = TRUE;
 	pApm->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
 		"Using \"Shadow Framebuffer\" - acceleration disabled\n");
     }
-    if (xf86ReturnOptValBool(ApmOptions, OPTION_PCI_RETRY, FALSE)) {
-	if (xf86ReturnOptValBool(ApmOptions, OPTION_PCI_BURST, FALSE)) {
+    if (xf86ReturnOptValBool(pApm->Options, OPTION_PCI_RETRY, FALSE)) {
+	if (xf86ReturnOptValBool(pApm->Options, OPTION_PCI_BURST, FALSE)) {
 	  pApm->UsePCIRetry = TRUE;
 	  xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "PCI retry enabled\n");
 	}
@@ -1050,25 +1043,11 @@ ApmPreInit(ScrnInfoPtr pScrn, int flags)
 	req = "xf4bppScreenInit";
 	break;
     case 8:
-	mod = "cfb";
-	req = "cfbScreenInit";
-	break;
     case 16:
-	mod = "cfb16";
-	req = "cfb16ScreenInit";
-	break;
     case 24:
-	if (pix24bpp == 24) {
-	    mod = "cfb24";
-	    req = "cfb24ScreenInit";
-	} else {
-	    mod = "xf24_32bpp";
-	    req = "cfb24_32ScreenInit";
-	}
-	break;
     case 32:
-	mod = "cfb32";
-	req = "cfb32ScreenInit";
+	mod = "fb";
+	req = "fbScreenInit";
 	break;
     }
 
@@ -1805,25 +1784,7 @@ ApmScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     ApmAdjustFrame(scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
 
     /*
-     * The next step is to setup the screen's visuals, and initialise the
-     * framebuffer code.  In cases where the framebuffer's default
-     * choices for things like visual layouts and bits per RGB are OK,
-     * this may be as simple as calling the framebuffer's ScreenInit()
-     * function.  If not, the visuals will need to be setup before calling
-     * a fb ScreenInit() function and fixed up after.
-     *
-     * XXX NOTE: cfbScreenInit() will not result in the default visual
-     * being set correctly when there is a screen-specific value given
-     * in the config file as opposed to a global value given on the
-     * command line.  Saving and restoring 'defaultColorVisualClass'
-     * around the fb's ScreenInit() solves this problem.
-     *
-     * For most PC hardware at depths >= 8, the defaults that cfb uses
-     * are not appropriate.  In this driver, we fixup the visuals after.
-     */
-
-    /*
-     * Reset cfb's visual list.
+     * Reset fb's visual list.
      */
     miClearVisualTypes();
 
@@ -1865,6 +1826,8 @@ ApmScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     ApmHWCursorReserveSpace(pApm);
     ApmAccelReserveSpace(pApm);
 
+    miSetPixmapDepths();
+
     switch (pScrn->bitsPerPixel) {
     case 1:
 	ret = xf1bppScreenInit(pScreen, FbBase,
@@ -1879,31 +1842,14 @@ ApmScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			pScrn->displayWidth);
 	break;
     case 8:
-	ret = cfbScreenInit(pScreen, FbBase, pScrn->virtualX,
-	    pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
-	    pScrn->displayWidth);
-	break;
     case 16:
-	ret = cfb16ScreenInit(pScreen, FbBase, pScrn->virtualX,
-	    pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
-	    pScrn->displayWidth);
-	break;
     case 24:
-	if (pix24bpp == 24)
-	    ret = cfb24ScreenInit(pScreen, FbBase,
-			pScrn->virtualX, pScrn->virtualY,
-			pScrn->xDpi, pScrn->yDpi,
-			pScrn->displayWidth);
-	else
-	    ret = cfb24_32ScreenInit(pScreen, FbBase,
-			pScrn->virtualX, pScrn->virtualY,
-			pScrn->xDpi, pScrn->yDpi,
-			pScrn->displayWidth);
-	break;
     case 32:
-	ret = cfb32ScreenInit(pScreen, FbBase, pScrn->virtualX,
+	ret = fbScreenInit(pScreen, FbBase, pScrn->virtualX,
 	    pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
-	    pScrn->displayWidth);
+	    pScrn->displayWidth, pScrn->bitsPerPixel);
+	if (ret)
+		fbPictureInit(pScreen, 0, 0);
 	break;
     default:
 	xf86DrvMsg(scrnIndex, X_ERROR,
@@ -1978,9 +1924,7 @@ ApmScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (pApm->ShadowFB)
 	ShadowFBInit(pScreen, ApmRefreshArea);
 
-#ifdef DPMSExtension
     xf86DPMSInit(pScreen, ApmDisplayPowerManagementSet, 0);
-#endif
 
     if (pApm->noLinear)
 	ApmInitVideo_IOP(pScreen);
@@ -2233,7 +2177,6 @@ ApmValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
  *
  * Sets VESA Display Power Management Signaling (DPMS) Mode.
  */
-#ifdef DPMSExtension
 static void
 ApmDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 			     int flags)
@@ -2270,7 +2213,6 @@ ApmDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
 	WRXB(0xD0, (tmp & 0xFC) | dpmsreg);
     }
 }
-#endif
 
 static Bool
 ApmSaveScreen(ScreenPtr pScreen, int mode)

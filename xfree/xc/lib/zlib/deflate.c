@@ -1,4 +1,4 @@
-/* $TOG: deflate.c /main/4 1998/02/04 14:33:18 kaleb $ */
+/* $Xorg: deflate.c,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-1998 Jean-loup Gailly.

@@ -1,4 +1,4 @@
-/* $TOG: elut.c /main/5 1998/02/09 16:08:15 kaleb $ */
+/* $Xorg: elut.c,v 1.3 2000/08/17 19:47:23 cpqbld Exp $ */
 /**** module elut.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare  -- AGE Logic, Inc. June 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/export/elut.c,v 3.2 1998/10/05 13:22:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/export/elut.c,v 3.4 2001/01/17 22:12:49 dawes Exp $ */
 
 #define _XIEC_ELUT
 

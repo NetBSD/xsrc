@@ -1,4 +1,4 @@
-/* $TOG: Viewport.h /main/24 1998/02/06 12:53:14 kaleb $ */
+/* $Xorg: Viewport.h,v 1.3 2000/08/17 19:45:44 cpqbld Exp $ */
 
 /************************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/Xaw/Viewport.h,v 1.4 1998/10/03 08:42:31 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Viewport.h,v 1.6 2001/01/17 19:42:36 dawes Exp $ */
 
 #ifndef _XawViewport_h
 #define _XawViewport_h

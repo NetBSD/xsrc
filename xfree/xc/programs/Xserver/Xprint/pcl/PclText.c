@@ -1,4 +1,4 @@
-/* $XConsortium: PclText.c /main/2 1996/12/30 14:57:22 kaleb $ */
+/* $Xorg: PclText.c,v 1.4 2000/08/17 19:48:08 cpqbld Exp $ */
 /*******************************************************************
 **
 **    *********************************************************
@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclText.c,v 1.5 1999/09/25 14:36:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclText.c,v 1.8 2001/01/19 17:10:50 dawes Exp $ */
 
 #ifdef DO_TWO_BYTE_PCL
 #include "iconv.h"
@@ -150,7 +150,8 @@ char font_type;
 	 */
 	MACRO_START( outFile, pConPriv );
 	sprintf(t, "\033%%0B;PU%d,%dPD;TD1;DT%c,1;",
-                x + pDrawable->x, y + pDrawable->y, ETX);
+                x + pDrawable->x, y + pDrawable->y + pGC->font->info.fontAscent,
+		ETX);
 	SAVE_PCL( outFile, pConPriv, t );
 	SAVE_PCL_COUNT( outFile, pConPriv, "FI0;SS;LB", 9 );
 
@@ -196,7 +197,8 @@ char font_type;
 	 */
 	MACRO_START( outFile, pConPriv );
 	sprintf(t, "\033%%0B;PU%d,%dPD;TD1;DT%c,1;",
-		x + pDrawable->x, y + pDrawable->y, ETX);
+		x + pDrawable->x, y + pDrawable->y + pGC->font->info.fontAscent,
+		ETX);
 	SAVE_PCL( outFile, pConPriv, t );
 	selectSize(outFile, pConPriv, pin);
 	SAVE_PCL_COUNT( outFile, pConPriv, "FI0;SS;LB", 9 );
@@ -223,15 +225,14 @@ char font_type;
      * Convert the collection of rectangles into a proper region, then
      * intersect it with the clip region.
      */
-    box.x1 = x + charinfo[0]->metrics.leftSideBearing + pDrawable->x;
-    box.y1 = y - max_ascent + pDrawable->y;
-    box.x2 = x + w - charinfo[n-1]->metrics.characterWidth
-		+ charinfo[n-1]->metrics.rightSideBearing + pDrawable->x;
-    box.y2 = y + max_descent + pDrawable->y;
+    box.x1 = x +  pDrawable->x;
+    box.y1 = y - max_ascent + pDrawable->y + pGC->font->info.fontAscent;
+    box.x2 = x + w + pDrawable->x;
+    box.y2 = y + max_descent + pDrawable->y + pGC->font->info.fontAscent;
 
-    drawRegion = REGION_CREATE( pGC->pScreen, &box, 0 );
-    region = REGION_CREATE( pGC->pScreen, NULL, 0 );
-    REGION_INTERSECT( pGC->pScreen, region, drawRegion, pGC->pCompositeClip );
+    drawRegion = miRegionCreate( &box, 0 );
+    region = miRegionCreate( NULL, 0 );
+    miIntersect( region, drawRegion, pGC->pCompositeClip );
 
     /*
      * For each rectangle in the clip region, set the HP-GL/2 "input
@@ -335,7 +336,8 @@ char font_type;
 	 */
 	MACRO_START( outFile, pConPriv );
 	sprintf(t, "\033%%0B;PU%d,%dPD;TD1;DT%c,1;",
-		x + pDrawable->x, y + pDrawable->y, ETX);
+		x + pDrawable->x, y + pDrawable->y + pGC->font->info.fontAscent,
+		ETX);
 	SAVE_PCL( outFile, pConPriv, t );
 	SAVE_PCL_COUNT( outFile, pConPriv, "FI0;SS;LB", 9 );
 
@@ -393,7 +395,8 @@ char font_type;
 	 */
 	MACRO_START( outFile, pConPriv );
 	sprintf(t, "\033%%0B;PU%d,%dPD;TD1;DT%c,1;",
-		x + pDrawable->x, y + pDrawable->y, ETX);
+		x + pDrawable->x, y + pDrawable->y + pGC->font->info.fontAscent,
+		ETX);
 	SAVE_PCL( outFile, pConPriv, t );
 	sprintf(t, "TD0;\033%%1A");
 	SAVE_PCL( outFile, pConPriv, t );
@@ -421,15 +424,14 @@ char font_type;
      * Convert the collection of rectangles into a proper region, then
      * intersect it with the clip region.
      */
-    box.x1 = x + charinfo[0]->metrics.leftSideBearing + pDrawable->x;
-    box.y1 = y - max_ascent + pDrawable->y;
-    box.x2 = x + w - charinfo[n-1]->metrics.characterWidth
-		+ charinfo[n-1]->metrics.rightSideBearing + pDrawable->x;
-    box.y2 = y + max_descent + pDrawable->y;
+    box.x1 = x + pDrawable->x;
+    box.y1 = y - max_ascent + pDrawable->y + pGC->font->info.fontAscent;
+    box.x2 = x + w + pDrawable->x;
+    box.y2 = y + max_descent + pDrawable->y + pGC->font->info.fontAscent;
 
-    drawRegion = REGION_CREATE( pGC->pScreen, &box, 0 );
-    region = REGION_CREATE( pGC->pScreen, NULL, 0 );
-    REGION_INTERSECT( pGC->pScreen, region, drawRegion, pGC->pCompositeClip );
+    drawRegion = miRegionCreate( &box, 0 );
+    region = miRegionCreate( NULL, 0 );
+    miIntersect( region, drawRegion, pGC->pCompositeClip );
 
     /*
      * For each rectangle in the clip region, set the HP-GL/2 "input

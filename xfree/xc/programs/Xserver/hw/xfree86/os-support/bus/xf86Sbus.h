@@ -20,18 +20,19 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Sbus.h,v 1.1 2000/05/18 23:21:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Sbus.h,v 1.3 2001/04/20 17:02:43 tsi Exp $ */
 
 #ifndef _XF86_SBUS_H
 #define _XF86_SBUS_H
 
-#ifdef linux
+#if defined(linux)
 #include <asm/types.h>
 #include <asm/fbio.h>
 #include <asm/openpromio.h>
 #elif defined(SVR4)
 #include <sys/fbio.h>
-#elif define(CSRG_BASED)
+#include <sys/openpromio.h>
+#elif defined(CSRG_BASED)
 #include <machine/fbio.h>
 #else
 #include <sun/fbio.h>

@@ -1,4 +1,4 @@
-/* $TOG: Withdraw.c /main/7 1998/02/06 17:57:21 kaleb $ */
+/* $Xorg: Withdraw.c,v 1.3 2000/08/17 19:44:59 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1988 by Wyse Technology, Inc., San Jose, Ca.,

@@ -193,4 +193,4 @@ how to do this, please refer to the README.LinkKit file.
      Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.2 1997/05/24 13:46:34 dawes Exp $
 
 
-$XFree86$
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/BUILD,v 3.4 1999/04/15 03:34:43 dawes Exp $

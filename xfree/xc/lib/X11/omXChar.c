@@ -1,4 +1,4 @@
-/* $TOG: omXChar.c /main/8 1998/03/14 06:09:03 kaleb $ */
+/* $Xorg: omXChar.c,v 1.3 2000/08/17 19:45:23 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -34,7 +34,7 @@
 /*
  * Modifiers: Jeff Walls, Paul Anderson (HEWLETT-PACKARD)
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/omXChar.c,v 1.5 2001/01/17 19:41:57 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPublic.h"

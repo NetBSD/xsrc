@@ -1,6 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/resource.h,v 1.4 2000/01/02 00:24:53 mvojkovi Exp $ */
-
-/* $TOG: resource.h /main/24 1998/02/09 14:29:47 kaleb $ */
+/* $Xorg: resource.h,v 1.4 2000/08/17 19:53:30 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1989, 1998  The Open Group
@@ -43,6 +41,8 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/programs/Xserver/include/resource.h,v 1.9 2001/02/02 21:39:02 herrb Exp $ */
+
 #ifndef RESOURCE_H
 #define RESOURCE_H 1
 #include "misc.h"
@@ -107,7 +107,7 @@ typedef unsigned long RESTYPE;
 #define CLIENT_BITS(id) ((id) & RESOURCE_CLIENT_MASK)
 /* extract the client id from an XID */
 #define CLIENT_ID(id) ((int)(CLIENT_BITS(id) >> CLIENTOFFSET))
-#define SERVER_BIT		0x20000000		/* use illegal bit */
+#define SERVER_BIT		(Mask)0x40000000	/* use illegal bit */
 
 #ifdef INVALID
 #undef INVALID	/* needed on HP/UX */
@@ -165,6 +165,11 @@ extern XID FakeClientID(
 #endif
 );
 
+/* Quartz support on Mac OS X uses the CarbonCore
+   framework whose AddResource function conflicts here. */
+#ifdef __DARWIN__
+#define AddResource Darwin_X_AddResource
+#endif
 extern Bool AddResource(
 #if NeedFunctionPrototypes
     XID /*id*/,

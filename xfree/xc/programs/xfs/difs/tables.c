@@ -1,4 +1,4 @@
-/* $TOG: tables.c /main/7 1998/02/11 10:03:36 kaleb $ */
+/* $Xorg: tables.c,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
  * all the dispatch, error, event and reply vectors
  */
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/tables.c,v 1.3 1998/10/25 12:48:00 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/tables.c,v 1.5 2001/01/17 23:45:29 dawes Exp $ */
 
 #include <dispatch.h>
 #include <swaprep.h>

@@ -1,5 +1,5 @@
 /*
- * Id: fbglyph.c,v 1.1 1999/11/02 03:54:45 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fbglyph.c,v 1.10 2001/03/03 22:14:44 tsi Exp $
  *
  * Copyright © 1998 Keith Packard
  *
@@ -21,7 +21,6 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbglyph.c,v 1.8 2000/09/22 05:58:01 keithp Exp $ */
 
 #include "fb.h"
 #include	"fontstruct.h"
@@ -81,8 +80,18 @@ fbGlyphIn (RegionPtr	pRegion,
  *  C A B C	f2	f0
  */
 
+#undef _A
+#undef _B
+#undef _C
+#undef _AB
+#undef _BC
+#undef _CA
+#undef _ABCA
+#undef _BCAB
+#undef _CABC
+
 #if IMAGE_BYTE_ORDER == MSBFirst
-#define	_A	f1
+#define _A	f1
 #define _B	f2
 #define _C	f0
 #define _AB	f2
@@ -93,7 +102,7 @@ fbGlyphIn (RegionPtr	pRegion,
 #define _CABC	f0
 #define CASE(a,b,c,d)	((a << 3) | (b << 2) | (c << 1) | d)
 #else
-#define	_A	f0
+#define _A	f0
 #define _B	f1
 #define _C	f2
 #define _AB	f0

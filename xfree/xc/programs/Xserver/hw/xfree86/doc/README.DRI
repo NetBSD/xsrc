@@ -2,13 +2,13 @@
 
           VA Linux Systems, Inc. Professional Services - Graphics.
 
-                              20 November 2000
+                                 3 May 2001
 
 1.  Preamble
 
 1.1  Copyright
 
-Copyright © 2000 by VA Linux Systems, Inc.  All Rights Reserved.
+Copyright © 2000-2001 by VA Linux Systems, Inc.  All Rights Reserved.
 
 Permission is granted to make and distribute verbatim copies of this document
 provided the copyright notice and this permission notice are preserved on all
@@ -24,8 +24,9 @@ Intel is a registered trademark of Intel Corporation.  3Dlabs, GLINT, and
 Oxygen are either registered trademarks or trademarks of 3Dlabs Inc. Ltd.
 3dfx, Voodoo3, Voodoo4, and Voodoo5 are registered trademarks of 3dfx Inter-
 active, Incorporated.  Matrox is a registered trademark of Matrox Electronic
-Systems Ltd.  ATI Rage is a registered trademark of ATI Technologies, Inc.
-All other trademarks mentioned are the property of their respective owners.
+Systems Ltd.  ATI Rage and Radeon are registered trademarks of ATI Technolo-
+gies, Inc.  All other trademarks mentioned are the property of their respec-
+tive owners.
 
 2.  Introduction
 
@@ -49,58 +50,36 @@ inux.com.
 
 3.  Supported Architectures & Hardware
 
-     "
+3.1  CPU Architectures
 
-3.1  Architectures
+The architectures currently supported by the DRI have grown from the initial
+Intel i386 systems to now include the Alpha Processor and the Sun SPARC
+machines.
 
-     "
+Intel's SSE (a.k.a. Katmai) instructions are used in optimized vertex trans-
+formation functions in Mesa-based drivers.  This requires a recent Linux ker-
+nel both at compile and runtime.  See the DRI Compile Guide for compile-time
+requirements.  At runtime a check is made to determine if the CPU can execute
+SSE instructions.  They're disabled otherwise.
 
-The Architectures currently supported by the DRI have grown from the initial
-Intel i386 based machines to now include, the Alpha Processor and the Sun
-SPARC machines.
+AMD's 3DNow! instructions are also used in optimized vertex transformation
+functions in the Mesa-based DRI drivers.  3DNow! is supported in most ver-
+sions of Linux.  Like the SSE optimizations, a runtime check is made to
+determine if the CPU can execute 3DNow! instructions.
 
-The build environment for both of these new architectures have a pre-build
-environment that will correctly build the DRI drivers and Mesa meaning no
-extra configuration is necessary to build the DRI for these architectures.
-
-3.1.1  Alpha Features
-
-     "
-
-On newer Alpha processors, it should be noted that a significant performance
-increase can be seen with the addition of the -mcpu= command that should be
-passed to GCC upon compilation. Dependent of the architecture of the proces-
-sor, for example -mcpu=ev6 will build specifically for the EV6 based AXP's,
-giving both byte and word alignment access to the DRI/Mesa drivers.
-
-Use this as an example of compiling with this extra speed.  In your host.def
-file that should reside in the xc/config directory, add the line.
-
-#define DefaultGcc2AxpOpt -O2 -mcpu=ev6
-
-Additional speed improvements to 3D rendering can be achieved by installing
-Compaq's Math Libraries (CPML) which can be obtained from the following URL.
-
-http://www.support.compaq.com/alpha-tools/software/index.html
-
-Once installed, you can set this option in your host.def to build against the
-CPML libraries.
-
-#define UseCompaqMathLibrary YES
+Alpha-based systems can use Compaq's optimized math library for improved 3D
+performance.  See the DRI Compilation Guide for details.
 
 3.2  Graphics Hardware
-
-     "
 
 XFree86 4.0 (or later versions) includes 3D acceleration for the following
 graphics hardware:
 
-NOTE: This is a complete list of graphics hardware supported. It may not be
-supported on your platform.
-
-   o 3dfx:
+   o 3dfx, supported on Intel x86, AMD and Alpha:
 
         o Voodoo5 5500
+
+        o Voodoo4 4500
 
         o Voodoo3 3500 TV
 
@@ -119,13 +98,13 @@ supported on your platform.
      There are many configurations of 3dfx cards on the market.  Not all have
      been tested.
 
-   o Matrox:
+   o Matrox, supported on Intel x86 and AMD:
 
         o Matrox G200
 
         o Matrox G400
 
-   o Intel i810
+   o Intel i810 (motherboard chipset)
 
         o i810
 
@@ -133,27 +112,38 @@ supported on your platform.
 
         o i810e
 
-   o ATI Rage 128
+   o ATI Rage 128, supported on Intel x86 and AMD:
 
-        o Rage Fury AGP
+        o Rage Fury
 
-        o Rage Magnum AGP
+        o Rage Magnum
 
-        o XPERT 2000 AGP
+        o XPERT 2000
 
-        o XPERT 128 AGP
+        o XPERT 128
 
-        o XPERT 99 AGP
+        o XPERT 99
 
-        o All-in-Wonder 128 AGP
+        o All-in-Wonder 128
 
-     The PCI versions of these cards also have minimal support.  Note that
-     there are also Rage 128 Pro based boards on the market, and these are
-     not yet supported.
+     Note that both PCI and AGP versions of Rage 128 based cards are sup-
+     ported at this time.
 
-   o 3Dlabs Oxygen GMX 2000 (MX/Gamma based)
+   o ATI Radeon, supported on Intel x86 and AMD:
 
-Support for other hardware is underway.
+        o Radeon SDR AGP
+
+        o Radeon DDR AGP
+
+   o 3Dlabs, supported on Intel x86 and AMD:
+
+        o Oxygen GMX 2000 (MX/Gamma based).  Note:  this driver is no longer
+          being actively developed.
+
+Support for other hardware is underway.  Most of the DRI development work is
+funded by contracts with IHVs.  These contracts often prevent us from
+announcing drivers before they're released.  Queries about upcoming drivers
+may not be answerable.
 
 4.  Prerequisite Software
 
@@ -166,8 +156,6 @@ Support for other hardware is underway.
      for hardware acceleration are already in the XFree86/DRI project.
 
 5.  Kernel Modules
-
-    "
 
 3D hardware acceleration requires a DRI kernel module that's specific to your
 graphics hardware.
@@ -195,8 +183,6 @@ X server startup log, and checking that /proc/dri/0 exists.
 
 6.  XF86Config file
 
-      "
-
 The XFree86 configuration file is usually found in /etc/X11/XF86Config.  This
 section describes the parts which must be specially set for the DRI.
 
@@ -210,10 +196,13 @@ First, the XF86Config file must load the GLX and DRI modules:
               Load       "dri"
           EndSection
 
-Next, the DRI section can be used to restrict access to direct rendering.
+Next, the DRI section can be used to restrict access to direct rendering.  A
+client can only use direct rendering if it has permission to open the
+/dev/dri/card? file(s).  The permissions on these DRI device files is con-
+trolled by the "DRI" section in the XF86Config file.
 
 If you want all of the users on your system to be able to use direct-render-
-ing, then use a simple DRI section:
+ing, then use a simple DRI section like this:
 
           Section "DRI"
                Mode 0666
@@ -342,15 +331,15 @@ as well as which DRI-based driver.  Simply type glxinfo and examine the
 OpenGL vendor, renderer, and version lines.  Among the output you should see
 something like this:
 
-               OpenGL vendor string: Precision Insight, Inc.
+               OpenGL vendor string: VA Linux Systems, Inc.
                OpenGL renderer string: Mesa DRI Voodoo3 20000224
-               OpenGL version string: 1.2 Mesa 3.3 beta
+               OpenGL version string: 1.2 Mesa 3.4
 
 or this:
 
-               OpenGL vendor string: Precision Insight, Inc.
+               OpenGL vendor string: VA Linux Systems, Inc.
                OpenGL renderer string: Mesa GLX Indirect
-               OpenGL version string: 1.2 Mesa 3.3 beta
+               OpenGL version string: 1.2 Mesa 3.4
 
 The first example indicates that the 3dfx driver is using Voodoo3 hardware.
 The second example indicates that no hardware driver was found and indirect,
@@ -399,7 +388,57 @@ MESA_DEBUG and MESA_INFO variables.
 This section contains information to help you diagnose general problems.  See
 below for additional information for specific hardware.
 
-9.1  The X Server
+9.1  Bus Mastering
+
+DMA-based DRI drivers (that's most DRI drivers) cannot function unless bus
+mastering is enabled for your graphics card.  By default, some systems don't
+having bus mastering on.  You should enable it in your BIOS.
+
+Alternately, you can check the status of bus mastering and change the setting
+from within Linux.  There may be similar procedures for other operating sys-
+tems.
+
+Run lspci (as root) and find the information describing your graphics
+adapter.  For example:
+
+         00:00.0 Host bridge: Intel Corporation 440BX/ZX - 82443BX/ZX Host bridge (rev 03)
+         00:01.0 PCI bridge: Intel Corporation 440BX/ZX - 82443BX/ZX AGP bridge (rev 03)
+         00:07.0 ISA bridge: Intel Corporation 82371AB PIIX4 ISA (rev 02)
+         00:07.1 IDE interface: Intel Corporation 82371AB PIIX4 IDE (rev 01)
+         00:07.2 USB Controller: Intel Corporation 82371AB PIIX4 USB (rev 01)
+         00:07.3 Bridge: Intel Corporation 82371AB PIIX4 ACPI (rev 02)
+         00:11.0 Ethernet controller: Intel Corporation 82557 [Ethernet Pro 100] (rev 08)
+         00:12.0 SCSI storage controller: Symbios Logic Inc. (formerly NCR) 53c895 (rev 02)
+         00:14.0 Multimedia audio controller: Ensoniq ES1371 [AudioPCI-97] (rev 08)
+         01:00.0 VGA compatible controller: 3Dfx Interactive, Inc.: Unknown device 0009 (rev 01)
+
+The bus, device, and function number comprise the device id, which is conven-
+tionally written in the form bus:dev.func, or in this case 01:00.0.
+
+Use the setpci command to examine bit two of register 4 for your graphics
+card.  This will indicate whether or not bus mastering is enabled.
+
+             setpci -s 01:00.0 4.w
+
+A hexadecimal value will be printed.  Convert the least significant digit to
+binary.  For example, if you see 3, that's 0011 in binary (bit two is 0).  If
+you see 7, that's 0111 in binary (bit two is 1).  In the first example, bus
+mastering is disabled.  It's enabled in the second example.
+
+The following shell script will enabled bus mastering for your graphics card
+and host bridge.  Run it as root.
+
+         #!/bin/bash
+         dev=01:00.0   # change as appropriate
+         echo Enabling bus mastering on device $dev
+         setpci -s $dev 4.w=$(printf %x $((0x$(setpci -s $dev 4.w)|4)))
+         dev=00:00.0
+         echo Enabling bus mastering on host bridge $dev
+         setpci -s $dev 4.w=$(printf %x $((0x$(setpci -s $dev 4.w)|4)))
+
+You can check if this worked by running the first setpci command again.
+
+9.2  The X Server
 
   1.  Before you start the X server, verify the appropriate 3D kernel module
       is installed.  Type lsmod and look for the appropriate kernel module.
@@ -453,7 +492,7 @@ below for additional information for specific hardware.
                   SGI-GLX
                   XFree86-DRI
 
-9.2  Linking, running and verifying 3D acceleration
+9.3  Linking, running and verifying 3D acceleration
 
 After you've verified that the X server and DRI have started correctly it's
 time to verify that the GL library and hardware drivers are working cor-
@@ -521,16 +560,18 @@ cific to your graphics card.
 This section presents hardware-specific information for normal use and trou-
 bleshooting.
 
-10.1  3dfx Voodoo3 Series
+10.1  3dfx Banshee, Voodoo3, Voodoo4 and Voodoo5 Series
 
-10.1.1  Dependencies
+10.1.1  Requirements
 
-The Voodoo3 DRI driver requires a special versions of the 3dfx Glide library.
-It can be downloaded from the DRI website.
+The 3dfx DRI driver requires special versions of the 3dfx Glide library.
+Different versions of Glide are needed for Banshee/Voodoo3 than for
+Voodoo4/5.  The Glide libraries can be downloaded from the DRI website.
 
 10.1.2  Configuration
 
-Your XF86Config file's device section must specify the tdfx device:
+Your XF86Config file's device section must specify the tdfx device.  For
+example:
 
              Section "Device"
                  Identifier  "Voodoo3"
@@ -538,7 +579,15 @@ Your XF86Config file's device section must specify the tdfx device:
                  Driver      "tdfx"
              EndSection
 
-The Screen section should then reference the Voodoo3 device:
+Or,
+
+             Section "Device"
+                 Identifier  "Voodoo5"
+                 VendorName  "3dfx"
+                 Driver      "tdfx"
+             EndSection
+
+The Screen section should then reference the Voodoo device:
 
           Section "Screen"
               Identifier  "Screen 1"
@@ -552,12 +601,38 @@ The Screen section should then reference the Voodoo3 device:
               EndSubsection
              EndSection
 
-The kernel module for the Voodoo3 is named tdfx.o and should be installed in
-/lib/modules/2.4.x/kernel/driver/char/drm/.  It will be automatically loaded
-by the Xserver if needed.
+Or,
 
-The DRI 3D driver for the Voodoo3 should be in /usr/X11R6/lib/mod-
+          Section "Screen"
+              Identifier  "Screen 1"
+              Device      "Voodoo5"
+              Monitor     "High Res Monitor"
+              DefaultDepth 24
+              Subsection "Display"
+               Depth       16
+               Modes       "1280x1024" "1024x768" "800x600" "640x480"
+               ViewPort    0 0
+              EndSubsection
+              Subsection "Display"
+               Depth       24
+               Modes       "1280x1024" "1024x768" "800x600" "640x480"
+               ViewPort    0 0
+              EndSubsection
+             EndSection
+
+The kernel module for 3dfx hardware is named tdfx.o and should be installed
+in /lib/modules/2.4.x/kernel/driver/char/drm/.  It will be automatically
+loaded by the Xserver if needed.
+
+The DRI 3D driver for 3dfx hardware should be in /usr/X11R6/lib/mod-
 ules/dri/tdfx_dri.so.  This will be automatically loaded by libGL.so.
+
+The Voodoo5 supports 3D rendering in 16 and 32 bpp modes.  When running in
+32bpp mode an 8-bit stencil buffer and 24-bit Z (depth) buffer are offered.
+When running in 16bpp mode only a 16-bit Z (depth) buffer is offered and
+stencil is implemented in software.
+
+A software-based accumulation buffer is available in both 16 and 32bpp modes.
 
 10.1.3  Troubleshooting
 
@@ -569,20 +644,32 @@ ules/dri/tdfx_dri.so.  This will be automatically loaded by libGL.so.
      it means that you have the wrong version of the Glide library for your
      hardware.
 
-   o 3D acceleration for Voodoo3 is only supported in the 16 bit/pixel screen
-     mode.  Use xdpyinfo to verify that all your visuals are depth 16.  Edit
-     your XF86Config file if needed.
+   o 3D acceleration for Banshee and Voodoo3 is only supported in the 16
+     bit/pixel screen mode.  Use xdpyinfo to verify that all your visuals are
+     depth 16.  Edit your XF86Config file if needed.
 
    o The /dev/3dfx device is not used for DRI; it's only for Glide on older
      3dfx hardware.
 
-10.1.4  Performance
+   o Different versions of Glide are needed for Voodoo3 and Voodoo5.  See the
+     DRI website's resources page to download the right version of Glide.
+
+   o Voodoo4/5 may be run at 24bpp (instead of 32bpp, the default) but 3D
+     acceleration is not supported in that mode.  32bpp mode is fully 3D
+     accelerated.
+
+10.1.4  Performance and Features
 
    o Normally, buffer swapping in double-buffered applications is synchro-
      nized to your monitor's refresh rate.  This may be overridden by setting
-     the FX_GLIDE_SWAPINTERNVAL environment variable.  The value of this
-     variable indicates the maximum number of swap buffer commands can be
+     the FX_GLIDE_SWAPINTERVAL environment variable.  The value of this vari-
+     able indicates the maximum number of swap buffer commands can be
      buffered.  Zero allows maximum frame rate.
+
+   o On Voodoo4/5, rendering with 16-bits/texel textures is faster than using
+     32-bit per texel textures.  The internalFormat parameter to glTexImage2D
+     can be used to control texel size.  Quake3 and other games let you con-
+     trol this as well.
 
    o The glTexEnv mode GL_BLEND is not directly supported by the Voodoo3
      hardware.  It can be accomplished with a multipass algorithm but it's
@@ -622,88 +709,6 @@ ules/dri/tdfx_dri.so.  This will be automatically loaded by libGL.so.
 
         o Using glColorMask(r, g, b, a) when r!=g or g!=b.
 
-10.1.5  Known Problems
-
-   o The Glide library cannot be used directly; it's only meant to be used
-     via the tdfx DRI driver.
-
-   o SSystem has problems because of poorly set near and far clipping planes.
-     The office.unc Performer model also suffers from this problem.
-
-   o The lowest mipmap level is sometimes miscolored in trilinear- sampled
-     polygons.
-
-10.2  3dfx Voodoo5 Series
-
-10.2.1  Dependencies
-
-The Voodoo5 DRI driver requires a special versions of the 3dfx Glide library,
-different than that used for Voodoo3 hardware.  It can be downloaded from the
-DRI website.
-
-10.2.2  Configuration
-
-Your XF86Config file's device section must specify the tdfx device:
-
-             Section "Device"
-                 Identifier  "Voodoo5"
-                 VendorName  "3dfx"
-                 Driver      "tdfx"
-             EndSection
-
-The Screen section should then reference the Voodoo3 device:
-
-          Section "Screen"
-              Identifier  "Screen 1"
-              Device      "Voodoo5"
-              Monitor     "High Res Monitor"
-              DefaultDepth 24
-              Subsection "Display"
-               Depth       16
-               Modes       "1280x1024" "1024x768" "800x600" "640x480"
-               ViewPort    0 0
-              EndSubsection
-              Subsection "Display"
-               Depth       24
-               Modes       "1280x1024" "1024x768" "800x600" "640x480"
-               ViewPort    0 0
-              EndSubsection
-             EndSection
-
-The kernel module for the Voodoo5 is named tdfx.o and should be installed in
-/lib/modules/2.4.x/kernel/driver/char/drm/.  It will be automatically loaded
-by the Xserver if needed.
-
-The DRI 3D driver for the Voodoo5 should be in /usr/X11R6/lib/mod-
-ules/dri/tdfx_dri.so.  This will be automatically loaded by libGL.so.
-
-The Voodoo5 supports 3D rendering in 16 and 32 bpp modes.  When running in
-32bpp mode an 8-bit stencil buffer and 24-bit Z (depth) buffer are offered.
-When running in 16bpp mode only a 16-bit Z (depth) buffer is offered and
-stencil is implemented in software.
-
-A software-based accumulation buffer is available in both 16 and 32bpp modes.
-
-10.2.3  Troubleshooting
-
-   o The /dev/3dfx device is not used for DRI; it's only for Glide on older
-     3dfx hardware.
-
-   o Different versions of Glide are needed for Voodoo3 and Voodoo5.  See the
-     DRI website's resources page to download the right version of Glide.
-
-10.2.4  Performance
-
-   o Normally, buffer swapping in double-buffered applications is synchro-
-     nized to your monitor's refresh rate.  This may be overridden by setting
-     the FX_GLIDE_SWAPINTERNVAL environment variable.  The value of this
-     variable indicates the maximum number of swap buffer commands can be
-     buffered.  Zero allows maximum frame rate.
-
-   o Rendering with 16-bit per texel textures is faster than using 32-bit per
-     texel textures.  The internalFormat parameter to glTexImage2D can be
-     used to control texel size.
-
    o The Voodoo5 driver reverts to software rendering under the same condi-
      tions Voodoo3 with three exceptions.  First, stencil operations are
      implemented in hardware when the screen is configured for 32 bits/pixel.
@@ -711,35 +716,42 @@ A software-based accumulation buffer is available in both 16 and 32bpp modes.
      Third, glColorMask is fully supported in hardware when the screen is
      configured for 32 bits/pixel.
 
-10.2.5  Known Problems
+   o As of January, 2001 the second VSA-100 chip on the Voodoo5 is not yet
+     operational.  Therefore, the board isn't being used to its full capac-
+     ity.  The second VSA-100 chip will allow Scan-Line Interleave (SLI) mode
+     for full-screen applications and games, potentially doubling the sys-
+     tem's fill rate.  When the second VSA-100 chip is activated glGet-
+     String(GL_RENDERER) will report Voodoo5 instead of Voodoo4.
+
+   o The lowest mipmap level is sometimes miscolored in trilinear- sampled
+     polygons.
+
+   o The GL_EXT_texture_env_combine extension is supported on the Voodoo4 and
+     Voodoo5.
+
+10.1.5  Known Problems
+
+   o The lowest mipmap level is sometimes miscolored in trilinear- sampled
+     polygons (Voodoo3/Banshee).
+
+   o Fog doesn't work with orthographic projections.
+
+   o The accuracy of blending operations on Voodoo4/5 isn't always very good.
+     If you run Glean, you'll find some test failures.
 
    o The Glide library cannot be used directly; it's only meant to be used
      via the tdfx DRI driver.
 
-   o 24bpp screen modes are supported by the hardware but not by the current
-     driver.  32bpp is fully supported.
+   o SSystem has problems because of poorly set near and far clipping planes.
+     The office.unc Performer model also suffers from this problem.
 
-   o As of October, 2000 the second VSA-100 chip on the Voodoo5 is not yet
-     operational.  Therefore, the board isn't being used to its full capac-
-     ity.  The second VSA-100 chip will allow Scan-Line Interleave (SLI) mode
-     for full-screen applications and games, potentially doubling the sys-
-     tem's fill rate.
+10.2  Intel i810
 
-10.3  Intel i810
+10.2.1  Requirements
 
-        "
+A kernel with AGP GART support (such as Linux 2.4.x) is needed.
 
-10.3.1  Dependencies
-
-          "
-
-A Linux kernel with AGP GART support is required.  The 2.2.x kernel series
-does not have AGP GART support.  The 2.4.x test kernels have AGP GART and
-have been tested with the i810.
-
-10.3.2  Configuration
-
-          "
+10.2.2  Configuration
 
 Your XF86Config file's device section must specify the i810 device, and spec-
 ify a usable amount of video ram to reserve.
@@ -748,6 +760,7 @@ ify a usable amount of video ram to reserve.
                  Identifier  "i810"
                  VendorName  "Intel"
                  Driver      "i810"
+              Option     "AGPMode" "1"
               VideoRam    10000
              EndSection
 
@@ -772,7 +785,7 @@ by the Xserver if needed.
 The DRI 3D driver for the i810 should be in /usr/X11R6/lib/mod-
 ules/dri/i810_dri.so.  This will be automatically loaded by libGL.so.
 
-10.3.3  Troubleshooting
+10.2.3  Troubleshooting
 
    o 3D acceleration for the i810 is only available in the 16 bit/pixel
      screen mode at this time.  32bpp acceleration is not supported by this
@@ -787,20 +800,33 @@ ules/dri/i810_dri.so.  This will be automatically loaded by libGL.so.
      too little memory is available for DMA buffers, back and depth buffers
      and textures, direct rendering will be disabled.
 
-10.4  Matrox G200 and G400
+10.2.4  Performance and Features
 
-      "
+Basically all of the i810 features which can be exposed through OpenGL 1.2
+are implemented.  However, the following OpenGL features are implemented in
+software and will be slow:
 
-10.4.1  Dependencies
+   o Stencil buffer and accumulation buffer operations
 
-        "
+   o Blend subtract, min/max and logic op blend modes
 
-A Linux kernel with AGP GART support (such as the 2.4.x test kernels) is
-needed.
+   o glColorMask when any mask is set to false
 
-10.4.2  Configuration
+   o GL_SEPARATE_SPECULAR_COLOR lighting mode
 
-        "
+   o glDrawBuffer(GL_FRONT_AND_BACK)
+
+   o Using 1D or 3D textures
+
+   o Using texture borders
+
+10.3  Matrox G200 and G400
+
+10.3.1  Requirements
+
+A kernel with AGP GART support (such as Linux 2.4.x) is needed.
+
+10.3.2  Configuration
 
 Your XF86Config file's device section must specify the mga device:
 
@@ -808,6 +834,7 @@ Your XF86Config file's device section must specify the mga device:
                  Identifier  "MGA"
                  VendorName  "Matrox"
                  Driver      "mga"
+              Option     "AGPMode" "1"
               VideoRam    32768
              EndSection
 
@@ -847,7 +874,7 @@ by the Xserver if needed.
 The DRI 3D driver for the G200/G400 should be in /usr/X11R6/lib/mod-
 ules/dri/mga_dri.so.  This will be automatically loaded by libGL.so.
 
-10.4.3  Performance
+10.3.3  Performance and Features
 
 Software rendering will be used under any of the following conditions:
 
@@ -861,9 +888,33 @@ Software rendering will be used under any of the following conditions:
 
    o Using 1D or 3D textures.
 
+   o Using texture borders.
+
+   o Using glDepthFunc(GL_NEVER).
+
    o Using the accumulation buffer.
 
-10.4.4  IRQ Assignment
+The AGP mode may be set to 1, 2, or 4.  One is used by default.  Higher AGP
+speeds may result in unreliable performance depending on your motherboard.
+
+Compaq has funded the implementation of AGP accelerated ReadPixels and Draw-
+Pixels in this driver.  With this implementation, on a G400 drawing directly
+from AGP memory (exported to the client), throughput of up to 1 GB/sec has
+been measured.
+
+Additionally Compaq's funding has produced several new extensions in Mesa,
+including one (packed_depth_stencil_MESA) which enables Read/DrawPixels func-
+tionality to operate directly on the packed 24/8 depth/stencil buffers of
+this hardware.
+
+In order to access this functionality, the application must ensure that all
+pixel processing operations are disabled.  There are in addition a fairly
+complex set of rules regarding which packing/unpacking modes must be used,
+and which data formats are supported, and alignment constraints.  See the
+files in lib/GL/mesa/src/drv/mga/DOCS for a summary of these.  The extension
+definitions are included in the Mesa 3.4 source distribution.
+
+10.3.4  IRQ Assignment
 
 There have been problems in the past with the MGA driver being very sluggish
 when the DRI is enabled (to the point of being unusable.)  This is caused by
@@ -875,7 +926,7 @@ card.  This is something you must turn on in your system BIOS configuration.
 Please consult your system BIOS manual for instructions on how to enable an
 interrupt for your graphics card.
 
-10.4.5  MGA HAL lib
+10.3.5  MGA HAL lib
 
 MGAHALlib.a is a binary library Matrox has provided for use under Linux to
 expose functionality for which they can not provide documentation.  (For
@@ -900,31 +951,26 @@ will be "PCI:1:0:0".  Configure your screen section as you would normally
 configure XFree86 4.x Multihead.  It should be noted that currently the sec-
 ond head does not support direct rendering.
 
-10.4.6  Known Problems
+10.3.6  Known Problems
 
 None.
 
-10.5  ATI Rage 128
+10.4  ATI Rage 128
 
-      "
+10.4.1  Requirements
 
-10.5.1  Dependencies
+A kernel with AGP GART support (such as Linux 2.4.x) is needed.
 
-        "
+10.4.2  Configuration
 
-A Linux kernel with AGP GART support (such as the 2.4.x test kernels) is
-needed.
-
-10.5.2  Configuration
-
-        "
-
-Your XF86Config file's device section must specify the r128 device:
+Your XF86Config file's device section must specify the ati device:
 
              Section "Device"
                  Identifier  "Rage128"
                  VendorName  "ATI"
-                 Driver      "r128"
+                 Driver      "ati"
+              Option     "AGPMode" "1"
+              Option     "UseCCEFor2D" "false"
              EndSection
 
 The Screen section should then reference the Rage 128 device:
@@ -955,15 +1001,123 @@ ules/dri/r128_dri.so.  This will be automatically loaded by libGL.so.
 
 You may also set your screen depth to 32 for 32bpp mode.
 
-10.5.3  Performance
+10.4.3  Performance and Features
 
 While PCI Rage 128 based cards are supported, they do not yet support PCI
 GART, so they will not perform as well as their AGP counterparts.
 
+For AGP cards, the AGP mode may be set to 1, 2, or 4.  One is used by
+default.  Higher AGP speeds may result in unreliable performance depending on
+your motherboard.
+
+Note that even at 32bpp there is no alpha channel.
+
+The following OpenGL features are implemented in software and will be slow:
+
+   o Stencil buffer and accumulation buffer operations
+
+   o Blend subtract, min/max and logic op blend modes
+
+   o GL_SEPARATE_SPECULAR_COLOR lighting mode
+
+   o glDrawBuffer(GL_FRONT_AND_BACK)
+
+   o Using 1D or 3D textures
+
+   o Using texture borders
+
+10.4.4  Known Problems
+
+If you experience stability problems you may try setting the UseCCEFor2D
+option to true.  This will effectively disable 2D hardware acceleration.
+Performance will be degraded, of course.
+
+10.5  ATI Radeon
+
+10.5.1  Requirements
+
+A kernel with AGP GART support (such as Linux 2.4.x) is needed.
+
+10.5.2  Configuration
+
+Your XF86Config file's device section must specify the ati device:
+
+             Section "Device"
+                 Identifier  "Radeon"
+                 VendorName  "ATI"
+                 Driver      "ati"
+              Option     "AGPMode" "1"
+             EndSection
+
+The Screen section should then reference the Radeon device:
+
+          Section "Screen"
+              Identifier  "Screen 1"
+              Device      "Radeon"
+              Monitor     "High Res Monitor"
+              DefaultDepth 16
+              Subsection "Display"
+               Depth       16
+               Modes       "1280x1024" "1024x768" "800x600" "640x480"
+               ViewPort    0 0
+              EndSubsection
+              Subsection "Display"
+               Depth       32
+               Modes       "1280x1024" "1024x768" "800x600" "640x480"
+               ViewPort    0 0
+              EndSubsection
+             EndSection
+
+The kernel module for the Radeon is named radeon.o and should be installed in
+/lib/modules/2.4.x/kernel/driver/char/drm/.  It will be automatically loaded
+by the Xserver if needed.
+
+The DRI 3D driver for the Radeon should be in /usr/X11R6/lib/mod-
+ules/dri/radeon_dri.so.  This will be automatically loaded by libGL.so.
+
+You may also set your screen depth to 32 for 32bpp mode.
+
+10.5.3  Performance and Features
+
+While this driver supports many of the features of ATI Radeon cards, we do
+not yet fully support the card's TCL features.  This work is progressing, but
+is not yet ready.
+
+The AGP mode may be set to 1, 2, or 4.  One is used by default.  Higher AGP
+speeds may result in unreliable performance depending on your motherboard.
+
+The following OpenGL features are implemented in software and will be slow:
+
+   o Blend subtract, blend min/max and blend logicops
+
+   o Stencil and accumulation operations
+
+   o 1D and 3D textures
+
+   o Texture borders
+
+The GL_EXT_texture_env_combine, GL_EXT_texture_env_add and GL_EXT_tex-
+ture_env_dot3 extensions are supported (or will be soon supported in the new
+driver based on Mesa 3.5).
+
+We hope to implement support for the following features in the future:
+
+   o Vertex transformation, clipping and lighting (TCL)
+
+   o Hardware stencil buffer
+
+   o Cube map textures
+
+   o 3D textures
+
+   o Three texture units
+
 10.5.4  Known Problems
 
-DGA is not yet supported in the ATI Rage 128 X server.  This feature will be
-added in a future release.
+Certain (early?) revisions of the AMD Irongate chipset have AGPGART problems
+which effect Radeon, and other graphics cards.  The card may work unreliably,
+or not work at all.  If the DRM kernel module is not loaded, the 2D Xserver
+may work.  There's hope that this can be fixed in the future.
 
 10.6  3DLabs Oxygen GMX 2000
 
@@ -977,8 +1131,8 @@ oped or supported.
 The following OpenGL features are not supported at this time: overlays,
 stereo, hardware-accelerated indirect rendering.
 
-OpenGL-like functionality is provided with the Mesa library.  XFree86 4.0.1
-uses Mesa 3.3.  Subsequent releases of XFree86 will use newer versions of
+OpenGL-like functionality is provided with the Mesa library.  XFree86 4.1.0
+uses Mesa 3.4.2.  Subsequent releases of XFree86 will use newer versions of
 Mesa.  When newer versions of Mesa are available, the 3D drivers can be
 updated without reinstalling XFree86 or libGL.so.
 
@@ -1052,8 +1206,7 @@ has already been reported and perhaps fixed.
 12.1  Software
 
 A collection of useful configuration files, libraries, headers, utilities and
-demo programs is available from http://dri.source-
-forge.net/resources/resources.html
+demo programs is available from http://dri.sourceforge.net/res.phtml
 
 12.2  Documentation
 
@@ -1078,7 +1231,7 @@ forge.net/resources/resources.html
    o In the future there may be IHV and Linux vendor support resources for
      the DRI.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.15 2000/12/12 18:54:29 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.24 2001/05/19 00:42:22 dawes Exp $
 
 
-$XFree86$
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.DRI,v 1.16.2.1 2001/06/01 18:26:43 dawes Exp $

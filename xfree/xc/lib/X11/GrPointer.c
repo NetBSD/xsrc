@@ -1,4 +1,4 @@
-/* $TOG: GrPointer.c /main/5 1998/02/06 17:30:21 kaleb $ */
+/* $Xorg: GrPointer.c,v 1.3 2000/08/17 19:44:36 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

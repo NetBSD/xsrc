@@ -1,4 +1,4 @@
-/* $TOG: xsm.h /main/38 1998/02/09 14:16:04 kaleb $ */
+/* $Xorg: xsm.h,v 1.3 2000/08/17 19:55:06 cpqbld Exp $ */
 /******************************************************************************
 
 Copyright 1993, 1998  The Open Group
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xsm/xsm.h,v 1.4 2001/01/17 23:46:31 dawes Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>

@@ -1,4 +1,4 @@
-/* $TOG: AsciiSink.c /main/63 1998/02/06 12:44:08 kaleb $ */
+/* $Xorg: AsciiSink.c,v 1.3 2000/08/17 19:45:30 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/AsciiSink.c,v 1.21 1999/09/27 06:29:09 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/AsciiSink.c,v 1.23 2001/01/17 19:42:24 dawes Exp $ */
 
 #include <stdio.h>
 #include <X11/IntrinsicP.h>

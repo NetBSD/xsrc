@@ -1,5 +1,5 @@
 /*
- * $TOG: DAofA8.c /main/7 1998/06/25 16:26:01 kaleb $
+ * $Xorg: DAofA8.c,v 1.3 2000/08/17 19:45:48 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group

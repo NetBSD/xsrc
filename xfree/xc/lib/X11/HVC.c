@@ -1,4 +1,4 @@
-/* $XConsortium: HVC.c,v 1.13 93/09/07 21:30:46 rws Exp $ */
+/* $Xorg: HVC.c,v 1.3 2000/08/17 19:44:36 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -47,7 +47,7 @@
  *	DOCUMENTATION
  *		"TekColor Color Management System, System Implementor's Manual"
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/HVC.c,v 1.3 2001/01/17 19:41:37 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xcmsint.h"

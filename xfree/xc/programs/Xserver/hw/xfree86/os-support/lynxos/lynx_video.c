@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_video.c,v 3.16 2000/04/17 16:30:13 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_video.c,v 3.17 2000/10/28 01:42:27 mvojkovi Exp $ */
 
 #include "X.h"
 #include "input.h"

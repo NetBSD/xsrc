@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/lib/GL/mesa/src/drv/sis/sis_xmesa.c,v 1.5 2000/09/26 15:56:49 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/sis/sis_xmesa.c,v 1.9.2.1 2001/05/22 21:25:41 dawes Exp $ */
 
 /*
  * Authors:
@@ -75,6 +75,39 @@ static GLubyte *global_FbBase;
 GLboolean XMesaInitDriver (__DRIscreenPrivate * driScrnPriv)
 {
   SISDRIPtr priv = (SISDRIPtr) driScrnPriv->pDevPriv;
+
+  /* Check the DRI version */
+  {
+      int major, minor, patch;
+      if (XF86DRIQueryVersion(driScrnPriv->display, &major, &minor, &patch)) {
+         if (major != 4 || minor < 0) {
+            char msg[1000];
+            sprintf(msg, "sis DRI driver expected DRI version 4.0.x but got version %d.%d.%d", major, minor, patch);
+            __driMesaMessage(msg);
+            return GL_FALSE;
+         }
+      }
+  }
+
+  /* Check that the DDX driver version is compatible */
+  if (driScrnPriv->ddxMajor != 0 ||
+       driScrnPriv->ddxMinor != 1 ||
+       driScrnPriv->ddxPatch < 0) {
+      char msg[1000];
+      sprintf(msg, "sis DRI driver expected DDX driver version 0.1.x but got version %d.%d.%d", driScrnPriv->ddxMajor, driScrnPriv->ddxMinor, driScrnPriv->ddxPatch);
+      __driMesaMessage(msg);
+      return GL_FALSE;
+  }
+
+  /* Check that the DRM driver version is compatible */
+  if (driScrnPriv->drmMajor != 1 ||
+       driScrnPriv->drmMinor != 0 ||
+       driScrnPriv->drmPatch < 0) {
+      char msg[1000];
+      sprintf(msg, "sis DRI driver expected DRM driver version 1.0.x but got version %d.%d.%d", driScrnPriv->drmMajor, driScrnPriv->drmMinor, driScrnPriv->drmPatch);
+      __driMesaMessage(msg);
+      return GL_FALSE;
+  }
 
   assert (driScrnPriv->devPrivSize == sizeof (SISDRIRec));
 

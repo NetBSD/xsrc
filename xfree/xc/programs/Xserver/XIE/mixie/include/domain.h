@@ -1,4 +1,4 @@
-/* $TOG: domain.h /main/5 1998/02/09 16:17:25 kaleb $ */
+/* $Xorg: domain.h,v 1.3 2000/08/17 19:47:46 cpqbld Exp $ */
 /**** module domain.h ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden  -- AGE Logic, Inc. August 1993
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/include/domain.h,v 1.4 2001/01/17 22:13:06 dawes Exp $ */
 
 
 #ifndef _XIEH_DOMAIN

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/int10/xf86x86emu.h,v 1.3 1999/12/03 19:17:41 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/xf86x86emu.h,v 1.2 2001/01/06 20:19:13 tsi Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -8,7 +8,7 @@
 #define XF86X86EMU_H_
 #include <x86emu.h>
 
-#define	M    	     _X86EMU_env
+#define M _X86EMU_env
 
 #define X86_EAX M.x86.R_EAX
 #define X86_EBX M.x86.R_EBX
@@ -37,10 +37,15 @@
 #define X86_SS M.x86.R_SS
 #define X86_FS M.x86.R_FS
 #define X86_GS M.x86.R_GS
-           
+
 #define X86_AL M.x86.R_AL
 #define X86_BL M.x86.R_BL
 #define X86_CL M.x86.R_CL
 #define X86_DL M.x86.R_DL
+
+#define X86_AH M.x86.R_AH
+#define X86_BH M.x86.R_BH
+#define X86_CH M.x86.R_CH
+#define X86_DH M.x86.R_DH
 
 #endif

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/Imakefile,v 1.13.2.1 2001/02/09 20:45:13 paulo Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/Imakefile,v 1.18 2001/04/22 08:36:31 herrb Exp $
 
 XCOMM CDEBUGFLAGS=-g -Wall -ansi -pedantic
 
@@ -96,9 +96,11 @@ CURSESDEFINES  = -DHAS_NCURSES
 #endif
 
 XF86CONFIGFILE = XConfigFile
+XF86CONFIGDIR = XConfigDir
 
 DEFINES        = -DXF86CONFIG=\"$(XF86CONFIGFILE)\" $(MODULEDEFINES) \
-		 $(CURSESDEFINES) -DPROJECT_ROOT=\"$(PROJECTROOT)\"
+		 $(CURSESDEFINES) -DPROJECT_ROOT=\"$(PROJECTROOT)\" \
+		 -DXF86CONFIGDIR=\"$(XF86CONFIGDIR)\" XFree86ConsoleDefines
 
 #if HasDlopen
 DLLIB = DlLibrary
@@ -115,7 +117,6 @@ InstallMultipleFlags($(XBMPICS),$(INCDIR)/X11/bitmaps,$(INSTINCFLAGS))
 InstallMultipleFlags($(XPMPICS),$(INCDIR)/X11/pixmaps,$(INSTINCFLAGS))
 InstallAppDefaults(XF86Cfg)
 
-CppManTarget(xf86cfg,)
 InstallManPage(xf86cfg,$(MANDIR))
 
 NormalLibraryObjectRule()

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_regs.h,v 1.2 2000/09/19 14:39:15 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_regs.h,v 1.7 2001/05/08 19:31:22 alanh Exp $ */
 
 /*
  * glint register file 
@@ -157,22 +157,81 @@
 #define PM3MiscControl						0x3088
 
 #define PM3VideoOverlayUpdate					0x3100
+	#define PM3VideoOverlayUpdate_DISABLE			(0<<0)
+	#define PM3VideoOverlayUpdate_ENABLE			(1<<0)
 #define PM3VideoOverlayMode					0x3108
 	#define PM3VideoOverlayMode_DISABLE			(0<<0)
 	#define PM3VideoOverlayMode_ENABLE			(1<<0)
-	/* ... */
+	#define PM3VideoOverlayMode_BUFFERSYNC_MANUAL		(0<<1)
+	#define PM3VideoOverlayMode_BUFFERSYNC_VIDEOSTREAMA	(1<<1)
+	#define PM3VideoOverlayMode_BUFFERSYNC_VIDEOSTREAMB	(2<<1)
+	#define PM3VideoOverlayMode_FIELDPOLARITY_NORMAL	(0<<4)
+	#define PM3VideoOverlayMode_FIELDPOLARITY_INVERT	(1<<4)
+	#define PM3VideoOverlayMode_PIXELSIZE_8BIT		(0<<5)
+	#define PM3VideoOverlayMode_PIXELSIZE_16BIT		(1<<5)
+	#define PM3VideoOverlayMode_PIXELSIZE_32BIT		(2<<5)
+	#define PM3VideoOverlayMode_COLORFORMAT_RGB8888	((0<<7)|(1<<12)|(2<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_RGB4444	((1<<7)|(1<<12)|(1<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_RGB5551	((2<<7)|(1<<12)|(1<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_RGB565	((3<<7)|(1<<12)|(1<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_RGB332	((4<<7)|(1<<12)|(0<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_BGR8888	((0<<7)|(2<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_BGR4444	((1<<7)|(1<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_BGR5551	((2<<7)|(1<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_BGR565	((3<<7)|(1<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_BGR332	((4<<7)|(0<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_CI8	((5<<7)|(1<<12)|(0<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_VUY444	((2<<10)|(1<<12)|(2<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_YUV444	((2<<10)|(2<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_VUY422	((1<<10)|(1<<12)|(1<<5))
+	#define PM3VideoOverlayMode_COLORFORMAT_YUV422	((1<<10)|(1<<5))
+	#define PM3VideoOverlayMode_COLORORDER_BGR		(0<<12)
+	#define PM3VideoOverlayMode_COLORORDER_RGB		(1<<12)
+	#define PM3VideoOverlayMode_LINEARCOLOREXT_OFF		(0<<13)
+	#define PM3VideoOverlayMode_LINEARCOLOREXT_ON		(1<<13)
+	#define PM3VideoOverlayMode_FILTER_MASK			(3<<14)
+	#define PM3VideoOverlayMode_FILTER_OFF			(0<<14)
+	#define PM3VideoOverlayMode_FILTER_FULL			(1<<14)
+	#define PM3VideoOverlayMode_FILTER_PARTIAL		(2<<14)
+	#define PM3VideoOverlayMode_DEINTERLACE_OFF		(0<<16)
+	#define PM3VideoOverlayMode_DEINTERLACE_BOB		(1<<16)
+	#define PM3VideoOverlayMode_PATCHMODE_OFF		(0<<18)
+	#define PM3VideoOverlayMode_PATCHMODE_ON		(1<<18)
+	#define PM3VideoOverlayMode_FLIP_VIDEO			(0<<20)
+	#define PM3VideoOverlayMode_FLIP_VIDEOSTREAMA		(1<<20)
+	#define PM3VideoOverlayMode_FLIP_VIDEOSTREAMB		(2<<20)
+	#define PM3VideoOverlayMode_MIRROR_MASK			(3<<23)
+	#define PM3VideoOverlayMode_MIRRORX_OFF			(0<<23)
+	#define PM3VideoOverlayMode_MIRRORX_ON			(1<<23)
+	#define PM3VideoOverlayMode_MIRRORY_OFF			(0<<24)
+	#define PM3VideoOverlayMode_MIRRORY_ON			(1<<24)
 #define PM3VideoOverlayFifoControl				0x3110
 #define PM3VideoOverlayIndex					0x3118
+#define PM3VideoOverlayBase					0x3120
 #define PM3VideoOverlayBase0					0x3120
 #define PM3VideoOverlayBase1					0x3128
 #define PM3VideoOverlayBase2					0x3130
 #define PM3VideoOverlayStride					0x3138
+	#define PM3VideoOverlayStride_STRIDE(s)		(((s)&0xfff)<<0)
 #define PM3VideoOverlayWidth					0x3140
+	#define PM3VideoOverlayWidth_WIDTH(w)		(((w)&0xfff)<<0)
 #define PM3VideoOverlayHeight					0x3148
+	#define PM3VideoOverlayHeight_HEIGHT(h)		(((h)&0xfff)<<0)
 #define PM3VideoOverlayOrigin					0x3150
+	#define PM3VideoOverlayOrigin_XORIGIN(x)	(((x)&0xfff)<<0)
+	#define PM3VideoOverlayOrigin_YORIGIN(y)	(((y)&0xfff)<<16)
 #define PM3VideoOverlayShrinkXDelta				0x3158
+	#define PM3VideoOverlayShrinkXDelta_NONE		(1<<16)
+	#define PM3VideoOverlayShrinkXDelta_DELTA(s,d)		\
+		((((s)<<16)/(d))&0x0ffffff0)
 #define PM3VideoOverlayZoomXDelta				0x3160
+	#define PM3VideoOverlayZoomXDelta_NONE			(1<<16)
+	#define PM3VideoOverlayZoomXDelta_DELTA(s,d)		\
+		((((s)<<16)/(d))&0x0001fff0)
 #define PM3VideoOverlayYDelta					0x3168
+	#define PM3VideoOverlayYDelta_NONE			(1<<16)
+	#define PM3VideoOverlayYDelta_DELTA(s,d)			\
+		((((s)<<16)/(d))&0x0ffffff0)
 #define PM3VideoOverlayFieldOffset				0x3170
 #define PM3VideoOverlayStatus					0x3178
 
@@ -314,6 +373,19 @@
 #define PM3RD_Scratch						0x01f
 
 #define PM3RD_VideoOverlayControl				0x020
+	#define PM3RD_VideoOverlayControl_DISABLE		(0<<0)
+	#define PM3RD_VideoOverlayControl_ENABLE		(1<<0)
+	#define PM3RD_VideoOverlayControl_MODE_MASK		(3<<1)
+	#define PM3RD_VideoOverlayControl_MODE_MAINKEY		(0<<1)
+	#define PM3RD_VideoOverlayControl_MODE_OVERLAYKEY	(1<<1)
+	#define PM3RD_VideoOverlayControl_MODE_ALWAYS		(2<<1)
+	#define PM3RD_VideoOverlayControl_MODE_BLEND		(3<<1)
+	#define PM3RD_VideoOverlayControl_DIRECTCOLOR_DISABLED	(0<<3)
+	#define PM3RD_VideoOverlayControl_DIRECTCOLOR_ENABLED	(1<<3)
+	#define PM3RD_VideoOverlayControl_BLENDSRC_MAIN		(0<<4)
+	#define PM3RD_VideoOverlayControl_BLENDSRC_REGISTER	(1<<4)
+	#define PM3RD_VideoOverlayControl_KEY_COLOR		(0<<5)
+	#define PM3RD_VideoOverlayControl_KEY_ALPHA		(1<<5)
 #define PM3RD_VideoOverlayXStartLow				0x021
 #define PM3RD_VideoOverlayXStartHigh				0x022
 #define PM3RD_VideoOverlayYStartLow				0x023
@@ -326,6 +398,10 @@
 #define PM3RD_VideoOverlayKeyG					0x02a
 #define PM3RD_VideoOverlayKeyB					0x02b
 #define PM3RD_VideoOverlayBlend					0x02c
+	#define PM3RD_VideoOverlayBlend_FACTOR_0_PERCENT	(0<<6)
+	#define PM3RD_VideoOverlayBlend_FACTOR_25_PERCENT	(1<<6)
+	#define PM3RD_VideoOverlayBlend_FACTOR_75_PERCENT	(2<<6)
+	#define PM3RD_VideoOverlayBlend_FACTOR_100_PERCENT	(3<<6)
 
 #define PM3RD_DClkSetup1					0x1f0
 #define PM3RD_DClkSetup2					0x1f1
@@ -698,7 +774,7 @@
 #define PM3LUT							0x8e80
 #define PM3LUTAddress						0x84d0
 #define PM3LUTData						0x84c8
-#define PM3LUTIndex						0x64c0
+#define PM3LUTIndex						0x84c0
 #define PM3LUTMode						0xb378
 #define PM3LUTModeAnd						0xad70
 #define PM3LUTModeOr						0xad78
@@ -840,6 +916,23 @@
 #define PM3TextureIndexMode1And					0xb3d0
 #define PM3TextureIndexMode1Or					0xb3d8
 /* ... */
+#define PM3TextureMapSize					0xb428
+#define PM3TextureMapWidth0					0x8580
+#define PM3TextureMapWidth1					0x8588
+	#define PM3TextureMapWidth_Width(w)		((w&0xfff)<<0)
+	#define PM3TextureMapWidth_BorderLayout			(1<<12)
+	#define PM3TextureMapWidth_Layout_Linear		(0<<13)
+	#define PM3TextureMapWidth_Layout_Patch64		(1<<13)
+	#define PM3TextureMapWidth_Layout_Patch32_2		(2<<13)
+	#define PM3TextureMapWidth_Layout_Patch2		(3<<13)
+	#define PM3TextureMapWidth_HostTexture			(1<<15)
+#define PM3TextureReadMode0					0xb400
+#define PM3TextureReadMode0And					0xac30
+#define PM3TextureReadMode0Or					0xac38
+#define PM3TextureReadMode1					0xb408
+#define PM3TextureReadMode1And					0xad40
+#define PM3TextureReadMode1Or					0xad48
+/* ... */
 #define PM3WaitForCompletion					0x80b8
 #define PM3Window						0x8980
 	#define PM3Window_ForceLBUpdate				1<<3
@@ -955,11 +1048,6 @@
 	#define PM3FillRectanglePosition_XOffset(x)            ((x)&0xffff)
 	#define PM3FillRectanglePosition_YOffset(y)            (((y)&0xffff)<<16)
 
-/**********************************************
-*  GLINT Permedia3 Tags and other stuff       *
-***********************************************/
-#define PM3SyncTag						0x0188
-
 #if 0
 
 /**********************************************
@@ -985,16 +1073,6 @@
 	temp = READ_REG(base,offset);				\
 	WRITE_REG(base,offset,temp&(~(val)));			\
     }
-
-#if 0 /* Old Xfree code ... */
-#define WAIT(n)                                           	\
-do{                                                             \
-	if(!pGlint->UsePCIRetry)                                \
-		while(READ_REG(InFIFOSpace)<(n)){         \
-			mem_barrier();                          \
-		}                                               \
-}while(0)
-#endif
 
 #define RAMDAC_DELAY(b,x) do {					\
 	int delay = x;						\

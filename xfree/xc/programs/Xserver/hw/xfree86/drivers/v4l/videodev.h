@@ -7,9 +7,9 @@
  * Used here with the explicit permission of the original author, Alan Cox.
  *				<alan@lxorguk.ukuu.org.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/v4l/videodev.h,v 1.6 1999/05/15 06:24:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/v4l/videodev.h,v 1.8 2001/03/03 22:46:31 tsi Exp $ */
 
-#include <Xmd.h>
+#include "Xmd.h"
 
 #define VID_TYPE_CAPTURE	1	/* Can capture */
 #define VID_TYPE_TUNER		2	/* Can tune */

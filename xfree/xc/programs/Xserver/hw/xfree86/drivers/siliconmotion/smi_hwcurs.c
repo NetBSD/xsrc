@@ -26,9 +26,9 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from the XFree86 Project and Silicon Motion.
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_hwcurs.c,v 1.2 2001/03/03 22:26:13 tsi Exp $ */
 
-#include <cursorstr.h>
+#include "cursorstr.h"
 #include "smi.h"
 
 #define MAX_CURSOR	32

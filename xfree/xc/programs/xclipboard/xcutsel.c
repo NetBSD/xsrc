@@ -1,5 +1,5 @@
 /*
- * $TOG: xcutsel.c /main/22 1998/02/09 13:52:55 kaleb $
+ * $Xorg: xcutsel.c,v 1.3 2000/08/17 19:54:12 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -22,9 +22,10 @@ in this Software without prior written authorization from The Open Group.
  * *
  * Author:  Ralph Swick, DEC/Project Athena
  */
-/* $XFree86: xc/programs/xclipboard/xcutsel.c,v 1.4 1999/02/28 11:20:07 dawes Exp $ */
+/* $XFree86: xc/programs/xclipboard/xcutsel.c,v 1.7 2001/04/01 14:00:19 tsi Exp $ */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
 #include <X11/Xatom.h>

@@ -1,4 +1,4 @@
-/* $TOG: miInquire.c /main/11 1998/02/10 12:41:21 kaleb $ */
+/* $Xorg: miInquire.c,v 1.5 2000/08/17 19:47:06 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miInquire.c,v 3.5 1998/07/26 13:13:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/miInquire.c,v 3.7 2001/01/17 22:12:23 dawes Exp $ */
 
 
 #include "ddpex.h"

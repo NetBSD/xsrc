@@ -1,4 +1,4 @@
-/* $TOG: osPexFont.c /main/11 1998/02/10 12:34:33 kaleb $ */
+/* $Xorg: osPexFont.c,v 1.3 2000/08/17 19:47:20 cpqbld Exp $ */
 
 /*
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/PEX5/ospex/osPexFont.c,v 3.15 1998/10/04 09:35:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ospex/osPexFont.c,v 3.17 2001/01/17 22:12:43 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

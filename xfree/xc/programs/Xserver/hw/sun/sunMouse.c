@@ -1,4 +1,4 @@
-/* $TOG: sunMouse.c /main/37 1998/02/10 13:17:21 kaleb $ */
+/* $Xorg: sunMouse.c,v 1.3 2000/08/17 19:48:32 cpqbld Exp $ */
 /*-
  * Copyright 1987 by the Regents of the University of California
  *

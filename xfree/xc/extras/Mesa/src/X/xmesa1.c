@@ -1,20 +1,21 @@
+/* $Id: xmesa1.c,v 1.1.1.2 2001/06/09 15:18:37 tron Exp $ */
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ * Version:  3.4.2
+ *
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -147,7 +148,7 @@ static short hpcr_rgbTbl[3][256] = {
 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223
-} 
+}
 };
 
 
@@ -783,7 +784,7 @@ noFaultXAllocColor( int client,
       subColor.pixel = (unsigned long) bestmatch;
       subColor.red   = ctable[bestmatch].red;
       subColor.green = ctable[bestmatch].green;
-      subColor.blue  = ctable[bestmatch].blue;   
+      subColor.blue  = ctable[bestmatch].blue;
       subColor.flags = DoRed | DoGreen | DoBlue;
       *alloced = 0;
    }
@@ -821,7 +822,7 @@ static GLboolean setup_grayscale( int client, XMesaVisual v,
 
       prevBuffer = find_xmesa_buffer(v->display, cmap, buffer);
       if (prevBuffer &&
-          (buffer->xm_visual->gl_visual->RGBAflag == 
+          (buffer->xm_visual->gl_visual->RGBAflag ==
            prevBuffer->xm_visual->gl_visual->RGBAflag)) {
          /* Copy colormap stuff from previous XMesaBuffer which uses same
           * X colormap.  Do this to avoid time spent in noFaultXAllocColor.
@@ -909,7 +910,7 @@ static GLboolean setup_dithered_color( int client, XMesaVisual v,
 
       prevBuffer = find_xmesa_buffer(v->display, cmap, buffer);
       if (prevBuffer &&
-          (buffer->xm_visual->gl_visual->RGBAflag == 
+          (buffer->xm_visual->gl_visual->RGBAflag ==
            prevBuffer->xm_visual->gl_visual->RGBAflag)) {
          /* Copy colormap stuff from previous, matching XMesaBuffer.
           * Do this to avoid time spent in noFaultXAllocColor.
@@ -982,8 +983,8 @@ static void setup_8bit_hpcr( XMesaVisual v )
    int i;
    double g;
 
-   g = 1.0 / v->RedGamma; 
-   for (i=0; i<256; i++) { 
+   g = 1.0 / v->RedGamma;
+   for (i=0; i<256; i++) {
       GLint red = (GLint) (255.0 * pow( hpcr_rgbTbl[0][i]/255.0, g ) + 0.5);
       v->hpcr_rgbTbl[0][i] = CLAMP( red, 16, 239 );
    }
@@ -1643,6 +1644,7 @@ XMesaContext XMesaCreateContext( XMesaVisual v, XMesaContext share_list )
    gl_extensions_enable(c->gl_ctx, "GL_HP_occlusion_test");
    gl_extensions_enable(c->gl_ctx, "GL_ARB_texture_cube_map");
    gl_extensions_enable(c->gl_ctx, "GL_EXT_texture_env_combine");
+   gl_extensions_enable(c->gl_ctx, "GL_EXT_texture_env_dot3");
 
    if (CHECK_BYTE_ORDER(v)) {
       c->swapbytes = GL_FALSE;
@@ -1839,7 +1841,7 @@ XMesaBuffer XMesaCreateWindowBuffer2( XMesaVisual v, XMesaWindow w,
          attribs[numAttribs++] = (int) c->gl_ctx;
        }
        attribs[numAttribs++] = FXMESA_NONE;
-       
+
        if ((hw = fxQueryHardware())==GR_SSTTYPE_VOODOO) {
          b->FXctx = fxMesaCreateBestContext(0, b->width, b->height, attribs);
          if ((v->undithered_pf!=PF_INDEX) && (b->backimage)) {
@@ -2271,7 +2273,7 @@ static void FXgetImage( XMesaBuffer b )
          /* read row from 3Dfx frame buffer */
          grLfbReadRegion( GR_BUFFER_FRONTBUFFER,
                           0, xmesa->xm_buffer->FXctx->height-(b->height-y),
-                          b->width, 1, 
+                          b->width, 1,
                           0,
                           pixbuf );
 
@@ -2290,7 +2292,7 @@ static void FXgetImage( XMesaBuffer b )
          /* read row from 3Dfx frame buffer */
          grLfbReadRegion( GR_BUFFER_FRONTBUFFER,
                           0, xmesa->xm_buffer->FXctx->height-(b->height-y),
-                          b->width, 1, 
+                          b->width, 1,
                           0,
                           pixbuf );
 
@@ -2395,7 +2397,7 @@ void XMesaCopySubBuffer( XMesaBuffer b, int x, int y, int width, int height )
       _mesa_swapbuffers(ctx);
 
    if (b->db_state) {
-      int yTop = b->bottom - y - height;
+      int yTop = b->height - y - height;
 #ifdef FX
       if (b->FXctx) {
          fxMesaSwapBuffers();
@@ -2511,7 +2513,7 @@ const char *XMesaGetString( XMesaContext c, int name )
 {
    (void) c;
    if (name==XMESA_VERSION) {
-      return "3.4";
+      return "3.4.2";
    }
    else if (name==XMESA_EXTENSIONS) {
       return "";
@@ -2623,5 +2625,3 @@ unsigned long XMesaDitherColor( XMesaContext xmesa, GLint x, GLint y,
    }
    return 0;
 }
-
-

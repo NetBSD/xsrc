@@ -1,4 +1,4 @@
-/* $TOG: xinit.c /main/59 1998/02/09 14:02:32 kaleb $ */
+/* $Xorg: xinit.c,v 1.4 2000/08/17 19:54:30 cpqbld Exp $ */
 
 /*
 
@@ -21,11 +21,10 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/xinit/xinit.c,v 3.22 2000/04/05 18:14:08 dawes Exp $ */
+/* $XFree86: xc/programs/xinit/xinit.c,v 3.26 2001/04/16 06:51:46 torrey Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/Xos.h>
-#include <X11/Xmu/SysUtil.h>
 #include <stdio.h>
 #include <ctype.h>
 
@@ -127,7 +126,9 @@ char *server_names[] = {
     "XFree86     XFree86 displays",
 #endif
 #ifdef __DARWIN__
-    "Xdarwin   Apple darwin / Mac OS/X",
+    "XDarwin         Darwin/Mac OS X IOKit displays",
+    "XDarwinQuartz   Mac OS X Quartz displays",
+    "XDarwinStartup  Auto-select between XDarwin and XDarwinQuartz",
 #endif
     
     NULL};

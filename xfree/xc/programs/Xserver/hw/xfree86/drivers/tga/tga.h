@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga.h,v 1.14 2000/03/06 22:59:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/tga.h,v 1.17 2001/05/04 19:05:47 dawes Exp $ */
 
 #ifndef _TGA_H_
 #define _TGA_H_
@@ -90,6 +90,7 @@ typedef struct {
     CARD16              line_pattern; /* for dashed lines */
     int                 Bpp; /* bytes per pixel */
     int                 depthflag; /* either BPP8PACKED or BPP24 */
+    OptionInfoPtr	Options;
 } TGARec, *TGAPtr;
 
 /* ?? this is a hack for initial TGA2 support */
@@ -120,7 +121,9 @@ struct monitor_data {
   unsigned int ibm561_ref;
 };
 
-extern struct monitor_data crystal_table;
+extern struct monitor_data tga_crystal_table[];
+extern int tga_crystal_table_entries;
+extern struct monitor_data *tga_c_table;
 
 /* Prototypes */
 
@@ -131,6 +134,7 @@ void DEC21030Save(ScrnInfoPtr pScrn, /*vgaRegPtr vgaReg,*/ TGARegPtr tgaReg/*,
 		   Bool saveFonts*/);
 Bool DEC21030Init(ScrnInfoPtr pScrn, DisplayModePtr mode);
 void write_av9110(ScrnInfoPtr pScrn, unsigned int *);
+void TGA2SetupMode(ScrnInfoPtr pScrn);
 
 /* tga_accel.c */
 Bool DEC21030AccelInit(ScreenPtr pScreen);

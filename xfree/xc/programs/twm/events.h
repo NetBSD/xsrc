@@ -44,12 +44,12 @@ in this Software without prior written authorization from The Open Group.
 /**    TORTIOUS ACTION, ARISING OUT OF OR IN  CONNECTION  WITH  THE  USE    **/
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
-/* $XFree86: $ */
+/* $XFree86: xc/programs/twm/events.h,v 1.4 2001/01/17 23:45:06 dawes Exp $ */
 
 
 /***********************************************************************
  *
- * $TOG: events.h /main/14 1998/02/09 13:47:57 kaleb $
+ * $Xorg: events.h,v 1.3 2000/08/17 19:54:06 cpqbld Exp $
  *
  * twm event handler include file
  *

@@ -1,4 +1,4 @@
-/* $TOG: transport.h /main/3 1998/02/09 13:58:40 kaleb $ */
+/* $Xorg: transport.h,v 1.3 2000/08/17 19:54:24 cpqbld Exp $ */
 /*
 
 Copyright "1986-1997, 1998  The Open Group 

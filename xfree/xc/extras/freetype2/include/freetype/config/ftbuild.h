@@ -14,6 +14,7 @@
 /*  understand and accept it fully.                                        */
 /*                                                                         */
 /***************************************************************************/
+/* $XFree86: xc/extras/freetype2/include/freetype/config/ftbuild.h,v 1.2 2001/02/13 17:20:10 tsi Exp $ */
 
 
 #ifndef __FT_BUILD_H__
@@ -59,7 +60,9 @@
   /* Its parameter is the file pathname, relative to the public root of a  */
   /* given header file.                                                    */
   /*                                                                       */
+#ifndef USE_MAKEDEPEND
 #define FT_PUBLIC_FILE( x )  <FT_ROOT/x>
+#endif
 
 
   /*************************************************************************/
@@ -68,7 +71,9 @@
   /* Its parameter is the file pathname, relative to the configuration     */
   /* root directory of a given header file.                                */
   /*                                                                       */
+#ifndef USE_MAKEDEPEND
 #define FT_CONFIG_FILE( x )  <FT_CONFIG_ROOT/x>
+#endif
 
 
   /*************************************************************************/
@@ -77,7 +82,9 @@
   /* file.  Its parameter is the file pathname, relative to the            */
   /* configuration root directory of a given header file.                  */
   /*                                                                       */
+#ifndef USE_MAKEDEPEND
 #define FT_INTERNAL_FILE( x )  <FT_ROOT/internal/x>
+#endif
 
 
   /*************************************************************************/
@@ -94,7 +101,9 @@
   /* directory and compile them normally by defining the macro             */
   /* FT_FLAT_COMPILATION.                                                  */
   /*                                                                       */
+#ifndef USE_MAKEDEPEND
 #define FT_COMPONENT_FILE( d, x )  <FT_ROOT/d/x>
+#endif
 
 
   /*************************************************************************/
@@ -111,10 +120,12 @@
   /* directory and compile them normally by defining the macro             */
   /* FT_FLAT_COMPILATION.                                                  */
   /*                                                                       */
+#ifndef USE_MAKEDEPEND
 #ifdef  FT_FLAT_COMPILATION
 #define FT_SOURCE_FILE( d, x )  <d/x>
 #else
 #define FT_SOURCE_FILE( d, x )  "x"
+#endif
 #endif
 
 
@@ -160,6 +171,8 @@
   /*                                                                       */
   /*************************************************************************/
 
+#ifndef USE_MAKEDEPEND
+
   /* don't add spaces around arguments to FT_CONFIG_FILE! */
 
   /* configuration files */
@@ -202,6 +215,51 @@
 
   /* now include internal headers definitions from <freetype/internal/...> */
 #include FT_PUBLIC_FILE(internal/internal.h)
+
+#else /* USE_MAKEDEPEND */
+
+  /* configuration files */
+#ifndef   FT_CONFIG_CONFIG_H
+#  define FT_CONFIG_CONFIG_H     <freetype/config/ftconfig.h>
+#endif
+
+#ifndef   FT_CONFIG_OPTIONS_H
+#  define FT_CONFIG_OPTIONS_H    <freetype/config/ftoption.h>
+#endif
+
+#ifndef   FT_CONFIG_MODULES_H
+#  define FT_CONFIG_MODULES_H    <freetype/config/ftmodule.h>
+#endif
+
+  /* public headers */
+#define FT_ERRORS_H            <freetype/fterrors.h>
+#define FT_SYSTEM_H            <freetype/ftsystem.h>
+#define FT_IMAGE_H             <freetype/ftimage.h>
+
+#define FT_TYPES_H             <freetype/fttypes.h>
+
+#define FT_FREETYPE_H          <freetype/freetype.h>
+#define FT_GLYPH_H             <freetype/ftglyph.h>
+#define FT_BBOX_H              <freetype/ftbbox.h>
+#define FT_CACHE_H             <freetype/ftcache.h>
+#define FT_LIST_H              <freetype/ftlist.h>
+#define FT_MAC_H               <freetype/ftmac.h>
+#define FT_MULTIPLE_MASTERS_H  <freetype/ftmm.h>
+#define FT_MODULE_H            <freetype/ftmodule.h>
+#define FT_NAMES_H             <freetype/ftnames.h>
+#define FT_OUTLINE_H           <freetype/ftoutln.h>
+#define FT_RENDER_H            <freetype/ftrender.h>
+#define FT_SYNTHESIS_H         <freetype/ftsynth.h>
+#define FT_TYPE1_TABLES_H      <freetype/t1tables.h>
+#define FT_TRUETYPE_NAMES_H    <freetype/ttnameid.h>
+#define FT_TRUETYPE_TABLES_H   <freetype/tttables.h>
+#define FT_TRUETYPE_TAGS_H     <freetype/tttags.h>
+
+
+  /* now include internal headers definitions from <freetype/internal/...> */
+#include <freetype/internal/internal.h>
+
+#endif /* USE_MAKEDEPEND */
 
 
 #endif /* __FT_BUILD_H__ */

@@ -1,4 +1,4 @@
-/* $TOG: Form.h /main/31 1998/02/06 12:45:58 kaleb $ */
+/* $Xorg: Form.h,v 1.4 2000/08/17 19:45:32 cpqbld Exp $ */
 
 
 /***********************************************************
@@ -43,12 +43,12 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Form.h,v 1.6 1999/05/03 12:15:39 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Form.h,v 1.8 2001/01/17 19:42:26 dawes Exp $ */
 
 #ifndef _XawForm_h
 #define _XawForm_h
 
-#include <X11/Constraint.h>
+#include <X11/Intrinsic.h>
 
 /* Resources:
 

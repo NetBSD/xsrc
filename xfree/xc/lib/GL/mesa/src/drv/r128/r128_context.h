@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_context.h,v 1.3 2000/12/04 19:21:44 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_context.h,v 1.8 2001/04/10 17:53:07 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -33,8 +33,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
-#ifndef _R128_CONTEXT_H_
-#define _R128_CONTEXT_H_
+#ifndef __R128_CONTEXT_H__
+#define __R128_CONTEXT_H__
 
 #ifdef GLX_DIRECT_RENDERING
 
@@ -67,7 +67,7 @@ typedef struct r128_context *r128ContextPtr;
 #define R128_NEW_CLIP		0x0008
 #define R128_NEW_CULL		0x0010
 #define R128_NEW_MASKS		0x0020
-#define R128_NEW_RENDER		0x0040
+#define R128_NEW_RENDER_NOT	0x0040
 #define R128_NEW_WINDOW		0x0080
 #define R128_NEW_TEXTURE	0x0100
 #define R128_NEW_CONTEXT	0x0200
@@ -88,10 +88,16 @@ typedef struct r128_context *r128ContextPtr;
 #define R128_BLEND_ENV_COLOR	0x1
 #define R128_BLEND_MULTITEX	0x2
 
-/* Subpixel offsets for window coordinates:
+/* Subpixel offsets for window coordinates (triangles):
  */
-#define SUBPIXEL_X		(-0.125F)
-#define SUBPIXEL_Y		( 0.375F)
+#define SUBPIXEL_X  (0.0F)
+#define SUBPIXEL_Y  (0.125F)
+
+/* Offset for points:
+ */
+#define PNT_X_OFFSET  ( 0.125F)
+#define PNT_Y_OFFSET  (-0.125F)
+
 
 typedef void (*r128_interp_func)( GLfloat t,
 				  GLfloat *result,
@@ -101,171 +107,180 @@ typedef void (*r128_interp_func)( GLfloat t,
 struct r128_elt_tab {
    void (*emit_unclipped_verts)( struct vertex_buffer *VB );
 
-   void (*build_tri_verts)( r128ContextPtr r128ctx,
+   void (*build_tri_verts)( r128ContextPtr rmesa,
 			    struct vertex_buffer *VB,
 			    GLfloat *O, GLuint *elt );
 
    void (*interp)( GLfloat t, GLfloat *O,
 		   const GLfloat *I, const GLfloat *J );
 
-   void (*project_and_emit_verts)( r128ContextPtr r128ctx,
+   void (*project_and_emit_verts)( r128ContextPtr rmesa,
 				   const GLfloat *verts,
 				   GLuint *elts,
-				   int nr );
+				   GLuint nr );
 };
 
 struct r128_context {
-   GLcontext		*glCtx;		/* Mesa context */
+   GLcontext *glCtx;			/* Mesa context */
 
    /* Driver and hardware state management
     */
-   GLuint		new_state;
-   GLuint		dirty;		/* Hardware state to be updated */
-   r128_context_regs_t	setup;
+   GLuint new_state;
+   GLuint dirty;			/* Hardware state to be updated */
+   r128_context_regs_t setup;
 
-   GLuint		vertsize;
-   CARD32		vc_format;
-   GLfloat		depth_scale;
+   GLuint vertsize;
+   GLuint vc_format;
+   GLfloat depth_scale;
 
-   CARD32		Color;		/* Current draw color */
-   CARD32		ClearColor;	/* Color used to clear color buffer */
-   CARD32		ClearDepth;	/* Value used to clear depth buffer */
-   CARD32		ClearStencil;	/* Value used to clear stencil */
+   GLuint Color;			/* Current draw color */
+   GLuint ClearColor;			/* Color used to clear color buffer */
+   GLuint ClearDepth;			/* Value used to clear depth buffer */
+   GLuint ClearStencil;			/* Value used to clear stencil */
+   GLuint DepthMask;
+   GLuint StencilMask;
 
    /* Map GL texture units onto hardware
     */
-   GLint		multitex;
-   GLint		tmu_source[2];
-   GLint		tex_dest[2];
-   GLuint		blend_flags;
-   CARD32		env_color;
-   GLint		lod_bias;
+   GLint multitex;
+   GLint tmu_source[2];
+   GLint tex_dest[2];
+   GLuint tex_combine[2];
+   GLuint blend_flags;
+   GLuint env_color;
 
    /* Texture object bookkeeping
     */
-   r128TexObjPtr	CurrentTexObj[2];
-   r128TexObj		TexObjList[R128_NR_TEX_HEAPS];
-   r128TexObj		SwappedOut;
-   memHeap_t		*texHeap[R128_NR_TEX_HEAPS];
-   GLint		lastTexAge[R128_NR_TEX_HEAPS];
-   GLint		lastTexHeap;
+   r128TexObjPtr CurrentTexObj[2];
+   r128TexObj TexObjList[R128_NR_TEX_HEAPS];
+   r128TexObj SwappedOut;
+   memHeap_t *texHeap[R128_NR_TEX_HEAPS];
+   GLint lastTexAge[R128_NR_TEX_HEAPS];
+   GLint lastTexHeap;
 
    /* Current rendering state, fallbacks
     */
-   points_func		PointsFunc;
-   line_func		LineFunc;
-   triangle_func	TriangleFunc;
-   quad_func		QuadFunc;
+   points_func   PointsFunc;
+   line_func     LineFunc;
+   triangle_func TriangleFunc;
+   quad_func     QuadFunc;
 
-   CARD32		IndirectTriangles;
-   CARD32		Fallback;
+   GLuint IndirectTriangles;
+   GLuint Fallback;
 
    /* Fast path
     */
-   GLuint		useFastPath;
-   GLuint		SetupIndex;
-   GLuint		SetupDone;
-   GLuint		RenderIndex;
-   r128_interp_func	interp;
+   GLuint SetupIndex;
+   GLuint SetupDone;
+   GLuint RenderIndex;
+   GLuint OnFastPath;
+   r128_interp_func interp;
+   GLfloat *tmp_matrix;
 
    /* Vertex buffers
     */
-   drmBufPtr		vert_buf;
-   GLuint		num_verts;
+   drmBufPtr vert_buf;
+   GLuint num_verts;
 
    /* Elt path
     */
-   drmBufPtr		elt_buf, retained_buf;
-   GLushort		*first_elt, *next_elt;
-   GLfloat		*next_vert, *vert_heap;
-   GLushort		next_vert_index;
-   GLushort		first_vert_index;
-   GLuint		elt_vertsize;
-   struct r128_elt_tab	*elt_tab;
-   GLfloat		device_matrix[16];
+   drmBufPtr elt_buf, retained_buf;
+   GLushort *first_elt, *next_elt;
+   GLfloat *next_vert, *vert_heap;
+   GLushort next_vert_index;
+   GLushort first_vert_index;
+   GLuint elt_vertsize;
+   struct r128_elt_tab *elt_tab;
+   GLfloat device_matrix[16];
 
-   /* CCE command packets
+   /* Page flipping
     */
-#if 0
-   CARD32		*CCEbuf;	/* buffer to submit to CCE */
-   GLuint		CCEcount;	/* number of dwords in CCEbuf */
-#endif
-   GLint		CCEtimeout;	/* number of times to loop
-					   before exiting */
+   GLuint doPageFlip;
+   GLuint currentPage;
 
-   /* Visual, drawable, cliprect and scissor information
+   /* Drawable, cliprect and scissor information
     */
-   GLint		DepthSize;	/* Bits in depth buffer */
-   GLint		StencilSize;	/* Bits in stencil buffer */
+   GLenum DrawBuffer;			/* Optimize draw buffer update */
+   GLint drawOffset, drawPitch;
+   GLint readOffset, readPitch;
 
-   GLenum		DrawBuffer;	/* Optimize draw buffer update */
-   GLint		drawOffset, drawPitch;
-   GLint		drawX, drawY;
-   GLint		readOffset, readPitch;
-   GLint		readX, readY;
+   GLuint numClipRects;			/* Cliprects for the draw buffer */
+   XF86DRIClipRectPtr pClipRects;
 
-   GLuint		numClipRects;	/* Cliprects for the draw buffer */
-   XF86DRIClipRectPtr	pClipRects;
-
-   GLuint		scissor;
-   XF86DRIClipRectRec	ScissorRect;	/* Current software scissor */
+   GLuint scissor;
+   XF86DRIClipRectRec ScissorRect;	/* Current software scissor */
 
    /* Mirrors of some DRI state
     */
-   Display		*display;	/* X server display */
+   Display *display;			/* X server display */
 
    __DRIcontextPrivate	*driContext;	/* DRI context */
    __DRIscreenPrivate	*driScreen;	/* DRI screen */
    __DRIdrawablePrivate	*driDrawable;	/* DRI drawable bound to this ctx */
 
-   drmContext		hHWContext;
-   drmLock		*driHwLock;
-   int			driFd;
+   int lastStamp;		        /* mirror driDrawable->lastStamp */
 
-   r128ScreenPtr	r128Screen;	/* Screen private DRI data */
-   R128SAREAPriv	*sarea;		/* Private SAREA data */
+   drmContext hHWContext;
+   drmLock *driHwLock;
+   int driFd;
+
+   r128ScreenPtr r128Screen;		/* Screen private DRI data */
+   R128SAREAPrivPtr sarea;		/* Private SAREA data */
 
    /* Performance counters
-     */
-   GLuint		boxes;		/* Draw performance boxes */
-   GLuint		hardwareWentIdle;
-   GLuint		c_clears;
-   GLuint		c_drawWaits;
-   GLuint		c_textureSwaps;
-   GLuint		c_textureBytes;
-   GLuint		c_vertexBuffers;
+    */
+   GLuint boxes;			/* Draw performance boxes */
+   GLuint hardwareWentIdle;
+   GLuint c_clears;
+   GLuint c_drawWaits;
+   GLuint c_textureSwaps;
+   GLuint c_textureBytes;
+   GLuint c_vertexBuffers;
 };
 
 #define R128_CONTEXT(ctx)		((r128ContextPtr)(ctx->DriverCtx))
 
-#define R128_MESACTX(r128ctx)		((r128ctx)->glCtx)
-#define R128_DRIDRAWABLE(r128ctx)	((r128ctx)->driDrawable)
-#define R128_DRISCREEN(r128ctx)		((r128ctx)->r128Screen->driScreen)
-
-#define R128_IS_PLAIN( r128ctx ) \
-		(r128ctx->r128Screen->chipset == R128_CARD_TYPE_R128)
-#define R128_IS_PRO( r128ctx ) \
-		(r128ctx->r128Screen->chipset == R128_CARD_TYPE_R128_PRO)
-#define R128_IS_MOBILITY( r128ctx ) \
-		(r128ctx->r128Screen->chipset == R128_CARD_TYPE_R128_MOBILITY)
+#define R128_IS_PLAIN( rmesa ) \
+		(rmesa->r128Screen->chipset == R128_CARD_TYPE_R128)
+#define R128_IS_PRO( rmesa ) \
+		(rmesa->r128Screen->chipset == R128_CARD_TYPE_R128_PRO)
+#define R128_IS_MOBILITY( rmesa ) \
+		(rmesa->r128Screen->chipset == R128_CARD_TYPE_R128_MOBILITY)
 
 
-extern GLboolean r128CreateContext(Display *dpy, GLvisual *glVisual,
-				   __DRIcontextPrivate *driContextPriv);
-extern void           r128DestroyContext(r128ContextPtr r128ctx);
-extern r128ContextPtr r128MakeCurrent(r128ContextPtr oldCtx,
-				      r128ContextPtr newCtx,
-				      __DRIdrawablePrivate *dPriv);
+extern GLboolean r128CreateContext( Display *dpy, GLvisual *glVisual,
+				    __DRIcontextPrivate *driContextPriv );
+extern void r128DestroyContext( r128ContextPtr rmesa );
+extern r128ContextPtr r128MakeCurrent( r128ContextPtr oldCtx,
+				       r128ContextPtr newCtx,
+				       __DRIdrawablePrivate *dPriv );
 
+/* ================================================================
+ * Byte ordering
+ */
+#include "X11/Xarch.h"
+
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+#define LE32_OUT( x, y )	do { x = y; } while (0)
+#define LE32_OUT_FLOAT( x, y )	do { *(GLfloat *)&(x) = y; } while (0)
+#else
+#include <byteswap.h>
+#define LE32_OUT( x, y )	do { x = bswap_32( y ); } while (0)
+#define LE32_OUT_FLOAT( x, y )						\
+do {									\
+   GLuint __tmp;							\
+   *(GLfloat *)&__tmp = y;						\
+   x = bswap_32( __tmp );						\
+} while (0)
+#endif
 
 /* ================================================================
  * Debugging:
  */
-#define DEBUG			0
-#define DEBUG_LOCKING		0
+#define DO_DEBUG		0
 #define ENABLE_PERF_BOXES	0
 
-#if DEBUG
+#if DO_DEBUG
 extern int R128_DEBUG;
 #else
 #define R128_DEBUG		0
@@ -280,4 +295,4 @@ extern int R128_DEBUG;
 #define DEBUG_VERBOSE_2D	0x40
 
 #endif
-#endif /* _R128_CONTEXT_H_ */
+#endif /* __R128_CONTEXT_H__ */

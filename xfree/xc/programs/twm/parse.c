@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/twm/parse.c,v 1.6 2000/10/24 22:45:15 dawes Exp $ */
+/* $XFree86: xc/programs/twm/parse.c,v 1.9 2001/04/23 20:31:08 dawes Exp $ */
 /*****************************************************************************/
 /*
 
@@ -49,7 +49,7 @@ in this Software without prior written authorization from The Open Group.
 
 /***********************************************************************
  *
- * $TOG: parse.c /main/55 1998/02/09 13:48:59 kaleb $
+ * $Xorg: parse.c,v 1.4 2000/08/17 19:54:07 cpqbld Exp $
  *
  * parse the .twmrc file
  *
@@ -262,8 +262,6 @@ static int twmFileInput()
     {
 	if (fgets(buff, BUF_LEN, twmrc) == NULL)
 	    return 0;
-
-	yylineno++;
 
 	ptr = 0;
 	len = strlen(buff);

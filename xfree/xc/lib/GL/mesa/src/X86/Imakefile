@@ -1,174 +1,39 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/X86/Imakefile,v 1.13 2000/11/13 23:31:25 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/X86/Imakefile,v 1.18 2001/05/02 15:06:03 dawes Exp $
 
-#define DoNormalLib NormalLibGlx
-#define DoSharedLib SharedLibGlx
+/*
+ * Only need SharedLib build unless OSMesa lib is built, or driver is built
+ * in to libGL
+ */
+#if BuildXF86DRI && !GlxUseSGISI && \
+	(GlxUseBuiltInDRIDriver || \
+	 !GlxBuiltInMesa || !defined(GlxDriverUsesMesa))
+#define DoNormalLib (NormalLibGlx || SharedLibGlxWithoutPIC)
+#define DoSharedLib (SharedLibGlx && !SharedLibGlxWithoutPIC)
 #define DoExtraLib SharedLibGlx
 #define DoDebugLib DebugLibGlx
 #define DoProfileLib ProfileLibGlx
-
-LinkSourceFile(assyntax.h, $(MESASRCDIR)/src/X86)
-LinkSourceFile(common_x86.c, $(MESASRCDIR)/src/X86)
-LinkSourceFile(common_x86_asm.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(common_x86_asm.h, $(MESASRCDIR)/src/X86)
-LinkSourceFile(common_x86_features.h, $(MESASRCDIR)/src/X86)
-LinkSourceFile(glapi_x86.S, $(MESASRCDIR)/src/X86)
-
-LinkSourceFile(xform_args.h, $(MESASRCDIR)/src/X86)
-LinkSourceFile(clip_args.h, $(MESASRCDIR)/src/X86)
-
-LinkSourceFile(x86.c, $(MESASRCDIR)/src/X86)
-LinkSourceFile(x86.h, $(MESASRCDIR)/src/X86)
-LinkSourceFile(x86_cliptest.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(x86_vertex.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(x86_xform_masked2.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(x86_xform_masked3.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(x86_xform_masked4.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(x86_xform_raw2.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(x86_xform_raw3.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(x86_xform_raw4.S, $(MESASRCDIR)/src/X86)
-
-LinkSourceFile(mmx.h, $(MESASRCDIR)/src/X86)
-LinkSourceFile(mmx_blend.S, $(MESASRCDIR)/src/X86)
-
-LinkSourceFile(3dnow.c, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow.h, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow_norm_raw.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow_vertex.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow_xform_masked1.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow_xform_masked2.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow_xform_masked3.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow_xform_masked4.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow_xform_raw1.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow_xform_raw2.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow_xform_raw3.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(3dnow_xform_raw4.S, $(MESASRCDIR)/src/X86)
-
-LinkSourceFile(katmai.c, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai.h, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai_norm_raw.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai_vertex.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai_xform_masked1.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai_xform_masked2.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai_xform_masked3.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai_xform_masked4.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai_xform_raw1.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai_xform_raw2.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai_xform_raw3.S, $(MESASRCDIR)/src/X86)
-LinkSourceFile(katmai_xform_raw4.S, $(MESASRCDIR)/src/X86)
-
-LinkSourceFile(glapioffsets.h, $(MESASRCDIR)/src)
+#else
+#define DoNormalLib SharedLibGlxWithoutPIC
+#define DoSharedLib !SharedLibGlxWithoutPIC
+#define DoExtraLib NO
+#define DoDebugLib NO
+#define DoProfileLib NO
+#endif
 
 #if Malloc0ReturnsNull
 ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
 
-#ifdef i386Architecture
-XCOMM Determine at runtime whether 3DNow!, Katmai, MMX, etc are really present.
-     X86_SRCS = common_x86.c \
-		common_x86_asm.S \
-		glapi_x86.S \
-		x86.c \
-		x86_cliptest.S \
-		x86_vertex.S \
-		x86_xform_masked2.S \
-		x86_xform_masked3.S \
-		x86_xform_masked4.S \
-		x86_xform_raw2.S \
-		x86_xform_raw3.S \
-		x86_xform_raw4.S
+#define MesaX86BuildDir /**/
+#define NeedToLinkMesaSrc
+#include "Imakefile.inc"
 
-     X86_OBJS = common_x86.o \
-		common_x86_asm.o \
-		x86.o \
-		x86_cliptest.o \
-		x86_vertex.o \
-		x86_xform_masked2.o \
-		x86_xform_masked3.o \
-		x86_xform_masked4.o \
-		x86_xform_raw2.o \
-		x86_xform_raw3.o \
-		x86_xform_raw4.o
+      DEFINES = $(ALLOC_DEFINES) GlxDefines $(MESA_ASM_DEFINES)
+     INCLUDES = -I$(INCLUDESRC) -I$(EXTINCSRC) -I$(MESASRCDIR)/src \
+		-I$(MESASRCDIR)/src/X86
 
-     X86_DEFS = -DUSE_X86_ASM
-
-
-#if MesaUseMMX
-     MMX_SRCS = mmx_blend.S
-
-     MMX_OBJS = mmx_blend.o
-
-     MMX_DEFS = -DUSE_MMX_ASM
-#endif
-
-#if MesaUse3DNow
-   3DNOW_SRCS = 3dnow.c \
-		3dnow_norm_raw.S \
-		3dnow_vertex.S \
-		3dnow_xform_masked1.S \
-		3dnow_xform_masked2.S \
-		3dnow_xform_masked3.S \
-		3dnow_xform_masked4.S \
-		3dnow_xform_raw1.S \
-		3dnow_xform_raw2.S \
-		3dnow_xform_raw3.S \
-		3dnow_xform_raw4.S
-
-   3DNOW_OBJS = 3dnow.o \
-		3dnow_norm_raw.o \
-		3dnow_vertex.o \
-		3dnow_xform_masked1.o \
-		3dnow_xform_masked2.o \
-		3dnow_xform_masked3.o \
-		3dnow_xform_masked4.o \
-		3dnow_xform_raw1.o \
-		3dnow_xform_raw2.o \
-		3dnow_xform_raw3.o \
-		3dnow_xform_raw4.o
-
-   3DNOW_DEFS = -DUSE_3DNOW_ASM
-#endif
-
-#if MesaUseKatmai
-  KATMAI_SRCS = katmai.c \
-		katmai_norm_raw.S \
-		katmai_vertex.S \
-		katmai_xform_masked1.S \
-		katmai_xform_masked2.S \
-		katmai_xform_masked3.S \
-		katmai_xform_masked4.S \
-		katmai_xform_raw1.S \
-		katmai_xform_raw2.S \
-		katmai_xform_raw3.S \
-		katmai_xform_raw4.S
-
-  KATMAI_OBJS = katmai.o \
-		katmai_norm_raw.o \
-		katmai_vertex.o \
-		katmai_xform_masked1.o \
-		katmai_xform_masked2.o \
-		katmai_xform_masked3.o \
-		katmai_xform_masked4.o \
-		katmai_xform_raw1.o \
-		katmai_xform_raw2.o \
-		katmai_xform_raw3.o \
-		katmai_xform_raw4.o
-
-  KATMAI_DEFS = -DUSE_KATMAI_ASM
-#endif
-
-#endif
-
-      DEFINES = $(ALLOC_DEFINES) GlxDefines -DFX $(X86_DEFS) $(MMX_DEFS) $(3DNOW_DEFS) $(KATMAI_DEFS)
-     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC) -I../include -I../../include -I../../dri -I..
-         SRCS = $(X86_SRCS) $(MMX_SRCS) $(3DNOW_SRCS) $(KATMAI_SRCS)
-         OBJS = $(X86_OBJS) $(MMX_OBJS) $(3DNOW_OBJS) $(KATMAI_OBJS)
-
-#if !GlxUseBuiltInDRIDriver
-#undef DoNormalLib NormalLibGlx
-#undef DoExtraLib SharedLibGlx
-#undef DoDebugLib DebugLibGlx
-#undef DoProfileLib ProfileLibGlx
-#endif
+         SRCS = $(MESA_ASM_SRCS)
+         OBJS = $(MESA_ASM_OBJS)
 
 #include <Library.tmpl>
 

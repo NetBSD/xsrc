@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Device.c,v 1.15 2000/06/20 05:08:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Device.c,v 1.18 2001/02/21 23:37:04 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -89,6 +89,8 @@ xf86parseDeviceSection (void)
 		case IDENTIFIER:
 			if (xf86getToken (NULL) != STRING)
 				Error (QUOTE_MSG, "Identifier");
+			if (has_ident == TRUE)
+				Error (MULTIPLE_MSG, "Identifier");
 			ptr->dev_identifier = val.str;
 			has_ident = TRUE;
 			break;

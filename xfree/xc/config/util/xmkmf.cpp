@@ -1,10 +1,10 @@
 XCOMM!/bin/sh
 
-XCOMM $XFree86$
+XCOMM $XFree86: xc/config/util/xmkmf.cpp,v 1.4 2001/01/17 16:39:02 dawes Exp $
 XCOMM
 XCOMM make a Makefile from an Imakefile from inside or outside the sources
 XCOMM 
-XCOMM $XConsortium: xmkmf.cpp /main/22 1996/09/28 16:17:05 rws $
+XCOMM $Xorg: xmkmf.cpp,v 1.3 2000/08/17 19:41:53 cpqbld Exp $
 
 usage="usage:  $0 [-a] [top_of_sources_pathname [current_directory]]"
 

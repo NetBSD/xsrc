@@ -1,4 +1,4 @@
-/* $TOG: ConnDis.c /main/115 1998/02/06 17:12:13 kaleb $ */
+/* $Xorg: ConnDis.c,v 1.7 2000/08/17 19:44:31 cpqbld Exp $ */
 /*
  
 Copyright 1989, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/ConnDis.c,v 3.16 1999/05/09 10:49:06 dawes Exp $ */
+/* $XFree86: xc/lib/X11/ConnDis.c,v 3.18 2001/01/17 19:41:33 dawes Exp $ */
 
 /* 
  * This file contains operating system dependencies.
@@ -122,6 +122,9 @@ _X11TransConnectDisplay (display_name, fullnamep, dpynump, screenp,
     int connect_stat;
 #ifdef LOCALCONN
     struct utsname sys;
+#ifdef TCPCONN
+    char *tcphostname = NULL;		/* A place to save hostname pointer */
+#endif
 #endif
 
     p = display_name;
@@ -183,10 +186,20 @@ _X11TransConnectDisplay (display_name, fullnamep, dpynump, screenp,
     p = lastc;
 
 #ifdef LOCALCONN
-    /* check if phostname == localnodename */
-    if (phostname && uname(&sys) >= 0 &&
-	!strncmp(phostname, sys.nodename, strlen(sys.nodename)))
+    /* check if phostname == localnodename AND protocol not specified */
+    if (!pprotocol && phostname && uname(&sys) >= 0 &&
+	!strncmp(phostname, sys.nodename, 
+	(strlen(sys.nodename) < strlen(phostname) ? 
+	strlen(phostname) : strlen(sys.nodename))))
     {
+#ifdef TCPCONN
+	/*
+	 * We'll first attempt to connect using the local transport.  If
+	 * this fails (which is the case if sshd X protocol forwarding is
+	 * being used), retry using tcp and this hostname.
+	 */
+	tcphostname = copystring(phostname, strlen(phostname));
+#endif
 	Xfree (phostname);
 	phostname = copystring ("unix", 4);
     }
@@ -282,6 +295,7 @@ _X11TransConnectDisplay (display_name, fullnamep, dpynump, screenp,
     }
 #endif
 
+  connect:
     /*
      * This seems kind of backwards, but we need to put the protocol,
      * host, and port back together to pass to _X11TransOpenCOTSClient().
@@ -396,6 +410,16 @@ _X11TransConnectDisplay (display_name, fullnamep, dpynump, screenp,
     if (saddr) free ((char *) saddr);
     if (pprotocol) Xfree (pprotocol);
     if (phostname) Xfree (phostname);
+
+#if defined(LOCALCONN) && defined(TCPCONN)
+    if (tcphostname) {
+	pprotocol = copystring("tcp", 3);
+	phostname = tcphostname;
+	tcphostname = NULL;
+	goto connect;
+    }
+#endif
+
     if (pdpynum) Xfree (pdpynum);
     if (pscrnum) Xfree (pscrnum);
     return NULL;

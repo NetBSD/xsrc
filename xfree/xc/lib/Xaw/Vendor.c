@@ -1,4 +1,4 @@
-/* $TOG: Vendor.c /main/28 1998/02/06 12:52:56 kaleb $ */
+/* $Xorg: Vendor.c,v 1.3 2000/08/17 19:45:43 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Vendor.c,v 1.5 1998/10/03 08:42:30 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Vendor.c,v 1.7 2001/01/17 19:42:35 dawes Exp $ */
 
 /*
  * This is a copy of Xt/Vendor.c with an additional ClassInitialize

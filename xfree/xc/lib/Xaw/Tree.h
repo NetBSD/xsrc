@@ -1,5 +1,5 @@
 /*
- * $TOG: Tree.h /main/15 1998/02/11 14:56:11 kaleb $
+ * $Xorg: Tree.h,v 1.3 2000/08/17 19:45:43 cpqbld Exp $
  *
 
 Copyright 1990, 1994, 1998  The Open Group
@@ -44,7 +44,7 @@ in this Software without prior written authorization from The Open Group.
  * additional blank space to make the structure of the graph easier to see
  * as well as to support vertical trees.
  */
-/* $XFree86: xc/lib/Xaw/Tree.h,v 1.4 1998/10/03 08:42:30 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Tree.h,v 1.6 2001/01/17 19:42:35 dawes Exp $ */
 
 
 #ifndef _XawTree_h

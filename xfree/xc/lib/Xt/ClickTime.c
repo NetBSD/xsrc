@@ -1,4 +1,4 @@
-/* $TOG: ClickTime.c /main/6 1998/02/06 13:19:59 kaleb $ */
+/* $Xorg: ClickTime.c,v 1.3 2000/08/17 19:46:09 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts

@@ -1,5 +1,4 @@
-/* $XConsortium: GCOps.c /main/10 1996/12/02 10:21:24 lehors $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/GCOps.c,v 3.2 1996/01/24 22:04:13 dawes Exp $ */
+/* $Xorg: GCOps.c,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -13,6 +12,8 @@ the suitability of this software for any purpose.  It is provided "as
 is" without express or implied warranty.
 
 */
+/* $XFree86: xc/programs/Xserver/hw/xnest/GCOps.c,v 3.4 2001/01/17 22:36:55 dawes Exp $ */
+
 #include "X.h"
 #include "Xproto.h"
 #include "miscstruct.h"

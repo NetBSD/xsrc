@@ -1,6 +1,6 @@
 %{
 /*
- * $XFree86: xc/lib/Xft/xftlex.l,v 1.2 2000/11/30 23:30:00 dawes Exp $
+ * $XFree86: xc/lib/Xft/xftlex.l,v 1.7 2001/05/18 16:03:06 tsi Exp $
  *
  * Copyright (c) 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -76,16 +76,20 @@ int	XftConfigFiledeep = 0;
 static int input (void)
 {
     char    buf[1];
-    int	    r;
+    static  int	r = EOF;
 
-    YY_INPUT(buf, r, 1);
     if (r == 0)
 	return 0;
+    YY_INPUT(buf, r, 1);
+    if (r == 0)
+	return EOF;
     return buf[0];
 }
 
 static void unput (char c)
 {
+    if (!c || c == EOF)
+	return;
     if (c == '\n')
 	XftConfigLineno--;
     ungetc (c, XftConfigInput);
@@ -97,6 +101,7 @@ static void unput (char c)
 "/\052"		_XftConfigSkipComment();
 ^#		_XftConfigSkipLine();
 dir		return DIR;
+cache		return CACHE;
 include		return INCLUDE;
 includeif	return INCLUDEIF;
 match		return MATCH;
@@ -123,6 +128,8 @@ all		return ALL;
 ">"		return MORE;
 "!="		return NOTEQ;
 "?"		return QUEST;
+"["		return OS;
+"]"		return CS;
 \"([^\n\"]|\\\")*\"	{
     			yytext[yyleng - 1] = '\0';
 			yylval.sval = yytext+1;
@@ -170,6 +177,7 @@ _XftConfigSkipLine (void)
     do {
 	c = input();
     } while (c != EOF && c != '\n');
+    if (c == '\n') unput('\n');
 }
 
 Bool
@@ -247,6 +255,7 @@ _XftConfigPopInput (void)
 	if (c >= 0)
 	    return c;
 	fclose (XftConfigInput);
+	XftConfigInput = 0;
 	if (XftConfigInpt == XftConfigInStack + XFT_CONFIG_IN_DEEP)
 	    return EOF;
 	XftConfigInput = *XftConfigInpt++;
@@ -255,4 +264,12 @@ _XftConfigPopInput (void)
 	XftConfigFile = *XftConfigFileNamePt++;
 	--XftConfigFiledeep;
     }
+}
+
+void
+XftConfigLexDone (void)
+{
+#ifdef FLEX_SCANNER
+    XftConfig_delete_buffer (XftConfig_current_buffer);
+#endif
 }

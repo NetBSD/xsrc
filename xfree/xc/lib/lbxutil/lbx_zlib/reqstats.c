@@ -1,4 +1,4 @@
-/* $TOG: reqstats.c /main/11 1998/02/09 10:23:25 kaleb $ */
+/* $Xorg: reqstats.c,v 1.3 2000/08/17 19:46:41 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/lbxutil/lbx_zlib/reqstats.c,v 1.4 2001/01/17 19:43:36 dawes Exp $ */
 
 #ifdef LBXREQSTATS
 

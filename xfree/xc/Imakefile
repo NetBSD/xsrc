@@ -1,9 +1,14 @@
-XCOMM $TOG: Imakefile /main/138 1997/12/29 16:37:30 kaleb $
-XCOMM $XFree86: xc/Imakefile,v 3.19 2000/05/31 15:02:54 eich Exp $
+XCOMM $Xorg: Imakefile,v 1.5 2000/08/17 19:41:44 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/Imakefile,v 3.25 2001/03/21 17:36:43 dawes Exp $
+
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
 
-RELEASE = "Release 6.4"
+RELEASE = XOrgReleaseString
 #ifndef OSName
 #define OSName Unknown Operating System!
 #endif
@@ -13,7 +18,9 @@ RELEASE = "Release 6.4"
         FONTSDIR = fonts
 #endif
 #ifndef Win32Architecture
+#if BuildDocs
         DOCSDIR = doc
+#endif
         NLSSUBDIR = nls
 #endif
 #endif
@@ -45,14 +52,24 @@ VerifyOS::
 	@echo Building on OSName "("OSMajorVersion"."OSMinorVersion"."OSTeenyVersion")."
 	@echo ""
 #ifdef LinuxArchitecture
+VerifyOS::
 	@echo Linux Distribution: LinuxDistName
 	@echo libc version: LinuxCLibMajorVersion"."LinuxCLibMinorVersion"."LinuxCLibTeenyVersion
 	@echo binutils version: `expr LinuxBinUtilsMajorVersion / 10`.`expr LinuxBinUtilsMajorVersion % 10`
 	@echo ""
 #endif
 #if defined(GccMajorVersion) && defined(GccMinorVersion)
+VerifyOS::
 	@echo GCC version: GccMajorVersion"."GccMinorVersion
 	@echo ""
+#endif
+
+#ifdef XFree86Version
+version.def::
+	$(RM) $(IRULESRC)/version.def
+	$(LN) ../../$(XF86SRC)/xf86Version.h $(IRULESRC)/version.def
+#else
+version.def::
 #endif
 
 includes::
@@ -97,9 +114,9 @@ Everything::
 
 XCOMM clean out link tree looking for stuff that should get checked in
 dangerous_strip_clean::
-	$(MAKE) -k clean
+	$(MAKE) -k distclean
 	find . -type l -exec rm {} \;
-	find . \( \! \( -type d -o -name Makefile \) \) -print
+	find . \( \! -type d \) -print
 
 #else /* OS2Architecture */
 VerifyOS::
@@ -124,7 +141,7 @@ Everything::
 	@echo :
 	\indir $(IMAKESRC) $(MAKE) $(MFLAGS) SHELL= -f Makefile.ini BOOTSTRAPCFLAGS=-Zexe
 	if exist Makefile.bak del Makefile.bak
-	if exist MAkefile ren Makefile Makefile.bak
+	if exist Makefile ren Makefile Makefile.bak
 	$(MAKE) $(MFLAGS) -f Makefile.bak Makefile
 	$(MAKE) $(MFLAGS) SHELL= VerifyOS
 	$(MAKE) $(MFLAGS) SHELL= Makefiles

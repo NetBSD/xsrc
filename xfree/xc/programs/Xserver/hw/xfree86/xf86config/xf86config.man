@@ -1,0 +1,16 @@
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.man,v 1.4 2001/01/27 18:20:59 dawes Exp $
+.TH xf86config 1 __vendorversion__
+.SH NAME
+xf86config \- generate an XF86Config file
+.SH SYNOPSIS
+.B xf86config
+.SH DESCRIPTION
+\fIxf86config\fP is an interactive program for generating an XF86Config file
+for use with XFree86 X servers.
+.SH FILES
+<xroot>/lib/X11/Cards            Video cards database
+.SH "SEE ALSO"
+XFree86(1), XF86Config(__filemansuffix__), reconfig(1)
+.SH AUTHOR
+Harm Hanemaayer.
+.\" $TOG: xf86conf.man /main/9 1997/07/19 10:53:08 kaleb $

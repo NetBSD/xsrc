@@ -1,4 +1,3 @@
-/* $Id: pipeline.c,v 1.1.1.2 2001/03/18 16:59:42 veego Exp $*/
 
 /*
  * Mesa 3-D graphics library

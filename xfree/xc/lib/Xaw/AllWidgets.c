@@ -1,4 +1,4 @@
-/* $TOG: AllWidgets.c /main/9 1998/02/06 12:43:49 kaleb $ */
+/* $Xorg: AllWidgets.c,v 1.3 2000/08/17 19:45:30 cpqbld Exp $ */
 
 /*
 

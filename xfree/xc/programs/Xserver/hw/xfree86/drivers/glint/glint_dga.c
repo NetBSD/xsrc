@@ -1,5 +1,5 @@
 /*
- * Copyright 2000 by Alan Hourihane, Sychdyn, North Wales, UK.
+ * Copyright 2000-2001 by Alan Hourihane, Sychdyn, North Wales, UK.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@
  *
  * Authors:  Alan Hourihane, <alanh@fairlite.demon.co.uk>
  */
-/* $XFree86: $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint_dga.c,v 1.3 2001/04/10 20:33:30 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -42,8 +42,10 @@ static int  GLINT_GetViewport(ScrnInfoPtr);
 static void GLINT_SetViewport(ScrnInfoPtr, int, int, int);
 static void GLINT_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void GLINT_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
+#if 0
 static void GLINT_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
 					unsigned long);
+#endif
 
 static
 DGAFunctionRec GLINTDGAFuncs = {
@@ -54,9 +56,8 @@ DGAFunctionRec GLINTDGAFuncs = {
    GLINT_GetViewport,
    GLINT_Sync,
    GLINT_FillRect,
-   NULL,
-#if 0
    GLINT_BlitRect,
+#if 0
    GLINT_BlitTransRect
 #else
    NULL
@@ -260,6 +261,7 @@ GLINT_BlitRect(
 }
 
 
+#if 0
 static void 
 GLINT_BlitTransRect(
    ScrnInfoPtr pScrn, 
@@ -271,6 +273,7 @@ GLINT_BlitTransRect(
   /* this one should be separate since the XAA function would
      prohibit usage of ~0 as the key */
 }
+#endif
 
 
 static Bool 

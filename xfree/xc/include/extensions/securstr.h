@@ -1,4 +1,4 @@
-/* $TOG: securstr.h /main/5 1998/02/09 11:23:18 kaleb $ */
+/* $Xorg: securstr.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
 /*
 Copyright 1996, 1998  The Open Group
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfb.h,v 1.15 1999/12/27 00:39:55 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfb.h,v 1.17 2001/01/17 22:37:02 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -42,14 +42,12 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfb.h /main/43 1998/02/09 14:40:38 kaleb $ */
-
+/* $Xorg: mfb.h,v 1.3 2000/08/17 19:53:34 cpqbld Exp $ */
 
 #if !defined(_MFB_H_) || defined(MFB_PROTOTYPES_ONLY)
 #ifndef MFB_PROTOTYPES_ONLY
 #define _MFB_H_
 #endif
-
 
 /* Monochrome Frame Buffer definitions 
    written by drewry, september 1986

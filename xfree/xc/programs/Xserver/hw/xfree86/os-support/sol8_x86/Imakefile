@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/Imakefile,v 1.6 2000/08/11 19:51:04 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sol8_x86/Imakefile,v 1.8 2001/04/07 16:37:16 dawes Exp $
 
 
 
@@ -29,7 +29,7 @@ OBJS = sol8_init.o sol8_vid.o sol8_bios.o sol8_kbd.o sol8_io.o \
         kmod_noop.o agp_noop.o
 
 INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
-           -I$(XINCLUDESRC) -I$(EXTINCSRC)
+           -I$(SERVERSRC)/mi -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
 RESDEFINES = -DUSESTDRES
 

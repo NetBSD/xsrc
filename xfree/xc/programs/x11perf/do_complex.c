@@ -1,4 +1,4 @@
-/* $XConsortium: do_complex.c,v 2.7 92/07/31 17:02:47 rws Exp $ */
+/* $Xorg: do_complex.c,v 1.3 2000/08/17 19:54:09 cpqbld Exp $ */
 /*****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86: xc/programs/x11perf/do_complex.c,v 1.3 1999/02/28 11:19:53 dawes Exp $ */
+/* $XFree86: xc/programs/x11perf/do_complex.c,v 1.7 2001/05/09 09:12:22 alanh Exp $ */
 
 #include "x11perf.h"
 
@@ -32,7 +32,7 @@ static GC       pgc;
 
 #ifndef X_NOT_STDC_ENV
 #include <math.h>
-#ifdef QNX4
+#if defined(QNX4) || defined(__CYGWIN__)
 #define PI 3.14159265358979323846
 #else
 #define PI M_PI

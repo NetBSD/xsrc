@@ -26,7 +26,7 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from the XFree86 Project and Silicon Motion.
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_dga.c,v 1.2 2001/02/15 18:20:33 dawes Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -132,7 +132,7 @@ SMI_DGAInit(ScreenPtr pScreen)
 		currentMode->bytesPerScanline = ((pScrn->displayWidth * Bpp) + 15)
 									  & ~15L;
 		currentMode->imageWidth       = pScrn->displayWidth;
-		currentMode->imageHeight      = (pSmi->videoRAMBytes - pSmi->FBReserved)
+		currentMode->imageHeight      = pSmi->FBReserved
 									  / currentMode->bytesPerScanline;
 	    currentMode->pixmapWidth      = currentMode->imageWidth;
 	    currentMode->pixmapHeight     = currentMode->imageHeight;

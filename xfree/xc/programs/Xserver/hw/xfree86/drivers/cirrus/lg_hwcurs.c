@@ -10,7 +10,7 @@
  * Much of this code is inspired by the HW cursor code from XFree86
  * 3.3.3.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_hwcurs.c,v 1.1 1998/11/22 10:37:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_hwcurs.c,v 1.5 2001/05/07 21:59:06 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -375,10 +375,6 @@ Bool LgHWCursorInit(ScreenPtr pScreen)
   infoPtr->HideCursor = LgHideCursor;
   infoPtr->ShowCursor = LgShowCursor;
   infoPtr->UseHWCursor = LgUseHWCursor;
-  /* RealizeCursor is how the cursor bits are converted from an infoPtr
-     to the bits to slam out to the card.  Can we use one of the 
-     pre-defined realize'rs?  Look in ramdac/xf86HWCurs.c. */
-  infoPtr->RealizeCursor = NULL;
 
 #ifdef LG_CURSOR_DEBUG
   ErrorF("LgHWCursorInit before xf86InitCursor\n");

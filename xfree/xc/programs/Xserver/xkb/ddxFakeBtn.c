@@ -1,4 +1,4 @@
-/* $XConsortium: ddxFakeBtn.c /main/2 1996/01/01 10:55:09 kaleb $ */
+/* $Xorg: ddxFakeBtn.c,v 1.3 2000/08/17 19:53:45 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,4 +1,4 @@
-/* $TOG: XIEproto.h /main/7 1998/02/09 11:20:18 kaleb $ */
+/* $Xorg: XIEproto.h,v 1.5 2000/08/18 04:05:45 coskrey Exp $ */
 /******************************************************************************
 Copyright 1993, 1994, 1998  The Open Group
 
@@ -577,7 +577,11 @@ typedef struct {
     CARD32            nameSpace B32;
     xieTypPhototag    phototag B16;
     CARD16            type B16;
+#if defined(__cplusplus) || defined(c_plusplus)
+    CARD8             c_operator;
+#else
     CARD8             operator;
+#endif
     CARD8             pad[11];
 } xieFloOperatorErr;
 

@@ -26,17 +26,15 @@
  * Author: Kevin E. Martin <martin@valinux.com>
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmR128.c,v 1.5 2000/12/04 19:21:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmR128.c,v 1.9.2.1 2001/05/23 18:58:00 dawes Exp $ */
 
 #ifdef XFree86Server
 # include "xf86.h"
 # include "xf86_OSproc.h"
 # include "xf86_ansic.h"
-# include "xf86Priv.h"
 # define _DRM_MALLOC xalloc
 # define _DRM_FREE   xfree
 # ifndef XFree86LOADER
-#  include <sys/stat.h>
 #  include <sys/mman.h>
 # endif
 #else
@@ -49,7 +47,6 @@
 # include <errno.h>
 # include <signal.h>
 # include <sys/types.h>
-# include <sys/stat.h>
 # include <sys/ioctl.h>
 # include <sys/mman.h>
 # include <sys/time.h>
@@ -78,7 +75,7 @@ extern int xf86RemoveSIGIOHandler(int fd);
 #include "drm.h"
 
 #define R128_BUFFER_RETRY	32
-#define R128_IDLE_RETRY		16
+#define R128_IDLE_RETRY		32
 
 
 int drmR128InitCCE( int fd, drmR128Init *info )
@@ -154,8 +151,11 @@ int drmR128StopCCE( int fd )
 
    ret = ioctl( fd, DRM_IOCTL_R128_CCE_STOP, &stop );
 
-   if ( ret && errno != EBUSY )
+   if ( ret == 0 ) {
+      return 0;
+   } else if ( errno != EBUSY ) {
       return -errno;
+   }
 
    stop.flush = 0;
 
@@ -163,8 +163,11 @@ int drmR128StopCCE( int fd )
       ret = ioctl( fd, DRM_IOCTL_R128_CCE_STOP, &stop );
    } while ( ret && errno == EBUSY && i++ < R128_IDLE_RETRY );
 
-   if ( ret && errno != EBUSY )
+   if ( ret == 0 ) {
+      return 0;
+   } else if ( errno != EBUSY ) {
       return -errno;
+   }
 
    stop.idle = 0;
 
@@ -208,6 +211,23 @@ int drmR128EngineReset( int fd )
    }
 }
 
+int drmR128FullScreen( int fd, int enable )
+{
+   drm_r128_fullscreen_t fs;
+
+   if ( enable ) {
+      fs.func = R128_INIT_FULLSCREEN;
+   } else {
+      fs.func = R128_CLEANUP_FULLSCREEN;
+   }
+
+   if ( ioctl( fd, DRM_IOCTL_R128_FULLSCREEN, &fs ) ) {
+      return -errno;
+   } else {
+      return 0;
+   }
+}
+
 int drmR128SwapBuffers( int fd )
 {
    if ( ioctl( fd, DRM_IOCTL_R128_SWAP, NULL ) ) {
@@ -218,19 +238,16 @@ int drmR128SwapBuffers( int fd )
 }
 
 int drmR128Clear( int fd, unsigned int flags,
-		  int x, int y, int w, int h,
-		  unsigned int clear_color,
-		  unsigned int clear_depth )
+		  unsigned int clear_color, unsigned int clear_depth,
+		  unsigned int color_mask, unsigned int depth_mask )
 {
    drm_r128_clear_t clear;
 
    clear.flags = flags;
-   clear.x = x;
-   clear.y = y;
-   clear.w = w;
-   clear.h = h;
    clear.clear_color = clear_color;
    clear.clear_depth = clear_depth;
+   clear.color_mask = color_mask;
+   clear.depth_mask = depth_mask;
 
    if ( ioctl( fd, DRM_IOCTL_R128_CLEAR, &clear ) < 0 ) {
       return -errno;
@@ -387,25 +404,19 @@ int drmR128PolygonStipple( int fd, unsigned int *mask )
    }
 }
 
-int drmR128SubmitPacket( int fd, void *buffer, int *count, int flags )
+int drmR128FlushIndirectBuffer( int fd, int index,
+				int start, int end, int discard )
 {
-   drm_r128_packet_t packet;
-   int ret;
+   drm_r128_indirect_t ind;
 
-   memset( &packet, 0, sizeof(drm_r128_packet_t) );
+   ind.idx = index;
+   ind.start = start;
+   ind.end = end;
+   ind.discard = discard;
 
-   packet.count = *count;
-   packet.flags = flags;
-
-   while (packet.count > 0) {
-      packet.buffer = (unsigned int *)buffer + (*count - packet.count);
-      ret = ioctl(fd, DRM_IOCTL_R128_PACKET, &packet);
-      if (ret < 0 && ret != -EAGAIN) {
-	 *count = packet.count;
-	 return -errno;
-      }
+   if ( ioctl( fd, DRM_IOCTL_R128_INDIRECT, &ind ) < 0 ) {
+      return -errno;
+   } else {
+      return 0;
    }
-
-   *count = 0;
-   return 0;
 }

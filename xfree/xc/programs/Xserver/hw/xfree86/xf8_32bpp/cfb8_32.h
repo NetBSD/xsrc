@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32bpp/cfb8_32.h,v 1.1 1999/01/03 03:58:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf8_32bpp/cfb8_32.h,v 1.5 2000/03/02 02:32:52 mvojkovi Exp $ */
 
 #ifndef _CFB8_32_H
 #define _CFB8_32_H

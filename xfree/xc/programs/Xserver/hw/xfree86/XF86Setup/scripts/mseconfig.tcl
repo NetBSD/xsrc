@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/mseconfig.tcl,v 3.3.2.4 1998/02/26 13:59:01 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/mseconfig.tcl,v 3.4 1998/03/27 23:23:07 hohndel Exp $
 
 set clicks1 [clock clicks]
 

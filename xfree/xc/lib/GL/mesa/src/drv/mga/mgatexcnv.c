@@ -1,31 +1,30 @@
-/* $XFree86: $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatexcnv.c,v 1.2 2001/04/10 16:07:51 dawes Exp $ */
 /*
- * GLX Hardware Device Driver for Matrox Millenium G200
- * Copyright (C) 1999 Wittawat Yamwong
+ * Copyright 2000-2001 VA Linux Systems, Inc.
+ * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * WITTAWAT YAMWONG, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM, 
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
+ * VA LINUX SYSTEMS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  *
- *
- *    original by Wittawat Yamwong <Wittawat.Yamwong@stud.uni-hannover.de>
- *	9/20/99 rewrite by John Carmack <johnc@idsoftware.com>
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
  */
-
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,18 +43,18 @@
  * for an 8x8 texture.  This happens when we have to crutch the pitch
  * limits of the mga by uploading a block of texels as a single line.
  */
-void mgaConvertTexture( GLuint *destPtr, int texelBytes, 
+void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 			struct gl_texture_image *image,
-			int x, int y, int width, int height ) 
+			int x, int y, int width, int height )
 {
    register int		i, j;
    GLubyte		*src;
    int stride;
-	
+
    if (0)
       fprintf(stderr, "texture image %p\n", image->Data);
-		
-   if (image->Data == 0) 
+
+   if (image->Data == 0)
       return;
 
    /* FIXME: g400 luminance_alpha internal format */
@@ -70,7 +69,7 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width);
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width >> 2  ; j ; j-- ) {
-			
+
 	       *destPtr++ = src[0] | ( src[1] << 8 ) | ( src[2] << 16 ) | ( src[3] << 24 );
 	       src += 4;
 	    }
@@ -88,8 +87,8 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width) * 3;
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width >> 1  ; j ; j-- ) {
-			
-	       *destPtr++ = MGAPACKCOLOR565(src[0],src[1],src[2]) |  
+
+	       *destPtr++ = MGAPACKCOLOR565(src[0],src[1],src[2]) |
 		  ( MGAPACKCOLOR565(src[3],src[4],src[5]) << 16 );
 	       src += 6;
 	    }
@@ -101,8 +100,8 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width) * 4;
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width >> 1  ; j ; j-- ) {
-			
-	       *destPtr++ = MGAPACKCOLOR4444(src[0],src[1],src[2],src[3]) |  
+
+	       *destPtr++ = MGAPACKCOLOR4444(src[0],src[1],src[2],src[3]) |
 		  ( MGAPACKCOLOR4444(src[4],src[5],src[6],src[7]) << 16 );
 	       src += 8;
 	    }
@@ -115,7 +114,7 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width >> 1  ; j ; j-- ) {
 	       /* FIXME: should probably use 555 texture to get true grey */
-	       *destPtr++ = MGAPACKCOLOR565(src[0],src[0],src[0]) |  
+	       *destPtr++ = MGAPACKCOLOR565(src[0],src[0],src[0]) |
 		  ( MGAPACKCOLOR565(src[1],src[1],src[1]) << 16 );
 	       src += 2;
 	    }
@@ -127,8 +126,8 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width);
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width >> 1  ; j ; j-- ) {
-			
-	       *destPtr++ = MGAPACKCOLOR4444(src[0],src[0],src[0],src[0]) |  
+
+	       *destPtr++ = MGAPACKCOLOR4444(src[0],src[0],src[0],src[0]) |
 		  ( MGAPACKCOLOR4444(src[1],src[1],src[1],src[1]) << 16 );
 	       src += 2;
 	    }
@@ -140,8 +139,8 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width);
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width >> 1  ; j ; j-- ) {
-			
-	       *destPtr++ = MGAPACKCOLOR4444(255,255,255,src[0]) |  
+
+	       *destPtr++ = MGAPACKCOLOR4444(255,255,255,src[0]) |
 		  ( MGAPACKCOLOR4444(255,255,255,src[1]) << 16 );
 	       src += 2;
 	    }
@@ -153,8 +152,8 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width) * 2;
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width >> 1  ; j ; j-- ) {
-			
-	       *destPtr++ = MGAPACKCOLOR4444(src[0],src[0],src[0],src[1]) |  
+
+	       *destPtr++ = MGAPACKCOLOR4444(src[0],src[0],src[0],src[1]) |
 		  ( MGAPACKCOLOR4444(src[2],src[2],src[2],src[3]) << 16 );
 	       src += 4;
 	    }
@@ -172,7 +171,7 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width) * 3;
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width ; j ; j-- ) {
-			
+
 	       *destPtr++ = MGAPACKCOLOR8888(src[0],src[1],src[2], 255);
 	       src += 3;
 	    }
@@ -184,7 +183,7 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width) * 4;
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width  ; j ; j-- ) {
-			
+
 	       *destPtr++ = MGAPACKCOLOR8888(src[0],src[1],src[2],src[3]);
 	       src += 4;
 	    }
@@ -196,7 +195,7 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width);
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width ; j ; j-- ) {
-			
+
 	       *destPtr++ = MGAPACKCOLOR8888(src[0],src[0],src[0], 255);
 	       src += 1;
 	    }
@@ -208,7 +207,7 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width);
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width ; j ; j-- ) {
-			
+
 	       *destPtr++ = MGAPACKCOLOR8888(src[0],src[0],src[0],src[0]);
 	       src += 1;
 	    }
@@ -220,7 +219,7 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width);
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width ; j ; j-- ) {
-			
+
 	       *destPtr++ = MGAPACKCOLOR8888(255,255,255,src[0]);
 	       src += 1;
 	    }
@@ -232,7 +231,7 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 	 stride = (image->Width - width) * 2;
 	 for ( i = height ; i ; i-- ) {
 	    for ( j = width ; j ; j-- ) {
-			
+
 	       *destPtr++ = MGAPACKCOLOR8888(src[0],src[0],
 					     src[0],src[1]);
 	       src += 2;
@@ -252,6 +251,6 @@ void mgaConvertTexture( GLuint *destPtr, int texelBytes,
 
  format_error:
 
-   fprintf(stderr, "Unsupported texelBytes %i, image->Format %i\n", 
+   fprintf(stderr, "Unsupported texelBytes %i, image->Format %i\n",
 	   (int)texelBytes, (int)image->Format );
 }

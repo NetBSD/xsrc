@@ -1,4 +1,4 @@
-/* $TOG: constrain.c /main/11 1998/02/09 13:59:48 kaleb $ */
+/* $Xorg: constrain.c,v 1.3 2000/08/17 19:54:25 cpqbld Exp $ */
 
 /**** module constrain.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/constrain.c,v 1.5 2001/01/17 23:45:37 dawes Exp $ */
 
 #include "xieperf.h"
 #include <stdio.h>

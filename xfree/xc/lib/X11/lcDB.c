@@ -1,4 +1,4 @@
-/* $TOG: lcDB.c /main/16 1998/06/26 14:37:14 kaleb $ */
+/* $Xorg: lcDB.c,v 1.6 2000/08/17 19:45:17 cpqbld Exp $ */
 /*
  *
  * Copyright IBM Corporation 1993
@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcDB.c,v 3.11 2000/01/29 18:58:16 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcDB.c,v 3.13 2001/01/17 19:41:53 dawes Exp $ */
 
 
 

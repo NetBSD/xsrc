@@ -41,7 +41,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: mispans.h /main/5 1998/02/09 14:48:48 kaleb $ */
+/* $Xorg: mispans.h,v 1.3 2000/08/17 19:53:39 cpqbld Exp $ */
 
 typedef struct {
     int         count;		/* number of spans		    */

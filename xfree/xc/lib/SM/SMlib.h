@@ -1,4 +1,4 @@
-/* $TOG: SMlib.h /main/24 1998/02/06 14:09:29 kaleb $ */
+/* $Xorg: SMlib.h,v 1.3 2000/08/17 19:44:28 cpqbld Exp $ */
 
 /*
 

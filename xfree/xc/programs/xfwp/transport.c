@@ -1,4 +1,4 @@
-/* $TOG: transport.c /main/6 1997/12/11 14:26:08 kaleb $ */
+/* $Xorg: transport.c,v 1.3 2000/08/17 19:54:24 cpqbld Exp $ */
 /*
 
 Copyright "1986-1997 The Open Group All Rights Reserved

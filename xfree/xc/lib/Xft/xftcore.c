@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftcore.c,v 1.3 2000/12/02 10:02:04 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftcore.c,v 1.5 2000/12/20 00:28:44 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -65,6 +65,37 @@ XftCoreConvert32 (XftChar32	    *string,
     return xc;
 }
 
+XChar2b *
+XftCoreConvertUtf8 (XftChar8	*string,
+		    int		len,
+		    XChar2b	xcloc[XFT_CORE_N16LOCAL],
+		    int		*nchar)
+{
+    XChar2b	*xc;
+    XftChar32	c;
+    int		i;
+    int		n, width;
+    int		clen;
+    
+    if (!XftUtf8Len (string, len, &n, &width))
+	return 0;
+    
+    if (n < XFT_CORE_N16LOCAL)
+	xc = xcloc;
+    else
+	xc = (XChar2b *) malloc (n * sizeof (XChar2b));
+    for (i = 0; i < n; i++)
+    {
+	clen = XftUtf8ToUcs4 (string, &c, len);
+	xc[i].byte1 = c & 0xff;
+	xc[i].byte2 = (c >> 8) & 0xff;
+	string += clen;
+	len -= clen;
+    }
+    *nchar = n;
+    return xc;
+}
+
 void
 XftCoreExtents8 (Display	*dpy,
 		 XFontStruct	*fs,
@@ -109,6 +140,8 @@ XftCoreExtents16 (Display	    *dpy,
     xc = XftCoreConvert16 (string, len, xcloc);
     XTextExtents16 (fs, xc, len, &direction,
 		    &ascent, &descent, &overall);
+    if (xc != xcloc)
+	free (xc);
     if (overall.lbearing < overall.rbearing)
     {
 	extents->x = overall.lbearing;
@@ -140,6 +173,42 @@ XftCoreExtents32 (Display	    *dpy,
     xc = XftCoreConvert32 (string, len, xcloc);
     XTextExtents16 (fs, xc, len, &direction,
 		    &ascent, &descent, &overall);
+    if (xc != xcloc)
+	free (xc);
+    if (overall.lbearing < overall.rbearing)
+    {
+	extents->x = overall.lbearing;
+	extents->width = overall.rbearing - overall.lbearing;
+    }
+    else
+    {
+	extents->x = overall.rbearing;
+	extents->width = overall.lbearing - overall.rbearing;
+    }
+    extents->y = -overall.ascent;
+    extents->height = overall.ascent + overall.descent;
+    extents->xOff = overall.width;
+    extents->yOff = 0;
+}
+
+void
+XftCoreExtentsUtf8 (Display	    *dpy,
+		    XFontStruct	    *fs,
+		    XftChar8	    *string, 
+		    int		    len,
+		    XGlyphInfo	    *extents)
+{
+    int		direction;
+    int		ascent, descent;
+    XCharStruct overall;
+    XChar2b	*xc, xcloc[XFT_CORE_N16LOCAL];
+    int		n;
+
+    xc = XftCoreConvertUtf8 (string, len, xcloc, &n);
+    XTextExtents16 (fs, xc, n, &direction,
+		    &ascent, &descent, &overall);
+    if (xc != xcloc)
+	free (xc);
     if (overall.lbearing < overall.rbearing)
     {
 	extents->x = overall.lbearing;

@@ -1,4 +1,4 @@
-/* $TOG: mparith.c /main/7 1998/02/09 16:21:07 kaleb $ */
+/* $Xorg: mparith.c,v 1.5 2000/08/17 19:47:49 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module mparith.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. August, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mparith.c,v 3.2 1998/10/04 09:36:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mparith.c,v 3.4 2001/01/17 22:13:10 dawes Exp $ */
 
 
 #define _XIEC_MPARITH
@@ -1081,7 +1081,7 @@ static int SetupArith(flo,ped,modify)
 	if (!act && !raw->src2)
 	    act = action_monoROI[iclass][raw->operator-1];
 
-	/* Or maybe a monadic look up table operator */
+	/* Or maybe a monadic look up table op */
 	if (!act && !raw->src2) {
 	     act = action_lut[iclass];
 	     if (act) {

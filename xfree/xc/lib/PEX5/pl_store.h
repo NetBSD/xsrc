@@ -1,4 +1,4 @@
-/* $TOG: pl_store.h /main/5 1998/02/06 16:12:15 kaleb $ */
+/* $Xorg: pl_store.h,v 1.3 2000/08/17 19:44:27 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

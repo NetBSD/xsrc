@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.c,v 1.20 2000/10/20 14:59:01 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/fbdevhw/fbdevhw.c,v 1.24 2001/04/06 18:16:31 dawes Exp $ */
 
 /* all driver need this */
 #include "xf86.h"
@@ -16,11 +16,9 @@
 
 #include "asm/page.h"	/* #define for PAGE_* */
 
-#ifdef DPMSExtension
 #include "globals.h"
 #define DPMS_SERVER
 #include "extensions/dpms.h"
-#endif
 
 #define DEBUG 0
 
@@ -529,7 +527,7 @@ fbdevHWUseBuildinMode(ScrnInfoPtr pScrn)
 void
 calculateFbmem_len(fbdevHWPtr fPtr)
 {
-	fPtr->fboff = (unsigned int) fPtr->fix.smem_start & ~PAGE_MASK;
+	fPtr->fboff = (unsigned long) fPtr->fix.smem_start & ~PAGE_MASK;
 	fPtr->fbmem_len = (fPtr->fboff+fPtr->fix.smem_len+~PAGE_MASK) &
 			  PAGE_MASK;
 }
@@ -598,7 +596,7 @@ fbdevHWMapMMIO(ScrnInfoPtr pScrn)
 			perror("FBIOPUT_VSCREENINFO");
 			return FALSE;
 		}
-		mmio_off = (unsigned int) fPtr->fix.mmio_start & ~PAGE_MASK;
+		mmio_off = (unsigned long) fPtr->fix.mmio_start & ~PAGE_MASK;
 		fPtr->mmio_len = (mmio_off+fPtr->fix.mmio_len+~PAGE_MASK) &
 				  PAGE_MASK;
 		if (NULL == fPtr->fbmem)
@@ -790,7 +788,6 @@ fbdevHWLeaveVT(int scrnIndex, int flags)
 void
 fbdevHWDPMSSet(ScrnInfoPtr pScrn, int mode, int flags)
 {
-#ifdef DPMSExtension
 	fbdevHWPtr fPtr = FBDEVHWPTR(pScrn);
 	unsigned long fbmode;
 
@@ -814,5 +811,22 @@ fbdevHWDPMSSet(ScrnInfoPtr pScrn, int mode, int flags)
 
 	if (-1 == ioctl(fPtr->fd, FBIOBLANK, (void *)fbmode))
 		perror("ioctl FBIOBLANK");
-#endif    /* DPMSExtension */
+}
+
+Bool
+fbdevHWSaveScreen(ScreenPtr pScreen, int mode)
+{
+	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+	fbdevHWPtr fPtr = FBDEVHWPTR(pScrn);
+	unsigned long unblank;
+
+	if (!pScrn->vtSema)
+		return;
+
+	unblank = xf86IsUnblank(mode);
+
+	if (-1 == ioctl(fPtr->fd, FBIOBLANK, (void *)(1-unblank)))
+		return FALSE;
+
+	return TRUE;
 }

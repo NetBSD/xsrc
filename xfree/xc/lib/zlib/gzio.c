@@ -1,4 +1,4 @@
-/* $TOG: gzio.c /main/1 1998/02/04 14:33:29 kaleb $ */
+/* $Xorg: gzio.c,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-1998 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h

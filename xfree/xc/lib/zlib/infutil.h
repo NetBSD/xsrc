@@ -1,4 +1,4 @@
-/* $TOG: infutil.h /main/4 1998/02/04 14:34:13 kaleb $ */
+/* $Xorg: infutil.h,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* infutil.h -- types and macros common to blocks and codes
  * Copyright (C) 1995-1998 Mark Adler

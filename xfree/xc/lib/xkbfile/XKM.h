@@ -1,4 +1,4 @@
-/* $XConsortium: XKM.h /main/2 1995/12/07 21:18:26 kaleb $ */
+/* $Xorg: XKM.h,v 1.3 2000/08/17 19:46:43 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,4 +1,4 @@
-/* $TOG: midraw.c /main/10 1998/02/09 16:16:46 kaleb $ */
+/* $Xorg: midraw.c,v 1.3 2000/08/17 19:47:45 cpqbld Exp $ */
 /**** module midraw.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/midraw.c,v 3.3 1998/10/05 13:22:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/midraw.c,v 3.5 2001/01/17 22:13:04 dawes Exp $ */
 
 #define _XIEC_IDRAW
 #define _XIEC_MIDRAW

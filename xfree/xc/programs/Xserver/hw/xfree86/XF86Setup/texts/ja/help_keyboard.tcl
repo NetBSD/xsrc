@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/help_keyboard.tcl,v 1.1.2.2 1998/02/26 20:11:22 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/texts/ja/help_keyboard.tcl,v 1.2 1998/04/05 15:30:31 robin Exp $
 #
 set message "\n\n\n\
 	まず、キーボードのモデルから、使っている種類を\n\

@@ -1,5 +1,5 @@
 /*
- * $TOG: sunGX.h /main/5 1998/02/10 13:16:42 kaleb $
+ * $Xorg: sunGX.h,v 1.3 2000/08/17 19:48:29 cpqbld Exp $
  *
 Copyright 1991, 1998  The Open Group
 

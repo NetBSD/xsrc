@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbbresd.c,v 3.3 2000/02/12 03:39:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbbresd.c,v 3.5 2001/01/17 22:36:34 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: cfbbresd.c /main/17 1998/02/09 14:04:47 kaleb $ */
+/* $Xorg: cfbbresd.c,v 1.3 2000/08/17 19:48:13 cpqbld Exp $ */
 #include "X.h"
 #include "misc.h"
 #include "cfb.h"

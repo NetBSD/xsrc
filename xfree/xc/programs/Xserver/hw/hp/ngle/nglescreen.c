@@ -1,4 +1,4 @@
-/* $TOG: nglescreen.c /main/4 1997/11/11 15:45:50 msr $ */
+/* $Xorg: nglescreen.c,v 1.3 2000/08/17 19:48:28 cpqbld Exp $ */
 /*************************************************************************
  * 
  * (c)Copyright 1992 Hewlett-Packard Co.,  All Rights Reserved.
@@ -23,7 +23,7 @@ performance, or use of this material.
  *
  *************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/hp/ngle/nglescreen.c,v 1.2 1998/06/27 12:53:50 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/hp/ngle/nglescreen.c,v 1.4 2001/01/17 22:36:49 dawes Exp $ */
 
 /******************************************************************************
  *

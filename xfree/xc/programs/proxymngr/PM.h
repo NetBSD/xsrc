@@ -1,4 +1,4 @@
-/* $TOG: PM.h /main/2 1998/02/09 13:45:58 kaleb $ */
+/* $Xorg: PM.h,v 1.3 2000/08/17 19:54:00 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group

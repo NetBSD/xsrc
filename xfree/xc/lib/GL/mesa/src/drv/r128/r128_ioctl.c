@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_ioctl.c,v 1.1 2000/12/04 19:21:46 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_ioctl.c,v 1.6 2001/04/10 16:07:52 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -38,7 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "mem.h"
 
-#define R128_TIMEOUT        2000000
+#define R128_TIMEOUT        2048
 
 
 /* =============================================================
@@ -47,9 +47,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Get a new VB from the pool of vertex buffers in AGP space.
  */
-drmBufPtr r128GetBufferLocked( r128ContextPtr r128ctx )
+drmBufPtr r128GetBufferLocked( r128ContextPtr rmesa )
 {
-   int fd = r128ctx->r128Screen->driScreen->fd;
+   int fd = rmesa->r128Screen->driScreen->fd;
    int index = 0;
    int size = 0;
    drmDMAReq dma;
@@ -57,7 +57,7 @@ drmBufPtr r128GetBufferLocked( r128ContextPtr r128ctx )
    int to = 0;
    int ret;
 
-   dma.context = r128ctx->hHWContext;
+   dma.context = rmesa->hHWContext;
    dma.send_count = 0;
    dma.send_list = NULL;
    dma.send_sizes = NULL;
@@ -68,15 +68,15 @@ drmBufPtr r128GetBufferLocked( r128ContextPtr r128ctx )
    dma.request_sizes = &size;
    dma.granted_count = 0;
 
-   while ( !buf && ( to++ < r128ctx->CCEtimeout ) ) {
+   while ( !buf && ( to++ < R128_TIMEOUT ) ) {
       ret = drmDMA( fd, &dma );
 
       if ( ret == 0 ) {
-	 buf = &r128ctx->r128Screen->buffers->list[index];
+	 buf = &rmesa->r128Screen->buffers->list[index];
 	 buf->used = 0;
 #if ENABLE_PERF_BOXES
 	 /* Bump the performance counter */
-	 r128ctx->c_vertexBuffers++;
+	 rmesa->c_vertexBuffers++;
 #endif
 	 return buf;
       }
@@ -84,6 +84,7 @@ drmBufPtr r128GetBufferLocked( r128ContextPtr r128ctx )
 
    if ( !buf ) {
       drmR128EngineReset( fd );
+      UNLOCK_HARDWARE( rmesa );
       fprintf( stderr, "Error: Could not get new VB... exiting\n" );
       exit( -1 );
    }
@@ -91,57 +92,50 @@ drmBufPtr r128GetBufferLocked( r128ContextPtr r128ctx )
    return buf;
 }
 
-void r128FlushVerticesLocked( r128ContextPtr r128ctx )
+void r128FlushVerticesLocked( r128ContextPtr rmesa )
 {
-   XF86DRIClipRectPtr pbox = r128ctx->pClipRects;
-   int nbox = r128ctx->numClipRects;
-   drmBufPtr buffer = r128ctx->vert_buf;
-   int count = r128ctx->num_verts;
+   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   int nbox = rmesa->numClipRects;
+   drmBufPtr buffer = rmesa->vert_buf;
+   int count = rmesa->num_verts;
    int prim = R128_TRIANGLES;
-   int fd = r128ctx->driScreen->fd;
+   int fd = rmesa->driScreen->fd;
    int i;
 
-   if ( 0 )
-	fprintf( stderr, "%s: buf=%d count=%d\n",
-		 __FUNCTION__, buffer ? buffer->idx : -1, count );
+   rmesa->num_verts = 0;
+   rmesa->vert_buf = NULL;
 
-   r128ctx->num_verts = 0;
-   r128ctx->vert_buf = NULL;
-
-   if ( !buffer ) {
+   if ( !buffer )
       return;
-   }
 
-   if ( r128ctx->dirty & ~R128_UPLOAD_CLIPRECTS ) {
-      r128EmitHwStateLocked( r128ctx );
-   }
+   if ( rmesa->dirty & ~R128_UPLOAD_CLIPRECTS )
+      r128EmitHwStateLocked( rmesa );
 
-   if ( !nbox ) {
+   if ( !nbox )
       count = 0;
-   }
-   if ( nbox >= R128_NR_SAREA_CLIPRECTS ) {
-      r128ctx->dirty |= R128_UPLOAD_CLIPRECTS;
-   }
 
-   if ( !count || !(r128ctx->dirty & R128_UPLOAD_CLIPRECTS) )
+   if ( nbox >= R128_NR_SAREA_CLIPRECTS )
+      rmesa->dirty |= R128_UPLOAD_CLIPRECTS;
+
+   if ( !count || !(rmesa->dirty & R128_UPLOAD_CLIPRECTS) )
    {
       if ( nbox < 3 ) {
-	 r128ctx->sarea->nbox = 0;
+	 rmesa->sarea->nbox = 0;
       } else {
-	 r128ctx->sarea->nbox = nbox;
+	 rmesa->sarea->nbox = nbox;
       }
 
       drmR128FlushVertexBuffer( fd, prim, buffer->idx, count, 1 );
    }
    else
    {
-      for (i = 0 ; i < nbox ; ) {
+      for ( i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = r128ctx->sarea->boxes;
+	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
 	 int discard = 0;
 
-	 r128ctx->sarea->nbox = nr - i;
-	 for ( ; i < nr ; i++) {
+	 rmesa->sarea->nbox = nr - i;
+	 for ( ; i < nr ; i++ ) {
 	    *b++ = pbox[i];
 	 }
 
@@ -151,12 +145,12 @@ void r128FlushVerticesLocked( r128ContextPtr r128ctx )
 	    discard = 1;
 	 }
 
-	 r128ctx->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
+	 rmesa->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
 	 drmR128FlushVertexBuffer( fd, prim, buffer->idx, count, discard );
       }
    }
 
-   r128ctx->dirty &= ~R128_UPLOAD_CLIPRECTS;
+   rmesa->dirty &= ~R128_UPLOAD_CLIPRECTS;
 }
 
 
@@ -165,60 +159,53 @@ void r128FlushVerticesLocked( r128ContextPtr r128ctx )
  * Indexed vertex buffer handling
  */
 
-void r128GetEltBufLocked( r128ContextPtr r128ctx )
+void r128GetEltBufLocked( r128ContextPtr rmesa )
 {
-   r128ctx->elt_buf = r128GetBufferLocked( r128ctx );
+   rmesa->elt_buf = r128GetBufferLocked( rmesa );
 }
 
-void r128FireEltsLocked( r128ContextPtr r128ctx,
+void r128FireEltsLocked( r128ContextPtr rmesa,
 			 GLuint start, GLuint end,
 			 GLuint discard )
 {
-   XF86DRIClipRectPtr pbox = r128ctx->pClipRects;
-   int nbox = r128ctx->numClipRects;
-   drmBufPtr buffer = r128ctx->elt_buf;
+   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   int nbox = rmesa->numClipRects;
+   drmBufPtr buffer = rmesa->elt_buf;
    int prim = R128_TRIANGLES;
-   int fd = r128ctx->driScreen->fd;
+   int fd = rmesa->driScreen->fd;
    int i;
 
-   if ( 0 )
-	fprintf( stderr, "%s: start=%d end=%d discard=%d\n",
-		 __FUNCTION__, start, end, discard );
-
-   if ( !buffer ) {
+   if ( !buffer )
       return;
-   }
 
-   if ( r128ctx->dirty & ~R128_UPLOAD_CLIPRECTS ) {
-      r128EmitHwStateLocked( r128ctx );
-   }
+   if ( rmesa->dirty & ~R128_UPLOAD_CLIPRECTS )
+      r128EmitHwStateLocked( rmesa );
 
-   if ( !nbox ) {
+   if ( !nbox )
       end = start;
-   }
-   if ( nbox >= R128_NR_SAREA_CLIPRECTS ) {
-      r128ctx->dirty |= R128_UPLOAD_CLIPRECTS;
-   }
 
-   if ( start == end || !(r128ctx->dirty & R128_UPLOAD_CLIPRECTS) )
+   if ( nbox >= R128_NR_SAREA_CLIPRECTS )
+      rmesa->dirty |= R128_UPLOAD_CLIPRECTS;
+
+   if ( start == end || !(rmesa->dirty & R128_UPLOAD_CLIPRECTS) )
    {
       if ( nbox < 3 ) {
-	 r128ctx->sarea->nbox = 0;
+	 rmesa->sarea->nbox = 0;
       } else {
-	 r128ctx->sarea->nbox = nbox;
+	 rmesa->sarea->nbox = nbox;
       }
 
       drmR128FlushIndices( fd, prim, buffer->idx, start, end, discard );
    }
    else
    {
-      for (i = 0 ; i < nbox ; ) {
+      for ( i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = r128ctx->sarea->boxes;
+	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
 	 int d = 0;
 
-	 r128ctx->sarea->nbox = nr - i;
-	 for ( ; i < nr ; i++) {
+	 rmesa->sarea->nbox = nr - i;
+	 for ( ; i < nr ; i++ ) {
 	    *b++ = pbox[i];
 	 }
 
@@ -228,44 +215,40 @@ void r128FireEltsLocked( r128ContextPtr r128ctx,
 	    d = discard;
 	 }
 
-	 r128ctx->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
-	 drmR128FlushIndices( fd, prim, buffer->idx, start, end, discard );
+	 rmesa->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
+	 drmR128FlushIndices( fd, prim, buffer->idx, start, end, d );
       }
    }
 
    if ( R128_DEBUG & DEBUG_ALWAYS_SYNC ) {
-      drmR128WaitForIdleCCE( r128ctx->driFd );
+      drmR128WaitForIdleCCE( rmesa->driFd );
    }
 
-   r128ctx->dirty &= ~R128_UPLOAD_CLIPRECTS;
+   rmesa->dirty &= ~R128_UPLOAD_CLIPRECTS;
 }
 
-void r128FlushEltsLocked( r128ContextPtr r128ctx )
+void r128FlushEltsLocked( r128ContextPtr rmesa )
 {
-   if ( r128ctx->first_elt != r128ctx->next_elt ) {
-      r128FireEltsLocked( r128ctx,
-			  ((GLuint)r128ctx->first_elt -
-			   (GLuint)r128ctx->elt_buf->address),
-			  ((GLuint)r128ctx->next_elt -
-			   (GLuint)r128ctx->elt_buf->address),
+   if ( rmesa->first_elt != rmesa->next_elt ) {
+      r128FireEltsLocked( rmesa,
+			  ((char *)rmesa->first_elt -
+			   (char *)rmesa->elt_buf->address),
+			  ((char *)rmesa->next_elt -
+			   (char *)rmesa->elt_buf->address),
 			  0 );
 
-      ALIGN_NEXT_ELT( r128ctx );
-      r128ctx->first_elt = r128ctx->next_elt;
+      ALIGN_NEXT_ELT( rmesa );
+      rmesa->first_elt = rmesa->next_elt;
    }
 }
 
-void r128ReleaseBufLocked( r128ContextPtr r128ctx, drmBufPtr buffer )
+void r128ReleaseBufLocked( r128ContextPtr rmesa, drmBufPtr buffer )
 {
-   int fd = r128ctx->driScreen->fd;
+   int fd = rmesa->driScreen->fd;
 
-   if ( 0 )
-	fprintf( stderr, "%s: buffer=%p\n",
-		 __FUNCTION__, buffer );
-
-   if ( !buffer ) {
+   if ( !buffer )
       return;
-   }
+
    drmR128FlushVertexBuffer( fd, R128_TRIANGLES, buffer->idx, 0, 1 );
 }
 
@@ -273,28 +256,28 @@ void r128ReleaseBufLocked( r128ContextPtr r128ctx, drmBufPtr buffer )
 /* Allocate some space in the current vertex buffer.  If the current
  * buffer is full, flush it and grab another one.
  */
-CARD32 *r128AllocVertices( r128ContextPtr r128ctx, int count )
+CARD32 *r128AllocVertices( r128ContextPtr rmesa, int count )
 {
-   return r128AllocVerticesInline( r128ctx, count );
+   return r128AllocVerticesInline( rmesa, count );
 }
-
 
 
 /* ================================================================
  * Texture uploads
  */
 
-void r128FireBlitLocked( r128ContextPtr r128ctx, drmBufPtr buffer,
+void r128FireBlitLocked( r128ContextPtr rmesa, drmBufPtr buffer,
 			 GLint offset, GLint pitch, GLint format,
 			 GLint x, GLint y, GLint width, GLint height )
 {
    GLint ret;
 
-   ret = drmR128TextureBlit( r128ctx->driFd, buffer->idx,
+   ret = drmR128TextureBlit( rmesa->driFd, buffer->idx,
 			     offset, pitch, format,
 			     x, y, width, height );
 
    if ( ret ) {
+      UNLOCK_HARDWARE( rmesa );
       fprintf( stderr, "drmR128TextureBlit: return = %d\n", ret );
       exit( 1 );
    }
@@ -317,16 +300,28 @@ static void delay( void ) {
  * long as we want for a frame to complete.  If it never does, then
  * the card has locked.
  */
-static int r128WaitForFrameCompletion( r128ContextPtr r128ctx )
+static int r128WaitForFrameCompletion( r128ContextPtr rmesa )
 {
-   unsigned char *R128MMIO = r128ctx->r128Screen->mmio;
+   unsigned char *R128MMIO = rmesa->r128Screen->mmio.map;
    CARD32 frame;
    int i;
    int wait = 0;
 
    while ( 1 ) {
+#if defined(__alpha__)
+       /* necessary to preserve the Alpha paradigm */
+       /* NOTE: this will not work on SPARSE machines */
+       mem_barrier();
+       frame = *(volatile CARD32 *)(void *)(R128MMIO + R128_LAST_FRAME_REG);
+#else
       frame = INREG( R128_LAST_FRAME_REG );
-      if ( r128ctx->sarea->last_frame - frame <= R128_MAX_OUTSTANDING ) {
+#endif
+
+      if ( 0 )
+	 fprintf( stderr, " last=0x%08x frame=0x%08x\n",
+		  rmesa->sarea->last_frame, frame );
+
+      if ( rmesa->sarea->last_frame - frame <= R128_MAX_OUTSTANDING ) {
 	 break;
       }
 
@@ -340,68 +335,131 @@ static int r128WaitForFrameCompletion( r128ContextPtr r128ctx )
    return wait;
 }
 
-/* Copy the back color buffer to the front color buffer */
-void r128SwapBuffers( r128ContextPtr r128ctx )
+/* Copy the back color buffer to the front color buffer.
+ */
+void r128SwapBuffers( r128ContextPtr rmesa )
 {
-   GLint nbox = r128ctx->numClipRects;
+   GLint nbox;
    GLint i;
    GLint ret;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "\n********************************\n" );
       fprintf( stderr, "\n%s( %p )\n\n",
-	       __FUNCTION__, r128ctx->glCtx );
+	       __FUNCTION__, rmesa->glCtx );
       fflush( stderr );
    }
 
-   /* Flush any outstanding vertex buffers */
-   FLUSH_BATCH( r128ctx );
+   FLUSH_BATCH( rmesa );
 
-   LOCK_HARDWARE( r128ctx );
+   LOCK_HARDWARE( rmesa );
+
+   nbox = rmesa->numClipRects;	/* must be in locked region */
 
    /* Throttle the frame rate -- only allow one pending swap buffers
     * request at a time.
     */
-   if ( !r128WaitForFrameCompletion( r128ctx ) ) {
-      r128ctx->hardwareWentIdle = 1;
+   if ( !r128WaitForFrameCompletion( rmesa ) ) {
+      rmesa->hardwareWentIdle = 1;
    } else {
-      r128ctx->hardwareWentIdle = 0;
+      rmesa->hardwareWentIdle = 0;
    }
 
    for ( i = 0 ; i < nbox ; ) {
       GLint nr = MIN2( i + R128_NR_SAREA_CLIPRECTS , nbox );
-      XF86DRIClipRectPtr box = r128ctx->pClipRects;
-      XF86DRIClipRectPtr b = r128ctx->sarea->boxes;
+      XF86DRIClipRectPtr box = rmesa->pClipRects;
+      XF86DRIClipRectPtr b = rmesa->sarea->boxes;
       GLint n = 0;
 
       for ( ; i < nr ; i++ ) {
 	 *b++ = *(XF86DRIClipRectRec *)&box[i];
 	 n++;
       }
-      r128ctx->sarea->nbox = n;
+      rmesa->sarea->nbox = n;
 
-      ret = drmR128SwapBuffers( r128ctx->driFd );
+      ret = drmR128SwapBuffers( rmesa->driFd );
 
       if ( ret ) {
+	 UNLOCK_HARDWARE( rmesa );
 	 fprintf( stderr, "drmR128SwapBuffers: return = %d\n", ret );
 	 exit( 1 );
       }
    }
 
    if ( R128_DEBUG & DEBUG_ALWAYS_SYNC ) {
-      drmR128WaitForIdleCCE( r128ctx->driFd );
+      drmR128WaitForIdleCCE( rmesa->driFd );
    }
 
-   UNLOCK_HARDWARE( r128ctx );
+   UNLOCK_HARDWARE( rmesa );
 
-   r128ctx->new_state |= R128_NEW_CONTEXT;
-   r128ctx->dirty |= (R128_UPLOAD_CONTEXT |
-		      R128_UPLOAD_MASKS |
-		      R128_UPLOAD_CLIPRECTS);
+   rmesa->new_state |= R128_NEW_CONTEXT;
+   rmesa->dirty |= (R128_UPLOAD_CONTEXT |
+		    R128_UPLOAD_MASKS |
+		    R128_UPLOAD_CLIPRECTS);
 
 #if ENABLE_PERF_BOXES
    /* Log the performance counters if necessary */
-   r128PerformanceCounters( r128ctx );
+   r128PerformanceCounters( rmesa );
+#endif
+}
+
+void r128PageFlip( r128ContextPtr rmesa )
+{
+   GLint ret;
+
+   if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
+      fprintf( stderr, "\n%s( %p ): page=%d\n\n",
+	       __FUNCTION__, rmesa->glCtx, rmesa->currentPage );
+   }
+
+   FLUSH_BATCH( rmesa );
+
+   LOCK_HARDWARE( rmesa );
+
+   /* Throttle the frame rate -- only allow one pending swap buffers
+    * request at a time.
+    */
+   if ( !r128WaitForFrameCompletion( rmesa ) ) {
+      rmesa->hardwareWentIdle = 1;
+   } else {
+      rmesa->hardwareWentIdle = 0;
+   }
+
+   /* The kernel will have been initialized to perform page flipping
+    * on a swapbuffers ioctl.
+    */
+   ret = drmR128SwapBuffers( rmesa->driFd );
+
+   UNLOCK_HARDWARE( rmesa );
+
+   if ( ret ) {
+      fprintf( stderr, "drmR128SwapBuffers: return = %d\n", ret );
+      exit( 1 );
+   }
+
+   if ( rmesa->currentPage == 0 ) {
+	 rmesa->drawOffset = rmesa->r128Screen->frontOffset;
+	 rmesa->drawPitch  = rmesa->r128Screen->frontPitch;
+	 rmesa->currentPage = 1;
+   } else {
+	 rmesa->drawOffset = rmesa->r128Screen->backOffset;
+	 rmesa->drawPitch  = rmesa->r128Screen->backPitch;
+	 rmesa->currentPage = 0;
+   }
+
+   rmesa->setup.dst_pitch_offset_c = (((rmesa->drawPitch/8) << 21) |
+				      (rmesa->drawOffset >> 5));
+   rmesa->new_state |= R128_NEW_WINDOW;
+
+   /* FIXME: Do we need this anymore? */
+   rmesa->new_state |= R128_NEW_CONTEXT;
+   rmesa->dirty |= (R128_UPLOAD_CONTEXT |
+		    R128_UPLOAD_MASKS |
+		    R128_UPLOAD_CLIPRECTS);
+
+#if ENABLE_PERF_BOXES
+   /* Log the performance counters if necessary */
+   r128PerformanceCounters( rmesa );
 #endif
 }
 
@@ -413,9 +471,11 @@ void r128SwapBuffers( r128ContextPtr r128ctx )
 static GLbitfield r128DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 			       GLint cx, GLint cy, GLint cw, GLint ch )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT(ctx);
-   __DRIdrawablePrivate *dPriv = r128ctx->driDrawable;
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;
    GLuint flags = 0;
+   GLuint color_mask = 0;
+   GLuint depth_mask = 0;
    GLint i;
    GLint ret;
 
@@ -423,55 +483,54 @@ static GLbitfield r128DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       fprintf( stderr, "%s:\n", __FUNCTION__ );
    }
 
-   FLUSH_BATCH( r128ctx );
+   FLUSH_BATCH( rmesa );
 
    /* Update and emit any new state.  We need to do this here to catch
     * changes to the masks.
     * FIXME: Just update the masks?
     */
-   if ( r128ctx->new_state )
+   if ( rmesa->new_state )
       r128DDUpdateHWState( ctx );
 
    if ( mask & DD_FRONT_LEFT_BIT ) {
       flags |= DRM_R128_FRONT;
+      color_mask = rmesa->setup.plane_3d_mask_c;
       mask &= ~DD_FRONT_LEFT_BIT;
    }
 
    if ( mask & DD_BACK_LEFT_BIT ) {
       flags |= DRM_R128_BACK;
+      color_mask = rmesa->setup.plane_3d_mask_c;
       mask &= ~DD_BACK_LEFT_BIT;
    }
 
    if ( ( mask & DD_DEPTH_BIT ) && ctx->Depth.Mask ) {
       flags |= DRM_R128_DEPTH;
+      depth_mask |= rmesa->DepthMask;
       mask &= ~DD_DEPTH_BIT;
    }
 #if 0
    /* FIXME: Add stencil support */
    if ( mask & DD_STENCIL_BIT ) {
       flags |= DRM_R128_DEPTH;
+      depth_mask |= rmesa->StencilMask;
       mask &= ~DD_STENCIL_BIT;
    }
 #endif
 
-   if ( !flags ) {
+   if ( !flags )
       return mask;
-   }
 
    /* Flip top to bottom */
    cx += dPriv->x;
    cy  = dPriv->y + dPriv->h - cy - ch;
 
-   LOCK_HARDWARE( r128ctx );
+   LOCK_HARDWARE( rmesa );
 
-   if ( r128ctx->dirty & ~R128_UPLOAD_CLIPRECTS ) {
-      r128EmitHwStateLocked( r128ctx );
-   }
-
-   for ( i = 0 ; i < r128ctx->numClipRects ; ) {
-      GLint nr = MIN2( i + R128_NR_SAREA_CLIPRECTS , r128ctx->numClipRects );
-      XF86DRIClipRectPtr box = r128ctx->pClipRects;
-      XF86DRIClipRectPtr b = r128ctx->sarea->boxes;
+   for ( i = 0 ; i < rmesa->numClipRects ; ) {
+      GLint nr = MIN2( i + R128_NR_SAREA_CLIPRECTS , rmesa->numClipRects );
+      XF86DRIClipRectPtr box = rmesa->pClipRects;
+      XF86DRIClipRectPtr b = rmesa->sarea->boxes;
       GLint n = 0;
 
       if ( !all ) {
@@ -502,30 +561,31 @@ static GLbitfield r128DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
 	 }
       }
 
-      r128ctx->sarea->nbox = n;
+      rmesa->sarea->nbox = n;
 
       if ( R128_DEBUG & DEBUG_VERBOSE_IOCTL ) {
 	 fprintf( stderr,
 		  "drmR128Clear: flag 0x%x color %x depth %x nbox %d\n",
 		  flags,
-		  (GLuint)r128ctx->ClearColor,
-		  (GLuint)r128ctx->ClearDepth,
-		  r128ctx->sarea->nbox );
+		  (GLuint)rmesa->ClearColor,
+		  (GLuint)rmesa->ClearDepth,
+		  rmesa->sarea->nbox );
       }
 
-      ret = drmR128Clear( r128ctx->driFd, flags,
-			  cx, cy, cw, ch,
-			  r128ctx->ClearColor, r128ctx->ClearDepth );
+      ret = drmR128Clear( rmesa->driFd, flags,
+			  rmesa->ClearColor, rmesa->ClearDepth,
+			  color_mask, depth_mask );
 
       if ( ret ) {
+	 UNLOCK_HARDWARE( rmesa );
 	 fprintf( stderr, "drmR128Clear: return = %d\n", ret );
 	 exit( 1 );
       }
    }
 
-   UNLOCK_HARDWARE( r128ctx );
+   UNLOCK_HARDWARE( rmesa );
 
-   r128ctx->dirty |= R128_UPLOAD_CLIPRECTS;
+   rmesa->dirty |= R128_UPLOAD_CLIPRECTS;
 
    return mask;
 }
@@ -535,29 +595,29 @@ static GLbitfield r128DDClear( GLcontext *ctx, GLbitfield mask, GLboolean all,
  * Depth spans, pixels
  */
 
-void r128WriteDepthSpanLocked( r128ContextPtr r128ctx,
+void r128WriteDepthSpanLocked( r128ContextPtr rmesa,
 			       GLuint n, GLint x, GLint y,
 			       const GLdepth depth[],
 			       const GLubyte mask[] )
 {
-   XF86DRIClipRectPtr pbox = r128ctx->pClipRects;
-   int nbox = r128ctx->numClipRects;
-   int fd = r128ctx->driScreen->fd;
+   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   int nbox = rmesa->numClipRects;
+   int fd = rmesa->driScreen->fd;
    int i;
 
    if ( !nbox || !n ) {
       return;
    }
    if ( nbox >= R128_NR_SAREA_CLIPRECTS ) {
-      r128ctx->dirty |= R128_UPLOAD_CLIPRECTS;
+      rmesa->dirty |= R128_UPLOAD_CLIPRECTS;
    }
 
-   if ( !(r128ctx->dirty & R128_UPLOAD_CLIPRECTS) )
+   if ( !(rmesa->dirty & R128_UPLOAD_CLIPRECTS) )
    {
       if ( nbox < 3 ) {
-	 r128ctx->sarea->nbox = 0;
+	 rmesa->sarea->nbox = 0;
       } else {
-	 r128ctx->sarea->nbox = nbox;
+	 rmesa->sarea->nbox = nbox;
       }
 
       drmR128WriteDepthSpan( fd, n, x, y, depth, mask );
@@ -566,44 +626,44 @@ void r128WriteDepthSpanLocked( r128ContextPtr r128ctx,
    {
       for (i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = r128ctx->sarea->boxes;
+	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
 
-	 r128ctx->sarea->nbox = nr - i;
+	 rmesa->sarea->nbox = nr - i;
 	 for ( ; i < nr ; i++) {
 	    *b++ = pbox[i];
 	 }
 
-	 r128ctx->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
+	 rmesa->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
 	 drmR128WriteDepthSpan( fd, n, x, y, depth, mask );
       }
    }
 
-   r128ctx->dirty &= ~R128_UPLOAD_CLIPRECTS;
+   rmesa->dirty &= ~R128_UPLOAD_CLIPRECTS;
 }
 
-void r128WriteDepthPixelsLocked( r128ContextPtr r128ctx, GLuint n,
+void r128WriteDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 				 const GLint x[], const GLint y[],
 				 const GLdepth depth[],
 				 const GLubyte mask[] )
 {
-   XF86DRIClipRectPtr pbox = r128ctx->pClipRects;
-   int nbox = r128ctx->numClipRects;
-   int fd = r128ctx->driScreen->fd;
+   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   int nbox = rmesa->numClipRects;
+   int fd = rmesa->driScreen->fd;
    int i;
 
    if ( !nbox || !n ) {
       return;
    }
    if ( nbox >= R128_NR_SAREA_CLIPRECTS ) {
-      r128ctx->dirty |= R128_UPLOAD_CLIPRECTS;
+      rmesa->dirty |= R128_UPLOAD_CLIPRECTS;
    }
 
-   if ( !(r128ctx->dirty & R128_UPLOAD_CLIPRECTS) )
+   if ( !(rmesa->dirty & R128_UPLOAD_CLIPRECTS) )
    {
       if ( nbox < 3 ) {
-	 r128ctx->sarea->nbox = 0;
+	 rmesa->sarea->nbox = 0;
       } else {
-	 r128ctx->sarea->nbox = nbox;
+	 rmesa->sarea->nbox = nbox;
       }
 
       drmR128WriteDepthPixels( fd, n, x, y, depth, mask );
@@ -612,42 +672,42 @@ void r128WriteDepthPixelsLocked( r128ContextPtr r128ctx, GLuint n,
    {
       for (i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = r128ctx->sarea->boxes;
+	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
 
-	 r128ctx->sarea->nbox = nr - i;
+	 rmesa->sarea->nbox = nr - i;
 	 for ( ; i < nr ; i++) {
 	    *b++ = pbox[i];
 	 }
 
-	 r128ctx->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
+	 rmesa->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
 	 drmR128WriteDepthPixels( fd, n, x, y, depth, mask );
       }
    }
 
-   r128ctx->dirty &= ~R128_UPLOAD_CLIPRECTS;
+   rmesa->dirty &= ~R128_UPLOAD_CLIPRECTS;
 }
 
-void r128ReadDepthSpanLocked( r128ContextPtr r128ctx,
+void r128ReadDepthSpanLocked( r128ContextPtr rmesa,
 			      GLuint n, GLint x, GLint y )
 {
-   XF86DRIClipRectPtr pbox = r128ctx->pClipRects;
-   int nbox = r128ctx->numClipRects;
-   int fd = r128ctx->driScreen->fd;
+   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   int nbox = rmesa->numClipRects;
+   int fd = rmesa->driScreen->fd;
    int i;
 
    if ( !nbox || !n ) {
       return;
    }
    if ( nbox >= R128_NR_SAREA_CLIPRECTS ) {
-      r128ctx->dirty |= R128_UPLOAD_CLIPRECTS;
+      rmesa->dirty |= R128_UPLOAD_CLIPRECTS;
    }
 
-   if ( !(r128ctx->dirty & R128_UPLOAD_CLIPRECTS) )
+   if ( !(rmesa->dirty & R128_UPLOAD_CLIPRECTS) )
    {
       if ( nbox < 3 ) {
-	 r128ctx->sarea->nbox = 0;
+	 rmesa->sarea->nbox = 0;
       } else {
-	 r128ctx->sarea->nbox = nbox;
+	 rmesa->sarea->nbox = nbox;
       }
 
       drmR128ReadDepthSpan( fd, n, x, y );
@@ -656,42 +716,42 @@ void r128ReadDepthSpanLocked( r128ContextPtr r128ctx,
    {
       for (i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = r128ctx->sarea->boxes;
+	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
 
-	 r128ctx->sarea->nbox = nr - i;
+	 rmesa->sarea->nbox = nr - i;
 	 for ( ; i < nr ; i++) {
 	    *b++ = pbox[i];
 	 }
 
-	 r128ctx->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
+	 rmesa->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
 	 drmR128ReadDepthSpan( fd, n, x, y );
       }
    }
 
-   r128ctx->dirty &= ~R128_UPLOAD_CLIPRECTS;
+   rmesa->dirty &= ~R128_UPLOAD_CLIPRECTS;
 }
 
-void r128ReadDepthPixelsLocked( r128ContextPtr r128ctx, GLuint n,
+void r128ReadDepthPixelsLocked( r128ContextPtr rmesa, GLuint n,
 				const GLint x[], const GLint y[] )
 {
-   XF86DRIClipRectPtr pbox = r128ctx->pClipRects;
-   int nbox = r128ctx->numClipRects;
-   int fd = r128ctx->driScreen->fd;
+   XF86DRIClipRectPtr pbox = rmesa->pClipRects;
+   int nbox = rmesa->numClipRects;
+   int fd = rmesa->driScreen->fd;
    int i;
 
    if ( !nbox || !n ) {
       return;
    }
    if ( nbox >= R128_NR_SAREA_CLIPRECTS ) {
-      r128ctx->dirty |= R128_UPLOAD_CLIPRECTS;
+      rmesa->dirty |= R128_UPLOAD_CLIPRECTS;
    }
 
-   if ( !(r128ctx->dirty & R128_UPLOAD_CLIPRECTS) )
+   if ( !(rmesa->dirty & R128_UPLOAD_CLIPRECTS) )
    {
       if ( nbox < 3 ) {
-	 r128ctx->sarea->nbox = 0;
+	 rmesa->sarea->nbox = 0;
       } else {
-	 r128ctx->sarea->nbox = nbox;
+	 rmesa->sarea->nbox = nbox;
       }
 
       drmR128ReadDepthPixels( fd, n, x, y );
@@ -700,60 +760,35 @@ void r128ReadDepthPixelsLocked( r128ContextPtr r128ctx, GLuint n,
    {
       for (i = 0 ; i < nbox ; ) {
 	 int nr = MIN2( i + R128_NR_SAREA_CLIPRECTS, nbox );
-	 XF86DRIClipRectPtr b = r128ctx->sarea->boxes;
+	 XF86DRIClipRectPtr b = rmesa->sarea->boxes;
 
-	 r128ctx->sarea->nbox = nr - i;
+	 rmesa->sarea->nbox = nr - i;
 	 for ( ; i < nr ; i++) {
 	    *b++ = pbox[i];
 	 }
 
-	 r128ctx->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
+	 rmesa->sarea->dirty |= R128_UPLOAD_CLIPRECTS;
 	 drmR128ReadDepthPixels( fd, n, x, y );
       }
    }
 
-   r128ctx->dirty &= ~R128_UPLOAD_CLIPRECTS;
+   rmesa->dirty &= ~R128_UPLOAD_CLIPRECTS;
 }
 
 
-/* ================================================================
- * Deprecated function...
- */
-void r128SubmitPacketLocked( r128ContextPtr r128ctx,
-			     CARD32 *buf, GLuint count )
+void r128WaitForIdleLocked( r128ContextPtr rmesa )
 {
-   CARD32 *b;
-   int c = count;
-   int fd = r128ctx->r128Screen->driScreen->fd;
-   int to = 0;
-   int ret;
-
-   do {
-      b = buf + (count - c);
-      ret = drmR128SubmitPacket( fd, b, &c, 0 );
-   } while ( ( ret == -EBUSY ) && ( to++ < r128ctx->CCEtimeout ) );
-
-   if ( ret < 0 ) {
-      drmR128EngineReset( fd );
-      fprintf( stderr, "Error: Could not submit packet... exiting\n" );
-      exit( -1 );
-   }
-}
-
-
-
-void r128WaitForIdleLocked( r128ContextPtr r128ctx )
-{
-    int fd = r128ctx->r128Screen->driScreen->fd;
+    int fd = rmesa->r128Screen->driScreen->fd;
     int to = 0;
     int ret;
 
     do {
 	ret = drmR128WaitForIdleCCE( fd );
-    } while ( ( ret == -EBUSY ) && ( to++ < r128ctx->CCEtimeout ) );
+    } while ( ( ret == -EBUSY ) && ( to++ < R128_TIMEOUT ) );
 
     if ( ret < 0 ) {
 	drmR128EngineReset( fd );
+	UNLOCK_HARDWARE( rmesa );
 	fprintf( stderr, "Error: Rage 128 timed out... exiting\n" );
 	exit( -1 );
     }
@@ -762,5 +797,5 @@ void r128WaitForIdleLocked( r128ContextPtr r128ctx )
 
 void r128DDInitIoctlFuncs( GLcontext *ctx )
 {
-    ctx->Driver.Clear	= r128DDClear;
+    ctx->Driver.Clear = r128DDClear;
 }

@@ -1,4 +1,4 @@
-/* $TOG: lcEuc.c /main/21 1998/04/30 11:02:13 kaleb $ */
+/* $Xorg: lcEuc.c,v 1.3 2000/08/17 19:45:17 cpqbld Exp $ */
 /******************************************************************
 
         Copyright 1992, 1993 by FUJITSU LIMITED
@@ -30,7 +30,7 @@ OF THIS SOFTWARE.
              Yoshiyuki Segawa		(segawa@ossi.com)
 
 *****************************************************************/
-/* $XFree86: xc/lib/X11/lcEuc.c,v 3.7 2000/02/12 02:54:11 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcEuc.c,v 3.10 2001/01/17 19:41:53 dawes Exp $ */
 
 /*
  * An EUC locale.
@@ -1084,7 +1084,7 @@ euc_ctstombs(
     XPointer *args,
     int num_args)
 {
-    const char *inbufptr = *from;
+    char *inbufptr = *from;
     XPointer outbufptr = *to;
     const char *inbuf_base;
     XPointer outbuf_base = outbufptr;

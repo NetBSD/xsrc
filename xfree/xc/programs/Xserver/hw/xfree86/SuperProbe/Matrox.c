@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Matrox.c,v 3.3tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Matrox.c,v 3.5 1999/11/19 13:54:14 hohndel Exp $ */
 /*
  * (c) Copyright 1997 Alan Hourihane <alanh@fairlite.demon.co.uk>
  *

@@ -22,8 +22,10 @@ TOP := $(shell cd $(TOP); pwd)
 DELETE   := rm -f
 SEP      := /
 HOSTSEP  := $(SEP)
+
 # we use a special devel ftoption.h
-BUILD    := $(TOP)/builds/unix/devel
+BUILD    := $(TOP)/builds/devel
+
 # do not set the platform to `unix', or libtool will trick you
 PLATFORM := unixdev
 
@@ -31,7 +33,7 @@ PLATFORM := unixdev
 # The directory where all object files are placed.
 #
 ifndef OBJ_DIR
-  OBJ_DIR := $(shell cd $(TOP)/obj; pwd)
+  OBJ_DIR := $(shell cd $(TOP)/objs; pwd)
 endif
 
 

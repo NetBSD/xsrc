@@ -1,8 +1,11 @@
-XCOMM $XConsortium: Imakefile /main/16 1996/11/13 14:43:28 lehors $
-XCOMM $XFree86: xc/config/util/Imakefile,v 3.29.2.2 2001/02/26 23:12:16 dawes Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:41:52 cpqbld Exp $
+
+
+
+XCOMM $XFree86: xc/config/util/Imakefile,v 3.36 2001/04/26 21:09:39 dawes Exp $
 
 #if UseCCMakeDepend
-MDEP_PROG = makedepend
+CCMDEP_PROG = ccmakedep
 #endif
 
 #ifdef ExportListGenSource
@@ -26,7 +29,7 @@ RMAN_PROG = ProgramTargetName(rman)
 QNXCopyInstaller($(PROJECTROOT)/bin/install.qnx,./install.sh)
 #endif
 
-PROGRAMS = xmkmf $(MDEP_PROG) $(GCCMDEP_PROG) mergelib $(LNDIR_PROG) \
+PROGRAMS = xmkmf $(CCMDEP_PROG) $(GCCMDEP_PROG) mergelib $(LNDIR_PROG) \
 	   $(RMAN_PROG) ProgramTargetName(revpath) \
 	   ProgramTargetName(makestrs) $(EXPORTLISTGEN) $(CMKDIRHIER)
 DEPLIBS =
@@ -64,7 +67,7 @@ InstallNamedProg(exportlistgen,exportlistgen,$(BINDIR))
 #endif
 
 CppScriptTarget(xmkmf,xmkmf.cpp,-DCONFIGDIRSPEC='"'"-I$(CONFIGDIR)"'"',$(ICONFIGFILES))
-CppScriptTarget(makedepend,mdepend.cpp,-DPREPROC='"'"$(PREPROCESSCMD_MKDEPEND)"'"',$(ICONFIGFILES))
+CppScriptTarget(ccmakedep,mdepend.cpp,-DPREPROC='"'"$(PREPROCESSCMD_MKDEPEND)"'"',$(ICONFIGFILES))
 CppScriptTarget(mergelib,mergelib.cpp,"-DARCMD=$(AR)" "-DRANLIB=$(RANLIB)",$(ICONFIGFILES))
 #ifndef OS2Architecture
 CppScriptTarget(gccmakedep,gccmdep.cpp,-DCCCMD='"'"$(GCCCMD)"'"' -DRMCMD='"'"$(RM)"'"' -DLNCMD='"'"$(LN)"'"' -DMVCMD='"'"$(MV)"'"',$(ICONFIGFILES))
@@ -127,6 +130,7 @@ InstallDriverSDKNamedProg(gccmakedep,gccmakedep,$(DRIVERSDKDIR)/config/util)
 InstallNamedProg(mergelib,mergelib,$(BINDIR))
 InstallNamedProg(makeg.sh,makeg,$(BINDIR))
 InstallManPage(makeg,$(MANDIR))
+InstallNamedProg(cleanlinks.sh,cleanlinks,$(BINDIR))
 #if HasPerl
 InstallNamedProg(mkhtmlindex.pl,mkhtmlindex,$(BINDIR))
 #else
@@ -134,10 +138,8 @@ InstallNamedProg(mkhtmlindex.sh,mkhtmlindex,$(BINDIR))
 #endif
 #endif
 InstallManPage(mkdirhier,$(MANDIR))
-#if UseCCMakeDepend
-InstallNamedProg(makedepend,makedepend,$(BINDIR))
-InstallDriverSDKNamedProg(makedepend,makedepend,$(DRIVERSDKDIR)/config/util)
-#endif
+InstallNamedProg(ccmakedep,ccmakedep,$(BINDIR))
+InstallDriverSDKNamedProg(ccmakedep,ccmakedep,$(DRIVERSDKDIR)/config/util)
 #if SystemV || SystemV4
 InstallNamedProg(bsdinst.sh,bsdinst,$(BINDIR))
 InstallDriverSDKNamedProg(bsdinst.sh,bsdinst.sh,$(DRIVERSDKDIR)/config/util)

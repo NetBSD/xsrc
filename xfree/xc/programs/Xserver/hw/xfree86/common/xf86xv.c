@@ -6,7 +6,7 @@
 
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xv.c,v 1.27 2000/08/04 16:13:26 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86xv.c,v 1.29 2001/05/07 21:59:05 tsi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -176,9 +176,13 @@ xf86XVScreenInit(
    XF86VideoAdaptorPtr *adaptors,
    int num
 ){
-  ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+  ScrnInfoPtr pScrn;
   XF86XVScreenPtr ScreenPriv;
   XvScreenPtr pxvs;
+
+  if(num <= 0 ||
+     !XvGetScreenIndexProc || !XvGetRTPortProc || !XvScreenInitProc)
+	return FALSE;  
 
   if(XF86XVGeneration != serverGeneration) {
 	if((XF86XVWindowIndex = AllocateWindowPrivateIndex()) < 0)
@@ -189,16 +193,12 @@ xf86XVScreenInit(
   if(!AllocateWindowPrivate(pScreen,XF86XVWindowIndex,sizeof(XF86XVWindowRec)))
         return FALSE;
 
-  if(!XvGetScreenIndexProc || !XvGetRTPortProc || !XvScreenInitProc)
-	return FALSE;  
-
   if(Success != (*XvScreenInitProc)(pScreen)) return FALSE;
 
   XF86XvScreenIndex = (*XvGetScreenIndexProc)();
   PortResource = (*XvGetRTPortProc)();
 
   pxvs = GET_XV_SCREEN(pScreen);
-
 
   /* Anyone initializing the Xv layer must provide these two.
      The Xv di layer calls them without even checking if they exist! */
@@ -216,6 +216,7 @@ xf86XVScreenInit(
 
   if(!ScreenPriv) return FALSE;
 
+  pScrn = xf86Screens[pScreen->myNum];
 
   ScreenPriv->CreateWindow = pScreen->CreateWindow;
   ScreenPriv->DestroyWindow = pScreen->DestroyWindow;
@@ -224,7 +225,6 @@ xf86XVScreenInit(
   ScreenPriv->EnterVT = pScrn->EnterVT;
   ScreenPriv->LeaveVT = pScrn->LeaveVT;
   ScreenPriv->AdjustFrame = pScrn->AdjustFrame;
-
 
   pScreen->CreateWindow = xf86XVCreateWindow;
   pScreen->DestroyWindow = xf86XVDestroyWindow;

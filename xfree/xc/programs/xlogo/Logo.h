@@ -1,4 +1,4 @@
-/* $TOG: Logo.h /main/14 1998/02/09 14:09:28 kaleb $ */
+/* $Xorg: Logo.h,v 1.3 2000/08/17 19:54:52 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1990, 1998  The Open Group

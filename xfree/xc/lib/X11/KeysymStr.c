@@ -1,4 +1,4 @@
-/* $TOG: KeysymStr.c /main/13 1998/02/06 17:38:27 kaleb $ */
+/* $Xorg: KeysymStr.c,v 1.4 2000/08/17 19:44:39 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/KeysymStr.c,v 3.4 2000/12/02 01:16:02 dawes Exp $ */
+/* $XFree86: xc/lib/X11/KeysymStr.c,v 3.6 2001/01/17 19:41:38 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xresource.h>

@@ -41,7 +41,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by
    Jarno Paananen <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_xaa.c,v 1.21 2001/02/22 01:42:11 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_xaa.c,v 1.22 2001/03/31 20:32:13 mvojkovi Exp $ */
 
 #include "nv_include.h"
 #include "xaalocal.h"
@@ -324,8 +324,10 @@ NVSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
 	write_mem_barrier();
     }
 
-    if (!(--pNv->expandRows))
-        RIVA_BUSY(pNv->riva);
+    if (!(--pNv->expandRows)) { /* hardware bug workaround */
+       RIVA_FIFO_FREE(pNv->riva, Blt, 1);
+       pNv->riva.Blt->TopLeftSrc = 0;
+    }
 }
 
 static void
@@ -335,8 +337,9 @@ NVSubsequentColorExpandScanlineFifo(ScrnInfoPtr pScrn, int bufno)
 
     if ( --pNv->expandRows ) {
        RIVA_FIFO_FREE(pNv->riva, Bitmap, pNv->expandWidth);
-    } else {
-	RIVA_BUSY(pNv->riva);
+    } else { /* hardware bug workaround */
+       RIVA_FIFO_FREE(pNv->riva, Blt, 1);
+       pNv->riva.Blt->TopLeftSrc = 0;
     }
     write_mem_barrier();
 }
@@ -389,8 +392,6 @@ NVSubsequentScanlineCPUToScreenColorExpandFill(ScrnInfoPtr pScrn, int x,
 				NVSubsequentColorExpandScanlineFifo;
 	RIVA_FIFO_FREE(pNv->riva, Bitmap, pNv->expandWidth);
     }
-
-    RIVA_BUSY(pNv->riva);
 }
 
 
@@ -417,8 +418,6 @@ NVSubsequentScanlineImageWriteRect(ScrnInfoPtr pScrn, int x, int y,
     pNv->riva.Pixmap->TopLeft         = (y << 16) | (x & 0xFFFF);
     pNv->riva.Pixmap->WidthHeight     = (h << 16) | w;
     pNv->riva.Pixmap->WidthHeightIn   = (h << 16) | bw;
-
-    RIVA_BUSY(pNv->riva);
 }
 
 
@@ -479,7 +478,6 @@ NVSetupForSolidLine(ScrnInfoPtr pScrn, int color, int rop, unsigned planemask)
 
     NVSetRopSolid(pNv, rop);
     write_mem_barrier();
-    RIVA_FIFO_FREE(pNv->riva, Line, 1);
     pNv->FgColor = color;
 }
 
@@ -629,8 +627,7 @@ NVAccelInit(ScreenPtr pScreen)
 /*                                         LEFT_EDGE_CLIPPING |
 	                                   LEFT_EDGE_CLIPPING_NEGATIVE_X; */
                                            NO_PLANEMASK | NO_TRANSPARENCY |
-                                           NO_GXCOPY |
-					   SYNC_AFTER_IMAGE_WRITE;
+                                           NO_GXCOPY;
 
         infoPtr->SetupForScanlineImageWrite = NVSetupForScanlineImageWrite;
         infoPtr->SubsequentScanlineImageWriteRect =

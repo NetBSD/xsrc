@@ -1,4 +1,4 @@
-/* $TOG: AuFileName.c /main/9 1998/02/06 14:14:36 kaleb $ */
+/* $Xorg: AuFileName.c,v 1.4 2000/08/17 19:45:28 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xau/AuFileName.c,v 3.3 1998/10/03 08:41:58 dawes Exp $ */
+/* $XFree86: xc/lib/Xau/AuFileName.c,v 3.5 2001/01/17 19:42:23 dawes Exp $ */
 
 #include <X11/Xauth.h>
 #include <X11/Xos.h>

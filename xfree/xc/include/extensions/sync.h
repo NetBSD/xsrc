@@ -1,4 +1,4 @@
-/* $TOG: sync.h /main/7 1998/02/09 11:23:35 kaleb $ */
+/* $Xorg: sync.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
 /*
 
 Copyright 1991, 1993, 1994, 1998  The Open Group

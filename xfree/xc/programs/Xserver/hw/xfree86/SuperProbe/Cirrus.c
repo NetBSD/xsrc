@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Cirrus.c,v 3.13tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Cirrus.c,v 3.15 1999/11/19 13:54:13 hohndel Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *

@@ -1,4 +1,4 @@
-/* $TOG: cfbinit.c /main/14 1998/03/17 17:41:19 kaleb $ */
+/* $Xorg: cfbinit.c,v 1.3 2000/08/17 19:48:20 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1991, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: RectObjP.h /main/14 1998/02/06 13:24:59 kaleb $ */
+/* $Xorg: RectObjP.h,v 1.3 2000/08/17 19:46:15 cpqbld Exp $ */
 /* $oHeader: RectObjP.h,v 1.2 88/08/18 15:55:52 asente Exp $ */
 /***********************************************************
 

@@ -1,4 +1,4 @@
-/* $XConsortium: lbxexts.c /main/9 1996/12/15 21:25:42 rws $ */
+/* $Xorg: lbxexts.c,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 /*
  * Copyright 1994 Network Computing Devices, Inc.
  *
@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxexts.c,v 1.4 2001/02/16 13:24:10 eich Exp $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -238,10 +238,12 @@ LbxQueryExtension(ClientPtr   client,
 void
 LbxCloseDownExtensions(void)
 {
-    int         i;
+    int         i,j;
 
     for (i = 0; i < num_exts; i++) {
 	xfree(lbx_extensions[i]->name);
+	for (j = 0; j < lbx_extensions[i]->num_aliases; j++)
+	  xfree(lbx_extensions[i]->aliases[j]);
 	xfree(lbx_extensions[i]->aliases);
 	xfree(lbx_extensions[i]->rep_mask);
 	xfree(lbx_extensions[i]->ev_mask);
@@ -250,6 +252,7 @@ LbxCloseDownExtensions(void)
     xfree(lbx_extensions);
     lbx_extensions = NULL;
     num_exts = 0;
+
 }
 
 void

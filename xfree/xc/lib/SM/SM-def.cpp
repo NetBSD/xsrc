@@ -38,4 +38,4 @@ EXPORTS
  SmsSaveYourselfPhase2
  SmsSetErrorHandler
  SmsShutdownCancelled
-/* $XConsortium: SM-def.cpp /main/3 1996/05/07 13:15:21 kaleb $ */
+/* $Xorg: SM-def.cpp,v 1.3 2000/08/17 19:44:28 cpqbld Exp $ */

@@ -1,4 +1,4 @@
-/* $TOG: xfindproxy.h /main/2 1998/02/09 13:57:46 kaleb $ */
+/* $Xorg: xfindproxy.h,v 1.3 2000/08/17 19:54:19 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group

@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.70 2000/02/12 20:45:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Print.c,v 3.71 2000/11/28 20:59:16 dawes Exp $ */
 
 #include "Probe.h"
 

@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbtile.c /main/13 1998/02/09 14:40:25 kaleb $ */
+/* $Xorg: mfbtile.c,v 1.3 2000/08/17 19:53:36 cpqbld Exp $ */
 #include "X.h"
 
 #include "windowstr.h"

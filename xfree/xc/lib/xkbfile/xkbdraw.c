@@ -1,4 +1,4 @@
-/* $XConsortium: xkbdraw.c /main/1 1996/02/02 14:13:11 kaleb $ */
+/* $Xorg: xkbdraw.c,v 1.3 2000/08/17 19:46:43 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

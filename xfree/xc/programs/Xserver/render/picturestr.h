@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/picturestr.h,v 1.12 2001/01/21 21:19:39 tsi Exp $
+ * $XFree86: xc/programs/Xserver/render/picturestr.h,v 1.13 2001/04/05 17:42:35 dawes Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -199,8 +199,10 @@ SetPictureToDefaults (PicturePtr pPicture);
 PicturePtr
 AllocatePicture (ScreenPtr  pScreen);
 
+#if 0
 Bool
 miPictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats);
+#endif
 
 
 PicturePtr

@@ -1,4 +1,4 @@
-/* $TOG: bitsource.c /main/11 1998/05/07 15:00:06 kaleb $ */
+/* $Xorg: bitsource.c,v 1.3 2000/08/17 19:46:36 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/font/fontfile/bitsource.c,v 1.3 2001/01/17 19:43:29 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

@@ -42,8 +42,8 @@
 .\" of this documentation for any purpose.
 .\" It is provided ``as is'' without express or implied warranty.
 .\"
-.\" $XFree86$
-.\" 
+.\" $XFree86: xc/doc/man/X11/XTLTTProp.man,v 1.5 2001/02/09 03:47:46 tsi Exp $
+.\"
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xW Athena X Widgets \- C Language X Toolkit Interface
 .ds xL Xlib \- C Language X Interface
@@ -143,7 +143,7 @@
 ..
 .ny0
 '\" t
-.TH XmbTextListToTextProperty 3X11 "Release 6.4" "X Version 11" "XLIB FUNCTIONS"
+.TH XmbTextListToTextProperty 3X11 __xorgversion__ "XLIB FUNCTIONS"
 .SH NAME
 XmbTextListToTextProperty, XwcTextListToTextProperty, Xutf8TextListToTextProperty, XmbTextPropertyToTextList, XwcTextPropertyToTextList, Xutf8TextPropertyToTextList, XwcFreeStringList, XDefaultString \- convert text lists and text property structures
 .SH SYNTAX
@@ -464,21 +464,21 @@ structure contains:
 .TS
 lw(.5i) lw(2i) lw(2.5i).
 T{
-#define
+\&#define
 T}	T{
 .ZN XNoMemory
 T}	T{
 \-1
 T}
 T{
-#define
+\&#define
 T}	T{
 .ZN XLocaleNotSupported
 T}	T{
 \-2
 T}
 T{
-#define
+\&#define
 T}	T{
 .ZN XConverterNotFound
 T}	T{

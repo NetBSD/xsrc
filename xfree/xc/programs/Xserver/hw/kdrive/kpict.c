@@ -1,5 +1,5 @@
 /*
- * $XFree86$
+ * $XFree86: xc/programs/Xserver/hw/kdrive/kpict.c,v 1.3 2000/09/15 15:19:00 keithp Exp $
  *
  * Copyright © 1999 Keith Packard
  *

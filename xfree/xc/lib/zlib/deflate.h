@@ -1,4 +1,4 @@
-/* $TOG: deflate.h /main/4 1998/02/04 14:33:24 kaleb $ */
+/* $Xorg: deflate.h,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-1998 Jean-loup Gailly

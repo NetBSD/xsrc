@@ -1,4 +1,4 @@
-/* $TOG: flo.h /main/5 1998/02/10 10:27:46 kaleb $ */
+/* $Xorg: flo.h,v 1.3 2000/08/17 19:47:32 cpqbld Exp $ */
 /**** module flo.h ****/
 /****************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc. April 1993
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/include/flo.h,v 1.4 2001/01/17 22:12:58 dawes Exp $ */
 
 #ifndef _XIEH_FLO
 #define _XIEH_FLO

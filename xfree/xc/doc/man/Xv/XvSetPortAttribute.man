@@ -1,5 +1,5 @@
-.TH XvSetPortAttribute 3X 
-.\" $XFree86: xc/doc/man/Xv/XvSetPortAttribute.man,v 1.4 1999/03/02 11:49:17 dawes Exp $
+.TH XvSetPortAttribute 3X  __vendorversion__
+.\" $XFree86: xc/doc/man/Xv/XvSetPortAttribute.man,v 1.6 2001/01/27 18:20:36 dawes Exp $
 .SH Name
 XvSetPortAttribute \- sets an attribute of a video port 
 .\"

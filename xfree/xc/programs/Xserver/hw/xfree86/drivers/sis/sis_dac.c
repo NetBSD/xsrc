@@ -25,7 +25,7 @@
  *           Mitani Hiroshi <hmitani@drl.mei.co.jp> 
  *           David Thomas <davtom@dream.org.uk>. 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dac.c,v 1.17 2000/12/02 01:16:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_dac.c,v 1.19 2001/04/19 12:40:33 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -37,34 +37,34 @@
 #include "vgaHW.h"
 
 #include "sis.h"
+#include "sis_dac.h"
 #include "sis_regs.h"
 #include "sis_vb.h"
+#include "sis_bios.h"
 
-static  void    SiSSave(ScrnInfoPtr pScrn, SISRegPtr sisReg);
-static  void    SiSRestore(ScrnInfoPtr pScrn, SISRegPtr sisReg);
+static void SiSSave(ScrnInfoPtr pScrn, SISRegPtr sisReg);
+static void SiSRestore(ScrnInfoPtr pScrn, SISRegPtr sisReg);
 
-static  void    SiS300Save(ScrnInfoPtr pScrn, SISRegPtr sisReg);
-static  void    SiS301Save(ScrnInfoPtr pScrn, SISRegPtr sisReg);
-static  void    SiSLVDSSave(ScrnInfoPtr pScrn, SISRegPtr sisReg);
-static  void    SiS300Restore(ScrnInfoPtr pScrn, SISRegPtr sisReg);
-static  void    SiS301Restore(ScrnInfoPtr pScrn, SISRegPtr sisReg);
-static  void    SiSLVDSRestore(ScrnInfoPtr pScrn, SISRegPtr sisReg);
-static  void	SiSChrontelSave(ScrnInfoPtr pScrn, SISRegPtr sisReg);
-
-static  void    SiS301LoadPalette(ScrnInfoPtr pScrn, int numColors,
-                        int *indicies, LOCO *colors, VisualPtr pVisual);
-
-static  void    SiS300Threshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
-                                unsigned short *Low, unsigned short *High);
-static  void    SiS630Threshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
-                                unsigned short *Low, unsigned short *High);
-static  void    SiS530Threshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
-                                unsigned short *Low, unsigned short *High);
-static  void    SiSThreshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
-                                unsigned short *Low, unsigned short *High);
+static void SiS300Save(ScrnInfoPtr pScrn, SISRegPtr sisReg);
+static void SiS301Save(ScrnInfoPtr pScrn, SISRegPtr sisReg);
+static void SiSLVDSSave(ScrnInfoPtr pScrn, SISRegPtr sisReg);
+static void SiS300Restore(ScrnInfoPtr pScrn, SISRegPtr sisReg);
+static void SiS301Restore(ScrnInfoPtr pScrn, SISRegPtr sisReg);
+static void SiSLVDSRestore(ScrnInfoPtr pScrn, SISRegPtr sisReg);
+static void SiSChrontelSave(ScrnInfoPtr pScrn, SISRegPtr sisReg);
+static void SiS301LoadPalette(ScrnInfoPtr pScrn, int numColors,
+                      int *indicies, LOCO *colors, VisualPtr pVisual);
+static void SiS300Threshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
+                      unsigned short *Low, unsigned short *High);
+static void SiS630Threshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
+                      unsigned short *Low, unsigned short *High);
+static void SiS530Threshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
+                      unsigned short *Low, unsigned short *High);
+static void SiSThreshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
+                      unsigned short *Low, unsigned short *High);
+static void SetBlock(CARD16 port, CARD8 from, CARD8 to, CARD8 *DataPtr);
 
 unsigned short ch7005idx[0x11]={0x00,0x07,0x08,0x0a,0x0b,0x04,0x09,0x20,0x21,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f};
-
 
 int
 compute_vclk(
@@ -75,99 +75,99 @@ compute_vclk(
         int *out_sbit,
         int *out_scale)
 {
-        float f,x,y,t, error, min_error;
-        int n, dn, best_n=0, best_dn=0;
+    float f,x,y,t, error, min_error;
+    int n, dn, best_n=0, best_dn=0;
 
-        /*
-         * Rules
-         *
-         * VCLK = 14.318 * (Divider/Post Scalar) * (Numerator/DeNumerator)
-         * Factor = (Divider/Post Scalar)
-         * Divider is 1 or 2
-         * Post Scalar is 1, 2, 3, 4, 6 or 8
-         * Numberator ranged from 1 to 128
-         * DeNumerator ranged from 1 to 32
-         * a. VCO = VCLK/Factor, suggest range is 150 to 250 Mhz
-         * b. Post Scalar selected from 1, 2, 4 or 8 first.
-         * c. DeNumerator selected from 2.
-         *
-         * According to rule a and b, the VCO ranges that can be scaled by
-         * rule b are:
-         *      150    - 250    (Factor = 1)
-         *       75    - 125    (Factor = 2)
-         *       37.5  -  62.5  (Factor = 4)
-         *       18.75 -  31.25 (Factor = 8)
-         *
-         * The following ranges use Post Scalar 3 or 6:
-         *      125    - 150    (Factor = 1.5)
-         *       62.5  -  75    (Factor = 3)
-         *       31.25 -  37.5  (Factor = 6)
-         *
-         * Steps:
-         * 1. divide the Clock by 2 until the Clock is less or equal to 31.25.
-         * 2. if the divided Clock is range from 18.25 to 31.25, than
-         *    the Factor is 1, 2, 4 or 8.
-         * 3. if the divided Clock is range from 15.625 to 18.25, than
-         *    the Factor is 1.5, 3 or 6.
-         * 4. select the Numberator and DeNumberator with minimum deviation.
-         *
-         * ** this function can select VCLK ranged from 18.75 to 250 Mhz
-         */
-        f = (float) Clock;
-        f /= 1000.0;
-        if ((f > 250.0) || (f < 18.75))
-                return 0;
+    /*
+     * Rules
+     *
+     * VCLK = 14.318 * (Divider/Post Scalar) * (Numerator/DeNumerator)
+     * Factor = (Divider/Post Scalar)
+     * Divider is 1 or 2
+     * Post Scalar is 1, 2, 3, 4, 6 or 8
+     * Numberator ranged from 1 to 128
+     * DeNumerator ranged from 1 to 32
+     * a. VCO = VCLK/Factor, suggest range is 150 to 250 Mhz
+     * b. Post Scalar selected from 1, 2, 4 or 8 first.
+     * c. DeNumerator selected from 2.
+     *
+     * According to rule a and b, the VCO ranges that can be scaled by
+     * rule b are:
+     *      150    - 250    (Factor = 1)
+     *       75    - 125    (Factor = 2)
+     *       37.5  -  62.5  (Factor = 4)
+     *       18.75 -  31.25 (Factor = 8)
+     *
+     * The following ranges use Post Scalar 3 or 6:
+     *      125    - 150    (Factor = 1.5)
+     *       62.5  -  75    (Factor = 3)
+     *       31.25 -  37.5  (Factor = 6)
+     *
+     * Steps:
+     * 1. divide the Clock by 2 until the Clock is less or equal to 31.25.
+     * 2. if the divided Clock is range from 18.25 to 31.25, than
+     *    the Factor is 1, 2, 4 or 8.
+     * 3. if the divided Clock is range from 15.625 to 18.25, than
+     *    the Factor is 1.5, 3 or 6.
+     * 4. select the Numberator and DeNumberator with minimum deviation.
+     *
+     * ** this function can select VCLK ranged from 18.75 to 250 Mhz
+     */
+    f = (float) Clock;
+    f /= 1000.0;
+    if ((f > 250.0) || (f < 18.75))
+        return 0;
 
-        min_error = f;
-        y = 1.0;
-        x = f;
-        while (x > 31.25) {
-                y *= 2.0;
-                x /= 2.0;
-        }
-        if (x >= 18.25) {
-                x *= 8.0;
-                y = 8.0 / y;
-        } else if (x >= 15.625) {
-                x *= 12.0;
-                y = 12.0 / y;
-        }
+    min_error = f;
+    y = 1.0;
+    x = f;
+    while (x > 31.25) {
+        y *= 2.0;
+        x /= 2.0;
+    }
+    if (x >= 18.25) {
+        x *= 8.0;
+        y = 8.0 / y;
+    } else if (x >= 15.625) {
+        x *= 12.0;
+        y = 12.0 / y;
+    }
 
-        t = y;
-        if (t == (float) 1.5) {
-                *out_div = 2;
-                t *= 2.0;
-        } else {
-                *out_div = 1;
-        }
-        if (t > (float) 4.0) {
-                *out_sbit = 1;
-                t /= 2.0;
-        } else {
-                *out_sbit = 0;
-        }
+    t = y;
+    if (t == (float) 1.5) {
+        *out_div = 2;
+        t *= 2.0;
+    } else {
+        *out_div = 1;
+    }
+    if (t > (float) 4.0) {
+        *out_sbit = 1;
+        t /= 2.0;
+    } else {
+        *out_sbit = 0;
+    }
 
-        *out_scale = (int) t;
+    *out_scale = (int) t;
 
-        for (dn=2;dn<=32;dn++) {
-                for (n=1;n<=128;n++) {
-                        error = x;
-                        error -= ((float) 14.318 * (float) n / (float) dn);
-                        if (error < (float) 0)
-                                error = -error;
-                        if (error < min_error) {
-                                min_error = error;
-                                best_n = n;
-                                best_dn = dn;
-                        }
-                }
+    for (dn=2;dn<=32;dn++) {
+        for (n=1;n<=128;n++) {
+            error = x;
+            error -= ((float) 14.318 * (float) n / (float) dn);
+            if (error < (float) 0)
+                    error = -error;
+            if (error < min_error) {
+                min_error = error;
+                best_n = n;
+                best_dn = dn;
+            }
         }
-        *out_n = best_n;
-        *out_dn = best_dn;
-        PDEBUG(ErrorF("compute_vclk: Clock=%d, n=%d, dn=%d, div=%d, sbit=%d,"
-                        " scale=%d\n", Clock, best_n, best_dn, *out_div,
-                        *out_sbit, *out_scale));
-        return 1;
+    }
+    *out_n = best_n;
+    *out_dn = best_dn;
+    PDEBUG(ErrorF("compute_vclk: Clock=%d, n=%d, dn=%d, div=%d, sbit=%d,"
+                    " scale=%d\n", Clock, best_n, best_dn, *out_div,
+                    *out_sbit, *out_scale));
+    return 1;
 }
 
 
@@ -469,11 +469,11 @@ SiS300Save(ScrnInfoPtr pScrn, SISRegPtr sisReg)
     /*sisReg->sisRegs3C2 = inb(0x3CC);*/
     sisReg->sisRegs3C2 = inb(pSiS->RelIO+0x4c);
 
-    if ((pSiS->VBFlags & (VB_LVDS | CRT2_LCD))==(VB_LVDS|CRT2_LCD)) 
+    if ((pSiS->VBFlags & (VB_LVDS | CRT2_LCD))==(VB_LVDS|CRT2_LCD))
         (*pSiS->SiSSaveLVDS)(pScrn, sisReg);
     if ((pSiS->VBFlags & (VB_CHRONTEL | CRT2_TV))==(VB_CHRONTEL|CRT2_TV))
-	(*pSiS->SiSSaveChrontel)(pScrn,sisReg);		
-    if ((pSiS->VBFlags & (VB_301|VB_302|VB_303)) && (pSiS->VBFlags & (CRT2_LCD|CRT2_TV|CRT2_VGA))) 
+    (*pSiS->SiSSaveChrontel)(pScrn,sisReg);
+    if ((pSiS->VBFlags & (VB_301|VB_302|VB_303)) && (pSiS->VBFlags & (CRT2_LCD|CRT2_TV|CRT2_VGA)))
         (*pSiS->SiSSave2)(pScrn, sisReg);
 }
 
@@ -520,19 +520,17 @@ SiS300Restore(ScrnInfoPtr pScrn, SISRegPtr sisReg)
                         sisReg->sisRegs3C4[i], inb(VGA_SEQ_DATA));
     }
 
-    if ((pSiS->VBFlags & (VB_LVDS | CRT2_LCD))==(VB_LVDS|CRT2_LCD)) 
+    if ((pSiS->VBFlags & (VB_LVDS | CRT2_LCD))==(VB_LVDS|CRT2_LCD))
         (*pSiS->SiSRestoreLVDS)(pScrn, sisReg);
     if ((pSiS->VBFlags & (VB_CHRONTEL | CRT2_TV))==(VB_CHRONTEL|CRT2_TV))
-	(*pSiS->SiSRestoreChrontel)(pScrn,sisReg);		
-    if ((pSiS->VBFlags & (VB_301|VB_302|VB_303)) && (pSiS->VBFlags & (CRT2_LCD|CRT2_TV|CRT2_VGA))) 
+    (*pSiS->SiSRestoreChrontel)(pScrn,sisReg);
+    if ((pSiS->VBFlags & (VB_301|VB_302|VB_303)) && (pSiS->VBFlags & (CRT2_LCD|CRT2_TV|CRT2_VGA)))
         (*pSiS->SiSRestore2)(pScrn, sisReg);
-    
 
     /*outb(0x3C2, sisReg->sisRegs3C2);*/
     outb(pSiS->RelIO+0x42, sisReg->sisRegs3C2);
 
     /* MemClock needs this to take effect */
-     
     outw(VGA_SEQ_INDEX, 0x0100);        /* Synchronous Reset */
     outw(VGA_SEQ_INDEX, 0x0300);        /* End Reset */
 }
@@ -540,108 +538,107 @@ SiS300Restore(ScrnInfoPtr pScrn, SISRegPtr sisReg)
 static void
 SiS301Save(ScrnInfoPtr pScrn, SISRegPtr sisReg)
 {
-        SISPtr  pSiS = SISPTR(pScrn);
-        int     i;
+    SISPtr  pSiS = SISPTR(pScrn);
+    int     i;
 
-        /* for SiS301 only */
-        for (i=0; i<0x29; i++)  {
-                inSISIDXREG(pSiS->RelIO+4, i, sisReg->VBPart1[i]);
-        }
-        for (i=0; i<0x46; i++)  {
-                inSISIDXREG(pSiS->RelIO+0x10, i, sisReg->VBPart2[i]);
-        }
-        for (i=0; i<0x3F; i++)  {
-                inSISIDXREG(pSiS->RelIO+0x12, i, sisReg->VBPart3[i]);
-        }
-        for (i=0; i<0x1C; i++)  {
-                inSISIDXREG(pSiS->RelIO+0x14, i, sisReg->VBPart4[i]);
-        }
-        sisReg->VBPart2[0] &= ~0x20;    /* Disable VB Processor */
-        sisReg->sisRegs3C4[0x32] &= ~0x20;      /* Disable Lock Mode */
+    /* for SiS301 only */
+    for (i=0; i<0x29; i++)  {
+        inSISIDXREG(pSiS->RelIO+4, i, sisReg->VBPart1[i]);
+    }
+    for (i=0; i<0x46; i++)  {
+        inSISIDXREG(pSiS->RelIO+0x10, i, sisReg->VBPart2[i]);
+    }
+    for (i=0; i<0x3F; i++)  {
+        inSISIDXREG(pSiS->RelIO+0x12, i, sisReg->VBPart3[i]);
+    }
+    for (i=0; i<0x1C; i++)  {
+        inSISIDXREG(pSiS->RelIO+0x14, i, sisReg->VBPart4[i]);
+    }
+    sisReg->VBPart2[0] &= ~0x20;    /* Disable VB Processor */
+    sisReg->sisRegs3C4[0x32] &= ~0x20;      /* Disable Lock Mode */
 }
 
 static void
 SiSLVDSSave(ScrnInfoPtr pScrn, SISRegPtr sisReg)
 {
-        SISPtr  pSiS = SISPTR(pScrn);
-        int     i;
+    SISPtr  pSiS = SISPTR(pScrn);
+    int     i;
 
-        /* for SiS LVDS only */
-        for (i=0; i<0x29; i++)  {
-                inSISIDXREG(pSiS->RelIO+4, i, sisReg->VBPart1[i]);
-        }
-        sisReg->sisRegs3C4[0x32] &= ~0x20;      /* Disable Lock Mode */
+    /* for SiS LVDS only */
+    for (i=0; i<0x29; i++)  {
+        inSISIDXREG(pSiS->RelIO+4, i, sisReg->VBPart1[i]);
+    }
+    sisReg->sisRegs3C4[0x32] &= ~0x20;      /* Disable Lock Mode */
 }
 
 static void
 SiSChrontelSave(ScrnInfoPtr pScrn, SISRegPtr sisReg)
 {
-        SISPtr  pSiS = SISPTR(pScrn);
-        int     i;
+    SISPtr  pSiS = SISPTR(pScrn);
+    int     i;
 
-        /* for SiS Chrontel TV */
-        for (i=0; i<0x29; i++)  {
-                inSISIDXREG(pSiS->RelIO+4, i, sisReg->VBPart1[i]);
-        }
-	for (i=0; i<0x11; i++)
-		sisReg->ch7005[i]=GetCH7005(ch7005idx[i]);
+    /* for SiS Chrontel TV */
+    for (i=0; i<0x29; i++)  {
+        inSISIDXREG(pSiS->RelIO+4, i, sisReg->VBPart1[i]);
+    }
+    for (i=0; i<0x11; i++)
+        sisReg->ch7005[i]=GetCH7005(ch7005idx[i]);
 
-        sisReg->sisRegs3C4[0x32] &= ~0x20;      /* Disable Lock Mode */
+    sisReg->sisRegs3C4[0x32] &= ~0x20;      /* Disable Lock Mode */
 }
-
 
 static void
 SiS301Restore(ScrnInfoPtr pScrn, SISRegPtr sisReg)
 {
-        SISPtr  pSiS = SISPTR(pScrn);
-        unsigned char   temp, temp1;
+    SISPtr  pSiS = SISPTR(pScrn);
+    unsigned char   temp, temp1;
 
-        DisableBridge(pSiS->RelIO+0x30); 
-        UnLockCRT2(pSiS->RelIO+0x30);  
+    DisableBridge(pSiS->RelIO+0x30); 
+    UnLockCRT2(pSiS->RelIO+0x30);  
 
-        /* SetCRT2ModeRegs() */
-        outSISIDXREG(pSiS->RelIO+0x04, 4, 0);
-        outSISIDXREG(pSiS->RelIO+0x04, 5, 0);
-        outSISIDXREG(pSiS->RelIO+0x04, 6, 0);
-        outSISIDXREG(pSiS->RelIO+0x04, 0, sisReg->VBPart1[0]);
-        outSISIDXREG(pSiS->RelIO+0x04, 1, sisReg->VBPart1[1]);
-        outSISIDXREG(pSiS->RelIO+0x14, 0x0D, sisReg->VBPart4[0x0D]);
-        outSISIDXREG(pSiS->RelIO+0x14, 0x0C, sisReg->VBPart4[0x0C]); 
+    /* SetCRT2ModeRegs() */
+    outSISIDXREG(pSiS->RelIO+0x04, 4, 0);
+    outSISIDXREG(pSiS->RelIO+0x04, 5, 0);
+    outSISIDXREG(pSiS->RelIO+0x04, 6, 0);
+    outSISIDXREG(pSiS->RelIO+0x04, 0, sisReg->VBPart1[0]);
+    outSISIDXREG(pSiS->RelIO+0x04, 1, sisReg->VBPart1[1]);
+    outSISIDXREG(pSiS->RelIO+0x14, 0x0D, sisReg->VBPart4[0x0D]);
+    outSISIDXREG(pSiS->RelIO+0x14, 0x0C, sisReg->VBPart4[0x0C]); 
 
-        if (!(sisReg->sisRegs3D4[0x30] & 0x03) &&
-             (sisReg->sisRegs3D4[0x31] & 0x20))  {      /* disable CRT2 */
-                LockCRT2(pSiS->RelIO+0x30);  
-                return;
-        }
-        SetBlock(pSiS->RelIO+0x04, 0x02, 0x23, &(sisReg->VBPart1[0x02]));
-        SetBlock(pSiS->RelIO+0x10, 0x00, 0x45, &(sisReg->VBPart2[0x00]));
-        SetBlock(pSiS->RelIO+0x12, 0x00, 0x3E, &(sisReg->VBPart3[0x00]));
-        SetBlock(pSiS->RelIO+0x14, 0x0E, 0x11, &(sisReg->VBPart4[0x0E]));
-        SetBlock(pSiS->RelIO+0x14, 0x13, 0x1B, &(sisReg->VBPart4[0x13])); 
+    if (!(sisReg->sisRegs3D4[0x30] & 0x03) &&
+         (sisReg->sisRegs3D4[0x31] & 0x20))  {      /* disable CRT2 */
+            LockCRT2(pSiS->RelIO+0x30);  
+            return;
+    }
+    SetBlock(pSiS->RelIO+0x04, 0x02, 0x23, &(sisReg->VBPart1[0x02]));
+    SetBlock(pSiS->RelIO+0x10, 0x00, 0x45, &(sisReg->VBPart2[0x00]));
+    SetBlock(pSiS->RelIO+0x12, 0x00, 0x3E, &(sisReg->VBPart3[0x00]));
+    SetBlock(pSiS->RelIO+0x14, 0x0E, 0x11, &(sisReg->VBPart4[0x0E]));
+    SetBlock(pSiS->RelIO+0x14, 0x13, 0x1B, &(sisReg->VBPart4[0x13])); 
 
-        outSISIDXREG(pSiS->RelIO+0x14, 0x0A, 1);
-        outSISIDXREG(pSiS->RelIO+0x14, 0x0B, sisReg->VBPart4[0x0B]);
-        outSISIDXREG(pSiS->RelIO+0x14, 0x0A, sisReg->VBPart4[0x0A]);
-        outSISIDXREG(pSiS->RelIO+0x14, 0x12, 0);
-        outSISIDXREG(pSiS->RelIO+0x14, 0x12, sisReg->VBPart4[0x12]); 
+    outSISIDXREG(pSiS->RelIO+0x14, 0x0A, 1);
+    outSISIDXREG(pSiS->RelIO+0x14, 0x0B, sisReg->VBPart4[0x0B]);
+    outSISIDXREG(pSiS->RelIO+0x14, 0x0A, sisReg->VBPart4[0x0A]);
+    outSISIDXREG(pSiS->RelIO+0x14, 0x12, 0);
+    outSISIDXREG(pSiS->RelIO+0x14, 0x12, sisReg->VBPart4[0x12]); 
 
-        
-        temp1 = 0;
-        if(!(pSiS->VBFlags & CRT2_VGA)) {
-          inSISIDXREG(pSiS->RelIO+CROFFSET, 0x31, temp);
-          if (temp & (SET_IN_SLAVE_MODE >> 8)) { 
-             inSISIDXREG(pSiS->RelIO+CROFFSET, 0x30, temp);
-             if (!(temp & (SET_CRT2_TO_RAMDAC >> 8))) { 
-                temp1 = 0x20;
-             }
-          }
-        }  
-        setSISIDXREG(pSiS->RelIO+SROFFSET, 0x32, ~0x20, temp1); 
-        orSISIDXREG(pSiS->RelIO+SROFFSET, 0x1E, 0x20);
-        andSISIDXREG(pSiS->RelIO+SROFFSET, 1, ~0x20);   /* DisplayOn */
+    
+    temp1 = 0;
+    if(!(pSiS->VBFlags & CRT2_VGA)) {
+      inSISIDXREG(pSiS->RelIO+CROFFSET, 0x31, temp);
+      if (temp & (SET_IN_SLAVE_MODE >> 8)) { 
+         inSISIDXREG(pSiS->RelIO+CROFFSET, 0x30, temp);
+         if (!(temp & (SET_CRT2_TO_RAMDAC >> 8))) { 
+            temp1 = 0x20;
+         }
+      }
+    }  
+    setSISIDXREG(pSiS->RelIO+SROFFSET, 0x32, ~0x20, temp1); 
+    orSISIDXREG(pSiS->RelIO+SROFFSET, 0x1E, 0x20);
+    andSISIDXREG(pSiS->RelIO+SROFFSET, 1, ~0x20);   /* DisplayOn */
 
-        EnableBridge(pSiS->RelIO+0x30);  
-        LockCRT2(pSiS->RelIO+0x30);  
+    EnableBridge(pSiS->RelIO+0x30);  
+    LockCRT2(pSiS->RelIO+0x30);  
 }
 
 static void
@@ -677,16 +674,16 @@ static void
 SiSChrontelRestore(ScrnInfoPtr pScrn, SISRegPtr sisReg)
 {
         SISPtr  pSiS = SISPTR(pScrn);
-	int i;
-	unsigned short wtemp;
+        int i;
+        unsigned short wtemp;
 
         DisableBridge(pSiS->RelIO+0x30); 
         UnLockCRT2(pSiS->RelIO+0x30);  
 
-	for (i=0; i<0x11; i++)
-	{	wtemp = ((sisReg->ch7005[i]) << 8) + (ch7005idx[i] & 0x00FF);
-		SetCH7005(wtemp);
-	}
+        for (i=0; i<0x11; i++)
+        {       wtemp = ((sisReg->ch7005[i]) << 8) + (ch7005idx[i] & 0x00FF);
+                SetCH7005(wtemp);
+        }
 
         /* SetCRT2ModeRegs() */
         outSISIDXREG(pSiS->RelIO+0x04, 4, 0);
@@ -708,6 +705,8 @@ SiSChrontelRestore(ScrnInfoPtr pScrn, SISRegPtr sisReg)
         EnableBridge(pSiS->RelIO+0x30);  
         LockCRT2(pSiS->RelIO+0x30);  
 }
+
+
 
 unsigned int
 SiSddc1Read(ScrnInfoPtr pScrn)
@@ -737,8 +736,9 @@ SiSddc1Read(ScrnInfoPtr pScrn)
 /* Auxiliary function to find real memory clock (in Khz) */
 int
 SiSMclk(SISPtr pSiS)
-{ int mclk;
-  unsigned char Num, Denum, Base;
+{ 
+	int mclk;
+  	unsigned char Num, Denum, Base;
 
     /* Numerator */
     switch (pSiS->Chipset)  {
@@ -757,7 +757,7 @@ SiSMclk(SISPtr pSiS)
         read_xr(MemClock1,Denum);
         mclk=mclk/((Denum & 0x1f)+1);
 
-        /* Divider. Don't seems to work for mclk */
+        /* Divider. Don't seems to work for mclk in older cards */
         if ( (Num & 0x80)!=0 ) { 
             mclk = mclk*2;
         }
@@ -806,55 +806,60 @@ SiSMclk(SISPtr pSiS)
     return(mclk);
 }
 
-/***** Only for SiS 5597 / 6326 *****/
-/* Returns estimated memory bandwidth in Kbits/sec (for dotclock defaults)        */
-/* Currently, a very rough estimate (4 cycles / read ; 2 for fast_vram) */
-int sisMemBandWidth(ScrnInfoPtr pScrn)
-{ int band;
-  SISPtr pSiS = SISPTR(pScrn);
-  SISRegPtr pReg = &pSiS->ModeReg;
+int SiSMemBandWidth(ScrnInfoPtr pScrn)
+{ 
+        SISPtr pSiS = SISPTR(pScrn);
+        SISRegPtr pReg = &pSiS->ModeReg;
 
-     band=pSiS->MemClock;
-
-   if (((pReg->sisRegs3C4[Mode64] >> 1) & 3) == 0) /* Only 1 bank Vram */
-     band = (band * 8);
-   else
-     band = (band * 16);
-
-   if ((pReg->sisRegs3C4[ExtMiscCont5] & 0xC0) == 0xC0) band=band*2;
-     
-   return(band);
-}
-
-const float     magic300[4] = { 1.2, 1.368421, 2.263158, 1.2};
-const float     magic630[4] = { 1.441177, 1.441177, 2.588235, 1.441177 };
-int sis300MemBandWidth(ScrnInfoPtr pScrn)
-{
-        SISPtr          pSiS = SISPTR(pScrn);
         int             bus = pSiS->BusWidth;
         int             mclk = pSiS->MemClock;
         int             bpp = pScrn->bitsPerPixel;
-        float           magic, total;
+        float   magic, total;
+        const float     magic300[4] = { 1.2, 1.368421, 2.263158, 1.2};
+        const float     magic630[4] = { 1.441177, 1.441177, 2.588235, 1.441177 };
 
-        if (pSiS->Chipset==PCI_CHIP_SIS300)
-                magic = magic300[bus/64];
-        else
-                magic = magic630[bus/64];
-
-        PDEBUG(ErrorF("mclk: %d, bus: %d, magic: %g, bpp: %d\n",
-                        mclk, bus, magic, bpp));
-
-        total = mclk*bus/bpp;
-        ErrorF("Total Adapter Bandwidth is %gM\n", total/1000);
-        if (pSiS->VBFlags & CRT2_ENABLE)  {
-                if (total/2 > 540000)
-                        total = total - 540000;
+        switch (pSiS->Chipset) {
+        case PCI_CHIP_SIS6326:
+                return 175000;    /* guest */
+                
+        case PCI_CHIP_SIS5597:
+                if (((pReg->sisRegs3C4[Mode64] >> 1) & 3) == 0) /* Only 1 bank Vram */
+                        mclk = (mclk * 8);
                 else
-                        total = total/2;
-                ErrorF("CRT1 Used Bandwidth is %gM\n", total/1000);
-        }
+                        mclk = (mclk * 16);
+                if ((pReg->sisRegs3C4[ExtMiscCont5] & 0xC0) == 0xC0) 
+                        mclk=mclk*2;
+                return(mclk);
 
-        return  (int)(total/magic);
+        case PCI_CHIP_SIS300:
+        case PCI_CHIP_SIS540:
+        case PCI_CHIP_SIS630:
+                if (pSiS->Chipset==PCI_CHIP_SIS300)
+                        magic = magic300[bus/64];
+                else
+                        magic = magic630[bus/64];
+                
+                PDEBUG(ErrorF("mclk: %d, bus: %d, magic: %g, bpp: %d\n",
+                                mclk, bus, magic, bpp));
+                
+                total = mclk*bus/bpp;
+                
+                ErrorF("Total Adapter Bandwidth is %gM\n", total/1000);
+                
+                if (pSiS->VBFlags & CRT2_ENABLE)  {
+                        if (total/2 > 540000)
+                                total -= 540000;
+                        else
+                                total /= 2;
+                        ErrorF("CRT1 Used Bandwidth is %gM\n", total/1000);
+                }
+                return (int)(total/magic);
+
+        case PCI_CHIP_SIS530:
+                return 230000;    /* guest */
+        default:
+                return 135000;    /* guest */
+        }
 }
 
 void
@@ -864,23 +869,32 @@ SISLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies, LOCO *colors,
         SISPtr  pSiS = SISPTR(pScrn);
         int     i, index;
 
-        PDEBUG(ErrorF("SISLoadPalette(%d)\n", numColors));
+        PDEBUG(ErrorF("SiSLoadPalette(%d)\n", numColors));
         for (i=0; i<numColors; i++)  {
                 index = indicies[i];
-                /*outSISREG(0x3c8, index);
+#if 0
+                outSISREG(0x3c8, index);
                 outSISREG(0x3c9, colors[index].red >> 2);
                 outSISREG(0x3c9, colors[index].green >> 2);
-                outSISREG(0x3c9, colors[index].blue >> 2);*/
+                outSISREG(0x3c9, colors[index].blue >> 2);
+#endif
                 outSISREG(pSiS->RelIO+0x48, index);
                 outSISREG(pSiS->RelIO+0x49, colors[index].red >> 2);
                 outSISREG(pSiS->RelIO+0x49, colors[index].green >> 2);
                 outSISREG(pSiS->RelIO+0x49, colors[index].blue >> 2);
         }
-        if (pSiS->VBFlags & CRT2_ENABLE)  {
-                (*pSiS->LoadCRT2Palette)(pScrn, numColors, indicies,
-                                                colors, pVisual);
+        switch (pSiS->Chipset) {
+            case PCI_CHIP_SIS630:
+            case PCI_CHIP_SIS540:
+            case PCI_CHIP_SIS300:
+                if (pSiS->VBFlags & CRT2_ENABLE)  {
+                        (*pSiS->LoadCRT2Palette)(pScrn, numColors, indicies,
+                                                        colors, pVisual);
+                }
+                break;
         }
 }
+
 static  void
 SiS301LoadPalette(ScrnInfoPtr pScrn, int numColors, int *indicies,
                                         LOCO *colors, VisualPtr pVisual)
@@ -920,66 +934,65 @@ static  void
 SiS630Threshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
                                 unsigned short *Low, unsigned short *High)
 {
-        SISPtr          pSiS = SISPTR(pScrn);
-        int             mclk = pSiS->MemClock;
-        int             vclk = mode->Clock;
-        int             bpp = pScrn->bitsPerPixel/8;
-        int             buswidth = pSiS->BusWidth;
-        CARD32          temp;
-        PCITAG          NBridge;
-        int             cyclea;
-        int             low, lowa;
+    SISPtr   pSiS = SISPTR(pScrn);
+    int      mclk = pSiS->MemClock;
+    int      vclk = mode->Clock;
+    int      bpp = pScrn->bitsPerPixel/8;
+    int      buswidth = pSiS->BusWidth;
+    CARD32   temp;
+    PCITAG   NBridge;
+    int      cyclea;
+    int      low, lowa;
 
-        int             i, j;
+    int      i, j;
 
 
-        if (!bpp)       bpp = 1;
+    if (!bpp)
+        bpp = 1;
 
-        i = 0;
-        j = buswidth/128;
+    i = 0;
+    j = buswidth/128;
 
-        while (1)  {
+    while (1)  {
 #ifdef  DEBUG
-                ErrorF("Config %d GT = %d, QC = %x, CycleA = %d\n",
-                        i, qconfig[i].GT, qconfig[i].QC, cycleA[i][j]);
+        ErrorF("Config %d GT = %d, QC = %x, CycleA = %d\n",
+            i, qconfig[i].GT, qconfig[i].QC, cycleA[i][j]);
 #endif
-                cyclea = cycleA[i][j];
-                lowa = cyclea * vclk * bpp;
-                lowa = (lowa + (mclk-1)) / mclk;
-                lowa = (lowa + 15) / 16;
-                low = lowa + 1;
-                if (low <= 0x13)
-                        break;
-                else
-                        if (i < 19)
-                                i++;
-                        else  {
-                                low = 0x13;
-                                PDEBUG(ErrorF("This mode may has threshold "
-                                        "problem and had better removed\n"));
-                                break;
-                        }
-        }
-        PDEBUG(ErrorF("Using Config %d with CycleA = %d\n", i, cyclea));
-        *Low = low;
-        if (lowa+4 > 15)
-                *High = 0x0F;
+        cyclea = cycleA[i][j];
+        lowa = cyclea * vclk * bpp;
+        lowa = (lowa + (mclk-1)) / mclk;
+        lowa = (lowa + 15) / 16;
+        low = lowa + 1;
+        if (low <= 0x13)
+            break;
         else
-                *High = lowa+4;
+            if (i < 19)
+                i++;
+            else  {
+                low = 0x13;
+                PDEBUG(ErrorF("This mode may has threshold "
+                        "problem and had better removed\n"));
+                break;
+            }
+    }
+    PDEBUG(ErrorF("Using Config %d with CycleA = %d\n", i, cyclea));
+    *Low = low;
+    if (lowa+4 > 15)
+            *High = 0x0F;
+    else
+            *High = lowa+4;
 
-        /* write PCI configuration space */
-        NBridge = pciTag(0, 0, 0);
-        temp = pciReadLong(NBridge, 0x50);
-        temp &= 0xF0FFFFFF;
-        temp |= qconfig[i].QC << 24;
-        pciWriteLong(NBridge, 0x50, temp);
+    /* write PCI configuration space */
+    NBridge = pciTag(0, 0, 0);
+    temp = pciReadLong(NBridge, 0x50);
+    temp &= 0xF0FFFFFF;
+    temp |= qconfig[i].QC << 24;
+    pciWriteLong(NBridge, 0x50, temp);
 
-        temp = pciReadLong(NBridge, 0xA0);
-        temp &= 0xF0FFFFFF;
-        temp |= qconfig[i].GT << 24;
-        pciWriteLong(NBridge, 0xA0, temp);
-
-
+    temp = pciReadLong(NBridge, 0xA0);
+    temp &= 0xF0FFFFFF;
+    temp |= qconfig[i].GT << 24;
+    pciWriteLong(NBridge, 0xA0, temp);
 }
 
 struct funcargc {
@@ -1001,94 +1014,95 @@ static  void
 SiS300Threshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
                                 unsigned short *Low, unsigned short *High)
 {
-        SISPtr          pSiS = SISPTR(pScrn);
-        SISRegPtr       pReg = &pSiS->ModeReg;
-        int             mclk = pSiS->MemClock;
-        int             vclk = mode->Clock;
-        int             bpp = pScrn->bitsPerPixel/8;
-        int             lowa, lowb, low;
-        struct funcargc *p;
-        unsigned int    i, j;
+    SISPtr          pSiS = SISPTR(pScrn);
+    SISRegPtr       pReg = &pSiS->ModeReg;
+    int             mclk = pSiS->MemClock;
+    int             vclk = mode->Clock;
+    int             bpp = pScrn->bitsPerPixel/8;
+    int             lowa, lowb, low;
+    struct funcargc *p;
+    unsigned int    i, j;
 
-        pReg->sisRegs3C4[0x16] = pSiS->SavedReg.sisRegs3C4[0x16];
+    pReg->sisRegs3C4[0x16] = pSiS->SavedReg.sisRegs3C4[0x16];
 
-        if (!bpp)       bpp = 1;
+    if (!bpp)       bpp = 1;
 
-        do {
-                i = GETBITSTR(pReg->sisRegs3C4[0x18], 6:5, 2:1) |
-                      GETBITS(pReg->sisRegs3C4[0x18], 1:1);
-                j = GETBITSTR(pReg->sisRegs3C4[0x14], 7:6, 3:2) |
-                      GETBITS(pReg->sisRegs3C4[0x16], 7:6);
-                p = &funca[j];
+    do {
+        i = GETBITSTR(pReg->sisRegs3C4[0x18], 6:5, 2:1) |
+              GETBITS(pReg->sisRegs3C4[0x18], 1:1);
+        j = GETBITSTR(pReg->sisRegs3C4[0x14], 7:6, 3:2) |
+              GETBITS(pReg->sisRegs3C4[0x16], 7:6);
+        p = &funca[j];
 
-                lowa = (p->base + p->inc*timing[i])*vclk*bpp;
-                lowa = (lowa + (mclk-1)) / mclk;
-                lowa = (lowa + 15)/16;
+        lowa = (p->base + p->inc*timing[i])*vclk*bpp;
+        lowa = (lowa + (mclk-1)) / mclk;
+        lowa = (lowa + 15)/16;
 
-                p = &funcb[j];
-                lowb = (p->base + p->inc*timing[i])*vclk*bpp;
-                lowb = (lowb + (mclk-1)) / mclk;
-                lowb = (lowb + 15)/16;
+        p = &funcb[j];
+        lowb = (p->base + p->inc*timing[i])*vclk*bpp;
+        lowb = (lowb + (mclk-1)) / mclk;
+        lowb = (lowb + 15)/16;
 
-                if (lowb < 4)
-                        lowb = 0;
-                else
-                        lowb -= 4;
-
-                low = (lowa > lowb)? lowa: lowb;
-
-                low++;
-
-                if (low <= 0x13) {
-                        break;
-                } else {
-                        i = GETBITS(pReg->sisRegs3C4[0x16], 7:6);
-                        if (!i) {
-                                low = 0x13;
-                                break;
-                        } else {
-                                i--;
-                                pReg->sisRegs3C4[0x16] &= 0x3C;
-                                pReg->sisRegs3C4[0x16] |= (i << 6);
-                        }
-                }
-        } while (1);
-
-        *Low = low;
-        if (low+3 > 15)
-                *High = 0x0F;
+        if (lowb < 4)
+            lowb = 0;
         else
-                *High = low+3;
+            lowb -= 4;
+
+        low = (lowa > lowb)? lowa: lowb;
+
+        low++;
+
+        if (low <= 0x13) {
+            break;
+        } else {
+            i = GETBITS(pReg->sisRegs3C4[0x16], 7:6);
+            if (!i) {
+                low = 0x13;
+                break;
+            } else {
+                i--;
+                pReg->sisRegs3C4[0x16] &= 0x3C;
+                pReg->sisRegs3C4[0x16] |= (i << 6);
+            }
+        }
+    } while (1);
+
+    *Low = low;
+    if (low+3 > 15)
+            *High = 0x0F;
+    else
+            *High = low+3;
 }
 
-static  void
+static void
 SiS530Threshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
                                 unsigned short *Low, unsigned short *High)
 {
-        SISPtr  pSiS = SISPTR(pScrn);
-        unsigned int    factor, z;
-        unsigned int    vclk = mode->Clock,
-                        bpp = pScrn->bitsPerPixel,
-                        mclk = pSiS->MemClock,
-                        buswidth = pSiS->BusWidth;
-        
-        if (pSiS->Flags & UMA)
-                factor = 0x60;
-        else
-                factor = 0x30;
-        z = factor * vclk * bpp;
-        z = z / mclk / buswidth;
-        *Low = (z+1)/2 + 4;
-        if (*Low > 0x1F)
-                *Low = 0x1F;
+    SISPtr  pSiS = SISPTR(pScrn);
+    unsigned int    factor, z;
+    unsigned int    vclk = mode->Clock,
+                    bpp = pScrn->bitsPerPixel,
+                    mclk = pSiS->MemClock,
+                    buswidth = pSiS->BusWidth;
+    
+    if (pSiS->Flags & UMA)
+        factor = 0x60;
+    else
+        factor = 0x30;
+    z = factor * vclk * bpp;
+    z = z / mclk / buswidth;
+    *Low = (z+1)/2 + 4;
+    if (*Low > 0x1F)
+        *Low = 0x1F;
 
-        *High = 0x1F;
+    *High = 0x1F;
 }
 
-static  void
+static void
 SiSThreshold(ScrnInfoPtr pScrn, DisplayModePtr mode,
                                 unsigned short *Low, unsigned short *High)
 {
+    return;
 
 }
 
@@ -1187,65 +1201,66 @@ void SiSIODump(ScrnInfoPtr pScrn)
     outw(pSiS->RelIO+0x44, SR5State << 8 | 0x05);
 }
 
+
 void
 SISDACPreInit(ScrnInfoPtr pScrn)
 {
-        SISPtr  pSiS = SISPTR(pScrn);
+    SISPtr  pSiS = SISPTR(pScrn);
 
-        switch (pSiS->Chipset)  {
-        case PCI_CHIP_SIS630:
-        case PCI_CHIP_SIS540:
-                pSiS->MaxClock = sis300MemBandWidth(pScrn);
-                pSiS->SiSSave           = SiS300Save;
-                pSiS->SiSSave2          = SiS301Save;
-                pSiS->SiSSaveLVDS       = SiSLVDSSave;
-                pSiS->SiSSaveChrontel   = SiSChrontelSave;
-                pSiS->SiSRestore        = SiS300Restore;
-                pSiS->SiSRestore2       = SiS301Restore;
-                pSiS->SiSRestoreLVDS    = SiSLVDSRestore;
-                pSiS->SiSRestoreChrontel= SiSChrontelRestore;
-                pSiS->LoadCRT2Palette   = SiS301LoadPalette;
-                pSiS->SetThreshold      = SiS630Threshold;
-                break;
-        case PCI_CHIP_SIS300:
-                pSiS->MaxClock = sis300MemBandWidth(pScrn);
-                pSiS->SiSSave           = SiS300Save;
-                pSiS->SiSSave2          = SiS301Save;
-                pSiS->SiSSaveLVDS       = SiSLVDSSave;
-                pSiS->SiSSaveChrontel   = SiSChrontelSave;
-                pSiS->SiSRestore        = SiS300Restore;
-                pSiS->SiSRestore2       = SiS301Restore;
-                pSiS->SiSRestoreLVDS    = SiSLVDSRestore;
-                pSiS->SiSRestoreChrontel= SiSChrontelRestore;
-                pSiS->LoadCRT2Palette   = SiS301LoadPalette;
-                pSiS->SetThreshold      = SiS300Threshold;
-                break;
-        case PCI_CHIP_SIS530:
-                pSiS->MaxClock = 230000;        /* Guest */
-                pSiS->SiSRestore        = SiSRestore;
-                pSiS->SiSSave           = SiSSave;
-                pSiS->SetThreshold      = SiS530Threshold;
-                break;
-        case PCI_CHIP_SIS6326:
-                pSiS->MaxClock = 175000;        /* Guest */
-                pSiS->SiSRestore        = SiSRestore;
-                pSiS->SiSSave           = SiSSave;
-                pSiS->SetThreshold      = SiSThreshold;
-                break;
-        default:
-                pSiS->MaxClock = 135000;        /* Guest */
-                pSiS->SiSRestore        = SiSRestore;
-                pSiS->SiSSave           = SiSSave;
-                pSiS->SetThreshold      = SiSThreshold;
-        }
+    switch (pSiS->Chipset)  {
+    case PCI_CHIP_SIS630:
+    case PCI_CHIP_SIS540:
+        pSiS->MaxClock = SiSMemBandWidth(pScrn);
+        pSiS->SiSSave           = SiS300Save;
+        pSiS->SiSSave2          = SiS301Save;
+        pSiS->SiSSaveLVDS       = SiSLVDSSave;
+        pSiS->SiSSaveChrontel   = SiSChrontelSave;
+        pSiS->SiSRestore        = SiS300Restore;
+        pSiS->SiSRestore2       = SiS301Restore;
+        pSiS->SiSRestoreLVDS    = SiSLVDSRestore;
+        pSiS->SiSRestoreChrontel= SiSChrontelRestore;
+        pSiS->LoadCRT2Palette   = SiS301LoadPalette;
+        pSiS->SetThreshold      = SiS630Threshold;
+        break;
+    case PCI_CHIP_SIS300:
+        pSiS->MaxClock = SiSMemBandWidth(pScrn);
+        pSiS->SiSSave           = SiS300Save;
+        pSiS->SiSSave2          = SiS301Save;
+        pSiS->SiSSaveLVDS       = SiSLVDSSave;
+        pSiS->SiSSaveChrontel   = SiSChrontelSave;
+        pSiS->SiSRestore        = SiS300Restore;
+        pSiS->SiSRestore2       = SiS301Restore;
+        pSiS->SiSRestoreLVDS    = SiSLVDSRestore;
+        pSiS->SiSRestoreChrontel= SiSChrontelRestore;
+        pSiS->LoadCRT2Palette   = SiS301LoadPalette;
+        pSiS->SetThreshold      = SiS300Threshold;
+        break;
+    case PCI_CHIP_SIS530:
+        pSiS->MaxClock = SiSMemBandWidth(pScrn);
+        pSiS->SiSRestore        = SiSRestore;
+        pSiS->SiSSave           = SiSSave;
+        pSiS->SetThreshold      = SiS530Threshold;
+        break;
+    case PCI_CHIP_SIS6326:
+        pSiS->MaxClock = SiSMemBandWidth(pScrn);
+        pSiS->SiSRestore        = SiSRestore;
+        pSiS->SiSSave           = SiSSave;
+        pSiS->SetThreshold      = SiSThreshold;
+        break;
+    default:
+        pSiS->MaxClock = SiSMemBandWidth(pScrn);
+        pSiS->SiSRestore        = SiSRestore;
+        pSiS->SiSSave           = SiSSave;
+        pSiS->SetThreshold      = SiSThreshold;
+    }
 }
 
-void
+static void
 SetBlock(CARD16 port, CARD8 from, CARD8 to, CARD8 *DataPtr)
 {
-        CARD8   index;
+    CARD8   index;
 
-        for (index=from; index <= to; index++, DataPtr++)  {
-                outSISIDXREG(port, index, *DataPtr);
-        }
+    for (index=from; index <= to; index++, DataPtr++)  {
+        outSISIDXREG(port, index, *DataPtr);
+    }
 }

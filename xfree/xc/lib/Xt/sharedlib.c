@@ -1,4 +1,4 @@
-/* $TOG: sharedlib.c /main/19 1998/02/06 13:26:09 kaleb $ */
+/* $Xorg: sharedlib.c,v 1.3 2000/08/17 19:46:21 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xt/sharedlib.c,v 3.1 1996/08/20 12:12:05 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/sharedlib.c,v 3.3 2001/01/17 19:43:13 dawes Exp $ */
 
 #if (defined(SUNSHLIB) || defined(AIXSHLIB)) && !defined(SHAREDCODE)
 #include "IntrinsicI.h"

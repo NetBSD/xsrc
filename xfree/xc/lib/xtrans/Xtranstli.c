@@ -1,4 +1,4 @@
-/* $TOG: Xtranstli.c /main/29 1998/04/22 16:31:16 barstow $ */
+/* $Xorg: Xtranstli.c,v 1.3 2000/08/17 19:46:46 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1994, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/xtrans/Xtranstli.c,v 3.7 1998/10/03 09:07:36 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranstli.c,v 3.9 2001/01/17 19:43:48 dawes Exp $ */
 
 /* Copyright 1993, 1994 NCR Corporation - Dayton, Ohio, USA
  *

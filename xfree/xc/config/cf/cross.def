@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/config/cf/cross.def,v 1.2 2001/03/30 02:15:17 keithp Exp $ */
 /*
  * This file contains redefinitions of some symbols to enable
  * cross compilation: e.g. paths for include files and paths to
@@ -20,6 +20,9 @@
 #undef PostIncDir
 #define PostIncDir /skiff/local/lib/gcc-lib/arm-linux/2.95.2/include
 #define CcCmd /skiff/local/bin/arm-linux-gcc
+#undef CplusplusCmd
+#define HasCplusplus YES
+#define CplusplusCmd /skiff/local/bin/arm-linux-g++
 #define DoRanlibCmd YES
 #define RanlibCmd /skiff/local/bin/arm-linux-ranlib
 #undef ExtraLoadFlags

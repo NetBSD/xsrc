@@ -16,15 +16,15 @@
 /***************************************************************************/
 
 
-#ifndef PSOBJS_H
-#define PSOBJS_H
-
-#include <freetype/internal/psaux.h>
+#ifndef __PSOBJS_H__
+#define __PSOBJS_H__
 
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+#include <ft2build.h>
+#include FT_INTERNAL_POSTSCRIPT_AUX_H
+
+
+FT_BEGIN_HEADER
 
 
   /*************************************************************************/
@@ -195,12 +195,9 @@
                     FT_UShort  seed );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* PSOBJS_H */
+#endif /* __PSOBJS_H__ */
 
 
 /* END */

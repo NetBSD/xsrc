@@ -20,22 +20,13 @@
 /***************************************************************************/
 
 
-#ifndef AHTYPES_H
-#define AHTYPES_H
+#ifndef __AHTYPES_H__
+#define __AHTYPES_H__
 
 
-#include <freetype/internal/ftobjs.h>  /* for freetype.h + FT_LOCAL etc. */
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_OBJECTS_H
 #include "ahloader.h"
-
-#else
-
-#include <autohint/ahloader.h>
-
-#endif
 
 
 #define xxAH_DEBUG
@@ -44,19 +35,16 @@
 #ifdef AH_DEBUG
 
 #include <stdio.h>
-
-#define AH_LOG( x )  printf##x
+#define AH_LOG( x )  printf ## x
 
 #else
 
 #define AH_LOG( x )  do ; while ( 0 ) /* nothing */
 
-#endif
+#endif /* AH_DEBUG */
 
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
   /*************************************************************************/
@@ -492,15 +480,14 @@
     FT_Vector         trans_delta;
     FT_Matrix         trans_matrix;
 
+    FT_Bool           disable_horz_edges;
+    FT_Bool           disable_vert_edges;
   } AH_Hinter;
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* AHTYPES_H */
+#endif /* __AHTYPES_H__ */
 
 
 /* END */

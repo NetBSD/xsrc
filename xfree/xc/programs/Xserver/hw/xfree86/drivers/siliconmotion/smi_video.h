@@ -26,12 +26,12 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from the XFree86 Project and silicon Motion.
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_video.h,v 1.2 2001/03/03 22:26:13 tsi Exp $ */
 
 #ifndef _SMI_VIDEO_H
 #define _SMI_VIDEO_H
 
-#include <fourcc.h>
+#include "fourcc.h"
 
 #define SMI_VIDEO_VIDEO		0
 #define SMI_VIDEO_IMAGE		1

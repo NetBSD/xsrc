@@ -1,5 +1,5 @@
 /*
- * $TOG: svpopup.c /main/19 1998/02/09 13:42:47 kaleb $
+ * $Xorg: svpopup.c,v 1.3 2000/08/17 19:53:52 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Chris D. Peterson, MIT X Consortium
  */
-/* $XFree86: xc/programs/editres/svpopup.c,v 1.3tsi Exp $ */
+/* $XFree86: xc/programs/editres/svpopup.c,v 1.5 2001/01/17 23:44:52 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>	/* Get standard string definations. */

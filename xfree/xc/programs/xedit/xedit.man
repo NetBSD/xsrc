@@ -25,9 +25,9 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/programs/xedit/xedit.man,v 1.12 1999/06/20 08:41:42 dawes Exp $
+.\" $XFree86: xc/programs/xedit/xedit.man,v 1.15 2001/01/27 18:21:11 dawes Exp $
 .\"
-.TH XEDIT 1 "Release 6" "X Version 11"
+.TH XEDIT 1 __vendorversion__
 .SH NAME
 xedit \- simple text editor for X
 .SH SYNTAX
@@ -55,7 +55,7 @@ Displays the text of the file that you are editing or creating.
 .I Xedit
 accepts all of the standard X Toolkit command line
 options (see
-.IR X (1)).
+.IR X (__miscmansuffix__)).
 The order of the command line options is not important.
 .TP 8
 .I filename
@@ -307,7 +307,7 @@ stored in the RESOURCE_MANAGER property.
 .I <XRoot>/lib/X11/app-defaults/Xedit
 specifies required resources
 .SH "SEE ALSO"
-.IR X (1),
+.IR X (__miscmansuffix__),
 .IR xrdb (1),
 .I "Athena Widget Set"
 .SH RESTRICTIONS
@@ -320,7 +320,7 @@ Copyright 1989, X Consortium
 Copyright 1998, The XFree86 Project
 .br
 See
-.IR X (1)
+.IR X (__miscmansuffix__)
 for a full statement of rights and permissions.
 .SH AUTHORS
 Chris D. Peterson, MIT X Consortium

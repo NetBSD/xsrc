@@ -1,27 +1,30 @@
 /*
- * GLX Hardware Device Driver for Intel i810
- * Copyright (C) 1999 Keith Whitwell
+ * Copyright 2000-2001 VA Linux Systems, Inc.
+ * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * KEITH WHITWELL, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM, 
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
+ * VA LINUX SYSTEMS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  *
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgafastpath.c,v 1.5 2000/09/24 13:51:06 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgafastpath.c,v 1.8 2001/04/10 16:07:50 dawes Exp $ */
 
 #include <stdio.h>
 
@@ -41,7 +44,7 @@
 extern void mgaDDResizeVB( struct vertex_buffer *VB, GLuint size );
 
 extern void gl_fast_copy_vb( struct vertex_buffer *VB );
-  
+
 struct mga_fast_tab {
    void (*build_vertices)( struct vertex_buffer *VB, GLuint do_cliptest );
    void (*interp)( GLfloat t, GLfloat *O, const GLfloat *I, const GLfloat *J );
@@ -112,7 +115,7 @@ static void mga_render_elements_direct( struct vertex_buffer *VB )
    GLuint nr = VB->EltPtr->count;
    render_func func = render_tab_mga_smooth_indirect[prim];
    GLuint p = 0;
-   
+
    if (mmesa->new_state)
       mgaDDUpdateHwState( ctx );
 
@@ -247,7 +250,7 @@ static __inline void mga_tri_clip( GLuint **p_elts,
    /* Convert the planar polygon to a list of triangles.
     */
    out = inlist[in];
-   
+
    for (i = 2 ; i < n ; i++) {
       elts[0] = out[0];
       elts[1] = out[i-1];
@@ -287,7 +290,7 @@ static __inline void mga_line_clip( GLuint **p_elts,
 
 #define CLIP_POINT( e )				\
    if (mask[e])					\
-      *out++ = e 
+      *out++ = e
 
 #define CLIP_LINE( e1, e0 )						\
 do {									\
@@ -342,7 +345,7 @@ do {									\
 #define POSTFIX							\
    MGA_DRIVER_DATA(VB)->clipped_elements.count =		\
           out - MGA_DRIVER_DATA(VB)->clipped_elements.data;	\
-   MGA_DRIVER_DATA(VB)->last_vert = next_vert;		
+   MGA_DRIVER_DATA(VB)->last_vert = next_vert;
 
 
 #define INIT(x)
@@ -424,10 +427,10 @@ static void mga_project_clipped_vertices( struct vertex_buffer *VB )
 /* Pack rgba and/or texture into the remaining half of a 32 byte vertex.
  */
 #define CLIP_UBYTE_COLOR  4
-#define CLIP_UBYTE_B 0   
-#define CLIP_UBYTE_G 1  
+#define CLIP_UBYTE_B 0
+#define CLIP_UBYTE_G 1
 #define CLIP_UBYTE_R 2
-#define CLIP_UBYTE_A 3   
+#define CLIP_UBYTE_A 3
 #define CLIP_S0 6
 #define CLIP_T0 7
 #define CLIP_S1 8
@@ -478,29 +481,26 @@ void mgaDDFastPathInit( void )
 
 #define VALID_SETUP (MGA_RGBA_BIT|MGA_TEX0_BIT|MGA_TEX1_BIT)
 
-
 void mgaDDFastPath( struct vertex_buffer *VB )
 {
    GLcontext *ctx = VB->ctx;
    GLenum prim = ctx->CVA.elt_mode;
-   mgaContextPtr mmesa = MGA_CONTEXT( ctx ); 
+   mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    struct mga_fast_tab *tab = &mgaFastTab[mmesa->setupindex & VALID_SETUP];
    GLuint do_cliptest = 1;
 
 
    gl_prepare_arrays_cva( VB );	                 /* still need this */
 
-#if 1
-   if (gl_reduce_prim[prim] == GL_TRIANGLES && 
-       VB->Count < (MGA_DMA_BUF_SZ / 48) &&
+   if (gl_reduce_prim[prim] == GL_TRIANGLES &&
+       VB->Count < (MGA_BUFFER_SIZE / 48) &&
        (ctx->ModelProjectMatrix.flags & (MAT_FLAG_GENERAL|
 					 MAT_FLAG_PERSPECTIVE)) &&
-       mmesa->mgaScreen->chipset == MGA_CARD_TYPE_G400) 
+       mmesa->mgaScreen->chipset == MGA_CARD_TYPE_G400)
    {
       mgaDDEltPath( VB );
       return;
    }
-#endif
 
    /* Reserve enough space for the pathological case.
     */
@@ -517,9 +517,9 @@ void mgaDDFastPath( struct vertex_buffer *VB )
    if (VB->ClipOrMask) {
       if (!VB->ClipAndMask) {
 	 render_func *clip = mga_clip_render_tab_elt;
-      
+
 	 mmesa->interp = tab->interp;
-      
+
 	 clip[prim]( VB, 0, VB->EltPtr->count, 0 ); /* build new elts */
 
 	 ctx->CVA.elt_mode = gl_reduce_prim[prim];
@@ -533,9 +533,8 @@ void mgaDDFastPath( struct vertex_buffer *VB )
       mga_render_elements_direct( VB );           /* render using orig list */
    }
 
-   /* This indicates that there is no cached data to reuse.  
+   /* This indicates that there is no cached data to reuse.
     */
    VB->pipeline->data_valid = 0;
    VB->pipeline->new_state = 0;
 }
-

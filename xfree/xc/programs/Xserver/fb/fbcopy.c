@@ -21,7 +21,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/fb/fbcopy.c,v 1.6 2000/04/06 15:27:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/fb/fbcopy.c,v 1.7 2000/05/06 21:09:32 keithp Exp $ */
 
 #include "fb.h"
 #ifdef IN_MODULE

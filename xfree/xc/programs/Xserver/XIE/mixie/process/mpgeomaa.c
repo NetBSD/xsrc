@@ -1,4 +1,4 @@
-/* $TOG: mpgeomaa.c /main/9 1998/02/09 16:22:04 kaleb $ */
+/* $Xorg: mpgeomaa.c,v 1.3 2000/08/17 19:47:52 cpqbld Exp $ */
 /**** module mpgeomaa.c ****/
 /******************************************************************************
 
@@ -67,7 +67,7 @@ terms and conditions:
 	Ben Fahy && Larry Hare -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpgeomaa.c,v 3.3 1998/10/04 09:36:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpgeomaa.c,v 3.5 2001/01/17 22:13:11 dawes Exp $ */
 
 
 #define _XIEC_MPGEOM

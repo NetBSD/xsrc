@@ -1,4 +1,4 @@
-/* $TOG: TMstate.c /main/155 1998/04/23 10:49:36 barstow $ */
+/* $Xorg: TMstate.c,v 1.4 2000/08/17 19:46:19 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/TMstate.c,v 1.1.1.3.6.3 1998/10/19 20:57:06 hohndel Exp $ */
+/* $XFree86: xc/lib/Xt/TMstate.c,v 1.5 2001/01/17 19:43:11 dawes Exp $ */
 
 /*
 
@@ -1348,7 +1348,7 @@ void _XtDestroyTMData(widget)
 
     _XtUninstallTranslations(widget);
 
-    if (cBindData = (TMComplexBindData)widget->core.tm.proc_table) {
+    if ((cBindData = (TMComplexBindData)widget->core.tm.proc_table)) {
 	if (cBindData->isComplex) {
 	    ATranslations	aXlations, nXlations;
 	    

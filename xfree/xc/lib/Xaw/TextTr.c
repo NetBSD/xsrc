@@ -1,4 +1,4 @@
-/* $TOG: TextTr.c /main/21 1998/02/06 12:51:54 kaleb $ */
+/* $Xorg: TextTr.c,v 1.3 2000/08/17 19:45:42 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xaw/TextTr.c,v 3.13 1999/06/06 08:48:18 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextTr.c,v 3.15 2001/01/17 19:42:35 dawes Exp $ */
 
 /* INTERNATIONALIZATION:
 

@@ -24,10 +24,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_accel.c,v 1.3 2000/06/23 19:29:45 dawes Exp $ */
-
-#include	<asm/types.h>
-#include	<math.h>
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_accel.c,v 1.5 2001/03/03 22:41:34 tsi Exp $ */
 
 #include	"scrnintstr.h"
 #include	"pixmapstr.h"

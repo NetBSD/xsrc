@@ -1,4 +1,4 @@
-/* $TOG: ChkIfEv.c /main/11 1998/02/06 17:06:16 kaleb $ */
+/* $Xorg: ChkIfEv.c,v 1.3 2000/08/17 19:44:31 cpqbld Exp $ */
 /*
 
 Copyright 1985, 1987, 1998  The Open Group

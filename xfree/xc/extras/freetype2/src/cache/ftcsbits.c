@@ -16,15 +16,17 @@
 /***************************************************************************/
 
 
-#include <freetype/cache/ftcsbits.h>
-#include <freetype/internal/ftobjs.h>
-#include <freetype/internal/ftdebug.h>
-#include <freetype/fterrors.h>
+#include <ft2build.h>
+#include FT_CACHE_H
+#include FT_CACHE_SMALL_BITMAPS_H
+#include FT_INTERNAL_OBJECTS_H
+#include FT_INTERNAL_DEBUG_H
+#include FT_ERRORS_H
 
 #include <string.h>         /* memcmp() */
 
 
-#define  FTC_SBITSET_ELEMENT_COUNT  16
+#define FTC_SBITSET_ELEMENT_COUNT  16
 
 
   typedef struct  FTC_SBitSetRec_

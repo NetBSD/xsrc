@@ -1,5 +1,5 @@
 /*
- * $TOG: MITMisc.c /main/7 1998/02/06 14:51:08 kaleb $
+ * $Xorg: MITMisc.c,v 1.3 2000/08/17 19:45:51 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 

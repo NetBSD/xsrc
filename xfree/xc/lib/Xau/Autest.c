@@ -1,4 +1,4 @@
-/* $TOG: Autest.c /main/5 1998/02/06 14:15:03 kaleb $ */
+/* $Xorg: Autest.c,v 1.3 2000/08/17 19:45:29 cpqbld Exp $ */
 
 /*
 

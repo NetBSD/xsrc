@@ -19,21 +19,11 @@
 /***************************************************************************/
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "ahhint.h"
 #include "ahglyph.h"
 #include "ahangles.h"
-
-#else
-
-#include <autohint/ahhint.h>
-#include <autohint/ahglyph.h>
-#include <autohint/ahangles.h>
-
-#endif
-
-#include <freetype/ftoutln.h>
+#include FT_OUTLINE_H
 
 
 #define FACE_GLOBALS( face )  ((AH_Face_Globals*)(face)->autohint.data)
@@ -48,10 +38,6 @@
   /****                                                                 ****/
   /*************************************************************************/
   /*************************************************************************/
-
-
-  static int  disable_horz_edges = 0;
-  static int  disable_vert_edges = 0;
 
 
   /* snap a given width in scaled coordinates to one of the */
@@ -224,10 +210,10 @@
       int       has_serifs = 0;
 
 
-      if ( disable_vert_edges && !dimension )
+      if ( hinter->disable_vert_edges && !dimension )
         goto Next_Dimension;
 
-      if ( disable_horz_edges && dimension )
+      if ( hinter->disable_horz_edges && dimension )
         goto Next_Dimension;
 
       /* we begin by aligning all stems relative to the blue zone */
@@ -391,11 +377,11 @@
 
   FT_LOCAL_DEF
   void  ah_hinter_hint_edges( AH_Hinter*  hinter,
-                              int         no_horz_edges,
-                              int         no_vert_edges )
+                              FT_Bool     no_horz_edges,
+                              FT_Bool     no_vert_edges )
   {
-    disable_horz_edges = no_horz_edges;
-    disable_vert_edges = no_vert_edges;
+    hinter->disable_horz_edges = no_horz_edges;
+    hinter->disable_vert_edges = no_vert_edges;
 
     /* AH_Interpolate_Blue_Edges( hinter ); -- doesn't seem to help      */
     /* reduce the problem of the disappearing eye in the `e' of Times... */
@@ -1020,14 +1006,15 @@
                             FT_UInt     load_flags,
                             FT_UInt     depth )
   {
-    FT_Face           face    = hinter->face;
-    FT_GlyphSlot      slot    = face->glyph;
-    FT_Fixed          x_scale = face->size->metrics.x_scale;
-    FT_Fixed          y_scale = face->size->metrics.y_scale;
+    FT_Face           face     = hinter->face;
+    FT_GlyphSlot      slot     = face->glyph;
+    FT_Slot_Internal  internal = slot->internal;
+    FT_Fixed          x_scale  = face->size->metrics.x_scale;
+    FT_Fixed          y_scale  = face->size->metrics.y_scale;
     FT_Glyph_Metrics  metrics;  /* temporary metrics */
     FT_Error          error;
-    AH_Outline*       outline = hinter->glyph;
-    AH_Loader*        gloader = hinter->loader;
+    AH_Outline*       outline  = hinter->glyph;
+    AH_Loader*        gloader  = hinter->loader;
     FT_Bool           no_horz_hints =
                         ( load_flags & AH_HINT_NO_HORZ_EDGES ) != 0;
     FT_Bool           no_vert_hints =
@@ -1038,6 +1025,21 @@
     error = FT_Load_Glyph( face, glyph_index, load_flags );
     if ( error )
       goto Exit;
+
+    /* Set `hinter->transformed' after loading with FT_LOAD_NO_RECURSE. */
+    hinter->transformed = internal->glyph_transformed;
+
+    if ( hinter->transformed )
+    {
+      FT_Matrix  imatrix;
+
+      imatrix              = internal->glyph_matrix;
+      hinter->trans_delta  = internal->glyph_delta;
+      hinter->trans_matrix = imatrix;
+
+      FT_Matrix_Invert( &imatrix );
+      FT_Vector_Transform( &hinter->trans_delta, &imatrix );
+    }
 
     /* save current glyph metrics */
     metrics = slot->metrics;
@@ -1348,9 +1350,11 @@
         error = ah_hinter_new_face_globals( hinter, face, 0 );
         if ( error )
           goto Exit;
+
       }
       hinter->globals = FACE_GLOBALS( face );
       face_globals    = FACE_GLOBALS( face );
+
     }
 
     /* now, we must check the current character pixel size to see if we */
@@ -1359,29 +1363,10 @@
          face_globals->y_scale != y_scale )
       ah_hinter_scale_globals( hinter, x_scale, y_scale );
 
-    load_flags |= FT_LOAD_NO_SCALE | FT_LOAD_NO_RECURSE;
-
     ah_loader_rewind( hinter->loader );
 
-    {
-      FT_Slot_Internal  internal = slot->internal;
-      
+    load_flags |= FT_LOAD_NO_SCALE | FT_LOAD_NO_RECURSE;
 
-      hinter->transformed = internal->glyph_transformed;
-      if ( hinter->transformed )
-      {
-        FT_Matrix  imatrix;
-        
-
-        imatrix              = internal->glyph_matrix;
-        hinter->trans_delta  = internal->glyph_delta;
-        hinter->trans_matrix = imatrix;
-
-        FT_Matrix_Invert( &imatrix );
-        FT_Vector_Transform( &hinter->trans_delta, &imatrix );
-      }
-    }
-    
     error = ah_hinter_load( hinter, glyph_index, load_flags, 0 );
 
   Exit:

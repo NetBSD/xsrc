@@ -15,18 +15,22 @@
 /*                                                                         */
 /***************************************************************************/
 
-#ifndef FTGRAYS_H
-#define FTGRAYS_H
+
+#ifndef __FTGRAYS_H__
+#define __FTGRAYS_H__
 
 #ifdef __cplusplus
   extern "C" {
 #endif
 
+
 #ifdef _STANDALONE_
 #include "ftimage.h"
 #else
-#include <freetype/ftimage.h>
+#include <ft2build.h>
+#include FT_IMAGE_H
 #endif
+
 
   /*************************************************************************/
   /*                                                                       */
@@ -42,11 +46,12 @@
 
   FT_EXPORT_VAR( const FT_Raster_Funcs )  ft_grays_raster;
 
+
 #ifdef __cplusplus
   }
 #endif
 
-#endif /* FTGRAYS_H */
+#endif /* __FTGRAYS_H__ */
 
 
 /* END */

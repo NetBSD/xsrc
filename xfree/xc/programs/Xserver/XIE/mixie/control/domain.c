@@ -1,4 +1,4 @@
-/* $TOG: domain.c /main/6 1998/02/09 16:12:14 kaleb $ */
+/* $Xorg: domain.c,v 1.3 2000/08/17 19:47:35 cpqbld Exp $ */
 /**** module domain.c ****/
 /******************************************************************************
 Copyright 1993, 1994, 1998  The Open Group
@@ -67,7 +67,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. July, 1993
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/control/domain.c,v 1.4 2001/01/17 22:13:00 dawes Exp $ */
 
 #define _XIEC_DOMAIN
 

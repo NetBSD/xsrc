@@ -1,5 +1,5 @@
 /*
- * $TOG: extutil.c /main/20 1998/02/06 14:50:55 kaleb $
+ * $Xorg: extutil.c,v 1.3 2000/08/17 19:45:53 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 

@@ -1,5 +1,5 @@
 /*
-$TOG: XRecord.c /main/7 1998/05/01 10:37:53 kaleb $
+$Xorg: XRecord.c,v 1.3 2000/08/17 19:46:23 cpqbld Exp $
 
 XRecord.c - client-side library for RECORD extension
 

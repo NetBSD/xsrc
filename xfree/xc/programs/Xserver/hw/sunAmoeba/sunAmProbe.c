@@ -1,4 +1,4 @@
-/* $TOG: sunAmProbe.c /main/3 1998/02/10 13:17:55 kaleb $ */
+/* $Xorg: sunAmProbe.c,v 1.3 2000/08/17 19:48:34 cpqbld Exp $ */
 /*-
  * sunAmProbe.c:
  *	Amoeba implementation of functions to probe and map in the

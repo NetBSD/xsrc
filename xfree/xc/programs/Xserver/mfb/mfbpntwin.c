@@ -1,4 +1,4 @@
-/* $TOG: mfbpntwin.c /main/20 1998/02/09 14:39:55 kaleb $ */
+/* $Xorg: mfbpntwin.c,v 1.3 2000/08/17 19:53:35 cpqbld Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 

@@ -1,4 +1,4 @@
-.\" $TOG: xrx.man /main/6 1998/02/10 18:30:01 kaleb $
+.\" $Xorg: xrx.man,v 1.3 2000/08/17 19:54:57 cpqbld Exp $
 .\" Copyright 1996, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -19,7 +19,10 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\" 
-.TH XRX 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/xrx/helper/xrx.man,v 1.6 2001/01/27 18:21:22 dawes Exp $
+.\"
+.TH XRX 1 __xorgversion__
 .SH NAME
 xrx - RX helper program
 .SH SYNOPSIS

@@ -1,5 +1,5 @@
 /*
- * $TOG: widgets.c /main/23 1998/02/09 13:42:57 kaleb $
+ * $Xorg: widgets.c,v 1.3 2000/08/17 19:53:52 cpqbld Exp $
  *
 Copyright 1989, 1998  The Open Group
 
@@ -19,7 +19,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  */
-/* $XFree86: xc/programs/editres/widgets.c,v 1.3 1999/02/01 12:52:27 dawes Exp $ */
+/* $XFree86: xc/programs/editres/widgets.c,v 1.5 2001/01/17 23:44:52 dawes Exp $ */
 
 /*
  * Code for creating all widgets used by EditRes.

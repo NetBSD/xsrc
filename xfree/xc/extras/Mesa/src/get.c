@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.4.2
  * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -730,6 +730,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_RENDER_MODE:
 	 *params = ENUM_TO_BOOL(ctx->RenderMode);
 	 break;
+      case GL_RESCALE_NORMAL:
+         *params = ctx->Transform.RescaleNormals;
+         break;
       case GL_RGBA_MODE:
          *params = ctx->Visual->RGBAflag;
 	 break;
@@ -1967,6 +1970,9 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_RENDER_MODE:
 	 *params = ENUM_TO_DOUBLE(ctx->RenderMode);
 	 break;
+      case GL_RESCALE_NORMAL:
+         *params = (GLdouble) ctx->Transform.RescaleNormals;
+         break;
       case GL_RGBA_MODE:
 	 *params = (GLdouble) ctx->Visual->RGBAflag;
 	 break;
@@ -3203,6 +3209,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_RENDER_MODE:
 	 *params = ENUM_TO_FLOAT(ctx->RenderMode);
 	 break;
+      case GL_RESCALE_NORMAL:
+         *params = (GLfloat) ctx->Transform.RescaleNormals;
+         break;
       case GL_RGBA_MODE:
 	 *params = (GLfloat) ctx->Visual->RGBAflag;
 	 break;
@@ -4414,6 +4423,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_RENDER_MODE:
 	 *params = (GLint) ctx->RenderMode;
 	 break;
+      case GL_RESCALE_NORMAL:
+         *params = (GLint) ctx->Transform.RescaleNormals;
+         break;
       case GL_RGBA_MODE:
 	 *params = (GLint) ctx->Visual->RGBAflag;
 	 break;
@@ -5082,7 +5094,7 @@ _mesa_GetString( GLenum name )
    GET_CURRENT_CONTEXT(ctx);
    static const char *vendor = "Brian Paul";
    static const char *renderer = "Mesa";
-   static const char *version = "1.2 Mesa 3.4";
+   static const char *version = "1.2 Mesa 3.4.2";
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glGetString", 0);
 

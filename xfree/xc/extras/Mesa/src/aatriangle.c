@@ -142,25 +142,26 @@ static GLfloat
 compute_coveragef(const GLfloat v0[3], const GLfloat v1[3],
                   const GLfloat v2[3], GLint winx, GLint winy)
 {
+#define B 0.125
    static const GLfloat samples[16][2] = {
       /* start with the four corners */
-      { 0.00, 0.00 },
-      { 0.75, 0.00 },
-      { 0.00, 0.75 },
-      { 0.75, 0.75 },
+      { 0.00+B, 0.00+B },
+      { 0.75+B, 0.00+B },
+      { 0.00+B, 0.75+B },
+      { 0.75+B, 0.75+B },
       /* continue with interior samples */
-      { 0.25, 0.00 },
-      { 0.50, 0.00 },
-      { 0.00, 0.25 },
-      { 0.25, 0.25 },
-      { 0.50, 0.25 },
-      { 0.75, 0.25 },
-      { 0.00, 0.50 },
-      { 0.25, 0.50 },
-      { 0.50, 0.50 },
-      { 0.75, 0.50 },
-      { 0.25, 0.75 },
-      { 0.50, 0.75 }
+      { 0.25+B, 0.00+B },
+      { 0.50+B, 0.00+B },
+      { 0.00+B, 0.25+B },
+      { 0.25+B, 0.25+B },
+      { 0.50+B, 0.25+B },
+      { 0.75+B, 0.25+B },
+      { 0.00+B, 0.50+B },
+      { 0.25+B, 0.50+B },
+      { 0.50+B, 0.50+B },
+      { 0.75+B, 0.50+B },
+      { 0.25+B, 0.75+B },
+      { 0.50+B, 0.75+B }
    };
    const GLfloat x = (GLfloat) winx;
    const GLfloat y = (GLfloat) winy;
@@ -230,23 +231,23 @@ compute_coveragei(const GLfloat v0[3], const GLfloat v1[3],
     */
    static const GLfloat samples[15][2] = {
       /* start with the four corners */
-      { 0.00, 0.00 },
-      { 0.75, 0.00 },
-      { 0.00, 0.75 },
-      { 0.75, 0.75 },
+      { 0.00+B, 0.00+B },
+      { 0.75+B, 0.00+B },
+      { 0.00+B, 0.75+B },
+      { 0.75+B, 0.75+B },
       /* continue with interior samples */
-      { 0.25, 0.00 },
-      { 0.50, 0.00 },
-      { 0.00, 0.25 },
-      { 0.25, 0.25 },
-      { 0.50, 0.25 },
-      { 0.75, 0.25 },
-      { 0.00, 0.50 },
-      { 0.25, 0.50 },
+      { 0.25+B, 0.00+B },
+      { 0.50+B, 0.00+B },
+      { 0.00+B, 0.25+B },
+      { 0.25+B, 0.25+B },
+      { 0.50+B, 0.25+B },
+      { 0.75+B, 0.25+B },
+      { 0.00+B, 0.50+B },
+      { 0.25+B, 0.50+B },
       /*{ 0.50, 0.50 },*/
-      { 0.75, 0.50 },
-      { 0.25, 0.75 },
-      { 0.50, 0.75 }
+      { 0.75+B, 0.50+B },
+      { 0.25+B, 0.75+B },
+      { 0.50+B, 0.75+B }
    };
    const GLfloat x = (GLfloat) winx;
    const GLfloat y = (GLfloat) winy;

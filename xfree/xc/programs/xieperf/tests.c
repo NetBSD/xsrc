@@ -1,4 +1,4 @@
-/* $TOG: tests.c /main/15 1998/02/09 14:01:42 kaleb $ */
+/* $Xorg: tests.c,v 1.3 2000/08/17 19:54:27 cpqbld Exp $ */
 
 /**** module tests.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc.
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/tests.c,v 1.4 2001/01/17 23:45:39 dawes Exp $ */
 
 #include <stdio.h> 	/* for stderr */
 #include "xieperf.h"

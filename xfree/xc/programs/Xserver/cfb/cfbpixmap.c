@@ -1,4 +1,4 @@
-/* $TOG: cfbpixmap.c /main/34 1998/02/09 14:06:38 kaleb $ */
+/* $Xorg: cfbpixmap.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbpixmap.c,v 1.4 2001/01/17 22:36:36 dawes Exp $ */
 /* pixmap management
    written by drewry, september 1986
 

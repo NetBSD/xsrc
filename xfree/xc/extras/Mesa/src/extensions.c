@@ -2,19 +2,19 @@
 /*
  * Mesa 3-D graphics library
  * Version:  3.4
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -42,7 +42,7 @@ struct extension {
    struct extension *next, *prev;
    GLint enabled;
    char name[MAX_EXT_NAMELEN+1];
-   void (*notify)( GLcontext *, GLboolean ); 
+   void (*notify)( GLcontext *, GLboolean );
 };
 
 
@@ -52,7 +52,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_ON,     "GL_ARB_multitexture" },
    { DEFAULT_OFF,    "GL_ARB_texture_compression" },
    { DEFAULT_OFF,    "GL_ARB_texture_cube_map" },  /* in progress */
-   { ALWAYS_ENABLED, "GL_ARB_tranpose_matrix" },
+   { ALWAYS_ENABLED, "GL_ARB_transpose_matrix" },
    { ALWAYS_ENABLED, "GL_EXT_abgr" },
    { DEFAULT_ON,     "GL_EXT_blend_color" },
    { DEFAULT_ON,     "GL_EXT_blend_func_separate" },
@@ -75,6 +75,7 @@ static struct { int enabled; const char *name; } default_extensions[] = {
    { DEFAULT_OFF,    "GL_EXT_texture_env" },
    { DEFAULT_ON,     "GL_EXT_texture_env_add" },
    { DEFAULT_OFF,    "GL_EXT_texture_env_combine" },
+   { DEFAULT_OFF,    "GL_EXT_texture_env_dot3" },
    { ALWAYS_ENABLED, "GL_EXT_texture_object" },
    { DEFAULT_ON,     "GL_EXT_texture_lod_bias" },
    { ALWAYS_ENABLED, "GL_EXT_vertex_array" },
@@ -104,6 +105,7 @@ update_extension_flags( GLcontext *ctx )
    /* Update flags */
    ctx->Extensions.HaveTextureEnvAdd = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_add");
    ctx->Extensions.HaveTextureEnvCombine = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_combine");
+   ctx->Extensions.HaveTextureEnvDot3 = gl_extension_is_enabled(ctx, "GL_EXT_texture_env_dot3");
    ctx->Extensions.HaveTextureLodBias = gl_extension_is_enabled(ctx, "GL_EXT_texture_lod_bias");
    ctx->Extensions.HaveHpOcclusionTest = gl_extension_is_enabled(ctx, "GL_HP_occlusion_test");
    ctx->Extensions.HaveTextureCubeMap = gl_extension_is_enabled(ctx, "GL_ARB_texture_cube_map");
@@ -115,14 +117,14 @@ update_extension_flags( GLcontext *ctx )
 
 
 
-int gl_extensions_add( GLcontext *ctx, 
-		       int state, 
-		       const char *name, 
+int gl_extensions_add( GLcontext *ctx,
+		       int state,
+		       const char *name,
 		       void (*notify)(void) )
 {
    (void) notify;
 
-   if (ctx->Extensions.ext_string == 0) 
+   if (ctx->Extensions.ext_string == 0)
    {
       struct extension *t = MALLOC_STRUCT(extension);
       t->enabled = state;
@@ -142,27 +144,27 @@ int gl_extensions_add( GLcontext *ctx,
 static int set_extension( GLcontext *ctx, const char *name, GLint state )
 {
    struct extension *i;
-   foreach( i, ctx->Extensions.ext_list ) 
-      if (strncmp(i->name, name, MAX_EXT_NAMELEN) == 0) 
+   foreach( i, ctx->Extensions.ext_list )
+      if (strncmp(i->name, name, MAX_EXT_NAMELEN) == 0)
 	 break;
 
    if (i == ctx->Extensions.ext_list)
       return 1;
 
    if (!(i->enabled & ALWAYS_ENABLED)) {
-      if (i->notify) i->notify( ctx, state );      
+      if (i->notify) i->notify( ctx, state );
       i->enabled = state;
    }
 
    update_extension_flags(ctx);
 
    return 0;
-}   
+}
 
 
 int gl_extensions_enable( GLcontext *ctx, const char *name )
 {
-   if (ctx->Extensions.ext_string == 0) 
+   if (ctx->Extensions.ext_string == 0)
       return set_extension( ctx, name, 1 );
    return 1;
 }
@@ -170,11 +172,11 @@ int gl_extensions_enable( GLcontext *ctx, const char *name )
 
 int gl_extensions_disable( GLcontext *ctx, const char *name )
 {
-   if (ctx->Extensions.ext_string == 0) 
+   if (ctx->Extensions.ext_string == 0)
       return set_extension( ctx, name, 0 );
    return 1;
 }
-      
+
 
 /*
  * Test if the named extension is enabled in this context.
@@ -208,10 +210,10 @@ void gl_extensions_dtr( GLcontext *ctx )
 	 remove_from_list( i );
 	 FREE( i );
       }
-   
+
       FREE(ctx->Extensions.ext_list);
       ctx->Extensions.ext_list = 0;
-   }      
+   }
 }
 
 
@@ -224,7 +226,7 @@ void gl_extensions_ctr( GLcontext *ctx )
    make_empty_list( ctx->Extensions.ext_list );
 
    for (i = 0 ; i < Elements(default_extensions) ; i++) {
-      gl_extensions_add( ctx, 
+      gl_extensions_add( ctx,
 			 default_extensions[i].enabled,
 			 default_extensions[i].name,
 			 0 );
@@ -235,22 +237,22 @@ void gl_extensions_ctr( GLcontext *ctx )
 
 const char *gl_extensions_get_string( GLcontext *ctx )
 {
-   if (ctx->Extensions.ext_string == 0) 
+   if (ctx->Extensions.ext_string == 0)
    {
       struct extension *i;
       char *str;
       GLuint len = 0;
-      foreach (i, ctx->Extensions.ext_list) 
+      foreach (i, ctx->Extensions.ext_list)
 	 if (i->enabled)
 	    len += strlen(i->name) + 1;
-      
-      if (len == 0) 
+
+      if (len == 0)
 	 return "";
 
       str = (char *)MALLOC(len * sizeof(char));
       ctx->Extensions.ext_string = str;
 
-      foreach (i, ctx->Extensions.ext_list) 
+      foreach (i, ctx->Extensions.ext_list)
 	 if (i->enabled) {
 	    strcpy(str, i->name);
 	    str += strlen(str);
@@ -259,6 +261,6 @@ const char *gl_extensions_get_string( GLcontext *ctx )
 
       *(str-1) = 0;
    }
-      
+
    return ctx->Extensions.ext_string;
 }

@@ -1,7 +1,7 @@
 /*
  * mfb copy area
  */
-/* $XFree86: xc/programs/Xserver/mfb/mfbblt.c,v 3.0 1994/08/12 14:03:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbblt.c,v 3.2 2001/01/17 22:37:02 dawes Exp $ */
 
 /*
 
@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 Author: Keith Packard
 
 */
-/* $TOG: mfbblt.c /main/12 1998/02/09 14:38:17 kaleb $ */
+/* $Xorg: mfbblt.c,v 1.3 2000/08/17 19:53:34 cpqbld Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"

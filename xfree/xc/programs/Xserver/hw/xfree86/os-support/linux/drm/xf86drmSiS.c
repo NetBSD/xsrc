@@ -1,14 +1,12 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmSiS.c,v 1.2 2000/10/10 16:38:43 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/xf86drmSiS.c,v 1.6.2.1 2001/05/22 21:25:46 dawes Exp $ */
 
 #ifdef XFree86Server
 # include "xf86.h"
 # include "xf86_OSproc.h"
 # include "xf86_ansic.h"
-# include "xf86Priv.h"
 # define _DRM_MALLOC xalloc
 # define _DRM_FREE   xfree
 # ifndef XFree86LOADER
-#  include <sys/stat.h>
 #  include <sys/mman.h>
 # endif
 #else
@@ -21,7 +19,6 @@
 # include <errno.h>
 # include <signal.h>
 # include <sys/types.h>
-# include <sys/stat.h>
 # include <sys/ioctl.h>
 # include <sys/mman.h>
 # include <sys/time.h>
@@ -46,7 +43,9 @@ extern int xf86RemoveSIGIOHandler(int fd);
 #include <sys/sysmacros.h>	/* for makedev() */
 #endif
 #include "xf86drm.h"
+#define CONFIG_DRM_SIS
 #include "drm.h"
+#undef CONFIG_DRM_SIS
 
 Bool drmSiSAgpInit(int driSubFD, int offset, int size)
 {

@@ -48,7 +48,7 @@ SOFTWARE.
  *
  */
 
-/* $TOG: ext_device.c /main/4 1998/02/10 12:44:58 kaleb $ */
+/* $Xorg: ext_device.c,v 1.3 2000/08/17 19:48:20 cpqbld Exp $ */
 
 #ifdef XINPUT
 

@@ -1,4 +1,4 @@
-/* $TOG: pcfwrite.c /main/8 1998/05/01 16:42:26 kaleb $ */
+/* $Xorg: pcfwrite.c,v 1.3 2000/08/17 19:46:35 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/pcfwrite.c,v 1.2 1999/07/17 05:30:32 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/pcfwrite.c,v 1.6 2001/04/05 17:42:27 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -36,7 +36,7 @@ from The Open Group.
 
 /* Write PCF font files */
 
-static int  current_position;
+static CARD32  current_position;
 
 static int
 pcfWrite(FontFilePtr file, char *b, int c)
@@ -216,7 +216,7 @@ pcfWriteFont(FontPtr pFont, FontFilePtr file)
     int         prop_pad = 0;
     char       *atom_name;
     int         glyph;
-    int         offset;
+    CARD32      offset;
 
     bitmapFont = (BitmapFontPtr) pFont->fontPrivate;
     if (bitmapFont->bitmapExtra) {
@@ -349,7 +349,7 @@ pcfWriteFont(FontPtr pFont, FontFilePtr file)
 	    cur_table++, table++) {
 	if (current_position > table->offset) {
 	    printf("can't go backwards... %d > %d\n",
-		   current_position, table->offset);
+		   (int)current_position, (int)table->offset);
 	    return BadFontName;
 	}
 	while (current_position < table->offset)

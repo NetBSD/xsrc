@@ -1,4 +1,4 @@
-/* $TOG: XpNotifyPdm.c /main/5 1997/07/24 15:47:13 kaleb $ */
+/* $Xorg: XpNotifyPdm.c,v 1.4 2000/08/17 19:46:07 cpqbld Exp $ */
 /******************************************************************************
  ******************************************************************************
  **
@@ -131,16 +131,16 @@ _XpGetSelectionServer (
 	    /*
 	     * remove ".scr" portion from "host:disp.scr" strings.
 	     */
-	    if ( tstrptr = strchr( tstr1, ':' ) )
-		if ( tstrptr = strchr( tstrptr, '.' ) )
+	    if (( tstrptr = strchr( tstr1, ':' ) ))
+		if (( tstrptr = strchr( tstrptr, '.' ) ))
 		    *tstrptr = '\0';
 
-	    if ( tstrptr = strchr( tstr2, ':' ) )
-		if ( tstrptr = strchr( tstrptr, '.' ) )
+	    if (( tstrptr = strchr( tstr2, ':' ) ))
+		if (( tstrptr = strchr( tstrptr, '.' ) ))
 		    *tstrptr = '\0';
 
-	    if ( tstrptr = strchr( tstr3, ':' ) )
-		if ( tstrptr = strchr( tstrptr, '.' ) )
+	    if (( tstrptr = strchr( tstr3, ':' ) ))
+		if (( tstrptr = strchr( tstrptr, '.' ) ))
 		    *tstrptr = '\0';
 
 	    if ( !strcmp( tstr1, tstr2 ) ) {

@@ -12,7 +12,7 @@ Matthieu Herrb
 <Date>Last modified on: 3 March 2001
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.59 2000/12/12 18:54:29 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.60.2.1 2001/06/01 18:09:48 dawes Exp $
 </ident>
 <toc>
 
@@ -56,8 +56,10 @@ this file and we'll revise it.
 
 <sect>New OS dependent features
 <p>
+<![ %haverelnotes [
 See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
 non-OS dependent new features in XFree86 &relvers;.
+]]>
 
 <sect1>New OS dependent features in 4.0.2
 <p>

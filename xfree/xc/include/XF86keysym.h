@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/XF86keysym.h,v 1.5 2000/07/07 00:44:58 dawes Exp $ */
+/* $XFree86: xc/include/XF86keysym.h,v 1.11 2001/04/06 02:16:21 dawes Exp $ */
 
 /*
  * XFree86 vendor specific keysyms.
@@ -57,12 +57,12 @@
 #define XF86XK_Forward		0x1008FF27
 #define XF86XK_Stop		0x1008FF28
 #define XF86XK_Refresh		0x1008FF29
-#define XF86XK_PowerOff		0x1008FF1A
-#define XF86XK_WakeUp		0x1008FF1B
-
-/* Note, 0x1008FF2C - 0x1008FF2F are free and should be used next */
-
-/* Some more ... */
+#define XF86XK_PowerOff		0x1008FF2A
+#define XF86XK_WakeUp		0x1008FF2B
+#define XF86XK_Eject            0x1008FF2C
+#define XF86XK_ScreenSaver      0x1008FF2D
+#define XF86XK_WWW              0x1008FF2E
+#define XF86XK_Sleep            0x1008FF2F
 #define XF86XK_Favorites	0x1008FF30
 #define XF86XK_AudioPause	0x1008FF31
 #define XF86XK_AudioMedia	0x1008FF32
@@ -70,5 +70,27 @@
 #define XF86XK_VendorHome	0x1008FF34
 #define XF86XK_LightBulb	0x1008FF35
 #define XF86XK_Shop		0x1008FF36
+#define XF86XK_History		0x1008FF37
+#define XF86XK_OpenURL		0x1008FF38
+#define XF86XK_AddFavorite	0x1008FF39
+#define XF86XK_HotLinks		0x1008FF3A
+#define XF86XK_BrightnessAdjust	0x1008FF3B
+/* Allocate 0x1008FF3C-F next */
+#define XF86XK_Launch0		0x1008FF40
+#define XF86XK_Launch1		0x1008FF41
+#define XF86XK_Launch2		0x1008FF42
+#define XF86XK_Launch3		0x1008FF43
+#define XF86XK_Launch4		0x1008FF44
+#define XF86XK_Launch5		0x1008FF45
+#define XF86XK_Launch6		0x1008FF46
+#define XF86XK_Launch7		0x1008FF47
+#define XF86XK_Launch8		0x1008FF48
+#define XF86XK_Launch9		0x1008FF49
+#define XF86XK_LaunchA		0x1008FF4A
+#define XF86XK_LaunchB		0x1008FF4B
+#define XF86XK_LaunchC		0x1008FF4C
+#define XF86XK_LaunchD		0x1008FF4D
+#define XF86XK_LaunchE		0x1008FF4E
+#define XF86XK_LaunchF		0x1008FF4F
 
 

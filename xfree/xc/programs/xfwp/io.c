@@ -1,4 +1,4 @@
-/* $TOG: io.c /main/13 1998/01/11 08:25:36 kaleb $ */
+/* $Xorg: io.c,v 1.3 2000/08/17 19:54:23 cpqbld Exp $ */
 /*
 
 Copyright "1986-1997 The Open Group All Rights Reserved
@@ -32,7 +32,7 @@ authorization from The Open Group.
 X Window System is a trademark of The Open Group.
 
 */
-/* $XFree86: xc/programs/xfwp/io.c,v 1.7 2000/05/11 18:14:44 tsi Exp $ */
+/* $XFree86: xc/programs/xfwp/io.c,v 1.9 2001/01/17 23:45:34 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>

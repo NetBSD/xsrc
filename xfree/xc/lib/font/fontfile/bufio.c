@@ -1,4 +1,4 @@
-/* $TOG: bufio.c /main/12 1998/05/07 13:44:12 kaleb $ */
+/* $Xorg: bufio.c,v 1.3 2000/08/17 19:46:37 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/bufio.c,v 3.4 1998/12/20 11:57:15 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/bufio.c,v 3.7 2001/01/17 19:43:29 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium

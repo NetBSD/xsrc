@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigiostubs.c,v 1.1 1999/10/14 01:59:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sigiostubs.c,v 1.2 1999/10/14 04:25:01 dawes Exp $ */
 
 #ifdef XFree86Server
 # include "X.h"

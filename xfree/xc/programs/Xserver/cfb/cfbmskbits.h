@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbmskbits.h,v 3.9 2000/07/26 01:52:14 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbmskbits.h,v 3.12 2001/01/17 22:36:36 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -28,7 +28,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
 
-/* $TOG: cfbmskbits.h /main/28 1998/02/09 14:06:32 kaleb $ */
+/* $Xorg: cfbmskbits.h,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
 /* Optimizations for PSZ == 32 added by Kyle Marvin (marvin@vitec.com) */
 
 #include	"X.h"
@@ -37,7 +37,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #if defined(XFREE86) || ( defined(__OpenBSD__) && defined(__alpha__) ) \
 	|| (defined(__bsdi__))
 #include	"xf86_ansic.h"
-#define NO_COMPILER_H_EXTRAS
 #include	"compiler.h"
 #endif
 

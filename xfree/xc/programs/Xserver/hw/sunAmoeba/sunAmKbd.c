@@ -1,4 +1,4 @@
-/* $TOG: sunAmKbd.c /main/3 1998/02/10 13:17:46 kaleb $ */
+/* $Xorg: sunAmKbd.c,v 1.3 2000/08/17 19:48:34 cpqbld Exp $ */
 /*-
  * Copyright 1987 by the Regents of the University of California
  *

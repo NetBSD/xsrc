@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/main.c,v 3.30 2000/11/27 00:10:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/main.c,v 3.35 2001/04/28 20:42:17 torrey Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,6 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $Xorg: main.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
 
 /* The panoramix components contained the following notice */
 /****************************************************************
@@ -123,6 +124,7 @@ extern int screenPrivateCount;
 
 extern void InitProcVectors();
 extern void InitEvents();
+extern void CloseDownEvents(void);
 extern void DefineInitialRootWindow();
 extern Bool CreateGCperDepthArray();
 
@@ -259,6 +261,15 @@ main(argc, argv, envp)
     char	*xauthfile;
     HWEventQueueType	alwaysCheckForInput[2];
 
+    display = "0";
+
+    /* Quartz support on Mac OS X requires that the Cocoa event loop be in
+     * the main thread. This allows the X server main to be called again
+     * from another thread. */
+#if defined(__DARWIN__) && defined(DARWIN_WITH_QUARTZ)
+    DarwinHandleGUI(argc, argv, envp);
+#endif
+
     /* Notice if we're restarted.  Probably this is because we jumped through
      * an uninitialized pointer */
     if (restart)
@@ -281,7 +292,6 @@ main(argc, argv, envp)
      * can't be passed argc, argv as parameters */
     argcGlobal = argc;
     argvGlobal = argv;
-    display = "0";
     /* prep X authority file from environment; this can be overriden by a
      * command line option */
     xauthfile = getenv("XAUTHORITY");
@@ -464,9 +474,13 @@ main(argc, argv, envp)
 	    FreeScreen(screenInfo.screens[i]);
 	    screenInfo.numScreens = i;
 	}
+  	CloseDownEvents();
 	xfree(WindowTable);
+	WindowTable = NULL;
 	FreeFonts ();
+
 	xfree(serverClient->devPrivates);
+	serverClient->devPrivates = NULL;
 
 	if (dispatchException & DE_TERMINATE)
 	{
@@ -477,6 +491,7 @@ main(argc, argv, envp)
 	}
 
 	xfree(ConnectionInfo);
+	ConnectionInfo = NULL;
     }
     return(0);
 }

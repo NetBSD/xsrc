@@ -1,4 +1,4 @@
-.\" $TOG: XtStrCW.man /main/9 1997/11/04 20:36:21 kaleb $
+.\" $Xorg: XtStrCW.man,v 1.3 2000/08/17 19:42:03 cpqbld Exp $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -25,6 +25,9 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
+.\"
+.\" $XFree86: xc/doc/man/Xt/XtStrCW.man,v 1.2 2001/01/27 18:20:30 dawes Exp $
+.\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xI Intrinsics
@@ -124,7 +127,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtStringConversionWarning 3Xt "Release 6.4" "X Version 11" "XT COMPATIBILITY FUNCTIONS"
+.TH XtStringConversionWarning 3Xt __xorgversion__ "XT COMPATIBILITY FUNCTIONS"
 .SH NAME
 XtStringConversionWarning \- issue a conversion warning message
 .SH SYNTAX

@@ -1,4 +1,4 @@
-/* $TOG: clientdata.c /main/5 1998/02/06 15:11:30 kaleb $ */
+/* $Xorg: clientdata.c,v 1.3 2000/08/17 19:45:25 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/XIE/clientdata.c,v 1.4 2001/01/17 19:42:21 dawes Exp $ */
 
 #include "XIElibint.h"
 

@@ -1,4 +1,4 @@
-/* $TOG: scanfont.c /main/12 1998/05/08 08:45:46 kaleb $ */
+/* $Xorg: scanfont.c,v 1.3 2000/08/17 19:46:32 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -45,7 +45,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/scanfont.c,v 1.12 1999/05/23 06:33:32 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/scanfont.c,v 1.14 2001/01/17 19:43:23 dawes Exp $ */
 
 #ifndef FONTMODULE
 #include <string.h>

@@ -1,4 +1,4 @@
-/* $XConsortium: fservestr.h,v 1.13 95/06/09 22:16:29 gildea Exp $ */
+/* $Xorg: fservestr.h,v 1.3 2000/08/17 19:46:36 cpqbld Exp $ */
 /*
  * Copyright 1990 Network Computing Devices
  *
@@ -23,7 +23,7 @@
  *
  * Author:  	Dave Lemke, Network Computing Devices, Inc
  */
-/* $XFree86: xc/lib/font/fc/fservestr.h,v 3.1 1999/07/17 05:30:37 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fservestr.h,v 3.3 2001/01/17 19:43:29 dawes Exp $ */
 
 #ifndef _FSERVESTR_H_
 #define _FSERVESTR_H_

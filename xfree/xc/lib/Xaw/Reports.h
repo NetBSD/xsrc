@@ -1,5 +1,5 @@
 /*
- * $TOG: Reports.h /main/5 1998/02/06 12:48:45 kaleb $
+ * $Xorg: Reports.h,v 1.4 2000/08/17 19:45:36 cpqbld Exp $
  *
 Copyright 1990, 1998  The Open Group
 
@@ -22,6 +22,8 @@ in this Software without prior written authorization from The Open Group.
 
 #ifndef _Xaw_Reports_h
 #define _Xaw_Reports_h
+
+#include <X11/Intrinsic.h>
 
 /*
  * XawPannerReport - this structure is used by the reportCallback of the

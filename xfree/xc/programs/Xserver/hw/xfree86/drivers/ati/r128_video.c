@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_video.c,v 1.13 2000/12/07 15:43:44 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_video.c,v 1.18 2001/03/03 22:26:10 tsi Exp $ */
 
 #include "r128.h"
 #include "r128_reg.h"
@@ -37,7 +37,7 @@ static int  R128QueryImageAttributes(ScrnInfoPtr, int, unsigned short *,
 
 static void R128ResetVideo(ScrnInfoPtr);
 
-static void R128VideoTimerCallback(ScrnInfoPtr pScrn, Time time);
+static void R128VideoTimerCallback(ScrnInfoPtr pScrn, Time now);
 
 
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, TRUE)
@@ -253,8 +253,8 @@ RegionsEqual(RegionPtr A, RegionPtr B)
        (A->extents.y2 != B->extents.y2))
 	return FALSE;
 
-    dataA = (int*)REGION_RECTS(A);
-    dataB = (int*)REGION_RECTS(B);
+    dataA = (pointer)REGION_RECTS(A);
+    dataB = (pointer)REGION_RECTS(B);
 
     while(num--) {
 	if((dataA[0] != dataB[0]) || (dataA[1] != dataB[1]))
@@ -398,6 +398,7 @@ R128SetPortAttribute(
 	if((value < -64) || (value > 63))
 	   return BadValue;
 	pPriv->brightness = value;
+
 	OUTREG(R128_OV0_COLOUR_CNTL, (pPriv->brightness & 0x7f) |
 				     (pPriv->saturation << 8) |
 				     (pPriv->saturation << 16));
@@ -406,6 +407,7 @@ R128SetPortAttribute(
 	if((value < 0) || (value > 31))
 	   return BadValue;
 	pPriv->saturation = value;
+
 	OUTREG(R128_OV0_COLOUR_CNTL, (pPriv->brightness & 0x7f) |
 				     (pPriv->saturation << 8) |
 				     (pPriv->saturation << 16));
@@ -460,13 +462,18 @@ R128QueryBestSize(
   unsigned int *p_w, unsigned int *p_h,
   pointer data
 ){
+   if(vid_w > (drw_w << 4))
+	drw_w = vid_w >> 4;
+   if(vid_h > (drw_h << 4))
+	drw_h = vid_h >> 4;
+
   *p_w = drw_w;
   *p_h = drw_h;
 }
 
 
 static void
-R128CopyData(
+R128CopyData422(
   unsigned char *src,
   unsigned char *dst,
   int srcPitch,
@@ -483,47 +490,44 @@ R128CopyData(
 }
 
 static void
-R128CopyMungedData(
+R128CopyData420(
    unsigned char *src1,
    unsigned char *src2,
    unsigned char *src3,
    unsigned char *dst1,
+   unsigned char *dst2,
+   unsigned char *dst3,
    int srcPitch,
    int srcPitch2,
    int dstPitch,
    int h,
    int w
 ){
-   CARD32 *dst;
-   CARD8 *s1, *s2, *s3;
-   int i, j;
+   int count;
+
+   count = h;
+   while(count--) {
+	memcpy(dst1, src1, w);
+	src1 += srcPitch;
+	dst1 += dstPitch;
+   }
 
    w >>= 1;
+   h >>= 1;
+   dstPitch >>= 1;
 
-   for(j = 0; j < h; j++) {
-	dst = (CARD32*)dst1;
-	s1 = src1;  s2 = src2;  s3 = src3;
-	i = w;
-	while(i > 4) {
-	   dst[0] = s1[0] | (s1[1] << 16) | (s3[0] << 8) | (s2[0] << 24);
-	   dst[1] = s1[2] | (s1[3] << 16) | (s3[1] << 8) | (s2[1] << 24);
-	   dst[2] = s1[4] | (s1[5] << 16) | (s3[2] << 8) | (s2[2] << 24);
-	   dst[3] = s1[6] | (s1[7] << 16) | (s3[3] << 8) | (s2[3] << 24);
-	   dst += 4; s2 += 4; s3 += 4; s1 += 8;
-	   i -= 4;
-	}
-	while(i--) {
-	   dst[0] = s1[0] | (s1[1] << 16) | (s3[0] << 8) | (s2[0] << 24);
-	   dst++; s2++; s3++;
-	   s1 += 2;
-	}
+   count = h;
+   while(count--) {
+	memcpy(dst2, src2, w);
+	src2 += srcPitch2;
+	dst2 += dstPitch;
+   }
 
-	dst1 += dstPitch;
-	src1 += srcPitch;
-	if(j & 1) {
-	    src2 += srcPitch2;
-	    src3 += srcPitch2;
-	}
+   count = h;
+   while(count--) {
+	memcpy(dst3, src3, w);
+	src3 += srcPitch2;
+	dst3 += dstPitch;
    }
 }
 
@@ -570,7 +574,7 @@ R128AllocateMemory(
 }
 
 static void
-R128DisplayVideo(
+R128DisplayVideo422(
     ScrnInfoPtr pScrn,
     int id,
     int offset,
@@ -613,7 +617,6 @@ R128DisplayVideo(
 
     left = (left >> 16) & 7;
 
-
     OUTREG(R128_OV0_REG_LOAD_CNTL, 1);
     while(!(INREG(R128_OV0_REG_LOAD_CNTL) & (1 << 3)));
 
@@ -624,22 +627,102 @@ R128DisplayVideo(
     OUTREG(R128_OV0_V_INC, v_inc);
     OUTREG(R128_OV0_P1_BLANK_LINES_AT_TOP, 0x00000fff | ((src_h - 1) << 16));
     OUTREG(R128_OV0_VID_BUF_PITCH0_VALUE, pitch);
-    OUTREG(R128_OV0_P1_X_START_END, (src_w + left - 1) | (left << 16));
-    left >>= 1; src_w >>= 1;
-    OUTREG(R128_OV0_P2_X_START_END, (src_w + left - 1) | (left << 16));
-    OUTREG(R128_OV0_P3_X_START_END, (src_w + left - 1) | (left << 16));
+    OUTREG(R128_OV0_P1_X_START_END, (width - 1) | (left << 16));
+    left >>= 1; width >>= 1;
+    OUTREG(R128_OV0_P2_X_START_END, (width - 1) | (left << 16));
+    OUTREG(R128_OV0_P3_X_START_END, (width - 1) | (left << 16));
     OUTREG(R128_OV0_VID_BUF0_BASE_ADRS, offset & 0xfffffff0);
     OUTREG(R128_OV0_P1_V_ACCUM_INIT, p1_v_accum_init);
+    OUTREG(R128_OV0_P23_V_ACCUM_INIT, 0);
     OUTREG(R128_OV0_P1_H_ACCUM_INIT, p1_h_accum_init);
     OUTREG(R128_OV0_P23_H_ACCUM_INIT, p23_h_accum_init);
 
     if(id == FOURCC_UYVY)
-       OUTREG(R128_OV0_SCALE_CNTL, 0x41008C03);
+       OUTREG(R128_OV0_SCALE_CNTL, 0x41FF8C03);
     else
-       OUTREG(R128_OV0_SCALE_CNTL, 0x41008B03);
+       OUTREG(R128_OV0_SCALE_CNTL, 0x41FF8B03);
 
     OUTREG(R128_OV0_REG_LOAD_CNTL, 0);
 }
+
+static void
+R128DisplayVideo420(
+    ScrnInfoPtr pScrn,
+    short width, short height,
+    int pitch,
+    int offset1, int offset2, int offset3,
+    int left, int right, int top,
+    BoxPtr dstBox,
+    short src_w, short src_h,
+    short drw_w, short drw_h
+){
+    R128InfoPtr info = R128PTR(pScrn);
+    unsigned char *R128MMIO = info->MMIO;
+    int v_inc, h_inc, step_by, tmp, leftUV;
+    int p1_h_accum_init, p23_h_accum_init;
+    int p1_v_accum_init, p23_v_accum_init;
+
+    v_inc = (src_h << 20) / drw_h;
+    h_inc = (src_w << 12) / drw_w;
+    step_by = 1;
+
+    while(h_inc >= (2 << 12)) {
+	step_by++;
+	h_inc >>= 1;
+    }
+
+    /* keep everything in 16.16 */
+
+    offset1 += (left >> 16) & ~15;
+    offset2 += (left >> 17) & ~15;
+    offset3 += (left >> 17) & ~15;
+
+    tmp = (left & 0x0003ffff) + 0x00028000 + (h_inc << 3);
+    p1_h_accum_init = ((tmp <<  4) & 0x000f8000) |
+		      ((tmp << 12) & 0xf0000000);
+
+    tmp = ((left >> 1) & 0x0001ffff) + 0x00028000 + (h_inc << 2);
+    p23_h_accum_init = ((tmp <<  4) & 0x000f8000) |
+		       ((tmp << 12) & 0x70000000);
+
+    tmp = (top & 0x0000ffff) + 0x00018000;
+    p1_v_accum_init = ((tmp << 4) & 0x03ff8000) | 0x00000001;
+
+    tmp = ((top >> 1) & 0x0000ffff) + 0x00018000;
+    p23_v_accum_init = ((tmp << 4) & 0x01ff8000) | 0x00000001;
+
+    leftUV = (left >> 17) & 15;
+    left = (left >> 16) & 15;
+
+    OUTREG(R128_OV0_REG_LOAD_CNTL, 1);
+    while(!(INREG(R128_OV0_REG_LOAD_CNTL) & (1 << 3)));
+
+    OUTREG(R128_OV0_H_INC, h_inc | ((h_inc >> 1) << 16));
+    OUTREG(R128_OV0_STEP_BY, step_by | (step_by << 8));
+    OUTREG(R128_OV0_Y_X_START, dstBox->x1 | (dstBox->y1 << 16));
+    OUTREG(R128_OV0_Y_X_END,   dstBox->x2 | (dstBox->y2 << 16));
+    OUTREG(R128_OV0_V_INC, v_inc);
+    OUTREG(R128_OV0_P1_BLANK_LINES_AT_TOP, 0x00000fff | ((src_h - 1) << 16));
+    src_h = (src_h + 1) >> 1;
+    OUTREG(R128_OV0_P23_BLANK_LINES_AT_TOP, 0x000007ff | ((src_h - 1) << 16));
+    OUTREG(R128_OV0_VID_BUF_PITCH0_VALUE, pitch);
+    OUTREG(R128_OV0_VID_BUF_PITCH1_VALUE, pitch >> 1);
+    OUTREG(R128_OV0_P1_X_START_END, (width - 1) | (left << 16));
+    width >>= 1;
+    OUTREG(R128_OV0_P2_X_START_END, (width - 1) | (leftUV << 16));
+    OUTREG(R128_OV0_P3_X_START_END, (width - 1) | (leftUV << 16));
+    OUTREG(R128_OV0_VID_BUF0_BASE_ADRS, offset1 & 0xfffffff0);
+    OUTREG(R128_OV0_VID_BUF1_BASE_ADRS, (offset2 & 0xfffffff0) | 0x00000001);
+    OUTREG(R128_OV0_VID_BUF2_BASE_ADRS, (offset3 & 0xfffffff0) | 0x00000001);
+    OUTREG(R128_OV0_P1_V_ACCUM_INIT, p1_v_accum_init);
+    OUTREG(R128_OV0_P23_V_ACCUM_INIT, p23_v_accum_init);
+    OUTREG(R128_OV0_P1_H_ACCUM_INIT, p1_h_accum_init);
+    OUTREG(R128_OV0_P23_H_ACCUM_INIT, p23_h_accum_init);
+    OUTREG(R128_OV0_SCALE_CNTL, 0x41FF8A03);
+
+    OUTREG(R128_OV0_REG_LOAD_CNTL, 0);
+}
+
 
 
 static int
@@ -657,26 +740,27 @@ R128PutImage(
    R128InfoPtr info = R128PTR(pScrn);
    R128PortPrivPtr pPriv = (R128PortPrivPtr)data;
    INT32 xa, xb, ya, yb;
-   unsigned char *dst_start;
-   int pitch, new_size, offset, s2offset, s3offset;
+   int pitch, new_size, offset, s1offset, s2offset, s3offset;
    int srcPitch, srcPitch2, dstPitch;
+   int d1line, d2line, d3line, d1offset, d2offset, d3offset;
    int top, left, npixels, nlines, bpp;
    BoxRec dstBox;
    CARD32 tmp;
 
    /*
-    * s2offset, s3offset - byte offsets into U and V plane of the
-    *                      source where copying starts.  Y plane is
-    *                      done by editing "buf".
+    * s1offset, s2offset, s3offset - byte offsets to the Y, U and V planes
+    *                                of the source.
     *
-    * offset - byte offset to the first line of the destination.
+    * d1offset, d2offset, d3offset - byte offsets to the Y, U and V planes
+    *                                of the destination.
     *
-    * dst_start - byte address to the first displayed pel.
+    * offset - byte offset within the framebuffer to where the destination
+    *          is stored.
+    *
+    * d1line, d2line, d3line - byte offsets within the destination to the
+    *                          first displayed scanline in each plane.
     *
     */
-
-   /* make the compiler happy */
-   s2offset = s3offset = srcPitch2 = 0;
 
    if(src_w > (drw_w << 4))
 	drw_w = src_w >> 4;
@@ -708,19 +792,24 @@ R128PutImage(
    switch(id) {
    case FOURCC_YV12:
    case FOURCC_I420:
-	dstPitch = ((width << 1) + 15) & ~15;
-	new_size = ((dstPitch * height) + bpp - 1) / bpp;
 	srcPitch = (width + 3) & ~3;
-	s2offset = srcPitch * height;
 	srcPitch2 = ((width >> 1) + 3) & ~3;
+	dstPitch = (width + 31) & ~31;  /* of luma */
+	new_size = ((dstPitch * (height + (height >> 1))) + bpp - 1) / bpp;
+	s1offset = 0;
+	s2offset = srcPitch * height;
 	s3offset = (srcPitch2 * (height >> 1)) + s2offset;
 	break;
    case FOURCC_UYVY:
    case FOURCC_YUY2:
    default:
+	srcPitch = width << 1;
+	srcPitch2 = 0;
 	dstPitch = ((width << 1) + 15) & ~15;
 	new_size = ((dstPitch * height) + bpp - 1) / bpp;
-	srcPitch = (width << 1);
+	s1offset = 0;
+	s2offset = 0;
+	s3offset = 0;
 	break;
    }
 
@@ -737,37 +826,52 @@ R128PutImage(
    left = (xa >> 16) & ~1;
    npixels = ((((xb + 0xffff) >> 16) + 1) & ~1) - left;
 
-   offset = (pPriv->linear->offset * bpp) + (top * dstPitch);
+   offset = pPriv->linear->offset * bpp;
    if(pPriv->doubleBuffer)
 	offset += pPriv->currentBuffer * new_size * bpp;
-   dst_start = info->FB + offset;
 
    switch(id) {
     case FOURCC_YV12:
     case FOURCC_I420:
+	d1line = top * dstPitch;
+	d2line = (height * dstPitch) + ((top >> 1) * (dstPitch >> 1));
+	d3line = d2line + ((height >> 1) * (dstPitch >> 1));
+
 	top &= ~1;
-	dst_start += left << 1;
+
+	d1offset = (top * dstPitch) + left + offset;
+	d2offset = d2line + (left >> 1) + offset;
+	d3offset = d3line + (left >> 1) + offset;
+
+	s1offset += (top * srcPitch) + left;
 	tmp = ((top >> 1) * srcPitch2) + (left >> 1);
 	s2offset += tmp;
 	s3offset += tmp;
-	if(id == FOURCC_I420) {
+	if(id == FOURCC_YV12) {
 	   tmp = s2offset;
 	   s2offset = s3offset;
 	   s3offset = tmp;
 	}
+
 	nlines = ((((yb + 0xffff) >> 16) + 1) & ~1) - top;
-	R128CopyMungedData(buf + (top * srcPitch) + left, buf + s2offset,
-			   buf + s3offset, dst_start, srcPitch, srcPitch2,
-			   dstPitch, nlines, npixels);
+	R128CopyData420(buf + s1offset, buf + s2offset, buf + s3offset,
+			info->FB+d1offset, info->FB+d2offset, info->FB+d3offset,
+			srcPitch, srcPitch2, dstPitch, nlines, npixels);
 	break;
     case FOURCC_UYVY:
     case FOURCC_YUY2:
     default:
 	left <<= 1;
-	buf += (top * srcPitch) + left;
+	d1line = top * dstPitch;
+	d2line = 0;
+	d3line = 0;
+	d1offset = d1line + left + offset;
+	d2offset = 0;
+	d3offset = 0;
+	s1offset += (top * srcPitch) + left;
 	nlines = ((yb + 0xffff) >> 16) - top;
-	dst_start += left;
-	R128CopyData(buf, dst_start, srcPitch, dstPitch, nlines, npixels);
+	R128CopyData422(buf + s1offset, info->FB + d1offset,
+			srcPitch, dstPitch, nlines, npixels);
 	break;
     }
 
@@ -776,13 +880,27 @@ R128PutImage(
     if(!RegionsEqual(&pPriv->clip, clipBoxes)) {
 	REGION_COPY(pScreen, &pPriv->clip, clipBoxes);
 	/* draw these */
-	(*info->accel->FillSolidRects)(pScrn, pPriv->colorKey, GXcopy, ~0,
+	(*info->accel->FillSolidRects)(pScrn, pPriv->colorKey, GXcopy,
+					(CARD32)~0,
 					REGION_NUM_RECTS(clipBoxes),
 					REGION_RECTS(clipBoxes));
     }
 
-    R128DisplayVideo(pScrn, id, offset, width, height, dstPitch,
+
+    switch(id) {
+     case FOURCC_YV12:
+     case FOURCC_I420:
+	R128DisplayVideo420(pScrn, width, height, dstPitch,
+		     offset + d1line, offset + d2line, offset + d3line,
 		     xa, xb, ya, &dstBox, src_w, src_h, drw_w, drw_h);
+	break;
+     case FOURCC_UYVY:
+     case FOURCC_YUY2:
+     default:
+	R128DisplayVideo422(pScrn, id, offset + d1line, width, height, dstPitch,
+		     xa, xb, ya, &dstBox, src_w, src_h, drw_w, drw_h);
+	break;
+    }
 
     pPriv->videoStatus = CLIENT_VIDEO_ON;
 
@@ -835,21 +953,21 @@ R128QueryImageAttributes(
 }
 
 static void
-R128VideoTimerCallback(ScrnInfoPtr pScrn, Time time)
+R128VideoTimerCallback(ScrnInfoPtr pScrn, Time now)
 {
     R128InfoPtr info = R128PTR(pScrn);
     R128PortPrivPtr pPriv = info->adaptor->pPortPrivates[0].ptr;
 
     if(pPriv->videoStatus & TIMER_MASK) {
 	if(pPriv->videoStatus & OFF_TIMER) {
-	    if(pPriv->offTime < time) {
+	    if(pPriv->offTime < now) {
 		unsigned char *R128MMIO = info->MMIO;
 		OUTREG(R128_OV0_SCALE_CNTL, 0);
 		pPriv->videoStatus = FREE_TIMER;
-		pPriv->freeTime = time + FREE_DELAY;
+		pPriv->freeTime = now + FREE_DELAY;
 	    }
 	} else {  /* FREE_TIMER */
-	    if(pPriv->freeTime < time) {
+	    if(pPriv->freeTime < now) {
 		if(pPriv->linear) {
 		   xf86FreeOffscreenLinear(pPriv->linear);
 		   pPriv->linear = NULL;

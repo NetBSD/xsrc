@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.21 2001/02/23 01:19:09 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.24 2001/05/09 00:39:51 mvojkovi Exp $ */
 
 #ifndef __NV_STRUCT_H__
 #define __NV_STRUCT_H__
@@ -85,6 +85,7 @@ typedef struct {
     void                (*Restore)(ScrnInfoPtr, vgaRegPtr, NVRegPtr, Bool);
     Bool                (*ModeInit)(ScrnInfoPtr, DisplayModePtr);
     void		(*PointerMoved)(int index, int x, int y);
+    ScreenBlockHandlerProcPtr BlockHandler;
     CloseScreenProcPtr  CloseScreen;
     Bool                FBDev;
     /* Color expansion */
@@ -113,6 +114,11 @@ typedef struct {
     Bool                (*i2cInit)(ScrnInfoPtr);
     I2CBusPtr           I2C;
     xf86Int10InfoPtr    pInt;
+    void		(*VideoTimerCallback)(ScrnInfoPtr, Time);
+    XF86VideoAdaptorPtr	overlayAdaptor;
+    int			videoKey;
+    Bool		FlatPanel;
+    OptionInfoPtr	Options;
 } NVRec, *NVPtr;
 
 #define NVPTR(p) ((NVPtr)((p)->driverPrivate))

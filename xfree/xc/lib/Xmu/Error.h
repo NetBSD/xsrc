@@ -1,4 +1,4 @@
-/* $TOG: Error.h /main/6 1998/02/06 15:43:33 kaleb $ */
+/* $Xorg: Error.h,v 1.4 2000/08/17 19:46:01 cpqbld Exp $ */
 
 /*
  
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/Error.h,v 1.3 1998/08/20 13:59:35 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Error.h,v 1.5 2001/01/17 19:42:55 dawes Exp $ */
 
 /*
  * The interfaces described by this header file are for miscellaneous utilities
@@ -31,6 +31,8 @@ in this Software without prior written authorization from The Open Group.
 #ifndef _XMU_ERROR_H_
 #define _XMU_ERROR_H_
 
+#include <stdio.h>
+#include <X11/Xlib.h>
 #include <X11/Xfuncproto.h>
 
 _XFUNCPROTOBEGIN

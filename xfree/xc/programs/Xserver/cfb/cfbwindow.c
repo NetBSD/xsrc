@@ -1,4 +1,4 @@
-/* $TOG: cfbwindow.c /main/43 1998/02/09 14:08:14 kaleb $ */
+/* $Xorg: cfbwindow.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group

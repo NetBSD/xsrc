@@ -6,10 +6,10 @@
 
 <title>Release Notes for XFree86&trade; &relvers;
 <author>The XFree86 Project, Inc
-<date>16 March 2001
+<date>17 December 2000
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.58.2.1 2001/03/02 17:40:20 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTES.sgml,v 1.60.2.1 2001/06/02 16:28:25 torrey Exp $
 </ident>
 
 <abstract>
@@ -83,44 +83,6 @@ don't have enough space to cover them all here.
 <![ %updaterel [
 <sect>Summary of updates in &relvers;.
 <p>
-<itemize>
-  <item>Some temporary file-related security vulnerabilities are fixed.
-  <item>Screen corruption problems and palette saving problems with some
-	Neomagic chips are fixed.
-  <item>'XFree86 -configure' problems are fixed in some drivers (including
-	sis and i810).
-  <item>A problem with some plain S3 ViRGE cards is fixed.
-  <item>Some Xaw incompatibilities with Xaw6 are fixed.
-  <item>Some XKB files are updated.
-  <item>Some trident driver updates, including fixing acceleration for the
-	Cyber9388.
-  <item>A palette saving problem in the vgahw module is fixed.
-  <item>Support for the wsmouse protocol is added for OpenBSD/i386.
-  <item>A load problem with the sis driver module, and some depth 24
-	problems are fixed.
-  <item>Support for the "PD" variant of the ATI Rage 128 is added.
-  <item>Support for GNU Hurd is updated.
-  <item>Some TrueType font problems are fixed.
-  <item>The mga driver doesn't attempt to drive the G450 if the "mga_hal"
-	module isn't available.
-  <item>A problem with bold font simulation in xterm is fixed.
-  <item>The (DPS) stub files created by pswrap are now compatible with the
-	Adobe version.
-  <item>Some glint driver problems are fixed.
-  <item>Support for building on OpenBSD-current, and multi-thread support
-	for OpenBSD are provided.
-  <item>A problem with the ThinkingMousePS/2 protocol is fixed in the mouse
-	driver.
-  <item>Support for the Render extension with Xinerama is added.
-  <item>A DGA-related server crash is fixed.
-  <item>Some Chips &amp; Technologies driver bugs are fixed.
-  <item>Some tseng driver bugs are fixed.
-  <item>Some Alpha platform updates are included.
-  <item>Support for the GeForce3 is added to the nv driver.
-  <item>Misc build-related issues are fixed.
-  <item>Various documentation updates, including a reworked <htmlurl
-	name="XFree86(1)" url="XFree86.1.html"> manual page.
-</itemize>
 
 </sect>
 ]]>
@@ -130,9 +92,10 @@ don't have enough space to cover them all here.
 <sect1>X server
 <p>
 <itemize>
-  <item>Darwin/Mac OS X is now supported and the X server runs on PowerPC.
-	The X server for this platform is called "Xdarwin", and its
-	installation and configuration is different from the "XFree86"
+  <item>Darwin/Mac OS X is now supported on PowerPC and Intel/x86.  The X
+	server runs from the console or in cooperation with the Mac OS X
+	Aqua GUI.  The X server for this platform is called "XDarwin", and
+	its installation and configuration is different from the "XFree86"
 	server used on other platforms.  Please read the <htmlurl
 	url="Darwin.html" name="XFree86 on Darwin and Mac OS X"> document
 	for further information.
@@ -1097,11 +1060,13 @@ doesn't provide accurate information via DDC, you may want to add that
 information to <tt>XF86Config</tt>.
 
 <p>
-To allow a graceful transition for applications moving from core text 
-rendering to the Render extension, Xft can use either core fonts or 
-FreeType and the Render extension for text.  By default, Xft is configured 
-to support only core fonts, see the section on building FreeType support
-for the changes needed to add FreeType/Render fonts.
+
+To allow a graceful transition for applications moving from core text
+rendering to the Render extension, Xft can use either core fonts or FreeType
+and the Render extension for text.  By default, Xft is configured to support
+both core fonts and FreeType fonts using the supplied version of FreeType
+2.  See the section on FreeType support in Xft for instructions on
+configuring XFree86 to use an existing FreeType installation.
 
 <p>
 The Xft library uses a configuration file, <tt>XftConfig</tt>, which
@@ -1110,32 +1075,30 @@ provides a sophisticated font aliasing mechanism.  Documentation for that
 file is included in the Xft man page.
 
 </sect2>
-<sect2>Building FreeType support for Xft
+<sect2>FreeType support in Xft
 <p>
 
-XFree86 &relvers; includes sources for FreeType version 2.0.1, but they are
-not built and installed automatically.  As a result, Xft is configured to
-provide only core fonts by default.  
+XFree86 &relvers; includes sources for FreeType version 2.0.1, and, by
+default, they are built and installed automatically.
 
 <p>
-To build FreeType support for Xft, first FreeType must be built and
-installed, either from the sources included in XFree86 in 
-<tt>extras/freetype2</tt> or from another FreeType (version 2.0.1 or later)
-release.  Early FreeType version 2 releases used a different header file 
+
+If you prefer, you can configure XFree86 &relvers; to use an existing
+Freetype2 installation by telling XFree86 not to build the internal copy and
+indicating where that external version has been installed. Edit (or create)
+<tt>config/cf/host.def</tt> to include:
+
+<itemize>
+	<item><tt>#define BuildFreetype2Library NO</tt>
+	<item><tt>#define Freetype2Dir /usr/local</tt>
+</itemize>
+
+Note that XFree86 assumes you'll be using a release FreeType no older than
+version 2.0.1.  Early FreeType version 2 releases used a different header file 
 installation and aren't compatible with XFree86. Instructions for building and
 installing FreeType can be found in the <tt>INSTALL</tt> file included with
 the FreeType release.
 
-<p>
-Second, XFree86 needs to know the installed location for FreeType, usually
-<tt>/usr/local</tt>.  Edit (or create) <tt>config/cf/host.def</tt> to 
-include:
-<quote><p>
-	#define Freetype2Dir	/usr/local
-</quote>
-
-<p>
-Finally, build XFree86 with "make World" from the top.
 </sect2>
 
 <sect2>Application Support For Anti-Aliased Text
@@ -1161,8 +1124,8 @@ Xft instead:
 Xditview will use Xft instead of the core API by default.  X11perf 
 includes tests to measure the performance of text rendered in three ways, 
 anti-aliased, anti-aliased with sub-pixel sampling and regular chunky 
-text, but through the Render extension, a path which has not been 
-optimized within the X server yet.
+text, but through the Render extension, a path which is currently somewhat
+slower than core text.
 </sect2>
 
 <sect1>Other extensions

@@ -1,5 +1,5 @@
 /*
- * $XFree86$
+ * $XFree86: xc/lib/Xrender/Composite.c,v 1.2 2000/08/28 02:43:13 tsi Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *

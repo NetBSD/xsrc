@@ -1,4 +1,4 @@
-/* $TOG: fastblt.h /main/8 1998/02/09 14:37:36 kaleb $ */
+/* $Xorg: fastblt.h,v 1.3 2000/08/17 19:53:32 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/mfb/fastblt.h,v 1.4 2001/01/17 22:37:01 dawes Exp $ */
 
 /*
  * Fast bitblt macros for certain hardware.  If your machine has an addressing

@@ -1,4 +1,4 @@
-/* $TOG: WrBitF.c /main/14 1998/02/06 17:57:38 kaleb $ */
+/* $Xorg: WrBitF.c,v 1.3 2000/08/17 19:44:59 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/WrBitF.c,v 3.1 1996/04/15 11:15:50 dawes Exp $ */
+/* $XFree86: xc/lib/X11/WrBitF.c,v 3.3 2001/01/17 19:41:47 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xos.h>

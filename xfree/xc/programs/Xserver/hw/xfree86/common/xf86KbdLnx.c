@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdLnx.c,v 3.14 1998/07/25 16:55:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdLnx.c,v 3.16 2001/03/05 20:18:20 dawes Exp $ */
 /*
  * Linux version of keymapping setup. The kernel (since 0.99.14) has support
  * for fully remapping the keyboard, but there are some differences between
@@ -205,8 +205,6 @@ static KeySym linux_to_x[256] = {
 	XK_udiaeresis,	XK_yacute,	XK_thorn,	XK_ydiaeresis
 };
 
-#ifndef ASSUME_CUSTOM_KEYCODES
-
 /*
  * Maps the AT keycodes to Linux keycodes
  */
@@ -279,19 +277,16 @@ static unsigned char at2lnx[NUM_KEYCODES] =
 };
 #define NUM_AT2LNX (sizeof(at2lnx) / sizeof(at2lnx[0]))
 
-#else /* !ASSUME_CUSTOM_KEYCODES */
+#define NUM_CUSTOMKEYS	NR_KEYS
 
-#define NUM_AT2LNX	NR_KEYS
-
-u_char SpecialServerMap[NR_KEYS];
-
-#endif /* !ASSUME_CUSTOM_KEYCODES */
+u_char SpecialServerMap[NUM_CUSTOMKEYS];
 
 static void
 readKernelMapping(KeySymsPtr pKeySyms, CARD8 *pModMap)
 {
   KeySym        *k;
   int           i;
+  int           maxkey;
   static unsigned char tbl[GLYPHS_PER_KEY] =
   {
 	0,	/* unshifted */
@@ -312,20 +307,24 @@ readKernelMapping(KeySymsPtr pKeySyms, CARD8 *pModMap)
   tbl[2] = 8;	/* alt */
   tbl[3] = tbl[2] | 1;
 
-#ifndef ASSUME_CUSTOM_KEYCODES
-  for (i = 0, k = map+GLYPHS_PER_KEY; i < NUM_AT2LNX; ++i)
-#else /* !ASSUME_CUSTOM_KEYCODES */
-  for (i = 0, k = map; i < NUM_AT2LNX; ++i)
-#endif /* !ASSUME_CUSTOM_KEYCODES */
+  if (xf86Info.kbdCustomKeycodes) {
+    k = map;
+    maxkey = NUM_CUSTOMKEYS;
+  }
+  else {
+    k = map+GLYPHS_PER_KEY;
+    maxkey = NUM_AT2LNX;
+  }
+
+  for (i = 0; i < maxkey; ++i)
   {
     struct kbentry kbe;
     int j;
 
-#ifndef ASSUME_CUSTOM_KEYCODES
-    kbe.kb_index = at2lnx[i];
-#else /* !ASSUME_CUSTOM_KEYCODES */
-    kbe.kb_index = i;
-#endif /* !ASSUME_CUSTOM_KEYCODES */
+    if (xf86Info.kbdCustomKeycodes)
+      kbe.kb_index = i;
+    else
+      kbe.kb_index = at2lnx[i];
 
     for (j = 0; j < GLYPHS_PER_KEY; ++j, ++k)
     {
@@ -335,9 +334,7 @@ readKernelMapping(KeySymsPtr pKeySyms, CARD8 *pModMap)
 
       kbe.kb_table = tbl[j];
       if (
-#ifndef ASSUME_CUSTOM_KEYCODES
-	  kbe.kb_index == 0 ||
-#endif /* !ASSUME_CUSTOM_KEYCODES */
+	  (!xf86Info.kbdCustomKeycodes && kbe.kb_index == 0) ||
 	  ioctl(xf86Info.consoleFd, KDGKBENT, &kbe))
 	continue;
 
@@ -549,11 +546,14 @@ readKernelMapping(KeySymsPtr pKeySyms, CARD8 *pModMap)
     if (k[-4] == k[-2] && k[-3] == k[-1]) k[-2] = k[-1] = NoSymbol;
     if (k[-1] == k[-4] && k[-2] == k[-3] && k[-2] == NoSymbol) k[-1] =NoSymbol;
   }
-#ifdef ASSUME_CUSTOM_KEYCODES
+
+  if (!xf86Info.kbdCustomKeycodes)
+    return;
+
   /*
    * Find the Mapping for the special server functions
    */
-  for (i = 0; i < NR_KEYS; ++i) {
+  for (i = 0; i < NUM_CUSTOMKEYS; ++i) {
     struct kbentry kbe;
     int special = 0;
 
@@ -618,5 +618,4 @@ readKernelMapping(KeySymsPtr pKeySyms, CARD8 *pModMap)
       }
     SpecialServerMap[i] = special;
   }
-#endif /* ASSUME_CUSTOM_KEYCODES */
 }

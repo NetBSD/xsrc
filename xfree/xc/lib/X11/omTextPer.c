@@ -1,4 +1,4 @@
-/* $XConsortium: omTextPer.c,v 1.2 94/01/20 18:08:28 rws Exp $ */
+/* $Xorg: omTextPer.c,v 1.3 2000/08/17 19:45:22 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/omTextPer.c,v 1.4 2001/01/17 19:41:57 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XomGeneric.h"

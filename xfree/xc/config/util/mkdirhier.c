@@ -1,4 +1,4 @@
-/* $TOG: mkdirhier.c /main/3 1998/02/06 11:24:37 kaleb $ */
+/* $Xorg: mkdirhier.c,v 1.3 2000/08/17 19:41:53 cpqbld Exp $ */
 /*
 
 Copyright (C) 1996, 1998 The Open Group

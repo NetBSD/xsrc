@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/shmstr.h,v 3.0 1996/05/06 05:52:42 dawes Exp $ */
+/* $XFree86: xc/include/extensions/shmstr.h,v 3.2 2001/01/17 17:53:22 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 #ifndef _SHMSTR_H_
 #define _SHMSTR_H_
 
-/* $TOG: shmstr.h /main/11 1998/02/09 11:23:31 kaleb $ */
+/* $Xorg: shmstr.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
 
 #include "XShm.h"
 

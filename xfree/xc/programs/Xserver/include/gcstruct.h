@@ -1,4 +1,4 @@
-/* $TOG: gcstruct.h /main/19 1998/02/09 14:28:45 kaleb $ */
+/* $Xorg: gcstruct.h,v 1.3 2000/08/17 19:53:29 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -43,7 +43,7 @@ SOFTWARE.
 ******************************************************************/
 
 
-/* $XFree86: xc/programs/Xserver/include/gcstruct.h,v 1.2 1998/03/20 21:08:07 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/include/gcstruct.h,v 1.5 2001/01/17 22:36:57 dawes Exp $ */
 
 #ifndef GCSTRUCT_H
 #define GCSTRUCT_H
@@ -395,7 +395,7 @@ typedef struct _GC {
     /*
      * The following were moved here from private storage to allow device-
      * independent access to them from screen wrappers.
-     * --- 1997.11.03  Marc Aurele La France (tsi@ualberta.ca)
+     * --- 1997.11.03  Marc Aurele La France (tsi@xfree86.org)
      */
     PixmapPtr		pRotatedPixmap; /* tile/stipple rotated for alignment */
     RegionPtr		pCompositeClip;

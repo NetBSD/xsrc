@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/hash.c,v 1.12 1999/03/14 03:22:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/hash.c,v 1.18 2001/02/22 23:17:09 dawes Exp $ */
 
 /*
  *
@@ -135,48 +135,66 @@ int	handle;
 int	module;
 LOOKUP	*list ;
 {
-    LOOKUP	*l = list;
-    itemPtr	i;
-    char		*modname;
+    LOOKUP	*l = list, *exports = NULL;
+    itemPtr	i, exportsItem = NULL;
+    char	*modname;
 
     if (!list)
 	return;
-    /* Visit every symbol in the lookup table,
-     * and add it to the given namespace.
+
+    /*
+     * First look for a symbol called <name>ExportedSymbols.  If it exists,
+     * only export the symbols that are listed in that array.  Otherwise
+     * export all of the external symbols.
      */
-    while ( l->symName ) {
-	i = xf86loadermalloc( sizeof( itemRec )) ;
-	i->name = l->symName ;
-	if( strcmp(i->name,"ModuleInit") == 0
-#if defined(__powerpc__) && defined(Lynx)
-	  || strcmp(i->name,".ModuleInit") == 0
-#endif
-	  )
-	{
-		char *origname=i->name;
-		/*
-		 * special handling for symbol name "ModuleInit"
-		 */
-		modname = _LoaderHandleToCanonicalName(handle);
-		if (modname) 
-		{
-			i->name = xf86loadermalloc(strlen(modname) +
-						strlen(origname) + 1);
-			if( i->name )
-			    {
-				/* XXX Is this right for PPC? */
-				strcpy(i->name,modname);
-				strcat(i->name,origname);
-			    }
+    modname = _LoaderHandleToCanonicalName(handle);
+    if (modname) {
+	char *exportname;
+
+	exportname = xf86loadermalloc(strlen("ExportedSymbols") +
+					strlen(modname) + 1);
+	if (exportname) {
+	    sprintf(exportname, "%sExportedSymbols", modname);
+	    while (l->symName) {
+		if (strcmp(l->symName, exportname) == 0) {
+		    exports = l;
+		    ErrorF("LoaderAddSymbols: %s: %s found\n", modname,
+			   exportname);
+		    break;
 		}
-#ifdef DEBUG
-		ErrorF("Add module init function %s at %lx\n",i->name, l->offset);
-#endif
+		l++;
+	    }
 	}
-	i->address = (char *) l->offset ;
-	i->handle = handle ;
-	i->module = module ;
-	LoaderHashAdd( i );
+    }
+
+    /*
+     * Allocate the exports list item first.
+     */
+    if (exports) {
+	exportsItem = xf86loadermalloc( sizeof( itemRec )) ;
+	exportsItem->name = exports->symName ;
+	exportsItem->address = (char *) exports->offset ;
+	exportsItem->handle = handle ;
+	exportsItem->module = module ;
+	exportsItem->exports = NULL;
+	LoaderHashAdd( exportsItem );
+    }
+
+    /*
+     * Visit every symbol in the lookup table, tagging it with the
+     * reference to the export list, if present.
+     */
+    l = list;
+    while ( l->symName ) {
+	if (l != exports) {
+	    i = xf86loadermalloc( sizeof( itemRec )) ;
+	    i->name = l->symName ;
+	    i->address = (char *) l->offset ;
+	    i->handle = handle ;
+	    i->module = module ;
+	    i->exports = exportsItem;
+	    LoaderHashAdd( i );
+	}
 	l ++ ;
     }
 }

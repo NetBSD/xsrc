@@ -1,4 +1,4 @@
-.\" $TOG: XtAppCSh.man /main/11 1997/11/04 20:30:50 kaleb $
+.\" $Xorg: XtAppCSh.man,v 1.3 2000/08/17 19:41:58 cpqbld Exp $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -24,6 +24,9 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
+.\"
+.\" $XFree86: xc/doc/man/Xt/XtAppCSh.man,v 1.3 2001/02/09 03:47:49 tsi Exp $
+.\"
 .ds tk X Toolkit
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xI Intrinsics
@@ -123,12 +126,12 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAppCreateShell 3Xt "Release 6.4" "X Version 11" "XT FUNCTIONS"
+.TH XtAppCreateShell 3Xt __xorgversion__ "XT FUNCTIONS"
 .SH NAME
 XtAppCreateShell, XtVaAppCreateShell \- create top-level widget instance
 .SH SYNTAX
-Widget XtAppCreateShell(\fIapplication_name\fP, \
-\fIapplication_class\fP, \fIwidget_class\fP, \fIdisplay\fP, \
+Widget XtAppCreateShell(\fIapplication_name\fP,
+\fIapplication_class\fP, \fIwidget_class\fP, \fIdisplay\fP,
 \fIargs\fP, \fInum_args\fP)
 .br
       String \fIapplication_name\fP;
@@ -143,7 +146,7 @@ Widget XtAppCreateShell(\fIapplication_name\fP, \
 .br
       Cardinal \fInum_args\fP;
 .LP
-Widget XtVaAppCreateShell(\fIapplication_name\fP, \
+Widget XtVaAppCreateShell(\fIapplication_name\fP,
 \fIapplication_class\fP, \fIwidget_class\fP, \fIdisplay\fP, ...)
 .br
       String \fIapplication_name\fP;

@@ -1,4 +1,4 @@
-/* $XConsortium: imTrX.c /main/8 1995/11/18 16:08:29 kaleb $ */
+/* $Xorg: imTrX.c,v 1.4 2000/08/17 19:45:15 cpqbld Exp $ */
 /******************************************************************
 
            Copyright 1992 by Sun Microsystems, Inc.
@@ -105,9 +105,23 @@ _XimXFilterWaitEvent(d, w, ev, arg)
 {
     Xim		 im = (Xim)arg;
     XSpecRec	*spec = (XSpecRec *)im->private.proto.spec;
+    Bool ret;
 
     spec->ev = (XPointer)ev;
-    return _XimFilterWaitEvent(im);
+    ret = _XimFilterWaitEvent(im);
+
+    /* 
+     * If ev is a pointer to a stack variable, there could be
+     * a coredump later on if the pointer is dereferenced.
+     * Therefore, reset to NULL to force reinitialization in
+     * _XimXRead().
+     * 
+     * Keep in mind _XimXRead may be called again when the stack
+     * is very different.
+     */
+     spec->ev = (XPointer)NULL;
+
+     return ret;
 }
 
 Private Bool

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_pipeline.c,v 1.2 2000/08/25 13:42:29 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_pipeline.c,v 1.4 2001/01/08 01:07:21 martin Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -41,7 +41,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "fog.h"
 
 static struct gl_pipeline_stage r128_fast_stage = {
-   "R128 Fast Path",
+   "r128 Fast Path",
    (PIPE_OP_VERT_XFORM |
     PIPE_OP_RAST_SETUP_0 |
     PIPE_OP_RAST_SETUP_1 |
@@ -66,10 +66,10 @@ static struct gl_pipeline_stage r128_fast_stage = {
  */
 GLboolean r128DDBuildPrecalcPipeline( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT(ctx);
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    struct gl_pipeline *pipe = &ctx->CVA.pre;
 
-   if ( r128ctx->RenderIndex == 0 &&
+   if ( rmesa->RenderIndex == 0 &&
 	(ctx->Enabled & ILLEGAL_ENABLES) == 0 &&
 	(ctx->Array.Flags & (VERT_OBJ_234 |
 			     VERT_TEX0_4  |
@@ -81,15 +81,15 @@ GLboolean r128DDBuildPrecalcPipeline( GLcontext *ctx )
       pipe->new_inputs = ctx->RenderFlags & VERT_DATA;
       pipe->ops        = pipe->stages[0]->ops;
 
-      r128ctx->useFastPath = GL_TRUE;
+      rmesa->OnFastPath = GL_TRUE;
       return GL_TRUE;
    }
 
-   if ( r128ctx->useFastPath ) {
-      r128ctx->useFastPath = GL_FALSE;
+   if ( rmesa->OnFastPath ) {
+      rmesa->OnFastPath = GL_FALSE;
 
-      ctx->CVA.VB->ClipOrMask   = 0;
-      ctx->CVA.VB->ClipAndMask  = CLIP_ALL_BITS;
+      ctx->CVA.VB->ClipOrMask = 0;
+      ctx->CVA.VB->ClipAndMask = CLIP_ALL_BITS;
       ctx->Array.NewArrayState |= ctx->Array.Summary;
    }
 
@@ -123,7 +123,6 @@ static void r128DDCheckRasterSetup( GLcontext *ctx,
 }
 
 
-/* Register the pipeline with our stages included */
 GLuint r128DDRegisterPipelineStages( struct gl_pipeline_stage *out,
 				     const struct gl_pipeline_stage *in,
 				     GLuint nr )

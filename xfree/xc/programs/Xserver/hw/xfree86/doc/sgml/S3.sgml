@@ -921,7 +921,7 @@ XF86Config (see the man page on XF86Config).
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3.sgml,v 3.37.2.4 1998/02/27 02:34:38 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3.sgml,v 3.38 1999/08/23 06:38:52 dawes Exp $
 
 
 

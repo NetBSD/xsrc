@@ -1,8 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_rush.c,v 1.7 2000/02/29 03:09:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_rush.c,v 1.9.2.1 2001/05/23 20:21:52 dawes Exp $ */
 /*
  * Copyright Loïc Grenié 1999
  */
 
+#define COMPILER_H_EXTRAS
 #include "apm.h"
 #include "xaalocal.h"
 
@@ -492,8 +493,10 @@ ProcXF86RushDispatch (register ClientPtr client)
         return ProcXF86RushUnlockAllPixmaps(client);
     case X_XF86RushSetCopyMode:
         return ProcXF86RushSetCopyMode(client);
+#if 0
     case X_XF86RushSetPixelStride:
         return ProcXF86RushSetPixelStride(client);
+#endif
     case X_XF86RushOverlayPixmap:
 	return ProcXF86RushOverlayPixmap(client);
     case X_XF86RushStatusRegOffset:

@@ -45,18 +45,17 @@
 #ifndef __FTCCHUNK_H__
 #define __FTCCHUNK_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_CACHE_H
-#include   FT_CACHE_MANAGER_H
+
+#include <ft2build.h>
+#include FT_CACHE_H
+#include FT_CACHE_MANAGER_H
+
 
 FT_BEGIN_HEADER
 
 
   /* maximum number of chunk sets in a given chunk cache */
-#define  FTC_MAX_CHUNK_SETS  16
+#define FTC_MAX_CHUNK_SETS  16
 
 
   typedef struct FTC_ChunkNodeRec_*    FTC_ChunkNode;

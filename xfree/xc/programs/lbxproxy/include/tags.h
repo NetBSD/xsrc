@@ -1,4 +1,4 @@
-/* $TOG: tags.h /main/11 1998/02/10 18:18:26 kaleb $ */
+/* $Xorg: tags.h,v 1.3 2000/08/17 19:53:58 cpqbld Exp $ */
 /*
 
 Copyright 1998  The Open Group

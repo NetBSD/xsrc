@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftfont.c,v 1.4 2000/12/08 07:51:28 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftfont.c,v 1.8 2000/12/20 00:20:48 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -22,9 +22,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include "xftint.h"
-#include <stdio.h>
 
 XftPattern *
 XftFontMatch (Display *dpy, int screen, XftPattern *pattern, XftResult *result)
@@ -43,8 +43,24 @@ XftFontMatch (Display *dpy, int screen, XftPattern *pattern, XftResult *result)
     new = XftPatternDuplicate (pattern);
     if (!new)
 	return 0;
+
+    if (_XftFontDebug () & XFT_DBG_OPENV)
+    {
+	printf ("XftFontMatch pattern ");
+	XftPatternPrint (new);
+    }
     XftConfigSubstitute (new);
+    if (_XftFontDebug () & XFT_DBG_OPENV)
+    {
+	printf ("XftFontMatch after XftConfig substitutions ");
+	XftPatternPrint (new);
+    }
     XftDefaultSubstitute (dpy, screen, new);
+    if (_XftFontDebug () & XFT_DBG_OPENV)
+    {
+	printf ("XftFontMatch after X resource substitutions ");
+	XftPatternPrint (new);
+    }
     nsets = 0;
     
 #ifdef FREETYPE2
@@ -52,6 +68,11 @@ XftFontMatch (Display *dpy, int screen, XftPattern *pattern, XftResult *result)
     core = True;
     (void) XftPatternGetBool (new, XFT_RENDER, 0, &render);
     (void) XftPatternGetBool (new, XFT_CORE, 0, &core);
+    if (_XftFontDebug () & XFT_DBG_OPENV)
+    {
+	printf ("XftFontMatch: use core fonts \"%s\", use render fonts \"%s\"\n",
+		core ? "True" : "False", render ? "True" : "False");
+    }
 
     if (render)
     {
@@ -133,10 +154,17 @@ _XftFontDebug (void)
 
     if (!initialized)
     {
+	char	*e;
+	
 	initialized = 1;
-	debug = getenv ("XFT_DEBUG") != 0;
-	if (debug)
-	    printf ("XFT_DEBUG found\n");
+	e = getenv ("XFT_DEBUG");
+	if (e)
+	{
+	    printf ("XFT_DEBUG=%s\n", e);
+	    debug = atoi (e);
+	    if (debug <= 0)
+		debug = 1;
+	}
     }
     return debug;
 }
@@ -155,12 +183,12 @@ XftFontOpen (Display *dpy, int screen, ...)
     va_end (va);
     if (!pat)
     {
-	if (_XftFontDebug ())
+	if (_XftFontDebug () & XFT_DBG_OPEN)
 	    printf ("XftFontOpen: Invalid pattern argument\n");
 	return 0;
     }
     match = XftFontMatch (dpy, screen, pat, &result);
-    if (_XftFontDebug ())
+    if (_XftFontDebug () & XFT_DBG_OPEN)
     {
 	printf ("Pattern ");
 	XftPatternPrint (pat);
@@ -179,7 +207,7 @@ XftFontOpen (Display *dpy, int screen, ...)
     font = XftFontOpenPattern (dpy, match);
     if (!font)
     {
-	if (_XftFontDebug ())
+	if (_XftFontDebug () & XFT_DBG_OPEN)
 	    printf ("No Font\n");
 	XftPatternDestroy (match);
     }
@@ -196,7 +224,7 @@ XftFontOpenName (Display *dpy, int screen, const char *name)
     XftFont   *font;
 
     pat = XftNameParse (name);
-    if (_XftFontDebug ())
+    if (_XftFontDebug () & XFT_DBG_OPEN)
     {
 	printf ("XftFontOpenName \"%s\": ", name);
 	if (pat)
@@ -208,7 +236,7 @@ XftFontOpenName (Display *dpy, int screen, const char *name)
     if (!pat)
 	return 0;
     match = XftFontMatch (dpy, screen, pat, &result);
-    if (_XftFontDebug ())
+    if (_XftFontDebug () & XFT_DBG_OPEN)
     {
 	if (match)
 	{
@@ -238,7 +266,7 @@ XftFontOpenXlfd (Display *dpy, int screen, const char *xlfd)
     XftFont   *font;
 
     pat = XftXlfdParse (xlfd, False, False);
-    if (_XftFontDebug ())
+    if (_XftFontDebug () & XFT_DBG_OPEN)
     {
 	printf ("XftFontOpenXlfd \"%s\": ", xlfd);
 	if (pat)
@@ -250,7 +278,7 @@ XftFontOpenXlfd (Display *dpy, int screen, const char *xlfd)
     if (!pat)
 	return 0;
     match = XftFontMatch (dpy, screen, pat, &result);
-    if (_XftFontDebug ())
+    if (_XftFontDebug () & XFT_DBG_OPEN)
     {
 	if (match)
 	{
@@ -275,7 +303,7 @@ void
 XftFontClose (Display *dpy, XftFont *font)
 {
     if (font->core)
-	XFreeFont (dpy, font->u.core.font);
+	XftCoreClose (dpy, font->u.core.font);
 #ifdef FREETYPE2
     else
 	XftFreeTypeClose (dpy, font->u.ft.font);

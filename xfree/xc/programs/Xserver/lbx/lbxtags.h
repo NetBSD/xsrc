@@ -1,4 +1,4 @@
-/* $TOG: lbxtags.h /main/8 1998/02/09 14:33:05 kaleb $ */
+/* $Xorg: lbxtags.h,v 1.3 2000/08/17 19:53:32 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -42,7 +42,7 @@ in this Software without prior written authorization from The Open Group.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxtags.h,v 1.3 2001/01/17 22:37:00 dawes Exp $ */
 
 #ifndef _LBXTAGS_H_
 #define _LBXTAGS_H_

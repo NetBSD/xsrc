@@ -1,4 +1,4 @@
-XCOMM $TOG: Imakefile /main/68 1997/08/28 08:08:34 kaleb $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:55:07 cpqbld Exp $
 XCOMM
 XCOMM                         Attention xterm porters
 XCOMM
@@ -7,7 +7,7 @@ XCOMM Xterm assumes that bcopy can handle overlapping arguments.  If your
 XCOMM bcopy (or memcpy) cannot, write a routine called bcopy and link it in
 XCOMM or add -Dbcopy=mybcopy to the DEFINES list below.
 XCOMM
-XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.33 2000/10/13 13:41:18 keithp Exp $
+XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.35.2.1 2001/05/28 06:53:37 torrey Exp $
 XCOMM
 
 /* Uncomment SCROLLBAR_RIGHT if you want the scroll bar to be on the right */
@@ -198,6 +198,16 @@ InstallProgramWithFlags(xterm,$(BINDIR),NullParameter)
 
 NormalProgramTarget(resize,$(OBJS2),$(DEPLIBS2),NullParameter,$(TERMCAPLIB))
 InstallProgramWithFlags(resize,$(BINDIR),NullParameter)
+
+/*
+ * termcap is a special name that does not install correctly with
+ * InstallNamedNonExec()
+ */
+install::
+	MakeDir($(DESTDIR)$(LIBDIR)/etc)
+	$(INSTALL) $(INSTALLFLAGS) $(INSTDATFLAGS) termcap \
+		$(DESTDIR)$(LIBDIR)/etc/xterm.termcap
+InstallNamedNonExec(terminfo,xterm.terminfo,$(LIBDIR)/etc)
 
 InstallAppDefaults(XTerm)
 InstallAppDefaultsLong(XTerm-col,XTerm-color)

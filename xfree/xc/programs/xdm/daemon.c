@@ -1,4 +1,4 @@
-/* $TOG: daemon.c /main/17 1998/02/09 13:54:47 kaleb $ */
+/* $Xorg: daemon.c,v 1.3 2000/08/17 19:54:14 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/daemon.c,v 3.11 2000/08/10 17:40:41 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/daemon.c,v 3.14 2001/04/26 20:26:30 alanh Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -36,7 +36,7 @@ from The Open Group.
 #else
 #include <sys/ioctl.h>
 #endif
-#if defined(__osf__) || defined(linux) || defined(MINIX) || defined(__GNU__)
+#if defined(__osf__) || defined(linux) || defined(MINIX) || defined(__GNU__) || defined(__CYGWIN__)
 #define setpgrp setpgid
 #endif
 #ifdef hpux

@@ -1,4 +1,4 @@
-/* $XConsortium: PclPixel.c /main/1 1996/09/28 17:01:49 rws $ */
+/* $Xorg: PclPixel.c,v 1.3 2000/08/17 19:48:08 cpqbld Exp $ */
 /*******************************************************************
 **
 **    *********************************************************
@@ -44,7 +44,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
-/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclPixel.c,v 1.3 1999/09/27 14:59:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/pcl/PclPixel.c,v 1.5 2001/01/17 22:36:30 dawes Exp $ */
 
 #include <stdio.h>
 

@@ -16,17 +16,15 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftcalc.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/ttnameid.h>
-#include <freetype/tttags.h>
-
-#include <freetype/internal/sfnt.h>
-#include <freetype/internal/psnames.h>
-
-
-#ifdef FT_FLAT_COMPILE
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_CALC_H
+#include FT_INTERNAL_STREAM_H
+#include FT_TRUETYPE_IDS_H
+#include FT_TRUETYPE_TAGS_H
+#include FT_INTERNAL_SFNT_H
+#include FT_INTERNAL_POSTSCRIPT_NAMES_H
+#include FT_INTERNAL_TRUETYPE_ERRORS_H
 
 #include "ttgload.h"
 #include "ttpload.h"
@@ -34,21 +32,6 @@
 #ifdef TT_CONFIG_OPTION_BYTECODE_INTERPRETER
 #include "ttinterp.h"
 #endif
-
-#else /* FT_FLAT_COMPILE */
-
-#include <truetype/ttgload.h>
-#include <truetype/ttpload.h>
-
-#ifdef TT_CONFIG_OPTION_BYTECODE_INTERPRETER
-#include <truetype/ttinterp.h>
-#endif
-
-#endif /* FT_FLAT_COMPILE */
-
-
-#include <freetype/internal/tterrors.h>
-
 
 
   /*************************************************************************/

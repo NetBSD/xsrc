@@ -1,4 +1,4 @@
-/* $TOG: spinfo.c /main/20 1998/05/07 14:46:42 kaleb $ */
+/* $Xorg: spinfo.c,v 1.3 2000/08/17 19:46:28 cpqbld Exp $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -45,7 +45,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spinfo.c,v 1.8 1999/03/14 11:17:43 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spinfo.c,v 1.10 2001/01/17 19:43:20 dawes Exp $ */
 
 #include "fntfilst.h"
 #include "fontutil.h"

@@ -1,21 +1,21 @@
-/* -*- mode: C; tab-width:8; c-basic-offset:8 -*- */
+/* -*- mode: C; tab-width:8; c-basic-offset:3 -*- */
 
 /*
  * Mesa 3-D graphics library
  * Version:  3.4
- * 
+ *
  * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -27,7 +27,7 @@
 
 #ifndef TYPES_H
 #define TYPES_H
- 
+
 
 #include "glheader.h"
 #include "config.h"
@@ -126,7 +126,7 @@ typedef void (*rect_func)( GLcontext *ctx, GLint x, GLint y,
 
 
 /*
- * The auxiliary interpolation function for clipping - now always in 
+ * The auxiliary interpolation function for clipping - now always in
  * clip space.
  */
 typedef void (*clip_interp_func)( struct vertex_buffer *VB, GLuint dst,
@@ -140,7 +140,7 @@ typedef void (*render_vb_func)( GLcontext *ctx );
 
 
 
-typedef void (*render_func)( struct vertex_buffer *VB, 
+typedef void (*render_func)( struct vertex_buffer *VB,
 			     GLuint start,
 			     GLuint count,
 			     GLuint parity );
@@ -171,7 +171,21 @@ typedef void (*TextureSampleFunc)( const struct gl_texture_object *tObj,
                                    const GLfloat u[], const GLfloat lambda[],
                                    GLubyte rgba[][4] );
 
+/* Texture format record */
+/* GH: This is an interim structure until 3.5 */
+struct gl_texture_format {
+   GLint IntFormat;		/* One of the MESA_FORMAT_* values */
 
+   GLubyte RedBits;		/* Bits per texel component */
+   GLubyte GreenBits;
+   GLubyte BlueBits;
+   GLubyte AlphaBits;
+   GLubyte LuminanceBits;
+   GLubyte IntensityBits;
+   GLubyte IndexBits;
+
+   GLint TexelBytes;
+};
 
 /* Texture image record */
 struct gl_texture_image {
@@ -180,13 +194,6 @@ struct gl_texture_image {
 				 * GL_COLOR_INDEX only
 				 */
    GLenum IntFormat;		/* Internal format as given by the user */
-   GLubyte RedBits;		/* Bits per texel component              */
-   GLubyte GreenBits;		/*   These are initialized by Mesa but   */
-   GLubyte BlueBits;		/*   may be reassigned by the device     */
-   GLubyte AlphaBits;		/*   driver to indicate the true texture */
-   GLubyte IntensityBits;	/*   color resolution.                   */
-   GLubyte LuminanceBits;
-   GLubyte IndexBits;
    GLuint Border;		/* 0 or 1 */
    GLuint Width;		/* = 2^WidthLog2 + 2*Border */
    GLuint Height;		/* = 2^HeightLog2 + 2*Border */
@@ -199,6 +206,8 @@ struct gl_texture_image {
    GLuint DepthLog2;		/* = log2(Depth2) */
    GLuint MaxLog2;		/* = MAX(WidthLog2, HeightLog2) */
    GLubyte *Data;		/* Image data as unsigned bytes */
+
+   const struct gl_texture_format *TexFormat;
 
    GLboolean IsCompressed;	/* GL_ARB_texture_compression */
    GLuint CompressedSize;	/* GL_ARB_texture_compression */
@@ -287,7 +296,7 @@ struct gl_light {
    GLfloat VP_inf_norm[3];	/* Norm direction to infinite light */
    GLfloat h_inf_norm[3];	/* Norm( VP_inf_norm + <0,0,1> ) */
    GLfloat NormDirection[4];	/* normalized spotlight direction */
-   GLfloat VP_inf_spot_attenuation; 
+   GLfloat VP_inf_spot_attenuation;
 
    GLfloat SpotExpTable[EXP_TABLE_SIZE][2];  /* to replace a pow() call */
    GLfloat MatAmbient[2][3];	/* material ambient * light ambient */
@@ -368,7 +377,7 @@ struct gl_colorbuffer_attrib {
 
 
 struct gl_current_attrib {
-   /* KW: These values valid only when the VB is flushed.  
+   /* KW: These values valid only when the VB is flushed.
     */
    GLuint Flag;		                	/* Contains size information */
    GLfloat Normal[3];
@@ -377,7 +386,7 @@ struct gl_current_attrib {
    GLboolean EdgeFlag;				/* Current edge flag */
    GLfloat Texcoord[MAX_TEXTURE_UNITS][4];	/* Current texture coords */
    GLenum Primitive;		                /* Prim or GL_POLYGON+1 */
-	
+
    /* KW: No change to these values.
     */
    GLfloat RasterPos[4];			/* Current raster position */
@@ -665,11 +674,11 @@ struct gl_point_attrib {
    GLboolean SmoothFlag;/* True if GL_POINT_SMOOTH is enabled */
    GLfloat UserSize;	/* User-specified point size */
    GLfloat Size;	/* Point size actually used */
-   GLfloat Params[3];	/* Point Parameters EXT distance atenuation 
-			   factors by default = {1,0,0} */ 
+   GLfloat Params[3];	/* Point Parameters EXT distance atenuation
+			   factors by default = {1,0,0} */
    GLfloat MinSize;	/* Default 0.0 always >=0 */
    GLfloat MaxSize;	/* Default MAX_POINT_SIZE */
-   GLfloat Threshold;	/* Default 1.0 */ 
+   GLfloat Threshold;	/* Default 1.0 */
    GLboolean Attenuated;
 };
 
@@ -775,7 +784,7 @@ struct gl_stencil_attrib {
 #define ENABLE_TEX_ANY  (ENABLE_TEX0 | ENABLE_TEX1)
 
 
-typedef void (*texgen_func)( struct vertex_buffer *VB, 
+typedef void (*texgen_func)( struct vertex_buffer *VB,
 			     GLuint textureSet);
 
 
@@ -887,14 +896,14 @@ struct gl_texture_attrib {
    GLuint CurrentTransformUnit;		/* Current texture xform unit */
 
    GLuint ReallyEnabled;     /* Really enabled (w.r.t. completeness, etc) */
-	
+
    GLuint LastEnabled;	/* Decide whether enabled has really changed */
 
    GLboolean NeedNormals;
    GLboolean NeedEyeCoords;
 
    struct gl_texture_unit Unit[MAX_TEXTURE_UNITS];
-	
+
    struct gl_texture_object *Proxy1D;
    struct gl_texture_object *Proxy2D;
    struct gl_texture_object *Proxy3D;
@@ -971,7 +980,7 @@ struct gl_client_array {
  */
 typedef void (*trans_1ui_func)(GLuint *to,
 			       const struct gl_client_array *from,
-			       GLuint start, 
+			       GLuint start,
 			       GLuint n );
 
 typedef void (*trans_1ub_func)(GLubyte *to,
@@ -986,52 +995,52 @@ typedef void (*trans_4ub_func)(GLubyte (*to)[4],
 
 typedef void (*trans_4f_func)(GLfloat (*to)[4],
 			      const struct gl_client_array *from,
-			      GLuint start, 
+			      GLuint start,
 			      GLuint n );
 
 typedef void (*trans_3f_func)(GLfloat (*to)[3],
 			      const struct gl_client_array *from,
-			      GLuint start, 
+			      GLuint start,
 			      GLuint n );
 
 
 
 typedef void (*trans_elt_1ui_func)(GLuint *to,
 				   const struct gl_client_array *from,
-				   GLuint *flags, 
-				   GLuint *elts, 
+				   GLuint *flags,
+				   GLuint *elts,
 				   GLuint match,
 				   GLuint start,
 				   GLuint n );
 
 typedef void (*trans_elt_1ub_func)(GLubyte *to,
 				   const struct gl_client_array *from,
-				   GLuint *flags, 
-				   GLuint *elts, 
+				   GLuint *flags,
+				   GLuint *elts,
 				   GLuint match,
 				   GLuint start,
 				   GLuint n );
 
 typedef void (*trans_elt_4ub_func)(GLubyte (*to)[4],
 				   const struct gl_client_array *from,
-				   GLuint *flags, 
-				   GLuint *elts, 
+				   GLuint *flags,
+				   GLuint *elts,
 				   GLuint match,
 				   GLuint start,
 				   GLuint n );
 
 typedef void (*trans_elt_4f_func)(GLfloat (*to)[4],
 				  const struct gl_client_array *from,
-				  GLuint *flags, 
-				  GLuint *elts, 
+				  GLuint *flags,
+				  GLuint *elts,
 				  GLuint match,
 				  GLuint start,
 				  GLuint n );
 
 typedef void (*trans_elt_3f_func)(GLfloat (*to)[3],
 				  const struct gl_client_array *from,
-				  GLuint *flags, 
-				  GLuint *elts, 
+				  GLuint *flags,
+				  GLuint *elts,
 				  GLuint match,
 				  GLuint start,
 				  GLuint n );
@@ -1051,15 +1060,15 @@ struct gl_array_object {
    struct gl_client_array EdgeFlag;
 
    trans_4f_func  VertexFunc;       /* conversion functions */
-   trans_3f_func  NormalFunc;  
-   trans_4ub_func ColorFunc;   
+   trans_3f_func  NormalFunc;
+   trans_4ub_func ColorFunc;
    trans_1ui_func IndexFunc;
    trans_4f_func  TexCoordFunc[MAX_TEXTURE_UNITS];
    trans_1ub_func EdgeFlagFunc;
 
    trans_elt_4f_func  VertexEltFunc; /* array elt conversion functions */
-   trans_elt_3f_func  NormalEltFunc;  
-   trans_elt_4ub_func ColorEltFunc;   
+   trans_elt_3f_func  NormalEltFunc;
+   trans_elt_4ub_func ColorEltFunc;
    trans_elt_1ui_func IndexEltFunc;
    trans_elt_4f_func  TexCoordEltFunc[MAX_TEXTURE_UNITS];
    trans_elt_1ub_func EdgeFlagEltFunc;
@@ -1068,7 +1077,7 @@ struct gl_array_object {
 
    GLuint LockFirst;
    GLuint LockCount;
-	
+
    GLuint Flag[VB_SIZE];	/* crock */
    GLuint Flags;
    GLuint Summary;		/* Like flags, but no size information */
@@ -1090,15 +1099,15 @@ struct gl_array_attrib {
    struct gl_client_array EdgeFlag;
 
    trans_4f_func  VertexFunc;       /* conversion functions */
-   trans_3f_func  NormalFunc;  
-   trans_4ub_func ColorFunc;   
+   trans_3f_func  NormalFunc;
+   trans_4ub_func ColorFunc;
    trans_1ui_func IndexFunc;
    trans_4f_func  TexCoordFunc[MAX_TEXTURE_UNITS];
    trans_1ub_func EdgeFlagFunc;
 
    trans_elt_4f_func  VertexEltFunc; /* array elt conversion functions */
-   trans_elt_3f_func  NormalEltFunc;  
-   trans_elt_4ub_func ColorEltFunc;   
+   trans_elt_3f_func  NormalEltFunc;
+   trans_elt_4ub_func ColorEltFunc;
    trans_elt_1ui_func IndexEltFunc;
    trans_elt_4f_func  TexCoordEltFunc[MAX_TEXTURE_UNITS];
    trans_elt_1ub_func EdgeFlagEltFunc;
@@ -1108,7 +1117,7 @@ struct gl_array_attrib {
 
    GLuint LockFirst;
    GLuint LockCount;
-	
+
    GLuint Flag[VB_SIZE];	/* crock */
    GLuint Flags;
    GLuint Summary;		/* Like flags, but no size information */
@@ -1200,7 +1209,7 @@ struct gl_pipeline {
 struct gl_cva {
    struct gl_pipeline pre;
    struct gl_pipeline elt;
-	
+
    struct gl_client_array Elt;
    trans_1ui_func EltFunc;
 
@@ -1254,7 +1263,7 @@ struct gl_1d_map {
    GLfloat u1, u2, du;	/* u1, u2, 1.0/(u2-u1) */
    GLfloat *Points;	/* Points to contiguous control points */
 };
-	
+
 
 /*
  * 2-D Evaluator control points
@@ -1423,6 +1432,7 @@ struct gl_extensions {
    /* flags to quickly test if certain extensions are available */
    GLboolean HaveTextureEnvAdd;
    GLboolean HaveTextureEnvCombine;
+   GLboolean HaveTextureEnvDot3;
    GLboolean HaveTextureLodBias;
    GLboolean HaveHpOcclusionTest;
    GLboolean HaveTextureCubeMap;
@@ -1478,7 +1488,7 @@ struct gl_extensions {
 
 
 #define NEW_DRIVER_STATE (NEW_DRVSTATE0 | NEW_DRVSTATE1 |	\
-                          NEW_DRVSTATE2 | NEW_DRVSTATE3) 
+                          NEW_DRVSTATE2 | NEW_DRVSTATE3)
 
 /* What can the driver do, what requires us to call render_triangle or
  * a non-driver rasterize function?
@@ -1501,13 +1511,13 @@ struct gl_extensions {
 #define DD_POINT_SIZE               0x8000
 #define DD_POINT_ATTEN              0x10000
 #define DD_LIGHTING_CULL            0x20000 /* never set by driver */
-#define DD_POINT_SW_RASTERIZE       0x40000 
-#define DD_LINE_SW_RASTERIZE        0x80000 
-#define DD_TRI_SW_RASTERIZE         0x100000 
-#define DD_QUAD_SW_RASTERIZE        0x200000 
+#define DD_POINT_SW_RASTERIZE       0x40000
+#define DD_LINE_SW_RASTERIZE        0x80000
+#define DD_TRI_SW_RASTERIZE         0x100000
+#define DD_QUAD_SW_RASTERIZE        0x200000
 #define DD_TRI_CULL_FRONT_BACK      0x400000 /* not supported by most drivers */
-#define DD_Z_NEVER                  0x800000 
-#define DD_STENCIL                  0x1000000 
+#define DD_Z_NEVER                  0x800000
+#define DD_STENCIL                  0x1000000
 #define DD_CLIP_FOG_COORD           0x2000000
 
 
@@ -1528,7 +1538,7 @@ struct gl_extensions {
                                DD_QUAD_SW_RASTERIZE)
 
 
-/* Vertex buffer clipping flags 
+/* Vertex buffer clipping flags
  */
 #define CLIP_RIGHT_SHIFT 	0
 #define CLIP_LEFT_SHIFT 	1
@@ -1580,7 +1590,7 @@ struct gl_extensions {
  */
 #define SHADE_TWOSIDE           0x4
 
-/* Flags for selecting a normal transformation function. 
+/* Flags for selecting a normal transformation function.
  */
 #define NORM_RESCALE   0x1	/* apply the scale factor */
 #define NORM_NORMALIZE 0x2	/* normalize */
@@ -1676,7 +1686,7 @@ typedef union node Node;
 
 
 /* KW: Flags that describe the current vertex state, and the contents
- * of a vertex in a vertex-cassette.  
+ * of a vertex in a vertex-cassette.
  *
  * For really major expansion, consider a 'VERT_ADDITIONAL_FLAGS' flag,
  * which means there is data in another flags array (eg, extra_flags[]).
@@ -1693,7 +1703,7 @@ typedef union node Node;
 #define VERT_INDEX           0x100	/* glIndex */
 #define VERT_EDGE            0x200	/* glEdgeFlag */
 #define VERT_MATERIAL        0x400	/* glMaterial */
-#define VERT_TEX0_1          0x800	   
+#define VERT_TEX0_1          0x800
 #define VERT_TEX0_2          0x1000
 #define VERT_TEX0_3          0x2000
 #define VERT_TEX0_4          0x4000
@@ -1710,7 +1720,7 @@ typedef union node Node;
 #define VERT_EVAL_C2         0x2000000  /*    - or just use 3 bits */
 #define VERT_EVAL_P1         0x4000000  /*  */
 #define VERT_EVAL_P2         0x8000000  /*  */
-#define VERT_SPEC_RGB        0x10000000	
+#define VERT_SPEC_RGB        0x10000000
 #define VERT_FOG_COORD       0x20000000	/* internal use only, currently */
 
 #define VERT_EYE             VERT_BEGIN /* for pipeline management & cva */
@@ -1746,7 +1756,7 @@ typedef union node Node;
 #define VERT_TEX2_1234    (VERT_TEX2_4|VERT_TEX2_123)
 #define VERT_TEX2_ANY     VERT_TEX2_1
 
-/* not used 
+/* not used
 #define VERT_TEX3_12      (VERT_TEX3_2|VERT_TEX3_1)
 #define VERT_TEX3_123     (VERT_TEX3_3|VERT_TEX3_12)
 #define VERT_TEX3_1234    (VERT_TEX3_4|VERT_TEX3_123)
@@ -1785,7 +1795,7 @@ typedef union node Node;
 typedef void (*vb_transform_func)( GLcontext *ctx );
 
 
-typedef GLuint (*clip_line_func)( struct vertex_buffer *VB, 
+typedef GLuint (*clip_line_func)( struct vertex_buffer *VB,
 				  GLuint *i, GLuint *j,
 				  GLubyte mask);
 typedef GLuint (*clip_poly_func)( struct vertex_buffer *VB,
@@ -1793,7 +1803,7 @@ typedef GLuint (*clip_poly_func)( struct vertex_buffer *VB,
 				  GLubyte mask );
 
 /*
- * The library context: 
+ * The library context:
  */
 
 struct gl_context {
@@ -1811,7 +1821,7 @@ struct gl_context {
 
    /* Driver function pointer table */
    struct dd_function_table Driver;
-	
+
    triangle_func TriangleFunc; /* driver or indirect triangle func */
    quad_func     QuadFunc;
    triangle_func ClippedTriangleFunc;
@@ -1931,7 +1941,7 @@ struct gl_context {
    GLboolean IntegerAccumMode;	/* Storing unscaled integers? */
    GLfloat IntegerAccumScaler;	/* Implicit scale factor */
 
-   struct gl_fallback_arrays Fallback; 
+   struct gl_fallback_arrays Fallback;
 
    GLenum ErrorValue;        /* Last error code */
 
@@ -1959,7 +1969,7 @@ struct gl_context {
    clip_interp_func ClipInterpFunc;
    GLuint ClipTabMask;
 
-   normal_func *NormalTransform; 
+   normal_func *NormalTransform;
 
    /* Current shading function table */
    gl_shade_func *shade_func_tab;
@@ -1992,7 +2002,7 @@ struct gl_context {
    /* The vertex buffer being used by this context.
     */
    struct vertex_buffer *VB;
-   
+
    /* The pixel buffer being used by this context */
    struct pixel_buffer* PB;
 
@@ -2001,7 +2011,7 @@ struct gl_context {
 
    /* Should 3Dfx Glide driver catch signals? */
    GLboolean CatchSignals;
-        
+
    /* For debugging/development only */
    GLboolean NoRaster;
    GLboolean FirstTimeCurrent;
@@ -2016,7 +2026,7 @@ struct gl_context {
 
 
 #ifdef MESA_DEBUG
-extern int MESA_VERBOSE; 
+extern int MESA_VERBOSE;
 extern int MESA_DEBUG_FLAGS;
 #else
 # define MESA_VERBOSE 0
@@ -2039,12 +2049,12 @@ enum _verbose {
 	VERBOSE_CULL            = 0x100,
 	VERBOSE_DISPLAY_LIST    = 0x200,
 	VERBOSE_LIGHTING        = 0x400
-}; 
+};
 
 
 enum _debug {
 	DEBUG_ALWAYS_FLUSH          = 0x1
-}; 
+};
 
 
 extern void gl_flush_vb( GLcontext *ctx, const char *where );
@@ -2061,7 +2071,7 @@ do {						\
 
 
 
-/* Test if we're inside a glBegin / glEnd pair: 
+/* Test if we're inside a glBegin / glEnd pair:
 */
 #define ASSERT_OUTSIDE_BEGIN_END( ctx, where )				\
 do {									\

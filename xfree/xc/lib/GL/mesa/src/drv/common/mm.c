@@ -21,7 +21,7 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/common/mm.c,v 1.2 2000/06/22 16:59:23 tsi Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -1,7 +1,7 @@
-/* $XFree86: $ */
+/* $XFree86: xc/programs/Xserver/Xprint/Quarks.c,v 1.4 2001/01/17 22:36:28 dawes Exp $ */
 
 /*
- * $XConsortium: Quarks.c /main/1 1996/09/28 16:58:44 rws $
+ * $Xorg: Quarks.c,v 1.3 2000/08/17 19:48:06 cpqbld Exp $
  */
 /*
 (c) Copyright 1996 Hewlett-Packard Company

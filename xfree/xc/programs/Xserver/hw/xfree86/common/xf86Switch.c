@@ -21,14 +21,10 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Switch.c,v 3.7 1999/04/04 09:33:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Switch.c,v 3.9 2001/04/20 16:32:31 tsi Exp $ */
 
-#if !defined(sun) || defined(i386)
 #include "xf86.h"
 #include "xf86Xinput.h"
-#else
-#include "extio.h"
-#endif
 
 /******************************************************************************
  * debugging macro

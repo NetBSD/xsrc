@@ -1,4 +1,4 @@
-/* $TOG: ICEconn.h /main/5 1998/02/06 13:56:22 kaleb $ */
+/* $Xorg: ICEconn.h,v 1.4 2000/08/17 19:44:10 cpqbld Exp $ */
 /******************************************************************************
 
 
@@ -25,6 +25,8 @@ Author: Ralph Mor, X Consortium
 
 #ifndef _ICECONN_H_
 #define _ICECONN_H_
+
+#include <X11/ICE/ICElib.h>
 
 /*
  * Data structures for ICE connection object 

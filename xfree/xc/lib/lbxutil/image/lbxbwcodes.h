@@ -1,4 +1,4 @@
-/* $XConsortium: lbxbwcodes.h,v 1.1 95/01/17 18:17:40 mor Exp $ */
+/* $Xorg: lbxbwcodes.h,v 1.3 2000/08/17 19:46:41 cpqbld Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992 Sam Leffler
@@ -23,6 +23,7 @@
  * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
  * OF THIS SOFTWARE.
  */
+/* $XFree86: xc/lib/lbxutil/image/lbxbwcodes.h,v 1.3 2001/03/05 01:05:12 tsi Exp $ */
 
 /*
  * Note that these tables are ordered such that the
@@ -33,6 +34,11 @@
  *     during state generation (see mkg3states.c).
  */
 
+#ifdef __DARWIN__
+#ifndef TIFFaxWhiteCodes
+#define TIFFFaxWhiteCodes Darwin_X_TIFFFaxWhiteCodes
+#endif
+#endif
 tableentry TIFFFaxWhiteCodes[] = {
     { 8, 0x35, 0 },	/* 0011 0101 */
     { 6, 0x7, 1 },	/* 0001 11 */
@@ -145,6 +151,11 @@ tableentry TIFFFaxWhiteCodes[] = {
     { 12, 0x0, G3CODE_INVALID },	/* 0000 0000 0000 */
 };
 
+#ifdef __DARWIN__
+#ifndef TIFFaxBlackCodes
+#define TIFFFaxBlackCodes Darwin_X_TIFFFaxBlackCodes
+#endif
+#endif
 tableentry TIFFFaxBlackCodes[] = {
     { 10, 0x37, 0 },	/* 0000 1101 11 */
     { 3, 0x2, 1 },	/* 010 */

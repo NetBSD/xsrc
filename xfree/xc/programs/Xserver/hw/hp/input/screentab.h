@@ -1,4 +1,4 @@
-/* $TOG: screentab.h /main/5 1998/02/10 13:11:20 kaleb $ */
+/* $Xorg: screentab.h,v 1.3 2000/08/17 19:48:23 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group

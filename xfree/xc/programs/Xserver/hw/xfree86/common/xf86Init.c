@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.172 2000/11/27 05:06:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.176.2.1 2001/05/24 19:43:39 dawes Exp $ */
 
 /*
  * Copyright 1991-1999 by The XFree86 Project, Inc.
@@ -1146,6 +1146,7 @@ ddxProcessArgument(int argc, char **argv, int i)
    * yet.  Use malloc/free instead.
    */
 
+#ifdef DDXOSVERRORF
   static Bool beenHere = FALSE;
 
   if (!beenHere) {
@@ -1156,6 +1157,7 @@ ddxProcessArgument(int argc, char **argv, int i)
     OsVendorVErrorFProc = OsVendorVErrorF;
     beenHere = TRUE;
   }
+#endif
 
   /* First the options that are only allowed for root */
   if (getuid() == 0)
@@ -1554,7 +1556,7 @@ ddxUseMsg()
 #define OSVENDOR ""
 #endif
 #ifndef PRE_RELEASE
-#define PRE_RELEASE (XF86_VERSION_BETA || XF86_VERSION_ALPHA)
+#define PRE_RELEASE XF86_VERSION_SNAP
 #endif
 
 static void
@@ -1568,18 +1570,28 @@ xf86PrintBanner()
     "please check the latest version in the XFree86 CVS repository\n"
     "(http://www.XFree86.Org/cvs)\n");
 #endif
-  ErrorF("\nXFree86 Version%s", XF86_VERSION);
-#ifdef XF86_CUSTOM_VERSION
-  ErrorF("(%s) ", XF86_CUSTOM_VERSION);
+  ErrorF("\nXFree86 Version %d.%d.%d", XF86_VERSION_MAJOR, XF86_VERSION_MINOR,
+					XF86_VERSION_PATCH);
+#if XF86_VERSION_SNAP > 0
+  ErrorF(".%d", XF86_VERSION_SNAP);
 #endif
-  ErrorF("/ X Window System\n");
+
+#if XF86_VERSION_SNAP >= 900
+  ErrorF(" (%d.%d.0 RC %d)", XF86_VERSION_MAJOR, XF86_VERSION_MINOR + 1,
+				XF86_VERSION_SNAP - 900);
+#endif
+
+#ifdef XF86_CUSTOM_VERSION
+  ErrorF(" (%s)", XF86_CUSTOM_VERSION);
+#endif
+  ErrorF(" / X Window System\n");
   ErrorF("(protocol Version %d, revision %d, vendor release %d)\n",
          X_PROTOCOL, X_PROTOCOL_REVISION, VENDOR_RELEASE );
   ErrorF("Release Date: %s\n", XF86_DATE);
   ErrorF("\tIf the server is older than 6-12 months, or if your card is\n"
 	 "\tnewer than the above date, look for a newer version before\n"
 	 "\treporting problems.  (See http://www.XFree86.Org/FAQ)\n");
-  ErrorF("Operating System:%s%s\n", OSNAME, OSVENDOR);
+  ErrorF("Build Operating System:%s%s\n", OSNAME, OSVENDOR);
 #if defined(BUILDERSTRING)
   ErrorF("%s \n",BUILDERSTRING);
 #endif

@@ -1,4 +1,4 @@
-/* $TOG: LoadFont.c /main/8 1998/02/06 17:42:20 kaleb $ */
+/* $Xorg: LoadFont.c,v 1.3 2000/08/17 19:44:40 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

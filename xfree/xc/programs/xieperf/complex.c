@@ -1,4 +1,4 @@
-/* $TOG: complex.c /main/5 1998/02/09 13:59:43 kaleb $ */
+/* $Xorg: complex.c,v 1.3 2000/08/17 19:54:25 cpqbld Exp $ */
 /**** module complex.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Syd Logan -- AGE Logic, Inc. January 3, 1994 
   
 *****************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xieperf/complex.c,v 1.5 2001/01/17 23:45:37 dawes Exp $ */
 
 #include "xieperf.h"
 #include <X11/Xlib.h>

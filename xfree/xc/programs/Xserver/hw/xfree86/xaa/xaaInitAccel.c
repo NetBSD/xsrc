@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInitAccel.c,v 1.26 2000/09/28 20:48:00 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaInitAccel.c,v 1.31 2001/05/15 18:22:23 paulo Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -13,6 +13,7 @@
 #include "xf86fbman.h"
 #include "servermd.h"
 
+static const OptionInfoRec *XAAAvailableOptions(void *unused);
 
 /*
  * XAA Config options
@@ -36,11 +37,13 @@ typedef enum {
     XAAOPT_SCREEN_TO_SCREEN_COL_EXP_FILL,
     XAAOPT_IMAGE_WRITE_RECT,
     XAAOPT_SCANLINE_IMAGE_WRITE_RECT,
+    XAAOPT_WRITE_BITMAP,
+    XAAOPT_WRITE_PIXMAP,
     XAAOPT_PIXMAP_CACHE,
     XAAOPT_OFFSCREEN_PIXMAPS
 } XAAOpts;
 
-static OptionInfoRec XAAOptions[] = {
+static const OptionInfoRec XAAOptions[] = {
     {XAAOPT_SCREEN_TO_SCREEN_COPY,	"XaaNoScreenToScreenCopy",
 				OPTV_BOOLEAN,	{0}, FALSE },
     {XAAOPT_SOLID_FILL_RECT,		"XaaNoSolidFillRect",
@@ -75,6 +78,10 @@ static OptionInfoRec XAAOptions[] = {
 				OPTV_BOOLEAN,	{0}, FALSE },
     {XAAOPT_SCANLINE_IMAGE_WRITE_RECT,	"XaaNoScanlineImageWriteRect",
 				OPTV_BOOLEAN,	{0}, FALSE },
+    {XAAOPT_WRITE_BITMAP,		"XaaNoWriteBitmap",
+				OPTV_BOOLEAN,	{0}, FALSE },
+    {XAAOPT_WRITE_PIXMAP,		"XaaNoWritePixmap",
+				OPTV_BOOLEAN,	{0}, FALSE },
     {XAAOPT_PIXMAP_CACHE,		"XaaNoPixmapCache",
 				OPTV_BOOLEAN,	{0}, FALSE },
     {XAAOPT_OFFSCREEN_PIXMAPS,		"XaaNoOffscreenPixmaps",
@@ -83,7 +90,57 @@ static OptionInfoRec XAAOptions[] = {
 				OPTV_NONE,	{0}, FALSE }
 };
 
-#define nXAAOptions (sizeof(XAAOptions) / sizeof(XAAOptions[0]))
+#ifdef XFree86LOADER
+static MODULESETUPPROTO(xaaSetup);
+
+static XF86ModuleVersionInfo xaaVersRec =
+{
+	"xaa",
+	MODULEVENDORSTRING,
+	MODINFOSTRING1,
+	MODINFOSTRING2,
+	XF86_VERSION_CURRENT,
+	1, 0, 0,
+	ABI_CLASS_VIDEODRV,		/* requires the video driver ABI */
+	ABI_VIDEODRV_VERSION,
+	MOD_CLASS_NONE,
+	{0,0,0,0}
+};
+
+XF86ModuleData xaaModuleData = { &xaaVersRec, xaaSetup, NULL };
+
+ModuleInfoRec XAA = {
+    1,
+    "XAA",
+    NULL,
+    0,
+    XAAAvailableOptions,
+};
+
+/*ARGSUSED*/
+static pointer
+xaaSetup(pointer Module, pointer Options, int *ErrorMajor, int *ErrorMinor)
+{
+    static Bool Initialised = FALSE;
+
+    if (!Initialised) {
+	Initialised = TRUE;
+#ifndef REMOVE_LOADER_CHECK_MODULE_INFO
+	if (xf86LoaderCheckSymbol("xf86AddModuleInfo"))
+#endif
+	xf86AddModuleInfo(&XAA, Module);
+    }
+
+    return (pointer)TRUE;
+}
+#endif
+
+/*ARGSUSED*/
+static const OptionInfoRec *
+XAAAvailableOptions(void *unused)
+{
+    return (XAAOptions);
+}
 
 Bool
 XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
@@ -107,10 +164,11 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
     Bool HaveImageWriteRect = FALSE;
     Bool HaveScanlineImageWriteRect = FALSE;
     Bool HaveScreenToScreenColorExpandFill = FALSE;
-    OptionInfoRec options[nXAAOptions];
+    OptionInfoPtr options;
     int is_shared = 0;
     int i;
 
+    options = xnfalloc(sizeof(XAAOptions));
     (void)memcpy(options, XAAOptions, sizeof(XAAOptions));
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, options);
 
@@ -767,7 +825,8 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 
     /**** WriteBitmap ****/
 
-    if(infoRec->WriteBitmap) {
+    if(infoRec->WriteBitmap && 
+      !xf86IsOptionSet(options, XAAOPT_WRITE_BITMAP)) {
 	XAAMSG("\tDriver provided WriteBitmap replacement\n");
     } else if(HaveColorExpansion) {
 	if (infoRec->CPUToScreenColorExpandFillFlags & TRIPLE_BITS_24BPP) {
@@ -924,7 +983,8 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 
     /**** WritePixmap ****/
 
-    if(infoRec->WritePixmap) {
+    if(infoRec->WritePixmap &&
+      !xf86IsOptionSet(options, XAAOPT_WRITE_PIXMAP)) {
 	XAAMSG("\tDriver provided WritePixmap replacement\n");
     } else if(HaveImageWriteRect) {
 	infoRec->WritePixmap = XAAWritePixmap;
@@ -1210,7 +1270,12 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
     {
 	infoRec->Composite = XAADoComposite;
     }
-	
+
+    if(!infoRec->Glyphs && infoRec->WriteBitmap &&
+	!(infoRec->WriteBitmapFlags & NO_TRANSPARENCY)) 
+    {
+	infoRec->Glyphs = XAADoGlyphs;
+    }	
 #endif
 
     /************  Validation Functions **************/
@@ -1417,6 +1482,8 @@ XAAInitAccel(ScreenPtr pScreen, XAAInfoRecPtr infoRec)
 	if(BITMAP_SCANLINE_PAD == 64)
 	    infoRec->CachePixelGranularity *= 2;
     }
+
+    xfree(options);
 
     if(!infoRec->CacheTile && infoRec->WritePixmapToCache)
 	infoRec->CacheTile = XAACacheTile;

@@ -1,5 +1,5 @@
 /*
- * $TOG: Xthreads.h /main/37 1998/02/09 11:19:20 kaleb $
+ * $Xorg: Xthreads.h,v 1.4 2000/08/18 04:05:44 coskrey Exp $
  *
  * 
 Copyright 1993, 1998  The Open Group
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  * *
  */
-/* $XFree86: xc/include/Xthreads.h,v 3.6 1999/10/13 04:20:47 dawes Exp $ */
+/* $XFree86: xc/include/Xthreads.h,v 3.8 2001/01/17 17:53:12 dawes Exp $ */
 
 #ifndef _XTHREADS_H_
 #define _XTHREADS_H_
@@ -59,7 +59,7 @@ typedef struct mutex xmutex_rec;
 #define xcondition_broadcast(cv) condition_broadcast(cv)
 #define xcondition_set_name(cv,str) condition_set_name(cv,str)
 #else /* !CTHREADS */
-#if defined(SVR4) && !defined(__sgi)
+#if defined(SVR4) && !defined(__sgi) && !defined(_SEQUENT_)
 #include <thread.h>
 #include <synch.h>
 typedef thread_t xthread_t;

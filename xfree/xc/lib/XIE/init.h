@@ -1,4 +1,4 @@
-/* $TOG: init.h /main/4 1998/02/06 15:12:30 kaleb $ */
+/* $Xorg: init.h,v 1.3 2000/08/17 19:45:27 cpqbld Exp $ */
 
 /*
 

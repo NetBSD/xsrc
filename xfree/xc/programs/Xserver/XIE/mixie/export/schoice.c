@@ -1,4 +1,4 @@
-/* $TOG: schoice.c /main/5 1998/02/09 16:13:38 kaleb $ */
+/* $Xorg: schoice.c,v 1.3 2000/08/17 19:47:36 cpqbld Exp $ */
 /**** module schoice.c ****/
 /****************************************************************************
 
@@ -64,7 +64,7 @@ terms and conditions:
 
 	Dean Verheiden && Robert NC Shelley  AGE Logic, Inc.  Jan 1994
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/export/schoice.c,v 3.3 1998/10/05 13:22:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/export/schoice.c,v 3.5 2001/01/17 22:13:02 dawes Exp $ */
 
 #define _XIEC_SCHOICE
 #define _XIEC_IPHOTO

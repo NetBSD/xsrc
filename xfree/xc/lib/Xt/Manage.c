@@ -1,4 +1,4 @@
-/* $TOG: Manage.c /main/37 1998/02/06 13:24:03 kaleb $ */
+/* $Xorg: Manage.c,v 1.3 2000/08/17 19:46:13 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Manage.c,v 3.4 1997/05/17 12:52:12 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Manage.c,v 3.6 2001/01/17 19:43:05 dawes Exp $ */
 
 /*
 

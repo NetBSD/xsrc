@@ -1,4 +1,4 @@
-/* $TOG: security.h /main/7 1998/02/09 11:23:13 kaleb $ */
+/* $Xorg: security.h,v 1.3 2000/08/18 04:05:46 coskrey Exp $ */
 /*
 Copyright 1996, 1998  The Open Group
 

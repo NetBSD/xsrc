@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/extsym.c,v 1.4 2000/03/30 18:20:58 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/extsym.c,v 1.5 2000/11/01 22:50:04 anderson Exp $ */
 
 /*
  *

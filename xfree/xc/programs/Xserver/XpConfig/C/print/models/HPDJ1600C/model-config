@@ -1,4 +1,4 @@
-# $XConsortium: model-config /main/3 1996/12/09 07:10:16 kaleb $
+# $Xorg: model-config,v 1.3 2000/08/17 19:48:04 cpqbld Exp $
 # This is the configuration file for the HP DeskJet 1600C printer.
 #
 # The CDEnext SI supports two 1600C drivers XP-PCL-MONO and

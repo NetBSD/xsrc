@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdBSD.c,v 3.13 2000/06/23 22:42:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdBSD.c,v 3.15 2001/03/08 23:23:32 dawes Exp $ */
 /*
  * Derived from xf86Kbd.c by S_ren Schmidt (sos@login.dkuug.dk)
  * which is Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -40,7 +40,7 @@
 #define KD_GET_ENTRY(i,n) \
   eascii_to_x[((keymap.key[i].spcl << (n+1)) & 0x100) + keymap.key[i].map[n]]
 
-static unsigned char remap[128] = {
+static unsigned char remap[NUM_KEYCODES] = {
      0, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,   /* 0x00 - 0x07 */
   0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,   /* 0x08 - 0x0f */
   0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,   /* 0x10 - 0x17 */
@@ -131,6 +131,74 @@ static KeySym eascii_to_x[512] = {
 	 * special marked entries (256 + x)
 	 */
 
+#if 1
+	/* This has been checked against what syscons actually does */
+	NoSymbol,	NoSymbol,	XK_Shift_L,	XK_Shift_R,
+	XK_Caps_Lock,	XK_Num_Lock,	XK_Scroll_Lock,	XK_Alt_L,
+	XK_ISO_Left_Tab,XK_Control_L,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	XK_F1,
+	XK_F2,		XK_F3,		XK_F4,		XK_F5,
+	XK_F6,		XK_F7,		XK_F8,		XK_F9,
+	XK_F10,		XK_F11,		XK_F12,		NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	XK_Control_R,	XK_Alt_R,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol
+#else
+	/* The old table, supposedly for pcvt. */
 	NoSymbol,	NoSymbol,	XK_Shift_L,	XK_Shift_R,
 	XK_Caps_Lock,	XK_Num_Lock,	XK_Scroll_Lock,	XK_Alt_L,
 	NoSymbol,	XK_Control_L,	XK_Alt_L,	XK_Alt_R,
@@ -194,6 +262,8 @@ static KeySym eascii_to_x[512] = {
 	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
 	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
 	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol,
+	NoSymbol,	NoSymbol,	NoSymbol,	NoSymbol
+#endif
       };
 
 #ifdef __OpenBSD__

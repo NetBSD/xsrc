@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xv/Xv.c,v 1.10 1999/12/27 00:39:25 robin Exp $ */
+/* $XFree86: xc/lib/Xv/Xv.c,v 1.15 2001/05/11 08:23:22 alanh Exp $ */
 /*
 ** File: 
 **
@@ -189,12 +189,16 @@ XvQueryAdaptors(
 
   /* GET INPUT ADAPTORS */
 
-  size = rep.num_adaptors*sizeof(XvAdaptorInfo);
-  if ((pas=(XvAdaptorInfo *)Xmalloc(size))==NULL) {
-      Xfree(buffer);
-      UnlockDisplay(dpy);
-      SyncHandle();
-      return(XvBadAlloc);
+  if (rep.num_adaptors == 0) {
+      pas = NULL;
+  } else {
+      size = rep.num_adaptors*sizeof(XvAdaptorInfo);
+      if ((pas=(XvAdaptorInfo *)Xmalloc(size))==NULL) {
+          Xfree(buffer);
+          UnlockDisplay(dpy);
+          SyncHandle();
+          return(XvBadAlloc);
+      }
   }
 
   /* INIT ADAPTOR FIELDS */
@@ -204,6 +208,7 @@ XvQueryAdaptors(
       pa->num_adaptors = 0;
       pa->name = (char *)NULL;
       pa->formats = (XvFormat *)NULL;
+      pa++;
   }
 
   pa = pas;

@@ -1,28 +1,42 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/GL/glx/rensize.c,v 1.3 2001/03/21 16:29:37 dawes Exp $ */
 /*
-** The contents of this file are subject to the GLX Public License Version 1.0
-** (the "License"). You may not use this file except in compliance with the
-** License. You may obtain a copy of the License at Silicon Graphics, Inc.,
-** attn: Legal Services, 2011 N. Shoreline Blvd., Mountain View, CA 94043
-** or at http://www.sgi.com/software/opensource/glx/license.html.
+** License Applicability. Except to the extent portions of this file are
+** made subject to an alternative license as permitted in the SGI Free
+** Software License B, Version 1.1 (the "License"), the contents of this
+** file are subject only to the provisions of the License. You may not use
+** this file except in compliance with the License. You may obtain a copy
+** of the License at Silicon Graphics, Inc., attn: Legal Services, 1600
+** Amphitheatre Parkway, Mountain View, CA 94043-1351, or at:
+** 
+** http://oss.sgi.com/projects/FreeB
+** 
+** Note that, as provided in the License, the Software is distributed on an
+** "AS IS" basis, with ALL EXPRESS AND IMPLIED WARRANTIES AND CONDITIONS
+** DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTIES AND
+** CONDITIONS OF MERCHANTABILITY, SATISFACTORY QUALITY, FITNESS FOR A
+** PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+** 
+** Original Code. The Original Code is: OpenGL Sample Implementation,
+** Version 1.2.1, released January 26, 2000, developed by Silicon Graphics,
+** Inc. The Original Code is Copyright (c) 1991-2000 Silicon Graphics, Inc.
+** Copyright in any portions created by third parties is as indicated
+** elsewhere herein. All Rights Reserved.
+** 
+** Additional Notice Provisions: The application programming interfaces
+** established by SGI in conjunction with the Original Code are The
+** OpenGL(R) Graphics System: A Specification (Version 1.2.1), released
+** April 1, 1999; The OpenGL(R) Graphics System Utility Library (Version
+** 1.3), released November 4, 1998; and OpenGL(R) Graphics with the X
+** Window System(R) (Version 1.3), released October 19, 1998. This software
+** was created using the OpenGL(R) version 1.2.1 Sample Implementation
+** published by SGI, but has not been independently verified as being
+** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** Software distributed under the License is distributed on an "AS IS"
-** basis. ALL WARRANTIES ARE DISCLAIMED, INCLUDING, WITHOUT LIMITATION, ANY
-** IMPLIED WARRANTIES OF MERCHANTABILITY, OF FITNESS FOR A PARTICULAR
-** PURPOSE OR OF NON- INFRINGEMENT. See the License for the specific
-** language governing rights and limitations under the License.
-**
-** The Original Software is GLX version 1.2 source code, released February,
-** 1999. The developer of the Original Software is Silicon Graphics, Inc.
-** Those portions of the Subject Software created by Silicon Graphics, Inc.
-** are Copyright (c) 1991-9 Silicon Graphics, Inc. All Rights Reserved.
-**
-** $SGI$
 */
 
-#include "glxserver.h"
 #include <GL/gl.h>
-#include <GL/glxproto.h>
+#include "glxserver.h"
+#include "GL/glxproto.h"
 #include "unpack.h"
 #include "impsize.h"
 
@@ -64,7 +78,7 @@ int __glXLightfvReqSize(GLbyte *pc, Bool swap )
     }
     return 4 * __glLightfv_size( pname );	/* defined in samplegl lib */
 }
-	   
+
 int __glXLightivReqSize(GLbyte *pc, Bool swap )
 {
     return __glXLightfvReqSize( pc, swap );
@@ -159,7 +173,7 @@ int __glXMap1dReqSize(GLbyte *pc, Bool swap )
 {
     GLenum target;
     GLint order, k;
-    
+
     target = *(GLenum*) (pc + 16);
     order = *(GLint*) (pc + 20);
     if (swap) {
@@ -174,8 +188,8 @@ int __glXMap1fReqSize(GLbyte *pc, Bool swap )
 {
     GLenum target;
     GLint order, k;
-    
-    target = *(GLenum *)(pc + 0); 
+
+    target = *(GLenum *)(pc + 0);
     order = *(GLint *)(pc + 12);
     if (swap) {
 	target = SWAPL( target );
@@ -195,7 +209,7 @@ int __glXMap2dReqSize(GLbyte *pc, Bool swap )
 {
     GLenum target;
     GLint uorder, vorder, k;
-    
+
     target = *(GLenum *)(pc + 32);
     uorder = *(GLint *)(pc + 36);
     vorder = *(GLint *)(pc + 40);
@@ -212,8 +226,8 @@ int __glXMap2fReqSize(GLbyte *pc, Bool swap )
 {
     GLenum target;
     GLint uorder, vorder, k;
-    
-    target = *(GLenum *)(pc + 0); 
+
+    target = *(GLenum *)(pc + 0);
     uorder = *(GLint *)(pc + 12);
     vorder = *(GLint *)(pc + 24);
     if (swap) {
@@ -250,19 +264,19 @@ int __glXPixelMapusvReqSize(GLbyte *pc, Bool swap )
     return 2 * mapsize;
 }
 
-static int ImageSize( GLenum format, GLenum type, GLsizei w, GLsizei h,
-		      GLint rowLength, GLint skipRows, GLint alignment )
+int __glXImageSize( GLenum format, GLenum type, GLsizei w, GLsizei h,
+	       GLint rowLength, GLint skipRows, GLint alignment )
 {
     GLint bytesPerElement, elementsPerGroup, groupsPerRow;
     GLint groupSize, rowSize, padding;
-    
+
     if (w < 0 || h < 0 ||
 	(type == GL_BITMAP &&
 	 (format != GL_COLOR_INDEX && format != GL_STENCIL_INDEX))) {
 	return -1;
     }
     if (w==0 || h==0) return 0;
-    
+
     if (type == GL_BITMAP) {
 	if (rowLength > 0) {
 	    groupsPerRow = rowLength;
@@ -276,23 +290,6 @@ static int ImageSize( GLenum format, GLenum type, GLsizei w, GLsizei h,
 	}
 	return ((h + skipRows) * rowSize);
     } else {
-	switch(type) {
-	  case GL_UNSIGNED_BYTE:
-	  case GL_BYTE:
-	    bytesPerElement = 1;
-	    break;
-	  case GL_UNSIGNED_SHORT:
-	  case GL_SHORT:
-	    bytesPerElement = 2;
-	    break;
-	  case GL_INT:
-	  case GL_UNSIGNED_INT:
-	  case GL_FLOAT:
-	    bytesPerElement = 4;
-	    break;
-	  default:
-	    return -1;
-	}
 	switch(format) {
 	  case GL_COLOR_INDEX:
 	  case GL_STENCIL_INDEX:
@@ -310,11 +307,51 @@ static int ImageSize( GLenum format, GLenum type, GLsizei w, GLsizei h,
 	    elementsPerGroup = 2;
 	    break;
 	  case GL_RGB:
+	  case GL_BGR:
 	    elementsPerGroup = 3;
 	    break;
 	  case GL_RGBA:
+	  case GL_BGRA:
 	  case GL_ABGR_EXT:
 	    elementsPerGroup = 4;
+	    break;
+	  default:
+	    return -1;
+	}
+	switch(type) {
+	  case GL_UNSIGNED_BYTE:
+	  case GL_BYTE:
+	    bytesPerElement = 1;
+	    break;
+	  case GL_UNSIGNED_BYTE_3_3_2:
+	  case GL_UNSIGNED_BYTE_2_3_3_REV:
+	    bytesPerElement = 1;	    
+	    elementsPerGroup = 1;
+	    break;
+	  case GL_UNSIGNED_SHORT:
+	  case GL_SHORT:
+	    bytesPerElement = 2;
+	    break;
+	  case GL_UNSIGNED_SHORT_5_6_5:
+	  case GL_UNSIGNED_SHORT_5_6_5_REV:
+	  case GL_UNSIGNED_SHORT_4_4_4_4:
+ 	  case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+	  case GL_UNSIGNED_SHORT_5_5_5_1:
+	  case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+	    bytesPerElement = 2;
+	    elementsPerGroup = 1;
+	    break;
+	  case GL_INT:
+	  case GL_UNSIGNED_INT:
+	  case GL_FLOAT:
+	    bytesPerElement = 4;
+	    break;
+	  case GL_UNSIGNED_INT_8_8_8_8:
+	  case GL_UNSIGNED_INT_8_8_8_8_REV:
+	  case GL_UNSIGNED_INT_10_10_10_2:
+	  case GL_UNSIGNED_INT_2_10_10_10_REV:
+	    bytesPerElement = 4;
+	    elementsPerGroup = 1;
 	    break;
 	  default:
 	    return -1;
@@ -334,6 +371,123 @@ static int ImageSize( GLenum format, GLenum type, GLsizei w, GLsizei h,
     }
 }
 
+/* XXX
+ * This should be folded into __glXImageSize().
+ */
+int __glXImage3DSize( GLenum format, GLenum type, GLsizei w, GLsizei h,
+		      GLsizei d, GLint imageHeight, GLint rowLength,
+		      GLint skipImages, GLint skipRows, GLint alignment )
+{
+    GLint bytesPerElement, elementsPerGroup, groupsPerRow;
+    GLint groupSize, rowSize, padding, imageSize;
+
+    if (w < 0 || h < 0 || d < 0 ||
+	(type == GL_BITMAP &&
+	 (format != GL_COLOR_INDEX && format != GL_STENCIL_INDEX))) {
+	return -1;
+    }
+    if (w==0 || h==0 || d == 0) return 0;
+
+    if (type == GL_BITMAP) {
+	if (rowLength > 0) {
+	    groupsPerRow = rowLength;
+	} else {
+	    groupsPerRow = w;
+	}
+	rowSize = (groupsPerRow + 7) >> 3;
+	padding = (rowSize % alignment);
+	if (padding) {
+	    rowSize += alignment - padding;
+	}
+	return ((h + skipRows) * rowSize);
+    } else {
+	switch(format) {
+	  case GL_COLOR_INDEX:
+	  case GL_STENCIL_INDEX:
+	  case GL_DEPTH_COMPONENT:
+	    elementsPerGroup = 1;
+	    break;
+	  case GL_RED:
+	  case GL_GREEN:
+	  case GL_BLUE:
+	  case GL_ALPHA:
+	  case GL_LUMINANCE:
+	    elementsPerGroup = 1;
+	    break;
+	  case GL_LUMINANCE_ALPHA:
+	    elementsPerGroup = 2;
+	    break;
+	  case GL_RGB:
+	  case GL_BGR:
+	    elementsPerGroup = 3;
+	    break;
+	  case GL_RGBA:
+	  case GL_BGRA:
+	  case GL_ABGR_EXT:
+	    elementsPerGroup = 4;
+	    break;
+	  default:
+	    return -1;
+	}
+	switch(type) {
+	  case GL_UNSIGNED_BYTE:
+	  case GL_BYTE:
+	    bytesPerElement = 1;
+	    break;
+	  case GL_UNSIGNED_BYTE_3_3_2:
+	  case GL_UNSIGNED_BYTE_2_3_3_REV:
+	    bytesPerElement = 1;	    
+	    elementsPerGroup = 1;
+	    break;
+	  case GL_UNSIGNED_SHORT:
+	  case GL_SHORT:
+	    bytesPerElement = 2;
+	    break;
+	  case GL_UNSIGNED_SHORT_5_6_5:
+	  case GL_UNSIGNED_SHORT_5_6_5_REV:
+	  case GL_UNSIGNED_SHORT_4_4_4_4:
+ 	  case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+	  case GL_UNSIGNED_SHORT_5_5_5_1:
+	  case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+	    bytesPerElement = 2;
+	    elementsPerGroup = 1;
+	    break;
+	  case GL_INT:
+	  case GL_UNSIGNED_INT:
+	  case GL_FLOAT:
+	    bytesPerElement = 4;
+	    break;
+	  case GL_UNSIGNED_INT_8_8_8_8:
+	  case GL_UNSIGNED_INT_8_8_8_8_REV:
+	  case GL_UNSIGNED_INT_10_10_10_2:
+	  case GL_UNSIGNED_INT_2_10_10_10_REV:
+	    bytesPerElement = 4;
+	    elementsPerGroup = 1;
+	    break;
+	  default:
+	    return -1;
+	}
+	groupSize = bytesPerElement * elementsPerGroup;
+	if (rowLength > 0) {
+	    groupsPerRow = rowLength;
+	} else {
+	    groupsPerRow = w;
+	}
+	rowSize = groupsPerRow * groupSize;
+	padding = (rowSize % alignment);
+	if (padding) {
+	    rowSize += alignment - padding;
+	}
+	if (imageHeight > 0) {
+	    imageSize = (imageHeight + skipRows) * rowSize;
+	} else {
+	    imageSize = (h + skipRows) * rowSize;
+	}
+	return ((d + skipImages) * imageSize);
+    }
+}
+
+
 int __glXDrawPixelsReqSize(GLbyte *pc, Bool swap )
 {
     __GLXdispatchDrawPixelsHeader *hdr = (__GLXdispatchDrawPixelsHeader *) pc;
@@ -350,11 +504,11 @@ int __glXDrawPixelsReqSize(GLbyte *pc, Bool swap )
 	type = SWAPL( type );
 	w = SWAPL( w );
 	h = SWAPL( h );
- 	rowLength = SWAPL( rowLength );
+	rowLength = SWAPL( rowLength );
 	skipRows = SWAPL( skipRows );
 	alignment = SWAPL( alignment );
     }
-    return ImageSize( format, type, w, h, rowLength, skipRows, alignment );
+    return __glXImageSize( format, type, w, h, rowLength, skipRows, alignment );
 }
 
 int __glXBitmapReqSize(GLbyte *pc, Bool swap )
@@ -369,11 +523,11 @@ int __glXBitmapReqSize(GLbyte *pc, Bool swap )
     if (swap) {
 	w = SWAPL( w );
 	h = SWAPL( h );
- 	rowLength = SWAPL( rowLength );
+	rowLength = SWAPL( rowLength );
 	skipRows = SWAPL( skipRows );
 	alignment = SWAPL( alignment );
     }
-    return ImageSize( GL_COLOR_INDEX, GL_BITMAP, w, h,
+    return __glXImageSize( GL_COLOR_INDEX, GL_BITMAP, w, h,
 		      rowLength, skipRows, alignment );
 }
 
@@ -402,7 +556,7 @@ int __glXTexImage1DReqSize(GLbyte *pc, Bool swap )
     } else if (format == GL_STENCIL_INDEX || format == GL_DEPTH_COMPONENT) {
 	return -1;
     }
-    return ImageSize( format, type, w, 1, rowLength, skipRows, alignment );
+    return __glXImageSize( format, type, w, 1, rowLength, skipRows, alignment );
 }
 
 int __glXTexImage2DReqSize(GLbyte *pc, Bool swap )
@@ -432,20 +586,21 @@ int __glXTexImage2DReqSize(GLbyte *pc, Bool swap )
     } else if (format == GL_STENCIL_INDEX || format == GL_DEPTH_COMPONENT) {
 	return -1;
     }
-    return ImageSize( format, type, w, h, rowLength, skipRows, alignment );
+    return __glXImageSize( format, type, w, h, rowLength, skipRows, alignment );
 }
 
+/* XXX this is used elsewhere - should it be exported from glxserver.h? */
 int __glXTypeSize(GLenum enm)
 {
   switch(enm) {
-    case GL_BYTE: 		return sizeof(GLbyte); 	
-    case GL_UNSIGNED_BYTE: 	return sizeof(GLubyte);
-    case GL_SHORT: 		return sizeof(GLshort); 	
-    case GL_UNSIGNED_SHORT: 	return sizeof(GLushort);
-    case GL_INT: 		return sizeof(GLint); 		
-    case GL_UNSIGNED_INT: 	return sizeof(GLint);
-    case GL_FLOAT: 		return sizeof(GLfloat);
-    case GL_DOUBLE:	 	return sizeof(GLdouble);
+    case GL_BYTE:		return sizeof(GLbyte);
+    case GL_UNSIGNED_BYTE:	return sizeof(GLubyte);
+    case GL_SHORT:		return sizeof(GLshort);
+    case GL_UNSIGNED_SHORT:	return sizeof(GLushort);
+    case GL_INT:		return sizeof(GLint);
+    case GL_UNSIGNED_INT:	return sizeof(GLint);
+    case GL_FLOAT:		return sizeof(GLfloat);
+    case GL_DOUBLE:		return sizeof(GLdouble);
     default:			return -1;
   }
 }
@@ -478,32 +633,32 @@ int __glXDrawArraysSize( GLbyte *pc, Bool swap )
 	    component = SWAPL( component );
 	}
 
-        switch (component) {
-          case GL_VERTEX_ARRAY:
-          case GL_COLOR_ARRAY:
-          case GL_TEXTURE_COORD_ARRAY:
-            break;
-          case GL_NORMAL_ARRAY:
-            if (numVals != 3) {
-		/* bad size */
-                return -1;
-            }
+	switch (component) {
+	  case GL_VERTEX_ARRAY:
+	  case GL_COLOR_ARRAY:
+	  case GL_TEXTURE_COORD_ARRAY:
 	    break;
-          case GL_INDEX_ARRAY:
-            if (numVals != 1) {
+	  case GL_NORMAL_ARRAY:
+	    if (numVals != 3) {
 		/* bad size */
-                return -1;
-            }
-            break;
-          case GL_EDGE_FLAG_ARRAY:
-            if ((numVals != 1) && (datatype != GL_UNSIGNED_BYTE)) {
+		return -1;
+	    }
+	    break;
+	  case GL_INDEX_ARRAY:
+	    if (numVals != 1) {
+		/* bad size */
+		return -1;
+	    }
+	    break;
+	  case GL_EDGE_FLAG_ARRAY:
+	    if ((numVals != 1) && (datatype != GL_UNSIGNED_BYTE)) {
 		/* bad size or bad type */
 		return -1;
-            }
-            break;
-          default:
-            /* unknown component type */
-            return -1;
+	    }
+	    break;
+	  default:
+	    /* unknown component type */
+	    return -1;
 	}
 
 	arrayElementSize += __GLX_PAD(numVals * __glXTypeSize(datatype));
@@ -512,7 +667,7 @@ int __glXDrawArraysSize( GLbyte *pc, Bool swap )
     }
 
     return ((numComponents * sizeof(__GLXdispatchDrawArraysComponentHeader)) +
-            (numVertexes * arrayElementSize));
+	    (numVertexes * arrayElementSize));
 }
 
 int __glXPrioritizeTexturesReqSize(GLbyte *pc, Bool swap )
@@ -541,7 +696,7 @@ int __glXTexSubImage1DReqSize(GLbyte *pc, Bool swap )
 	skipRows = SWAPL( skipRows );
 	alignment = SWAPL( alignment );
     }
-    return ImageSize( format, type, w, 1, rowLength, skipRows, alignment );
+    return __glXImageSize( format, type, w, 1, rowLength, skipRows, alignment );
 }
 
 int __glXTexSubImage2DReqSize(GLbyte *pc, Bool swap )
@@ -565,5 +720,280 @@ int __glXTexSubImage2DReqSize(GLbyte *pc, Bool swap )
 	skipRows = SWAPL( skipRows );
 	alignment = SWAPL( alignment );
     }
-    return ImageSize( format, type, w, h, rowLength, skipRows, alignment );
+    return __glXImageSize( format, type, w, h, rowLength, skipRows, alignment );
+}
+
+int __glXTexImage3DReqSize(GLbyte *pc, Bool swap )
+{
+    __GLXdispatchTexImage3DHeader *hdr = (__GLXdispatchTexImage3DHeader *) pc;
+    GLenum target = hdr->target;
+    GLenum format = hdr->format;
+    GLenum type = hdr->type;
+    GLint w = hdr->width;
+    GLint h = hdr->height;
+    GLint d = hdr->depth;
+    GLint imageHeight = hdr->imageHeight;
+    GLint rowLength = hdr->rowLength;
+    GLint skipImages = hdr->skipImages;
+    GLint skipRows = hdr->skipRows;
+    GLint alignment = hdr->alignment;
+    GLint nullImage = hdr->nullimage;
+
+    if (swap) {
+	target = SWAPL( target );
+	format = SWAPL( format );
+	type = SWAPL( type );
+	w = SWAPL( w );
+	h = SWAPL( h );
+	d = SWAPL( d );
+	imageHeight = SWAPL( imageHeight );
+	rowLength = SWAPL( rowLength );
+	skipImages = SWAPL( skipImages );
+	skipRows = SWAPL( skipRows );
+	alignment = SWAPL( alignment );
+    }
+    if (target == GL_PROXY_TEXTURE_3D || nullImage) {
+	return 0;
+    } else {
+	return __glXImage3DSize( format, type, w, h, d, imageHeight,
+				 rowLength, skipImages, skipRows,
+				 alignment);
+    }
+}
+
+int __glXTexSubImage3DReqSize(GLbyte *pc, Bool swap )
+{
+    __GLXdispatchTexSubImage3DHeader *hdr =
+					(__GLXdispatchTexSubImage3DHeader *) pc;
+    GLenum target = hdr->target;
+    GLenum format = hdr->format;
+    GLenum type = hdr->type;
+    GLint w = hdr->width;
+    GLint h = hdr->height;
+    GLint d = hdr->depth;
+    GLint imageHeight = hdr->imageHeight;
+    GLint rowLength = hdr->rowLength;
+    GLint skipImages = hdr->skipImages;
+    GLint skipRows = hdr->skipRows;
+    GLint alignment = hdr->alignment;
+
+    if (swap) {
+	target = SWAPL( target );
+	format = SWAPL( format );
+	type = SWAPL( type );
+	w = SWAPL( w );
+	h = SWAPL( h );
+	d = SWAPL( d );
+	imageHeight = SWAPL( imageHeight );
+	rowLength = SWAPL( rowLength );
+	skipImages = SWAPL( skipImages );
+	skipRows = SWAPL( skipRows );
+	alignment = SWAPL( alignment );
+    }
+    if (target == GL_PROXY_TEXTURE_3D) {
+	return 0;
+    } else {
+	return __glXImage3DSize( format, type, w, h, d, imageHeight,
+				 rowLength, skipImages, skipRows,
+				 alignment);
+    }
+}
+
+int __glXConvolutionFilter1DReqSize(GLbyte *pc, Bool swap )
+{
+    __GLXdispatchConvolutionFilterHeader *hdr =
+			(__GLXdispatchConvolutionFilterHeader *) pc;
+
+    GLenum format = hdr->format;
+    GLenum type = hdr->type;
+    GLint w = hdr->width;
+    GLint rowLength = hdr->rowLength;
+    GLint alignment = hdr->alignment;
+
+    if (swap) {
+	format = SWAPL( format );
+	type = SWAPL( type );
+	w = SWAPL( w );
+	rowLength = SWAPL( rowLength );
+	alignment = SWAPL( alignment );
+    }
+
+    return __glXImageSize ( format, type, w, 1, rowLength, 0, alignment );
+}
+
+int __glXConvolutionFilter2DReqSize(GLbyte *pc, Bool swap )
+{
+    __GLXdispatchConvolutionFilterHeader *hdr =
+			(__GLXdispatchConvolutionFilterHeader *) pc;
+
+    GLenum format = hdr->format;
+    GLenum type = hdr->type;
+    GLint w = hdr->width;
+    GLint h = hdr->height;
+    GLint rowLength = hdr->rowLength;
+    GLint skipRows = hdr->skipRows;
+    GLint alignment = hdr->alignment;
+
+    if (swap) {
+	format = SWAPL( format );
+	type = SWAPL( type );
+	w = SWAPL( w );
+	h = SWAPL( h );
+	rowLength = SWAPL( rowLength );
+	skipRows = SWAPL( skipRows );
+	alignment = SWAPL( alignment );
+    }
+
+    return __glXImageSize ( format, type, w, h, rowLength, skipRows, alignment );
+}
+
+int __glXConvolutionParameterivSize(GLenum pname)
+{
+    switch (pname) {
+      case GL_CONVOLUTION_BORDER_COLOR:
+      case GL_CONVOLUTION_FILTER_SCALE:
+      case GL_CONVOLUTION_FILTER_BIAS:
+	return 4;
+      case GL_CONVOLUTION_BORDER_MODE:
+	return 1;
+      default:
+	return -1;
+    }
+}
+
+int __glXConvolutionParameterfvSize(GLenum pname)
+{
+    return __glXConvolutionParameterivSize(pname);
+}
+
+int __glXConvolutionParameterivReqSize(GLbyte *pc, Bool swap )
+{
+    GLenum pname = *(GLenum *)(pc + 4);
+    if (swap) {
+	pname = SWAPL( pname );
+    }
+    return 4 * __glXConvolutionParameterivSize( pname );
+}
+
+int __glXConvolutionParameterfvReqSize(GLbyte *pc, Bool swap )
+{
+    return __glXConvolutionParameterivReqSize( pc, swap );
+}
+
+int __glXSeparableFilter2DReqSize(GLbyte *pc, Bool swap )
+{
+    __GLXdispatchConvolutionFilterHeader *hdr =
+			(__GLXdispatchConvolutionFilterHeader *) pc;
+
+    GLint image1size, image2size;
+    GLenum format = hdr->format;
+    GLenum type = hdr->type;
+    GLint w = hdr->width;
+    GLint h = hdr->height;
+    GLint rowLength = hdr->rowLength;
+    GLint alignment = hdr->alignment;
+
+    if (swap) {
+	format = SWAPL( format );
+	type = SWAPL( type );
+	w = SWAPL( w );
+	h = SWAPL( h );
+	rowLength = SWAPL( rowLength );
+	alignment = SWAPL( alignment );
+    }
+
+    /* XXX Should rowLength be used for either or both image? */
+    image1size = __glXImageSize ( format, type, w, 1, rowLength, 0, alignment );
+    image1size = __GLX_PAD(image1size);
+    image2size = __glXImageSize ( format, type, h, 1, rowLength, 0, alignment );
+    return image1size + image2size;
+
+}
+
+int __glXColorTableParameterfvSize(GLenum pname)
+{
+    /* currently, only scale and bias are supported; return RGBA */
+    switch(pname) {
+    case GL_COLOR_TABLE_SCALE:
+    case GL_COLOR_TABLE_BIAS:
+	return 4;
+    default:
+	return 0;
+    }
+}
+
+int __glXColorTableParameterivSize(GLenum pname)
+{
+    /* fv and iv are the same in this context */
+    return __glXColorTableParameterfvSize(pname);
+}
+
+int __glXColorTableReqSize(GLbyte *pc, Bool swap )
+{
+    __GLXdispatchColorTableHeader *hdr =
+			(__GLXdispatchColorTableHeader *) pc;
+
+    GLenum target = hdr->target;
+    GLenum format = hdr->format;
+    GLenum type = hdr->type;
+    GLint w = hdr->width;
+    GLint rowLength = hdr->rowLength;
+    GLint alignment = hdr->alignment;
+
+    switch (target) {
+      case GL_PROXY_TEXTURE_1D:
+      case GL_PROXY_TEXTURE_2D:
+      case GL_PROXY_TEXTURE_3D:
+      case GL_PROXY_COLOR_TABLE:
+      case GL_PROXY_POST_CONVOLUTION_COLOR_TABLE:
+      case GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE:
+          return 0;
+    }
+
+    if (swap) {
+	format = SWAPL( format );
+	type = SWAPL( type );
+	w = SWAPL( w );
+	rowLength = SWAPL( rowLength );
+	alignment = SWAPL( alignment );
+    }
+
+    return __glXImageSize ( format, type, w, 1, rowLength, 0, alignment );
+}
+
+int __glXColorSubTableReqSize(GLbyte *pc, Bool swap )
+{
+    __GLXdispatchColorSubTableHeader *hdr =
+			(__GLXdispatchColorSubTableHeader *) pc;
+
+    GLenum format = hdr->format;
+    GLenum type = hdr->type;
+    GLint count = hdr->count;
+    GLint rowLength = hdr->rowLength;
+    GLint alignment = hdr->alignment;
+
+    if (swap) {
+	format = SWAPL( format );
+	type = SWAPL( type );
+	count = SWAPL( count );
+	rowLength = SWAPL( rowLength );
+	alignment = SWAPL( alignment );
+    }
+
+    return __glXImageSize ( format, type, count, 1, rowLength, 0, alignment );
+}
+
+int __glXColorTableParameterfvReqSize(GLbyte *pc, Bool swap )
+{
+    GLenum pname = *(GLenum *)(pc + 4);
+    if (swap) {
+	pname = SWAPL( pname );
+    }
+    return 4 * __glXColorTableParameterfvSize(pname);
+}
+
+int __glXColorTableParameterivReqSize(GLbyte *pc, Bool swap )
+{
+    /* no difference between fv and iv versions */
+    return __glXColorTableParameterfvReqSize(pc, swap);
 }

@@ -1,4 +1,4 @@
-/* $TOG: xfwp.h /main/29 1998/02/09 13:58:51 kaleb $ */
+/* $Xorg: xfwp.h,v 1.5 2000/08/17 19:54:24 cpqbld Exp $ */
 
 /*
 Copyright 1996, 1998  The Open Group
@@ -21,7 +21,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from The Open Group.
 */
-/* $XFree86: xc/programs/xfwp/xfwp.h,v 1.7 1999/03/02 11:49:40 dawes Exp $ */
+/* $XFree86: xc/programs/xfwp/xfwp.h,v 1.9 2001/01/17 23:45:35 dawes Exp $ */
 
 #ifndef _XFWP_H
 #define _XFWP_H
@@ -182,7 +182,11 @@ struct config_line
   unsigned int 	 	dest_host;
   char * 		dest_netmask;
   unsigned int	 	dest_net;
+#if defined(__cplusplus) || defined(c_plusplus)
+  char * 		c_operator;
+#else
   char * 		operator;
+#endif
   char * 		service;
   int	 		service_id;
 };

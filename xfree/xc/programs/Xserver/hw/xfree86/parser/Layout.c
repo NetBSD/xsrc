@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Layout.c,v 1.12 2000/04/04 22:36:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Layout.c,v 1.14 2001/02/21 23:37:04 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -78,6 +78,8 @@ xf86parseLayoutSection (void)
 		case IDENTIFIER:
 			if (xf86getToken (NULL) != STRING)
 				Error (QUOTE_MSG, "Identifier");
+			if (has_ident == TRUE)
+				Error (MULTIPLE_MSG, "Identifier");
 			ptr->lay_identifier = val.str;
 			has_ident = TRUE;
 			break;

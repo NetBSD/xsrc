@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/keyboard-cfg.h,v 1.1 2000/04/04 22:36:59 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/keyboard-cfg.h,v 1.3 2001/03/02 22:39:27 paulo Exp $
  */
 
 #include "config.h"
@@ -63,7 +63,7 @@ typedef struct {
 XtPointer KeyboardConfig(XtPointer);
 void KeyboardModelAndLayout(XF86SetupInfo*);
 void InitializeKeyboard(void);
-void UpdateKeyboard(Bool);
+Bool UpdateKeyboard(Bool);
 Bool WriteXKBConfiguration(char*, XkbConfigRtrnPtr);
 
 /*

@@ -1,5 +1,10 @@
-// $XConsortium: dk /main/3 1996/08/31 12:19:29 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/dk,v 3.4 1999/12/14 03:26:18 robin Exp $
+// $Xorg: dk,v 1.3 2000/08/17 19:54:42 cpqbld Exp $
+
+
+
+
+// $XFree86: xc/programs/xkbcomp/symbols/dk,v 3.6 2001/01/17 23:45:58 dawes Exp $
+
 partial alphanumeric_keys 
 xkb_symbols "basic" {
 

@@ -3,7 +3,7 @@
 #
 #
 #
-# $XFree86$
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/listbox.tcl,v 3.1 1996/12/27 06:54:59 dawes Exp $
 #
 # listbox.tcl --
 #

@@ -40,7 +40,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ************************************************************************/
-/* $TOG: mipolytext.c /main/13 1998/02/09 14:48:08 kaleb $ */
+/* $Xorg: mipolytext.c,v 1.3 2000/08/17 19:53:38 cpqbld Exp $ */
 /*
  * mipolytext.c - text routines
  *

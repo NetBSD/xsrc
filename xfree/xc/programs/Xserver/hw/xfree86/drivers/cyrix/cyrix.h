@@ -26,7 +26,7 @@
  *          Dirk H. Hohndel (hohndel@suse.de),
  *          Portions: the GGI project & confidential CYRIX databooks.
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix.h,v 1.3 2001/05/04 19:05:36 dawes Exp $ */
 
 #ifndef _CYRIX_H_
 #define _CYRIX_H_
@@ -116,6 +116,7 @@ typedef struct {
 	Bool			IsCyber;
 	Bool			NewClockCode;
 	Bool			NoAccel;
+	OptionInfoPtr		Options;
     /* accel stuff */
         int bltBufWidth;
         int blitMode;

@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sunffb/ffb_dac.h,v 1.2 2001/04/05 17:42:33 dawes Exp $ */
 
 #ifndef _FFB_DAC_H
 #define _FFB_DAC_H
@@ -346,6 +346,8 @@ typedef struct ffb_dac_info {
 #define FFB_DAC_PAC1	0x00000001	/* Pacifica1 DAC, BT9068	*/
 #define FFB_DAC_PAC2	0x00000002	/* Pacifica2 DAC, BT498		*/
 #define FFB_DAC_ICURCTL	0x00000004	/* Inverted CUR_CTRL bits	*/
+
+	unsigned int kernel_wid;
 
 	/* These registers need to be modified when changing DAC
 	 * timing state, so at init time we capture their values.

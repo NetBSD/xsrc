@@ -5,10 +5,10 @@
 <article>
 <title>XFree86 on Darwin and Mac OS X
 <author>Torrey T. Lyons
-<date>11 December 2000
+<date>25 May 2001
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Darwin.sgml,v 1.3 2000/12/12 07:35:52 herrb Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Darwin.sgml,v 1.4.4.2 2001/06/02 04:44:37 torrey Exp $
 </ident>
 
 <toc>
@@ -19,8 +19,7 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Darwin.sgml,v 1.3 2000/12/12 0
 implementation of X Windows, has been ported to <htmlurl
 url="http://www.publicsource.apple.com/projects/darwin/" name="Darwin">
 and <htmlurl url="http://www.apple.com/macosx/" name="Mac OS X">. This
-document is
-a collection of information for anyone
+document is a collection of information for anyone
 experimenting with running X Windows on Apple's next generation operating
 system. Please send any comments on this page to
 <email/torrey@mrcla.com/.  If you are also 
@@ -28,21 +27,36 @@ working on modifications to the Darwin X server, please let me know.
 
 <sect>Hardware Support and Configuration
 <p>
-The Darwin port of XFree86 uses the IOKit for device driver loading
-and discovery, rather than the XFree86 module loader. Because of this,
-the XFree86 configuration file is not used on Darwin systems. The
-descriptions found elsewhere of devices supported by XFree86 for other
-operating systems also do not apply.
+XFree86 can be run either from the console or side by side with
+Mac OS&nbsp;X's Aqua desktop in a full screen mode. In full screen mode
+with Aqua, when the X window system is active, it takes over the entire
+screen. You can switch back to the Mac OS&nbsp;X desktop by holding down
+Command-Option-A. This key combination can be changed in the user
+preferences. From the Mac OS&nbsp;X desktop, just click on the XDarwin
+icon in the floating switch window to switch back to the X window system.
+You can change this behavior in the user preferences so that clicking on
+the XDarwin icon in the Dock switches as well. The full screen cooperative
+mode with Aqua is known as Quartz mode, named after the Quartz 2D
+compositing engine used by Aqua.
 
 <p>
-XFree86 for Darwin will work with any video card that you have an
-IOKit driver for. If you are running Mac OS X, this typically means
-any card that has been shipped by Apple. If a card works for you with
-the Mac OS X GUI, it will work on the same machine with XFree86. If
-you have a pure Darwin installation, your hardware support may be
-somewhat limited because Apple does not include all its hardware
-drivers with Darwin. IOKit drivers are typically found in
-/System/Library/Extensions/ or /Library/Extensions/.
+From the console, the Darwin port of XFree86 uses the IOKit for device
+driver loading and discovery, rather than the XFree86 module loader.
+Because of this, the XFree86 configuration file is not used on Darwin
+or Mac OS&nbsp;X systems. The descriptions found elsewhere of devices
+supported by XFree86 for other operating systems also do not apply.
+Running XFree86 from the text console is known as IOKit mode.
+
+<p>
+XFree86 for Darwin or Mac OS&nbsp;X will work with any video card that
+you have an IOKit driver for. If you are running Mac OS&nbsp;X, this
+typically means any card that has been shipped by Apple. If a card works
+for you with the Mac OS&nbsp;X GUI, it will work on the same machine with
+XFree86. If you have a pure Darwin installation, you may need to download
+additional third-party drivers from
+<htmlurl url="http://www.publicsource.apple.com/projects/darwin/"
+name="Apple's Darwin site">. IOKit drivers are typically installed in
+<tt>/System/Library/Extensions/</tt> or <tt>/Library/Extensions/</tt>.
 
 <p>
 Multi-button and scroll wheel mouse support works well with all
@@ -53,41 +67,26 @@ mice.
 <p>
 Following are instructions for building and running your own copy of
 XFree86. The procedure for getting your X server up and running on
-Darwin and Mac OS X are very similar, but it is actually somewhat more
-difficult on Mac OS X. Where there are differences I have noted them
-below. Both Mac OS&nbsp;X Developers' Preview 4 and Mac OS&nbsp;X
-Public Beta are covered. Note that to build XFree86 for yourself on
-Mac OS&nbsp;X Beta, you will need to have the Developers' Tools. If
-you did not receive these as a member of ADC, they are available for
-download from the <htmlurl url="http://www.apple.com/developer/"
-name="Apple Developer Connection">.
+Darwin and Mac OS&nbsp;X are very similar. Where there are differences
+I have noted them below. Note that to build XFree86 for yourself on
+Mac OS&nbsp;X, you will need to install the Developers' Tools.
 
 <p>
-If you want to save some time, you can use the precompiled binaries
-provided by the XFree86 server at <url
+If you don't feel the need to live on the cutting edge, you can save
+some time and effort by using the precompiled binaries available on
+the XFree86 FTP server at <url
 url="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/binaries/Darwin/">.
 Follow the instructions in the <htmlurl
 url="http://www.xfree86.org/&relvers;/Install.html" name="Install">
-document to install it. 
-
-<p>
-This will create two new directory trees, <tt>/usr/X11R6</tt> and
-<tt>/private/etc/X11</tt>. If you have the developers' tools, you may
-have to run ranlib on all the libraries in <tt>/usr/X11R6/lib/*</tt>
-before  trying to build other X applications. 
+document to install it. This will create two new directory trees,
+<tt>/usr/X11R6</tt> and <tt>/etc/X11</tt> For Mac OS&nbsp;X Quartz
+support, download the optional Xquartz.tgz tarball.
 
 <p>
 If you get the precompiled binaries you can skip ahead to the section
-on <ref id="running" name="running X windows">
-
-<p>
-On the other hand, if you want to build things yourself from scratch,
+on <ref id="running" name="running the X window system"> On the other hand,
+if you want to build things yourself from scratch,
 follow the directions below.
-
-<p>
-If you want to recompile the X server on Mac OS X, you will have to
-make the header files as described <ref id="makeHeaders"
-name="below">. 
 
 <sect1> Get the Code 
 
@@ -96,11 +95,11 @@ The first thing you need to do is to get the source code from the
 XFree86 project.
 
 <itemize>
-<item> Setup CVS: Both Darwin and Mac OS X include CVS (Concurrent
+<item> Setup CVS: Both Darwin and Mac OS&nbsp;X include CVS (Concurrent
 Versions System), which is an easy way to download and keep up to date
 with open source code released by XFree86 and others. You do have to
 setup CVS properly, however, to tell it where to look. Follow the
-instructions <htmlurl url="http://www.xfree86.org/cvs/" name="here"> on
+<htmlurl url="http://www.xfree86.org/cvs/" name="XFree86 instructions"> on
 how to do this either via ssh or via the cvs pserver.
 
 <item> Now make a directory in some convenient place which will serve
@@ -117,24 +116,6 @@ Wait for all the files to complete downloading.
 
 </itemize>
 
-<sect1>Make Header Files for Mac OS X<label id="makeHeaders">
-<p>
-
-These next steps are not necessary if you are building XFree86 on
-Darwin. Mac OS X Beta or DP4 does not include many of the
-&quot;in-progress&quot; header files that are needed to successfully
-build XFree86. The general philosophy is that at any given time, Mac
-OS X will include only headers files that are &quot;ready for prime
-time&quot; while Darwin will include a snapshot of Apple's current
-efforts. So if you have access to a Darwin system, I would suggest
-using this instead of Mac OS X to build XFree86. If you don't, read
-the appropriate page below for an outline of what you need to do:
-
-<itemize>
-<item><ref id="headersXBeta" name="Mac OS&nbsp;X Public Beta"> 
-<item><ref id="headersXDP4" name="Mac OS&nbsp;X Developers' Preview 4">
-</itemize>
-
 <sect1> Build XFree86
 <p>
 Once you have everything ready it is easy to build and install
@@ -146,47 +127,43 @@ make World >& world.log
 
 (wait for several hours)
 
-su root
-make install >& install.log
-make install.man >& man.log
+sudo make install >& install.log
+sudo make install.man >& man.log
 </verb></tscreen>
 
-<sect>Run X Windows<label id="running">
+<sect>Run the X Window System<label id="running">
 <p>
-You will want to add the X windows executables to your path. Your path
+You will want to add the X window executables to your path. Your path
 is the list of directories to be searched when you type a command. You
 will also want to add the man pages from XFree86 to the list of pages
 to be searched when you are looking for documentation. The way to do
 this depends on the shell you are using. With tcsh or csh add the
-following two lines to a file in your home directory called <tt/.cshrc/
-(create this file if you don't have one yet): 
+following two lines to a file named
+<tt>~/Library/init/tcsh/path</tt>: (You may need to create this file and
+directory path if it does not exist already.)
+
 <tscreen><verb>
-setenv MANPATH "${MANPATH}:/usr/X11R6/man:/usr/local/man" 
 setenv PATH "${PATH}:/usr/X11R6/bin"
+setenv MANPATH "${MANPATH}:/usr/X11R6/man" 
 </verb></tscreen>
-Now type ``<tt>source ~/.cshrc;rehash</tt>'' to
-get these changes to take effect. On future logins, this file will be
+The next time you login or open a Terminal window, this file will be
 executed automatically.
 
 <p>
-You are now ready to go. On Mac OS X, you have to do a few extra steps
-each time you want to run X windows. You can't run XFree86 with
-CoreGraphics running since they both want to control the screen. So
-for Mac OS X you first need to logout. Then for Mac OS X DP4, from the
-login window type ``console'' as the user name and push
-login. For Mac OS X Beta, type ``&gt;console'' as the user
-name. This should shutdown CoreGraphics and bring you up with a text
-console. Login again.
+You are now ready to go. On Mac OS&nbsp;X, you can run XFree86 from the
+text console or in full screen mode with Aqua. To get to the text
+console in Mac OS&nbsp;X you need to logout and type ``&gt;console'' as
+the user name. This will shutdown Core Graphics and
+bring up the console login prompt. Login again as your user. 
 
 <p>
-Now from the text console you can start X Windows in either Darwin or
-Mac OS X by typing ``startx''. After a brief wait at least one terminal
-window should pop up for you. So far it probably isn't very impressive
-as you might not even have a window manager running to allow you to
-move windows around.
+From the text console you can start the X Window System by typing ``startx''.
+After a brief wait at least one terminal window should pop up for you.
+So far it probably isn't very impressive as you might not even have a
+window manager running to allow you to move windows around.
 
 <p>
-When you are ready to quit X windows type ``exit'' in the main
+When you are ready to quit XFree86 type ``exit'' in the main
 terminal window or quit with the window manager if you have one
 running. Unfortunately the X server won't shutdown correctly and you
 will get an apparently frozen screen with only a spinning beachball
@@ -194,25 +171,36 @@ cursor on it. Nothing you type shows up on the screen, but in fact
 your keystrokes are being received by the console. Type
 ``logout'' to return to normalcy after a brief delay. With
 Darwin this should put you back at the text console login prompt. With
-Mac OS X, CoreGraphics will restart and you should be given a login
+Mac OS&nbsp;X, Core Graphics will restart and you should be given a login
 window.
+
+<p>
+To start XFree86 in Quartz mode you can launch the XDarwin application
+in the <tt>/Applications</tt> folder, or from the command line type
+``startx -- -quartz''. When the X window system is active, it takes over
+the entire screen. You can switch back to the Mac OS&nbsp;X desktop by
+holding down Command-Option-A. This key combination can be changed in
+the user preferences. From the Mac OS&nbsp;X desktop, just click on the
+XDarwin icon in the floating switch window to switch back to the X window
+system. You can change this behavior in the user preferences so that
+clicking on the XDarwin icon in the Dock switches as well.
 
 <p>
 <bf/Customize X Windows/
 <p>
 
-X windows is very customizable and you will certainly want to change
-some things. There is a lot you can do to control how your windows
+The X window system is very customizable and you will certainly want to
+change some things. There is a lot you can do to control how your windows
 look, how the windows are moved, resized, etc. You will likely want to
 get a better window manager than twm, which is included with
 XFree86. The <tt>.xinitrc</tt> file in your home directory controls what
-programs are run when you start X windows. You can find a sample
-<tt>.xinitrc</tt> file in <tt>/private/etc/X11/xinit/xinitrc</tt>.  
+programs are run when you start the X window system. You can find a sample
+<tt>.xinitrc</tt> file in <tt>/etc/X11/xinit/xinitrc</tt>.  
 
 <p>
-There are several
-window managers that have been ported to Darwin. The best collection
-of window managers and other X windows applications is at <htmlurl
+There are several window managers that have been ported to Darwin.
+The best collection of window managers and other X window clients
+is at <htmlurl
 url="http://www.darwinfo.org/ports.shtml#X Windows" name="Darwinfo's ports
 page">. Another good place to look for Darwin ports in general is at
 <htmlurl
@@ -230,195 +218,21 @@ let me know if you are interested in working on any of these issues.
 
 <bf/Things that are broken:/
 <itemize>
-<item>The bell is broken. 
+<item>The bell does not work in IOKit mode. 
 
-<item>Server shutdown problem: After quitting the X server the colored
-beachball cursor reappears, but the screen never returns to the
+<item>Server shutdown problem: After quitting the X server in IOKit mode,
+the colored beachball cursor reappears, but the screen never returns to the
 console display. The console is accepting input however, so typing
 ``logout'' will return you to the login prompt.
 
 <item>Only one display is currently supported.
 
-<item>Screen saver not supported. 
+<item>The display mode can not be changed once  the  X  server
+has started.
 
-<item>Key repeat rate can not be adjusted. 
+<item>A screen saver is not supported.
+
 </itemize>
-
-<bf/Things I am working on:/
-<itemize>
-<item> Allowing rootless use on Mac OS X
-<item> Correct wake from sleep behavior
-</itemize>
-
-<sect>Appendix
-
-<sect1>Installing IOKit Header files on Mac OS X Beta<label 
-	id="headersXBeta">
-<p>
-Here is what you need to do to be able to build XFree86 (or other
-clients of IOGraphics services) on Mac OS X Public Beta.
-<enum>
-
-<item>You need to install some more build tools that aren't included
-in Mac OS X Beta, but are included in Darwin. These are needed for the
-next step. Go to your development directory and type:
-<tscreen><verb>
-cvs checkout bootstrap_cmds
-cd bootstrap_cmds
-make
-</verb></tscreen>
-Now su to root and do a ``make install'' from the bootstrap_cmds
-directory.
-
-<item>
-The IOKit framework included with Mac OS X Beta is a little on the
-wimpy side, even after installing the Developer Tools. You'll need to
-rebuild it, but to do so safely we'll take advantage of the cool
-directory structure of Mac OS X and put the new version in
-/Library/Frameworks/. This will override the version in
-/System/Library/Frameworks/. Or at least, that's where you should put
-it using the new Mac OS X Beta file structure, but in fact the
-compiler doesn't know this and still looks in
-/Local/Library/Frameworks. (I have already filed a developer's bug
-report on this.) To start we make a copy of the original. Login as
-root and do the following:
-<tscreen><verb>
-cd /Library
-mkdir -p Frameworks
-cp -R /System/Library/Frameworks/IOKit.framework Frameworks/IOKit.framework
-cd /
-mkdir -p Local
-ln -s /Library /Local/Library
-</verb></tscreen>
-
-<item>Now you need to get a full version of the IOKit framework from
-the Darwin repository. This comes as part of the kernel. So, in your
-development directory again:
-
-<tscreen><verb>
-cvs checkout xnu
-cd xnu
-source SETUP/setup.csh
-make exporthdrs
-make install
-</verb></tscreen>
-
-The "make install" will start by assembling all the headers you need,
-but then will proceed to build a new kernel. You can Control-C out of
-the build once it starts compiling things if you want. Otherwise, just
-be patient.
-
-<item>
-You also need to get the IOKitUser project, which contains the user
-interface to the IOKit, and merge it into the IOKit framework. From
-your development directory type:
-<tscreen><verb>
-cvs checkout IOKitUser
-</verb></tscreen>
-Then you need to change the Makefile so it builds on top of the new
-IOKit framework you are building.  Change to the IOKitUser project
-directory and edit the Makefile. Change the following line:
-<tscreen><verb>
-NEXTSTEP_BUILD_OUTPUT_DIR = /$(USER)/build/$(NAME)
-</verb></tscreen>
-to:
-<tscreen><verb>
-NEXTSTEP_BUILD_OUTPUT_DIR = <your xnudir>/BUILD/dst/System/Library/Frameworks
-</verb></tscreen>
-
-Now, run ``make'' while in the IOKitUser directory. It will likely not
-finish building since the IOKitUser project relies on some stuff that
-Apple hasn't really made public yet, but it should finish populating
-the new IOKit framework with headers and start compiling. (Strangely
-enough, the headers installed in your new IOKit framework don't contain
-the real header files. They are just single line files with an #import
-of the file in your IOKitUser project. This works fine as long as you
-don't ever delete or move your IOKitUser project. I imagine that using
-``make install'' would fix this up, but you can't do this as long as the
-project doesn't build correctly. So for now you can either move the
-header files by hand, or make sure you leave your IOKitUser project in
-place.)
-
-<item>
-Now put the new IOKit headers into our local copy. Change to the xnu
-project directory and do the following as root:
-<tscreen><verb>
-cd BUILD/dst/System/Library/Frameworks/
-cp -R IOKit.framework/Versions/A/Headers/* \
-  /Library/Frameworks/IOKit.framework/Versions/A/Headers
-</verb></tscreen>
-
-<item>
-The System framework needs touching up a bit too. You need to copy the
-libkern header files from the new System.framework. As root, go to the
-xnu project directory and type: (Of course you could make a local copy
-of the System framework in /Library/Frameworks/, but the additions to
-the System framework are small.)
-<tscreen><verb>
-cd BUILD/dst/System/Library/Frameworks/System.framework/Versions/B/Headers
-cp -R libkern /System/Library/Frameworks/System.framework/Headers/libkern
-</verb></tscreen>
-</enum>
-
-<sect1>Installing IOKit Header files on Mac OS X DP4<label 
-id="headersXDP4">
-<p>
-Here is an outline of what you need to do to be able to build XFree86
-(or other clients of IOGraphics services) on Mac OS X Developers'
-Preview 4.
-
-<enum>
-
-<item>Checkout, build, and install bootstrap_cmds from the CVS
-repository.
-<item>Checkout xnu from the CVS repository. Go to sandbox/xnu and do
-the following: 
-<tscreen><verb>
-source SETUP/setup.csh
-make exporthdrs
-</verb></tscreen>
-<item>su to root and do the following:
-<tscreen><verb>
-mkdir -p /Local/Library/Frameworks
-cp -R /System/Library/Frameworks/IOKit.framework /Local/Library/Frameworks
-</verb></tscreen>
-This will create a new local version of the IOKit framework that will
-override the System version without changing the original.
-
-<item>You now want to merge the IOKit headers from the xnu project
-into your local IOKit framework. I did this fairly tediously by hand,
-but I would suggest something like:
-<tscreen><verb>
-cp -R sandbox/xnu/BUILD/dst/System/Library/Frameworks/IOKit.framework/Versions/A/Headers \
-/Local/Library/Frameworks/IOKit.framework/Versions/A
-</verb></tscreen>
-The only problem with this is that there are a few stub header files
-included that are just a single line with an #import to the
-appropriate place in the xnu source on your disk. This is fine as long
-as you don't move your xnu project. If you do, you can copy the
-original file to replace the stub. There is probably an easier way to
-automatically build a clean version of the IOKit framework, but I
-didn't find it. (Let me know if you do.)
-
-<item>There are just a few more files you need in the IOKit
-framework. Checkout the IO project from CVS. Get the necessary header
-files from there and put them in your new local IOKit
-framework. You'll get errors when you try to build XFree86 from which
-you can tell which files are needed. I also needed to make the
-following patch to IOLLEvent.h. Your mileage may vary.
-<tscreen><verb>
-47c47 
-< #include <Kernel/libkern/OSTypes.h> 
---- 
-> #include <libkern/OSTypes.h>
-</verb></tscreen>
-
-<item>You'll also need a few extra CoreFoundation header
-files. Checkout CoreFoundation. You can make a new local version of
-the CoreFoundation framework as above, or just add to the existing
-one. The files you need are CFMachPort.h and CFMessagePort.h in the
-RunLoop.subproj and CFStorage.h in Collections.subproj.
-</enum>
 
 </article>
 

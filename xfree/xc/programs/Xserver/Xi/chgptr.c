@@ -1,4 +1,4 @@
-/* $TOG: chgptr.c /main/20 1998/02/09 15:28:25 kaleb $ */
+/* $Xorg: chgptr.c,v 1.3 2000/08/17 19:48:00 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/chgptr.c,v 3.3 1996/04/15 11:18:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/chgptr.c,v 3.5 2001/01/17 22:13:24 dawes Exp $ */
 
 /***********************************************************************
  *

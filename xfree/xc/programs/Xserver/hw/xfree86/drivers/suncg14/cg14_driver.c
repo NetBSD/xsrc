@@ -20,9 +20,8 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg14/cg14_driver.c,v 1.1 2000/06/30 17:15:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg14/cg14_driver.c,v 1.4 2001/05/16 06:48:10 keithp Exp $ */
 
-#define PSZ 8
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86_ansic.h"
@@ -31,13 +30,11 @@
 #include "mibstore.h"
 #include "micmap.h"
 
-#include "cfb.h"
-#undef PSZ
-#include "cfb32.h"
+#include "fb.h"
 #include "xf86cmap.h"
 #include "cg14.h"
 
-static OptionInfoPtr CG14AvailableOptions(int chipid, int busid);
+static const OptionInfoRec * CG14AvailableOptions(int chipid, int busid);
 static void	CG14Identify(int flags);
 static Bool	CG14Probe(DriverPtr drv, int flags);
 static Bool	CG14PreInit(ScrnInfoPtr pScrn, int flags);
@@ -87,7 +84,7 @@ DriverRec SUNCG14 = {
     0
 };
 
-static OptionInfoRec CG14Options[] = {
+static const OptionInfoRec CG14Options[] = {
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
@@ -169,8 +166,7 @@ CG14FreeRec(ScrnInfoPtr pScrn)
     return;
 }
 
-static 
-OptionInfoPtr
+static const OptionInfoRec *
 CG14AvailableOptions(int chipid, int busid)
 {
     return CG14Options;
@@ -346,7 +342,10 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
     /* Collect all of the relevant option flags (fill in pScrn->options) */
     xf86CollectOptions(pScrn, NULL);
     /* Process the options */
-    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, CG14Options);
+    if (!(pCg14->Options = xalloc(sizeof(CG14Options))))
+	return FALSE;
+    memcpy(pCg14->Options, CG14Options, sizeof(CG14Options));
+    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pCg14->Options);
 
     /*
      * This must happen after pScrn->display has been set because
@@ -385,7 +384,7 @@ CG14PreInit(ScrnInfoPtr pScrn, int flags)
 	}
     }
 
-    if (xf86LoadSubModule(pScrn, "cfb32") == NULL) {
+    if (xf86LoadSubModule(pScrn, "fb") == NULL) {
 	CG14FreeRec(pScrn);
 	return FALSE;
     }
@@ -465,18 +464,24 @@ CG14ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			  pScrn->rgbBits, pScrn->defaultVisual))
 	return FALSE;
 
+    miSetPixmapDepths ();
+
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
      * pScreen fields.
      */
 
     CG14InitCplane24(pScrn);
-    ret = cfb32ScreenInit(pScreen, pCg14->fb, pScrn->virtualX,
-			  pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
-			  pScrn->virtualX);
+    ret = fbScreenInit(pScreen, pCg14->fb, pScrn->virtualX,
+		       pScrn->virtualY, pScrn->xDpi, pScrn->yDpi,
+		       pScrn->virtualX, pScrn->bitsPerPixel);
 
     if (!ret)
 	return FALSE;
+
+#ifdef RENDER
+    fbPictureInit (pScreen, 0, 0);
+#endif
 
     miInitializeBackingStore(pScreen);
     xf86SetBackingStore(pScreen);

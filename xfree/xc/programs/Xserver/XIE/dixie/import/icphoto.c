@@ -1,4 +1,4 @@
-/* $TOG: icphoto.c /main/5 1998/02/09 16:08:38 kaleb $ */
+/* $Xorg: icphoto.c,v 1.3 2000/08/17 19:47:24 cpqbld Exp $ */
 /**** module icphoto.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley, Dean Verheiden -- AGE Logic, Inc. April 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/import/icphoto.c,v 3.2 1998/10/05 13:22:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/import/icphoto.c,v 3.4 2001/01/17 22:12:50 dawes Exp $ */
 
 #define _XIEC_ICPHOTO
 

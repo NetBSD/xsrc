@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/GL/Imakefile,v 1.6tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/GL/Imakefile,v 1.8 2001/04/23 16:17:07 tsi Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -29,7 +29,7 @@ DONES = glx/DONE
 
 INCLUDES = -Iinclude -Idri -I$(SERVERSRC)/include -I$(SERVERSRC)/mi \
 	   -I$(XINCLUDESRC) -I$(EXTINCSRC) -I$(XF86OSSRC)
-DEPEND_DEFINES = $(EXT_DEFINES)
+DEPEND_DEFINES = $(EXT_DEFINES) DependDefines
 DEFINES = $(GLX_DEFINES)
 
 #if HasParallelMake

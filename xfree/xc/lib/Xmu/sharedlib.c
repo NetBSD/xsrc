@@ -1,4 +1,4 @@
-/* $TOG: sharedlib.c /main/10 1998/02/06 15:44:59 kaleb $ */
+/* $Xorg: sharedlib.c,v 1.3 2000/08/17 19:46:05 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/Xmu/sharedlib.c,v 3.3 2001/01/17 19:42:58 dawes Exp $ */
 
 #if defined(SUNSHLIB) && !defined(SHAREDCODE)
 

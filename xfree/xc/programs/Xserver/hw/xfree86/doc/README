@@ -1,8 +1,8 @@
-                        README for XFree86[tm] 4.0.3
+                        README for XFree86[tm] 4.1.0
 
                           The XFree86 Project, Inc
 
-                                2 March 2001
+                                 2 June 2001
 
                                   Abstract
 
@@ -10,15 +10,9 @@
      supports several UNIX(R) and UNIX-like (such as Linux, the BSDs and
      Solaris x86) operating systems on Intel and other platforms.
 
-1.  What is XFree86 4.0.3?
+1.  What is XFree86 4.1.0?
 
-XFree86 4.0.3 is the first update to 4.0.2, the third full release in the new
-XFree86 4 series.
-
-Update releases are taken from a stable/maintenance branch.  They are
-designed to be installed on top of the full release that they are updating.
-They contain fixes for serious problems, most commonly fixes for security
-issues, fixes for driver bugs, and fixes that improve stability.
+XFree86 4.1.0 is the fourth full release in the XFree86 4 series.
 
 XFree86 release 4 is a major re-design of the basic architectural underpin-
 nings of XFree86's implementation of the original X Consortium's X Server.
@@ -31,7 +25,8 @@ installing the new driver module and updating the configuration file.
 The road to XFree86 release 4 began as an architectural concept in mid 1997,
 with the serious framework being implemented in code the beginning of 1998.
 There were several snapshots on the road to 4.0 which are now part of the 4.0
-base release.
+base release.  The 4.1.0 version is an upgrade to 4.0.3, which include more
+hardware ports, code enhancements and bug fixes.
 
 Release 4 also included the long-awaited integration of the DRI (Direct Ren-
 dering Infrastructure).  This upgrade into the code base  gives XFree86 the
@@ -42,8 +37,6 @@ While some driver available in the old 3.3.x release series have not been
 converted over to the 4.x series, those required for most modern video hard-
 ware are available.  Please check the Driver Status document first to see
 whether your hardware is supported before upgrading to the 4.x series.
-
-Specific release enhancements can be viewed in the Release Notes.
 
 The XFree86 version numbering system has had some changes as of the 4.0.2
 release.  Information about this can be found in the Versions Document.
@@ -121,26 +114,50 @@ Once your work is finished (coded, debugged and documented) please send your
 fix to <fixes@XFree86.org>.  This will ensure that they are included in
 future releases. And thanks!  You make this truly an Open group.
 
-4.  How to get XFree86 4.0.3
+4.  How to get XFree86 4.1.0
 
-XFree86 4.0.3 can be found at the XFree86 ftp server
-<URL:ftp://ftp.xfree86.org/pub/XFree86/4.0.3/>, and at mirrors of this
+XFree86 4.1.0 can be found at the XFree86 ftp server
+<URL:ftp://ftp.xfree86.org/pub/XFree86/4.1.0/>, and at mirrors of this
 server.  Information about obtaining and installing binary distributions of
 this release can be found in the Installation Document.  Information about
 obtaining the release in source form is given below.
 
-The source for version 4.0.3 is available as a patch relative to 4.0.2.  The
-patch file is 4.0.2-4.0.3.diff.gz.
+The source for version 4.1.0 is split into three tarballs: X410src-1.tgz,
+X410src-2.tgz, X410src-3.tgz.  The first contains everything except the fonts
+and general X11 documentation.  It is sufficient for building XFree86 if you
+already have a set of fonts.  The second contains the fonts and the source
+for the general X11 documentation.  The third contains the general X11 docu-
+mentation in hardcopy format.
 
-The patch should be applied to a clean 4.0.2 source tree, working from the
-directory containing the xc/ directory.  The patch should be applied by run-
-ning:
+A source patch relative to version 4.0.2 is also available.  Because of its
+size, it is split into four parts.  The patch files are 4.0.2-4.1.0.diff1.gz,
+4.0.2-4.1.0.diff2.gz, 4.0.2-4.1.0.diff3.gz and 4.0.2-4.1.0.diff4.gz.  There
+is also a tarball that contains some files that have components that can't be
+included in a diff.  It is 4.1.0.tgz.  These patches should be applied to a
+clean 4.0.2 source tree, working from the directory containing the xc/ direc-
+tory.  The patches should be applied by running:
 
-     gzip -d < 4.0.2-4.0.3.diff.gz | patch -p0 -E
+     gzip -d < 4.0.2-4.1.0.diff1.gz | patch -p0 -E
+     gzip -d < 4.0.2-4.1.0.diff2.gz | patch -p0 -E
+     gzip -d < 4.0.2-4.1.0.diff3.gz | patch -p0 -E
+     gzip -d < 4.0.2-4.1.0.diff4.gz | patch -p0 -E
 
-Information about getting the source for 4.0.2 can be found in the README
-file for that version, which can be found on the XFree86 web site
-<URL:http://www.xfree86.org/pub/XFree86/4.0.2/README.html>.
+     rm -f xc/programs/xieperf/images/image.012
+     rm -fr xc/fonts/bdf/latin2
+     rm -fr xc/fonts/bdf/100dpi
+     rm -fr xc/fonts/bdf/75dpi
+
+     gzip -d < 4.1.0.tgz | tar vxf -
+
+Patches might also be available relative to 4.0.3.  If so, the instructions
+for applying them are the same, except that you should start with a clean
+4.0.3 source tree.
+
+The contrib part of the distribution was folded into the main source tree a
+while ago, so a separate contrib tarball is not required.
+
+To format the XFree86 documentation use the latest version of our doctools
+package available as doctools-1.2.tgz.
 
 5.  Reporting Bugs
 
@@ -151,7 +168,7 @@ yourself, send the entire log file with your bug report but not the operating
 system core dump.  Do not edit  the log file as our developers use it to
 reproduce and debug your problem.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.110.2.4 2001/03/16 15:57:44 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.113.2.3 2001/06/02 16:17:40 dawes Exp $
 
 
-$XFree86$
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.111.2.3 2001/06/02 16:21:49 dawes Exp $

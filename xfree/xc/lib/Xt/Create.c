@@ -1,4 +1,4 @@
-/* $TOG: Create.c /main/83 1998/02/06 13:21:11 kaleb $ */
+/* $Xorg: Create.c,v 1.3 2000/08/17 19:46:10 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Create.c,v 3.5 1998/10/03 09:06:50 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Create.c,v 3.7 2001/01/17 19:43:04 dawes Exp $ */
 
 /*
 

@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/GL/dri/dri_glx.c,v 1.8 2001/04/10 16:07:49 dawes Exp $ */
 
 /*
  * Authors:
@@ -46,6 +46,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <dlfcn.h>
 #include "dri_glx.h"
 #include <sys/types.h>
+#include <stdarg.h>
 
 
 typedef void *(*CreateScreenFunc)(Display *dpy, int scrn, __DRIscreen *psc,
@@ -67,6 +68,43 @@ extern void *__driCreateScreen(Display *dpy, int scrn, __DRIscreen *psc,
 #define DEFAULT_DRIVER_DIR "/usr/X11R6/lib/modules/dri"
 #endif
 
+
+static void InfoMessageF(const char *f, ...)
+{
+    va_list args;
+    const char *env;
+
+    if ((env = getenv("LIBGL_DEBUG")) && strstr(env, "verbose")) {
+	fprintf(stderr, "libGL: ");
+	va_start(args, f);
+	vfprintf(stderr, f, args);
+	va_end(args);
+    }
+}
+
+static void ErrorMessageF(const char *f, ...)
+{
+    va_list args;
+
+    if (getenv("LIBGL_DEBUG")) {
+	fprintf(stderr, "libGL error: ");
+	va_start(args, f);
+	vfprintf(stderr, f, args);
+	va_end(args);
+    }
+}
+
+static void PrintF(const char *f, ...)
+{
+    va_list args;
+    const char *env;
+
+    if ((env = getenv("LIBGL_DEBUG")) && strstr(env, "verbose")) {
+	va_start(args, f);
+	vfprintf(stderr, f, args);
+	va_end(args);
+    }
+}
 
 static void ErrorMessage(const char *msg)
 {
@@ -180,22 +218,19 @@ static void *OpenDriver(const char *driverName)
       libPaths = DEFAULT_DRIVER_DIR;
 
    for (i = 0; ; i++) {
-      char libDir[1000], info[1000], realDriverName[100];
+      char libDir[1000], realDriverName[200];
       void *handle;
       ExtractDir(i, libPaths, 1000, libDir);
       if (!libDir[0])
          return NULL;
-      sprintf(realDriverName, "%s/%s_dri.so", libDir, driverName);
-      sprintf(info, "trying %s", realDriverName);
-      InfoMessage(info);
+      snprintf(realDriverName, 200, "%s/%s_dri.so", libDir, driverName);
+      InfoMessageF("trying %s\n", realDriverName);
       handle = dlopen(realDriverName, RTLD_NOW | RTLD_GLOBAL);
       if (handle) {
          return handle;
       }
       else {
-         char message[1000];
-         snprintf(message, 1000, "dlopen failed: %s", dlerror());
-         ErrorMessage(message);
+         ErrorMessageF("dlopen failed: %s\n", dlerror());
       }
    }
 
@@ -246,9 +281,7 @@ static void Find_CreateScreenFuncs(Display *dpy,
         b = XF86DRIGetClientDriverName(dpy, scrn, &driverMajor, &driverMinor,
                                        &driverPatch, &driverName);
         if (!b) {
-            char message[1000];
-            snprintf(message, 1000, "Cannot determine driver name for screen %d", scrn);
-            ErrorMessage(message);
+            ErrorMessageF("Cannot determine driver name for screen %d\n", scrn);
             continue;
         }
 
@@ -265,7 +298,7 @@ static void Find_CreateScreenFuncs(Display *dpy,
               /* success! */
               createFuncs[scrn] = createScreenFunc;
               libraryHandles[scrn] = handle;
-              break;  /* onto the next screen */
+              continue;  /* onto the next screen */
            }
            else {
               ErrorMessage("driCreateScreen() not defined in driver!");
@@ -366,7 +399,6 @@ void *driCreateDisplay(Display *dpy, __DRIdisplay *pdisp)
 static void
 register_extensions_on_screen(Display *dpy, int scrNum)
 {
-   GLboolean verbose = GL_FALSE;  /* for debugging only */
    int eventBase, errorBase;
    Bool b, b2;
    int driMajor, driMinor, driPatch;
@@ -380,34 +412,29 @@ register_extensions_on_screen(Display *dpy, int scrNum)
     */
    b = XF86DRIQueryExtension(dpy, &eventBase, &errorBase);
    if (!b) {
-      if (verbose)
-         fprintf(stderr, "XF86DRIQueryExtension failed\n");
+      InfoMessage("XF86DRIQueryExtension failed");
       return;
    }
 
    b = XF86DRIQueryDirectRenderingCapable(dpy, scrNum, &b2);
    if (!b || !b2) {
-      if (verbose)
-         fprintf(stderr, "XF86DRIQueryDirectRenderingCapable failed\n");
+      InfoMessage("XF86DRIQueryDirectRenderingCapable failed");
       return;
    }
 
    b = XF86DRIQueryVersion(dpy, &driMajor, &driMinor, &driPatch);
    if (!b) {
-      if (verbose)
-         fprintf(stderr, "XF86DRIQueryVersion failed\n");
-      return;
+      InfoMessage("XF86DRIQueryVersion failed");
    }
 
    b = XF86DRIGetClientDriverName(dpy, scrNum, &driverMajor, &driverMinor,
                                   &driverPatch, &driverName);
    if (!b) {
-      if (verbose)
-         fprintf(stderr, "XF86DRIGetClientDriverName failed\n");
+      InfoMessage("XF86DRIGetClientDriverName failed");
       return;
    }
-   else if (verbose) {
-      printf("XF86DRIGetClientDriverName: %d.%d.%d %s\n", driverMajor,
+   else {
+      InfoMessageF("XF86DRIGetClientDriverName: %d.%d.%d %s\n", driverMajor,
              driverMinor, driverPatch, driverName);
    }
 
@@ -446,8 +473,10 @@ void
 __glXRegisterExtensions(void)
 {
    static GLboolean alreadyCalled = GL_FALSE;
-   if (alreadyCalled)
+
+   if (alreadyCalled) {
       return;
+   }
 
 #ifndef BUILT_IN_DRI_DRIVER
    {

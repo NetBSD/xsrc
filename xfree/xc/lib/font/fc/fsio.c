@@ -1,4 +1,4 @@
-/* $TOG: fsio.c /main/41 1998/05/07 15:15:52 kaleb $ */
+/* $Xorg: fsio.c,v 1.3 2000/08/17 19:46:36 cpqbld Exp $ */
 /*
  * Copyright 1990 Network Computing Devices
  *
@@ -23,7 +23,7 @@
  *
  * Author:  	Dave Lemke, Network Computing Devices, Inc
  */
-/* $XFree86: xc/lib/font/fc/fsio.c,v 3.11 1999/12/27 01:14:10 robin Exp $ */
+/* $XFree86: xc/lib/font/fc/fsio.c,v 3.13 2001/01/17 19:43:29 dawes Exp $ */
 /*
  * font server i/o routines
  */

@@ -1,4 +1,4 @@
-/* $TOG: hpsocket.c /main/4 1998/02/09 15:12:11 kaleb $ */
+/* $Xorg: hpsocket.c,v 1.3 2000/08/17 19:53:40 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group

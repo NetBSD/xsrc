@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fbpict.h,v 1.1 2000/10/02 05:25:46 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fbpict.h,v 1.3 2001/01/21 21:19:09 tsi Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -461,7 +461,4 @@ fbComposite (CARD8      op,
 	     CARD16     width,
 	     CARD16     height);
 
-Bool
-fbPictureInit (ScreenPtr pScreen, PictFormatPtr formats, int nformats);
-    
 #endif /* _FBPICT_H_ */

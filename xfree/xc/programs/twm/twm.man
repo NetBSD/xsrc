@@ -1,4 +1,4 @@
-.\" $TOG: twm.man /main/67 1998/02/09 13:49:48 kaleb $
+.\" $Xorg: twm.man,v 1.3 2000/08/17 19:54:08 cpqbld Exp $
 .\" Copyright 1993, 1994, 1998  The Open Group
 .\" Portions copyright 1988 Evans & Sutherland Computer Corporation.
 .\" Portions copyright 1989 Hewlett-Packard Company
@@ -20,6 +20,9 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
+.\"
+.\" $XFree86: xc/programs/twm/twm.man,v 1.7 2001/01/27 18:21:06 dawes Exp $
+.\"
 .de EX		\"Begin example
 .ne 5
 .if n .sp 1
@@ -34,7 +37,7 @@
 .if t .sp .5
 ..
 .ta .3i .6i .9i 1.2i 1.5i 1.8i
-.TH TWM 1 "Release 6.4" "X Version 11"
+.TH TWM 1 __xorgversion__
 .SH NAME
 twm \- Tab Window Manager for the X Window System
 .SH SYNTAX
@@ -1261,7 +1264,7 @@ This variable is used as the prefix for files that begin with a tilde and
 for locating the \fItwm\fP startup file.
 .SH "SEE ALSO"
 .PP
-X(1), Xserver(1), xdm(1), xrdb(1)
+X(__miscmansuffix__), Xserver(1), xdm(1), xrdb(1)
 .SH AUTHORS
 Tom LaStrange, Solbourne Computer; Jim Fulton, MIT X Consortium;
 Steve Pitschke, Stardent Computer; Keith Packard, MIT X Consortium;

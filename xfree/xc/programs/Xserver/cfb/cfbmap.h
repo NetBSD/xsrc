@@ -1,5 +1,5 @@
 /*
- * $TOG: cfbmap.h /main/12 1998/02/09 14:06:19 kaleb $
+ * $Xorg: cfbmap.h,v 1.3 2000/08/17 19:48:14 cpqbld Exp $
  *
 Copyright 1991, 1998  The Open Group
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/Xserver/cfb/cfbmap.h,v 3.7 1998/11/28 10:42:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbmap.h,v 3.9 2001/01/17 22:36:35 dawes Exp $ */
 
 /*
  * Map names around so that multiple depths can be supported simultaneously

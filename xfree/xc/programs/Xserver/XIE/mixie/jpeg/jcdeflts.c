@@ -1,4 +1,4 @@
-/* $TOG: jcdeflts.c /main/5 1998/02/09 16:18:43 kaleb $ */
+/* $Xorg: jcdeflts.c,v 1.3 2000/08/17 19:47:46 cpqbld Exp $ */
 /* Module jcdeflts.c */
 
 /****************************************************************************
@@ -66,7 +66,7 @@ terms and conditions:
 	Gary Rogers, AGE Logic, Inc., January 1994
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jcdeflts.c,v 1.2 1998/07/25 08:05:11 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jcdeflts.c,v 1.4 2001/01/17 22:13:07 dawes Exp $ */
 /*
  * jcdeflts.c
  *

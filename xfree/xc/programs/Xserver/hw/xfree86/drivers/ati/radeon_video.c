@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_video.c,v 1.7 2000/12/08 14:31:32 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_video.c,v 1.11 2001/03/03 22:26:11 tsi Exp $ */
 
 #include "radeon.h"
 #include "radeon_reg.h"
@@ -37,7 +37,7 @@ static int  RADEONQueryImageAttributes(ScrnInfoPtr, int, unsigned short *,
 
 static void RADEONResetVideo(ScrnInfoPtr);
 
-static void RADEONVideoTimerCallback(ScrnInfoPtr pScrn, Time time);
+static void RADEONVideoTimerCallback(ScrnInfoPtr pScrn, Time now);
 
 
 #define MAKE_ATOM(a) MakeAtom(a, sizeof(a) - 1, TRUE)
@@ -253,8 +253,8 @@ RegionsEqual(RegionPtr A, RegionPtr B)
        (A->extents.y2 != B->extents.y2))
 	return FALSE;
 
-    dataA = (int*)REGION_RECTS(A);
-    dataB = (int*)REGION_RECTS(B);
+    dataA = (pointer)REGION_RECTS(A);
+    dataB = (pointer)REGION_RECTS(B);
 
     while(num--) {
 	if((dataA[0] != dataB[0]) || (dataA[1] != dataB[1]))
@@ -460,6 +460,11 @@ RADEONQueryBestSize(
   unsigned int *p_w, unsigned int *p_h,
   pointer data
 ){
+   if(vid_w > (drw_w << 4))
+	drw_w = vid_w >> 4;
+   if(vid_h > (drw_h << 4))
+	drw_h = vid_h >> 4;
+	
   *p_w = drw_w;
   *p_h = drw_h;
 }
@@ -501,7 +506,7 @@ RADEONCopyMungedData(
    w >>= 1;
 
    for(j = 0; j < h; j++) {
-	dst = (CARD32*)dst1;
+	dst = (pointer)dst1;
 	s1 = src1;  s2 = src2;  s3 = src3;
 	i = w;
 	while(i > 4) {
@@ -776,7 +781,8 @@ RADEONPutImage(
     if(!RegionsEqual(&pPriv->clip, clipBoxes)) {
 	REGION_COPY(pScreen, &pPriv->clip, clipBoxes);
 	/* draw these */
-	(*info->accel->FillSolidRects)(pScrn, pPriv->colorKey, GXcopy, ~0,
+	(*info->accel->FillSolidRects)(pScrn, pPriv->colorKey, GXcopy,
+					(CARD32)~0,
 					REGION_NUM_RECTS(clipBoxes),
 					REGION_RECTS(clipBoxes));
     }
@@ -835,21 +841,21 @@ RADEONQueryImageAttributes(
 }
 
 static void
-RADEONVideoTimerCallback(ScrnInfoPtr pScrn, Time time)
+RADEONVideoTimerCallback(ScrnInfoPtr pScrn, Time now)
 {
     RADEONInfoPtr info = RADEONPTR(pScrn);
     RADEONPortPrivPtr pPriv = info->adaptor->pPortPrivates[0].ptr;
 
     if(pPriv->videoStatus & TIMER_MASK) {
 	if(pPriv->videoStatus & OFF_TIMER) {
-	    if(pPriv->offTime < time) {
+	    if(pPriv->offTime < now) {
 		unsigned char *RADEONMMIO = info->MMIO;
 		OUTREG(RADEON_OV0_SCALE_CNTL, 0);
 		pPriv->videoStatus = FREE_TIMER;
-		pPriv->freeTime = time + FREE_DELAY;
+		pPriv->freeTime = now + FREE_DELAY;
 	    }
 	} else {  /* FREE_TIMER */
-	    if(pPriv->freeTime < time) {
+	    if(pPriv->freeTime < now) {
 		if(pPriv->linear) {
 		   xf86FreeOffscreenLinear(pPriv->linear);
 		   pPriv->linear = NULL;

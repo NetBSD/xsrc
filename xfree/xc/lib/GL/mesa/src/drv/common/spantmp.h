@@ -2,21 +2,45 @@
 #define DBG 0
 #endif
 
-static void TAG(WriteRGBASpan)( const GLcontext *ctx, 
-				GLuint n, GLint x, GLint y, 
-				const GLubyte rgba[][4], 
+#ifndef HW_WRITE_LOCK
+#define HW_WRITE_LOCK()		HW_LOCK()
+#endif
+
+#ifndef HW_WRITE_UNLOCK
+#define HW_WRITE_UNLOCK()	HW_UNLOCK()
+#endif
+
+#ifndef HW_READ_LOCK
+#define HW_READ_LOCK()		HW_LOCK()
+#endif
+
+#ifndef HW_READ_UNLOCK
+#define HW_READ_UNLOCK()	HW_UNLOCK()
+#endif
+
+#ifndef HW_READ_CLIPLOOP
+#define HW_READ_CLIPLOOP()	HW_CLIPLOOP()
+#endif
+
+#ifndef HW_WRITE_CLIPLOOP
+#define HW_WRITE_CLIPLOOP()	HW_CLIPLOOP()
+#endif
+
+
+static void TAG(WriteRGBASpan)( const GLcontext *ctx,
+				GLuint n, GLint x, GLint y,
+				const GLubyte rgba[][4],
 				const GLubyte mask[] )
 {
-   HW_LOCK()
+   HW_WRITE_LOCK()
       {
 	 GLint x1;
 	 GLint n1;
 	 LOCAL_VARS;
-	 
+
 	 y = Y_FLIP(y);
 
-
-	 HW_CLIPLOOP() 
+	 HW_WRITE_CLIPLOOP()
 	    {
 	       GLint i = 0;
 	       CLIPSPAN(x,y,n,x1,n1,i);
@@ -26,31 +50,31 @@ static void TAG(WriteRGBASpan)( const GLcontext *ctx,
 
 	       if (mask)
 	       {
-		  for (;i<n1;i++,x1++)
+		  for (;n1>0;i++,x1++,n1--)
 		     if (mask[i])
-			WRITE_RGBA( x1, y, 
-				    rgba[i][0], rgba[i][1], 
+			WRITE_RGBA( x1, y,
+				    rgba[i][0], rgba[i][1],
 				    rgba[i][2], rgba[i][3] );
 	       }
 	       else
 	       {
-		  for (;i<n1;i++,x1++)
-		     WRITE_RGBA( x1, y, 
-				 rgba[i][0], rgba[i][1], 
+		  for (;n1>0;i++,x1++,n1--)
+		     WRITE_RGBA( x1, y,
+				 rgba[i][0], rgba[i][1],
 				 rgba[i][2], rgba[i][3] );
 	       }
 	    }
 	 HW_ENDCLIPLOOP();
       }
-   HW_UNLOCK();
+   HW_WRITE_UNLOCK();
 }
 
 static void TAG(WriteRGBSpan)( const GLcontext *ctx,
 			       GLuint n, GLint x, GLint y,
-			       const GLubyte rgb[][3], 
+			       const GLubyte rgb[][3],
 			       const GLubyte mask[] )
 {
-   HW_LOCK()
+   HW_WRITE_LOCK()
       {
 	 GLint x1;
 	 GLint n1;
@@ -58,7 +82,7 @@ static void TAG(WriteRGBSpan)( const GLcontext *ctx,
 
 	 y = Y_FLIP(y);
 
-	 HW_CLIPLOOP() 
+	 HW_WRITE_CLIPLOOP()
 	    {
 	       GLint i = 0;
 	       CLIPSPAN(x,y,n,x1,n1,i);
@@ -68,59 +92,59 @@ static void TAG(WriteRGBSpan)( const GLcontext *ctx,
 
 	       if (mask)
 	       {
-		  for (;i<n1;i++,x1++)
+		  for (;n1>0;i++,x1++,n1--)
 		     if (mask[i])
 			WRITE_RGBA( x1, y, rgb[i][0], rgb[i][1], rgb[i][2], 255 );
 	       }
 	       else
 	       {
-		  for (;i<n1;i++,x1++)
+		  for (;n1>0;i++,x1++,n1--)
 		     WRITE_RGBA( x1, y, rgb[i][0], rgb[i][1], rgb[i][2], 255 );
 	       }
 	    }
 	 HW_ENDCLIPLOOP();
       }
-   HW_UNLOCK();
+   HW_WRITE_UNLOCK();
 }
 
 static void TAG(WriteRGBAPixels)( const GLcontext *ctx,
-			       GLuint n, 
-			       const GLint x[], 
+			       GLuint n,
+			       const GLint x[],
 			       const GLint y[],
-			       const GLubyte rgba[][4], 
+			       const GLubyte rgba[][4],
 			       const GLubyte mask[] )
 {
-   HW_LOCK()
+   HW_WRITE_LOCK()
       {
 	 GLint i;
 	 LOCAL_VARS;
 
 	 if (DBG) fprintf(stderr, "WriteRGBAPixels\n");
 
-	 HW_CLIPLOOP()
+	 HW_WRITE_CLIPLOOP()
 	    {
 	       for (i=0;i<n;i++)
 	       {
 		  if (mask[i]) {
 		     const int fy = Y_FLIP(y[i]);
 		     if (CLIPPIXEL(x[i],fy))
-			WRITE_RGBA( x[i], fy, 
-				    rgba[i][0], rgba[i][1], 
+			WRITE_RGBA( x[i], fy,
+				    rgba[i][0], rgba[i][1],
 				    rgba[i][2], rgba[i][3] );
 		  }
 	       }
 	    }
 	 HW_ENDCLIPLOOP();
       }
-   HW_UNLOCK();
+   HW_WRITE_UNLOCK();
 }
 
 
-static void TAG(WriteMonoRGBASpan)( const GLcontext *ctx,	
-				    GLuint n, GLint x, GLint y, 
+static void TAG(WriteMonoRGBASpan)( const GLcontext *ctx,
+				    GLuint n, GLint x, GLint y,
 				    const GLubyte mask[] )
 {
-   HW_LOCK()
+   HW_WRITE_LOCK()
       {
 	 GLint x1;
 	 GLint n1;
@@ -131,26 +155,26 @@ static void TAG(WriteMonoRGBASpan)( const GLcontext *ctx,
 
 	 if (DBG) fprintf(stderr, "WriteMonoRGBASpan\n");
 
-	 HW_CLIPLOOP() 
+	 HW_WRITE_CLIPLOOP()
 	    {
 	       GLint i = 0;
 	       CLIPSPAN(x,y,n,x1,n1,i);
-	       for (;i<n1;i++,x1++)
+	       for (;n1>0;i++,x1++,n1--)
 		  if (mask[i])
 		     WRITE_PIXEL( x1, y, p );
 	    }
 	 HW_ENDCLIPLOOP();
       }
-   HW_UNLOCK();
+   HW_WRITE_UNLOCK();
 }
 
 
 static void TAG(WriteMonoRGBAPixels)( const GLcontext *ctx,
-				      GLuint n, 
+				      GLuint n,
 				      const GLint x[], const GLint y[],
-				      const GLubyte mask[] ) 
+				      const GLubyte mask[] )
 {
-   HW_LOCK()
+   HW_WRITE_LOCK()
       {
 	 GLint i;
 	 LOCAL_VARS;
@@ -158,7 +182,7 @@ static void TAG(WriteMonoRGBAPixels)( const GLcontext *ctx,
 
 	 if (DBG) fprintf(stderr, "WriteMonoRGBAPixels\n");
 
-	 HW_CLIPLOOP()
+	 HW_WRITE_CLIPLOOP()
 	    {
 	       for (i=0;i<n;i++)
 		  if (mask[i]) {
@@ -168,20 +192,16 @@ static void TAG(WriteMonoRGBAPixels)( const GLcontext *ctx,
 		  }
 	    }
 	 HW_ENDCLIPLOOP();
-      } 
-   HW_UNLOCK();
+      }
+   HW_WRITE_UNLOCK();
 }
 
 
-
-/*
- * Read a horizontal span of color pixels.
- */
 static void TAG(ReadRGBASpan)( const GLcontext *ctx,
 			       GLuint n, GLint x, GLint y,
 			       GLubyte rgba[][4])
 {
-   HW_LOCK()
+   HW_READ_LOCK()
       {
 	 GLint x1,n1;
 	 LOCAL_VARS;
@@ -190,30 +210,31 @@ static void TAG(ReadRGBASpan)( const GLcontext *ctx,
 
 	 if (DBG) fprintf(stderr, "ReadRGBASpan\n");
 
-	 HW_CLIPLOOP() 
+	 HW_READ_CLIPLOOP()
 	    {
 	       GLint i = 0;
 	       CLIPSPAN(x,y,n,x1,n1,i);
-	       for (;i<n1;i++)
-		  READ_RGBA( rgba[i], (x1+i), y );
+	       for (;n1>0;i++,x1++,n1--)
+		  READ_RGBA( rgba[i], x1, y );
 	    }
-	 HW_ENDCLIPLOOP();
+         HW_ENDCLIPLOOP();
       }
-   HW_UNLOCK();
+   HW_READ_UNLOCK();
 }
+
 
 static void TAG(ReadRGBAPixels)( const GLcontext *ctx,
 				 GLuint n, const GLint x[], const GLint y[],
 				 GLubyte rgba[][4], const GLubyte mask[] )
 {
-   HW_LOCK()
+   HW_READ_LOCK()
       {
 	 GLint i;
 	 LOCAL_VARS;
 
 	 if (DBG) fprintf(stderr, "ReadRGBAPixels\n");
- 
-	 HW_CLIPLOOP()
+
+	 HW_READ_CLIPLOOP()
 	    {
 	       for (i=0;i<n;i++)
 		  if (mask[i]) {
@@ -224,7 +245,7 @@ static void TAG(ReadRGBAPixels)( const GLcontext *ctx,
 	    }
 	 HW_ENDCLIPLOOP();
       }
-   HW_UNLOCK();
+   HW_READ_UNLOCK();
 }
 
 

@@ -25,22 +25,12 @@
   /*************************************************************************/
 
 
-#include <freetype/internal/ftstream.h>
-#include <freetype/internal/tterrors.h>
-#include <freetype/tttags.h>
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_STREAM_H
+#include FT_INTERNAL_TRUETYPE_ERRORS_H
+#include FT_TRUETYPE_TAGS_H
 #include "ttpost.h"
 #include "ttload.h"
-
-#else
-
-#include <sfnt/ttpost.h>
-#include <sfnt/ttload.h>
-
-#endif
 
 
   /*************************************************************************/
@@ -71,7 +61,7 @@
    /* table of Mac names.  Thus, it is possible to build a version of */
    /* FreeType without the Type 1 driver & PSNames module.            */
 
-#define  MAC_NAME( x )  TT_Post_Default_Names[x]
+#define MAC_NAME( x )  TT_Post_Default_Names[x]
 
   /* the 258 default Mac PS glyph names */
 

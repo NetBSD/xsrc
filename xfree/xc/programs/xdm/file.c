@@ -1,4 +1,4 @@
-/* $TOG: file.c /main/18 1998/02/09 13:55:19 kaleb $ */
+/* $Xorg: file.c,v 1.4 2000/08/17 19:54:15 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xdm/file.c,v 1.5 2001/01/17 23:45:21 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -117,7 +117,7 @@ copyArgs (char **args)
     n = new;
     a = args;
     /* SUPPRESS 560 */
-    while ((*n++ = *a++) != 0)
+    while ((*n++ = *a++))
 	/* SUPPRESS 530 */
 	;
     return new;

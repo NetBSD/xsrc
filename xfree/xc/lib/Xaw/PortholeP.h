@@ -1,5 +1,5 @@
 /*
- * $TOG: PortholeP.h /main/5 1998/02/11 14:54:23 kaleb $
+ * $Xorg: PortholeP.h,v 1.3 2000/08/17 19:45:36 cpqbld Exp $
  *
 Copyright 1990, 1994, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86: xc/lib/Xaw/PortholeP.h,v 1.5 1999/06/06 08:48:07 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/PortholeP.h,v 1.7 2001/01/17 19:42:29 dawes Exp $ */
 
 #ifndef _XawPortholeP_h
 #define _XawPortholeP_h

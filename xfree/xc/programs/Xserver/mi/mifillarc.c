@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/mifillarc.c,v 3.3 1998/10/04 09:39:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/mifillarc.c,v 3.5 2001/01/17 22:37:06 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ Author:  Bob Scheifler, MIT X Consortium
 
 ********************************************************/
 
-/* $TOG: mifillarc.c /main/20 1998/02/09 14:46:52 kaleb $ */
+/* $Xorg: mifillarc.c,v 1.3 2000/08/17 19:53:37 cpqbld Exp $ */
 
 #include <math.h>
 #include "X.h"

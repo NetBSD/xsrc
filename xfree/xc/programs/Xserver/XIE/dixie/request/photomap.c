@@ -1,4 +1,4 @@
-/* $TOG: photomap.c /main/7 1998/02/09 16:11:38 kaleb $ */
+/* $Xorg: photomap.c,v 1.3 2000/08/17 19:47:31 cpqbld Exp $ */
 /**** module photomap.c ****/
 /****************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Dean Verheiden, Robert NC Shelley  AGE Logic, Inc.  April 1993
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/photomap.c,v 3.2 1998/10/05 13:22:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/photomap.c,v 3.4 2001/01/17 22:12:56 dawes Exp $ */
 
 #define _XIEC_PHOTOMAP
 

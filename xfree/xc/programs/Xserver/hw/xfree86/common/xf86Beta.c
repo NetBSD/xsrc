@@ -1,6 +1,6 @@
 /* Copyright 1996, The XFree86 Project, Inc */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Beta.c,v 3.6 1998/07/26 09:56:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Beta.c,v 3.7 1998/08/16 10:25:39 dawes Exp $ */
 
 /*
  * This is for publicly released beta server binaries.

@@ -1,27 +1,30 @@
 /*
- * GLX Hardware Device Driver for Matrox G400
- * Copyright (C) 1999 Keith Whitwell
+ * Copyright 2000-2001 VA Linux Systems, Inc.
+ * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * on the rights to use, copy, modify, merge, publish, distribute, sub
+ * license, and/or sell copies of the Software, and to permit persons to whom
+ * the Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * KEITH WHITWELL, OR ANY OTHER CONTRIBUTORS BE LIABLE FOR ANY CLAIM, 
- * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
- * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
- * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  IN NO EVENT SHALL
+ * VA LINUX SYSTEMS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  *
+ * Authors:
+ *    Keith Whitwell <keithw@valinux.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaeltpath.c,v 1.4 2000/09/24 13:51:06 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgaeltpath.c,v 1.7 2001/04/10 16:07:50 dawes Exp $ */
 
 #include <stdio.h>
 
@@ -42,8 +45,8 @@
 /* Always use a full-sized stride for vertices. [FIXME]
  * Stride in the buffers must be a quadword multiple.
  */
-#define BUFFER_STRIDE 12 
-#define CLIP_STRIDE 10 
+#define BUFFER_STRIDE 12
+#define CLIP_STRIDE 10
 
 
 static void fire_elts( mgaContextPtr mmesa )
@@ -57,32 +60,32 @@ static void fire_elts( mgaContextPtr mmesa )
       GLuint retain = (mmesa->elt_buf == mmesa->retained_buf);
 
       if (mmesa->first_elt != mmesa->next_elt) {
-	 mgaFireEltsLocked( mmesa, 
-			    ((char *)mmesa->first_elt - 
+	 mgaFireEltsLocked( mmesa,
+			    ((char *)mmesa->first_elt -
 			     (char *)mmesa->elt_buf->address),
-			    ((char *)mmesa->next_elt - 
+			    ((char *)mmesa->next_elt -
 			     (char *)mmesa->elt_buf->address),
 			    !retain );
-      } else if (!retain) 
+      } else if (!retain)
 	 mgaReleaseBufLocked( mmesa, mmesa->elt_buf );
-      
+
       mmesa->elt_buf = 0;
-   } 
-   else if (mmesa->vertex_dma_buffer) 
+   }
+   else if (mmesa->vertex_dma_buffer)
    {
       mgaFlushVerticesLocked( mmesa );
    }
 
    mgaGetEltBufLocked( mmesa );
-      
+
    UNLOCK_HARDWARE( mmesa );
 
-   mmesa->next_vert = (GLfloat *)((char *)mmesa->elt_buf->address + 
-				  mmesa->elt_buf->total - 
+   mmesa->next_vert = (GLfloat *)((char *)mmesa->elt_buf->address +
+				  mmesa->elt_buf->total -
 				  BUFFER_STRIDE * sizeof(GLfloat));
 
-   mmesa->next_vert_phys = (mmesa->mgaScreen->dmaOffset + 
-			    mmesa->elt_buf->idx * MGA_DMA_BUF_SZ +
+   mmesa->next_vert_phys = (mmesa->mgaScreen->dmaOffset +
+			    mmesa->elt_buf->idx * MGA_BUFFER_SIZE +
 			    mmesa->elt_buf->total -
 			    BUFFER_STRIDE * sizeof(GLfloat));
 
@@ -94,14 +97,14 @@ static void fire_elts( mgaContextPtr mmesa )
 
 static void release_bufs( mgaContextPtr mmesa )
 {
-   if (mmesa->retained_buf && mmesa->retained_buf != mmesa->elt_buf) 
+   if (mmesa->retained_buf && mmesa->retained_buf != mmesa->elt_buf)
    {
       LOCK_HARDWARE( mmesa );
       if (mmesa->first_elt != mmesa->next_elt) {
-	 mgaFireEltsLocked( mmesa, 
-			    ((char *)mmesa->first_elt - 
+	 mgaFireEltsLocked( mmesa,
+			    ((char *)mmesa->first_elt -
 			     (char *)mmesa->elt_buf->address),
-			    ((char *)mmesa->next_elt - 
+			    ((char *)mmesa->next_elt -
 			     (char *)mmesa->elt_buf->address),
 			    0 );
 
@@ -200,7 +203,7 @@ static void mga_tri_clip( mgaContextPtr mmesa,
    CLIP(-,1,CLIP_TOP_BIT);
    CLIP(+,1,CLIP_BOTTOM_BIT);
    CLIP(-,2,CLIP_FAR_BIT);
-   CLIP(+,2,CLIP_NEAR_BIT); 
+   CLIP(+,2,CLIP_NEAR_BIT);
 
 
    {
@@ -208,15 +211,15 @@ static void mga_tri_clip( mgaContextPtr mmesa,
       GLuint space = (char *)mmesa->next_vert - (char *)mmesa->next_elt;
 
       if (space < n * (BUFFER_STRIDE + 3) * sizeof(GLuint))
-         fire_elts(mmesa); 
+         fire_elts(mmesa);
 
       /* Project the new vertices and emit to dma buffers.  Translate
-       * out values to physical addresses for setup dma.  
+       * out values to physical addresses for setup dma.
        */
       tab->project_and_emit_verts( mmesa, (GLfloat *)verts, out, n );
-      
+
       /* Convert the planar polygon to a list of triangles and emit to
-       * elt buffers. 
+       * elt buffers.
        */
       for (i = 2 ; i < n ; i++) {
 	 mmesa->next_elt[0] = out[0];
@@ -275,8 +278,8 @@ do {								\
 
 
 
-#define RENDER_POINTS(start, count) 
-#define RENDER_LINE(i1, i0) 
+#define RENDER_POINTS(start, count)
+#define RENDER_LINE(i1, i0)
 #define RENDER_TRI(i2, i1, i0, pv, parity)		\
 do {							\
    GLuint e2 = elt[i2], e1 = elt[i1], e0 = elt[i0];	\
@@ -298,8 +301,8 @@ do {							\
    GLuint *elt = VB->EltPtr->data;				\
    (void) elt; (void) mmesa;
 
-#define RENDER_POINTS(start, count) 
-#define RENDER_LINE(i1, i0) 
+#define RENDER_POINTS(start, count)
+#define RENDER_LINE(i1, i0)
 #define RENDER_TRI(i2, i1, i0, pv, parity)		\
 do {							\
    GLuint e2 = elt[i2], e1 = elt[i1], e0 = elt[i0];	\
@@ -333,10 +336,10 @@ static void refresh_projection_matrix( GLcontext *ctx )
    m[MAT_TZ] =   mat->m[MAT_TZ] * mmesa->depth_scale;
 }
 
-#define CLIP_UBYTE_B 0   
-#define CLIP_UBYTE_G 1  
+#define CLIP_UBYTE_B 0
+#define CLIP_UBYTE_G 1
 #define CLIP_UBYTE_R 2
-#define CLIP_UBYTE_A 3   
+#define CLIP_UBYTE_A 3
 
 
 #define TYPE (0)
@@ -389,26 +392,26 @@ void mgaDDEltPathInit( void )
 /* Use a temporary array for device coordinates, so that we can easily
  * tap into existing mesa assembly.  Otherwise consider emitting
  * device coordinates to dma buffers directly from the project/cliptest
- * routine.  (requires output stride, potential loss of writecombining 
- * efficiency?)  
+ * routine.  (requires output stride, potential loss of writecombining
+ * efficiency?)
  *
  * This path is a lot closer to the standard vertex path in the
  * initial stages than the original fastpath.  A slightly more optimal
  * path could be constructed, but would require us to write new
- * assembly.  
+ * assembly.
  */
 void mgaDDEltPath( struct vertex_buffer *VB )
 {
    GLcontext *ctx = VB->ctx;
    GLenum prim = ctx->CVA.elt_mode;
-   mgaContextPtr mmesa = MGA_CONTEXT( ctx ); 
+   mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    struct mga_elt_tab *tab = &mgaEltTab[mmesa->setupindex & VALID_SETUP];
 
    VB->ClipPtr = TransformRaw(&VB->Clip, &ctx->ModelProjectMatrix, VB->ObjPtr );
 
    refresh_projection_matrix( ctx );
 
-   VB->ClipAndMask = ~0; 
+   VB->ClipAndMask = ~0;
    VB->ClipOrMask = 0;
    VB->Projected = gl_clip_tab[VB->ClipPtr->size]( VB->ClipPtr,
 						   &VB->Win,
@@ -416,33 +419,33 @@ void mgaDDEltPath( struct vertex_buffer *VB )
 						   &VB->ClipOrMask,
 						   &VB->ClipAndMask );
 
-   if (VB->ClipAndMask) 
+   if (VB->ClipAndMask)
       return;
 
-   if (mmesa->vertex_dma_buffer) 
+   if (mmesa->vertex_dma_buffer)
       mgaFlushVertices( mmesa );
 
    if (mmesa->new_state)
       mgaDDUpdateHwState( ctx );
 
    /* Allocate a single buffer to hold unclipped vertices.  All
-    * unclipped vertices must be contiguous.  
+    * unclipped vertices must be contiguous.
     */
-   if ((char *)mmesa->next_vert - (char *)mmesa->next_elt <  
-       VB->Count * BUFFER_STRIDE * sizeof(GLuint))	
+   if ((char *)mmesa->next_vert - (char *)mmesa->next_elt <
+       VB->Count * BUFFER_STRIDE * sizeof(GLuint))
       fire_elts( mmesa );
 
    mmesa->retained_buf = mmesa->elt_buf;
-   
+
    /* Emit unclipped vertices to the buffer.
     */
-   tab->emit_unclipped_verts( VB ); 
-	 
+   tab->emit_unclipped_verts( VB );
+
    /* Emit indices and clipped vertices to one or more buffers.
     */
    if (VB->ClipOrMask) {
       mmesa->elt_tab = tab;
-      mga_render_tab_elt[prim]( VB, 0, VB->EltPtr->count, 0 ); 
+      mga_render_tab_elt[prim]( VB, 0, VB->EltPtr->count, 0 );
    } else
       mga_render_tab_elt_unclipped[prim]( VB, 0, VB->EltPtr->count, 0 );
 
@@ -450,9 +453,8 @@ void mgaDDEltPath( struct vertex_buffer *VB )
     */
    release_bufs( mmesa );
 
-   /* This indicates that there is no cached data to reuse.  
+   /* This indicates that there is no cached data to reuse.
     */
    VB->pipeline->data_valid = 0;
    VB->pipeline->new_state = 0;
 }
-

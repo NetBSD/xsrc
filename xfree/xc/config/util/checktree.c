@@ -1,4 +1,4 @@
-/* $TOG: checktree.c /main/8 1998/02/06 11:23:04 kaleb $ */
+/* $Xorg: checktree.c,v 1.3 2000/08/17 19:41:52 cpqbld Exp $ */
 
 /*
 

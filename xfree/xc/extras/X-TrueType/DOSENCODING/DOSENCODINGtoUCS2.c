@@ -46,7 +46,7 @@ Notice===
     whith -misc-fontspecific instead of -viscii1.1-1 *sigh*)
 
  */
-/* $XFree86$ */
+/* $XFree86: xc/extras/X-TrueType/DOSENCODING/DOSENCODINGtoUCS2.c,v 1.2 2000/06/27 21:26:32 tsi Exp $ */
 
 #include "xttversion.h"
 

@@ -28,7 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/programs/xman/misc.c,v 1.5 2001/01/27 17:24:27 herrb Exp $ */
+/* $XFree86: xc/programs/xman/misc.c,v 1.6 2001/04/19 19:54:51 dawes Exp $ */
 
 /*
  * xman - X window system manual page display program.
@@ -44,18 +44,27 @@ from the X Consortium.
 #include <X11/Xaw/Dialog.h>
 #include <X11/Shell.h>
 
+#ifndef HAS_SNPRINTF
+#undef SCOPE
+#define SCOPE static
+#include "snprintf.c"
+#endif
+
 static FILE * Uncompress(ManpageGlobals * man_globals, char * filename);
 #ifndef HAS_MKSTEMP
-static Boolean UncompressNamed(ManpageGlobals * man_globals, char * filename, 
+static Boolean UncompressNamed(ManpageGlobals * man_globals, char * filename,
 			       char * output);
-static Boolean UncompressUnformatted(ManpageGlobals * man_globals, 
+static Boolean UncompressUnformatted(ManpageGlobals * man_globals,
 				     char * entry, char * filename);
 #else
-static Boolean UncompressNamed(ManpageGlobals * man_globals, char * filename, 
+static Boolean UncompressNamed(ManpageGlobals * man_globals, char * filename,
 			       char * output, FILE ** output_fd);
-static Boolean UncompressUnformatted(ManpageGlobals * man_globals, 
-				     char * entry, char * filename, 
+static Boolean UncompressUnformatted(ManpageGlobals * man_globals,
+				     char * entry, char * filename,
 				     FILE **file);
+#endif
+#ifdef HANDLE_ROFFSEQ
+static Boolean ConstructCommand(char * cmdbuf, char * path, char * filename, char * tempfile);
 #endif
 
 #if defined(ISC) || defined(SCO)
@@ -76,7 +85,7 @@ static char *uncompress_formats[] =
 extern Widget top;
 static Widget warnShell, warnDialog;
 
-static void 
+static void
 PopdownWarning(Widget w, XtPointer client, XtPointer call)
 {
   XtPopdown((Widget)client);
@@ -107,7 +116,7 @@ PopupWarning(ManpageGlobals * man_globals, char * string)
     hasPosition = TRUE;
   }
 
-  if (man_globals != NULL) 
+  if (man_globals != NULL)
     ChangeLabel(man_globals->label, buffer);
   if (man_globals->label == NULL) {
     n=0;
@@ -117,12 +126,12 @@ PopupWarning(ManpageGlobals * man_globals, char * string)
       XtSetArg(wargs[n], XtNy, topY); n++;
     }
     XtSetArg(wargs[n], XtNtransientFor, top); n++;
-    warnShell = XtCreatePopupShell("warnShell", transientShellWidgetClass, 
+    warnShell = XtCreatePopupShell("warnShell", transientShellWidgetClass,
 				   initial_widget, wargs, n);
-    XtSetArg(wargs[0], XtNlabel, buffer); 
-    warnDialog = XtCreateManagedWidget("warnDialog", dialogWidgetClass, 
+    XtSetArg(wargs[0], XtNlabel, buffer);
+    warnDialog = XtCreateManagedWidget("warnDialog", dialogWidgetClass,
 				       warnShell, wargs, 1);
-    XawDialogAddButton(warnDialog, "dismiss", PopdownWarning, 
+    XawDialogAddButton(warnDialog, "dismiss", PopdownWarning,
 		       (XtPointer)warnShell);
     XtRealizeWidget(warnShell);
     Popup(warnShell, XtGrabNone);
@@ -169,11 +178,11 @@ OpenFile(ManpageGlobals * man_globals, FILE * file)
  *
  * NOTES:
  *
- * If there is a uncompressed section it will look there for uncompresed 
- * manual pages first and then for individually comressed file in the 
+ * If there is a uncompressed section it will look there for uncompresed
+ * manual pages first and then for individually comressed file in the
  * uncompressed section.
- * 
- * If there is a compressed directory then it will also look there for 
+ *
+ * If there is a compressed directory then it will also look there for
  * the manual pages.
  *
  * If both of these fail then it will attempt to format the manual page.
@@ -202,12 +211,12 @@ FindManualFile(ManpageGlobals * man_globals, int section_num, int entry_num)
  */
 #if defined(__OpenBSD__) || defined(__NetBSD__)
   /* look in machine subdir first */
-  sprintf(filename, "%s/%s%s/%s/%s", path, CAT, 
+  sprintf(filename, "%s/%s%s/%s/%s", path, CAT,
 	  section + len_cat, MACHINE, page);
   if ( (file = fopen(filename,"r")) != NULL)
     return(file);
 #endif
-  
+
   sprintf(filename, "%s/%s%s/%s", path, CAT, section + len_cat, page);
   if ( (file = fopen(filename,"r")) != NULL)
     return(file);
@@ -219,27 +228,27 @@ FindManualFile(ManpageGlobals * man_globals, int section_num, int entry_num)
 #if !defined(ISC) && !defined(SCO)
 #if defined(__OpenBSD__) || defined(__NetBSD__)
   /* look in machine subdir first */
-  sprintf(filename, "%s/%s%s/%s/%s.%s", path, CAT, 
+  sprintf(filename, "%s/%s%s/%s/%s.%s", path, CAT,
 	  section + len_cat, MACHINE, page, COMPRESSION_EXTENSION);
   if ( (file = Uncompress(man_globals, filename)) != NULL)
     return(file);
 #endif
-  sprintf(filename, "%s/%s%s/%s.%s", path, CAT, 
+  sprintf(filename, "%s/%s%s/%s.%s", path, CAT,
 	  section + len_cat, page, COMPRESSION_EXTENSION);
-  if ( (file = Uncompress(man_globals, filename)) != NULL) 
+  if ( (file = Uncompress(man_globals, filename)) != NULL)
     return(file);
 #ifdef GZIP_EXTENSION
   else {
 #if defined(__OpenBSD__) || defined(__NetBSD__)
       /* look in machine subdir first */
-      sprintf(filename, "%s/%s%s/%s/%s.%s", path, CAT, 
+      sprintf(filename, "%s/%s%s/%s/%s.%s", path, CAT,
 	      section + len_cat, MACHINE, page, GZIP_EXTENSION);
       if ( (file = Uncompress(man_globals, filename)) != NULL)
 	  return(file);
 #endif
     sprintf(filename, "%s/%s%s/%s.%s", path, CAT,
 	    section + len_cat, page, GZIP_EXTENSION);
-    if ( (file = Uncompress(man_globals, filename)) != NULL) 
+    if ( (file = Uncompress(man_globals, filename)) != NULL)
       return(file);
   }
 #endif
@@ -251,7 +260,7 @@ FindManualFile(ManpageGlobals * man_globals, int section_num, int entry_num)
 #ifdef DEBUG
       printf("Trying .%c ...\n", COMPRESSION_EXTENSIONS[i]);
 #endif
-      if ( (file = Uncompress(man_globals, filename)) != NULL) 
+      if ( (file = Uncompress(man_globals, filename)) != NULL)
 	return(file);
   }
 #endif
@@ -293,7 +302,7 @@ Uncompress(ManpageGlobals * man_globals, char * filename)
   if ( !UncompressNamed(man_globals, filename, tmp_file) )
     return(NULL);
 
-  else if ((file = fopen(tmp_file, "r")) == NULL) {  
+  else if ((file = fopen(tmp_file, "r")) == NULL) {
       sprintf(error_buf, "Something went wrong in retrieving the %s",
 	      "uncompressed manual page try cleaning up /tmp.");
       PopupWarning(man_globals, error_buf);
@@ -384,7 +393,7 @@ UncompressNamed(ManpageGlobals * man_globals, char * filename, char * output,
  *	Arguments: man_globals - the psuedo globals
  *                 file - the file pointer to use and return
  *                 entry - the current entry struct.
- *                 current_box - The current directory being displayed. 
+ *                 current_box - The current directory being displayed.
  *	Returns: none.
  */
 
@@ -449,8 +458,8 @@ Format(ManpageGlobals * man_globals, char * entry)
   }
 
   Popup(XtParent(man_globals->standby), XtGrabExclusive);
-  while ( !XCheckTypedWindowEvent(XtDisplay(man_globals->standby), 
-				  XtWindow(man_globals->standby), 
+  while ( !XCheckTypedWindowEvent(XtDisplay(man_globals->standby),
+				  XtWindow(man_globals->standby),
 				  Expose, &event) );
   XtDispatchEvent( &event );
   XFlush(XtDisplay(man_globals->standby));
@@ -466,13 +475,23 @@ Format(ManpageGlobals * man_globals, char * entry)
 
   ParseEntry(entry, path, NULL, NULL);
 
+#ifndef HANDLE_ROFFSEQ
 #ifndef HAS_MKSTEMP
   sprintf(cmdbuf,"cd %s ; %s %s %s > %s %s", path, TBL,
 	  filename, FORMAT, man_globals->tempfile, "2> /dev/null");
 #else
   sprintf(cmdbuf,"cd %s ; %s %s %s >> %s %s", path, TBL,
 	  filename, FORMAT, man_globals->tempfile, "2> /dev/null");
-#endif  
+#endif
+#else
+  /* Handle more flexible way of specifying the formatting pipeline */
+  if (! ConstructCommand(cmdbuf, path, filename, man_globals->tempfile)) {
+     sprintf(error_buf, "Constructed command was too long!");
+     PopupWarning(man_globals, error_buf);
+     file = NULL;
+  }
+  else
+#endif /* HANDLE_ROFFSEQ */
 
   if(system(cmdbuf) != 0) {	/* execute search. */
     sprintf(error_buf,
@@ -482,7 +501,7 @@ Format(ManpageGlobals * man_globals, char * entry)
   }
   else {
 #ifndef HAS_MKSTEMP
-    if ((file = fopen(man_globals->tempfile,"r")) == NULL) {  
+    if ((file = fopen(man_globals->tempfile,"r")) == NULL) {
       sprintf(error_buf, "Something went wrong in retrieving the %s",
 	      "temp file, try cleaning up /tmp");
       PopupWarning(man_globals, error_buf);
@@ -491,16 +510,16 @@ Format(ManpageGlobals * man_globals, char * entry)
 #endif
 
       XtPopdown( XtParent(man_globals->standby) );
-  
+
       if ( (man_globals->save == NULL) ||
-	   (man_globals->manpagewidgets.manpage == NULL) ) 
+	   (man_globals->manpagewidgets.manpage == NULL) )
 	unlink(man_globals->tempfile);
       else {
 	char * ptr, catdir[BUFSIZ];
 
 	/*
 	 * If the catdir is writeable then ask the user if he/she wants to
-	 * write the man page to it. 
+	 * write the man page to it.
 	 */
 
 	strcpy(catdir, man_globals->save_file);
@@ -517,7 +536,7 @@ Format(ManpageGlobals * man_globals, char * entry)
 	    XtPopup( man_globals->save, XtGrabExclusive);
 	  }
 	}
-	else 
+	else
 	  unlink(man_globals->tempfile);
       }
 #ifndef HAS_MKSTEMP
@@ -527,12 +546,163 @@ Format(ManpageGlobals * man_globals, char * entry)
 
   if (man_globals->compress || man_globals->gzip)    /* If the original
 							was compressed
-				   			then this is a tempory
+							then this is a tempory
 							file. */
     unlink(filename);
-  
+
   return(file);
 }
+
+#ifdef HANDLE_ROFFSEQ
+/*      Function Name: ConstructCommand
+ *      Description: Constructs the pipeline of commands necessary to format
+ *                   a manual page.
+ *      Arguments: cmdbuf - the buffer into which to write the command
+ *                 path - the directory in which the original man page resides
+ *                 filename - the (uncompressed) manpage source file
+ *                 tempfile - the name of a temporary file to direct the final
+ *                  output of the pipeline into
+ *      Returns: TRUE if the command fit into the buffer, FALSE if it would
+ *               be too long (more than BUFSIZ characters)
+ */
+static Boolean
+ConstructCommand(cmdbuf, path, filename, tempfile)
+   char *cmdbuf, *path, *filename, *tempfile;
+{
+   /* The original code did the following to produce a command line:
+    *   sprintf(cmdbuf,"cd %s ; %s %s %s > %s %s", path, TBL,
+    *      filename, FORMAT, man_globals->tempfile, "2> /dev/null");
+    * We are more flexible and follow more or less the algorithm used
+    * by the Linux man command:
+    *  + Obtain a string of letters from the following sources in order
+    *    of preference:
+    *    + a command line option (not implemented in xman; it's probably not
+    *      useful)
+    *    + the first line of the manpage source, if it is of the form:
+    *      '\" <string>
+    *    + the MANROFFSEQ environment variable
+    *    + a default string; this is "".
+    *  + Interpret the string as a pipeline of filters:
+    *    + e = eqn   g = grap   p = pic   t = tbl   v = vgrind   r = refer
+    *  + zsoelim is always run as the first preprocessor in any case.
+    *
+    * Strictly speaking we should save a catpage iff the string comes
+    * from the file or is the default.
+    *
+    * You'll notice that we format a man page into ASCII text output and then
+    * attempt to interpret things like L^HL as bold and so forth. This
+    * is so obviously the Wrong Thing it's untrue.
+    */
+   char *c = cmdbuf;           /* current posn in buffer */
+   int left = BUFSIZ;          /* space left in buffer */
+   int used;
+   char *fmt;
+   FILE *file;
+   char fmtbuf[128];
+   int gotfmt = 0;             /* set to 1 if we got a directive from source */
+   char *fname = NULL;
+
+   fmt = NULL;
+   /* If you have a command line option that gives a setting for fmt,
+      set it here. */
+
+   if (!fmt) {
+      /* This is the tricky bit: extract a format string from the source file
+       * Annoyingly, filename might be relative or absolute. We cheat and
+       * use system to get the thing to a known absoute filename.
+       */
+      if (filename[0] == '/') {
+         fname = filename;
+      } else {
+         fname = malloc(strlen(path) + 1 + strlen(filename) + 1);
+         if (!fname)
+            return FALSE;
+         sprintf(fname, "%s/%s", path, filename);
+      }
+      if ((file = fopen(fname, "r")) &&
+          (fgets(fmtbuf, sizeof(fmtbuf), file)) &&
+          (!memcmp(fmtbuf, "'\\\" ", 4))) {
+                              /* that's squote-backslash-dquote-space */
+         int len;
+         fmt = fmtbuf + 3;
+         len = strlen(fmt);
+         if (len && (fmt[len-1] == '\n')) {
+            fmt[len-1] = 0;
+            gotfmt++;
+         }
+      }
+      if (fname && fname != filename)
+         free(fname);
+      if (!gotfmt)                                /* not there or some error */
+      {
+         fmt = getenv("MANROFFSEQ");
+      }
+   }
+
+   if (!fmt)
+   {
+      fmt = DEFAULT_MANROFFSEQ;
+   }
+
+
+   /* Start with the first fixed part of the command line */
+   used = snprintf(c, left, "cd %s; %s %s ", path, ZSOELIM, filename);
+   left -= used;
+   c += used;
+   if (left <= 1)
+      return (FALSE);
+
+   /* Now add preprocessors of the form '| processor' */
+   for ( ; *fmt; fmt++)
+   {
+      char *filter;
+      switch (*fmt)
+      {
+         case 'e':
+            filter = EQN;
+            break;
+         case 'g':
+            filter = GRAP;
+            break;
+         case 'p':
+            filter = PIC;
+            break;
+         case 't':
+            filter = TBL;
+            break;
+         case 'v':
+            filter = VGRIND;
+            break;
+         case 'r':
+            filter = REFER;
+            break;
+         default:
+            filter = NULL;
+            break;
+      }
+      if (filter)
+      {
+         used = snprintf(c, left, " | %s ", filter);
+         left -= used;
+         c += used;
+         if (left <= 1)
+            return (FALSE);
+      }
+   }
+
+   /* Now add the fixed trailing part 'formatprog > tempfile 2> /dev/null' */
+#ifndef HAS_MKSTEMP
+   used = snprintf(c, left, " | %s > %s 2>/dev/null", FORMAT, tempfile);
+#else
+   used = snprintf(c, left, " | %s >> %s 2>/dev/null", FORMAT, tempfile);
+#endif
+   left -= used;
+   if (left <= 1)
+      return (FALSE);
+
+   return (TRUE);
+}
+#endif /* HANDLE_ROFFSEQ */
 
 /*	Function Name: UncompressUnformatted
  *	Description: Finds an uncompressed unformatted manual page.
@@ -544,10 +714,10 @@ Format(ManpageGlobals * man_globals, char * entry)
 
 static Boolean
 #ifndef HAS_MKSTEMP
-UncompressUnformatted(ManpageGlobals * man_globals, char * entry, 
+UncompressUnformatted(ManpageGlobals * man_globals, char * entry,
 		      char * filename)
 #else
-UncompressUnformatted(ManpageGlobals * man_globals, char * entry, 
+UncompressUnformatted(ManpageGlobals * man_globals, char * entry,
 		      char * filename, FILE **file)
 #endif
 {
@@ -557,10 +727,10 @@ UncompressUnformatted(ManpageGlobals * man_globals, char * entry,
   ParseEntry(entry, path, section, page);
 
 #if defined(__OpenBSD__) || defined(__NetBSD__)
-  /* 
-   * look for uncomressed file in machine subdir first 
+  /*
+   * look for uncomressed file in machine subdir first
    */
-  sprintf(filename, "%s/%s%s/%s/%s", path, MAN, 
+  sprintf(filename, "%s/%s%s/%s/%s", path, MAN,
 	  section + len_cat, MACHINE, page);
   if ( access( filename, R_OK ) == 0 ) {
     man_globals->compress = FALSE;
@@ -648,7 +818,7 @@ UncompressUnformatted(ManpageGlobals * man_globals, char * entry,
  * And lastly files in a compressed directory.
  */
 
-  sprintf(input, "%s/%s%s.%s/%s", path, 
+  sprintf(input, "%s/%s%s.%s/%s", path,
 	  MAN, section + len_man, COMPRESSION_EXTENSION, page);
 #ifndef HAS_MKSTEMP
   if ( UncompressNamed(man_globals, input, filename) ) {
@@ -656,13 +826,13 @@ UncompressUnformatted(ManpageGlobals * man_globals, char * entry,
   if ( UncompressNamed(man_globals, input, filename, file) ) {
 #endif
     man_globals->compress = TRUE;
-    sprintf(man_globals->save_file, "%s/%s%s.%s/%s", path, 
+    sprintf(man_globals->save_file, "%s/%s%s.%s/%s", path,
 	    CAT, section + len_cat, COMPRESSION_EXTENSION, page);
     return(TRUE);
   }
   return(FALSE);
 }
-  
+
 /*	Function Name: AddCursor
  *	Description: This function adds the cursor to the window.
  *	Arguments: w - the widget to add the cursor to.
@@ -677,7 +847,7 @@ AddCursor(Widget w, Cursor cursor)
   Arg args[10];
   Cardinal num_args = 0;
   Colormap c_map;
-  
+
   if (!XtIsRealized(w)) {
     PopupWarning(NULL, "Widget is not realized, no cursor added.\n");
     return;
@@ -756,21 +926,21 @@ PositionCenter(Widget widget, int x, int y, int above, int left, int v_space, in
  * root window, and if not then force them to be.
  */
 
-  if (x_temp < h_space) 
+  if (x_temp < h_space)
     x_temp = v_space;
   if (y_temp < v_space)
     (y_temp = 2);
 
   if ( y_temp + Height(widget) + v_space > parent_height )
-      y_temp = parent_height - Height(widget) - v_space; 
+      y_temp = parent_height - Height(widget) - v_space;
 
   if ( x_temp + Width(widget) + h_space > parent_width )
-      x_temp = parent_width - Width(widget) - h_space; 
+      x_temp = parent_width - Width(widget) - h_space;
 
-  XtSetArg(wargs[0], XtNx, x_temp); 
-  XtSetArg(wargs[1], XtNy, y_temp); 
+  XtSetArg(wargs[0], XtNx, x_temp);
+  XtSetArg(wargs[1], XtNy, y_temp);
   XtSetValues(widget, wargs, 2);
-}  
+}
 
 /*	Function Name: ParseEntry(entry, path, sect, page)
  *	Description: Parses the manual pages entry filenames.
@@ -782,32 +952,32 @@ PositionCenter(Widget widget, int x, int y, int above, int left, int v_space, in
  */
 
 void
-ParseEntry(char *entry, char *path, char *sect, char *page) 
+ParseEntry(char *entry, char *path, char *sect, char *page)
 {
   char *c, temp[BUFSIZ];
 
   strcpy(temp, entry);
 
   c = rindex(temp, '/');
-  if (c == NULL) 
+  if (c == NULL)
     PrintError("index failure in ParseEntry.");
   *c++ = '\0';
   if (page != NULL)
     strcpy(page, c);
 
   c = rindex(temp, '/');
-  if (c == NULL) 
+  if (c == NULL)
     PrintError("index failure in ParseEntry.");
   *c++ = '\0';
 #if defined(__OpenBSD__) || defined(__NetBSD__)
   /* Skip machine subdirectory if present */
   if (strcmp(c, MACHINE) == 0) {
       c = rindex(temp, '/');
-      if (c == NULL) 
+      if (c == NULL)
 	  PrintError("index failure in ParseEntry.");
       *c++ = '\0';
   }
-#endif 
+#endif
   if (sect != NULL)
     strcpy(sect, c);
 
@@ -833,18 +1003,18 @@ GetGlobals(Widget w)
   while ( (temp = XtParent(w)) != initial_widget && (temp != NULL))
     w = temp;
 
-  if (temp == NULL) 
-    XtAppError(XtWidgetToApplicationContext(w), 
+  if (temp == NULL)
+    XtAppError(XtWidgetToApplicationContext(w),
 	       "Xman: Could not locate widget in tree, exiting");
 
   if (XFindContext(XtDisplay(w), XtWindow(w),
 		   manglobals_context, &data) != XCSUCCESS)
-    XtAppError(XtWidgetToApplicationContext(w), 
+    XtAppError(XtWidgetToApplicationContext(w),
 	       "Xman: Could not find global data, exiting");
 
   return( (ManpageGlobals *) data);
 }
-  
+
 /*      Function Name: SaveGlobals
  *      Description: Saves the psuedo globals on the widget passed
  *                   to this function, although GetGlobals assumes that
@@ -861,7 +1031,7 @@ SaveGlobals(Widget w, ManpageGlobals * globals)
 {
   if (XSaveContext(XtDisplay(w), XtWindow(w), manglobals_context,
 		   (caddr_t) globals) != XCSUCCESS)
-    XtAppError(XtWidgetToApplicationContext(w), 
+    XtAppError(XtWidgetToApplicationContext(w),
 	       "Xman: Could not save global data, are you out of memory?");
 }
 
@@ -877,8 +1047,8 @@ SaveGlobals(Widget w, ManpageGlobals * globals)
 void
 RemoveGlobals(Widget w)
 {
-  if (XDeleteContext(XtDisplay(w), XtWindow(w), 
+  if (XDeleteContext(XtDisplay(w), XtWindow(w),
 		     manglobals_context) != XCSUCCESS)
-    XtAppError(XtWidgetToApplicationContext(w), 
+    XtAppError(XtWidgetToApplicationContext(w),
 	       "Xman: Could not remove global data?");
 }

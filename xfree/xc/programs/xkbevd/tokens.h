@@ -1,4 +1,4 @@
-/* $XConsortium: tokens.h /main/2 1995/12/07 21:28:01 kaleb $ */
+/* $Xorg: tokens.h,v 1.3 2000/08/17 19:54:49 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

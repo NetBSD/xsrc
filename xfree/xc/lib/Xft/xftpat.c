@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftpat.c,v 1.4 2000/12/08 07:51:28 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftpat.c,v 1.6 2001/03/30 18:50:18 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -45,6 +45,8 @@ XftValueDestroy (XftValue v)
 {
     if (v.type == XftTypeString)
 	free (v.u.s);
+    if( v.type == XftTypeMatrix)
+	free (v.u.m);
 }
 
 void
@@ -55,6 +57,8 @@ XftValueListDestroy (XftValueList *l)
     {
 	if (l->value.type == XftTypeString)
 	    free (l->value.u.s);
+	if (l->value.type == XftTypeMatrix)
+	    free (l->value.u.m);
 	next = l->next;
 	free (l);
     }
@@ -136,6 +140,12 @@ XftPatternAdd (XftPattern *p, const char *object, XftValue value, Bool append)
 	if (!value.u.s)
 	    goto bail1;
     }
+    else if (value.type == XftTypeMatrix)
+    {
+	value.u.m = _XftSaveMatrix (value.u.m);
+	if (!value.u.m)
+	    goto bail1;
+    }
     new->value = value;
     new->next = 0;
     
@@ -160,6 +170,8 @@ XftPatternAdd (XftPattern *p, const char *object, XftValue value, Bool append)
 bail2:    
     if (value.type == XftTypeString)
         free (value.u.s);
+    else if (value.type == XftTypeMatrix)
+	free (value.u.m);
 bail1:
     free (new);
 bail0:
@@ -217,6 +229,16 @@ XftPatternAddString (XftPattern *p, const char *object, const char *s)
 
     v.type = XftTypeString;
     v.u.s = (char *) s;
+    return XftPatternAdd (p, object, v, True);
+}
+
+Bool
+XftPatternAddMatrix (XftPattern *p, const char *object, const XftMatrix *s)
+{
+    XftValue	v;
+
+    v.type = XftTypeMatrix;
+    v.u.m = (XftMatrix *) s;
     return XftPatternAdd (p, object, v, True);
 }
 
@@ -310,6 +332,22 @@ XftPatternGetString (XftPattern *p, const char *object, int id, char **s)
     *s = v.u.s;
     return XftResultMatch;
 }
+
+XftResult
+XftPatternGetMatrix (XftPattern *p, const char *object, int id, XftMatrix **m)
+{
+    XftValue	v;
+    XftResult	r;
+
+    r = XftPatternGet (p, object, id, &v);
+    if (r != XftResultMatch)
+	return r;
+    if (v.type != XftTypeMatrix)
+        return XftResultTypeMismatch;
+    *m = v.u.m;
+    return XftResultMatch;
+}
+
 
 XftResult
 XftPatternGetBool (XftPattern *p, const char *object, int id, Bool *b)

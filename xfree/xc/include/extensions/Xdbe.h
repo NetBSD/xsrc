@@ -1,4 +1,4 @@
-/* $XConsortium: Xdbe.h /main/3 1995/09/22 10:20:01 dpw $ */
+/* $Xorg: Xdbe.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /******************************************************************************
  * 
  * Copyright (c) 1994, 1995  Hewlett-Packard Company

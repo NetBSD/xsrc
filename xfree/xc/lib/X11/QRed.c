@@ -1,4 +1,4 @@
-/* $XConsortium: QRed.c,v 1.3 93/09/07 21:32:24 rws Exp $ */
+/* $Xorg: QRed.c,v 1.3 2000/08/17 19:44:49 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.

@@ -1,4 +1,4 @@
-/* $TOG: milut.c /main/5 1998/02/09 16:17:00 kaleb $ */
+/* $Xorg: milut.c,v 1.3 2000/08/17 19:47:45 cpqbld Exp $ */
 /**** module milut.c ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Larry Hare -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/import/milut.c,v 3.2 1998/10/04 09:36:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/import/milut.c,v 3.4 2001/01/17 22:13:05 dawes Exp $ */
 
 #define _XIEC_ILUT
 #define _XIEC_MILUT

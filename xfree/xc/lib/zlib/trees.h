@@ -1,4 +1,4 @@
-/* $TOG: trees.h /main/1 1998/02/04 14:34:22 kaleb $ */
+/* $Xorg: trees.h,v 1.3 2000/08/17 19:46:48 cpqbld Exp $ */
 /* header created automatically with -DGEN_TREES_H */
 
 local const ct_data static_ltree[L_CODES+2] = {

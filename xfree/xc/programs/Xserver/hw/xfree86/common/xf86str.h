@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86str.h,v 1.73 2000/10/24 22:45:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86str.h,v 1.79 2001/05/18 23:35:31 dawes Exp $ */
 
 /*
  * Copyright (c) 1997-2000 by The XFree86 Project, Inc.
@@ -87,9 +87,9 @@ typedef enum {
     MODE_VBLANK_WIDE,	/* vertical blanking too wide */
     MODE_PANEL,         /* exceeds panel dimensions */
     MODE_INTERLACE_WIDTH, /* width too large for interlaced mode */
-    MODE_ONE_WIDTH,    /* only one width is supported */
-    MODE_ONE_HEIGHT,   /* only one height is supported */
-    MODE_ONE_SIZE,     /* only one resolution is supported */
+    MODE_ONE_WIDTH,     /* only one width is supported */
+    MODE_ONE_HEIGHT,    /* only one height is supported */
+    MODE_ONE_SIZE,      /* only one resolution is supported */
     MODE_BAD = -2,	/* unspecified reason */
     MODE_ERROR	= -1	/* error condition */
 } ModeStatus;
@@ -218,10 +218,26 @@ typedef struct _DriverRec {
     char *		driverName;
     void		(*Identify)(int flags);
     Bool		(*Probe)(struct _DriverRec *drv, int flags);
-    OptionInfoPtr	(*AvailableOptions)(int chipid, int bustype);
+    const OptionInfoRec * (*AvailableOptions)(int chipid, int bustype);
     pointer		module;
     int			refCount;
 } DriverRec, *DriverPtr;
+
+#ifdef XFree86LOADER
+/*
+ * The optional module list struct. This allows modules exporting helping
+ * functions to configuration tools, the Xserver, or any other
+ * application/module interested in such information.
+ */
+typedef struct _ModuleInfoRec {
+    int			moduleVersion;
+    char *		moduleName;
+    pointer		module;
+    int			refCount;
+    const OptionInfoRec * (*AvailableOptions)(void *unused);
+    pointer		unused[8];	/* leave some space for more fields */
+} ModuleInfoRec, *ModuleInfoPtr;
+#endif
 
 /*
  * These are the private bus types.  New types can be added here.  Types
@@ -233,7 +249,8 @@ typedef enum {
     BUS_NONE,
     BUS_ISA,
     BUS_PCI,
-    BUS_SBUS
+    BUS_SBUS,
+    BUS_last    /* Keep last */
 } BusType;
 
 typedef struct {
@@ -438,7 +455,8 @@ typedef enum {
     X_ERROR,			/* Error message */
     X_WARNING,			/* Warning message */
     X_INFO,			/* Informational message */
-    X_NONE			/* No prefix */
+    X_NONE,			/* No prefix */
+    X_NOT_IMPLEMENTED		/* Not implemented */
 } MessageType;
 
 /* flags for depth 24 pixmap options */

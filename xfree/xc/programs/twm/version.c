@@ -45,6 +45,6 @@ in this Software without prior written authorization from The Open Group.
 /**    OR PERFORMANCE OF THIS SOFTWARE.                                     **/
 /*****************************************************************************/
 
-/* $TOG: version.c /main/14 1998/02/09 13:50:04 kaleb $ */
+/* $Xorg: version.c,v 1.3 2000/08/17 19:54:08 cpqbld Exp $ */
 char *Version = "The Open Group, R6.3";
 

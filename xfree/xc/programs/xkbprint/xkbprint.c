@@ -1,4 +1,4 @@
-/* $TOG: xkbprint.c /main/6 1997/06/10 06:56:25 kaleb $ */
+/* $Xorg: xkbprint.c,v 1.4 2000/08/17 19:54:50 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.6 1997/12/06 09:26:16 hohndel Exp $ */
+/* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.8 2001/01/17 23:46:11 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

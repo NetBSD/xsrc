@@ -1,4 +1,4 @@
-/* $XConsortium: lbxgfx.c /main/27 1996/12/15 21:25:50 rws $ */
+/* $Xorg: lbxgfx.c,v 1.3 2000/08/17 19:53:31 cpqbld Exp $ */
 /*
  * Copyright 1993 Network Computing Devices, Inc.
  *
@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/lbx/lbxgfx.c,v 1.3 2001/01/17 22:36:59 dawes Exp $ */
 
 /* various bits of DIX-level mangling */
 

@@ -1,4 +1,4 @@
-/* $XConsortium: OfCCC.c,v 1.1 91/05/13 22:37:17 rws Exp $ */
+/* $Xorg: OfCCC.c,v 1.3 2000/08/17 19:44:47 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.

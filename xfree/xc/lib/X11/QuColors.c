@@ -1,4 +1,4 @@
-/* $TOG: QuColors.c /main/11 1998/02/06 17:48:32 kaleb $ */
+/* $Xorg: QuColors.c,v 1.4 2000/08/17 19:44:50 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/QuColors.c,v 1.3 2001/01/17 19:41:42 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"

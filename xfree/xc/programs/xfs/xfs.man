@@ -1,3 +1,5 @@
+.\" $XFree86: xc/programs/xfs/xfs.man,v 3.15 2001/04/18 16:13:22 dawes Exp $
+.\"
 .\" Copyright 1991, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -30,9 +32,8 @@
 .\" no representations about the
 .\" suitability of this software for any purpose.  It is provided "as is"
 .\" without express or implied warranty.
-.\" $TOG: xfs.man /main/16 1998/02/09 13:58:02 kaleb $
-.\" $XFree86: xc/programs/xfs/xfs.man,v 3.10 2000/12/02 17:27:36 dawes Exp $
-.TH XFS 1 "Release 6.4" "X Version 11"
+.\" $Xorg: xfs.man,v 1.3 2000/08/17 19:54:19 cpqbld Exp $
+.TH XFS 1 __xorgversion__
 .SH NAME
 xfs \- X font server
 .SH SYNOPSIS
@@ -78,10 +79,6 @@ process (unless xfs was built to daemonize by default).
 .B \-droppriv
 If specified, xfs will attempt to run as user and group \fIxfs\fR (unless
 the
-.TP 8
-.B \-nodaemon
-When xfs is built to daemonize (run in the background) by default,
-this prevents that and starts xfs up as a regular process.
 .B \-user
 option is used). This
 has been implemented for security reasons, as xfs may have undiscovered
@@ -89,6 +86,10 @@ buffer overflows or other paths for possible exploit, both local and
 remote.  With this option, you may also wish to specify
 "no-listen = tcp"
 in the config file, which ensures that xfs will not to use a TCP port at all.
+.TP 8
+.B \-nodaemon
+When xfs is built to daemonize (run in the background) by default,
+this prevents that and starts xfs up as a regular process.
 .TP 8
 .B \-user username
 This is equivalent to
@@ -164,31 +165,31 @@ enabled for all fonts, and "16", meaning it is enabled only for
 .\" list means the server will talk to any client.
 .SH "EXAMPLE"
 .nf
-#
-# sample font server configuration file
-#
+XCOMM
+XCOMM sample font server configuration file
+XCOMM
 
-# allow a max of 10 clients to connect to this font server
+XCOMM allow a max of 10 clients to connect to this font server
 client-limit = 10
 
-# when a font server reaches its limit, start up a new one
+XCOMM when a font server reaches its limit, start up a new one
 clone-self = on
 
-# alternate font servers for clients to use
+XCOMM alternate font servers for clients to use
 alternate-servers = hansen:7101,hansen:7102
 
-# where to look for fonts
-# the first is a set of Speedo outlines, the second is a set of 
-# misc bitmaps and the last is a set of 100dpi bitmaps
-#
+XCOMM where to look for fonts
+XCOMM the first is a set of Speedo outlines, the second is a set of 
+XCOMM misc bitmaps and the last is a set of 100dpi bitmaps
+XCOMM
 catalogue = /usr/X11R6/lib/X11/fonts/speedo,
 	/usr/X11R6/lib/X11/fonts/misc,
 	/usr/X11R6/lib/X11/fonts/100dpi/
 
-# in 12 points, decipoints
+XCOMM in 12 points, decipoints
 default-point-size = 120
 
-# 100 x 100 and 75 x 75
+XCOMM 100 x 100 and 75 x 75
 default-resolutions = 100,100,75,75
 use-syslog = off
 .fi
@@ -226,7 +227,7 @@ with '+' as a separator.
 .PP
 Examples: \fIDECnet/SRVNOD::FONT$DEFAULT\fP, \fIdecnet/44.70::font$special/symbols\fP.
 .SH "SEE ALSO"
-X(1), \fIThe X Font Service Protocol\fP,
+X(__miscmansuffix__), \fIThe X Font Service Protocol\fP,
 .br
 \fIFont server implementation overview\fP
 .SH BUGS

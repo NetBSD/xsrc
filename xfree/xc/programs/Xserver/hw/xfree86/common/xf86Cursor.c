@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.27 2000/06/23 22:42:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Cursor.c,v 3.29 2001/05/09 03:12:01 tsi Exp $ */
 /* $XConsortium: xf86Cursor.c /main/10 1996/10/19 17:58:23 kaleb $ */
 
 #define NEED_EVENTS
@@ -201,7 +201,7 @@ xf86ZoomViewport (ScreenPtr pScreen, int zoom)
       /* 
        * adjust new frame for the displaysize
        */
-      pScr->frameX0 = (pScr->frameX1 + pScr->frameX0 -
+      pScr->frameX0 = (pScr->frameX1 + pScr->frameX0 + 1 -
 		       pScr->currentMode->HDisplay) / 2;
       pScr->frameX1 = pScr->frameX0 + pScr->currentMode->HDisplay - 1;
 
@@ -213,7 +213,7 @@ xf86ZoomViewport (ScreenPtr pScreen, int zoom)
 	  pScr->frameX1 = pScr->frameX0 + pScr->currentMode->HDisplay - 1;
       }
       
-      pScr->frameY0 = (pScr->frameY1 + pScr->frameY0 -
+      pScr->frameY0 = (pScr->frameY1 + pScr->frameY0 + 1 -
 		       pScr->currentMode->VDisplay) / 2;
       pScr->frameY1 = pScr->frameY0 + pScr->currentMode->VDisplay - 1;
 

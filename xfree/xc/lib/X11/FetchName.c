@@ -1,4 +1,4 @@
-/* $TOG: FetchName.c /main/11 1998/02/06 17:20:40 kaleb $ */
+/* $Xorg: FetchName.c,v 1.3 2000/08/17 19:44:33 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group

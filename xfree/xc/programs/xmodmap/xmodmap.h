@@ -1,4 +1,4 @@
-/* $TOG: xmodmap.h /main/9 1998/02/09 14:11:42 kaleb $ */
+/* $Xorg: xmodmap.h,v 1.3 2000/08/17 19:54:55 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xmodmap/xmodmap.h,v 1.4 2001/01/17 23:46:21 dawes Exp $ */
 
 extern char *ProgramName;
 extern Display *dpy;

@@ -1,5 +1,5 @@
 /*
-* $TOG: CommandP.h /main/28 1998/02/06 12:45:15 kaleb $
+* $Xorg: CommandP.h,v 1.3 2000/08/17 19:45:32 cpqbld Exp $
 */
 
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/CommandP.h,v 1.5 1999/06/06 08:47:54 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/CommandP.h,v 1.7 2001/01/17 19:42:26 dawes Exp $ */
 
 #ifndef _XawCommandP_h
 #define _XawCommandP_h

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcImg.c,v 1.3 1999/06/06 08:49:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/ppcImg.c,v 1.4 2000/09/26 15:57:21 tsi Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *

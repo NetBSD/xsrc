@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_xmesa.c,v 1.7 2000/11/27 10:59:37 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_xmesa.c,v 1.12 2001/03/21 16:14:20 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -40,28 +40,28 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "gamma_gl.h"
 #include "glapi.h"
 #include "glint_dri.h"
+#include "gamma_dlist.h"
 #include "context.h"
 #include "mmath.h"
+#include "hash.h"
 
 
 __DRIcontextPrivate *nullCC  = NULL;
 __DRIcontextPrivate *gCC = NULL;
 gammaContextPrivate *gCCPriv = NULL;
 
-static struct _glapi_table *Dispatch = NULL;
-
-
 GLboolean XMesaInitDriver(__DRIscreenPrivate *sPriv)
 {
     gammaScreenPrivate *gsp;
 
+#if 0
     /* Check the DRI version */
     {
        int major, minor, patch;
        if (XF86DRIQueryVersion(sPriv->display, &major, &minor, &patch)) {
-          if (major != 3 || minor != 0 || patch < 0) {
+          if (major != 4 || minor < 0) {
              char msg[1000];
-             sprintf(msg, "gamma DRI driver expected DRI version 3.0.x but got version %d.%d.%d", major, minor, patch);
+             sprintf(msg, "gamma DRI driver expected DRI version 4.0.x but got version %d.%d.%d", major, minor, patch);
              __driMesaMessage(msg);
              return GL_FALSE;
           }
@@ -70,8 +70,7 @@ GLboolean XMesaInitDriver(__DRIscreenPrivate *sPriv)
 
     /* Check that the DDX driver version is compatible */
     if (sPriv->ddxMajor != 1 ||
-        sPriv->ddxMinor != 0 ||
-        sPriv->ddxPatch < 0) {
+        sPriv->ddxMinor < 0) {
         char msg[1000];
         sprintf(msg, "gamma DRI driver expected DDX driver version 1.0.x but got version %d.%d.%d", sPriv->ddxMajor, sPriv->ddxMinor, sPriv->ddxPatch);
         __driMesaMessage(msg);
@@ -80,13 +79,13 @@ GLboolean XMesaInitDriver(__DRIscreenPrivate *sPriv)
 
     /* Check that the DRM driver version is compatible */
     if (sPriv->drmMajor != 1 ||
-        sPriv->drmMinor != 0 ||
-        sPriv->drmPatch < 0) {
+        sPriv->drmMinor < 0) {
         char msg[1000];
         sprintf(msg, "gamm DRI driver expected DRM driver version 1.0.x but got version %d.%d.%d", sPriv->drmMajor, sPriv->drmMinor, sPriv->drmPatch);
         __driMesaMessage(msg);
         return GL_FALSE;
     }
+#endif
 
     /* Allocate the private area */
     gsp = (gammaScreenPrivate *)Xmalloc(sizeof(gammaScreenPrivate));
@@ -148,15 +147,23 @@ GLboolean XMesaCreateContext( Display *dpy,
     gammaScreenPrivate *gPriv = (gammaScreenPrivate *)driScrnPriv->private;
     GLINTDRIPtr         gDRIPriv = (GLINTDRIPtr)driScrnPriv->pDevPriv;
 
-    if (!Dispatch) {
-       GLuint size = _glapi_get_dispatch_table_size() * sizeof(GLvoid *);
-       Dispatch = (struct _glapi_table *) malloc(size);
-       _gamma_init_dispatch(Dispatch);
-    }
-
     cPriv = (gammaContextPrivate *)Xmalloc(sizeof(gammaContextPrivate));
     if (!cPriv) {
 	return GL_FALSE;
+    }
+
+    if (!cPriv->Exec) {
+       GLuint size = _glapi_get_dispatch_table_size() * sizeof(GLvoid *);
+       cPriv->Exec = (struct _glapi_table *) malloc(size);
+       _gamma_init_exec(cPriv->Exec);
+    }
+
+    cPriv->API = cPriv->Exec;
+
+    if (!cPriv->Save) {
+       GLuint size = _glapi_get_dispatch_table_size() * sizeof(GLvoid *);
+       cPriv->Save = (struct _glapi_table *) malloc(size);
+       _gamma_init_save(cPriv->Save);
     }
 
     cPriv->hHWContext = driContextPriv->hHWContext;
@@ -169,6 +176,54 @@ GLboolean XMesaCreateContext( Display *dpy,
 		  1, &cPriv->WCbufIndex, &cPriv->WCbufSize,
 		  &cPriv->WCbuf, &cPriv->WCbufCount, gPriv);
 #endif
+
+    gamma_init_lists();
+
+    /* Display List stuff */
+    cPriv->DisplayList = _mesa_NewHashTable();
+    cPriv->List.ListBase = 0;
+    cPriv->CallDepth = 0;
+    cPriv->ExecuteFlag = GL_TRUE;
+    cPriv->CompileFlag = GL_FALSE;
+    cPriv->CurrentListPtr = NULL;
+    cPriv->CurrentBlock = NULL;
+    cPriv->CurrentListNum = 0;
+    cPriv->CurrentPos = 0;
+
+    /* Vertex arrays */
+    cPriv->Array.VertexSize = 4;
+    cPriv->Array.VertexType = GL_FLOAT;
+    cPriv->Array.VertexStride = 0;
+    cPriv->Array.VertexStrideB = 0;
+    cPriv->Array.VertexPtr = NULL;
+    cPriv->Array.VertexEnabled = GL_FALSE;
+    cPriv->Array.NormalType = GL_FLOAT;
+    cPriv->Array.NormalStride = 0;
+    cPriv->Array.NormalStrideB = 0;
+    cPriv->Array.NormalPtr = NULL;
+    cPriv->Array.NormalEnabled = GL_FALSE;
+    cPriv->Array.ColorSize = 4;
+    cPriv->Array.ColorType = GL_FLOAT;
+    cPriv->Array.ColorStride = 0;
+    cPriv->Array.ColorStrideB = 0;
+    cPriv->Array.ColorPtr = NULL;
+    cPriv->Array.ColorEnabled = GL_FALSE;
+    cPriv->Array.IndexType = GL_FLOAT;
+    cPriv->Array.IndexStride = 0;
+    cPriv->Array.IndexStrideB = 0;
+    cPriv->Array.IndexPtr = NULL;
+    cPriv->Array.IndexEnabled = GL_FALSE;
+    cPriv->Array.EdgeFlagStride = 0;
+    cPriv->Array.EdgeFlagStrideB = 0;
+    cPriv->Array.EdgeFlagPtr = NULL;
+    cPriv->Array.EdgeFlagEnabled = GL_FALSE;
+
+    cPriv->Unpack.Alignment = 4;
+    cPriv->Unpack.RowLength = 0;
+    cPriv->Unpack.SkipPixels = 0;
+    cPriv->Unpack.SkipRows = 0;
+    cPriv->Unpack.SwapBytes = GL_FALSE;
+    cPriv->Unpack.LsbFirst = GL_FALSE;
 
     cPriv->ClearColor[0] = 0.0;
     cPriv->ClearColor[1] = 0.0;
@@ -208,7 +263,7 @@ GLboolean XMesaCreateContext( Display *dpy,
 			 FBWindowOriginBot |
 			 gDRIPriv->pprod);
  
-    if (gDRIPriv->numMXDevices == 2) {
+    if (gDRIPriv->numMultiDevices == 2) {
 	cPriv->LBReadMode |= LBScanLineInt2;
 	cPriv->FBReadMode |= FBScanLineInt2;
     	cPriv->FBWindowBase =driScrnPriv->fbWidth*(driScrnPriv->fbHeight/2 - 1);
@@ -354,13 +409,31 @@ GLboolean XMesaCreateContext( Display *dpy,
 
     cPriv->gammaScrnPriv = gPriv;
 
-    cPriv->LightingMode = LightingModeDisable;
+    cPriv->LightingMode = LightingModeDisable | LightingModeSpecularEnable;
     cPriv->Light0Mode = LNM_Off;
     cPriv->Light1Mode = LNM_Off;
+    cPriv->Light2Mode = LNM_Off;
+    cPriv->Light3Mode = LNM_Off;
+    cPriv->Light4Mode = LNM_Off;
+    cPriv->Light5Mode = LNM_Off;
+    cPriv->Light6Mode = LNM_Off;
+    cPriv->Light7Mode = LNM_Off;
+    cPriv->Light8Mode = LNM_Off;
+    cPriv->Light9Mode = LNM_Off;
+    cPriv->Light10Mode = LNM_Off;
+    cPriv->Light11Mode = LNM_Off;
+    cPriv->Light12Mode = LNM_Off;
+    cPriv->Light13Mode = LNM_Off;
+    cPriv->Light14Mode = LNM_Off;
+    cPriv->Light15Mode = LNM_Off;
+
+    cPriv->LogicalOpMode = LogicalOpModeDisable;
 
     cPriv->MaterialMode = MaterialModeDisable;
 
     cPriv->ScissorMode = UserScissorDisable | ScreenScissorDisable;
+
+    cPriv->TransformMode = XM_UseModelViewProjMatrix;
 
     driContextPriv->driverPrivate = cPriv;
 
@@ -511,7 +584,7 @@ GLboolean XMesaMakeCurrent(__DRIcontextPrivate *driContextPriv,
 	CHECK_DMA_BUFFER(gCC, gCCPriv, 1);
 	WRITE(gCCPriv->buf, GLINTWindow, gCCPriv->Window);
 
-        _glapi_set_dispatch(Dispatch);
+        _glapi_set_dispatch(gCCPriv->API);
 
 	_gamma_Viewport(0, 0, driDrawPriv->w, driDrawPriv->h);
     } else {

@@ -1,4 +1,4 @@
-/* $TOG: colorlist.c /main/7 1998/02/06 15:11:36 kaleb $ */
+/* $Xorg: colorlist.c,v 1.3 2000/08/17 19:45:25 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/XIE/colorlist.c,v 1.3 1999/06/13 16:18:08 dawes Exp $ */
+/* $XFree86: xc/lib/XIE/colorlist.c,v 1.5 2001/01/17 19:42:21 dawes Exp $ */
 
 #include "XIElibint.h"
 

@@ -1,4 +1,4 @@
-/* $TOG: TMgrab.c /main/13 1998/02/06 13:26:51 kaleb $ */
+/* $Xorg: TMgrab.c,v 1.3 2000/08/17 19:46:18 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tex.c,v 1.5 2000/11/08 05:02:51 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tex.c,v 1.9 2001/04/10 16:07:52 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -28,8 +28,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
+ *   Michel Dänzer <michdaen@iiic.ethz.ch>
  *
  */
 
@@ -44,14 +45,77 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "enums.h"
 #include "mem.h"
 
+#define TEX_0	1
+#define TEX_1	2
 
-static void r128SetTexWrap(r128TexObjPtr t, GLenum srwap, GLenum twrap);
-static void r128SetTexFilter(r128TexObjPtr t, GLenum minf, GLenum magf);
-static void r128SetTexBorderColor(r128TexObjPtr t, GLubyte c[4]);
 
-/* Allocate and initialize hardware state associated with texture `t' */
-/* NOTE: This function is only called while holding the hardware lock */
-static r128TexObjPtr r128CreateTexObj( r128ContextPtr r128ctx,
+static void r128SetTexWrap( r128TexObjPtr t, GLenum swrap, GLenum twrap )
+{
+   t->setup.tex_cntl &= ~(R128_TEX_CLAMP_S_MASK | R128_TEX_CLAMP_T_MASK);
+
+   switch ( swrap ) {
+   case GL_CLAMP:
+      t->setup.tex_cntl |= R128_TEX_CLAMP_S_CLAMP;
+      break;
+   case GL_REPEAT:
+      t->setup.tex_cntl |= R128_TEX_CLAMP_S_WRAP;
+      break;
+   }
+
+   switch ( twrap ) {
+   case GL_CLAMP:
+      t->setup.tex_cntl |= R128_TEX_CLAMP_T_CLAMP;
+      break;
+   case GL_REPEAT:
+      t->setup.tex_cntl |= R128_TEX_CLAMP_T_WRAP;
+      break;
+   }
+}
+
+static void r128SetTexFilter( r128TexObjPtr t, GLenum minf, GLenum magf )
+{
+   t->setup.tex_cntl &= ~(R128_MIN_BLEND_MASK | R128_MAG_BLEND_MASK);
+
+   switch ( minf ) {
+   case GL_NEAREST:
+      t->setup.tex_cntl |= R128_MIN_BLEND_NEAREST;
+      break;
+   case GL_LINEAR:
+      t->setup.tex_cntl |= R128_MIN_BLEND_LINEAR;
+      break;
+   case GL_NEAREST_MIPMAP_NEAREST:
+      t->setup.tex_cntl |= R128_MIN_BLEND_MIPNEAREST;
+      break;
+   case GL_LINEAR_MIPMAP_NEAREST:
+      t->setup.tex_cntl |= R128_MIN_BLEND_LINEARMIPNEAREST;
+      break;
+   case GL_NEAREST_MIPMAP_LINEAR:
+      t->setup.tex_cntl |= R128_MIN_BLEND_MIPLINEAR;
+      break;
+   case GL_LINEAR_MIPMAP_LINEAR:
+      t->setup.tex_cntl |= R128_MIN_BLEND_LINEARMIPLINEAR;
+      break;
+   }
+
+   switch ( magf ) {
+   case GL_NEAREST:
+      t->setup.tex_cntl |= R128_MAG_BLEND_NEAREST;
+      break;
+   case GL_LINEAR:
+      t->setup.tex_cntl |= R128_MAG_BLEND_LINEAR;
+      break;
+   }
+}
+
+static void r128SetTexBorderColor( r128TexObjPtr t, GLubyte c[4] )
+{
+   t->setup.tex_border_color = r128PackColor( 4, c[0], c[1], c[2], c[3] );
+}
+
+
+/* Allocate and initialize hardware state associated with texture `t'.
+ */
+static r128TexObjPtr r128CreateTexObj( r128ContextPtr rmesa,
 				       struct gl_texture_object *tObj )
 {
    r128TexObjPtr t;
@@ -64,7 +128,7 @@ static r128TexObjPtr r128CreateTexObj( r128ContextPtr r128ctx,
    if ( !image )
       return NULL;
 
-   t = (r128TexObjPtr)CALLOC( sizeof(*t) );
+   t = (r128TexObjPtr) CALLOC( sizeof(*t) );
    if ( !t )
       return NULL;
 
@@ -75,8 +139,7 @@ static r128TexObjPtr r128CreateTexObj( r128ContextPtr r128ctx,
    case GL_RGBA:
    case GL_ALPHA:
    case GL_LUMINANCE_ALPHA:
-   case GL_INTENSITY:
-      if ( r128ctx->r128Screen->bpp == 32 ) {
+      if ( rmesa->r128Screen->cpp == 4 ) {
 	 t->texelBytes = 4;
 	 t->textureFormat = R128_DATATYPE_ARGB8888;
       } else {
@@ -86,7 +149,7 @@ static r128TexObjPtr r128CreateTexObj( r128ContextPtr r128ctx,
       break;
 
    case GL_RGB:
-      if ( r128ctx->r128Screen->bpp == 32 ) {
+      if ( rmesa->r128Screen->cpp == 4 ) {
 	 t->texelBytes = 4;
 	 t->textureFormat = R128_DATATYPE_ARGB8888;
       } else {
@@ -96,14 +159,9 @@ static r128TexObjPtr r128CreateTexObj( r128ContextPtr r128ctx,
       break;
 
    case GL_LUMINANCE:
-      if ( r128ctx->r128Screen->bpp == 32 ) {
-	 t->texelBytes = 4;
-	 t->textureFormat = R128_DATATYPE_ARGB8888;
-      } else {
-	 t->texelBytes = 2;
-	 /* Use this to get true greys */
-	 t->textureFormat = R128_DATATYPE_ARGB1555;
-      }
+   case GL_INTENSITY:
+      t->texelBytes = 1;
+      t->textureFormat = R128_DATATYPE_RGB8;
       break;
 
    case GL_COLOR_INDEX:
@@ -176,7 +234,7 @@ static r128TexObjPtr r128CreateTexObj( r128ContextPtr r128ctx,
 			      (log2Height  << R128_TEX_HEIGHT_SHIFT) |
 			      (log2MinSize << R128_TEX_MIN_SIZE_SHIFT));
 
-   for ( i = 0 ; i < R128_TEX_MAXLEVELS ; i++ ) {
+   for ( i = 0 ; i < R128_MAX_TEXTURE_LEVELS ; i++ ) {
       t->setup.tex_offset[i]  = 0x00000000;
    }
    t->setup.tex_border_color = 0x00000000;
@@ -196,12 +254,13 @@ static r128TexObjPtr r128CreateTexObj( r128ContextPtr r128ctx,
    return t;
 }
 
-/* Destroy hardware state associated with texture `t' */
-void r128DestroyTexObj( r128ContextPtr r128ctx, r128TexObjPtr t )
+/* Destroy hardware state associated with texture `t'.
+ */
+void r128DestroyTexObj( r128ContextPtr rmesa, r128TexObjPtr t )
 {
 #if ENABLE_PERF_BOXES
    /* Bump the performace counter */
-   r128ctx->c_textureSwaps++;
+   rmesa->c_textureSwaps++;
 #endif
    if ( !t ) return;
 
@@ -212,19 +271,21 @@ void r128DestroyTexObj( r128ContextPtr r128ctx, r128TexObjPtr t )
 
    if ( t->tObj )
       t->tObj->DriverData = NULL;
-   if ( t->bound )
-      r128ctx->CurrentTexObj[t->bound-1] = NULL;
+
+   if ( t->bound & TEX_0 ) rmesa->CurrentTexObj[0] = NULL;
+   if ( t->bound & TEX_1 ) rmesa->CurrentTexObj[1] = NULL;
 
    remove_from_list( t );
    FREE( t );
 }
 
-/* Keep track of swapped out texture objects */
-static void r128SwapOutTexObj( r128ContextPtr r128ctx, r128TexObjPtr t )
+/* Keep track of swapped out texture objects.
+ */
+static void r128SwapOutTexObj( r128ContextPtr rmesa, r128TexObjPtr t )
 {
 #if ENABLE_PERF_BOXES
    /* Bump the performace counter */
-   r128ctx->c_textureSwaps++;
+   rmesa->c_textureSwaps++;
 #endif
    if ( t->memBlock ) {
       mmFreeMem( t->memBlock );
@@ -232,18 +293,19 @@ static void r128SwapOutTexObj( r128ContextPtr r128ctx, r128TexObjPtr t )
    }
 
    t->dirty_images = ~0;
-   move_to_tail( &r128ctx->SwappedOut, t );
+   move_to_tail( &rmesa->SwappedOut, t );
 }
 
-/* Print out debugging information about texture LRU */
-void r128PrintLocalLRU( r128ContextPtr r128ctx, int heap )
+/* Print out debugging information about texture LRU.
+ */
+void r128PrintLocalLRU( r128ContextPtr rmesa, int heap )
 {
    r128TexObjPtr t;
-   int sz = 1 << (r128ctx->r128Screen->log2TexGran[heap]);
+   int sz = 1 << (rmesa->r128Screen->logTexGranularity[heap]);
 
    fprintf( stderr, "\nLocal LRU, heap %d:\n", heap );
 
-   foreach( t, &r128ctx->TexObjList[heap] ) {
+   foreach ( t, &rmesa->TexObjList[heap] ) {
       if ( !t->tObj ) {
 	 fprintf( stderr, "Placeholder %d at 0x%x sz 0x%x\n",
 		  t->memBlock->ofs / sz,
@@ -260,9 +322,9 @@ void r128PrintLocalLRU( r128ContextPtr r128ctx, int heap )
    fprintf( stderr, "\n" );
 }
 
-void r128PrintGlobalLRU( r128ContextPtr r128ctx, int heap )
+void r128PrintGlobalLRU( r128ContextPtr rmesa, int heap )
 {
-   r128_tex_region_t *list = r128ctx->sarea->texList[heap];
+   r128_tex_region_t *list = rmesa->sarea->texList[heap];
    int i, j;
 
    fprintf( stderr, "\nGlobal LRU, heap %d list %p:\n", heap, list );
@@ -285,12 +347,12 @@ void r128PrintGlobalLRU( r128ContextPtr r128ctx, int heap )
    fprintf( stderr, "\n" );
 }
 
-/* Reset the global texture LRU */
-/* NOTE: This function is only called while holding the hardware lock */
-static void r128ResetGlobalLRU( r128ContextPtr r128ctx, int heap )
+/* Reset the global texture LRU.
+ */
+static void r128ResetGlobalLRU( r128ContextPtr rmesa, int heap )
 {
-   r128_tex_region_t *list = r128ctx->sarea->texList[heap];
-   int sz = 1 << r128ctx->r128Screen->log2TexGran[heap];
+   r128_tex_region_t *list = rmesa->sarea->texList[heap];
+   int sz = 1 << rmesa->r128Screen->logTexGranularity[heap];
    int i;
 
    /* (Re)initialize the global circular LRU list.  The last element in
@@ -298,7 +360,7 @@ static void r128ResetGlobalLRU( r128ContextPtr r128ctx, int heap )
     * the end of the array allows it to be addressed rationally when
     * looking up objects at a particular location in texture memory.
     */
-   for ( i = 0 ; (i+1) * sz <= r128ctx->r128Screen->texSize[heap] ; i++ ) {
+   for ( i = 0 ; (i+1) * sz <= rmesa->r128Screen->texSize[heap] ; i++ ) {
       list[i].prev = i-1;
       list[i].next = i+1;
       list[i].age = 0;
@@ -310,21 +372,21 @@ static void r128ResetGlobalLRU( r128ContextPtr r128ctx, int heap )
    list[i].next = R128_NR_TEX_REGIONS;
    list[R128_NR_TEX_REGIONS].prev = i;
    list[R128_NR_TEX_REGIONS].next = 0;
-   r128ctx->sarea->texAge[heap] = 0;
+   rmesa->sarea->texAge[heap] = 0;
 }
 
-/* Update the local and glock texture LRUs */
-/* NOTE: This function is only called while holding the hardware lock */
-static void r128UpdateTexLRU( r128ContextPtr r128ctx, r128TexObjPtr t )
+/* Update the local and glock texture LRUs.
+ */
+static void r128UpdateTexLRU( r128ContextPtr rmesa, r128TexObjPtr t )
 {
    int heap = t->heap;
-   r128_tex_region_t *list = r128ctx->sarea->texList[heap];
-   int log2sz = r128ctx->r128Screen->log2TexGran[heap];
+   r128_tex_region_t *list = rmesa->sarea->texList[heap];
+   int log2sz = rmesa->r128Screen->logTexGranularity[heap];
    int start = t->memBlock->ofs >> log2sz;
    int end = (t->memBlock->ofs + t->memBlock->size - 1) >> log2sz;
    int i;
 
-   r128ctx->lastTexAge[heap] = ++r128ctx->sarea->texAge[heap];
+   rmesa->lastTexAge[heap] = ++rmesa->sarea->texAge[heap];
 
    if ( !t->memBlock ) {
       fprintf( stderr, "no memblock\n\n" );
@@ -332,12 +394,12 @@ static void r128UpdateTexLRU( r128ContextPtr r128ctx, r128TexObjPtr t )
    }
 
    /* Update our local LRU */
-   move_to_head( &r128ctx->TexObjList[heap], t );
+   move_to_head( &rmesa->TexObjList[heap], t );
 
    /* Update the global LRU */
    for ( i = start ; i <= end ; i++ ) {
       list[i].in_use = 1;
-      list[i].age = r128ctx->lastTexAge[heap];
+      list[i].age = rmesa->lastTexAge[heap];
 
       /* remove_from_list(i) */
       list[(CARD32)list[i].next].prev = list[i].prev;
@@ -351,23 +413,23 @@ static void r128UpdateTexLRU( r128ContextPtr r128ctx, r128TexObjPtr t )
    }
 
    if ( 0 ) {
-      r128PrintGlobalLRU( r128ctx, t->heap );
-      r128PrintLocalLRU( r128ctx, t->heap );
+      r128PrintGlobalLRU( rmesa, t->heap );
+      r128PrintLocalLRU( rmesa, t->heap );
    }
 }
 
 /* Update our notion of what textures have been changed since we last
-   held the lock.  This pertains to both our local textures and the
-   textures belonging to other clients.  Keep track of other client's
-   textures by pushing a placeholder texture onto the LRU list -- these
-   are denoted by (tObj == NULL). */
-/* NOTE: This function is only called while holding the hardware lock */
-static void r128TexturesGone( r128ContextPtr r128ctx, int heap,
+ * held the lock.  This pertains to both our local textures and the
+ * textures belonging to other clients.  Keep track of other client's
+ * textures by pushing a placeholder texture onto the LRU list -- these
+ * are denoted by (tObj == NULL).
+ */
+static void r128TexturesGone( r128ContextPtr rmesa, int heap,
 			      int offset, int size, int in_use )
 {
    r128TexObjPtr t, tmp;
 
-   foreach_s ( t, tmp, &r128ctx->TexObjList[heap] ) {
+   foreach_s ( t, tmp, &rmesa->TexObjList[heap] ) {
       if ( t->memBlock->ofs >= offset + size ||
 	   t->memBlock->ofs + t->memBlock->size <= offset )
 	 continue;
@@ -376,37 +438,38 @@ static void r128TexturesGone( r128ContextPtr r128ctx, int heap,
        * bound objects, however.
        */
       if ( t->bound ) {
-	 r128SwapOutTexObj( r128ctx, t );
+	 r128SwapOutTexObj( rmesa, t );
       } else {
-	 r128DestroyTexObj( r128ctx, t );
+	 r128DestroyTexObj( rmesa, t );
       }
    }
 
    if ( in_use ) {
       t = (r128TexObjPtr) CALLOC( sizeof(*t) );
-      if (!t) return;
+      if ( !t ) return;
 
-      t->memBlock = mmAllocMem( r128ctx->texHeap[heap], size, 0, offset );
+      t->memBlock = mmAllocMem( rmesa->texHeap[heap], size, 0, offset );
       if ( !t->memBlock ) {
 	 fprintf( stderr, "Couldn't alloc placeholder sz %x ofs %x\n",
 		  (int)size, (int)offset );
-	 mmDumpMemInfo( r128ctx->texHeap[heap] );
+	 mmDumpMemInfo( rmesa->texHeap[heap] );
 	 return;
       }
-      insert_at_head( &r128ctx->TexObjList[heap], t );
+      insert_at_head( &rmesa->TexObjList[heap], t );
    }
 }
 
 /* Update our client's shared texture state.  If another client has
-   modified a region in which we have textures, then we need to figure
-   out which of our textures has been removed, and update our global
-   LRU. */
-void r128AgeTextures( r128ContextPtr r128ctx, int heap )
+ * modified a region in which we have textures, then we need to figure
+ * out which of our textures has been removed, and update our global
+ * LRU.
+ */
+void r128AgeTextures( r128ContextPtr rmesa, int heap )
 {
-   R128SAREAPriv *sarea = r128ctx->sarea;
+   R128SAREAPrivPtr sarea = rmesa->sarea;
 
-   if ( sarea->texAge[heap] != r128ctx->lastTexAge[heap] ) {
-      int sz = 1 << r128ctx->r128Screen->log2TexGran[heap];
+   if ( sarea->texAge[heap] != rmesa->lastTexAge[heap] ) {
+      int sz = 1 << rmesa->r128Screen->logTexGranularity[heap];
       int nr = 0;
       int idx;
 
@@ -418,15 +481,16 @@ void r128AgeTextures( r128ContextPtr r128ctx, int heap )
 	    idx = sarea->texList[heap][idx].prev, nr++ )
       {
 	 /* If switching texturing schemes, then the SAREA might not
-	    have been properly cleared, so we need to reset the
-	    global texture LRU. */
-	 if ( idx * sz > r128ctx->r128Screen->texSize[heap] ) {
+	  * have been properly cleared, so we need to reset the
+	  * global texture LRU.
+	  */
+	 if ( idx * sz > rmesa->r128Screen->texSize[heap] ) {
 	    nr = R128_NR_TEX_REGIONS;
 	    break;
 	 }
 
-	 if ( sarea->texList[heap][idx].age > r128ctx->lastTexAge[heap] ) {
-	    r128TexturesGone( r128ctx, heap, idx * sz, sz,
+	 if ( sarea->texList[heap][idx].age > rmesa->lastTexAge[heap] ) {
+	    r128TexturesGone( rmesa, heap, idx * sz, sz,
 			      sarea->texList[heap][idx].in_use );
 	 }
       }
@@ -436,24 +500,30 @@ void r128AgeTextures( r128ContextPtr r128ctx, int heap )
        * global texture LRU.
        */
       if ( nr == R128_NR_TEX_REGIONS ) {
-	 r128TexturesGone( r128ctx, heap, 0,
-			   r128ctx->r128Screen->texSize[heap], 0 );
-	 r128ResetGlobalLRU( r128ctx, heap );
+	 r128TexturesGone( rmesa, heap, 0,
+			   rmesa->r128Screen->texSize[heap], 0 );
+	 r128ResetGlobalLRU( rmesa, heap );
       }
 
       if ( 0 ) {
-	 r128PrintGlobalLRU( r128ctx, heap );
-	 r128PrintLocalLRU( r128ctx, heap );
+	 r128PrintGlobalLRU( rmesa, heap );
+	 r128PrintLocalLRU( rmesa, heap );
       }
 
-      r128ctx->dirty |= (R128_UPLOAD_CONTEXT |
-			 R128_UPLOAD_TEX0IMAGES |
-			 R128_UPLOAD_TEX1IMAGES);
-      r128ctx->lastTexAge[heap] = sarea->texAge[heap];
+      rmesa->dirty |= (R128_UPLOAD_CONTEXT |
+		       R128_UPLOAD_TEX0IMAGES |
+		       R128_UPLOAD_TEX1IMAGES);
+      rmesa->lastTexAge[heap] = sarea->texAge[heap];
    }
 }
 
-/* Convert a block of Mesa-formatted texture to an 8bpp hardware format */
+
+/* ================================================================
+ * Texture image conversions
+ */
+
+/* Convert a block of Mesa-formatted texture to an 8bpp hardware format.
+ */
 static void r128ConvertTexture8bpp( CARD32 *dst,
 				    struct gl_texture_image *image,
 				    int x, int y, int width, int height,
@@ -463,20 +533,6 @@ static void r128ConvertTexture8bpp( CARD32 *dst,
    int i, j;
 
    switch ( image->Format ) {
-   case GL_RGB:
-      for ( i = 0 ; i < height ; i++ ) {
-	 src = (CARD8 *)image->Data + ((y + i) * pitch + x) * 3;
-	 for ( j = width >> 2 ; j ; j-- ) {
-	    *dst++= ((R128PACKCOLOR332( src[0], src[1], src[2] )) |
-		     (R128PACKCOLOR332( src[3], src[4], src[5] ) << 8) |
-		     (R128PACKCOLOR332( src[6], src[7], src[8] ) << 16) |
-		     (R128PACKCOLOR332( src[9], src[10], src[11] ) << 24));
-	    src += 12;
-	 }
-      }
-      break;
-
-   case GL_ALPHA:
    case GL_LUMINANCE:
    case GL_INTENSITY:
    case GL_COLOR_INDEX:
@@ -496,7 +552,8 @@ static void r128ConvertTexture8bpp( CARD32 *dst,
    }
 }
 
-/* Convert a block of Mesa-formatted texture to a 16bpp hardware format */
+/* Convert a block of Mesa-formatted texture to a 16bpp hardware format.
+ */
 static void r128ConvertTexture16bpp( CARD32 *dst,
 				     struct gl_texture_image *image,
 				     int x, int y, int width, int height,
@@ -512,24 +569,24 @@ static void r128ConvertTexture16bpp( CARD32 *dst,
 
 
    switch ( image->Format ) {
-   case GL_RGB:
-      for ( i = 0 ; i < height ; i++ ) {
-	 src = (CARD8 *)image->Data + ((y + i) * pitch + x) * 3;
-	 for ( j = width >> 1 ; j ; j-- ) {
-	    *dst++ = ((R128PACKCOLOR565( src[0], src[1], src[2] )) |
-		      (R128PACKCOLOR565( src[3], src[4], src[5] ) << 16));
-	    src += 6;
-	 }
-      }
-      break;
-
    case GL_RGBA:
       for ( i = 0 ; i < height ; i++ ) {
 	 src = (CARD8 *)image->Data + ((y + i) * pitch + x) * 4;
 	 for ( j = width >> 1 ; j ; j-- ) {
-	    *dst++ = ((R128PACKCOLOR4444( src[0], src[1], src[2], src[3] )) |
-		      (R128PACKCOLOR4444( src[4], src[5], src[6], src[7] ) << 16));
+	    *dst++ = R128PACKCOLORS4444( src[0], src[1], src[2], src[3],
+					 src[4], src[5], src[6], src[7] );
 	    src += 8;
+	 }
+      }
+      break;
+
+   case GL_RGB:
+      for ( i = 0 ; i < height ; i++ ) {
+	 src = (CARD8 *)image->Data + ((y + i) * pitch + x) * 3;
+	 for ( j = width >> 1 ; j ; j-- ) {
+	    *dst++ = R128PACKCOLORS565( src[0], src[1], src[2],
+					src[3], src[4], src[5] );
+	    src += 6;
 	 }
       }
       break;
@@ -538,19 +595,8 @@ static void r128ConvertTexture16bpp( CARD32 *dst,
       for ( i = 0 ; i < height ; i++ ) {
 	 src = (CARD8 *)image->Data + ((y + i) * pitch + x);
 	 for ( j = width >> 1 ; j ; j-- ) {
-	    *dst++ = ((R128PACKCOLOR4444( 0xff, 0xff, 0xff, src[0] )) |
-		      (R128PACKCOLOR4444( 0xff, 0xff, 0xff, src[1] ) << 16));
-	    src += 2;
-	 }
-      }
-      break;
-
-   case GL_LUMINANCE:
-      for ( i = 0 ; i < height ; i++ ) {
-	 src = (CARD8 *)image->Data + ((y + i) * pitch + x);
-	 for ( j = width >> 1 ; j ; j-- ) {
-	    *dst++ = ((R128PACKCOLOR1555( src[0], src[0], src[0], 0xff )) |
-		      (R128PACKCOLOR1555( src[1], src[1], src[1], 0xff ) << 16));
+	    *dst++ = R128PACKCOLORS4444( 0xff, 0xff, 0xff, src[0],
+					 0xff, 0xff, 0xff, src[1] );
 	    src += 2;
 	 }
       }
@@ -560,20 +606,9 @@ static void r128ConvertTexture16bpp( CARD32 *dst,
       for ( i = 0 ; i < height ; i++ ) {
 	 src = (CARD8 *)image->Data + ((y + i) * pitch + x) * 2;
 	 for ( j = width >> 1 ; j ; j-- ) {
-	    *dst++ = ((R128PACKCOLOR4444( src[0], src[0], src[0], src[1] )) |
-		      (R128PACKCOLOR4444( src[2], src[2], src[2], src[3] ) << 16));
+	    *dst++ = R128PACKCOLORS4444( src[0], src[0], src[0], src[1],
+					 src[2], src[2], src[2], src[3] );
 	    src += 4;
-	 }
-      }
-      break;
-
-   case GL_INTENSITY:
-      for ( i = 0 ; i < height ; i++ ) {
-	 src = (CARD8 *)image->Data + ((y + i) * pitch + x);
-	 for ( j = width >> 1 ; j ; j-- ) {
-	    *dst++ = ((R128PACKCOLOR4444( src[0], src[0], src[0], src[0] )) |
-		      (R128PACKCOLOR4444( src[1], src[1], src[1], src[1] ) << 16));
-	    src += 2;
 	 }
       }
       break;
@@ -585,7 +620,8 @@ static void r128ConvertTexture16bpp( CARD32 *dst,
    }
 }
 
-/* Convert a block of Mesa-formatted texture to a 32bpp hardware format */
+/* Convert a block of Mesa-formatted texture to a 32bpp hardware format.
+ */
 static void r128ConvertTexture32bpp( CARD32 *dst,
 				     struct gl_texture_image *image,
 				     int x, int y, int width, int height,
@@ -595,16 +631,6 @@ static void r128ConvertTexture32bpp( CARD32 *dst,
    int i, j;
 
    switch ( image->Format ) {
-   case GL_RGB:
-      for ( i = 0 ; i < height ; i++ ) {
-	 src = (CARD8 *)image->Data + ((y + i) * pitch + x) * 3;
-	 for ( j = width ; j ; j-- ) {
-	    *dst++ = R128PACKCOLOR8888( src[0], src[1], src[2], 0xff );
-	    src += 3;
-	 }
-      }
-      break;
-
    case GL_RGBA:
       for ( i = 0 ; i < height ; i++ ) {
 	 src = (CARD8 *)image->Data + ((y + i) * pitch + x) * 4;
@@ -615,21 +641,21 @@ static void r128ConvertTexture32bpp( CARD32 *dst,
       }
       break;
 
+   case GL_RGB:
+      for ( i = 0 ; i < height ; i++ ) {
+	 src = (CARD8 *)image->Data + ((y + i) * pitch + x) * 3;
+	 for ( j = width ; j ; j-- ) {
+	    *dst++ = R128PACKCOLOR8888( src[0], src[1], src[2], 0xff );
+	    src += 3;
+	 }
+      }
+      break;
+
    case GL_ALPHA:
       for ( i = 0 ; i < height ; i++ ) {
 	 src = (CARD8 *)image->Data + ((y + i) * pitch + x);
 	 for ( j = width ; j ; j-- ) {
 	    *dst++ = R128PACKCOLOR8888( 0xff, 0xff, 0xff, src[0] );
-	    src += 1;
-	 }
-      }
-      break;
-
-   case GL_LUMINANCE:
-      for ( i = 0 ; i < height ; i++ ) {
-	 src = (CARD8 *)image->Data + ((y + i) * pitch + x);
-	 for ( j = width ; j ; j-- ) {
-	    *dst++ = R128PACKCOLOR8888( src[0], src[0], src[0], 0xff );
 	    src += 1;
 	 }
       }
@@ -645,16 +671,6 @@ static void r128ConvertTexture32bpp( CARD32 *dst,
       }
       break;
 
-   case GL_INTENSITY:
-      for ( i = 0 ; i < height ; i++ ) {
-	 src = (CARD8 *)image->Data + ((y + i) * pitch + x);
-	 for ( j = width ; j ; j-- ) {
-	    *dst++ = R128PACKCOLOR8888( src[0], src[0], src[0], src[0] );
-	    src += 1;
-	 }
-      }
-      break;
-
    default:
       fprintf( stderr, "%s: unsupported format 0x%x\n",
 	       __FUNCTION__, image->Format );
@@ -663,9 +679,9 @@ static void r128ConvertTexture32bpp( CARD32 *dst,
 }
 
 /* Upload the texture image associated with texture `t' at level `level'
-   at the address relative to `start'. */
-/* NOTE: This function is only called while holding the hardware lock */
-static void r128UploadSubImage( r128ContextPtr r128ctx,
+ * at the address relative to `start'.
+ */
+static void r128UploadSubImage( r128ContextPtr rmesa,
 				r128TexObjPtr t, int level,
 				int x, int y, int width, int height )
 {
@@ -680,7 +696,7 @@ static void r128UploadSubImage( r128ContextPtr r128ctx,
    int i;
 
    /* Ensure we have a valid texture to upload */
-   if ( ( level < 0 ) || ( level > R128_TEX_MAXLEVELS ) )
+   if ( ( level < 0 ) || ( level > R128_MAX_TEXTURE_LEVELS ) )
       return;
 
    image = t->tObj->Image[level];
@@ -694,7 +710,7 @@ static void r128UploadSubImage( r128ContextPtr r128ctx,
    }
 
 #if 1
-   /* FIXME: The subimage index calcs are wrong - who changed them? */
+   /* FIXME: The subimage index calcs are wrong... */
    x = 0;
    y = 0;
    width = image->Width;
@@ -768,23 +784,17 @@ static void r128UploadSubImage( r128ContextPtr r128ctx,
    dwords = width * height / texelsPerDword;
    offset = t->bufAddr + t->image[level].offset;
 
-   /* Fix offset for AGP textures */
-   if ( t->heap == R128_AGP_TEX_HEAP ) {
-      offset += R128_AGP_TEX_OFFSET + r128ctx->r128Screen->agpTexOffset;
-   }
-
 #if ENABLE_PERF_BOXES
    /* Bump the performace counter */
-   r128ctx->c_textureBytes += (dwords << 2);
+   rmesa->c_textureBytes += (dwords << 2);
 #endif
-
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "r128UploadSubImage: %d,%d of %d,%d at %d,%d\n",
 	       width, height, image->Width, image->Height, x, y );
       fprintf( stderr, "          blit ofs: 0x%07x pitch: 0x%x dwords: %d "
 	       "level: %d format: %x\n",
-	       (int)offset, pitch, dwords, level, format );
+	       (GLuint)offset, (GLuint)pitch, dwords, level, format );
    }
 
    /* Subdivide the texture if required */
@@ -803,11 +813,11 @@ static void r128UploadSubImage( r128ContextPtr r128ctx,
 
       if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
 	 fprintf( stderr, "          blitting: %d,%d at %d,%d - %d dwords\n",
-		 width, height, x, y, dwords );
+		  width, height, x, y, dwords );
       }
 
       /* Grab the indirect buffer for the texture blit */
-      buffer = r128GetBufferLocked( r128ctx );
+      buffer = r128GetBufferLocked( rmesa );
 
       dst = (CARD32 *)((char *)buffer->address + R128_HOSTDATA_BLIT_OFFSET);
 
@@ -827,13 +837,13 @@ static void r128UploadSubImage( r128ContextPtr r128ctx,
 	 break;
       }
 
-      r128FireBlitLocked( r128ctx, buffer,
+      r128FireBlitLocked( rmesa, buffer,
 			  offset, pitch, format,
 			  x, y, width, height );
    }
 
-   r128ctx->new_state |= R128_NEW_CONTEXT;
-   r128ctx->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_MASKS;
+   rmesa->new_state |= R128_NEW_CONTEXT;
+   rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_MASKS;
 }
 
 /* Upload the texture images associated with texture `t'.  This might
@@ -841,7 +851,7 @@ static void r128UploadSubImage( r128ContextPtr r128ctx,
  * make room for these images.
  */
 /* NOTE: This function is only called while holding the hardware lock */
-int r128UploadTexImages( r128ContextPtr r128ctx, r128TexObjPtr t )
+int r128UploadTexImages( r128ContextPtr rmesa, r128TexObjPtr t )
 {
    int i;
    int minLevel;
@@ -850,47 +860,48 @@ int r128UploadTexImages( r128ContextPtr r128ctx, r128TexObjPtr t )
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s( %p, %p )\n",
-	       __FUNCTION__, r128ctx->glCtx, t );
+	       __FUNCTION__, rmesa->glCtx, t );
    }
 
    if ( !t ) return 0;
 
    /* Choose the heap appropriately */
-   heap = t->heap = R128_LOCAL_TEX_HEAP;
-   if ( !r128ctx->r128Screen->IsPCI &&
-	t->totalSize > r128ctx->r128Screen->texSize[heap] ) {
-      heap = t->heap = R128_AGP_TEX_HEAP;
+   heap = t->heap = R128_CARD_HEAP;
+   if ( !rmesa->r128Screen->IsPCI &&
+	t->totalSize > rmesa->r128Screen->texSize[heap] ) {
+      heap = t->heap = R128_AGP_HEAP;
    }
 
    /* Do we need to eject LRU texture objects? */
    if ( !t->memBlock ) {
       /* Allocate a memory block on a 4k boundary (1<<12 == 4096) */
-      t->memBlock = mmAllocMem( r128ctx->texHeap[heap], t->totalSize, 12, 0 );
+      t->memBlock = mmAllocMem( rmesa->texHeap[heap], t->totalSize, 12, 0 );
 
       /* Try AGP before kicking anything out of local mem */
-      if ( !t->memBlock && heap == R128_LOCAL_TEX_HEAP ) {
-	 t->memBlock = mmAllocMem( r128ctx->texHeap[R128_AGP_TEX_HEAP],
+      if ( !rmesa->r128Screen->IsPCI &&
+	   !t->memBlock && heap == R128_CARD_HEAP ) {
+	 t->memBlock = mmAllocMem( rmesa->texHeap[R128_AGP_HEAP],
 				   t->totalSize, 12, 0 );
 
 	 if ( t->memBlock )
-	    heap = t->heap = R128_AGP_TEX_HEAP;
+	    heap = t->heap = R128_AGP_HEAP;
       }
 
       /* Kick out textures until the requested texture fits */
       while ( !t->memBlock ) {
-	 if ( r128ctx->TexObjList[heap].prev->bound ) {
+	 if ( rmesa->TexObjList[heap].prev->bound ) {
 	    fprintf( stderr,
 		     "r128UploadTexImages: ran into bound texture\n" );
 	    return -1;
 	 }
-	 if ( r128ctx->TexObjList[heap].prev == &r128ctx->TexObjList[heap] ) {
-	    if ( r128ctx->r128Screen->IsPCI ) {
+	 if ( rmesa->TexObjList[heap].prev == &rmesa->TexObjList[heap] ) {
+	    if ( rmesa->r128Screen->IsPCI ) {
 	       fprintf( stderr, "r128UploadTexImages: upload texture "
 			"failure on local texture heaps, sz=%d\n",
 			t->totalSize );
 	       return -1;
-	    } else if ( heap == R128_LOCAL_TEX_HEAP ) {
-	       heap = t->heap = R128_AGP_TEX_HEAP;
+	    } else if ( heap == R128_CARD_HEAP ) {
+	       heap = t->heap = R128_AGP_HEAP;
 	       continue;
 	    } else {
 	       fprintf( stderr, "r128UploadTexImages: upload texture "
@@ -901,14 +912,14 @@ int r128UploadTexImages( r128ContextPtr r128ctx, r128TexObjPtr t )
 	    }
 	 }
 
-	 r128DestroyTexObj( r128ctx, r128ctx->TexObjList[heap].prev );
+	 r128DestroyTexObj( rmesa, rmesa->TexObjList[heap].prev );
 
-	 t->memBlock = mmAllocMem( r128ctx->texHeap[heap],
+	 t->memBlock = mmAllocMem( rmesa->texHeap[heap],
 				   t->totalSize, 12, 0 );
       }
 
       /* Set the base offset of the texture image */
-      t->bufAddr = r128ctx->r128Screen->texOffset[heap] + t->memBlock->ofs;
+      t->bufAddr = rmesa->r128Screen->texOffset[heap] + t->memBlock->ofs;
 
       maxLevel = ((t->setup.tex_size_pitch & R128_TEX_SIZE_MASK) >>
 		  R128_TEX_SIZE_SHIFT);
@@ -917,7 +928,7 @@ int r128UploadTexImages( r128ContextPtr r128ctx, r128TexObjPtr t )
 
       /* Set texture offsets */
       if ( t->setup.tex_cntl & R128_MIP_MAP_DISABLE ) {
-	 for ( i = 0 ; i < R128_TEX_MAXLEVELS ; i++ ) {
+	 for ( i = 0 ; i < R128_MAX_TEXTURE_LEVELS ; i++ ) {
 	    t->setup.tex_offset[i] = t->bufAddr;
 	 }
       } else {
@@ -926,22 +937,15 @@ int r128UploadTexImages( r128ContextPtr r128ctx, r128TexObjPtr t )
 	       (t->image[maxLevel-i].offset + t->bufAddr);
 	 }
       }
-      /* Fix AGP texture offsets */
-      if ( heap == R128_AGP_TEX_HEAP ) {
-	 for ( i = 0 ; i < R128_TEX_MAXLEVELS ; i++ ) {
-	    t->setup.tex_offset[i] += R128_AGP_TEX_OFFSET +
-	       r128ctx->r128Screen->agpTexOffset;
-	 }
-      }
 
       /* Force loading the new state into the hardware */
       switch ( t->bound ) {
       case 1:
-	 r128ctx->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_TEX0;
+	 rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_TEX0;
 	 break;
 
       case 2:
-	 r128ctx->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_TEX1;
+	 rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_TEX1;
 	 break;
 
       default:
@@ -950,7 +954,7 @@ int r128UploadTexImages( r128ContextPtr r128ctx, r128TexObjPtr t )
    }
 
    /* Let the world know we've used this memory recently */
-   r128UpdateTexLRU( r128ctx, t );
+   r128UpdateTexLRU( rmesa, t );
 
    /* Upload any images that are new */
    if ( t->dirty_images ) {
@@ -961,14 +965,14 @@ int r128UploadTexImages( r128ContextPtr r128ctx, r128TexObjPtr t )
 
       for ( i = 0 ; i <= num_levels ; i++ ) {
 	 if ( t->dirty_images & (1 << i) ) {
-	    r128UploadSubImage( r128ctx, t, i, 0, 0,
+	    r128UploadSubImage( rmesa, t, i, 0, 0,
 				t->image[i].width, t->image[i].height );
 	 }
       }
 
-      r128ctx->setup.tex_cntl_c |= R128_TEX_CACHE_FLUSH;
+      rmesa->setup.tex_cntl_c |= R128_TEX_CACHE_FLUSH;
 
-      r128ctx->dirty |= R128_UPLOAD_CONTEXT;
+      rmesa->dirty |= R128_UPLOAD_CONTEXT;
    }
 
    t->dirty_images = 0;
@@ -976,47 +980,50 @@ int r128UploadTexImages( r128ContextPtr r128ctx, r128TexObjPtr t )
 }
 
 
-/*
- * Texture combiners:
+/* ================================================================
+ * Texture combine functions
  */
 
-#define COLOR_COMB_DISABLE	(R128_COMB_DIS |			\
-				 R128_COLOR_FACTOR_TEX)
-#define COLOR_COMB_COPY_INPUT	(R128_COMB_COPY_INP |			\
-				 R128_COLOR_FACTOR_TEX)
-#define COLOR_COMB_MODULATE	(R128_COMB_MODULATE |			\
-				 R128_COLOR_FACTOR_TEX)
-#define COLOR_COMB_MODULATE_NTEX (R128_COMB_MODULATE |			\
-				  R128_COLOR_FACTOR_NTEX)
-#define COLOR_COMB_ADD		(R128_COMB_ADD |			\
-				 R128_COLOR_FACTOR_TEX)
-#define COLOR_COMB_BLEND_TEX	(R128_COMB_BLEND_TEXTURE |		\
-				 R128_COLOR_FACTOR_TEX)
+#define COLOR_COMB_DISABLE		(R128_COMB_DIS |		\
+					 R128_COLOR_FACTOR_TEX)
+#define COLOR_COMB_COPY_INPUT		(R128_COMB_COPY_INP |		\
+					 R128_COLOR_FACTOR_TEX)
+#define COLOR_COMB_MODULATE		(R128_COMB_MODULATE |		\
+					 R128_COLOR_FACTOR_TEX)
+#define COLOR_COMB_MODULATE_NTEX	(R128_COMB_MODULATE |		\
+					 R128_COLOR_FACTOR_NTEX)
+#define COLOR_COMB_ADD			(R128_COMB_ADD |		\
+					 R128_COLOR_FACTOR_TEX)
+#define COLOR_COMB_BLEND_TEX		(R128_COMB_BLEND_TEXTURE |	\
+					 R128_COLOR_FACTOR_TEX)
+/* Rage 128 Pro/M3 only! */
+#define COLOR_COMB_BLEND_COLOR		(R128_COMB_MODULATE2X |		\
+					 R128_COMB_FCN_MSB |		\
+					 R128_COLOR_FACTOR_CONST_COLOR)
 
-#define ALPHA_COMB_DISABLE	(R128_COMB_ALPHA_DIS |			\
-				 R128_ALPHA_FACTOR_TEX_ALPHA)
-#define ALPHA_COMB_COPY_INPUT	(R128_COMB_ALPHA_COPY_INP |		\
-				 R128_ALPHA_FACTOR_TEX_ALPHA)
-#define ALPHA_COMB_MODULATE	(R128_COMB_ALPHA_MODULATE |		\
-				 R128_ALPHA_FACTOR_TEX_ALPHA)
-#define ALPHA_COMB_MODULATE_NTEX (R128_COMB_ALPHA_MODULATE |		\
-				  R128_ALPHA_FACTOR_NTEX_ALPHA)
-#define ALPHA_COMB_ADD		(R128_COMB_ADD |			\
-				 R128_ALPHA_FACTOR_TEX_ALPHA)
+#define ALPHA_COMB_DISABLE		(R128_COMB_ALPHA_DIS |		\
+					 R128_ALPHA_FACTOR_TEX_ALPHA)
+#define ALPHA_COMB_COPY_INPUT		(R128_COMB_ALPHA_COPY_INP |	\
+					 R128_ALPHA_FACTOR_TEX_ALPHA)
+#define ALPHA_COMB_MODULATE		(R128_COMB_ALPHA_MODULATE |	\
+					 R128_ALPHA_FACTOR_TEX_ALPHA)
+#define ALPHA_COMB_MODULATE_NTEX	(R128_COMB_ALPHA_MODULATE |	\
+					 R128_ALPHA_FACTOR_NTEX_ALPHA)
+#define ALPHA_COMB_ADD			(R128_COMB_ALPHA_ADD |		\
+					 R128_ALPHA_FACTOR_TEX_ALPHA)
 
-#define INPUT_INTERP		(R128_INPUT_FACTOR_INT_COLOR |		\
-				 R128_INP_FACTOR_A_INT_ALPHA)
-#define INPUT_PREVIOUS		(R128_INPUT_FACTOR_PREV_COLOR |		\
-				 R128_INP_FACTOR_A_PREV_ALPHA)
+#define INPUT_INTERP			(R128_INPUT_FACTOR_INT_COLOR |	\
+					 R128_INP_FACTOR_A_INT_ALPHA)
+#define INPUT_PREVIOUS			(R128_INPUT_FACTOR_PREV_COLOR |	\
+					 R128_INP_FACTOR_A_PREV_ALPHA)
 
-static void r128UpdateTextureStage( GLcontext *ctx, int unit )
+static void r128UpdateTextureEnv( GLcontext *ctx, int unit )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   int source = r128ctx->tmu_source[unit];
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   GLint source = rmesa->tmu_source[unit];
    struct gl_texture_object *tObj;
-   r128TexObjPtr t;
    GLuint enabled;
-   CARD32 combine;
+   GLuint combine;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s( %p, %d )\n",
@@ -1037,9 +1044,6 @@ static void r128UpdateTextureStage( GLcontext *ctx, int unit )
    if ( ( tObj != ctx->Texture.Unit[source].CurrentD[2] ) &&
 	( tObj != ctx->Texture.Unit[source].CurrentD[1] ) )
       return;
-
-   /* We definately have a valid texture now */
-   t = tObj->DriverData;
 
    if ( unit == 0 ) {
       combine = INPUT_INTERP;
@@ -1120,20 +1124,63 @@ static void r128UpdateTextureStage( GLcontext *ctx, int unit )
       break;
 
    case GL_BLEND:
-      /* Catch the cases of GL_BLEND we can't handle (yet, in some cases).
+      /* Rage 128 Pro and M3 can handle GL_BLEND texturing.
        */
-      if ( r128ctx->blend_flags ) {
-	 r128ctx->Fallback |= R128_FALLBACK_TEXTURE;
+      if ( !R128_IS_PLAIN( rmesa ) ) {
+	 switch ( tObj->Image[0]->Format ) {
+	 case GL_RGBA:
+	 case GL_LUMINANCE_ALPHA:
+	    combine |= (COLOR_COMB_BLEND_COLOR |	/* C = Cf(1-Ct)+CcCt */
+			ALPHA_COMB_MODULATE);		/* A = AfAt          */
+	    break;
+
+	 case GL_RGB:
+	 case GL_LUMINANCE:
+	    combine |= (COLOR_COMB_BLEND_COLOR |	/* C = Cf(1-Ct)+CcCt */
+			ALPHA_COMB_COPY_INPUT);		/* A = Af            */
+	    break;
+
+	 case GL_ALPHA:
+	    combine |= (COLOR_COMB_COPY_INPUT |		/* C = Cf            */
+			ALPHA_COMB_MODULATE);		/* A = AfAt          */
+	    break;
+
+	 case GL_INTENSITY:
+	    /* GH: We could be smarter about this... */
+	    switch ( rmesa->env_color & 0xff000000 ) {
+	    case 0x00000000:
+	       combine |= (COLOR_COMB_BLEND_COLOR |	/* C = Cf(1-It)+CcIt */
+			   ALPHA_COMB_MODULATE_NTEX);	/* A = Af(1-It)      */
+	    default:
+	       combine |= (COLOR_COMB_MODULATE |	/* C = fallback      */
+			   ALPHA_COMB_MODULATE);	/* A = fallback      */
+	       rmesa->Fallback |= R128_FALLBACK_TEXTURE;
+	       break;
+	    }
+	    break;
+
+	 case GL_COLOR_INDEX:
+	 default:
+	    return;
+	 }
+	 break;
+      }
+
+      /* Rage 128 has to fake some cases of GL_BLEND, otherwise fallback
+       * to software rendering.
+       */
+      if ( rmesa->blend_flags ) {
+	 rmesa->Fallback |= R128_FALLBACK_TEXTURE;
       }
       switch ( tObj->Image[0]->Format ) {
       case GL_RGBA:
       case GL_LUMINANCE_ALPHA:
-	 switch ( r128ctx->env_color ) {
+	 switch ( rmesa->env_color & 0x00ffffff ) {
 	 case 0x00000000:
 	    combine |= (COLOR_COMB_MODULATE_NTEX |	/* C = Cf(1-Ct)      */
 			ALPHA_COMB_MODULATE);		/* A = AfAt          */
 	    break;
-	 case 0xffffffff:
+	 case 0x00ffffff:
 	    if ( unit == 0 ) {
 	       combine |= (COLOR_COMB_MODULATE_NTEX |	/* C = Cf(1-Ct)      */
 			   ALPHA_COMB_MODULATE);	/* A = AfAt          */
@@ -1145,18 +1192,18 @@ static void r128UpdateTextureStage( GLcontext *ctx, int unit )
 	 default:
 	    combine |= (COLOR_COMB_MODULATE |		/* C = fallback      */
 			ALPHA_COMB_MODULATE);		/* A = fallback      */
-	    r128ctx->Fallback |= R128_FALLBACK_TEXTURE;
+	    rmesa->Fallback |= R128_FALLBACK_TEXTURE;
 	    break;
 	 }
 	 break;
       case GL_RGB:
       case GL_LUMINANCE:
-	 switch ( r128ctx->env_color ) {
+	 switch ( rmesa->env_color & 0x00ffffff ) {
 	 case 0x00000000:
 	    combine |= (COLOR_COMB_MODULATE_NTEX |	/* C = Cf(1-Ct)      */
 			ALPHA_COMB_COPY_INPUT);		/* A = Af            */
 	    break;
-	 case 0xffffffff:
+	 case 0x00ffffff:
 	    if ( unit == 0 ) {
 	       combine |= (COLOR_COMB_MODULATE_NTEX |	/* C = Cf(1-Ct)      */
 			   ALPHA_COMB_COPY_INPUT);	/* A = Af            */
@@ -1168,42 +1215,52 @@ static void r128UpdateTextureStage( GLcontext *ctx, int unit )
 	 default:
 	    combine |= (COLOR_COMB_MODULATE |		/* C = fallback      */
 			ALPHA_COMB_COPY_INPUT);		/* A = fallback      */
-	    r128ctx->Fallback |= R128_FALLBACK_TEXTURE;
+	    rmesa->Fallback |= R128_FALLBACK_TEXTURE;
 	    break;
 	 }
 	 break;
       case GL_ALPHA:
-	 combine |= (COLOR_COMB_COPY_INPUT |		/* C = Cf            */
-		     ALPHA_COMB_MODULATE);		/* A = AfAt          */
+	 if ( unit == 0 ) {
+	    combine |= (COLOR_COMB_COPY_INPUT |		/* C = Cf            */
+			ALPHA_COMB_MODULATE);		/* A = AfAt          */
+	 } else {
+	    combine |= (COLOR_COMB_COPY_INPUT |		/* C = Cf            */
+			ALPHA_COMB_COPY_INPUT);		/* A = Af            */
+	 }
 	 break;
       case GL_INTENSITY:
-	 switch ( r128ctx->env_color ) {
+	 switch ( rmesa->env_color & 0x00ffffff ) {
 	 case 0x00000000:
-	    combine |= (COLOR_COMB_MODULATE_NTEX |	/* C = Cf(1-Ct)      */
-			ALPHA_COMB_MODULATE_NTEX);	/* A = Af(1-Ct)      */
+	    combine |= COLOR_COMB_MODULATE_NTEX;	/* C = Cf(1-It)      */
 	    break;
 	 case 0x00ffffff:
 	    if ( unit == 0 ) {
-	       combine |= (COLOR_COMB_MODULATE_NTEX |	/* C = Cf(1-Ct)      */
-			   ALPHA_COMB_MODULATE_NTEX);	/* A = Af(1-Ct)      */
+	       combine |= COLOR_COMB_MODULATE_NTEX;	/* C = Cf(1-It)      */
 	    } else {
-	       combine |= (COLOR_COMB_ADD |		/* C = Cf+Ct         */
-			   ALPHA_COMB_COPY_INPUT);	/* A = Af            */
-	    }
-	    break;
-	 case 0xffffffff:
-	    if ( unit == 0 ) {
-	       combine |= (COLOR_COMB_MODULATE_NTEX |	/* C = Cf(1-Ct)      */
-			   ALPHA_COMB_MODULATE_NTEX);	/* A = Af(1-Ct)      */
-	    } else {
-	       combine |= (COLOR_COMB_ADD |		/* C = Cf+Ct         */
-			   ALPHA_COMB_ADD);		/* A = Af+At         */
+	       combine |= COLOR_COMB_ADD;		/* C = Cf+It         */
 	    }
 	    break;
 	 default:
 	    combine |= (COLOR_COMB_MODULATE |		/* C = fallback      */
 			ALPHA_COMB_MODULATE);		/* A = fallback      */
-	    r128ctx->Fallback |= R128_FALLBACK_TEXTURE;
+	    rmesa->Fallback |= R128_FALLBACK_TEXTURE;
+	    break;
+	 }
+	 switch ( rmesa->env_color & 0xff000000 ) {
+	 case 0x00000000:
+	    combine |= ALPHA_COMB_MODULATE_NTEX;	/* A = Af(1-It)      */
+	    break;
+	 case 0xff000000:
+	    if ( unit == 0 ) {
+	       combine |= ALPHA_COMB_MODULATE_NTEX;	/* A = Af(1-It)      */
+	    } else {
+	       combine |= ALPHA_COMB_ADD;		/* A = Af+It         */
+	    }
+	    break;
+	 default:
+	    combine |= (COLOR_COMB_MODULATE |		/* C = fallback      */
+			ALPHA_COMB_MODULATE);		/* A = fallback      */
+	    rmesa->Fallback |= R128_FALLBACK_TEXTURE;
 	    break;
 	 }
 	 break;
@@ -1217,7 +1274,6 @@ static void r128UpdateTextureStage( GLcontext *ctx, int unit )
       switch ( tObj->Image[0]->Format ) {
       case GL_RGBA:
       case GL_LUMINANCE_ALPHA:
-      case GL_INTENSITY:
 	 combine |= (COLOR_COMB_ADD |			/* C = Cf+Ct         */
 		     ALPHA_COMB_MODULATE);		/* A = AfAt          */
 	 break;
@@ -1230,6 +1286,10 @@ static void r128UpdateTextureStage( GLcontext *ctx, int unit )
 	 combine |= (COLOR_COMB_COPY_INPUT |		/* C = Cf            */
 		     ALPHA_COMB_MODULATE);		/* A = AfAt          */
 	 break;
+      case GL_INTENSITY:
+	 combine |= (COLOR_COMB_ADD |			/* C = Cf+Ct         */
+		     ALPHA_COMB_ADD);			/* A = Af+At         */
+	 break;
       case GL_COLOR_INDEX:
       default:
 	 return;
@@ -1240,13 +1300,13 @@ static void r128UpdateTextureStage( GLcontext *ctx, int unit )
       return;
    }
 
-   t->setup.tex_combine_cntl = combine;
+   rmesa->tex_combine[unit] = combine;
 }
 
 static void r128UpdateTextureObject( GLcontext *ctx, int unit )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
-   int source = r128ctx->tmu_source[unit];
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
+   int source = rmesa->tmu_source[unit];
    struct gl_texture_object *tObj;
    r128TexObjPtr t;
    GLuint enabled;
@@ -1256,14 +1316,10 @@ static void r128UpdateTextureObject( GLcontext *ctx, int unit )
 	       __FUNCTION__, ctx, unit, ctx->Texture.ReallyEnabled );
    }
 
-   /* Disable all texturing until it is known to be good */
-   r128ctx->setup.tex_cntl_c &= ~(R128_TEXMAP_ENABLE |
-				  R128_SEC_TEXMAP_ENABLE);
-
    enabled = (ctx->Texture.ReallyEnabled >> (source * 4)) & TEXTURE0_ANY;
    if ( enabled != TEXTURE0_2D && enabled != TEXTURE0_1D ) {
       if ( enabled )
-	 r128ctx->Fallback |= R128_FALLBACK_TEXTURE;
+	 rmesa->Fallback |= R128_FALLBACK_TEXTURE;
       return;
    }
 
@@ -1272,13 +1328,13 @@ static void r128UpdateTextureObject( GLcontext *ctx, int unit )
     */
    tObj = ctx->Texture.Unit[source].Current;
    if ( !tObj || !tObj->Complete ) {
-      r128ctx->Fallback |= R128_FALLBACK_TEXTURE;
+      rmesa->Fallback |= R128_FALLBACK_TEXTURE;
       return;
    }
 
    if ( ( tObj != ctx->Texture.Unit[source].CurrentD[2] ) &&
 	( tObj != ctx->Texture.Unit[source].CurrentD[1] ) ) {
-      r128ctx->Fallback |= R128_FALLBACK_TEXTURE;
+      rmesa->Fallback |= R128_FALLBACK_TEXTURE;
       return;
    }
 
@@ -1286,13 +1342,13 @@ static void r128UpdateTextureObject( GLcontext *ctx, int unit )
       /* If this is the first time the texture has been used, then create
        * a new texture object for it.
        */
-      r128CreateTexObj( r128ctx, tObj );
+      r128CreateTexObj( rmesa, tObj );
 
       if ( !tObj->DriverData ) {
 	 /* Can't create a texture object... */
 	 fprintf( stderr, "%s: texture object creation failed!\n",
 		  __FUNCTION__ );
-	 r128ctx->Fallback |= R128_FALLBACK_TEXTURE;
+	 rmesa->Fallback |= R128_FALLBACK_TEXTURE;
 	 return;
       }
    }
@@ -1301,39 +1357,37 @@ static void r128UpdateTextureObject( GLcontext *ctx, int unit )
    t = tObj->DriverData;
 
    /* Force the texture unit state to be loaded into the hardware */
-   r128ctx->dirty |= R128_UPLOAD_CONTEXT | (R128_UPLOAD_TEX0 << unit);
+   rmesa->dirty |= R128_UPLOAD_CONTEXT | (R128_UPLOAD_TEX0 << unit);
 
    /* Force any texture images to be loaded into the hardware */
    if ( t->dirty_images )
-      r128ctx->dirty |= (R128_UPLOAD_TEX0IMAGES << unit);
+      rmesa->dirty |= (R128_UPLOAD_TEX0IMAGES << unit);
 
    /* Bind to the given texture unit */
-   r128ctx->CurrentTexObj[unit] = t;
-   t->bound = unit + 1;
+   rmesa->CurrentTexObj[unit] = t;
+   t->bound |= unit + 1;
 
    if ( t->memBlock )
-      r128UpdateTexLRU( r128ctx, t );
+      r128UpdateTexLRU( rmesa, t );
 
    if ( unit == 0 ) {
-      r128ctx->setup.tex_cntl_c       |= R128_TEXMAP_ENABLE;
-      r128ctx->setup.tex_size_pitch_c |= t->setup.tex_size_pitch << 0;
-      r128ctx->setup.scale_3d_cntl    &= ~R128_TEX_CACHE_SPLIT;
+      rmesa->setup.tex_cntl_c       |= R128_TEXMAP_ENABLE;
+      rmesa->setup.tex_size_pitch_c |= t->setup.tex_size_pitch << 0;
+      rmesa->setup.scale_3d_cntl    &= ~R128_TEX_CACHE_SPLIT;
 
       t->setup.tex_cntl &= ~R128_SEC_SELECT_SEC_ST;
    } else {
       t->setup.tex_cntl |=  R128_SEC_SELECT_SEC_ST;
 
-      r128ctx->setup.tex_cntl_c       |= (R128_TEXMAP_ENABLE |
-					  R128_SEC_TEXMAP_ENABLE) ;
-      r128ctx->setup.tex_size_pitch_c |= t->setup.tex_size_pitch << 16;
-      r128ctx->setup.scale_3d_cntl    |= R128_TEX_CACHE_SPLIT;
+      rmesa->setup.tex_cntl_c       |= R128_SEC_TEXMAP_ENABLE;
+      rmesa->setup.tex_size_pitch_c |= t->setup.tex_size_pitch << 16;
+      rmesa->setup.scale_3d_cntl    |= R128_TEX_CACHE_SPLIT;
    }
 }
 
-/* Update the hardware texture state */
 void r128UpdateTextureState( GLcontext *ctx )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s( %p ) en=0x%x\n",
@@ -1341,112 +1395,47 @@ void r128UpdateTextureState( GLcontext *ctx )
    }
 
    /* Clear any texturing fallbacks */
-   r128ctx->Fallback &= ~R128_FALLBACK_TEXTURE;
+   rmesa->Fallback &= ~R128_FALLBACK_TEXTURE;
 
-    /* Unbind any currently bound textures */
-   if ( r128ctx->CurrentTexObj[0] ) r128ctx->CurrentTexObj[0]->bound = 0;
-   if ( r128ctx->CurrentTexObj[1] ) r128ctx->CurrentTexObj[1]->bound = 0;
-   r128ctx->CurrentTexObj[0] = NULL;
-   r128ctx->CurrentTexObj[1] = NULL;
+   /* Unbind any currently bound textures */
+   if ( rmesa->CurrentTexObj[0] ) rmesa->CurrentTexObj[0]->bound = 0;
+   if ( rmesa->CurrentTexObj[1] ) rmesa->CurrentTexObj[1]->bound = 0;
+   rmesa->CurrentTexObj[0] = NULL;
+   rmesa->CurrentTexObj[1] = NULL;
 
-   r128ctx->setup.tex_size_pitch_c = 0x00000000;
+   if ( ctx->Enabled & (TEXTURE0_3D|TEXTURE1_3D) )
+      rmesa->Fallback |= R128_FALLBACK_TEXTURE;
+
+   /* Disable all texturing until it is known to be good */
+   rmesa->setup.tex_cntl_c &= ~(R128_TEXMAP_ENABLE |
+				R128_SEC_TEXMAP_ENABLE);
+   rmesa->setup.tex_size_pitch_c = 0x00000000;
 
    r128UpdateTextureObject( ctx, 0 );
-   r128UpdateTextureStage( ctx, 0 );
+   r128UpdateTextureEnv( ctx, 0 );
 
-   if ( r128ctx->multitex ) {
+   if ( rmesa->multitex ) {
       r128UpdateTextureObject( ctx, 1 );
-      r128UpdateTextureStage( ctx, 1 );
+      r128UpdateTextureEnv( ctx, 1 );
    }
 
-   r128ctx->dirty |= R128_UPLOAD_CONTEXT;
+   rmesa->dirty |= R128_UPLOAD_CONTEXT;
 }
 
 
-/* Set the texture wrap mode */
-static void r128SetTexWrap( r128TexObjPtr t, GLenum swrap, GLenum twrap )
-{
-   t->setup.tex_cntl &= ~(R128_TEX_CLAMP_S_MASK | R128_TEX_CLAMP_T_MASK);
+/* ================================================================
+ * DD interface texturing functions
+ *
+ * FIXME: Many of these are deprecated -- we should move to the new
+ * single-copy texture interface.
+ */
 
-   switch ( swrap ) {
-   case GL_CLAMP:
-      t->setup.tex_cntl |= R128_TEX_CLAMP_S_CLAMP;
-      break;
-   case GL_REPEAT:
-      t->setup.tex_cntl |= R128_TEX_CLAMP_S_WRAP;
-      break;
-   }
-
-   switch ( twrap ) {
-   case GL_CLAMP:
-      t->setup.tex_cntl |= R128_TEX_CLAMP_T_CLAMP;
-      break;
-   case GL_REPEAT:
-      t->setup.tex_cntl |= R128_TEX_CLAMP_T_WRAP;
-      break;
-   }
-}
-
-/* Set the texture filter mode */
-static void r128SetTexFilter( r128TexObjPtr t, GLenum minf, GLenum magf )
-{
-   t->setup.tex_cntl &= ~(R128_MIN_BLEND_MASK | R128_MAG_BLEND_MASK);
-
-   switch ( minf ) {
-   case GL_NEAREST:
-      t->setup.tex_cntl |= R128_MIN_BLEND_NEAREST;
-      break;
-   case GL_LINEAR:
-      t->setup.tex_cntl |= R128_MIN_BLEND_LINEAR;
-      break;
-   case GL_NEAREST_MIPMAP_NEAREST:
-      t->setup.tex_cntl |= R128_MIN_BLEND_MIPNEAREST;
-      break;
-   case GL_LINEAR_MIPMAP_NEAREST:
-      t->setup.tex_cntl |= R128_MIN_BLEND_LINEARMIPNEAREST;
-      break;
-   case GL_NEAREST_MIPMAP_LINEAR:
-      t->setup.tex_cntl |= R128_MIN_BLEND_MIPLINEAR;
-      break;
-   case GL_LINEAR_MIPMAP_LINEAR:
-      t->setup.tex_cntl |= R128_MIN_BLEND_LINEARMIPLINEAR;
-      break;
-   }
-
-   switch ( magf ) {
-   case GL_NEAREST:
-      t->setup.tex_cntl |= R128_MAG_BLEND_NEAREST;
-      break;
-   case GL_LINEAR:
-      t->setup.tex_cntl |= R128_MAG_BLEND_LINEAR;
-      break;
-   }
-}
-
-/* Set the texture border color */
-static void r128SetTexBorderColor( r128TexObjPtr t, GLubyte c[4] )
-{
-   t->setup.tex_border_color = r128PackColor( 32, c[0], c[1], c[2], c[3] );
-}
-
-
-/*
-============================================================================
-
-Driver functions called directly from mesa
-
-============================================================================
-*/
-
-
-/* Set the texture environment state */
 static void r128DDTexEnv( GLcontext *ctx, GLenum target,
 			  GLenum pname, const GLfloat *param )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    struct gl_texture_unit *texUnit;
    GLubyte c[4];
-   int bias;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s( %s )\n",
@@ -1455,59 +1444,71 @@ static void r128DDTexEnv( GLcontext *ctx, GLenum target,
 
    switch ( pname ) {
    case GL_TEXTURE_ENV_MODE:
-      /* TexEnv modes are handled in UpdateTextureState */
-      FLUSH_BATCH( r128ctx );
-      r128ctx->new_state |= R128_NEW_TEXTURE | R128_NEW_ALPHA;
+      FLUSH_BATCH( rmesa );
+      rmesa->new_state |= R128_NEW_TEXTURE | R128_NEW_ALPHA;
       break;
 
    case GL_TEXTURE_ENV_COLOR:
       texUnit = &ctx->Texture.Unit[ctx->Texture.CurrentUnit];
       FLOAT_RGBA_TO_UBYTE_RGBA( c, texUnit->EnvColor );
-      r128ctx->env_color = r128PackColor( 32, c[0], c[1], c[2], c[3] );
-      if ( r128ctx->setup.constant_color_c != r128ctx->env_color ) {
-	 FLUSH_BATCH( r128ctx );
-	 r128ctx->setup.constant_color_c = r128ctx->env_color;
+      rmesa->env_color = r128PackColor( 4, c[0], c[1], c[2], c[3] );
+      if ( rmesa->setup.constant_color_c != rmesa->env_color ) {
+	 FLUSH_BATCH( rmesa );
+	 rmesa->setup.constant_color_c = rmesa->env_color;
 
-	 r128ctx->new_state |= R128_NEW_TEXTURE;
+	 rmesa->new_state |= R128_NEW_TEXTURE;
 
 	 /* More complex multitexture/multipass fallbacks for GL_BLEND
 	  * can be done later, but this allows a single pass GL_BLEND
-	  * in some cases (ie. Performer town demo).
+	  * in some cases (ie. Performer town demo).  This is only
+	  * applicable to the regular Rage 128, as the Pro and M3 can
+	  * handle true single-pass GL_BLEND texturing.
 	  */
-	 r128ctx->blend_flags &= ~R128_BLEND_ENV_COLOR;
-	 if ( r128ctx->env_color != 0x00000000 &&
-	      r128ctx->env_color != 0xff000000 /*&&
-	      r128ctx->env_color != 0x00ffffff &&
-	      r128ctx->env_color != 0xffffffff */ ) {
-	    r128ctx->blend_flags |= R128_BLEND_ENV_COLOR;
+	 rmesa->blend_flags &= ~R128_BLEND_ENV_COLOR;
+	 if ( R128_IS_PLAIN( rmesa ) &&
+	      rmesa->env_color != 0x00000000 &&
+	      rmesa->env_color != 0xff000000 &&
+	      rmesa->env_color != 0x00ffffff &&
+	      rmesa->env_color != 0xffffffff ) {
+	    rmesa->blend_flags |= R128_BLEND_ENV_COLOR;
 	 }
       }
       break;
 
    case GL_TEXTURE_LOD_BIAS_EXT:
-      /* GTH: This isn't exactly correct, but gives good results up to a
-       * certain point.  It is better than completely ignoring the LOD
-       * bias.  Unfortunately there isn't much range in the bias, the
-       * spec mentions strides that vary between 0.5 and 2.0 but these
-       * numbers don't seem to relate the the GL LOD bias value at all.
-       */
-      if ( param[0] >= 1.0 ) {
-	 bias = -128;
-      } else if ( param[0] >= 0.5 ) {
-	 bias = -64;
-      } else if ( param[0] >= 0.25 ) {
-	 bias = 0;
-      } else if ( param[0] >= 0.0 ) {
-	 bias = 63;
-      } else {
-	 bias = 127;
-      }
-      if ( r128ctx->lod_bias != bias ) {
-	 FLUSH_BATCH( r128ctx );
-	 r128ctx->lod_bias = bias;
+      do {
+	 CARD32 t = rmesa->setup.tex_cntl_c;
+	 GLint bias;
+	 CARD32 b;
 
-	 r128ctx->new_state |= R128_NEW_RENDER;
-      }
+	 /* GTH: This isn't exactly correct, but gives good results up to a
+	  * certain point.  It is better than completely ignoring the LOD
+	  * bias.  Unfortunately there isn't much range in the bias, the
+	  * spec mentions strides that vary between 0.5 and 2.0 but these
+	  * numbers don't seem to relate the the GL LOD bias value at all.
+	  */
+	 if ( param[0] >= 1.0 ) {
+	    bias = -128;
+	 } else if ( param[0] >= 0.5 ) {
+	    bias = -64;
+	 } else if ( param[0] >= 0.25 ) {
+	    bias = 0;
+	 } else if ( param[0] >= 0.0 ) {
+	    bias = 63;
+	 } else {
+	    bias = 127;
+	 }
+
+	 b = (CARD32)bias & 0xff;
+	 t &= ~R128_LOD_BIAS_MASK;
+	 t |= (b << R128_LOD_BIAS_SHIFT);
+
+	 if ( rmesa->setup.tex_cntl_c != t ) {
+	    FLUSH_BATCH( rmesa );
+	    rmesa->setup.tex_cntl_c = t;
+	    rmesa->dirty |= R128_UPLOAD_CONTEXT;
+	 }
+      } while (0);
       break;
 
    default:
@@ -1515,35 +1516,37 @@ static void r128DDTexEnv( GLcontext *ctx, GLenum target,
    }
 }
 
-/* Upload a new texture image */
 static void r128DDTexImage( GLcontext *ctx, GLenum target,
 			    struct gl_texture_object *tObj, GLint level,
 			    GLint internalFormat,
 			    const struct gl_texture_image *image )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    r128TexObjPtr t;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API )
       fprintf( stderr, "%s( %p, level %d )\n", __FUNCTION__, tObj, level );
 
-   if ( ( target != GL_TEXTURE_2D ) && ( target != GL_TEXTURE_1D ) ) return;
-   if ( level >= R128_TEX_MAXLEVELS ) return;
+   if ( ( target != GL_TEXTURE_2D ) &&
+	( target != GL_TEXTURE_1D ) )
+      return;
+
+   if ( level >= R128_MAX_TEXTURE_LEVELS )
+      return;
 
    t = (r128TexObjPtr)tObj->DriverData;
    if ( t ) {
-      if ( t->bound ) FLUSH_BATCH( r128ctx );
+      if ( t->bound ) FLUSH_BATCH( rmesa );
 
       /* Destroy the old texture, and upload a new one.  The actual
        * uploading of the texture image occurs in the UploadSubImage
        * function.
        */
-      r128DestroyTexObj( r128ctx, t );
-      r128ctx->new_state |= R128_NEW_TEXTURE;
+      r128DestroyTexObj( rmesa, t );
+      rmesa->new_state |= R128_NEW_TEXTURE;
    }
 }
 
-/* Upload a new texture sub-image */
 static void r128DDTexSubImage( GLcontext *ctx, GLenum target,
 			       struct gl_texture_object *tObj, GLint level,
 			       GLint xoffset, GLint yoffset,
@@ -1551,7 +1554,7 @@ static void r128DDTexSubImage( GLcontext *ctx, GLenum target,
 			       GLint internalFormat,
 			       const struct gl_texture_image *image )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    r128TexObjPtr t;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
@@ -1560,31 +1563,40 @@ static void r128DDTexSubImage( GLcontext *ctx, GLenum target,
 	       image->Width, image->Height );
    }
 
-   if ( ( target != GL_TEXTURE_2D ) && ( target != GL_TEXTURE_1D ) ) return;
-   if ( level >= R128_TEX_MAXLEVELS ) return;
+   if ( ( target != GL_TEXTURE_2D ) &&
+	( target != GL_TEXTURE_1D ) )
+      return;
+
+   if ( level >= R128_MAX_TEXTURE_LEVELS )
+      return;
 
    t = (r128TexObjPtr)tObj->DriverData;
    if ( t ) {
-      if ( t->bound ) FLUSH_BATCH( r128ctx );
+      if ( t->bound ) FLUSH_BATCH( rmesa );
 
-      LOCK_HARDWARE( r128ctx );
-      r128UploadSubImage( r128ctx, t, level,
+#if 0
+      /* FIXME: Only upload textures if we already have space in the heap.
+       */
+      LOCK_HARDWARE( rmesa );
+      r128UploadSubImage( rmesa, t, level,
 			  xoffset, yoffset, width, height );
-      UNLOCK_HARDWARE( r128ctx );
+      UNLOCK_HARDWARE( rmesa );
 
       /* Update the context state */
-      r128ctx->setup.tex_cntl_c |= R128_TEX_CACHE_FLUSH;
+      rmesa->setup.tex_cntl_c |= R128_TEX_CACHE_FLUSH;
+#else
+      r128DestroyTexObj( rmesa, t );
+#endif
 
-      r128ctx->new_state |= R128_NEW_TEXTURE;
+      rmesa->new_state |= R128_NEW_TEXTURE;
    }
 }
 
-/* Set the texture parameter state */
 static void r128DDTexParameter( GLcontext *ctx, GLenum target,
 				struct gl_texture_object *tObj,
 				GLenum pname, const GLfloat *params )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    r128TexObjPtr t = (r128TexObjPtr)tObj->DriverData;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
@@ -1592,24 +1604,32 @@ static void r128DDTexParameter( GLcontext *ctx, GLenum target,
 	       __FUNCTION__, gl_lookup_enum_by_nr( pname ) );
    }
 
-   if ( !t || !t->bound ) return;
-   if ( ( target != GL_TEXTURE_2D ) && ( target != GL_TEXTURE_1D ) ) return;
+   /* If we don't have a hardware texture, it will be automatically
+    * created with current state before it is used, so we don't have
+    * to do anything now.
+    */
+   if ( !t || !t->bound )
+      return;
+
+   if ( ( target != GL_TEXTURE_2D ) &&
+	( target != GL_TEXTURE_1D ) )
+      return;
 
    switch ( pname ) {
    case GL_TEXTURE_MIN_FILTER:
    case GL_TEXTURE_MAG_FILTER:
-      if ( t->bound ) FLUSH_BATCH( r128ctx );
+      if ( t->bound ) FLUSH_BATCH( rmesa );
       r128SetTexFilter( t, tObj->MinFilter, tObj->MagFilter );
       break;
 
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:
-      if ( t->bound ) FLUSH_BATCH( r128ctx );
+      if ( t->bound ) FLUSH_BATCH( rmesa );
       r128SetTexWrap( t, tObj->WrapS, tObj->WrapT );
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      if ( t->bound ) FLUSH_BATCH( r128ctx );
+      if ( t->bound ) FLUSH_BATCH( rmesa );
       r128SetTexBorderColor( t, tObj->BorderColor );
       break;
 
@@ -1617,14 +1637,13 @@ static void r128DDTexParameter( GLcontext *ctx, GLenum target,
       return;
    }
 
-   r128ctx->new_state |= R128_NEW_TEXTURE;
+   rmesa->new_state |= R128_NEW_TEXTURE;
 }
 
-/* Bind a texture to the currently active texture unit */
 static void r128DDBindTexture( GLcontext *ctx, GLenum target,
 			       struct gl_texture_object *tObj )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    GLint unit = ctx->Texture.CurrentUnit;
 
    if ( R128_DEBUG & DEBUG_VERBOSE_API ) {
@@ -1632,50 +1651,46 @@ static void r128DDBindTexture( GLcontext *ctx, GLenum target,
 	       __FUNCTION__, tObj, unit );
    }
 
-   FLUSH_BATCH( r128ctx );
+   FLUSH_BATCH( rmesa );
 
-   /* Unbind the old texture */
-   if ( r128ctx->CurrentTexObj[unit] ) {
-      r128ctx->CurrentTexObj[unit]->bound &= ~(unit+1);
-      r128ctx->CurrentTexObj[unit] = NULL;
+   if ( rmesa->CurrentTexObj[unit] ) {
+      rmesa->CurrentTexObj[unit]->bound &= ~(unit+1);
+      rmesa->CurrentTexObj[unit] = NULL;
    }
 
-   /* The actualy binding occurs in the Tex[01]UpdateState function */
-   r128ctx->new_state |= R128_NEW_TEXTURE;
+   rmesa->new_state |= R128_NEW_TEXTURE;
 }
 
-/* Remove texture from AGP/local texture memory */
 static void r128DDDeleteTexture( GLcontext *ctx,
 				 struct gl_texture_object *tObj )
 {
-   r128ContextPtr r128ctx = R128_CONTEXT( ctx );
+   r128ContextPtr rmesa = R128_CONTEXT(ctx);
    r128TexObjPtr t = (r128TexObjPtr)tObj->DriverData;
 
    if ( t ) {
       if ( t->bound ) {
-	 FLUSH_BATCH( r128ctx );
+	 FLUSH_BATCH( rmesa );
 
-	 r128ctx->CurrentTexObj[t->bound-1] = 0;
-	 r128ctx->new_state |= R128_NEW_TEXTURE;
+	 if ( t->bound & TEX_0 ) rmesa->CurrentTexObj[0] = NULL;
+	 if ( t->bound & TEX_1 ) rmesa->CurrentTexObj[1] = NULL;
+	 rmesa->new_state |= R128_NEW_TEXTURE;
       }
 
-      r128DestroyTexObj( r128ctx, t );
+      r128DestroyTexObj( rmesa, t );
       tObj->DriverData = NULL;
    }
 }
 
-/* Determine if a texture is currently residing in either AGP/local
- * texture memory.
- */
 static GLboolean r128DDIsTextureResident( GLcontext *ctx,
 					  struct gl_texture_object *tObj )
 {
    r128TexObjPtr t = (r128TexObjPtr)tObj->DriverData;
 
-   return t && t->memBlock;
+   return ( t && t->memBlock );
 }
 
-/* Initialize the driver's texture functions */
+
+
 void r128DDInitTextureFuncs( GLcontext *ctx )
 {
    ctx->Driver.TexEnv			= r128DDTexEnv;

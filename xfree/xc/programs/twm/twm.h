@@ -49,14 +49,14 @@ from The Open Group.
 
 /***********************************************************************
  *
- * $TOG: twm.h /main/65 1998/02/09 13:49:43 kaleb $
+ * $Xorg: twm.h,v 1.3 2000/08/17 19:54:08 cpqbld Exp $
  *
  * twm include file
  *
  * 28-Oct-87 Thomas E. LaStrange	File created
  * 10-Oct-90 David M. Sternlicht        Storeing saved colors on root
  ***********************************************************************/
-/* $XFree86: xc/programs/twm/twm.h,v 3.4 1999/02/25 06:01:03 dawes Exp $ */
+/* $XFree86: xc/programs/twm/twm.h,v 3.6 2001/01/17 23:45:08 dawes Exp $ */
 
 #ifndef _TWM_
 #define _TWM_

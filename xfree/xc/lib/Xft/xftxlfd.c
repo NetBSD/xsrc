@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/xftxlfd.c,v 1.4 2000/12/12 00:45:18 keithp Exp $
+ * $XFree86: xc/lib/Xft/xftxlfd.c,v 1.7 2000/12/22 05:05:16 tsi Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -208,9 +208,21 @@ XftCoreAddFonts (XftFontSet *set, Display *dpy, Bool ignore_scalable)
     return ret;
 }
 
-XFontStruct *
+typedef struct _XftCoreFont {
+    struct _XftCoreFont	*next;
+    int			ref;
+
+    XFontStruct		*font;
+    Display		*display;
+    char		*xlfd;
+} XftCoreFont;
+
+static XftCoreFont *_XftCoreFonts;
+
+XFontStruct*
 XftCoreOpen (Display *dpy, XftPattern *pattern)
 {
+    XftCoreFont	*cf;
     char	*xlfd;
     char	*xlfd_pixel = 0;
     char	*i, *o;
@@ -258,9 +270,66 @@ XftCoreOpen (Display *dpy, XftPattern *pattern)
 	    xlfd = xlfd_pixel;
 	}
     }
-    ret = XLoadQueryFont (dpy, xlfd);
+    for (cf = _XftCoreFonts; cf; cf = cf->next)
+    {
+	if (cf->display == dpy &&
+	    !_XftStrCmpIgnoreCase (cf->xlfd, xlfd))
+	{
+	    cf->ref++;
+	    if (_XftFontDebug () & XFT_DBG_REF)
+	    {
+		printf ("Xlfd \"%s\" matches existing font (%d)\n",
+			xlfd, cf->ref);
+	    }
+	    break;
+	}
+    }
+    if (!cf)
+    {
+	ret = XLoadQueryFont (dpy, xlfd);
+	if (!ret)
+	    return 0;
+
+	cf = (XftCoreFont *) malloc (sizeof (XftCoreFont) +
+				     strlen (xlfd) + 1);
+	if (!cf)
+	{
+	    XFreeFont (dpy, ret);
+	    return 0;
+	}
+	
+        if (_XftFontDebug () & XFT_DBG_REF)
+	    printf ("Xlfd \"%s\" matches new font\n", xlfd);
+	
+	cf->next = _XftCoreFonts;
+	_XftCoreFonts = cf;
+	cf->ref = 1;
+	
+	cf->font = ret;
+	cf->xlfd = (char *) (cf + 1);
+	strcpy (cf->xlfd, xlfd);
+    }
     if (xlfd_pixel)
 	free (xlfd_pixel);
-    return ret;
+    return cf->font;
 }
 
+void
+XftCoreClose (Display *dpy, XFontStruct *font)
+{
+    XftCoreFont	*cf, **prev;
+
+    for (prev = &_XftCoreFonts; (cf = *prev); prev = &cf->next)
+    {
+	if (cf->display == dpy && cf->font == font)
+	{
+	    if (--cf->ref == 0)
+	    {
+		XFreeFont (dpy, cf->font);
+		*prev = cf->next;
+		free (cf);
+	    }
+	    break;
+	}
+    }
+}

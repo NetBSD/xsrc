@@ -1,4 +1,4 @@
-/* $XConsortium: imDefIm.c /main/19 1996/01/21 15:11:43 kaleb $ */
+/* $Xorg: imDefIm.c,v 1.5 2000/08/17 19:45:12 cpqbld Exp $ */
 /******************************************************************
          Copyright 1990, 1991, 1992 by Sun Microsystems, Inc.
          Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -31,7 +31,7 @@ OF THIS SOFTWARE.
                                makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imDefIm.c,v 1.6 2000/11/28 18:49:35 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imDefIm.c,v 1.8 2001/01/17 19:41:51 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #define NEED_EVENTS

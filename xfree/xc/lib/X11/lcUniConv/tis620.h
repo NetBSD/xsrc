@@ -1,7 +1,7 @@
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/lcUniConv/tis620.h,v 1.4 2001/02/09 00:02:54 dawes Exp $ */
 
 /*
- * TIS620.2533-1
+ * TIS620-0
  */
 
 static const unsigned short tis620_2uni[96] = {

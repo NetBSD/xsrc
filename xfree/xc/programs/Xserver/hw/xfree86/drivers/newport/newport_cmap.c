@@ -1,7 +1,7 @@
 /*
  * Id: newport_cmap.c,v 1.1 2000/11/29 20:58:10 agx Exp $
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_cmap.c,v 1.1 2000/12/01 19:47:59 dawes Exp $ */
 
 #include "newport.h"
 

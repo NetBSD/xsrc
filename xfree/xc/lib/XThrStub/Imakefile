@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/XThrStub/Imakefile,v 3.1 1996/12/12 09:13:41 dawes Exp $
+XCOMM $XFree86: xc/lib/XThrStub/Imakefile,v 3.2 1998/12/20 11:57:00 dawes Exp $
 #define DoNormalLib NormalLibXThrStub
 #define DoSharedLib SharedLibXThrStub
 #define DoExtraLib SharedLibXThrStub

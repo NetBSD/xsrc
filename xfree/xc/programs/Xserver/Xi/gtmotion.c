@@ -1,4 +1,4 @@
-/* $TOG: gtmotion.c /main/13 1998/02/09 15:29:51 kaleb $ */ /*ALLOC-FIX*/
+/* $Xorg: gtmotion.c,v 1.3 2000/08/17 19:48:02 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/gtmotion.c,v 3.3 1997/05/03 09:15:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/gtmotion.c,v 3.5 2001/01/17 22:13:25 dawes Exp $ */
 
 /***********************************************************************
  *

@@ -3,7 +3,7 @@
  * 
  * Copyright 1999 by Andrew C Aitchison <A.C.Aitchison@dpmms.cam.ac.uk>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/ddcProperty.c,v 1.3 2000/03/05 23:47:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ddc/ddcProperty.c,v 1.7 2001/04/05 17:42:32 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -26,6 +26,8 @@ xf86SetDDCproperties(ScrnInfoPtr pScrnInfo, xf86MonPtr DDC)
     CARD8 *EDID2rawdata = NULL;
     CARD8 *VDIFrawdata = NULL;
     int  i, ret;
+    Bool  makeEDID1prop = FALSE;
+    Bool  makeEDID2prop = FALSE;
 
 #ifdef DEBUG
     ErrorF("xf86SetDDCproperties(%p, %p)\n", pScrnInfo, DDC);
@@ -44,7 +46,36 @@ xf86SetDDCproperties(ScrnInfoPtr pScrnInfo, xf86MonPtr DDC)
     pScrnInfo->monitor->DDC = DDC;
 
     if (DDC->ver.version == 1) {
+      makeEDID1prop = TRUE;
+    } else if (DDC->ver.version == 2) {
+      int checksum1 = 0;
+      int checksum2 = 0;
+      makeEDID2prop = TRUE;
 
+      /* Some monitors (eg Panasonic PanaSync4)
+       * report version==2 because they used EDID v2 spec document,
+       * although they use EDID v1 data structure :-(
+       *
+       * Try using checksum to determine when we have such a monitor.
+       */
+      for (i=0; i<256; i++) { checksum2 += DDC->rawData[i]; }
+      if ( (checksum2 % 256) != 0 ) {
+	xf86DrvMsg(pScrnInfo->scrnIndex,X_INFO, "Monitor EDID v2 checksum failed\n");
+	xf86DrvMsg(pScrnInfo->scrnIndex,X_INFO, "XFree86_DDC_EDID2_RAWDATA property may be bad\n");
+	for (i=0; i<128; i++) { checksum1 += DDC->rawData[i]; }
+	if ( (checksum1 % 256) == 0 ) {
+	  xf86DrvMsg(pScrnInfo->scrnIndex,X_INFO, "Monitor EDID v1 checksum passed,\n");
+	  xf86DrvMsg(pScrnInfo->scrnIndex,X_INFO, "XFree86_DDC_EDID2_RAWDATA property created\n");
+	  makeEDID1prop = TRUE;
+	}
+      }
+    } else {
+     xf86DrvMsg(pScrnInfo->scrnIndex, X_PROBED,
+		"unexpected EDID version %d revision %d\n",
+		DDC->ver.version, DDC->ver.revision );      
+    }
+
+    if (makeEDID1prop) {
       if ( (EDID1rawdata = xalloc(128*sizeof(CARD8)))==NULL ) {
 	return FALSE;
       }
@@ -72,9 +103,10 @@ xf86SetDDCproperties(ScrnInfoPtr pScrnInfo, xf86MonPtr DDC)
       ErrorF("xf86RegisterRootWindowProperty returns %d\n", ret );
 #endif
 
-    } else if (DDC->ver.version == 2) {
+    } 
+
+    if (makeEDID2prop) {
       if ( (EDID2rawdata = xalloc(256*sizeof(CARD8)))==NULL ) {
-	xfree(EDID2rawdata);
 	return FALSE;
       }
       for (i=0; i<256; i++) {
@@ -92,21 +124,11 @@ xf86SetDDCproperties(ScrnInfoPtr pScrnInfo, xf86MonPtr DDC)
 #endif
       ret = xf86RegisterRootWindowProperty(pScrnInfo->scrnIndex,
 					   EDID2Atom, XA_INTEGER, 8, 
-#if 1
-					   256, (unsigned char *)EDID1rawdata
-#else
-#define EDID2_DUMMY_STRING "Dummy EDID2 property - please insert correct values"
-					   strlen(EDID2_DUMMY_STRING),
-					   EDID2_DUMMY_STRING 
-#endif
+					   256, (unsigned char *)EDID2rawdata
 					   );
 #ifdef DEBUG
       ErrorF("xf86RegisterRootWindowProperty returns %d\n", ret );
 #endif
-    } else {
-     xf86DrvMsg(pScrnInfo->scrnIndex, X_PROBED,
-		"unexpected EDID version %d revision %d\n",
-		DDC->ver.version, DDC->ver.revision );      
     }
 
     if (DDC->vdif) {

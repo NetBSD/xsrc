@@ -1,4 +1,4 @@
-/* $TOG: spint.h /main/13 1998/02/09 10:51:26 kaleb $ */
+/* $Xorg: spint.h,v 1.3 2000/08/17 19:46:28 cpqbld Exp $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -43,7 +43,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/spint.h,v 1.7 1999/01/31 04:59:27 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/spint.h,v 1.9 2001/01/17 19:43:20 dawes Exp $ */
 
 #ifndef _SPINT_H_
 #define _SPINT_H_

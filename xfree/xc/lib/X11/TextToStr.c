@@ -1,4 +1,4 @@
-/* $TOG: TextToStr.c /main/6 1998/02/06 17:55:20 kaleb $ */
+/* $Xorg: TextToStr.c,v 1.3 2000/08/17 19:44:57 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/X11/TextToStr.c,v 1.2 1998/06/28 08:41:32 dawes Exp $ */
+/* $XFree86: xc/lib/X11/TextToStr.c,v 1.4 2001/01/17 19:41:45 dawes Exp $ */
 
 #include <X11/Xlibint.h>
 #include <X11/Xatom.h>

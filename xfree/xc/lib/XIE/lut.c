@@ -1,4 +1,4 @@
-/* $TOG: lut.c /main/3 1998/02/06 15:12:36 kaleb $ */
+/* $Xorg: lut.c,v 1.3 2000/08/17 19:45:27 cpqbld Exp $ */
 
 /*
 
@@ -23,7 +23,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/XIE/lut.c,v 1.4 2001/01/17 19:42:22 dawes Exp $ */
 
 #include "XIElibint.h"
 

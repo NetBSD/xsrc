@@ -1,4 +1,4 @@
-/* $XConsortium: do_simple.c /main/14 1996/08/01 19:32:37 dpw $ */
+/* $Xorg: do_simple.c,v 1.4 2000/08/17 19:54:09 cpqbld Exp $ */
 /*****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/x11perf/do_simple.c,v 1.5 2001/01/17 23:45:12 dawes Exp $ */
 
 #ifndef VMS
 #include <X11/Xatom.h>

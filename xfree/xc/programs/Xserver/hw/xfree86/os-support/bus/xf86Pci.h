@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Pci.h,v 1.23 2000/02/08 13:13:29 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Pci.h,v 1.27 2001/05/15 10:19:42 eich Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -655,6 +655,18 @@ void          xf86writepci(int, int, int, int, int, CARD32, CARD32);
 #endif
 
 extern int pciNumBuses;
+
+typedef enum {
+  ROM_BASE_PRESET = -2,
+  ROM_BASE_BIOS,
+  ROM_BASE_MEM0 = 0,
+  ROM_BASE_MEM1,
+  ROM_BASE_MEM2,
+  ROM_BASE_MEM3,
+  ROM_BASE_MEM4,
+  ROM_BASE_MEM5,
+  ROM_BASE_FIND
+} romBaseSource;
 
 #endif /* _XF86PCI_H */
 

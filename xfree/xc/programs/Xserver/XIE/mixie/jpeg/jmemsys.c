@@ -1,4 +1,4 @@
-/* $TOG: jmemsys.c /main/5 1998/02/09 16:20:19 kaleb $ */
+/* $Xorg: jmemsys.c,v 1.3 2000/08/17 19:47:48 cpqbld Exp $ */
 /* Module jmemsys.c */
 
 /****************************************************************************
@@ -66,7 +66,7 @@ terms and conditions:
 	Gary Rogers, AGE Logic, Inc., January 1994
 
 ****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jmemsys.c,v 3.1 1996/08/20 13:16:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/jpeg/jmemsys.c,v 3.3 2001/01/17 22:13:09 dawes Exp $ */
 
 /*
  * jmemnobs.c  (jmemsys.c)

@@ -1,4 +1,4 @@
-/* $TOG: xtest1imp.c /main/4 1998/02/10 13:11:24 kaleb $ */
+/* $Xorg: xtest1imp.c,v 1.3 2000/08/17 19:48:24 cpqbld Exp $ */
 /*
  *	File: xtest1dd.c
  *

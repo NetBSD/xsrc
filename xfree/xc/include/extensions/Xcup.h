@@ -1,4 +1,4 @@
-/* $TOG: Xcup.h /main/3 1998/02/09 11:21:30 kaleb $ */
+/* $Xorg: Xcup.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /*
 
 Copyright 1987, 1988, 1998  The Open Group

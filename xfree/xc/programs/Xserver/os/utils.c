@@ -1,4 +1,4 @@
-/* $TOG: utils.c /main/138 1998/04/22 16:32:51 msr $ */
+/* $Xorg: utils.c,v 1.3 2000/08/17 19:53:41 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1998  The Open Group
@@ -45,7 +45,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE
 OR PERFORMANCE OF THIS SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.66 2000/11/14 18:20:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/utils.c,v 3.69 2001/05/04 19:05:52 dawes Exp $ */
 #ifdef __CYGWIN__
 #include <stdlib.h>
 #include <signal.h>
@@ -234,6 +234,7 @@ OsSignal(sig, handler)
 
 static Bool StillLocking = FALSE;
 static char LockFile[PATH_MAX];
+static Bool nolock = FALSE;
 
 /*
  * LockServer --

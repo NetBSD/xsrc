@@ -16,22 +16,12 @@
 /***************************************************************************/
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "t1gload.h"
-
-#else
-
-#include <type1/t1gload.h>
-
-#endif
-
-
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/ftoutln.h>
-#include <freetype/internal/psaux.h>
-
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_STREAM_H
+#include FT_OUTLINE_H
+#include FT_INTERNAL_POSTSCRIPT_AUX_H
 
 #include <string.h>     /* for strcmp() */
 
@@ -306,6 +296,11 @@
         metrics->horiBearingX = cbox.xMin;
         metrics->horiBearingY = cbox.yMax;
       }
+      
+      /* Set control data to the glyph charstrings.  Note that this is */
+      /* _not_ zero-terminated.                                        */
+      glyph->root.control_data = type1->charstrings    [glyph_index];
+      glyph->root.control_len  = type1->charstrings_len[glyph_index];
     }
 
   Exit:

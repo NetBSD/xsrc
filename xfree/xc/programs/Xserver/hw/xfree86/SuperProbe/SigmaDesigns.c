@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SigmaDesigns.c,v 3.1tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SigmaDesigns.c,v 3.3 1999/11/19 13:54:17 hohndel Exp $ */
 
 #include "Probe.h"
 

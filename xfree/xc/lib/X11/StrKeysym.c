@@ -1,4 +1,4 @@
-/* $TOG: StrKeysym.c /main/18 1998/02/06 17:54:40 kaleb $ */
+/* $Xorg: StrKeysym.c,v 1.4 2000/08/17 19:44:56 cpqbld Exp $ */
 /*
 
 Copyright 1985, 1987, 1990, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/StrKeysym.c,v 3.2 1999/05/09 10:50:15 dawes Exp $ */
+/* $XFree86: xc/lib/X11/StrKeysym.c,v 3.4 2001/01/17 19:41:44 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xresource.h>

@@ -1,4 +1,4 @@
-/* $TOG: psout.h /main/3 1998/02/09 15:43:01 kaleb $ */
+/* $Xorg: psout.h,v 1.4 2000/08/17 19:48:11 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -144,7 +144,8 @@ typedef PsClipRec *PsClipPtr;
 
 typedef struct PsOutRec_ *PsOutPtr;
 
-extern PsOutPtr PsOut_BeginFile(FILE *fp);
+extern PsOutPtr PsOut_BeginFile(FILE *fp, int orient, int count, int plex,
+                              int res, int wd, int ht);
 extern void PsOut_EndFile(PsOutPtr self, int closeFile);
 extern void PsOut_BeginPage(PsOutPtr self, int orient, int count, int plex,
                             int res, int wd, int ht);

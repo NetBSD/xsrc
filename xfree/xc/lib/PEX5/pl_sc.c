@@ -1,4 +1,4 @@
-/* $TOG: pl_sc.c /main/13 1998/02/06 16:12:02 kaleb $ */
+/* $Xorg: pl_sc.c,v 1.3 2000/08/17 19:44:27 cpqbld Exp $ */
 /*
 
 Copyright 1992, 1998  The Open Group

@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mutouch/xf86MuTouch.c,v 1.11 2000/05/24 01:11:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/input/mutouch/xf86MuTouch.c,v 1.13 2001/04/01 14:00:13 tsi Exp $ */
 
 /*
  *******************************************************************************
@@ -42,23 +42,23 @@
  *******************************************************************************
  */
 
-#include <xf86Version.h>
+#include "xf86Version.h"
 #if XF86_VERSION_CURRENT >= XF86_VERSION_NUMERIC(3,9,0,0,0)
 #define XFREE86_V4
 #endif
 
 #ifdef XFREE86_V4
-#include <misc.h>
-#include <xf86.h>
+#include "misc.h"
+#include "xf86.h"
 #if !defined(DGUX)
-#include <xf86_ansic.h>
+#include "xf86_ansic.h"
 #endif
-#include <xf86_OSproc.h>
-#include <xf86Xinput.h>
-#include <exevents.h>
+#include "xf86_OSproc.h"
+#include "xf86Xinput.h"
+#include "exevents.h"
 
 #ifdef XFree86LOADER
-#include <xf86Module.h>
+#include "xf86Module.h"
 #endif
 
 #else /* XFREE86_V4 */
@@ -82,7 +82,6 @@
 #include "xf86_OSlib.h"
 #include "xf86_Config.h"
 #include "xf86Xinput.h"
-#include "xf86Version.h"
 
 #include "os.h"
 #include "osdep.h"

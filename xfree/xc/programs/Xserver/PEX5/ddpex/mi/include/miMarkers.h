@@ -1,4 +1,4 @@
-/* $TOG: miMarkers.h /main/3 1998/02/10 12:38:47 kaleb $ */
+/* $Xorg: miMarkers.h,v 1.3 2000/08/17 19:47:03 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group

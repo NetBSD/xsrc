@@ -1,4 +1,4 @@
-/* $TOG: xkbatom.c /main/5 1998/02/06 15:21:40 kaleb $ */
+/* $Xorg: xkbatom.c,v 1.3 2000/08/17 19:46:43 cpqbld Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -67,7 +67,7 @@ SOFTWARE.
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkbatom.c,v 3.4 1997/10/26 13:24:56 dawes Exp $ */
+/* $XFree86: xc/lib/xkbfile/xkbatom.c,v 3.6 2001/01/17 19:43:42 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/* $TOG: Scrollbar.c /main/73 1998/02/06 12:48:56 kaleb $ */
+/* $Xorg: Scrollbar.c,v 1.3 2000/08/17 19:45:36 cpqbld Exp $ */
 
 /***********************************************************
 
@@ -42,7 +42,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/Scrollbar.c,v 1.10 2000/08/23 22:10:02 tsi Exp $ */
+/* $XFree86: xc/lib/Xaw/Scrollbar.c,v 1.12 2001/01/17 19:42:29 dawes Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

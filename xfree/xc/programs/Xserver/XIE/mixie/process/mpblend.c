@@ -1,4 +1,4 @@
-/* $TOG: mpblend.c /main/7 1998/02/09 16:21:26 kaleb $ */
+/* $Xorg: mpblend.c,v 1.3 2000/08/17 19:47:50 cpqbld Exp $ */
 /* AGE Logic - Oct 15 1995 - Larry Hare */
 /**** module mpblend.c ****/
 /******************************************************************************
@@ -67,7 +67,7 @@ terms and conditions:
 	Dean Verheiden -- AGE Logic, Inc. June, 1993
   
 *****************************************************************************/
-/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpblend.c,v 3.2 1998/10/04 09:36:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/process/mpblend.c,v 3.4 2001/01/17 22:13:11 dawes Exp $ */
 
 #define _XIEC_MPBLEND
 #define _XIEC_PBLEND

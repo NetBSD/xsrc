@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_savage/s3sav_cursor.c,v 1.1.2.1 1999/07/30 11:21:32 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_cursor.c,v 1.4 2001/05/18 23:35:32 dawes Exp $ */
 
 /*
  * Hardware cursor support for S3 Savage 4.0 driver. Taken with
@@ -12,8 +12,6 @@
 #include "savage_driver.h"
 
 static void SavageLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src);
-static void SavageShowCursor(ScrnInfoPtr pScrn);
-static void SavageHideCursor(ScrnInfoPtr pScrn);
 static void SavageSetCursorPosition(ScrnInfoPtr pScrn, int x, int y);
 static void SavageSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg);
 
@@ -24,8 +22,19 @@ static void SavageSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg);
 
 #define inCRReg(reg) (VGAHWPTR(pScrn))->readCrtc( VGAHWPTR(pScrn), reg )
 #define outCRReg(reg, val) (VGAHWPTR(pScrn))->writeCrtc( VGAHWPTR(pScrn), reg, val )
+#define inStatus1() (VGAHWPTR(pScrn))->readST01( VGAHWPTR(pScrn) )
 
-
+/* 
+ * certain HW cursor operations seem 
+ * to require a delay to prevent lockups.
+ */
+#define waitHSync(n) { \
+                       int num = n; \
+                       while (num--) { \
+			 while ((inStatus1()) & 0x01){};\
+                         while (!(inStatus1()) & 0x01){};\
+                        } \
+                      } 
 #define MAX_CURS 64
 
 
@@ -57,11 +66,12 @@ SavageHWCursorInit(ScreenPtr pScreen)
      */
 
     if(
-        ( (inCRReg(0x18) & 0x80) && (inCRReg(0x15) & 0x50) )
+        ((psav->Chipset != S3_SAVAGE4) 
+       && (inCRReg(0x18) & 0x80) && (inCRReg(0x15) & 0x50) )
 	||
 	(psav->Chipset == S3_SAVAGE_MX)
-    )
-       infoPtr->Flags |= HARDWARE_CURSOR_TRUECOLOR_AT_8BPP;
+      )
+         infoPtr->Flags |= HARDWARE_CURSOR_TRUECOLOR_AT_8BPP; 
 
     infoPtr->SetCursorColors = SavageSetCursorColors;
     infoPtr->SetCursorPosition = SavageSetCursorPosition;
@@ -89,10 +99,14 @@ SavageShowCursor(ScrnInfoPtr pScrn)
 void
 SavageHideCursor(ScrnInfoPtr pScrn)
 {
-   /* Turn cursor off. */
-   outCRReg( 0x45, inCRReg(0x45) & 0xfe );
-}
+    /* Turn cursor off. */
 
+    if( S3_SAVAGE4_SERIES( SAVPTR(pScrn)->Chipset ) )
+    {
+       waitHSync(5);
+    }
+    outCRReg( 0x45, inCRReg(0x45) & 0xfe );
+}
 
 static void
 SavageLoadCursorImage(
@@ -117,7 +131,6 @@ SavageLoadCursorImage(
     }
 }
 
-
 static void
 SavageSetCursorPosition(
      ScrnInfoPtr pScrn,
@@ -126,6 +139,10 @@ SavageSetCursorPosition(
 {
     unsigned char xoff, yoff;
 
+    if( S3_SAVAGE4_SERIES( SAVPTR(pScrn)->Chipset ) )
+    {
+	waitHSync(5);
+    }
     /* adjust for frame buffer base address granularity */
     if (pScrn->bitsPerPixel == 8)
 	x += ((pScrn->frameX0) & 3);
@@ -175,15 +192,35 @@ SavageSetCursorColors(
     Bool bNeedExtra = FALSE;
 
     /* Clock doubled modes need an extra cursor stack write. */
+
     bNeedExtra =
         (psav->CursorInfoRec->Flags & HARDWARE_CURSOR_TRUECOLOR_AT_8BPP);
 
-    if( psav->Chipset == S3_SAVAGE_MX )
-        bNeedExtra = TRUE;
-
-    switch (pScrn->bitsPerPixel) {
-    case 16:
-	if (pScrn->weight.green == 5) {
+    if(
+        (psav->Chipset == S3_SAVAGE_MX) ||
+	(pScrn->depth == 24) ||
+	((pScrn->depth == 8) && bNeedExtra)
+    )
+    {
+	/* Do it straight, full 24 bit color. */
+      
+	/* Reset the cursor color stack pointer */
+	inCRReg(0x45);
+	/* Write low, mid, high bytes - foreground */
+	outCRReg(0x4a, fg);
+	outCRReg(0x4a, fg >> 8);
+	outCRReg(0x4a, fg >> 16);
+	/* Reset the cursor color stack pointer */
+	inCRReg(0x45);
+	/* Write low, mid, high bytes - background */
+	outCRReg(0x4b, bg);
+	outCRReg(0x4b, bg >> 8);
+	outCRReg(0x4b, bg >> 16);
+	return;
+    }
+    else if( (pScrn->depth == 15) || (pScrn->depth == 16) )
+    {
+	if (pScrn->depth == 15) {
 	    fg = ((fg & 0xf80000) >> 9) |
 		((fg & 0xf800) >> 6) |
 		((fg & 0xf8) >> 3);
@@ -216,40 +253,18 @@ SavageSetCursorColors(
 	    outCRReg( 0x4b, bg );
 	    outCRReg( 0x4b, bg>>8 );
 	}
-        break;
-    case 8:
-	if( !bNeedExtra )
-	{
-	    /* Reset the cursor color stack pointer */
-	    inCRReg(0x45);
-	    /* Write foreground */
-	    outCRReg(0x4a, fg);
-	    outCRReg(0x4a, fg);
-	    /* Reset the cursor color stack pointer */
-	    inCRReg(0x45);
-	    /* Write background */
-	    outCRReg(0x4b, bg);
-	    outCRReg(0x4b, bg);
-	    break;
-	}
-	/* else */
-	/* FALLTHROUGH */
-    case 24:
-    case 32:
-	/* Do it straight, full 24 bit color. */
-      
+    }
+    else if( pScrn->depth == 8 )
+    {
 	/* Reset the cursor color stack pointer */
 	inCRReg(0x45);
-	/* Write low, mid, high bytes - foreground */
+	/* Write foreground */
 	outCRReg(0x4a, fg);
-	outCRReg(0x4a, fg >> 8);
-	outCRReg(0x4a, fg >> 16);
+	outCRReg(0x4a, fg);
 	/* Reset the cursor color stack pointer */
 	inCRReg(0x45);
-	/* Write low, mid, high bytes - background */
+	/* Write background */
 	outCRReg(0x4b, bg);
-	outCRReg(0x4b, bg >> 8);
-	outCRReg(0x4b, bg >> 16);
-	break;
+	outCRReg(0x4b, bg);
     }
 }

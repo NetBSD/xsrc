@@ -1,4 +1,4 @@
-/* $TOG: miTestOCs.c /main/3 1998/02/10 12:42:41 kaleb $ */
+/* $Xorg: miTestOCs.c,v 1.3 2000/08/17 19:47:07 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1990, 1991, 1998  The Open Group

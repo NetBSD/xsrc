@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgarctstp8.c,v 1.1.2.2 1998/02/14 06:31:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vgafb/vgarctstp8.c,v 1.2 1998/07/25 16:58:23 dawes Exp $ */
 /*
  * Fill 32 bit stippled rectangles for 8 bit frame buffers
  */

@@ -41,7 +41,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $TOG: init.c /main/14 1998/03/17 16:39:04 kaleb $ */
+/* $Xorg: init.c,v 1.3 2000/08/17 19:48:20 cpqbld Exp $ */
 
 #include <stdio.h>
 #include <sys/types.h>

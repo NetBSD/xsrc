@@ -1,4 +1,4 @@
-/* $TOG: connection.c /main/35 1998/02/11 10:06:34 kaleb $ */
+/* $Xorg: connection.c,v 1.4 2000/08/17 19:54:22 cpqbld Exp $ */
 /*
  * handles connections
  */
@@ -63,7 +63,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/connection.c,v 3.18 2000/04/04 19:25:26 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/connection.c,v 3.20 2001/01/17 23:45:32 dawes Exp $ */
 
 #include	<X11/Xtrans.h>
 #include	<stdlib.h>

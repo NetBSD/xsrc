@@ -1,4 +1,4 @@
-/* $TOG: FSConnServ.c /main/29 1998/05/01 11:34:29 kaleb $ */
+/* $Xorg: FSConnServ.c,v 1.3 2000/08/17 19:44:01 cpqbld Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -46,7 +46,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/FS/FSConnServ.c,v 3.5 1998/04/05 00:45:41 robin Exp $ */
+/* $XFree86: xc/lib/FS/FSConnServ.c,v 3.7 2001/01/17 19:41:28 dawes Exp $ */
 
 #include	<stdio.h>
 #include	"FSlibint.h"

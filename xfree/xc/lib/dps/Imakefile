@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/dps/Imakefile,v 1.11 2000/05/23 04:47:36 dawes Exp $
+XCOMM $XFree86: xc/lib/dps/Imakefile,v 1.13 2001/04/07 19:41:50 alanh Exp $
 
 #define DoNormalLib NormalLibDps
 #define DoSharedLib SharedLibDps
@@ -231,7 +231,7 @@ ProgramTargetName($(PSWRAP)):
 
 HEADERS = psops.h dpsops.h
 
-depend :: $(HEADERS)
+includes :: $(HEADERS)
 depend :: $(DPSOPSCFILES) $(PSOPSCFILES)
 
 #ifndef OS2Architecture

@@ -30,7 +30,7 @@
  * Project.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_driver.c,v 1.5 2000/12/09 03:31:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport_driver.c,v 1.10 2001/05/16 06:48:09 keithp Exp $ */
 
 /* function prototypes, common data structures & generic includes */
 #include "newport.h"
@@ -42,12 +42,8 @@
 /* Drivers using the mi colourmap code need: */
 #include "micmap.h"
 
-/* Drivers using cfb need: */
-#define PSZ 8
-#include "cfb.h"
-#undef PSZ
-#include "cfb24.h"
-#include "cfb24_32.h"
+/* Drivers using fb need: */
+#include "fb.h"
 
 /* Drivers using the shadow frame buffer need: */
 #include "shadowfb.h"
@@ -55,14 +51,6 @@
 /* Xv Extension */
 #include "xf86xv.h"
 #include "Xv.h"
-
-/* Temporary workaround.  A module really shouldn't need this */
-#ifndef XFree86LOADER
-# include "xf86_OSlib.h"
-# ifndef MAP_FAILED
-#  define MAP_FAILED ((pointer)(-1))
-# endif
-#endif
 
 #define VERSION			4000
 #define NEWPORT_NAME		"Newport"
@@ -74,7 +62,7 @@
 
 /* Prototypes ------------------------------------------------------- */
 static void	NewportIdentify(int flags);
-static OptionInfoPtr NewportAvailableOptions(int chipid, int busid);
+static const OptionInfoRec * NewportAvailableOptions(int chipid, int busid);
 static Bool NewportProbe(DriverPtr drv, int flags);
 static Bool NewportPreInit(ScrnInfoPtr pScrn, int flags);
 static Bool NewportScreenInit(int Index, ScreenPtr pScreen, int argc, char **argv);
@@ -112,8 +100,11 @@ static SymTabRec NewportChipsets[] = {
 
 /* List of Symbols from other modules that this module references */
 
-static const char *cfbSymbols[] = {
-	"cfbScreenInit",
+static const char *fbSymbols[] = {
+	"fbScreenInit",
+#ifdef RENDER
+	"fbPictureInit",
+#endif
 	NULL
 };	
 
@@ -161,7 +152,7 @@ newportSetup(pointer module, pointer opts, int *errmaj, int *errmin)
 		 * might refer to.
 		 *
 		 */
-		LoaderRefSymLists( cfbSymbols, shadowSymbols, NULL);
+		LoaderRefSymLists( fbSymbols, shadowSymbols, NULL);
 
 
 		/*
@@ -183,7 +174,7 @@ typedef enum {
 } NewportOpts;
 
 /* Supported options */
-static OptionInfoRec NewportOptions [] = {
+static const OptionInfoRec NewportOptions [] = {
 	{ OPTION_BITPLANES, "bitplanes", OPTV_INTEGER, {0}, FALSE },
 	{ OPTION_BUS_ID, "BusID", OPTV_INTEGER, {0}, FALSE },
 	{ -1, NULL, OPTV_NONE, {0}, FALSE }
@@ -268,7 +259,7 @@ NewportProbe(DriverPtr drv, int flags)
 					pScrn->ScreenInit    = NewportScreenInit;
 					pScrn->EnterVT       = NewportEnterVT;
 					pScrn->LeaveVT       = NewportLeaveVT;
-					pScrn->driverPrivate = (void*)busID;
+					pScrn->driverPrivate = (void*)(long)busID;
 					foundScreen = TRUE;
 					break;
 				}
@@ -287,14 +278,13 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 	NewportPtr pNewport;
 	MessageType from;
 	ClockRangePtr clockRanges;
-	char *mod=0, *reqSym=0;
 
 	if (flags & PROBE_DETECT) return FALSE;
 
 	if (pScrn->numEntities != 1)
 		return FALSE;
 
-	busID = (int)(pScrn->driverPrivate);
+	busID = (long)(pScrn->driverPrivate);
 	pScrn->driverPrivate = NULL;
 	
 	/* Fill in the monitor field */
@@ -360,7 +350,10 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 
 	/* Fill in pScrn->options) */
 	xf86CollectOptions(pScrn, NULL);
-	xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, NewportOptions);
+	if (!(pNewport->Options = xalloc(sizeof(NewportOptions))))
+		return FALSE;
+	memcpy(pNewport->Options, NewportOptions, sizeof(NewportOptions));
+	xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pNewport->Options);
 
 	/* Set fields in ScreenInfoRec && NewportRec */
     	pScrn->videoRam = 1280 * (pScrn->bitsPerPixel >> 3);
@@ -377,7 +370,7 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 		pNewport->board_rev, pNewport->rex3_rev, 
 		pNewport->cmap_rev, pNewport->xmap9_rev);
 
-	if ( (xf86GetOptValInteger(NewportOptions, OPTION_BITPLANES, &pNewport->bitplanes)))
+	if ( (xf86GetOptValInteger(pNewport->Options, OPTION_BITPLANES, &pNewport->bitplanes)))
 	from = X_CONFIG;
 	xf86DrvMsg(pScrn->scrnIndex, from, "Newport has %d bitplanes\n", pNewport->bitplanes);
 
@@ -437,17 +430,12 @@ NewportPreInit(ScrnInfoPtr pScrn, int flags)
 	xf86PrintModes(pScrn);
 	xf86SetDpi (pScrn, 0, 0);
 
-	switch(pScrn->bitsPerPixel) {
-		case 8: 
-			mod = "cfb";
-			reqSym = "cfbScreenInit";
-			break;
-	}
-	if ( mod && (!xf86LoadSubModule(pScrn, mod))) {
+	/* Load FB module */
+	if (!xf86LoadSubModule (pScrn, "fb")) {
 		NewportFreeRec(pScrn);
 		return FALSE;
 	}
-	xf86LoaderReqSymbols( reqSym, NULL);
+	xf86LoaderReqSymLists( fbSymbols, NULL);
 
 	/* Load ShadowFB module */
 	if (!xf86LoadSubModule(pScrn, "shadowfb")) {
@@ -484,6 +472,8 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 				pScrn->rgbBits, pScrn->defaultVisual))
 		return FALSE;
 	
+	miSetPixmapDepths ();
+
 	pNewport->Bpp = pScrn->bitsPerPixel >> 3;
 	/* Setup the stuff for the shadow framebuffer */
 	pNewport->ShadowPitch = (( pScrn->virtualX * pNewport->Bpp ) + 3) & ~3L;
@@ -492,22 +482,18 @@ NewportScreenInit(int index, ScreenPtr pScreen, int argc, char **argv)
 	if (!NewportModeInit(pScrn, pScrn->currentMode))
 			return FALSE;
 
-	switch( pScrn->bitsPerPixel) {
-		case 8:
-			ret=cfbScreenInit(pScreen, pNewport->ShadowPtr,
-				pScrn->virtualX, pScrn->virtualY,
-				pScrn->xDpi, pScrn->yDpi,
-				pScrn->displayWidth);
-			break;
-		default:
-			xf86Msg(X_ERROR,
-				"Internal Error: Display depth not supported in NewportScreenInit.\n");
-			ret=FALSE;
-			break;
-	}
+	ret = fbScreenInit(pScreen, pNewport->ShadowPtr,
+			   pScrn->virtualX, pScrn->virtualY,
+			   pScrn->xDpi, pScrn->yDpi,
+			   pScrn->displayWidth,
+			   pScrn->bitsPerPixel);
 
 	if(!ret)
 		return FALSE;
+
+#ifdef RENDER
+	fbPictureInit (pScreen, 0, 0);
+#endif
 
 	/* we need rgb ordering if bitsPerPixel > 8 */
 	if (pScrn->bitsPerPixel > 8) {
@@ -630,7 +616,7 @@ NewportSaveScreen(ScreenPtr pScreen, int mode)
 }
 
 
-static OptionInfoPtr
+static const OptionInfoRec *
 NewportAvailableOptions(int chipid, int busid)
 {
 	return NewportOptions;

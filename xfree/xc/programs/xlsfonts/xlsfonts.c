@@ -1,5 +1,5 @@
 /*
- * $TOG: xlsfonts.c /main/35 1998/02/09 14:10:16 kaleb $
+ * $Xorg: xlsfonts.c,v 1.3 2000/08/17 19:54:53 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -20,6 +20,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
  * */
+/* $XFree86: xc/programs/xlsfonts/xlsfonts.c,v 1.7 2001/04/27 12:58:28 dawes Exp $ */
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -450,27 +451,37 @@ static char *bounds_metrics_fmt =
 
 
 static char* stringValued [] = { /* values are atoms */
-    "FAMILY_NAME",
+    /* font name components (see section 3.2 of the XLFD) */
     "FOUNDRY",
-    "STYLE",
-    "MONOSPACED",
-    "RELATIVE_WEIGHT",
-    "RELATIVE_SET",
-    "CLASSIFICATION",
+    "FAMILY_NAME",
+    "WEIGHT_NAME",
+    "SLANT",
+    "SETWIDTH_NAME",
+    "ADD_STYLE_NAME",
+    "SPACING",
     "CHARSET_REGISTRY",
     "CHARSET_ENCODING",
-    "QUALITY",
-    "CHARSET_COLLECTIONS",
-    "FULL_NAME",
-    "COPYRIGHT",
-    "WEIGHT_NAME",
-    "SETWIDTH_NAME",
-    "SLANT",
-    "SPACING",
-    "ADD_STYLE_NAME",
-    "FONTNAME_REGISTRY",
+
+    /* other standard X font properties (see section 3.2 of the XLFD) */
     "FONT",
+    "FACE_NAME",
+    "FULL_NAME",              /* deprecated */
+    "COPYRIGHT",
+    "NOTICE",
+    "FONT_TYPE",
+    "FONT_VERSION",
+    "RASTERIZER_NAME",
+    "RASTERIZER_VERSION",
+
+    /* unregistered font properties */
+    "CHARSET_COLLECTIONS",
+    "CLASSIFICATION",
     "DEVICE_FONT_NAME",
+    "FONTNAME_REGISTRY",
+    "MONOSPACED",
+    "QUALITY",
+    "RELATIVE_SET",
+    "STYLE",
      NULL
     };
 

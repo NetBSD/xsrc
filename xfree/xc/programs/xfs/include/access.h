@@ -1,4 +1,4 @@
-/* $TOG: access.h /main/5 1998/02/11 10:02:39 kaleb $ */
+/* $Xorg: access.h,v 1.3 2000/08/17 19:54:20 cpqbld Exp $ */
 /*
 Copyright 1987, 1998  The Open Group
 
@@ -43,7 +43,7 @@ in this Software without prior written authorization from The Open Group.
  * @(#)access.h	4.1	91/05/02
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xfs/include/access.h,v 1.4 2001/01/17 23:45:30 dawes Exp $ */
 
 #ifndef _ACCESS_H_
 #define _ACCESS_H_

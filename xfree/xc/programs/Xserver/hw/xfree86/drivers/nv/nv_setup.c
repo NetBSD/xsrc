@@ -24,7 +24,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c,v 1.8 2001/02/21 00:42:57 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_setup.c,v 1.9 2001/03/28 01:17:43 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -235,7 +235,7 @@ NVCommonSetup(ScrnInfoPtr pScrn)
                                       regBase+0x00009000, 0x00001000);
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "- PTIMER %x\n", pNv->riva.PTIMER));
     pNv->riva.PMC     = xf86MapPciMem(pScrn->scrnIndex, mmioFlags, pNv->PciTag,
-                                      regBase+0x00000000, 0x00001000);
+                                      regBase+0x00000000, 0x00009000);
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "- PMC %x\n", pNv->riva.PMC));
     pNv->riva.FIFO    = xf86MapPciMem(pScrn->scrnIndex, mmioFlags, pNv->PciTag,
                                       regBase+0x00800000, 0x00010000);

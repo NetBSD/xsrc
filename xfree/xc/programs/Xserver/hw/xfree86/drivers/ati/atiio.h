@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiio.h,v 1.9 2000/08/22 21:54:30 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atiio.h,v 1.12 2001/01/06 21:29:15 tsi Exp $ */
 /*
- * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2001 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -32,9 +32,6 @@
 
 #include "atiregs.h"
 
-#ifndef NO_COMPILER_H_EXTRAS
-# define NO_COMPILER_H_EXTRAS
-#endif
 #include "compiler.h"
 
 /* I/O decoding definitions */

@@ -1,4 +1,4 @@
-/* $TOG: sched.h /main/5 1998/02/09 16:18:15 kaleb $ */
+/* $Xorg: sched.h,v 1.3 2000/08/17 19:47:46 cpqbld Exp $ */
 /**** module sched.h ****/
 /******************************************************************************
 
@@ -66,7 +66,7 @@ terms and conditions:
 	Robert NC Shelley -- AGE Logic, Inc.  May 1993
 
 ******************************************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/XIE/mixie/include/sched.h,v 1.4 2001/01/17 22:13:07 dawes Exp $ */
 
 #ifndef _XIEH_SCHED
 #define _XIEH_SCHED

@@ -1,4 +1,4 @@
-/* $TOG: ResConfigP.h /main/2 1998/02/06 13:25:14 kaleb $ */
+/* $Xorg: ResConfigP.h,v 1.4 2000/08/17 19:46:16 cpqbld Exp $ */
 /*
 
 Copyright 1987, 1988, 1998  The Open Group
@@ -20,24 +20,34 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/*
- * 1.2 src/gos/2d/XTOP/lib/Xt/custom_proto.h, xtoolkit, gos42G 8/12/93 10:35:50 
- *
- * COMPONENT_NAME:  XTOOLKIT
- *
- * FUNCTIONS:
- *
- * ORIGINS:  27
- *
- * IBM CONFIDENTIAL -- (IBM Confidential Restricted when
- * combined with the aggregated modules for this product)
- * OBJECT CODE ONLY SOURCE MATERIALS
- * (C) COPYRIGHT International Business Machines Corp. 1992 
- * All Rights Reserved
- *
- * US Government Users Restricted Rights - Use, duplication or
- * disclosure restricted by GSA ADP Schedule Contract with IBM Corp.
- */
+/*****************************************************************
+
+(C) COPYRIGHT International Business Machines Corp. 1992,1997
+    All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software.
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+THE IBM CORPORATION BE LIABLE FOR ANY CLAIM, DAMAGES, INCLUDING,
+BUT NOT LIMITED TO CONSEQUENTIAL OR INCIDENTAL DAMAGES, OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name of the IBM Corporation shall
+not be used in advertising or otherwise to promote the sale, use or other
+dealings in this Software without prior written authorization from the IBM
+Corporation.
+
+******************************************************************/
 
 #ifndef _RESCONFIGP_H
 #define _RESCONFIGP_H

@@ -1,4 +1,4 @@
-/* $TOG: xkbout.c /main/8 1997/06/13 05:59:04 kaleb $ */
+/* $Xorg: xkbout.c,v 1.3 2000/08/17 19:46:44 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/xkbfile/xkbout.c,v 3.7 2001/01/17 19:43:42 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/* $TOG: Xct.h /main/9 1998/02/06 15:46:55 kaleb $ */
+/* $Xorg: Xct.h,v 1.3 2000/08/17 19:46:05 cpqbld Exp $ */
 
 /*
 
@@ -21,7 +21,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/Xct.h,v 1.4 1998/10/03 09:06:38 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/Xct.h,v 1.6 2001/01/17 19:42:58 dawes Exp $ */
 
 #ifndef _Xct_h
 #define _Xct_h

@@ -1,4 +1,4 @@
-/* $TOG: SetWMCW.c /main/11 1998/02/06 13:26:04 kaleb $ */
+/* $Xorg: SetWMCW.c,v 1.3 2000/08/17 19:46:17 cpqbld Exp $ */
 
 /*
  * Copyright 1993 by Sun Microsystems, Inc. Mountain View, CA.

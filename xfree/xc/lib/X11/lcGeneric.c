@@ -1,4 +1,4 @@
-/* $TOG: lcGeneric.c /main/12 1998/06/25 16:09:44 kaleb $ */
+/* $Xorg: lcGeneric.c,v 1.6 2000/08/17 19:45:18 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.12 2000/11/29 18:12:26 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcGeneric.c,v 3.14 2001/01/17 19:41:54 dawes Exp $ */
 
 #include <stdio.h>
 #include "Xlibint.h"
@@ -442,7 +442,7 @@ read_charset_define(
         if (num > 0) {
 	    /* hackers will get truncated -- C'est la vie */
             strncpy(cset_name,value[0], sizeof cset_name - 1);
-	    cset_name[sizeof cset_name - 1] = '\0';
+	    cset_name[(sizeof cset_name) - 1] = '\0';
             sprintf(name, "%s.%s", csd , "side");
             _XlcGetResource(lcd, "XLC_CHARSET_DEFINE", name, &value, &num);
             if (num > 0) {

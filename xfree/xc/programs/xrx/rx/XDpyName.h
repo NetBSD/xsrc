@@ -1,4 +1,4 @@
-/* $TOG: XDpyName.h /main/4 1998/02/10 18:37:11 kaleb $ */
+/* $Xorg: XDpyName.h,v 1.3 2000/08/17 19:55:02 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

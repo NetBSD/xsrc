@@ -1,5 +1,5 @@
 /*
- * $TOG: xfd.c /main/34 1998/02/09 13:57:31 kaleb $
+ * $Xorg: xfd.c,v 1.3 2000/08/17 19:54:18 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * *
  * Author:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xfd/xfd.c,v 1.5 2001/04/01 14:00:20 tsi Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -35,6 +35,7 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xaw/Form.h>
 #include <X11/Xaw/Command.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "grid.h"
 
 char *ProgramName;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbimage.c,v 1.9 2000/01/29 18:58:26 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbimage.c,v 1.11 2001/01/17 22:36:35 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: cfbimage.c /main/20 1998/02/09 14:06:06 kaleb $ */
+/* $Xorg: cfbimage.c,v 1.3 2000/08/17 19:48:14 cpqbld Exp $ */
 
 #include "X.h"
 #include "windowstr.h"

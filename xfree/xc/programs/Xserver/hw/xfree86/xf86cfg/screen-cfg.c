@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c,v 1.5 2000/12/01 18:31:07 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/screen-cfg.c,v 1.8.2.1 2001/05/21 22:24:02 paulo Exp $
  */
 
 #include "xf86config.h"
@@ -367,7 +367,7 @@ static void
 MoveCallback(Widget w, XtPointer user_data, XtPointer call_data)
 {
     char *tmp;
-    Bool down = (Bool)user_data;
+    Bool down = (long)user_data;
 
     if (unsel_index < 0 || unsel_index >= ndefmodes)
 	return;
@@ -406,7 +406,7 @@ ScreenDialog(XF86SetupInfo *info)
     XF86ConfModeLinePtr mline = mon != NULL ? mon->mon_modeline_lst : NULL;
     int i;
 #ifdef USE_MODULES
-    xf86cfgDriverOptions *drv_opts = video_driver_info;
+    xf86cfgModuleOptions *drv_opts = module_options;
     Bool foundRotate = False;
 #endif
 
@@ -486,31 +486,34 @@ ScreenDialog(XF86SetupInfo *info)
     }
 
 #ifdef USE_MODULES
-    while (drv_opts) {
-	if (strcmp(drv_opts->name, screen->scrn_device->dev_driver) == 0) {
-	    OptionInfoPtr opts = drv_opts->option;
+    if (!nomodules) {
+	while (drv_opts) {
+	    if (drv_opts->type == VideoModule &&
+		strcmp(drv_opts->name, screen->scrn_device->dev_driver) == 0) {
+		OptionInfoPtr opts = drv_opts->option;
 
-	    while (opts->name) {
-		if (xf86nameCompare(opts->name, "Rotate") == 0) {
-		    foundRotate = True;
-		    break;
+		while (opts->name) {
+		    if (xf86nameCompare(opts->name, "Rotate") == 0) {
+			foundRotate = True;
+			break;
+		    }
+		    opts++;
 		}
-		opts++;
+		break;
 	    }
-	    break;
+	    drv_opts = drv_opts->next;
 	}
-	drv_opts = drv_opts->next;
-    }
 
-    if (!foundRotate) {
-	XtUnmapWidget(labelRotate);
-	XtUnmapWidget(cw);
-	XtUnmapWidget(ccw);
-    }
-    else {
-	XtMapWidget(labelRotate);
-	XtMapWidget(cw);
-	XtMapWidget(ccw);
+	if (!foundRotate) {
+	    XtUnmapWidget(labelRotate);
+	    XtUnmapWidget(cw);
+	    XtUnmapWidget(ccw);
+	}
+	else {
+	    XtMapWidget(labelRotate);
+	    XtMapWidget(cw);
+	    XtMapWidget(ccw);
+	}
     }
 #endif
     if (rotate == CW) {

@@ -23,7 +23,7 @@
  * dealings in this Software without prior written authorization from the
  * XFree86 Project.
  */
-/* $XFree86: xc/lib/font/FreeType/module/ftmodule.c,v 1.8 2000/11/14 16:54:44 dawes Exp $ */
+/* $XFree86: xc/lib/font/FreeType/module/ftmodule.c,v 1.9 2001/02/13 21:15:15 dawes Exp $ */
 
 #include "misc.h"
 

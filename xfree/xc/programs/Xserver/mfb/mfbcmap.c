@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mfb/mfbcmap.c,v 1.4 1998/10/04 09:39:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/mfb/mfbcmap.c,v 1.6 2001/01/17 22:37:02 dawes Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $TOG: mfbcmap.c /main/13 1998/02/09 14:38:42 kaleb $ */
+/* $Xorg: mfbcmap.c,v 1.3 2000/08/17 19:53:34 cpqbld Exp $ */
 #include "X.h"
 #include "scrnintstr.h"
 #include "colormapst.h"

@@ -1,6 +1,4 @@
-/* $XFree86: $ */
-
-/* $XConsortium: AttrValid.h /main/1 1996/09/28 16:57:36 rws $ */
+/* $Xorg: AttrValid.h,v 1.3 2000/08/17 19:48:04 cpqbld Exp $ */
 /*
 (c) Copyright 1996 Hewlett-Packard Company
 (c) Copyright 1996 International Business Machines Corp.
@@ -32,6 +30,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
+/* $XFree86: xc/programs/Xserver/Xprint/AttrValid.h,v 1.4 2001/01/17 22:36:28 dawes Exp $ */
 
 #ifndef _Xp_AttrValid_h
 #define _Xp_AttrValid_h

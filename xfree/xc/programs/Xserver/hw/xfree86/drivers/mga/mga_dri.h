@@ -1,12 +1,45 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dri.h,v 1.2 2000/06/17 00:03:19 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_dri.h,v 1.6 2001/04/10 16:08:01 dawes Exp $ */
 
-#ifndef _MGA_DRI_
-#define _MGA_DRI_
+/*
+ * Copyright 2000 VA Linux Systems Inc., Fremont, California.
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * VA LINUX SYSTEMS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES
+ * OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *   Keith WHitwell <keithw@valinux.com>
+ *   Gareth Hughes <gareth@valinux.com>
+ */
 
-#include <xf86drm.h>
-#include <xf86drmMga.h>
+#ifndef __MGA_DRI_H__
+#define __MGA_DRI_H__
 
-#define MGA_MAX_DRAWABLES 256
+#include "xf86drm.h"
+#include "xf86drmMga.h"
+
+#define MGA_DEFAULT_AGP_MODE     1
+#define MGA_MAX_AGP_MODE         4
+
+/* Buffer are aligned on 4096 byte boundaries.
+ */
+#define MGA_BUFFER_ALIGN	0x00000fff
 
 typedef struct {
    int reserved_map_agpstart;
@@ -17,19 +50,33 @@ typedef struct {
    int warp_ucode_size;
    int chipset;
    int sgram;
-   unsigned long agpMode;
-   unsigned long agpHandle;
-   Bool agpAcquired;
-   drmHandle agp_private;
-   drmSize agpSizep;
-   drmAddress agpBase;
-   int irq;
-   drmHandle regs;
-   drmSize regsSize;
-   drmAddress regsMap;
-   drmMgaWarpIndex WarpIndex[MGA_MAX_WARP_PIPES];
-   drmBufMapPtr drmBufs;
-   CARD8 *agp_map;
+
+   unsigned int frontOffset;
+   unsigned int frontPitch;
+
+   unsigned int backOffset;
+   unsigned int backPitch;
+
+   unsigned int depthOffset;
+   unsigned int depthPitch;
+
+   unsigned int textureOffset;
+   int textureSize;
+
+   drmRegion agp;
+
+   /* PCI mappings */
+   drmRegion registers;
+   drmRegion status;
+
+   /* AGP mappings */
+   drmRegion warp;
+   drmRegion primary;
+   drmRegion buffers;
+   drmRegion agpTextures;
+
+   drmBufMapPtr drmBuffers;
+
 } MGADRIServerPrivateRec, *MGADRIServerPrivatePtr;
 
 typedef struct {
@@ -38,6 +85,9 @@ typedef struct {
    int height;
    int mem;
    int cpp;
+
+   int agpMode;
+
    unsigned int frontOffset;
    unsigned int frontPitch;
 
@@ -59,83 +109,13 @@ typedef struct {
    unsigned int agpTextureSize;
    int logAgpTextureGranularity;
 
-   /* Redundant?
-    */
-   unsigned int frontOrg;
-   unsigned int backOrg;
-   unsigned int depthOrg;
-
    unsigned int mAccess;
 
-   drmHandle agp;
-   drmSize agpSize;
+   drmRegion registers;
+   drmRegion status;
+   drmRegion primary;
+   drmRegion buffers;
+   unsigned int sarea_priv_offset;
 } MGADRIRec, *MGADRIPtr;
-
-
-/* WARNING: Do not change the SAREA structure without changing the kernel
- * as well */
-typedef struct {
-   unsigned char next, prev;
-   unsigned char in_use;
-   unsigned int age;
-} MGATexRegionRec, *MGATexRegionPtr;
-
-typedef struct {
-   /* The channel for communication of state information to the kernel
-    * on firing a vertex dma buffer.
-    */
-   unsigned int ContextState[MGA_CTX_SETUP_SIZE];
-   unsigned int ServerState[MGA_2D_SETUP_SIZE];
-   unsigned int TexState[2][MGA_TEX_SETUP_SIZE];
-   unsigned int WarpPipe;
-   unsigned int dirty;
-   
-   unsigned int nbox;
-   XF86DRIClipRectRec boxes[MGA_NR_SAREA_CLIPRECTS];
-   
-   /* Information about the most recently used 3d drawable.  The
-    * client fills in the req_* fields, the server fills in the 
-    * exported_ fields and puts the cliprects into boxes, above.
-    *
-    * The client clears the exported_drawable field before
-    * clobbering the boxes data.
-    */
-   unsigned int req_drawable;       /* the X drawable id */
-   unsigned int req_draw_buffer;    /* MGA_FRONT or MGA_BACK */
-   
-   unsigned int exported_drawable;
-   unsigned int exported_index;
-   unsigned int exported_stamp;
-   unsigned int exported_buffers;
-   int exported_nfront;
-   int exported_nback;
-   int exported_back_x, exported_front_x, exported_w;
-   int exported_back_y, exported_front_y, exported_h;
-   XF86DRIClipRectRec exported_boxes[MGA_NR_SAREA_CLIPRECTS];
-   
-   /* Counters for aging textures and for client-side throttling.
-    */
-   unsigned int last_enqueue;       /* last time a buffer was enqueued */
-   unsigned int last_dispatch;      /* age of the most recently dispatched buffer */
-   unsigned int last_quiescent;     /*  */
-   
-   /* LRU lists for texture memory in agp space and on the card */
-   
-   MGATexRegionRec texList[MGA_NR_TEX_HEAPS][MGA_NR_TEX_REGIONS+1];
-   unsigned int texAge[MGA_NR_TEX_HEAPS];
-   /* Mechanism to validate card state.
-    */
-   int ctxOwner;
-} MGASAREARec, *MGASAREAPtr;
-
-typedef struct {
-  /* Nothing here yet */
-  int dummy;
-} MGAConfigPrivRec, *MGAConfigPrivPtr;
-
-typedef struct {
-  /* Nothing here yet */
-  int dummy;
-} MGADRIContextRec, *MGADRIContextPtr;
 
 #endif

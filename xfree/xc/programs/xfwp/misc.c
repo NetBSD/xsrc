@@ -1,4 +1,4 @@
-/* $TOG: misc.c /main/11 1997/12/04 13:14:03 barstow $ */
+/* $Xorg: misc.c,v 1.5 2000/08/17 19:54:23 cpqbld Exp $ */
 
 /*
 Copyright "1986-1997 The Open Group All Rights Reserved
@@ -31,7 +31,7 @@ authorization from The Open Group.
 
 X Window System is a trademark of The Open Group.
 */
-/* $XFree86$ */
+/* $XFree86: xc/programs/xfwp/misc.c,v 1.6 2001/01/17 23:45:34 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -407,7 +407,7 @@ doConfigPermitDeny(
       if ((config_file_data[line_number]->operator = 
 		(char *) malloc (strlen(result) + 1)) == NULL)
       {
-	(void) fprintf(stderr, "malloc - config rule (operator)\n");
+	(void) fprintf(stderr, "malloc - config rule (op)\n");
 	return 0;
       }
       strcpy(config_file_data[line_number]->operator, result);

@@ -1,3 +1,4 @@
+/* $XFree86: xc/lib/GL/glx/dispatch.c,v 1.3 2001/03/21 16:04:39 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.

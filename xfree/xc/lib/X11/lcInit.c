@@ -1,4 +1,4 @@
-/* $TOG: lcInit.c /main/5 1997/11/13 18:54:36 kaleb $ */
+/* $Xorg: lcInit.c,v 1.3 2000/08/17 19:45:18 cpqbld Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -31,7 +31,7 @@
  *   Modifier: Masayoshi Shimamura      FUJITSU LIMITED 
  *
  */
-/* $XFree86: xc/lib/X11/lcInit.c,v 3.6 2000/10/24 18:07:36 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcInit.c,v 3.8 2001/01/17 19:41:54 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

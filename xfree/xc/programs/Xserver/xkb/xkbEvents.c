@@ -1,4 +1,4 @@
-/* $TOG: xkbEvents.c /main/21 1997/11/25 12:31:37 kaleb $ */
+/* $Xorg: xkbEvents.c,v 1.3 2000/08/17 19:53:47 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbEvents.c,v 3.5 2000/06/13 23:15:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbEvents.c,v 3.8 2001/02/20 16:43:14 paulo Exp $ */
 
 #include <stdio.h>
 #define NEED_EVENTS 1
@@ -925,7 +925,7 @@ XkbSrvInfoPtr	xkbi;
 	     	(_XkbIsReleaseEvent(xE[0].u.u.type)) ) {
 	    return False;
 	}
-	if ((pXDev->grab != NullGrab) &&
+	if ((pXDev->grab != NullGrab) && pXDev->fromPassiveGrab &&
 	    ((xE[0].u.u.type==KeyPress)||(xE[0].u.u.type==KeyRelease))) {
 	    register unsigned state,flags;
 

@@ -18,9 +18,7 @@
 
 #define FT_MAKE_OPTION_SINGLE_OBJECT
 
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
 #include "t1parse.c"
 #include "t1load.c"
 #include "t1objs.c"
@@ -30,20 +28,6 @@
 #ifndef T1_CONFIG_OPTION_NO_AFM
 #include "t1afm.c"
 #endif
-
-#else /* FT_FLAT_COMPILE */
-
-#include <type1/t1parse.c>
-#include <type1/t1load.c>
-#include <type1/t1objs.c>
-#include <type1/t1driver.c>
-#include <type1/t1gload.c>
-
-#ifndef T1_CONFIG_OPTION_NO_AFM
-#include <type1/t1afm.c>
-#endif
-
-#endif /* FT_FLAT_COMPILE */
 
 
 /* END */

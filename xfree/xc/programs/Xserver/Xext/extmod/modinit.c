@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/extmod/modinit.c,v 1.13 2000/02/13 06:15:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/extmod/modinit.c,v 1.15 2001/03/05 04:51:56 mvojkovi Exp $ */
 
 /*
  *
@@ -128,8 +128,10 @@ extern void EVIExtensionInit(INITARGS);
 
 #ifdef XV
 extern void XvExtensionInit(INITARGS);
+extern void XvMCExtensionInit(INITARGS);
 extern void XvRegister(INITARGS);
 #include "Xv.h"
+#include "XvMC.h"
 #endif
 
 /*
@@ -277,6 +279,13 @@ ExtensionModule extensionModules[] = {
 	NULL,
 	XvRegister,
 	NULL
+    },
+    {
+        XvMCExtensionInit,
+        XvMCName,
+        NULL,
+        NULL,
+        NULL
     },
 #endif
     {				/* DON'T delete this entry ! */

@@ -1,4 +1,4 @@
-/* $TOG: sharedlib.c /main/7 1998/02/06 12:49:07 kaleb $ */
+/* $Xorg: sharedlib.c,v 1.3 2000/08/17 19:45:45 cpqbld Exp $ */
 /*
 
 Copyright 1991, 1994, 1998  The Open Group

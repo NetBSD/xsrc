@@ -1,4 +1,4 @@
-/* $TOG: PassivGrab.c /main/31 1998/02/06 13:24:33 kaleb $ */
+/* $Xorg: PassivGrab.c,v 1.4 2000/08/17 19:46:15 cpqbld Exp $ */
 
 /********************************************************
 
@@ -365,7 +365,7 @@ static void DeleteServerGrabFromList(passiveListPtr, pMinuendGrab)
     register XtServerGrabPtr grab;
     register XtServerGrabExtPtr ext;
     
-    for (next = passiveListPtr; grab = *next; )
+    for (next = passiveListPtr; (grab = *next); )
     {
 	if (GrabMatchesSecond(grab, pMinuendGrab) && 
 	    (pDisplay(grab) == pDisplay(pMinuendGrab)))

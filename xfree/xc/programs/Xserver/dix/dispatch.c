@@ -1,4 +1,4 @@
-/* $TOG: dispatch.c /main/196 1998/02/09 14:18:32 kaleb $ */
+/* $Xorg: dispatch.c,v 1.4 2000/08/17 19:48:17 cpqbld Exp $ */
 /************************************************************
 
 Copyright 1987, 1989, 1998  The Open Group
@@ -64,7 +64,7 @@ SOFTWARE.
 *                                                               *
 *****************************************************************/
 
-/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.21 2000/09/22 05:57:18 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.23 2001/01/17 22:36:42 dawes Exp $ */
 
 #ifdef PANORAMIX_DEBUG
 #include <stdio.h>
@@ -3674,8 +3674,11 @@ KillAllClients()
 {
     int i;
     for (i=1; i<currentMaxClients; i++)
-        if (clients[i])
+        if (clients[i]) {
+            /* Make sure Retained clients are released. */
+            clients[i]->closeDownMode = DestroyAll;
             CloseDownClient(clients[i]);     
+        }
 }
 
 /*********************

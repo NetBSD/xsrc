@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.22 2000/02/08 17:18:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.24 2001/01/17 22:36:43 dawes Exp $ */
 /************************************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -22,30 +22,7 @@ SOFTWARE.
 
 ************************************************************************/
 
-/* The panoramix components contained the following notice */
-/****************************************************************
-*                                                               *
-*    Copyright (c) Digital Equipment Corporation, 1991, 1997    *
-*                                                               *
-*   All Rights Reserved.  Unpublished rights  reserved  under   *
-*   the copyright laws of the United States.                    *
-*                                                               *
-*   The software contained on this media  is  proprietary  to   *
-*   and  embodies  the  confidential  technology  of  Digital   *
-*   Equipment Corporation.  Possession, use,  duplication  or   *
-*   dissemination of the software and media is authorized only  *
-*   pursuant to a valid written license from Digital Equipment  *
-*   Corporation.                                                *
-*                                                               *
-*   RESTRICTED RIGHTS LEGEND   Use, duplication, or disclosure  *
-*   by the U.S. Government is subject to restrictions  as  set  *
-*   forth in Subparagraph (c)(1)(ii)  of  DFARS  252.227-7013,  *
-*   or  in  FAR 52.227-19, as applicable.                       *
-*                                                               *
-*****************************************************************/
-
-
-/* $TOG: dixfonts.c /main/61 1998/05/28 15:47:54 kaleb $ */
+/* $Xorg: dixfonts.c,v 1.4 2000/08/17 19:48:18 cpqbld Exp $ */
 
 #define NEED_REPLIES
 #include "X.h"
@@ -490,7 +467,7 @@ CloseFont(value, fid)
     if (pfont == NullFont)
 	return (Success);
     if (--pfont->refcnt == 0) {
-	if (patternCache && pfont->info.cachable)
+	if (patternCache)
 	    RemoveCachedFontPattern (patternCache, pfont);
 	/*
 	 * since the last reference is gone, ask each screen to free any

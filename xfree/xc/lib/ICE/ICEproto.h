@@ -1,4 +1,4 @@
-/* $TOG: ICEproto.h /main/8 1998/02/06 13:56:44 kaleb $ */
+/* $Xorg: ICEproto.h,v 1.4 2000/08/17 19:44:11 cpqbld Exp $ */
 /******************************************************************************
 
 
@@ -25,6 +25,8 @@ Author: Ralph Mor, X Consortium
 
 #ifndef _ICEPROTO_H_
 #define _ICEPROTO_H_
+
+#include <X11/Xmd.h>
 
 typedef struct {
     CARD8	majorOpcode;

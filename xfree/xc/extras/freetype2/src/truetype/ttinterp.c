@@ -16,32 +16,21 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftcalc.h>
-#include <freetype/ftsystem.h>
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_CALC_H
+#include FT_SYSTEM_H
 #include "ttinterp.h"
-
-#else
-
-#include <truetype/ttinterp.h>
-
-#endif
-
-
-#include <freetype/internal/tterrors.h>
+#include FT_INTERNAL_TRUETYPE_ERRORS_H
 
 
 #ifdef TT_CONFIG_OPTION_BYTECODE_INTERPRETER
 
 
-#define TT_MULFIX   FT_MulFix
-#define TT_MULDIV   FT_MulDiv
+#define TT_MULFIX  FT_MulFix
+#define TT_MULDIV  FT_MulDiv
 
-#define TT_INT64    FT_Int64
+#define TT_INT64   FT_Int64
 
 
   /*************************************************************************/
@@ -201,9 +190,6 @@
 
 #define CUR_Ppem() \
           Cur_PPEM( EXEC_ARG )
-
-#define CALC_Length() \
-          Calc_Length( EXEC_ARG )
 
 #define INS_SxVTL( a, b, c, d ) \
           Ins_SxVTL( EXEC_ARG_ a, b, c, d )
@@ -6855,8 +6841,8 @@
         FT_Byte   opcode = CUR.opcode;
 
 
-#undef   ARRAY_BOUND_ERROR
-#define  ARRAY_BOUND_ERROR  goto Set_Invalid_Ref
+#undef  ARRAY_BOUND_ERROR
+#define ARRAY_BOUND_ERROR  goto Set_Invalid_Ref
 
 
         switch ( opcode )

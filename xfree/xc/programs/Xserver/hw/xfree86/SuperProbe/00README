@@ -69,14 +69,14 @@ Tiago Gons <tiago@comosjn.hobby.nl>
 Kevin Martin <martin@cs.unc.edu>
 	8514/A, ATI Mach8 and ATI Mach32 probe code.
 
-Marc Aurele La France <tsi@ualberta.ca>
+Marc Aurele La France <tsi@xfree86.org>
 	ATI Mach64 probe code.
 
 The XFree86 Beta Test Team
 	For helping test and debug this software.
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/00README,v 3.4 1996/02/04 08:56:27 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/00README,v 3.6 2001/01/06 20:58:02 tsi Exp $
 
 
 

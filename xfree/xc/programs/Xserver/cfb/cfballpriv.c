@@ -1,5 +1,5 @@
 /*
- * $TOG: cfballpriv.c /main/6 1998/02/09 14:04:27 kaleb $
+ * $Xorg: cfballpriv.c,v 1.3 2000/08/17 19:48:13 cpqbld Exp $
  *
 Copyright 1991, 1998  The Open Group
 
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XFree86: xc/programs/Xserver/cfb/cfballpriv.c,v 1.8 1999/04/04 08:46:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfballpriv.c,v 1.11 2001/01/30 22:06:15 tsi Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -41,11 +41,9 @@ in this Software without prior written authorization from The Open Group.
 #if PSZ==8
 int cfbWindowPrivateIndex;
 int cfbGCPrivateIndex;
+#endif
 #ifdef CFB_NEED_SCREEN_PRIVATE
 int cfbScreenPrivateIndex = -1;
-#endif
-#endif
-#ifdef CFB_NEED_SCREEN_PRIVATE
 static unsigned long cfbGeneration = 0;
 #endif
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810state.c,v 1.4 2000/06/22 16:59:24 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i810/i810state.c,v 1.6 2001/03/21 16:14:21 dawes Exp $ */
 
 #include <stdio.h>
 
@@ -63,11 +63,18 @@ static void i810DDAlphaFunc(GLcontext *ctx, GLenum func, GLclampf ref)
 
 static void i810DDBlendEquation(GLcontext *ctx, GLenum mode) 
 {
+   i810ContextPtr imesa = I810_CONTEXT(ctx);
+
    if (mode != GL_FUNC_ADD_EXT) {
       ctx->Color.BlendEquation = GL_FUNC_ADD_EXT;
       if (0) fprintf(stderr, "Unsupported blend equation: %s\n", 
 		     gl_lookup_enum_by_nr(mode));
    }
+
+   if (ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY)
+      imesa->Fallback |= I810_FALLBACK_LOGICOP;
+   else
+      imesa->Fallback &= ~I810_FALLBACK_LOGICOP;
 }
 
 static void i810DDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
@@ -175,6 +182,7 @@ static void i810DDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
    GLubyte p[4];
    int i,j,k;
    int active = (ctx->Polygon.StippleFlag && ctx->PB->primitive == GL_POLYGON);
+   GLuint newMask;
 
    FLUSH_BATCH(imesa);
    ctx->Driver.TriangleCaps |= DD_TRI_STIPPLE;
@@ -184,10 +192,10 @@ static void i810DDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
       imesa->Setup[I810_CTXREG_ST1] &= ~ST1_ENABLE;
    }
 
-   p[0] = mask[0] & 0xf; p[0] |= p[0] << 4;
-   p[1] = mask[4] & 0xf; p[1] |= p[1] << 4;
-   p[2] = mask[8] & 0xf; p[2] |= p[2] << 4;
-   p[3] = mask[12] & 0xf; p[3] |= p[3] << 4;
+   p[0] = mask[12] & 0xf; p[0] |= p[0] << 4;
+   p[1] = mask[8] & 0xf; p[1] |= p[1] << 4;
+   p[2] = mask[4] & 0xf; p[2] |= p[2] << 4;
+   p[3] = mask[0] & 0xf; p[3] |= p[3] << 4;
 
    for (k = 0 ; k < 8 ; k++)
       for (j = 0 ; j < 4; j++) 
@@ -196,12 +204,19 @@ static void i810DDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
 	       ctx->Driver.TriangleCaps &= ~DD_TRI_STIPPLE;
 	       return;
 	    }
-   
+
+   newMask = ((p[0] & 0xf) << 0) |
+             ((p[1] & 0xf) << 4) |
+             ((p[2] & 0xf) << 8) |
+             ((p[3] & 0xf) << 12);
+   if (newMask == 0xffff) {
+      /* do opaque stipple in software for conformance */
+      ctx->Driver.TriangleCaps &= ~DD_TRI_STIPPLE;
+      return;
+   }
+
    imesa->Setup[I810_CTXREG_ST1] &= ~0xffff;
-   imesa->Setup[I810_CTXREG_ST1] |= ( ((p[0] & 0xf) << 0) |
-				      ((p[1] & 0xf) << 4) |
-				      ((p[2] & 0xf) << 8) |
-				      ((p[3] & 0xf) << 12) );   
+   imesa->Setup[I810_CTXREG_ST1] |= newMask;
 
    if (active)
       imesa->Setup[I810_CTXREG_ST1] |= ST1_ENABLE;
@@ -244,10 +259,10 @@ static void i810DDDither(GLcontext *ctx, GLboolean enable)
 
 static void i810DDLogicOp( GLcontext *ctx, GLenum opcode )
 {
+   i810ContextPtr imesa = I810_CONTEXT(ctx);
+
    if (ctx->Color.ColorLogicOpEnabled) 
    {
-      i810ContextPtr imesa = I810_CONTEXT(ctx);
-
       FLUSH_BATCH( imesa );
    
       if (opcode == GL_COPY)
@@ -255,6 +270,8 @@ static void i810DDLogicOp( GLcontext *ctx, GLenum opcode )
       else
 	 imesa->Fallback |= I810_FALLBACK_LOGICOP;
    }
+   else 
+      imesa->Fallback &= ~I810_FALLBACK_LOGICOP;
 }
 
 static GLboolean i810DDSetDrawBuffer(GLcontext *ctx, GLenum mode )
@@ -430,26 +447,23 @@ static GLboolean i810DDColorMask(GLcontext *ctx,
 				 GLboolean b, GLboolean a )
 {
    i810ContextPtr imesa = I810_CONTEXT( ctx );
-   GLuint tmp = 0;
-   GLuint rv = 1;
+   GLuint tmp;
 
-   imesa->Fallback &= ~I810_FALLBACK_COLORMASK;
-
-   if (r && g && b) {
-      tmp = imesa->Setup[I810_CTXREG_B2] | B2_FB_WRITE_ENABLE;
-   } else if (!r && !g && !b) {
-      tmp = imesa->Setup[I810_CTXREG_B2] & ~B2_FB_WRITE_ENABLE;
-   } else {
-      rv = 0;
+   if (r && g && b)
+      imesa->Fallback &= ~I810_FALLBACK_COLORMASK;
+   else
       imesa->Fallback |= I810_FALLBACK_COLORMASK;
-   }
-      
+
+   tmp = imesa->Setup[I810_CTXREG_B2] |
+      (B2_FB_WRITE_ENABLE | B2_UPDATE_FB_WRITE_ENABLE);
+
    if (tmp != imesa->Setup[I810_CTXREG_B2]) {
       FLUSH_BATCH(imesa);
       imesa->Setup[I810_CTXREG_B2] = tmp;
+      imesa->dirty |= I810_UPLOAD_CTX;
    }
 
-   return rv;
+   return GL_FALSE;  /* makes s/w path always do s/w masking */
 }
 
 /* Seperate specular not fully implemented in hardware...  Needs
@@ -529,6 +543,13 @@ static void i810DDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
       imesa->Setup[I810_CTXREG_B1] &= ~B1_BLEND_ENABLE;
       if (state)
 	 imesa->Setup[I810_CTXREG_B1] |= B1_BLEND_ENABLE;
+
+      /* For some reason enable(GL_BLEND) affects ColorLogicOpEnabled.
+       */
+      if (ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY)
+	 imesa->Fallback |= I810_FALLBACK_LOGICOP;
+      else
+	 imesa->Fallback &= ~I810_FALLBACK_LOGICOP;
       break;
    case GL_DEPTH_TEST:
       FLUSH_BATCH(imesa);
@@ -609,19 +630,8 @@ static void i810DDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
    case GL_TEXTURE_2D:      
       FLUSH_BATCH(imesa);
       imesa->new_state |= I810_NEW_TEXTURE;
-      imesa->dirty |= I810_UPLOAD_CTX;
-      if (ctx->Texture.CurrentUnit == 0) {
-	 imesa->Setup[I810_CTXREG_MT] &= ~MT_TEXEL0_ENABLE;
-	 if (state)
-	    imesa->Setup[I810_CTXREG_MT] |= MT_TEXEL0_ENABLE;
-      } else {
-	 imesa->Setup[I810_CTXREG_MT] &= ~MT_TEXEL1_ENABLE;
-	 if (state)
-	    imesa->Setup[I810_CTXREG_MT] |= MT_TEXEL1_ENABLE;
-      }
       break;
    case GL_COLOR_LOGIC_OP:
-   case GL_INDEX_LOGIC_OP:
       FLUSH_BATCH( imesa );
       imesa->Fallback &= ~I810_FALLBACK_LOGICOP;
       if (state && ctx->Color.LogicOp != GL_COPY)
@@ -980,8 +990,8 @@ void i810DDInitState( i810ContextPtr imesa )
 
 #define INTERESTED (~(NEW_MODELVIEW|NEW_PROJECTION|\
                       NEW_TEXTURE_MATRIX|\
-                      NEW_USER_CLIP|NEW_CLIENT_STATE|\
-                      NEW_TEXTURE_ENABLE))
+                      NEW_USER_CLIP|NEW_CLIENT_STATE))
+
 
 void i810DDUpdateState( GLcontext *ctx )
 {

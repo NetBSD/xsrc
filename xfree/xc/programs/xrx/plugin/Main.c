@@ -1,4 +1,4 @@
-/* $TOG: Main.c /main/20 1998/03/05 16:17:28 kaleb $ */
+/* $Xorg: Main.c,v 1.4 2000/08/17 19:54:59 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -479,7 +479,7 @@ NPP_DestroyStream(NPP instance, NPStream *stream, NPError reason)
     int rx_argc;
     RxParams params;
     RxReturnParams return_params;
-    NPError err, status = NPERR_NO_ERROR;
+    NPError status = NPERR_NO_ERROR;
 
     if (instance == NULL)
 	return NPERR_INVALID_INSTANCE_ERROR;

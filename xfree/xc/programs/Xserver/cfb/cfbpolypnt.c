@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/cfb/cfbpolypnt.c,v 3.2 1998/10/04 09:37:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbpolypnt.c,v 3.4 2001/01/17 22:36:36 dawes Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -21,7 +21,7 @@ in this Software without prior written authorization from The Open Group.
 
 ********************************************************/
 
-/* $TOG: cfbpolypnt.c /main/19 1998/02/09 14:06:58 kaleb $ */
+/* $Xorg: cfbpolypnt.c,v 1.3 2000/08/17 19:48:15 cpqbld Exp $ */
 
 #include "X.h"
 #include "gcstruct.h"

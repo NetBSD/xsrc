@@ -1,5 +1,5 @@
 /*
- * $TOG: Fill.c /main/12 1998/02/06 14:39:37 kaleb $
+ * $Xorg: Fill.c,v 1.3 2000/08/17 19:45:48 cpqbld Exp $
  *
  * 
 Copyright 1989, 1998  The Open Group
@@ -23,7 +23,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/lib/Xdmcp/Fill.c,v 3.5 1998/10/03 08:42:51 dawes Exp $ */
+/* $XFree86: xc/lib/Xdmcp/Fill.c,v 3.7 2001/01/17 19:42:43 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

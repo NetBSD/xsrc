@@ -1,4 +1,4 @@
-/* $XConsortium: sunAmIo.c,v 1.1 94/04/01 17:54:49 dpw Exp $ */
+/* $Xorg: sunAmIo.c,v 1.3 2000/08/17 19:48:34 cpqbld Exp $ */
 /*-
  * sunAmIo.c --
  *	Amoeba implementation of functions to handle input from

@@ -1,4 +1,4 @@
-/* $TOG: pl_oc_attr.c /main/10 1998/02/06 16:10:45 kaleb $ */
+/* $Xorg: pl_oc_attr.c,v 1.4 2000/08/17 19:44:24 cpqbld Exp $ */
 
 /******************************************************************************
 
@@ -1850,7 +1850,7 @@ INPUT PEXPSCData	*pscData;
      * Copy the oc data.
      */
 
-    if (pBuf = PEXGetOCAddr (display, req->length))
+    if ((pBuf = PEXGetOCAddr (display, req->length)))
     {
 	if (pscType == PEXPSCIsoCurves)
 	{

@@ -1,4 +1,4 @@
-/* $XConsortium: XKBUse.c /main/15 1996/09/28 16:34:51 rws $ */
+/* $Xorg: XKBUse.c,v 1.3 2000/08/17 19:45:03 cpqbld Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/XKBUse.c,v 3.4 2001/01/17 19:41:49 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

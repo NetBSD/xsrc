@@ -1,4 +1,4 @@
-/* $TOG: bics-iso.h /main/6 1998/02/09 10:49:34 kaleb $ */
+/* $Xorg: bics-iso.h,v 1.3 2000/08/17 19:46:24 cpqbld Exp $ */
 /*
 
 Copyright 1993, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/Speedo/bics-iso.h,v 1.4 1998/10/03 09:07:11 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/bics-iso.h,v 1.6 2001/01/17 19:43:17 dawes Exp $ */
 
 int  sp_bics_map[] = {
     32, 0,

@@ -1,5 +1,5 @@
 
-/* $TOG: sunCfb.c /main/23 1998/02/10 13:16:19 kaleb $ */
+/* $Xorg: sunCfb.c,v 1.4 2000/08/17 19:48:29 cpqbld Exp $ */
 
 /*
 Copyright 1990, 1998  The Open Group
@@ -50,7 +50,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.10 1998/10/04 09:38:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.12 2001/01/17 22:36:50 dawes Exp $ */
 
 /*
  * Copyright 1987 by the Regents of the University of California
@@ -303,7 +303,9 @@ Bool sunTCXInit (screen, pScreen, argc, argv)
 #if !defined(i386) /* { */
 
 #ifdef SVR4 /* { */
+#ifdef INCLUDE_CG2_HEADER /* { */
 #include <sys/cg2reg.h>
+#endif /* } INCLUDE_CG2_HEADER */
 #else
 #ifndef CSRG_BASED /* { */
 #include <pixrect/cg2reg.h>
@@ -318,7 +320,7 @@ Bool sunTCXInit (screen, pScreen, argc, argv)
 #endif /* } */
 #endif /* } */
 
-#ifndef __bsdi__ /* { */
+#ifdef INCLUDE_CG2_HEADER
 typedef struct {
     struct cg2memfb	mem;
     struct cg2fb 	regs;
@@ -421,8 +423,7 @@ Bool sunCG2Init (screen, pScreen, argc, argv)
 #endif /* ifndef LOWMEMFTPT */
     return ret;
 }
-
-#endif /* } */
+#endif /* INCLUDE_CG2_HEADER */
 
 #define	CG4_HEIGHT	900
 #define	CG4_WIDTH	1152

@@ -1,4 +1,4 @@
-/* $TOG: PsDef.h /main/3 1998/02/09 15:42:31 kaleb $ */
+/* $Xorg: PsDef.h,v 1.3 2000/08/17 19:48:09 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: process.c /main/52 1998/02/09 13:52:23 kaleb $ */
+/* $Xorg: process.c,v 1.5 2000/08/17 19:54:11 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xauth/process.c,v 3.6 1999/03/07 11:40:49 dawes Exp $ */
+/* $XFree86: xc/programs/xauth/process.c,v 3.9 2001/04/23 20:31:09 dawes Exp $ */
 
 /*
  * Author:  Jim Fulton, MIT X Consortium
@@ -634,7 +634,15 @@ catchsig(int sig)
 #ifdef SYSV
     if (sig > 0) signal (sig, die);	/* re-establish signal handler */
 #endif
-    if (verbose && xauth_modified) WRITES(fileno(stdout), "\r\n");
+    /*
+     * fileno() might not be reentrant, avoid it if possible, and use
+     * stderr instead of stdout
+     */
+#ifdef STDERR_FILENO
+    if (verbose && xauth_modified) WRITES(STDERR_FILENO, "\r\n");
+#else
+    if (verbose && xauth_modified) WRITES(fileno(stderr), "\r\n");
+#endif
     die (sig);
     /* NOTREACHED */
 #ifdef SIGNALRETURNSINT
@@ -818,10 +826,20 @@ auth_finalize(void)
     if (xauth_modified) {
 	if (dieing) {
 	    if (verbose) {
-		/* called from a signal handler -- printf is *not* reentrant */
-		WRITES(fileno(stdout), "\nAborting changes to authority file ");
-		WRITES(fileno(stdout), xauth_filename);
-		WRITES(fileno(stdout), "\n");
+		/*
+		 * called from a signal handler -- printf is *not* reentrant; also
+		 * fileno() might not be reentrant, avoid it if possible, and use
+		 * stderr instead of stdout
+		 */
+#ifdef STDERR_FILENO
+		WRITES(STDERR_FILENO, "\nAborting changes to authority file ");
+		WRITES(STDERR_FILENO, xauth_filename);
+		WRITES(STDERR_FILENO, "\n");
+#else
+		WRITES(fileno(stderr), "\nAborting changes to authority file ");
+		WRITES(fileno(stderr), xauth_filename);
+		WRITES(fileno(stderr), "\n");
+#endif
 	    }
 	} else if (!xauth_allowed) {
 	    fprintf (stderr, 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Pci.c,v 1.41 2000/12/06 15:35:29 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/Pci.c,v 1.48.2.1 2001/05/21 05:00:36 tsi Exp $ */
 /*
  * Pci.c - New server PCI access functions
  *
@@ -568,7 +568,12 @@ pciGetBaseSize(PCITAG tag, int index, Bool destructive, Bool *min)
     mask1 >>= 1;
   }
   /* I/O maps can be no larger than 8 bits */
+
+#if defined(Lynx) && defined(__powerpc__)
+  if (PCI_MAP_IS_IO(addr1) && bits > 8)
+#else
   if ((index < 6) && PCI_MAP_IS_IO(addr1) && bits > 8)
+#endif
     bits = 8;
   /* ROM maps can be no larger than 24 bits */
   if (index == 6 && bits > 24)
@@ -623,20 +628,20 @@ pciMfDev(int busnum, int devnum)
 PCITAG
 pciGenFindNext(void)
 {
-  unsigned long devid, tmp;
-  unsigned char base_class, sub_class, sec_bus, pri_bus;
-  Bool speculativeProbe = FALSE;
+    unsigned long devid, tmp;
+    unsigned char base_class, sub_class, sec_bus, pri_bus;
+    Bool speculativeProbe = FALSE;
   
 #ifdef DEBUGPCI
-ErrorF("pciGenFindNext\n");
+    ErrorF("pciGenFindNext\n");
 #endif
 
-  for (;;) {
+    for (;;) {
 
 #ifdef DEBUGPCI
-ErrorF("pciGenFindNext: pciBusNum %d\n", pciBusNum);
+	ErrorF("pciGenFindNext: pciBusNum %d\n", pciBusNum);
 #endif
-    if (pciBusNum == -1) {
+	if (pciBusNum == -1) {
 	    /*
 	     * Start at top of the order
 	     */
@@ -646,34 +651,32 @@ ErrorF("pciGenFindNext: pciBusNum %d\n", pciBusNum);
 	    pciBusNum = 0;
 	    pciFuncNum = 0;
 	    pciDevNum = 0;
-    }
-    else {
+	} else {
 #ifdef PCI_MFDEV_SUPPORT
 #ifdef DEBUGPCI
-ErrorF("pciGenFindNext: pciFuncNum %d\n", pciFuncNum);
+	    ErrorF("pciGenFindNext: pciFuncNum %d\n", pciFuncNum);
 #endif
 	    /*
 	     * Somewhere in middle of order.  Determine who's
 	     * next up
 	     */
 	    if (pciFuncNum == 0) {
+		/*
+		 * Is current dev a multifunction device?
+		 */
+		if (pciMfDev(pciBusNum, pciDevNum))
+		    /* Probe for other functions */
+		    pciFuncNum = 1;
+		else
 		    /*
-		     * Is current dev a multifunction device?
+		     * No more functions this device. Next
+		     * device please
 		     */
-		    if (pciMfDev(pciBusNum, pciDevNum))
-			    /* Probe for other functions */
-			    pciFuncNum = 1;
-		    else
-			    /*
-			     * No more functions this device. Next
-			     * device please
-			     */
-			    pciDevNum ++;
-	    }
-	    else if (++pciFuncNum >= 8) {
-		    /* No more functions for this device. Next device please */
-		    pciFuncNum = 0;
 		    pciDevNum ++;
+	    } else if (++pciFuncNum >= 8) {
+		/* No more functions for this device. Next device please */
+		pciFuncNum = 0;
+		pciDevNum ++;
 	    }
 #else
 	    pciDevNum ++;
@@ -682,116 +685,113 @@ ErrorF("pciGenFindNext: pciFuncNum %d\n", pciFuncNum);
 		!pciBusInfo[pciBusNum] ||
 		pciDevNum >= pciBusInfo[pciBusNum]->numDevices) {
 #ifdef DEBUGPCI
-ErrorF("pciGenFindNext: next bus\n");
+		ErrorF("pciGenFindNext: next bus\n");
 #endif
-		    /*
-		     * No more devices for this bus. Next bus please
-		     */
-     if (speculativeProbe) {
-	 xfree(pciBusInfo[pciBusNum]);
-	 pciBusInfo[pciBusNum] = NULL;
-     }
+		/*
+		 * No more devices for this bus. Next bus please
+		 */
+		if (speculativeProbe) {
+		    xfree(pciBusInfo[pciBusNum]);
+		    pciBusInfo[pciBusNum] = NULL;
+		}
      
 	 
-     if (++pciBusNum >= MAX_PCI_BUSES) {
+		if (++pciBusNum >= MAX_PCI_BUSES) {
 #ifdef DEBUGPCI
-ErrorF("pciGenFindNext: out of buses\n");
+		    ErrorF("pciGenFindNext: out of buses\n");
 #endif
-			    /* No more buses.  All done for now */
-			    return(PCI_NOT_FOUND);
-		    }
+		    /* No more buses.  All done for now */
+		    return(PCI_NOT_FOUND);
+		}
 		    
-		    pciDevNum = 0;
+		pciDevNum = 0;
 	    }
-    }
+	}
 
 #ifdef DEBUGPCI
-ErrorF("pciGenFindNext: pciBusInfo[%d] = 0x%lx\n", pciBusNum, pciBusInfo[pciBusNum]);
+	ErrorF("pciGenFindNext: pciBusInfo[%d] = 0x%lx\n", pciBusNum, pciBusInfo[pciBusNum]);
 #endif
- if (!pciBusInfo[pciBusNum]) {
-     pciBusInfo[pciBusNum] = xnfalloc(sizeof(pciBusInfo_t));
-     *pciBusInfo[pciBusNum] = *pciBusInfo[0];
+	if (!pciBusInfo[pciBusNum]) {
+	    pciBusInfo[pciBusNum] = xnfalloc(sizeof(pciBusInfo_t));
+	    *pciBusInfo[pciBusNum] = *pciBusInfo[0];
      
-     speculativeProbe = TRUE;
- }
+	    speculativeProbe = TRUE;
+	}
     
-    /*
-     * At this point, pciBusNum, pciDevNum, and pciFuncNum have been
-     * advanced to the next device.  Compute the tag, and read the
-     * device/vendor ID field.
-     */
+	/*
+	 * At this point, pciBusNum, pciDevNum, and pciFuncNum have been
+	 * advanced to the next device.  Compute the tag, and read the
+	 * device/vendor ID field.
+	 */
 #ifdef DEBUGPCI
-ErrorF("pciGenFindNext: [%d, %d, %d]\n", pciBusNum, pciDevNum, pciFuncNum);
+	ErrorF("pciGenFindNext: [%d, %d, %d]\n", pciBusNum, pciDevNum, pciFuncNum);
 #endif
-    pciDeviceTag = PCI_MAKE_TAG(pciBusNum, pciDevNum, pciFuncNum);
-    inProbe = TRUE;
-    devid = pciReadLong(pciDeviceTag, 0);
-    inProbe = FALSE;
+	pciDeviceTag = PCI_MAKE_TAG(pciBusNum, pciDevNum, pciFuncNum);
+	inProbe = TRUE;
+	devid = pciReadLong(pciDeviceTag, 0);
+	inProbe = FALSE;
 #ifdef DEBUGPCI
-ErrorF("pciGenFindNext: pciDeviceTag = 0x%lx, devid = 0x%lx\n", pciDeviceTag, devid);
+	ErrorF("pciGenFindNext: pciDeviceTag = 0x%lx, devid = 0x%lx\n", pciDeviceTag, devid);
 #endif
-    if (devid == 0xffffffff)
+	if (devid == 0xffffffff)
 	    continue; /* Nobody home.  Next device please */
 
-    if (speculativeProbe && (pciNumBuses <= pciBusNum))
-	pciNumBuses = pciBusNum + 1;
+	if (speculativeProbe && (pciNumBuses <= pciBusNum))
+	    pciNumBuses = pciBusNum + 1;
     
-    speculativeProbe = FALSE;
+	speculativeProbe = FALSE;
     
-    /*
-     * Before checking for a specific devid, look for enabled
-     * PCI to PCI bridge devices.  If one is found, create and
-     * initialize a bus info record (if one does not already exist).
-     */
+	/*
+	 * Before checking for a specific devid, look for enabled
+	 * PCI to PCI bridge devices.  If one is found, create and
+	 * initialize a bus info record (if one does not already exist).
+	 */
 #ifdef PCI_BRIDGE_SUPPORT    
-    tmp = pciReadLong(pciDeviceTag, PCI_CLASS_REG);
-    base_class = PCI_CLASS_EXTRACT(tmp);
-    sub_class = PCI_SUBCLASS_EXTRACT(tmp); 
-    if (base_class == PCI_CLASS_BRIDGE)
-	if (sub_class == PCI_SUBCLASS_BRIDGE_PCI) {
+	tmp = pciReadLong(pciDeviceTag, PCI_CLASS_REG);
+	base_class = PCI_CLASS_EXTRACT(tmp);
+	sub_class = PCI_SUBCLASS_EXTRACT(tmp); 
+	if ((base_class == PCI_CLASS_BRIDGE) &&
+	    (sub_class == PCI_SUBCLASS_BRIDGE_PCI)) {
 	    tmp = pciReadLong(pciDeviceTag, PCI_PCI_BRIDGE_BUS_REG);
 	    sec_bus = PCI_SECONDARY_BUS_EXTRACT(tmp);
 	    pri_bus = PCI_PRIMARY_BUS_EXTRACT(tmp);
 #ifdef DEBUGPCI
-ErrorF("pciGenFindNext: pri_bus %d sec_bus %d\n", pri_bus, sec_bus);
+	    ErrorF("pciGenFindNext: pri_bus %d sec_bus %d\n", pri_bus, sec_bus);
 #endif
 	    if (sec_bus > 0 && sec_bus < MAX_PCI_BUSES && pciBusInfo[pri_bus]) {
-		    /*
-		     * Found a secondary PCI bus
-		     */
-		    if (!pciBusInfo[sec_bus]) {
-			    pciBusInfo[sec_bus] =
-				xnfalloc(sizeof(pciBusInfo_t));
+		/*
+		 * Found a secondary PCI bus
+		 */
+		if (!pciBusInfo[sec_bus])
+		    pciBusInfo[sec_bus] = xnfalloc(sizeof(pciBusInfo_t));
 
-		    }
+		/* Copy parents settings... */
+		*pciBusInfo[sec_bus] = *pciBusInfo[pri_bus];
 
-		    /* Copy parents settings... */
-		    *pciBusInfo[sec_bus] = *pciBusInfo[pri_bus];
+		/* ...but not everything same as parent */
+		pciBusInfo[sec_bus]->primary_bus = pri_bus;
+		pciBusInfo[sec_bus]->secondary = TRUE;
+		pciBusInfo[sec_bus]->numDevices = 32;
 
-		    /* ...but not everything same as parent */
-		    pciBusInfo[sec_bus]->primary_bus = pri_bus;
-		    pciBusInfo[sec_bus]->secondary = TRUE;
-		    pciBusInfo[sec_bus]->numDevices = 32;
-
-		    if (pciNumBuses <= sec_bus)
-			    pciNumBuses = sec_bus+1;
+		if (pciNumBuses <= sec_bus)
+		    pciNumBuses = sec_bus+1;
 	    }
-    }
+	}
 #endif
     
-    /*
-     * Does this device match the requested devid after
-     * applying mask?
-     */
+	/*
+	 * Does this device match the requested devid after
+	 * applying mask?
+	 */
 #ifdef DEBUGPCI
-ErrorF("pciGenFindNext: pciDevidMask = 0x%lx, pciDevid = 0x%lx\n", pciDevidMask, pciDevid);
+	ErrorF("pciGenFindNext: pciDevidMask = 0x%lx, pciDevid = 0x%lx\n", pciDevidMask, pciDevid);
 #endif
-    if ((devid & pciDevidMask) == pciDevid)
-	  /* Yes - Return it.  Otherwise, next device */
-	  return(pciDeviceTag); /* got a match */
+	if ((devid & pciDevidMask) == pciDevid)
+	    /* Yes - Return it.  Otherwise, next device */
+	    return(pciDeviceTag); /* got a match */
 
-  } /* for */
-  /*NOTREACHED*/
+    } /* for */
+    /*NOTREACHED*/
 }
 
 PCITAG
@@ -1053,10 +1053,122 @@ static int
 readPciBIOS(unsigned long Offset, PCITAG Tag, int basereg,
 		unsigned char *Buf, int Len)
 {
+    CARD32 romsave = 0;
+    int i;
+    romBaseSource b_reg;
     ADDRESS hostbase;
-    CARD32 romaddr, savebase = 0, romsave = 0, newbase = 0;
-    int ret;
+    CARD8 tmp[64];
+    CARD8 *image;
 
+    unsigned long offset;
+    int ret, length, len, rlength;
+
+    romsave = pciReadLong(Tag, PCI_MAP_ROM_REG);
+
+    for (i = ROM_BASE_PRESET; i <= ROM_BASE_FIND; i++) {
+        memType savebase = 0, newbase, romaddr;
+
+        if (i == ROM_BASE_PRESET) {
+	    /* Does the driver have a preference? */
+	    if (basereg > ROM_BASE_PRESET && basereg <= ROM_BASE_FIND)
+	        b_reg =  basereg;
+	    else 
+	        b_reg = ++i;
+	} else
+	    b_reg = i;
+
+	if (!(newbase = getValidBIOSBase(Tag, b_reg)))
+	    continue;  /* no valid address found */
+
+	romaddr = PCIGETROM(newbase);
+
+	/* if we use a mem base save it and move it out of the way */
+	if (b_reg >= 0 && b_reg <= 5) {
+	    savebase = pciReadLong(Tag, PCI_MAP_REG_START+(basereg<<2));
+	    xf86MsgVerb(X_INFO,5,"xf86ReadPciBios: modifying membase[%i]"
+			" for device %i:%i:%i\n", basereg,
+			PCI_BUS_FROM_TAG(Tag), PCI_DEV_FROM_TAG(Tag),
+			PCI_FUNC_FROM_TAG(Tag));
+	    pciWriteLong(Tag, PCI_MAP_REG_START + (b_reg << 2),
+			 (CARD32)~0);
+	}
+	/* Set ROM base address and enable ROM address decoding */
+	pciWriteLong(Tag, PCI_MAP_ROM_REG, romaddr 
+		     | PCI_MAP_ROM_DECODE_ENABLE);
+
+	hostbase = pciBusAddrToHostAddr(Tag, PCI_MEM, PCIGETROM(romaddr));
+	
+	if ((xf86ReadBIOS(hostbase, 0, tmp, sizeof(tmp)) != sizeof(tmp)) 
+	    || (tmp[0] != 0x55) 
+	    || (tmp[1] != 0xaa) 
+	    || !tmp[2] ) { 
+	  /* Restore the base register if it was changed. */
+	    if (savebase) pciWriteLong(Tag, PCI_MAP_REG_START + (b_reg << 2),
+				       (CARD32) savebase);
+	    /* No BIOS found: try another address */
+	    continue;
+	}
+
+#if 0
+	/* 
+	 * Currently this is only good for PC style BIOSes.
+	 * This code needs to be revistited after 4.1 is out.
+	 * We need to pass an argument for the BIOS type to
+	 * look for. Then we can pick the correct BIOS.
+	 * Combine this with the code in int10/pci.c.
+	 */
+	if ((Offset) > (tmp[2] << 9)) {
+	    xf86Msg(X_WARNING,"xf86ReadPciBios: requesting data past "
+		    "end of BIOS %i > %i\n",(Offset) , (tmp[2] << 9));
+	} else {
+	  if ((Offset + Len) > (tmp[2] << 9)) {
+	    Len = (tmp[2] << 9) - Offset;
+	    xf86Msg(X_INFO,"Truncating PCI BIOS Length to %i\n",Len);
+	  }
+	}
+#endif
+
+	/* Read BIOS in 64kB chunks */
+	ret = 0;
+	offset = Offset;
+	image = Buf;
+	len = Len;
+	while ((length = len) > 0) {
+	  if (length > 0x10000) length = 0x10000;
+	  rlength = xf86ReadBIOS(hostbase, offset, image, length);
+	  if (rlength < 0) {
+	    ret = rlength;
+	    break;
+	  }
+	  ret += rlength;
+	  if (rlength < length) break;
+	  offset += length;
+	  image += length;
+	  len -= length;
+	}
+	/* Restore the base register if it was changed. */
+	if (savebase) pciWriteLong(Tag, PCI_MAP_REG_START + (b_reg << 2),
+				   (CARD32) savebase);
+	/* Restore ROM address decoding */
+	pciWriteLong(Tag, PCI_MAP_ROM_REG, romsave);
+	return ret;
+	
+    }
+    /* Restore ROM address decoding */
+    pciWriteLong(Tag, PCI_MAP_ROM_REG, romsave);
+    return 0;
+}
+
+#if 0
+static int
+readPciBIOS(unsigned long Offset, PCITAG Tag, int basereg,
+		unsigned char *Buf, int Len)
+{
+    ADDRESS hostbase;
+    CARD8 *image = Buf;
+    unsigned long offset;
+    CARD32 romaddr, savebase = 0, romsave = 0, newbase = 0;
+    int ret, tmpLen, length, rlength, n;
     /* XXX This assumes that memory access is enabled */
 
     /*
@@ -1067,24 +1179,23 @@ readPciBIOS(unsigned long Offset, PCITAG Tag, int basereg,
     romsave = pciReadLong(Tag, PCI_MAP_ROM_REG);
     romaddr = PCIGETROM(romsave);
     if ((newbase = getValidBIOSBase(Tag, &basereg)) != romaddr) {
+RetryWithBase:
 	romaddr = PCIGETROM(newbase);
-	if (romaddr != 0 && romaddr == newbase) {
-#if 1
-	  /* move mem base out of the way if in conflict with ROM */
+	if (romaddr) {
+	  /* move mem base out of the way if in conflicts with ROM */
 	  if ((basereg >= 0) && (basereg <= 5)) {
-	      savebase = pciReadLong(Tag, PCI_MAP_REG_START + (basereg << 2));
+	      if (!savebase)
+	          savebase = pciReadLong(Tag, PCI_MAP_REG_START+(basereg<<2));
 	      if (PCIGETROM(savebase) == romaddr) {
-	          xf86MsgVerb(X_INFO,5,"xf86ReadPciBios: modifying membase[%i]"
+	          xf86MsgVerb(X_INFO,5,"xf86ReadPciBIOS: modifying membase[%i]"
 			    " for device %i:%i:%i\n", basereg,
 			    PCI_BUS_FROM_TAG(Tag), PCI_DEV_FROM_TAG(Tag),
 			    PCI_FUNC_FROM_TAG(Tag));
-		pciWriteLong(Tag, PCI_MAP_REG_START + (basereg << 2), 0);
+		pciWriteLong(Tag, PCI_MAP_REG_START + (basereg << 2),
+		    (CARD32)~0);
 	    }
 	  }
-#endif
-	    pciWriteLong(Tag, PCI_MAP_ROM_REG, romaddr);
-	} else
-	    romaddr = 0;
+	}
     }
 
 
@@ -1092,19 +1203,56 @@ readPciBIOS(unsigned long Offset, PCITAG Tag, int basereg,
 	xf86Msg(X_WARNING, "xf86ReadPciBIOS: cannot locate a BIOS address\n");
 	return -1;
     } 
-    else
-      xf86MsgVerb(X_INFO,5,"xf86ReadPciBIOS: found ValidBIOSBase for %i:%i:%i:"
-		  " %x\n", PCI_BUS_FROM_TAG(Tag), PCI_DEV_FROM_TAG(Tag),
-		  PCI_FUNC_FROM_TAG(Tag),newbase);
+    xf86MsgVerb(X_INFO, 5,
+	"xf86ReadPciBIOS: found ValidBIOSBase for %i:%i:%i: %x\n",
+	PCI_BUS_FROM_TAG(Tag), PCI_DEV_FROM_TAG(Tag), PCI_FUNC_FROM_TAG(Tag),
+	newbase);
 
     hostbase = pciBusAddrToHostAddr(Tag, PCI_MEM, PCIGETROM(romaddr));
-#ifdef DEBUG
-    ErrorF("ReadPciBIOS: base = 0x%x\n",romaddr);
-#endif
+    xf86MsgVerb(X_INFO, 5, "ReadPciBIOS: base = 0x%x\n",romaddr);
     /* Enable ROM address decoding */
     pciWriteLong(Tag, PCI_MAP_ROM_REG, romaddr | PCI_MAP_ROM_DECODE_ENABLE);
 
-    ret = xf86ReadBIOS(hostbase, Offset, Buf, Len);
+    /* Check to see if we really have a PCI BIOS image */
+    rlength = xf86ReadBIOS(hostbase, 0, tmp_buf, sizeof(tmp_buf));
+    if (rlength < 0) return rlength;
+    /* If we found a BIOS image we read the requested data */
+    if ((rlength == sizeof(tmp_buf)) && (tmp_buf[0] == 0x55) 
+	 && (tmp_buf[1] == 0xaa) && tmp_buf[2] ) {
+    
+        /* Read BIOS in 64kB chunks */
+        ret = 0;
+	offset = Offset;
+	tmpLen = Len;
+	image = Buf;
+	
+	while ((length = tmpLen) > 0) {
+	    if (length > 0x10000) length = 0x10000;
+	    rlength = xf86ReadBIOS(hostbase, offset, image, length);
+	    if (rlength < 0) {
+	        ret = rlength;
+		break;
+	    }
+	    ret += rlength;
+	    if (rlength < length) break;
+	    offset += length;
+	    image += length;
+	    tmpLen -= length;
+	}
+    } else {
+        /* If we don't have a PCI BIOS image we look further */
+	n = 0;
+	if ((basereg >= 0) && (basereg <= 5) && xf86PciVideoInfo) do {
+	    pciVideoPtr pvp;
+
+	    if (!(pvp = xf86PciVideoInfo[n++])) break;
+	    if (pciTag(pvp->bus, pvp->device, pvp->func) == Tag) {
+		if (newbase == pvp->memBase[basereg]) break;
+		newbase = pvp->memBase[basereg];
+		goto RetryWithBase;
+	    }
+	} while (1);
+    }
 
     /* Restore ROM address decoding */
     pciWriteLong(Tag, PCI_MAP_ROM_REG, romsave);
@@ -1114,6 +1262,7 @@ readPciBIOS(unsigned long Offset, PCITAG Tag, int basereg,
 
     return ret;
 }
+#endif
 
 typedef CARD32 (*ReadProcPtr)(PCITAG, int);
 typedef void (*WriteProcPtr)(PCITAG, int, CARD32);
@@ -1129,7 +1278,8 @@ xf86ReadPciBIOS(unsigned long Offset, PCITAG Tag, int basereg,
 
   size = readPciBIOS(Offset,Tag,basereg,Buf,Len);
   
-  if (size != -1 && Buf[0] == 0x55 && Buf[1] == 0xaa)
+  if ((size == Len) && (Buf[0] == 0x55) && (Buf[1] == 0xaa) && Buf[2] &&
+      (Len >= (Buf[2] << 9)))
     return size;
 
   num = pciTestMultiDeviceCard(PCI_BUS_FROM_TAG(Tag),
@@ -1149,7 +1299,8 @@ xf86ReadPciBIOS(unsigned long Offset, PCITAG Tag, int basereg,
 					     PCI_CMD_STAT_REG,(Acc2 | PCI_ENA));
     size = readPciBIOS(Offset,pTag[i],0,Buf,Len);
     ((WriteProcPtr)(pciLongFunc(pTag[i],WRITE)))(pTag[i],PCI_CMD_STAT_REG,Acc2);
-    if (size != -1 && ((CARD8*)Buf)[0] == 0x55 && ((CARD8*)Buf)[1] == 0xaa)
+    if ((size == Len) && (Buf[0] == 0x55) && (Buf[1] == 0xaa) && Buf[2] &&
+	(Len >= (Buf[2] << 9)))
       break;
   }
   ((WriteProcPtr)(pciLongFunc(Tag,WRITE)))(Tag,PCI_CMD_STAT_REG,Acc1);

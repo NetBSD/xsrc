@@ -1,4 +1,7 @@
-.TH SETXKBMAP 1 "" "Silicon Graphics"
+.\"
+.\" $XFree86: xc/programs/setxkbmap/setxkbmap.man,v 3.4 2001/03/01 00:56:55 dawes Exp $
+.\"
+.TH SETXKBMAP 1 __xorgversion__
 .SH NAME
 setxkbmap
 \- set the keyboard using the X Keyboard Extension
@@ -58,7 +61,12 @@ on the command line.
 .B \-option \fIname\fP
 Specifies the name of an option to determine the components which make up 
 the keyboard description;  multiple options may be specified, one per
-\fI-option\fP flag.
+\fI-option\fP flag. Note that
+.B setxkbmap
+summarize options specified in command
+line with options setted before (saved in root window properties). If you
+want only specified options will be setted use \fI-option\fP flag with
+empty argument first.
 .TP 8
 .B \-rules \fIfile\fP
 Specifies the name of the rules file used to resolve the request layout

@@ -1,4 +1,4 @@
-/* $TOG: auth.c /main/64 1998/02/26 10:02:22 barstow $ */
+/* $Xorg: auth.c,v 1.4 2000/08/17 19:54:14 cpqbld Exp $ */
 /*
 
 Copyright 1988, 1998  The Open Group
@@ -22,7 +22,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/auth.c,v 3.19 1998/10/10 15:25:31 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/auth.c,v 3.21 2001/01/17 23:45:20 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -1192,7 +1192,7 @@ SetUserAuthorization (struct display *d, struct verify_info *verify)
 	    if (fstat (fileno (old), &statb) != -1)
 		chmod (new_name, (int) (statb.st_mode & 0777));
 	    /*SUPPRESS 560*/
-	    while ((entry = XauReadAuth (old)) != 0) {
+	    while ((entry = XauReadAuth (old))) {
 		if (!checkEntry (entry))
 		{
 		    Debug ("Writing an entry\n");
@@ -1273,7 +1273,7 @@ RemoveUserAuthorization (struct display *d, struct verify_info *verify)
 	    if (fstat (fileno (old), &statb) != -1)
 		chmod (new_name, (int) (statb.st_mode & 0777));
 	    /*SUPPRESS 560*/
-	    while ((entry = XauReadAuth (old)) != 0) {
+	    while ((entry = XauReadAuth (old))) {
 		if (!checkEntry (entry))
 		{
 		    Debug ("Writing an entry\n");

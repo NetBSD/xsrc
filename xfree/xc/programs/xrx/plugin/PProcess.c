@@ -1,4 +1,4 @@
-/* $TOG: PProcess.c /main/34 1998/02/25 14:00:05 barstow $ */
+/* $Xorg: PProcess.c,v 1.5 2000/08/17 19:54:59 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group
@@ -227,7 +227,7 @@ SetWMColormap(PluginInstance* This, Window win)
 
     /* get window's record */
     for (i = 0; i < This->nclient_windows; i++)
-	if (This->client_windows[i].win = win)
+	if ((This->client_windows[i].win = win))
 	    break;
 
     if (i == This->nclient_windows)
@@ -501,7 +501,6 @@ StructureNotifyHandler (
 	    int i;
 	    Position x, y;
 	    XConfigureEvent sendev;
-	    XConfigureEvent* ev = (XConfigureEvent*) event;
 
 	    XtTranslateCoords (This->plugin_widget, 0, 0, &x, &y);
 	    for (i = 0; i < This->nclient_windows; i++) {

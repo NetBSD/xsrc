@@ -1,4 +1,4 @@
-/* $XConsortium: XKB.h /main/14 1996/02/05 10:19:11 kaleb $ */
+/* $Xorg: XKB.h,v 1.3 2000/08/18 04:05:45 coskrey Exp $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/include/extensions/XKB.h,v 1.2 2000/08/26 15:11:23 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XKB.h,v 1.4 2001/01/17 17:53:17 dawes Exp $ */
 
 #ifndef _XKB_H_
 #define	_XKB_H_

@@ -1,4 +1,4 @@
-XCOMM $TOG: Imakefile /main/7 1997/06/06 10:35:09 kaleb $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:57 cpqbld Exp $
 
 #ifndef HtmlDir
 #define HtmlDir /files/web/xfiles/consortium/plug-in

@@ -16,30 +16,17 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/psnames.h>
-#include <freetype/internal/ftobjs.h>
-
-
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_POSTSCRIPT_NAMES_H
+#include FT_INTERNAL_OBJECTS_H
 #include "psmodule.h"
 #include "pstables.h"
-
-#else
-
-#include <psnames/psmodule.h>
-#include <psnames/pstables.h>
-
-#endif
-
 
 #include <stdlib.h>     /* for qsort()             */
 #include <string.h>     /* for strcmp(), strncpy() */
 
 
 #ifndef FT_CONFIG_OPTION_NO_POSTSCRIPT_NAMES
-
-
 
 
 #ifdef FT_CONFIG_OPTION_ADOBE_GLYPH_LIST
@@ -113,7 +100,7 @@
       while ( *p && *p != '.' )
         p++;
 
-      len = p - glyph_name;
+      len = (int)( p - glyph_name );
 
       if ( *p && len < 64 )
       {
@@ -194,7 +181,7 @@
       }
 
       /* now, compress the table a bit */
-      count = map - table->maps;
+      count = (FT_UInt)( map - table->maps );
 
       if ( count > 0 && REALLOC( table->maps,
                                  num_glyphs * sizeof ( PS_UniMap ),

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tex.h,v 1.2 2000/12/04 19:21:47 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_tex.h,v 1.6 2001/04/10 17:53:07 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -28,58 +28,83 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
+ *   Kevin E. Martin <martin@valinux.com>
  *
  */
 
-#ifndef _R128_TEX_H_
-#define _R128_TEX_H_
+#ifndef __R128_TEX_H__
+#define __R128_TEX_H__
 
 #ifdef GLX_DIRECT_RENDERING
 
 extern void r128UpdateTextureState( GLcontext *ctx );
 
-extern int r128UploadTexImages( r128ContextPtr r128ctx, r128TexObjPtr t );
+extern int r128UploadTexImages( r128ContextPtr rmesa, r128TexObjPtr t );
 
-extern void r128AgeTextures( r128ContextPtr r128ctx, int heap );
-extern void r128DestroyTexObj( r128ContextPtr r128ctx, r128TexObjPtr t );
+extern void r128AgeTextures( r128ContextPtr rmesa, int heap );
+extern void r128DestroyTexObj( r128ContextPtr rmesa, r128TexObjPtr t );
 
-extern void r128PrintLocalLRU( r128ContextPtr r128ctx, int heap );
-extern void r128PrintGlobalLRU( r128ContextPtr r128ctx, int heap );
+extern void r128PrintLocalLRU( r128ContextPtr rmesa, int heap );
+extern void r128PrintGlobalLRU( r128ContextPtr rmesa, int heap );
 
 extern void r128DDInitTextureFuncs( GLcontext *ctx );
 
 
-#define R128PACKCOLOR332(r, g, b)                                             \
-    (((r) & 0xe0) | (((g) & 0xe0) >> 3) | (((b) & 0xc0) >> 6))
+/* ================================================================
+ * Color conversion macros:
+ */
 
-#define R128PACKCOLOR1555(r, g, b, a)                                         \
-    ((((r) & 0xf8) << 7) | (((g) & 0xf8) << 2) | (((b) & 0xf8) >> 3) |        \
-     ((a) ? 0x8000 : 0))
+#define R128PACKCOLOR332( r, g, b )					\
+   (((r) & 0xe0) | (((g) & 0xe0) >> 3) | (((b) & 0xc0) >> 6))
 
-#define R128PACKCOLOR565(r, g, b)                                             \
-    ((((r) & 0xf8) << 8) | (((g) & 0xfc) << 3) | (((b) & 0xf8) >> 3))
+#define R128PACKCOLOR1555( r, g, b, a )					\
+   ((((r) & 0xf8) << 7) | (((g) & 0xf8) << 2) | (((b) & 0xf8) >> 3) |	\
+    ((a) ? 0x8000 : 0))
 
-#define R128PACKCOLOR888(r, g, b)                                             \
-    (((r) << 16) | ((g) << 8) | (b))
+#define R128PACKCOLOR565( r, g, b )					\
+   ((((r) & 0xf8) << 8) | (((g) & 0xfc) << 3) | (((b) & 0xf8) >> 3))
 
-#define R128PACKCOLOR8888(r, g, b, a)                                         \
-    (((a) << 24) | ((r) << 16) | ((g) << 8) | (b))
+#define R128PACKCOLOR888( r, g, b )					\
+   (((r) << 16) | ((g) << 8) | (b))
 
-#define R128PACKCOLOR4444(r, g, b, a)                                         \
-    ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
+#define R128PACKCOLOR8888( r, g, b, a )					\
+   (((a) << 24) | ((r) << 16) | ((g) << 8) | (b))
 
-static __inline__ CARD32 r128PackColor( GLuint bpp,
+#define R128PACKCOLOR4444( r, g, b, a )					\
+   ((((a) & 0xf0) << 8) | (((r) & 0xf0) << 4) | ((g) & 0xf0) | ((b) >> 4))
+
+#include "X11/Xarch.h"
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+#define R128PACKCOLORS565( r0, g0, b0, r1, g1, b1 )			\
+		((R128PACKCOLOR565( r0, g0, b0 )) |			\
+		 (R128PACKCOLOR565( r1, g1, b1 ) << 16))
+#define R128PACKCOLORS4444( r0, g0, b0, a0, r1, g1, b1, a1 )		\
+		((R128PACKCOLOR4444( r0, g0, b0, a0 )) |		\
+		 (R128PACKCOLOR4444( r1, g1, b1, a1 ) << 16))
+#else
+#define R128PACKCOLORS565( r0, g0, b0, r1, g1, b1 )			\
+		((R128PACKCOLOR565( r1, g1, b1 )) |			\
+		 (R128PACKCOLOR565( r0, g0, b0 ) << 16))
+#define R128PACKCOLORS4444( r0, g0, b0, a0, r1, g1, b1, a1 )		\
+		((R128PACKCOLOR4444( r1, g1, b1, a1 )) |		\
+		 (R128PACKCOLOR4444( r0, g0, b0, a0 ) << 16))
+
+#endif
+
+static __inline__ CARD32 r128PackColor( GLuint cpp,
 					GLubyte r, GLubyte g,
 					GLubyte b, GLubyte a )
 {
-    switch ( bpp ) {
-    case 16: return R128PACKCOLOR565( r, g, b );
-    case 32: return R128PACKCOLOR8888( r, g, b, a );
-    default: return 0;
+    switch ( cpp ) {
+    case 2:
+       return R128PACKCOLOR565( r, g, b );
+    case 4:
+       return R128PACKCOLOR8888( r, g, b, a );
+    default:
+       return 0;
     }
 }
 
 #endif
-#endif /* _R128_TEX_H_ */
+#endif /* __R128_TEX_H__ */

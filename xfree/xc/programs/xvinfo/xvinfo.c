@@ -1,9 +1,10 @@
-/* $XFree86: xc/programs/xvinfo/xvinfo.c,v 1.3 2000/09/26 15:57:27 tsi Exp $ */
+/* $XFree86: xc/programs/xvinfo/xvinfo.c,v 1.6 2001/04/01 14:00:24 tsi Exp $ */
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xvlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -179,7 +180,7 @@ int main(int argc, char *argv[])
 		   }
 
                    formats = XvListImageFormats(
-				dpy, ainfo[i].base_id, &numImages);
+				dpy, ainfo[j].base_id, &numImages);
 
 		   fprintf(stdout, "    Number of image formats: %i\n",
 						numImages);

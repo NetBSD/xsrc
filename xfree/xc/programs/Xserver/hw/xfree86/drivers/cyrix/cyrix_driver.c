@@ -26,7 +26,7 @@
  *          Dirk H. Hohndel (hohndel@suse.de),
  *          Portions: the GGI project & confidential CYRIX databooks.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_driver.c,v 1.14 2000/12/02 15:30:37 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_driver.c,v 1.19 2001/05/04 19:05:36 dawes Exp $ */
 
 #include "fb.h"
 #include "mibank.h"
@@ -45,17 +45,14 @@
 
 #include "cyrix.h"
 
-#ifdef XFreeXDGA
 #define _XF86DGA_SERVER_
 #include "extensions/xf86dgastr.h"
-#endif
 
-#ifdef DPMSExtension
 #include "opaque.h"
+#define DPMS_SERVER
 #include "extensions/dpms.h"
-#endif
 
-static OptionInfoPtr CYRIXAvailableOptions(int chip, int busid);
+static const OptionInfoRec * CYRIXAvailableOptions(int chip, int busid);
 static void	CYRIXIdentify(int flags);
 static Bool	CYRIXProbe(DriverPtr drv, int flags);
 static Bool	CYRIXPreInit(ScrnInfoPtr pScrn, int flags);
@@ -104,7 +101,7 @@ enum GenericTypes {
 
 /* 
  * This contains the functions needed by the server after loading the driver
- * module.  It must be supplied, and gets passed back by the ModuleInit
+ * module.  It must be supplied, and gets passed back by the moduleSetup
  * function in the dynamic case.  In the static case, a reference to this
  * is compiled in, and this requires that the name of this DriverRec be
  * an upper-case version of the driver name.
@@ -136,7 +133,7 @@ typedef enum {
     OPTION_NOACCEL
 } CYRIXOpts;
 
-static OptionInfoRec CYRIXOptions[] = {
+static const OptionInfoRec CYRIXOptions[] = {
     { OPTION_SW_CURSOR,		"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE  },
     { OPTION_NOACCEL,		"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
@@ -238,7 +235,6 @@ CYRIXFreeRec(ScrnInfoPtr pScrn)
     pScrn->driverPrivate = NULL;
 }
 
-#ifdef DPMSExtension
 static void 
 CYRIXDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode, int flags)
 {
@@ -278,7 +274,6 @@ CYRIXDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode, int f
 	outb(0x83C6, PMCont);
 	outw(0x3C4, (temp<<8) | 0x0E);
 }
-#endif
 
 /* Mandatory */
 static void
@@ -287,8 +282,7 @@ CYRIXIdentify(int flags)
     xf86PrintChipsets(CYRIX_NAME, "driver for Cyrix MediaGX Processors", CYRIXChipsets);
 }
 
-static
-OptionInfoPtr
+static const OptionInfoRec *
 CYRIXAvailableOptions(int chip, int busid)
 {
     return CYRIXOptions;
@@ -617,7 +611,10 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
     xf86CollectOptions(pScrn, NULL);
 
     /* Process the options */
-    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, CYRIXOptions);
+    if (!(pCyrix->Options = xalloc(sizeof(CYRIXOptions))))
+	return FALSE;
+    memcpy(pCyrix->Options, CYRIXOptions, sizeof(CYRIXOptions));
+    xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pCyrix->Options);
 
     /* Set the bits per RGB for 8bpp mode */
     if (pScrn->depth == 8) {
@@ -625,7 +622,7 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
 	/* Default to 8 */
 	pScrn->rgbBits = 8;
 #if 0
-	if (xf86GetOptValInteger(CYRIXOptions, OPTION_RGB_BITS,
+	if (xf86GetOptValInteger(pCyrix->Options, OPTION_RGB_BITS,
 				 &pScrn->rgbBits)) {
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Bits per RGB set to %d\n",
 		       pScrn->rgbBits);
@@ -634,17 +631,17 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
     }
     from = X_DEFAULT;
     pCyrix->HWCursor = TRUE;
-    if (xf86IsOptionSet(CYRIXOptions, OPTION_HW_CURSOR)) {
+    if (xf86IsOptionSet(pCyrix->Options, OPTION_HW_CURSOR)) {
 	from = X_CONFIG;
 	pCyrix->HWCursor = TRUE;
     }
-    if (xf86IsOptionSet(CYRIXOptions, OPTION_SW_CURSOR)) {
+    if (xf86IsOptionSet(pCyrix->Options, OPTION_SW_CURSOR)) {
 	from = X_CONFIG;
 	pCyrix->HWCursor = FALSE;
     }
     xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		pCyrix->HWCursor ? "HW" : "SW");
-    if (xf86IsOptionSet(CYRIXOptions, OPTION_NOACCEL)) {
+    if (xf86IsOptionSet(pCyrix->Options, OPTION_NOACCEL)) {
 	pCyrix->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
     }
@@ -994,6 +991,8 @@ CYRIXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    return FALSE;
     }
 
+    miSetPixmapDepths ();
+    
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
      * pScreen fields.
@@ -1018,6 +1017,8 @@ CYRIXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!ret)
 	return FALSE;
 
+    fbPictureInit (pScreen, 0, 0);
+    
     xf86SetBlackWhitePixels(pScreen);
 
     if (pScrn->bitsPerPixel > 8) {
@@ -1084,9 +1085,7 @@ CYRIXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!vgaHWHandleColormaps(pScreen))
 	return FALSE;
 
-#ifdef DPMSExtension
     xf86DPMSInit(pScreen, (DPMSSetProcPtr)CYRIXDisplayPowerManagementSet, 0);
-#endif
 
     pScrn->memPhysBase = pCyrix->FbAddress;
     pScrn->fbOffset = 0;

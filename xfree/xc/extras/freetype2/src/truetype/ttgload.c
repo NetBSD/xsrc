@@ -16,23 +16,15 @@
 /***************************************************************************/
 
 
-#include <freetype/internal/ftdebug.h>
-#include <freetype/internal/ftcalc.h>
-#include <freetype/internal/ftstream.h>
-#include <freetype/internal/sfnt.h>
-#include <freetype/tttags.h>
-#include <freetype/ftoutln.h>
-
-
-#ifdef FT_FLAT_COMPILE
+#include <ft2build.h>
+#include FT_INTERNAL_DEBUG_H
+#include FT_INTERNAL_CALC_H
+#include FT_INTERNAL_STREAM_H
+#include FT_INTERNAL_SFNT_H
+#include FT_TRUETYPE_TAGS_H
+#include FT_OUTLINE_H
 
 #include "ttgload.h"
-
-#else
-
-#include <truetype/ttgload.h>
-
-#endif
 
 
   /*************************************************************************/
@@ -259,7 +251,7 @@
     FT_TRACE5(( "  yMin: %4d  yMax: %4d\n", loader->bbox.yMin,
                                             loader->bbox.yMax ));
 
-    return FT_Err_Ok;
+    return TT_Err_Ok;
   }
 
 
@@ -502,7 +494,8 @@
       /* composite instructions, if we find some.               */
       /* we will process them later...                          */
       /*                                                        */
-      loader->ins_pos = FILE_Pos() + stream->cursor - stream->limit;
+      loader->ins_pos = (FT_ULong)( FILE_Pos() +
+                                    stream->cursor - stream->limit );
     }
 #endif
 
@@ -541,7 +534,7 @@
     FT_UInt          n_points = outline->n_points;
     FT_UInt          n_ins;
     TT_GlyphZone*    zone     = &load->zone;
-    FT_Error         error    = FT_Err_Ok;
+    FT_Error         error    = TT_Err_Ok;
 
     FT_UNUSED( debug );  /* used by truetype interpreter only */
 
@@ -632,7 +625,7 @@
         if ( error && load->exec->pedantic_hinting )
           goto Exit;
 
-        error = FT_Err_Ok;  /* ignore bytecode errors in non-pedantic mode */
+        error = TT_Err_Ok;  /* ignore bytecode errors in non-pedantic mode */
       }
 
 #endif /* TT_CONFIG_OPTION_BYTECODE_INTERPRETER */
@@ -747,7 +740,7 @@
 
 #endif
 
-      error = FT_Err_Ok;
+      error = TT_Err_Ok;
       goto Exit;
     }
 
@@ -898,6 +891,7 @@
           if ( error )
             goto Fail;
 
+          /* restore subglyph pointer */
           subglyph = gloader->base.subglyphs + num_base_subgs + n;
 
           if ( subglyph->flags & USE_MY_METRICS )
@@ -978,8 +972,16 @@
             }
           }
 
-          translate_array( num_new_points, loader->zone.cur, x, y );
-          cur_to_org( num_new_points, &loader->zone );
+          if ( x | y )
+          {
+            translate_array( num_new_points,
+                             gloader->base.outline.points + num_base_points,
+                             x, y );
+
+            translate_array( num_new_points,
+                             gloader->base.extra_points + num_base_points,
+                             x, y );
+          }
         }
 
         /*******************************************************************/
@@ -1490,3 +1492,4 @@
 
 
 /* END */
+

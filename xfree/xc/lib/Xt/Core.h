@@ -1,5 +1,5 @@
 /*
-* $TOG: Core.h /main/12 1998/02/06 13:21:07 kaleb $
+* $Xorg: Core.h,v 1.3 2000/08/17 19:46:10 cpqbld Exp $
 * $oHeader: Core.h,v 1.2 88/08/18 15:54:32 asente Exp $
 */
 

@@ -41,7 +41,7 @@
 .\" of this documentation for any purpose.
 .\" It is provided ``as is'' without express or implied warranty.
 .\"
-.\" $XFree86$
+.\" $XFree86: xc/doc/man/X11/XSeWMProp.man,v 1.4 2001/02/09 03:47:46 tsi Exp $
 .\" 
 .ds xT X Toolkit Intrinsics \- C Language Interface
 .ds xW Athena X Widgets \- C Language X Toolkit Interface
@@ -141,12 +141,12 @@
 .el .sp 10p
 ..
 .ny0
-.TH XSetWMProperties 3X11 "Release 6.4" "X Version 11" "XLIB FUNCTIONS"
+.TH XSetWMProperties 3X11 __xorgversion__ "XLIB FUNCTIONS"
 .SH NAME
 XSetWMProperties, XmbSetWMProperties, Xutf8SetWMProperties \- set standard window properties
 .SH SYNTAX
-void XSetWMProperties\^(\^\fIdisplay\fP, \fIw\fP, \fIwindow_name\fP, \
-\fIicon_name\fP, \fIargv\fP, \fIargc\fP, \fInormal_hints\fP, \fIwm_hints\fP, \
+void XSetWMProperties\^(\^\fIdisplay\fP, \fIw\fP, \fIwindow_name\fP,
+\fIicon_name\fP, \fIargv\fP, \fIargc\fP, \fInormal_hints\fP, \fIwm_hints\fP,
 \fIclass_hints\fP\^)
 .br
       Display *\fIdisplay\fP\^; 

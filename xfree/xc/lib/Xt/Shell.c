@@ -1,4 +1,4 @@
-/* $TOG: Shell.c /main/178 1998/02/06 13:26:20 kaleb $ */
+/* $Xorg: Shell.c,v 1.3 2000/08/17 19:46:17 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Shell.c,v 3.7 1997/05/17 12:52:15 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Shell.c,v 3.9 2001/01/17 19:43:09 dawes Exp $ */
 
 /*
 

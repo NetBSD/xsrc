@@ -1,4 +1,4 @@
-/* $TOG: StNColor.c /main/21 1998/02/06 17:54:35 kaleb $ */
+/* $Xorg: StNColor.c,v 1.3 2000/08/17 19:44:56 cpqbld Exp $ */
 /*
 
 Copyright 1986, 1998  The Open Group
@@ -20,7 +20,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/StNColor.c,v 1.3 2001/01/17 19:41:44 dawes Exp $ */
 
 #include <stdio.h>
 #include "Xlibint.h"

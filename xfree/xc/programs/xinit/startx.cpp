@@ -1,7 +1,6 @@
 XCOMM!/bin/sh
 
-XCOMM $XConsortium: startx.cpp,v 1.4 91/08/22 11:41:29 rws Exp $
-XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.4 2000/12/02 17:38:23 herrb Exp $
+XCOMM $Xorg: startx.cpp,v 1.3 2000/08/17 19:54:29 cpqbld Exp $
 XCOMM 
 XCOMM This is just a sample implementation of a slightly less primitive 
 XCOMM interface than xinit.  It looks for user .xinitrc and .xserverrc
@@ -12,6 +11,7 @@ XCOMM and pop a clock and serveral xterms.
 XCOMM
 XCOMM Site administrators are STRONGLY urged to write nicer versions.
 XCOMM 
+XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.8 2001/04/27 11:04:53 dawes Exp $
 
 #ifdef SCO
 
@@ -53,18 +53,20 @@ userclientrc=$HOME/.xinitrc
 userserverrc=$HOME/.xserverrc
 sysclientrc=XINITDIR/xinitrc
 sysserverrc=XINITDIR/xserverrc
+defaultclientargs=""
+defaultserverargs=""
 clientargs=""
 serverargs=""
 
 #ifdef SCO
 if [ -f $scoclientrc ]; then
-    clientargs=$scoclientrc
+    defaultclientargs=$scoclientrc
 else
 #endif
 if [ -f $userclientrc ]; then
-    clientargs=$userclientrc
+    defaultclientargs=$userclientrc
 else if [ -f $sysclientrc ]; then
-    clientargs=$sysclientrc
+    defaultclientargs=$sysclientrc
 fi
 fi
 #ifdef SCO
@@ -72,9 +74,9 @@ fi
 #endif
 
 if [ -f $userserverrc ]; then
-    serverargs=$userserverrc
+    defaultserverargs=$userserverrc
 else if [ -f $sysserverrc ]; then
-    serverargs=$sysserverrc
+    defaultserverargs=$sysserverrc
 fi
 fi
 
@@ -82,31 +84,37 @@ display=:0
 whoseargs="client"
 while [ "x$1" != "x" ]; do
     case "$1" in
-	/''*|\.*)	if [ "$whoseargs" = "client" ]; then
-		    if [ "x$clientargs" = x ]; then
-			clientargs="$1"
-		    else
-			clientargs="$clientargs $1"
-		    fi
-		else
-		    if [ "x$serverargs" = x ]; then
-			serverargs="$1"
-		    else
-			serverargs="$serverargs $1"
-		    fi
-		fi ;;
-	--)	whoseargs="server" ;;
-	*)	if [ "$whoseargs" = "client" ]; then
-		    clientargs="$clientargs $1"
-		else
-		    case "$1" in
-			:[0-9]*) display="$1"; serverargs="$serverargs $1";;
-			*) serverargs="$serverargs $1" ;;
-		    esac
-		fi ;;
+    --)
+	whoseargs="server"
+	;;
+    *)
+	if [ "$whoseargs" = "client" ]; then
+	    clientargs="$clientargs $1"
+	else
+	    serverargs="$serverargs $1"
+	    case "$1" in
+	    :[0-9]*)
+		display="$1"
+		;;
+	    esac
+	fi
+	;;
     esac
     shift
 done
+
+if [ x"$clientargs" = x ]; then
+    clientargs="$defaultclientargs"
+fi
+if [ x"$serverargs" = x ]; then
+    serverargs="$defaultserverargs"
+fi
+    
+if [ X"$XAUTHORITY" = X ]; then
+    export XAUTHORITY=$HOME/.Xauthority
+fi
+
+removelist=
 
 #if defined(HAS_COOKIE_MAKER) && defined(MK_COOKIE)
 XCOMM set up default Xauth info for this machine
@@ -118,21 +126,29 @@ XCOMM set up default Xauth info for this machine
 #endif
 #endif
 mcookie=`MK_COOKIE`
-if [ X"$XAUTHORITY" = X ]; then
-    authfile="$HOME/.Xauthority"
-else
-    authfile="$XAUTHORITY"
-fi
-serverargs="$serverargs -auth $authfile"
-xauth add $display . $mcookie
-xauth add `HOSTNAME`$display . $mcookie
+for displayname in $display `HOSTNAME`$display; do
+    if ! xauth list "$displayname" | grep "$displayname " >/dev/null 2>&1; then
+	xauth add $displayname . $mcookie
+	removelist="$displayname $removelist"
+    fi
+done
 #endif
 
 xinit $clientargs -- $serverargs
 
+if [ x"$removelist" != x ]; then
+    xauth remove $removelist
+fi
+
 /*
  * various machines need special cleaning up
  */
+#ifdef __linux__
+if command -v deallocvt > /dev/null 2>&1; then
+    deallocvt
+fi
+#endif
+
 #ifdef macII
 Xrepair
 screenrestore

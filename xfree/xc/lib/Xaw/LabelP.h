@@ -1,5 +1,5 @@
 /*
-* $TOG: LabelP.h /main/30 1998/02/06 12:46:19 kaleb $
+* $Xorg: LabelP.h,v 1.3 2000/08/17 19:45:33 cpqbld Exp $
 */
 
 
@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xaw/LabelP.h,v 1.5 1999/06/06 08:47:58 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/LabelP.h,v 1.7 2001/01/17 19:42:27 dawes Exp $ */
 
 #ifndef _XawLabelP_h
 #define _XawLabelP_h

@@ -1,4 +1,4 @@
-/* $TOG: helper.c /main/19 1998/02/25 13:59:56 barstow $ */
+/* $Xorg: helper.c,v 1.3 2000/08/17 19:54:57 cpqbld Exp $ */
 /*
 
 Copyright 1996, 1998  The Open Group

@@ -1,4 +1,4 @@
-/* $TOG: chgdctl.c /main/5 1998/02/09 15:28:01 kaleb $ */
+/* $Xorg: chgdctl.c,v 1.3 2000/08/17 19:48:00 cpqbld Exp $ */
 
 /************************************************************
 
@@ -41,7 +41,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/Xi/chgdctl.c,v 3.1 1996/05/06 05:56:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/chgdctl.c,v 3.3 2001/01/17 22:13:23 dawes Exp $ */
 
 /********************************************************************
  *

@@ -1,4 +1,4 @@
-/* $XConsortium: Events.h,v 1.2 93/09/23 18:57:02 rws Exp $ */
+/* $Xorg: Events.h,v 1.3 2000/08/17 19:53:28 cpqbld Exp $ */
 /*
 
 Copyright 1993 by Davor Matic

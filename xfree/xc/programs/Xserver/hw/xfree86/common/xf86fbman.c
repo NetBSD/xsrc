@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbman.c,v 1.18 2000/10/25 06:14:24 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86fbman.c,v 1.22 2001/05/10 10:17:39 alanh Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -917,7 +917,7 @@ localResizeOffscreenLinear(FBLinearPtr resize, int length)
 	extents = REGION_EXTENTS(pScreen, offman->InitialBoxes);
 	pitch = extents->x2 - extents->x1;
 
-	if(length < w) { /* special case */
+	if(length < pitch) { /* special case */
 	    w = length;
 	    h = 1;
 	} else {
@@ -1011,7 +1011,10 @@ xf86FBCloseScreen (int i, ScreenPtr pScreen)
    REGION_DESTROY(pScreen, offman->InitialBoxes);
    REGION_DESTROY(pScreen, offman->FreeBoxes);
 
+   xfree(offman->FreeBoxesUpdateCallback);
+   xfree(offman->devPrivates);
    xfree(offman);
+   pScreen->devPrivates[xf86FBScreenIndex].ptr = NULL;
 
    return (*pScreen->CloseScreen) (i, pScreen);
 }
@@ -1036,6 +1039,9 @@ xf86InitFBManager(
       (FullBox->x2 <  ScreenBox.x2) || (FullBox->y2 <  ScreenBox.y2)) {
 	return FALSE;   
    }
+
+   if (FullBox->y2 < FullBox->y1) return FALSE;
+   if (FullBox->x2 < FullBox->x2) return FALSE;
 
    REGION_INIT(pScreen, &ScreenRegion, &ScreenBox, 1); 
    REGION_INIT(pScreen, &FullRegion, FullBox, 1); 

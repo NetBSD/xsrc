@@ -1,4 +1,4 @@
-/* $TOG: infutil.c /main/4 1998/02/04 14:34:09 kaleb $ */
+/* $Xorg: infutil.c,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* inflate_util.c -- data and routines common to blocks and codes
  * Copyright (C) 1995-1998 Mark Adler

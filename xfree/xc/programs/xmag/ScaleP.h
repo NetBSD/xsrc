@@ -1,4 +1,4 @@
-/* $TOG: ScaleP.h /main/4 1998/02/09 14:10:41 kaleb $ */
+/* $Xorg: ScaleP.h,v 1.3 2000/08/17 19:54:54 cpqbld Exp $ */
 /*
 
 Copyright 1989, 1998  The Open Group

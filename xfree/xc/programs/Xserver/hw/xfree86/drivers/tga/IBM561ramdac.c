@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tga/IBM561ramdac.c,v 1.3 2001/02/15 11:03:58 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -533,7 +533,6 @@ IBM561ramdacHWInit(ScrnInfoPtr pScrn)
   TGAPtr pTga = TGAPTR(pScrn);
 
     unsigned int temp1[6] = {0,0,0,0,0,0};
-    struct monitor_data * c_table = &crystal_table;
 
     /*
      *  Set-up av9110 to 14.3 Mhz as reference for 561's PLL
@@ -555,10 +554,10 @@ IBM561ramdacHWInit(ScrnInfoPtr pScrn)
   IBM561WriteReg(pScrn, IBM561_CONFIG_REG_4, 0x20 );
 
 /* IBM561WriteReg(pScrn, IBM561_PLL_VCO_DIV_REG, 0xc8 ); */
-  IBM561WriteReg(pScrn, IBM561_PLL_VCO_DIV_REG, c_table->ibm561_vco_div);
+  IBM561WriteReg(pScrn, IBM561_PLL_VCO_DIV_REG, tga_c_table->ibm561_vco_div);
 
 /* IBM561WriteReg(pScrn, IBM561_PLL_REF_REG, 0x08 ); */
-  IBM561WriteReg(pScrn, IBM561_PLL_REF_REG, c_table->ibm561_ref );
+  IBM561WriteReg(pScrn, IBM561_PLL_REF_REG, tga_c_table->ibm561_ref );
 
   IBM561WriteReg(pScrn, IBM561_DIV_DOT_CLK_REG, 0xb0 );
 

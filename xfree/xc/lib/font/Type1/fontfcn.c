@@ -1,4 +1,4 @@
-/* $XConsortium: fontfcn.c,v 1.10 94/02/06 16:07:23 gildea Exp $ */
+/* $Xorg: fontfcn.c,v 1.4 2000/08/17 19:46:30 cpqbld Exp $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -45,7 +45,7 @@
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/fontfcn.c,v 1.7 1999/05/04 09:35:21 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/fontfcn.c,v 1.10 2001/04/05 17:42:27 dawes Exp $ */
  
 #ifndef FONTMODULE
 #include <stdio.h>
@@ -61,6 +61,7 @@
 #include "range.h"
 #include "Xdefs.h"
 #endif
+#include "fntfilst.h"
 #include "fontfcn.h"
 
 extern struct segment *Type1Char ( char *env, XYspace S, 

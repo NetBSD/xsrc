@@ -4,18 +4,18 @@
 .\"
 .\" Copyright (c) 1996  Joe Moss, The XFree86 Project
 .\" 
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86Misc.man,v 3.8 1998/03/27 23:23:36 hohndel Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86Misc.man,v 3.11 2001/02/07 22:35:22 tsi Exp $
 .de ZN
 .ie t \fB\^\\$1\^\fR\\$2
 .el \fI\^\\$1\^\fP\\$2
 ..
-.TH XF86MISC 3X11 "3.3.1+ (X11R6.4)" "XFree86" "X FUNCTIONS"
+.TH XF86MISC 3X11 __vendorversion__ "X FUNCTIONS"
 .SH NAME
 XF86MiscQueryExtension, XF86MiscQueryVersion, XF86MiscGetMouseSettings, XF86MiscSetMouseSettings, XF86MiscGetKbdSettings, XF86MiscSetKbdSettings \- XFree86-Misc extension interface functions
 .SH SYNTAX
 .nf
 .LP
-#include <X11/extensions/xf86misc.h>
+\&#include <X11/extensions/xf86misc.h>
 .LP
 Bool XF86MiscQueryExtension(
     Display *\fIdisplay\fP\^,

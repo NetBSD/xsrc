@@ -1,7 +1,6 @@
 
   /*\
-   * $XConsortium: utils.c /main/2 1996/12/04 10:24:13 lehors $
-   * $XFree86: xc/programs/xkbevd/utils.c,v 3.2 1997/12/06 09:26:15 hohndel Exp $
+   * $XFree86: xc/programs/xkbevd/utils.c,v 3.4 2001/01/17 23:46:08 dawes Exp $
    *
    *		              COPYRIGHT 1990
    *		        DIGITAL EQUIPMENT CORPORATION
@@ -26,6 +25,7 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
+/* $Xorg: utils.c,v 1.5 2000/08/17 19:54:49 cpqbld Exp $ */
 
 #include 	"utils.h"
 #include	<ctype.h>

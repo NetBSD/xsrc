@@ -1,4 +1,4 @@
-/* $TOG: inffast.c /main/4 1998/02/04 14:33:49 kaleb $ */
+/* $Xorg: inffast.c,v 1.3 2000/08/17 19:46:47 cpqbld Exp $ */
 
 /* inffast.c -- process literals and length/distance pairs fast
  * Copyright (C) 1995-1998 Mark Adler

@@ -19,13 +19,31 @@
 #ifndef __FTMODULE_H__
 #define __FTMODULE_H__
 
-#ifndef    FT_BUILD_H
-#  define  FT_BUILD_H    <freetype/config/ftbuild.h>
-#endif
-#include   FT_BUILD_H
-#include   FT_FREETYPE_H
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
 
 FT_BEGIN_HEADER
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* <Section>                                                             */
+  /*    module_management                                                  */
+  /*                                                                       */
+  /* <Title>                                                               */
+  /*    Module Management                                                  */
+  /*                                                                       */
+  /* <Abstract>                                                            */
+  /*    How to add, upgrade, and remove modules from FreeType.             */
+  /*                                                                       */
+  /* <Description>                                                         */
+  /*    The definitions below are used to manage modules within FreeType.  */
+  /*    Modules can be added, upgraded, and removed at runtime.            */
+  /*                                                                       */
+  /*************************************************************************/
+
 
   /* module bit flags */
   typedef enum  FT_Module_Flags_
@@ -264,6 +282,9 @@ FT_BEGIN_HEADER
   /*    library :: A handle to a new library object.                       */
   /*                                                                       */
   FT_EXPORT( void )  FT_Add_Default_Modules( FT_Library  library );
+
+
+  /* */
 
 
 FT_END_HEADER

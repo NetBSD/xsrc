@@ -1,4 +1,4 @@
-/* $XFree86$ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_axp.c,v 1.1 2001/02/15 19:34:18 eich Exp $ */
 
 #include "X.h"
 #include "os.h"

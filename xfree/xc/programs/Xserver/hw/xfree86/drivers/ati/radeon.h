@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon.h,v 1.5 2000/12/01 08:56:03 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon.h,v 1.19 2001/05/04 19:05:33 dawes Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
  *                VA Linux Systems Inc., Fremont, California.
@@ -51,21 +51,21 @@
 #include "xf86xv.h"
 
 				/* DRI support */
-#undef XF86DRI			/* Not yet */
 #ifdef XF86DRI
 #define _XF86DRI_SERVER_
-#include "r128_dripriv.h"
+#include "radeon_dripriv.h"
 #include "dri.h"
 #include "GL/glxint.h"
+#endif
+
+				/* Render support */
+#ifdef RENDER
+#include "picturestr.h"
 #endif
 
 #define RADEON_DEBUG    0       /* Turn off debugging output                */
 #define RADEON_TIMEOUT  2000000 /* Fall out of wait loops after this count */
 #define RADEON_MMIOSIZE 0x80000
-/* Atomic updates of PLL clock don't seem to always work and stick, thus
- * the bit never resets. Here - we use our own check by reading back the
- * register we've just wrote to make sure it's got the Right! value */
-#define RADEON_ATOMIC_UPDATE 0  /* Use PLL Atomic updates (seems broken) */
 
 #define RADEON_VBIOS_SIZE 0x00010000
 
@@ -197,7 +197,6 @@ typedef struct {
     unsigned long     LinearAddr; /* Frame buffer physical address           */
     unsigned long     MMIOAddr;   /* MMIO region physical address            */
     unsigned long     BIOSAddr;   /* BIOS physical address                   */
-    Bool              BIOSFromPCI; /* BIOS is read from PCI space            */
 
     unsigned char     *MMIO;      /* Map of MMIO region                      */
     unsigned char     *FB;        /* Map of frame buffer                     */
@@ -280,6 +279,11 @@ typedef struct {
     drmHandle         registerHandle;
 
     Bool              IsPCI;            /* Current card is a PCI card */
+    drmSize           pciSize;
+    drmHandle         pciMemHandle;
+    unsigned char     *PCI;             /* Map */
+
+    Bool              depthMoves;       /* Enable depth moves -- slow! */
 
     drmSize           agpSize;
     drmHandle         agpMemHandle;     /* Handle from drmAgpAlloc */
@@ -287,12 +291,12 @@ typedef struct {
     unsigned char     *AGP;             /* Map */
     int               agpMode;
 
-    Bool              CPInUse;          /* CP is currently active */
+    CARD32            pciCommand;
+
+    Bool              CPInUse;          /* CP has been used by X server */
     int               CPMode;           /* CP mode that server/clients use */
     int               CPFifoSize;       /* Size of the CP command FIFO */
-    Bool              CPSecure;         /* CP security enabled */
     int               CPusecTimeout;    /* CP timeout in usecs */
-    Bool              CP2D;             /* CP is used for X server 2D prims */
 
 				/* CP ring buffer data */
     unsigned long     ringStart;        /* Offset into AGP space */
@@ -307,22 +311,14 @@ typedef struct {
     drmSize           ringReadMapSize;  /* Size of map */
     unsigned char     *ringReadPtr;     /* Map */
 
-				/* CP vertex buffer data */
-    unsigned long     vbStart;          /* Offset into AGP space */
-    drmHandle         vbHandle;         /* Handle from drmAddMap */
-    drmSize           vbMapSize;        /* Size of map */
-    int               vbSize;           /* Size of vert bufs (in MB) */
-    unsigned char     *vb;              /* Map */
-    int               vbBufSize;        /* Size of individual vert buf */
-    int               vbNumBufs;        /* Number of vert bufs */
-    drmBufMapPtr      vbBufs;           /* Buffer map */
-
-				/* CP indirect buffer data */
-    unsigned long     indStart;         /* Offset into AGP space */
-    drmHandle         indHandle;        /* Handle from drmAddMap */
-    drmSize           indMapSize;       /* Size of map */
-    int               indSize;          /* Size of indirect bufs (in MB) */
-    unsigned char     *ind;             /* Map */
+				/* CP vertex/indirect buffer data */
+    unsigned long     bufStart;        /* Offset into AGP space */
+    drmHandle         bufHandle;       /* Handle from drmAddMap */
+    drmSize           bufMapSize;      /* Size of map */
+    int               bufSize;         /* Size of buffers (in MB) */
+    unsigned char     *buf;            /* Map */
+    int               bufNumBufs;      /* Number of buffers */
+    drmBufMapPtr      buffers;         /* Buffer map */
 
 				/* CP AGP Texture data */
     unsigned long     agpTexStart;      /* Offset into AGP space */
@@ -332,6 +328,10 @@ typedef struct {
     unsigned char     *agpTex;          /* Map */
     int               log2AGPTexGran;
 
+				/* CP accleration */
+    drmBufPtr         indirectBuffer;
+    int               indirectStart;
+
 				/* DRI screen private data */
     int               fbX;
     int               fbY;
@@ -339,15 +339,44 @@ typedef struct {
     int               backY;
     int               depthX;
     int               depthY;
-    int               textureX;
-    int               textureY;
+
+    int               frontOffset;
+    int               frontPitch;
+    int               backOffset;
+    int               backPitch;
+    int               depthOffset;
+    int               depthPitch;
+    int               textureOffset;
     int               textureSize;
     int               log2TexGran;
+
+    CARD32            frontPitchOffset;
+    CARD32            backPitchOffset;
+    CARD32            depthPitchOffset;
+
+    CARD32            dst_pitch_offset;
+
+				/* Saved scissor values */
+    CARD32            sc_left;
+    CARD32            sc_right;
+    CARD32            sc_top;
+    CARD32            sc_bottom;
+
+    CARD32            re_top_left;
+    CARD32            re_width_height;
+
+    CARD32            aux_sc_cntl;
+
+#ifdef PER_CONTEXT_SAREA
+    int 	      perctx_sarea_size;
 #endif
+#endif
+
     XF86VideoAdaptorPtr adaptor;
     void              (*VideoTimerCallback)(ScrnInfoPtr, Time);
     int               videoKey;
     Bool              showCache;
+    OptionInfoPtr     Options;
 } RADEONInfoRec, *RADEONInfoPtr;
 
 #define RADEONWaitForFifo(pScrn, entries)                                    \
@@ -359,14 +388,17 @@ do {                                                                         \
 
 extern void        RADEONWaitForFifoFunction(ScrnInfoPtr pScrn, int entries);
 extern void        RADEONWaitForIdle(ScrnInfoPtr pScrn);
+
 extern void        RADEONEngineReset(ScrnInfoPtr pScrn);
 extern void        RADEONEngineFlush(ScrnInfoPtr pScrn);
+extern void        RADEONEngineRestore(ScrnInfoPtr pScrn);
 
 extern unsigned    RADEONINPLL(ScrnInfoPtr pScrn, int addr);
 extern void        RADEONWaitForVerticalSync(ScrnInfoPtr pScrn);
 
+extern void        RADEONSelectBuffer(ScrnInfoPtr pScrn, int buffer);
+
 extern Bool        RADEONAccelInit(ScreenPtr pScreen);
-extern void        RADEONEngineInit(ScrnInfoPtr pScrn);
 extern Bool        RADEONCursorInit(ScreenPtr pScreen);
 extern Bool        RADEONDGAInit(ScreenPtr pScreen);
 
@@ -378,10 +410,174 @@ extern void        RADEONInitVideo(ScreenPtr);
 extern Bool        RADEONDRIScreenInit(ScreenPtr pScreen);
 extern void        RADEONDRICloseScreen(ScreenPtr pScreen);
 extern Bool        RADEONDRIFinishScreenInit(ScreenPtr pScreen);
-extern void        RADEONCPStart(ScrnInfoPtr pScrn);
-extern void        RADEONCPStop(ScrnInfoPtr pScrn);
-extern void        RADEONCPResetRing(ScrnInfoPtr pScrn);
-extern void        RADEONCPWaitForIdle(ScrnInfoPtr pScrn);
-#endif
 
-#endif
+extern drmBufPtr   RADEONCPGetBuffer(ScrnInfoPtr pScrn);
+extern void        RADEONCPFlushIndirect(ScrnInfoPtr pScrn);
+extern void        RADEONCPReleaseIndirect(ScrnInfoPtr pScrn);
+
+
+#define RADEONCP_START(pScrn, info)					\
+do {									\
+    int _ret = drmRadeonStartCP(info->drmFD);				\
+    if (_ret) {								\
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,				\
+		   "%s: CP start %d\n", __FUNCTION__, _ret);		\
+    }									\
+} while (0)
+
+#define RADEONCP_STOP(pScrn, info)					\
+do {									\
+    int _ret = drmRadeonStopCP(info->drmFD);				\
+    if (_ret) {								\
+	xf86DrvMsg(pScrn->scrnIndex, X_ERROR,				\
+		   "%s: CP stop %d\n", __FUNCTION__, _ret);		\
+    }									\
+    RADEONEngineRestore(pScrn);						\
+} while (0)
+
+#define RADEONCP_RESET(pScrn, info)					\
+do {									\
+    if (RADEONCP_USE_RING_BUFFER(info->CPMode)) {			\
+	int _ret = drmRadeonResetCP(info->drmFD);			\
+	if (_ret) {							\
+	    xf86DrvMsg(pScrn->scrnIndex, X_ERROR,			\
+		       "%s: CP reset %d\n", __FUNCTION__, _ret);	\
+	}								\
+    }									\
+} while (0)
+
+#define RADEONCP_REFRESH(pScrn, info)					\
+do {									\
+   if ( !info->CPInUse ) {						\
+      RADEON_WAIT_UNTIL_IDLE();						\
+      BEGIN_RING( 6 );							\
+      OUT_RING_REG( RADEON_RE_TOP_LEFT,     info->re_top_left );	\
+      OUT_RING_REG( RADEON_RE_WIDTH_HEIGHT, info->re_width_height );	\
+      OUT_RING_REG( RADEON_AUX_SC_CNTL,     info->aux_sc_cntl );	\
+      ADVANCE_RING();							\
+      info->CPInUse = TRUE;						\
+   }									\
+} while (0)
+
+
+#define CP_PACKET0( reg, n )						\
+	(RADEON_CP_PACKET0 | ((n) << 16) | ((reg) >> 2))
+#define CP_PACKET1( reg0, reg1 )					\
+	(RADEON_CP_PACKET1 | (((reg1) >> 2) << 11) | ((reg0) >> 2))
+#define CP_PACKET2()							\
+	(RADEON_CP_PACKET2)
+#define CP_PACKET3( pkt, n )						\
+	(RADEON_CP_PACKET3 | (pkt) | ((n) << 16))
+
+
+#define RADEON_VERBOSE	0
+
+#define RING_LOCALS	CARD32 *__head; int __count;
+#define RING_THRESHOLD	256
+
+#define BEGIN_RING( n ) do {						\
+   if ( RADEON_VERBOSE ) {						\
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO,				\
+		  "BEGIN_RING( %d ) in %s\n", n, __FUNCTION__ );	\
+   }									\
+   if ( !info->indirectBuffer ) {					\
+      info->indirectBuffer = RADEONCPGetBuffer( pScrn );		\
+      info->indirectStart = 0;						\
+   } else if ( info->indirectBuffer->used - info->indirectStart +	\
+	       (n) * (int)sizeof(CARD32) > RING_THRESHOLD ) {		\
+      RADEONCPFlushIndirect( pScrn );					\
+   }									\
+   __head = (pointer)((char *)info->indirectBuffer->address +		\
+		       info->indirectBuffer->used);			\
+   __count = 0;								\
+} while (0)
+
+#define ADVANCE_RING() do {						\
+   if ( RADEON_VERBOSE ) {						\
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO,				\
+		  "ADVANCE_RING() used: %d+%d=%d/%d\n",			\
+		  info->indirectBuffer->used - info->indirectStart,	\
+		  __count * sizeof(CARD32),				\
+		  info->indirectBuffer->used - info->indirectStart +	\
+		  __count * sizeof(CARD32),				\
+		  RING_THRESHOLD );					\
+   }									\
+   info->indirectBuffer->used += __count * (int)sizeof(CARD32);		\
+} while (0)
+
+#define OUT_RING( x ) do {						\
+   if ( RADEON_VERBOSE ) {						\
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO,				\
+		  "   OUT_RING( 0x%08x )\n", (unsigned int)(x) );	\
+   }									\
+   __head[__count++] = (x);						\
+} while (0)
+
+#define OUT_RING_REG( reg, val )					\
+do {									\
+   OUT_RING( CP_PACKET0( reg, 0 ) );					\
+   OUT_RING( val );							\
+} while (0)
+
+#define FLUSH_RING()							\
+do {									\
+   if ( RADEON_VERBOSE )						\
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO,				\
+		  "FLUSH_RING in %s\n", __FUNCTION__ );			\
+   if ( info->indirectBuffer ) {					\
+      RADEONCPFlushIndirect( pScrn );					\
+   }									\
+} while (0)
+
+
+#define RADEON_WAIT_UNTIL_2D_IDLE()					\
+do {									\
+   BEGIN_RING( 2 );							\
+   OUT_RING( CP_PACKET0( RADEON_WAIT_UNTIL, 0 ) );			\
+   OUT_RING( (RADEON_WAIT_2D_IDLECLEAN |				\
+	      RADEON_WAIT_HOST_IDLECLEAN) );				\
+   ADVANCE_RING();							\
+} while (0)
+
+#define RADEON_WAIT_UNTIL_3D_IDLE()					\
+do {									\
+   BEGIN_RING( 2 );							\
+   OUT_RING( CP_PACKET0( RADEON_WAIT_UNTIL, 0 ) );			\
+   OUT_RING( (RADEON_WAIT_3D_IDLECLEAN |				\
+	      RADEON_WAIT_HOST_IDLECLEAN) );				\
+   ADVANCE_RING();							\
+} while (0)
+
+#define RADEON_WAIT_UNTIL_IDLE()					\
+do {									\
+   if ( RADEON_VERBOSE ) {						\
+      xf86DrvMsg( pScrn->scrnIndex, X_INFO,				\
+		  "WAIT_UNTIL_IDLE() in %s\n", __FUNCTION__ );		\
+   }									\
+   BEGIN_RING( 2 );							\
+   OUT_RING( CP_PACKET0( RADEON_WAIT_UNTIL, 0 ) );			\
+   OUT_RING( (RADEON_WAIT_2D_IDLECLEAN |				\
+	      RADEON_WAIT_3D_IDLECLEAN |				\
+	      RADEON_WAIT_HOST_IDLECLEAN) );				\
+   ADVANCE_RING();							\
+} while (0)
+
+#define RADEON_FLUSH_CACHE()						\
+do {									\
+   BEGIN_RING( 2 );							\
+   OUT_RING( CP_PACKET0( RADEON_RB2D_DSTCACHE_CTLSTAT, 0 ) );		\
+   OUT_RING( RADEON_RB2D_DC_FLUSH );					\
+   ADVANCE_RING();							\
+} while (0)
+
+#define RADEON_PURGE_CACHE()						\
+do {									\
+   BEGIN_RING( 2 );							\
+   OUT_RING( CP_PACKET0( RADEON_RB2D_DSTCACHE_CTLSTAT, 0 ) );		\
+   OUT_RING( RADEON_RB2D_DC_FLUSH_ALL );				\
+   ADVANCE_RING();							\
+} while (0)
+
+#endif /* XF86DRI */
+
+#endif /* _RADEON_H_ */

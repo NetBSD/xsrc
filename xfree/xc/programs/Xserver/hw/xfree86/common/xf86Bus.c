@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Bus.c,v 1.56 2000/12/06 15:35:07 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Bus.c,v 1.61.2.2 2001/06/02 15:27:54 dawes Exp $ */
 /*
  * Copyright (c) 1997-1999 by The XFree86 Project, Inc.
  */
@@ -46,22 +46,23 @@ static resPtr AccReducers = NULL;
 #endif
 
 /* resource lists */
-resPtr Acc =  NULL;
+resPtr Acc = NULL;
+resPtr osRes = NULL;
 
 /* allocatable ranges */
 resPtr ResRange = NULL;
 
 /* predefined special resources */
-resRange resVgaExclusive[] = {_VGA_EXCLUSIVE, _END};
-resRange resVgaShared[] = {_VGA_SHARED, _END};
-resRange resVgaMemShared[] = {_VGA_SHARED_MEM,_END};
-resRange resVgaIoShared[] = {_VGA_SHARED_IO,_END};
-resRange resVgaUnusedExclusive[] = {_VGA_EXCLUSIVE_UNUSED, _END};
-resRange resVgaUnusedShared[] = {_VGA_SHARED_UNUSED, _END};
-resRange resVgaSparseExclusive[] = {_VGA_EXCLUSIVE_SPARSE, _END};
-resRange resVgaSparseShared[] = {_VGA_SHARED_SPARSE, _END};
-resRange res8514Exclusive[] = {_8514_EXCLUSIVE, _END};
-resRange res8514Shared[] = {_8514_SHARED, _END};
+const resRange resVgaExclusive[] = {_VGA_EXCLUSIVE, _END};
+const resRange resVgaShared[] = {_VGA_SHARED, _END};
+const resRange resVgaMemShared[] = {_VGA_SHARED_MEM,_END};
+const resRange resVgaIoShared[] = {_VGA_SHARED_IO,_END};
+const resRange resVgaUnusedExclusive[] = {_VGA_EXCLUSIVE_UNUSED, _END};
+const resRange resVgaUnusedShared[] = {_VGA_SHARED_UNUSED, _END};
+const resRange resVgaSparseExclusive[] = {_VGA_EXCLUSIVE_SPARSE, _END};
+const resRange resVgaSparseShared[] = {_VGA_SHARED_SPARSE, _END};
+const resRange res8514Exclusive[] = {_8514_EXCLUSIVE, _END};
+const resRange res8514Shared[] = {_8514_SHARED, _END};
 
 /* Flag: do we need RAC ? */
 static Bool needRAC = FALSE;
@@ -225,12 +226,13 @@ xf86IsEntityPrimary(int entityIndex)
 
     switch (pEnt->busType) {
     case BUS_PCI:
-	return (primaryBus.type == BUS_PCI &&
-		pEnt->pciBusId.bus == primaryBus.id.pci.bus &&
+	return (pEnt->pciBusId.bus == primaryBus.id.pci.bus &&
 		pEnt->pciBusId.device == primaryBus.id.pci.device &&
 		pEnt->pciBusId.func == primaryBus.id.pci.func);
     case BUS_ISA:
-	return ( primaryBus.type == BUS_ISA );
+	return TRUE;
+    case BUS_SBUS:
+	return (pEnt->sbusBusId.fbNum == primaryBus.id.sbus.fbNum);
     default:
 	return FALSE;
     }
@@ -1365,7 +1367,8 @@ void
 xf86ResourceBrokerInit(void)
 {
     resPtr resPci;
-    resPtr osRes = NULL;
+
+    osRes = NULL;
 
     /* Get the addressable ranges */
     ResRange = xf86BusAccWindowsFromOS();
@@ -1373,14 +1376,13 @@ xf86ResourceBrokerInit(void)
     xf86PrintResList(3, ResRange);
 
     /* Get the ranges used exclusively by the system */
-    osRes = xf86AccResFromOS(osRes); /*these need to be in host address space*/
+    osRes = xf86AccResFromOS(osRes);
     xf86MsgVerb(X_INFO, 3, "OS-reported resource ranges:\n");
     xf86PrintResList(3, osRes);
 
     /* Bus dep initialization */
     resPci = ResourceBrokerInitPci(&osRes);
-    Acc = xf86JoinResLists(osRes, resPci);
-
+    Acc = xf86JoinResLists(xf86DupResList(osRes), resPci);
     
     xf86MsgVerb(X_INFO, 3, "All system resource ranges:\n");
     xf86PrintResList(3, Acc);
@@ -1397,7 +1399,7 @@ xf86ResourceBrokerInit(void)
  * only deals with exclusive resources.
  */
 void
-RemoveOverlaps(resPtr target, resPtr list, Bool pow2Alignment)
+RemoveOverlaps(resPtr target, resPtr list, Bool pow2Alignment, Bool useEstimated)
 {
     resPtr pRes;
     memType size, newsize, adjust;
@@ -1408,24 +1410,24 @@ RemoveOverlaps(resPtr target, resPtr list, Bool pow2Alignment)
 		(target->res_type & ResPhysMask))
 	    && pRes->block_begin <= target->block_end
 	    && pRes->block_end >= target->block_begin) {
+	    /* Possibly ignore estimated resources */
+	    if (!useEstimated && (pRes->res_type & ResEstimated)) continue;
 	    /*
-	     * target should be a larger region than pRes.  If pRes fully
+	     * Target should be a larger region than pRes.  If pRes fully
 	     * contains target, don't do anything.
 	     */
 	    if (pRes->block_begin <= target->block_begin &&
 		pRes->block_end >= target->block_end)
 		continue;
 	    /*
-	     * cases where the target and pRes have the same starting address
-	     * cannot be resolved, so skip them (with a warning).
+	     * In cases where the target and pRes have the same starting
+	     * address, reduce the size of the target (given it's an estimate).
 	     */
 	    if (pRes->block_begin == target->block_begin) {
-		xf86MsgVerb(X_WARNING, 3, "Unresolvable overlap at 0x%08x\n",
-			    pRes->block_begin);
-		continue;
+		target->block_end = pRes->block_end;
 	    }
 	    /* Otherwise, trim target to remove the overlap */
-	    if (pRes->block_begin <= target->block_end) {
+	    else if (pRes->block_begin <= target->block_end) {
 		target->block_end = pRes->block_begin - 1;
 	    } else if (!pow2Alignment &&
 		       pRes->block_end >= target->block_begin) {
@@ -1710,11 +1712,13 @@ xf86RegisterResources(int entityIndex, resList list, int access)
 {
     resPtr res = NULL;
     resRange range;
-    
+    resList list_f = NULL;
+
     if (!list) {
 	list = xf86GetResourcesImplicitly(entityIndex);
 	/* these resources have to be in host address space already */
 	if (!list) return NULL;
+	list_f = list;
     }
     
     while(list->type != ResEnd) {
@@ -1727,13 +1731,20 @@ xf86RegisterResources(int entityIndex, resList list, int access)
 	    range.type = (range.type & ~ResAccMask) | (access & ResAccMask);
 	}
  	range.type &= ~ResEstimated;	/* Not allowed for drivers */
+#if !(defined(__alpha__) && defined(linux))
+	/* On Alpha Linux, do not check for conflicts, trust the kernel. */
 	if (checkConflict(&range, Acc, entityIndex, SETUP,TRUE)) 
 	    res = xf86AddResToList(res,&range,entityIndex);
-	else {
+	else
+#endif
+	{
 	    Acc = xf86AddResToList(Acc,&range,entityIndex);
 	}
 	list++;
     }
+    if (list_f)
+      xfree(list_f);
+
 #ifdef DEBUG
     xf86MsgVerb(X_INFO, 3,"Resources after driver initialization\n");
     xf86PrintResList(3, Acc);
@@ -2073,6 +2084,8 @@ setAccess(EntityPtr pEnt, xf86State state)
  * xf86EnterServerState() -- set state the server is in.
  */
 
+typedef enum { TRI_UNSET, TRI_TRUE, TRI_FALSE } TriState;
+
 void
 xf86EnterServerState(xf86State state)
 {
@@ -2080,13 +2093,29 @@ xf86EnterServerState(xf86State state)
     ScrnInfoPtr pScrn;
     int i,j;
     resType rt;
+    static int sigio_state;
+    static TriState sigio_blocked = TRI_UNSET;
 
+    /* 
+     * This is a good place to block SIGIO during SETUP state.
+     * SIGIO should be blocked in SETUP state otherwise (u)sleep()
+     * might get interrupted early. 
+     * We take care not to call xf86BlockSIGIO() twice. 
+     */
+    if ((state == SETUP) && (sigio_blocked != TRI_TRUE)) {
+        sigio_state = xf86BlockSIGIO();
+	sigio_blocked = TRI_TRUE;
+    } else if ((state == OPERATING) && (sigio_blocked != TRI_UNSET)) {
+        xf86UnblockSIGIO(sigio_state);
+        sigio_blocked = TRI_FALSE;
+    }
 #ifdef DEBUG
     if (state == SETUP)
 	ErrorF("Entering SETUP state\n");
     else
 	ErrorF("Entering OPERATING state\n");
 #endif
+
     /* When servicing a dump framebuffer we don't need to do anything */
     if (doFramebufferMode) return;
 
@@ -2456,7 +2485,10 @@ xf86PostProbe(void)
     }
     xf86FreeResList(acc);
 
+#if !(defined(__alpha__) && defined(linux))
+    /* No need to validate on Alpha Linux, trust the kernel. */
     ValidatePci();
+#endif
     
     xf86MsgVerb(X_INFO, 3, "resource ranges after probing:\n");
     xf86PrintResList(3, Acc);
@@ -2975,13 +3007,13 @@ xf86FindPrimaryDevice()
         CheckGenericGA();
     if (primaryBus.type != BUS_NONE) {
 	char *bus;
-	char *loc = xnfcalloc(1,8);
+	char *loc = xnfcalloc(1,9);
 	if (loc == NULL) return;
 
 	switch (primaryBus.type) {
 	case BUS_PCI:
 	    bus = "PCI";
-	    sprintf(loc,"%2.2x:%2.2x:%1.1x",primaryBus.id.pci.bus,
+	    sprintf(loc," %2.2x:%2.2x:%1.1x",primaryBus.id.pci.bus,
 	    primaryBus.id.pci.device,primaryBus.id.pci.func);
 	    break;
 	case BUS_ISA:
@@ -2990,14 +3022,14 @@ xf86FindPrimaryDevice()
 	    break;
 	case BUS_SBUS:
 	    bus = "SBUS";
-	    sprintf(loc,"%2.2x",primaryBus.id.sbus.fbNum);
+	    sprintf(loc," %2.2x",primaryBus.id.sbus.fbNum);
 	    break;
 	default:
 	    bus = "";
 	    loc[0] = '\0';
 	}
 	
-	xf86MsgVerb(X_INFO, 2, "Primary Device is: %s %s\n",bus,loc);
+	xf86MsgVerb(X_INFO, 2, "Primary Device is: %s%s\n",bus,loc);
 	xfree(loc);
     }
     

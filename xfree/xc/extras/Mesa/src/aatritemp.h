@@ -253,43 +253,45 @@
          ix = startX;
          count = 0;
          while (coverage > 0.0F) {
+            /* (cx,cy) = center of fragment */
+            GLfloat cx = ix + 0.5F, cy = iy + 0.5F;
 #ifdef DO_Z
-            z[count] = (GLdepth) solve_plane(ix, iy, zPlane);
+            z[count] = (GLdepth) solve_plane(cx, cy, zPlane);
 #endif
 #ifdef DO_RGBA
-            rgba[count][RCOMP] = solve_plane_0_255(ix, iy, rPlane);
-            rgba[count][GCOMP] = solve_plane_0_255(ix, iy, gPlane);
-            rgba[count][BCOMP] = solve_plane_0_255(ix, iy, bPlane);
-            rgba[count][ACOMP] = (GLubyte) (solve_plane_0_255(ix, iy, aPlane) * coverage);
+            rgba[count][RCOMP] = solve_plane_0_255(cx, cy, rPlane);
+            rgba[count][GCOMP] = solve_plane_0_255(cx, cy, gPlane);
+            rgba[count][BCOMP] = solve_plane_0_255(cx, cy, bPlane);
+            rgba[count][ACOMP] = (GLubyte) (solve_plane_0_255(cx, cy, aPlane) * coverage);
 #endif
 #ifdef DO_INDEX
             {
                GLint frac = compute_coveragei(pMin, pMid, pMax, ix, iy);
-               GLint indx = (GLint) solve_plane(ix, iy, iPlane);
+               GLint indx = (GLint) solve_plane(cx, cy, iPlane);
                index[count] = (indx & ~0xf) | frac;
             }
 #endif
 #ifdef DO_SPEC
-            spec[count][RCOMP] = solve_plane_0_255(ix, iy, srPlane);
-            spec[count][GCOMP] = solve_plane_0_255(ix, iy, sgPlane);
-            spec[count][BCOMP] = solve_plane_0_255(ix, iy, sbPlane);
+            spec[count][RCOMP] = solve_plane_0_255(cx, cy, srPlane);
+            spec[count][GCOMP] = solve_plane_0_255(cx, cy, sgPlane);
+            spec[count][BCOMP] = solve_plane_0_255(cx, cy, sbPlane);
 #endif
 #ifdef DO_STUV0
             {
-               GLfloat invQ = solve_plane_recip(ix, iy, v0Plane);
-               s[0][count] = solve_plane(ix, iy, s0Plane) * invQ;
-               t[0][count] = solve_plane(ix, iy, t0Plane) * invQ;
-               u[0][count] = solve_plane(ix, iy, u0Plane) * invQ;
+               const GLfloat invQ = solve_plane_recip(cx, cy, v0Plane);
+               s[0][count] = solve_plane(cx, cy, s0Plane) * invQ;
+               t[0][count] = solve_plane(cx, cy, t0Plane) * invQ;
+               u[0][count] = solve_plane(cx, cy, u0Plane) * invQ;
                lambda[0][count] = compute_lambda(s0Plane, t0Plane, invQ,
                                                  width0, height0);
             }
 #endif
 #ifdef DO_STUV1
             {
-               GLfloat invQ = solve_plane_recip(ix, iy, v1Plane);
-               s[1][count] = solve_plane(ix, iy, s1Plane) * invQ;
-               t[1][count] = solve_plane(ix, iy, t1Plane) * invQ;
-               u[1][count] = solve_plane(ix, iy, u1Plane) * invQ;
+               const GLfloat invQ = solve_plane_recip(cx, cy, v1Plane);
+               s[1][count] = solve_plane(cx, cy, s1Plane) * invQ;
+               t[1][count] = solve_plane(cx, cy, t1Plane) * invQ;
+               u[1][count] = solve_plane(cx, cy, u1Plane) * invQ;
                lambda[1][count] = compute_lambda(s1Plane, t1Plane, invQ,
                                                  width1, height1);
             }
@@ -354,47 +356,53 @@
             startX--;
          }
 
+         if (startX > ctx->DrawBuffer->Xmax) {
+            startX = ctx->DrawBuffer->Xmax;
+         }
+
          /* enter interior of triangle */
          ix = startX;
          count = 0;
          while (coverage > 0.0F) {
+            /* (cx,cy) = center of fragment */
+            const GLfloat cx = ix + 0.5F, cy = iy + 0.5F;
 #ifdef DO_Z
-            z[ix] = (GLdepth) solve_plane(ix, iy, zPlane);
+            z[ix] = (GLdepth) solve_plane(cx, cy, zPlane);
 #endif
 #ifdef DO_RGBA
-            rgba[ix][RCOMP] = solve_plane_0_255(ix, iy, rPlane);
-            rgba[ix][GCOMP] = solve_plane_0_255(ix, iy, gPlane);
-            rgba[ix][BCOMP] = solve_plane_0_255(ix, iy, bPlane);
-            rgba[ix][ACOMP] = (GLubyte) (solve_plane_0_255(ix, iy, aPlane) * coverage);
+            rgba[ix][RCOMP] = solve_plane_0_255(cx, cy, rPlane);
+            rgba[ix][GCOMP] = solve_plane_0_255(cx, cy, gPlane);
+            rgba[ix][BCOMP] = solve_plane_0_255(cx, cy, bPlane);
+            rgba[ix][ACOMP] = (GLubyte) (solve_plane_0_255(cx, cy, aPlane) * coverage);
 #endif
 #ifdef DO_INDEX
             {
                GLint frac = compute_coveragei(pMin, pMax, pMid, ix, iy);
-               GLint indx = (GLint) solve_plane(ix, iy, iPlane);
+               GLint indx = (GLint) solve_plane(cx, cy, iPlane);
                index[ix] = (indx & ~0xf) | frac;
             }
 #endif
 #ifdef DO_SPEC
-            spec[ix][RCOMP] = solve_plane_0_255(ix, iy, srPlane);
-            spec[ix][GCOMP] = solve_plane_0_255(ix, iy, sgPlane);
-            spec[ix][BCOMP] = solve_plane_0_255(ix, iy, sbPlane);
+            spec[ix][RCOMP] = solve_plane_0_255(cx, cy, srPlane);
+            spec[ix][GCOMP] = solve_plane_0_255(cx, cy, sgPlane);
+            spec[ix][BCOMP] = solve_plane_0_255(cx, cy, sbPlane);
 #endif
 #ifdef DO_STUV0
             {
-               GLfloat invQ = solve_plane_recip(ix, iy, v0Plane);
-               s[0][ix] = solve_plane(ix, iy, s0Plane) * invQ;
-               t[0][ix] = solve_plane(ix, iy, t0Plane) * invQ;
-               u[0][ix] = solve_plane(ix, iy, u0Plane) * invQ;
+               const GLfloat invQ = solve_plane_recip(cx, cy, v0Plane);
+               s[0][ix] = solve_plane(cx, cy, s0Plane) * invQ;
+               t[0][ix] = solve_plane(cx, cy, t0Plane) * invQ;
+               u[0][ix] = solve_plane(cx, cy, u0Plane) * invQ;
                lambda[0][ix] = compute_lambda(s0Plane, t0Plane, invQ,
                                               width0, height0);
             }
 #endif
 #ifdef DO_STUV1
             {
-               GLfloat invQ = solve_plane_recip(ix, iy, v1Plane);
-               s[1][ix] = solve_plane(ix, iy, s1Plane) * invQ;
-               t[1][ix] = solve_plane(ix, iy, t1Plane) * invQ;
-               u[1][ix] = solve_plane(ix, iy, u1Plane) * invQ;
+               const GLfloat invQ = solve_plane_recip(cx, cy, v1Plane);
+               s[1][ix] = solve_plane(cx, cy, s1Plane) * invQ;
+               t[1][ix] = solve_plane(cx, cy, t1Plane) * invQ;
+               u[1][ix] = solve_plane(cx, cy, u1Plane) * invQ;
                lambda[1][ix] = compute_lambda(s1Plane, t1Plane, invQ,
                                               width1, height1);
             }

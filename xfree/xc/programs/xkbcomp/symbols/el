@@ -1,0 +1,96 @@
+// $XFree86: xc/programs/xkbcomp/symbols/el,v 1.2 2001/04/06 17:44:58 dawes Exp $
+//
+
+default partial alphanumeric_keys alternate_group
+xkb_symbols "basic" {
+
+    include "el(bare)"
+
+    key <TLDE> { [],	[ quoteleft,	asciitilde	]	};
+    key <AE01> { [],	[	  1,	exclam 		]	};
+    key <AE02> { [],	[	  2,	at		]	};
+    key <AE03> { [],	[	  3,	numbersign	]	};
+    key <AE04> { [],	[	  4,	dollar		]	};
+    key <AE05> { [],	[	  5,	percent		]	};
+    key <AE06> { [],	[	  6,	asciicircum	]	};
+    key <AE07> { [],	[	  7,	ampersand	]	};
+    key <AE08> { [],	[	  8,	asterisk	]	};
+    key <AE09> { [],	[	  9,	parenleft	]	};
+    key <AE10> { [],	[	  0,	parenright	]	};
+    key <AE11> { [],	[     minus,	underscore	]	};
+    key <AE12> { [],	[     equal,	plus		]	};
+
+    key <AD11> { [],	[ bracketleft,	braceleft	]	};
+    key <AD12> { [],	[ bracketright,	braceright	]	};
+
+    key <AC11> { [],	[ quoteright,	quotedbl	]	};
+
+    key <AB08> { [],	[     comma,	less		]	};
+    key <AB09> { [],	[    period,	greater		]	};
+    key <AB10> { [],	[     slash,	question	]	};
+    key <BKSL> { [],	[ backslash,	bar		]	};
+
+};
+
+hidden partial alphanumeric_keys alternate_group
+xkb_symbols "bare" {
+
+    name[Group2] = "ISO8859-7";
+
+    key <AD01> { [], [ semicolon,		colon		] };
+    key <AD02> { [], [ Greek_finalsmallsigma,	Greek_SIGMA	] };
+    key <AD03> { [], [ Greek_epsilon,		Greek_EPSILON	] };
+    key <AD04> { [], [ Greek_rho,		Greek_RHO	] };
+    key <AD05> { [], [ Greek_tau,		Greek_TAU	] };
+    key <AD06> { [], [ Greek_upsilon,		Greek_UPSILON	] };
+    key <AD07> { [], [ Greek_theta,		Greek_THETA	] };
+    key <AD08> { [], [ Greek_iota,		Greek_IOTA	] };
+    key <AD09> { [], [ Greek_omicron,		Greek_OMICRON	] };
+    key <AD10> { [], [ Greek_pi,		Greek_PI	] };
+
+    key <AC01> { [], [ Greek_alpha,		Greek_ALPHA	] };
+    key <AC02> { [], [ Greek_sigma,		Greek_SIGMA	] };
+    key <AC03> { [], [ Greek_delta,		Greek_DELTA	] };
+    key <AC04> { [], [ Greek_phi,		Greek_PHI	] };
+    key <AC05> { [], [ Greek_gamma,		Greek_GAMMA	] };
+    key <AC06> { [], [ Greek_eta,		Greek_ETA	] };
+    key <AC07> { [], [ Greek_xi,		Greek_XI	] };
+    key <AC08> { [], [ Greek_kappa,		Greek_KAPPA	] };
+    key <AC09> { [], [ Greek_lamda,		Greek_LAMDA	] };
+    key <AC10> { [], [ dead_acute,		dead_diaeresis	] };
+
+    key <AB01> { [], [ Greek_zeta,		Greek_ZETA	] };
+    key <AB02> { [], [ Greek_chi,		Greek_CHI	] };
+    key <AB03> { [], [ Greek_psi,		Greek_PSI	] };
+    key <AB04> { [], [ Greek_omega,		Greek_OMEGA	] };
+    key <AB05> { [], [ Greek_beta,		Greek_BETA	] };
+    key <AB06> { [], [ Greek_nu,		Greek_NU	] };
+    key <AB07> { [], [ Greek_mu,		Greek_MU	] };
+
+    key <LSGT> { [], [ guillemotleft,		guillemotright	] };
+
+};
+
+partial alphanumeric_keys alternate_group
+xkb_symbols "Sundeadkeys" {
+
+    include "el(basic)"
+
+};
+
+partial alphanumeric_keys alternate_group
+xkb_symbols "sundeadkeys" {
+
+    include "el(Sundeadkeys)"
+
+};
+
+partial alphanumeric_keys alternate_group
+xkb_symbols "nodeadkeys" {
+
+    include "el(basic)"
+
+    key <AC10> { [], [ semicolon,		colon		] };
+
+};
+

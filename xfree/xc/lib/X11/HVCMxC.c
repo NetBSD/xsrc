@@ -1,4 +1,4 @@
-/* $XConsortium: HVCMxC.c,v 1.9 93/09/07 21:30:55 rws Exp $" */
+/* $Xorg: HVCMxC.c,v 1.3 2000/08/17 19:44:37 cpqbld Exp $ */
 
 /*
  * Code and supporting documentation (c) Copyright 1990 1991 Tektronix, Inc.
@@ -44,7 +44,7 @@
  *		querying routine.
  *
  */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/HVCMxC.c,v 1.3 2001/01/17 19:41:37 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xcmsint.h"

@@ -41,7 +41,7 @@ SOFTWARE.
 
 ************************************************************************/
 
-/* $TOG: glyphcurs.c /main/29 1998/02/09 14:19:46 kaleb $ */
+/* $Xorg: glyphcurs.c,v 1.3 2000/08/17 19:48:18 cpqbld Exp $ */
 
 #include "misc.h"
 #include "fontstruct.h"

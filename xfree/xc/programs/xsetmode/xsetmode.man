@@ -1,6 +1,6 @@
-.\" $XFree86: xc/programs/xsetmode/xsetmode.man,v 3.0 1995/12/26 06:10:18 dawes Exp $
+.\" $XFree86: xc/programs/xsetmode/xsetmode.man,v 3.2 2001/01/27 18:21:23 dawes Exp $
 .\"
-.TH xsetmode 1 "Release 6" "X Version 11"
+.TH xsetmode 1 __vendorversion__
 .SH NAME
 xsetmode \- set the mode for an X Input device
 .SH SYNOPSIS

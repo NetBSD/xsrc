@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86Parser.h,v 1.25 2000/11/02 19:58:21 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86Parser.h,v 1.27 2000/12/06 15:35:33 eich Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated

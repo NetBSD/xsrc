@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_inithw.c,v 1.5 2000/06/17 00:02:56 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_inithw.c,v 1.7 2001/01/31 16:15:37 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -43,7 +43,7 @@ void gammaInitHW(gammaContextPrivate *gcp)
     __DRIscreenPrivate *driScrnPriv = gcp->gammaScrnPriv->driScrnPriv;
     GLINTDRIPtr         gDRIPriv = (GLINTDRIPtr)driScrnPriv->pDevPriv;
 
-    if (gDRIPriv->numMXDevices == 2) {
+    if (gDRIPriv->numMultiDevices == 2) {
 	/* Set up each MX's ScanLineOwnership for OpenGL */
 	CHECK_DMA_BUFFER(nullCC, gcp, 4);
 	WRITE(gcp->buf, BroadcastMask, 1);
@@ -142,7 +142,7 @@ void gammaInitHW(gammaContextPrivate *gcp)
     WRITE(gcp->buf, AlphaTestMode, gcp->AlphaTestMode);
     WRITE(gcp->buf, AlphaBlendMode, gcp->AlphaBlendMode);
     WRITE(gcp->buf, DitherMode, DitherModeEnable | DM_ColorOrder_RGB);
-    if (gDRIPriv->numMXDevices == 2)
+    if (gDRIPriv->numMultiDevices == 2)
     	WRITE(gcp->buf, RasterizerMode, RM_MultiGLINT | RM_BiasCoordNearHalf);
     else
     	WRITE(gcp->buf, RasterizerMode, RM_BiasCoordNearHalf);

@@ -1,4 +1,4 @@
-.\" $TOG: smproxy.man /main/5 1998/02/09 13:47:29 kaleb $
+.\" $Xorg: smproxy.man,v 1.3 2000/08/17 19:54:05 cpqbld Exp $
 .\" Copyright 1994, 1998  The Open Group
 .\" 
 .\" All Rights Reserved.
@@ -18,7 +18,10 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
-.TH XSM 1 "Release 6.4" "X Version 11"
+.\"
+.\" $XFree86: xc/programs/smproxy/smproxy.man,v 1.6 2001/01/27 18:21:06 dawes Exp $
+.\"
+.TH XSM 1 __xorgversion__
 .SH NAME
 smproxy \- Session Manager Proxy
 .SH SYNOPSIS

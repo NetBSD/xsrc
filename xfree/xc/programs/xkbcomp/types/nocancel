@@ -1,4 +1,4 @@
-// $XConsortium: nocancel /main/3 1996/01/27 18:07:06 kaleb $
+// $Xorg: nocancel,v 1.3 2000/08/17 19:54:48 cpqbld Exp $
 // 
 partial default xkb_types "nocancel" {
     // alternate definition for the

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_texobj.h,v 1.2 2000/09/27 03:39:03 tsi Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_texobj.h,v 1.4 2001/01/08 01:07:24 martin Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -39,44 +39,45 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "r128_sarea.h"
 #include "mm.h"
 
-/* Individual texture image information */
+/* Individual texture image information.
+ */
 typedef struct {
-    GLuint offset;	/* Offset into locally shared texture space (i.e.,
-			   relative to bufAddr (below) */
-    GLuint width;	/* Width of texture image */
-    GLuint height;	/* Height of texture image */
+    GLuint offset;			/* Relative to local texture space */
+    GLuint width;
+    GLuint height;
 } r128TexImage;
 
 typedef struct r128_tex_obj r128TexObj, *r128TexObjPtr;
 
-/* Texture object in locally shared texture space */
+/* Texture object in locally shared texture space.
+ */
 struct r128_tex_obj {
-   r128TexObjPtr	next, prev;
+   r128TexObjPtr next, prev;
 
    struct gl_texture_object *tObj;	/* Mesa texture object */
 
-   PMemBlock		memBlock;	/* Memory block containing texture */
-   CARD32		bufAddr;	/* Offset to start of locally
+   PMemBlock memBlock;			/* Memory block containing texture */
+   CARD32 bufAddr;			/* Offset to start of locally
 					   shared texture block */
 
-   CARD32		dirty_images;	/* Flags for whether or not
+   CARD32 dirty_images;			/* Flags for whether or not
 					   images need to be uploaded to
 					   local or AGP texture space */
 
-   GLuint		age;
-   GLint		bound;		/* Texture unit currently bound to */
-   GLint		heap;		/* Texture heap currently stored in */
-   r128TexImage		image[R128_TEX_MAXLEVELS]; /* Image data for all
-						      mipmap levels */
+   GLuint age;
+   GLint bound;				/* Texture unit currently bound to */
+   GLint heap;				/* Texture heap currently stored in */
+   r128TexImage image[R128_MAX_TEXTURE_LEVELS]; /* Image data for all
+						   mipmap levels */
 
-   GLint		totalSize;	/* Total size of the texture
+   GLint totalSize;			/* Total size of the texture
 					   including all mipmap levels */
-   GLuint		internFormat;	/* Internal GL format used to store
+   GLuint internFormat;			/* Internal GL format used to store
 					   texture on card */
-   CARD32		textureFormat;	/* Actual hardware format */
-   GLint		texelBytes;	/* Number of bytes per texel */
+   CARD32 textureFormat;		/* Actual hardware format */
+   GLint texelBytes;			/* Number of bytes per texel */
 
-   r128_texture_regs_t	setup;		/* Setup regs for texture */
+   r128_texture_regs_t setup;		/* Setup regs for texture */
 };
 
 #endif /* _R128_TEXOBJ_H_ */

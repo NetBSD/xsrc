@@ -1,4 +1,4 @@
-/* $TOG: Context.c /main/22 1998/02/06 17:12:29 kaleb $ */
+/* $Xorg: Context.c,v 1.4 2000/08/17 19:44:31 cpqbld Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988, 1990 by Digital Equipment Corporation, Maynard,
@@ -46,7 +46,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86$ */
+/* $XFree86: xc/lib/X11/Context.c,v 1.3 2001/01/17 19:41:33 dawes Exp $ */
 
 /* This module implements a simple sparse array.
 

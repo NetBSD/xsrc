@@ -20,27 +20,16 @@
 /***************************************************************************/
 
 
-#ifndef AHANGLES_H
-#define AHANGLES_H
+#ifndef __AHANGLES_H__
+#define __AHANGLES_H__
 
 
-#ifdef FT_FLAT_COMPILE
-
+#include <ft2build.h>
+#include FT_INTERNAL_OBJECTS_H
 #include "ahtypes.h"
 
-#else
 
-#include <autohint/ahtypes.h>
-
-#endif
-
-
-#include <freetype/internal/ftobjs.h>
-
-
-#ifdef __cplusplus
-  extern "C" {
-#endif
+FT_BEGIN_HEADER
 
 
   /* PI expressed in ah_angles -- we don't really need an important */
@@ -62,12 +51,9 @@
   AH_Angle  ah_angle( FT_Vector*  v );
 
 
-#ifdef __cplusplus
-  }
-#endif
+FT_END_HEADER
 
-
-#endif /* AHANGLES_H */
+#endif /* __AHANGLES_H__ */
 
 
 /* END */
