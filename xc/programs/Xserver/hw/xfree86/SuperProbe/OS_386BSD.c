@@ -156,9 +156,8 @@ int OpenVideo()
 			MyName);
 		return(-1);
 	}
-#ifdef USE_ALPHA_PIO	/* XXX! */
-	CONS_fd = open("/dev/null", O_RDONLY, 0);
-	return(CONS_fd);
+#ifdef USE_ALPHA_PIO
+	return(1);	/* CONS_fd not needed on alpha */
 #endif
 	/*
 	 * Attempt to open /dev/kbd.  If this fails, the driver is either
