@@ -2741,7 +2741,7 @@ static int S3_TRIO_Init(DisplayModePtr mode)
 
       /* for Trio64+ we need corrected blank signal timing */
       if (!(S3_TRIO64V_SERIES(s3ChipId) && (s3ChipRev <= 0x53)
-	    || (S3_TRIO64V2_SERIES(s3ChipId))) ^ 
+	    /* || (S3_TRIO64V2_SERIES(s3ChipId)) */ ) ^ 
 	  !!OFLG_ISSET(OPTION_TRIO64VP_BUG1, &vga256InfoRec.options)) {
 	 cr33 |= 0x20;
       }

@@ -133,7 +133,9 @@ extern void s3OutTi3026IndReg(unsigned char, unsigned char, unsigned char);
 extern unsigned char s3InTi3026IndReg(unsigned char);
 extern void s3OutTiIndReg(unsigned char, unsigned char, unsigned char);
 extern unsigned char s3InTiIndReg(unsigned char);
-  
+
+extern void S3AccelSetup();
+extern void S3AccelSetup_NewMMIO();
 
 
 extern vgaVideoChipRec s3InfoRec;

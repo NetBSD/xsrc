@@ -225,6 +225,8 @@ Bool S3InitLevelThree(DisplayModePtr mode)
 					/* disabled anyway */
 
 /* !! double negative? (MArk) */
+/* !! is used to guarantee that right hand operand of (binary) xor "^" 
+   really is a boolean 0/1 value (and not e.g. some bit mask)  (Harald) */
    if ((S3_TRIO64V_SERIES(s3ChipId) && (s3ChipRev <= 0x53) && (s3Bpp==1)) ^
        !!OFLG_ISSET(OPTION_TRIO64VP_BUG2, &vga256InfoRec.options)) {
       /* set correct blanking for broken Trio64V+ to avoid bright left border:
@@ -968,6 +970,20 @@ else
    outb(DAC_MASK, 0x00);
 
  /* Reset the 8514/A, and disable all interrupts. */
+
+   /* 
+    * XXX: resetting the Trio64V2/GX causes trouble with the SGRAM memory bus
+    * (gets out of sync?  same as setting CR88_6) which I don't know to fix,
+    * so better not reset that chip and cross fingers... 
+    * This happens at least for some IBM Netfinity boxes (e.g. 7000M10) with 1MB SGRAM.
+    */
+   if (S3_TRIO64V2_SERIES(s3ChipId)) {
+     outb(vgaCRIndex, 0x36);
+     tmp = inb(vgaCRReg);
+     if ((tmp & 0x0c) != 0x04) /* no SGRAM */
+       outw(SUBSYS_CNTL, GPCTRL_RESET | CHPTEST_NORMAL);
+   }
+   else /* do normal reset for S3 chip... */
    outw(SUBSYS_CNTL, GPCTRL_RESET | CHPTEST_NORMAL);
    outw(SUBSYS_CNTL, GPCTRL_ENAB | CHPTEST_NORMAL);
 
@@ -997,14 +1013,10 @@ else
 	outb(vgaCRReg, s3SAM256);
    }
 
-   WaitQueue(5);
-   SET_SCISSORS(0,0,s3ScissR,s3ScissB);
-   if(s3Bpp > 2) {
-	if(s3newmmio)
-      	  SET_MULT_MISC(0x200);
-	else 
-      	  SET_MULT_MISC(0);
-    }
+   if (s3newmmio)
+     S3AccelSetup_NewMMIO();
+   else 
+     S3AccelSetup();
 
    return TRUE;
 }
