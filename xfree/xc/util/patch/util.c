@@ -1,4 +1,4 @@
-/* $XConsortium: util.c,v 3.3 94/09/14 21:26:09 gildea Exp $ */
+/* $Xorg: util.c,v 1.3 2000/08/17 19:55:22 cpqbld Exp $ */
 
 #define const /*nothing*/
 

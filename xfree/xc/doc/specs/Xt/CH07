@@ -1,4 +1,4 @@
-.\" $TOG: CH07 /main/20 1998/01/13 14:36:52 kaleb $
+.\" $Xorg: CH07,v 1.4 2000/08/17 19:42:45 cpqbld Exp $
 .\" Copyright \(co 1985, 1986, 1987, 1988, 1991, 1994
 .\" X Consortium
 .\" 
@@ -1517,8 +1517,8 @@ and
 returns
 .PN False .
 .FS
-No known implementations provide XtAppPeekEvent as described.  Timeout callbacks
-are not called while blocking for input.  If some input for an input source is
+The sample implementations provides XtAppPeekEvent as described.  Timeout callbacks
+are called while blocking for input.  If some input for an input source is
 available, 
 .PN XtAppPeekEvent
 will return 

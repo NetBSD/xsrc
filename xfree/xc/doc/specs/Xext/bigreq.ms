@@ -1,5 +1,5 @@
 .\" Use -ms and macros.t
-.\" $TOG: bigreq.ms /main/14 1997/11/04 17:55:04 kaleb $
+.\" $Xorg: bigreq.ms,v 1.3 2000/08/17 19:42:30 cpqbld Exp $
 .EH ''''
 .OH ''''
 .EF ''''

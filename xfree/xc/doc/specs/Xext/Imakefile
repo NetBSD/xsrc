@@ -1,5 +1,9 @@
-XCOMM $TOG: Imakefile /main/21 1997/12/10 16:42:02 kaleb $
-XCOMM $XFree86: xc/doc/specs/Xext/Imakefile,v 1.2 1998/12/20 11:56:40 dawes Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:42:30 cpqbld Exp $
+
+
+
+
+XCOMM $XFree86: xc/doc/specs/Xext/Imakefile,v 1.5 2001/04/23 15:53:54 dawes Exp $
 
 MakeSimpleDoc(shape,shape.ms)
 
@@ -51,12 +55,17 @@ InstallRoffDoc(DPMS)
 InstallRoffDoc(DPMSLib)
 InstallRoffDoc(bigreq)
 InstallRoffDoc(buffer)
+InstallLatexDoc(dbe)
+InstallLatexDoc(dbelib)
 InstallRoffDoc(evi)
 InstallRoffDoc(mit-shm)
 InstallRoffDoc(record)
 InstallRoffDoc(recordlib)
+InstallLatexDoc(security)
 InstallRoffDoc(shape)
 InstallRoffDoc(shapelib)
+InstallLatexDoc(sync)
+InstallLatexDoc(synclib)
 InstallRoffDoc(tog-cup)
 InstallRoffDoc(xc-misc)
 InstallRoffDoc(xtest)

@@ -1,4 +1,4 @@
-.\" $TOG: library.ms /main/21 1997/11/04 18:22:37 kaleb $
+.\" $Xorg: library.ms,v 1.3 2000/08/17 19:42:38 cpqbld Exp $
 .\" Input Extension			now coded to macros.t
 .\" edited for DP edits and code consistency w/ core protocol/xlib 4/5/96
 .EH ''''

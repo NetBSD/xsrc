@@ -1,5 +1,5 @@
 /* oldHeader: common.h,v 2.0.1.2 88/06/22 20:44:53 lwall Locked $
- * $XConsortium: common.h,v 3.3 94/09/14 21:13:08 gildea Exp $
+ * $Xorg: common.h,v 1.3 2000/08/17 19:55:22 cpqbld Exp $
  *
  * Revision 2.0.1.2  88/06/22  20:44:53  lwall
  * patch12: sprintf was declared wrong

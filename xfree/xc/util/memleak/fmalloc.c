@@ -1,5 +1,5 @@
 /*
- * $TOG: fmalloc.c /main/8 1998/02/09 11:39:50 kaleb $
+ * $Xorg: fmalloc.c,v 1.4 2000/08/17 19:55:20 cpqbld Exp $
  *
 Copyright 1992, 1998  The Open Group
 
@@ -22,7 +22,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/util/memleak/fmalloc.c,v 3.8 2000/06/15 01:26:22 dawes Exp $ */
+/* $XFree86: xc/util/memleak/fmalloc.c,v 3.12 2001/02/16 13:24:10 eich Exp $ */
 
 
 /*
@@ -91,6 +91,7 @@ typedef struct _head {
     mem		    returnStack[MAX_RETURN_STACK];
 #endif
     mem		    *from;
+    mem             *fromReturnStack;
     unsigned long   allocTime;
     unsigned long   freeTime;
     int		    size;
@@ -190,10 +191,16 @@ MemError (s, h, ourRet)
 
     if (h)
     {
-	fprintf (stderr, "%s 0x%08lx (size %d) (from 0x%lx)\n",
+	fprintf (stderr, "%s 0x%08lx (size %d) (from 0x%lx) ",
 	     s, DataForHead(h), h->desiredsize, h->from);
 #ifdef HAS_GET_RETURN_ADDRESS
+	if (h->fromReturnStack)
+	    PrintReturnStack ("\nallocated at", h->fromReturnStack);
+	else
+	  fprintf(stderr,"\n");
 	PrintReturnStack ("Saved return stack", h->returnStack);
+#else
+	fprintf(stderr,"\n");
 #endif
     }
     else 
@@ -228,7 +235,7 @@ static void
 MarkActiveBlock (p, from)
     mem   *p, *from;
 {
-    HeadPtr	h;
+    HeadPtr	h, hh;
     int		marked;
     int		oldMarked;
 
@@ -242,6 +249,11 @@ MarkActiveBlock (p, from)
 	{
 	    h->marked |= marked;
 	    h->from = from;
+#ifdef HAS_GET_RETURN_ADDRESS
+	    SEARCH(activeMemory, hh, h->from)
+	      if (hh) 
+		h->fromReturnStack = hh->returnStack;
+#endif
 	    if (!oldMarked)
 		MarkMemoryRegion (DataForHead(h), (mem *) TailForHead(h));
 	}
@@ -257,6 +269,11 @@ MarkActiveBlock (p, from)
 	{
 	    h->marked |= marked;
 	    h->from = from;
+#ifdef HAS_GET_RETURN_ADDRESS
+	    SEARCH(activeMemory, hh, h->from)
+            if (hh) 
+		h->fromReturnStack = hh->returnStack;
+#endif
 	}
 	return;
     }
@@ -468,7 +485,49 @@ AddFreedBlock (h)
     if (freedMemoryTotal - deadMemoryTotal >= MAX_FREED_MEMORY)
 	CheckMemory ();
 }
+#if 0
+static void
+WarnReferencedRange(rangeStart,rangeEnd,from,to)
+     mem *rangeStart;
+     mem *rangeEnd;
+     mem *from;
+     mem *to;
+{
+  mem *range = rangeStart;
 
+  while ( range < rangeEnd) {
+    if ((mem *)*range >= from && (mem *)*range <= to)
+      fprintf(stderr, "0x%lx still points into newly allocated range\n",
+	      (unsigned long) range);
+    range++;
+  }
+}
+
+static void
+WarnReferencedTree(head, from, to)
+     tree *head;
+     char *from;
+     char *to;
+{
+  if (!head) return;
+  WarnReferencedTree(head->right,from,to);
+  WarnReferencedRange(DataForHead(head),TailForHead(head),from,to);
+  WarnReferencedTree(head->left,from,to);
+}
+
+static void
+WarnReferenced(from, to)
+     char *from;
+     char *to;
+{
+    mem	foo;
+
+    foo = 1;
+    WarnReferencedTree(activeMemory,from,to);
+    WarnReferencedRange(BOTTOM_OF_DATA, endOfStaticMemory,from,to);
+    WarnReferencedRange(&foo, TOP_OF_STACK,from,to);
+}  
+#endif
 /*
  * Entry points:
  *
@@ -486,6 +545,8 @@ CheckMemory ()
 
     foo = 1;
     fprintf (stderr, "\nCheckMemory\n");
+    fprintf (stderr, "Static Memory Area: 0x%lx to 0x%lx\n",
+               BOTTOM_OF_DATA, endOfStaticMemory);
     fprintf (stderr, "%d bytes active memory in %d allocations\n",
 	     activeMemoryTotal, activeMemoryCount);
     fprintf (stderr, "%d bytes freed memory held from %d allocations\n",

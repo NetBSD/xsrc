@@ -1,6 +1,6 @@
-.\" $TOG: Framework.ms /main/6 1997/11/04 18:03:10 kaleb $
+.\" $Xorg: Framework.ms,v 1.3 2000/08/17 19:42:49 cpqbld Exp $
 .\" To print this out, type tbl macros.t ThisFile | troff -ms
-.\" $XFree86: xc/doc/specs/i18n/Framework.ms,v 1.2 2000/11/28 18:49:21 dawes Exp $
+.\" $XFree86: xc/doc/specs/i18n/Framework.ms,v 1.5 2001/02/09 00:02:52 dawes Exp $
 .EH ''''
 .OH ''''
 .EF ''''
@@ -650,7 +650,7 @@ JISX0212.1990-0:GR@JIS X0212-1990, Japanese Graphic Character Set
 @defined as GR
 .\" CNS11643.1986-0:GL
 .\" CNS11643.1986-1:GL
-.\" TIS620.2533-1:GR
+.\" TIS620-0:GR
 .sp 6p
 _
 .TE

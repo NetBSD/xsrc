@@ -1,7 +1,13 @@
-XCOMM $XConsortium: Imakefile,v 1.3 94/02/10 17:20:53 rws Exp $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:42:37 cpqbld Exp $
+XCOMM $XFree86: xc/doc/specs/Xi/Imakefile,v 1.2 2001/04/23 15:53:55 dawes Exp $
 
-MakeTblDoc(proto,protocol.ms encoding.ms)
+MakeTblDoc(XiProtocol,protocol.ms encoding.ms)
 
-MakeTblDoc(lib,library.ms)
+MakeTblDoc(XiLib,library.ms)
 
-MakeTblDoc(port,porting.ms)
+MakeTblDoc(XiPorting,porting.ms)
+
+InstallRoffDoc(XiProtocol)
+InstallRoffDoc(XiLib)
+InstallRoffDoc(XiPorting)
+

@@ -1,28 +1,45 @@
 #!/bin/sh
 #
-# $TOG: find-rtns.sh /main/2 1998/02/09 11:39:44 kaleb $
+# $Xorg: find-rtns.sh,v 1.3 2000/08/17 19:55:19 cpqbld Exp $
 #
 # find-routines - convert leak tracer stack traces into file/lineno traces
-# 		  using a modified version of gdb-4.4
+#                 modified to work with the an unmodified version of
+#                 gdb-4.18
 #
 # Usage: find-routines <program-name> {leak-tracing-output-files}
 #
+
 TMP1=find-routine.tmp1
 TMP=find-routine.tmp
 trap "rm -f $TMP $TMP1" 0
 OBJ=$1
 shift
-grep 'return stack:' $* | 
+echo 'set width 500' > $TMP1
+for i in `grep '\(return stack:\)\|\(allocated at\)' $* | 
 	tr ' ' '\012' | 
-	grep 0x | sort -u | sed 's;^;x/i ;' |
-	gdb $OBJ | grep '>:' | 
-	sed 's/>.*$/>/' | sed 's/(gdb) //' > $TMP1
+	grep 0x | sort -u`; 
+    do
+	echo 'x/i '$i >> $TMP1
+	echo 'i line * '$i >> $TMP1
+done
 
-awk '/^"/ { printf("s;%s;%s line %s %s;\n", $4, $1, $3, $5) }
-/^0/ { printf("s;%s;%s %s;\n", $1, $2, $1);}' $TMP1 > $TMP
+cat $TMP1 | gdb $OBJ \
+    | awk '\
+           /^\(gdb\) \(?g?d?b?\)? ?0x[[:xdigit:]]*.*:.*/ \
+    {a = gensub(/^\(gdb\) \(?g?d?b?\)? ?(0x[[:xdigit:]]*).*:.*/,"\\1","G");\
+     b = gensub(/^\(gdb\) \(?g?d?b?\)? ?(0x[[:xdigit:]]*.*):.*/,"\\1","G");\
+     printf("s;%s;%s",a,b); next; } \
+           /.*No line.*/ \
+    {printf(";\n",a);next} \
+           /.*Line [[:digit:]]+.*/ \
+    {a = gensub(/.*(Line [[:digit:]]+ of .*) starts.*/,"\\1","G"); \
+     printf(" at %s;\n", a); next}'>> $TMP
 
 awk '/return stack/	{ printf ("return stack\n");
 			  for (i = 3; i <= NF; i++)
 				printf ("\troutine %s\n", $i); }
+     /allocated at/     { printf ("allocated at\n");
+			  for (i = 3; i <= NF; i++)
+			        printf ("\t\troutine %s\n", $i); }
      /^[A-Z]/		{ print }' $* |
 	sed -f $TMP

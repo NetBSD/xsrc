@@ -1,3 +1,5 @@
+XCOMM $XFree86: xc/doc/specs/X11/Imakefile,v 1.2 2001/04/23 15:53:50 dawes Exp $
+
 SRCS = 	abstract.t \
 	credits.t \
 	CH[01][0123456789] \
@@ -8,3 +10,6 @@ SRCS = 	abstract.t \
 MakeEqnDoc(xlib,$(SRCS))
 
 MakeDocIndex(xlib,indexmacros.t)
+
+InstallRoffDoc(xlib)
+

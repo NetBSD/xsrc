@@ -1,5 +1,5 @@
 char rcsid[] =
-	"$XConsortium: patch.c,v 3.3 94/09/14 21:21:33 gildea Exp $";
+	"$Xorg: patch.c,v 1.3 2000/08/17 19:55:22 cpqbld Exp $
 /*	"oldHeader: patch.c,v 2.0.2.0 90/05/01 22:17:50 davison Locked $"; */
 
 /* patch - a program to apply diffs to original files

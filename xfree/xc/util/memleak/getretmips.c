@@ -1,5 +1,5 @@
 /*
- * $TOG: getretmips.c /main/5 1998/02/09 11:40:00 kaleb $
+ * $Xorg: getretmips.c,v 1.3 2000/08/17 19:55:20 cpqbld Exp $
  *
 Copyright 1992, 1998  The Open Group
 
