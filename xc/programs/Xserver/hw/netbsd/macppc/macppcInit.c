@@ -72,6 +72,7 @@ static char *fallbackList[] = {
 fbFd macppcFbs[MAXSCREENS];
 
 static PixmapFormatRec	formats[] = {
+    { 1, 1, BITMAP_SCANLINE_PAD},	/* 1-bit deep */
     { 8, 8, BITMAP_SCANLINE_PAD}	/* 8-bit deep */
 };
 #define NUMFORMATS	(sizeof formats)/(sizeof formats[0])
