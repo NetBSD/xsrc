@@ -880,10 +880,10 @@ char *cpp_argv[ARGUMENTS] = {
 	minor = (int)strtol(ptr, &endptr, 10);				\
 	if (ptr == endptr)						\
 	    goto error;							\
+	ptr = endptr;							\
 									\
 	if (major > 2 || (major == 2 && minor >= 99)) {			\
 		if (*endptr++ == '.') {					\
-			ptr = endptr;					\
 			teeny = (int)strtol(ptr, &endptr, 10);		\
 			if (ptr == endptr)				\
 				goto error;				\
