@@ -1,4 +1,4 @@
-/* $NetBSD: alphaInit.c,v 1.1 2004/01/18 04:13:22 rtr Exp $ */
+/* $NetBSD: alphaInit.c,v 1.2 2005/03/28 00:08:16 tron Exp $ */
 
 #include    "alpha.h"
 #include    "gcstruct.h"
@@ -236,6 +236,14 @@ static char** GetDeviceList (argc, argv)
 	deviceList[FALLBACK_LIST_LEN] = NULL;
     }
     return deviceList;
+}
+
+void OsVendorPreInit(
+#if NeedFunctionPrototypes
+    void
+#endif
+)
+{
 }
 
 void OsVendorInit(
