@@ -3331,7 +3331,7 @@ depend:: dst
 dst::  src deplist							@@\
 	RemoveFile($@)							@@\
 	ClearmakeOSName \
-	$(RAWCPP) CppNoLineInfoOption defs <src | CppSedMagic >$@	@@\
+	sed -e 's/\\$$/\\ /' src | $(RAWCPP) CppNoLineInfoOption defs | CppSedMagic >$@	@@\
 									@@\
 clean::									@@\
 	RemoveFiles(dst)
