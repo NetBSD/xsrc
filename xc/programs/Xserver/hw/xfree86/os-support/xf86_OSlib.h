@@ -32,6 +32,35 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/*
+ * Copyright 1997
+ * Digital Equipment Corporation. All rights reserved.
+ * This software is furnished under license and may be used and copied only in 
+ * accordance with the following terms and conditions.  Subject to these 
+ * conditions, you may download, copy, install, use, modify and distribute 
+ * this software in source and/or binary form. No title or ownership is 
+ * transferred hereby.
+ * 1) Any source code used, modified or distributed must reproduce and retain 
+ *    this copyright notice and list of conditions as they appear in the 
+ *    source file.
+ *
+ * 2) No right is granted to use any trade name, trademark, or logo of Digital 
+ *    Equipment Corporation. Neither the "Digital Equipment Corporation" name 
+ *    nor any trademark or logo of Digital Equipment Corporation may be used 
+ *    to endorse or promote products derived from this software without the 
+ *    prior written permission of Digital Equipment Corporation.
+ *
+ * 3) This software is provided "AS-IS" and any express or implied warranties,
+ *    including but not limited to, any implied warranties of merchantability,
+ *    fitness for a particular purpose, or non-infringement are disclaimed. In
+ *    no event shall DIGITAL be liable for any damages whatsoever, and in 
+ *    particular, DIGITAL shall not be liable for special, indirect, 
+ *    consequential, or incidental damages or damages for lost profits, loss 
+ *    of revenue or loss of use, whether such damages arise in contract, 
+ *    negligence, tort, under statute, in equity, at law or otherwise, even if
+ *    advised of the possibility of such damage. 
+ */
+
 /* $XConsortium: xf86_OSlib.h /main/22 1996/10/27 11:06:31 kaleb $ */
 
 #ifndef _XF86_OSLIB_H
@@ -402,6 +431,25 @@ extern int errno;
 #   ifndef CONSOLE_X_BELL
 #    define CONSOLE_X_BELL _IOW('t',123,int[2])
 #   endif
+#   ifndef CONSOLE_X_TV_ON
+#    define CONSOLE_X_TV_ON _IOW('t',155,int)
+#    define XMODE_RGB   0
+#    define XMODE_NTSC  1
+#    define XMODE_PAL   2
+#    define XMODE_SECAM 3
+#   endif
+#ifndef CONSOLE_X_TV_OFF
+#    define CONSOLE_X_TV_OFF                _IO('t',156)
+#endif
+#ifndef CONSOLE_GET_LINEAR_INFO
+#    define CONSOLE_GET_LINEAR_INFO         _IOR('t',157,struct map_info)
+#endif
+#ifndef CONSOLE_GET_IO_INFO 
+#    define CONSOLE_GET_IO_INFO             _IOR('t',158,struct map_info)
+#endif
+#ifndef CONSOLE_GET_MEM_INFO 
+#    define CONSOLE_GET_MEM_INFO            _IOR('t',159,struct map_info)
+#endif
 #  endif /* __bsdi__ */
 # endif /* !LINKKIT */
 

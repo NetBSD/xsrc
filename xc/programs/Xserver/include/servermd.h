@@ -140,6 +140,27 @@ SOFTWARE.
 
 #endif /* vax */
 
+#if defined(__arm32__)
+
+#define IMAGE_BYTE_ORDER        LSBFirst
+
+# if defined(XF86MONOVGA) || defined(XF86VGA16) || defined(XF86MONO)
+#  define BITMAP_BIT_ORDER      MSBFirst
+# else
+#  define BITMAP_BIT_ORDER      LSBFirst
+# endif
+
+# if defined(XF86MONOVGA) || defined(XF86VGA16)
+#  define BITMAP_SCANLINE_UNIT  8
+# endif
+
+#define GLYPHPADBYTES           4
+#define GETLEFTBITS_ALIGNMENT   1
+#define LARGE_INSTRUCTION_CACHE
+#define AVOID_MEMORY_READ
+
+#endif /* __arm32__ */
+
 #if (defined(Lynx) || defined(__NetBSD__)) && defined(__powerpc__)
 
 /* For now this is for Xvfb only */

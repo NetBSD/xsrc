@@ -82,9 +82,9 @@ vgaSetReadWrite(p)
     register pointer p;
 {
 #ifdef XF86VGA16
-  writeseg = ((unsigned long)p - vgaBase) >> vgaSegmentShift;
+  writeseg = ((unsigned long)p - (unsigned long)vgaBase) >> vgaSegmentShift;
   (vgaSetReadWriteFunc)(writeseg);
-  return (vgaWriteBottom + (((unsigned long)p - vgaBase) & vgaSegmentMask));
+  return (vgaWriteBottom + (((unsigned long)p - (unsigned long)vgaBase) & vgaSegmentMask));
 #else
   writeseg = ((unsigned long)p - VGABASE) >> vgaSegmentShift;
   (vgaSetReadWriteFunc)(writeseg);
@@ -150,9 +150,9 @@ vgaSetRead(p)
     register pointer p;
 {
 #ifdef XF86VGA16
-  readseg = ((unsigned long)p - vgaBase) >> vgaSegmentShift;
+  readseg = ((unsigned long)p - (unsigned long)vgaBase) >> vgaSegmentShift;
   (vgaSetReadFunc)(readseg);
-  return (vgaReadBottom + (((unsigned long)p - vgaBase) & vgaSegmentMask));
+  return (vgaReadBottom + (((unsigned long)p - (unsigned long)vgaBase) & vgaSegmentMask));
 #else
   readseg = ((unsigned long)p - VGABASE) >> vgaSegmentShift;
   (vgaSetReadFunc)(readseg);
@@ -217,9 +217,9 @@ vgaSetWrite(p)
     register pointer p;
 {
 #ifdef XF86VGA16
-  writeseg = ((unsigned long)p - vgaBase) >> vgaSegmentShift;
+  writeseg = ((unsigned long)p - (unsigned long)vgaBase) >> vgaSegmentShift;
   (vgaSetWriteFunc)(writeseg);
-  return (vgaWriteBottom + (((unsigned long)p - vgaBase) & vgaSegmentMask));
+  return (vgaWriteBottom + (((unsigned long)p - (unsigned long)vgaBase) & vgaSegmentMask));
 #else
   writeseg = ((unsigned long)p - VGABASE) >> vgaSegmentShift;
   (vgaSetWriteFunc)(writeseg);

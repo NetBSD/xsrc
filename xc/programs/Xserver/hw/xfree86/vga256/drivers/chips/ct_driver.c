@@ -35,6 +35,35 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/*
+ * Copyright 1997
+ * Digital Equipment Corporation. All rights reserved.
+ * This software is furnished under license and may be used and copied only in 
+ * accordance with the following terms and conditions.  Subject to these 
+ * conditions, you may download, copy, install, use, modify and distribute 
+ * this software in source and/or binary form. No title or ownership is 
+ * transferred hereby.
+ * 1) Any source code used, modified or distributed must reproduce and retain 
+ *    this copyright notice and list of conditions as they appear in the 
+ *    source file.
+ *
+ * 2) No right is granted to use any trade name, trademark, or logo of Digital 
+ *    Equipment Corporation. Neither the "Digital Equipment Corporation" name 
+ *    nor any trademark or logo of Digital Equipment Corporation may be used 
+ *    to endorse or promote products derived from this software without the 
+ *    prior written permission of Digital Equipment Corporation.
+ *
+ * 3) This software is provided "AS-IS" and any express or implied warranties,
+ *    including but not limited to, any implied warranties of merchantability,
+ *    fitness for a particular purpose, or non-infringement are disclaimed. In
+ *    no event shall DIGITAL be liable for any damages whatsoever, and in 
+ *    particular, DIGITAL shall not be liable for special, indirect, 
+ *    consequential, or incidental damages or damages for lost profits, loss 
+ *    of revenue or loss of use, whether such damages arise in contract, 
+ *    negligence, tort, under statute, in equity, at law or otherwise, even if
+ *    advised of the possibility of such damage. 
+ */
+
 /* $XConsortium: ct_driver.c /main/18 1996/10/28 05:24:15 kaleb $ */
 
 /*
@@ -266,6 +295,70 @@ int ctAluConv2[] =
 };
 
 /* Driver data structures. */
+
+int ctTVMode = XMODE_RGB;
+
+static DisplayModeRec ctPALMode = {
+    NULL, NULL,         /* prev, next */
+    "PAL",              /* identifier of this mode */
+  /* These are the values that the user sees/provides */
+    0,                  /* pixel clock select */
+    776,                /* horizontal timing: HDisplay */
+    800,                /* HSyncStart */
+    872,                /* HSyncEnd */
+    960,                /* HTotal */
+    0,                  /* HSkew */
+    585,                /* vertical timing: VDisplay */
+    589,                /* VSyncStart */
+    593,                /* VSyncEnd */
+    625,                /* VTotal */
+    V_INTERLACE,        /* Flags */
+ /* These are the values the hardware uses */
+    15000,             /* Actual clock freq to be programmed (kHz) */
+    776,               /* CrtcHDisplay */
+    800,               /* CrtcHSyncStart */
+    872,               /* CrtcHSyncEnd */
+    960,               /* CrtcHTotal */
+    0,                 /* CrtcHSkew */
+    585,               /* CrtcVDisplay */
+    590,               /* CrtcVSyncStart */
+    595,               /* CrtcVsyncEnd */
+    625,               /* CrtcVTotal */
+    FALSE,             /* CrtcHadjusted */
+    FALSE,             /* CrtcVAdjusted */
+
+};
+
+static DisplayModeRec ctNTSCMode = {
+	NULL, NULL,		/* prev, next */
+	"NTSC",			/* identifier of this mode */
+  /* These are the values that the user sees/provides */
+	0,				/* pixel clock select */
+	584,			/* horizontal timing:  HDisplay */
+	640,		              /* HSyncStart */	       	       
+	696,		      	  	/* HSyncEnd */
+	760,	       	       		/* HTotal */
+	0,									/* HSkew */
+	450,           /* vertical timing:	   VDisplay */
+	479,			       		/* VSyncStart */
+	485,	       	       			/* VSyncEnd */
+	525,		      	                  /* VTotal */
+	 V_INTERLACE | V_NVSYNC | V_NHSYNC ,	/* Flags */
+  /* These are the values the hardware uses */
+	11970,    /* Actual clock freq to be programmed (kHz)*/
+	584,			/* CrtcHDisplay */
+	640,			/* CrtcHSyncStart */
+	696,			/* CrtcHSyncEnd */
+	760,			/* CrtcHTotal */
+	0,				/* CrtcHSkew */
+	450,			/* CrtcVDisplay */
+	479,			/* CrtcVSyncStart */
+	485,			/* CrtcVSyncEnd */
+	525,			/* CrtcVTotal */
+	FALSE,			/* CrtcHAdjusted */
+	FALSE,			/* CrtcVAdjusted */
+};
+
 struct {
     int HDisplay;
     int HRetraceStart;
@@ -1546,10 +1639,21 @@ Bool ctProbeHiQV()
 		ctAccelSupport = FALSE;
 	    }
 	  } else {
+#ifdef	__arm32__
+	      /* Unaligned word accesses don't do the same thing on ARM */
+	      /* as on x86!  Actually, I don't understand why 32-bit accesses */
+	      /* are being done in the x86 case; byte reads ought to work */
+	      /* just fine, shouldn't they? -JJK */
+		outb(0x3D6, 0x6);
+		CHIPS.ChipLinearBase = ((unsigned int)inb(0x3D7)) << 24;
+		outb(0x3D6, 0x5);
+		CHIPS.ChipLinearBase |= ((unsigned int)(0x80 & inb(0x3D7))) << 16;
+#else
 		outb(0x3D6, 0x6);
 		CHIPS.ChipLinearBase = ((0xFF00 & inl(0x3D6)) << 16);
 		outb(0x3D6, 0x5);
 		CHIPS.ChipLinearBase |= ((0x8000 & inl(0x3D6)) << 8);
+#endif
 	}
 	ErrorF("%s %s: CHIPS: base address is set at 0x%X.\n",
 	    XCONFIG_PROBED, vga256InfoRec.name, CHIPS.ChipLinearBase);
@@ -1760,6 +1864,53 @@ Bool ctProbeHiQV()
     else
         ctColorTransparency = FALSE;
 
+    /* 
+     ** If PAL. SECAM or NTSC is specified as the first mode in /etc/XF86Config, 
+     ** add it as the Built in mode.
+     */
+     ErrorF("%s %s: CHIPS: GJS: About to test for builtin modes. eg NTSC\nMode = %s",
+	     XCONFIG_PROBED, vga256InfoRec.name,vga256InfoRec.modes->name);
+
+     if (strlen(vga256InfoRec.modes->name) == 3 
+       	&& strcmp(vga256InfoRec.modes->name, "PAL") == 0)
+     {
+	 CHIPS.ChipBuiltinModes = &ctPALMode;
+	 CHIPS.ChipBuiltinModes->prev = CHIPS.ChipBuiltinModes->next = &ctPALMode;
+	 ctTVMode = XMODE_PAL;
+     }
+     else if (strlen(vga256InfoRec.modes->name) == 4 
+	      && strcmp(vga256InfoRec.modes->name, "NTSC") == 0)
+     {
+	 CHIPS.ChipBuiltinModes = &ctNTSCMode;
+	 CHIPS.ChipBuiltinModes->prev = CHIPS.ChipBuiltinModes->next = &ctNTSCMode;
+	 ctTVMode = XMODE_NTSC;
+	 ErrorF("%s %s: CHIPS: GJS: NTSC Mode selected\n",
+	     XCONFIG_PROBED, vga256InfoRec.name);
+     }
+     else if (strlen(vga256InfoRec.modes->name) == 5 
+	      && strcmp(vga256InfoRec.modes->name, "SECAM") == 0)
+     {
+	 /*
+	  ** So far, it looks like SECAM uses the same values as PAL
+	  */
+	 CHIPS.ChipBuiltinModes = &ctPALMode;
+	 CHIPS.ChipBuiltinModes->prev = CHIPS.ChipBuiltinModes->next = &ctPALMode;
+	 ctTVMode = XMODE_SECAM;
+     }
+  
+     if (ctTVMode != XMODE_RGB)
+     {
+	 /*
+	  ** These are normally set in xf86LookupMode, but that's not called for
+	  ** a built in mode, so do it here.
+	  */
+	 vga256InfoRec.clocks = 3;
+	 vga256InfoRec.clock[0] = 25175;
+	 vga256InfoRec.clock[1] = 28322;
+	 vga256InfoRec.clock[2] = CHIPS.ChipBuiltinModes->SynthClock;
+	 CHIPS.ChipBuiltinModes->Clock = 2;
+     }
+  
     vga256InfoRec.chipset = CHIPSIdent(CHIPSchipset);
     vga256InfoRec.bankedMono = FALSE;
 
@@ -3792,11 +3943,33 @@ CHIPSInitHiQV32(mode)
     new->Port_3D6[0x81] |= 0x2;
     new->Port_3D6[0x80] |= 0x10;       /* Enable cursor output on P0 and P1 */
 
+#ifdef	__arm32__
+    if (OFLG_ISSET(OPTION_FAST_DRAM, &vga256InfoRec.options)) {
+	/* set mem clk */
+	/* 5v operation limited to 40MHz; 3.3v can go to 60 -JJK */
+	outb(0x3D0, 0x0A);
+	if (inb(0x3D1) & 2) {
+	    /* 5V Vcc */
+	    new->Port_3D6[0xCC] = 0x43;     /* 40 MHz */
+	    new->Port_3D6[0xCD] = 0x18;
+	    new->Port_3D6[0xCE] = 0xA1;
+	} else {
+	    /* 3.3V Vcc */
+	    new->Port_3D6[0xCC] = 0x64;     /* 60 MHz */
+	    new->Port_3D6[0xCD] = 0x30;
+	    new->Port_3D6[0xCE] = 0x91;
+	}
+
+	/* Shortened RAS cycle. */
+	/* Should this be enabled by a different option? */
+	new->Port_3D6[0x44] = 0x80;
+#else
     if (abs(vga256InfoRec.MemClk - ctMemClk->ProbedClk) > 50) {
 	/* set mem clk */
 	new->Port_3D6[0xCC] = ctMemClk->xrCC;
 	new->Port_3D6[0xCD] = ctMemClk->xrCD;
 	new->Port_3D6[0xCE] = ctMemClk->xrCE;
+#endif
     }
 
     /* linear specific */
@@ -3950,6 +4123,14 @@ CHIPSInitHiQV32(mode)
 	{
 	    new->Port_3D4[0x70] &= ~0x80;	/* unset interlace */
 	}
+    }
+    else /* XMODE_RGB */
+    {
+	ErrorF("GJS: About to call xf86SetRGBOut()\n");
+	/*
+	 * Put the console into RGB Out mode.
+	 */
+	xf86SetRGBOut();
     }
 
     /* STN specific */

@@ -25,7 +25,34 @@
  * in this Software without prior written authorization from David Wexelblat.
  *
  */
-
+/*
+ * Copyright 1997
+ * Digital Equipment Corporation. All rights reserved.
+ * This software is furnished under license and may be used and copied only in 
+ * accordance with the following terms and conditions.  Subject to these 
+ * conditions, you may download, copy, install, use, modify and distribute 
+ * this software in source and/or binary form. No title or ownership is 
+ * transferred hereby.
+ * 1) Any source code used, modified or distributed must reproduce and retain 
+ *    this copyright notice and list of conditions as they appear in the 
+ *    source file.
+ *
+ * 2) No right is granted to use any trade name, trademark, or logo of Digital 
+ *    Equipment Corporation. Neither the "Digital Equipment Corporation" name 
+ *    nor any trademark or logo of Digital Equipment Corporation may be used 
+ *    to endorse or promote products derived from this software without the 
+ *    prior written permission of Digital Equipment Corporation.
+ *
+ * 3) This software is provided "AS-IS" and any express or implied warranties,
+ *    including but not limited to, any implied warranties of merchantability,
+ *    fitness for a particular purpose, or non-infringement are disclaimed. In
+ *    no event shall DIGITAL be liable for any damages whatsoever, and in 
+ *    particular, DIGITAL shall not be liable for special, indirect, 
+ *    consequential, or incidental damages or damages for lost profits, loss 
+ *    of revenue or loss of use, whether such damages arise in contract, 
+ *    negligence, tort, under statute, in equity, at law or otherwise, even if
+ *    advised of the possibility of such damage. 
+ */
 /* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/AsmMacros.h,v 3.10 1996/12/23 06:31:04 dawes Exp $ */
 
 #if defined(__GNUC__)
@@ -37,6 +64,66 @@
 #define outw(p,v) _outw((v),(p))
 #define outl(p,v) _outl((v),(p))
 #else
+#ifdef __arm32__
+unsigned int IOPortBase;  /* Memory mapped I/O port area */
+
+static __inline__ void
+outb(port, val)
+     short port;
+     char val;
+{
+	 if ((unsigned short)port >= 0x400) return;
+
+	*(volatile unsigned char*)(((unsigned short)(port))+IOPortBase) = val;
+}
+
+static __inline__ void
+outw(port, val)
+     short port;
+     short val;
+{
+	 if ((unsigned short)port >= 0x400) return;
+
+	*(volatile unsigned short*)(((unsigned short)(port))+IOPortBase) = val;
+}
+
+static __inline__ void
+outl(port, val)
+     short port;
+     int val;
+{
+	 if ((unsigned short)port >= 0x400) return;
+
+	*(volatile unsigned long*)(((unsigned short)(port))+IOPortBase) = val;
+}
+
+static __inline__ unsigned int
+inb(port)
+     short port;
+{
+	 if ((unsigned short)port >= 0x400) return((unsigned int)-1);
+
+	return(*(volatile unsigned char*)(((unsigned short)(port))+IOPortBase));
+}
+
+static __inline__ unsigned int
+inw(port)
+     short port;
+{
+	 if ((unsigned short)port >= 0x400) return((unsigned int)-1);
+
+	return(*(volatile unsigned short*)(((unsigned short)(port))+IOPortBase));
+}
+
+static __inline__ unsigned int
+inl(port)
+     short port;
+{
+	 if ((unsigned short)port >= 0x400) return((unsigned int)-1);
+
+	return(*(volatile unsigned long*)(((unsigned short)(port))+IOPortBase));
+}
+#else /* __arm32__ */
 #ifdef GCCUSESGAS
 static __inline__ void
 outb(port, val)
@@ -155,14 +242,15 @@ inl(port)
 }
 
 #endif /* GCCUSESGAS */
+#endif /* __arm32__ */
 #endif /* linux && __alpha__ */
 
-#ifdef linux
+#if defined(linux) || defined(__arm32__)
 
 #define intr_disable()
 #define intr_enable()
 
-#else /* !linux */
+#else /* !linux && !__arm32__ */
 
 static __inline__ void
 intr_disable()
@@ -176,7 +264,7 @@ intr_enable()
   __asm__ __volatile__("sti");
 }
 
-#endif /* else !linux */
+#endif /* else !linux && !__arm32__ */
 
 #else /* __GNUC__ */
 

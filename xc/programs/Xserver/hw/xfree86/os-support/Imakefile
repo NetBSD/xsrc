@@ -48,6 +48,10 @@ OS_SUBDIR = bsd
 # endif
 #endif
 
+#if defined(NetBSDArchitecture) && defined(arm32Architecture)
+OS_SUBDIR = bsd
+#endif
+
 #if defined(i386MachArchitecture) || defined(OsfArchitecture)
 #if defined(GNUMachArchitecture)
 OS_SUBDIR = hurd

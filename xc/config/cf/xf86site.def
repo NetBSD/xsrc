@@ -313,6 +313,14 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
  */
 
 /*
+ * The following servers are supported on arm32/SHARK platforms:
+ *
+#define XF86SVGAServer          NO
+#define XF86VGA16Server         NO
+#define XF86MonoServer          NO
+ */
+
+/*
  * To disable building the Xnest server, uncomment this.
  *
 #define XnestServer		NO

@@ -1,4 +1,33 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_accel.c,v 3.5.2.2 1998/09/27 12:59:01 hohndel Exp $ */
+/*
+ * Copyright 1997
+ * Digital Equipment Corporation. All rights reserved.
+ * This software is furnished under license and may be used and copied only in 
+ * accordance with the following terms and conditions.  Subject to these 
+ * conditions, you may download, copy, install, use, modify and distribute 
+ * this software in source and/or binary form. No title or ownership is 
+ * transferred hereby.
+ * 1) Any source code used, modified or distributed must reproduce and retain 
+ *    this copyright notice and list of conditions as they appear in the 
+ *    source file.
+ *
+ * 2) No right is granted to use any trade name, trademark, or logo of Digital 
+ *    Equipment Corporation. Neither the "Digital Equipment Corporation" name 
+ *    nor any trademark or logo of Digital Equipment Corporation may be used 
+ *    to endorse or promote products derived from this software without the 
+ *    prior written permission of Digital Equipment Corporation.
+ *
+ * 3) This software is provided "AS-IS" and any express or implied warranties,
+ *    including but not limited to, any implied warranties of merchantability,
+ *    fitness for a particular purpose, or non-infringement are disclaimed. In
+ *    no event shall DIGITAL be liable for any damages whatsoever, and in 
+ *    particular, DIGITAL shall not be liable for special, indirect, 
+ *    consequential, or incidental damages or damages for lost profits, loss 
+ *    of revenue or loss of use, whether such damages arise in contract, 
+ *    negligence, tort, under statute, in equity, at law or otherwise, even if
+ *    advised of the possibility of such damage. 
+ */
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_accel.c,v 3.5.2.1 1997/05/03 09:47:59 dawes Exp $ */
 
 
 #include "vga256.h"
@@ -7,6 +36,12 @@
 #include "vga.h"
 #include "xf86xaa.h"
 #include "ct_driver.h"
+
+#ifdef	__arm32__
+#ifdef	CHIPS_HIQV
+#include "xf86local.h"
+#endif
+#endif
 
 #if (defined(__STDC__) && !defined(UNIXCPP)) || defined(ANSICPP)
 #define CATNAME(prefix,subname) prefix##subname
@@ -52,6 +87,13 @@ void CTNAME(SetupForFill8x8Pattern)();
 void CTNAME(SubsequentFill8x8Pattern)();
 void CTNAME(SetupFor8x8PatternColorExpand)();
 void CTNAME(Subsequent8x8PatternColorExpand)();
+
+#ifdef	__arm32__
+#ifdef	CHIPS_HIQV
+RegionPtr CTNAME(CopyArea)();
+void CTNAME(DoPixWinBitBltCopy)();
+#endif
+#endif
 
 static unsigned int CommandFlags;
 
@@ -102,6 +144,10 @@ void _ctAccelInit() {
      */
     if (!ctColorTransparency)
 	xf86GCInfoRec.CopyAreaFlags |= NO_TRANSPARENCY;
+
+#ifdef	__arm32__
+    xf86GCInfoRec.CopyArea = CTNAME(CopyArea);
+#endif
 #endif
     xf86AccelInfoRec.SetupForScreenToScreenCopy =
 	CTNAME(SetupForScreenToScreenCopy);
@@ -930,3 +976,154 @@ void CTNAME(Subsequent8x8PatternColorExpand)(patternx, patterny, x, y, w, h)
 #endif
     ctSETHEIGHTWIDTHGO(h, w * vgaBytesPerPixel);
 }
+
+#ifdef	__arm32__
+#ifdef	CHIPS_HIQV
+RegionPtr CTNAME(CopyArea)(pSrcDrawable, pDstDrawable,
+			    pGC, srcx, srcy, width, height, dstx, dsty)
+    register DrawablePtr pSrcDrawable;
+    register DrawablePtr pDstDrawable;
+    GC *pGC;
+    int srcx, srcy;
+    int width, height;
+    int dstx, dsty;
+{
+	/* Usual XAA handling of screen-to-screen blts. */
+	if (pSrcDrawable->type == DRAWABLE_WINDOW
+	    && pDstDrawable->type == DRAWABLE_WINDOW) {
+	    return (*xf86GCInfoRec.cfbBitBltDispatch)(pSrcDrawable, pDstDrawable,
+						      pGC, srcx, srcy, width,
+						      height, dstx, dsty,
+						      xf86DoBitBlt, 0L);
+	}
+
+	/* ctHiQV-specific handling of pixmap-to-screen blts. */
+	if (pSrcDrawable->type == DRAWABLE_PIXMAP
+	    && pDstDrawable->type == DRAWABLE_WINDOW) {
+	    return (*xf86GCInfoRec.cfbBitBltDispatch)(pSrcDrawable, pDstDrawable,
+						      pGC, srcx, srcy, width,
+						      height, dstx, dsty,
+						      CTNAME(DoPixWinBitBltCopy), 0L);
+	}
+
+	/* Fallback to cfb/vga256. */
+	return (*xf86GCInfoRec.CopyAreaFallBack)(pSrcDrawable, pDstDrawable, pGC,
+						 srcx, srcy, width, height, dstx, dsty);
+    }
+
+
+void CTNAME(DoPixWinBitBltCopy)(pSrc, pDst, alu, prgnDst,
+			     pptSrc, planemask, bitPlane)
+    DrawablePtr	    pSrc, pDst;
+    int		    alu;
+    RegionPtr	    prgnDst;
+    DDXPointPtr	    pptSrc;
+    unsigned int    planemask;
+    int		    bitPlane;
+{
+    unsigned long *psrcBase;
+    int widthSrc, widthDst;
+    int byteWidthSrc, byteWidthDst;
+    BoxPtr pbox;
+    int nbox;
+
+    cfbGetLongWidthAndPointer(pSrc, widthSrc, psrcBase);
+    widthSrc = cfbGetByteWidth(pSrc)/vgaBytesPerPixel;
+    widthDst = vga256InfoRec.displayWidth;
+    byteWidthSrc = widthSrc * vgaBytesPerPixel;
+    byteWidthDst = widthDst * vgaBytesPerPixel;
+
+    pbox = REGION_RECTS(prgnDst);
+    nbox = REGION_NUM_RECTS(prgnDst);
+
+    for (; nbox; pbox++, pptSrc++, nbox--) {
+	unsigned int psrc, pdst;
+	int w, h;
+
+	CommandFlags = ctSRCSYSTEM | ctLEFT2RIGHT | ctTOP2BOTTOM;
+
+	ctBLTWAIT;
+	ctSETROP(CommandFlags | ctAluConv[alu & 0xF]);
+	ctSETPITCH(byteWidthSrc, byteWidthDst);
+
+	w = pbox->x2 - pbox->x1;
+	h = pbox->y2 - pbox->y1;
+	psrc = (pptSrc->x + pptSrc->y * widthSrc) * vgaBytesPerPixel;
+	pdst = (pbox->x1 + pbox->y1 * widthDst) * vgaBytesPerPixel;
+
+	/*
+	 *  There is an annoying bug in the CT65550, or at least when used
+	 *  on SHARK.  The bug manifests itself as scarring or, more
+	 *  commonly, system freeze (because the CT65550 has hung the bus).
+	 *
+	 *  This bad behavior occurs when the number of bytes per scanline
+	 *  to be sent to the CT65550 is not constant.  This can happen
+	 *  because the chip insists that each line begin on a quad-word
+	 *  (i.e., 8-byte) boundary and that it be padded out to an integral
+	 *  number of quad-words.  The chip masks the beginning and ending
+	 *  quad-words appropriately so that only the right bits are painted.
+	 *
+	 *  Given X's padding of pixmaps to 4-byte boundaries, it almost
+	 *  always turns out that each scanline sent to the CT65550 consists
+	 *  of the same number of quad-words.  But not always.  You sometimes
+	 *  get a pattern where n and n+1 quad-words need to be sent in
+	 *  alternating fashion.
+	 *
+	 *  Whether a constant or non-constant number of quad-words needs to
+	 *  be sent is a function of the alignment of the source pixmap,
+	 *  the starting offset into that pixmap, the width of the pixmap,
+	 *  and the number of bytes to be painted on each line.  Computing
+	 *  the predicate is fairly involved, but fortunately the failure
+	 *  case has an easily-determined necessary condition:  the width
+	 *  of the source pixmap is not a quad-word multiple.  This is not
+	 *  a sufficient condition, but it's good enough that I'm using it
+	 *  to switch out to a "safe" alternative.
+	 *
+	 *  The safe alternative is to do the blt as n 1-line blts, rather
+	 *  than 1 big blt.  This is obviously going to be slower, but it's
+	 *  not so much worse that I feel a need to spend time optimizing
+	 *  further.
+	 */
+	{
+	    Bool buggyCase = (byteWidthSrc & 0x7) != 0;
+	    unsigned char *src = (unsigned char *)psrcBase + psrc;
+	    unsigned char *dst = (unsigned char *)pdst;
+	    int bytesperline = w * vgaBytesPerPixel;
+
+	    if (!buggyCase) {
+		/* One-time set-up. */
+		ctSETSRCADDR((unsigned int)src);
+		ctSETDSTADDR((unsigned int)dst);
+		ctSETHEIGHTWIDTHGO(h, bytesperline);
+	    }
+
+	    while (h--) {
+		unsigned int *qwa_src = (unsigned int *)((unsigned int)src & (~0x7));
+		int qwords = (((unsigned int)src & 0x7) + bytesperline + 0x7) >> 3;
+
+		if (buggyCase) {
+		    /* N-time set-up. */
+		    ctSETSRCADDR((unsigned int)src);
+		    ctSETDSTADDR((unsigned int)dst);
+		    ctSETHEIGHTWIDTHGO(1, bytesperline);
+		}
+
+		while (qwords--) {
+		    *(unsigned int *)ctBltDataWindow = *qwa_src++;
+		    *(unsigned int *)ctBltDataWindow = *qwa_src++;
+		}
+
+		src += byteWidthSrc;
+		if (buggyCase) {
+		    dst += byteWidthDst;
+		    ctBLTWAIT;
+		}
+	    }
+
+	    if (!buggyCase)
+		ctBLTWAIT;
+	}
+    }
+}
+#endif
+#endif

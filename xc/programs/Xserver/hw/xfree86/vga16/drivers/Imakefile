@@ -16,10 +16,10 @@ SRCS = */?*.c
 OBJS = */?*_drv.o 
 #else
 SRCS = ati/?*.c cl64xx/?*.c et3000/?*.c et4000/?*.c generic/?*.c \
-       ncr77c22/?*.c oak/?*.c tvga8900/?*.c sis/?*.c
+       igs/?*.c ncr77c22/?*.c oak/?*.c tvga8900/?*.c sis/?*.c
 
 OBJS = ati/?*_drv.o cl64xx/?*_drv.o et3000/?*_drv.o et4000/?*_drv.o \
-       generic/?*_drv.o ncr77c22/?*_drv.o oak/?*_drv.o tvga8900/?*_drv.o \
+       generic/?*_drv.o igs/?*_drv.o ncr77c22/?*_drv.o oak/?*_drv.o tvga8900/?*_drv.o \
        sis/?*_drv.o
 #endif
 
