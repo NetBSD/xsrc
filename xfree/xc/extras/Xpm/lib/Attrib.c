@@ -35,7 +35,7 @@
 #include "XpmI.h"
 
 /* 3.2 backward compatibility code */
-LFUNC(CreateOldColorTable, int, (XpmColor *ct, int ncolors,
+LFUNC(CreateOldColorTable, int, (XpmColor *ct, unsigned int ncolors,
 				 XpmColor ***oldct));
 
 LFUNC(FreeOldColorTable, void, (XpmColor **colorTable, int ncolors));
@@ -46,11 +46,14 @@ LFUNC(FreeOldColorTable, void, (XpmColor **colorTable, int ncolors));
 static int
 CreateOldColorTable(ct, ncolors, oldct)
     XpmColor *ct;
-    int ncolors;
+    unsigned int ncolors;
     XpmColor ***oldct;
 {
     XpmColor **colorTable, **color;
     int a;
+
+    if (ncolors >= SIZE_MAX / sizeof(XpmColor *)) 
+	return XpmNoMemory;
 
     colorTable = (XpmColor **) XpmMalloc(ncolors * sizeof(XpmColor *));
     if (!colorTable) {
