@@ -22,7 +22,7 @@ SOFTWARE.
 ************************************************************************/
 
 /* $XConsortium: dixfonts.c /main/58 1996/09/28 17:11:55 rws $ */
-/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6.2.5 1998/07/15 23:48:57 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dixfonts.c,v 3.6.2.7 1998/11/08 08:45:26 dawes Exp $ */
 
 #define NEED_REPLIES
 #include "X.h"
@@ -1652,9 +1652,11 @@ FreeFontPath(list, n, force)
 		    found++;
 	    }
 	    if (list[i]->refcount != found) {
+#if 0
 		ErrorF("FreeFontPath: FPE \"%.*s\" refcount is %d, should be %d; fixing.\n",
 		       list[i]->name_length, list[i]->name,
 		       list[i]->refcount, found);
+#endif
 		list[i]->refcount = found; /* ensure it will get freed */
 	    }
 	}

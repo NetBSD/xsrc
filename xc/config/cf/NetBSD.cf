@@ -2,7 +2,7 @@ XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.9 1997/07/26 06:30:39 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.11 1998/11/06 13:54:15 dawes Exp $
 
 
   
@@ -49,7 +49,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #if ((OSMajorVersion > 1) || \
      (OSMajorVersion == 1 && OSMinorVersion > 2) || \
      (OSMajorVersion == 1 && OSMinorVersion == 2 && OSTeenyVersion > 1))
-# define HasPoll			YES
+# define HasPoll		YES
 #endif
 
 #define HasNdbm         	YES
@@ -492,8 +492,8 @@ install.man:: 								@@\
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
 
-#ifdef i386Architecture
-#include <xfree86.cf>
+#if defined(i386Architecture) || defined(Arm32Architecture)
+# include <xfree86.cf>
 #endif
 
 /*

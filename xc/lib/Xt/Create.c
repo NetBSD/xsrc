@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Create.c,v 3.1.8.1 1997/05/17 12:24:52 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Create.c,v 3.1.8.2 1998/10/04 13:36:33 hohndel Exp $ */
 
 /*
 

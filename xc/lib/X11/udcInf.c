@@ -35,7 +35,7 @@ from the X Consortium.
  *
  */
 
-/* $XFree86: xc/lib/X11/udcInf.c,v 1.1.1.1.2.1 1998/05/19 07:31:42 dawes Exp $ */
+/* $XFree86: xc/lib/X11/udcInf.c,v 1.1.1.1.2.2 1998/10/04 13:36:26 hohndel Exp $ */
 
 #include <stdio.h>
 #include <locale.h>
@@ -148,8 +148,13 @@ int  *num_codeset;
                 if(num_ret == 1){
                     ret = (int *)Xmalloc(sizeof(int));
                 } else {
+		    int *prev_ret = ret;
+
 		    ret = 
                         (int *)Xrealloc(ret,num_ret*sizeof(int)); 
+		    if (ret == NULL){
+			Xfree(prev_ret);
+		    }
                 }
                 if(ret == NULL){
 		    _xudc_utyerrno = 0x03 ;

@@ -21,6 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/Xserver/lbx/lbxopts.c,v 1.1.1.1.2.2 1998/10/04 15:23:03 hohndel Exp $ */
 
 #ifdef OPTDEBUG
 #include <stdio.h>

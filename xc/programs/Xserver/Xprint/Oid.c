@@ -30,6 +30,7 @@ not be used in advertising or otherwise to promote the sale, use or other
 dealings in this Software without prior written authorization from said
 copyright holders.
 */
+/* $XFree86: xc/programs/Xserver/Xprint/Oid.c,v 1.1.1.1.2.2 1998/10/04 15:22:58 hohndel Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

@@ -3,9 +3,10 @@ XCOMM $TOG: Imakefile /main/196 1997/05/20 10:06:09 kaleb $
 
 
 
-XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.19.2.3 1998/05/23 13:38:55 dawes Exp $
+XCOMM $XFree86: xc/lib/X11/Imakefile,v 3.19.2.5 1998/11/06 13:54:24 dawes Exp $
 #define DoNormalLib NormalLibX11
 #define DoSharedLib SharedLibX11
+#define DoExtraLib SharedLibX11
 #define DoDebugLib DebugLibX11
 #define DoProfileLib ProfileLibX11
 #define LibName X11
@@ -55,7 +56,7 @@ EXTRA_LIBRARIES = /**/
 #if HasPoll
    POLL_DEFINES = -DUSE_POLL
 #endif
-   CONN_DEFINES = ConnectionFlags
+   CONN_DEFINES = $(CONNECTION_FLAGS)
    XTRANS_X_DEFINES = -DX11_t -DTRANS_CLIENT
    XTRANS_XIM_DEFINES = -DXIM_t -DTRANS_CLIENT
 #if HasBSD44Sockets

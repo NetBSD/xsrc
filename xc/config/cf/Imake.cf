@@ -1,5 +1,5 @@
 XCOMM $TOG: Imake.cf /main/28 1997/06/25 08:31:36 barstow $
-XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.4 1998/05/22 16:38:18 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.9 1998/11/12 10:34:47 dawes Exp $
 /*
  * To add support for another platform:
  * 
@@ -592,10 +592,18 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.4 1998/05/22 16:38:18 dawes Exp $
 #  define AlphaArchitecture
 #  undef __alpha
 # endif /* __alpha */
+# ifdef __alpha__
+#  define AlphaArchitecture
+#  undef __alpha__
+# endif /* __alpha__ */
 # ifdef mc68000
 #  define Mc68020Architecture
 #  undef mc68000
 # endif /* mc68000 */
+# ifdef powerpc
+#  define PowerPCArchitecture
+#  undef powerpc
+# endif
 #endif /* linux */
 
 #if (defined(__Lynx__) || defined(Lynx)) && (defined(i386) || defined(__i386__) || defined(__x86__) || defined(__powerpc__) || defined(__sparc__) || defined(sparc))

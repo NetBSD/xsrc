@@ -1,5 +1,5 @@
 /* $XConsortium: osPexFont.c /main/10 1996/12/06 11:02:43 lehors $ */
-/* $XFree86: xc/programs/Xserver/PEX5/ospex/osPexFont.c,v 3.4.2.4 1998/07/12 18:45:53 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ospex/osPexFont.c,v 3.4.2.5 1998/08/27 01:59:58 dawes Exp $ */
 
 /*
 
@@ -116,6 +116,14 @@ extern char *getenv();
 /* A convenient shorthand. */
 typedef struct dirent	 ENTRY;
 #define FileName(file) file->d_name
+
+#ifndef FILENAME_MAX
+#ifdef MAXNAMLEN
+#define FILENAME_MAX MAXNAMLEN
+#else
+#define FILENAME_MAX 255
+#endif
+#endif
 
 #else  /* WIN32 */
 

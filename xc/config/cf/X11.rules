@@ -1,4 +1,10 @@
 XCOMM $TOG: X11.rules /main/4 1997/04/30 15:23:24 kaleb $
+XCOMM
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/config/cf/X11.rules,v 1.1.1.1.2.3 1998/10/04 15:22:47 hohndel Exp $
+
+
 
 /* Note whether we are the top level project. */
 #ifndef SeenTopLevelProject
@@ -69,7 +75,11 @@ XCOMM $TOG: X11.rules /main/4 1997/04/30 15:23:24 kaleb $
 #elif !UseInstalledX11
 # define TopXInclude	-I$(TOP)/exports/include
 #else
-# define TopXInclude	-I$(XPROJECTROOT)/include
+# ifdef XProjectRoot
+#  define TopXInclude	-I$(XPROJECTROOT)/include
+# else
+#  define TopXInclude	/**/
+# endif
 #endif
 #ifdef TopIncludes
 # undef TopIncludes

@@ -1,7 +1,7 @@
 XCOMM ---------------------------------------------------------------------
 XCOMM Imake rules for building libraries, programs, scripts, and data files
 XCOMM rules:  $TOG: Imake.rules /main/222 1997/07/17 20:04:40 kaleb $
-XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.7 1998/02/06 09:02:17 dawes Exp $
+XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.10 1998/11/04 10:53:01 dawes Exp $
 
 /*
  *		   MACHINE-INDEPENDENT RULES; DO NOT MODIFY
@@ -647,7 +647,7 @@ InstallManPage(program,$(MANDIR))
 #endif /* ProgramTargetHelper */
 
 #ifndef ProgramTargetHelperNoMan
-#define        ProgramTargetHelperNoMan(program,srcs,objs,deplib,locallib,syslib) @@\
+#define ProgramTargetHelperNoMan(program,srcs,objs,deplib,locallib,syslib) @@\
 ProgramTargetName(program): $(objs) $(deplib)				@@\
 	RemoveTargetProgram($@)						@@\
 	LinkRule($@,$(LDOPTIONS),$(objs),locallib $(LDLIBS) syslib)	@@\
@@ -1326,21 +1326,28 @@ step:: list								@@\
  * Make links from $LIBDIR (<ProjectRoot>/lib/X11) to /var/X11/
  * For example /usr/X11R6/lib/X11/xdm ==> /var/X11/xdm so that X can be
  * run from a read-only volume like a CD-ROM.
+ *
+ * Since the link is used in the installation process, we need to
+ * make the link relative in order to honor $(DESTDIR) if it is set
  */
 #ifndef LinkVarDirectory
 #if HasVarDirectory && HasSymLinks
 #define LinkVarDirectory(mdir,cdir,rdir,ldir)				@@\
 install::								@@\
 	MakeDir(Concat($(DESTDIR)$(LIBDIR)/,cdir))			@@\
-	MakeDir(Concat($(VARDIR)/,mdir))				@@\
+	MakeDir(Concat($(DESTDIR)$(VARDIR)/,mdir))			@@\
 	@MakeFlagsToShellFlags(i,set +e); \				@@\
 	if [ -d Concat($(DESTDIR)$(LIBDIR)/,cdir) ]; then \		@@\
+	  RELPATH=`echo Concat($(LIBDIR)/,cdir) | \			@@\
+		sed -e 's:^.::' -e 's:[^/.][^/]*:..:'g`; \		@@\
 	  cd Concat($(DESTDIR)$(LIBDIR)/,cdir); \			@@\
 	  if [ -d rdir -a ! -h rdir ]; then \				@@\
-	    (cd rdir; tar cf - . | (cd Concat($(VARDIR)/,mdir); tar xf -; exit 0); exit 0); \ @@\
+	    (cd rdir; tar cf - . | \					@@\
+		(cd Concat($(DESTDIR)$(VARDIR)/,mdir);\			@@\
+		 tar xf -; exit 0); exit 0); \ 				@@\
 	  fi; \								@@\
 	  $(RM) -r rdir; \						@@\
-	  $(LN) Concat($(VARDIR)/,mdir) ldir; \				@@\
+	  $(LN) Concat($${RELPATH}$(VARDIR)/,mdir) ldir; \		@@\
 	fi
 #else
 #define LinkVarDirectory(mdir,cdir,rdir,ldir)

@@ -48,7 +48,7 @@ SOFTWARE.
 
 
 /* $XConsortium: events.c /main/187 1996/09/25 00:47:41 dpw $ */
-/* $XFree86: xc/programs/Xserver/dix/events.c,v 3.11 1996/12/24 02:23:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/events.c,v 3.11.2.1 1998/10/04 13:36:48 hohndel Exp $ */
 
 #include "X.h"
 #include "misc.h"

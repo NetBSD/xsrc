@@ -21,6 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+/* $XFree86: xc/programs/lbxproxy/di/options.c,v 1.1.1.1.2.2 1998/10/04 15:23:07 hohndel Exp $ */
 
 #include <stdio.h>
 #include "X.h"

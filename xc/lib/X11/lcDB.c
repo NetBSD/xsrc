@@ -28,7 +28,7 @@
  *  This is source code modified by FUJITSU LIMITED under the Joint
  *  Development Agreement for the CDE/Motif PST.
  */
-/* $XFree86: xc/lib/X11/lcDB.c,v 3.3.2.3 1998/05/19 02:55:12 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcDB.c,v 3.3.2.4 1998/10/04 13:36:24 hohndel Exp $ */
 
 
 
@@ -255,6 +255,9 @@ realloc_line(line, size)
     }
     if(str == NULL){
 	/* malloc error */
+	if (line->str != NULL) {
+	    Xfree(line->str);
+	}
 	bzero(line, sizeof(Line));
 	return 0;
     }
@@ -497,8 +500,13 @@ append_value_list()
 	value_list = (char **)Xmalloc(sizeof(char *) * 2);
 	*value_list = NULL;
     }else{
+	char **prev_list = value_list;
+
 	value_list = (char **)
 	    Xrealloc(value_list, sizeof(char *) * (value_num + 2));
+	if (value_list == NULL){
+	    Xfree(prev_list);
+	}
     }
     if(value_list == (char **)NULL){
 	goto err;
@@ -508,7 +516,12 @@ append_value_list()
     if(value == NULL){
 	value = (char *)Xmalloc(value_len + len + 1);
     }else{
+	char *prev_value = value;
+
 	value = (char *)Xrealloc(value, value_len + len + 1);
+	if (value == NULL){
+	    Xfree(prev_value);
+	}
     }
     if(value == NULL){
 	goto err;

@@ -1,5 +1,5 @@
 /* $XConsortium: session.c /main/77 1996/11/24 17:32:33 rws $ */
-/* $XFree86: xc/programs/xdm/session.c,v 3.11.2.1 1998/01/23 12:35:20 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/session.c,v 3.11.2.3 1998/10/22 04:31:11 hohndel Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -522,6 +522,10 @@ StartClient (verify, d, pidp, name, passwd)
     switch (pid = fork ()) {
     case 0:
 	CleanUpChild ();
+#ifdef XDMCP
+	/* The chooser socket is not closed by CleanUpChild() */
+	DestroyWellKnownSockets();
+#endif
 
 	/* Do system-dependent login setup here */
 
@@ -772,7 +776,7 @@ execute (argv, environ)
 {
     /* give /dev/null as stdin */
     (void) close (0);
-    open ("/dev/null", 0);
+    open ("/dev/null", O_RDONLY);
     /* make stdout follow stderr to the log file */
     dup2 (2,1);
     execve (argv[0], argv, environ);

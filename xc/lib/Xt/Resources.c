@@ -60,7 +60,7 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
-/* $XFree86: xc/lib/Xt/Resources.c,v 1.1.1.2.4.3 1998/05/19 14:36:48 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Resources.c,v 1.1.1.2.4.4 1998/10/04 13:36:35 hohndel Exp $ */
 
 /*LINTLIBRARY*/
 #include "IntrinsicI.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3probe.c,v 1.1.2.5 1998/07/16 06:55:05 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/s3probe.c,v 1.1.2.6 1998/10/18 20:42:32 hohndel Exp $ */
 /*
  *
  * Copyright 1995-1997 The XFree86 Project, Inc.
@@ -72,6 +72,7 @@ static SymTabRec s3DacTable[] = {
    { ATT20C409_DAC,	"att20c409" },
    { SS2410_DAC,	"ss2410" },
    { S3_TRIO64V2_DAC,	"s3_trio64v2" },
+   { S3_TRIO64V_DAC,	"s3_trio64v+" },
    { -1,		"" }
 };
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.13 1998/02/24 19:05:56 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.16 1998/11/12 11:32:07 dawes Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -130,6 +130,7 @@ Bool xf86SupportedMouseTypes[] =
 #else
 	FALSE,	/* auto */
 #endif
+	TRUE,	/* ACECAD */
 	FALSE,	/* xque */
 	FALSE,	/* osmouse */
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 103060000
@@ -174,9 +175,7 @@ unsigned short xf86MouseCflags[] =
 
 	(CS8 | CSTOPB          | CREAD | CLOCAL | HUPCL ),   /* sysmouse */
 	0,						     /* auto */
-	0,						     /* xque */
-	0,						     /* osmouse */
-	0,						     /* wsmouse */
+	(CS8 | PARENB | PARODD | CREAD | CLOCAL | HUPCL ),   /* ACECAD */
 };
 #endif /* ! MOUSE_PROTOCOL_IN_KERNEL */
 
@@ -225,8 +224,8 @@ static unsigned char proto[][7] = {
   {  0xc0,   0x00, 0x00,   0x00, 6,    0x00,   0xff },  /* NetScroll */
 
   {  0xf8,   0x80, 0x00,   0x00, 5,    0x00,   0xff },  /* sysmouse */
-
-  {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* auto */
+  {  0xf8,   0x80, 0x00,   0x00, 5,    0x00,   0xff },  /* dummy entry for auto - used only to fill space */
+  {  0x80,   0x80, 0x80,   0x00, 3,    0x00,   0xff },  /* ACECAD */
   {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* xque */
   {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* osmouse */
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 103060000
@@ -235,6 +234,7 @@ static unsigned char proto[][7] = {
 #else
   {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* wsmouse */
 #endif
+=======
 };
 #endif /* ! MOUSE_PROTOCOL_IN_KERNEL */
 
@@ -486,6 +486,17 @@ MouseDevPtr mouse;
           }
 #endif
         break;
+
+      case P_ACECAD:
+	  xf86SetMouseSpeed(mouse, 9600, mouse->baudRate,
+			    xf86MouseCflags[mouse->mseType]);
+	  /* initialize */
+	  /* a nul charactor resets */
+	  write(mouse->mseFd, "", 1);
+	  usleep(50000);
+	  /* stream out relative mode high resolution increments of 1 */
+	  write(mouse->mseFd, "@EeI!", 5);
+	  break;
 
 #if defined(__FreeBSD__) && defined(MOUSE_PROTO_SYSMOUSE)
       case P_SYSMOUSE:
@@ -827,6 +838,13 @@ xf86MouseProtocol(device, rBuf, nBytes)
       dy = (pBuf[0] & 0x08) ? - pBuf[2] :   pBuf[2];
       break;
 
+    case P_ACECAD:	    /* ACECAD */
+	/* ACECAD is almost exactly like MM but the buttons are different */
+      buttons = (pBuf[0] & 0x02) | ((pBuf[0] & 0x04) >> 2) | ((pBuf[0] & 1) << 2);
+      dx = (pBuf[0] & 0x10) ?   pBuf[1] : - pBuf[1];
+      dy = (pBuf[0] & 0x08) ? - pBuf[2] :   pBuf[2];
+      break;
+
     case P_MM:              /* MM Series */
     case P_LOGI:            /* Logitech Mice */
       buttons = pBuf[0] & 0x07;
@@ -1098,6 +1116,9 @@ xf86MouseProc(device, what)
     } else {
 	if ((what == DEVICE_INIT) &&
 	    (ret == Success)) {
+	    /* allocate the motion history buffer if needed */
+	    xf86MotionHistoryAllocate(local);
+	    
 	    AssignTypeAndName(device, local->atom, local->name);
 #ifdef EXTMOUSEDEBUG
 	    ErrorF("assigning 0x%x atom=%d name=%s\n", device,
@@ -1132,6 +1153,36 @@ xf86MouseReadInput(local)
 /*
  ***************************************************************************
  *
+ * xf86MouseConvert --
+ *	Convert valuators to X and Y.
+ *
+ ***************************************************************************
+ */
+static Bool
+xf86MouseConvert(LocalDevicePtr	local,
+		 int		first,
+		 int		num,
+		 int		v0,
+		 int		v1,
+		 int		v2,
+		 int		v3,
+		 int		v4,
+		 int		v5,
+		 int*		x,
+		 int*		y)
+{
+    if (first != 0 || num != 2)
+      return FALSE;
+
+    *x = v0;
+    *y = v1;
+
+    return TRUE;
+}
+
+/*
+ ***************************************************************************
+ *
  * xf86MouseAllocate --
  *
  ***************************************************************************
@@ -1141,7 +1192,6 @@ xf86MouseAllocate()
 {
     LocalDevicePtr	local = (LocalDevicePtr) xalloc(sizeof(LocalDeviceRec));
     MouseDevPtr		mouse = (MouseDevPtr) xalloc(sizeof(MouseDevRec));
-    int			i;
     
     local->name = "MOUSE";
     local->type_name = "Mouse";
@@ -1154,6 +1204,8 @@ xf86MouseAllocate()
     local->control_proc = 0;
     local->close_proc = 0;
     local->switch_mode = 0;
+    local->conversion_proc = xf86MouseConvert;
+    local->reverse_conversion_proc = 0;
     local->fd = -1;
     local->atom = 0;
     local->dev = NULL;

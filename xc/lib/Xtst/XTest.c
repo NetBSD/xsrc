@@ -32,6 +32,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/lib/Xtst/XTest.c,v 1.1.1.1.12.2 1998/10/04 15:22:55 hohndel Exp $ */
 
 #define NEED_REPLIES
 #include "Xlibint.h"

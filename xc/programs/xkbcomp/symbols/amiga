@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/amiga,v 3.0 1996/08/18 01:55:50 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/amiga,v 3.0.4.1 1998/10/04 13:37:29 hohndel Exp $
 default xkb_symbols "usa1" {
 
     name[Group1]= "usa1";
@@ -467,3 +467,4 @@ xkb_symbols "fr" {
     modifier_map Mod2	{ Mode_switch };
     modifier_map Mod3	{ Meta_L, Meta_R };
 };
+

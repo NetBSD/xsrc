@@ -1,5 +1,5 @@
 /* $XConsortium: dbe.c /main/4 1996/08/01 19:24:47 dpw $ */
-/* $XFree86: xc/programs/Xserver/dbe/dbe.c,v 3.2 1996/12/23 06:29:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dbe/dbe.c,v 3.2.2.1 1998/10/04 13:36:47 hohndel Exp $ */
 /******************************************************************************
  * 
  * Copyright (c) 1994, 1995  Hewlett-Packard Company

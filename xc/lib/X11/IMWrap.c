@@ -1,6 +1,6 @@
 /*
  * $XConsortium: IMWrap.c /main/13 1996/01/05 11:22:19 kaleb $
- * $XFree86: xc/lib/X11/IMWrap.c,v 3.4 1996/02/09 08:18:40 dawes Exp $
+ * $XFree86: xc/lib/X11/IMWrap.c,v 3.4.4.1 1998/10/04 13:36:18 hohndel Exp $
  */
 
 /*
