@@ -115,12 +115,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #define MkdirHierCmd		mkdir -p
 
-#define CppCmd          	/usr/libexec/cpp
-#define StandardCppOptions	-traditional
-#define StandardCppDefines	/**/
-#define PreProcessCmd   	CppCmd
-#define PreIncDir		/usr/include
-
 #undef CcCmd
 #define CcCmd 			gcc
 #ifndef DefaultCCOptions
@@ -136,6 +130,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #endif
 #endif
+
+#define CppCmd          	cpp
+#define StandardCppOptions	-traditional
+#define StandardCppDefines	/**/
+#define PreProcessCmd   	CcCmd -E
+#define PostIncDir		/usr/include
 
 #define GccGasOption 		-DGCCUSESGAS
 #define AsmDefines 		-DUSE_GAS
