@@ -120,7 +120,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #if defined(UseInstalled) && (!defined(XF86LinkKit) || !XF86LinkKit)
 #define DefaultCCOptions 	/**/
 #else
-#define DefaultCCOptions 	-ansi -Dasm=__asm -Werror
+#define DefaultCCOptions 	-ansi -Dasm=__asm
 #endif
 
 #define GccGasOption 		-DGCCUSESGAS
