@@ -1,0 +1,75 @@
+! SshAskpass.ad:  Default resources for the X11-based ssh-askpass for OpenSSH
+! created 1999-Nov-17 03:40 Jim Knoble <jmknoble@pobox.com>
+! autodate: 1999-Nov-22 07:49
+! 
+! by Jim Knoble <jmknoble@pobox.com>
+! Copyright © 1999 Jim Knoble
+! 
+! Disclaimer:
+! 
+! The software is provided "as is", without warranty of any kind,
+! express or implied, including but not limited to the warranties of
+! merchantability, fitness for a particular purpose and
+! noninfringement. In no event shall the author(s) be liable for any
+! claim, damages or other liability, whether in an action of
+! contract, tort or otherwise, arising from, out of or in connection
+! with the software or the use or other dealings in the software.
+! 
+! Permission to use, copy, modify, distribute, and sell this software
+! and its documentation for any purpose is hereby granted without
+! fee, provided that the above copyright notice appear in all copies
+! and that both that copyright notice and this permission notice
+! appear in supporting documentation.
+! 
+
+! +--------------------+
+! | NEXTstep-ish theme |
+! +--------------------+
+
+*Dialog.font:			-adobe-helvetica-medium-r-normal-*-*-120-*-*-*-*-iso8859-1
+*?.foreground:			#000000
+*?.background:			#a8a8a8
+*topShadowColor:		#ffffff
+*bottomShadowColor:		#545454
+*borderColor:			#202020
+*shadowThickness:		0
+*borderWidth:			1
+*horizontalSpacing:		8
+*verticalSpacing:		8
+
+*Button.font:			-adobe-helvetica-medium-r-normal-*-*-120-*-*-*-*-iso8859-1
+*Button.shadowThickness:	1
+*Button.borderWidth:		1
+*Button.horizontalSpacing:	8
+*Button.verticalSpacing:	3
+
+*Indicator.foreground:		#9bcd9b
+*Indicator.background:		#545454
+*Indicator.topShadowColor:	#ffffff
+*Indicator.bottomShadowColor:	#202020
+*Indicator.shadowThickness:	1
+*Indicator.borderWidth:		0
+*Indicator.height:		7
+*Indicator.width:		15
+*Indicator.horizontalSpacing:	4
+*Indicator.verticalSpacing:	6
+*Indicator.minimumCount:	8
+*Indicator.maximumCount:	24
+
+! Ssh-askpass grabs the keyboard by default.
+! To stop it from grabbing the keyboard, use:
+!*grabKeyboard:			false
+
+! Ssh-askpass does not grab the pointer by default.
+! To make it grab the pointer, use:
+!*grabPointer:			true
+
+! Ssh-askpass does not grab the server by default.
+! To make it grab the server, use:
+!*grabServer:			true
+
+*Dialog.title:			OpenSSH Authentication Passphrase Request
+*Dialog.label:			Please enter your authentication passphrase:
+*okButton.label:		OK
+*cancelButton.label:		Cancel
+
