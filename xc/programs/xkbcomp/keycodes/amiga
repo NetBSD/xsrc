@@ -338,3 +338,22 @@ xkb_keycodes "fr" {
     <KPDC> = 68;
     <KPEN> = 75;
 };
+
+// XXX simplified keycodes (experimental)
+// The only difference between US and European keyboards consists of two
+// additional keys (usa: 94 keys, europe: 96 keys)
+
+xkb_keycodes "us" {
+    include "amiga(usa1)"
+};
+
+xkb_keycodes "eur" {
+    include "amiga(usa1)"
+    
+    // AC11
+    <AC12> = 51;
+    // LFSH
+    <LSGT> = 56;
+    // AB01
+};
+
