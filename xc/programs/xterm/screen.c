@@ -25,7 +25,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/xterm/screen.c,v 3.12.2.2 1998/02/15 16:10:09 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/screen.c,v 3.25 1998/01/24 01:53:39 hohndel Exp $ */
 
 /* screen.c */
 

@@ -5,7 +5,7 @@
 #ifndef lint
 static char *rid="$XConsortium: main.c,v 1.227.1.2 95/06/29 18:13:15 kaleb Exp $";
 #endif /* lint */
-/* $XFree86: xc/programs/xterm/os2main.c,v 3.5.2.3 1998/02/22 01:28:30 robin Exp $ */
+/* $XFree86: xc/programs/xterm/os2main.c,v 3.15 1998/03/27 23:24:02 hohndel Exp $ */
 
 /***********************************************************
 
@@ -66,7 +66,6 @@ SOFTWARE.
 #include <os2.h>
 #endif
 
-#include "version.h"
 #include "ptyx.h"
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
@@ -518,6 +517,12 @@ static char *message[] = {
 "will be started.  Options that start with a plus sign (+) restore the default.",
 NULL};
 
+static int abbrev (char *tst, char *cmp)
+{
+	size_t len = strlen(tst);
+	return ((len >= 2) && (!strncmp(tst, cmp, len)));
+}
+
 static void Syntax (badOption)
     char *badOption;
 {
@@ -761,7 +766,10 @@ int ptioctl(int fd, int func, void* data)
 
 char **gblenvp;
 
-main (int argc, char** argv, char** envp)
+main (argc, argv, envp)
+int argc;
+char **argv;
+char **envp;
 {
 	register TScreen *screen;
 	int mode;
@@ -770,9 +778,9 @@ main (int argc, char** argv, char** envp)
 	/* Do these first, since we may not be able to open the display */
 	ProgramName = argv[0];
 	if (argc > 1) {
-		if (!strncmp(argv[1], "-v", 2))
+		if (abbrev(argv[1], "-version"))
 			Version();
-		if (!strncmp(argv[1], "-h", 2) && strncmp(argv[1], "-hc", 3))
+		if (abbrev(argv[1], "-help"))
 			Help();
 	}
 
@@ -1064,10 +1072,6 @@ main (int argc, char** argv, char** envp)
 #endif	/* DEBUG */
 	XSetErrorHandler(xerror);
 	XSetIOErrorHandler(xioerror);
-
-	(void) setuid (screen->uid); /* we're done with privileges... */
-	(void) setgid (screen->gid);
-	done_setuid = 1;
 
 #ifdef ALLOWLOGGING
 	if (term->misc.log_on) {
