@@ -68,7 +68,7 @@
 ! To make it grab the server, use:
 !*grabServer:			true
 
-*Dialog.title:			OpenSSH Authentication Passphrase Request
+*Dialog.title:			SSH Authentication Passphrase Request
 *Dialog.label:			Please enter your authentication passphrase:
 *okButton.label:		OK
 *cancelButton.label:		Cancel
