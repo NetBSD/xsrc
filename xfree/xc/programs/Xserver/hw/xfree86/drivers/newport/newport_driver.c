@@ -854,10 +854,15 @@ NewportMapRegs(ScrnInfoPtr pScrn)
 {
 	NewportPtr pNewport = NEWPORTPTR(pScrn);
 
+#if defined(__NetBSD__)
+	pNewport->pNewportRegs = xf86MapVidMem(pScrn->scrnIndex,
+			VIDMEM_MMIO, NEWPORT_REGISTERS, sizeof(NewportRegs));
+#else
 	pNewport->pNewportRegs = xf86MapVidMem(pScrn->scrnIndex, 
 			VIDMEM_MMIO,
 			NEWPORT_BASE_ADDR0 + pNewport->busID * NEWPORT_BASE_OFFSET,
 			 sizeof(NewportRegs));
+#endif
 	if ( ! pNewport->pNewportRegs ) 
 		return FALSE;
 	return TRUE;
