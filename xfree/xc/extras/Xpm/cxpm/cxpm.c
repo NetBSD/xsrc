@@ -47,8 +47,9 @@
  * note that 's' could stand both for "special" and "slow" ;-)
  */
 static int
-sGetc(data)
+sGetc(data, file)
     xpmData *data;
+    FILE *file;
 {
     int c = getc(data->stream.file);
     if (c == '\n') {
@@ -61,9 +62,10 @@ sGetc(data)
 }
 
 static void
-sUngetc(data, c)
+sUngetc(data, c, file)
     xpmData *data;
     int c;
+    FILE *file;
 {
     ungetc(c, data->stream.file);
     if (c == '\n') {
