@@ -136,7 +136,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #if (OSMajorVersion >= 2 || \
       (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion >= 2))
-# define HasArc4random
+# define HasArc4Random		YES
 #endif
 
 /*
