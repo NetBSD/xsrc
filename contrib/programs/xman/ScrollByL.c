@@ -601,7 +601,7 @@ Widget w;
 XtPointer client_data;
 XtPointer call_data;
 {
-  int pos = (int) call_data;
+  int pos = (int)(long) call_data;
   int new_line;			/* The new location for the line pointer. */
   ScrollByLineWidget sblw = (ScrollByLineWidget) XtParent(w);
 
