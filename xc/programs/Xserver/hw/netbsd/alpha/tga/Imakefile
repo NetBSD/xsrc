@@ -1,0 +1,29 @@
+XCOMM $NetBSD: Imakefile,v 1.1 1999/04/27 08:18:24 ross Exp $
+
+#include <Server.tmpl>
+
+SRCS =	alphaTGA.c tgagc.c tgabitblt.c tgablt.c tgawindow.c tgasimpleblt.c
+OBJS = 	alphaTGA.o tgagc.o tgabitblt.o tgablt.o tgawindow.o tgasimpleblt.o
+
+   INCLUDES = -I. -I.. -I../../../.. -I../../../../mi -I../../../../mfb \
+		-I../../../../cfb -I../../../../include -I/sys/arch/amiga \
+		-I$(XINCLUDESRC) -I$(FONTINCSRC)
+   LINTLIBS = ../../../../dix/llib-ldix.ln ../../../../os/llib-los.ln \
+		../../../../mfb/llib-lmfb.ln ../../../../mi/llib-lmi.ln \
+		../../../../cfb/llib-lcfb.ln
+
+DEFINES = -DPSZ=8
+
+NormalLibraryObjectRule()
+
+all:: $(OBJS)
+
+lintlib:
+
+/* ObjectFromSpecialSource(clbltC,clblt,-DMROP=Mcopy) */
+/* ObjectFromSpecialSource(clsolidC,clsolid,-DRROP=GXcopy) */
+
+NormalLibraryTarget(alphaTga,$(OBJS))
+NormalLintTarget($(SRCS))
+
+DependTarget()

@@ -61,6 +61,8 @@ extern int errno;
 #include <machine/wsconsio.h>
 #endif
 
+#include <dev/pci/tgareg.h>
+
 #include <machine/fbio.h>
 #if 0 /* XXX */
 #include <machine/kbd.h>
@@ -156,6 +158,10 @@ typedef struct {
     unsigned char*  fb;		/* Frame buffer itself */
     int		    fd;		/* frame buffer for ioctl()s, */
     struct fbtype   info;	/* Frame buffer characteristics */
+    tga_reg_t       *tgaregs0;  /* Registers, and... */
+    tga_reg_t       *tgaregs1;  /* their aliases */
+    tga_reg_t       *tgaregs2;
+    tga_reg_t       *tgaregs3;
     void	    (*EnterLeave)();/* screen switch */
 } fbFd;
 
@@ -428,6 +434,46 @@ extern int alphaListInstalledColormaps(
 #if NeedFunctionPrototypes
     ScreenPtr /* pScreen */,
     Colormap* /* pCmapList */
+#endif
+);
+
+void 
+alphaTgaCopyWindow(
+#if NeedFunctionPrototypes
+    WindowPtr /* pWin */,
+    DDXPointRec /* ptOldOrg */,
+    RegionPtr /* prgnSrc */
+#endif
+);
+
+Bool
+alphaTgaCreateGC(
+#if NeedFunctionPrototypes
+    register GCPtr /* pGC */
+#endif
+);
+
+void
+alphaTgaValidateGC(
+#if NeedFunctionPrototypes
+    register GCPtr  /* pGC */,
+    unsigned long   /* changes */,
+    DrawablePtr	    /* pDrawable */
+#endif
+);
+
+RegionPtr
+alphaTgaCopyArea(
+#if NeedFunctionPrototypes
+    register DrawablePtr /* pSrcDrawable */,
+    register DrawablePtr /* pDstDrawable */,
+    GCPtr /* pGC */,
+    int /* srcx */,
+    int /* srcy */,
+    int /* width */,
+    int /* height */,
+    int /* dstx */,
+    int /* dsty */
 #endif
 );
 
