@@ -4126,11 +4126,13 @@ CHIPSInitHiQV32(mode)
     }
     else /* XMODE_RGB */
     {
+#ifdef __arm32__
 	ErrorF("GJS: About to call xf86SetRGBOut()\n");
 	/*
 	 * Put the console into RGB Out mode.
 	 */
 	xf86SetRGBOut();
+#endif
     }
 
     /* STN specific */
