@@ -253,6 +253,14 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Ex
 #  define playstation2Architecture
 #  undef playstation2
 # endif
+# if defined(__sh__) || defined(sh)
+#  define shArchitecture
+#  undef sh
+# endif
+# if defined(__dreamcast__) || defined(dreamcast)
+#  define dreamcastArchitecture
+#  undef dreamcast
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__

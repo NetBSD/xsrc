@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.108 2003/10/05 15:53:22 tron Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.109 2003/12/23 16:30:20 tsutsui Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -39,6 +39,7 @@ XCOMM		NetBSD/luna68k	client
 XCOMM		NetBSD/mipsco	client
 XCOMM		NetBSD/algor	client
 XCOMM		NetBSD/playstation2	client
+XCOMM		NetBSD/dreamcast	client/server
 XCOMM
 
 #ifndef OSName
@@ -292,12 +293,17 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 				s3_savage s3_svga neo chips cyrix rendition p9x00 \
 				spc8110 i740 tdfx smi generic
 # endif
-#else
-# if defined(m68kArchitecture) && OSMajorVersion == 1 && OSMinorVersion <= 3
-#  define OptimizedCDebugFlags 	-O
-# else
-#  define OptimizedCDebugFlags 	-O2
-# endif
+#endif
+
+#if defined(m68kArchitecture) && OSMajorVersion == 1 && OSMinorVersion <= 3
+# define OptimizedCDebugFlags 	-O
+#endif
+
+#if defined(shArchitecture)
+# define OptimizedCDebugFlags	-O
+# define HasSharedLibraries	NO
+# undef BuildDynamicLoading
+# define BuildDynamicLoading	NO
 #endif
 
 /*
@@ -520,6 +526,14 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
 #endif
+
+#if defined(dreamcastArchitecture)
+# define ServerExtraDefines	GccGasOption
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+# define XserverNeedsSetUID	YES
+#endif
+
 
 #ifndef OptimizedCDebugFlags
 # define OptimizedCDebugFlags 	-O2
@@ -908,6 +922,13 @@ clean::									@@\
  */
 #if defined(hpcarmArchitecture)
 # define XhpcServer		YES
+#endif
+
+/*
+ * Definitions for the NetBSD/dreamcast X server.
+ */
+#if defined(dreamcastArchitecture)
+# define XdreamcastServer	YES
 #endif
 
 
