@@ -46,6 +46,10 @@
 #include "xf86_OSlib.h"
 #include "xf86_Config.h"
 
+#if defined(__NetBSD__)
+#include <dev/wscons/wsconsio.h>
+#endif
+
 #ifdef XINPUT
 #include "xf86Xinput.h"
 #include "extnsionst.h"
@@ -117,6 +121,11 @@ Bool xf86SupportedMouseTypes[] =
 	FALSE,	/* Genius NetScroll (PS/2) */
 #endif /* __FreeBSD__ */
 	TRUE,	/* sysmouse */
+#if defined(__NetBSD__)
+	TRUE,	/* wsmouse */
+#else
+	FALSE,	/* wsmouse */
+#endif
 #ifdef PNP_MOUSE
 	TRUE,	/* auto */
 #else
@@ -158,6 +167,7 @@ unsigned short xf86MouseCflags[] =
 	0,						     /* NetScroll */
 
 	(CS8 | CSTOPB          | CREAD | CLOCAL | HUPCL ),   /* sysmouse */
+	0,						     /* wsmouse */
 	0,						     /* auto */
 };
 #endif /* ! MOUSE_PROTOCOL_IN_KERNEL */
@@ -207,6 +217,9 @@ static unsigned char proto[][7] = {
   {  0xc0,   0x00, 0x00,   0x00, 6,    0x00,   0xff },  /* NetScroll */
 
   {  0xf8,   0x80, 0x00,   0x00, 5,    0x00,   0xff },  /* sysmouse */
+
+  {  0x00,   0x00, 0x00,   0x00, sizeof(struct wscons_event),
+     				       0x00,   0x00 },  /* wsmouse */
 };
 #endif /* ! MOUSE_PROTOCOL_IN_KERNEL */
 
@@ -536,6 +549,11 @@ MouseDevPtr mouse;
 	}
 	break;
 
+#if defined(__NetBSD__)
+      case P_WSMOUSE:
+	break;
+#endif
+
       default:
 	xf86SetMouseSpeed(mouse, mouse->baudRate, mouse->baudRate,
                           xf86MouseCflags[mouse->mseType]);
@@ -617,7 +635,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
 {
   int                  i, buttons, dx, dy, dz;
   static int           pBufP = 0;
-  static unsigned char pBuf[8];
+  static unsigned char pBuf[32];
   MouseDevPtr          mouse = MOUSE_DEV(device);
   
 #ifdef EXTMOUSEDEBUG
@@ -626,6 +644,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
     	ErrorF("%2x ",rBuf[i]);
     ErrorF("\n");
 #endif
+
   for ( i=0; i < nBytes; i++) {
     /*
      * Hack for resyncing: We check here for a package that is:
@@ -651,6 +670,9 @@ xf86MouseProtocol(device, rBuf, nBytes)
     if (pBufP != 0 &&
 #if !defined(__NetBSD__)
 	mouse->mseType != P_PS2 &&
+#endif
+#if defined(__NetBSD__)
+	mouse->mseType != P_WSMOUSE &&
 #endif
 	((rBuf[i] & mouse->protoPara[2]) != mouse->protoPara[3] 
 	 || rBuf[i] == 0x80))
@@ -886,6 +908,44 @@ xf86MouseProtocol(device, rBuf, nBytes)
           buttons |= (int)(~pBuf[7] & 0x07) << 3;
 	}
       break;
+
+    case P_WSMOUSE: {
+      struct wscons_event ev;
+
+      /* copy to guarantee alignment */
+      memcpy(&ev, pBuf, sizeof ev);
+      switch (ev.type) {
+      case WSCONS_EVENT_MOUSE_UP:
+	dx = dy = 0;
+#define BUTBIT (1 << (ev.value <= 2 ? 2 - ev.value : ev.value))
+	buttons = mouse->lastButtons & ~BUTBIT;
+	break;
+      case WSCONS_EVENT_MOUSE_DOWN:
+	dx = dy = 0;
+	buttons = mouse->lastButtons | BUTBIT;
+#undef BUTBIT
+	break;
+      case WSCONS_EVENT_MOUSE_DELTA_X:
+	dx = ev.value;
+	dy = 0;
+	buttons = mouse->lastButtons;
+	break;
+      case WSCONS_EVENT_MOUSE_DELTA_Y:
+	dx = 0;
+	dy = -ev.value;
+	buttons = mouse->lastButtons;
+	break;
+      case WSCONS_EVENT_MOUSE_DELTA_Z:
+	dx = dy = 0;
+	dz = ev.value;
+	buttons = mouse->lastButtons;
+	break;
+      default:
+	ErrorF("wsmouse: bad event type=%d\n", ev.type);
+	return;
+      }
+      break;
+      }
 
     default: /* There's a table error */
       continue;
