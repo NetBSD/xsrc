@@ -916,7 +916,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(outw)
    SYMFUNC(outl)
 #endif
-#if defined(__powerpc__) && !defined(__OpenBSD__)
+#if defined(__powerpc__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
    SYMFUNC(inb)
    SYMFUNC(inw)
    SYMFUNC(inl)
