@@ -424,6 +424,7 @@ ReadWinConfigEntry (FILE *configFile, unsigned short version,
 	sizeof (TWMWinConfigEntry));
     if (!*pentry)
 	return 0;
+    memset(entry, 0, sizeof(TWMWinConfigEntry));
 
     entry->tag = 0;
     entry->client_id = NULL;
@@ -462,6 +463,7 @@ ReadWinConfigEntry (FILE *configFile, unsigned short version,
 
 	    if (!entry->wm_command)
 		goto give_up;
+	    memset(entry->wm_command, 0, entry->wm_command_count * sizeof(char *));
 
 	    for (i = 0; i < entry->wm_command_count; i++)
 		if (!read_counted_string (configFile, &entry->wm_command[i]))
@@ -882,6 +884,7 @@ SmPointer clientData;
 	success = False;
 	goto bad;
     }
+    memset(prop1.vals, 0, (Argc + 4) * sizeof (SmPropValue));
 
     numVals = 0;
 

@@ -1041,12 +1041,14 @@ int key;
   Cptr cptrav, cpnew;
   if (!chead) {
     chead = (Cptr)malloc(sizeof(Cnode));
+    memset(chead, 0, sizeof(Cnode));
     chead->i = key; chead->next = NULL;
   }
   else {
     cptrav = chead;
     while (cptrav->next != NULL) { cptrav = cptrav->next; }
     cpnew = (Cptr)malloc(sizeof(Cnode));
+    memset(cpnew, 0, sizeof(Cnode));
     cpnew->i = key; cpnew->next = NULL; cptrav->next = cpnew;
   }
 }
@@ -1161,6 +1163,7 @@ do_squeeze_entry (list, name, justify, num, denom)
 		     (unsigned long)sizeof(SqueezeInfo));
 	    return;
 	}
+	memset(sinfo, 0, sizeof(SqueezeInfo));
 	sinfo->justify = justify;
 	sinfo->num = num;
 	sinfo->denom = denom;

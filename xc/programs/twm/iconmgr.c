@@ -159,6 +159,9 @@ IconMgr *AllocateIconManager(name, icon_name, geom, columns)
 	return NULL;
 
     p = (IconMgr *)malloc(sizeof(IconMgr));
+    if (!p)
+	return NULL;
+    memset(p, 0, sizeof(IconMgr));
     p->name = name;
     p->icon_name = icon_name;
     p->geometry = geom;
@@ -419,6 +422,9 @@ WList *AddIconManager(tmp_win)
 	ip = &Scr->iconmgr;
 
     tmp = (WList *) malloc(sizeof(WList));
+    if (!tmp)
+	return NULL;
+    memset(tmp, 0, sizeof(WList));
     tmp->iconmgr = ip;
     tmp->next = NULL;
     tmp->active = FALSE;
