@@ -17,6 +17,13 @@
 #ifndef _ALPHA_H_ 
 #define _ALPHA_H_
 
+/* XXX -- I define USE_WSCONS here, although there should
+ *  probably be a little logic as to if to define it.
+ */
+#ifndef USE_WSCONS
+#define USE_WSCONS
+#endif
+
 /* X headers */
 #include "Xos.h"
 #undef index /* don't mangle silly Sun structure member names */
@@ -46,6 +53,10 @@ extern char *getenv();
 
 #ifdef X_NOT_STDC_ENV
 extern int errno;
+#endif
+
+#ifdef USE_WSCONS
+#include <dev/wscons/wsconsio.h>
 #endif
 
 #include <machine/fbio.h>
@@ -271,6 +282,15 @@ extern Bool alphaInitCommon(
 #endif
 );
 
+#ifdef USE_WSCONS
+extern struct wscons_event* alphaKbdGetEvents(
+#if NeedFunctionPrototypes
+    int /* fd */,
+    int* /* pNumEvents */,
+    Bool* /* pAgain */
+#endif
+);
+#else
 extern Firm_event* alphaKbdGetEvents(
 #if NeedFunctionPrototypes
     int /* fd */,
@@ -278,7 +298,17 @@ extern Firm_event* alphaKbdGetEvents(
     Bool* /* pAgain */
 #endif
 );
+#endif
 
+#ifdef USE_WSCONS
+extern struct wscons_event* alphaMouseGetEvents(
+#if NeedFunctionPrototypes
+    int /* fd */,
+    int* /* pNumEvents */,
+    Bool* /* pAgain */
+#endif
+);
+#else
 extern Firm_event* alphaMouseGetEvents(
 #if NeedFunctionPrototypes
     int /* fd */,
@@ -286,18 +316,27 @@ extern Firm_event* alphaMouseGetEvents(
     Bool* /* pAgain */
 #endif
 );
+#endif
 
 extern void alphaKbdEnqueueEvent(
 #if NeedFunctionPrototypes
     DeviceIntPtr /* device */,
+#ifdef USE_WSCONS
+    struct wscons_event * /* fe */
+#else
     Firm_event* /* fe */
+#endif
 #endif
 );
 
 extern void alphaMouseEnqueueEvent(
 #if NeedFunctionPrototypes
     DeviceIntPtr /* device */,
+#ifdef USE_WSCONS
+    struct wscons_event * /* fe */
+#else
     Firm_event* /* fe */
+#endif
 #endif
 );
 
@@ -326,6 +365,12 @@ extern void alphaKbdWait(
  *	Given a struct timeval, convert its time into milliseconds...
  */
 #define TVTOMILLI(tv)	(((tv).tv_usec/1000)+((tv).tv_sec*1000))
+
+/*-
+ * TSTOMILLI(ts)
+ *	Given a struct timespec, convert its time into milliseconds...
+ */
+#define TSTOMILLI(ts)	(((ts).tv_nsec/1000000)+((ts).tv_sec*1000))
 
 extern Bool alphaCfbSetupScreen(
 #if NeedFunctionPrototypes

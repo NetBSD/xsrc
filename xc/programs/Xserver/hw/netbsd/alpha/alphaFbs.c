@@ -95,25 +95,30 @@ pointer alphaMemoryMap (len, off, fd)
     int		pagemask, mapsize;
     caddr_t	addr;
     pointer	mapaddr;
+    int		mode = WSDISPLAYIO_MODE_MAPPED;
 
     pagemask = getpagesize() - 1;
     mapsize = ((int) len + pagemask) & ~pagemask;
     addr = 0;
 
+
+    /*
+     * Constant churning in wscons has repeatedly broken the X support.
+     * let's deal with the latest lossage: overly picky mode checks.
+     */
+    if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) == -1)
+	Error("WSDISPLAYIO_SMODE");
     /* 
      * try and make it private first, that way once we get it, an
      * interloper, e.g. another server, can't get this frame buffer,
      * and if another server already has it, this one won't.
+     * ross@netbsd.org .. hehe, that was not what MAP_PRIVATE meant ..
+     * MAP_PRIVATE makes no sense for a frame buffer...
      */
-    if ((long)(mapaddr = (pointer) mmap (addr,
-		mapsize,
-		PROT_READ | PROT_WRITE, MAP_PRIVATE,
-		fd, off)) == -1)
-	mapaddr = (pointer) mmap (addr,
-		    mapsize,
+    mapaddr = (pointer) mmap (addr, mapsize,
 		    PROT_READ | PROT_WRITE, MAP_SHARED,
 		    fd, off);
-    if (mapaddr == (pointer) -1) {
+    if (mapaddr == (pointer) -1L) {
 	Error ("mapping frame buffer memory");
 	(void) close (fd);
 	mapaddr = (pointer) NULL;
@@ -165,7 +170,11 @@ Bool alphaSaveScreen (pScreen, on)
 	    state = 0;
 	else
 	    state = 1;
+#ifdef USE_WSCONS
+	(void) ioctl(alphaFbs[pScreen->myNum].fd, WSDISPLAYIO_SVIDEO, &state);
+#else
 	(void) ioctl(alphaFbs[pScreen->myNum].fd, FBIOSVIDEO, &state);
+#endif
     }
     return( TRUE );
 }
@@ -253,7 +262,6 @@ Bool alphaInitCommon (scrn, pScrn, offset, init1, init2, cr_cm, save, fb_off)
 {
     unsigned char*	fb = alphaFbs[scrn].fb;
 
-fprintf(stderr, "in alphaInitCommon\n");
     if (!alphaScreenAllocate (pScrn))
 	return FALSE;
     if (!fb) {

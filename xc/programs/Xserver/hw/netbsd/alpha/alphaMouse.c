@@ -126,22 +126,14 @@ int alphaMouseProc (device, what)
     BYTE    	  map[4];
     char	  *dev;
 
-fprintf(stderr, "alphaMouseProc (%d)\n", what);
-fflush(stderr);
     switch (what) {
 	case DEVICE_INIT:
-fprintf(stderr, "init\n");
-fflush(stderr);
 	    if (pMouse != LookupPointerDevice()) {
 		ErrorF ("Cannot open non-system mouse");	
 		return !Success;
 	    }
-fprintf(stderr, "init a\n");
-fflush(stderr);
 	    if (alphaPtrPriv.fd == -1)
 		return !Success;
-fprintf(stderr, "init b\n");
-fflush(stderr);
 	    pMouse->devicePrivate = (pointer) &alphaPtrPriv;
 	    pMouse->on = FALSE;
 	    map[1] = 1;
@@ -153,31 +145,27 @@ fflush(stderr);
 	    break;
 
 	case DEVICE_ON:
-fprintf(stderr, "on\n");
-fflush(stderr);
+#if 0		/* XXX -- deal with this rcd */
 	    if (ioctl (alphaPtrPriv.fd, VUIDGFORMAT, &oformat) == -1) {
 		Error ("alphaMouseProc ioctl VUIDGFORMAT");
 		return !Success;
 	    }
-fprintf(stderr, "on a\n");
-fflush(stderr);
 	    format = VUID_FIRM_EVENT;
 	    if (ioctl (alphaPtrPriv.fd, VUIDSFORMAT, &format) == -1) {
 		Error ("alphaMouseProc ioctl VUIDSFORMAT");
 		return !Success;
 	    }
-fprintf(stderr, "on b\n");
-fflush(stderr);
 	    alphaPtrPriv.bmask = 0;
 	    AddEnabledDevice (alphaPtrPriv.fd);
+#endif
 	    pMouse->on = TRUE;
-fprintf(stderr, "on c\n");
-fflush(stderr);
 	    break;
 
 	case DEVICE_CLOSE:
+#if 0		/* XXX -- deal with this rcd */
 	    if (ioctl (alphaPtrPriv.fd, VUIDSFORMAT, &oformat) == -1)
 		Error ("alphaMouseProc ioctl VUIDSFORMAT");
+#endif
 	    break;
 
 	case DEVICE_OFF:
@@ -198,25 +186,39 @@ fflush(stderr);
  *	The number of events contained in the array.
  *	A boolean as to whether more events might be available.
  *
+ *      #ifdef USE_WSCONS changes Firm_events to struct wscons_events.
+ *
  * Side Effects:
  *	None.
  *-----------------------------------------------------------------------
  */
 
 #if NeedFunctionPrototypes
+#ifdef USE_WSCONS
+struct wscons_event* alphaMouseGetEvents (
+#else
 Firm_event* alphaMouseGetEvents (
+#endif
     int		fd,
     int*	pNumEvents,
     Bool*	pAgain)
 #else
+#ifdef USE_WSCONS
+struct wscons_event* alphaMouseGetEvents (fd, pNumEvents, pAgain)
+#else
 Firm_event* alphaMouseGetEvents (fd, pNumEvents, pAgain)
+#endif
     int		fd;
     int*	pNumEvents;
     Bool*	pAgain;
 #endif
 {
     int	    	  nBytes;	    /* number of bytes of events available. */
+#ifdef USE_WSCONS
+    static struct wscons_event	evBuf[MAXEVENTS];   /* Buffer for wscons_events */
+#else
     static Firm_event	evBuf[MAXEVENTS];   /* Buffer for Firm_events */
+#endif
 
     if ((nBytes = read (fd, (char *)evBuf, sizeof(evBuf))) == -1) {
 	if (errno == EWOULDBLOCK) {
@@ -227,7 +229,11 @@ Firm_event* alphaMouseGetEvents (fd, pNumEvents, pAgain)
 	    FatalError ("Could not read from mouse");
 	}
     } else {
+#ifdef USE_WSCONS
+	*pNumEvents = nBytes / sizeof (struct wscons_event);
+#else
 	*pNumEvents = nBytes / sizeof (Firm_event);
+#endif
 	*pAgain = (nBytes == sizeof (evBuf));
     }
     return evBuf;
@@ -287,11 +293,19 @@ MouseAccelerate (device, delta)
 #if NeedFunctionPrototypes
 void alphaMouseEnqueueEvent (
     DeviceIntPtr  device,
+#ifdef USE_WSCONS
+    struct wscons_event *fe)
+#else
     Firm_event	  *fe)
+#endif
 #else
 void alphaMouseEnqueueEvent (device, fe)
     DeviceIntPtr  device;   	/* Mouse from which the event came */
+#ifdef USE_WSCONS
+    struct wscons_event *fe;
+#else
     Firm_event	  *fe;	    	/* Event to process */
+#endif
 #endif
 {
     xEvent		xE;
@@ -302,22 +316,41 @@ void alphaMouseEnqueueEvent (device, fe)
 
     pPriv = (alphaPtrPrivPtr)device->public.devicePrivate;
 
+#ifdef USE_WSCONS
+    time = xE.u.keyButtonPointer.time = TSTOMILLI(fe->time);
+#else
     time = xE.u.keyButtonPointer.time = TVTOMILLI(fe->time);
+#endif
 
+#ifdef USE_WSCONS
+    switch (fe->type) {
+    case WSCONS_EVENT_MOUSE_UP:
+    case WSCONS_EVENT_MOUSE_DOWN:
+#else
     switch (fe->id) {
     case MS_LEFT:
     case MS_MIDDLE:
     case MS_RIGHT:
+#endif
 	/*
 	 * A button changed state. Sometimes we will get two events
 	 * for a single state change. Should we get a button event which
 	 * reflects the current state of affairs, that event is discarded.
 	 *
 	 * Mouse buttons start at 1.
+	 * with USE_WSCONS mouse buttons start with 0.
 	 */
+#ifdef USE_WSCONS
+	xE.u.u.detail = fe->value + 1;
+#else
 	xE.u.u.detail = (fe->id - MS_LEFT) + 1;
+#endif
 	bmask = 1 << xE.u.u.detail;
+#ifdef USE_WSCONS
+	if (fe->type == WSCONS_EVENT_MOUSE_UP) {
+#else
 	if (fe->value == VKEY_UP) {
+#endif
 	    if (pPriv->bmask & bmask) {
 		xE.u.u.type = ButtonRelease;
 		pPriv->bmask &= ~bmask;
@@ -334,9 +367,25 @@ void alphaMouseEnqueueEvent (device, fe)
 	}
 	mieqEnqueue (&xE);
 	break;
+#ifdef USE_WSCONS
+    case WSCONS_EVENT_MOUSE_DELTA_X:
+	miPointerDeltaCursor (MouseAccelerate(device,fe->value),0,time);
+	break;
+#else
     case LOC_X_DELTA:
 	miPointerDeltaCursor (MouseAccelerate(device,fe->value),0,time);
 	break;
+#endif
+#ifdef USE_WSCONS
+    case WSCONS_EVENT_MOUSE_DELTA_Y:
+	/*
+	 * For some reason, motion up generates a positive y delta
+	 * and motion down a negative delta, so we must subtract
+	 * here instead of add...
+	 */
+	miPointerDeltaCursor (0,-MouseAccelerate(device,fe->value),time);
+	break;
+#else
     case LOC_Y_DELTA:
 	/*
 	 * For some reason, motion up generates a positive y delta
@@ -345,14 +394,29 @@ void alphaMouseEnqueueEvent (device, fe)
 	 */
 	miPointerDeltaCursor (0,-MouseAccelerate(device,fe->value),time);
 	break;
+#endif
+#ifdef USE_WSCONS
+    case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
+	miPointerPosition (&x, &y);
+	miPointerAbsoluteCursor (fe->value, y, time);
+	break;
+#else
     case LOC_X_ABSOLUTE:
 	miPointerPosition (&x, &y);
 	miPointerAbsoluteCursor (fe->value, y, time);
 	break;
+#endif
+#ifdef USE_WSCONS
+    case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
+	miPointerPosition (&x, &y);
+	miPointerAbsoluteCursor (x, fe->value, time);
+	break;
+#else
     case LOC_Y_ABSOLUTE:
 	miPointerPosition (&x, &y);
 	miPointerAbsoluteCursor (x, fe->value, time);
 	break;
+#endif
     default:
 	FatalError ("alphaMouseEnqueueEvent: unrecognized id\n");
 	break;

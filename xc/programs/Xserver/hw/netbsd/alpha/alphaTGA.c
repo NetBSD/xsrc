@@ -97,7 +97,11 @@ static void CGUpdateColormap(pScreen, dex, count, rmap, gmap, bmap)
     int		dex, count;
     u_char	*rmap, *gmap, *bmap;
 {
+#ifdef USE_WSCONS
+    struct wsdisplay_cmap alphaCmap;
+#else
     struct fbcmap alphaCmap;
+#endif
 
     alphaCmap.index = dex;
     alphaCmap.count = count;
@@ -105,10 +109,17 @@ static void CGUpdateColormap(pScreen, dex, count, rmap, gmap, bmap)
     alphaCmap.green = &gmap[dex];
     alphaCmap.blue = &bmap[dex];
 
+#ifdef USE_WSCONS
+    if (ioctl(alphaFbs[pScreen->myNum].fd, WSDISPLAYIO_PUTCMAP, &alphaCmap) < 0) {
+	Error("CGUpdateColormap");
+	FatalError( "CGUpdateColormap: FBIOPUTCMAP failed\n" );
+    }
+#else
     if (ioctl(alphaFbs[pScreen->myNum].fd, FBIOPUTCMAP, &alphaCmap) < 0) {
 	Error("CGUpdateColormap");
 	FatalError( "CGUpdateColormap: FBIOPUTCMAP failed\n" );
     }
+#endif
 }
 
 void alphaInstallColormap(cmap)
@@ -247,7 +258,6 @@ Bool alphaTGAInit (screen, pScreen, argc, argv)
 	int fb_off, realwidth, rowsize;
 	volatile tga_reg_t *tgaregs;
 
-fprintf(stderr, "alphaTGAInit\n");
 	alphaFbs[screen].EnterLeave = (void (*)())NoopDDA;
 
     	if (!alphaScreenAllocate(pScreen))
@@ -258,7 +268,6 @@ fprintf(stderr, "alphaTGAInit\n");
 			return FALSE;
 	        alphaFbs[screen].fb = fb;
 	}
-fprintf(stderr, "mapped\n");
 
 	/*
 	 * Frame buffer RAM always starts at core space size / 2.
@@ -306,7 +315,6 @@ fprintf(stderr, "mapped\n");
 	fb_off += rowsize * 1;
 #endif
 
-fprintf(stderr, "width = %d, real width is %d, fb_off is 0x%x\n", alphaFbs[screen].info.fb_width, realwidth, fb_off);
 	if (!alphaCfbScreenInit(pScreen, fb + fb_off,
 	    alphaFbs[screen].info.fb_width,
 	    alphaFbs[screen].info.fb_height,
