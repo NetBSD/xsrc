@@ -1458,7 +1458,7 @@ static double Div(num1, num2)
 /*   Calling sequence: 'idmin epX epY 3 0 callothersubr' */
 /*   Computes Flex values, and renders the Flex path,    */
 /*   and returns (leaves) ending coordinates on stack    */
-#ifdef __sparc_v9__
+#if defined(__sparc_v9__) && defined(__GNUC__) && __GNUC__ < 3
 static void FlxProc(inputs, idmin)
   double inputs[];
 #else
@@ -1487,7 +1487,7 @@ static void FlxProc(c1x2, c1y2, c3x0, c3y0, c3x1, c3y1, c3x2, c3y2,
   double eShift;
   double cx, cy;
   double ex, ey;
-#ifdef __sparc_v9__
+#if defined(__sparc_v9__) && defined(__GNUC__) && __GNUC__ < 3
   double c1x2 = *inputs++;
   double c1y2 = *inputs++;
   double c3x0 = *inputs++;
@@ -1699,7 +1699,7 @@ static CallOtherSubr(othersubrno)
       if (PSFakeTop < 16) Error0("CallOtherSubr: PSFakeStack low");
       ClearPSFakeStack();
       FlxProc(
-#ifdef __sparc_v9__
+#if defined(__sparc_v9__) && defined(__GNUC__) && __GNUC__ < 3
         PSFakeStack,
 #else
         PSFakeStack[0],  PSFakeStack[1],  PSFakeStack[2],  PSFakeStack[3],
