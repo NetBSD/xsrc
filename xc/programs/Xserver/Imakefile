@@ -550,8 +550,9 @@ XCOMM NetBSD/Alpha server
 XCOMM
 MFBDIR   = mfb
 CFB8DIR  = cfb
+CFB32DIR = cfb32
 DDXDIR1  = hw/netbsd/alpha
-ANBDIRS1 = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(DDXDIR1) $(DEPDIRS)
+ANBDIRS1 = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
 ANBOBJS1 = hw/netbsd/alpha/alphaInit.o
 ANBLIBS1 = hw/netbsd/alpha/tga/libalphaTga.a hw/netbsd/alpha/libalpha.a CFB8Libs
 SetUIDServerTarget(XalphaNetBSD,$(ANBDIRS1),$(ANBOBJS1),$(ANBLIBS1),$(SYSLIBS))

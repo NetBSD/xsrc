@@ -1,4 +1,4 @@
-/* $NetBSD: tgablt.c,v 1.1 1999/04/27 08:18:24 ross Exp $ */
+/* $NetBSD: tgablt.c,v 1.2 2000/07/03 21:06:31 elric Exp $ */
 
 /*
  * tga copy area
@@ -39,6 +39,10 @@ Author: Keith Packard
 
 #define MROP	Mcopy
 
+#ifndef PSZ
+#define PSZ 8
+#endif
+
 #include	"X.h"
 #include	"Xmd.h"
 #include	"Xproto.h"
@@ -58,7 +62,7 @@ Author: Keith Packard
 /*static unsigned char *clregs,*clfb;*/
 
 #include "alpha.h"
-
+#include "tgamap.h"
 #include <dev/pci/tgareg.h>
 
 void

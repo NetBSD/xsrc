@@ -1,4 +1,4 @@
-/* $NetBSD: tgagc.c,v 1.2 1999/10/27 05:42:41 elric Exp $ */
+/* $NetBSD: tgagc.c,v 1.3 2000/07/03 21:06:31 elric Exp $ */
 
 /***********************************************************
 
@@ -52,6 +52,10 @@ SOFTWARE.
 
 #include <stdio.h>
 
+#ifndef PSZ
+#define PSZ 8
+#endif
+
 #include "X.h"
 #include "Xmd.h"
 #include "Xproto.h"
@@ -72,6 +76,7 @@ SOFTWARE.
 #include "cfb8bit.h"
 
 #include "alpha.h"
+#include "tgamap.h"
 
 #if PSZ == 8
 # define useTEGlyphBlt  cfbTEGlyphBlt8

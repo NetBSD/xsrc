@@ -85,9 +85,15 @@ fbFd alphaFbs[MAXSCREENS];
 Bool alphaTgaAccelerate = 1;
 
 static PixmapFormatRec	formats[] = {
-    { 8, 8, BITMAP_SCANLINE_PAD}	/* 8-bit deep */
+    { 8, 8, BITMAP_SCANLINE_PAD},	/* 8-bit deep */
+    { 24, 32, BITMAP_SCANLINE_PAD}	/* 32-bit deep */
 };
 #define NUMFORMATS	(sizeof formats)/(sizeof formats[0])
+
+static PixmapFormatRec	formats32[] = {
+    { 24, 32, BITMAP_SCANLINE_PAD}	/* 32-bit deep */
+};
+#define NUMFORMATS32	(sizeof formats32)/(sizeof formats32[0])
 
 /*
  * OpenFrameBuffer --
@@ -123,6 +129,7 @@ static int OpenFrameBuffer(device, screen)
 	}
 	if (ioctl(alphaFbs[screen].fd, WSDISPLAYIO_GINFO,
 	    &info) == -1) {
+fprintf(stderr, "Huh?\n");
 		Error("unable to get frame buffer info");
 		(void) close(alphaFbs[screen].fd);
 		alphaFbs[screen].fd = -1;
@@ -133,7 +140,10 @@ static int OpenFrameBuffer(device, screen)
 	alphaFbs[screen].info.fb_width = info.width;
 	alphaFbs[screen].info.fb_depth = info.depth;
 	alphaFbs[screen].info.fb_cmsize = info.cmsize;
-	alphaFbs[screen].info.fb_size = 4*1024*1024;
+	if (alphaFbs[screen].info.fb_depth == 32)
+		alphaFbs[screen].info.fb_size = 16*1024*1024; /* XXXNJW */
+	else
+		alphaFbs[screen].info.fb_size = 4*1024*1024;
 #else
 	if (ioctl(alphaFbs[screen].fd, FBIOGTYPE,
 	    &alphaFbs[screen].info) == -1) {
@@ -146,6 +156,7 @@ static int OpenFrameBuffer(device, screen)
 	if (ret) {
 	    if (alphaFbs[screen].info.fb_type >= FBTYPE_LASTPLUSONE || 
 		!alphaFbData[alphaFbs[screen].info.fb_type].init) {
+fprintf(stderr, "Huh2?\n");
 		    Error("frame buffer type not supported");
 		    (void) close(alphaFbs[screen].fd);
 		    alphaFbs[screen].fd = -1;
@@ -155,6 +166,7 @@ static int OpenFrameBuffer(device, screen)
     }
     if (!ret)
 	alphaFbs[screen].fd = -1;
+fprintf(stderr, "open frame buffer (%s), ret = %d\n", device, ret);
     return ret;
 }
 
@@ -317,9 +329,12 @@ void InitOutput(pScreenInfo, argc, argv)
 	xfree (devList);
     }
     for (scr = 0; scr < MAXSCREENS; scr++)
-	if (alphaFbs[scr].fd != -1)
+	if (alphaFbs[scr].fd != -1) {
 	    (void) AddScreen (alphaFbData[alphaFbs[scr].info.fb_type].init, 
 			      argc, argv);
+		fprintf(stderr, "alphaFbs[scr].info.fb_type = %d\n",
+		    alphaFbs[scr].info.fb_type);
+	}
     (void) OsSignal(SIGWINCH, SIG_IGN);
 }
 
