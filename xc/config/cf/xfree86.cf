@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.129.2.47 1999/08/03 09:41:30 hohndel Exp $
+XCOMM $XFree86: xc/config/cf/xfree86.cf,v 3.129.2.53 1999/12/10 12:38:13 hohndel Exp $
 /*
  * This configuration file contains all of the configuration
  * information for the XFree86 based X Servers.
@@ -493,17 +493,17 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #  define XF86SvgaDrivers	chips igs generic
 # else
 #  if defined(LinuxArchitecture)
-#   define XF86SvgaDrivers	nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
+#   define XF86SvgaDrivers	nv et4000 et3000 pvga1 gvga r128 ati sis tvga8900 \
 				cirrus ncr77c22 compaq mga oak al2101 \
 				ali cl64xx video7 ark mx realtek s3_savage s3v apm \
 				s3_svga neo chips cyrix rendition p9x00 \
-				spc8110 i740 tdfx generic
+				spc8110 i740 tdfx smi generic
 #  else
-#   define XF86SvgaDrivers	nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
+#   define XF86SvgaDrivers	nv et4000 et3000 pvga1 gvga r128 ati sis tvga8900 \
 				cirrus ncr77c22 compaq mga oak al2101 \
 				ali cl64xx video7 ark mx realtek s3v apm \
 				s3_svga neo chips cyrix rendition p9x00 \
-				spc8110 i740 tdfx generic
+				spc8110 i740 tdfx smi generic
 #  endif
 # endif
 #endif
@@ -1043,6 +1043,15 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #endif
 #endif
 
+/* Support for USB mouse */
+#ifndef UsbMouseSupport
+#define UsbMouseSupport	NO
+#endif
+/* Does this OS has libusb ? */
+#ifndef HasLibUsb
+#define HasLibUsb	NO
+#endif
+
 #ifndef UseServerLock
 #define UseServerLock	YES
 #endif
@@ -1217,7 +1226,7 @@ XFREE86JAPANESEDOCDIR = $(DOCDIR)/Japanese
 #endif
 
 #ifndef XFree86Version
-#define XFree86Version	335
+#define XFree86Version	3360
 #endif
 
 #ifndef XVendorString

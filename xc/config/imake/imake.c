@@ -8,7 +8,7 @@
  * be passed to the template file.                                         *
  *                                                                         *
  ***************************************************************************/
-/* $XFree86: xc/config/imake/imake.c,v 3.13.2.20 1999/07/23 13:22:10 hohndel Exp $ */
+/* $XFree86: xc/config/imake/imake.c,v 3.13.2.23 1999/12/20 12:55:40 hohndel Exp $ */
 
 /*
  * 
@@ -293,12 +293,8 @@ extern int sys_nerr;
 #include <sys/utsname.h>
 #endif
 
-/*
- * Avoid mktemp() if possible;  4.4BSD and derived platforms have a 
- * safe mkstemp() so lets use that.
- */
-#if defined(CSRG_BASED)
-# define HAVE_MKSTEMP
+#if !(defined(Lynx) || defined(__Lynx__) || (defined(SVR4) && !defined(sun)))
+#define HAS_MKSTEMP
 #endif
 
 #define	TRUE		1
@@ -406,16 +402,25 @@ main(argc, argv)
 	Imakefile = FindImakefile(Imakefile);
 	CheckImakefileC(ImakefileC);
 	if (Makefile) {
-		tmpMakefile = Makefile;
-#ifdef HAVE_MKSTEMP
-		fd = open(Makefile, O_RDWR|O_CREAT|O_TRUNC|O_APPEND, 0644);
-#endif
+                tmpMakefile = Makefile;
+                if ((tmpfd = fopen(tmpMakefile, "w+")) == NULL)
+                   LogFatal("Cannot create temporary file %s.", tmpMakefile);
 	} else {
+	        int fd;
 		tmpMakefile = Strdup(tmpMakefile);
-#ifdef HAVE_MKSTEMP
-		fd = mkstemp(tmpMakefile);
+#ifndef HAS_MKSTEMP
+		if (mktemp(tmpMakefile) == NULL ||
+		    (tmpfd = fopen(tmpMakefile, "w+")) == NULL) {
+		   LogFatal("Cannot create temporary file %s.", tmpMakefile);
+		}
 #else
-		(void) mktemp(tmpMakefile);
+	        fd = mkstemp(tmpMakefile);
+	        if (fd == -1 || (tmpfd = fdopen(fd, "w+")) == NULL) {
+		   if (fd != -1) {
+		      unlink(tmpMakefile); close(fd);
+		   }
+		   LogFatal("Cannot create temporary file %s.", tmpMakefile);
+		}
 #endif
 	}
 	AddMakeArg("-f");
@@ -424,15 +429,6 @@ main(argc, argv)
 	AddMakeArg( makeMacro );
 	sprintf(makefileMacro, "MAKEFILE=%s", Imakefile);
 	AddMakeArg( makefileMacro );
-
-#ifdef HAVE_MKSTEMP
-	if (fd < 0)
-		LogFatal("Cannot mkstemp %s.", tmpMakefile);
-	if ((tmpfd = fdopen(fd, "w+")) == NULL)
-#else
-	if ((tmpfd = fopen(tmpMakefile, "w+")) == NULL)
-#endif
-		LogFatal("Cannot create temporary file %s.", tmpMakefile);
 
 	cleanedImakefile = CleanCppInput(Imakefile);
 	cppit(cleanedImakefile, Template, ImakefileC, tmpfd, tmpMakefile);
@@ -1257,22 +1253,26 @@ CleanCppInput(imakefile)
 		    strcmp(ptoken, "pragma") &&
 		    strcmp(ptoken, "undef")) {
 		    if (outFile == NULL) {
-#ifdef HAVE_MKSTEMP
-			int fd;
-#endif
+		        int fd;
 			tmpImakefile = Strdup(tmpImakefile);
-#ifdef HAVE_MKSTEMP
-			fd = mkstemp(tmpImakefile);
-			if (fd < 0)
-			    LogFatal("Cannot mkstemp %s", tmpImakefile);
-			outFile = fdopen(fd, "w");
-#else
-			(void) mktemp(tmpImakefile);
-			outFile = fopen(tmpImakefile, "w");
-#endif
-			if (outFile == NULL)
+#ifndef HAS_MKSTEMP
+			if (mktemp(tmpImakefile) == NULL ||
+			    (outFile = fopen(tmpImakefile, "w+")) == NULL) {
 			    LogFatal("Cannot open %s for write.",
 				tmpImakefile);
+			}
+#else
+			fd=mkstemp(tmpImakefile);
+			if (fd != -1)
+			    outFile = fdopen(fd, "w");
+			if (outFile == NULL) {
+			    if (fd != -1) {
+			       unlink(tmpImakefile); close(fd);
+			    }
+			    LogFatal("Cannot open %s for write.",
+				tmpImakefile);
+			}
+#endif
 		    }
 		    writetmpfile(outFile, punwritten, pbuf-punwritten,
 				 tmpImakefile);

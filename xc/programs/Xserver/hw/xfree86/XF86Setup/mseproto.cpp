@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mseproto.cpp,v 1.1.2.7 1999/04/21 07:21:07 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/mseproto.cpp,v 1.1.2.9 1999/12/11 19:00:41 hohndel Exp $ */
 
 #if defined(PC98)
 set SerialMouseTypes [list \
@@ -63,10 +63,14 @@ set ExtraMouseTypes [list \
 #define MOUSE_TYPES $SerialMouseTypes $BusMouseTypes $ExtraMouseTypes \
 			$PnpMouseTypes 
 #elif defined(__OpenBSD__)
+set ExtraMouseTypes [ list \
+		    "usb" \
+]
 #define MOUSE_TYPES $SerialMouseTypes $BusMouseTypes $StandardPS2Types \
-			$PnpMouseTypes
+			$ExtraMouseTypes $PnpMouseTypes 
 #elif defined(Lynx)
-#define MOUSE_TYPES $SerialMouseTypes $BusMouseTypes $StandardPS2Types
+#define MOUSE_TYPES $SerialMouseTypes $BusMouseTypes $StandardPS2Types \
+			$ExtendedPS2Types
 #elif defined(ISC)
 #define MOUSE_TYPES $SerialMouseTypes $BusMouseTypes $StandardPS2Types
 #elif defined(sun) && defined(i386) && defined(SVR4)

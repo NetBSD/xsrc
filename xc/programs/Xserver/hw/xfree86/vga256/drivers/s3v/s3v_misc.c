@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_misc.c,v 1.1.2.11 1999/07/30 11:21:40 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_misc.c,v 1.1.2.12 1999/12/20 14:36:29 hohndel Exp $ */
 
 /*
  *
@@ -69,6 +69,8 @@ s3vGetPCIInfo()
    if (vgaPCIInfo && vgaPCIInfo->AllCards) {
       while (pcrp = vgaPCIInfo->AllCards[i]) {
          if ((pcrp->_vendor == PCI_S3_VENDOR_ID) && 
+	     (pcrp->_base_class == PCI_CLASS_DISPLAY) &&
+	     (pcrp->_sub_class == PCI_SUBCLASS_DISPLAY_VGA) &&
              (pcrp->_command & PCI_CMD_IO_ENABLE) &&
 	     (pcrp->_command & PCI_CMD_MEM_ENABLE)) {
 	    int ChipId = pcrp->_device;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.21 1999/07/19 11:46:40 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.24 1999/12/11 19:00:42 hohndel Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -45,6 +45,10 @@
 #include "xf86Procs.h"
 #include "xf86_OSlib.h"
 #include "xf86_Config.h"
+
+#ifdef USB_MOUSE
+#include "xf86_UsbMse.h"
+#endif
 
 #if defined(__NetBSD__)
 #undef MAXHOSTNAMELEN		/* avoid duplication from param.h */
@@ -109,7 +113,7 @@ Bool xf86SupportedMouseTypes[] =
 	TRUE,	/* ALPS GlidePoint (serial) */
 	TRUE,   /* Microsoft IntelliMouse (serial) */
 	TRUE,	/* Kensington ThinkingMouse (serial) */
-#if !defined(__FreeBSD__) && !defined(Lynx)
+#if !defined(__FreeBSD__)
 	TRUE,   /* Microsoft IntelliMouse (PS/2) */
 	TRUE,	/* Kensington ThinkingMouse (PS/2) */
 	TRUE,	/* Logitech MouseMan+ (PS/2) */
@@ -140,6 +144,11 @@ Bool xf86SupportedMouseTypes[] =
 	TRUE,	/* sun */
 #else
 	FALSE,	/* sun */
+#endif
+#ifdef USB_MOUSE
+        TRUE,
+#else
+        FALSE,
 #endif
 };
 
@@ -241,6 +250,7 @@ static unsigned char proto[][7] = {
 #else
   {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* sun */
 #endif
+  {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* USB mouse */
 };
 #endif /* ! MOUSE_PROTOCOL_IN_KERNEL */
 
@@ -395,14 +405,14 @@ MouseDevPtr mouse;
 	xf86SetMouseSpeed(mouse, mouse->baudRate, mouse->baudRate,
                           xf86MouseCflags[P_MM]);
         /* select report rate/frequency */
-	if      (mouse->sampleRate <=   0)  write(mouse->mseFd, "O", 1);
-	else if (mouse->sampleRate <=  15)  write(mouse->mseFd, "J", 1);
-	else if (mouse->sampleRate <=  27)  write(mouse->mseFd, "K", 1);
-	else if (mouse->sampleRate <=  42)  write(mouse->mseFd, "L", 1);
-	else if (mouse->sampleRate <=  60)  write(mouse->mseFd, "R", 1);
-	else if (mouse->sampleRate <=  85)  write(mouse->mseFd, "M", 1);
-	else if (mouse->sampleRate <= 125)  write(mouse->mseFd, "Q", 1);
-	else                                write(mouse->mseFd, "N", 1);
+	if      (mouse->sampleRate <=   0)  write(mouse->mseFd, "O", 1);  /* 100 */
+	else if (mouse->sampleRate <=  15)  write(mouse->mseFd, "J", 1);  /*  10 */
+	else if (mouse->sampleRate <=  27)  write(mouse->mseFd, "K", 1);  /*  20 */
+	else if (mouse->sampleRate <=  42)  write(mouse->mseFd, "L", 1);  /*  35 */
+	else if (mouse->sampleRate <=  60)  write(mouse->mseFd, "R", 1);  /*  50 */
+	else if (mouse->sampleRate <=  85)  write(mouse->mseFd, "M", 1);  /*  67 */
+	else if (mouse->sampleRate <= 125)  write(mouse->mseFd, "Q", 1);  /* 100 */
+	else                                write(mouse->mseFd, "N", 1);  /* 150 */
 	break;
 
       case P_LOGIMAN:
@@ -590,6 +600,11 @@ MouseDevPtr mouse;
 #endif
 #endif
 
+#ifdef USB_MOUSE
+      case P_USB:
+	mouse->usb = usbMouseInit(mouse);
+	break;
+#endif
       default:
 	xf86SetMouseSpeed(mouse, mouse->baudRate, mouse->baudRate,
                           xf86MouseCflags[mouse->mseType]);
@@ -632,6 +647,8 @@ MouseDevPtr mouse;
  		c[1] = 200;
  	      else if (mouse->sampleRate >= 100)
  		c[1] = 100;
+ 	      else if (mouse->sampleRate >= 80)
+ 		c[1] = 80;
  	      else if (mouse->sampleRate >= 60)
  		c[1] = 60;
  	      else if (mouse->sampleRate >= 40)
@@ -719,6 +736,9 @@ xf86MouseProtocol(device, rBuf, nBytes)
 #if defined(__atari__)
 	mouse->mseType != P_SUN &&
 #endif
+#endif
+#ifdef USB_MOUSE
+	mouse->mseType != P_USB &&
 #endif
 	((rBuf[i] & mouse->protoPara[2]) != mouse->protoPara[3] 
 	 || rBuf[i] == 0x80))
@@ -1048,6 +1068,12 @@ xf86MouseProtocol(device, rBuf, nBytes)
     }
 #endif /* __atari__ */
 #endif /* defined(__NetBSD__) && __NetBSD_Version__ >= 103060000 */
+
+#ifdef USB_MOUSE
+    case P_USB:
+      usbMouseProtocol(mouse, &dx, &dy, &dz, &buttons);
+      break;
+#endif
 
     default: /* There's a table error */
       continue;

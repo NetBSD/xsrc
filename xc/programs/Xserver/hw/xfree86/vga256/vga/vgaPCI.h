@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.38 1999/08/25 12:21:40 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.45 2000/01/08 03:25:42 robin Exp $ */
 /*
  * PCI Probe
  *
@@ -51,16 +51,13 @@
 
 /* ATI */
 #define PCI_CHIP_MACH32		0x4158
-#define PCI_CHIP_RAGE128_RE	0x5245
-#define PCI_CHIP_RAGE128_RF	0x5246
-#define PCI_CHIP_RAGE128_RK	0x524B
-#define PCI_CHIP_RAGE128_RL	0x524C
 #define PCI_CHIP_MACH64CT	0x4354
 #define PCI_CHIP_MACH64CX	0x4358
 #define PCI_CHIP_MACH64ET	0x4554
 #define PCI_CHIP_MACH64GB	0x4742
 #define PCI_CHIP_MACH64GD	0x4744
 #define PCI_CHIP_MACH64GI	0x4749
+#define PCI_CHIP_MACH64GL	0x474C
 #define PCI_CHIP_MACH64GM	0x474D
 #define PCI_CHIP_MACH64GN	0x474E
 #define PCI_CHIP_MACH64GO	0x474F
@@ -78,10 +75,53 @@
 #define PCI_CHIP_MACH64LD	0x4C44
 #define PCI_CHIP_MACH64LG	0x4C47
 #define PCI_CHIP_MACH64LI	0x4C49
+#define PCI_CHIP_MACH64LM	0x4C4D
+#define PCI_CHIP_MACH64LN	0x4C4E
 #define PCI_CHIP_MACH64LP	0x4C50
+#define PCI_CHIP_MACH64LR	0x4C52
+#define PCI_CHIP_MACH64LS	0x4C53
+#define PCI_CHIP_RAGE128_RE	0x5245
+#define PCI_CHIP_RAGE128_RF	0x5246
+#define PCI_CHIP_RAGE128_RK	0x524B
+#define PCI_CHIP_RAGE128_RL	0x524C
 #define PCI_CHIP_MACH64VT	0x5654
 #define PCI_CHIP_MACH64VU	0x5655
 #define PCI_CHIP_MACH64VV	0x5656
+#define PCI_CHIP_RAGE128RE	0x5245
+#define PCI_CHIP_RAGE128RF	0x5246
+#define PCI_CHIP_RAGE128RK	0x524B
+#define PCI_CHIP_RAGE128RL	0x524C
+#define PCI_CHIP_RAGE128SE	0x5345
+#define PCI_CHIP_RAGE128SF	0x5346
+#define PCI_CHIP_RAGE128SG	0x5347
+#define PCI_CHIP_RAGE128SK	0x534B
+#define PCI_CHIP_RAGE128SL	0x534C
+#define PCI_CHIP_RAGE128SM	0x534D
+#define PCI_CHIP_RAGE128PA	0x5041
+#define PCI_CHIP_RAGE128PB	0x5042
+#define PCI_CHIP_RAGE128PC	0x5043
+#define PCI_CHIP_RAGE128PD	0x5044
+#define PCI_CHIP_RAGE128PE	0x5045
+#define PCI_CHIP_RAGE128PF	0x5046
+#define PCI_CHIP_RAGE128PG	0x5047
+#define PCI_CHIP_RAGE128PH	0x5048
+#define PCI_CHIP_RAGE128PI	0x5049
+#define PCI_CHIP_RAGE128PJ	0x504A
+#define PCI_CHIP_RAGE128PK	0x504B
+#define PCI_CHIP_RAGE128PL	0x504C
+#define PCI_CHIP_RAGE128PM	0x504D
+#define PCI_CHIP_RAGE128PN	0x504E
+#define PCI_CHIP_RAGE128PO	0x504F
+#define PCI_CHIP_RAGE128PP	0x5050
+#define PCI_CHIP_RAGE128PQ	0x5051
+#define PCI_CHIP_RAGE128PR	0x5052
+#define PCI_CHIP_RAGE128PS	0x5053
+#define PCI_CHIP_RAGE128PT	0x5054
+#define PCI_CHIP_RAGE128PU	0x5055
+#define PCI_CHIP_RAGE128PV	0x5056
+#define PCI_CHIP_RAGE128PW	0x5057
+#define PCI_CHIP_RAGE128PX	0x5058
+
 
 /* Avance Logic */
 #define PCI_CHIP_ALG2301	0x2301
@@ -170,6 +210,9 @@
 #define PCI_CHIP_SIS6326	0x6326
 #define PCI_CHIP_SIS530		0x6306
 #define PCI_CHIP_SIS620		0x6306
+#define PCI_CHIP_SIS300		0x0300
+#define PCI_CHIP_SIS630         0x6300
+#define PCI_CHIP_SIS540         0x5300
 
 /* SGS */
 #define PCI_CHIP_STG2000	0x0008
@@ -201,6 +244,9 @@
 #define PCI_CHIP_VTNT2		0x002C
 #define PCI_CHIP_UVTNT2		0x002D
 #define PCI_CHIP_ITNT2		0x00A0
+#define PCI_CHIP_GEFORCE256     0x0100
+#define PCI_CHIP_GEFORCEDDR     0x0101
+#define PCI_CHIP_QUADRO         0x0103
 
 /* NVIDIA & SGS */
 #define PCI_CHIP_RIVA128        0x0018
@@ -241,6 +287,7 @@
 #define PCI_CHIP_SAVAGE3D	0x8A20
 #define PCI_CHIP_SAVAGE3D_M	0x8A21
 #define PCI_CHIP_SAVAGE4	0x8A22
+#define PCI_CHIP_SAVAGE2000	0x9102
 #define PCI_CHIP_868		0x8880
 #define PCI_CHIP_928		0x88B0
 #define PCI_CHIP_864_0		0x88C0
@@ -267,7 +314,7 @@
 #define PCI_CHIP_INTERG_1682	0x1682
 
 /* Increase this as required */
-#define MAX_DEV_PER_VENDOR 48
+#define MAX_DEV_PER_VENDOR 80
 
 typedef struct vgaPCIInformation {
     int Vendor;
@@ -311,10 +358,6 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{0x0000,		NULL}}},
     {PCI_VENDOR_ATI,	"ATI",	{
 				{PCI_CHIP_MACH32,	"Mach32"},
-				{PCI_CHIP_RAGE128_RE,   "Rage128 RE"},
-				{PCI_CHIP_RAGE128_RF,   "Rage128 RF"},
-				{PCI_CHIP_RAGE128_RK,   "Rage128 RK"},
-				{PCI_CHIP_RAGE128_RL,   "Rage128 RL"},
 				{PCI_CHIP_MACH64GX,	"Mach64 GX"},
 				{PCI_CHIP_MACH64CX,	"Mach64 CX"},
 				{PCI_CHIP_MACH64CT,	"Mach64 CT"},
@@ -337,11 +380,50 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_MACH64LD,	"Mach64 LT Pro"},
 				{PCI_CHIP_MACH64LI,	"Mach64 LT Pro"},
 				{PCI_CHIP_MACH64LP,	"Mach64 LT Pro"},
+				{PCI_CHIP_MACH64GL,	"Mach64 XL or XC"},
 				{PCI_CHIP_MACH64GM,	"Mach64 XL or XC"},
 				{PCI_CHIP_MACH64GN,	"Mach64 XL or XC"},
 				{PCI_CHIP_MACH64GO,	"Mach64 XL or XC"},
 				{PCI_CHIP_MACH64GR,	"Mach64 XL or XC"},
 				{PCI_CHIP_MACH64GS,	"Mach64 XL or XC"},
+				{PCI_CHIP_MACH64LM,	"Mach64 Mobility"},
+				{PCI_CHIP_MACH64LN,	"Mach64 Mobility"},
+				{PCI_CHIP_MACH64LR,	"Mach64 Mobility"},
+				{PCI_CHIP_MACH64LS,	"Mach64 Mobility"},
+				{PCI_CHIP_RAGE128RE,    "Rage 128 RE"},
+				{PCI_CHIP_RAGE128RF,    "Rage 128 RF"},
+				{PCI_CHIP_RAGE128RK,    "Rage 128 RK"},
+				{PCI_CHIP_RAGE128RL,    "Rage 128 RL"},
+				{PCI_CHIP_RAGE128SE,    "Rage 128 SE"},
+				{PCI_CHIP_RAGE128SF,    "Rage 128 SF"},
+				{PCI_CHIP_RAGE128SG,    "Rage 128 SG"},
+				{PCI_CHIP_RAGE128SK,    "Rage 128 SK"},
+				{PCI_CHIP_RAGE128SL,    "Rage 128 SL"},
+				{PCI_CHIP_RAGE128SM,    "Rage 128 SM"},
+				{PCI_CHIP_RAGE128PA,    "Rage 128 PA"},
+				{PCI_CHIP_RAGE128PB,    "Rage 128 PB"},
+				{PCI_CHIP_RAGE128PC,    "Rage 128 PC"},
+				{PCI_CHIP_RAGE128PD,    "Rage 128 PD"},
+				{PCI_CHIP_RAGE128PE,    "Rage 128 PE"},
+				{PCI_CHIP_RAGE128PF,    "Rage 128 PF"},
+				{PCI_CHIP_RAGE128PG,    "Rage 128 PG"},
+				{PCI_CHIP_RAGE128PH,    "Rage 128 PH"},
+				{PCI_CHIP_RAGE128PI,    "Rage 128 PI"},
+				{PCI_CHIP_RAGE128PJ,    "Rage 128 PJ"},
+				{PCI_CHIP_RAGE128PK,    "Rage 128 PK"},
+				{PCI_CHIP_RAGE128PL,    "Rage 128 PL"},
+				{PCI_CHIP_RAGE128PM,    "Rage 128 PM"},
+				{PCI_CHIP_RAGE128PN,    "Rage 128 PN"},
+				{PCI_CHIP_RAGE128PO,    "Rage 128 PO"},
+				{PCI_CHIP_RAGE128PP,    "Rage 128 PP"},
+				{PCI_CHIP_RAGE128PQ,    "Rage 128 PQ"},
+				{PCI_CHIP_RAGE128PR,    "Rage 128 PR"},
+				{PCI_CHIP_RAGE128PS,    "Rage 128 PS"},
+				{PCI_CHIP_RAGE128PT,    "Rage 128 PT"},
+				{PCI_CHIP_RAGE128PU,    "Rage 128 PU"},
+				{PCI_CHIP_RAGE128PV,    "Rage 128 PV"},
+				{PCI_CHIP_RAGE128PW,    "Rage 128 PW"},
+				{PCI_CHIP_RAGE128PX,    "Rage 128 PX"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_AVANCE,	"Avance Logic",	{
 				{PCI_CHIP_ALG2301,	"ALG2301"},
@@ -429,6 +511,9 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_SIS5597,	"5597/98"},
 				{PCI_CHIP_SIS6326,	"6326"},
 				{PCI_CHIP_SIS530,	"530/620"},
+				{PCI_CHIP_SIS300,	"300"},
+				{PCI_CHIP_SIS630,       "630"},
+				{PCI_CHIP_SIS540,       "540"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_SGS,	"SGS-Thomson",	{
 				{PCI_CHIP_STG2000,	"STG2000"},
@@ -445,8 +530,11 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_TNT2,		"Riva TNT2"},
 				{PCI_CHIP_UTNT2,	"Riva Ultra TNT2"},
 				{PCI_CHIP_VTNT2,	"Riva Vanta TNT2"},
-				{PCI_CHIP_UVTNT2,	"Riva Ultra Vanta"},
+				{PCI_CHIP_UVTNT2,       "Riva Ultra Vanta"},
 				{PCI_CHIP_ITNT2,	"Riva Integrated"},
+				{PCI_CHIP_GEFORCE256,	"GeForce 256"},
+				{PCI_CHIP_GEFORCEDDR,	"GeForce 256 DDR"},
+				{PCI_CHIP_QUADRO,	"Quadro"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_NVIDIA_SGS,	"NVidia/SGS-Thomson",	{
 				{PCI_CHIP_RIVA128,	"Riva128"},
@@ -500,6 +588,7 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_SAVAGE3D,	"Savage3D"},
 				{PCI_CHIP_SAVAGE3D_M,	"Savage3D (Macrovision Support)"},
 				{PCI_CHIP_SAVAGE4,	"Savage4"},
+				{PCI_CHIP_SAVAGE2000,	"Savage2000"},
 				{PCI_CHIP_868,		"868"},
 				{PCI_CHIP_928,		"928"},
 				{PCI_CHIP_864_0,	"864"},
