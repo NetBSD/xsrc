@@ -128,8 +128,10 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #else
 #ifdef Arm32Architecture
 #define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char -fomit-frame-pointer GccWarningOptions
+#elif defined(PpcArchitecture)
+# define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char GccWarningOptions
 #else
-#define DefaultCCOptions 	-ansi -Dasm=__asm GccWarningOptions
+# define DefaultCCOptions 	-ansi -Dasm=__asm GccWarningOptions
 #endif
 #endif
 
@@ -191,7 +193,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define OptimizedCDebugFlags 	-O2
 # if defined(SparcArchitecture)
 #  define ServerOSDefines 	-DDDXOSINIT
-# elif defined(AlphaArchitecture)
+# elif defined(AlphaArchitecture) || defined(PpcArchitecture)
 #  define ServerOSDefines 	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
 # elif defined(Arm32Architecture)
 #  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
@@ -218,24 +220,26 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #else
 # if defined(SparcArchitecture)
 #  define ServerExtraDefines XFree86ServerDefines
-# else
-#  if defined(AlphaArchitecture)
+# elif defined(AlphaArchitecture)
 	/* XXX for the following */
-#   define ServerExtraDefines GccGasOption XFree86ServerDefines -D_XSERVER64
-#   ifndef XFree86ConsoleDefines
-#    define XFree86ConsoleDefines -DWSCONS_SUPPORT -DPCCONS_SUPPORT -DPCVT_SUPPORT
-#   endif
-#  else
-#   ifdef Arm32Architecture
-#    define ServerExtraDefines GccGasOption XFree86ServerDefines
-#    ifndef XFree86ConsoleDefines
-#     define XFree86ConsoleDefines -DPCCONS_SUPPORT
-#    endif
-#   else
-#   define ServerExtraDefines GccGasOption
+#  define ServerExtraDefines GccGasOption XFree86ServerDefines -D_XSERVER64
+#  ifndef XFree86ConsoleDefines
+#   define XFree86ConsoleDefines -DWSCONS_SUPPORT -DPCCONS_SUPPORT -DPCVT_SUPPORT
 #  endif
+# elif defined(Arm32Architecture)
+#  define ServerExtraDefines GccGasOption XFree86ServerDefines
+#  ifndef XFree86ConsoleDefines
+#   define XFree86ConsoleDefines -DPCCONS_SUPPORT
+#  endif
+# elif defined(PpcArchitecture)
+#   define ServerExtraDefines   GccGasOption XFree86ServerDefines -D__macppc__
+#   define XkbServerDefines     -DXKB_ALWAYS_USES_SOFT_REPEAT
+#   ifndef XFree86ConsoleDefines
+#    defined XFree86ConsoleDefines	-DWSCONS_SUPPORT
+#   endif
+# else   
+#  define ServerExtraDefines GccGasOption
 # endif
-#endif
 #endif
 
 #define StandardDefines	-DCSRG_BASED
@@ -478,7 +482,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
 
-#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture)
+#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture)
 # include <xfree86.cf>
 #endif
 

@@ -833,10 +833,12 @@ static __inline__ unsigned long ldw_u(unsigned short * r11)
 #define write_mem_barrier()	/* NOP */
 #endif /* __arm32__ */
 
-#elif (defined(Lynx) || defined(linux) || defined(__OpenBSD__)) && defined(__powerpc__)
+#elif (defined(Lynx) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__)) && defined(__powerpc__)
 
+#ifndef __NetBSD__
 #ifndef MAP_FAILED
 #define MAP_FAILED ((void *)-1)
+#endif
 #endif
 
 extern volatile unsigned char *ioBase;
