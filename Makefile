@@ -1,6 +1,30 @@
-#	$NetBSD: Makefile,v 1.8 1999/09/27 08:56:05 fredb Exp $
+#	$NetBSD: Makefile,v 1.9 1999/12/28 19:51:54 fredb Exp $
 #
-# build and install xsrc
+# Targets & Variables
+#
+# build: Clean out xsrc, and build and install everything that goes
+#	under /usr/X11R6.
+#
+#  DESTDIR -- Set to an alternative directory to install under.
+#  UPDATE --  If set, don't make clean first, plus attempt to make
+#	only the targets that are out of date.
+#
+# release snapshot: Same as build, plus tar up the X sets and install
+#	them under the ${RELEASEDIR}/binary/sets directory.
+#
+#  DESTDIR -- Same as for build. Mandatory for building a release.
+#  RELEASEDIR -- As explained above.
+#  BUILD_DONE -- If set, assume build is already done.
+#  INSTALL_DONE -- If set, assume binaries to tar up are to be found
+#	in ${DESTDIR} already.
+#  BSDSRCDIR -- Set to the full path to the main source tree, /usr/src
+#	by default. Needed to find ./distrib/sets.
+#
+# cleandir distclean: Remove all generated files from under xsrc.
+#
+# clean: Remove object files, but keep imake generated makefiles.
+
+BSDSRCDIR?=	/usr/src
 
 all: all-xc all-contrib
 
@@ -44,3 +68,38 @@ build:
 .else
 	@${MAKE} cleandir all install
 .endif
+
+# release goo
+#
+.if !defined(DESTDIR)
+release snapshot:
+	@echo setenv DESTDIR before doing that!
+	@false
+.elif !defined(RELEASEDIR)
+release snapshot:
+	@echo setenv RELEASEDIR before doing that!
+	@false
+#
+.else
+#
+.if defined(INSTALL_DONE)
+release snapshot:
+.elif defined(BUILD_DONE)
+release snapshot: install
+.else
+release snapshot: build
+#
+.endif # INSTALL_DONE or BUILD_DONE
+#
+	${INSTALL} -d -m 755 -o root -g wheel ${RELEASEDIR}/binary/sets
+	sh ${BSDSRCDIR}/distrib/sets/maketars -x -s ../src/distrib/sets \
+		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
+	cd ${RELEASEDIR}/binary/sets && \
+		cksum -o 1 *.tgz >BSDSUM && \
+		cksum *.tgz >CKSUM && \
+		cksum -m *.tgz >MD5 && \
+		cksum -o 2 *.tgz >SYSVSUM
+#
+.endif # maketars exists and DESTDIR and RELEASEDIR check
+
+.include "/etc/mk.conf"
