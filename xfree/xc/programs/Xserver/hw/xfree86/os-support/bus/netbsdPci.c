@@ -12,9 +12,9 @@
 
 #include "Pci.h"
 
-CARD32 netbsdPciConfRead(PCITAG, int);
-void netbsdPciConfWrite(PCITAG, int, CARD32);
-void netbsdPciSetBits(PCITAG, int, CARD32, CARD32);
+static CARD32 netbsdPciConfRead(PCITAG, int);
+static void netbsdPciConfWrite(PCITAG, int, CARD32);
+static void netbsdPciSetBits(PCITAG, int, CARD32, CARD32);
 
 static int devpci = -1;
 
@@ -26,7 +26,7 @@ static pciBusFuncs_t netbsdFuncs0 = {
 /* pciAddrBusToHost */	pciAddrNOOP
 };
 
-pciBusInfo_t netbsdPci0 = {
+static pciBusInfo_t netbsdPci0 = {
 /* configMech  */	PCI_CFG_MECH_OTHER,
 /* numDevices  */	32,
 /* secondary   */	FALSE,
@@ -55,7 +55,7 @@ netbsdPciInit()
 	netbsdPci0.numDevices = pci_businfo.maxdevs;
 }
 
-CARD32
+static CARD32
 netbsdPciConfRead(PCITAG tag, int reg)
 {
 	struct pciio_bdf_cfgreg bdfr;
@@ -72,7 +72,7 @@ netbsdPciConfRead(PCITAG tag, int reg)
 	return (bdfr.cfgreg.val);
 }
 
-void
+static void
 netbsdPciConfWrite(PCITAG tag, int reg, CARD32 val)
 {
 	struct pciio_bdf_cfgreg bdfr;
@@ -88,7 +88,7 @@ netbsdPciConfWrite(PCITAG tag, int reg, CARD32 val)
 		    bdfr.bus, bdfr.device, bdfr.function);
 }
 
-void
+static void
 netbsdPciSetBits(PCITAG tag, int reg, CARD32 mask, CARD32 bits)
 {
 	CARD32 val;
