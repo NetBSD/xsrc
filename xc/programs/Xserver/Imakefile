@@ -430,10 +430,10 @@ MFBDIR  = mfb
 CFB8DIR = cfb
 CFB16DIR = cfb16
 CFB32DIR = cfb32
-DDXDIR1 = hw/macNetBSD
+DDXDIR1 = hw/netbsd/mac68k
 MACDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB16DIR) $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
-MACOBJS = hw/macNetBSD/macInit.o hw/macNetBSD/macEvent.o
-MACLIBS = hw/macNetBSD/libmac.a CFBLibs
+MACOBJS = hw/netbsd/mac68k/macInit.o hw/netbsd/mac68k/macEvent.o
+MACLIBS = hw/netbsd/mac68k/libmac.a CFBLibs
 MACSYSLIBS = $(CBRT) $(SYSLIBS)
 ServerTarget(Xmac68k,$(MACDIRS),$(MACOBJS),$(MACLIBS),$(MACSYSLIBS))
 #ifndef ServerToInstall
@@ -446,7 +446,7 @@ XCOMM
 XCOMM NetBSD/Amiga 24Bit server with Cybervision64/Cirrus 5426/RetinaZ3/ECS
 XCOMM and AGA-Support
 XCOMM
-DDXDIR1  = hw/amigaNetBSD
+DDXDIR1  = hw/netbsd/amiga
 MFBDIR   = mfb
 #if XamigaGfxCardSupport
 CFB8DIR  = cfb
