@@ -7,4 +7,4 @@
  * parentheses is my patch number (T.Dickey).
  */
 #define XTERM_PATCH   165
-#define XFREE86_VERSION "XFree86 4.2.0"
+#define XFREE86_VERSION "XFree86 4.2.1nb1"
