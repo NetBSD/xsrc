@@ -1,5 +1,5 @@
 /* $XConsortium: Xtranslcl.c /main/27 1996/09/28 16:50:14 rws $ */
-/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21 1996/12/23 06:04:16 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21.2.2 1997/07/19 04:59:17 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -81,13 +81,8 @@ from the X Consortium.
 #include <sys/signal.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#ifdef SCO325
-#include <sys/stream.h>
-#include <sys/ptms.h>
-#else
 #ifdef SVR4
 #include <sys/filio.h>
-#endif
 #endif
 #include <sys/stropts.h>
 #include <sys/wait.h>
@@ -606,7 +601,7 @@ int		*status;
 #endif /* TRANS_SERVER */
 
 
-#if defined(SVR4) && !defined(SCO325)
+#ifdef SVR4
 
 /* NAMED */
 
@@ -821,7 +816,7 @@ int		*status;
 
 #endif /* TRANS_SERVER */
 
-#endif /* SVR4  && !SCO325 */
+#endif /* SVR4 */
 
 
 
@@ -1673,7 +1668,7 @@ static LOCALtrans2dev LOCALtrans2devtab[] = {
 #endif /* TRANS_SERVER */
 },
 
-#if defined(SVR4) && !defined(SCO325)
+#ifdef SVR4
 {"named",
 #ifdef TRANS_CLIENT
      TRANS(NAMEDOpenClient),
@@ -1695,7 +1690,7 @@ static LOCALtrans2dev LOCALtrans2devtab[] = {
      TRANS(NAMEDAccept)
 #endif /* TRANS_SERVER */
 },
-#endif /* SVR4  && !SCO325 */
+#endif /* SVR4 */
 
 {"isc",
 #ifdef TRANS_CLIENT
@@ -2351,12 +2346,8 @@ BytesReadable_t *pend;
 {
     PRMSG(2,"LocalBytesReadable(%x->%d,%x)\n", ciptr, ciptr->fd, pend);
 
-#ifndef JKJ
-#if defined(SCO) || defined(sco) || defined(ISC)
+#if defined(ISC) || defined(SCO)
     return ioctl(ciptr->fd, I_NREAD, (char *)pend);
-#else
-    return ioctl(ciptr->fd, FIONREAD, (char *)pend);
-#endif
 #else
     return ioctl(ciptr->fd, FIONREAD, (char *)pend);
 #endif

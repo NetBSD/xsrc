@@ -1,4 +1,4 @@
-/* $XConsortium: spfile.c,v 1.12 94/04/17 20:17:47 gildea Exp $ */
+/* $TOG: spfile.c /main/13 1997/06/09 09:38:27 barstow $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -200,6 +200,8 @@ sp_open_master(filename, master)
 
     /* open font */
     spmf->fname = (char *) xalloc(strlen(filename) + 1);
+    if (!spmf->fname)
+	return AllocError;
     fp = fopen(filename, "r");
     if (!fp) {
 	ret = BadFontName;

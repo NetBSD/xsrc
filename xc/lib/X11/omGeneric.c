@@ -1,4 +1,4 @@
-/* $XConsortium: omGeneric.c /main/20 1996/12/05 10:40:40 swick $ */
+/* $TOG: omGeneric.c /main/22 1997/07/17 21:49:06 kaleb $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -31,7 +31,7 @@
  * Modifier: Takanori Tateno   FUJITSU LIMITED
  *
  */
-/* $XFree86: xc/lib/X11/omGeneric.c,v 3.5 1996/12/26 01:37:33 dawes Exp $ */
+/* $XFree86: xc/lib/X11/omGeneric.c,v 3.5.2.2 1997/07/19 04:59:11 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XomGeneric.h"
@@ -194,94 +194,6 @@ get_prop_name(dpy, fs)
 
     return (char *) NULL;
 }
-
-static FontData
-check_charset(font_set, font_name)
-    FontSet font_set;
-    char *font_name;
-{
-    FontData font_data;
-    char *last;
-    int count, length, name_len;
-
-    name_len = strlen(font_name);
-    last = font_name + name_len;
-
-    count = font_set->font_data_count;
-    font_data = font_set->font_data;
-    for ( ; count-- > 0; font_data++) {
-	length = strlen(font_data->name);
-	if (length > name_len)
-	    continue;
-	
-	if (_XlcCompareISOLatin1(last - length, font_data->name) == 0)
-	    return font_data;
-    }
-
-    return (FontData) NULL;
-}
-
-static int
-check_fontname(oc, name, found_num)
-    XOC oc;
-    char *name;
-    int found_num;
-{
-    Display *dpy = oc->core.om->core.display;
-    XOCGenericPart *gen = XOC_GENERIC(oc);
-    FontData data;
-    FontSet font_set;
-    XFontStruct *fs_list;
-    char **fn_list, *fname, *prop_fname = NULL;
-    int list_num, font_set_num, i;
-    int list2_num;
-    char **fn2_list = NULL;
-
-    fn_list = XListFonts(dpy, name, MAXFONTS, &list_num);
-    if (fn_list == NULL)
-	return found_num;
-
-    for (i = 0; i < list_num; i++) {
-	fname = fn_list[i];
-
-	font_set = gen->font_set;
-	font_set_num = gen->font_set_num;
-
-	for ( ; font_set_num-- > 0; font_set++) {
-	    if (font_set->font_name)
-		continue;
-
-	    if ((data = check_charset(font_set, fname)) == NULL) {
-		if ((fn2_list = XListFontsWithInfo(dpy, name, MAXFONTS,
-					      &list2_num, &fs_list))
-		    && (prop_fname = get_prop_name(dpy, fs_list))
-		    && (data = check_charset(font_set, prop_fname)))
-		    fname = prop_fname;
-	    }
-	    if (data) {
-		font_set->side = data->side;
-		font_set->font_name = (char *) Xmalloc(strlen(fname) + 1);
-		if (font_set->font_name) {
-		    strcpy(font_set->font_name, fname);
-		    found_num++;
-		}
-	    }
-	    if (fn2_list) {
-		XFreeFontInfo(fn2_list, fs_list, list2_num);
-		fn2_list = NULL;
-		if (prop_fname) {
-		    Xfree(prop_fname);
-		    prop_fname = NULL;
-		}
-	    }
-	    if (found_num == gen->font_set_num)
-		break;
-	}
-    }
-    XFreeFontNames(fn_list);
-    return found_num;
-}
-
 
 /* For VW/UDC start */
 
@@ -992,7 +904,7 @@ parse_vw(oc, font_set, name_list, count)
     return True;
 }
 
-/* static */ int
+static int
 parse_fontname(oc)
     XOC oc;
 {

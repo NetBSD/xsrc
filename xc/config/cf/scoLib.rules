@@ -1,4 +1,5 @@
 XCOMM $XConsortium: scoLib.rules /main/2 1996/09/28 16:12:20 rws $
+XCOMM $XFree86: xc/config/cf/scoLib.rules,v 1.1.1.2.2.2 1997/07/19 12:59:10 dawes Exp $
 
 /*
  * SharedLibraryTarget3 - generate rules to create a shared library;
@@ -13,7 +14,7 @@ AllTarget(Concat(lib,libname.so.rev))					@@\
 									@@\
 Concat(lib,libname.so.rev): solist1 solist2 solist3 $(EXTRALIBRARYDEPS)	@@\
 	$(RM) $@~							@@\
-	echo -n $(LD) -o up/$@~ $(SHLIBLDFLAGS) -h $@ solist1 " " > Concat(down/lib,cmd) 	@@\
+	echo -n $(LD) -o up/$@~ $(SHLIBLDFLAGS) -h $(DESTDIR)$(SHLIBDIR)/$@ solist1 " " > Concat(down/lib,cmd) 	@@\
 	echo -n solist2 " " >> Concat(down/lib,cmd)			@@\
 	echo -n solist3  >> Concat(down/lib,cmd)			@@\
 	(cd down; $(SHELL) Concat(./lib,cmd))				@@\

@@ -1,5 +1,4 @@
-/* $XConsortium: cout.c /main/4 1996/08/31 12:45:09 kaleb $ */
-/* $XFree86: xc/lib/xkbfile/cout.c,v 3.2 1996/12/23 06:04:00 dawes Exp $ */
+/* $TOG: cout.c /main/5 1997/06/10 06:53:31 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/lib/xkbfile/cout.c,v 3.2.2.1 1997/06/22 10:32:28 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -446,7 +446,7 @@ register unsigned i;
 	else fprintf(file,"{    0,    0 }");
     }
     fprintf(file,"\n};\n");
-    fprintf(file,"static unsigned char explicit[NUM_KEYS]= {\n");
+    fprintf(file,"static unsigned char explicit_parts[NUM_KEYS]= {\n");
     for (i=0;i<=xkb->max_key_code;i++) {
 	if (i==0)		fprintf(file,"    ");
 	else if ((i&0x7)==0)	fprintf(file,",\n    ");
@@ -469,7 +469,7 @@ register unsigned i;
     fprintf(file,"static XkbServerMapRec serverMap= {\n");
     fprintf(file,"    %d, %d, (XkbAction *)actionCache,\n",
 				xkb->server->num_acts,xkb->server->num_acts);
-    fprintf(file,"    behaviors, keyActions, explicit,\n");
+    fprintf(file,"    behaviors, keyActions, explicit_parts,\n");
     for (i=0;i<XkbNumVirtualMods;i++) {
 	if (i==0)	fprintf(file,"    { ");
 	else if (i==8)	fprintf(file,",\n      ");

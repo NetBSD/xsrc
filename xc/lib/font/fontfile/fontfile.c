@@ -1,5 +1,4 @@
-/* $XConsortium: fontfile.c,v 1.28 95/02/21 14:17:19 mor Exp $ */
-/* $XFree86: xc/lib/font/fontfile/fontfile.c,v 3.3 1996/02/09 08:19:39 dawes Exp $ */
+/* $TOG: fontfile.c /main/29 1997/05/23 16:36:56 barstow $ */
 
 /*
 
@@ -27,6 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/font/fontfile/fontfile.c,v 3.3.4.2 1997/07/05 15:55:36 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -90,12 +90,20 @@ FontFileResetFPE (fpe)
      * The reset must fail for bitmap fonts because they get cleared when
      * the path is set.
      */
-    if (FontFileDirectoryChanged (dir) || dir->nonScalable.used > 0)
+    if (FontFileDirectoryChanged (dir))
     {
 	/* can't do it, so tell the caller to close and re-open */
 	return FPEResetFailed;	
     }
-    return Successful;
+    else 
+    {
+	if (dir->nonScalable.used > 0)
+	    if (!FontFileRegisterBitmapSource (fpe))
+	    {
+	        return FPEResetFailed;	
+	    }
+        return Successful;
+    }
 }
 
 int

@@ -1,7 +1,7 @@
 XCOMM ---------------------------------------------------------------------
 XCOMM Imake rules for building libraries, programs, scripts, and data files
-XCOMM rules:  $TOG: Imake.rules /main/218 1997/02/13 13:54:11 kaleb $
-XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.2 1997/05/11 05:04:02 dawes Exp $
+XCOMM rules:  $TOG: Imake.rules /main/222 1997/07/17 20:04:40 kaleb $
+XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.5 1997/07/19 04:59:07 dawes Exp $
 
 /*
  *		   MACHINE-INDEPENDENT RULES; DO NOT MODIFY
@@ -139,6 +139,9 @@ XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.2 1997/05/11 05:04:02 
  * LinkSourceFile		(src,dir)
  * LinkFile			(tofile,fromfile)
  * MakeSubincludesForBuild	(step,dir,srclist)
+ * LangNamedTargetSubdirs	(lang,name,dirs,verb,flags,subname)
+ * LangNamedMakeSubdirs		(lang,name,dirs)
+ * LangMakeSubdirs		(lang,dirs)
  * NamedTargetSubdirs		(name,dirs,verb,flags,subname)
  * NamedMakeSubdirs		(name,dirs)
  * MakeSubdirs			(dirs)
@@ -286,14 +289,6 @@ XCOMM special target for clearmake					@@\
 #ifndef _UseCat
 # define _UseCat	_XUseCat
 #endif /* _UseCat */
-
-#ifndef _MUse
-#define _MUse(a,b) _Use(a,b)
-#endif
-
-#ifndef _MUseCat
-#define _MUseCat(a,b,c) _UseCat(a,b,c)
-#endif
 
 #ifndef ProgramTargetName
 #define ProgramTargetName(target)target
@@ -2234,6 +2229,40 @@ clean::									@@\
 
 
 /*
+ * LangNamedTargetSubdirs - recursively make a series of steps
+ */
+#ifndef LangNamedTargetSubdirs
+#define LangNamedTargetSubdirs(lang,name,dirs,verb,flags,subname)	@@\
+name::									@@\
+	@MakeFlagsToShellFlags(ik,set +e); \				@@\
+	for i in dirs ;\						@@\
+	do \								@@\
+		echo verb "in $(CURRENT_DIR)/$$i..."; \			@@\
+		(cd $$i && LANG=lang $(MAKE) $(MFLAGS) flags subname);\ @@\
+	done
+#endif
+
+
+/*
+ * NamedMakeSubdirs - generate rules to do makes in the given subdirectories.
+ * If you want CDEBUGFLAGS passed along to subdirectories, provide a line like
+ * the following in the appropriate Imakefile
+ * 
+ *         #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
+ */
+#ifndef LangNamedMakeSubdirs
+#define LangNamedMakeSubdirs(lang,name,dirs) \
+LangNamedTargetSubdirs(lang,name,dirs,"making" name,PassCDebugFlags,all)
+#endif /* LangNamedMakeSubdirs */
+
+#ifndef LangMakeSubdirs
+#define LangMakeSubdirs(lang,dirs)					@@\
+LangNamedMakeSubdirs(lang,all,dirs)
+#endif /* LangMakeSubdirs */
+
+
+
+/*
  * NamedTargetSubdirs - recursively make a series of steps
  */
 #ifndef NamedTargetSubdirs
@@ -2420,22 +2449,16 @@ target::								@@\
 		*) curdir=$(CURRENT_DIR)/ ;; \				@@\
 		esac; \							@@\
 		echo "making Makefiles in $$curdir$$i..."; \		@@\
-		itmp="$$i" \						@@\
+		itmp=`echo $$i | sed -e 's;^\./;;g' -e 's;/\./;/;g'`; \	@@\
 		curtmp="$(CURRENT_DIR)" \				@@\
 		toptmp=""; \						@@\
 		case "$$itmp" in \					@@\
 		    ../?*) \ 						@@\
-			while echo "$$itmp" | grep '^../' > /dev/null;\	@@\
+			while echo "$$itmp" | grep '^\.\./' > /dev/null;\	@@\
 			  do \						@@\
 			     toptmp="/`basename $$curtmp`$$toptmp"; \	@@\
 			     curtmp="`dirname $$curtmp`"; \		@@\
-			     itmp="`echo $$itmp | sed 's;../;;'`"; \	@@\
-			  done \					@@\
-		    ;; \						@@\
-		    ./?*) \						@@\
-			while echo "$$itmp" | grep '^./' > /dev/null;\	@@\
-			  do \						@@\
-			    itmp="`echo $$itmp | sed 's;./;;'`"; \	@@\
+			     itmp="`echo $$itmp | sed 's;\.\./;;'`"; \	@@\
 			  done \					@@\
 		    ;; \						@@\
 		esac; \							@@\
@@ -2517,10 +2540,14 @@ clean::									@@\
 #ifndef CppScriptTarget
 #if ExecableScripts		/* can use #! instead of colon */
 #define CppScriptTarget(dst,src,defs,deplist)				@@\
-	CppFileTarget(dst,src,defs,deplist)				@@\
+dst::	src deplist							@@\
+	RemoveFile($@)							@@\
+	ClearmakeOSName \
+	$(CPP) CppNoLineInfoOption defs <src | CppSedMagic >$@		@@\
+	chmod a+x $@							@@\
 									@@\
-dst::									@@\
-	chmod a+x $@
+clean::									@@\
+	RemoveFiles(dst)
 #else
 #define CppScriptTarget(dst,src,defs,deplist)				@@\
 dst::  src deplist							@@\

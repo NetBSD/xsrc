@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.10 1997/05/24 13:38:10 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.11 1997/06/22 10:32:22 dawes Exp $
 /******************************************************************************/
 /*
  * This file is to provide a quick method for most people to change the
@@ -55,12 +55,16 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.10 1997/05/24 13:38:10 dawes
  * For Linux, this should match the Binutils version you have.  This example
  * is for 2.6.0.7.  See linux.cf for the default setting.
  *
-#define BinUtilsMajorVersion	26
+ * This should automatically get set correctly by imake.
+ *
+#define LinuxBinUtilsMajorVersion	26
  */
 
 /*
  * For Linux, these should match the libc version you have.  This example
  * is for libc.5.4.x.  See linux.cf for the default setting.
+ *
+ * This should automatically get set correctly by imake.
  *
 #define LinuxCLibMajorVersion	5
 #define LinuxClibMinorVersion	4

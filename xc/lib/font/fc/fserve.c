@@ -1,4 +1,4 @@
-/* $TOG: fserve.c /main/47 1997/05/28 08:44:49 barstow $ */
+/* $TOG: fserve.c /main/49 1997/06/10 11:23:56 barstow $ */
 /*
 
 Copyright (c) 1990  X Consortium
@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
-/* $XFree86: xc/lib/font/fc/fserve.c,v 3.4.2.1 1997/05/29 14:00:58 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fserve.c,v 3.4.2.2 1997/06/11 12:08:41 dawes Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices
@@ -345,10 +345,8 @@ fs_close_conn(conn)
 
     /* XXX - hack.  The right fix is to remember that the font server
        has gone away when we first discovered it. */
-    if (!conn->trans_conn)
-	return;
-
-    (void) _FontTransClose (conn->trans_conn);
+    if (conn->trans_conn)
+        (void) _FontTransClose (conn->trans_conn);
 
     FD_CLR(conn->fs_fd, &_fs_fd_mask);
 
@@ -1262,7 +1260,8 @@ fs_wakeup(fpe, LastSelectMask)
 	/* find the matching block record */
 
 	for (br = (FSBlockDataPtr) conn->blocked_requests; br; br = br->next) {
-	    if (br->sequence_number == (rep.sequenceNumber - 1))
+	    if ((CARD16)(br->sequence_number & 0xffff) ==
+		(CARD16)(rep.sequenceNumber - 1))
 		break;
 	}
 	if (!br) {

@@ -1,4 +1,4 @@
-/* $XConsortium: XKBSetGeom.c /main/7 1996/10/22 14:24:13 kaleb $ */
+/* $TOG: XKBSetGeom.c /main/8 1997/06/10 06:53:24 kaleb $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -464,7 +464,7 @@ register int sz;
 
 /***====================================================================***/
 
-static Status 
+static Status
 #if NeedFunctionPrototypes
 _SendSetGeometry(Display *dpy,XkbGeometryPtr geom,xkbSetGeometryReq *req)
 #else
@@ -552,10 +552,10 @@ Status ret;
     req->nKeyAliases= geom->num_key_aliases;
     req->baseColorNdx= (geom->base_color-geom->colors);
     req->labelColorNdx= (geom->label_color-geom->colors);
-    if ((ret = _SendSetGeometry(dpy,geom,req)) != Success)
-	return ret;
+
+    ret = _SendSetGeometry(dpy,geom,req);
     UnlockDisplay(dpy);
     SyncHandle();
-    return Success;
+    return ret;
 }
 

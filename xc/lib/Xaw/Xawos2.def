@@ -1,5 +1,5 @@
 LIBRARY Xaw
-DESCRIPTION "X11R6 XFree86 3.3 libXaw.dll for OS/2 EMX09C VERSION=6.3"
+DESCRIPTION "$XFree86: xc/lib/Xaw/Xawos2.def,v 3.5.4.2 1997/07/19 04:59:13 dawes Exp $"
 CODE	
 	PRELOAD
 DATA	
@@ -185,6 +185,7 @@ EXPORTS
         _XawDefaultTextTranslations1 @ 184
         _XawDefaultTextTranslations2 @ 185
         _XawDefaultTextTranslations3 @ 186
-        vendorShellClassRec @ 187
-        vendorShellWidgetClass @ 188
+;        vendorShellClassRec @ 187
+	_XawVendorShellClassRec @ 187
+;        vendorShellWidgetClass @ 188
         _XawDefaultTextTranslations4 @ 189

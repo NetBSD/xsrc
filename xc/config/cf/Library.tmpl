@@ -14,8 +14,12 @@
  * Define LargePICTable YES if large (32-bit) PIC tables are needed.
  */
 
-XCOMM $XConsortium: Library.tmpl /main/42 1996/12/04 10:10:19 swick $
-XCOMM $XFree86: xc/config/cf/Library.tmpl,v 3.5 1996/12/23 05:50:08 dawes Exp $
+XCOMM $TOG: Library.tmpl /main/44 1997/04/28 11:47:53 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/config/cf/Library.tmpl,v 3.5.2.1 1997/06/11 12:08:29 dawes Exp $
 
 #ifndef LibraryCplusplusOptions
 # if DoSharedLib && defined(SharedLibraryCplusplusOptions)
@@ -149,7 +153,7 @@ LIB_MT_DEFINES = LibraryMTDefines
 #  define _SharedObjCplusplusCompile(options) NormalSharedLibObjCplusplusCompile(options)
 #else
 # define _SharedObjCompile(options) NormalLibObjCompile(options)
-# define _SharedObjCpluplusCompile(options) NormalLibObjCplusplusCompile(options)
+# define _SharedObjCplusplusCompile(options) NormalLibObjCplusplusCompile(options)
 #endif
 #endif
 
@@ -204,13 +208,12 @@ clean::									@@\
 
 #ifndef SpecialLibObjectRule
 # define SpecialLibObjectRule(objs,depends,options)			@@\
-_CompileObj(objs: depends,options)					@@\
-_CompileObjCplusplus(objs: depends,options)
+_CompileObj(objs: depends,options)
 #endif /* SpecialLibObjectRule */
 
 #ifndef SpecialCLibObjectRule
 # define SpecialCLibObjectRule(basename,depends,options)		@@\
-SpecialLibObjectRule(basename.Osuf,basename.SRCsuf depends,options)	@@\
+_CompileObj(basename.Osuf: basename.SRCsuf depends,options)		@@\
 									@@\
 basename.i: basename.SRCsuf depends					@@\
 	CPPOnlyCompile(basename.SRCsuf,options)				@@\
@@ -220,7 +223,7 @@ CenterLoadTarget(debug_src,basename.SRCsuf,NullParameter,$(ALLDEFINES) options)
 
 #ifndef SpecialCplusplusLibObjectRule
 # define SpecialCplusplusLibObjectRule(basename,depends,options)	@@\
-SpecialLibObjectRule(basename.Osuf,basename.SRCsuf depends,options)	@@\
+_CompileObjCplusplus(basename.Osuf: basename.SRCsuf depends,options)	@@\
 									@@\
 CenterLoadTarget(debug_src,basename.SRCsuf,NullParameter,$(ALLDEFINES) options)
 #endif /* SpecialCplusplusLibObjectRule */

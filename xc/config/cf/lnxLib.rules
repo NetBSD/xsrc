@@ -1,5 +1,5 @@
 XCOMM $XConsortium: lnxLib.rules /main/13 1996/09/28 16:11:01 rws $
-XCOMM $XFree86: xc/config/cf/lnxLib.rules,v 3.28.2.2 1997/05/24 08:35:53 dawes Exp $
+XCOMM $XFree86: xc/config/cf/lnxLib.rules,v 3.28.2.3 1997/06/22 10:32:20 dawes Exp $
 
 /*
  * Linux shared library rules (DLL & ELF versions)
@@ -62,9 +62,9 @@ XCOMM $XFree86: xc/config/cf/lnxLib.rules,v 3.28.2.2 1997/05/24 08:35:53 dawes E
 #define PositionIndependentCplusplusFlags -fPIC
 #endif
 #ifndef ExtraLoadFlags
-#if BinUtilsMajorVersion >= 26
+#if LinuxBinUtilsMajorVersion >= 26
 #ifdef UseInstalled
-#if BinUtilsMajorVersion < 27
+#if LinuxBinUtilsMajorVersion < 27
 #define ExtraLoadFlags -Wl,-rpath-link,$(USRLIBDIRPATH)
 #endif
 #else

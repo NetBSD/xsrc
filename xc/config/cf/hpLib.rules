@@ -32,7 +32,6 @@ XCOMM $XConsortium: hpLib.rules /main/16 1996/12/04 11:44:35 swick $
 # define InstLibFlags -m 0555
 #endif
 #ifndef UseInstalled
-#ifndef HasGcc2
 /* assert: LdPostLib pulls in -L$(USRLIBDIR), so it doesn't need to be here */
 # define ExtraLoadFlags -Wl,+s -Wl,+b$(USRLIBDIRPATH)
 #endif

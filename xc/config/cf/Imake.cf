@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imake.cf /main/26 1996/09/28 16:05:09 rws $
-XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34 1997/01/05 11:49:28 dawes Exp $
+XCOMM $TOG: Imake.cf /main/28 1997/06/25 08:31:36 barstow $
+XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.3 1997/07/27 02:41:02 dawes Exp $
 /*
  * To add support for another platform:
  * 
@@ -76,15 +76,43 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34 1997/01/05 11:49:28 dawes Exp $
 # endif
 # ifdef mips
 #   define MipsArchitecture
-#   define ArcArchitecture
+#   ifdef arc
+#     define ArcArchitecture
+#     undef arc
+#   endif
+#   ifdef pmax
+#     define PmaxArchitecture
+#     undef pmax
+#   endif
 #   undef mips
 # endif
 # ifdef __alpha__
 #   define AlphaArchitecture
 #   undef __alpha__
 # endif
-# ifdef mc68000
-#   define Mc68020Architecture
+# ifdef mc68020
+#  define Mc68020Architecture
+#  if defined(amiga)
+#   define AmigaArchitecture
+#   undef amiga
+#  endif
+#  if defined(hp300)
+#   define Hp300Architecture
+#   undef hp300
+#  endif
+#  if defined(mac68k)
+#    define Mac68kArchitecture
+#    undef mac68k
+#  endif
+#  if defined(mvme68k)
+#   define Mvme68kArchitecture
+#   undef mvme68k
+#  endif
+#  if defined(sun3) 
+#   define Sun3Architecture
+#   undef sun3
+#  endif
+#  undef mc68000
 # endif
 #endif /* OpenBSD */
 
@@ -194,8 +222,6 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34 1997/01/05 11:49:28 dawes Exp $
 # define SCOArchitecture
 # define i386SVR3Architecture
 # define SVR3Architecture
-# define i386SVR4Architecture
-# define SVR4Architecture
 # define i386ScoArchitecture
 # define i386Sco325Architecture
 #endif /* sco - SCO Open Server 5 */
@@ -562,6 +588,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34 1997/01/05 11:49:28 dawes Exp $
 # define FujitsuArchitecture
 # undef __uxp__
 # define UXPArchitecture
+# define SVR4Architecture
 # ifdef sparc
 #  undef sparc
 #  define SparcArchitecture

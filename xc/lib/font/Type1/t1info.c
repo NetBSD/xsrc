@@ -1,4 +1,4 @@
-/* $XConsortium: t1info.c,v 1.19 94/04/17 20:17:23 dpw Exp $ */
+/* $TOG: t1info.c /main/20 1997/06/09 11:21:53 barstow $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -128,8 +128,8 @@ static fontProp fontNamePropTable[] = {  /* Example: */
 static fontProp extraProps[] = {
     "FONT", 0, 0,
     "COPYRIGHT", 0, 0,
-    "RAW_PIXELSIZE", 0, 0,
-    "RAW_POINTSIZE", 0, 0,
+    "RAW_PIXEL_SIZE", 0, 0,
+    "RAW_POINT_SIZE", 0, 0,
     "RAW_ASCENT", 0, 0,
     "RAW_DESCENT", 0, 0,
     "RAW_AVERAGE_WIDTH", 0, 0,

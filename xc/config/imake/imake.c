@@ -1,5 +1,4 @@
-/* $XConsortium: imake.c /main/90 1996/11/13 14:43:23 lehors $ */
-/* $XFree86: xc/config/imake/imake.c,v 3.13.2.1 1997/05/11 05:04:06 dawes Exp $ */
+/* $TOG: imake.c /main/97 1997/06/20 20:23:51 kaleb $ */
 
 /***************************************************************************
  *                                                                         *
@@ -9,6 +8,7 @@
  * be passed to the template file.                                         *
  *                                                                         *
  ***************************************************************************/
+/* $XFree86: xc/config/imake/imake.c,v 3.13.2.8 1997/07/27 02:41:04 dawes Exp $ */
 
 /*
  * 
@@ -104,6 +104,9 @@ in this Software without prior written authorization from the X Consortium.
  *	- If DEFAULT_OS_TEENY_REV is defined, format the utsname struct
  *	  and call the result <defaultOsTeenyVersion>.  Add:
  *		#define DefaultOSTeenyVersion <defaultOsTeenyVersion>
+ *      - If DEFAULT_MACHINE_ARCITECTURE is defined, format the utsname struct
+ *        and define the corresponding macro. (For example on the amiga,
+ *        this will define amiga in addition to m68k).    
  *	- If the file "localdefines" is readable in the current
  *	  directory, print a warning message to stderr and add: 
  *		#define IMAKE_LOCAL_DEFINES	"localdefines"
@@ -142,6 +145,12 @@ in this Software without prior written authorization from the X Consortium.
  *	#include INCLUDE_IMAKEFILE
  *	<add any global targets like 'clean' and long dependencies>
  */
+#ifdef __FreeBSD__
+/* This needs to be before _POSIX_SOURCE gets defined */
+# include <sys/param.h>
+# include <sys/types.h>
+# include <sys/sysctl.h>
+#endif
 #include <stdio.h>
 #include "Xosdefs.h"
 #ifndef X_NOT_STDC_ENV
@@ -253,6 +262,14 @@ extern int	errno;
 #  define SYS_NMLN 257
 # endif
 #endif
+#ifdef linux
+#include <limits.h>
+#endif
+/* 
+ * is strstr() in <strings.h> on X_NOT_STDC_ENV? 
+ * are there any X_NOT_STDC_ENV machines left in the world?
+ */
+#include <string.h>
 #include "imakemdep.h"
 
 /*
@@ -806,13 +823,116 @@ parse_utsname(name, fmt, result, msg)
   *result = '\0';
   (void) sscanf(buf, fmt + arg + 1, result);
 }
+
+/* Trim leading 0's and periods from version names.  The 0's cause
+   the number to be interpreted as octal numbers.  Some version strings
+   have the potential for different numbers of .'s in them.
+ */
+	
+static char *
+trim_version(p)
+	char *p;
+{
+
+	if (p != 0 && *p != '\0')
+	{
+		while ((*p == '0' || *p == '.') && *(p + 1) != '\0')
+			++p;
+	}
+	return (p);
+}
+#endif
+
+#ifdef linux
+static void get_libc_version(inFile)
+  FILE* inFile;
+{
+  static char* libcso = "/usr/lib/libc.so";
+  struct stat sb;
+  char buf[PATH_MAX];
+  char* ptr;
+  int libcmajor, libcminor, libcteeny;
+
+  if (lstat (libcso, &sb) == 0) {
+    if (S_ISLNK (sb.st_mode)) {
+      if (readlink (libcso, buf, PATH_MAX) >= 0) {
+	for (ptr = buf; *ptr && !isdigit (*ptr); ptr++);
+	  (void) sscanf (ptr, "%d.%d.%d", &libcmajor, &libcminor, &libcteeny);
+	  fprintf(inFile, "#define DefaultLinuxCLibMajorVersion %d\n", libcmajor);    
+	  fprintf(inFile, "#define DefaultLinuxCLibMinorVersion %d\n", libcminor);    
+	  fprintf(inFile, "#define DefaultLinuxCLibTeenyVersion %d\n", libcteeny);    
+      }
+    }
+  }
+}
+
+static void get_ld_version(inFile)
+  FILE* inFile;
+{
+  FILE* ldprog = popen ("ld -v", "r");
+  char c;
+  int ldmajor, ldminor;
+
+  if (ldprog) {
+    do {
+      c = fgetc (ldprog);
+    } while (c != EOF && !isdigit (c));
+    ungetc (c, ldprog);
+    (void) fscanf (ldprog, "%d.%d", &ldmajor, &ldminor);
+    fprintf(inFile, "#define DefaultLinuxBinUtilsMajorVersion %d\n", 
+	    ldmajor * 10 + ldminor);    
+    pclose (ldprog);
+  }
+}
+#endif
+
+#ifndef PATH_MAX
+#define PATH_MAX 1024
+#endif
+
+#ifndef __EMX__
+static void get_gcc_incdir(inFile)
+  FILE* inFile;
+{
+  static char* gcc_path[] = {
+#if defined(linux) || defined(__OpenBSD__)
+    "/usr/bin/cc",	/* for Linux PostIncDir */
+#endif
+    "/usr/local/bin/gcc",
+    "/opt/gnu/bin/gcc"
+  };
+  struct stat sb;
+  int i;
+  FILE* gccproc;
+  char buf[PATH_MAX];
+  char cmd[PATH_MAX];
+  char* ptr;
+
+  buf[0] = '\0';
+  for (i = 0; i < sizeof gcc_path / sizeof gcc_path[0]; i++) {
+    if (lstat (gcc_path[i], &sb) == 0) {
+      strcpy (cmd, gcc_path[i]);
+      strcat (cmd, " --print-libgcc-file-name");
+      if ((gccproc = popen (cmd, "r")) != NULL) {
+	if (fgets (buf, PATH_MAX, gccproc) != NULL) {
+	  ptr = strstr (buf, "libgcc.a");
+	  if (ptr) strcpy (ptr, "include");
+	}
+	(void) pclose (gccproc);
+	break;
+      }
+    }
+  }
+  if (buf[0])
+    fprintf (inFile, "#define DefaultGccIncludeDir %s\n", buf);
+}
 #endif
 
 boolean
 define_os_defaults(inFile)
 	FILE	*inFile;
 {
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__EMX__)
 #if (defined(DEFAULT_OS_NAME) || defined(DEFAULT_OS_MAJOR_REV) || \
      defined(DEFAULT_OS_MINOR_REV) || defined(DEFAUL_OS_TEENY_REV))
 	struct utsname name;
@@ -838,7 +958,8 @@ define_os_defaults(inFile)
 #  ifdef DEFAULT_OS_MAJOR_REV_FROB
 	DEFAULT_OS_MAJOR_REV_FROB(buf, sizeof buf);
 #  endif
-	fprintf(inFile, "#define DefaultOSMajorVersion %s\n", *buf ? buf : "0");
+	fprintf(inFile, "#define DefaultOSMajorVersion %s\n",
+		*buf ? trim_version(buf) : "0");
 # endif
 
 # ifdef DEFAULT_OS_MINOR_REV
@@ -847,7 +968,8 @@ define_os_defaults(inFile)
 #  ifdef DEFAULT_OS_MINOR_REV_FROB
 	DEFAULT_OS_MINOR_REV_FROB(buf, sizeof buf);
 #  endif
-	fprintf(inFile, "#define DefaultOSMinorVersion %s\n", *buf ? buf : "0");
+	fprintf(inFile, "#define DefaultOSMinorVersion %s\n",
+		*buf ? trim_version(buf) : "0");
 # endif
 
 # ifdef DEFAULT_OS_TEENY_REV
@@ -856,9 +978,20 @@ define_os_defaults(inFile)
 #  ifdef DEFAULT_OS_TEENY_REV_FROB
 	DEFAULT_OS_TEENY_REV_FROB(buf, sizeof buf);
 #  endif
-	fprintf(inFile, "#define DefaultOSTeenyVersion %s\n", *buf ? buf : "0");
+	fprintf(inFile, "#define DefaultOSTeenyVersion %s\n",
+		*buf ? trim_version(buf) : "0");
+# endif
+# ifdef DEFAULT_MACHINE_ARCHITECTURE
+	parse_utsname(&name, DEFAULT_MACHINE_ARCHITECTURE, buf, 
+		      "Bad DEFAULT_MACHINE_ARCHITECTURE %s");
+	fprintf(inFile, "#ifndef %s\n# define %s\n#endif\n", buf, buf);
 # endif
 #endif
+#ifdef linux
+    get_libc_version (inFile);
+    get_ld_version(inFile);
+#endif
+    get_gcc_incdir(inFile);
 #endif /* WIN32 */
 	return FALSE;
 }
@@ -1139,7 +1272,7 @@ ReadLine(tmpfd, tmpfname)
 		initialized = TRUE;
 	    fprintf (tmpfd, "# Makefile generated by imake - do not edit!\n");
 	    fprintf (tmpfd, "# %s\n",
-		"$XConsortium: imake.c /main/90 1996/11/13 14:43:23 lehors $");
+		"$TOG: imake.c /main/97 1997/06/20 20:23:51 kaleb $");
 	}
 
 	for (p1 = pline; p1 < end; p1++) {

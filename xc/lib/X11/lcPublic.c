@@ -1,4 +1,4 @@
-/* $XConsortium: lcPublic.c /main/6 1996/01/05 11:22:44 kaleb $ */
+/* $TOG: lcPublic.c /main/8 1997/06/03 15:52:52 kaleb $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -188,7 +188,6 @@ initialize(lcd)
     XLCdPublicMethodsPart *methods = XLC_PUBLIC_METHODS(lcd);
     XLCdPublicMethodsPart *pub_methods = &publicMethods.pub;
     XLCdPublicPart *pub = XLC_PUBLIC_PART(lcd);
-    char lang[128], terr[128], code[128], *str;
     char *name;
 #if !defined(X_NOT_STDC_ENV) && !defined(X_LOCALE)
     char siname[256];
@@ -205,28 +204,8 @@ initialize(lcd)
     name = _XlcMapOSLocaleName(name, siname);
 #endif
 	
-    if (_XlcResolveLocaleName(name, NULL, lang, terr, code) == 0)
+    if (_XlcResolveLocaleName(name, pub) == 0)
 	return False;
-
-    str = (char*) Xmalloc(strlen(name) + strlen(lang) + strlen(terr) +
-			  strlen(code) + 4);
-    if (str == NULL)
-	return False;
-
-    strcpy(str, name);
-    pub->siname = str;
-    str += strlen(str) + 1;
-
-    strcpy(str, lang);
-    pub->language = str;
-    str += strlen(str) + 1;
-
-    strcpy(str, terr);
-    pub->territory = str;
-    str += strlen(str) + 1;
-
-    strcpy(str, code);
-    pub->codeset = str;
 
     if (pub->default_string == NULL)
 	pub->default_string = "";

@@ -2,7 +2,7 @@ XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.8 1997/05/25 05:06:25 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.9 1997/07/26 06:30:39 dawes Exp $
 
 
 #ifndef OSName
@@ -190,6 +190,8 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasZlib			  YES
 #endif
 #endif 
+
+#define	AdmDir			/var/log
 
 /*
  * Make & install Features

@@ -32,16 +32,12 @@ in this Software without prior written authorization from the X Consortium.
 
 
 
-/* $XFree86: xc/include/extensions/XShm.h,v 1.2 1997/01/05 11:50:42 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XShm.h,v 1.2.2.1 1997/08/04 02:10:32 dawes Exp $ */
 
 #ifndef _XSHM_H_
 #define _XSHM_H_
 
 #include <X11/Xfuncproto.h>
-
-#ifdef __EMX__
-#warning Xshm is not supported in XFree86/OS2 3.2
-#endif
 
 #define X_ShmQueryVersion		0
 #define X_ShmAttach			1
