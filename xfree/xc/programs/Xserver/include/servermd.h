@@ -122,7 +122,7 @@ SOFTWARE.
  *	Currently defined for SPARC.
  */
 
-#ifdef vax
+#if defined(vax) || defined(__vax__)
 
 #define IMAGE_BYTE_ORDER	LSBFirst        /* Values for the VAX only */
 #define BITMAP_BIT_ORDER	LSBFirst
