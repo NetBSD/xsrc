@@ -67,7 +67,7 @@ AuthCheckSitePolicy(data_lengthP, dataP, client, reason)
 
     sitePolicies = SecurityGetSitePolicyStrings(&nSitePolicies);
 
-    while (nPolicies) {
+    while (nPolicies > 0) {
 	int strLen, sitePolicy;
 
 	if (length == 0) {
