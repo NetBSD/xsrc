@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/1 1996/01/12 16:31:53 matt $
+XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:42:10 cpqbld Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags

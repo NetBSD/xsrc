@@ -1,4 +1,4 @@
-.\" $XConsortium: encoding_doc.ms,v 1.2 94/04/18 18:01:29 rws Exp $
+.\" $Xorg: encoding_doc.ms,v 1.3 2000/08/17 19:42:11 cpqbld Exp $
 .\"
 .\"
 .\"  This macro puts the section numbers, labels, and page numbers out
