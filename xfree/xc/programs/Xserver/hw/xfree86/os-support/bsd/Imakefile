@@ -29,7 +29,7 @@ SHARED_CFLAGS = PositionIndependentCFlags
   IOPERMDEFINES = -DUSE_ALPHA_PIO
 # elif defined(ArcArchitecture)
   IOPERMDEFINES = -DUSE_ARC_MMAP
-# elif defined(Arm32Architecture)
+# elif defined(ArmArchitecture) || defined(CatsArchitecture)
   IOPERMDEFINES = -DUSE_ARM32_MMAP
 # elif defined(PpcArchitecture) || \
 	defined(Sparc64Architecture)
@@ -148,7 +148,7 @@ VIDEO_OBJ = alpha_video.o
 #elif defined(PpcArchitecture)
 VIDEO_SRC = ppc_video.c
 VIDEO_OBJ = ppc_video.o
-#elif defined(Arm32Architecture)
+#elif defined(ArmArchitecture) || defined(CatsArchitecture)
 VIDEO_SRC = arm_video.c
 VIDEO_OBJ = arm_video.o
 #elif defined(Sparc64Architecture)
