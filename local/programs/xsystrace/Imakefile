@@ -1,0 +1,20 @@
+XCOMM $OpenBSD: Imakefile,v 1.4 2002/06/06 16:17:09 todd Exp $
+
+PIXMAPS= pixmaps/deny-always.xpm \
+	pixmaps/deny.xpm \
+	pixmaps/logo.xpm \
+	pixmaps/permit-always.xpm \
+	pixmaps/permit.xpm \
+	pixmaps/skull.xpm
+
+        DEPLIBS = XawClientDepLibs XkbClientDepLibs
+LOCAL_LIBRARIES = XawClientLibs XkbClientLibs
+           SRCS = callbacks.c interface.c main.c
+           OBJS = callbacks.o interface.o main.o
+        HEADERS = callbacks.h interface.h
+        DEFINES = XkbClientDefines
+
+ComplexProgramTarget(xsystrace)
+InstallAppDefaults(Xsystrace)
+InstallMultipleFlags($(PIXMAPS),$(INCDIR)/X11/pixmaps,$(INSTINCFLAGS))
+

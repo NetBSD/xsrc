@@ -1,4 +1,4 @@
-XCOMM $NetBSD: Imakefile,v 1.3 2002/04/08 12:23:47 tron Exp $
+XCOMM $NetBSD: Imakefile,v 1.4 2002/06/17 16:35:16 christos Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
@@ -11,7 +11,7 @@ XCOMM $NetBSD: Imakefile,v 1.3 2002/04/08 12:23:47 tron Exp $
         FTSRCDIR = xftlsfonts
 #endif
 
-SUBDIRS = x11-ssh-askpass $(FTSRCDIR)
+SUBDIRS = x11-ssh-askpass $(FTSRCDIR) xsystrace
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
