@@ -1,4 +1,4 @@
-XCOMM $NetBSD: Imakefile,v 1.5 2002/06/18 09:04:00 tron Exp $
+XCOMM $NetBSD: Imakefile,v 1.6 2003/02/28 23:00:30 tron Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
@@ -7,9 +7,9 @@ XCOMM $NetBSD: Imakefile,v 1.5 2002/06/18 09:04:00 tron Exp $
 #define UseFreetype2	NO
 #endif
 
-#if UseFreetype2
-        FTSRCDIR = xftlsfonts
-#endif
+XCOMM #if UseFreetype2
+XCOMM        FTSRCDIR = xftlsfonts
+XCOMM #endif
 
 #if defined(NetBSDArchitecture) && \
     ((OSMajorVersion > 1) || \
