@@ -28,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: contrib/programs/xditview/Dvi.c,v 1.1.1.1.2.2 1997/05/17 13:49:14 dawes Exp $ */
 
 
 /*
@@ -391,12 +392,20 @@ static void OpenFile (dw)
 	DviWidget	dw;
 {
     char	tmpName[sizeof ("/tmp/dviXXXXXX")];
+#ifdef HAS_MKSTEMP
+    int fd;
+#endif
 
     dw->dvi.tmpFile = 0;
     if (!dw->dvi.seek) {
 	strcpy (tmpName, "/tmp/dviXXXXXX");
+#ifndef HAS_MKSTEMP
 	mktemp (tmpName);
 	dw->dvi.tmpFile = fopen (tmpName, "w+");
+#else
+	fd = mkstemp(tmpName);
+	dw->dvi.tmpFile = fdopen(fd, "w+");
+#endif
 	unlink (tmpName);
     }
     if (dw->dvi.requested_page < 1)
