@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.105 2003/03/02 16:06:49 tron Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.106 2003/06/24 18:50:51 tshiozak Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -136,6 +136,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define LibraryMTDefines	-DUSE_NBSD_THREADLIB
 # define SystemMTDefines	-D_REENTRANT
 # define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXNO_MTSAFE_PWDAPI
+# define SharedThreadReqs	/**/
 #else
 # define ThreadedX		NO
 #endif
