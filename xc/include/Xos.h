@@ -1,6 +1,6 @@
 /*
  * $XConsortium: Xos.h /main/70 1996/11/15 16:00:41 kaleb $
- * $XFree86: xc/include/Xos.h,v 3.21.2.5 1999/08/17 07:39:18 hohndel Exp $
+ * $XFree86: xc/include/Xos.h,v 3.21.2.6 2001/02/28 20:24:22 dawes Exp $
  * 
  * 
 Copyright (c) 1987  X Consortium
@@ -156,7 +156,7 @@ extern int sys_nerr;
 #endif /* CSRG_BASED */
 
 /*
- * Get struct timeval
+ * Get struct timeval and struct tm
  */
 
 #ifdef SYSV
@@ -236,6 +236,7 @@ struct timeval {
 #else
 #ifndef Lynx
 #include <sys/time.h>
+#include <time.h>
 #else
 #include <time.h>
 #endif /* Lynx */

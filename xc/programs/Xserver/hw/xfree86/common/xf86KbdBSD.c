@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdBSD.c,v 3.10 1996/12/23 06:43:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86KbdBSD.c,v 3.10.2.1 2001/02/04 21:41:28 herrb Exp $ */
 /*
  * Derived from xf86Kbd.c by S_ren Schmidt (sos@login.dkuug.dk)
  * which is Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -453,7 +453,7 @@ xf86KbdGetMapping (pKeySyms, pModMap)
   break;
 #endif
 
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
+#if (defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)) && defined(GIO_KEYMAP)
   case SYSCONS:
   case PCVT:
     {
@@ -480,7 +480,7 @@ xf86KbdGetMapping (pKeySyms, pModMap)
       }
     }
     break;
-#endif /* SYSCONS || PCVT */
+#endif /* (SYSCONS || PCVT) && GIO_KEYMAP */
     
 #ifdef CODRV_SUPPORT
   case CODRV011:
@@ -522,6 +522,11 @@ xf86KbdGetMapping (pKeySyms, pModMap)
     }
     break;
 #endif /* CODRV */
+#ifdef WSCONS_SUPPORT
+  case WSCONS:
+    /* XXX need to fill this */
+    break;
+#endif /* WSCONS */
   } 
 #endif /* !bsdi */
 

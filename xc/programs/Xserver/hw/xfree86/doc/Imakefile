@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/33 1996/10/28 05:12:24 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.44.2.15 1999/11/21 19:29:18 robin Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.44.2.16 2000/02/24 20:49:31 dawes Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -39,7 +39,7 @@ OSREADME = README.OpenBSD
 OSREADME = /* README.Mach */
 #endif
 #ifdef DguxArchitecture
-OSREADME = README.DGux
+OSREADME = README.DGUX
 #endif
 #ifdef LinuxArchitecture
 OSREADME = README.Linux

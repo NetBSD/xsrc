@@ -29,7 +29,7 @@ from the X Consortium.
 
 */
 
-/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9.2.3 1999/07/29 09:22:30 hohndel Exp $ */
+/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9.2.5 2001/02/08 21:11:24 herrb Exp $ */
 
 /*
  *	XlibInt.c - Internal support routines for the C subroutine
@@ -37,6 +37,8 @@ from the X Consortium.
  */
 #define NEED_EVENTS
 #define NEED_REPLIES
+
+#define GENERIC_LENGTH_LIMIT (1 << 29)
 
 #include "Xlibint.h"
 #include <X11/Xpoll.h>
@@ -597,7 +599,10 @@ static void _XFlushInt (dpy, cv)
 	register char *bufindex;
 	_XExtension *ext;
 
-	if (dpy->flags & XlibDisplayIOError) return;
+       if (dpy->flags & XlibDisplayIOError) {
+            dpy->bufptr = dpy->buffer;  /* reset to avoid buffer overflows */
+            return;
+       }
 #ifdef XTHREADS
 	while (dpy->flags & XlibDisplayWriting) {
 	    ConditionWait(dpy, dpy->lock->writers);
@@ -1689,6 +1694,17 @@ _XReply (dpy, rep, extra, discard)
 			!= (char *)rep)
 			continue;
 		}
+                /*
+                 * Don't accept ridiculously large values for
+                 * generic.length; doing so could cause stack-scribbling
+                 * problems elsewhere.
+                 */
+                if (rep->generic.length > GENERIC_LENGTH_LIMIT) {
+                    rep->generic.length = GENERIC_LENGTH_LIMIT;
+                    (void) fprintf(stderr,
+                                   "Xlib: suspiciously long reply length %d set to %d",
+                                   rep->generic.length, GENERIC_LENGTH_LIMIT);
+		}
 		if (extra <= rep->generic.length) {
 		    if (extra > 0)
 			/* 
@@ -1827,6 +1843,13 @@ _XAsyncReply(dpy, rep, buf, lenp, discard)
 #endif
 	if (len > *lenp)
 	    _XEatData(dpy, len - *lenp);
+    }
+    if (len < SIZEOF(xReply))
+    {
+	_XIOError (dpy);
+	buf += *lenp;
+	*lenp = 0;
+	return buf;
     }
     if (len >= *lenp) {
 	buf += *lenp;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_386BSD.c,v 3.10.2.4 1999/07/30 11:21:15 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_386BSD.c,v 3.10.2.5 2001/02/04 19:50:43 herrb Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Dawes <dawes@xfree86.org>
  *
@@ -73,7 +73,10 @@
     /* This header is part of codrv */
 #   include <machine/ioctl_pc.h>
 #  endif
-#  if defined(PCVT_SUPPORT) && !defined(SYSCONS_SUPPORT)
+#  if defined(WSCONS_SUPPORT)
+#   include <dev/wscons/wsdisplay_usl_io.h>
+#  endif
+#  if defined(PCVT_SUPPORT) && !defined(SYSCONS_SUPPORT) && !defined(WSCONS_SUPPORT)
 #   include <machine/pcvt_ioctl.h>
 #  endif
 #  ifdef SYSCONS_SUPPORT

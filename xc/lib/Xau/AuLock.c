@@ -1,5 +1,5 @@
 /* $XConsortium: AuLock.c,v 1.15 94/04/17 20:15:43 rws Exp $ */
-/* $XFree86: xc/lib/Xau/AuLock.c,v 3.0 1994/10/20 06:04:31 dawes Exp $ */
+/* $XFree86: xc/lib/Xau/AuLock.c,v 3.0.8.2 2001/02/08 21:05:55 herrb Exp $ */
 
 /*
 
@@ -94,7 +94,9 @@ long	dead;
     
     while (retries > 0) {
 	if (creat_fd == -1) {
-	    creat_fd = creat (creat_name, 0666);
+	    /* use open with O_EXCL instead of creat to avoid race */
+	    creat_fd = open (creat_name, O_WRONLY | O_CREAT | O_EXCL, 
+			     S_IRUSR | S_IWUSR );
 	    if (creat_fd == -1) {
 		if (errno != EACCES)
 		    return LOCK_ERROR;

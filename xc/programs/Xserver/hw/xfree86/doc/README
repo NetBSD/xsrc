@@ -2,7 +2,7 @@
 
                           The XFree86 Project, Inc
 
-                               13 October 1999
+                               31 December 1999
 
                                   Abstract
 
@@ -877,7 +877,7 @@ Team.  At this time the Core Team consists of (in chronoligical order):
 
    o Preston Brown <pbrown@redhat.com>
 
-   o Marc Aurele La France <tsi@ualberta.cait>
+   o Marc Aurele La France <tsi@ualberta.ca>
 
    o Kevin E. Martin <kevin@precisioninsight.com>
 
@@ -1128,8 +1128,6 @@ and the following mirror sites:
 
    o North America:
 
-        o ftp://ftp2.XFree86.org/pub/XFree86 (source and binaries)
-
         o ftp://ftp.infomagic.com/pub/mirrors/XFree86-current (source and
           binaries)
 
@@ -1187,9 +1185,9 @@ Ensure that you are getting XFree86 3.3.6 - some of these sites may archive
 older releases as well.  Check the RELNOTES to find which files you need to
 take from the archive.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.57 1999/10/13 21:46:26 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.60 2000/03/22 03:16:23 tsi Exp $
 
      $XConsortium: README.sgml /main/31 1996/10/28 05:43:24 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.76.2.52 1999/10/13 21:48:10 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.76.2.55 2000/03/22 03:22:40 tsi Exp $

@@ -1,5 +1,5 @@
 XCOMM platform:  $TOG: linux.cf /main/36 1997/06/16 22:21:03 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.19 1999/09/04 09:12:27 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.20 2000/02/11 21:36:12 dawes Exp $
 
 #ifndef LinuxElfDefault
 #define LinuxElfDefault		YES
@@ -138,8 +138,8 @@ XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 #define HasSnprintf		YES
 #define HasMkstemp		YES
 #endif
-#ifndef HasPam
-#define HasPam			NO
+#if HasPam
+#define PamLibrary		-lpam -lpam_misc -ldl
 #endif
 
 #define AvoidNullMakeCommand	YES

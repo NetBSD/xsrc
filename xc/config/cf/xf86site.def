@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.36 1999/12/28 12:13:34 hohndel Exp $
+XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.37 2001/02/26 18:28:18 dawes Exp $
 /******************************************************************************/
 /*
  * This file is to provide a quick method for most people to change the
@@ -606,9 +606,4 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.36 1999/12/28 12:13:34 hohnd
 #define DontDefineXF86Contrib
  */
 
-/*
- * By default, gccmakedep uses mktemp for security reasons.
- * Uncomment this, if your system lacks mktemp.
- *
-#define HasMktemp		NO
- */
+
