@@ -100,11 +100,6 @@ pointer alphaMemoryMap (len, off, fd)
     mapsize = ((int) len + pagemask) & ~pagemask;
     addr = 0;
 
-#ifndef MAP_FILE
-#define	MAP_FILE	0
-#endif
-
-#ifndef __NetBSD__
     /* 
      * try and make it private first, that way once we get it, an
      * interloper, e.g. another server, can't get this frame buffer,
@@ -112,12 +107,11 @@ pointer alphaMemoryMap (len, off, fd)
      */
     if ((long)(mapaddr = (pointer) mmap (addr,
 		mapsize,
-		PROT_READ | PROT_WRITE, MAP_FILE | MAP_PRIVATE,
+		PROT_READ | PROT_WRITE, MAP_PRIVATE,
 		fd, off)) == -1)
-#endif
 	mapaddr = (pointer) mmap (addr,
 		    mapsize,
-		    PROT_READ | PROT_WRITE, MAP_FILE | MAP_SHARED,
+		    PROT_READ | PROT_WRITE, MAP_SHARED,
 		    fd, off);
     if (mapaddr == (pointer) -1) {
 	Error ("mapping frame buffer memory");
@@ -171,7 +165,7 @@ Bool alphaSaveScreen (pScreen, on)
 	    state = 0;
 	else
 	    state = 1;
-	(void) ioctl(alphaFbs[pScreen->myNum].fd, WSDISPLAYIO_SVIDEO, &state);
+	(void) ioctl(alphaFbs[pScreen->myNum].fd, FBIOSVIDEO, &state);
     }
     return( TRUE );
 }
@@ -285,3 +279,4 @@ fprintf(stderr, "in alphaInitCommon\n");
     (void) (*save) (pScrn, SCREEN_SAVER_OFF);
     return (*cr_cm)(pScrn);
 }
+
