@@ -376,7 +376,7 @@ install.man::                                                           @@\
 	fi								@@\
 									@@\
 clean::									@@\
-	$(RM) file.o
+	$(RM) file.0
 
 #define InstallGenManPageLong(file,destdir,dest,suffix)			@@\
 	InstallManPageLong(file,destdir,dest)
