@@ -103,10 +103,14 @@ void DRM(dma_takedown)(drm_device_t *dev)
 		}
 	}
 
-	DRM(free)(dma->buflist, dma->buf_count * sizeof(*dma->buflist),
-	    DRM_MEM_BUFS);
-	DRM(free)(dma->pagelist, dma->page_count * sizeof(*dma->pagelist),
-	    DRM_MEM_PAGES);
+	if (dma->buflist != NULL)
+		DRM(free)(dma->buflist,
+		    dma->buf_count * sizeof(*dma->buflist), DRM_MEM_BUFS);
+
+	if (dma->pagelist != NULL)
+		DRM(free)(dma->pagelist,
+		    dma->page_count * sizeof(*dma->pagelist), DRM_MEM_PAGES);
+
 	DRM(free)(dev->dma, sizeof(*dev->dma), DRM_MEM_DRIVER);
 	dev->dma = NULL;
 	DRM_SPINUNINIT(dev->dma_lock);
