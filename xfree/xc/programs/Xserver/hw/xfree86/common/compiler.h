@@ -1339,7 +1339,7 @@ inl(unsigned short port)
 #    define write_mem_barrier()   /* NOP */
 
 #    if !defined(__SUNPRO_C)
-#    if !defined(FAKEIT) && !defined(__mc68000__) && !defined(__mc68020__) && !defined(__arm__) && !defined(__sh__) && !defined(__hppa__)
+#    if !defined(FAKEIT) && !defined(__mc68000__) && !defined(__arm__) && !defined(__sh__) && !defined(__hppa__)
 #     ifdef GCCUSESGAS
 
 /*
@@ -1448,7 +1448,7 @@ inl(unsigned short port)
 
 #     endif /* GCCUSESGAS */
 
-#    else /* !defined(FAKEIT) && !defined(__mc68000__) && !defined(__mc68020__)  && !defined(__arm__) && !defined(__sh__) && !defined(__hppa__)*/
+#    else /* !defined(FAKEIT) && !defined(__mc68000__)  && !defined(__arm__) && !defined(__sh__) && !defined(__hppa__)*/
 
 static __inline__ void
 outb(unsigned short port, unsigned char val)
