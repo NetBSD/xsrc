@@ -31,7 +31,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fc/fslibos.h,v 3.7 2002/05/31 18:45:49 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fslibos.h,v 3.7.2.2 2003/09/01 21:05:37 herrb Exp $ */
 
 /*
  * FSlib networking & os include file
@@ -56,11 +56,11 @@ from The Open Group.
 #  undef _POSIX_SOURCE
 # endif
 #endif
-#ifndef SIZE_T_MAX
+#ifndef SIZE_MAX
 # ifdef ULONG_MAX
-#  define SIZE_T_MAX ULONG_MAX
+#  define SIZE_MAX ULONG_MAX
 # else
-#  define SIZE_T_MAX UINT_MAX
+#  define SIZE_MAX UINT_MAX
 # endif
 #endif
 #ifndef OPEN_MAX
