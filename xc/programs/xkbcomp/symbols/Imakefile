@@ -7,7 +7,7 @@ XCOMM $XFree86: xc/programs/xkbcomp/symbols/Imakefile,v 3.9.2.3 1997/07/05 15:55
 		 es fi fr fr_CH \
 		 gb group hu iso9995-3 it jp keypad lock no pc104 pl pt ru se \
 		 th us
-       SUBDIRS = digital fujitsu nec sgi sony sun
+       SUBDIRS = digital fujitsu nec sgi sony sun sharp
 
 MakeXkbDir($(LIBDIR)/xkb,symbols)
 InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/symbols)
