@@ -25,7 +25,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/programs/xterm/xterm.man,v 3.25 1998/04/05 02:29:21 dawes Exp $
+.\" $XFree86: xc/programs/xterm/xterm.man,v 3.30 1998/07/04 14:48:34 robin Exp $
 .\"
 .\" updated by Thomas Dickey <dickey@clark.net> for XFree86, July 1996.
 .TH XTERM 1 "Release 6.3" "X Version 11"
@@ -957,12 +957,18 @@ Specifies the maximum time in milliseconds between multi-click select
 events.  The default is 250 milliseconds.
 .TP 8
 .B "multiScroll (\fPclass\fB MultiScroll)"
-Specifies whether or not scrolling should be done asynchronously.  The default
-is ``false.''
+Specifies whether or not scrolling should be done asynchronously.
+The default is ``false.''
 .TP 8
 .B "nMarginBell (\fPclass\fB Column)"
 Specifies the number of characters from the right margin at which the margin
 bell should be rung, when enabled.
+.TP 8
+.B "oldXtermFKeys (\fPclass\fB OldXtermFKeys)"
+If true, xterm will use old-style control sequences for function keys F1 to F4,
+for compatibility with X Consortium xterm.  Otherwise, it uses the VT100-style
+codes for PF1 to PF4.
+The default is ``false.''
 .TP 8
 .B "pointerColor (\fPclass\fB Foreground)"
 Specifies the foreground color of the pointer.  The default is 
@@ -983,7 +989,19 @@ A ``0'' disables the attributes.
 A ``1'' prints the normal set of attributes (bold, underline, inverse and blink)
 as VT100-style control sequences.
 A ``2'' prints ANSI color attributes as well.
-The default is ``0.''
+The default is ``1.''
+.TP 8
+.B "printerAutoClose (\fPclass\fB PrinterAutoClose)"
+If true, xterm will close the printer (a pipe) when the application switches
+the printer offline with a Media Copy command.
+The default is ``false.''
+.TP 8
+.B "printerCommand (\fPclass\fB PrinterCommand)"
+Specifies a shell command to which
+.I xterm
+will open a pipe when the first
+MC (Media Copy) command is initiated.
+The default is ``lpr.''
 .TP 8
 .B "printerControlMode (\fPclass\fB PrinterControlMode)"
 Specifies the printer control mode.
@@ -995,13 +1013,6 @@ autowrap occurs.
 Autoprint mode is overridden by printer controller mode (a ``2''),
 which causes all of the output to be directed to the printer.
 The default is ``0.''
-.TP 8
-.B "printerCommand (\fPclass\fB PrinterCommand)"
-Specifies a shell command to which
-.I xterm
-will open a pipe when the first
-MC (Media Copy) command is initiated.
-The default is ``lpr.''
 .TP 8
 .B "printerExtent (\fPclass\fB PrinterExtent)"
 Controls whether a print page function will print the entire page (true), or

@@ -64,7 +64,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/xterm/main.c,v 3.68 1998/04/05 00:46:10 robin Exp $ */
+/* $XFree86: xc/programs/xterm/main.c,v 3.73 1998/07/04 14:48:27 robin Exp $ */
 
 
 /* main.c */
@@ -169,6 +169,10 @@ static Bool IsPts = False;
 #define KANJI
 #endif
 
+#ifdef TIOCSLTC
+#define HAS_LTCHARS
+#endif
+
 #ifdef linux
 #define USE_TERMIOS
 #define USE_SYSV_PGRP
@@ -177,11 +181,20 @@ static Bool IsPts = False;
 #define HAS_UTMP_UT_HOST
 #define LASTLOG
 #define WTMP
+#undef  HAS_LTCHARS
+#endif
+
+#ifdef __CYGWIN32__
+#define SYSV
+#define SVR4
+#define LASTLOG
+#define WTMP
+#define ATT
 #endif
 
 #ifdef Lynx
 #define USE_SYSV_TERMIO
-#undef  TIOCSLTC
+#undef  HAS_LTCHARS
 #include <termio.h>
 #endif
 
@@ -193,7 +206,10 @@ static Bool IsPts = False;
 #define _SVID3
 #endif
 
+#ifndef __CYGWIN32__
 #include <sys/ioctl.h>
+#endif
+
 #include <sys/stat.h>
 
 #ifdef Lynx
@@ -235,7 +251,7 @@ static Bool IsPts = False;
 #endif /* USE_POSIX_TERMIOS */
 
 #ifdef SVR4
-#undef TIOCSLTC				/* defined, but not useable */
+#undef HAS_LTCHARS			/* defined, but not useable */
 #endif
 #define USE_TERMCAP_ENVVARS	/* every one uses this except SYSV maybe */
 
@@ -255,7 +271,7 @@ static Bool IsPts = False;
 #define USE_SYSV_TERMIO
 #define USE_SYSV_SIGNALS
 #define	USE_SYSV_PGRP
-#ifndef TIOCSWINSZ
+#if !defined(TIOCSWINSZ)
 #define USE_SYSV_ENVVARS		/* COLUMNS/LINES vs. TERMCAP */
 #endif
 /*
@@ -283,13 +299,13 @@ static Bool IsPts = False;
 #define USE_POSIX_WAIT
 #define HAS_UTMP_UT_HOST
 #endif /* SCO */
-#ifdef hpux
+#ifdef __hpux
 #define HAS_BSD_GROUPS
 #define USE_SYSV_UTMP
 #define HAS_UTMP_UT_HOST
 #define USE_POSIX_WAIT
 #include <sys/ptyio.h>
-#endif /* hpux */
+#endif /* __hpux */
 #ifdef __sgi
 #define HAS_BSD_GROUPS
 #include <sys/sysmacros.h>
@@ -355,9 +371,9 @@ extern time_t time ();
 #include <time.h>
 #endif
 
-#ifdef hpux
+#ifdef __hpux
 #include <sys/utsname.h>
-#endif /* hpux */
+#endif /* __hpux */
 
 #if defined(apollo) && OSMAJORVERSION == 10 && OSMINORVERSION < 4
 #define ttyslot() 1
@@ -367,7 +383,7 @@ extern time_t time ();
 #include <sys/filio.h>
 #endif
 
-#if defined(SVR4) || defined(SCO325)
+#if (defined(SVR4) || defined(SCO325)) && !defined(__CYGWIN32__)
 #include <utmpx.h>
 #define setutent setutxent
 #define getutent getutxent
@@ -451,7 +467,7 @@ int	Ptyfd;
 
 #ifdef SIGTSTP
 #include <sys/wait.h>
-#ifdef hpux
+#ifdef __hpux
 #include <sys/bsdtty.h>
 #endif
 #endif
@@ -472,25 +488,21 @@ extern char *ptsname();
 
 int switchfb[] = {0, 2, 1, 3};
 
-extern int tgetent PROTO((char *ptr, char *name));
+extern int tgetent (char *ptr, char *name);
 
-static SIGNAL_T reapchild PROTO((int n));
-static char *base_name PROTO((char *name));
-static int pty_search PROTO((int *pty));
-static int remove_termcap_entry PROTO((char *buf, char *str));
-static int spawn PROTO((void));
-static void DeleteWindow PROTO_XT_ACTIONS_ARGS;
-static void Help PROTO((void));
-static void HsSysError PROTO((int pf, int error));
-static void KeyboardMapping PROTO_XT_ACTIONS_ARGS;
-static void Syntax PROTO((char *badOption));
-static void Version PROTO((void));
-static void get_terminal PROTO((void));
-static void resize PROTO((TScreen *s, char *oldtc, char *newtc));
+static SIGNAL_T reapchild (int n);
+static char *base_name (char *name);
+static int pty_search (int *pty);
+static int remove_termcap_entry (char *buf, char *str);
+static int spawn (void);
+static void get_terminal (void);
+static void resize (TScreen *s, char *oldtc, char *newtc);
 
 static Bool added_utmp_entry = False;
 
+#ifdef USE_SYSV_UTMP
 static Bool xterm_exiting = False;
+#endif
 
 /*
 ** Ordinarily it should be okay to omit the assignment in the following
@@ -507,9 +519,9 @@ static char **command_to_exec = NULL;
 ** contents.
 */
 static struct termio d_tio;
-#ifdef TIOCSLTC
+#ifdef HAS_LTCHARS
 static struct ltchars d_ltc;
-#endif	/* TIOCSLTC */
+#endif	/* HAS_LTCHARS */
 
 #ifdef __sgi
 #undef TIOCLSET /* XXX why is this undef-ed again? */
@@ -626,7 +638,7 @@ struct _xttymodes {
 { NULL, 0, 0, '\0' },			/* end of data */
 };
 
-static int parse_tty_modes PROTO((char *s, struct _xttymodes *modelist));
+static int parse_tty_modes (char *s, struct _xttymodes *modelist);
 
 #ifdef USE_SYSV_UTMP
 #if defined(X_NOT_STDC_ENV) || (defined(AIXV3) && OSMAJORVERSION < 4)
@@ -670,11 +682,6 @@ static char bin_login[] = LOGIN_FILENAME;
 static int inhibit;
 static char passedPty[2];	/* name if pty if slave */
 
-#ifndef AMOEBA
-static int get_pty PROTO((int *pty));
-static SIGNAL_T hungtty PROTO((int i));
-#endif
-
 #if defined(TIOCCONS) || defined(SRIOCSREDIR)
 static int Console;
 #include <X11/Xmu/SysUtil.h>	/* XmuGetHostname */
@@ -682,7 +689,6 @@ static int Console;
 #define MIT_CONSOLE "MIT_CONSOLE_"
 static char mit_console_name[255 + MIT_CONSOLE_LEN + 1] = MIT_CONSOLE;
 static Atom mit_console;
-static Boolean ConvertConsoleSelection PROTO_XT_CVT_SELECT_ARGS;
 #endif	/* TIOCCONS */
 
 #ifndef USE_SYSV_UTMP
@@ -996,8 +1002,7 @@ static int abbrev (char *tst, char *cmp)
 	return ((len >= 2) && (!strncmp(tst, cmp, len)));
 }
 
-static void Syntax (badOption)
-    char *badOption;
+static void Syntax (char *badOption)
 {
     struct _options *opt;
     int col;
@@ -1022,13 +1027,13 @@ static void Syntax (badOption)
     exit (1);
 }
 
-static void Version ()
+static void Version (void)
 {
     puts (XTERM_VERSION);
     exit (0);
 }
 
-static void Help ()
+static void Help (void)
 {
     struct _options *opt;
     char **cpp;
@@ -1053,12 +1058,14 @@ static void Help ()
 #if defined(TIOCCONS) || defined(SRIOCSREDIR)
 /* ARGSUSED */
 static Boolean
-ConvertConsoleSelection(w, selection, target, type, value, length, format)
-    Widget w GCC_UNUSED;
-    Atom *selection GCC_UNUSED, *target GCC_UNUSED, *type GCC_UNUSED;
-    XtPointer *value GCC_UNUSED;
-    unsigned long *length GCC_UNUSED;
-    int *format GCC_UNUSED;
+ConvertConsoleSelection(
+	Widget w GCC_UNUSED,
+	Atom *selection GCC_UNUSED,
+	Atom *target GCC_UNUSED,
+	Atom *type GCC_UNUSED,
+	XtPointer *value GCC_UNUSED,
+	unsigned long *length GCC_UNUSED,
+	int *format GCC_UNUSED)
 {
     /* we don't save console output, so can't offer it */
     return False;
@@ -1079,11 +1086,11 @@ Bool waiting_for_initial_map;
  */
 /* ARGSUSED */
 static void
-DeleteWindow(w, event, params, num_params)
-    Widget w;
-    XEvent *event GCC_UNUSED;
-    String *params GCC_UNUSED;
-    Cardinal *num_params GCC_UNUSED;
+DeleteWindow(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params GCC_UNUSED,
+	Cardinal *num_params GCC_UNUSED)
 {
 #if OPT_TEK4014
   if (w == toplevel)
@@ -1101,11 +1108,11 @@ DeleteWindow(w, event, params, num_params)
 
 /* ARGSUSED */
 static void
-KeyboardMapping(w, event, params, num_params)
-    Widget w GCC_UNUSED;
-    XEvent *event;
-    String *params GCC_UNUSED;
-    Cardinal *num_params GCC_UNUSED;
+KeyboardMapping(
+	Widget w GCC_UNUSED,
+	XEvent *event,
+	String *params GCC_UNUSED,
+	Cardinal *num_params GCC_UNUSED)
 {
     switch (event->type) {
        case MappingNotify:
@@ -1125,9 +1132,7 @@ extern fd_set X_mask;
 extern fd_set pty_mask;
 
 int
-main (argc, argv)
-int argc;
-char **argv;
+main (int argc, char *argv[])
 {
 	register TScreen *screen;
 	int mode;
@@ -1221,7 +1226,9 @@ char **argv;
     	d_tio.c_cc[VEOF] = CEOF;
 	d_tio.c_cc[VEOL] = CNUL;
 	d_tio.c_cc[VEOL2] = CNUL;
+#ifdef VSWTCH
 	d_tio.c_cc[VSWTCH] = CNUL;
+#endif
 
 #if defined(USE_TERMIOS) || defined(USE_POSIX_TERMIOS) /* { */
 	d_tio.c_cc[VSUSP] = CSUSP;
@@ -1235,14 +1242,14 @@ char **argv;
 	d_tio.c_cc[VMIN] = 1;
 	d_tio.c_cc[VTIME] = 0;
 #endif /* } */
-#ifdef TIOCSLTC /* { */
+#ifdef HAS_LTCHARS /* { */
         d_ltc.t_suspc = CSUSP;		/* t_suspc */
         d_ltc.t_dsuspc = CDSUSP;	/* t_dsuspc */
         d_ltc.t_rprntc = CRPRNT;
         d_ltc.t_flushc = CFLUSH;
         d_ltc.t_werasc = CWERASE;
         d_ltc.t_lnextc = CLNEXT;
-#endif /* } TIOCSLTC */
+#endif /* } HAS_LTCHARS */
 #ifdef TIOCLSET /* { */
 	d_lmode = 0;
 #endif /* } TIOCLSET */
@@ -1376,14 +1383,14 @@ char **argv;
 		}
 	    }
 	}
-#ifdef TIOCSLTC /* { */
+#ifdef HAS_LTCHARS /* { */
         d_ltc.t_suspc = '\000';		/* t_suspc */
         d_ltc.t_dsuspc = '\000';	/* t_dsuspc */
         d_ltc.t_rprntc = '\377';	/* reserved...*/
         d_ltc.t_flushc = '\377';
         d_ltc.t_werasc = '\377';
         d_ltc.t_lnextc = '\377';
-#endif	/* } TIOCSLTC */
+#endif	/* } HAS_LTCHARS */
 #if defined(USE_TERMIOS) || defined(USE_POSIX_TERMIOS) /* { */
 	d_tio.c_cc[VSUSP] = CSUSP;
 #ifdef VDSUSP
@@ -1649,7 +1656,7 @@ char **argv;
 		unsigned char *old_bufend;
 
 		old_bufend = (unsigned char *) _bufend(stderr);
-#ifdef hpux
+#ifdef __hpux
 		stderr->__fileH = (i >> 8);
 		stderr->__fileL = i;
 #else
@@ -1772,8 +1779,7 @@ char **argv;
 }
 
 static char *
-base_name(name)
-char *name;
+base_name(char *name)
 {
 	register char *cp;
 
@@ -1790,8 +1796,7 @@ char *name;
  */
 
 static int
-get_pty (pty)
-    int *pty;
+get_pty (int *pty)
 {
 #ifdef __osf__
     int tty;
@@ -1891,6 +1896,16 @@ get_pty (pty)
 	return(0);
 #else /* __sgi or umips */
 
+#ifdef __hpux
+	/*
+	 * Use the clone device if it works, otherwise use pty_search logic.
+	 */
+	if ((*pty = open("/dev/ptym/clone", O_RDWR)) >= 0) {
+		strcpy(ttydev, ptsname(*pty));
+		return(0);
+	}
+#endif
+
 	return pty_search(pty);
 
 #endif /* __sgi or umips else */
@@ -1905,8 +1920,7 @@ get_pty (pty)
  * Returns 0 if found a pty, 1 if fails.
  */
 static int
-pty_search(pty)
-    int *pty;
+pty_search(int *pty)
 {
     static int devindex, letter = 0;
 
@@ -1961,7 +1975,7 @@ pty_search(pty)
 #endif /* AMOEBA */
 
 static void
-get_terminal ()
+get_terminal (void)
 /*
  * sets up X and initializes the terminal structure except for term.buf.fildes.
  */
@@ -2019,8 +2033,7 @@ static char *vtterm[] = {
 };
 
 /* ARGSUSED */
-static SIGNAL_T hungtty(i)
-	int i GCC_UNUSED;
+static SIGNAL_T hungtty(int i GCC_UNUSED)
 {
 	longjmp(env, 1);
 	SIGNAL_RETURN;
@@ -2063,9 +2076,7 @@ typedef struct {
  */
 
 static void
-HsSysError(pf, error)
-int pf;
-int error;
+HsSysError(int pf, int error)
 {
 	handshake_t handshake;
 
@@ -2077,7 +2088,7 @@ int error;
 	exit(error);
 }
 
-void first_map_occurred ()
+void first_map_occurred (void)
 {
     handshake_t handshake;
     register TScreen *screen = &term->screen;
@@ -2095,15 +2106,14 @@ void first_map_occurred ()
  * temporary hack to get xterm working on att ptys
  */
 void
-HsSysError(pf, error)
-    int pf;
-    int error;
+HsSysError(int pf, int error)
 {
     fprintf(stderr, "%s: fatal pty error %d (errno=%d) on tty %s\n",
 	    xterm_name, error, errno, ttydev);
     exit(error);
 }
-void first_map_occurred ()
+
+void first_map_occurred (void)
 {
     return;
 }
@@ -2114,7 +2124,7 @@ void first_map_occurred ()
 extern char **environ;
 
 static int
-spawn ()
+spawn (void)
 /*
  *  Inits pty and tty and forks a login process.
  *  Does not close fd Xsocket.
@@ -2132,9 +2142,9 @@ spawn ()
 #ifdef TIOCLSET
 	unsigned lmode;
 #endif	/* TIOCLSET */
-#ifdef TIOCSLTC
+#ifdef HAS_LTCHARS
 	struct ltchars ltc;
-#endif	/* TIOCSLTC */
+#endif	/* HAS_LTCHARS */
 #else	/* else not USE_SYSV_TERMIO */
 #ifdef USE_POSIX_TERMIOS
 	struct termios tio;
@@ -2169,7 +2179,7 @@ spawn ()
 #endif	/* sun */
 	struct passwd *pw = NULL;
 #ifdef UTMP
-#if defined(SVR4) || defined(SCO325)
+#if (defined(SVR4) || defined(SCO325)) && !defined(__CYGWIN32__)
 	struct utmpx utmp;
 #else
 	struct utmp utmp;
@@ -2235,9 +2245,9 @@ spawn ()
 			if (tty_got_hung || errno == ENXIO || errno == EIO ||
 			    errno == EINVAL || errno == ENOTTY) {
 				no_dev_tty = TRUE;
-#ifdef TIOCSLTC
+#ifdef HAS_LTCHARS
 				ltc = d_ltc;
-#endif	/* TIOCSLTC */
+#endif	/* HAS_LTCHARS */
 #ifdef TIOCLSET
 				lmode = d_lmode;
 #endif	/* TIOCLSET */
@@ -2262,10 +2272,10 @@ spawn ()
 			 * if started directly from xdm or xinit,
 			 * in which case we just use the defaults as above.
 			 */
-#ifdef TIOCSLTC
+#ifdef HAS_LTCHARS
 			if(ioctl(tty, TIOCGLTC, &ltc) == -1)
 				ltc = d_ltc;
-#endif	/* TIOCSLTC */
+#endif	/* HAS_LTCHARS */
 #ifdef TIOCLSET
 			if(ioctl(tty, TIOCLGET, &lmode) == -1)
 				lmode = d_lmode;
@@ -2783,7 +2793,7 @@ spawn ()
 #ifdef VSTOP
 			TMODE (XTTYMODE_stop, tio.c_cc[VSTOP]);
 #endif
-#ifdef TIOCSLTC
+#ifdef HAS_LTCHARS
 			/* both SYSV and BSD have ltchars */
 			TMODE (XTTYMODE_susp, ltc.t_suspc);
 			TMODE (XTTYMODE_dsusp, ltc.t_dsuspc);
@@ -2795,10 +2805,16 @@ spawn ()
 		    }
 #undef TMODE
 
-#ifdef TIOCSLTC
+#ifdef HAS_LTCHARS
+#ifdef __hpux
+		    /* ioctl chokes when the "reserved" process group controls
+		     * are not set to _POSIX_VDISABLE */
+		    ltc.t_rprntc = ltc.t_rprntc = ltc.t_flushc =
+		    ltc.t_werasc = ltc.t_lnextc = _POSIX_VDISABLE;
+#endif /* __hpux */
 		    if (ioctl (tty, TIOCSLTC, &ltc) == -1)
 			    HsSysError(cp_pipe[1], ERROR_TIOCSETC);
-#endif	/* TIOCSLTC */
+#endif	/* HAS_LTCHARS */
 #ifdef TIOCLSET
 		    if (ioctl (tty, TIOCLSET, (char *)&lmode) == -1)
 			    HsSysError(cp_pipe[1], ERROR_TIOCLSET);
@@ -2910,6 +2926,9 @@ spawn ()
 #ifdef UTMP
 		envsize += 2;   /* HOME, SHELL */
 #endif /* UTMP */
+#ifdef OWN_TERMINFO_DIR
+		envsize += 1;	/* TERMINFO */
+#endif
 #else /* USE_SYSV_ENVVARS */
 		envsize += 1;	/* TERMCAP */
 #endif /* USE_SYSV_ENVVARS */
@@ -3255,7 +3274,10 @@ spawn ()
 			Setenv("SHELL=", pw->pw_shell);
 		}
 #endif /* UTMP */
-#else /* USE_SYSV_ENVVAR */
+#ifdef OWN_TERMINFO_DIR
+		Setenv("TERMINFO=", OWN_TERMINFO_DIR);
+#endif
+#else /* USE_SYSV_ENVVARS */
 		if(!TEK4014_ACTIVE(screen) && *newtc) {
 		    strcpy (termcap, newtc);
 		    resize (screen, termcap, newtc);
@@ -3277,7 +3299,7 @@ spawn ()
 		}
 		if(*newtc)
 		    Setenv ("TERMCAP=", newtc);
-#endif /* USE_SYSV_ENVVAR */
+#endif /* USE_SYSV_ENVVARS */
 
 
 		/* need to reset after all the ioctl bashing we did above */
@@ -3426,7 +3448,7 @@ spawn ()
 	/* hung sh problem? */
 	signal (SIGHUP, SIG_DFL);
 #else
-	signal (SIGHUP,SIG_IGN);
+	signal (SIGHUP, SIG_IGN);
 #endif
 
 /*
@@ -3495,11 +3517,7 @@ extern struct caplist *capv;
  * I made this a function since it cannot be a macro.
  */
 void
-setcap(capvec, n, name, cap)
-    struct caplist *capvec;
-    int n;
-    char *name;
-    capability *cap;
+setcap(struct caplist *capvec, int n, char *name, capability *cap)
 {
     capvec[n].cl_name = name;
     capvec[n].cl_cap = cap;
@@ -3510,9 +3528,7 @@ setcap(capvec, n, name, cap)
  * necessarily running down the user's PATH.
  */
 errstat
-find_program(program, programcap)
-    char *program;
-    capability *programcap;
+find_program(char *program, capability *programcap)
 {
     errstat err;
 
@@ -3551,13 +3567,13 @@ find_program(program, programcap)
 static semaphore main_sema;
 
 void
-InitMainThread()
+InitMainThread(void)
 {
     sema_init(&main_sema, 0);
 }
 
 void
-WakeupMainThread()
+WakeupMainThread(void)
 {
     sema_up(&main_sema);
 }
@@ -3565,7 +3581,7 @@ WakeupMainThread()
 /*
  * Spawn off tty threads and fork the login process.
  */
-static int spawn()
+static int spawn(void)
 {
     register TScreen *screen = &term->screen;
     char *TermName = NULL;
@@ -3634,6 +3650,7 @@ static int spawn()
 	    if (*ptr)
 		if (!TEK4014_ACTIVE(screen))
 		    resize (screen, termcap, newtc);
+	}
     }
 
     if (!TermName) {
@@ -3800,7 +3817,7 @@ static int spawn()
  * X watch-dog thread. This thread unblocks the main
  * thread when there's an X event.
  */
-xwatchdogthread()
+xwatchdogthread(void)
 {
     register TScreen *screen = &term->screen;
 
@@ -3817,7 +3834,7 @@ xwatchdogthread()
 }
 
 void
-SleepMainThread()
+SleepMainThread(void)
 {
     int remaining;
 
@@ -3834,8 +3851,7 @@ SleepMainThread()
 #endif /* AMOEBA */
 
 SIGNAL_T
-Exit(n)
-	int n;
+Exit(int n)
 {
 	register TScreen *screen = &term->screen;
 #ifdef UTMP
@@ -3879,30 +3895,31 @@ Exit(n)
 	    (void) setutent();
 	    utptr = getutid(&utmp);
 	    /* write it out only if it exists, and the pid's match */
-	    if (utptr && (utptr->ut_pid == term->screen.pid)) {
+	    if (utptr && (utptr->ut_pid == screen->pid)) {
 		    utptr->ut_type = DEAD_PROCESS;
 #if defined(SVR4) || defined(SCO325) || (defined(linux) && __GLIBC__ >= 2)
-		    utmp.ut_session = getsid(0);
-		    utmp.ut_xtime = time ((time_t *) 0);
-		    utmp.ut_tv.tv_usec = 0;
+		    utptr->ut_session = getsid(0);
+		    utptr->ut_xtime = time ((time_t *) 0);
+		    utptr->ut_tv.tv_usec = 0;
 #else
-		    *utptr->ut_user=0;
+		    *utptr->ut_user = 0;
 		    utptr->ut_time = time((time_t *) 0);
 #endif
 		    (void) pututline(utptr);
 #ifdef WTMP
 #if defined(SVR4) || defined(SCO325)
 		    if (term->misc.login_shell)
-			updwtmpx(WTMPX_FILE, &utmp);
+			updwtmpx(WTMPX_FILE, utptr);
 #else
 #if defined(linux) && __GLIBC__ >= 2
+		    strncpy (utmp.ut_line, utptr->ut_line, sizeof (utmp.ut_line));
 		    if (term->misc.login_shell)
-			updwtmp(etc_wtmp, &utmp);
+			updwtmp(etc_wtmp, utptr);
 #else
 		    /* set wtmp entry if wtmp file exists */
 		    if (term->misc.login_shell &&
 			(fd = open(etc_wtmp, O_WRONLY | O_APPEND)) >= 0) {
-		      i = write(fd, utptr, sizeof(utmp));
+		      i = write(fd, utptr, sizeof(*utptr));
 		      i = close(fd);
 		    }
 #endif
@@ -3937,7 +3954,7 @@ Exit(n)
 #endif	/* USE_SYSV_UTMP */
 #endif	/* UTMP */
 #ifndef AMOEBA
-        close(term->screen.respond); /* close explicitly to avoid race with slave side */
+        close(screen->respond); /* close explicitly to avoid race with slave side */
 #endif
 #ifdef ALLOWLOGGING
 	if(screen->logging)
@@ -3948,13 +3965,13 @@ Exit(n)
 	if (!am_slave) {
 		/* restore ownership of tty and pty */
 		chown (ttydev, 0, 0);
-#if (!defined(__sgi) && !defined(__osf__))
+#if (!defined(__sgi) && !defined(__osf__) && !defined(__hpux))
 		chown (ptydev, 0, 0);
 #endif
 
 		/* restore modes of tty and pty */
 		chmod (ttydev, 0666);
-#if (!defined(__sgi) && !defined(__osf__))
+#if (!defined(__sgi) && !defined(__osf__) && !defined(__hpux))
 		chmod (ptydev, 0666);
 #endif
 	}
@@ -3965,9 +3982,7 @@ Exit(n)
 
 /* ARGSUSED */
 static void
-resize(screen, oldtc, newtc)
-TScreen *screen;
-register char *oldtc, *newtc;
+resize(TScreen *screen, register char *oldtc, register char *newtc)
 {
 #ifndef USE_SYSV_ENVVARS
 	register char *ptr1, *ptr2;
@@ -4012,7 +4027,7 @@ register char *oldtc, *newtc;
  * Returns the pid of the child, or 0 or -1 if none or error.
  */
 int
-nonblocking_wait()
+nonblocking_wait(void)
 {
 #ifdef USE_POSIX_WAIT
         pid_t pid;
@@ -4038,8 +4053,7 @@ nonblocking_wait()
 }
 
 /* ARGSUSED */
-static SIGNAL_T reapchild (n)
-    int n GCC_UNUSED;
+static SIGNAL_T reapchild (int n GCC_UNUSED)
 {
     int pid;
 
@@ -4064,42 +4078,8 @@ static SIGNAL_T reapchild (n)
     SIGNAL_RETURN;
 }
 
-#if 0	/* this isn't used, but could be useful in debugging */
-/* VARARGS1 */
-void
-consolepr(fmt,x0,x1,x2,x3,x4,x5,x6,x7,x8,x9)
-char *fmt;
-{
-	int oerrno;
-	int f;
- 	char buf[ BUFSIZ ];
-
-	oerrno = errno;
- 	strcpy(buf, "xterm: ");
- 	sprintf(buf+strlen(buf), fmt, x0,x1,x2,x3,x4,x5,x6,x7,x8,x9);
- 	strcat(buf, ": ");
- 	strcat(buf, SysErrorMsg (oerrno));
- 	strcat(buf, "\n");
-#ifndef AMOEBA
-	f = open("/dev/console",O_WRONLY);
-	write(f, buf, strlen(buf));
-	close(f);
-#else
-	fputs(buf, stderr);
-#endif
-#ifdef TIOCNOTTY
-	if ((f = open("/dev/tty", 2)) >= 0) {
-		ioctl(f, TIOCNOTTY, (char *)NULL);
-		close(f);
-	}
-#endif	/* TIOCNOTTY */
-}
-#endif
-
 static int
-remove_termcap_entry (buf, str)
-    char *buf;
-    char *str;
+remove_termcap_entry (char *buf, char *str)
 {
     register char *strinbuf;
 
@@ -4126,9 +4106,7 @@ remove_termcap_entry (buf, str)
  * where setting consists of the words in the modelist followed by a character
  * or ^char.
  */
-static int parse_tty_modes (s, modelist)
-    char *s;
-    struct _xttymodes *modelist;
+static int parse_tty_modes (char *s, struct _xttymodes *modelist)
 {
     struct _xttymodes *mp;
     int c;
@@ -4160,14 +4138,23 @@ static int parse_tty_modes (s, modelist)
     }
 }
 
-int GetBytesAvailable (fd)
-    int fd;
+int GetBytesAvailable (int fd)
 {
 #ifndef AMOEBA
 #ifdef FIONREAD
     long arg;
     ioctl (fd, FIONREAD, (char *) &arg);
     return (int) arg;
+#elif defined(__CYGWIN32__)
+    fd_set set;
+    struct timeval timeout = {0, 0};
+
+    FD_ZERO (&set);
+    FD_SET (fd, &set);
+    if (select (fd+1, &set, NULL, NULL, &timeout) > 0)
+      return 1;
+    else
+      return 0;
 #else
 #ifdef MINIX
     /* The answer doesn't have to correct. Calling nbio_isinprogress is
@@ -4209,9 +4196,7 @@ int GetBytesAvailable (fd)
    everybody who used to call killpg() */
 
 int
-kill_process_group(pid, sig)
-    int pid;
-    int sig;
+kill_process_group(int pid, int sig)
 {
     TRACE(("kill_process_group(pid=%d, sig=%d)\n", pid, sig))
 #ifndef AMOEBA

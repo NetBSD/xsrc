@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: data.c,v 1.12 95/04/05 19:58:47 kaleb Exp $
- *	$XFree86: xc/programs/xterm/data.c,v 3.8 1998/03/20 21:08:35 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/data.c,v 3.10 1998/06/04 16:43:56 hohndel Exp $
  */
 
 /*
@@ -77,8 +77,8 @@ int Ttoggled = 0;
 #endif
 
 int bcnt = 0;
-Char buffer[BUF_SIZE];
-Char *bptr = buffer;
+Char VTbuffer[BUF_SIZE];
+Char *bptr = VTbuffer;
 jmp_buf VTend;
 XPoint VTbox[NBOX] = {
 	{0, 0},
