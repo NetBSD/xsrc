@@ -1,4 +1,4 @@
-/* $NetBSD: hpcKbd.c,v 1.1 2004/01/03 01:09:19 takemura Exp $	*/
+/* $NetBSD: hpcKbd.c,v 1.2 2004/01/03 01:23:02 takemura Exp $	*/
 /* $XConsortium: sunKbd.c,v 5.47 94/08/16 13:45:30 dpw Exp $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -222,6 +222,7 @@ hpcKbdProc(device, what)
 	    break;
 	case HPC_KBDDEV_WSKBD:
 	case HPC_KBDDEV_WSMUX:
+	    break;
 	}
 	hpcCleanupFd(pPriv->fd);
 	AddEnabledDevice(pPriv->fd);
@@ -242,6 +243,7 @@ hpcKbdProc(device, what)
 	    break;
 	case HPC_KBDDEV_WSKBD:
 	case HPC_KBDDEV_WSMUX:
+	    break;
 	}
 	break;
     default:
