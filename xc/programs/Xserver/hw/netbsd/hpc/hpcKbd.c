@@ -1,4 +1,4 @@
-/* $NetBSD: hpcKbd.c,v 1.1 2000/05/06 06:01:49 takemura Exp $	*/
+/* $NetBSD: hpcKbd.c,v 1.2 2000/07/29 14:23:58 takemura Exp $	*/
 /* $XConsortium: sunKbd.c,v 5.47 94/08/16 13:45:30 dpw Exp $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -50,6 +50,9 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #define MIN_KEYCODE	8	/* necessary to avoid the mouse buttons */ /* XXX */
 #define MAX_KEYCODE	255	/* limited by the protocol */ /* XXX */
+#define MOUSE_EMUL_KEY	(0xdd + MIN_KEYCODE)	/* menu key on windows keyboard */
+#define MOUSE_EMUL_KEY1	(0x02 + MIN_KEYCODE)
+#define MOUSE_EMUL_KEY5	(0x07 + MIN_KEYCODE)
 
 extern KeySymsRec hpcKeySyms[];
 extern hpcModmapRec *hpcModMaps[];
@@ -188,6 +191,17 @@ hpcKbdProc(device, what)
 	break;
 
     case DEVICE_ON:
+	if (!hpcKbdPriv.bedev) {
+	    hpcKbdPriv.bedev = (hpcPtrPrivPtr)(((DeviceIntPtr)
+             LookupPointerDevice())->public.devicePrivate);
+	    if (hpcKbdPriv.bedev)
+		hpcKbdPriv.bedev->bedev = &hpcKbdPriv;
+	}
+
+	hpcKbdPriv.bkeydown = 0;
+	hpcKbdPriv.bkeymask = 0;
+	hpcKbdPriv.bkeynrmask = 0;
+
 	pPriv = (hpcKbdPrivPtr)pKeyboard->devicePrivate;
 	switch (pPriv->devtype) {
 	case HPC_KBDDEV_RAW:
@@ -261,6 +275,7 @@ hpcKbdGetEvents(pPriv, pNumEvents, pAgain)
     static hpcEvent evBuf[MAXEVENTS];   /* Buffer for hpcEvents */
 
     fd = pPriv->fd;
+AGAIN:
     switch (pPriv->devtype) {
     case HPC_KBDDEV_RAW:
 	    if (read(fd, &c, 1) < 0) {
@@ -278,9 +293,11 @@ hpcKbdGetEvents(pPriv, pNumEvents, pAgain)
 		case HPC_KBDXSTAT_INIT:
 		    if (c == KBR_EXTENDED0) {
 			pPriv->xlatestat = HPC_KBDXSTAT_EXT0;
+			goto AGAIN;
 		    } else
 		    if (c == KBR_EXTENDED1) {
 			pPriv->xlatestat = HPC_KBDXSTAT_EXT1;
+			goto AGAIN;
 		    } else {
 			*pNumEvents = 1;
 			evBuf[0].value = (c & 0x7f);
@@ -294,13 +311,16 @@ hpcKbdGetEvents(pPriv, pNumEvents, pAgain)
 		case HPC_KBDXSTAT_EXT1:
 		    if (c == 0x1d) {
 			pPriv->xlatestat = HPC_KBDXSTAT_EXT1_1D;
+			goto AGAIN;
 		    } else
 		    if (c == 0x9d) {
 			pPriv->xlatestat = HPC_KBDXSTAT_EXT1_9D;
+			goto AGAIN;
 		    } else {
 			ErrorF("hpcKbdGetEvents: unexpected input"
 			       " %02x, stat=%d", c, pPriv->xlatestat);
 			pPriv->xlatestat = HPC_KBDXSTAT_INIT;
+			goto AGAIN;
 		    }
 		    break;
 		case HPC_KBDXSTAT_EXT1_1D:
@@ -308,11 +328,13 @@ hpcKbdGetEvents(pPriv, pNumEvents, pAgain)
 		    if (c == 0x45 || c == (0x45 | 0x80)) {
 			*pNumEvents = 1;
 			evBuf[0].value = 0x7f;
+			pPriv->xlatestat = HPC_KBDXSTAT_INIT;
 		    } else {
 			ErrorF("hpcKbdGetEvents: unexpected input %02x, stat=%d",
 			       c, pPriv->xlatestat);
+			pPriv->xlatestat = HPC_KBDXSTAT_INIT;
+			goto AGAIN;
 		    }
-		    pPriv->xlatestat = HPC_KBDXSTAT_INIT;
 		    break;
 		default:
 		    FatalError("hpcKbdGetEvents: invalid xlate status");
@@ -358,6 +380,13 @@ hpcKbdEnqueueEvent (device, fe)
     xEvent		xE;
     BYTE		keycode;
     CARD8		keyModifiers;
+    hpcKbdPrivPtr	pPriv;
+    hpcPtrPrivPtr	ptrPriv;
+    Bool		skipKeyEvent;
+
+    pPriv = (hpcKbdPrivPtr)device->public.devicePrivate;
+    ptrPriv = pPriv->bedev;
+    skipKeyEvent = FALSE;
 
     keycode = (fe->value & 0xff) + MIN_KEYCODE;
 
@@ -380,6 +409,93 @@ hpcKbdEnqueueEvent (device, fe)
     xE.u.keyButtonPointer.time = TSTOMILLI(fe->time);
     xE.u.u.type = ((fe->type == WSCONS_EVENT_KEY_UP) ? KeyRelease : KeyPress);
     xE.u.u.detail = keycode;
+
+    if (ptrPriv != NULL) {
+	if (fe->type == WSCONS_EVENT_KEY_UP) {
+	    if (keycode == MOUSE_EMUL_KEY) {
+		pPriv->bkeydown = 0;
+		skipKeyEvent = 1;
+
+		if (!ptrPriv->ebdown && ptrPriv->bemask) {
+		    xEvent xbE;
+		    int button;
+
+		    xbE.u.u.type = ButtonRelease;
+		    while ((button = ffs(ptrPriv->bemask) - 1) > 0) {
+			ptrPriv->bemask &= ~(1 << button);
+			xbE.u.u.detail = button;
+			mieqEnqueue (&xbE);
+		    }
+		}
+	    } else if (MOUSE_EMUL_KEY1 <= keycode &&
+		       keycode <= MOUSE_EMUL_KEY5) {
+		int button = keycode - 0x0a + 1;
+		int bmask = 1 << button;
+
+		if (pPriv->bkeynrmask & bmask)
+		    skipKeyEvent = 1;
+
+		pPriv->bkeymask &= ~bmask;
+
+		if (pPriv->bkeydown && ptrPriv->ebdown) {
+		    ptrPriv->bemask &= ~bmask;
+
+		    if (!(ptrPriv->brmask & bmask)) {
+			xEvent xbE;
+
+			xbE.u.u.type = ButtonRelease;
+			xbE.u.u.detail = button;
+			mieqEnqueue (&xbE);
+		    }
+		}
+	    }
+	} else { /* WSCONS_EVENT_KEY_DOWN */
+	    if (keycode == MOUSE_EMUL_KEY) {
+		pPriv->bkeydown = 1;
+		skipKeyEvent = 1;
+
+		if (ptrPriv->ebdown && pPriv->bkeymask) {
+		    xEvent xbE;
+		    int button;
+
+		    xbE.u.u.type = ButtonPress;
+		    while ((button = ffs(pPriv->bkeymask &
+		     ~ptrPriv->bemask) - 1) > 0) {
+			ptrPriv->bemask &= ~(1 << button);
+			xbE.u.u.detail = button;
+			mieqEnqueue (&xbE);
+		    }
+		}
+	    } else if (MOUSE_EMUL_KEY1 <= keycode &&
+		       keycode <= MOUSE_EMUL_KEY5) {
+		int button = keycode - 0x0a + 1;
+		int bmask = 1 << button;
+
+		if (pPriv->bkeydown) {
+		    pPriv->bkeynrmask |= bmask;
+		    pPriv->bkeymask |= bmask;
+		    skipKeyEvent = 1;
+
+		    if (ptrPriv->ebdown && !(ptrPriv->bemask & bmask)) {
+			ptrPriv->bemask |= bmask;
+			if (!(ptrPriv->brmask & bmask)) {
+			    xEvent xbE;
+
+			    xbE.u.u.type = ButtonPress;
+			    xbE.u.u.detail = button;
+			    mieqEnqueue (&xbE);
+			}
+		    }
+		} else if (pPriv->bkeynrmask & bmask)
+		    pPriv->bkeynrmask &= ~bmask;
+		}
+	}
+
+	if (skipKeyEvent)
+	    return;
+
+    } /* ptrPriv != NULL */
+
 #if 0 /* XXX */
 #ifdef XKB
     if (noXkbExtension) {
