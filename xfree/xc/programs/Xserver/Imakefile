@@ -649,6 +649,30 @@ SetUIDServerTarget(XalphaNetBSD,$(ANBDIRS),$(ANBOBJS), \
 #endif
 #endif /* XalphaNetBSDServer */
 
+#if defined(XdecNetBSDServer) && XdecNetBSDServer
+XCOMM
+XCOMM NetBSD/alpha and NetBSD/pmax server
+XCOMM
+MFBSUBDIR   = mfb
+CFB8SUBDIR  = cfb
+CFB32SUBDIR = cfb32
+DNBDDXDIR  = hw/netbsd/dec
+DNBDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB32DIR) $(DNBDDXDIR) $(DEPDIRS)
+DNBOBJS = hw/netbsd/dec/decInit.o hw/netbsd/dec/stubs.o
+DNBLIBS = hw/netbsd/dec/sfb/libdecSfb.a hw/netbsd/dec/px/libdecPX.a \
+	  hw/netbsd/dec/cfb/libdecCfb.a hw/netbsd/dec/mfb/libdecMfb.a
+#if defined(AlphaArchitecture)
+DNBLIBS += hw/netbsd/dec/tga/libdecTga.a
+#endif
+DNBLIBS += hw/netbsd/dec/libdec.a CFB32Libs CFB8Libs
+SetUIDServerTarget(XdecNetBSD,$(DNBDIRS),$(DNBOBJS), \
+	$(LIBCWAPPER) $(DNBLIBS), \
+	$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XdecNetBSD
+#endif
+#endif /* XdecNetBSDServer */
+
 #if defined(XdreamcastServer) && XdreamcastServer
 XCOMM
 XCOMM NetBSD/dreamcast server
@@ -1471,6 +1495,7 @@ MIEXTDIRS = $(SHADOWDIR) $(LAYERDIR) $(ROOTLESSDIR)
 IPLANDIRS = $(IPLAN2P2DIR) $(IPLAN2P4DIR) $(IPLAN2P8DIR)
 DDXDIRS = $(DECWSDDXDIR) $(SUNDDXDIR) $(LYNXDDXDIR) \
 	  $(ANBDDXDIR) \
+	  $(DNBDDXDIR) \
 	  $(DREAMCASTDDXDIR) \
 	  $(HPCDDXDIR) \
 	  $(MACPPCDDXDIR) $(MAC68KDDXDIR) \
