@@ -48,15 +48,18 @@ XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
 #define CplusplusLibC
 #define FrescoSysLibs	CplusplusLibC MathLibrary
 
-#if ThreadedX
-# ifdef BuildThreadStubLibrary
-#  define SharedThreadReqs	-L$(BUILDLIBDIR) -lXThrStub 
+/* Allow for libpthread, as overridden by OS definitions */
+#if !defined(SharedThreadReqs)
+# if ThreadedX
+#  ifdef BuildThreadStubLibrary
+#   define SharedThreadReqs	-L$(BUILDLIBDIR) -lXThrStub 
+#  else
+#   define SharedThreadReqs	-pthread
+#  endif
 # else
-#  define SharedThreadReqs	-pthread
-# endif
-#else
-# define SharedThreadReqs /**/
-#endif
+#  define SharedThreadReqs /**/
+# endif /* ThreadedX */
+#endif /* !defined(SharedThreadReqs) */
 
 #define SharedX11Reqs	SharedThreadReqs
 #define SharedOldXReqs	$(LDPRELIBS) $(XLIBONLY)
