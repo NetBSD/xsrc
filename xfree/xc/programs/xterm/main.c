@@ -125,6 +125,12 @@ SOFTWARE.
 #include <xstrings.h>
 #include <xterm_io.h>
 
+#if defined(LONG64)
+typedef	int	BytesReadable_t;
+#else
+typedef	long	BytesReadable_t;
+#endif
+
 #if OPT_WIDE_CHARS
 #include <charclass.h>
 #include <wcwidth.h>
@@ -4519,8 +4525,8 @@ int
 GetBytesAvailable(int fd)
 {
 #if defined(FIONREAD)
-    long arg;
-    ioctl(fd, FIONREAD, (char *) &arg);
+    BytesReadable_t arg = 0;
+    ioctl(fd, FIONREAD, (BytesReadable_t *) &arg);
     return (int) arg;
 #elif defined(__CYGWIN__)
     fd_set set;
