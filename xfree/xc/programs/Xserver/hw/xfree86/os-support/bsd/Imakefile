@@ -154,6 +154,9 @@ VIDEO_OBJ = arm_video.o
 #elif defined(Sparc64Architecture)
 VIDEO_SRC = sparc64_video.c
 VIDEO_OBJ = sparc64_video.o
+#elif defined(MipsArchitecture)
+VIDEO_SRC = mips_video.c
+VIDEO_OBJ = mips_video.o
 #else
 #error Unknown architecture !
 #endif
