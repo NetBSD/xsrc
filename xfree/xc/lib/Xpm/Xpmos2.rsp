@@ -1,7 +1,0 @@
-Attrib.obj CrBufFrI.obj CrBufFrP.obj CrDatFrI.obj CrDatFrP.obj CrIFrBuf.obj+
-CrIFrDat.obj CrIFrP.obj CrPFrBuf.obj CrPFrDat.obj CrPFrI.obj Image.obj+
-Info.obj RdFToBuf.obj RdFToDat.obj RdFToI.obj RdFToP.obj WrFFrBuf.obj+
-WrFFrDat.obj WrFFrI.obj WrFFrP.obj create.obj data.obj hashtab.obj misc.obj+
-parse.obj rgb.obj scan.obj /NOI /NOL /NOD /BAT
-Xpm.dll
-Xpm.map

@@ -1,6 +1,0 @@
-glx\clientattrib.obj glx\compsize.obj glx\eval.obj glx\g_render.obj+
-glx\g_single.obj glx\g_vendpriv.obj glx\glxcmds.obj glx\glxext.obj+
-glx\pixel.obj glx\pixelstore.obj glx\render2.obj glx\renderpix.obj+
-glx\single2.obj glx\singlepix.obj glx\vertarr.obj /NOI /NOL /NOD /BAT
-GL.dll
-GL.map
