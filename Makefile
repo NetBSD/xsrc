@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2001/11/25 18:52:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.31 2002/04/26 16:52:42 lukem Exp $
 #
 # Targets & Variables
 #
@@ -17,7 +17,7 @@
 #  BUILD_DONE -- If set, assume build is already done.
 #  INSTALL_DONE -- If set, assume binaries to tar up are to be found
 #	in ${DESTDIR} already.
-#  BSDSRCDIR -- Set to the full path to the main source tree, /usr/src
+#  NETBSDSRCDIR -- Set to the full path to the main source tree, /usr/src
 #	by default. Needed to find ./distrib/sets.
 #
 # cleandir distclean: Remove all generated files from under xsrc.
@@ -135,7 +135,7 @@ release snapshot: build
 	cd ${XCDIR}/programs/Xserver/hw/netbsd/amiga && \
 		${INSTALL} -c -m 644 INSTALL.X11 ${RELEASEDIR}
 .endif
-	cd ${BSDSRCDIR}/distrib/sets && \
+	cd ${NETBSDSRCDIR}/distrib/sets && \
 	    sh ./maketars -x -d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
 	cd ${RELEASEDIR}/binary/sets && \
 		cksum -o 1 *.tgz >BSDSUM && \
