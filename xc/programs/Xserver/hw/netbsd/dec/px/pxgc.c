@@ -1,4 +1,4 @@
-/*	$NetBSD: pxgc.c,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: pxgc.c,v 1.2 2001/09/22 19:43:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -235,6 +235,10 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 		 */
 		switch (index) {
 		case GCForeground:
+			if (sp->bpp == 8)
+				gcPriv->fgPixel = PX_DUPBYTE(pGC->fgPixel);
+			else
+				gcPriv->fgPixel = pGC->fgPixel;
 			new_fill = TRUE;
 			break;
 		case GCBackground:
@@ -291,15 +295,12 @@ pxValidateGC(GCPtr pGC, u_long changes, DrawablePtr pDrawable)
 		if (pGC->fillStyle == FillTiled && pGC->tileIsPixel) {
 			gcPriv->fillStyle = FillSolid;
 			if (sp->bpp == 8)
-				gcPriv->fgPixel = PX_DUPBYTE(pGC->tile.pixel);
+				gcPriv->fgFill = PX_DUPBYTE(pGC->tile.pixel);
 			else
-				gcPriv->fgPixel = pGC->tile.pixel;
+				gcPriv->fgFill = pGC->tile.pixel;
 		} else {
 			gcPriv->fillStyle = pGC->fillStyle;
-			if (sp->bpp == 8)
-				gcPriv->fgPixel = PX_DUPBYTE(pGC->fgPixel);
-			else
-				gcPriv->fgPixel = pGC->fgPixel;
+			gcPriv->fgFill = gcPriv->fgPixel;
 		}
 	}
 

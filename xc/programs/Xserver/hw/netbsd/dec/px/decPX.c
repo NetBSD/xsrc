@@ -1,4 +1,4 @@
-/*	$NetBSD: decPX.c,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: decPX.c,v 1.2 2001/09/22 19:43:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ SOFTWARE.
 
 #include <sys/mman.h>
 #include <sys/ioctl.h>
-#include <stdio.h>
 
 #include "../dec.h"
 
@@ -164,7 +163,7 @@ pxSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
 	    return FALSE;
 	break;
     default:
-	fprintf(stderr, "pxSetupScreen:  unsupported bpp = %d\n", bpp);
+	ErrorF("pxSetupScreen:  unsupported bpp = %d\n", bpp);
 	return FALSE;
     }
    
@@ -446,13 +445,17 @@ decPXInit(int screen, ScreenPtr pScreen, int argc, char **argv)
 
 		if (sp->bpp == 8) {
 			sp->compressBuf = pxCompressBuf24to8;
-			if (sp->realbpp == 8)
+			if (sp->realbpp == 8) {
 				sp->expandBuf = pxExpandBuf8to8;
-			else
+				sp->tileBuf = pxTileBuf8r8;
+			} else {
 				sp->expandBuf = pxExpandBuf8to24;
+				sp->tileBuf = pxTileBuf8r24;
+			}
 		} else {
 			sp->compressBuf = pxCompressBuf24to24;
 			sp->expandBuf = pxExpandBuf24to24;
+			sp->tileBuf = pxTileBuf24r24;
 		}
 	}
 
@@ -479,7 +482,7 @@ decPXInit(int screen, ScreenPtr pScreen, int argc, char **argv)
 	decColormapScreenInit(pScreen);
 
 	if (!decScreenInit(pScreen)) {
-                fprintf(stderr, "decScreenInit failed\n");
+                ErrorF("decScreenInit failed\n");
 		return FALSE;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: px.h,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: px.h,v 1.2 2001/09/22 19:43:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ typedef struct pxScreenPriv {
 
 	void		(*expandBuf)(void *, void *, int);
 	void		*(*compressBuf)(void *, void *, int);
+	void		(*tileBuf)(void *, void *, int, int, int);
 
 	int		fd;
 	int		mapfd;
@@ -139,8 +140,9 @@ typedef struct pxScreenPriv {
 typedef struct pxPrivGC {
 	u_int32_t	umet;
 	int		pmask;
-	u_long		fgPixel;
-	u_long		bgPixel;
+	u_int		fgPixel;
+	u_int		bgPixel;
+	u_int		fgFill;
 	int		type;
 	int		fillStyle;
 	void		(*doFillSpans)(DrawablePtr, GCPtr, struct pxPrivGC *,
@@ -280,9 +282,13 @@ void	pxFillBoxSolid(pxScreenPrivPtr, RegionPtr, u_int);
 void	pxFillBoxTiled(pxScreenPrivPtr, RegionPtr, pxMaskPtr);
 Bool	pxMaskFromStipple(pxScreenPrivPtr, PixmapPtr, pxMaskPtr, int, int);
 Bool	pxMaskFromTile(pxScreenPrivPtr, PixmapPtr, pxMaskPtr);
-void	pxTileBuf(pxScreenPrivPtr, int, int, int, PixmapPtr, u_int32_t *);
+void	pxTileBuf24r24(void *, void *, int, int, int);
+void	pxTileBuf8r24(void *, void *, int, int, int);
+void	pxTileBuf8r8(void *, void *, int, int, int);
 void	pxStippleBuf(PixmapPtr, u_int32_t *, int, int, u_int32_t, u_int32_t,
 		     int, int);
+void	pxStippleBufOpaque(PixmapPtr, u_int32_t *, int, int, u_int32_t,
+			   u_int32_t, int, int);
 void	*pxCompressBuf24to24(void *, void *, int);
 void	*pxCompressBuf24to8(void *, void *, int);
 void	pxExpandBuf24to24(void *, void *, int);

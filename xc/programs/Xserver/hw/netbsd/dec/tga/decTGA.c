@@ -1,4 +1,4 @@
-/* $NetBSD: decTGA.c,v 1.1 2001/09/18 20:02:55 ad Exp $ */
+/* $NetBSD: decTGA.c,v 1.2 2001/09/22 19:43:52 ad Exp $ */
 
 /* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
@@ -90,9 +90,6 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "cfb.h"
 #include "tga.h"
 
-/* XXX */
-#include <stdio.h>
-
 Bool decTGAInit (screen, pScreen, argc, argv)
     int	    	  screen;    	/* what screen am I going to be */
     ScreenPtr	  pScreen;  	/* The Screen to initialize */
@@ -172,14 +169,14 @@ Bool decTGAInit (screen, pScreen, argc, argv)
 	    monitorResolution, monitorResolution,
 	    realwidth,
 	    decFbs[screen].depth)) {
-fprintf(stderr, "decTgaScreenInit failed\n");
+	    ErrorF("decTgaScreenInit failed\n");
             return FALSE;
 	}
 
 	decColormapScreenInit(pScreen);
 	if (!decScreenInit(pScreen)) {
-fprintf(stderr, "decScreenInit failed\n");
-		return FALSE;
+	    ErrorF("decScreenInit failed\n");
+	    return FALSE;
 	}
 	(void) decSaveScreen(pScreen, SCREEN_SAVER_OFF);
 	return cfbCreateDefColormap(pScreen);
@@ -210,7 +207,7 @@ decTgaSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
 	}
 	return TRUE;
     default:
-	fprintf(stderr, "decTgaSetupScreen:  unsupported bpp = %d\n", bpp);
+	ErrorF("decTgaSetupScreen:  unsupported bpp = %d\n", bpp);
 	return FALSE;
     }
 }

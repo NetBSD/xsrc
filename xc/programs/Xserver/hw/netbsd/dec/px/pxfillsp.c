@@ -1,4 +1,4 @@
-/*	$NetBSD: pxfillsp.c,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: pxfillsp.c,v 1.2 2001/09/22 19:43:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ pxDoFillSpans(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 	pb[2] = 0;
 	pb[3] = gcPriv->umet;
 	pb[4] = (1 << 2) - 1;
-	pb[5] = gcPriv->fgPixel;
+	pb[5] = gcPriv->fgFill;
 
 	for (pptmax = ppt + n; ppt < pptmax; ppt++) {
 		w = *pwidth++;
@@ -221,7 +221,7 @@ pxDoFillSpansS(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 		pb[8] = xya;
 		pb[9] = v1;
 		pb[10] = v2;
-		pb[11] = gcPriv->fgPixel;
+		pb[11] = gcPriv->fgFill;
 	}
 
 	pxPacketFlush(sp, &pxp);
@@ -233,12 +233,15 @@ pxDoFillSpansT(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 {
 	pxScreenPrivPtr sp;
 	DDXPointPtr pptmax;
-	int x, y, w, xorg, yorg;
+	int x, y, w, xorg, yorg, tbp, tw;
 	pxImgBufPtr ib;
+	PixmapPtr pix;
+	void *p;
 
 	PX_TRACE("pxDoFillSpansT");
 
 	sp = gcPriv->sp;
+	pix = pGC->tile.pixmap;
 
 	for (pptmax = ppt + n; ppt < pptmax; ppt++) {
 		w = *pwidth++;
@@ -266,7 +269,13 @@ pxDoFillSpansT(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 		xorg = x - pGC->patOrg.x - pDrawable->x;
 		yorg = y - pGC->patOrg.y - pDrawable->y;
 
-		pxTileBuf(sp, w, xorg, yorg, pGC->tile.pixmap, ib->ptr);
+		tbp = pix->drawable.bitsPerPixel >> 3;
+		tw = pix->drawable.width;
+		p = (caddr_t)pix->devPrivate.ptr +
+		    (yorg % pix->drawable.height + pix->drawable.y) * pix->devKind +
+		    (pix->drawable.x * tbp);
+
+		(*sp->tileBuf)(ib->ptr, p, w, tw, xorg % tw);
 		pxSetScanlineRaw(sp, x, y, w, gcPriv->umet, gcPriv->pmask, ib);
 	}
 }
@@ -310,10 +319,15 @@ pxDoFillSpansUS(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 		xorg = x - pGC->patOrg.x - pDrawable->x;
 		yorg = y - pGC->patOrg.y - pDrawable->y;
 
-		if (gcPriv->fillStyle == FillStippled)
+		if (gcPriv->fillStyle == FillStippled) {
 			pxGetScanlineRaw(sp, x, y, w, ib);
-		pxStippleBuf(pGC->stipple, ib->ptr, w, pGC->fillStyle,
-		    gcPriv->fgPixel, gcPriv->bgPixel, xorg, yorg);
+			pxStippleBuf(pGC->stipple, ib->ptr, w, pGC->fillStyle,
+			    gcPriv->fgFill, gcPriv->bgPixel, xorg, yorg);
+		} else {
+			pxStippleBufOpaque(pGC->stipple, ib->ptr, w,
+			    pGC->fillStyle, gcPriv->fgFill, gcPriv->bgPixel,
+			    xorg, yorg);
+		}
 		pxSetScanlineRaw(sp, x, y, w, gcPriv->umet, gcPriv->pmask,
 		    ib);
 	}

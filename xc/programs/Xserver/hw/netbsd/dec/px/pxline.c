@@ -1,4 +1,4 @@
-/*	$NetBSD: pxline.c,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: pxline.c,v 1.2 2001/09/22 19:43:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ pxPolylines(pDrawable, pGC, mode, npt, pptInit)
     pb[2] = 0;
     pb[3] = gcPriv->umet;
     pb[4] = 4;
-    pb[5] = gcPriv->fgPixel;
+    pb[5] = gcPriv->fgFill;
 
     xorg = pDrawable->x;
     yorg = pDrawable->y;
@@ -729,7 +729,7 @@ dontStep:	;
 		(y2 <  pbox->y2))
 	    {
 		if (dashIndex & 1)
-		    pxAddLineC(sp, &pxp, x1, y2, x1, y1, gcPriv->fgPixel);
+		    pxAddLineC(sp, &pxp, x1, y2, x1, y1, gcPriv->fgFill);
 		else
 		    pxAddLineC(sp, &pxp, x2, y2, x2, y2, gcPriv->bgPixel);
 		break;

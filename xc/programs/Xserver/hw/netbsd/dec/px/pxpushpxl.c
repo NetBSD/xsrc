@@ -1,4 +1,4 @@
-/*	$NetBSD: pxpushpxl.c,v 1.1 2001/09/18 20:02:54 ad Exp $	*/
+/*	$NetBSD: pxpushpxl.c,v 1.2 2001/09/22 19:43:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ pxSolidPP(GCPtr pGC, PixmapPtr pBitMap, DrawablePtr pDrawable, int dx, int dy,
 		pb[1] = gcPriv->pmask;
 		pb[2] = 0;
 		pb[3] = gcPriv->umet | STAMP_WE_XYMASK;
-		pb[4] = gcPriv->fgPixel;
+		pb[4] = gcPriv->fgFill;
 
 		pBox = REGION_RECTS(&rgnDst);
 		pMaxBox = pBox + REGION_NUM_RECTS(&rgnDst);

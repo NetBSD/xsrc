@@ -1,4 +1,4 @@
-/*	$NetBSD: pxsetsp.c,v 1.1 2001/09/18 20:02:54 ad Exp $	*/
+/*	$NetBSD: pxsetsp.c,v 1.2 2001/09/22 19:43:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ pxSetSpans(DrawablePtr pDrawable, GCPtr pGC, char *charpsrc, DDXPointPtr ppt,
 	BoxPtr pbox, pboxLast, pboxTest;
 	DDXPointPtr pptLast;
 	RegionPtr prgnDst;
-	int xStart, xEnd, yMax, bpp;
+	int xStart, xEnd, yMax;
 	unsigned int *psrc;
 
 	PX_TRACE("pxSetSpans");
@@ -148,7 +148,6 @@ pxSetSpans(DrawablePtr pDrawable, GCPtr pGC, char *charpsrc, DDXPointPtr ppt,
 	sp = gcPriv->sp;
 
 	pptLast = ppt + nspans;
-	bpp = sp->bpp;
 	yMax = pDrawable->y + pDrawable->height;
 
 	pbox = REGION_RECTS(prgnDst);
@@ -210,7 +209,8 @@ pxSetSpans(DrawablePtr pDrawable, GCPtr pGC, char *charpsrc, DDXPointPtr ppt,
 			 * be outside them all.  Move on to the next point.
 			 */
 			ppt++;
-			psrc += PixmapWidthInPadUnits(*pwidth, bpp);
+			psrc += PixmapWidthInPadUnits(*pwidth,
+			    pDrawable->depth);
 			pwidth++;
 		}
 		return;
@@ -251,7 +251,7 @@ pxSetSpans(DrawablePtr pDrawable, GCPtr pGC, char *charpsrc, DDXPointPtr ppt,
 			}
 		}
 
-		psrc += PixmapWidthInPadUnits(*pwidth, bpp);
+		psrc += PixmapWidthInPadUnits(*pwidth, pDrawable->depth);
 		ppt++;
 		pwidth++;
 	}
