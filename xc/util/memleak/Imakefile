@@ -1,9 +1,10 @@
-XCOMM $XConsortium: Imakefile,v 1.8 94/04/04 21:48:49 gildea Exp $
-XCOMM $XFree86: xc/util/memleak/Imakefile,v 3.1 1995/05/07 14:08:40 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/9 1996/09/28 17:19:05 rws $
+XCOMM $XFree86: xc/util/memleak/Imakefile,v 3.2 1996/12/23 07:19:34 dawes Exp $
 #define DoNormalLib YES
 #define DoSharedLib NO
 #define DoDebugLib NO
 #define DoProfileLib NO
+#define IncSubdir X11
 #include <Library.tmpl>
 
 #ifdef MipsArchitecture

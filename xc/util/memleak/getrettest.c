@@ -1,5 +1,5 @@
 /*
- * $XConsortium: getrettest.c,v 1.3 94/04/17 20:59:45 keith Exp $
+ * $XConsortium: getrettest.c /main/4 1996/11/24 17:42:11 rws $
  *
 Copyright (c) 1992  X Consortium
 
@@ -45,5 +45,5 @@ g ()
 
     getStackTrace (returnStack, 16);
     for (i = 0; i < 16 && returnStack[i]; i++)
-	printf ("%2d: 0x%x\n", i, returnStack[i]);
+	printf ("%2d: 0x%lx\n", i, returnStack[i]);
 }

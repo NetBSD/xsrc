@@ -1,6 +1,6 @@
 /*
- * $XConsortium: fmalloc.c,v 1.6 94/04/17 20:59:43 kaleb Exp $
- * $XFree86: xc/util/memleak/fmalloc.c,v 3.1 1995/05/07 14:08:43 dawes Exp $
+ * $XConsortium: fmalloc.c /main/7 1996/11/24 17:42:06 rws $
+ * $XFree86: xc/util/memleak/fmalloc.c,v 3.3 1996/12/31 05:02:25 dawes Exp $
  *
 Copyright (c) 1992  X Consortium
 
@@ -97,7 +97,7 @@ typedef struct _head {
 
 typedef struct _tail {
     int		    tailMagic;
-#ifdef __alpha
+#if defined(__alpha) || defined(__alpha__)
     int		    tailPad;
 #endif
 } TailRec, *TailPtr;
@@ -170,7 +170,7 @@ PrintReturnStack (m, ra)
 
     fprintf (stderr, "   %s:", m);
     for (i = 0; i < MAX_RETURN_STACK && ra[i]; i++)
-	fprintf (stderr, " 0x%x", ra[i]);
+	fprintf (stderr, " 0x%lx", ra[i]);
     fprintf (stderr, "\n");
 }
 #endif
@@ -186,7 +186,7 @@ MemError (s, h, ourRet)
 
     if (h)
     {
-	fprintf (stderr, "%s 0x%08x (size %d) (from 0x%x)\n",
+	fprintf (stderr, "%s 0x%08lx (size %d) (from 0x%lx)\n",
 	     s, DataForHead(h), h->desiredsize, h->from);
 #ifdef HAS_GET_RETURN_ADDRESS
 	PrintReturnStack ("Saved return stack", h->returnStack);
