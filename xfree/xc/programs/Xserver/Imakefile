@@ -629,6 +629,26 @@ ServerDriverSDKTarget(XFree86)
 #endif
 #endif        /* XF86Server */
 
+#if defined(XalphaNetBSDServer) && XalphaNetBSDServer
+XCOMM
+XCOMM NetBSD/Alpha server
+XCOMM
+MFBSUBDIR   = mfb
+CFB8SUBDIR  = cfb
+CFB32SUBDIR = cfb32
+ANBDDXDIR  = hw/netbsd/alpha
+ANBDIRS = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB32DIR) $(ANBDDXDIR) $(DEPDIRS)
+ANBOBJS = hw/netbsd/alpha/alphaInit.o hw/netbsd/alpha/stubs.o
+ANBLIBS = hw/netbsd/alpha/tga/libalphaTga.a hw/netbsd/alpha/sfb/libalphaSfb.a \
+	  hw/netbsd/alpha/libalpha.a CFB32Libs CFB8Libs
+SetUIDServerTarget(XalphaNetBSD,$(ANBDIRS),$(ANBOBJS), \
+	$(LIBCWAPPER) $(ANBLIBS), \
+	$(FONTLIBS) $(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XalphaNetBSD
+#endif
+#endif /* XalphaNetBSDServer */
+
 #if defined(XdreamcastServer) && XdreamcastServer
 XCOMM
 XCOMM NetBSD/dreamcast server
@@ -1450,6 +1470,7 @@ CFBSUBDIRS = $(CFB8SUBDIR) $(CFB16SUBDIR) $(CFB24SUBDIR) $(CFB32SUBDIR)
 MIEXTDIRS = $(SHADOWDIR) $(LAYERDIR) $(ROOTLESSDIR)
 IPLANDIRS = $(IPLAN2P2DIR) $(IPLAN2P4DIR) $(IPLAN2P8DIR)
 DDXDIRS = $(DECWSDDXDIR) $(SUNDDXDIR) $(LYNXDDXDIR) \
+	  $(ANBDDXDIR) \
 	  $(DREAMCASTDDXDIR) \
 	  $(HPCDDXDIR) \
 	  $(MACPPCDDXDIR) $(MAC68KDDXDIR) \
