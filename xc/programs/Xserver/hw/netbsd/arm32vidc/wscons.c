@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.2 2001/12/18 00:06:15 bjh21 Exp $	*/
+/*	$NetBSD: wscons.c,v 1.3 2002/04/01 23:15:26 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -116,7 +116,7 @@ void wsmouse_io(void)
 	DeviceIntPtr device;
 
 	device = (DeviceIntPtr)LookupPointerDevice();
-	while (read(private.mouse_fd, &wsev, sizeof(wsev)) > 0) {
+	while (read(private.wsmouse_fd, &wsev, sizeof(wsev)) > 0) {
 		/* Get the time of the event as near as possible */
 		x_event.u.keyButtonPointer.time = TSTOMILLI(wsev.time);
 
