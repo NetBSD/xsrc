@@ -1,6 +1,6 @@
 /*
  * $XConsortium: fmalloc.c /main/7 1996/11/24 17:42:06 rws $
- * $XFree86: xc/util/memleak/fmalloc.c,v 3.3.2.1 1999/12/20 14:36:30 hohndel Exp $
+ * $XFree86: xc/util/memleak/fmalloc.c,v 3.3.2.2 2000/06/15 21:58:37 dawes Exp $
  *
 Copyright (c) 1992  X Consortium
 
@@ -638,6 +638,8 @@ realloc (old, desiredsize)
     new = malloc (desiredsize);
     if (!new)
 	return NULL;
+    if (!old)
+	return new;
     SEARCH(activeMemory, h, old);
     if (!h)
     {

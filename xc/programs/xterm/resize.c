@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: resize.c,v 1.34 95/05/24 22:12:04 gildea Exp $
- *	$XFree86: xc/programs/xterm/resize.c,v 3.40 2000/03/31 20:13:47 dawes Exp $
+ *	$XFree86: xc/programs/xterm/resize.c,v 3.18.2.11 1999/10/21 12:08:15 hohndel Exp $
  */
 
 /*
@@ -31,13 +31,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include <xtermcfg.h>
-
-#else
-
-#if defined(__EMX__) || defined(__CYGWIN__) || defined(SCO) || defined(sco)
-#define USE_TERMCAP 1
-#endif
-
 #endif
 
 #include <X11/Xos.h>
@@ -67,8 +60,14 @@
 #define CANT_OPEN_DEV_TTY
 #endif
 
-#if defined(__EMX__) || defined(__CYGWIN__)
+#ifdef __EMX__
 #define USE_SYSV_TERMIO
+#define USE_TERMCAP
+#endif
+
+#ifdef __QNX__
+#define USE_TERMINFO
+#include <unix.h>
 #endif
 
 #ifdef macII
@@ -76,16 +75,13 @@
 #undef SYSV				/* pretend to be bsd */
 #endif /* macII */
 
+#ifdef SCO
+#define USE_TERMCAP
+#endif
+
 #ifdef linux
 #define USE_TERMIOS
-#endif
-
-#ifdef __MVS__
-#define USE_TERMIOS
-#endif
-
-#ifdef Lynx
-#define USE_SYSV_TERMIO
+#define USE_SYSV_UTMP
 #endif
 
 #ifdef __OpenBSD__
@@ -93,24 +89,28 @@
 #include <term.h>
 #endif
 
-#ifndef USE_TERMINFO	/* avoid conflict with configure script */
-#if defined(SCO) || defined(sco) || defined(linux)
+#ifndef USE_TERMINFO
+#if defined(SCO) || defined(linux)
 #define USE_TERMINFO
 #endif
 #endif
 
-#if defined(SYSV) || defined(__CYGWIN__)
+#if defined(SYSV) || defined(Lynx) || defined(__CYGWIN__)
 #define USE_SYSV_TERMIO
-#elif defined(__QNX__)
-#define USE_TERMINFO
-#include <unix.h>
-#elif !defined(USE_TERMCAP)
+#ifndef Lynx
+#define USE_SYSV_UTMP
+#else
 #define USE_TERMCAP
+#endif
+#else /* else not SYSV */
+#ifndef __QNX__
+#define USE_TERMCAP
+#endif
 #endif /* SYSV */
 
 /*
- * Some OS's may want to use both, like SCO for example.  We catch here anyone
- * who hasn't decided what they want.
+ * some OS's may want to use both, like SCO for example we catch
+ * here anyone who hasn't decided what they want.
  */
 #if !defined(USE_TERMCAP) && !defined(USE_TERMINFO)
 #define USE_TERMINFO
@@ -184,12 +184,6 @@ extern struct passwd *getpwuid(); 	/* does ANYBODY need this? */
 #define GCC_UNUSED /* nothing */
 #endif
 
-#ifdef __MVS__
-#define ESC(string) "\047" string
-#else
-#define ESC(string) "\033" string
-#endif
-
 #define	EMULATIONS	2
 #define	SUN		1
 #define	VT100		0
@@ -221,25 +215,25 @@ char *emuname[EMULATIONS] = {
 char *myname;
 int shell_type = SHELL_UNKNOWN;
 char *getsize[EMULATIONS] = {
-	ESC("7") ESC("[r") ESC("[999;999H") ESC("[6n"),
-	ESC("[18t"),
+	"\0337\033[r\033[999;999H\033[6n",
+	"\033[18t",
 };
 #if !defined(sun) || defined(SVR4)
 #ifdef TIOCSWINSZ
 char *getwsize[EMULATIONS] = {	/* size in pixels */
 	0,
-	ESC("[14t"),
+	"\033[14t",
 };
 #endif	/* TIOCSWINSZ */
 #endif	/* sun */
 char *restore[EMULATIONS] = {
-	ESC("8"),
+	"\0338",
 	0,
 };
 char *setname = "";
 char *setsize[EMULATIONS] = {
 	0,
-	ESC("[8;%s;%st"),
+	"\033[8;%s;%st",
 };
 #ifdef USE_SYSV_TERMIO
 struct termio tioorig;
@@ -251,8 +245,8 @@ struct sgttyb sgorig;
 # endif /* USE_TERMIOS */
 #endif /* USE_SYSV_TERMIO */
 char *size[EMULATIONS] = {
-	ESC("[%d;%dR"),
-	ESC("[8;%d;%dt"),
+	"\033[%d;%dR",
+	"\033[8;%d;%dt",
 };
 char sunname[] = "sunsize";
 int tty;
@@ -261,7 +255,7 @@ FILE *ttyfp;
 #ifdef TIOCSWINSZ
 char *wsize[EMULATIONS] = {
 	0,
-	ESC("[4;%hd;%hdt"),
+	"\033[4;%hd;%hdt",
 };
 #endif	/* TIOCSWINSZ */
 #endif	/* sun */
@@ -275,6 +269,7 @@ static void Usage (void);
 static void readstring (FILE *fp, char *buf, char *str);
 
 #ifdef USE_TERMCAP
+static char *strindex (char *s1, char *s2);
 #ifdef HAVE_TERMCAP_H
 #include <termcap.h>
 #if defined(NCURSES_VERSION)
@@ -287,17 +282,8 @@ static void readstring (FILE *fp, char *buf, char *str);
 #endif
 #else
 #include <curses.h>
-#ifdef NCURSES_VERSION
-#include <term.h> /* tgetent() */
-#endif
 #endif /* HAVE_TERMCAP_H  */
 #endif
-
-#ifdef USE_TERMCAP
-static char *strindex (char *s1, char *s2);
-#endif
-
-#define TERMCAP_SIZE 1500		/* 1023 is standard; 'screen' exceeds */
 
 /*
    resets termcap string to reflect current screen size
@@ -322,8 +308,8 @@ main (int argc, char **argv)
 #endif /* USE_SYSV_TERMIO */
 #ifdef USE_TERMCAP
 	int ok_tcap = 1;
-	char termcap [TERMCAP_SIZE];
-	char newtc [TERMCAP_SIZE];
+	char termcap [1024];
+	char newtc [1024];
 #endif /* USE_TERMCAP */
 	char buf[BUFSIZ];
 #if defined(sun) && !defined(SVR4)
@@ -568,8 +554,10 @@ main (int argc, char **argv)
 			 setname, termcap);
 #endif /* USE_TERMCAP */
 #ifdef USE_TERMINFO
+#ifndef SVR4
 		printf ("%sCOLUMNS=%d;\nLINES=%d;\nexport COLUMNS LINES;\n",
 			setname, cols, rows);
+#endif /* !SVR4 */
 #endif	/* USE_TERMINFO */
 
 	} else {		/* not Bourne shell */
@@ -580,8 +568,10 @@ main (int argc, char **argv)
 			 setname, termcap);
 #endif /* USE_TERMCAP */
 #ifdef USE_TERMINFO
+#ifndef SVR4
 		printf ("set noglob;\n%ssetenv COLUMNS '%d';\nsetenv LINES '%d';\nunset noglob;\n",
 			setname, cols, rows);
+#endif /* !SVR4 */
 #endif	/* USE_TERMINFO */
 	}
 	exit(0);
@@ -636,11 +626,10 @@ readstring(register FILE *fp, register char *buf, char *str)
 	setitimer(ITIMER_REAL, &it, (struct itimerval *)NULL);
 #endif
 	if ((c = getc(fp)) == 0233) {	/* meta-escape, CSI */
-		*buf++ = c = ESC("")[0];
+		*buf++ = c = '\033';
 		*buf++ = '[';
-	} else {
+	} else
 		*buf++ = c;
-	}
 	if(c != *str) {
 		fprintf(stderr, "%s: unknown character, exiting.\r\n", myname);
 		onintr(0);

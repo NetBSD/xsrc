@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.17 1999/12/20 12:55:59 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.18 2001/02/04 19:41:52 herrb Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -316,7 +316,7 @@ void getstring(s)
  * We also do the same for QNX4, since we use the OS mouse drivers.
  */
 
-static char *mousetype_identifier[11] = {
+static char *mousetype_identifier[12] = {
 	"Microsoft",
 	"MouseSystems",
 	"Busmouse",
@@ -327,6 +327,7 @@ static char *mousetype_identifier[11] = {
 	"MMHitTab",
 	"IntelliMouse",
 	"acecad",
+	"wsmouse",
 #if defined(__EMX__) || (defined(__QNX__) && !defined(__QNXNTO__))
 	"OSMOUSE"
 #endif
@@ -337,7 +338,7 @@ static char *mouseintro_text =
 "First specify a mouse protocol type. Choose one from the following list:\n"
 "\n";
 
-static char *mousetype_name[10] = {
+static char *mousetype_name[11] = {
 	"Microsoft compatible (2-button protocol)",
 	"Mouse Systems (3-button protocol)",
 	"Bus Mouse",
@@ -347,7 +348,8 @@ static char *mousetype_name[10] = {
 	"MM Series",	/* XXXX These descriptions should be improved. */
 	"MM HitTablet",
 	"Microsoft IntelliMouse",
-	"Acecad tablet"
+	"Acecad tablet",
+	"Net/OpenBSD WSCONS Mouse"
 };
 
 static char *mousedev_text =
@@ -403,7 +405,7 @@ void mouse_configuration() {
 	char s[80];
 	printf("%s", mouseintro_text);
 	
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < 11; i++)
 		printf("%2d.  %s\n", i + 1, mousetype_name[i]);
 
 	printf("\n");
@@ -2134,8 +2136,8 @@ static char *XF86Config_fontpathchunk_text =
 "\n"
 "# For OSs that support Dynamically loaded modules, ModulePath can be\n"
 "# used to set a search path for the modules.  This is currently supported\n"
-"# for Linux ELF, FreeBSD 2.x and NetBSD 1.x.  The default path is shown\n"
-"# here.\n"
+"# for Linux ELF, FreeBSD 2.x, NetBSD 1.x and OpenBSD 2.x.\n"
+"# The default path is shown here.\n"
 "\n"
 "#    ModulePath \"" MODULEPATH "\"\n"
 "\n"
@@ -2145,7 +2147,7 @@ static char *XF86Config_fontpathchunk_text =
 "# Module section -- this is an optional section which is used to specify\n"
 "# which dynamically loadable modules to load.  Dynamically loadable\n"
 "# modules are currently supported only for Linux ELF, FreeBSD 2.x\n"
-"# and NetBSD 1.x.  Currently, dynamically loadable modules are used\n"
+"# NetBSD 1.x and OpenBSD. Currently, dynamically loadable modules are used\n"
 "# only for some extended input (XInput) device drivers.\n"
 "# **********************************************************************\n"
 "#\n"

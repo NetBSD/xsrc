@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/ativersion.h,v 1.1.2.5 1999/10/12 17:18:57 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/ativersion.h,v 1.1.2.8 2000/05/14 02:02:18 tsi Exp $ */
 /*
- * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -24,10 +24,10 @@
 #ifndef ___ATIVERSION_H___
 #define ___ATIVERSION_H___ 1
 
-#define ATI_VERSION_NAME "4.6"
+#define ATI_VERSION_NAME "4.9"
 
 #define ATI_VERSION_MAJOR 4
-#define ATI_VERSION_MINOR 6
+#define ATI_VERSION_MINOR 9
 
 #define ATI_VERSION_CURRENT ((ATI_VERSION_MAJOR << 16) | ATI_VERSION_MINOR)
 

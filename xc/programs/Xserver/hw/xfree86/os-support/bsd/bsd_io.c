@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_io.c,v 3.12.2.1 1999/05/07 00:52:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_io.c,v 3.12.2.2 2001/02/04 21:41:27 herrb Exp $ */
 /*
  * Copyright 1992 by Rich Murphey <Rich@Rice.edu>
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
@@ -67,9 +67,10 @@ int duration;
 		    	ioctl(xf86Info.consoleFd, KBDSETBELL, &s);
 			break;
 #endif
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
+#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
 	    	case SYSCONS:
 		case PCVT:
+		case WSCONS:
 			ioctl(xf86Info.consoleFd, KDMKTONE,
 			      ((1193190 / pitch) & 0xffff) |
 			      (((unsigned long)duration*loudness/50)<<16));
@@ -93,9 +94,10 @@ int leds;
 		ioctl(xf86Info.consoleFd, KBDSLEDS, &leds);
 		break;
 #endif
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
+#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
 	case SYSCONS:
 	case PCVT:
+	case WSCONS:
 		ioctl(xf86Info.consoleFd, KDSETLED, leds);
 		break;
 #endif
@@ -117,9 +119,10 @@ int xf86GetKbdLeds()
 	        leds = (leds&0x01)<<2 | leds&0x02 | (leds&0x04)>>2;
 		break;
 #endif
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
+#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)  || defined(WSCONS_SUPPORT)
 	case SYSCONS:
 	case PCVT:
+	case WSCONS:
 		ioctl(xf86Info.consoleFd, KDGETLED, &leds);
 		break;
 #endif
@@ -144,9 +147,10 @@ char rad;
 		ioctl(xf86Info.consoleFd, KBDSTPMAT, &rad);
 		break;
 #endif
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
+#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
 	case SYSCONS:
 	case PCVT:
+	case WSCONS:
 		ioctl(xf86Info.consoleFd, KDSETRAD, rad);
 		break;
 #endif
@@ -162,10 +166,11 @@ void xf86KbdInit()
 	case CODRV011:
 	case CODRV01X:
 		break;
-#if defined(PCCONS_SUPPORT) || defined(SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
+#if defined(PCCONS_SUPPORT) || defined(SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
 	case PCCONS:
 	case SYSCONS:
 	case PCVT:
+	case WSCONS:
 		tcgetattr(xf86Info.consoleFd, &kbdtty);
 		break;
 #endif
@@ -182,10 +187,11 @@ int xf86KbdOn()
 	case CODRV01X:
 		break;
 
-#if defined(SYSCONS_SUPPORT) || defined(PCCONS_SUPPORT) || defined(PCVT_SUPPORT)
+#if defined(SYSCONS_SUPPORT) || defined(PCCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
 	case SYSCONS:
 	case PCCONS:
 	case PCVT:
+	case WSCONS:
 		nTty = kbdtty;
 		nTty.c_iflag = IGNPAR | IGNBRK;
 		nTty.c_oflag = 0;
@@ -197,7 +203,7 @@ int xf86KbdOn()
 		cfsetospeed(&nTty, 9600);
 		tcsetattr(xf86Info.consoleFd, TCSANOW, &nTty);
 
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
+#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
 		ioctl(xf86Info.consoleFd, KDSKBMODE, K_RAW);
 #endif
 		break;
@@ -214,13 +220,14 @@ int xf86KbdOff()
 	case CODRV01X:
 		break;
 
-#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT)
+#if defined (SYSCONS_SUPPORT) || defined (PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
 	case SYSCONS:
 	case PCVT:
+	case WSCONS:
 		ioctl(xf86Info.consoleFd, KDSKBMODE, K_XLATE);
 		/* FALL THROUGH */
 #endif
-#if defined(SYSCONS_SUPPORT) || defined(PCCONS_SUPPORT) || defined(PCVT_SUPPORT)
+#if defined(SYSCONS_SUPPORT) || defined(PCCONS_SUPPORT) || defined(PCVT_SUPPORT) || defined(WSCONS_SUPPORT)
 	case PCCONS:
 		tcsetattr(xf86Info.consoleFd, TCSANOW, &kbdtty);
 		break;

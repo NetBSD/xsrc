@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_mmap.c,v 3.2 1996/09/29 13:38:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/lynx_mmap.c,v 3.2.4.1 2000/02/11 21:36:26 dawes Exp $ */
 
 #include "X.h"
 #include "input.h"
@@ -44,7 +44,7 @@ int Len;
 	char *p;
 	int mlen;
 
-	mlen = (Offset + Len + 4095) & ~4096;
+	mlen = (Offset + Len + 4095) & ~4095;
 	p = smem_create("BIOS-probe", (char *)Base, mlen, SM_READ);
 	if (p == NULL)
 	{

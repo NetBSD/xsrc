@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticlock.h,v 1.1.2.1 1998/02/01 16:41:45 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticlock.h,v 1.1.2.2 2000/02/28 04:51:28 tsi Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -35,9 +35,10 @@
 #define ATI_CLOCK_18810     3
 #define ATI_CLOCK_18811_0   4
 #define ATI_CLOCK_18811_1   5
-#define ATI_CLOCK_MACH64A   6
-#define ATI_CLOCK_MACH64B   7
-#define ATI_CLOCK_MACH64C   8
+#define ATI_CLOCK_2494AM    6
+#define ATI_CLOCK_MACH64A   7
+#define ATI_CLOCK_MACH64B   8
+#define ATI_CLOCK_MACH64C   9
 extern CARD8 ATIClock;
 extern const char *ATIClockNames[];
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/ativga.c,v 3.7.2.1 1998/10/18 20:42:04 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/ativga.c,v 3.7.2.2 2000/02/15 03:47:02 tsi Exp $ */
 /***************************************************************************
  * Start of VGA font saving and restoration code.
  * Created: Sun Jun 27 12:50:09 1993 by faith@cs.unc.edu
@@ -55,6 +55,7 @@
 
 typedef struct {
    vgaHWRec std;
+   unsigned char shadow_crtc[25];
    unsigned char ATIExtRegBank[11]; /* ATI Registers B0,B1,B2,B3,
 				       B5, B6,B8,B9, BE,A6,A7 */
 } SaveBlock;
@@ -104,8 +105,10 @@ static int inATI(index)
 void mach64SaveVGAInfo(screen_idx)
      int screen_idx;
 {
+   unsigned long saved_lcd_gen_ctrl = 0, lcd_gen_ctrl = 0;
    unsigned char b2_save;
    unsigned char b8_save;
+   int i;
 
    if (!vgaBase) {
       vgaBase = xf86MapVidMem(screen_idx, VGA_REGION, (pointer)0xa0000,
@@ -114,10 +117,6 @@ void mach64SaveVGAInfo(screen_idx)
 
    vgaIOBase = (inb(0x3cc) & 0x01) ? 0x3D0 : 0x3B0;
    
-   /* This part is copied from ATISave() in
-    * xf86/vga256/drivers/ati/driver.c
-    */
-
    if (!mach64IntegratedController) {
      /* Unlock ATI specials */
      outw(ATIExtReg, (((b8_save = inATI(0xb8)) & 0xC0) << 8) | 0xb8);
@@ -126,7 +125,48 @@ void mach64SaveVGAInfo(screen_idx)
      outw(ATIExtReg, 0x00b2);	/* segment select 0 */
    }
 
+   if (mach64LCDPanelID >= 0) {
+      if (mach64ChipType == MACH64_LG_ID) {
+	 saved_lcd_gen_ctrl = regr(LCD_GEN_CTRL);
+	 lcd_gen_ctrl = saved_lcd_gen_ctrl &
+	    ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN);
+	 regw(LCD_GEN_CTRL, lcd_gen_ctrl);
+      } else {
+	 outb(ioLCD_INDEX, LCD_GEN_CNTL);
+	 saved_lcd_gen_ctrl = inl(ioLCD_DATA);
+	 lcd_gen_ctrl = saved_lcd_gen_ctrl &
+	    ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN);
+	 outl(ioLCD_DATA, lcd_gen_ctrl);
+      }
+   }
+
    vgaNewVideoState = vgaHWSave(vgaNewVideoState, sizeof(SaveBlock));
+   /* Unlock VGA CRTC */
+   outw(vgaIOBase + 4, ((save->std.CRTC[17] & 0x7F) << 8) | 17);
+
+   if (mach64LCDPanelID >= 0) {
+      lcd_gen_ctrl |= SHADOW_EN | SHADOW_RW_EN;
+      if (mach64ChipType == MACH64_LG_ID) {
+	 regw(LCD_GEN_CTRL, lcd_gen_ctrl);
+      } else {
+	 outb(ioLCD_INDEX, LCD_GEN_CNTL);
+	 outl(ioLCD_DATA, lcd_gen_ctrl);
+      }
+
+      for (i=0; i<25; i++) {
+	 outb(vgaIOBase + 4, i);
+	 save->shadow_crtc[i] = inb(vgaIOBase + 5);
+      }
+      /* Unlock shadow VGA CRTC */
+      outw(vgaIOBase + 4, ((save->shadow_crtc[17] & 0x7F) << 8) | 17);
+
+      if (mach64ChipType == MACH64_LG_ID) {
+	 regw(LCD_GEN_CTRL, saved_lcd_gen_ctrl);
+      } else {
+	 outb(ioLCD_INDEX, LCD_GEN_CNTL);
+	 outl(ioLCD_DATA, saved_lcd_gen_ctrl);
+      }
+   }
 
    if (!mach64IntegratedController) {
      save->ATIReg0  = inATI(0xb0);
@@ -155,9 +195,8 @@ void mach64SaveVGAInfo(screen_idx)
 
 void mach64RestoreVGAInfo()
 {
-   /* This routine is mostly from ATIRestore() in
-    * xf86/vga256/drivers/ati/driver.c
-    */
+   unsigned long saved_lcd_gen_ctrl = 0, lcd_gen_ctrl = 0;
+   int i;
 
    if (!mach64IntegratedController) {
      /* Unlock ATI specials */
@@ -182,10 +221,45 @@ void mach64RestoreVGAInfo()
      outw(ATIExtReg, (save->ATIReg8 << 8) | 0xb8);
    }
 
+   if (mach64LCDPanelID >= 0) {
+      if (mach64ChipType == MACH64_LG_ID) {
+	 saved_lcd_gen_ctrl = regr(LCD_GEN_CTRL);
+	 lcd_gen_ctrl = saved_lcd_gen_ctrl &
+	    ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN);
+	 regw(LCD_GEN_CTRL, lcd_gen_ctrl);
+      } else {
+	 outb(ioLCD_INDEX, LCD_GEN_CNTL);
+	 saved_lcd_gen_ctrl = inl(ioLCD_DATA);
+	 lcd_gen_ctrl = saved_lcd_gen_ctrl &
+	    ~(CRTC_RW_SELECT | SHADOW_EN | SHADOW_RW_EN);
+	 outl(ioLCD_DATA, lcd_gen_ctrl);
+      }
+   }
+
    /*
     * Restore the generic vga registers
     */
    vgaHWRestore((vgaHWPtr)save);
+
+   if (mach64LCDPanelID >= 0) {
+      lcd_gen_ctrl |= SHADOW_EN | SHADOW_RW_EN;
+      if (mach64ChipType == MACH64_LG_ID) {
+	 regw(LCD_GEN_CTRL, lcd_gen_ctrl);
+      } else {
+	 outb(ioLCD_INDEX, LCD_GEN_CNTL);
+	 outl(ioLCD_DATA, lcd_gen_ctrl);
+      }
+
+      outw(vgaIOBase + 4, ((save->shadow_crtc[17] & 0x7F) << 8) | 17);
+      for (i=0; i<25; i++) outw(vgaIOBase + 4, (save->shadow_crtc[i] << 8) | i);
+
+      if (mach64ChipType == MACH64_LG_ID) {
+	 regw(LCD_GEN_CTRL, saved_lcd_gen_ctrl);
+      } else {
+	 outb(ioLCD_INDEX, LCD_GEN_CNTL);
+	 outl(ioLCD_DATA, saved_lcd_gen_ctrl);
+      }
+   }
 }
 
 /*

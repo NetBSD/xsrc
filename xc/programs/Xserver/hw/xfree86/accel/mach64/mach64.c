@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.20 1999/10/12 17:18:42 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.22 2000/05/14 02:02:09 tsi Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -417,6 +417,7 @@ int	mach64CXClk;
 int	mach64MemClk;
 int	mach64DRAMMemClk;
 int	mach64VRAMMemClk;
+int	mach64XCLK;
 int	mach64MemCycle;
 Bool	mach64IntegratedController;
 Bool	mach64HasDSP;
@@ -436,7 +437,7 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
 {
 #define BIOS_DATA_SIZE 0x10000
    char                       signature[]    = " 761295520";
-   char                       bios_data[BIOS_DATA_SIZE];
+   CARD8                      bios_data[BIOS_DATA_SIZE];
    char                       bios_signature[10];
 #define sbios_data(_n)        (*((CARD16 *)(bios_data + (_n))))
    int                        tmp,tmp2,i,j;
@@ -473,7 +474,7 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    info.asic_identifier        = bios_data[ 0x43 ];
    info.bios_major             = bios_data[ 0x4c ];
    info.bios_minor             = bios_data[ 0x4d ];
-   strncpy( info.bios_date, bios_data + 0x50, 20 );
+   strncpy( info.bios_date, (char *)bios_data + 0x50, 20 );
    
    info.VGA_Wonder_Present     = bios_data[ 0x44 ] & 0x40;
 
@@ -1540,6 +1541,25 @@ mach64Probe()
 	mach64CXClk = 7;  /* Use IBM RGB514 PLL */
     else
 	mach64CXClk = info->CXClk;
+    if (mach64HasDSP) {
+	/* Calculate XCLK */
+	outb(ioCLOCK_CNTL + 1, MCLK_FB_DIV << 2);
+	mach64XCLK =
+	    inb(ioCLOCK_CNTL + 2) * 4 * mach64RefFreq / mach64RefDivider;
+	outb(ioCLOCK_CNTL + 1, PLL_XCLK_CNTL << 2);
+	i = inb(ioCLOCK_CNTL + 2);
+	if (!(i & MFB_TIMES_4_2))
+	    mach64XCLK >>= 1;
+	i = i & XCLK_SRC_SEL;
+	switch (i) {
+	case 0:					      break;
+	case 1:  case 2:  case 3:  mach64XCLK >>= i;  break;
+	case 4:			   mach64XCLK /= 3;   break;
+	default:
+	    ErrorF("Unsupported XCLK source:  %d!\n", i);
+	    return FALSE;
+	}
+    }
 
 #ifdef DEBUG
     ErrorF("MinFreq = %d, MaxFreq = %d, RefFreq = %d, RefDivider = %d\n",
@@ -1561,7 +1581,12 @@ mach64Probe()
 
 	mach64LCDHorizontal = info->LCDHorizontal;
 	mach64LCDVertical = info->LCDVertical;
-	mach64LCDClock = mach64GetCTClock(0);
+
+	if (inl(ioCRTC_GEN_CNTL) & CRTC_EXT_DISP_EN)
+	    i = inb(ioCLOCK_CNTL);
+	else
+	    i = inb(0x3cc) >> 2;
+	mach64LCDClock = mach64GetCTClock(i & 3);
 	ErrorF("%s %s: %dx%d panel (ID %d) detected;  clock %.2f MHz\n",
 		XCONFIG_PROBED, mach64InfoRec.name,
 		mach64LCDHorizontal, mach64LCDVertical, mach64LCDPanelID,

@@ -7,25 +7,17 @@ XCOMM Xterm assumes that bcopy can handle overlapping arguments.  If your
 XCOMM bcopy (or memcpy) cannot, write a routine called bcopy and link it in
 XCOMM or add -Dbcopy=mybcopy to the DEFINES list below.
 XCOMM
-XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.29 2000/03/03 20:02:27 dawes Exp $
+XCOMM $XFree86: xc/programs/xterm/Imakefile,v 3.11.4.7 1999/07/28 13:37:50 hohndel Exp $
 XCOMM
 
 /* Uncomment SCROLLBAR_RIGHT if you want the scroll bar to be on the right */
 SCROLLBAR_RIGHT = -DSCROLLBAR_RIGHT
-
-/* Define UTF8support to compile-in support for UTF-8 */
-#define UTF8support
 
 /*
  * Fixes to allow compile with X11R5
  */
 #ifndef XkbClientDefines
 #define XkbClientDefines /**/
-#endif
-
-#if defined(UseUtempter)
-#undef InstallXtermSetUID
-        UTMPLIB = -lutempter
 #endif
 
 #ifndef XkbClientDepLibs
@@ -61,74 +53,56 @@ module.o: ; $(CC) -c defines $(CFLAGS) module.c
          PTYLIB = -lutil
 #endif
 
-#ifdef OS2Architecture
-/*
- * Only used in os2main.c, see ptyx.h for OPT_I18N_SUPPORT
- * <werner@suse.de>
- */
 #if XtermWithI18N
         I18NDEF = -DI18N
-      FEATURE_DEFINES = -DDEBUG -DALLOWLOGGING $(I18NDEF)
-#else
-      FEATURE_DEFINES = -DDEBUG -DALLOWLOGGING
 #endif
+
+#ifdef OS2Architecture
+      FEATURE_DEFINES = -DDEBUG -DALLOWLOGGING
 #endif
 
  OSMAJORVERSION = OSMajorVersion
  OSMINORVERSION = OSMinorVersion
 
 #if !defined(AmoebaArchitecture) && !defined(OS2Architecture) && !defined(__GNU__)
-#if defined(UseUtempter)
-        UTMPDEF = -DUSE_UTEMPTER
-#else
         UTMPDEF = -DUTMP
-#endif
 #endif
 
 #ifdef AmoebaArchitecture
-       EXTRASRC = ttysvr.c
-       EXTRAOBJ = ttysvr.o
+        EXTRASRC = ttysvr.c
+        EXTRAOBJ = ttysvr.o
 #endif
-
-#ifdef UTF8support
-    UTF8_OPTION = -DOPT_WIDE_CHARS
-        UTF8SRC = keysym2ucs.c
-        UTF8OBJ = keysym2ucs.o
-#endif
-
    MAIN_DEFINES = $(UTMPDEF) $(TTYGROUPDEF) $(PUCCPTYDDEF) $(NOPOSIXTERMIOS) \
 		  -DOSMAJORVERSION=$(OSMAJORVERSION) \
 		  -DOSMINORVERSION=$(OSMINORVERSION)
-   MISC_DEFINES = /* -DALLOWLOGGING -DALLOWLOGFILEEXEC */
+   MISC_DEFINES = /* -DALLOWLOGGING -DALLOWLOGFILEEXEC */ 
     XKB_DEFINES = XkbClientDefines
-        DEFINES = -I. $(XKB_DEFINES) $(TERMCAPDEFINES) $(FEATURE_DEFINES) $(SCROLLBAR_RIGHT) $(UTF8_OPTION)
+        DEFINES = -I. $(XKB_DEFINES) $(TERMCAPDEFINES) $(FEATURE_DEFINES) $(SCROLLBAR_RIGHT)
 
 #ifdef OS2Architecture
           MAINSRC = os2main.c
-          MAINOBJ = os2main.o
+          MAINOBJ = os2main.o 
 #else
           MAINSRC = main.c
           MAINOBJ = main.o
 #endif
           SRCS1 = button.c charproc.c charsets.c cursor.c \
-		  data.c doublechr.c fontutils.c input.c \
-		  menu.c misc.c print.c ptydata.c \
+	  	  data.c doublechr.c fontutils.c input.c \
+		  $(MAINSRC) menu.c misc.c print.c \
 		  screen.c scrollbar.c tabs.c util.c \
-		  TekPrsTbl.c Tekproc.c VTPrsTbl.c \
-		  $(MAINSRC) $(EXTRASRC) $(UTF8SRC)
+		  TekPrsTbl.c Tekproc.c VTPrsTbl.c $(EXTRASRC)
           OBJS1 = button.o charproc.o charsets.o cursor.o \
 		  data.o doublechr.o fontutils.o input.o \
-		  menu.o misc.o print.o ptydata.o \
+		  $(MAINOBJ) menu.o misc.o print.o \
 		  screen.o scrollbar.o tabs.o util.o \
-		  TekPrsTbl.o Tekproc.o VTPrsTbl.o \
-		  $(MAINOBJ) $(EXTRAOBJ) $(UTF8OBJ)
+		  TekPrsTbl.o Tekproc.o VTPrsTbl.o $(EXTRAOBJ)
           SRCS2 = resize.c
           OBJS2 = resize.o
            SRCS = $(SRCS1) $(SRCS2)
            OBJS = $(OBJS1) $(OBJS2)
        PROGRAMS = ProgramTargetName(resize) ProgramTargetName(xterm)
        DEPLIBS1 = XkbClientDepLibs XawClientDepLibs
-       DEPLIBS2 =
+       DEPLIBS2 = 
 
 #ifndef TermcapLibrary
 #if SystemV && !defined(MacIIArchitecture)
@@ -147,15 +121,15 @@ module.o: ; $(CC) -c defines $(CFLAGS) module.c
 AllTarget($(PROGRAMS))
 
 SpecialCObjectRule(main,$(_NOOP_),$(MAIN_DEFINES))
-SpecialCObjectRule(menu,$(_NOOP_),$(MISC_DEFINES))
+SpecialCObjectRule(menu,$(_NOOP_),$(MISC_DEFINES)) 
 SpecialCObjectRule(misc,$(_NOOP_),$(MISC_DEFINES))
 SpecialCObjectRule(charproc,$(_NOOP_),$(MISC_DEFINES))
-SpecialCObjectRule(data,$(_NOOP_),$(MISC_DEFINES))
+SpecialCObjectRule(data,$(_NOOP_),$(MISC_DEFINES)) 
 
 #if InstallXtermSetUID
 SetUIDProgramTarget(xterm,$(OBJS1),$(DEPLIBS1),XkbClientLibs XawClientLibs,$(TERMCAPLIB) $(PTYLIB))
 #else
-NormalProgramTarget(xterm,$(OBJS1),$(DEPLIBS1),XkbClientLibs XawClientLibs,$(TERMCAPLIB) $(UTMPLIB) $(PTYLIB))
+NormalProgramTarget(xterm,$(OBJS1),$(DEPLIBS1),XkbClientLibs XawClientLibs,$(TERMCAPLIB) $(PTYLIB))
 #endif
 
 #if InstallXtermSetUID && defined(SunArchitecture) && HasSharedLibraries && (OSMajorVersion < 5)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/r128/r128_accel.c,v 1.1.2.3 1999/11/18 15:37:32 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/r128/r128_accel.c,v 1.1.2.4 2000/01/28 03:35:54 martin Exp $ */
 /**************************************************************************
 
 Copyright 1999 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -179,7 +179,7 @@ static void R128SetupForFillRectSolid(int color, int rop,
     R128InfoPtr   info      = R128PTR();
     unsigned char *R128MMIO = info->MMIO;
 
-    R128WaitForFifo(3);
+    R128WaitForFifo(4);
     OUTREG(R128_DP_GUI_MASTER_CNTL, (info->dp_gui_master_cntl
 				     | R128_GMC_BRUSH_SOLID_COLOR
 				     | R128_GMC_SRC_DATATYPE_COLOR
@@ -188,6 +188,8 @@ static void R128SetupForFillRectSolid(int color, int rop,
 				     | R128_AUX_CLIP_DIS));
     OUTREG(R128_DP_BRUSH_FRGD_CLR,  color);
     OUTREG(R128_DP_WRITE_MASK,      planemask);
+    OUTREG(R128_DP_CNTL,            (R128_DST_X_LEFT_TO_RIGHT
+				     | R128_DST_Y_TOP_TO_BOTTOM));
 }
 
 /* Subsequent XAA FillRectSolid. */
@@ -364,6 +366,9 @@ static void R128SubsequentScanlineScreenToScreenColorExpand(int srcAddr)
     OUTREG(R128_DST_Y_X,            ((info->scanline_y++ << 16)
 				     | info->scanline_x));
     OUTREG(R128_DST_HEIGHT_WIDTH,   info->scanline_h_w);
+
+				/* Correct for new XAA offset calculation */
+    p += ((srcAddr/8-1)/4);
 
 #if R128_FAST_COLOR_EXPAND
     while (left) {

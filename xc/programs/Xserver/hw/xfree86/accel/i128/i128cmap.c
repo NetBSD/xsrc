@@ -24,7 +24,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128cmap.c,v 3.2.2.1 1998/01/12 03:02:10 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128cmap.c,v 3.2.2.2 2000/02/15 23:36:26 robin Exp $ */
 
 /*
  * Modified by Amancio Hasty and Jon Tombs
@@ -41,6 +41,13 @@
 #include "colormapst.h"
 #include "windowstr.h"
 #include "compiler.h"
+
+#ifdef XFreeXDGA    
+#include "scrnintstr.h"
+#include "servermd.h"
+#define _XF86DGA_SERVER_
+#include "extensions/xf86dgastr.h"
+#endif      
 
 #include "i128.h"
 #include "i128reg.h"
@@ -136,7 +143,14 @@ i128StoreColors(pmap, ndef, pdefs)
          b = currenti128dac[pdefs[i].pixel].b =
 	    xf86bGammaMap[pdefs[i].blue  >> 8] >> 2;
       }
-      if (xf86VTSema) {
+      if (xf86VTSema
+#ifdef XFreeXDGA    
+            || ((i128InfoRec.directMode & XF86DGADirectGraphics)
+                && !(i128InfoRec.directMode & XF86DGADirectColormap))
+            || (i128InfoRec.directMode & XF86DGAHasColormap)
+#endif
+         )
+      {
 	 i128mem.rbase_g[WR_ADR] = pdefs[i].pixel;			MB;
 	 i128mem.rbase_g[PAL_DAT] = r;					MB;
 	 i128mem.rbase_g[PAL_DAT] = g;					MB;

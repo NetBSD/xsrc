@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/symbols/jp,v 3.1.4.2 1997/07/10 08:02:28 hohndel Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/jp,v 3.1.4.3 2000/06/15 21:58:36 dawes Exp $
 //
 // symbols for a Japanese 106 keyboard(by tsuka@kawalab.dnj.ynu.ac.jp)
 default xkb_symbols "jp106" {
@@ -97,8 +97,16 @@ default xkb_symbols "jp106" {
 	type= "PC_SYSRQ",
 	symbols[Group1]= [ Print, Execute ]
     };
+    key <SYRQ> {
+	type= "PC_SYSRQ",
+	symbols[Group1]= [ Print, Execute ]
+    };
     key <SCLK> {  [  Scroll_Lock	]	};
     key <PAUS> {
+	type= "PC_BREAK",
+	symbols[Group1]= [ Pause, Break ]
+    };
+    key <BRK> {
 	type= "PC_BREAK",
 	symbols[Group1]= [ Pause, Break ]
     };

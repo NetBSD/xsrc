@@ -33,7 +33,7 @@ from the X Consortium.
   under contract to X Consortium, Inc.
  */
 
-/* $XFree86: xc/programs/xfwp/xfwp.c,v 1.7.2.3 1999/07/23 13:23:23 hohndel Exp $ */
+/* $XFree86: xc/programs/xfwp/xfwp.c,v 1.7.2.4 2000/06/26 21:44:58 dawes Exp $ */
 
 #if defined(sun) && defined(i386) && defined(SVR4)
 #define __EXTENSIONS__
@@ -932,8 +932,9 @@ void  doProcessWritables(int fd_counter,
       // since we just wrote data to the conn_to fd, mark it as ready 
       // to check for reading when we go through select() the next time
       */
-      if (client_conn_array[fd_counter]->conn_to != -1)
-        FD_SET(client_conn_array[fd_counter]->conn_to, rinit);
+      if (client_conn_array[fd_counter] != NULL)
+	if (client_conn_array[fd_counter]->conn_to != -1)
+        	FD_SET(client_conn_array[fd_counter]->conn_to, rinit);
     } /* end else no errors on write  */
   } else
   {

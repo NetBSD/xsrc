@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiio.h,v 1.1.2.3 1999/10/12 17:18:54 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiio.h,v 1.1.2.4 2000/05/14 02:02:16 tsi Exp $ */
 /*
  * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -43,7 +43,7 @@ extern CARD16 ATIIOPortCRTC_H_TOTAL_DISP, ATIIOPortCRTC_H_SYNC_STRT_WID,
               ATIIOPortDAC_REGS, ATIIOPortDAC_CNTL,
               ATIIOPortHORZ_STRETCHING, ATIIOPortVERT_STRETCHING,
               ATIIOPortGEN_TEST_CNTL, ATIIOPortLCD_GEN_CTRL,
-              ATIIOPortPOWER_MANAGEMENT, ATIIOPortCONFIG_CNTL;
+              ATIIOPortCONFIG_CNTL;
 
 /* These port numbers are determined by ATISave & ATIRestore */
 extern CARD16 ATIIOPortDAC_MASK, ATIIOPortDAC_DATA,

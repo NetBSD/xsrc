@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticlock.c,v 1.1.2.3 1999/10/12 17:18:52 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/aticlock.c,v 1.1.2.6 2000/05/14 02:02:13 tsi Exp $ */
 /*
- * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 2000 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -55,55 +55,65 @@
  * R E G I S T E R S
  *   1CE     1CE     3C2     3C2    Frequency
  *   B9h     BEh                     (MHz)   18811-0  18811-1
- *  Bit 1   Bit 4   Bit 3   Bit 2    18810   18812-0  18811-2
- * ------- ------- ------- -------  -------  -------  -------
- *    0       0       0       0      30.240   30.240  135.000
- *    0       0       0       1      32.000   32.000   32.000
- *    0       0       1       0      37.500  110.000  110.000
- *    0       0       1       1      39.000   80.000   80.000
- *    0       1       0       0      42.954   42.954  100.000
- *    0       1       0       1      48.771   48.771  126.000
- *    0       1       1       0        (*1)   92.400   92.400
- *    0       1       1       1      36.000   36.000   36.000
- *    1       0       0       0      40.000   39.910   39.910
- *    1       0       0       1      56.644   44.900   44.900
- *    1       0       1       0      75.000   75.000   75.000
- *    1       0       1       1      65.000   65.000   65.000
- *    1       1       0       0      50.350   50.350   50.350
- *    1       1       0       1      56.640   56.640   56.640
- *    1       1       1       0        (*2)     (*3)     (*3)
- *    1       1       1       1      44.900   44.900   44.900
+ *  Bit 1   Bit 4   Bit 3   Bit 2    18810   18812-0  18811-2  (*5)
+ * ------- ------- ------- -------  -------  -------  -------  -------
+ *    0       0       0       0      30.240   30.240  135.000   75.000
+ *    0       0       0       1      32.000   32.000   32.000   77.500
+ *    0       0       1       0      37.500  110.000  110.000   80.000
+ *    0       0       1       1      39.000   80.000   80.000   90.000
+ *    0       1       0       0      42.954   42.954  100.000   25.175
+ *    0       1       0       1      48.771   48.771  126.000   28.322
+ *    0       1       1       0        (*1)   92.400   92.400   31.500
+ *    0       1       1       1      36.000   36.000   36.000   36.000
+ *    1       0       0       0      40.000   39.910   39.910  100.000
+ *    1       0       0       1        (*4)   44.900   44.900  110.000
+ *    1       0       1       0      75.000   75.000   75.000  126.000
+ *    1       0       1       1      65.000   65.000   65.000  135.000
+ *    1       1       0       0      50.350   50.350   50.350   40.000
+ *    1       1       0       1      56.640   56.640   56.640   44.900
+ *    1       1       1       0        (*2)     (*3)     (*3)   50.000
+ *    1       1       1       1      44.900   44.900   44.900   65.000
  *
  * (*1) External 0 (supposedly 16.657 Mhz)
  * (*2) External 1 (supposedly 28.322 MHz)
  * (*3) This setting doesn't seem to generate anything
+ * (*4) This setting is documented to be 56.644 MHz, but something close to 82
+ *      MHz has also been encountered.
+ * (*5) This setting is for Dell OmniPlex 590 systems, with a 68800AX on the
+ *      motherboard, along with an AT&T21C498 DAC (which is reported as an
+ *      STG1700) and ICS2494AM clock generator (a.k.a. ATI 18811-?).
  *
  * Mach32 Clock Frequencies
  * R E G I S T E R S
  *   1CE     1CE     3C2     3C2    Frequency
  *   B9h     BEh                     (MHz)   18811-0  18811-1
- *  Bit 1   Bit 4   Bit 3   Bit 2    18810   18812-0  18811-2
- * ------- ------- ------- -------  -------  -------  -------
- *    0       0       0       0      42.954   42.954  100.000
- *    0       0       0       1      48.771   48.771  126.000
- *    0       0       1       0        (*1)   92.400   92.400
- *    0       0       1       1      36.000   36.000   36.000
- *    0       1       0       0      30.240   30.240  135.000
- *    0       1       0       1      32.000   32.000   32.000
- *    0       1       1       0      37.500  110.000  110.000
- *    0       1       1       1      39.000   80.000   80.000
- *    1       0       0       0      50.350   50.350   50.350
- *    1       0       0       1      56.640   56.640   56.640
- *    1       0       1       0        (*2)     (*3)     (*3)
- *    1       0       1       1      44.900   44.900   44.900
- *    1       1       0       0      40.000   39.910   39.910
- *    1       1       0       1      56.644   44.900   44.900
- *    1       1       1       0      75.000   75.000   75.000
- *    1       1       1       1      65.000   65.000   65.000
+ *  Bit 1   Bit 4   Bit 3   Bit 2    18810   18812-0  18811-2  (*5)
+ * ------- ------- ------- -------  -------  -------  -------  -------
+ *    0       0       0       0      42.954   42.954  100.000   25.175
+ *    0       0       0       1      48.771   48.771  126.000   28.322
+ *    0       0       1       0        (*1)   92.400   92.400   31.500
+ *    0       0       1       1      36.000   36.000   36.000   36.000
+ *    0       1       0       0      30.240   30.240  135.000   75.000
+ *    0       1       0       1      32.000   32.000   32.000   77.500
+ *    0       1       1       0      37.500  110.000  110.000   80.000
+ *    0       1       1       1      39.000   80.000   80.000   90.000
+ *    1       0       0       0      50.350   50.350   50.350   40.000
+ *    1       0       0       1      56.640   56.640   56.640   44.900
+ *    1       0       1       0        (*2)     (*3)     (*3)   50.000
+ *    1       0       1       1      44.900   44.900   44.900   65.000
+ *    1       1       0       0      40.000   39.910   39.910  100.000
+ *    1       1       0       1        (*4)   44.900   44.900  110.000
+ *    1       1       1       0      75.000   75.000   75.000  126.000
+ *    1       1       1       1      65.000   65.000   65.000  135.000
  *
  * (*1) External 0 (supposedly 16.657 Mhz)
  * (*2) External 1 (supposedly 28.322 MHz)
  * (*3) This setting doesn't seem to generate anything
+ * (*4) This setting is documented to be 56.644 MHz, but something close to 82
+ *      MHz has also been encountered.
+ * (*5) This setting is for Dell OmniPlex 590 systems, with a 68800AX on the
+ *      motherboard, along with an AT&T21C498 DAC (which is reported as an
+ *      STG1700) and ICS2494AM clock generator (a.k.a. ATI 18811-?).
  *
  * Note that, to reduce confusion, this driver masks out the different clock
  * ordering.
@@ -205,6 +215,7 @@ const char *ATIClockNames[] =
     "ATI 18810 or similar",
     "ATI 18811-0 or similar",
     "ATI 18811-1 or similar",
+    "ICS 2494-AM or similar",
     "Programmable (BIOS setting 1)",
     "Programmable (BIOS setting 2)",
     "Programmable (BIOS setting 3)"
@@ -292,7 +303,7 @@ ATICrystalFrequencies[] =
 ATI18810Frequencies[] =
 {
      30240,  32000,  37500,  39000,  42954,  48771,      0,  36000,
-     40000,  56644,  75000,  65000,  50350,  56640,      0,  44900
+     40000,      0,  75000,  65000,  50350,  56640,      0,  44900
 },
 ATI188110Frequencies[] =
 {
@@ -303,6 +314,11 @@ ATI188111Frequencies[] =
 {
     135000,  32000, 110000,  80000, 100000, 126000,  92400,  36000,
      39910,  44900,  75000,  65000,  50350,  56640,      0,  44900
+},
+ATI2494AMFrequencies[] =
+{
+     75000,  77500,  80000,  90000,  25175,  28322,  31500,  36000,
+    100000, 110000, 126000, 135000,  40000,  44900,  50000,  65000
 },
 ATIMach64AFrequencies[] =
 {
@@ -327,6 +343,7 @@ ATIMach64CFrequencies[] =
     ATI18810Frequencies,
     ATI188110Frequencies,
     ATI188111Frequencies,
+    ATI2494AMFrequencies,
     ATIMach64AFrequencies,
     ATIMach64BFrequencies,
     ATIMach64CFrequencies,
@@ -341,7 +358,7 @@ static const int
 ATIPre_2_1_1_Clocks_A[] =       /* Based on 18810 */
 {
      18000,  22450,  25175,  28320,  36000,  44900,  50350,  56640,
-     30240,  32000,  37500,  39000,  40000,  56644,  75000,  65000,
+     30240,  32000,  37500,  39000,  40000,      0,  75000,  65000,
         -1
 },
 ATIPre_2_1_1_Clocks_B[] =       /* Based on 18811-0 */
@@ -356,13 +373,19 @@ ATIPre_2_1_1_Clocks_C[] =       /* Based on 18811-1 (or -2) */
     135000,  32000, 110000,  80000,  39910,  44900,  75000,  65000,
         -1
 },
-ATIPre_2_1_1_Clocks_D[] =       /* Based on programmable setting 1 */
+ATIPre_2_1_1_Clocks_D[] =       /* Based on ICS 2494-AM */
+{
+     18000,  32500,  20000,  22450,  36000,  65000,  40000,  44900,
+     75000,  77500,  80000,  90000, 100000, 110000, 126000, 135000,
+        -1
+},
+ATIPre_2_1_1_Clocks_E[] =       /* Based on programmable setting 1 */
 {
      36000,  25000,  20000,  22450,  72000,  50000,  40000,  44900,
          0, 110000, 126000, 135000,      0,  80000,  75000,  65000,
         -1
 },
-ATIPre_2_1_1_Clocks_E[] =       /* Based on programmable setting 2 */
+ATIPre_2_1_1_Clocks_F[] =       /* Based on programmable setting 2 */
 {
      18000,  25000,  20000,  22450,  36000,  50000,  40000,  44900,
          0, 110000, 126000, 135000,      0,  80000,  75000,  65000,
@@ -377,6 +400,7 @@ ATIPre_2_1_1_Clocks_E[] =       /* Based on programmable setting 2 */
     ATIPre_2_1_1_Clocks_C,
     ATIPre_2_1_1_Clocks_D,
     ATIPre_2_1_1_Clocks_E,
+    ATIPre_2_1_1_Clocks_F,
     NULL
 };
 
@@ -534,6 +558,11 @@ ATIMatchClockLine(const int **Clock_Line,
     for (;  Clock_Line[++Clock_Chip_Index];  )
     {
         int Maximum_Gap = 0, Clock_Count = 0, Clock_Index = 0;
+
+        /* Only Mach64's and Rage128's can have programmable clocks */
+        if ((Clock_Chip_Index >= ATI_CLOCK_MACH64A) &&
+            (ATIAdapter < ATI_ADAPTER_MACH64))
+            break;
 
         for (;  Clock_Index < Number_Of_Clocks;  Clock_Index++)
         {
@@ -699,8 +728,8 @@ probe_clocks:
         else
         {
             Number_Of_Undivided_Clocks = 16;
-            Calibration_Clock_Number = 10 /* or 11 */;
-            Calibration_Clock_Value = 75000 /* or 65000 */;
+            Calibration_Clock_Number = 7;
+            Calibration_Clock_Value = 36000;
             if (ATIChip >= ATI_CHIP_68800)
             {
                 Number_Of_Dividers = 2;
@@ -710,6 +739,11 @@ probe_clocks:
                     Number_Of_Undivided_Clocks = 4;
                     Calibration_Clock_Number = 1;
                     Calibration_Clock_Value = 28322;
+                }
+                else if (ATIAdapter >= ATI_ADAPTER_MACH64)
+                {
+                    Calibration_Clock_Number = 10 /* or 11 */;
+                    Calibration_Clock_Value = 75000 /* or 65000 */;
                 }
 
                 /*
@@ -898,11 +932,13 @@ probe_clocks:
     else if (ATIClock == ATI_CLOCK_NONE)
         ErrorF("Unknown clock generator detected.\n");
     else if (xf86Verbose)
+    {
         if (ATIClock == ATI_CLOCK_CRYSTALS)
             ErrorF("This adapter uses crystals to generate clock"
                    " frequencies.\n");
         else if (ATIClock != ATI_CLOCK_VGA)
             ErrorF("%s clock chip detected.\n", ATIClockNames[ATIClock]);
+    }
 
     if (ATIClock == ATI_CLOCK_NONE)
         return;                 /* Don't touch the clocks */

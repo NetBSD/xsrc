@@ -2,17 +2,17 @@
 
 <article>
 
-<title>Release Notes for XFree86&tm; 3.3.6
+<title>Release Notes for XFree86&tm; 3.3.7
 <author>The XFree86 Project, Inc
-<date>31 December 1999
+<date>15 February 2000
 
 <abstract>
 
 This document describes the bugs fixed and the features added in
-XFree86 3.3.6 compared with the 3.3.5 release, 
+XFree86 3.3.7 compared with the 3.3.6 release, 
 It also includes installation instructions for the binary distributions.
 It is strongly recommended that anyone using XFree86 update to version
-3.3.6. 
+3.3.7. 
 
 </abstract>
 
@@ -65,11 +65,17 @@ Users running FreeBSD 3.0 should note that only ELF binaries are provided
 with this release.  a.out shared libraries are also included for compatibility
 purposes.
 
+<p>
+<sect> What's new in 3.3.7?
+<p>
+<itemize>
+  <item>Fixes for ATI Mobility and Rage 128
+</itemize>
 <p> 
 <sect> What's new in 3.3.6?
 <p>
 <itemize>
-  <item>Support for ATI Rage128.
+  <item>Support for ATI Rage128
   <item>Support for ATI Rage Mobility
   <item>Support for SiS 540/630 and SiS 300
   <item>Support for Silicon Motion Lynx chipsets
@@ -273,17 +279,17 @@ as set forth at <htmlurl name="http://www.opensource.org/osd.html"
 url="http://www.opensource.org/osd.html">. 
 This definition is actually a subset of our requirements.
 <p>
-All code in XFree86 3.3.6 satisfies the Open Source Software definition.
+All code in XFree86 3.3.7 satisfies the Open Source Software definition.
 <p>
 
-<sect>Installing the XFree86 3.3.6 Release
+<sect>Installing the XFree86 3.3.7 Release
 <p>
-The XFree86 3.3.6 binaries are distributed as a full release.
+The XFree86 3.3.7 binaries are distributed as a full release.
 <!--
 , and as an
-update to the 3.3.5 release.  For information about upgrading from 3.3.5
-to 3.3.6 see section <ref id="upgrade"
-name="Updating XFree86 3.3.5 to XFree86 3.3.6">.
+update to the 3.3.6 release.  For information about upgrading from 3.3.6
+to 3.3.7 see section <ref id="upgrade"
+name="Updating XFree86 3.3.6 to XFree86 3.3.7">.
 -->
 
 NOTE: the X servers are no longer installed setuid root.  If you are
@@ -291,7 +297,7 @@ starting your X servers with startx/xinit, or something similar, you
 will need a copy of the setuid Xwrapper, and an updated xinit.  These
 can be found in Xbin.tgz.
 
-What follows is a list of the XFree86 3.3.6 components.  There may be
+What follows is a list of the XFree86 3.3.7 components.  There may be
 some variations in this for some OSs.
 
 The following are required for all new installations, or when upgrading
@@ -519,16 +525,16 @@ optional for an existing installation.  Refer to the
 information.
 
 <!--
-<sect>Updating XFree86 3.3.5 to XFree86 3.3.6<label id="upgrade">
+<sect>Updating XFree86 3.3.6 to XFree86 3.3.7<label id="upgrade">
 <p>
-The following is required to update an XFree86 3.3.5
-installation to XFree86 3.3.6:
+The following is required to update an XFree86 3.3.6
+installation to XFree86 3.3.7:
 <quote>
 <verb>
 extract              XFree86 extraction utility
-X336upd.tgz          XFree86 3.3.6 update
-Xdoc.tgz             XFree86 3.3.6 documentation
-X{SERVER}.tgz        3.3.6 Server update from the Servers or PC98_Servers
+X337upd.tgz          XFree86 3.3.7 update
+Xdoc.tgz             XFree86 3.3.7 documentation
+X{SERVER}.tgz        3.3.7 Server update from the Servers or PC98_Servers
 		     directory.
                      You must select the appropriate SERVER file for the
 		     server that you are currently running (i.e. XI128.tgz).
@@ -539,17 +545,17 @@ First make the extract utility executable by running:
 <tscreen><verb>
 	chmod 755 extract
 </verb></tscreen>
-To update your installation to 3.3.6, run the following as
+To update your installation to 3.3.7, run the following as
 <bf>root</bf>:
 <tscreen><verb>
 	cd /usr/X11R6
-	/var/tmp/extract /var/tmp/X336upd.tgz
+	/var/tmp/extract /var/tmp/X337upd.tgz
 	/var/tmp/extract /var/tmp/X{SERVER}.tgz
 </verb></tscreen>
 -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.82 1999/12/31 14:10:41 robin Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.83 2000/02/15 12:39:10 tsi Exp $
 </verb>
 
 </article>

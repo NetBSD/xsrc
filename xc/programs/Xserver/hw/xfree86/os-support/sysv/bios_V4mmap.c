@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/bios_V4mmap.c,v 3.4 1996/12/23 06:51:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sysv/bios_V4mmap.c,v 3.4.2.2 2000/02/11 21:36:27 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -42,6 +42,8 @@ int Len;
 {
 	int fd;
 	unsigned char *ptr;
+	int mlen;
+	int psize = 4096;	/* XXX x86 only */
 
 	if ((fd = open(DEV_MEM, O_RDONLY)) < 0)
 	{
@@ -49,7 +51,8 @@ int Len;
 		       strerror(errno));
 		return(-1);
 	}
-	ptr = (unsigned char *)mmap((caddr_t)0, 0x8000, PROT_READ, MAP_SHARED,
+	mlen = (Offset + Len + psize - 1) & ~(psize - 1);
+	ptr = (unsigned char *)mmap((caddr_t)0, mlen, PROT_READ, MAP_SHARED,
 				    fd, (off_t)Base);
 	if ((int)ptr == -1)
 	{
@@ -58,7 +61,7 @@ int Len;
 		return(-1);
 	}
 	(void)memcpy(Buf, (void *)(ptr + Offset), Len);
-	(void)munmap((caddr_t)ptr, 0x8000);
+	(void)munmap((caddr_t)ptr, mlen);
 	(void)close(fd);
 	return(Len);
 }

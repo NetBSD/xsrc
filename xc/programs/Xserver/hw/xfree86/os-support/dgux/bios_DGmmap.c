@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/bios_DGmmap.c,v 1.1.2.2 1999/07/19 11:46:43 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/dgux/bios_DGmmap.c,v 1.1.2.3 2000/02/11 21:36:25 dawes Exp $ */
 /*
  * INTEL DG/UX RELEASE 4.20 MU04
  * Copyright 1999 Takis Psarogiannakopoulos Cambridge,UK
@@ -51,7 +51,7 @@ int Len;
 		return(-1);
 	}
 	psize = sysconf(_SC_PAGESIZE);
-	mlen = (Offset + Len + psize -1) & ~psize;
+	mlen = (Offset + Len + psize -1) & ~(psize - 1);
 	ptr = (unsigned char *)mmap((caddr_t)0, mlen, PROT_READ, MAP_SHARED,
 					fd, (off_t)Base);
 	if ((int)ptr == -1)

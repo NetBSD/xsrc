@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/12 1996/10/28 05:13:56 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/sgml/Imakefile,v 3.16.2.6 1999/08/02 08:38:29 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/sgml/Imakefile,v 3.16.2.7 2000/08/08 23:04:41 dawes Exp $
 
 #include <Server.tmpl>
 
@@ -33,9 +33,6 @@ LinuxDocReadmeTarget(Mach)
 LinuxDocReadmeTarget(Linux)
 LinuxDocReadmeTarget(fbdev)
 #endif
-# if defined(DguxArchitecture) || BuildAllDocs
-LinuxDocReadmeTarget(DGux)
-# endif
 #if defined(LynxOSArchitecture) || BuildAllDocs
 LinuxDocReadmeTarget(LynxOS)
 #endif
@@ -120,7 +117,6 @@ LinkSourceFile(Bsdi.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(CPYRIGHT.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Config.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(DECtga.sgml,$(XF86SRC)/doc/sgml)
-LinkSourceFile(DGux.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(DocIndex.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(FreeBSD.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(BUILD.sgml,$(XF86SRC)/doc/sgml)
