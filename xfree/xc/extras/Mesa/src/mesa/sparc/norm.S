@@ -1,17 +1,15 @@
-/* $Id: norm.S,v 1.1.1.1 2005/03/18 13:06:54 tron Exp $ */
+/* $Id: norm.S,v 1.2 2005/03/22 20:31:16 martin Exp $ */
 /* $XFree86: xc/extras/Mesa/src/mesa/sparc/norm.S,v 1.3 2004/12/10 15:41:02 alanh Exp $ */
 
 #include "sparc_matrix.h"
 
-#ifdef SVR4
-	/* Solaris requires this for 64-bit. */
-	.register %g2, #scratch
-	.register %g3, #scratch
-#endif
 
 	.text
 
 #if (defined(__sparc_v9__) && (!defined(__linux__) || defined(__linux_sparc_64__)))
+	/* Solaris requires this for 64-bit. */
+	.register %g2, #scratch
+	.register %g3, #scratch
 #define STACK_VAR_OFF	(2047 + (8 * 16))
 #else
 #define STACK_VAR_OFF	(4 * 16)
