@@ -25,7 +25,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/* $XFree86: xc/lib/GL/mesa/src/drv/i830/i830_tex.c,v 1.4 2002/12/10 01:26:53 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i830/i830_tex.c,v 1.4.2.1 2003/05/07 21:59:42 dawes Exp $ */
 
 /*
  * Author:
@@ -287,7 +287,12 @@ static void i830TexEnv( GLcontext *ctx, GLenum target,
    case GL_TEXTURE_LOD_BIAS_EXT:
       {
          struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
-         i830TextureObjectPtr t = (i830TextureObjectPtr) tObj->DriverData;
+         i830TextureObjectPtr t;
+	 if (!tObj) return;
+
+	 t = (i830TextureObjectPtr) tObj->DriverData;
+	 if (!t) return;
+
 	 i830ComputeLodBias(imesa, t, *param);
 	 /* Do a state change */
 	 if (t == imesa->CurrentTexObj[unit]) {

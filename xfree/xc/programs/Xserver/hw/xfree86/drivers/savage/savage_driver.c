@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.c,v 1.34 2003/02/25 04:08:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_driver.c,v 1.34.2.1 2003/05/16 14:50:12 alanh Exp $ */
 /*
  * vim: sw=4 ts=8 ai ic:
  *
@@ -2090,8 +2090,18 @@ static void SavageWriteMode(ScrnInfoPtr pScrn, vgaRegPtr vgaSavePtr,
     VGAOUT8(vgaCRIndex, 0x3a);
     VGAOUT8(vgaCRReg, cr3a);
 
-    if( Entering )
+    if( Entering ) {
+    	/* We reinit the engine here just as in the UseBIOS case
+	 * as otherwise we lose performance because the engine
+	 * isn't setup properly (Alan Hourihane - alanh@fairlite.demon.co.uk).
+	 */
+	SavageInitialize2DEngine(pScrn);
 	SavageSetGBD(pScrn);
+
+	VGAOUT16(vgaCRIndex, 0x0140);
+
+	SavageSetGBD(pScrn);
+    }
 
     vgaHWProtect(pScrn, FALSE);
 

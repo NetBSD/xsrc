@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/freetype2/Imakefile,v 1.9 2003/01/01 22:08:39 torrey Exp $
+XCOMM $XFree86: xc/lib/freetype2/Imakefile,v 1.9.2.1 2003/11/06 01:33:04 torrey Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags
@@ -53,9 +53,10 @@ SUBDIRS=freetype
 
 HEADERS=ft2build.h
 
-SRCS_BASE = ftbase.c \
-            ftbdf.c \
+SRCS_BASE = ftapi.c \
+            ftbase.c \
             ftbbox.c \
+            ftbdf.c \
             ftdebug.c \
             ftglyph.c \
             ftinit.c \
@@ -65,9 +66,10 @@ SRCS_BASE = ftbase.c \
             fttype1.c \
             ftxf86.c
 
-OBJS_BASE = ftbase.o \
-            ftbdf.o \
+OBJS_BASE = ftapi.o \
+            ftbase.o \
             ftbbox.o \
+            ftbdf.o \
             ftdebug.o \
             ftglyph.o \
             ftinit.o \
@@ -185,6 +187,7 @@ InstallMultipleFlags($(HEADERS),$(INCDIR)/freetype2,$(INSTINCFLAGS))
 
 LinkSourceFile(ft2build.h,$(FREETYPETOP)/include)
 
+LinkSourceFile(ftapi.c,$(FREETYPESRC)/base)
 LinkSourceFile(ftbase.c,$(FREETYPESRC)/base)
 LinkSourceFile(ftbdf.c,$(FREETYPESRC)/base)
 LinkSourceFile(ftbbox.c,$(FREETYPESRC)/base)

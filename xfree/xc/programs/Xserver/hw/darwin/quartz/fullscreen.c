@@ -26,7 +26,7 @@
  * dealings in this Software without prior written authorization from
  * Torrey T. Lyons.
  */
-/* $XFree86: xc/programs/Xserver/hw/darwin/quartz/fullscreen.c,v 1.3 2002/12/10 00:00:39 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/quartz/fullscreen.c,v 1.3.2.1 2003/08/13 19:45:28 torrey Exp $ */
 
 #include "quartzCommon.h"
 #include "darwin.h"
@@ -349,8 +349,7 @@ Bool QuartzFSAddScreen(
     fsDisplayInfo->framebuffer = CGDisplayBaseAddress(cgID);
 
     // allocate shadow framebuffer
-    fsDisplayInfo->shadowPtr = shadowAlloc(dfb->width, dfb->height,
-                                           dfb->bitsPerPixel);
+    fsDisplayInfo->shadowPtr = xalloc(dfb->pitch * dfb->height);
     dfb->framebuffer = fsDisplayInfo->shadowPtr;
 
     return TRUE;

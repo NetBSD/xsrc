@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/Imakefile,v 1.21 2003/02/17 17:06:43 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/Imakefile,v 1.21.2.1 2003/05/24 22:22:14 sven Exp $
 /*
  *
  * Copyright 1995-1998 The XFree86 Project, Inc.
@@ -63,5 +63,6 @@ InstallDriverSDKNonExecFile(s3v_i2c.c,$(DRIVERSDKDIR)/drivers/s3virge)
 InstallDriverSDKNonExecFile(s3v_macros.h,$(DRIVERSDKDIR)/drivers/s3virge)
 InstallDriverSDKNonExecFile(s3v_rop.h,$(DRIVERSDKDIR)/drivers/s3virge)
 InstallDriverSDKNonExecFile(s3v_shadow.c,$(DRIVERSDKDIR)/drivers/s3virge)
+InstallDriverSDKNonExecFile(s3v_xv.c,$(DRIVERSDKDIR)/drivers/s3virge)
 
 InstallDriverSDKObjectModule(s3virge,$(DRIVERSDKMODULEDIR),drivers)

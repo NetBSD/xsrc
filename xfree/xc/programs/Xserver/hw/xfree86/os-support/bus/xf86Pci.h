@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Pci.h,v 1.36 2003/02/18 15:42:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bus/xf86Pci.h,v 1.36.2.1 2003/03/21 22:29:59 tsi Exp $ */
 /*
  * Copyright 1998 by Concurrent Computer Corporation
  *
@@ -80,6 +80,8 @@
 #include "Xarch.h"
 #include "Xfuncproto.h"
 #include "misc.h"
+
+#define PCI_NOT_FOUND	0xFFFFFFFFU
 
 /*
  * PCI cfg space definitions (e.g. stuff right out of the PCI spec)

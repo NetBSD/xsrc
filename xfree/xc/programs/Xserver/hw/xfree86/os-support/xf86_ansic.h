@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_ansic.h,v 3.49 2003/02/22 06:00:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_ansic.h,v 3.49.2.1 2003/03/13 04:10:49 tsi Exp $ */
 
 #ifndef _XF86_ANSIC_H
 #define _XF86_ANSIC_H
@@ -307,13 +307,14 @@ extern int xf86shmdt(char *addr);
 extern int xf86shmctl(int id, int xf86cmd, pointer buf);
 
 extern int xf86setjmp(xf86jmp_buf env);
+extern int xf86setjmp0(xf86jmp_buf env);
 extern int xf86setjmp1(xf86jmp_buf env, int);
 extern int xf86setjmp1_arg2(void);
 extern int xf86setjmperror(xf86jmp_buf env);
 extern int xf86getjmptype(void);
 extern void xf86longjmp(xf86jmp_buf env, int val);
 #define xf86setjmp_macro(env) \
-	(xf86getjmptype() == 0 ? xf86setjmp((env)) : \
+	(xf86getjmptype() == 0 ? xf86setjmp0((env)) : \
 	(xf86getjmptype() == 1 ? xf86setjmp1((env), xf86setjmp1_arg2()) : \
 		xf86setjmperror((env))))
 

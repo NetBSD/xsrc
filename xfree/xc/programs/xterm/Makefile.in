@@ -1,6 +1,6 @@
-## $XFree86: xc/programs/xterm/Makefile.in,v 3.43 2003/05/21 22:59:11 dickey Exp $ ##
+## $XFree86: xc/programs/xterm/Makefile.in,v 3.40 2002/03/26 01:46:39 dickey Exp $ ##
 ##
-## Copyright 2002,2003 by Thomas E. Dickey
+## Copyright 2002 by Thomas E. Dickey
 ##
 ##                         All Rights Reserved
 ##
@@ -27,7 +27,7 @@ SHELL		= /bin/sh
 
 srcdir		= @srcdir@
 VPATH  		= @srcdir@
-x		= @PROG_EXT@
+x		= #@PROG_EXT@
 
 CC		= @CC@
 CPP		= @CPP@
@@ -54,9 +54,9 @@ prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 
 manext		= 1
-bindir		= @bindir@
-libdir		= @libdir@
-mandir		= @mandir@/man$(manext)
+bindir		= $(exec_prefix)/bin
+libdir		= $(exec_prefix)/lib
+mandir		= $(prefix)/man/man$(manext)
 appsdir		= $(libdir)/X11/app-defaults
 
 #### End of system configuration section. ####
@@ -203,10 +203,7 @@ distclean: clean
 	-$(RM) Makefile config.status config.cache config.log xtermcfg.h
 
 realclean: distclean
-	-$(RM) tags TAGS ctlseqs.ps ctlseqs.txt
-
-ctlseqs.txt : ctlseqs.ms
-	tbl ctlseqs.ms | nroff -ms >$@
+	-$(RM) tags TAGS ctlseqs.ps
 
 ctlseqs.ps : ctlseqs.ms
 	tbl ctlseqs.ms | groff -ms >$@

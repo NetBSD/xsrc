@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/streams.c,v 3.6 2001/12/14 20:01:24 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/streams.c,v 3.6.4.1 2003/09/17 05:58:17 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -144,6 +144,25 @@ GetChooserAddr (addr, lenp)
     }
     *lenp = nbuf.len;
     return retval;
+}
+
+/* TODO: Implement support for controlling which interfaces are listened on
+   and for listening to multicast addresses.  See the sockets equivalent in
+   sockets.c for details. */
+
+void UpdateListenSockets (void)
+{
+    return;
+}
+
+void CloseListenSockets (void)
+{
+    return;
+}
+
+void ProcessListenSockets (fd_set *readmask)
+{
+    return;
 }
 
 #endif /* STREAMSCONN */

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greet.h,v 1.8 2001/12/14 20:01:22 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greet.h,v 1.8.4.1 2003/09/17 05:58:16 herrb Exp $ */
 
 /*
  * greet.h - interface to xdm's dynamically-loadable modular greeter
@@ -37,7 +37,7 @@ from The Open Group.
 /*
  * Do this rather than break a build over a const-mismatch
  */
-#if defined(__linux__) || defined(CSRG_BASED)
+#if defined(__linux__) || defined(CSRG_BASED) || (defined(sun) && defined(SVR4))
 #define CRYPT_ARGS    const char *s1, const char *s2
 #define GETSPNAM_ARGS const char *name
 #define GETPWNAM_ARGS const char *name

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/dm.c,v 3.21 2002/12/07 20:31:04 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/dm.c,v 3.21.2.1 2003/09/17 05:58:16 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -73,7 +73,7 @@ from The Open Group.
 #endif
 
 
-#if defined(SVR4) && !defined(SCO)
+#if defined(SVR4) && !defined(SCO) && !defined(sun)
 extern FILE    *fdopen();
 #endif
 
@@ -86,7 +86,7 @@ static void	SetConfigFileTime (void);
 static void	StartDisplays (void);
 static void	TerminateProcess (int pid, int signal);
 
-int		Rescan;
+volatile int	Rescan;
 static long	ServersModTime, ConfigModTime, AccessFileModTime;
 
 int nofork_session = 0;
@@ -157,7 +157,9 @@ main (int argc, char **argv)
 	snprintf(cmdbuf, sizeof(cmdbuf), "/bin/rm -f %s/authdir/authfiles/A*", authDir);
 	system(cmdbuf);
     }
-
+#if!defined(ARC4_RANDOM) && !defined(DEV_RANDOM)
+    AddOtherEntropy ();
+#endif
 #ifdef XDMCP
     init_session_id ();
     CreateWellKnownSockets ();
@@ -177,9 +179,13 @@ main (int argc, char **argv)
     SetAccessFileTime ();
 #ifdef XDMCP
     ScanAccessDatabase ();
+    UpdateListenSockets ();
 #endif
     ScanServers ();
     StartDisplays ();
+#if !defined(ARC4_RANDOM) && !defined(DEV_RANDOM)
+    AddOtherEntropy();
+#endif
     (void) Signal (SIGHUP, RescanNotify);
 #ifndef UNRELIABLE_SIGNALS
     (void) Signal (SIGCHLD, ChildNotify);
@@ -281,6 +287,7 @@ RescanServers (void)
     SetAccessFileTime ();
 #ifdef XDMCP
     ScanAccessDatabase ();
+    UpdateListenSockets ();
 #endif
     StartDisplays ();
 }
@@ -339,6 +346,7 @@ RescanIfMod (void)
 	    LogInfo ("Rereading access file %s\n", accessFile);
 	    AccessFileModTime = statb.st_mtime;
 	    ScanAccessDatabase ();
+	    UpdateListenSockets();
 	}
     }
 #endif
@@ -517,6 +525,9 @@ WaitForChild (void)
 			  " removing display %s\n",d->name);
 		    LogError("Server crash rate too high:"
 			     " removing display %s\n",d->name);
+#if !defined(ARC4_RANDOM) && !defined(DEV_RANDOM)
+		    AddTimerEntropy();
+#endif
 		    RemoveDisplay (d);
 		  } else 
 		    d->lastCrash = Time;
