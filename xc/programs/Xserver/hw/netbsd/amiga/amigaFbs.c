@@ -99,19 +99,9 @@ pointer amigaMemoryMap (len, off, fd)
     mapsize = ((int) len + pagemask) & ~pagemask;
     addr = 0;
 
-    /* 
-     * try and make it private first, that way once we get it, an
-     * interloper, e.g. another server, can't get this frame buffer,
-     * and if another server already has it, this one won't.
-     */
-    if ((int)(mapaddr = (pointer) mmap (addr,
-		mapsize,
-		PROT_READ | PROT_WRITE, MAP_FILE|MAP_PRIVATE,
-		fd, off)) == -1)
-	mapaddr = (pointer) mmap (addr,
-		    mapsize,
-		    PROT_READ | PROT_WRITE, MAP_FILE|MAP_SHARED,
-		    fd, off);
+    mapaddr = (pointer) mmap (addr, mapsize,
+	PROT_READ | PROT_WRITE, MAP_FILE|MAP_SHARED,
+	fd, off);
     if (mapaddr == (pointer) -1) {
 	Error ("mapping frame buffer memory");
 	(void) close (fd);
