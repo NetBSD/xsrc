@@ -93,9 +93,9 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 	static int kmem = -1;
 
 	if (kmem == -1) {
-		kmem = open("/dev/xf86", 2);
+		kmem = open(DEV_MEM, 2);
 		if (kmem == -1) {
-			FatalError("xf86ReadBIOS: open /dev/xf86\n");
+			FatalError("xf86ReadBIOS: open %s\n", DEV_MEM);
 		}
 	}
 
