@@ -22,7 +22,20 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/Imakefile,v 3.3.2.2 1999/06/02 07
 #endif
 
 SUBDIRS = os-support common $(COMMONHW) $(XAADIR) $(SCREENS) doc \
-	  $(XF68SETUPDIR) etc LinkKit 77c32blt mach64 imstt pm2
+	  $(XF68SETUPDIR) etc LinkKit
+
+#if XF68FBDev77C32
+SIBDIRS += 77c32blt
+#endif
+#if XF68FBDevMach64
+SUBDIRS += mach64
+#endif
+#if XF68FBDevIMSTT
+SUBDIRS += imstt
+#endif
+#if !(defined(NetBSDArchitecture) && defined(atariArchitecture))
+SUBDIRS += pm2
+#endif
 
 XF86CONFIG = XF86Config
 

@@ -583,6 +583,15 @@ XCOMM $XConsortium: xfree86.cf /main/34 1996/12/06 11:45:18 rws $
 #  ifndef XF68FBDevCFB32
 #   define XF68FBDevCFB32	NO
 #  endif
+#  ifndef XF68FBDev77C32
+#   define XF68FBDev77C32	NO
+#  endif
+#  ifndef XF68FBDevMach64
+#   define XF68FBDevMach64	NO
+#  endif
+#  ifndef XF68FBDevIMSTT
+#   define XF68FBDevIMSTT	NO
+#  endif
 # else
 #  ifndef XF68FBDevIPLAN2p2
 #   define XF68FBDevIPLAN2p2	YES
