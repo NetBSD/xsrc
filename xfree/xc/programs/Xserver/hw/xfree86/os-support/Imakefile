@@ -16,6 +16,7 @@ XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:38:46 kaleb $
 	(defined(NetBSDArchitecture) && defined(AlphaArchitecture)) || \
 	(defined(NetBSDArchitecture) && defined(PpcArchitecture)) || \
 	(defined(NetBSDArchitecture) && defined(SparcArchitecture)) || \
+	(defined(NetBSDArchitecture) && defined(CatsArchitecture)) || \
 	(defined(OpenBSDArchitecture) && defined(PpcArchitecture)) || \
 	(defined(LynxOSArchitecture) && defined(PpcArchitecture)) || \
 	defined(LinuxArchitecture)

@@ -229,9 +229,13 @@ xf86Msg(X_INFO, "no memory base\n");							/* XXXX */
 
 #else /* !__alpha__ */
 
+#ifdef USE_CATS_MMAP
+#define BUS_BASE	0x80000000L
+#define BUS_BASE_BWX	0x80000000L
+#else
 #define BUS_BASE	0L
 #define BUS_BASE_BWX	0L
-
+#endif
 #endif /* !__alpha__ */
 
 /***************************************************************************/
@@ -453,7 +457,7 @@ mapVidMem(int ScreenNum, unsigned long Base, unsigned long Size, int flags)
 	}
 	base = mmap(0, Size, PROT_READ|PROT_WRITE, MAP_FLAGS,
 			     xf86Info.screenFd,
-#if defined(__alpha__)
+#if defined(__alpha__) || defined(__arm__)
 			     (unsigned long)Base + BUS_BASE
 #elif defined(__mips__)
 			     (unsigned long)Base
@@ -832,6 +836,52 @@ xf86DisableIO()
 
 #endif
 
+#if defined(USE_CATS_MMAP)
+
+#define	DEV_MEM_IOBASE	0x7c000000	/* PCI I/O space */
+#define	DEV_MEM_IOSIZE	0x00010000
+
+static Bool ExtendedEnabled = FALSE;
+
+void
+xf86EnableIO()
+{
+    pointer base;
+    IOPortBase = (unsigned int)-1;
+
+    checkDevMem(TRUE);
+    if (devMemFd >= 0 && useDevMem)
+    {
+	base = (pointer)mmap((caddr_t)0, DEV_MEM_IOSIZE, PROT_READ|PROT_WRITE,
+		MAP_FILE, devMemFd, (off_t)DEV_MEM_IOBASE);
+	
+    	if (base != (pointer)-1)
+	    IOPortBase = (unsigned int)base;
+    }
+    
+    if (IOPortBase == (unsigned int)-1)
+    {	
+	FatalError("xf86EnableIO: failed to open mem device or map IO base. \n"
+		"Make sure you have the Aperture Driver installed, "
+		"or a kernel built with the INSECURE option\n");
+    }
+    ExtendedEnabled = TRUE;
+
+    return;	
+}
+
+void
+xf86DisableIO()
+{
+    if (!ExtendedEnabled)
+	return;
+    
+    munmap((caddr_t)IOPortBase, DEV_MEM_IOSIZE);
+    IOPortBase = (unsigned int)-1;
+    ExtendedEnabled = FALSE; 
+}
+#endif
+
 #if defined(USE_ARC_MMAP) || defined(__arm32__)
 
 void
@@ -918,7 +968,7 @@ xf86DisableInterrupts()
 {
 
 #if !defined(__mips__) && !defined(__arm32__) && !defined(__alpha__) && \
-    !defined(__powerpc__)
+    !defined(__powerpc__) && !defined(__arm__)
 #ifdef __GNUC__
 	__asm__ __volatile__("cli");
 #else 
@@ -934,7 +984,7 @@ xf86EnableInterrupts()
 {
 
 #if !defined(__mips__) && !defined(__arm32__) && !defined(__alpha__) && \
-    !defined(__powerpc__)
+    !defined(__powerpc__) && !defined(__arm__)
 #ifdef __GNUC__
 	__asm__ __volatile__("sti");
 #else 

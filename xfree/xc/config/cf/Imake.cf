@@ -197,6 +197,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.74 2001/11/16 16:47:50 dawes Exp $
 #   define Arm32Architecture
 #   undef __arm32__
 # endif
+# ifdef __cats__
+#   define CatsArchitecture
+#   undef __cats__
+# endif
 # ifdef __vax__
 #   define VaxArchitecture
 #   undef __vax__

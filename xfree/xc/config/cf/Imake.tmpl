@@ -415,7 +415,7 @@ XCOMM the platform-specific parameters - edit site.def to change
 #define ByteOrder		X_BIG_ENDIAN
 #elif defined(s390xArchitecture)
 #define ByteOrder		X_BIG_ENDIAN
-#elif defined(Arm32Architecture)
+#elif defined(Arm32Architecture) || defined(CatsArchitecture)
 #define ByteOrder		X_LITTLE_ENDIAN
 #elif defined(PpcArchitecture)
 #define ByteOrder		X_BIG_ENDIAN

@@ -107,7 +107,7 @@ xf86AccResFromOS(resPtr ret)
     return ret;
 }
 
-#elif defined(__powerpc__)
+#elif defined(__powerpc__) || defined(__arm__)
 
 resRange PciAvoid[] = {_PCI_AVOID_PC_STYLE, _END};
 
