@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: util.c /main/33 1996/12/01 23:47:10 swick $
- *	$XFree86: xc/programs/xterm/util.c,v 3.13.2.2 1997/05/23 12:19:50 dawes Exp $
+ *	$XFree86: xc/programs/xterm/util.c,v 3.13.2.3 1997/07/06 07:28:22 dawes Exp $
  */
 
 /*
@@ -531,6 +531,7 @@ DeleteChar (screen, n)
 		
 	if(screen->cur_row - screen->topline <= screen->max_row) {
 	    if(!AddToRefresh(screen)) {
+		int col = screen->max_col + 1 - n;
 		if(screen->scroll_amt)
 			FlushScroll(screen);
 	
@@ -540,7 +541,7 @@ DeleteChar (screen, n)
 	
 		FillCurBackground (
 			screen,
-			Width(screen) + CursorX(screen, -n),
+			CursorX(screen, col),
 			CursorY (screen, screen->cur_row),
 			n * FontWidth(screen),
 			FontHeight(screen));
@@ -1505,7 +1506,9 @@ char *	my_memmove(s1, s2, n)
 			register int	j;
 			if (length < n) {
 				length = (n * 3) / 2;
-				buffer = doalloc(buffer, length = n);
+				buffer = (buffer != 0)
+					 ? realloc(buffer, length)
+					 : malloc(length);
 			}
 			for (j = 0; j < n; j++)
 				buffer[j] = s2[j];
