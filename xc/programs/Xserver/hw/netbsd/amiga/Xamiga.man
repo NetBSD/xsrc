@@ -120,7 +120,7 @@ problems on Gfx Boards:
 .nf
 - Some Chip Revisions of the RetinaZ3 VGA chip have
   problems with the mouse pointer.
-- The mouse pointer on 1MB Ciruss Gfx Boards are
+- The mouse pointer on 1MB Cirrus Gfx Boards are
   corrupt, thats a problem in the NetBSD kernel
   which needs to be fixed.
 
