@@ -11,6 +11,7 @@ DisplayManager.keyFile:		XDMDIR/xdm-keys
 DisplayManager.servers:		XDMDIR/Xservers
 DisplayManager.accessFile:	XDMDIR/Xaccess
 DisplayManager.willing:		SU nobody -c XDMDIR/Xwilling
+DisplayManager.authDir:		XDMAUTHDIR
 ! All displays should use authorization, but we cannot be sure
 ! X terminals may not be configured that way, so they will require
 ! individual resource settings.
