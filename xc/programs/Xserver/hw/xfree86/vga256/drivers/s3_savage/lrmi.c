@@ -88,7 +88,7 @@ real_mem_init(void)
 
 	m = mmap((void *)REAL_MEM_BASE, REAL_MEM_SIZE,
 	 PROT_READ | PROT_WRITE | PROT_EXEC,
-	 MAP_FIXED | MAP_PRIVATE, fd_zero, 0);
+	 MAP_FIXED | MAP_SHARED, fd_zero, 0);
 
 	if (m == (void *)-1)
 		{
@@ -279,7 +279,7 @@ LRMI_init(void)
 
 	m = mmap((void *)0, 0x502,
 	 PROT_READ | PROT_WRITE | PROT_EXEC,
-	 MAP_FIXED | MAP_PRIVATE, fd_mem, 0);
+	 MAP_FIXED | MAP_SHARED, fd_mem, 0);
 
 	if (m == (void *)-1)
 		{
