@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_mouse.c,v 1.20 2002/01/14 15:34:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_mouse.c,v 1.20.2.1 2002/01/27 19:05:19 herrb Exp $ */
 
 /*
  * Copyright 1999 by The XFree86 Project, Inc.
@@ -36,9 +36,6 @@
 #define UMS_BUT(i) ((i) == 0 ? 2 : (i) == 1 ? 0 : (i) == 2 ? 1 : (i))
 #endif /* USBMOUSE_SUPPORT */
 
-#ifdef WSCONS_SUPPORT
-static void wsconsSigioReadInput (int fd, void *closure);
-#endif
 #ifdef USBMOUSE_SUPPORT
 static void usbSigioReadInput (int fd, void *closure);
 #endif
@@ -196,82 +193,6 @@ SetSysMouseRes(InputInfoPtr pInfo, const char *protocol, int rate, int res)
 #if defined(WSCONS_SUPPORT)
 #define NUMEVENTS 64
 
-static int
-wsconsMouseProc(DeviceIntPtr pPointer, int what)
-{
-    InputInfoPtr pInfo;
-    MouseDevPtr pMse;
-    unsigned char map[MSE_MAXBUTTONS + 1];
-    int nbuttons;
-
-    pInfo = pPointer->public.devicePrivate;
-    pMse = pInfo->private;
-    pMse->device = pPointer;
-
-    switch (what) {
-    case DEVICE_INIT: 
-	pPointer->public.on = FALSE;
-
-	for (nbuttons = 0; nbuttons < MSE_MAXBUTTONS; ++nbuttons)
-	    map[nbuttons + 1] = nbuttons + 1;
-
-	InitPointerDeviceStruct((DevicePtr)pPointer, 
-				map, 
-				min(pMse->buttons, MSE_MAXBUTTONS),
-				miPointerGetMotionEvents, 
-				pMse->Ctrl,
-				miPointerGetMotionBufferSize());
-
-	/* X valuator */
-	xf86InitValuatorAxisStruct(pPointer, 0, 0, -1, 1, 0, 1);
-	xf86InitValuatorDefaults(pPointer, 0);
-	/* Y valuator */
-	xf86InitValuatorAxisStruct(pPointer, 1, 0, -1, 1, 0, 1);
-	xf86InitValuatorDefaults(pPointer, 1);
-	xf86MotionHistoryAllocate(pInfo);
-	break;
-
-    case DEVICE_ON:
-	pInfo->fd = xf86OpenSerial(pInfo->options);
-	if (pInfo->fd == -1)
-	    xf86Msg(X_WARNING, "%s: cannot open input device\n", pInfo->name);
-	else {
-	    pMse->buffer = XisbNew(pInfo->fd,
-			      NUMEVENTS * sizeof(struct wscons_event));
-	    if (!pMse->buffer) {
-		xfree(pMse);
-		xf86CloseSerial(pInfo->fd);
-		pInfo->fd = -1;
-	    } else {
-		xf86FlushInput(pInfo->fd);
-		if (!xf86InstallSIGIOHandler (pInfo->fd, wsconsSigioReadInput, pInfo))
-		    AddEnabledDevice(pInfo->fd);
-	    }
-	}
-	pMse->lastButtons = 0;
-	pMse->emulateState = 0;
-	pPointer->public.on = TRUE;
-	break;
-
-    case DEVICE_OFF:
-    case DEVICE_CLOSE:
-	if (pInfo->fd != -1) {
-	    RemoveEnabledDevice(pInfo->fd);
-	    if (pMse->buffer) {
-		XisbFree(pMse->buffer);
-		pMse->buffer = NULL;
-	    }
-	    xf86CloseSerial(pInfo->fd);
-	    pInfo->fd = -1;
-	}
-	pPointer->public.on = FALSE;
-	usleep(300000);
-	break;
-    }
-    return Success;
-}
-
-
 static void
 wsconsReadInput(InputInfoPtr pInfo)
 {
@@ -328,12 +249,6 @@ wsconsReadInput(InputInfoPtr pInfo)
     return;
 }
 
-static void
-wsconsSigioReadInput (int fd, void *closure)
-{
-    wsconsReadInput ((InputInfoPtr) closure);
-}
-
 
 /* This function is called when the protocol is "wsmouse". */
 static Bool
@@ -365,8 +280,7 @@ wsconsPreInit(InputInfoPtr pInfo, const char *protocol, int flags)
     /* Process common mouse options (like Emulate3Buttons, etc). */
     pMse->CommonOptions(pInfo);
 
-    /* Setup the local procs. */
-    pInfo->device_control = wsconsMouseProc;
+    /* Setup the local input proc. */
     pInfo->read_input = wsconsReadInput;
 
     pInfo->flags |= XI86_CONFIGURED;

@@ -41,7 +41,7 @@ interest in or to any trademark, service mark, logo or trade name of
 Sun Microsystems, Inc. or its licensors is granted.
 
 */
-/* $XFree86: xc/lib/X11/XlcDL.c,v 1.3 2001/11/19 15:33:38 tsi Exp $ */
+/* $XFree86: xc/lib/X11/XlcDL.c,v 1.3.4.1 2002/01/23 19:17:00 dawes Exp $ */
 
 #include <stdio.h>
 #if defined(hpux)
@@ -125,27 +125,36 @@ int argsize;
 }
 
 static char *
-strdup_and_prefix(char *symbol)
+strdup_with_underscore(const char *symbol)
 {
-	size_t n;
 	char *result;
 
-	n = strlen(symbol) + 1;
-#ifndef __ELF__
-	n++;			/* add space for _ */
-#endif
-	if ((result = malloc(n)) == NULL) 
+	if ((result = malloc(strlen(symbol) + 2)) == NULL) 
 		return NULL;
-#ifndef __ELF__
 	result[0] = '_';
-#endif
-	memcpy(result
-#ifndef __ELF__
-		+1
-#endif
-		, symbol, n);
+	strcpy(result + 1, symbol);
 	return result;
 }
+
+#ifndef hpux
+static void *
+try_both_dlsym (void *handle, char *name)
+{
+    void    *ret;
+
+    ret = dlsym (handle, name);
+    if (!ret)
+    {
+	 name = strdup_with_underscore (name);
+	 if (name)
+	 {
+	     ret = dlsym (handle, name);
+	     free (name);
+	 }
+    }
+    return ret;
+}
+#endif
 
 static void
 resolve_object(path, lc_name)
@@ -202,13 +211,13 @@ Limit the length of path to prevent stack buffer corruption.
 	    xi18n_objects_list[lc_count].type = XIM_OBJECT;
 	  }
 	  xi18n_objects_list[lc_count].dl_name = strdup(args[1]);
-	  xi18n_objects_list[lc_count].open = strdup_and_prefix(args[2]);
+	  xi18n_objects_list[lc_count].open = strdup(args[2]);
 	  xi18n_objects_list[lc_count].dl_release = XI18N_DLREL;
 	  xi18n_objects_list[lc_count].locale_name = strdup(lc_name);
 	  xi18n_objects_list[lc_count].dl_module = (void*)NULL;
 	  if (n == 5) {
-	    xi18n_objects_list[lc_count].im_register = strdup_and_prefix(args[3]);
-	    xi18n_objects_list[lc_count].im_unregister = strdup_and_prefix(args[4]);
+	    xi18n_objects_list[lc_count].im_register = strdup(args[3]);
+	    xi18n_objects_list[lc_count].im_unregister = strdup(args[4]);
 	  } else {
 	    xi18n_objects_list[lc_count].im_register = NULL;
 	    xi18n_objects_list[lc_count].im_unregister = NULL;
@@ -331,8 +340,8 @@ _XlcDynamicLoad(lc_name)
 	    free(symbols);
 	}
 #else
-	lc_loader = (XLCd(*)())dlsym(objects_list->dl_module,
-				     objects_list->open);
+	lc_loader = (XLCd(*)())try_both_dlsym(objects_list->dl_module,
+					      objects_list->open);
 #endif
 	if (!lc_loader) continue;
 	lcd = (*lc_loader)(lc_name);
@@ -406,8 +415,8 @@ char *res_name, *res_class;
 	free(symbols);
     }
 #else
-    im_openIM = (XIM(*)())dlsym(objects_list->dl_module,
-				objects_list->open);
+    im_openIM = (XIM(*)())try_both_dlsym(objects_list->dl_module,
+					 objects_list->open);
     if (!im_openIM) continue;
 #endif
     im = (*im_openIM)(lcd, display, rdb, res_name, res_class);
@@ -481,8 +490,8 @@ XPointer	*client_data;
 	free(symbols);
     }
 #else
-    im_registerIM = (Bool(*)())dlsym(objects_list->dl_module,
-				     objects_list->im_register);
+    im_registerIM = (Bool(*)())try_both_dlsym(objects_list->dl_module,
+					      objects_list->im_register);
     if (!im_registerIM) continue;
 #endif
     ret_flag = (*im_registerIM)(lcd, display, rdb,
@@ -556,8 +565,8 @@ XPointer	*client_data;
 	free(symbols);
     }
 #else
-    im_unregisterIM = (Bool(*)())dlsym(objects_list->dl_module,
-				       objects_list->im_unregister);
+    im_unregisterIM = (Bool(*)())try_both_dlsym(objects_list->dl_module,
+						objects_list->im_unregister);
 
     if (!im_unregisterIM) continue;
 #endif
@@ -651,8 +660,8 @@ char *res_class;
 	free(symbols);
     }
 #else
-    om_openOM = (XOM(*)())dlsym(objects_list->dl_module,
-				objects_list->open);
+    om_openOM = (XOM(*)())try_both_dlsym(objects_list->dl_module,
+					 objects_list->open);
     if (!om_openOM) continue;
 #endif
     om = (*om_openOM)(lcd, display, rdb, res_name, res_class);

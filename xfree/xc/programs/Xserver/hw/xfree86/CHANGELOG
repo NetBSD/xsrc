@@ -1,3 +1,18 @@
+XFree86 4.2.0.1 (xx January 2002)
+ 699. Fix for `hostname` issue on Linux (Marc La France).
+ 698. Fix startx script for ksh (Philip B. Bruce).
+ 697. Fix Emulate3Buttons for wsmouse protocol on NetBSD and OpenBSD
+      (Matthieu Herrb).
+ 696. Temporary workaround for IA-64 (Marc La France).
+ 695. Fix SIGSEGV when printing modes that have no flags (Marc La France).
+ 694. Fix an unresolved symbol in libGLU.so that shows up when building it
+      with gcc-3 (David Dawes).
+ 693. Fix incorrect symbol prefixing with Xlib's i18n modules on Solaris,
+      and fix invalid code caused by a memcpy() macro being split by a
+      directive (Keith Packard, David Dawes, #5150, Sami Farin).
+ 692. Don't try to print mode names when NULL (David Dawes).
+ 691. Revert the ATI driver's composite sync default to off (Marc La France).
+
 XFree86 4.2.0 (18 January 2002)
  690. Workaround for hardware bug that prevents older ATI 3D Rage adapters from
       being assigned to XF86Config device sections (Marc La France).
@@ -14555,4 +14570,4 @@ XFree86 3.0a (28 April 1994)
 XFree86 3.0 (26 April 1994)
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.2144 2002/01/18 20:09:22 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.2144.2.7 2002/01/28 18:27:34 tsi Exp $
