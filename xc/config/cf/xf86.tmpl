@@ -2,7 +2,7 @@ XCOMM $XConsortium: xf86.tmpl /main/2 1996/10/31 15:01:41 kaleb $
 
 
 
-XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11.2.2 1998/10/31 14:40:44 hohndel Exp $
+XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11.2.4 1999/06/17 16:23:45 hohndel Exp $
 
 #if XF86LinkKit
     TOP_INCLUDES = TopIncludes
@@ -33,6 +33,9 @@ XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11.2.2 1998/10/31 14:40:44 hohndel Ex
 #ifndef ElographicsSupport
 #define ElographicsSupport	NO
 #endif
+#ifndef DynaproSupport
+#define DynaproSupport		NO
+#endif
 #ifndef MicroTouchSupport
 #define MicroTouchSupport	NO
 #endif
@@ -44,6 +47,9 @@ XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11.2.2 1998/10/31 14:40:44 hohndel Ex
 #endif
 #ifndef DialBoxSupport
 #define DialBoxSupport		NO
+#endif
+#ifndef CalcompSupport
+#define CalcompSupport		NO
 #endif
 
 #if BuildDynamicLoading
@@ -66,6 +72,11 @@ XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11.2.2 1998/10/31 14:40:44 hohndel Ex
 # else
 #  define ElographicsDefines
 # endif
+# if DynaproSupport
+#  define DynaproDefines -DDYNAPRO_SUPPORT
+# else
+#  define DynaproDefines
+# endif
 # if MicroTouchSupport
 #  define MicroTouchDefines -DMICROTOUCH_SUPPORT
 # else
@@ -85,5 +96,10 @@ XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.11.2.2 1998/10/31 14:40:44 hohndel Ex
 #  define DialBoxDefines -DDIALBOX_SUPPORT
 # else
 #  define DialBoxDefines
+# endif
+# if CalcompSupport
+#  define CalcompDefines -DCALCOMP_SUPPORT
+# else
+#  define CalcompDefines
 # endif
 #endif

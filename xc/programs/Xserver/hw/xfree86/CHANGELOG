@@ -1,4 +1,197 @@
-XFree86 3.3.3.1 (4 January 1998)
+XFree86 3.3.4 (13 July 1999)
+1409. DG/ux support updates (Takis Psarogiannakopoulos).
+1408. Attempt at making the a.out libraries built on FreeBSD/ELF suitable for
+      2.2.x compatibility.
+1407. Fix a bug occuring when multiple wacom devices don't report the 
+      same valuators (#3009, Frederic Lepied).
+1406. Fix printout label for probed PLL reference frequency in MGA driver
+      (#2980, Harald Koenig).
+1405. Fix a few slight glitches for OS/2 and update the docs (#2975,
+      Holger Veit).
+1404. Fix the acute and apostrophe mixup in the German xkb layout with the
+      nodeadkey option, and add the EuroSign to AltGr+e (#3006, Markus Kuhn).
+1403. Fix Cyber9525 support (Dirk Hohndel).
+1402. Modify XF86_Mono, XF86_VGA16, XF86_SVGA and XF86_Mach64 servers to
+      provide panel support on ATI LT, LT Pro, XL and XC chipsets. Update
+      docs accordingly (#2961, Marc La France).
+1401. Add Ultra Vanta PCI ID and update chip names in the NVIDIA
+      driver. Fix a text ROP related bug. Remove accleration for 
+      broken functionality in RGB 565 (#2956, David Schmenk).
+1400. Add sync on green for Permedia 2 (Stefan Dirsch).
+1399. Update manpages for 3.3.4 (#2941,2942 Takaaki Nomura,
+      Matthieu Herrb).
+1398. Fix the security fix for mkdir/chmod issue, fix a problem
+      where umask isn't cleaned up (#2936, Bill Nottingham).
+1397. Add support for two variants of the CyberBlade to trident
+      driver (#2935, Alan Hourihane).
+1396. Fix error in ati PCI detection introduced in change 1376
+      (#2934, Matthieu Herrb).
+1395. Fix Wacom PenPartner driver (Frederic Lepied).
+1394. Update Banshee driver to version 1.02. Clean up debugging code,
+      get it to work on Alpha and remove drawing errors; fix support
+      for SDRAM boards (#2930,3000 Daryll Strauss).
+1393. Update NetBSD, OpenBSD and mouse docs (#2925, Matthieu Herrb).
+1392. Fix S3 server to support Aurora64 cards on CRT as well (#2923,
+      Harald Koenig).
+
+XFree86 3.3.3.1Z (25 June 1999)
+1391. Fix a lockup when the BitBlt engine times out on a HiQV chip
+      (#2919, Thomas Mueller).
+1390. Documentation updates.
+1389. Integrate AceCad mouse protocol into the xf86misc extension
+      (#2831, Jeff Anton).
+1388. Add quite a few new cards to the Cards file (Dirk Hohndel).
+1387. New Cyrix MediaGX code (#2916,2921 Richard Hecker, Brian Falardeau).
+1386. Set the Rendition clock limit back to 170MHz as some boards can't
+      do 203MHz (#2914, Dejan Ilic).
+1385. Fix race condition in xinit (Nate Eldredge, Mark Montague).
+1384. Integration of the mouse acceleration patch from
+      Kevin Brown <kevin@sysexperts.com> into XInput, wacom update to 
+      alpha 5 public release: wheel support and baud rate change 
+      capability (#2910. Frederic Lepied).
+1383. Fix install rule for LinkKit (#2908, Thomas Mueller).
+1382. Workaround for PC98 with multi PCI cards, resync PC98 Imakefiles
+      (#2900, Takaaki Nomura).
+1381. Fix for Rendition driver. Activate hw-cursor for V1k, increase max
+      clock for V2K to 203MHz, update docs (#2897, Dejan Ilic).
+1380. Add Cyber9525 and CyberBlade support to the trident driver
+      (#2892, Alan Hourihane).
+1379. Add Brasilian XKB keymaps (#2880, Wanderlei Antonio Cavassin,
+      Arnaldo Carvalho de Melo).
+
+
+XFree86 3.3.3.1f (17 June 1999)
+1378. Fix red/blue problem in 3Dlabs server at 32bpp/no_accel
+      (#2882, Stefan Drisch).
+1377. Save and restore CR55 in the ViRGE driver (#2864, Harald Koenig).
+1376. Fix the servers to only use the active card in a multi card machine 
+      (#2885, Dejan Ilic, Dirk Hohndel).
+1375. Don't use the G400 bios (we don't understand the format)
+      (#2881, Mark Vojkovich).
+1374. Add Dynapro touch screen support (#2868, David Woodhouse).
+1373. Bump MAXSOCKS to 128 for NetBSD and OpenBSD (#2858, Matthieu Herrb
+1372. Add Blade3D acceleration (#2855,2856, Alan Hourihane).
+1371. Resyinc SuperProbe with the 3.9 branch, add detection of 
+      ATI Rage XL & XC chips, minor xdm warning fix (#2848, Marc La France).
+1370. Fix some problems in modes using more than 4 Meg and fix a desktop
+      panning problem in 24bpp for G400 (#2845, Mark Vojkovich).
+1369. Reinstate the check for the socket directory not being a symlink.
+1368. Fix a problem with the Cyrillic `m' in some of the helvetica fonts
+      (#2876, Pavel Roskin).
+
+XFree86 3.3.3.1e (2 June 1999)
+1367. Add ISO 8859-15 locale information (Dirk Hohndel).
+1366. Add Permedia2 acceleration to the frame buffer server on PPC, fix
+      some imstt accel problem (#2826, Sven Luther).
+1365. Fixes for ROPs on SiS and some more code for 8MB cards (Bart Oldeman).
+1364. Add Matrox G400 support (#2839, Mark Vojkovich).
+1363. Update LynxOS docs (#2837, Thomas Mueller).
+1362. Update Japanese Documentation and man pages (#2828, Taketoshi Sano,
+      xjman project).
+1361. Make button mapping work for AlwaysCore devices (#2822, 
+      Frederic Lepied).
+1360. Updates for AceCad Flair support, add to man page and sample config
+      file (#2816, Fredrik Chabot).
+1359. Back out change 1353 (#2825, Edward Wang).
+1358. Possible support for the different PLL reference clock used for HP's
+      on-board G200s.
+1357. Fix a build problem with the Mach64 server (#2826 Sven Luther).
+
+XFree86 3.3.3.1d (25 May 1999)
+1356. Update docs and xfree86.cf to reflect the planned 3.3.4 version number.
+1355. Fix resize for OpenBSD (#2814, Matthieu Herrb).
+1354. Fix typo in lynx.cf and add spc8110 to SVGA driver list in xf86site.def
+      (#2806, Thomas Mueller).
+1353. Add a new DGA-1.1 acceleration function: XF86DGAFillPolygon (#2804,
+      Edward Wang).
+1352. Update Elographics and MicroTouch drivers, add Calcomp DrawingBoard
+      tablet driver, add a new comptaible keyword to the SummaSketch driver
+      to enable compatible tablets to work, update wacom driver (#2801,
+      Frederic Lepied, Patrick Lecoanet, Martin Kroeker).
+1351. Add Trident Blade3D support (#2799, Alan Hourihane).
+1350. Add Acecad flair support (#2790, Fredrik Chabot).
+1349. Update Japanese Documentation and man pages (#2789, Taketoshi Sano,
+      xjman project).
+1348. Fix XF98_S3 server for S3 Vision864 (#2783, Isao Ohishi).
+1347. Add acceleration to the XF68_FBDev server (#2776, Sven Luther).
+1346. Fix asm codes so that the latest egcs builds the code again (#2773,
+      Marc Espie).
+1345. ANSI fix for RIVA driver (#2787, David Schmenk).
+1344. Xkb data files for a Macintosh keyboard (#2798, Sven LUTHER).
+1343. SiS driver updates (Alan Hourihane).
+1342. Fix handling of xkbcomp's -I flag (Stanislav Meduna).
+1341. Fix a server loop that can happen when VT switching while a grab is
+      in progress (#2782, Edward Wang).
+1340. Fix some spelling errors in Xlib.h (#2775, Itai Nahshon).
+1339. Add missing '#include "compiler.h"' to some files in the i740 driver
+      (David Dawes).
+1338. Update Cards file (H.J. Lu, Dirk Hohndel).
+1337. Restrict SiS driver to 4MB (Dirk Hohndel).
+
+XFree86 3.3.3.1c (10 May 1999)
+1336. Add support for the 3dfx Banshee and Voodoo3 (#2742, Daryll Strauss,
+      Scott Bertin).
+1335. Fix for screen corruption when using DGA acceleration and software 
+      cursor, fix for bad frame-buffer bank size reported by DGA for
+      glint server (#2739, Edward Wang).
+1334. Fix the initial-erase feature for xterm (#2749,2761, Tom Dickey).
+1333. Fix XF98_SVGA for DSTN-LCD using Cirrus chipset (#2741, Isao Ohishi).
+1332. Trio3D support (#2762, Alok Ladsariya, Sebastian Kloska).
+1331. Disable MIT-SHM in Xnest since it doesn't work (#2763, Wolfram Gloger).
+1330. Add Elsa GLoria XXL to 3Dlabs driver (#2718, Alan Hourihane).
+1329. Fix XF98_EGC server, fix XF98Setup with -egc option, update PC98 docs
+      (#2723, Takaaki Nomura).
+1328. Work around a bash bug in LynxOS 3.0.1 (#2714, Thomas Mueller).
+
+XFree86 3.3.3.1b (24 April 1999)
+1327. Fix typo in Russian keymap (#2703, Peter Novodvorsky).
+1326. Add support for Trident 9397DVD (#2705, Bill Mair).
+1325. Add SiS530/620 support to the server and SiS6326/530/620 support
+      to SuperProbe (Xavier Ducoin, Dirk Hohndel).
+1324. Fix a problem in X11.rules and fix an uninitialized structure in 
+      XF86_Mouse.c (#2698, Matthieu Herrb).
+1323. Add wsmouse protocol support for NetBSD 1.4 and update host.def
+      in etc/bindist/NetBSD-x86 to use the Tcl/Tk package from /usr/pkg 
+      (#2698, Matthieu Herrb).
+1322. Add TNT2 support and add more acceleration for NVIDIA chipsets
+      (#2697, David Schmenk, NVIDIA).
+1321. Change xterm to use the tty default value for the backspace key
+      (#2692, Tom Dickey).
+1320. Fix typo in XF86Conf manpage (#2691, Itai Noahshon).
+1319. Import a fix for destroying an Xt action hook procedure from within an
+      invocation of the hook procedure from R6.4.
+
+XFree86 3.3.3.1a (17 April 1999)
+1318. Change the argv[0] setting that Xwrapper uses when execing the X server.
+1317. Remove references to ru_SU in locale.alias (#2669, Aleksey Nowodworsky).
+1316. Fix misuse of depth/bpp in glint driver (#2680, Huver Hu).
+1315. Add VMWare patches for DGA 1.1 (#2684, VMWare).
+1314. Add i740 driver (#2683, Kevin Martin, Precision Insight).
+1313. Update 'ru' xkb symbols file (#2656, Aleksey Nowodworsky).
+1312. Fix a problem with the ThinkingMousePS/2 protocol handling of left
+      movement (#2392, Ian Remmler).
+1311. Fix an ISO8859-5 support bug in Xlib (Nikolai Saoukh).
+1310. Fix security problem with the creation of the /tmp/.X11-unix directory
+      (#2607, Matthieu Herrb).
+1309. Fix for linear addressing mode for the Cirrus 7543 (#2597,
+      Samuel Guyer).
+1308. Fix some build problems on Solaris 7/x86 (David Holland,
+      Nicholas Brealey).
+1307. Add Cards entry for Number Nine FX Reality 772 (#2556, Harald Koenig).
+1306. Fix DoubleScan modes for the Permedia 2 (#2488, Michael Schimek).
+1305. Fix for Millennium II hardware cursor-related loss of sync problem
+      that shows up with some revs of the 3026 ramdac (Trey Boudreau).
+1304. Fix a problem with xsm not acknowledging the SaveYourself message it
+      sends clients with a SaveComplete message (#2425, Robert Bihlmeyer).
+1303. Fix a namespace problem in the nv driver that shows up on LynxOS
+      (#2368, Thomas Mueller).
+1302. Fix a problem with the xkb dvorak layout (#2362, Tabman).
+1301. Fix an xsm crash (NULL dereference) when a client sets an SM property
+      list to a length of zero (#2361, Robert Bihlmeyer).
+1300. Initial support for building the Japanese versions of XF86Setup as part
+      of a normal build.
+
+XFree86 3.3.3.1 (4 January 1999)
 1299. Put a copy of <linux/fb.h> in hw/xfree86/etc for reference.
 1298. Document the MGA hw cursor problem with virtual screens >= 8MB.
 1297. Update PC98 documentation (#2350. Takaaki Nomura).
@@ -5548,4 +5741,4 @@ XFree86 3.0a (28 April 1994)
 
 XFree86 3.0 (26 April 1994)
 
-$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.212 1999/01/04 19:16:01 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.256 1999/07/17 05:00:48 dawes Exp $

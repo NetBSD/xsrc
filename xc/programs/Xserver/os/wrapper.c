@@ -35,7 +35,7 @@
  * authorization from the XFree86 Project.
  */
 
-/* $XFree86: xc/programs/Xserver/os/wrapper.c,v 1.1.2.5 1998/02/27 15:28:59 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/wrapper.c,v 1.1.2.6 1999/04/17 05:52:41 dawes Exp $ */
 
 /* This is normally set in the Imakefile */
 #ifndef XSERVER_PATH
@@ -206,6 +206,7 @@ main(int argc, char **argv, char **envp)
 #endif
     switch (bad) {
     case NotBad:
+	argv[0] = XSERVER_PATH;
 	execve(XSERVER_PATH, argv, envp);
 	fprintf(stderr, "execve failed for %s (errno %d)\n", XSERVER_PATH,
 		errno);

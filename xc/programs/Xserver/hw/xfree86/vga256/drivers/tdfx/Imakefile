@@ -1,0 +1,43 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tdfx/Imakefile,v 1.1.2.2 1999/06/21 09:45:16 hohndel Exp $
+XCOMM
+XCOMM This is an Imakefile for the 3Dfx driver.  
+XCOMM
+
+#include <Server.tmpl>
+
+SRCS = vb_driver.c vb_hwcurs.c vb_vgahw.c \
+	vb_accel8.c vb_accel16.c vb_accel24.c vb_accel32.c 
+OBJS = vb_driver.o vb_hwcurs.o vb_vgahw.o \
+	vb_accel8.o vb_accel16.o vb_accel24.o vb_accel32.o 
+
+
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+           -I$(SERVERSRC)/cfb -I../../vga -I../../../xaa \
+           -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+NormalRelocatableTarget(vb_drv, $(OBJS))
+
+ObjectFromSpecialSource(vb_accel8, vb_accel, -DPSZ=8)
+ObjectFromSpecialSource(vb_accel16, vb_accel, -DPSZ=16)
+ObjectFromSpecialSource(vb_accel24, vb_accel, -DPSZ=24)
+ObjectFromSpecialSource(vb_accel32, vb_accel, -DPSZ=32)
+
+InstallLinkKitNonExecFile(vb.h,$(LINKKITDIR)/drivers/vga256/tdfx)
+InstallLinkKitNonExecFile(vbdefs.h,$(LINKKITDIR)/drivers/vga256/tdfx)
+InstallLinkKitNonExecFile(vb_driver.c,$(LINKKITDIR)/drivers/vga256/tdfx)
+InstallLinkKitNonExecFile(vb_hwcurs.c,$(LINKKITDIR)/drivers/vga256/tdfx)
+InstallLinkKitNonExecFile(vb_vgahw.c,$(LINKKITDIR)/drivers/vga256/tdfx)
+InstallLinkKitNonExecFile(vb_accel.c,$(LINKKITDIR)/drivers/vga256/tdfx)
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/tdfx)
+
+DependTarget()

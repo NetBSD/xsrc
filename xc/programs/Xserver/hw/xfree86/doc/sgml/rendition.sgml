@@ -3,18 +3,17 @@
 <article>
 <title>Information for Rendition Users
 <author>The XFree86 Project Inc.
-<date>23 October 1998
+<date>19 June 1999
 <toc>
 
 <sect>Supported hardware <p>
 All cards based on the V1000 or the V2x00 should be supported. The server
-was tested on a miroCRYSTAL VRX (V1000), Diamond Stealth II S220 (V2100), and
-Hercules Thriller3D (V2200).
+was tested on a miroCRYSTAL VRX (V1000), Intergraph Intense-100 3D (V1000), Diamond Stealth II S220 (V2100), Hercules Thriller3D (V2200) and Innovision Warrior3D (V2200).
 
 <sect>Features <p>
 <itemize>
 <item>Unaccelerated
-<item>Hardware cursor
+<item>Hardware cursor on V1000-based cards
 <item>Supported color depths
 <itemize>
 <item>8 bits per pixel (256 pseudo colour)
@@ -31,10 +30,37 @@ Disables use of the hardware cursor.
 Run the memory at a higher clock. Useful on some cards with display glitches
 at higher resolutions. But adds the risk to damage the hardware. Use with
 caution.
+<tag>DacSpeed "MHz"</tag>
+Set custom ramdac limit. We have currently no way of knowing if the v2x00 chip is a v2100 (170MHz) or v2200 (203MHz and 230MHz) so we assume the lowest. Use this option to manualy override the value.
 </descrip>
 
+<sect>News in this release <p>
+<itemize>
+<item>Maximum allowed clock on V2x00 cards increased to 170MHz.
+<item>Hardware-cursor on V1000 cards.
+</itemize>
+
+<sect>Major fixes in this release <p>
+<itemize>
+<item>The driver should now correctly autodetect the primary display card.
+</itemize>
+
+<sect>Known problems in current driver<p>
+<itemize>
+<item>Displays with depth 15 (-fbb 15) has incorrect redish color.
+<item>Swithing from display to VC and back to display can lock up V2x00 cards.
+<item>No limits are programmed into driver. High-bandwidth resolutions might be corrupted.
+</itemize>
+
+<sect>Work in progress (not finished in time for release) <p>
+<itemize>
+<item>Hardware cursor for V2100 and V2200. Almost done.
+<item>Acceleration for V1000 chipset. Some bugs to clear out.
+<item>Acceleration for V2100 and V2200 chipset. Not ready for general use.
+</itemize>
+
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/rendition.sgml,v 1.1.2.5 1998/11/07 13:52:46 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/rendition.sgml,v 1.1.2.8 1999/07/13 07:38:01 hohndel Exp $
 </verb>
 
 </article>

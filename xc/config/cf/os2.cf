@@ -2,11 +2,11 @@ XCOMM $XConsortium: os2.cf /main/1 1996/10/31 14:47:25 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.7 1998/12/20 10:37:54 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.8 1999/07/13 07:09:36 hohndel Exp $
 
 #define OSName           OS/2
 #define OSVendor	 IBM
-#define OSMajorVersion    3
+#define OSMajorVersion    4
 #define OSMinorVersion    0
 
 /*
@@ -69,9 +69,13 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.7 1998/12/20 10:37:54 da
 #define OSDefines		-D__EMX__ -D__i386__ -Demxos2 -D_POSIX_SOURCE \
 				-D_BSD_SOURCE -D_GNU_SOURCE
 
+#ifndef BuildXKB
 #define BuildXKB		YES
+#endif
 #define BuildImplibs		YES
+#ifndef BuildLBX
 #define BuildLBX		YES
+#endif
 
 /* some more properties of the OS/2 implementation */
 #define HasNdbm         	YES

@@ -4,7 +4,7 @@
 <title>README for XFree86 on OpenBSD
 <author>
 Matthieu Herrb
-<Date>Last modified on: 29 December 1998
+<Date>Last modified on: 25 June 1999
 
 <toc>
 
@@ -26,7 +26,7 @@ The sources for XFree86 are available by anonymous ftp from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current"
 url="ftp://ftp.XFree86.org/pub/XFree86/current">
 
-Binaries for OpenBSD 2.4 and later are available from:
+Binaries for OpenBSD 2.5 and later are available from:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/OpenBSD"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/OpenBSD">
@@ -50,8 +50,14 @@ this file and we'll revise it.
 
 <sect>New features in this release
 <p>
+<itemize>
+<item>The maximum number of open connections in the server has been
+raised to 128,
+<item>the <tt>resize</tt> utility was fixed.
+</itemize>
+<p>
 See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
-new features in XFree86.
+non-OS dependent new features in XFree86 3.3.4.
 
 <sect>Installing the Binaries
 
@@ -393,7 +399,7 @@ pages you should update <tt/whatis.db/ by running ``<tt>makewhatis
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.1.2.9 1999/01/05 07:15:47 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.1.2.10 1999/06/30 13:00:28 hohndel Exp $
 
 
 

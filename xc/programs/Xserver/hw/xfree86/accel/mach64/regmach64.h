@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.4 1998/10/18 20:42:06 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/regmach64.h,v 3.15.2.6 1999/07/05 09:07:26 hohndel Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -30,6 +30,7 @@
 #ifndef REGMACH64_H
 #define REGMACH64_H
 
+#ifndef FBDEV_SERVER
 #include "compiler.h"
 
 /* NON-GUI IO MAPPED Registers */
@@ -45,6 +46,9 @@ extern unsigned ioDAC_CNTL;
 extern unsigned ioGEN_TEST_CNTL;
 extern unsigned ioCLOCK_CNTL;
 extern unsigned ioCRTC_GEN_CNTL;
+extern unsigned ioLCD_GEN_CTRL;
+extern unsigned ioLCD_INDEX;
+extern unsigned ioLCD_DATA;
 
 /* NON-GUI sparse IO register offsets */
 
@@ -59,6 +63,7 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define sioGEN_TEST_CNTL 	0x19
 #define sioCLOCK_CNTL	 	0x12
 #define sioCRTC_GEN_CNTL 	0x07
+#endif
 
 /* NON-GUI MEMORY MAPPED Registers - expressed in BYTE offsets */
 
@@ -95,6 +100,9 @@ extern unsigned ioCRTC_GEN_CNTL;
 
 #define BUS_CNTL                0x00A0  /* Dword offset 28 */
 
+#define LCD_INDEX               0x00A4  /* Dword offset 29 (LTPro) */
+#define LCD_DATA                0x00A8  /* Dword offset 2A (LTPro) */
+
 #define MEM_CNTL                0x00B0  /* Dword offset 2C */
 
 #define MEM_VGA_WP_SEL          0x00B4  /* Dword offset 2D */
@@ -107,7 +115,13 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define DAC_R_INDEX             0x00C3  /* Dword offset 30 */
 #define DAC_CNTL                0x00C4  /* Dword offset 31 */
 
+#define HORZ_STRETCHING         0x00C8  /* Dword offset 32 (LT) */
+#define VERT_STRETCHING         0x00CC  /* Dword offset 33 (LT) */
+
 #define GEN_TEST_CNTL           0x00D0  /* Dword offset 34 */
+
+#define LCD_GEN_CTRL            0x00D4  /* Dword offset 35 (LT) */
+#define POWER_MANAGEMENT        0x00D8  /* Dword offset 36 (LT) */
 
 #define CONFIG_CNTL		0x00DC	/* Dword offset 37 (CT, ET, VT) */
 #define CONFIG_CHIP_ID          0x00E0  /* Dword offset 38 */
@@ -340,6 +354,48 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define VCLK2_POST		0x30
 #define VCLK3_POST		0xC0
 
+/* LCD_INDEX register mapping */
+#define LCD_REG_INDEX		0x0000000f
+#define LCD_DISPLAY_DIS		0x00000100
+#define LCD_SRC_SEL		0x00000200
+#define LCD_SRC_SEL_CRTC1	0x00000000
+#define LCD_SRC_SEL_CRTC2	0x00000200
+#define LCD_CRTC2_DISPLAY_DIS	0x00000400
+
+/* LCD registers on LTPro */
+#define LCD_CONFIG_PANEL	0x00
+#define LCD_GEN_CNTL		0x01
+#define LCD_HORZ_STRETCHING	0x04
+#define LCD_VERT_STRETCHING	0x05
+#define LCD_EXT_VERT_STRETCH	0x06
+#define LCD_POWER_MANAGEMENT	0x08
+
+/* Fields in LCD registers */
+#define DONT_SHADOW_HEND	0x00004000
+#define CRT_ON			0x00000001
+#define LCD_ON			0x00000002
+#define HORZ_DIVBY2_EN		0x00000004
+#define LOCK_8DOT		0x00000010
+#define DONT_SHADOW_VPAR	0x00000040
+#define DIS_HOR_CRT_DIVBY2	0x00000400
+#define CRTC_RW_SELECT		0x08000000
+#define USE_SHADOWED_VEND	0x10000000
+#define USE_SHADOWED_ROWCUR	0x20000000
+#define SHADOW_EN		0x40000000
+#define SHADOW_RW_EN		0x80000000
+#define HORZ_STRETCH_RATIO	0x0000FFFF
+#define HORZ_STRETCH_LOOP	0x00070000
+#define HORZ_STRETCH_MODE	0x40000000
+#define HORZ_STRETCH_EN		0x80000000
+#define VERT_STRETCH_RATIO0	0x000003FF
+#define VERT_STRETCH_RATIO1	0x000FFC00
+#define VERT_STRETCH_RATIO2	0x3FF00000
+#define VERT_STRETCH_USE0	0x40000000
+#define VERT_STRETCH_EN		0x80000000
+#define VERT_STRETCH_MODE	0x00000400
+#define AUTO_VERT_RATIO		0x00400000
+#define PWR_MGT_ON		0x00000001
+
 /* CONFIG_CNTL register constants */
 #define APERTURE_4M_ENABLE      1
 #define APERTURE_8M_ENABLE      2
@@ -349,6 +405,7 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define CFG_BUS_TYPE		0x00000007
 #define CFG_MEM_TYPE		0x00000038
 #define CFG_INIT_DAC_TYPE	0x00000e00
+#define CFG_PANEL_ID		0x001f0000
 
 /* CONFIG_STAT0 register constants (CT, ET, VT) */
 #define CFG_MEM_TYPE_xT		0x00000007
@@ -454,6 +511,11 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define PCI_MACH64_LB_ID	0x4C42
 #define PCI_MACH64_LI_ID	0x4C49
 #define PCI_MACH64_LP_ID	0x4C50
+#define PCI_MACH64_GM_ID	0x474D
+#define PCI_MACH64_GN_ID	0x474E
+#define PCI_MACH64_GO_ID	0x474F
+#define PCI_MACH64_GR_ID	0x4752
+#define PCI_MACH64_GS_ID	0x4753
 
 /* CONFIG_CHIP_ID register constants */
 #define CFG_CHIP_TYPE		0x0000FFFF
@@ -486,6 +548,11 @@ extern unsigned ioCRTC_GEN_CNTL;
 #define MACH64_LB_ID		0x4C42
 #define MACH64_LI_ID		0x4C49
 #define MACH64_LP_ID		0x4C50
+#define MACH64_GM_ID		0x474D
+#define MACH64_GN_ID		0x474E
+#define MACH64_GO_ID		0x474F
+#define MACH64_GR_ID		0x4752
+#define MACH64_GS_ID		0x4753
 #define MACH64_UNKNOWN_ID	0x0000
 
 /* DST_CNTL register constants */
@@ -684,16 +751,48 @@ typedef struct {
     unsigned long h_total_disp, h_sync_strt_wid;
     unsigned long v_total_disp, v_sync_strt_wid;
     unsigned long crtc_gen_cntl;
-    unsigned long color_depth;
     unsigned long clock_cntl;
+    unsigned long horz_stretching, vert_stretching, ext_vert_stretch;
+    unsigned long color_depth;
     unsigned long dot_clock;
     unsigned long fifo_v1;
 } mach64CRTCRegRec, *mach64CRTCRegPtr;
 
 
+#ifdef FBDEV_SERVER
+
+extern pointer mach64MemReg;
+
+#if defined (__powerpc__)
+
+static inline void regw(volatile unsigned long regindex, unsigned long regdata)
+{
+  register unsigned long base_addr = (unsigned long)mach64MemReg;
+
+  asm("stwbrx %0,%1,%2": : "r"(regdata), "r"(regindex), "r"(base_addr):"memory");
+}
+
+static inline unsigned long regr(volatile unsigned long regindex)
+{
+  register unsigned long base_addr = (unsigned long)mach64MemReg, val;
+
+  asm("lwbrx %0,%1,%2": "=r"(val):"r"(regindex), "r"(base_addr));
+  return(val);
+}
+
+static inline void regwbe(volatile unsigned long regindex, unsigned long regdata
+)
+{
+  *(unsigned long *)(mach64MemReg + regindex) = regdata;
+}
+
+#endif
+
+#endif	/* FBDEV_SERVER */
+
 /* Wait until "v" queue entries are free */
-#define WaitQueue(v)    { while ((regr(FIFO_STAT) & 0xffff) > \
-			 ((unsigned short)(0x8000 >> (v)))); }
+#define WaitQueue(v)    { while ((regr(FIFO_STAT) & 0x0000ffff) > \
+			 ((0x00008000 >> (v)))); }
 
 /* Wait until GP is idle and queue is empty */
 #define WaitIdleEmpty() { WaitQueue(16); \

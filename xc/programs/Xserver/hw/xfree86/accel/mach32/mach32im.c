@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32im.c,v 3.11 1996/12/23 06:38:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32im.c,v 3.11.2.1 1999/05/25 06:55:32 hohndel Exp $ */
 /*
  * Copyright 1992,1993 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -124,7 +124,7 @@ static int screenStride;
 static __inline__ void outsw(void *buf, int count, unsigned short port)
 {
    __asm__ __volatile__ ("cld;rep;outsw"
-		     ::"d" (port),"S" (buf),"c" (count):"cx","si");
+		     : "=S" (buf),"=c" (count):"d" (port),"0" (buf),"1" (count));
 }
 
 __inline__ void mach32SetVGAPage(int page)

@@ -1,5 +1,5 @@
 /* $XConsortium: Xlib.h /main/119 1996/09/28 16:35:29 rws $ */
-/* $XFree86: xc/lib/X11/Xlib.h,v 3.10.2.2 1998/11/04 08:01:35 hohndel Exp $ */
+/* $XFree86: xc/lib/X11/Xlib.h,v 3.10.2.4 1999/05/15 06:23:00 dawes Exp $ */
 /* 
 
 Copyright (c) 1985, 1986, 1987, 1991  X Consortium
@@ -582,7 +582,7 @@ typedef struct {
 	Bool send_event;	/* true if this came from a SendEvent request */
 	Display *display;	/* Display the event was read from */
 	Window window;	        /* "event" window it is reported relative to */
-	Window root;	        /* root window that the event occured on */
+	Window root;	        /* root window that the event occurred on */
 	Window subwindow;	/* child window */
 	Time time;		/* milliseconds */
 	int x, y;		/* pointer x, y coordinates in event window */
@@ -600,7 +600,7 @@ typedef struct {
 	Bool send_event;	/* true if this came from a SendEvent request */
 	Display *display;	/* Display the event was read from */
 	Window window;	        /* "event" window it is reported relative to */
-	Window root;	        /* root window that the event occured on */
+	Window root;	        /* root window that the event occurred on */
 	Window subwindow;	/* child window */
 	Time time;		/* milliseconds */
 	int x, y;		/* pointer x, y coordinates in event window */
@@ -618,7 +618,7 @@ typedef struct {
 	Bool send_event;	/* true if this came from a SendEvent request */
 	Display *display;	/* Display the event was read from */
 	Window window;	        /* "event" window reported relative to */
-	Window root;	        /* root window that the event occured on */
+	Window root;	        /* root window that the event occurred on */
 	Window subwindow;	/* child window */
 	Time time;		/* milliseconds */
 	int x, y;		/* pointer x, y coordinates in event window */
@@ -635,7 +635,7 @@ typedef struct {
 	Bool send_event;	/* true if this came from a SendEvent request */
 	Display *display;	/* Display the event was read from */
 	Window window;	        /* "event" window reported relative to */
-	Window root;	        /* root window that the event occured on */
+	Window root;	        /* root window that the event occurred on */
 	Window subwindow;	/* child window */
 	Time time;		/* milliseconds */
 	int x, y;		/* pointer x, y coordinates in event window */
@@ -1312,7 +1312,13 @@ typedef	unsigned short	XIMStringConversionType;
 typedef	unsigned short	XIMStringConversionOperation;
 
 #define	XIMStringConversionSubstitution	(0x0001)
-#define	XIMStringConversionRetrival	(0x0002)
+#define	XIMStringConversionRetrieval	(0x0002)
+/*
+ * This typo was present in pre-R6.4 versions.  It is defined here for
+ * compatibility purposes only.  It should not be used, and may not be
+ * present in future releases.
+ */
+#define	XIMStringConversionRetrival	XIMStringConversionRetrieval
 
 typedef enum {
     XIMForwardChar, XIMBackwardChar,

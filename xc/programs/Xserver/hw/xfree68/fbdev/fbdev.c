@@ -3,7 +3,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree68/fbdev/fbdev.c,v 3.4.2.10 1998/11/08 11:49:18 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree68/fbdev/fbdev.c,v 3.4.2.12 1999/06/02 07:50:09 hohndel Exp $ */
 /*
  *
  *  Author: Martin Schaller. Taken from hga2.c
@@ -52,6 +52,7 @@
 #include <linux/fb.h>
 #include <asm/page.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "colormapst.h"
 #include "resource.h"
@@ -129,11 +130,20 @@ extern int mach64_gx_init(ScreenPtr pScreen);
 extern int mach64_ct_init(ScreenPtr pScreen);
 extern int mach64_vt_init(ScreenPtr pScreen);
 extern int mach64_gt_init(ScreenPtr pScreen);
+extern void mach64_reinit(ScreenPtr pScreen);
 #else
 #define mach64_gx_init			NULL
 #define mach64_ct_init			NULL
 #define mach64_vt_init			NULL
 #define mach64_gt_init			NULL
+#define mach64_reinit			NULL
+#endif
+#ifdef CONFIG_PM2
+extern int pm2fb_init(ScreenPtr pScreen);
+extern void pm2fb_reinit(ScreenPtr pScreen);
+#else
+#define pm2fb_init			NULL
+#define pm2fb_reinit			NULL
 #endif
 #ifdef CONFIG_IMSTT
 extern int imstt_init(ScreenPtr pScreen);
@@ -300,30 +310,32 @@ static struct accelentry {
     CARD32 id;
     const char *name;
     int (*init)(ScreenPtr pScreen);
+    void (*reinit)(ScreenPtr pScreen);
 } acceltab[] = {
-    { FB_ACCEL_NONE, "None", NULL },
-    { FB_ACCEL_ATARIBLITT, "Atari Blitter", NULL },
-    { FB_ACCEL_AMIGABLITT, "Amiga Blitter", NULL },
-    { FB_ACCEL_S3_TRIO64, "S3 Trio64", NULL },
-    { FB_ACCEL_NCR_77C32BLT, "NCR 77C32BLT", ncr77c32_init },
-    { FB_ACCEL_S3_VIRGE, "S3 ViRGE", NULL },
-    { FB_ACCEL_ATI_MACH64GX, "ATI Mach64GX", mach64_gx_init },
-    { FB_ACCEL_DEC_TGA, "DEC 21030 TGA", NULL },
-    { FB_ACCEL_ATI_MACH64CT, "ATI Mach64CT", mach64_ct_init },
-    { FB_ACCEL_ATI_MACH64VT, "ATI Mach64VT", mach64_vt_init },
-    { FB_ACCEL_ATI_MACH64GT, "ATI Mach64GT (3D RAGE)", mach64_gt_init },
-    { FB_ACCEL_SUN_CREATOR, "Sun Creator/Creator3D", NULL },
-    { FB_ACCEL_SUN_CGSIX, "Sun cg6", NULL },
-    { FB_ACCEL_SUN_LEO, "Sun leo/zx", NULL },
-    { FB_ACCEL_IMS_TWINTURBO, "IMS Twin Turbo", imstt_init },
-    { FB_ACCEL_3DLABS_PERMEDIA2, "3Dlabs Permedia 2", NULL },
-    { FB_ACCEL_MATROX_MGA2064W, "Matrox MGA2064W (Millennium)", mga_init },
-    { FB_ACCEL_MATROX_MGA1064SG, "Matrox MGA1064SG (Mystique)", mga_init },
-    { FB_ACCEL_MATROX_MGA2164W, "Matrox MGA2164W (Millennium II)", mga_init },
-    { FB_ACCEL_MATROX_MGA2164W_AGP, "Matrox MGA2164W (Millennium II AGP)", mga_init },
-    { FB_ACCEL_MATROX_MGAG100, "Matrox G100 (Productiva G100)", mga_init },
-    { FB_ACCEL_MATROX_MGAG200, "Matrox G200 (Millennium, Mystique)", mga_init },
+    { FB_ACCEL_NONE, "None", NULL, NULL },
+    { FB_ACCEL_ATARIBLITT, "Atari Blitter", NULL, NULL },
+    { FB_ACCEL_AMIGABLITT, "Amiga Blitter", NULL, NULL },
+    { FB_ACCEL_S3_TRIO64, "S3 Trio64", NULL, NULL },
+    { FB_ACCEL_NCR_77C32BLT, "NCR 77C32BLT", ncr77c32_init, NULL },
+    { FB_ACCEL_S3_VIRGE, "S3 ViRGE", NULL, NULL },
+    { FB_ACCEL_ATI_MACH64GX, "ATI Mach64GX", mach64_gx_init, mach64_reinit },
+    { FB_ACCEL_DEC_TGA, "DEC 21030 TGA", NULL, NULL },
+    { FB_ACCEL_ATI_MACH64CT, "ATI Mach64CT", mach64_ct_init, mach64_reinit },
+    { FB_ACCEL_ATI_MACH64VT, "ATI Mach64VT", mach64_vt_init, mach64_reinit },
+    { FB_ACCEL_ATI_MACH64GT, "ATI Mach64GT (3D RAGE)", mach64_gt_init, mach64_reinit },
+    { FB_ACCEL_SUN_CREATOR, "Sun Creator/Creator3D", NULL, NULL },
+    { FB_ACCEL_SUN_CGSIX, "Sun cg6", NULL, NULL },
+    { FB_ACCEL_SUN_LEO, "Sun leo/zx", NULL, NULL },
+    { FB_ACCEL_IMS_TWINTURBO, "IMS Twin Turbo", imstt_init, NULL },
+    { FB_ACCEL_3DLABS_PERMEDIA2, "3Dlabs Permedia 2", pm2fb_init, pm2fb_reinit },
+    { FB_ACCEL_MATROX_MGA2064W, "Matrox MGA2064W (Millennium)", mga_init, NULL },
+    { FB_ACCEL_MATROX_MGA1064SG, "Matrox MGA1064SG (Mystique)", mga_init, NULL },
+    { FB_ACCEL_MATROX_MGA2164W, "Matrox MGA2164W (Millennium II)", mga_init, NULL },
+    { FB_ACCEL_MATROX_MGA2164W_AGP, "Matrox MGA2164W (Millennium II AGP)", mga_init, NULL },
+    { FB_ACCEL_MATROX_MGAG100, "Matrox G100 (Productiva G100)", mga_init, NULL }, { FB_ACCEL_MATROX_MGAG200, "Matrox G200 (Millennium, Mystique)", mga_init, NULL },
 };
+
+static struct accelentry *AccelEntry = NULL;
 
 static Bool UseModeDB = FALSE;
 
@@ -551,6 +563,9 @@ static void fbdevPrintIdent(void)
 #ifdef CONFIG_MGA
     ErrorF(", Matrox MGA (accel)");
 #endif
+#ifdef CONFIG_PM2
+    ErrorF(", 3Dlabs Permedia 2 (accel)");
+#endif
     ErrorF("\n");
 }
 
@@ -701,10 +716,10 @@ static void fbdevSetLinearColormap(const struct fb_var_screeninfo *var)
     bmap = (unsigned short *)
 		ALLOCATE_LOCAL(ColorMapSize*sizeof(unsigned short));
     for (i = 0; i < ColorMapSize; i++) {
-	float val = 65535.0*i/(ColorMapSize-1);
-	rmap[i] = val;
-	gmap[i] = val;
-	bmap[i] = val;
+	float val = i/(ColorMapSize - 1.0);
+	rmap[i] = (unsigned short)(65535.0*pow(val, xf86rGamma));
+	gmap[i] = (unsigned short)(65535.0*pow(val, xf86gGamma));
+	bmap[i] = (unsigned short)(65535.0*pow(val, xf86bGamma));
     }
     fbdevUpdateColormap(0, ColorMapSize, rmap, gmap, bmap);
     DEALLOCATE_LOCAL(rmap);
@@ -765,10 +780,9 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 	0xffff, 0x0000
     };
     DisplayModePtr mode;
-    int i, bpp, xsize, ysize, width;
+    int i, depth, bpp, xsize, ysize, width;
     char *fbtype;
     VisualPtr visual;
-    struct accelentry *accelentry = NULL;
 
     open_framebuffer();
 
@@ -820,27 +834,27 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
     }
     for (i = 0; i < sizeof(acceltab)/sizeof(*acceltab); i++)
 	if (fb_fix.accel == acceltab[i].id) {
-	    accelentry = &acceltab[i];
+	    AccelEntry = &acceltab[i];
 	    break;
 	}
-    if (accelentry) {
+    if (AccelEntry) {
 	if (xf86Verbose)
 	    ErrorF("%s %s: Hardware accelerator: %s\n", XCONFIG_PROBED,
-		   fbdevInfoRec.name, accelentry->name);
-	if (!accelentry->init)
-	    accelentry = NULL;
+		   fbdevInfoRec.name, AccelEntry->name);
+	if (!AccelEntry->init)
+	    AccelEntry = NULL;
     } else {
 	if (xf86Verbose)
 	    ErrorF("%s %s: Unknown hardware accelerator type %d\n",
 		   XCONFIG_PROBED, fbdevInfoRec.name, fb_fix.accel);
     }
-    if (!accelentry) {
+    if (!AccelEntry) {
 	mmio_len = 0;
 	if (xf86Verbose)
 	    ErrorF("%s %s: No driver support for hardware acceleration\n",
 		   XCONFIG_PROBED, fbdevInfoRec.name);
     } else if (OFLG_ISSET(OPTION_NOACCEL, &fbdevInfoRec.options)) {
-	accelentry = NULL;
+	AccelEntry = NULL;
 	mmio_len = 0;
 	if (xf86Verbose)
 	    ErrorF("%s %s: hardware acceleration disabled\n", XCONFIG_GIVEN,
@@ -869,7 +883,7 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 	case FB_VISUAL_MONO01:
 	case FB_VISUAL_MONO10:
 	    Visuals = StaticGrayMask;
-	    fbdevInfoRec.depth = 1;
+	    depth = 1;
 	    BitsPerRGB = 1;
 	    ColorMapSize = 2;
 	    RedMask = 0;
@@ -889,8 +903,8 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 	case FB_VISUAL_TRUECOLOR:
 	    Visuals |= var->grayscale ? StaticGrayMask | GrayScaleMask
 				      : TrueColorMask;
-	    fbdevInfoRec.depth = var->red.length+var->green.length+
-				 var->blue.length+var->transp.length;
+	    depth = var->red.length+var->green.length+var->blue.length+
+		    var->transp.length;
 	    BitsPerRGB = var->red.length;
 	    if (var->green.length > BitsPerRGB)
 		BitsPerRGB = var->green.length;
@@ -911,7 +925,7 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 	    Visuals |= StaticGrayMask;
 	    if (!var->grayscale)
 		Visuals |= StaticColorMask;
-	    fbdevInfoRec.depth = bpp;
+	    depth = bpp;
 	    BitsPerRGB = var->red.length;
 	    if (var->green.length > BitsPerRGB)
 		BitsPerRGB = var->green.length;
@@ -927,6 +941,7 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 	default:
 	    FatalError("Unknown visual type 0x%08x\n", fb_fix.visual);
     }
+    fbdevInfoRec.depth = depth;
 
     if (bpp == 1)
 	switch (fb_fix.type) {
@@ -1046,7 +1061,12 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 	    case FB_TYPE_PACKED_PIXELS:
 		width = fb_fix.line_length ? 8*fb_fix.line_length/bpp : xsize;
 #if defined(CONFIG_CFB16) || defined(CONFIG_CFB24) || defined(CONFIG_CFB32)
+ErrorF("bpp = %d, depth = %d, BitsPerRGB = %d\n", bpp, depth, BitsPerRGB);
+#if 0
+		if (!cfbSetVisualTypes(depth, Visuals, BitsPerRGB))
+#else
 		if (!cfbSetVisualTypes(bpp, Visuals, BitsPerRGB))
+#endif
 		    FatalError("cfbSetVisualTypes: FALSE\n");
 #endif /* CONFIG_CFB16 || CONFIG_CFB24 || CONFIG_CFB32 */
 		switch (bpp) {
@@ -1147,11 +1167,11 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 		FatalError("Unknown format type %d\n", fb_fix.type);
 	}
 
-    if (accelentry) {
+    if (AccelEntry) {
 	ErrorF("%s %s: Initializing accel code\n", XCONFIG_PROBED,
 	       fbdevInfoRec.name);
-	if (!accelentry->init(pScreen))
-	    FatalError("Initialization of %s failed\n", accelentry->name);
+	if (!AccelEntry->init(pScreen))
+	    FatalError("Initialization of %s failed\n", AccelEntry->name);
     }
 
     ErrorF("%s %s: Using %s driver\n", XCONFIG_PROBED, fbdevInfoRec.name,
@@ -1238,6 +1258,12 @@ static void fbdevEnterLeaveVT(Bool enter, int screen_idx)
 	if (!xf86Resetting) {
 	    /* Update the colormap */
 	    fbdevRestoreColors(pScreen);
+	}
+
+	if (AccelEntry && AccelEntry->reinit) {
+	    ErrorF("%s %s: Reinitializing accel code\n", XCONFIG_PROBED,
+		   fbdevInfoRec.name);
+	    AccelEntry->reinit(pScreen);
 	}
     } else {
 	/*

@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86dga.h,v 3.5 1996/10/18 14:57:24 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86dga.h,v 3.5.4.3 1999/06/02 07:50:01 hohndel Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs
@@ -21,6 +21,8 @@ Copyright (c) 1995  XFree86 Inc
 #define X_XF86DGAInstallColormap	7
 #define X_XF86DGAQueryDirectVideo	8
 #define X_XF86DGAViewPortChanged	9
+#define X_XF86DGACopyArea		10
+#define X_XF86DGAFillRectangle		11
 
 #define XF86DGADirectPresent		0x0001
 #define XF86DGADirectGraphics		0x0002
@@ -28,6 +30,8 @@ Copyright (c) 1995  XFree86 Inc
 #define XF86DGADirectKeyb		0x0008
 #define XF86DGAHasColormap		0x0100
 #define XF86DGADirectColormap		0x0200
+#define XF86DGAAccelPresent		0x0400
+#define XF86DGADoAccel			0x0800
 
 #define XF86DGANumberEvents		0
 
@@ -156,6 +160,34 @@ Bool XF86DGAViewPortChanged(
     Display *		/* dpy */,
     int			/* screen */,
     int			/* n */
+#endif
+);
+
+Bool XF86DGACopyArea(
+#if NeedFunctionPrototypes
+    Display *		/* dpy */,
+    int			/* screen */,
+    Drawable		/* drawable */,
+    GC			/* GC */,
+    int			/* srcx */,
+    int			/* srcy */,
+    unsigned int	/* width */,
+    unsigned int	/* height */,
+    int			/* dstx */,
+    int			/* dsty */
+#endif
+);
+
+Bool XF86DGAFillRectangle(
+#if NeedFunctionPrototypes
+    Display *		/* dpy */,
+    int			/* screen */,
+    Drawable		/* drawable */,
+    GC			/* GC */,
+    int			/* x */,
+    int			/* y */,
+    unsigned int	/* width */,
+    unsigned int	/* height */
 #endif
 );
 

@@ -1,7 +1,7 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/minix/mnx_io.c,v 3.9 1996/12/23 06:50:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/minix/mnx_io.c,v 3.9.2.1 1999/05/07 00:52:10 dawes Exp $ */
 /*
  * Copyright 1993 by Vrije Universiteit, The Netherlands
- * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
+ * Copyright 1993 by David Dawes <dawes@xfree86.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that

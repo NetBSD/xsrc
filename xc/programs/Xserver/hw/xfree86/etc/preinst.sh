@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/preinst.sh,v 3.8.2.6 1998/11/14 06:47:17 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/preinst.sh,v 3.8.2.7 1999/01/15 03:23:27 dawes Exp $
 #
 # preinst.sh  (for XFree86 3.3.3)
 #
@@ -65,7 +65,7 @@ if [ "`uname`" = Linux ]; then
 		    echo "Make sure you are installing the 'Linux-ix86-glibc' binary dist"
 		else
 		    echo "You appear to have an ELF system."
-		    echo "Make sure you are installing the 'Linux-ix86' binary dist"
+		    echo "Make sure you are installing the 'Linux-ix86-libc5' binary dist"
 		    echo "and *not* the 'Linux-ix86-glibc' binary dist"
 		fi
 		;;

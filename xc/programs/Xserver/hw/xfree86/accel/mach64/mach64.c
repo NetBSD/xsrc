@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.15 1998/10/18 20:42:04 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.18 1999/07/05 09:07:24 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -233,7 +233,14 @@ unsigned ioDAC_REGS;
 unsigned ioDAC_CNTL;
 unsigned ioGEN_TEST_CNTL;
 unsigned ioCLOCK_CNTL;   
+unsigned ioCRTC_H_TOTAL_DISP;
+unsigned ioCRTC_H_SYNC_STRT_WID;
+unsigned ioCRTC_V_TOTAL_DISP;
+unsigned ioCRTC_V_SYNC_STRT_WID;
 unsigned ioCRTC_GEN_CNTL;
+unsigned ioLCD_GEN_CTRL;
+unsigned ioLCD_INDEX;
+unsigned ioLCD_DATA;
 unsigned ATIExtReg;
 
 /*
@@ -271,6 +278,9 @@ typedef struct ATIInformationBlock {
    int  CXClk;
    int  ChipType;
    int  ChipRev;
+   int  PanelID;
+   int  LCDHorizontal;
+   int  LCDVertical;
 } ATIInformationBlock;
 
 typedef struct ATIPCIInformation {
@@ -357,10 +367,15 @@ SymTabRec mach64ChipTable[] = {
     { MACH64_GW_ID, "Mach64 Rage IIC" },
     { MACH64_GZ_ID, "Mach64 Rage IIC" },
     { MACH64_LD_ID, "Mach64 Rage LT Pro" },
-    { MACH64_LG_ID, "Mach64 Rage LT Pro" },
+    { MACH64_LG_ID, "Mach64 Rage LT" },
     { MACH64_LB_ID, "Mach64 Rage LT Pro" },
     { MACH64_LI_ID, "Mach64 Rage LT Pro" },
     { MACH64_LP_ID, "Mach64 Rage LT Pro" },
+    { MACH64_GM_ID, "Mach64 Rage XL or XC" },
+    { MACH64_GN_ID, "Mach64 Rage XL or XC" },
+    { MACH64_GO_ID, "Mach64 Rage XL or XC" },
+    { MACH64_GR_ID, "Mach64 Rage XL or XC" },
+    { MACH64_GS_ID, "Mach64 Rage XL or XC" },
     { -1, "" },
 };
 
@@ -401,20 +416,30 @@ Bool	mach64HasDSP;
 Bool	mach64HasBlockWrite;
 Bool	mach64AGP;
 
+int	mach64LCDPanelID = -1;
+int	mach64LCDClock = 0;
+int	mach64LCDHorizontal = 0;
+int	mach64LCDVertical = 0;
+
+static int LCDHSyncStart, LCDHSyncWidth, LCDHBlankWidth;
+static int LCDVSyncStart, LCDVSyncWidth, LCDVBlankWidth;
+
 static ATIInformationBlock *GetATIInformationBlock(BlockIO)
     Bool BlockIO;
 {
-#define BIOS_DATA_SIZE 0x8000
+#define BIOS_DATA_SIZE 0x10000
    char                       signature[]    = " 761295520";
    char                       bios_data[BIOS_DATA_SIZE];
    char                       bios_signature[10];
    unsigned short             *sbios_data = (unsigned short *)bios_data;
-   int                        tmp,i,j;
+   int                        tmp,tmp2,i,j;
    static ATIInformationBlock info = { 0, };
    int                        ROM_Table_Offset;
    int                        Freq_Table_Ptr;
    int                        CDepth_Table_Ptr;
    int                        CTable_Size;
+   int                        LCDTable;
+   int                        LCDPanelInfo;
 
 	 
    if (xf86ReadBIOS(mach64InfoRec.BIOSbase, 0x30,
@@ -500,6 +525,11 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    case MACH64_LB_ID:
    case MACH64_LI_ID:
    case MACH64_LP_ID:
+   case MACH64_GM_ID:
+   case MACH64_GN_ID:
+   case MACH64_GO_ID:
+   case MACH64_GR_ID:
+   case MACH64_GS_ID:
 	info.ChipType = tmp & CFG_CHIP_TYPE;
 	break;
    default:
@@ -532,7 +562,7 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
 	info.Bus_Type = tmp & CFG_BUS_TYPE;
 	info.Mem_Type = (tmp & CFG_MEM_TYPE) >> 3;
 	info.DAC_Type = (tmp & CFG_INIT_DAC_TYPE) >> 9;
-	info.DAC_SubType = inb(ioSCRATCH_REG1+1) & 0xf0 | info.DAC_Type;
+	info.DAC_SubType = (inb(ioSCRATCH_REG1+1) & 0xf0) | info.DAC_Type;
    } else {
 	info.Mem_Type = tmp & CFG_MEM_TYPE_xT;
 	info.DAC_Type = DAC_INTERNAL;
@@ -542,6 +572,32 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
 	ErrorF("CONFIG_STAT0 is 0x%08x\n", tmp);
 #endif
    }
+
+   switch (info.ChipType) {
+   case MACH64_LG_ID:
+	tmp2 = inl(ioLCD_GEN_CTRL);
+	break;
+   case MACH64_LD_ID:
+   case MACH64_LB_ID:
+   case MACH64_LI_ID:
+   case MACH64_LP_ID:
+   case MACH64_GM_ID:
+   case MACH64_GN_ID:
+   case MACH64_GO_ID:
+   case MACH64_GR_ID:
+   case MACH64_GS_ID:
+	outb(ioLCD_INDEX, LCD_GEN_CNTL);
+	tmp2 = inl(ioLCD_DATA);
+	break;
+   default:
+	tmp2 = 0;
+	break;
+   }
+
+   if (tmp2 & LCD_ON)
+	info.PanelID = (tmp & CFG_PANEL_ID) >> 16;
+   else
+	info.PanelID = -1;
 
    tmp = inl(ioMEM_CNTL);
    if (info.ChipType == MACH64_GX_ID ||
@@ -647,6 +703,29 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    } else
        info.Freq_Table2[0].h_disp = 0;
 
+   if (info.PanelID < 0)
+       return &info;
+
+   /* Pick up panel dimensions */
+   LCDTable = sbios_data[0x78 >> 1];
+   LCDPanelInfo = sbios_data[(LCDTable >> 1) + 5];
+
+   if (!LCDTable || !LCDPanelInfo ||
+       (bios_data[LCDTable + 5] != 0x1A) ||
+       (bios_data[LCDPanelInfo] != info.PanelID) ||
+       ((LCDTable + 0x1A) > BIOS_DATA_SIZE) ||
+       ((LCDPanelInfo + 0x1D) > BIOS_DATA_SIZE)) {
+	ErrorF("Warning:  Unable to determine dimensions of panel (ID %d)\n",
+		info.PanelID);
+	info.PanelID = -1;
+	return &info;
+   }
+
+   info.LCDHorizontal =
+       (bios_data[LCDPanelInfo + 0x1A] << 8) + bios_data[LCDPanelInfo + 0x19];
+   info.LCDVertical =
+       (bios_data[LCDPanelInfo + 0x1C] << 8) + bios_data[LCDPanelInfo + 0x1B];
+
    return &info;
 }
 
@@ -665,7 +744,9 @@ GetATIPCIInformation()
 	return NULL;
 
     while (pcrp = pcrpp[i]) {
-	if (pcrp->_vendor == PCI_ATI_VENDOR_ID) {
+	if ((pcrp->_vendor == PCI_ATI_VENDOR_ID) &&
+	    (pcrp->_command & PCI_CMD_IO_ENABLE) &&
+	    (pcrp->_command & PCI_CMD_MEM_ENABLE)) {
 	    found = TRUE;
 	    devid = pcrp->_device;
 	    switch (devid) {
@@ -695,6 +776,11 @@ GetATIPCIInformation()
 	    case PCI_MACH64_LB_ID:
 	    case PCI_MACH64_LI_ID:
 	    case PCI_MACH64_LP_ID:
+	    case PCI_MACH64_GM_ID:
+	    case PCI_MACH64_GN_ID:
+	    case PCI_MACH64_GO_ID:
+	    case PCI_MACH64_GR_ID:
+	    case PCI_MACH64_GS_ID:
 		info.ChipType = devid;
 		break;
 	    default:
@@ -893,6 +979,16 @@ InitIOAddresses(base, block)
 	ioCLOCK_CNTL     = base + CLOCK_CNTL;
 	ioCRTC_GEN_CNTL  = base + CRTC_GEN_CNTL;
 	ATIExtReg        = bioATIEXT;
+	/* The following are only available through block I/O */
+	ioLCD_GEN_CTRL	 = base + LCD_GEN_CTRL;
+	ioLCD_INDEX	 = base + LCD_INDEX;
+	ioLCD_DATA	 = base + LCD_DATA;
+	/* These are only needed for panel support (and are thus needed only
+	 * through block I/O) */
+	ioCRTC_H_TOTAL_DISP = base + CRTC_H_TOTAL_DISP;
+	ioCRTC_H_SYNC_STRT_WID = base + CRTC_H_SYNC_STRT_WID;
+	ioCRTC_V_TOTAL_DISP = base + CRTC_V_TOTAL_DISP;
+	ioCRTC_V_SYNC_STRT_WID = base + CRTC_V_SYNC_STRT_WID;
     } else {
 	ioCONFIG_CHIP_ID = base + (sioCONFIG_CHIP_ID << 10);
 	ioCONFIG_CNTL    = base + (sioCONFIG_CNTL << 10);
@@ -1023,7 +1119,12 @@ mach64Probe()
         mach64ChipType == MACH64_LG_ID ||
         mach64ChipType == MACH64_LB_ID ||
         mach64ChipType == MACH64_LI_ID ||
-        mach64ChipType == MACH64_LP_ID) {
+        mach64ChipType == MACH64_LP_ID ||
+        mach64ChipType == MACH64_GM_ID ||
+        mach64ChipType == MACH64_GN_ID ||
+        mach64ChipType == MACH64_GO_ID ||
+        mach64ChipType == MACH64_GR_ID ||
+        mach64ChipType == MACH64_GS_ID) {
 	mach64HasBlockWrite = TRUE;
     } else {
 	mach64HasBlockWrite = FALSE;
@@ -1033,7 +1134,10 @@ mach64Probe()
         mach64ChipType == MACH64_GD_ID ||
         mach64ChipType == MACH64_GW_ID ||
         mach64ChipType == MACH64_GZ_ID ||
-        mach64ChipType == MACH64_LB_ID) {
+        mach64ChipType == MACH64_LB_ID ||
+        mach64ChipType == MACH64_LD_ID ||
+        mach64ChipType == MACH64_GM_ID ||
+        mach64ChipType == MACH64_GN_ID) {
 	mach64AGP = TRUE;
     } else {
 	mach64AGP = FALSE;
@@ -1184,7 +1288,12 @@ mach64Probe()
 		   mach64ChipType == MACH64_LG_ID ||
 		   mach64ChipType == MACH64_LB_ID ||
 		   mach64ChipType == MACH64_LI_ID ||
-		   mach64ChipType == MACH64_LP_ID) {
+		   mach64ChipType == MACH64_LP_ID ||
+		   mach64ChipType == MACH64_GM_ID ||
+		   mach64ChipType == MACH64_GN_ID ||
+		   mach64ChipType == MACH64_GO_ID ||
+		   mach64ChipType == MACH64_GR_ID ||
+		   mach64ChipType == MACH64_GS_ID) {
 	    mach64InfoRec.maxClock = 230000;
 	} else {
 	    if (xf86bpp == 8)
@@ -1344,6 +1453,54 @@ mach64Probe()
 	mach64FreqTable[i] = info->Freq_Table[i];
     for (i = 0; i < MACH64_NUM_FREQS; i++)
 	mach64FreqTable2[i] = info->Freq_Table2[i];
+
+    if ((mach64LCDPanelID = info->PanelID) >= 0) {
+	CARD32 h_total_disp, h_sync_strt_wid, v_total_disp, v_sync_strt_wid;
+	int HDisplay, VDisplay;
+
+	mach64LCDHorizontal = info->LCDHorizontal;
+	mach64LCDVertical = info->LCDVertical;
+	mach64LCDClock = mach64GetCTClock(0);
+	ErrorF("%s %s: %dx%d panel (ID %d) detected;  clock %.2f MHz\n",
+		XCONFIG_PROBED, mach64InfoRec.name,
+		mach64LCDHorizontal, mach64LCDVertical, mach64LCDPanelID,
+		(double)mach64LCDClock / 100.0);
+
+	/*
+	 * Determine porch data.  The intent here is to produce stretched modes
+	 * that approximate the horizontal sync and vertical refresh rates of
+	 * the mode on entry.
+	 */
+	h_total_disp = inl(ioCRTC_H_TOTAL_DISP);
+	h_sync_strt_wid = inl(ioCRTC_H_SYNC_STRT_WID);
+	v_total_disp = inl(ioCRTC_V_TOTAL_DISP);
+	v_sync_strt_wid = inl(ioCRTC_V_SYNC_STRT_WID);
+
+	HDisplay = h_total_disp >> 16;
+	VDisplay = v_total_disp >> 16;
+
+	LCDHSyncStart = ((h_sync_strt_wid & 0x1000) >> 4) +
+	    (h_sync_strt_wid & 0xFF) - HDisplay;
+	LCDHSyncWidth = (h_sync_strt_wid & 0x1F0000) >> 16;
+	LCDHBlankWidth = (h_total_disp & 0x1FF) - HDisplay;
+
+	LCDVSyncStart = (v_sync_strt_wid & 0x7FF) - VDisplay;
+	LCDVSyncWidth = (v_sync_strt_wid & 0x1F0000) >> 16;
+	LCDVBlankWidth = (v_total_disp & 0x7FF) - VDisplay;
+
+	if (!(inl(ioCRTC_GEN_CNTL) & CRTC_EXT_DISP_EN)) {
+	    /* Adjust for VGA */
+	    LCDHSyncWidth = (LCDHSyncWidth - LCDHSyncStart - HDisplay) & 0x1F;
+	    LCDHBlankWidth += 4;
+            LCDVSyncWidth = (LCDVSyncWidth - LCDVSyncStart - VDisplay) & 0x0F;
+	    LCDVSyncStart--;
+	    LCDVBlankWidth++;
+	}
+
+	LCDHSyncStart <<= 3;
+	LCDHSyncWidth <<= 3;
+	LCDHBlankWidth <<= 3;
+    }
 
     if (OFLG_ISSET(OPTION_NO_PROGRAM_CLOCKS, &mach64InfoRec.options)) {
 	if (OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &mach64InfoRec.clockOptions)) {
@@ -1526,20 +1683,42 @@ mach64Probe()
 						 pMode->HDisplay);
 		    mach64InfoRec.virtualY = max(mach64InfoRec.virtualY,
 						 pMode->VDisplay);
+
+		    /*
+		     * For programmable clocks, fill in the SynthClock value
+		     * for each mode.
+		     */
+		    if (OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE,
+				   &mach64InfoRec.clockOptions))
+			pMode->SynthClock = mach64InfoRec.clock[pMode->Clock];
+
+		    /* For panels, clobber mode timings */
+		    if (mach64LCDPanelID >= 0) {
+			pMode->Flags &= ~(V_DBLSCAN | V_INTERLACE | V_CLKDIV2);
+
+			pMode->CrtcHDisplay = pMode->HDisplay;
+			pMode->CrtcHSyncStart =
+			    pMode->HDisplay + LCDHSyncStart;
+			pMode->CrtcHSyncEnd =
+			    pMode->CrtcHSyncStart + LCDHSyncWidth;
+			pMode->CrtcHTotal =
+			    pMode->HDisplay + LCDHBlankWidth;
+			pMode->CrtcHAdjusted = TRUE;
+
+			pMode->CrtcVDisplay = pMode->VDisplay;
+			pMode->CrtcVSyncStart =
+			    pMode->VDisplay + LCDVSyncStart;
+			pMode->CrtcVSyncEnd =
+			    pMode->CrtcVSyncStart + LCDVSyncWidth;
+			pMode->CrtcVTotal =
+			    pMode->VDisplay + LCDVBlankWidth;
+			pMode->CrtcVAdjusted = TRUE;
+		    }
+
 		    pMode = pMode->next;
 		}
           }
     } while (pMode != pEnd);
-
-    /* For programmable clocks, fill in the SynthClock value for each
-     * mode */
-    if (OFLG_ISSET(CLOCK_OPTION_PROGRAMABLE, &mach64InfoRec.clockOptions)) {
-	pEnd = pMode = mach64InfoRec.modes;
-	do {
-	    pMode->SynthClock = mach64InfoRec.clock[pMode->Clock];
-	    pMode = pMode->next;
-	} while (pMode != pEnd);
-    }
 
     mach64VirtX = mach64InfoRec.virtualX = (mach64InfoRec.virtualX+7) & 0xfff8;
     mach64VirtY = mach64InfoRec.virtualY;
@@ -1760,7 +1939,7 @@ mach64Probe()
 
 #ifdef XFreeXDGA
     mach64InfoRec.displayWidth = mach64InfoRec.virtualX;
-    mach64InfoRec.directMode = XF86DGADirectPresent;
+    mach64InfoRec.directMode = XF86DGADirectPresent | XF86DGAAccelPresent;
 #endif
 
     return(TRUE);
@@ -1916,6 +2095,55 @@ mach64EnterLeaveVT(enter, screen_idx)
             break;
         }
     }
+
+#ifdef XFreeXDGA
+    /*
+     * Patch up things to allow a graphics operations to go to the screen
+     * while remaining in direct graphics mode.
+     */
+    if (mach64InfoRec.directMode & XF86DGADoAccel) {
+	if (enter) {
+	    pspix->devPrivate.ptr = mach64VideoMem;
+	    pScreen->CopyWindow = mach64CopyWindow;
+	    pScreen->PaintWindowBackground = mach64PaintWindow;
+	    pScreen->PaintWindowBorder = mach64PaintWindow;
+	    switch (mach64InfoRec.bitsPerPixel) {
+	    case 8:
+		pScreen->GetSpans = cfbGetSpans;
+		break;
+	    case 16:
+		pScreen->GetSpans = cfb16GetSpans;
+		break;
+	    case 32:
+		pScreen->GetSpans = cfb32GetSpans;
+		break;
+	    }
+	} else {
+	    pspix->devPrivate.ptr = ppix->devPrivate.ptr;
+            switch (mach64InfoRec.bitsPerPixel) {
+            case 8:
+                pScreen->CopyWindow = cfbCopyWindow;
+                pScreen->GetSpans = cfbGetSpans;
+                pScreen->PaintWindowBackground = cfbPaintWindow;
+                pScreen->PaintWindowBorder = cfbPaintWindow;
+                break;
+            case 16:
+                pScreen->CopyWindow = cfb16CopyWindow;
+                pScreen->GetSpans = cfb16GetSpans;
+                pScreen->PaintWindowBackground = cfb16PaintWindow;
+                pScreen->PaintWindowBorder = cfb16PaintWindow;
+                break;
+            case 32:
+                pScreen->CopyWindow = cfb32CopyWindow;
+                pScreen->GetSpans = cfb32GetSpans;
+                pScreen->PaintWindowBackground = cfb32PaintWindow;
+                pScreen->PaintWindowBorder = cfb32PaintWindow;
+                break;
+            }
+	}
+	return;
+    }
+#endif /* XFreeXDGA */
 
     if (pScreen && !xf86Exiting && !xf86Resetting)
         WalkTree(pScreen, mach64NewSerialNumber, 0);
@@ -2243,5 +2471,13 @@ mach64ValidMode(mode, verbose, flag)
 DisplayModePtr mode;
 Bool verbose;
 {
-return MODE_OK;
+    if ((mach64LCDPanelID >= 0) &&
+        ((mode->HDisplay > mach64LCDHorizontal) ||
+         (mode->VDisplay > mach64LCDVertical))) {
+	if (verbose)
+	    ErrorF("Mode \"%s\" exceeds panel dimensions.  Deleted.\n",
+		mode->name);
+	return MODE_BAD;
+    }
+    return MODE_OK;
 }

@@ -27,7 +27,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.4 1998/01/12 03:02:09 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128misc.c,v 3.5.2.5 1999/01/28 18:20:54 robin Exp $ */
 
 #include "servermd.h"
 
@@ -324,7 +324,8 @@ i128AdjustFrame(int x, int y)
    i128mem.rbase_g[DB_ADR] = (Base & I128_PAN_MASK) + i128DisplayOffset; MB;
 
    /* now warp the cursor after the screen move */
-   i128AdjustCursorXPos = Base - (Base & I128_PAN_MASK);
+   i128AdjustCursorXPos = (Base - (Base & I128_PAN_MASK))
+                             / (i128InfoRec.bitsPerPixel/8);
 
    if (i128ModeSwitched) {
       i128ModeSwitched = FALSE;

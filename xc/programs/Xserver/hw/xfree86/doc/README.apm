@@ -1,19 +1,8 @@
+               Information for Alliance Promotion chipset users
 
+               Henrik Harmsen (Henrik.Harmsen@erv.ericsson.se)
 
-
-
-
-
-
-
-
-                Information for Alliance Promotion chipset users
-
-                Henrik Harmsen (Henrik.Harmsen@erv.ericsson.se)
-
-                                23 February 1998
-
-
+                               23 February 1998
 
 1.  Support chipsets
 
@@ -31,9 +20,8 @@ graphics chipsets. The following chipsets are supported:
    o  AT25, AT3D
 
      AT3D is found in Hercules Stingray 128/3D. Most other Voodoo Rush based
-     cards use the AT25 which is identical except it doesn't have the 3D stuff
-     in it.
-
+     cards use the AT25 which is identical except it doesn't have the 3D
+     stuff in it.
 
 2.  Acceleration
 
@@ -54,25 +42,12 @@ All in 8, 16 and 32 bpp modes. No 24bpp mode is supported.  Also VESA DPMS
 power save mode is fully supported with "standby", "suspend" and "off" modes
 (set with with the "xset dpms" command).
 
-
 3.  Configuration
 
 First: Please run the XF86Setup program to create a correct configuration.
 
-
-
- Information for Alliance Promotion chipset users                             1
-
-
-
-
-
- Information for Alliance Promotion chipset users                             2
-
-
-
-You can turn off hardware cursor by inserting the following line in the Device
-section of the XF86Config file:
+You can turn off hardware cursor by inserting the following line in the
+Device section of the XF86Config file:
 
 Option "sw_cursor"
 
@@ -80,187 +55,14 @@ Or turn off hardware acceleration:
 
 Option "noaccel"
 
-Please don't specify the amount of video RAM you have or which chipset you have
-in the config file, let the driver probe for this. Also please don't put any
-"clocks" line in the device section since these chips have a fully programmable
-clock that can take (almost) any modeline you throw at it. It might fail at
-some specific clock values but you should just try a slightly different clock
-and it should work.
+Please don't specify the amount of video RAM you have or which chipset you
+have in the config file, let the driver probe for this. Also please don't put
+any "clocks" line in the device section since these chips have a fully pro-
+grammable clock that can take (almost) any modeline you throw at it. It might
+fail at some specific clock values but you should just try a slightly differ-
+ent clock and it should work.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/apm.sgml,v 1.1.2.2 1998/02/25 12:20:30 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/apm.sgml,v 1.1.2.1 1998/02/24 13:54:23 hohndel Exp $
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- Information for Alliance Promotion chipset users                             3
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                   CONTENTS
-
-
-
-1. Support chipsets ......................................................... 1
-
-2. Acceleration ............................................................. 1
-
-3. Configuration ............................................................ 1
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                       i
-
-
-
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.apm,v 1.1.2.4 1998/11/14 06:46:58 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.apm,v 1.1.2.6 1999/06/25 08:56:47 hohndel Exp $

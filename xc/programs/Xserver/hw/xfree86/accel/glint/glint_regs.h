@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint_regs.h,v 1.16.2.4 1998/11/30 11:58:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint_regs.h,v 1.16.2.6 1999/06/02 07:50:34 hohndel Exp $ */
 
 /*
  * glint register file 
@@ -35,6 +35,7 @@
 #define PCI_CHIP_3DLABS_PERMEDIA				0x04
 #define PCI_CHIP_3DLABS_MX					0x06
 #define PCI_CHIP_3DLABS_PERMEDIA2				0x07
+#define PCI_CHIP_3DLABS_GAMMA					0x08
 #define PCI_CHIP_3DLABS_PERMEDIA2V				0x09
 #define PCI_CHIP_TI_PERMEDIA 	  				0x3d04
 #define PCI_CHIP_TI_PERMEDIA2				        0x3d07
@@ -362,6 +363,7 @@
 #define RasterizerMode							GLINT_TAG_ADDR(0x01,0x04)
 #define		ForceBackgroundColor		1<<6
 #define		InvertBitMask			1<<1
+#define		BitMaskRelative			1<<19
 #define YLimits								GLINT_TAG_ADDR(0x01,0x05)
 #define ScanLineOwnership						GLINT_TAG_ADDR(0x01,0x06)
 #define WaitForCompletion						GLINT_TAG_ADDR(0x01,0x07)
@@ -401,6 +403,7 @@
 	#define ASM_InvertPattern					1 << 17
 	#define ASM_MirrorX						1 << 18
 	#define ASM_MirrorY						1 << 19
+	#define ASM_ForceBGColor					1 << 20
 
 #define LineStippleMode						GLINT_TAG_ADDR(0x03,0x05)
 #define LoadLineStippleCounters					GLINT_TAG_ADDR(0x03,0x06)

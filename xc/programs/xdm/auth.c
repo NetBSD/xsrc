@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xdm/auth.c,v 3.16.2.1 1998/12/22 11:23:31 hohndel Exp $ */
+/* $XFree86: xc/programs/xdm/auth.c,v 3.16.2.2 1999/06/17 16:24:22 hohndel Exp $ */
 /* $XConsortium: auth.c /main/62 1995/12/19 16:44:07 mor $ */
 /*
 
@@ -100,14 +100,14 @@ extern int errno;
 #ifdef __GNU__
 #include <netdb.h>
 #undef SIOCGIFCONF
-#else __GNU__
+#else /* __GNU__ */
 #ifndef MINIX
 #include <net/if.h>
 #else
 #include <net/netlib.h>
 #include <net/gen/netdb.h>
 #endif /* !MINIX */
-#endif __GNU__
+#endif /* __GNU__ */
 
 #if ((defined(SVR4) && !defined(sun)) || defined(ISC)) && defined(SIOCGIFCONF)
 #define SYSV_SIOCGIFCONF

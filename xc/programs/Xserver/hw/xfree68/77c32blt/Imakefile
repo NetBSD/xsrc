@@ -1,0 +1,31 @@
+XCOMM $XConsortium: Imakefile,v 5.25 94/02/21 10:20:10 kaleb Exp $
+XCOMM
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/77c32blt/Imakefile,v 1.1.2.2 1999/05/25 12:00:28 hohndel Exp $
+XCOMM
+#include <Server.tmpl>
+
+SRCS =	ncr77c32.c
+
+OBJS = 	ncr77c32.o
+
+   INCLUDES = -I. -I.. -I../../.. -I../../../mi -I../../../mfb \
+		-I../../../cfb -I../../../include \
+		-I$(XINCLUDESRC) -I$(FONTINCSRC)
+   LINTLIBS = ../../../dix/llib-ldix.ln ../../../os/llib-los.ln \
+		../../../mfb/llib-lmfb.ln ../../../mi/llib-lmi.ln \
+		../../../cfb/llib-lcfb.ln
+
+DEFINES = -DGFX_CARD_SUPPORT -DAMIGAMAXDEPTH=32 -DRETINAZ3_SUPPORT
+
+NormalLibraryObjectRule()
+
+all:: $(OFILES)
+
+lintlib:
+
+NormalLibraryTarget(ncr77c32,$(OBJS))
+NormalLintTarget($(SRCS))
+
+DependTarget()

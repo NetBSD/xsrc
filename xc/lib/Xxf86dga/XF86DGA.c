@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xxf86dga/XF86DGA.c,v 3.11 1997/01/18 06:52:20 dawes Exp $ */
+/* $XFree86: xc/lib/Xxf86dga/XF86DGA.c,v 3.11.2.5 1999/06/02 07:50:03 hohndel Exp $ */
 /*
 
 Copyright (c) 1995  Jon Tombs
@@ -346,6 +346,71 @@ Bool XF86DGAViewPortChanged(dpy, screen, n)
     return rep.result;
 }
 
+Bool XF86DGACopyArea(dpy, screen, d, gc,
+		     src_x, src_y, width, height, dst_x, dst_y)
+    Display* dpy;
+    int screen;
+    Drawable d;
+    GC gc;
+    int src_x, src_y;
+    unsigned int width, height;
+    int dst_x, dst_y;
+{
+    XExtDisplayInfo *info = find_display (dpy);
+    xXF86DGACopyAreaReq *req;
+
+    XF86DGACheckExtension(dpy, info, False);
+
+    LockDisplay(dpy);
+    FlushGC(dpy, gc);
+    GetReq(XF86DGACopyArea, req);
+    req->reqType = info->codes->major_opcode;
+    req->dgaReqType = X_XF86DGACopyArea;
+    req->screen = screen;
+    req->drawable = d;
+    req->gc = gc->gid;
+    req->srcX = src_x;
+    req->srcY = src_y;
+    req->dstX = dst_x;
+    req->dstY = dst_y;
+    req->width = width;
+    req->height = height;
+    UnlockDisplay(dpy);
+    SyncHandle();
+    return True;
+}
+
+Bool XF86DGAFillRectangle(dpy, screen, d, gc,
+			  x, y, width, height)
+    Display* dpy;
+    int screen;
+    Drawable d;
+    GC gc;
+    int x, y;
+    unsigned int width, height;
+{
+    XExtDisplayInfo *info = find_display (dpy);
+    xXF86DGAFillRectangleReq *req;
+
+    XF86DGACheckExtension(dpy, info, False);
+
+    LockDisplay(dpy);
+    FlushGC(dpy, gc);
+    GetReq(XF86DGAFillRectangle, req);
+    req->reqType = info->codes->major_opcode;
+    req->dgaReqType = X_XF86DGAFillRectangle;
+    req->screen = screen;
+    req->drawable = d;
+    req->gc = gc->gid;
+    req->x = x;
+    req->y = y;
+    req->width = width;
+    req->height = height;
+    UnlockDisplay(dpy);
+    SyncHandle();
+    return True;
+}
+
 
 
 /* Helper functions */
@@ -508,6 +573,8 @@ int *width, *bank, *ram;
    {
         fprintf(stderr, "XF86DGAGetVideo: failed to open /dev/mmap (%s)\n",
                            strerror(errno));
+	exit(-1);
+   }
 #else
 #ifdef __EMX__
    /* Dragon warning here! /dev/pmap$ is never closed, except on progam exit.
@@ -521,15 +588,17 @@ int *width, *bank, *ram;
 	fprintf(stderr, 
 		"XF86DGAGetVideo: failed to open /dev/pmap$ (rc=%d)\n",
 		rc);
+	exit(-1);
+   }
 #else
    if ((fd = open(DEV_MEM, O_RDWR)) < 0)
    {
         fprintf(stderr, "XF86DGAGetVideo: failed to open %s (%s)\n",
                            DEV_MEM, strerror(errno));
-#endif
-#endif
         exit (-1);
    }
+#endif
+#endif
 #endif
 
 #if defined(ISC) && defined(HAS_SVR3_MMAP)
@@ -555,12 +624,16 @@ int *width, *bank, *ram;
      DEBUG_MMAP("after MMAP");
      fprintf(stderr, "XF86DGAGetVideo: failed to mmap /dev/mmap (%s)\n",
                            strerror(errno));
+     exit (-2);
+   }
 #else /* !ISC */
 #ifdef Lynx
    *addr = (void *)smem_create("XF86DGA", (char *)offset, *bank, SM_READ|SM_WRITE);
    if (*addr == NULL) {
         fprintf(stderr, "XF86DGAGetVideo: smem_create() failed (%s)\n",
                            strerror(errno));
+        exit (-2);
+   }
 #else /* !Lynx */
 #ifdef __EMX__
    {
@@ -588,6 +661,8 @@ int *width, *bank, *ram;
         fprintf(stderr, 
 		"XF86DGAGetVideo: failed to mmap /dev/pmap$ (rc=%d)\n",
                 rc);
+        exit (-2);
+   }
 #else /* !__EMX__ */
 #ifndef MAP_FILE
 #define MAP_FILE 0
@@ -602,11 +677,11 @@ int *width, *bank, *ram;
    if (*addr == (char *) -1) {
         fprintf(stderr, "XF86DGAGetVideo: failed to mmap %s (%s)\n",
                            DEV_MEM, strerror(errno));
+        exit (-2);
+   }
 #endif /* !__EMX__*/
 #endif /* !Lynx */
 #endif /* !ISC && !HAS_SVR3_MMAP */
-        exit (-2);
-   }
    _XFree86size = *bank;
    _XFree86addr = *addr;
 

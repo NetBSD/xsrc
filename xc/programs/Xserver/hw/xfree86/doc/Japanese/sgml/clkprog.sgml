@@ -1,0 +1,170 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+<article>
+ 
+<!--
+<title> Information for using/developing external clock setting programs
+-->
+<title> クロック設定用外部プログラムの使用と開発に関する情報
+<author> The XFree86 Project, Inc.
+<date> 16 December 1994
+<trans> The X Japanese Documentation Project
+<tdate> 13 January 1999
+<toc>
+ 
+<!-- <sect> Using an external clock setting program <p> -->
+<sect> クロック設定用外部プログラムの使用 <p>
+<!--
+XFree86 provides a facility for setting the clock frequency on a graphics
+card by an external program.  This is provided to make it possible to
+deal with cards that use clock selection methods not supported by the
+standard drivers.
+-->
+XFree86 には、グラフィックスカードのクロック周波数の設定を外部プログラ
+ムから行うための機能があります。これにより、標準ドライバがサポートして
+いない方法でクロック選択を行うカードを扱えるようになります。
+
+<!--
+This facility is enabled by adding a <tt>ClockProg</tt> line to the
+<tt>Device</tt> section of the <tt>XF86Config</tt> file.
+The format of this line is:
+-->
+この機能を有効にするには、<tt>XF86Config</tt> ファイルの
+<tt>Device</tt> セクションに <tt>ClockProg</tt> という行を追加します。
+この行のフォーマットは以下のようになっています:
+<tscreen>
+<tt>ClockProg  "</tt><it>commandpath</it><tt>"</tt>
+</tscreen>
+<!--
+where <it>commandpath</it> is the full pathname of the clock setting
+program.  No flags are allowed in <it>commandpath</it>.
+-->
+ここで <it>commandpath</it> はクロック設定プログラムのフルパス名です。
+<it>commandpath</it> に引き数を付けることはできません。
+
+<!--
+When using this option, and no <tt>Clocks</tt> line is specified, it is
+assumed that the card has clocks which are fully programmable (like the 
+SS24). However if the card has a fixed set of preset clocks a <tt>Clocks</tt>
+line is required in the Device section of the <tt>XF86Config</tt> file 
+to tell the server which clock frequencies are available to it. The 
+ordering of the clocks in the <tt>Clocks</tt> line should correspond to 
+what the card/program expects. Up to 128 clock values may be specified.
+-->
+このオプションが使われ、かつ <tt>Clocks</tt> 行を指定されていない時に
+は、カードのクロックは完全にプログラマブルである(例: SS24)ものと想定さ
+れます。しかし、カードで選べるクロックが予め決まっている場合には、
+<tt>XF86Config</tt> ファイルの Device セクションに <tt>Clocks</tt> 行
+が必要であり、これを使って利用可能なクロック周波数をサーバに教えてやら
+なければなりません。<tt>Clocks</tt> 行におけるクロックの順序は、カード
+やプログラムが想定している順序と一致していなければなりません。クロック
+値は 128 個まで指定することができます。
+
+<!--
+The server calls the external program when it needs to change the clock
+frequency.  This occurs at startup and when switching modes with the
+hot-key sequences.  The command is passed two command-line arguments.  The
+first is the clock frequency in MHz (as a floating point number &mdash;
+currently specified to the nearest 0.1 MHz).  The second argument is the
+index of the clock value in the Clocks list (the first clock is index 0).
+Cards with a fixed set of clocks would probably make use of the index,
+while cards with a fully programmable clock would use the frequency argument.
+-->
+サーバが外部プログラムを呼び出すのは、クロック周波数を変更する必要があ
+るときです。変更する必要が生じるのは、サーバの起動時とホットキーシーケ
+ンスによってモードが切替えられたときです。外部コマンドには2つのコマン
+ドライン引き数が渡されます。最初の引き数はクロック周波数です(MHz を単
+位とする浮動小数で、現在はほぼ 0.1MHz 単位で指定できます)。2番目の引き数
+は Clocks リストにおけるクロック値のインデックス番号です(最初のクロッ
+ク値のインデックス番号は 0 になります)。選べるクロック値の組合せが決まっ
+ているカードではインデックス番号を使うことになるでしょうし、クロックが
+完全にプログラマブルなカードでは周波数を引き数にすることになるでしょう。
+
+<!-- <sect> Developing an extern clock setting program <p> -->
+<sect>クロック設定用外部プログラムの開発 <p>
+<!--
+When such an external program is being used, the server does not change
+any register fields related to clock selection, and the external program
+must be careful to only modify clock selection fields.  The program is
+run with stdin and stdout set to xf86Info.consoleFd &mdash; which is the
+fd to use for display-related ioctl() operations if required.
+Stderr is
+the same as the server's stderr &mdash; so error or warning messages should
+be directed there.  The program is run with the uid set to the real user's
+ID &mdash; so if it needs to use privileged system calls it should be suid-root.
+The program does not inherit any I/O access privileges, so it will
+need to do whatever is required to enable them.
+-->
+このような外部プログラムを使っている間には、サーバはクロック選択に関係
+するレジスタは一切変更しません。また、外部プログラムではクロック選択
+フィールド以外は変更しないよう注意しなければなりません。外部プログラム
+は、標準入力と標準出力を xf86Info.consoleFd にセットして実行されます。
+xf86Info.consoleFd はファイルデスクリプタであり、表示関係の ioctl() 操
+作のために必要に応じて使われます。標準エラー出力はサーバの標準エラー出
+力と同じになります。つまり、エラーメッセージや警告メッセージはこちらに
+送られます。外部プログラムは実際に使うユーザの ID で実行されるので、特
+権を必要とするシステムコールを使う場合には、外部プログラムは root に
+SUID しておかなければなりません。外部プログラムは I/O アクセスの特権を
+サーバから受け継がないので、必要なアクセス権限は自分で使えるようにしな
+ければならないでしょう。
+
+<!--
+The program is expected to return an exit status 0 when successful, and a
+status in the range 1-254 when it fails.  If the external program fails
+during the server initialisation stage, the server exits.  If it fails for
+a mode switch, the mode switch is aborted (the server assumes that the
+clock frequency hasn't been changed) and the server keeps running.  If
+necessary an exit status may be specified in the future for which the
+server would exit if the program fails for a mode switch.
+-->
+外部プログラムは、正常終了すると終了ステータス 0 を返し、異常終了する
+と 1-254 の範囲のステータスを返すことが期待されます。サーバの初期化時
+に外部プログラムが異常終了すると、サーバも終了します。モード切替えのと
+きに外部プログラムが異常終了すると、モード切替えが失敗し(サーバはクロッ
+ク周波数が変更されなかったとみなします)、サーバは実行を続けます。将来
+的には、必要に応じて終了ステータスを変更できるようになるでしょう。これ
+により、外部プログラムがモード切替えに失敗してもサーバが終了できるよう
+になります。
+
+<!--
+A sample clock switching program is provided for use with many ET4000 cards
+that have a fixed set of 8 clocks.  This program is only intended as a sample,
+and it is not intended for general use (the internal server code handles this
+type of card).  The program is
+<tt>xc/programs/Xserver/hw/xfree86/etc/et4000clock.c</tt>
+in the source tree, and 
+<tt>/usr/X11R6/lib/X11/etc/et4000clock.c</tt> in the binary tree.
+-->
+クロック切替えプログラムの例としては、ET4000 カード(8組の決まったクロッ
+ク値を使用します)で使うプログラムがあります。このプログラムは例題とし
+て用意されたものであり、汎用的に使うことは考えられていません(ET4000 カー
+ドはサーバの内部コードで 扱います)。このプログラムはソースツリーの
+<tt>xc/programs/Xserver/hw/xfree86/etc/et4000clock.c</tt> とバイナリツ
+リーの <tt>/usr/X11R6/lib/X11/etc/et4000clock.c</tt> にあります。
+
+<!--
+The idea of using an external clock program was suggested by
+Frank Klemm &lt;<it>pfk@rz.uni-jena.de</it>&gt;
+-->
+クロック設定に外部プログラムを使うというアイディアは、
+Frank Klemm さん &lt;<it>pfk@rz.uni-jena.de</it>&gt; が提案したもので
+す。
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/clkprog.sgml,v 1.1.2.1 1999/05/25 06:39:30 hohndel Exp $
+
+
+
+
+
+$XConsortium: clkprog.sgml /main/3 1996/02/21 17:46:48 kaleb $
+</verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました
+(翻訳: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;">,
+校正: 金田浩司  <url url="mailto:vanitas@ma3.seikyou.ne.jp"
+name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">)。
+問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 
+プロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+Project にあります。
+</article>

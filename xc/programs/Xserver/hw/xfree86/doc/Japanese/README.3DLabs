@@ -1,0 +1,132 @@
+  3DLabs 製チップセットユーザ向けの情報
+  The XFree86 Project Inc.
+  5 November 1998
+  The X Japanese Documentation Project
+  12 January 1999
+  ____________________________________________________________
+
+  目次
+
+
+  1. サポートしているハードウェア
+  2. 機能
+  3. XF86Config のオプション
+  4. バグと機能制限
+  5. 作者
+  6. 日本語訳について
+
+
+  ______________________________________________________________________
+
+  1.  サポートしているハードウェア
+
+
+  このサーバは 3DLabs 製の以下のチップセットをサポートしています。
+
+  o  IBM RGB526 RAMDAC を載せた GLINT 500TX
+
+  o  IBM RGB526 または IBM RGB640 RAMDAC を載せた GLINT MX
+
+  o  IBM RGB526 RAMDAC を載せた Permedia
+
+  o  Permedia 2 (classic, 2a, 2v)
+
+
+  2.  機能
+
+
+  o  アクセラレーション付き
+
+  o  ハードウェアカーソル
+
+  o  DPMS サポート
+
+  o  サポートしている色の深さ
+
+  o  GLINT MX/500TX: 8/16/32 bpp
+
+  o  Permedia: 8/16/32 bpp
+
+  o  Permedia 2: 8/16/24/32 bpp
+
+
+  3.  XF86Config のオプション
+
+
+     Option "sw_cursor"
+        ハードウェアカーソルを無効にします。
+
+     Option "no_pixmap_cache"
+        ピックスマップキャッシュの使用を無効にします。描画エラーが起こる
+        場合に有効かもしれません。
+
+     Option "no_accel"
+        アクセラレーションを完全に無効にします。普通はお勧めしません。
+
+
+     Option "pci_retry"
+        グラフィックスエンジンがビジー状態のときに PCI バスを停止させま
+        す。このオプションを使うと性能は少し向上しますが、プロセッサのサ
+        ービスを受けようとしている他のデバイスの妨害をするリスクを負うこ
+        とになります。このオプションを使うと、SCSI カードやシリアル接
+        続、サウンドカード等で問題を起こすことがあります。
+
+     Option "firegl_3000"
+        Diamond Fire GL 3000 で主スクリーンを使うために必要です。現在副
+        スクリーンはサポートされていません。
+
+     Option "overclock_mem"
+        メモリの動作クロックを上げます。高解像度時で表示が乱れるカードで
+        役に立ちます。ただし、ハードウェアを壊してしまうリスクを負うこと
+        になります。注意してください。
+
+
+  4.  バグと機能制限
+
+
+  o  500TX チップセットと MX チップセットではモード切替えができません。
+     したがって、モード行に現われる最初のモードしか使用できません。
+
+  o  色の深さによっては、アクセラレーション無しだと色の問題が起こりま
+     す。
+
+  o  サーバはアクセラレーション付きですが、改善の余地があります。現在は
+     XFree86-4.0 の開発に集中しているので、3.3.3 ブランチの改善を行う予
+     定はありません。XFree86-4.0 に含まれるサーバは、現在のものよりずっ
+     と高速になるでしょう。
+
+
+  5.  作者
+
+
+  o  Alan Hourihane <alanh@fairlite.demon.co.uk>
+
+  o  Dirk Hohndel <hohndel@XFree86.org>
+
+  o  Stefan Dirsch <sndirsch@suse.de>
+
+  o  Helmut Fahrion <hf@suse.de>
+
+  o  Elsa の AG である Aachen 氏に感謝します。氏には、このサーバを開発で
+     きるようにしていただき、開発中には多くのボードや情報を提供していた
+     だきました。
+
+  o  SuSE 有限責任会社の Nuernberg 氏に深く感謝します。サーバ開発メンバ
+     ーの何人かに給料を出していただき、このサーバ開発の資金面を支えてい
+     ただきました。
+
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.3DLabs,v 1.1.2.1 1999/06/02 07:50:41 hohndel Exp $
+
+
+
+
+  6.  日本語訳について
+
+  日本語訳は X Japanese Documentation Project が行いました (翻訳: 藤原輝
+  嘉 <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp>, 校正: 金田浩
+  司  <vanitas@ma3.seikyou.ne.jp> <mailto:vanitas@ma3.seikyou.ne.jp>)。
+  問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86
+  プロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+  Project にあります。
+

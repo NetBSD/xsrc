@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint_init.c,v 1.20.2.3 1998/09/13 12:29:02 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint_init.c,v 1.20.2.6 1999/07/01 16:23:29 hohndel Exp $ */
 /*
  * Copyright 1997 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -239,9 +239,14 @@ glintCalcCRTCRegs(glintCRTCRegPtr crtcRegs, DisplayModePtr mode)
     }
 
     else if (IS_3DLABS_PM_FAMILY(coprotype)) {
-	crtcRegs->vtgpolarity = 
- 	    (((mode->Flags & V_PHSYNC) ? 0x1 : 0x3) << 3) |  
- 	    (((mode->Flags & V_PVSYNC) ? 0x1 : 0x3) << 5) | 1; 
+        if (OFLG_ISSET(OPTION_SYNC_ON_GREEN, &glintInfoRec.options)) 
+ 	    crtcRegs->vtgpolarity = (0x1 << 3) | (0x1 << 5) | 
+	        ((mode->Flags & V_DBLSCAN) ? (1 << 2) : 0) | 1;
+ 	else
+ 	    crtcRegs->vtgpolarity = 
+		(((mode->Flags & V_PHSYNC) ? 0x1 : 0x3) << 3) |  
+		(((mode->Flags & V_PVSYNC) ? 0x1 : 0x3) << 5) |
+		((mode->Flags & V_DBLSCAN) ? (1 << 2) : 0) | 1;
 	if (IS_3DLABS_PM2_CLASS(coprotype)) {
 	 if (coprotype == PCI_CHIP_3DLABS_PERMEDIA2V) {
 		/* We stick the RAMDAC into 64bit mode */
@@ -929,8 +934,7 @@ glintInitAperture(int screen_idx)
 
 #ifdef XFreeXDGA
     glintInfoRec.physBase = glintInfoRec.MemBase;
-    glintInfoRec.physSize = glintInfoRec.virtualX * glintInfoRec.virtualY
- 	* glintInfoRec.bitsPerPixel / 8;
+    glintInfoRec.physSize = glintInfoRec.videoRam * 1024;
 #endif
 }	
 

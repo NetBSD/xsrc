@@ -1,0 +1,792 @@
+  LynxOS における XFree86 に関する README
+  Thomas Mueller
+  Last modified on: 29 December 1998
+  The X Japanese Documentation Project
+  Last modified on: 9 February 1999
+  ____________________________________________________________
+
+  目次
+
+
+  1. XFree86 とその入手方法について
+  2. バイナリのインストール
+  3. XFree86 の実行
+     3.1 システム要件
+     3.2 システムのチューニング
+        3.2.1 チューニングできるパラメータ
+        3.2.2 pty の数を増やす
+        3.2.3 カーネルの構築
+     3.3 XFree86 におけるマウスのサポート
+     3.4 バスマウスのドライバ
+     3.5 ATC コンソールドライバと仮想端末切り替え
+     3.6 X サーバのデバッグ診断出力と仮想端末のその他の特性
+
+  4. XFree86 のオンラインマニュアルのインストール
+  5. XFree86 の Motif と組み合わせての利用
+     5.1 Motif のファイルのコピー
+     5.2 LynxOS AT 2.3.0 用の Motif ライブラリへのパッチ
+     5.3 X11R6 設定ファイルへのパッチ
+     5.4 Motif 設定ファイルへのパッチ
+
+  6. XFree86 配布物のコンパイル
+     6.1 必要なディスク容量
+     6.2 システム環境に対する変更点 (LynxOS AT)
+     6.3 make World
+
+  7. microSPARC と PowerPC 上での構築
+     7.1 microSPARC 用のコンソールドライバのパッチ
+     7.2 microSPARC サーバの既知のバグ
+
+
+  ______________________________________________________________________
+
+  1.  XFree86 とその入手方法について
+
+
+  XFree86 3.1.2 は X11R6.3 を Intel ベースの Unix のいくつかに移植したも
+  のです。XFree86 は元々、 X386 1.2 という X11R5 と一緒に配布されていた
+  X サーバでした。このリリースでは新しい機能がたくさん追加され、性能も改
+  善されていますし、バグもたくさん修正されています。このリリースは X コ
+  ンソーシアムの X11R6 のソースコードへのパッチの形でも入手できますし、
+  各種アーキテクチャ用のバイナリ配布の形でも入手できます。
+
+  著作権表示には目を通してください。
+
+  XFree86 のソースコードは以下の場所から anonymous ftp で入手できます:
+
+  ftp://ftp.XFree86.org/pub/XFree86/current
+
+  XFree86 の LynxOS AT 用バイナリは以下の場所から入手できます:
+
+  ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS
+
+  バイナリは `LynxOS x86 3.0.0' 上で構築されています。オブジェクトのフォ
+  ーマットが変更されたため、このバイナリは古いバージョンの LynxOS では動
+  作しません。
+
+  このバージョンの XFree86 の構築は、バージョン 2.4.0 以前の LynxOS でテ
+  ストされています。LynxOS 2.4.0 上で構築したバイナリは、2.3.0 でもきっ
+  と動作すると思います。
+
+  XFree86 は、 AT, microSPARC, PowerPC プラットフォーム用の  LynxOS をサ
+  ポートしています。現時点で X サーバが利用可能なのは AT と microSPARC
+  プラットフォームです。AT 以外のプラットフォームにおける XFree86 の詳細
+  については、「``microSPARC と PowerPC 上での構築''」セクションを参照し
+  てください。
+
+  XFree86 の FTP サーバ上に置いてないプラットフォーム用のバイナリが必要
+  であれば、筆者(tmueller@sysgo.de)に連絡してください。
+
+  コメントや提案があれば tmueller@sysgo.de (Thomas Mueller) または
+  XFree86@XFree86.org に電子メールを送ってください。修正を行います。
+
+
+  2.  バイナリのインストール
+
+  詳しいインストール手順については、リリースノート の「XFree86 3.3.3.1
+  の導入」セクションを参照してください。
+
+  XF86Setup をインストールする予定ならば、X333prog もインストールする必
+  要があります。というのも、XF86Setup は X333prog からライブラリファイル
+  をインストールした場合だけ満たされる、特定のファイル名パターンがあるこ
+  とを確認するからです。この制限は将来の LynxOS 用の XFree86 リリースで
+  は修正されるでしょう。
+
+  お使いのシステム上で XFree86 を動かすためには、プロセススタックの上限
+  を増やす必要があるかもしれません。インストールを始める前には
+  /etc/startab を編集し、システムをリブートして、変更を有効にしましょ
+  う。
+
+  また、環境変数 PATH に /usr/X11R6/bin が必ず含まれるようにしましょう。
+
+  LynxOS で XFree86 を実行する前に必要な設定ステップの詳しい情報について
+  は、次の ``XFree86 の実行'' セクションを参照してください。
+
+
+  3.  XFree86 の実行
+
+
+  このセクションでは、XFree86 をうまく動作させるために必要かもしれない
+  LynxOS の環境に対する変更点を説明します。
+
+  ハードウェアに関する XFree86 の設定方法について詳しく知るには、
+  「XFree86 の設定を手早くする為の手引き」を読んでください。
+
+
+  3.1.  システム要件
+
+  X を実行するためにはメモリが最低 16MB 必要です。実際のアプリケーション
+  を実行したければ、32MB(以上)へのアップグレードを考えるべきです。
+
+
+  3.2.  システムのチューニング
+
+
+  3.2.1.  チューニングできるパラメータ
+
+  XFree86 をうまく動作させるためには、システムのパラメータをいくつか変更
+  する必要があるかもしれません。
+
+  LynxOS 2.5.0 と 3.0.0 では、
+
+
+    #define X_WINDOWS
+
+
+
+  という行を /sys/lynx.os/uparam.h に追加してください。
+
+  以前のバージョンの場合には、/usr/include/param.h を編集しなければなり
+  ません:
+
+    調整可能                                              旧      新
+    USR_NFDS      プロセスごとにオープンできるファイル数  20      64
+    NPROC         タスクの数                              50     150
+    NFILES        システムがオープンできるファイル数     100     250
+    NINODES       コア内の i-ノードの数                  (NFILES と同じ数)
+    QUANTUM       プリエンプションまでのクロック数        64      20
+    CACHEBLKS     キャッシュのメモリブロック数           202      >= 4096
+
+
+
+  新しい値は、LynxOS のドキュメントに OS 付属の X ウィンドウパッケージ用
+  として書かれている値です。
+
+
+  3.2.2.  pty の数を増やす
+
+
+  xterm を何個も実行できるようにするためには、pty の数も増やさなければな
+  りません。/sys/lynx.os/pty.cfg を /usr/X11R6/lib/X11/etc/pty.cfg で置
+  き換えることもできます。
+
+
+  3.2.3.  カーネルの構築
+
+  PS/2 マウスやバスマウスの使用を考えている場合、カーネルの再構築の前に
+  以下のセクションを見てください。考えていない場合には、すぐにカーネルを
+  再構築してください:
+
+
+
+            # cd /sys/lynx.os
+            # make install
+            # reboot -N
+
+
+
+
+
+
+  3.3.  XFree86 におけるマウスのサポート
+
+
+  XFree86 は PnP マウスをサポートしています(XFree86 におけるマウスのサポ
+  ートも参照してください)。しかし、現在の LynxOS の TTY デバイスドライバ
+  は TRS ラインで必要な操作を行うことができないので、LynxOS では PnP マ
+  ウスのサポートは無効にされます。
+
+
+  3.4.  バスマウスのドライバ
+
+  LynxOS AT 2.4.0 以降、LynxOS には PS/2 マウスのドライバが入っていま
+  す。 XFree86 は現在このドライバを完全にはサポートしていません(おそら
+  く、実際のマウスの種類に関係なくマウスの種類に  Microsoft を指定しなけ
+  ればなりませんし、マウスのボタン全てがサポートされない場合もありま
+  す)。/usr/X11R6/lib/X11/etc/BM-Lynx.shar に、Linux のバスマウスドライ
+  バを LynxOS に移植したものがあります。このドライバをインストールするに
+  は、まず以下の操作で shar 形式のアーカイブを展開します:
+           # cd /
+           # bash /usr/X11R6/lib/X11/etc/BM-Lynx.shar
+
+
+
+
+
+  次に、インストールの続きと設定の注意について、/BMOUSE.Readme に書かれ
+  ている注意に従ってください。
+
+  XFree86 の PS/2 マウスドライバは、LynxOS のパッチ 000055-00 をインスト
+  ールしていなければ、LynxOS AT 2.4.0 に付属している MetroLink X 2.3.3.1
+  でも動作します。
+
+
+  3.5.  ATC コンソールドライバと仮想端末切り替え
+
+  XFree86 サーバは LynxOS のデフォルトのコンソールドライバでしか動作しま
+  せん。代替品の vdt コンソールドライバを使っている人には残念なことです
+  が。現時点では、サーバを起動した後の仮想端末切り替えはサポートされてい
+  ません。
+
+  X サーバがキーボード入力のために使う空きのコンソールが 1 つ必要です。
+  したがって、/etc/ttys の 4 つの仮想端末のうち、少なくとも1 つを無効に
+  しなければなりません。/dev/atc3 を無効にする例を示します:
+
+
+
+              /dev/atc3:1:default:vt100at:/bin/login
+
+
+
+       を
+
+              /dev/atc3:0:default:vt100at:/bin/login
+                        ^
+       に変更します。
+
+
+
+
+
+  3.6.  X サーバのデバッグ診断出力と仮想端末のその他の特性
+
+
+  XFree86 の X サーバは起動の間に大量の診断用の出力を標準エラー出力に出
+  力します。この出力は、サーバがコンソール初期化処理の特定の点に達した時
+  に消えてしまいます。サーバが生成した診断用の出力を解析したければ、標準
+  出力と標準エラー出力をリダイレクトしなければなりません。
+
+  X サーバの実行中は、他のコンソールへの出力は消えてしまいます。サーバが
+  終了した後は、他のコンソールの画面の内容はおかしくなり、想像できないよ
+  うなもの(つまりランダム)になるかもしれません。
+
+
+  4.  XFree86 のオンラインマニュアルのインストール
+
+
+  LynxOS は cat で表示する方式のオンラインマニュアルを使っています。ド
+  キュメント準備システムは、リアルタイムオペレーションシステムの重要な部
+  分では決してないため、まずは groff-1.09(以降)をインストールしなければ
+  なりません。LynxOS 2.3.0 以降では、箱(あるいは、もっと便利な tar アー
+  カイブ)から取り出してすぐにコンパイルできるはずです。
+
+  XFree98 のオンラインマニュアルは次のコマンドでインストールできます:
+
+            make install.man
+
+
+
+
+
+  XFree86 のオンラインマニュアル用のインデックスと whatis データベースは
+  自動的に生成されます。対象ディレクトリに whatis データベースやインデッ
+  クスファイルが既にある場合は、sort/uniq で操作を行って、重複しているエ
+  ントリを取り除かなければなりません:
+
+
+
+            for i in 1 3 5
+            do
+              rm -f /tmp/tmpfile
+              sort /usr/X11R6/man/cat$i/LIST$i | uniq > /tmp/tmpfile
+              mv /tmp/tmpfile /usr/X11R6/man/cat$i/LIST$i
+            done
+            sort /usr/X11R6/man/whatis | uniq > /tmp/tmpfile
+            mv /tmp/tmpfile /usr/X11R6/man/whatis
+
+
+
+
+
+  LynxOS 2.3.0 では、MANPATH 環境変数に /usr/X11R6/man を含めなければな
+  りません。
+
+
+       bash の場合:   MANPATH=$MANPATH:/usr/X11R6/man
+
+
+  LynxOS 2.2.1 の man コマンドは MANPATH 環境変数を正しくサポートしてい
+  ません。したがって、XFree86 のオンラインマニュアルを man コマンドが読
+  めるように、標準のオンラインマニュアルの場所(/usr/man/catx)にコピー(あ
+  るいはリンク)しなければなりません。
+
+
+
+             for i in 1 3 5
+             do
+               ln -s /usr/X11R6/man/cat$i/*.* /usr/man/cat$i
+               cat /usr/X11R6/man/cat$i/LIST$i >> /usr/man/cat$i/LIST$i
+               sort -o /usr/man/cat$i/LIST$i /usr/man/cat$i/LIST$i
+               cat /usr/X11R6/man/cat$i/whatis$i >> /usr/man/whatis
+             done
+
+
+
+
+
+
+  5.  XFree86 の Motif と組み合わせての利用
+
+
+  LynxOS AT 2.3.0 と 2.4.0 付属の Motif ライブラリは、XFree86 のライブラ
+  リと組み合わせて使うこともできます。XFree86 と LynxOS の Motif をシス
+  テムにインストールした後に、以下の手順の概略にしたがってください。
+
+
+  5.1.  Motif のファイルのコピー
+
+
+  Motif のライブラリとユーティリティへのシンボリックリンクを /usr/X11R6
+  ディレクトリツリーに作らなければなりません。
+             ln -s /usr/bin/X11/uil /usr/X11R6/bin
+             ln -s /usr/lib/libUil.a /usr/X11R6/lib
+             ln -s /usr/lib/libMrm.a /usr/X11R6/lib
+             ln -s /usr/lib/libXm.a /usr/X11R6/lib
+             ln -s /usr/lib/X11/uid /usr/X11R6/lib/X11
+             ln -s /usr/include/Xm /usr/X11R6/include
+             ln -s /usr/include/Mrm /usr/X11R6/include
+             ln -s /usr/include/uil /usr/X11R6/include
+
+
+
+
+
+  Motif の imake 設定ファイルは LynxOS の X ウィンドウパッケージに含まれ
+  ています。これを /usr/X11R6 ディレクトリツリーにコピーしなければなりま
+  せん。
+
+
+
+             cp /usr/lib/X11/config/Motif.* /usr/X11R6/lib/X11/config
+
+
+
+
+
+
+  5.2.  LynxOS AT 2.3.0 用の Motif ライブラリへのパッチ
+
+
+  XFree86 のライブラリは -mposix コンパイラオプションを使ってコンパイル
+  されており、一方 LynxOS 2.3.0 付属の Motif のライブラリではこのオプ
+  ションを使っていません。この非互換性により、Motif の XmFileSelection
+  ウィジェットは誤った(つまり POSIX)のディレクトリルーチンとリンクされて
+  しまいます。この問題を回避するためには、ライブラリに以下のパッチを適用
+  します:
+
+
+
+             cp /usr/lib/libXm.a /usr/X11R6/lib
+             ar x /usr/X11R6/lib/libXm.a Xmos.o
+             ar x /lib/libc.a directory.s.o
+             ld -r -o x.o Xmos.o directory.s.o
+             mv x.o Xmos.o
+             ar r /usr/X11R6/lib/libXm.a Xmos.o
+
+
+
+
+
+  このパッチは 2.3.0 以降のリビジョンの LynxOS では必要ありません。
+
+
+  5.3.  X11R6 設定ファイルへのパッチ
+
+
+  /usr/X11R6/lib/X11/config/lynx.cf を編集し、HasMotif の定義
+
+
+              #define HasMotif    NO
+
+
+
+       から
+
+
+
+         #define HasMotif    YES
+
+
+
+
+
+  に変更します。
+
+
+  5.4.  Motif 設定ファイルへのパッチ
+
+
+  LynxOS の Motif に付属の Motif.tmplファイルを XFree86 で動作させるため
+  には修正が必要です。UnsharedLibReferences への参照全てについて、最初の
+  引き数を
+
+
+              UnsharedLibReferences(<Something>LIB, Arg2, Arg3)
+
+
+
+       から
+
+              UnsharedLibReferences(<Something>, Arg2, Arg3)
+
+
+
+
+
+  に変更しなければなりません。
+
+  この変更は必ず、/usr/X11R6/lib/X11/config にコピーしたファイルに適用し
+  てください。
+
+
+  6.  XFree86 配布物のコンパイル
+
+
+  XFree86 をソースから再構築しようとする前には、「XFree86 の構築」を読ん
+  で、構築の手続きの詳細を調べてください。次のセクションでは、構築の手続
+  きの点から LynxOS 特有の注意を述べています。
+
+
+  6.1.  必要なディスク容量
+
+  現在は LynxOS 移植版の XFree86 では、共有ライブラリはサポートされてい
+  ません。オンラインマニュアルも含めたバイナリの完全なインストールには、
+  約 90〜100MB のディスク容量が必要です。システムをコンパイルするには、
+  少なくとも空きディスク容量が 230MB 必要でしょう。
+
+
+  6.2.  システム環境に対する変更点 (LynxOS AT)
+
+  XFree86 の配布物をコンパイルする前には、システムを少し調整しなければな
+  らないでしょう:
+
+
+     LynxOS AT 2.5
+
+     o  /lib/cpp という名前で、次のようなシェルスクリプトを作成します:
+
+
+
+
+
+
+         #!/bin/sh
+         /usr/lib/gcc-lib/i386-unknown-lynxos2.5/2.7-96q1/cpp \
+                   -traditional "$@"
+
+
+
+
+
+     AT 以外のプラットフォームでは、コンパイラ補助のプログラムのパスは異
+     なります。正しいパスは
+
+
+                  gcc -v
+
+
+
+
+
+     を使って見つけることができます。次のコマンドで、/lib/cpp のファイル
+     のモードを設定してください:
+
+
+                  # chown root /lib/cpp
+                  # chmod 755 /lib/cpp
+
+
+
+
+
+     o  /lib/liblynx.a を修正します。X サーバは、フレームバッファを自身
+        のメモリ空間にマップするために smem_create() システムコールを必
+        要とします。システムコールは liblynx ライブラリに、他の Lynx 固
+        有の呼び出しと一緒に入っています。これらの呼び出しは(残念ながら)
+        libc の呼び出しと重複しています。混乱を少なくするために、
+        liblynx を以下のように変更しておくべきです:
+
+
+              # mv /lib/liblynx.a /lib/liblynx.a.ORG
+              # mkdir /tmp/xx; cd /tmp/xx
+              # ar xv /lib/liblynx.a.ORG
+              # ar rv /lib/liblynx.a *smem*
+              # ranlib /lib/liblynx.a
+
+
+
+
+
+
+     LynxOS AT 2.4
+
+     o  XFree86 を構築するには CYGNUS GNU C コンパイラを使います。LynxOS
+        2.4.0 ではシェルスクリプト /CYGNUS.bash を実行して、環境に対して
+        必要な変更を行わなければなりません。
+
+     o  /lib/cpp という名前で以下のようなシェルスクリプトを作成します:
+
+
+              #!/bin/sh
+              /cygnus/94q4-lynxos-x86/lib/gcc-lib/i386-lynx/2.6-94q4/cpp \
+                        -traditional "$@"
+
+
+
+
+
+     将来のリリースでは CYGNUS のコンパイラ支援のプログラムに対して別の
+     パスを使う可能性があります。正しいパスは
+
+
+                  gcc -v
+
+
+
+
+
+     を使って見つけることができます。/lib/cpp のファイルモードを
+
+
+                  # chown root /lib/cpp
+                  # chmod 755 /lib/cpp
+
+
+
+
+
+     を使って設定します。
+
+     LynxOS AT 2.3
+        これは実際にはテストされていませんが、2.4 向けに説明した手順は
+        2.3 にも適用できるはずです。
+
+     LynxOS AT 2.2.1
+        これは実際には全くテストされておらず、構築はどこかで失敗するで
+        しょう。
+
+     o  /lib/cpp という名前で次のようなシェルスクリプトを作成します:
+
+
+              #!/bin/sh
+              /usr/local/lib/gcc-cpp -traditional "$@"
+
+
+
+
+
+     o  LynxOS 2.2.1 のローダ /bin/ld は、X11R6 の Makefile で非常に多用
+        されている -L オプションをサポートしていません。この問題を回避す
+        るためには、元の /bin/ld プログラムを置き換える、小さなラッパプ
+        ログラムをインストールしなければなりません。以下の手順に従って、
+        これをインストールしてください:
+
+
+                # cd xc/programs/Xserver/hw/xfree/etc
+                # cc -o ld ld-wrapper.c
+                # mv /bin/ld /bin/ld.org
+                # mv ld /bin/ld
+                # chmod 511 /bin/ld
+                # chown root /bin/ld
+
+
+
+
+
+     o  システムのヘッダファイルを以下のように修正します:
+
+        /usr/include/uio.h
+           を
+
+
+
+
+
+                  #ifndef _UIO_H
+                  #define _UIO_H
+                  ...
+                  #endif
+
+
+
+
+
+        で囲みます。
+
+        /usr/include/utmp.h
+           を
+
+
+                       #ifndef _UTMP_H
+                       #define _UTMP_H
+                       ...
+                       #endif
+
+
+
+
+
+        で囲みます。
+
+        /usr/include/unistd.h
+           に
+
+
+                       extern int read();
+
+
+
+
+
+        を追加します。
+
+
+  6.3.  make World
+
+
+  ソース配布物から XFree86 を再構築しようとする前には、 XFree86 の構築を
+  読んでください。
+
+  次に
+
+
+
+            make World
+
+
+
+
+
+  を実行して、XFree86 をコンパイルします。数時間後には(たぶん XFree86 シ
+  ステムがうまく構築され)、
+
+
+
+            make install
+
+
+
+
+
+  を使ってソフトウェアをインストールすることができます。`make install'
+  を実行する際には、スーパーユーザ(root)としてログインしていなければなり
+  ません。必ず `make World' で使ったのと同じコンパイラ(LynxOS
+  2.3.0/2.4.0 では CYGNUS GNU-C)を使うように環境を設定してください。
+  LinkKit をインストールするには、
+
+
+
+            make install.linkkit
+
+
+
+
+
+  を使ってください。LynsOS 2.2.1 では、プログラムはインストール時にスト
+  リップされません。これは、インストールがファイルシステム境界にまたがっ
+  た時に現われる strip プログラムの問題のせいです。
+
+  オンラインマニュアルのインストールについては、 ``XFree86 のオンライン
+  マニュアルのインストール'' セクションを参照してください。
+
+  LynxOS AT 2.5.0 では、深くネストしたディレクトリで make の問題(コアダ
+  ンプやハングアップ等)に出会うかもしれません。このような場合には、GNU
+  make のバージョン 3.75 以上に更新してください。
+
+
+  7.  microSPARC と PowerPC 上での構築
+
+
+  XFree86 3.3 は LynxOS microSPARC 上と LynxOS PPC 上でもコンパイルでき
+  ます。microSPARC の場合は、X サーバは CG3 と CG6 カラーフレームバッ
+  ファをサポートし、PPC の場合は現時点では X サーバは利用できませ
+  ん。(2.5.0 以前のバージョンで)構築を始める前には、PATH 環境変数に入っ
+  ているディレクトリのいずれかに、CYGNUS gcc から cc という名前へのシン
+  ボリックリンクを作らなければなりません。
+
+
+  7.1.  microSPARC 用のコンソールドライバのパッチ
+
+
+  microSPARC 上で構築を行う前に
+  は、xc/programs/Xserver/hw/sunLynx/patch.Console として用意されている
+  コンソールドライバ用のパッチをインストールしなければなりません(2.5.0
+  以前のリビジョンの LynxOS の場合は
+  xc/programs/Xserver/hw/sunLynx/patch.Console-2.4.0 を使ってください)。
+  このパッチは LynxOS オリジナルのドライバのちょっとしたバグを修正し、キ
+  ーボードの種類の検出とキークリックの制御の機能を追加します。オリジナル
+  のドライバのバックアップを生成し、パッチをインストールするには、以下の
+  コマンドを実行します:
+
+
+        # cd /
+        # tar cf /sys/drivers/console.tar /sys/drivers/console
+        # patch -p -E < xc/programs/Xserver/hw/sunLynx/patch.Console
+        # cd /sys/drivers/console
+        # make install
+        # cd /sys/lynx.os
+        # make install
+        # reboot -a
+
+
+
+
+  パッチをインストールしないことを選んだ場合には、 xc/config/cf/lynx.cf
+  を編集し、SparcConsoleDefines の定義を
+
+         #define SparcConsoleDefines    -DPATCHED_CONSOLE
+
+
+
+  から
+
+         #define SparcConsoleDefines    /* -DPATCHED_CONSOLE */
+
+
+
+
+
+  に変更しなければなりません。
+
+
+  7.2.  microSPARC サーバの既知のバグ
+
+
+  microSPARC 上で X サーバを初めて起動する際には、ポインタがマウスの動き
+  にいくらか遅れて追従する(特にマウスをとても速く動かしている場合)ことに
+  注意してください。特定のウィンドウマネージャ(mwm 等)を使っている場合に
+  は、ウィンドウの移動が正しく動作しない点にも注意してください。このよう
+  な現象は、次にサーバを起動した時には起こらないはずです。
+
+  lynx.cf で有効にすれば白黒カード用のサーバが正しくコンパイルされます
+  が、テストは全く行われていません(報告はお待ちしています)。
+
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.LynxOS,v 1.1.2.1 1999/06/02 07:50:46 hohndel Exp $
+
+
+
+
+
+  $XConsortium: LynxOS.sgml /main/10 1996/10/28 05:13:07 kaleb $
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

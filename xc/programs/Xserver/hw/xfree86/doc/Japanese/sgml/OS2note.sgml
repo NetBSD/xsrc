@@ -1,0 +1,459 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+<article>
+
+<!--
+<title>Notes on Rebuilding XFree86/OS2 from Scratch
+-->
+<title>XFree86/OS2 を最初から再構築する際の注意
+<author>Holger Veit
+<date>Last modified 04 October 1998
+<trans>The X Japanese Documentation Project
+<tdate>Last modified 11 February 1999
+
+<toc>
+
+<!--
+<sect>Preface
+-->
+<sect>前書き
+<p>
+<!--
+X11 and XFree86 were initially developed on Unix-based systems. Usually
+Unix systems provide a rich number of tools and utilities to get certain
+things done. Under OS/2, these tools are not installed, but ports are
+available which are sometimes functionally equivalent to Unix utilities
+with the same name, but also differ sometimes in a subtle way.
+This guide will give you hints if you intend to rebuild the system
+from scratch under OS/2.
+-->
+X11 と XFree86 は初めは Unix ベースのシステム上で開発されました。Unix
+システムには通常、各種作業を行うための豊富なツールとユーティリティが用
+意されています。このようなツールは OS/2 ではインストールされないのです
+が、移植版が利用可能です。これらのツールは同じ名前の Unix 用ユーティリ
+ティと同じ機能を持っていることもありますが、微妙に機能が異なることもあ
+ります。このガイドでは、OS/2 上で最初からシステムを再構築しようと考え
+ている方のためのヒントを提供しています。
+<p>
+<!--
+Please also read <htmlurl name=README.OS2 url=OS2.html> for end-user
+information, and set at least the environment variables described there.
+-->
+エンドユーザ向け情報である「<htmlurl name=README.OS2 url=OS2.html>」も読
+んで、最低限ここに書かれている環境変数の設定を行ってください。
+<p>
+<!--
+At the current time, the most recent version available is XFree86-3.3.3.
+This is a full and unrestricted version which comes with complete source 
+code. 3.3.3 is not only a bugfix release, but also supports new hardware,
+some of which might not even supported by OS/2 itself. See the RELEASE NOTES
+document for details.
+-->
+現時点では、利用可能な最新バージョンは XFree86-3.3.3 です。これは制限
+無しの完全なバージョンであり、ソースコードも全て付いています。3.3.3 は
+単なるバグ修正リリースではなく、新しいハードウェアもサポートしています。
+この中には OS/2 自身でさえサポートしていないものがあるかもしれません。
+詳しくはリリースノートを参照してください。
+
+<!--
+If you want to join the XFree86 developer team, e.g. to add support for
+certain hardware, please send a request to BOD@XFree86.org. Please
+think about such a step carefully before, though, since much work is 
+involved. Please use the XFree86-3.3.3 source code as a test example how
+to compile the system. The ability to manage that is a basic requirement
+for becoming a developer.
+-->
+(あるハードウェアのサポート追加等で)XFree86 開発チームに参加したいと思
+われたなら、BOD@XFree86.org にリクエストを送ってください。しかし、その
+前にこのようなステップについてよく考えてください。というのも、作業がた
+くさんあるからです。XFree86-3.3.3 のソースコードをシステムのコンパイル
+方法のテスト例として使ってください。開発者になるためには、これを管理す
+る能力が基本的に必要です。
+
+<!--
+<sect>Tools required
+-->
+<sect>必要なツール
+<p>
+
+<!--
+I have tried to reduce the number of external tools, but when looking back
+it seems I were not very successful. At least I managed to get everything
+working with the native CMD.EXE shell only. However, there is still plenty
+of software required.
+Most of this software is available from <tt/hobbes.nmsu.edu/ or <tt/ftp.leo.org/
+via anonymous FTP. The following shopping list shows what you will need:
+-->
+筆者は必要な外部ツールの数を減らそうとしてきましたが、振り返ってみると
+あまりうまく行っていないようです。筆者は少なくとも、ネィティブの
+CMD.EXE シェルだけで全て行えるようにしようとしました。しかし、必要なソ
+フトウェアはまだたくさんあります。
+このソフトウェアのほとんどは <tt/hobbes.nmsu.edu/ または
+<tt/ftp.leo.org/ から anonymous ftp で入手することができます。以下の買
+物リストを見れば、必要なものが分かるでしょう:
+
+<itemize>
+<!--
+<item>gcc	EMX/gcc emx 0.9C patch4 or later
+-->
+<item>gcc	EMX/gcc emx 0.9C patch4 以降
+<item>gzip	GNU zip/unzip
+<item>tar	GNU tar
+<!--
+<item>patch	Larry Wall's patch utility (attention: incompatible tool with same name in OS/2)
+-->
+<item>patch	Larry Wall さん作の patch ユーティリティ (注意: OS/2の同名のコマンドとは互換性はありません)
+<item>install	BSD/GNU install
+<!--
+<item>rm,mv,cp	GNU file utilities
+-->
+<item>rm,mv,cp	GNU ファイルユーティリティ
+<!--
+<item>tee,..	GNU shell utilities
+-->
+<item>tee,..	GNU シェルユーティリティ
+<item>groff	GNU nroff/troff
+<!--
+<item>sed	GNU sed stream editor
+-->
+<item>sed	GNU sed ストリームエディタ
+<item>grep	GNU grep
+<item>gawk	GNU awk
+<!--
+<item>make	GNU make 3.71/3.72 (use the one from X332prog.zip!)
+-->
+<item>make	GNU make 3.71/3.72 (X332prog.zip に入っているものを使ってください!)
+<item>flex	GNU flex
+<item>bison	GNU bison
+<!--
+<item>find	GNU find    (attention: incompatible tool with the same name in OS/2)
+-->
+<item>find	GNU find    (注意: OS/2 の同名のコマンドとは互換性はありません)
+</itemize>
+
+<!--
+If there is no version number given, any new version will do. Particularly
+critical is only EMX/gcc and GNU make. Note that the second GCC implementation
+which might still be available from some archives is NOT compatible.
+-->
+バージョン番号を書いていない場合は、できるだけ新しいものを使ってくださ
+い。特に重要なのは EMX/gcc と GNU make だけです。2番目の gcc の実装も
+まだどこかのアーカイブから入手できるかもしれませんが、これは互換では
+<em/ありません/。
+<!-- second GCC implementation って具体的には何を指しているんでしょう? -->
+
+<!--
+Furthermore, you need the XFree86 sources. These are available from 
+the common XFree86 repositories. Look into a directory which is 
+often named /pub/XFree86/3.3/source.
+-->
+これに加えて、XFree86 のソースが必要です。これは一般の XFree86 のリポ
+ジトリから入手することができます。/pub/XFree86/3.3/source といった名前
+であることが多いので、そのディレクトリを見てください。
+
+<!--
+<sect>Compiling and Installing
+-->
+<sect>コンパイルとインストール
+<p>
+
+<!--
+You need about 300MB of free HPFS space for the whole system. This does not
+include space for the postscript and troff documentation files. I have never
+installed them. Nor did I install the test subtree.
+-->
+システム全体をコンパイルするためには、HPFS の空き領域が約 300MB 必要で
+す。このサイズには Postscript 形式や troff 形式のドキュメントの分は含
+まれていません。筆者はこれらをインストールしたことがありません。また、
+テスト用のサブツリーをインストールしたこともありません。
+
+<enum>
+<!--
+<item>Install all the above utilities. Refer to the corresponding documentation.
+      Verify that everything works well, particularly EMX.
+-->
+<item>上記のユーティリティを全てインストールします。関連ドキュメントを
+参照してください。全てのユーティリティ(特に EMX)が正しく動作することを
+確かめてください。
+<!--
+<item>It is a good idea to use the same or a similar structure I have.
+      I have made a directory <tt>&bsol;x11</tt> on the partition for compiling and have
+      put everything below this tree. I found that a clean tree occupies
+      less than the half space of the disk, this gives me the opportunity to
+      rename this tree to <tt>&bsol;x11old</tt> and copy a new version to the
+      same disk to produce diffs. Last time the complete tree was
+      arranged under the root directory <tt>xc</tt>, this would become 
+      <tt>&bsol;x11&bsol;xc</tt> then.
+-->
+<item>筆者と同じあるいは同様の構造を使うのは良い考えです。筆者はコンパ
+イル用のパーティションに <tt>&bsol;x11</tt> というディレクトリを作成し、
+全てのものをこのツリーの下に置きました。筆者の場合には、初期状態のツリー
+で使ったディスク容量がディスク全体の半分未満だったので、このツリーの名
+前を <tt>&bsol;x11old</tt> に変え、新しいバージョンを同じディスクにコ
+ピーし、diff を取ることができました。完成したツリーは最終的にルートディ
+レクトリ <tt>xc</tt> の下に配置されるので、このディレクトリは
+<tt>&bsol;x11&bsol;xc</tt> になります。
+<!--
+<item>To unpack the files you would usually execute the command
+      <verb>gzip -dc file.tar.gz | tar xvf -</verb> 
+      in the <tt>&bsol;x11</tt> directory. At the end you will usually see the
+      irritating, but non-fatal message "gzip: stdout Broken pipe". Ignore it.
+-->
+<item>ファイルを展開するには通常、<tt>&bsol;x11</tt> ディレクトリで
+      <verb>gzip -dc file.tar.gz | tar xvf -</verb> 
+      コマンドを実行します。最後に "gzip: stdout Broken pipe" といううっ
+      とうしいですが、致命的ではないメッセージが出力されます。これは無
+      視してください。
+<!--
+<item>After that, is is likely necessary to apply some patches, either from
+      the XConsortium or from the XFree86 project. Before you do this, enter
+      <verb>
+      chmod -R a+rw &bsol;x11&bsol;xc
+      </verb> 
+      to make certain files in the tree writable.
+-->
+<item>その後、パッチをいくつか当てる必要があるようです。パッチは X コ
+      ンソーシアムが出したものと、XFree86 プロジェクトが出したものがあ
+      ります。パッチを当てる前には、
+      <verb>
+      chmod -R a+rw &bsol;x11&bsol;xc
+      </verb> 
+      を実行して、ツリー中のファイルを書き込み可能にしてください。
+<!--
+<item>There should be a file <tt>added-XXX</tt> accompanying the patch file
+      which lists the files that are newly created. The patch program has
+      a problem with creating new directories, so we need to create them
+      on advance. For each <tt/added-XXX/ file you find, execute from
+      <tt>&bsol;x11</tt> <verb>xc&bsol;config&bsol;util&bsol;added added-XXX</verb>
+      If there is no <tt>added-XXX</tt> file available, you can make one with
+      the following instructions:
+      <verb>
+      grep "&bsol;*&bsol;*&bsol;* xc/" patchfile >added-file
+      </verb>
+      Edit <tt/added-file/ with a text editor and remove the <tt/*** / at
+      the beginning and the time stamp at the end (search for a TAB and
+      erase to the end of the line). You get a list of file paths, one in a
+      line, which is the input to the added utility.
+-->
+<item>パッチには <tt>added-XXX</tt> というファイルが付属しているはずで
+      す。このファイルは新しく生成されるファイルを列挙したものです。
+      patch プログラムは新しいディレクトリをうまく作成できないので、先
+      にディレクトリを作成しておく必要があります。存在する
+      <tt/added-XXX/ それぞれについて、<tt>&bsol;x11</tt> で
+      <verb>xc&bsol;config&bsol;util&bsol;added added-XXX</verb> を実
+      行してください。利用できる <tt>added-XXX</tt> がない場合、このファ
+      イルは以下の手順で作成することができます:
+      <verb>
+      grep "&bsol;*&bsol;*&bsol;* xc/" patchfile >added-file
+      </verb>
+      テキストエディタで <tt/added-file/ を編集し、先頭の <tt/*** / と
+      末尾のタイムスタンプを削除します(TAB を検索し、行末まで削除しま
+      す)。この操作により、ファイルパスのリスト(1 行に 1 ファイル)が得
+      られますが、これが added ユーティリティの入力となります。
+<!--
+<item>After that you can apply the patches in the right order. Usually this
+      is done by a command
+      <verb>
+      patch -p -E <patchfile 2>&1 | tee patchlog
+      </verb>
+      from the <tt>&bsol;x11</tt> directory. Be aware to use the right
+      patch - OS/2 has a utility with the same name and different functionality.
+      Don't use the recommended <tt/-s/ option, this makes <tt/patch/ quiet,
+      and you won't see problems in the patchlog file. Use
+      <verb>
+      find &bsol;x11 -name *.rej -print 
+      find &bsol;x11 -name *# -print
+      </verb>
+      to find any rejects and unapplied patches (attention: yet another OS/2
+      program with wrong functionality). Normally there shouldn't
+      be any problems of this kind, else you have made a mistake. Finally
+      remove the original files with
+      <verb>
+      find &bsol;x11 -name *.orig -print -exec rm {} ;
+      </verb>
+-->
+<item>次に、パッチを正しい順序で当てます。パッチを当てるには通常、
+       <tt>&bsol;x11</tt> ディレクトリで
+      <verb>
+      patch -p -E <patchfile 2>&1 | tee patchlog
+      </verb>
+      というコマンドを実行します。ただし、正しい patch コマンドを使っ
+      てください。OS/2 には名前が同じで機能が異なるユーティリティが存
+      在します。よく勧められる <tt/-s/ オプションは使わないでください。
+      このオプションは <tt/patch/ のメッセージ出力を止めるので、patch
+      のログに残される問題点を見られません。リジェクトされ、適用されな
+      かったパッチを見つけるには
+      <verb>
+      find &bsol;x11 -name *.rej -print 
+      find &bsol;x11 -name *# -print
+      </verb>
+      を実行します(注意: 違う機能を持つ別のコマンドが OS/2 にあります)。
+      通常はこのような問題は起こらないはずなので、問題が起こった場合は
+      何かミスをしています。最後に、次のコマンドを実行してオリジナルの
+      ファイルを消します。
+      <verb>
+      find &bsol;x11 -name *.orig -print -exec rm {} ;
+      </verb>
+<!--
+<item>Go to the <tt>xc/config/cf</tt> directory and edit the <tt>xf86site.def</tt>
+      file to match your requirements (you probably don't want to compile
+      all X servers). Certain changes must be set to the following values:
+-->
+<item><tt>xc/config/cf</tt> ディレクトリに移動し、
+<tt>xf86site.def</tt> を編集して必要な条件に合うようにします(たぶん、
+全ての X サーバをコンパイルするつもりはないでしょう)。いくつかの変更が
+必要で、以下に設定しなければなりません:
+      <itemize>
+<!--
+      <item>Disable if not already done any PC98 server; PC98 (Japanese XFree86)
+            does not work yet. Porters from Japan are welcome!
+-->
+<item>PC98 サーバを無効にします(まだ無効にされていない場合)。PC98 (日
+      本独自のマシン用の XFree86)はまだ動作しません。移植する人が日本
+      から現われるのを待ってます!
+<!--
+      <item><tt>&num;define WacomSupport            NO
+            &num;define ElographicsSupport      NO</tt>
+            Both options are not yet supported.
+-->
+      <item><tt>&num;define WacomSupport            NO
+            &num;define ElographicsSupport      NO</tt>
+	    どちらのオプションもまだサポートされていません。	    
+<!--
+      <item>Tcl* and Tk* don't need to be set explicitly. Reasonable defaults
+            are in the other config files, provided you have a complete 
+            XFree86/OS2 binary tree with the tcl/tk runtime support installed.
+-->
+      <item>Tcl* and Tk* の設定を明示的に行う必要はありません。Tcl/Tk
+      のランタイムサポートを含む XFree86/OS2 のバイナリ全体がインストー
+      ルされていれば、適切なデフォルト値が他の設定ファイルで設定されま
+      す。
+<!--
+      <item><tt>&num;define BuildDynamicLoading   NO</tt>
+	    This does not work.
+-->
+      <item><tt>&num;define BuildDynamicLoading   NO</tt>
+      これは動作しません。
+      </itemize>
+<!--
+<item>Go to the directory <tt>xc&bsol;util&bsol;compress</tt> and 
+      <tt>make compress.exe</tt> there. Install the program produced 
+      there in your path. I stumbled more than once on half-ported
+      compress programs on OS/2 ftp servers that are defective w.r.t.
+      reading and writing stdin/stdout. In some stage (font compression)
+      otherwise you will get a core dump of mkfontdir, because all
+      compressed fonts are corrupt.
+-->
+<item><tt>xc&bsol;util&bsol;compress</tt> ディレクトリに移動し、そこで
+<tt>make compress.exe</tt> を実行します。これにより生成されたプログラ
+ムをパスが通っている場所にインストールします。筆者は OS/2 関連の ftp
+サーバにある移植が中途半端な compress プログラムで何度もつまづきました。
+この compress プログラムは標準入力/標準出力の読み書きに問題があります。
+<!-- w.r.t. って何(^_^; -->
+ちゃんとしたものを使わないと、圧縮したフォントが全て壊れてしまうので、
+インストール途中の段階(フォントの圧縮)でmkfontdir が core を吐くことに
+なるでしょう。
+<!--
+<item>Set the environment variable <tt/X11ROOT/ to something different than
+      it is; otherwise the installation process will overwrite your
+      original XFree86/OS2 installation. If you have not set this variable,
+      go back to the prefix section of this document: you have forgotten
+      something.
+-->
+<item>環境変数 <tt/X11ROOT/  を現在とは別のどこかに設定します。さもな
+いと、インストール処理で先にインストールしていた XFree86/OS2 が上書き
+されてしまいます。この環境変数が設定されていない場合、本ドキュメントの
+前書きまで戻ってください。何か忘れものをしています。
+<!--
+<item>Copy the file <tt>xc/config/util/buildos2.cmd</tt> into the <tt/xc/
+      directory. If this is a second or later attempt, you might need to
+      copy the saved toplevel Makefile.os2 back to Makefile.
+-->
+<item><tt>xc/config/util/buildos2.cmd</tt> ファイルを <tt/xc/ ディレク
+トリにコピーします。2 回目以降の試みであれば、保存されているトップレベ
+ルの Makefile.os2 を Makefile にコピーして戻す必要があるかもしれません。
+<!--
+<item>Execute this <tt/buildos2.cmd/ command in the <tt/xc/ directory;
+      it will produce a logfile <tt>buildxc.log</tt> in this directory.
+-->
+<item>この <tt/buildos2.cmd/ コマンドを <tt/xc/ ディレクトリで実行しま
+す。このコマンドは、このディレクトリにログファイル
+<tt>buildxc.log</tt> を作ります。
+<!--
+<item>Go have a bucket of coffee, or better, buy new coffee - in Colombia!
+      The compile will need between 2 and 20 hours, depending on your
+      selections, and the horse power of your hardware.
+-->
+<item>コーヒーを飲みます。新しいコーヒーをコロンビアまで買いに行くともっ
+といいでしょう! マシン選択とハードウェアの馬力によって、コンパイルには
+2 時間から 20 時間かかります。
+<!--
+<item>When finished, view the logfile for errors, and fix the problems if
+      there are some. I have managed to compile the whole system
+      flawlessly, so there is at least one configuration that works.
+-->
+<item>コンパイルが終了したら、ログファイルでエラーを調べ、問題があれば
+修正します。筆者は何とか問題なくシステム全体をコンパイルすることができ
+たので、動作する設定は少なくとも 1 つはあると言えます。
+<!--
+<item>Finally, from the <tt/xc/ dir, execute
+<item>最後に、<tt/xc/ ディレクトリで次のコマンドを実行します:
+-->
+      <verb>
+      xmake install
+      xmake install.man
+      </verb>
+<!--
+<item>There are a few minor glitches in the installation:
+-->
+<item>インストールの際にはちょっとした問題がいくつかあります:
+<enum>
+<!--
+<item>The xdm and linkkit directories will fail in compile and installation.
+      This is no problem and has no effect on the rest of the system.
+-->
+<item>xdm ディレクトリと linkkit ディレクトリはコンパイルとインストー
+ルに失敗するでしょう。これは問題ではありませんし、残りのシステムにも影
+響を与えません。
+<!--
+<item>The imake.exe which is installed in <tt/&bsol;XFree86&bsol;bin/ is usually defective.
+      The one which was built initially and installed in the root directory
+      of the drive where you have the source tree is okay. So simply copy
+      this <tt/&bsol;imake.exe/ to the <tt/&bsol;XFree86&bsol;bin/ directory 
+      manually. Some day this might be fixed.
+-->
+<item><tt/&bsol;XFree86&bsol;bin/ にインストールされる imake.exe には普
+通、不具合があります。最初に作成し、ソースツリーがあるドライブのルート
+ディレクトリにインストールされる imake.exe は大丈夫です。したがって、
+単にこの <tt/&bsol;imake.exe/ を手動で <tt/&bsol;XFree86&bsol;bin/ に
+コピーしてください。いつかこの問題は修正されるかもしれません。
+<!--
+<item><tt/XF86Setup/ is not ported yet and won't work with the tcl/tk port
+      available for XFree86/OS2. My idea was to replace this by some native
+      installation tool, which I didn't find the time to do yet. Feel free
+      to spend a bit of time to play with XF86Setup if you like.
+-->
+<item><tt/XF86Setup/ はまだ移植されていないので、XFree86/OS2 で利用可
+能な Tcl/Tk の移植版を使っても動作しません。XF86Setup をネイティブのイ
+ンストール用ツールで置き換えるという考えが筆者にはあったのですが、まだ
+そのための時間が取れません。よかったら、XF86Setup をちょっといじってみ
+てください。
+</enum>
+</enum>
+
+<!--
+Well, you see, this was quite easy :-)
+-->
+というわけで、ご覧の通り、作業はとっても簡単でした :-)
+
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/OS2note.sgml,v 1.1.2.1 1999/05/25 06:39:17 hohndel Exp $
+
+
+
+
+
+$XConsortium: OS2note.sgml /main/1 1996/02/24 10:08:59 kaleb $
+</verb>
+
+</article>

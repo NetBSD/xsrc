@@ -1,0 +1,83 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+
+<article>
+<!--
+<title>Information for Rendition Users
+-->
+<title>Rendition ユーザ向けの情報
+<author>The XFree86 Project Inc.
+<date>23 October 1998
+<trans>The X Japanese Documentation Project
+<tdate>12 January 1999
+<toc>
+
+<!-- <sect>Supported hardware <p> -->
+<sect>サポートしているハードウェア <p>
+<!--
+All cards based on the V1000 or the V2x00 should be supported. The server
+was tested on a miroCRYSTAL VRX (V1000), Diamond Stealth II S220 (V2100), and
+Hercules Thriller3D (V2200).
+-->
+V1000, V2x00 ベースのカードは全てサポートされているはずです。サーバの
+テストは miroCRYSTAL VRX (V1000), Diamond Stealth II S220 (V2100),
+Hercules Thriller3D (V2200) で行いました。
+
+<!-- <sect>Features <p> -->
+<sect>機能 <p>
+<!--
+<itemize>
+<item>Unaccelerated
+<item>Hardware cursor
+<item>Supported color depths
+<itemize>
+<item>8 bits per pixel (256 pseudo colour)
+<item>16 bits per pixel (high colour)
+<item>32 bits per pixel (true colour)
+</itemize>
+</itemize>
+-->
+<itemize>
+<item>アクセラレーション無し
+<item>ハードウェアカーソル
+<item>サポートされている色の深さ
+<itemize>
+<item>8 bpp (256 pseudo colour)
+<item>16 bpp (high color)
+<item>32 bpp (true colour)
+</itemize>
+</itemize>
+
+<!-- <sect>XF86Config Option <p> -->
+<sect>XF86Config のオプション <p>
+<descrip>
+<!--
+<tag>Option "sw_cursor"</tag>
+Disables use of the hardware cursor.
+<tag>Option "overclock_mem"</tag>
+Run the memory at a higher clock. Useful on some cards with display glitches
+at higher resolutions. But adds the risk to damage the hardware. Use with
+caution.
+</descrip>
+-->
+<tag>Option &dquot;sw_cursor&dquot;</tag>
+ハードウェアカーソルを無効にします。
+<tag>Option &dquot;overclock_mem&dquot;</tag>
+メモリを高いクロックで動作させます。高解像度のときに表示が乱れるカード
+で有効なことがあります。ただし、ハードウェアを壊してしまうリスクを負う
+ことになります。使うときには注意しましょう。
+</descrip>
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/rendition.sgml,v 1.1.2.1 1999/05/25 06:39:33 hohndel Exp $
+</verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました
+(翻訳: 藤原輝嘉 <url url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;">,
+校正: 金田浩司 <url url="mailto:vanitas@ma3.seikyou.ne.jp"
+name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">)。問題点の指摘やご意
+見は藤原まで御連絡ください。
+原文の著作権は XFree86 プロジェクト社にあり、日本語訳の著作権は
+X Japanese Documentation Project にあります。
+</article>

@@ -1,5 +1,5 @@
 /* $XConsortium: xinit.c /main/58 1996/02/22 10:37:38 kaleb $ */
-/* $XFree86: xc/programs/xinit/xinit.c,v 3.17.2.1 1998/02/07 10:39:12 dawes Exp $ */
+/* $XFree86: xc/programs/xinit/xinit.c,v 3.17.2.3 1999/06/27 10:32:26 dawes Exp $ */
 
 /*
 
@@ -33,7 +33,21 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Xmu/SysUtil.h>
 #include <stdio.h>
 #include <ctype.h>
+
+#ifdef X_POSIX_C_SOURCE
+#define _POSIX_C_SOURCE X_POSIX_C_SOURCE
 #include <signal.h>
+#undef _POSIX_C_SOURCE
+#else
+#if defined(X_NOT_POSIX) || defined(_POSIX_SOURCE)
+#include <signal.h>
+#else
+#define _POSIX_SOURCE
+#include <signal.h>
+#undef _POSIX_SOURCE
+#endif
+#endif
+
 #ifndef SYSV
 #include <sys/wait.h>
 #endif
@@ -500,9 +514,30 @@ processTimeout(timeout, string)
 startServer(server)
 	char *server[];
 {
-	serverpid = vfork();
+#if !defined(X_NOT_POSIX) && !defined(__EMX__)
+	sigset_t mask, old;
+#else
+	int old;
+#endif
+
+#ifndef X_NOT_POSIX
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGUSR1);
+	sigprocmask(SIG_BLOCK, &mask, &old);
+#else
+	old = sigblock (sigmask (SIGUSR1));
+#endif
+	serverpid = fork(); 
+
 	switch(serverpid) {
 	case 0:
+		/* Unblock */
+#ifndef X_NOT_POSIX
+		sigprocmask(SIG_SETMASK, &old, NULL);
+#else
+		sigsetmask (old);
+#endif
+
 		/*
 		 * don't hang on read/write to control tty
 		 */
@@ -570,8 +605,16 @@ startServer(server)
 		 * you can easily adjust this value.
 		 */
 		alarm (15);
-		pause ();
+
+#ifndef X_NOT_POSIX
+		sigsuspend(&old);
 		alarm (0);
+		sigprocmask(SIG_SETMASK, &old, NULL);
+#else
+		sigpause (old);
+		alarm (0);
+		sigsetmask (old);
+#endif
 
 		if (waitforserver() == 0) {
 			Error("unable to connect to X server\r\n");

@@ -2,17 +2,17 @@
 
 <article>
 
-<title>Release Notes for XFree86&tm; 3.3.3.1
+<title>Release Notes for XFree86&tm; 3.3.4
 <author>The XFree86 Project, Inc
-<date>30 December 1998
+<date>21 June 1999
 
 <abstract>
 
 This document describes the bugs fixed and the features added in
-XFree86 3.3.3.1 compared with the 3.3.2 and 3.3.3 release, 
+XFree86 3.3.4 compared with the 3.3.3 and 3.3.3.1 release, 
 It also includes installation instructions for the binary distributions.
 It is strongly recommended that anyone using XFree86 update to version
-3.3.3.1. 
+3.3.4. 
 
 </abstract>
 
@@ -49,8 +49,9 @@ X11R6.4 back to the old free X Consortium style copyright.
 Given the fact that our main development focus is on XFree86-4.0 and that 
 the 3.3.3 release was intended mostly to fix some bugs and get out new
 drivers to the public, we opted not to include X11R6.4 in XFree86-3.3.3.
-Since XFree86-3.3.3.1 is merely a quick bug fix release to
-XFree86-3.3.3, the same applies here as well.
+Since XFree86-3.3.4 and XFree86-3.3.3.1 are merely quick bug fix releases to
+XFree86-3.3.3 (that happen to add support for some new common hardware as
+well), the same applies here.
 <p>
 XFree86-4.0 will be X11R6.4 based.
 <p>
@@ -66,6 +67,36 @@ release.
 Users running FreeBSD 3.0 should note that only ELF binaries are provided
 with this release.  a.out shared libraries are also included for compatibility
 purposes.
+
+<p> 
+<sect> What's new in 3.3.4?
+<p>
+<itemize>
+  <item>Several security fixes.
+  <item>Intel i740 support (donated by Precision Insight).
+  <item>SiS 530 and SiS 620 support.
+  <item>3Dfx Voodoo Banshee and Voodoo3 support.
+  <item>Trident Blade3D, CyberBlade and Cyber9525 support.
+  <item>S3 Trio3D support.
+  <item>Matrox G400 support.
+  <item>NVIDIA Riva TNT2 support and better acceleration for all Riva
+	chipsets (donated by NVIDIA).
+  <item>Rewritten Cyrix MediaGX support (donated by Cyrix). 
+        <bf>Warning: this is reported
+        to hang some machines!</bf> If that happens, please use the
+        SVGA server in XFree86-3.3.3.1 instead.
+  <item>Acceleration for XF68_FBDev on PPC.
+  <item>VMWare's DGA-1.1 extension. Note that the next major release of XFree86
+        will NOT include DGA-1.1 but the newly developed DGA-2.0 that contains
+        significantly more features than DGA-1.1 and will most likely not be
+        compatible with DGA-1.1
+  <item>Change xterm to use the tty default value for the backspace key.
+  <item>Japanese documentation and manpage updates.
+  <item>Updates and new hardware support (Acecad flair, Calcomp DrawingBoard)
+        for xinput extension.
+  <item>Bug fixed for cards with S3 Aurora64V+ (M65) chip, VGA output
+        should now work.
+</itemize>
 
 <p> 
 <sect> What's new in 3.3.3.1?
@@ -215,17 +246,17 @@ as set forth at <htmlurl name="http://www.opensource.org/osd.html"
 url="http://www.opensource.org/osd.html">. 
 This definition is actually a subset of our requirements.
 <p>
-All code in XFree86 3.3.3.1 satisfies the Open Source Software definition.
+All code in XFree86 3.3.4 satisfies the Open Source Software definition.
 <p>
 
-<sect>Installing the XFree86 3.3.3.1 Release
+<sect>Installing the XFree86 3.3.4 Release
 <p>
-The XFree86 3.3.3.1 binaries are distributed as a full release.
+The XFree86 3.3.4 binaries are distributed as a full release.
 <!--
 , and as an
 update to the 3.3.3 release.  For information about upgrading from 3.3.3
-to 3.3.3.1 see section <ref id="upgrade"
-name="Updating XFree86 3.3.3 to XFree86 3.3.3.1">.
+to 3.3.4 see section <ref id="upgrade"
+name="Updating XFree86 3.3.3 to XFree86 3.3.4">.
 -->
 
 NOTE: the X servers are no longer installed setuid root.  If you are
@@ -375,8 +406,8 @@ Xvfb.tgz        Virtual framebuffer X server
 Xprt.tgz        X Print server
 Xps.tgz         PostScript version of the documentation
 Xhtml.tgz       HTML version of the documentation
-Xjdoc.tgz       Documentation in Japanese (for version 3.2)
-Xjhtm.tgz       HTML version of the documentation in Japanese (3.2)
+Xjdoc.tgz       Documentation in Japanese (for version 3.3.4)
+Xjhtm.tgz       HTML version of the documentation in Japanese (3.3.4)
 Xlkit.tgz       X server LinkKit
 Xlk98.tgz       X server LinkKit for PC98 servers
 </verb>
@@ -461,16 +492,16 @@ optional for an existing installation.  Refer to the
 information.
 
 <!--
-<sect>Updating XFree86 3.3.3 to XFree86 3.3.3.1<label id="upgrade">
+<sect>Updating XFree86 3.3.3 to XFree86 3.3.4<label id="upgrade">
 <p>
-The following is required to update an XFree86 3.3.3 installation to
-XFree86 3.3.3.1:
+The following is required to update an XFree86 3.3.3 (or XFree86-3.3.3.1)
+installation to XFree86 3.3.4:
 <quote>
 <verb>
 extract              XFree86 extraction utility
-X3331upd.tgz         XFree86 3.3.3.1 update
-Xdoc.tgz             XFree86 3.3.3.1 documentation
-X{SERVER}.tgz        3.3.3.1 Server update from the Servers or PC98_Servers
+X334upd.tgz          XFree86 3.3.4 update
+Xdoc.tgz             XFree86 3.3.4 documentation
+X{SERVER}.tgz        3.3.4 Server update from the Servers or PC98_Servers
 		     directory.
                      You must select the appropriate SERVER file for the
 		     server that you are currently running (i.e. XI128.tgz).
@@ -481,17 +512,17 @@ First make the extract utility executable by running:
 <tscreen><verb>
 	chmod 755 extract
 </verb></tscreen>
-To update your installation to 3.3.3.1, run the following as
+To update your installation to 3.3.4, run the following as
 <bf>root</bf>:
 <tscreen><verb>
 	cd /usr/X11R6
-	/var/tmp/extract /var/tmp/X3331upd.tgz
+	/var/tmp/extract /var/tmp/X334upd.tgz
 	/var/tmp/extract /var/tmp/X{SERVER}.tgz
 </verb></tscreen>
 -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.68 1998/12/30 10:22:34 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.76 1999/06/30 13:00:29 hohndel Exp $
 </verb>
 
 </article>

@@ -1,0 +1,132 @@
+  Alliance Promotion チップセットユーザ向けの情報
+  Henrik Harmsen (Henrik.Harmsen@erv.ericsson.se)
+  23 February 1998
+  The X Japanese Documentation Project
+  13 January 1999
+  ____________________________________________________________
+
+  目次
+
+
+  1. サポートしているチップセット
+  2. アクセラレーション
+  3. 設定
+  4. 日本語訳について
+
+
+  ______________________________________________________________________
+
+  1.  サポートしているチップセット
+
+  SVGA サーバの apm ドライバは Alliance Promotion(www.alsc.com)グラ
+  フィックスチップセット用です。以下に挙げるチップセットがサポートされて
+  います:
+
+
+  o  6422
+
+     色展開ハードウェア機能がない古いチップセット(テキストアクセラレー
+     ション)
+
+  o  AT24
+
+     Diamond Stealth Video 2500 で使われています。AT3D に非常に似ていま
+     す。
+
+  o  AT25, AT3D
+
+     AT3D は Hercules Stingray 128/3D で使われています。Voodoo Rush ベー
+     スの他のカードのほとんどが AT25 を使っています。これは、3D のサポー
+     トが無い以外は全く同じものです。
+
+
+  2.  アクセラレーション
+
+  apm ドライバは SVGA ドライバで XAA(XFree86 Acceleration Architecture)
+  を使っています。このドライバは以下のアクセラレーションをサポートしてい
+  ます:
+
+
+  o  bitblt (長方形領域のコピー操作)
+
+  o  線 (実線、単独のピクセル)
+
+  o  塗りつぶした長方形
+
+  o  CPU->スクリーンの色展開(テキストアクセラレーション)。6422 では使え
+     ません。
+
+  o  ハードウェアカーソル
+
+  8, 16, 32 bpp モードは全て使えます。24bpp モードはサポートされていませ
+  ん。VESA DPMS 省電力モードは完全にサポートされており、"standby",
+  "suspend", "off" モードが使えます(設定は "xset dpms" コマンドで行いま
+  す)。
+
+
+  3.  設定
+
+  最初に: XF86Setup を実行して、正しい設定を行ってください。
+
+  ハードウェアカーソルを無効にするには、以下の行を XF86Config ファイルの
+  Device セクションに挿入します:
+
+  Option "sw_cursor"
+
+  ハードウェアアクセラレーションを無効にするには、以下の行を挿入します:
+
+  Option "noaccel"
+
+  搭載しているビデオ RAM の量や使っているチップセットを設定ファイルで指
+  定せず、ドライバに検出させるようにしてください。また、Device セクショ
+  ンには "clocks" 行を書かないでください。なぜなら、これらのチップは完全
+  にプログラマブルなクロックを持っており、ユーザが指定する(ほとんど) 全
+  てのモード行を受け入れることができるからです。特定のクロック値で設定に
+  失敗することもありますが、その場合には少しだけクロック値を変えればうま
+  く動作するはずです。
+
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.apm,v 1.1.2.1 1999/06/02 07:50:56 hohndel Exp $
+
+
+
+
+  4.  日本語訳について
+
+  日本語訳は X Japanese Documentation Project が行いました (翻訳: 藤原輝
+  嘉 <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp>, 校正: 金田浩
+  司  <vanitas@ma3.seikyou.ne.jp> <mailto:vanitas@ma3.seikyou.ne.jp>)。
+  問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86
+  プロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+  Project にあります。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

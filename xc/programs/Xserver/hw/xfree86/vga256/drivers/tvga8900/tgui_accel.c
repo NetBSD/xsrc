@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_accel.c,v 3.6.2.7 1998/12/26 00:12:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/tvga8900/tgui_accel.c,v 3.6.2.9 1999/06/21 09:45:20 hohndel Exp $ */
 
 /*
  * Copyright 1996 by Alan Hourihane, Wigan, England.
@@ -38,6 +38,7 @@ extern int TGUIRops_alu[16];
 extern int TGUIRops_Pixalu[16];
 extern int GE_OP;
 extern int revision;
+extern Bool SETUPCHIP;
 extern Bool ClipOn;
 #include "t89_driver.h"
 #include "tgui_ger.h"
@@ -49,18 +50,23 @@ extern Bool ClipOn;
 
 #define TGUISync			MMIONAME(TGUISync)
 #define IMAGESync			MMIONAME(IMAGESync)
+#define BLADESync			MMIONAME(BLADESync)
 #define TGUIAccelInit			MMIONAME(TGUIAccelInit)
 #define TGUISetupForFillRectSolid	MMIONAME(TGUISetupForFillRectSolid)
 #define IMAGESetupForFillRectSolid	MMIONAME(IMAGESetupForFillRectSolid)
+#define BLADESetupForFillRectSolid	MMIONAME(BLADESetupForFillRectSolid)
 #define TGUI9685SetupForFillRectSolid	MMIONAME(TGUI9685SetupForFillRectSolid)
 #define TGUISubsequentFillRectSolid	MMIONAME(TGUISubsequentFillRectSolid)
 #define IMAGESubsequentFillRectSolid	MMIONAME(IMAGESubsequentFillRectSolid)
+#define BLADESubsequentFillRectSolid	MMIONAME(BLADESubsequentFillRectSolid)
 #define TGUILinearSubsequentFillRectSolid	MMIONAME(TGUILinearSubsequentFillRectSolid)
 #define TGUISetClippingRectangle	MMIONAME(TGUISetClippingRectangle)
 #define TGUISetupForScreenToScreenCopy	MMIONAME(TGUISetupForScreenToScreenCopy)
 #define TGUISubsequentScreenToScreenCopy	MMIONAME(TGUISubsequentScreenToScreenCopy)
 #define IMAGESetupForScreenToScreenCopy	MMIONAME(IMAGESetupForScreenToScreenCopy)
+#define BLADESetupForScreenToScreenCopy	MMIONAME(BLADESetupForScreenToScreenCopy)
 #define IMAGESubsequentScreenToScreenCopy	MMIONAME(IMAGESubsequentScreenToScreenCopy)
+#define BLADESubsequentScreenToScreenCopy	MMIONAME(BLADESubsequentScreenToScreenCopy)
 #define TGUISubsequentBresenhamLine		MMIONAME(TGUISubsequentBresenhamLine)
 #define TGUISetupForCPUToScreenColorExpand	MMIONAME(TGUISetupForCPUToScreenColorExpand)
 #define TGUISubsequentCPUToScreenColorExpand	MMIONAME(TGUISubsequentCPUToScreenColorExpand)
@@ -73,17 +79,22 @@ extern Bool ClipOn;
 
 void TGUISync();
 void IMAGESync();
+void BLADESync();
 void TGUISetupForFillRectSolid();
 void TGUI9685SetupForFillRectSolid();
 void IMAGESetupForFillRectSolid();
+void BLADESetupForFillRectSolid();
 void IMAGESubsequentFillRectSolid();
+void BLADESubsequentFillRectSolid();
 void TGUISubsequentFillRectSolid();
 void TGUILinearSubsequentFillRectSolid();
 void TGUISetClippingRectangle();
 void TGUISetupForScreenToScreenCopy();
 void TGUISubsequentScreenToScreenCopy();
 void IMAGESetupForScreenToScreenCopy();
+void BLADESetupForScreenToScreenCopy();
 void IMAGESubsequentScreenToScreenCopy();
+void BLADESubsequentScreenToScreenCopy();
 void TGUISubsequentBresenhamLine();
 void TGUISetupForCPUToScreenColorExpand();
 void TGUISubsequentCPUToScreenColorExpand();
@@ -110,6 +121,72 @@ void TGUISubsequentImageWrite();
 		       IsTGUI9660 || IsAdvCyber)
 #define HAVE_TRANSPARENCY (IsTGUI9440 || IsTGUI9682 || IsTGUI9685 || IsAdvCyber)
 #define HAVE_DASHEDLINES (IsTGUI9685)
+
+#ifdef TRIDENT_MMIO
+void
+ImageInitializeAccelerator()
+{
+    int engineop;
+
+    IMAGE_OUT(0x20, 0xF0000000);
+    switch (vga256InfoRec.depth) {
+	case 8:
+	    engineop = 0;
+	    break;
+	case 15:
+	    engineop = 5;
+	    break;
+	case 16:
+	    engineop = 1;
+	    break;
+	case 24:
+	    engineop = 2;
+	    break;
+    }
+    IMAGE_OUT(0x20, 0x40000000 | engineop);
+    IMAGE_OUT(0x20, 0x80000000);
+    IMAGE_OUT(0x44, 0x00000000);
+    IMAGE_OUT(0x48, 0x00000000);
+    IMAGE_OUT(0x20, 0x60000000 | vga256InfoRec.displayWidth<<16 | vga256InfoRec.displayWidth);
+    IMAGE_OUT(0x6C, 0x00000000);
+    IMAGE_OUT(0x70, 0x00000000);
+    IMAGE_OUT(0x7C, 0x00000000);
+    IMAGE_OUT(0x20, 0x10000000 | 4095 << 16 | 4095);
+    IMAGE_OUT(0x30, 4095 << 16 | 4095);
+    SETUPCHIP = TRUE;
+}
+
+void
+BladeInitializeAccelerator()
+{
+    CARD32 stride;
+
+    stride = (vga256InfoRec.displayWidth >> 3) << 20;
+    BLADE_OUT(0xC8, stride);
+    BLADE_OUT(0xCC, stride);
+    BLADE_OUT(0xD0, stride);
+    BLADE_OUT(0xD4, stride);
+    switch (vga256InfoRec.depth) {
+	case 8:
+	    stride |= 0<<29;
+	    break;
+	case 15:
+	    stride |= 5<<29;
+	    break;
+	case 16:
+	    stride |= 1<<29;
+	    break;
+	case 24:
+	    stride |= 2<<29;
+	    break;
+    }
+    BLADE_OUT(0xB8, stride);
+    BLADE_OUT(0xBC, stride);
+    BLADE_OUT(0xC0, stride);
+    BLADE_OUT(0xC4, stride);
+    SETUPCHIP = TRUE;
+}
+#endif
 
 /*
  * The following function sets up the supported acceleration. Call it
@@ -185,6 +262,23 @@ void TGUIAccelInit() {
     xf86AccelInfoRec.SubsequentScreenToScreenColorExpand = 
 	TGUISubsequentScreenToScreenColorExpand;
   } else {
+    if ((TVGAchipset == BLADE3D) || (TVGAchipset == CYBERBLADE)) {
+    xf86AccelInfoRec.Flags = PIXMAP_CACHE | BACKGROUND_OPERATIONS |
+				ONLY_TWO_BITBLT_DIRECTIONS;
+
+    xf86AccelInfoRec.Sync = BLADESync;
+
+    xf86GCInfoRec.PolyFillRectSolidFlags = NO_PLANEMASK | NO_TRANSPARENCY;
+
+    xf86AccelInfoRec.SetupForFillRectSolid = BLADESetupForFillRectSolid;
+    xf86AccelInfoRec.SubsequentFillRectSolid = BLADESubsequentFillRectSolid;
+
+    xf86GCInfoRec.CopyAreaFlags = NO_PLANEMASK | NO_TRANSPARENCY;
+    xf86AccelInfoRec.SetupForScreenToScreenCopy =
+       					BLADESetupForScreenToScreenCopy;
+    xf86AccelInfoRec.SubsequentScreenToScreenCopy =
+	       				BLADESubsequentScreenToScreenCopy;
+    } else {
     xf86AccelInfoRec.Flags = PIXMAP_CACHE | BACKGROUND_OPERATIONS |
 				ONLY_TWO_BITBLT_DIRECTIONS;
 
@@ -200,6 +294,7 @@ void TGUIAccelInit() {
        					IMAGESetupForScreenToScreenCopy;
     xf86AccelInfoRec.SubsequentScreenToScreenCopy =
 	       				IMAGESubsequentScreenToScreenCopy;
+    }
   }
 
     xf86AccelInfoRec.ServerInfoRec = &vga256InfoRec;
@@ -208,7 +303,7 @@ void TGUIAccelInit() {
 				(vga256InfoRec.virtualY *
 		vga256InfoRec.displayWidth * vga256InfoRec.bitsPerPixel / 8);
 
-    xf86AccelInfoRec.PixmapCacheMemoryEnd = vga256InfoRec.videoRam * 1024 - 4096;
+    xf86AccelInfoRec.PixmapCacheMemoryEnd = 2048 * 1024 - 4096;
 }
 
 /*
@@ -487,12 +582,8 @@ IMAGESetupForScreenToScreenCopy(
     blitxdir = 0;
     if ((xdir < 0) || (ydir < 0)) blitxdir |= 1<<2;
 
+    if (!SETUPCHIP) ImageInitializeAccelerator();
     IMAGE_OUT(0x20, 0x40000000 | GE_OP);
-    IMAGE_OUT(0x20, 0x70000000);
-    IMAGE_OUT(0x20, 0x60000000 |vga256InfoRec.displayWidth<<16 | vga256InfoRec.displayWidth);
-    IMAGE_OUT(0x6C, 0x00000000);
-    IMAGE_OUT(0x70, 0x00000000);
-    IMAGE_OUT(0x7C, 0x00000000);
     IMAGE_OUT(0x20, 0x90000000 | TGUIRops_alu[rop]);
 }
 
@@ -521,10 +612,7 @@ IMAGESetupForFillRectSolid(int color,
 				    int rop, unsigned int planemask)
 {
     REPLICATE(color);
-    IMAGE_OUT(0x20, 0x60000000 |vga256InfoRec.displayWidth<<16 | vga256InfoRec.displayWidth);
-    IMAGE_OUT(0x6C, 0x00000000);
-    IMAGE_OUT(0x70, 0x00000000);
-    IMAGE_OUT(0x7C, 0x00000000);
+    if (!SETUPCHIP) ImageInitializeAccelerator();
     IMAGE_OUT(0x20, 0x40000000 | GE_OP);
     IMAGE_OUT(0x44, color);
     IMAGE_OUT(0x48, color);
@@ -538,4 +626,80 @@ IMAGESubsequentFillRectSolid(int x, int y, int w, int h)
     IMAGE_OUT(0x0C, (y+h-1)<<16 | x+w-1);
     IMAGE_OUT(0x24, 0x80000000 | 1<<22 | 1<<10 | 1<<9);
     IMAGESync();
+}
+
+void
+BLADESync()
+{
+    int count = 0, timeout = 0;
+    int busy;
+
+    for (;;) {
+	BLADEBUSY(busy);
+	if (busy == 0) {
+	    return;
+	}
+	count++;
+	if (count == 10000000) {
+	    ErrorF("Trident: BitBLT engine time-out.\n");
+	    count = 9990000;
+	    timeout++;
+	    if (timeout == 8) {
+		/* Reset BitBLT Engine */
+		BLADE_STATUS(0x00);
+		return;
+	    }
+	}
+    }
+}
+
+void
+BLADESetupForScreenToScreenCopy( 
+				int xdir, int ydir, int rop,
+				unsigned int planemask, int transparency_color)
+{
+    blitxdir = 0;
+    if ((xdir < 0) || (ydir < 0)) blitxdir |= 1<<1;
+
+    if (!SETUPCHIP) BladeInitializeAccelerator();
+    BLADE_OUT(0x48, TGUIRops_alu[rop]);
+}
+
+void
+BLADESubsequentScreenToScreenCopy(int x1, int y1,
+					int x2, int y2, int w, int h)
+{
+    BLADE_OUT(0x44, 0xE0000000 | 1<<19 | 1<<4 | 1<<2 | blitxdir);
+
+    if (blitxdir) {
+	BLADE_OUT(0x00, (y1+h-1)<<16 | (x1+w-1));
+	BLADE_OUT(0x04, y1<<16 | x1);
+	BLADE_OUT(0x08, (y2+h-1)<<16 | (x2+w-1));
+	BLADE_OUT(0x0C, y2<<16 | x2);
+    } else {
+	BLADE_OUT(0x00, y1<<16 | x1);
+	BLADE_OUT(0x04, (y1+h-1)<<16 | (x1+w-1));
+	BLADE_OUT(0x08, y2<<16 | x2);
+	BLADE_OUT(0x0C, (y2+h-1)<<16 | (x2+w-1));
+    }
+    BLADESync();
+}
+
+void
+BLADESetupForFillRectSolid(int color, 
+				    int rop, unsigned int planemask)
+{
+    REPLICATE(color);
+    if (!SETUPCHIP) BladeInitializeAccelerator();
+    BLADE_OUT(0x60, color);
+    BLADE_OUT(0x48, TGUIRops_alu[rop]);
+}
+
+void
+BLADESubsequentFillRectSolid(int x, int y, int w, int h)
+{
+    BLADE_OUT(0x44, 0x20000000 | 1<<19 | 1<<4 | 2<<2);
+    BLADE_OUT(0x08, y<<16 | x);
+    BLADE_OUT(0x0C, (y+h-1)<<16 | x+w-1);
+    BLADESync();
 }

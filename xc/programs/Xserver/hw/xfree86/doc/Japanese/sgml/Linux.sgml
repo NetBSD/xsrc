@@ -4,33 +4,35 @@
 
 <!-- 
 <title>Information for Linux Users
-<author>Orest Zborowski, Dirk Hohndel
-<date>May 13, 1997
 -->
-<title> Linux を使用している人のための情報
-<author> Orest Zborowski, Dirk Hohndel
-<date> 1996 年 10 月 20 日
-<trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
-<tdate> 1997 年 7 月 5 日
+<title>Linux ユーザ向けの情報
+<author>Orest Zborowski, Dirk Hohndel
+<date>December 23, 1998
+<trans>The X Japanese Documentation Project
+<tdate> January 11, 1999
 <toc>
 
-<!-- 
-<sect>Linux versions on which XFree86 has been tested <p>
-XFree86 has been tested with Linux version 2.0.30. It should work
-with any version since 1.0 without change. The binaries and libraries are
-based on the 5.4.7 Elf C libraries, and the 1.7.14 dynamic linker
-<tt>ld.so</tt>. You will at least need the 5.2.x Elf C libraries to
-successfully use the servers.
+<!-- <sect>Linux versions on which XFree86 has been tested <p> -->
+<sect> XFree86 をテストした Linux のバージョン <p>
+<!--
+XFree86 has been tested with Linux version 2.0.36 and several 2.1.x kernels.
+It works just fine with all 2.1.x kernels tested (including
+2.1.131). It should work with any version since 1.0 without change. The 
+binaries and libraries are based on the 5.3.12 Elf C libraries, and the 
+1.7.14 dynamic linker <tt>ld.so</tt>. You will at least need the 5.2.x Elf 
+C libraries to successfully use the servers.
 -->
-<sect> XFree86 がテストされた Linux のバージョン <p>
-XFree86 は Linux のバージョン 2.0.30 でテスト済みです。 1.0 以降のバージョ
-ンでは、XFree86 に変更がなければ動くでしょう。バイナリとライブラリは 
-5.4.7 Elf C ライブラリと 1.7.14 のダイナミック・リンカー <tt>ld.so</tt>
-を基にしています。うまくサーバを動作させるには最低 5.2.x Elf C ライブラリ
-が必要になるでしょう。
+XFree86 は Linux のバージョン 2.0.36 と 2.1.x カーネルの一部でテスト済
+みです。 XFree86 はテストした全ての 2.1.x カーネル(2.1.131 を含む)でう
+まく動作しています。1.0 以降のバージョンでは、XFree86 を変更しなくても
+動作するはずです。バイナリとライブラリはバージョン 5.3.12 の ELF C ラ
+イブラリとバージョン 1.7.14 のダイナミック・リンカ<tt>ld.so</tt>を想定
+しています。うまくサーバを動作させるには、少なくともバージョン 5.2.x 
+の ELF C ライブラリが必要になるでしょう。
 
-<!-- 
-<sect>Backwards Compatibility <p>
+<!-- <sect>Backwards Compatibility <p> -->
+<sect> 前のバージョンとの互換性 <p>
+<!--
 X11R6 is considered a major update from X11R5, so the shared
 libraries in XFree86 3.1 and later are not compatible with XFree86 2.1.1
 and older libraries. To continue to run X11R5 applications, you must keep
@@ -38,134 +40,100 @@ the old libraries somewhere on your machine. They can be moved from
 <tt>/usr/X386/lib</tt> elsewhere, but <tt>/etc/ld.so.conf</tt> must be updated.
 All X11R5 applications should work with the X11R6 servers without problems.
 -->
-<sect> 前のバージョンとの互換性 <p>
-X11R6 は X11R5 から大きく更新したものとなっていますので、XFree86-3.1 以降
-の共有ライブラリは、XFree86-2.1.1 以前の古いライブラリとは互換性がありませ
-ん。X11R5 のアプリケーションを実行するには、マシンの何処かに古いライブラリ
-を保存しておかなければいけません。古いライブラリは <tt>/usr/X386/lib</tt>
-から何処かへ移動すればいいのですが、<tt>/etc/ld.so.conf</tt> は更新しなけ
-ればいけません。全ての X11R5 のアプリケーションは問題無く X11R6 のサーバと
-一緒に動作するでしょう。
+X11R6 は X11R5 から大幅に変更されていますので、XFree86-3.1 以降の共有
+ライブラリは、XFree86-2.1.1 以前の古いライブラリと互換性がありません。
+X11R5 のアプリケーションを実行するには、マシンのどこかに古いライブラリ
+を保存しておかなければいけません。古いライブラリは 
+<tt>/usr/X386/lib</tt>からどこかへ移動させることができますが、その場合
+は<tt>/etc/ld.so.conf</tt> は更新しなければいけません。全ての X11R5 の
+アプリケーションは問題無く X11R6 のサーバと一緒に動作するでしょう。
 
-<!-- 
+<!--
 X11R6.1 is yet another update to X11R6. While the minor number for some
 libraries has been increased to '1' it is believed to be fully
 compatible with X11R6 based applications.
 -->
-X11R6.1 はX11R6 のもう一つの更新版です。 いくつかのライブラリのマイナー番号
-が '1' に増加している場合、そのライブラリは X11R6 で動作するアプリケーション
-と完全に互換性があると考えます。
+X11R6.1 はX11R6 をさらに更新した版です。 マイナー番号が '1' 増加してい
+るライブラリもありますが、そのライブラリは X11R6 で動作するアプリケー
+ションと完全に互換性があるはずです。
 
-<!-- 
+<!--
 X11R6.3 is yet another update to X11R6.1. While the minor number for some
 libraries has been increased to '3' it is believed to be fully
 compatible with X11R6 based applications.
 -->
-X11R6.3 は X11R6.1 からのもう一つのさらなる更新版です。幾つかのライブラリの
-マイナー番号が '3' に増えている場合、そのライブラリは X11R6 で
-動作するアプリケーションと完全に互換性があると考えます。
+X11R6.3 は X11R6.1 をさらに更新した版です。マイナー番号が '3' に増えて
+いるライブラリもありますが、そのライブラリは X11R6 で動作するアプリケー
+ションと完全に互換性があるはずです。
 
-<!-- 
+<!--
 Very old binaries (linked to XFree86-1.2, XFree86-1.3 or
 XFree86-2.0 libraries) will continue to work, but may need an explicit
 symlink from <tt>/lib/libX{11,t,aw}.so.3</tt> to
 <tt>/usr/X386/lib/libX{11,t,aw}.so.3</tt>.
 -->
-XFree86-1.2、XFree86-1.3 または XFree86-2.0 ライブラリと関連のある古いバイ
-ナリは引き続き動作しますが、<tt>/lib/libX{11,t,aw}.so.3</tt>
-<tt>/usr/X386/lib/libX{11,t,aw}.so.3</tt> へ明確にシンボリックリンクを張る
-必要があります。
+(XFree86-1.2、XFree86-1.3 または XFree86-2.0 ライブラリにリンクされて
+いる)非常に古いバイナリは引き続き動作しますが、<tt>/lib/libX{11,t,aw}.so.3</tt>
+から <tt>/usr/X386/lib/libX{11,t,aw}.so.3</tt> へ明示的にシンボリックリンク
+を張る必要があります。
 
-<!-- 
-<sect>Installing XFree86 <p>
-Starting with version 3.0, XFree86 is installed in <tt>/usr/X11R6</tt>.
-Each binary distribution of XFree86 3.X comes with a detailed
-installation document relevant to that release. The most up-to-date
-information is kept there, while this document describes basic features
-of XFree86 3.X on Linux and how to compile the sources.
+<!-- <sect>Installing XFree86 <p> -->
+<sect> XFree86 のインストール <p>
+<!--
+Starting with version 3.0, XFree86 is installed in <tt>/usr/X11R6</tt>. 
+The installation details are provided in the <htmlurl name="RELNOTES"
+url="RELNOTES.html">.
 -->
-<sect> XFree86 を導入するには <p>
-バージョン 3.0 から始めるなら、XFree86 を <tt>/usr/X11R6</tt> に導入します。
-XFree86 3.X のそれぞれのバイナリ配付物には、対応する版の詳細な導入に関する
-文書が付属しています。殆どの最新の情報がその文書にありますが、この文書に 
-Linux で動く XFree86 3.X の基本的な機能とソースをどうやってコンパイルする
-かを記述しています。
-X11R5 と X11R6 の両方を導入する十分なディスク容量が無い場合は、X11R5
-の必要の無い部分を捨てる事でディスク容量を確保しましょう。
-特に、フォントと古い X11R5 のバイナリは、消去出来ます。
-ダイナミックリンクを使う X11R5 のバイナリを動作させるには共有ライブラリを
-取っておいて下さい。
+バージョン 3.0 以降、XFree86 は <tt>/usr/X11R6</tt> にインストールされ
+ます。インストールの詳しい手順は、<htmlurl name="RELNOTES" url="RELNOTES.html">
+で説明されています。
 
-<!-- 
-After unpacking the tar files, you need to include <tt>/usr/X11R6/lib</tt>
-in <tt>/etc/ld.so.conf</tt> (where it should already be by default) or in your
-<tt>LD_LIBRARY_PATH</tt> environment variable. Also, the configuration file
-<tt>/etc/XF86Config</tt> or <tt>/usr/X11R6/lib/X11/XF86Config</tt>
-<em>must</em> be properly filled out
-based on the host setup. Ideally this is done using <tt>XF86Setup</tt> or (if
-for some reason this doesn't work) using <tt>xf86config</tt>. If you really
-insist in hand-creating your config file use <tt>XF86Config.eg</tt> as a
-starting point and <tt>README.Config</tt> as
-guideline.  You may damage your hardware if you use a wrong
-<tt>XF86Config</tt> file, so <em>read the docs</em>,
-especially the man pages and the other <tt>README</tt> files in
-<tt>/usr/X11R6/lib/X11/doc</tt>.
--->
-XFree86 3.X のそれぞれのバイナリ配付物には、対応する版の詳細な導入に関する
-文書が付属しています。殆どの最新の情報がその文書にありますが、この文書に 
-Linux で動く XFree86 3.X の基本的な機能とソースをどうやってコンパイルする
-かを記述しています。
-
-<!-- 
-<sect>Running XFree86 <p>
+<!-- <sect>Running XFree86 <p> -->
+<sect> XFree86 を動作させるには <p>
+<!--
 XFree86 requires about 4mb of virtual memory to run, although
 having 8mb of RAM is probably the minimum comfortable configuration. A 387
 coprocessor is helpful for 386 machines, although greater gains in
 interactive performance are obtained with an increase in physical memory.
 Also, a faster graphics card, bus or RAM, will improve server performance.
 -->
-<sect> XFree86 を動作させるには <p>
 XFree86 を動作させるためには 4MB の仮想メモリが必要ですが、快適に動作させ
-る最小の環境としては、多分 8MB の実記憶があったほうがいいでしょう。386 プ
-ロセッサにとって 387 コプロセッサは、有効ですが、物理的なメモリを増設した
-ほうが対話処理の速度は格段に向上します。また、高速なグラフィックカード、バ
-スまたはメモリがサーバーの性能を向上させるでしょう。
+るための最低限の環境としては、多分 8MB の実記憶があったほうがいいでしょ
+う。386 マシンの性能向上に 387 コプロセッサは有効ですが、物理的なメモ
+リを増設したほうが対話処理の速度は格段に向上します。また、高速なグラフィッ
+クカードやバス、メモリを使えばサーバの性能は向上するでしょう。
 
-<!-- 
+<!--
 After unpacking the tar files, you need to include <tt>/usr/X11R6/lib</tt>
 in <tt>/etc/ld.so.conf</tt> (where it should already be by default) or in your
 <tt>LD_LIBRARY_PATH</tt> environment variable. Also, the configuration file
-<tt>/etc/XF86Config</tt> or <tt>/usr/X11R6/lib/X11/XF86Config</tt>
+<tt>/etc/XF86Config</tt> or <tt>/usr/X11R6/lib/X11/XF86Config</tt> 
 <em>must</em> be properly filled out
 based on the host setup. Ideally this is done using <tt>XF86Setup</tt> or (if
 for some reason this doesn't work) using <tt>xf86config</tt>. If you really
-insist in hand-creating your config file use <tt>XF86Config.eg</tt> as a
+insist in hand-creating your config file use <tt>XF86Config.eg</tt> as a 
 starting point and <tt>README.Config</tt> as
 guideline.  You may damage your hardware if you use a wrong
 <tt>XF86Config</tt> file, so <em>read the docs</em>,
 especially the man pages and the other <tt>README</tt> files in
 <tt>/usr/X11R6/lib/X11/doc</tt>.
 -->
-tar ファイルを展開したら、<tt>/etc/ld.so.conf</tt> の中か（初期値によって既にそう定
-義されているはずです）、<tt>LD_LIBRARY_PATH</tt> 環境変数の中に <tt>/usr/X11R6/lib</tt> を定
-義する必要があります。また、構成定義ファイルである 
-<tt>README.Config</tt> を指針とし、<tt>XF86Config.eg</tt> を例題にして
-<tt>/etc/XF86Config</tt> または <tt>/usr/X11R6/lib/X11/XF86Config</tt>を 
-ホストの構成を正確に記入<em>しなければ</em>なりません。間違った 
-<tt>XF86Config</tt> を使うとハードウェアを痛める場合があるので、
-<em>良く文章を読んで</em>下さい。
-特にオンラインマニュアルと <tt>/usr/X11R6/lib/X11/doc</tt> にあるその他の 
-<tt>README</tt> ファイルを良く読んで下さい。
+tar ファイルを展開したら、<tt>/etc/ld.so.conf</tt> か
+<tt>LD_LIBRARY_PATH</tt> 環境変数に <tt>/usr/X11R6/lib</tt> を定義する
+必要があります(<tt>/etc/ld.so.conf</tt> のデフォルト値は既にそうなって
+いるはずです)。また、設定ファイルである <tt>/etc/XF86Config</tt> か 
+<tt>/usr/X11R6/lib/X11/XF86Config</tt> はホストの設定に基づいて、適切
+な値を<em>記述しなければなりません</em>。理想的にはこの設定は
+<tt>XF86Setup</tt> か(何らかの理由で <tt>XF86Setup</tt> が動作しない場
+合には)<tt>xf86config</tt>を使って行います。どうしても設定ファイルを手
+で書きたい場合には、<tt>XF86Config.eg</tt> を雛型に、
+<tt>README.Config</tt> をガイドラインに使ってください。
+<tt>XF86Config</tt> ファイルの設定を間違えるとハードウェアを壊してしま
+うこともあるので、<em>ドキュメントはちゃんと読みましょう</em>。特に
+オンラインマニュアルや <tt>/usr/X11R6/lib/X11/doc</tt> ディレクトリに
+ある他の README は必ず読みましょう。
 
-<!--Starting with XFree86-3.1.2F a new interactive setup utility
-<tt>XF86Setup</tt> has been included in the distribution. We recommend
-using this tool to setup the <tt>XF86Config</tt> file. Please read the
-corresponding documentation.-->
-XFree86-3.1.2F からはじめるならば配布物に入っている新しい設定ユーティリティ
-である <tt>XF86Setup</tt> があります。<tt>XF86Config</tt> を設定する
-このツールを使用することをお勧めします。適切な文書をお読みください。
-
-<!-- 
+<!--
 XFree86 has the ability to perform VT switching to and from the X
 server. When first started, XFree86 will automatically locate the first
 available VT (one that hasn't been opened by any process), and run on that
@@ -173,24 +141,27 @@ VT.  If there isn't one available, XFree86 will terminate with an error
 message.  The server can be run on a specific VT by using the
 ``vt&lt;nn&gt;'' option, where
  &lt;nn&gt; is the number of an available VT (starting from 1). If
-you don't have a free VT XFree86 cannot run. Normally you can simply disable
+you don't have a free VT XFree86 cannot run. Normally you can simply disable 
 one of the <tt>getty</tt> programs in <tt>/etc/inittab</tt>, but if this is
 not an option, you can increase the number of
 available VTs by increasing the value of <tt>NR_CONSOLES</tt> in
 <tt>include/linux/tty.h</tt> and recompiling the kernel.
 -->
-XFree86 は、X サーバーとの間で双方向に仮想端末 (VT) 切り替え（サーバーから
-仮想端末へ、仮想端末からサーバーへ切り替える）をする機能があります。初めて
-起動するときは、XFree86 が、先ず仮想端末（使用可能な他のプロセスに開かれて
-いないもの）を自動的に探して、その仮想端末で起動します。その仮想端末が使用
-不可の場合、エラーメッセージを出して XFree86 は終了するでしょう。
-``vt&lt;nn&gt;'' というオプションを付けることによって、サーバーを指定する仮想端
-末で実行させることができます。ここで &lt;nn&gt; は使用可能な仮想端末番号（1 から
-始まります）です。空いている仮想端末がないときは、XFree86 は起動不能です。
-<tt>include/linux/tty.h</tt> の中の <tt>NR_CONSOLES</tt> の数を増やしてカーネルをコンパイル
-すれば、使用可能な仮想端末の数を増やすことができます。
+XFree86 には、X サーバから仮想端末へ、また仮想端末からサーバへ画面を切
+替える機能があります。最初に X サーバを 起動するときは、XFree86 は利用
+可能な最初の仮想端末(他のプロセスがオープンしていないもの)を自動的に見
+つけ、その仮想端末上で X サーバを起動します。その仮想端末が使用不可の
+場合、XFree86 はエラーメッセージを出して終了します。``vt&lt;nn&gt;'' 
+というオプションを付けることによって、指定した仮想端末でサーバを実行で
+きます。ここで &lt;nn&gt; は使用可能な仮想端末の番号です(1 から始まり
+ます)。空いている仮想端末がないときは、XFree86 は起動できません。通常
+は単に <tt>/etc/inittab</tt> ファイルで <tt>getty</tt> の1つを無効にす
+れば良いのですが、これを行いたくない場合には仮想端末の数を増やすことも
+できます。仮想端末の数を増やすには、<tt>include/linux/tty.h</tt> ファ
+イル中の <tt>NR_CONSOLES</tt> の値を増やし、カーネルを再コンパイルしま
+す。
 
-<!-- 
+<!--
 Once running inside X, switching to another VT is accomplished by
 pressing Ctrl-Alt-&lt;Fnn&gt; where nn is the number of the VT to switch to.
 To return to the server, press the proper key-combination that moves you back
@@ -199,29 +170,27 @@ mm is the number of the VT the server is running on (this number is printed
 when the server is started).  Note that this is NOT the VT from which the
 server was started.
 -->
-一旦、XFree86 が動作してしまえば、コントロールキー &lt;Ctrl&gt; とオルタネイトキ
-ー &lt;Alt&gt; とファンクションキー &lt;Fnn&gt; を同時に押すことで、他の仮想端末に切り
-替えられます。ここの nn は切り替えたい仮想端末番号です。XFree86 サーバーに
-戻すときは、サーバーが標準で使っている仮想端末番号を表わす正しいキーの組み
-合わせを押しましょう。正しいキーの組み合わせとは、オルタネイトキー &lt;Alt&gt; 
-とファンクションキー &lt;Fmm&gt; です。ここで、mm はサーバーが動いている仮想端末
-の番号です。（この番号はサーバーが起動するときに表示されます。）既に起動し
-ているサーバーから起動した仮想端末<em>ではない</em>ことに注意して下さい。
+XFree86 が動作してしまえば、Ctrl-Alt-&lt;Fnn&gt という組合せのキーを押
+すことで他の仮想端末に切替えることができます。ここで nn は切り替えたい
+仮想端末の番号です。X サーバに戻るときは、サーバが使っている仮想端末の
+番号を表わす適切なキーの組み合わせを押します。デフォルトでは、この組み
+合わせは Alt-&lt;Fmm&gt; です。ここで、mm はサーバが動いている仮想端末
+の番号です(この番号はサーバ起動時に表示されます)。この仮想端末はサーバ
+を起動した仮想端末<em>ではない</em>ことに注意してください。
 
-<!-- 
+<!--
 NOTE: you can redefine the text-mode keybindings with the
 `<tt>loadkeys</tt>' command found in the <tt>kbd-0.81.tar.gz</tt>
 archive (or a later version thereof).
 With this, you can (for example) make Ctrl-Alt-&lt;Fmm&gt; work from text mode
 the same way it works under the XFree86 server.
 -->
-注意: <tt>kbd-0.81.tar.gz</tt> 以降のバージョンの中にある `<tt>loadkeys</tt>' コマンドで、テ
-キストモードのキー割当を再定義できます。これを使えば、例えば、コントロール
-キー &lt;Ctrl&gt; とオルタネイトキー &lt;Alt&gt; とファンクションキー &lt;Fmm&gt; を同時に使
-用して X サーバー下から移動するのと同じようなキー操作で、仮想端末のテキス
-トモードから、移動する事が出来ます。
+注意: <tt>kbd-0.81.tar.gz</tt> (または新しいバージョンの kbd パッケー
+ジ)に含まれる `<tt>loadkeys</tt>' コマンドを使ってテキストモードのキー
+割り当てを再定義することができます。これを使えば、Ctrl-Alt-&lt;Fmm&gt; 
+の動作を XFree86 サーバ上での動作と同じにすることができます。
 
-<!-- 
+<!--
 When the server is exited, it will return to the original VT it was
 started from, unless it dies unexpectedly, when the switch must be done
 manually. There still seem to be weird combinations of graphic cards and
@@ -229,14 +198,14 @@ motherboards that have problems to restore the textfont when returning from
 XFree86 to the text mode. In these cases using the <tt>runx</tt> script from
 the <bf>svgalib</bf> distribution might help.
 -->
-サーバーを終了させるとサーバーを起動した仮想端末に戻りますが、もしサーバー
-を起動した仮想端末が死んでしまったときは、手動で戻さなければなりません。
-XFree86 からテキストモードに戻る時に、未だ画面の回復に問題があるのは、グラ
-フィックカードとマザーボードの相性が悪いのだと思われます。こんな時は、
-<bf>svgalib</bf> という配付物に入っている <tt>runx</tt> というスクリプトを実行すれば、解消で
-きるでしょう。
+サーバを終了させるとサーバを起動した仮想端末に戻りますが、もしサーバを
+起動した仮想端末が死んでしまったときは、手動で戻さなければなりません。
+未だに相性の悪いグラフィックスカードとマザーボードがあり、XFree86 から
+テキストモードに戻るとテキストフォントが元に戻らないことがあります。こ
+のような時は、<bf>svgalib</bf> というパッケージに入っている 
+<tt>runx</tt> というスクリプトを実行するとよいでしょう。
 
-<!-- 
+<!--
 The XFree86 server now queries the kernel to obtain the key binding
 in effect at startup. These bindings are either the default map in place
 when the kernel was compiled, or reloaded using the
@@ -245,41 +214,29 @@ all keys are bound: kernel-specific, multiple keysym, and dead keys are not
 handled by the server. All others are translated to their X equivalents.
 Note that the XFree86 server only allows for four modifier maps: unshifted,
 shifted, modeswitch unshifted and modeswitch shifted.  Depending on what
-the modeswitch key is (it is configurable in your <tt>XF86Config</tt> and defaul
-ts
+the modeswitch key is (it is configurable in your <tt>XF86Config</tt> and defaults
 to Alt),
 XFree86 will read those tables into its keymaps.  This means if you use
 certain keys, like left-Control, for Linux modeswitch, that will not be
 mappable to X.
 -->
-起動時に、XFree86 サーバーはカーネルに対してキー割り付けを獲得することを要
-求します。この割り付けはカーネルをコンパイルしたとき設定される初期値かまた
-は、`<tt>loadkeys</tt>' ユーティリティによって書き替えた値になります。サーバーでは、
-カーネルに依存したもの、複数のキー組み合わせや無効なキーは割り付け出来ませ
-ん。その他のキーは X 共通に変換されます。X サーバーはシフトしてない状態、
-シフト状態、モードスイッチを押していない状態と、モードスイッチを押している
-状態の４種類しか変換テーブルを持っていないことに注意して下さい。モードスイ
-ッチがどんなキーかによります（これは <tt>XF86Config</tt> で設定可能です。初期値はオ
-ルタネイトキー &lt;Alt&gt; です。）が、XFree86 はキーマップの中に変換テーブルを
-読み込みます。この事は、Linux のモードスイッチに左コントロールキーの様な特
-定のキーを割り当てられない事を意味します。
+現在のXFree86 サーバは、起動時にカーネルに対して問い合わせを行い、現在
+有効になっているキー割り当てを取得します。この割り当てはカーネルをコン
+パイルしたとき設定される初期値か、または `<tt>loadkeys</tt>' ユーティ
+リティによって書き替えた値になります。必ずしも全てのキーを割り当てるこ
+とはできません。具体的には、サーバはカーネルに依存したものや複数のキー
+シンボルの組み合わせ、無効なキーを割り当てることはできません。その他の
+キーは全て X に置ける同等のキーに変換されます。XFre86 のサーバは、4種
+類のモディファイアマップ(シフトしてない状態、シフト状態、モードスイッ
+チを押していない状態と、モードスイッチを押している状態)しか使うことが
+できない点に注意してください。モードスイッチがどのキーであるかによって
+(これは <tt>XF86Config</tt> で設定可能で、初期値は Alt キーです)、
+XFree86 はこれらのテーブルをキーマップに読み込みます。これは、Linux の
+モードスイッチに左コントロールキーの様な特定のキーを使っている場合、こ
+れを X では割り当てられないことを意味します。
 
-構成によっては、調子が悪くなって修正しなければならないことがあるでしょう。
-過去に、Linux の xload コマンドが、動作中のカーネルから、負荷平均を取り出
-すのに BSD の方法を使った事があります。XFree86-1.3 版では、カーネルの将来
-の版での互換性を考慮して、動作中のカーネルから負荷平均を取り出す代わりに、
-<tt>/proc/loadavg</tt> から取り出す方法に変えました。Xman も BSD の nroff ファミリ
-ーの代わりに GNU groff ファミリーをサポートするように変更されました。ちょ
-っと編集して再コンパイルすれば従来の BDS の nroff の方をサポートするように
-戻せます。クライアントに、仮想端末で動作していたのと同等なより良いコンソー
-ル切り替えを提供するために、 <tt>/dev/console</tt> と <tt>/dev/tty0</tt> の所有権と共にサー
-バーが変更されましたが、そのために root の setuid 属性を付けなければならな
-くなりました。同様に、<tt>xterm</tt> と <tt>xconsole</tt> にも root の setuid 属性を付ける必
-要があります。<tt>xconsole</tt> は root の setuid 属性を付けて動作するようには設計
-されてないので、これは安全上、大きな問題が生じると思われます。
-
-<!--<sect> Installing Xdm, the display manager-->
-<sect> ディスプレイマネージャ Xdm の導入
+<!-- <sect>Installing Xdm, the display manager -->
+<sect> ディスプレイマネージャ xdm のインストール
 <p>
 
 <!--
@@ -288,9 +245,10 @@ export restriction outside US for this binary distribution of xdm: it
 does not contain the DES encryption code. So it's now included in the
 bin package.
 -->
-xdm は動的にリンクしているので、xdm のバイナリ配布物のアメリカ国外への
-輸出制限は問題はありません。これは DES 暗号化プログラムを含んでいない
-事からです。従って現在、バイナリパッケージに xdm が含まれています。
+xdm は動的にリンクされているので、xdm のバイナリ配布物をアメリカ国外へ
+配布しても輸出制限には引っかかりません。xdm のバイナリは DES の暗号化
+プログラムを含んでいないからです。従って現在、バイナリパッケージに xdm 
+が含まれています。
 
 <!--
 However the file <tt>xc/lib/Xdmcp/WrapHelp.c</tt> is not included in the
@@ -299,10 +257,10 @@ XDM-AUTHORIZATION-1 is not included here. You'll have to get
 WrapHelp.c and rebuild xdm after having set <tt/HasXdmAuth/ in
 <tt/xf86site.def/.
 -->
-<tt>xc/lib/Xdmcp/WrapHelp.c</tt> というファイルが XFree86-3.2 のソースに
-含まれていないので、XDM-AUTHORIZATION-1 はサポートしません。WrapHelp.c を
-入手して <tt/xf86site.def/ の中に <tt/HasXdmAuth/ を設定した後で xdm を
-再構築する必要があります。
+<tt>xc/lib/Xdmcp/WrapHelp.c</tt> というファイルが XFree86-3.3 のソース
+に含まれていないので、XDM-AUTHORIZATION-1 はサポートされていません。こ
+れをサポートするためには WrapHelp.c を入手し、<tt/xf86site.def/ ファイ
+ルに <tt/HasXdmAuth/ を設定した後で xdm を再構築する必要があります。
 
 <!--
 The file is available within the US; for
@@ -318,17 +276,18 @@ url="ftp://ftp.x.org/pub/R6/xdm-auth/README">
 To start the display manager, log in as root on the console and type:
 ``<tt/xdm -nodaemon/''.
 -->
-ディスプレイマネージャを起動する前に、ルート (root) でログインして
-コンソールから ``<tt/xdm -nodaemon/'' と入力して下さい。
+ディスプレイマネージャを起動するには、root ユーザでログインしてコンソー
+ルから ``<tt/xdm -nodaemon/'' と入力してください。
 
 <!--
 You can start xdm automatically on bootup by disabling the console getty
 and modifying <tt>/etc/inittab</tt>. Details about this setup depend on the
 Linux distribution that you use, so check the documentation provided there.
 -->
-console getty を無効にして、 <tt>/etc/inittab</tt> を変更することにより
-ブート時に自動的に xdm を起動出来ます。詳細は使おうとする Linux 配布物の
-xdm の設定に依存しますのでここにある文書を確認して下さい。
+コンソールの getty を無効にし、 <tt>/etc/inittab</tt> を変更することにより
+ブート時に自動的に xdm を起動することができます。設定の細かい部分は使
+用している Linux 配布物の xdm の設定によって異なるので、そちらの文書で
+確認してください。
 
 <!--
 The xdm binary provided should run with both shadow- and non-shadow password
@@ -337,208 +296,8 @@ systems.
 xdm バイナリ配布物はシャドウパスワードと普通のパスワードのシステムの両方で
 動作するでしょう。
 
-<sect>xterm
-<p>
-<!--
-The XFree86-3.3 binary release contains an xterm binary that has been linked
-statically against libtermcap. This was done to make sure that it will
-correctly work with all distributions, regardless whether they rely on
-libtermcap or libncurses. Contrary to the xterm binaries in some beta version
-following XFree86-3.1.2, this binary does not rely on a recent libncurses
-being installed on your system.
--->
-XFree86-3.2 バイナリ配布物は libtermcap と静的にリンクしている xterm バイナリ
-配布物を含んでいます。xterm は libtermcap と libncurses のどちらにでも関連の
-あるプログラムの全ての配布物で正しく動作する確認をしています。逆に XFree86-3.1.2
-に付属するいくつかのベータ版の xterm バイナリ配布物は導入した最新の libncurses
-とは関連がありません。
-
-<!--
-<sect>Input devices
--->
-<sect>入力機器
-<p>
-<!--
-XFree86 now support the dynamic loading of drivers for external
-input devices using the <tt/XInput/ extension. Currently supported
-devices are:
-<itemize>
-<item>Joystick (<tt/xf86Jstk.so/)
-<item>Wacom tablets (Wacom IV protocol only, <tt/xf86Wacom.so/)
-<item>SummaSketch tablets (<tt/xf86Summa.so/)
-<item>Elographics touchscreen (<tt/xf86Elo.so/)
-</itemize>
--->
-今回、<tt/XInput/ 機能拡張を使った外部入力機器ドライバのダイナミック
-ローディングをサポートしました。現在次の機器をサポートしています。
-<itemize>
-<item> ジョイスティック (<tt/xf86Jstk.so/)
-<item> Wacom タブレット (Wacom IV プロトコルに限定, <tt/xf86Wacom.so/)
-<item> SummaSketch タブレット (<tt/xf86Summa.so/)
-<item> Elographics タッチスクリーン (<tt/xf86Elo.so/)
-</itemize>
-
-<!--
-To use a specific device, add the line
-<tscreen>
-<tt/load/ <tt/"/<em/module/<tt/"/
-</tscreen>
-in the <bf/Module/ section of <tt/XF86Config/, where <em/module/ is
-the name of the <tt/.so/ file corresponding to your device.
-You also need to set up a <bf/XInput/ section in <tt/XF86Config/.
-Refer to the <em>XF86Config(5)</em> man page for detailed
-configuration instructions.
--->
-特定の機器を使用するには、次の行を <tt/XF86Config/ の <bf/Module/
-に追加してください。ここで <em/module/ は 機器に対応する<tt/.so/ 
-ファイルの名称です。
-<tscreen>
-<tt/load/ <tt/"/<em/module/<tt/"/
-</tscreen>
-また、<tt/XF86Config/ の <bf/XInput/ の部分を設定する必要があります。
-設定手順の詳細については <em>XF86Config(5)</em> のオンラインマニュアル
-を参照してください。
-<p>
-<!--
-You can then change the device used to drive the X pointer with the
-<em/xsetpointer(1)/ command.
--->
-<em/xsetpointer(1)/ コマンドを使って X のカーソルを駆動する使用したい
-機器に変更出来ます。
-<p>
-<!--
-For joystick support, you'll need to install the joystick device
-driver in the kernel.
--->
-ジョイスティックを使うにはカーネルにジョイスティックのデバイスドライバ
-を組み込む必要があります。
-
-<!--
-<sect1>Configuring PEX, XIE and GLX extensions
--->
-<sect1>PEX と XIE 機能拡張の設定
-<p>
-<!--
-The PEX, XIE and GLX extensions are now supported as external modules.
-If you want to have access to these extensions, add the following
-lines to the <bf/Module/ section of <tt/XF86Config/:
-<tscreen><verb>
-   load    "pex5.so"
-   load    "xie.so"
-</verb></tscreen>
-For GLX you need to get the appropriate GLX modules, first. They are, at this
-time, not part of the XFree86 distribution.
--->
-現在、PEX と XIE 機能拡張は外部モジュールとしてサポートしました。
-この機能拡張を使いたい場合は、次の行を <tt/XF86Config/ の <bf/Module/
-に追加してください
-<tscreen><verb>
-   load    "pex5.so"
-   load    "xie.so"
-</verb></tscreen>
-
-<!--
-<sect> Compiling XFree86 <p>
-There are no special instructions required for compiling XFree86.
-This version was compiled with gcc-2.7.2.1, the 5.4.7 Elf libraries and the
-1.7.14 shared, dynamic linker ld.so.
-The server has been
-compiled with <tt>-m486</tt>, which optimizes it for the 486 processor, but
-the binary will run on the 386 processor (there is a slight increase in
-binary size over using <tt>-m386</tt>, but no loss of performance).
--->
-
-<sect> XFree86 をコンパイルするには <p>
-XFree86 の完全版のソースだけは無料で公開されています。最新の XFree86 の
-完全版は 3.2 です。
-
-XFree86 をコンパイルするためには特別な手順書は必要ありません。
-このバージョンの XFree86 は gcc-2.7.2 、Elf ライブラリの 5.2.18 と共用ライ
-ブラリの1.7.14 、ダイナミック・リンカ ld.so とでコンパイルしています。
-<!-- 共有
-ライブラリは DLL tools-2.16 パッケージで作成し、新しい場所 (<tt>/usr/bin</tt>) にあ
-るツールを使うようにサーバーのソースを更新しました。 -->
-サーバーは 486 プロセ
-ッサ用に最適化する為に、<tt>-m486</tt> オプションを付けてコンパイルされていますが、
-バイナリは 386 プロセッサで動作するでしょう。（ -m486 を付けてコンパイルし
-たものは、<tt>-m386</tt> を付けてコンパイルしたものより少々ファイルサイズが大きくな
-っていますが、性能の損失はありません。）
-
-<!--
-All extensions and clients have been ported and tested. By default,
-the servers are compiled without any extra extensions (PEX, XIE, etc),
-but libraries for those extensions are always generated. They can be loaded
-at runtime, see the XFree86 man page for details. By modifying
-<tt>site.def</tt>, extra extensions can be compiled into the server.
-Alternately, the link kit can be used to craft modified servers.
--->
-全ての機能拡張とクライアントは移植とテストが終わっています。標準では、サー
-バーは外部機能拡張 (PEX, XIE 等) 無しでコンパイルしていますが、これらの外
-部機能拡張のライブラリは既に生成済みです。
-<!--They can be loaded 
-at runtime, see the XFree86 man page for details. -->
-外部機能拡張は実行時にローディングされます。詳細は XFree86 オンラインマニュアル
-を参照してください。
-<tt>site.def</tt> を変更すれば、外部機能
-拡張をコンパイルしてサーバーに組み込めます。若しくは、リンクキットがサーバ
-ーを変更できます。
-
-<!--
-The distribution is very large, but it is possible to compile
-XFree86 on a single 64mb partition, if the source tree is carefully trimmed
-(no manpages, PEX or large clients). Simply run ``<tt>make Makefiles</tt>'' to
-create
-the Makefiles, then stop the make and run each piece individually. It is
-not necessary to run ``<tt>make depend</tt>'' as well, which saves some
-space.  Having
-150mb available makes compiling XFree86 a lot easier. You will need about
-10mb of virtual memory to compile the entire server.
--->
-配付物は大変大きいものですが、オンラインマニュアル、PEX や大きなクライアン
-トを消去する等してソースを注意深く整理すれば、XFree86 は 64MB のパーティシ
-ョン１つで、コンパイル出来ます。 Makefile を作成するには、単に ``<tt>make Makefiles</tt>'' を実行してください。ファイルが自動的に作成され、実行は終了しま
-す。ディスクを節約するならば、``<tt>make depend</tt>'' は実行する必要はないでしょう。
-100MB の空きディスクがあれば、もっと容易に XFree86 をコンパイルできます。
-サーバー全てをコンパイルするには、約 10MB の仮想メモリが必要でしょう。
-
-<!--
-If an aout version of XFree86 is to be built and patches are applied which
-significantly change the libraries,
-modified jump_xxx files will be needed. Those can be generated according to
-instructions given in the DLL tools package, and will be made available as
-XFree86 patches.
--->
-XFree86 の aout 版を生成したり
-パッチがライブラリに重要な変更を行なう場合は、更新した jump_xxx が必要でし
-ょう。DLL tools パッケージに付属する手順でパッチが生成でき、XFree86 のパッ
-チを当てるのに必要でしょう。
-
-<!--
-The JUMP_xxx defines used to compile the X libraries can also be
-used to compile external X shared libraries, like Xaw3d. Detailed
-instructions are provided in <tt>/usr/X11R6/lib/X11/config/lnxLib.rules</tt>,
-where the X library definitions are provided, as an example.
--->
-例えば、Xaw3d のような外部 X 共有ライブラリも X ライブラリをコンパイルする
-ように、 X ライブラリを定義する JUMP_xxx で定義してコンパイル出来ます。詳
-細な手順については、X ライブラリの定義例を、
-<tt>/usr/X11R6/lib/X11/config/lnxLib.rules</tt> に提供しています。
-
-Orest Zborowski (<it>orestz@eskimo.com</it>) 氏が開発した最新の方法で、全ての詳細
-説明ファイルを書き、初めて XFree86 DLL ライブラリを作成してくれた Dirk 
-Hohndel (<it>hohndel@aib.com</it>) 氏に感謝します。
-
-<!--
-<sect>Bug Notification <p>
-Bug reports should be sent to <it>XFree86@XFree86.org</it> or posted
-to the <it>comp.windows.x.i386unix</it> newsgroup.
--->
-<sect> バグの告知について <p>
-バグ報告は <it>XFree86@XFree86.org</it> に送るか <it>comp.windows.x.i386unix</it> のニュース
-グループに投稿して下さい。
-
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Linux.sgml,v 3.2.2.1 1997/07/31 06:05:51 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Linux.sgml,v 3.2.2.2 1999/05/25 06:39:12 hohndel Exp $
 
 
 
@@ -546,16 +305,17 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/Linux.sgml,v 3.2.2.1 
 
 $XConsortium: Linux.sgml /main/6 1996/10/28 04:47:37 kaleb $
 </verb>
-<hrule>
-このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.9 1996/10/20 13:33:12 を、岡本  一幸 
-( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
-name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.2 を
-日本でインストールする人向けに和訳したものです。ここがおかしいとか、
-ここはこうしたほうがいいといったご意見がありましたら、電子メールで
-お知らせ下さい。
-原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
-XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
-電子メールで送って下さい。
-<hrule>
-&lsqb;EOF&rsqb;
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project が行いました(
+翻訳(XFree86 3.2): 岡本一幸
+<url url="mailto:ikko-@pacific.rim.or.jp" name="&lt;ikko-@pacific.rim.or.jp&gt;">,
+更新(XFree86 3.3.3.1 対応): 藤原輝嘉
+<url url="mailto:fujiwara@linux.or.jp" name="&lt;fujiwara@linux.or.jp&gt;">,
+校正: 金田浩司  <url url="mailto:vanitas@ma3.seikyou.ne.jp"
+name="&lt;vanitas@ma3.seikyou.ne.jp&gt;">)。
+問題点の指摘やご意見は藤原まで御連絡ください。
+原文の著作権は XFree86 プロジェクト社にあり、日本語訳の著作権は X Japanese
+Documentation Project にあります。
+
 </article>

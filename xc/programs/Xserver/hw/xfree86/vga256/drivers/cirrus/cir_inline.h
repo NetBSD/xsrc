@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_inline.h,v 3.1 1996/12/23 06:56:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_inline.h,v 3.1.2.1 1999/05/25 06:55:48 hohndel Exp $ */
 
 
 
@@ -55,8 +55,8 @@ static __inline__ void __memset( void * s, char c, int count ) {
 	"andl $3,%%edx\n"		/* fill last few bytes */
 	"1:\tmovl %%edx,%%ecx\n\t"	/* <= 12 entry point */
 	"rep ; stosb\n\t"
-	: :"a" (c),"D" (s),"d" (count)
-	:"ax","cx","dx","di");
+	: "=a" (c), "=D" (s), "=d" (count) :"0" (c),"1" (s),"2" (count)
+	:"cx");
 }
 
 static __inline__ void __memcpy( void *to, void *from, int n ) {
@@ -75,8 +75,8 @@ __asm__ __volatile__("cld\n\t"
 	"je 2f\n\t"
 	"movsw\n"
 	"2:\n"
-	::"d" (n),"D" ((long) to),"S" ((long) from)
-	: "cx","dx","di","si");
+	:"=d" (n),"=D" (to), "=S" (from) : "0" (n),"1" ((long) to),"2" ((long) from)
+	: "cx");
 }
 
 static __inline__ void __memcpyb( unsigned char *to, unsigned char *from,

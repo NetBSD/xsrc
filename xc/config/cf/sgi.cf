@@ -1,4 +1,7 @@
 XCOMM platform:  $TOG: sgi.cf /main/45 1997/06/18 18:01:03 kaleb $
+XCOMM
+XCOMM
+XCOMM $XFree86: xc/config/cf/sgi.cf,v 1.1.1.5.2.4 1999/06/18 13:47:28 hohndel Exp $
 
 #ifndef OSName
 # define OSName		DefaultOSName
@@ -67,6 +70,7 @@ XCOMM operating system: OSName (OSMajorVersion.OSMinorVersion.OSTeenyVersion)
 # define BuildLibPathVar	_RLD_ROOT=/dev/null LD_LIBRARYN32_PATH
 # define SystemBuildLibPath	/usr/lib32:/lib32
 # define LdCmd			ld -n32
+# define AsCmd			as -n32
 #else
 # define BuildLibPathVar	_RLD_ROOT=/dev/null LD_LIBRARY_PATH
 # define SystemBuildLibPath	/usr/lib:/lib

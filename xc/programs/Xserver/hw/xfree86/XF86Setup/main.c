@@ -3,7 +3,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/main.c,v 3.9.2.5 1998/11/15 02:37:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/main.c,v 3.9.2.7 1999/07/17 05:00:55 dawes Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -332,7 +332,7 @@ XF86Setup_TclRunScript(interp, filename)
 
 */
 
-void
+int
 main(argc, argv)
     int		argc;
     char	**argv;
@@ -424,7 +424,7 @@ main(argc, argv)
     nodialog = 1;
     Tcl_SetVar(interp, "pc98", "1", TCL_GLOBAL_ONLY);
     if (pc98_EGC) {
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(SVR4)
+#ifdef SVR4
       fprintf(stderr, "Sorry, EGC server doesn't work on this OS.\n");
       fprintf(stderr, "-egc option can't be used.\n");
       exit(1);

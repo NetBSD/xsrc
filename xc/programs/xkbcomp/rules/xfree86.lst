@@ -4,7 +4,7 @@
 //  Rules descriptions for XFree86
 //  Copyright 1996 by Joseph Moss
 //
-//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.3.2.3 1998/11/04 08:02:12 hohndel Exp $
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86.lst,v 3.3.2.4 1999/06/21 09:45:30 hohndel Exp $
 
 ! model
   pc101		Generic 101-key PC
@@ -19,6 +19,7 @@
   winbook	Winbook Model XP5
   jp106		Japanese 106-key
   pc98		PC-98xx Series
+  abnt2		Brazilian ABNT2
 
 ! layout
   us		U.S. English
@@ -45,6 +46,8 @@
   se		Swedish
   th		Thai
   nec/jp	PC-98xx Series
+  us_intl	U.S. English w/ deadkeys
+  br		Brazilian
 
 ! variant
   nodeadkeys	Eliminate dead keys

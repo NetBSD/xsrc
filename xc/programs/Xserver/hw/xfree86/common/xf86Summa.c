@@ -20,7 +20,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Summa.c,v 3.5.2.5 1998/12/22 11:23:24 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Summa.c,v 3.5.2.6 1999/05/25 06:55:42 hohndel Exp $ */
 
 #include "Xos.h"
 #include <signal.h>
@@ -89,6 +89,7 @@ static int      debug_level = 0;
 */
 #define ABSOLUTE_FLAG		1
 #define STYLUS_FLAG		2
+#define COMPATIBLE_FLAG		4
 
 typedef struct 
 {
@@ -126,6 +127,7 @@ typedef struct
 #define ALWAYS_CORE	9
 #define ACTIVE_AREA	10
 #define ACTIVE_OFFSET	11
+#define COMPATIBLE	12
 
 #if !defined(sun) || defined(i386)
 static SymTabRec SumTab[] = {
@@ -141,6 +143,7 @@ static SymTabRec SumTab[] = {
 	{ALWAYS_CORE,		"alwayscore"},
 	{ACTIVE_AREA,		"activearea"},
 	{ACTIVE_OFFSET,		"activeoffset"},
+	{COMPATIBLE,		"compatible"},
 	{-1,			""}
 };
 
@@ -332,6 +335,11 @@ xf86SumConfig(LocalDevicePtr *array, int inx, int max, LexPtr val)
 		ErrorF("%s SummaSketch Motion history size is %d\n", XCONFIG_GIVEN,
 		       dev->history_size);      
 	    break;
+	case COMPATIBLE:
+	    priv->flags |= COMPATIBLE_FLAG;
+	    if(xf86Verbose)
+		ErrorF("SummaSketch compatible - will not query firmware ID\n");
+	    break;		    
 
 	case ALWAYS_CORE:
 	    xf86AlwaysCore(dev, TRUE);
@@ -723,6 +731,7 @@ xf86SumOpen(LocalDevicePtr local)
 /* Clear any pending input */
     tcflush(local->fd, TCIFLUSH);
   
+    if ( ! (priv->flags & COMPATIBLE_FLAG)) {
     DBG(2, ErrorF("reading firmware ID\n"));
     if (!xf86SumWriteAndRead(local->fd, SS_FIRMID, buffer, 255, 1))
       return !Success;
@@ -731,7 +740,8 @@ xf86SumOpen(LocalDevicePtr local)
 
     if (xf86Verbose)
 	ErrorF("%s SummaSketch firmware ID : %s\n", XCONFIG_PROBED, buffer);
-
+    }
+    
     DBG(2, ErrorF("reading max coordinates\n"));
     if (!xf86SumWriteAndRead(local->fd, SS_500LPI SS_CONFIG, buffer, 5, 0))
 	return !Success;

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/ativalid.c,v 1.1.2.1 1998/02/01 16:42:05 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/ativalid.c,v 1.1.2.2 1999/07/05 09:07:36 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -45,7 +45,7 @@ ATIValidMode(DisplayModePtr mode, const Bool verbose, const int Flag)
     int VDisplay = mode->VDisplay;
     int VTotal = mode->VTotal;
 
-    if (mode->Flags & V_DBLSCAN)
+    if ((mode->Flags & V_DBLSCAN) && (ATILCDPanelID < 0))
     {
         VDisplay <<= 1;
         VTotal <<= 1;
@@ -139,6 +139,17 @@ ATIValidMode(DisplayModePtr mode, const Bool verbose, const int Flag)
 
         default:
             break;
+    }
+
+    /* Compare mode against panel dimensions */
+    if ((ATILCDPanelID >= 0) &&
+        ((mode->HDisplay > ATILCDHorizontal) ||
+         (mode->VDisplay > ATILCDVertical)))
+    {
+        if (verbose)
+            ErrorF("Mode \"%s\" exceeds panel dimensions.  Deleted.\n",
+                mode->name);
+        return MODE_BAD;
     }
 
     return MODE_OK;

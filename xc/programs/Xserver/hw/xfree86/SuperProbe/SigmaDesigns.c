@@ -14,18 +14,18 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL 
- * JOSEPH MOSS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
+ * HARALD KOENIG BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, 
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF 
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
  * SOFTWARE.
  * 
- * Except as contained in this notice, the name of Joseph Moss shall not be
+ * Except as contained in this notice, the name of Harald Koenig shall not be
  * used in advertising or otherwise to promote the sale, use or other dealings
- * in this Software without prior written authorization from Joseph Moss.
+ * in this Software without prior written authorization from Harald Koenig.
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SigmaDesigns.c,v 3.1.2.1 1997/05/06 13:24:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SigmaDesigns.c,v 3.1.2.2 1999/06/17 16:24:04 hohndel Exp $ */
 
 #include "Probe.h"
 

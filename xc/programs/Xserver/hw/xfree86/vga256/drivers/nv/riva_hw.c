@@ -1,6 +1,6 @@
  /***************************************************************************\
 |*                                                                           *|
-|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*       Copyright 1993-1999 NVIDIA, Corporation.  All rights reserved.      *|
 |*                                                                           *|
 |*     NOTICE TO USER:   The source code  is copyrighted under  U.S. and     *|
 |*     international laws.  Users and possessors of this source code are     *|
@@ -11,7 +11,7 @@
 |*     tion and  internal comments to the code,  notices to the end user     *|
 |*     as follows:                                                           *|
 |*                                                                           *|
-|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*       Copyright 1993-1999 NVIDIA, Corporation.  All rights reserved.      *|
 |*                                                                           *|
 |*     NVIDIA, CORPORATION MAKES NO REPRESENTATION ABOUT THE SUITABILITY     *|
 |*     OF  THIS SOURCE  CODE  FOR ANY PURPOSE.  IT IS  PROVIDED  "AS IS"     *|
@@ -36,7 +36,7 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
  \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_hw.c,v 1.1.2.3 1998/12/26 00:12:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_hw.c,v 1.1.2.5 1999/05/24 21:28:24 robin Exp $ */
 
 #include "riva_hw.h"
 #include "riva_tbl.h"
@@ -205,7 +205,7 @@ static int nv3_iterate(nv3_fifo_info *res_info, nv3_sim_state * state, nv3_arb_i
             if (ainfo->wcglwm > glwm) ainfo->wcglwm = glwm ;
             if (ainfo->wcgocc > ainfo->gocc) ainfo->wcgocc = ainfo->gocc;
             ns = 1000000 * (ainfo->gburst_size/(state->memory_width/8))/state->mclk_khz;
-            gfsize = ns *ainfo->gdrain_rate/1000000;
+            gfsize = (ns * (long) ainfo->gdrain_rate)/1000000;
             gfsize = ainfo->wcglwm - ainfo->gburst_size + gfsize;
         }
         mfsize = 0;
@@ -302,7 +302,7 @@ static int nv3_iterate(nv3_fifo_info *res_info, nv3_sim_state * state, nv3_arb_i
         }
         ns = 1000000*ainfo->gburst_size/(state->memory_width/8)/state->mclk_khz;
         tmp = ns * ainfo->gdrain_rate/1000000;
-        if (ABS(ainfo->gburst_size) + ((ABS(ainfo->wcglwm) + 16 ) & ~0x7)    - tmp > max_gfsize)
+        if (ABS(ainfo->gburst_size) + ((ABS(ainfo->wcglwm) + 16 ) & ~0x7) - tmp > max_gfsize)
         {
             ainfo->converged = 0;
             return (1);
@@ -445,6 +445,9 @@ static char nv3_arb(nv3_fifo_info * res_info, nv3_sim_state * state,  nv3_arb_in
     }
     else
     {
+#ifdef nARBDEBUG
+        ErrorF("** Non-converged!\n");
+#endif
         res_info->graphics_lwm = 256;
         res_info->video_lwm = 128;
         res_info->graphics_burst_size = 64;
@@ -457,36 +460,32 @@ static char nv3_arb(nv3_fifo_info * res_info, nv3_sim_state * state,  nv3_arb_in
 static char nv3_get_param(nv3_fifo_info *res_info, nv3_sim_state * state, nv3_arb_info *ainfo)
 {
     int done, g,v, p;
-    int priority, gburst_size, vburst_size, iter;
+    int priority, gburst_size, vburst_size;
     
     done = 0;
-    if (state->gr_during_vid && ainfo->vid_en)
-        ainfo->priority = MPORT;
-    else
-        ainfo->priority = ainfo->gdrain_rate < ainfo->vdrain_rate ? VIDEO: GRAPHICS;
-    for (p=0; p < 2 && done != 1; p++)
+    for (p=0; p < 2; p++)
     {
-        for (g=128 ; (g > 32) && (done != 1); g= g>> 1)
+        for (g=128 ; g > 32; g= g>> 1)
         {
-            for (v=128; (v >=32) && (done !=1); v = v>> 1)
+            for (v=128; v >=32; v = v>> 1)
             {
                 ainfo->priority = p;
                 ainfo->gburst_size = g;     
                 ainfo->vburst_size = v;
                 done = nv3_arb(res_info, state,ainfo);
-                if (g==128)
-                {
+                if (done && (g==128))
                     if ((res_info->graphics_lwm + g) > 256)
                         done = 0;
-                }
+                if (done)
+                    goto Done;
             }
         }
     }
-    if (!done)
-        return (0);
-    else
-        return (1);
+
+ Done:
+    return done;
 }
+
 static void nv3CalcArbitration 
 (
     nv3_fifo_info * res_info,
@@ -501,7 +500,7 @@ static void nv3CalcArbitration
     ainfo.vid_en = state->enable_video;
     ainfo.vid_only_once = 0;
     ainfo.gr_only_once = 0;
-    ainfo.gdrain_rate = (int) state->pclk_khz * state -> pix_bpp/8;
+    ainfo.gdrain_rate = (int) state->pclk_khz * (state->pix_bpp/8);
     ainfo.vdrain_rate = (int) state->pclk_khz * 2;
     if (state->video_scale != 0)
         ainfo.vdrain_rate = ainfo.vdrain_rate/state->video_scale;
@@ -519,7 +518,7 @@ static void nv3CalcArbitration
         ainfo.vid_en = 1;
         ainfo.vid_only_once = 1;
         ainfo.gr_en = 1;
-        ainfo.gdrain_rate = (int) state->pclk_khz * state -> pix_bpp/8;
+        ainfo.gdrain_rate = (int) state->pclk_khz * (state->pix_bpp/8);
         ainfo.vdrain_rate = 0;
         res_gr = nv3_get_param(res_info, state,  &ainfo);
         res_gr = ainfo.converged;
@@ -557,9 +556,10 @@ void nv3UpdateArbitrationSettings
     sim_data.video_scale    = 1;
     sim_data.memory_width   = (chip->PEXTDEV[0x00000000/4] & 0x10) ? 128 : 64;
     sim_data.memory_width   = 128;
-    sim_data.mem_latency    = 11;
+
+    sim_data.mem_latency    = 9;
     sim_data.mem_aligned    = 1;
-    sim_data.mem_page_miss  = 9;
+    sim_data.mem_page_miss  = 11;
     sim_data.gr_during_vid  = 0;
     sim_data.pclk_khz       = VClk;
     sim_data.mclk_khz       = MClk;
@@ -574,7 +574,7 @@ void nv3UpdateArbitrationSettings
     else
     {
         *lwm   = 0x24;
-        *burst = 0x02;
+        *burst = 0x2;
     }
 }
 static void nv4CalcArbitration 
@@ -773,6 +773,7 @@ static void nv4UpdateArbitrationSettings
 static int CalcVClock
 (
     int           clockIn,
+    int           double_scan,
     int          *clockOut,
     int          *mOut,
     int          *nOut,
@@ -786,7 +787,11 @@ static int CalcVClock
     unsigned M, N, O, P;
     
     DeltaOld = 0xFFFFFFFF;
+
     VClk     = (unsigned)clockIn;
+    if (double_scan)
+        VClk *= 2;
+    
     if (chip->CrystalFreqKHz == 14318)
     {
         lowM  = 8;
@@ -797,6 +802,7 @@ static int CalcVClock
         lowM  = 7;
         highM = 13 - (chip->Architecture == 3);
     }                      
+
     highP = 4 - (chip->Architecture == 3);
     for (P = 0; P <= highP; P ++)
     {
@@ -822,7 +828,11 @@ static int CalcVClock
             }
         }
     }
-    return (DeltaOld != 0xFFFFFFFF);
+
+    if (DeltaOld == 0xFFFFFFFF)
+        FatalError("RIVA ERROR: did not generate good VClk\n");
+
+    return DeltaOld != 0xFFFFFFFF;
 }
 /*
  * Calculate extended mode parameters (SVGA) and save in a 
@@ -858,7 +868,13 @@ static void CalcStateExt
      * Extended RIVA registers.
      */
     pixelDepth = (bpp + 1)/8;
-    CalcVClock(dotClock, &VClk, &m, &n, &p, chip);
+    CalcVClock(dotClock, hDisplaySize < 512,  /* double scan? */
+               &VClk, &m, &n, &p, chip);
+
+#ifdef ARBDEBUG
+    ErrorF("** VClk is %d\n", VClk);
+#endif
+
     switch (chip->Architecture)
     {
         case 3:
@@ -876,6 +892,12 @@ static void CalcStateExt
                             | 0x1000;
             state->general  = 0x00000100;
             state->repaint1 = hDisplaySize < 1280 ? 0x06 : 0x02;
+#ifdef ARBDEBUG
+    ErrorF("** %2d bpp; burst: 0x%02x  lwm: 0x%02x\n",
+           state->bpp,
+           state->arbitration0,
+           state->arbitration1);
+#endif
             break;
         case 4:
             nv4UpdateArbitrationSettings(VClk, 
@@ -890,6 +912,14 @@ static void CalcStateExt
             state->config   = 0x00001114;
             state->general  = bpp == 16 ? 0x00101100 : 0x00100100;
             state->repaint1 = hDisplaySize < 1280 ? 0x04 : 0x00;
+#ifdef ARBDEBUG
+    ErrorF("** %2d bpp; %4dx%-4d; burst: 0x%02x  lwm: 0x%02x\n",
+           state->bpp,
+           state->width,
+           state->height,
+           state->arbitration0,
+           state->arbitration1);
+#endif
             break;
     }
     state->vpll     = (p << 16) | (n << 8) | m;
@@ -1056,6 +1086,10 @@ static void LoadStateExt
      * Reset FIFO free count.
      */
     chip->FifoFreeCount = 0;
+
+#ifdef ARBDEBUG
+    ErrorF("** Set\n");
+#endif
 }
 static void UnloadStateExt
 (
@@ -1248,7 +1282,7 @@ void nv3GetConfig
     chip->VBLANKENABLE     = &(chip->PGRAPH[0x0140/4]);
     chip->VBLANK           = &(chip->PGRAPH[0x0100/4]);
     chip->VBlankBit        = 0x00000100;
-    chip->MaxVClockFreqKHz = 230000;
+    chip->MaxVClockFreqKHz = 256000;
     chip->LockUnlockIO     = 0x3C4;
     chip->LockUnlockIndex  = 0x06;
     /*
@@ -1271,21 +1305,29 @@ void nv4GetConfig
     /*
      * Fill in chip configuration.
      */
-    switch (chip->PFB[0x00000000/4] & 0x00000003)
+    if (chip->PFB[0x00000000/4] & 0x00000100)
     {
-        case 0:
-            chip->RamAmountKBytes = 1024 * 32 - 128;
-            break;
-        case 1:
-            chip->RamAmountKBytes = 1024 * 4 - 128;
-            break;
-        case 2:
-            chip->RamAmountKBytes = 1024 * 8 - 128;
-            break;
-        case 3:
-        default:
-            chip->RamAmountKBytes = 1024 * 16 - 128;
-            break;
+        chip->RamAmountKBytes = ((chip->PFB[0x00000000/4] >> 12) & 0x0F) * 1024 * 2
+                              + 1024 * 2 - 128;
+    }
+    else
+    {
+        switch (chip->PFB[0x00000000/4] & 0x00000003)
+        {
+            case 0:
+                chip->RamAmountKBytes = 1024 * 32 - 128;
+                break;
+            case 1:
+                chip->RamAmountKBytes = 1024 * 4 - 128;
+                break;
+            case 2:
+                chip->RamAmountKBytes = 1024 * 8 - 128;
+                break;
+            case 3:
+            default:
+                chip->RamAmountKBytes = 1024 * 16 - 128;
+                break;
+        }
     }
     switch ((chip->PFB[0x00000000/4] >> 3) & 0x00000003)
     {
@@ -1302,7 +1344,7 @@ void nv4GetConfig
     chip->VBLANKENABLE     = &(chip->PCRTC[0x0140/4]);
     chip->VBLANK           = &(chip->PCRTC[0x0100/4]);
     chip->VBlankBit        = 0x00000001;
-    chip->MaxVClockFreqKHz = 250000;
+    chip->MaxVClockFreqKHz = 350000;
     chip->LockUnlockIO     = 0x3D4;
     chip->LockUnlockIndex  = 0x1F;
     /*

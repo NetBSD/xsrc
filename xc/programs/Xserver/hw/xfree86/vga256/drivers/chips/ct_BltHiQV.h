@@ -4,7 +4,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_BltHiQV.h,v 3.4.2.2 1998/12/06 05:40:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_BltHiQV.h,v 3.4.2.3 1999/06/24 06:16:45 hohndel Exp $ */
 
 /* Definitions for the Chips and Technology BitBLT engine communication. */
 /* These are done using Memory Mapped IO, of the registers */
@@ -79,6 +79,7 @@
                             ErrorF("CHIPS: BitBlt Engine Timeout\n"); \
 			    tmp = inb(0x3D7); \
 			    outb(0x3D7, ((tmp & 0xFD) | 0x2)); \
+			    outb(0x3D7, ((tmp & 0xFD))); \
 			    break; \
                          } \
 		      } \

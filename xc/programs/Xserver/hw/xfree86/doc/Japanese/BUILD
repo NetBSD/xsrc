@@ -1,227 +1,330 @@
   XFree86 の構築
-  David Dawes 著
-  2 June 1997
-  岡本 一幸 Kazuyuki Okamoto <ikko-@pacific.rim.or.jp> 訳
-  29 July 1997
+  David Dawes
+  7 November 1998
+  The X Japanese Documentation Project
+  11 January 1999
 
-  この文書は如何に XFree86 を ソース 配布物から構築するか説明します。こ
-  の文書は全ソース配布物と同様に X サーバだけ構築するように切り詰めたソ
-  ース配布物から構築する説明も言及します。この文書は OS 固有の README
-  ファイルと併せて使用するように設計しています。
+  この文書では XFree86 をソース 配布物から構築する方法を説明します。この
+  文書は全ソース配布物からの構築方法とともに、X サーバだけ構築するように
+  切り詰めたソース配布物からの構築についても説明します。この文書は OS 固
+  有の README ファイルと併せて読むように意図して書いてあります。
   ______________________________________________________________________
 
-  Table of Contents:
+  目次
 
-  1.      ソース配布物から XFree86 を構築する。
 
-  1.1.    XFree86 3.3 のソースをどうやって入手するか。
+  1. ソース配布物からの XFree86 の構築
+     1.1 XFree86 3.3.3 のソースの取得方法
+     1.2 構築前のソースの設定
+     1.3 配布物の構築とインストール
 
-  1.2.    構築前のソースの設定
+  2. サーバの再設定 (ソース配布物の場合)
+  3. サーバの再設定 (バイナリ配布物の場合)
+  4. 日本語訳について
 
-  1.3.    配布物の構築と導入
 
-  2.      サーバの再設定 (ソース配布物の場合)
-
-  3.      サーバの再設定 (バイナリ配布物の場合)
   ______________________________________________________________________
 
-  1.  ソース配布物から XFree86 を構築する。
+  1.  ソース配布物からの XFree86 の構築
 
-        注意:  XFree86 を構築しようとする前に適切な OS 固有の README
-        ファイルを参照してください。OS 固有の README ファイルはお手元の
-        OS の下で構築がうまくいくのに必要な追加情報が含まれています。
 
-  我々は XFree86 を構築するのに GCC-2 を使用することを強くお勧めします。
-  2.6.0 または 2.4.5 以前の 2.4.x 版は構築や実行を阻害するバグがあるので
-  使用しないでください。(gcc-2 は prep.ai.mit.edu かその他の GNU ソース
-  アーカイブサイトにあります。)
+       注意:  XFree86 を構築しようとする前に適切な OS 固有の README
+       ファイルを参照してください。OS 固有の README ファイルには、
+       その OS の下で構築をうまく行うために必要な追加情報が書かれて
+       います。
 
-  1.1.  XFree86 3.3 のソースをどうやって入手するか。
 
-  XFree86 のソースを入手するのに幾つかの開始方法があります。一つ目は
-  XFree86 3.3 ソースアーカイブから直接はじめることです。この場合は次の手
-  順で行います。
 
-  o  XFree86 3.3 のソースは X33src-1.tgz, X33src-2.tgz と X33src-3.tgz
-     に含まれています。これらのファイルは
-     ftp://ftp.xfree86.org/pub/XFree86/3.3/source/ と XFree86 のミラーサ
-     イトの同様な場所にあります。X33src-2.tgz はフォントと文書のソースで
-     す。X33src-3.tgz は印刷可能な形態の文書です。文書やフォントが必要な
-     い場合は、 X33src-1.tgz だけ入手してください。
+  XFree86 を構築の際には GCC-2 を使うことを強くお勧めします。GCC-2 は
+  prep.ai.mit.edu 等の GNU ソースアーカイブサイトで入手できます。
+  gcc-2.8.0 と egcs はどちらも、コードが何ヶ所かで壊れてしまうことが分
+  かっています。特に、egcs は一部のモジュールのコンパイル時に最適化で問
+  題を起こすようです。
 
-  o  十分容量に余裕があるファイルシステムのディレクトリで次の手順を実行
-     してこれらのファイルを伸長してください。(全てのソースには約 130MB
-     ,コンパイルしてバイナリを得るには同量の空きスペースが必要です。)
 
-                gzip -d < X33src-1.tgz | tar vxf -
-                gzip -d < X33src-2.tgz | tar vxf -
-                gzip -d < X33src-3.tgz | tar vxf -
+  1.1.  XFree86 3.3.3 のソースの取得方法
 
-  他の X11R6.3 ソース配布物と XFree86 3.3 にパッチを当てて始める方法は次
-  の手順で行います。
+  XFree86 のソースの入手のスタート地点はいくつかあります。そのうちの1つ
+  は、XFree86 3.3.3 のソースアーカイブから直接作業を開始することです。こ
+  の場合の手順は以下のようになります:
 
-  o  公式パッチ 1 が当たった X コンソーシアムの X11R6.3 配布から始めま
-     す。次の URL X のホームページ <http://www.x.org> からのリンクから得
-     られます。
+  o  XFree86 3.3.3 のソースは X333src-1.tgz, X333src-2.tgz,
+     X333src-3.tgz に含まれています。これらのファイルは
+     ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/や XFree86 のミラー
+     サイトの同様のディレクトリにあります。 X333src-2.tgz はフォントと文
+     書のソースです。 X333src-3.tgz は印刷可能な形式の文書です。
+     X333src-1.tgz には他のものが全て入っています。文書やフォントが必要
+     ない場合は、X333src-1.tgz だけ入手してもかまいません。
 
-  o  R6.3pl1-3.3.diff1.gz, R6.3pl1-3.3.diff2.gz, R6.3pl1-3.3.diff3.gz,
-     R6.3pl1-3.3.diff4.gz と cfont33.tgz を
-     ftp://ftp.xfree86.org/pub/XFree86/3.3/patches/ から (または ミラー
-     サイトの同様な場所から)入手してください。 XFree86 3.3 へソースを更
-     新するには次の X11R6.3 pl1 のソースファイルの xc ディレクトリで次の
-     手順を実行してください。
+  o  空き容量が十分あるファイルシステムのディレクトリで次のコマンドを実
+     行し、これらのファイルを展開してください。(ソース全てを展開するには
+     約 140MB, コンパイルしてバイナリを得るには同程度の空きスペース必要
+     です):
 
-                gzip -d < R6.3pl1-3.3.diff1.gz | patch -p0 -E
-                gzip -d < R6.3pl1-3.3.diff2.gz | patch -p0 -E
-                gzip -d < R6.3pl1-3.3.diff3.gz | patch -p0 -E
-                gzip -d < R6.3pl1-3.3.diff4.gz | patch -p0 -E
-                gzip -d < cfont33.tgz | tar vxf -
 
-     まっ更な変更していないソースファイルで行うことを確認してください。
-     そうしないとパッチが失敗します。
 
-  XFree86 X サーバだけを構築したいの時は、``servers only'' 配布物と呼ば
-  れる XFree86 ソースファイルを切り詰めたものを使用しましょう。この方法
-  を選択した場合は、次の手順を実行しましょう。:
 
-  o  X33servonly.tgz というファイルを
-     ftp://ftp.xfree86.org/pub/XFree86/3.3/source/ から (またはミラーサ
-     イトの同様な場所から) 入手しましょう。
+          gzip -d < X333src-1.tgz | tar vxf -
+          gzip -d < X333src-2.tgz | tar vxf -
+          gzip -d < X333src-3.tgz | tar vxf -
 
-  o  次の手順でファイルを伸長してください。:
 
-                gzip -d < X33servonly.tgz | tar vxf -
 
-  XFree86 3.2 のソースから 3.3 に更新するパッチはありません。その理由は
-  X11R6.1 から X11R6.3 に移行するにあたり関連する変更点が多すぎたためで
-  す。
 
-  XFree86 は X コンソーシアムの X11R6.1 contrib 配布物の一部をサポートし
-  ています。これを構築したい場合は、次のファイルやディレクトリを配布物か
-  ら入手しましょう。:
 
-                contrib/Imakefile
-                contrib/programs/Imakefile
-                contrib/programs/ico
-                contrib/programs/listres
-                contrib/programs/showfont
-                contrib/programs/viewres
-                contrib/programs/xbiff
-                contrib/programs/xcalc
-                contrib/programs/xditview
-                contrib/programs/xedit
-                contrib/programs/xev
-                contrib/programs/xeyes
-                contrib/programs/xfontsel
-                contrib/programs/xgc
-                contrib/programs/xload
-                contrib/programs/xman
-                contrib/programs/xmessage
+  別の方法は、X11R6.3 ソース配布物を入手し、これにパッチを当てて XFree86
+  3.3.3 にすることです。これは次の手順で行います:
 
-  また、XFree86 patch contrib-3.3.diff.gz が必要です。パッチを当てるため
-  には、contrib ディレクトリがあるディレクトリで次のコマンドを実行してく
-  ださい。:
+  o  公式パッチ 1, 2が当たった(ただし、3は当てない) X コンソーシアムの
+     X11R6.3 配布を用意します。これは The Open Group の X のホームページ
+     <http://www.opengroup.org/tech/desktop/x/>からのリンクをたどって入
+     手することができます。
 
-                gzip -d < contrib-3.3.diff.gz | patch -p0 -E
+  o  ファイル R6.3pl2-3.3.3.diff1.gz, R6.3pl2-3.3.3.diff2.gz,
+     R6.3pl2-3.3.3.diff3.gz, R6.3pl2-3.3.3.diff4.gz を
+     ftp://ftp.xfree86.org/pub/XFree86/3.3.3/patches/ (またはミラーサイ
+     トの同様のディレクトリ)から入手します。このソースを XFree86 3.3.3
+     に更新するには、X11R6.3 pl2 のソースツリー内の xc ディレクトリがあ
+     るディレクトリで以下のコマンドを実行します。
 
-  ほかの方法としては、XFree86 ソースディレクトリから X33contrib.tgz とい
-  うファイルを入手して次のコマンドで伸長してください。:
 
-                gzip -d < X33contrib.tgz | tar vxf -
+               gzip -d < R6.3pl2-3.3.3.diff1.gz | patch -p0 -E
+               gzip -d < R6.3pl2-3.3.3.diff2.gz | patch -p0 -E
+               gzip -d < R6.3pl2-3.3.3.diff3.gz | patch -p0 -E
+               gzip -d < R6.3pl2-3.3.3.diff4.gz | patch -p0 -E
+
+
+
+
+
+  この操作は必ず、全く変更されていないソースツリーに対して行ってくださ
+  い。そうでなければ、当たらないパッチが出てくるかもしれません。
+
+  さらに別の方法として、XFree86 3.3.2 のソースを用意し、これにパッチを当
+  てて XFree86 3.3.3 にすることもできます。この場合には以下の手順を行い
+  ます:
+
+  o  この方法を使う場合には、既に XFree86 3.3.2 のソースをお持ちのことと
+     思います。3.3.2 への公式パッチを1つでも当てていたら、 3.3.3 への
+     アップグレードを始める前に、これらのパッチを外してください。
+
+  o  3.3.2-3.3.3.diff.gz ファイルを
+     ftp://ftp.xfree86.org/pub/XFree86/3.3.3/patches/ (またはミラーサイ
+     トの同様のディレクトリ)から入手します。このソースをアップグレードし
+     て XFree86 3.3.3 にするには、XFree86 3.3.2 のソースツリー内の xc
+     ディレクトリがあるディレクトリから次のコマンドを実行します:
+
+
+               gzip -d < 3.3.2-3.3.3.diff.gz | patch -p0 -E
+
+
+
+
+
+  パッチ当ては必ず修正をしていないソースツリーで行ってください。さもなけ
+  れば、うまく当たらないパッチがあるかもしれません。
+
+  XFree86 の X サーバだけを構築したい場合は、``servers only'' 配布物と呼
+  ばれる XFree86 ソースファイルを切り詰めたものを使用します。この方法を
+  選択した場合は、次の手順を実行します:
+
+  o  X333servonly.tgz というファイルを
+     ftp://ftp.xfree86.org/pub/XFree86/3.3.3/source/ から (またはミラー
+     サイトの同様な場所から)入手します。
+
+  o  次の手順でファイルを展開します:
+
+
+               gzip -d < X333servonly.tgz | tar vxf -
+
+
+
+
+
+  XFree86 は X コンソーシアムの X11R6.1 contrib 配布物をほんの一部だけサ
+  ポートしています。これを構築したい場合は、配布物のうち、少なくとも次の
+  ファイルやディレクトリが必要です:
+
+
+               contrib/Imakefile
+               contrib/programs/Imakefile
+               contrib/programs/ico
+               contrib/programs/listres
+               contrib/programs/showfont
+               contrib/programs/viewres
+               contrib/programs/xbiff
+               contrib/programs/xcalc
+               contrib/programs/xditview
+               contrib/programs/xedit
+               contrib/programs/xev
+               contrib/programs/xeyes
+               contrib/programs/xfontsel
+               contrib/programs/xgc
+               contrib/programs/xload
+               contrib/programs/xman
+               contrib/programs/xmessage
+
+
+
+
+  XFree86 のパッチ contrib-3.3.3.diff.gz も必要になるでしょう。このパッ
+  チを適用するには、contrib ディレクトリがあるディレクトリから以下のコマ
+  ンドを実行してください:
+
+
+               gzip -d < contrib-3.3.3.diff.gz | patch -p0 -E
+
+
+
+
+  他の方法もあります。その場合、XFree86 ソースディレクトリから X333con-
+  trib.tgz というファイルを入手して、次のコマンドで展開します:
+
+
+               gzip -d < X333contrib.tgz | tar vxf -
+
+
+
 
   xtest 配布物を構築したい場合は、XFree86 ソースディレクトリから
-  X33test.tgz ソース配布物 を入手して次のコマンドで伸長してください。:
+  X33test.tgz ソース配布物 を入手して次のコマンドで展開します:
 
-                gzip -d < X33test.tgz | tar vxf -
 
-  注意として、xtest は (X11R6.3 から) コア X11 配布物の一部ではなくなり
+               gzip -d < X33test.tgz | tar vxf -
+
+
+
+
+  注意ですが、xtest は (X11R6.3 から) X11 のコア配布物には含まれなくなり
   ました。
+
 
   1.2.  構築前のソースの設定
 
-  設定過程をはじめる前に xc/config/cf ディレクトリに移動して、
-  xf86site.def ファイルを host.def にコピーしてください。そし
-  て、host.def ファイルを通読いし、幾つかのパラメタを設定してください。
-  良く読むことを強くお勧めします。標準値の設定は御使用の OS の名前に .cf
-  が付いたファイルにありますので調べてください。
+  設定作業の一番始めには、xc/config/cf ディレクトリに移動して、
+  xf86site.def ファイルを host.def にコピーしましょう。そしてhost.def
+  ファイルを全て読み(このファイルにはコメントがたくさん書かれています)、
+  目的の設定に合わせてパラメタを設定します。普通は使っている OS に関連す
+  る .cf を調べれば、デフォルトの設定が分かります。
 
-  前の版と異なっているのは、imake が自動認識するようになったことといろい
-  ろな OS*Version パラメタを設定するようになったので、これらの設定を明示
-  的に設定する必要がなくなりました。
+  前のバージョンと異なる点があります。このバージョンでは imake が各種
+  OS*Version を自動的に検出して設定するようになったので、これに関する設
+  定を明示的に入力する必要はなくなりました。
 
-  ソース配布物から X33src-1.tgz 部分だけを使用する場合は、 BuildFonts を
-  NO にしてください。
+  ソース配布物のうち X333src-1.tgz の部分だけを使う場合には、 BuildFonts
+  は NO と定義する必要があります。
 
-  ``servers only'' 配布物を使用する場合は、 BuildServersOnly を YES にし
-  てください。
+  ``servers only'' 配布物を使用する場合は、BuildServersOnly を YES と定
+  義する必要があります。
 
-  1.3.  配布物の構築と導入
 
-  配布物を構築する前に、xc/programs/Xserver/hw/xfree86/doc にある適切な
-  OS 固有の README ファイルを通読してください。 OS 固有の詳細な処理を
-  行ってから、xc ディレクトリに移動して、 ``make World'' を OS 固有の
-  README ファイルに従って必要に応じて BOOTSTRAPCFLAGS を追加して実行して
-  ください。標準出力と標準エラー出力を World.Log にリダイレクトしておく
-  と構築中に発生した問題を追跡するのに役に立ちます。
+  1.3.  配布物の構築とインストール
 
-  構築が終了したら、 World.Log を見て問題が無いことを確認してください。
-  問題がなければバイナリを導入できます。全てのソース配布物を使用している
-  場合は、xc ディレクトリから導入を行います。``servers only'' 配布物を使
-  用している場合は、xc/programs/Xserver ディレクトリから導入を行います。
-  導入を行うには``make install'' と ``make install.man'' を実行してくだ
-  さい。導入を行う /usr/X11R6 に十分な空き容量があることを確認してくださ
-  い。/usr 以外のファイルシステムに導入したい場合は導入前に /usr/X11R6
-  へシンボリックリンクを張ってください。
+  配布物を構築する前には、お使いの OS 固有の README ファイルを通読してく
+  ださい。このファイルは xc/programs/Xserver/hw/xfree86/doc にありま
+  す。OS 固有の詳細な注意点が理解できれば、xc ディレクトリに移動して
+  ``make World'' を実行します。 実行の際には必要に応じて、OS 固有の
+  README ファイルに書かれている BOOTSTRAPCFLAGS を使用してください。標準
+  出力と標準エラー出力を World.Log にリダイレクトしておくと、構築中に発
+  生した問題の原因追求に役立ちます。
 
-  /usr/X11R6/lib/Server にあるバイナリの LinkKit を導入するには、``make
-  install.linkkit'' を xc ディレクトリから実行してください。
+  構築が終了したら、 World.Log を調べて問題が無いことを確認してくださ
+  い。問題がなければバイナリをインストールしても良いでしょう。全てのソー
+  ス配布物を使う場合は、xc ディレクトリからインストールを行います。
+  ``servers only'' 配布物を使用している場合は、 xc/programs/Xserver ディ
+  レクトリからインストールを行います。インストールを行うには``make
+  install'' と ``make install.man'' を実行します。インストールに十分なだ
+  けの空き容量が /usr/X11R6 にあることを確認してください。/usr 以外の
+  ファイルシステムにインストールする場合にはインストールの前に
+  /usr/X11R6 へシンボリックリンクを張ってください。
 
-  XFree86 のサポートしている contrib の一部を構築するにはコア配布物が先
-  ず導入してあることを確認してください。そうしたら contrib ディレクトリ
-  に移動して ``xmkmf -a; make'' を実行してください。コンパイルが終了した
-  ら ``make install'' と ``make install.man'' を実行して導入してくださ
-  い。
+  /usr/X11R6/lib/Server にあるバイナリの LinkKit をインストールするに
+  は、``make install.linkkit'' を xc ディレクトリから実行してください。
+
+  XFree86 のサポートしている contrib リリースの一部を構築するには、まず
+  コア配布物がインストールしてあることを確認してください。次に、 contrib
+  ディレクトリに移動して ``xmkmf -a; make'' を実行します。コンパイルが終
+  了したら ``make install'' と ``make install.man'' を実行してインストー
+  ルを行います。
 
   xtest 配布物を構築/実行するには、test/xsuite/NOTES.xf86 ファイルにある
   手順を参照してください。
 
+
   2.  サーバの再設定 (ソース配布物の場合)
 
-  複数の異なるサーバや異なるドライバを含むサーバを構築するには:
+  複数の異なるサーバや異なるドライバを含むサーバを構築するには、以下の手
+  順を行います:
 
-  1. 新しいドライバが正しい位置 (例えば SVGA サーバのドライバのソースは
+  1. 新しいドライバのソースが正しい位置にあることを確認します(例えば
+     SVGA サーバのドライバのソースは
      xc/programs/Xserver/hw/xfree86/vga256/drivers というサブディレクト
-     リに置いてあります) にあることを確認してください。
+     リにあるはずです)。
 
-  2. サーバの定義の設定変更
 
-  3. xc/programs/Xserver から実行してください。
+  2. host.def ファイル中でサーバの定義の設定を変更し、構築するサーバを指
+     定します。また、必要に応じてドライバのリストを変更します。
 
-                make Makefile
-                make Makefiles
-                make depend
-                make
+  3. xc/programs/Xserver ディレクトリで以下のコマンドを実行します:
+
+
+               make Makefile
+               make Makefiles
+               make depend
+               make
+
+
+
+
 
   3.  サーバの再設定 (バイナリ配布物の場合)
 
-  サーバのバイナリリンクキットを導入する場合は、ドライバとサーバ内の幾つ
-  かの機能拡張を再設定できます。この作業の詳細は README.LinkKit ファイル
-  を参照して下さい。
 
-  ______________________________________________________________________
+  サーバのバイナリリンクキットを導入していれば、ドライバとサーバ内の一部
+  の機能拡張を再設定することができます。この作業の詳細な手順について
+  は、README.LinkKit ファイルを参照してください。
 
-  このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v
-  3.1.2.4 1997/06/02 03:12:42 を、岡本  一幸 ( Kazuyuki Okamoto
-  <ikko-@pacific.rim.or.jp> <mailto:ikko-@pacific.rim.or.jp> ) が
-  XFree86 3.3 を日本でインストールする人向けに和訳したものです。ここがお
-  かしいとか、ここはこうしたほうがいいといったご意見がありましたら、電子
-  メールでお知らせ下さい。原文の著作権は XFree86 プロジェクト社にありま
-  す。この和訳の著作権は XFree86 プロジェクト社と岡本 一幸にありますが、
-  この和訳の不具合は私に、電子メールで送って下さい。
 
-  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/BUILD,v 1.1.2.1 1997/07/31 06:05:47 dawes Exp $
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/BUILD,v 1.1.2.2 1999/06/02 07:50:36 hohndel Exp $
 
-  ______________________________________________________________________
 
-  [EOF]
+
+
+  4.  日本語訳について
+
+  日本語訳は X Japanese Documentation Project が行いました( 翻訳(XFree86
+  3.3): 岡本一幸 <ikko-@pacific.rim.or.jp>
+  <mailto:ikko-@pacific.rim.or.jp>, 更新(XFree86 3.3.3 対応): 藤原輝嘉
+  <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp>, 校正: 金田浩司
+  <vanitas@ma3.seikyou.ne.jp> <mailto:vanitas@ma3.seikyou.ne.jp>)。問題
+  点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86 プロ
+  ジェクト社にあり、日本語訳の著作権は X Japanese Documentation Project
+  にあります。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

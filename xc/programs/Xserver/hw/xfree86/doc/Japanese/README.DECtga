@@ -1,0 +1,132 @@
+  DEC 21030(別名 TGA)ユーザ向けの情報
+  The XFree86 Project, Inc.
+  23th October 1998
+  The X Japanese Documentation Project
+  12th January 1999
+  ____________________________________________________________
+
+  目次
+
+
+  1. DEC 21030
+  2. 追加事項
+  3. 日本語訳について
+
+
+  ______________________________________________________________________
+
+
+  1.  DEC 21030
+
+
+  o  XFree86 3.3 のこのリリースで DEC 21030 はサポートされています。
+
+  o  現在知られている問題
+
+
+     1. モード行は1つしか指定できません。これは他の基準に適合して実行可
+        能な指定のうち、最初のものになるでしょう。
+
+     2. 上記の理由により、仮想的な解像度もサポートされていません。
+
+
+  o  21030 ドライバに対しては以下のオプションを指定することができます:
+
+     Option "dac_8_bit"
+        8Bit の BT485 RamDac を有効にします(Multia と 8プレーンを持つ
+        TGA のみ)。
+
+     Option "dac_6_bit"
+        6Bit の BT485 RamDac を有効にします(Multia と 8プレーンを持つ
+        TGA のみ)。
+
+
+     MemBase 0x???????
+        サーバが21030のベースアドレスを検出できなければ、/proc/pci で
+        21030 について調べて "Prefetchable 32 bit memory at 0x???????"
+        という行を探します。そしてこのアドレスを MemBase の設定として入
+        力します。XFree86 バージョン 3.3.3 では、バージョンが 2.0.28 以
+        降の Linux カーネルを使っており、カーネルに PCI サポートを組み込
+        んでいれば、ベースアドレスは自動的に検出されるはずです。
+
+
+  o  21030 のアクセラレーション機能は今のところ全く利用していません!
+
+
+  2.  追加事項
+
+  このコードは、DEC 製の UDB ボックス(Multia), ZLZp-E1 (8プレーンを持つ
+  TGA), ZLXp-E2 (24プレーンを持つ TGA)上で動作する Linux でしかテストし
+  ていません。ZLXp-E3 (24プレーンと3D機能を持つ TGA)のテストは行っていま
+  せんが、きっと動作するはずです。
+
+
+  $XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/README.DECtga,v 1.1.2.1 1999/06/02 07:50:42 hohndel Exp $
+
+
+  3.  日本語訳について
+
+  日本語訳は X Japanese Documentation Project が行いました (翻訳: 藤原輝
+  嘉 <fujiwara@linux.or.jp> <mailto:fujiwara@linux.or.jp>, 校正: 金田浩
+  司  <vanitas@ma3.seikyou.ne.jp> <mailto:vanitas@ma3.seikyou.ne.jp>)。
+  問題点の指摘やご意見は藤原まで御連絡ください。原文の著作権は XFree86
+  プロジェクト社にあり、日本語訳の著作権は X Japanese Documentation
+  Project にあります。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

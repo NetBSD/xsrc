@@ -1,0 +1,36 @@
+XCOMM $XConsortium: Imakefile /main/3 1996/10/25 11:32:44 kaleb $
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/pm2/Imakefile,v 1.1.2.1 1999/06/02 07:50:12 hohndel Exp $
+
+#include <Server.tmpl>
+
+SRCS = pm2bdev.c pm2_accel.c pm2win.c pm2blt.c pm2im.c pm2pntwn.c pm2frect.c \
+	pm2pcach.c pm2gc.c pm2fs.c pm2orect.c
+
+OBJS = pm2fbdev.o pm2_accel.o pm2win.o pm2blt.o pm2im.o pm2pntwn.o pm2frect.o \
+	pm2pcach.o pm2gc.o pm2fs.o pm2orect.o
+
+DEFINES = -DFBDEV_SERVER -DPSZ=8 \
+	-DNO_COPY_PLANE \
+	$(DEBUG)
+
+INCLUDES = -I$(XF86COMSRC) -I. -I$(XF86SRC)/vga256/vga \
+	   -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
+	   -I$(SERVERSRC)/cfb -I$(XINCLUDESRC) -I$(FONTSRC)/include \
+	   -I$(FONTINCSRC) -I$(XF86OSSRC) -I$(XF86HWSRC)
+	   
+NormalLibraryObjectRule()
+
+NormalLibraryTarget(pm2,$(OBJS))
+
+LinkSourceFile(glint.h,../../xfree86/accel/glint)
+LinkSourceFile(glintIBMCurs.c,../../xfree86/accel/glint)
+LinkSourceFile(glint_regs.h,../../xfree86/accel/glint)
+LinkSourceFile(glintcurs.h,../../xfree86/accel/glint)
+LinkSourceFile(glintcmap.c,../../xfree86/accel/glint)
+LinkSourceFile(xf86xaa.h,../../xfree86/xaa)
+LinkSourceFile(xf86expblt.h,../../xfree86/xaa)
+
+InstallLinkKitLibrary(pm2,$(LINKKITDIR)/drivers)
+
+DependTarget()

@@ -1,6 +1,6 @@
  /***************************************************************************\
 |*                                                                           *|
-|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*       Copyright 1993-1999 NVIDIA, Corporation.  All rights reserved.      *|
 |*                                                                           *|
 |*     NOTICE TO USER:   The source code  is copyrighted under  U.S. and     *|
 |*     international laws.  Users and possessors of this source code are     *|
@@ -11,7 +11,7 @@
 |*     tion and  internal comments to the code,  notices to the end user     *|
 |*     as follows:                                                           *|
 |*                                                                           *|
-|*       Copyright 1993-1998 NVIDIA, Corporation.  All rights reserved.      *|
+|*       Copyright 1993-1999 NVIDIA, Corporation.  All rights reserved.      *|
 |*                                                                           *|
 |*     NVIDIA, CORPORATION MAKES NO REPRESENTATION ABOUT THE SUITABILITY     *|
 |*     OF  THIS SOURCE  CODE  FOR ANY PURPOSE.  IT IS  PROVIDED  "AS IS"     *|
@@ -36,9 +36,9 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
  \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_xaa.c,v 1.1.2.4 1998/12/26 00:12:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_xaa.c,v 1.1.2.6 1999/07/05 09:07:40 hohndel Exp $ */
 /*
- * Based on the NV1, NV3 code by Dave McKay.
+ * Based initially on the NV1, NV3 code by Dave McKay.
  *
  * Copyright 1996-1997  David J. McKay
  */
@@ -88,6 +88,10 @@
 #define SetBit(n) (1<<(n))
 #define Set8Bits(value) ((value)&0xff)
 /*
+ * Macro to define valid rectangle.
+ */
+#define RIVA_RECT_VALID(rr)  (((rr).x1 < (rr).x2) && ((rr).y1 < (rr).y2))
+/*
  * RIVA hardware instance structure.
  */
 RIVA_HW_INST riva;
@@ -111,6 +115,37 @@ unsigned rivaBufferOffset[5] = {0, 0, 0, 0, 0};
  * 2D render flag for 3D code.
  */
 int rivaRendered2D = 0;
+/*
+ * Opaque monochrome bits.
+ */
+unsigned int rivaOpaqueMonochrome;
+/*
+ * Set scissor clip rect.  Internal routine.
+ */
+static void RivaSetClippingRectangle(int x1, int y1, int x2, int y2)
+{
+    int height = y2-y1 + 1;
+    int width  = x2-x1 + 1;
+
+    rivaRendered2D = 1;
+    RIVA_FIFO_FREE(riva, Clip, 2);
+    riva.Clip->TopLeft     = (y1     << 16) | x1;
+    riva.Clip->WidthHeight = (height << 16) | width;
+}
+/*
+ * Set pattern. Internal routine. The upper bits of the colors
+ * are the ALPHA bits.  0 == transparency.
+ */
+static void RivaSetPattern(int clr0, int clr1, int pat0, int pat1)
+{
+    rivaRendered2D = 1;
+    RIVA_FIFO_FREE(riva, Patt, 5);
+    riva.Patt->Shape         = 0; /* 0 = 8X8, 1 = 64X1, 2 = 1X64 */
+    riva.Patt->Color0        = clr0;
+    riva.Patt->Color1        = clr1;
+    riva.Patt->Monochrome[0] = pat0;
+    riva.Patt->Monochrome[1] = pat1;
+}
 /*
  * Set ROP.  Translate X rop into ROP3.  Internal routine.
  */
@@ -139,6 +174,8 @@ static void RivaSetRopSolid(int rop)
     
     if (currentRop != rop)
     {
+        if (currentRop > 16)
+            RivaSetPattern(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF);
         currentRop     = rop;
         rivaRendered2D = 1;
         RIVA_FIFO_FREE(riva, Rop, 1);
@@ -176,43 +213,37 @@ static void RivaSetRopPattern(int rop)
     }
 }
 /*
- * Set scissor clip rect.  Internal routine.
- */
-static void RivaSetClippingRectangle(int x1, int y1, int x2, int y2)
-{
-    int height = y2-y1 + 1;
-    int width  = x2-x1 + 1;
-
-    rivaRendered2D = 1;
-    RIVA_FIFO_FREE(riva, Clip, 2);
-    riva.Clip->TopLeft     = (y1     << 16) | x1;
-    riva.Clip->WidthHeight = (height << 16) | width;
-}
-/*
- * Set pattern. Internal routine.
- */
-static void RivaSetPattern(int clr0, int clr1, int pat0, int pat1)
-{
-    rivaRendered2D = 1;
-    RIVA_FIFO_FREE(riva, Patt, 5);
-    riva.Patt->Shape         = 0; /* 0 = 8X8, 1 = 64X1, 2 = 1X64 */
-    riva.Patt->Color0        = clr0;
-    riva.Patt->Color1        = clr1;
-    riva.Patt->Monochrome[0] = pat0;
-    riva.Patt->Monochrome[1] = pat1;
-}
-/*
  * Fill solid rectangles.
  */                                           
 static void RivaSetupForFillRectSolid(int color, int rop, unsigned planemask)
 {
     RivaSetRopSolid(rop);
-    
     rivaRendered2D = 1;
     RIVA_FIFO_FREE(riva, Bitmap, 1);
     riva.Bitmap->Color1A = color;
 }
 static void RivaSubsequentFillRectSolid(int x, int y, int w, int h)
+{
+    RIVA_FIFO_FREE(riva, Bitmap, 2);
+    riva.Bitmap->UnclippedRectangle[0].TopLeft     = (x << 16) | y;
+    riva.Bitmap->UnclippedRectangle[0].WidthHeight = (w << 16) | h;
+}
+/*
+ * Fill 8x8 monochrome pattern rectangles.  patternx and patterny are
+ * the overloaded pattern bits themselves. The pattern colors don't
+ * support 565, only 555. Hack around it.
+ */                                           
+static void RivaSetupFor8x8PatternColorExpand(int patternx, int patterny, int bg, int fg, int rop, unsigned planemask)
+{
+    RivaSetRopPattern(rop);
+    rivaRendered2D = 1;
+    fg |= rivaOpaqueMonochrome;
+    bg  = (bg == -1) ? 0 : bg | rivaOpaqueMonochrome;
+    RivaSetPattern(bg, fg, patternx, patterny);
+    RIVA_FIFO_FREE(riva, Bitmap, 1);
+    riva.Bitmap->Color1A = fg;
+}
+static void RivaSubsequent8x8PatternColorExpand(int patternx, int patterny, int x, int y, int w, int h)
 {
     RIVA_FIFO_FREE(riva, Bitmap, 2);
     riva.Bitmap->UnclippedRectangle[0].TopLeft     = (x << 16) | y;
@@ -232,6 +263,425 @@ static void RivaSubsequentScreenToScreenCopy(int x1, int y1, int x2, int y2, int
     riva.Blt->TopLeftSrc  = (y1 << 16) | x1;
     riva.Blt->TopLeftDst  = (y2 << 16) | x2;
     riva.Blt->WidthHeight = (h  << 16) | w;
+}
+/*
+ * Individual glyph routines.
+ */
+static void RivaTransparentGlyph(int x, int y, int w, int h, unsigned long *pbits)
+{
+    int i, padHeight, padWidth;
+
+    RIVA_FIFO_FREE(riva, Bitmap, 3);
+    if (w <= 8)
+    {
+        padHeight = (h + 3) >> 2;
+        riva.Bitmap->WidthHeightInD  = (padHeight << (16 + 2)) | 8;
+        riva.Bitmap->WidthHeightOutD = (h         <<  16)      | w;
+        riva.Bitmap->PointD          = (y         <<  16)      | (x & 0xFFFF);
+        while (padHeight--)
+        {
+            RIVA_FIFO_FREE(riva, Bitmap, 1);
+            riva.Bitmap->MonochromeData1D = (pbits[0])
+                                          | (pbits[1] << 8)
+                                          | (pbits[2] << 16)
+                                          | (pbits[3] << 24);
+            pbits += 4;
+        }
+    }
+    else if (w <= 16)
+    {
+        padHeight = (h + 1) >> 1;
+        riva.Bitmap->WidthHeightInD  = (padHeight << (16 + 1)) | 16;
+        riva.Bitmap->WidthHeightOutD = (h         <<  16)      | w;
+        riva.Bitmap->PointD          = (y         <<  16)      | (x & 0xFFFF);
+        while (padHeight--)
+        {
+            RIVA_FIFO_FREE(riva, Bitmap, 1);
+            riva.Bitmap->MonochromeData1D = (pbits[0])
+                                          | (pbits[1] << 16);
+            pbits += 2;
+        }
+    }
+    else
+    {
+        padWidth = (w + 31) >> 5;
+        riva.Bitmap->WidthHeightInD  = (h << 16) | (padWidth << 5);
+        riva.Bitmap->WidthHeightOutD = (h << 16) | w;
+        riva.Bitmap->PointD          = (y << 16) | (x & 0xFFFF);
+        while (h--)
+            for (i = 0; i < padWidth; i++)
+            {
+                RIVA_FIFO_FREE(riva, Bitmap, 1);
+                riva.Bitmap->MonochromeData1D = *pbits++;
+            }
+    }
+}
+static void RivaOpaqueGlyph(int x, int y, int w, int h, unsigned long *pbits)
+{
+    int i, padHeight, padWidth;
+
+    RIVA_FIFO_FREE(riva, Bitmap, 3);
+    if (w <= 8)
+    {
+        padHeight = (h + 3) >> 2;
+        riva.Bitmap->WidthHeightInE  = (padHeight << (16 + 2)) | 8;
+        riva.Bitmap->WidthHeightOutE = (h         <<  16)      | w;
+        riva.Bitmap->PointE          = (y         <<  16)      | (x & 0xFFFF);
+        while (padHeight--)
+        {
+            RIVA_FIFO_FREE(riva, Bitmap, 1);
+            riva.Bitmap->MonochromeData01E = (pbits[0])
+                                           | (pbits[1] << 8)
+                                           | (pbits[2] << 16)
+                                           | (pbits[3] << 24);
+            pbits += 4;
+        }
+    }
+    else if (w <= 16)
+    {
+        padHeight = (h + 1) >> 1;
+        riva.Bitmap->WidthHeightInE  = (padHeight << (16 + 1)) | 16;
+        riva.Bitmap->WidthHeightOutE = (h         <<  16)      | w;
+        riva.Bitmap->PointE          = (y         <<  16)      | (x & 0xFFFF);
+        while (padHeight--)
+        {
+            RIVA_FIFO_FREE(riva, Bitmap, 1);
+            riva.Bitmap->MonochromeData01E = (pbits[0])
+                                           | (pbits[1] << 16);
+            pbits += 2;
+        }
+    }
+    else
+    {
+        padWidth = (w + 31) >> 5;
+        riva.Bitmap->WidthHeightInE  = (h << 16) | (padWidth << 5);
+        riva.Bitmap->WidthHeightOutE = (h << 16) | w;
+        riva.Bitmap->PointE          = (y << 16) | (x & 0xFFFF);
+        while (h--)
+            for (i = 0; i < padWidth; i++)
+            {
+                RIVA_FIFO_FREE(riva, Bitmap, 1);
+                riva.Bitmap->MonochromeData01E = *pbits++;
+            }
+    }
+}
+/*
+ * Terminal Emulator font routines.
+ */
+static void RivaPolyGlyphBltTE(DrawablePtr pDrawable, GCPtr pGC, int xInit, int yInit, int nglyph, CharInfoPtr *ppci, unsigned char *pglyphBase)
+{
+    FontPtr   pfont = pGC->font;
+    RegionPtr cclip;
+    BoxPtr    pclipRect;
+    BoxRec    glyphRect, intersectRect;
+    int       x, y, i;
+    int       glyphWidth, glyphHeight;
+    int       nclip;
+
+    /*
+     * Sanity checks.
+     */
+    if (!xf86VTSema) return;
+    if (pGC->fillStyle != FillSolid)
+    {
+        miPolyGlyphBlt(pDrawable, pGC, xInit, yInit, nglyph, ppci,pglyphBase);
+        return;
+    }
+    /*
+     * Get glyph extents.
+     */
+    glyphWidth  = FONTMAXBOUNDS(pfont, characterWidth);
+    glyphHeight = FONTASCENT(pfont) + FONTDESCENT(pfont);
+    if ((glyphHeight | glyphWidth) == 0) return;
+    x = xInit + FONTMAXBOUNDS(pfont, leftSideBearing) + pDrawable->x;
+    y = yInit - FONTASCENT(pfont)                     + pDrawable->y;
+    glyphRect.x1 = x; glyphRect.x2 = x + (glyphWidth * nglyph) + 1;
+    glyphRect.y1 = y; glyphRect.y2 = y + glyphHeight           + 1;
+    /*
+     * Get region clip rects.
+     */
+    cclip     = cfbGetCompositeClip(pGC);
+    nclip     = REGION_NUM_RECTS(cclip);
+    pclipRect = REGION_RECTS(cclip);
+    /*
+     * Render glyphs through clipping regions.
+     */
+    RivaSetRopSolid(pGC->alu);
+    rivaRendered2D = 1;
+    while (nclip--)
+    {
+        /*
+         * Intersect glyph bounds with clip rect.
+         */
+        intersectRect.x1 = max(pclipRect->x1, glyphRect.x1);
+        intersectRect.y1 = max(pclipRect->y1, glyphRect.y1);
+        intersectRect.x2 = min(pclipRect->x2, glyphRect.x2);
+        intersectRect.y2 = min(pclipRect->y2, glyphRect.y2);
+        pclipRect++;
+        /*
+         * Only draw glyph string if visible through this region.
+         */
+        if (RIVA_RECT_VALID(intersectRect))
+        {
+            /*
+             * Set clip rect.
+             */
+            RIVA_FIFO_FREE(riva, Bitmap, 3);
+            riva.Bitmap->ClipD.TopLeft     = (intersectRect.y1 << 16) | intersectRect.x1;
+            riva.Bitmap->ClipD.BottomRight = (intersectRect.y2 << 16) | intersectRect.x2;
+            riva.Bitmap->Color1D           = pGC->fgPixel;
+            /*
+             * Render each glyph.
+             */
+            for (i = 0; i < nglyph; i++)
+                RivaTransparentGlyph(x + i * glyphWidth, 
+                                     y,
+                                     glyphWidth,
+                                     glyphHeight,
+                                     (unsigned long *)(FONTGLYPHBITS(pglyphBase, ppci[i])));
+        }
+    }
+}
+static void RivaImageGlyphBltTE(DrawablePtr pDrawable, GCPtr pGC, int xInit, int yInit, int nglyph, CharInfoPtr *ppci, unsigned char *pglyphBase)
+{
+    FontPtr   pfont = pGC->font;
+    RegionPtr cclip;
+    BoxPtr    pclipRect;
+    BoxRec    glyphRect, intersectRect;
+    int       x, y, i, bg;
+    int       glyphWidth, glyphHeight;
+    int       nclip;
+
+    /*
+     * Sanity checks.
+     */
+    if (!xf86VTSema) return;
+    /*
+     * Get glyph extents.
+     */
+    glyphWidth  = FONTMAXBOUNDS(pfont, characterWidth);
+    glyphHeight = FONTASCENT(pfont) + FONTDESCENT(pfont);
+    if ((glyphHeight | glyphWidth) == 0) return;
+    x = xInit + FONTMAXBOUNDS(pfont, leftSideBearing) + pDrawable->x;
+    y = yInit - FONTASCENT(pfont)                     + pDrawable->y;
+    glyphRect.x1 = x; glyphRect.x2 = x + (glyphWidth * nglyph);
+    glyphRect.y1 = y; glyphRect.y2 = y + glyphHeight;
+    /*
+     * Get region clip rects.
+     */
+    cclip     = cfbGetCompositeClip(pGC);
+    nclip     = REGION_NUM_RECTS(cclip);
+    pclipRect = REGION_RECTS(cclip);
+    /*
+     * Render glyphs through clipping regions.
+     */
+    RivaSetRopSolid(GXcopy);
+    rivaRendered2D = 1;
+    bg = pGC->bgPixel | rivaOpaqueMonochrome;
+    while (nclip--)
+    {
+        /*
+         * Intersect glyph bounds with clip rect.
+         */
+        intersectRect.x1 = max(pclipRect->x1, glyphRect.x1);
+        intersectRect.y1 = max(pclipRect->y1, glyphRect.y1);
+        intersectRect.x2 = min(pclipRect->x2, glyphRect.x2);
+        intersectRect.y2 = min(pclipRect->y2, glyphRect.y2);
+        pclipRect++;
+        /*
+         * Only draw glyph string if visible through this region.
+         */
+        if (RIVA_RECT_VALID(intersectRect))
+        {
+            /*
+             * Set clip rect.
+             */
+            RIVA_FIFO_FREE(riva, Bitmap, 4);
+            riva.Bitmap->ClipE.TopLeft     = (intersectRect.y1 << 16) | intersectRect.x1;
+            riva.Bitmap->ClipE.BottomRight = (intersectRect.y2 << 16) | intersectRect.x2;
+            riva.Bitmap->Color0E           = bg;
+            riva.Bitmap->Color1E           = pGC->fgPixel;
+            /*
+             * Render each glyph.
+             */
+            for (i = 0; i < nglyph; i++)
+                RivaOpaqueGlyph(x + i * glyphWidth, 
+                                y,
+                                glyphWidth,
+                                glyphHeight,
+                                (unsigned long *)FONTGLYPHBITS(pglyphBase, ppci[i]));
+        }
+    }
+}
+/*
+ * Normal Font routines.
+ */
+static void RivaPolyGlyphBltNonTE(DrawablePtr pDrawable, GCPtr pGC, int xInit, int yInit, int nglyph, CharInfoPtr *ppci, unsigned char *pglyphBase)
+{
+    FontPtr       pfont = pGC->font;
+    RegionPtr     cclip;
+    BoxPtr        pclipRect;
+    BoxRec        glyphRect, intersectRect;
+    int           x, y, i, dx;
+    int           nclip;
+
+    /*
+     * Sanity checks.
+     */
+    if (!xf86VTSema) return;
+    if (pGC->fillStyle != FillSolid)
+    {
+        miPolyGlyphBlt(pDrawable, pGC, xInit, yInit, nglyph, ppci,pglyphBase);
+        return;
+    }
+    y = yInit + pDrawable->y;
+    x = xInit + pDrawable->x;
+    /*
+     * Get glyph extents.
+     */
+    for (i = dx = 0; i < nglyph; i++)
+    	dx += ppci[i]->metrics.characterWidth;
+    if (dx >= 0)
+    {
+        glyphRect.x1 = x; glyphRect.x2 = x + dx + 1;
+    }
+    else
+    {
+        glyphRect.x1 = x + dx; glyphRect.x2 = x + 1;
+    }
+    glyphRect.y1 = y - FONTASCENT(pfont); glyphRect.y2 = y + FONTDESCENT(pfont) + 1;
+    /*
+     * Get region clip rects.
+     */
+    cclip     = cfbGetCompositeClip(pGC);
+    nclip     = REGION_NUM_RECTS(cclip);
+    pclipRect = REGION_RECTS(cclip);
+    /*
+     * Render glyphs through clipping regions.
+     */
+    RivaSetRopSolid(pGC->alu);
+    rivaRendered2D = 1;
+    while (nclip--)
+    {
+        /*
+         * Intersect glyph bounds with clip rect.
+         */
+        intersectRect.x1 = max(pclipRect->x1, glyphRect.x1);
+        intersectRect.y1 = max(pclipRect->y1, glyphRect.y1);
+        intersectRect.x2 = min(pclipRect->x2, glyphRect.x2);
+        intersectRect.y2 = min(pclipRect->y2, glyphRect.y2);
+        pclipRect++;
+        /*
+         * Only draw glyph string if visible through this region.
+         */
+        if (RIVA_RECT_VALID(intersectRect))
+        {
+            /*
+             * Set clip rect.
+             */
+            RIVA_FIFO_FREE(riva, Bitmap, 3);
+            riva.Bitmap->ClipD.TopLeft     = (intersectRect.y1 << 16) | intersectRect.x1;
+            riva.Bitmap->ClipD.BottomRight = (intersectRect.y2 << 16) | intersectRect.x2;
+            riva.Bitmap->Color1D           = pGC->fgPixel;
+            /*
+             * Render each glyph.
+             */
+            for (i = dx = 0; i < nglyph; i++)
+            {
+                RivaTransparentGlyph(x + dx + ppci[i]->metrics.leftSideBearing,
+                                     y      - ppci[i]->metrics.ascent,
+                                     GLYPHWIDTHPIXELS(ppci[i]),
+                                     GLYPHHEIGHTPIXELS(ppci[i]),
+                                     (unsigned long *)FONTGLYPHBITS(pglyphBase, ppci[i]));
+                dx += ppci[i]->metrics.characterWidth;
+            }
+        }
+    }
+}
+static void RivaImageGlyphBltNonTE(DrawablePtr pDrawable, GCPtr pGC, int xInit, int yInit, int nglyph, CharInfoPtr *ppci, unsigned char *pglyphBase)
+{
+    FontPtr       pfont = pGC->font;
+    RegionPtr     cclip;
+    BoxPtr        pclipRect;
+    BoxRec        glyphRect, intersectRect;
+    int           x, y, i, dx;
+    int           nclip;
+
+    /*
+     * Sanity checks.
+     */
+    if (!xf86VTSema) return;
+    y = yInit + pDrawable->y;
+    x = xInit + pDrawable->x;
+    /*
+     * Get glyph extents.
+     */
+    for (i = dx = 0; i < nglyph; i++)
+    	dx += ppci[i]->metrics.characterWidth;
+    if (dx >= 0)
+    {
+        glyphRect.x1 = x; glyphRect.x2 = x + dx;
+    }
+    else
+    {
+        glyphRect.x1 = x + dx; glyphRect.x2 = x;
+    }
+    glyphRect.y1 = y - FONTASCENT(pfont); glyphRect.y2 = y + FONTDESCENT(pfont);
+    /*
+     * Get region clip rects.
+     */
+    cclip     = cfbGetCompositeClip(pGC);
+    nclip     = REGION_NUM_RECTS(cclip);
+    pclipRect = REGION_RECTS(cclip);
+    /*
+     * Render glyphs through clipping regions.
+     */
+    RivaSetRopSolid(GXcopy);
+    rivaRendered2D = 1;
+    while (nclip--)
+    {
+        /*
+         * Intersect glyph bounds with clip rect.
+         */
+        intersectRect.x1 = max(pclipRect->x1, glyphRect.x1);
+        intersectRect.y1 = max(pclipRect->y1, glyphRect.y1);
+        intersectRect.x2 = min(pclipRect->x2, glyphRect.x2);
+        intersectRect.y2 = min(pclipRect->y2, glyphRect.y2);
+        pclipRect++;
+        /*
+         * Only draw glyph string if visible through this region.
+         */
+        if (RIVA_RECT_VALID(intersectRect))
+        {
+            /*
+             * Draw background rect.
+             */
+            RIVA_FIFO_FREE(riva, Bitmap, 3);
+            riva.Bitmap->Color1A                           = pGC->bgPixel;
+            riva.Bitmap->UnclippedRectangle[0].TopLeft     = (intersectRect.x1 << 16) | intersectRect.y1;
+            riva.Bitmap->UnclippedRectangle[0].WidthHeight = ((intersectRect.x2 - intersectRect.x1) << 16)
+                                                           |  (intersectRect.y2 - intersectRect.y1);
+            /*
+             * Set clip rect.
+             */
+            RIVA_FIFO_FREE(riva, Bitmap, 3);
+            riva.Bitmap->ClipD.TopLeft     = (intersectRect.y1 << 16) | intersectRect.x1;
+            riva.Bitmap->ClipD.BottomRight = (intersectRect.y2 << 16) | intersectRect.x2;
+            riva.Bitmap->Color1D           = pGC->fgPixel;
+            /*
+             * Render each glyph.
+             */
+            for (i = dx = 0; i < nglyph; i++)
+            {
+                RivaTransparentGlyph(x + dx + ppci[i]->metrics.leftSideBearing,
+                                     y      - ppci[i]->metrics.ascent,
+                                     GLYPHWIDTHPIXELS(ppci[i]),
+                                     GLYPHHEIGHTPIXELS(ppci[i]),
+                                     (unsigned long *)FONTGLYPHBITS(pglyphBase, ppci[i]));
+                dx += ppci[i]->metrics.characterWidth;
+            }
+        }
+    }
 }
 /*
  * Synchronise with graphics engine.  Make sure it is idle before returning.
@@ -339,9 +789,15 @@ static Bool RivaUnrealizeCursor(ScreenPtr pScr, CursorPtr pCurs)
  */
 static void RivaMoveCursor(ScreenPtr pScr, int x, int y)
 {
-    if (xf86VTSema)
-        *(riva.CURSORPOS) = ((x - vga256InfoRec.frameX0 - RivaCursorHotX) & 0xFFFF)
-                          | ((y - vga256InfoRec.frameY0 - RivaCursorHotY) << 16);
+    if ( ! xf86VTSema)
+        return;
+
+    x -= vga256InfoRec.frameX0 + RivaCursorHotX;
+    y -= vga256InfoRec.frameY0 + RivaCursorHotY;
+    if (XF86SCRNINFO(pScr)->modes->Flags & V_DBLSCAN)
+        y *= 2;
+
+    *(riva.CURSORPOS) = (x & 0xFFFF) | (y << 16);
 }
 /*
  * This function uploads a cursor image to the video memory of the
@@ -503,20 +959,59 @@ static void RivaFbInit(void)
         /*
          * There are still some problems with delayed syncing.
          */
-        xf86AccelInfoRec.Flags = BACKGROUND_OPERATIONS/*| DELAYED_SYNC*/;
+        xf86AccelInfoRec.Flags = BACKGROUND_OPERATIONS/*| DELAYED_SYNC*/
+                               | HARDWARE_PATTERN_PROGRAMMED_BITS/*| HARDWARE_PATTERN_BIT_ORDER_MSBFIRST*/
+                               | HARDWARE_PATTERN_MONO_TRANSPARENCY
+                               | HARDWARE_PATTERN_SCREEN_ORIGIN;
         xf86AccelInfoRec.Sync  = RivaSync;
         /*
          * Hook filled rectangles.
          */
-        xf86GCInfoRec.PolyFillRectSolidFlags     = NO_PLANEMASK | NO_TRANSPARENCY;
-        xf86AccelInfoRec.SetupForFillRectSolid   = RivaSetupForFillRectSolid;
-        xf86AccelInfoRec.SubsequentFillRectSolid = RivaSubsequentFillRectSolid;
+        xf86GCInfoRec.PolyFillRectSolidFlags             = NO_PLANEMASK;
+        xf86AccelInfoRec.SetupForFillRectSolid           = RivaSetupForFillRectSolid;
+        xf86AccelInfoRec.SubsequentFillRectSolid         = RivaSubsequentFillRectSolid;
+        if (!(vga256InfoRec.bitsPerPixel == 16 && xf86weight.green == 6))
+        {
+            xf86AccelInfoRec.SetupFor8x8PatternColorExpand   = RivaSetupFor8x8PatternColorExpand;
+            xf86AccelInfoRec.Subsequent8x8PatternColorExpand = RivaSubsequent8x8PatternColorExpand;
+        }
+        /*
+         * Set pattern opaque bits based on pixel format.
+         */
+        switch (vga256InfoRec.bitsPerPixel)
+        {
+            case 8:
+                rivaOpaqueMonochrome = 0xFFFFFF00;
+                break;
+            case 15:
+            case 16:
+                rivaOpaqueMonochrome = (xf86weight.green == 5) ? 0xFFFF8000 : 0xFFFF0000;
+                break;
+            default:
+                rivaOpaqueMonochrome = 0xFF000000;
+        }
         /*
          * Hook screen-to-screen BLTs.
          */
         xf86GCInfoRec.CopyAreaFlags                   = NO_PLANEMASK | NO_TRANSPARENCY;
         xf86AccelInfoRec.SetupForScreenToScreenCopy   = RivaSetupForScreenToScreenCopy;
         xf86AccelInfoRec.SubsequentScreenToScreenCopy = RivaSubsequentScreenToScreenCopy;
+        /*
+         * Hook text routines.
+         */
+#if GLYPHPADBYTES == 4
+        xf86GCInfoRec.PolyGlyphBltNonTEFlags  |= NO_PLANEMASK;
+        xf86GCInfoRec.ImageGlyphBltNonTEFlags |= NO_PLANEMASK;
+        xf86GCInfoRec.PolyGlyphBltTEFlags     |= NO_PLANEMASK;
+        xf86GCInfoRec.ImageGlyphBltTEFlags    |= NO_PLANEMASK;
+        xf86GCInfoRec.PolyGlyphBltNonTE        = RivaPolyGlyphBltNonTE;
+        xf86GCInfoRec.PolyGlyphBltTE           = RivaPolyGlyphBltTE;
+        xf86GCInfoRec.ImageGlyphBltNonTE       = RivaImageGlyphBltNonTE;
+        if (vga256InfoRec.bitsPerPixel == 16 && xf86weight.green == 6)
+            xf86GCInfoRec.ImageGlyphBltNonTE       = RivaImageGlyphBltNonTE;
+        else
+            xf86GCInfoRec.ImageGlyphBltTE          = RivaImageGlyphBltTE;
+#endif
         /*
          * Calc surface size and round up to nearest 256 bytes.
          */
@@ -774,13 +1269,18 @@ static void RivaAdjust(int x, int y)
     int startAddr = (((y*vga256InfoRec.virtualX)+x)*(vgaBitsPerPixel/8));
     riva.SetStartAddress(&riva, startAddr);
 }
+static int RivaValidMode(DisplayModePtr mode, Bool verbose, int flag)
+{
+    float refresh_rate;
+
+    refresh_rate = mode->Clock * 1000 / (mode->CrtcHTotal * mode->CrtcVTotal);
+    if (mode->Flags & V_DBLSCAN)
+        refresh_rate /= 2;
+    return (MODE_OK);
+}
 /*
  * These are all NO-OPed for now.
  */
-static int RivaValidMode(DisplayModePtr mode, Bool verbose, int flag)
-{
-    return (MODE_OK);
-}
 static void RivaDisplayPowerManagementSet(int mode)
 {
 }

@@ -1,38 +1,24 @@
+                        README for XFree86[tm] 3.3.4
 
+                          The XFree86 Project, Inc
 
+                                21 June 1999
 
+                                  Abstract
 
+     XFree86 is a port of X11R6.3 that supports several Unix and Unix-
+     like operating systems on Intel and other platforms.  This release
+     is a quick update to XFree86 3.3.3, fixing a number of bugs that
+     were found after releasing it.  The release is available as source
+     patches against the X Consortium X11R6.3 code and the XFree86 3.3.3
+     release.  Binary distributions for many architectures are also
+     available, including a binary upgrade for XFree86 3.3.3.
 
-
-
-
-
-                        README for XFree86[tm] 3.3.3.1
-
-                           The XFree86 Project, Inc
-
-                               20 December 1998
-
-
-
-                                   Abstract
-
-     XFree86 is a port of X11R6.3 that supports several Unix and Unix-like
-     operating systems on Intel and other platforms.  This release is a
-     quick update to XFree86 3.3.3, fixing a number of bugs that were
-     found after releasing it.  The release is available as source patches
-     against the X Consortium X11R6.3 code and the XFree86 3.3.3 release.
-     Binary distributions for many architectures are also available,
-     including a binary upgrade for XFree86 3.3.3.
-
-
-
-1.  What's new in XFree86 3.3.3.1
+1.  What's new in XFree86 3.3.4
 
 For a summary of new features in this release, please refer to the RELNOTES
 file.  For a detailed list of changes, refer to the CHANGELOG file in the
 source distribution.
-
 
 2.  Systems XFree86 has been tested on
 
@@ -58,23 +44,9 @@ Note: Not all systems listed here have been tested with the current release.
 
                o NCR: MP-RAS
 
-
-
-
-README for XFree86[tm] 3.3.3.1                                                1
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                                2
-
-
-
                o SunSoft: Solaris x86 2.1, 2.4, 2.5, 2.5.1, 2.6
 
                o PANIX 5.0 for AT
-
 
       SVR4.2:
 
@@ -82,11 +54,9 @@ README for XFree86[tm] 3.3.3.1                                                2
 
                o Novell/SCO UnixWare
 
-
       SVR3:
 
                o ISC: 3.0, 4.0, 4.1
-
 
       Others:
 
@@ -94,19 +64,18 @@ README for XFree86[tm] 3.3.3.1                                                2
 
                o OpenBSD 2.0, 2.1, 2.2, 2.3, 2.4
 
-               o FreeBSD 2.0.5, 2.1, 2.1.5, 2.1.6, 2.1.7, 2.1.7.1, 2.2, 2.2.1,
-                 2.2.2, 2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0
+               o FreeBSD 2.0.5, 2.1, 2.1.5, 2.1.6, 2.1.7, 2.1.7.1, 2.2,
+                 2.2.1, 2.2.2, 2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0
 
                o Linux (Intel x86, DEC Alpha/AXP and m68k)
 
-               o LynxOS AT 2.3.0, 2.4.0, 2.5.0
+               o LynxOS x86 2.3.0, 2.4.0, 2.5.x, 3.0.x
 
-               o LynxOS microSPARC 2.4.0, 2.5.0
+               o LynxOS microSPARC 2.4.0, 2.5.x, 3.0.x
 
-               o LynxOS PowerPC 2.4.0, 2.5.0
+               o LynxOS PowerPC 2.4.0, 2.5.x, 3.0.x
 
                o OS/2 Warp 3 FP5/17/22, Warp 4 -/FP1
-
 
       PC98:
 
@@ -119,23 +88,9 @@ README for XFree86[tm] 3.3.3.1                                                2
 
                o Linux/98
 
-
 3.  Supported video-card chip-sets
 
-At this time, XFree86 3.3.3.1 supports the following chipsets:
-
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                                3
-
-
+At this time, XFree86 3.3.4 supports the following chipsets:
 
       Ark Logic
             ARK1000PV, ARK1000VL, ARK2000PV, ARK2000MT
@@ -182,26 +137,18 @@ README for XFree86[tm] 3.3.3.1                                                3
       IBM
             8514/A (and true clones), XGA-2
 
+      Intel
+            i740
+
       IIT
             AGX-014, AGX-015, AGX-016
 
       Matrox
             MGA2064W (Millennium), MGA1064SG (Mystique and Mystique 220),
-            MGA2164W (Millennium II PCI and AGP), G100, G200
+            MGA2164W (Millennium II PCI and AGP), G100, G200, G400
 
       MX
             MX68000(*), MX680010(*)
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                                4
-
-
 
       NCR
             77C22(*), 77C22E(*), 77C22E+(*)
@@ -213,7 +160,7 @@ README for XFree86[tm] 3.3.3.1                                                4
             I128 (series I, II and IV), Revolution 3D (T2R)
 
       NVidia/SGS Thomson
-            NV1, STG2000, RIVA128, Riva TNT
+            NV1, STG2000, RIVA128, Riva TNT, Riva TNT2
 
       OAK
             OTI067, OTI077, OTI087
@@ -230,7 +177,11 @@ README for XFree86[tm] 3.3.3.1                                                4
             86C325, 86C357, 86C375, 86C375, 86C385, 86C988, 86CM65, 86C260
 
       SiS
-            86C201, 86C202, 86C205, 86C215, 86C225, 5597, 5598, 6326
+            86C201, 86C202, 86C205, 86C215, 86C225, 5597, 5598, 6326, 530,
+            620
+
+      3dfx
+            Voodoo Banshee, Voodoo3
 
       3DLabs
             GLINT 500TX, GLINT MX, Permedia, Permedia 2, Permedia 2v
@@ -240,11 +191,12 @@ README for XFree86[tm] 3.3.3.1                                                4
             ET6100
 
       Trident
-            TVGA8800CS, TVGA8900B, TVGA8900C, TVGA8900CL, TVGA9000, TVGA9000i,
-            TVGA9100B, TVGA9200CXR, Cyber9320(*), TVGA9400CXi, TVGA9420,
-            TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi, TGUI9680, Pro-
-            Vidia 9682, ProVidia 9685(*), Cyber 9382, Cyber 9385, Cyber 9388,
-            3DImage975, 3DImage985, Cyber 9397, Cyber 9520
+            TVGA8800CS, TVGA8900B, TVGA8900C, TVGA8900CL, TVGA9000,
+            TVGA9000i, TVGA9100B, TVGA9200CXR, Cyber9320(*), TVGA9400CXi,
+            TVGA9420, TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi,
+            TGUI9680, ProVidia 9682, ProVidia 9685(*), Cyber 9382, Cyber
+            9385, Cyber 9388, 3DImage975, 3DImage985, Cyber 9397, Cyber 9520,
+            Cyber 9525, Blade3D, CyberBlade
 
       Video 7/Headland Technologies
             HT216-32(*)
@@ -257,18 +209,6 @@ README for XFree86[tm] 3.3.3.1                                                4
 
       Western Digital
             WD90C00, WD90C10, WD90C11, WD90C24, WD90C24A, WD90C30, WD90C31,
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                                5
-
-
-
             WD90C33
 
 (*) Note, chips marked in this way have either limited support or the drivers
@@ -277,35 +217,34 @@ for them are not actively maintained.
 All of the above are supported in both 256 color, and some are supported in
 mono and 16 color modes, and some are supported an higher color depths.
 
-Refer to the chipset-specific README files (currently for TGA, Matrox, Mach32,
-Mach64, NVidia, Oak, P9000, S3 (except ViRGE), S3 ViRGE, SiS, Video7, Western
-Digital, Tseng (W32), Tseng (all), AGX/XGA, ARK, ATI (SVGA server), Chips and
-Technologies, Cirrus, Trident, NeoMagic, Rendition, Epson, 3DLabs) for more
-information about using those chipsets.
+Refer to the chipset-specific README files (currently for TGA, Matrox,
+Mach32, Mach64, NVidia, Oak, P9000, S3 (except ViRGE), S3 ViRGE, SiS, Video7,
+Western Digital, Tseng (W32), Tseng (all), AGX/XGA, ARK, ATI (SVGA server),
+Chips and Technologies, Cirrus, Trident, NeoMagic, Rendition, Epson, 3DLabs)
+i740) for more information about using those chipsets.
 
-The monochrome server also supports generic VGA cards, using 64k of video mem-
-ory in a single bank, the Hercules monochrome card, the Hyundai HGC1280, Sigma
-LaserView, Visa and Apollo monochrome cards.
+The monochrome server also supports generic VGA cards, using 64k of video
+memory in a single bank, the Hercules monochrome card, the Hyundai HGC1280,
+Sigma LaserView, Visa and Apollo monochrome cards.
 
 The VGA16 server supports memory banking with the ET4000, Trident, ATI, NCR,
 OAK and Cirrus 6420 chipsets allowing virtual display sizes up to about
 1600x1200 (with 1MB of video memory).  For other chipsets the display size is
 limited to approximately 800x600.
 
-
 4.  Where to get more information
 
 Additional documentation is available in the XFree86(1), XF86Config(4/5),
 XF86_SVGA(1), XF86_Mono(1), XF86_VGA16(1), XF86_Accel(1), XF86Setup(1) and
-xvidtune(1) manual pages.  In addition, several README files and tutorial docu-
-ments are provided.  These are available in /usr/X11R6/lib/X11/doc in the
-binary distributions, and in  xc/programs/Xserver/hw/xfree86/doc in the source
-distribution.
+xvidtune(1) manual pages.  In addition, several README files and tutorial
+documents are provided.  These are available in /usr/X11R6/lib/X11/doc in the
+binary distributions, and in  xc/programs/Xserver/hw/xfree86/doc in the
+source distribution.
 
-The files QuickStart.doc and README.Config should be consulted for information
-on how to set up the XFree86 servers.  All supplied documents, manual pages,
-and the XFree86 FAQ <URL:http://www.XFree86.org/FAQ> should be read before con-
-tacting the XFree86 team for assistance.
+The files QuickStart.doc and README.Config should be consulted for informa-
+tion on how to set up the XFree86 servers.  All supplied documents, manual
+pages, and the XFree86 FAQ <URL:http://www.XFree86.org/FAQ> should be read
+before contacting the XFree86 team for assistance.
 
 Documentation on SVGA driver development can be found in the directory
 /usr/X11R6/lib/Server/VGADriverDoc in the binary distribution, and in the
@@ -317,23 +256,9 @@ If you are totally at a loss, you can contact the XFree86 Support Team at
 the latest release of XFree86.  Check the versions listed on
 ftp://ftp.xfree86.org/pub/XFree86.
 
-There is a Usenet news group comp.windows.x.i386unix that contains mostly dis-
-cussions about XFree86 and related topics. Many questions can be answered
+There is a Usenet news group comp.windows.x.i386unix that contains mostly
+discussions about XFree86 and related topics. Many questions can be answered
 there.
-
-
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                                6
-
-
 
 5.  Credits
 
@@ -389,18 +314,6 @@ XFree86 support was integrated into the base X11R6 distribution by:
 
    o Jon Tombs <tombs@XFree86.org>
 
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                                7
-
-
-
    o Kees Verstoep <versto@cs.vu.nl>
 
    o Paul Vixie <paul@vix.com>
@@ -454,18 +367,6 @@ README for XFree86[tm] 3.3.3.1                                                7
                o Marc Evans <Marc@XFree86.org>
 
       BSD/OS support by:
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                                8
-
-
 
                o Hans Nasten <nasten@everyware.se>,
 
@@ -521,25 +422,13 @@ README for XFree86[tm] 3.3.3.1                                                8
 
                o Koichiro Suzuki <s-koichi@nims.nec.co.jp>,
 
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                                9
-
-
-
                o Tsuyoshi Tamaki <tamaki@sail.t.u-tokyo.ac.jp>,
 
                o Isao Ohishi <ohishi@hf.rim.or.jp>,
 
                o Kohji Ohishi <atena@njk.co.jp>,
 
-               o Shin'ichi Yairo <QZR00522@niftyserve.or.jp>,
+               o Shin'ichi Yairo <QZR00522@nifty.ne.jp>,
 
                o Kazuo Ito <ft4k-itu@asahi-net.or.jp>,
 
@@ -567,7 +456,7 @@ README for XFree86[tm] 3.3.3.1                                                9
 
                o Yasushi Suzuki <suz@d2.bs1.fc.nec.co.jp>,
 
-               o Satoshi Kimura <KFB03633@niftyserve.or.jp>,
+               o Satoshi Kimura <KFB03633@nifty.ne.jp>,
 
                o Kazuhiko Uno <Kazuhiko.Uno@softvision.co.jp>,
 
@@ -586,18 +475,6 @@ README for XFree86[tm] 3.3.3.1                                                9
                o Rik Faith <faith@cs.unc.edu>,
 
                o Jon Tombs <tombs@XFree86.org>
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               10
-
-
 
       XFree86 Acceleration Architecture (XAA) by:
 
@@ -653,18 +530,6 @@ README for XFree86[tm] 3.3.3.1                                               10
 
                o Craig Groeschel <craig@metrolink.com>
 
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               11
-
-
-
                o Bryan Feir <jenora@istar.ca>
 
       Mach64 accelerated code by:
@@ -719,18 +584,6 @@ README for XFree86[tm] 3.3.3.1                                               11
 
       ET4000/W32 accelerated code by:
 
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               12
-
-
-
                o Glenn Lai <glenn@cs.utexas.edu>,
 
       ET6000 SVGA and accelerated support (both based on the existing W32 code) by:
@@ -772,6 +625,8 @@ README for XFree86[tm] 3.3.3.1                                               12
 
                o Xavier Ducoin <xavier@rd.lectra.fr>
 
+               o Dirk Hohndel <hohndel@XFree86.Org>
+
       DEC 21030 (TGA) server by:
 
                o Alan Hourihane <alanh@fairlite.demon.co.uk>
@@ -784,18 +639,6 @@ README for XFree86[tm] 3.3.3.1                                               12
                  of NCR Corporation
 
       Cirrus SVGA driver by:
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               13
-
-
 
                o Bill Reynolds <bill@goshawk.lanl.gov>,
 
@@ -851,18 +694,6 @@ README for XFree86[tm] 3.3.3.1                                               13
 
                o Mike Hollick <hollick@graphics.cis.upenn.edu>
 
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               14
-
-
-
                o Nozomi Ytow
 
                o Egbert Eich <Egbert.Eich@Physik.TH-Darmstadt.DE>
@@ -917,18 +748,6 @@ README for XFree86[tm] 3.3.3.1                                               14
 
                o Martin Schaller
 
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               15
-
-
-
                o Geert Uytterhoeven <Geert.Uytterhoeven@cs.kuleuven.ac.be>
 
                o Andreas Schwab <schwab@issan.informatik.uni-dortmund.de>
@@ -975,6 +794,16 @@ README for XFree86[tm] 3.3.3.1                                               15
 
                o Helmut Fahrion <hf@suse.de>
 
+      3dfx accelerated code by:
+
+               o Daryll Strauss <daryll@harlot.rb.ca.us>
+
+               o Scott Bertin
+
+      Intel i740 accelerated code by:
+
+               o Kevin E. Martin <martin@cs.unc.edu>,
+
       XFree86-VidModeExtension and xvidtune client by:
 
                o Kaleb S. Keithley <kaleb@x.org>
@@ -982,18 +811,6 @@ README for XFree86[tm] 3.3.3.1                                               15
                o David Dawes <dawes@XFree86.org>
 
                o Jon Tombs <tombs@XFree86.org>
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               16
-
-
 
                o Joe Moss <joe@XFree86.org>
 
@@ -1016,8 +833,8 @@ README for XFree86[tm] 3.3.3.1                                               16
       XInput integration, devices and clients by:
 
                o Frederic Lepied <lepied@XFree86.Org> (XInput integration,
-                 Wacom tablet, Joystick and extended mouse devices, xsetpointer
-                 and xsetmode clients)
+                 Wacom tablet, Joystick and extended mouse devices, xset-
+                 pointer and xsetmode clients)
 
                o Patrick Lecoanet <lecoanet@cena.dgac.fr> (Elographics touch-
                  screen device)
@@ -1026,16 +843,16 @@ README for XFree86[tm] 3.3.3.1                                               16
 
       Other contributors:
 
-               o Joerg Wunsch <joerg_wunsch@uriah.sax.de> (ET3000 banked mono),
+               o Joerg Wunsch <joerg_wunsch@uriah.sax.de> (ET3000 banked
+                 mono),
 
-               o Thomas Dickey <dickey@clark.net> (xterm "new" model ANSI col-
-                 ors and VT220, VT52 emulation).
+               o Thomas Dickey <dickey@clark.net> (xterm "new" model ANSI
+                 colors and VT220, VT52 emulation).
 
-               o Eric Raymond <esr@snark.thyrsus.com> (new video mode documen-
-                 tation),
+               o Eric Raymond <esr@snark.thyrsus.com> (new video mode docu-
+                 mentation),
 
                o and an entire horde of beta-testers around the world!
-
 
 6.  Contact information
 
@@ -1047,19 +864,6 @@ Team.  At this time the Core Team consists of (in alphabetical order):
    o David Dawes <dawes@XFree86.org>
 
    o Marc Evans <marc@XFree86.org>
-
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               17
-
-
 
    o Harm Hanemaayer <H.Hanemaayer@inter.nl.net>
 
@@ -1078,14 +882,13 @@ README for XFree86[tm] 3.3.3.1                                               17
 Mail sent to <Core@XFree86.org> will reach the core team.  Please note that
 support questions should be sent to <XFree86@XFree86.org>.
 
-
 7.  The XFree86 Project, Inc.
 
 The XFree86 Project, Inc, was founded to accomplish two major goals:
 
-  1.  To provide a vehicle by which XFree86 can be represented in X Consortium,
-      Inc, the organization responsible for the design, development, and
-      release of The X Window System.
+  1.  To provide a vehicle by which XFree86 can be represented in X Consor-
+      tium, Inc, the organization responsible for the design, development,
+      and release of The X Window System.
 
   2.  To provide some basic funding for acquisition of facilities for ongoing
       XFree86 development, largely to consist of new video hardware and basic
@@ -1093,39 +896,28 @@ The XFree86 Project, Inc, was founded to accomplish two major goals:
 
 The first of these was the primary motivation.  We have held discussions with
 the X Consortium on and off for many months, attempting to find an avenue by
-which our loosely-organized free software project could be given a voice within
-the X Consortium.  The bylaws of the Consortium would not recognize such an
-organization.  After an initial investigation about funding, we decided to form
-our own corporation to provide the avenue we needed to meet the requirements of
-the X Consortium bylaws.
+which our loosely-organized free software project could be given a voice
+within the X Consortium.  The bylaws of the Consortium would not recognize
+such an organization.  After an initial investigation about funding, we
+decided to form our own corporation to provide the avenue we needed to meet
+the requirements of the X Consortium bylaws.
 
-By doing this, we were able to be involved in the beta-test interval for X11R6,
-and have contributed the majority of XFree86 to the X11R6 and X11R6.1 core
-release.  The version of XFree86 in the initial X11R6 core is 3.0.  The version
-of XFree86 in the current X11R6.3 release is 3.2.
+By doing this, we were able to be involved in the beta-test interval for
+X11R6, and have contributed the majority of XFree86 to the X11R6 and X11R6.1
+core release.  The version of XFree86 in the initial X11R6 core is 3.0.  The
+version of XFree86 in the current X11R6.3 release is 3.2.
 
 An additional benefit of this incorporation is that The XFree86 Project, Inc
-has obtained outside financial support for our work.  This will hopefully give
-us the freedom to be more pro-active in obtaining new video hardware, and
-enable us to release better products more quickly, as we will be able to go and
-get what we need, and get it into the hands of the people who can do the work.
+has obtained outside financial support for our work.  This will hopefully
+give us the freedom to be more pro-active in obtaining new video hardware,
+and enable us to release better products more quickly, as we will be able to
+go and get what we need, and get it into the hands of the people who can do
+the work.
 
 The current Board of Directors and Officers of the The XFree86 Project, Inc,
 are:
 
    o David Dawes, President and Secretary
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               18
-
-
 
    o Dirk Hohndel, Vice-President
 
@@ -1141,63 +933,52 @@ README for XFree86[tm] 3.3.3.1                                               18
 
 Email to <BOD@XFree86.org> reaches the board of directors.
 
-Our bylaws have been crafted in such a way to ensure that XFree86 is and always
-will be a free software project.  There is no personal financial benefit to any
-member of the Core Team or any other XFree86 participant.  All assets of the
-corporation remain with the corporation, and, in the event of the dissolution
-of the corporation, all assets will be turned over to the X Consortium, Inc.
-It is hoped that by doing this, our corporation will be merely a formalization
-of what we have been doing in the past, rather than something entirely new.
+Our bylaws have been crafted in such a way to ensure that XFree86 is and
+always will be a free software project.  There is no personal financial bene-
+fit to any member of the Core Team or any other XFree86 participant.  All
+assets of the corporation remain with the corporation, and, in the event of
+the dissolution of the corporation, all assets will be turned over to the X
+Consortium, Inc.  It is hoped that by doing this, our corporation will be
+merely a formalization of what we have been doing in the past, rather than
+something entirely new.
 
-As of March 1997, The XFree86 Project has revised its source/binary access and
-release policy.  The main points of the new policy are:
+As of March 1997, The XFree86 Project has revised its source/binary access
+and release policy.  The main points of the new policy are:
 
    o There will be no more time-limited public binary-only beta releases.
-     Instead we plan to increase the frequency of full public releases to about
-     four releases per year.
+     Instead we plan to increase the frequency of full public releases to
+     about four releases per year.
 
    o The source access/use is divided into three categories:
 
         o End users.  End users have access to only the source of full public
-          releases.  The main reason for this restriction is that our develop-
-          ment code often contains code from other sources which cannot be
+          releases.  The main reason for this restriction is that our devel-
+          opment code often contains code from other sources which cannot be
           released to the public immediately.
 
         o Active developers (members of the XFree86 ``developer team'').
           Active developers must formally become non-voting members of the
           XFree86 Project, and have full access to our internal development
-          source.  They are permitted to make time-limited binaries (in coordi-
-          nation with the Core Team) of the servers they are actively working
-          on available to external testers for specific testing.
+          source.  They are permitted to make time-limited binaries (in coor-
+          dination with the Core Team) of the servers they are actively work-
+          ing on available to external testers for specific testing.
 
-        o Commercial members.  Commercial members are non-voting members of The
-          XFree86 Project who donate US$5000/year to the Project.  Addition-
-          ally, companies who contribute significantly to the development
+        o Commercial members.  Commercial members are non-voting members of
+          The XFree86 Project who donate US$5000/year to the Project.  Addi-
+          tionally, companies who contribute significantly to the development
           effort of XFree86 can be awarded commercial membership by the Core
           Team on a yearly bases.  Commercial members can use the internal
-          XFree86 development source for derived binary-only products providing
-          that they take full responsibility for supporting the product, and
-          don't call it ``XFree86'' (although the derivation of the product
-          must be acknowledged in any accompanying documentation).  Binary
-          packages for the OSs we support which are simply compiled from our
-          internal source without significant added value are explicitly NOT
+          XFree86 development source for derived binary-only products provid-
+          ing that they take full responsibility for supporting the product,
+          and don't call it ``XFree86'' (although the derivation of the prod-
+          uct must be acknowledged in any accompanying documentation).
+          Binary packages for the OSs we support which are simply compiled
+          from our internal source without significant added value are
+          explicitly NOT allowed.
 
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               19
-
-
-
-          allowed.
-
-Here is a list of the organizations and individuals who have provided sponsor-
-ship to The XFree86 Project, Inc, either by financial contribution or by the
-donation of equipment and resources.  The XFree86 Project, Inc gratefully
+Here is a list of the organizations and individuals who have provided spon-
+sorship to The XFree86 Project, Inc, either by financial contribution or by
+the donation of equipment and resources.  The XFree86 Project, Inc gratefully
 acknowledges these contributions, and hopes that we can do justice to them by
 continuing to release high-quality free software for the betterment of the
 Internet community as a whole.
@@ -1246,18 +1027,6 @@ ject has been provided from its proceeds.
    o Helius, Inc. <URL:http://www.helius.com/>
 
    o Hercules Computer Technology, Inc. <URL:http://www.hercules.com/>
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               20
-
-
 
    o Ralf Hockens
 
@@ -1313,18 +1082,6 @@ README for XFree86[tm] 3.3.3.1                                               20
 
    o Tekelec Airtronic GmbH <URL:http://www.tekelec.com>, Muenchen, Germany
 
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               21
-
-
-
    o Jim Tsillas
 
    o Trans-Ameritech Enterprises, Inc., Santa Clara, CA
@@ -1342,12 +1099,11 @@ and/or equipment.  Such contributions should be tax-deductible; we will know
 for certain when the lawyers get finished with the papers.  For more informa-
 tion, contact The XFree86 Project, Inc, at <BOD@XFree86.org>
 
-
 8.  Source and binary archive sites
 
-Source patches are available to upgrade X11R6.3 PL2 from the X Consortium (now
-The Open Group) to XFree86 3.3.3.1.  Binaries for many OSs are also available.
-The distribution is available from:
+Source patches are available to upgrade X11R6.3 PL2 from the X Consortium
+(now The Open Group) to XFree86 3.3.3.1.  Binaries for many OSs are also
+available.  The distribution is available from:
 
    o ftp://ftp.XFree86.org/pub/XFree86
 
@@ -1357,18 +1113,17 @@ and the following mirror sites:
 
         o ftp://ftp2.XFree86.org/pub/XFree86 (source and binaries)
 
-        o ftp://ftp.infomagic.com/pub/mirrors/XFree86-current (source and bina-
-          ries)
+        o ftp://ftp.infomagic.com/pub/mirrors/XFree86-current (source and
+          binaries)
 
-        o ftp://ftp.rge.com/pub/X/XFree86 and http://www.rge.com/pub/X/XFree86
-          (source and binaries)
+        o ftp://ftp.rge.com/pub/X/XFree86 and
+          http://www.rge.com/pub/X/XFree86 (source and binaries)
 
         o ftp://ftp.varesearch.com/pub/mirrors/xfree86 (source and binaries)
 
         o ftp://ftp.cs.umn.edu/pub/XFree86 (source and binaries)
 
         o ftp://ftp.kernel.org/pub/mirrors/xfree86 (source and binaries)
-
 
    o Europe:
 
@@ -1379,18 +1134,6 @@ and the following mirror sites:
 
         o ftp://ftp.fee.vutbr.cz/pub/XFree86 (source patches and binaries)
 
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               22
-
-
-
         o ftp://ftp.gwdg.de/pub/xfree86/XFree86 (source and binaries)
 
         o ftp://ftp.mpi-sb.mpg.de/pub/X/mirror/ftp.xfree86.org (source and
@@ -1398,8 +1141,8 @@ README for XFree86[tm] 3.3.3.1                                               22
 
         o ftp://ftp.cs.tu-berlin.de/pub/X/XFree86 (source and binaries)
 
-        o ftp://ftp.uni-erlangen.de/pub/Linux/MIRROR.xfree86 (source and Linux
-          binaries)
+        o ftp://ftp.uni-erlangen.de/pub/Linux/MIRROR.xfree86 (source and
+          Linux binaries)
 
         o ftp://ftp.uni-stuttgart.de/pub/X11/Xfree86 (source and binaries)
 
@@ -1413,9 +1156,6 @@ README for XFree86[tm] 3.3.3.1                                               22
 
         o ftp://sunsite.doc.ic.ac.uk/packages/XFree86 (source and binaries)
 
-
-
-
    o Asia/Australia:
 
         o ftp://x.physics.usyd.edu.au/pub/XFree86 (source and binaries)
@@ -1426,161 +1166,13 @@ README for XFree86[tm] 3.3.3.1                                               22
 
         o ftp://ftp.kreonet.re.kr/pub/Linux/xfree86 (source and binaries)
 
-
 Ensure that you are getting XFree86 3.3.3.1 - some of these sites may archive
 older releases as well.  Check the RELNOTES to find which files you need to
 take from the archive.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.46 1999/01/05 07:15:48 hohndel Exp $
-
-
-
-
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.51 1999/06/23 12:37:18 hohndel Exp $
 
      $XConsortium: README.sgml /main/31 1996/10/28 05:43:24 kaleb $
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-README for XFree86[tm] 3.3.3.1                                               23
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                   CONTENTS
-
-
-
-1. What's new in XFree86 3.3.3.1 ............................................ 1
-
-2. Systems XFree86 has been tested on ....................................... 1
-
-3. Supported video-card chip-sets ........................................... 2
-
-4. Where to get more information ............................................ 5
-
-5. Credits .................................................................. 6
-
-6. Contact information ..................................................... 16
-
-7. The XFree86 Project, Inc. ............................................... 17
-
-8. Source and binary archive sites ......................................... 21
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                       i
-
-
-
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.76.2.44 1999/01/05 12:06:33 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README,v 3.76.2.48 1999/06/25 08:56:30 hohndel Exp $

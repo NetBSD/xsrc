@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiio.c,v 1.1.2.1 1998/02/01 16:41:56 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atiio.c,v 1.1.2.2 1999/07/05 09:07:33 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -33,10 +33,13 @@ CARD16 ATIIOPortCRTC_H_TOTAL_DISP, ATIIOPortCRTC_H_SYNC_STRT_WID,
        ATIIOPortCRTC_OFF_PITCH, ATIIOPortCRTC_INT_CNTL, ATIIOPortCRTC_GEN_CNTL,
        ATIIOPortDSP_CONFIG, ATIIOPortDSP_ON_OFF, ATIIOPortOVR_CLR,
        ATIIOPortOVR_WID_LEFT_RIGHT, ATIIOPortOVR_WID_TOP_BOTTOM,
-       ATIIOPortCLOCK_CNTL, ATIIOPortBUS_CNTL, ATIIOPortMEM_INFO,
-       ATIIOPortMEM_VGA_WP_SEL, ATIIOPortMEM_VGA_RP_SEL,
+       ATIIOPortTV_OUT_INDEX, ATIIOPortCLOCK_CNTL, ATIIOPortTV_OUT_DATA,
+       ATIIOPortBUS_CNTL, ATIIOPortLCD_INDEX, ATIIOPortLCD_DATA,
+       ATIIOPortMEM_INFO, ATIIOPortMEM_VGA_WP_SEL, ATIIOPortMEM_VGA_RP_SEL,
        ATIIOPortDAC_REGS, ATIIOPortDAC_CNTL,
-       ATIIOPortGEN_TEST_CNTL, ATIIOPortCONFIG_CNTL;
+       ATIIOPortHORZ_STRETCHING, ATIIOPortVERT_STRETCHING,
+       ATIIOPortGEN_TEST_CNTL, ATIIOPortLCD_GEN_CTRL,
+       ATIIOPortPOWER_MANAGEMENT, ATIIOPortCONFIG_CNTL;
 
 /* These port numbers are to be determined by ATISave & ATIRestore */
 CARD16 ATIIOPortDAC_MASK, ATIIOPortDAC_DATA,

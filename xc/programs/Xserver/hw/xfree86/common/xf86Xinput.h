@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.14.2.3 1998/11/12 11:32:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Xinput.h,v 3.14.2.4 1999/06/21 09:45:12 hohndel Exp $ */
 
 #ifndef _xf86Xinput_h
 #define _xf86Xinput_h
@@ -128,7 +128,9 @@ typedef struct _LocalDeviceRec {
     int* /* valuators */
 #endif
     );
-} LocalDeviceRec, *LocalDevicePtr;
+    float	         dxremaind;
+    float		 dyremaind;
+ } LocalDeviceRec, *LocalDevicePtr;
 
 typedef struct _DeviceAssocRec 
 {

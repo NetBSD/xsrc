@@ -1,0 +1,106 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
+
+<article>
+<!-- Information for Cyrix Chipset Users -->
+<title>Cyrix チップセットのユーザ向けの情報
+<author>The XFree86 Project Inc.
+<date>6 November 1998
+<trans>The X Japanese Documentation Project
+<tdate>10 December 1998
+<toc>
+
+<!-- Supported hardware -->
+<sect>サポートしているハードウェア <p>
+<!--
+This driver (as used in the SVGA (VGA256), VGA16 and VGA_Mono servers) 
+supports a single chipset `mediagx' that should work on the following Cyrix
+CPUs with integrated graphics:
+-->
+このドライバ(SVGA(VGA256), VGA16, VGA_MONO サーバで使われる)がサポート
+しているのは、組み込みのグラフィックス機能を持つ Cyrix 製 CPU 上で動作
+するチップセット`mediagx' だけです。これは以下の CPU を含んでいます:
+
+<itemize>
+<item>MediaGX
+<item>MediaGXi
+<item>MediaGXm
+</itemize>
+
+<!-- Features -->
+<sect>機能 <p>
+<itemize>
+<item><!-- accelerated -->
+アクセラレーションが利用できます
+<item><!-- hardware cursor -->
+ハードウェアカーソルが利用できます
+<item><!-- support color depths 1, 4, 8 and 16 -->
+色の深さ 1, 4, 8, 16 をサポートしています
+</itemize>
+
+<!-- XF86Config Option -->
+<sect>XF86Config のオプション<p>
+
+<descrip>
+<!-- <tag>Option "sw_cursor"</tag> -->
+<!-- disable the hardware cursor. -->
+<tag>Option &dquot;sw_cursor&dquot;</tag>
+ハードウェアカーソルを無効にします。
+<!-- <tag>Option "no_accel"</tag> -->
+<!-- completely disables acceleration. Usually not recommended. -->
+<tag>Option &dquot;no_accel&dquot;</tag>
+アクセラレーションを完全に無効にします。
+普通は使わない方がよいでしょう。
+</descrip>
+
+<sect>バグと機能制限<p>
+<!-- Bugs and Limitations -->
+<itemize>
+<item><!-- On some older chipsets, the driver may trigger an illegal instruction
+just after probing for the ``scratchpad size''.  If this is the case,
+email to Annius.Groenink@cwi.nl with the output of  -->
+一部の古いチップセットにおいては、「scratchpad size」を調べた直後にド
+ライバが不正な命令を出すことがあります。このような場合には、
+<verb>
+XF86_SVGA -probeonly -verbose
+</verb>
+<!-- and this will be fixed. -->
+の出力結果を添えて Annius.Groenink@cwi.nl に電子メールを送ってください。
+そうすればきっと修正されると思います。
+<item><!-- There are limitations to the modeline values that can be specified.
+Particularly, the difference between the first two horizontal
+timings (e.g. 640 656, 1024 1048) must be at least 16 and at most 24. -->
+指定できるモード行の値には制限があります。特に、最初の2つの垂直タイミ
+ング(例えば 640 656, 1024, 1048)の差は少なくとも16、かつ多くとも24でな
+ければなりません。
+<item><!-- The 4 colour server is slow due to the VGA banking mode used.
+Moreover,
+it does not work the way it is run by XF86Setup, which is probably
+due to the timing limitations. -->
+4色のサーバでは VGA バンクモードが使われるため動作が遅いです。さらに、
+XF86Setup から動作させることはできません。これはタイミングの制限のため
+だと思われます。
+</itemize>
+
+<sect>作者<p>
+<!-- Authors -->
+<itemize>
+<item>Annius Groenink <it>&lt;Annius.Groenink@cwi.nl&gt;</it>
+<item>Dirk Hohndel <it>&lt;hohndel@XFree86.org&gt;</it>
+<item><!-- Special thanks to Cyrix and Wyse for helping us with the development of
+this server. -->
+このサーバの開発に協力してくださった Cyrix と Wyse に深く感謝します。
+</itemize>
+
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/cyrix.sgml,v 1.1.2.1 1999/05/25 06:39:31 hohndel Exp $
+</verb>
+
+<sect>日本語訳について<p>
+日本語訳は X Japanese Documentation Project の藤原輝嘉 <url
+url="mailto:fujiwara@linux.or.jp"
+name="&lt;fujiwara@linux.or.jp&gt;"> が行いました。問題点の指摘やご意
+見は藤原まで御連絡ください。
+原文の著作権は XFree86 プロジェクト社にあり、日本語訳の著作権は
+X Japanese Documentation Project にあります。
+</article>
+

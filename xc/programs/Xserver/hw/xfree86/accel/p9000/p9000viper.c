@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000viper.c,v 3.11.2.2 1997/05/11 01:54:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000viper.c,v 3.11.2.3 1999/06/18 13:08:16 hohndel Exp $ */
 /*
  * Copyright 1994, Erik Nygren (nygren@mit.edu)
  *
@@ -351,6 +351,8 @@ p9000ViperPciProbe()
 
   while ((pcrp = pcrpp[i++]) != (pciConfigPtr)NULL)
     if ((pcrp->_vendor == PCI_WEITEK_VENDOR_ID) &&
+	(pcrp->_command & PCI_CMD_IO_ENABLE) &&
+	(pcrp->_command & PCI_CMD_MEM_ENABLE) &&
         (pcrp->_device == PCI_P9000_DEVICE_ID))
       break;
 

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/etc/et4000clock.c,v 3.5 1996/12/23 06:47:09 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/et4000clock.c,v 3.5.2.1 1999/05/07 00:52:05 dawes Exp $
  *
  * This is a sample clock setting program.  It will not work with all
  * ET4000 cards.  To work correctly the clocks line in XF86Config must
@@ -9,7 +9,7 @@
  *
  * This program ignores 'freq' and relies entirely on 'index'
  *
- * David Dawes  <dawes@physics.su.oz.au>
+ * David Dawes  <dawes@xfree86.org>
  * 19 December 1992
  */
 /* $XConsortium: et4000clock.c /main/7 1996/10/25 11:37:41 kaleb $ */

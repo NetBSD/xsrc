@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/etc/2key.c,v 3.4 1996/12/23 06:47:01 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/2key.c,v 3.4.2.1 1999/05/07 00:52:05 dawes Exp $
  *
  * Enable/disable the 2-key VT switching sequences for Esix SVR4
  * Note that is program *only* works for Esix SVR4.  To use this program
@@ -9,7 +9,7 @@
  * Usage:
  *         2key on|off
  *
- * David Dawes <dawes@physics.su.oz.au>  October 1992
+ * David Dawes <dawes@xfree86.org>  October 1992
  *
  */
 /* $XConsortium: 2key.c /main/3 1996/02/21 17:47:02 kaleb $ */

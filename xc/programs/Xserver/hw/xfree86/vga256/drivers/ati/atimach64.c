@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atimach64.c,v 1.1.2.2 1998/10/20 20:51:18 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/atimach64.c,v 1.1.2.3 1999/07/05 09:07:34 hohndel Exp $ */
 /*
- * Copyright 1997,1998 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
+ * Copyright 1997 through 1999 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -45,6 +45,8 @@ ATIMach64Save(ATIHWPtr save)
 
     save->crtc_off_pitch = inl(ATIIOPortCRTC_OFF_PITCH);
 
+    save->crtc_gen_cntl = inl(ATIIOPortCRTC_GEN_CNTL);
+
     save->ovr_clr = inl(ATIIOPortOVR_CLR);
     save->ovr_wid_left_right = inl(ATIIOPortOVR_WID_LEFT_RIGHT);
     save->ovr_wid_top_bottom = inl(ATIIOPortOVR_WID_TOP_BOTTOM);
@@ -69,6 +71,8 @@ ATIMach64Save(ATIHWPtr save)
 void
 ATIMach64Init(DisplayModePtr mode)
 {
+    int VDisplay;
+
     if (!mode)                          /* Fill in common data */
     {
         ATINewHWPtr->crtc_off_pitch =
@@ -82,6 +86,13 @@ ATIMach64Init(DisplayModePtr mode)
                 (SetBits(15, BUS_FIFO_WS) | BUS_FIFO_ERR_INT);
         else
             ATINewHWPtr->bus_cntl |= BUS_APER_REG_DIS;
+
+        ATINewHWPtr->mem_vga_wp_sel =
+            /* SetBits(0, MEM_VGA_WPS0) | */
+            SetBits(ATINewHWPtr->planes, MEM_VGA_WPS1);
+        ATINewHWPtr->mem_vga_rp_sel =
+            /* SetBits(0, MEM_VGA_RPS0) | */
+            SetBits(ATINewHWPtr->planes, MEM_VGA_RPS1);
 
         ATINewHWPtr->dac_cntl = inl(ATIIOPortDAC_CNTL);
         if (vga256InfoRec.depth > 8)
@@ -113,6 +124,10 @@ ATIMach64Init(DisplayModePtr mode)
         if (!mode->CrtcHAdjusted)
         {
             mode->CrtcHAdjusted = TRUE;
+            mode->CrtcHDisplay = mode->HDisplay;
+            mode->CrtcHSyncStart = mode->HSyncStart;
+            mode->CrtcHSyncEnd = mode->HSyncEnd;
+            mode->CrtcHTotal = mode->HTotal;
             mode->CrtcHDisplay >>= 3;
             mode->CrtcHSyncStart >>= 3;
             mode->CrtcHSyncEnd >>= 3;
@@ -123,9 +138,9 @@ ATIMach64Init(DisplayModePtr mode)
             mode->CrtcHTotal--;
             /* Make adjustments if sync width is out-of-bounds */
             if ((mode->CrtcHSyncEnd - mode->CrtcHSyncStart) >
-                 (int)GetBits(CRTC_H_SYNC_WID, CRTC_H_SYNC_WID))
+                 (int)MaxBits(CRTC_H_SYNC_WID))
                 mode->CrtcHSyncEnd = mode->CrtcHSyncStart +
-                    GetBits(CRTC_H_SYNC_WID, CRTC_H_SYNC_WID);
+                    MaxBits(CRTC_H_SYNC_WID);
             else if (mode->CrtcHSyncStart == mode->CrtcHSyncEnd)
                 if (mode->CrtcHDisplay < mode->CrtcHSyncStart)
                     mode->CrtcHSyncStart--;
@@ -155,9 +170,9 @@ ATIMach64Init(DisplayModePtr mode)
         mode->CrtcVTotal--;
         /* Make sure sync pulse is not too wide */
         if ((mode->CrtcVSyncEnd - mode->CrtcVSyncStart) >
-             (int)GetBits(CRTC_V_SYNC_WID, CRTC_V_SYNC_WID))
+             (int)MaxBits(CRTC_V_SYNC_WID))
             mode->CrtcVSyncEnd = mode->CrtcVSyncStart +
-                GetBits(CRTC_V_SYNC_WID, CRTC_V_SYNC_WID);
+                MaxBits(CRTC_V_SYNC_WID);
         mode->CrtcVAdjusted = TRUE;
 
         /*
@@ -169,11 +184,16 @@ ATIMach64Init(DisplayModePtr mode)
         {
             mode->Flags &= ~(V_PHSYNC | V_NHSYNC | V_PVSYNC | V_NVSYNC);
 
-            if (mode->CrtcVDisplay < (400 - 1))
+            if (ATILCDPanelID >= 0)
+                VDisplay = ATILCDVertical;
+            else
+                VDisplay = mode->CrtcVDisplay;
+
+            if (VDisplay < 400)
                 mode->Flags |= V_PHSYNC | V_NVSYNC;
-            else if (mode->CrtcVDisplay < (480 - 1))
+            else if (VDisplay < 480)
                 mode->Flags |= V_NHSYNC | V_PVSYNC;
-            else if (mode->CrtcVDisplay < (768 - 1))
+            else if (VDisplay < 768)
                 mode->Flags |= V_NHSYNC | V_NVSYNC;
             else
                 mode->Flags |= V_PHSYNC | V_PVSYNC;
@@ -279,7 +299,7 @@ ATIMach64Restore(ATIHWPtr restore)
     outl(ATIIOPortCRTC_OFF_PITCH, restore->crtc_off_pitch);
 
     /* Set pixel clock */
-    outl(ATIIOPortCLOCK_CNTL, restore->clock_cntl);
+    outl(ATIIOPortCLOCK_CNTL, restore->clock_cntl | CLOCK_STROBE);
 
     /* Load overscan registers */
     outl(ATIIOPortOVR_CLR, restore->ovr_clr);

@@ -2,7 +2,7 @@ XCOMM $XConsortium: os2Lib.rules /main/1 1996/10/31 14:47:29 kaleb $
 
 
 
-XCOMM $XFree86: xc/config/cf/os2Lib.rules,v 3.7.2.1 1998/10/11 12:34:49 hohndel Exp $
+XCOMM $XFree86: xc/config/cf/os2Lib.rules,v 3.7.2.2 1999/07/13 07:09:36 hohndel Exp $
 
 /*
  * OS2/EMX shared library rules (DLL version)
@@ -242,3 +242,10 @@ LibraryTargetNameSuffix(libname,_p): objlist $(EXTRALIBRARYDEPS)	@@\
 	_LinkBuildLibrary($@)
 
 #endif /* ProfiledLibraryTarget */
+
+/*
+define ExtraLibMkdir() $(_NULLCMD_)
+define ExtraObjCompile(options) $(_NULLCMD_)
+define ExtraObjCplusplusCompile(options) $(_NULLCMD_)
+define ExtraCleanDir() $(_NULLCMD_)
+*/

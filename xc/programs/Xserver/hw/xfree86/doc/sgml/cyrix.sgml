@@ -3,7 +3,7 @@
 <article>
 <title>Information for Cyrix Chipset Users
 <author>The XFree86 Project Inc.
-<date>6 November 1998
+<date>22 June 1999
 <toc>
 
 <sect>Supported hardware <p>
@@ -37,7 +37,7 @@ completely disables acceleration. Usually not recommended.
 <itemize>
 <item>On some older chipsets, the driver may trigger an illegal instruction
 just after probing for the ``scratchpad size''.  If this is the case,
-email to Annius.Groenink@cwi.nl with the output of 
+email to hecker@cat.dfrc.nasa.gov with the output of 
 <verb>
 XF86_SVGA -probeonly -verbose
 </verb>
@@ -45,22 +45,36 @@ and this will be fixed.
 <item>There are limitations to the modeline values that can be specified.
 Particularly, the difference between the first two horizontal
 timings (e.g. 640 656, 1024 1048) must be at least 16 and at most 24.
+The modeline values are not used in the 3.3.4 server since there is a
+static array used to load the registers.  The modeline only identifies
+that a particular resolution is desired.  The standard VESA modes up
+to 1280x768 are supported.  For more specific information, consult
+the source code.
 <item>The 4 colour server is slow due to the VGA banking mode used.
 Moreover,
 it does not work the way it is run by XF86Setup, which is probably
 due to the timing limitations.
+<item>The 3.3.4 server MAY totally hang the machine at times.  It is
+reported to be stable on a BSD platform using twm.  It has crashed
+when using resolutions greater than 800x600 on a Linux (Debian 
+based) system using wm as the window manager.  The safest course is
+to use the 3.3.3.1 server instead.  Efforts are under way to resolve
+this issue and provide a more robust server under the 4.x release.
+
 </itemize>
 
 <sect>Authors<p>
 <itemize>
 <item>Annius Groenink <it>&lt;Annius.Groenink@cwi.nl&gt;</it>
 <item>Dirk Hohndel <it>&lt;hohndel@XFree86.org&gt;</it>
+<item>Brian Falardeau 
 <item>Special thanks to Cyrix and Wyse for helping us with the development of
-this server.
+this server.  Brian, a Cyrix employee, made the 3.3.4 update possible since
+the new 4.0 server has been our top priority.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/cyrix.sgml,v 1.1.2.3 1998/11/07 13:37:52 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/cyrix.sgml,v 1.1.2.4 1999/06/24 06:16:44 hohndel Exp $
 </verb>
 
 </article>

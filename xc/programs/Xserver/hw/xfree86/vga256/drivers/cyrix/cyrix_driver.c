@@ -1,8 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cyrix/cyrix_driver.c,v 1.1.2.6 1998/11/06 09:47:08 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cyrix/cyrix_driver.c,v 1.1.2.7 1999/06/23 12:37:22 hohndel Exp $ */
 /*
+ * Copyright 1999 by Brian Falardeau 
  * Copyright 1998 by Annius V. Groenink (A.V.Groenink@zfc.nl, avg@cwi.nl),
  *                   Dirk H. Hohndel (hohndel@suse.de),
  *                   Portions: the GGI project & confidential CYRIX databooks.
+ *
+ * Substitute Brian Falardeau into a copy of the following legal jargon...
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,12 +25,16 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XConsortium: $ */
 
 /*************************************************************************/
 
 /*
    Log for the cyrix driver source as a whole
+
+   May 1999, Brian Falardeau:
+   - Fixed interaction with SoftVGA for setting 2K pitch at 1280x1024.
+   - Added CRTC tables for 60 Hz and 75 Hz modes.
+   - Removed enabling display compression directly for VSA1.
 
    5th Nov 1998 avg  - Fixed blit buffer organization using CPU_WRITE
                        instruction.  Support for older chipsets (color
@@ -108,50 +115,35 @@ extern vgaPCIInformation *vgaPCIInfo;
 #include "extensions/xf86dgastr.h"
 #endif
 
-#ifdef XF86VGA16
-#define MONOVGA
-#endif
 
-#if !defined(MONOVGA) && !defined(XF86VGA16)
 #include "vga256.h"
-#endif
-
 #include "cyrix.h"
 
 pciTagRec CyrixPciTag;
 extern vgaHWCursorRec vgaHWCursor;
 
+#define NUM_STD_CRTC_REGS 25
+#define NUM_EXT_CRTC_REGS 16
+
 typedef struct {
 	vgaHWRec std; /* IBM VGA */
 	struct vgaCYRIXext
-	{	/* extended SoftVGA registers */
-		unsigned char VerticalTimingExtension;
-		unsigned char ExtendedAddressControl;
-		unsigned char ExtendedOffset;
-		unsigned char ExtendedColorControl;
-		unsigned char DisplayCompression;
-		unsigned char DriverControl;
-		unsigned char DACControl;
-		unsigned char ClockControl;
-		unsigned char CrtClockFrequency;
-		unsigned char CrtClockFrequencyFraction;
-		unsigned char RefreshRate;
+	{	
+		/* override of miscellaneous output register value */
 
-		/* display controller hardware registers */
-		CARD32 DcGeneralCfg;
-		CARD32 DcCursStOffset;
-		CARD32 DcCbStOffset;
-		CARD32 DcLineDelta;
-		CARD32 DcBufSize;
-		CARD32 DcCursorX;
-		CARD32 DcCursorY;
-		CARD32 DcCursorColor;
+		unsigned char miscOutput;
+
+		/* override of standard CRTC register values */
+
+		unsigned char stdCRTCregs[NUM_STD_CRTC_REGS];
+
+		/* extended CRTC register values (specific to MediaGX) */
+
+		unsigned char extCRTCregs[NUM_EXT_CRTC_REGS];
 
 		/* graphics pipeline registers */
-		CARD32 GpBlitStatus;
 
-		/* save area for cursor image */
-		char cursorPattern[256];
+		CARD32 GpBlitStatus;
 	}	ext;
 } vgaCYRIXRec, *vgaCYRIXPtr;
 
@@ -166,11 +158,9 @@ static void *	CYRIXSave();
 static void	CYRIXRestore();
 static void	CYRIXAdjust();
 
-#ifndef MONOVGA
 static void	CYRIXFbInit();
 static Bool	CYRIXScreenInit();
 static Bool	CYRIXPitchAdjust();
-#endif
 
 void	 CYRIXSetRead();
 void	 CYRIXSetWrite();
@@ -187,11 +177,7 @@ vgaVideoChipRec CYRIX = {
 	CYRIXAdjust,
 	vgaHWSaveScreen,
 	(void (*)())NoopDDA,     /* CYRIXGetMode */
-#ifndef MONOVGA
 	CYRIXFbInit,
-#else
-	(void (*)())NoopDDA,     /* CYRIXFbInit */
-#endif
 	CYRIXSetRead,
 	CYRIXSetWrite,
 	CYRIXSetReadWrite,
@@ -205,9 +191,9 @@ vgaVideoChipRec CYRIX = {
 	VGA_NO_DIVIDE_VERT,      /* ChipInterlaceType */
 	{0,},                    /* ChipOptionFlags */
 	8,                       /* ChipRounding */
-	FALSE,                   /* ChipUseLinearAddressing */
-	0,                       /* ChipLinearBase */
-	0,                       /* ChipLinearSize */
+	TRUE,                    /* ChipUseLinearAddressing */
+	0x40800000,              /* ChipLinearBase */
+	0x001FFFFF,              /* ChipLinearSize */
 	TRUE,                    /* ChipHas16bpp */
 	FALSE,                   /* ChipHas24bpp */
 	FALSE,                   /* ChipHas32bpp */
@@ -220,6 +206,10 @@ vgaVideoChipRec CYRIX = {
 /* access to the MediaGX video hardware registers */
 
 char* GXregisters;
+
+int CYRIXvsaversion;			/* VSA version */
+#define CYRIX_VSA1	1
+#define CYRIX_VSA2  2
 
 int CYRIXcbufferAddress;      /* relative to video base */
 int CYRIXoffscreenAddress;
@@ -234,6 +224,94 @@ int CYRIXbltBufSize;
 int CYRIXisOldChipRevision;
 
 #define newstate ((vgaCYRIXPtr)vgaNewVideoState)
+
+typedef struct {
+	int xsize;
+	int ysize;
+	int clock;
+	unsigned char miscOutput;
+	unsigned char stdCRTCregs[NUM_STD_CRTC_REGS];
+	unsigned char extCRTCregs[NUM_EXT_CRTC_REGS];
+} vgaCYRIXmode;
+
+vgaCYRIXmode CYRIXmodes[] =
+{
+/*------------------------------------------------------------------------------*/
+	{ 640, 480,         /* 640x480 */
+	  25,               /* 25 MHz clock = 60 Hz refresh rate */
+	  0xE3,             /* miscOutput register */
+	{ 0x5F, 0x4F, 0x50, 0x82, 0x54, 0x80, 0x0B, 0x3E, /* standard CRTC */ 
+	  0x80, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	  0xEA, 0x0C, 0xDF, 0x50, 0x00, 0xE7, 0x04, 0xE3, 0xFF },    
+	{ 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, /* extended CRTC */
+	  0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x00, 0x00 } },
+/*------------------------------------------------------------------------------*/
+	{ 800, 600,         /* 800x600 */
+	  40,               /* 40 MHz clock = 60 Hz refresh rate */
+	  0x23,             /* miscOutput register */
+	{ 0x7F, 0x63, 0x64, 0x82, 0x6B, 0x1B, 0x72, 0xF0, /* standard CRTC */ 
+	  0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	  0x59, 0x0D, 0x57, 0x64, 0x00, 0x57, 0x73, 0xE3, 0xFF },    
+	{ 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, /* extended CRTC */
+	  0x00, 0x00, 0x01, 0x03, 0xA0, 0x50, 0x00, 0x00 } },
+/*------------------------------------------------------------------------------*/
+	{ 1024, 768,        /* 1024x768 */
+	  65,               /* 65 MHz clock = 60 Hz refresh rate */
+	  0xE3,             /* miscOutput register */
+	{ 0xA3, 0x7F, 0x80, 0x86, 0x85, 0x96, 0x24, 0xF5, /* standard CRTC */ 
+	  0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	  0x04, 0x0A, 0xFF, 0x80, 0x00, 0xFF, 0x25, 0xE3, 0xFF },    
+	{ 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, /* extended CRTC */
+	  0x00, 0x00, 0x01, 0x03, 0x80, 0x41, 0x00, 0x00 } },
+/*------------------------------------------------------------------------------*/
+	{ 1280, 1024,       /* 1280x1024 */
+	  108,              /* 108 MHz clock = 60 Hz refresh rate */
+	  0x23,             /* miscOutput register */
+	{ 0xCF, 0x9F, 0xA0, 0x92, 0xAA, 0x19, 0x28, 0x52, /* standard CRTC */ 
+	  0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	  0x01, 0x04, 0xFF, 0xA0, 0x00, 0x00, 0x29, 0xE3, 0xFF },    
+	{ 0x00, 0x51, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, /* extended CRTC */
+	  0x00, 0x00, 0x01, 0x03, 0x80, 0x6C, 0x00, 0x00 } },
+/*------------------------------------------------------------------------------*/
+	{ 640, 480,         /* 640x480 */
+	  31,               /* 31.5 MHz clock = 75 Hz refresh rate */
+	  0xE3,             /* miscOutput register */
+	{ 0x64, 0x4F, 0x4F, 0x88, 0x54, 0x9B, 0xF2, 0x1F, /* standard CRTC */ 
+	  0x80, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	  0xE1, 0x04, 0xDF, 0x50, 0x00, 0xDF, 0xF3, 0xE3, 0xFF },    
+	{ 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, /* extended CRTC */
+	  0x00, 0x00, 0x01, 0x03, 0xA0, 0x3F, 0x00, 0x00 } },
+/*------------------------------------------------------------------------------*/
+  	{ 800, 600,         /* 800x600 */
+	  99,               /* 99 MHz clock = 75 Hz refresh rate */
+	  0x23,             /* miscOutput register */
+	{ 0x7F, 0x63, 0x63, 0x83, 0x68, 0x11, 0x6F, 0xF0, /* standard CRTC */ 
+	  0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	  0x59, 0x1C, 0x57, 0x64, 0x00, 0x57, 0x70, 0xE3, 0xFF },    
+	{ 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, /* extended CRTC */
+	  0x00, 0x00, 0x01, 0x03, 0xA0, 0x63, 0x00, 0x00 } },
+/*------------------------------------------------------------------------------*/
+	{ 1024, 768,        /* 1024x768 */
+	  79,               /* 79 MHz clock = 75 Hz refresh rate */
+	  0xE3,             /* miscOutput register */
+	{ 0x9F, 0x7F, 0x7F, 0x83, 0x84, 0x8F, 0x1E, 0xF5, /* standard CRTC */ 
+	  0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	  0x01, 0x04, 0xFF, 0x80, 0x00, 0xFF, 0x1F, 0xE3, 0xFF },    
+	{ 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, /* extended CRTC */
+	  0x00, 0x00, 0x01, 0x03, 0x80, 0x4F, 0x00, 0x00 } },
+/*------------------------------------------------------------------------------*/
+	{ 1280, 1024,       /* 1280x1024 */
+	  135,              /* 135 MHz clock = 75 Hz refresh rate */
+	  0x23,             /* miscOutput register */
+	{ 0xCE, 0x9F, 0x9F, 0x92, 0xA4, 0x15, 0x28, 0x52, /* standard CRTC */ 
+	  0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	  0x01, 0x04, 0xFF, 0xA0, 0x00, 0x00, 0x29, 0xE3, 0xFF },    
+	{ 0x00, 0x51, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, /* extended CRTC */
+	  0x00, 0x00, 0x01, 0x03, 0x80, 0x87, 0x00, 0x00 } },
+/*------------------------------------------------------------------------------*/
+};
+
+#define NUM_CYRIX_MODES sizeof(CYRIXmodes)/sizeof(vgaCYRIXmode)
 
 static char *
 CYRIXIdent(n)
@@ -400,7 +478,6 @@ CYRIXProbe()
 	vga256InfoRec.bankedMono = TRUE;
 	OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &vga256InfoRec.clockOptions);
 
-#ifndef MONOVGA
 	/* define option set valid for the driver */
 	OFLG_SET(OPTION_SW_CURSOR, &CYRIX.ChipOptionFlags);
 	OFLG_SET(OPTION_HW_CURSOR, &CYRIX.ChipOptionFlags);
@@ -419,13 +496,12 @@ CYRIXProbe()
 	CYRIX.ChipLinearSize  = (1024 * vga256InfoRec.videoRam);
 
 	CYRIX.ChipUseLinearAddressing = TRUE;
-#endif
 
 	/* map the entire area from GX_BASE (scratchpad area)
 	   up to the end of the control registers */
 	GXregisters = (char*)xf86MapVidMem(vga256InfoRec.scrnIndex,
 				    EXTENDED_REGION,
-				    (void*)physbase, 0x9000);
+				    (void*)physbase, 0x20000);
 
 	if (!GXregisters)
 	{	ErrorF("%s %s: Cannot map hardware registers\n",
@@ -433,27 +509,80 @@ CYRIXProbe()
 		goto probeFailed;
 	}
 
+	/* check VSA version */
+	/* VSA2 contains a "CX" signature at registers 0x35 and 0x36. */
+	/* The SoftVGA interface changed slightly for VSA2.  Originally, */
+	/* VSA2 was intended for MXi only, but it may someday be */
+	/* provided for MediaGX systems as well. */
+
+	CYRIXvsaversion = CYRIX_VSA2;
+	outb(vgaIOBase + 4, 0x35);
+	if (inb(vgaIOBase + 5) != 'C') CYRIXvsaversion = CYRIX_VSA1;
+	outb(vgaIOBase + 4, 0x36);
+	if (inb(vgaIOBase + 5) != 'X') CYRIXvsaversion = CYRIX_VSA1;
+	if (CYRIXvsaversion == CYRIX_VSA1)
+	{
+		ErrorF("%s %s: VSA1 detected\n", 
+			XCONFIG_PROBED, vga256InfoRec.name);
+	}
+	else
+	{
+		ErrorF("%s %s: VSA2 detected\n", 
+			XCONFIG_PROBED, vga256InfoRec.name);
+	}
 	return(TRUE);
 }
 
+/*------------------------------------------------------------------------*\
+** FbInit()
+** 
+** From README file: "The FbInit() function is required for drivers with
+** accelerated graphics support.  It is used to replace default cfb.banked
+** functions with accelerated chip-specific versions.
+**
+** For the Cyrix driver, this routine is also used to allocate video 
+** memory.  This is more complicated than it needs to be...
+**
+** For VSA1, SoftVGA manages all of graphics memory, including the 
+** compression buffer, cursor buffer, and offscreen memory.  The driver 
+** should not allocate memory itself.  For offscreen memory it reads 
+** registers 0x3C and 0x3D.  For the cursor buffer it reads the hardware 
+** register after validating a mode.  For compression, it just sets bit 0
+** of register 0x49 if it wants to use compression, and SoftVGA will 
+** enable it if memory has been allocated.
+**
+** This model, however, breaks down for this driver.  There is a bug in 
+** SoftVGA that keeps the 0x3C register from working properly.  This bug
+** also prevents compression from being enabled when using a virtual 
+** desktop.  This driver also cannot use the memory past 2 Meg, which 
+** effects the memory calculation. 
+**
+** Therefore, this driver does what it is not supposed to and allocates
+** video memory itself.  But, this is required due to bugs in SoftVGA and,
+** as it turns out, works out fine (with limiting compression use).
+**
+** For VSA2, the driver is supposed to do this allocation itself.
+\*------------------------------------------------------------------------*/
 
-#ifndef MONOVGA
 static void
 CYRIXFbInit()
 {	int lineDelta    = vga256InfoRec.displayWidth * (vgaBitsPerPixel / 8);
 	int virtualDelta = vga256InfoRec.virtualX * (vgaBitsPerPixel / 8);
+	int base;
 
 	vgaSetScreenInitHook(CYRIXScreenInit);
 
+	/* always put the cursor at the end of video memory. */
+
+	CYRIXcursorAddress = CYRIX.ChipLinearSize - 256;
+
 	/* offscreen memory is, normally, right after the frame buffer;
-	   always put the cursor at the end of video memory.
-	   
 	   (It would be nice to use the ignored 64KB block at the end of
 	   the video memory (2112 - 2048) for the hardware cursor, but
 	   it is not mapped.  This will not be a problem in Xfree 3.9 */
+
 	CYRIXoffscreenAddress = (lineDelta * vga256InfoRec.virtualY);
-	CYRIXcursorAddress    = CYRIX.ChipLinearSize - 256;
-	CYRIXoffscreenSize    = CYRIXcursorAddress - CYRIXoffscreenAddress;
+	CYRIXoffscreenSize = CYRIXcursorAddress - CYRIXoffscreenAddress;
 
 	/* if there is enough room between lines, put the compression
 	   buffer there */
@@ -462,7 +591,7 @@ CYRIXFbInit()
 		CYRIXcbLineDelta    = (lineDelta >> 2);
 		if (xf86Verbose > 1)
 			ErrorF("%s %s: Interleaving frame buffer and compression buffer\n",
-			       XCONFIG_PROBED, vga256InfoRec.name);
+				   XCONFIG_PROBED, vga256InfoRec.name);
 	}
 	/* otherwise, put it directly after the virtual frame */
 	else
@@ -471,7 +600,7 @@ CYRIXFbInit()
 		if (cbuffer_size > CYRIXoffscreenSize)
 		{	CYRIXcbLineDelta  =  0;
 			ErrorF("%s %s: No room for the compression buffer\n",
-			       XCONFIG_PROBED, vga256InfoRec.name);
+				   XCONFIG_PROBED, vga256InfoRec.name);
 		}
 		else
 		{	CYRIXcbufferAddress    = CYRIXoffscreenAddress;
@@ -480,25 +609,43 @@ CYRIXFbInit()
 			CYRIXoffscreenSize    -= cbuffer_size;
 	}	}
 
-        /* call CYRIXAccelInit to setup the XAA accelerated functions */
+	/* print results of offscreen memory configuration */
+
+	if (CYRIXoffscreenSize <= 0)
+	{
+		ErrorF("%s %s: No offscreen memory available.\n", 
+			XCONFIG_PROBED, vga256InfoRec.name);
+	}
+	else
+	{
+		ErrorF("%s %s: Offscreen memory from 0x%8.8X-0x%8.8X\n",
+			XCONFIG_PROBED, vga256InfoRec.name, 
+			CYRIXoffscreenAddress, 
+			CYRIXoffscreenAddress+CYRIXoffscreenSize-1);
+	}
+
+    /* call CYRIXAccelInit to setup the XAA accelerated functions */
+
 	if (!OFLG_ISSET(OPTION_NOACCEL, &vga256InfoRec.options))
 		CYRIXAccelInit();
 
 	/* install hardware cursor routines */
+
 	if (OFLG_ISSET(OPTION_HW_CURSOR, &vga256InfoRec.options))
-	{	if (CYRIXoffscreenSize >= 0)
+	{	if (CYRIXoffscreenSize > 0)
 		{	vgaHWCursor.Initialized = TRUE;
 			vgaHWCursor.Init = CYRIXCursorInit;
 			vgaHWCursor.Restore = CYRIXRestoreCursor;
 			vgaHWCursor.Warp = CYRIXWarpCursor;
 			vgaHWCursor.QueryBestSize = CYRIXQueryBestSize;
-			if (xf86Verbose)
-		           ErrorF("%s %s: Using hardware cursor\n",
-		                  XCONFIG_PROBED, vga256InfoRec.name);
+			ErrorF("%s %s: Using hardware cursor at %8.8X\n",
+				XCONFIG_PROBED, vga256InfoRec.name, CYRIXcursorAddress);
 		}
 		else
+		{
 			ErrorF("%s %s: No room for hardware cursor\n",
-		               XCONFIG_PROBED, vga256InfoRec.name);
+				XCONFIG_PROBED, vga256InfoRec.name);
+		}
 	}
 }
 
@@ -549,7 +696,6 @@ CYRIXPitchAdjust()
 
 	return pitch;
 }
-#endif /* not MONOVGA */
 
 
 static void
@@ -601,210 +747,121 @@ CYRIXmarkLinesDirty()
 
 static void
 CYRIXresetVGA()
-{	unsigned char temp;
-	/* switch off compression and cursor the hard way */
-	GX_REG(DC_UNLOCK)  = DC_UNLOCK_VALUE;
-	GX_REG(DC_GENERAL_CFG) &= ~(DC_GCFG_CMPE | DC_GCFG_DECE | DC_GCFG_FDTY | DC_GCFG_CURE);
-	GX_REG(DC_UNLOCK)  = 0;
-	CYRIXmarkLinesDirty();
+{
+	int i;
 
 	/* reset SoftVGA extensions to standard VGA behaviour */
-	outb(vgaIOBase + 4, CrtcExtendedAddressControl);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, temp & 0xf8);
-	outb(vgaIOBase + 4, CrtcExtendedStartAddress);
-	outb(vgaIOBase + 5, 0x00);
-	outb(vgaIOBase + 4, CrtcWriteMemoryAperture);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, temp & 0xe0);
-	outb(vgaIOBase + 4, CrtcReadMemoryAperture);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, temp & 0xe0);
-	outb(vgaIOBase + 4, CrtcDriverControl);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, temp & 0xfe);
-	outb(vgaIOBase + 4, CrtcDisplayCompression);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, temp & 0xf0);
+
+	for (i = 0; i < NUM_EXT_CRTC_REGS; i++)
+	{
+		outb(vgaIOBase + 4, 0x40 + i);
+		outb(vgaIOBase + 5, 0x00);
+	}
 }
 
 static void
 CYRIXRestore(restore)
 vgaCYRIXPtr restore;
-{	unsigned char temp;
-	vgaProtect(TRUE);		/* Blank the screen */
+{	unsigned char i, temp, temp2;
+	unsigned long value;
 
-	/* it would be ideal to be able to use the ModeSwitchControl
-	   register to protect SoftVGA from reading the configuration
-	   before all registers have been written.  But that bit must be
-	   set somewhere in the middle of vgaHWRestore (after restoring
-	   the font). Luckily things seem to work without it. */
+	/* unlock extended CRTC registers */
+
+	outb(vgaIOBase + 4, 0x30);
+	outb(vgaIOBase + 5, 0x57);
+	outb(vgaIOBase + 5, 0x4C);
+
+	/* SIGNAL THE BEGINNING OF THE MODE SWITCH 
+       SoftVGA will hold off validating the back end hardware. */
+
+	outb(vgaIOBase + 4, CrtcModeSwitchControl);
+	outb(vgaIOBase + 5, 0x01);
 
 	/* restore standard VGA portion */
+
 	CYRIXresetVGA();
 	vgaHWRestore((vgaHWPtr)restore);
-	CYRIXmarkLinesDirty();
 
+	/* override restored miscellaneous output regiter value */
+	
+	outb(0x3C2, restore->ext.miscOutput);
+
+	/* override restored standard CRTC register values */
+
+	outb(vgaIOBase + 4, 0x11); 
+	outb(vgaIOBase + 5, 0x00);
+	for (i = 0; i < NUM_STD_CRTC_REGS; i++)
+	{
+		outb(vgaIOBase + 4, i);
+		outb(vgaIOBase + 5, restore->ext.stdCRTCregs[i]);
+	}
+	
 	/* restore SoftVGA extended registers */
-	outb(vgaIOBase + 4, CrtcDriverControl);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, (restore->ext.DriverControl & 0x01)
-	                  | (temp & 0xfe));
 
-	outb(vgaIOBase + 4, CrtcVerticalTimingExtension);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, (restore->ext.VerticalTimingExtension & 0x55)
-	                  | (temp & 0xaa));
-
-	outb(vgaIOBase + 4, CrtcExtendedAddressControl);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, (restore->ext.ExtendedAddressControl & 0x07)
-	                  | (temp & 0xf8));
-
-	outb(vgaIOBase + 4, CrtcExtendedOffset);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, (restore->ext.ExtendedOffset & 0x03)
-	                  | (temp & 0xfc));
-
-	outb(vgaIOBase + 4, CrtcExtendedColorControl);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, (restore->ext.ExtendedColorControl & 0x07)
-	                  | (temp & 0xf8));
-
-	outb(vgaIOBase + 4, CrtcDisplayCompression);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, (restore->ext.DisplayCompression & 0x0f)
-	                  | (temp & 0xf0));
-
-	outb(vgaIOBase + 4, CrtcDACControl);
-	temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, (restore->ext.DACControl & 0x0e)
-	                  | (temp & 0xf1));
-
-	if (restore->std.NoClock >= 0)
-	{	outb(vgaIOBase + 4, CrtcClockControl);
-		temp = inb(vgaIOBase + 5);
-		outb(vgaIOBase + 5, (restore->ext.ClockControl & 0xb0)
-		                  | (temp & 0x4f));
-
-		outb(vgaIOBase + 4, CrtcClockFrequency);
-		outb(vgaIOBase + 5, restore->ext.CrtClockFrequency);
-
-		outb(vgaIOBase + 4, CrtcClockFrequencyFraction);
-		outb(vgaIOBase + 5, restore->ext.CrtClockFrequencyFraction);
-
-		outb(vgaIOBase + 4, CrtcRefreshRate);
-		outb(vgaIOBase + 5, restore->ext.RefreshRate);
+	for (i = 0; i < NUM_EXT_CRTC_REGS; i++)
+	{
+		outb(vgaIOBase + 4, 0x40+i);
+		outb(vgaIOBase + 5, restore->ext.extCRTCregs[i]);
 	}
 
-	/* let SoftVGA programming settle before we access DC registers,
-	   but don't wait too long */
-	usleep(1000);
-	CYRIXmarkLinesDirty();
+	/* signal the end of the mode switch */
 
-	/* restore display controller hardware registers */
-#ifndef MONOVGA
-#define DCFG_MASK       (DC_GCFG_FDTY | DC_GCFG_DECE | DC_GCFG_CMPE)
-#define GPBS_MASK       (BC_16BPP | BC_FB_WIDTH_2048)
+	outb(vgaIOBase + 4, CrtcModeSwitchControl);
+	outb(vgaIOBase + 5, 0x00);
 
-	GX_REG(DC_UNLOCK) = DC_UNLOCK_VALUE;
+	/* wait until SoftVGA has validated the mode.
+	   This is for VSA1 only, where SoftVGA waits until the next
+	   vertical blank to recalculate the hardware state.  For VSA2
+	   the hardware us updated immediately, so this is not needed. 
+	   THIS MUST BE DONE FOR VSA1 before loading the GP_BLT_STATUS
+	   register, otherwise SoftVGA will override the value. */
 
-	GX_REG(DC_CURS_ST_OFFSET) = restore->ext.DcCursStOffset;
-	GX_REG(DC_CB_ST_OFFSET)  = restore->ext.DcCbStOffset;
-	GX_REG(DC_LINE_DELTA)    = (GX_REG(DC_LINE_DELTA) & 0xFFC00FFF)
-	                         | (restore->ext.DcLineDelta & 0x003FF000);
-	GX_REG(DC_BUF_SIZE)      = (GX_REG(DC_BUF_SIZE) & 0xFFFF01FF)
-                                 | (restore->ext.DcBufSize & 0x0000FE00);
-	GX_REG(DC_CURSOR_X)      = restore->ext.DcCursorX;
-	GX_REG(DC_CURSOR_Y)      = restore->ext.DcCursorY;
-	GX_REG(DC_CURSOR_COLOR)  = restore->ext.DcCursorColor;
+	if (CYRIXvsaversion == CYRIX_VSA1)
+	{
+		outb(vgaIOBase + 4, 0x33); 
+		while(inb(vgaIOBase + 5) & 0x80); 
+	}
 
-	GX_REG(DC_GENERAL_CFG)   = (GX_REG(DC_GENERAL_CFG) & (~DCFG_MASK))
-	                         | (restore->ext.DcGeneralCfg & DCFG_MASK);
+	/* overrite what SoftVGA may have stored into GP_BLIT_STATUS */
 
-	GX_REG(DC_UNLOCK) = 0;
-
-	GX_REG(GP_BLIT_STATUS)   = (GX_REG(GP_BLIT_STATUS) & (~GPBS_MASK))
-	                         | (restore->ext.GpBlitStatus & GPBS_MASK);
-
-	/* restore cursor pattern */
-	if (restore->ext.DcCursStOffset < 1024 * vga256InfoRec.videoRam)
-		memcpy((char*)vgaLinearBase + restore->ext.DcCursStOffset,
-		       restore->ext.cursorPattern, 256);
-#endif
-
-	vgaProtect(FALSE);		/* Turn on screen */
+	GX_REG(GP_BLIT_STATUS) = restore->ext.GpBlitStatus;
 }
 
 static void *
 CYRIXSave(save)
 vgaCYRIXPtr save;
-{	struct vgaCYRIXext ext;
+{	unsigned char i;
+	struct vgaCYRIXext ext;
 
-#ifndef MONOVGA
+	/* save miscellaneous output register */
+
+	ext.miscOutput = inb(0x3CC);
+
+	/* save standard CRTC registers */
+
+	for (i = 0; i < NUM_STD_CRTC_REGS; i++)
+	{
+		outb(vgaIOBase + 4, i);
+		ext.stdCRTCregs[i] = inb(vgaIOBase + 5);
+	}
+
+	/* save extended CRTC registers */
+
+	for (i = 0; i < NUM_EXT_CRTC_REGS; i++)
+	{
+		outb(vgaIOBase + 4, 0x40+i);
+		ext.extCRTCregs[i] = inb(vgaIOBase + 5);
+	}
+
 	/* save graphics pipeline registers */
+
 	ext.GpBlitStatus   = GX_REG(GP_BLIT_STATUS);
 
-	/* save display controller hardware registers */
-	GX_REG(DC_UNLOCK)  = DC_UNLOCK_VALUE;
-	ext.DcGeneralCfg   = GX_REG(DC_GENERAL_CFG);
-	ext.DcCursStOffset = GX_REG(DC_CURS_ST_OFFSET);
-	ext.DcCbStOffset   = GX_REG(DC_CB_ST_OFFSET);
-	ext.DcLineDelta    = GX_REG(DC_LINE_DELTA);
-	ext.DcBufSize      = GX_REG(DC_BUF_SIZE);
-	ext.DcCursorX      = GX_REG(DC_CURSOR_X);
-	ext.DcCursorY      = GX_REG(DC_CURSOR_Y);
-	ext.DcCursorColor  = GX_REG(DC_CURSOR_COLOR);
-	GX_REG(DC_UNLOCK)  = 0;
-
-	/* save cursor pattern.
-	   In the 3.3.1 solution, we don't need to do this
-	   if it is in the extra 64KB block of frame buffer memory
-	   that we ignore (and is not mapped anyway) */
-	if (ext.DcCursStOffset < 1024 * vga256InfoRec.videoRam)
-		memcpy(ext.cursorPattern,
-		       (char*)vgaLinearBase + ext.DcCursStOffset, 256);
-#endif
-
-	/* save SoftVGA extended registers */
-	outb(vgaIOBase + 4, CrtcVerticalTimingExtension);
-	ext.VerticalTimingExtension = inb(vgaIOBase + 5);
-
-	outb(vgaIOBase + 4, CrtcExtendedAddressControl);
-	ext.ExtendedAddressControl = inb(vgaIOBase + 5);
-
-	outb(vgaIOBase + 4, CrtcExtendedOffset);
-	ext.ExtendedOffset = inb(vgaIOBase + 5);
-
-	outb(vgaIOBase + 4, CrtcExtendedColorControl);
-	ext.ExtendedColorControl = inb(vgaIOBase + 5);
-
-	outb(vgaIOBase + 4, CrtcDisplayCompression);
-	ext.DisplayCompression = inb(vgaIOBase + 5);
-
-	outb(vgaIOBase + 4, CrtcDriverControl);
-	ext.DriverControl = inb(vgaIOBase + 5);
-
-	outb(vgaIOBase + 4, CrtcDACControl);
-	ext.DACControl = inb(vgaIOBase + 5);
-
-	outb(vgaIOBase + 4, CrtcClockControl);
-	ext.ClockControl = inb(vgaIOBase + 5);
-
-	outb(vgaIOBase + 4, CrtcClockFrequency);
-	ext.CrtClockFrequency = inb(vgaIOBase + 5);
-
-	outb(vgaIOBase + 4, CrtcClockFrequencyFraction);
-	ext.CrtClockFrequencyFraction = inb(vgaIOBase + 5);
-
-	outb(vgaIOBase + 4, CrtcRefreshRate);
-	ext.RefreshRate = inb(vgaIOBase + 5);
-
 	/* save standard VGA portion */
+
 	CYRIXresetVGA();
 	save = (vgaCYRIXPtr)vgaHWSave((vgaHWPtr)save, sizeof(vgaCYRIXRec));
 	save->ext = ext;
-
 	return ((void *) save);
 }
 
@@ -812,101 +869,108 @@ vgaCYRIXPtr save;
 static Bool
 CYRIXInit(mode)
 DisplayModePtr mode;
-{	int offset_shift = (vgaBitsPerPixel == 16) ? 2 :
+{	int i, mode_index;
+	int clock = vga256InfoRec.clock[mode->Clock] / 1000;
+	int min, diff;
+	int offset_shift = (vgaBitsPerPixel == 16) ? 2 :
                            (vgaBitsPerPixel == 8) ? 3 : 4;
 	int line_offset = vga256InfoRec.displayWidth >> offset_shift;
 
 	/* initialize standard VGA portion */
+
 	if (!vgaHWInit(mode,sizeof(vgaCYRIXRec)))
 		return(FALSE);
 
-	newstate->std.CRTC[19] = line_offset;
+	/* search for specified mode in the table */
+    /* Need to find the entry with the closest dot clock value */ 
+	/* Assume within at least 200 MHz and then maintain closest natch. */
 
-	/* initialize SoftVGA extended registers */
-	newstate->ext.VerticalTimingExtension =
-		((mode->CrtcVSyncStart & 0x400) >> 4) |
-		(((mode->CrtcVDisplay - 1) & 0x400) >> 8) |
-		(((mode->CrtcVTotal - 2) & 0x400) >> 10) |
-		((mode->CrtcVSyncStart & 0x400) >> 6);
-
-	if (vgaBitsPerPixel < 8)
-		newstate->ext.ExtendedAddressControl = EAC_DIRECT_FRAME_BUFFER;
-	else
-		newstate->ext.ExtendedAddressControl = EAC_DIRECT_FRAME_BUFFER |
-		                                       EAC_PACKED_CHAIN4;
-
-	newstate->ext.ExtendedOffset = ((line_offset >> 8) & 0x03);
-
-	newstate->ext.ExtendedColorControl = (vgaBitsPerPixel == 16)
-                                           ? ECC_16BPP | ECC_565_FORMAT
-                                           : ECC_8BPP;
-
-	/* display compression is set using the DC registers */
-	newstate->ext.DisplayCompression = 0x00;
-
-	/* we drive the palette through the display controller (in new
-	   chipsets only) in 8bpp and 16bpp (that is, whenever the
-	   hardware cursor is used). */
-	if (vgaBitsPerPixel < 8)
-		newstate->ext.DriverControl = 0x00;
-	else
-		newstate->ext.DriverControl = DRVCT_DISPLAY_DRIVER_ACTIVE;
-
-	/* set `16 bit bus' or else compression will hang the
-	   system in 16bpp mode */
-	if (vgaBitsPerPixel == 16)
-		newstate->ext.DACControl = DACCT_ENABLE_16BIT_BUS;
-	else
-		newstate->ext.DACControl = 0;
-
-
-	if (newstate->std.NoClock >= 0)
-	{	int entier_clock   = (vga256InfoRec.clock[mode->Clock] / 1000);
-		int clock_fraction = (vga256InfoRec.clock[mode->Clock] / 100)
-				   - (entier_clock * 10);
-
-		newstate->ext.ClockControl = CLKCT_EXT_CLOCK_MODE;
-		newstate->ext.CrtClockFrequency = entier_clock;
-		newstate->ext.CrtClockFrequencyFraction = clock_fraction;
-		newstate->ext.RefreshRate = 0 /* relevant to VGA BIOS only */;
+	mode_index = 0;
+	min = 200; 
+	for (i = 0; i < NUM_CYRIX_MODES; i++)
+	{
+		diff = clock - CYRIXmodes[i].clock;
+		if (diff < 0) diff = -diff;
+		if ((mode->CrtcHDisplay == CYRIXmodes[i].xsize) &&
+			(mode->CrtcVDisplay == CYRIXmodes[i].ysize) &&
+			(diff < min))
+		{
+			mode_index = i;
+			min = diff;
+		}
 	}
 
-#ifndef MONOVGA
-	/* initialize masked contents of display controller
-	   hardware registers. */
-	newstate->ext.DcCursStOffset =  CYRIXcursorAddress;
-	newstate->ext.DcCbStOffset  =  CYRIXcbufferAddress;
-	newstate->ext.DcLineDelta   =  CYRIXcbLineDelta << 12;
-	newstate->ext.DcBufSize     =  0x41 << 9;
-	newstate->ext.DcCursorX     =  0;
-	newstate->ext.DcCursorY     =  0;
-	newstate->ext.DcCursorColor =  0;
+	/* override standard miscOutput register value */
 
-	/* Compression  is enabled only  when a buffer  was allocated by
-	   FbInit  and provided that the displayed screen is the virtual
-	   screen.  If the line delta is not 1024 or 2048, entire frames
-	   will be flagged dirty as opposed to lines.  Problems with 16bpp
-	   and line-dirty flagging seem to have been solved now.  */
-	if (CYRIXcbLineDelta != 0 &&
-	    mode->CrtcVDisplay == vga256InfoRec.virtualY &&
-	    mode->CrtcHDisplay == vga256InfoRec.virtualX)
-	{	newstate->ext.DcGeneralCfg = DC_GCFG_DECE
-		                           | DC_GCFG_CMPE;
-		if (/* vgaBitsPerPixel != 8 ||   -- this is OK now */
-		   (vga256InfoRec.displayWidth * (vgaBitsPerPixel / 8)) & 0x03FF)
-			newstate->ext.DcGeneralCfg |= DC_GCFG_FDTY;
+	newstate->ext.miscOutput = CYRIXmodes[mode_index].miscOutput;
+
+	/* override standard CRTC register values */
+
+	for (i = 0; i < NUM_STD_CRTC_REGS; i++)
+	{
+		newstate->ext.stdCRTCregs[i] = 
+			CYRIXmodes[mode_index].stdCRTCregs[i];
+	}
+
+	/* set extended CRTC registers */
+
+	for (i = 0; i < NUM_EXT_CRTC_REGS; i++)
+	{
+		newstate->ext.extCRTCregs[i] = 
+			CYRIXmodes[mode_index].extCRTCregs[i];
+	}
+
+	/* override pitch from the mode tables */
+	/* (same tables are used for 8BPP and 16BPP) */
+
+	newstate->ext.stdCRTCregs[19] = line_offset;
+	newstate->ext.extCRTCregs[5] = ((line_offset >> 8) & 0x03);
+
+	/* override color control from the mode tables */
+	/* (same tables are used for 8BPP and 16BPP) */
+
+	newstate->ext.extCRTCregs[6] = (vgaBitsPerPixel == 16)
+		? ECC_16BPP | ECC_565_FORMAT : ECC_8BPP;
+
+	/* enable display compression when appropriate */
+
+	if (CYRIXvsaversion == CYRIX_VSA1)
+	{
+		/* For VSA1, SoftVGA manages the compression buffer. */
+		/* Enabling compression directly causes unpredictable results. */
+		/* Only enable if not panning (there is a bug in SoftVGA that */
+		/* will put the compression buffer in the wrong place when */
+		/* using a virtual desktop. */
+		/* By setting bit 0 of register 0x49, SoftVGA will enable */
+		/* compression whenever possible, based on memory available */
+		/* and starting address of memory. */
+
+	    if ((mode->CrtcVDisplay == vga256InfoRec.virtualY) &&
+			(mode->CrtcHDisplay == vga256InfoRec.virtualX))
+		{
+			newstate->ext.extCRTCregs[9] = 0x01;
+			ErrorF("%s %s: Display compression enabled.\n", 
+				XCONFIG_PROBED, vga256InfoRec.name);
+		}
+		else
+		{
+			ErrorF("%s %s: Display compression disabled.\n", 
+				XCONFIG_PROBED, vga256InfoRec.name);
+		}
 	}
 	else
-		newstate->ext.DcGeneralCfg = 0;
-
+	{
+		/* ### TO DO ### */
+		/* Enable display compression directly for VSA2. */
+		/* For VSA2, the display driver manages all graphics memory. */
+	}
 
 	/* initialize the graphics pipeline registers */
+
 	newstate->ext.GpBlitStatus  =  ((vga256InfoRec.displayWidth == 2048) ?
 	                                BC_FB_WIDTH_2048 : BC_FB_WIDTH_1024) |
 	                               ((vgaBitsPerPixel == 16) ?
 	                                BC_16BPP : BC_8BPP);
-#endif
-
 	return(TRUE);
 }
 
@@ -914,31 +978,68 @@ static void
 CYRIXAdjust(x, y)
 int x, y;
 {	int Base = (y * vga256InfoRec.displayWidth + x);
+	unsigned long active, sync, count1, count2;
 
 	if (vgaBitsPerPixel > 8) Base *= (vgaBitsPerPixel / 8);
 	if (vgaBitsPerPixel < 8) Base /= 2;
 
-	/* doing this using the SoftVGA registers does not work reliably */
+	/* wait until out of active display area */
+
+	active = GX_REG(DC_V_TIMING_1) & 0x07FF;	
+	sync = GX_REG(DC_V_TIMING_3) & 0x07FF;
+
+	do
+	{
+		/* read twice to avoid transition values */
+
+		count1 = GX_REG(DC_V_LINE_CNT) & 0x07FF;
+		count2 = GX_REG(DC_V_LINE_CNT) & 0x07FF;
+	} while ((count1 != count2) || (count1 < active) || (count1 >= sync));
+
+	/* load the start address directly */
+
 	GX_REG(DC_UNLOCK) = DC_UNLOCK_VALUE;
 	GX_REG(DC_FB_ST_OFFSET) = Base;
 	GX_REG(DC_UNLOCK) = 0;
 }
+
+/*------------------------------------------------------------------------*\
+** ValidMode()
+** 
+** From README file: "The ValidMode() function is required.  It is used to 
+** check for any chipset dependent reasons why a graphics mode might not be
+** valid.  It gets called by higher levels of the code after the Probe()
+** stage.  In many cases no special checking will be required and this 
+** function will simply return TRUE always."
+**
+** For the Cyrix driver, this routine loops through modes provided in a 
+** table at the beginning of this file and returns OK if it finds a match.
+** These tables were required to make the standard VESA 60 Hz and 75 Hz 
+** modes work correctly.  Doing this, however, takes away the flexibility 
+** of adding different resolutions or different refresh rates to the 
+** XF86Config file.
+\*------------------------------------------------------------------------*/
 
 static int
 CYRIXValidMode(mode, verbose, flag)
 DisplayModePtr mode;
 Bool verbose;
 int flag;
-{	/* note (avg): there seems to be a lot more to this if you look
-	   at the GGI code (adjustment). */
-	if (mode->CrtcHSyncStart - mode->CrtcHDisplay >= 24 ||
-            mode->CrtcHSyncStart - mode->CrtcHDisplay <= 8)
-	{	if (verbose)
-			ErrorF("%s %s: mode %s: horizontal sync out of range (sync - display should be between 8 and 24)\n",
-				XCONFIG_PROBED, vga256InfoRec.name, mode->name
-				);
-		return MODE_HSYNC;
+{
+	int i;
+
+	/* loop through table of modes */
+
+	for (i = 0; i < NUM_CYRIX_MODES; i++)
+	{
+		if ((mode->CrtcHDisplay == CYRIXmodes[i].xsize) &&
+			(mode->CrtcVDisplay == CYRIXmodes[i].ysize))
+		{
+			return MODE_OK;
+		}
 	}
-	return(MODE_OK);
+	return MODE_BAD;
 }
+
+/* END OF FILE */
 

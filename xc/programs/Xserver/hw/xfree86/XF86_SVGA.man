@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_SVGA.man,v 3.42.2.9 1998/11/06 09:46:01 hohndel Exp $ 
-.TH XF86_SVGA 1 "Version 3.3.3"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_SVGA.man,v 3.42.2.11 1999/06/30 13:00:17 hohndel Exp $ 
+.TH XF86_SVGA 1 "Version 3.3.4"  "XFree86"
 .SH NAME
 XF86_SVGA - SVGA X Window System servers for UNIX on 
 x86 platforms
@@ -53,7 +53,10 @@ GVGA
 Trident:
 TVGA8800CS, TVGA8900B, TVGA8900C, TVGA8900CL, TVGA9000
 TVGA9000i, TVGA9100B, TVGA9200CXr, TGUI9320LCD, TGUI9400CXi, TGUI9420,
-TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi, TGUI9680
+TGUI9420DGi, TGUI9430DGi, TGUI9440AGi, TGUI9660XGi, TGUI9680,
+PROVIDIA9682, PROVIDIA9685, CYBER9382, CYBER9385, CYBER9385-1,
+CYBER9388, CYBER9397, CYBER9520, CYBER9525, 3DIMAGE975, 3DIMAGE975 AGP,
+3DIMAGE985 AGP, BLADE3D, CYBERBLADE
 .TP 4
 NCR:
 77C22, 77C22E
@@ -99,10 +102,14 @@ Alliance:
 AP6422
 .TP 4
 Matrox:
-MGA2064W
+MGA1064SG, MGA1164SG, MGA2064W, MGA2164W, MGA2164 AGP,
+MGAG100, MGAG200, MGAG400
 .TP 4
 NVidia:
 NV1, STG2000
+.TP 4
+Intel and Real3D:
+I740 (AGP and PCI)
 .RE
 .PP
 Accelerated support is included for most of the Cirrus chipsets, the Western
@@ -112,7 +119,9 @@ Accelerated 8bpp support for the ET4000/W32 (i and p) and ET6000 is
 implemented in a separate server (see
 \fIXF86_W32(1)\fP). Users of boards based on ATI's Mach8, Mach32 and Mach64
 chipsets should refer to the \fIXF86_Mach8(1)\fP, \fIXF86_Mach32(1)\fP and
-\fIXF86_Mach64(1)\fP manual pages, respectively.
+\fIXF86_Mach64(1)\fP manual pages, respectively. Accelerated support is
+also included for i740 (AGP and PCI) based cards in 8bpp, 16bpp and 24bpp
+color depths (32bpp is unaccelerated).
 .SH OPTIONS
 In addition to the normal server options described in the \fIXserver(1)\fP
 manual page, \fIXF86_SVGA\fP accepts some more command line switches,
@@ -207,6 +216,9 @@ mga2064w
 NVidia:
 nv1, stg2000
 .TP 4
+Intel and Real3D:
+i740, i740_pci
+.TP 4
 Generic:
 generic
 .RE
@@ -270,9 +282,10 @@ Refer to the \fIXF86Config(4/5)\fP
 manual page for details of how to set the timeouts for the different levels
 of operation.
 .sp
-\fBnoaccel\fP - for Cirrus, WD, ARK, C&T, MGA and Tseng chipsets.  This option
-disables the accelerated features for the clgd542X, clgd543x, clgd5446,
-clgd546X, wd90c24, wd90c31 and wd90c33, C&T, ARK, MGA and Tseng chipsets.
+\fBnoaccel\fP - for Cirrus, WD, ARK, C&T, MGA, Tseng and i740 chipsets.
+This option disables the accelerated features for the clgd542X, clgd543x,
+clgd5446, clgd546X, wd90c24, wd90c31 and wd90c33, C&T, ARK, MGA, Tseng
+and i740 chipsets.
 .sp
 \fBno_pixmap_cache\fP - for any chip that uses XAA for acceleration,
 which includes ARK, Cirrus, C&T, MGA, SiS, Trident 9440/9680, and Tseng
@@ -310,6 +323,12 @@ sets the DRAM timings for medium-speed DRAM chips.
 Trident. This option sets the DRAM timings for fast DRAM chips. Normally not
 recommended.
 .sp
+\fBsgram\fP - for i740 chipsets. This option forces the use of SGRAM
+timing informaiton.
+.sp
+\fBsdram\fP - for i740 chipsets. This option forces the use of SDRAM
+timing informaiton.
+.sp
 \fBno_2mb_banksel\fP - for Cirrus chipsets.  This option is required for
 Cirrus cards with 2MB of videoram which is in the form of 512kx8 DRAMs
 (4 chips) rather than 256kx4 DRAMs (16 chips).
@@ -344,10 +363,10 @@ suspend_hack, use_18bit_bus\fP - more Chips & Technologies specific
 options for use with LCD screens. Refer to <XRoot>/lib/X11/doc/README.chips
 for a detailed description of these options.
 .sp
-\fBhw_cursor\fP - for ARK or ET6000 chipsets.  This option enables the
+\fBhw_cursor\fP - for ARK, ET6000 and i740 chipsets.  This option enables the
 hardware cursor.
 .sp
-\fBsw_cursor\fP - for Cirrus and C&T chipsets.  This option disables the
+\fBsw_cursor\fP - for Cirrus, C&T and i740 chipsets.  This option disables the
 hardware cursor.
 .sp
 \fBsync_on_green\fP - for Chips & Technologies 65550's and 65554's
@@ -446,6 +465,9 @@ Extra documentation for the Video7 driver
 .TP 30
 <XRoot>/lib/X11/doc/README.WstDig
 Extra documentation for the WD/PVGA driver
+.TP 30
+<XRoot>/lib/X11/doc/README.i740
+Extra documentation for the i740 driver
 .LP
 Note: <XRoot> refers to the root of the X11 install tree.
 .SH "SEE ALSO"

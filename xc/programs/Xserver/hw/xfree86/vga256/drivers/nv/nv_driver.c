@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.8 1998/12/22 12:39:13 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nv_driver.c,v 3.5.2.11 1999/07/05 09:07:39 hohndel Exp $ */
 
 #include <math.h>
 #include <stdlib.h>
@@ -134,8 +134,13 @@ typedef struct {
 static NVProbeInfo probeList[]={
   { "NV1",NV1,PCI_VENDOR_NVIDIA,PCI_CHIP_DAC64},
   { "STG2000",NV1,PCI_VENDOR_SGS,PCI_CHIP_STG1764},
-  { "RIVA128",NV3,PCI_VENDOR_NVIDIA_SGS,PCI_CHIP_RIVA128},
-  { "RIVATNT",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_TNT}
+  { "RIVA 128",NV3,PCI_VENDOR_NVIDIA_SGS,PCI_CHIP_RIVA128},
+  { "RIVA TNT",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_TNT},
+  { "RIVA TNT2",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_TNT2},
+  { "RIVA ULTRA TNT2",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_UTNT2},
+  { "RIVA VANTA",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_VTNT2},
+  { "RIVA ULTRA VANTA",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_UVTNT2},
+  { "RIVA INTEGRATED",NV4,PCI_VENDOR_NVIDIA,PCI_CHIP_ITNT2}
 };
 
 
@@ -174,6 +179,8 @@ static Bool NVProbe(void)
     while((pcrp=pciList[idx++]) && (!found)) {
       for(i=0;i<NUM_PROBE_ENTRIES && !found;i++) {
         if((pcrp->_vendor==probeList[i].vendor) &&
+           (pcrp->_command & PCI_CMD_IO_ENABLE) &&
+           (pcrp->_command & PCI_CMD_MEM_ENABLE) &&
            ( ((pcrp->_device & 0xFFFB)==probeList[i].device) ||
              (vga256InfoRec.chipset &&
              !StrCaseCmp(vga256InfoRec.chipset,probeList[i].name)))) {
