@@ -166,11 +166,7 @@ Bool alphaSaveScreen (pScreen, on)
 	    state = 0;
 	else
 	    state = 1;
-#ifdef USE_WSCONS
 	(void) ioctl(alphaFbs[pScreen->myNum].fd, WSDISPLAYIO_SVIDEO, &state);
-#else
-	(void) ioctl(alphaFbs[pScreen->myNum].fd, FBIOSVIDEO, &state);
-#endif
     }
     return( TRUE );
 }
@@ -264,7 +260,7 @@ Bool alphaInitCommon (scrn, pScrn, offset, init1, init2, cr_cm, save, fb_off)
     if (!alphaScreenAllocate (pScrn))
 	return FALSE;
     if (!fb) {
-	if ((fb = alphaMemoryMap ((size_t) alphaFbs[scrn].info.fb_size, 
+	if ((fb = alphaMemoryMap ((size_t) alphaFbs[scrn].size, 
 			     offset, 
 			     alphaFbs[scrn].fd)) == NULL)
 	    return FALSE;
@@ -272,11 +268,11 @@ Bool alphaInitCommon (scrn, pScrn, offset, init1, init2, cr_cm, save, fb_off)
     }
     /* mfbScreenInit() or cfbScreenInit() */
     if (!(*init1)(pScrn, fb + fb_off,
-	    alphaFbs[scrn].info.fb_width,
-	    alphaFbs[scrn].info.fb_height,
+	    alphaFbs[scrn].info.width,
+	    alphaFbs[scrn].info.height,
 	    monitorResolution, monitorResolution,
-	    alphaFbs[scrn].info.fb_width,
-	    alphaFbs[scrn].info.fb_depth))
+	    alphaFbs[scrn].info.width,
+	    alphaFbs[scrn].info.depth))
 	    return FALSE;
     /* alphaCGScreenInit() if cfb... */
     if (init2)

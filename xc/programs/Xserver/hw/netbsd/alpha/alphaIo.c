@@ -84,13 +84,8 @@ void alphaEnqueueEvents (
 #endif
 )
 {
-#ifdef USE_WSCONS
     struct wscons_event *ptrEvents,
 			*kbdEvents;
-#else
-    Firm_event	*ptrEvents,    	/* Current pointer event */
-		*kbdEvents;    	/* Current keyboard event */
-#endif
     int		numPtrEvents, 	/* Number of remaining pointer events */
 		numKbdEvents;   /* Number of remaining keyboard events */
     int		nPE,   	    	/* Original number of pointer events */
@@ -137,11 +132,7 @@ void alphaEnqueueEvents (
 	if ((numPtrEvents == 0) && (numKbdEvents == 0))
 	    break;
 	if (numPtrEvents && numKbdEvents) {
-#ifdef USE_WSCONS
 	    if (timespeccmp (&kbdEvents->time, &ptrEvents->time, <)) {
-#else
-	    if (timercmp (&kbdEvents->time, &ptrEvents->time, <)) {
-#endif
 		alphaKbdEnqueueEvent (pKeyboard, kbdEvents);
 		numKbdEvents--;
 		kbdEvents++;

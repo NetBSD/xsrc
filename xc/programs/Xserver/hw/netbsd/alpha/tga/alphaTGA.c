@@ -1,4 +1,4 @@
-/* $NetBSD: alphaTGA.c,v 1.4 2000/12/19 01:34:05 perseant Exp $ */
+/* $NetBSD: alphaTGA.c,v 1.5 2001/10/06 02:25:51 thorpej Exp $ */
 
 /* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
@@ -265,7 +265,7 @@ Bool alphaTGAInit (screen, pScreen, argc, argv)
     	if (!alphaScreenAllocate(pScreen))
 		return FALSE;
 	if (!fb) {
-		if ((fb = alphaMemoryMap ((size_t)alphaFbs[screen].info.fb_size,
+		if ((fb = alphaMemoryMap ((size_t)alphaFbs[screen].size,
 		    0, alphaFbs[screen].fd)) == NULL)
 			return FALSE;
 	        alphaFbs[screen].fb = fb;
@@ -281,7 +281,7 @@ Bool alphaTGAInit (screen, pScreen, argc, argv)
 	 * things out, we have to look at the TGA registers.
 	 */ 
 	tgaregs = (tga_reg_t *)(fb + (1 * 1024 * 1024));
-	fb_off = (int)alphaFbs[screen].info.fb_size / 2;
+	fb_off = (int)alphaFbs[screen].size / 2;
 	fbr = fb + ( 1 * 1024 * 1024 );
 	alphaFbs[screen].tgaregs0 = (tga_reg_t *)(fbr + 0 * 64 * 1024);
 	alphaFbs[screen].tgaregs1 = (tga_reg_t *)(fbr + 1 * 64 * 1024);
@@ -308,7 +308,7 @@ Bool alphaTGAInit (screen, pScreen, argc, argv)
 	 * where the displayed frame buffer actually starts.
 	 */
 	rowsize = 2 * 1024;			/* 2k for 128K VRAMs, 8BPP */
-	if (alphaFbs[screen].info.fb_depth == 32)
+	if (alphaFbs[screen].info.depth == 32)
 		rowsize *= 4;			/* increase by 4x for 32BPP */
 	if ((tgaregs[TGA_REG_GDER] & 0x200) == 0) /* 256K VRAMs */
 		rowsize *= 2;			/* increase by 2x */
@@ -323,11 +323,11 @@ Bool alphaTGAInit (screen, pScreen, argc, argv)
 #endif
 
 	if (!alphaTgaScreenInit(pScreen, fb + fb_off,
-	    alphaFbs[screen].info.fb_width,
-	    alphaFbs[screen].info.fb_height,
+	    alphaFbs[screen].info.width,
+	    alphaFbs[screen].info.height,
 	    monitorResolution, monitorResolution,
 	    realwidth,
-	    alphaFbs[screen].info.fb_depth)) {
+	    alphaFbs[screen].info.depth)) {
 fprintf(stderr, "alphaTgaScreenInit failed\n");
             return FALSE;
 	}

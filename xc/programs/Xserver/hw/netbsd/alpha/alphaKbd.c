@@ -571,31 +571,19 @@ int alphaKbdProc (device, what)
  */
 
 #if NeedFunctionPrototypes
-#ifdef USE_WSCONS
 struct wscons_event* alphaKbdGetEvents (
-#else
-Firm_event* alphaKbdGetEvents (
-#endif
     int		fd,
     int*	pNumEvents,
     Bool*	pAgain)
 #else
-#ifdef USE_WSCONS
 struct wscons_event* alphaKbdGetEvents (fd, pNumEvents, pAgain)
-#else
-Firm_event* alphaKbdGetEvents (fd, pNumEvents, pAgain)
-#endif
     int		fd;
     int*	pNumEvents;
     Bool*	pAgain;
 #endif
 {
     int	    	  nBytes;	    /* number of bytes of events available. */
-#ifdef USE_WSCONS
     static struct wscons_event	evBuf[MAXEVENTS];   /* Buffer for wscons_events */
-#else
-    static Firm_event	evBuf[MAXEVENTS];   /* Buffer for Firm_events */
-#endif
 
     if ((nBytes = read (fd, evBuf, sizeof(evBuf))) == -1) {
 	if (errno == EWOULDBLOCK) {
@@ -606,11 +594,7 @@ Firm_event* alphaKbdGetEvents (fd, pNumEvents, pAgain)
 	    FatalError ("Could not read the keyboard");
 	}
     } else {
-#ifdef USE_WSCONS
 	*pNumEvents = nBytes / sizeof (struct wscons_event);
-#else
-	*pNumEvents = nBytes / sizeof (Firm_event);
-#endif
 	*pAgain = (nBytes == sizeof (evBuf));
     }
     return evBuf;
@@ -628,7 +612,7 @@ static int	composeCount;
 static Bool DoSpecialKeys(device, xE, fe)
     DeviceIntPtr  device;
     xEvent*       xE;
-    Firm_event* fe;
+    struct wscons_event   *fe;
 {
     int	shift_index, map_index, bit;
     KeySym ksym;
@@ -643,11 +627,7 @@ static Bool DoSpecialKeys(device, xE, fe)
 	shift_index ^= 1;
     if (device->key->state & LockMask) 
 	shift_index ^= 1;
-#ifdef USE_WSCONS
     map_index = (fe->value - 1) * device->key->curKeySyms.mapWidth;
-#else
-    map_index = (fe->id - 1) * device->key->curKeySyms.mapWidth;
-#endif
     ksym = device->key->curKeySyms.map[shift_index + map_index];
     if (ksym == NoSymbol)
 	ksym = device->key->curKeySyms.map[map_index];
@@ -712,19 +692,11 @@ static Bool DoSpecialKeys(device, xE, fe)
 #if NeedFunctionPrototypes
 void alphaKbdEnqueueEvent (
     DeviceIntPtr  device,
-#ifdef USE_WSCONS
     struct wscons_event	  *fe)
-#else
-    Firm_event	  *fe)
-#endif
 #else
 void alphaKbdEnqueueEvent (device, fe)
     DeviceIntPtr  device;
-#ifdef USE_WSCONS
     struct wscons_event	  *fe;
-#else
-    Firm_event	  *fe;
-#endif
 #endif
 {
     xEvent		xE;
@@ -732,17 +704,10 @@ void alphaKbdEnqueueEvent (device, fe)
     CARD8		keyModifiers;
     int			i;
 
-#ifdef USE_WSCONS
     if (alphaKbdPriv.type <= WSKBD_TYPE_LK401)
 	    keycode = (fe->value) + MIN_KEYCODE;
     else
 	    keycode = (fe->value & 0x7f) + MIN_KEYCODE;
-#else
-    if (alphaKbdPriv.type <= WSKBD_TYPE_LK401)
-	    keycode = (fe->id) + MIN_KEYCODE;
-    else
-	    keycode = (fe->id & 0x7f) + MIN_KEYCODE;
-#endif
 
     keyModifiers = device->key->modifierMap[keycode];
 #if 0 /* XXX */
@@ -750,11 +715,7 @@ void alphaKbdEnqueueEvent (device, fe)
     if (noXkbExtension) {
 #endif
     if (autoRepeatKeyDown && (keyModifiers == 0) &&
-#ifdef USE_WSCONS
 	((fe->type == WSCONS_EVENT_KEY_DOWN) || (keycode == autoRepeatEvent.u.u.detail))) {
-#else /* ! USE_WSCONE */
-	((fe->value == VKEY_DOWN) || (keycode == autoRepeatEvent.u.u.detail))) {
-#endif /* ! USE_WSCONS */
 	/*
 	 * Kill AutoRepeater on any real non-modifier key down, or auto key up
 	 */
@@ -764,7 +725,6 @@ void alphaKbdEnqueueEvent (device, fe)
     }
 #endif
 #endif /* 0 XXX */
-#ifdef USE_WSCONS
     /*
      * For lk201, we need to keep track of which keys are down so we can
      * process "all keys up" events.
@@ -797,10 +757,6 @@ void alphaKbdEnqueueEvent (device, fe)
     }
     xE.u.keyButtonPointer.time = TSTOMILLI(fe->time);
     xE.u.u.type = ((fe->type == WSCONS_EVENT_KEY_UP) ? KeyRelease : KeyPress);
-#else
-    xE.u.keyButtonPointer.time = TVTOMILLI(fe->time);
-    xE.u.u.type = ((fe->value == VKEY_UP) ? KeyRelease : KeyPress);
-#endif
     xE.u.u.detail = keycode;
 #if 0 /* XXX */
 #ifdef XKB
