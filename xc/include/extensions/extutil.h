@@ -193,6 +193,18 @@ XExtDisplayInfo *proc (dpy) \
     return dpyinfo; \
 }
 
+/*
+ * This doesn't look like the ideal place, but somewhere, xp_find_display()
+ * must be declared as returning _some_ kind of pointer (or even a long), or
+ * an LP64 bug is introduced as it defaults to returning a 32-bit int.
+ * Remember, long and pointer are sometimes 64 now, but int is still 32.
+ */
+XExtDisplayInfo *xp_find_display(
+#if NeedFunctionPrototypes
+    Display *
+#endif
+);
+
 #define XEXT_GENERATE_CLOSE_DISPLAY(proc,extinfo) \
 int proc (dpy, codes) \
     Display *dpy; \
