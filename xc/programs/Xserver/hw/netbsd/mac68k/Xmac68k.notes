@@ -1,0 +1,35 @@
+DESKTOP paradigm configuration and behavior
+
+One user enters input through one keyboard and mouse to one or more
+virtual terminals on one or more physical screens.
+
+When X is invoked from any foreground VT connected to the user's
+keyboard, X invokes RAW mode on the VT (ioctl(VT_RAW)).  This
+disables normal COOKED input and for all VT's and hides all VT's
+from their physical screens.
+
+X can retrieve information about
+input devices and screen parameters through ioctl()s to the VT.
+
+X is then free to perform framebuffer memory mapping on the
+physical screens and video devices at will.
+
+X receives input device events as raw bytes on the VT input stream.
+
+When X is done, it calls VT with ioctl(VT_COOKED), which brings VT's
+to the foreground where necessary and begins re-transmitting input
+as COOKED events.
+
+When a user wants to bring VT's forward and push X to the background,
+X may receive an event asking it to clean up and prepare to lose
+the physical screens.  X must respond with an ioctl(VT_YIELD), after
+which it may not draw to the screen and will not receive events until
+it receives an event informing it that has been brought to the foreground.
+
+Toggling between normal VT mode and the RAW application is caused by
+pressing flower-tab.  If there is no RAW app to bring forward, the
+keystroke only handles a beep.  flower-option-tab will bring the
+VT's forward immediately, as in the case of an X server crashing.
+(Effectively not waiting for the VT_YIELD.)
+
+
