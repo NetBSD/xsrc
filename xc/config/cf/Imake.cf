@@ -168,6 +168,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.3 1997/07/27 02:41:02 dawes Exp $
 #  define VaxArchitecture
 #  undef vax
 # endif
+# if defined(__pc532__) || defined(pc532)
+#  define pc532Architecture
+#  undef pc532
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__
