@@ -624,7 +624,8 @@ InstallManPageAliasesBase(file,destdir,aliases)
 /*
  * Definitions for the SUN server on NetBSD/sparc
  */
-#ifdef SparcArchitecture
+#ifdef	SparcArchitecture
+
 #ifndef Xsun24Server
 #define Xsun24Server	YES
 #endif
@@ -632,7 +633,7 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #define XsunServer	YES
 #endif
 #ifndef XsunMonoServer
-#define XsunMonoServer	NO	/* XXX: does not link */
+#define XsunMonoServer	YES
 #endif
 #ifndef BuildScreenSaverLibrary
 #define BuildScreenSaverLibrary	YES
@@ -647,10 +648,40 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #ifndef UseRgbTxt
 #define UseRgbTxt	YES
 #endif
+
 #define BuildXF86VidModeExt	NO
+
+#if !defined(Sparc64Architecture)
+
 #define BuildXF86DGA		NO
 #define BuildXInputExt		NO
 #include <xfree86.cf>
+
+#else /* Sparc64Architecture */
+# define OptimizedCDebugFlags	-O2
+
+# ifndef XF86Server
+/* #  define XF86Server		YES */
+# endif
+
+/* # define XkbServerDefines  -DXKB_ALWAYS_USES_SOFT_REPEAT */
+
+# if XF86Server
+#   ifndef DoLoadableServer
+#     define DoLoadableServer	NO
+#   endif
+#   define XF86CardDrivers	wsfb sunffb
+#   define AsOutputArchSize	64
+#   define AsVISOption		-Av9a
+#   define XFree86ConsoleDefines -DWSCONS_SUPPORT
+# endif
+
+#define BuildXF86DGA		YES
+#define BuildXInputExt		YES
+#include <xfree86.cf>
+
+#endif
+
 #endif
 
 /*
