@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2000/03/12 11:16:55 dbj Exp $
+#	$NetBSD: Makefile,v 1.15 2000/07/25 17:08:28 thorpej Exp $
 #
 # Targets & Variables
 #
@@ -27,7 +27,7 @@
 .include <bsd.own.mk>
 
 
-all: all-xc all-contrib
+all: all-xc all-contrib all-local
 
 all-xc:
 .if exists(xc/xmakefile) && defined(UPDATE)
@@ -44,13 +44,23 @@ all-contrib:
 	fi
 	@cd contrib && ${MAKE}
 
-install: install-xc install-contrib
+all-local:
+	@if [ ! -f local/Makefile ]; then \
+	  cd local && PATH=../xc/config/imake:$$PATH \
+	    sh ../xc/config/util/xmkmf -a ../xc ../local; \
+	fi
+	@cd local && ${MAKE}
+
+install: install-xc install-contrib install-local
 
 install-xc:
 	@cd xc && ${MAKE} install && ${MAKE} install.man
 
 install-contrib:
 	@cd contrib && ${MAKE} install && ${MAKE} install.man
+
+install-local:
+	@cd local && ${MAKE} install && ${MAKE} install.man
 
 clean:
 	@-cd xc && ${MAKE} clean
