@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/12 1995/12/07 21:15:22 gildea $
-XCOMM $XFree86: xc/lib/font/Imakefile,v 3.5 1996/01/24 21:58:58 dawes Exp $
+XCOMM $XFree86: xc/lib/font/Imakefile,v 3.5.4.2 1997/05/11 05:04:09 dawes Exp $
 #include <Server.tmpl>
 
 #define	IHaveSubdirs
@@ -10,6 +10,10 @@ DONES = bitmap/DONE fontfile/DONE fc/DONE Speedo/DONE Type1/DONE util/DONE
 
 #if HasParallelMake
 MakeMutex($(SUBDIRS) $(DONES))
+#endif
+
+#if HasGnuMake || HasBsdMake
+$(DONES): $(SUBDIRS)
 #endif
 
 #undef _LinkBuildLibrary

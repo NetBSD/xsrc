@@ -1,4 +1,4 @@
-/* $XConsortium: Geometry.c,v 1.63 94/04/17 20:14:07 kaleb Exp $ */
+/* $XConsortium: Geometry.c /main/64 1996/09/28 16:45:54 rws $ CHECKEDOUT */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -109,6 +109,13 @@ _XtMakeGeometryRequest (widget, request, reply, clear_rect_obj)
 
     *clear_rect_obj = FALSE;
 
+    CALLGEOTAT(_XtGeoTrace(widget,
+	"\"%s\" is making a %sgeometry request to its parent \"%s\".\n",
+		   XtName(widget),
+		   ((request->request_mode & XtCWQueryOnly))? "query only ":"",
+		   (XtParent(widget))?XtName(XtParent(widget)):"Root"));
+    CALLGEOTAT(_XtGeoTab(1));
+
     if (XtIsShell(widget)) {
 	ShellClassExtension ext;
 	LOCK_PROCESS;
@@ -180,13 +187,20 @@ _XtMakeGeometryRequest (widget, request, reply, clear_rect_obj)
                   (String *)NULL, (Cardinal *)NULL);
     }
 
-    if (widget->core.being_destroyed) return XtGeometryNo;
+    if (widget->core.being_destroyed) {
+	CALLGEOTAT(_XtGeoTab(-1));
+	CALLGEOTAT(_XtGeoTrace(widget,
+		       "It is being destroyed, just return XtGeometryNo.\n"));
+	return XtGeometryNo;
+    }
 
     /* see if requesting anything to change */
     req.changeMask = 0;
     if (request->request_mode & CWStackMode
 	&& request->stack_mode != XtSMDontChange) {
 	    req.changeMask |= CWStackMode;
+	    CALLGEOTAT(_XtGeoTrace(widget,
+				   "Asking for a change in StackMode!\n"));
 	    if (request->request_mode & CWSibling) {
 		XtCheckSubclass(request->sibling, rectObjClass,
 				"XtMakeGeometryRequest");
@@ -194,17 +208,47 @@ _XtMakeGeometryRequest (widget, request, reply, clear_rect_obj)
 	    }
     }
     if (request->request_mode & CWX
-	&& widget->core.x != request->x) req.changeMask |= CWX;
+	&& widget->core.x != request->x) {
+	CALLGEOTAT(_XtGeoTrace(widget,
+			       "Asking for a change in x: from %d to %d.\n",
+			       widget->core.x, request->x));
+	req.changeMask |= CWX;
+    }
     if (request->request_mode & CWY
-	&& widget->core.y != request->y) req.changeMask |= CWY;
+	&& widget->core.y != request->y) {
+	CALLGEOTAT(_XtGeoTrace(widget,
+			       "Asking for a change in y: from %d to %d.\n",
+			       widget->core.y, request->y));
+	req.changeMask |= CWY;
+    }
     if (request->request_mode & CWWidth
-	&& widget->core.width != request->width) req.changeMask |= CWWidth;
+	&& widget->core.width != request->width) {
+	CALLGEOTAT(_XtGeoTrace(widget,"Asking for a change in width: from %d to %d.\n",
+		       widget->core.width, request->width));
+	req.changeMask |= CWWidth;
+    }
     if (request->request_mode & CWHeight
-	&& widget->core.height != request->height) req.changeMask |= CWHeight;
+	&& widget->core.height != request->height) {
+	CALLGEOTAT(_XtGeoTrace(widget,
+			    "Asking for a change in height: from %d to %d.\n",
+			       widget->core.height, request->height));
+	req.changeMask |= CWHeight;
+    }
     if (request->request_mode & CWBorderWidth
-	&& widget->core.border_width != request->border_width)
+	&& widget->core.border_width != request->border_width){
+	CALLGEOTAT(_XtGeoTrace(widget,
+		       "Asking for a change in border_width: from %d to %d.\n",
+		       widget->core.border_width, request->border_width));
 	req.changeMask |= CWBorderWidth;
-    if (! req.changeMask) return XtGeometryYes;
+    }
+    if (! req.changeMask) {
+	CALLGEOTAT(_XtGeoTrace(widget,
+		       "Asking for nothing new,\n"));
+	CALLGEOTAT(_XtGeoTab(-1));
+	CALLGEOTAT(_XtGeoTrace(widget,
+		       "just return XtGeometryYes.\n"));
+	return XtGeometryYes;
+    }
     req.changeMask |= (request->request_mode & XtCWQueryOnly);
 
     if ( !(req.changeMask & XtCWQueryOnly) && XtIsRealized(widget) ) {
@@ -217,11 +261,18 @@ _XtMakeGeometryRequest (widget, request, reply, clear_rect_obj)
     }
 
     if (!managed || !parentRealized) {
+	CALLGEOTAT(_XtGeoTrace(widget,
+			       "Not Managed or Parent not realized.\n"));
 	/* Don't get parent's manager involved--assume the answer is yes */
 	if (req.changeMask & XtCWQueryOnly) {
 	    /* He was just asking, don't change anything, just tell him yes */
+	    CALLGEOTAT(_XtGeoTrace(widget,"QueryOnly request\n"));
+	    CALLGEOTAT(_XtGeoTab(-1));
+	    CALLGEOTAT(_XtGeoTrace(widget,"just return XtGeometryYes.\n"));
 	    return XtGeometryYes;
 	} else {
+	    CALLGEOTAT(_XtGeoTrace(widget,
+				   "Copy values from request to widget.\n"));
 	    /* copy values from request to widget */
 	    if (request->request_mode & CWX)
 		widget->core.x = request->x;
@@ -233,11 +284,17 @@ _XtMakeGeometryRequest (widget, request, reply, clear_rect_obj)
 		widget->core.height = request->height;
 	    if (request->request_mode & CWBorderWidth)
 		widget->core.border_width = request->border_width;
-	    if (!parentRealized) return XtGeometryYes;
+	    if (!parentRealized) {
+		CALLGEOTAT(_XtGeoTab(-1));
+		CALLGEOTAT(_XtGeoTrace(widget,"and return XtGeometryYes.\n"));
+		return XtGeometryYes;
+	    }
 	    else returnCode = XtGeometryYes;
 	}
     } else {
 	/* go ask the widget's geometry manager */
+	CALLGEOTAT(_XtGeoTrace(widget,
+			       "Go ask the parent geometry manager.\n"));
 	if (reply == (XtWidgetGeometry *) NULL) {
 	    returnCode = (*manager)(widget, request, &junk);
 	} else {
@@ -252,8 +309,54 @@ _XtMakeGeometryRequest (widget, request, reply, clear_rect_obj)
     if ((returnCode != XtGeometryYes) || 
 	(req.changeMask & XtCWQueryOnly) || !XtIsRealized(widget)) {
 
+#ifdef XT_GEO_TATTLER
+	switch(returnCode){
+	case XtGeometryNo:
+	    CALLGEOTAT(_XtGeoTab(-1));
+	    CALLGEOTAT(_XtGeoTrace(widget,"\"%s\" returns XtGeometryNo.\n",
+			  (XtParent(widget))?XtName(XtParent(widget)):"Root"));
+            /* check for no change */
+            break ;
+	case XtGeometryDone:
+	    CALLGEOTAT(_XtGeoTab(-1));
+	    CALLGEOTAT(_XtGeoTrace(widget,"\"%s\" returns XtGeometryDone.\n",
+		        (XtParent(widget))?XtName(XtParent(widget)):"Root"));
+            /* check for no change in queryonly */
+            break ;
+	case XtGeometryAlmost:
+	    CALLGEOTAT(_XtGeoTab(-1));
+	    CALLGEOTAT(_XtGeoTrace(widget,"\"%s\" returns XtGeometryAlmost.\n",
+			 (XtParent(widget))?XtName(XtParent(widget)):"Root"));
+	    CALLGEOTAT(_XtGeoTab(1));
+	    CALLGEOTAT(_XtGeoTrace(widget,"Proposal: width %d height %d.\n",
+			   (reply)?reply->width:junk.width,
+			   (reply)?reply->height:junk.height));
+	    CALLGEOTAT(_XtGeoTab(-1));
+	    
+            /* check for no change */
+            break ;
+	case XtGeometryYes:
+	    if (req.changeMask & XtCWQueryOnly) {
+		CALLGEOTAT(_XtGeoTrace(widget,
+				"QueryOnly specified, no configuration.\n"));
+	    }
+            if (!XtIsRealized(widget)) {
+		CALLGEOTAT(_XtGeoTrace(widget,
+				 "\"%s\" not realized, no configuration.\n",
+				 XtName(widget)));
+	    }
+	    CALLGEOTAT(_XtGeoTab(-1));
+            CALLGEOTAT(_XtGeoTrace(widget,"\"%s\" returns XtGeometryYes.\n",
+                         (XtParent(widget))?XtName(XtParent(widget)):"Root"));
+	    break ;
+	}
+#endif
 	return returnCode;
     }
+
+    CALLGEOTAT(_XtGeoTab(-1));
+    CALLGEOTAT(_XtGeoTrace(widget,"\"%s\" returns XtGeometryYes.\n",
+		   (XtParent(widget))?XtName(XtParent(widget)):"Root"));
 
     if (XtIsWidget(widget)) {	/* reconfigure the window (if needed) */
 
@@ -262,25 +365,37 @@ _XtMakeGeometryRequest (widget, request, reply, clear_rect_obj)
 	if (req.changes.x != widget->core.x) {
  	    req.changeMask |= CWX;
  	    req.changes.x = widget->core.x;
+	    CALLGEOTAT(_XtGeoTrace(widget,
+				   "x changing to %d\n",widget->core.x));
  	}
  	if (req.changes.y != widget->core.y) {
  	    req.changeMask |= CWY;
  	    req.changes.y = widget->core.y;
+	    CALLGEOTAT(_XtGeoTrace(widget,
+				   "y changing to %d\n",widget->core.y));
  	}
  	if (req.changes.width != widget->core.width) {
  	    req.changeMask |= CWWidth;
  	    req.changes.width = widget->core.width;
+	    CALLGEOTAT(_XtGeoTrace(widget,
+				 "width changing to %d\n",widget->core.width));
  	}
  	if (req.changes.height != widget->core.height) {
  	    req.changeMask |= CWHeight;
  	    req.changes.height = widget->core.height;
+	    CALLGEOTAT(_XtGeoTrace(widget,
+                               "height changing to %d\n",widget->core.height));
  	}
  	if (req.changes.border_width != widget->core.border_width) {
  	    req.changeMask |= CWBorderWidth;
  	    req.changes.border_width = widget->core.border_width;
+	    CALLGEOTAT(_XtGeoTrace(widget,
+				   "border_width changing to %d\n",
+				   widget->core.border_width));
  	}
 	if (req.changeMask & CWStackMode) {
 	    req.changes.stack_mode = request->stack_mode;
+	    CALLGEOTAT(_XtGeoTrace(widget,"stack_mode changing\n"));
 	    if (req.changeMask & CWSibling)
 		if (XtIsWidget(request->sibling))
 		    req.changes.sibling = XtWindow(request->sibling);
@@ -288,11 +403,26 @@ _XtMakeGeometryRequest (widget, request, reply, clear_rect_obj)
 		    req.changeMask &= ~(CWStackMode | CWSibling);
 	}
 
+#ifdef XT_GEO_TATTLER
+        if (req.changeMask) {
+	    CALLGEOTAT(_XtGeoTrace(widget,
+				   "XConfigure \"%s\"'s window.\n",
+				   XtName(widget)));
+	} else {
+	    CALLGEOTAT(_XtGeoTrace(widget,
+			     "No window configuration needed for \"%s\".\n",
+			     XtName(widget)));
+	}
+#endif
+
 	XConfigureWindow(XtDisplay(widget), XtWindow(widget),
 			 req.changeMask, &req.changes);
     }
     else {			/* RectObj child of realized Widget */
 	*clear_rect_obj = TRUE;
+	CALLGEOTAT(_XtGeoTrace(widget,
+			       "ClearRectObj on \"%s\".\n",XtName(widget)));
+
 	ClearRectObjAreas((RectObj)widget, &req.changes);
     }
     hookobj = XtHooksOfDisplay(XtDisplayOfObject(widget));;
@@ -443,67 +573,7 @@ void XtResizeWidget(w, width, height, borderWidth)
     Dimension width, height, borderWidth;
 #endif
 {
-    XtConfigureHookDataRec req;
-    Widget hookobj;
-    Dimension old_width, old_height, old_borderWidth;
-    WIDGET_TO_APPCON(w);
-
-    LOCK_APP(app);
-    req.changeMask = 0;
-    if ((old_width = w->core.width) != width) {
-	req.changes.width = w->core.width = width;
-	req.changeMask |= CWWidth;
-    }
-
-    if ((old_height = w->core.height) != height) {
-	req.changes.height = w->core.height = height;
-	req.changeMask |= CWHeight;
-    }
-
-    if ((old_borderWidth = w->core.border_width) != borderWidth) {
-	req.changes.border_width = w->core.border_width = borderWidth;
-	req.changeMask |= CWBorderWidth;
-    }
-
-    if (req.changeMask != 0) {
-	if (XtIsRealized(w)) {
-	    if (XtIsWidget(w))
-		XConfigureWindow(XtDisplay(w), XtWindow(w), 
-				 req.changeMask, &req.changes);
-	    else {
-		Widget pw = _XtWindowedAncestor(w);
-		old_width += (old_borderWidth << 1);
-		old_height += (old_borderWidth << 1);
-		if ((Dimension)(width + (borderWidth << 1)) > old_width)
-		    old_width = width + (borderWidth << 1);
-		if ((Dimension)(height + (borderWidth << 1)) > old_height)
-		    old_height = height + (borderWidth << 1);
-		XClearArea(XtDisplay(pw), XtWindow(pw),
-			   (int)w->core.x, (int)w->core.y,
-			   (unsigned int)old_width, (unsigned int)old_height,
-			   TRUE);
-	    }
-	}
-	hookobj = XtHooksOfDisplay(XtDisplayOfObject(w));;
-	if (XtHasCallbacks(hookobj, XtNconfigureHook) == XtCallbackHasSome) {
-	    req.type = XtHconfigure;
-	    req.widget = w;
-	    XtCallCallbackList(hookobj,
-			((HookObject)hookobj)->hooks.confighook_callbacks,
-			(XtPointer)&req);
-	}
-	{
-	XtWidgetProc resize;
-
-	LOCK_PROCESS;
-	resize = XtClass(w)->core_class.resize;
-	UNLOCK_PROCESS;
-	if ((req.changeMask & (CWWidth | CWHeight)) && 
-	    resize != (XtWidgetProc) NULL)
-	    (*resize)(w);
-	}
-    }
-    UNLOCK_APP(app);
+    XtConfigureWidget(w, w->core.x, w->core.y, width, height, borderWidth);
 } /* XtResizeWidget */
 
 #if NeedFunctionPrototypes
@@ -527,40 +597,59 @@ void XtConfigureWidget(w, x, y, width, height, borderWidth)
     XWindowChanges old;
     WIDGET_TO_APPCON(w);
 
+    CALLGEOTAT(_XtGeoTrace(w,
+                   "\"%s\" is being configured by its parent \"%s\"\n",
+		   XtName(w), 
+		   (XtParent(w))?XtName(XtParent(w)):"Root"));
+    CALLGEOTAT(_XtGeoTab(1));
+    
     LOCK_APP(app);
     req.changeMask = 0;
     if ((old.x = w->core.x) != x) {
+	CALLGEOTAT(_XtGeoTrace(w,"x move from %d to %d\n",w->core.x, x));
 	req.changes.x = w->core.x = x;
 	req.changeMask |= CWX;
     }
 
     if ((old.y = w->core.y) != y) {
+	CALLGEOTAT(_XtGeoTrace(w,"y move from %d to %d\n",w->core.y, y));
 	req.changes.y = w->core.y = y;
 	req.changeMask |= CWY;
     }
 
     if ((old.width = w->core.width) != width) {
+	CALLGEOTAT(_XtGeoTrace(w,
+			 "width move from %d to %d\n",w->core.width, width));
 	req.changes.width = w->core.width = width;
 	req.changeMask |= CWWidth;
     }
 
     if ((old.height = w->core.height) != height) {
+	CALLGEOTAT(_XtGeoTrace(w,
+		       "height move from %d to %d\n",w->core.height, height));
 	req.changes.height = w->core.height = height;
 	req.changeMask |= CWHeight;
     }
 
     if ((old.border_width = w->core.border_width) != borderWidth) {
+	CALLGEOTAT(_XtGeoTrace(w,"border_width move from %d to %d\n",
+		    w->core.border_width,borderWidth ));
 	req.changes.border_width = w->core.border_width = borderWidth;
 	req.changeMask |= CWBorderWidth;
     }
 
     if (req.changeMask != 0) {
 	if (XtIsRealized(w)) {
-	    if (XtIsWidget(w))
+	    if (XtIsWidget(w)) {
+		CALLGEOTAT(_XtGeoTrace(w,
+                                  "XConfigure \"%s\"'s window\n",XtName(w)));
 		XConfigureWindow(XtDisplay(w), XtWindow(w), 
 				 req.changeMask, &req.changes);
-	    else
+	    } else {
+		CALLGEOTAT(_XtGeoTrace(w,
+			       "ClearRectObj called on \"%s\"\n",XtName(w)));
 		ClearRectObjAreas((RectObj)w, &old);
+	    }
 	}
 	hookobj = XtHooksOfDisplay(XtDisplayOfObject(w));;
 	if (XtHasCallbacks(hookobj, XtNconfigureHook) == XtCallbackHasSome) {
@@ -577,10 +666,16 @@ void XtConfigureWidget(w, x, y, width, height, borderWidth)
 	resize = XtClass(w)->core_class.resize;
 	UNLOCK_PROCESS;
 	if ((req.changeMask & (CWWidth | CWHeight)) && 
-	    resize != (XtWidgetProc) NULL)
+	    resize != (XtWidgetProc) NULL) {
+	    CALLGEOTAT(_XtGeoTrace(w,"Resize proc is called.\n"));
 	    (*resize)(w);
+	 }
 	}
+    } else {
+	CALLGEOTAT(_XtGeoTrace(w,"No change in configuration\n"));
     }
+
+    CALLGEOTAT(_XtGeoTab(-1));
     UNLOCK_APP(app);
 } /* XtConfigureWidget */
 
@@ -596,44 +691,8 @@ void XtMoveWidget(w, x, y)
     Position x, y;
 #endif
 {
-    XtConfigureHookDataRec req;
-    XWindowChanges old;
-    Widget hookobj;
-    WIDGET_TO_APPCON(w);
-
-    LOCK_APP(app);
-    req.changeMask = 0;
-    if ((old.x = w->core.x) != x) {
-	req.changes.x = w->core.x = x;
-	req.changeMask |= CWX;
-    }
-
-    if ((old.y = w->core.y) != y) {
-	req.changes.y = w->core.y = y;
-	req.changeMask |= CWY;
-    }
-
-    if (req.changeMask != 0) {
-	if (XtIsRealized(w)) {
-	    if (XtIsWidget(w))
-		XMoveWindow(XtDisplay(w), XtWindow(w), w->core.x, w->core.y);
-	    else {
-		old.width = w->core.width;
-		old.height = w->core.height;
-		old.border_width = w->core.border_width;
-		ClearRectObjAreas((RectObj)w, &old);
-	    }
-	}
-	hookobj = XtHooksOfDisplay(XtDisplayOfObject(w));;
-	if (XtHasCallbacks(hookobj, XtNconfigureHook) == XtCallbackHasSome) {
-	    req.type = XtHconfigure;
-	    req.widget = w;
-	    XtCallCallbackList(hookobj,
-			((HookObject)hookobj)->hooks.confighook_callbacks,
-			(XtPointer)&req);
-	}
-    }
-    UNLOCK_APP(app);
+    XtConfigureWidget(w, x, y, w->core.width, w->core.height,
+		      w->core.border_width);
 } /* XtMoveWidget */
 
 #if NeedFunctionPrototypes
@@ -691,6 +750,12 @@ XtGeometryResult XtQueryGeometry(widget, intended, reply)
     XtGeometryResult result;
     WIDGET_TO_APPCON(widget);
 
+    CALLGEOTAT(_XtGeoTrace(widget,
+		     "\"%s\" is asking its preferred geometry to \"%s\".\n",
+		     (XtParent(widget))?XtName(XtParent(widget)):"Root",
+		     XtName(widget)));
+    CALLGEOTAT(_XtGeoTab(1));
+
     LOCK_APP(app);
     LOCK_PROCESS;
     query = XtClass(widget)->core_class.query_geometry;
@@ -700,21 +765,63 @@ XtGeometryResult XtQueryGeometry(widget, intended, reply)
 	if (intended == NULL) {
 	    null_intended.request_mode = 0;
 	    intended = &null_intended;
+#ifdef XT_GEO_TATTLER
+	    CALLGEOTAT(_XtGeoTrace(widget,"without any constraint.\n"));
+	} else {
+	    CALLGEOTAT(_XtGeoTrace(widget,
+				   "with the following constraints:\n"));
+
+	    if (intended->request_mode & CWX) {
+		CALLGEOTAT(_XtGeoTrace(widget," x = %d\n",intended->x));
+	    }
+	    if (intended->request_mode & CWY) {
+		CALLGEOTAT(_XtGeoTrace(widget," y = %d\n",intended->y));
+	    }
+	    if (intended->request_mode & CWWidth) {
+		CALLGEOTAT(_XtGeoTrace(widget,
+				       " width = %d\n",intended->width));
+	    }
+	    if (intended->request_mode & CWHeight) {
+		CALLGEOTAT(_XtGeoTrace(widget,
+				       " height = %d\n",intended->height));
+	    }
+	    if (intended->request_mode & CWBorderWidth) {
+		CALLGEOTAT(_XtGeoTrace(widget,
+			       " border_width = %d\n",intended->border_width));
+	    }
+#endif
 	}
+
 	result = (*query) (widget, intended, reply);
     }
     else {
+	CALLGEOTAT(_XtGeoTrace(widget,"\"%s\" has no QueryGeometry proc, return the current state\n",XtName(widget)));
+
 	result = XtGeometryYes;
     }
 
+#ifdef XT_GEO_TATTLER
+#define FillIn(mask, field) \
+	if (!(reply->request_mode & mask)) {\
+	      reply->field = widget->core.field;\
+	      _XtGeoTrace(widget," using core %s = %d.\n","field",\
+			                               widget->core.field);\
+	} else {\
+	      _XtGeoTrace(widget," replied %s = %d\n","field",\
+			                           reply->field);\
+	} 
+#else
 #define FillIn(mask, field) \
 	if (!(reply->request_mode & mask)) reply->field = widget->core.field;
+#endif
 
     FillIn(CWX, x);
     FillIn(CWY, y);
     FillIn(CWWidth, width);
     FillIn(CWHeight, height);
     FillIn(CWBorderWidth, border_width);
+
+    CALLGEOTAT(_XtGeoTab(-1));
 #undef FillIn
 
     if (!reply->request_mode & CWStackMode) 

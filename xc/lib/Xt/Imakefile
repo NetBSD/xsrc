@@ -1,5 +1,9 @@
-XCOMM $XConsortium: Imakefile /main/116 1995/11/30 19:05:17 kaleb $
-XCOMM $XFree86: xc/lib/Xt/Imakefile,v 3.7 1996/08/26 06:28:50 dawes Exp $
+XCOMM $TOG: Imakefile /main/119 1997/05/20 10:06:20 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/lib/Xt/Imakefile,v 3.8.2.1 1997/05/21 15:02:18 dawes Exp $
 #define DoNormalLib NormalLibXt
 #define DoSharedLib SharedLibXt
 #define DoDebugLib DebugLibXt
@@ -7,6 +11,7 @@ XCOMM $XFree86: xc/lib/Xt/Imakefile,v 3.7 1996/08/26 06:28:50 dawes Exp $
 #define HasSharedData YES
 #define LibName Xt
 #define SoRev SOXTREV
+#define IncSubdir X11
 
 #include <Threads.tmpl>
 
@@ -43,7 +48,7 @@ XTWARNINGPREFIX = XtWarningPrefix
    POLL_DEFINES = -DUSE_POLL
 #endif
 #if HasSnprintf
-   MISC_DEFINES = -DHAS_SNPRINTF -DLIBXT
+   MISC_DEFINES = -DUSE_SNPRINTF -DLIBXT
 #endif
         DEFINES = AllocateLocalDefines $(ALIGN_DEFINES) $(POLL_DEFINES) $(MISC_DEFINES) XtExtraDefines
 
@@ -53,7 +58,7 @@ XTWARNINGPREFIX = XtWarningPrefix
 
    SRCH_DEFINES = -DXFILESEARCHPATHDEFAULT=\"$(XFILESEARCHPATHDEFAULT)\"
 #if Malloc0ReturnsNull
-  ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+  ALLOC_DEFINES = XtMalloc0ReturnsNullDefines
 #endif
 #if MotifBC
      BC_DEFINES = -DMOTIFBC
@@ -64,18 +69,9 @@ XTWARNINGPREFIX = XtWarningPrefix
 #if NoRConst
  RCONST_DEFINES = -DNORCONST
 #endif
- LIB_MT_DEFINES = LibraryMTDefines
-
- DEPEND_DEFINES = $(LIB_MT_DEFINES)
-
 STRINGSABIOPTIONS = ToolkitStringsABIOptions
 
        LINTLIBS = $(LINTXLIB)
-
-#if !HasSnprintf
-      MISCSRCS = snprintf.c
-      MISCOBJS = snprintf.o
-#endif
 
 HEADERS = \
 	Composite.h \
@@ -226,15 +222,9 @@ SpecialCLibObjectRule(TMaction,$(_NOOP_),$(RCONST_DEFINES))
 #if BuildXKBlib
 SpecialCLibObjectRule(TMkey,$(_NOOP_),-DXKB)
 #endif
-SpecialCLibObjectRule(Threads,$(ICONFIGFILES),$(LIB_MT_DEFINES))
 #if DoSharedLib
 SpecialCObjectRule(sharedlib,$(_NOOP_),$(SHLIBDEF))
 #endif
-#if !HasSnprintf
-LinkSourceFile(snprintf.c,../misc)
-SpecialCLibObjectRule(snprintf,$(ICONFIGFILES),-DLIBXT)
-#endif
-LinkSourceFile(snprintf.h,../misc)
 
 #ifdef MinixArchitecture
 SpecialCLibObjectRule(Shell,$(ICONFIGFILES),-DXT_NO_SM)

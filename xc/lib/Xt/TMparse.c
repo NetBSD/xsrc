@@ -1,5 +1,4 @@
-/* $XConsortium: TMparse.c,v 1.142 94/06/03 16:27:01 converse Exp $ */
-/* $XFree86: xc/lib/Xt/TMparse.c,v 3.0 1996/03/10 11:52:29 dawes Exp $ */
+/* $TOG: TMparse.c /main/119 1997/05/15 17:31:29 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -33,6 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/TMparse.c,v 3.0.4.1 1997/05/17 12:24:59 dawes Exp $ */
 
 /*
 
@@ -1657,7 +1657,7 @@ static String ParseString(str, strP)
 		&& *str != ')'
                 && !IsNewline(*str)
 		&& *str != '\0') str++;
-	*strP = XtMalloc((unsigned)(str-start+1));
+	*strP = __XtMalloc((unsigned)(str-start+1));
 	(void) memmove(*strP, start, str-start);
 	(*strP)[str-start] = '\0';
     }
@@ -1702,7 +1702,7 @@ static String ParseParamSeq(str, paramSeqP, paramNumP)
 
     if (num_params != 0) {
 	String *paramP = (String *)
-		XtMalloc( (unsigned)(num_params+1) * sizeof(String) );
+		__XtMalloc( (unsigned)(num_params+1) * sizeof(String) );
 	*paramSeqP = paramP;
 	*paramNumP = num_params;
 	paramP += num_params; /* list is LIFO right now */

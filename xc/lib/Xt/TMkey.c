@@ -1,4 +1,4 @@
-/* $XConsortium: TMkey.c /main/30 1995/11/30 19:05:20 kaleb $ */
+/* $TOG: TMkey.c /main/32 1997/05/15 17:31:22 kaleb $ */
 /*LINTLIBRARY*/
 
 /***********************************************************
@@ -426,11 +426,11 @@ void _XtBuildKeysymTables(dpy,pd)
 	XtFree((char *)pd->modKeysyms);
     if (pd->modsToKeysyms)
 	XtFree((char *)pd->modsToKeysyms);
-    pd->modKeysyms = (KeySym*)XtMalloc((Cardinal)KeysymTableSize*sizeof(KeySym));
+    pd->modKeysyms = (KeySym*)__XtMalloc((Cardinal)KeysymTableSize*sizeof(KeySym));
     maxCount = KeysymTableSize;
     tempCount = 0;
 
-    table = (ModToKeysymTable*)XtMalloc((Cardinal)8*sizeof(ModToKeysymTable));
+    table = (ModToKeysymTable*)__XtMalloc((Cardinal)8*sizeof(ModToKeysymTable));
     pd->modsToKeysyms = table;
 
     table[0].mask = ShiftMask;
@@ -634,7 +634,7 @@ void XtRegisterCaseConverter(dpy, proc, start, stop)
     LOCK_APP(app);
     pd = _XtGetPerDisplay(dpy);
 
-    ptr = (CaseConverterPtr) XtMalloc(sizeof(CaseConverterRec));
+    ptr = (CaseConverterPtr) __XtMalloc(sizeof(CaseConverterRec));
     ptr->start = start;
     ptr->stop = stop;
     ptr->proc = proc;
@@ -720,7 +720,7 @@ void XtKeysymToKeycodeList(dpy, keysym, keycodes_return, keycount_return)
 	    if (ncodes == maxcodes) {
 		KeyCode *old = keycodes;
 		maxcodes += KEYCODE_ARRAY_SIZE;
-		keycodes = (KeyCode*)XtMalloc(maxcodes*sizeof(KeyCode));
+		keycodes = (KeyCode*)__XtMalloc(maxcodes*sizeof(KeyCode));
 		if (ncodes) {
 		    (void) memmove((char *)keycodes, (char *)old, 
 				   ncodes*sizeof(KeyCode) );

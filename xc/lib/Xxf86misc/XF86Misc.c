@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/Xxf86misc/XF86Misc.c,v 3.3 1996/02/22 05:09:50 dawes Exp $ */
+/* $XFree86: xc/lib/Xxf86misc/XF86Misc.c,v 3.4 1997/01/18 06:52:26 dawes Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -92,59 +92,6 @@ Bool XF86MiscQueryVersion(dpy, majorVersion, minorVersion)
     }
     *majorVersion = rep.majorVersion;
     *minorVersion = rep.minorVersion;
-    UnlockDisplay(dpy);
-    SyncHandle();
-    return True;
-}
-
-Bool XF86MiscSetSaver(dpy, screen, suspendTime, offTime)
-    Display* dpy;
-    int screen;
-    int suspendTime, offTime;
-{
-    XExtDisplayInfo *info = find_display (dpy);
-    xXF86MiscSetSaverReq *req;
-
-    XF86MiscCheckExtension (dpy, info, False);
-
-    LockDisplay(dpy);
-    GetReq(XF86MiscSetSaver, req);
-    req->reqType = info->codes->major_opcode;
-    req->xf86miscReqType = X_XF86MiscSetSaver;
-    req->screen = screen;
-    req->suspendTime = suspendTime;
-    req->offTime = offTime;
-    UnlockDisplay(dpy);
-    SyncHandle();
-    return True;
-}
-    
-Bool XF86MiscGetSaver(dpy, screen, suspendTime, offTime)
-    Display* dpy;
-    int screen;
-    int *suspendTime, *offTime;
-{
-    XExtDisplayInfo *info = find_display (dpy);
-    xXF86MiscGetSaverReply rep;
-    xXF86MiscGetSaverReq *req;
-    int i;
-
-    XF86MiscCheckExtension (dpy, info, False);
-
-    LockDisplay(dpy);
-    GetReq(XF86MiscGetSaver, req);
-    req->reqType = info->codes->major_opcode;
-    req->xf86miscReqType = X_XF86MiscGetSaver;
-    req->screen = screen;
-    if (!_XReply(dpy, (xReply *)&rep, 0, xFalse)) {
-	UnlockDisplay(dpy);
-	SyncHandle();
-	return False;
-    }
-
-    *suspendTime = rep.suspendTime;
-    *offTime = rep.offTime;
-	
     UnlockDisplay(dpy);
     SyncHandle();
     return True;

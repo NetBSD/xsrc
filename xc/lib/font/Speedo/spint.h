@@ -1,4 +1,4 @@
-/* $XConsortium: spint.h,v 1.10 94/04/17 20:17:51 gildea Exp $ */
+/* $XConsortium: spint.h /main/12 1996/09/28 16:47:40 rws $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -52,10 +52,6 @@ from the X Consortium.
 
 #ifndef _SPINT_H_
 #define _SPINT_H_
-
-#ifndef DEBUG
-#define NDEBUG
-#endif
 
 #include <stdio.h>
 #include "fntfilst.h"

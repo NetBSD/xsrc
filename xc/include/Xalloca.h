@@ -1,4 +1,4 @@
-/* $XConsortium: Xalloca.h /main/4 1996/01/12 10:07:00 kaleb $ */
+/* $XConsortium: Xalloca.h /main/6 1996/09/28 16:17:22 rws $ */
 
 /*
 

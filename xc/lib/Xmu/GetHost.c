@@ -1,5 +1,5 @@
-/* $XConsortium: GetHost.c,v 1.7 94/04/17 20:16:07 rws Exp $ */
-/* $XFree86: xc/lib/Xmu/GetHost.c,v 3.0 1996/05/06 05:54:33 dawes Exp $ */
+/* $XConsortium: GetHost.c /main/8 1996/11/13 14:44:43 lehors $ */
+/* $XFree86: xc/lib/Xmu/GetHost.c,v 3.1 1996/12/23 06:01:00 dawes Exp $ */
 
 /*
 
@@ -40,7 +40,7 @@ in this Software without prior written authorization from the X Consortium.
 #endif
 
 #ifdef WIN32
-#include <winsock.h>
+#include <X11/Xwinsock.h>
 #endif
 
 #ifdef USG

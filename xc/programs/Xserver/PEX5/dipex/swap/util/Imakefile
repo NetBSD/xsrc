@@ -1,8 +1,9 @@
+# $XConsortium: Imakefile /main/3 1996/09/28 16:55:13 rws $
 # This can be used directly as a Makefile, with make -f Imakefile
 
 PEXINCLUDE = ./../../../../../include/PEX
 
-all: cOCTables.ci uOCTables.ci Requests.h Requests.ci
+all:: cOCTables.ci uOCTables.ci Requests.h Requests.ci
 
 cOCTables.ci:
 	echo "STUB_NAME " "cPEX" | cat > OCTables.temp

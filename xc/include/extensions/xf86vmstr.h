@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86vmstr.h,v 3.16 1996/10/16 14:28:58 dawes Exp $ */
+/* $XFree86: xc/include/extensions/xf86vmstr.h,v 3.18.2.1 1997/05/25 14:13:37 dawes Exp $ */
 /*
 
 Copyright (c) 1995  Kaleb S. KEITHLEY
@@ -28,7 +28,7 @@ or other dealings in this Software without prior written authorization
 from Kaleb S. KEITHLEY
 
 */
-/* $XConsortium: xf86vmstr.h /main/9 1996/01/21 14:28:39 kaleb $ */
+/* $XConsortium: xf86vmstr.h /main/10 1996/10/26 21:38:17 kaleb $ */
 
 /* THIS IS NOT AN X CONSORTIUM STANDARD */
 
@@ -40,7 +40,7 @@ from Kaleb S. KEITHLEY
 #define XF86VIDMODENAME "XFree86-VidModeExtension"
 
 #define XF86VIDMODE_MAJOR_VERSION	0	/* current version numbers */
-#define XF86VIDMODE_MINOR_VERSION	7
+#define XF86VIDMODE_MINOR_VERSION	8
 /*
  * major version 0 == uses parameter-to-wire functions in XFree86 libXxf86vm.
  * major version 1 == uses parameter-to-wire functions hard-coded in xvidtune
@@ -242,11 +242,11 @@ typedef struct {
     CARD8	modelLength;
     CARD8	nhsync;
     CARD8	nvsync;
-    CARD32	bandwidth B32;
     CARD32	pad2 B32;
     CARD32	pad3 B32;
     CARD32	pad4 B32;
     CARD32	pad5 B32;
+    CARD32	pad6 B32;
 } xXF86VidModeGetMonitorReply;
 #define sz_xXF86VidModeGetMonitorReply	32
 

@@ -26,6 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/Xmu/EditresCom.c,v 1.3 1997/01/18 07:17:50 dawes Exp $ */
 
 /*
  * Author:  Chris D. Peterson, Dave Sternlicht, MIT X Consortium
@@ -222,6 +223,10 @@ Boolean *cont;
  *                 length - length of request.
  *	Returns: the event, or NULL.
  */
+
+#if defined(Lynx) && defined(ERROR_MESSAGE)
+#undef ERROR_MESSAGE
+#endif
 
 #define ERROR_MESSAGE ("Client: Improperly formatted protocol request")
 

@@ -1,4 +1,4 @@
-/* $XConsortium: xkbmisc.c /main/6 1996/02/05 05:59:47 kaleb $ */
+/* $XConsortium: xkbmisc.c /main/7 1996/12/27 20:53:10 kaleb $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -485,7 +485,7 @@ register int	i;
 	a= xkb->geom->key_aliases;
 	for (i=0;i<xkb->geom->num_key_aliases;i++,a++) {
 	    if (strncmp(name,a->alias,XkbKeyNameLength)==0)
-		return XkbFindKeycodeByName(xkb,name,False);
+		return XkbFindKeycodeByName(xkb,a->real,False);
 	}
     }
     if (xkb->names && xkb->names->key_aliases) {
@@ -493,7 +493,7 @@ register int	i;
 	a= xkb->names->key_aliases;
 	for (i=0;i<xkb->names->num_key_aliases;i++,a++) {
 	    if (strncmp(name,a->alias,XkbKeyNameLength)==0)
-		return XkbFindKeycodeByName(xkb,name,False);
+		return XkbFindKeycodeByName(xkb,a->real,False);
 	}
     }
     return 0;

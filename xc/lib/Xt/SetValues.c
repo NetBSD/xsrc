@@ -1,4 +1,4 @@
-/* $XConsortium: SetValues.c,v 1.22 94/05/11 16:03:28 kaleb Exp $ */
+/* $XConsortium: SetValues.c /main/23 1996/09/28 16:46:45 rws $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -332,6 +332,10 @@ void XtSetValues(w, args, num_args)
 		    }
 		}
 	    }
+	    CALLGEOTAT(_XtGeoTrace(w,
+		     "\nXtSetValues sees some geometry changes for \"%s\".\n", 
+			   XtName(w)));
+	    CALLGEOTAT(_XtGeoTab(1));
 	    do {
 		XtGeometryHookDataRec call_data;
 
@@ -371,6 +375,7 @@ void XtSetValues(w, args, num_args)
 		    break;
 		}
 		if (result == XtGeometryNo) geoReply.request_mode = 0;
+		CALLGEOTAT(_XtGeoTrace(w,"calling SetValuesAlmost.\n"));
 		(*set_values_almost) (oldw, w, &geoReq, &geoReply);
 	    } while (geoReq.request_mode != 0);
 	    /* call resize proc if we changed size and parent
@@ -383,9 +388,14 @@ void XtSetValues(w, args, num_args)
 	    if ((w->core.width != oldw->core.width ||
 		 w->core.height != oldw->core.height)
 		&& result != XtGeometryDone
-		&& resize != (XtWidgetProc) NULL)
+		&& resize != (XtWidgetProc) NULL) {
+		CALLGEOTAT(_XtGeoTrace(w,
+				 "XtSetValues calls \"%s\"'s resize proc.\n",
+			       XtName(w)));
 		(*resize)(w);
+	      }
 	    }
+	    CALLGEOTAT(_XtGeoTab(-1));
 	}
 	/* Redisplay if needed.  No point in clearing if the window is
 	 * about to disappear, as the Expose event will just go straight
@@ -393,17 +403,25 @@ void XtSetValues(w, args, num_args)
         if (XtIsWidget(w)) {
             /* widgets can distinguish between redisplay and resize, since
              the server will cause an expose on resize */
-            if (redisplay && XtIsRealized(w) && !w->core.being_destroyed)
-                XClearArea (XtDisplay(w), XtWindow(w), 0, 0, 0, 0, TRUE);
+            if (redisplay && XtIsRealized(w) && !w->core.being_destroyed) {
+                CALLGEOTAT(_XtGeoTrace(w,
+				 "XtSetValues calls ClearArea on \"%s\".\n",
+			       XtName(w)));
+		XClearArea (XtDisplay(w), XtWindow(w), 0, 0, 0, 0, TRUE);
+	    }
         } else { /*non-window object */
 	  if (redisplay && ! cleared_rect_obj ) {
 	      Widget pw = _XtWindowedAncestor(w);
 	      if (XtIsRealized(pw) && !pw->core.being_destroyed) {
 		  RectObj r = (RectObj)w;
 		  int bw2 = r->rectangle.border_width << 1;
+		  CALLGEOTAT(_XtGeoTrace(w,
+		   "XtSetValues calls ClearArea on \"%s\"'s parent \"%s\".\n",
+				 XtName(w),XtName(pw)));
 		  XClearArea (XtDisplay (pw), XtWindow (pw),
-		      r->rectangle.x, r->rectangle.y,
-		      r->rectangle.width + bw2,r->rectangle.height + bw2,TRUE);
+			      r->rectangle.x, r->rectangle.y,
+			      r->rectangle.width + bw2,
+			      r->rectangle.height + bw2,TRUE);
 	      }
 	  }
         }

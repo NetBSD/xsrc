@@ -1,6 +1,6 @@
 XCOMM
-XCOMM $XConsortium: Imakefile,v 5.7 94/11/21 18:32:10 kaleb Exp $
-XCOMM $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/Imakefile,v 3.2 1996/10/03 08:30:12 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/8 1996/09/28 16:54:14 rws $
+XCOMM $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/level2/Imakefile,v 3.3 1996/12/23 06:26:05 dawes Exp $
 XCOMM
 XCOMM 
 XCOMM Copyright 1989, 1990, 1991 by Sun Microsystems, Inc. and the X Consortium
@@ -41,7 +41,7 @@ DDPEXINCLUDE = ../include
 
 INCLUDES = -I. \
 	-I$(DDPEXINCLUDE) \
-	-I$(INCLUDESRC) \
+	-I$(XINCLUDESRC) \
 	-I$(PEXSERVINC) \
 	-I$(SERVERSRC)/include
 

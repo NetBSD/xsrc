@@ -49,6 +49,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miLight.h,v 1.1.1.1.12.1 1997/05/11 05:04:11 dawes Exp $ */
 
 #ifndef MI_LIGHT_H
 #define MI_LIGHT_H
@@ -145,7 +146,7 @@ SOFTWARE.
  ****/
 #define		NORMALIZE_VECTOR(vector, length)	\
 {							\
-    double sqrt();					\
+    double sqrt(double);					\
     ddFLOAT  *v;					\
     v = (ddFLOAT *) (vector);				\
     DOT_PRODUCT(v, v, (length));			\

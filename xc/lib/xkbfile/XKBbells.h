@@ -1,7 +1,7 @@
 #ifndef _XKBBELLS_H_
 #define	_XKBBELLS_H_ 1
 
-/* $XConsortium: XKBbells.h /main/3 1996/01/14 16:44:13 kaleb $ */
+/* $XConsortium: XKBbells.h /main/4 1996/08/31 12:44:47 kaleb $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

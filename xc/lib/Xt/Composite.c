@@ -1,4 +1,4 @@
-/* $XConsortium: Composite.c,v 1.23 94/04/17 20:13:41 converse Exp $ */
+/* $TOG: Composite.c /main/24 1997/05/15 17:28:24 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts
@@ -150,7 +150,7 @@ static void InheritAllowsChangeManagedSet(widget_class)
 	super_ext->allows_change_managed_set) {
 
 	new_ext = (CompositeClassExtension) 
-	    XtCalloc(1, sizeof(CompositeClassExtensionRec));
+	    __XtCalloc(1, sizeof(CompositeClassExtensionRec));
 
 	/* Be careful to inherit only what is appropriate */
 	new_ext->next_extension = cc->composite_class.extension;

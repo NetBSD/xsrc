@@ -1,5 +1,5 @@
-/* $XConsortium: sync.c,v 1.10 94/04/17 20:32:58 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/Xext/sync.c,v 3.1 1996/05/06 05:55:35 dawes Exp $ */
+/* $XConsortium: sync.c /main/13 1996/12/16 16:51:55 rws $ */
+/* $XFree86: xc/programs/Xserver/Xext/sync.c,v 3.3 1997/01/18 06:53:00 dawes Exp $ */
 /*
 
 Copyright (c) 1991, 1993  X Consortium
@@ -476,8 +476,8 @@ SyncInitTrigger(client, pTrigger, counter, changes)
     {
 	if (counter == None)
 	    pCounter = NULL;
-	else if (!(pCounter = (SyncCounter *)
-		   			LookupIDByType(counter, RTCounter)))
+	else if (!(pCounter = (SyncCounter *)SecurityLookupIDByType(
+			client, counter, RTCounter, SecurityReadAccess)))
 	{
 	    client->errorValue = counter;
 	    return SyncErrorBase + XSyncBadCounter;
@@ -1494,7 +1494,7 @@ ProcSyncSetPriority(client)
 
     if (stuff->id == None)
 	priorityclient = client;
-    else if (!(priorityclient = LookupClient(stuff->id)))
+    else if (!(priorityclient = LookupClient(stuff->id, client)))
     {
 	client->errorValue = stuff->id;
 	return BadMatch;
@@ -1529,13 +1529,14 @@ ProcSyncGetPriority(client)
 
     if (stuff->id == None)
 	priorityclient = client;
-    else if (!(priorityclient = LookupClient(stuff->id)))
+    else if (!(priorityclient = LookupClient(stuff->id, client)))
     {
 	client->errorValue = stuff->id;
 	return BadMatch;
     }
 
     rep.type = X_Reply;
+    rep.length = 0;
     rep.sequenceNumber = client->sequence;
     rep.priority = priorityclient->priority;
 
@@ -1583,7 +1584,8 @@ ProcSyncSetCounter(client)
     SyncCounter    *pCounter;
     CARD64	   newvalue;
 
-    pCounter = (SyncCounter *) LookupIDByType(stuff->cid, RTCounter);
+    pCounter = (SyncCounter *)SecurityLookupIDByType(client, stuff->cid,
+					   RTCounter, SecurityWriteAccess);
     if (pCounter == NULL)
     {
 	client->errorValue = stuff->cid;
@@ -1615,7 +1617,8 @@ ProcSyncChangeCounter(client)
 
     REQUEST_SIZE_MATCH(xSyncChangeCounterReq);
 
-    pCounter = (SyncCounter *) LookupIDByType(stuff->cid, RTCounter);
+    pCounter = (SyncCounter *) SecurityLookupIDByType(client, stuff->cid,
+					    RTCounter, SecurityWriteAccess);
     if (pCounter == NULL)
     {
 	client->errorValue = stuff->cid;
@@ -1652,7 +1655,8 @@ ProcSyncDestroyCounter(client)
 
     REQUEST_SIZE_MATCH(xSyncDestroyCounterReq);
 
-    pCounter = (SyncCounter *) LookupIDByType(stuff->counter, RTCounter);
+    pCounter = (SyncCounter *)SecurityLookupIDByType(client, stuff->counter,
+					   RTCounter, SecurityDestroyAccess);
     if (pCounter == NULL)
     {
 	client->errorValue = stuff->counter;
@@ -1797,7 +1801,8 @@ ProcSyncQueryCounter(client)
 
     REQUEST_SIZE_MATCH(xSyncQueryCounterReq);
 
-    pCounter = (SyncCounter *) LookupIDByType(stuff->counter, RTCounter);
+    pCounter = (SyncCounter *)SecurityLookupIDByType(client, stuff->counter,
+					    RTCounter, SecurityReadAccess);
     if (pCounter == NULL)
     {
 	client->errorValue = stuff->counter;
@@ -1925,7 +1930,8 @@ ProcSyncChangeAlarm(client)
 
     REQUEST_AT_LEAST_SIZE(xSyncChangeAlarmReq);
 
-    if (!(pAlarm = (SyncAlarm *) LookupIDByType(stuff->alarm, RTAlarm)))
+    if (!(pAlarm = (SyncAlarm *)SecurityLookupIDByType(client, stuff->alarm,
+					      RTAlarm, SecurityWriteAccess)))
     {
 	client->errorValue = stuff->alarm;
 	return SyncErrorBase + XSyncBadAlarm;
@@ -1965,7 +1971,8 @@ ProcSyncQueryAlarm(client)
 
     REQUEST_SIZE_MATCH(xSyncQueryAlarmReq);
 
-    pAlarm = (SyncAlarm *) LookupIDByType(stuff->alarm, RTAlarm);
+    pAlarm = (SyncAlarm *)SecurityLookupIDByType(client, stuff->alarm,
+						RTAlarm, SecurityReadAccess);
     if (!pAlarm)
     {
 	client->errorValue = stuff->alarm;
@@ -2025,7 +2032,8 @@ ProcSyncDestroyAlarm(client)
 
     REQUEST_SIZE_MATCH(xSyncDestroyAlarmReq);
 
-    if (!(pAlarm = (SyncAlarm *) LookupIDByType(stuff->alarm, RTAlarm)))
+    if (!(pAlarm = (SyncAlarm *)SecurityLookupIDByType(client, stuff->alarm,
+					      RTAlarm, SecurityDestroyAccess)))
     {
 	client->errorValue = stuff->alarm;
 	return SyncErrorBase + XSyncBadAlarm;
@@ -2438,7 +2446,7 @@ SyncExtensionInit()
  */
 
 
-#ifndef MINIX
+#if !defined(WIN32) && !defined(MINIX) && !defined(Lynx)
 #include <sys/time.h>
 #endif
 

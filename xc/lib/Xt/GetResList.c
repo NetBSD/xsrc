@@ -1,5 +1,4 @@
-/* $XConsortium: GetResList.c,v 1.7 94/04/17 20:14:08 kaleb Exp $ */
-/* $XFree86: xc/lib/Xt/GetResList.c,v 3.0 1996/05/06 05:54:50 dawes Exp $ */
+/* $TOG: GetResList.c /main/8 1997/05/15 17:29:43 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -33,6 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xt/GetResList.c,v 3.0.4.1 1997/05/17 12:24:54 dawes Exp $ */
 
 /*
 
@@ -79,7 +79,7 @@ void XtGetResourceList(widget_class, resources, num_resources)
 
 	LOCK_PROCESS;
 	size = widget_class->core_class.num_resources * sizeof(XtResource);
-	*resources = (XtResourceList) XtMalloc((unsigned) size);
+	*resources = (XtResourceList) __XtMalloc((unsigned) size);
 
 	if (!widget_class->core_class.class_inited) {
 	    /* Easy case */
@@ -151,7 +151,7 @@ void XtGetConstraintResourceList(widget_class, resources, num_resources)
 	}
 
 	size = class->constraint_class.num_resources * sizeof(XtResource);
-	*resources = (XtResourceList) XtMalloc((unsigned) size);
+	*resources = (XtResourceList) __XtMalloc((unsigned) size);
 
 	if (!class->core_class.class_inited) {
 	    /* Easy case */

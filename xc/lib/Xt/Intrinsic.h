@@ -1,5 +1,5 @@
-/* $XConsortium: Intrinsic.h,v 1.200 95/06/08 23:20:39 gildea Exp $ */
-/* $XFree86: xc/lib/Xt/Intrinsic.h,v 3.1 1995/06/14 07:12:11 dawes Exp $ */
+/* $XConsortium: Intrinsic.h /main/176 1996/08/31 06:51:04 kaleb $ */
+/* $XFree86: xc/lib/Xt/Intrinsic.h,v 3.2 1996/12/23 06:01:18 dawes Exp $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -1256,7 +1256,7 @@ extern void XtRemoveInput(
 #endif
 );
 
-extern XtInputId XtAppAddSignal(
+extern XtSignalId XtAppAddSignal(
 #if NeedFunctionPrototypes
     XtAppContext       	/* app_context */,
     XtSignalCallbackProc /* proc */,

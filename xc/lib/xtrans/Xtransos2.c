@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/xtrans/Xtransos2.c,v 3.4 1996/08/20 12:12:19 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransos2.c,v 3.5 1997/01/28 10:53:32 dawes Exp $ */
 
 /*
  * (c) Copyright 1996 by Sebastien Marineau and Holger Veit
@@ -110,6 +110,10 @@ char *port;
 	if (try >=10) {
 		PRMSG(1,"Os2OpenClient: Open server pipe %s failed, rc=%d\n",
 			pipename,rc,0 );
+		PRMSG(1,"\tProbable causes: either the XServer is not running, or has not started properly,\n",
+			0,0,0 );
+		PRMSG(1,"\tor the DISPLAY variable is set incorrectly.\n",
+			0,0,0 );
 		xfree(ciptr);
 		return NULL;
 	    }
@@ -151,7 +155,6 @@ char *port;
 /* Now write name to server on hServer */
         server_string[0]=(char) strlen(clientname)+1;
         strcpy(&server_string[1],clientname);
-        /* pipe_len=strlen(clientname)+1; */
         rc = DosWrite(hServer,server_string,(ULONG)server_string[0]+1,&byteWritten);
         if(rc != 0){  /* Could not write to server pipe? */
            PRMSG(1, "Os2OpenClient: Error writing to server pipe, handle=%d, rc=%d, w=%d\n",
@@ -161,15 +164,6 @@ char *port;
            xfree(ciptr);
            return(NULL);
            }
-/*
-        rc = DosWrite(hServer,clientname,pipe_len,&byteWritten);
-        if(rc != 0) {             
-		PRMSG(1, "Os2OpenClient: Error writing to server pipe, handle=%d, rc=%d, written %d\n",hServer,rc,byteWritten );
-           DosClose(hServer);
-           DosClose(hfd);
-           xfree(ciptr);
-           return(NULL);
-           }   Comment this out for now */
 
       PRMSG (5, "Os2OpenCLient: Wrote pipename %s to server; len %d written %d \n",
         &server_string[1],server_string[0]+1,byteWritten);
@@ -187,6 +181,8 @@ char *port;
 
         if(rc != 0){  /* Server has not responded! */
            PRMSG(1, "Os2OpenClient: Timeout on wait for server response, handle=%d, rc=%d\n",hServer,rc,0 );
+           PRMSG(1, "\tProbable cause: the XServer has exited or crashed while the connection was being established\n",0,0,0 );
+           PRMSG(1, "\tor the XServer is too busy to respond.\n",0,0,0 );
            DosClose(hServer);
            DosClose(hfd);
            xfree(ciptr);
@@ -202,6 +198,7 @@ char *port;
         rc = DosQueryNPHState(hfd,&State);
         if(rc != 0){  /* Client is not connected! */
            PRMSG(1, "Os2OpenClient: Client pipe does not appear connected. rc=%d, h=%d\n",rc,hfd,0 );
+           PRMSG(1, "\tProbable cause: the XServer has just exited.\n",0,0,0 );
            DosClose(hfd);
            xfree(ciptr);
            return(NULL);
@@ -240,6 +237,8 @@ char *port;
         ciptr->index=hfd;
         ciptr->family=AF_UNIX;
         if((ciptr->fd=_imphandle(hfd))<0){
+           PRMSG(1, "Os2OpenClient: Could not import the pipe handle into EMX\n",0,0,0 );
+           PRMSG(1, "\tProbable cause: EMX has run out of free file handles.\n",0,0,0 );
            DosClose(hfd);
            xfree(ciptr->addr);
            xfree(ciptr->peeraddr);
@@ -301,6 +300,7 @@ char *port;
                        0, 8192, 0);
    if (rc != 0){
         PRMSG(1, "Os2OpenServer: Unable to create pipe %s, rc=%d\n", pipename,rc,0 );
+        PRMSG(1, "\tProbable cause: there is already another XServer running on display :%s\n",port,0,0 );
 	DosClose(hfd);
         xfree(ciptr);
 	return(NULL);
@@ -596,6 +596,7 @@ int	       *status;
        if (rc) {
 	    PRMSG(1,"Os2Accept: Open pipe %s to client failed, rc=%d\n",
 	    clientname,rc,0 );
+            PRMSG(1, "\tProbable cause: the client has exited or timed-out.\n",0,0,0 );
             xfree(newciptr);
             rc = DosDisConnectNPipe(ciptr->fd);
             rc = DosConnectNPipe (ciptr->fd);
@@ -671,6 +672,7 @@ int	       *status;
         if((newciptr->fd=_imphandle(hClient))<0){
            PRMSG(1,"Os2Accept: Could not import pipe %d into EMX, errno=%d\n",
            hClient,errno,0 );
+           PRMSG(1, "\tProbable cause: EMX has run out of file handles.\n",0,0,0 );
            DosClose(hClient);
            xfree(newciptr->addr);
            xfree(newciptr->peeraddr);

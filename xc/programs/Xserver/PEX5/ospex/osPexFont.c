@@ -1,5 +1,5 @@
-/* $XConsortium: osPexFont.c,v 5.8 94/04/17 20:36:01 rws Exp $ */
-/* $XFree86: xc/programs/Xserver/PEX5/ospex/osPexFont.c,v 3.3 1996/08/11 12:34:10 dawes Exp $ */
+/* $XConsortium: osPexFont.c /main/10 1996/12/06 11:02:43 lehors $ */
+/* $XFree86: xc/programs/Xserver/PEX5/ospex/osPexFont.c,v 3.4 1996/12/23 06:26:34 dawes Exp $ */
 
 /*
 
@@ -49,6 +49,9 @@ SOFTWARE.
 
 */
 
+#ifdef WIN32
+#define _WILLWINSOCK_
+#endif
 #include <X11/Xos.h>
 #ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
@@ -67,6 +70,8 @@ extern char *getenv();
 #define PEX_DEFAULT_FONTPATH "/usr/lib/X11/fonts/PEX"
 #endif
 
+#ifndef WIN32
+
 #ifndef X_NOT_POSIX
 #include <dirent.h>
 #else
@@ -84,9 +89,20 @@ extern char *getenv();
 #endif
 #endif
 
-
 /* A convenient shorthand. */
 typedef struct dirent	 ENTRY;
+#define FileName(file) file->d_name
+
+#else  /* WIN32 */
+
+#define BOOL wBOOL
+#define ATOM wATOM
+#include <windows.h>
+#undef BOOL
+#undef ATOM
+#define FileName(file) file.cFileName
+
+#endif
 
 extern void CopyISOLatin1Lowered();
 extern int get_lowered_truncated_entry();
@@ -263,8 +279,14 @@ ddUSHORT   maxNames;		/* in */
 ddULONG   *numNames;		/* out - number of names found */
 char    ***names;		/* out - pointer to list of strings */
 {
+#ifdef WIN32
+    HANDLE		fontdirh;
+    WIN32_FIND_DATA	dir_entry;
+    char	        path[MAX_PATH];
+#else
     DIR		    *fontdir;
     ENTRY           *dir_entry;
+#endif
     char	     pattern[100];
     char	     entry[100];
     int		     i, head, tail, len, total = 0;
@@ -274,16 +296,25 @@ char    ***names;		/* out - pointer to list of strings */
     if (!(*names = (char **)xalloc((unsigned long)(ABSOLUTE_MAX_NAMES * sizeof(char *)))))
 	return 0;
     
+#ifdef WIN32
+    sprintf(path, "%s/*.*", pex_get_font_directory_path());
+    if ((fontdirh = FindFirstFile(path, &dir_entry)) == INVALID_HANDLE_VALUE)
+	return 0;
+#else
     if (!(fontdir = opendir(pex_get_font_directory_path())))
 	return 0;
+#endif
 
     pex_setup_wild_match(pattern, &head, &tail, &len);
     
-    do {
-	dir_entry = readdir(fontdir);
-	if (dir_entry) {
+#ifdef WIN32
+    do
+#else
+    while (total < maxNames && (dir_entry = readdir(fontdir)))
+#endif
+	{
 	
-	    if (!get_lowered_truncated_entry(dir_entry->d_name, entry))
+	    if (!get_lowered_truncated_entry(FileName(dir_entry), entry))
 		continue;
 
 	    if (pex_is_matching(entry, pattern, head, tail, len) > 0) {
@@ -299,9 +330,15 @@ char    ***names;		/* out - pointer to list of strings */
 		total++;
 	    }
 	}
-    } while (dir_entry && total < maxNames);
+#ifdef WIN32
+    while (total < maxNames && FindNextFile(fontdirh, &dir_entry));
+#endif
 
+#ifdef WIN32
+    FindClose(fontdirh);
+#else
     closedir(fontdir);
+#endif
     
     *numNames = total;
     
@@ -383,8 +420,14 @@ LoadPEXFontFile(length, fontname, pFont)
     int                 found_first, found_it = 0, err = Success, numChars, np;
     char		name_to_match[100];
     char		lowered_entry[100];
+#ifdef WIN32
+    HANDLE		fontdirh;
+    WIN32_FIND_DATA	dir_entry;
+    char	        path[MAX_PATH];
+#else
     DIR		       *fontdir;
     ENTRY              *dir_entry;
+#endif
     register int        i;
     register Ch_stroke_data **ch_font, *ch_stroke = 0;
     register Dispatch  *tblptr = 0;
@@ -395,30 +438,45 @@ LoadPEXFontFile(length, fontname, pFont)
 			 (unsigned char *)fontname, length);
 
     /* open up the font directory and look for matching file names */
+#ifdef WIN32
+    sprintf(path, "%s/*.*", pex_get_font_directory_path());
+    if ((fontdirh = FindFirstFile(path, &dir_entry)) == INVALID_HANDLE_VALUE)
+	return (PEXERR(PEXFontError));
+#else
     if (!(fontdir = opendir(pex_get_font_directory_path())))
 	return (PEXERR(PEXFontError));
+#endif
 
-    do {
-	dir_entry = readdir(fontdir);
-	if (dir_entry) {
+#ifdef WIN32
+    do
+#else
+    while(!found_it && (dir_entry = readdir(fontdir)))
+#endif
+	{
 	    /* strip off .phont and make all lower case */
-	    if (!get_lowered_truncated_entry(dir_entry->d_name, lowered_entry))
+	    if (!get_lowered_truncated_entry(FileName(dir_entry), lowered_entry))
 		continue;
 		
 	    /* does this match what got passed in? */
 	    if (strcmp(lowered_entry, name_to_match) == 0)
 		found_it = 1;
 	}
-    } while (dir_entry && !found_it);
+#ifdef WIN32
+    while (!found_it && FindNextFile(fontdirh, &dir_entry) && !found_it);
+#endif
     
     if (!found_it)
 	return (PEXERR(PEXFontError));
     
     (void) strcpy(fname, pex_get_font_directory_path());
     (void) strcat(fname, "/");
-    (void) strcat(fname, dir_entry->d_name);
+    (void) strcat(fname, FileName(dir_entry));
     
+#ifdef WIN32
+    FindClose(fontdirh);
+#else
     closedir(fontdir);
+#endif
 
     if ((fp = fopen(fname, "r")) == NULL)
 	return (PEXERR(PEXFontError));

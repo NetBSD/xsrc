@@ -1,5 +1,5 @@
-/* $XConsortium: xkbatom.c /main/2 1996/01/01 10:52:48 kaleb $ */
-/* $XFree86: xc/lib/xkbfile/xkbatom.c,v 3.2 1996/10/13 11:18:12 dawes Exp $ */
+/* $XConsortium: xkbatom.c /main/3 1996/08/31 12:45:22 kaleb $ */
+/* $XFree86: xc/lib/xkbfile/xkbatom.c,v 3.3 1996/12/23 06:04:03 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium

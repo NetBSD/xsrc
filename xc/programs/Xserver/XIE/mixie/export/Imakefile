@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile,v 1.5 94/01/12 20:07:25 rws Exp $
-XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/export/Imakefile,v 3.1 1996/10/03 09:17:21 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/6 1996/09/28 16:56:01 rws $
+XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/export/Imakefile,v 3.2 1996/12/23 06:28:27 dawes Exp $
 XCOMM build device dependent machine independent export element objs
 #include <Server.tmpl>
 
@@ -20,7 +20,7 @@ OBJS2 = mechist.o mecroi.o meroi.o mejpeg.o
 
        OBJS = $(OBJS1) $(OBJS2)
 
-   INCLUDES = -I../include -I../../include -I$(SERVERSRC)/include -I$(INCLUDESRC) -I$(INCLUDESRC)/extensions -I../jpeg
+   INCLUDES = -I../include -I../../include -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(XINCLUDESRC)/extensions -I../jpeg
    LINTLIBS = ../../dixie/export/llib-lexp.ln ../../dixie/import/llib-limp.ln \
               ../../dixie/process/llib-lproc.ln ../../dixie/request/llib-lreq.ln \
               ../control/llib-lctrl.ln ../export/llib-lmexp.ln ../fax/llib-lfax.ln \

@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile,v 1.4 93/11/07 10:57:59 rws Exp $
-XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/fax/Imakefile,v 3.1 1996/10/03 09:17:26 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/5 1996/09/28 16:56:07 rws $
+XCOMM $XFree86: xc/programs/Xserver/XIE/mixie/fax/Imakefile,v 3.2 1996/12/23 06:28:32 dawes Exp $
 XCOMM build device dependent machine independent fax processing element objects
 #include <Server.tmpl>
 
@@ -31,7 +31,7 @@ XCOMM build device dependent machine independent fax processing element objects
     DEFINES = -DXIE_DIS
 #endif
 
-   INCLUDES = -I../include -I../../include -I$(SERVERSRC)/include -I$(INCLUDESRC) -I$(INCLUDESRC)/extensions
+   INCLUDES = -I../include -I../../include -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(XINCLUDESRC)/extensions
    LINTLIBS = ../../dixie/export/llib-lexp.ln ../../dixie/import/llib-limp.ln \
               ../../dixie/process/llib-lproc.ln ../../dixie/request/llib-lreq.ln \
               ../control/llib-lctrl.ln ../export/llib-lmexp.ln ../fax/llib-lfax.ln \

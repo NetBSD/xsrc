@@ -1,4 +1,4 @@
-/* $XConsortium: Functions.c,v 1.12 94/04/17 20:14:05 kaleb Exp $ */
+/* $TOG: Functions.c /main/13 1997/05/15 17:29:29 kaleb $ */
 
 /*
 
@@ -225,5 +225,5 @@ String XtNewString(str)
     if (str == NULL)
 	return NULL;
     else
-	return strcpy(XtMalloc((unsigned)strlen(str) + 1), str);
+	return strcpy(__XtMalloc((unsigned)strlen(str) + 1), str);
 }

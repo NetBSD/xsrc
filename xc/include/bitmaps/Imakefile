@@ -1,4 +1,5 @@
-XCOMM $XConsortium: Imakefile,v 1.31 94/03/29 15:54:29 gildea Exp $
+XCOMM $XConsortium: Imakefile /main/32 1996/09/28 16:17:53 rws $
+
 HEADERS = \
 	1x1 \
 	2x2 \
@@ -73,6 +74,6 @@ HEADERS = \
 
 all::
 
-BuildIncludes($(HEADERS),bitmaps,..)
+BuildIncludes($(HEADERS),X11/bitmaps,../..)
 
-InstallMultipleFlags($(HEADERS),$(INCDIR)/bitmaps,$(INSTINCFLAGS))
+InstallMultipleFlags($(HEADERS),$(INCDIR)/X11/bitmaps,$(INSTINCFLAGS))

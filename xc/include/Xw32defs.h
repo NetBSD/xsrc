@@ -1,4 +1,4 @@
-/* $XConsortium: Xw32defs.h,v 1.4 94/02/25 18:50:11 rws Exp $ */
+/* $XConsortium: Xw32defs.h /main/5 1996/11/13 14:43:44 lehors $ */
 
 #ifndef _XW32DEFS_H
 #define  _XW32DEFS_H
@@ -44,6 +44,8 @@ typedef char *caddr_t;
 #define umask	   _umask
 #define unlink	   _unlink
 #define write	   _write
+#define random   rand
+#define srandom  srand
 
 #define O_RDONLY    _O_RDONLY
 #define O_WRONLY    _O_WRONLY

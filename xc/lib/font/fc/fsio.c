@@ -1,5 +1,5 @@
 /* $XConsortium: fsio.c,v 1.37 95/04/05 19:58:13 kaleb Exp $ */
-/* $XFree86: xc/lib/font/fc/fsio.c,v 3.4 1996/05/13 06:37:56 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fsio.c,v 3.5 1997/01/18 06:52:29 dawes Exp $ */
 /*
  * Copyright 1990 Network Computing Devices
  *
@@ -44,7 +44,11 @@
 #include	<signal.h>
 #include	<sys/types.h>
 #if !defined(WIN32) && !defined(AMOEBA) && !defined(_MINIX)
+#ifndef Lynx
 #include	<sys/socket.h>
+#else
+#include	<socket.h>
+#endif
 #endif
 #include	<errno.h>
 #ifdef X_NOT_STDC_ENV

@@ -1,4 +1,4 @@
-/* $XConsortium: EventUtil.c,v 1.12 94/04/17 20:14:04 kaleb Exp $ */
+/* $TOG: EventUtil.c /main/13 1997/05/15 17:29:22 kaleb $ */
 
 /********************************************************
 
@@ -109,7 +109,7 @@ XtPerWidgetInput _XtGetPerWidgetInput(widget, create)
 	create) 
       {
 	  pwi = (XtPerWidgetInput) 
-	    XtMalloc((unsigned) sizeof(XtPerWidgetInputRec));
+	    __XtMalloc((unsigned) sizeof(XtPerWidgetInputRec));
 	  
 	  pwi->focusKid = NULL;
 	  pwi->queryEventDescendant = NULL;
@@ -148,7 +148,7 @@ void _XtFillAncestorList(listPtr, maxElemsPtr, numElemsPtr, start, breakWidget)
     /* First time in, allocate the ancestor list */
     if (trace == NULL) 
       {
-	  trace = (Widget *) XtMalloc(CACHESIZE * sizeof(Widget));
+	  trace = (Widget *) __XtMalloc(CACHESIZE * sizeof(Widget));
 	  *maxElemsPtr = CACHESIZE;
       }	
     /* First fill in the ancestor list */

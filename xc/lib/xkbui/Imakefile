@@ -6,7 +6,8 @@ XCOMM $XConsortium: Imakefile /main/1 1995/11/30 19:00:42 kaleb $
 #define HasSharedData NO
 #define LibName xkbui
 #define SoRev SOXKBFILEREV
-#define	IncSubdir extensions
+#define	IncSubdir X11
+#define	IncSubSubdir extensions
             SRCS = XKBui.c
             OBJS = XKBui.o
          HEADERS = XKBui.h

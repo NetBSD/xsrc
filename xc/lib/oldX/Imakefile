@@ -1,10 +1,11 @@
-XCOMM $XConsortium: Imakefile,v 1.27 94/03/29 15:54:14 gildea Exp $
+XCOMM $XConsortium: Imakefile /main/28 1996/09/28 16:49:50 rws $
 #define DoNormalLib NormalOldX
 #define DoSharedLib SharedOldX
 #define DoDebugLib DebugOldX
 #define DoProfileLib ProfileOldX
 #define LibName oldX
 #define SoRev SOOLDXREV
+#define IncSubdir X11
 
 #ifdef SharedOldXReqs
 REQUIREDLIBS = SharedOldXReqs
@@ -13,7 +14,7 @@ REQUIREDLIBS = SharedOldXReqs
 #if Malloc0ReturnsNull
         DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
-       INCLUDES = -I$(INCLUDESRC) -I$(XLIBSRC)
+       INCLUDES = -I$(XINCLUDESRC) -I$(XLIBSRC)
            SRCS = \
 		XDraw.c \
 		XCrAssoc.c \

@@ -1,5 +1,5 @@
 /* $XConsortium: extinit.c,v 1.18 94/04/17 20:33:08 rws Exp $ */
-/* $XFree86: xc/programs/Xserver/Xi/extinit.c,v 3.2 1996/05/06 05:56:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xi/extinit.c,v 3.2.4.1 1997/05/16 11:35:04 hohndel Exp $ */
 
 /************************************************************
 
@@ -731,15 +731,6 @@ FixExtensionEvents (extEntry)
     AllowPropagateSuppress (mask);
 
     mask = GetNextExtEventMask ();
-    DevicePointerMotionMask = mask;
-    SetMaskForExtEvent (mask, DeviceMotionNotify);
-    AllowPropagateSuppress (mask);
-
-    DeviceFocusChangeMask = GetNextExtEventMask ();
-    SetMaskForExtEvent (DeviceFocusChangeMask, DeviceFocusIn);
-    SetMaskForExtEvent (DeviceFocusChangeMask, DeviceFocusOut);
-
-    mask = GetNextExtEventMask ();
     SetMaskForExtEvent (mask, ProximityIn);
     SetMaskForExtEvent (mask, ProximityOut);
     AllowPropagateSuppress (mask);
@@ -749,12 +740,9 @@ FixExtensionEvents (extEntry)
     SetMaskForExtEvent (mask, DeviceStateNotify);
 
     mask = GetNextExtEventMask ();
-    SetMaskForExtEvent (mask, DeviceMappingNotify);
-    DeviceMappingNotifyMask = mask;
-
-    mask = GetNextExtEventMask ();
-    SetMaskForExtEvent (mask, ChangeDeviceNotify);
-    ChangeDeviceNotifyMask = mask;
+    DevicePointerMotionMask = mask;
+    SetMaskForExtEvent (mask, DeviceMotionNotify);
+    AllowPropagateSuppress (mask);
 
     DevicePointerMotionHintMask = GetNextExtEventMask();
     SetEventInfo (DevicePointerMotionHintMask, _devicePointerMotionHint);
@@ -765,6 +753,18 @@ FixExtensionEvents (extEntry)
     SetEventInfo (GetNextExtEventMask(), _deviceButton5Motion);
     DeviceButtonMotionMask = GetNextExtEventMask();
     SetEventInfo (DeviceButtonMotionMask, _deviceButtonMotion);
+
+    DeviceFocusChangeMask = GetNextExtEventMask ();
+    SetMaskForExtEvent (DeviceFocusChangeMask, DeviceFocusIn);
+    SetMaskForExtEvent (DeviceFocusChangeMask, DeviceFocusOut);
+
+    mask = GetNextExtEventMask ();
+    SetMaskForExtEvent (mask, DeviceMappingNotify);
+    DeviceMappingNotifyMask = mask;
+
+    mask = GetNextExtEventMask ();
+    SetMaskForExtEvent (mask, ChangeDeviceNotify);
+    ChangeDeviceNotifyMask = mask;
 
     DeviceButtonGrabMask = GetNextExtEventMask();
     SetEventInfo (DeviceButtonGrabMask, _deviceButtonGrab);

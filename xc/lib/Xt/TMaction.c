@@ -1,4 +1,4 @@
-/* $XConsortium: TMaction.c,v 1.27 95/06/28 16:03:40 converse Exp $ */
+/* $TOG: TMaction.c /main/28 1997/05/15 17:31:14 kaleb $ */
 /*LINTLIBRARY*/
 
 /***********************************************************
@@ -105,7 +105,7 @@ static CompiledActionTable CompileActionTable(actions, count, stat, perm)
 
     if (! stat) {
 	cTableHold = cActions = (CompiledActionTable)
-	    XtMalloc(count * sizeof(CompiledAction));
+	    __XtMalloc(count * sizeof(CompiledAction));
 
 	for (i=count; --i >= 0; cActions++, actions++) {
 	    cActions->proc = actions->proc;
@@ -437,7 +437,7 @@ static XtActionProc *EnterBindCache(w, stateTree, procs, bindStatus)
       {
 	  *bindCachePtr = 
 	    bindCache = (TMBindCache)
-	      XtMalloc(sizeof(TMBindCacheRec) + 
+	      __XtMalloc(sizeof(TMBindCacheRec) + 
 		       (procsSize - sizeof(XtActionProc)));
 	  bindCache->next = NULL;
 	  bindCache->status = *bindStatus;
@@ -775,7 +775,7 @@ void XtGetActionList(widget_class, actions_return, num_actions_return)
     *num_actions_return = widget_class->core_class.num_actions;
     if (*num_actions_return) {
 	list = *actions_return = (XtActionList) 
-	    XtMalloc(*num_actions_return * sizeof(XtActionsRec));
+	    __XtMalloc(*num_actions_return * sizeof(XtActionsRec));
 	table = GetClassActions(widget_class);
 	for (i= (*num_actions_return); --i >= 0; list++, table++) {
 	    list->string = XrmQuarkToString(table->signature);

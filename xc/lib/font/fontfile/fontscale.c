@@ -1,5 +1,5 @@
-/* $XConsortium: fontscale.c,v 1.14 94/07/25 13:52:04 kaleb Exp $ */
-/* $XFree86: xc/lib/font/fontfile/fontscale.c,v 3.2 1996/08/25 14:04:02 dawes Exp $ */
+/* $XConsortium: fontscale.c /main/15 1996/09/28 16:49:13 rws $ */
+/* $XFree86: xc/lib/font/fontfile/fontscale.c,v 3.4 1996/12/24 02:23:08 dawes Exp $ */
 
 /*
 
@@ -40,8 +40,6 @@ in this Software without prior written authorization from the X Consortium.
 #include <math.h>
 #undef _XOPEN_SOURCE
 #endif
-
-extern fsResolution *GetClientResolutions();
 
 Bool
 FontFileAddScaledInstance (entry, vals, pFont, bitmapName)
@@ -132,7 +130,7 @@ FontFileCompleteXLFD (vals, def)
     FontScalablePtr	def;
 {
     int		best;
-    fsResolution  *res;
+    FontResolutionPtr res;
     int		num_res;
     double	sx, sy, temp_matrix[4];
     double	pixel_setsize_adjustment = 1.0;

@@ -1,4 +1,4 @@
-/* $XConsortium: XKBproto.h /main/21 1996/03/21 10:04:37 kaleb $ */
+/* $XConsortium: XKBproto.h /main/22 1996/09/28 16:18:24 rws $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

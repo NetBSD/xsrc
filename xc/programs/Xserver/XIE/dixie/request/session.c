@@ -1,5 +1,5 @@
 /* $XConsortium: session.c,v 1.6 94/04/17 20:33:58 rws Exp $ */
-/* $XFree86: xc/programs/Xserver/XIE/dixie/request/session.c,v 3.2 1996/10/06 13:11:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/XIE/dixie/request/session.c,v 3.2.4.1 1997/05/22 14:00:28 dawes Exp $ */
 /**** session.c ****/
 /****************************************************************************
 
@@ -92,6 +92,10 @@ terms and conditions:
 
 #include <memory.h>
 #include <technq.h>		/* extern def for technique_init	*/
+
+#ifdef DYNAMIC_MODULE
+#include "xf86Version.h"
+#endif
 
 /* function declarations */
 static	int	XieDispatch(),	/* dispatcher for XIE opcodes */
@@ -361,9 +365,7 @@ unsigned long server_version;
 {
 
   XieInitPtr = XieInit;
-#ifdef DEBUG
-  ErrorF("Init module XIE %p\n", XieInit);
-#endif
+  ErrorF("\tXIE extension module for XFree86%s\n", XF86_VERSION);
   return 1;
 }
 #endif /* DYNAMIC_MODULE */

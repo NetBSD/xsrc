@@ -47,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/programs/Xserver/PEX5/ddpex/mi/include/miStruct.h,v 1.2 1996/12/31 04:15:59 dawes Exp $ */
 
 #ifndef MISTRUCT_H
 #define MISTRUCT_H
@@ -64,7 +65,7 @@ typedef struct {
 	/* sample server definitions are listed later in this file */
 	
 	/* do the following to pad to 64 bit alignment for alpha */
-#ifdef __alpha
+#if defined(__alpha) || defined(__alpha__)
 	ddUSHORT		unused0;
 	ddUSHORT		unused1;
 #endif

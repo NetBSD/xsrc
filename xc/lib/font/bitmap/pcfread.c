@@ -1,4 +1,4 @@
-/* $XConsortium: pcfread.c,v 1.17 94/04/17 20:17:15 gildea Exp $ */
+/* $XConsortium: pcfread.c /main/18 1996/09/28 16:48:33 rws $ */
 
 /*
 
@@ -37,6 +37,9 @@ from the X Consortium.
 #include "fntfilst.h"
 #include "bitmap.h"
 #include "pcf.h"
+#ifndef MAX
+#define   MAX(a,b)    (((a)>(b)) ? a : b)
+#endif
 
 /* Read PCF font files */
 
@@ -679,4 +682,206 @@ pcfUnloadFont(pFont)
     xfree(bitmapFont);
     xfree(pFont->devPrivates);
     xfree(pFont);
+}
+
+int
+pmfReadFont(pFont, file, bit, byte, glyph, scan)
+    FontPtr     pFont;
+    FontFilePtr file;
+    int         bit,
+                byte,
+                glyph,
+                scan;
+{
+    CARD32      format;
+    CARD32      size;
+    BitmapFontPtr  bitmapFont = 0;
+    int         i;
+    PCFTablePtr tables = 0;
+    int         ntables;
+    int         nmetrics;
+    int         sizebitmaps;
+    int         nink_metrics;
+    CharInfoPtr metrics = 0;
+    xCharInfo  *ink_metrics = 0;
+    char       *bitmaps = 0;
+    CharInfoPtr *encoding = 0;
+    int         nencoding;
+    int         encodingOffset;
+    CARD32      bitmapSizes[GLYPHPADOPTIONS];
+    Bool	hasBDFAccelerators;
+    CharInfoPtr pci;
+
+    pFont->info.props = 0;
+    if (!(tables = pcfReadTOC(file, &ntables)))
+	goto Bail;
+
+    /* properties */
+
+    if (!pcfGetProperties(&pFont->info, file, tables, ntables))
+	goto Bail;
+
+    /* Use the old accelerators if no BDF accelerators are in the file */
+
+    hasBDFAccelerators = pcfHasType (tables, ntables, PCF_BDF_ACCELERATORS);
+    if (!hasBDFAccelerators)
+	if (!pcfGetAccel (&pFont->info, file, tables, ntables, PCF_ACCELERATORS))
+	    goto Bail;
+
+    /* metrics */
+
+    if (!pcfSeekToType(file, tables, ntables, PCF_METRICS, &format, &size)) {
+	goto Bail;
+    }
+    format = pcfGetLSB32(file);
+    if (!PCF_FORMAT_MATCH(format, PCF_DEFAULT_FORMAT) &&
+	    !PCF_FORMAT_MATCH(format, PCF_COMPRESSED_METRICS)) {
+	goto Bail;
+    }
+    if (PCF_FORMAT_MATCH(format, PCF_DEFAULT_FORMAT))
+	nmetrics = pcfGetINT32(file, format);
+    else
+	nmetrics = pcfGetINT16(file, format);
+    metrics = (CharInfoPtr) xalloc(nmetrics * sizeof(CharInfoRec));
+    if (!metrics) {
+	goto Bail;
+    }
+    for (i = 0; i < nmetrics; i++)
+	if (PCF_FORMAT_MATCH(format, PCF_DEFAULT_FORMAT))
+	    pcfGetMetric(file, format, &(metrics + i)->metrics);
+	else
+	    pcfGetCompressedMetric(file, format, &(metrics + i)->metrics);
+
+    /* Set the bitmaps to all point to the same zero filled array 
+     * that is the size of the largest bitmap.
+     */
+
+    pci = metrics;
+    sizebitmaps = 0;
+    for (i = 0; i < nmetrics; i++)
+    {
+	sizebitmaps = MAX(sizebitmaps,BYTES_FOR_GLYPH(pci, glyph));
+	pci++;
+    }
+
+    sizebitmaps = BUFSIZ;
+    /* guard against completely empty font */
+    bitmaps = (char *) xalloc(sizebitmaps);
+    if (!bitmaps)
+	goto Bail;
+
+    memset(bitmaps,0,sizebitmaps);
+    for (i = 0; i < nmetrics; i++)
+	metrics[i].bits = bitmaps;
+
+    /* ink metrics ? */
+
+    ink_metrics = NULL;
+    if (pcfSeekToType(file, tables, ntables, PCF_INK_METRICS, &format, &size)) {
+	format = pcfGetLSB32(file);
+	if (!PCF_FORMAT_MATCH(format, PCF_DEFAULT_FORMAT) &&
+		!PCF_FORMAT_MATCH(format, PCF_COMPRESSED_METRICS)) {
+	    goto Bail;
+	}
+	if (PCF_FORMAT_MATCH(format, PCF_DEFAULT_FORMAT))
+	    nink_metrics = pcfGetINT32(file, format);
+	else
+	    nink_metrics = pcfGetINT16(file, format);
+	if (nink_metrics != nmetrics)
+	    goto Bail;
+	ink_metrics = (xCharInfo *) xalloc(nink_metrics * sizeof(xCharInfo));
+	if (!ink_metrics)
+	    goto Bail;
+	for (i = 0; i < nink_metrics; i++)
+	    if (PCF_FORMAT_MATCH(format, PCF_DEFAULT_FORMAT))
+		pcfGetMetric(file, format, ink_metrics + i);
+	    else
+		pcfGetCompressedMetric(file, format, ink_metrics + i);
+    }
+
+    /* encoding */
+
+    if (!pcfSeekToType(file, tables, ntables, PCF_BDF_ENCODINGS, &format, &size))
+	goto Bail;
+    format = pcfGetLSB32(file);
+    if (!PCF_FORMAT_MATCH(format, PCF_DEFAULT_FORMAT))
+	goto Bail;
+
+    pFont->info.firstCol = pcfGetINT16(file, format);
+    pFont->info.lastCol = pcfGetINT16(file, format);
+    pFont->info.firstRow = pcfGetINT16(file, format);
+    pFont->info.lastRow = pcfGetINT16(file, format);
+    pFont->info.defaultCh = pcfGetINT16(file, format);
+
+    nencoding = (pFont->info.lastCol - pFont->info.firstCol + 1) *
+	(pFont->info.lastRow - pFont->info.firstRow + 1);
+
+    encoding = (CharInfoPtr *) xalloc(nencoding * sizeof(CharInfoPtr));
+    if (!encoding)
+	goto Bail;
+
+    pFont->info.allExist = TRUE;
+    for (i = 0; i < nencoding; i++) {
+	encodingOffset = pcfGetINT16(file, format);
+	if (encodingOffset == 0xFFFF) {
+	    pFont->info.allExist = FALSE;
+	    encoding[i] = 0;
+	} else
+	    encoding[i] = metrics + encodingOffset;
+    }
+
+    /* BDF style accelerators (i.e. bounds based on encoded glyphs) */
+
+    if (hasBDFAccelerators)
+	if (!pcfGetAccel (&pFont->info, file, tables, ntables, PCF_BDF_ACCELERATORS))
+	    goto Bail;
+
+    bitmapFont = (BitmapFontPtr) xalloc(sizeof *bitmapFont);
+    if (!bitmapFont)
+	goto Bail;
+
+    bitmapFont->version_num = PCF_FILE_VERSION;
+    bitmapFont->num_chars = nmetrics;
+    bitmapFont->num_tables = ntables;
+    bitmapFont->metrics = metrics;
+    bitmapFont->ink_metrics = ink_metrics;
+    bitmapFont->bitmaps = bitmaps;
+    bitmapFont->encoding = encoding;
+    bitmapFont->pDefault = (CharInfoPtr) 0;
+    if (pFont->info.defaultCh != (unsigned short) NO_SUCH_CHAR) {
+	unsigned int r,
+	            c,
+	            cols;
+
+	r = pFont->info.defaultCh >> 8;
+	c = pFont->info.defaultCh & 0xFF;
+	if (pFont->info.firstRow <= r && r <= pFont->info.lastRow &&
+		pFont->info.firstCol <= c && c <= pFont->info.lastCol) {
+	    cols = pFont->info.lastCol - pFont->info.firstCol + 1;
+	    r = r - pFont->info.firstRow;
+	    c = c - pFont->info.firstCol;
+	    bitmapFont->pDefault = encoding[r * cols + c];
+	}
+    }
+    bitmapFont->bitmapExtra = (BitmapExtraPtr) 0;
+    pFont->fontPrivate = (pointer) bitmapFont;
+    pFont->get_glyphs = bitmapGetGlyphs;
+    pFont->get_metrics = bitmapGetMetrics;
+    pFont->unload_font = pcfUnloadFont;
+    pFont->unload_glyphs = NULL;
+    pFont->bit = bit;
+    pFont->byte = byte;
+    pFont->glyph = glyph;
+    pFont->scan = scan;
+    xfree(tables);
+    return Successful;
+Bail:
+    xfree(ink_metrics);
+    xfree(encoding);
+    xfree(metrics);
+    xfree(pFont->info.props);
+    xfree(bitmapFont);
+    pFont->info.props = 0;
+    xfree(tables);
+    return AllocError;
 }

@@ -1,8 +1,8 @@
 /*
  * O/S-dependent (mis)feature macro definitions
  *
- * $XConsortium: Xosdefs.h /main/15 1995/12/05 16:45:01 mor $
- * $XFree86: xc/include/Xosdefs.h,v 3.10 1996/01/10 05:34:46 dawes Exp $
+ * $XConsortium: Xosdefs.h /main/16 1996/09/28 16:17:29 rws $
+ * $XFree86: xc/include/Xosdefs.h,v 3.11 1996/12/23 05:58:09 dawes Exp $
  *
 Copyright (c) 1991  X Consortium
 

@@ -1,6 +1,6 @@
 XCOMM
-XCOMM $XConsortium: Imakefile,v 5.8 94/11/21 18:31:20 kaleb Exp $
-XCOMM $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/Imakefile,v 3.2 1996/10/03 08:30:24 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/8 1996/09/28 16:54:48 rws $
+XCOMM $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/Imakefile,v 3.3.2.1 1997/05/22 14:00:27 dawes Exp $
 XCOMM
 XCOMM 
 XCOMM Copyright 1989, 1990, 1991 by Sun Microsystems, Inc. and the X Consortium.
@@ -38,6 +38,7 @@ DIPEXDEFINES = PexDipexDefines
 MODULEDEFINES =  -DDLSYM_BUG
 #endif
 #define SharedServerLibraryDef -DDYNAMIC_MODULE
+SHAREDINCLUDES = -I$(XF86SRC)
 #endif
 
 
@@ -52,7 +53,8 @@ MODULEDEFINES =  -DDLSYM_BUG
 		../objects/llib-lobj.ln
 
    PEXSRVINC = ../../include
-    INCLUDES = -I$(PEXSRVINC) -I$(INCLUDESRC) -I$(SERVERSRC)/include
+    INCLUDES = -I$(PEXSRVINC) -I$(XINCLUDESRC) -I$(SERVERSRC)/include \
+               $(SHAREDINCLUDES)
 
 
 SRCS = dipexParse.c dipexExt.c pexDump.c pexError.c dipexBuf.c pexUtils.c

@@ -1,4 +1,4 @@
-/* $XConsortium: Xpoll.h,v 1.2 95/04/05 19:57:45 kaleb Exp $ */
+/* $XConsortium: Xpoll.h /main/6 1996/12/02 10:25:52 lehors $ */
 
 /*
 
@@ -43,6 +43,10 @@ from the X Consortium.
 #ifdef luna
 #include <sysent.h>
 #endif
+#endif
+/* AIX 4.2 fubar-ed <sys/select.h>, so go to heroic measures to get it */
+#if defined(AIXV4) && !defined(NFDBITS)
+#include <sys/select.h>
 #endif
 #include <X11/Xmd.h>
 #ifdef CSRG_BASED
@@ -162,27 +166,62 @@ typedef struct fd_set {
 
 #else /* WIN32 */
 
+#define XFD_SETSIZE	256
 #ifndef FD_SETSIZE
-#define FD_SETSIZE      256
+#define FD_SETSIZE	XFD_SETSIZE
 #endif
-#define BOOL wBOOL
-#undef Status
-#define Status wStatus
-#include <winsock.h>
-#undef Status
-#define Status int
-#undef BOOL
+#include <X11/Xwinsock.h>
+
 #define Select(n,r,w,e,t) select(0,(fd_set*)r,(fd_set*)w,(fd_set*)e,(struct timeval*)t)
 
-/* 
- * These are merely placeholders for the present, to allow servers to
- * be compiled on WinNT. Eventually they need to be filled in.
- */
-#define XFD_ANYSET(p)	1
-#define XFD_COPYSET(src,dst)
-#define XFD_ANDSET(dst,b1,b2)
-#define XFD_ORSET(dst,b1,b2)
-#define XFD_UNSET(dst,b1)
+#define XFD_SETCOUNT(p)	(((fd_set FAR *)(p))->fd_count)
+#define XFD_FD(p,i) (((fd_set FAR *)(p))->fd_array[i])
+#define XFD_ANYSET(p)	XFD_SETCOUNT(p)
+
+#define XFD_COPYSET(src,dst) { \
+    u_int __i; \
+    FD_ZERO(dst); \
+    for (__i = 0; __i < XFD_SETCOUNT(src) ; __i++) { \
+        XFD_FD(dst,__i) = XFD_FD(src,__i); \
+    } \
+    XFD_SETCOUNT(dst) = XFD_SETCOUNT(src); \
+}
+
+#define XFD_ANDSET(dst,b1,b2) { \
+    u_int __i; \
+    FD_ZERO(dst); \
+    for (__i = 0; __i < XFD_SETCOUNT(b1) ; __i++) { \
+        if (FD_ISSET(XFD_FD(b1,__i), b2)) \
+	   FD_SET(XFD_FD(b1,__i), dst); \
+    } \
+}
+
+#define XFD_ORSET(dst,b1,b2) { \
+    u_int __i; \
+    XFD_COPYSET(b1,dst); \
+    for (__i = 0; __i < XFD_SETCOUNT(b2) ; __i++) { \
+        if (!FD_ISSET(XFD_FD(b2,__i), dst)) \
+	   FD_SET(XFD_FD(b2,__i), dst); \
+    } \
+}
+
+/* this one is really sub-optimal */
+#define XFD_UNSET(dst,b1) { \
+    u_int __i; \
+    for (__i = 0; __i < XFD_SETCOUNT(b1) ; __i++) { \
+	FD_CLR(XFD_FD(b1,__i), dst); \
+    } \
+}
+
+/* we have to pay the price of having an array here, unlike with bitmasks
+   calling twice FD_SET with the same fd is not transparent, so be careful */
+#undef FD_SET
+#define FD_SET(fd,set) do { \
+    if (XFD_SETCOUNT(set) < FD_SETSIZE && !FD_ISSET(fd,set)) \
+        XFD_FD(set,XFD_SETCOUNT(set)++)=(fd); \
+} while(0)
+
+#define getdtablesize() FD_SETSIZE 
 
 #endif /* WIN32 */
 

@@ -1,5 +1,5 @@
 # $XConsortium: jump_funcs,v 1.4 95/06/30 18:48:53 kaleb Exp $
-# $XFree86: xc/lib/Xt/jump_funcs,v 3.4 1996/02/12 11:11:22 dawes Exp $
+# $XFree86: xc/lib/Xt/jump_funcs,v 3.5 1996/12/30 13:58:31 dawes Exp $
 #
 00000000 T _XtAppAddActionHook  libXt          ActionHook
 00000000 T _XtRemoveActionHook  libXt          ActionHook
@@ -694,3 +694,59 @@
 00000000 T _XRecordProcessReplies libXtst        XRecord
 00000000 T _XRecordDisableContext libXtst        XRecord
 00000000 T _XRecordFreeContext  libXtst        XRecord
+00000000 T _XLbxQueryExtension  libXext        XLbx
+00000000 T _XLbxGetEventBase    libXext        XLbx
+00000000 T _XLbxQueryVersion    libXext        XLbx
+00000000 T _XSecurityQueryExtension libXext        XSecurity
+00000000 T _XSecurityAllocXauth libXext        XSecurity
+00000000 T _XSecurityFreeXauth  libXext        XSecurity
+00000000 T _XSecurityGenerateAuthorization libXext        XSecurity
+00000000 T _XSecurityRevokeAuthorization libXext        XSecurity
+00000000 T _XagQueryVersion     libXext        XAppgroup
+00000000 T _XagCreateEmbeddedApplicationGroup libXext        XAppgroup
+00000000 T _XagCreateNonembeddedApplicationGroup libXext        XAppgroup
+00000000 T _XagDestroyApplicationGroup libXext        XAppgroup
+00000000 T _XagGetApplicationGroupAttributes libXext        XAppgroup
+00000000 T _XagQueryApplicationGroup libXext        XAppgroup
+00000000 T _XagCreateAssociation libXext        XAppgroup
+00000000 T _XagDestroyAssociation libXext        XAppgroup
+00000000 T _XpGetAttributes     libXp          XpAttr
+00000000 T _XpGetOneAttribute   libXp          XpAttr
+00000000 T _XpSetAttributes     libXp          XpAttr
+00000000 T _XpCreateContext     libXp          XpContext
+00000000 T _XpSetContext        libXp          XpContext
+00000000 T _XpGetContext        libXp          XpContext
+00000000 T _XpDestroyContext    libXp          XpContext
+00000000 T _XpGetScreenOfContext libXp          XpContext
+00000000 T _XpStartDoc          libXp          XpDoc
+00000000 T _XpEndDoc            libXp          XpDoc
+00000000 T _XpCancelDoc         libXp          XpDoc
+00000000 T _xp_find_display     libXp          XpExtUtil
+00000000 T _XpCheckExtInit      libXp          XpExtUtil
+00000000 T _XpQueryExtension    libXp          XpExtVer
+00000000 T _XpQueryVersion      libXp          XpExtVer
+00000000 T _XpGetDocumentData   libXp          XpGetData
+00000000 T _XpSelectInput       libXp          XpInput
+00000000 T _XpInputSelected     libXp          XpInput
+00000000 T _XpStartJob          libXp          XpJob
+00000000 T _XpEndJob            libXp          XpJob
+00000000 T _XpCancelJob         libXp          XpJob
+00000000 T _XpSetLocaleHinter   libXp          XpLocale
+00000000 T _XpGetLocaleHinter   libXp          XpLocale
+00000000 T _XpGetLocaleNetString libXp          XpLocale
+00000000 T _XpStartPage         libXp          XpPage
+00000000 T _XpEndPage           libXp          XpPage
+00000000 T _XpCancelPage        libXp          XpPage
+00000000 T _XpGetPdmStartParams libXp          XpNotifyPdm
+00000000 T _XpSendOneTicket     libXp          XpNotifyPdm
+00000000 T _XpSendAuth          libXp          XpNotifyPdm
+00000000 T _XpGetAuthParams     libXp          XpNotifyPdm
+00000000 T _XpNotifyPdm         libXp          XpNotifyPdm
+00000000 T _XpGetPrinterList    libXp          XpPrinter
+00000000 T _XpFreePrinterList   libXp          XpPrinter
+00000000 T _XpRehashPrinterList libXp          XpPrinter
+00000000 T _XpPutDocumentData   libXp          XpPutData
+00000000 T _XpQueryScreens      libXp          XpScreens
+00000000 T _XpGetPageDimensions libXp          XpPageDim
+00000000 T _XpSetImageResolution libXp          XpImageRes
+00000000 T _XpGetImageResolution libXp          XpImageRes

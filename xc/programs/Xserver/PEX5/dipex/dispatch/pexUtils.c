@@ -1,5 +1,5 @@
 /* $XConsortium: pexUtils.c,v 5.8 94/04/17 20:36:06 hersh Exp $ */
-/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/pexUtils.c,v 3.0 1995/07/07 15:35:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/PEX5/dipex/dispatch/pexUtils.c,v 3.0.6.1 1997/05/11 05:04:13 dawes Exp $ */
 /*
 
 Copyright (c) 1989, 1990, 1991  X Consortium
@@ -198,7 +198,7 @@ static unsigned long obj_array_sizes[] = {
 #define PU_CHECK_LIST( plist )	if (!plist)	 return( PU_BAD_LIST )
 
 /*
- * XXX - calls abort if passed a pList which has had the objects
+ * XXX - calls FatalError if passed a pList which has had the objects
  * allocated right after the header
  */
 
@@ -211,7 +211,8 @@ static unsigned long obj_array_sizes[] = {
     if (newmax < (atleast)) \
 	newmax = (atleast); \
     if (plist->pList == (ddPointer) (plist + 1)) \
-	abort (); \
+	FatalError("PU_GROW_LIST passed a pList which has had the objects"\
+		   "allocated right after the header"); \
     pList = (ddPointer)xrealloc( (pointer)(plist->pList), 	\
 		(unsigned long)(newmax * obj_struct_sizes[(int)(plist->type)] ));	\
     if (!pList ) return( BadAlloc );	\

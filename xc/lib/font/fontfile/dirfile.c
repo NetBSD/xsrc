@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/font/fontfile/dirfile.c,v 3.2 1996/02/09 08:19:37 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/dirfile.c,v 3.3 1997/01/27 06:56:28 dawes Exp $ */
 #ifndef lint
 static char *rid=
     "$XConsortium: dirfile.c /main/12 1995/12/08 19:02:23 gildea $";
@@ -108,6 +108,12 @@ FontFileReadDirectory (directory, pdir)
 	}
 	dir->dir_mtime = statb.st_mtime;
 	while ((count = fscanf(file, "%s %[^\n]\n", file_name, font_name)) != EOF) {
+#ifdef __EMX__
+	    /* strip any existing trailing CR */
+	    for (i=0; i<strlen(font_name); i++) {
+		if (font_name[i]=='\r') font_name[i] = '\0';
+	    }
+#endif
 	    if (count != 2) {
 		FontFileFreeDir (dir);
 		fclose(file);

@@ -1,4 +1,4 @@
-/* $XConsortium: Object.c,v 1.26 94/04/17 20:14:30 converse Exp $ */
+/* $TOG: Object.c /main/26 1997/05/15 17:30:23 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988 by Digital Equipment Corporation, Maynard, Massachusetts,
@@ -162,7 +162,7 @@ static void ConstructCallbackOffsets(widgetClass)
      * offsets so that resource overrides work.
      */
     newTable = (CallbackTable)
-	XtMalloc(sizeof(XrmResource *) * (tableSize + 1));
+	__XtMalloc(sizeof(XrmResource *) * (tableSize + 1));
 	
     newTable[0] = (XrmResource *) tableSize;
 
@@ -209,7 +209,7 @@ static void InheritObjectExtensionMethods(widget_class)
     } else if (super_ext) {
 	/* Be careful to inherit only what is appropriate */
 	ext = (ObjectClassExtension) 
-	    XtCalloc(1, sizeof(ObjectClassExtensionRec));
+	    __XtCalloc(1, sizeof(ObjectClassExtensionRec));
 	ext->next_extension = oc->object_class.extension;
 	ext->record_type = NULLQUARK;
 	ext->version = XtObjectExtensionVersion;

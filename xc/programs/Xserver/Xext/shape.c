@@ -25,8 +25,12 @@ in this Software without prior written authorization from the X Consortium.
 
 ********************************************************/
 
-/* $XConsortium: shape.c,v 5.22 94/09/22 20:58:37 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/Xext/shape.c,v 3.0 1996/05/06 05:55:32 dawes Exp $ */
+/* $TOG: shape.c /main/37 1997/05/22 10:11:40 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/Xext/shape.c,v 3.1.2.1 1997/05/23 12:19:34 dawes Exp $ */
 #define NEED_REPLIES
 #define NEED_EVENTS
 #include <stdio.h>
@@ -210,11 +214,11 @@ RegionOperate (client, pWin, kind, destRgnp, srcRgn, op, xoff, yoff, create)
 	srcRgn = 0;
 	break;
     case ShapeUnion:
-	if (*destRgnp)
+	if (*destRgnp && srcRgn)
 	    REGION_UNION(pScreen, *destRgnp, *destRgnp, srcRgn);
 	break;
     case ShapeIntersect:
-	if (*destRgnp)
+	if (*destRgnp && srcRgn)
 	    REGION_INTERSECT(pScreen, *destRgnp, *destRgnp, srcRgn);
 	else {
 	    *destRgnp = srcRgn;
@@ -224,12 +228,13 @@ RegionOperate (client, pWin, kind, destRgnp, srcRgn, op, xoff, yoff, create)
     case ShapeSubtract:
 	if (!*destRgnp)
 	    *destRgnp = (*create)(pWin);
-	REGION_SUBTRACT(pScreen, *destRgnp, *destRgnp, srcRgn);
+	if (srcRgn)
+	    REGION_SUBTRACT(pScreen, *destRgnp, *destRgnp, srcRgn);
 	break;
     case ShapeInvert:
 	if (!*destRgnp)
 	    *destRgnp = REGION_CREATE(pScreen, (BoxPtr) 0, 0);
-	else
+	else if (srcRgn)
 	    REGION_SUBTRACT(pScreen, *destRgnp, srcRgn, *destRgnp);
 	break;
     default:
@@ -377,7 +382,7 @@ ProcShapeMask (client)
 
     REQUEST_SIZE_MATCH (xShapeMaskReq);
     UpdateCurrentTime();
-    pWin = LookupWindow (stuff->dest, client);
+    pWin = SecurityLookupWindow (stuff->dest, client, SecurityWriteAccess);
     if (!pWin)
 	return BadWindow;
     switch (stuff->destKind) {
@@ -397,7 +402,8 @@ ProcShapeMask (client)
     if (stuff->src == None)
 	srcRgn = 0;
     else {
-        pPixmap = (PixmapPtr) LookupIDByType(stuff->src, RT_PIXMAP);
+        pPixmap = (PixmapPtr) SecurityLookupIDByType(client, stuff->src,
+						RT_PIXMAP, SecurityReadAccess);
         if (!pPixmap)
 	    return BadPixmap;
 	if (pPixmap->drawable.pScreen != pScreen ||
@@ -659,10 +665,11 @@ ProcShapeSelectInput (client)
     XID			clientResource;
 
     REQUEST_SIZE_MATCH (xShapeSelectInputReq);
-    pWin = LookupWindow (stuff->window, client);
+    pWin = SecurityLookupWindow (stuff->window, client, SecurityWriteAccess);
     if (!pWin)
 	return BadWindow;
-    pHead = (ShapeEventPtr *) LookupIDByType(pWin->drawable.id, EventType);
+    pHead = (ShapeEventPtr *)SecurityLookupIDByType(client,
+			pWin->drawable.id, EventType, SecurityWriteAccess);
     switch (stuff->enable) {
     case xTrue:
 	if (pHead) {
@@ -816,7 +823,8 @@ ProcShapeInputSelected (client)
     pWin = LookupWindow (stuff->window, client);
     if (!pWin)
 	return BadWindow;
-    pHead = (ShapeEventPtr *) LookupIDByType(pWin->drawable.id, EventType);
+    pHead = (ShapeEventPtr *) SecurityLookupIDByType(client,
+			pWin->drawable.id, EventType, SecurityReadAccess);
     enabled = xFalse;
     if (pHead) {
     	for (pShapeEvent = *pHead;

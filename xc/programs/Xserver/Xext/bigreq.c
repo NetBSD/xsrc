@@ -1,5 +1,5 @@
-/* $XConsortium: bigreq.c,v 1.4 94/04/17 20:32:51 rws Exp $ */
-/* $XFree86: xc/programs/Xserver/Xext/bigreq.c,v 3.1 1996/05/06 05:55:27 dawes Exp $ */
+/* $XConsortium: bigreq.c /main/5 1996/08/01 19:22:48 dpw $ */
+/* $XFree86: xc/programs/Xserver/Xext/bigreq.c,v 3.2 1996/12/23 06:28:58 dawes Exp $ */
 /*
 
 Copyright (c) 1992  X Consortium
@@ -58,6 +58,7 @@ BigReqExtensionInit()
 				 ProcBigReqDispatch, ProcBigReqDispatch,
 				 BigReqResetProc, StandardMinorOpcode)) != 0)
 	XBigReqCode = (unsigned char)extEntry->base;
+    DeclareExtensionSecurity(XBigReqExtensionName, TRUE);
 }
 
 /*ARGSUSED*/
