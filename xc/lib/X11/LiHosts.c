@@ -1,4 +1,4 @@
-/* $XConsortium: LiHosts.c,v 11.22 94/04/17 20:20:06 rws Exp $ */
+/* $TOG: LiHosts.c /main/14 1997/06/30 18:39:46 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -46,6 +46,7 @@ XHostAddress *XListHosts (dpy, nhosts, enabled)
     register unsigned i;
     register xListHostsReq *req;
 
+    *nhosts = 0;
     LockDisplay(dpy);
     GetReq (ListHosts, req);
 

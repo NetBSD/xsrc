@@ -1,4 +1,4 @@
-/* $XConsortium: scanfont.c,v 1.10 94/02/06 16:23:17 gildea Exp $ */
+/* $TOG: scanfont.c /main/11 1997/06/09 13:27:16 barstow $ */
 /* Copyright International Business Machines,Corp. 1991
  * All Rights Reserved
  *
@@ -943,7 +943,7 @@ static int BuildPrivate(fontP)
   objFormatBoolean(&(Private[FORCEBOLD].value),DEFAULTFORCEBOLD);
   objFormatName(&(Private[LANGUAGEGROUP].key),13,"LanguageGroup");
   objFormatInteger(&(Private[LANGUAGEGROUP].value),DEFAULTLANGUAGEGROUP);
-  objFormatName(&(Private[LENIV].key),5,"LenIV");
+  objFormatName(&(Private[LENIV].key),5,"lenIV");
   objFormatInteger(&(Private[LENIV].value),DEFAULTLENIV);
   objFormatName(&(Private[RNDSTEMUP].key),9,"RndStemUp");
   objFormatBoolean(&(Private[RNDSTEMUP].value),DEFAULTRNDSTEMUP);

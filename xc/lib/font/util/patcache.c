@@ -1,5 +1,4 @@
-/* $XConsortium: patcache.c,v 1.7 94/04/17 20:17:37 gildea Exp $ */
-/* $XFree86: xc/lib/font/util/patcache.c,v 3.0 1996/04/15 11:17:52 dawes Exp $ */
+/* $TOG: patcache.c /main/8 1997/06/12 11:51:59 barstow $ */
 
 /*
 
@@ -27,6 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/font/util/patcache.c,v 3.0.4.1 1997/07/05 15:55:37 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -117,7 +117,7 @@ EmptyFontPatternCache (cache)
     
     for (i = 0; i < NBUCKETS; i++)
 	cache->buckets[i] = 0;
-    for (i = 0; i < NENTRIES - 1; i++)
+    for (i = 0; i < NENTRIES; i++)
     {
 	cache->entries[i].next = &cache->entries[i+1];
 	cache->entries[i].prev = 0;
@@ -127,7 +127,7 @@ EmptyFontPatternCache (cache)
 	cache->entries[i].patlen = 0;
     }
     cache->free = &cache->entries[0];
-    cache->entries[i].next = 0;
+    cache->entries[NENTRIES - 1].next = 0;
 }
 
 /* add entry */

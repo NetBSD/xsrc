@@ -1,5 +1,4 @@
-/* $XConsortium: bitscale.c /main/30 1996/09/28 16:48:20 rws $ */
-/* $XFree86: xc/lib/font/bitmap/bitscale.c,v 3.4 1996/12/23 06:01:51 dawes Exp $ */
+/* $TOG: bitscale.c /main/31 1997/06/09 11:21:46 barstow $ */
 
 /*
 
@@ -30,6 +29,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/lib/font/bitmap/bitscale.c,v 3.4.2.1 1997/06/11 12:08:40 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -117,8 +117,8 @@ static fontProp fontNamePropTable[] = {
     "FONT", 0, fontname,
     "RAW_ASCENT", 0, raw_ascent,
     "RAW_DESCENT", 0, raw_descent,
-    "RAW_PIXELSIZE", 0, raw_pixelsize,
-    "RAW_POINTSIZE", 0, raw_pointsize,
+    "RAW_PIXEL_SIZE", 0, raw_pixelsize,
+    "RAW_POINT_SIZE", 0, raw_pointsize,
     "RAW_AVERAGE_WIDTH", 0, raw_average_width
 };
 

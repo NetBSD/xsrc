@@ -26,13 +26,13 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 */
 
-/* $XConsortium: XAppgroup.c /main/3 1996/11/13 14:44:26 lehors $ */
+/* $TOG: XAppgroup.c /main/4 1997/07/17 21:38:05 kaleb $ */
 
 
 
 
 
-/* $XFree86: xc/lib/Xext/XAppgroup.c,v 1.2 1996/12/26 01:37:43 dawes Exp $ */
+/* $XFree86: xc/lib/Xext/XAppgroup.c,v 1.2.2.1 1997/07/19 04:59:14 dawes Exp $ */
 
 #ifdef WIN32
 #define BOOL wBOOL

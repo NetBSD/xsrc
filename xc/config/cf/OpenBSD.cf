@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.7 1997/05/25 05:06:26 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.10 1997/07/27 02:41:03 dawes Exp $
 
 #ifndef OSName
 #define OSName			DefaultOSName OSBinaryType
@@ -59,7 +59,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define CppCmd          	/usr/libexec/cpp
 #define StandardCppDefines	-traditional
 #define PreProcessCmd   	CppCmd
-#define PreIncDir /usr/lib/gcc-lib/i386-unknown-openbsd1.2/2.7.2.1/include
+#define PreIncDir 		DefaultGccIncludeDir
 
 #undef CcCmd
 #define CcCmd 			gcc
@@ -105,17 +105,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define StandardDefines	-DCSRG_BASED
 #define XawI18nDefines	-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 
-/* Dynamic loading supported starting in 1.0, but not yet on the Alpha. */
-#if (!defined(AlphaArchitecture) && (OSMajorVersion > 0)) || \
-    (defined(AlphaArchitecture) && 0) /* NOT YET */
-# ifndef BuildDynamicLoading
-#  ifdef ArcArchitecture
-#   define BuildDynamicLoading        NO
-#  else
-#   define BuildDynamicLoading        YES
-#  endif
-# endif
-#endif
 
 #ifndef ExtraLibraries
 #define ExtraLibraries		/**/
@@ -124,6 +113,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #define HasZlib			YES
 
+#define	AdmDir			/var/log
 
 /*
  * Make & install Features
@@ -220,81 +210,233 @@ install.man:: 								@@\
 #define InstallGenManPageAliases(file,destdir,suffix,aliases)		@@\
 	InstallManPageAliases(file,destdir,aliases)
 
-/*
- * Shared libraries supported for most ports starting in 1.0, but not
- * (quite) yet on the Alpha.
- */
-#if (!defined(AlphaArchitecture) && (OSMajorVersion > 0)) || \
-    (defined(AlphaArchitecture) && 0) /* NOT YET */
-# ifndef HasSharedLibraries
-# define HasSharedLibraries	YES
-# endif
-#endif
+
 
 /*
- * Mips ELF shared libs on Arc's need some special handling.
+ * Architecture specific sections - put all architecture dependent
+ * options and setting here into the correct section
+ */
+
+
+/*
+ * Definitions for the alpha architecture
+ */
+#ifdef AlphaArchitecture
+
+# include <xf86.rules>
+# define BuildServer		NO
+
+ /*
+  * For the current ECOFF system
+  */
+# define HasSharedLibraries	NO
+# define UseElfFormat		NO
+# define BuildDynamicLoading	NO
+ /*
+  * For the upcoming ELF system
+  */
+# if 0 /* NOT YET */
+#  define HasSharedLibraries	YES
+#  define UseElfFormat		YES
+#  define BuildDynamicLoading	YES
+# endif
+
+#endif /* AlphaArchitecture */
+
+
+/*
+ * Definitions for the i386 architecture
+ */
+#ifdef i386Architecture
+
+# define BuildDynamicLoading	YES
+# include <xfree86.cf>
+
+#endif /* i386Architecture */
+
+
+/*
+ * Definitions for the m68k architecture (currently amiga, hp300,
+ * mac68k, mvme68k, sun3)
+ */
+#ifdef Mc68020Architecture
+
+#endif /* Mc68020Architecture */
+
+
+/*
+ * Definitions for the amiga architecture
+ */
+#ifdef AmigaArchitecture
+
+# include <xf86.rules>
+# define BuildServer		NO
+
+#endif /* AmigaArchitecture */
+
+
+/*
+ * Definitions for the hp300 architecture
+ */
+#ifdef Hp300Architecture
+
+# include <xf86.rules>
+# define BuildServer		NO
+
+#endif /* Hp300Architecture */
+
+
+/*
+ * Definitions for the mac68k architecture
+ */
+#ifdef Mac68kArchitecture
+
+# include <xf86.rules>
+# define BuildServer		NO
+
+#endif /* Mac68kArchitecture */
+
+
+/*
+ * Definitions for the mvme68k architecture
+ */
+#ifdef Mvme68kArchitecture
+
+# include <xf86.rules>
+# define BuildServer		NO
+
+#endif /* Mvme68kArchitecture */
+
+
+/*
+ * Definitions for the sun3 architecture
+ */
+#ifdef Sun3Architecture
+
+# include <xf86.rules>
+
+# define OptimizedCDebugFlags  -O2
+# define ServerOSDefines       -DDDXOSINIT
+# define BootstrapCFlags       -Dsun3
+# define UnalignedReferencesAllowed YES /* changes _XtCopyArgs() */
+/* Note: -ansi turns off -Dmc68000 */
+# define ServerExtraDefines    GccGasOption -Dmc68000 -Dmc68020
+
+# ifndef Xsun24Server
+#  define Xsun24Server		NO
+# endif
+# ifndef XsunServer
+#  define XsunServer		NO
+# endif
+# ifndef XsunMonoServer
+#  define XsunMonoServer	YES
+# endif
+
+# ifndef BuildXKB
+#  define BuildXKB        	NO
+# endif
+
+# ifndef BuildXKBlib
+#  define BuildXKBlib     	NO
+# endif
+
+# ifndef BuildPexExt
+#  define BuildPexExt 		(XsunServer || Xsun24Server)
+# endif
+
+#endif /* Sun3Architecture */
+
+
+/*
+ * Definitions for the mips architecture (currently arc, pmax)
+ */
+#ifdef MipsArchitecture
+
+ /*
+  * Mips ELF shared libs need some special handling.
+  */
+# define PositionIndependentCFlags
+# define SharedLibraryLoadFlags -x -shared --whole-archive -soname `echo $@ | sed 's/\.[0-9]*$$//'`
+# define SharedXtReqs -L$(BUILDLIBDIR) $(XLIBONLY) $(SMLIB) $(ICELIB)
+# define SharedXmuReqs $(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB) $(EXTENSIONLIB)
+
+#endif /* MipsArchitecture */
+
+
+/*
+ * Definitions for the arc architecture
  */
 #ifdef ArcArchitecture
-#define PositionIndependentCFlags
-#define SharedLibraryLoadFlags -x -shared --whole-archive -soname `echo $@ | sed 's/\.[0-9]*$$//'`
-#define SharedXtReqs -L$(BUILDLIBDIR) $(XLIBONLY) $(SMLIB) $(ICELIB)
-#define SharedXmuReqs $(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB) $(EXTENSIONLIB)
-#endif
 
-
-/*
- * ELF supported on the Alpha starting (not quite yet), not yet on other
- * architectures.
- */
-#if (defined(AlphaArchitecture) && 0) /* NOT YET */
-# ifndef UseElfFormat
-# define UseElfFormat	YES
-# endif
-#endif
-
-/*
- * Default to non-ELF without shared library support if nothing else
- * set above.
- */
-#ifndef UseElfFormat
-#define UseElfFormat    NO
-#endif 
-
-#ifndef OSBinaryType
-#if UseElfFormat
-#define OSBinaryType	[ELF]
-#else
-#define OSBinaryType	/**/
-#endif
-#endif
-
-#ifndef HasSharedLibraries
-#define HasSharedLibraries	NO
-#endif 
-
-#if HasSharedLibraries
-#include <bsdLib.rules>
-#endif /* HasSharedLibraries */
-
-#if defined(i386Architecture) || defined(ArcArchitecture)
 # include <xfree86.cf>
-#endif
+
+#endif /* ArcArchitecture */
+
 
 /*
- * Definitions for the SUN server on sparc
+ * Definitions for the pmax architecture
+ */
+#ifdef PmaxArchitecture
+
+# include <xf86.rules>
+# define BuildServer		NO
+
+#endif /* PmaxArchitecture */
+
+
+/*
+ * Definitions for the sparc architecture
  */
 #ifdef SparcArchitecture
-#ifndef Xsun24Server
-#define Xsun24Server	NO
+
+# include <xf86.rules>
+
+# ifndef Xsun24Server
+# define Xsun24Server	YES
+# endif
+# ifndef XsunServer
+# define XsunServer	YES
+# endif
+# ifndef XsunMonoServer
+# define XsunMonoServer	YES
+# endif
+
+#define XkbServerDefines  -DXKB_ALWAYS_USES_SOFT_REPEAT
+
+# ifndef BuildPexExt
+#  define BuildPexExt 	(XsunServer || Xsun24Server)
+# endif
+#endif /* SparcArchitecture */
+
+
+/* End or architecture specific section */
+
+/*
+ * Generic settings for all architectures
+ */
+
+#ifndef XVirtualFramebufferServer
+# undef BuildServer
+# define BuildServer			YES
+# define XVirtualFramebufferServer	YES
 #endif
-#ifndef XsunServer
-#define XsunServer	YES
+
+#ifndef XnestServer
+# undef BuildServer
+# define BuildServer			YES
+# define XnestServer			YES
 #endif
-#ifndef XsunMonoServer
-#define XsunMonoServer	YES
-#endif
+
 #ifndef BuildScreenSaverLibrary
-#define BuildScreenSaverLibrary	YES
+# define BuildScreenSaverLibrary	YES
+#endif
+
+#ifndef ForceNormalLib
+# define ForceNormalLib			YES
+#endif
+
+#ifndef BuildDynamicLoading
+# define BuildDynamicLoading		NO
 #endif
 
 /*
@@ -304,13 +446,17 @@ install.man:: 								@@\
  * site.def
  */
 #ifndef UseRgbTxt
-#define UseRgbTxt	YES
-#endif
+# define UseRgbTxt			YES
 #endif
 
-/*
- * Definition for compiling on Alpha machines
- */
-#ifdef AlphaArchitecture
-#define	BuildServer	NO
+#ifndef OSBinaryType
+# if UseElfFormat
+#  define OSBinaryType			[ELF]
+# else 
+#  define OSBinaryType			/**/
+# endif
 #endif
+
+/* This must come last */
+#include <bsdLib.rules>
+

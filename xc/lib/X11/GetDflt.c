@@ -1,5 +1,4 @@
-/* $XConsortium: GetDflt.c /main/55 1996/12/03 19:15:16 kaleb $ */
-/* $XFree86: xc/lib/X11/GetDflt.c,v 3.10 1996/12/23 05:59:31 dawes Exp $ */
+/* $TOG: GetDflt.c /main/56 1997/06/11 06:40:28 kaleb $ */
 
 /***********************************************************
 
@@ -48,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/GetDflt.c,v 3.10.2.2 1997/06/15 07:25:26 dawes Exp $ */
 
 #include "Xlibint.h"
 #include <X11/Xos.h>
@@ -144,7 +144,7 @@ static XrmDatabase InitDefaults (dpy)
     XrmInitialize();
 
     /*
-     * See lib/Xtk/Initialize.c
+     * See lib/Xt/Initialize.c
      *
      * First, get the defaults from the server; if none, then load from
      * ~/.Xdefaults.  Next, if there is an XENVIRONMENT environment variable,
@@ -154,7 +154,7 @@ static XrmDatabase InitDefaults (dpy)
     if (dpy->xdefaults == NULL) {
 	char *slashDotXdefaults = "/.Xdefaults";
 
-	(void) GetHomeDir (fname, PATH_MAX - sizeof slashDotXdefaults - 1);
+	(void) GetHomeDir (fname, PATH_MAX - strlen (slashDotXdefaults) - 1);
 	(void) strcat (fname, slashDotXdefaults);
 	xdb = XrmGetFileDatabase (fname);
     } else {
@@ -165,7 +165,7 @@ static XrmDatabase InitDefaults (dpy)
 	char *slashDotXdefaultsDash = "/.Xdefaults-";
 	int len;
 
-	(void) GetHomeDir (fname, PATH_MAX - sizeof slashDotXdefaultsDash - 1);
+	(void) GetHomeDir (fname, PATH_MAX - strlen (slashDotXdefaultsDash) - 1);
 	(void) strcat (fname, slashDotXdefaultsDash);
 	len = strlen (fname);
 	(void) _XGetHostname (fname+len, PATH_MAX-len);

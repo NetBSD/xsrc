@@ -1,5 +1,5 @@
 /* $XConsortium: Xtrans.c,v 1.31 95/03/28 19:49:02 mor Exp $ */
-/* $XFree86: xc/lib/xtrans/Xtrans.c,v 3.15 1996/12/09 11:50:25 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtrans.c,v 3.15.2.2 1997/07/19 04:59:16 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -111,7 +111,9 @@ Xtransport_table Xtransports[] = {
 #if defined(LOCALCONN)
     &TRANS(LocalFuncs),		TRANS_LOCAL_LOCAL_INDEX,
     &TRANS(PTSFuncs),		TRANS_LOCAL_PTS_INDEX,
+#ifdef SVR4
     &TRANS(NAMEDFuncs),		TRANS_LOCAL_NAMED_INDEX,
+#endif
     &TRANS(ISCFuncs),		TRANS_LOCAL_ISC_INDEX,
     &TRANS(SCOFuncs),		TRANS_LOCAL_SCO_INDEX,
 #endif /* LOCALCONN */
@@ -721,7 +723,7 @@ int		arg;
 	    break;
 	case 1: /* Set to non-blocking mode */
 
-#if defined(O_NONBLOCK) && (!defined(ultrix) && !defined(hpux) && !defined(AIXV3) && !defined(uniosu) && !defined(__EMX__))
+#if defined(O_NONBLOCK) && (!defined(ultrix) && !defined(hpux) && !defined(AIXV3) && !defined(uniosu) && !defined(__EMX__) && !defined(SCO))
 	    ret = fcntl (fd, F_SETFL, O_NONBLOCK);
 #else
 #ifdef FIOSNBIO
@@ -1419,8 +1421,10 @@ int 		iovcnt;
 #endif /* SYSV && i386 || WIN32 || __sxg__ */
 
 
-#if (defined(_POSIX_SOURCE) && !defined(AIXV3)) || defined(hpux) || defined(USG) || defined(SVR4)
+#if (defined(_POSIX_SOURCE) && !defined(AIXV3)) || defined(hpux) || defined(USG) || defined(SVR4) || defined(SCO)
+#ifndef NEED_UTSNAME
 #define NEED_UTSNAME
+#endif
 #include <sys/utsname.h>
 #endif
 

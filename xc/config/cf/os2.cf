@@ -2,7 +2,7 @@ XCOMM $XConsortium: os2.cf /main/1 1996/10/31 14:47:25 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.1 1997/05/24 13:38:08 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.2 1997/08/04 02:10:31 dawes Exp $
 
 #define OSName           OS/2
 #define OSVendor	 IBM
@@ -92,7 +92,7 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.1 1997/05/24 13:38:08 da
 # define HasLibCrypt		NO
 #endif
 #ifndef HasShm
-# define HasShm          	NO
+# define HasShm          	YES
 #endif
 #define ConnectionFlags		-DTCPCONN -DOS2PIPECONN
 #define StdIncDir $(C_INCLUDE_PATH)
@@ -186,17 +186,12 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.1 1997/05/24 13:38:08 da
 #define InstDatFlags /**/
 #define InstallFlags /**/
 
-#ifdef i386Architecture
-# define OptimizedCDebugFlags 	DefaultGcc2i386Opt
-# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
-#else
-# define OptimizedCDebugFlags 	-O
-# define ServerOSDefines 	/**/
-#endif
-#ifdef i386Architecture
+#define OptimizedCDebugFlags 	DefaultGcc2i386Opt
+#define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
 #define ServerExtraDefines GccGasOption XFree86ServerDefines
-#else
-#define ServerExtraDefines GccGasOption
+
+#if HasShm
+# define ServerExtraSysLibs	-lshm
 #endif
 
 /*

@@ -1,5 +1,4 @@
-/* $XConsortium: spfont.c,v 1.23 94/07/25 13:48:35 kaleb Exp $ */
-/* $XFree86: xc/lib/font/Speedo/spfont.c,v 3.1 1994/08/20 07:29:31 dawes Exp $ */
+/* $TOG: spfont.c /main/24 1997/06/09 09:38:19 barstow $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -22,6 +21,7 @@
  *
  * Author: Dave Lemke, Network Computing Devices Inc
  */
+/* $XFree86: xc/lib/font/Speedo/spfont.c,v 3.1.8.1 1997/06/11 12:08:38 dawes Exp $ */
 
 /*
 
@@ -347,11 +347,12 @@ sp_load_font(fontname, filename, entry, vals, format, fmask, pfont, flags)
     esize = sizeof(CharInfoRec) * (spmf->max_id - spmf->first_char_id + 1);
 
     spf->encoding = (CharInfoPtr) xalloc(esize);
-    bzero((char *) spf->encoding, esize);
     if (!spf->encoding) {
 	sp_close_font(spf);
 	return AllocError;
     }
+    bzero((char *) spf->encoding, esize);
+
     sp_fp_cur = spf;
 
     sp_make_header(spf, &pfont->info);

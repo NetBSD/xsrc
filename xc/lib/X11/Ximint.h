@@ -1,9 +1,4 @@
 /* $TOG: Ximint.h /main/10 1997/04/28 16:40:16 barstow $ */
-
-
-
-
-/* $XFree86: xc/lib/X11/Ximint.h,v 3.0.4.1 1997/05/03 09:43:35 dawes Exp $ */
 /******************************************************************
 
                 Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -35,6 +30,7 @@ PERFORMANCE OF THIS SOFTWARE.
 			       makoto@sm.sony.co.jp
 
 ******************************************************************/
+/* $XFree86: xc/lib/X11/Ximint.h,v 3.0.4.2 1997/07/05 15:55:33 dawes Exp $ */
 
 #ifndef _XIMINT_H
 #define _XIMINT_H

@@ -1,4 +1,4 @@
-/* $TOG: imDefIc.c /main/17 1997/04/29 12:26:48 barstow $ */
+/* $TOG: imDefIc.c /main/18 1997/06/22 18:11:11 kaleb $ */
 /******************************************************************
 
            Copyright 1991, 1992 by Sun Microsystems, Inc.
@@ -352,7 +352,7 @@ _XimProtoGetICValues(xic, arg)
 				ic->private.proto.ic_num_resources, arg,
 				&buf_s[3], &len, XIM_GETICVALUES);
 
-    if (len) {
+    if (len > 0) {
 	buf_s[0] = im->private.proto.imid;		/* imid */
 	buf_s[1] = ic->private.proto.icid;		/* icid */
 	buf_s[2] = len;				/* length of ic-attr-id */
@@ -400,7 +400,7 @@ _XimProtoGetICValues(xic, arg)
 	data = &buf_s[4];
 	data_len = buf_s[2];
     }
-    else {
+    else if (len < 0) {
 	return arg->name;
     }
 

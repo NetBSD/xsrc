@@ -47,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/lib/Xaw/Vendor.c,v 1.1.1.1.12.2 1997/07/19 07:07:11 dawes Exp $ */
 
 /*
  * This is a copy of Xt/Vendor.c with an additional ClassInitialize
@@ -84,6 +85,29 @@ static XtResource resources[] = {
  * Vendor shell class record
  *
  ***************************************************************************/
+
+#ifdef __EMX__
+/* to fix the EditRes problem because of wrong linker semantics */
+extern WidgetClass vendorShellWidgetClass; /* from Xt/Vendor.c */
+extern VendorShellClassRec _XawVendorShellClassRec;
+extern void _XawFixupVendorShell();
+unsigned long _DLL_InitTerm(unsigned long mod,unsigned long flag)
+{
+	switch (flag) {
+	case 0: /*called on init*/
+		_CRT_init();
+		vendorShellWidgetClass = (WidgetClass)(&_XawVendorShellClassRec);
+		_XawFixupVendorShell();
+		return 1;
+	case 1: /*called on exit*/
+		return 1;
+	default:
+		return 0;
+	}
+}
+#define vendorShellClassRec _XawVendorShellClassRec
+
+#endif
 
 static void XawVendorShellClassInitialize();
 static void XawVendorShellClassPartInit();
@@ -152,9 +176,10 @@ externaldef(vendorshellclassrec) VendorShellClassRec vendorShellClassRec = {
   }
 };
 
+#ifndef __EMX__
 externaldef(vendorshellwidgetclass) WidgetClass vendorShellWidgetClass =
 	(WidgetClass) (&vendorShellClassRec);
-
+#endif
 
 /***************************************************************************
  *
@@ -303,7 +328,7 @@ static void XawVendorShellClassPartInit(class)
     }
 }
 
-#ifdef __osf__
+#if defined(__osf__) || defined(__EMX__)
 /* stupid OSF/1 shared libraries have the wrong semantics */
 /* symbols do not get resolved external to the shared library */
 void _XawFixupVendorShell()

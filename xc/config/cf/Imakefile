@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/38 1996/11/07 14:43:46 kaleb $
-XCOMM $XFree86: xc/config/cf/Imakefile,v 3.13.2.1 1997/05/03 09:42:56 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imakefile,v 3.13.2.2 1997/07/27 02:41:03 dawes Exp $
 
 XCOMM Some compilers generate fatal errors if an -L directory does
 XCOMM not exist.  Since BUILDLIBDIR may not exist yet suppress its use.
@@ -101,6 +101,7 @@ os2.cf \
 osf1.cf \
 pegasus.cf \
 sco.cf \
+sco5.cf \
 sequent.cf \
 sgi.cf \
 sony.cf \

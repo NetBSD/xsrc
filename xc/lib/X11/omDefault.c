@@ -1,4 +1,4 @@
-/* $XConsortium: omDefault.c /main/5 1996/12/05 11:10:58 swick $ */
+/* $TOG: omDefault.c /main/6 1997/06/22 15:53:43 kaleb $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -200,12 +200,11 @@ _XmbDefaultTextPerCharExtents(oc, text, length, ink_buf, logical_buf, buf_size,
     XCharStruct *def, *cs, overall;
     Bool first = True;
 
-    *num_chars = length;
-
     if (buf_size < length)
 	return 0;
 
     bzero((char *) &overall, sizeof(XCharStruct));
+    *num_chars = 0;
 
     CI_GET_DEFAULT_INFO_1D(font, def)
 
@@ -239,6 +238,8 @@ _XmbDefaultTextPerCharExtents(oc, text, length, ink_buf, logical_buf, buf_size,
 				   cs->rbearing);
 	    overall.width += cs->width;
 	}
+
+	(*num_chars)++;
     }
 
     if (overall_ink) {

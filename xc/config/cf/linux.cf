@@ -1,5 +1,5 @@
-XCOMM platform:  $XConsortium: linux.cf /main/27 1996/12/26 08:52:44 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.6 1997/05/27 06:22:10 dawes Exp $
+XCOMM platform:  $TOG: linux.cf /main/36 1997/06/16 22:21:03 kaleb $
+XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.10 1997/07/28 14:17:25 dawes Exp $
 
 #ifndef LinuxElfDefault
 #define LinuxElfDefault		YES
@@ -37,34 +37,81 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.6 1997/05/27 06:22:10 
 #ifndef OSTeenyVersion
 #define OSTeenyVersion		DefaultOSTeenyVersion
 #endif
+
+/* Set some defaults for the Default* values in case imake doesn't find them */
+#ifndef DefaultLinuxCLibMajorVersion
+#ifdef AlphaArchitecture
+#define DefaultLinuxCLibMajorVersion	6
+#else
+#define DefaultLinuxCLibMajorVersion	5
+#endif
+#endif
+#ifndef DefaultLinuxCLibMinorVersion
+#if DefaultLinuxCLibMajorVersion > 5
+#define DefaultLinuxCLibMinorVersion	0
+#else
+#define DefaultLinuxCLibMinorVersion	4
+#endif
+#endif
+#ifndef DefaultLinuxCLibTeenyVersion
+#define DefaultLinuxCLibTeenyVersion	0
+#endif
+
+#ifndef LinuxCLibMajorVersion
+#define LinuxCLibMajorVersion	DefaultLinuxCLibMajorVersion
+#endif
+#ifndef LinuxCLibMinorVersion
+#define LinuxCLibMinorVersion	DefaultLinuxCLibMinorVersion
+#endif
+#ifndef LinuxCLibTeenyVersion
+#define LinuxCLibTeenyVersion	DefaultLinuxCLibTeenyVersion
+#endif
+
+#ifndef LinuxBinUtilsMajorVersion
+#define LinuxBinUtilsMajorVersion	DefaultLinuxBinUtilsMajorVersion
+#endif
+
 XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
+XCOMM libc:	(LinuxCLibMajorVersion./**/LinuxCLibMinorVersion./**/LinuxCLibTeenyVersion)
+XCOMM binutils:	(LinuxBinUtilsMajorVersion)
 
 /*
  * The Linux BinUtils major version.  25 => 2.5.x, which is what is included
  * with Slackware 3.0
+ *
+ * This remains for compatibility only.
+ *
  */
 #ifndef BinUtilsMajorVersion
-#define BinUtilsMajorVersion	25
-#endif
-
-/*
- * The Linux libc major/minor versions.  Slackware 3.0 has libc.5.0.9
- */
-#ifndef LinuxCLibMajorVersion
-#define LinuxCLibMajorVersion	5
-#endif
-#ifndef LinuxClibMinorVersion
-#define LinuxClibMinorVersion	0
+#define BinUtilsMajorVersion	LinuxBinUtilsMajorVersion
 #endif
 
 #if LinuxCLibMajorVersion >= 6
-#define SourceDefines		-D_POSIX_C_SOURCE=199309L \
+#define LinuxSourceDefines	-D_POSIX_C_SOURCE=199309L \
 				-D_POSIX_SOURCE \
 				-D_BSD_SOURCE -D_SVID_SOURCE
-#else
-#define SourceDefines		-D_POSIX_SOURCE \
-				-D_BSD_SOURCE -D_SVID_SOURCE
+#define XawI18nDefines		-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
+#if !defined(AlphaArchitecture)
+#define HasPosixThreads		YES
+#define ThreadedX		YES
+#define HasThreadSafeAPI	YES
+#define ThreadsLibraries	-lpthread
+#define SystemMTDefines		-D_REENTRANT
 #endif
+#ifndef HasLibCrypt
+#define HasLibCrypt		YES
+#endif
+#else
+#define LinuxSourceDefines	-D_POSIX_SOURCE \
+				-D_BSD_SOURCE -D_SVID_SOURCE -DX_LOCALE
+#define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
+#ifndef HasLibCrypt
+#define HasLibCrypt		NO
+#endif
+#endif
+
+/* For compatibility */
+#define SourceDefines		LinuxSourceDefines
 
 #define HasGcc			YES
 #define HasGcc2			YES
@@ -80,9 +127,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # else
 #  define HasShadowPasswd	NO
 # endif
-#endif
-#ifndef HasLibCrypt
-# define HasLibCrypt		NO
 #endif
 #define HasPutenv		YES
 #define HasShm			YES
@@ -187,59 +231,34 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define LexCmd			flex -l
 #define LexLib			-lfl
 #define PreProcessCmd		CcCmd -E
-#define PostIncDir		`CcCmd --print-libgcc-file-name | sed 's/libgcc.a/include/'`
+#define PostIncDir		DefaultGccIncludeDir
 #define LdCombineFlags		-r
 #define LdPostLib		/* Never needed */
+#define HasWChar32		YES
+#define StandardCppDefines	-traditional StandardDefines
 
 #ifdef i386Architecture
 #define OptimizedCDebugFlags	DefaultGcc2i386Opt
-#if LinuxCLibMajorVersion >= 6
-#undef HasLibCrypt
-#define HasLibCrypt		YES
-#define StandardDefines		SourceDefines -Dlinux -D__i386__
-#define XawI18nDefines		-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
-#define HasPosixThreads		YES
-#define ThreadedX		YES
-#define HasThreadSafeAPI	YES
-#define ThreadsLibraries	-lpthread
-#define SystemMTDefines		-D_REENTRANT
-#else /* LinuxCLibMajorVersion >= 6 */
-#define StandardDefines		SourceDefines -Dlinux -D__i386__ \
-				-DX_LOCALE
-#define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
-#endif /* LinuxCLibMajorVersion >= 6 */
-#define HasWChar32		YES
-#define StandardCppDefines	-traditional StandardDefines
+#define LinuxMachineDefines	-D__i386__
 #define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME -DPART_NET
 #define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
 #endif /* i386Architecture */
 
 #ifdef AlphaArchitecture
 #define OptimizedCDebugFlags	-O2
-#if UseElfFormat
-#define StandardDefines		SourceDefines -Dlinux -D__alpha__
-#define XawI18nDefines		-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
-#else
-#define StandardDefines		SourceDefines -Dlinux -D__alpha__ \
-				-DX_LOCALE
-#define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
-#endif
-#define HasWChar32		YES
-#define StandardCppDefines	-traditional StandardDefines
+#define LinuxMachineDefines	-D__alpha__
 #define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME -DPART_NET
 #define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
 #endif /* AlphaArchitecture */
 
 #ifdef Mc68020Architecture
 #define OptimizedCDebugFlags	-O2
-#define StandardDefines		SourceDefines -Dlinux -D__mc68000__ \
-				-DX_LOCALE
-#define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
-#define HasWChar32		YES
-#define StandardCppDefines	-traditional StandardDefines
+#define LinuxMachineDefines 	-D__mc68000__
 #define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME -DPART_NET
 #define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
 #endif /* Mc68020Architecture */
+
+#define StandardDefines		-Dlinux LinuxMachineDefines LinuxSourceDefines
 
 #if UseElfFormat
 #define DlLibrary		-rdynamic -ldl

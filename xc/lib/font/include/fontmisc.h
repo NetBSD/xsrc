@@ -1,5 +1,4 @@
-/* $XConsortium: fontmisc.h,v 1.6 94/04/17 20:17:29 rws Exp $ */
-/* $XFree86: xc/lib/font/include/fontmisc.h,v 3.0 1996/05/06 05:54:56 dawes Exp $ */
+/* $TOG: fontmisc.h /main/7 1997/06/10 14:11:11 barstow $ */
 
 /*
 
@@ -27,6 +26,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/font/include/fontmisc.h,v 3.0.4.1 1997/06/11 12:08:42 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -39,10 +39,18 @@ in this Software without prior written authorization from the X Consortium.
 
 typedef unsigned char	*pointer;
 typedef int		Bool;
+
 #ifndef X_PROTOCOL
+#ifndef _XSERVER64
 typedef unsigned long	Atom;
 typedef unsigned long	XID;
+#else
+#include <X11/Xmd.h>
+typedef CARD32 XID;
+typedef CARD32 Atom;
+#endif 
 #endif
+
 #ifndef LSBFirst
 #define LSBFirst	0
 #define MSBFirst	1

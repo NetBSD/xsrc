@@ -1,4 +1,4 @@
-/* $XConsortium: lcWrap.c /main/24 1995/12/09 12:03:14 gildea $ */
+/* $TOG: lcWrap.c /main/25 1997/06/02 17:28:04 kaleb $ */
 /*
 
 Copyright (c) 1991  X Consortium

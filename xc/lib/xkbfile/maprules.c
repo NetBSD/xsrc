@@ -1,5 +1,4 @@
-/* $XConsortium: maprules.c /main/11 1996/12/05 10:21:52 kaleb $ */
-/* $XFree86: xc/lib/xkbfile/maprules.c,v 3.8 1996/12/24 08:47:02 dawes Exp $ */
+/* $TOG: maprules.c /main/12 1997/06/10 06:53:35 kaleb $ */
 /************************************************************
  Copyright (c) 1996 by Silicon Graphics Computer Systems, Inc.
 
@@ -25,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/lib/xkbfile/maprules.c,v 3.8.2.2 1997/07/05 15:55:37 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -361,7 +361,8 @@ MatchOneOf(wanted,vals_defined)
     char *	vals_defined;
 #endif
 {
-char *str,*next;
+char	*str,*next;
+int	want_len= strlen(wanted);
 
     for (str=vals_defined,next=NULL;str!=NULL;str=next) {
 	int len;
@@ -373,7 +374,7 @@ char *str,*next;
 	else {
 	    len= strlen(str);
 	}
-	if (strncmp(wanted,str,len)==0)
+	if ((len==want_len)&&(strncmp(wanted,str,len)==0))
 	    return True;
     }
     return False;
@@ -1252,17 +1253,17 @@ XkbRF_GetNamesProp(dpy,rf_rtrn,vd_rtrn)
 Atom		rules_atom,actual_type;
 int		fmt,len;
 unsigned long	nitems,bytes_after;
-char *		data,*out;
+char            *data,*out;
 Status		rtrn;
 
     rules_atom= XInternAtom(dpy,_XKB_RF_NAMES_PROP_ATOM,True);
     if (rules_atom==None)	/* property cannot exist */
 	return False; 
     rtrn= XGetWindowProperty(dpy,DefaultRootWindow(dpy),rules_atom,
-				0L,_XKB_RF_NAMES_PROP_MAXLEN,False,
-				XA_STRING,&actual_type,
-				&fmt,&nitems,&bytes_after,
-				(unsigned char **)&data);
+                                0L,_XKB_RF_NAMES_PROP_MAXLEN,False,
+                                XA_STRING,&actual_type,
+                                &fmt,&nitems,&bytes_after,
+                                (unsigned char **)&data);
     if (rtrn!=Success)
 	return False;
     if (rf_rtrn)
@@ -1373,7 +1374,7 @@ char *	pval;
     }
 
     XChangeProperty(dpy,DefaultRootWindow(dpy),name,XA_STRING,8,PropModeReplace,
-                                      (unsigned char *)pval,len);
+                                                (unsigned char *)pval,len);
     _XkbFree(pval);
     return True;
 }

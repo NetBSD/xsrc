@@ -1,4 +1,4 @@
-/* $XConsortium: XlcPublic.h /main/5 1996/12/05 10:40:11 swick $ */
+/* $TOG: XlcPublic.h /main/6 1997/06/22 07:38:55 kaleb $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -54,7 +54,7 @@ typedef enum {
     XlcUnknown, XlcC0, XlcGL, XlcC1, XlcGR, XlcGLGR, XlcOther, XlcNONE
 } XlcSide;
 
-typedef struct _FonScope {
+typedef struct _FontScope {
         unsigned long   start;
         unsigned long   end;
         unsigned long   shift;

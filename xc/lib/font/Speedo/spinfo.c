@@ -1,4 +1,4 @@
-/* $XConsortium: spinfo.c,v 1.15 94/04/17 20:17:50 gildea Exp $ */
+/* $TOG: spinfo.c /main/17 1997/06/09 14:19:24 barstow $ */
 /*
  * Copyright 1990, 1991 Network Computing Devices;
  * Portions Copyright 1987 by Digital Equipment Corporation
@@ -93,8 +93,8 @@ static fontProp fontNamePropTable[] = {
 static fontProp extraProps[] = {
     "FONT", 0, 0,
     "COPYRIGHT", 0, 0,
-    "RAW_PIXELSIZE", 0, 0,
-    "RAW_POINTSIZE", 0, 0,
+    "RAW_PIXEL_SIZE", 0, 0,
+    "RAW_POINT_SIZE", 0, 0,
     "RAW_ASCENT", 0, 0,
     "RAW_DESCENT", 0, 0,
     "RAW_AVERAGE_WIDTH", 0, 0,
@@ -210,7 +210,7 @@ sp_compute_bounds(spf, pinfo, flags, sWidth)
                 index,
 		maxOverlap,
 		overlap,
-		total_width;
+		total_width = 0;
     xCharInfo   minchar,
                 maxchar,
                 tmpchar;

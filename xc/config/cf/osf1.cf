@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: osf1.cf /main/73 1996/12/27 16:10:46 kaleb $
+XCOMM platform:  $TOG: osf1.cf /main/74 1997/05/27 15:51:24 kaleb $
 /* only tested with Digital OSF/1 */
 
 #ifndef OSName
@@ -157,10 +157,10 @@ XCOMM operating system: OSName (OSMajorVersion.OSMinorVersion)
 #endif
 #ifndef BuildServer
 #define BuildServer		NO
+#endif
 
 /* For DtHelp's TIFF processing routines. */
 #define LSBBitOrder		YES
-#endif
 
 #define MotifDefines		-DNO_REGCOMP -DNO_REGEX -DSTRINGS_ALIGNED
 #define DtSvcDefines		-DXK_MISCELLANY -DMULTIBYTE -DMESSAGE_CAT

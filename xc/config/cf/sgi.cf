@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: sgi.cf /main/42 1996/12/03 15:54:15 swick $
+XCOMM platform:  $TOG: sgi.cf /main/45 1997/06/18 18:01:03 kaleb $
 
 #ifndef OSName
 # define OSName		DefaultOSName
@@ -122,14 +122,24 @@ XCOMM operating system: OSName (OSMajorVersion.OSMinorVersion.OSTeenyVersion)
 #   define sgiCCOptions -xansi
 #  endif
 #  if OSMinorVersion > 1
-/* if you haven't installed patches 1361, 1367, and 1429 on IRIX 6.2  then
- * you must #define HasPosixThreads NO in your site.def or host.def file
+/* if you haven't installed patch 1361, 1403, or 1645 on IRIX 6.2 then you
+ * must add "#define HasPosixThreads NO" in your site.def or host.def file
  */
 #   ifndef HasPosixThreads
 #    define HasPosixThreads	YES
 #   endif
 #   define ThreadedX HasPosixThreads
 #   define ThreadsLibraries -lpthread
+/* 
+ * Add "#define HasSgiThreadsPatch1403 NO" to your site.def or host.def if 
+ * that's which patch you have.
+ */
+#   ifndef HasSgiThreadsPatch1403
+#    define HasSgiThreadsPatch1403 YES
+#   endif
+#   if (HasSgiThreadsPatch1403) 
+#    define SystemMTDefines -D_POSIX_THREAD_SAFE_FUNCTIONS
+#   endif
 #  endif
 # endif
 /* SGI's -lsocket -lnsl is broken, at least in 5.2, so override here */
@@ -211,16 +221,12 @@ man_keywords::								@@\
 
 #define MotifDefines		-DSYS_DIR -DPORT_NOVFORK -DNO_REGCOMP
 
-/* since we're using cc -E as cpp we need to make the input file named as
- * a C file */
 #ifndef CppFileTarget
 #define CppFileTarget(dst,src,defs,deplist)				@@\
 dst::  src deplist							@@\
 	RemoveFile($@)							@@\
-	$(CP) src Concat3(_$$$$_,src,.c); \
 	ClearmakeOSName \
-	$(CPP) CppNoLineInfoOption defs Concat3(_$$$$_,src,.c) | \
-	CppSedMagic >$@; $(RM) Concat3(_$$$$_,src,.c)			@@\
+	$(CPP) CppNoLineInfoOption defs src | CppSedMagic >$@; 		@@\
 									@@\
 clean::									@@\
 	RemoveFiles(dst)

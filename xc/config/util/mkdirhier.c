@@ -1,4 +1,4 @@
-/* $XConsortium: mkdirhier.c /main/1 1996/11/13 14:43:34 lehors $ */
+/* $TOG: mkdirhier.c /main/2 1997/06/05 18:09:26 kaleb $ */
 /*
 
 Copyright (C) 1996 X Consortium
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 	    _mkdir(buf);	/* no error checking to avoid barfing on C: */
 	prev = next + 1;
     }
-    if (!_mkdir(dirname)) {
+    if (_mkdir(dirname) == -1) {
 	perror("mkdirhier failed");
 	exit(1);
     }

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.1.2.2 1997/05/25 05:06:26 dawes Exp $
+XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.1.2.4 1997/07/19 04:59:08 dawes Exp $
 
 /*
  * This is for SCO Open Server 5.0.2 or later.
@@ -9,7 +9,7 @@ XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.1.2.2 1997/05/25 05:06:26 dawes Exp $
 #endif
 
 #ifndef OSName
-#define OSName                  UNIX System V/386 Open Server 5
+#define OSName                  UNIX System V/386 Open Server 5.0.4
 #endif
 #ifndef OSVendor
 #define OSVendor                SCO
@@ -25,21 +25,13 @@ XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.1.2.2 1997/05/25 05:06:26 dawes Exp $
 #endif
 
 /*
- * NOTE: We define SVR4 here, as a lot of neat features depend on this.
- * Where SCO does not have a true SVR4 implementation, we adjust accordingly.
- * However, SCO Open Server 5 is a lot like SVR4.
- *
  * Note: We define FD_SETSIZE here (as opposed to in ConnectionFlags) to
  * guarantee that the same FD_SETSIZE is used. Havoc abounds if we do not
  * do this, as some files which include sys/socket.h and sys/types.h will
  * have different values for FD_SETSIZE.
- *
- * Note 2: We also define _SVID3, as this seems to enable more Streams
- * based options which are closer to the "desired" state for X11. A by-
- * product of this is that we get better signals too.
  */
 
-#define StandardDefines         -D_SVID3 -Dsco -DSCO -DSYSV -Di386 -DSCO325 -DSVR4 -DFD_SETSIZE=256 -D_NO_STATIC -D_SVID3
+#define StandardDefines         -Dsco -DSCO -DSYSV -Di386 -DSCO325 -DFD_SETSIZE=256 -D_NO_STATIC
 #ifdef HasGcc2
 # define DefaultCCOptions       -melf
 # define CcCmd                  gcc
@@ -54,37 +46,27 @@ XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.1.2.2 1997/05/25 05:06:26 dawes Exp $
 # define OptimizedCDebugFlags   -O
 #endif
 
-/*
- * There is currently a problem, especially when building with the current
- * revisions of GCC, with Dynamic Module support. The xf86site.def file
- * already allows the user to specify whether or not they want PEX5 and
- * XIE. By attempting to load XIE and PEX5 dynamically, we currently get
- * unresolved symbols. This seems to have something to do with SCO's
- * weak symbols in their libraries. For the time being, we disable the
- * building of PEX5 and XIE as loadable modules. Its a great feature and
- * one I hope to get working soon. If anyone has any ideas why this is
- * not currently working, and understand the semantics of dlopen() and
- * the entire loading process better, please mail hug@netcom.com so we
- * can try and thrash this whole lot out. I would dearly love to have this
- * functionality enabled.
- */
 #ifndef PexDynamicModule
-#define PexDynamicModule        NO
+#define PexDynamicModule        YES
 #endif
 #ifndef XieDynamicModule
-#define XieDynamicModule        NO
+#define XieDynamicModule        YES
 #endif
 
 #ifndef HasSymLinks
 # define HasSymLinks            YES
 #endif
 
+#ifdef BuildDynamicLoading
+#define SCODynamicFlags         -Wl,-Bexport
+#endif
+
 #define XawI18nDefines          -DHAS_WCHAR_H -DHAS_ISW_FUNCS
 #if ScoOsMouse
-# define ServerExtraSysLibs     $(CBRT) -lm -levent
+# define ServerExtraSysLibs     $(CBRT) -lm -levent SCODynamicFlags
 # define ServerExtraDefines     ServerCCOptions -DUSE_OSMOUSE XFree86ServerDefines
 #else
-# define ServerExtraSysLibs     $(CBRT) -lm
+# define ServerExtraSysLibs     $(CBRT) -lm SCODynamicFlags
 # define ServerExtraDefines     ServerCCOptions XFree86ServerDefines
 #endif
 #define ExtraLibraries          -lsocket

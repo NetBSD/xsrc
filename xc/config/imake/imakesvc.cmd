@@ -2,7 +2,7 @@
  * This script serves as a helper cmd file for imake. Install this in
  * the path just like imake itself.
  *
- * $XFree86: xc/config/imake/imakesvc.cmd,v 3.10 1997/01/05 11:49:55 dawes Exp $
+ * $XFree86: xc/config/imake/imakesvc.cmd,v 3.10.2.1 1997/07/19 04:59:10 dawes Exp $
  */
 '@echo off'
 ADDRESS CMD
@@ -167,15 +167,12 @@ SELECT
    END
    WHEN code=13 THEN DO
       /* imakesvc 13 indir fromfile tofile */
-      ind = WORD(all,2)
-      frm = WORD(all,3)
-      tof = WORD(all,4)
-      curdir = DIRECTORY()
-      d = DIRECTORY(ind)
+      ind = TRANSLATE(WORD(all,2),'\','/')
+      frm = TRANSLATE(WORD(all,3),'\','/')
+      tof = ind'\'WORD(all,4)
+      IF \(exists(ind)) THEN MKDIR ind
       rc = SysFileDelete(tof)
-      frm1 = TRANSLATE(frm,'\','/')
-      COPY frm1' 'tof' >nul 2>&1'
-      d = DIRECTORY(curdir)
+      COPY frm' 'tof
    END
    OTHERWISE NOP
 END

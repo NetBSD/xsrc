@@ -1,5 +1,5 @@
 LIBRARY X11
-DESCRIPTION "X11R6 XFree86 3.3 libX11.dll for OS/2 EMX09C VERSION=6.3"
+DESCRIPTION "$XFree86: xc/lib/X11/X11os2.def,v 3.5.4.3 1997/08/04 02:10:34 dawes Exp $"
 CODE	
 	PRELOAD
 DATA	
@@ -860,7 +860,7 @@ EXPORTS
 	_XlcEucLoader  @ 850
 	_XlcFileName  @ 851
 	_XlcResolveLocaleName  @ 852
-	_XlcResolveDBName  @ 853
+;REMOVED	_XlcResolveDBName  @ 853
 	_XlcResolveI18NPath  @ 854
 	_XlcGenericLoader  @ 855
 	_XlcInitLoader  @ 856

@@ -1,4 +1,4 @@
-/* $XConsortium: imRmAttr.c /main/12 1996/10/22 14:24:45 kaleb $ */
+/* $TOG: imRmAttr.c /main/13 1997/06/22 18:11:18 kaleb $ */
 /******************************************************************
 
            Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -150,6 +150,7 @@ _XimMakeICAttrIDList(ic, res_list, res_num, arg, buf, len, mode)
 	if (!(res = _XimGetResourceListRec(res_list, res_num, p->name))) {
 	    if (_XimCheckInnerICAttributes(ic, p, mode))
 		continue;
+	    *len = -1;
 	    return p->name;
 	}
 
@@ -157,6 +158,7 @@ _XimMakeICAttrIDList(ic, res_list, res_num, arg, buf, len, mode)
 	if(check == XIM_CHECK_INVALID)
 	    continue;
 	else if(check == XIM_CHECK_ERROR) {
+	    *len = -1;
 	    return p->name;
 	}
 
@@ -168,14 +170,16 @@ _XimMakeICAttrIDList(ic, res_list, res_num, arg, buf, len, mode)
 		if (name = _XimMakeICAttrIDList(ic, res_list, res_num,
 				(XIMArg *)p->value, buf, &new_len,
 				(mode | XIM_PREEDIT_ATTR))) {
-		    *len += new_len;
+		    if (new_len < 0) *len = -1;
+		    else *len += new_len;
 		    return name;
 		}
 	    } else if (res->xrm_name == sts_quark) {
 		if (name = _XimMakeICAttrIDList(ic, res_list, res_num,
 				(XIMArg *)p->value, buf, &new_len,
 				(mode | XIM_STATUS_ATTR))) {
-		    *len += new_len;
+		    if (new_len < 0) *len = -1;
+		    else *len += new_len;
 		    return name;
 		}
 	    }
@@ -184,6 +188,7 @@ _XimMakeICAttrIDList(ic, res_list, res_num, arg, buf, len, mode)
 	    if (!(res = _XimGetNestedListSeparator(res_list, res_num))) {
 		p++;
 		if (p) {
+		    *len = -1;
 		    return p->name;
 		}
 		else {

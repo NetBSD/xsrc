@@ -1,5 +1,5 @@
 XCOMM site:  $XConsortium: site.def /main/revisionist/4 1996/12/31 08:02:07 kaleb $
-XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.17 1997/01/14 22:12:40 dawes Exp $
+XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.17.2.1 1997/06/22 10:32:21 dawes Exp $
 
 /***************************************************************************
  *                                                                         *
@@ -78,7 +78,7 @@ XCOMM site:  $XFree86: xc/config/cf/site.def,v 3.17 1997/01/14 22:12:40 dawes Ex
 /* Only set HasXdmAuth to YES if you have a Wraphelp.c file. */
 /* #define HasXdmAuth YES */
 
-/* #define PreIncDir /usr/local/lib/gcc-lib/sparc-sun-solaris2.4/2.7.2/include */
+/* #define PreIncDir DefaultGccIncludeDir */
 
 /*
 #if defined(SunArchitecture) && defined(SparcArchitecture)
