@@ -139,7 +139,10 @@ typedef enum {
     OPTION_VIDEO_KEY,
     OPTION_DISP_PRIORITY,
     OPTION_PANEL_SIZE,
-    OPTION_MIN_DOTCLOCK
+    OPTION_MIN_DOTCLOCK,
+#ifdef __powerpc__
+    OPTION_IBOOKHACKS
+#endif
 } RADEONOpts;
 
 const OptionInfoRec RADEONOptions[] = {
@@ -175,6 +178,9 @@ const OptionInfoRec RADEONOptions[] = {
     { OPTION_DISP_PRIORITY,  "DisplayPriority",  OPTV_ANYSTR,  {0}, FALSE },
     { OPTION_PANEL_SIZE,     "PanelSize",        OPTV_ANYSTR,  {0}, FALSE },
     { OPTION_MIN_DOTCLOCK,   "ForceMinDotClock", OPTV_FREQ,    {0}, FALSE },
+#ifdef __powerpc__
+    { OPTION_IBOOKHACKS,     "iBookHacks",       OPTV_BOOLEAN, {0}, FALSE },
+#endif
     { -1,                    NULL,               OPTV_NONE,    {0}, FALSE }
 };
 
@@ -2030,7 +2036,6 @@ static Bool RADEONPreInitConfig(ScrnInfoPtr pScrn)
 
     info->HasCRTC2 = TRUE;
     info->IsMobility = FALSE;
-    info->IsIBook = FALSE;
     info->IsIGP = FALSE;
     switch (info->Chipset) {
     case PCI_CHIP_RADEON_LY:
@@ -2150,16 +2155,6 @@ static Bool RADEONPreInitConfig(ScrnInfoPtr pScrn)
 	info->ChipFamily = CHIP_FAMILY_RADEON;
 	info->HasCRTC2 = FALSE;
     }
-
-    /* 
-     * We assume the only PowerPC machine using mobile Radeon 
-     * chips is the Apple iBook, and it needs minor tweaks
-     */
-#ifdef __powerpc__
-	if (info->IsMobility)
-        	info->IsIBook = TRUE;
-#endif
-
 				/* Framebuffer */
 
     from               = X_PROBED;
@@ -5046,8 +5041,10 @@ static void RADEONRestorePLLRegisters(ScrnInfoPtr pScrn,
     /* 
      * Never do it on Apple iBook to avoid a blank screen.
      */
-    if (info->IsIBook)
+#ifdef __powerpc__
+    if (xf86ReturnOptValBool(info->Options, OPTION_IBOOKHACKS, FALSE))
         return;
+#endif
 
     if (info->IsMobility) {
         /* A temporal workaround for the occational blanking on certain laptop panels.
@@ -6535,9 +6532,11 @@ static void RADEONInitPLLRegisters(RADEONSavePtr save, RADEONInfoPtr info,
     /* 
      * on iBooks the LCD pannel needs tweaked PLL timings 
      */
-    if (info->IsIBook)
+#ifdef __powerpc__
+    if (xf86ReturnOptValBool(info->Options, OPTION_IBOOKHACKS, FALSE))
         save->ppll_div_3 = 0x000600ad;
     else
+#endif
         save->ppll_div_3 = (save->feedback_div | (post_div->bitvalue << 16));
 
     save->htotal_cntl    = 0;
