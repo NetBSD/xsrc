@@ -687,13 +687,8 @@ FUNC_NAME(cfb8LineSS1Rect) (pDrawable, pGC, mode, npt, pptInit, pptInitOrig,
 # if PSZ == 24
 	    y1_or_e1 = xOffset & 3;
 # else
-#  if PGSZ == 64 /* PIM value from <cfbmskbits.h> is not it! (for 16/32 PSZ)*/
-	    y1_or_e1 = ((long) addrp) & 0x7;
+	    y1_or_e1 = ((long) addrp) & (PGSZB - 1);
 	    addrp = (PixelType *) (((unsigned char *) addrp) - y1_or_e1);
-#  else
-	    y1_or_e1 = ((long) addrp) & PIM;
-	    addrp = (PixelType *) (((unsigned char *) addrp) - y1_or_e1);
-#  endif
 #if PGSZ == 32
 #  if PWSH != 2
 	    y1_or_e1 >>= (2 - PWSH);
