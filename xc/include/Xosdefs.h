@@ -106,6 +106,10 @@ in this Software without prior written authorization from the X Consortium.
 #endif
 #endif
 
+#if defined(__NetBSD__) && defined(__alpha__)
+#define X_NOT_POSIX	/* get around struct stat alignment lossage */
+#endif
+
 #ifdef WIN32
 #ifndef _POSIX_
 #define X_NOT_POSIX
