@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.54 1999/04/27 07:49:57 ross Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.55 1999/05/24 17:31:13 jwise Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -355,14 +355,14 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define DefaultUserPath		/bin:/usr/bin:/usr/local/bin:$(BINDIR)
 #define DefaultSystemPath	/sbin:/usr/sbin:/bin:/usr/bin:$(BINDIR)
 
-#define InstPgmFlags		-s -m 0555 -o bin -g bin
-#define InstBinFlags		-m 0555 -o bin -g bin
-#define InstUidFlags		-m 4511 -o root -g bin
-#define InstLibFlags		-m 0444 -o bin -g bin
-#define InstIncFlags		-m 0444 -o bin -g bin
-#define InstManFlags		-m 0444 -o bin -g bin
-#define InstDatFlags		-m 0444 -o bin -g bin
-#define InstKmemFlags		-m 2555 -o bin -g kmem
+#define InstPgmFlags		-s -m 0555 -o root -g wheel
+#define InstBinFlags		-m 0555 -o root -g wheel
+#define InstUidFlags		-m 4511 -o root -g wheel
+#define InstLibFlags		-m 0444 -o root -g wheel
+#define InstIncFlags		-m 0444 -o root -g wheel
+#define InstManFlags		-m 0444 -o root -g wheel
+#define InstDatFlags		-m 0444 -o root -g wheel
+#define InstKmemFlags		-m 2555 -o root -g kmem
 
 #ifdef  InstallCmd
 # undef  InstallCmd
