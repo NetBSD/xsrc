@@ -48,7 +48,7 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.14 1999
 # if USBSupport
          USB_SRC = xf86USBtablet.c
 #   if defined(NetBSDArchitecture)
-#     if (OSMajorVersion == 1 && OSMinorVersion > 5) || (OSMajorVersion == 1 && OSMinorVersion == 5 && OSTeenyVersion > 26)
+#     if (OSMajorVersion == 1 && OSMinorVersion > 5) || (OSMajorVersion == 1 && OSMinorVersion == 5 && OSTeenyVersion > 650)
          ARCH_USB = /usr/lib/libusbhid_pic.a
 #     else
          ARCH_USB = /usr/lib/libusb_pic.a
