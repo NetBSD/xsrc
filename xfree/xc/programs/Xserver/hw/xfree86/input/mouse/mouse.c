@@ -1941,13 +1941,9 @@ Emulate3ButtonsSoft(InputInfoPtr pInfo)
     if (!pMse->emulate3ButtonsSoft)
 	return TRUE;
 
-    pMse->emulate3Buttons = FALSE;
-    
     if (pMse->emulate3Pending)
 	buttonTimer(pInfo);
 
-    xf86Msg(X_INFO,"3rd Button detected: disabling emulate3Button\n");
-    
     return FALSE;
 }
 
@@ -2141,7 +2137,7 @@ MouseDoPostEvent(InputInfoPtr pInfo, int buttons, int dx, int dy)
 	    pLock->lockLastButtons = buttons;
 	}
 
-        if ((pMse->emulate3Buttons || pMse->emulate3ButtonsSoft)
+        if (pMse->emulate3Buttons
 	    && (!(buttons & 0x02) || Emulate3ButtonsSoft(pInfo))) {
 
             /* handle all but buttons 1 & 3 normally */
