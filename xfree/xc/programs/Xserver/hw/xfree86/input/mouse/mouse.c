@@ -2141,7 +2141,7 @@ MouseDoPostEvent(InputInfoPtr pInfo, int buttons, int dx, int dy)
 	    pLock->lockLastButtons = buttons;
 	}
 
-        if (pMse->emulate3Buttons
+        if ((pMse->emulate3Buttons || pMse->emulate3ButtonsSoft)
 	    && (!(buttons & 0x02) || Emulate3ButtonsSoft(pInfo))) {
 
             /* handle all but buttons 1 & 3 normally */
