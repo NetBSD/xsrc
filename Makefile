@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/02/27 16:44:50 fredb Exp $
+#	$NetBSD: Makefile,v 1.14 2000/03/12 11:16:55 dbj Exp $
 #
 # Targets & Variables
 #
@@ -103,4 +103,3 @@ release snapshot: build
 #
 .endif # DESTDIR and RELEASEDIR check
 
-.include "/etc/mk.conf"
