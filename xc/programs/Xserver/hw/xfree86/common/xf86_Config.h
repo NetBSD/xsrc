@@ -184,9 +184,10 @@ static SymTabRec DriverTab[] = {
 #define NETPS2		1035
 #define NETSCROLLPS2	1036
 #define SYSMOUSE	1037
-#define AUTOMOUSE	1038
-#define XQUE      	1039
-#define OSMOUSE   	1040
+#define WSMOUSE   	1038
+#define AUTOMOUSE	1039
+#define XQUE      	1040
+#define OSMOUSE		1041
 
 #ifdef INIT_CONFIG
 static SymTabRec MouseTab[] = {
@@ -211,6 +212,7 @@ static SymTabRec MouseTab[] = {
   { AUTOMOUSE,	"auto" },
   { XQUE,	"xqueue" },
   { OSMOUSE,	"osmouse" },
+  { WSMOUSE,	"wsmouse" },
   { -1,		"" },
 };
 #endif /* INIT_CONFIG */
@@ -548,7 +550,8 @@ static SymTabRec KeyboardTab[] = {
 #define P_NETPS2	15		/* Genius PS/2 NetMouse */
 #define P_NETSCROLLPS2	16		/* Genius PS/2 NetScroll */
 #define P_SYSMOUSE	17		/* SysMouse */
-#define P_AUTO		18		/* automatic */
+#define P_WSMOUSE	18		/* wsmouse */
+#define P_AUTO		19		/* automatic */
 
 #define EMULATE3	50
 #define BAUDRATE	51

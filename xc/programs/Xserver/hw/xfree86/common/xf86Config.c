@@ -1852,6 +1852,7 @@ configPointerSection(MouseDevPtr	mouse_dev,
 	&& mouse_dev->mseType != P_GLIDEPOINTPS2
 	&& mouse_dev->mseType != P_NETPS2
 	&& mouse_dev->mseType != P_NETSCROLLPS2
+	&& mouse_dev->mseType != P_WSMOUSE
 	&& mouse_dev->mseType != P_SYSMOUSE)
     {
       formatFlag = TRUE;
