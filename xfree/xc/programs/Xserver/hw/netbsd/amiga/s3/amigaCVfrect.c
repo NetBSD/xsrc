@@ -710,7 +710,7 @@ amigaCVPolyFillRect(pDrawable, pGC, nrectFill, prectInit)
    } else {
       int   x1, y1, x2, y2, bx2, by2;
 
-      pextent = (*pGC->pScreen->RegionExtents) (prgnClip);
+      pextent = REGION_EXTENTS(pGC->pScreen, prgnClip);
       x1 = pextent->x1;
       y1 = pextent->y1;
       x2 = pextent->x2;

@@ -290,7 +290,7 @@ amigaCVCopyWindow(pWin, ptOldOrg, prgnSrc)
 
    dummyGC.subWindowMode = ~IncludeInferiors;
 
-   prgnDst = (*pWin->drawable.pScreen->RegionCreate) (NULL, 1);
+   prgnDst = REGION_CREATE(*pWin->drawable.pScreen, NULL, 1);
 
    if ((dx = ptOldOrg.x - pWin->drawable.x) > 0)
       direction |= INC_X;
@@ -298,8 +298,8 @@ amigaCVCopyWindow(pWin, ptOldOrg, prgnSrc)
    if ((dy = ptOldOrg.y - pWin->drawable.y) > 0)
       direction |= INC_Y;
 
-   (*pWin->drawable.pScreen->TranslateRegion) (prgnSrc, -dx, -dy);
-   (*pWin->drawable.pScreen->Intersect) (prgnDst, &pWin->borderClip, prgnSrc);
+   REGION_TRANSLATE(pWin->drawable.pScreen, prgnSrc, -dx, -dy);
+   REGION_INTERSECT(pWin->drawable.pScreen, prgnDst, &pWin->borderClip, prgnSrc);
 
    pboxOrig = REGION_RECTS(prgnDst);
    nbox = REGION_NUM_RECTS(prgnDst);
@@ -307,7 +307,7 @@ amigaCVCopyWindow(pWin, ptOldOrg, prgnSrc)
    ordering = (unsigned int *)ALLOCATE_LOCAL(nbox * sizeof(unsigned int));
 
    if (!ordering) {
-      (*pWin->drawable.pScreen->RegionDestroy) (prgnDst);
+      REGION_DESTROY(pWin->drawable.pScreen, prgnDst);
       return;
    }
    amigaCVFindOrdering((DrawablePtr)pWin, (DrawablePtr)pWin, &dummyGC, nbox,
@@ -381,7 +381,7 @@ amigaCVCopyWindow(pWin, ptOldOrg, prgnSrc)
    S3_OUTW(BKGD_MIX, BSS_BKGDCOL | MIX_SRC);
    UNBLOCK_CURSOR;
 
-   (*pWin->drawable.pScreen->RegionDestroy) (prgnDst);
+   REGION_DESTROY(pWin->drawable.pScreen, prgnDst);
    DEALLOCATE_LOCAL(ordering);
 }
 
