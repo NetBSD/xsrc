@@ -1,4 +1,4 @@
-/* $NetBSD: hpcKbd.c,v 1.2 2004/01/03 01:23:02 takemura Exp $	*/
+/* $NetBSD: hpcKbd.c,v 1.3 2004/07/22 18:08:59 uch Exp $	*/
 /* $XConsortium: sunKbd.c,v 5.47 94/08/16 13:45:30 dpw Exp $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -47,7 +47,14 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdio.h>
 #include <sys/time.h>
 #include <dev/pckbc/pckbdreg.h>
+#include <dev/wscons/wsksymdef.h>
 #include "atKeynames.h"
+
+#ifdef XKB
+#include <X11/extensions/XKB.h>
+#include <X11/extensions/XKBstr.h>
+#include <X11/extensions/XKBsrv.h>
+#endif
 
 #define MOUSE_EMUL_KEY	(KEY_Menu + MIN_KEYCODE)	/* menu key on windows keyboard */
 #define MOUSE_EMUL_KEY1	(KEY_1 + MIN_KEYCODE)
@@ -55,6 +62,11 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 extern KeySymsRec hpcKeySyms[];
 extern hpcModmapRec *hpcModMaps[];
+static void hpcInitKbdNames(XkbComponentNamesRec *, hpcKbdPrivPtr);
+static int hpcKbdMuxSaveDevices(struct wsmux_device_list *);
+static int hpcKbdMuxRestoreDevices(struct wsmux_device_list *);
+static int hpcKbdMainKeyboardIoctl(hpcKbdPrivPtr);
+static int hpcKbdMainKeyboardDoIoctl(hpcKbdPrivPtr, const char *);
 
 /*
  * hpcBell --
@@ -131,7 +143,7 @@ hpcKbdProc(device, what)
 {
     int i;
     DevicePtr pKeyboard = (DevicePtr) device;
-    hpcKbdPrivPtr pPriv;
+    hpcKbdPrivPtr pPriv = &hpcKbdPriv;
     KeybdCtrl*	ctrl = &device->kbdfeed->ctrl;
     extern int XkbDfltRepeatDelay, XkbDfltRepeatInterval;
     struct termios tkbdtty;
@@ -184,9 +196,25 @@ hpcKbdProc(device, what)
 	pKeyboard->devicePrivate = (pointer)&hpcKbdPriv;
 	pKeyboard->on = FALSE;
 
-	InitKeyboardDeviceStruct(pKeyboard,
-				 workingKeySyms, workingModMap,
-				 hpcBell, hpcKbdCtrl);
+#ifndef XKB
+	InitKeyboardDeviceStruct(pKeyboard, workingKeySyms,
+	    workingModMap, hpcBell, hpcKbdCtrl);
+#else
+	if (noXkbExtension || pPriv->devtype == HPC_KBDDEV_WSMUX ||
+	    pPriv->devtype == HPC_KBDDEV_WSKBD) {
+		/*
+		 * When using wskbd and its multiplexer, keysyms are
+		 * already converted from WSKBDIO_GETMAP ioctl.
+		 */
+		InitKeyboardDeviceStruct(pKeyboard, workingKeySyms,
+		    workingModMap, hpcBell, hpcKbdCtrl);
+	} else {
+		XkbComponentNamesRec names;
+		hpcInitKbdNames(&names, &hpcKbdPriv);
+		XkbInitKeyboardDeviceStruct((DeviceIntPtr)pKeyboard, &names,
+		    workingKeySyms, workingModMap, hpcBell, hpcKbdCtrl);
+	}
+#endif
 	break;
 
     case DEVICE_ON:
@@ -201,7 +229,6 @@ hpcKbdProc(device, what)
 	hpcKbdPriv.bkeymask = 0;
 	hpcKbdPriv.bkeynrmask = 0;
 
-	pPriv = (hpcKbdPrivPtr)pKeyboard->devicePrivate;
 	switch (pPriv->devtype) {
 	case HPC_KBDDEV_RAW:
 	    pPriv->xlatestat = HPC_KBDXSTAT_INIT;
@@ -231,7 +258,6 @@ hpcKbdProc(device, what)
 
     case DEVICE_CLOSE:
     case DEVICE_OFF:
-	pPriv = (hpcKbdPrivPtr)pKeyboard->devicePrivate;
 	RemoveEnabledDevice(pPriv->fd);
 	pKeyboard->on = FALSE;
 	switch (pPriv->devtype) {
@@ -272,6 +298,7 @@ hpcKbdGetEvents(pPriv, pNumEvents, pAgain)
 {
     int fd;
     int	nBytes;	    /* number of bytes of events available. */
+    struct timeval tv;
     u_char c, c2;
     static hpcEvent evBuf[MAXEVENTS];   /* Buffer for hpcEvents */
 
@@ -300,8 +327,43 @@ AGAIN:
 			pPriv->xlatestat = HPC_KBDXSTAT_EXT1;
 			goto AGAIN;
 		    } else {
-			*pNumEvents = 1;
-			evBuf[0].value = (c & 0x7f);
+			    switch (c & 0x7f) {
+			    case 0x59:        c2 = KEY_0x59; break;
+			    case 0x5a:        c2 = KEY_0x5A; break;
+			    case 0x5b:        c2 = KEY_0x5B; break;
+			    case 0x5c:        c2 = KEY_KP_Equal; break; /* Keypad Equal */
+			    case 0x5d:        c2 = KEY_0x5D; break;
+			    case 0x5e:        c2 = KEY_0x5E; break;
+			    case 0x5f:        c2 = KEY_0x5F; break;
+			    case 0x62:        c2 = KEY_0x62; break;
+			    case 0x63:        c2 = KEY_0x63; break;
+			    case 0x64:        c2 = KEY_0x64; break;
+			    case 0x65:        c2 = KEY_0x65; break;
+			    case 0x66:        c2 = KEY_0x66; break;
+			    case 0x67:        c2 = KEY_0x67; break;
+			    case 0x68:        c2 = KEY_0x68; break;
+			    case 0x69:        c2 = KEY_0x69; break;
+			    case 0x6a:        c2 = KEY_0x6A; break;
+			    case 0x6b:        c2 = KEY_0x6B; break;
+			    case 0x6c:        c2 = KEY_0x6C; break;
+			    case 0x6d:        c2 = KEY_0x6D; break;
+			    case 0x6e:        c2 = KEY_0x6E; break;
+			    case 0x6f:        c2 = KEY_0x6F; break;
+			    case 0x70:        c2 = KEY_0x70; break;
+			    case 0x71:        c2 = KEY_0x71; break;
+			    case 0x72:        c2 = KEY_0x72; break;
+			    case 0x73:        c2 = KEY_0x73; break;
+			    case 0x74:        c2 = KEY_0x74; break;
+			    case 0x75:        c2 = KEY_0x75; break;
+			    case 0x76:        c2 = KEY_0x76; break;
+			    default:	      c2 = c & 0x7f; break;
+			    }
+			    *pNumEvents = 1;
+			    evBuf[0].value = c2;
+			    evBuf[0].type = (c & 0x80) ?
+				WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+			    TIMEVAL_TO_TIMESPEC(&tv, &evBuf[0].time);
+			    return evBuf;
 		    }
 		    break;
 		case HPC_KBDXSTAT_EXT0:
@@ -380,8 +442,8 @@ AGAIN:
 		    hpcFatalError(("hpcKbdGetEvents: invalid xlate status"));
 		    break;
 		}
+
 		if (*pNumEvents != 0) {
-		    struct timeval tv;
 		    gettimeofday(&tv, NULL);
 		    evBuf[0].type = (c & 0x80) ?
 				WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
@@ -555,4 +617,218 @@ Bool LegalModifier(key, pDev)
     DevicePtr	pDev;
 {
     return TRUE;
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * hpcInitKbdNames --
+ *	Handle the XKB initialization
+ *
+ * Results:
+ *	None.
+ *
+ * Comments:
+ *-----------------------------------------------------------------------
+ */
+#ifdef XKB
+static void hpcInitKbdNames (XkbComponentNamesRec* names, hpcKbdPrivPtr pKbd)
+{
+#ifndef XKBBUFSIZE
+#define	XKBBUFSIZE 64
+#endif
+    static char keycodesbuf[XKBBUFSIZE];
+    static char geometrybuf[XKBBUFSIZE];
+    static char symbolsbuf[XKBBUFSIZE];
+
+    names->keymap = NULL;
+    names->compat = "compat/complete";
+    names->types  = "types/complete";
+    names->keycodes = keycodesbuf;
+    names->geometry = geometrybuf;
+    names->symbols = symbolsbuf;
+    strcpy(keycodesbuf, "keycodes/");
+    strcpy(geometrybuf, "geometry/");
+    strcpy(symbolsbuf, "symbols/");
+
+    /* keycodes & geometry */
+    switch (pKbd->encode) {
+    case KB_DE:
+	    strcat(names->keycodes, "xfree86");
+	    strcat(names->geometry, "pc(jp102)");
+	    strcat(names->symbols, "en_US(pc105)+de");
+	    hpcPrintF(("keymap: en_US(pc105)+de\n"));
+	    break;
+    case KB_FR:
+	    strcat(names->keycodes, "xfree86");
+	    strcat(names->geometry, "pc(pc102)");
+	    strcat(names->symbols, "en_US(pc105)+fr");
+	    hpcPrintF(("keymap: en_US(pc105)+fr\n"));
+	    break;
+    case KB_JP:
+	    strcat(names->keycodes, "xfree86(jp106)");
+	    strcat(names->geometry, "pc(jp106)");
+	    strcat(names->symbols, "jp(jp106)");
+	    hpcPrintF(("keymap: jp(jp106)\n"));
+	    break;
+    case KB_PT:
+	    strcat(names->keycodes, "xfree86");
+	    strcat(names->geometry, "pc(pc102)");
+	    strcat(names->symbols, "en_US(pc105)+pt");
+	    hpcPrintF(("keymap: en_US(jp105)+pt\n"));
+	    break;
+    case KB_US:
+    default:
+	    strcat(names->keycodes, "xfree86");
+	    strcat(names->geometry, "pc");
+	    strcat(names->symbols, "us(pc105)");
+	    hpcPrintF(("keymap: us(pc105)\n"));
+	    break;
+    }
+}
+#endif /* XKB */
+
+/*
+ * Inquire built-in keyboard encoding type and keymap.
+ */
+void
+hpcKbdGetInfo(hpcKbdPrivPtr pPriv)
+{
+	struct wsmux_device_list devlist;
+
+	/* try to open multiplexer */
+	if (hpcKbdMuxSaveDevices(&devlist) == 0) {
+		pPriv->multiplexer = TRUE;
+		hpcKbdMainKeyboardIoctl(pPriv);
+		hpcKbdMuxRestoreDevices(&devlist);
+	} else {
+		pPriv->multiplexer = FALSE;
+		hpcKbdMainKeyboardIoctl(pPriv);
+	}
+}
+
+/*
+ * Save attached device of mulitiplexer to devlist.
+ */
+int
+hpcKbdMuxSaveDevices(struct wsmux_device_list *devlist)
+{
+	struct wsmux_device *dev;
+	int i, fd;
+
+	if ((fd = open("/dev/wskbd", O_RDWR)) == -1) {
+		hpcPrintF(("can't open /dev/wskbd multiplexer (not fatal)"));
+		return 1;
+	}
+
+	if (ioctl(fd, WSMUXIO_LIST_DEVICES, devlist) == -1) {
+		hpcPrintF(("can't WSMUXIO_LIST_DEVICES (not fatal)"));
+		close(fd);
+		return 1;
+	}
+	close(fd);
+
+	return 0;
+}
+
+int
+hpcKbdMuxRestoreDevices(struct wsmux_device_list *odevlist)
+{
+	struct wsmux_device_list devlist;
+	struct wsmux_device *odev, *dev;
+	int fd, i, j, n;
+
+	/* Get current list */
+	if (hpcKbdMuxSaveDevices(&devlist) != 0)
+		return 1;
+
+	fd = open("/dev/wskbd", O_RDWR);
+
+	/* Compare old list, if find detatched device, reconnect again. */
+	n = devlist.ndevices;
+	for (odev = odevlist->devices,
+	    i = 0; i < odevlist->ndevices; i++, odev++) {
+		for (dev = devlist.devices, j = 0; j < n; j++, dev++)
+			if (dev->type == odev->type && dev->idx == odev->idx)
+				break;
+		if (j != n)
+			continue;
+
+		if (ioctl(fd, WSMUXIO_ADD_DEVICE, odev) == -1) {
+			hpcPrintF(("failed to add type %d idx %d\n",
+			    odev->type, odev->idx));
+		}
+	}
+	close(fd);
+}
+
+int
+hpcKbdMainKeyboardIoctl(hpcKbdPrivPtr pPriv)
+{
+	char device[16];
+	int i;
+
+	if (pPriv->multiplexer) {
+		/* find builtin-keyboard */
+		for (i = 0; i < 8; i++) {
+			sprintf(device, "/dev/wskbd%d", i);
+			if (hpcKbdMainKeyboardDoIoctl(pPriv, device) == 0)
+				break;
+		}
+	} else {
+		hpcKbdMainKeyboardDoIoctl(pPriv, pPriv->devname);
+	}
+
+	if (pPriv->encode == 0)
+		pPriv->encode = KB_USER;
+}
+
+int
+hpcKbdMainKeyboardDoIoctl(hpcKbdPrivPtr pPriv, const char *device)
+{
+	extern int XkbDfltRepeatDelay, XkbDfltRepeatInterval;
+	struct wskbd_keyrepeat_data keyrepeat;
+	int fd;
+	kbd_t kbdencoding = 0;
+	u_int kbdtype;
+
+	if ((fd = open(device, O_RDWR)) == -1)
+		return 1;
+
+	if (ioctl(fd, WSKBDIO_GTYPE, &kbdtype) == -1) {
+		hpcErrorF(("can't get keyboard type.\n"));
+		close(fd);
+		return 1;
+	}
+
+	if (ioctl(fd, WSKBDIO_GETKEYREPEAT, &keyrepeat) == -1) {
+		hpcErrorF(("can't get keyrepeat configuration. (not fatal)\n"));
+	} else {
+		XkbDfltRepeatDelay = keyrepeat.del1;
+		XkbDfltRepeatInterval = keyrepeat.delN;
+		hpcPrintF(("key repeat: %d/%d ms.\n", XkbDfltRepeatDelay,
+		    XkbDfltRepeatInterval));
+	}
+
+	if (ioctl(fd, WSKBDIO_GETENCODING, &kbdencoding) != -1) {
+		pPriv->encode = kbdencoding;
+	} else {
+		hpcErrorF(("can't get keyboard encoding. (not fatal)\n"));
+	}
+
+	switch (kbdtype) {
+	default:
+		hpcErrorF(("unsupported keyboard type %d.\n", kbdtype));
+		break;
+	case WSKBD_TYPE_USB:
+		hpcErrorF(("USB keyboard.\n"));
+		/* FALLTHROUGH */
+	case WSKBD_TYPE_HPC_KBD:
+		if (pPriv->devtype == HPC_KBDDEV_WSMUX ||
+		    pPriv->devtype == HPC_KBDDEV_WSKBD)
+			hpcKeymapConvertWssymToXsym(fd);
+		break;
+	}
+	close(fd);
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: hpc.h,v 1.1 2004/01/03 01:09:19 takemura Exp $	*/
+/* $NetBSD: hpc.h,v 1.2 2004/07/22 18:08:59 uch Exp $	*/
 /* $XConsortium: sun.h,v 5.39.1.1 95/01/05 19:58:43 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.2 1995/02/12 02:36:21 dawes Exp $ */
 /*-
@@ -107,6 +107,9 @@ typedef struct {
     int			xlatestat;     	/* state machine for key code xlation */
     Leds		leds;		/* last known LED state */
     struct termios	kbdtty;		/* previous tty settings */
+    int			encode;		/* builtin keyboard encoding */
+    Bool		multiplexer;	/* connected to wsmux */
+    char                devname[16];	/* actual device name */
 } hpcKbdPrivRec, *hpcKbdPrivPtr;
 extern hpcKbdPrivRec hpcKbdPriv;
 
@@ -175,6 +178,9 @@ extern Bool		noXkbExtension;
 	FatalError a; \
 }
 
+/* alias for verbose print */
+#define	hpcPrintF(x)	hpcErrorF(x)
+
 /*
  * hpcInit.c
  */
@@ -192,6 +198,7 @@ void hpcEnqueueEvents __P((void));
 int hpcKbdProc __P((DeviceIntPtr pKeyboard, int what));
 hpcEvent* hpcKbdGetEvents __P((hpcKbdPrivPtr, int*, Bool*));
 void hpcKbdEnqueueEvent __P((DeviceIntPtr dev, hpcEvent* fe));
+void hpcKbdGetInfo(hpcKbdPrivPtr);
 
 /*
  * hpcMouse.c
@@ -212,5 +219,10 @@ hpcScreenPtr hpcGetScreenPrivate __P((ScreenPtr	pScreen));
  */
 Bool hpcFBInit __P((int scrn, ScreenPtr pScrn, int argc, char** argv));
 int hpcSetDisplayMode(int, int, int *);
+
+/*
+ * hpcKeymap.c
+ */
+int hpcKeymapConvertWssymToXsym(int);
 
 #endif

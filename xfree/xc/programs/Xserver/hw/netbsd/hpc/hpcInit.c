@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.3 2004/06/25 20:51:59 manu Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.4 2004/07/22 18:08:59 uch Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -30,16 +30,6 @@ hpcPtrPrivRec hpcPtrPriv = {
     0,		/* emulation button down */
     -1,		/* fd */
 };
-
-/*
- * a list of devices to try if there is no environment or command
- * line list of devices
- */
-static char *fallbackList[] = {
-    "/dev/ttyE0", "/dev/ttyE1", "/dev/ttyE2", "/dev/ttyE3",
-    "/dev/ttyE4", "/dev/ttyE5", "/dev/ttyE6", "/dev/ttyE7",
-};
-#define FALLBACK_LIST_LEN sizeof fallbackList / sizeof fallbackList[0]
 
 hpcFbRec hpcFbs[MAXSCREENS];
 
@@ -175,16 +165,7 @@ GetDeviceList (argc, argv)
 	}
 	deviceList[MAXSCREENS] = NULL;
     }
-#if 0
-    if (!deviceList) {
-	/* no environment and no cmdline, so default */
-	deviceList =
-	    (char **) xalloc ((FALLBACK_LIST_LEN + 1) * sizeof (char *));
-	for (i = 0; i < FALLBACK_LIST_LEN; i++)
-	    deviceList[i] = fallbackList[i];
-	deviceList[FALLBACK_LIST_LEN] = NULL;
-    }
-#endif
+
     return deviceList;
 }
 
@@ -199,11 +180,12 @@ InitKbdMouse(argc, argv)
     char    	  **argv;
 {
 	struct rlimit rl;
-	int maxfds, kbdtype;
-	int i;
+	int maxfds;
+	int i, fd;
 	char **devList;
-
+	Bool kbdFound;
 	static int inited;
+	char mousedevname[16];
 
 	if (inited)
 	    return;
@@ -219,73 +201,103 @@ InitKbdMouse(argc, argv)
 	    (void) setrlimit (RLIMIT_NOFILE, &rl);
 	}
 
-	hpcKbdPriv.fd = hpcPtrPriv.fd = -1;
+	hpcPtrPriv.fd = -1;
+	kbdFound = FALSE;
 
 	/*
 	 * use mouse multiplexer if it's available.
 	 */
-	hpcPtrPriv.fd = open("/dev/wsmux0", O_RDWR);
+	if ((hpcPtrPriv.fd = open("/dev/wsmouse", O_RDWR)) != -1) {
+		hpcPrintF(("mouse: /dev/wsmouse (multiplexer)\n"));
+	} else {
+		for (i = 0; i < 8; i++) {
+			sprintf(mousedevname, "/dev/wsmouse%d", i);
+			if ((hpcPtrPriv.fd = open(mousedevname, O_RDWR)) != -1) {
+				hpcPrintF(("mouse: %s\n", mousedevname));
+				break;
+			} else {
+				hpcError(mousedevname);
+			}
+		}
+	}
+
+#ifndef __arm__
+	/*
+	 * 1. use keyboards which are connected wsdisplay(ttyE*).
+	 * hpcarm's Xhpc can't use ttyE* even if WSDISPLAY_COMPAT_RAWKBD
+	 * is setted. because keyboard scancode is not compatible with
+	 * hpcsh/hpcmips. -uch
+	 */
+	if (!kbdFound) {
+		devList = GetDeviceList (argc, argv);
+		for (i = 0; devList[i] != NULL; i++) {
+			int mode;
+			strcpy(hpcKbdPriv.devname, devList[i]);
+			if ((fd = open(hpcKbdPriv.devname, O_RDWR)) == -1)
+				continue;
+			/* check raw keyboard scan code support */
+			if (ioctl(fd, WSKBDIO_GETMODE, &mode) != -1) {
+				hpcPrintF(("keyboard: %s (RAW XT keyboard)\n",
+				    devList[i]));
+				hpcKbdPriv.devtype = HPC_KBDDEV_RAW;
+				kbdFound = TRUE;
+				close(fd);
+				break;
+			}
+			close(fd);
+		}
+	}
+#endif /* __arm__ */
 
 	/*
-	 * try each mouse device
+	 * 2. use wskbd (multiplexer)
 	 */
-	for (i = 0; i < 8; i++) {
-	    char devname[16];
-
-#ifdef __arm__
-	    /*
-	     * We can't use wskbd for now, because primary keyboard(wskbd0)
-             * is already connected with console(/dev/ttyE0).
-	     */
-	    if (hpcKbdPriv.fd == -1) {
-		sprintf(devname, "/dev/wskbd%d", i);
-		hpcKbdPriv.fd = open(devname, O_RDWR);
-	    }
-#endif
-
-	    if (hpcPtrPriv.fd == -1) {
-		sprintf(devname, "/dev/wsmouse%d", i);
-		if ((hpcPtrPriv.fd = open(devname, O_RDWR)) < 0)
-		    hpcError(devname);
-	    }
-	}
-
-	if (hpcKbdPriv.fd != -1) {
-	    hpcKbdPriv.devtype = HPC_KBDDEV_WSKBD;
-	} else {
-	    /*
-	     * use keyboards which are connected wsdisplay(ttyE*).
-	     */
-	    devList = GetDeviceList (argc, argv);
-	    for (i = 0; devList[i] != NULL; i++) {
-		if (0 <= (hpcKbdPriv.fd = open(devList[i], O_RDWR))) {
-		    /* this isn't error */
-		    hpcErrorF(("use RAW XT keyboard, %s\n", devList[i]));
-		    hpcKbdPriv.devtype = HPC_KBDDEV_RAW;
-		    break;
+	if (!kbdFound) {
+		strcpy(hpcKbdPriv.devname, "/dev/wskbd");
+		if ((fd = open(hpcKbdPriv.devname, O_RDWR)) != -1) {
+			hpcKbdPriv.devtype = HPC_KBDDEV_WSMUX;
+			kbdFound = TRUE;
+			hpcPrintF(("keyboard: /dev/wskbd (multiplexer)\n"));
+			close(fd);
 		}
-	    }
 	}
 
-	if (hpcKbdPriv.fd == -1)
-	    hpcFatalError(("Can't open keyboard device\n"));
+	/*
+	 * 3. use wskbd*
+	 */
+	if (!kbdFound) {
+		for (i = 0; i < 8; i++) {
+			sprintf(hpcKbdPriv.devname, "/dev/wskbd%d", i);
+			if ((fd = open(hpcKbdPriv.devname, O_RDWR)) != -1) {
+				hpcKbdPriv.devtype = HPC_KBDDEV_WSKBD;
+				kbdFound = TRUE;
+				hpcPrintF(("keyboard: %s\n", hpcKbdPriv.devname));
+				close(fd);
+				break;
+			}
+		}
+	}
+
+	if (!kbdFound)
+		hpcFatalError(("Can't open keyboard device\n"));
 	if (hpcPtrPriv.fd == -1)
-	    hpcFatalError(("Can't open pointer device\n"));
+		hpcFatalError(("Can't open pointer device\n"));
+
 	noXkbExtension = FALSE;		/* XXX for now */
+
+	/*
+	 * Try to inquire keyboard encoding type. If using wskbd,
+	 * generating keymap.
+	 */
+	hpcKbdGetInfo(&hpcKbdPriv);
+	/*
+	 * Index of hpcKeySyms[]. Xhpc use only one keymap table.
+	 */
+	hpcKbdPriv.type = 0;
+
+	hpcKbdPriv.fd = open(hpcKbdPriv.devname, O_RDWR);
 	inited = 1;
 
-	if (ioctl(hpcKbdPriv.fd, WSKBDIO_GTYPE, &kbdtype) == -1) {
-	    hpcError("cannot get keyboard type\n");
-	    kbdtype = 0;
-	}
-
-	switch (kbdtype) {
-	case WSKBD_TYPE_USB:
-		break;
-	}
-
-	/* XXX, What does this mean ??? */
-	hpcKbdPriv.type = 0;
 }
 
 /*
@@ -434,3 +446,4 @@ Bool DPMSSupported ()
     return FALSE;
 }
 #endif
+
