@@ -1,6 +1,6 @@
 /*
- *	$XConsortium: ptyx.h /main/66 1995/12/09 08:58:41 kaleb $
- *	$XFree86: xc/programs/xterm/ptyx.h,v 3.16 1996/09/22 05:16:11 dawes Exp $
+ *	$XConsortium: ptyx.h /main/67 1996/11/29 10:34:19 swick $
+ *	$XFree86: xc/programs/xterm/ptyx.h,v 3.19.2.2 1997/05/25 05:07:00 dawes Exp $
  */
 
 /*
@@ -188,8 +188,12 @@ typedef Char **ScrnBuf;
 #define	APC	0x9F
 #define	RDEL	0xFF
 
-#define MIN_DECID 100			/* emulate VT100 */
+#define MIN_DECID  52			/* can emulate VT52 */
 #define MAX_DECID 420			/* ...through VT420 */
+
+#ifndef DFT_DECID
+#define DFT_DECID 100			/* default VT100 */
+#endif
 
 #define NMENUFONTS 9			/* entries in fontMenu */
 
@@ -284,8 +288,25 @@ typedef struct {
 
 /***====================================================================***/
 
-#define OPT_ISO_COLORS  1 /* true if xterm is configured with ISO colors */
+#ifndef OPT_AIX_COLORS
+#define OPT_AIX_COLORS  1 /* true if xterm is configured with AIX (16) colors */
+#endif
+
 #define OPT_BLINK_CURS  0 /* FIXME: do this later (96/7/31) */
+
+#ifndef OPT_ISO_COLORS
+#define OPT_ISO_COLORS  1 /* true if xterm is configured with ISO colors */
+#endif
+
+#ifndef OPT_VT52_MODE
+#define OPT_VT52_MODE   1 /* true if xterm supports VT52 emulation */
+#endif
+
+/***====================================================================***/
+
+#if OPT_AIX_COLORS && !OPT_ISO_COLORS
+fixme: You must have ANSI/ISO colors to support AIX colors
+#endif
 
 /***====================================================================***/
 
@@ -311,10 +332,19 @@ typedef struct {
 #define COLOR_15	15
 #define COLOR_BD	16
 #define COLOR_UL	17
+#ifndef DFT_COLORMODE
+#define DFT_COLORMODE FALSE	/* default colorMode resource */
+#endif
 #else
 #define if_OPT_ISO_COLORS(screen, code) /* nothing */
 #define TERM_COLOR_FLAGS 0
 #endif	/* OPT_ISO_COLORS */
+
+#if OPT_AIX_COLORS
+#define if_OPT_AIX_COLORS(screen, code) if(screen->colorMode) code
+#else
+#define if_OPT_AIX_COLORS(screen, code) /* nothing */
+#endif
 
 	/* the number of pointers per row in 'ScrnBuf' */
 #if OPT_ISO_COLORS
@@ -323,13 +353,18 @@ typedef struct {
 #define MAX_PTRS 2
 #endif
 
+#if OPT_VT52_MODE
+#define if_OPT_VT52_MODE(screen, code) if(screen->ansi_level == 0) code
+#else
+#define if_OPT_VT52_MODE(screen, code) /* nothing */
+#endif
+
 	/* ScrnBuf-level macros */
 #define BUF_CHARS(buf, row) (buf[MAX_PTRS * (row) + 0])
 #define BUF_ATTRS(buf, row) (buf[MAX_PTRS * (row) + 1])
 
 #if OPT_ISO_COLORS
-#define BUF_FORES(buf, row) (buf[MAX_PTRS * (row) + 2])
-#define BUF_BACKS(buf, row) (buf[MAX_PTRS * (row) + 3])
+#define BUF_COLOR(buf, row) (buf[MAX_PTRS * (row) + 2])
 #endif
 
 	/* TScreen-level macros */
@@ -337,8 +372,7 @@ typedef struct {
 #define SCRN_BUF_ATTRS(screen, row) BUF_ATTRS(screen->buf, row)
 
 #if OPT_ISO_COLORS
-#define SCRN_BUF_FORES(screen, row) BUF_FORES(screen->buf, row)
-#define SCRN_BUF_BACKS(screen, row) BUF_BACKS(screen->buf, row)
+#define SCRN_BUF_COLOR(screen, row) BUF_COLOR(screen->buf, row)
 #endif
 
 typedef struct {
@@ -354,10 +388,6 @@ typedef struct {
 	long		pid;		/* pid of process on far side   */
 	int		uid;		/* user id of actual person	*/
 	int		gid;		/* group id of actual person	*/
-	GC		normalGC;	/* normal painting		*/
-	GC		reverseGC;	/* reverse painting		*/
-	GC		normalboldGC;	/* normal painting, bold font	*/
-	GC		reverseboldGC;	/* reverse painting, bold font	*/
 	GC		cursorGC;	/* normal cursor painting	*/
 	GC		reversecursorGC;/* reverse cursor painting	*/
 	GC		cursoroutlineGC;/* for painting lines around    */
@@ -389,7 +419,7 @@ typedef struct {
 	int		inhibit;	/* flags for inhibiting changes	*/
 
 /* VT window parameters */
-	struct {
+	struct _vtwin {
 		Window	window;		/* X window id			*/
 		int	width;		/* width of columns		*/
 		int	height;		/* height of rows		*/
@@ -397,12 +427,25 @@ typedef struct {
 		int	fullheight;	/* full height of window	*/
 		int	f_width;	/* width of fonts in pixels	*/
 		int	f_height;	/* height of fonts in pixels	*/
+		int	scrollbar;	/* if > 0, width of scrollbar, and
+						scrollbar is showing	*/
+		GC	normalGC;	/* normal painting		*/
+		GC	reverseGC;	/* reverse painting		*/
+		GC	normalboldGC;	/* normal painting, bold font	*/
+		GC	reverseboldGC;	/* reverse painting, bold font	*/
 	} fullVwin;
+#ifndef NO_ACTIVE_ICON
+	struct _vtwin iconVwin;
+	struct _vtwin *whichVwin;
+#endif /* NO_ACTIVE_ICON */
 	Cursor pointer_cursor;		/* pointer cursor in window	*/
 
 	/* Terminal fonts must be of the same size and of fixed width */
 	XFontStruct	*fnt_norm;	/* normal font of terminal	*/
 	XFontStruct	*fnt_bold;	/* bold font of terminal	*/
+#ifndef NO_ACTIVE_ICON
+	XFontStruct	*fnt_icon;	/* icon font */
+#endif /* NO_ACTIVE_ICON */
 	int		enbolden;	/* overstrike for bold font	*/
 	XPoint		*box;		/* draw unselected cursor	*/
 
@@ -421,8 +464,6 @@ typedef struct {
 	int		top_marg;	/* top line of scrolling region */
 	int		bot_marg;	/* bottom line of  "	    "	*/
 	Widget		scrollWidget;	/* pointer to scrollbar struct	*/
-	int		scrollbar;	/* if > 0, width of scrollbar, and
-						scrollbar is showing	*/
 	int		topline;	/* line number of top, <= 0	*/
 	int		savedlines;     /* number of lines that've been saved */
 	int		savelines;	/* number of lines off top to save */
@@ -484,7 +525,7 @@ typedef struct {
 	Boolean		Vshow;		/* VT window showing		*/
 	Boolean		Tshow;		/* Tek window showing		*/
 	Boolean		waitrefresh;	/* postpone refresh		*/
-	struct {
+	struct _tekwin {
 		Window	window;		/* X window id			*/
 		int	width;		/* width of columns		*/
 		int	height;		/* height of rows		*/
@@ -492,6 +533,10 @@ typedef struct {
 		int	fullheight;	/* full height of window	*/
 		double	tekscale;	/* scale factor Tek -> vs100	*/
 	} fullTwin;
+#ifndef NO_ACTIVE_ICON
+	struct _tekwin iconTwin;
+	struct _tekwin *whichTwin;
+#endif /* NO_ACTIVE_ICON */
 	int		xorplane;	/* z plane for inverts		*/
 	GC		linepat[TEKNUMLINES]; /* line patterns		*/
 	Boolean		TekEmu;		/* true if Tektronix emulation	*/
@@ -578,6 +623,12 @@ typedef struct _Misc {
     Boolean open_im;
 #endif
     Boolean dynamicColors;
+    Boolean shared_ic;
+#ifndef NO_ACTIVE_ICON
+    Boolean active_icon;	/* use application icon window  */
+    int icon_border_width;
+    Pixel icon_border_pixel;
+#endif /* NO_ACTIVE_ICON */
 } Misc;
 
 typedef struct {int foo;} XtermClassPart, TekClassPart;
@@ -592,10 +643,9 @@ typedef struct _TekClassRec {
     TekClassPart tek_class;
 } TekClassRec;
 
-/* define masks for flags */
-#define CAPS_LOCK	0x01
-#define KYPD_APL	0x02
-#define CURSOR_APL	0x04
+/* define masks for keyboard.flags */
+#define MODE_DECKPAM	0x02	/* keypad application mode */
+#define MODE_DECCKM	0x04	/* cursor keys */
 
 
 #define N_MARGINBELL	10
@@ -612,6 +662,7 @@ typedef struct _XtermWidgetRec {
     unsigned    cur_foreground;	/* current foreground color	*/
     unsigned    cur_background;	/* current background color	*/
 #if OPT_ISO_COLORS
+    unsigned    sgr_foreground;	/* current SGR foreground color	*/
     int         num_ptrs;	/* number of pointers per row in 'ScrnBuf' */
 #endif
     unsigned	initflags;	/* initial mode flags		*/
@@ -681,28 +732,64 @@ typedef struct _TekWidgetRec {
 #define OFF_PROTECT 0
 #define DEC_PROTECT 1
 #define ISO_PROTECT 2
-
-#define VWindow(screen)		(screen->fullVwin.window)
-#define VShellWindow		term->core.parent->core.window
-#define TextWindow(screen)      (screen->fullVwin.window)
-#define TWindow(screen)		(screen->fullTwin.window)
-#define TShellWindow		tekWidget->core.parent->core.window
-#define Width(screen)		(screen->fullVwin.width)
-#define Height(screen)		(screen->fullVwin.height)
-#define FullWidth(screen)	(screen->fullVwin.fullwidth)
-#define FullHeight(screen)	(screen->fullVwin.fullheight)
-#define FontWidth(screen)	(screen->fullVwin.f_width)
-#define FontHeight(screen)	(screen->fullVwin.f_height)
-#define TWidth(screen)		(screen->fullTwin.width)
-#define THeight(screen)		(screen->fullTwin.height)
-#define TFullWidth(screen)	(screen->fullTwin.fullwidth)
-#define TFullHeight(screen)	(screen->fullTwin.fullheight)
-#define TekScale(screen)	(screen->fullTwin.tekscale)
-
 #define CursorX(screen,col) ((col) * FontWidth(screen) + screen->border \
-			+ screen->scrollbar)
+			+ Scrollbar(screen))
 #define CursorY(screen,row) ((((row) - screen->topline) * FontHeight(screen)) \
 			+ screen->border)
+
+#ifndef NO_ACTIVE_ICON
+#define IsIcon(screen)		((screen)->whichVwin == &(screen)->iconVwin)
+#define VWindow(screen)		((screen)->whichVwin->window)
+#define VShellWindow		term->core.parent->core.window
+#define TextWindow(screen)      ((screen)->whichVwin->window)
+#define TWindow(screen)		((screen)->whichTwin->window)
+#define TShellWindow		tekWidget->core.parent->core.window
+#define Width(screen)		((screen)->whichVwin->width)
+#define Height(screen)		((screen)->whichVwin->height)
+#define FullWidth(screen)	((screen)->whichVwin->fullwidth)
+#define FullHeight(screen)	((screen)->whichVwin->fullheight)
+#define FontWidth(screen)	((screen)->whichVwin->f_width)
+#define FontHeight(screen)	((screen)->whichVwin->f_height)
+#define FontAscent(screen)	(IsIcon(screen) ? (screen)->fnt_icon->ascent \
+						: (screen)->fnt_norm->ascent)
+#define Scrollbar(screen)	((screen)->whichVwin->scrollbar)
+#define NormalGC(screen)	((screen)->whichVwin->normalGC)
+#define ReverseGC(screen)	((screen)->whichVwin->reverseGC)
+#define NormalBoldGC(screen)	((screen)->whichVwin->normalboldGC)
+#define ReverseBoldGC(screen)	((screen)->whichVwin->reverseboldGC)
+#define TWidth(screen)		((screen)->whichTwin->width)
+#define THeight(screen)		((screen)->whichTwin->height)
+#define TFullWidth(screen)	((screen)->whichTwin->fullwidth)
+#define TFullHeight(screen)	((screen)->whichTwin->fullheight)
+#define TekScale(screen)	((screen)->whichTwin->tekscale)
+
+#else /* NO_ACTIVE_ICON */
+
+#define IsIcon(screen)		(False)
+#define VWindow(screen)		((screen)->fullVwin.window)
+#define VShellWindow		term->core.parent->core.window
+#define TextWindow(screen)      ((screen)->fullVwin.window)
+#define TWindow(screen)		((screen)->fullTwin.window)
+#define TShellWindow		tekWidget->core.parent->core.window
+#define Width(screen)		((screen)->fullVwin.width)
+#define Height(screen)		((screen)->fullVwin.height)
+#define FullWidth(screen)	((screen)->fullVwin.fullwidth)
+#define FullHeight(screen)	((screen)->fullVwin.fullheight)
+#define FontWidth(screen)	((screen)->fullVwin.f_width)
+#define FontHeight(screen)	((screen)->fullVwin.f_height)
+#define FontAscent(screen)	((screen)->fnt_norm->ascent)
+#define Scrollbar(screen)	((screen)->fullVwin.scrollbar)
+#define NormalGC(screen)	((screen)->fullVwin.normalGC)
+#define ReverseGC(screen)	((screen)->fullVwin.reverseGC)
+#define NormalBoldGC(screen)	((screen)->fullVwin.normalboldGC)
+#define ReverseBoldGC(screen)	((screen)->fullVwin.reverseboldGC)
+#define TWidth(screen)		((screen)->fullTwin.width)
+#define THeight(screen)		((screen)->fullTwin.height)
+#define TFullWidth(screen)	((screen)->fullTwin.fullwidth)
+#define TFullHeight(screen)	((screen)->fullTwin.fullheight)
+#define TekScale(screen)	((screen)->fullTwin.tekscale)
+
+#endif /* NO_ACTIVE_ICON */
 
 #define	TWINDOWEVENTS	(KeyPressMask | ExposureMask | ButtonPressMask |\
 			 ButtonReleaseMask | StructureNotifyMask |\
