@@ -233,15 +233,15 @@ XpmCreateXpmImageFromImage(display, image, shapeimage,
     else
 	cpp = 0;
 
-    if ((height > 0 && width >= SIZE_MAX / height) ||
-	width * height >= SIZE_MAX / sizeof(unsigned int))
+    if ((height > 0 && width >= UINT_MAX / height) ||
+	width * height >= UINT_MAX / sizeof(unsigned int))
 	RETURN(XpmNoMemory);
     pmap.pixelindex =
 	(unsigned int *) XpmCalloc(width * height, sizeof(unsigned int));
     if (!pmap.pixelindex)
 	RETURN(XpmNoMemory);
 
-    if (pmap.size >= SIZE_MAX / sizeof(Pixel)) 
+    if (pmap.size >= UINT_MAX / sizeof(Pixel)) 
 	RETURN(XpmNoMemory);
 
     pmap.pixels = (Pixel *) XpmMalloc(sizeof(Pixel) * pmap.size);
@@ -308,7 +308,7 @@ XpmCreateXpmImageFromImage(display, image, shapeimage,
      * get rgb values and a string of char, and possibly a name for each
      * color
      */
-    if (pmap.ncolors >= SIZE_MAX / sizeof(XpmColor))
+    if (pmap.ncolors >= UINT_MAX / sizeof(XpmColor))
 	RETURN(XpmNoMemory);
     colorTable = (XpmColor *) XpmCalloc(pmap.ncolors, sizeof(XpmColor));
     if (!colorTable)
@@ -368,7 +368,7 @@ ScanTransparentColor(color, cpp, attributes)
 
     /* first get a character string */
     a = 0;
-    if (cpp >= SIZE_MAX - 1)
+    if (cpp >= UINT_MAX - 1)
 	return (XpmNoMemory);
     if (!(s = color->string = (char *) XpmMalloc(cpp + 1)))
 	return (XpmNoMemory);
@@ -461,7 +461,7 @@ ScanOtherColors(display, colors, ncolors, pixels, mask, cpp, attributes)
     }
 
     /* first get character strings and rgb values */
-    if (ncolors >= SIZE_MAX / sizeof(XColor) || cpp >= SIZE_MAX - 1)
+    if (ncolors >= UINT_MAX / sizeof(XColor) || cpp >= UINT_MAX - 1)
 	return (XpmNoMemory);
     xcolors = (XColor *) XpmMalloc(sizeof(XColor) * ncolors);
     if (!xcolors)

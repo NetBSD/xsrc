@@ -205,7 +205,7 @@ xpmParseColors(data, ncolors, cpp, colorTablePtr, hashtable)
     char **defaults;
     int ErrorStatus;
 
-    if (ncolors >= SIZE_MAX / sizeof(XpmColor))
+    if (ncolors >= UINT_MAX / sizeof(XpmColor))
 	return (XpmNoMemory);
     colorTable = (XpmColor *) XpmCalloc(ncolors, sizeof(XpmColor));
     if (!colorTable)
@@ -218,7 +218,7 @@ xpmParseColors(data, ncolors, cpp, colorTablePtr, hashtable)
 	    /*
 	     * read pixel value
 	     */
-	    if (cpp >= SIZE_MAX - 1) {
+	    if (cpp >= UINT_MAX - 1) {
 		xpmFreeColorTable(colorTable, ncolors);
 		return (XpmNoMemory);
 	    }
@@ -306,7 +306,7 @@ xpmParseColors(data, ncolors, cpp, colorTablePtr, hashtable)
 	    /*
 	     * read pixel value
 	     */
-	    if (cpp >= SIZE_MAX - 1) {
+	    if (cpp >= UINT_MAX - 1) {
 		xpmFreeColorTable(colorTable, ncolors);
 		return (XpmNoMemory);
 	    }
@@ -374,7 +374,7 @@ ParsePixels(data, width, height, ncolors, cpp, colorTable, hashtable, pixels)
     unsigned int a, x, y;
 
     if ((height > 0 && width >= SIZE_MAX / height) ||
-	width * height >= SIZE_MAX / sizeof(unsigned int)) 
+	width * height >= UINT_MAX / sizeof(unsigned int)) 
 	return XpmNoMemory;
 #ifndef FOR_MSW
     iptr2 = (unsigned int *) XpmMalloc(sizeof(unsigned int) * width * height);
