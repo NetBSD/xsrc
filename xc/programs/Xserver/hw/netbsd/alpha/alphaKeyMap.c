@@ -60,7 +60,7 @@ AlphaModmapRec *alphaModMaps[] = {
     NULL,
     lk201modmap,
     lk201modmap,
-    NULL,
     xf86modmap,
-    NULL,
+    xf86modmap,
+    xf86modmap,
 };
