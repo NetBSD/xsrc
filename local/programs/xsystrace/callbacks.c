@@ -76,21 +76,27 @@ dprintf(char *format, ...)
 }
 	
 static char *
-freadline(char *line, int size, int fd)
+freadline(char *line, size_t size, int fd)
 {
 	char *p = line;
-	int n;
+	ssize_t n;
 
-	do {
+	for (;;) {
+		if (size == 0)
+			return NULL;
+
 		if ((n = read(fd, p, 1)) <= 0) {
-			dprintf("got null line n=%d state %d\n", n, state);
+			dprintf("got null line n=%zd state %d\n", n, state);
 			XtRemoveInput(inputId);
 			return NULL;
 		}
-		if (*p == '\n') break;
+		if (*p == '\n')
+			break;
+
+		size--;
 		p++;
-	} while (1);
-	
+	}
+
 	*p = '\0';
 
 	dprintf("state %d got line: %s\n", state, line);
