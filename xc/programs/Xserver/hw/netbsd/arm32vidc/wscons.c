@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.3 2002/04/01 23:15:26 reinoud Exp $	*/
+/*	$NetBSD: wscons.c,v 1.4 2002/04/04 02:00:31 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -74,8 +74,8 @@ extern int kbdmap[], kbdmap1[], kbdmap2[];
 #define DPRINTF(x)
 #endif
 
-#define MOUSE_PATH	"/dev/wsmouse"
-#define KBD_PATH	"/dev/wskbd"
+#define MOUSE_PATH	"/dev/wsmouse0"
+#define KBD_PATH	"/dev/wskbd0"
 #define CON_PATH	"/dev/ttyE0"
 
 extern struct _private private;
@@ -132,12 +132,13 @@ void wsmouse_io(void)
 			mieqEnqueue(&x_event);
 			break;
 		case WSCONS_EVENT_MOUSE_DELTA_X:
-			miPointerDeltaCursor(mouse_accel(device, wsev.value),
-			    0, TSTOMILLI(wsev.time));
+			miPointerDeltaCursor(mouse_accel(device, wsev.value), 0,
+			    TSTOMILLI(wsev.time));
 			break;
 		case WSCONS_EVENT_MOUSE_DELTA_Y:
-			miPointerDeltaCursor(mouse_accel(device, wsev.value),
-			    0, TSTOMILLI(wsev.time));
+			/* y coords diffs from wscons are negated */
+			miPointerDeltaCursor(0, mouse_accel(device, -wsev.value),
+			    TSTOMILLI(wsev.time));
 			break;
 		default:
 			/* Do anything with other events? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.4 2002/04/01 23:15:26 reinoud Exp $	*/
+/*	$NetBSD: vidc.c,v 1.5 2002/04/04 02:00:31 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -498,6 +498,9 @@ int vidc_init_screen(int index, ScreenPtr screen, int argc, char **argv)
 		FatalError("Unable to mmap frame buffer\n");
 		return FALSE;
 	}
+
+	DPRINTF(("mmap'ed vram ... the vram_base = %p, size = %d on filehandle %d\n",
+		private.vram_base, private.width * private.yres, private.vram_fd));
 
 	/* Set the palette for blackpixel and whitepixel */
 /*	write_palette(255, 0, 0, 0);
