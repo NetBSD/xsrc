@@ -1039,31 +1039,34 @@ Bool PopUpMenu (menu, x, y, center)
             tmp_win != NULL;
             tmp_win = tmp_win->next)
           WindowNameCount++;
-        WindowNames =
-          (TwmWindow **)malloc(sizeof(TwmWindow *)*WindowNameCount);
-        WindowNames[0] = Scr->TwmRoot.next;
-        for(tmp_win = Scr->TwmRoot.next->next , WindowNameCount=1;
-            tmp_win != NULL;
-            tmp_win = tmp_win->next,WindowNameCount++)
+        if (WindowNameCount != 0)
         {
-            tmp_win2 = tmp_win;
-            for (i=0;i<WindowNameCount;i++)
+            WindowNames =
+              (TwmWindow **)malloc(sizeof(TwmWindow *)*WindowNameCount);
+            WindowNames[0] = Scr->TwmRoot.next;
+            for(tmp_win = Scr->TwmRoot.next->next , WindowNameCount=1;
+                tmp_win != NULL;
+                tmp_win = tmp_win->next,WindowNameCount++)
             {
-                if ((*compar)(tmp_win2->name,WindowNames[i]->name) < 0)
+                tmp_win2 = tmp_win;
+                for (i=0;i<WindowNameCount;i++)
                 {
-                    tmp_win3 = tmp_win2;
-                    tmp_win2 = WindowNames[i];
-                    WindowNames[i] = tmp_win3;
+                    if ((*compar)(tmp_win2->name,WindowNames[i]->name) < 0)
+                    {
+                        tmp_win3 = tmp_win2;
+                        tmp_win2 = WindowNames[i];
+                        WindowNames[i] = tmp_win3;
+                    }
                 }
+                WindowNames[WindowNameCount] = tmp_win2;
             }
-            WindowNames[WindowNameCount] = tmp_win2;
+            for (i=0; i<WindowNameCount; i++)
+            {
+                AddToMenu(menu, WindowNames[i]->name, (char *)WindowNames[i],
+                          NULL, F_POPUP,NULL,NULL);
+            }
+            free(WindowNames);
         }
-        for (i=0; i<WindowNameCount; i++)
-        {
-            AddToMenu(menu, WindowNames[i]->name, (char *)WindowNames[i],
-                      NULL, F_POPUP,NULL,NULL);
-        }
-        free(WindowNames);
 
 	MakeMenu(menu);
     }
