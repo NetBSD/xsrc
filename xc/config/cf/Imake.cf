@@ -198,6 +198,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Ex
 #  define prepArchitecture
 #  undef prep
 # endif
+# if defined(__news68k__) || defined(news68k)
+#  define news68kArchitecture
+#  undef news68k
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__
