@@ -262,7 +262,7 @@ static int OpenFrameBuffer(device, screen, vmode)
 
     if (access (device, R_OK | W_OK) == -1)
 	return FALSE;
-    if ((amigaFbs[screen].fd = open(device, O_RDWR, 0)) == -1)
+    if ((amigaFbs[screen].fd = open(device, O_RDWR|O_EXLOCK, 0)) == -1)
 	ret = FALSE;
     else {
         if (ioctl (amigaFbs[screen].fd, GRFIOCON, 0) == -1)
