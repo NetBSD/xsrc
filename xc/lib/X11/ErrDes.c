@@ -1,6 +1,6 @@
 /*
- * $XConsortium: ErrDes.c,v 11.54 95/06/08 23:20:39 gildea Exp $
- * $XFree86: xc/lib/X11/ErrDes.c,v 3.1 1996/08/26 06:19:01 dawes Exp $
+ * $XConsortium: ErrDes.c /main/41 1996/10/22 14:18:04 kaleb $
+ * $XFree86: xc/lib/X11/ErrDes.c,v 3.4 1996/12/24 08:46:43 dawes Exp $
  */
 
 /***********************************************************
@@ -55,7 +55,6 @@ SOFTWARE.
 #include <X11/Xos.h>
 #include "Xresource.h"
 #include <stdio.h>
-#include "snprintf.h"
 
 #ifndef ERRORDB
 #define ERRORDB "/usr/lib/X11/XErrorDB"
@@ -106,8 +105,8 @@ XGetErrorText(dpy, code, buffer, nbytes)
     if (nbytes == 0) return 0;
     if (code <= BadImplementation && code > 0) {
 	sprintf(buf, "%d", code);
-	XGetErrorDatabaseText(dpy, "XProtoError", buf, _XErrorList[code],
-			      buffer, nbytes);
+	(void) XGetErrorDatabaseText(dpy, "XProtoError", buf, _XErrorList[code],
+				     buffer, nbytes);
     } else
 	buffer[0] = '\0';
     /* call out to any extensions interested */
@@ -120,9 +119,8 @@ XGetErrorText(dpy, code, buffer, nbytes)
 	    bext = ext;
     }    
     if (!buffer[0] && bext) {
-	_XSnprintf(buf, sizeof(buf), "%s.%d", bext->name,
-		   code - bext->codes.first_error);
-	XGetErrorDatabaseText(dpy, "XProtoError", buf, "", buffer, nbytes);
+	sprintf(buf, "%s.%d", bext->name, code - bext->codes.first_error);
+	(void) XGetErrorDatabaseText(dpy, "XProtoError", buf, "", buffer, nbytes);
     }
     if (!buffer[0])
 	sprintf(buffer, "%d", code);
@@ -179,7 +177,16 @@ XGetErrorDatabaseText(dpy, name, type, defaultp, buffer, nbytes)
 
     if (db)
     {
-	_XSnprintf(temp, sizeof(temp), "%s.%s", name, type);
+	if (strlen(name) + 1 + strlen(type) + 1 <= BUFSIZ) {
+	    sprintf(temp, "%s.%s", name, type);
+	} else {
+	    strncpy(temp, name, BUFSIZ);
+	    temp[BUFSIZ - 1] = '\0';
+	    if (strlen(name) + 2 < BUFSIZ) {
+		strcat(temp, ".");
+		strncat(temp, type, BUFSIZ - strlen(name) - 2);
+	    }
+	}
 	XrmGetResource(db, temp, "ErrorType.ErrorNumber", &type_str, &result);
     }
     else

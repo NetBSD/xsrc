@@ -1,6 +1,6 @@
 /*
- * $XConsortium: Flush.c,v 1.10 94/04/17 20:16:35 rws Exp $
- * $XFree86: xc/lib/Xdmcp/Flush.c,v 3.2 1994/06/28 12:23:10 dawes Exp $
+ * $XConsortium: Flush.c /main/11 1996/11/13 14:44:22 lehors $
+ * $XFree86: xc/lib/Xdmcp/Flush.c,v 3.4 1997/01/18 06:52:07 dawes Exp $
  *
  * 
 Copyright (c) 1989  X Consortium
@@ -41,12 +41,14 @@ in this Software without prior written authorization from the X Consortium.
 #include <tiuser.h>
 #else
 #ifdef WIN32
-#define BOOL wBOOL
-#include <winsock.h>
-#undef BOOL
+#include <X11/Xwinsock.h>
 #else
 #ifndef MINIX
+#ifndef Lynx
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif /* !Lynx */
 #endif /* !MINIX */
 #endif
 #endif

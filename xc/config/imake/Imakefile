@@ -1,9 +1,14 @@
-XCOMM $XConsortium: Imakefile /main/7 1995/11/07 19:46:45 gildea $
-XCOMM $XFree86: xc/config/imake/Imakefile,v 3.5 1996/01/24 21:55:39 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/8 1996/09/28 16:14:12 rws $
+XCOMM $XFree86: xc/config/imake/Imakefile,v 3.6 1996/12/23 05:50:56 dawes Exp $
+
+XCOMM Some compilers generate fatal errors if an -L directory does
+XCOMM not exist.  Since BUILDLIBDIR may not exist yet suppress its use.
+         LDPRELIB =
+        LDPRELIBS =
 
 DEPLIBS = 
 
-INCLUDES = -I$(TOP)/include
+INCLUDES = -I$(TOP)/include -I$(TOP)/imports/x11/include/X11
 CPP_PROGRAM = CppCmd
 CPP_DEFINES = -DCPP_PROGRAM="\"$(CPP_PROGRAM)\""
 DEFINES = $(SIGNAL_DEFINES) $(BOOTSTRAPCFLAGS) $(CPP_DEFINES)

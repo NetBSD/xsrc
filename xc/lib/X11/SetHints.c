@@ -1,4 +1,4 @@
-/* $XConsortium: SetHints.c,v 11.39 94/04/17 20:20:57 gildea Exp $ */
+/* $XConsortium: SetHints.c /main/24 1996/10/22 14:22:17 kaleb $ */
 
 /***********************************************************
 
@@ -78,8 +78,9 @@ XSetSizeHints(dpy, w, hints, property)		/* old routine */
 	prop.minAspectY = hints->min_aspect.y;
 	prop.maxAspectX = hints->max_aspect.x;
 	prop.maxAspectY = hints->max_aspect.y;
-	XChangeProperty (dpy, w, property, XA_WM_SIZE_HINTS, 32,
-	     PropModeReplace, (unsigned char *) &prop, OldNumPropSizeElements);
+	return XChangeProperty (dpy, w, property, XA_WM_SIZE_HINTS, 32,
+				PropModeReplace, (unsigned char *) &prop, 
+				OldNumPropSizeElements);
 }
 
 /* 
@@ -102,8 +103,9 @@ XSetWMHints (dpy, w, wmhints)
 	prop.iconY = wmhints->icon_y;
 	prop.iconMask = wmhints->icon_mask;
 	prop.windowGroup = wmhints->window_group;
-	XChangeProperty (dpy, w, XA_WM_HINTS, XA_WM_HINTS, 32,
-	    PropModeReplace, (unsigned char *) &prop, NumPropWMHintsElements);
+	return XChangeProperty (dpy, w, XA_WM_HINTS, XA_WM_HINTS, 32,
+				PropModeReplace, (unsigned char *) &prop, 
+				NumPropWMHintsElements);
 }
 
 
@@ -118,7 +120,7 @@ XSetZoomHints (dpy, w, zhints)
 	Window w;
 	XSizeHints *zhints;
 {
-	XSetSizeHints (dpy, w, zhints, XA_WM_ZOOM_HINTS);
+	return XSetSizeHints (dpy, w, zhints, XA_WM_ZOOM_HINTS);
 }
 
 
@@ -132,7 +134,7 @@ XSetNormalHints (dpy, w, hints)			/* old routine */
 	Window w;
 	XSizeHints *hints;
 {
-	XSetSizeHints (dpy, w, hints, XA_WM_NORMAL_HINTS);
+	return XSetSizeHints (dpy, w, hints, XA_WM_NORMAL_HINTS);
 }
 
 
@@ -170,6 +172,7 @@ XSetIconSizes (dpy, w, list, count)
 			     count * NumPropIconSizeElements);
 	    Xfree ((char *)prop);
 	}
+	return 1;
 }
 
 XSetCommand (dpy, w, argv, argc)
@@ -198,6 +201,7 @@ XSetCommand (dpy, w, argv, argc)
 			     PropModeReplace, (unsigned char *)buf, nbytes);
 	    Xfree(buf);		
 	}
+	return 1;
 }
 /* 
  * XSetStandardProperties sets the following properties:
@@ -207,7 +211,7 @@ XSetCommand (dpy, w, argv, argc)
  *	WM_COMMAND	  type: STRING
  *	WM_NORMAL_HINTS	  type: WM_SIZE_HINTS 	format: 32
  */
-	
+
 #if NeedFunctionPrototypes
 XSetStandardProperties (
     	Display *dpy,
@@ -249,6 +253,8 @@ XSetStandardProperties (dpy, w, name, icon_string, icon_pixmap, argv, argc, hint
 	if (hints != NULL) XSetNormalHints(dpy, w, hints);
 
 	if (phints.flags != 0) XSetWMHints(dpy, w, &phints);
+
+	return 1;
 }
 
 XSetTransientForHint(dpy, w, propWindow)
@@ -256,8 +262,8 @@ XSetTransientForHint(dpy, w, propWindow)
 	Window w;
 	Window propWindow;
 {
-	XChangeProperty(dpy, w, XA_WM_TRANSIENT_FOR, XA_WINDOW, 32,
-		PropModeReplace, (unsigned char *) &propWindow, 1);
+	return XChangeProperty(dpy, w, XA_WM_TRANSIENT_FOR, XA_WINDOW, 32,
+			       PropModeReplace, (unsigned char *) &propWindow, 1);
 }
 
 XSetClassHint(dpy, w, classhint)
@@ -287,4 +293,5 @@ XSetClassHint(dpy, w, classhint)
 			    len_nm+len_cl+2);
 	    Xfree(class_string);
 	}
+	return 1;
 }

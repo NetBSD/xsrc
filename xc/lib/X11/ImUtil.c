@@ -1,4 +1,4 @@
-/* $XConsortium: ImUtil.c,v 11.61 95/06/08 23:20:39 gildea Exp $ */
+/* $XConsortium: ImUtil.c /main/47 1996/10/22 14:19:42 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -25,6 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/X11/ImUtil.c,v 3.3 1997/01/18 07:17:37 dawes Exp $ */
 
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
@@ -122,7 +123,7 @@ static unsigned char Const _himask[0x09] = { 0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0,
  *	For XY formats, bitmap_unit is 8, 16, or 32 bits.
  *	For Z format, bits_per_pixel is 1, 4, 8, 16, 24, or 32 bits.
  */
-static _xynormalizeimagebits (bp, img)
+static void _xynormalizeimagebits (bp, img)
     register unsigned char *bp;
     register XImage *img;
 {
@@ -151,7 +152,7 @@ static _xynormalizeimagebits (bp, img)
 	    _XReverse_Bytes (bp, img->bitmap_unit >> 3);
 }
 
-static _znormalizeimagebits (bp, img)
+static void _znormalizeimagebits (bp, img)
     register unsigned char *bp;
     register XImage *img;
 {
@@ -185,7 +186,7 @@ static _znormalizeimagebits (bp, img)
 	}
 }
 
-static _putbits (src, dstoffset, numbits, dst)
+static void _putbits (src, dstoffset, numbits, dst)
     register char *src;	/* address of source bit string */
     int dstoffset;	/* bit offset into destination; range is 0-31 */
     register int numbits;/* number of bits to copy to destination */
@@ -242,6 +243,10 @@ static _putbits (src, dstoffset, numbits, dst)
  * 
  */
 
+#if defined(Lynx) && defined(ROUNDUP)
+#undef ROUNDUP
+#endif
+
 #define ROUNDUP(nbytes, pad) ((((nbytes) + ((pad)-1)) / (pad)) * ((pad)>>3))
 
 #define XYNORMALIZE(bp, img) \
@@ -259,6 +264,43 @@ static _putbits (src, dstoffset, numbits, dst)
 #define ZINDEX(x, y, img) ((y) * img->bytes_per_line) + \
     (((x) * img->bits_per_pixel) >> 3)
 
+/*
+ * This routine initializes the image object function pointers.  The
+ * intent is to provide native (i.e. fast) routines for native format images
+ * only using the generic (i.e. slow) routines when fast ones don't exist.
+ * However, with the current rather botched external interface, clients may
+ * have to mung image attributes after the image gets created, so the fast
+ * routines always have to check to make sure the optimization is still
+ * valid, and reinit the functions if not.
+ */
+void _XInitImageFuncPtrs (image)
+    register XImage *image;
+{
+	image->f.create_image = XCreateImage;
+	image->f.destroy_image = _XDestroyImage;
+	if ((image->format == ZPixmap) && (image->bits_per_pixel == 8)) {
+	    image->f.get_pixel = _XGetPixel8;
+	    image->f.put_pixel = _XPutPixel8;
+	} else if (((image->bits_per_pixel | image->depth) == 1) &&
+		   (image->byte_order == image->bitmap_bit_order)) {
+	    image->f.get_pixel = _XGetPixel1;
+	    image->f.put_pixel = _XPutPixel1;
+	} else if ((image->format == ZPixmap) &&
+		   (image->bits_per_pixel == 32)) {
+	    image->f.get_pixel = _XGetPixel32;
+	    image->f.put_pixel = _XPutPixel32;
+	} else if ((image->format == ZPixmap) &&
+		   (image->bits_per_pixel == 16)) {
+	    image->f.get_pixel = _XGetPixel16;
+	    image->f.put_pixel = _XPutPixel16;
+	} else {
+	    image->f.get_pixel = _XGetPixel;
+	    image->f.put_pixel = _XPutPixel;
+	}
+	image->f.sub_image = _XSubImage;
+/*	image->f.set_image = _XSetImage;*/
+	image->f.add_pixel = _XAddPixel;
+}
 
 /*
  * CreateImage
@@ -978,40 +1020,3 @@ static _XAddPixel (ximage, value)
 	return 0;
 }
 
-/*
- * This routine initializes the image object function pointers.  The
- * intent is to provide native (i.e. fast) routines for native format images
- * only using the generic (i.e. slow) routines when fast ones don't exist.
- * However, with the current rather botched external interface, clients may
- * have to mung image attributes after the image gets created, so the fast
- * routines always have to check to make sure the optimization is still
- * valid, and reinit the functions if not.
- */
-_XInitImageFuncPtrs (image)
-    register XImage *image;
-{
-	image->f.create_image = XCreateImage;
-	image->f.destroy_image = _XDestroyImage;
-	if ((image->format == ZPixmap) && (image->bits_per_pixel == 8)) {
-	    image->f.get_pixel = _XGetPixel8;
-	    image->f.put_pixel = _XPutPixel8;
-	} else if (((image->bits_per_pixel | image->depth) == 1) &&
-		   (image->byte_order == image->bitmap_bit_order)) {
-	    image->f.get_pixel = _XGetPixel1;
-	    image->f.put_pixel = _XPutPixel1;
-	} else if ((image->format == ZPixmap) &&
-		   (image->bits_per_pixel == 32)) {
-	    image->f.get_pixel = _XGetPixel32;
-	    image->f.put_pixel = _XPutPixel32;
-	} else if ((image->format == ZPixmap) &&
-		   (image->bits_per_pixel == 16)) {
-	    image->f.get_pixel = _XGetPixel16;
-	    image->f.put_pixel = _XPutPixel16;
-	} else {
-	    image->f.get_pixel = _XGetPixel;
-	    image->f.put_pixel = _XPutPixel;
-	}
-	image->f.sub_image = _XSubImage;
-/*	image->f.set_image = _XSetImage;*/
-	image->f.add_pixel = _XAddPixel;
-}

@@ -1,4 +1,4 @@
-/* $XConsortium: WarpPtr.c,v 11.8 94/04/17 20:21:29 rws Exp $ */
+/* $XConsortium: WarpPtr.c /main/5 1996/10/22 14:24:05 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -50,5 +50,6 @@ XWarpPointer(dpy, src_win, dest_win, src_x, src_y, src_width, src_height,
     req->dstY = dest_y;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

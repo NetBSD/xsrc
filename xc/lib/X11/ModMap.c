@@ -1,4 +1,4 @@
-/* $XConsortium: ModMap.c,v 11.14 94/04/17 20:20:18 rws Exp $ */
+/* $XConsortium: ModMap.c /main/15 1996/10/22 14:20:24 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -117,6 +117,7 @@ XFreeModifiermap(map)
 	    Xfree((char *) map->modifiermap);
 	Xfree((char *) map);
     }
+    return 1;
 }
 
 #if NeedFunctionPrototypes
@@ -163,7 +164,7 @@ XInsertModifiermapEntry(map, keycode, modifier)
 	row += map->max_keypermod;
 	newrow += newmap->max_keypermod;
     }
-    XFreeModifiermap(map);
+    (void) XFreeModifiermap(map);
     newrow = newmap->max_keypermod * modifier + newmap->max_keypermod - 1;
     newmap->modifiermap[ newrow ] = keycode;
     return(newmap);

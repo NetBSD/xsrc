@@ -1,4 +1,4 @@
-/* $XConsortium: DestSubs.c,v 11.7 94/04/17 20:19:05 rws Exp $ */
+/* $XConsortium: DestSubs.c /main/5 1996/10/22 14:17:21 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -38,5 +38,6 @@ Window win;
     GetResReq (DestroySubwindows,win, req);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

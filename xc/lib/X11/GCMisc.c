@@ -1,4 +1,4 @@
-/* $XConsortium: GCMisc.c,v 11.5 94/04/17 20:19:28 rws Exp $ */
+/* $XConsortium: GCMisc.c /main/5 1996/10/22 14:19:06 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -40,6 +40,7 @@ int arc_mode;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 
 XSetFillRule (dpy, gc, fill_rule)
@@ -54,6 +55,7 @@ int fill_rule;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 
 XSetFillStyle (dpy, gc, fill_style)
@@ -68,6 +70,7 @@ int fill_style;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 
 XSetGraphicsExposures (dpy, gc, graphics_exposures)
@@ -82,6 +85,7 @@ Bool graphics_exposures;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 
 XSetSubwindowMode (dpy, gc, subwindow_mode)
@@ -96,4 +100,5 @@ int subwindow_mode;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

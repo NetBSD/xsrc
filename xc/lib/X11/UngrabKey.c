@@ -1,4 +1,4 @@
-/* $XConsortium: UngrabKey.c,v 11.8 94/04/17 20:21:23 rws Exp $ */
+/* $XConsortium: UngrabKey.c /main/5 1996/10/22 14:23:37 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -44,6 +44,7 @@ XUngrabKey(dpy, key, modifiers, grab_window)
     req->key = key;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 
 

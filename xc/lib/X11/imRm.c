@@ -1,5 +1,5 @@
 /* $XConsortium: imRm.c /main/10 1995/11/18 16:08:18 kaleb $ */
-/* $XFree86: xc/lib/X11/imRm.c,v 3.0 1996/08/26 06:19:04 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imRm.c,v 3.1 1996/12/24 02:22:46 dawes Exp $ */
 /******************************************************************
 
 	  Copyright 1990, 1991, 1992,1993, 1994 by FUJITSU LIMITED
@@ -38,7 +38,6 @@ PERFORMANCE OF THIS SOFTWARE.
 #include "Xlcint.h"
 #include "Ximint.h"
 #include "Xresource.h"
-#include "snprintf.h"
 
 #ifndef	isalnum
 #define	isalnum(c)	\

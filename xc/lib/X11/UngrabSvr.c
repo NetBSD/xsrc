@@ -1,4 +1,4 @@
-/* $XConsortium: UngrabSvr.c,v 11.8 94/04/17 20:21:24 rws Exp $ */
+/* $XConsortium: UngrabSvr.c /main/5 1996/10/22 14:23:45 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 */
 
 #include "Xlibint.h"
+
 XUngrabServer (dpy)
 register Display *dpy;
 {
@@ -36,5 +37,6 @@ register Display *dpy;
         GetEmptyReq(UngrabServer, req);
         UnlockDisplay(dpy);
 	SyncHandle();
+	return 1;
 }
 

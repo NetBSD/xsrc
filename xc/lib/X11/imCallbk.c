@@ -1,5 +1,5 @@
-/* $XConsortium: imCallbk.c /main/15 1995/12/06 11:23:10 kaleb $ */
-/* $XFree86: xc/lib/X11/imCallbk.c,v 3.2 1996/02/09 08:18:52 dawes Exp $ */
+/* $XConsortium: imCallbk.c /main/16 1996/09/28 16:37:06 rws $ */
+/* $XFree86: xc/lib/X11/imCallbk.c,v 3.3 1996/12/23 05:59:53 dawes Exp $ */
 /***********************************************************************
 Copyright 1993 by Digital Equipment Corporation, Maynard, Massachusetts,
 Copyright 1994 by FUJITSU LIMITED
@@ -184,7 +184,8 @@ _XimProcessPendingCallbacks(ic)
 						     pcbq->proto, 
 						     pcbq->proto_len);
 	ic->private.proto.pend_cb_que = pcbq->next;
-	Xfree(pcbq);		/* free memory of XimPendingCallback */
+	Xfree(pcbq->proto);	/* free memory of XimPendingCallback */
+	Xfree(pcbq);
     }
 }
 
@@ -271,13 +272,17 @@ _XimCbDispatch(xim, len, data, call_data)
 	/* queue the protocol
 	 */
 	XimPendingCallback pcb;
+	char *proto_buf = (proto_len > 0) ? (char*)Xmalloc(proto_len) : NULL;
 
 	pcb = (XimPendingCallback)Xmalloc(sizeof(XimPendingCallbackRec));
-	if (pcb) {
+	if (pcb && (proto_len <= 0 || proto_buf)) {
+	    if (proto_len > 0)
+		memcpy(proto_buf, proto, proto_len);
+
 	    pcb->major_opcode = major_opcode;
 	    pcb->im = im;
 	    pcb->ic = ic;
-	    pcb->proto = proto;
+	    pcb->proto = proto_buf;
 	    pcb->proto_len = proto_len;
 	    pcb->next = (XimPendingCallback)NULL; /* queue is FIFO */
 	    _XimPutCbIntoQueue(ic, pcb);
@@ -520,28 +525,23 @@ _read_text_from_packet(im, buf, text_ptr)
 {
     int status;
     XIMText* text;
+    int tmp_len;
+    char* tmp_buf;
+    Status s = 0;
 
     status = (int)*(BITMASK32*)buf; buf += sz_BITMASK32;
-
-    if (status & 0x00000003) {
-	*text_ptr = (XIMText*)NULL;
-	return;
-    }
-    *text_ptr = text = (XIMText*)Xmalloc(sizeof(XIMText));
-    if (text == (XIMText*)NULL) return;
 
     /* string part
      */
     if (status & 0x00000001) /* "no string" bit on */ {
-	text->length = 0;
-	text->string.multi_byte = NULL;
 	buf += sz_CARD16;	/* skip "length of preedit string" */
 	buf += 2;		/* pad */
+	*text_ptr = (XIMText*)NULL;
+	return;
     }
-    else {
-	int tmp_len;
-	char* tmp_buf;
-	Status s;
+
+    *text_ptr = text = (XIMText*)Xmalloc(sizeof(XIMText));
+    if (text == (XIMText*)NULL) return;
 
 	tmp_len = (int)*(CARD16*)buf;
 	buf += sz_CARD16;
@@ -554,13 +554,38 @@ _read_text_from_packet(im, buf, text_ptr)
 					tmp_buf, tmp_len, 
 					NULL, 0, &s); /* CT? HM */
 	    if (s != XLookupNone) {
-		if ((text->string.multi_byte = (char*)Xmalloc(text->length+1)) != 0) {
+#ifndef NO_DEC_I18N_FIX
+                /* Allow for NULL-terminated */
+                if (text->string.multi_byte =
+                    (char*)Xmalloc(text->length *
+                      XLC_PUBLIC(im->core.lcd,mb_cur_max) + 1)) {
+#else
+		if (text->string.multi_byte = (char*)Xmalloc(text->length+1)) {
+#endif
 			int tmp;
+#ifndef NO_DEC_I18N_FIX
+                        char *char_tmp;
+                        int char_len;
+#endif
 			tmp = im->methods->ctstombs((XIM)im,
 					   tmp_buf, tmp_len, 
+#ifndef NO_DEC_I18N_FIX
+                                           text->string.multi_byte,
+                                           text->length * XLC_PUBLIC(im->core.lcd,mb_cur_max) + 1,
+#else
 					   text->string.multi_byte, text->length, 
+#endif
 					   &s);
 			text->string.multi_byte[tmp] = '\0';
+#ifndef NO_DEC_I18N_FIX
+                        text->length = 0;
+                        char_tmp =  text->string.multi_byte;
+                        while (*char_tmp != '\0') {
+                              char_len = mblen(char_tmp, strlen(char_tmp));
+                              char_tmp = char_tmp + char_len;
+                              (text->length)++;
+                        }
+#endif
 		}
 	    }
 	    else {
@@ -573,7 +598,6 @@ _read_text_from_packet(im, buf, text_ptr)
 	buf += tmp_len;
 
 	buf += XIM_PAD(sz_CARD16 + tmp_len); /* pad */
-    }
 
     /* feedback part
      */

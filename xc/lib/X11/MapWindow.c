@@ -1,4 +1,4 @@
-/* $XConsortium: MapWindow.c,v 11.8 94/04/17 20:20:16 rws Exp $ */
+/* $XConsortium: MapWindow.c /main/5 1996/10/22 14:20:17 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 */
 
 #include "Xlibint.h"
+
 XMapWindow (dpy, w)
 	Window w;
 	register Display *dpy;
@@ -36,5 +37,6 @@ XMapWindow (dpy, w)
         GetResReq(MapWindow, w, req);
 	UnlockDisplay (dpy);
 	SyncHandle();
+	return 1;
 }
 

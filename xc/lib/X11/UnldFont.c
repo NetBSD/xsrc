@@ -1,4 +1,4 @@
-/* $XConsortium: UnldFont.c,v 11.8 94/04/17 20:21:25 rws Exp $ */
+ /* $XConsortium: UnldFont.c /main/5 1996/10/22 14:23:52 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -31,7 +31,6 @@ in this Software without prior written authorization from the X Consortium.
 XUnloadFont(dpy, font)
      register Display *dpy;
      Font font;
-
 {       
     register xResourceReq *req;
 
@@ -39,5 +38,6 @@ XUnloadFont(dpy, font)
     GetResReq(CloseFont, font, req);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

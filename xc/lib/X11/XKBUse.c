@@ -1,4 +1,4 @@
-/* $XConsortium: XKBUse.c /main/13 1996/05/24 15:11:41 kaleb $ */
+/* $XConsortium: XKBUse.c /main/15 1996/09/28 16:34:51 rws $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,4 +1,4 @@
-/* $XConsortium: SetTSOrig.c,v 11.5 94/04/17 20:21:06 rws Exp $ */
+/* $XConsortium: SetTSOrig.c /main/5 1996/10/22 14:22:53 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -46,4 +46,5 @@ int x, y;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

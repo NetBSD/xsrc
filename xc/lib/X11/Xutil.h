@@ -1,4 +1,5 @@
 /* $XConsortium: Xutil.h,v 11.78 94/04/17 20:21:56 rws Exp $ */
+/* $XFree86: xc/lib/X11/Xutil.h,v 3.0 1996/12/09 11:49:36 dawes Exp $ */
 
 /***********************************************************
 
@@ -355,7 +356,7 @@ extern XWMHints *XAllocWMHints (
 #endif
 );
 
-extern XClipBox(
+extern int XClipBox(
 #if NeedFunctionPrototypes
     Region		/* r */,
     XRectangle*		/* rect_return */
@@ -382,19 +383,19 @@ extern int XDeleteContext(
 #endif
 );
 
-extern XDestroyRegion(
+extern int XDestroyRegion(
 #if NeedFunctionPrototypes
     Region		/* r */
 #endif
 );
 
-extern XEmptyRegion(
+extern int XEmptyRegion(
 #if NeedFunctionPrototypes
     Region		/* r */
 #endif
 );
 
-extern XEqualRegion(
+extern int XEqualRegion(
 #if NeedFunctionPrototypes
     Region		/* r1 */,
     Region		/* r2 */
@@ -539,7 +540,7 @@ extern Status XGetZoomHints(
 #endif
 );
 
-extern XIntersectRegion(
+extern int XIntersectRegion(
 #if NeedFunctionPrototypes
     Region		/* sra */,
     Region		/* srb */,
@@ -575,7 +576,7 @@ extern Status XMatchVisualInfo(
 #endif
 );
 
-extern XOffsetRegion(
+extern int XOffsetRegion(
 #if NeedFunctionPrototypes
     Region		/* r */,
     int			/* dx */,
@@ -618,7 +619,7 @@ extern int XSaveContext(
 #endif
 );
 
-extern XSetClassHint(
+extern int XSetClassHint(
 #if NeedFunctionPrototypes
     Display*		/* display */,
     Window		/* w */,
@@ -626,7 +627,7 @@ extern XSetClassHint(
 #endif
 );
 
-extern XSetIconSizes(
+extern int XSetIconSizes(
 #if NeedFunctionPrototypes
     Display*		/* display */,
     Window		/* w */,
@@ -635,7 +636,7 @@ extern XSetIconSizes(
 #endif
 );
 
-extern XSetNormalHints(
+extern int XSetNormalHints(
 #if NeedFunctionPrototypes
     Display*		/* display */,
     Window		/* w */,
@@ -653,7 +654,7 @@ extern void XSetRGBColormaps(
 #endif
 );
 
-extern XSetSizeHints(
+extern int XSetSizeHints(
 #if NeedFunctionPrototypes
     Display*		/* display */,
     Window		/* w */,
@@ -662,7 +663,7 @@ extern XSetSizeHints(
 #endif
 );
 
-extern XSetStandardProperties(
+extern int XSetStandardProperties(
 #if NeedFunctionPrototypes
     Display*		/* display */,
     Window		/* w */,
@@ -692,7 +693,7 @@ extern void XSetWMClientMachine(
 #endif
 );
 
-extern XSetWMHints(
+extern int XSetWMHints(
 #if NeedFunctionPrototypes
     Display*		/* display */,
     Window		/* w */,
@@ -761,7 +762,7 @@ extern void XSetWMSizeHints(
 #endif
 );
 
-extern XSetRegion(
+extern int XSetRegion(
 #if NeedFunctionPrototypes
     Display*		/* display */,
     GC			/* gc */,
@@ -778,7 +779,7 @@ extern void XSetStandardColormap(
 #endif
 );
 
-extern XSetZoomHints(
+extern int XSetZoomHints(
 #if NeedFunctionPrototypes
     Display*		/* display */,
     Window		/* w */,
@@ -786,7 +787,7 @@ extern XSetZoomHints(
 #endif
 );
 
-extern XShrinkRegion(
+extern int XShrinkRegion(
 #if NeedFunctionPrototypes
     Region		/* r */,
     int			/* dx */,
@@ -802,7 +803,7 @@ extern Status XStringListToTextProperty(
 #endif
 );
 
-extern XSubtractRegion(
+extern int XSubtractRegion(
 #if NeedFunctionPrototypes
     Region		/* sra */,
     Region		/* srb */,
@@ -862,7 +863,7 @@ extern int XwcTextPropertyToTextList(
 #endif
 );
 
-extern XUnionRectWithRegion(
+extern int XUnionRectWithRegion(
 #if NeedFunctionPrototypes
     XRectangle*		/* rectangle */,
     Region		/* src_region */,
@@ -870,7 +871,7 @@ extern XUnionRectWithRegion(
 #endif
 );
 
-extern XUnionRegion(
+extern int XUnionRegion(
 #if NeedFunctionPrototypes
     Region		/* sra */,
     Region		/* srb */,
@@ -894,7 +895,7 @@ extern int XWMGeometry(
 #endif
 );
 
-extern XXorRegion(
+extern int XXorRegion(
 #if NeedFunctionPrototypes
     Region		/* sra */,
     Region		/* srb */,

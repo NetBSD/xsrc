@@ -1,4 +1,4 @@
-/* $XConsortium: omText.c,v 1.2 94/01/20 18:08:14 rws Exp $ */
+/* $XConsortium: omText.c /main/4 1996/12/05 10:40:52 swick $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,10 +23,239 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
+/*
+ * Copyright 1995 by FUJITSU LIMITED
+ * This is source code modified by FUJITSU LIMITED under the Joint
+ * Development Agreement for the CDE/Motif PST.
+ */
 
 #include "Xlibint.h"
 #include "XomGeneric.h"
 #include <stdio.h>
+
+/* For VW/UDC */
+
+static int
+is_rotate(oc, font)
+    XOC		oc;
+    XFontStruct	*font;
+{
+    XOCGenericPart	*gen = XOC_GENERIC(oc);
+    FontSet		font_set;
+    VRotate		vrotate;
+    int			font_set_count;
+    int			vrotate_num;
+
+    font_set = gen->font_set;
+    font_set_count = gen->font_set_num;
+    for( ; font_set_count-- ; font_set++) {
+	if((font_set->vrotate_num > 0) && (font_set->vrotate)) {
+	    vrotate = font_set->vrotate;
+	    vrotate_num = font_set->vrotate_num;
+	    for( ; vrotate_num-- ; vrotate++)
+		if(vrotate->font == font)
+		    return True;
+	}
+    }
+    return False;
+}
+
+static int
+is_codemap(oc, font)
+    XOC		oc;
+    XFontStruct	*font;
+{
+    XOCGenericPart	*gen = XOC_GENERIC(oc);
+    FontSet		font_set;
+    FontData		vmap;
+    int			font_set_count;
+    int			vmap_num;
+
+    font_set = gen->font_set;
+    font_set_count = gen->font_set_num;
+    for( ; font_set_count-- ; font_set++) {
+	if(font_set->vmap_num > 0) {
+	    vmap = font_set->vmap;
+	    vmap_num = font_set->vmap_num;
+	    for( ; vmap_num-- ; vmap++)
+		if(vmap->font == font)
+		    return True;
+	}
+    }
+    return False;
+}
+
+static int
+draw_vertical(dpy, d, oc, gc, font, is_xchar2b, x, y, text, length)
+    Display	*dpy;
+    Drawable	d;
+    XOC		oc;
+    GC		gc;
+    XFontStruct	*font;
+    Bool	is_xchar2b;
+    int		x, y;
+    XPointer	text;
+    int		length;
+{
+    XChar2b	*buf2b;
+    char	*buf;
+    int		wx = 0, wy = 0;
+    int		direction = 0;
+    int		font_ascent_return = 0, font_descent_return = 0;
+    int		i;
+    XCharStruct	overall;		
+
+    wy = y;
+    if (is_xchar2b) {
+	for(i = 0, buf2b = (XChar2b *) text ; i < length ; i++, buf2b++) {
+	    if(is_rotate(oc, font) == True) {
+		XTextExtents16(font, buf2b, 1,
+			       &direction, &font_ascent_return,
+			       &font_descent_return, &overall);
+		wx = x - (int)((overall.rbearing - overall.lbearing) >> 1) -
+			 (int) overall.lbearing;
+		wy += overall.ascent;
+		XDrawString16(dpy, d, gc, wx, wy, buf2b, 1);
+		wy += overall.descent;
+	    } else {
+		wx = x - (int)((font->max_bounds.rbearing -
+				font->min_bounds.lbearing) >> 1) -
+			 (int) font->min_bounds.lbearing;
+		wy += font->max_bounds.ascent;
+		XDrawString16(dpy, d, gc, wx, wy, buf2b, 1);
+		wy += font->max_bounds.descent;
+	    }
+	}
+    } else {
+	for(i = 0, buf = (char *)text ; i < length && *buf ; i++, buf++) {
+	    if(is_rotate(oc, font) == True) {
+		XTextExtents(font, buf, 1,
+			     &direction, &font_ascent_return,
+			     &font_descent_return, &overall);
+		wx = x - (int)((overall.rbearing - overall.lbearing) >> 1) -
+			 (int) overall.lbearing;
+		wy += overall.ascent;
+		XDrawString(dpy, d, gc, wx, wy, buf, 1);
+		wy += overall.descent;
+	    } else {
+		wx = x - (int)((font->max_bounds.rbearing -
+				font->min_bounds.lbearing) >> 1) -
+			 (int) font->min_bounds.lbearing;
+		wy += font->max_bounds.ascent;
+		XDrawString(dpy, d, gc, wx, wy, buf, 1);
+		wy += font->max_bounds.descent;
+	    }
+	}
+    }
+    return wy;
+}
+
+#define VMAP          0
+#define VROTATE       1
+#define FONTSCOPE     2
+
+extern FontData _XomGetFontDataFromFontSet();
+
+static int
+DrawStringWithFontSet(dpy, d, oc, fs, gc, x, y, text, length)
+    Display *dpy;
+    Drawable d;
+    XOC oc;
+    FontSet fs;
+    GC gc;
+    int x, y;
+    XPointer text;
+    int length;
+{
+    XFontStruct *font;
+    Bool is_xchar2b;
+    unsigned char *ptr;
+    int ptr_len, char_len = 0;
+    FontData fd;
+    int ret;
+
+    ptr = (unsigned char *)text;
+    is_xchar2b = fs->is_xchar2b;
+
+    while (length > 0) {
+        fd = _XomGetFontDataFromFontSet(fs,
+			(char *)ptr,length,&ptr_len,is_xchar2b,FONTSCOPE);
+	if(ptr_len <= 0)
+	    break;
+        if(fd == (FontData) NULL ||
+	   (font = fd->font) == (XFontStruct *) NULL){
+
+	    if((font = fs->font) == (XFontStruct *) NULL)
+		break;
+        }
+
+	switch(oc->core.orientation) {
+	  case XOMOrientation_LTR_TTB:
+	  case XOMOrientation_RTL_TTB:
+            XSetFont(dpy, gc, font->fid);
+
+	    if (is_xchar2b) {
+		char_len = ptr_len / sizeof(XChar2b);
+		XDrawString16(dpy, d, gc, x, y, (XChar2b *)ptr, char_len);
+		x += XTextWidth16(font, (XChar2b *)ptr, char_len);
+            } else {
+		char_len = ptr_len;
+		XDrawString(dpy, d, gc, x, y, (char *)ptr, char_len);
+		x += XTextWidth(font, (char *)ptr, char_len);
+	    }
+	    break;
+	  case XOMOrientation_TTB_RTL:
+	  case XOMOrientation_TTB_LTR:
+	    if(fs->font == font) {
+		fd = _XomGetFontDataFromFontSet(fs,
+			(char *)ptr,length,&ptr_len,is_xchar2b,VMAP);
+		if(ptr_len <= 0)
+		    break;
+		if(fd == (FontData) NULL ||
+		   (font = fd->font) == (XFontStruct *) NULL)
+		    break;
+
+		if(is_codemap(oc, fd->font) == False) {
+		    fd = _XomGetFontDataFromFontSet(fs,
+			     (char *)ptr,length,&ptr_len,is_xchar2b,VROTATE);
+		    if(ptr_len <= 0)
+			break;
+		    if(fd == (FontData) NULL ||
+		       (font = fd->font) == (XFontStruct *) NULL)
+			break;
+		}
+	    }
+
+	    if(is_xchar2b)
+		char_len = ptr_len / sizeof(XChar2b);
+	    else
+		char_len = ptr_len;
+            XSetFont(dpy, gc, font->fid);
+	    y = draw_vertical(dpy, d, oc, gc, font, is_xchar2b, x, y,
+			       (char *)ptr, char_len);
+	    break;
+	}
+
+	if(char_len <= 0)
+	    break;
+
+        length -= char_len;
+        ptr += ptr_len;
+    }
+
+    switch(oc->core.orientation) {
+      case XOMOrientation_LTR_TTB:
+      case XOMOrientation_RTL_TTB:
+	ret = x;
+	break;
+      case XOMOrientation_TTB_RTL:
+      case XOMOrientation_TTB_LTR:
+	ret = y;
+    }
+    return ret;
+}
+
+/* For VW/UDC */
 
 int
 _XomGenericDrawString(dpy, d, oc, gc, x, y, type, text, length)
@@ -42,9 +271,15 @@ _XomGenericDrawString(dpy, d, oc, gc, x, y, type, text, length)
     XlcConv conv;
     XFontStruct *font;
     Bool is_xchar2b;
-    XPointer args[2];
+/* VW/UDC */
+    XPointer args[3];
+    FontSet fs;
+/* VW/UDC */
     XChar2b xchar2b_buf[BUFSIZ], *buf;
-    int buf_len, left, start_x = x;
+    int start_x = x;
+    int start_y = y;
+    int left = 0, buf_len = 0;
+    int next = 0;
 
     conv = _XomInitConverter(oc, type);
     if (conv == NULL)
@@ -52,28 +287,36 @@ _XomGenericDrawString(dpy, d, oc, gc, x, y, type, text, length)
     
     args[0] = (XPointer) &font;
     args[1] = (XPointer) &is_xchar2b;
+    args[2] = (XPointer) &fs;
 
     while (length > 0) {
 	buf = xchar2b_buf;
 	left = buf_len = BUFSIZ;
 
 	if (_XomConvert(oc, conv, (XPointer *) &text, &length,
-			(XPointer *) &buf, &left, args, 2) < 0)
+			(XPointer *) &buf, &left, args, 3) < 0)
 	    break;
 	buf_len -= left;
 
-	XSetFont(dpy, gc, font->fid);
+/* For VW/UDC */
+	next = DrawStringWithFontSet(dpy, d, oc, fs, gc, x, y,
+				     (XPointer)xchar2b_buf, buf_len);
 
-	if (is_xchar2b) {
-	    XDrawString16(dpy, d, gc, x, y, xchar2b_buf, buf_len);
-	    x += XTextWidth16(font, xchar2b_buf, buf_len);
-        } else {
-	    XDrawString(dpy, d, gc, x, y, (char *) xchar2b_buf, buf_len);
-	    x += XTextWidth(font, (char *) xchar2b_buf, buf_len);
+	switch(oc->core.orientation) {
+	  case XOMOrientation_LTR_TTB:
+	  case XOMOrientation_RTL_TTB:
+	    x = next;
+	    break;
+	  case XOMOrientation_TTB_RTL:
+	  case XOMOrientation_TTB_LTR:
+	    y = next;
+	    break;
 	}
+/* For VW/UDC */
     }
 
     x -= start_x;
+    y -= start_y;
 
     return x;
 }

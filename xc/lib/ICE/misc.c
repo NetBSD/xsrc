@@ -1,4 +1,4 @@
-/* $XConsortium: misc.c,v 1.27 94/08/19 15:49:08 mor Exp $ */
+/* $XConsortium: misc.c /main/29 1996/11/13 14:43:55 lehors $ */
 /******************************************************************************
 
 
@@ -36,13 +36,7 @@ Author: Ralph Mor, X Consortium
 #include <X11/Xtrans.h>
 #include <stdio.h>
 #ifdef WIN32
-#define BOOL wBOOL
-#undef Status
-#define Status wStatus
-#include <winsock.h>
-#undef Status
-#define Status int
-#undef BOOL
+#include <X11/Xwinsock.h>
 #include <X11/Xw32defs.h>
 #endif
 
@@ -86,6 +80,7 @@ IceConn iceConn;
 	iceConn->outbuf);
 
     iceConn->outbufptr = iceConn->outbuf;
+    return 1;
 }
 
 

@@ -1,4 +1,4 @@
-/* $XConsortium: GetKCnt.c,v 11.15 94/04/17 20:19:36 rws Exp $ */
+/* $XConsortium: GetKCnt.c /main/11 1996/10/22 14:19:17 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -51,5 +51,6 @@ XGetKeyboardControl (dpy, state)
     * (struct kmap *) state->auto_repeats = * (struct kmap *) rep.map;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
     }
 

@@ -84,3 +84,9 @@ EXPORTS
  XdbeGetVisualInfo
  XdbeFreeVisualInfo
  XdbeGetBackBufferAttributes
+ XSecurityQueryExtension
+ XSecurityAllocXauth
+ XSecurityFreeXauth
+ XSecurityGenerateAuthorization
+ XSecurityRevokeAuthorization
+/* $XConsortium: Xext-def.cpp /main/6 1996/11/13 14:44:36 lehors $ */

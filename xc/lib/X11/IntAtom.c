@@ -1,4 +1,4 @@
-/* $XConsortium: IntAtom.c,v 11.26 94/04/17 20:20:02 rws Exp $ */
+/* $XConsortium: IntAtom.c /main/19 1996/10/22 15:45:00 kaleb $ */
 /*
 
 Copyright (c) 1986, 1990  X Consortium
@@ -255,7 +255,7 @@ Bool _XIntAtomHandler(dpy, rep, buf, len, data)
 			(SIZEOF(xInternAtomReply) - SIZEOF(xReply)) >> 2,
 			True);
     if (state->atoms[i] = repl->atom)
-	_XUpdateAtomCache(dpy, state->names[i], repl->atom,
+	_XUpdateAtomCache(dpy, state->names[i], (Atom) repl->atom,
 			  (unsigned long)0, idx, 0);
     return True;
 }
@@ -306,7 +306,8 @@ XInternAtoms (dpy, names, count, onlyIfExists, atoms_return)
         }
 	if (_XReply (dpy, (xReply *)&rep, 0, xTrue)) {
 	    if (atoms_return[missed] = rep.atom)
-		_XUpdateAtomCache(dpy, names[missed], rep.atom, sig, idx, n);
+		_XUpdateAtomCache(dpy, names[missed], (Atom) rep.atom, 
+				  sig, idx, n);
 	} else {
 	    atoms_return[missed] = None;
 	    async_state.status = 0;

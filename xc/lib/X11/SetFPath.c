@@ -1,4 +1,4 @@
-/* $XConsortium: SetFPath.c,v 11.16 94/04/17 20:20:54 rws Exp $ */
+/* $TOG: SetFPath.c /main/9 1997/04/22 15:55:16 barstow $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -40,6 +40,7 @@ int ndirs;
 	register int nbytes;
 	char *p;
 	register xSetFontPathReq *req;
+	int retCode;
 
         LockDisplay(dpy);
 	GetReq (SetFontPath, req);
@@ -49,17 +50,26 @@ int ndirs;
 	}
 	nbytes = (n + 3) & ~3;
 	req->length += nbytes >> 2;
-	BufAlloc (char *, p, nbytes);
-	/*
-	 * pack into counted strings.
-	 */
-	for (i = 0; i < ndirs; i++) {
-		register int length = safestrlen (directories[i]);
-		*p = length;
-		memcpy (p + 1, directories[i], length);
-		p += length + 1;
+	if (p = (char *) Xmalloc ((unsigned) nbytes)) {
+		/*
+	 	 * pack into counted strings.
+	 	 */
+		char	*tmp = p;
+
+		for (i = 0; i < ndirs; i++) {
+			register int length = safestrlen (directories[i]);
+			*p = length;
+			memcpy (p + 1, directories[i], length);
+			p += length + 1;
+		}
+		Data (dpy, tmp, nbytes);
+		Xfree ((char *) tmp);
+		retCode = 1;
 	}
+	else
+		retCode = 0;
+
         UnlockDisplay(dpy);
 	SyncHandle();
+	return (retCode);
 }
-		      

@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/10 1995/09/21 11:27:50 kaleb $
+XCOMM $XConsortium: Imakefile /main/12 1996/12/04 10:22:18 lehors $
 
 #define DoNormalLib NormalLibSM
 #define DoSharedLib SharedLibSM
@@ -6,7 +6,8 @@ XCOMM $XConsortium: Imakefile /main/10 1995/09/21 11:27:50 kaleb $
 #define DoProfileLib ProfileLibSM
 #define LibName SM
 #define SoRev SOSMREV
-#define IncSubdir SM
+#define IncSubdir X11
+#define IncSubSubdir SM
 
 #include <Threads.tmpl>
 
@@ -19,6 +20,7 @@ CONN_DEFINES = -DTCPCONN -DICE_t
 #else
 CONN_DEFINES = ConnectionFlags -DICE_t
 #endif
+DEPEND_DEFINES = $(CONN_DEFINES)
 
 HEADERS = SM.h \
           SMproto.h \

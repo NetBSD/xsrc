@@ -280,3 +280,4 @@ EXPORTS
  PEXViewOrientationMatrix2D
  PEXXCToNPCTransform
  PEXXCToNPCTransform2D
+/* $XConsortium: PEX5-def.cpp /main/2 1996/05/07 13:15:18 kaleb $ */

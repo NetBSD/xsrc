@@ -1,4 +1,4 @@
-XCOMM $XConsortium: necLib.rules,v 1.3 95/01/16 19:50:38 kaleb Exp $
+XCOMM $XConsortium: necLib.rules /main/4 1996/09/28 16:11:42 rws $
 
 /*
  * NECOS shared library rules
@@ -58,15 +58,15 @@ install:: Concat(lib,libname.sa.rev)					@@\
 #endif /* InstallSharedLibraryData */
 
 /*
- * NormalSharedLibraryTarget - generate rules to create a shared library;
- * build it into a different name so that the we do not hose people by having
+ * SharedLibraryTarget - generate rules to create a shared library;
+ * build it into a different name so that we do not hose people by having
  * the library gone for long periods.
  */
 #ifndef SharedLibraryTarget
 #define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
 AllTarget(Concat(lib,libname.so.rev))					@@\
 									@@\
-Concat(lib,libname.so.rev):  solist					@@\
+Concat(lib,libname.so.rev):  solist $(EXTRALIBRARYDEPS)			@@\
 	$(RM) $@~							@@\
 	$(CC) -G -o $@~ $(SHLIBLDFLAGS) solist				@@\
 	$(RM) $@ 							@@\
@@ -92,7 +92,7 @@ clean::									@@\
 #define SharedLibraryDataTarget(libname,rev,salist)			@@\
 AllTarget(Concat(lib,libname.sa.rev))					@@\
 									@@\
-Concat(lib,libname.sa.rev):  salist					@@\
+Concat(lib,libname.sa.rev):  salist $(EXTRALIBRARYDEPS)			@@\
 	$(RM) $@							@@\
 	$(AR) $@ salist							@@\
 	RanLibrary($@)							@@\

@@ -1,8 +1,13 @@
-XCOMM $XConsortium: Imakefile /main/23 1995/11/07 19:46:53 gildea $
-XCOMM $XFree86: xc/config/makedepend/Imakefile,v 3.3 1996/01/05 13:07:25 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/25 1996/09/28 16:14:57 rws $
+XCOMM $XFree86: xc/config/makedepend/Imakefile,v 3.4 1996/12/23 05:54:51 dawes Exp $
 
     SRCS = include.c main.c parse.c pr.c cppsetup.c ifparser.c 
     OBJS = include.o main.o parse.o pr.o cppsetup.o ifparser.o 
+
+XCOMM Some compilers generate fatal errors if an -L directory does
+XCOMM not exist.  Since BUILDLIBDIR may not exist yet suppress its use.
+         LDPRELIB =
+        LDPRELIBS =
 
 #if HasGcc && !defined(PreIncDir)
 #define PreIncDir /usr/local/lib/gcc-include
@@ -24,7 +29,7 @@ INC_DEFINES = $(PREINC_DEFINES) $(STDINC_DEFINES) $(POSTINC_DEFINES)
 OSUF = .Osuf
 OSUF_DEFINES = -DOBJSUFFIX=\"$(OSUF)\"
 MAIN_DEFINES = $(INC_DEFINES) $(SIGNAL_DEFINES) $(OSUF_DEFINES)
-INCLUDES = -I$(IMAKESRC) -I$(TOP)/include
+INCLUDES = -I$(IMAKESRC) -I$(TOP)/include -I$(TOP)/imports/x11/include/X11
 
  DEPLIBS =
 
@@ -44,7 +49,10 @@ AllTarget(ProgramTargetName(makedepend))
 
 #if HasClearmake
 bootstrap:
-	$(MAKE) -f Makefile.proto makedepend
+	test -h X11 || $(LN) TOPDIR/include X11
+	$(MAKE) -f Makefile.proto TOP_INCLUDES=-I. makedepend
+
+depend::
 	$(MAKE) -f Makefile.proto depend
 	test -d bootstrap || mkdir bootstrap
 	$(MV) *.o makedepend bootstrap
@@ -52,6 +60,7 @@ bootstrap:
 
 clean::
 	$(RM) -r bootstrap
+	$(RM) X11
 #else
 bootstrap:
 #endif /* HasClearmake */

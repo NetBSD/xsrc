@@ -1,4 +1,4 @@
-/* $XConsortium: Macros.c,v 11.28 94/04/17 20:20:14 rws Exp $ */
+/* $XConsortium: Macros.c /main/15 1996/10/22 14:20:06 kaleb $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -247,4 +247,5 @@ XNoOp (dpy)
 
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

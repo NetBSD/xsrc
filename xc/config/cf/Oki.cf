@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: Oki.cf /main/15 1996/01/22 17:35:50 gildea $
+XCOMM platform:  $XConsortium: Oki.cf /main/16 1996/09/28 16:06:53 rws $
 
 #ifndef OSName
 #define OSName			Unix System V/860 Release 4.0 Version 3

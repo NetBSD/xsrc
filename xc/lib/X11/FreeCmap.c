@@ -1,4 +1,4 @@
-/* $XConsortium: FreeCmap.c,v 11.11 94/04/17 20:19:24 rws Exp $ */
+/* $XConsortium: FreeCmap.c /main/8 1996/10/22 14:18:47 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -43,4 +43,5 @@ Colormap cmap;
     SyncHandle();
 
     _XcmsDeleteCmapRec(dpy, cmap);
+    return 1;
 }

@@ -1,4 +1,4 @@
-XCOMM $XConsortium: sgiLib.rules /main/14 1995/10/16 18:46:30 gildea $
+XCOMM $XConsortium: sgiLib.rules /main/16 1996/09/28 18:11:04 rws $
 
 #ifndef HasSharedLibraries
 #define HasSharedLibraries YES
@@ -13,13 +13,13 @@ XCOMM $XConsortium: sgiLib.rules /main/14 1995/10/16 18:46:30 gildea $
 
 /*
  * SharedLibraryTarget - generate rules to create a shared library;
- * build it into a different name so that the we don't hose people by having
+ * build it into a different name so that we don't hose people by having
  * the library gone for long periods.
  */
 #define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
 AllTarget(Concat3(lib,libname,_s))					@@\
 									@@\
-Concat3(lib,libname,_s): sharedlib.o solist Concat(lib,libname.spec)	@@\
+Concat3(lib,libname,_s): sharedlib.o solist Concat(lib,libname.spec) $(EXTRALIBRARYDEPS)	@@\
 	$(RM) $@ $@.a \							@@\
 	&& cd down \							@@\
 	&& mkshlib -s Concat(up/lib,libname.spec) -t up/$@ -h up/$@.a \	@@\
@@ -64,7 +64,15 @@ InstallTarget(install,Concat3(lib,libname,_s.a),$(INSTLIBFLAGS),dest)
 #define ShLibIncludeFile <sgiLib.tmpl>
 #endif
 #ifndef SharedLibraryLoadFlags
+#if OSMajorVersion < 6
 #define SharedLibraryLoadFlags -shared
+#else
+#ifndef Mips64Architecture
+#define SharedLibraryLoadFlags -shared
+#else
+#define SharedLibraryLoadFlags -shared -mips3
+#endif
+#endif
 #endif
 /* -KPIC is redundant, PIC is always used unless you specify -non_shared */
 #ifndef PositionIndependentCFlags
@@ -132,7 +140,7 @@ install:: Concat(lib,libname.so.rev) 					@@\
 #define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
 AllTarget(Concat(lib,libname.so.rev))					@@\
 									@@\
-Concat(lib,libname.so.rev):  solist					@@\
+Concat(lib,libname.so.rev):  solist $(EXTRALIBRARYDEPS)			@@\
 	$(RM) $@~ 							@@\
 	(cd down; $(CCENVSETUP) $(LD) -o up/$@~ $(SHLIBLDFLAGS) -soname $@ solist $(REQUIREDLIBS))	@@\
 	$(RM) $@							@@\

@@ -1,5 +1,5 @@
 /* $XConsortium: ConnDis.c /main/114 1996/09/06 17:12:49 kaleb $ */
-/* $XFree86: xc/lib/X11/ConnDis.c,v 3.12 1996/09/14 13:05:40 dawes Exp $ */
+/* $XFree86: xc/lib/X11/ConnDis.c,v 3.13 1997/01/18 06:51:49 dawes Exp $ */
 /*
  
 Copyright (c) 1989  X Consortium
@@ -40,7 +40,11 @@ in this Software without prior written authorization from the X Consortium.
 #include <ctype.h>
 
 #if !defined(WIN32) && !defined(MINIX)
+#ifndef Lynx
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif
 #endif
 
 #ifndef X_CONNECTION_RETRIES		/* number retries on ECONNREFUSED */

@@ -1,4 +1,4 @@
-/* $XConsortium: StBytes.c,v 11.22 94/04/17 20:21:09 kaleb Exp $ */
+/* $XConsortium: StBytes.c /main/12 1996/10/22 14:23:01 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -44,7 +44,7 @@ XRotateBuffers (dpy, rotate)
     register Display *dpy;
     int rotate;
 {
-	XRotateWindowProperties(dpy, RootWindow(dpy, 0), n_to_atom, 8, rotate);
+    return XRotateWindowProperties(dpy, RootWindow(dpy, 0), n_to_atom, 8, rotate);
 }
     
 char *XFetchBuffer (dpy, nbytes, buffer)
@@ -95,9 +95,8 @@ XStoreBuffer (dpy, bytes, nbytes, buffer)
 #endif
 {
     if ((buffer < 0) || (buffer > 7)) return 0;
-    XChangeProperty(dpy, RootWindow(dpy, 0), n_to_atom[buffer], 
+    return XChangeProperty(dpy, RootWindow(dpy, 0), n_to_atom[buffer], 
 	XA_STRING, 8, PropModeReplace, (unsigned char *) bytes, nbytes);
-    return 0;
 }
 
 #if NeedFunctionPrototypes
@@ -112,5 +111,5 @@ XStoreBytes (dpy, bytes, nbytes)
     int nbytes;
 #endif
 {
-    XStoreBuffer (dpy, bytes, nbytes, 0);
+    return XStoreBuffer (dpy, bytes, nbytes, 0);
 }

@@ -1,5 +1,5 @@
-/* $XConsortium: AuFileName.c,v 1.5 95/07/10 21:18:07 gildea Exp $ */
-/* $XFree86: xc/lib/Xau/AuFileName.c,v 3.0 1996/06/10 09:32:59 dawes Exp $ */
+/* $XConsortium: AuFileName.c /main/8 1996/09/28 16:43:20 rws $ */
+/* $XFree86: xc/lib/Xau/AuFileName.c,v 3.2 1996/12/24 08:46:53 dawes Exp $ */
 
 /*
 
@@ -40,6 +40,7 @@ char *malloc (), *getenv ();
 char *
 XauFileName ()
 {
+    char *slashDotXauthority = "/.Xauthority";
     char    *name;
     static char	*buf;
     static int	bsize;
@@ -62,7 +63,7 @@ XauFileName ()
 #endif
 	return 0;
     }
-    size = strlen (name) + strlen(".Xauthority") + 2;
+    size = strlen (name) + strlen(&slashDotXauthority[1]) + 2;
     if (size > bsize) {
 	if (buf)
 	    free (buf);
@@ -72,6 +73,6 @@ XauFileName ()
 	bsize = size;
     }
     strcpy (buf, name);
-    strcat (buf, "/.Xauthority" + (name[1] == '\0' ? 1 : 0));
+    strcat (buf, slashDotXauthority + (name[1] == '\0' ? 1 : 0));
     return buf;
 }

@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: sony.cf /main/67 1996/02/02 19:00:08 gildea $
+XCOMM platform:  $XConsortium: sony.cf /main/69 1996/09/29 18:19:36 kaleb $
 
 #ifdef SonyBsdArchitecture
 
@@ -48,17 +48,19 @@ XCOMM platform:  $XConsortium: sony.cf /main/67 1996/02/02 19:00:08 gildea $
 #else
 
 #ifndef OSName
-#define OSName			NEWS-OS 6.1.1
+#define OSName			DefaultOSName
 #endif
 #ifndef OSMajorVersion
-#define OSMajorVersion		6
+#define OSMajorVersion		DefaultOSMajorVersion
 #endif
 #ifndef OSMinorVersion
-#define OSMinorVersion		1
+#define OSMinorVersion		DefaultOSMinorVersion
 #endif
 #ifndef OSTeenyVersion
-#define OSTeenyVersion		1
+#define OSTeenyVersion		DefaultOSTeenyVersion
 #endif
+XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
+
 #define BootstrapCFlags		-Dsony
 #define SystemV4		YES
 #define HasVFork		NO
@@ -67,10 +69,10 @@ XCOMM platform:  $XConsortium: sony.cf /main/67 1996/02/02 19:00:08 gildea $
 #if OSMajorVersion >= 6
 #define DefaultCCOptions	-Xa -Wf,-XNp9000,-XNd6000
 #define PexCCOptions		-Xa -Wf,-XNp15000,-XNd15000
-#define SharedLibraryLoadFlags -G -rpath $(USRLIBDIR)
+#define SharedLibraryLoadFlags -G -rpath $(USRLIBDIRPATH)
 #define PositionIndependentCFlags -K PIC -Wx,-G 0
 #define PositionIndependentCplusplusFlags -K PIC -Wx,-G 0
-#define SharedXmuReqs $(LDPRELIB) $(XTOOLLIB) $(XLIB)
+#define SharedXmuReqs $(LDPRELIBS) $(XTOOLLIB) $(XLIB)
 #define FixupLibReferences() /**/
 #include <sv4Lib.rules>
 #else

@@ -1,4 +1,5 @@
 /* $XConsortium: makekeys.c,v 11.8 94/04/17 20:22:22 gildea Exp $ */
+/* $XFree86: xc/lib/X11/util/makekeys.c,v 3.1 1996/12/09 12:14:18 dawes Exp $ */
 /*
 
 Copyright (c) 1990  X Consortium
@@ -73,7 +74,7 @@ main()
     register char c;
     int first;
     int best_max_rehash;
-    int best_z;
+    int best_z = 0;
     int num_found;
     KeySym val;
 

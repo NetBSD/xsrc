@@ -1,4 +1,4 @@
-/* $XConsortium: XKBBind.c /main/19 1996/03/01 14:29:21 kaleb $ */
+/* $TOG: XKBBind.c /main/26 1997/05/28 11:42:32 kaleb $ */
 /*
 
 Copyright (c) 1985, 1987, 1994  X Consortium
@@ -36,7 +36,6 @@ from the X Consortium.
 #include <X11/keysym.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <locale.h>
 
 #include <X11/extensions/XKBproto.h>
 #include "XKBlibint.h"
@@ -461,8 +460,11 @@ XRefreshKeyboardMapping(event)
     XkbMapChangesRec changes;
     XkbInfoPtr xkbi;
 
+    /* always do this for input methods, which still use the old keymap */
+    (void) _XRefreshKeyboardMapping(event);
+
     if (_XkbUnavailable(dpy))
-	return _XRefreshKeyboardMapping(event);
+	return 1;
 
     xkbi = dpy->xkb_info;
 
@@ -582,8 +584,8 @@ _XkbLoadDpy(dpy)
     LockDisplay(dpy);
     xkbi->desc = desc;
 
-    xkbi->charset = _XkbGetCharset(NULL);
-    _XkbGetConverters(xkbi->charset,&xkbi->cvt);
+    _XkbGetConverters(_XkbGetCharset(),&xkbi->cvt);
+    _XkbGetConverters("ISO8859-1",&xkbi->latin1cvt);
     UnlockDisplay(dpy);
     oldEvents= xkbi->selected_events;
     if (!(xkbi->xlib_ctrls&XkbLC_IgnoreNewKeyboards)) {
@@ -666,6 +668,8 @@ XkbTranslateKeySym(dpy, sym_rtrn, mods, buffer, nbytes, extra_rtrn)
 #endif
 {
     register XkbInfoPtr	xkb;
+    XkbKSToMBFunc cvtr;
+    XPointer priv;
     char tmp[4];
     register struct _XKeytrans *p; 
     int n;
@@ -703,8 +707,15 @@ XkbTranslateKeySym(dpy, sym_rtrn, mods, buffer, nbytes, extra_rtrn)
     if ( xkb->cvt.KSToUpper && (mods&LockMask) ) {
 	*sym_rtrn = (*xkb->cvt.KSToUpper)(*sym_rtrn);
     }
-    n = (*xkb->cvt.KSToMB)(xkb->cvt.KSToMBPriv,*sym_rtrn,buffer,nbytes,
-								extra_rtrn);
+    if (xkb->xlib_ctrls & XkbLC_ForceLatin1Lookup) {
+	cvtr = xkb->latin1cvt.KSToMB;
+	priv = xkb->latin1cvt.KSToMBPriv;
+    } else {
+	cvtr = xkb->cvt.KSToMB;
+	priv = xkb->cvt.KSToMBPriv;
+    }
+
+    n = (*cvtr)(priv,*sym_rtrn,buffer,nbytes,extra_rtrn);
 
     if ((!xkb->cvt.KSToUpper)&&( mods&LockMask )) {
 	register int i;

@@ -1,4 +1,4 @@
-/* $XConsortium: FillArc.c,v 11.15 94/04/17 20:19:18 rws Exp $ */
+/* $XConsortium: FillArc.c /main/8 1996/10/22 14:18:12 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -93,4 +93,5 @@ XFillArc(dpy, d, gc, x, y, width, height, angle1, angle2)
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

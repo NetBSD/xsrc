@@ -1,4 +1,4 @@
-/* $XConsortium: TextAction.c,v 1.53 95/06/14 15:07:27 kaleb Exp $ */
+/* $XConsortium: TextAction.c /main/54 1996/05/28 11:54:49 kaleb $ */
 
 /*
 
@@ -1201,7 +1201,7 @@ Cardinal *n;
 
   if ( text.format == XawFmtWide ) {
      wchar_t* ptr;
-     text.ptr = XtMalloc( ( 1 + wcslen((wchar_t*)line_to_ip) ) * sizeof(wchar_t) );
+     text.ptr = XtMalloc( ( 2 + wcslen((wchar_t*)line_to_ip) ) * sizeof(wchar_t) );
 
      ptr = (wchar_t*)text.ptr;
      ptr[0] = _Xaw_atowc( XawLF );
@@ -1215,13 +1215,13 @@ Cardinal *n;
 
   } else {
      char *ptr;
-     text.ptr = XtMalloc( ( 1 + strlen( line_to_ip ) ) * sizeof( char ) );
-     printf( "%p ", text.ptr );
+     length = strlen(line_to_ip);
+     text.ptr = XtMalloc( ( 2 + length ) * sizeof( char ) );
      ptr = text.ptr;
      ptr[0] = XawLF;
      strcpy( ++ptr, line_to_ip );
 
-     length = strlen(text.ptr);
+     length++;
      while ( length && ( isspace(*ptr) || ( *ptr == XawTAB ) ) )
          ptr++, length--;
      *ptr = '\0';

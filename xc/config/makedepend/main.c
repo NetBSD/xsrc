@@ -1,5 +1,5 @@
-/* $XConsortium: main.c /main/82 1995/11/07 19:47:02 gildea $ */
-/* $XFree86: xc/config/makedepend/main.c,v 3.9 1996/10/17 15:10:22 dawes Exp $ */
+/* $XConsortium: main.c /main/84 1996/12/04 10:11:23 swick $ */
+/* $XFree86: xc/config/makedepend/main.c,v 3.11.2.1 1997/05/11 05:04:07 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -76,9 +76,7 @@ char	*directives[] = {
 	"sccs",
 	"elif",
 	"eject",
-#ifdef __EMX__	/* maybe also gcc extension */
 	"warning",
-#endif
 	NULL
 };
 
@@ -102,6 +100,14 @@ boolean	printed = FALSE;
 boolean	verbose = FALSE;
 boolean	show_where_not = FALSE;
 boolean warn_multiple = FALSE;	/* Warn on multiple includes of same file */
+
+void freefile();
+void redirect();
+#if !NeedVarargsPrototypes
+void fatalerr();
+void warning();
+void warning1();
+#endif
 
 static
 #ifdef SIGNALRETURNSINT
@@ -143,6 +149,8 @@ main(argc, argv)
 	struct symtab *psymp = predefs;
 	char *endmarker = NULL;
 	char *defincdir = NULL;
+	char **undeflist = NULL;
+	int numundefs = 0, i;
 
 	ProgramName = argv[0];
 
@@ -237,6 +245,20 @@ main(argc, argv)
 				argc--;
 			}
 			break;
+		case 'U':
+			/* Undef's override all -D's so save them up */
+			numundefs++;
+			if (numundefs == 1)
+			    undeflist = malloc(sizeof(char *));
+			else
+			    undeflist = realloc(undeflist,
+						numundefs * sizeof(char *));
+			if (argv[0][2] == '\0') {
+				argv++;
+				argc--;
+			}
+			undeflist[numundefs - 1] = argv[0] + 2;
+			break;
 		case 'Y':
 			defincdir = argv[0]+2;
 			break;
@@ -316,6 +338,12 @@ main(argc, argv)
 			warning("ignoring option %s\n", argv[0]);
 		}
 	}
+	/* Now do the undefs from the command line */
+	for (i = 0; i < numundefs; i++)
+	    undefine(undeflist[i], &maininclist);
+	if (numundefs > 0)
+	    free(undeflist);
+
 	if (!defincdir) {
 #ifdef PREINCDIR
 	    if (incp >= includedirs + MAXDIRS)
@@ -488,6 +516,7 @@ struct filepointer *getfile(file)
 	return(content);
 }
 
+void
 freefile(fp)
 	struct filepointer	*fp;
 {
@@ -525,7 +554,7 @@ char *getline(filep)
 	register char	*p,	/* walking pointer */
 			*eof,	/* end of file pointer */
 			*bol;	/* beginning of line pointer */
-	register	lineno;	/* line number */
+	register int	lineno;	/* line number */
 
 	p = filep->f_p;
 	eof = filep->f_end;
@@ -616,6 +645,7 @@ int rename (from, to)
 }
 #endif /* USGISH */
 
+void
 redirect(line, makefile)
 	char	*line,
 		*makefile;
@@ -687,6 +717,7 @@ redirect(line, makefile)
 #endif /* USGISH */
 }
 
+void
 #if NeedVarargsPrototypes
 fatalerr(char *msg, ...)
 #else
@@ -709,6 +740,7 @@ fatalerr(msg,x1,x2,x3,x4,x5,x6,x7,x8,x9)
 	exit (1);
 }
 
+void
 #if NeedVarargsPrototypes
 warning(char *msg, ...)
 #else
@@ -730,6 +762,7 @@ warning(msg,x1,x2,x3,x4,x5,x6,x7,x8,x9)
 #endif
 }
 
+void
 #if NeedVarargsPrototypes
 warning1(char *msg, ...)
 #else

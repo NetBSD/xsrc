@@ -3,7 +3,7 @@ XCOMM!/bin/sh
 XCOMM
 XCOMM make a Makefile from an Imakefile from inside or outside the sources
 XCOMM 
-XCOMM $XConsortium: xmkmf.cpp,v 1.21 94/11/10 21:59:20 gildea Exp $
+XCOMM $XConsortium: xmkmf.cpp /main/22 1996/09/28 16:17:05 rws $
 
 usage="usage:  $0 [-a] [top_of_sources_pathname [current_directory]]"
 

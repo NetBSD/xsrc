@@ -1,4 +1,4 @@
-/* $XConsortium: ChWindow.c,v 11.12 94/04/17 20:18:44 rws Exp $ */
+/* $XConsortium: ChWindow.c /main/8 1996/10/22 14:16:23 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -58,4 +58,5 @@ unsigned int width, height;
 #endif /* MUSTCOPY */
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

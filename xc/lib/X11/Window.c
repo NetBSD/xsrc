@@ -1,4 +1,4 @@
-/* $XConsortium: Window.c,v 11.18 94/04/17 20:21:31 rws Exp $ */
+/* $XConsortium: Window.c /main/9 1996/10/22 14:24:09 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -28,57 +28,12 @@ in this Software without prior written authorization from the X Consortium.
 
 #include "Xlibint.h"
 
-#define AllMaskBits (CWBackPixmap|CWBackPixel|CWBorderPixmap|\
-		     CWBorderPixel|CWBitGravity|CWWinGravity|\
-		     CWBackingStore|CWBackingPlanes|CWBackingPixel|\
-		     CWOverrideRedirect|CWSaveUnder|CWEventMask|\
-		     CWDontPropagate|CWColormap|CWCursor)
-
-Window XCreateWindow(dpy, parent, x, y, width, height, 
-                borderWidth, depth, class, visual, valuemask, attributes)
-    register Display *dpy;
-    Window parent;
-    int x, y;
-    unsigned int width, height, borderWidth;
-    int depth;
-    unsigned int class;
-    Visual *visual;
-    unsigned long valuemask;
-    XSetWindowAttributes *attributes;
-{
-    Window wid;
-    register xCreateWindowReq *req;
-
-    LockDisplay(dpy);
-    GetReq(CreateWindow, req);
-    req->parent = parent;
-    req->x = x;
-    req->y = y;
-    req->width = width;
-    req->height = height;
-    req->borderWidth = borderWidth;
-    req->depth = depth;
-    req->class = class;
-    if (visual == CopyFromParent)
-	req->visual = CopyFromParent;
-    else
-	req->visual = visual->visualid;
-    wid = req->wid = XAllocID(dpy);
-    valuemask &= AllMaskBits;
-    if (req->mask = valuemask) 
-        _XProcessWindowAttributes (dpy, (xChangeWindowAttributesReq *)req, 
-			valuemask, attributes);
-    UnlockDisplay(dpy);
-    SyncHandle();
-    return (wid);
-    }
-
-_XProcessWindowAttributes (dpy, req, valuemask, attributes)
+void _XProcessWindowAttributes (dpy, req, valuemask, attributes)
     register Display *dpy;
     xChangeWindowAttributesReq *req;
     register unsigned long valuemask;
     register XSetWindowAttributes *attributes;
-    {
+{
     unsigned long values[32];
     register unsigned long *value = values;
     unsigned int nvalues;
@@ -133,4 +88,50 @@ _XProcessWindowAttributes (dpy, req, valuemask, attributes)
     nvalues <<= 2;			    /* watch out for macros... */
     Data32 (dpy, (long *) values, (long)nvalues);
 
+}
+
+#define AllMaskBits (CWBackPixmap|CWBackPixel|CWBorderPixmap|\
+		     CWBorderPixel|CWBitGravity|CWWinGravity|\
+		     CWBackingStore|CWBackingPlanes|CWBackingPixel|\
+		     CWOverrideRedirect|CWSaveUnder|CWEventMask|\
+		     CWDontPropagate|CWColormap|CWCursor)
+
+Window XCreateWindow(dpy, parent, x, y, width, height, 
+                borderWidth, depth, class, visual, valuemask, attributes)
+    register Display *dpy;
+    Window parent;
+    int x, y;
+    unsigned int width, height, borderWidth;
+    int depth;
+    unsigned int class;
+    Visual *visual;
+    unsigned long valuemask;
+    XSetWindowAttributes *attributes;
+{
+    Window wid;
+    register xCreateWindowReq *req;
+
+    LockDisplay(dpy);
+    GetReq(CreateWindow, req);
+    req->parent = parent;
+    req->x = x;
+    req->y = y;
+    req->width = width;
+    req->height = height;
+    req->borderWidth = borderWidth;
+    req->depth = depth;
+    req->class = class;
+    if (visual == CopyFromParent)
+	req->visual = CopyFromParent;
+    else
+	req->visual = visual->visualid;
+    wid = req->wid = XAllocID(dpy);
+    valuemask &= AllMaskBits;
+    if (req->mask = valuemask) 
+        _XProcessWindowAttributes (dpy, (xChangeWindowAttributesReq *)req, 
+			valuemask, attributes);
+    UnlockDisplay(dpy);
+    SyncHandle();
+    return (wid);
     }
+

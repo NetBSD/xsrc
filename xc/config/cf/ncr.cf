@@ -1,5 +1,5 @@
-XCOMM platform:  $XConsortium: ncr.cf /main/27 1996/02/02 18:59:47 gildea $
-XCOMM platform:  $XFree86: xc/config/cf/ncr.cf,v 3.16 1996/02/10 10:35:25 dawes Exp $
+XCOMM platform:  $XConsortium: ncr.cf /main/28 1996/09/28 16:11:31 rws $
+XCOMM platform:  $XFree86: xc/config/cf/ncr.cf,v 3.18 1996/12/27 06:50:22 dawes Exp $
 
 #ifndef OSName
 #define OSName			Unix System V Release 4/MP-RAS
@@ -25,7 +25,7 @@ XCOMM
 #define AllocateLocalDefines	-DINCLUDE_ALLOCA_H
 #define ServerExtraDefines      -DNO_SECONDARY AllocateLocalDefines XFree86ServerDefines
 #define ServerOSDefines         -DDDXTIME XFree86ServerOSDefines
-#define ToolkitStringsABIOptions -intelabi -earlyR6bc
+#define ToolkitStringsABIOptions -intelabi
 
 XCOMM This has not been tested, don't turn it on yet.
 XCOMM #define ExtensionOSDefines	-DXTESTEXT1

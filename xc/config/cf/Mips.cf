@@ -15,7 +15,7 @@
 #define OSMinorVersion    50
 #endif
 
-XCOMM platform:  $XConsortium: Mips.cf /main/16 1996/02/02 18:59:26 gildea $
+XCOMM platform:  $XConsortium: Mips.cf /main/17 1996/09/28 16:06:25 rws $
 XCOMM operating system:  OSName
 
 /***************************************************************************

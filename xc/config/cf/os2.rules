@@ -1,4 +1,8 @@
-XCOMM platform:  $XFree86: xc/config/cf/os2.rules,v 3.12 1996/10/17 15:10:00 dawes Exp $
+XCOMM $XConsortium: os2.rules /main/1 1996/10/31 14:47:27 kaleb $
+
+
+
+XCOMM platform:  $XFree86: xc/config/cf/os2.rules,v 3.15 1997/01/05 11:49:39 dawes Exp $
 
 .SUFFIXES: .Osuf .c .CCsuf
 
@@ -17,6 +21,7 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.rules,v 3.12 1996/10/17 15:10:00 daw
 #define ImakeSubCmdHelper \imake -I$(IRULESRC) $(IMAKE_DEFINES)
 #define Fontc \bdftopcf
 #define MkFontDir \mkfontdir
+#define XkbComp \xkbcomp
 #else
 #define ImakeHelper imakesvc
 #define IMmode u
@@ -24,12 +29,14 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.rules,v 3.12 1996/10/17 15:10:00 daw
 #define ImakeSubCmdHelper $(IMAKE_CMD)
 #define Fontc bdftopcf
 #define MkFontDir mkfontdir
+#define XkbComp xkbcomp
 #endif
 
 #define echo ImakeHelper 8 
 #define RunProgram(progvar,options) $(subst /,\,$(progvar)) options
 #define RemoveFile(file) $(RM) file
 #define RemoveFiles(files) $(RM) files
+#define NeedLdLibraryPathForXkbComp NO
 
 #define LibObjCompile(dir,options) RemoveFiles($@ dir\$@)		@@\
 	$(CC) $(CCOPTIONS) $(ALLDEFINES) options -c  $*.c		@@\
@@ -43,7 +50,7 @@ includes:: srclist							@@\
 	@for %i in (srclist) do ImakeHelper 2 $(BUILDINCDIR) $(BUILDINCTOP) $(CURRENT_DIR) %i
 
 #define	ProgramTargetHelper(program,srcs,objs,deplib,locallib,syslib)	@@\
-ProgramTargetName(program): $(objs) $(deplib)				@@\
+ProgramTargetName(program): $(objs) 					@@\
 	RemoveTargetProgram($@)						@@\
 	LinkRule($@,$(LDOPTIONS),$(objs),locallib $(LDLIBS) syslib)	@@\
 									@@\
@@ -52,7 +59,7 @@ InstallManPage(program,$(MANDIR))
 
 #if 0
 #define	ProgramTargetHelperNoMan(program,srcs,objs,deplib,locallib,syslib)	@@\
-ProgramTargetName(program): $(objs) $(deplib)				@@\
+ProgramTargetName(program): $(objs) 					@@\
 	RemoveTargetProgram($@)						@@\
 	LinkRule($@,$(LDOPTIONS),$(objs),locallib $(LDLIBS) syslib)	@@\
 									@@\
@@ -108,7 +115,7 @@ PROGRAM3 = ProgramTargetName(program)					@@\
 ProgramTargetHelper(program,SRCS3,OBJS3,DEPLIBS3,locallib,syslib)
 
 #define NormalProgramTarget(program,objects,deplibs,locallibs,syslibs)	@@\
-ProgramTargetName(program): objects deplibs				@@\
+ProgramTargetName(program): objects 					@@\
 	RemoveTargetProgram($@)						@@\
 	LinkRule($@,$(LDOPTIONS),objects,locallibs $(LDLIBS) syslibs)	@@\
 									@@\
@@ -136,7 +143,7 @@ clean::									@@\
 
 #define InstallMultipleDestFlags(step,list,dest,flags)			@@\
 step:: list								@@\
-	MakeDir($(DESTDIR)dest)						@@\
+	MakeDir($(DESTDIR)dest)							@@\
 	$(INSTALL) $(INSTALLFLAGS) flags list $(subst /,\,$(DESTDIR)dest)
 
 #define	CleanTarget()							@@\
@@ -255,7 +262,6 @@ clean::									@@\
 	RemoveFile(dst.c)
 
 #define FontBaseObj(basename)basename.pcf
-#define FontCompressObj(basename)basename.pcz
 /*
  * UncompressedFontTarget
  */
@@ -266,9 +272,17 @@ FontBaseObj(basename):  FontSrc(basename)				@@\
 /*
  * CompressedFontTarget
  */
+#ifndef CompressedFontTarget
+#if GzipFontCompression
 #define CompressedFontTarget(basename)					@@\
-FontCompressObj(basename):  FontSrc(basename)				@@\
+FontBaseObj(basename).gz:  FontSrc(basename)				@@\
+	Fontc $(FONTCFLAGS) $? | $(GZIPCMD) > $@
+#else
+#define CompressedFontTarget(basename)					@@\
+FontBaseObj(basename).Z:  FontSrc(basename)				@@\
 	Fontc $(FONTCFLAGS) $? | $(COMPRESS) > $@
+#endif
+#endif
 
 /*
  * MakeFontsDir - generate rules to build fonts.dir database.
@@ -281,14 +295,6 @@ fonts.dir:  deplist							@@\
 									@@\
 clean::									@@\
 	RemoveFile(fonts.dir)
-
-#if CompressAllFonts
-#define FontTarget(basename) CompressedFontTarget(basename)
-#define FontObj(basename) FontCompressObj(basename)
-#else
-#define FontTarget(basename) UncompressedFontTarget(basename)
-#define FontObj(basename) FontBaseObj(basename)
-#endif /* CompressAllFonts */
 
 /* OS/2 scripts are based on REXX
  * it is just the SHELL variable that is messed up that forces me to
@@ -499,3 +505,33 @@ clean::									@@\
 #ifndef StaticLibrary
 #define StaticLibrary(libpath,libname) Concat4(libpath,/,libname,_s.a)
 #endif
+
+#ifndef MakeXkbDir
+#define MakeXkbDir(basedir,subdir)					@@\
+all::	Concat(subdir,.dir)						@@\
+									@@\
+Concat(subdir,.dir):							@@\
+	$(XKBCOMPCMD) -lfhlpR -o Concat(subdir,.dir) *			@@\
+									@@\
+InstallTarget(install,Concat(subdir,.dir),$(INSTDATFLAGS),basedir)
+#endif
+
+/* This is to replace an ugly hack in /xc/nls/XLC_LOCALE */
+/* the corresponding Imake.rules rule would be:
+   define LinkFileSpecial(gotodir,tofile,fromfile)	@@\
+        @MakeFlagsToShellFlags(i,set +e); \		@@\
+	cd dir && (set -x; RemoveFile(tofile); $(LN) fromfile tofile)
+ */
+#ifndef LinkFileSpecial
+#define LinkFileSpecial(gotodir,tofile,fromfile)			@@\
+	ImakeHelper 13 gotodir fromfile tofile
+#endif
+
+#ifndef LinkBuildBinary
+#define LinkBuildBinary(binary)						@@\
+all:: $(BUILDBINDIR)/binary binary					@@\
+									@@\
+$(BUILDBINDIR)/binary: binary						@@\
+	ImakeHelper 13 $(BUILDBINDIR) $(BUILDBINTOP)/$(CURRENT_DIR)/binary binary @@\
+	$(CP) binary /
+#endif /* LinkBuildBinary */

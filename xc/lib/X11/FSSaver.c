@@ -1,4 +1,4 @@
-/* $XConsortium: FSSaver.c,v 1.6 94/04/17 20:19:16 rws Exp $ */
+/* $XConsortium: FSSaver.c /main/5 1996/10/22 14:18:08 kaleb $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -33,6 +33,7 @@ XActivateScreenSaver(dpy)
 
 {
     XForceScreenSaver (dpy, ScreenSaverActive);
+    return 1;
 }
 
 XResetScreenSaver(dpy) 
@@ -40,6 +41,7 @@ XResetScreenSaver(dpy)
 
 {
     XForceScreenSaver (dpy, ScreenSaverReset);
+    return 1;
 }
 
 XForceScreenSaver(dpy, mode)
@@ -54,5 +56,6 @@ XForceScreenSaver(dpy, mode)
     req->mode = mode;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

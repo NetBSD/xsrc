@@ -1,4 +1,4 @@
-/* $XConsortium: FillRcts.c,v 11.16 94/04/17 20:19:20 rws Exp $ */
+/* $XConsortium: FillRcts.c /main/10 1996/10/22 14:18:28 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -59,5 +59,6 @@ int n_rects;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
     

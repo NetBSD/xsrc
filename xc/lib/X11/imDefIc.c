@@ -1,4 +1,4 @@
-/* $XConsortium: imDefIc.c /main/15 1996/01/21 15:11:34 kaleb $ */
+/* $TOG: imDefIc.c /main/17 1997/04/29 12:26:48 barstow $ */
 /******************************************************************
 
            Copyright 1991, 1992 by Sun Microsystems, Inc.
@@ -684,13 +684,14 @@ _XimProtoSetICValues(xic, arg)
     int			 ret_code;
     BITMASK32		 flag = 0L;
     char		*name;
+    char		*tmp_name = (arg) ? arg->name : NULL;
 
 #ifndef XIM_CONNECTABLE
     if (!IS_IC_CONNECTED(ic))
-	return arg->name;
+	return tmp_name;
 #else
     if (!_XimSaveICValues(ic, arg))
-	return False;
+	return NULL;
 
     if (!IS_IC_CONNECTED(ic)) {
 	if (IS_CONNECTABLE(im)) {
@@ -703,7 +704,7 @@ _XimProtoSetICValues(xic, arg)
 	        return _XimDelayModeSetICValues(ic, arg);
 	    }
         } else {
-	    return arg->name;
+	    return tmp_name;
         }
     }
 #endif /* XIM_CONNECTABLE */
@@ -732,14 +733,14 @@ _XimProtoSetICValues(xic, arg)
 	buf_size += ret_len;
 	if (buf == tmp_buf) {
 	    if (!(tmp = (char *)Xmalloc(buf_size + data_len))) {
-		return arg->name;
+		return tmp_name;
 	    }
 	    memcpy(tmp, buf, buf_size);
 	    buf = tmp;
 	} else {
 	    if (!(tmp = (char *)Xrealloc(buf, (buf_size + data_len)))) {
 		Xfree(buf);
-		return arg->name;
+		return tmp_name;
 	    }
 	    buf = tmp;
 	}
@@ -747,10 +748,7 @@ _XimProtoSetICValues(xic, arg)
     _XimSetCurrentICValues(ic, &ic_values);
 
     if (!total) {
-	if(arg)
-	    return arg->name;
-	else
-	    return (char *)NULL;
+        return tmp_name;
     }
 
     buf_s = (CARD16 *)&buf[XIM_HEADER_SIZE];
@@ -771,7 +769,7 @@ _XimProtoSetICValues(xic, arg)
     if (!(_XimWrite(im, len, (XPointer)buf))) {
 	if (buf != tmp_buf)
 	    Xfree(buf);
-	return arg->name;
+	return tmp_name;
     }
     _XimFlush(im);
     if (buf != tmp_buf)
@@ -790,11 +788,11 @@ _XimProtoSetICValues(xic, arg)
 	if(ret_code != XIM_TRUE) {
 	    Xfree(preply);
 	    ic->private.proto.waitCallback = False;
-	    return arg->name;
+	    return tmp_name;
 	}
     } else {
 	ic->private.proto.waitCallback = False;
-	return arg->name;
+	return tmp_name;
     }
     ic->private.proto.waitCallback = False;
     buf_s = (CARD16 *)((char *)preply + XIM_HEADER_SIZE);
@@ -802,7 +800,7 @@ _XimProtoSetICValues(xic, arg)
 	_XimProcError(im, 0, (XPointer)&buf_s[3]);
 	if(reply != preply)
 	    Xfree(preply);
-	return arg->name;
+	return tmp_name;
     }
     if(reply != preply)
 	Xfree(preply);

@@ -1,4 +1,4 @@
-/* $XConsortium: UngrabPtr.c,v 11.10 94/04/17 20:21:24 rws Exp $ */
+/* $XConsortium: UngrabPtr.c /main/5 1996/10/22 14:23:41 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -38,4 +38,5 @@ Time time;
     GetResReq(UngrabPointer, time, req);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

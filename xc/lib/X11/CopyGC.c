@@ -1,4 +1,4 @@
-/* $XConsortium: CopyGC.c,v 11.15 94/04/17 20:18:56 rws Exp $ */
+/* $XConsortium: CopyGC.c /main/9 1996/10/22 14:17:01 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -131,4 +131,5 @@ XCopyGC (dpy, srcGC, mask, destGC)
 	if (ext->copy_GC) (*ext->copy_GC)(dpy, destGC, &ext->codes);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
     }

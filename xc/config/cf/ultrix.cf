@@ -1,15 +1,15 @@
-XCOMM platform:  $XConsortium: ultrix.cf /main/67 1995/12/15 22:49:02 gildea $
+XCOMM platform:  $XConsortium: ultrix.cf /main/68 1996/09/28 16:13:46 rws $
 
 #ifndef OSName
-#define OSName            Ultrix-32 4.4
+# define OSName		DefaultOSName
 #endif
-XCOMM operating system:  OSName
 #ifndef OSMajorVersion
-#define OSMajorVersion    4
+# define OSMajorVersion	DefaultOSMajorVersion
 #endif
 #ifndef OSMinorVersion
-#define OSMinorVersion    4
+# define OSMinorVersion DefaultOSMinorVersion
 #endif
+XCOMM operating system: OSName (OSMajorVersion.OSMinorVersion)
 
 #define HasNdbm YES
 #define HasPutenv YES
@@ -73,3 +73,5 @@ XCOMM operating system:  OSName
 
 #define ServerExtraDefines AllocateLocalDefines
 #define HasWChar32 YES
+
+#define MotifDefines		-DNO_REGEX -DNO_REGCOMP -DNO_CONST

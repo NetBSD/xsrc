@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile /main/19 1995/12/13 18:07:45 kaleb $
-XCOMM $XFree86: xc/lib/ICE/Imakefile,v 3.1 1996/01/05 13:10:27 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/21 1996/11/29 13:30:33 swick $
+XCOMM $XFree86: xc/lib/ICE/Imakefile,v 3.2 1996/12/23 05:58:58 dawes Exp $
 
 #define DoNormalLib NormalLibICE
 #define DoSharedLib SharedLibICE
@@ -7,15 +7,22 @@ XCOMM $XFree86: xc/lib/ICE/Imakefile,v 3.1 1996/01/05 13:10:27 dawes Exp $
 #define DoProfileLib ProfileLibICE
 #define LibName ICE
 #define SoRev SOICEREV
-#define IncSubdir ICE
+#define IncSubdir X11
+#define IncSubSubdir ICE
 
 #ifdef SharedICEReqs
 REQUIREDLIBS = SharedICEReqs
 #endif
+
 #if (SystemV || SystemV4) && !HasSockets
 CONN_DEFINES = -DTCPCONN -DICE_t -DTRANS_CLIENT -DTRANS_SERVER
 #else
+#ifdef USLArchitecture
+/* XXX temporary hack, PTS is failing on UnixWare */
+CONN_DEFINES = -DSTREAMSCONN -DUNIXCONN -DICE_t -DTRANS_CLIENT -DTRANS_SERVER
+#else
 CONN_DEFINES = ConnectionFlags -DICE_t -DTRANS_CLIENT -DTRANS_SERVER
+#endif
 #endif
 
 #if HasBSD44Sockets
@@ -38,6 +45,7 @@ SRCS = accept.c \
        getauth.c \
        iceauth.c \
        listen.c \
+       listenwk.c \
        locking.c \
        misc.c \
        ping.c \
@@ -57,6 +65,7 @@ OBJS = accept.o \
        getauth.o \
        iceauth.o \
        listen.o \
+       listenwk.o \
        locking.o \
        misc.o \
        ping.o \
@@ -74,6 +83,7 @@ OBJS = accept.o \
 SpecialCLibObjectRule(accept,$(ICONFIGFILES),$(TRANS_INCLUDES) $(CONN_DEFINES))
 SpecialCLibObjectRule(connect,$(ICONFIGFILES),$(TRANS_INCLUDES) $(CONN_DEFINES))
 SpecialCLibObjectRule(listen,$(ICONFIGFILES),$(TRANS_INCLUDES) $(CONN_DEFINES))
+SpecialCLibObjectRule(listenwk,$(ICONFIGFILES),$(TRANS_INCLUDES) $(CONN_DEFINES))
 SpecialCLibObjectRule(misc,$(ICONFIGFILES),$(TRANS_INCLUDES) $(CONN_DEFINES))
 SpecialCLibObjectRule(transport,$(ICONFIGFILES),$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES))
 LinkSourceFile(transport.c,$(TRANSCOMMSRC))

@@ -1,5 +1,5 @@
-/* $XConsortium: lcInit.c,v 1.2 94/01/20 18:06:58 rws Exp $ */
-/* $XFree86: xc/lib/X11/lcInit.c,v 3.0 1994/06/28 12:21:04 dawes Exp $ */
+/* $XConsortium: lcInit.c /main/4 1996/12/05 10:40:35 swick $ */
+/* $XFree86: xc/lib/X11/lcInit.c,v 3.2 1996/12/24 02:22:48 dawes Exp $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -24,19 +24,24 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
+/*
+ *  (c) Copyright 1995 FUJITSU LIMITED
+ *  This is source code modified by FUJITSU LIMITED under the Joint
+ *  Development Agreement for the CDE/Motif PST.
+ *
+ *   Modifier: Masayoshi Shimamura      FUJITSU LIMITED 
+ *
+ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"
 
-#ifndef X11_TINY_LC
 #define USE_GENERIC_LOADER
-#ifdef NOTDEF
-#define USE_UTF_LOADER
-#define USE_EUC_LOADER
-#endif
-#define USE_SJIS_LOADER
-#endif
-
+#define USE_DEFAULT_LOADER
+/*** #define USE_EUC_LOADER ***/
+/*** #define USE_SJIS_LOADER ***/
+/*** #define USE_JIS_LOADER ***/
+/*** #define USE_UTF_LOADER ***/
 
 extern XLCd _XlcDefaultLoader(
 #if NeedFunctionPrototypes
@@ -94,6 +99,22 @@ extern XLCd _XlcSjisLoader(
 );
 #endif
 
+#ifdef USE_JIS_LOADER
+extern XLCd _XlcJisLoader(
+#if NeedFunctionPrototypes
+    char*
+#endif
+);
+#endif
+
+#ifdef USE_DYNAMIC_LOADER
+extern XLCd _XlcDynamicLoader(
+#if NeedFunctionPrototypes
+    char*
+#endif
+);
+#endif
+
 /*
  * The _XlcInitLoader function initializes the locale object loader list
  * with vendor specific manner.
@@ -102,23 +123,29 @@ extern XLCd _XlcSjisLoader(
 void
 _XlcInitLoader()
 {
-#ifdef USE_EUC_LOADER
-    _XlcAddLoader(_XlcEucLoader, XlcHead);
-#endif
-
 #ifdef USE_GENERIC_LOADER
     _XlcAddLoader(_XlcGenericLoader, XlcHead);
+#endif
+
+#ifdef USE_DEFAULT_LOADER
+    _XlcAddLoader(_XlcDefaultLoader, XlcHead);
+#endif
+
+#ifdef USE_EUC_LOADER
+    _XlcAddLoader(_XlcEucLoader, XlcHead);
 #endif
 
 #ifdef USE_SJIS_LOADER
     _XlcAddLoader(_XlcSjisLoader, XlcHead);
 #endif
 
+#ifdef USE_JIS_LOADER
+    _XlcAddLoader(_XlcJisLoader, XlcHead);
+#endif
+
 #ifdef USE_UTF_LOADER
     _XlcAddLoader(_XlcUtfLoader, XlcHead);
 #endif
-
-    _XlcAddLoader(_XlcDefaultLoader, XlcHead);
 
 #ifdef DYNAMIC_LOAD
 #ifdef sun
@@ -129,4 +156,8 @@ _XlcInitLoader()
     _XlcAddLoader(_XaixOsDynamicLoad, XlcHead);
 #endif /* AIXV3 */
 #endif /* DYNAMIC_LOAD */
+
+#ifdef USE_DYNAMIC_LOADER
+    _XlcAddLoader(_XlcDynamicLoader, XlcHead);
+#endif
 }

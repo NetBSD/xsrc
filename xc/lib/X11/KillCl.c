@@ -1,4 +1,4 @@
-/* $XConsortium: KillCl.c,v 11.10 94/04/17 20:20:04 rws Exp $ */
+/* $XConsortium: KillCl.c /main/5 1996/10/22 14:19:55 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 */
 
 #include "Xlibint.h"
+
 XKillClient(dpy, resource)
 	register Display *dpy;
 	XID resource;
@@ -36,5 +37,6 @@ XKillClient(dpy, resource)
         GetResReq(KillClient, resource, req);
 	UnlockDisplay(dpy);
 	SyncHandle();
+	return 1;
 }
 

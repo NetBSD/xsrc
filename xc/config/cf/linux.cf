@@ -1,5 +1,5 @@
-XCOMM platform:  $XConsortium: linux.cf /main/18 1996/02/02 18:59:31 gildea $
-XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.49 1996/10/19 15:12:28 dawes Exp $
+XCOMM platform:  $XConsortium: linux.cf /main/27 1996/12/26 08:52:44 kaleb $
+XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.57.2.6 1997/05/27 06:22:10 dawes Exp $
 
 #ifndef LinuxElfDefault
 #define LinuxElfDefault		YES
@@ -9,37 +9,61 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.49 1996/10/19 15:12:28 dawe
 #define UseElfFormat		LinuxElfDefault
 #endif
 
-#ifndef OSName
+#ifndef OSBinaryType
 #if UseElfFormat
-#define OSName			Linux [ELF]
+#define OSBinaryType		[ELF]
 #else
 #ifdef AlphaArchitecture
-#define OSName			Linux [ECOFF]
+#define OSBinaryType		[ECOFF]
 #else
-#define OSName			Linux [a.out]
+#define OSBinaryType		[a.out]
 #endif
 #endif
+#endif
+
+#ifndef OSName
+#define OSName			DefaultOSName OSBinaryType
 #endif
 
 #ifndef OSVendor
 #define OSVendor		/**/
 #endif
 #ifndef OSMajorVersion
-#define OSMajorVersion		2
+#define OSMajorVersion		DefaultOSMajorVersion
 #endif
 #ifndef OSMinorVersion
-#define OSMinorVersion		0
+#define OSMinorVersion		DefaultOSMinorVersion
 #endif
 #ifndef OSTeenyVersion
-#define OSTeenyVersion		13
+#define OSTeenyVersion		DefaultOSTeenyVersion
+#endif
+XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
+
+/*
+ * The Linux BinUtils major version.  25 => 2.5.x, which is what is included
+ * with Slackware 3.0
+ */
+#ifndef BinUtilsMajorVersion
+#define BinUtilsMajorVersion	25
 #endif
 
 /*
- * The Linux BinUtils version.  2520 => 2.5.2, which is what is included
- * with Slackware 3.0
+ * The Linux libc major/minor versions.  Slackware 3.0 has libc.5.0.9
  */
-#ifndef BinUtilsVersion
-#define BinUtilsVersion		2520
+#ifndef LinuxCLibMajorVersion
+#define LinuxCLibMajorVersion	5
+#endif
+#ifndef LinuxClibMinorVersion
+#define LinuxClibMinorVersion	0
+#endif
+
+#if LinuxCLibMajorVersion >= 6
+#define SourceDefines		-D_POSIX_C_SOURCE=199309L \
+				-D_POSIX_SOURCE \
+				-D_BSD_SOURCE -D_SVID_SOURCE
+#else
+#define SourceDefines		-D_POSIX_SOURCE \
+				-D_BSD_SOURCE -D_SVID_SOURCE
 #endif
 
 #define HasGcc			YES
@@ -50,7 +74,13 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.49 1996/10/19 15:12:28 dawe
 #define GccUsesGas		YES
 #define UseGas			YES
 #define GnuCpp			YES
-#define HasShadowPasswd		NO
+#ifndef HasShadowPasswd
+# if UseElfFormat
+#  define HasShadowPasswd	YES
+# else
+#  define HasShadowPasswd	NO
+# endif
+#endif
 #ifndef HasLibCrypt
 # define HasLibCrypt		NO
 #endif
@@ -59,6 +89,7 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.49 1996/10/19 15:12:28 dawe
 #define HasSockets		YES
 #if UseElfFormat || defined(AlphaArchitecture)
 #define HasSnprintf		YES
+#define HasMkstemp		YES
 #endif
 
 #define AvoidNullMakeCommand	YES
@@ -92,18 +123,21 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.49 1996/10/19 15:12:28 dawe
 #else
 #ifdef AlphaArchitecture
 #define CcCmd			gcc -b alpha-linuxecoff
+#define CplusplusCmd		g++ -b alpha-linuxecoff
 #define AsCmd			/usr/alpha-linuxecoff/bin/as
 #define LdCmd			/usr/alpha-linuxecoff/bin/ld -m alpha
 #define AsmDefines		-DUSE_GAS -U__ELF__
 #endif /* AlphaArchitecture */
 #ifdef i386Architecture
 #define CcCmd			gcc -b i486-linuxaout
+#define CplusplusCmd		g++ -b i486-linuxaout
 #define AsCmd			/usr/i486-linuxaout/bin/as
 #define LdCmd			/usr/i486-linuxaout/bin/ld -m i386linux
 #define AsmDefines		-DUSE_GAS -U__ELF__
 #endif /* i386Architecture */
 #ifdef Mc68020Architecture
 #define CcCmd			gcc -b m68k-linuxaout
+#define CplusplusCmd		g++ -b m68k-linuxaout
 #define AsCmd			/usr/m68k-linuxaout/bin/as
 #define LdCmd			/usr/m68k-linuxaout/bin/ld -m m68klinux
 #define AsmDefines		-DUSE_GAS -U__ELF__
@@ -158,10 +192,22 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.49 1996/10/19 15:12:28 dawe
 #define LdPostLib		/* Never needed */
 
 #ifdef i386Architecture
-#define OptimizedCDebugFlags	DefaultGcc2i386Opt -m486
-#define StandardDefines		-Dlinux -D__i386__ -D_POSIX_SOURCE \
-				-D_BSD_SOURCE -D_SVID_SOURCE -DX_LOCALE
+#define OptimizedCDebugFlags	DefaultGcc2i386Opt
+#if LinuxCLibMajorVersion >= 6
+#undef HasLibCrypt
+#define HasLibCrypt		YES
+#define StandardDefines		SourceDefines -Dlinux -D__i386__
+#define XawI18nDefines		-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
+#define HasPosixThreads		YES
+#define ThreadedX		YES
+#define HasThreadSafeAPI	YES
+#define ThreadsLibraries	-lpthread
+#define SystemMTDefines		-D_REENTRANT
+#else /* LinuxCLibMajorVersion >= 6 */
+#define StandardDefines		SourceDefines -Dlinux -D__i386__ \
+				-DX_LOCALE
 #define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
+#endif /* LinuxCLibMajorVersion >= 6 */
 #define HasWChar32		YES
 #define StandardCppDefines	-traditional StandardDefines
 #define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME -DPART_NET
@@ -171,12 +217,11 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.49 1996/10/19 15:12:28 dawe
 #ifdef AlphaArchitecture
 #define OptimizedCDebugFlags	-O2
 #if UseElfFormat
-#define StandardDefines		-Dlinux -D__alpha__ -D_POSIX_SOURCE \
-				-D_BSD_SOURCE -D_SVID_SOURCE
+#define StandardDefines		SourceDefines -Dlinux -D__alpha__
 #define XawI18nDefines		-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
 #else
-#define StandardDefines		-Dlinux -D__alpha__ -D_POSIX_SOURCE \
-				-D_BSD_SOURCE -D_SVID_SOURCE -DX_LOCALE
+#define StandardDefines		SourceDefines -Dlinux -D__alpha__ \
+				-DX_LOCALE
 #define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 #endif
 #define HasWChar32		YES
@@ -187,8 +232,8 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.49 1996/10/19 15:12:28 dawe
 
 #ifdef Mc68020Architecture
 #define OptimizedCDebugFlags	-O2
-#define StandardDefines		-Dlinux -D__mc68000__ -D_POSIX_SOURCE \
-				-D_BSD_SOURCE -D_GNU_SOURCE -DX_LOCALE
+#define StandardDefines		SourceDefines -Dlinux -D__mc68000__ \
+				-DX_LOCALE
 #define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 #define HasWChar32		YES
 #define StandardCppDefines	-traditional StandardDefines
@@ -196,8 +241,14 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.49 1996/10/19 15:12:28 dawe
 #define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
 #endif /* Mc68020Architecture */
 
+#if UseElfFormat
+#define DlLibrary		-rdynamic -ldl
+#else
+#define DlLibrary		/**/
+#endif
+
 #if BuildDynamicLoading
-#define ServerExtraSysLibs	-rdynamic -ldl
+#define ServerExtraSysLibs	DlLibrary
 #else
 #define ServerExtraSysLibs	/**/
 #endif
@@ -226,6 +277,11 @@ XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.49 1996/10/19 15:12:28 dawe
 #ifndef StaticLibrary
 #define StaticLibrary(libpath,libname) -Wl,-Bstatic Concat(-L,libpath) Concat(-l,libname) -Wl,-Bdynamic
 #endif
+
+#define HasGnuMake	YES
+
+#define MakeNamedTargetSubdir(dir,flags,subname)\
+	$(MAKE) -C dir $(MFLAGS) $(PARALLELMFLAGS) flags subname
 
 #include <lnxLib.rules>
 #include <xfree86.cf>

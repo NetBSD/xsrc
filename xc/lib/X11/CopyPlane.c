@@ -1,4 +1,4 @@
-/* $XConsortium: CopyPlane.c,v 11.10 94/04/17 20:18:57 rws Exp $ */
+/* $XConsortium: CopyPlane.c /main/5 1996/10/22 14:17:05 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -57,5 +57,6 @@ XCopyPlane(dpy, src_drawable, dst_drawable, gc,
     req->bitPlane = bit_plane;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

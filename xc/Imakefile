@@ -1,9 +1,9 @@
-XCOMM $XConsortium: Imakefile /main/135 1996/02/02 19:03:12 gildea $
-XCOMM $XFree86: xc/Imakefile,v 3.10 1996/03/04 04:19:15 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/137 1996/10/08 07:38:14 swick $
+XCOMM $XFree86: xc/Imakefile,v 3.11 1996/12/23 05:49:49 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
 
-RELEASE = "Release 6.1"
+RELEASE = "Release 6.3"
 #ifndef OSName
 #define OSName Unknown Operating System!
 #endif
@@ -47,6 +47,7 @@ VerifyOS::
 
 includes::
 	MakeDir($(BUILDINCDIR))
+	MakeDir($(BUILDBINDIR))
 
 XCOMM
 XCOMM Watch out!!!  Make sure you do make includes after removing X11....
@@ -54,6 +55,7 @@ XCOMM
 clean::
 	$(RM) -r $(BUILDINCDIR)
 	$(RM) -r $(BUILDLIBDIR)
+	$(RM) -r $(BUILDBINDIR)
 
       MAKE_OPTS = -f xmakefile
 

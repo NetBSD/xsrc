@@ -1,4 +1,4 @@
-/* $XConsortium: DrLines.c,v 11.17 94/04/17 20:19:11 rws Exp $ */
+/* $XConsortium: DrLines.c /main/10 1996/10/22 14:17:43 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -50,5 +50,6 @@ XDrawLines (dpy, d, gc, points, npoints, mode)
     Data16 (dpy, (short *) points, length);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,5 +1,5 @@
 /*
- * $XConsortium: extutil.c,v 1.18 94/04/17 20:22:58 rws Exp $
+ * $XConsortium: extutil.c /main/19 1996/09/24 22:33:20 dpw $
  *
 Copyright (c) 1989  X Consortium
 
@@ -136,6 +136,18 @@ XExtDisplayInfo *XextAddDisplay (extinfo, dpy, ext_name, hooks, nevents, data)
 	if (hooks->error_string)
 	  XESetErrorString (dpy, dpyinfo->codes->extension,
 			    hooks->error_string);
+    } else if (hooks->close_display) {
+	/* The server doesn't have this extension.
+	 * Use a private Xlib-internal extension to hang the close_display
+	 * hook on so that the "cache" (extinfo->cur) is properly cleaned.
+	 * (XBUG 7955)
+	 */
+	XExtCodes *codes = XAddExtension(dpy);
+	if (!codes) {
+	    XFree(dpyinfo);
+	    return NULL;
+	}
+	XESetCloseDisplay (dpy, codes->extension, hooks->close_display);
     }
 
     /*

@@ -1,4 +1,4 @@
-/* $XConsortium: GetFPath.c,v 11.16 94/04/17 20:19:31 rws Exp $ */
+/* $XConsortium: GetFPath.c /main/7 1996/10/22 14:19:09 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -87,4 +87,5 @@ char **list;
 		Xfree (list[0]-1);
 		Xfree ((char *)list);
 	}
+	return 1;
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: PmapBord.c,v 11.9 94/04/17 20:20:27 rws Exp $ */
+/* $XConsortium: PmapBord.c /main/6 1996/10/22 14:20:42 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -41,5 +41,6 @@ XSetWindowBorderPixmap(dpy, w, pixmap)
     OneDataCard32 (dpy, NEXTPTR(req,xChangeWindowAttributesReq), pixmap);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

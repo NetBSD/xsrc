@@ -1,4 +1,4 @@
-/* $XConsortium: mkshadow.c,v 1.1 94/04/13 18:26:53 rws Exp $ */
+/* $XConsortium: mkshadow.c /main/2 1996/12/04 10:11:51 swick $ */
 /* mkshadow.c - make a "shadow copy" of a directory tree with symlinks.
    Copyright 1990, 1993 Free Software Foundation, Inc.
 
@@ -65,7 +65,7 @@
 #ifndef MAXPATHLEN
 #define MAXPATHLEN 1024
 #endif
-#include "errno.h"
+#include <errno.h>
 #ifndef errno
 extern int errno;
 #endif

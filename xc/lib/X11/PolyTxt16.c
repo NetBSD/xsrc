@@ -1,4 +1,4 @@
-/* $XConsortium: PolyTxt16.c,v 11.25 94/04/17 20:20:29 rws Exp $ */
+/* $XConsortium: PolyTxt16.c /main/13 1996/10/22 14:20:46 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -258,6 +258,7 @@ XDrawText16(dpy, d, gc, x, y, items, nitems)
 
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
     }
 
 

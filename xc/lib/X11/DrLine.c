@@ -1,4 +1,4 @@
-/* $XConsortium: DrLine.c,v 11.16 94/04/17 20:19:10 rws Exp $ */
+/* $XConsortium: DrLine.c /main/8 1996/10/22 14:17:40 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -91,5 +91,6 @@ XDrawLine (dpy, d, gc, x1, y1, x2, y2)
     UnlockDisplay(dpy);
     SyncHandle();
     }
+    return 1;
 }
 

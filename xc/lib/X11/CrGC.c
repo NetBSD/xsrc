@@ -1,4 +1,4 @@
-/* $XConsortium: CrGC.c,v 11.43 95/06/08 23:20:39 gildea Exp $ */
+/* $XConsortium: CrGC.c /main/26 1996/10/22 14:17:09 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -312,7 +312,7 @@ _XUpdateGCCache (gc, mask, attr)
 
 /* can only call when display is already locked. */
 
-_XFlushGCCache(dpy, gc)
+void _XFlushGCCache(dpy, gc)
      Display *dpy;
      GC gc;
 {

@@ -1,4 +1,4 @@
-/* $XConsortium: aixlcLoad.c /main/9 1996/04/19 16:00:47 kaleb $ */
+/* $XConsortium: aixlcLoad.c /main/12 1996/09/28 16:36:57 rws $ */
 /*
  *
  * Copyright IBM Corporation 1993
@@ -68,6 +68,8 @@ typedef _XlcCoreObj (*XdlEntry)();
 extern void *__lc_load();
 extern int __issetuid();
 
+extern int _XlcParsePath(char*, char**, int);
+
 /************************************************************************/
 /*	Private functions						*/
 /************************************************************************/
@@ -99,34 +101,6 @@ parse_line(line, argv, argsize)
     }
 
     return argc;
-}
-
-static int
-parse_path(path, argv, argsize)
-    char *path;
-    char **argv;
-    int argsize;
-{
-    char *p = path;
-    int i, n;
-
-    while((p = strchr(p, ':')) != NULL){
-	*p = ' ';	/* place space on delimter */
-    }
-    n = parse_line(path, argv, argsize);
-    if(n == 0){
-	return 0;
-    }
-    for(i = 0; i < n; ++i){
-	int len;
-	p = argv[i];
-	len = strlen(p);
-	if(p[len - 1] == '/'){
-	    /* eliminate slash */
-	    p[len - 1] = '\0';
-	}
-    }
-    return n;
 }
 
 static int
@@ -207,7 +181,7 @@ resolve_ldxinfo(lc_name, type, option)
 	/* Resolve default path for database */
 	_XlcResolveI18NPath(buf, BUFSIZE);
     }
-    n = parse_path(buf, args, 256);
+    n = _XlcParsePath(buf, args, 256);
     for(i = 0; i < n; ++i){
 	if(read_ldxdb(lc_name, args[i], type, option)){
 	    if(*type == LDX_DYNAMIC && *option != '/'){

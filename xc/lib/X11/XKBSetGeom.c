@@ -1,4 +1,4 @@
-/* $XConsortium: XKBSetGeom.c /main/5 1996/03/22 12:52:41 kaleb $ */
+/* $XConsortium: XKBSetGeom.c /main/7 1996/10/22 14:24:13 kaleb $ */
 /************************************************************
 Copyright (c) 1993 by Silicon Graphics Computer Systems, Inc.
 
@@ -464,7 +464,7 @@ register int sz;
 
 /***====================================================================***/
 
-Status
+static Status 
 #if NeedFunctionPrototypes
 _SendSetGeometry(Display *dpy,XkbGeometryPtr geom,xkbSetGeometryReq *req)
 #else
@@ -515,7 +515,7 @@ char *			wire,*tbuf;
 	Data(dpy,tbuf,sz);
 	_XFreeTemp(dpy,tbuf,sz);
     }
-    return;
+    return Success;
 }
 
 /***====================================================================***/
@@ -531,6 +531,7 @@ XkbSetGeometry(dpy,deviceSpec,geom)
 #endif
 {
 xkbSetGeometryReq	*req;
+Status ret;
 
     if ( (!geom) || (dpy->flags & XlibDisplayNoXkb) ||
 	(!dpy->xkb_info && !XkbUseExtension(dpy,NULL,NULL)))
@@ -551,7 +552,8 @@ xkbSetGeometryReq	*req;
     req->nKeyAliases= geom->num_key_aliases;
     req->baseColorNdx= (geom->base_color-geom->colors);
     req->labelColorNdx= (geom->label_color-geom->colors);
-    _SendSetGeometry(dpy,geom,req);
+    if ((ret = _SendSetGeometry(dpy,geom,req)) != Success)
+	return ret;
     UnlockDisplay(dpy);
     SyncHandle();
     return Success;

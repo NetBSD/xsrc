@@ -2,7 +2,7 @@
  * This script serves as a helper cmd file for imake. Install this in
  * the path just like imake itself.
  *
- * $XFree86: xc/config/imake/imakesvc.cmd,v 3.9 1996/08/20 12:07:16 dawes Exp $
+ * $XFree86: xc/config/imake/imakesvc.cmd,v 3.10 1997/01/05 11:49:55 dawes Exp $
  */
 '@echo off'
 ADDRESS CMD
@@ -164,6 +164,18 @@ SELECT
       tgt = destdir'\'dest'.gz'
       /* if you have no col.exe get one from 4.4BSD */
       'groff -e -t -man -Tascii 'src'.man | col -b | gzip -n >'tgt
+   END
+   WHEN code=13 THEN DO
+      /* imakesvc 13 indir fromfile tofile */
+      ind = WORD(all,2)
+      frm = WORD(all,3)
+      tof = WORD(all,4)
+      curdir = DIRECTORY()
+      d = DIRECTORY(ind)
+      rc = SysFileDelete(tof)
+      frm1 = TRANSLATE(frm,'\','/')
+      COPY frm1' 'tof' >nul 2>&1'
+      d = DIRECTORY(curdir)
    END
    OTHERWISE NOP
 END

@@ -1,4 +1,4 @@
-/* $XConsortium: ChPntCon.c,v 11.10 94/04/17 20:18:42 rws Exp $ */
+/* $XConsortium: ChPntCon.c /main/6 1996/10/22 14:16:06 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -46,5 +46,6 @@ XChangePointerControl(dpy, do_acc, do_thresh, acc_numerator,
     req->threshold = threshold;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: imRmAttr.c /main/11 1996/01/21 15:12:03 kaleb $ */
+/* $XConsortium: imRmAttr.c /main/12 1996/10/22 14:24:45 kaleb $ */
 /******************************************************************
 
            Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -460,8 +460,8 @@ _XimDecodeIMATTRIBUTE(im, res_list, res_num,  data, data_len, arg, mode)
 	if (total < min_len)
 	    return p->name;
 
-	if (!(_XimAttributeToValue(im, res, &buf[2], buf[1],
-							p->value, mode)))
+	if (!(_XimAttributeToValue((Xic) im->private.local.current_ic, 
+				   res, &buf[2], buf[1], p->value, mode)))
 	    return p->name;
     }
     return (char *)NULL;

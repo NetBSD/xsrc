@@ -1,4 +1,4 @@
-/* $XConsortium: StColors.c,v 11.15 94/04/17 20:21:10 rws Exp $ */
+/* $XConsortium: StColors.c /main/8 1996/10/22 14:23:09 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -59,4 +59,5 @@ int ncolors;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

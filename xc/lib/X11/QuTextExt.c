@@ -1,4 +1,4 @@
-/* $XConsortium: QuTextExt.c,v 11.20 94/04/17 20:20:39 rws Exp $ */
+/* $XConsortium: QuTextExt.c /main/14 1996/10/22 14:21:10 kaleb $ */
 /*
 
 Copyright (c) 1986, 1987  X Consortium
@@ -74,7 +74,7 @@ XQueryTextExtents (dpy, fid, string, nchars, dir, font_ascent, font_descent,
     if (!_XReply (dpy, (xReply *)&rep, 0, xTrue) || !buf) {
         UnlockDisplay(dpy);
 	SyncHandle();
-	return (0);
+	return 0;
     }
     *dir = rep.drawDirection;
     *font_ascent = cvtINT16toInt (rep.fontAscent);
@@ -87,5 +87,5 @@ XQueryTextExtents (dpy, fid, string, nchars, dir, font_ascent, font_descent,
     overall->rbearing = (short) cvtINT32toInt (rep.overallRight);
     UnlockDisplay(dpy);
     SyncHandle();
-    return (1);
+    return 1;
 }

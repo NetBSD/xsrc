@@ -1,4 +1,4 @@
-/* $XConsortium: imThaiIc.c /main/4 1996/01/21 15:11:59 kaleb $ */
+/* $XConsortium: imThaiIc.c /main/5 1996/10/22 14:24:50 kaleb $ */
 /******************************************************************
 
           Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -59,7 +59,7 @@ _XimThaiDestroyIC(xic)
 {
     Xic	 ic = (Xic)xic;
     if(((Xim)ic->core.im)->private.local.current_ic == (XIC)ic) {
-	_XimThaiUnSetFocus(ic);
+	_XimThaiUnSetFocus(xic);
     }
     if(ic->private.local.ic_resources) {
 	Xfree(ic->private.local.ic_resources);

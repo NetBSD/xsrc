@@ -1,4 +1,4 @@
-/* $XConsortium: FreePix.c,v 11.8 94/04/17 20:19:27 rws Exp $ */
+/* $XConsortium: FreePix.c /main/5 1996/10/22 14:19:02 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -38,5 +38,6 @@ XFreePixmap(dpy, pixmap)
     GetResReq(FreePixmap, pixmap, req);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

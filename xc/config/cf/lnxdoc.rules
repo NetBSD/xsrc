@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/config/cf/lnxdoc.rules,v 3.6 1996/01/28 07:27:37 dawes Exp $
+XCOMM $XFree86: xc/config/cf/lnxdoc.rules,v 3.9 1997/01/26 05:10:25 dawes Exp $
 XCOMM
 XCOMM Rules for formatting Linuxdoc-SGML documentation
 XCOMM
@@ -14,6 +14,8 @@ XCOMM
 InstallMultipleDest(install,files,dest)
 #endif
 
+#if !HasSgmlFmt
+/* Version for Linuxdoc-SGML */
 #if BuildLinuxDocPS
 #define LinuxDocSgmlToPs(sgmlfile,base) 				@@\
 AllTarget(base.ps)							@@\
@@ -87,6 +89,68 @@ clean::									@@\
 #else
 #define LinuxDocSgmlToHtml(sgmlfile,base) /**/
 #endif
+
+#else /* HasSgmlFmt */
+
+/* Version for FreeBSD's sgmlfmt */
+#if BuildLinuxDocPS
+#define LinuxDocSgmlToPs(sgmlfile,base) 				@@\
+AllTarget(base.ps)							@@\
+									@@\
+base.ps: sgmlfile							@@\
+	RemoveFile(base.ps)						@@\
+	@(BASE=`basename sgmlfile .sgml`;\				@@\
+	  set -x;\							@@\
+	  RemoveFile($$BASE.ps);\					@@\
+	  $(SGMLFMTCMD) -f ps sgmlfile && $(MV) $$BASE.ps $@)		@@\
+									@@\
+LinuxDocInstall(base.ps,$(XFREE86PSDOCDIR))				@@\
+									@@\
+clean::									@@\
+	RemoveFile(base.ps)
+#else
+#define LinuxDocSgmlToPs(sgmlfile,base) /**/
+#endif
+
+#if BuildLinuxDocText
+#define LinuxDocSgmlToText(sgmlfile,textfile)				@@\
+AllTarget(textfile)							@@\
+									@@\
+textfile: sgmlfile							@@\
+	RemoveFile(textfile)						@@\
+	@(BASE=`basename sgmlfile .sgml`;\				@@\
+	  set -x;\							@@\
+	  RemoveFile($$BASE.latin1);\					@@\
+	  $(SGMLFMTCMD) -f latin1 sgmlfile; \				@@\
+	  $(XFREE86IDENTFIX) < $$BASE.latin1 > _$@ && $(MV) _$@ $@)	@@\
+									@@\
+LinuxDocInstall(textfile,$(XFREE86DOCDIR))				@@\
+									@@\
+clean::									@@\
+	RemoveFiles(Concat(_,textfile) textfile)
+#else
+#define LinuxDocSgmlToText(sgmlfile,textfile) /**/
+#endif
+
+#if BuildLinuxDocHtml
+#define LinuxDocSgmlToHtml(sgmlfile,base)				@@\
+AllTarget(base.html)							@@\
+									@@\
+base.html: sgmlfile							@@\
+	@if [ sgmlfile != base.sgml ]; then $(LN) sgmlfile base.sgml; fi @@\
+	RemoveFiles(base*.html)						@@\
+	$(SGMLFMTCMD) -f html base.sgml || RemoveFile($@)		@@\
+	@if [ sgmlfile != base.sgml ]; then RemoveFile(base.sgml); fi	@@\
+									@@\
+LinuxDocInstallMultiple(base*.html,$(XFREE86HTMLDOCDIR))		@@\
+									@@\
+clean::									@@\
+	RemoveFiles(base*.html)
+#else
+#define LinuxDocSgmlToHtml(sgmlfile,base) /**/
+#endif
+
+#endif /* HasSgmlFmt */
 
 
 #define LinuxDocTargetLong(sgmlfile,textfile,base)			@@\

@@ -1,4 +1,4 @@
-/* $XConsortium: AuGetBest.c /main/20 1996/01/12 14:39:48 kaleb $ */
+/* $XConsortium: AuGetBest.c /main/23 1996/12/04 11:04:55 lehors $ */
 
 /*
 
@@ -33,7 +33,9 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Xthreads.h>
 #endif
 #ifdef hpux
-#include <netdb.h>
+#define X_INCLUDE_NETDB_H
+#define XOS_USE_NO_LOCKING
+#include <X11/Xos_r.h>
 #endif
 
 static
@@ -104,35 +106,12 @@ XauGetBestAuthByAddr (family, address_length, address,
 
 #ifdef hpux
     if (family == FamilyLocal) {
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API)
-	struct hostent hent;
-	char h_buf[LINE_MAX];
-#ifndef _POSIX_THREAD_SAFE_FUNCTIONS
-#define Gethostbyname(a) gethostbyname_r((a),&hs,h_buf,sizeof h_buf,&h_err)
-#define HostName hent.h_name
-#define CallFailed NULL
+	_Xgethostbynameparams hparams;
 	struct hostent *hostp;
-	int h_err;
-#else
-#define Gethostbyname(a) gethostbyname_r((a),&hent,&hdata)
-#define HostName hent.h_name
-#define CallFailed -1
-	struct hostent_data h_data;
-	int hostp;
-#endif
-#else
-#define Gethostbyname(a) gethostbyname((a))
-#define HostName hostp->h_name
-#define CallFailed NULL
-	struct hostent *hostp;
-#endif
 
-#if defined(XTHREADS) && defined(XUSE_MTSAFE_API) && defined(_POSIX_THREAD_SAFE_FUNCTIONS)
-	bzero((char*)&hdata, sizeof hdata);
-#endif
 	/* make sure we try fully-qualified hostname */
-	if ((hostp = Gethostbyname(address)) != CallFailed) {
-	    fully_qual_address = HostName;
+	if ((hostp = _XGethostbyname(address,hparams)) != NULL) {
+	    fully_qual_address = hostp->h_name;
 	    fully_qual_address_length = strlen(fully_qual_address);
 	}
 	else

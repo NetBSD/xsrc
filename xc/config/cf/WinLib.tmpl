@@ -1,12 +1,13 @@
-XCOMM $XConsortium: WinLib.tmpl,v 1.1 94/01/08 18:32:51 rws Exp $
+XCOMM $XConsortium: WinLib.tmpl /main/3 1996/11/13 14:43:09 lehors $
 
-#define SharedOldXReqs $(LDPRELIB) $(XLIBONLY)
-#define SharedXtReqs $(LDPRELIB) $(XLIBONLY)
-#define SharedXawReqs $(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
-#define SharedXmuReqs $(LDPRELIB) $(XTOOLLIB) $(XLIB)
-#define SharedXextReqs $(LDPRELIB) $(XLIBONLY)
-#define SharedXiReqs $(LDPRELIB) $(XLIB)
-#define SharedPexReqs $(LDPRELIB) $(XLIBONLY) MathLibrary
-#define SharedXtstReqs $(LDPRELIB) $(XLIB)
-#define SharedXieReqs $(LDPRELIB) $(XLIBONLY)
-#define SharedSMReqs $(LDPRELIB) $(ICELIB)
+#define SharedOldXReqs $(LDPRELIBS) $(XLIBONLY)
+#define SharedXtReqs $(LDPRELIBS) $(XLIBONLY)
+#define SharedXawReqs $(LDPRELIBS) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedXmuReqs $(LDPRELIBS) $(XTOOLLIB) $(XLIB)
+#define SharedXextReqs $(LDPRELIBS) $(XLIBONLY)
+#define SharedXiReqs $(LDPRELIBS) $(XLIB)
+#define SharedPexReqs $(LDPRELIBS) $(XLIBONLY) MathLibrary
+#define SharedXtstReqs $(LDPRELIBS) $(XLIB)
+#define SharedXieReqs $(LDPRELIBS) $(XLIBONLY)
+#define SharedSMReqs $(LDPRELIBS) $(ICELIB)
+#define SharedXpReqs $(LDPRELIBS) $(XAUTHLIB) $(EXTENSIONLIB) $(XLIBONLY)

@@ -1,4 +1,4 @@
-/* $XConsortium: TextExt.c,v 11.29 94/04/17 20:21:18 kaleb Exp $ */
+/* $XConsortium: TextExt.c /main/21 1996/12/05 10:40:03 swick $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -28,6 +28,11 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/*
+ * Copyright 1995 by FUJITSU LIMITED
+ * This is source code modified by FUJITSU LIMITED under the Joint
+ * Development Agreement for the CDE/Motif PST.
+ */
 
 
 #include "Xlibint.h"
@@ -193,3 +198,57 @@ int XTextWidth (fs, string, count)
 
     return width;
 }
+
+
+
+/*
+ * _XTextHeight - compute the height of a string of eightbit bytes.
+ */
+#if NeedFunctionPrototypes
+int _XTextHeight (
+    XFontStruct *fs,
+    _Xconst char *string,
+    int count)
+#else
+int _XTextHeight (fs, string, count)
+    XFontStruct *fs;
+    char *string;
+    int count;
+#endif
+{
+    int i;				/* iterator */
+    Bool singlerow = (fs->max_byte1 == 0);  /* optimization */
+    XCharStruct *def;			/* info about default char */
+    unsigned char *us;  		/* be 8bit clean */
+    int height = 0;			/* RETURN value */
+
+    if (singlerow) {			/* optimization */
+	CI_GET_DEFAULT_INFO_1D (fs, def);
+    } else {
+	CI_GET_DEFAULT_INFO_2D (fs, def);
+    }
+
+    if (def && (fs->min_bounds.ascent == fs->max_bounds.ascent)
+	    && (fs->min_bounds.descent == fs->max_bounds.descent))
+	return ((fs->min_bounds.ascent + fs->min_bounds.descent) * count);
+
+    /*
+     * Iterate over all character in the input string; only consider characters
+     * that exist.
+     */
+    for (i = 0, us = (unsigned char *) string; i < count; i++, us++) {
+	register unsigned uc = (unsigned) *us;	/* since about to do macro */
+	register XCharStruct *cs;
+
+	if (singlerow) {		/* optimization */
+	    CI_GET_CHAR_INFO_1D (fs, uc, def, cs);
+	} else {
+	    CI_GET_ROWZERO_CHAR_INFO_2D (fs, uc, def, cs);
+	}
+
+	if (cs) height += (cs->ascent + cs->descent);
+    }
+
+    return height;
+}
+

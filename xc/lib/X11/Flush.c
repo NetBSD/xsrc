@@ -1,4 +1,4 @@
-/* $XConsortium: Flush.c,v 11.9 94/04/17 20:19:22 rws Exp $ */
+/* $XConsortium: Flush.c /main/6 1996/10/22 14:18:31 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -37,4 +37,5 @@ XFlush (dpy)
     LockDisplay(dpy);
     _XFlush (dpy);
     UnlockDisplay(dpy);
+    return 1;
     }

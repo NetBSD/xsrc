@@ -1,4 +1,4 @@
-/* $XConsortium: FillPoly.c,v 11.15 94/04/17 20:19:19 rws Exp $ */
+/* $XConsortium: FillPoly.c /main/10 1996/10/22 14:18:19 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -58,4 +58,5 @@ int mode;
     Data16 (dpy, (short *) points, nbytes);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

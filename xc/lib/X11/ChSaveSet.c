@@ -1,4 +1,4 @@
-/* $XConsortium: ChSaveSet.c,v 11.7 94/04/17 20:18:43 rws Exp $ */
+/* $XConsortium: ChSaveSet.c /main/5 1996/10/22 14:16:14 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -41,18 +41,19 @@ int mode;
     req->mode = mode;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 
 XAddToSaveSet(dpy, win)
     register Display *dpy;
     Window win;
 {
-    XChangeSaveSet(dpy,win,SetModeInsert);
+    return XChangeSaveSet(dpy,win,SetModeInsert);
 }
 
 XRemoveFromSaveSet (dpy, win)
     register Display *dpy;
     Window win;
 {
-    XChangeSaveSet(dpy,win,SetModeDelete);
+    return XChangeSaveSet(dpy,win,SetModeDelete);
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: lcStd.c,v 1.4 94/01/20 18:07:31 rws Exp $ */
+/* $XConsortium: lcStd.c /main/5 1996/10/22 17:22:55 kaleb $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -252,7 +252,7 @@ _Xwcscpy(wstr1, wstr2)
 wchar_t *
 _Xwcsncpy(wstr1, wstr2, len)
     register wchar_t *wstr1, *wstr2;
-    register len;
+    register int len;
 {
     wchar_t *wstr_tmp = wstr1;
 
@@ -292,7 +292,7 @@ _Xwcscmp(wstr1, wstr2)
 int
 _Xwcsncmp(wstr1, wstr2, len)
     register wchar_t *wstr1, *wstr2;
-    register len;
+    register int len;
 {
     for ( ; *wstr1 && *wstr2 && len > 0; wstr1++, wstr2++, len--)
 	if (*wstr1 != *wstr2)

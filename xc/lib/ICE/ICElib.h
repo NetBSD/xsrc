@@ -1,4 +1,5 @@
-/* $XConsortium: ICElib.h,v 1.40 94/06/01 10:48:43 mor Exp $ */
+/* $XConsortium: ICElib.h /main/41 1996/11/29 13:30:19 swick $ */
+/* $XFree86: xc/lib/ICE/ICElib.h,v 3.1 1996/12/23 05:58:57 dawes Exp $ */
 /******************************************************************************
 
 
@@ -292,6 +293,16 @@ extern Status IceListenForConnections (
 #endif
 );
 
+extern Status IceListenForWellKnownConnections (
+#if NeedFunctionPrototypes
+    char *		/* port */,
+    int *		/* countRet */,
+    IceListenObj **	/* listenObjsRet */,
+    int			/* errorLength */,
+    char *		/* errorStringRet */
+#endif
+);
+
 extern int IceGetListenConnectionNumber (
 #if NeedFunctionPrototypes
     IceListenObj	/* listenObj */
@@ -410,7 +421,7 @@ extern char *IceAllocScratch (
 #endif
 );
 
-extern IceFlush (
+extern int IceFlush (
 #if NeedFunctionPrototypes
    IceConn		/* iceConn */
 #endif

@@ -1,5 +1,5 @@
 /*
- * $XConsortium: ifparser.h /main/3 1996/04/23 13:27:11 kaleb $
+ * $XConsortium: ifparser.h /main/4 1996/09/28 16:15:24 rws $
  *
  * Copyright 1992 Network Computing Devices, Inc.
  * 
@@ -31,10 +31,12 @@
  * 
  *     EXPRESSION	:=	VALUE
  * 			 |	VALUE  BINOP	EXPRESSION
+ *			 |	VALUE	'?'	EXPRESSION ':'	EXPRESSION
  * 
  *     VALUE		:=	'('  EXPRESSION  ')'
  * 			 |	'!'  VALUE
  * 			 |	'-'  VALUE
+ *			 |	'~'  VALUE
  * 			 |	'defined'  '('  variable  ')'
  * 			 |	variable
  * 			 |	number
@@ -44,16 +46,18 @@
  * 			 |	'<<'	|  '>>'
  * 			 |	'<'	|  '>'	|  '<='  |  '>='
  * 			 |	'=='	|  '!='
- * 			 |	'&'	|  '|'
+ * 			 |	'&'	|  '^'  |  '|'
  * 			 |	'&&'	|  '||'
  * 
- * The normal C order of precidence is supported.
+ * The normal C order of precedence is supported.
  * 
  * 
  * External Entry Points:
  * 
  *     ParseIfExpression		parse a string for #if
  */
+
+/* $XFree86: xc/config/makedepend/ifparser.h,v 3.2 1996/12/30 13:57:56 dawes Exp $ */
 
 #include <stdio.h>
 

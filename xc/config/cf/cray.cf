@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: cray.cf /main/50 1996/01/22 17:36:35 gildea $
+XCOMM platform:  $XConsortium: cray.cf /main/52 1996/09/28 16:09:55 rws $
 
 #ifndef OSName
 #define OSName			UNICOS 8.0
@@ -19,7 +19,6 @@ XCOMM operating system:  OSName
 #define ExecableScripts		NO
 #define HasPoll			NO
 #define HasXServer		NO
-#define BuildPex		NO
 #define ConnectionFlags		-DTCPCONN
 #define HasShm			NO
 #define PexNativeFPFormat	PEXCRAY_Floating
@@ -47,3 +46,5 @@ XCOMM operating system:  OSName
 
 /* XKB library code does not work here yet */
 #define BuildXKBlib NO
+
+#define MotifDefines		-DNO_REGEX -DNO_REGCOMP

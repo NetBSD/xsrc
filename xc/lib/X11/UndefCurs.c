@@ -1,4 +1,4 @@
-/* $XConsortium: UndefCurs.c,v 11.9 94/04/17 20:21:21 rws Exp $ */
+/* $XConsortium: UndefCurs.c /main/6 1996/10/22 14:23:25 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -42,5 +42,6 @@ XUndefineCursor (dpy,w)
     OneDataCard32 (dpy, NEXTPTR(req,xChangeWindowAttributesReq), defcurs);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,8 +1,12 @@
-XCOMM $XFree86: xc/config/cf/lnxdoc.tmpl,v 3.3 1994/12/25 12:12:24 dawes Exp $
+XCOMM $XFree86: xc/config/cf/lnxdoc.tmpl,v 3.5 1997/01/26 05:10:26 dawes Exp $
 XCOMM
 
 #ifndef HasLinuxDoc
 #define HasLinuxDoc		NO
+#endif
+
+#ifndef HasSgmlFmt
+#define HasSgmlFmt		NO
 #endif
 
 #ifndef LinuxDocDir
@@ -45,6 +49,10 @@ XCOMM
 #define LinuxDocLatexCmd	$(LINUXDOCBIN)/qtex
 #endif
 
+#ifndef SgmlFmtCmd
+#define SgmlFmtCmd		sgmlfmt
+#endif
+
 #ifndef HasDvips
 #define HasDvips		NO
 #endif
@@ -66,7 +74,7 @@ XCOMM
 #endif
 
 #ifndef BuildLinuxDocPS
-#define BuildLinuxDocPS		HasLatex && HasDvips
+#define BuildLinuxDocPS		(HasLatex && HasDvips) || HasSgmlFmt
 #endif
 
 
@@ -82,11 +90,12 @@ XCOMM
   XFREE86IDENTFIX = XFree86IdentFix
             DVIPS = DvipsCmd
      DVIPSOPTIONS = DvipsOptions
+       SGMLFMTCMD = SgmlFmtCmd
 
 XCOMM Some extra things to clean
 
 #ifdef ExtraFilesToClean
 #undef ExtraFilesToClean
 #endif
-#define ExtraFilesToClean *.aux *.dvi *.log *.tex *.toc *.html *.ps
+#define ExtraFilesToClean *.aux *.dvi *.log *.tex *.toc *.html *.ps *.latin1
 

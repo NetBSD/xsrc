@@ -1,4 +1,4 @@
-/* $XConsortium: QuKeybd.c,v 11.13 94/04/17 20:20:36 rws Exp $ */
+/* $XConsortium: QuKeybd.c /main/7 1996/10/22 14:21:03 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -48,5 +48,6 @@ XQueryKeymap(dpy, keys)
     *(struct kmap *) keys = *(struct kmap *)rep.map;  /* faster than memcpy */
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: MapRaised.c,v 1.10 94/04/17 20:20:15 rws Exp $ */
+/* $XConsortium: MapRaised.c /main/6 1996/10/22 14:20:10 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -44,5 +44,6 @@ XMapRaised (dpy, w)
     GetResReq (MapWindow, w, req2);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

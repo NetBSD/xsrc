@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: moto.cf /main/15 1996/01/22 17:37:14 gildea $
+XCOMM platform:  $XConsortium: moto.cf /main/16 1996/09/28 16:11:24 rws $
 
 #if defined(MotoR3Architecture)
 
