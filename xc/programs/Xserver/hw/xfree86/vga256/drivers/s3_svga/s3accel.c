@@ -209,6 +209,23 @@ S3AccelInit()
 
 }
 
+
+void
+#ifdef S3_NEWMMIO
+S3AccelSetup_NewMMIO() 
+#else
+S3AccelSetup() 
+#endif
+{
+  WaitQueue(5);
+  SET_SCISSORS(0,0,s3ScissR,s3ScissB);
+  if(s3Bpp > 2) {
+    if(s3newmmio)
+      SET_MULT_MISC(0x200);
+    else 
+      SET_MULT_MISC(0);
+  }
+}
 		/******************\
 		|	Sync	   |
 		\******************/

@@ -248,7 +248,7 @@ typedef struct {
 #define WaitQueue(v)					\
 	if(!s3PCIRetry) {				\
 	   mem_barrier();				\
-	   while(inb(GP_STAT) & (0x0100 >> (v)));	\
+	   while(mmio_INB_GP_STAT() & (0x0100 >> (v)));	\
 	}
 
 #define CMD_REG_WIDTH  0x200  	/* select 32bit command register */
