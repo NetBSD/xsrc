@@ -1,7 +1,5 @@
 /*
- * $XConsortium: cfb8line.c,v 1.30 95/01/03 15:28:30 dpw Exp $
- * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.2.2.1 1997/05/10 07:02:47 hohndel Exp $
- * Jeff Anton'x fixes: cfb8line.c   97/02/07
+ * $TOG: cfb8line.c /main/33 1997/07/17 19:33:47 kaleb $
  *
 Copyright (c) 1990  X Consortium
 
@@ -27,6 +25,9 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
  *
  * Author:  Keith Packard, MIT X Consortium
+ *
+ * $XFree86: xc/programs/Xserver/cfb/cfb8line.c,v 3.2.2.3 1997/07/19 04:59:19 dawes Exp $
+ * Jeff Anton'x fixes: cfb8line.c   97/02/07
  */
 
 #if defined(__mc68000__) && !defined(mc68000)

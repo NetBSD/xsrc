@@ -1,5 +1,4 @@
-/* $XConsortium: imakemdep.h /main/100 1996/10/31 14:32:02 kaleb $ */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.24 1997/01/14 22:12:48 dawes Exp $ */
+/* $TOG: imakemdep.h /main/101 1997/06/06 09:13:20 bill $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -26,6 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.24.2.3 1997/07/27 02:41:05 dawes Exp $ */
 
 
 /* 
@@ -581,10 +581,10 @@ char *cpp_argv[ARGUMENTS] = {
 # define DEFAULT_OS_TEENY_REV	"r %*[^.].%*d.%*c%[0-9]"
 # define DEFAULT_OS_NAME	"srvm %[^\n]"
 #elif defined(USL) || defined(__USLC__)
-/* uname -v returns "x.yz", e.g. "2.02". */
+/* uname -v returns "x.yz" or "x.y.z", e.g. "2.02" or "2.1.2". */
 # define DEFAULT_OS_MAJOR_REV	"v %[0-9]"
 # define DEFAULT_OS_MINOR_REV	"v %*d.%1s"
-# define DEFAULT_OS_TEENY_REV	"v %*d.%*c%[0-9]"
+# define DEFAULT_OS_TEENY_REV	"v %*d.%*c%[.0-9]"
 # define DEFAULT_OS_NAME	"srvm %[^\n]"
 #elif defined(__osf__)
 /* uname -r returns "Wx.y", e.g. "V3.2" or "T4.0" */
@@ -616,6 +616,38 @@ char *cpp_argv[ARGUMENTS] = {
 # define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
 # define DEFAULT_OS_TEENY_REV   "r %*d.%*d.%[0-9]" 
 # define DEFAULT_OS_NAME        "srm %[^\n]"
+# if defined(__FreeBSD__)
+/* Use an alternate way to find the teeny version for -STABLE, -SNAP versions */
+#  define DEFAULT_OS_TEENY_REV_FROB(buf, size)				\
+    do {								\
+	if (*buf == 0) {						\
+		int __mib[2];						\
+		size_t __len;						\
+		int __osrel;						\
+									\
+		__mib[0] = CTL_KERN;					\
+		__mib[1] = KERN_OSRELDATE;				\
+		__len = sizeof(__osrel);				\
+		sysctl(__mib, 2, &__osrel, &__len, NULL, 0);		\
+		if (__osrel < 210000) {					\
+			if (__osrel < 199607)				\
+				buf[0] = '0';				\
+			else if (__osrel < 199612)			\
+				buf[0] = '5';				\
+			else if (__osrel == 199612)			\
+				buf[0] = '6';				\
+			else						\
+				buf[0] = '8'; /* guess */		\
+		} else {						\
+			buf[0] = ((__osrel / 1000) % 10) + '0';		\
+		}							\
+		buf[1] = 0;						\
+	}								\
+    } while (0)
+# else
+   /* OpenBSD - Add DEFAULT_MACHINE_ARCHITECTURE */
+#  define DEFAULT_MACHINE_ARCHITECTURE "m %[^\n]"
+# endif
 #elif defined(__NetBSD__)
 /*
  * uname -r returns "x.y([ABCD...]|_mumble)", e.g.:

@@ -1,4 +1,4 @@
-XCOMM $XConsortium: X11.rules /main/2 1996/12/04 10:13:00 swick $
+XCOMM $TOG: X11.rules /main/4 1997/04/30 15:23:24 kaleb $
 
 /* Note whether we are the top level project. */
 #ifndef SeenTopLevelProject
