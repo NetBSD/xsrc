@@ -42,8 +42,10 @@ netbsdPciInit()
     	struct pciio_businfo pci_businfo;
 
 	devpci = open("/dev/pci0", O_RDWR);
-	if (devpci == -1)
-		FatalError("netbsdPciInit: can't open /dev/pci0\n");
+	if (devpci == -1) {
+		ErrorF("netbsdPciInit: can't open /dev/pci0\n");
+		return;
+	}
 
 	pciNumBuses    = 1;
 	pciBusInfo[0]  = &netbsdPci0;
