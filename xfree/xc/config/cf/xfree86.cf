@@ -652,7 +652,7 @@ XCOMM $Xorg: xfree86.cf,v 1.4 2000/08/17 19:41:49 cpqbld Exp $
 
 /* Pure PCI drivers should go first */
 # ifndef XF86CardDrivers
-#  define XF86CardDrivers	ati mga glint s3 s3virge sis savage\
+#  define XF86CardDrivers	ati cirrus mga glint s3 s3virge sis savage\
 				trident chips tdfx fbdev \
 				DevelDrivers vga \
 				XF86OSCardDrivers XF86ExtraCardDrivers
