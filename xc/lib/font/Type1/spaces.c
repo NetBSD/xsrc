@@ -44,6 +44,7 @@ This module is responsible for handling the TYPE1IMAGER "XYspace" object.
 #include "fonts.h"
 #include "arith.h"
 #include "trig.h"
+#include "X11/Xos.h"
 
 static void FindFfcn();
 static void FindIfcn();
