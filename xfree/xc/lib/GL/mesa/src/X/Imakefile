@@ -1,0 +1,49 @@
+XCOMM $XFree86: xc/lib/GL/mesa/src/X/Imakefile,v 1.6 2000/08/01 20:28:39 dawes Exp $
+
+#define DoNormalLib NormalLibGlx
+#define DoSharedLib SharedLibGlx
+#define DoExtraLib SharedLibGlx
+#define DoDebugLib DebugLibGlx
+#define DoProfileLib ProfileLibGlx
+
+LinkSourceFile(xmesa1.c, $(MESASRCDIR)/src/X)
+LinkSourceFile(xmesa2.c, $(MESASRCDIR)/src/X)
+LinkSourceFile(xmesa3.c, $(MESASRCDIR)/src/X)
+LinkSourceFile(xmesa4.c, $(MESASRCDIR)/src/X)
+LinkSourceFile(xmesaP.h, $(MESASRCDIR)/src/X)
+LinkSourceFile(glxheader.h, $(MESASRCDIR)/src/X)
+
+
+#if Malloc0ReturnsNull
+ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+#endif
+
+#if BuildXF86DRI
+  DRI_DEFINES = GlxDefines
+ DRI_INCLUDES = -I../../../dri -I../../../glx -I../../dri \
+		-I$(TOP)/include -I$(TOP)/include/GL \
+		-I$(XF86OSSRC) -I$(SERVERSRC)/GL/dri
+#endif
+
+MESA_INCLUDES = -I. -I.. -I../../include
+
+      DEFINES = $(ALLOC_DEFINES) $(DRI_DEFINES)
+     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC) $(MESA_INCLUDES) $(DRI_INCLUDES)
+         SRCS = xmesa1.c xmesa2.c xmesa3.c xmesa4.c xdri.c
+         OBJS = xmesa1.o xmesa2.o xmesa3.o xmesa4.o xdri.o
+
+#if !GlxUseBuiltInDRIDriver
+#undef DoNormalLib NormalLibGlx
+#undef DoExtraLib SharedLibGlx
+#undef DoDebugLib DebugLibGlx
+#undef DoProfileLib ProfileLibGlx
+#endif
+
+#include <Library.tmpl>
+
+LibraryObjectRule()
+
+SubdirLibraryRule($(OBJS))
+NormalLintTarget($(SRCS))
+
+DependTarget()

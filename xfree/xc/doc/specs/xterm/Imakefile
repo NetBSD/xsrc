@@ -1,0 +1,7 @@
+XCOMM $XConsortium: Imakefile,v 1.1 94/02/10 21:08:29 rws Exp $
+XCOMM $XFree86: xc/doc/specs/xterm/Imakefile,v 1.4 2000/03/02 17:53:00 dawes Exp $
+
+MakeTblDoc(ctlseqs,ctlseqs.ms)
+
+InstallRoffDoc(ctlseqs)
+

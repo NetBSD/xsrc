@@ -1,0 +1,12 @@
+XCOMM $TOG: Imakefile /main/11 1997/08/02 10:11:09 kaleb $
+XCOMM $XFree86: xc/programs/xkbcomp/keymap/Imakefile,v 3.7 1999/05/23 05:27:51 dawes Exp $
+#define IHaveSubdirs
+
+     DATAFILES = amiga ataritt macintosh sony xfree86 xfree98
+       SUBDIRS = digital sgi sun
+
+all::
+
+MakeXkbDir($(LIBDIR)/xkb,keymap)
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/keymap)
+DependTarget()

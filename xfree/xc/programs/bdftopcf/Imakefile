@@ -1,0 +1,15 @@
+XCOMM $TOG: Imakefile /main/10 1997/05/25 15:12:03 kaleb $
+XCOMM $XFree86: xc/programs/bdftopcf/Imakefile,v 3.8 1999/01/11 09:39:27 dawes Exp $
+
+#if GzipFontCompression
+ZLIB = GzipLibrary
+#endif
+LOCAL_LIBRARIES = $(FONTLIB)
+SYS_LIBRARIES = $(ZLIB) MathLibrary
+DEPLIBS = $(DEPFONTLIB)
+INCLUDES = -I$(FONTINCSRC) -I$(FONTLIBSRC)/include
+SRCS = bdftopcf.c
+OBJS = bdftopcf.o
+
+ComplexProgramTarget(bdftopcf)
+LinkBuildBinary(ProgramTargetName(bdftopcf))

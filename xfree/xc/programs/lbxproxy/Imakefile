@@ -1,0 +1,44 @@
+XCOMM $TOG: Imakefile /main/17 1997/08/05 09:00:04 kaleb $
+
+
+
+
+
+XCOMM $XFree86: xc/programs/lbxproxy/Imakefile,v 1.13 2000/01/31 19:33:40 dawes Exp $
+
+#include <Server.tmpl>
+#define       IHaveSubdirs
+
+LBXPROXYCONFIGDIR = LbxproxyConfigSubdir
+
+   ZLIB = GzipLibrary
+SUBDIRS = di os $(LBXPROXYCONFIGDIR)
+LBXLIBS = di/LibraryTargetName(dilbx) os/LibraryTargetName(os) $(TOP)/lib/lbxutil/LibraryTargetName(lbxutil)
+  
+#ifdef i386IscArchitecture
+OTHERLIBS = $(ICELIB) $(XLIB) -linet $(ZLIB)
+#else
+#ifdef LynxOSArchitecture
+OTHERLIBS = $(ICELIB) $(XLIB) -lbsd $(ZLIB)
+#else
+OTHERLIBS = $(ICELIB) $(XLIB) $(ZLIB)
+#endif
+#endif
+
+os/LibraryTargetName(os):	os
+
+di/LibraryTargetName(dilbx):	di
+
+#if !defined(LynxOSArchitecture) && !defined(QNX4Architecture)
+ServerTarget(lbxproxy,$(SUBDIRS),NullParameter,$(LBXLIBS),$(OTHERLIBS))
+#else
+ServerTarget(lbxproxy,$(SUBDIRS),di/main.o,$(LBXLIBS),$(OTHERLIBS))
+#endif
+
+LinkConfDirectory(lbxproxy,.,lbxproxy,.)
+
+DependSubdirs($(SUBDIRS))
+
+ForceSubdirs($(SUBDIRS))
+
+InstallManPage(lbxproxy,$(MANDIR))

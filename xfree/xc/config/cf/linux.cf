@@ -1,0 +1,737 @@
+XCOMM platform:  $TOG: linux.cf /main/47 1998/04/17 11:32:51 mgreess
+
+
+
+
+
+XCOMM platform:  $XFree86: xc/config/cf/linux.cf,v 3.157 2000/12/14 17:00:46 dawes Exp $
+
+#ifndef LinuxElfDefault
+# define LinuxElfDefault	YES
+#endif
+
+#ifndef UseElfFormat
+# define UseElfFormat		LinuxElfDefault
+#endif
+
+#ifndef OSBinaryType
+# if UseElfFormat
+#  define OSBinaryType		[ELF]
+# else
+#  ifdef AlphaArchitecture
+#   define OSBinaryType		[ECOFF]
+#  else
+#   define OSBinaryType		[a.out]
+#  endif
+# endif
+#endif
+
+#ifndef OSName
+# define OSName			DefaultOSName OSBinaryType
+#endif
+
+#ifndef OSVendor
+# define OSVendor		/**/
+#endif
+#ifndef OSMajorVersion
+# define OSMajorVersion		DefaultOSMajorVersion
+#endif
+#ifndef OSMinorVersion
+# define OSMinorVersion		DefaultOSMinorVersion
+#endif
+#ifndef OSTeenyVersion
+# define OSTeenyVersion		DefaultOSTeenyVersion
+#endif
+
+#ifndef LinuxDistribution
+# define LinuxDistribution	DefaultLinuxDistribution
+/*
+  Add "#define LinuxDistribution Linux<mumble>" to your site.def or host.def.
+  Currently only LinuxSuSE, LinuxRedHat and LinuxDebian will be figured out
+  automatically.
+  Valid values are (from the list at www.linux.org in Oct. '97):
+    LinuxUnknown    (0)
+    LinuxSuSE       (1)
+    LinuxCaldera    (2)
+    LinuxCraftworks (3)
+    LinuxDebian     (4)
+    LinuxInfoMagic  (5)
+    LinuxKheops     (6)
+    LinuxPro        (7)
+    LinuxRedHat     (8)
+    LinuxSlackware  (9)
+    LinuxTurbo      (10)
+    LinuxWare       (11)
+    LinuxYggdrasil  (12)
+*/
+#endif
+#ifndef LinuxDistName
+# define LinuxDistName		DefaultLinuxDistName
+#endif
+#ifndef LinuxCLibMajorVersion
+# define LinuxCLibMajorVersion	DefaultLinuxCLibMajorVersion
+#endif
+#ifndef LinuxCLibMinorVersion
+# define LinuxCLibMinorVersion	DefaultLinuxCLibMinorVersion
+#endif
+#ifndef LinuxCLibTeenyVersion
+# define LinuxCLibTeenyVersion	DefaultLinuxCLibTeenyVersion
+#endif
+
+#ifndef LinuxBinUtilsMajorVersion
+# define LinuxBinUtilsMajorVersion	DefaultLinuxBinUtilsMajorVersion
+#endif
+
+XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
+XCOMM libc:	(LinuxCLibMajorVersion./**/LinuxCLibMinorVersion./**/LinuxCLibTeenyVersion)
+XCOMM binutils:	(LinuxBinUtilsMajorVersion)
+
+#if LinuxDistribution == LinuxDebian
+#ifdef DebianMaintainer
+#define XFree86Devel		YES
+#endif
+#define HasTk			YES
+#define TkLibDir		/usr/lib
+#define TkIncDir		/usr/include
+#define TkLibName		tk8.3
+#define XF86SetupUsesStaticTk	NO
+#define HasTcl			YES
+#define TclLibDir		/usr/lib
+#define TclIncDir		/usr/include
+#define TclLibName		tcl8.3
+#define XF86SetupUsesStaticTcl	NO
+/* un-comment this when it is un-broken */
+/* #define JoystickSupport YES */
+#define InstallXinitConfig	YES
+#define InstallXdmConfig	YES
+#define InstallFSConfig		YES
+#ifdef DebianMaintainer
+#define HasXdmAuth		YES
+#endif
+#define DebuggableLibraries	YES
+#define ForceNormalLib		YES
+#define BuildSpecsDocs		YES
+#define SpecsDocDirs		CTEXT GL ICCCM X11 Xext Xv i18n xterm
+/* right now glide only works on i386 */
+#ifdef i386Architecture
+#ifdef DebianMaintainer
+#define HasGlide2		YES
+#endif
+#define Glide2IncDir		/usr/include/glide
+#ifdef DebianMaintainer
+#define HasGlide3		YES
+#endif
+#define Glide3IncDir		/usr/include/glide3
+#endif
+#define XAppLoadDir		EtcX11Directory/app-defaults
+#define XFileSearchPathDefault	Concat4(EtcX11Directory/%L/%T/%N%C,%S:EtcX11Directory/%l/%T/%N%C,%S:EtcX11Directory/%T/%N%C,%S:EtcX11Directory/%L/%T/%N%S:EtcX11Directory/%l/%T/%N%S:EtcX11Directory/%T/%N%S):Concat4($(LIBDIR)/%L/%T/%N%C,%S:$(LIBDIR)/%l/%T/%N%C,%S:$(LIBDIR)/%T/%N%C,%S:$(LIBDIR)/%L/%T/%N%S:$(LIBDIR)/%l/%T/%N%S:$(LIBDIR)/%T/%N%S)
+#ifdef DebianMaintainer
+/* the relative symlink created by this rule causes problems for us */
+#if InstallAppDefFiles
+#define InstallAppDefaultsLong(file,class)				@@\
+InstallNamedTarget(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class)
+#else
+#define InstallAppDefaultsLong(file,class)				@@\
+InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class)
+#endif /* InstallAppDefFiles */
+#endif
+#ifdef DebianMaintainer
+#define BuilderEMailAddr	"submit@bugs.debian.org"
+#endif
+#define SharedLibXdmGreet	YES
+#define LinkGLToUsrInclude	NO
+#define LinkGLToUsrLib		NO
+#define SharedLibFont		NO
+#define SharedLibXft		NO
+#define SharedLibXrender	NO
+#define HasZlib			YES
+#define SharedLibGlu		YES
+#define NormalLibGlu		YES
+#define BuildRman		NO
+#define BuildHtmlManPages	NO
+#define FSUseSyslog		YES
+#ifndef HasKatmaiSupport
+#define HasKatmaiSupport	NO
+#endif
+#endif
+
+#if LinuxDistribution == LinuxRedHat
+#define FSUseSyslog		YES
+#endif
+
+/*
+ * The Linux BinUtils major version.  25 => 2.5.x, which is what is included
+ * with Slackware 3.0
+ *
+ * This remains for compatibility only.
+ *
+ */
+#ifndef BinUtilsMajorVersion
+# define BinUtilsMajorVersion	LinuxBinUtilsMajorVersion
+#endif
+
+#if (LinuxCLibMajorVersion >= 6 || LinuxDistribution == LinuxSuSE)
+# define LinuxLocaleDefines	/**/
+#else
+# define LinuxLocaleDefines	-DX_LOCALE
+#endif
+
+#ifndef  LinuxAdditionalIncludes
+# define LinuxAdditionalIncludes	/**/
+#endif
+
+#ifndef LinuxGnuSourceDefines
+# ifdef UseInstalled
+#  define LinuxGnuSourceDefines	/**/
+# else
+#  define LinuxGnuSourceDefines	-D_GNU_SOURCE
+# endif
+#endif
+
+#if LinuxCLibMajorVersion >= 6
+# define LinuxSourceDefines	-D_POSIX_C_SOURCE=199309L \
+				-D_POSIX_SOURCE -D_XOPEN_SOURCE \
+				-D_BSD_SOURCE -D_SVID_SOURCE \
+				LinuxAdditionalIncludes LinuxGnuSourceDefines \
+				LinuxLocaleDefines
+# define XawI18nDefines		-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H
+# define HasPosixThreads	YES
+# define ThreadedX		YES
+# define HasThreadSafeAPI	YES
+# define ThreadsLibraries	-lpthread
+# define SystemMTDefines	-D_REENTRANT
+# ifndef HasLibCrypt
+#  define HasLibCrypt		YES
+# endif
+/* netscape wraps select but not poll as of communicator 4.72 */
+# ifndef HasPoll
+#  define HasPoll		NO
+# endif
+#else
+# define LinuxSourceDefines	-D_POSIX_SOURCE -D_POSIX_C_SOURCE=2 \
+				-D_BSD_SOURCE -D_SVID_SOURCE \
+				LinuxGnuSourceDefines LinuxLocaleDefines
+# define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
+# ifndef HasLibCrypt
+#  define HasLibCrypt		NO
+# endif
+#endif
+
+/* <linux/input.h> support mainly for USB support */
+#ifndef HasLinuxInput
+# if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 4)
+#  define HasLinuxInput YES
+# endif
+#endif
+
+/* On x86, determine whether to build with MTRR support */
+#ifndef HasMTRRSupport
+# ifdef i386Architecture
+/* There is no certain way to know if <asm/mtrr.h> is available,
+   but it made it into kernel 2.2, so... */
+#  if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 2)
+#   define HasMTRRSupport	YES
+#  else
+#   define HasMTRRSupport	NO
+#  endif
+# else
+#  define HasMTRRSupport	NO	/* no for non-ix86 */
+# endif
+#endif
+
+#ifndef XF86INT10_BUILD
+# ifdef i386Architecture
+#  define XF86INT10_BUILD	X86VM
+# else
+#  define XF86INT10_BUILD	X86EMU_GENERIC
+# endif
+#endif
+
+/* The DRM module requires kernel services that appeared in late 2.1.x
+   kernels and are known to be present in 2.2.x kernels. */
+#ifndef BuildXF86DRI
+#  if defined(i386Architecture) || defined(ia64Architecture)
+#    if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 2)
+#      define BuildXF86DRI	YES
+#    else
+#      define BuildXF86DRI	NO
+#    endif
+#  elif defined(SparcArchitecture)
+#    define BuildXF86DRI	YES
+#  elif defined(AlphaArchitecture)
+#    define BuildXF86DRI	YES
+#  elif defined(PpcArchitecture)
+#    define BuildXF86DRI	NO
+#  else
+#    define BuildXF86DRI	NO
+#  endif
+#endif
+
+/* The DRM module requires kernel services that appeared in late 2.1.x
+   kernels and are known to be present in 2.2.x kernels.  Unfortunately,
+   the kernel API is a moving target and the module may break with new
+   kernel revisions.  So, we'll only build the module for kernels that are
+   known to be supported by the module. */
+#ifndef BuildXF86DRM
+#  if defined(i386Architecture) || defined(ia64Architecture)
+#    if OSMajorVersion == 2
+       /* Only tested for Linux 2.2.0 through 2.2.12 */
+#      if OSMinorVersion == 2 && OSTeenyVersion <= 12
+#        define BuildXF86DRM	YES
+#      else
+         /* Only tested for Linux 2.3.0 through 2.3.18 */
+#        if OSMinorVersion == 3 && OSTeenyVersion <= 18
+#          define BuildXF86DRM	YES
+#        else
+           /* Note: add more conditions when 2.4.x and 2.5.x are released */
+#          define BuildXF86DRM	NO
+#        endif
+#      endif
+#    else
+       /* Note: add more conditions when 3.0.x and 3.1.x are released */
+#      define BuildXF86DRM	NO
+#    endif
+#  else
+#    define BuildXF86DRM	NO
+#  endif
+#endif
+
+#ifndef HasAgpGart
+#  if defined(i386Architecture) || defined(ia64Architecture)
+     /* The AGPGART header file is included in os-support/linux, which
+        allows all drivers that depend on AGP to build properly. */
+#    define HasAgpGart	YES
+#  else
+#    define HasAgpGart	NO
+#  endif
+#endif
+
+/* Support for Intel's Katmai Native Instructions, also known as the
+ * Streaming SIMD Extensions, was introduced in the 2.4.x kernels.
+ */
+#ifndef HasKatmaiSupport
+#  ifdef i386Architecture
+#    if OSMajorVersion > 2 || (OSMajorVersion == 2 && OSMinorVersion >= 4)
+#      define HasKatmaiSupport		YES
+#    else
+#      define HasKatmaiSupport		NO
+#    endif
+#  else
+#    define HasKatmaiSupport		NO
+#  endif
+#endif
+
+/*
+ * Support for MMX isn't present in the Assembler used in Red Hat 4.2, so
+ * don't enable it for libc5 as a reasonable default.
+ */
+#ifndef HasMMXSupport
+#  ifdef i386Architecture
+#    if (LinuxCLibMajorVersion > 5)
+#      define HasMMXSupport		YES
+#    else
+#      define HasMMXSupport		NO
+#    endif
+#  else
+#    define HasMMXSupport		NO
+#  endif
+#endif
+
+/*
+ * Support for 3DNow isn't present in the Assembler used in Red Hat 4.2, so
+ * don't enable it for libc5 as a reasonable default.
+ *
+ * XXX This is preliminary.
+ */
+#ifndef Has3DNowSupport
+#  ifdef i386Architecture
+#    if (LinuxCLibMajorVersion > 5)
+#      define Has3DNowSupport		YES
+#    else
+#      define Has3DNowSupport		NO
+#    endif
+#  else
+#    define Has3DNowSupport		NO
+#  endif
+#endif
+
+/*
+ * The Rush extension support.
+ */
+#ifndef BuildXF86RushExt
+# define BuildXF86RushExt	YES
+#endif
+
+#ifndef LinuxFBDevSupport
+# define LinuxFBDevSupport	YES
+#endif
+
+/* For compatibility */
+#define SourceDefines		LinuxSourceDefines
+
+#define BuildLibPathVar		LD_LIBRARY_PATH
+#define GccUsesGas		YES
+#define UseGas			YES
+#define GnuCpp			YES
+#if UseElfFormat
+# define HasDlopen		YES
+#endif
+#ifndef HasShadowPasswd
+# if UseElfFormat
+#  define HasShadowPasswd	YES
+# else
+#  define HasShadowPasswd	NO
+# endif
+#endif
+#define HasPutenv		YES
+#define HasShm			YES
+#define HasSockets		YES
+#if UseElfFormat || defined(AlphaArchitecture)
+#define HasSnprintf		YES
+#define HasMkstemp		YES
+#endif
+#if OSMajorVersion >= 2
+#define HasUsableFileMmap	YES
+#endif
+#ifndef HasNCurses
+#define HasNCurses		YES
+#endif
+
+#define AvoidNullMakeCommand	YES
+#ifndef DebuggableLibraries
+#define DebuggableLibraries	NO
+#endif
+#define CompressAllFonts	YES
+#define Malloc0ReturnsNull	YES
+#define NeedConstPrototypes	YES
+#define NeedFunctionPrototypes	YES
+#define NeedNestedPrototypes	YES
+#define NeedVarargsPrototypes	YES
+#ifndef NeedWidePrototypes
+#define NeedWidePrototypes	NO
+#endif
+#define SetTtyGroup		YES
+
+#ifndef UseStaticTermcapLib
+#define UseStaticTermcapLib	NO
+#endif
+
+#ifndef HasCookieMaker
+#define HasCookieMaker		YES
+#define MkCookieCmd		mcookie
+#endif
+
+#ifndef BourneShell
+/*
+ * This will cause builds/installs to terminate on errors, as on other
+ * platforms.
+ */
+#define BourneShell		/bin/sh -e
+#endif
+
+#define MkdirHierCmd		mkdir -p
+
+#if LinuxElfDefault
+# if UseElfFormat
+#  ifdef MipsArchitecture
+#   ifndef AsCmd
+#     define AsCmd		gcc -c -x assembler-with-cpp
+#   endif
+#   ifndef DoLoadableServer
+#     define DoLoadableServer	NO
+#   endif
+#  endif /* MipsArchitecure */
+#  ifndef CcCmd
+#   define CcCmd		gcc
+#  endif
+#  ifndef AsCmd
+#   define AsCmd		as
+#  endif
+#  ifndef LdCmd
+#   define LdCmd		ld
+#  endif
+#  define AsmDefines		-D__ELF__
+#  define CplusplusCmd		c++
+#  ifndef LinuxUsesNcurses
+#   if LinuxCLibMajorVersion >= 6 || (LinuxDistribution == LinuxSuSE)
+#    define LinuxUsesNcurses	YES
+#   else
+#    define LinuxUsesNcurses	NO
+#   endif
+#  endif
+#  ifndef TermcapLibrary
+#   if UseStaticTermcapLib
+#    if LinuxUsesNcurses
+#     define TermcapLibrary	StaticLibrary(/usr/lib,ncurses)
+#    else
+#     define TermcapLibrary	StaticLibrary(/usr/lib/termcap,termcap)
+#    endif
+#   else
+#    if LinuxUsesNcurses
+#     define TermcapLibrary	-lncurses
+#    else
+#     define TermcapLibrary	-ltermcap
+#    endif
+#   endif
+#  endif
+# else
+#  ifdef AlphaArchitecture
+#   define CcCmd		gcc -b alpha-linuxecoff
+#   define CplusplusCmd		g++ -b alpha-linuxecoff
+#   define AsCmd		/usr/alpha-linuxecoff/bin/as
+#   define LdCmd		/usr/alpha-linuxecoff/bin/ld -m alpha
+#   define AsmDefines		-DUSE_GAS -U__ELF__
+#  endif /* AlphaArchitecture */
+#  ifdef ia64Architecture
+#   define CcCmd                 gcc
+#   define CplusplusCmd          g++
+#   define AsCmd                 as
+#   define LdCmd                 ld
+#   define AsmDefines            -DUSE_GAS -U__ELF__
+#  endif /* ia64Architecture */
+#  ifdef i386Architecture
+#   define CcCmd		gcc -b i486-linuxaout
+#   define CplusplusCmd		g++ -b i486-linuxaout
+#   define AsCmd		/usr/i486-linuxaout/bin/as
+#   define LdCmd		/usr/i486-linuxaout/bin/ld -m i386linux
+#   define AsmDefines		-DUSE_GAS -U__ELF__
+#  endif /* i386Architecture */
+#  ifdef Mc68020Architecture
+#   define CcCmd		gcc -b m68k-linuxaout
+#   define CplusplusCmd		g++ -b m68k-linuxaout
+#   define AsCmd		/usr/m68k-linuxaout/bin/as
+#   define LdCmd		/usr/m68k-linuxaout/bin/ld -m m68klinux
+#   define AsmDefines		-DUSE_GAS -U__ELF__
+#  endif /* Mc68020Architecture */
+# endif
+#else
+# if UseElfFormat
+#  ifdef AlphaArchitecture
+#   define CcCmd		gcc -b alpha-linux
+#   define AsCmd		/usr/alpha-linux/bin/as
+#   define LdCmd		ld -m elf64alpha
+#   define AsmDefines		-D__ELF__
+#   define CplusplusCmd		c++ -b alpha-linux
+#  endif /* AlphaArchitecture */
+#  ifdef ia64Architecture
+#   define CcCmd		gcc
+#   define CplusplusCmd		g++
+#   define AsCmd		as
+#   define LdCmd		ld
+#   define AsmDefines		-D__ELF__
+#  endif /* ia64Architecture */
+#  ifdef i386Architecture
+#   define CcCmd		gcc -b i486-linux
+#   define AsCmd		/usr/i486-linux/bin/as
+#   define LdCmd		ld -m elf_i386
+#   define AsmDefines		-D__ELF__
+#   define CplusplusCmd		c++ -b i486-linux
+#  endif /* i386Architecture */
+#  ifdef Mc68020Architecture
+#   define CcCmd		gcc -b m68k-linux
+#   define AsCmd		/usr/m68k-linux/bin/as
+#   define LdCmd		ld -m m68kelf
+#   define AsmDefines		-D__ELF__
+#   define CplusplusCmd		c++ -b m68k-linux
+#  endif /* Mc68020Architecture */
+# else
+#  define CcCmd			gcc
+#  define AsCmd			as
+#  define LdCmd			ld
+#  define AsmDefines		-DUSE_GAS
+# endif
+#endif
+#if UseElfFormat
+# ifndef DoLoadableServer
+#  define DoLoadableServer	YES
+# endif
+#endif
+#ifndef CppCmd
+# define CppCmd			/lib/cpp
+#endif
+/* Some Linux distributions have yacc, some don't. All have bison. */
+#define YaccCmd			bison -y
+#define LexCmd			flex -l
+#define HasFlex			YES
+#define LexLib			-lfl
+#define PreProcessCmd		CcCmd -E
+#define PostIncDir		DefaultGccIncludeDir
+#define LdCombineFlags		-r
+#ifndef LdPostLib
+# define LdPostLib		/* Never needed */
+#endif
+#define HasWChar32		YES
+#define StandardCppOptions	-traditional
+#define StandardCppDefines	StandardDefines
+
+#define HasVarRun		YES
+#define VarDbDirectory		$(VARDIR)/lib
+
+#ifndef XF86OSCardDrivers
+# define XF86OSCardDrivers	v4l
+#endif
+
+#if UseElfFormat
+# define HasPlugin			YES
+# define VendorHasX11R6_3libXext	YES	/* XC or XFree86 >= 3.3.1 */
+#endif
+
+#ifdef i386Architecture
+# define OptimizedCDebugFlags	DefaultGcc2i386Opt
+# define LinuxMachineDefines	-D__i386__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+#endif /* i386Architecture */
+
+#ifdef s390Architecture
+#define OptimizedCDebugFlags	-O2
+#define LinuxMachineDefines	-D__s390__
+#define ServerOSDefines		XFree86ServerOSDefines -DDDXTIME -DPART_NET
+#define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+#endif /* s390Architecture */
+
+#ifdef AlphaArchitecture
+# define OptimizedCDebugFlags	DefaultGcc2AxpOpt
+# define LinuxMachineDefines	-D__alpha__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
+# ifdef UseCompaqMathLibrary
+#  define MathLibrary		-lcpml -lm
+# endif
+#endif /* AlphaArchitecture */
+
+#ifdef Arm32Architecture
+# define DefaultCCOptions	-fsigned-char
+# define OptimizedCDebugFlags  	-O3
+# define LinuxMachineDefines	-D__arm__ -U__arm -Uarm
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
+# define ServerExtraDefines	-DGCCUSEGAS XFree86ServerDefines
+#endif /* Arm32Achitecture */
+
+#ifdef ia64Architecture
+# define OptimizedCDebugFlags  -O2
+# define LinuxMachineDefines   -D__ia64__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines -D_XSERVER64
+#endif /* ia64Architecture */
+
+#ifdef Mc68020Architecture
+# define OptimizedCDebugFlags	-O2
+# define LinuxMachineDefines 	-D__mc68000__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+# define PositionIndependentCFlags -fpic
+# define PositionIndependentCplusplusFlags -fpic
+#endif /* Mc68020Architecture */
+
+#ifdef PpcArchitecture
+# define DefaultCCOptions	-fsigned-char
+# define OptimizedCDebugFlags	-O2
+# define LinuxMachineDefines	-D__powerpc__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+#endif /* PpcArchitecture */
+
+#ifdef SparcArchitecture
+# define OptimizedCDebugFlags	-O2
+# define LinuxMachineDefines	-D__sparc__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+# define AsVISOption		-Av9a
+# ifdef Sparc64Architecture
+#  define AsOutputArchSize	64
+# else
+#  define AsOutputArchSize	32
+# endif
+#endif
+
+#ifdef MipsArchitecture
+# define OptimizedCDebugFlags	-O2
+# define LinuxMachineDefines	-D__mips__
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DPART_NET
+# define ServerExtraDefines	-DGCCUSESGAS XFree86ServerDefines
+#endif
+
+#ifndef StandardDefines
+# define StandardDefines	-Dlinux LinuxMachineDefines LinuxSourceDefines
+#endif
+
+#if UseElfFormat
+# define DlLibrary		-rdynamic -ldl
+#else
+# define DlLibrary		/**/
+#endif
+
+#define ServerExtraSysLibs	/**/
+
+#ifndef PamLibraries
+#define PamLibraries		-lpam DlLibrary
+#endif
+
+#ifndef PamMiscLibraries
+#define PamMiscLibraries	-lpam_misc
+#endif
+
+#if HasDECnet
+# define ConnectionFlags	-DUNIXCONN -DTCPCONN -DDNETCONN
+# define ExtraLibraries		-ldnet
+#else
+# define ConnectionFlags	-DUNIXCONN -DTCPCONN
+#endif
+
+/* Some of these man page defaults are overriden in the above OS sections */
+#ifndef ManSuffix
+# define ManSuffix	1x
+#endif
+#ifndef ManDir
+# define ManDir		$(MANSOURCEPATH)1
+#endif
+#ifndef LibManSuffix
+# define LibManSuffix	3x
+#endif
+#ifndef LibmanDir
+# define LibmanDir	$(MANSOURCEPATH)3
+#endif
+#ifndef FileManSuffix
+# define FileManSuffix	5x
+#endif
+#ifndef FileManDir
+# define FileManDir	$(MANSOURCEPATH)5
+#endif
+
+#ifndef StaticLibrary
+# define StaticLibrary(libpath,libname) -Wl,-Bstatic Concat(-L,libpath) Concat(-l,libname) -Wl,-Bdynamic
+#endif
+
+#ifndef LinkGLToUsrLib
+# define LinkGLToUsrLib		YES
+#endif
+# ifndef LinkGLToUsrInclude
+# define LinkGLToUsrInclude	YES
+#endif
+
+
+#define HasGnuMake		YES
+
+#define MakeNamedTargetSubdir(dir,flags,subname)\
+	$(MAKE) -C dir $(MFLAGS) $(PARALLELMFLAGS) flags subname
+
+#define ArchitectureDefines	-DLINUX_ARCHITECTURE
+
+#define TtClientLibs $(TTLIB) $(XTOOLLIB) $(XLIB)
+#define TtClientDepLibs $(DEPTTLIB) $(DEPXTOOLLIB) $(DEPXLIB)
+
+#ifdef S390Architecture
+# define HasXServer	NO
+#endif
+
+#include <lnxLib.rules>
+#ifdef KDriveXServer
+# include <kdrive.cf>
+#else
+# include <xfree86.cf>
+#endif
+
+#ifndef XFree86ServerOSDefines
+# define XFree86ServerOSDefines
+#endif

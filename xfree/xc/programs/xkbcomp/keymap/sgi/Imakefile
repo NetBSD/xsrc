@@ -1,0 +1,9 @@
+XCOMM $TOG: Imakefile /main/3 1997/06/10 06:54:46 kaleb $
+
+     DATAFILES = be bg ca cs de de_CH dk dvorak en_US es fi fr fr_CH \
+		gb hu it jp no pl pt ru se th us
+
+all::
+
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/keymap/sgi)
+DependTarget()

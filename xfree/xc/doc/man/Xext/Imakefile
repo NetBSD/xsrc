@@ -1,0 +1,27 @@
+XCOMM $TOG: Imakefile /main/5 1997/12/24 10:07:52 kaleb $
+
+MANDIR = $(LIBMANDIR)
+MANSUFFIX = $(LIBMANSUFFIX)
+
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+SUBDIRS = dbe
+
+all::
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+
+#if ExpandManNames
+InstallManPageLong(XShape,$(MANDIR),XShapeQueryExtension)
+InstallManPageAliases(XShapeQueryExtension,$(MANDIR),XShapeQueryVersion XShapeCombineRegion XShapeCombineRectangles XShapeCombineMask XShapeCombineShape XShapeOffsetShape XShapeQueryExtents XShapeSelectInput XShapeInputSelected XShapeGetRectangles)
+InstallManPageLong(Xmbuf,$(MANDIR),XmbufQueryExtension)
+InstallManPageAliases(XmbufQueryExtension,$(MANDIR),XmbufGetVersion XmbufCreateBuffers XmbufDestroyBuffers XmbufDisplayBuffers XmbufGetWindowAttributes XmbufChangeWindowAttributes XmbufGetBufferAttributes XmbufChangeBufferAttributes XmbufGetScreenInfo XmbufCreateStereoWindow)
+InstallManPageLong(Xevi,$(MANDIR),XeviQueryVersion)
+InstallManPageAliases(XeviQueryVersion,$(MANDIR),XeviGetVisualInfo)
+#else
+InstallManPage(XShape,$(MANDIR))
+InstallManPage(Xmbuf,$(MANDIR))
+InstallManPage(Xevi,$(MANDIR))
+#endif

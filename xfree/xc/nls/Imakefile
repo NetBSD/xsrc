@@ -1,0 +1,58 @@
+XCOMM $XConsortium: Imakefile /main/5 1996/11/13 14:45:33 lehors $
+
+
+
+
+XCOMM $XFree86: xc/nls/Imakefile,v 1.5 2000/12/02 01:16:04 dawes Exp $
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+        SUBDIRS = XLC_LOCALE Compose
+#if defined(FreeBSDArchitecture)
+  RU_SU_DEFINES = -DINCLUDE_ru_SU
+#endif
+        DEFINES = -DR63_COMPAT $(RU_SU_DEFINES)
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+
+#ifndef Win32Architecture
+#ifndef OS2Architecture
+# define LTarget(name)							@@\
+all:: name.lt								@@\
+									@@\
+CppFileTarget(name.lt,name,$(DEFINES),NullParameter)			@@\
+									@@\
+all:: name.lt								@@\
+	MakeDir($(BUILDLIBDIR)/locale)					@@\
+	RemoveFile($(BUILDLIBDIR)/locale/name)				@@\
+	cd $(BUILDLIBDIR)/locale && $(LN) $(BUILDLIBTOP)/../$(CURRENT_DIR)/name.lt name @@\
+InstallNamedNonExec(name.lt,name,$(XLOCALEDIR))
+#else
+# define LTarget(name)							@@\
+all:: name.lt								@@\
+									@@\
+CppFileTarget(name.lt,name,$(DEFINES),NullParameter)			@@\
+									@@\
+all:: name.lt								@@\
+	MakeDir($(BUILDLIBDIR)/locale)					@@\
+	LinkFileSpecial($(BUILDLIBDIR)/locale,name,$(BUILDLIBTOP)/../../$(CURRENT_DIR)/name.lt) @@\
+									@@\
+InstallNamedNonExec(name.lt,name,$(XLOCALEDIR))
+#endif
+#else
+# define LTarget(name)							@@\
+all:: name.lt								@@\
+									@@\
+CppFileTarget(name.lt,name,$(DEFINES),NullParameter)			@@\
+									@@\
+all:: name.lt								@@\
+	MakeDir($(BUILDLIBDIR:/=\)\locale)				@@\
+	RemoveFile(Concat($(BUILDLIBDIR:/=\)\locale\,name))		@@\
+	cd $(BUILDLIBDIR:/=\)\locale && $(LN) Concat($(BUILDLIBTOP:/=\)\..\$(CURRENT_DIR:/=\)\,name.lt) name @@\
+InstallNamedNonExec(name.lt,name,$(XLOCALEDIR))
+#endif
+
+LTarget(locale.alias)
+LTarget(locale.dir)
+LTarget(compose.dir)

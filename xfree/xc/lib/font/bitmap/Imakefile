@@ -1,0 +1,60 @@
+XCOMM $XConsortium: Imakefile /main/9 1996/11/03 19:31:58 kaleb $
+XCOMM $XFree86: xc/lib/font/bitmap/Imakefile,v 1.9 2000/09/19 12:46:07 eich Exp $
+
+#if BuildServer && DoLoadableServer
+#define IHaveSubdirs
+#define NoLibSubdirs
+#define PassCDebugFlags
+SUBDIRS = module
+#endif
+
+#ifndef KDriveXServer
+BDFSRCS=bdfread.c bdfutils.c
+BDFOBJS=bdfread.o bdfutils.o
+BDFDEFS=-DBDFFORMAT
+
+SNFSRCS=snfread.c
+SNFOBJS=snfread.o
+SNFDEFS=-DSNFFORMAT
+#endif
+
+PCFSRCS=pcfread.c pcfwrite.c
+PCFOBJS=pcfread.o pcfwrite.o
+PCFDEFS=-DPCFFORMAT
+
+
+        INCLUDES = -I$(FONTINCSRC) -I../include 
+         HEADERS = 
+#ifdef FontFormatDefines
+     FORMAT_DEFS = FontFormatDefines
+#endif
+#if GzipFontCompression
+       GZIP_DEFS = -DX_GZIP_FONT_COMPRESSION
+#endif
+         DEFINES = $(BDFDEFS) $(PCFDEFS) $(SNFDEFS)
+
+            SRCS = $(BDFSRCS) bitmap.c bitmaputil.c bitscale.c \
+		   bitmapfunc.c $(PCFSRCS) $(SNFSRCS) \
+		   fontink.c 
+
+            OBJS = $(BDFOBJS) bitmap.o bitmaputil.o bitscale.o \
+		   bitmapfunc.o $(PCFOBJS) $(SNFOBJS) \
+		   fontink.o
+
+#define DoNormalLib NormalLibFont
+#define DoSharedLib SharedLibFont
+#define DoDebugLib DebugLibFont
+#define DoProfileLib ProfileLibFont
+#include <Library.tmpl>
+LibraryObjectRule()
+
+SpecialCLibObjectRule(bitmapfunc,$(ICONFIGFILES),$(GZIP_DEFS))
+SubdirLibraryRule($(OBJS))
+NormalLintTarget($(SRCS))
+
+#if BuildServer && DoLoadableServer
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
+
+DependTarget()

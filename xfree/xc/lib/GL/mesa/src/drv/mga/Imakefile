@@ -1,0 +1,375 @@
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/mga/Imakefile,v 1.13 2000/12/12 23:24:28 dawes Exp $
+
+#include <Threads.tmpl>
+
+#define DoNormalLib NormalLibGlx
+#define DoSharedLib SharedLibGlx
+#define DoExtraLib SharedLibGlx
+#define DoDebugLib DebugLibGlx
+#define DoProfileLib ProfileLibGlx
+
+#if Malloc0ReturnsNull
+ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+#endif
+
+#ifdef i386Architecture
+#if MesaUseMMX
+     MMX_DEFS = -DUSE_MMX_ASM
+#endif
+#if MesaUse3DNow
+   3DNOW_DEFS = -DUSE_3DNOW_ASM
+#endif
+#if MesaUseKatmai
+  KATMAI_DEFS = -DUSE_KATMAI_ASM
+#endif
+  ASM_DEFINES = -DUSE_X86_ASM $(MMX_DEFS) $(3DNOW_DEFS) $(KATMAI_DEFS)
+#endif
+
+#if BuildXF86DRI
+  DRI_DEFINES = GlxDefines -DDRIVERTS
+ DRI_INCLUDES = -I../../../../dri -I../../../../glx \
+		-I../../../dri \
+		-I$(TOP)/include -I$(TOP)/include/GL \
+		-I$(XF86OSSRC) -I$(SERVERSRC)/GL/dri \
+		-I$(XF86DRIVERSRC)/mga \
+		-I../../../include -I../.. -I../../X -I../common
+#endif
+
+MESA_INCLUDES = -I. -I.. -I../../include \
+		-I../../../../dri/drm
+
+      DEFINES = $(ALLOC_DEFINES) $(DRI_DEFINES) $(ASM_DEFINES)
+     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC) $(MESA_INCLUDES) $(DRI_INCLUDES)
+
+      DRISRCS = ../../../dri/dri_mesa.c \
+		../../../../dri/dri_tmm.c
+
+      DRIOBJS = ../../../dri/dri_mesa.o \
+		../../../../dri/dri_tmm.o
+
+      DRMSRCS = ../../../../dri/drm/xf86drm.c \
+		../../../../dri/drm/xf86drmHash.c \
+		../../../../dri/drm/xf86drmRandom.c \
+		../../../../dri/drm/xf86drmSL.c
+
+      DRMOBJS = ../../../../dri/drm/xf86drm.o \
+		../../../../dri/drm/xf86drmHash.o \
+		../../../../dri/drm/xf86drmRandom.o \
+		../../../../dri/drm/xf86drmSL.o
+
+      MGASRCS = mgabuffers.c \
+		mgadd.c \
+		mgaeltpath.c \
+		mgafastpath.c \
+		mgaioctl.c \
+		mgapipeline.c \
+		mgaspan.c \
+		mgastate.c \
+		mgatex.c \
+		mgatexcnv.c \
+		mgatexmem.c \
+		mgatris.c \
+		mgavb.c \
+		mga_xmesa.c \
+
+      MGAOBJS = mgabuffers.o \
+		mgadd.o \
+		mgaeltpath.o \
+		mgafastpath.o \
+		mgaioctl.o \
+		mgapipeline.o \
+		mgaspan.o \
+		mgastate.o \
+		mgatex.o \
+		mgatexcnv.o \
+		mgatexmem.o \
+		mgatris.o \
+		mgavb.o \
+		mga_xmesa.o
+
+     MESASRCS = ../../aatriangle.c \
+		../../accum.c \
+		../../alpha.c \
+		../../alphabuf.c \
+		../../attrib.c \
+		../../bbox.c \
+		../../bitmap.c \
+		../../blend.c \
+		../../buffers.c \
+		../../clip.c \
+		../../colortab.c \
+		../../config.c \
+		../../context.c \
+		../../copypix.c \
+		../../cva.c \
+		../../debug_xform.c \
+		../../depth.c \
+		../../dlist.c \
+		../../drawpix.c \
+		../../enable.c \
+		../../enums.c \
+		../../eval.c \
+		../../extensions.c \
+		../../feedback.c \
+		../../fog.c \
+		../../get.c \
+		../../glapi.c \
+		../../glapinoop.c \
+		../../glthread.c \
+		../../hash.c \
+		../../image.c \
+		../../imaging.c \
+		../../light.c \
+		../../lines.c \
+		../../logic.c \
+		../../masking.c \
+		../../matrix.c \
+		../../mem.c \
+		../../mmath.c \
+		../../pb.c \
+		../../pipeline.c \
+		../../pixel.c \
+		../../pixeltex.c \
+		../../points.c \
+		../../polygon.c \
+		../../quads.c \
+		../../rastpos.c \
+		../../readpix.c \
+		../../rect.c \
+		../../scissor.c \
+		../../shade.c \
+		../../span.c \
+		../../stages.c \
+		../../state.c \
+		../../stencil.c \
+		../../teximage.c \
+		../../texobj.c \
+		../../texstate.c \
+		../../texture.c \
+		../../texutil.c \
+		../../translate.c \
+		../../triangle.c \
+		../../varray.c \
+		../../vb.c \
+		../../vbcull.c \
+		../../vbfill.c \
+		../../vbindirect.c \
+		../../vbrender.c \
+		../../vbxform.c \
+		../../vector.c \
+		../../vertices.c \
+		../../winpos.c \
+		../../xform.c \
+		../../zoom.c
+
+     MESAOBJS = ../../aatriangle.o \
+		../../accum.o \
+		../../alpha.o \
+		../../alphabuf.o \
+		../../attrib.o \
+		../../bbox.o \
+		../../bitmap.o \
+		../../blend.o \
+		../../buffers.o \
+		../../clip.o \
+		../../colortab.o \
+		../../config.o \
+		../../context.o \
+		../../copypix.o \
+		../../cva.o \
+		../../debug_xform.o \
+		../../depth.o \
+		../../dlist.o \
+		../../drawpix.o \
+		../../enable.o \
+		../../enums.o \
+		../../eval.o \
+		../../extensions.o \
+		../../feedback.o \
+		../../fog.o \
+		../../get.o \
+		../../hash.o \
+		../../hint.o \
+		../../image.o \
+		../../imaging.o \
+		../../light.o \
+		../../lines.o \
+		../../logic.o \
+		../../masking.o \
+		../../matrix.o \
+		../../mem.o \
+		../../mmath.o \
+		../../pb.o \
+		../../pipeline.o \
+		../../pixel.o \
+		../../pixeltex.o \
+		../../points.o \
+		../../polygon.o \
+		../../quads.o \
+		../../rastpos.o \
+		../../readpix.o \
+		../../rect.o \
+		../../scissor.o \
+		../../shade.o \
+		../../span.o \
+		../../stages.o \
+		../../state.o \
+		../../stencil.o \
+		../../teximage.o \
+		../../texobj.o \
+		../../texstate.o \
+		../../texture.o \
+		../../texutil.o \
+		../../translate.o \
+		../../triangle.o \
+		../../varray.o \
+		../../vb.o \
+		../../vbcull.o \
+		../../vbfill.o \
+		../../vbindirect.o \
+		../../vbrender.o \
+		../../vbxform.o \
+		../../vector.o \
+		../../vertices.o \
+		../../winpos.o \
+		../../xform.o \
+		../../zoom.o
+
+#ifdef i386Architecture
+     X86_SRCS = ../../X86/common_x86.c \
+		../../X86/common_x86_asm.S \
+		../../X86/x86.c \
+		../../X86/x86_cliptest.S \
+		../../X86/x86_vertex.S \
+		../../X86/x86_xform_masked2.S \
+		../../X86/x86_xform_masked3.S \
+		../../X86/x86_xform_masked4.S \
+		../../X86/x86_xform_raw2.S \
+		../../X86/x86_xform_raw3.S \
+		../../X86/x86_xform_raw4.S
+
+     X86_OBJS = ../../X86/common_x86.o \
+		../../X86/common_x86_asm.o \
+		../../X86/x86.o \
+		../../X86/x86_cliptest.o \
+		../../X86/x86_vertex.o \
+		../../X86/x86_xform_masked2.o \
+		../../X86/x86_xform_masked3.o \
+		../../X86/x86_xform_masked4.o \
+		../../X86/x86_xform_raw2.o \
+		../../X86/x86_xform_raw3.o \
+		../../X86/x86_xform_raw4.o
+
+#if MesaUseMMX
+     MMX_SRCS = ../../X86/mmx_blend.S
+
+     MMX_OBJS = ../../X86/mmx_blend.o
+#endif
+
+#if MesaUse3DNow
+   3DNOW_SRCS = ../../X86/3dnow.c \
+		../../X86/3dnow_norm_raw.S \
+		../../X86/3dnow_vertex.S \
+		../../X86/3dnow_xform_masked1.S \
+		../../X86/3dnow_xform_masked2.S \
+		../../X86/3dnow_xform_masked3.S \
+		../../X86/3dnow_xform_masked4.S \
+		../../X86/3dnow_xform_raw1.S \
+		../../X86/3dnow_xform_raw2.S \
+		../../X86/3dnow_xform_raw3.S \
+		../../X86/3dnow_xform_raw4.S
+
+   3DNOW_OBJS = ../../X86/3dnow.o \
+		../../X86/3dnow_norm_raw.o \
+		../../X86/3dnow_vertex.o \
+		../../X86/3dnow_xform_masked1.o \
+		../../X86/3dnow_xform_masked2.o \
+		../../X86/3dnow_xform_masked3.o \
+		../../X86/3dnow_xform_masked4.o \
+		../../X86/3dnow_xform_raw1.o \
+		../../X86/3dnow_xform_raw2.o \
+		../../X86/3dnow_xform_raw3.o \
+		../../X86/3dnow_xform_raw4.o
+#endif
+
+#if MesaUseKatmai
+  KATMAI_SRCS = ../../X86/katmai.c \
+		../../X86/katmai_norm_raw.S \
+		../../X86/katmai_vertex.S \
+		../../X86/katmai_xform_masked1.S \
+		../../X86/katmai_xform_masked2.S \
+		../../X86/katmai_xform_masked3.S \
+		../../X86/katmai_xform_masked4.S \
+		../../X86/katmai_xform_raw1.S \
+		../../X86/katmai_xform_raw2.S \
+		../../X86/katmai_xform_raw3.S \
+		../../X86/katmai_xform_raw4.S
+
+  KATMAI_OBJS = ../../X86/katmai.o \
+		../../X86/katmai_norm_raw.o \
+		../../X86/katmai_vertex.o \
+		../../X86/katmai_xform_masked1.o \
+		../../X86/katmai_xform_masked2.o \
+		../../X86/katmai_xform_masked3.o \
+		../../X86/katmai_xform_masked4.o \
+		../../X86/katmai_xform_raw1.o \
+		../../X86/katmai_xform_raw2.o \
+		../../X86/katmai_xform_raw3.o \
+		../../X86/katmai_xform_raw4.o
+#endif
+#endif
+
+#ifdef GlxSoProf
+       LOSRCS = ../../../../lowpc.c
+       HISRCS = ../../../../highpc.c
+
+       LOOBJS = ../../../../lowpc.o
+       HIOBJS = ../../../../highpc.o
+#endif
+
+      ASMSRCS = $(X86_SRCS) $(MMX_SRCS) $(3DNOW_SRCS) $(KATMAI_SRCS)
+      ASMOBJS = $(X86_OBJS) $(MMX_OBJS) $(3DNOW_OBJS) $(KATMAI_OBJS)
+
+   COMMONSRCS = ../common/mm.c ../common/hwlog.c
+   COMMONOBJS = ../common/mm.o ../common/hwlog.o
+
+         SRCS = $(LOSRCS) $(DRISRCS) $(DRMSRCS) $(MESASRCS) \
+		$(ASMSRCS) $(COMMONSRCS) $(MGASRCS) $(HISRCS)
+         OBJS = $(LOOBJS) $(DRIOBJS) $(DRMOBJS) $(MESAOBJS) \
+		$(ASMOBJS) $(COMMONOBJS) $(MGAOBJS) $(HIOBJS)
+
+REQUIREDLIBS += MathLibrary 
+#if !GlxBuiltInMga
+REQUIREDLIBS += -L../../../.. -lGL -L../../../../../X11 -lX11
+#endif
+
+
+#if !GlxUseBuiltInDRIDriver
+#undef DoNormalLib NormalLibGlx
+#undef DoExtraLib SharedLibGlx
+#undef DoDebugLib DebugLibGlx
+#undef DoProfileLib ProfileLibGlx
+#endif
+
+#include <Library.tmpl>
+
+LibraryObjectRule()
+
+SubdirLibraryRule($(OBJS))
+NormalLintTarget($(SRCS))
+
+#if !GlxUseBuiltInDRIDriver
+LIBNAME = mga_dri.so
+ALL_OBJS = $(OBJS)
+ALL_DEPS = DONE
+SharedDepModuleTarget($(LIBNAME),$(ALL_DEPS),$(ALL_OBJS))
+InstallDynamicModule($(LIBNAME),$(MODULEDIR),dri)
+
+#ifdef GlxSoProf
+SOPROF_LIBNAME = _mga_dri_p
+NormalDepLibraryTarget($(SOPROF_LIBNAME),$(ALL_DEPS),$(ALL_OBJS))
+InstallLibrary($(SOPROF_LIBNAME),$(MODULEDIR)/dri)
+#endif
+#endif
+
+DependTarget()

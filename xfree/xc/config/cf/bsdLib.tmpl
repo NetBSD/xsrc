@@ -1,0 +1,63 @@
+XCOMM $XConsortium: bsdLib.tmpl /main/3 1996/09/28 16:09:25 rws $
+XCOMM $XFree86: xc/config/cf/bsdLib.tmpl,v 3.6 2000/08/28 15:29:08 dawes Exp $
+
+/*
+ * NetBSD/FreeBSD/OpenBSD shared library template
+ */
+
+#if !UseElfFormat
+
+#ifndef SharedXtReqs
+#define SharedXtReqs /**/
+#endif
+#ifndef SharedXawReqs
+#define SharedXawReqs /**/
+#endif
+#ifndef SharedXmuReqs
+# if !defined(Mc68020Architecture) || !defined(OpenBSDArchitecture)
+#  define SharedXmuReqs $(LDPRELIBS) $(XTOOLONLYLIB) $(XONLYLIB)
+# else
+   /* At least the hp300 and the sun3 OpenBSD ports need that */
+#  define SharedXmuReqs $(LDPRELIBS) $(XTOOLLIB) $(EXTENSIONLIB) $(XONLYLIB)
+# endif
+#endif
+
+#else /* UseElfFormat */
+
+/*
+ * NetBSD/FreeBSD (ELF) shared library template
+ * Cloned from Linux ELF rules, but with a minor number.
+ */
+
+#ifndef FixupLibReferences
+#define FixupLibReferences()						@@\
+XMULIBONLY = -lXmu							@@\
+XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
+#endif
+
+#ifndef XawClientLibs
+#define XawClientLibs $(XAWLIB) $(XMULIBONLY) $(XTOOLLIB) $(XPMLIB) $(XLIB)
+#endif
+
+#define CplusplusLibC
+#define FrescoSysLibs	CplusplusLibC MathLibrary
+
+/* Allow for libpthread, as overridden by OS definitions */
+#if !defined(SharedX11Reqs)
+#define SharedX11Reqs
+#endif
+#define SharedOldXReqs	$(LDPRELIB) $(XLIBONLY)
+#define SharedXtReqs	$(LDPRELIB) $(XLIBONLY) $(SMLIB) $(ICELIB)
+#define SharedXawReqs	$(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XPMLIB) $(XLIB)
+#define SharedXaw6Reqs	$(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedXmuReqs	$(LDPRELIB) $(XTOOLLIB) $(XLIB)
+#define SharedXextReqs	$(LDPRELIB) $(XLIBONLY)
+#define SharedXiReqs	$(LDPRELIB) $(XLIB)
+#define SharedPexReqs	$(LDPRELIB) $(XLIBONLY) MathLibrary
+#define SharedXtstReqs	$(LDPRELIB) $(XLIB)
+#define SharedXieReqs	$(LDPRELIB) $(XLIBONLY)
+#define SharedSMReqs	$(LDPRELIB) $(ICELIB)
+#define SharedFrescoReqs	$(LDPRELIB) $(XLIBONLY) FrescoSysLibs
+#define SharedXtfReqs	$(LDPRELIB) $(FRESCOLIB) $(XTOOLLIB) $(XLIB) FrescoSysLibs
+
+#endif /* UseElfFormat */

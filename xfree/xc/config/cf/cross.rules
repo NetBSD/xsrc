@@ -1,0 +1,52 @@
+XCOMM $XFree86: xc/config/cf/cross.rules,v 1.2 2000/12/09 03:33:18 dawes Exp $
+
+#define HostLinkRule(target, flags, src, libs)  cc -I$(BUILDINCDIR) -o target src
+
+/* ComplexHostProgramTarget - Compile a program such that we can run
+ * it on this host, i.e., don't use the default cross compiler.
+ */
+#ifndef ComplexHostProgramTarget
+#define	ComplexHostProgramTarget(program)				@@\
+              CC=cc							@@\
+    STD_INCLUDES=							@@\
+          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)		@@\
+EXTRA_LOAD_FLAGS=							@@\
+        PROGRAM = program						@@\
+									@@\
+AllTarget(program)							@@\
+									@@\
+program: $(OBJS) $(DEPLIBS)						@@\
+	RemoveTargetProgram($@)						@@\
+	HostLinkRule($@,$(_NOOP_),$(OBJS),$(DEPLIBS) $(LOCAL_LIBRARIES)) @@\
+									@@\
+DependTarget()								@@\
+									@@\
+LintTarget()								@@\
+									@@\
+clean::									@@\
+	RemoveFile(ProgramTargetName(program))
+#endif /* ComplexHostProgramTarget */
+
+#ifndef SimpleHostProgramTarget
+#define SimpleHostProgramTarget(program)				@@\
+           SRCS = program.c						@@\
+									@@\
+              CC=cc							@@\
+    STD_INCLUDES=							@@\
+          CFLAGS=$(TOP_INCLUDES) $(INCLUDES) $(BOOTSTRAPCFLAGS)		@@\
+EXTRA_LOAD_FLAGS=							@@\
+        PROGRAM = program						@@\
+									@@\
+AllTarget(program)							@@\
+									@@\
+program: program.o $(DEPLIBS)						@@\
+	RemoveTargetProgram($@)						@@\
+	HostLinkRule($@,$(_NOOP_),program.o,$(DEPLIBS) $(LOCAL_LIBRARIES)) @@\
+									@@\
+DependTarget()								@@\
+									@@\
+LintTarget()								@@\
+									@@\
+clean::									@@\
+	RemoveFile(ProgramTargetName(program))
+#endif /* SimpleHostProgramTarget */

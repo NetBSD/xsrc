@@ -1,0 +1,58 @@
+XCOMM $XFree86: xc/programs/Xserver/miext/shadow/Imakefile,v 1.3 2000/09/12 19:40:13 keithp Exp $
+XCOMM 
+XCOMM 
+
+#define IHaveModules
+#include <Server.tmpl>
+
+#ifdef XFree86Version
+#if DoLoadableServer
+XFMODSRC = shmodule.c
+XFMODOBJ = shmodule.o
+#endif
+#endif
+
+SRCS =  $(XFMODSRC) \
+	shadow.c \
+	shalloc.c \
+	shplanar.c \
+	shplanar8.c \
+	shpacked.c \
+	shrot8pack.c \
+	shrot16pack.c \
+	shrot32pack.c
+
+OBJS =  $(XFMODOBJ) \
+	shadow.o \
+	shalloc.o \
+	shplanar.o \
+	shplanar8.o \
+	shpacked.o \
+	shrot8pack.o \
+	shrot16pack.o \
+	shrot32pack.o
+
+#if BuildRender
+RENDERINCS=-I../../render -I$(EXTINCSRC)
+#endif
+
+   INCLUDES = -I. -I../../mi -I../../fb -I../../include -I$(XINCLUDESRC) \
+	      -I$(FONTINCSRC) -I$(XF86SRC)/common $(EXTRAINCLUDES) \
+	      $(RENDERINCS)
+   LINTLIBS = ../../dix/llib-ldix.ln ../../os/llib-los.ln \
+	     ../../mi/llib-lmi.ln
+
+NormalLibraryObjectRule()
+LibraryModuleTarget(shadow,$(OBJS))
+LintLibraryTarget(shadow,$(SRCS))
+
+NormalLintTarget($(SRCS))
+
+InstallLibraryModule(shadow,$(MODULEDIR),.)
+
+#ifndef OS2Architecture
+DependTarget()
+#endif
+
+InstallDriverSDKLibraryModule(shadow,$(DRIVERSDKMODULEDIR),.)
+InstallDriverSDKNonExecFile(shadow.h,$(DRIVERSDKINCLUDEDIR))

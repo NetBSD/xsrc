@@ -1,0 +1,130 @@
+/* $XFree86: xc/config/cf/nto.cf,v 1.3 2000/07/07 20:06:56 tsi Exp $ */
+/* Get X to build using the gcc toolchain, from QNX4 */
+/* Let us try to separate the x86 stuff out of here as well... */ 
+
+
+#ifndef OSName
+#define OSName 			Neutrino	
+#endif
+
+#ifndef OSVendor
+#define OSVendor		QNX Corp.
+#endif
+#ifndef OSMajorVersion
+#define OSMajorVersion		2
+#endif
+#ifndef OSMinorVersion
+#define OSMinorVersion		0
+#endif
+
+#if defined(i386Architecture)
+#define BuildServer 		YES
+#else
+#define BuildServer		NO
+#endif
+
+/* Use a non-broken shell ... */
+#define BourneShell		/bin/pdksh
+#define OSDefines		-DNO_REGEX -DSTRINGS_ALIGNED
+#define XawI18nDefines		-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
+#define StripInstalledPrograms	NO
+#define BuildLBX		YES 
+
+#define SourceDefines		-D_POSIX_SOURCE
+#define CrossCompiling		YES
+#define DoRanlibCmd 		YES
+#define GccUsesGas		YES
+#define MkdirHierCmd		mkdir -p
+
+#define InstallCmd		/usr/X11R6/bin/install.qnx
+#define DefaultCCOptions	
+#define LibraryCCOptions
+#define ServerCCOptions		
+#define LocalLibraries
+#define CLibrary
+#define PosixLibraries
+#define ConnectionFlags 	-DTCPCONN 
+
+#define StandardCppDefines	-traditional StandardDefines
+#define PreProcessCmd		CppCmd
+
+#define HasShm			NO    /* For now as well */
+#define HasSockets		YES
+#define HasPutenv		YES
+#define HasCbrt			NO
+#define HasShadowPasswd	YES
+
+#define AvoidNullMakeCommand    YES
+#define CompressAllFonts        YES
+#define Malloc0ReturnsNull      YES
+#define NeedConstPrototypes     YES
+#define NeedFunctionPrototypes  YES
+#define NeedNestedPrototypes    YES
+#define NeedVarargsPrototypes   YES
+#define OptimizedCDebugFlags	-O2
+#define DefaultCDebugFlags	-O2
+
+#ifndef NeedWidePrototypes
+#define NeedWidePrototypes      NO
+#endif
+
+#define LexLib
+#define TermcapLibrary		-lncurses
+#ifndef UseStaticTermcapLib
+#define UseStaticTermcapLib     NO
+#endif
+
+/* Here, we put in the #defines which are CPU-specific */
+/* Note that the full paths to the tools will go away when self-hosted */
+
+#ifdef i386Architecture
+#define BootstrapCFlags		-D__QNXNTO__ -Di386
+#define OSDefines		-DNO_REGEX -DSTRINGS_ALIGNED 
+#define NTODefines		-D__i386__ -D__ELF__ -D__QNXNTO__ -D_i386
+#define CcCmd			/usr/gcc/ntox86/bin/gcc -bntox86
+#define ArCmd			/usr/gcc/bin/ar cq
+#define LdCmd			/usr/gcc/bin/ld
+#define AsCmd			/usr/gcc/ntox86/bin/as
+#define RanlibCmd		/usr/gcc/bin/ranlib
+#define CppCmd			/usr/gcc/lib/gcc-lib/ntox86/2.8.1/cpp
+#define AsmDefines		-DUSE_GAS -D__ELF__ -D__QNXNTO__
+#define ExtraLibraries		-lsocket
+#endif
+
+/* MIPS architecture */
+#ifdef mipsArchitecture
+#define BootstrapCFlags		-D__QNXNTO__ -DMIPS
+#define OSDefines		-DNO_REGEX -DSTRINGS_ALIGNED
+#define NTODefines		-D__MIPS__ -D__ELF__ -D__QNXNTO__
+#define CcCmd			/usr/gcc/ntomips/bin/gcc -bntomips -EL
+#define ArCmd			/usr/gcc/bin/ar cq
+#define LdCmd			/usr/gcc/bin/ld
+#define AsCmd			/usr/gcc/ntomips/bin/as
+#define RanlibCmd		/usr/gcc/bin/ranlib
+#define AsmDefines		-DUSE_GAS -D__ELF__ -D__QNXNTO__
+#define ExtraLibraries		-lsocket 
+#endif
+
+/* Power PC support */
+#ifdef PPCArchitecture
+#define BootstrapCFlags		-D__QNXNTO__ -DPPC
+#define OSDefines		-DNO_REGEX -DSTRINGS_ALIGNED
+#define NTODefines		-D__PPC__ -D__ELF__ -D__QNXNTO__
+#define CcCmd			/usr/gcc/ntoppc/bin/gcc -bntoppc
+#define ArCmd			/usr/gcc/bin/ar cq
+#define LdCmd			/usr/gcc/bin/ld
+#define AsCmd			/usr/gcc/ntoppc/bin/as
+#define RanlibCmd		/usr/gcc/bin/ranlib
+#define AsmDefines		-DUSE_GAS -D__ELF__ -D__QNXNTO__
+#define ExtraLibraries		-lsocket
+#endif
+
+
+#define StandardDefines OSDefines SourceDefines NTODefines
+#define ServerOSDefines -DDDXTIME XFree86ServerOSDefines 
+#define ServerExtraDefines XFree86ServerDefines
+#define ExtraFilesToClean       *.err *.map 
+
+#include <nto.rules>
+#include <xfree86.cf>
+

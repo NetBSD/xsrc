@@ -1,0 +1,75 @@
+XCOMM $XConsortium: Imakefile /main/14 1996/11/03 19:58:41 kaleb $
+XCOMM $XFree86: xc/lib/font/fontfile/Imakefile,v 3.17 2000/09/19 12:46:08 eich Exp $
+#include <Server.tmpl>
+
+#if BuildServer && DoLoadableServer
+#define IHaveSubdirs
+#define NoLibSubdirs
+SUBDIRS = module
+#endif
+
+   INCLUDES = -I$(FONTINCSRC) -I../include -I$(SERVERSRC)/include \
+	      -I$(TOP)/lib/zlib -I$(XTOP)/include
+    HEADERS = 
+#ifdef FontFormatDefines
+FORMAT_DEFS = FontFormatDefines
+#endif
+
+#if BuildSpeedo
+SPEEDO_DEFINES = -DBUILD_SPEEDO
+#endif
+#if BuildType1
+TYPE1_DEFINES = -DBUILD_TYPE1
+#endif
+#if BuildCID
+CID_DEFINES = -DBUILD_CID
+#endif
+#if BuildFreeType
+FREETYPE_DEFINES = -DBUILD_FREETYPE
+#endif
+#if BuildXTrueType
+#if XTTInLibFont
+XTRUETYPE_DEFINES = -DBUILD_XTRUETYPE
+#endif
+#endif
+
+#if GzipFontCompression
+ GUNZIP_SRC = gunzip.c
+ GUNZIP_OBJ = gunzip.o
+  GZIP_DEFS = -DX_GZIP_FONT_COMPRESSION
+#endif
+
+ ATTRIBDEFS = -DFONTDIRATTRIB
+
+    DEFINES = StrcasecmpDefines $(ATTRIBDEFS) \
+	      $(SPEEDO_DEFINES) $(TYPE1_DEFINES) $(CID_DEFINES) \
+	      $(FREETYPE_DEFINES) $(XTRUETYPE_DEFINES) $(GZIP_DEFS)
+
+       SRCS = dirfile.c fontdir.c fontfile.c fileio.c fontscale.c \
+              defaults.c bitsource.c register.c renderers.c bufio.c \
+              decompress.c filewr.c printerfont.c ffcheck.c \
+	      fontenc.c encparse.c $(GUNZIP_SRC)
+       OBJS = dirfile.o fontdir.o fontfile.o fileio.o fontscale.o \
+              defaults.o bitsource.o register.o renderers.o bufio.o \
+              decompress.o filewr.o printerfont.o ffcheck.o \
+              fontenc.o encparse.o $(GUNZIP_OBJ)
+
+#define DoNormalLib NormalLibFont
+#define DoSharedLib SharedLibFont
+#define DoDebugLib DebugLibFont
+#define DoProfileLib ProfileLibFont
+#include <Library.tmpl>
+LibraryObjectRule()
+
+SpecialCLibObjectRule(fileio,$(ICONFIGFILES),$(GZIP_DEFS))
+
+SubdirLibraryRule($(OBJS))
+NormalLintTarget($(SRCS))
+
+#if BuildServer && DoLoadableServer
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
+
+DependTarget()
+

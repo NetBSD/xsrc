@@ -1,0 +1,43 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/Imakefile,v 3.11 2000/12/13 18:38:05 robin Exp $
+
+
+
+
+XCOMM $XConsortium: Imakefile /main/4 1996/09/28 17:24:25 rws $
+
+#include <Server.tmpl>
+
+SRCS = sco_init.c sco_video.c sco_io.c bios_devmem.c VTsw_sco.c \
+       sysv_kbd.c std_kbdEv.c sysv_tty.c sco_mouse.c \
+       libc_wrapper.c stdResource.c stdPci.o sigiostubs.c pm_noop.c \
+       kmod_noop.c agp_noop.c
+
+OBJS = sco_init.o sco_video.o sco_io.o bios_devmem.o VTsw_sco.o \
+       sysv_kbd.o std_kbdEv.o sysv_tty.o sco_mouse.o \
+       libc_wrapper.o stdResource.o stdPci.o sigiostubs.o pm_noop.o \
+       kmod_noop.o agp_noop.o
+
+INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
+           -I$(XINCLUDESRC)
+
+RESDEFINES = -DUSESTDRES
+
+DEFINES = $(RESDEFINES)
+
+SubdirLibraryRule($(OBJS))
+NormalLibraryObjectRule()
+
+LinkSourceFile(bios_devmem.c,../shared)
+LinkSourceFile(sysv_kbd.c,../shared)
+LinkSourceFile(std_kbdEv.c,../shared)
+LinkSourceFile(sysv_tty.c,../shared)
+LinkSourceFile(libc_wrapper.c,../shared)
+LinkSourceFile(stdResource.c,../shared)
+LinkSourceFile(stdPci.c,../shared)
+LinkSourceFile(sigiostubs.c,../shared)
+LinkSourceFile(pm_noop.c,../shared)
+LinkSourceFile(kmod_noop.c,../shared)
+LinkSourceFile(agp_noop.c,../shared)
+
+DependTarget()
+

@@ -1,0 +1,72 @@
+XCOMM $XFree86: xc/config/cf/Server.tmpl,v 3.16 2000/02/18 16:23:07 dawes Exp $
+/*
+ * Server imakefile info  - this contains any special redefinitions, etc.
+ * that Imakefiles in the server subtree will need.
+ */
+
+XCOMM $TOG: Server.tmpl /main/15 1997/07/16 14:43:38 kaleb $
+
+#define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)" LDSTRIPFLAGS="$(LDSTRIPFLAGS)"
+
+#ifndef ServerCcCmd
+#define ServerCcCmd CcCmd
+#endif
+#ifndef ServerCCOptions
+#define ServerCCOptions DefaultCCOptions
+#endif
+#ifndef ServerDefines
+#define ServerDefines StandardDefines
+#endif
+/* Note: Changing ServerCDebugFlags has no effect because CDEBUGFLAGS is over-
+   ridden by PassCDebugFlags in the parent Makefile or toplevel xmakefile. */
+#ifndef ServerCDebugFlags
+#define ServerCDebugFlags DefaultCDebugFlags
+#endif
+#ifndef DoThreadedServer
+#define DoThreadedServer NO
+#endif
+#ifndef DoLoadableServer
+#define DoLoadableServer NO
+#endif
+#ifndef MakeDllModules
+#define MakeDllModules NO
+#endif
+#ifndef InstallServerSetUID
+#define InstallServerSetUID NO
+#endif
+
+/*
+ * SetUIDServerTarget - compile, link, and relink a setuid server
+ */
+#ifndef SetUIDServerTarget
+#if InstallServerSetUID
+#define	SetUIDServerTarget(server,subdirs,objects,libs,syslibs)		@@\
+ServerTargetWithFlags(server,subdirs,objects,libs,syslibs,$(INSTUIDFLAGS))
+#else
+#define	SetUIDServerTarget ServerTarget
+#endif
+#endif /* SetUIDServerTarget */
+
+         CC = ServerCcCmd
+  CCOPTIONS = ServerCCOptions
+#if DoThreadedServer
+SERVER_THREAD_DEFINES = XThreadsDefines ThreadTypeDefines
+#endif
+STD_DEFINES = ServerDefines $(SERVER_THREAD_DEFINES)
+CDEBUGFLAGS = ServerCDebugFlags
+EXT_DEFINES = ExtensionDefines
+
+GLX_DEFINES = GlxDefines
+ 
+#ifndef GlxStaticServerLib
+#ifndef GlxStubLib
+#define GlxStubLib    NO
+#endif
+#endif
+#ifndef GlxUseSGISI
+#define GlxUseSGISI   NO
+#endif
+
+#ifdef XFree86Version
+#include <xf86.tmpl>
+#endif

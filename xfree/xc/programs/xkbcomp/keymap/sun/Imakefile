@@ -1,0 +1,9 @@
+XCOMM $XConsortium: Imakefile /main/2 1996/08/31 12:18:50 kaleb $
+XCOMM $XFree86: xc/programs/xkbcomp/keymap/sun/Imakefile,v 3.4 2000/10/27 18:31:07 dawes Exp $
+
+     DATAFILES = de es fi fr no pl ru se uk us 
+
+all::
+
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/keymap/sun)
+DependTarget()

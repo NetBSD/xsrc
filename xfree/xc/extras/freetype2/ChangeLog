@@ -1,0 +1,215 @@
+2000-12-01  David Turner  <david.turner@freetype.org>
+
+	* builds/unix/configure.in, builds/unix/configure,
+	builds/cygwin/configure.in, builds/cygwin/configure: setting 
+	"version_info" to 6:1:0 for the 2.0.1 release
+
+	* CHANGES: added a summary of changes between 2.0.1 and 2.0
+
+	* builds/unix/ftconfig.in, builds/cygwin/ftconfig.in: changes
+	to allow compilation under Unix with the Unix-specific config
+	files..
+
+2000-12-01  Werner Lemberg  <wl@gnu.org>
+
+	* INSTALL: Revised.
+	* builds/compiler/bcc-dev.mk, builds/compiler/visualage.mk,
+	builds/compiler/bcc.mk, builds/win32/w32-bcc.mk,
+	builds/win32/w32-bccd.mk: Revised.
+	* include/freetype/config/ftbuild.h,
+	include/freetype/internal/internal.h: Revised.
+	* include/freetype/ftimage.h: Updated to new header inclusion scheme.
+
+2000-11-30  Werner Lemberg  <wl@gnu.org>
+
+	* builds/toplevel.mk (.PHONY): Adding `distclean'.
+	* builds/unix/detect.mk (.PHONY): Adding `devel', `unix', `lcc',
+	`setup'.
+
+2000-11-30  David Turner  <david.turner@freetype.ogr>
+
+	* INSTALL: Slightly updated the quick starter documentation to
+	include IDE compilation, prevent against BSD Make, and specify "make
+	setup" instead of a single "make" for build configuration.
+
+	* include/config/ftbuild.h, include/internal/internal.h: Added new
+	configuration files used to determine the location of all public,
+	configuration, and internal header files for FreeType 2.  Modified
+	all headers under "include/freetype" to reflect this change.  Note
+	that we still need to change the library source files themselves
+	though.
+
+	* builds/compiler/bcc.mk, builds/compiler/bcc-dev.mk,
+	builds/win32/w32-bcc.mk, builds/win32/w32-bccd.mk,
+	builds/win32/detect.mk: Added new files to support compilation with
+	the free Borland C++ command-line compiler.  Modified the detection
+	rules to recognize the new "bcc32" target in "make setup bcc32".
+
+	* src/sfnt/ttcmap.c, src/sfnt/ttpost.c, src/sfnt/ttsbit.c,
+	src/truetype/ttobjs.c, src/truetype/ttgload.c,
+	src/truetype/ttinterp.c: Fixed a few comparisons that Borland C++
+	didn't really like.  Basically, this compiler complains when FT_UInt
+	is compared to FT_UShort (apparently, it promotes `UShort' to `Int'
+	in these cases).
+
+2000-11-30  Tom Kacvinsky  <tjk@ams.org>
+
+	* t2objs.c (T2_Init_Face): Added calculation of `face->height' for
+	pure CFF fonts.
+
+	* t1objs.c (T1_Init_Face): Fixed computation of `face->height'.
+
+2000-11-29  David Turner  <david.turner@freetype.org>
+
+	* src/base/ftbbox.c (BBox_Conic_Check): Fixed a really stupid
+	bug in the formula used to compute the conic Bézier extrema
+	of non-monotonous arcs.
+
+2000-11-29  Werner Lemberg  <wl@gnu.org>
+
+	* src/base/ftcalc.c (FT_SqrtFixed), src/base/ftobjs.c
+	(FT_Set_Renderer): Use FT_EXPORT_DEF.
+	* src/cache/ftcimage.c (FTC_Image_Cache_Lookup),
+	src/cache/ftcmanag.c (FTC_Manager_Done, FTC_Manager_Reset,
+	FTC_Manager_Lookup_Face, FTC_Manager_Lookup_Size,
+	FTC_Manager_Register_Cache), src/cache/ftcsbits.c
+	(FTC_SBit_Cache_Lookup): Ditto.
+
+	* src/include/freetype/cache/ftcglyph.h (FTC_GlyphNode_Init),
+	src/include/freetype/ftmac.h (FT_New_Face_From_FOND): Use FT_EXPORT.
+
+2000-11-29  Werner Lemberg  <wl@gnu.org>
+
+	* src/sfnt/sfdriver.c: Include ttsbit.h and ttpost.h only
+	conditionally.
+
+	* src/truetype/ttdriver.c (Set_Char_Sizes, Set_Pixel_Sizes): Set
+	`size->strike_index' only conditionally.
+
+	* src/type1/t1driver.c, src/type1/t1objs.c: Include t1afm.h only
+	conditionally.
+
+	* src/winfonts/winfnt.h: Move all type definitions to...
+	* src/include/freetype/internal/fnttypes.h: New file.
+	* src/winfonts/winfnt.c: Use it.
+
+2000-11-29  ??? ???  <darin@eazel.com>
+
+	* include/freetype/internal/ftdebug.h: Replaced FT_CAT and FT_XCAT
+	with a direct solution (which also satifies picky compilers).
+
+2000-11-28  YAMANO-UCHI Hidetoshi <mer@din.or.jp>
+
+	* src/truetype/ttobjs.c (TT_Init_Size): Fix #ifdef's to work with
+	disabled interpreter also.
+
+	* src/base/ftnames.c (FT_Get_Sfnt_Name_Count): Fix incorrect
+	parentheses.
+
+2000-11-26  Tom Kacvinsky  <tjk@ams.org>
+
+	* src/cff/t2gload.c (T2_Parse_CharStrings): Added logic to glyph
+	width setting code to take into account even/odd argument counts
+	and glyph width operand before endchar/hmoveto/vmoveto.
+
+2000-11-26  Werner Lemberg  <wl@gnu.org>
+
+	* builds/ansi/ansi.mk: Fix inclusion order of files.
+
+2000-11-26  Keith Packard  <keithp@keithp.com>
+
+	* src/type1/t1objs.c (T1_Init_Face): Compute style flags.
+
+2000-11-26  Werner Lemberg  <wl@gnu.org>
+
+	* builds/compiler/ansi-cc.mk (CLEAN_LIBRARY): Fix rule and
+	conditional.
+
+2000-11-23  Werner Lemberg  <wl@gnu.org>
+
+	* src/type1/t1load.c (parse_subrs, parse_charstrings): Use decrypt
+	function from PSAux module.
+
+	* src/type1/t1parse.c (T1_Done_Parse): Renamed to...
+	(T1_Finalize_Parser): New function (to avoid name clash with a
+	function in the PSAux module).
+	(T1_Decrypt): Removed since it is duplicated in the PSAux module.
+	(T1_Get_Private_Dict): Added `psaux' as new parameter; use decrypt
+	function from PSAux module.
+
+	* src/type1/t1parse.h: Adapted.
+
+2000-11-22  Tom Kacvinsky  <tjk@ams.org>
+
+	* src/cff/t2objs.c (T2_Init_Face): For pure CFF fonts, set 
+	`root->num_faces' to `cff->num_faces' and set `units_per_EM'
+	to 1000.
+
+	* src/cff/t2parse.c (parse_t2_real): Fixed real number parsing
+	loop.
+	
+	* src/cff/t2load.c (T2_Get_String): Called T2_Get_Name with a
+	sid that was off by one.
+
+2000-11-16  David Turner <david@freetype.org>
+
+	* src/autohint/ahtypes.h (AH_Hinter): Added new fields to control
+	auto-hinting of synthetic Type 1 fonts.
+
+	* src/autohint/ahhint.c (ah_hinter_load, ah_hinter_load_glyph):
+	Added auto-hinting support of synthetic Type 1 fonts.
+
+2000-11-12  Tom Kacvinsky  <tjk@ams.org>
+
+	* src/sfnt/ttload.c (TT_LookUp_Table, TT_Load_Generic_Table): Change
+	tracing output.
+
+	* src/sfnt/sfobjs.c (SFNT_Load_Face): Set boolean variable
+	`has-outline' to true only if the font has a `glyf' or `CFF ' table.
+
+2000-11-11  Werner Lemberg  <wl@gnu.org>
+
+	* builds/win32/visualc/freetype.dsp: Fix raster1->raster and
+	type1z->type1.
+
+2000-11-11  Tom Kacvinsky  <tjk@ams.org>
+
+	* builds/unix/freetype-config.in, builds/cygwin/freetype-config.in:
+	Added a --libtool option.  When freetype-config --libtool is
+	invoked, the absolute path to the libtool convenience library
+	is returned.
+
+2000-11-11  Werner Lemberg  <wl@gnu.org>
+
+	* builds/cygwin/cygwin-def.in: Same fix as previous.
+
+2000-11-10  Tom Kacvinsky  <tjk@ams.org>
+
+	* builds/unix/unix-def.in: Add
+
+	    INSTALL_PROGRAM := @INSTALL_PROGRAM@
+	    INSTALL_SCRIPT  := @INSTALL_SCRIPT@
+
+	so that installation of freetype-config does not fail.
+
+2000-11-10  Werner Lemberg  <wl@gnu.org>
+
+	* builds/cygwin/freetype-config.in, builds/unix/freetype-config.in:
+	Move test down for empty --exec-prefix.
+	Fix --version.
+
+	* builds/cygwin/install.mk, builds/unix/install.mk: Use
+	$(INSTALL_SCRIPT) for installation of freetype-config.
+
+	* builds/cygwin/install.mk: Fix clean target names.
+
+2000-11-09  David Turner  <david@freetype.org>
+
+	* Version 2.0 released.
+	=======================
+
+
+Local Variables:
+version-control: never
+coding: latin-1
+End:

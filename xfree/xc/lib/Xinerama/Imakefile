@@ -1,0 +1,29 @@
+XCOMM $XFree86: xc/lib/Xinerama/Imakefile,v 1.2 2000/02/29 18:38:42 dawes Exp $
+
+#define DoNormalLib NormalLibXinerama
+#define DoSharedLib SharedLibXinerama
+#define DoDebugLib DebugLibXinerama
+#define DoProfileLib ProfileLibXinerama
+#define LibName Xinerama
+#define SoRev SOXINERAMAREV
+#define LibHeaders NO
+
+#include <Threads.tmpl>
+
+#ifdef SharedXineramaReqs
+REQUIREDLIBS = SharedXineramaReqs
+#endif
+
+#if Malloc0ReturnsNull
+ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+#endif
+
+      DEFINES = $(ALLOC_DEFINES)
+     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC)
+         SRCS = Xinerama.c
+         OBJS = Xinerama.o
+     LINTLIBS = $(LINTXLIB)
+
+#include <Library.tmpl>
+
+DependTarget()

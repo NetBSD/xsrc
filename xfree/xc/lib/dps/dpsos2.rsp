@@ -1,0 +1,13 @@
+XDPS.obj csconndi.obj csfindNX.obj cslibext.obj cslibint.obj csopendi.obj+
+csstartNX.obj dpsXclient.obj dpsXcmu.obj dpsXops.obj dpsXpriv.obj+
+dpsXtdisp.obj dpsabbrev.obj dpsclient.obj dpsclrops.obj dpsctrlops.obj+
+dpsctxtops.obj dpsdataops.obj dpsdict.obj dpsexcept.obj dpsfontops.obj+
+dpsgsttops.obj dpsioops.obj dpsl2ops.obj dpsmathops.obj dpsmiscops.obj+
+dpsmtrxops.obj dpsopstack.obj dpspathops.obj dpspntops.obj dpsprintf.obj+
+dpssysnames.obj dpssysops.obj dpswinops.obj psXops.obj psclrops.obj+
+psctrlops.obj psctxtops.obj psdataops.obj psfontops.obj psgsttops.obj+
+psioops.obj psl2ops.obj psmathops.obj psmiscops.obj psmtrxops.obj+
+psopstack.obj pspathops.obj pspntops.obj pssysops.obj pswinops.obj+
+/NOI /NOL /NOD /BAT
+dps.dll
+dps.map

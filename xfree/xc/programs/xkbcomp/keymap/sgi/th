@@ -1,0 +1,17 @@
+// $TOG: th /main/4 1997/06/14 06:36:57 kaleb $
+default xkb_keymap "indy" {
+    xkb_keycodes	{ include "sgi/indy(universal)"	};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols 	{
+	include "en_US(pc_universal)+th+group(shift_toggle)"
+    };
+    xkb_geometry	{ include "sgi/indy(pc102)"	};
+};
+xkb_keymap "indigo" {
+    xkb_keycodes	{ include "sgi/indigo(pc102)"	};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols 	{ include "en_US(pc102)+th+group(shift_toggle)"	};
+    xkb_geometry	{ include "sgi/indigo(pc102)"	};
+};

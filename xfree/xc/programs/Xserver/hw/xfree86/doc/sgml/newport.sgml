@@ -1,0 +1,53 @@
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN" [
+<!ENTITY % defs SYSTEM "defs.ent"> %defs;
+]>
+
+<article>
+<title>Information for newport Users
+<author>Guido Guenther
+<date>1 August 2000
+<ident>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/newport.sgml,v 1.2 2000/12/12 18:54:29 dawes Exp $
+</ident>
+<toc>
+
+<sect>Supported Hardware
+<p>
+This is an unaccelerated driver for the SGI Indy's newport cards. Both the
+ 8bit and 24bit versions are tested and working with some limitations(see below). 
+The 24bit newport additionally works in 8bit mode only.
+
+<sect>Notes
+<p>
+<itemize>
+  <item>X -configure does not generate a XF86Config file
+</itemize>
+
+
+<sect>Configuration
+<p>
+The following Section "Device" options are supported by the newport driver:
+<itemize>
+  <item>Option "bitplanes" "x"
+	Gives the maximum number of bitplanes your card supports (8 or 24).
+</itemize>
+
+
+<sect>Authors
+<p>
+<itemize>
+  <item>Guido Guenther <email>guido.guenther@gmx.net</email>
+</itemize>
+
+
+<sect>Acknowledgements
+<p>
+<itemize>
+  <item>Gleb O. Raiko <email>raiko@niisi.msk.ru</email> for getting the beast to build
+  <item>Ralf Baechle <email>ralf@oss.sgi.com</email> for his patience...
+  <item>Ulf Carlsson <email>ulfc@calypso.engr.sgi.com</email> for comments and the dynamic loader code
+  <item>Nina A. Podolskaya <email>nap@niisi.msk.ru</email> for dynamic loader code
+  <item>all the guys who wrote the newport_con linux kernel code
+</itemize>
+
+</article>

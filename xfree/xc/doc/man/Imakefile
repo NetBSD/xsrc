@@ -1,0 +1,30 @@
+XCOMM $XConsortium: Imakefile,v 1.9 94/02/10 21:17:55 rws Exp $
+
+
+
+XCOMM $XFree86: xc/doc/man/Imakefile,v 1.5 2000/12/14 20:59:06 dawes Exp $
+
+#define IHaveSubdirs
+#define PassCDebugFlags
+
+#if BuildXvLibrary
+XVDIR = Xv
+#endif
+#if BuildGLXLibrary
+GLXDIRS = GL GLw
+#endif
+
+#if InstallMiscManPages
+MISCDIR = misc
+#endif
+
+#if InstallLibManPages
+LIBMANDIRS = X11 Xt Xext Xi Xau $(XVDIR) $(GLXDIRS)
+#endif
+
+SUBDIRS = general $(LIBMANDIRS) $(MISCDIR)
+
+all::
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

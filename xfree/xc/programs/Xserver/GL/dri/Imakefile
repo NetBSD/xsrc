@@ -1,0 +1,33 @@
+XCOMM $XFree86: xc/programs/Xserver/GL/dri/Imakefile,v 1.5 2000/02/23 04:46:52 martin Exp $
+
+#define IHaveModules
+#include <Server.tmpl>
+
+#if DoLoadableServer
+MSRC = drimodule.c
+MOBJ = drimodule.o
+#endif
+
+         SRCS = xf86dri.c dri.c $(MSRC)
+         OBJS = xf86dri.o dri.o $(MOBJ)
+
+     INCLUDES = -I$(SERVERSRC)/include -I$(XTOP)/include -I$(EXTINCSRC) \
+		-I$(XF86OSSRC) -I$(XF86COMSRC) \
+		-I../include -I../glx -I$(LIBSRC)/GL/include \
+		-I$(SERVERSRC)/mi -I$(FONTINCSRC)
+      DEFINES = $(GLX_DEFINES)
+
+LinkSourceFile(xf86dri.h,$(LIBSRC)/GL/dri)
+LinkSourceFile(xf86dristr.h,$(LIBSRC)/GL/dri)
+
+ModuleObjectRule()
+LibraryModuleTarget(dri,$(OBJS))
+InstallLibraryModule(dri,$(MODULEDIR),extensions)
+
+DependTarget()
+
+InstallDriverSDKLibraryModule(dri,$(DRIVERSDKMODULEDIR),extensions)
+
+InstallDriverSDKNonExecFile(dri.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(sarea.h,$(DRIVERSDKINCLUDEDIR))
+InstallDriverSDKNonExecFile(xf86dri.h,$(DRIVERSDKINCLUDEDIR))

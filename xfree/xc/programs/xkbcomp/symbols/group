@@ -1,0 +1,120 @@
+// $TOG: group /main/3 1997/06/13 06:25:02 kaleb $
+// using the group(switch) map, the right alt key temporarily chooses 
+// the second keyboard group (until it is released).
+//
+// $XFree86: xc/programs/xkbcomp/symbols/group,v 3.4 2000/11/06 19:24:10 dawes Exp $
+partial modifier_keys 
+xkb_symbols "switch" {
+    key <RALT>	{ 	
+	symbols[Group1]= [	Mode_switch, Multi_key 	],
+	virtualMods= AltGr
+    };
+};
+
+// using the group(toggle) map, pressing the right alt key switches to
+// the next sequential group (until the next explicit group change).
+partial modifier_keys 
+xkb_symbols "toggle" {
+    virtual_modifiers AltGr;
+    key <RALT>	{	
+	symbols[Group1]= [	ISO_Next_Group	],
+	virtualMods= AltGr
+    };
+};
+
+// using the group(shift_toggle) map, pressing both shift keys together
+// locks the next sequential keyboard group.
+partial modifier_keys 
+xkb_symbols "shift_toggle" {
+    key <LFSH>	{	[	Shift_L,	ISO_Prev_Group ]	};
+    key <RTSH>	{	[	Shift_R,	ISO_Next_Group ]	};
+};
+
+// using the group(ctrl_shift_toggle) map, pressing:
+//     Control_L+Shift_L locks the previous group
+//     Control_R+Shift_R locks the next group
+// If you have two groups and group wrap is enabled, the effect is
+// indistinguishable.
+partial modifier_keys 
+xkb_symbols "ctrl_shift_toggle" {
+    key <LFSH> {
+	type="PC_BREAK",
+	symbols[Group1]= [ Shift_L,	ISO_Prev_Group ]
+    };
+    key <RTSH> {
+	type="PC_BREAK",
+	symbols[Group1]= [ Shift_R,	ISO_Next_Group ]
+    };
+    key <LCTL>	{	[	Control_L,	ISO_Prev_Group ]	};
+    key <RCTL>	{	[	Control_R,	ISO_Next_Group ]	};
+};
+
+// using the group(caps_toggle) map, pressing:
+//     Caps Lock toggles groups
+//     Shift+Caps Lock toggles caps lock
+partial modifier_keys
+xkb_symbols "caps_toggle" {
+    key	<CAPS> {	[  ISO_Next_Group,	 Caps_Lock	]	};
+};
+
+// using the group(ctrl_alt_toggle) map, pressing:
+//     Control_L+Alt_L locks the previous group
+//     Control_R+Alt_R locks the next group
+// If you have two groups and group wrap is enabled, the effect is
+// indistinguishable.
+partial modifier_keys 
+xkb_symbols "ctrl_alt_toggle" {
+    virtual_modifiers Alt;
+    key <LALT> {
+	type="PC_BREAK",
+	symbols[Group1]= [ NoSymbol,	ISO_Prev_Group ],
+	virtualMods= Alt
+    };
+    key <RALT> {
+	type="PC_BREAK",
+	symbols[Group1]= [ NoSymbol,	ISO_Next_Group ],
+	virtualMods= Alt
+    };
+    key <LCTL> {
+	type="PC_SYSRQ",
+	symbols[Group1]= [ Control_L,	ISO_Prev_Group ]
+    };
+    key <RCTL> {
+	type="PC_SYSRQ",
+	symbols[Group1]= [ Control_R,	ISO_Next_Group ]
+    };
+};
+
+// using the group(alt_shift_toggle) map, pressing:
+//     Shift_L+Alt_L locks the previous group
+//     Shift_R+Alt_R locks the next group
+// If you have two groups and group wrap is enabled, the effect is
+// indistinguishable.
+partial modifier_keys 
+xkb_symbols "alt_shift_toggle" {
+    virtual_modifiers Alt;
+    key <LALT> {
+	symbols[Group1]= [ NoSymbol,	ISO_Prev_Group ],
+	virtualMods= Alt
+    };
+    key <RALT> {
+	symbols[Group1]= [ NoSymbol,	ISO_Next_Group ],
+	virtualMods= Alt
+    };
+    key <LFSH> {
+	type="PC_SYSRQ",
+	symbols[Group1]= [ Shift_L,	ISO_Prev_Group ]
+    };
+    key <RTSH> {
+	type="PC_SYSRQ",
+	symbols[Group1]= [ Shift_R,	ISO_Next_Group ]
+    };
+};
+
+// using the group(menu_toggle) map, pressing:
+//     Menu key toggles groups
+//     Shift+Menu acts as Menu
+partial modifier_keys
+xkb_symbols "menu_toggle" {
+    key	<MENU> {	[  ISO_Next_Group,	 Menu	]	};
+};

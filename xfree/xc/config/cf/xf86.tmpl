@@ -1,0 +1,113 @@
+XCOMM $XConsortium: xf86.tmpl /main/2 1996/10/31 15:01:41 kaleb $
+
+
+
+XCOMM $XFree86: xc/config/cf/xf86.tmpl,v 3.27 2000/08/04 16:13:15 eich Exp $
+
+#ifdef BuilderEMailAddr
+BUILDERADDR = BuilderEMailAddr
+#else 
+BUILDERADDR = "xfree86@xfree86.org"
+#endif
+BUGMSG = -DBUILDERADDR='$(BUILDERADDR)'
+
+#if XF86DriverSDK
+    BUILDMODULEDIR = $(DRIVERSDKMODULEDIR)
+    BUILDMODULETOP = ..
+    TOP_INCLUDES = TopIncludes
+   IMAKE_DEFINES = -DXF86DriverSDK=1
+#ifdef UseInstalled
+       IMAKE_CMD = $(IMAKE) -DUseInstalled -I$(TOP) -I$(IRULESRC) \
+		   $(IMAKE_DEFINES)
+#else
+       IMAKE_CMD = $(IMAKE) -I$(TOP) -I$(IRULESRC) $(IMAKE_DEFINES)
+#endif
+
+#undef ImakeSubCmdHelper
+#ifdef UseInstalled
+#define ImakeSubCmdHelper $(IMAKE) -DUseInstalled -I$(IMAKETOP) \
+			  -I$(IRULESRC) $(IMAKE_DEFINES)
+#else
+#define ImakeSubCmdHelper $(IMAKEPREFIX)$(IMAKE) -I$(IMAKETOP) \
+			  -I$(IMAKEPREFIX)$(IRULESRC) $(IMAKE_DEFINES)
+#endif
+#endif
+
+#ifndef JoystickSupport
+#define JoystickSupport		NO
+#endif
+
+/* Module support: These overrides must be here, not in xf86.rules,
+ * because they will replace rules after having seen the first lines
+ * of Imakefile (include <Server.tmpl>)
+ */
+
+#if defined(IHaveModules) && MakeDllModules
+MODULE_CFLAGS = $(PICFLAGS)
+#endif
+#if defined(IHaveModules)
+# if DoLoadableServer
+MODULE_DEFINES = -DIN_MODULE -DXFree86Module
+# else
+MODULE_DEFINES = -DXFree86Module
+# endif
+#endif
+
+#if defined(IHaveModules) && DoLoadableServer && defined(OS2Architecture)
+
+/* This overrides the ObjCompile in Imake.rules! */
+#undef ObjectCompile
+#define ObjectCompile(options) RemoveFile($@)                           @@\
+	ClearmakeOSName\
+	$(MODCC) $(MODCFLAGS) options -c $*.c
+
+/* This overrides an AssembleObject in xf86.rules or in an os-dependent
+ * rules file (currently only minix.cf and os2.rules (uncritical))
+ */
+#define ModCPPOnlyAsm(basename,options) RemoveFile(basename.i)		@@\
+	$(MODCPP) AsmDefines $(DEFINES) $(INCLUDES) options basename.S | \	@@\
+		grep -v '^\#' > basename.i
+
+#undef AssembleObject
+#define AssembleObject(flags) ModCPPOnlyAsm($*,flags)			@@\
+	RemoveFile($*.o)						@@\
+	$(MODAS) $(MODASFLAGS) -o $*.o $*.i				@@\
+	RemoveFile($*.i)
+
+/* This overrides the NormalRelocatableTarget in Imake.rules */
+#undef NormalRelocatableTarget
+#define	NormalRelocatableTarget(objname,objlist)			@@\
+AllTarget(objname.Osuf)							@@\
+									@@\
+objname.Osuf: objlist $(EXTRALIBRARYDEPS)				@@\
+	RemoveFile($@)							@@\
+	$(MODLD) $(MODLDCOMBINEFLAGS) objlist -o $@
+
+/* This overrides the NormalDepRelocatableTarget in Imake.rules */
+#undef NormalDepRelocatableTarget
+#define	NormalDepRelocatableTarget(objname,deplist,objlist)		@@\
+AllTarget(objname.Osuf)							@@\
+									@@\
+objname.Osuf: deplist $(EXTRALIBRARYDEPS)				@@\
+	RemoveFile($@)							@@\
+	$(MODLD) $(MODLDCOMBINEFLAGS) objlist -o $@
+
+/* This overrides the RanLibrary in Imake.rules */
+#if DoRanlibCmd || NeedModuleRanlib
+#undef RanLibrary
+#define RanLibrary(args) $(MODRANLIB) args
+#endif
+
+/* This overrides the MakeLibrary rule in Imake.rules */
+#undef MakeLibrary
+#define MakeLibrary(libname,objlist) $(MODAR) libname objlist
+
+/* This overrides the LibraryTargetName rule in Imake.rules */
+#undef LibraryTargetName
+#define LibraryTargetName(libname)Concat(lib,libname.a)
+
+/* This disables an OS/2 rule */
+#undef BuildLibSupportLibs
+#define BuildLibSupportLibs(dummy)
+
+#endif /* IHaveModules */

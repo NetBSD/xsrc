@@ -1,0 +1,54 @@
+XCOMM $XFree86: xc/programs/Xserver/GL/Imakefile,v 1.7 2000/08/24 22:20:08 tsi Exp $
+
+#define IHaveModules
+#include <Server.tmpl>
+
+#define IHaveSubdirs
+
+#if GlxUseSGISI
+ CORE_SUBDIR = /* opengl */
+#else
+ CORE_SUBDIR = mesa
+#endif
+
+#if BuildXF86DRI
+DRI_SUBDIR = dri
+#endif
+
+SUBDIRS = glx $(DRI_SUBDIR) $(CORE_SUBDIR)
+
+#if DoLoadableServer
+MSRCS = glxmodule.c
+MOBJS = glxmodule.o
+#endif
+
+SRCS = glx/?*.c $(MSRCS)
+OBJS = glx/?*.o $(MOBJS)
+
+DONES = glx/DONE
+
+INCLUDES = -Iinclude -Idri -I$(SERVERSRC)/include -I$(SERVERSRC)/mi \
+	   -I$(XINCLUDESRC) -I$(EXTINCSRC) -I$(XF86OSSRC)
+DEPEND_DEFINES = $(EXT_DEFINES)
+DEFINES = $(GLX_DEFINES)
+
+#if HasParallelMake
+MakeMutex($(SUBDIRS) $(OBJS) $(DONES))
+#endif
+
+#if HasGnuMake || HasBsdMake 
+$(DONES): $(SUBDIRS)
+#endif
+
+ModuleObjectRule()
+
+DepLibraryModuleTarget(glx,$(SUBDIRS) $(DONES) $(MOBJS),$(OBJS))
+
+InstallLibraryModule(glx,$(MODULEDIR),extensions)
+ForceSubdirs($(SUBDIRS))
+
+DependSubdirs($(SUBDIRS))
+MakeLintLibSubdirs($(SUBDIRS))
+LintSubdirs($(SUBDIRS))
+
+InstallDriverSDKLibraryModule(glx,$(DRIVERSDKMODULEDIR),extensions)

@@ -1,0 +1,8 @@
+/*
+ * Host.def for building NetBSD bindists
+ *
+ * $XFree86: xc/programs/Xserver/hw/xfree86/etc/bindist/NetBSD-aout-ix86/host.def,v 1.1 2000/12/09 21:46:27 herrb Exp $
+ */
+
+#define InstallEmptyHostDef
+

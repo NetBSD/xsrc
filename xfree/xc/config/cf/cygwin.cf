@@ -1,0 +1,171 @@
+XCOMM platform:  $XFree86: xc/config/cf/cygwin.cf,v 3.2 2000/11/30 23:29:55 dawes Exp $
+XCOMM
+XCOMM - changes since B20 Cygwin32 release
+XCOMM	- avoided tons of "not in XXX directory" messages;
+XCOMM	- dlls are built stripped;
+XCOMM	- search for cpp in a default location;
+XCOMM	- fixed problem with missing netinet/tcp.h;
+XCOMM - Added AF_UNIX socket support;
+XCOMM	- xterm compiles and works;
+XCOMM	- more libs are built as a DLLs;
+XCOMM	- all DLLs have different base addresses;
+XCOMM - changes since B20 Cygwin32 release
+XCOMM	- dllwrap is used to build DLLs;
+XCOMM - Plan to add WATCOM TCP headers support;
+XCOMM	- gcc -E is invoked instead of cpp;
+
+#ifndef OSName
+#define OSName                  Cygwin
+#endif
+#ifndef OSVendor
+#define OSVendor                Red Hat Inc.
+#endif
+#ifndef OSMajorVersion
+#define OSMajorVersion          1
+#endif
+#ifndef OSMinorVersion
+#define OSMinorVersion          1
+#endif
+#ifndef OSTeenyVersion		2
+#define OSTeenyVersion
+#endif
+
+XCOMM #define OSDefines	             -DSYSV -DSYSV386		
+
+#define ProjectRoot /usr/X11R6
+
+#define BuildServer		YES
+
+#ifndef UnixCpp
+#define UnixCpp
+#endif
+
+#define HasGcc                  YES
+#define HasGcc2                 YES
+#define HasGcc2ForCplusplus     YES
+#define GccUsesGas              YES
+#define UseGas                  YES
+#define GnuCpp                  YES
+#define HasShadowPasswd         NO
+#define HasLibCrypt             YES
+#define HasPutenv               YES
+#define HasPoll			NO
+#define HasShm                  NO
+#define Hastcl                  YES
+#define Hastk                   YES
+#define TclLibName              tcl80
+#define TkLibName               tk80
+#define HasSockets              YES
+#define GzipFontCompression	YES
+#define BuildXKB		YES
+#define BuildXF86MiscExt        YES
+#define BuildXF86VidModeExt     YES   /* need -fpcc-struct-return for gcc-2.95.2 or it will fail*/
+#define SharedLibFont           NO
+#define AvoidNullMakeCommand    YES
+#define StripInstalledPrograms  NO
+#define CompressAllFonts        YES
+#define Malloc0ReturnsNull      NO
+#define NeedConstPrototypes     YES
+#define NeedFunctionPrototypes  YES
+#define NeedNestedPrototypes    YES
+#define NeedVarargsPrototypes   YES
+#define NeedWidePrototypes      NO
+#define SetTtyGroup             YES
+#define ExpandManNames          NO
+#define HasDlopen	        NO
+#define HasGnuMake		YES
+XCOMM #define ExtraLoaderDefines      DlopenHack
+#define DefaultCCOptions        -Wall
+#define DefaultGcc2i386Opt      -O2 
+#define LibraryCDebugFlags      -O2
+#define UseGccMakeDepend	YES
+
+
+
+#define ThreadedX               NO
+#define HasThreadSafeAPI        NO
+#define LnCmd                   ln -s
+#define CcCmd                   gcc
+#define CpluplusCmd		c++ -fpermissive
+#define AsCmd                   as
+XCOMM #define AsCmd                	  gcc -S
+#define GccGasOption	        -DGCCUSESGAS
+#define AsmDefines	        -DUSE_GAS -DGCCUSESGAS
+#define LdCmd                   ld
+#define MkdirHierCmd            mkdir -p
+#define CppCmd                  cpp
+#define YaccCmd                 byacc
+#define LexCmd                  flex -l
+#define LexLib                  -lfl
+#define HasFlex			YES
+#define PreProcessCmd           CcCmd -E
+XCOMM #define StdIncDir               `CcCmd --print-libgcc-file-name | sed ':libgcc.a:../../../../i586-cygwin32/include:'|sed 's,\\\\,/,g'`
+XCOMM #define PostIncDir              `CcCmd --print-libgcc-file-name | sed ':libgcc.a:/include:'|sed 's,\\\\,/,g'`
+#define StdIncDir               `CcCmd --print-libgcc-file-name | sed 's,\\\\,/,g' | sed 's,libgcc.a,../../../../i686-pc-cygwin/include,'`
+#define PostIncDir              `CcCmd --print-libgcc-file-name | sed 's,\\\\,/,g' | sed 's,libgcc.a,include,'`
+#define LdCombineFlags          -r
+#define OptimizedCDebugFlags    -O2 -pedantic -fno-strength-reduce -fpcc-struct-return -fvtable-thunks -m486
+#define StandardDefines         -D__i386__ -DWIN32_LEAN_AND_MEAN -DX_LOCALE -D_MT -D_X86_ -D__STDC__ -DNO_TCP_H -D__CYGWIN__ -D_XOPEN_SOURCE -D_REENTRANT -D_POSIX_C_SOURCE=199309L -D_BSD_SOURCE -D_SVID_SOURCE -D_GNU_SOURCE -DX_SOURCE
+#define XawI18nDefines          -DUSE_XWCHAR_STRING -DUSE_XMBTOWC
+#define HasWChar32              YES
+#define StandardCppDefines      -traditional StandardDefines
+#define ServerOSDefines         XFree86ServerDefines -DDDXTIME -DFD_SETSIZE=256 -DDXOSINIT 
+#define XkbServerDefines        -DXKB_ALWAYS_USES_SOFT_REPEAT
+#define ServerExtraDefines      -DGCCUSESGAS XFree86ServerDefines
+#define ConnectionFlags         -DTCPCONN -DUNIXCONN
+#define ExtraLibraries          
+#define InstUidFlags            -m 4711
+#define UseRgbTxt                YES
+#define ExtraFilesToClean	  *.obj *.orig *.rej junk.c *.exe *.dll *.lib *~
+
+/* This a must to compile for xfddx display driver, or your server will NOT work on Win32. DO NOT change to NO */
+
+#define BuildSurfLibrary	YES
+
+/* The DRM module requires Linux kernel services, thus useless for CYGWIN compilers*/
+
+#define BuildXF86DRI		NO
+#define BuildXF86DRM		NO
+#define BuildGlxExt		YES
+#define BuildXinrama		YES
+#define BuildPlugin		NO
+#define BuildDPSLibrary		YES
+XCOMM #define GlxStaticServerLib	YES
+#define DoLoadableServer   NO
+
+/* Some of these man page defaults are overriden in the above OS sections */
+#ifndef ManSuffix
+# define ManSuffix      1x
+#endif
+#ifndef ManDir
+# define ManDir         $(MANSOURCEPATH)1
+#endif
+#ifndef LibManSuffix
+# define LibManSuffix   3x
+#endif
+#ifndef LibmanDir
+# define LibmanDir      $(MANSOURCEPATH)3
+#endif
+#ifndef FileManSuffix
+# define FileManSuffix  5x
+#endif
+#ifndef FileManDir
+# define FileManDir     $(MANSOURCEPATH)5
+#endif
+
+#define TermcapLibrary -ltermcap
+#define XnestServer	YES
+#define BuildXprint	YES
+#define XprtServer	YES
+#define XVirtualFramebufferServer	YES
+#define XWinServer	YES
+#define UseSmartScheduler       NO
+
+/* --unix option of cygwin make fools the standard MakeFlagsToShellFlags macro */
+#define MakeFlagsToShellFlags(makeflags,shellcmd)\
+	for flag in ${MAKEFLAGS} ''; do \				@@\
+	  case "$$flag" in *=*) ;;--*) ;; *[makeflags]*) shellcmd;; esac; done
+
+#include <cygwin.rules>
+#include <xfree86.cf>
+/*#include <xttMod.tmpl>*/

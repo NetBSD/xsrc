@@ -1,0 +1,71 @@
+XCOMM $XFree86: xc/lib/Xft/Imakefile,v 1.8 2000/12/15 17:12:52 keithp Exp $
+
+#define DoNormalLib NormalLibXft
+#define DoSharedLib SharedLibXft
+#define DoExtraLib SharedLibXft
+#define DoDebugLib DebugLibXft
+#define DoProfileLib ProfileLibXft
+#define HasSharedData YES
+#define LibName Xft
+#define SoRev SOXFTREV
+#define IncSubdir X11
+#define IncSubSubdir Xft
+
+#include <Threads.tmpl>
+
+YFLAGS = -d
+
+#ifndef XftLibDir
+#define XftLibDir $(LIBDIR)
+#endif
+#ifndef XftType1Dir
+#define XftType1Dir $(LIBDIR)/fonts/Type1
+#endif
+
+XFTLIBDIR=XftLibDir
+XFTCONFIG=$(XFTLIBDIR)/XftConfig
+
+TYPE1DIR=XftType1Dir
+CONFIG_DEFS=-DXFT_TYPE1_DIR=\"$(TYPE1DIR)\"
+INCLUDES=$(FREETYPE2INCLUDES)
+DEFINES=-DXFT_DEFAULT_PATH=\"$(XFTCONFIG)\" $(FREETYPE2DEFINES) $(RENDERDEFINES)
+REQUIREDLIBS=$(LDPRELIBS) $(XRENDERLIB) $(XLIB) $(FREETYPE2LIB)
+
+#ifdef Freetype2Dir
+FT_HEADERS = XftFreetype.h
+   FT_SRCS = xftdir.c xftfreetype.c xftglyphs.c xftrender.c
+   FT_OBJS = xftdir.o xftfreetype.o xftglyphs.o xftrender.o
+#endif
+
+HEADERS = Xft.h $(FT_HEADERS)
+
+   SRCS = xftcfg.c xftcolor.c xftcore.c xftdbg.c xftdpy.c \
+          xftdraw.c xftextent.c xftfont.c xftfs.c xftgram.c \
+          xftinit.c xftlex.c xftlist.c xftmatch.c xftname.c \
+          xftpat.c xftstr.c xftxlfd.c $(FT_SRCS)
+  
+   OBJS = xftcfg.o xftcolor.o xftcore.o xftdbg.o xftdpy.o \
+          xftdraw.o  xftextent.o xftfont.o xftfs.o xftgram.o \
+          xftinit.o xftlex.o xftlist.o xftmatch.o xftname.o \
+          xftpat.o xftstr.o xftxlfd.o $(FT_OBJS)
+
+#include <Library.tmpl>
+
+LexFilePrefix(xftlex,XftConfig)
+YaccFilePrefix(xftgram,$(YFLAGS),XftConfig)
+
+#if DoSharedLib && SharedDataSeparation
+SpecialCObjectRule(sharedlib,NullParameter,$(SHLIBDEF))
+#endif
+
+CppFileTarget(XftConfig,XftConfig.cpp,$(CONFIG_DEFS),$(ICONFIGFILES))
+
+#if InstallFSConfig
+InstallNonExecFile(XftConfig,$(XFTLIBDIR))
+#else
+InstallNonExecFileNoClobber(XftConfig,$(XFTLIBDIR))
+#endif
+
+MANSUFFIX = $(LIBMANSUFFIX)
+InstallManPage(Xft,$(LIBMANDIR))
+DependTarget()

@@ -1,0 +1,21 @@
+XCOMM $TOG: Imakefile /main/11 1997/05/25 15:12:09 kaleb $
+XCOMM $XFree86: xc/programs/mkfontdir/Imakefile,v 3.9 1999/05/23 15:18:53 dawes Exp $
+LOCAL_LIBRARIES = $(FONTLIB)
+DEPLIBS = $(DEPFONTLIB)
+INCLUDES = -I$(FONTINCSRC) -I$(FONTLIBSRC)/include
+#if GzipFontCompression
+ZLIB = GzipLibrary
+ZDEFINES = -DX_GZIP_FONT_COMPRESSION
+#endif
+SYS_LIBRARIES = MathLibrary $(ZLIB)
+SRCS = mkfontdir.c
+OBJS = mkfontdir.o
+
+#ifdef NoScaleHack
+NOSCALEDEFS = -DNOSCALE_HACK
+#endif
+
+DEFINES = $(NOSCALEDEFS) $(ZDEFINES)
+
+ComplexProgramTarget(mkfontdir)
+LinkBuildBinary(ProgramTargetName(mkfontdir))

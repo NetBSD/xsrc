@@ -1,0 +1,387 @@
+XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/Imakefile,v 1.16 2000/09/24 13:51:22 alanh Exp $
+
+#define IHaveModules
+#include <Server.tmpl>
+
+#define IHaveSubdirs
+
+      SUBDIRS = X
+
+LinkSourceFile(aatriangle.c,$(MESASRCDIR)/src)
+LinkSourceFile(aatriangle.h,$(MESASRCDIR)/src)
+LinkSourceFile(aatritemp.h,$(MESASRCDIR)/src)
+LinkSourceFile(accum.c,$(MESASRCDIR)/src)
+LinkSourceFile(accum.h,$(MESASRCDIR)/src)
+LinkSourceFile(all.h,$(MESASRCDIR)/src)
+LinkSourceFile(alpha.c,$(MESASRCDIR)/src)
+LinkSourceFile(alpha.h,$(MESASRCDIR)/src)
+LinkSourceFile(alphabuf.c,$(MESASRCDIR)/src)
+LinkSourceFile(alphabuf.h,$(MESASRCDIR)/src)
+LinkSourceFile(attrib.c,$(MESASRCDIR)/src)
+LinkSourceFile(attrib.h,$(MESASRCDIR)/src)
+LinkSourceFile(bbox.c,$(MESASRCDIR)/src)
+LinkSourceFile(bbox.h,$(MESASRCDIR)/src)
+LinkSourceFile(bitmap.c,$(MESASRCDIR)/src)
+LinkSourceFile(bitmap.h,$(MESASRCDIR)/src)
+LinkSourceFile(blend.c,$(MESASRCDIR)/src)
+LinkSourceFile(blend.h,$(MESASRCDIR)/src)
+LinkSourceFile(buffers.c,$(MESASRCDIR)/src)
+LinkSourceFile(buffers.h,$(MESASRCDIR)/src)
+LinkSourceFile(clip.c,$(MESASRCDIR)/src)
+LinkSourceFile(clip.h,$(MESASRCDIR)/src)
+LinkSourceFile(clip_funcs.h,$(MESASRCDIR)/src)
+LinkSourceFile(clip_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(colortab.c,$(MESASRCDIR)/src)
+LinkSourceFile(colortab.h,$(MESASRCDIR)/src)
+LinkSourceFile(config.c,$(MESASRCDIR)/src)
+LinkSourceFile(config.h,$(MESASRCDIR)/src)
+LinkSourceFile(context.c,$(MESASRCDIR)/src)
+LinkSourceFile(context.h,$(MESASRCDIR)/src)
+LinkSourceFile(copy_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(copypix.c,$(MESASRCDIR)/src)
+LinkSourceFile(copypix.h,$(MESASRCDIR)/src)
+LinkSourceFile(cull_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(cva.c,$(MESASRCDIR)/src)
+LinkSourceFile(cva.h,$(MESASRCDIR)/src)
+LinkSourceFile(dd.h,$(MESASRCDIR)/src)
+LinkSourceFile(ddsample.c,$(MESASRCDIR)/src)
+LinkSourceFile(debug_xform.c,$(MESASRCDIR)/src)
+LinkSourceFile(debug_xform.h,$(MESASRCDIR)/src)
+LinkSourceFile(depth.c,$(MESASRCDIR)/src)
+LinkSourceFile(depth.h,$(MESASRCDIR)/src)
+LinkSourceFile(dispatch.c,$(MESASRCDIR)/src)
+LinkSourceFile(dlist.c,$(MESASRCDIR)/src)
+LinkSourceFile(dlist.h,$(MESASRCDIR)/src)
+LinkSourceFile(dotprod_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(drawpix.c,$(MESASRCDIR)/src)
+LinkSourceFile(drawpix.h,$(MESASRCDIR)/src)
+LinkSourceFile(enable.c,$(MESASRCDIR)/src)
+LinkSourceFile(enable.h,$(MESASRCDIR)/src)
+LinkSourceFile(enums.c,$(MESASRCDIR)/src)
+LinkSourceFile(enums.h,$(MESASRCDIR)/src)
+LinkSourceFile(eval.c,$(MESASRCDIR)/src)
+LinkSourceFile(eval.h,$(MESASRCDIR)/src)
+LinkSourceFile(extensions.c,$(MESASRCDIR)/src)
+LinkSourceFile(extensions.h,$(MESASRCDIR)/src)
+LinkSourceFile(feedback.c,$(MESASRCDIR)/src)
+LinkSourceFile(feedback.h,$(MESASRCDIR)/src)
+LinkSourceFile(fixed.h,$(MESASRCDIR)/src)
+LinkSourceFile(fog.c,$(MESASRCDIR)/src)
+LinkSourceFile(fog.h,$(MESASRCDIR)/src)
+LinkSourceFile(fog_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(general_clip.h,$(MESASRCDIR)/src)
+LinkSourceFile(get.c,$(MESASRCDIR)/src)
+LinkSourceFile(get.h,$(MESASRCDIR)/src)
+LinkSourceFile(glapi.h,$(MESASRCDIR)/src)
+LinkSourceFile(glapi.c,$(MESASRCDIR)/src)
+LinkSourceFile(glapioffsets.h,$(MESASRCDIR)/src)
+LinkSourceFile(glapinoop.c,$(MESASRCDIR)/src)
+LinkSourceFile(glapinoop.h,$(MESASRCDIR)/src)
+LinkSourceFile(glapitable.h,$(MESASRCDIR)/src)
+LinkSourceFile(glapitemp.h,$(MESASRCDIR)/src)
+LinkSourceFile(glheader.h,$(MESASRCDIR)/src)
+LinkSourceFile(glthread.c,$(MESASRCDIR)/src)
+LinkSourceFile(glthread.h,$(MESASRCDIR)/src)
+LinkSourceFile(hash.c,$(MESASRCDIR)/src)
+LinkSourceFile(hash.h,$(MESASRCDIR)/src)
+LinkSourceFile(hint.c,$(MESASRCDIR)/src)
+LinkSourceFile(hint.h,$(MESASRCDIR)/src)
+LinkSourceFile(highpc.c,$(MESASRCDIR)/src)
+LinkSourceFile(image.c,$(MESASRCDIR)/src)
+LinkSourceFile(image.h,$(MESASRCDIR)/src)
+LinkSourceFile(imaging.c,$(MESASRCDIR)/src)
+LinkSourceFile(imaging.h,$(MESASRCDIR)/src)
+LinkSourceFile(indirect_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(interp_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(light.c,$(MESASRCDIR)/src)
+LinkSourceFile(light.h,$(MESASRCDIR)/src)
+LinkSourceFile(lines.c,$(MESASRCDIR)/src)
+LinkSourceFile(lines.h,$(MESASRCDIR)/src)
+LinkSourceFile(linetemp.h,$(MESASRCDIR)/src)
+LinkSourceFile(lnaatemp.h,$(MESASRCDIR)/src)
+LinkSourceFile(logic.c,$(MESASRCDIR)/src)
+LinkSourceFile(logic.h,$(MESASRCDIR)/src)
+LinkSourceFile(lowpc.c,$(MESASRCDIR)/src)
+LinkSourceFile(macros.h,$(MESASRCDIR)/src)
+LinkSourceFile(masking.c,$(MESASRCDIR)/src)
+LinkSourceFile(masking.h,$(MESASRCDIR)/src)
+LinkSourceFile(matrix.c,$(MESASRCDIR)/src)
+LinkSourceFile(matrix.h,$(MESASRCDIR)/src)
+LinkSourceFile(mem.c,$(MESASRCDIR)/src)
+LinkSourceFile(mem.h,$(MESASRCDIR)/src)
+LinkSourceFile(mmath.c,$(MESASRCDIR)/src)
+LinkSourceFile(mmath.h,$(MESASRCDIR)/src)
+LinkSourceFile(norm_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(pb.c,$(MESASRCDIR)/src)
+LinkSourceFile(pb.h,$(MESASRCDIR)/src)
+LinkSourceFile(pipeline.c,$(MESASRCDIR)/src)
+LinkSourceFile(pipeline.h,$(MESASRCDIR)/src)
+LinkSourceFile(pixel.c,$(MESASRCDIR)/src)
+LinkSourceFile(pixel.h,$(MESASRCDIR)/src)
+LinkSourceFile(pixeltex.c,$(MESASRCDIR)/src)
+LinkSourceFile(pixeltex.h,$(MESASRCDIR)/src)
+LinkSourceFile(points.c,$(MESASRCDIR)/src)
+LinkSourceFile(points.h,$(MESASRCDIR)/src)
+LinkSourceFile(polygon.c,$(MESASRCDIR)/src)
+LinkSourceFile(polygon.h,$(MESASRCDIR)/src)
+LinkSourceFile(quads.c,$(MESASRCDIR)/src)
+LinkSourceFile(quads.h,$(MESASRCDIR)/src)
+LinkSourceFile(rastpos.c,$(MESASRCDIR)/src)
+LinkSourceFile(rastpos.h,$(MESASRCDIR)/src)
+LinkSourceFile(readpix.c,$(MESASRCDIR)/src)
+LinkSourceFile(readpix.h,$(MESASRCDIR)/src)
+LinkSourceFile(rect.c,$(MESASRCDIR)/src)
+LinkSourceFile(rect.h,$(MESASRCDIR)/src)
+LinkSourceFile(render_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(scissor.c,$(MESASRCDIR)/src)
+LinkSourceFile(scissor.h,$(MESASRCDIR)/src)
+LinkSourceFile(shade.c,$(MESASRCDIR)/src)
+LinkSourceFile(shade.h,$(MESASRCDIR)/src)
+LinkSourceFile(shade_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(simple_list.h,$(MESASRCDIR)/src)
+LinkSourceFile(span.c,$(MESASRCDIR)/src)
+LinkSourceFile(span.h,$(MESASRCDIR)/src)
+LinkSourceFile(stages.c,$(MESASRCDIR)/src)
+LinkSourceFile(stages.h,$(MESASRCDIR)/src)
+LinkSourceFile(state.c,$(MESASRCDIR)/src)
+LinkSourceFile(state.h,$(MESASRCDIR)/src)
+LinkSourceFile(stencil.c,$(MESASRCDIR)/src)
+LinkSourceFile(stencil.h,$(MESASRCDIR)/src)
+LinkSourceFile(texgen_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(teximage.c,$(MESASRCDIR)/src)
+LinkSourceFile(teximage.h,$(MESASRCDIR)/src)
+LinkSourceFile(texobj.c,$(MESASRCDIR)/src)
+LinkSourceFile(texobj.h,$(MESASRCDIR)/src)
+LinkSourceFile(texstate.c,$(MESASRCDIR)/src)
+LinkSourceFile(texstate.h,$(MESASRCDIR)/src)
+LinkSourceFile(texture.c,$(MESASRCDIR)/src)
+LinkSourceFile(texture.h,$(MESASRCDIR)/src)
+LinkSourceFile(trans_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(translate.c,$(MESASRCDIR)/src)
+LinkSourceFile(translate.h,$(MESASRCDIR)/src)
+LinkSourceFile(triangle.c,$(MESASRCDIR)/src)
+LinkSourceFile(triangle.h,$(MESASRCDIR)/src)
+LinkSourceFile(tritemp.h,$(MESASRCDIR)/src)
+LinkSourceFile(types.h,$(MESASRCDIR)/src)
+LinkSourceFile(varray.c,$(MESASRCDIR)/src)
+LinkSourceFile(varray.h,$(MESASRCDIR)/src)
+LinkSourceFile(vb.c,$(MESASRCDIR)/src)
+LinkSourceFile(vb.h,$(MESASRCDIR)/src)
+LinkSourceFile(vbcull.c,$(MESASRCDIR)/src)
+LinkSourceFile(vbcull.h,$(MESASRCDIR)/src)
+LinkSourceFile(vbfill.c,$(MESASRCDIR)/src)
+LinkSourceFile(vbfill.h,$(MESASRCDIR)/src)
+LinkSourceFile(vbindirect.c,$(MESASRCDIR)/src)
+LinkSourceFile(vbindirect.h,$(MESASRCDIR)/src)
+LinkSourceFile(vbrender.c,$(MESASRCDIR)/src)
+LinkSourceFile(vbrender.h,$(MESASRCDIR)/src)
+LinkSourceFile(vbxform.c,$(MESASRCDIR)/src)
+LinkSourceFile(vbxform.h,$(MESASRCDIR)/src)
+LinkSourceFile(vector.c,$(MESASRCDIR)/src)
+LinkSourceFile(vector.h,$(MESASRCDIR)/src)
+LinkSourceFile(vertices.c,$(MESASRCDIR)/src)
+LinkSourceFile(vertices.h,$(MESASRCDIR)/src)
+LinkSourceFile(winpos.c,$(MESASRCDIR)/src)
+LinkSourceFile(winpos.h,$(MESASRCDIR)/src)
+LinkSourceFile(xform.c,$(MESASRCDIR)/src)
+LinkSourceFile(xform.h,$(MESASRCDIR)/src)
+LinkSourceFile(xform_tmp.h,$(MESASRCDIR)/src)
+LinkSourceFile(zoom.c,$(MESASRCDIR)/src)
+LinkSourceFile(zoom.h,$(MESASRCDIR)/src)
+
+    CORE_SRCS = aatriangle.c \
+		accum.c \
+		alpha.c \
+		alphabuf.c \
+                attrib.c \
+		bbox.c \
+		bitmap.c \
+		blend.c \
+		buffers.c \
+		clip.c \
+		colortab.c \
+		config.c \
+		context.c \
+		copypix.c \
+		cva.c \
+		debug_xform.c \
+		depth.c \
+		dispatch.c \
+		dlist.c \
+		drawpix.c \
+		enable.c \
+		enums.c \
+		eval.c \
+		extensions.c \
+		feedback.c \
+		fog.c \
+		get.c \
+		glapi.c \
+		glapinoop.c \
+		hash.c \
+		hint.c \
+		image.c \
+		imaging.c \
+		light.c \
+		lines.c \
+		logic.c \
+		masking.c \
+		matrix.c \
+		mem.c \
+		mmath.c \
+		pb.c \
+		pipeline.c \
+		pixel.c \
+		pixeltex.c \
+		points.c \
+		polygon.c \
+		quads.c \
+		rastpos.c \
+		readpix.c \
+		rect.c \
+		scissor.c \
+		shade.c \
+		span.c \
+		stages.c \
+		state.c \
+		stencil.c \
+		teximage.c \
+		texobj.c \
+		texstate.c \
+		texture.c \
+		translate.c \
+		triangle.c \
+		varray.c \
+		vb.c \
+		vbcull.c \
+		vbfill.c \
+		vbindirect.c \
+		vbrender.c \
+		vbxform.c \
+		vector.c \
+		vertices.c \
+		winpos.c \
+		xform.c \
+		zoom.c
+
+    CORE_OBJS = aatriangle.o \
+		accum.o \
+		alpha.o \
+		alphabuf.o \
+                attrib.o \
+		bbox.o \
+		bitmap.o \
+		blend.o \
+		buffers.o \
+		clip.o \
+		colortab.o \
+		config.o \
+		context.o \
+		copypix.o \
+		cva.o \
+		debug_xform.o \
+		depth.o \
+		dispatch.o \
+		dlist.o \
+		drawpix.o \
+		enable.o \
+		enums.o \
+		eval.o \
+		extensions.o \
+		feedback.o \
+		fog.o \
+		get.o \
+		glapi.o \
+		glapinoop.o \
+		glthread.o \
+		hash.o \
+		hint.o \
+		image.o \
+		imaging.o \
+		light.o \
+		lines.o \
+		logic.o \
+		masking.o \
+		matrix.o \
+		mem.o \
+		mmath.o \
+		pb.o \
+		pipeline.o \
+		pixel.o \
+		pixeltex.o \
+		points.o \
+		polygon.o \
+		quads.o \
+		rastpos.o \
+		readpix.o \
+		rect.o \
+		scissor.o \
+		shade.o \
+		span.o \
+		stages.o \
+		state.o \
+		stencil.o \
+		teximage.o \
+		texobj.o \
+		texstate.o \
+		texture.o \
+		translate.o \
+		triangle.o \
+		varray.o \
+		vb.o \
+		vbcull.o \
+		vbfill.o \
+		vbindirect.o \
+		vbrender.o \
+		vbxform.o \
+		vector.o \
+		vertices.o \
+		winpos.o \
+		xform.o \
+		zoom.o
+
+     ASM_SRCS = asm_386.S
+     ASM_OBJS = asm_386.o
+
+#if DoLoadableServer
+        MSRCS = GLcoremodule.c
+        MOBJS = GLcoremodule.o
+
+        XOBJS = X/?*.o
+#endif
+
+         SRCS = $(CORE_SRCS) /*$(ASM_SRCS)*/ $(MSRCS)
+         OBJS = $(CORE_OBJS) /*$(ASM_OBJS)*/ $(MOBJS)
+
+     INCLUDES = -I. -I../include -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
+                -I../../include -I../../glx
+
+      DEFINES = $(GLX_DEFINES) /*-DUSE_X86_ASM */
+
+#if DoLoadableServer
+        DONES = X/DONE
+
+#if HasParallelMake
+MakeMutex($(SUBDIRS) $(OBJS) $(DONES))
+#endif
+
+ModuleObjectRule()
+
+DepLibraryModuleTarget(GLcore,$(SUBDIRS) $(DONES) $(OBJS),$(OBJS) $(XOBJS))
+InstallLibraryModule(GLcore,$(MODULEDIR),extensions)
+ForceSubdirs($(SUBDIRS))
+
+#else
+MakeSubdirs($(SUBDIRS))
+NormalLibraryTarget(GLcore,$(OBJS))
+NormalLibraryObjectRule()
+#endif
+
+DependTarget()
+
+InstallDriverSDKLibraryModule(GLcore,$(DRIVERSDKMODULEDIR),extensions)
+
+DependSubdirs($(SUBDIRS))
+MakeLintLibSubdirs($(SUBDIRS))
+LintSubdirs($(SUBDIRS))
+

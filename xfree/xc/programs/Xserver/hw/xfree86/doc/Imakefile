@@ -1,0 +1,101 @@
+XCOMM $XConsortium: Imakefile /main/33 1996/10/28 05:12:24 kaleb $
+
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/doc/Imakefile,v 3.72 2000/12/11 16:06:49 dawes Exp $
+
+#include <Server.tmpl>
+#include <lnxdoc.rules>
+
+#define IHaveSubdirs
+
+#if BuildSgmlDocs
+SGMLDIR = sgml
+#endif
+
+#if InstallJapaneseDocs
+JAPANESEDIR = Japanese
+#endif
+
+SUBDIRS = $(SGMLDIR) $(JAPANESEDIR) man
+
+all::
+
+REPORTFORM = BugReport
+
+#if !BuildLinuxDocText
+OSREADMES = \
+	/*ReadmeFile(Bsdi)*/	\
+	ReadmeFile(Darwin)	\
+	/*ReadmeFile(DGUX)*/	\
+	/*ReadmeFile(FreeBSD)*/	\
+	ReadmeFile(isc)		\
+	/*ReadmeFile(Linux)*/	\
+	ReadmeFile(LynxOS)	\
+	ReadmeFile(NetBSD)	\
+	ReadmeFile(OpenBSD)	\
+	/*ReadmeFile(OS2)*/	\
+	/*OS2.Notes*/		\
+	/*ReadmeFile(SCO)*/	\
+	/*ReadmeFile(SOLX86)*/	\
+	/*ReadmeFile(SVR4)*/	\
+	$(_NULLENTRY_)
+
+HWREADME = \
+	/*ReadmeFile(3Dlabs)*/	\
+	ReadmeFile(apm)		\
+	/*ReadmeFile(agx)*/	\
+	/*ReadmeFile(ark)*/	\
+	ReadmeFile(ati)		\
+	ReadmeFile(chips)	\
+	/*ReadmeFile(cirrus)*/	\
+	ReadmeFile(cyrix)	\
+	ReadmeFile(DECtga)	\
+	/*ReadmeFile(epson)*/	\
+	/*ReadmeFile(fbdev)*/	\
+	ReadmeFile(I128)	\
+	ReadmeFile(i740)	\
+	ReadmeFile(i810)	\
+	/*ReadmeFile(Mach32)*/	\
+	/*ReadmeFile(Mach64)*/	\
+	/*ReadmeFile(MGA)*/	\
+	ReadmeFile(newport)	\
+	/*ReadmeFile(NVIDIA)*/	\
+	/*ReadmeFile(Oak)*/	\
+	/*ReadmeFile(P9000)*/	\
+	ReadmeFile(r128)	\
+	ReadmeFile(rendition)	\
+	/*ReadmeFile(S3)*/	\
+	ReadmeFile(s3virge)	\
+	ReadmeFile(SiS)		\
+	/*ReadmeFile(trident)*/	\
+	/*ReadmeFile(tseng)*/	\
+	/*ReadmeFile(Video7)*/	\
+	/*ReadmeFile(WstDig)*/	\
+	$(_NULLENTRY_)
+
+MAINDOCS = LICENSE README /*ReadmeFile(Config)*/ /*BUILD*/ RELNOTES \
+	   Install Status DESIGN
+
+OTHERDOCS = /*VideoModes.doc*/ /*QuickStart.doc*/ /*xinput*/ \
+	    ReadmeFile(fonts) ReadmeFile(mouse) ReadmeFile(DRI) \
+	    ReadmeFile(DRIcomp)
+#endif
+
+MISCDOCS = ServersOnly /*LbxproxyOnly*/ $(REPORTFORM) ReadmeFile(DGA) \
+	   VideoBoard98
+
+DATABASE = /* modeDB.txt */ /* AccelCards Monitors Devices */
+
+FILES = $(MAINDOCS) $(OSREADME) $(HWREADME) $(OTHERDOCS) $(MISCDOCS) $(DATABASE)
+
+InstallMultipleDest(install,$(FILES),$(XFREE86DOCDIR))
+
+#ifdef IHaveSubdirs
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
+
+InstallDriverSDKNonExecFile(DESIGN,$(DRIVERSDKDIR))

@@ -1,0 +1,82 @@
+XCOMM $TOG: Imakefile /main/48 1997/11/13 15:48:43 msr $
+XCOMM $XFree86: xc/programs/Xserver/hw/sun/Imakefile,v 1.4 2000/06/17 18:23:23 dawes Exp $
+
+#include <Server.tmpl>
+
+SRCS1 =	sunInit.c \
+	sunCfb.c \
+	sunCfb24.c \
+	sunCursor.c \
+	sunFbs.c \
+	sunIo.c \
+	sunKbd.c \
+	sunMfb.c \
+	sunMouse.c\
+	sunKeyMap.c
+
+#if BuildLowMem
+SRCS2 =
+#else
+SRCS2 = sunGX.c
+#endif
+
+SRCS =	$(SRCS1) $(SRCS2) kbd_mode.c constype.c
+
+#ifdef i386Architecture
+OFILES = sunInit.o
+#else
+OFILES = sunInit.o sunInitMono.o sunInExMono.o sunInitMulti.o
+#endif
+
+OBJS1 = sunCfb.o \
+	sunCfb24.o \
+	sunCursor.o \
+	sunFbs.o \
+	sunIo.o \
+	sunKbd.o \
+	sunMfb.o \
+	sunMouse.o \
+	sunKeyMap.o
+
+#if BuildLowMem
+OBJS2 =
+#else
+OBJS2 = sunGX.o
+#endif
+
+OBJS = $(OBJS1) $(OBJS2)
+
+   INCLUDES = -I. -I../.. -I../../mi -I../../mfb -I../../cfb -I../../cfb32 \
+	      -I../../include -I$(XINCLUDESRC) -I$(FONTINCSRC) -I$(EXTINCSRC)
+   LINTLIBS = ../../dix/llib-ldix.ln ../../os/llib-los.ln \
+	      ../mfb/llib-lmfb.ln ../mi/llib-lmi.ln ../cfb/llib-lcfb.ln
+
+NormalLibraryObjectRule()
+
+all:: $(OFILES) kbd_mode constype
+
+lintlib:
+
+NormalLibraryTarget(sun,$(OBJS))
+NormalLintTarget($(SRCS1))
+
+#ifndef i386Architecture
+sunInExMono.o: $(ICONFIGFILES)
+ObjectFromSpecialSource(sunInExMono,../../mi/miinitext,-I$(EXTINCSRC) $(EXT_DEFINES) -UPEXEXT -UGLXEXT)
+ObjectFromSpecialSource(sunInitMono,sunInit,-DSUNMAXDEPTH=1)
+ObjectFromSpecialSource(sunInitMulti,sunInit,-DSUNMAXDEPTH=32)
+#endif
+
+SingleProgramTarget(kbd_mode, kbd_mode.o,,)
+SingleProgramTarget(constype, constype.o,,)
+InstallProgram(kbd_mode,$(BINDIR))
+InstallProgram(constype,$(BINDIR))
+InstallManPage(kbd_mode,$(MANDIR))
+InstallManPage(constype,$(MANDIR))
+InstallManPage(Xsun,$(MANDIR))
+#ifndef i386Architecture
+InstallManPageAliases(Xsun,$(MANDIR),XsunMono)
+InstallManPageAliases(Xsun,$(MANDIR),Xsun24)
+#endif
+
+DependTarget()

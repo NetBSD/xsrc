@@ -1,0 +1,131 @@
+// $TOG: xfree86 /main/3 1997/08/02 10:11:25 kaleb $
+
+//
+//  Rules for resolving XKB components for use with XFree86
+//  Copyright 1996 by Joseph Moss
+//
+//  $XFree86: xc/programs/xkbcomp/rules/xfree86,v 3.26 2000/12/02 01:16:25 dawes Exp $
+//
+
+! model 	=	keycodes	geometry
+  microsoft	=	xfree86		microsoft(natural)
+  dell101	=	xfree86		dell(dell101)
+  flexpro	=	xfree86		keytronic(FlexPro)
+  omnikey101	=	xfree86		northgate(omnikey101)
+  pc101		=	xfree86		pc(pc101)
+  pc102		=	xfree86		pc(pc102)
+  pc104		=	xfree86		pc(pc104)
+  pc105		=	xfree86		pc(pc105)
+  jp106		=	xfree86(jp106)	pc(jp106)
+  everex	=	xfree86		everex(STEPnote)
+  winbook	=	xfree86		winbook(XP5)
+  pc98		=	xfree98(pc98)	nec(pc98)
+  abnt2		=	xfree86(abnt2)	pc
+  hp		=       xfree86         pc(pc104)
+  itouch	=       xfree86         pc(pc104)
+  logicordless  =	xfree86		pc(pc104)
+  compaq	=       xfree86         pc(pc104)
+  microsoftpro	=	xfree86		microsoft(natural)
+  btc9000	=       xfree86         pc(pc104)
+  macintosh	=	macintosh	macintosh(macintosh)
+  powerpcps2	=	powerpcps2	pc(pc104)
+
+//! model		layout	=	symbols
+//  microsoft	us	=	us(pc104)
+//  microsoft	en_US	=	en_US(pc104)
+//  microsoft	*	=	en_US(pc104)+%l%(v)
+//  pc104		us	=	us(pc104)
+//  pc104		en_US	=	en_US(pc104)
+//  pc104		*	=	en_US(pc104)+%l%(v)
+//  *		us	=	us(pc101)
+//  *		en_US	=	en_US(pc102)
+//  *		*	=	en_US(pc102)+%l%(v)
+//  *		jp	=	jp
+
+! model		variant		=	symbols
+  pc102		nodeadkeys	=	en_US(pc102%_v)+%l%(v)
+  pc104		nodeadkeys	=	en_US(pc104%_v)+%l%(v)
+  pc105		nodeadkeys	=	en_US(pc105%_v)+%l%(v)
+  microsoft	nodeadkeys	=	en_US(pc104%_v)+%l%(v)
+  macintosh	nodeadkeys	=	macintosh/us(extended)+macintosh/%l%(v)
+  powerpcps2	nodeadkeys	=	en_US(pc104%_v)+%l%(v)
+  *		nodeadkeys	=	en_US(pc101%_v)+%l%(v)
+
+! model		layout	=	symbols
+  pc102		us	=	us(pc102)
+  pc102		en_US	=	en_US(pc102)
+  pc102		intl	=	us(pc102compose)
+  pc102		*	=	en_US(pc102)+%l%(v)
+  pc104		us	=	us(pc104)
+  pc104		en_US	=	en_US(pc104)
+  pc104		intl	=	us(pc104compose)
+  pc104		*	=	en_US(pc104)+%l%(v)
+  pc105		us	=	us(pc105)
+  pc105		en_US	=	en_US(pc105)
+  pc105		intl	=	us(pc105compose)
+  pc105		*	=	en_US(pc105)+%l%(v)
+  microsoft	us	=	us(pc104)
+  microsoft	en_US	=	en_US(pc104)
+  microsoft	intl	=	us(pc104compose)
+  microsoft	*	=	en_US(pc104)+%l%(v)
+  pc104		us	=	us(pc104)
+  pc104		en_US	=	en_US(pc104)
+  pc104		*	=	en_US(pc104)+%l%(v)
+  pc105		us	=	us(pc105)
+  pc105		en_US	=	en_US(pc105)
+  pc105		*	=	en_US(pc105)+%l%(v)
+  pc101		us_intl	=	us(pc101)+us_intl
+  pc98		nec/jp	=	nec/jp(pc98)
+  abnt2		br	=	us(pc101)+br
+  hp		us	=	us(pc104)+inet(hp)
+  hp		en_US	=	en_US(pc104)+inet(hp)
+  hp		*	=	en_US(pc104)+inet(hp)+%l%(v)
+  compaq	us	=	us(pc104)+inet(compaq)
+  compaq	en_US	=	en_US(pc104)+inet(compaq)
+  compaq	*	=	en_US(pc104)+inet(compaq)+%l%(v)
+  itouch	us	=	us(pc104)+inet(itouch)
+  itouch	en_US	=	en_US(pc104)+inet(itouch)
+  itouch	*	=	en_US(pc104)+inet(itouch)+%l%(v)
+  logicordless	us	=	us(pc104)+inet(logicordless)
+  logicordless	en_US	=	en_US(pc104)+inet(logicordless)
+  logicordless	*	=	en_US(pc104)+inet(logicordless)+%l%(v)
+  microsoftpro	us	=	us(pc104)+inet(microsoftpro)
+  microsoftpro	en_US	=	en_US(pc104)+inet(microsoftpro)
+  microsoftpro	*	=	en_US(pc104)+inet(microsoftpro)+%l%(v)
+  btc9000	us	=	us(pc104)+inet(btc9000)
+  btc9000	en_US	=	en_US(pc104)+inet(btc9000)
+  btc9000	*	=	en_US(pc104)+inet(btc9000)+%l%(v)
+  macintosh	us	=	macintosh/us(extended)
+  macintosh	*	=	macintosh/us(extended)+macintosh/%l%(v)
+  powerpcps2	us	=	us(pc104)
+  powerpcps2	en_US	=	en_US(pc104)
+  powerpcps2	*	=	en_US(pc104)+%l%(v)
+  *		us	=	us(pc101)
+  *		en_US	=	en_US(pc101)
+  *		intl	=	us(pc101compose)
+  *		*	=	en_US(pc101)+%l%(v)
+  *		jp	=	jp
+
+! model		layout	=	compat		types
+  pc98		nec/jp	=	pc98(basic)	complete
+  *		*	=	complete	complete
+
+! option		=	symbols
+  grp:switch		=	+group(switch)
+  grp:toggle		=	+group(toggle)
+  grp:shift_toggle	=	+group(shift_toggle)
+  grp:ctrl_shift_toggle	=	+group(ctrl_shift_toggle)
+  grp:caps_toggle	=	+group(caps_toggle)
+  grp:ctrl_alt_toggle	=	+group(ctrl_alt_toggle)
+  grp:alt_shift_toggle	=	+group(alt_shift_toggle)
+  grp:menu_toggle	=	+group(menu_toggle)
+  ctrl:nocaps		=	+ctrl(nocaps)
+  ctrl:swapcaps		=	+ctrl(swapcaps)
+  ctrl:ctrl_ac		=	+ctrl(ctrl_ac)
+  ctrl:ctrl_aa		=	+ctrl(ctrl_aa)
+
+! option		=	compat
+  grp_led:num		=	+leds(num)
+  grp_led:caps		=	+leds(caps)
+  grp_led:scroll	=	+leds(scroll)
+

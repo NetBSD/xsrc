@@ -1,0 +1,8 @@
+XCOMM $TOG: Imakefile /main/1 1997/08/02 10:11:42 kaleb $
+
+     DATAFILES = amiga ataritt
+
+all::
+
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/symbols/xfree68)
+DependTarget()

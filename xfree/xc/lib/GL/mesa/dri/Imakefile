@@ -1,0 +1,41 @@
+XCOMM $XFree86: xc/lib/GL/mesa/dri/Imakefile,v 1.2 2000/02/23 04:46:36 martin Exp $
+
+#define DoNormalLib NormalLibGlx
+#define DoSharedLib SharedLibGlx
+#define DoExtraLib SharedLibGlx
+#define DoDebugLib DebugLibGlx
+#define DoProfileLib ProfileLibGlx
+
+#if Malloc0ReturnsNull
+ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
+#endif
+
+#if BuildXF86DRI
+  DRI_DEFINES = GlxDefines
+ DRI_INCLUDES = -I../../glx -I../../dri \
+		-I$(TOP)/include -I$(TOP)/include/GL \
+		-I$(XF86OSSRC) -I$(SERVERSRC)/GL/dri
+#endif
+
+MESA_INCLUDES = -I. -I.. -I../include
+
+      DEFINES = $(ALLOC_DEFINES) $(DRI_DEFINES)
+     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC) $(DRI_INCLUDES) $(MESA_INCLUDES)
+         SRCS = dri_mesa.c
+         OBJS = dri_mesa.o
+
+#if !GlxUseBuiltInDRIDriver
+#undef DoNormalLib NormalLibGlx
+#undef DoExtraLib SharedLibGlx
+#undef DoDebugLib DebugLibGlx
+#undef DoProfileLib ProfileLibGlx
+#endif
+
+#include <Library.tmpl>
+
+LibraryObjectRule()
+
+SubdirLibraryRule($(OBJS))
+NormalLintTarget($(SRCS))
+
+DependTarget()

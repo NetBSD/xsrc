@@ -1,0 +1,125 @@
+// $XConsortium: am /main/3 1997/12/18 12:40:12 rch $
+//
+// $XFree86: xc/programs/xkbcomp/symbols/am,v 1.2 2000/10/28 00:34:06 dawes Exp $
+
+partial default alphanumeric_keys 
+xkb_symbols "basic" {
+
+    // Describes the differences between a very simple en_US
+    // keyboard and a very simple Armenian keyboard
+
+    name[Group1]= "US/ASCII";
+    name[Group2]= "Armenian";
+
+    // Alphanumeric section
+    key <TLDE> {	[    grave,	asciitilde	],
+			[ Armenian_but, Armenian_exclam	]	};
+    key	<LSGT> {	[ Armenian_eternity,   greater	],
+			[  question,  Armenian_hyphen	]	};
+    key <BKSL> {        [ backslash,		bar	],
+                        [ Armenian_guillemotright, Armenian_guillemotleft ] };
+
+    key <AE01> {	[	  1,	exclam		],
+			[ Armenian_fe,  Armenian_FE	]	};
+    key <AE02> {	[	  2,	at		],
+			[ Armenian_dza, Armenian_DZA	]	};
+    key <AE03> {	[	  3,	numbersign	],
+			[ Armenian_en_dash, Armenian_em_dash ]	};
+    key <AE04> {	[	  4,	dollar		],
+			[ Armenian_comma, dollar	]	};
+    key <AE05> {	[         5,	percent		],
+    			[ Armenian_verjaket, Armenian_ellipsis	] };
+    key <AE06> {	[	  6,	asciicircum	],
+			[ Armenian_question, percent	]	};
+    key <AE07> {	[	  7,	ampersand	],
+			[ Armenian_mijaket, Armenian_ligature_ew ] };
+    key <AE08> {	[	  8,	asterisk	],
+			[ Armenian_shesht, Armenian_apostroph ] };
+    key <AE09> {	[	  9,	parenleft	],
+			[ Armenian_parenright, Armenian_parenleft ] };
+    key <AE10> {	[	  0,	parenright	],
+			[ Armenian_o,	Armenian_O	]	};
+    key <AE11> {	[     minus,	underscore	],
+			[ Armenian_e,	Armenian_E	]	};
+    key <AE12> {	[     equal,	plus      	],
+			[ Armenian_ghat, Armenian_GHAT	]	};
+
+
+    key <AD01> {        [         q,    Q               ],
+			[ Armenian_tche, Armenian_TCHE	]       };
+    key <AD02> {        [         w,    W               ],
+			[ Armenian_pyur, Armenian_PYUR	]	};
+    key <AD03> {        [         e,    E               ],
+			[ Armenian_ben, Armenian_BEN	]       };
+    key <AD04> {        [         r,    R               ],
+			[ Armenian_se,  Armenian_SE	]	};
+    key <AD05> {        [         t,    T               ],
+			[ Armenian_men, Armenian_MEN	]       };
+    key <AD06> {        [         y,    Y               ],
+			[ Armenian_vo,	Armenian_VO	]       };
+    key <AD07> {        [         u,    U               ],
+			[ Armenian_vyun, Armenian_VYUN	]       };
+    key <AD08> {        [         i,    I               ],
+			[ Armenian_ken, Armenian_KEN	]       };
+    key <AD09> {        [         o,    O               ],
+			[ Armenian_at,	Armenian_AT	]       };
+    key <AD10> {        [         p,    P               ],
+			[ Armenian_to,	Armenian_TO	]       };
+    key <AD11> {        [ bracketleft,  braceleft       ],
+			[ Armenian_tsa, Armenian_TSA	]       };
+    key <AD12> {        [ bracketright, braceright      ],
+			[ Armenian_tso,	Armenian_TSO	]       };
+
+    key <AC01> {        [         a,    A               ],
+			[ Armenian_je,  Armenian_JE	]       };
+    key <AC02> {        [         s,    S               ],
+			[ Armenian_vev, Armenian_VEV	]	};
+    key <AC03> {        [         d,    D               ],
+			[ Armenian_gim, Armenian_GIM	]       };
+    key <AC04> {        [         f,    F               ],
+			[ Armenian_yech, Armenian_YECH	]       };
+    key <AC05> {        [         g,    G               ],
+			[ Armenian_ayb, Armenian_AYB	]       };
+    key <AC06> {        [         h,    H               ],
+			[ Armenian_nu,	Armenian_NU	]	};
+    key <AC07> {        [         j,    J               ],
+			[ Armenian_ini, Armenian_INI	]       };
+    key <AC08> {        [         k,    K               ],
+			[ Armenian_tyun, Armenian_TYUN	]       };
+    key <AC09> {        [         l,    L               ],
+			[ Armenian_ho,  Armenian_HO	]       };
+    key <AC10> {        [ semicolon,    colon           ],
+			[ Armenian_pe,  Armenian_PE	]       };
+    key <AC11> {        [ apostrophe,   quotedbl        ], 
+			[ Armenian_re,  Armenian_RE	]       };
+
+    key <AB01> {        [         z,    Z               ],
+			[ Armenian_zhe, Armenian_ZHE	]       };
+    key <AB02> {        [         x,    X               ],
+			[ Armenian_da,  Armenian_DA	]       };
+    key <AB03> {        [         c,    C               ],
+			[ Armenian_cha, Armenian_CHA	]       };
+    key <AB04> {        [         v,    V               ],
+			[ Armenian_hi,  Armenian_HI	]       };
+    key <AB05> {        [         b,    B               ],
+			[ Armenian_za,  Armenian_ZA	]       };
+    key <AB06> {        [         n,    N               ],
+			[ Armenian_lyun, Armenian_LYUN	]       };
+    key <AB07> {        [         m,    M               ],
+			[ Armenian_ke,  Armenian_KE	]       };
+    key <AB08> {        [     comma,    less            ],
+			[ Armenian_khe, Armenian_KHE	]       };
+    key <AB09> {        [    period,    greater         ],
+			[ Armenian_sha, Armenian_SHA	]       };
+    key <AB10> {        [     slash,    question        ],
+			[ Armenian_ra,  Armenian_RA	]       };
+    
+    // Begin modifier mappings 
+
+    modifier_map Shift  { Shift_L };
+    modifier_map Lock   { Caps_Lock, ISO_Lock };
+    modifier_map Control{ Control_L };
+    modifier_map Mod3   { Mode_switch };
+};
+
+

@@ -1,0 +1,44 @@
+XCOMM $XFree86: xc/programs/Xserver/GL/mesa/src/X/Imakefile,v 1.8 2000/08/01 20:28:40 dawes Exp $
+
+#define IHaveModules
+#include <Server.tmpl>
+
+LinkSourceFile(xmesa1.c,$(MESASRCDIR)/src/X)
+LinkSourceFile(xmesa2.c,$(MESASRCDIR)/src/X)
+LinkSourceFile(xmesa3.c,$(MESASRCDIR)/src/X)
+LinkSourceFile(xmesa4.c,$(MESASRCDIR)/src/X)
+LinkSourceFile(xmesaP.h,$(MESASRCDIR)/src/X)
+LinkSourceFile(glxheader.h,$(MESASRCDIR)/src/X)
+
+LinkSourceFile(compsize.c,$(LIBSRC)/GL/glx)
+LinkSourceFile(size.h,$(LIBSRC)/GL/glx)
+
+  DRIVER_SRCS = xmesa1.c xmesa2.c xmesa3.c xmesa4.c
+  DRIVER_OBJS = xmesa1.o xmesa2.o xmesa3.o xmesa4.o
+
+     GLX_SRCS = xf86glx.c xf86glx_util.c compsize.c
+     GLX_OBJS = xf86glx.o xf86glx_util.o compsize.o
+
+         SRCS = $(DRIVER_SRCS) $(GLX_SRCS)
+         OBJS = $(DRIVER_OBJS) $(GLX_OBJS)
+
+     INCLUDES = -I. -I.. -I../../include \
+                -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
+                -I../../../include -I../../../glx \
+                -I$(LIBSRC)/GL/include \
+                -I$(XF86SRC) -I$(XTOP)/include
+
+      DEFINES = $(GLX_DEFINES) /*-DUSE_X86_ASM*/
+
+#if DoLoadableServer
+ModuleObjectRule()
+SubdirLibraryRule($(OBJS))
+#else
+NormalLibraryTarget(GLcoreX,$(OBJS))
+NormalLibraryObjectRule()
+#endif
+
+LintLibraryTarget(dri,$(SRCS))
+NormalLintTarget($(SRCS))
+
+DependTarget()

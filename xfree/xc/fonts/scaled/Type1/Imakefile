@@ -1,0 +1,37 @@
+XCOMM $XConsortium: Imakefile,v 1.5 94/02/10 16:52:16 rws Exp $
+
+
+
+
+XCOMM $XFree86: xc/fonts/scaled/Type1/Imakefile,v 1.9 2000/03/06 22:59:11 dawes Exp $
+
+
+#define PassCDebugFlags /* as nothing */
+
+FONTS = UTRG____.pfa UTB_____.pfa UTBI____.pfa UTI_____.pfa \
+        cour.pfa courb.pfa courbi.pfa couri.pfa \
+        c0648bt_.pfb c0649bt_.pfb c0632bt_.pfb c0633bt_.pfb \
+        c0419bt_.pfb c0582bt_.pfb c0583bt_.pfb c0611bt_.pfb cursor.pfa
+
+AFMS = UTRG____.afm UTB_____.afm UTBI____.afm UTI_____.afm \
+       cour.afm courb.afm courbi.afm couri.afm \
+       c0648bt_.afm c0649bt_.afm c0632bt_.afm c0633bt_.afm \
+       c0419bt_.afm c0582bt_.afm c0583bt_.afm c0611bt_.afm
+
+BHFONTS = lcdxmo.pfa lcdxmr.pfa lcdxro.pfa lcdxrr.pfa lcdxso.pfa lcdxsr.pfa
+BHAFMS = lcdxmo.afm lcdxmr.afm lcdxro.afm lcdxrr.afm lcdxso.afm lcdxsr.afm
+
+OBJS = $(FONTS) $(BHFONTS) $(AFMS) $(BHAFMS)
+
+FONTINSTDIR = $(FONTDIR)/Type1
+
+MakeFontsDir(fonts.scale)
+
+InstallFonts($(FONTINSTDIR))
+InstallFontScale($(FONTINSTDIR))
+InstallEncodingsDir($(ENCODINGSSRC),$(FONTINSTDIR))
+
+#ifdef IHaveSubdirs
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
