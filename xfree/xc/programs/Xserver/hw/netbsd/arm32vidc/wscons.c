@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.3 2004/03/10 09:46:33 bjh21 Exp $	*/
+/*	$NetBSD: wscons.c,v 1.4 2004/03/14 13:36:48 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -170,6 +170,7 @@ void wskbd_io(void)
 			continue;
 		}
 
+#ifdef WSKBD_TYPE_RISCPC
 		if (private.wskbd_type == WSKBD_TYPE_RISCPC) {
 			/*
 			 * Ok we now have a kludge to map the RiscPC
@@ -197,7 +198,9 @@ void wskbd_io(void)
 			else
 				continue;
 			DPRINTF(("X11 code = 0x%x\n", x_event.u.u.detail));
-		} else {
+		} else
+#endif
+		{
 			/* Assume WSKBD_TYPE_PC_XT, i.e. no translation. */
 			x_event.u.u.detail = wsev.value & 0x7f;
 		}
@@ -269,9 +272,16 @@ wskbd_init(void)
 		ErrorF("Couldn't get keyboard type\n");
 		FatalError((char *)sys_errlist[errno]);
 	}
-	if (kbdtype != WSKBD_TYPE_RISCPC &&
+	if (
+#ifdef WSKBD_TYPE_RISCPC
+	    kbdtype != WSKBD_TYPE_RISCPC &&
+#endif
 	    kbdtype != WSKBD_TYPE_PC_XT) {
-		ErrorF("%s is not a Risc PC or PC/XT keyboard\n", KBD_PATH);
+		ErrorF("%s is not a "
+#ifdef WSKBD_TYPE_RISCPC
+		    "Risc PC or "
+#endif
+		    "PC/XT keyboard\n", KBD_PATH);
 		close(fd);
 		return -1;
 	}
