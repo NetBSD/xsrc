@@ -498,24 +498,30 @@ read_b(xf86Int10InfoPtr pInt, int addr)
 static CARD16
 read_w(xf86Int10InfoPtr pInt, int addr)
 {
+#if !defined(__arm__)
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
     if (OFF(addr + 1) > 0)
 	return V_ADDR_RW(addr);
 #endif
+#else
     return V_ADDR_RB(addr) | (V_ADDR_RB(addr + 1) << 8);
+#endif
 }
 
 static CARD32
 read_l(xf86Int10InfoPtr pInt, int addr)
 {
+#if !defined(__arm__)
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
     if (OFF(addr + 3) > 2)
 	return V_ADDR_RL(addr);
 #endif
+#else
     return V_ADDR_RB(addr) |
 	   (V_ADDR_RB(addr + 1) << 8) |
 	   (V_ADDR_RB(addr + 2) << 16) |
 	   (V_ADDR_RB(addr + 3) << 24);
+#endif
 }
 
 static void
@@ -527,25 +533,31 @@ write_b(xf86Int10InfoPtr pInt, int addr, CARD8 val)
 static void
 write_w(xf86Int10InfoPtr pInt, int addr, CARD16 val)
 {
+#if !defined(__arm__)
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
     if (OFF(addr + 1) > 0)
       { V_ADDR_WW(addr, val); }
 #endif
+#else
     V_ADDR_WB(addr, val);
     V_ADDR_WB(addr + 1, val >> 8);
+#endif
 }
 
 static void
 write_l(xf86Int10InfoPtr pInt, int addr, CARD32 val)
 {
+#if !defined(__arm__)
 #if X_BYTE_ORDER == X_LITTLE_ENDIAN
     if (OFF(addr + 3) > 2)
       { V_ADDR_WL(addr, val); }
 #endif
+#else
     V_ADDR_WB(addr, val);
     V_ADDR_WB(addr + 1, val >> 8);
     V_ADDR_WB(addr + 2, val >> 16);
     V_ADDR_WB(addr + 3, val >> 24);
+#endif
 }
 
 pointer
