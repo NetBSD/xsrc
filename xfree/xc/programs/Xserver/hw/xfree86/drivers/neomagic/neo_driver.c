@@ -22,7 +22,15 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_driver.c,v 1.59 2001/11/30 12:11:57 eich Exp $ */
+
+/*
+ * Copyright 1998, 1999 Egbert Eich
+ * Copyright 2000, 2001 SuSE GmbH, Author: Egbert Eich
+ * Copyright 2002 SuSE Linux AG, Author: Egbert Eich
+ * Copyright 2002 Shigehiro Nomura
+ */
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_driver.c,v 1.62 2002/04/06 17:49:40 tsi Exp $ */
 
 /*
  * The original Precision Insight driver for
@@ -299,7 +307,11 @@ typedef enum {
     OPTION_PROG_LCD_MODE_REGS,
     OPTION_PROG_LCD_MODE_STRETCH,
     OPTION_OVERRIDE_VALIDATE_MODE,
+    OPTION_SHOWCACHE,
     OPTION_ROTATE,
+    OPTION_VIDEO_KEY,
+    OPTION_OVERLAYMEM,
+    OPTION_VIDEO_INTERLACE,
     OPTION_DISPLAY_HEIGHT_480,
     OPTION_STRANGE_LOCKUPS
 } NEOOpts;
@@ -314,6 +326,7 @@ static const OptionInfoRec NEO_2070_Options[] = {
     { OPTION_LCD_STRETCH, "NoStretch",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_SHADOW_FB,   "ShadowFB",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_PCI_BURST,	 "pciBurst",	OPTV_BOOLEAN,   {0}, FALSE },
+    { OPTION_SHOWCACHE,  "ShowCache",   OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_ROTATE, 	 "Rotate",	OPTV_ANYSTR,	{0}, FALSE },
     { OPTION_PROG_LCD_MODE_REGS, "progLcdModeRegs",
       OPTV_BOOLEAN, {0}, FALSE },
@@ -321,6 +334,10 @@ static const OptionInfoRec NEO_2070_Options[] = {
       OPTV_BOOLEAN, {0}, FALSE },
     { OPTION_OVERRIDE_VALIDATE_MODE, "overrideValidateMode",
       OPTV_BOOLEAN, {0}, FALSE },
+    { OPTION_VIDEO_KEY, "VideoKey",     OPTV_INTEGER,   {0}, FALSE },
+    { OPTION_OVERLAYMEM, "OverlayMem",  OPTV_INTEGER,   {0}, FALSE },
+    { OPTION_VIDEO_INTERLACE, "Interlace",
+      OPTV_INTEGER,   {0}, FALSE },
     { -1,                  NULL,           OPTV_NONE,	{0}, FALSE }
 };
 
@@ -335,6 +352,7 @@ static const OptionInfoRec NEOOptions[] = {
     { OPTION_SHADOW_FB,  "ShadowFB",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_LCD_STRETCH,"NoStretch",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_PCI_BURST,	 "pciBurst",	OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_SHOWCACHE,  "ShowCache",   OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_ROTATE, 	 "Rotate",	OPTV_ANYSTR,	{0}, FALSE },
     { OPTION_STRANGE_LOCKUPS, "StrangeLockups", OPTV_BOOLEAN, {0}, FALSE },
     { OPTION_DISPLAY_HEIGHT_480, "DisplayHeight480",
@@ -345,6 +363,10 @@ static const OptionInfoRec NEOOptions[] = {
       OPTV_BOOLEAN, {0}, FALSE },
     { OPTION_OVERRIDE_VALIDATE_MODE, "overrideValidateMode",
       OPTV_BOOLEAN, {0}, FALSE },
+    { OPTION_VIDEO_KEY, "VideoKey",     OPTV_INTEGER,   {0}, FALSE },
+    { OPTION_OVERLAYMEM, "OverlayMem",  OPTV_INTEGER,   {0}, FALSE },
+    { OPTION_VIDEO_INTERLACE, "Interlace",
+      OPTV_INTEGER,   {0}, FALSE },
     { -1,                  NULL,           OPTV_NONE,	{0}, FALSE }
 };
 
@@ -979,6 +1001,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
     xf86GetOptValBool(nPtr->Options, OPTION_LCD_CENTER,&nPtr->lcdCenter);
     xf86GetOptValBool(nPtr->Options, OPTION_LCD_STRETCH,&nPtr->noLcdStretch);
     xf86GetOptValBool(nPtr->Options, OPTION_SHADOW_FB,&nPtr->shadowFB);
+    xf86GetOptValBool(nPtr->Options, OPTION_SHOWCACHE,&nPtr->showcache);
     nPtr->onPciBurst = TRUE;
     xf86GetOptValBool(nPtr->Options, OPTION_PCI_BURST,&nPtr->onPciBurst);
     xf86GetOptValBool(nPtr->Options,
@@ -1014,6 +1037,39 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 		       "Valid options are \"CW\" or \"CCW\"\n");
       }
     }
+#ifdef XvExtension
+    if(xf86GetOptValInteger(nPtr->Options,
+			    OPTION_VIDEO_KEY, &(nPtr->videoKey))) {
+        xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "video key set to 0x%x\n",
+		   nPtr->videoKey);
+    } else {
+        nPtr->videoKey = (1 << pScrn->offset.red) | 
+	    (1 << pScrn->offset.green) |
+	    (((pScrn->mask.blue >> pScrn->offset.blue) - 1)
+	     << pScrn->offset.blue); 
+    }
+    if(xf86GetOptValInteger(nPtr->Options, OPTION_OVERLAYMEM,
+			    &(nPtr->overlay))) {
+        xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+		   "reserve %d bytes for overlay.\n", nPtr->overlay);
+    } else {
+	nPtr->overlay = 0;
+    }
+    nPtr->interlace = 0;
+    if(xf86GetOptValInteger(nPtr->Options, OPTION_VIDEO_INTERLACE,
+			    &(nPtr->interlace))) {
+	if (nPtr->interlace >= 0  &&  nPtr->interlace <= 2){
+	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "interlace flag = %d\n",
+		       nPtr->interlace);
+	} else {
+	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+		       "\"%s\" is not a valid value for "
+		       "Option \"Interlaced\"\n", s);
+	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Valid options are  0..2\n");
+        }
+    }
+#endif /* XvExtension */
+
 
     if (height_480 && nPtr->NeoPanelWidth == 800) {
 	xf86DrvMsg(pScrn->scrnIndex,X_CONFIG,
@@ -1069,6 +1125,9 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
     if (nPtr->strangeLockups)
 	xf86DrvMsg(pScrn->scrnIndex,X_CONFIG,
 		   "Option StrangeLockups set: disabling some acceleration\n");
+    if (nPtr->showcache)
+	xf86DrvMsg(pScrn->scrnIndex,X_CONFIG,
+		   "Show chache for debugging\n");
     if (nPtr->shadowFB) {
 	if (nPtr->noLinear) {
     	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
@@ -1096,6 +1155,8 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	nPtr->NeoLinearAddr = 0;
     }
 
+    nPtr->NeoMMIOAddr2 = 0;
+    nPtr->NeoMMIOBase2 = NULL;
     if (nPtr->pEnt->device->IOBase && !nPtr->noMMIO) {
 	/* XXX Check this matches a PCI base address */
 	nPtr->NeoMMIOAddr = nPtr->pEnt->device->IOBase;
@@ -1113,7 +1174,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 		       "FB base address is set at 0x%X.\n",
 		       nPtr->NeoLinearAddr);
 	}
-	if (!nPtr->NeoMMIOAddr) {
+	if (!nPtr->NeoMMIOAddr && !nPtr->noMMIO) {
 	    switch (nPtr->NeoChipset) {
 	    case NM2070 :
 		nPtr->NeoMMIOAddr = nPtr->NeoLinearAddr + 0x100000;
@@ -1129,11 +1190,17 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 	    case NM2360:
 	    case NM2380:
 		nPtr->NeoMMIOAddr = nPtr->PciInfo->memBase[1];
+		nPtr->NeoMMIOAddr2 = nPtr->PciInfo->memBase[2];
 		break;
 	    }
 	    xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 		       "MMIO base address is set at 0x%X.\n",
 		       nPtr->NeoMMIOAddr);
+	    if (nPtr->NeoMMIOAddr2 != 0){
+	        xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+		           "MMIO base address2 is set at 0x%X.\n",
+		           nPtr->NeoMMIOAddr2);
+	    }
 	}
 	/* XXX What about VGA resources in OPERATING mode? */
 	if (xf86RegisterResources(nPtr->pEnt->index, NULL, ResExclusive))
@@ -1152,7 +1219,7 @@ NEOPreInit(ScrnInfoPtr pScrn, int flags)
 		       "FB base address is set at 0x%X.\n",
 		       nPtr->NeoLinearAddr);
 	}
-	if (!nPtr->NeoMMIOAddr) {
+	if (!nPtr->NeoMMIOAddr && !nPtr->noMMIO) {
 	    nPtr->NeoMMIOAddr = nPtr->NeoLinearAddr + 0x100000;
 	    xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
 		       "MMIO base address is set at 0x%X.\n",
@@ -1293,6 +1360,10 @@ NEOEnterVT(int scrnIndex, int flags)
     /* Should we re-save the text mode on each VT enter? */
     if(!neoModeInit(pScrn, pScrn->currentMode))
       return FALSE;
+#ifdef XvExtension
+    if (nPtr->video)
+	NEOResetVideo(pScrn);
+#endif
     if (nPtr->NeoHWCursorShown) 
 	NeoShowCursor(pScrn);
     NEOAdjustFrame(pScrn->scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);    
@@ -1515,7 +1586,7 @@ NEOScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	xf86DrvMsg(scrnIndex, X_PROBED,
 		   "%d bytes off-screen memory available\n", freespace);
 
-	if (nPtr->swCursor || nPtr->noMMIO) {
+	if (nPtr->swCursor || !nPtr->NeoMMIOBase) {
 	    xf86DrvMsg(scrnIndex, X_CONFIG,
 		       "Using Software Cursor.\n");
 	} else if (nPtr->NeoCursorMem <= freespace) {
@@ -1530,15 +1601,48 @@ NEOScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	} else xf86DrvMsg(scrnIndex, X_ERROR,
 			  "Too little space for H/W cursor.\n");
 	
-	if (!nPtr->noAccel && nPtr->noMMIO)
+	if (!nPtr->noAccel && !nPtr->NeoMMIOBase)
 	  xf86DrvMsg(pScrn->scrnIndex,X_INFO,
 		     "Acceleration disabled when not using MMIO\n");
-
-	/* Setup the acceleration primitives */
-	if (!nPtr->noAccel && !nPtr->noMMIO) {
+	{
+#ifdef XvExtension
+	    if (nPtr->overlay > 0){
+		if (nPtr->overlay > freespace){
+		    xf86DrvMsg(pScrn->scrnIndex,X_INFO,
+			       "Can not reserve %d bytes for overlay. "
+			       "Resize to %d bytes.\n",
+			       nPtr->overlay, freespace);
+		    nPtr->overlay = freespace;
+		}
+		currentaddr -= nPtr->overlay;
+		freespace -= nPtr->overlay;
+		nPtr->overlay_offset = currentaddr;
+		xf86DrvMsg(pScrn->scrnIndex,X_INFO,"Overlay at 0x%x\n",
+			   nPtr->overlay_offset);
+	    }
+#endif /* XvExtension */
 	    nAcl->cacheStart = currentaddr - freespace;
 	    nAcl->cacheEnd = currentaddr;
 	    freespace = 0;
+	    if (nAcl->cacheStart < nAcl->cacheEnd) {
+		BoxRec AvailFBArea;
+		int lines = nAcl->cacheEnd /
+		    (pScrn->displayWidth * (pScrn->bitsPerPixel >> 3));
+  		if (!nPtr->noAccel && nPtr->NeoMMIOBase && lines > 1024) 
+  		    lines = 1024;
+ 		AvailFBArea.x1 = 0;
+		AvailFBArea.y1 = 0;
+		AvailFBArea.x2 = pScrn->displayWidth;
+		AvailFBArea.y2 = lines;
+		xf86InitFBManager(pScreen, &AvailFBArea); 
+
+		xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
+			   "Using %i scanlines of offscreen memory \n"
+			   , lines - pScrn->virtualY);
+	    }
+	}
+	/* Setup the acceleration primitives */
+	if (!nPtr->noAccel && nPtr->NeoMMIOBase) {
 	    if (nAcl->cacheStart >= nAcl->cacheEnd) {
 		xf86DrvMsg(scrnIndex, X_ERROR,
 			   "Too little space for pixmap cache.\n");
@@ -1624,6 +1728,8 @@ NEOScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     pScrn->racIoFlags = pScrn->racMemFlags = racflag;
 
+    NEOInitVideo(pScreen);
+
     pScreen->SaveScreen = vgaHWSaveScreen;
 
     /* Setup DPMS mode */
@@ -1635,17 +1741,6 @@ NEOScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
         pScrn->memPhysBase = (unsigned long)nPtr->NeoFbBase;
 	pScrn->fbOffset = 0;
     }
-
-#ifdef XvExtension
-    {
-        XF86VideoAdaptorPtr *ptr;
-	int n;
-	
-	n = xf86XVListGenericAdaptors(pScrn,&ptr);
-	if (n)
-	    xf86XVScreenInit(pScreen, ptr, n);
-    }
-#endif
 
     /* Wrap the current CloseScreen function */
     nPtr->CloseScreen = pScreen->CloseScreen;
@@ -1677,11 +1772,21 @@ NEOAdjustFrame(int scrnIndex, int x, int y, int flags)
     int Base; 
 
     pScrn = xf86Screens[scrnIndex];
-    Base = (y * pScrn->displayWidth + x) >> 2;
     hwp = VGAHWPTR(pScrn);
     nPtr = NEOPTR(pScrn);
-    /* Scale Base by the number of bytes per pixel. */
 
+    if (nPtr->showcache && y) {
+	int lastline = nPtr->NeoFbMapSize / 
+	    ((pScrn->displayWidth * pScrn->bitsPerPixel) / 8);
+	
+	lastline -= pScrn->currentMode->VDisplay;
+	y += pScrn->virtualY - 1;
+        if (y > lastline) y = lastline;
+    }
+
+    Base = (y * pScrn->displayWidth + x) >> 2;
+
+    /* Scale Base by the number of bytes per pixel. */
     switch (pScrn->depth) {
     case  8 :
 	break;
@@ -1730,6 +1835,7 @@ NEOCloseScreen(int scrnIndex, ScreenPtr pScreen)
 	if (nPtr->NeoHWCursorShown)
 	    NeoHideCursor(pScrn);
 	neoRestore(pScrn, &(VGAHWPTR(pScrn))->SavedReg, &nPtr->NeoSavedReg, TRUE);
+
 	neoLock(pScrn);
 	neoUnmapMem(pScrn);
     }
@@ -1845,12 +1951,18 @@ neoMapMem(ScrnInfoPtr pScrn)
 
     if (!nPtr->noLinear) {
 	if (!nPtr->noMMIO) {
-	    if (nPtr->pEnt->location.type == BUS_PCI)
+	    if (nPtr->pEnt->location.type == BUS_PCI){
 		nPtr->NeoMMIOBase =
 		    xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO,
 				  nPtr->PciTag, nPtr->NeoMMIOAddr,
 				  0x200000L);
-	    else
+		if (nPtr->NeoMMIOAddr2 != 0){
+		    nPtr->NeoMMIOBase2 =
+		        xf86MapPciMem(pScrn->scrnIndex, VIDMEM_MMIO,
+				      nPtr->PciTag, nPtr->NeoMMIOAddr2,
+				      0x100000L);
+		}
+	    } else
 		nPtr->NeoMMIOBase =
 		    xf86MapVidMem(pScrn->scrnIndex,
 				  VIDMEM_MMIO, nPtr->NeoMMIOAddr,
@@ -1889,8 +2001,14 @@ neoUnmapMem(ScrnInfoPtr pScrn)
     NEOPtr nPtr = NEOPTR(pScrn);
 
     if (!nPtr->noLinear) {
-      xf86UnMapVidMem(pScrn->scrnIndex, (pointer)nPtr->NeoMMIOBase, 0x200000L);
+      if (nPtr->NeoMMIOBase)
+	  xf86UnMapVidMem(pScrn->scrnIndex, (pointer)nPtr->NeoMMIOBase,
+			  0x200000L);
       nPtr->NeoMMIOBase = NULL;
+      if (nPtr->NeoMMIOBase2)
+	  xf86UnMapVidMem(pScrn->scrnIndex, (pointer)nPtr->NeoMMIOBase2,
+			  0x100000L);
+      nPtr->NeoMMIOBase2 = NULL;
       xf86UnMapVidMem(pScrn->scrnIndex, (pointer)nPtr->NeoFbBase,
 		    nPtr->NeoFbMapSize); 
     }
@@ -2220,6 +2338,7 @@ neoRestore(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, NeoRegPtr restore,
      * any reserved bits.
      */
     temp = VGArGR(0x90);
+
     switch (nPtr->NeoChipset) {
     case NM2070 :
 	temp &= 0xF0; /* Save bits 7:4 */
@@ -2238,6 +2357,7 @@ neoRestore(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, NeoRegPtr restore,
 	break;
     }
     VGAwGR(0x90,temp);
+
     /*
      * In some rare cases a lockup might occur if we don't delay
      * here. (Reported by Miles Lane)
@@ -2256,7 +2376,6 @@ neoRestore(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, NeoRegPtr restore,
      * had time to take effect.
      */
     xf86UDelay(200000);
-
     /*
      * This function handles restoring the generic VGA registers.  */
     vgaHWRestore(pScrn, VgaReg,
@@ -2273,6 +2392,7 @@ neoRestore(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, NeoRegPtr restore,
     VGAwGR(0x11, restore->SysIfaceCntl2);
     VGAwGR(0x15, restore->SingleAddrPage);
     VGAwGR(0x16, restore->DualAddrPage);
+
     temp = VGArGR(0x20);
     switch (nPtr->NeoChipset) {
     case NM2070 :
@@ -2371,12 +2491,12 @@ neoRestore(ScrnInfoPtr pScrn, vgaRegPtr VgaReg, NeoRegPtr restore,
 	    VGAwGR(i, restore->reg->GR[i]);
 	}
     }
+
     /* Program vertical extension register */
     if (nPtr->NeoChipset == NM2200 || nPtr->NeoChipset == NM2230
 	|| nPtr->NeoChipset == NM2360 || nPtr->NeoChipset == NM2380) {
 	VGAwCR(0x70, restore->VerticalExt);
     }
-
 
     vgaHWProtect(pScrn, FALSE);		/* Turn on screen */
 
@@ -2632,6 +2752,18 @@ neoModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    }
 	}
     }
+#ifdef XvExtension
+    if (!noLcdStretch)  {
+	if (mode->HDisplay != nPtr->NeoPanelWidth)
+	    nPtr->videoHZoom = (double)nPtr->NeoPanelWidth/mode->HDisplay;
+	if (mode->VDisplay != nPtr->NeoPanelHeight)
+	    nPtr->videoVZoom = (double)nPtr->NeoPanelHeight/mode->VDisplay;
+    } else {
+	nPtr->videoHZoom = 1.0;
+	nPtr->videoVZoom = 1.0;
+    }
+#endif
+    
     NeoNew->biosMode = neoFindMode(mode->HDisplay,mode->VDisplay,pScrn->depth);
     
     /*
@@ -2764,9 +2896,8 @@ NeoDisplayPowerManagementSet(ScrnInfoPtr pScrn, int PowerManagementMode,
     }
 
     /* Turn the screen on/off */
-    outb(0x3C4, 0x01);
-    SEQ01 |= inb(0x3C5) & ~0x20;
-    outb(0x3C5, SEQ01);
+    SEQ01 |= VGArSR(0x01) & ~0x20;
+    VGAwSR(0x01, SEQ01);
 
     /* Turn the LCD on/off */
     LCD_on |= VGArGR(0x20) & ~0x02;

@@ -22,7 +22,7 @@ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
 CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
 CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 **********************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2200.c,v 1.15 2001/10/28 03:33:42 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/neomagic/neo_2200.c,v 1.16 2002/04/04 14:05:44 eich Exp $ */
 /*
  * The original Precision Insight driver for
  * XFree86 v.3.3 has been sponsored by Red Hat.
@@ -120,8 +120,6 @@ Neo2200AccelInit(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     NEOPtr nPtr = NEOPTR(pScrn);
     NEOACLPtr nAcl = NEOACLPTR(pScrn);
-    BoxRec AvailFBArea;
-    int lines;
 
     nPtr->AccelInfoRec = infoPtr = XAACreateInfoRec();
     if(!infoPtr) return FALSE;
@@ -251,19 +249,6 @@ Neo2200AccelInit(ScreenPtr pScreen)
 	return FALSE;
     }
 
-    lines =  nAcl->cacheEnd /
-      (pScrn->displayWidth * (pScrn->bitsPerPixel >> 3));
-    if(lines > 1024) lines = 1024;
-
-    AvailFBArea.x1 = 0;
-    AvailFBArea.y1 = 0;
-    AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = lines;
-    xf86InitFBManager(pScreen, &AvailFBArea); 
-
-    xf86DrvMsg(pScrn->scrnIndex, X_INFO, 
-               "Using %i scanlines of offscreen memory for pixmap caching\n",
-                lines - pScrn->virtualY);
 
     return(XAAInit(pScreen, infoPtr));
 }
