@@ -234,7 +234,6 @@ static unsigned char proto[][7] = {
 #else
   {  0x00,   0x00, 0x00,   0x00, 0,    0x00,   0x00 },  /* wsmouse */
 #endif
-=======
 };
 #endif /* ! MOUSE_PROTOCOL_IN_KERNEL */
 
