@@ -314,7 +314,7 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.37 2001/02/26 18:28:18 dawes
  */
 
 /*
- * The following servers are supported on arm32/SHARK platforms:
+ * The following servers are supported on SHARK platforms:
  *
 #define XF86SVGAServer          NO
 #define XF86VGA16Server         NO

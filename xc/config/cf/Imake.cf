@@ -164,9 +164,22 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Ex
 #  define amigaArchitecture
 #  undef amiga
 # endif
-# if defined(__arm32__) || defined(arm32)
-#  define arm32Architecture
+# if defined(__arm__) || defined(arm) || defined(__arm32__) || defined(arm32)
+#  define armArchitecture
+#  undef arm
 #  undef arm32
+# endif
+# if defined(__acorn32__) || defined(acorn32)
+#  define acorn32Architecture
+#  undef acorn32
+# endif
+# if defined(__cats__) || defined(cats)
+#  define catsArchitecture
+#  undef cats
+# endif
+# if defined(__shark__) || defined(shark)
+#  define sharkArchitecture
+#  undef shark
 # endif
 # if defined(__atari__) || defined(atari)
 #  define atariArchitecture
