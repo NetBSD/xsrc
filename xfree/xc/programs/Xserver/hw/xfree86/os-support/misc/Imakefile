@@ -11,12 +11,12 @@ XCOMM $XConsortium: Imakefile /main/4 1996/09/28 17:24:12 rws $
 #if defined(i386Architecture) && !defined(cygwinArchitecture)
 XSRCS = BUSmemcpy.S IODelay.S SlowBcopy.S
 XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o
-#elif defined(SparcArchitecture)
-XSRCS = BUSmemcpy.c IODelay.c SlowBcopy.c
-XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o
 #else
 XSRCS = BUSmemcpy.c IODelay.c SlowBcopy.c
 XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o
+BUSmemcpy.o: BUSmemcpy.c
+IODelay.o: IODelay.c
+SlowBcopy.o: SlowBcopy.c
 #endif
 
 #if HasGcc || HasGcc2
