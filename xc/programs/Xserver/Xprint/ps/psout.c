@@ -1165,7 +1165,7 @@ PsOut_BeginPattern(PsOutPtr self, void *tag, int w, int h, PsFillEnum type,
   }
   self->Patterns[self->NPatterns].tag  = tag;
   self->Patterns[self->NPatterns].type = type;
-  sprintf(key, "/ %d", (int)tag);
+  sprintf(key, "/ %ld", (long)tag);
   switch(type) {
     case PsTile:   key[1] = 't'; break;
     case PsStip:   key[1] = 's'; break;
@@ -1210,7 +1210,7 @@ PsOut_SetPattern(PsOutPtr self, void *tag, PsFillEnum type)
   for( i=0 ; i<self->NPatterns ; i++ )
     { if( tag==self->Patterns[i].tag && type==self->Patterns[i].type ) break; }
   if( i>=self->NPatterns ) return;
-  sprintf(key, " %d", (int)tag);
+  sprintf(key, " %ld", (long)tag);
   switch(type) {
     case PsTile:   key[0] = 't'; break;
     case PsStip:   key[0] = 's'; break;
