@@ -401,14 +401,15 @@ main(argc, argv)
 
 	Imakefile = FindImakefile(Imakefile);
 	CheckImakefileC(ImakefileC);
-	if (Makefile)
+	if (Makefile) {
 		tmpMakefile = Makefile;
-	else {
+#ifdef HAVE_MKSTEMP
+		fd = open(Makefile, O_RDWR|O_CREAT|O_TRUNC|O_APPEND, 0644);
+#endif
+	} else {
 		tmpMakefile = Strdup(tmpMakefile);
 #ifdef HAVE_MKSTEMP
 		fd = mkstemp(tmpMakefile);
-		if (fd , 0)
-			LogFatal("Cannot mkstemp %s.", tmpMakefile);
 #else
 		(void) mktemp(tmpMakefile);
 #endif
@@ -421,6 +422,8 @@ main(argc, argv)
 	AddMakeArg( makefileMacro );
 
 #ifdef HAVE_MKSTEMP
+	if (fd < 0)
+		LogFatal("Cannot mkstemp %s.", tmpMakefile);
 	if ((tmpfd = fdopen(fd, "w+")) == NULL)
 #else
 	if ((tmpfd = fopen(tmpMakefile, "w+")) == NULL)
