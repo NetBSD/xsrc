@@ -1,9 +1,38 @@
 /*
  *	$XConsortium: ptyx.h /main/67 1996/11/29 10:34:19 swick $
- *	$XFree86: xc/programs/xterm/ptyx.h,v 3.19.2.8 1999/07/28 13:38:05 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/ptyx.h,v 3.73 2000/03/03 22:50:36 dawes Exp $
  */
 
 /*
+ * Copyright 1999-2000 by Thomas E. Dickey <dickey@clark.net>
+ *
+ *                         All Rights Reserved
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the
+ * sale, use or other dealings in this Software without prior written
+ * authorization.
+ *
+ *
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
  *
  *                         All Rights Reserved
@@ -49,7 +78,7 @@
     :  (XtPointer)malloc((unsigned)(size)))
 
 #define MyStackFree(pointer, stack_cache_array) \
-    if ((pointer) != ((XtPointer)(stack_cache_array))) free(pointer)
+    if ((pointer) != ((char *)(stack_cache_array))) free(pointer)
 
 #ifdef AMOEBA
 /* Avoid name clashes with standard Amoeba types: */
@@ -61,17 +90,6 @@
 #undef event
 #undef interval
 #endif
-
-/* Extra Xlib definitions */
-#define AllButtonsUp(detail, ignore)  (\
-		((ignore) == Button1) ? \
-				(((detail)&(Button2Mask|Button3Mask)) == 0) \
-				: \
-		 (((ignore) == Button2) ? \
-		  		(((detail)&(Button1Mask|Button3Mask)) == 0) \
-				: \
-		  		(((detail)&(Button1Mask|Button2Mask)) == 0)) \
-		)
 
 /*
 ** System V definitions
@@ -90,66 +108,70 @@
 ** allow for mobility of the pty master/slave directories
 */
 #ifndef PTYDEV
-#ifdef __hpux 
+#if defined(__hpux)
 #define	PTYDEV		"/dev/ptym/ptyxx"
-#else	/* !__hpux */ 
-#ifndef __osf__
+#elif defined(__MVS__)
+#define	PTYDEV		"/dev/ptypxxxx"
+#elif !defined(__osf__)
 #define	PTYDEV		"/dev/ptyxx"
 #endif
-#endif	/* !__hpux */ 
 #endif	/* !PTYDEV */
 
 #ifndef TTYDEV
-#ifdef __hpux 
+#if defined(__hpux)
 #define TTYDEV		"/dev/pty/ttyxx"
-#else	/* !__hpux */ 
-#if defined(__osf__) || (defined(linux) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 1))
+#elif defined(__MVS__)
+#define TTYDEV		"/dev/ptypxxxx"
+#elif defined(__osf__) || (defined(linux) && defined(__GLIBC__) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 1))
 #define TTYDEV		"/dev/ttydirs/xxx/xxxxxxxxxxxxxx"
 #else
 #define	TTYDEV		"/dev/ttyxx"
 #endif
-#endif	/* !__hpux */ 
 #endif	/* !TTYDEV */
 
 #ifndef PTYCHAR1
-#ifdef __hpux 
+#ifdef __hpux
 #define PTYCHAR1	"zyxwvutsrqp"
-#else	/* !__hpux */ 
+#else	/* !__hpux */
 #ifdef __EMX__
 #define PTYCHAR1	"pq"
 #else
 #define	PTYCHAR1	"pqrstuvwxyzPQRSTUVWXYZ"
 #endif  /* !__EMX__ */
-#endif	/* !__hpux */ 
+#endif	/* !__hpux */
 #endif	/* !PTYCHAR1 */
 
 #ifndef PTYCHAR2
-#ifdef __hpux 
+#ifdef __hpux
 #define	PTYCHAR2	"fedcba9876543210"
-#else	/* !__hpux */ 
+#else	/* !__hpux */
 #ifdef __FreeBSD__
 #define	PTYCHAR2	"0123456789abcdefghijklmnopqrstuv"
 #else /* !__FreeBSD__ */
 #define	PTYCHAR2	"0123456789abcdef"
 #endif /* !__FreeBSD__ */
-#endif	/* !__hpux */ 
+#endif	/* !__hpux */
 #endif	/* !PTYCHAR2 */
 
 #ifndef TTYFORMAT
-#ifdef CRAY
+#if defined(CRAY)
 #define TTYFORMAT "/dev/ttyp%03d"
+#elif defined(__MVS__)
+#define TTYFORMAT "/dev/ttyp%04d"
 #else
 #define TTYFORMAT "/dev/ttyp%d"
 #endif
-#endif
+#endif /* TTYFORMAT */
 
 #ifndef PTYFORMAT
 #ifdef CRAY
 #define PTYFORMAT "/dev/pty/%03d"
+#elif defined(__MVS__)
+#define PTYFORMAT "/dev/ptyp%04d"
 #else
 #define PTYFORMAT "/dev/ptyp%d"
 #endif
-#endif
+#endif /* PTYFORMAT */
 
 #ifndef MAXPTTYS
 #ifdef CRAY
@@ -172,8 +194,10 @@ typedef enum {NORMAL, LEFTEXTENSION, RIGHTEXTENSION} EventMode;
 typedef unsigned char Char;		/* to support 8 bit chars */
 typedef Char **ScrnBuf;
 
+#define CharOf(n) ((n) & 0xff)
+
 /*
- * ANSI emulation.
+ * ANSI emulation, special character codes
  */
 #define INQ	0x05
 #define BEL	0x07
@@ -184,9 +208,9 @@ typedef Char **ScrnBuf;
 #define	CAN	0x18
 #define	SUB	0x1A
 #define	ESC	0x1B
+#define XPOUND	0x1E			/* internal mapping for '#'	*/
 #define US	0x1F
 #define	DEL	0x7F
-#define HTS     ('H'+0x40)
 #define	RI	0x8D
 #define	SS2	0x8E
 #define	SS3	0x8F
@@ -206,15 +230,23 @@ typedef Char **ScrnBuf;
 #define MAX_DECID 420			/* ...through VT420 */
 
 #ifndef DFT_DECID
-#define DFT_DECID 100			/* default VT100 */
+#define DFT_DECID "vt100"		/* default VT100 */
 #endif
 
-#define NMENUFONTS 9			/* entries in fontMenu */
+#ifndef DFT_KBD_DIALECT
+#define DFT_KBD_DIALECT "B"		/* default USASCII */
+#endif
+
+/* constants used for utf8 mode */
+#define UCS_REPL	0xfffd		
+#define UCS_LIMIT	0x80000000U	/* both limit and flag for non-UCS */
+
+#define TERMCAP_SIZE 1500		/* 1023 is standard; 'screen' exceeds */
+
+#define NMENUFONTS 9			/* font entries in fontMenu */
 
 #define	NBOX	5			/* Number of Points in box	*/
-#define	NPARAM	10			/* Max. parameters		*/
-
-#define	MINHILITE	32
+#define	NPARAM	30			/* Max. parameters		*/
 
 typedef struct {
 	unsigned char	a_type;
@@ -222,9 +254,7 @@ typedef struct {
 	unsigned char	a_final;
 	unsigned char	a_inters;
 	char	a_nparam;		/* # of parameters		*/
-	char	a_dflt[NPARAM];		/* Default value flags		*/
 	short	a_param[NPARAM];	/* Parameters			*/
-	char	a_nastyf;		/* Error flag			*/
 } ANSI;
 
 #define TEK_FONT_LARGE 0
@@ -288,11 +318,28 @@ typedef struct {
 				 ((n)==TEK_FG?TEK_BG:\
 				 ((n)==TEXT_BG?TEK_FG:(n))))))))
 
-typedef struct {
-	unsigned	which;	/* must have NCOLORS bits */
-	Pixel		colors[NCOLORS];
-	char		*names[NCOLORS];
-} ScrnColors;
+#ifndef RES_OFFSET
+#define RES_OFFSET(offset) XtOffsetOf(XtermWidgetRec, offset)
+#endif
+
+#define RES_NAME(name) name
+#define RES_CLASS(name) name
+
+#define Bres(name,class,offset,value) \
+	{RES_NAME(name), RES_CLASS(class), XtRBoolean, sizeof(Boolean), \
+	 RES_OFFSET(offset), XtRImmediate, (XtPointer) value}
+
+#define Cres(name,offset,value) \
+	{RES_NAME(name), XtCForeground, XtRPixel, sizeof(Pixel), \
+	 RES_OFFSET(offset), XtRString, value}
+
+#define Ires(name,class,offset,value) \
+	{RES_NAME(name), RES_CLASS(class), XtRInt, sizeof(int), \
+	 RES_OFFSET(offset), XtRImmediate, (XtPointer) value}
+
+#define Sres(name,class,offset,value) \
+	{RES_NAME(name), RES_CLASS(class), XtRString, sizeof(char *), \
+	 RES_OFFSET(offset), XtRString, (XtPointer) value}
 
 /***====================================================================***/
 
@@ -306,14 +353,48 @@ typedef struct {
 #define OPT_AIX_COLORS  1 /* true if xterm is configured with AIX (16) colors */
 #endif
 
-#define OPT_BLINK_CURS  0 /* FIXME: do this later (96/7/31) */
+#ifndef OPT_BLINK_CURS
+#define OPT_BLINK_CURS  1 /* true if xterm has blinking cursor capability */
+#endif
+
+#ifndef OPT_BOX_CHARS
+#define OPT_BOX_CHARS	1 /* true if xterm can simulate box-characters */
+#endif
+
+#ifndef OPT_CLIP_BOLD
+#define OPT_CLIP_BOLD	1 /* true if xterm uses clipping to avoid bold-trash */
+#endif
+
+#ifndef OPT_COLOR_RES
+#define OPT_COLOR_RES   1 /* true if xterm delays color-resource evaluation */
+#endif
 
 #ifndef OPT_DEC_CHRSET
 #define OPT_DEC_CHRSET  1 /* true if xterm is configured for DEC charset */
 #endif
 
+#ifndef OPT_DEC_LOCATOR
+#define	OPT_DEC_LOCATOR 0 /* true if xterm supports VT220-style mouse events */
+#endif
+
+#ifndef OPT_DEC_SOFTFONT
+#define OPT_DEC_SOFTFONT 0 /* true if xterm is configured for VT220 softfonts */
+#endif
+
+#ifndef OPT_EBCDIC
+#ifdef __MVS__
+#define OPT_EBCDIC 1
+#else
+#define OPT_EBCDIC 0
+#endif
+#endif
+
+#ifndef OPT_HP_FUNC_KEYS
+#define OPT_HP_FUNC_KEYS 0 /* true if xterm supports HP-style function keys */
+#endif
+
 #ifndef OPT_I18N_SUPPORT
-#if (XtSpecificationRelease >= 6)
+#if (XtSpecificationRelease >= 5)
 #define OPT_I18N_SUPPORT 1 /* true if xterm uses internationalization support */
 #else
 #define OPT_I18N_SUPPORT 0
@@ -336,8 +417,24 @@ typedef struct {
 #define OPT_ISO_COLORS  1 /* true if xterm is configured with ISO colors */
 #endif
 
+#ifndef OPT_256_COLORS
+#define OPT_256_COLORS  0 /* true if xterm is configured with 256 colors */
+#endif
+
+#ifndef OPT_88_COLORS
+#define OPT_88_COLORS	0 /* true if xterm is configured with 88 colors */
+#endif
+
 #ifndef OPT_HIGHLIGHT_COLOR
 #define OPT_HIGHLIGHT_COLOR 1 /* true if xterm supports color highlighting */
+#endif
+
+#ifndef OPT_MAXIMIZE
+#define OPT_MAXIMIZE	1 /* add actions for iconify ... maximize */
+#endif
+
+#ifndef OPT_NUM_LOCK
+#define OPT_NUM_LOCK	1 /* use NumLock key only for numeric-keypad */
 #endif
 
 #ifndef OPT_SAME_NAME
@@ -352,6 +449,14 @@ typedef struct {
 #define OPT_PRINT_COLORS 1 /* true if we print color information */
 #endif
 
+#ifndef OPT_SCO_FUNC_KEYS
+#define OPT_SCO_FUNC_KEYS 0 /* true if xterm supports SCO-style function keys */
+#endif
+
+#ifndef OPT_SHIFT_KEYS
+#define OPT_SHIFT_KEYS  1 /* true if xterm interprets shifted special-keys */
+#endif
+
 #ifndef OPT_SUNPC_KBD
 #define OPT_SUNPC_KBD	1 /* true if xterm supports Sun/PC keyboard map */
 #endif
@@ -360,12 +465,20 @@ typedef struct {
 #define OPT_TEK4014     1 /* true if we're using tek4014 emulation */
 #endif
 
+#ifndef OPT_TOOLBAR
+#define OPT_TOOLBAR	0 /* true if xterm supports toolbar menus */
+#endif
+
 #ifndef OPT_TRACE
 #define OPT_TRACE       0 /* true if we're using debugging traces */
 #endif
 
 #ifndef OPT_VT52_MODE
 #define OPT_VT52_MODE   1 /* true if xterm supports VT52 emulation */
+#endif
+
+#ifndef OPT_WIDE_CHARS
+#define OPT_WIDE_CHARS  0 /* true if xterm supports 16-bit characters */
 #endif
 
 #ifndef OPT_XMC_GLITCH
@@ -379,7 +492,28 @@ typedef struct {
 /***====================================================================***/
 
 #if OPT_AIX_COLORS && !OPT_ISO_COLORS
-fixme: You must have ANSI/ISO colors to support AIX colors
+/* You must have ANSI/ISO colors to support AIX colors */
+#undef OPT_AIX_COLORS
+#endif
+
+#if OPT_PC_COLORS && !OPT_ISO_COLORS
+/* You must have ANSI/ISO colors to support PC colors */
+#undef OPT_PC_COLORS
+#endif
+
+#if OPT_256_COLORS && !OPT_ISO_COLORS
+/* You must have ANSI/ISO colors to support 256 colors */
+#undef OPT_256_COLORS
+#endif
+
+#if OPT_88_COLORS && !OPT_ISO_COLORS
+/* You must have ANSI/ISO colors to support 88 colors */
+#undef OPT_88_COLORS
+#endif
+
+#if OPT_88_COLORS && OPT_256_COLORS
+/* 256 colors supersedes 88 colors */
+#undef OPT_88_COLORS
 #endif
 
 /***====================================================================***/
@@ -387,7 +521,6 @@ fixme: You must have ANSI/ISO colors to support AIX colors
 #if OPT_ISO_COLORS
 #define if_OPT_ISO_COLORS(screen, code) if(screen->colorMode) code
 #define TERM_COLOR_FLAGS (term->flags & (FG_COLOR|BG_COLOR))
-#define MAXCOLORS 19
 #define COLOR_0		0
 #define COLOR_1		1
 #define COLOR_2		2
@@ -404,15 +537,34 @@ fixme: You must have ANSI/ISO colors to support AIX colors
 #define COLOR_13	13
 #define COLOR_14	14
 #define COLOR_15	15
-#define COLOR_BD	16	/* BOLD */
-#define COLOR_UL	17	/* UNDERLINE */
-#define COLOR_BL	18	/* BLINK */
+
+#if OPT_256_COLORS
+# define NUM_ANSI_COLORS 256
+#elif OPT_88_COLORS
+# define NUM_ANSI_COLORS 88
+#else
+# define NUM_ANSI_COLORS 16
+#endif
+
+#if NUM_ANSI_COLORS > 16
+# define OPT_EXT_COLORS  1
+#else
+# define OPT_EXT_COLORS  0
+#endif
+
+#define COLOR_BD	(NUM_ANSI_COLORS)	/* BOLD */
+#define COLOR_UL	(NUM_ANSI_COLORS+1)	/* UNDERLINE */
+#define COLOR_BL	(NUM_ANSI_COLORS+2)	/* BLINK */
+#define MAXCOLORS	(NUM_ANSI_COLORS+3)
 #ifndef DFT_COLORMODE
 #define DFT_COLORMODE TRUE	/* default colorMode resource */
 #endif
-#else
+
+#else	/* !OPT_ISO_COLORS */
+
 #define if_OPT_ISO_COLORS(screen, code) /* nothing */
 #define TERM_COLOR_FLAGS 0
+
 #endif	/* OPT_ISO_COLORS */
 
 #if OPT_AIX_COLORS
@@ -421,29 +573,49 @@ fixme: You must have ANSI/ISO colors to support AIX colors
 #define if_OPT_AIX_COLORS(screen, code) /* nothing */
 #endif
 
+#if OPT_256_COLORS || OPT_88_COLORS
+# define if_OPT_EXT_COLORS(screen, code) if(screen->colorMode) code
+# define if_OPT_ISO_TRADITIONAL_COLORS(screen, code) /* nothing */
+#elif OPT_ISO_COLORS
+# define if_OPT_EXT_COLORS(screen, code) /* nothing */
+# define if_OPT_ISO_TRADITIONAL_COLORS(screen, code) if(screen->colorMode) code
+#else
+# define if_OPT_EXT_COLORS(screen, code) /* nothing */
+# define if_OPT_ISO_TRADITIONAL_COLORS(screen, code) /*nothing*/
+#endif
+
+#if OPT_COLOR_RES
+#define COLOR_RES(name,offset,value) Sres(name, XtCForeground, offset.resource, value)
+#else
+#define COLOR_RES(name,offset,value) Cres(name, offset, value)
+#endif
+
 /***====================================================================***/
 
 #if OPT_DEC_CHRSET
 #define if_OPT_DEC_CHRSET(code) code
-	/* Use 3 bits for encoding the double high/wide sense of characters */
+	/* Use 2 bits for encoding the double high/wide sense of characters */
 #define CSET_SWL        0
 #define CSET_DHL_TOP    1
 #define CSET_DHL_BOT    2
-#define CSET_DWL        4
+#define CSET_DWL        3
+#define NUM_CHRSET      8	/* normal/bold and 4 CSET_xxx values */
 	/* Use remaining bits for encoding the other character-sets */
 #define CSET_NORMAL(code)  ((code) == CSET_SWL)
 #define CSET_DOUBLE(code)  (!CSET_NORMAL(code) && !CSET_EXTEND(code))
-#define CSET_EXTEND(code)  ((code) >= 8)
+#define CSET_EXTEND(code)  ((code) > CSET_DWL)
+	/* for doublesize characters, the first cell in a row holds the info */
+#define SCRN_ROW_CSET(screen,row) (SCRN_BUF_CSETS((screen), row)[0])
 #define CurMaxCol(screen, row) \
-	(CSET_DOUBLE(SCRN_BUF_CSETS(screen, row)[0]) \
+	(CSET_DOUBLE(SCRN_ROW_CSET(screen, row)) \
 	? (screen->max_col / 2) \
 	: (screen->max_col))
 #define CurCursorX(screen, row, col) \
-	(CSET_DOUBLE(SCRN_BUF_CSETS(screen, row)[0]) \
+	(CSET_DOUBLE(SCRN_ROW_CSET(screen, row)) \
 	? CursorX(screen, 2*(col)) \
 	: CursorX(screen, (col)))
 #define CurFontWidth(screen, row) \
-	(CSET_DOUBLE(SCRN_BUF_CSETS(screen, row)[0]) \
+	(CSET_DOUBLE(SCRN_ROW_CSET(screen, row)) \
 	? 2*FontWidth(screen) \
 	: FontWidth(screen))
 #else
@@ -454,15 +626,27 @@ fixme: You must have ANSI/ISO colors to support AIX colors
 #endif
 
 	/* the number of pointers per row in 'ScrnBuf' */
-#if OPT_ISO_COLORS || OPT_DEC_CHRSET
+#if OPT_ISO_COLORS || OPT_DEC_CHRSET || OPT_WIDE_CHARS
 #define MAX_PTRS term->num_ptrs
 #else
-#define MAX_PTRS 3
+#define MAX_PTRS (OFF_ATTRS+1)
 #endif
 
 #define BUF_HEAD 1
 	/* the number that point to Char data */
 #define BUF_PTRS (MAX_PTRS - BUF_HEAD)
+
+/***====================================================================***/
+
+#if OPT_EBCDIC
+extern int E2A(int);
+extern int A2E(int);
+extern char CONTROL(char);
+#else
+#define E2A(a) (a)
+#define A2E(a) (a)
+#define CONTROL(a) ((a)&037)
+#endif
 
 /***====================================================================***/
 
@@ -478,11 +662,10 @@ fixme: You must have ANSI/ISO colors to support AIX colors
 
 /***====================================================================***/
 
-#if OPT_TRACE
-#include <trace.h>
+#if OPT_TOOLBAR
+#define SHELL_OF(widget) XtParent(XtParent(widget))
 #else
-#define TRACE(p) /*nothing*/
-#define TRACE_CHILD /*nothing*/
+#define SHELL_OF(widget) XtParent(widget)
 #endif
 
 /***====================================================================***/
@@ -505,36 +688,91 @@ fixme: You must have ANSI/ISO colors to support AIX colors
 
 /***====================================================================***/
 
-#define OFF_CHARS (BUF_HEAD + 0)
-#define OFF_ATTRS (BUF_HEAD + 1)
-#define OFF_COLOR (BUF_HEAD + 2)
-#define OFF_CSETS (BUF_HEAD + 3)
+#if OPT_WIDE_CHARS
+#define if_OPT_WIDE_CHARS(screen, code) if(screen->wide_chars) code
+#define PAIRED_CHARS(a,b) a,b
+typedef unsigned IChar;		/* for 8 or 16-bit characters, plus flag */
+#else
+#define if_OPT_WIDE_CHARS(screen, code) /* nothing */
+#define PAIRED_CHARS(a,b) a
+typedef unsigned char IChar;	/* for 8-bit characters */
+#endif
+
+/***====================================================================***/
+
+#define BUF_SIZE 4096
+
+typedef struct {
+	int	cnt;		/* number of chars left to process */
+	IChar *	ptr;		/* pointer into decoded data */
+	Char	buf[BUF_SIZE];	/* we read directly into this */
+#if OPT_WIDE_CHARS
+	IChar	buf2[BUF_SIZE];	/* ...and may decode into this */
+#define DecodedData(data) (data)->buf2
+#else
+#define DecodedData(data) (data)->buf
+#endif
+	} PtyData;
+
+/***====================================================================***/
+
+#if OPT_TRACE
+#include <trace.h>
+#else
+#define TRACE(p) /*nothing*/
+#define TRACE_CHILD /*nothing*/
+#endif
+
+/***====================================================================***/
+
+/* The order of ifdef's matches the logic for num_ptrs in VTInitialize */
+typedef enum {
+	OFF_FLAGS = 0		/* BUF_HEAD */
+	, OFF_CHARS = 1
+	, OFF_ATTRS = 2
+#if OPT_ISO_COLORS
+#if OPT_256_COLORS || OPT_88_COLORS
+	, OFF_FGRND
+	, OFF_BGRND
+#else
+	, OFF_COLOR
+#endif
+#endif
+#if OPT_DEC_CHRSET
+	, OFF_CSETS
+#endif
+#if OPT_WIDE_CHARS
+	, OFF_WIDEC
+#endif
+} BufOffsets;
 
 	/* ScrnBuf-level macros */
-#define BUF_FLAGS(buf, row) (buf[MAX_PTRS * (row) + 0])
+#define BUF_FLAGS(buf, row) (buf[MAX_PTRS * (row) + OFF_FLAGS])
 #define BUF_CHARS(buf, row) (buf[MAX_PTRS * (row) + OFF_CHARS])
 #define BUF_ATTRS(buf, row) (buf[MAX_PTRS * (row) + OFF_ATTRS])
-
-#if OPT_ISO_COLORS
 #define BUF_COLOR(buf, row) (buf[MAX_PTRS * (row) + OFF_COLOR])
-#endif
-
-#if OPT_DEC_CHRSET
+#define BUF_FGRND(buf, row) (buf[MAX_PTRS * (row) + OFF_FGRND])
+#define BUF_BGRND(buf, row) (buf[MAX_PTRS * (row) + OFF_BGRND])
 #define BUF_CSETS(buf, row) (buf[MAX_PTRS * (row) + OFF_CSETS])
-#endif
+#define BUF_WIDEC(buf, row) (buf[MAX_PTRS * (row) + OFF_WIDEC])
 
 	/* TScreen-level macros */
 #define SCRN_BUF_FLAGS(screen, row) BUF_FLAGS(screen->visbuf, row)
 #define SCRN_BUF_CHARS(screen, row) BUF_CHARS(screen->visbuf, row)
 #define SCRN_BUF_ATTRS(screen, row) BUF_ATTRS(screen->visbuf, row)
-
-#if OPT_ISO_COLORS
 #define SCRN_BUF_COLOR(screen, row) BUF_COLOR(screen->visbuf, row)
-#endif
-
-#if OPT_DEC_CHRSET
+#define SCRN_BUF_FGRND(screen, row) BUF_FGRND(screen->visbuf, row)
+#define SCRN_BUF_BGRND(screen, row) BUF_BGRND(screen->visbuf, row)
 #define SCRN_BUF_CSETS(screen, row) BUF_CSETS(screen->visbuf, row)
-#endif
+#define SCRN_BUF_WIDEC(screen, row) BUF_WIDEC(screen->visbuf, row)
+
+typedef struct {
+	unsigned	chrset;
+	unsigned	flags;
+	XFontStruct *	fs;
+	GC		gc;
+	char *		fn;
+} XTermFonts;
 
 	/* indices into save_modes[] */
 typedef enum {
@@ -565,6 +803,32 @@ typedef enum {
 #define DoSM(code,value) screen->save_modes[code] = value
 #define DoRM(code,value) value = screen->save_modes[code]
 
+	/* index into vt_shell[] or tek_shell[] */
+typedef enum {
+	mainMenu,
+	vtMenu,
+	fontMenu,
+	tekMenu
+} MenuIndex;
+
+#define NUM_POPUP_MENUS 4
+
+#if OPT_COLOR_RES
+typedef struct {
+	String		resource;
+	Pixel		value;
+	int		mode;
+} ColorRes;
+#else
+#define ColorRes Pixel
+#endif
+
+typedef struct {
+	unsigned	which;	/* must have NCOLORS bits */
+	Pixel		colors[NCOLORS];
+	char		*names[NCOLORS];
+} ScrnColors;
+
 typedef struct {
 	Boolean		saved;
 	int		row;
@@ -577,23 +841,37 @@ typedef struct {
 	int		cur_foreground; /* current foreground color	*/
 	int		cur_background; /* current background color	*/
 	int		sgr_foreground; /* current SGR foreground color */
+	Boolean		sgr_extended;	/* SGR set with extended codes? */
 #endif
 } SavedCursor;
 
 struct _vtwin {
-	Window	window;			/* X window id			*/
-	int	width;			/* width of columns		*/
-	int	height;			/* height of rows		*/
-	int	fullwidth;		/* full width of window		*/
-	int	fullheight;		/* full height of window	*/
-	int	f_width;		/* width of fonts in pixels	*/
-	int	f_height;		/* height of fonts in pixels	*/
-	int	scrollbar;		/* if > 0, width of scrollbar, and
-						scrollbar is showing	*/
-	GC	normalGC;		/* normal painting		*/
-	GC	reverseGC;		/* reverse painting		*/
-	GC	normalboldGC;		/* normal painting, bold font	*/
-	GC	reverseboldGC;		/* reverse painting, bold font	*/
+	Window		window;		/* X window id			*/
+	int		width;		/* width of columns		*/
+	int		height;		/* height of rows		*/
+	int		fullwidth;	/* full width of window		*/
+	int		fullheight;	/* full height of window	*/
+	int		f_width;	/* width of fonts in pixels	*/
+	int		f_height;	/* height of fonts in pixels	*/
+	int		scrollbar;	/* if > 0, width of scrollbar,	*/
+					/* and scrollbar is showing	*/
+	GC		normalGC;	/* normal painting		*/
+	GC		reverseGC;	/* reverse painting		*/
+	GC		normalboldGC;	/* normal painting, bold font	*/
+	GC		reverseboldGC;	/* reverse painting, bold font	*/
+#if OPT_TOOLBAR
+	Widget		menu_bar;	/* toolbar, if initialized	*/
+	Dimension	menu_height;	/* ...and its height		*/
+#endif
+};
+
+struct _tekwin {
+	Window		window;		/* X window id			*/
+	int		width;		/* width of columns		*/
+	int		height;		/* height of rows		*/
+	int		fullwidth;	/* full width of window		*/
+	int		fullheight;	/* full height of window	*/
+	double		tekscale;	/* scale factor Tek -> vs100	*/
 };
 
 typedef struct {
@@ -618,7 +896,7 @@ typedef struct {
 	Pixel		mousecolor;	/* Mouse color			*/
 	Pixel		mousecolorback;	/* Mouse color background	*/
 #if OPT_ISO_COLORS
-	Pixel		Acolors[MAXCOLORS]; /* ANSI color emulation	*/
+	ColorRes	Acolors[MAXCOLORS]; /* ANSI color emulation	*/
 	Boolean		boldColors;	/* can we make bold colors?	*/
 	Boolean		colorMode;	/* are we using color mode?	*/
 	Boolean		colorULMode;	/* use color for underline?	*/
@@ -630,13 +908,34 @@ typedef struct {
 	Pixel		highlightcolor;	/* Highlight background color	*/
 #endif
 #if OPT_DEC_CHRSET
-	Char		chrset;		/* character-set index & code	*/
+	Boolean		font_doublesize;/* enable font-scaling		*/
+	int		cache_doublesize;/* limit of our cache		*/
+	Char		cur_chrset;	/* character-set index & code	*/
+	int		fonts_used;	/* count items in double_fonts	*/
+	XTermFonts	double_fonts[NUM_CHRSET];
+#endif
+#if OPT_WIDE_CHARS
+	Boolean		wide_chars;	/* true when 16-bit chars	*/
+	int		utf8_mode;	/* use UTF-8 decode/encode: 0-2	*/
+	int		utf_count;	/* state of utf_char */
+	IChar		utf_char;	/* in-progress character */
 #endif
 	int		border;		/* inner border			*/
 	Cursor		arrow;		/* arrow cursor			*/
 	unsigned long	event_mask;
 	unsigned short	send_mouse_pos;	/* user wants mouse transition  */
 					/* and position information	*/
+#if OPT_DEC_LOCATOR
+	Boolean		locator_reset;	/* turn mouse off after 1 report? */
+	Boolean		locator_pixels;	/* report in pixels?		*/
+					/* if false, report in cells	*/
+	unsigned short	locator_events;	/* what events to report	*/
+	Boolean		loc_filter;	/* is filter rectangle active?	*/
+	int		loc_filter_top;	/* filter rectangle for DEC Locator */
+	int		loc_filter_left;
+	int		loc_filter_bottom;
+	int		loc_filter_right;
+#endif	/* OPT_DEC_LOCATOR */
 	int		mouse_button;	/* current button pressed	*/
 	int		mouse_row;	/* ...and its row		*/
 	int		mouse_col;	/* ...and its column		*/
@@ -649,29 +948,35 @@ typedef struct {
 	int		logging;	/* logging mode			*/
 	int		logfd;		/* file descriptor of log	*/
 	char		*logfile;	/* log file name		*/
-	unsigned char	*logstart;	/* current start of log buffer	*/
+	IChar		*logstart;	/* current start of log buffer	*/
 #endif
 	int		inhibit;	/* flags for inhibiting changes	*/
 
 /* VT window parameters */
 	Boolean		Vshow;		/* VT window showing		*/
-	struct _vtwin fullVwin;
+	struct _vtwin	fullVwin;
 #ifndef NO_ACTIVE_ICON
-	struct _vtwin iconVwin;
-	struct _vtwin *whichVwin;
+	struct _vtwin	iconVwin;
+	struct _vtwin *	whichVwin;
 #endif /* NO_ACTIVE_ICON */
-	Cursor pointer_cursor;		/* pointer cursor in window	*/
 
+	Cursor	pointer_cursor;		/* pointer cursor in window	*/
+
+	String	answer_back;		/* response to ENQ		*/
 	String	printer_command;	/* pipe/shell command string	*/
 	Boolean printer_autoclose;	/* close printer when offline	*/
 	Boolean printer_extent;		/* print complete page		*/
 	Boolean printer_formfeed;	/* print formfeed per function	*/
 	int	printer_controlmode;	/* 0=off, 1=auto, 2=controller	*/
-#ifdef OPT_PRINT_COLORS
+#if OPT_PRINT_COLORS
 	int	print_attributes;	/* 0=off, 1=normal, 2=color	*/
 #endif
 
 	Boolean		fnt_prop;	/* true if proportional fonts	*/
+	Boolean		fnt_boxes;	/* true if font has box-chars	*/
+	Boolean		force_box_chars; /* true if we assume that	*/
+	Dimension	fnt_wide;
+	Dimension	fnt_high;
 	XFontStruct	*fnt_norm;	/* normal font of terminal	*/
 	XFontStruct	*fnt_bold;	/* bold font of terminal	*/
 #ifndef NO_ACTIVE_ICON
@@ -682,7 +987,9 @@ typedef struct {
 
 	int		cursor_state;	/* ON, OFF, or BLINKED_OFF	*/
 #if OPT_BLINK_CURS
-	int		cursor_blink;	/* blink-rate (0=off) msecs	*/
+	Boolean		cursor_blink;	/* cursor blink enable		*/
+	int		cursor_on;	/* cursor on time (msecs)	*/
+	int		cursor_off;	/* cursor off time (msecs)	*/
 	XtIntervalId	cursor_timer;	/* timer-id for cursor-proc	*/
 #endif
 	int		cursor_set;	/* requested state		*/
@@ -731,24 +1038,35 @@ typedef struct {
 	Boolean 	multiscroll;	/* true if multi-scroll		*/
 	int		scrolls;	/* outstanding scroll count,
 					    used only with multiscroll	*/
-	SavedCursor	sc;		/* data for restore cursor	*/
+	SavedCursor	sc[2];		/* data for restore cursor	*/
 	int		save_modes[24];	/* save dec/xterm private modes	*/
 
 	/* Improved VT100 emulation stuff.				*/
+	String		keyboard_dialect; /* default keyboard dialect	*/
 	char		gsets[4];	/* G0 through G3.		*/
 	char		curgl;		/* Current GL setting.		*/
 	char		curgr;		/* Current GR setting.		*/
 	char		curss;		/* Current single shift.	*/
+	String		term_id;	/* resource for terminal_id	*/
 	int		terminal_id;	/* 100=vt100, 220=vt220, etc.	*/
 	int		ansi_level;	/* 0=vt100, 1,2,3 = vt100 ... vt320 */
 	int		scroll_amt;	/* amount to scroll		*/
 	int		refresh_amt;	/* amount to refresh		*/
 	int		protected_mode;	/* 0=off, 1=DEC, 2=ISO		*/
 	Boolean		old_fkeys;	/* true for compatible fkeys	*/
+	Boolean		delete_is_del;	/* true for compatible Delete key */
 	Boolean		jumpscroll;	/* whether we should jumpscroll */
 	Boolean         always_highlight; /* whether to highlight cursor */
 	Boolean		underline;	/* whether to underline text	*/
+	Boolean		bold_mode;	/* whether to use bold font	*/
 
+#if OPT_MAXIMIZE
+	Boolean		restore_data;
+	unsigned	restore_x;
+	unsigned	restore_y;
+	unsigned	restore_width;
+	unsigned	restore_height;
+#endif
 	/* Testing */
 #if OPT_XMC_GLITCH
 	int		xmc_glitch;	/* # of spaces to pad on SGR's	*/
@@ -764,21 +1082,16 @@ typedef struct {
 	Pixel		Tforeground;	/* foreground color		*/
 	Pixel		Tbackground;	/* Background color		*/
 	Pixel		Tcursorcolor;	/* Cursor color			*/
+
 	int		Tcolor;		/* colors used			*/
 	Boolean		Tshow;		/* Tek window showing		*/
 	Boolean		waitrefresh;	/* postpone refresh		*/
-	struct _tekwin {
-		Window	window;		/* X window id			*/
-		int	width;		/* width of columns		*/
-		int	height;		/* height of rows		*/
-		int	fullwidth;	/* full width of window		*/
-		int	fullheight;	/* full height of window	*/
-		double	tekscale;	/* scale factor Tek -> vs100	*/
-	} fullTwin;
+	struct _tekwin	fullTwin;
 #ifndef NO_ACTIVE_ICON
-	struct _tekwin iconTwin;
+	struct _tekwin	iconTwin;
 	struct _tekwin *whichTwin;
 #endif /* NO_ACTIVE_ICON */
+
 	int		xorplane;	/* z plane for inverts		*/
 	GC		linepat[TEKNUMLINES]; /* line patterns		*/
 	Boolean		TekEmu;		/* true if Tektronix emulation	*/
@@ -799,7 +1112,8 @@ typedef struct {
 	Boolean		cutNewline;	/* whether or not line cut has \n */
 	Boolean		cutToBeginningOfLine;  /* line cuts to BOL? */
 	Boolean		highlight_selection; /* controls appearance of selection */
-	char		*selection;	/* the current selection */
+	Boolean		trim_selection; /* controls trimming of selection */
+	char		*selection_data; /* the current selection */
 	int		selection_size; /* size of allocated buffer */
 	int		selection_length; /* number of significant bytes */
 	Time		selection_time;	/* latest event timestamp */
@@ -813,18 +1127,23 @@ typedef struct {
 	Boolean		output_eight_bits; /* honor all bits or strip */
 	Boolean		control_eight_bits; /* send CSI as 8-bits */
 	Boolean		backarrow_key;		/* backspace/delete */
+	Boolean		meta_sends_esc;		/* Meta-key sends ESC prefix */
 	Pixmap		menu_item_bitmap;	/* mask for checking items */
-	Widget		mainMenu, vtMenu, tekMenu, fontMenu;
 	String		menu_font_names[NMENUFONTS];
+	unsigned long	menu_font_sizes[NMENUFONTS];
 	int		menu_font_number;
 	XIC		xic;
 } TScreen;
 
 typedef struct _TekPart {
-    XFontStruct *Tfont[TEKNUMFONTS];
-    int		tobaseline[TEKNUMFONTS]; /* top to baseline for each font */
-    char	*initial_font;		/* large, 2, 3, small */
-    char	*gin_terminator_str;	/* ginTerminator resource */
+	XFontStruct *	Tfont[TEKNUMFONTS];
+	int		tobaseline[TEKNUMFONTS]; /* top-baseline, each font */
+	char *		initial_font;		/* large, 2, 3, small */
+	char *		gin_terminator_str;	/* ginTerminator resource */
+#if OPT_TOOLBAR
+	Widget		menu_bar;	/* toolbar, if initialized	*/
+	Dimension	menu_height;	/* ...and its height		*/
+#endif
 } TekPart;
 
 
@@ -835,9 +1154,19 @@ typedef struct _TekPart {
 
 #define MULTICLICKTIME 250	/* milliseconds */
 
+typedef enum {
+    keyboardIsLegacy,		/* bogus vt220 codes for F1-F4, etc. */
+    keyboardIsDefault,
+    keyboardIsHP,
+    keyboardIsSCO,
+    keyboardIsSun,
+    keyboardIsVT220
+} xtermKeyboardType;
+
 typedef struct
 {
-	unsigned	flags;
+    xtermKeyboardType type;
+    unsigned	flags;
 } TKeyboard;
 
 typedef struct _Misc {
@@ -850,6 +1179,7 @@ typedef struct _Misc {
 #endif
     Boolean login_shell;
     Boolean re_verse;
+    Boolean re_verse0;	/* initial value of "-rv" */
     XtGravity resizeGravity;
     Boolean reverseWrap;
     Boolean autoWrap;
@@ -878,6 +1208,21 @@ typedef struct _Misc {
     int icon_border_width;
     Pixel icon_border_pixel;
 #endif /* NO_ACTIVE_ICON */
+#if OPT_DEC_SOFTFONT
+    Boolean font_loadable;
+#endif
+#if OPT_SHIFT_KEYS
+    Boolean shift_keys;		/* true if we interpret shifted special-keys */
+#endif
+#if OPT_NUM_LOCK
+    Boolean real_NumLock;	/* true if we treat NumLock key specially */
+    unsigned long num_lock;	/* modifier for Num_Lock */
+    unsigned long alt_left;	/* modifier for Alt_L */
+    unsigned long alt_right;	/* modifier for Alt_R */
+    Boolean meta_trans;		/* true if Meta is used in translations */
+    unsigned long meta_left;	/* modifier for Meta_L */
+    unsigned long meta_right;	/* modifier for Meta_R */
+#endif
 } Misc;
 
 typedef struct {int foo;} XtermClassPart, TekClassPart;
@@ -923,8 +1268,9 @@ typedef struct _XtermWidgetRec {
     Pixel       dft_background;	/* default background color	*/
 #if OPT_ISO_COLORS
     int         sgr_foreground;	/* current SGR foreground color	*/
+    Boolean     sgr_extended;	/* SGR set with extended codes? */
 #endif
-#if OPT_ISO_COLORS || OPT_DEC_CHRSET
+#if OPT_ISO_COLORS || OPT_DEC_CHRSET || OPT_WIDE_CHARS
     int         num_ptrs;	/* number of pointers per row in 'ScrnBuf' */
 #endif
     unsigned	initflags;	/* initial mode flags		*/
@@ -938,8 +1284,6 @@ typedef struct _TekWidgetRec {
     TekPart tek;
 } TekWidgetRec, *TekWidget;
 #endif /* OPT_TEK4014 */
-
-#define BUF_SIZE 4096
 
 /*
  * terminal flags
@@ -1013,10 +1357,9 @@ typedef struct _TekWidgetRec {
 #ifndef NO_ACTIVE_ICON
 #define IsIcon(screen)		((screen)->whichVwin == &(screen)->iconVwin)
 #define VWindow(screen)		((screen)->whichVwin->window)
-#define VShellWindow		term->core.parent->core.window
-#define TextWindow(screen)      ((screen)->whichVwin->window)
+#define VShellWindow		XtWindow(SHELL_OF(term))
 #define TWindow(screen)		((screen)->whichTwin->window)
-#define TShellWindow		tekWidget->core.parent->core.window
+#define TShellWindow		XtWindow(SHELL_OF(tekWidget))
 #define Width(screen)		((screen)->whichVwin->width)
 #define Height(screen)		((screen)->whichVwin->height)
 #define FullWidth(screen)	((screen)->whichVwin->fullwidth)
@@ -1042,10 +1385,9 @@ typedef struct _TekWidgetRec {
 
 #define IsIcon(screen)		(False)
 #define VWindow(screen)		((screen)->fullVwin.window)
-#define VShellWindow		term->core.parent->core.window
-#define TextWindow(screen)      ((screen)->fullVwin.window)
+#define VShellWindow		XtWindow(SHELL_OF(term))
 #define TWindow(screen)		((screen)->fullTwin.window)
-#define TShellWindow		tekWidget->core.parent->core.window
+#define TShellWindow		XtWindow(SHELL_OF(tekWidget))
 #define Width(screen)		((screen)->fullVwin.width)
 #define Height(screen)		((screen)->fullVwin.height)
 #define FullWidth(screen)	((screen)->fullVwin.fullwidth)
@@ -1066,12 +1408,6 @@ typedef struct _TekWidgetRec {
 #define TekScale(screen)	((screen)->fullTwin.tekscale)
 
 #endif /* NO_ACTIVE_ICON */
-
-#define	TWINDOWEVENTS	(KeyPressMask | ExposureMask | ButtonPressMask |\
-			 ButtonReleaseMask | StructureNotifyMask |\
-			 EnterWindowMask | LeaveWindowMask | FocusChangeMask)
-
-#define	WINDOWEVENTS	(TWINDOWEVENTS | PointerMotionMask)
 
 #if OPT_TEK4014
 #define TEK_LINK_BLOCK_SIZE 1024

@@ -1,10 +1,10 @@
 /*
- * $XFree86: xc/programs/xterm/trace.h,v 3.1.2.4 1999/07/28 13:38:07 hohndel Exp $
+ * $XFree86: xc/programs/xterm/trace.h,v 3.8 2000/02/08 17:19:43 dawes Exp $
  */
 
 /************************************************************
 
-Copyright 1997 by Thomas E. Dickey <dickey@clark.net>
+Copyright 1997-2000 by Thomas E. Dickey <dickey@clark.net>
 
                         All Rights Reserved
 
@@ -39,14 +39,21 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <ptyx.h>
 
+#if OPT_TRACE
+
 extern	void	Trace ( char *, ... )
 #ifdef GCC_PRINTF
 	__attribute__ ((format(printf,1,2)))
 #endif
 	;
-#define TRACE(p) Trace p;
+#define TRACE(p) Trace p
+
+extern	char *	visibleChars (PAIRED_CHARS(Char *buf, Char *buf2), unsigned len);
+extern	char *	visibleIChar (IChar *, unsigned);
 
 extern	char	*trace_who;
 #define TRACE_CHILD int tracing_child = (trace_who = "child") != 0;
+
+#endif
 
 #endif	/* included_trace_h */

@@ -1,6 +1,28 @@
 /* $XConsortium: menu.c /main/66 1996/12/01 23:46:59 swick $ */
-/* $XFree86: xc/programs/xterm/menu.c,v 3.9.2.3 1998/10/20 20:51:47 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/menu.c,v 3.32 2000/03/03 20:02:33 dawes Exp $ */
 /*
+
+Copyright 1999-2000 by Thomas E. Dickey <dickey@clark.net>
+
+                        All Rights Reserved
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation, and that the name of the above listed
+copyright holder(s) not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.
+
+THE ABOVE LISTED COPYRIGHT HOLDER(S) DISCLAIM ALL WARRANTIES WITH REGARD
+TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS, IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE
+LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 
 Copyright (c) 1989  X Consortium
 
@@ -30,13 +52,22 @@ in this Software without prior written authorization from the X Consortium.
 #include <ptyx.h>
 #include <data.h>
 #include <menu.h>
+#include <fontutils.h>
 
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
 #include <X11/Xmu/CharSet.h>
+
 #include <X11/Xaw/SimpleMenu.h>
+#include <X11/Xaw/Box.h>
 #include <X11/Xaw/SmeBSB.h>
 #include <X11/Xaw/SmeLine.h>
+
+#if OPT_TOOLBAR
+#include <X11/Xaw/MenuButton.h>
+#include <X11/Xaw/Form.h>
+#endif
+
 #include <stdio.h>
 #include <signal.h>
 
@@ -45,9 +76,6 @@ in this Software without prior written authorization from the X Consortium.
 #endif
 
 #include <xterm.h>
-
-Arg menuArgs[2] = {{ XtNleftBitmap, (XtArgVal) 0 },
-		   { XtNsensitive, (XtArgVal) 0 }};
 
 static void do_8bit_control    PROTO_XT_CALLBACK_ARGS;
 static void do_allow132        PROTO_XT_CALLBACK_ARGS;
@@ -61,11 +89,13 @@ static void do_backarrow       PROTO_XT_CALLBACK_ARGS;
 static void do_clearsavedlines PROTO_XT_CALLBACK_ARGS;
 static void do_continue        PROTO_XT_CALLBACK_ARGS;
 static void do_cursesemul      PROTO_XT_CALLBACK_ARGS;
+static void do_delete_del      PROTO_XT_CALLBACK_ARGS;
 static void do_hardreset       PROTO_XT_CALLBACK_ARGS;
 static void do_interrupt       PROTO_XT_CALLBACK_ARGS;
 static void do_jumpscroll      PROTO_XT_CALLBACK_ARGS;
 static void do_kill            PROTO_XT_CALLBACK_ARGS;
 static void do_marginbell      PROTO_XT_CALLBACK_ARGS;
+static void do_old_fkeys       PROTO_XT_CALLBACK_ARGS;
 static void do_print           PROTO_XT_CALLBACK_ARGS;
 static void do_quit            PROTO_XT_CALLBACK_ARGS;
 static void do_redraw          PROTO_XT_CALLBACK_ARGS;
@@ -77,9 +107,9 @@ static void do_scrollttyoutput PROTO_XT_CALLBACK_ARGS;
 static void do_securekbd       PROTO_XT_CALLBACK_ARGS;
 static void do_softreset       PROTO_XT_CALLBACK_ARGS;
 static void do_sun_fkeys       PROTO_XT_CALLBACK_ARGS;
-static void do_sun_kbd         PROTO_XT_CALLBACK_ARGS;
 static void do_suspend         PROTO_XT_CALLBACK_ARGS;
 static void do_terminate       PROTO_XT_CALLBACK_ARGS;
+static void do_titeInhibit     PROTO_XT_CALLBACK_ARGS;
 static void do_visualbell      PROTO_XT_CALLBACK_ARGS;
 static void do_vtfont          PROTO_XT_CALLBACK_ARGS;
 
@@ -90,6 +120,39 @@ static void do_logging         PROTO_XT_CALLBACK_ARGS;
 #ifndef NO_ACTIVE_ICON
 static void do_activeicon      PROTO_XT_CALLBACK_ARGS;
 #endif /* NO_ACTIVE_ICON */
+
+#if OPT_BLINK_CURS
+static void do_cursorblink     PROTO_XT_CALLBACK_ARGS;
+#endif
+
+#if OPT_BOX_CHARS
+static void do_font_boxchars   PROTO_XT_CALLBACK_ARGS;
+#endif
+
+#if OPT_DEC_CHRSET
+static void do_font_doublesize PROTO_XT_CALLBACK_ARGS;
+#endif
+
+#if OPT_DEC_SOFTFONT
+static void do_font_loadable   PROTO_XT_CALLBACK_ARGS;
+#endif
+
+#if OPT_HP_FUNC_KEYS
+static void do_hp_fkeys        PROTO_XT_CALLBACK_ARGS;
+#endif
+
+#if OPT_NUM_LOCK
+static void do_num_lock        PROTO_XT_CALLBACK_ARGS;
+static void do_meta_esc        PROTO_XT_CALLBACK_ARGS;
+#endif
+
+#if OPT_SCO_FUNC_KEYS
+static void do_sco_fkeys       PROTO_XT_CALLBACK_ARGS;
+#endif
+
+#if OPT_SUNPC_KBD
+static void do_sun_kbd         PROTO_XT_CALLBACK_ARGS;
+#endif
 
 #if OPT_TEK4014
 static void do_tekcopy         PROTO_XT_CALLBACK_ARGS;
@@ -125,8 +188,22 @@ MenuEntry mainMenuEntries[] = {
     { "line1",		NULL,		NULL },
     { "8-bit control",	do_8bit_control, NULL },
     { "backarrow key",	do_backarrow,	NULL },
+#if OPT_NUM_LOCK
+    { "num-lock",	do_num_lock,	NULL },
+    { "meta-esc",	do_meta_esc,	NULL },
+#endif
+    { "delete-is-del",	do_delete_del,	NULL },
+    { "old function-keys",do_old_fkeys,	NULL },
+#if OPT_HP_FUNC_KEYS
+    { "hp function-keys",do_hp_fkeys,	NULL },
+#endif
+#if OPT_SCO_FUNC_KEYS
+    { "sco function-keys",do_sco_fkeys,	NULL },
+#endif
     { "sun function-keys",do_sun_fkeys,	NULL },
+#if OPT_SUNPC_KBD
     { "sun keyboard",	do_sun_kbd,	NULL },
+#endif
     { "line2",		NULL,		NULL },
     { "suspend",	do_suspend,	NULL },
     { "continue",	do_continue,	NULL },
@@ -138,95 +215,231 @@ MenuEntry mainMenuEntries[] = {
     { "quit",		do_quit,	NULL }};
 
 MenuEntry vtMenuEntries[] = {
-    { "scrollbar",	do_scrollbar, NULL },		/*  0 */
-    { "jumpscroll",	do_jumpscroll, NULL },		/*  1 */
-    { "reversevideo",	do_reversevideo, NULL },	/*  2 */
-    { "autowrap",	do_autowrap, NULL },		/*  3 */
-    { "reversewrap",	do_reversewrap, NULL },		/*  4 */
-    { "autolinefeed",	do_autolinefeed, NULL },	/*  5 */
-    { "appcursor",	do_appcursor, NULL },		/*  6 */
-    { "appkeypad",	do_appkeypad, NULL },		/*  7 */
-    { "scrollkey",	do_scrollkey, NULL },		/*  8 */
-    { "scrollttyoutput",do_scrollttyoutput, NULL },	/*  9 */
-    { "allow132",	do_allow132, NULL },		/* 10 */
-    { "cursesemul",	do_cursesemul, NULL },		/* 11 */
-    { "visualbell",	do_visualbell, NULL },		/* 12 */
-    { "marginbell",	do_marginbell, NULL },		/* 13 */
-    { "altscreen",	do_altscreen, NULL },		/* 14 */
-#ifndef NO_ACTIVE_ICON
-    { "activeicon",	do_activeicon, NULL },		/* 15 */
-#endif /* NO_ACTIVE_ICON */
-    { "line1",		NULL, NULL },			/* 16 */
-    { "softreset",	do_softreset, NULL },		/* 17 */
-    { "hardreset",	do_hardreset, NULL },		/* 18 */
-    { "clearsavedlines",do_clearsavedlines, NULL },	/* 19 */
-#if OPT_TEK4014
-    { "line2",		NULL, NULL },			/* 20 */
-    { "tekshow",	do_tekshow, NULL },		/* 21 */
-    { "tekmode",	do_tekmode, NULL },		/* 22 */
-    { "vthide",		do_vthide, NULL },		/* 23 */
+    { "scrollbar",	do_scrollbar,	NULL },
+    { "jumpscroll",	do_jumpscroll,	NULL },
+    { "reversevideo",	do_reversevideo, NULL },
+    { "autowrap",	do_autowrap,	NULL },
+    { "reversewrap",	do_reversewrap, NULL },
+    { "autolinefeed",	do_autolinefeed, NULL },
+    { "appcursor",	do_appcursor,	NULL },
+    { "appkeypad",	do_appkeypad,	NULL },
+    { "scrollkey",	do_scrollkey,	NULL },
+    { "scrollttyoutput",do_scrollttyoutput, NULL },
+    { "allow132",	do_allow132,	NULL },
+    { "cursesemul",	do_cursesemul,	NULL },
+    { "visualbell",	do_visualbell,	NULL },
+    { "marginbell",	do_marginbell,	NULL },
+#if OPT_BLINK_CURS
+    { "cursorblink",	do_cursorblink,	NULL },
 #endif
+    { "titeInhibit",	do_titeInhibit,	NULL },
+#ifndef NO_ACTIVE_ICON
+    { "activeicon",	do_activeicon,	NULL },
+#endif /* NO_ACTIVE_ICON */
+    { "line1",		NULL,		NULL },
+    { "softreset",	do_softreset,	NULL },
+    { "hardreset",	do_hardreset,	NULL },
+    { "clearsavedlines",do_clearsavedlines, NULL },
+    { "line2",		NULL,		NULL },
+#if OPT_TEK4014
+    { "tekshow",	do_tekshow,	NULL },
+    { "tekmode",	do_tekmode,	NULL },
+    { "vthide",		do_vthide,	NULL },
+#endif
+    { "altscreen",	do_altscreen,	NULL },
     };
 
 MenuEntry fontMenuEntries[] = {
-    { "fontdefault",	do_vtfont, NULL },		/*  0 */
-    { "font1",		do_vtfont, NULL },		/*  1 */
-    { "font2",		do_vtfont, NULL },		/*  2 */
-    { "font3",		do_vtfont, NULL },		/*  3 */
-    { "font4",		do_vtfont, NULL },		/*  4 */
-    { "font5",		do_vtfont, NULL },		/*  5 */
-    { "font6",		do_vtfont, NULL },		/*  6 */
-    { "fontescape",	do_vtfont, NULL },		/*  7 */
-    { "fontsel",	do_vtfont, NULL }};		/*  8 */
-    /* this should match NMENUFONTS in ptyx.h */
+    { "fontdefault",	do_vtfont,	NULL },
+    { "font1",		do_vtfont,	NULL },
+    { "font2",		do_vtfont,	NULL },
+    { "font3",		do_vtfont,	NULL },
+    { "font4",		do_vtfont,	NULL },
+    { "font5",		do_vtfont,	NULL },
+    { "font6",		do_vtfont,	NULL },
+    /* this is after the last builtin font; the other entries are special */
+    { "fontescape",	do_vtfont,	NULL },
+    { "fontsel",	do_vtfont,	NULL },
+    /* down to here should match NMENUFONTS in ptyx.h */
+#if OPT_DEC_CHRSET || OPT_BOX_CHARS || OPT_DEC_SOFTFONT
+    { "line1",		NULL,		NULL },
+#if OPT_BOX_CHARS
+    { "font-linedrawing",do_font_boxchars,NULL },
+#endif
+#if OPT_DEC_CHRSET
+    { "font-doublesize",do_font_doublesize,NULL },
+#endif
+#if OPT_DEC_SOFTFONT
+    { "font-loadable",	do_font_loadable,NULL },
+#endif
+#endif /* toggles for font extensions */
+    };
 
 #if OPT_TEK4014
 MenuEntry tekMenuEntries[] = {
-    { "tektextlarge",	do_tektextlarge, NULL },	/*  0 */
-    { "tektext2",	do_tektext2, NULL },		/*  1 */
-    { "tektext3",	do_tektext3, NULL },		/*  2 */
-    { "tektextsmall",	do_tektextsmall, NULL },	/*  3 */
-    { "line1",		NULL, NULL },			/*  4 */
-    { "tekpage",	do_tekpage, NULL },		/*  5 */
-    { "tekreset",	do_tekreset, NULL },		/*  6 */
-    { "tekcopy",	do_tekcopy, NULL },		/*  7 */
-    { "line2",		NULL, NULL },			/*  8 */
-    { "vtshow",		do_vtshow, NULL },		/*  9 */
-    { "vtmode",		do_vtmode, NULL },		/* 10 */
-    { "tekhide",	do_tekhide, NULL }};		/* 11 */
+    { "tektextlarge",	do_tektextlarge, NULL },
+    { "tektext2",	do_tektext2,	NULL },
+    { "tektext3",	do_tektext3,	NULL },
+    { "tektextsmall",	do_tektextsmall, NULL },
+    { "line1",		NULL,		NULL },
+    { "tekpage",	do_tekpage,	NULL },
+    { "tekreset",	do_tekreset,	NULL },
+    { "tekcopy",	do_tekcopy,	NULL },
+    { "line2",		NULL,		NULL },
+    { "vtshow",		do_vtshow,	NULL },
+    { "vtmode",		do_vtmode,	NULL },
+    { "tekhide",	do_tekhide,	NULL }};
 #endif
 
-static Widget create_menu (
-		XtermWidget xtw,
-		Widget toplevelw,
-		char *name,
-		struct _MenuEntry *entries,
-		int nentries);
+typedef struct {
+    char *internal_name;
+    MenuEntry *entry_list;
+    Cardinal entry_len;
+} MenuHeader;
 
-static void handle_send_signal (Widget gw, int sig);
-
-static void handle_toggle (
-		void (*proc)PROTO_XT_CALLBACK_ARGS,
-		int var,
-		String *params,
-		Cardinal nparams,
-		Widget w,
-		XtPointer closure,
-		XtPointer data);
-
-extern Widget toplevel;
-
-
-/*
- * we really want to do these dynamically
- */
-#define check_width 9
-#define check_height 8
-static unsigned char check_bits[] = {
-   0x00, 0x01, 0x80, 0x01, 0xc0, 0x00, 0x60, 0x00,
-   0x31, 0x00, 0x1b, 0x00, 0x0e, 0x00, 0x04, 0x00
+    /* This table is ordered to correspond with MenuIndex */
+static MenuHeader menu_names[] = {
+    { "mainMenu", mainMenuEntries, XtNumber(mainMenuEntries) },
+    { "vtMenu",   vtMenuEntries,   XtNumber(vtMenuEntries)   },
+    { "fontMenu", fontMenuEntries, XtNumber(fontMenuEntries) },
+#if OPT_TEK4014
+    { "tekMenu",  tekMenuEntries,  XtNumber(tekMenuEntries)  },
+#endif
+    { 0,          0,               0 },
 };
 
+/*
+ * FIXME:  These are global data rather than in the xterm widget because they
+ * are initialized before the widget is created.
+ */
+typedef struct {
+    Widget w;
+    Cardinal entries;
+} MenuList;
+
+static MenuList vt_shell[NUM_POPUP_MENUS];
+
+#if OPT_TEK4014 && OPT_TOOLBAR
+static MenuList tek_shell[NUM_POPUP_MENUS];
+#endif
+
+/*
+ * Returns a pointer to the MenuList entry that matches the popup menu.
+ */
+static MenuList *
+select_menu (Widget w GCC_UNUSED, MenuIndex num)
+{
+#if OPT_TEK4014 && OPT_TOOLBAR
+    while (w != 0) {
+	if (w == tekshellwidget) {
+	    return &tek_shell[num];
+	}
+	w = XtParent(w);
+    }
+#endif
+    return &vt_shell[num];
+}
+
+/*
+ * Returns a pointer to the given popup menu shell
+ */
+static Widget
+obtain_menu (Widget w, MenuIndex num)
+{
+    return select_menu(w, num)->w;
+}
+
+/*
+ * Returns the number of entries in the given popup menu shell
+ */
+static Cardinal
+sizeof_menu (Widget w, MenuIndex num)
+{
+    return select_menu(w, num)->entries;
+}
+
+/*
+ * create_menu - create a popup shell and stuff the menu into it.
+ */
+
+static Widget
+create_menu (Widget w, XtermWidget xtw, MenuIndex num)
+{
+    static XtCallbackRec cb[2] = { { NULL, NULL }, { NULL, NULL }};
+    static Arg arg = { XtNcallback, (XtArgVal) cb };
+
+    Widget m;
+    TScreen *screen = &xtw->screen;
+    MenuHeader *data = &menu_names[num];
+    MenuList *list = select_menu(w, num);
+    struct _MenuEntry *entries = data->entry_list;
+    int nentries = data->entry_len;
+
+    if (screen->menu_item_bitmap == None) {
+	/*
+	 * we really want to do these dynamically
+	 */
+#define check_width 9
+#define check_height 8
+	static unsigned char check_bits[] = {
+	   0x00, 0x01, 0x80, 0x01, 0xc0, 0x00, 0x60, 0x00,
+	   0x31, 0x00, 0x1b, 0x00, 0x0e, 0x00, 0x04, 0x00
+	};
+
+	screen->menu_item_bitmap =
+	XCreateBitmapFromData (XtDisplay(xtw),
+				RootWindowOfScreen(XtScreen(xtw)),
+				(char *)check_bits, check_width, check_height);
+    }
+
+#if OPT_TOOLBAR
+    m = list->w;
+    if (m == 0) {
+	return m;
+    }
+#else
+    m = XtCreatePopupShell (data->internal_name, simpleMenuWidgetClass, toplevel, NULL, 0);
+    list->w = m;
+#endif
+    list->entries = nentries;
+
+    for (; nentries > 0; nentries--, entries++) {
+	cb[0].callback = (XtCallbackProc) entries->function;
+	cb[0].closure = (caddr_t) entries->name;
+	entries->widget = XtCreateManagedWidget (entries->name,
+						 (entries->function ?
+						  smeBSBObjectClass :
+						  smeLineObjectClass), m,
+						 &arg, (Cardinal) 1);
+    }
+
+    /* do not realize at this point */
+    return m;
+}
+
+static int indexOfMenu(String menuName)
+{
+    int me;
+    switch (*menuName) {
+    case 'm':
+	me = mainMenu;
+	break;
+    case 'v':
+	me = vtMenu;
+	break;
+    case 'f':
+	me = fontMenu;
+	break;
+#if OPT_TEK4014
+    case 't':
+	me = tekMenu;
+	break;
+#endif
+    default:
+	me = -1;
+    }
+    return (me);
+}
 
 /*
  * public interfaces
@@ -240,48 +453,58 @@ static Bool domenu (
 	Cardinal *param_count)      /* 0 or 1 */
 {
     TScreen *screen = &term->screen;
+    int me;
+    Boolean created = False;
+    Widget mw;
 
     if (*param_count != 1) {
 	Bell(XkbBI_MinorError,0);
 	return False;
     }
 
-    switch (params[0][0]) {
-      case 'm':
-	if (!screen->mainMenu) {
-	    screen->mainMenu = create_menu (term, toplevel, "mainMenu",
-					    mainMenuEntries,
-					    XtNumber(mainMenuEntries));
+    if ((me = indexOfMenu(params[0])) < 0) {
+	Bell(XkbBI_MinorError,0);
+	return False;
+    }
+
+    if ((mw = obtain_menu(w, me)) == 0
+     || sizeof_menu(w, me) == 0) {
+	mw = create_menu (w, term, me);
+	created = (mw != 0);
+    }
+    if (mw == 0)
+	return False;
+
+    switch (me) {
+      case mainMenu:
+	if (created) {
 	    update_securekbd();
 	    update_allowsends();
-#ifdef ALLOWLOGGING
 	    update_logging();
-#endif
 	    update_8bit_control();
 	    update_decbkm();
-	    update_sun_kbd();
+	    update_num_lock();
+	    update_meta_esc();
+	    update_delete_del();
+	    update_keyboard_type();
 	    if (screen->terminal_id < 200) {
-		set_sensitivity (screen->mainMenu,
+		set_sensitivity (mw,
 				 mainMenuEntries[mainMenu_8bit_ctrl].widget,
 				 FALSE);
 	    }
-	    update_sun_fkeys();
 #if !defined(SIGTSTP) || defined(AMOEBA)
-	    set_sensitivity (screen->mainMenu,
+	    set_sensitivity (mw,
 			     mainMenuEntries[mainMenu_suspend].widget, FALSE);
 #endif
 #if !defined(SIGCONT) || defined(AMOEBA)
-	    set_sensitivity (screen->mainMenu, 
+	    set_sensitivity (mw,
 			     mainMenuEntries[mainMenu_continue].widget, FALSE);
 #endif
 	}
 	break;
 
-      case 'v':
-	if (!screen->vtMenu) {
-	    screen->vtMenu = create_menu (term, toplevel, "vtMenu",
-					  vtMenuEntries,
-					  XtNumber(vtMenuEntries));
+      case vtMenu:
+	if (created) {
 	    update_scrollbar();
 	    update_jumpscroll();
 	    update_reversevideo();
@@ -296,9 +519,12 @@ static Bool domenu (
 	    update_cursesemul();
 	    update_visualbell();
 	    update_marginbell();
+	    update_cursorblink();
+	    update_altscreen();
+	    update_titeInhibit();
 #ifndef NO_ACTIVE_ICON
 	    if (!screen->fnt_icon || !screen->iconVwin.window) {
-		set_sensitivity (screen->vtMenu,
+		set_sensitivity (mw,
 				 vtMenuEntries[vtMenu_activeicon].widget,
 				 FALSE);
 	    }
@@ -308,38 +534,48 @@ static Bool domenu (
 	}
 	break;
 
-      case 'f':
-	if (!screen->fontMenu) {
-	    screen->fontMenu = create_menu (term, toplevel, "fontMenu",
-					    fontMenuEntries,
-					    NMENUFONTS);  
+      case fontMenu:
+	if (created) {
 	    set_menu_font (True);
-	    set_sensitivity (screen->fontMenu,
+	    set_sensitivity (mw,
 			     fontMenuEntries[fontMenu_fontescape].widget,
 			     (screen->menu_font_names[fontMenu_fontescape]
 			      ? TRUE : FALSE));
+#if OPT_BOX_CHARS
+	    update_font_boxchars();
+	    set_sensitivity (mw,
+			     fontMenuEntries[fontMenu_font_boxchars].widget,
+			     True);
+#endif
+#if OPT_DEC_SOFTFONT	/* FIXME: not implemented */
+	    update_font_loadable();
+	    set_sensitivity (mw,
+			     fontMenuEntries[fontMenu_font_loadable].widget,
+			     FALSE);
+#endif
+#if OPT_DEC_CHRSET
+	    update_font_doublesize();
+	    if (term->screen.cache_doublesize == 0)
+		set_sensitivity (mw,
+				fontMenuEntries[fontMenu_font_doublesize].widget,
+				False);
+#endif
 	}
 	FindFontSelection (NULL, True);
-	set_sensitivity (screen->fontMenu,
+	set_sensitivity (mw,
 			 fontMenuEntries[fontMenu_fontsel].widget,
 			 (screen->menu_font_names[fontMenu_fontsel]
 			  ? TRUE : FALSE));
 	break;
 
 #if OPT_TEK4014
-      case 't':
-	if (!screen->tekMenu) {
-	    screen->tekMenu = create_menu (term, toplevel, "tekMenu",
-					   tekMenuEntries,
-					   XtNumber(tekMenuEntries));
+      case tekMenu:
+	if (created) {
 	    set_tekfont_menu_item (screen->cur.fontsize, TRUE);
+	    update_vtshow();
 	}
 	break;
 #endif
-
-      default:
-	Bell(XkbBI_MinorError,0);
-	return False;
     }
 
     return True;
@@ -361,6 +597,9 @@ void HandlePopupMenu (
 	Cardinal *param_count)      /* 0 or 1 */
 {
     if (domenu (w, event, params, param_count)) {
+#if OPT_TOOLBAR
+	w = select_menu(w, mainMenu)->w;
+#endif
 	XtCallActionProc (w, "XawPositionSimpleMenu", event, params, 1);
 	XtCallActionProc (w, "MenuPopup", event, params, 1);
     }
@@ -371,52 +610,15 @@ void HandlePopupMenu (
  * private interfaces - keep out!
  */
 
-/*
- * create_menu - create a popup shell and stuff the menu into it.
- */
-
-static Widget
-create_menu (
-	XtermWidget xtw,
-	Widget toplevelw,
-	char *name,
-	struct _MenuEntry *entries,
-	int nentries)
-{
-    Widget m;
-    TScreen *screen = &xtw->screen;
-    static XtCallbackRec cb[2] = { { NULL, NULL }, { NULL, NULL }};
-    static Arg arg = { XtNcallback, (XtArgVal) cb };
-
-    if (screen->menu_item_bitmap == None) {
-	screen->menu_item_bitmap =
-	  XCreateBitmapFromData (XtDisplay(xtw),
-				 RootWindowOfScreen(XtScreen(xtw)),
-				 (char *)check_bits, check_width, check_height);
-    }
-
-    m = XtCreatePopupShell (name, simpleMenuWidgetClass, toplevelw, NULL, 0);
-
-    for (; nentries > 0; nentries--, entries++) {
-	cb[0].callback = (XtCallbackProc) entries->function;
-	cb[0].closure = (caddr_t) entries->name;
-	entries->widget = XtCreateManagedWidget (entries->name, 
-						 (entries->function ?
-						  smeBSBObjectClass :
-						  smeLineObjectClass), m,
-						 &arg, (Cardinal) 1);
-    }
-
-    /* do not realize at this point */
-    return m;
-}
-
 /* ARGSUSED */
 static void handle_send_signal (Widget gw GCC_UNUSED, int sig)
 {
+#ifndef VMS
     register TScreen *screen = &term->screen;
 
+    if (hold_screen > 1) hold_screen = 0;
     if (screen->pid > 1) kill_process_group (screen->pid, sig);
+#endif
 }
 
 
@@ -427,7 +629,7 @@ static void handle_send_signal (Widget gw GCC_UNUSED, int sig)
 /* ARGSUSED */
 void DoSecureKeyboard (Time tp GCC_UNUSED)
 {
-    do_securekbd (term->screen.mainMenu, (XtPointer)0, (XtPointer)0);
+    do_securekbd (vt_shell[mainMenu].w, (XtPointer)0, (XtPointer)0);
 }
 
 static void do_securekbd (
@@ -443,7 +645,7 @@ static void do_securekbd (
 	ReverseVideo (term);
 	screen->grabbedKbd = FALSE;
     } else {
-	if (XGrabKeyboard (screen->display, term->core.window,
+	if (XGrabKeyboard (screen->display, XtWindow(term),
 			   True, GrabModeAsync, GrabModeAsync, now)
 	    != GrabSuccess) {
 	    Bell(XkbBI_MinorError, 100);
@@ -500,7 +702,7 @@ static void do_print (
 	XtPointer closure GCC_UNUSED,
 	XtPointer data GCC_UNUSED)
 {
-    xtermPrintScreen ();
+    xtermPrintScreen (TRUE);
 }
 
 
@@ -538,27 +740,83 @@ static void do_backarrow (
     update_decbkm();
 }
 
+#if OPT_NUM_LOCK
+static void do_num_lock (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    term->misc.real_NumLock = ! term->misc.real_NumLock;
+    update_num_lock();
+}
+
+static void do_meta_esc (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    term->screen.meta_sends_esc = ! term->screen.meta_sends_esc;
+    update_meta_esc();
+}
+#endif
+
+static void do_delete_del (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    term->screen.delete_is_del = ! term->screen.delete_is_del;
+    update_delete_del();
+}
+
+static void do_old_fkeys (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    toggle_keyboard_type(keyboardIsLegacy);
+}
+
+#if OPT_HP_FUNC_KEYS
+static void do_hp_fkeys (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    toggle_keyboard_type(keyboardIsHP);
+}
+#endif
+
+#if OPT_SCO_FUNC_KEYS
+static void do_sco_fkeys (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    toggle_keyboard_type(keyboardIsSCO);
+}
+#endif
+
 static void do_sun_fkeys (
 	Widget gw GCC_UNUSED,
 	XtPointer closure GCC_UNUSED,
 	XtPointer data GCC_UNUSED)
 {
-    sunFunctionKeys = ! sunFunctionKeys;
-    update_sun_fkeys();
+    toggle_keyboard_type(keyboardIsSun);
 }
 
-
 #if OPT_SUNPC_KBD
+/*
+ * This really means "Sun/PC keyboard emulating VT220".
+ */
 static void do_sun_kbd (
 	Widget gw GCC_UNUSED,
 	XtPointer closure GCC_UNUSED,
 	XtPointer data GCC_UNUSED)
 {
-    sunKeyboard = ! sunKeyboard;
-    update_sun_kbd();
+    toggle_keyboard_type(keyboardIsVT220);
 }
 #endif
-
 
 /*
  * The following cases use the pid instead of the process group so that we
@@ -643,14 +901,7 @@ static void do_scrollbar (
 	XtPointer closure GCC_UNUSED,
 	XtPointer data GCC_UNUSED)
 {
-    register TScreen *screen = &term->screen;
-
-    if (screen->fullVwin.scrollbar) {
-	ScrollBarOff (screen);
-    } else {
-	ScrollBarOn (term, FALSE, FALSE);
-    }
-    update_scrollbar();
+    ToggleScrollBar(term);
 }
 
 
@@ -677,9 +928,7 @@ static void do_reversevideo (
 	XtPointer closure GCC_UNUSED,
 	XtPointer data GCC_UNUSED)
 {
-    term->flags ^= REVERSE_VIDEO;
     ReverseVideo (term);
-    /* update_reversevideo done in ReverseVideo */
 }
 
 
@@ -826,6 +1075,18 @@ static void do_tekonoff (
 }
 #endif /* OPT_TEK4014 */
 
+#if OPT_BLINK_CURS
+/* ARGSUSED */
+static void do_cursorblink (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    TScreen *screen = &term->screen;
+    ToggleCursorBlink(screen);
+}
+#endif
+
 /* ARGSUSED */
 static void do_altscreen (
 	Widget gw GCC_UNUSED,
@@ -834,6 +1095,16 @@ static void do_altscreen (
 {
     TScreen *screen = &term->screen;
     ToggleAlternate(screen);
+}
+
+/* ARGSUSED */
+static void do_titeInhibit (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    term->misc.titeInhibit = !term->misc.titeInhibit;
+    update_titeInhibit();
 }
 
 #ifndef NO_ACTIVE_ICON
@@ -846,7 +1117,7 @@ static void do_activeicon (
     TScreen *screen = &term->screen;
 
     if (screen->iconVwin.window) {
-	Widget shell = term->core.parent;
+	Widget shell = XtParent(term);
 	term->misc.active_icon = !term->misc.active_icon;
 	XtVaSetValues(shell, XtNiconWindow,
 		      term->misc.active_icon ? screen->iconVwin.window : None,
@@ -879,7 +1150,7 @@ static void do_clearsavedlines (
 	XtPointer closure GCC_UNUSED,
 	XtPointer data GCC_UNUSED)
 {
-    VTReset (TRUE, TRUE); 
+    VTReset (TRUE, TRUE);
 }
 
 
@@ -925,6 +1196,42 @@ static void do_vtfont (
     }
     Bell(XkbBI_MinorError, 0);
 }
+
+#if OPT_DEC_CHRSET
+static void do_font_doublesize (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    if (term->screen.cache_doublesize != 0)
+        term->screen.font_doublesize = ! term->screen.font_doublesize;
+    update_font_doublesize();
+    Redraw ();
+}
+#endif
+
+#if OPT_BOX_CHARS
+static void do_font_boxchars (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    term->screen.force_box_chars = ! term->screen.force_box_chars;
+    update_font_boxchars();
+    Redraw ();
+}
+#endif
+
+#if OPT_DEC_SOFTFONT
+static void do_font_loadable (
+	Widget gw GCC_UNUSED,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+    term->misc.font_loadable = ! term->misc.font_loadable;
+    update_font_loadable();
+}
+#endif
 
 
 /*
@@ -1006,7 +1313,7 @@ static void handle_vtshow (Widget gw GCC_UNUSED, Bool allowswitch)
 	set_vt_visibility (FALSE);
 	if (!screen->TekEmu && TekRefresh) dorefresh ();
 	end_vt_mode ();			/* WARNING: this does a longjmp... */
-    } else 
+    } else
       Bell(XkbBI_MinorError, 0);
 }
 
@@ -1228,7 +1535,49 @@ void HandleSunFunctionKeys(
 	String *params,
 	Cardinal *param_count)
 {
-    handle_toggle (do_sun_fkeys, (int) sunFunctionKeys,
+    handle_toggle (do_sun_fkeys, term->keyboard.type == keyboardIsSun,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+
+#if OPT_NUM_LOCK
+void HandleNumLock(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    handle_toggle (do_num_lock, (int) term->misc.real_NumLock,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+
+void HandleMetaEsc(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    handle_toggle (do_meta_esc, (int) term->screen.meta_sends_esc,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+#endif
+
+void HandleDeleteIsDEL(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    handle_toggle (do_delete_del, term->screen.delete_is_del,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+
+void HandleOldFunctionKeys(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    handle_toggle (do_old_fkeys, term->keyboard.type == keyboardIsLegacy,
 		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
 }
 
@@ -1239,7 +1588,31 @@ void HandleSunKeyboard(
 	String *params,
 	Cardinal *param_count)
 {
-    handle_toggle (do_sun_kbd, (int) sunKeyboard,
+    handle_toggle (do_sun_kbd, term->keyboard.type == keyboardIsVT220,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+#endif
+
+#if OPT_HP_FUNC_KEYS
+void HandleHpFunctionKeys(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    handle_toggle (do_hp_fkeys, term->keyboard.type == keyboardIsHP,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+#endif
+
+#if OPT_SCO_FUNC_KEYS
+void HandleScoFunctionKeys(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    handle_toggle (do_sco_fkeys, term->keyboard.type == keyboardIsSCO,
 		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
 }
 #endif
@@ -1270,7 +1643,7 @@ void HandleReverseVideo(
 	String *params,
 	Cardinal *param_count)
 {
-    handle_toggle (do_reversevideo, (int) (term->flags & REVERSE_VIDEO),
+    handle_toggle (do_reversevideo, (int) (term->misc.re_verse0),
 		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
 }
 
@@ -1374,6 +1747,19 @@ void HandleMarginBell(
 		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
 }
 
+#if OPT_BLINK_CURS
+void HandleCursorBlink(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    /* eventually want to see if sensitive or not */
+    handle_toggle (do_cursorblink, (int) term->screen.cursor_blink,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+#endif
+
 void HandleAltScreen(
 	Widget w,
 	XEvent *event GCC_UNUSED,
@@ -1382,6 +1768,17 @@ void HandleAltScreen(
 {
     /* eventually want to see if sensitive or not */
     handle_toggle (do_altscreen, (int) term->screen.alternate,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+
+void HandleTiteInhibit(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    /* eventually want to see if sensitive or not */
+    handle_toggle (do_titeInhibit, ! ((int) term->misc.titeInhibit),
 		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
 }
 
@@ -1414,6 +1811,42 @@ void HandleClearSavedLines(
 {
     do_clearsavedlines(w, (XtPointer)0, (XtPointer)0);
 }
+
+#if OPT_DEC_CHRSET
+void HandleFontDoublesize(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    handle_toggle (do_font_doublesize, (int) term->screen.font_doublesize,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+#endif
+
+#if OPT_BOX_CHARS
+void HandleFontBoxChars(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    handle_toggle (do_font_boxchars, (int) term->screen.force_box_chars,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+#endif
+
+#if OPT_DEC_SOFTFONT
+void HandleFontLoading(
+	Widget w,
+	XEvent *event GCC_UNUSED,
+	String *params,
+	Cardinal *param_count)
+{
+    handle_toggle (do_font_loadable, (int) term->misc.font_loadable,
+		   params, *param_count, w, (XtPointer)0, (XtPointer)0);
+}
+#endif
 
 #if OPT_TEK4014
 void HandleSetTerminalType(
@@ -1518,3 +1951,167 @@ void HandleTekCopy(
     do_tekcopy(w, (XtPointer)0, (XtPointer)0);
 }
 #endif /* OPT_TEK4014 */
+
+void
+UpdateMenuItem(Widget mi, XtArgVal val)
+{
+	static Arg menuArgs = { XtNleftBitmap, (XtArgVal) 0 };
+
+	if (mi) {
+		menuArgs.value = (XtArgVal) ((val)
+				? term->screen.menu_item_bitmap
+				: None);
+		XtSetValues (mi, &menuArgs, (Cardinal) 1);
+	}
+}
+
+void
+SetItemSensitivity(Widget mi, XtArgVal val)
+{
+	static Arg menuArgs = { XtNsensitive, (XtArgVal) 0 };
+
+	if (mi) {
+		menuArgs.value = (XtArgVal) (val);
+		XtSetValues (mi, &menuArgs, (Cardinal) 1);
+	}
+}
+
+#if OPT_TOOLBAR
+/*
+ * In the normal (non-toolbar) configuration, the xterm widget covers almost
+ * all of the window.  With a toolbar, there's a relatively large area that
+ * the user would expect to enter keystrokes since the program can get the
+ * focus.
+ */
+static char menu_trans[] =
+"\
+                ~Meta <KeyPress>:insert-seven-bit() \n\
+                 Meta <KeyPress>:insert-eight-bit() \n\
+";
+
+XtActionsRec menu_actions[] = {
+    { "insert",			HandleKeyPressed }, /* alias */
+    { "insert-eight-bit",	HandleEightBitKeyPressed },
+    { "insert-seven-bit",	HandleKeyPressed },
+    { "secure",			HandleSecure },
+    { "string",			HandleStringEvent },
+};
+
+/*
+ * The normal style of xterm popup menu delays initialization until the menu is
+ * first requested.  When using a toolbar, we can use the same initialization,
+ * though on the first popup there will be a little geometry layout jitter,
+ * since the menu is already managed when this callback is invoked.
+ */
+static void InitPopup (
+	Widget gw,
+	XtPointer closure GCC_UNUSED,
+	XtPointer data GCC_UNUSED)
+{
+	String params[2];
+	Cardinal count = 1;
+
+	params[0] = closure;
+	params[1] = 0;
+	TRACE(("InitPopup(%s)\n", params[0]));
+
+	domenu(gw, (XEvent *)0, params, &count);
+
+	XtRemoveCallback(gw, XtNpopupCallback, InitPopup, closure);
+}
+
+static void SetupShell(Widget *menus, MenuList *shell, Widget *menu_tops, int n, int m)
+{
+	char temp[80];
+	char *external_name = 0;
+
+	shell[n].w = XtVaCreatePopupShell (menu_names[n].internal_name,
+			simpleMenuWidgetClass,
+			*menus,
+			XtNgeometry,		NULL,
+			NULL);
+
+	XtAddCallback(shell[n].w, XtNpopupCallback, InitPopup, menu_names[n].internal_name);
+	XtVaGetValues(shell[n].w,
+			XtNlabel,	&external_name,
+			NULL);
+
+	TRACE(("...SetupShell(%s) -> %s -> %#lx\n",
+		menu_names[n].internal_name,
+		external_name,
+		(long)shell[n].w));
+
+	sprintf(temp, "%sButton", menu_names[n].internal_name);
+	menu_tops[n] = XtVaCreateManagedWidget (temp,
+			menuButtonWidgetClass,
+			*menus,
+			XtNfromHoriz,	(m >= 0) ? menu_tops[m] : 0,
+			XtNmenuName,	menu_names[n].internal_name,
+			XtNlabel,	external_name,
+			NULL);
+}
+
+#endif
+
+void
+SetupMenus(Widget shell, Widget *forms, Widget *menus)
+{
+#if OPT_TOOLBAR
+	int n;
+	Widget menu_tops[NUM_POPUP_MENUS];
+#endif
+
+	TRACE(("SetupMenus(%s)\n", shell == toplevel ? "vt100" : "tek4014"));
+
+	if (shell == toplevel) {
+	    XawSimpleMenuAddGlobalActions (app_con);
+	    XtRegisterGrabAction (HandlePopupMenu, True,
+				  (ButtonPressMask|ButtonReleaseMask),
+				  GrabModeAsync, GrabModeAsync);
+	}
+#if OPT_TOOLBAR
+	*forms = XtVaCreateManagedWidget(
+				"form",
+				formWidgetClass,	shell,
+				NULL);
+
+	XtAppAddActions(app_con, menu_actions, XtNumber(menu_actions));
+	XtAugmentTranslations(*forms, XtParseTranslationTable(menu_trans));
+
+	/*
+	 * Set a nominal value for the preferred pane size, which lets the
+	 * buttons determine the actual height of the menu bar.  We don't show
+	 * the grip, because it's too easy to make the toolbar look bad that
+	 * way.
+	 */
+	*menus = XtVaCreateManagedWidget(
+				"menubar",
+				boxWidgetClass,		*forms,
+				XtNorientation,		XtorientHorizontal,
+				XtNtop,			XawChainTop,
+				XtNbottom,		XawChainTop,
+				XtNleft,		XawChainLeft,
+				XtNright,		XawChainLeft,
+				NULL);
+
+	if (shell == toplevel) {	/* vt100 */
+	    for (n = mainMenu; n <= fontMenu; n++) {
+		SetupShell(menus, vt_shell, menu_tops, n, n-1);
+	    }
+	}
+#if OPT_TEK4014
+	else {			/* tek4014 */
+	    SetupShell(menus, tek_shell, menu_tops, mainMenu, -1);
+	    SetupShell(menus, tek_shell, menu_tops, tekMenu, mainMenu);
+	}
+#endif
+
+#else
+	*forms = shell;
+	*menus = shell;
+#endif
+
+	TRACE(("...shell=%#lx\n", (long) shell));
+	TRACE(("...forms=%#lx\n", (long) *forms));
+	TRACE(("...menus=%#lx\n", (long) *menus));
+}
