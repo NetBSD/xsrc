@@ -1,4 +1,4 @@
-.\" $XConsortium: X11.protocol /main/46 1996/02/07 16:27:12 swick $
+.\" $XConsortium: X11.protocol /main/48 1996/12/11 14:55:54 kaleb $
 .EH ''''
 .OH ''''
 .EF ''''
@@ -12,7 +12,7 @@
 
 \s+1\fBX Consortium Standard\fP\s-1
 
-\s+1\fBX Version 11, Release 6.1\fP\s-1
+\s+1\fBX Version 11, Release 6.3\fP\s-1
 .sp 6
 .ce 5
 \s-1Robert W. Scheifler
@@ -120,8 +120,8 @@ Robert W. Scheifler
 X Consortium, Inc.
 .De
 .bp 1
-.EH '\fBX Protocol\fP''\fBX11, Release 6.1\fP'
-.OH '\fBX Protocol\fP''\fBX11, Release 6.1\fP'
+.EH '\fBX Protocol\fP''\fBX11, Release 6.3\fP'
+.OH '\fBX Protocol\fP''\fBX11, Release 6.3\fP'
 .EF ''\fB % \fP''
 .OF ''\fB % \fP''
 .NH 1
@@ -158,7 +158,7 @@ Every reply contains a 32-bit length field expressed in units of four bytes.
 Every reply consists of 32 bytes followed by zero or more additional bytes of
 data, as specified in the length field.
 Unused bytes within a reply are not guaranteed to be zero.
-Every reply also contains the least-significant 16 bits of the sequence number 
+Every reply also contains the least significant 16 bits of the sequence number 
 of the corresponding request.
 .SH
 Error Format
@@ -167,7 +167,7 @@ Error reports are 32 bytes long.
 Every error includes an 8-bit error code.
 Error codes 128 through 255 are reserved for extensions.
 Every error also includes the major and minor opcodes of the failed request
-and the least-significant 16 bits of the sequence number of the request.
+and the least significant 16 bits of the sequence number of the request.
 For the following errors (see section 4), 
 the failing resource ID is also returned: 
 .PN Colormap ,
@@ -193,14 +193,14 @@ Event Format
 Events are 32 bytes long.
 Unused bytes within an event are not guaranteed to be zero.
 Every event contains an 8-bit type code.
-The most-significant bit in this code is set if the event was generated from a 
+The most significant bit in this code is set if the event was generated from a 
 .PN SendEvent 
 request.
 Event codes 64 through 127 are reserved for extensions, although the core
 protocol does not define a mechanism for selecting interest in such events.
 Every core event (with the exception of 
 .PN KeymapNotify ) 
-also contains the least-significant 16 bits of the sequence number of the last 
+also contains the least significant 16 bits of the sequence number of the last 
 request issued by the client that was (or is currently being) processed by 
 the server.
 .NH 1
@@ -228,7 +228,7 @@ Requests in section 9 are described in the following format:
 	\fIarg1\fP\^: type1
 	...
 	\fIargN\fP\^: typeN
-   =>
+   \(->
 	result1: type1
 	...
 	resultM: typeM
@@ -238,10 +238,10 @@ Requests in section 9 are described in the following format:
 	Description.
 .De
 .IP
-If no => is present in the description, 
+If no \(-> is present in the description, 
 then the request has no reply (it is asynchronous), 
 although errors may still be reported.
-If =>+ is used, 
+If \(->+ is used, 
 then one or more replies can be generated for a single request.
 .IP \(bu 5
 Events in section 11 are described in the following format:
@@ -309,9 +309,9 @@ The unused bits in the value-mask must be zero (or the server generates a
 .PN Value 
 error).
 The value-list contains one value for each bit set to 1 in the mask, 
-from least-significant to most-significant bit in the mask.
+from least significant to most significant bit in the mask.
 Each value is represented with four bytes, 
-but the actual value occupies only the least-significant bytes as required.
+but the actual value occupies only the least significant bytes as required.
 The values of the unused bytes do not matter.
 T}
 .sp 3p
@@ -539,16 +539,16 @@ T}
 The [x,y] coordinates of a RECTANGLE specify the upper-left corner.
 .LP
 The primary interpretation of large characters in a STRING16 is that they
-are composed of two bytes used to index a two-dimensional matrix;
+are composed of two bytes used to index a two-dimensional matrix,
 hence, the use of CHAR2B rather than CARD16.
 This corresponds to the JIS/ISO method of indexing 2-byte characters.
 It is expected that most large fonts will be defined with 2-byte 
 matrix indexing.
 For large fonts constructed with linear indexing, 
 a CHAR2B can be interpreted as a 16-bit number by treating byte1 as
-the most-significant byte.
+the most significant byte.
 This means that clients should always transmit such
-16-bit character values most-significant byte first, as the server will never
+16-bit character values most significant byte first, as the server will never
 byte-swap CHAR2B quantities.
 .LP
 The length, format, and interpretation of a HOST address are specific to the
@@ -791,7 +791,7 @@ Latin-3, Latin-4, Kana, Arabic, Cyrillic, Greek, Tech, Special, Publish, APL,
 Hebrew, Thai, and Korean as well as a set of symbols common on keyboards
 (Return, Help, Tab, 
 and so on).
-KEYSYMs with the most-significant bit (of the 29 bits) set are reserved 
+KEYSYMs with the most significant bit (of the 29 bits) set are reserved 
 as vendor-specific.
 .LP
 A list of KEYSYMs is associated with each KEYCODE.
@@ -879,7 +879,7 @@ this case, if the
 modifier is on, or if the
 .PN Lock 
 modifier is on and
-is interpreted as ShiftLock, then the first KEYSYM is used, otherwise the
+is interpreted as ShiftLock, then the first KEYSYM is used; otherwise, the
 second KEYSYM is used.
 .IP \(bu 5
 The
@@ -995,9 +995,9 @@ Connection Initiation
 The client must send an initial byte of data to identify the byte order to be
 employed.
 The value of the byte must be octal 102 or 154.
-The value 102 (ASCII uppercase B) means values are transmitted most-significant
+The value 102 (ASCII uppercase B) means values are transmitted most significant
 byte first, and value 154 (ASCII lowercase l) means values are transmitted 
-least-significant byte first.
+least significant byte first.
 Except where explicitly noted in the protocol,
 all 16-bit and 32-bit quantities sent by the client must be transmitted with 
 this byte order,
@@ -1230,11 +1230,11 @@ The scanline is quantized in multiples of bits as given by bitmap-scanline-unit.
 The bitmap-scanline-unit is always less than or equal to the
 bitmap-scanline-pad.
 Within each unit,
-the leftmost bit in the bitmap is either the least-significant
-or most-significant bit in the unit, as given by bitmap-bit-order.
+the leftmost bit in the bitmap is either the least significant
+or most significant bit in the unit, as given by bitmap-bit-order.
 If a pixmap is represented in XY format,
 each plane is represented as a bitmap, and the planes appear from 
-most-significant to least-significant in bit order with no padding 
+most significant to least significant in bit order with no padding 
 between planes.
 .LP
 Pixmap-formats contains one entry for each depth value.
@@ -1246,7 +1246,7 @@ In Z format,
 the pixels are in scanline order, left to right within a scanline.
 The number of bits used to hold each pixel is given by bits-per-pixel.
 Bits-per-pixel may be larger than strictly required by the depth,
-in which case the least-significant bits are used to hold
+in which case the least significant bits are used to hold
 the pixmap data, and the values of the unused high-order bits are
 undefined.
 When the bits-per-pixel is 4,
@@ -2038,7 +2038,7 @@ a subset of the attributes may have been altered.
 \fIwindow\fP\^: WINDOW
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 visual: VISUALID
@@ -2719,7 +2719,7 @@ Exposure processing is performed on formerly obscured windows.
 \fIdrawable\fP\^: DRAWABLE
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 root: WINDOW
@@ -2756,7 +2756,7 @@ window as a drawable to this request.
 \fIwindow\fP\^: WINDOW
 .LP
 .in -.2i
-   =>
+   \(->
 .in +.2i
 .LP
 root: WINDOW
@@ -2785,7 +2785,7 @@ The children are listed in bottom-to-top stacking order.
 \fIonly-if-exists\fP\^: BOOL
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 atom: ATOM or 
@@ -2816,7 +2816,7 @@ Atoms remain defined until server reset (see section 10).
 \fIatom\fP\^: ATOM
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 name: STRING8
@@ -2930,7 +2930,7 @@ event on the window unless the property does not exist.
 \fIdelete\fP\^: BOOL
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 type: ATOM or 
@@ -3044,7 +3044,7 @@ error is generated, no properties are changed.
 \fIwindow\fP\^: WINDOW
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 atoms: LISTofATOM
@@ -3127,12 +3127,12 @@ Selections are global to the server.
 \fIselection\fP\^: ATOM
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 owner: WINDOW or 
 .PN None
-.IP
+.LP
 Errors: 
 .PN Atom
 .in -.2i
@@ -3241,7 +3241,7 @@ defined by an extension (or a
 error results) so that the server can correctly byte-swap the
 contents as necessary.
 The contents of the event are otherwise unaltered and unchecked 
-by the server except to force on the most-significant bit of the event code
+by the server except to force on the most significant bit of the event code
 and to set the sequence number in the event correctly.
 .LP
 Active grabs are ignored for this request.
@@ -3272,7 +3272,7 @@ Active grabs are ignored for this request.
 .PN CurrentTime
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 status: 
@@ -3581,7 +3581,7 @@ with
 .PN CurrentTime
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 status:
@@ -4020,7 +4020,7 @@ on other connections.
 \fIwindow\fP\^: WINDOW
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 root: WINDOW
@@ -4069,7 +4069,7 @@ may lag the physical state if device event processing is frozen.
 \fIwindow\fP\^: WINDOW
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 events: LISTofTIMECOORD
@@ -4109,7 +4109,7 @@ If the stop time is in the future, it is equivalent to specifying
 \fIsrc-x\fP, \fIsrc-y\fP\^: INT16
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 same-screen: BOOL
@@ -4270,7 +4270,7 @@ but the last-focus-change time is not affected.
 .IN "GetInputFocus" "" "@DEF@"
 .PN GetInputFocus
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 focus: WINDOW or 
@@ -4292,7 +4292,7 @@ This request returns the current focus state.
 .IN "QueryKeymap" "" "@DEF@"
 .PN QueryKeymap
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 keys: LISTofCARD8
@@ -4303,7 +4303,7 @@ This request returns a bit vector for the logical state of the keyboard.
 Each bit set to 1 indicates that the corresponding key is currently pressed.
 The vector is represented as 32 bytes.
 Byte N (from 0) contains the bits for keys 8N to 8N + 7
-with the least-significant bit in the byte representing key 8N.
+with the least significant bit in the byte representing key 8N.
 Note that the logical state of a device (as seen by means of the protocol)
 may lag the physical state if device event processing is frozen.
 .sp
@@ -4365,7 +4365,7 @@ The font itself will be freed when no other resource references it.
 \fIfont\fP\^: FONTABLE
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 font-info: FONTINFO
@@ -4457,8 +4457,8 @@ The default-char specifies the character that will be used when an
 undefined or nonexistent character is used.
 Note that default-char is a CARD16, not CHAR2B.
 For a font using 2-byte matrix format, 
-the default-char has byte1 in the most-significant byte
-and byte2 in the least-significant byte.
+the default-char has byte1 in the most significant byte
+and byte2 in the least significant byte.
 If the default-char itself specifies an undefined or nonexistent character,
 then no printing is performed for an undefined or nonexistent character.
 .LP
@@ -4546,7 +4546,7 @@ server-dependent.
 \fIstring\fP\^: STRING16
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 draw-direction:
@@ -4593,8 +4593,8 @@ and the overall-right is the maximum R.
 .LP
 For fonts defined with linear indexing rather than 2-byte matrix indexing, 
 the server will interpret each CHAR2B as a 16-bit number that
-has been transmitted most-significant byte first (that is, byte1 of the
-CHAR2B is taken as the most-significant byte).
+has been transmitted most significant byte first (that is, byte1 of the
+CHAR2B is taken as the most significant byte).
 .LP
 Characters with all zero metrics are ignored.
 If the font has no defined default-char, 
@@ -4611,7 +4611,7 @@ then undefined characters in the string are also ignored.
 \fImax-names\fP\^: CARD16
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 names: LISTofSTRING8
@@ -4643,7 +4643,7 @@ The returned names are in lowercase.
 \fImax-names\fP\^: CARD16
 .in -.2i
 .LP
-   =>+
+   \(->+
 .in +.2i
 .LP
 name: STRING8
@@ -4708,7 +4708,7 @@ The meaning of an error from this request is system specific.
 .IN "GetFontPath" "" "@DEF@"
 .PN GetFontPath
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 path: LISTofSTRING8
@@ -6619,7 +6619,7 @@ GC mode-dependent components: foreground, background
 .PN ZPixmap }
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 depth: CARD8
@@ -6644,7 +6644,7 @@ If
 .PN XYPixmap 
 is specified, 
 only the bit planes specified in plane-mask are transmitted, 
-with the planes appearing from most-significant to least-significant 
+with the planes appearing from most significant to least significant 
 in bit order.
 If 
 .PN ZPixmap 
@@ -6730,7 +6730,7 @@ the delta is always added to the character origin.
 Each character image, as defined by the font in gc, 
 is treated as an additional mask for a fill operation on the drawable.
 .LP
-All contained FONTs are always transmitted most-significant byte first.
+All contained FONTs are always transmitted most significant byte first.
 .LP
 If a 
 .PN Font 
@@ -6784,8 +6784,8 @@ This request is similar to
 except 2-byte (or 16-bit) characters are used.
 For fonts defined with linear indexing rather than 2-byte matrix indexing, 
 the server will interpret each CHAR2B as a 16-bit number that
-has been transmitted most-significant byte first (that is, byte1 of the
-CHAR2B is taken as the most-significant byte).
+has been transmitted most significant byte first (that is, byte1 of the
+CHAR2B is taken as the most significant byte).
 .sp
 .LP
 .sM
@@ -6871,8 +6871,8 @@ This request is similar to
 except 2-byte (or 16-bit) characters are used.
 For fonts defined with linear indexing rather than 2-byte matrix indexing, 
 the server will interpret each CHAR2B as a 16-bit number that
-has been transmitted most-significant byte first (that is, byte1 of the
-CHAR2B is taken as the most-significant byte).
+has been transmitted most significant byte first (that is, byte1 of the
+CHAR2B is taken as the most significant byte).
 .sp
 .LP
 .sM
@@ -7122,7 +7122,7 @@ event is generated on every window having that colormap as an attribute.
 \fIwindow\fP\^: WINDOW
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 cmaps: LISTofCOLORMAP
@@ -7150,7 +7150,7 @@ request).
 \fIred\fP, \fIgreen\fP, \fIblue\fP\^: CARD16
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 pixel: CARD32
@@ -7180,7 +7180,7 @@ the same read-only entry, allowing entries to be shared.
 \fIname\fP\^: STRING8
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 pixel: CARD32
@@ -7219,7 +7219,7 @@ and the visual values specify the values actually used in the colormap.
 \fIcontiguous\fP\^: BOOL
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 pixels, masks: LISTofCARD32
@@ -7273,7 +7273,7 @@ The RGB values of the allocated entries are undefined.
 \fIcontiguous\fP\^: BOOL
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 pixels: LISTofCARD32
@@ -7466,7 +7466,7 @@ errors are the same as in
 \fIpixels\fP\^: LISTofCARD32
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 colors: LISTofRGB
@@ -7502,7 +7502,7 @@ it is arbitrary as to which pixel is reported.
 \fIname\fP\^: STRING8
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 exact-red, exact-green, exact-blue: CARD16
@@ -7631,8 +7631,8 @@ If no mask is given,
 all pixels of the source are displayed.
 Note that source-char and mask-char are CARD16, not CHAR2B.
 For 2-byte matrix fonts, 
-the 16-bit value should be formed with byte1 in the most-significant byte 
-and byte2 in the least-significant byte.
+the 16-bit value should be formed with byte1 in the most significant byte 
+and byte2 in the least significant byte.
 .LP
 The components of the cursor may be transformed arbitrarily to meet
 display limitations.
@@ -7693,7 +7693,7 @@ the change is visible immediately.
 \fIwidth\fP, \fIheight\fP\^: CARD16
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 width, height: CARD16
@@ -7743,7 +7743,7 @@ error results).
 \fIname\fP\^: STRING8
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 present: BOOL
@@ -7778,7 +7778,7 @@ and uppercase and lowercase matter.
 .IN "ListExtensions" "" "@DEF@"
 .PN ListExtensions
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 names: LISTofSTRING8
@@ -7797,7 +7797,7 @@ This request returns a list of all extensions supported by the server.
 \fIkeycodes\fP\^: LISTofKEYCODE
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 status: 
@@ -7869,7 +7869,7 @@ status.
 .IN "GetModifierMapping" "" "@DEF@"
 .PN GetModifierMapping
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 keycodes-per-modifier: CARD8
@@ -7970,7 +7970,7 @@ it is merely stored for reading and writing by clients (see section 5).
 \fIcount\fP\^: CARD8
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 keysyms-per-keycode: CARD8
@@ -8167,7 +8167,7 @@ a subset of the controls may have been altered.
 .IN "GetKeyboardControl" "" "@DEF@"
 .PN GetKeyboardControl
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 key-click-percent: CARD8
@@ -8190,13 +8190,13 @@ auto-repeats: LISTofCARD8
 .LP
 This request returns the current control values for the keyboard.
 For the LEDs, 
-the least-significant bit of led-mask corresponds to LED one, 
+the least significant bit of led-mask corresponds to LED one, 
 and each one bit in led-mask indicates an LED that is lit.
 The auto-repeats is a bit vector; 
 each one bit indicates that auto-repeat is enabled for the corresponding key.
 The vector is represented as 32 bytes.
 Byte N (from 0) contains the bits for keys 8N to 8N + 7, 
-with the least-significant bit in the byte representing key 8N.
+with the least significant bit in the byte representing key 8N.
 .sp
 .LP
 .sM
@@ -8235,7 +8235,7 @@ base + [(base * percent) / 100]
 \fImap\fP\^: LISTofCARD8
 .in -.2i
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 status: 
@@ -8279,7 +8279,7 @@ status.
 .IN "GetPointerMapping" "" "@DEF@"
 .PN GetPointerMapping
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 map: LISTofCARD8
@@ -8326,7 +8326,7 @@ error, as does a zero value for acceleration-denominator.
 .IN "GetPointerControl" "" "@DEF@"
 .PN GetPointerControl
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 acceleration-numerator, acceleration-denominator: CARD16
@@ -8400,7 +8400,7 @@ randomly reorigined periodically.
 .IN "GetScreenSaver" "" "@DEF@"
 .PN GetScreenSaver
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 timeout, interval: CARD16
@@ -8491,20 +8491,20 @@ The address bytes are in standard IP order;
 the server performs no automatic swapping on the address bytes.
 For a Class A address, 
 the network number is the first byte in the address, 
-and the host number is the remaining three bytes, most-significant byte first.
+and the host number is the remaining three bytes, most significant byte first.
 For a Class B address, 
 the network number is the first two bytes and the host number
-is the last two bytes, each most-significant byte first.
+is the last two bytes, each most significant byte first.
 For a Class C address, 
-the network number is the first three bytes, most-significant byte first, 
+the network number is the first three bytes, most significant byte first, 
 and the last byte is the host number.
 .LP
 For the DECnet family, 
 the server performs no automatic swapping on the address bytes.
 A Phase IV address is two bytes long:
-the first byte contains the least-significant eight bits of the node number,
-and the second byte contains the most-significant two bits of the node number in
-the least-significant two bits of the byte and the area in the most
+the first byte contains the least significant eight bits of the node number,
+and the second byte contains the most significant two bits of the node number in
+the least significant two bits of the byte and the area in the most
 significant six bits of the byte.
 .LP
 For the Chaos family, 
@@ -8518,7 +8518,7 @@ The server performs no automatic swapping on the address bytes.
 .IN "ListHosts" "" "@DEF@"
 .PN ListHosts
 .LP
-   =>
+   \(->
 .in +.2i
 .LP
 mode: 
@@ -10300,3 +10300,4 @@ and requests.
 For a request from a given client,
 any events destined for that client that are caused by executing the request
 must be sent to the client before any reply or error is sent.
+.bp

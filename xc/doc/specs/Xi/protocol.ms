@@ -1,4 +1,4 @@
-.\" $XConsortium: protocol.ms /main/16 1996/02/07 19:18:17 swick $
+.\" $XConsortium: protocol.ms /main/17 1996/12/11 15:05:55 kaleb $
 .\" Input Extension
 .EH ''''
 .OH ''''
@@ -17,7 +17,7 @@ Version 1.0
 .sp 1
 X Consortium Standard
 .sp 1
-X Version 11, Release 6.1
+X Version 11, Release 6.3
 .sp 16
 .ps 15
 \fBMark Patrick\0\0\0\0Ardent Computer
@@ -66,8 +66,8 @@ in this Software without prior written authorization from the X Consortium.
 .ps
 .vs
 .bp 1
-.EH '\fBX Input Extension Protocol Specification\fP''\fBX11, Release 6.1\fP'
-.OH '\fBX Input Extension Protocol Specification\fP''\fBX11, Release 6.1\fP'
+.EH '\fBX Input Extension Protocol Specification\fP''\fBX11, Release 6.3\fP'
+.OH '\fBX Input Extension Protocol Specification\fP''\fBX11, Release 6.3\fP'
 .EF ''\fB\\\\n(PN\fP''
 .OF ''\fB\\\\n(PN\fP''
 .\"  Force the heading counter for level 1 to one

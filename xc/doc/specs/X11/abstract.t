@@ -11,7 +11,7 @@
 
 \s+1\fBX Consortium Standard\fP\s-1
 
-\s+1\fBX Version 11, Release 6.1\fP\s-1
+\s+1\fBX Version 11, Release 6.3\fP\s-1
 .sp 6
 .ce 4
 \s-1James Gettys

@@ -284,7 +284,7 @@ T}
 .TE
 .LP
 For additional information on gravity,
-see section 3.3.
+see section 3.2.3.
 .LP
 The backing_store member is set to indicate how the X server should maintain
 the contents of a window 
@@ -632,8 +632,6 @@ The atoms for these properties are defined in
 To avoid name clashes with user symbols, the 
 .PN #define 
 name for each atom has the XA_ prefix.
-For definitions of these properties,
-see section 4.3.
 For an explanation of the functions that let you get and set
 much of the information stored in these predefined properties,
 see chapter 14.

@@ -1,9 +1,9 @@
-.\" $XConsortium: CH1 /main/15 1996/02/07 17:03:10 swick $
+.\" $XConsortium: CH1 /main/16 1996/12/11 14:57:11 kaleb $
 .ps 11
 .nr PS 11
 .ds LH \fBAthena Widget Set\fP
 .ds CH
-.ds RH \fBX11, Release 6.1\fP
+.ds RH \fBX11, Release 6.3\fP
 .bp 1
 .af PN 1
 \&

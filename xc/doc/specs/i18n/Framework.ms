@@ -1,4 +1,4 @@
-.\" $XConsortium: Framework.ms /main/4 1996/02/07 21:30:57 swick $
+.\" $XConsortium: Framework.ms /main/5 1996/12/11 15:09:01 kaleb $
 .\" To print this out, type tbl macros.t ThisFile | troff -ms
 .EH ''''
 .OH ''''
@@ -65,8 +65,8 @@ in this Software without prior written authorization from the X Consortium.
 .ps 11
 .nr PS 11
 .bp 1
-.EH '\fBSample Implementation Frame Work\fP''\fBX11, Release 6.1\fP'
-.OH '\fBSample Implementation Frame Work\fP''\fBX11, Release 6.1\fP'
+.EH '\fBSample Implementation Frame Work\fP''\fBX11, Release 6.3\fP'
+.OH '\fBSample Implementation Frame Work\fP''\fBX11, Release 6.3\fP'
 .EF ''\fB % \fP''
 .OF ''\fB % \fP''
 .NH 1

@@ -66,15 +66,17 @@ This chapter discusses how to:
 .IP \(bu 5
 Open (connect to) the display
 .IP \(bu 5
-Obtain information about the display, image formats, and screens
+Obtain information about the display, image formats, or screens
 .IP \(bu 5
-Generate a NoOperation protocol request
+Generate a
+.PN NoOperation
+protocol request
 .IP \(bu 5
 Free client-created data
 .IP \(bu 5
 Close (disconnect from) a display
 .IP \(bu 5
-Understand the X Server connection close operations
+Use X Server connection close operations
 .IP \(bu 5
 Use Xlib with threads
 .IP \(bu 5

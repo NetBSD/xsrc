@@ -1,4 +1,4 @@
-.\" $XConsortium: xim.ms /main/8 1996/02/07 14:06:27 swick $
+.\" $XConsortium: xim.ms /main/9 1996/12/11 14:52:53 kaleb $
 .\" To print this out, type tbl macros.t ThisFile | troff -ms
 .EH ''''
 .OH ''''
@@ -15,7 +15,7 @@
 .sp
 \fBX Consortium Standard\fP
 .sp
-\fBX Version 11, Release 6.1\fP
+\fBX Version 11, Release 6.3\fP
 .sp 3
 .AU
 Masahiko Narita
