@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.2 1999/06/26 15:00:39 minoura Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.3 1999/10/06 14:10:51 minoura Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -271,7 +271,7 @@ Command command[] = {
  *-----------------------------------------------------------------------*/
 static int parseCommand(void)
 {
-    Token **argv, *token;
+    Token **argv = 0, *token;
     int argc = 0;
     int i;
     
