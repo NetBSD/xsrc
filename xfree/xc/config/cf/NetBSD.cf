@@ -25,6 +25,13 @@ XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.87.2.1 2001/01/22 19:49:14
 XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
 
 /*
+ * Enable support for "xdmauth" authentification.
+ */
+#ifndef HasXdmAuth
+#define HasXdmAuth YES
+#endif
+
+/*
  * C library features
  */
 #if ((OSMajorVersion > 1) || \
