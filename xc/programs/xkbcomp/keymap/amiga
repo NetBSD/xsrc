@@ -22,3 +22,20 @@ xkb_keymap "fr" {
     xkb_symbols		{ include "amiga(fr)"		};
     xkb_geometry	{ include "amiga(fr)"		};
 };
+
+xkb_keymap "pl_us" {
+    xkb_keycodes	{ include "amiga(us)"		};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols		{ include "amiga(pl_us)"	};
+    xkb_geometry	{ include "amiga(us)"		};
+};
+
+xkb_keymap "pl_eur" {
+    xkb_keycodes	{ include "amiga(eur)"	};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols		{ include "amiga(pl_eur)"	};
+    xkb_geometry	{ include "amiga(eur)"		};
+};
+
