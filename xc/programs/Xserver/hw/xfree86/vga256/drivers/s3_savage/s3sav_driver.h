@@ -8,7 +8,7 @@ extern vgaCRIndex, vgaCRReg;
 
 /* Driver variables */
 
-#if defined(linux) && defined(__i386__)
+#if (defined(linux) || defined(__NetBSD__)) && defined(__i386__)
 #define	USEBIOS
 #endif
 

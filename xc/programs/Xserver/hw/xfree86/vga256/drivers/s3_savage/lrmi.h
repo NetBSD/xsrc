@@ -14,7 +14,7 @@ This software has NO WARRANTY.  Use it at your own risk.
 #ifndef LRMI_H
 #define LRMI_H
 
-#if defined(linux) && defined(__i386__)
+#if (defined(linux) || defined(__NetBSD__)) && defined(__i386__)
 
 struct LRMI_regs
 {
