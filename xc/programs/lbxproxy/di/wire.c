@@ -20,7 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.3 1997/01/18 07:18:54 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/wire.c,v 1.3.2.1 1998/10/04 13:37:14 hohndel Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>

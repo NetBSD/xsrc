@@ -48,7 +48,7 @@
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/ps/PsWindow.c,v 1.6 1997/01/14 22:16:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/ps/PsWindow.c,v 1.6.2.1 1998/10/04 13:36:45 hohndel Exp $ */
 
 #include <stdio.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.8 1998/07/12 09:53:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.9 1998/11/10 11:55:38 dawes Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -501,7 +501,7 @@ int pciconfig_read(
           unsigned char len,
           void * buf)
 {
-  return __syscall(__NR_pciconfig_read, bus, dfn, off, len, buf);
+  return syscall(__NR_pciconfig_read, bus, dfn, off, len, buf);
 }
 int pciconfig_write(
           unsigned char bus,
@@ -510,7 +510,7 @@ int pciconfig_write(
           unsigned char len,
           void * buf)
 {
-  return __syscall(__NR_pciconfig_write, bus, dfn, off, len, buf);
+  return syscall(__NR_pciconfig_write, bus, dfn, off, len, buf);
 }
 #endif /* __alpha__ */
 

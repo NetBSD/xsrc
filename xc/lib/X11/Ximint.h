@@ -30,7 +30,7 @@ PERFORMANCE OF THIS SOFTWARE.
 			       makoto@sm.sony.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/Ximint.h,v 3.0.4.4 1998/05/19 14:36:45 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Ximint.h,v 3.0.4.5 1998/10/21 06:40:38 dawes Exp $ */
 
 #ifndef _XIMINT_H
 #define _XIMINT_H
@@ -853,7 +853,7 @@ extern int	_XimLookupMBText(
 #if NeedFunctionPrototypes
     Xic			 ic,
     XKeyEvent		*event,
-    unsigned char	*buffer,
+    char		*buffer,
     int			 nbytes,
     KeySym		*keysym,
     XComposeStatus	*status

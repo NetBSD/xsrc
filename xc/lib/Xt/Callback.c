@@ -59,6 +59,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/lib/Xt/Callback.c,v 1.1.1.1.12.3 1998/10/04 15:22:54 hohndel Exp $ */
 
 #include "IntrinsicI.h"
 

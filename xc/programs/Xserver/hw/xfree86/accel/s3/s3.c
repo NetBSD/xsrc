@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3.c,v 3.155.2.18 1998/07/16 06:54:58 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3.c,v 3.155.2.19 1998/10/19 04:09:32 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * 
@@ -499,7 +499,7 @@ s3GetPCIInfo()
 	       ,vendor, chip);
       }
 
-      if (pcrp->_vendor == PCI_S3_VENDOR_ID) {
+      if (pcrp->_vendor == PCI_S3_VENDOR_ID && pcrp->_command != 0) {
 	 found = TRUE;
 	 switch (pcrp->_device) {
 	 case PCI_TRIO_32_64:

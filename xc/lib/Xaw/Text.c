@@ -48,7 +48,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/lib/Xaw/Text.c,v 3.2.4.2 1998/05/16 09:05:21 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/Text.c,v 3.2.4.3 1998/10/04 13:36:29 hohndel Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include <X11/StringDefs.h>

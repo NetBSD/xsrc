@@ -47,6 +47,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
+/* $XFree86: xc/programs/Xserver/mfb/mfbtegblt.c,v 1.1.1.1.12.2 1998/10/04 15:23:03 hohndel Exp $ */
 #include	"X.h"
 #include	"Xmd.h"
 #include	"Xproto.h"

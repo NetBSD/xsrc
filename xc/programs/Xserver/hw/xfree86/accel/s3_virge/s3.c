@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3.c,v 3.14.2.11 1998/07/16 06:55:01 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3.c,v 3.14.2.12 1998/10/19 04:09:34 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -343,7 +343,7 @@ s3GetPCIInfo()
       return NULL;
 
    while ((pcrp = pcrpp[i])) {
-      if (pcrp->_vendor == PCI_S3_VENDOR_ID) {
+      if (pcrp->_vendor == PCI_S3_VENDOR_ID && pcrp->_command != 0) {
 	 found = TRUE;
 	 switch (pcrp->_device) {
 	 case PCI_ViRGE:

@@ -42,6 +42,7 @@ of this software for any purpose.  It is provided "as is" without express or
 implied warranty.
 
 ******************************************************************/
+/* $XFree86: xc/programs/Xserver/mi/mibstore.c,v 1.1.1.2.4.2 1998/10/04 15:23:04 hohndel Exp $ */
 
 #define NEED_EVENTS
 #include "X.h"

@@ -1,4 +1,4 @@
-/* $TOG: lcCT.c /main/11 1997/02/11 17:48:39 kaleb $ */
+/* $TOG: lcCT.c /main/17 1998/06/18 13:17:06 kaleb $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -31,7 +31,7 @@
  * Modifier: Takanori Tateno   FUJITSU LIMITED
  *
  */
-/* $XFree86: xc/lib/X11/lcCT.c,v 3.5.2.3 1998/05/19 02:55:11 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcCT.c,v 3.5.2.4 1998/10/21 06:40:39 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"
@@ -72,6 +72,7 @@ static CTDataRec default_ct_data[] =
     { "ISO8859-8:GR", "\033-H" },
     { "ISO8859-5:GR", "\033-L" },
     { "ISO8859-9:GR", "\033-M" },
+    { "ISO8859-10:GR", "\033-V" },
     { "JISX0201.1976-0:GL", "\033(J" },
     { "JISX0201.1976-0:GR", "\033)I" },
 
@@ -88,11 +89,12 @@ static CTDataRec default_ct_data[] =
     { "CNS11643.1986-1:GR", "\033$)G" },
     { "CNS11643.1986-2:GL", "\033$(H" },
     { "CNS11643.1986-2:GR", "\033$)H" },
-
-    /* Non-Standard Character Set Encodings */
-    { "TIS620.2533-1:GR", "\033-T"},
 #endif
+    { "TIS620.2533-1:GR", "\033-T"},
+    { "ISO10646-1", "\033%B"},
+    /* Non-Standard Character Set Encodings */
     { "KOI8-R:GR", "\033%/1\200\210koi8-r\002"},
+    { "ISO8859-15:GR", "\033%/1\200\213iso8859-15\002"},
 } ; 
 
 #define XctC0		0x0000
@@ -396,7 +398,7 @@ _XlcParseCharSet(charset)
     XlcCharSet charset;
 {
     CTParseRec parse;
-    char *ptr, buf[BUFSIZ];
+    char *ptr, *bufp, buf[BUFSIZ];
     int length;
 
     if (charset->ct_sequence == NULL)
@@ -413,10 +415,15 @@ _XlcParseCharSet(charset)
     if (charset->name) {
 	charset->xrm_name = XrmStringToQuark(charset->name);
 
-	strcpy(buf, charset->name);
-	if (ptr = strchr(buf, ':'))
+	if ((length = strlen (charset->name)) < sizeof buf) bufp = buf;
+	else bufp = Xmalloc (length + 1);
+
+	if (bufp == NULL) return False;
+	strcpy(bufp, charset->name);
+	if (ptr = strchr(bufp, ':'))
 	    *ptr = '\0';
-	charset->xrm_encoding_name = XrmStringToQuark(buf);
+	charset->xrm_encoding_name = XrmStringToQuark(bufp);
+	if (bufp != buf) Xfree (bufp);
 	charset->encoding_name = XrmQuarkToString(charset->xrm_encoding_name);
     } else {
 	charset->xrm_name = 0;

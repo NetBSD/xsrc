@@ -52,7 +52,7 @@ from the X Consortium.
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * 
  */
-/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib.c,v 1.3 1997/01/18 07:18:17 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib.c,v 1.3.2.1 1998/10/04 13:36:40 hohndel Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

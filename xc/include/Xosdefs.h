@@ -2,7 +2,7 @@
  * O/S-dependent (mis)feature macro definitions
  *
  * $XConsortium: Xosdefs.h /main/16 1996/09/28 16:17:29 rws $
- * $XFree86: xc/include/Xosdefs.h,v 3.11 1996/12/23 05:58:09 dawes Exp $
+ * $XFree86: xc/include/Xosdefs.h,v 3.11.2.2 1998/11/04 08:01:35 hohndel Exp $
  *
 Copyright (c) 1991  X Consortium
 
@@ -121,10 +121,7 @@ in this Software without prior written authorization from the X Consortium.
 
 #ifdef __EMX__
 #define USGISH
-/* EMX claims to be ANSI, so X_NOT_STDC_ENV does not hold */
-/* could have been provided as std flags as well */
-#define X_WCHAR
-#define X_LOCALE
+#define NULL_NOT_ZERO
 #endif
 
 #endif /* _XOSDEFS_H_ */

@@ -26,7 +26,7 @@ in this Software without prior written authorization from the X Consortium.
 ********************************************************/
 
 /* $XConsortium: mbuf.c /main/25 1996/12/02 10:19:23 lehors $ */
-/* $XFree86: xc/programs/Xserver/Xext/mbuf.c,v 3.3 1997/01/18 06:52:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/mbuf.c,v 3.3.2.1 1998/10/04 13:36:42 hohndel Exp $ */
 #define NEED_REPLIES
 #define NEED_EVENTS
 #include <stdio.h>

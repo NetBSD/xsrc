@@ -1,5 +1,5 @@
 /* $XConsortium: sm_genid.c /main/22 1996/12/04 10:22:25 lehors $ */
-/* $XFree86: xc/lib/SM/sm_genid.c,v 3.7 1997/01/18 06:51:43 dawes Exp $ */
+/* $XFree86: xc/lib/SM/sm_genid.c,v 3.7.2.2 1998/10/04 13:36:18 hohndel Exp $ */
 
 /*
 

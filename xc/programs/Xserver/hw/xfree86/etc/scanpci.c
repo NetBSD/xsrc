@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.12 1998/07/16 06:55:03 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.17 1998/11/10 11:55:40 dawes Exp $ */
 
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
@@ -62,7 +62,9 @@
 #include <sys/types.h>
 #if defined(SVR4)
 #if defined(sun)
+#ifndef __EXTENSIONS__
 #define __EXTENSIONS__
+#endif
 #endif
 #include <sys/proc.h>
 #include <sys/tss.h>
@@ -247,7 +249,7 @@ int pciconfig_read(
           unsigned char len,
           void * buf)
 {
-  return __syscall(__NR_pciconfig_read, bus, dfn, off, len, buf);
+  return syscall(__NR_pciconfig_read, bus, dfn, off, len, buf);
 }
 int pciconfig_write(
           unsigned char bus,
@@ -256,7 +258,7 @@ int pciconfig_write(
           unsigned char len,
           void * buf)
 {
-  return __syscall(__NR_pciconfig_write, bus, dfn, off, len, buf);
+  return syscall(__NR_pciconfig_write, bus, dfn, off, len, buf);
 }
 #else
 Generate compiler error - scanpci unsupported on non-linux alpha platforms
@@ -670,12 +672,23 @@ struct pci_vendor_device {
                             { 0x4554, "Mach64 ET", print_mach64 },
                             { 0x4742, "Mach64 GB", print_mach64 },
                             { 0x4744, "Mach64 GD", print_mach64 },
+                            { 0x4749, "Mach64 GI", print_mach64 },
                             { 0x4750, "Mach64 GP", print_mach64 },
+                            { 0x4751, "Mach64 GQ", print_mach64 },
                             { 0x4754, "Mach64 GT", print_mach64 },
-                            { 0x4755, "Mach64 GT", print_mach64 },
+                            { 0x4755, "Mach64 GU", print_mach64 },
+                            { 0x4756, "Mach64 GV", print_mach64 },
+                            { 0x4757, "Mach64 GW", print_mach64 },
                             { 0x4758, "Mach64 GX", print_mach64 },
-                            { 0x4C47, "Mach64 LT", print_mach64 },
+                            { 0x475A, "Mach64 GZ", print_mach64 },
+                            { 0x4C42, "Mach64 LB", print_mach64 },
+                            { 0x4C44, "Mach64 LD", print_mach64 },
+                            { 0x4C47, "Mach64 LG", print_mach64 },
+                            { 0x4C49, "Mach64 LI", print_mach64 },
+                            { 0x4C50, "Mach64 LP", print_mach64 },
                             { 0x5654, "Mach64 VT", print_mach64 },
+                            { 0x5655, "Mach64 VU", print_mach64 },
+                            { 0x5656, "Mach64 VV", print_mach64 },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1004, "VLSI", {
                             { 0x0005, "82C592-FC1", NF },
@@ -727,6 +740,7 @@ struct pci_vendor_device {
                             { 0x00BC, "GD 5480", NF },
                             { 0x00D0, "GD 5462", NF },
                             { 0x00D4, "GD 5464", NF },
+                            { 0x00D6, "GD 5465", NF },
                             { 0x1100, "CL 6729", NF },
                             { 0x1110, "CL 6832", NF },
                             { 0x1200, "GD 7542", NF },
@@ -757,7 +771,10 @@ struct pci_vendor_device {
                             { 0x9680, "TGUI 9680", NF },
                             { 0x9682, "TGUI 9682", NF },
 #endif
+                            { 0x9388, "TGUI 9388", NF },
+                            { 0x9397, "TGUI 9397", NF },
                             { 0x9750, "TGUI 9750", NF },
+                            { 0x9850, "TGUI 9850", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1025, "ALI", {
                             { 0x1435, "M1435", NF },
@@ -767,13 +784,21 @@ struct pci_vendor_device {
                             { 0x0519, "MGA Millennium", NF },
                             { 0x051a, "MGA Mystique", NF },
                             { 0x051b, "MGA Millennium II", NF },
+                            { 0x051f, "MGA Millennium II AGP", NF },
+                            { 0x0520, "MGA Millennium G200 PCI", NF },
+                            { 0x0521, "MGA Millennium G200 AGP", NF },
                             { 0x0D10, "MGA Impression", NF },
+                            { 0x1000, "MGA Productiva G100 PCI", NF },
+                            { 0x1001, "MGA Productiva G100 AGP", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x102C, "CT", {
                             { 0x00D8, "65545", NF },
                             { 0x00DC, "65548", NF },
                             { 0x00E0, "65550", NF },
                             { 0x00E4, "65554", NF },
+                            { 0x00E5, "65555", NF },
+                            { 0x00F4, "68554", NF },
+                            { 0x00C0, "69000", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1031, "Miro", {
                             { 0x5601, "ZR36050", NF },
@@ -991,6 +1016,7 @@ struct pci_vendor_device {
         { 0x10DE, "NVidia", {
                             { 0x0008, "NV1", NF },
                             { 0x0009, "DAC64", NF },
+                            { 0x0020, "Riva TNT", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x10E0, "IMS", {
                             { 0x8849, "8849", NF },
@@ -1066,6 +1092,7 @@ struct pci_vendor_device {
                             { 0x0000, (char *)NULL, NF } } },
         { 0x121A, "3Dfx Interactive", {
                             { 0x0001, "Voodoo Graphics", NF },
+                            { 0x0003, "Banshee", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x1236, "Sigma Designs", {
                             { 0x6401, "REALmagic64/GX (SD 6425)", NF },
@@ -1136,6 +1163,11 @@ struct pci_vendor_device {
                             { 0x7111, "82371AB PIIX4 IDE", NF },
                             { 0x7112, "82371AB PIIX4 USB", NF },
                             { 0x7113, "82371AB PIIX4 ACPI", NF },
+			    { 0x7180, "82443LX PAC Host", NF },
+			    { 0x7181, "82443LX PAC AGP", NF },
+			    { 0x7190, "82443BX Host", NF },
+			    { 0x7191, "82443BX AGP", NF },
+			    { 0x7192, "82443BX Host (no AGP)", NF },
                             { 0x0000, (char *)NULL, NF } } },
         { 0x9004, "Adaptec", {
                             { 0x5078, "7850", NF },
@@ -1158,6 +1190,9 @@ struct pci_vendor_device {
                             { 0xA0A1, "2000MT", NF },
                             { 0xA0A9, "2000MI", NF },
                             { 0x0000, (char *)NULL, NF } } },
+	{ 0x1274, "Ensoniq", {
+			    { 0x5000, "AudioPCI", NF },
+                            { 0x0000, (char *)NULL, NF } } },
         { 0x0000, (char *)NULL, {
                             { 0x0000, (char *)NULL, NF } } }
 };
@@ -1179,7 +1214,7 @@ struct pci_vendor_device {
 #endif
 
 
-main(int argc, unsigned char *argv[])
+main(int argc, char *argv[])
 {
     unsigned long tmplong1, tmplong2, config_cmd;
     unsigned char tmp1, tmp2;
@@ -1547,6 +1582,10 @@ print_mach64(struct pci_config_reg *pcr)
     if (pcr->_base1)
         printf("  BLOCKIO   0x%08x  addr 0x%08x\n",
             pcr->_base1, pcr->_base1 & (pcr->_base1 & 0x1 ?
+		0xFFFFFFFC : 0xFFFFFFF0));
+    if (pcr->_base2)
+        printf("  REGBASE   0x%08x  addr 0x%08x\n",
+            pcr->_base2, pcr->_base2 & (pcr->_base2 & 0x1 ?
 		0xFFFFFFFC : 0xFFFFFFF0));
     if (pcr->_baserom)
         printf("  BASEROM   0x%08x  addr 0x%08x  %sdecode-enabled\n",

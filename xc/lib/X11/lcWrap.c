@@ -55,7 +55,7 @@ from the X Consortium.
  *
  *		 Katsuhisa Yano		TOSHIBA Corp.
  */				
-/* $XFree86: xc/lib/X11/lcWrap.c,v 3.1.4.3 1998/01/25 06:11:09 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcWrap.c,v 3.1.4.4 1998/10/04 13:36:25 hohndel Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"

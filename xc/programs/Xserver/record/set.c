@@ -29,6 +29,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/Xserver/record/set.c,v 1.1.1.1.4.2 1998/10/04 15:23:05 hohndel Exp $ */
 
 /*
 

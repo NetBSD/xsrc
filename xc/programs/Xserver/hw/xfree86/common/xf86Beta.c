@@ -1,6 +1,6 @@
 /* Copyright 1996, The XFree86 Project, Inc */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Beta.c,v 3.3.2.1 1998/07/12 09:53:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Beta.c,v 3.3.2.2 1998/08/31 03:19:27 dawes Exp $ */
 
 /*
  * This is for publicly released beta server binaries.
@@ -94,7 +94,7 @@ xf86CheckBeta(int extraDays, char *key)
   {
     char homebuf[PATH_MAX];
     strncpy(homebuf,home,PATH_MAX-1); /* getenv might return R/O memory, as with OS/2 */
-    homebuf[PATH_MAX] = '\0';
+    homebuf[PATH_MAX-1] = '\0';
     home = homebuf;
 
     if (!(filename =

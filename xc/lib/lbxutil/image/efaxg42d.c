@@ -22,6 +22,7 @@
  * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
  * OF THIS SOFTWARE.
  */
+/* $XFree86: xc/lib/lbxutil/image/efaxg42d.c,v 1.1.1.1.2.2 1998/10/04 15:22:57 hohndel Exp $ */
 
 #include <X11/Xos.h>
 #include <X11/Xfuncproto.h>

@@ -27,7 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 
 */
 
-/* $XFree86: xc/lib/Xaw/TextPop.c,v 1.1.1.2.4.3 1998/07/12 09:52:59 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextPop.c,v 1.1.1.2.4.4 1998/10/04 13:36:30 hohndel Exp $ */
 
 /************************************************************
  *

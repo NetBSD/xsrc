@@ -22,7 +22,7 @@
  *
  * Author:  Dale Tonogai, Network Computing Devices
  */
-/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib_io.c,v 1.3.2.3 1997/07/06 07:28:05 dawes Exp $ */
+/* $XFree86: xc/lib/lbxutil/lbx_zlib/lbx_zlib_io.c,v 1.3.2.4 1998/10/04 13:36:40 hohndel Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_cursor.c,v 1.1.2.4 1998/07/16 06:55:06 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_cursor.c,v 1.1.2.5 1998/10/21 10:44:46 dawes Exp $ */
 
 /*
  *
@@ -45,13 +45,13 @@
 #include "windowstr.h"
 
 #include "compiler.h"
-#include "vga256.h"
 #include "xf86.h"
+#include "xf86_OSlib.h"
 #include "mipointer.h"
 #include "inputstr.h"
 #include "xf86Priv.h"
 #include "xf86_Option.h"
-#include "xf86_OSlib.h"
+#include "vga256.h"
 #include "vga.h"
 #include "xf86xaa.h"
 #include "regs3v.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.18 1998/07/16 06:55:06 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3v/s3v_driver.c,v 1.1.2.20 1998/11/08 10:03:46 hohndel Exp $ */
 
 /*
  *
@@ -291,11 +291,11 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    /* First reset GE to make sure nothing is going on */
    if(s3vPriv.chip == S3_ViRGE_VX) {
       outb(vgaCRIndex, 0x63);
-      if(inb(vgaCRReg) & 0x01) S3VGEReset();
+      if(inb(vgaCRReg) & 0x01) S3VGEReset(0,__LINE__,__FILE__);
       }
    else {
       outb(vgaCRIndex, 0x66);
-      if(inb(vgaCRReg) & 0x01) S3VGEReset();
+      if(inb(vgaCRReg) & 0x01) S3VGEReset(0,__LINE__,__FILE__);
       }
 
    /* As per databook, always disable STREAMS before changing modes */
@@ -449,6 +449,9 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
    outb(0x3c5, tmp | 0x03);
    outb(0x3c5, restore->SR15);
 
+   outb(0x3c4, 0x08);
+   outb(0x3c5, restore->SR8); 
+
 
    /* Now write out CR67 in full, possibly starting STREAMS */
    
@@ -487,10 +490,10 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
 
 
    if(s3vPriv.chip == S3_ViRGE_VX) {
-      if(restore->CR63 & 0x01) S3VGEReset();
+      if(restore->CR63 & 0x01) S3VGEReset(0,__LINE__,__FILE__);
       }
    else {
-      if(restore->CR66 & 0x01) S3VGEReset();
+      if(restore->CR66 & 0x01) S3VGEReset(0,__LINE__,__FILE__);
       }
 
    VerticalRetraceWait();
@@ -565,6 +568,7 @@ unsigned char cr3a, cr53, cr66;
 
    /* First unlock extended sequencer regs */
    outb(0x3c4, 0x08);
+   save->SR8 = inb(0x3c5);
    outb(0x3c5, 0x06); 
 
    /* Now we save all the s3 extended regs we need */
@@ -756,7 +760,7 @@ static Bool
 S3VProbe()
 {
 S3PCIInformation *pciInfo = NULL;
-unsigned char config1, config2, m, n, n1, n2, cr66;
+unsigned char config1, config2, m, n, n1, n2, cr66, sr8;
 int mclk;
 DisplayModePtr pMode, pEnd;
 
@@ -973,11 +977,14 @@ DisplayModePtr pMode, pEnd;
 
    /* Detect current MCLK and print it for user */
    outb(0x3c4, 0x08);
+   sr8 = inb(0x3c5);
    outb(0x3c5, 0x06); 
    outb(0x3c4, 0x10);
    n = inb(0x3c5);
    outb(0x3c4, 0x11);
    m = inb(0x3c5);
+   outb(0x3c4, 0x08);
+   outb(0x3c5, sr8);
    m &= 0x7f;
    n1 = n & 0x1f;
    n2 = (n>>5) & 0x03;
@@ -1423,7 +1430,9 @@ int i, j;
          unsigned char ndiv;
 	 if (S3_ViRGE_MX_SERIES(s3vPriv.chip)) {
 	   int lcd_freq;
+	   unsigned char sr8;
 	   outb(0x3c4, 0x08);  /* unlock extended SEQ regs */
+	   sr8 = inb(0x3c5);
 	   outb(0x3c5, 0x06);
 	   outb(0x3c4, 0x31);
 	   if (inb(0x3c5) & 0x10) { /* LCD on */
@@ -1462,6 +1471,8 @@ int i, j;
 	   else
 	     commonCalcClock(dclk/2, 1, 1, 31, 0, 4,
 			     170000, 340000, &new->SR13, &ndiv);
+	   outb(0x3c4, 0x08);
+	   outb(0x3c5, sr8);
 	 }
 	 else  /* S3_ViRGE_GX2 */
 	   commonCalcClock(dclk, 1, 1, 31, 0, 4,
