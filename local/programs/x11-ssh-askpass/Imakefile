@@ -55,6 +55,7 @@ APP_DEFAULTS	= $(CLASS)-default.ad
 
 DEPLIBS        	= $(DEPXTOOLLIB) $(DEPXLIB)
 LOCAL_LIBRARIES	= $(XTOOLLIB) $(XLIB)
+EXTRA_LIBRARIES = -lpthread
 
 #ifndef ComplexProgramTargetNoMan
 #define ComplexProgramTargetNoMan(x) ComplexProgramTarget(x)
