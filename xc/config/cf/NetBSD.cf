@@ -287,10 +287,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(x68kArchitecture)
+# define BuildServer		YES
 # define ServerOSDefines	-DDDXOSINIT
 # define ServerExtraDefines	GccGasOption -D__x68k__
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
+# define XserverNeedsSetUID	YES
 #endif
 
 #if defined(macppcArchitecture)
