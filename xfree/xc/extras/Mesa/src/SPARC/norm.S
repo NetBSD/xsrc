@@ -4,6 +4,8 @@
 	.text
 
 #ifdef __sparc_v9__
+.register	%g2,#scratch
+.register	%g3,#scratch
 #define STACK_VAR_OFF	(2047 + (8 * 16))
 #else
 #define STACK_VAR_OFF	(4 * 16)

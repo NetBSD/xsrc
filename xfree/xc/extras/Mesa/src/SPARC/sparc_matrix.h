@@ -3,6 +3,8 @@
 #define _SPARC_MATRIX_H
 
 #ifdef __sparc_v9__
+.register	%g2,#scratch
+.register	%g3,#scratch
 #define LDPTR		ldx
 #define MAT_M		0x00
 #define MAT_INV		0x08
