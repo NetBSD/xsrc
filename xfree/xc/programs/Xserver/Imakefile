@@ -219,7 +219,7 @@ XPFBLIBS = dix/LibraryTargetName(xpstubs)
 #if BuildLBX || GzipFontCompression
            ZLIB = GzipLibrary
 #endif
-             OS = os/LibraryTargetName(os) $(DEPXAUTHLIB) $(DEPXDMCPLIB)
+             OS = os/LibraryTargetName(os)
         BSDEMUL = $(DEPXBSDLIB)
 #if DoLoadableServer
             MFB = mfb/ModuleLibraryTargetName(mfb)
@@ -291,8 +291,8 @@ XPFBLIBS = dix/LibraryTargetName(xpstubs)
 #if !(SystemV4 || defined(SGIArchitecture) || UseRgbTxt)
        DBMLIBS = DBMLibrary
 #endif
-        SYSLIBS = $(ZLIB) MathLibrary Krb5Libraries $(DBMLIBS) $(USB) \
-		  $(PAMLIBS) $(EXTRASYSLIBS)
+        SYSLIBS = $(XAUTHLIB) $(XDMCPLIB) $(ZLIB) MathLibrary Krb5Libraries \
+		  $(DBMLIBS) $(USB) $(PAMLIBS) $(EXTRASYSLIBS)
 #if !HasCbrt
            CBRT = mi/LibraryTargetName(cbrt)
 #endif
