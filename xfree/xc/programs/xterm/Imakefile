@@ -16,6 +16,14 @@ SCROLLBAR_RIGHT = -DSCROLLBAR_RIGHT
 /* Define UTF8support to compile-in support for UTF-8 */
 #define UTF8support
 
+/* This definition should match with HAVE_GRANTPT in programs/luit/sys.c */
+#if SystemV4 || \
+    (defined(LinuxDistribution) && \
+     (LinuxCLibMajorVersion > 6 || \
+      (LinuxCLibMajorVersion == 6 && LinuxCLibMinorVersion >= 1)))
+#define HaveGrantPT
+#endif
+
 /*
  * Fixes to allow compile with X11R5
  */
@@ -88,7 +96,11 @@ module.o: ; $(CC) -c defines $(CFLAGS) module.c
 #endif
 
 #ifdef UTF8support
+# ifdef HaveGrantPT
     UTF8_OPTION = -DOPT_WIDE_CHARS -DOPT_LUIT_PROG
+# else
+    UTF8_OPTION = -DOPT_WIDE_CHARS
+#endif
         UTF8SRC = charclass.c precompose.c wcwidth.c xutf8.c
         UTF8OBJ = charclass.o precompose.o wcwidth.o xutf8.o
 #endif
