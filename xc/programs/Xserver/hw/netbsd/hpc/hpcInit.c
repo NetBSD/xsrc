@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.3 2000/07/29 14:23:58 takemura Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.4 2000/08/11 04:09:32 jun Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -44,6 +44,7 @@ hpcFbRec hpcFbs[MAXSCREENS];
 
 static PixmapFormatRec	formats[] = {
     {	1,	1,	BITMAP_SCANLINE_PAD},	/* 1 bit deep */
+    {	8,	8,	BITMAP_SCANLINE_PAD},	/* 8 bit deep */
     {	16,	16,	BITMAP_SCANLINE_PAD},	/* 16 bit deep */
 };
 #define NUMFORMATS	(sizeof formats)/(sizeof formats[0])
