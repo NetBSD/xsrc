@@ -9,6 +9,8 @@ SRCS =	macppcInit.c \
 	macppcMouse.c \
 	macppcOFB.c \
 	macppcKeyMap.c \
+	macppcInEx.c \
+	stubs.c \
 	GetTime.c
 
 OBJS =	macppcInit.o \
@@ -18,6 +20,8 @@ OBJS =	macppcInit.o \
 	macppcMouse.o \
 	macppcOFB.o \
 	macppcKeyMap.o \
+	macppcInEx.o \
+	stubs.o \
 	GetTime.o
 
 INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
@@ -27,6 +31,10 @@ INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
 LINTLIBS = ../../dix/llib-ldix.ln ../../os/llib-los.ln \
 	   ../mfb/llib-lmfb.ln ../mi/llib-lmi.ln ../cfb/llib-lcfb.ln
 
+DEFINES = $(OS_DEFINES) $(EXT_DEFINES) \
+	-UXFree86LOADER -UXF86VIDMODE -UXFreeXDGA \
+	-UXF86MISC -UXF86DRI -UXF86BIGFONT
+
 NormalLibraryObjectRule()
 
 all::
@@ -35,6 +43,8 @@ lintlib:
 
 NormalLibraryTarget(macppc,$(OBJS))
 NormalLintTarget($(SRCS1))
+LinkFile(macppcInEx.c,../../../mi/miinitext.c)
+LinkFile(stubs.c,../../../Xi/stubs.c)
 
 /* InstallManPage(Xmacppc,$(MANDIR)) */
 
