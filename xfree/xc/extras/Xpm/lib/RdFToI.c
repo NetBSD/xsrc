@@ -31,18 +31,16 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/RdFToI.c,v 1.2 2001/10/28 03:32:09 tsi Exp $ */
+/* $XFree86$ */
+
+/* October 2004, source code review by Thomas Biege <thomas@suse.de> */
 
 #include "XpmI.h"
-#include <sys/stat.h>
-#if !defined(NO_ZPIPE) && defined(WIN32)
-# define popen _popen
-# define pclose _pclose
-# if defined(STAT_ZFILE)
-#  include <io.h>
-#  define stat _stat
-#  define fstat _fstat
-# endif
+#ifndef NO_ZPIPE
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #endif
 
 LFUNC(OpenReadFile, int, (char *filename, xpmData *mdata));
@@ -120,80 +118,137 @@ XpmReadFileToXpmImage(filename, image, info)
 }
 #endif /* CXPMPROG */
 
+#ifndef NO_ZPIPE
+/* Do not depend on errno after read_through */
+FILE*
+xpmPipeThrough(fd, cmd, arg1, mode)
+    int fd;
+    const char* cmd;
+    const char* arg1;
+    const char* mode;
+{
+    FILE* fp;
+    int status, fds[2], in = 0, out = 1;
+    pid_t pid;
+    if ( 'w' == *mode )
+	out = 0, in = 1;
+    if ( pipe(fds) < 0 )
+	return NULL;
+    pid = fork();
+    if ( pid < 0 )
+	goto fail1;
+    if ( 0 == pid )
+    {
+	close(fds[in]);
+	if ( dup2(fds[out], out) < 0 )
+	    goto err;
+	close(fds[out]);
+	if ( dup2(fd, in) < 0 )
+	    goto err;
+	close(fd);
+	pid = fork();
+	if ( pid < 0 )
+	    goto err;
+	if ( 0 == pid )
+	{
+	    execlp(cmd, cmd, arg1, NULL);
+	    perror(cmd);
+	    goto err;
+	}
+	_exit(0);
+    err:
+	_exit(1);
+    }
+    close(fds[out]);
+    /* calling process: wait for first child */
+    while ( waitpid(pid, &status, 0) < 0 && EINTR == errno )
+	;
+    if ( WIFSIGNALED(status) ||
+	 (WIFEXITED(status) && WEXITSTATUS(status) != 0) )
+	goto fail2;
+    fp = fdopen(fds[in], mode);
+    if ( !fp )
+	goto fail2;
+    close(fd); /* still open in 2nd child */
+    return fp;
+fail1:
+    close(fds[out]);
+fail2:
+    close(fds[in]);
+    return NULL;
+}
+#endif
+
 /*
  * open the given file to be read as an xpmData which is returned.
  */
+#ifndef NO_ZPIPE
+	FILE *s_popen(char *cmd, const char *type);
+#else
+#	define s_popen popen
+#endif
+
 static int
 OpenReadFile(filename, mdata)
     char *filename;
     xpmData *mdata;
 {
-#ifndef NO_ZPIPE
-    char buf[BUFSIZ];
-# ifdef STAT_ZFILE
-    char *compressfile;
-    struct stat status;
-# endif
-#endif
-
     if (!filename) {
 	mdata->stream.file = (stdin);
 	mdata->type = XPMFILE;
     } else {
-#ifndef NO_ZPIPE
-	int len = strlen(filename);
-	if ((len > 2) && !strcmp(".Z", filename + (len - 2))) {
-	    mdata->type = XPMPIPE;
-	    sprintf(buf, "uncompress -c \"%s\"", filename);
-	    if (!(mdata->stream.file = popen(buf, "r")))
-		return (XpmOpenFailed);
-
-	} else if ((len > 3) && !strcmp(".gz", filename + (len - 3))) {
-	    mdata->type = XPMPIPE;
-	    sprintf(buf, "gunzip -qc \"%s\"", filename);
-	    if (!(mdata->stream.file = popen(buf, "r")))
-		return (XpmOpenFailed);
-
-	} else {
-# ifdef STAT_ZFILE
-	    if (!(compressfile = (char *) XpmMalloc(len + 4)))
+	int fd = open(filename, O_RDONLY);
+#if defined(NO_ZPIPE)
+	if ( fd < 0 )
+	    return XpmOpenFailed;
+#else
+	const char* ext = NULL;
+	if ( fd >= 0 )
+	    ext = strrchr(filename, '.');
+#ifdef STAT_ZFILE /* searching for z-files if the given name not found */
+	else
+	{
+	    size_t len = strlen(filename);
+	    char *compressfile = (char *) XpmMalloc(len + 4);
+	    if ( !compressfile )
 		return (XpmNoMemory);
-
-	    sprintf(compressfile, "%s.Z", filename);
-	    if (!stat(compressfile, &status)) {
-		sprintf(buf, "uncompress -c \"%s\"", compressfile);
-		if (!(mdata->stream.file = popen(buf, "r"))) {
+	    strcpy(compressfile, filename);
+	    strcpy(compressfile + len, ext = ".Z");
+	    fd = open(compressfile, O_RDONLY);
+	    if ( fd < 0 )
+	    {
+		strcpy(compressfile + len, ext = ".gz");
+		fd = open(compressfile, O_RDONLY);
+		if ( fd < 0 )
+		{
 		    XpmFree(compressfile);
-		    return (XpmOpenFailed);
-		}
-		mdata->type = XPMPIPE;
-	    } else {
-		sprintf(compressfile, "%s.gz", filename);
-		if (!stat(compressfile, &status)) {
-		    sprintf(buf, "gunzip -c \"%s\"", compressfile);
-		    if (!(mdata->stream.file = popen(buf, "r"))) {
-			XpmFree(compressfile);
-			return (XpmOpenFailed);
-		    }
-		    mdata->type = XPMPIPE;
-		} else {
-# endif
-#endif
-		    if (!(mdata->stream.file = fopen(filename, "r"))) {
-#if !defined(NO_ZPIPE) && defined(STAT_ZFILE)
-			XpmFree(compressfile);
-#endif
-			return (XpmOpenFailed);
-		    }
-		    mdata->type = XPMFILE;
-#ifndef NO_ZPIPE
-# ifdef STAT_ZFILE
+		    return XpmOpenFailed;
 		}
 	    }
 	    XpmFree(compressfile);
-# endif
 	}
 #endif
+	if ( ext && !strcmp(ext, ".Z") )
+	{
+	    mdata->type = XPMPIPE;
+	    mdata->stream.file = xpmPipeThrough(fd, "uncompress", "-c", "r");
+	}
+	else if ( ext && !strcmp(ext, ".gz") )
+	{
+	    mdata->type = XPMPIPE;
+	    mdata->stream.file = xpmPipeThrough(fd, "gunzip", "-qc", "r");
+	}
+	else
+#endif /* z-files */
+	{
+	    mdata->type = XPMFILE;
+	    mdata->stream.file = fdopen(fd, "r");
+	}
+	if (!mdata->stream.file)
+	{
+	    close(fd);
+	    return (XpmOpenFailed);
+	}
     }
     mdata->CommentLength = 0;
 #ifdef CXPMPROG
@@ -210,15 +265,6 @@ static void
 xpmDataClose(mdata)
     xpmData *mdata;
 {
-    switch (mdata->type) {
-    case XPMFILE:
-	if (mdata->stream.file != (stdin))
-	    fclose(mdata->stream.file);
-	break;
-#ifndef NO_ZPIPE
-    case XPMPIPE:
-	pclose(mdata->stream.file);
-	break;
-#endif
-    }
+    if (mdata->stream.file != (stdin))
+	fclose(mdata->stream.file);
 }
