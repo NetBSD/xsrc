@@ -101,8 +101,8 @@ XCOMM Sparc64 (NetBSD) PCI driver
 
 PCIDRVRSRC = netbsdPci.c
 PCIDRVROBJ = netbsdPci.o
-XCOMM SBUSDRVSRC = Sbus.c
-XCOMM SBUSDRVOBJ = Sbus.o
+SBUSDRVSRC = netbsdSbus.c
+SBUSDRVOBJ = netbsdSbus.o
 
 #elif defined(i386Architecture) || \
       defined(ia64Architecture) || \
