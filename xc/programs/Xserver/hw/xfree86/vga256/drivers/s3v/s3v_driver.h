@@ -19,7 +19,7 @@ typedef struct {
    unsigned char CR40, CR41, CR42, CR43, CR45;
    unsigned char CR51, CR53, CR54, CR55, CR58, CR5D, CR5E;
    unsigned char CR63, CR65, CR66, CR67, CR68, CR69, CR6D; /* Video attrib. */
-   unsigned char CR86;
+   unsigned char CR85, CR86;
    unsigned char CR90, CR91;
    unsigned char ColorStack[8]; /* S3 hw cursor color stack CR4A/CR4B */
    unsigned int  STREAMS[22];   /* Streams regs */

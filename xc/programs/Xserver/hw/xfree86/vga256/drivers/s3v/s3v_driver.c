@@ -471,6 +471,10 @@ unsigned char tmp, cr3a, cr53, cr66, cr67;
 
    outb(vgaCRIndex, 0x33);
    outb(vgaCRReg, restore->CR33);
+   if (S3_TRIO_3D_2X_SERIES(s3vPriv.chip)) {
+      outb(vgaCRIndex, 0x85);
+      outb(vgaCRReg, restore->CR85);
+   }
    if (s3vPriv.chip == S3_ViRGE_DXGX) {
       outb(vgaCRIndex, 0x86);
       outb(vgaCRReg, restore->CR86);
@@ -702,6 +706,10 @@ unsigned char cr3a, cr53, cr66;
 
    outb(vgaCRIndex, 0x33);             
    save->CR33 = inb(vgaCRReg);
+   if (S3_TRIO_3D_2X_SERIES(s3vPriv.chip)) {
+      outb(vgaCRIndex, 0x85);
+      save->CR85 = inb(vgaCRReg);
+   }
    if (s3vPriv.chip == S3_ViRGE_DXGX) {
       outb(vgaCRIndex, 0x86);
       save->CR86 = inb(vgaCRReg);
@@ -970,10 +978,12 @@ DisplayModePtr pMode, pEnd;
       }
       else if (S3_TRIO_3D_2X_SERIES(s3vPriv.chip)) {
          switch((config1 & 0xE0) >> 5) {
-         case 0:
-            vga256InfoRec.videoRam = 8 * 1024;
+         case 0:  /* 8MB -- only 4MB usable for display/cursor */
+            vga256InfoRec.videoRam = 4 * 1024;
+            s3vPriv.MemOffScreen   = 4 * 1024;
             break;
          case 1:    /* 32 bit interface -- yuck */
+	    ErrorF("%s %s: found 32 bit interface for video memory -- yuck:(\n");
          case 2:
             vga256InfoRec.videoRam = 4 * 1024;
             break;
@@ -1068,6 +1078,12 @@ DisplayModePtr pMode, pEnd;
    if (s3vPriv.chip == S3_ViRGE_VX) {
       if (vga256InfoRec.dacSpeeds[0] <= 0) vga256InfoRec.dacSpeeds[0] = 220000;
       if (vga256InfoRec.dacSpeeds[1] <= 0) vga256InfoRec.dacSpeeds[1] = 220000;
+      if (vga256InfoRec.dacSpeeds[2] <= 0) vga256InfoRec.dacSpeeds[2] = 135000;
+      if (vga256InfoRec.dacSpeeds[3] <= 0) vga256InfoRec.dacSpeeds[3] = 135000;
+   }
+   else if (S3_TRIO_3D_2X_SERIES(s3vPriv.chip)) {
+      if (vga256InfoRec.dacSpeeds[0] <= 0) vga256InfoRec.dacSpeeds[0] = 230000;
+      if (vga256InfoRec.dacSpeeds[1] <= 0) vga256InfoRec.dacSpeeds[1] = 230000;
       if (vga256InfoRec.dacSpeeds[2] <= 0) vga256InfoRec.dacSpeeds[2] = 135000;
       if (vga256InfoRec.dacSpeeds[3] <= 0) vga256InfoRec.dacSpeeds[3] = 135000;
    }
@@ -1874,6 +1890,9 @@ int i, j;
    new->CR33 = 0x20;
    if ((s3vPriv.chip == S3_ViRGE_DXGX) || (S3_TRIO_3D_SERIES(s3vPriv.chip))) {
       new->CR86 = 0x80;  /* disable DAC power saving to avoid bright left edge */
+   }
+   if (S3_TRIO_3D_2X_SERIES(s3vPriv.chip)) {
+      new->CR85 = 0x1f;  /* avoid sreen flickering */
    }
    if (s3vPriv.chip == S3_ViRGE_DXGX || S3_ViRGE_GX2_SERIES(s3vPriv.chip) || 
        S3_ViRGE_MX_SERIES(s3vPriv.chip) || S3_TRIO_3D_SERIES(s3vPriv.chip)) {
