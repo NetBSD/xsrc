@@ -50,7 +50,11 @@ FcConfigCreate (void)
     
     config->cache = 0;
     if (!FcConfigSetCache (config, (FcChar8 *) ("~/" FC_USER_CACHE_FILE)))
-	goto bail4;
+#ifdef P_tmpdir
+	if (!FcConfigSetCache (config, (FcChar8 *)
+	    (P_tmpdir FC_USER_CACHE_FILE)))
+#endif
+	   goto bail4;
 
     config->blanks = 0;
 
