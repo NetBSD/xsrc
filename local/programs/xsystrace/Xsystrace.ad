@@ -275,9 +275,9 @@ draw-string 60,35,"Always";
 !
 ! Various labels
 !
-*processInfo-label.label: Processus Information
-*processName-label.label: Processus Name: 
-*processPid-label.label: Processus ID: 
+*processInfo-label.label: Process Information
+*processName-label.label: Process Name: 
+*processPid-label.label: Process ID: 
 *policyName-label.label: Policy Name:
 *syscallInfo-label.label: System Call Information
 *filter-label.label: Filter Expression:
