@@ -530,7 +530,9 @@ void UseMsg()
     ErrorF("c #                    key-click volume (0-100)\n");
     ErrorF("-cc int                default color visual class\n");
     ErrorF("-co file               color database file\n");
+#ifdef ThisIsASecurityProblem	/* This will be removed in the next XFree/TOG release */
     ErrorF("-config file           read options from file\n");
+#endif
     ErrorF("-core                  generate core dump on fatal error\n");
     ErrorF("-dpi int               screen resolution in dots per inch\n");
 #ifdef DPMSExtension
@@ -948,6 +950,7 @@ char	*argv[];
     }
 }
 
+#ifdef ThisIsASecurityProblem 	/* This will be removed in the next XFree/TOG release */
 static void
 InsertFileIntoCommandLine(resargc, resargv, prefix_argc, prefix_argv,
 			  filename, suffix_argc, suffix_argv)
@@ -1054,6 +1057,7 @@ ExpandCommandLine(pargc, pargv)
 	}
     }
 } /* end ExpandCommandLine */
+#endif
 
 #if defined(TCPCONN) || defined(STREAMSCONN)
 #ifndef WIN32
