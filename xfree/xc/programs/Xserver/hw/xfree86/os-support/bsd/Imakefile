@@ -100,7 +100,7 @@ AXP_SRC=bsd_ev56.c xf86Axp.c bsd_axp.c
 AXP_OBJ=bsd_ev56.o xf86Axp.o bsd_axp.o
 #endif
 
-#if defined(FreeBSDArchitecture) && HasAgpGart
+#if (defined(FreeBSDArchitecture) || defined(NetBSDArchitecture)) && HasAgpGart
 AGP_SRC=lnx_agp.c
 AGP_OBJ=lnx_agp.o
 #else
@@ -173,7 +173,7 @@ LinkSourceFile(stdPci.c,../shared)
 LinkSourceFile(vidmem.c,../shared)
 LinkSourceFile(sigio.c,../shared)
 LinkSourceFile(kmod_noop.c,../shared)
-#if defined(FreeBSDArchitecture) && HasAgpGart
+#if (defined(FreeBSDArchitecture) || defined(NetBSDArchitecture)) && HasAgpGart
 LinkSourceFile(lnx_agp.c,../linux)
 #else
 LinkSourceFile(agp_noop.c,../shared)
