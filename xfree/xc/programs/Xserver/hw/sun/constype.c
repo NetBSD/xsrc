@@ -64,11 +64,13 @@ struct vis_identifier {
 };
 # endif
 #else
-# ifndef CSRG_BASED
-#  include <sun/fbio.h>
-# else
-#  include <machine/fbio.h>
-# endif
+# ifndef __NetBSD__
+#  ifdef CSRG_BASED
+#   include <sun/fbio.h>
+#  else
+#   include <machine/fbio.h>
+#  endif
+# endif 
 #endif
 
 static int wu_fbid(char *devname, char **fbname, int *fbtype);
