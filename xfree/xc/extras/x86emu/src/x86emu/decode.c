@@ -734,6 +734,10 @@ unsigned decode_rm00_address(
 {
 	unsigned offset;
 
+	if (M.x86.mode & SYSMODE_PREFIX_ADDR) {
+		u32* rp = decode_rm_long_register(rm);
+		return (*rp);
+	}
 	switch (rm) {
       case 0:
 		DECODE_PRINTF("[BX+SI]");
@@ -782,6 +786,10 @@ unsigned decode_rm01_address(
 	int rm)
 {
 	int displacement = (s8)fetch_byte_imm();
+	if (M.x86.mode & SYSMODE_PREFIX_ADDR) {
+		u32* rp = decode_rm_long_register(rm);
+		return (*rp + displacement);
+	}
 	switch (rm) {
       case 0:
 		DECODE_PRINTF2("%d[BX+SI]", displacement);
@@ -830,6 +838,11 @@ unsigned decode_rm10_address(
 	int rm)
 {
 	unsigned displacement = (u16)fetch_word_imm();
+	if (M.x86.mode & SYSMODE_PREFIX_ADDR) {
+		u32* rp = decode_rm_long_register(rm);
+		int sd = (int)((s16)displacement);
+		return (*rp + sd);
+	}
 	switch (rm) {
       case 0:
 		DECODE_PRINTF2("%04x[BX+SI]", displacement);
