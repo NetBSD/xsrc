@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/os/osdep.h,v 3.18 2003/04/27 21:31:09 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/os/osdep.h,v 3.20 2004/06/24 02:21:16 tsi Exp $ */
 /***********************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -121,9 +121,9 @@ SOFTWARE.
 
 #include <stddef.h>
 
-typedef Bool (*ValidatorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
-typedef Bool (*GeneratorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, int packet_type);
-typedef Bool (*AddAuthorFunc)(unsigned name_length, char *name, unsigned data_length, char *data);
+typedef Bool (*ValidatorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, xdmOpCode packet_type);
+typedef Bool (*GeneratorFunc)(ARRAY8Ptr Auth, ARRAY8Ptr Data, xdmOpCode packet_type);
+typedef Bool (*AddAuthorFunc)(unsigned int name_length, char *name, unsigned int data_length, char *data);
 
 typedef struct _connectionInput {
     struct _connectionInput *next;
@@ -309,7 +309,7 @@ extern int  K5Reset           (AuthRstCArgs);
 /* in secauth.c */
 extern XID AuthSecurityCheck (AuthCheckArgs);
 
-/* in xdmcp.c */
+/* in xdmcp.c  & xdmauth.c */
 extern void XdmcpUseMsg (void);
 extern int XdmcpOptions(int argc, char **argv, int i);
 extern void XdmcpSetAuthentication (ARRAY8Ptr name);
@@ -332,10 +332,13 @@ extern void XdmcpRegisterAuthentication (
     ValidatorFunc Validator,
     GeneratorFunc Generator,
     AddAuthorFunc AddAuth);
-extern int XdmcpCheckAuthentication (ARRAY8Ptr Name, ARRAY8Ptr Data, int packet_type);
+extern int XdmcpCheckAuthentication (ARRAY8Ptr Name, ARRAY8Ptr Data,
+				     xdmOpCode packet_type);
 extern int XdmcpAddAuthorization (ARRAY8Ptr name, ARRAY8Ptr data);
 
 struct sockaddr_in;
 extern void XdmcpRegisterBroadcastAddress (struct sockaddr_in *addr);
+
+extern void XdmAuthenticationInit (char *cookie, int cookie_length);
 
 #endif /* _OSDEP_H_ */

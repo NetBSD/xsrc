@@ -31,7 +31,7 @@
  *		Harold L Hunt II
  *		Kensuke Matsuzaki
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winscrinit.c,v 1.28 2003/08/07 23:47:58 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winscrinit.c,v 1.29 2005/02/15 01:09:37 dawes Exp $ */
 
 #include "win.h"
 
@@ -323,7 +323,7 @@ winFinishScreenInitFB (int index,
 #endif
 
 #if WIN_LAYER_SUPPORT
-  /* KDrive does LayerStartInit right after fbPictureInit */
+  /* TinyX does LayerStartInit right after fbPictureInit */
   if (!LayerStartInit (pScreen))
     {
       ErrorF ("winFinishScreenInitFB - LayerStartInit () failed\n");
@@ -337,14 +337,14 @@ winFinishScreenInitFB (int index,
       return FALSE;
     }
 
-  /* KDrive does LayerFinishInit right after LayerStartInit */
+  /* TinyX does LayerFinishInit right after LayerStartInit */
   if (!LayerFinishInit (pScreen))
     {
       ErrorF ("winFinishScreenInitFB - LayerFinishInit () failed\n");
       return FALSE;
     }
 
-  /* KDrive does LayerCreate right after LayerFinishInit */
+  /* TinyX does LayerCreate right after LayerFinishInit */
   pScreenPriv->pLayer = winLayerCreate (pScreen);
   if (!pScreenPriv->pLayer)
     {
@@ -352,7 +352,7 @@ winFinishScreenInitFB (int index,
       return FALSE;
     }
   
-  /* KDrive does RandRInit right after LayerCreate */
+  /* TinyX does RandRInit right after LayerCreate */
 #ifdef RANDR
   if (pScreenInfo->dwDepth != 8 && !winRandRInit (pScreen))
     {
@@ -368,14 +368,14 @@ winFinishScreenInitFB (int index,
    */
   miInitializeBackingStore (pScreen);
 
-  /* KDrive does miDCInitialize right after miInitializeBackingStore */
+  /* TinyX does miDCInitialize right after miInitializeBackingStore */
   /* Setup the cursor routines */
 #if CYGDEBUG
   ErrorF ("winFinishScreenInitFB - Calling miDCInitialize ()\n");
 #endif
   miDCInitialize (pScreen, &g_winPointerCursorFuncs);
 
-  /* KDrive does winCreateDefColormap right after miDCInitialize */
+  /* TinyX does winCreateDefColormap right after miDCInitialize */
   /* Create a default colormap */
 #if CYGDEBUG
   ErrorF ("winFinishScreenInitFB - Calling winCreateDefColormap ()\n");

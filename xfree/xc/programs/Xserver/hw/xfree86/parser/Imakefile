@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Imakefile,v 1.13 2002/05/31 18:46:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Imakefile,v 1.14 2005/01/07 23:03:14 dawes Exp $ */
 
 
 
@@ -27,7 +27,8 @@ INCLUDES = -I. -I$(XF86OSSRC)
 HEADERS = xf86Parser.h xf86Optrec.h
 
 SRCS = Device.c Files.c Flags.c Input.c Keyboard.c Layout.c Module.c \
-	Video.c Monitor.c Pointer.c Screen.c Vendor.c read.c scan.c write.c
+	Video.c Monitor.c Pointer.c Screen.c Vendor.c read.c scan.c write.c \
+	cpconfig.c
 OBJS = Device.o Files.o Flags.o Input.o Keyboard.o Layout.o Module.o \
 	Video.o Monitor.o Pointer.o Screen.o Vendor.o read.o scan.o write.o \
 	DRI.o

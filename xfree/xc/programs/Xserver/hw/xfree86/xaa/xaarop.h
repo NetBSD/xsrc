@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaarop.h,v 1.1 1999/03/21 07:35:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaarop.h,v 1.2 2004/03/23 14:47:49 tsi Exp $ */
 
 /*
 
@@ -31,6 +31,8 @@
 
 #ifndef _XAAROP_H
 #define _XAAROP_H
+
+#include "xf86str.h"
 
 #define ROP_DST		0x00000001
 #define ROP_SRC		0x00000002

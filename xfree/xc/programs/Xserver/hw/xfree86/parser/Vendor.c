@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Vendor.c,v 1.18 2004/02/13 23:58:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Vendor.c,v 1.19 2005/01/26 05:31:50 dawes Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -27,7 +27,7 @@
  * 
  */
 /*
- * Copyright (c) 1997-2003 by The XFree86 Project, Inc.
+ * Copyright (c) 1997-2005 by The XFree86 Project, Inc.
  * All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -72,6 +72,50 @@
  * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Copyright © 2004, 2005 X-Oz Technologies.
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ * 
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions, and the following disclaimer.
+ *
+ *  2. Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ * 
+ *  3. The end-user documentation included with the redistribution,
+ *     if any, must include the following acknowledgment: "This product
+ *     includes software developed by X-Oz Technologies
+ *     (http://www.x-oz.com/)."  Alternately, this acknowledgment may
+ *     appear in the software itself, if and wherever such third-party
+ *     acknowledgments normally appear.
+ *
+ *  4. Except as contained in this notice, the name of X-Oz
+ *     Technologies shall not be used in advertising or otherwise to
+ *     promote the sale, use or other dealings in this Software without
+ *     prior written authorization from X-Oz Technologies.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL X-OZ TECHNOLOGIES OR ITS CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+ * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+ * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ */
 
 
 /* View/edit this file with tab stops set to 4 */
@@ -93,11 +137,15 @@ static xf86ConfigSymTabRec VendorSubTab[] =
 #define CLEANUP xf86freeVendorSubList
 
 XF86ConfVendSubPtr
-xf86parseVendorSubSection (void)
+xf86parseVendorSubSection (XF86ConfVendSubPtr head, char *name)
 {
 	int has_ident = FALSE;
 	int token;
 	parsePrologue (XF86ConfVendSubPtr, XF86ConfVendSubRec)
+
+	ptr->vs_name = name;
+	ptr->vs_option_lst = NULL;
+	ptr->list.next = NULL;
 
 	while ((token = xf86getToken (VendorSubTab)) != ENDSUBSECTION)
 	{
@@ -107,7 +155,7 @@ xf86parseVendorSubSection (void)
 			ptr->vs_comment = xf86addComment(ptr->vs_comment, val.str);
 			break;
 		case IDENTIFIER:
-			if (xf86getSubToken (&(ptr->vs_comment)))
+			if (xf86getSubToken (&(ptr->vs_comment)) != STRING)
 				Error (QUOTE_MSG, "Identifier");
 			if (has_ident == TRUE)
 				Error (MULTIPLE_MSG, "Identifier");
@@ -131,7 +179,7 @@ xf86parseVendorSubSection (void)
 	printf ("Vendor subsection parsed\n");
 #endif
 
-	return ptr;
+	return (XF86ConfVendSubPtr) xf86addListItem ((glp) head, (glp) ptr);
 }
 
 #undef CLEANUP
@@ -140,6 +188,7 @@ static xf86ConfigSymTabRec VendorTab[] =
 {
 	{ENDSECTION, "endsection"},
 	{IDENTIFIER, "identifier"},
+	{VENDORNAME, "vendorname"},
 	{OPTION, "option"},
 	{SUBSECTION, "subsection"},
 	{-1, ""},
@@ -169,16 +218,19 @@ xf86parseVendorSection (void)
 			ptr->vnd_identifier = val.str;
 			has_ident = TRUE;
 			break;
+		case VENDORNAME:
+			if (xf86getSubToken (&(ptr->vnd_comment)) != STRING)
+				Error (QUOTE_MSG, "VendorName");
+			ptr->vnd_name = val.str;
+			break;
 		case OPTION:
 			ptr->vnd_option_lst = xf86parseOption(ptr->vnd_option_lst);
 			break;
 		case SUBSECTION:
 			if (xf86getSubToken (&(ptr->vnd_comment)) != STRING)
 				Error (QUOTE_MSG, "SubSection");
-			{
-				HANDLE_LIST (vnd_sub_lst, xf86parseVendorSubSection,
-							XF86ConfVendSubPtr);
-			}
+			ptr->vnd_sub_lst =
+				xf86parseVendorSubSection(ptr->vnd_sub_lst, val.str);
 			break;
 		case EOF_TOKEN:
 			Error (UNEXPECTED_EOF_MSG, NULL);
@@ -214,6 +266,8 @@ xf86printVendorSection (FILE * cf, XF86ConfVendorPtr ptr)
 			fprintf (cf, "%s", ptr->vnd_comment);
 		if (ptr->vnd_identifier)
 			fprintf (cf, "\tIdentifier     \"%s\"\n", ptr->vnd_identifier);
+		if (ptr->vnd_name)
+			fprintf (cf, "\tVendorName     \"%s\"\n", ptr->vnd_name);
 
 		xf86printOptionList(cf, ptr->vnd_option_lst, 1);
 		for (pptr = ptr->vnd_sub_lst; pptr; pptr = pptr->list.next)
@@ -239,6 +293,7 @@ xf86freeVendorList (XF86ConfVendorPtr p)
 	xf86freeVendorSubList (p->vnd_sub_lst);
 	TestFree (p->vnd_identifier);
 	TestFree (p->vnd_comment);
+	TestFree (p->vnd_name);
 	xf86optionListFree (p->vnd_option_lst);
 	xf86conffree (p);
 }

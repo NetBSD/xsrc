@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaOverlay.c,v 1.15 2003/11/10 18:22:41 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaOverlay.c,v 1.16 2004/04/06 20:53:22 tsi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -297,7 +297,8 @@ XAASetupOverlay8_32Planar(ScreenPtr pScreen)
     pScreen->PaintWindowBorder = XAAPaintWindow8_32;
     pScreen->CopyWindow = XAACopyWindow8_32;
 
-    if(!(infoRec->FillSolidRectsFlags & NO_PLANEMASK))
+    if(infoRec->FillSolidRects &&
+	!(infoRec->FillSolidRectsFlags & NO_PLANEMASK))
 	miOverlaySetTransFunction(pScreen, XAASetColorKey8_32);
 
     infoRec->FullPlanemask = ~0;

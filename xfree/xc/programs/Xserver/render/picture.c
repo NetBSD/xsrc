@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/render/picture.c,v 1.30 2003/01/26 16:40:43 eich Exp $
+ * $XFree86: xc/programs/Xserver/render/picture.c,v 1.31 2004/06/30 20:21:46 martin Exp $
  *
  * Copyright © 2000 SuSE, Inc.
  *
@@ -46,6 +46,57 @@ RESTYPE		PictFormatType;
 RESTYPE		GlyphSetType;
 int		PictureCmapPolicy = PictureCmapPolicyDefault;
 
+/* Picture Private machinery */
+
+static int picturePrivateCount;
+
+void
+ResetPicturePrivateIndex (void)
+{
+    picturePrivateCount = 0;
+}
+
+int
+AllocatePicturePrivateIndex (void)
+{
+    return picturePrivateCount++;
+}
+
+Bool
+AllocatePicturePrivate (ScreenPtr pScreen, int index2, unsigned int amount)
+{
+    PictureScreenPtr	ps = GetPictureScreen(pScreen);
+    unsigned int	oldamount;
+
+    /* Round up sizes for proper alignment */
+    amount = ((amount + (sizeof(long) - 1)) / sizeof(long)) * sizeof(long);
+
+    if (index2 >= ps->PicturePrivateLen)
+    {
+	unsigned int *nsizes;
+
+	nsizes = (unsigned int *)xrealloc(ps->PicturePrivateSizes,
+					  (index2 + 1) * sizeof(unsigned int));
+	if (!nsizes)
+	    return FALSE;
+	while (ps->PicturePrivateLen <= index2)
+	{
+	    nsizes[ps->PicturePrivateLen++] = 0;
+	    ps->totalPictureSize += sizeof(DevUnion);
+	}
+	ps->PicturePrivateSizes = nsizes;
+    }
+    oldamount = ps->PicturePrivateSizes[index2];
+    if (amount > oldamount)
+    {
+	ps->PicturePrivateSizes[index2] = amount;
+	ps->totalPictureSize += (amount - oldamount);
+    }
+
+    return TRUE;
+}
+
+
 Bool
 PictureDestroyWindow (WindowPtr pWindow)
 {
@@ -82,6 +133,8 @@ PictureCloseScreen (int index, ScreenPtr pScreen)
 	if (ps->formats[n].type == PictTypeIndexed)
 	    (*ps->CloseIndexed) (pScreen, &ps->formats[n]);
     SetPictureScreen(pScreen, 0);
+    if (ps->PicturePrivateSizes)
+	xfree (ps->PicturePrivateSizes);
     xfree (ps->formats);
     xfree (ps);
     return ret;
