@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/programs/Xserver/xkb/xkbInit.c,v 3.12.2.2 1998/02/24 13:20:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/xkb/xkbInit.c,v 3.12.2.3 2000/06/15 21:58:34 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -915,8 +915,13 @@ XkbProcessArguments(argc,argv,i)
 #endif
     else if (strncmp(argv[i], "-xkbmap", 7) == 0) {
 	if(++i < argc) {
-	    XkbInitialMap= argv[i];
-	    return 2;
+	    if (strlen(argv[i]) < PATH_MAX) {
+		XkbInitialMap= argv[i];
+		return 2;
+	    } else {
+		ErrorF("-xkbmap pathname too long\n");
+		return -1;
+	    }
 	}
 	else {
 	    return -1;
@@ -924,8 +929,13 @@ XkbProcessArguments(argc,argv,i)
     }
     else if (strncmp(argv[i], "-xkbdb", 7) == 0) {
 	if(++i < argc) {
-	    XkbDB= argv[i];
-	    return 2;
+	    if (strlen(argv[i]) < PATH_MAX) {
+		XkbDB= argv[i];
+		return 2;
+	    } else {
+		ErrorF("-xkbdb pathname too long\n");
+		return -1;
+	    }
 	}
 	else {
 	    return -1;
