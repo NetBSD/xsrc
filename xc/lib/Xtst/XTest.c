@@ -79,7 +79,7 @@ get_xinput_base(dpy)
     Display *dpy;
 {
     int major_opcode, first_event, first_error;
-    first_event = 0;
+    int *first_event = 0;	/* serious LP64 bug fixed here */
 
     XQueryExtension(dpy, INAME, &major_opcode, &first_event, &first_error);
     return (XPointer)first_event;
@@ -283,7 +283,7 @@ send_axes(dpy, info, req, dev, first_axis, axes, n_axes)
 
     req->deviceid |= MORE_EVENTS;
     req->length += ((n_axes + 5) / 6) * (SIZEOF(xEvent) >> 2);
-    ev.type = XI_DeviceValuator + (int)info->data;
+    ev.type = XI_DeviceValuator + (long)info->data;
     ev.deviceid = dev->device_id;
     ev.num_valuators = n_axes;
     ev.first_valuator = first_axis;
@@ -331,7 +331,7 @@ XTestFakeDeviceKeyEvent(dpy, dev, keycode, is_press, axes, n_axes, delay)
     req->reqType = info->codes->major_opcode;
     req->xtReqType = X_XTestFakeInput;
     req->type = is_press ? XI_DeviceKeyPress : XI_DeviceKeyRelease;
-    req->type += (int)info->data;
+    req->type += (int)(long)info->data;
     req->detail = keycode;
     req->time = delay;
     req->deviceid = dev->device_id;
@@ -361,7 +361,7 @@ XTestFakeDeviceButtonEvent(dpy, dev, button, is_press, axes, n_axes, delay)
     req->reqType = info->codes->major_opcode;
     req->xtReqType = X_XTestFakeInput;
     req->type = is_press ? XI_DeviceButtonPress : XI_DeviceButtonRelease;
-    req->type += (int)info->data;
+    req->type += (int)(long)info->data;
     req->detail = button;
     req->time = delay;
     req->deviceid = dev->device_id;
@@ -390,7 +390,7 @@ XTestFakeProximityEvent(dpy, dev, in_prox, axes, n_axes, delay)
     req->reqType = info->codes->major_opcode;
     req->xtReqType = X_XTestFakeInput;
     req->type = in_prox ? XI_ProximityIn : XI_ProximityOut;
-    req->type += (int)info->data;
+    req->type += (int)(long)info->data;
     req->time = delay;
     req->deviceid = dev->device_id;
     if (n_axes)
@@ -419,7 +419,7 @@ XTestFakeDeviceMotionEvent(dpy, dev, is_relative,
     GetReq(XTestFakeInput, req);
     req->reqType = info->codes->major_opcode;
     req->xtReqType = X_XTestFakeInput;
-    req->type = XI_DeviceMotionNotify + (int)info->data;
+    req->type = XI_DeviceMotionNotify + (int)(long)info->data;
     req->detail = is_relative;
     req->time = delay;
     req->deviceid = dev->device_id;
