@@ -406,6 +406,23 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif
 #endif
 
+/*
+ * MMX, SSE and 3DNow will be autodetected. NetBSD 1.6 and up have the
+ * necessary kernel and toolchain support.
+ */
+#if defined(i386Architecture) &&  \
+	((OSMajorVersion > 1) || (OSMajorVersion == 1 && OSMinorVersion > 5))
+# define HasX86Support          YES
+# define HasMMXSupport          YES
+# define Has3DNowSupport        YES
+# define HasSSESupport          YES
+#else
+# define HasX86Support          NO
+# define HasMMXSupport          NO
+# define Has3DNowSupport        NO
+# define HasSSESupport          NO
+#endif
+
 #ifndef HasCookieMaker
 # if OSMajorVersion == 1 && OSMinorVersion >= 5 || OSMajorVersion >= 2
    /* NetBSD 1.5 and later have /dev/urandom */
