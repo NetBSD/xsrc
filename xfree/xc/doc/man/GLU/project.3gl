@@ -76,6 +76,7 @@ The window coordinates are then computed as follows:
 .sp
 .EQ
 "winY" ~=~ "view" (1) ~+~ "view" (3)~*~(v sup prime (1) ~+~ 1)~/~2 .EN
+.EN
 .sp
 .EQ
 "winZ" ~=~ (v sup prime (2)  ~+~ 1)~/~ 2
