@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.81 2000/12/17 06:45:52 eeh Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.82 2001/01/14 13:40:20 scw Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -360,6 +360,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define XieDynamicModule	NO
 # define ServerExtraDefines	-DSTATIC_COLOR
 # define XserverNeedsSetUID	YES
+#endif
+
+#if defined(mvme68kArchitecture)
+# define BuildServer		NO
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
 #endif
 
 #if defined(next68kArchitecture)
