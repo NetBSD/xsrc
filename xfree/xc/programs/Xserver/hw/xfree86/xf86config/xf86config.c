@@ -453,15 +453,7 @@ mouse_configuration(void) {
 	char s[80];
 	printf("%s", mouseintro_text);
 	
-<<<<<<< xf86config.c
-#ifdef __NetBSD__
-	for (i = 0; i < 10; i++)
-#else
-	for (i = 0; i < 9; i++)
-#endif
-=======
 	for (i = 0; i < sizeof(mousetype_name)/sizeof(char *); i++)
->>>>>>> 1.1.1.3
 		printf("%2d.  %s\n", i + 1, mousetype_name[i]);
 
 	printf("\n");
