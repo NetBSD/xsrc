@@ -75,7 +75,7 @@ MTRRDEFINES = -DHAS_MTRR_SUPPORT
 MTRRDEFINES = -DHAS_MTRR_BUILTIN
 #endif
 
-#if defined(FreeBSDArchitecture)
+#if defined(FreeBSDArchitecture) || defined(NetBSDArchitecture)
 SYSVIPCDEFINES = -DHAVE_SYSV_IPC
 #endif
 
