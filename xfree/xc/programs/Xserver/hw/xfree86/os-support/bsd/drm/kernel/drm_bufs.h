@@ -882,8 +882,9 @@ int DRM(mapbufs)( DRM_IOCTL_ARGS )
 	vm_offset_t vaddr;
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
+	voff_t foff;
 	struct vnode *vn;
-	vm_size_t size;
+	vsize_t size;
 	vaddr_t vaddr;
 #endif /* __NetBSD__ */
 
