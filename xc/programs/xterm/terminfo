@@ -1,24 +1,60 @@
 # $XConsortium: terminfo,v 1.11 94/10/13 21:24:31 gildea Exp $
-# $XFree86: xc/programs/xterm/terminfo,v 3.22 1998/04/05 00:46:12 robin Exp $
+# $XFree86: xc/programs/xterm/terminfo,v 3.25 1998/07/04 14:48:29 robin Exp $
 #
 # XFree86 updates/notes/new entries (including xterm-8bit, xterm-16color)
 # - Thomas E. Dickey <dickey@clark.net>
 #
-# meml locks memory above the cursor; memu unlocks (ala HP terminals)
+# Special Capabilities:
+# --------------------
+# ich has a corresponding capability that inserts a single blank.  We could
+#	have used ich1=\E[@, which works with ncurses, but that is not standard
+#	behavior.  If it is set, then SVr4 vi (e.g., Solaris 2.6) emits both
+#	smir/rmir and ich1.
+# meml locks memory above the cursor; memu unlocks (ala HP terminals).  This
+#	is not recognized by some older (e.g., SVr3) tic programs, but none
+#	do more than warn about it.  Ignore the warning.
 # rmcup clears memory before switching to the alternate screen.  The older
 #	(deprecated) \E[?47h did not do this, requiring applications to
 #	embed a \E[2J in the rmcup string.  However, that behavior cannot
 #	be disabled via titeInhibit, making that resource not function as
 #	intended on systems with terminfo.
 #
-# We could have used ich1=\E[@, which works with ncurses, but that is not
-# standard behavior.  If it is set, then SVr4 vi (e.g., Solaris 2.6) emits
-# both smir/rmir and ich1.
+# Editing Keypad:
+# --------------
+# XFree86 xterm emulates vt220 if the decTerminalID resource is set to 200 or
+# higher.  Otherwise it emulates a vt100 or vt52 depending on the value of the
+# resource.  When emulating a vt220, we support the editing keypad.  Sun and PC
+# keyboards have an editing keypad which is similar to the vt220:
 #
-# The xterm-r6 entry does not define acsc, which is probably an error (but
-# it matches the X11R5 to X11R6.3 distributions).
+#	VT220 editing keypad
+#	----------------------------
+#	Find      Insert      Remove
+#	Select    Prev        Next
+#	----------------------------
 #
-xterm|xterm-24|xterms|vs100|xterm terminal emulator (X Window System),
+#	Sun/PC editing keypad
+#	----------------------------
+#	Insert    Home        PageUp
+#	Delete    End         PageDn
+#	----------------------------
+#
+# If the sunKeyboard resource is true, we map it this way (adjusting the values
+# of Home, End and Delete):
+#	VT220		      Sun/PC
+#	----------------------------
+#	Find		      Home
+#	Select		      End
+#	Insert		      Insert
+#	Remove		      Delete
+#	Prev		      PageUp
+#	Next		      PageDn
+#	----------------------------
+#
+# Note that all of the keys on the editing keypad transmit escape sequences.  A
+# vt220 does this only when in vt220 mode; when emulating a vt100 the editing
+# keypad is inactive.
+#
+xterm-xfree86|xterm-new|xterm terminal emulator (XFree86),
 	am,
 	bce,
 	km,
@@ -31,8 +67,9 @@ xterm|xterm-24|xterms|vs100|xterm terminal emulator (X Window System),
 	it#8,
 	lines#24,
 	pairs#64,
-	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G,
+	blink=\E[5m,
 	bold=\E[1m,
 	cbt=\E[Z,
 	civis=\E[?25l,
@@ -68,6 +105,7 @@ xterm|xterm-24|xterms|vs100|xterm terminal emulator (X Window System),
 	il=\E[%p1%dL,
 	il1=\E[L,
 	ind=^J,
+	invis=\E[8m,
 	is2=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>,
 	ka1=\EOw,
 	ka3=\EOu,
@@ -80,8 +118,8 @@ xterm|xterm-24|xterms|vs100|xterm terminal emulator (X Window System),
 	kcud1=\EOB,
 	kcuf1=\EOC,
 	kcuu1=\EOA,
-	kdch1=\177,
-	kend=\EOF,
+	kdch1=\E[3~,
+	kend=\E[4~,
 	kent=\EOM,
 	kf1=\EOP,
 	kf10=\E[21~,
@@ -104,7 +142,7 @@ xterm|xterm-24|xterms|vs100|xterm terminal emulator (X Window System),
 	kf8=\E[19~,
 	kf9=\E[20~,
 	kfnd=\E[1~,
-	khome=\EOH,
+	khome=\E[1~,
 	kich1=\E[2~,
 	kmous=\E[M,
 	knp=\E[6~,
@@ -131,45 +169,9 @@ xterm|xterm-24|xterms|vs100|xterm terminal emulator (X Window System),
 	sc=\E7,
 	setab=\E[4%p1%dm,
 	setaf=\E[3%p1%dm,
-	setb=\E[4
-		%?%p1%{1}%=
-			%t4
-			%e%p1%{3}%=
-			%t6
-			%e%p1%{4}%=
-			%t1
-			%e%p1%{6}%=
-			%t3
-			%e%p1%d
-		%;m,
-	setf=\E[3
-		%?%p1%{1}%=
-			%t4
-			%e%p1%{3}%=
-			%t6
-			%e%p1%{4}%=
-			%t1
-			%e%p1%{6}%=
-			%t3
-			%e%p1%d
-		%;m,
-	sgr=\E[0
-		%?%p1%p6%|
-			%t;1
-		%;
-		%?%p2
-			%t;4
-		%;
-		%?%p1%p3%|
-			%t;7
-		%;
-		%?%p4
-			%t;5
-		%;m
-		%?%p9
-			%t\016
-			%e\017
-		%;,
+	setb=\E[4%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
+	setf=\E[3%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
+	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
 	sgr0=\E[m\017,
 	smacs=^N,
 	smam=\E[?7h,
@@ -179,12 +181,37 @@ xterm|xterm-24|xterms|vs100|xterm terminal emulator (X Window System),
 	smso=\E[7m,
 	smul=\E[4m,
 	tbc=\E[3g,
+	u6=\E[%i%d;%dR,
+	u7=\E[6n,
+	u8=\E[?1;2c,
+	u9=\E[c,
 	vpa=\E[%i%p1%dd,
+#
+# The xterm-xfree86 description has all of the features, but is not completely
+# compatible with vt220.  If you are using a Sun or PC keyboard, set the
+# sunKeyboard resource to true:
+#	+ maps the editing keypad
+#	+ interprets control-function-key as a second array of keys, so a
+#	  12-fkey keyboard can support vt220's 20-fkeys.
+#	+ maps numeric keypad "+" to ",".
+#	  
+xterm-vt220|XFree86 xterm emulating vt220,
+	kdch1=\E[3~,
+	kend=\E[4~,
+	kfnd=\E[1~,
+	khome=\E[1~,
+	kslt=\E[4~,
+	use=xterm-xfree86,
+
+# Other variants:
+xterm-24|xterms|vs100|xterm terminal emulator (X Window System),
+	lines#24,
+	use=xterm,
 xterm-65|xterm with tall window 65x80 (X Window System),
 	lines#65,
 	use=xterm,
 xterm-bold|xterm with bold instead of underline (X Window System),
-	rmul=\E[22m,
+	smso=\E[7m,
 	smul=\E[1m,
 	use=xterm,
 xtermm|monochrome xterm (X Window System),
@@ -198,8 +225,20 @@ xtermm|monochrome xterm (X Window System),
 	setf@,
 	sgr@,
 	use=xterm,
+#
+# This should work for the commonly used "color xterm" variations (XFree86
+# xterm, color_xterm, nxterm, rxvt):
+xterm-color|generic "ANSI" color xterm (X Window System),
+	colors#8,
+	ncv@,
+	pairs#64,
+	op=\E[m,
+	setab=\E[4%p1%dm,
+	setaf=\E[3%p1%dm,
+	use=xterm-r6,
+#
 xterm-boldso|xterm with bold for standout (X Window System),
-	rmso=\E[22m,
+	rmso=\E[m,
 	smso=\E[1m,
 	use=xterm,
 #
@@ -211,13 +250,6 @@ xterm-ic|xterm-vi|xterm with insert character instead of insert mode,
 	ich1=\E[@,
 	rmir@,
 	smir@,
-	use=xterm,
-#
-xterm-vt220|xterm emulating vt220,
-	kf1=\E[11~,
-	kf2=\E[12~,
-	kf3=\E[13~,
-	kf4=\E[14~,
 	use=xterm,
 #
 # This is used only for testing (it's not relevant to DEC VTxxx terminals, but
@@ -239,70 +271,8 @@ xterm-rep|xterm with repeat-character control,
 # normally used only for printers).  The parameter to csnm and scs is the same
 # in both cases:  the keyboard language parameter returned by CSI ? 2 6 n.
 xterm-nrc|xterm with VT220 national replacement character sets,
-	csnm=
-		%?%p1%{1}%=
-			%tNorth American
-			%e%p1%{2}%=
-			%tBritish
-			%e%p1%{3}%=
-			%tFlemish
-			%e%p1%{4}%=
-			%tFrench Canadian
-			%e%p1%{5}%=
-			%tDanish
-			%e%p1%{6}%=
-			%tFinnish
-			%e%p1%{7}%=
-			%tGerman
-			%e%p1%{8}%=
-			%tDutch
-			%e%p1%{9}%=
-			%tItalian
-			%e%p1%{10}%=
-			%tSwiss (French)
-			%e%p1%{11}%=
-			%tSwiss (German)
-			%e%p1%{12}%=
-			%tSwedish
-			%e%p1%{13}%=
-			%tNorwegian
-			%e%p1%{14}%=
-			%tFrench/Belgian
-			%e%p1%{15}%=
-			%tSpanish
-		%;,
-	scs=
-		%?%p1%{1}%=
-			%t\E(B
-			%e%p1%{2}%=
-			%t\E(A
-			%e%p1%{3}%=
-			%t\E(R
-			%e%p1%{4}%=
-			%t\E(9
-			%e%p1%{5}%=
-			%t\E(E
-			%e%p1%{6}%=
-			%t\E(5
-			%e%p1%{7}%=
-			%t\E(K
-			%e%p1%{8}%=
-			%t\E(4
-			%e%p1%{9}%=
-			%t\E(Y
-			%e%p1%{10}%=
-			%t\E(=
-			%e%p1%{11}%=
-			%t\E(=
-			%e%p1%{12}%=
-			%t\E(7
-			%e%p1%{13}%=
-			%t\E(E
-			%e%p1%{14}%=
-			%t\E(R
-			%e%p1%{15}%=
-			%t\E(Z
-		%;,
+	csnm=%?%p1%{1}%=%tNorth American%e%p1%{2}%=%tBritish%e%p1%{3}%=%tFlemish%e%p1%{4}%=%tFrench Canadian%e%p1%{5}%=%tDanish%e%p1%{6}%=%tFinnish%e%p1%{7}%=%tGerman%e%p1%{8}%=%tDutch%e%p1%{9}%=%tItalian%e%p1%{10}%=%tSwiss (French)%e%p1%{11}%=%tSwiss (German)%e%p1%{12}%=%tSwedish%e%p1%{13}%=%tNorwegian%e%p1%{14}%=%tFrench/Belgian%e%p1%{15}%=%tSpanish%;,
+	scs=%?%p1%{1}%=%t\E(B%e%p1%{2}%=%t\E(A%e%p1%{3}%=%t\E(R%e%p1%{4}%=%t\E(9%e%p1%{5}%=%t\E(E%e%p1%{6}%=%t\E(5%e%p1%{7}%=%t\E(K%e%p1%{8}%=%t\E(4%e%p1%{9}%=%t\E(Y%e%p1%{10}%=%t\E(=%e%p1%{11}%=%t\E(=%e%p1%{12}%=%t\E(7%e%p1%{13}%=%t\E(E%e%p1%{14}%=%t\E(R%e%p1%{15}%=%t\E(Z%;,
 	use=xterm,
 #
 # Foreground 0-15 maps (with toggles) into 30-37 & 90-97
@@ -319,39 +289,11 @@ xterm-16color|xterm with 16 colors,
 	colors#16,
 	ncv#32,
 	pairs#256,
-	setab=\E[
-		%?%p1%{8}%<
-			%t%p1%{40}%+
-			%e%p1%{92}%+
-		%;%dm,
-	setaf=\E[
-		%?%p1%{8}%<
-			%t%p1%{30}%+
-			%e%p1%{82}%+
-		%;%dm,
-	setb=%p1%{8}%/%{6}%*%{4}%+\E[%d%p1%{8}%m%Pa
-		%?%ga%{1}%=
-			%t4
-			%e%ga%{3}%=
-			%t6
-			%e%ga%{4}%=
-			%t1
-			%e%ga%{6}%=
-			%t3
-			%e%ga%d
-		%;m,
-	setf=%p1%{8}%/%{6}%*%{3}%+\E[%d%p1%{8}%m%Pa
-		%?%ga%{1}%=
-			%t4
-			%e%ga%{3}%=
-			%t6
-			%e%ga%{4}%=
-			%t1
-			%e%ga%{6}%=
-			%t3
-			%e%ga%d
-		%;m,
-	use=xterm,
+	setab=\E[%?%p1%{8}%<%t%p1%{40}%+%e%p1%{92}%+%;%dm,
+	setaf=\E[%?%p1%{8}%<%t%p1%{30}%+%e%p1%{82}%+%;%dm,
+	setb=%p1%{8}%/%{6}%*%{4}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m,
+	setf=%p1%{8}%/%{6}%*%{3}%+\E[%d%p1%{8}%m%Pa%?%ga%{1}%=%t4%e%ga%{3}%=%t6%e%ga%{4}%=%t1%e%ga%{6}%=%t3%e%ga%d%;m,
+	use=xterm-xfree86,
 # This is an 8-bit version of xterm, which emulates DEC vt220 with ANSI color.
 # To use it, your decTerminalID resource must be set to 200 or above.
 #
@@ -373,8 +315,9 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	it#8,
 	lines#24,
 	pairs#64,
-	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
+	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G,
+	blink=\2335m,
 	bold=\2331m,
 	cbt=\233Z,
 	civis=\233?25l,
@@ -410,6 +353,7 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	il=\233%p1%dL,
 	il1=\233L,
 	ind=^J,
+	invis=\2338m,
 	is2=\E7\E G\233r\233m\233?7h\233?1;3;4;6l\2334l\E8\E>,
 	ka1=\217w,
 	ka3=\217u,
@@ -423,7 +367,7 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	kcuf1=\217C,
 	kcuu1=\217A,
 	kdch1=\2333~,
-	kend=\217F,
+	kend=\2334~,
 	kent=\217M,
 	kf1=\23311~,
 	kf10=\23321~,
@@ -446,7 +390,7 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	kf8=\23319~,
 	kf9=\23320~,
 	kfnd=\2331~,
-	khome=\217H,
+	khome=\2331~,
 	kich1=\2332~,
 	kmous=\233M,
 	knp=\2336~,
@@ -473,45 +417,9 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	sc=\E7,
 	setab=\2334%p1%dm,
 	setaf=\2333%p1%dm,
-	setb=\2334
-		%?%p1%{1}%=
-			%t4
-			%e%p1%{3}%=
-			%t6
-			%e%p1%{4}%=
-			%t1
-			%e%p1%{6}%=
-			%t3
-			%e%p1%d
-		%;m,
-	setf=\2333
-		%?%p1%{1}%=
-			%t4
-			%e%p1%{3}%=
-			%t6
-			%e%p1%{4}%=
-			%t1
-			%e%p1%{6}%=
-			%t3
-			%e%p1%d
-		%;m,
-	sgr=\2330
-		%?%p1%p6%|
-			%t;1
-		%;
-		%?%p2
-			%t;4
-		%;
-		%?%p1%p3%|
-			%t;7
-		%;
-		%?%p4
-			%t;5
-		%;m
-		%?%p9
-			%t\016
-			%e\017
-		%;,
+	setb=\2334%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
+	setf=\2333%?%p1%{1}%=%t4%e%p1%{3}%=%t6%e%p1%{4}%=%t1%e%p1%{6}%=%t3%e%p1%d%;m,
+	sgr=\2330%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;%?%p7%t;8%;m%?%p9%t\016%e\017%;,
 	sgr0=\233m^O,
 	smacs=^N,
 	smam=\233?7h,
@@ -521,9 +429,18 @@ xterm-8bit|xterm terminal emulator with 8-bit controls (X Window System),
 	smso=\2337m,
 	smul=\2334m,
 	tbc=\2333g,
+	u6=\233[%i%d;%dR,
+	u7=\E[6n,
+	u8=\233[?1;2c,
+	u9=\E[c,
 	vpa=\233%i%p1%dd,
 #
-# Compatible with the R6 xterm
+# Compatible with the R6 xterm, with the following changes:
+#	+ added acsc (perhaps some versions of tic assume the standard vt100
+#	  alternate character set)
+#	+ added u6, u7, u8, u9 strings for Daniel Weaver's tack program.
+#	+ added kmous string for ncurses.
+#	+ added khome/kend strings.
 xterm-r6|xterm-old|xterm X11R6 version,
 	am,
 	km,
@@ -531,7 +448,9 @@ xterm-r6|xterm-old|xterm X11R6 version,
 	msgr,
 	xenl,
 	cols#80,
+	it#8,
 	lines#24,
+	acsc=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
 	bel=^G,
 	blink@,
 	bold=\E[1m,
@@ -566,6 +485,7 @@ xterm-r6|xterm-old|xterm X11R6 version,
 	kcuf1=\EOC,
 	kcuu1=\EOA,
 	kdch1=\E[3~,
+	kend=\E[4~,
 	kf1=\EOP,
 	kf10=\E[21~,
 	kf11=\E[23~,
@@ -587,7 +507,9 @@ xterm-r6|xterm-old|xterm X11R6 version,
 	kf8=\E[19~,
 	kf9=\E[20~,
 	kfnd=\E[1~,
+	khome=\E[1~,
 	kich1=\E[2~,
+	kmous=\E[M,
 	knp=\E[6~,
 	kpp=\E[5~,
 	kslt=\E[4~,
@@ -612,8 +534,19 @@ xterm-r6|xterm-old|xterm X11R6 version,
 	smso=\E[7m,
 	smul=\E[4m,
 	tbc=\E[3g,
+	u6=\E[%i%d;%dR,
+	u7=\E[6n,
+	u8=\E[?1;2c,
+	u9=\E[c,
 #
-# Compatible with the R5 xterm
+# Compatible with the R5 xterm, with the following changes:
+#	+ changed 'blink=@', to 'blink@' (the former meant that "@" would start
+#	  a blink, the latter that it is not supported).
+#	+ changed kf1 through kf4 to correspond with actual usage.  Though X
+#	  supports keypad symbols for PF1 to PF4, and xterm interprets these
+#	  correctly, the F1 to F4 codes are commonly (but incorrectly) used.
+#	+ moved reset string from rs1 to rs2, to correlate better with termcap.
+#	+ make khome consistent with other entries.
 xterm-r5|xterm R5 version,
 	am,
 	km,
@@ -623,7 +556,7 @@ xterm-r5|xterm R5 version,
 	it#8,
 	lines#24,
 	bel=^G,
-	blink=@,
+	blink@,
 	bold=\E[1m,
 	clear=\E[H\E[2J,
 	cr=^M,
@@ -659,20 +592,21 @@ xterm-r5|xterm R5 version,
 	kdch1=\E[3~,
 	kdl1=\E[31~,
 	kel=\E[8~,
+	kend=\E[4~,
 	kf0=\EOq,
-	kf1=\EOP,
+	kf1=\E[11~,
 	kf10=\E[21~,
 	kf11=\E[23~,
 	kf12=\E[24~,
-	kf2=\EOQ,
-	kf3=\EOR,
-	kf4=\EOS,
+	kf2=\E[12~,
+	kf3=\E[13~,
+	kf4=\E[14~,
 	kf5=\E[15~,
 	kf6=\E[17~,
 	kf7=\E[18~,
 	kf8=\E[19~,
 	kf9=\E[20~,
-	khome=\E[7~,
+	khome=\E[1~,
 	kich1=\E[2~,
 	kil1=\E[30~,
 	knp=\E[6~,
@@ -682,25 +616,17 @@ xterm-r5|xterm R5 version,
 	ri=\EM,
 	rmkx=\E[?1l\E>,
 	rmso=\E[m,
-	rs1=\E>\E[1;3;4;5;6l\E[?7h\E[m\E[r\E[2J\E[H,
+	rs2=\E>\E[1;3;4;5;6l\E[?7h\E[m\E[r\E[2J\E[H,
 	sc=\E7,
-	sgr=\E[
-		%?%p1
-			%t;7
-		%;
-		%?%p2
-			%t;4
-		%;
-		%?%p3
-			%t;7
-		%;
-		%?%p4
-			%t;5
-		%;
-		%?%p6
-			%t;1
-		%;m,
+	sgr=\E[%?%p1%t;7%;%?%p2%t;4%;%?%p3%t;7%;%?%p4%t;5%;%?%p6%t;1%;m,
 	sgr0=\E[m,
 	smkx=\E[?1h\E=,
 	smso=\E[7m,
 	tbc=\E[3g,
+#
+# This is the only entry which you should have to customize, since "xterm"
+# is widely used for a variety of incompatible terminal emulations including
+# color_xterm and rxvt.
+xterm|X Windows terminal emulator,
+	use=xterm-xfree86,
+#	use=xterm-r6,
