@@ -43,6 +43,8 @@
  * Lorens Younes (d93-hyo@nada.kth.se) 4/96
  */
 
+/* October 2004, source code review by Thomas Biege <thomas@suse.de> */
+
 #include "XpmI.h"
 
 #define MAXPRINTABLE 92			/* number of printable ascii chars
@@ -172,10 +174,10 @@ storeMaskPixel(pixel, pmap, index_return)
 /* function call in case of error */
 #undef RETURN
 #define RETURN(status) \
-{ \
+do { \
       ErrorStatus = status; \
       goto error; \
-}
+} while(0)
 
 /*
  * This function scans the given image and stores the found informations in
@@ -619,8 +621,8 @@ GetImagePixels(image, width, height, pmap)
     char *dst;
     unsigned int *iptr;
     char *data;
-    int x, y, i;
-    int bits, depth, ibu, ibpp, offset;
+    unsigned int x, y;
+    int bits, depth, ibu, ibpp, offset, i;
     unsigned long lbt;
     Pixel pixel, px;
 
@@ -630,6 +632,9 @@ GetImagePixels(image, width, height, pmap)
     lbt = low_bits_table[depth];
     ibpp = image->bits_per_pixel;
     offset = image->xoffset;
+
+    if (image->bitmap_unit < 0)
+	    return (XpmNoMemory);
 
     if ((image->bits_per_pixel | image->depth) == 1) {
 	ibu = image->bitmap_unit;
@@ -721,7 +726,7 @@ GetImagePixels32(image, width, height, pmap)
     unsigned char *addr;
     unsigned char *data;
     unsigned int *iptr;
-    int x, y;
+    unsigned int x, y;
     unsigned long lbt;
     Pixel pixel;
     int depth;
@@ -786,7 +791,7 @@ GetImagePixels16(image, width, height, pmap)
     unsigned char *addr;
     unsigned char *data;
     unsigned int *iptr;
-    int x, y;
+    unsigned int x, y;
     unsigned long lbt;
     Pixel pixel;
     int depth;
@@ -831,7 +836,7 @@ GetImagePixels8(image, width, height, pmap)
 {
     unsigned int *iptr;
     unsigned char *data;
-    int x, y;
+    unsigned int x, y;
     unsigned long lbt;
     Pixel pixel;
     int depth;
@@ -864,7 +869,7 @@ GetImagePixels1(image, width, height, pmap, storeFunc)
     storeFuncPtr storeFunc;
 {
     unsigned int *iptr;
-    int x, y;
+    unsigned int x, y;
     char *data;
     Pixel pixel;
     int xoff, yoff, offset, bpl;
@@ -900,11 +905,11 @@ GetImagePixels1(image, width, height, pmap, storeFunc)
 # else /* AMIGA */
 
 #define CLEAN_UP(status) \
-{\
+do {\
     if (pixels) XpmFree (pixels);\
     if (tmp_img) FreeXImage (tmp_img);\
     return (status);\
-}
+} while(0)
 
 static int
 AGetImagePixels (
@@ -925,7 +930,7 @@ AGetImagePixels (
     
     tmp_img = AllocXImage ((((width+15)>>4)<<4), 1, image->rp->BitMap->Depth);
     if (tmp_img == NULL)
-	CLEAN_UP (XpmNoMemory)
+	CLEAN_UP (XpmNoMemory);
     
     iptr = pmap->pixelindex;
     for (y = 0; y < height; ++y)
@@ -934,11 +939,11 @@ AGetImagePixels (
 	for (x = 0; x < width; ++x, ++iptr)
 	{
 	    if ((*storeFunc) (pixels[x], pmap, iptr))
-		CLEAN_UP (XpmNoMemory)
+		CLEAN_UP (XpmNoMemory);
 	}
     }
     
-    CLEAN_UP (XpmSuccess)
+    CLEAN_UP (XpmSuccess);
 }
 
 #undef CLEAN_UP
