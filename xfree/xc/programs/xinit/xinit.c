@@ -591,7 +591,11 @@ startServer(char *server[])
 		 * if client is xterm -L
 		 */
 #ifndef __UNIXOS2__
+#ifdef USE_PAM
+		(void) signal(SIGHUP, SIG_IGN);
+#else
 		setpgrp(0,getpid());
+#endif
 #endif
 		Execute (server, environ);
 		Error ("no server \"%s\" in PATH\n", server[0]);
