@@ -82,6 +82,7 @@ typedef struct {
 /* VESA BIOS Mode information. */
 
 #ifdef USEBIOS
+#define MAX_REFRESH_RATE_COUNT	8
 
 typedef struct _S3VMODEENTRY {
    unsigned short Width;
