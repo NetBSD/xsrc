@@ -40,9 +40,9 @@ KeySymsRec alphaKeySyms[] = {
     NULL,               0,      0,                      0,   /* None */
     lk201map,		0,	LK201_NUM_KEYCODES,	4,   /* lk201 */
     lk201map,		0,	LK201_NUM_KEYCODES,	4,   /* lk401 */
-    NULL,               0,      0,                      0,   /* XT */
+    map,		0,	MAX_STD_KEYCODE,	4,   /* XT */
     map,		0,	MAX_STD_KEYCODE,	4,   /* AT */
-    NULL,               0,      0,                      0,   /* USB/XT */
+    map,		0,	MAX_STD_KEYCODE,	4,   /* USB/XT */
 };
 
 static AlphaModmapRec xf86modmap[] = {
