@@ -142,7 +142,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * NOTE: This is done in bsdLib.rules for ELF libraries!
  */
 #if (OSMajorVersion == 1 && OSMinorVersion >= 2) || OSMajorVersion > 1
-# ifndef UseElfFormat
+# if !defined(UseElfFormat) || UseElfFormat == NO
 #  define ExtraLoadFlags	-R$(USRLIBDIR)
 # endif
 #endif
