@@ -583,7 +583,7 @@ install.man:: 								@@\
 #define BuildScreenSaverLibrary	YES
 #endif
 #ifndef DfltDisableXKB
-#define DfltDisableXKB		YES
+#define DfltDisableXKB		NO
 #endif
 #ifndef XkbServerDefines
 #define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
