@@ -20,7 +20,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF   *
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.            *
  *****************************************************************************
-  $XFree86: xc/programs/xterm/xterm.log.html,v 1.49 2000/03/03 20:02:35 dawes Exp $
+  $XFree86: xc/programs/xterm/xterm.log.html,v 1.50 2000/03/31 20:13:50 dawes Exp $
   -->
 <HTML>
 <HEAD>
@@ -41,6 +41,9 @@ in the XFree86 CHANGELOG (found in the unbundled tree,
 xc/programs/Xserver/hw/xfree86).
 
 <UL>
+<LI><A HREF="#xterm_133">Patch #133 - 2000/5/2 - XFree86 4.0a</A>
+<LI><A HREF="#xterm_132">Patch #132 - 2000/4/11 - XFree86 4.0a</A>
+<LI><A HREF="#xterm_131">Patch #131 - 2000/3/3 - XFree86 3.9.18b</A>
 <LI><A HREF="#xterm_130">Patch #130 - 2000/3/1 - XFree86 3.9.18a</A>
 <LI><A HREF="#xterm_129">Patch #129 - 2000/2/26 - XFree86 3.9.18a</A>
 <LI><A HREF="#xterm_128">Patch #128 - 2000/2/17 - XFree86 3.9.18</A>
@@ -173,6 +176,103 @@ xc/programs/Xserver/hw/xfree86).
 <LI><A HREF="#xterm_02">Patch #2 - 1996/1/7</A>
 <LI><A HREF="#xterm_01">Patch #1 - 1996/1/6</A>
 </UL>
+
+<H1><A NAME="xterm_133">Patch #133 - 2000/5/2 - XFree86 4.0a</A></H1>
+<ul>
+	<li>add substitutions in autoconf'd Makefile for CPPFLAGS, LDFLAGS and
+	  AWK (reported by Neil Bird).
+
+	<li>correct uninitialized <code>childstat</code> variable from patch
+	  #131 in <code>creat_as()</code> function, which caused logging to not
+	  work on Solaris, whose <code>waitpid()</code> function does not
+	  initialize its parameter.  Add check for EINTR on return from
+	  <code>waitpid()</code> as well (reported by Neil Bird
+	  &lt;neil.bird@rdel.co.uk&gt;).
+
+	<li>remove a redundant check for working <code>setuid()</code> function
+	  introduced in patch #132 (Greg Smith reports that this does not work
+	  as intended on os390).
+
+	<li>change line speed from 9600bd to 38400bd, to accommodate people who
+	  mistakenly use $TERM set to <em>vt100</em>, to reduce the effect of
+	  padding associated with this terminal type.
+
+	<li>add configure script check for IRIX 6.5's redefinition of baud
+	  rates associated with <code>struct termio</code>, to correct a
+	  situation where the baud rate was initialized to zero (reported by
+	  Andrew Isaacson &lt;adi@lcse.umn.edu&gt;).
+
+	<li>remove unused configure script check for VDISABLE.
+</ul>
+
+<H1><A NAME="xterm_132">Patch #132 - 2000/4/11 - XFree86 4.0a</A></H1>
+<ul>
+	<li>undo an incorrect change from patch #113 caused the right scrollbar
+	  to be positioned incorrectly when re-enabling it (analysis by
+	  D Roland Walker).
+
+	<li>add ctrlFKeys resource, replacing constant for adjusting
+	  control-F1 to control-F12 to VT220-style F10-F20.  The resource
+	  changes the constant 12 to a default value of 10 (request by
+	  Jim Knoble &lt;jmknoble@pobox.com&gt;).
+
+	<li>correct ifdef'ing for conflict between definitions in AIX's
+	  &lt;sys/select.h&gt; and &lt;X11/XPoll.h&gt; (reported by Clint
+	  Olsen).
+
+	<li>add checks for return-values of getutid(), initgroups() and
+	  setuid() in main.c, as well as modifying ifdef's for __osf__ to
+	  include tty-group and WTMP logic (adapted from patch by Paul Szabo
+	  &lt;psz@maths.usyd.edu.au&gt;)
+
+	<li>modify resize.c to build and work on os390 (uses EBCDIC)
+	  (adapted from patch by Phil Sidler &lt;Phil.Sidler@airborne.com&gt;)
+
+	<li>use Ires(), Bres() and Sres() macros to simplify resource list in
+	  charproc.c
+
+	<li>resync with XFree86 4.0a:
+	<ul>
+	  <li>correct a typo in os2main.c (Holger Veit, from 4.0a).
+	</ul>
+</ul>
+
+<H1><A NAME="xterm_131">Patch #131 - 2000/3/3 - XFree86 3.9.18b</A></H1>
+<ul>
+	<li>integrate patch by Branden Robinson for improving logfile
+	  security:
+	  <ul>
+	  <li>make the <code>creat_as()</code> function more strict by using
+	    O_EXCL rather than O_APPEND.
+	  <li>fixes to make DEBUG ifdef's compile/run, including making the
+	    debug logfile more unique by appending a timestamp to its name.
+	  <li>include &lt;term.h&gt; in resize.c, to fix a missing-prototype
+	    warning.
+	  </ul>
+	    
+	<li>modified <code>creat_as()</code> a little more, retaining the
+	  ability to append to a logfile If the user specifies the name.
+	  Also, check if the opened file (which patch #130 ensures is
+	  owned by the effective user) is not writable by other users.
+
+	<li>use <code>creat_as()</code> logic to make tek4014 screen-copy
+	  more secure (noted by Branden Robinson).
+
+	<li>ifdef'd some of Branden's changes to build/work on older machines. 
+
+	<li>correct missing initialization of the <code>.mode</code> flag in
+	  <code>ColorRes</code> struct, from patch #129.  This worked on Linux
+	  because <code>malloc()</code> zeroes memory on that platform
+	  (reported by Christian Weisgerber).
+
+	<li>modify logic for <code>deleteIsDEL</code> resource so it has
+	  internally 3 states:  unspecified, true and false.  If unspecified,
+	  the keyboard type determines whether the Delete key transmits
+	  <code>&lt;esc&gt;[3~</code> or <code>\177</code>, and the popup menu
+	  entry reflects the internal state.  Otherwise, the popup menu entry
+	  overrides the keyboard type (suggested by Dr Werner Fink, to make it
+	  simpler to set resources that imitate the legacy X11R6 xterm).
+</ul>
 
 <H1><A NAME="xterm_130">Patch #130 - 2000/3/1 - XFree86 3.9.18a</A></H1>
 <ul>
@@ -911,7 +1011,7 @@ longterm plan to allow configuring with Motif libraries.
 
 <H1><A NAME="xterm_107">Patch #107 - 1999/6/12 - XFree86 3.9Pq</A></H1>
 <ul>
-	<li>Two changes from Stephen P Wall &lt;steve_wall@redcom.com&gt;.
+	<li>Two changes from Stephen P Wall.
 	  From his description:
 	<blockquote>
 	The first change is simple - I added ESC[3J to erase the stored lines
