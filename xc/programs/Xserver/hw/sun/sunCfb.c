@@ -292,9 +292,10 @@ Bool sunTCXInit (screen, pScreen, argc, argv)
 #  include <pixrect/cg2reg.h>
 # else
 #  ifdef __sparc__
+/*  Everyone calls it "cg2reg.h" except *BSD/sparc (sigh). */
 #   include <machine/cgtworeg.h>
 #  else
-#   include <machine/cgtworeg.h>
+#   include <machine/cg2reg.h>
 #  endif
 # endif
 #endif
