@@ -95,16 +95,21 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #define InstallXloadSetGID	NO
 
-/* Defines for using the GNU pth thread library -- experimental */
+/*
+ * NetBSD 1.6M and newer supports POSIX Threads.
+ */
 
-#ifdef NetBSDPth
-#define PthreadHLocation	-I/usr/local/include /* where is pthread.h? */
-#define LibPthreadLocation	-L/usr/local/lib /* where is libpthread? */
-#define HasThreadSafeAPI	NO
-#define	HasPosixThreads		YES
-#define SystemMTDefines		-D_REENTRANT PthreadHLocation
-#define ThreadsLibraries	LibPthreadLocation -Wl,-rpath,/usr/local/lib -lpthread
-#define SharedX11Reqs		ThreadsLibraries
+#if ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion > 6) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion >= 12))
+
+# define HasPosixThreads	YES
+# define ThreadedX		YES
+# define HasThreadSafeAPI	YES
+# define ThreadsLibraries	-lpthread
+# define SystemMTDefines	-D_REENTRANT
+# define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXNO_MTSAFE_PWDAPI
+# define SharedX11Reqs		-lpthread
 #endif
 
 /*
