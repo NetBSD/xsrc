@@ -117,8 +117,10 @@ PclDownloadSoftFont16(
     }
     pfh->index[row][col].fid = pfh->cur_fid;
     pfh->index[row][col].cindex = pfh->cur_cindex++;
+#if 0	/* not necessary, and gcc 3.3 complains */
     if ( pfh->cur_cindex > MAX_CINDEX )
 	pfh->cur_cindex = 0;
+#endif
 
     PclDownloadChar(fp, pcd, pfh->index[row][col].fid, pfh->index[row][col].cindex);
 }
