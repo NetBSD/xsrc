@@ -11,7 +11,7 @@ XCOMM and pop a clock and serveral xterms.
 XCOMM
 XCOMM Site administrators are STRONGLY urged to write nicer versions.
 XCOMM
-XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.12 2001/11/30 20:57:48 dawes Exp $
+XCOMM $XFree86: xc/programs/xinit/startx.cpp,v 3.12.2.2 2002/01/28 18:27:34 tsi Exp $
 
 #ifdef SCO
 
@@ -139,24 +139,30 @@ if [ x"$server" = x ]; then
 fi
 
 if [ x"$XAUTHORITY" = x ]; then
-    export XAUTHORITY=$HOME/.Xauthority
+    XAUTHORITY=$HOME/.Xauthority
+    export XAUTHORITY
 fi
 
 removelist=
 
 #if defined(HAS_COOKIE_MAKER) && defined(MK_COOKIE)
 XCOMM set up default Xauth info for this machine
-#ifndef HOSTNAME
-#ifdef __linux__
-#define HOSTNAME hostname -f
-#else
-#define HOSTNAME hostname
-#endif
-#endif
+case `uname` in
+Linux*)
+	if [ -z "`hostname --version | grep GNU`" ]; then
+		hostname=`hostname -f`
+	else
+		hostname=`hostname`
+	fi
+	;;
+*)
+	hostname=`hostname`
+	;;
+esac
 
 authdisplay=${display:-:0}
 mcookie=`MK_COOKIE`
-for displayname in $authdisplay `HOSTNAME`$authdisplay; do
+for displayname in $authdisplay $hostname$authdisplay; do
     if ! xauth list "$displayname" | grep "$displayname " >/dev/null 2>&1; then
 	xauth add $displayname . $mcookie
 	removelist="$displayname $removelist"
