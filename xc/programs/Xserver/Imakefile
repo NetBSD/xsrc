@@ -6,9 +6,11 @@ XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.85.2.12 1999/05/25 06:55:14 ho
 
 #include <Server.tmpl>
 
+#ifndef NetBSDArchitecture
 #ifdef XFree86Version
 /* Don't strip server binaries */
 INSTPGMFLAGS = 
+#endif
 #endif
 
 #define PreFbLibs $(DIX) $(OS) $(FONT) $(XPDDX)
