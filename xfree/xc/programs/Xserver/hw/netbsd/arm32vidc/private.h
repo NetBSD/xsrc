@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.2 2004/03/08 01:08:19 bjh21 Exp $	*/
+/*	$NetBSD: private.h,v 1.3 2004/03/13 19:43:33 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -41,14 +41,12 @@ struct _private
 	int width;		/* width of frame buffer */
 
 	int vram_fd;		/* Screen file descriptor for frame buffer */
-	int mouse_fd;		/* File descriptor for pms/qms */
 	int wsmouse_fd;		/* File descriptor for wsmouse */
 	int kbd_fd;		/* File descriptor for kbd */
 	int wskbd_fd;		/* File descriptor for wskbd */
 	u_int wskbd_type;	/* Keyboard type from WSKBDIO_GTYPE */
 	int con_fd;		/* File descriptor for the console */
 	int wsdisplay_fd;	/* File descriptor for wsdisplay */
-	int beep_fd;		/* File descriptor for beep */
 	char *vram_base;	/* Where the screen has been mapped to */
 	DevicePtr mouse_dev;	/* X device for mouse */
 	DevicePtr kbd_dev;	/* X device for keyboard */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc.c,v 1.2 2004/03/07 11:21:24 bjh21 Exp $	*/
+/*	$NetBSD: vidc.c,v 1.3 2004/03/13 19:43:33 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Neil A. Carson & Mark Brinicombe
@@ -395,8 +395,6 @@ int mouse_accel(DeviceIntPtr device, int delta)
  */
 static void sigio_handler(int flags)
 {
-	if (private.mouse_fd >= 0)
-		rpc_mouse_io();
 	if (private.wsmouse_fd >= 0)
 		wsmouse_io();
 	if (private.kbd_fd >= 0)
@@ -413,20 +411,14 @@ void InitInput(int argc, char *argv[])
 
 	DPRINTF(("InitInput\n"));
 
-	private.mouse_fd = -1;
 	private.wsmouse_fd = -1;
 	private.kbd_fd = -1;
 	private.wskbd_fd = -1;
-	private.beep_fd = -1;
 
 	/* Try to init the wsmouse device */
 	private.wsmouse_fd = wsmouse_init();
-	if (private.wsmouse_fd == -1) {
-		/* Try and init the old rpc mouse device */
-		private.mouse_fd = rpc_init_mouse();
-		if (private.mouse_fd == -1)
-			FatalError("Cannot open mouse device\n");
-	}
+	if (private.wsmouse_fd == -1)
+		FatalError("Cannot open mouse device\n");
 	
 	/* ... and wskbd */
 	private.wskbd_fd = wskbd_init();
@@ -453,8 +445,6 @@ void InitInput(int argc, char *argv[])
 		FatalError("mieqInit failed!!\n");
 
 	/* Start taking some SIGIOs on input device file descriptors. */
-	if (private.mouse_fd >= 0)
-		fcntl(private.mouse_fd, F_SETFL, O_ASYNC | O_NONBLOCK);
 	if (private.wsmouse_fd >= 0)
 		fcntl(private.wsmouse_fd, F_SETFL, O_ASYNC | O_NONBLOCK);
        	if (private.kbd_fd >= 0)
@@ -608,7 +598,6 @@ void AbortDDX(void)
 
 	if (private.vram_fd != 0)
 		close(private.vram_fd);
-	close(private.mouse_fd);
 	close(private.wsmouse_fd);
 	close(private.con_fd);
 	close(private.wsdisplay_fd);
