@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.66.2.4 1998/10/11 12:35:37 hohndel Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.66.2.5 1998/12/22 11:23:23 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -174,7 +174,7 @@ InitOutput(pScreenInfo, argc, argv)
 
     xf86OpenConsole();
 
-#if !defined(AMOEBA) && !defined(MINIX)
+#if !defined(AMOEBA) && !defined(MINIX) && !defined(__GNU__)
     /*
      * If VTInit was set, run that program with consoleFd as stdin and stdout
      */

@@ -1,28 +1,29 @@
 /* $XConsortium: i128.c /main/13 1996/10/27 11:04:19 kaleb $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
- *
+ * Copyright 1998 by Number Nine Visual Technology, Inc.
+ * 
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation, and that the name of Robin Cutshaw not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Robin Cutshaw makes no representations
- * about the suitability of this software for any purpose.  It is provided
- * "as is" without express or implied warranty.
+ * specific, written prior permission.  Robin Cutshaw and Number Nine make no
+ * representations about the suitability of this software for any purpose.  It
+ * is provided "as is" without express or implied warranty.
  *
- * ROBIN CUTSHAW DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL ROBIN CUTSHAW BE LIABLE FOR ANY SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
- * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * ROBIN CUTSHAW AND NUMBER NINE DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS, IN NO EVENT SHALL ROBIN CUTSHAW OR NUMBER NINE BE LIABLE FOR
+ * ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+ * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+ * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.c,v 3.22.2.12 1998/10/24 02:12:39 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128.c,v 3.22.2.13 1998/12/19 15:40:50 robin Exp $ */
 
 #include "i128.h"
 #include "i128reg.h"
@@ -126,6 +127,7 @@ static SymTabRec i128DacTable[] = {
    { IBM524_DAC,	"ibm524" },
    { IBM526_DAC,	"ibm526" },
    { IBM528_DAC,	"ibm528" },
+   { SILVER_HAMMER_DAC,	"SilverHammerDAC" },
    { -1,		"" },
 };
 
@@ -136,6 +138,7 @@ static Bool ti3025ClockSelect();
 ScreenPtr i128savepScreen;
 Bool  i128DAC8Bit = FALSE;
 Bool  i128DACSyncOnGreen = FALSE;
+Bool  i128FlatPanel = FALSE;
 int i128DisplayWidth;
 int i128DisplayOffset = 0;
 int i128Weight;
@@ -149,6 +152,7 @@ int i128CursorStartX, i128CursorStartY, i128CursorLines;
 int i128DeviceType;
 int i128MemoryType = I128_MEMORY_UNKNOWN;
 int i128RamdacType = UNKNOWN_DAC;
+Bool i128Doublescan = FALSE;
 
 extern Bool xf86Exiting, xf86Resetting;
 
@@ -197,6 +201,7 @@ i128Probe()
    pciConfigPtr pcrp, *pcrpp;
    CARD32 tmpl, tmph, tmp;
    extern i128Registers iR;
+   int PitchAlignment;
 
    pcrpp = xf86scanpci(i128InfoRec.scrnIndex);
 
@@ -207,7 +212,8 @@ i128Probe()
    while ((pcrp = pcrpp[i]) != (pciConfigPtr)NULL) {
       if ((pcrp->_device_vendor == I128_DEVICE_ID1) ||
           (pcrp->_device_vendor == I128_DEVICE_ID2) ||
-          (pcrp->_device_vendor == I128_DEVICE_ID3))
+          (pcrp->_device_vendor == I128_DEVICE_ID3) ||
+          (pcrp->_device_vendor == I128_DEVICE_ID4))
         break;
       i++;
    }
@@ -228,7 +234,7 @@ i128Probe()
    i128io.rbase_i = inl(iR.iobase + 0x10) & 0xFFFFFF00;
    i128io.rbase_e = inl(iR.iobase + 0x14) & 0xFFFF8003;
    i128io.id =      inl(iR.iobase + 0x18) & /* 0x7FFFFFFF */ 0xFFFFFFFF;
-   i128io.config1 = inl(iR.iobase + 0x1C) & /* 0xF3333F1F */ 0xFF333F1F;
+   i128io.config1 = inl(iR.iobase + 0x1C) & /* 0xF3333F1F */ 0xFF333F3F;
    i128io.config2 = inl(iR.iobase + 0x20) & 0xC1F70FFF;
    i128io.sgram   = inl(iR.iobase + 0x24) & 0xFFFFFFFF;
    i128io.soft_sw = inl(iR.iobase + 0x28) & 0x0000FFFF;
@@ -284,16 +290,21 @@ i128Probe()
    iR.config1 = i128io.config1;
    iR.config2 = i128io.config2;
    iR.sgram = i128io.sgram;
-   i128io.sgram = 0x21089030;
+   if (i128DeviceType == I128_DEVICE_ID4)
+	i128io.sgram = 0x211BF030;
+   else
+	i128io.sgram = 0x21089030;
    /* vga_ctl is saved later */
 
    /* enable all of the memory mapped windows */
 
    i128io.config1 &= 0xFF00001F;
-   i128io.config1 |= 0x00333F10;
+   i128io.config1 |= 0x00331F10;
    outl(iR.iobase + 0x1C, i128io.config1);
 
-   if (i128DeviceType == I128_DEVICE_ID3) {
+   if (i128DeviceType == I128_DEVICE_ID4)
+		i128MemoryType = I128_MEMORY_SGRAM;
+   else if (i128DeviceType == I128_DEVICE_ID3) {
 	if ((i128io.config2&6) == 2)
 		i128MemoryType = I128_MEMORY_SGRAM;
 	else
@@ -318,7 +329,8 @@ i128Probe()
    ErrorF("%s %s: I128%s%s revision (%d)\n", 
 	  XCONFIG_PROBED, i128InfoRec.name,
 	  i128DeviceType == I128_DEVICE_ID2 ? "-II" :
-	  i128DeviceType == I128_DEVICE_ID3 ? "-T2R (Rev3D)" : "",
+	  i128DeviceType == I128_DEVICE_ID3 ? "-T2R (Rev3D)" :
+	  i128DeviceType == I128_DEVICE_ID4 ? "-T2R4 (Rev4)" : "",
 	  i128DeviceType != I128_DEVICE_ID3 ? "" :
 	   i128MemoryType == I128_MEMORY_SGRAM ? "-SGRAM" : "-WRAM",
 	  i128io.id&0x7);
@@ -335,6 +347,30 @@ i128Probe()
       ErrorF("%s %s: card type: PCI\n", XCONFIG_PROBED, i128InfoRec.name);
 
    i128InfoRec.videoRam = 0;
+
+   if (i128DeviceType == I128_DEVICE_ID4) {
+      /* Use the subsystem ID to determine the memory size */
+      switch ((pcrp->rsvd2>>16) & 0x0007) {
+         case 0x00:      /* 4MB card */
+	    i128InfoRec.videoRam = 4 * 1024; break;
+         case 0x01:      /* 8MB card */
+	    i128InfoRec.videoRam = 8 * 1024; break;
+         case 0x02:      /* 12MB card */
+            i128InfoRec.videoRam = 12 * 1024; break;
+         case 0x03:      /* 16MB card */
+	    i128InfoRec.videoRam = 16 * 1024; break;
+         case 0x04:      /* 20MB card */
+	    i128InfoRec.videoRam = 20 * 1024; break;
+         case 0x05:      /* 24MB card */
+	    i128InfoRec.videoRam = 24 * 1024; break;
+         case 0x06:      /* 28MB card */
+	    i128InfoRec.videoRam = 28 * 1024; break;
+         case 0x07:      /* 32MB card */
+	    i128InfoRec.videoRam = 32 * 1024; break;
+         default: /* Unknown board... */
+            break;
+      }
+   }
 
    if (i128DeviceType == I128_DEVICE_ID3) {
       switch ((pcrp->rsvd2>>16)&0xFFF7) {
@@ -450,8 +486,8 @@ i128Probe()
 #endif
    i128mem.xyw_ada = (unsigned char *)xf86MapVidMem(0, 2,
 			(pointer)(pcrp->_base2 & 0xFFC00000),
-                        i128InfoRec.videoRam * 1024);
-#ifdef TOOMANYMMAPS
+                        4 * 1024 * 1024);  /* Never use more than 4MB here */
+#if 0 /* #ifdef TOOMANYMMAPS */ /* This is never used */
    i128mem.xyw_adb = (CARD32 *)xf86MapVidMem(0, 3,
 			(pointer)(pcrp->_base3 & 0xFFC00000),
                         i128InfoRec.videoRam * 1024);
@@ -475,6 +511,8 @@ i128Probe()
 	 i128RamdacType = IBM526_DAC;
    } else if (pcrp->_device_vendor == I128_DEVICE_ID3) {
 	 i128RamdacType = IBM526_DAC;
+   } else if (pcrp->_device_vendor == I128_DEVICE_ID4) {
+	 i128RamdacType = SILVER_HAMMER_DAC;
    } else {
             ErrorF("%s: Unknown I128 rev (%x).\n", i128InfoRec.name,
 		pcrp->_device_vendor);
@@ -593,6 +631,45 @@ i128Probe()
 	           XCONFIG_PROBED, i128InfoRec.name, mclk / 1000.0);
          break;
 
+      case SILVER_HAMMER_DAC:
+         /* verify that the ramdac is a Silver Hammer */
+
+         i128InfoRec.ramdac = "SilverHammer";
+	 tmph = i128mem.rbase_g[IDXH_I] & 0xFF;
+	 tmpl = i128mem.rbase_g[IDXL_I] & 0xFF;
+	 tmp = i128mem.rbase_g[DATA_I] & 0xFF;
+
+         i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_ref_div;		MB;
+	 n = i128mem.rbase_g[DATA_I] & 0x1f;
+         i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_vco_div;		MB;
+	 m = i128mem.rbase_g[DATA_I];
+	 df = m>>6;
+	 m &= 0x3f;
+	 if (n == 0) { m=0; n=1; }
+	 mclk = ((3750000 * (m+65)) / n / (8>>df) + 50) / 100;
+
+	 i128mem.rbase_g[IDXL_I] = tmpl;				MB;
+	 i128mem.rbase_g[IDXH_I] = tmph;				MB;
+         if (pcrp->_device_vendor != I128_DEVICE_ID4) {
+            ErrorF("%s: %s Ramdac not found.\n", i128InfoRec.name,
+		i128InfoRec.ramdac);
+            return(FALSE);
+         }
+
+	 if (i128mem.rbase_g[CRT_1CON] & 0x00000100) {
+            i128FlatPanel = TRUE;
+            if (xf86Verbose)
+               ErrorF("%s %s: Digital flat panel detected\n",
+	              XCONFIG_PROBED, i128InfoRec.name);
+         }
+
+         OFLG_SET(CLOCK_OPTION_IBMRGB, &i128InfoRec.clockOptions);
+
+         if (xf86Verbose)
+            ErrorF("%s %s: Using IBM 526 programmable clock (MCLK %1.3f MHz)\n",
+	           XCONFIG_PROBED, i128InfoRec.name, mclk / 1000.0);
+         break;
+
       default:
          ErrorF("%s: Unknown Ramdac.\n", i128InfoRec.name);
          return(FALSE);
@@ -611,6 +688,8 @@ i128Probe()
           (pcrp->_device_vendor == I128_DEVICE_ID3) ||
           (i128InfoRec.videoRam == 8192))
 	 i128InfoRec.dacSpeeds[0] = 220000;
+      else if (pcrp->_device_vendor == I128_DEVICE_ID4)
+	 i128InfoRec.dacSpeeds[0] = 270000;
       else
 	 i128InfoRec.dacSpeeds[0] = 175000;
    }
@@ -679,6 +758,15 @@ i128Probe()
    if ((tx != i128InfoRec.virtualX) || (ty != i128InfoRec.virtualY))
       OFLG_CLR(XCONFIG_VIRTUAL,&i128InfoRec.xconfigFlag);
 
+#if 0
+   /* The code below is whacked...
+    *
+    * The rules for virtualX are:
+    *      On a WRAM board, the pitch must be a multiple of 128 bytes.
+    *      Otherwise, the pitch must be a multiple of 256 bits.
+    * There is no need to force the numbers to 800, 1024, etc.
+    * The memory size check (above) should be done AFTER the pitch is changed!
+    */
    if (pcrp->_device_vendor == I128_DEVICE_ID3) {
       i128DisplayWidth = i128InfoRec.virtualX;
       if ((i128InfoRec.virtualX % 128) != 0)
@@ -699,8 +787,23 @@ i128Probe()
       i128DisplayWidth = 1920;
    else
       i128DisplayWidth = 2048;
+#else
+   i128DisplayWidth = i128InfoRec.virtualX;
+   /* Normally, the pitch must be a multiple of 256 bits */
+   PitchAlignment = 256;
 
-   if (i128InfoRec.videoRam > 4096)
+   /* For WRAM, the pitch must be a multiple of 256 bytes */
+   if (i128MemoryType == I128_MEMORY_WRAM)
+      PitchAlignment = 256 * 8;
+
+   PitchAlignment /= xf86bpp;
+   if ((i128InfoRec.virtualX % PitchAlignment) != 0)
+         i128DisplayWidth +=  PitchAlignment - (i128InfoRec.virtualX % PitchAlignment);
+#endif
+
+   if (i128InfoRec.videoRam > 4096 &&
+       i128MemoryType != I128_MEMORY_DRAM &&
+       i128MemoryType != I128_MEMORY_SGRAM)
       i128DisplayOffset = 0x400000L %
 		          (i128DisplayWidth * (i128InfoRec.bitsPerPixel/8));
 
@@ -869,7 +972,8 @@ i128ProgramIBMRGB(freq, flags)
    i128mem.rbase_g[DATA_I] = tmp2 | ((flags & V_DBLCLK) ? 0x03 : 0x01);	MB;
 
    i128mem.rbase_g[IDXL_I] = IBMRGB_sync;				MB;
-   i128mem.rbase_g[DATA_I] = 0x00;  /* 0x10 +Hsync, 0x20 +Vsync */	MB;
+   i128mem.rbase_g[DATA_I] = ((flags & V_PHSYNC) ? 0x10 : 0x00)
+                           | ((flags & V_PVSYNC) ? 0x20 : 0x00);	MB;
    i128mem.rbase_g[IDXL_I] = IBMRGB_hsync_pos;				MB;
    i128mem.rbase_g[DATA_I] = 0x01;  /* Delay syncs by 1 pclock */	MB;
    i128mem.rbase_g[IDXL_I] = IBMRGB_pwr_mgmt;				MB;
@@ -896,7 +1000,8 @@ i128ProgramIBMRGB(freq, flags)
 	 (i128InfoRec.bitsPerPixel > 16)))
 	tmp2 |= 0x40;
    if ((i128MemoryType == I128_MEMORY_SGRAM) &&
-	 (i128InfoRec.bitsPerPixel > 16))
+	 (i128InfoRec.bitsPerPixel > 16) &&
+         (i128RamdacType != SILVER_HAMMER_DAC) )
 	tmp2 &= 0x3F;
    i128mem.rbase_g[DATA_I] = tmp2;					MB;
    i128mem.rbase_g[IDXL_I] = IBMRGB_misc3;				MB;
@@ -922,6 +1027,205 @@ i128ProgramIBMRGB(freq, flags)
 	/* should delay at least a millisec so we'll wait 50 */
    	usleep(50000);
    }
+
+   switch (i128InfoRec.depth) {
+   	case 24: /* 32 bit */
+   		i128mem.rbase_g[IDXL_I] = IBMRGB_pix_fmt;		MB;
+   		tmp2 = i128mem.rbase_g[DATA_I] & 0xf8;
+   		i128mem.rbase_g[DATA_I] = tmp2 | 0x06;			MB;
+   		i128mem.rbase_g[IDXL_I] = IBMRGB_32bpp;			MB;
+   		i128mem.rbase_g[DATA_I] = 0x03;				MB;
+   		break;
+	case 16:
+   		i128mem.rbase_g[IDXL_I] = IBMRGB_pix_fmt;		MB;
+   		tmp2 = i128mem.rbase_g[DATA_I] & 0xf8;
+   		i128mem.rbase_g[DATA_I] = tmp2 | 0x04;			MB;
+   		i128mem.rbase_g[IDXL_I] = IBMRGB_16bpp;			MB;
+   		i128mem.rbase_g[DATA_I] = 0xC7;				MB;
+   		break;
+	case 15:
+   		i128mem.rbase_g[IDXL_I] = IBMRGB_pix_fmt;		MB;
+   		tmp2 = i128mem.rbase_g[DATA_I] & 0xf8;
+   		i128mem.rbase_g[DATA_I] = tmp2 | 0x04;			MB;
+   		i128mem.rbase_g[IDXL_I] = IBMRGB_16bpp;			MB;
+   		i128mem.rbase_g[DATA_I] = 0xC5;				MB;
+   		break;
+	default: /* 8 bit */
+   		i128mem.rbase_g[IDXL_I] = IBMRGB_pix_fmt;		MB;
+   		tmp2 = i128mem.rbase_g[DATA_I] & 0xf8;
+   		i128mem.rbase_g[DATA_I] = tmp2 | 0x03;			MB;
+   		i128mem.rbase_g[IDXL_I] = IBMRGB_8bpp;			MB;
+   		i128mem.rbase_g[DATA_I] = 0x00;				MB;
+   		break;
+   }
+
+   i128mem.rbase_g[IDXCTL_I] = tmpc;					MB;
+   i128mem.rbase_g[IDXH_I] = tmph;					MB;
+   i128mem.rbase_g[IDXL_I] = tmpl;					MB;
+
+   return(TRUE);
+}
+
+
+Bool
+i128ProgramSilverHammerDAC(freq, flags, skew)
+     int   freq;
+     int   flags;
+     int   skew;
+{
+   /* The SilverHammer DAC is essentially the same as the IBMRGBxxx DACs,
+    * but with fewer options and a different reference frequency.
+    */
+
+   unsigned char tmp, tmp2, m, n, df, best_m, best_n, best_df, max_n;
+   CARD32 tmpl, tmph, tmpc;
+   long f, vrf, outf, best_vrf, best_diff, best_outf, diff;
+   long requested_freq;
+
+#undef  REF_FREQ
+#define REF_FREQ	 37500000
+#undef  MAX_VREF
+#define MAX_VREF	  9000000
+#define MIN_VREF	  1500000
+#undef  MAX_VCO
+#define MAX_VCO		270000000
+#define MIN_VCO		 65000000
+
+   if (freq < 25000) {
+       ErrorF("%s %s: Specified dot clock (%.3f) too low for SilverHammer",
+	      XCONFIG_PROBED, i128InfoRec.name, freq / 1000.0);
+       return(FALSE);
+   } else if (freq > MAX_VCO) {
+       ErrorF("%s %s: Specified dot clock (%.3f) too high for SilverHammer",
+	      XCONFIG_PROBED, i128InfoRec.name, freq / 1000.0);
+       return(FALSE);
+   }
+
+   requested_freq = freq * 1000;
+
+   best_m = best_n = best_df = 0;
+   best_vrf = best_outf = 0;
+   best_diff = requested_freq;  /* worst case */
+
+   for (df=0; df<4; df++) {
+   	max_n = REF_FREQ / MIN_VREF;
+   	if (df < 3)
+   		max_n >>= 1;
+	for (n=2; n<max_n; n++)
+		for (m=65; m<=128; m++) {
+			vrf = REF_FREQ / n;
+			if (df < 3)
+				vrf >>= 1;
+			if ((vrf > MAX_VREF) || (vrf < MIN_VREF))
+				continue;
+
+			f = vrf * m;
+			outf = f;
+			if (df < 2)
+				outf >>= 2 - df;
+			if ((f > MAX_VCO) || (f < MIN_VCO))
+				continue;
+
+			/* outf is a valid freq, pick the closest now */
+
+			if ((diff = (requested_freq - outf)) < 0)
+				diff = -diff;;
+			if (diff < best_diff) {
+				best_diff = diff;
+				best_m = m;
+				best_n = n;
+				best_df = df;
+				best_outf = outf;
+			}
+		}
+   }
+
+   /* do we have an acceptably close frequency? (less than 1% diff) */
+
+   if (best_diff > (requested_freq/100)) {
+       ErrorF("%s %s: Specified dot clock (%.3f) too far (best %.3f) SilverHammer",
+	      XCONFIG_PROBED, i128InfoRec.name, requested_freq / 1000.0,
+	      best_outf / 1000.0);
+       return(FALSE);
+   }
+
+   i128mem.rbase_g[PEL_MASK] = 0xFF;					MB;
+
+   tmpc = i128mem.rbase_g[IDXCTL_I] & 0xFF;
+   tmph = i128mem.rbase_g[IDXH_I] & 0xFF;
+   tmpl = i128mem.rbase_g[IDXL_I] & 0xFF;
+
+   i128mem.rbase_g[IDXH_I] = 0;						MB;
+   i128mem.rbase_g[IDXCTL_I] = 0;					MB;
+
+   i128mem.rbase_g[IDXL_I] = IBMRGB_misc_clock;				MB;
+   tmp2 = i128mem.rbase_g[DATA_I] & 0xFF;
+   i128mem.rbase_g[DATA_I] = tmp2 | 0x81;				MB;
+
+   i128mem.rbase_g[IDXL_I] = IBMRGB_m0+4;				MB;
+   i128mem.rbase_g[DATA_I] = (best_df<<6) | (best_m&0x3f);		MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_n0+4;				MB;
+   i128mem.rbase_g[DATA_I] = best_n;					MB;
+
+   i128mem.rbase_g[IDXL_I] = IBMRGB_pll_ctrl1;				MB;
+   tmp2 = i128mem.rbase_g[DATA_I] & 0xFF;
+   i128mem.rbase_g[DATA_I] = (tmp2&0xf8) | 3;  /* 8 M/N pairs in PLL */	MB;
+
+   i128mem.rbase_g[IDXL_I] = IBMRGB_pll_ctrl2;				MB;
+   tmp2 = i128mem.rbase_g[DATA_I] & 0xFF;
+   i128mem.rbase_g[DATA_I] = (tmp2&0xf0) | 2;  /* clock number 2 */	MB;
+
+   i128mem.rbase_g[IDXL_I] = IBMRGB_misc_clock;				MB;
+   tmp2 = i128mem.rbase_g[DATA_I] & 0xf0;
+   i128mem.rbase_g[DATA_I] = tmp2 | ((flags & V_DBLCLK) ? 0x03 : 0x01);	MB;
+
+   i128mem.rbase_g[IDXL_I] = IBMRGB_sync;				MB;
+   i128mem.rbase_g[DATA_I] = ((flags & V_PHSYNC) ? 0x10 : 0x00)
+                           | ((flags & V_PVSYNC) ? 0x20 : 0x00);	MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_hsync_pos;				MB;
+   i128mem.rbase_g[DATA_I] = ((flags & V_HSKEW)  ? skew : 0x01);	MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_pwr_mgmt;				MB;
+/* Use 0x01 below with digital flat panel to conserve energy and reduce noise */
+   i128mem.rbase_g[DATA_I] = (i128FlatPanel ? 0x01 : 0x00);		MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_dac_op;				MB;
+   i128mem.rbase_g[DATA_I] = (i128DACSyncOnGreen ? 0x08 : 0x00);	MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_pal_ctrl;				MB;
+   i128mem.rbase_g[DATA_I] = 0x00;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk;				MB;
+   i128mem.rbase_g[DATA_I] = 0x01;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_misc1;				MB;
+   tmp2 = i128mem.rbase_g[DATA_I] & 0xbc;
+   if ((i128MemoryType != I128_MEMORY_DRAM) &&
+       (i128MemoryType != I128_MEMORY_SGRAM))
+   	tmp2 |= (i128RamdacType == IBM528_DAC) ? 3 : 1;
+   i128mem.rbase_g[DATA_I] = tmp2;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_misc2;				MB;
+   tmp2 = 0x03;
+   if (i128DAC8Bit)
+	tmp2 |= 0x04;
+   if (!((i128MemoryType == I128_MEMORY_DRAM) &&
+	 (i128InfoRec.bitsPerPixel > 16)))
+	tmp2 |= 0x40;
+   if ((i128MemoryType == I128_MEMORY_SGRAM) &&
+	 (i128InfoRec.bitsPerPixel > 16) &&
+         (i128RamdacType != SILVER_HAMMER_DAC) )
+	tmp2 &= 0x3F;
+   i128mem.rbase_g[DATA_I] = tmp2;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_misc3;				MB;
+   i128mem.rbase_g[DATA_I] = 0x00;					MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_misc4;				MB;
+   i128mem.rbase_g[DATA_I] = 0x00;					MB;
+
+   /* ?? There is no write to cursor control register */
+
+   /* Set the memory clock speed to 95 MHz */
+   i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_ref_div;		MB;
+   i128mem.rbase_g[DATA_I] = 0x08;				MB;
+   i128mem.rbase_g[IDXL_I] = IBMRGB_sysclk_vco_div;		MB;
+   i128mem.rbase_g[DATA_I] = 0x50;				MB;
+
+   /* should delay at least a millisec so we'll wait 50 */
+   usleep(50000);
 
    switch (i128InfoRec.depth) {
    	case 24: /* 32 bit */

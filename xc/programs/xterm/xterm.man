@@ -25,7 +25,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\"
-.\" $XFree86: xc/programs/xterm/xterm.man,v 3.13.2.2 1998/10/20 20:51:58 hohndel Exp $
+.\" $XFree86: xc/programs/xterm/xterm.man,v 3.13.2.3 1998/12/22 07:50:03 hohndel Exp $
 .\"
 .\" updated by Thomas Dickey <dickey@clark.net> for XFree86, July 1996.
 .TH XTERM 1 "Release 6.3" "X Version 11"
@@ -1664,7 +1664,6 @@ actions are provided for using within the \fIvt100\fP or \fItek4014\fP
 .B "allow-send-events(\fIon/off/toggle\fP)"
 This action set or toggles the \fBallowSendEvents\fP resource and is also
 invoked by the \fBallowsends\fP entry in \fImainMenu\fP.
-.TP
 .TP 8
 .B "bell([\fIpercent\fP])"
 This action rings the keyboard bell at the specified percentage

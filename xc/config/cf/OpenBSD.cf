@@ -1,4 +1,4 @@
-XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.12 1998/10/04 13:36:13 hohndel Exp $
+XCOMM platform:  $XFree86: xc/config/cf/OpenBSD.cf,v 3.1.2.13 1998/12/22 11:23:02 hohndel Exp $
 XCOMM
 XCOMM $OpenBSD: OpenBSD.cf,v 1.33 1998/09/27 04:52:48 rahnds Exp $
 XCOMM
@@ -77,7 +77,13 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define AsmDefines 		-DUSE_GAS
 
 #ifdef i386Architecture
-# define OptimizedCDebugFlags 	DefaultGcc2i386Opt
+# ifndef DefaultGcc2i386Opt
+#  if (OSMajorVersion == 2 && OSMinorVersion >= 3) || OSMajorVersion > 2
+    /* The GCC strength-reduce bug is fixed for OpenBSD 2.3 and later */
+#   define DefaultGcc2i386Opt	-O2
+#  endif
+# endif
+# define OptimizedCDebugFlags	DefaultGcc2i386Opt
 # define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
 # define ServerExtraSysLibs	-li386
 # define LdPostLib		/**/

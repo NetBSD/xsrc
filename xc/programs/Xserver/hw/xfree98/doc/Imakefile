@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/15 1996/10/28 05:13:52 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/Imakefile,v 3.22.2.5 1998/11/15 02:37:25 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/Imakefile,v 3.22.2.6 1998/12/22 07:50:01 hohndel Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -84,7 +84,7 @@ HWREADME =  README.ati README.trident README.tseng README.WstDig \
             README.DECtga  README.apm README.rendition README.epson \
             README.chips README.cirrus README.Video7 README.P9000 README.agx \
             README.S3 README.S3V README.SiS README.W32 README.Oak \
-            README.Mach32 \
+            README.I128 README.Mach32 \
             README.Mach64 README.ark README.MGA README.NVIDIA README.mouse \
             README.neo README.rendition README.3DLabs README.cyrix
 
@@ -124,6 +124,7 @@ LinkSourceFile(README.Bsdi,$(XF86SRC)/doc)
 LinkSourceFile(README.Config,$(XF86SRC)/doc)
 LinkSourceFile(README.DECtga,$(XF86SRC)/doc)
 LinkSourceFile(README.DGA,$(XF86SRC)/doc)
+LinkSourceFile(README.I128,$(XF86SRC)/doc)
 LinkSourceFile(README.Linux,$(XF86SRC)/doc)
 LinkSourceFile(README.LynxOS,$(XF86SRC)/doc)
 LinkSourceFile(README.Mach,$(XF86SRC)/doc)

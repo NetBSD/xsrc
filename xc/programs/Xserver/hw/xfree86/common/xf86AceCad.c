@@ -22,7 +22,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86AceCad.c,v 3.6.2.1 1998/10/11 12:35:29 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86AceCad.c,v 3.6.2.2 1998/12/22 11:23:19 hohndel Exp $ */
 
 #include "Xos.h"
 #include <signal.h>
@@ -437,12 +437,6 @@ xf86AceCadReadInput(LocalDevicePtr local)
 
 	    is_absolute = (priv->flags & ABSOLUTE_FLAG);
 	    is_core_pointer = xf86IsCorePointer(device);
-
-	    if (is_core_pointer) {
-		x = x * screenInfo.screens[0]->width / priv->acecadMaxX;
-		y = y * screenInfo.screens[0]->height / priv->acecadMaxY;
-		DBG(6, ErrorF("Adjusted coords x=%d y=%d\n", x, y));
-	    }
 
 /* coordonates are ready we can send events */
 	    if (prox) {
@@ -908,6 +902,53 @@ xf86AceCadSwitchMode(ClientPtr client, DeviceIntPtr dev, int mode)
 }
 
 /*
+** xf86AceConvert
+** Convert valuators to X and Y core coordinates.
+*/
+static Bool
+xf86AceConvert(LocalDevicePtr	local,
+	       int		first,
+	       int		num,
+	       int		v0,
+	       int		v1,
+	       int		v2,
+	       int		v3,
+	       int		v4,
+	       int		v5,
+	       int*		x,
+	       int*		y)
+{
+    AceCadDevicePtr	priv = (AceCadDevicePtr)(local->private);
+
+    *x = v0 * screenInfo.screens[0]->width / priv->acecadMaxX;
+    *y = v1 * screenInfo.screens[0]->height / priv->acecadMaxY;
+    DBG(6, ErrorF("xf86AceConvert Adjusted coords x=%d y=%d\n", *x, *y));
+
+    return TRUE;
+}
+
+/*
+** xf86AceReverseConvert
+** Convert X and Y core coordinates to valuators.
+*/
+static Bool
+xf86AceReverseConvert(LocalDevicePtr	local,
+		      int		x,
+		      int		y,
+		      int		*valuators)
+{
+    AceCadDevicePtr	priv = (AceCadDevicePtr)(local->private);
+
+    valuators[0] = x * priv->acecadMaxX / screenInfo.screens[0]->width;
+    valuators[1] = y * priv->acecadMaxY / screenInfo.screens[0]->height;
+
+    DBG(6, ErrorF("xf86AceReverseConvert converted x=%d y=%d to v0=%d v1=%d\n", x, y,
+		  valuators[0], valuators[1]));
+
+    return TRUE;
+}
+
+/*
 ** xf86AceCadAllocate
 ** Allocates the device structures for the AceCad.
 */
@@ -931,6 +972,8 @@ xf86AceCadAllocate()
     local->control_proc = xf86AceCadChangeControl;
     local->close_proc = xf86AceCadClose;
     local->switch_mode = xf86AceCadSwitchMode;
+    local->conversion_proc = xf86AceConvert;
+    local->reverse_conversion_proc = xf86AceReverseConvert;
     local->fd = -1;
     local->atom = 0;
     local->dev = NULL;

@@ -26,7 +26,7 @@
 //other dealings in this Software without prior written authorization
 //from the X Consortium.
 //
-// $XFree86: xc/programs/xkbcomp/symbols/nec/jp,v 3.3.2.2 1998/02/01 22:08:24 robin Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/nec/jp,v 3.3.2.3 1998/12/13 14:12:28 dawes Exp $
 //
 // symbols for a NEC PC98 keyboard
 default xkb_symbols "pc98" {
@@ -163,7 +163,7 @@ default xkb_symbols "pc98" {
     modifier_map Shift  { Shift_L };
     modifier_map Lock   { Caps_Lock };
     modifier_map Control{ Control_L };
+    modifier_map Mod1   { Alt_L };
     modifier_map Mod2   { Mode_switch };
-    modifier_map Mod3   { Alt_L };
 };
 

@@ -2,16 +2,17 @@
 
 <article>
 
-<title>Release Notes for XFree86&tm; 3.3.3
+<title>Release Notes for XFree86&tm; 3.3.3.1
 <author>The XFree86 Project, Inc
-<date>19 November 1998
+<date>30 December 1998
 
 <abstract>
 
-This document describes the bugs fixed and the features added in XFree86 3.3.3 
-compared with the 3.3.2 release,
+This document describes the bugs fixed and the features added in
+XFree86 3.3.3.1 compared with the 3.3.2 and 3.3.3 release, 
 It also includes installation instructions for the binary distributions.
-It is strongly recommended that anyone using XFree86 update to version 3.3.3.
+It is strongly recommended that anyone using XFree86 update to version
+3.3.3.1. 
 
 </abstract>
 
@@ -48,6 +49,8 @@ X11R6.4 back to the old free X Consortium style copyright.
 Given the fact that our main development focus is on XFree86-4.0 and that 
 the 3.3.3 release was intended mostly to fix some bugs and get out new
 drivers to the public, we opted not to include X11R6.4 in XFree86-3.3.3.
+Since XFree86-3.3.3.1 is merely a quick bug fix release to
+XFree86-3.3.3, the same applies here as well.
 <p>
 XFree86-4.0 will be X11R6.4 based.
 <p>
@@ -65,6 +68,33 @@ with this release.  a.out shared libraries are also included for compatibility
 purposes.
 
 <p> 
+<sect> What's new in 3.3.3.1?
+<p>
+<itemize>
+  <item>A system clock slowdown caused by 3Dlabs driver has been fixed.
+  <item>Drawing bugs with C&amp;T HiQV chips have been fixed.
+  <item>Drawing problems in the Cyrix driver have been fixed.
+  <item>The Matrox G100/G200 PCI versions should now be fully supported.
+  <item>The Mach64 server now supports gamma correction.
+  <item>Open Source NVIDIA driver has been provided.
+  <item>I128 Rev IV support has been added.
+  <item>Another S3V lockup has been fixed.
+  <item>A drawing bug in cfb24 has been fixed.
+  <item>A problem causing lockups with some Trident cards has been fixed.
+  <item>Updates for SCO, FreeBSD, Linux glibc OS support.
+  <item>DG/ux support has been added.
+  <item>GNU/Hurd support has been added.
+  <item>Several XINPUT problems have been addressed.
+  <item>DGA relative mouse movement events when XINPUT is defined have
+        been fixed, as have DGA-related problems with the NVIDIA and S3V
+	drivers.
+  <item>The X server now reads Xauthority files using the real user id.
+  <item>Several small fixes to core clients.
+  <item>A bug in Xlib's handling of KOI8-R has been fixed.
+  <item>PC98 cards database, sample config file and XKB handling have
+        been fixed.
+</itemize>
+<p>
 <sect> What's new in 3.3.3?
 <p>
 <sect1> Security fixes
@@ -153,6 +183,10 @@ purposes.
 </itemize>
 <sect1>Known Problems
 <p>
+The problems listed here are those known at the time of the release.  See
+the <htmlurl name="XFree86 FAQ" url="http://www.xfree86.org/FAQ"> for more
+up to date information.
+<p>
 <itemize>
   <item>There are problems with some Cirrus laptop chipsets (75xx).  The
 	driver seems to work for some people, but not others.  Until
@@ -181,43 +215,18 @@ as set forth at <htmlurl name="http://www.opensource.org/osd.html"
 url="http://www.opensource.org/osd.html">. 
 This definition is actually a subset of our requirements.
 <p>
-After we had finalized XFree86 3.3.3, and within hours of our planned
-release, NVIDIA insisted that we withdraw two source files from the
-driver that they had supplied to us and replace some other source files
-with versions that were partly run through the C preprocessor.  NVIDIA's
-stated reason for this was to remove some of the names that they thought might
-reveal intellectual property from NVIDIA. This resulted in somewhat
-unreadable and unmaintainable code.
-<p> 
-The XFree86 Project is strongly opposed to such obfuscated code.  Among other
-things, such code does not satisfy the Open Source definition of "Source Code",
-which states that
-<quote>
-The source code must be the preferred form in which a programmer would
-modify the program. Deliberately obfuscated source code is not allowed.
-Intermediate forms such as the output of a preprocessor or translator
-are not allowed.
-</quote>
-Due to the extremely late date of this decision by NVIDIA, we decided
-to include the code as offered by NVIDIA.  All other options would have
-significantly delayed the release of XFree86-3.3.3.  Unless another
-solution can be found with NVIDIA, we will remove this code from future
-releases.
-<p>
-The code affected by this is located in the directory:
-<quote>
-<tt>xc/programs/Xserver/hw/xfree86/vga256/drivers/nv</tt>
-</quote>
-Specifically,
-the files: <tt>nv3arb.c</tt>, <tt>nv3cursor.c</tt>, <tt>nv3driver.c</tt>,
-<tt>nv3setup.c</tt>, <tt>nv4arb.c</tt>, <tt>nv4cursor.c</tt>,
-<tt>nv4driver.c</tt>, <tt>nv4setup.c</tt>.
-All other code in XFree86 3.3.3 satisfies the Open Source Software definition.
+All code in XFree86 3.3.3.1 satisfies the Open Source Software definition.
 <p>
 
-<sect>Installing the XFree86 3.3.3 Release
+<sect>Installing the XFree86 3.3.3.1 Release
 <p>
-The XFree86 3.3.3 binaries are distributed as a full release.
+The XFree86 3.3.3.1 binaries are distributed as a full release.
+<!--
+, and as an
+update to the 3.3.3 release.  For information about upgrading from 3.3.3
+to 3.3.3.1 see section <ref id="upgrade"
+name="Updating XFree86 3.3.3 to XFree86 3.3.3.1">.
+-->
 
 NOTE: the X servers are no longer installed setuid root.  If you are
 starting your X servers with startx/xinit, or something similar, you
@@ -289,6 +298,9 @@ The following X servers are for PC/AT based hardware (i.e., typical
 Intel ix86 based PCs).  Choose at least one which
 matches your hardware, as well as the VGA16 server.  The VGA16 server is
 required by the new configuration utility (XF86Setup).
+A list showing which X server is required for a range of video cards can
+be found at <htmlurl name="http://www.xfree86.org/cardlist.html"
+url="http://www.xfree86.org/cardlist.html">.
 <quote>
 <verb>
 X3DL.tgz        3Dlabs server
@@ -326,6 +338,10 @@ choose one which suits your hardware.  If you don't know what a PC98 machine
 is, you don't need any of these.  These servers <bf>will not run</bf>
 on "normal" PCs, so don't even try them if you don't have a Japanese PC98
 machine.
+A list showing which X server is required for a range of PC98 video cards
+and computers can
+be found at <htmlurl name="http://www.xfree86.org/cardlist98.html"
+url="http://www.xfree86.org/cardlist98.html">.
 <quote>
 <verb>
 X9NS3.tgz       PC98 NEC(S3) server
@@ -445,17 +461,19 @@ optional for an existing installation.  Refer to the
 information.
 
 <!--
-<sect>Updating XFree86 3.3.2 patch 3 to XFree86 3.3.3
+<sect>Updating XFree86 3.3.3 to XFree86 3.3.3.1<label id="upgrade">
 <p>
-The following is required to update an XFree86 3.3.2 patch 3 installation to
-XFree86 3.3.3:
+The following is required to update an XFree86 3.3.3 installation to
+XFree86 3.3.3.1:
 <quote>
 <verb>
 extract              XFree86 extraction utility
-X333upd.tgz         XFree86 3.3.3 update
-X333{SERVER}.tgz    3.3.3 Server update from Servers/PC98_Servers directory
+X3331upd.tgz         XFree86 3.3.3.1 update
+Xdoc.tgz             XFree86 3.3.3.1 documentation
+X{SERVER}.tgz        3.3.3.1 Server update from the Servers or PC98_Servers
+		     directory.
                      You must select the appropriate SERVER file for the
-		     server that you are currently running (i.e. X333S3.tgz).
+		     server that you are currently running (i.e. XI128.tgz).
 </verb>
 </quote>
 
@@ -463,21 +481,17 @@ First make the extract utility executable by running:
 <tscreen><verb>
 	chmod 755 extract
 </verb></tscreen>
-To update your installation to 3.3.3, run the following as
+To update your installation to 3.3.3.1, run the following as
 <bf>root</bf>:
 <tscreen><verb>
 	cd /usr/X11R6
-	/var/tmp/extract /var/tmp/X333upd.tgz
-	/var/tmp/extract /var/tmp/X333{SERVER}.tgz
+	/var/tmp/extract /var/tmp/X3331upd.tgz
+	/var/tmp/extract /var/tmp/X{SERVER}.tgz
 </verb></tscreen>
-
-<bf>NOTE: X333upd.tgz supersedes the previous update (X3323upd.tgz),
-so there is no need to have installed X3323upd.tgz before installing
-X333upd.tgz.</bf>
 -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.61 1998/11/19 11:27:57 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.68 1998/12/30 10:22:34 hohndel Exp $
 </verb>
 
 </article>

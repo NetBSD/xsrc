@@ -3,7 +3,7 @@
 
 <title> Information for Trident Chipset Users
 <author> The XFree86 Project, Inc.
-<date> 25th October 1998
+<date> December 29 1998
 <toc>
 
 <sect> Supported chipsets <p>
@@ -31,7 +31,10 @@ but should work in this way according to the chipset documentation.
 no longer specify 'tgui96xx' as the generic keyword, but you actually
 specify your chip. i.e. Chipset 'tgui9685' will set a ProVidia9685 chip.
 <item> The Cyber9388/9397, 3DImage975 and 3DImage985 cards are fixed in
-XFree86 v3.3.3, these chipsets have some acceleration now too.
+XFree86 v3.3.3, these chipsets have some acceleration now too. This
+acceleration has been disabled by default for the Cyber9388/9397
+because there have been problems, but it can be re-enabled with the
+<tt>"accel"</tt> option (see below).
 <item> 24bpp is all drivers remains unaccelerated, this will change in
 a future version, although 32bpp acceleration is supported for all TGUI
 based chipset except the 9440 which doesn't have the capability.
@@ -56,10 +59,14 @@ based chipset except the 9440 which doesn't have the capability.
 	Turn on PCI burst read mode.
 <tag>Option "tgui_pci_write_on"</tag>
 	Turn on PCI burst write mode.
-	NOTE: PCI Burst modes are now OFF by default. The reason for
-	this is the Graphics Accelerator gets upset, but we allow
-	you to turn it back on it may improve performance, or lock up
-	the chip with Timeouts displayed.
+<tag>Option "pci_burst_on"</tag>
+	Turn on PCI burst (read and write)
+<tag>Option "pci_burst_off"</tag>
+	Turn off PCI burst (read and write)
+	<p>NOTE: PCI burst modes are now OFF by default for TGUI9440 cards
+        because it often upsets its Graphics Accelerator.  It can be
+	turned it back on as may improve performance.
+	PCI burst modes are ON by default for all other PCI/AGP cards.
 <tag>ClockChip "tgui"</tag>
 	Turn on programmable clocks.  This is the default for TGUIs.
 <tag>Option "no_program_clocks"</tag>
@@ -68,6 +75,8 @@ based chipset except the 9440 which doesn't have the capability.
 	monitors - not SVGA.
 <tag>Option "noaccel"</tag>
 	Turn off XAA acceleration.
+<tag>Option "accel"</tag>
+	Enable acceleration for the Cyber9388/9397.
 <tag>Option "xaa_no_color_exp"</tag>
 	Disable color expansion.
 <tag>Option "no_stretch"</tag>
@@ -147,7 +156,7 @@ in the <tt>XF86Config</tt> file, these lockups are overcome. But it may
 be worth checking wait states etc. on the card and in the BIOS setup.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.22.2.6 1998/11/07 13:37:52 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/trident.sgml,v 3.22.2.8 1998/12/29 12:26:23 dawes Exp $
 
 
 

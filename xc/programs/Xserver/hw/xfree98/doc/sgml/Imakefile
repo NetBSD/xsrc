@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/12 1996/10/28 05:13:56 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/sgml/Imakefile,v 3.16.2.4 1998/11/14 06:47:21 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/sgml/Imakefile,v 3.16.2.5 1998/12/22 07:50:02 hohndel Exp $
 
 #include <Server.tmpl>
 
@@ -67,6 +67,7 @@ LinuxDocReadmeTarget(SVR4)
 
 /* Hardware docs */
 LinuxDocReadmeTarget(DECtga)
+LinuxDocReadmeTarget(I128)
 LinuxDocReadmeTarget(Mach32)
 LinuxDocReadmeTarget(Mach64)
 LinuxDocReadmeTarget(MGA)
@@ -112,6 +113,7 @@ LinkSourceFile(DECtga.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(DocIndex.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(FreeBSD.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(BUILD.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(I128.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(LinkKit.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Linux.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(LynxOS.sgml,$(XF86SRC)/doc/sgml)

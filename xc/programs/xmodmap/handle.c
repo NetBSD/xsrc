@@ -1,5 +1,5 @@
 /* $XConsortium: handle.c,v 1.28 94/04/17 20:24:20 converse Exp $ */
-/* $XFree86: xc/programs/xmodmap/handle.c,v 3.0 1996/08/25 14:15:27 dawes Exp $ */
+/* $XFree86: xc/programs/xmodmap/handle.c,v 3.0.4.1 1998/12/13 14:12:29 dawes Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -76,7 +76,8 @@ KeyCode *KeysymToKeycodes(dpy, keysym, pnum_kcs)
 		if (!kcs)
 		    kcs = (KeyCode *)malloc(sizeof(KeyCode));
 		else
-		    kcs = (KeyCode *)realloc((char *)kcs, *pnum_kcs + 1);
+		    kcs = (KeyCode *)realloc((char *)kcs,
+					 sizeof(KeyCode) * (*pnum_kcs + 1));
 		kcs[*pnum_kcs] = i;
 		*pnum_kcs += 1;
 		break;

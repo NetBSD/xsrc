@@ -5,7 +5,7 @@
 <!-- Title information -->
 <title> XFree86 PC98 Dependent Information
 <author> The XFree86 Project Inc. and X98 CORE TEAM
-<date> 1998年  11月  10日
+<date> 1998年  12月 30日
 <abstract>
 このドキュメントでは、PC98サーバ固有の事項について解説します。
 PC-ATと共通の事項については、共通のドキュメントを参照してください。この
@@ -22,7 +22,7 @@ PC-ATと共通の事項については、共通のドキュメントを参照してください。この
   ベンダー	カード名称					サーバ
   ------------- ----------------------------------------------- -------------
   MELCO		WAB-S, WAB-1000, WAB-2000, WSR-E, WSR-G		XF98_WABS
-  MELCO		WAP-2000, WAP-4000				XF98_GANBWAP
+  MELCO		WAP-2000, WAP-4000, WGN-A2, WGN-A4		XF98_GANBWAP
   MELCO		WAB-EP						XF98_WABEP
   MELCO		WSN-A2F						XF98_WSNA
   IO Data	GA-98NB I/C,GA-98NB II, GA-98NB IV		XF98_GANBWAP
@@ -118,7 +118,7 @@ MELCOのWAB-EP (EPSON ローカルバス用)で動作するVGA256ベースのサーバです。
 
 <sect1>XF98_GANBWAP<p>
 	MELCOのWAP2000/4000, IO DataのGA-98NB I/C,II,IV で動作する VGA256
-	ベースのサーバです。ICM GI-5434-2M/4Mでも動作します。
+	ベースのサーバです。ICM GI-5434-2M/4MやMELCO WGN-A2/4でも動作します。
 <sect2>XF86Configの設定<p>
 	以下のOptionがPC98用に指定できます。これ以外に、README.cirrus内に
 	解説されているオプションを指定できます。
@@ -589,8 +589,9 @@ README.s3、XF86_Accel man page
 	<ITEM>Mystique では、使用前に Windows(3.1/95/NT) を使用する色数に
 	合わせて起動しておく必要があります。一旦起動すれば電源をOFFにする
 	までは正常に動作します。ただし 8bpp は色がおかしくなります。
-	<ITEM>Linux/98 では、使用中にハングアップすることがあります。これ
-	を避けるには、root 権限にて dmesg -n 1 を実行するといいようです。
+	<ITEM>Linux/98 では、beta 14 以降のカーネルでないと使用中にハング
+	アップすることがあります。これを避けるには、root 権限にて dmesg
+	-n 1 を実行するといいようです。
 </itemize>
 <sect2>その他<p>
 <itemize>
@@ -621,5 +622,8 @@ README.s3、XF86_Accel man page
 	ます。
 </itemize>
 <sect2>関連<p>
-	README.cirrus、XF86_SVGA man page</p>
+	README.cirrus、XF86_SVGA man page
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree98/doc/Japanese/sgml/read98.sgml,v 3.6.2.7 1998/12/30 09:14:47 hohndel Exp $
+</verb>
 </article>

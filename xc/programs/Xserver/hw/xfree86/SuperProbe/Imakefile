@@ -4,14 +4,18 @@ XCOMM $XConsortium: Imakefile /main/14 1996/10/27 11:03:56 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Imakefile,v 3.23.2.4 1998/10/18 20:41:59 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Imakefile,v 3.23.2.6 1998/12/22 11:23:13 hohndel Exp $
 
-#if defined(SVR3Architecture) || defined(SVR4Architecture) || defined(SCOArchitecture)
+#if (defined(SVR3Architecture) || defined(SVR4Architecture) || defined(SCOArchitecture)) && !defined(DguxArchitecture)
 # define OSModule OS_SYSV
 #endif
 
 #if defined(SVR4Architecture)
 # include <Server.tmpl>
+#endif
+
+#if defined(DguxArchitecture)
+# define OSModule OS_DGUX
 #endif
 
 #if defined(SVR4Architecture) && defined(SunArchitecture) && !HasGcc
@@ -35,8 +39,13 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Imakefile,v 3.23.2.4 1
 # define OSModule OS_Minix
 #endif
 #if defined(i386MachArchitecture)
+#if defined(GNUMachArchitecture)
+   SYS_LIBRARIES = 
+# define OSModule OS_GNUmach
+#else
    SYS_LIBRARIES = /usr/lib/libmach.a
 # define OSModule OS_Mach
+#endif
 #endif
 #if defined(OS2Architecture)
 # define OSModule OS_Os2

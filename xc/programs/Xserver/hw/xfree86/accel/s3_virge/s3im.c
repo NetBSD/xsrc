@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3im.c,v 3.12.2.4 1997/05/28 13:12:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3im.c,v 3.12.2.5 1998/12/18 11:56:22 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -820,7 +820,7 @@ s3RealImageStipple(x, y, w, h, psrc, pwidth, pw, ph, pox, poy,
    if (opaque) {
       SETB_SRC_BG_CLR(bgPixel);
    }
-   else {
+   else if (alu != ROP_Dn) {
       alu |= MIX_MONO_TRANSP;
    }
 

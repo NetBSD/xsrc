@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cyrix/cyrix_accel.c,v 1.1.2.3 1998/11/06 09:47:04 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cyrix/cyrix_accel.c,v 1.1.2.5 1998/12/22 07:49:58 hohndel Exp $ */
 
 /*
  * Copyright 1998 by Annius Groenink, Amsterdam.
@@ -80,10 +80,12 @@ CYRIXAccelInit()
 {	/* General acceleration flags */
 	xf86AccelInfoRec.Flags = PIXMAP_CACHE
 	                       | BACKGROUND_OPERATIONS
+#if 0
+	                       | HARDWARE_PATTERN_MONO_TRANSPARENCY
+#endif
 	                       | HARDWARE_PATTERN_SCREEN_ORIGIN
 	                       | HARDWARE_PATTERN_BIT_ORDER_MSBFIRST
-	                       | HARDWARE_PATTERN_PROGRAMMED_BITS
-	                       | HARDWARE_PATTERN_MONO_TRANSPARENCY;
+	                       | HARDWARE_PATTERN_PROGRAMMED_BITS;
 
 	/* Sync */
 	xf86AccelInfoRec.Sync = CYRIXAccelSync;
@@ -93,19 +95,22 @@ CYRIXAccelInit()
 	    CYRIXSetupForFillRectSolid;
 	xf86AccelInfoRec.SubsequentFillRectSolid = 
 	    CYRIXSubsequentFillRectSolid;
-	xf86GCInfoRec.PolyFillRectSolidFlags = 0;
+	xf86GCInfoRec.PolyFillRectSolidFlags = NO_PLANEMASK;
 
 	/* ScreenToScreen copies */
 	xf86AccelInfoRec.SetupForScreenToScreenCopy =
 	    CYRIXSetupForScreenToScreenCopy;
 	xf86AccelInfoRec.SubsequentScreenToScreenCopy =
 	    CYRIXSubsequentScreenToScreenCopy;
-	xf86GCInfoRec.CopyAreaFlags = TRANSPARENCY_GXCOPY;
 
-	/* Bresenham lines */
+	xf86GCInfoRec.CopyAreaFlags = NO_PLANEMASK | GXCOPY_ONLY;
+
+#if 0
+	/* Bresenham lines - disable because of minor display errors */
 	xf86AccelInfoRec.SubsequentBresenhamLine =
 	    CYRIXSubsequentBresenhamLine;
 	xf86AccelInfoRec.ErrorTermBits = 15;
+#endif
 
 	/* 8x8 color-expanded patterns */
 	xf86AccelInfoRec.SetupFor8x8PatternColorExpand =
@@ -115,6 +120,8 @@ CYRIXAccelInit()
 
 	/* Color expansion */
 	xf86AccelInfoRec.ColorExpandFlags = BIT_ORDER_IN_BYTE_MSBFIRST |
+	                                    NO_PLANEMASK |
+	                                    TRANSPARENCY_GXCOPY |
 	                                    SCANLINE_PAD_BYTE;
 
 	/* Use two blit buffers in a row for text expansion
@@ -175,13 +182,18 @@ void
 CYRIXSetupForFillRectSolid(color, rop, planemask)
 int color, rop;
 unsigned int planemask;
-{	CYRIXsetupSync();
+{	if (xf86GCInfoRec.PolyFillRectSolidFlags & NO_PLANEMASK)
+		planemask = 0xFFFF;
+	if (xf86GCInfoRec.PolyFillRectSolidFlags & GXCOPY_ONLY)
+		rop = GXcopy;
+
+	CYRIXsetupSync();
 	CYRIXsetSourceColors01(color, color);
 	CYRIXsetPatColors01(planemask, 0);
 	CYRIXsetPatMode(rop, RM_PAT_DISABLE);
 	blitMode = BM_READ_SRC_NONE | BM_WRITE_FB | BM_SOURCE_EXPAND
-	         | IfDest(rop, BM_READ_DST_FB0);
-	vectorMode = IfDest(rop, VM_READ_DST_FB);
+	         | IfDest(rop, planemask, BM_READ_DST_FB0);
+	vectorMode = IfDest(rop, planemask, VM_READ_DST_FB);
 }
     
     
@@ -209,7 +221,14 @@ int xdir, ydir;
 int rop;
 unsigned int planemask;
 int transparency_color;
-{	CYRIXsetupSync();
+{	if (xf86GCInfoRec.CopyAreaFlags & NO_PLANEMASK)
+		planemask = 0xFFFF;
+	if (xf86GCInfoRec.CopyAreaFlags & GXCOPY_ONLY)
+		rop = GXcopy;
+	if (xf86GCInfoRec.CopyAreaFlags & NO_TRANSPARENCY)
+		transparency_color = -1;
+
+	CYRIXsetupSync();
 	CYRIXsetPatColors01(planemask, 0);
 
 	if (transparency_color == -1)
@@ -219,6 +238,9 @@ int transparency_color;
 	else
 	{	CYRIXsetPatModeTrans(RM_PAT_DISABLE);
 		transMode = 1;
+
+		if (xf86GCInfoRec.CopyAreaFlags & TRANSPARENCY_GXCOPY)
+			rop = GXcopy;
 
 		/* fill blit buffer 1 with the transparency color */
 		if (vgaBitsPerPixel == 16)
@@ -235,7 +257,7 @@ int transparency_color;
 	}
 
 	blitMode = BM_READ_SRC_FB | BM_WRITE_FB | BM_SOURCE_COLOR
-	         | (transMode ? IfDest(rop, BM_READ_DST_FB1) : BM_READ_DST_NONE)
+	         | (transMode ? BM_READ_DST_NONE : IfDest(rop, planemask, BM_READ_DST_FB1))
 	         | (ydir < 0 ? BM_REVERSE_Y : 0);
 
 	copyXdir = xdir;
@@ -318,6 +340,11 @@ int bg, fg, rop;
 unsigned int planemask;
 {	int trans = (bg == -1);
 
+	if (xf86AccelInfoRec.ColorExpandFlags & NO_PLANEMASK)
+		planemask = 0xFFFF;
+	if (trans && (xf86AccelInfoRec.ColorExpandFlags & TRANSPARENCY_GXCOPY))
+		rop = GXcopy;
+
 	CYRIXsetupSync();
 	CYRIXsetSourceColors01(planemask, planemask);
 	CYRIXsetPatColors01(trans ? 0 : bg, fg);
@@ -325,7 +352,7 @@ unsigned int planemask;
 	CYRIXsetPatModeX(rop, RM_PAT_MONO | (trans ? RM_PAT_TRANSPARENT : 0));
 
 	blitMode = BM_READ_SRC_NONE | BM_WRITE_FB | BM_SOURCE_EXPAND
-	         | (trans ? IfDest(rop, BM_READ_DST_FB0) : BM_READ_DST_NONE);
+	         | (trans ? IfDest(rop, planemask, BM_READ_DST_FB0) : BM_READ_DST_NONE);
 }
 
 void CYRIXSubsequent8x8PatternColorExpand(patternx, patterny, x, y, w, h)
@@ -341,6 +368,9 @@ int bg, fg, rop;
 unsigned int planemask;
 {	int trans = (bg == -1);
 
+	if (trans && (xf86AccelInfoRec.ColorExpandFlags & TRANSPARENCY_GXCOPY))
+		rop = GXcopy;
+
 	CYRIXsetupSync();
 	CYRIXsetSourceColors01(trans ? 0 : bg, fg);
 	CYRIXsetPatColors01(planemask, 0);
@@ -352,7 +382,7 @@ unsigned int planemask;
 	   used.  So far, this problem has not manifested itself in
 	   practice. */
 	blitMode = BM_READ_SRC_BB0 | BM_WRITE_FB | BM_SOURCE_EXPAND
-	         | (trans ? IfDest(rop, BM_READ_DST_FB1) : BM_READ_DST_NONE);
+	         | (trans ? IfDest(rop, planemask, BM_READ_DST_FB1) : BM_READ_DST_NONE);
 }
 
 void CYRIXSubsequentCPUToScreenColorExpand(x, y, w, h, skipleft)

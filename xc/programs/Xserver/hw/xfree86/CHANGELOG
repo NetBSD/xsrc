@@ -1,3 +1,94 @@
+XFree86 3.3.3.1 (4 January 1998)
+1299. Put a copy of <linux/fb.h> in hw/xfree86/etc for reference.
+1298. Document the MGA hw cursor problem with virtual screens >= 8MB.
+1297. Update PC98 documentation (#2350. Takaaki Nomura).
+
+XFree86 3.3.3Z (29 December 1998)
+1296. Add a "cursor_bug" option to enable an experimental workaround for
+      the hw cursor problem that shows up with some Millennium II cards.
+1295. Fix startx incorrectly handling client/server arguments that start with
+      '.' or '/'.
+1294. Fix a tgui problem introduced with item 1276.
+1293. Some minor DG/ux and scanpci updates (Takis Psarogiannakopoulos).
+1292. Fix problem with SVGA s3v driver not turning off the HW cursor when
+      entering DGA mode.
+1291. Fix problem with mouse movement causing viewport changes while in
+      DGA mode.
+1290. Fix some build problems on SVR4.0.
+1289. Documentation updates.
+1288. Fix DGA with NVIDIA driver (#2339, Itai Nahshon).
+1287. Fix XF86Setup, resync PC98 Imakefiles, update Cards98 and XF98Conf.cpp
+      (#2341, Takaaki Nomura).
+
+XFree86 3.3.3b (22 December 1998)
+1286. Fix bug with AceCAD and SummaGraphics XINPUT drivers (#2334, 
+      Frederic Lepied).
+1285. Add support for GNU/Hurd(gnu-0.2) and also glibc-pre2.1 based Hurd
+      (#2329, Uchiyama Yasushi).
+1284. Remove -fno-strength-reduce on NetBSD and OpenBSD (#2328,
+      Matthieu Herrb).
+1283. Update XF86Setup to show correct chipsets for Trident and Matrox driver
+      (Dirk Hohndel).
+1282. Add later Matrox chipsets to SuperProbe (Dirk Hohndel).
+1281. Documentation update for xterm (#2333, Tom Dickey).
+1280. Add Gamma correction to Mach64 server (#2324, Kevin Martin).
+1279. Documentation update and PC98 resync (#2330, Takaaki Nomura).
+1278. Add the newly rewritten Riva code from NVIDIA. Fixes some bugs with 
+      multiple server instances running and other problems with the previous
+      code. The NV1 code is unchanged. The code looks to be Open Source.
+      (#2336, David Schmenk, NVIDIA).
+1277. Fix some drawing errors in the cyrix driver (#2335, Annius Groenink).
+1276. Trident fix to only disable PCI bursting on the 9440 (#2338, 
+      Alan Hourihane).
+
+XFree86 3.3.3a (20 December 1998)
+1275. Disable hardware cursor for MGA if there is not enough memory.
+1274. Documentation updates.
+1273. Add support for the Number Nine I128 Rev IV (Galen Brooks).
+1272. Fix Wacom driver to not send two release events (#2323, Frederic Lepied).
+1271. Change the default name of the SGI dial box to conform to the GLUT
+      default (#2323, Frederic Lepied).
+1270. Fix multi-mouse XInput support (#2323, Frederic Lepied).
+1269. Fix DGA relative mouse movement events when XINPUT is defined.
+1268. DG/ux i386 support (Takis Psarogiannakopoulos).
+1267. Some enhanced XKB files for French-Canadian keyboards (#2204,
+      Eric Moreau).
+1266. Make the X server read an Xauthority file using the real user id
+      to avoid problems when it is located on an NFS-mounted filesystem.
+      (as suggested by #2276, MIHIRA Sanpei Yoshiro).
+1265. Fix an xset segfault (#2320, Itai Nahshon).
+1264. Fix the incorrect mga memory message for Millennium II and G100 cards.
+1263. Only show the mga driver "Read OPTION" message once.
+1262. Avoid an S3V server lockup (#2222, Harald Koenig).
+1261. Set BaseShLibReqs to "-lc" for Linux + glibc2, which avoids problems
+      on systems with both libc5 and glibc2-based X libraries.
+1261. Fix cfb24 bitblt for non-trivial planemasks (Peter Wainwright).
+1260. Fix a typo in FreeBSD.cf that affects adding the runtime library
+      search patch for 2.2.x (#2305, Keisuke Inoue).
+1259. Fix an incorrect realloc in xmodmap (#2303, Alexander V. Lukyanov).
+1258. Some SCO updates (#2302, J. Kean Johnston).
+1257. Fix PC98 XKB (#2292, Hirofumi Nishizuka and #2300, Tetsuo Tsukamoto).
+1256. Update PC98 docs and sample config file (#2292, 2300, Takaaki Nomura).
+1255. Fix MGAG200RamdacInit() not being called for PCI versions of G100/G200
+      cards (Mark Vojkovich).
+1254. Fix Cyrix problem with non-trivial rops (Dave Gotwisner).
+1253. Fix an Xlib  problem with _XimLookupMBText() when using KOI8-R
+      (#2282, Alexander Kabaev).
+1252. Fix the pattern source address mask for the C&T HiQV chips, which
+      was causing 8x8 pattern problems when using more than 2MB of video
+      memory (#2281, Peter Wainwright).
+1251. Fix a mode name typo in xf86config (#2280, Darrin B. Jewell).
+1250. Update PC98 Card database (#2279, 2292, Takaaki Nomura).
+1249. Update sco_mouse.c for XInput changes in 3.3.3 (#2278, Dan Rosenblatt).
+1248. Fix a core dump problem in xauth when interrupted while attempting
+      to lock the auth file.  Also fix a potential problem with calling
+      printf() from within a signal handler (#2274, BSDI/Jeff Polk).
+1247. Fix a problem that shows up occasionally with the X server's PCI probe
+      code detecting phantom entries.
+1246. Fix typo in the 3Dlabs driver that causes serious problems for most OSs.
+1245. Fix some relatively minor install problems (#2238, Geert Uytterhoeven
+      and #2268, Matthieu Herrb).
+
 XFree86 3.3.3 (18 November 1998)
 1244. Obfuscate the NVIDIA sources by NVIDIA's request.
 
@@ -304,7 +395,7 @@ XFree86 3.3.2e (4 October 1998)
 1096. VSTATUS support in xterm (#2019, Robert Earl).
 1095. Support for arc4random() in xdm/genauth.c (#2019, Michael Shalayeff).
 1094. German amiga XKB maps (#2019, Bernd Ernesti).
-1093. Swedish sun keyboad support in Xsun and xkb (#2019, Magnus Holmberg).
+1093. Swedish sun keyboard support in Xsun and xkb (#2019, Magnus Holmberg).
 1092. OpenBSD/amiga support in imake (#2019, Niklas Hallqvist).
 1091. Make LinkVarDirectory handle DESTDIR, OpenBSD.cf synchronisation, fix
       TopXInclude definition in X11.rules (for building contrib against $TOP
@@ -5457,4 +5548,4 @@ XFree86 3.0a (28 April 1994)
 
 XFree86 3.0 (26 April 1994)
 
-$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.194 1998/11/18 16:42:18 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.212 1999/01/04 19:16:01 hohndel Exp $

@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Dial.c,v 1.1.2.4 1998/11/13 05:14:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Dial.c,v 1.1.2.5 1998/12/20 01:54:04 dawes Exp $ */
 
 /*
  * This driver handles SGI dial and button boxes protocol.
@@ -1170,7 +1170,7 @@ xf86DialAllocate()
     char			*dev_name = (char *) getenv("DIAL_DEV");  
 #endif
 
-    local->name = "DialBox";
+    local->name = "dial+buttons";
     local->flags = 0; /*XI86_NO_OPEN_ON_INIT;*/
 #if !defined(sun) || defined(i386)
     local->device_config = xf86DialConfig;

@@ -28,7 +28,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Main.c,v 3.17.2.9 1998/10/27 05:19:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Main.c,v 3.17.2.10 1998/12/18 11:56:20 dawes Exp $ */
 
 #include "Probe.h"
 #include "PatchLevel.h"
@@ -550,16 +550,20 @@ char *argv[];
 #endif
     if (f != (FILE *)NULL)
     {
+#if !defined(DGUX)  /* It craches SuperProbe in DG/ux */
         putc('\007', f);
         putc('\007', f);
         putc('\007', f);
+#endif
         fprintf(f, "WARNING - THIS SOFTWARE COULD HANG YOUR MACHINE.\n");
         fprintf(f, "          READ THE SuperProbe.1 MANUAL PAGE BEFORE\n");
         fprintf(f, "          RUNNING THIS PROGRAM.\n\n");
         fprintf(f, "          INTERRUPT WITHIN FIVE SECONDS TO ABORT!\n\n");
+#if !defined(DGUX)  /* It craches SuperProbe in DG/ux */
         putc('\007', f);
         putc('\007', f);
         putc('\007', f);
+#endif
         fflush(f);
         sleep(5);
     }

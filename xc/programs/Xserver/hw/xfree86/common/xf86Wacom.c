@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Wacom.c,v 3.25.2.8 1998/11/13 05:14:58 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Wacom.c,v 3.25.2.9 1998/12/20 01:54:05 dawes Exp $ */
 
 /*
  * This driver is only able to handle the Wacom IV and Wacom V protocols.
@@ -124,6 +124,7 @@ typedef struct
     int		rotation;
     int		wheel;
     int		discard_first;
+    int		proximity;
 } WacomDeviceState;
 
 typedef struct
@@ -234,8 +235,7 @@ static SymTabRec ModeTabRec[] = {
 #define MAXTRY 3                /* max number of try to receive magic number */
 #define SYSCALL(call) while(((call) == -1) && (errno == EINTR))
 
-/* RESET_IV should be "\r#", methinks -- RLL */
-#define WC_RESET_IV	"#\r"	/* reset to wacom IV command set */
+#define WC_RESET_IV	"RE\r"	/* reset to wacom IV command set */
 #define WC_CONFIG	"~R\r"	/* request a configuration string */
 #define WC_COORD	"~C\r"	/* request max coordinates */
 /* MODEL should be "~#", methinks -- RLL */
@@ -251,15 +251,20 @@ static SymTabRec ModeTabRec[] = {
 #define WC_NO_INCREMENT	"IN0\r"	/* do not enable increment mode */
 #define WC_STREAM_MODE	"SR\r"	/* enable continuous mode */
 #define WC_PRESSURE_MODE "PH1\r" /* enable pressure mode */
+#define WC_STOP		"SP\r"	/* stop sending coordinates */
 #define WC_START	"ST\r"	/* start sending coordinates */
 
 static const char * setup_string = WC_MULTI WC_UPPER_ORIGIN
- WC_ALL_MACRO WC_NO_MACRO1 WC_RATE WC_NO_INCREMENT WC_STREAM_MODE;
+ WC_ALL_MACRO WC_NO_MACRO1 WC_RATE WC_NO_INCREMENT WC_STREAM_MODE WC_START;
 
 static const char * penpartner_setup_string = WC_PRESSURE_MODE WC_START;
 
 #define WC_V_SINGLE	"MT0\r"
 #define WC_V_ID		"ID1\r"
+#define WC_V_BAUD	"BA19\r"
+
+#define WC_RESET_19200	"\r$"	/* reset to 9600 baud */
+#define WC_RESET_19200_IV "\r#"
 
 static const char * intuos_setup_string = WC_V_SINGLE WC_V_ID WC_RATE WC_START;
 
@@ -597,6 +602,78 @@ ascii_to_hexa(char	buf[2])
 /*
  ***************************************************************************
  *
+ * set_serial_speed --
+ *
+ *	Set speed of the serial port.
+ *
+ ***************************************************************************
+ */
+static int
+set_serial_speed(int	fd,
+		 int	speed_code)
+{
+    struct termios	termios_tty;
+    int			err;
+    
+#ifdef POSIX_TTY
+    SYSCALL(err = tcgetattr(fd, &termios_tty));
+
+    if (err == -1) {
+	ErrorF("Wacom tcgetattr error : %s\n", strerror(errno));
+	return !Success;
+    }
+    termios_tty.c_iflag = IXOFF;
+    termios_tty.c_oflag = 0;
+    termios_tty.c_cflag = speed_code|CS8|CREAD|CLOCAL;
+    termios_tty.c_lflag = 0;
+
+    termios_tty.c_cc[VINTR] = 0;
+    termios_tty.c_cc[VQUIT] = 0;
+    termios_tty.c_cc[VERASE] = 0;
+    termios_tty.c_cc[VEOF] = 0;
+#ifdef VWERASE
+    termios_tty.c_cc[VWERASE] = 0;
+#endif
+#ifdef VREPRINT
+    termios_tty.c_cc[VREPRINT] = 0;
+#endif
+    termios_tty.c_cc[VKILL] = 0;
+    termios_tty.c_cc[VEOF] = 0;
+    termios_tty.c_cc[VEOL] = 0;
+#ifdef VEOL2
+    termios_tty.c_cc[VEOL2] = 0;
+#endif
+    termios_tty.c_cc[VSUSP] = 0;
+#ifdef VDSUSP
+    termios_tty.c_cc[VDSUSP] = 0;
+#endif
+#ifdef VDISCARD
+    termios_tty.c_cc[VDISCARD] = 0;
+#endif
+#ifdef VLNEXT
+    termios_tty.c_cc[VLNEXT] = 0; 
+#endif
+	
+    /* minimum 1 character in one read call and timeout to 100 ms */
+    termios_tty.c_cc[VMIN] = 1;
+    termios_tty.c_cc[VTIME] = 10;
+
+    SYSCALL(err = tcsetattr(fd, TCSANOW, &termios_tty));
+    if (err == -1) {
+	ErrorF("Wacom tcsetattr TCSANOW error : %s\n", strerror(errno));
+	return !Success;
+    }
+
+#else
+    Code for OSs without POSIX tty functions
+#endif
+
+    return Success;
+}
+
+/*
+ ***************************************************************************
+ *
  * wait_for_fd --
  *
  *	Wait one second that the file descriptor becomes readable.
@@ -617,6 +694,40 @@ wait_for_fd(int	fd)
     timeout.tv_usec = 0;
     SYSCALL(err = select(FD_SETSIZE, &readfds, NULL, NULL, &timeout));
 
+    return err;
+}
+
+/*
+ ***************************************************************************
+ *
+ * flush_input_fd --
+ *
+ *	Flush all input pending on the file descriptor.
+ *
+ ***************************************************************************
+ */
+static int
+flush_input_fd(int	fd)
+{
+    int			err;
+    int			n_bytes;
+    fd_set		readfds;
+    struct timeval	timeout;
+    char		dummy[1];
+    
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+
+    do {
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+	SYSCALL(err = select(FD_SETSIZE, &readfds, NULL, NULL, &timeout));
+
+	if (err > 0) {
+	    SYSCALL(err = read(fd, &dummy, 1));
+	    DBG(10, ErrorF("flush_input_fd: read %d bytes\n", err));
+	}
+    } while (err > 0);
     return err;
 }
 
@@ -1061,10 +1172,11 @@ xf86WcmSendEvents(LocalDevicePtr	local,
 	/* reports button up when the device has been down and becomes out of proximity */
 	if (priv->oldButtons) {
 	    xf86WcmSendButtons (local, 0, rx, ry, rz, rtx, rty);
+	    priv->oldButtons = 0;
 	}
 	if (!is_core_pointer) {
 	    /* macro button management */
-	    if (buttons) {
+	    if (common->wcmProtocolLevel == 4 && buttons) {
 		int	macro = z / 2;
 
 		DBG(6, ErrorF("macro=%d buttons=%d wacom_map[%d]=%x\n",
@@ -1087,6 +1199,34 @@ xf86WcmSendEvents(LocalDevicePtr	local,
     }
 }
 
+#define ABS(x) ((x) > 0 ? (x) : -(x))
+
+/*
+ ***************************************************************************
+ *
+ * xf86WcmSuppress --
+ *	Determine whether device state has changed enough - return 1
+ *	if not.
+ *
+ ***************************************************************************
+ */
+static int
+xf86WcmSuppress(int			suppress,
+		WacomDeviceState 	*ds1,
+		WacomDeviceState	*ds2)
+{
+    if (ds1->buttons != ds2->buttons) return 0;
+    if (ds1->proximity != ds2->proximity) return 0;
+    if (ABS(ds1->x - ds2->x) >= suppress) return 0;
+    if (ABS(ds1->y - ds2->y) >= suppress) return 0;
+    if (ABS(ds1->pressure - ds2->pressure) >= suppress) return 0;
+    if ((1800 + ds1->rotation - ds2->rotation) % 1800 >= suppress &&
+    	(1800 + ds2->rotation - ds1->rotation) % 1800 >= suppress) return 0;
+    if (ABS(ds1->wheel - ds2->wheel) >= suppress) return 0;
+    return 1;
+}
+
+
 /*
  ***************************************************************************
  *
@@ -1106,6 +1246,7 @@ xf86WcmReadInput(LocalDevicePtr         local)
     int			*px, *py, *pz, *pbuttons, *pprox;
     unsigned char	buffer[BUFFER_SIZE];
     WacomDeviceState	*ds;
+    WacomDeviceState	old_ds;
     int			have_data;
   
     DBG(7, ErrorF("xf86WcmReadInput BEGIN device=%s fd=%d\n",
@@ -1264,9 +1405,10 @@ xf86WcmReadInput(LocalDevicePtr         local)
 	    common->wcmIndex = 0;
 
 	    ds = &common->wcmDevStat[common->wcmData[0] & 0x01];
+	    old_ds = *ds;
 	    have_data = 0;
 	    if ((common->wcmData[0] & 0xfc) == 0xc0) {
-		is_proximity = 1;
+		ds->proximity = 1;
 		ds->device_id = (((common->wcmData[1] & 0x7f) << 5) |
 				 ((common->wcmData[2] & 0x7c) >> 2));
 		ds->serial_num = (((common->wcmData[2] & 0x03) << 30) |
@@ -1279,7 +1421,7 @@ xf86WcmReadInput(LocalDevicePtr         local)
 		  ds->discard_first = 1;
 	    }
 	    else if ((common->wcmData[0] & 0xfe) == 0x80) {
-		is_proximity = 0;
+		ds->proximity = 0;
 		have_data = 1;
 	    }
 	    else if ((common->wcmData[0] & 0xb8) == 0xa0) {
@@ -1296,7 +1438,7 @@ xf86WcmReadInput(LocalDevicePtr         local)
 			   (ds->pressure >= common->wcmThreshold));
 		if ((ds->device_id & 0x008) == 0x008)
 		  ds->buttons |= 4;
-		is_proximity = (common->wcmData[0] & PROXIMITY_BIT);
+		ds->proximity = (common->wcmData[0] & PROXIMITY_BIT);
 		have_data = 1;
 	    }
 	    else if ((common->wcmData[0] & 0xbe) == 0xa8) {
@@ -1312,9 +1454,9 @@ xf86WcmReadInput(LocalDevicePtr         local)
 		if (common->wcmData[8] & 0x08) ds->wheel = -ds->wheel;
 		ds->buttons = (((common->wcmData[8] & 0x70) >> 1) |
 			   (common->wcmData[8] & 0x07));
-		is_proximity = (common->wcmData[0] & PROXIMITY_BIT);
+		ds->proximity = (common->wcmData[0] & PROXIMITY_BIT);
 		have_data = !ds->discard_first;
-	      }
+	    }
 	    else if ((common->wcmData[0] & 0xbe) == 0xaa) {
 		is_stylus = 0;
 		ds->x = (((common->wcmData[1] & 0x7f) << 9) |
@@ -1325,9 +1467,15 @@ xf86WcmReadInput(LocalDevicePtr         local)
 			 ((common->wcmData[5] & 0x78) >> 3));
 		ds->rotation = (((common->wcmData[6] & 0x0f) << 7) |
 				       (common->wcmData[7] & 0x7f));
-		is_proximity = (common->wcmData[0] & PROXIMITY_BIT);
+		ds->proximity = (common->wcmData[0] & PROXIMITY_BIT);
 		have_data = 1;
-		ds->discard_first == 0;
+		ds->discard_first = 0;
+	    }
+
+	    if (have_data && xf86WcmSuppress (common->wcmSuppress,
+		&old_ds, ds)) {
+		*ds = old_ds;
+		have_data = 0;
 	    }
 
 	    if (have_data) {
@@ -1337,9 +1485,17 @@ xf86WcmReadInput(LocalDevicePtr         local)
 
 		    xf86WcmSendEvents(common->wcmDevices[idx],
 				      is_stylus,
-				      is_button,
-				      is_proximity,
-				      ds->x, ds->y, ds->pressure, ds->buttons);
+				      0,
+				      ds->proximity,
+				      ds->x, ds->y,
+				      (ds->device_id & 0xf06) == 0x004 ?
+/* change to #if 0 to make rotation control 3rd valuator */
+#if 1
+				      (ds->wheel >> 1) : ds->pressure,
+#else
+				      ((900 - ((ds->rotation + 900) % 1800)) >> 1) : ds->pressure,
+#endif
+				      ds->buttons);
 		}
 	    }
 	}
@@ -1391,63 +1547,67 @@ xf86WcmOpen(LocalDevicePtr	local)
 	return !Success;
     }
 
-#ifdef POSIX_TTY
-    SYSCALL(err = tcgetattr(local->fd, &termios_tty));
-
-    if (err == -1) {
-	ErrorF("Wacom tcgetattr error : %s\n", strerror(errno));
-	return !Success;
-    }
-    termios_tty.c_iflag = IXOFF;
-    termios_tty.c_oflag = 0;
-    termios_tty.c_cflag = B9600|CS8|CREAD|CLOCAL;
-    termios_tty.c_lflag = 0;
-
-    termios_tty.c_cc[VINTR] = 0;
-    termios_tty.c_cc[VQUIT] = 0;
-    termios_tty.c_cc[VERASE] = 0;
-    termios_tty.c_cc[VEOF] = 0;
-#ifdef VWERASE
-    termios_tty.c_cc[VWERASE] = 0;
-#endif
-#ifdef VREPRINT
-    termios_tty.c_cc[VREPRINT] = 0;
-#endif
-    termios_tty.c_cc[VKILL] = 0;
-    termios_tty.c_cc[VEOF] = 0;
-    termios_tty.c_cc[VEOL] = 0;
-#ifdef VEOL2
-    termios_tty.c_cc[VEOL2] = 0;
-#endif
-    termios_tty.c_cc[VSUSP] = 0;
-#ifdef VDSUSP
-    termios_tty.c_cc[VDSUSP] = 0;
-#endif
-#ifdef VDISCARD
-    termios_tty.c_cc[VDISCARD] = 0;
-#endif
-#ifdef VLNEXT
-    termios_tty.c_cc[VLNEXT] = 0; 
-#endif
-	
-    /* minimum 1 character in one read call and timeout to 100 ms */
-    termios_tty.c_cc[VMIN] = 1;
-    termios_tty.c_cc[VTIME] = 10;
-
-    SYSCALL(err = tcsetattr(local->fd, TCSANOW, &termios_tty));
-    if (err == -1) {
-	ErrorF("Wacom tcsetattr TCSANOW error : %s\n", strerror(errno));
-	return !Success;
-    }
-
-#else
-    Code for OSs without POSIX tty functions
-#endif
 
     DBG(1, ErrorF("initializing tablet\n"));
     
+#if 0
+    if (set_serial_speed(local->fd, B19200) == !Success)
+        return !Success;
+
     /* send reset to the tablet */
+    SYSCALL(err = write(local->fd, WC_RESET_19200, strlen(WC_RESET_19200)));
+    if (err == -1) {
+	ErrorF("Wacom write error : %s\n", strerror(errno));
+	return !Success;
+    }
+    
+    /* wait 15 mSecs */
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 15000;
+    SYSCALL(err = select(0, NULL, NULL, NULL, &timeout));
+    if (err == -1) {
+	ErrorF("Wacom select error : %s\n", strerror(errno));
+	return !Success;
+    }
+
+    /* send reset to the tablet */
+    SYSCALL(err = write(local->fd, WC_RESET_19200_IV, strlen(WC_RESET_19200_IV)));
+    if (err == -1) {
+	ErrorF("Wacom write error : %s\n", strerror(errno));
+	return !Success;
+    }
+    
+    /* wait 100 mSecs */
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 100000;
+    SYSCALL(err = select(0, NULL, NULL, NULL, &timeout));
+    if (err == -1) {
+	ErrorF("Wacom select error : %s\n", strerror(errno));
+	return !Success;
+    }
+#endif
+    
+    /* send reset to the tablet */
+    if (set_serial_speed(local->fd, B9600) == !Success)
+        return !Success;
+
     SYSCALL(err = write(local->fd, WC_RESET_IV, strlen(WC_RESET_IV)));
+    if (err == -1) {
+	ErrorF("Wacom write error : %s\n", strerror(errno));
+	return !Success;
+    }
+    
+    /* wait 15 mSecs */
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 15000;
+    SYSCALL(err = select(0, NULL, NULL, NULL, &timeout));
+    if (err == -1) {
+	ErrorF("Wacom select error : %s\n", strerror(errno));
+	return !Success;
+    }
+
+#if 0
+    SYSCALL(err = write(local->fd, WC_STOP, strlen(WC_STOP)));
     if (err == -1) {
 	ErrorF("Wacom write error : %s\n", strerror(errno));
 	return !Success;
@@ -1461,7 +1621,19 @@ xf86WcmOpen(LocalDevicePtr	local)
 	ErrorF("Wacom select error : %s\n", strerror(errno));
 	return !Success;
     }
-  
+
+    flush_input_fd(local->fd);
+
+#endif
+    
+    SYSCALL(err = write(local->fd, WC_START, strlen(WC_START)));
+    if (err == -1) {
+	ErrorF("Wacom write error : %s\n", strerror(errno));
+	return !Success;
+    }
+    
+    flush_input_fd(local->fd);
+
     DBG(2, ErrorF("reading model\n"));
     if (!send_request(local->fd, WC_MODEL, buffer)) 
 	return !Success;
@@ -1488,7 +1660,7 @@ xf86WcmOpen(LocalDevicePtr	local)
 	common->wcmResolY = 2540;	/* Y resolution in points/inch */
 	common->wcmResolZ = 2540;	/* Z resolution in points/inch */
 	common->wcmPktLength = 9;	/* length of a packet */
-	common->wcmThreshold = -448;	/* Threshold for counting pressure as a button */
+	common->wcmThreshold = -480;	/* Threshold for counting pressure as a button */
     }
 	
     /* tilt works on ROM 1.4 and above */
@@ -1533,6 +1705,26 @@ xf86WcmOpen(LocalDevicePtr	local)
 	SYSCALL(err = write(local->fd, setup_string, strlen(setup_string)));
     }
     else {
+	SYSCALL(err = write(local->fd, WC_V_BAUD,
+			    strlen(WC_V_BAUD)));
+        
+	if (err == -1) {
+	    ErrorF("Wacom write error : %s\n", strerror(errno));
+	    return !Success;
+	}
+
+	/* wait 100 mSecs */
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 100000;
+	SYSCALL(err = select(0, NULL, NULL, NULL, &timeout));
+	if (err == -1) {
+	    ErrorF("Wacom select error : %s\n", strerror(errno));
+	    return !Success;
+	}
+
+	if (set_serial_speed(local->fd, B19200) == !Success)
+	    return !Success;
+
 	SYSCALL(err = write(local->fd, intuos_setup_string,
 			    strlen(intuos_setup_string)));
     }

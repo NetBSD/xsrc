@@ -1,26 +1,28 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128init.c,v 3.6.2.8 1998/10/24 02:12:40 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128init.c,v 3.6.2.9 1998/12/19 15:40:51 robin Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
- *
+ * Copyright 1998 by Number Nine Visual Technology, Inc.
+ * 
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation, and that the name of Robin Cutshaw not be used in
  * advertising or publicity pertaining to distribution of the software without
- * specific, written prior permission.  Robin Cutshaw makes no representations
- * about the suitability of this software for any purpose.  It is provided
- * "as is" without express or implied warranty.
+ * specific, written prior permission.  Robin Cutshaw and Number Nine make no
+ * representations about the suitability of this software for any purpose.  It
+ * is provided "as is" without express or implied warranty.
  *
- * ROBIN CUTSHAW DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL ROBIN CUTSHAW BE LIABLE FOR ANY SPECIAL, INDIRECT OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
- * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * ROBIN CUTSHAW AND NUMBER NINE DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
+ * SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ * FITNESS, IN NO EVENT SHALL ROBIN CUTSHAW OR NUMBER NINE BE LIABLE FOR
+ * ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+ * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+ * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+
 /* $XConsortium: i128init.c /main/5 1996/10/19 17:52:17 kaleb $ */
 
 
@@ -51,6 +53,8 @@ extern int i128DeviceType;
 extern int i128MemoryType;
 extern int i128RamdacType;
 extern int i128DACSyncOnGreen;
+extern int i128FlatPanel;
+extern Bool i128Doublescan;
 
 
 
@@ -77,7 +81,8 @@ saveI128state()
 		iR.i128_base_g[DATA_TI]  =
 			i128mem.rbase_g[DATA_TI];  /*  0x001C  */
 	} else if ((i128RamdacType == IBM526_DAC) ||
-		   (i128RamdacType == IBM528_DAC)) {
+		   (i128RamdacType == IBM528_DAC) ||
+		   (i128RamdacType == SILVER_HAMMER_DAC)) {
 		iR.i128_base_g[IDXL_I] =
 			i128mem.rbase_g[IDXL_I];   /*  0x0010  */
 		iR.i128_base_g[IDXH_I] =
@@ -191,7 +196,8 @@ saveI128state()
 		i128mem.rbase_g[INDEX_TI] = TI_LOOP_CLOCK_PLL_DATA;	MB;
 		iR.Ti3025[8] = i128mem.rbase_g[DATA_TI];
 	} else if ((i128RamdacType == IBM526_DAC) ||
-		   (i128RamdacType == IBM528_DAC)) {
+		   (i128RamdacType == IBM528_DAC) ||
+		   (i128RamdacType == SILVER_HAMMER_DAC)) {
 		CARD32 i;
 
 		for (i=0; i<0x100; i++) {
@@ -290,7 +296,8 @@ restoreI128state()
 		i128mem.rbase_g[INDEX_TI] = TI_COLOR_KEY_CONTROL;	MB;
 		i128mem.rbase_g[DATA_TI] = iR.Ti302X[TI_COLOR_KEY_CONTROL]; MB;
 	} else if ((i128RamdacType == IBM526_DAC) ||
-		   (i128RamdacType == IBM528_DAC)) {
+		   (i128RamdacType == IBM528_DAC) ||
+		   (i128RamdacType == SILVER_HAMMER_DAC)) {
 		CARD32 i;
 
 		for (i=0; i<0x100; i++) {
@@ -318,7 +325,8 @@ restoreI128state()
 	}
 
 	/* iobase is filled in during the device probe (as well as config 1&2)*/
-	if ((i128io.id&0x7) > 0) {
+	if (((i128io.id&0x7) > 0) || (i128DeviceType == I128_DEVICE_ID3)
+			          || (i128DeviceType == I128_DEVICE_ID4)) {
 		int i;
 		unsigned char *vidmem = (unsigned char *)i128mem.mw0_ad;
 
@@ -354,7 +362,8 @@ restoreI128state()
 		i128mem.rbase_g[DATA_TI]  =
 			iR.i128_base_g[DATA_TI];  /* 0x001C */		MB;
 	} else if ((i128RamdacType == IBM526_DAC) ||
-		   (i128RamdacType == IBM528_DAC)) {
+		   (i128RamdacType == IBM528_DAC) ||
+		   (i128RamdacType == SILVER_HAMMER_DAC)) {
 		i128mem.rbase_g[IDXL_I] =
 			iR.i128_base_g[IDXL_I];   /* 0x0010 */		MB;
 		i128mem.rbase_g[IDXH_I] =
@@ -415,6 +424,10 @@ i128Init(mode)
 	int pitch_multiplier, iclock;
 	Bool ret;
 	CARD32 tmp;
+	int doubled = 1;
+
+	if (mode->Flags & V_DBLSCAN)
+		doubled = 2;
 
 	i128HDisplay = mode->HDisplay;
 
@@ -438,6 +451,8 @@ i128Init(mode)
 		iclock = 4;
 	else if (i128RamdacType == IBM528_DAC)
 		iclock = 128 / i128InfoRec.bitsPerPixel;
+	else if (i128RamdacType == SILVER_HAMMER_DAC)
+		iclock = 64 / i128InfoRec.bitsPerPixel;
 	else if ((i128MemoryType == I128_MEMORY_DRAM) ||
 		 (i128MemoryType == I128_MEMORY_SGRAM))
 		iclock = 32 / i128InfoRec.bitsPerPixel; /* IBM526 DAC 32b bus */
@@ -452,15 +467,17 @@ i128Init(mode)
 	i128mem.rbase_g[CRT_HBL] = (mode->HTotal - mode->HDisplay)/iclock;
 	i128mem.rbase_g[CRT_HFP] = (mode->HSyncStart - mode->HDisplay)/iclock;
 	i128mem.rbase_g[CRT_HS] = (mode->HSyncEnd - mode->HSyncStart)/iclock;
-	i128mem.rbase_g[CRT_VAC] = mode->VDisplay;
-	i128mem.rbase_g[CRT_VBL] = mode->VTotal - mode->VDisplay;
-	i128mem.rbase_g[CRT_VFP] = mode->VSyncStart - mode->VDisplay;
-	i128mem.rbase_g[CRT_VS] = mode->VSyncEnd - mode->VSyncStart;
+	i128mem.rbase_g[CRT_VAC] = mode->VDisplay * doubled;
+	i128mem.rbase_g[CRT_VBL] = (mode->VTotal - mode->VDisplay) * doubled;
+	i128mem.rbase_g[CRT_VFP] = (mode->VSyncStart - mode->VDisplay)* doubled;
+	i128mem.rbase_g[CRT_VS] = (mode->VSyncEnd - mode->VSyncStart) * doubled;
 	i128mem.rbase_g[CRT_BORD] = 0x00;
 	tmp = 0x00000070;
 	if (i128DeviceType == I128_DEVICE_ID3)
 		tmp |= 0x00000100;
-	if (i128DACSyncOnGreen)
+	if ((i128DeviceType == I128_DEVICE_ID4) && i128FlatPanel)
+		tmp |= 0x00000100;	/* Turn on digital flat panel support */
+	if (i128DACSyncOnGreen || (mode->Flags & V_CSYNC))
 		tmp |= 0x00000004;
 	i128mem.rbase_g[CRT_1CON] = tmp;
 	if ((i128MemoryType == I128_MEMORY_DRAM) ||
@@ -477,7 +494,11 @@ i128Init(mode)
 			tmp |= 0x01000000;  /* split transfer */
 	}
 	i128mem.rbase_g[CRT_2CON] = tmp;
-	i128mem.rbase_g[CRT_ZOOM] = 0x00000000;
+        if (mode->Flags & V_DBLSCAN)
+		i128Doublescan = TRUE;
+        else
+		i128Doublescan = FALSE;
+	i128mem.rbase_g[CRT_ZOOM] = (i128Doublescan ? 0x00000001 : 0x00000000);
 
 	i128mem.rbase_w[MW0_CTRL] = 0x00000000;
 	switch (i128InfoRec.videoRam) {
@@ -491,6 +512,15 @@ i128Init(mode)
 			/* no break */
 		case 16384:
 			i128mem.rbase_w[MW0_SZ]   = 0x0000000C;
+			break;
+		case 16384+4096:
+			/* no break */
+		case 16384+8192:
+			/* no break */
+		case 16384+8192+4096:
+			/* no break */
+		case 32768:
+			i128mem.rbase_w[MW0_SZ]   = 0x0000000D;
 			break;
 		case 4096:
 			/* no break */
@@ -506,16 +536,24 @@ i128Init(mode)
 	i128mem.rbase_w[MW0_MASK] = 0xFFFFFFFF;
 									MB;
 
-	if ((i128io.id&0x7) > 0) {
+	if ((i128io.id&0x7) > 0 || i128DeviceType == I128_DEVICE_ID3
+			        || i128DeviceType == I128_DEVICE_ID4) {
 
         	xf86EnableIOPorts(i128InfoRec.scrnIndex);
 
 	   	i128io.vga_ctl &= 0x0000FF00;
    		i128io.vga_ctl |= 0x00000082;
+                if (i128FlatPanel && (mode->Flags & V_DBLSCAN))
+		   i128io.vga_ctl |= 0x00000020;  /* Stretch horizontally */
    		outl(iR.iobase + 0x30, i128io.vga_ctl);
 
-		if (i128MemoryType == I128_MEMORY_SGRAM) {
+                if (i128DeviceType == I128_DEVICE_ID4) {
+                        outl(iR.iobase + 0x24, 0x211BF030);
+			usleep(5000);
+			outl(iR.iobase + 0x24, 0xA11BF030);
+		} else if (i128MemoryType == I128_MEMORY_SGRAM) {
 			outl(iR.iobase + 0x24, 0x21089030);
+			usleep(5000);
 			outl(iR.iobase + 0x24, 0xA1089030);
 		}
 
@@ -534,6 +572,9 @@ i128Init(mode)
 
 	if (i128RamdacType == TI3025_DAC)
 		ret = i128ProgramTi3025(mode->SynthClock);
+	else if (i128RamdacType == SILVER_HAMMER_DAC)
+		ret = i128ProgramSilverHammerDAC(mode->SynthClock,
+				                 mode->Flags, mode->HSkew);
 	else
 		ret = i128ProgramIBMRGB(mode->SynthClock, mode->Flags);
 

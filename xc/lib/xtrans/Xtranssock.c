@@ -1,5 +1,5 @@
 /* $XConsortium: Xtranssock.c /main/58 1996/12/04 10:22:50 lehors $ */
-/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.25.2.6 1998/11/05 14:03:08 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranssock.c,v 3.25.2.7 1998/12/18 11:56:11 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -101,7 +101,7 @@ from the X Consortium.
 #include <netinet/tcp.h>
 #endif /* !NO_TCP_H */
 #include <sys/ioctl.h>
-#if defined(SVR4) && !defined(SCO325)
+#if defined(SVR4) && !defined(SCO325) && !defined(DGUX)
 #include <sys/filio.h>
 #endif
 #if (defined(i386) && defined(SYSV)) || defined(_SEQUENT_)

@@ -2,7 +2,7 @@ XCOMM $XConsortium: os2.cf /main/1 1996/10/31 14:47:25 kaleb $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.6 1998/11/04 13:17:43 hohndel Exp $
+XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.7 1998/12/20 10:37:54 dawes Exp $
 
 #define OSName           OS/2
 #define OSVendor	 IBM
@@ -19,7 +19,6 @@ XCOMM platform:  $XFree86: xc/config/cf/os2.cf,v 3.18.2.6 1998/11/04 13:17:43 ho
  */
 #define BootstrapCFlags   -DBSD43
 
-/* X_WCHAR and X_LOCALE are set in Xosdefs.h */
 #define StandardDefines   -DX_LOCALE -DX_WCHAR
 #define XawI18nDefines    -DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 

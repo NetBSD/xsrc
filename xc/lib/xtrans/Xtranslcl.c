@@ -1,5 +1,5 @@
 /* $XConsortium: Xtranslcl.c /main/27 1996/09/28 16:50:14 rws $ */
-/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21.2.6 1998/11/05 14:03:07 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21.2.8 1998/12/18 11:56:11 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -81,8 +81,13 @@ from the X Consortium.
 #include <sys/signal.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#ifdef SVR4
+#if defined(SVR4)
+#if !defined(DGUX)
 #include <sys/filio.h>
+#else /* DGUX */
+#include <sys/stream.h>
+#include <sys/ptms.h>
+#endif
 #endif
 #include <sys/stropts.h>
 #include <sys/wait.h>
@@ -1239,7 +1244,7 @@ char		*port;
      * we recieved, we're doing another I_FDINSERT ...
      */
     (void) putmsg(fd, &ctlbuf, 0, 0);
-    (void) fcntl(fd,F_SETFL,fcntl(fd,F_GETFL,0)|O_NDELAY);
+    (void) fcntl(fd,F_SETFL,fcntl(fd,F_GETFL,0)|O_NONBLOCK);
     
     (void) close(server);
     

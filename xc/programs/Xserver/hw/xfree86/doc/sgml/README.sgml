@@ -3,25 +3,24 @@
 
 <article>
 
-<title>README for XFree86&tm; 3.3.3
+<title>README for XFree86&tm; 3.3.3.1
 <author>The XFree86 Project, Inc
-<date>19 November 1998
+<date>20 December 1998
 
 
 <abstract>
 
 XFree86 is a port of X11R6.3 that supports several Unix and Unix-like
 operating systems on Intel and other platforms.  This release is a
-full release, fixing a number of bugs and adding support for lots of
-new cards compared to XFree86-3.3.2.
-The release is available
-as source patches against the X Consortium X11R6.3 code and the XFree86
-3.3.2 release.  Binary distributions for many architectures are also
-available, including a binary upgrade for XFree86 3.3.2.
+quick update to XFree86 3.3.3, fixing a number of bugs that were found
+after releasing it.  The release is available as source patches
+against the X Consortium X11R6.3 code and the XFree86 3.3.3 release.
+Binary distributions for many architectures are also available,
+including a binary upgrade for XFree86 3.3.3.
 
 </abstract>
 
-<sect>What's new in XFree86 3.3.3
+<sect>What's new in XFree86 3.3.3.1
 <p>
 
 For a summary of new features in this release, please refer to the
@@ -67,10 +66,10 @@ Note: Not all systems listed here have been tested with the current release.
 
     <tag/Others:/
 	<itemize>	
-	<ITEM>NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2
-	<ITEM>OpenBSD 2.0, 2.1
+	<ITEM>NetBSD 1.0, 1.1, 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2, 1.3.3
+	<ITEM>OpenBSD 2.0, 2.1, 2.2, 2.3, 2.4
 	<ITEM>FreeBSD 2.0.5, 2.1, 2.1.5, 2.1.6, 2.1.7, 2.1.7.1, 2.2,
-		2.2.1, 2.2.2, 2.2.5, 2.2.6, 2,2,7, 3.0
+		2.2.1, 2.2.2, 2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0
 <!--
 	<ITEM>BSD/386 1.1, BSD/OS 2.0
 	<ITEM>Mach 386
@@ -89,7 +88,7 @@ Note: Not all systems listed here have been tested with the current release.
     <tag/PC98:/
 	<itemize>
 	<ITEM>FreeBSD(98) 2.0.5, 2.1, 2.1.5, 2.1.7.1, 2.2, 2.2.1,
-		2.2.2, 2.2.5, 2.2.6, 2,2,7
+		2.2.2, 2.2.5, 2.2.6, 2,2,7, 2.2.8, 3.0
 	<ITEM>NetBSD/pc98 (based on NetBSD 1.2, 1.2.1, 1.3, 1.3.1, 1.3.2)
 	<ITEM>PANIX 5.0 for 98
 	<ITEM>Linux/98
@@ -100,7 +99,7 @@ Note: Not all systems listed here have been tested with the current release.
 <sect> Supported video-card chip-sets
 <p>
 
-At this time, XFree86 3.3.3 supports the following chipsets:
+At this time, XFree86 3.3.3.1 supports the following chipsets:
 
   <DESCRIP>
     <tag/Ark Logic/
@@ -148,7 +147,7 @@ At this time, XFree86 3.3.3 supports the following chipsets:
     <tag/NeoMagic/
         2200, 2160, 2097, 2093, 2090, 2070
     <tag/Number Nine/
-	I128 (series I and II), Revolution 3D (T2R)
+	I128 (series I, II and IV), Revolution 3D (T2R)
     <tag>NVidia/SGS Thomson </tag>
 	NV1, STG2000, RIVA128, Riva TNT
     <tag/OAK /
@@ -194,7 +193,7 @@ in mono and 16 color modes, and some are supported an higher color depths.
 Refer to the chipset-specific <tt>README</tt> files (currently for
 <htmlurl name=TGA url=DECtga.html>, <htmlurl name=Matrox url=MGA.html>,
 <htmlurl name=Mach32 url=Mach32.html>, <htmlurl name=Mach64 url=Mach64.html>,
-<htmlurl name=NVidia url=NV1.html>, <htmlurl name=Oak url=Oak.html>,
+<htmlurl name=NVidia url=NVIDIA.html>, <htmlurl name=Oak url=Oak.html>,
 <htmlurl name=P9000 url=P9000.html>,
 <htmlurl name="S3 (except ViRGE)" url=S3.html>,
 <htmlurl name="S3 ViRGE" url=S3V.html>, <htmlurl name=SiS url=SiS.html>,
@@ -705,7 +704,7 @@ XFree86 support was integrated into the base X11R6 distribution by:
 <itemize>
        <item>Joerg Wunsch <it>&lt;joerg_wunsch@uriah.sax.de&gt;</it> (ET3000 banked mono),
        <item>Thomas Dickey <it>&lt;dickey@clark.net&gt;</it>
-		(xterm "new" model ANSI colors and VT220, VT520 emulation).
+		(xterm "new" model ANSI colors and VT220, VT52 emulation).
        <item>Eric Raymond <it>&lt;esr@snark.thyrsus.com&gt;</it> (new video mode documentation),
 
        <item>and an entire horde of beta-testers around the world!
@@ -725,6 +724,7 @@ Core Team.  At this time the Core Team consists of (in alphabetical order):
        <item>Dirk Hohndel <it>&lt;hohndel@XFree86.org&gt;</it>
        <item>Harald Koenig <it>&lt;koenig@XFree86.org&gt;</it>
        <item>Rich Murphey <it>&lt;rich@XFree86.org&gt;</it>
+       <item>Takaaki Nomura <it>&lt;nomura@XFree86.org&gt;</it>
        <item>Jon Tombs <it>&lt;tombs@XFree86.org&gt;</it>
        <item>David Wexelblat <it>&lt;dwex@XFree86.org&gt;</it> 
 </itemize>
@@ -931,8 +931,8 @@ information, contact The XFree86 Project, Inc, at
 
 Source patches are available to upgrade X11R6.3 PL2 from the X Consortium
 (now The Open Group)
-to XFree86 3.3.3.  Binaries for many OSs are also available.  The distribution
-is available from:
+to XFree86 3.3.3.1.  Binaries for many OSs are also available.  The
+distribution is available from:
 
 <itemize>
 <item><htmlurl url="ftp://ftp.XFree86.org/pub/XFree86"
@@ -1088,13 +1088,13 @@ Refer to the <tt>README</tt> file under the specified directory for information 
 which files you need to get to build your distribution.
 -->
 
-Ensure that you are getting XFree86 3.3.3 - some of these sites may archive
+Ensure that you are getting XFree86 3.3.3.1 - some of these sites may archive
 older releases as well.  Check the <htmlurl name="RELNOTES"
 url="RELNOTES.html"> to find which files you need to take from the
 archive.
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.41 1998/11/19 10:08:14 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.75.2.46 1999/01/05 07:15:48 hohndel Exp $
 
 
 

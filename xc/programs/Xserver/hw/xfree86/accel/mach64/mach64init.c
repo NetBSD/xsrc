@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.7 1998/11/13 05:14:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64init.c,v 3.24.2.8 1998/12/22 07:49:52 hohndel Exp $ */
 /*
  * Written by Jake Richter
  * Copyright (c) 1989, 1990 Panacea Inc., Londonderry, NH - All Rights Reserved
@@ -2091,6 +2091,7 @@ int mach64ProgramInternal(colorDepth, dotClock)
 {
     int muxMode = FALSE;
     int temp;
+    extern unsigned char xf86rGammaMap[], xf86gGammaMap[], xf86bGammaMap[];
 
     switch (colorDepth) {
     case CRTC_PIX_WIDTH_8BPP:
@@ -2109,9 +2110,9 @@ int mach64ProgramInternal(colorDepth, dotClock)
 	outb(ioDAC_REGS + 2, 0xFF);
         outb(ioDAC_REGS, 0);
 	for (temp = 0; temp < 256; temp++) {
-	    outb(ioDAC_REGS + 1, temp);
-	    outb(ioDAC_REGS + 1, temp);
-	    outb(ioDAC_REGS + 1, temp);
+	    outb(ioDAC_REGS + 1, xf86rGammaMap[temp]);
+	    outb(ioDAC_REGS + 1, xf86gGammaMap[temp]);
+	    outb(ioDAC_REGS + 1, xf86bGammaMap[temp]);
 	}
 	break;
     }

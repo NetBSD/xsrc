@@ -1,4 +1,4 @@
-# $XFree86: xc/programs/Xserver/hw/xfree98/xf86config/Cards98,v 1.3.2.3 1998/11/10 11:55:46 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree98/xf86config/Cards98,v 1.3.2.6 1998/12/23 13:36:31 hohndel Exp $
 #
 #
 #
@@ -6,7 +6,7 @@
 # This is the database of card definitions used by xf86config.
 # Each definition should have a NAME entry, CHIPSET (descriptive) and
 # SERVER (one of EGC, GANBWAP, PEGC, NKVNEC, WABS, WABEP, WSNA, TGUI,
-# MGA, NECS3, PWSKB, PWLB, GA968).
+# MGA, SVGA, NECS3, PWSKB, PWLB, GA968).
 # A reference to another definition is made with SEE (already defined
 # entries are not overridden).
 # Optional entries are RAMDAC (identifier), CLOCKCHIP (identifier),
@@ -47,7 +47,7 @@ CHIPSET CL-GD5434
 SERVER GANBWAP
 LINE    ClockChip	"cirrus"
 LINE    Option	"ga98nb1"
-LINE    # Option	"mmio"
+LINE    Option	"no_mmio"
 LINE    # Option	"sw_cursor"
 
 NAME GA-98NBII
@@ -55,7 +55,7 @@ CHIPSET CL-GD5434
 SERVER GANBWAP
 LINE    ClockChip	"cirrus"
 LINE    Option	"ga98nb2"
-LINE    # Option	"mmio"
+LINE    Option	"no_mmio"
 LINE    # Option	"sw_cursor"
 
 NAME GA-98NBIV
@@ -63,14 +63,31 @@ CHIPSET CL-GD5434
 SERVER GANBWAP
 LINE    ClockChip	"cirrus"
 LINE    Option	"ga98nb4"
-LINE    # Option	"mmio"
+LINE    Option	"no_mmio"
 LINE    # Option	"sw_cursor"
 
 NAME WAP-2000/4000
 CHIPSET CL-GD5434
 SERVER GANBWAP
 LINE    Option	"wap"
+LINE    Option	"no_mmio"
 LINE    # Option	"epsonmemwin"
+
+NAME WGN-A2/4
+CHIPSET CL-GD5434
+SERVER GANBWAP
+LINE    Chipset	"clgd5434"
+LINE    ClockChip	"cirrus"
+LINE    Option	"wap"
+LINE    Option	"med_dram"
+LINE    Option	"no_mmio"
+LINE    Option	"sw_cursor"
+LINE    Option	"fifo_conservative"
+LINE    Option	"fifo_aggressive"
+LINE    Option	"linear"
+LINE    speedup	"all"
+LINE    VideoRam	2048
+LINE    # VideoRam	4096
 
 # NKVNEC
 
@@ -106,26 +123,17 @@ SEE PCNKV/PCNKV2/NEC_CIRRUS
 
 NAME PC9821BX4/U2
 LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
 NAME PC9821Cb
 LINE    Option	"nec_cirrus"
-SEE PCNKV/PCNKV2/NEC_CIRRUS
-
-NAME PC9821Ce
-LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
 NAME PC9821Cf
 LINE    Option	"nec_cirrus"
-SEE PCNKV/PCNKV2/NEC_CIRRUS
-
-NAME PC9821Ce2
-LINE    Option	"nec_cirrus"
-SEE PCNKV/PCNKV2/NEC_CIRRUS
-
-NAME PC9821Cs
-LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
 NAME PC9821Cs2
@@ -134,9 +142,15 @@ SEE PCNKV/PCNKV2/NEC_CIRRUS
 
 NAME PC9821Cx
 LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
 NAME PC9821Cx2
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821Es
 LINE    Option	"nec_cirrus"
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
@@ -160,6 +174,90 @@ NAME PC9821Ns
 LINE    Option	"nec_cirrus"
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
+NAME PC9821V7/C
+LINE    Chipset "clgd5430"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821V10/C,S
+LINE    Chipset "clgd5430"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821V12/S
+LINE    Chipset "clgd5430"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821V13/S
+LINE    Chipset "clgd5430"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821V16/S
+LINE    Chipset "clgd5430"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821V16/S5V,P
+LINE    Chipset "clgd5446"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821V20/S7
+LINE    Chipset "clgd5430"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821Xb10
+LINE    Chipset "clgd5430"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821Xc13/S5
+LINE    Chipset "clgd5446"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821Xc16/M,S
+LINE    Chipset "clgd5446"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821Xc200/M,S
+LINE    Chipset "clgd5446"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821Xa7e
+LINE    Chipset "clgd5430"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821Xe
+LINE    Chipset "clgd5430"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
+NAME PC9821Xe10
+LINE    Chipset "clgd5430"
+LINE    Option	"nec_cirrus"
+LINE    Option	"no_mmio"
+SEE PCNKV/PCNKV2/NEC_CIRRUS
+
 NAME PC486MR
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
@@ -167,6 +265,7 @@ NAME PC486MS
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
 NAME PC486MU
+LINE    Chipset "clgd5429"
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
 NAME PC486MV
@@ -176,6 +275,7 @@ NAME PC586MV
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
 NAME PC586RV
+LINE    Chipset "clgd5429"
 SEE PCNKV/PCNKV2/NEC_CIRRUS
 
 # WABS
@@ -207,6 +307,7 @@ LINE    Option	"med_dram"
 NAME WSN-A2F
 CHIPSET CL-GD5434
 SERVER WSNA
+LINE    Option	"no_mmio"
 LINE    Option	"med_dram"
 
 # TGUI
@@ -318,13 +419,54 @@ CHIPSET MGA1064SG
 SERVER MGA
 
 NAME PC9821V166/S
+LINE    VideoRam	2048
 SEE MGA Mystique
 
-NAME PC9821V200/M,S
+NAME PC9821V200/S
+LINE    VideoRam	2048
 SEE MGA Mystique
 
-NAME PC9821V233/M7,M7V
+NAME PC9821V200/M
+LINE    VideoRam	4096
 SEE MGA Mystique
+
+NAME PC9821V233/M7
+LINE    VideoRam	2048
+SEE MGA Mystique
+
+NAME PC9821V233/M7V
+LINE    VideoRam	4096
+SEE MGA Mystique
+
+# SVGA
+
+NAME NEC Cirrus 755x
+CHIPSET CL-GD7555
+LINE    Chipset "clgd7555"
+LINE    # VideoRam	2048
+LINE    # Option	"no_bitblt"
+LINE    # Option	"fast_dram"
+LINE    Option	"linear"
+LINE    Option	"noaccel"
+SERVER SVGA
+
+NAME PC9821Nr12
+SEE NEC Cirrus 755x
+
+NAME PC9821Nr13
+SEE NEC Cirrus 755x
+
+NAME PC9821La13
+SEE NEC Cirrus 755x
+
+NAME PC9821Ls12
+SEE NEC Cirrus 755x
+
+NAME PC9821Ls13
+SEE NEC Cirrus 755x
+
+NAME PC9821Ls150
+SEE NEC Cirrus 755x
 
 # NECS3
 
@@ -509,7 +651,7 @@ LINE    VideoRam	4096
 NAME GA-968V4/PCI
 CHIPSET S3 968
 SERVER GA968
-LINE    Chipset	"s3_generic"
+LINE    # Chipset	"s3_generic"
 LINE    # Chipset	"mmio_928"
 LINE    VideoRam	4096
 LINE    # VideoRam	2048

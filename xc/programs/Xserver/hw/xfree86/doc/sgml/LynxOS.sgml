@@ -2,9 +2,9 @@
 
 <article>
 
-<title>README for XFree86 3.3.3 on LynxOS
+<title>README for XFree86 on LynxOS
 <author>Thomas Mueller
-<date>Last modified on: 10 October 1998
+<date>Last modified on: 29 December 1998
 <toc>
 
 <sect>What and Where is XFree86?<p>
@@ -23,7 +23,7 @@ The sources for XFree86 are available by anonymous ftp from:
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current"
 url="ftp://ftp.XFree86.org/pub/XFree86/current">
 
-Binaries of the 3.3.3 release for LynxOS AT are available from:
+Binaries of XFree86 for LynxOS AT are available from:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS"
 url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/LynxOS">
@@ -51,7 +51,7 @@ this file and we'll revise it.
 
 <sect>Installing the Binaries
 <p>
-Please refer to section "Installing the XFree86 3.3.3 Release" of the 
+Please refer to section "Installing the XFree86 3.3.3.1 Release" of the 
 <htmlurl url="RELNOTES.html" name="Release Notes"> for detailed 
 installation instructions.
 
@@ -128,9 +128,9 @@ your hardware.
      # reboot -N
   </verb></tscreen>
 
-<sect1>Mouse support in 3.3.3<p>
+<sect1>Mouse support in XFree86<p>
 
-  XFree86 3.3.3 includes support for PnP mice (see also
+  XFree86 includes support for PnP mice (see also
   <htmlurl url="mouse.html" name="Mouse Support in XFree86">). The
   current LynxOS TTY device driver doesn't allow the necessary
   manipulation of the RTS line and therefore the support for
@@ -535,7 +535,7 @@ few little adjustments to your system:
   <tt>lynx.cf</tt> but it has never been tested (reports are welcome).
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.8 1998/11/07 13:52:41 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/LynxOS.sgml,v 3.14.2.9 1998/12/29 07:54:27 hohndel Exp $
 
 
 

@@ -11,20 +11,17 @@
 
                          Orest Zborowski, Dirk Hohndel
 
-                               November 7, 1998
+                               December 23, 1998
 
 
 
 1.  Linux versions on which XFree86 has been tested
 
-XFree86 has been tested with Linux version 2.0.32 and several 2.1.x kernels.
-It is known not to compile with kernel sources newer then somewhere around
-2.1.70, due to incompatibilities in the joystick driver. Except for the joy-
-stick driver, it works just fine with all 2.1.x kernels tested (including
-2.1.88). It should work with any version since 1.0 without change. The binaries
-and libraries are based on the 5.3.12 Elf C libraries, and the 1.7.14 dynamic
-linker ld.so. You will at least need the 5.2.x Elf C libraries to successfully
-use the servers.
+XFree86 has been tested with Linux version 2.0.36 and several 2.1.x kernels.
+It works just fine with all 2.1.x kernels tested (including 2.1.131). It should
+work with any version since 1.0 without change. The binaries and libraries are
+based on the 5.3.12 Elf C libraries, and the 1.7.14 dynamic linker ld.so. You
+will at least need the 5.2.x Elf C libraries to successfully use the servers.
 
 
 2.  Backwards Compatibility
@@ -59,6 +56,9 @@ tion details are provided in the RELNOTES.
 
 XFree86 requires about 4mb of virtual memory to run, although having 8mb of RAM
 is probably the minimum comfortable configuration. A 387 coprocessor is helpful
+for 386 machines, although greater gains in interactive performance are
+obtained with an increase in physical memory.  Also, a faster graphics card,
+bus or RAM, will improve server performance.
 
 
 Information for Linux Users                                                   1
@@ -70,10 +70,6 @@ Information for Linux Users                                                   1
 Information for Linux Users                                                   2
 
 
-
-for 386 machines, although greater gains in interactive performance are
-obtained with an increase in physical memory.  Also, a faster graphics card,
-bus or RAM, will improve server performance.
 
 After unpacking the tar files, you need to include /usr/X11R6/lib in
 /etc/ld.so.conf (where it should already be by default) or in your
@@ -133,6 +129,10 @@ Linux modeswitch, that will not be mappable to X.
 
 
 
+
+
+
+
 Information for Linux Users                                                   3
 
 
@@ -160,121 +160,7 @@ tion that you use, so check the documentation provided there.
 The xdm binary provided should run with both shadow- and non-shadow password
 systems.
 
-
-6.  xterm
-
-The XFree86-3.3.3 binary release contains an xterm binary that has been linked
-statically against libtermcap. This was done to make sure that it will cor-
-rectly work with all distributions, regardless whether they rely on libtermcap
-or libncurses. Contrary to the xterm binaries in some beta version following
-XFree86-3.1.2, this binary does not rely on a recent libncurses being installed
-on your system.
-
-
-7.  Input devices
-
-XFree86 now support the dynamic loading of drivers for external input devices
-using the XInput extension. Currently supported devices are:
-
-   o Joystick (xf86Jstk.so)
-
-   o Wacom tablets (Wacom IV protocol only, xf86Wacom.so)
-
-   o SummaSketch tablets (xf86Summa.so)
-
-   o Elographics touchscreen (xf86Elo.so)
-
-   o AceCad ADVANCEDigitizer (xf86AceCad.so)
-
-   o MicroTouch TouchPen (xf86MuTouch.so)
-
-   o SGI dial box (xf86Dial.so)
-
-To use a specific device, add the line
-
-
-
-
-
-
-
-
-Information for Linux Users                                                   4
-
-
-
-     load "module"
-
-
-in the Module section of XF86Config, where module is the name of the .so file
-corresponding to your device.  You also need to set up a XInput section in
-XF86Config.  Refer to the XF86Config(5) man page for detailed configuration
-instructions.
-
-You can then change the device used to drive the X pointer with the xset-
-pointer(1) command.
-
-For joystick support, you'll need to install the joystick device driver in the
-kernel.
-
-7.1  Configuring PEX, XIE and GLX extensions
-
-The PEX, XIE and GLX extensions are now supported as external modules.  If you
-want to have access to these extensions, add the following lines to the Module
-section of XF86Config:
-
-        load    "pex5.so"
-        load    "xie.so"
-
-
-For GLX you need to get the appropriate GLX modules, first. They are, at this
-time, not part of the XFree86 distribution.
-
-
-8.  Compiling XFree86
-
-There are no special instructions required for compiling XFree86.  This version
-was compiled with gcc-2.7.2.1, the 5.3.12 Elf libraries and the 1.7.14 shared,
-dynamic linker ld.so.  The server has been compiled with -m486, which optimizes
-it for the 486 processor, but the binary will run on the 386 processor (there
-is a slight increase in binary size over using -m386, but no loss of perfor-
-mance).
-
-All extensions and clients have been ported and tested. By default, the servers
-are compiled without any extra extensions (PEX, XIE, etc), but libraries for
-those extensions are always generated. They can be loaded at runtime, see the
-XFree86 man page for details. By modifying site.def, extra extensions can be
-compiled into the server.  Alternately, the link kit can be used to craft modi-
-fied servers.
-
-If an aout version of XFree86 is to be built and patches are applied which sig-
-nificantly change the libraries, modified jump_xxx files will be needed. Those
-can be generated according to instructions given in the DLL tools package, and
-will be made available as XFree86 patches.
-
-The JUMP_xxx defines used to compile the X libraries can also be used to com-
-pile external X shared libraries, like Xaw3d. Detailed instructions are pro-
-vided in /usr/X11R6/lib/X11/config/lnxLib.rules, where the X library defini-
-tions are provided, as an example.
-
-
-
-
-
-
-
-
-
-Information for Linux Users                                                   5
-
-
-
-9.  Bug Notification
-
-Bug reports should be sent to XFree86@XFree86.org or posted to the comp.win-
-dows.x.i386unix newsgroup.
-
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.6 1998/11/08 09:06:39 dawes Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Linux.sgml,v 3.13.2.7 1998/12/23 13:36:26 hohndel Exp $
 
 
 
@@ -313,25 +199,7 @@ dows.x.i386unix newsgroup.
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Information for Linux Users                                                   6
+Information for Linux Users                                                   4
 
 
 
@@ -415,14 +283,14 @@ Information for Linux Users                                                   6
 
 5. Installing Xdm, the display manager ...................................... 3
 
-6. xterm .................................................................... 3
 
-7. Input devices ............................................................ 3
-   7.1 Configuring PEX, XIE and GLX extensions .............................. 4
 
-8. Compiling XFree86  ....................................................... 4
 
-9. Bug Notification  ........................................................ 5
+
+
+
+
+
 
 
 
@@ -461,4 +329,4 @@ Information for Linux Users                                                   6
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Linux,v 3.21.2.8 1998/11/14 06:46:45 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.Linux,v 3.21.2.10 1998/12/29 07:54:23 hohndel Exp $

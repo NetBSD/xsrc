@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvreg.h,v 3.2.2.2 1998/10/19 07:33:50 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvreg.h,v 3.2.2.3 1998/12/22 07:37:49 hohndel Exp $ */
 
 #ifndef __NVREG_H_
 #define __NVREG_H_

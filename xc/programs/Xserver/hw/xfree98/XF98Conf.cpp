@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/XF98Conf.cpp,v 3.13.2.5 1998/11/10 11:55:43 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/XF98Conf.cpp,v 3.13.2.7 1998/12/23 13:36:28 hohndel Exp $
 XCOMM
 XCOMM Copyright (c) 1994 by The XFree86 Project, Inc.
 XCOMM
@@ -474,6 +474,24 @@ Section "Device"
 EndSection
 
 Section "Device"
+    Identifier	"WGNA2"
+    VendorName	"MELCO"
+    BoardName	"WGN-A2"
+    Chipset	"clgd5434"
+    ClockChip   "cirrus"
+    Option      "wap"
+    Option      "med_dram"
+    Option      "no_mmio"
+    Option      "sw_cursor"
+    Option      "fifo_conservative"
+    Option      "fifo_aggressive"
+    Option      "linear"
+    speedup     "all"
+    VideoRam    2048
+XCOMM    VideoRam	4096
+EndSection
+
+Section "Device"
     Identifier  "GA98NB1"
     VendorName  "IO DATA"
     BoardName   "GA-98NBI"
@@ -708,9 +726,8 @@ Section "Device"
     Identifier	"GA-968"
     VendorName	"IO DATA"
     BoardName	"GA-968V4/PCI"
-    Chipset	"s3_generic"
+XCOMM Chipset	"s3_generic"
 XCOMM Chipset	"mmio_928"
-XCOMM Option	"ga968"
     VideoRam	4096
 XCOMM    VideoRam	2048
 Endsection
@@ -728,6 +745,7 @@ XCOMM    Device	"WABEP"
 XCOMM    Device	"NEC480"
 XCOMM    Device	"WAP"
 XCOMM    Device	"WSNA2F"
+XCOMM    Device	"WGNA2"
 XCOMM    Device	"NKVNEC"
 XCOMM    Device	"GA98NB1"
 XCOMM    Device	"GA98NB2"

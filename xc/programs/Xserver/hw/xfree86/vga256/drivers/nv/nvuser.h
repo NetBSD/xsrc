@@ -31,7 +31,7 @@
 |*                                                                           *|
  \***************************************************************************/
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvuser.h,v 1.1.2.3 1998/10/19 07:33:51 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvuser.h,v 1.1.2.5 1998/12/22 12:39:14 hohndel Exp $ */
 
 #ifndef __NVUSER_H_
 #define __NVUSER_H_

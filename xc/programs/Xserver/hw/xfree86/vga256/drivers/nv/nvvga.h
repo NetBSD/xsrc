@@ -20,14 +20,17 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvvga.h,v 1.1.2.3 1998/10/19 07:33:51 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/nvvga.h,v 1.1.2.4 1998/12/22 07:37:50 hohndel Exp $ */
 
 #ifndef __NVVGA_H__
 #define __NVVGA_H__
 
+#ifndef __RIVA_HW_H__
+#include "riva_hw.h"
+#endif
+
 #define PALETTE_SIZE 256
 
-#if 1
 #define NV_PDAC_CURSOR_SIZE                   32
 #define NV_PDAC_CURSOR_PLANE_SIZE         (NV_PDAC_CURSOR_SIZE*4)
 
@@ -63,46 +66,6 @@ typedef struct {
   unsigned char plane1[NV_PDAC_CURSOR_PLANE_SIZE];
   unsigned char palette[PALETTE_SIZE][3];
 }NV1Registers;
-#endif
-
-
-/* This is for the NV3, AKA RIVA128. It does have a VGA core, so
- * fits into the SVGA server much easier than the NV1 does
- */
-typedef struct {
-  unsigned char offset,
-                repaint0,
-                repaint1,
-                screenExtra,
-                pixelFormat,
-                horizExtra,
-                fifoControl,
-                fifo;
-
-  unsigned long vpllCoeff,
-                config0,
-                coeffSelect,
-                generalControl;
-}NV3Registers;
-
-/* This is for the NV4, AKA RIVATNT. It does have a VGA core, so
- * fits into the SVGA server much easier than the NV1 does
- */
-typedef struct {
-  unsigned char offset,
-                repaint0,
-                repaint1,
-                screenExtra,
-                pixelFormat,
-                horizExtra,
-                fifoControl,
-                fifo;
-
-  unsigned long vpllCoeff,
-                config0,
-                coeffSelect,
-                generalControl;
-}NV4Registers;
 
 /*
  * Driver data structures.
@@ -112,11 +75,9 @@ typedef struct {
   int vgaValid; /* is the above state valid?? */
   NVChipType type; /* What the union holds */
   union {
-    NV1Registers nv1;
-    NV3Registers nv3;
-    NV4Registers nv4;
+    NV1Registers  nv1;
+    RIVA_HW_STATE RivaState;
   }regs;
 } vgaNVRec, *vgaNVPtr;
-
 
 #endif
