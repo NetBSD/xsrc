@@ -23,6 +23,7 @@ This software has NO WARRANTY.  Use it at your own risk.
 #endif /* USE_LIBC_VM86 */
 #elif defined(__NetBSD__)
 #include <signal.h>
+#include <setjmp.h>
 #include <machine/psl.h>
 #include <machine/vm86.h>
 #endif
@@ -211,6 +212,12 @@ static struct
 	unsigned short ret_seg, ret_off;
 	unsigned short stack_seg, stack_off;
 	struct vm86_struct vm;
+#if defined(__NetBSD__)
+	int success;
+	jmp_buf env;
+	void *old_sigurg;
+	int vret;
+#endif
 	} context = { 0 };
 
 
@@ -799,7 +806,7 @@ debug_info(int vret)
 	fputs("]\n", stderr);
 	}
 
-
+#if defined(linux)
 static int
 run_vm86(void)
 	{
@@ -838,6 +845,93 @@ run_vm86(void)
 
 	return 0;
 	}
+#elif defined(__NetBSD__)
+static int
+vm86_callback(int sig, int code, struct sigcontext *scp)
+	{
+
+	/* Sync our context with what the kernel develivered to us. */
+	memcpy(&context.vm.substr.regs.vmsc, scp, sizeof(*scp));
+
+	switch (VM86_TYPE(code))
+		{
+		case VM86_INTx:
+			{
+			unsigned int v = VM86_ARG(code);
+
+			if (v == RETURN_TO_32_INT)
+				{
+				context.success = 1;
+				longjmp(context.env, 1);
+				}
+
+			pushw(CONTEXT_REGS.REG(eflags));
+			pushw(CONTEXT_REGS.REG(cs));
+			pushw(CONTEXT_REGS.REG(eip));
+
+			CONTEXT_REGS.REG(cs) = get_int_seg(v);
+			CONTEXT_REGS.REG(eip) = get_int_off(v);
+			CONTEXT_REGS.REG(eflags) &= ~(VIF_MASK | TF_MASK);
+
+			break;
+			}
+
+		case VM86_UNKNOWN:
+			if (emulate() == 0)
+				{
+				context.success = 0;
+				context.vret = code;
+				longjmp(context.env, 1);
+				}
+			break;
+
+		default:
+			context.success = 0;
+			context.vret = code;
+			longjmp(context.env, 1);
+			return;
+		}
+
+	/* ...and sync our context back to the kernel. */
+	memcpy(scp, &context.vm.substr.regs.vmsc, sizeof(*scp));
+	}
+
+static int
+run_vm86(void)
+	{
+
+	if (context.old_sigurg)
+		{
+		fprintf(stderr, "run_vm86: callback already installed\n");
+		return (0);
+		}
+
+	if ((context.old_sigurg =
+	     signal(SIGURG, (void (*)(int))vm86_callback)) == (void *)-1)
+		{
+		context.old_sigurg = NULL;
+		fprintf(stderr, "run_vm86: cannot install callback\n");
+		return (0);
+		}
+
+	if (setjmp(context.env))
+		{
+		(void) signal(SIGURG, context.old_sigurg);
+		context.old_sigurg = NULL;
+
+		if (context.success)
+			return (1);
+		debug_info(context.vret);
+		return (0);
+		}
+
+	if (i386_vm86(&context.vm) == -1)
+		return (0);
+
+	/* NOTREACHED */
+	return (0);
+	}
+#endif
 
 
 int
