@@ -38,6 +38,7 @@
 
 #include "Pci.h"
 
+#if defined(__alpha__)
 #include <machine/pio.h>
 #include <machine/sysarch.h>
 
@@ -93,3 +94,7 @@ netbsdPciCfgSetBits(PCITAG tag, int off, CARD32 mask, CARD32 bits)
 	val = (val & ~mask) | (bits & mask);
 	netbsdPciCfgWrite(tag, off, val);
 }
+/* #elif defined(__something_else__) */
+#else
+# error architecture not supported
+#endif
