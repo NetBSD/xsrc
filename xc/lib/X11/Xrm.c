@@ -1,4 +1,4 @@
-/* $TOG: Xrm.c /main/91 1997/05/21 14:09:34 kaleb $ */
+/* $TOG: Xrm.c /main/92 1997/06/22 07:14:10 kaleb $ */
 
 /***********************************************************
 Copyright 1987, 1988, 1990 by Digital Equipment Corporation, Maynard
@@ -51,7 +51,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/lib/X11/Xrm.c,v 3.3.4.2 1997/05/22 14:00:26 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xrm.c,v 3.3.4.3 1997/06/22 12:19:25 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>
@@ -491,6 +491,7 @@ static XrmDatabase NewDatabase()
     if (db) {
 	_XCreateMutex(&db->linfo);
 	db->table = (NTable)NULL;
+	db->mbstate = (XPointer)NULL;
 	db->methods = _XrmInitParseInfo(&db->mbstate);
 	if (!db->methods)
 	    db->methods = (XrmMethods)&mb_methods;
