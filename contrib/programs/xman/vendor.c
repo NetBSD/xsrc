@@ -279,40 +279,34 @@ int section;
 int flags;
 {
   char * cp;
-  char *p;
+  int l1, l2;
   char page[BUFSIZ];
   char sect[BUFSIZ];
+  char suffix[BUFSIZ];
 
-  ParseEntry(entry, NULL, sect, page);
+  ParseEntry(entry, NULL, sect, page, suffix);
 
+  l1 = strlen(page);
 #ifndef CRAY
-  if ( (cp = rindex(page, '.')) != NULL)
-    if ( (int)strlen(cp) > 2 ) {
-      *cp++ = '(';
-      while( (cp[1] != '\0') ) {
-	*cp = *(cp + 1); 
-	cp++;
-      }
-      *cp++ = ')';
-      *cp = '\0';
-    }
-    else
-      *cp = '\0';
+  l2 = strlen(suffix);
+  if (l2 > 2) {
+      cp = XtMalloc(l1+3);
+      sprintf(cp, "%s(%s)", page, suffix);
+  } else {
+      cp = StrAlloc(page);
+  }
 
 #else	/* CRAY	- pick up the Cray name from the section */
-
-  if ( (cp = rindex(page, '.')) == NULL)
-    cp = page + strlen(page);
-  if ((flags & MSUFFIX) && strlen(sect) > 4) {
-    p = sect + 4;
-    *cp++ = '(';
-    while (*p)
-      *cp++ = *p++;
-    *cp++ = ')';
+  
+  l2 = strlen(sect);
+  if ((flags & MSUFFIX) && l2 > 4) {
+      cp = XtMalloc(l1+l2-3);
+      sprintf(cp, "%s(%s)", page, sect+4);
+  } else {
+      cp = StrAlloc(page);
   }
-  *cp = '\0';  
 
 #endif	/* CRAY */
   
-  return(StrAlloc(page));
+  return(cp);
 }
