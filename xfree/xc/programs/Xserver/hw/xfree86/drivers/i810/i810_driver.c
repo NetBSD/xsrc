@@ -969,9 +969,9 @@ DoSave(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, I810RegPtr i810Reg, Bool saveFonts)
     * in the generic VGA portion.
     */
    if (saveFonts)
-      vgaHWSave(pScrn, vgaReg, VGA_SR_MODE|VGA_SR_FONTS);
+      vgaHWSave(pScrn, vgaReg, VGA_SR_MODE|VGA_SR_FONTS|VGA_SR_CMAP);
    else
-      vgaHWSave(pScrn, vgaReg, VGA_SR_MODE);
+      vgaHWSave(pScrn, vgaReg, VGA_SR_MODE|VGA_SR_CMAP);
 
    /*
     * The port I/O code necessary to read in the extended registers 
@@ -1153,9 +1153,9 @@ DoRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, I810RegPtr i810Reg,
     *		restore clock-select bits.
     */
    if (restoreFonts)
-      vgaHWRestore(pScrn, vgaReg, VGA_SR_FONTS|VGA_SR_MODE);
+      vgaHWRestore(pScrn, vgaReg, VGA_SR_FONTS|VGA_SR_MODE|VGA_SR_CMAP);
    else
-      vgaHWRestore(pScrn, vgaReg, VGA_SR_MODE);
+      vgaHWRestore(pScrn, vgaReg, VGA_SR_MODE|VGA_SR_CMAP);
 
    hwp->writeCrtc(hwp, EXT_VERT_TOTAL, i810Reg->ExtVertTotal);
    hwp->writeCrtc(hwp, EXT_VERT_DISPLAY, i810Reg->ExtVertDispEnd);
@@ -1258,9 +1258,9 @@ DoRestore(ScrnInfoPtr pScrn, vgaRegPtr vgaReg, I810RegPtr i810Reg,
    if (!(vgaReg->Attribute[0x10] & 0x1)) {
       usleep(50000);
       if (restoreFonts)
-	 vgaHWRestore(pScrn, vgaReg, VGA_SR_FONTS|VGA_SR_MODE);
+	 vgaHWRestore(pScrn, vgaReg, VGA_SR_FONTS|VGA_SR_MODE|VGA_SR_CMAP);
       else
-	 vgaHWRestore(pScrn, vgaReg, VGA_SR_MODE);
+	 vgaHWRestore(pScrn, vgaReg, VGA_SR_MODE|VGA_SR_CMAP);
    }
 
    vgaHWProtect(pScrn, FALSE);
