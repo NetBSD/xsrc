@@ -111,7 +111,11 @@ extern int setrlimit();
 extern int getpagesize();
 # else
 #  if defined (__NetBSD__) || defined (__OpenBSD__)
-#   include <machine/fbio.h>
+#   if defined(__NetBSD__
+#    include <dev/sun/fbio.h>
+#   else
+#    include <machine/fbio.h>
+#   endif
 #   include <machine/kbd.h>
 #   include <machine/kbio.h>
 #   include <machine/vuid_event.h>

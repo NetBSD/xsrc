@@ -80,7 +80,11 @@ main (argc, argv)
 #ifndef CSRG_BASED
 #include <sun/fbio.h>
 #else
-#include <machine/fbio.h>
+#ifdef __NetBSD__
+# include <dev/sun/fbio.h>
+#else
+# include <machine/fbio.h>
+#endif
 #endif
 #endif
 
