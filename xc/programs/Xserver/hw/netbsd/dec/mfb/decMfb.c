@@ -1,4 +1,4 @@
-/* $NetBSD: decMfb.c,v 1.1 2002/02/26 12:34:54 ad Exp $ */
+/* $NetBSD: decMfb.c,v 1.2 2002/09/13 17:39:57 ad Exp $ */
 
 /* XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp */
@@ -97,6 +97,7 @@ Bool decMFBInit (screen, pScreen, argc, argv)
 {
 	unsigned char *fb;
 	size_t sz;
+	int stride;
 
 	fb = decFbs[screen].fb;
 
@@ -105,16 +106,25 @@ Bool decMFBInit (screen, pScreen, argc, argv)
     	if (!decScreenAllocate(pScreen))
 		return FALSE;
 
+	switch (decFbs[screen].type) {
+	case WSDISPLAY_TYPE_PM_MONO:
+		stride = 2048;
+		break;
+	default:
+		stride = decFbs[screen].width;
+		break;
+	}
+
 	if (!fb) {
-		sz = decFbs[screen].width * decFbs[screen].height *
-		    decFbs[screen].depth / 8;
+		sz = stride * decFbs[screen].height >> 3;
 		if ((fb = decMemoryMap (sz, 0, decFbs[screen].fd)) == NULL)
 			return FALSE;
 	        decFbs[screen].fb = fb;
 	}
 
-	if (!mfbScreenInit(pScreen, scrInfo->bitmap, 1024, 864,
-	    monitorResolution, monitorResolution, 2048)) {
+	if (!mfbScreenInit(pScreen, fb, decFbs[screen].width,
+	    decFbs[screen].height,
+	    monitorResolution, monitorResolution, stride)) {
 	    ErrorF("mfbScreenInit failed\n");
 	    return FALSE;
 	}
