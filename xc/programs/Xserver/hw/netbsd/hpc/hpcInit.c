@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.1 2000/05/06 06:01:49 takemura Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.2 2000/05/28 11:15:46 takemura Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -183,12 +183,27 @@ InitKbdMouse(argc, argv)
 	}
 
 	hpcKbdPriv.fd = hpcPtrPriv.fd = -1;
+
+	/*
+	 * use mouse multiplexer if it's available.
+	 */
+	hpcPtrPriv.fd = open("/dev/wsmux0", O_RDWR);
+
+	/*
+	 * try each mouse device
+	 */
 	for (i = 0; i < 8; i++) {
 	    char devname[16];
 
+#if 0
+	    /*
+	     * We can't use wskbd for now, because primary keyboard(wskbd0)
+             * is already connected with console(/dev/ttyE0).
+	     */
 	    sprintf(devname, "/dev/wskbd%d", i);
 	    if (hpcKbdPriv.fd == -1)
 		hpcKbdPriv.fd = open(devname, O_RDWR);
+#endif
 
 	    sprintf(devname, "/dev/wsmouse%d", i);
 	    if (hpcPtrPriv.fd == -1)
@@ -198,6 +213,9 @@ InitKbdMouse(argc, argv)
 	if (hpcKbdPriv.fd != -1) {
 	    hpcKbdPriv.devtype = HPC_KBDDEV_WSKBD;
 	} else {
+	    /*
+	     * use keyboards which are connected wsdisplay(ttyE*).
+	     */
 	    devList = GetDeviceList (argc, argv);
 	    for (i = 0; devList[i] != NULL; i++) {
 		if (0 <= (hpcKbdPriv.fd = open(devList[i], O_RDWR))) {
