@@ -62,8 +62,8 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.28 1996/10/16 14:28:24 dawes Exp $
 #ifdef __OpenBSD__
 # undef __OpenBSD__
 # define OpenBSDArchitecture
-# define MacroIncludeFile <NetBSD.cf>
-# define MacroFile NetBSD.cf
+# define MacroIncludeFile <OpenBSD.cf>
+# define MacroFile OpenBSD.cf
 # ifdef __i386__
 #  define i386BsdArchitecture
 #  define i386Architecture
@@ -110,6 +110,25 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.28 1996/10/16 14:28:24 dawes Exp $
 # endif
 # ifdef mc68000
 #   define Mc68020Architecture
+# endif
+# if defined(__alpha__)
+#  define AlphaArchitecture
+# endif
+# if defined(__m68k__) || defined(m68k)
+#  define m68kArchitecture
+#  undef m68k
+# endif
+# if defined(__sun3__) || defined(sun3)
+#  define Sun3Architecture
+#  undef sun3
+# endif
+# if defined(__hp300__) || defined(hp300)
+#  define hp300Architecture
+#  undef hp300
+# endif
+# if defined(__mac68k__) || defined(mac68k)
+#  define mac68kArchitecture
+#  undef mac68k
 # endif
 #endif /* NetBSD */
 

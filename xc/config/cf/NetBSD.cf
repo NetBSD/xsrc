@@ -5,9 +5,22 @@ XCOMM platform:  $XConsortium: NetBSD.cf /main/14 1996/01/28 07:42:14 kaleb $
 
 
 XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.44 1996/10/23 13:07:55 dawes Exp $
+  
+XCOMM
+XCOMM This file currently contains support for:
+XCOMM
+XCOMM 		NetBSD/i386	client/server
+XCOMM 		NetBSD/sparc	client/server
+XCOMM 		NetBSD/sun3	client/server
+XCOMM 		NetBSD/hp300	client
+XCOMM 		NetBSD/mac68k	client/server
+XCOMM
 
 #ifndef OSName
 #define OSName		NetBSD 1.2
+#endif
+#ifndef OSVendor
+#define	OSVendor	The NetBSD Foundation, Inc.
 #endif
 #ifndef OSMajorVersion
 #define OSMajorVersion    1
@@ -61,6 +74,10 @@ XCOMM operating system:  OSName
 #if OSMajorVersion == 1 && OSMinorVersion <= 2
 #  define HasDlsymBug		YES
 #endif
+  
+#if OSMajorVersion >= 1
+# define LexCmd			lex -l
+#endif
 
 /*
  * Compiler Features
@@ -98,7 +115,13 @@ XCOMM operating system:  OSName
 
 #define GccGasOption 		-DGCCUSESGAS
 #define AsmDefines 		-DUSE_GAS
-
+  
+/*
+ * Make sure the binaries know where to look for the shared libaries.
+ */
+#if (OSMajorVersion == 1 && OSMinorVersion >= 2) || OSMajorVersion > 1
+#define ExtraLoadFlags		-R$(USRLIBDIR)
+#endif
 
 #ifdef i386Architecture
 # define OptimizedCDebugFlags 	-m486 DefaultGcc2i386Opt
@@ -110,14 +133,33 @@ XCOMM operating system:  OSName
 # if OSMajorVersion == 1 && OSMinorVersion >= 1 || OSMajorVersion >= 2
 #  define ServerExtraSysLibs	-li386
 # endif
-#else
-# define OptimizedCDebugFlags 	-O2
-# if defined(SparcArchitecture)
-#  define ServerOSDefines 	-DDDXOSINIT
-# else
-#  define ServerOSDefines 	/**/
-# endif
 #endif
+
+#if defined(SparcArchitecture)
+# define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption
+#endif
+
+#if defined(Sun3Architecture)
+# define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption -D__sun3__
+#endif
+
+#if defined(hp300Architecture)
+# define BuildServer		NO		/* XXX */
+# define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption
+#endif
+
+#if defined(mac68kArchitecture)
+# define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption -D__mac68k__
+#endif
+
+#ifndef OptimizedCDebugFlags
+# define OptimizedCDebugFlags 	-O2
+#endif
+
 #ifdef i386Architecture
 # define ServerExtraDefines GccGasOption XFree86ServerDefines
 # ifndef XFree86ConsoleDefines
@@ -221,7 +263,10 @@ install.man::                                                           @@\
 	-@if [ -f file.0 ]; \						@@\
 	then \								@@\
 	$(INSTALL) -c $(INSTMANFLAGS) file.0 $(DESTDIR)destdir/dest.0; \@@\
-	fi
+	fi								@@\
+									@@\
+clean::									@@\
+	$(RM) file.o
 
 #define InstallGenManPageLong(file,destdir,dest,suffix)			@@\
 	InstallManPageLong(file,destdir,dest)
@@ -260,30 +305,12 @@ install.man:: 								@@\
 #endif
 
 /*
- * Definitions for the SUN server on NetBSD/sparc
+ * XXX We have to work around a strange dynamic linker bug.
+ * XXX Note this ends up causing a pretty large dependency graph!
  */
-#ifdef SparcArchitecture
-#ifndef Xsun24Server
-#define Xsun24Server	NO
-#endif
-#ifndef XsunServer
-#define XsunServer	YES
-#endif
-#ifndef XsunMonoServer
-#define XsunMonoServer	YES
-#endif
-#ifndef BuildScreenSaverLibrary
-#define BuildScreenSaverLibrary	YES
-#endif
-/*
- * XFree86 uses its own (more portable) database routines to speed up 
- * the RGB database lookups
- * However, if you want to use ndbm anyway, you can set that to NO in 
- * site.def
- */
-#ifndef UseRgbTxt
-#define UseRgbTxt	NO
-#endif
+#if defined(m68kArchitecture)
+# define SharedXtReqs	$(LDPRELIB) $(SMLIB) $(ICELIB)
+# define SharedXmuReqs	$(LDPRELIB) $(EXTENSIONLIB) $(XTOOLONLYLIB) $(XONLYLIB)
 #endif
 
 /*
@@ -293,6 +320,50 @@ install.man:: 								@@\
 #define PositionIndependentCFlags
 #define SharedLibraryLoadFlags -x -shared --whole-archive -soname `echo $@ |
 sed 's/\.[0-9]*$$//'`
-#define SharedXtReqs $(XLIBONLY) $(SMLIB) $(ICELIB)
-#define SharedXmuReqs $(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB) $(EXTENSIONLIB)
+#define SharedXtReqs	$(XLIBONLY) $(SMLIB) $(ICELIB)
+#define SharedXmuReqs	$(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB) $(EXTENSIONLIB)
+#endif
+
+/*
+ * Definitions for the SUN server on NetBSD/sparc or NetBSD/sun3
+ */
+#if defined(SparcArchitecture) || defined(Sun3Architecture)
+#ifndef Xsun24Server
+#define Xsun24Server	YES
+#endif
+#ifndef XsunServer
+#define XsunServer	YES
+#endif
+#ifndef XsunMonoServer
+#define XsunMonoServer	YES
+#endif
+  
+/*
+ * Definitions for the NetBSD/mac68k server.
+ */
+#ifdef mac68kArchitecture
+# ifndef Xmac68kServer
+#  define Xmac68kServer		YES
+# endif
+#endif
+
+#ifndef BuildScreenSaverLibrary
+#define BuildScreenSaverLibrary	YES
+#endif
+#ifndef DfltDisableXKB
+#define DfltDisableXKB		YES
+#endif
+#ifndef XkbServerDefines
+#define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
+#endif
+
+/*
+ * XFree86 uses its own (more portable) database routines to speed up 
+ * the RGB database lookups
+ * However, if you want to use ndbm anyway, you can set that to NO in 
+ * site.def
+ */
+#ifndef UseRgbTxt
+#define UseRgbTxt	NO
+#endif
 #endif
