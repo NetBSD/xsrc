@@ -523,7 +523,10 @@ Bool use_default;
     }
 
     if (!sm_id)
+    {
 	sm_id = SmsGenerateClientID (NULL);
+	if (!sm_id) return (0);
+    }
     XChangeProperty (XtDisplay (topLevel), XtWindow (topLevel),
 	XInternAtom (XtDisplay (topLevel), "SM_CLIENT_ID", False),
 	XA_STRING, 8, PropModeReplace,
