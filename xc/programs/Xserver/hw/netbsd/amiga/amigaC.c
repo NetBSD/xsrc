@@ -306,6 +306,24 @@ amigaCProbe(pScreenInfo, index, fbNum, argc, argv)
         return FALSE;
       }
 
+    if (mapaddr) {
+	unsigned long endaddr, guardaddr, pagesize;
+	caddr_t guardp, guardp1;
+
+	pagesize = getpagesize();
+
+	endaddr = (unsigned long)mapaddr + bm.bytes_per_row*bm.rows*bm.depth;
+	guardaddr = endaddr + (8 - 1);
+	if (guardaddr & endaddr & ~(pagesize-1)) {
+		/* need guard page */
+		guardp = (caddr_t)(guardaddr & ~(pagesize-1));
+		guardp1 = mmap(guardp, pagesize, PROT_READ|PROT_WRITE, MAP_ANON|MAP_FIXED, -1, 0);
+		if (guardp == (caddr_t)-1) {
+			Error("Can't allocate guard page");
+		}
+	}
+    }
+
     if (mapaddr == 0)
         mapaddr = addr;
 
