@@ -173,18 +173,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #undef CcCmd
 #define CcCmd 			gcc
 #ifndef DefaultCCOptions
-#if defined(UseInstalled)
-#define DefaultCCOptions 	/**/
-#else
-#if defined(Arm32Architecture) || defined(CatsArchitecture)
-#define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char \
-				-fomit-frame-pointer
-#elif defined(PpcArchitecture)
-# define DefaultCCOptions	-ansi -Dasm=__asm -fsigned-char
-#else
-# define DefaultCCOptions 	-ansi -Dasm=__asm
-#endif
-#endif
+# if defined(UseInstalled)
+#  define DefaultCCOptions 	/**/
+# else
+#  define DefaultCCOptions 	-ansi -Dasm=__asm
+# endif
 #endif
 
 #define CppCmd			cpp
@@ -206,12 +199,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif
 #endif
 
-#if 0
-/* one day we should enable this, but support is needed in the Xserver */
+#ifndef OSBinaryType
 #if UseElfFormat
-# ifndef DoLoadableServer
-#  define DoLoadableServer	YES
-# endif
+#define OSBinaryType	[ELF]
+#else
+#define OSBinaryType	/**/
 #endif
 #endif
 
@@ -224,123 +216,113 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  *
  * Disabled for NetBSD/vax until I figure out the scheme. --CS 
  */
-#if ((OSMajorVersion > 0) && defined(i386Architecture)) || \
-    defined(PpcArchitecture)
-#  ifndef DoLoadableServer
-#  define DoLoadableServer	YES
-#  endif
-#else
-#  ifndef DoLoadableServer
-#  define DoLoadableServer	NO
-#  endif
-#endif
-
 #if UseElfFormat
-#define DlLibrary		-rdynamic /* no -ldl yet */
-#else
-#define DlLibrary		/**/
+# if (OSMajorVersion > 0 && defined(i386Architecture)) || \
+      defined(PpcArchitecture)
+#  ifndef  DoLoadableServer
+#   define DoLoadableServer	YES
+#  endif
+# endif
+# if \
+     !defined(ns32kArchitecture) && \
+     !defined(m68000Architecture) && \
+     !(OSMajorVersion < 2 && defined(sh3Architecture)) && \
+     !defined(sh5Architecture) && \
+     !(GccMajorVersion == 3 && defined(VaxArchitecture)) && \
+     1
+#  ifndef  HasSharedLibraries
+#   define HasSharedLibraries	YES
+#  endif
+# endif
+
+# define DlLibrary		-rdynamic /* no -ldl yet */
+#else /* UseElfFormat */
+# define DlLibrary		/**/
+# if (OSMajorVersion > 0) && \
+     (!defined(AlphaArchitecture) && !defined(MipsArchitecture))
+   /* XXX: which port lacked a.out shlib support? */
+#  ifndef  HasSharedLibraries
+#   define HasSharedLibraries	YES
+#  endif
+   /* XXX: which port had a.out dynamic loding support? Only i386? */
+#  ifndef  DoLoadableServer
+#   define DoLoadableServer	YES
+#  endif
+# endif
+#endif /* UseElfFormat */
+
+#ifndef HasSharedLibraries
+# define HasSharedLibraries	NO
+#endif
+#ifndef DoLoadableServer
+# define DoLoadableServer	NO
 #endif
 
 /* All ELF NetBSD systems support Weak symbols */
 #define HasWeakSymbols		UseElfFormat 
 
+
+/*
+ * MACHINE_CPU specific toolchain options
+ */
+/* arm specific options */
+#ifdef armArchitecture
+# undef  DefaultCCOptions
+# define DefaultCCOptions	-ansi -Dasm=__asm -fsigned-char \
+					-fomit-frame-pointer
+#endif /* armArchitecture */
+
+/* i386 specific options */
 #ifdef i386Architecture
 # ifndef DefaultGcc2i386Opt
-#  if OSMajorVersion > 1 || (OSMajorVersion == 1 && OSMinorVersion > 2)
+#  if ((OSMajorVersion > 1) || \
+       (OSMajorVersion == 1 && OSMinorVersion > 2))
     /* The GCC strength-reduce bug is fixed for NetBSD 1.3 and later */
-#   define DefaultGcc2i386Opt -O2 GccAliasingArgs
+#   define DefaultGcc2i386Opt	-O2 GccAliasingArgs
 #  endif
 # endif
 # define OptimizedCDebugFlags 	DefaultGcc2i386Opt
-# if OSMajorVersion < 1
-#  define ServerOSDefines	XFree86ServerOSDefines -DXNO_SYSCONF
-# else
-#  define ServerOSDefines	XFree86ServerOSDefines
+#endif /* i386Architecture */
+
+/* m68k specific options */
+#ifdef m68kArchitecture
+# if (OSMajorVersion == 1 && OSMinorVersion <= 3)
+#  define OptimizedCDebugFlags	-O
 # endif
-# if OSMajorVersion == 1 && OSMinorVersion >= 1 || OSMajorVersion >= 2
-#  define ServerExtraSysLibs	-li386
-# endif
-#else
+#endif /* m68kArchitecture */
+
+/* mips specific options */
+#ifdef MipsArchitecture
+# define PositionIndependentCFlags	/* -fPIC */
+#endif /* MipsArchitecture */
+
+/* powerpc specific option */
+#ifdef PpcArchitecture
+# undef  DefaultCCOptions
+# define DefaultCCOptions	-ansi -Dasm=__asm -fsigned-char
+#endif /* PpcArchitecture */
+
+/* sh3 specific options */
+#ifdef sh3Architecture
+# define OptimizedCDebugFlags	-O
+#endif /* sh3Archtecture */
+
+/* sh5 specific options */
+#ifdef sh5Architecture
+# define OptimizedCDebugFlags	-O
+#endif /* sh5Archtecture */
+
+/* x86_64 */
+#if defined(x86_64Architecture)
+# define OptimizedCDebugFlags	-O2	/* XXX not needed anymore? */
+#endif
+
+/* set default */
+#ifndef OptimizedCDebugFlags
 # define OptimizedCDebugFlags 	-O2
-# if defined(SparcArchitecture)
-#  define ServerOSDefines 	-DDDXOSINIT
-# elif defined(AlphaArchitecture)
-#  define ServerOSDefines 	XFree86ServerOSDefines
-# elif defined(Arm32Architecture)
-#   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
-# elif defined(CatsArchitecture)
-#   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME 
-# elif defined(PpcArchitecture)
-#  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
-# elif defined(AMD64Architecture)
-#  undef OptimizedCDebugFlags
-#  define OptimizedCDebugFlags	-O2
-#  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
-#  define NetBSDMachineDefines	-D__AMD64__
-# else
-#  define ServerOSDefines 	/**/
-# endif
-# if defined(AlphaArchitecture)
-#  define ServerExtraSysLibs	-lalpha
-# elif defined(AMD64Architecture)
-#  define ServerExtraSysLibs	-lx86_64
-# else
-#  define ServerExtraSysLibs	/**/
-# endif
 #endif
-#ifdef i386Architecture
-# define ServerExtraDefines GccGasOption XFree86ServerDefines
-# ifndef XFree86ConsoleDefines
-#  if (OSMajorVersion == 1 && ((OSMinorVersion == 3 && OSTeenyVersion >= 6) \
-	                       || OSMinorVersion >= 4) \
-       || OSMajorVersion >= 2)  
-#   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT -DWSCONS_SUPPORT
-#  else
-#   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
-#  endif
-# endif
-#elif defined(SparcArchitecture)
-#  if defined(Sparc64Architecture)
-#   define ServerExtraDefines XFree86ServerDefines -D_XSERVER64
-#  else
-#   define ServerExtraDefines XFree86ServerDefines
-#  endif
-# elif defined(AlphaArchitecture)
-	/* XXX for the following */
-#  define ServerExtraDefines GccGasOption XFree86ServerDefines -D_XSERVER64
-#  ifndef XFree86ConsoleDefines
-#   define XFree86ConsoleDefines -DWSCONS_SUPPORT -DPCCONS_SUPPORT -DPCVT_SUPPORT
-#  endif
-#elif defined(AlphaArchitecture)
-#   define ServerExtraDefines GccGasOption -D_XSERVER64
-#elif defined(Arm32Architecture)
-#  define ServerExtraDefines GccGasOption XFree86ServerDefines
-#  ifndef XFree86ConsoleDefines
-#    define XFree86ConsoleDefines -DPCCONS_SUPPORT
-#  endif
-#elif defined(CatsArchitecture)
-#  define ServerExtraDefines GccGasOption XFree86ServerDefines
-#  ifndef XFree86ConsoleDefines
-#    define XFree86ConsoleDefines	-DPCCONS_SUPPORT -DPCVT_SUPPORT -DWSCONS_SUPPORT
-#  endif
-#elif defined(PpcArchitecture)
-#  define ServerExtraDefines	GccGasOption XFree86ServerDefines
-#  ifndef XFree86ConsoleDefines
-#    define XFree86ConsoleDefines	-DWSCONS_SUPPORT
-#  endif
-#elif defined(AMD64Architecture)
-# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D_XSERVER64
-#  ifndef XFree86ConsoleDefines
-#    define XFree86ConsoleDefines -DWSCONS_SUPPORT -DPCVT_SUPPORT
-#  endif
-#elif defined(SGIMipsArchitecture)
-#    define XFree86ConsoleDefines -DWSCONS_SUPPORT
-#  define ServerExtraDefines    GccGasOption XFree86ServerDefines
-#elif defined(atariArchitecture)
-#   define ServerExtraDefines GccGasOption -D__atari__ -D__mc68000__ -Dmc68020
-#else
-#  define ServerExtraDefines GccGasOption
-#endif
+/* End of MACHINE_CPU specific options */
+
 
 #ifndef NetBSDMachineDefines
 #define NetBSDMachineDefines /**/
@@ -612,33 +594,6 @@ InstallHtmlManPageAliases(file,aliases,suffix)				@@\
 InstallManPageAliasesBase(file,destdir,aliases)
 
 /*
- * Shared libraries supported starting in 1.0 on a.out platforms,
- * and on all ELF platforms.
- *
- * XXX May not be correct on NetBSD/pmax (ELF, but might not have
- * working shared libs).
- */
-#if ((OSMajorVersion > 0) && \
-     !defined(AlphaArchitecture) && !defined(MipsArchitecture)) || \
-    UseElfFormat
-# ifndef HasSharedLibraries
-# define HasSharedLibraries	YES
-# endif
-#endif
-
-#ifndef OSBinaryType
-#if UseElfFormat
-#define OSBinaryType	[ELF]
-#else
-#define OSBinaryType	/**/
-#endif
-#endif
-
-#ifndef HasSharedLibraries
-#define HasSharedLibraries	NO
-#endif 
-
-/*
  * Unresolved references are fatal on NetBSD 1.5 for libGL, which is
  * built with -Bsymbolic.
  */
@@ -659,28 +614,6 @@ InstallManPageAliasesBase(file,destdir,aliases)
 # define BuildXInputLib          YES
 #endif
 
-#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture) || defined(CatsArchitecture) || defined(AMD64Architecture) || defined(SGIMipsArchitecture)
-# include <xfree86.cf>
-#endif
-
-/*
- * Definitions for the SUN server on NetBSD/sparc
- */
-#ifdef	SparcArchitecture
-
-#ifndef Xsun24Server
-#define Xsun24Server	YES
-#endif
-#ifndef XsunServer
-#define XsunServer	YES
-#endif
-#ifndef XsunMonoServer
-#define XsunMonoServer	YES
-#endif
-#ifndef BuildScreenSaverLibrary
-#define BuildScreenSaverLibrary	YES
-#endif
-
 /*
  * XFree86 uses its own (more portable) database routines to speed up 
  * the RGB database lookups
@@ -691,90 +624,298 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #define UseRgbTxt	YES
 #endif
 
-#define BuildXF86VidModeExt	NO
+/*
+ * MACHINE specific Xserver dependent definitions
+ */
 
-#if !defined(Sparc64Architecture)
+/* acorn32 */
+#if defined(acorn32Architecture)
+# define BuildServer		YES
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# ifndef XFree86ConsoleDefines
+# define XFree86ConsoleDefines	-DPCCONS_SUPPORT
+# endif
+#endif /* acorn32Architecture */
 
-#define BuildXF86DGA		NO
-#define BuildXInputExt		NO
-#include <xfree86.cf>
+/* alpha */
+#if defined(AlphaArchitecture)
+# define BuildServer		YES
+# define ServerOSDefines 	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D_XSERVER64
+# ifndef XFree86ConsoleDefines
+# define XFree86ConsoleDefines	-DWSCONS_SUPPORT -DPCCONS_SUPPORT -DPCVT_SUPPORT
+# endif
+# define ServerExtraSysLibs	-lalpha
+#endif
 
-#else /* Sparc64Architecture */
-# define OptimizedCDebugFlags	-O2
+/* amd64 */
+#if defined(AMD64Architecture)
+# define BuildServer		YES
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D_XSERVER64
+# define NetBSDMachineDefines	-D__AMD64__
+# ifndef XFree86ConsoleDefines
+# define XFree86ConsoleDefines	-DWSCONS_SUPPORT -DPCVT_SUPPORT
+# endif
+# define ServerExtraSysLibs	-lx86_64
+#endif
 
+/* amiga */
+#if defined(amigaArchitecture)
+# define BuildServer		YES
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D__amiga__
+# define XserverNeedsSetUID	YES
+#endif
+
+/* atari */
+#if defined(atariArchitecture)
+# define BuildServer		YES
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines GccGasOption XFree86ServerDefines -D__atari__ -D__mc68000__ -Dmc68020
+#endif
+
+/* cats */
+#if defined(catsArchitecture)
+# define BuildServer		YES
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME 
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# ifndef XFree86ConsoleDefines
+# define XFree86ConsoleDefines	-DPCCONS_SUPPORT -DPCVT_SUPPORT -DWSCONS_SUPPORT
+# endif
+#endif
+
+/* dreamcast */
+#if defined(dreamcastArchitecture)
+# define BuildServer		YES
+# define XdreamcastServer	YES
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# define XserverNeedsSetUID	YES
+# define XVirtualFramebufferServer	NO
+
+# define XF86Server		NO
+# define BuildXFree86ConfigTools	NO
+# define BuildXInputExt		NO
+# define BuildXF86DGA		NO
+# define BuildDPMS		NO
+# define BuildDPMSExt		NO
+#endif
+
+/* hpcarm, hpcmips */
+#if defined(hpcarmArchitecture) || \
+    defined(hpcmipsArchitecture)
+# define BuildServer		YES
+# define XhpcServer		YES
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# define XserverNeedsSetUID	YES
+# define XVirtualFramebufferServer	NO
+
+# define XF86Server		NO
+# define BuildXFree86ConfigTools	NO
+# define BuildXInputExt		NO
+# define BuildXF86DGA		NO
+# define BuildDPMS		NO
+# define BuildDPMSExt		NO
+#endif
+
+/* i386 (as MACHINE) */
+#ifdef i386Architecture
+# define BuildServer		YES
+# if (OSMajorVersion < 1)
+#  define ServerOSDefines	XFree86ServerOSDefines -DXNO_SYSCONF
+# else
+#  define ServerOSDefines	XFree86ServerOSDefines
+# endif
+# if ((OSMajorVersion > 1) || \
+      (OSMajorVersion == 1 && OSMinorVersion >= 1))
+#  define ServerExtraSysLibs	-li386
+# endif
+# define ServerExtraDefines GccGasOption XFree86ServerDefines
+# ifndef XFree86ConsoleDefines
+#  if ((OSMajorVersion > 1) || \
+       (OSMajorVersion == 1 && OSMinorVersion == 3 && OSTeenyVersion >= 6) || \
+       (OSMajorVersion == 1 && OSMinorVersion >= 4))
+#   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT \
+	-DWSCONS_SUPPORT
+#  else
+#   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
+#  endif
+# endif
+#endif /* i386Architecture */
+ 
+/* mac68k */
+#if defined(mac68kArchitecture)
+# define BuildServer		YES
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D__mac68k__
+#endif
+
+/* macppc */
+#if defined(macppcArchitecture)
+# define BuildServer		YES
+# define XmacppcServer		YES
+# define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
+# ifndef  XFree86ConsoleDefines
+#  define XFree86ConsoleDefines	-DWSCONS_SUPPORT
+# endif
+#endif /* macppcArchitecture */
+
+/* pmax */
+#if defined(pmaxArchitecture)
+# define BuildServer		NO	/* XXX notyet */
+# define ServerOSDefines	-DDDXOSINIT
+#endif
+
+/* sgimips */
+#if defined(SGIMipsArchitecture)
+# define BuildServer		YES
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# define XFree86ConsoleDefines	-DWSCONS_SUPPORT
+# undef  XF86CardDrivers
+# define XF86CardDrivers	newport
+#endif /* SGIMipsArchitectur */
+
+/* shark */
+#if defined(sharkArchitecture)
+# define BuildServer		NO	/* no IGS driver in XF86_4 */
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# ifndef XFree86ConsoleDefines
+#  if ((OSMajorVersion < 1) || \
+       (OSMajorVersion == 1 && OSMinorVersion < 5))
+#   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
+#  else
+#   define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT \
+	-DWSCONS_SUPPORT 
+#  endif
+# endif
+#endif
+
+/* sparc */
+#if defined(SparcArchitecture) && !defined(Sparc64Architecture)
+# define BuildServer	YES
+# ifndef Xsun24Server
+# define Xsun24Server	YES
+# endif
+# ifndef XsunServer
+# define XsunServer	YES
+# endif
+# ifndef XsunMonoServer
+# define XsunMonoServer	YES
+# endif
+# ifndef BuildScreenSaverLibrary
+# define BuildScreenSaverLibrary	YES
+# endif
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+# define BuildXF86DGA		NO
+# define BuildXInputExt		NO
+#endif /* SparcArchitecture */
+
+/* sparc64 */
+#if defined(Sparc64Architecture)
+# define BuildServer	YES
+# ifndef Xsun24Server
+# define Xsun24Server	YES
+# endif
+# ifndef XsunServer
+# define XsunServer	YES
+# endif
+# ifndef XsunMonoServer
+# define XsunMonoServer	YES
+# endif
+# ifndef BuildScreenSaverLibrary
+# define BuildScreenSaverLibrary	YES
+# endif
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D_XSERVER64
+# if 0 /* XXX: we should just remove this line?  */
+# define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
+# endif
 # ifndef XF86Server
 #  define XF86Server		YES
 # endif
-
-/* # define XkbServerDefines  -DXKB_ALWAYS_USES_SOFT_REPEAT */
-
 # if XF86Server
-#   ifndef DoLoadableServer
-#     define DoLoadableServer	NO
-#   endif
-#   define XF86OSCardDrivers	/* wsfb sunffb */
-#   define AsOutputArchSize	64
-#   define AsVISOption		-Av9a
-#   define XFree86ConsoleDefines -DWSCONS_SUPPORT
+#  define XF86OSCardDrivers	/* wsfb sunffb */
+#  define AsOutputArchSize	64
+#  define AsVISOption		-Av9a
+#  define XFree86ConsoleDefines	-DWSCONS_SUPPORT
 # endif
+# define BuildXF86DGA		YES
+# define BuildXInputExt		YES
+#endif /* Sparc64Archtecture */
 
-#define BuildXF86DGA		YES
-#define BuildXInputExt		YES
-#include <xfree86.cf>
-
-#endif
-
-#endif
-
-/*
- * Definition for compiling on MIPS machines
- */
-#if defined(MipsArchitecture) && !defined(SGIMipsArchitecture)
-#define PositionIndependentCFlags
-#define SharedLibraryLoadFlags -x -shared --whole-archive -soname `echo $@ | sed 's/\.[0-9]*$$//'`
-#define SharedXtReqs $(XONLYLIB) $(SMLIB) $(ICELIB)
-#define SharedXmuReqs $(LDPRELIB) $(XTOOLONLYLIB) $(XLIB)
-#endif
-
-/*
- * Definition for compiling on SGI MIPS machines
- */
-#ifdef SGIMipsArchitecture
-#undef XF86CardDrivers
-#define XF86CardDrivers               newport
-#endif
-
-/*
- * Definition for compile on macppc machines
- */
-#ifdef macppcArchitecture
-
-# define OptimizedCDebugFlags 	-O2
-# define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
-
-# ifndef DoLoadableServer
-#   define DoLoadableServer	YES
+/* sun3 */
+#if defined(Sun3Architecture)
+# define BuildServer	YES
+# ifndef Xsun24Server
+# define Xsun24Server	NO
 # endif
+# ifndef XsunServer
+# define XsunServer	YES
+# endif
+# ifndef XsunMonoServer
+# define XsunMonoServer	YES
+# endif
+# ifndef BuildScreenSaverLibrary
+# define BuildScreenSaverLibrary	YES
+# endif
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D__sun3__
+#endif /* Sun3Architecture */
 
-# define UseElfFormat		YES
-
-# define XmacppcServer		YES
-
-#endif
-
-/*
- * Definition for compiling on cats machines
- */
-#ifdef CatsArchitecture
-/* nothing is needed */
-#endif
-
-/*
- * Definition for compiling on VAX machines
- */
+/* vax */
 #ifdef VaxArchitecture
-#define BuildServer	NO
+# define BuildServer		NO	/* XXX notyet */
+# define XVirtualFramebufferServer	NO
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+
+# define XF86Server		NO
+# define BuildXFree86ConfigTools	NO
+# define BuildXInputExt		NO
+# define BuildXF86DGA		NO
+# define BuildDPMS		NO
+# define BuildDPMSExt		NO
+#endif /* VaxArchitecture */
+
+/* x68k */
+#if defined(x68kArchitecture)
+# define BuildServer		YES
+# define X68kServer		YES
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines -D__x68k__
+# define XserverNeedsSetUID	YES
+# define XVirtualFramebufferServer	NO
+
+# define XF86Server		NO
+# define BuildXFree86ConfigTools	NO
+# define BuildXInputExt		NO
+# define BuildXF86DGA		NO
+# define BuildDPMS		NO
+# define BuildDPMSExt		NO
 #endif
+
+/* set default */
+#ifndef BuildServer
+# define BuildServer		NO
+# define BuildXF86DGA		NO
+#endif
+#ifndef ServerExtraDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+#endif
+#ifndef ServerOSDefines
+# define ServerOSDefines	XFree86ServerOSDefines
+#endif
+/* End of MACHINE specific options */
+
+#include <xfree86.cf>
 
 /* 
  * General settings for all platforms 
