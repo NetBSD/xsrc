@@ -67,7 +67,7 @@ LOCAL_LIBRARIES	= $(XTOOLLIB) $(XLIB)
 ComplexProgramTargetNoMan($(NAME))
 InstallAppDefaults($(CLASS))
 
-.PHONY: depends changelog realclean spotless tar
+.PHONY: depends changelog realclean tar
 
 depends: depend
 
@@ -83,13 +83,10 @@ changelog:
 	$(MAKE_CHANGELOG)
 
 clean::
-	-$(RM) $(CLASS)_ad.h
+	-$(RM) $(CLASS)_ad.h $(CLASS).ad
 
 realclean: clean
-	-$(RM) $(CLASS).ad
-
-spotless: realclean
-	-$(RM) Makefile Makefile.bak ChangeLog
+	-$(RM) Makefile Makefile.bak
 
 tar: changelog
 	-$(RM) -r $(TARBALL_DIR)
