@@ -769,8 +769,17 @@ InstallManPageAliasesBase(file,destdir,aliases)
 
 /* pmax */
 #if defined(pmaxArchitecture)
-# define BuildServer		NO	/* XXX notyet */
-# define ServerOSDefines	-DDDXOSINIT
+# define BuildServer		YES
+# define XdecNetBSDServer	YES
+# define ServerOSDefines	XFree86ServerOSDefines
+# define ServerExtraDefines	GccGasOption XFree86ServerDefines
+
+# define XF86Server		NO
+# define BuildXFree86ConfigTools	NO
+# define BuildXInputExt		NO
+# define BuildXF86DGA		NO
+# define BuildDPMS		NO
+# define BuildDPMSExt		NO
 #endif
 
 /* sgimips */
