@@ -1,5 +1,5 @@
-// $XConsortium: se /main/2 1995/12/07 21:43:26 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/se,v 3.2 1996/10/13 11:35:39 dawes Exp $
+// $XConsortium: se /main/3 1996/08/31 12:20:15 kaleb $
+// $XFree86: xc/programs/xkbcomp/symbols/se,v 3.3 1996/12/23 07:13:32 dawes Exp $
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 
@@ -58,4 +58,3 @@ partial alphanumeric_keys
 xkb_symbols "nodeadkeys" {
     include "se(basic)" // for consistent naming
 };
-

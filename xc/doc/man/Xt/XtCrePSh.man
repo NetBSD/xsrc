@@ -1,4 +1,4 @@
-.\" $XConsortium: XtCrePSh.man /main/8 1995/12/15 14:22:43 gildea $
+.\" $XConsortium: XtCrePSh.man /main/9 1996/12/09 16:15:11 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtCreatePopupShell 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtCreatePopupShell 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtCreatePopupShell, XtVaCreatePopupShell \- create a popup shell
 .SH SYNTAX

@@ -1,4 +1,4 @@
-.\" $XConsortium: XShape.man /main/6 1995/12/15 14:07:17 gildea $
+.\" $XConsortium: XShape.man /main/7 1996/12/09 16:46:07 kaleb $
 .\"
 .\" Copyright (c) 1989, 1994  X Consortium
 .\" 
@@ -28,7 +28,7 @@
 .ie t \fB\^\\$1\^\fR\\$2
 .el \fI\^\\$1\^\fP\\$2
 ..
-.TH XSHAPE 3X11 "Release 6.1" "X Version 11" "X FUNCTIONS"
+.TH XSHAPE 3X11 "Release 6.3" "X Version 11" "X FUNCTIONS"
 .SH NAME
 XShapeQueryExtension, XShapeQueryVersion, XShapeCombineRegion, XShapeCombineRectangles, XShapeCombineMask, XShapeCombineShape, XShapeOffsetShape, XShapeQueryExtents, XShapeSelectInput, XShapeInputSelected, XShapeGetRectangles \- X nonrectangular shape functions
 .SH SYNTAX

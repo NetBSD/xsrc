@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XLookupKeysym 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XLookupKeysym 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XLookupKeysym, XRefreshKeyboardMapping, XLookupString, XRebindKeySym \- handle keyboard input events in Latin-1
 .SH SYNTAX

@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XIfEvent 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XIfEvent 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XIfEvent, XCheckIfEvent, XPeekIfEvent \- check the event queue with a predicate procedure
 .SH SYNTAX

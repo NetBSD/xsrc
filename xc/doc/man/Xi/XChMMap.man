@@ -8,9 +8,9 @@
 .\" suitability for any purpose of the information in this document.  It is 
 .\" provided \`\`as is'' without express or implied warranty.
 .\" 
-.\" $XConsortium: XChMMap.man /main/6 1995/12/15 14:08:39 gildea $
+.\" $XConsortium: XChMMap.man /main/7 1996/12/09 16:49:07 kaleb $
 .ds xL Programming With Xlib
-.TH XGetDeviceModifierMapping 3X11 "Release 6.1" "X Version 11"  "X FUNCTIONS"
+.TH XGetDeviceModifierMapping 3X11 "Release 6.3" "X Version 11"  "X FUNCTIONS"
 .SH NAME
 XGetDeviceModifierMapping, XSetDeviceModifierMapping \- query or change device modifier mappings
 .SH SYNTAX

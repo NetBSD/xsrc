@@ -1,4 +1,4 @@
-.\" $XConsortium: XtOpenApp.man /main/2 1995/12/15 14:26:20 gildea $
+.\" $XConsortium: XtOpenApp.man /main/3 1996/12/09 16:18:39 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtOpenApplication 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtOpenApplication 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtOpenApplication, XtVaOpenApplication \- initialize, open, or close a display
 .SH SYNTAX

@@ -1,4 +1,4 @@
-.\" $XConsortium: XtGetDisp.man /main/4 1995/12/15 14:24:18 gildea $
+.\" $XConsortium: XtGetDisp.man /main/5 1996/12/09 16:16:38 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtGetDisplays 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtGetDisplays 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtGetDisplays \- retrieve a list of displays associated with an application context
 .SH SYNTAX

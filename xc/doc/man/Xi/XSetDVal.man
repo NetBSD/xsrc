@@ -8,9 +8,9 @@
 .\" suitability for any purpose of the information in this document.  It is 
 .\" provided \`\`as is'' without express or implied warranty.
 .\" 
-.\" $XConsortium: XSetDVal.man /main/7 1995/12/15 14:10:00 gildea $
+.\" $XConsortium: XSetDVal.man /main/8 1996/12/09 16:49:53 kaleb $
 .ds xL Programming with Xlib
-.TH XSetDeviceValuators 3X11 "Release 6.1" "X Version 11" "X FUNCTIONS"
+.TH XSetDeviceValuators 3X11 "Release 6.3" "X Version 11" "X FUNCTIONS"
 .SH NAME
 XSetDeviceValuators \- initialize the valuators on an extension input device
 .SH SYNTAX

@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XRaiseWindow 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XRaiseWindow 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XRaiseWindow, XLowerWindow, XCirculateSubwindows, XCirculateSubwindowsUp, XCirculateSubwindowsDown, XRestackWindows \- change window stacking order
 .SH SYNTAX

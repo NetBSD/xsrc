@@ -1,6 +1,6 @@
 /*
- *	$XConsortium: input.c /main/20 1996/01/14 16:52:52 kaleb $
- *	$XFree86: xc/programs/xterm/input.c,v 3.8 1996/08/13 11:36:58 dawes Exp $
+ *	$XConsortium: input.c /main/21 1996/04/17 15:54:23 kaleb $
+ *	$XFree86: xc/programs/xterm/input.c,v 3.11.2.2 1997/05/23 09:24:37 dawes Exp $
  */
 
 /*
@@ -27,6 +27,10 @@
  */
 
 /* input.c */
+
+#ifdef HAVE_CONFIG_H
+#include <xtermcfg.h>
+#endif
 
 #include "ptyx.h"		/* gets Xt headers, too */
 #include <X11/keysym.h>
@@ -105,42 +109,79 @@ Input (keyboard, screen, event, eightbit)
 	reply.a_nparam = 0;
 	reply.a_inters = 0;
 
+#ifdef XK_KP_Home
 	if (keysym >= XK_KP_Home && keysym <= XK_KP_Begin) {
 	    keysym += XK_Home - XK_KP_Home;
 	}
+#endif
+
+#define VT52_KEYPAD \
+	if_OPT_VT52_MODE(screen,{ \
+		reply.a_type = ESC; \
+		reply.a_pintro = '?'; \
+		})
+
+#define VT52_CURSOR_KEYS \
+	if_OPT_VT52_MODE(screen,{ \
+		reply.a_type = ESC; \
+		})
 
 	if (IsPFKey(keysym)) {
 		reply.a_type = SS3;
+		reply.a_final = keysym-XK_KP_F1+'P';
+		VT52_CURSOR_KEYS
 		unparseseq(&reply, pty);
-		unparseputc((char)(keysym-XK_KP_F1+'P'), pty);
 		key = TRUE;
         } else if (IsCursorKey(keysym) &&
         	keysym != XK_Prior && keysym != XK_Next) {
-       		if (keyboard->flags & CURSOR_APL) {
+       		if (keyboard->flags & MODE_DECCKM) {
 			reply.a_type = SS3;
+			reply.a_final = cur[keysym-XK_Home];
+			VT52_CURSOR_KEYS
 			unparseseq(&reply, pty);
-			unparseputc(cur[keysym-XK_Home], pty);
 		} else {
 			reply.a_type = CSI;
+			if_OPT_VT52_MODE(screen,{ reply.a_type = ESC; })
 			reply.a_final = cur[keysym-XK_Home];
 			unparseseq(&reply, pty);
 		}
 		key = TRUE;
-	 } else if (IsFunctionKey(keysym) || IsMiscFunctionKey(keysym) ||
-	 	keysym == XK_Prior || keysym == XK_Next ||
-	 	keysym == DXK_Remove || keysym == XK_KP_Delete ||
-		keysym == XK_KP_Insert) {
-		if ((string = udk_lookup(funcvalue(keysym), &nbytes)) != 0) {
+	 } else if (IsFunctionKey(keysym) || IsMiscFunctionKey(keysym)
+	 	|| keysym == XK_Prior
+		|| keysym == XK_Next
+		|| keysym == DXK_Remove
+#ifdef XK_KP_Delete
+		|| keysym == XK_KP_Delete
+		|| keysym == XK_KP_Insert
+#endif
+		) {
+		int dec_code = funcvalue(keysym);
+		if ((event->state & ShiftMask)
+		 && ((string = udk_lookup(dec_code, &nbytes)) != 0)) {
 			while (nbytes-- > 0)
 				unparseputc(*string++, pty);
-		} else {
+		}
+#if OPT_VT52_MODE
+		/*
+		 * Interpret F1-F4 as PF1-PF4 for VT52, VT100
+		 */
+		else if (screen->ansi_level <= 1
+		  && (dec_code >= 11 && dec_code <= 14))
+		{
+			reply.a_type = SS3;
+			VT52_CURSOR_KEYS
+			reply.a_final = dec_code - 11 + 'P';
+			unparseseq(&reply, pty);
+		}
+#endif
+		else {
 			reply.a_type = CSI;
 			reply.a_nparam = 1;
 			if (sunFunctionKeys) {
 				reply.a_param[0] = sunfuncvalue (keysym);
 				reply.a_final = 'z';
 			} else {
-				reply.a_param[0] = funcvalue (keysym);
+				reply.a_param[0] = dec_code;
 				reply.a_final = '~';
 			}
 			if (reply.a_param[0] > 0)
@@ -148,10 +189,21 @@ Input (keyboard, screen, event, eightbit)
 		}
 		key = TRUE;
 	} else if (IsKeypadKey(keysym)) {
-	  	if (keyboard->flags & KYPD_APL)	{
+#if OPT_VT52_MODE
+		/*
+		 * DEC keyboards don't have keypad(+), but do have keypad(,)
+		 * instead.  Other (Sun, PC) keyboards commonly have keypad(+),
+		 * but no keypad(,) - it's a pain for users to work around.
+		 */
+		if (!sunFunctionKeys
+		 && keysym == XK_KP_Add)
+			keysym = XK_KP_Separator;
+#endif
+	  	if (keyboard->flags & MODE_DECKPAM)	{
 			reply.a_type   = SS3;
+			reply.a_final = kypd_apl[keysym-XK_KP_Space];
+			VT52_KEYPAD
 			unparseseq(&reply, pty);
-			unparseputc(kypd_apl[keysym-XK_KP_Space], pty);
 		} else
 			unparseputc(kypd_num[keysym-XK_KP_Space], pty);
 		key = TRUE;
@@ -228,9 +280,11 @@ static int funcvalue (keycode)
 
 		case XK_Find :	return(1);
 		case XK_Insert:	return(2);
-		case XK_KP_Insert: return(2);
 		case XK_Delete:	return(3);
+#ifdef XK_KP_Insert
+		case XK_KP_Insert: return(2);
 		case XK_KP_Delete: return(3);
+#endif
 		case DXK_Remove: return(3);
 		case XK_Select:	return(4);
 		case XK_Prior:	return(5);
@@ -285,9 +339,11 @@ static int sunfuncvalue (keycode)
   
 		case XK_Find :	return(1);
 		case XK_Insert:	return(2);
-		case XK_KP_Insert: return(2);
 		case XK_Delete:	return(3);
+#ifdef XK_KP_Insert
+		case XK_KP_Insert: return(2);
 		case XK_KP_Delete: return(3);
+#endif
 		case DXK_Remove: return(3);
 		case XK_Select:	return(4);
 		case XK_Prior:	return(5);

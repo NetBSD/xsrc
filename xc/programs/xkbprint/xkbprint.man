@@ -1,5 +1,5 @@
-.\" $XConsortium: xkbprint.man /main/3 1995/12/15 11:17:09 kaleb $
-.TH XKBPRINT 1 "Release 6.1" "X Version 11"
+.\" $XConsortium: xkbprint.man /main/4 1996/12/09 17:09:34 kaleb $
+.TH XKBPRINT 1 "Release 6.3" "X Version 11"
 .SH NAME
 xkbprint \- print an XKB keyboard description
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-.\" $XConsortium: XtAppGSTO.man /main/7 1995/12/15 14:20:48 gildea $
+.\" $XConsortium: XtAppGSTO.man /main/8 1996/12/09 16:13:13 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAppGetSelectionTimeout 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAppGetSelectionTimeout 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAppGetSelectionTimeout, XtAppSetSelectionTimeout \- set and obtain selection timeout values
 .SH SYNTAX

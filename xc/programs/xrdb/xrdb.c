@@ -2,7 +2,7 @@
  * xrdb - X resource manager database utility
  *
  * $XConsortium: xrdb.c,v 11.76 95/05/12 18:36:46 mor Exp $
- * $XFree86: xc/programs/xrdb/xrdb.c,v 3.5 1996/09/03 15:13:49 dawes Exp $
+ * $XFree86: xc/programs/xrdb/xrdb.c,v 3.7.2.1 1997/05/25 05:06:57 dawes Exp $
  */
 
 /*
@@ -780,8 +780,11 @@ addstring (arg, s)
 #endif
 {
     if(arg->used + strlen(s) + 1 >= arg->room) {
-	if((arg->val = (char *)realloc(arg->val, arg->room + CHUNK_SIZE))
-	   == NULL)
+	if(arg->val)
+	    arg->val = (char *)realloc(arg->val, arg->room + CHUNK_SIZE);
+	else
+	    arg->val = (char *)malloc(arg->room + CHUNK_SIZE);	    
+	if(arg->val == NULL)
 	    fatal("%s: Not enough memory\n", ProgramName);
 	arg->room += CHUNK_SIZE;
     }
@@ -1051,7 +1054,8 @@ void FormatEntries(buffer, entries)
     if (!entries->used)
 	return;
     if (oper == OPMERGE)
-	qsort(entries->entry, entries->used, sizeof(Entry), CompareEntries);
+	qsort(entries->entry, entries->used, sizeof(Entry),
+	      (int (*)())CompareEntries);
     for (i = 0; i < entries->used; i++) {
 	if (entries->entry[i].usable)
 	    AppendEntryToBuffer(buffer, &entries->entry[i]);
@@ -1200,7 +1204,7 @@ Process(scrno, doScreen, execute)
 	    (void) mktemp(tmpname3);
 	    if((cmd = (char *)
 		malloc(strlen(cpp_program) + strlen(includes.val) +
-		       1 + strlen(defines.val) +
+		       1 + strlen(defines.val) + 1 +
 		       strlen(filename ? filename : "") + 3 +
 		       strlen(tmpname3) + 1)) ==
 	       NULL)
@@ -1215,7 +1219,7 @@ Process(scrno, doScreen, execute)
 		fatal("%s: can't open file '%s'\n", ProgramName, tmpname3);
 #else
 	    if((cmd = (char *)
-		malloc(strlen(cpp_program) + strlen(includes.val) +
+		malloc(strlen(cpp_program) + strlen(includes.val) + 1 +
 		       strlen(defines.val) + 1)) ==
 	       NULL)
 		fatal("%s: Out of memory\n", ProgramName);

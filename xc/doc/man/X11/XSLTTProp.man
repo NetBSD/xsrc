@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XStringListToTextProperty 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XStringListToTextProperty 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XStringListToTextProperty, XTextPropertyToStringList, XFreeStringList, XTextProperty \- convert string lists and text property structure
 .SH SYNTAX

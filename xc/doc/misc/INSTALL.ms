@@ -1,5 +1,5 @@
-.\" $XConsortium: INSTALL.ms /main/6 1996/03/05 14:41:10 gildea $
-.\" X11R6.1 Installation instructions.  Use troff -ms macros
+.\" $XConsortium: INSTALL.ms /main/7 1996/12/22 20:44:54 swick $
+.\" X11R6.3 Installation instructions.  Use troff -ms macros
 .ds Ts March 5, 1996\" updated by Emacs
 .\"
 .ie t \{
@@ -39,7 +39,7 @@ X Consortium
 .sp 6
 \*(Ts
 
-For Release 6.1
+Updated For Release 6.3
 .LP
 .if t \{\
 .bp
@@ -78,8 +78,8 @@ from the X Consortium.
 \fIX Window System\fP is a trademark of X Consortium, Inc.
 .\"
 .if t \{
-.OH 'X Version 11, Release 6.1''X Window System Installation'
-.EH 'X Window System Installation Version 11, Release 6.1'
+.OH 'X Version 11, Release 6.3 Snapshot''X Window System Installation'
+.EH 'X Window System Installation Version 11, Release 6.3 Snapshot'
 .bp 1
 .ds CF \\n(PN
 .\}
@@ -94,7 +94,7 @@ instructions later in this document.
 Edit \fBxc/config/cf/site.def\fP for local preferences.
 If you want to build with \fIgcc\fP
 uncomment the \fBHasGcc2\fP line.
-If you want to install somewhere other than \fB/usr/X11R6.1\fP,
+If you want to install somewhere other than \fB/usr/X11R6.3\fP,
 change
 \fBProjectRoot\fP.  (Do \fInot\fP use \fBDESTDIR\fP.)
 .LP
@@ -164,14 +164,14 @@ To install requires
 You will need an equivalent amount of extra space to build, since you
 also need room for all the object files.
 .LP
-Distributed as tar files, Release 6.1 core is divided into parts as follows:
+Distributed as tar files, Release 6.3 core is divided into parts as follows:
 .LP
 .KS
 .DS
 .ta 1.5i
 xc-1.tar	contains everything in xc/ that isn't in the other tar files
 xc-2.tar	contains xc/fonts, xc/doc/specs, xc/util
-xc-3.tar	contains xc/doc/hardcopy xc/test
+xc-3.tar	contains xc/doc/hardcopy
 .DE
 .KE
 .LP
@@ -195,11 +195,6 @@ Then for each tar file \fBxc\-*.tar.Z\fP, execute this:
 .ID
 zcat\0\fIftp-dir\fP/xc\-\fIN\fP.tar.Z | tar xf\0\-
 .DE
-.LP
-For each tar file \fBcontrib\-*.tar.Z\fP, execute this:
-.ID
-zcat\0\fIftp-dir\fP/contrib\-\fIN\fP.tar.Z | tar xf\0\-
-.DE
 
 .nH 3 "Unpacking a gzipped FTP Distribution"
 
@@ -213,11 +208,6 @@ Then for each tar file \fBxc\-*.tar.gz\fP, execute this:
 .ID
 gunzip\0\-c\0\fIftp-dir\fP/xc\-\fIN\fP.tar.gz | tar xf\0\-
 .DE
-.LP
-For each tar file \fBcontrib\-*.tar.gz\fP, execute this:
-.ID
-gunzip\0\-c\0\fIftp-dir\fP/contrib\-\fIN\fP.tar.gz | tar xf\0\-
-.DE
 
 .nH 3 "Unpacking a Split Compressed FTP Distribution"
 
@@ -230,12 +220,6 @@ Then for each directory \fBxc\-*\fP:
 .ID
 cd \fIftp-dir\fP/xc\-\fIN\fP
 cat xc\-\fIN\fP.?? | uncompress | (cd \fIsourcedir\fP\|; tar xf\0\-\|)
-.DE
-.LP
-For each directory \fBcontrib\-*\fP, execute this:
-.ID
-cd \fIftp-dir\fP/contrib\-\fIN\fP
-cat contrib\-\fIN\fP.?? | uncompress | (cd \fIsourcedir\fP\|; tar xf\0\-\|)
 .DE
 
 .nH 3 "Unpacking the Tape Distribution"
@@ -280,7 +264,7 @@ The links may use an additional 10 megabytes, but it is cheaper
 than having multiple copies of the source tree.
 .LP
 It may be tricky to compile \fIlndir\fP before the distribution is
-built.  If you have a copy from Release 5, use that.
+built.  If you have a copy from a previous release, use that.
 \fBMakefile.ini\fP can be used for building \fIlndir\fP the first time.
 You may have to specify \fBOSFLAGS=\-D\fP\fIsomething\fP to
 get it to compile.
@@ -373,7 +357,7 @@ talk to your system manager before setting this variable.
 .Ip InstallXdmConfig
 By default set to NO, which suppresses installing xdm config files
 over existing ones.  Leave it set to NO if your site has customized
-the files in \fB/usr/X11R6.1/lib/X11/xdm\fP, as many sites do.
+the files in \fB/usr/X11R6.3/lib/X11/xdm\fP, as many sites do.
 If you don't install the new files, merge any changes
 present in the new files.
 .Ip "MotifBC"
@@ -401,9 +385,7 @@ not been tested recently and hence probably need changes to work:
 \fBAmoeba.cf\fP is known to require additional patches.
 .LP
 The file \fBxc/lib/Xdmcp/Wraphelp.c\fP, for XDM-AUTHORIZATION-1, is not
-included in this release.  The file is available within the US;
-for details get
-\fB/pub/R6/xdm-auth/README\fP from ftp.x.org via anonymous FTP.
+included in this release.
 
 .nH 2 "System Build Notes"
 
@@ -435,25 +417,26 @@ in the \*Qmake World\*U command.
 .\"
 Use of the GNU assembler, \fIas\fP, or linker, \fIld\fP, is not supported.
 GNU \fImake\fP is not supported.
-
-.nH 3 "clearmake"
 .\"
-Atria's \fIclearmake\fP make program, part of their ClearCase product,
-is supported as of R6.1.
-You will need patches to ClearCase version
-2.0.2 or 2.0.3.
-You need one of 2.0.3-61 through 2.0.3-69, as
-appropriate for your platform, or any later patch that fixes bug #7250.
-Even with these patches there is still a bug in clearmake that
-prevents it from correctly building the X server on HP-UX (the problem
-is building the HP ddx).
-.LP
-To use clearmake, set the variable \fBHasClearmake\fP to \fBYES\fP.
-Once you make Makefiles with HasClearmake, you
-cannot go back and use regular make with the same Makefiles.
-You can use clearmake without setting HasClearmake,
-but you won't be able to take advantage of clearmake's
-file-sharing abilities.
+.\"We broke clearmake between R6.1 and R6.3 and didn't get to fix it.
+.\".nH 3 "clearmake"
+.\"
+.\"Atria's \fIclearmake\fP make program, part of their ClearCase product,
+.\"was supported in R6.1.
+.\"You will need patches to ClearCase version
+.\"2.0.2 or 2.0.3.
+.\"You need one of 2.0.3-61 through 2.0.3-69, as
+.\"appropriate for your platform, or any later patch that fixes bug #7250.
+.\"Even with these patches there is still a bug in clearmake that
+.\"prevents it from correctly building the X server on HP-UX (the problem
+.\"is building the HP ddx).
+.\".LP
+.\"To use clearmake, set the variable \fBHasClearmake\fP to \fBYES\fP.
+.\"Once you make Makefiles with HasClearmake, you
+.\"cannot go back and use regular make with the same Makefiles.
+.\"You can use clearmake without setting HasClearmake,
+.\"but you won't be able to take advantage of clearmake's
+.\"file-sharing abilities.
 
 .nH 3 "SparcWorks 2.0"
 
@@ -468,7 +451,7 @@ ar cq libthr_stubs.a thr_stubs.o
 ranlib libthr_stubs.a
 .DE
 Install libthr_stubs.a in the same directory with your X libraries
-(e.g., \fB/usr/X11R6.1/lib/libthr_stubs.a\fP).
+(e.g., \fB/usr/X11R6.3/lib/libthr_stubs.a\fP).
 Add the following line to \fBsite.def\fP:
 .ID
 #define ExtraLibraries\0\-lsocket\0\-lnsl $(CDEBUGFLAGS:\-g=\-lthr_stubs)
@@ -476,10 +459,10 @@ Add the following line to \fBsite.def\fP:
 This example uses a \fImake\fP macro substitution; not all \fImake\fP
 implementations support this feature.
 
-.nH 3 "CenterLine C under Solaris 2.3"
+.nH 3 "CenterLine C under Solaris 2"
 
 If you are using the CenterLine C compiler to compile the distribution
-under Solaris 2.3,
+under Solaris 2,
 place the following line in your \fBsite.def\fP:
 .ID
 #define HasCenterLineC YES
@@ -507,6 +490,7 @@ with the \fB\-g\fP flag:
 .DE
 This optimizer bug appears to be fixed in CodeCenter 4.0.6.
 
+.\"No idea if the following is still needed on newer version of AIX
 .nH 3 "IBM AIX 4.1.4"
 
 On AIX 4.1.4, the file \fBlib/font/Type1/objects.c\fP must be compiled
@@ -530,6 +514,9 @@ There are also some other rough edges in the
 implementation, such as lack of support for non-socket file descriptors as Xt
 alternate inputs and not using the registry for configurable parameters like
 the system filenames and search paths.
+.LP
+The \fIXnest\fP server has been made to run on NT.  It requires a real
+X server for output still.
 
 .nH 3 "Omron Luna"
 
@@ -626,9 +613,9 @@ Create a link from
 the old name to the new name.
 .IP
 For example, to have programs that were linked against libX11.so.6.0 use
-libX11.so.6.1, make this link:
+libX11.so.6.3, make this link:
 .ID
-ln\0\-s libX11.so.6.1 libX11.so.6.0
+ln\0\-s libX11.so.6.3 libX11.so.6.0
 .DE
 
 .nH 2 "Setting Up xterm"
@@ -662,12 +649,12 @@ If your system uses an \fB/etc/rc\fP file at boot time, you can
 usually enable these programs by placing the following at or near the end
 of the file:
 .ID
-if [ \-f /usr/X11R6.1/bin/xfs ]; then
-        /usr/X11R6.1/bin/xfs & echo \-n ' xfs'
+if [ \-f /usr/X11R6.3/bin/xfs ]; then
+        /usr/X11R6.3/bin/xfs & echo \-n ' xfs'
 fi
 
-if [ \-f /usr/X11R6.1/bin/xdm ]; then
-        /usr/X11R6.1/bin/xdm; echo \-n ' xdm'
+if [ \-f /usr/X11R6.3/bin/xdm ]; then
+        /usr/X11R6.3/bin/xdm; echo \-n ' xdm'
 fi
 .DE
 .LP
@@ -676,7 +663,7 @@ you do not need to run a font server on every machine with
 an X display.  You should start \fIxfs\fP before \fIxdm\fP, since
 \fIxdm\fP may start an X server which is a client of the font server.
 .LP
-The examples here use \fB/usr/X11R6.1/bin\fP, but if you have installed into
+The examples here use \fB/usr/X11R6.3/bin\fP, but if you have installed into
 a different directory by setting (or unsetting) \fBProjectRoot\fP then you
 need to substitute the correct directory.
 .LP
@@ -689,8 +676,8 @@ There are two ways you can get \
 On systems with a \fB/etc/inittab\fP file, you can edit this file to
 add the lines
 .ID
-xfs:3:once:/usr/X11R6.1/bin/xfs
-xdm:3:once:/usr/X11R6.1/bin/xdm
+xfs:3:once:/usr/X11R6.3/bin/xfs
+xdm:3:once:/usr/X11R6.3/bin/xdm
 .DE
 .LP
 On some systems, you can edit a file in /etc/init.d to run
@@ -706,7 +693,7 @@ OPEN LOOK Undo, Copy, Paste, Find, and Cut keys may not work correctly.
 For example, to run Sun's OpenWindows 3.3 desktop environment with an
 X11R6 server, use the command:
 .ID
-% openwin\0\-server\0/usr/X11R6.1/bin/Xsun\0\-swapLkeys
+% openwin\0\-server\0/usr/X11R6.3/bin/Xsun\0\-swapLkeys
 .DE
 .LP
 The keysyms reported by keys on the numeric keypad have also changed 
@@ -738,8 +725,8 @@ keysym KP_Delete = Delete
 
 You shouldn't need this right away, but eventually you are probably
 going to make changes to the sources, for example by applying
-X Consortium public patches.  See the section \*QPublic Patches\*U
-later in this document.
+any public patches that may be released.
+.\"See the section \*QPublic Patches\*U later in this document.
 .LP
 Each patch comes with explicit instructions at the top of it saying
 what to do.  Thus the procedure here is only an overview of the types
@@ -787,79 +774,79 @@ You can also generate text files by specifying the document name with
 a \fB.txt\fP extension as a \fImake\fP target, e.g., \*Qmake
 icccm.txt\*U.
 
-
-.nH 1 "Public Patches"
-
-X Consortium may from time to time issue public patches to the latest
-public release to fix any
-serious problems that are discovered.
-Such fixes are a subset of fixes available to
-Consortium members.  Public patches are available over the Internet in
-two ways: via anonymous
-FTP, and via the xstuff mail server.
-.LP
-Fixes are available via anonymous FTP to ftp.x.org,
-in the directory \fB/pub/R6.1/fixes/\fP, or from your local X mirror site.
-Check the site closest to you first.
-.LP
-You can determine which public patches have been applied to your
-source tree by examining the \*QVERSION\*U line of \fBxc/bug-report\fP.
-The distribution you get might already have some patches applied; you
-only need to apply later patches.  If you try to apply patches out of
-order or apply patches that
-are already in your tree, \fIpatch\fP will tell you that you have the
-wrong version and not apply the patch.
-.LP
-A copy of the \fIpatch\fP program is in \fBxc/util/patch/\fP.
+.\"Perhaps the Open Group will continue patches... who knows?
+.\".nH 1 "Public Patches"
 .\"
-.nH 2 "The xstuff Mail Server"
-For those without FTP access, individual fixes can be obtained by
-electronic mail by sending a message to
-.ID
-xstuff@x.org
-.DE
-.LP
-In the usual case,
-the message should have a subject line and no body, or a single-line body and
-no subject, in either case the line looking like:
-.ID
-send fixes \fInumber\fP
-.DE
-.LP
-where \fInumber\fP is a decimal number, starting from one.
-Large patches are broken up into parts for the convenience of mailers
-that cannot handle large messages, for example
-\*Q2a\*U, \*Q2b\*U, \*Q2c\*U, \*Q2d\*U, and \*Q2e\*U.
-Ask for each part separately,
-for example, use this line:
-.ID
-send fixes 2a
-.DE
-to get part 2a.  Concatenate all the parts together before applying,
-e.g.,
-.ID
-cat 2[abcde] | patch \|\-p \|\-s
-.DE
-.LP
-To get a
-summary of available fixes, email this line to xstuff:
-.ID
-index fixes
-.DE
-.LP
-If you need help, make the line:
-.ID
-help
-.DE
-.LP
-Some mailers produce mail headers that are unusable for extracting
-return addresses.  If you use such a mailer, you won't get any
-response.  If you happen to know an explicit return path, you can
-include include one in the body of your message, and the daemon will
-use it.  For example:
-.ID
-path \fIuser\fP%\fIhost\fP.bitnet@mitvma.mit.edu
-.DE
+.\"X Consortium may from time to time issue public patches to the latest
+.\"public release to fix any
+.\"serious problems that are discovered.
+.\"Such fixes are a subset of fixes available to
+.\"Consortium members.  Public patches are available over the Internet in
+.\"two ways: via anonymous
+.\"FTP, and via the xstuff mail server.
+.\".LP
+.\"Fixes are available via anonymous FTP to ftp.x.org,
+.\"in the directory \fB/pub/R6.3/fixes/\fP, or from your local X mirror site.
+.\"Check the site closest to you first.
+.\".LP
+.\"You can determine which public patches have been applied to your
+.\"source tree by examining the \*QVERSION\*U line of \fBxc/bug-report\fP.
+.\"The distribution you get might already have some patches applied; you
+.\"only need to apply later patches.  If you try to apply patches out of
+.\"order or apply patches that
+.\"are already in your tree, \fIpatch\fP will tell you that you have the
+.\"wrong version and not apply the patch.
+.\".LP
+.\"A copy of the \fIpatch\fP program is in \fBxc/util/patch/\fP.
+.\".\"
+.\".nH 2 "The xstuff Mail Server"
+.\"For those without FTP access, individual fixes can be obtained by
+.\"electronic mail by sending a message to
+.\".ID
+.\"xstuff@x.org
+.\".DE
+.\".LP
+.\"In the usual case,
+.\"the message should have a subject line and no body, or a single-line body and
+.\"no subject, in either case the line looking like:
+.\".ID
+.\"send fixes \fInumber\fP
+.\".DE
+.\".LP
+.\"where \fInumber\fP is a decimal number, starting from one.
+.\"Large patches are broken up into parts for the convenience of mailers
+.\"that cannot handle large messages, for example
+.\"\*Q2a\*U, \*Q2b\*U, \*Q2c\*U, \*Q2d\*U, and \*Q2e\*U.
+.\"Ask for each part separately,
+.\"for example, use this line:
+.\".ID
+.\"send fixes 2a
+.\".DE
+.\"to get part 2a.  Concatenate all the parts together before applying,
+.\"e.g.,
+.\".ID
+.\"cat 2[abcde] | patch \|\-p \|\-s
+.\".DE
+.\".LP
+.\"To get a
+.\"summary of available fixes, email this line to xstuff:
+.\".ID
+.\"index fixes
+.\".DE
+.\".LP
+.\"If you need help, make the line:
+.\".ID
+.\"help
+.\".DE
+.\".LP
+.\"Some mailers produce mail headers that are unusable for extracting
+.\"return addresses.  If you use such a mailer, you won't get any
+.\"response.  If you happen to know an explicit return path, you can
+.\"include include one in the body of your message, and the daemon will
+.\"use it.  For example:
+.\".ID
+.\"path \fIuser\fP%\fIhost\fP.bitnet@mitvma.mit.edu
+.\".DE
 .\"
 .ie t \{
 .\"

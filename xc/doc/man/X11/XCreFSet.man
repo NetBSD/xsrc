@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XCreateFontSet 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XCreateFontSet 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XCreateFontSet, XFreeFontSet \- create and free an international text drawing font set
 .SH SYNTAX

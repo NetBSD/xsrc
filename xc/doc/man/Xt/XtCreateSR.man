@@ -1,4 +1,4 @@
-.\" $XConsortium: XtCreateSR.man /main/4 1995/12/15 14:22:58 gildea $
+.\" $XConsortium: XtCreateSR.man /main/5 1996/12/09 16:15:26 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtCreateSelectionRequest 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtCreateSelectionRequest 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtCreateSelectionRequest, XtSendSelectionRequest, XtCancelSelectionRequest \- bundle multiple selection conversion requests into a single request using MULTIPLE target
 .SH SYNTAX

@@ -8,9 +8,9 @@
 .\" suitability for any purpose of the information in this document.  It is 
 .\" provided \`\`as is'' without express or implied warranty.
 .\" 
-.\" $XConsortium: XGetExtV.man /main/6 1995/12/15 22:36:56 gildea $
+.\" $XConsortium: XGetExtV.man /main/7 1996/12/09 16:49:22 kaleb $
 .ds xL Programming With Xlib
-.TH XGetExtensionVersion 3X11 "Release 6.1" "X Version 11" "X FUNCTIONS"
+.TH XGetExtensionVersion 3X11 "Release 6.3" "X Version 11" "X FUNCTIONS"
 .SH NAME
 XGetExtensionVersion \- query the version of the input extension.
 .SH SYNTAX

@@ -1,4 +1,4 @@
-.\" $XConsortium: xprop.man /main/19 1995/12/15 14:05:28 gildea $
+.\" $XConsortium: xprop.man /main/20 1996/12/09 17:10:17 kaleb $
 .\" Copyright (c) 1988  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -24,7 +24,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH XPROP 1 "Release 6.1" "X Version 11"
+.TH XPROP 1 "Release 6.3" "X Version 11"
 .SH NAME
 xprop - property displayer for X
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-.\" $XConsortium: XtCreACon.man /main/8 1995/12/15 14:22:33 gildea $
+.\" $XConsortium: XtCreACon.man /main/10 1996/12/09 16:14:59 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtCreateApplicationContext 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtCreateApplicationContext 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtCreateApplicationContext, XtDestroyApplicationContext, XtWidgetToApplicationContext, XtToolkitInitialize \- create, destroy, and obtain an application context
 .SH SYNTAX
@@ -163,6 +163,13 @@ does not destroy the application context until the dispatch is complete.
 The
 .ZN XtWidgetToApplicationContext
 function returns the application context for the specified widget.
+.LP
+The
+.ZN XtToolkitInitialize
+function initializes the Intrinsics internals.
+If
+.ZN XtToolkitInitialize
+was previously called it returns immediately.
 .LP
 .SH "SEE ALSO"
 XtDisplayInitialize(3Xt)

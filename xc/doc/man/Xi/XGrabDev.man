@@ -8,9 +8,9 @@
 .\" suitability for any purpose of the information in this document.  It is 
 .\" provided \`\`as is'' without express or implied warranty.
 .\" 
-.\" $XConsortium: XGrabDev.man /main/7 1995/12/15 14:09:22 gildea $
+.\" $XConsortium: XGrabDev.man /main/8 1996/12/09 16:49:32 kaleb $
 .ds xL Programming With Xlib
-.TH XGrabDevice 3X11 "Release 6.1" "X Version 11" "X FUNCTIONS"
+.TH XGrabDevice 3X11 "Release 6.3" "X Version 11" "X FUNCTIONS"
 .SH NAME
 XGrabDevice, XUngrabDevice \- grab/release the specified extension device
 .SH SYNTAX

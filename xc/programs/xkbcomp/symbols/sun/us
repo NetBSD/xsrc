@@ -1,4 +1,4 @@
-// $XConsortium: us /main/3 1996/01/24 12:18:12 kaleb $
+// $XConsortium: us /main/4 1996/08/31 12:20:41 kaleb $
 //
 //Copyright (c) 1996  X Consortium
 //
@@ -104,13 +104,13 @@ xkb_symbols "sun4" {
     // begin modifier mappings
     modifier_map Shift  	{ Shift_R };
     modifier_map Mod1   	{ Meta_L, Meta_R };
-    modifier_map Mod2   	{ Mode_switch };
-    modifier_map Mod3   	{ Alt_L };
+    modifier_map Mod2   	{ Alt_L };
+    modifier_map Mod3   	{ Mode_switch };
     modifier_map Mod4   	{ Num_Lock };
     modifier_map Mod5   	{ F13, F18, F20 };
 };
 
-xkb_symbols "broken_openlook_map" {
+hidden partial function_keys xkb_symbols "broken_openlook_map" {
     key <STOP> { [ F11	],	[ Cancel	]	};
     key <AGAI> { [ F12	],	[ Redo		]	};
     key <PROP> { [ F13	],	[ SunProps	]	};
@@ -221,8 +221,8 @@ xkb_symbols "sun5" {
     // begin modifier mappings
     modifier_map Shift  { Shift_R };
     modifier_map Mod1	{ Meta_L, Meta_R };
-    modifier_map Mod2	{ Mode_switch };
-    modifier_map Mod3	{ Alt_L };
+    modifier_map Mod2	{ Alt_L };
+    modifier_map Mod3	{ Mode_switch };
     modifier_map Mod4	{ Num_Lock };
 };
 

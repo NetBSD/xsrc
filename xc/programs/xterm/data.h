@@ -1,6 +1,6 @@
 /*
- *	$XConsortium: data.h /main/12 1996/01/14 16:52:48 kaleb $
- *	$XFree86: xc/programs/xterm/data.h,v 3.2 1996/08/13 11:36:57 dawes Exp $
+ *	$XConsortium: data.h /main/13 1996/11/24 17:35:40 rws $
+ *	$XFree86: xc/programs/xterm/data.h,v 3.3 1996/12/23 07:14:27 dawes Exp $
  */
 /*
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
@@ -62,7 +62,6 @@ extern int bcnt;
 #ifdef DEBUG
 extern int debug;
 #endif	/* DEBUG */
-extern int errno;
 extern int max_plus1;
 extern int switchfb[];
 

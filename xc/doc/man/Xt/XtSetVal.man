@@ -1,4 +1,4 @@
-.\" $XConsortium: XtSetVal.man /main/10 1995/12/15 14:28:06 gildea $
+.\" $XConsortium: XtSetVal.man /main/11 1996/12/09 16:20:44 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtSetValues 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtSetValues 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtSetValues, XtVaSetValues, XtSetSubvalues, XtVaSetSubvalues, XtGetValues, XtVaGetValues, XtGetSubvalues, XtVaGetSubvalues \- obtain and set widget resources 
 .SH SYNTAX

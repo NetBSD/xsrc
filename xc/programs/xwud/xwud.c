@@ -1,5 +1,5 @@
-/* $XConsortium: xwud.c,v 1.58 94/04/17 20:24:32 rws Exp $ */
-/* $XFree86: xc/programs/xwud/xwud.c,v 3.1 1996/06/10 10:03:27 dawes Exp $ */
+/* $XConsortium: xwud.c /main/60 1996/11/24 17:23:09 rws $ */
+/* $XFree86: xc/programs/xwud/xwud.c,v 3.2 1996/12/23 07:14:50 dawes Exp $ */
 /*
 
 Copyright (c) 1985, 1986, 1988  X Consortium
@@ -43,12 +43,13 @@ from the X Consortium.
 #include <X11/keysymdef.h>
 #include <errno.h>
 
-extern int errno;
 #ifdef X_NOT_STDC_ENV
+extern int errno;
 extern char *malloc();
 #else
 #include <stdlib.h>
 #endif
+
 unsigned Image_Size();
 Atom wm_protocols;
 Atom wm_delete_window;
@@ -61,6 +62,7 @@ usage()
     fprintf(stderr, "usage: %s [-in <file>] [-noclick] [-geometry <geom>] [-display <display>]\n", progname);
     fprintf(stderr, "            [-new] [-std <maptype>] [-raw] [-vis <vis-type-or-id>]\n");
     fprintf(stderr, "            [-help] [-rv] [-plane <number>] [-fg <color>] [-bg <color>]\n");
+    fprintf(stderr, "            [-scale]\n");
     exit(1);
 }
 
@@ -104,6 +106,7 @@ main(argc, argv)
     char *win_name;
     Bool inverse = False, rawbits = False, newmap = False;
     Bool onclick = True;
+    Bool scale = False;
     int plane = -1;
     char *std = NULL;
     char *vis = NULL;
@@ -129,6 +132,7 @@ main(argc, argv)
     Atom map_prop;
     XStandardColormap *stdmaps, *stdmap;
     char c;
+    int win_width, win_height;
 
     progname = argv[0];
 
@@ -186,6 +190,10 @@ main(argc, argv)
 	}
 	if (strcmp(argv[i], "-rv") == 0) {
 	    inverse = True;
+	    continue;
+	}
+	if (strcmp(argv[i], "-scale") == 0) {
+	    scale = True;
 	    continue;
 	}
 	if (strcmp(argv[i], "-split") == 0) {
@@ -540,9 +548,14 @@ main(argc, argv)
 
     attributes.background_pixel = gc_val.background;
     attributes.border_pixel = gc_val.background;
-    attributes.bit_gravity = NorthWestGravity;
+    if (scale)
+	attributes.bit_gravity = ForgetGravity;
+    else
+	attributes.bit_gravity = NorthWestGravity;
     attributes.event_mask = ButtonPressMask|ButtonReleaseMask|KeyPressMask|
 			    ExposureMask;
+    if (scale)
+	attributes.event_mask |= StructureNotifyMask;
     attributes.colormap = colormap;
 
     hints.x = header.window_x;
@@ -553,14 +566,15 @@ main(argc, argv)
 	gbits = XParseGeometry(geom, &hints.x, &hints.y,
 			       (unsigned int *)&hints.width,
 			       (unsigned int *)&hints.height);
-    hints.max_width = (hints.width > out_image->width) ? hints.width :
-							 out_image->width;
-    hints.max_height = (hints.height > out_image->height) ? hints.height :
-							    out_image->height;
-    hints.flags = PMaxSize |
-		  ((gbits & (XValue|YValue)) ? USPosition : 0) |
+    hints.flags = ((gbits & (XValue|YValue)) ? USPosition : 0) |
 		  ((gbits & (HeightValue|WidthValue)) ? USSize : PSize);
-
+    if (!scale) {
+	hints.flags |= PMaxSize;
+	hints.max_width = (hints.width > out_image->width) ?
+	    hints.width : out_image->width;
+	hints.max_height = (hints.height > out_image->height) ?
+	    hints.height : out_image->height;
+    }
     if ((gbits & XValue) && (gbits & XNegative))
 	hints.x += DisplayWidth(dpy, screen) - hints.width; 
     if ((gbits & YValue) && (gbits & YNegative))
@@ -572,6 +586,8 @@ main(argc, argv)
 			      0, vinfo.depth, InputOutput, vinfo.visual,
 			      CWBorderPixel|CWBackPixel|CWColormap|CWEventMask|CWBitGravity,
 			      &attributes);
+    win_width = hints.width;
+    win_height = hints.height;
 
     /* Setup for ICCCM delete window. */
     wm_protocols = XInternAtom(dpy, "WM_PROTOCOLS", False);
@@ -619,9 +635,18 @@ main(argc, argv)
 		exit(0);
 	    }
 	    break;
+	case ConfigureNotify:
+	    win_width = event.xconfigure.width;
+	    win_height = event.xconfigure.height;
+	    break;
 	case Expose:
-	    if ((expose->x < out_image->width) &&
-		(expose->y < out_image->height)) {
+	    if (scale)
+		putScaledImage(dpy, image_win, gc, out_image,
+			       expose->x, expose->y,
+			       expose->width, expose->height,
+			       win_width, win_height);
+	    else if ((expose->x < out_image->width) &&
+		     (expose->y < out_image->height)) {
 		if ((out_image->width - expose->x) < expose->width)
 		    expose->width = out_image->width - expose->x;
 		if ((out_image->height - expose->y) < expose->height)
@@ -660,6 +685,141 @@ putImage (dpy, image_win, gc, out_image, x, y, w, h)
     } else {
 	XPutImage (dpy, image_win, gc, out_image, x, y, x, y, w, h);
     }
+}
+
+typedef short Position;
+typedef unsigned short Dimension;
+typedef unsigned long Pixel;
+
+#define roundint(x)                   (int)((x) + 0.5)
+
+typedef struct {
+  Position *x, *y;
+  Dimension *width, *height;
+} Table;
+
+putScaledImage(display, d, gc, src_image, exp_x, exp_y,
+	       exp_width, exp_height, dest_width, dest_height)
+    Display*		 display;
+    Drawable		 d;
+    GC			 gc;
+    XImage*		 src_image;
+    int			 exp_x;
+    int			 exp_y;
+    unsigned int	 exp_width;
+    unsigned int	 exp_height;
+    unsigned int	 dest_width;
+    unsigned int	 dest_height;
+{
+    XImage *dest_image;
+    Position x, y, min_y, max_y, exp_max_y, src_x, src_max_x, src_y;
+    Dimension w, h, strip_height;
+    Table table;    
+    Pixel pixel;
+    double ratio_x, ratio_y;
+    Bool fast8;
+
+    if (dest_width == src_image->width && dest_height == src_image->height) {
+	/* same for x and y, just send it out */
+	XPutImage(display, d, gc, src_image, exp_x, exp_y, 
+		  exp_x, exp_y, exp_width, exp_height); 
+	return;
+    }
+
+    ratio_x = (double)dest_width / (double)src_image->width;
+    ratio_y = (double)dest_height / (double)src_image->height;
+ 
+    src_x = exp_x / ratio_x;
+    if (src_x >= src_image->width)
+	src_x = src_image->width - 1;
+    src_y = exp_y / ratio_y;
+    if (src_y >= src_image->height)
+	src_y = src_image->height - 1;
+    exp_max_y = exp_y + exp_height;
+    src_max_x = roundint((exp_x + exp_width) / ratio_x) + 1;
+    if (src_max_x > src_image->width)
+	src_max_x = src_image->width;
+
+    strip_height = 65536 / roundint(ratio_x * src_image->bytes_per_line);
+    if (strip_height == 0)
+	strip_height = 1;
+    if (strip_height > exp_height)
+	strip_height = exp_height;
+
+    h = strip_height + roundint(ratio_y);
+    dest_image = XCreateImage(display,
+			      DefaultVisualOfScreen(
+					     DefaultScreenOfDisplay(display)),
+			      src_image->depth, src_image->format, 
+			      0, NULL,
+			      dest_width, h,
+			      src_image->bitmap_pad, 0);
+    dest_image->data = malloc(dest_image->bytes_per_line * h);
+    fast8 = (src_image->depth == 8 && src_image->bits_per_pixel == 8 &&
+	     dest_image->bits_per_pixel == 8 && src_image->format == ZPixmap);
+
+    table.x = (Position *) malloc(sizeof(Position) * (src_image->width + 1));
+    table.y = (Position *) malloc(sizeof(Position) * (src_image->height + 1));
+    table.width = (Dimension *) malloc(sizeof(Dimension) * src_image->width);
+    table.height = (Dimension *) malloc(sizeof(Dimension)*src_image->height);
+    
+    table.x[0] = 0;
+    for (x = 1; x <= src_image->width; x++) {
+	table.x[x] = roundint(ratio_x * x);
+	table.width[x - 1] = table.x[x] - table.x[x - 1];
+    }
+
+    table.y[0] = 0;
+    for (y = 1; y <= src_image->height; y++) {
+	table.y[y] = roundint(ratio_y * y);
+	table.height[y - 1] = table.y[y] - table.y[y - 1];
+    }
+
+    for (min_y = table.y[src_y]; min_y < exp_max_y; min_y = table.y[y]) {
+	max_y = min_y + strip_height;
+	if (max_y > exp_max_y) {
+	    strip_height = exp_max_y - min_y;
+	    max_y = exp_max_y;
+	}
+	for (y = src_y; table.y[y] < max_y; y++) {
+	    if (table.y[y] < min_y)
+		continue;
+	    if (fast8) {
+		for (x = src_x; x < src_max_x; x++) {
+		    pixel = ((unsigned char *)src_image->data)
+			[y * src_image->bytes_per_line + x];
+		    for (h = 0; h < table.height[y]; h++) {
+			memset(dest_image->data +
+			       (table.y[y] + h - min_y) *
+			       dest_image->bytes_per_line + table.x[x],
+			       pixel, table.width[x]);
+		    }
+		}
+	    } else {
+		for (x = src_x; x < src_max_x; x++) {
+		    pixel = XGetPixel(src_image, x, y);
+		    for (h = 0; h < table.height[y]; h++) {
+			for (w = 0; w < table.width[x]; w++)
+			    XPutPixel(dest_image,
+				      table.x[x] + w,
+				      table.y[y] + h - min_y,
+				      pixel);
+		    }
+		}
+	    }
+	}
+	XPutImage(display, d, gc, dest_image, exp_x, 0,
+		  exp_x, min_y, exp_width, table.y[y] - min_y);
+	if (y >= src_image->height)
+	    break;
+    }
+    
+    XFree((char *)table.x);
+    XFree((char *)table.y);
+    XFree((char *)table.width);
+    XFree((char *)table.height);
+
+    XDestroyImage(dest_image);
 }
 
 Latin1Upper(s)

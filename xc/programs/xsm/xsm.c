@@ -1,4 +1,4 @@
-/* $XConsortium: xsm.c /main/77 1995/12/07 18:03:09 mor $ */
+/* $XConsortium: xsm.c /main/78 1996/08/21 10:31:48 mor $ */
 /******************************************************************************
 
 Copyright (c) 1993  X Consortium
@@ -50,19 +50,6 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Shell.h>
 #include <X11/Xatom.h>
 
-#if defined(X_POSIX_C_SOURCE)
-#define _POSIX_C_SOURCE X_POSIX_C_SOURCE
-#include <setjmp.h>
-#undef _POSIX_C_SOURCE
-#elif defined(X_NOT_POSIX) || defined(_POSIX_SOURCE)
-#include <setjmp.h>
-#else
-#define _POSIX_SOURCE
-#include <setjmp.h>
-#undef _POSIX_SOURCE
-#endif
-
-jmp_buf JumpHere;
 Atom wmStateAtom;
 Atom wmDeleteAtom;
 static char *cmd_line_display = NULL;
@@ -306,7 +293,6 @@ char **argv;
      * Main loop
      */
 
-    setjmp (JumpHere);
     XtAppMainLoop (appContext);
 }
 

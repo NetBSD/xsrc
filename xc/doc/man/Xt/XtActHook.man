@@ -1,4 +1,4 @@
-.\" $XConsortium: XtActHook.man /main/5 1995/12/15 14:19:17 gildea $
+.\" $XConsortium: XtActHook.man /main/6 1996/12/09 16:11:28 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAppAddActionHook 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAppAddActionHook 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAppAddActionHook, XtRemoveActionHook \- register an action hook procedure
 .SH SYNTAX

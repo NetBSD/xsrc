@@ -1,7 +1,7 @@
 #ifndef lint
-static char *rid="$XConsortium: main.c /main/239 1995/12/10 17:21:49 gildea $";
+static char *rid="$XConsortium: main.c /main/247 1996/11/29 10:33:51 swick $";
 #endif /* lint */
-/* $XFree86: xc/programs/xterm/main.c,v 3.44 1996/10/03 08:50:34 dawes Exp $ */
+/* $XFree86: xc/programs/xterm/main.c,v 3.47.2.3 1997/05/25 05:07:00 dawes Exp $ */
 
 /*
  * 				 W A R N I N G
@@ -67,6 +67,10 @@ SOFTWARE.
 
 
 /* main.c */
+
+#ifdef HAVE_CONFIG_H
+#include <xtermcfg.h>
+#endif
 
 #include "ptyx.h"
 #include <X11/StringDefs.h>
@@ -178,8 +182,7 @@ static Bool IsPts = False;
 #ifdef Lynx
 #define USE_SYSV_TERMIO
 #undef  TIOCSLTC
-#include <sys/termio.h>
-#undef CAPS_LOCK
+#include <termio.h>
 #endif
 
 #ifdef CSRG_BASED
@@ -194,8 +197,6 @@ static Bool IsPts = False;
 #include <sys/stat.h>
 
 #ifdef Lynx
-#undef CAPS_LOCK
-#define CAPS_LOCK	0x01
 #ifndef BSDLY
 #define BSDLY	0
 #endif
@@ -301,7 +302,11 @@ static Bool IsPts = False;
 #ifndef USE_POSIX_TERMIOS
 #include <sgtty.h>
 #endif /* USE_POSIX_TERMIOS */
+#ifndef Lynx
 #include <sys/resource.h>
+#else
+#include <resource.h>
+#endif
 #define HAS_UTMP_UT_HOST
 #define HAS_BSD_GROUPS
 #ifdef __osf__
@@ -314,14 +319,17 @@ static Bool IsPts = False;
 
 #ifdef _POSIX_SOURCE
 #define USE_POSIX_WAIT
-#define HAS_POSIX_SAVED_IDS
 #endif
 #ifdef SVR4
 #define USE_POSIX_WAIT
-#define HAS_POSIX_SAVED_IDS
+#define HAS_SAVED_IDS_AND_SETEUID
 #endif
 
-#if !defined(MINIX) && !defined(WIN32)
+#ifdef linux
+#define HAS_SAVED_IDS_AND_SETEUID
+#endif
+
+#if !defined(MINIX) && !defined(WIN32) && !defined(Lynx)
 #include <sys/param.h>	/* for NOFILE */
 #endif
 
@@ -329,7 +337,7 @@ static Bool IsPts = False;
 #define USE_POSIX_WAIT
 #define LASTLOG
 #define WTMP
-#define HAS_POSIX_SAVED_IDS
+#define HAS_SAVED_IDS_AND_SETEUID
 #endif
 
 #include <stdio.h>
@@ -470,12 +478,8 @@ extern void exit();
 extern char *ttyname();
 #endif
 
-#ifdef __sgi
-#include <locale.h>
-#endif
-
-#if defined(SYSV) && !defined(SCO)
-extern char *ptsname PROTO((int));
+#ifdef SYSV
+extern char *ptsname();
 #endif
 
 #include "xterm.h"
@@ -713,9 +717,6 @@ static struct _resource {
     Boolean sunFunctionKeys;	/* %%% should be widget resource? */
     Boolean wait_for_map;
     Boolean useInsertMode;
-#ifdef __sgi
-    Boolean useLocale;
-#endif
 } resource;
 
 /* used by VT (charproc.c) */
@@ -743,10 +744,6 @@ static XtResource application_resources[] = {
         offset(wait_for_map), XtRString, "false"},
     {"useInsertMode", "UseInsertMode", XtRBoolean, sizeof (Boolean),
         offset(useInsertMode), XtRString, "false"},
-#ifdef __sgi
-    {"useLocale", "UseLocale", XtRBoolean, sizeof(Boolean),
-	offset(useLocale), XtRString, "true"},
-#endif
 };
 #undef offset
 
@@ -773,6 +770,10 @@ static XrmOptionDescRec optionDescList[] = {
 {"+ah",		"*alwaysHighlight", XrmoptionNoArg,	(caddr_t) "off"},
 {"-aw",		"*autoWrap",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+aw",		"*autoWrap",	XrmoptionNoArg,		(caddr_t) "off"},
+#ifndef NO_ACTIVE_ICON
+{"-ai",		"*activeIcon",	XrmoptionNoArg,		(caddr_t) "off"},
+{"+ai",		"*activeIcon",	XrmoptionNoArg,		(caddr_t) "on"},
+#endif /* NO_ACTIVE_ICON */
 {"-b",		"*internalBorder",XrmoptionSepArg,	(caddr_t) NULL},
 {"-bdc",	"*colorBDMode",	XrmoptionNoArg,		(caddr_t) "off"},
 {"+bdc",	"*colorBDMode",	XrmoptionNoArg,		(caddr_t) "on"},
@@ -790,6 +791,9 @@ static XrmOptionDescRec optionDescList[] = {
 {"+dc",		"*dynamicColors",XrmoptionNoArg,	(caddr_t) "on"},
 {"-e",		NULL,		XrmoptionSkipLine,	(caddr_t) NULL},
 {"-fb",		"*boldFont",	XrmoptionSepArg,	(caddr_t) NULL},
+#ifndef NO_ACTIVE_ICON
+{"-fi",		"*iconFont",	XrmoptionSepArg,	(caddr_t) NULL},
+#endif /* NO_ACTIVE_ICON */
 {"-j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "off"},
 /* parse logging options anyway for compatibility */
@@ -822,10 +826,6 @@ static XrmOptionDescRec optionDescList[] = {
 {"+t",		"*tekStartup",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-tm",		"*ttyModes",	XrmoptionSepArg,	(caddr_t) NULL},
 {"-tn",		"*termName",	XrmoptionSepArg,	(caddr_t) NULL},
-#ifdef __sgi
-{"-ul",		"*useLocale",	XrmoptionNoArg,		(caddr_t) "on"},
-{"+ul",		"*useLocale",	XrmoptionNoArg,		(caddr_t) "off"},
-#endif
 {"-ulc",	"*colorULMode",	XrmoptionNoArg,		(caddr_t) "off"},
 {"+ulc",	"*colorULMode",	XrmoptionNoArg,		(caddr_t) "on"},
 {"-ut",		"*utmpInhibit",	XrmoptionNoArg,		(caddr_t) "on"},
@@ -868,6 +868,10 @@ static struct _options {
 { "-xrm resourcestring",   "additional resource specifications" },
 { "-/+132",                "turn on/off column switch inhibiting" },
 { "-/+ah",                 "turn on/off always highlight" },
+#ifndef NO_ACTIVE_ICON
+{ "-/+ai",		   "turn on/off active icon" },
+{ "-fi fontname",	   "icon font for active icon" },
+#endif /* NO_ACTIVE_ICON */
 { "-b number",             "internal border in pixels" },
 { "-/+bdc",                "turn off/on display of bold as color"},
 { "-/+cb",                 "turn on/off cut-to-beginning-of-line inhibit" },
@@ -904,9 +908,6 @@ static struct _options {
 { "-/+t",                  "turn on/off Tek emulation window" },
 { "-tm string",            "terminal mode keywords and characters" },
 { "-tn name",              "TERM environment variable name" },
-#ifdef __sgi
-{ "-/+ul",                 "use/don't use locale for character input" },
-#endif
 { "-/+ulc",                "turn off/on display of underline as color" },
 #ifdef UTMP
 { "-/+ut",                 "turn on/off utmp inhibit" },
@@ -1330,7 +1331,7 @@ char **argv;
 
 	/* Init the Toolkit. */
 	{
-#ifdef HAS_POSIX_SAVED_IDS
+#ifdef HAS_SAVED_IDS_AND_SETEUID
 	    uid_t euid = geteuid();
 	    gid_t egid = getegid();
 	    uid_t ruid = getuid();
@@ -1345,7 +1346,6 @@ char **argv;
 			       (int) ruid, strerror(errno));
 #endif
 
-	    XtSetErrorHandler(xt_error);
 	    toplevel = XtAppInitialize (&app_con, "XTerm", 
 				    optionDescList, XtNumber(optionDescList), 
 				    &argc, argv, fallback_resources, NULL, 0);
@@ -1354,12 +1354,7 @@ char **argv;
 				  application_resources,
 				  XtNumber(application_resources), NULL, 0);
 
-#ifdef __sgi
-	    if (resource.useLocale)
-	        setlocale(LC_ALL,"");
-#endif
-
-#ifdef HAS_POSIX_SAVED_IDS
+#ifdef HAS_SAVED_IDS_AND_SETEUID
 	    if (seteuid(euid) == -1)
 		(void) fprintf(stderr, "seteuid(%d): %s\n",
 			       (int) euid, strerror(errno));
@@ -1505,12 +1500,12 @@ char **argv;
 	term->initflags = term->flags;
 
 	if (term->misc.appcursorDefault) {
-	    term->keyboard.flags |= CURSOR_APL;
+	    term->keyboard.flags |= MODE_DECCKM;
 	    update_appcursor();
 	}
 
 	if (term->misc.appkeypadDefault) {
-	    term->keyboard.flags |= KYPD_APL;
+	    term->keyboard.flags |= MODE_DECKPAM;
 	    update_appkeypad();
 	}
 
@@ -2267,12 +2262,14 @@ spawn ()
 		envnew = vtterm;
 		ptr = termcap;
 	}
+	*ptr = 0;
 	TermName = NULL;
 	if (resource.term_name) {
 	    if (tgetent (ptr, resource.term_name) == 1) {
 		TermName = resource.term_name;
-		if (!screen->TekEmu)
-		    resize (screen, TermName, termcap, newtc);
+		if (*ptr) 
+		    if (!screen->TekEmu)
+			resize (screen, TermName, termcap, newtc);
 	    } else {
 		fprintf (stderr, "%s:  invalid termcap entry \"%s\".\n",
 			 ProgramName, resource.term_name);
@@ -2282,8 +2279,9 @@ spawn ()
 	    while (*envnew != NULL) {
 		if(tgetent(ptr, *envnew) == 1) {
 			TermName = *envnew;
-			if(!screen->TekEmu)
-			    resize(screen, TermName, termcap, newtc);
+			if (*ptr) 
+			    if(!screen->TekEmu)
+				resize(screen, TermName, termcap, newtc);
 			break;
 		}
 		envnew++;
@@ -2340,9 +2338,6 @@ spawn ()
 #else
 		int pgrp = getpid();
 #endif
-#ifdef USE_SYSV_TERMIO
-		char numbuf[12];
-#endif	/* USE_SYSV_TERMIO */
 #if defined(UTMP) && defined(USE_SYSV_UTMP)
 		char* ptyname;
 		char* ptynameptr = 0;
@@ -2926,6 +2921,7 @@ spawn ()
 		ptynameptr = ptyname + sizeof("/dev/tty")-1;
 #endif
 		(void) strncpy(utmp.ut_id, ptynameptr, sizeof (utmp.ut_id));
+
 		utmp.ut_type = DEAD_PROCESS;
 
 		/* position to entry in utmp file */
@@ -2940,6 +2936,7 @@ spawn ()
 			       (pw && pw->pw_name) ? pw->pw_name : "????",
 			       sizeof(utmp.ut_user));
 		    
+		/* why are we copying this string again? look up 16 lines. */
 		(void)strncpy(utmp.ut_id, ptynameptr, sizeof(utmp.ut_id));
 		(void) strncpy (utmp.ut_line,
 			ptyname + strlen("/dev/"), sizeof (utmp.ut_line));
@@ -3129,10 +3126,13 @@ spawn ()
 
 #ifdef USE_SYSV_ENVVARS
 #ifndef TIOCSWINSZ
+		{
+		char numbuf[12];
 		sprintf (numbuf, "%d", screen->max_col + 1);
 		Setenv("COLUMNS=", numbuf);
 		sprintf (numbuf, "%d", screen->max_row + 1);
 		Setenv("LINES=", numbuf);
+		}
 #endif
 #ifdef UTMP
 		if (pw) {	/* SVR4 doesn't provide these */
@@ -3143,7 +3143,7 @@ spawn ()
 		}
 #endif /* UTMP */
 #else /* USE_SYSV_ENVVAR */
-		if(!screen->TekEmu) {
+		if(!screen->TekEmu && *newtc) {
 		    strcpy (termcap, newtc);
 		    resize (screen, TermName, termcap, newtc);
 		}
@@ -3159,9 +3159,11 @@ spawn ()
 		    remove_termcap_entry (newtc, ":im=");
 		    remove_termcap_entry (newtc, ":ei=");
 		    remove_termcap_entry (newtc, ":mi");
-		    strcat (newtc, ":im=\\E[4h:ei=\\E[4l:mi:");
+		    if(*newtc)
+			strcat (newtc, ":im=\\E[4h:ei=\\E[4l:mi:");
 		}
-		Setenv ("TERMCAP=", newtc);
+		if(*newtc)
+		    Setenv ("TERMCAP=", newtc);
 #endif /* USE_SYSV_ENVVAR */
 
 
@@ -3507,12 +3509,14 @@ static int spawn()
 	ptr = termcap;
     }
 
+    *ptr = 0;
     TermName = NULL;
     if (resource.term_name) {
 	if (tgetent (ptr, resource.term_name) == 1) {
 	    TermName = resource.term_name;
-	    if (!screen->TekEmu)
-		resize (screen, TermName, termcap, newtc);
+	    if (*ptr)
+		if (!screen->TekEmu)
+		    resize (screen, TermName, termcap, newtc);
 	} else {
 	    fprintf (stderr, "%s:  invalid termcap entry \"%s\".\n",
 		ProgramName, resource.term_name);
@@ -3523,9 +3527,10 @@ static int spawn()
 	while (*envnew != NULL) {
 	    if(tgetent(ptr, *envnew) == 1) {
 		TermName = *envnew;
-		if(!screen->TekEmu)
-		    resize(screen, TermName, termcap, newtc);
-		    break;
+		if (*ptr)
+		    if(!screen->TekEmu)
+			resize(screen, TermName, termcap, newtc);
+		break;
 	    }
 	    envnew++;
 	}
@@ -3600,7 +3605,7 @@ static int spawn()
     if (!getenv("HOME")) Setenv("HOME=", DEF_HOME);
     if (!getenv("SHELL")) Setenv("SHELL=", DEF_SHELL);
 
-    if(!screen->TekEmu) {
+    if(!screen->TekEmu && *newtc) {
 	strcpy (termcap, newtc);
 	resize (screen, TermName, termcap, newtc);
     }
@@ -3615,9 +3620,11 @@ static int spawn()
 	remove_termcap_entry (newtc, ":im=");
 	remove_termcap_entry (newtc, ":ei=");
 	remove_termcap_entry (newtc, ":mi");
-	strcat (newtc, ":im=\\E[4h:ei=\\E[4l:mi:");
+	if (*newtc)
+	    strcat (newtc, ":im=\\E[4h:ei=\\E[4l:mi:");
     }
-    Setenv ("TERMCAP=", newtc);
+    if (*newtc)
+	Setenv ("TERMCAP=", newtc);
 
     /*
      * Execute specified program or shell. Use find_program to
@@ -3902,7 +3909,11 @@ nonblocking_wait()
 	/* cannot do non-blocking wait */
 	int pid = 0;
 #else	/* defined(USE_SYSV_SIGNALS) && (defined(CRAY) || !defined(SIGTSTP)) */
+#ifndef Lynx
 	union wait status;
+#else
+	int status;
+#endif
 	register int pid;
 
 	pid = wait3 (&status, WNOHANG, (struct rusage *)NULL);

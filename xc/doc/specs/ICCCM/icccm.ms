@@ -1,4 +1,4 @@
-.\" $XConsortium: icccm.ms /main/25 1996/02/05 15:15:57 swick $
+.\" $XConsortium: icccm.ms /main/26 1996/12/11 14:45:10 kaleb $
 .\" Use tbl, eqn, -ms, and macros.t
 .\" @(#)icccm.ms	1.50	16 Apr 1994	14:13:55
 .EH ''''
@@ -43,7 +43,7 @@ Version 2.0
 
 X Consortium Standard
 
-X Version 11, Release 6.1
+X Version 11, Release 6.3
 .R
 .ce 0
 .sp 6
@@ -214,8 +214,8 @@ John Interrante	John Thomas
 .De
 .bp 1
 .af PN 1
-.EH '\fBInter-Client Communication Conventions\fP''\fBX11, Release 6.1\fP'
-.OH '\fBInter-Client Communication Conventions\fP''\fBX11, Release 6.1\fP'
+.EH '\fBInter-Client Communication Conventions\fP''\fBX11, Release 6.3\fP'
+.OH '\fBInter-Client Communication Conventions\fP''\fBX11, Release 6.3\fP'
 .EF ''\fB % \fP''
 .OF ''\fB % \fP''
 .nH 1 Introduction

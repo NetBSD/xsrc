@@ -88,7 +88,7 @@ Version 1.1
 .sp
 X Consortium Standard
 .sp
-X Version 11, Release 6.1
+X Version 11, Release 6.3
 
 
 
@@ -151,8 +151,8 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 .sp 5
 X Window System is a trademark of X Consortium, Inc.
-.EH '\fBInter-Client Exchange Protocol\fP''\fBX11, Release 6.1\fP'
-.OH '\fBInter-Client Exchange Protocol\fP''\fBX11, Release 6.1\fP'
+.EH '\fBInter-Client Exchange Protocol\fP''\fBX11, Release 6.3\fP'
+.OH '\fBInter-Client Exchange Protocol\fP''\fBX11, Release 6.3\fP'
 .bp 1
 .EF ''\fB % \fP''
 .OF ''\fB % \fP''
@@ -1560,6 +1560,9 @@ _
 .LP
 Release 6.1 added the ICE X rendezvous protocol (Appendix B) and
 updated the document version to 1.1.
+.nH 2 "Release 6.1 to Release 6.3"
+.LP
+Release 6.3 added the listen on well known ports feature.
 .bp
 .cT "Appendix B" no
 .nH 1 "ICE X Rendezvous Protocol"

@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XSetWMClientMachine 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XSetWMClientMachine 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XSetWMClientMachine, XGetWMClientMachine \- set or read a window's WM_CLIENT_MACHINE property
 .SH SYNTAX

@@ -1,5 +1,5 @@
-.\" $XConsortium: xterm.man /main/83 1995/12/15 14:06:17 gildea $
-.\" $XFree86: xc/programs/xterm/xterm.man,v 3.11 1996/09/22 05:16:14 dawes Exp $
+.\" $XConsortium: xterm.man /main/85 1996/12/09 17:10:53 kaleb $
+.\" $XFree86: xc/programs/xterm/xterm.man,v 3.13 1996/12/23 07:14:42 dawes Exp $
 .\" Copyright (c) 1989  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -27,7 +27,7 @@
 .\" from the X Consortium.
 .\"
 .\" updated by Thomas Dickey <dickey@clark.net> for XFree86, July 1996.
-.TH XTERM 1 "Release 6.1" "X Version 11"
+.TH XTERM 1 "Release 6.3" "X Version 11"
 .SH NAME
 xterm \- terminal emulator for X
 .SH SYNOPSIS
@@ -56,7 +56,6 @@ the ``VT Options'' menu in the VT102 window, and the ``Tek Options''
 menu in the 4014 window.
 .SH EMULATIONS
 The VT102 emulation is fairly complete, but does not support
-VT52 mode,
 autorepeat,
 the blinking character attribute
 nor the double-wide and double-size character sets.
@@ -160,6 +159,16 @@ This option indicates that
 .I xterm
 should do text cursor highlighting based on focus.
 .TP 8
+.B \-ai
+This option disables active icon support if that feature was compiled
+into xterm.  This is equivalent to setting the \fIvt100\fP resource
+\fBactiveIcon\fP to FALSE.
+.TP 8
+.B \+ai
+This option enables active icon support if that feature was compiled
+into xterm.  This is equivalent to setting the \fIvt100\fP resource
+\fBactiveIcon\fP to TRUE.
+.TP 8
 .B \-aw
 This option indicates that auto-wraparound should be allowed.  This
 allows the cursor to automatically wrap to the beginning of the next
@@ -245,6 +254,10 @@ This font must be the same height and width as the normal font.
 If only one of the normal or bold fonts is specified, it will be used as the
 normal font and the bold font will be produced by overstriking this font.
 The default is to do overstriking of the normal font.
+.TP 8
+.B \-fi
+This option sets the font for active icons if that feature was compiled
+in to xterm.
 .TP 8
 .B \-im
 Turn on the \fBuseInsertMode\fP resource.
@@ -575,6 +588,15 @@ The following resources are specified as part of the \fIvt100\fP widget (class
 \fIVT100\fP):
 .\".in +1in
 .TP 8
+.B "activeIcon (\fPclass\fB ActiveIcon)"
+Specifies whether or not active icon windows are to be used when the
+\fIxterm\fP window is iconified, if this feature is compiled into xterm.
+The active icon is a miniature representation of the content of the
+window and will update as the content changes.  Not all window managers
+necessarily support application icon windows.  Some window managers
+will allow you to enter keystrokes into the active icon window.  The
+default is ``false.''
+.TP 8
 .B "allowSendEvents (\fPclass\fB AllowSendEvents)"
 Specifies whether or not synthetic key and button events (generated using
 the X protocol SendEvent request) should be interpreted or discarded.
@@ -782,6 +804,20 @@ which ignores termcap and always sends
 ESC F to move to the lower left corner.
 ``true'' causes \fIxterm\fP to interpret ESC F as a request to move to the
 lower left corner of the screen.  The default is ``false.''
+.TP 8
+.B "iconBorderWidth (\fPclass\fB BorderWidth)"
+Specifies the border width for the active icon window if this feature
+is compiled into xterm.  The default is 0 (no border).  Not all window
+managers will make the border visible.
+.TP 8
+.B "iconBorderColor (\fPclass\fB BorderColor)"
+Specifies the border color for the active icon window if this feature
+is compiled into xterm.  Not all window managers will make the icon
+border visible.
+.TP 8
+.B "iconFont (\fPclass\fB IconFont)"
+Specifies the font for the miniature active icon window, if this feature
+is compiled into xterm.  The default is "nil2".
 .TP 8
 .B "internalBorder (\fPclass\fB BorderWidth)"
 Specifies the number of pixels between the characters and the window border.
@@ -1048,6 +1084,12 @@ This entry invokes the \fBset-marginbell(toggle)\fP action.
 .TP 8
 .B "altscreen (\fPclass\fB SmeBSB)"
 This entry is currently disabled.
+.TP 8
+.B "activeicon (\fPclass\fB SMeBSB)"
+This entry toggles active icons on and off if this feature was
+compiled into \fIxterm\fP.  It is enabled only if \fIxterm\fP
+was started with the command line option +ai or the \fBactiveIcon\fP
+resource set to ``True.''
 .TP 8
 .B "line1 (\fPclass\fB SmeLine)"
 This is a separator.

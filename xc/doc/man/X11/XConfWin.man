@@ -140,7 +140,7 @@
 ..
 .ny0
 '\" t
-.TH XConfigureWindow 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XConfigureWindow 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XConfigureWindow, XMoveWindow, XResizeWindow, XMoveResizeWindow, XSetWindowBorderWidth, XWindowChanges \- configure windows and window changes structure
 .SH SYNTAX

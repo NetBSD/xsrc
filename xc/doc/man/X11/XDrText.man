@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XDrawText 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XDrawText 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XDrawText, XDrawText16, XTextItem, XTextItem16 \- draw polytext text and text drawing structures
 .SH SYNTAX
