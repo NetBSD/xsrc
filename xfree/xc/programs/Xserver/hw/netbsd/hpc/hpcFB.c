@@ -1,4 +1,4 @@
-/* $NetBSD: hpcFB.c,v 1.1 2004/01/03 01:09:19 takemura Exp $	*/
+/* $NetBSD: hpcFB.c,v 1.2 2004/01/03 01:31:18 takemura Exp $	*/
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -35,7 +35,13 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <stdio.h>
 
-extern miBSFuncRec cfbBSFuncRec;
+/* Adapt cfb logic */
+#undef CFB_NEED_SCREEN_PRIVATE
+#if !defined(SINGLEDEPTH) || defined(FORDE_SEPARATE_PRIVATE)
+#define CFB_NEED_SCREEN_PRIVATE
+#endif
+
+extern BSFuncRec cfbBSFuncRec, cfb16BSFuncRec;
 extern int cfb16ScreenPrivateIndex;
 extern Bool cfbCreateScreenResources(ScreenPtr pScreen);
 extern Bool cfb16CreateScreenResources(ScreenPtr pScreen);
@@ -96,8 +102,7 @@ hpc8ScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width)
 
     if (! miScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width,
 			rootdepth, ndepths, depths,
-			defaultVisual, nvisuals, visuals,
-			(miBSFuncPtr) 0))
+			defaultVisual, nvisuals, visuals))
 	return FALSE;
 
     /* overwrite miCloseScreen with our own */
@@ -105,7 +110,7 @@ hpc8ScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width)
 
     /* init backing store here so we can overwrite CloseScreen without stepping
      * on the backing store wrapped version */
-    miInitializeBackingStore (pScreen, &cfbBSFuncRec);
+    pScreen->BackingStoreFuncs = cfbBSFuncRec;
 
     return TRUE;
 }
@@ -176,8 +181,7 @@ hpc16ScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width)
 #endif
     if (! miScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width,
 			rootdepth, ndepths, depths,
-			defaultVisual, nvisuals, visuals,
-			(miBSFuncPtr) 0))
+			defaultVisual, nvisuals, visuals))
 	return FALSE;
 
     /* overwrite miCloseScreen with our own */
@@ -185,7 +189,7 @@ hpc16ScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width)
 
     /* init backing store here so we can overwrite CloseScreen without stepping
      * on the backing store wrapped version */
-    miInitializeBackingStore (pScreen, &cfbBSFuncRec);
+    pScreen->BackingStoreFuncs = cfb16BSFuncRec;
 
 #ifdef CFB_NEED_SCREEN_PRIVATE
     pScreen->CreateScreenResources = cfb16CreateScreenResources;
