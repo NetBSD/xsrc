@@ -1,8 +1,21 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/wabep/Imakefile,v 3.3 1996/10/08 12:45:51 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/wabep/Imakefile,v 3.6 1996/12/24 02:27:09 dawes Exp $
 #include <Server.tmpl>
 
+#ifdef i386Architecture
 FSRCS =  fBitBlt.s fFillCopy.s fFillOr.s fFillAnd.s \
          fFillXor.s fFillSet.s vgabres.s vgalineH.s vgalineV.s
+BSRCS = BitBlt.s BitBlt2.s Box.s Line.s VHLine.s vgaBank.s
+
+FOBJS =  fBitBlt.o fFillCopy.o fFillOr.o fFillAnd.o \
+         fFillXor.o fFillSet.o vgabres.o vgalineH.o vgalineV.o
+BOBJS = BitBlt.o BitBlt2.o Box.o Line.o VHLine.o vgaBank.o
+#else
+FSRCS = vgaBltFillc.c vgaLinec.c
+BSRCS = vgaBankc.c
+
+FOBJS = vgaBltFillc.o vgaLinec.o
+BOBJS = vgaBankc.o
+#endif
 
 SRCS =	 vgagc.c vgawindow.c vgascrinit.c \
 	 vgapntwin.c vgapwinS.c vgabitblt.c \
@@ -17,12 +30,12 @@ SRCS =	 vgagc.c vgawindow.c vgascrinit.c \
 	 vgategblt.c vgabstore.c vga8cppl.c \
 	 vgabltC.c vgabltCS.c vgabltX.c vgabltO.c vgabltG.c \
 	 vgateblt8.c vgateblt8S.c vgaglblt8.c vgaglrop8.c \
- 	 vgapush8.c vgarctstp8.c vgarctstp8S.c vgapolypnt.c \
+	 vgapush8.c vgarctstp8.c vgarctstp8S.c vgapolypnt.c \
 	 vgaline.c vgalineS.c vgabresd.c \
 	 vgalined.c vgasegd.c vgaseg.c vgasegS.c \
 	 vgaply1rctC.c vgaply1rctG.c vgafuncs.c \
-	 SpeedUpBlt.c BitBlt.s BitBlt2.s Box.s Line.s \
-	 VHLine.s vgaBanks.c $(FSRCS) vgaHW.c vga.c vgaCmap.c vgaBank.s \
+	 SpeedUpBlt.c $(BSRCS) \
+	 vgaBanks.c $(FSRCS) vgaHW.c vga.c vgaCmap.c \
 	 vgaPCI.c vgatables.c
 
 FOBJS =  fBitBlt.o fFillCopy.o fFillXor.o fFillOr.o fFillAnd.o \
@@ -40,20 +53,20 @@ OBJS =   vgagc.o vgawindow.o vgascrinit.o \
 	 vgafillarcC.o vgafillarcG.o \
 	 vgategblt.o vgabstore.o vga8cppl.o \
 	 vgateblt8.o vgateblt8S.o vgaglblt8.o vgaglrop8.o \
- 	 vgarctstp8.o vgarctstp8S.o vgapolypnt.o \
+	 vgarctstp8.o vgarctstp8S.o vgapolypnt.o \
 	 vgaline.o vgalineS.o vgabresd.o \
 	 vgalined.o vgasegd.o vgaseg.o vgasegS.o \
- 	 vgabitblt.o vgabltC.o vgabltCS.o vgabltX.o \
+	 vgabitblt.o vgabltC.o vgabltCS.o vgabltX.o \
 	 vgabltO.o vgabltG.o \
 	 vgapush8.o vgaply1rctC.o vgaply1rctG.o $(STIPPLEOBJ) vgafuncs.o \
-	 SpeedUpBlt.o BitBlt.o BitBlt2.o Box.o Line.o \
-	 VHLine.o vgaBanks.o $(FOBJS) vgaHW.o vga.o vgaCmap.o vgaBank.o \
+	 SpeedUpBlt.o $(BOBJS) \
+	 vgaBanks.o $(FOBJS) vgaHW.o vga.o vgaCmap.o \
 	 vgaPCI.o vgatables.o
 
    INCLUDES = -I. -I$(XF98COMSRC) -I$(XF86OSSRC) -I$(XF86HWSRC) \
 	      -I$(SERVERSRC)/cfb -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
-              -I$(SERVERSRC)/include -I$(INCLUDESRC) -I$(FONTINCSRC) \
-	      -I$(XF86SRC)/vga256/vgainit
+              -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(FONTINCSRC) \
+	      -I$(XF86SRC)/xaa
    LINTLIBS = ../../../dix/llib-ldix.ln ../../../os/llib-los.ln \
 	     ../../mfb/llib-lmfb.ln ../../mi/llib-lmi.ln
 
@@ -62,6 +75,10 @@ STARTUPDEFINES = -DDIRTY_STARTUP
 #endif
 
     DEFINES = $(SPEEDUPDEFINES) $(STARTUPDEFINES) -DPSZ=8 -DPC98 -DPC98_WABEP
+
+#ifdef i386Architecture
+SUDEFINE = -DSPEEDUP
+#endif
 
 SubdirLibraryRule($(OBJS))
 NormalLibraryObjectRule()
@@ -115,6 +132,8 @@ LinkSourceFile(vgazerarc.c,$(XF86SRC)/vga256/vga)
 
 #define EnhancedDir $(XF86SRC)/vga256/enhanced
 
+ObjectFromSpecialSource(vgaBanks,EnhancedDir/gBanks,NullParameter)
+#ifdef i386Architecture
 ObjectFromSpecialAsmSource(BitBlt,EnhancedDir/suBitBlt,NullParameter)
 ObjectFromSpecialAsmSource(BitBlt2,EnhancedDir/suBBlt2,NullParameter)
 ObjectFromSpecialAsmSource(Box,EnhancedDir/suBox,NullParameter)
@@ -123,10 +142,13 @@ ObjectFromSpecialAsmSource(VHLine,EnhancedDir/suVHLine,NullParameter)
 ObjectFromSpecialAsmSource(vgabres,EnhancedDir/fLineBres,NullParameter)
 ObjectFromSpecialAsmSource(vgalineH,EnhancedDir/fLineH,NullParameter)
 ObjectFromSpecialAsmSource(vgalineV,EnhancedDir/fLineV,NullParameter)
-ObjectFromSpecialSource(vgaBanks,EnhancedDir/gBanks,NullParameter)
 LinkSourceFile(fBitBlt.s,EnhancedDir)
 LinkSourceFile(fFill.s,EnhancedDir)
 LinkSourceFile(fFillSet.s,EnhancedDir)
+#else
+LinkSourceFile(vgaBltFillc.c,EnhancedDir)
+LinkSourceFile(vgaLinec.c,EnhancedDir)
+#endif
 LinkFile(vgaBitBlt1.c,EnhancedDir/vgaBitBlt.c)
 LinkSourceFile(SpeedUpBlt.c,EnhancedDir)
 LinkSourceFile(vgaFasm.h,EnhancedDir)
@@ -136,10 +158,10 @@ ObjectFromSpecialSource(vgasegd,vgalined,-DPOLYSEGMENT)
 ObjectFromSpecialSource(vgaglrop8,vgaglblt8,-DGLYPHROP)
 SpecialObjectRule(vgaglblt8.o,vgaglblt8.c,$(STIPPLEDEF))
 
-ObjectFromSpecialSource(vgalineS,vgaline,-DSPEEDUP)
-ObjectFromSpecialSource(vgasegS,vgaline,-DSPEEDUP -DPOLYSEGMENT)
-ObjectFromSpecialSource(vgateblt8S,vgateblt8,-DSPEEDUP)
-ObjectFromSpecialSource(vgarctstp8S,vgarctstp8,-DSPEEDUP)
+ObjectFromSpecialSource(vgalineS,vgaline,$(SUDEFINE))
+ObjectFromSpecialSource(vgasegS,vgaline,$(SUDEFINE) -DPOLYSEGMENT)
+ObjectFromSpecialSource(vgateblt8S,vgateblt8,$(SUDEFINE))
+ObjectFromSpecialSource(vgarctstp8S,vgarctstp8,$(SUDEFINE))
 
 ObjectFromSpecialSource(vgafillarcC,vgafillarc,-DRROP=GXcopy)
 ObjectFromSpecialSource(vgafillarcG,vgafillarc,-DRROP=GXset)
@@ -148,13 +170,13 @@ ObjectFromSpecialSource(vgazerarcC,vgazerarc,-DRROP=GXcopy)
 ObjectFromSpecialSource(vgazerarcX,vgazerarc,-DRROP=GXxor)
 ObjectFromSpecialSource(vgazerarcG,vgazerarc,-DRROP=GXset)
 
-ObjectFromSpecialSource(vgabltCS,vgablt,-DMROP=Mcopy -DSPEEDUP)
+ObjectFromSpecialSource(vgabltCS,vgablt,-DMROP=Mcopy $(SUDEFINE))
 ObjectFromSpecialSource(vgabltX,vgablt,-DMROP=Mxor)
 ObjectFromSpecialSource(vgabltO,vgablt,-DMROP=Mor)
 ObjectFromSpecialSource(vgabltG,vgablt,-DMROP=0)
 
 ObjectFromSpecialSource(vgasolidC,vgasolid,-DRROP=GXcopy)
-ObjectFromSpecialSource(vgasolidCS,vgasolid,-DRROP=GXcopy -DSPEEDUP)
+ObjectFromSpecialSource(vgasolidCS,vgasolid,-DRROP=GXcopy $(SUDEFINE))
 ObjectFromSpecialSource(vgasolidX,vgasolid,-DRROP=GXxor)
 ObjectFromSpecialSource(vgasolidO,vgasolid,-DRROP=GXor)
 ObjectFromSpecialSource(vgasolidA,vgasolid,-DRROP=GXand)
@@ -169,10 +191,12 @@ ObjectFromSpecialSource(vgatileoddG,vgatileodd,-DMROP=0)
 ObjectFromSpecialSource(vgaply1rctC,vgaply1rct,-DRROP=GXcopy)
 ObjectFromSpecialSource(vgaply1rctG,vgaply1rct,-DRROP=GXset)
 
+#ifdef i386Architecture
 ObjectFromSpecialAsmSource(fFillAnd,fFill,-DRROP=GXAnd)
 ObjectFromSpecialAsmSource(fFillCopy,fFill,-DRROP=GXCopy)
 ObjectFromSpecialAsmSource(fFillOr,fFill,-DRROP=GXOr)
 ObjectFromSpecialAsmSource(fFillXor,fFill,-DRROP=GXXor)
+#endif
 
 InstallLinkKitNonExecFile(vga.h,$(XF98LINKKITDIR)/drivers98)
 InstallLinkKitNonExecFile(vgaBank.h,$(XF98LINKKITDIR)/drivers98)

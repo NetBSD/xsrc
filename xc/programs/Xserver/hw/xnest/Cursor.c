@@ -1,4 +1,4 @@
-/* $XConsortium: Cursor.c,v 1.4 95/07/10 17:42:22 ray Exp $ */
+/* $XConsortium: Cursor.c /main/5 1996/09/28 17:13:30 rws $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -29,6 +29,7 @@ is" without express or implied warranty.
 #include "Cursor.h"
 #include "Visual.h"
 #include "Keyboard.h"
+#include "Args.h"
 
 void xnestConstrainCursor(pScreen, pBox)
      ScreenPtr pScreen;
@@ -204,7 +205,7 @@ Bool xnestSetCursorPosition(pScreen, x, y, generateEvent)
 {
   int i;
 
-  for (i = 0; i < screenInfo.numScreens; i++)
+  for (i = 0; i < xnestNumScreens; i++)
     XWarpPointer(xnestDisplay, xnestDefaultWindows[i],
 		 xnestDefaultWindows[pScreen->myNum],
 		 0, 0, 0, 0, x, y);

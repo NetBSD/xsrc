@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Primus.c,v 3.3 1996/02/04 08:57:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/Primus.c,v 3.4 1996/12/23 06:31:31 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: Primus.c /main/4 1995/11/13 11:13:02 kaleb $ */
+/* $XConsortium: Primus.c /main/5 1996/02/21 17:11:57 kaleb $ */
 
 #include "Probe.h"
 

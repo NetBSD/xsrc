@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/w32map.h,v 3.3 1996/02/04 09:00:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/w32map.h,v 3.4 1996/12/23 06:35:26 dawes Exp $ */
 /*
  *
 Copyright (c) 1991  X Consortium
@@ -26,7 +26,7 @@ in this Software without prior written authorization from the X Consortium.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XConsortium: w32map.h /main/4 1995/11/12 16:37:52 kaleb $ */
+/* $XConsortium: w32map.h /main/5 1996/02/21 17:22:32 kaleb $ */
 
 /*
  * Map names around so that multiple depths can be supported simultaneously

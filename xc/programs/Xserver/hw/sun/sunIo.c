@@ -1,5 +1,4 @@
-/* $XConsortium: sunIo.c /main/48 1995/10/05 07:36:52 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/sun/sunIo.c,v 3.2 1996/01/05 13:18:46 dawes Exp $ */
+/* $TOG: sunIo.c /main/49 1997/05/20 11:42:20 kaleb $ */
 /*-
  * sunIo.c --
  *	Functions to handle input from the keyboard and mouse.
@@ -16,6 +15,7 @@
  *
  *
  */
+/* $XFree86: xc/programs/Xserver/hw/sun/sunIo.c,v 3.2.4.1 1997/05/21 15:02:18 dawes Exp $ */
 
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
@@ -200,22 +200,35 @@ ddxProcessArgument (argc, argv, i)
 {
     extern void UseMsg();
 
-#ifndef XKB
+#ifdef XKB
+    int noxkb = 0, n;
+    /* 
+     * peek in argv and see if -kb because noXkbExtension won't 
+     * get set until too late to useful here.
+     */
+    for (n = 1; n < argc; n++)
+	if (strcmp (argv[n], "-kb") == 0)
+	    noxkb = 1;
+
+    if (noxkb)
+#endif
     if (strcmp (argv[i], "-ar1") == 0) {	/* -ar1 int */
 	if (++i >= argc) UseMsg ();
-	sunAutoRepeatInitiate = 1000 * (long)atoi(argv[i]);
+	sunAutoRepeatInitiate = 1000 * (long)atoi(argv[i]); /* cvt to usec */
 	if (sunAutoRepeatInitiate > 1000000)
 	    sunAutoRepeatInitiate =  999000;
 	return 2;
     }
+#ifdef XKB
+    if (noxkb)
+#endif
     if (strcmp (argv[i], "-ar2") == 0) {	/* -ar2 int */
 	if (++i >= argc) UseMsg ();
-	sunAutoRepeatDelay = 1000 * (long)atoi(argv[i]);
+	sunAutoRepeatDelay = 1000 * (long)atoi(argv[i]); /* cvt to usec */
 	if (sunAutoRepeatDelay > 1000000)
 	    sunAutoRepeatDelay =  999000;
 	return 2;
     }
-#endif
     if (strcmp (argv[i], "-swapLkeys") == 0) {	/* -swapLkeys */
 	sunSwapLkeys = TRUE;
 	return 1;

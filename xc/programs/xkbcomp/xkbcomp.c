@@ -1,5 +1,5 @@
-/* $XConsortium: xkbcomp.c /main/10 1996/02/05 14:08:51 kaleb $ */
-/* $XFree86: xc/programs/xkbcomp/xkbcomp.c,v 3.5 1996/08/26 10:52:29 dawes Exp $ */
+/* $XConsortium: xkbcomp.c /main/12 1996/12/27 21:17:23 kaleb $ */
+/* $XFree86: xc/programs/xkbcomp/xkbcomp.c,v 3.8 1997/01/27 07:00:20 dawes Exp $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -45,6 +45,10 @@
 #include "misc.h"
 #include "tokens.h"
 #include <X11/extensions/XKBgeom.h>
+
+#ifdef __EMX__
+#define chdir _chdir2
+#endif
 
 #define	lowbit(x)	((x) & (-(x)))
 
@@ -703,10 +707,6 @@ Status		status;
 #ifdef DEBUG
     if (debugFlags&0x2)
 	yydebug= 1;
-#ifdef sgi
-    if (debugFlags&0x4)
-	mallopt(M_DEBUG,1);
-#endif
 #endif
     if (preErrorMsg)
 	uSetPreErrorMessage(preErrorMsg);

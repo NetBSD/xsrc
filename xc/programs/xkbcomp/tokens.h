@@ -1,4 +1,4 @@
-/* $XConsortium: tokens.h /main/5 1996/01/14 16:48:18 kaleb $ */
+/* $XConsortium: tokens.h /main/6 1996/08/31 12:15:55 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

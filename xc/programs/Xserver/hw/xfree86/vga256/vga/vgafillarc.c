@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgafillarc.c,v 3.2 1996/02/04 09:15:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgafillarc.c,v 3.3 1996/12/23 06:59:39 dawes Exp $ */
 /************************************************************
 
 Copyright (c) 1989  X Consortium
@@ -26,7 +26,7 @@ in this Software without prior written authorization from the X Consortium.
 
 ********************************************************/
 
-/* $XConsortium: vgafillarc.c /main/2 1995/11/13 09:26:26 kaleb $ */
+/* $XConsortium: vgafillarc.c /main/3 1996/02/21 18:10:46 kaleb $ */
 
 #include "vga256.h"
 #include "mifillarc.h"

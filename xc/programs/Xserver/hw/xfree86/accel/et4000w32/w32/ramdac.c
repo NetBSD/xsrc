@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/ramdac.c,v 3.12 1996/09/22 05:02:06 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/ramdac.c,v 3.14.2.1 1997/05/16 11:35:12 hohndel Exp $ */ 
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: ramdac.c /main/8 1995/12/09 15:52:52 kaleb $ */
+/* $XConsortium: ramdac.c /main/12 1996/10/24 07:10:32 kaleb $ */
 
 #include "X.h"
 #include "Xproto.h"
@@ -56,8 +56,10 @@ static SymTabRec W32DacTable[] = {
    { ICS5341_DAC,        "ics5341" },
    { GENDAC_DAC,         "gendac" },
    { STG1700_DAC,	 "stg1700" },
+   { STG1702_DAC,        "stg1702" },
    { STG1703_DAC,	 "stg1703" },
    { ET6000_DAC,	 "et6000" },
+   { CH8398_DAC,	 "ch8398" },
    { -1,                "" },
 };
 
@@ -343,7 +345,6 @@ W32SaveScreen (pScreen, on)
     unsigned char state;
     unsigned char *cmap;
     unsigned char overscan; 
-    extern vgaPowerSaver;
 
     if (on)
 	SetTimeSinceLastInputEvent();
@@ -367,13 +368,15 @@ W32SaveScreen (pScreen, on)
 
 	    write_color(overscan, cmap);
 
-	    if (vgaPowerSaver && W32pCAndLater)
+#ifdef DPMSExtension
+	    if (DPMSEnabled && W32pCAndLater)
 	    {
 		outb(vgaIOBase + 4, 0x34);
 		GlennsIODelay();
 		outb(vgaIOBase + 5, state);
 		GlennsIODelay();
 	    }
+#endif
 	}
 	else
 	{
@@ -388,13 +391,15 @@ W32SaveScreen (pScreen, on)
 	    outb(0x3C0, 0x00);         
 	    GlennsIODelay();
 
-	    if (vgaPowerSaver && W32pCAndLater)
+#ifdef DPMSExtension
+	    if (DPMSEnabled && W32pCAndLater)
 	    {
 		outb(vgaIOBase + 4, 0x34);
 		GlennsIODelay();
 		outb(vgaIOBase + 5, state);
 		GlennsIODelay();
 	    }
+#endif
 	}
     }
     return(TRUE);
@@ -423,13 +428,19 @@ ProbeSTG1703(Bool quiet)
 	outb(0x3c6,readmask);
 	xf86setdaccomm(daccomm);
 
-	if ((cid == 0x44) && (did == 0x00)) {
+	if (cid == 0x44) { /* STG170x found */
 	   Found = TRUE;
-	   W32RamdacType = STG1700_DAC;
-	}
-	if ((cid == 0x44) && (did == 0x03)) {
-	   Found = TRUE;
-	   W32RamdacType = STG1703_DAC;
+	   switch (did) {
+	      case 0x02:
+		W32RamdacType = STG1702_DAC;
+		break;
+	      case 0x03:
+		W32RamdacType = STG1703_DAC;
+		break;
+	      case 0x00:
+	      default: /* Unknown STG170x - treat as 1700. */
+		W32RamdacType = STG1700_DAC;
+	   }
 	}
 
 	return(Found);
@@ -526,6 +537,26 @@ ProbeGenDAC(Bool quiet)
 }
 
 
+static Bool
+ProbeCH8398(Bool quiet)  
+{  
+    unsigned char cid;   
+    Bool Found = FALSE;  
+   
+    xf86dactopel();      
+    cid = inb(RMR);
+    cid = inb(RMR);
+    cid = inb(RMR);
+    cid = inb(RMR);  /* this returns chip ID */
+    if (cid == 0xc0) {   
+       Found = TRUE;     
+       W32RamdacType = CH8398_DAC;
+    }
+    xf86dactopel();
+
+    return Found;
+}
+
 
 /*
  *  For a description of the following, see AT&T's data sheet for ATT20C490/491
@@ -610,6 +641,7 @@ static void check_ramdac()
                   vgaRamdacMask = 0x3f;
                   W32Dac8Bit = FALSE;
 	    	  break;
+	    case CH8398_DAC:
             case NORMAL_DAC: 
             case ATT20C47xA_DAC:
             case ATT20C497_DAC:
@@ -617,6 +649,7 @@ static void check_ramdac()
             case ATT20C492_DAC:
             case ICS5341_DAC:
             case GENDAC_DAC:
+	    case STG1702_DAC:
             case STG1703_DAC:
             default:
                   RamdacShift = 10;
@@ -636,6 +669,10 @@ static void check_ramdac()
 	  else if (ProbeSTG1703(FALSE))
 	  {
 	    /* this is the STG1703 */
+	  }
+	  else if (ProbeCH8398(FALSE))
+	  {
+	    /* this is a CH8398 */
 	  }
 	  else
           /* if none of the above: start probing for other DAC's */

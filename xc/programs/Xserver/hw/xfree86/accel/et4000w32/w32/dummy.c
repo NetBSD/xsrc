@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/dummy.c,v 3.3 1996/02/04 09:00:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/dummy.c,v 3.5 1997/01/12 10:41:36 dawes Exp $ */
 /*
  * cfbfuncs.c
  *
@@ -6,7 +6,7 @@
  * 
  * To coax et4_driver.c into cooperation--GGL 
  */
-/* $XConsortium: dummy.c /main/3 1995/11/12 16:37:19 kaleb $ */
+/* $XConsortium: dummy.c /main/4 1996/02/21 17:21:47 kaleb $ */
 
 #include "vga256.h"
 
@@ -21,13 +21,14 @@ void speedupvga256FillRectSolidCopy(a, b, c, d)
   BoxPtr d;
 {FatalError("FillRectSolidCopy");}
 
-void speedupvga256DoBitbltCopy(a, b, c, d, e, f)
+void speedupvga256DoBitbltCopy(a, b, c, d, e, f, g)
   DrawablePtr a;
   DrawablePtr b;
   int c;
   RegionPtr d;
   DDXPointPtr e;
   unsigned long f;
+  unsigned long g;
 {FatalError("DoBitbltCopy");}
 
 void speedupvga256SegmentSS(a, b, c, d)

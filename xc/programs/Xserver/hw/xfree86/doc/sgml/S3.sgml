@@ -1,4 +1,4 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <article>
 <title> Information for S3 Chipset Users
@@ -22,8 +22,8 @@ chances are good it might work for you, too.
 <descrip>
 <tag>S3 801/805, AT&amp;T 20C490 (or similar) RAMDAC</tag>
 	<itemize>
-        <item> Orchid Fahrenheit 1280+ VLB
-        <item> Actix GE32
+        <item>Orchid Fahrenheit 1280+ VLB
+        <item>Actix GE32
 	</itemize>
 
         8 and 15/16 bpp
@@ -43,7 +43,7 @@ chances are good it might work for you, too.
 
 <tag>S3 805 VLB, S3 GENDAC (RAMDAC + clock synthesizer)</tag>
 	<itemize>
-	<item> MIRO 10SD (available for VLB and PCI)
+	<item>MIRO 10SD (available for VLB and PCI)
                        It is not known whether all 10SDs use the S3 GENDAC.
 	</itemize>
 
@@ -57,7 +57,7 @@ chances are good it might work for you, too.
 
 <tag>S3 801/805, AT&amp;T 20C490 RAMDAC, ICD2061A Clockchip</tag>
 	<itemize>
-	<item> STB PowerGraph X.24 S3 (ISA)
+	<item>STB PowerGraph X.24 S3 (ISA)
 	</itemize>
 
 	8 and 15/16 bpp
@@ -76,7 +76,7 @@ chances are good it might work for you, too.
 
 <tag>S3 805, Diamond SS2410 RAMDAC, ICD2061A Clockchip</tag>
 	<itemize>
-        <item> Diamond Stealth 24 VLB
+        <item>Diamond Stealth 24 VLB
 	</itemize> 
 
 	8 and 15bpp(*) only.
@@ -91,8 +91,8 @@ chances are good it might work for you, too.
 
 <tag>S3 801/805, Chrontel 8391 Clockchip/Ramdac</tag>
 	<itemize>
-        <item> JAX 8241
-	<item> SPEA Mirage
+        <item>JAX 8241
+	<item>SPEA Mirage
 	</itemize> 
 
 	8 and 15/16 bpp.
@@ -108,7 +108,7 @@ chances are good it might work for you, too.
 
 <tag>S3 928, AT&amp;T 20C490 RAMDAC </tag>
       	<itemize> 
-	<item> Actix Ultra
+	<item>Actix Ultra
 	</itemize>
 
  	8 and 15/16 bpp
@@ -127,8 +127,8 @@ chances are good it might work for you, too.
 
 <tag>S3 928, Sierra SC15025 RAMDAC, ICD2061A Clockchip</tag>
 	<itemize>
-        <item> ELSA Winner 1000 ISA/EISA (``TwinBus'', not Winner1000ISA!!)
-        <item> ELSA Winner 1000 VL
+        <item>ELSA Winner 1000 ISA/EISA (``TwinBus'', not Winner1000ISA!!)
+        <item>ELSA Winner 1000 VL
 	</itemize>
 
  	8, 15/16 and 24(32) bpp
@@ -151,7 +151,7 @@ chances are good it might work for you, too.
 
 <tag>S3 928, Bt9485 RAMDAC, ICD2061A Clockchip</tag>
 	<itemize>
-        <item> STB Pegasus VL 
+        <item>STB Pegasus VL 
 	</itemize>
                         
  	8, 15/16 and 24(32) bpp
@@ -171,7 +171,7 @@ chances are good it might work for you, too.
 
 <tag>S3 928, Bt485 RAMDAC, SC11412 Clockchip</tag>
 	<itemize>
-        <item> SPEA Mercury 2MB VL
+        <item>SPEA Mercury 2MB VL
 	</itemize>
                         
  	8, 15/16 and 24(32) bpp   
@@ -184,7 +184,7 @@ chances are good it might work for you, too.
 
 <tag>S3 928, Bt485 RAMDAC, ICD2061A Clockchip</tag>
 	<itemize>
-        <item> &num;9 GXE Level 10, 11, 12
+        <item>&num;9 GXE Level 10, 11, 12
 	</itemize>	
 
  	8, 15/16 and 24(32) bpp
@@ -197,7 +197,7 @@ chances are good it might work for you, too.
 
 <tag>S3 928, Ti3020 RAMDAC, ICD2061A Clockchip</tag>
 	<itemize>
-        <item> &num;9 GXE Level 14, 16
+        <item>&num;9 GXE Level 14, 16
 	</itemize>
                         
 	8, 15/16 and 24(32) bpp
@@ -212,7 +212,7 @@ chances are good it might work for you, too.
 
 <tag>S3 864, AT&amp;T20C498, ICS2494 Clockchip</tag>
 	<itemize>
-        <item> MIRO 20SD (BIOS 1.xx)
+        <item>MIRO 20SD (BIOS 1.xx)
 	</itemize>
 
  	The ICS2494 is a fixed frequency clockchip, you have to use
@@ -224,10 +224,10 @@ chances are good it might work for you, too.
 
 <tag>S3 864, AT&amp;T20C498 or STG1700 RAMDAC, ICD2061A or ICS9161 Clockchip</tag>
 	<itemize>
-        <item> Elsa Winner1000PRO VLB
-        <item> Elsa Winner1000PRO PCI
-        <item> MIRO 20SD (BIOS 2.xx)
-        <item> Actix GraphicsENGINE 64 VLB/2MB
+        <item>Elsa Winner1000PRO VLB
+        <item>Elsa Winner1000PRO PCI
+        <item>MIRO 20SD (BIOS 2.xx)
+        <item>Actix GraphicsENGINE 64 VLB/2MB
 	</itemize>
 
  	8, 15/16 and 24(32) bpp
@@ -239,7 +239,7 @@ chances are good it might work for you, too.
 
 <tag>S3 864, 20C498 or 21C498 RAMDAC, ICS2595 Clockchip</tag>
 	<itemize>
-        <item> SPEA MirageP64 2MB DRAM  (BIOS 3.xx)
+        <item>SPEA MirageP64 2MB DRAM  (BIOS 3.xx)
 	</itemize>
 
  	8, 15/16 and 24(32) bpp
@@ -260,10 +260,10 @@ chances are good it might work for you, too.
 
 <tag>S3 864, S3 86C716 SDAC RAMDAC and Clockchip</tag>
 	<itemize>
-        <item> Elsa Winner1000PRO
-        <item> MIRO 20SD (BIOS 3.xx)
-        <item> SPEA MirageP64 2MB DRAM  (BIOS 4.xx)
-        <item> Diamond Stealth 64 DRAM
+        <item>Elsa Winner1000PRO
+        <item>MIRO 20SD (BIOS 3.xx)
+        <item>SPEA MirageP64 2MB DRAM  (BIOS 4.xx)
+        <item>Diamond Stealth 64 DRAM
 	</itemize>
 
  	8, 15/16 and 24 bpp
@@ -271,7 +271,7 @@ chances are good it might work for you, too.
 
 <tag>S3 864, ICS5342 RAMDAC and Clockchip</tag>
 	<itemize>
-        <item> Diamond Stealth 64 DRAM (only some cards)
+        <item>Diamond Stealth 64 DRAM (only some cards)
 	</itemize>
 
  	8, 15/16 and 24 bpp
@@ -284,7 +284,7 @@ chances are good it might work for you, too.
 
 <tag>S3 864, AT&amp;T21C498-13 RAMDAC, ICD2061A Clockchip</tag>
 	<itemize>
-        <item> &num;9 GXE64 - PCI
+        <item>&num;9 GXE64 - PCI
 	</itemize>
                         
  	8, 15/16, 24(32) bpp
@@ -297,7 +297,7 @@ chances are good it might work for you, too.
 
 <tag>S3 964, AT&amp;T 20C505 RAMDAC, ICD2061A Clockchip</tag>
 	<itemize>
-        <item> Miro Crystal 20SV
+        <item>Miro Crystal 20SV
 	</itemize>
 
  	8, 15/16, 24(32) bpp
@@ -310,7 +310,7 @@ chances are good it might work for you, too.
 
 <tag>S3 964, Bt485 RAMDAC, ICD2061A Clockchip</tag>
 	<itemize>
- 	<item> Diamond Stealth 64
+ 	<item>Diamond Stealth 64
 	</itemize>
 
  	8, 15/16, 24(32) bpp
@@ -322,7 +322,7 @@ chances are good it might work for you, too.
 
 <tag>S3 964, Bt9485 or AT&amp;T 20C505 RAMDAC, ICS9161a Clockchip</tag>
 	<itemize>
- 	<item> SPEA Mercury 64
+ 	<item>SPEA Mercury 64
 	</itemize>
 
  	8, 15/16, 24(32) bpp
@@ -335,7 +335,7 @@ chances are good it might work for you, too.
 
 <tag>S3 964, Ti3020 RAMDAC, ICD2061A Clockchip</tag>
 	<itemize>
- 	<item> Elsa Winner2000PRO PCI
+ 	<item>Elsa Winner2000PRO PCI
 	</itemize>
 
  	8, 15/16, 24(32) bpp
@@ -347,9 +347,9 @@ chances are good it might work for you, too.
 
 <tag>S3 964, Ti3025 RAMDAC, Ti3025 Clockchip</tag>
 	<itemize>
-        <item> Miro Crystal 40SV
-	<item> &num;9 GXE64 Pro VLB
-        <item> &num;9 GXE64 Pro PCI
+        <item>Miro Crystal 40SV
+	<item>&num;9 GXE64 Pro VLB
+        <item>&num;9 GXE64 Pro PCI
 	</itemize>
 
  	8 bpp, 15, 16 and 24(32) bpp
@@ -365,9 +365,9 @@ chances are good it might work for you, too.
 
 <tag>S3 764 (Trio64)</tag>
 	<itemize>
-        <item> SPEA Mirage P64 (BIOS 5.xx)
-        <item> Diamond Stealth 64 DRAM
-        <item> &num;9 GXE64 Trio64
+        <item>SPEA Mirage P64 (BIOS 5.xx)
+        <item>Diamond Stealth 64 DRAM
+        <item>&num;9 GXE64 Trio64
 	</itemize>
 
  	8/15/16/24 bpp
@@ -379,7 +379,7 @@ chances are good it might work for you, too.
 
 <tag>S3 732 (Trio32)</tag>
 	<itemize>
-        <item> Diamond Stealth 64 DRAM SE
+        <item>Diamond Stealth 64 DRAM SE
 	</itemize>
 
  	8/15/16/24 bpp
@@ -391,15 +391,15 @@ chances are good it might work for you, too.
 
 <tag>S3 868, S3 86C716 SDAC RAMDAC and Clockchip</tag>
 	<itemize>
-	<item> ELSA Winner 1000AVI
-	<item> Diamond Stealth Video DRAM
+	<item>ELSA Winner 1000AVI
+	<item>Diamond Stealth Video DRAM
 	</itemize>
 
 	8/15/16/24 bpp
 
 <tag>S3 868, AT&amp;T 20C409 RAMDAC and Clockchip</tag>
 	<itemize>
-	<item> ELSA Winner 1000AVI
+	<item>ELSA Winner 1000AVI
 	</itemize>
 
 	8/15/16/24 bpp
@@ -410,16 +410,16 @@ chances are good it might work for you, too.
 	
 <tag>S3 968, Ti3026 RAMDAC, Ti3026 Clockchip</tag>
 	<itemize>
-	<item> Elsa Winner 2000PRO/X-2 and /X-4 (Revsions <= F)
-	<item> Elsa Winner 2000AVI-2 and -4 
-	<item> Diamond Stealth 64 VIDEO VRAM 
+	<item>Elsa Winner 2000PRO/X-2 and /X-4 (Revsions <= F)
+	<item>Elsa Winner 2000AVI-2 and -4 
+	<item>Diamond Stealth 64 VIDEO VRAM 
 	</itemize>
 
 	8/15/16/24 bpp
 
 <tag>S3 968, Ti3026 RAMDAC, ICS9161A Clockchip</tag>
 	<itemize>
-	<item> Elsa Winner 2000PRO/X-2 and /X-4 (Revision G)
+	<item>Elsa Winner 2000PRO/X-2 and /X-4 (Revision G)
 	</itemize>
 
 	8/15/16/24 bpp
@@ -429,7 +429,7 @@ chances are good it might work for you, too.
 
 <tag>S3 964, IBM RGB 514/524/525/528 RAMDAC &amp; Clockchip</tag>
 	<itemize>
-	<item> Hercules Graphics Terminator 64
+	<item>Hercules Graphics Terminator 64
 	</itemize>
 
 	8/15/16/24 bpp
@@ -442,12 +442,12 @@ chances are good it might work for you, too.
 
 <tag>S3 968, IBM RGB 514/524/525/528 RAMDAC &amp; Clockchip</tag>
 	<itemize>
-	<item> Genoa Genoa VideoBlitz III AV
+	<item>Genoa Genoa VideoBlitz III AV
  <tscreen><verb>
  s3RefClk   50
  DACspeed  170
  </verb></tscreen>
-	<item> Hercules Graphics Terminator Pro 64
+	<item>Hercules Graphics Terminator Pro 64
  <tscreen><verb>
  s3RefClk   16
  DACspeed  220
@@ -457,24 +457,69 @@ chances are good it might work for you, too.
         Invert_VCLK "*" 0
  </verb></tscreen>
 	in each Display subsection.
-	<item> STB Velocity 64
+	<item>STB Velocity 64
  <tscreen><verb>
  s3RefClk   24
  DACspeed  220
  </verb></tscreen>
-	<item> Number Nine FX Motion 771
+	<item>Number Nine FX Motion 771
  <tscreen><verb>
  s3RefClk   16
  DACspeed  220
  </verb></tscreen>
 	This card may require the line:
  <tscreen><verb>
-        Invert_VCLK "*" 0
+ Invert_VCLK "*" 0
  </verb></tscreen>
 	in each Display subsection.
+	<item>MIRO 80SV
+ <tscreen><verb>
+ s3RefClk   16
+ DACspeed  250
+ </verb></tscreen>
 	</itemize>
 
 	8/15/16/24 bpp
+
+<tag>ELSA Winner 2000PRO/X-8 (S3 968, 8MB VRAM, 220MHz for 32bpp)</tag>
+
+ The server has only been tested for "revision C" of this card
+ (guess the serial number should start with C, but not sure since
+ mine says  Ser.No. A-0000.000.000;)  which have an IBM RGB528A
+ note the A;  can't be probed though)
+
+ depending on the mode line etc there may be some display distortions like:
+ <enum>
+    <item>many long horizontal lines/stripes
+    <item>pixel jitter or short horizontal stripes like snow all over the
+	  screen
+    <item>Like 2., but only when doing graphics ops (like opaque move of
+	  windows).
+    <item>additional pixel at the left display edge and some missing pixels
+	  at the right edge.
+ </enum>
+ All of these problems can be fixed by small adjustments to the mode line
+ (best to run `xvidtune' and make these adjustments interactively).  E.g.,
+ for the first three problems, shift the display left or right a few steps.
+ For the last problem, increasing HSyncEnd (making the hsync pulse longer)
+ solves the problem.  In some cases, a significant increase in the sync
+ pulse width is needed, and rarely, it needs to be shortened (by decreasing
+ HSyncEnd).
+
+ In rare cases, InvertVCLK and/or EarlySC may need to be adjusted, followed
+ by an adjustment of BlankDelay (see the bottom line of xvidtune).
+
+ If you see any of these problems, please contact
+ <htmlurl url="mailto:koenig@XFree86.org" name="koenig@XFree86.org">, and
+ send details of:
+ <itemize>
+    <item>Original mode showing the problem,
+    <item>Tuned/fixed mode, including all flags from the bottom line of
+	  xvidtune,
+    <item>Colour depth used for this tuned mode line,
+    <item>Full server startup output.
+ </itemize>
+
 
 </descrip>
 
@@ -789,13 +834,13 @@ exit
 </code>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3.sgml,v 3.33 1996/02/04 09:08:21 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3.sgml,v 3.37.2.1 1997/05/27 06:22:23 dawes Exp $
 
 
 
 
 
-$XConsortium: S3.sgml /main/13 1996/01/16 15:36:43 kaleb $
+$XConsortium: S3.sgml /main/14 1996/02/21 17:45:58 kaleb $
 </verb>
 
 </article>

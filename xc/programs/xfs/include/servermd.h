@@ -1,4 +1,4 @@
-/* $XConsortium: servermd.h /main/10 1995/12/12 16:43:12 gildea $ */
+/* $XConsortium: servermd.h /main/11 1996/12/09 17:53:44 kaleb $ */
 /* 
 Copyright (c) 1987  X Consortium
 
@@ -49,7 +49,7 @@ in this Software without prior written authorization from the X Consortium.
 #define _SERVERMD_H_
 
 #ifndef VENDOR_RELEASE
-#define VENDOR_RELEASE 6100
+#define VENDOR_RELEASE 6300
 #endif
 
 #ifndef VENDOR_STRING

@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile,v 5.43 95/04/07 19:13:59 kaleb Exp $
-XCOMM $XFree86: xc/programs/Xserver/cfb/Imakefile,v 3.6 1996/08/11 12:34:53 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/67 1996/12/02 10:19:53 lehors $
+XCOMM $XFree86: xc/programs/Xserver/cfb/Imakefile,v 3.9.2.1 1997/05/03 09:45:03 dawes Exp $
 #include <Server.tmpl>
 
 #ifndef PixelSize
@@ -11,10 +11,12 @@ XCOMM $XFree86: xc/programs/Xserver/cfb/Imakefile,v 3.6 1996/08/11 12:34:53 dawe
 PSZSRCS = cfb8bit.c cfbteblt8.c cfbglrop8.c cfbpush8.c cfbrctstp8.c cfb8cppl.c
 PSZOBJS = cfb8bit.o cfbteblt8.o cfbglrop8.o cfbpush8.o cfbrctstp8.o cfb8cppl.o
 #ifdef MipsArchitecture
+#ifndef ArcArchitecture
 #ifndef Mips64Architecture
 STIPPLESRC = stipmips.s stipmipste.s
 STIPPLEOBJ = stipmips.o stipmipste.o
 STIPPLEDEF = -DHAS_STIPPLE_CODE
+#endif
 #endif
 #endif
 #ifdef SparcArchitecture
@@ -62,13 +64,18 @@ OBJS =   cfbgc.o cfbrrop.o cfbwindow.o \
 	 cfbbres.o cfbline.o cfbhrzvert.o cfbbresd.o cfbimage.o cfbseg.o \
 	 cfb8lineCO.o cfb8lineX.o cfb8lineG.o cfb8lineCP.o \
 	 cfb8segCS.o cfb8segX.o cfb8segG.o cfb8segC.o \
- 	 cfbbitblt.o cfbbltC.o cfbbltX.o cfbbltO.o cfbbltG.o \
+	 cfbbitblt.o cfbbltC.o cfbbltX.o cfbbltO.o cfbbltG.o \
 	 cfbply1rctC.o cfbply1rctG.o $(PSZOBJS) $(STIPPLEOBJ)
 
-   INCLUDES = -I. -I../mfb -I../mi -I../include -I$(INCLUDESRC) -I$(FONTINCSRC)
+#ifdef XFree86Version
+EXTRAINCLUDES = -I../hw/xfree86/common
+EXTRADEFINES  = -DXFREE86
+#endif
+   INCLUDES = -I. -I../cfb -I../mfb -I../mi -I../include -I$(XINCLUDESRC) \
+	      -I$(FONTINCSRC) $(EXTRAINCLUDES)
    LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln \
 	     ../mfb/llib-lmfb.ln ../mi/llib-lmi.ln
-    DEFINES = -DPSZ=PixelSize
+    DEFINES = -DPSZ=PixelSize $(EXTRADEFINES)
 
 NormalLibraryObjectRule()
 NormalLibraryTarget(cfb,$(OBJS))
@@ -173,6 +180,8 @@ ObjectFromSpecialSource(cfbply1rctC,cfbply1rct,-DRROP=GXcopy)
 ObjectFromSpecialSource(cfbply1rctG,cfbply1rct,-DRROP=GXset)
 
 SpecialCObjectRule(cfbglblt8,$(_NOOP_),$(STIPPLEDEF))
+SpecialCObjectRule(cfbpixmap,$(ICONFIGFILES),$(_NOOP_))
+SpecialCObjectRule(cfbcmap,$(ICONFIGFILES),$(EXT_DEFINES) $(GLX_DEFINES))
 
 #if PixelSize == 8
 ObjectFromSpecialSource(cfbglrop8,cfbglblt8,-DGLYPHROP)
@@ -237,4 +246,7 @@ InstallLinkKitNonExecFile(cfbmskbits.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(cfbrrop.h,$(LINKKITDIR)/include)
 #endif
 
+#ifndef OS2Architecture
 DependTarget()
+#endif
+

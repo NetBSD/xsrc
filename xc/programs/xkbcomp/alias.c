@@ -1,4 +1,4 @@
-/* $XConsortium: alias.c /main/6 1996/02/02 14:17:11 kaleb $ */
+/* $XConsortium: alias.c /main/7 1996/12/27 21:16:10 kaleb $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
@@ -152,11 +152,12 @@ ClearAliases(info_in)
 
 Bool
 #if NeedFunctionPrototypes
-MergeAliases(AliasInfo **into,AliasInfo **merge)
+MergeAliases(AliasInfo **into,AliasInfo **merge,unsigned how_merge)
 #else
-MergeAliases(into,merge)
+MergeAliases(into,merge,how_merge)
     AliasInfo **	into;
     AliasInfo **	merge;
+    unsigned		how_merge;
 #endif
 {
 AliasInfo *	tmp;
@@ -171,7 +172,9 @@ KeyAliasDef 	def;
     }	
     bzero((char *)&def,sizeof(KeyAliasDef));
     for (tmp= *merge;tmp!=NULL;tmp= (AliasInfo *)tmp->def.next) {
-	def.merge= tmp->def.merge;
+	if (how_merge==MergeDefault)
+	     def.merge= tmp->def.merge;
+	else def.merge= how_merge;
 	memcpy(def.alias,tmp->alias,XkbKeyNameLength);
 	memcpy(def.real,tmp->real,XkbKeyNameLength);
 	if (!HandleAliasDef(&def,def.merge,tmp->def.fileID,into))

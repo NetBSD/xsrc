@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.11 1996/10/26 09:35:21 dawes Exp $
+# $XConsortium: carddata.tcl /main/8 1996/10/28 05:42:15 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/carddata.tcl,v 3.12.2.3 1997/05/27 06:22:17 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -22,39 +27,44 @@ set AccelServerList	[list 8514 AGX I128 Mach8 Mach32 Mach64 P9000 \
 # and SVGA servers, the list is broken out by driver)?
 set CardChipSets(SVGA-al2101)	al2101
 set CardChipSets(SVGA-ali)	{ ali2228 ali2301 ali2302 ali2308 ali2401 }
-set CardChipSets(SVGA-apm)	ap6422
-set CardChipSets(SVGA-ark)	{ ark1000vl ark1000pv ark2000pv }
+set CardChipSets(SVGA-apm)	{ ap6422 at24 }
+set CardChipSets(SVGA-ark)	{ ark1000vl ark1000pv ark2000pv ark2000mt }
 set CardChipSets(SVGA-ati)	ati
 set CardChipSets(SVGA-cl64xx)	{ cl6410 cl6412 cl6420 cl6440 }
 set CardChipSets(SVGA-cirrus)	{ clgd5420 clgd5422 clgd5424 clgd5426 \
 				  clgd5428 clgd5429 clgd5430 clgd5434 \
-				  clgd5436 clgd5446 clgd6215 clgd6225 \
-				  clgd6235 clgd7541 clgd7542 clgd7543 }
-#set CardChipSets(SVGA-compaq)	cpq_avga
-set CardChipSets(SVGA-chips)	{ ct65520 ct65530 ct65540 ct65545 \
-				  ct65546 ct65548 ct65550 ct65554 \
-				  ct451 ct452 ct453 ct455 ct456 ct457 }
+				  clgd5436 clgd5446 clgd5480 clgd5462 \
+				  clgd5464 clgd5465 clgd6205 clgd6215 \
+				  clgd6225 clgd6235 clgd7541 clgd7542 \
+				  clgd7543 clgd7548 clgd7555 }
+set CardChipSets(SVGA-compaq)	cpq_avga
+set CardChipSets(SVGA-chips)	{ ct65520 ct65525 ct65530 ct65535 \
+				  ct65540 ct65545 ct65546 ct65548 \
+				  ct65550 ct65554 ct64200 ct64300 }
 set CardChipSets(SVGA-et3000)	et3000
-set CardChipSets(SVGA-et4000)	{ et4000 et4000w32 et4000w32i et4000w32p \
-				  et6000 }
+set CardChipSets(SVGA-et4000)	{ et4000 et4000w32 et4000w32i \
+				  et4000w32i_rev_b et4000w32i_rev_c \
+				  et4000w32p et4000w32p_rev_a \
+				  et4000w32p_rev_b et4000w32p_rev_c \
+				  et4000w32p_rev_d et6000 }
 set CardChipSets(SVGA-gvga)	gvga
-set CardChipSets(SVGA-mga)	mga2064w
+set CardChipSets(SVGA-mga)	{ mga2064w mga1064sg }
 set CardChipSets(SVGA-mx)	mx
 set CardChipSets(SVGA-ncr77c22)	{ ncr77c22 ncr77c22e }
 set CardChipSets(SVGA-nv)	{ nv1 stg2000 }
 set CardChipSets(SVGA-oak)	{ oti067 oti077 oti087 oti037c }
 set CardChipSets(SVGA-pvga1)	{ pvga1 \
 				  wd90c00 wd90c10 wd90c30 wd90c24 \
-				  wd90c31 wd90c31 wd90c33 wd90c20 }
+				  wd90c31 wd90c33 wd90c20 }
 set CardChipSets(SVGA-realtek)	realtek
-#set CardChipSets(SVGA-s3_svga)	s3
+set CardChipSets(SVGA-s3v)	s3_virge
 set CardChipSets(SVGA-sis)	{ sis86c201 sis86c202 sis86c205 }
 set CardChipSets(SVGA-tvga8900)	{ tvga8200lx tvga8800cs tvga8900b tvga8900c \
 				  tvga8900cl tvga8900d tvga9000 tvga9000i \
 				  tvga9100b tvga9200cxr \
 				  tgui9320lcd tgui9400cxi tgui9420 \
 				  tgui9420dgi tgui9430dgi tgui9440agi \
-				  tgui9660xgi tgui9680 cyber938x }
+				  tgui96xx cyber938x }
 set CardChipSets(SVGA-video7)	video7
 set chiplist ""
 foreach idx [array names CardChipSets SVGA-*] {
@@ -163,8 +173,9 @@ set CardRamDacs(S3V)	   {} ;# { normal s3_trio64 }
 set CardRamDacs(TGA)	   { bt485 }
 set CardRamDacs(W32)	   { normal \
 			     att20c47xa att20c490 att20c491 \
-				att20c492 att20c493 att20c497 \
-			     ics5341 sc1502x stg1703 et6000 }
+			     att20c492 att20c493 att20c497 \
+			     ics5341 sc1502x stg1700 stg1702 \
+			     stg1703 ch8398 gendac et6000 }
 
 set CardRamDacs(SVGA-ark)	   { ark1491a att20c490 att20c498 \
 					ics5342 stg1700 \
@@ -208,18 +219,19 @@ set CardClockChips(S3)	   { att20c409 att20c499 att20c408 \
 			     ibm_rgb514 ibm_rgb51x ibm_rgb524 ibm_rgb525 \
 				ibm_rgb528 ibm_rgb52x ibm_rgb5xx \
 			     icd2061a ics2595 ics5300 ics5342 ics9161a \
-			     s3_sdac s3_trio s3_trio32 \
-				s3_trio64 s3gendac \
+			     s3_aurora64 s3_sdac s3_trio s3_trio32 \
+				s3_trio64 s3_trio64v2 s3gendac \
 			     sc11412 stg1703 ti3025 ti3026 ti3030 \
 			   }
 set CardClockChips(S3V)	   {} ;# { s3_trio64 }
-set CardClockChips(TGA)	   {}
+set CardClockChips(TGA)	   ics1562 
 set CardClockChips(W32)	   { dcs2824 et6000 icd2061a ics5341 stg1703 }
 
 set CardClockChips(SVGA-ark)		ics5342
 set CardClockChips(SVGA-cirrus)		cirrus
 set CardClockChips(SVGA-et4000)		$CardClockChips(W32)
 set CardClockChips(SVGA-mga)		ti3026
+set CardClockChips(SVGA-pvga1)          icd2061A
 set CardClockChips(SVGA-tvga8900)	tgui
 set clklist ""
 foreach idx [array names CardClockChips SVGA-*] {
@@ -247,52 +259,68 @@ set CardOptions(Mono)	   { 16clocks 8clocks all_wait clgd6225_lcd \
 			     fast_dram favour_bitblt favor_bitblt \
 			     fb_debug fifo_aggressive fifo_conservative \
 			     first_wwait ga98nb1 ga98nb2 ga98nb4 \
-			     hibit_high hibit_low hw_cursor intern_disp \
+			     hibit_high hibit_low hw_clocks hw_cursor \
+			     intern_disp lcd_center lcd_stretch \
 			     legend linear med_dram mmio nec_cirrus \
 			     noaccel nolinear no_2mb_banksel no_bitblt \
-			     no_imageblt no_pci_probe no_program_clocks \
+			     no_imageblt no_pci_probe no_pixmap_cache \
+			     no_program_clocks \
 			     no_wait one_wait pc98_tgui pci_burst_off \
-			     pci_burst_on power_saver probe_clocks \
-			     read_wait slow_dram swap_hibit sw_cursor \
+			     pci_burst_on pci_retry power_saver probe_clocks \
+			     read_wait secondary \
+			     slow_dram swap_hibit sw_cursor tgui_mclk_66 \
 			     tgui_pci_read_off tgui_pci_read_on \
 			     tgui_pci_write_off tgui_pci_write_on \
 			     w32_interleave_off w32_interleave_on \
-			     wap write_wait \
+			     wap write_wait xaa_no_col_exp\
 			   }
 set CardOptions(VGA16)	   { 16clocks all_wait clgd6225_lcd clkdiv2 \
 			     clock_50 clock_66 composite enable_bitblt \
 			     fast_dram fb_debug fifo_aggressive \
 			     fifo_conservative first_wwait hibit_high \
-			     hibit_low hw_cursor legend linear med_dram \
+			     hibit_low hw_clocks hw_cursor \
+			     lcd_center lcd_stretch legend \
+			     linear med_dram \
 			     mmio noaccel nolinear no_pci_probe \
 			     no_program_clocks no_wait one_wait \
-			     pc98_tgui pci_burst_off pci_burst_on \
+			     pc98_tgui pci_burst_off pci_burst_on pci_retry \
 			     power_saver probe_clocks read_wait \
-			     slow_dram tgui_pci_read_off tgui_pci_read_on \
+			     secondary \
+			     slow_dram tgui_mclk_66 \
+			     tgui_pci_read_off tgui_pci_read_on \
 			     tgui_pci_write_off tgui_pci_write_on \
 			     w32_interleave_off w32_interleave_on \
-			     write_wait \
+			     write_wait xaa_no_col_exp\
 			   }
 set CardOptions(SVGA)	   { 16clocks 8clocks all_wait clgd6225_lcd \
 			     clkdiv2 clock_50 clock_66 composite \
-			     enable_bitblt epsonmemwin extern_disp \
+			     dac_6_bit dac_8_bit early_ras_precharge \
+			     enable_bitblt \
+			     epsonmemwin extern_disp \
 			     ext_fram_buf fast_dram favour_bitblt \
 			     favor_bitblt fb_debug fifo_aggressive \
-			     fifo_conservative first_wwait ga98nb1 \
+			     fifo_conservative fifo_moderate \
+			     first_wwait fix_panel_size \
+			     fpm_vram ga98nb1 \
 			     ga98nb2 ga98nb4 hibit_high hibit_low \
-			     hw_clocks hw_cursor intern_disp lcd_center \
-			     lcd_centre no_stretch legend linear \
+			     hw_clocks hw_cursor intern_disp \
+			     late_ras_precharge lcd_center \
+			     lcd_centre legend linear \
 			     med_dram mmio nec_cirrus noaccel nolinear \
 			     no_2mb_banksel no_bitblt no_imageblt \
-			     no_pci_probe no_program_clocks no_wait \
+			     no_pci_probe no_pixmap_cache \
+			     no_program_clocks no_stretch no_wait \
 			     one_wait pc98_tgui pci_burst_off\
-			     pci_burst_on power_saver probe_clocks \
-			     read_wait slow_dram stn suspend_hack \
-			     swap_hibit sw_cursor tgui_pci_read_off \
+			     pci_burst_on pci_retry power_saver probe_clocks \
+			     read_wait slow_edoram slow_dram stn suspend_hack \
+			     swap_hibit sw_cursor sync_on_green \
+			     tgui_mclk_66 tgui_pci_read_off \
 			     tgui_pci_read_on tgui_pci_write_off \
-			     tgui_pci_write_on use_modeline \
+			     tgui_pci_write_on use_18bit_bus use_modeline \
+			     use_vclk1 \
 			     w32_interleave_off w32_interleave_on wap \
 			     write_wait \
+			     xaa_benchmark xaa_no_col_exp \
 			   }
 set CardOptions(8514)	   {}
 set CardOptions(AGX)	   { 8_bit_bus bt482_curs bt485_curs clkdiv2 \
@@ -307,7 +335,8 @@ set CardOptions(AGX)	   { 8_bit_bus bt482_curs bt485_curs clkdiv2 \
 			     vram_256 vram_delay_latch vram_delay_ras \
 			     vram_extend_ras wait_state \
 			   }
-set CardOptions(I128)	   { dac_8_bit power_saver showcache sync_on_green }
+set CardOptions(I128)	   { dac_8_bit noaccel power_saver showcache \
+	                     sync_on_green }
 set CardOptions(Mach8)	   composite
 set CardOptions(Mach32)	   { clkdiv2 composite dac_8_bit intel_gx \
 			     nolinear sw_cursor }
@@ -319,12 +348,15 @@ set CardOptions(Mach64)	   { block_write clkdiv2 composite dac_6_bit \
 			   }
 set CardOptions(P9000)	   { noaccel sw_cursor sync_on_green vram_128 vram_256 }
 set CardOptions(S3)	   { bt485_curs clkdiv2 dac_6_bit dac_8_bit \
-			     diamond elsa_w1000pro elsa_w1000isa \
-			     elsa_w2000pro epsonmemwin fast_vram \
+			     diamond early_ras_precharge elsa_w1000pro \
+			     elsa_w1000isa elsa_w2000pro elsa_w2000pro/x8 \
+			     epsonmemwin fast_vram \
 			     s3_fast_vram fb_debug genoa hercules \
-			     ibmrgb_curs legend miro_magic_s4 \
+			     ibmrgb_curs late_ras_precharge legend \
+			     miro_80sv miro_magic_s4 \
 			     necwab noinit nolinear no_font_cache \
-			     nomemaccess no_pixmap_cache no_ti3020_curs \
+			     nomemaccess no_pci_disconnect no_pixmap_cache \
+			     no_ti3020_curs \
 			     number_nine pchkb pci_hack pcskb pcskb4 \
 			     power_saver pw805i pw968 pw_localbus \
 			     pw_mux s3_964_bt485_vclk s3_968_dash_bug \
@@ -337,9 +369,13 @@ set CardOptions(S3)	   { bt485_curs clkdiv2 dac_6_bit dac_8_bit \
 			   }
 set CardOptions(S3V)	   { sw_cursor dac_6_bit dac_8_bit power_saver \
 	                     slow_dram_refresh slow_edodram slow_vram }
-set CardOptions(TGA)	   { sw_cursor dac_6_bit dac_8_bit power_saver }
+set CardOptions(TGA)	   { bt485_cursor dac_6_bit dac_8_bit hw_cursor \
+	                     power_saver sw_cursor \
+			   }
 set CardOptions(W32)	   { clkdiv2 fast_dram hibit_high hibit_low \
-			     legend pci_burst_off pci_burst_on power_saver \
+			     legend linear noaccel no_pci_probe \
+			     pci_burst_off pci_burst_on \
+			     power_saver slow_dram \
 			     w32_interleave_off w32_interleave_on }
 
 # For each server, what readme files are applicable?
@@ -350,8 +386,12 @@ set CardReadmes(SVGA-cirrus)	README.cirrus
 set CardReadmes(SVGA-chips)	README.chips
 set CardReadmes(SVGA-et3000)	README.tseng
 set CardReadmes(SVGA-et4000)	README.tseng
+set CardReadmes(SVGA-mga)	README.MGA
+set CardReadmes(SVGA-nv)	README.NV1
 set CardReadmes(SVGA-oak)	README.Oak
 set CardReadmes(SVGA-pvga1)	README.WstDig
+set CardReadmes(SVGA-s3v)	README.S3V
+set CardReadmes(SVGA-sis)	README.SiS
 set CardReadmes(SVGA-tvga8900)	README.trident
 set CardReadmes(SVGA-video7)	README.Video7
 set rdmelist ""

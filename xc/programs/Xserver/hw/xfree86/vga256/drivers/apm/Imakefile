@@ -1,4 +1,9 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/Imakefile,v 3.0 1996/09/01 04:47:25 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/3 1996/10/23 15:09:22 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/apm/Imakefile,v 3.2 1996/12/27 07:04:44 dawes Exp $
 #include <Server.tmpl>
 
 SRCS = apm_driver.c apm_bank.s apm_cursor.c
@@ -13,7 +18,7 @@ INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
            -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
            -I$(SERVERSRC)/cfb -I../../vga \
-           -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(INCLUDESRC)
+           -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC)
 #endif
 
 #if MakeHasPosixVariableSubstitutions

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/bstor.c,v 1.1.1.3 1996/01/03 07:12:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/bstor.c,v 3.1 1996/12/23 06:37:41 dawes Exp $ */
 /*-
  * ibm8514bstore.c --
  *	Functions required by the backing-store implementation in MI.
@@ -25,7 +25,7 @@
  *
  * Modified by Tiago Gons (tiago@comosjn.hobby.nl)
  */
-/* $XConsortium: bstor.c /main/2 1995/11/12 16:53:55 kaleb $ */
+/* $XConsortium: bstor.c /main/3 1996/02/21 17:23:53 kaleb $ */
 
 
 #include    "cfb.h"

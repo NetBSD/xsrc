@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8gc.c,v 3.3 1996/02/04 09:03:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8gc.c,v 3.4 1996/12/23 06:39:55 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -52,7 +52,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 Modified for the Mach-8 by Rickard E. Faith (faith@cs.unc.edu)
 
 */
-/* $XConsortium: mach8gc.c /main/4 1995/11/12 18:00:29 kaleb $ */
+/* $XConsortium: mach8gc.c /main/5 1996/02/21 17:30:29 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

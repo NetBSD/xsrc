@@ -1,4 +1,4 @@
-/* $XConsortium: Events.c,v 1.4 95/07/10 17:42:22 ray Exp $ */
+/* $XConsortium: Events.c /main/6 1996/12/02 10:21:07 lehors $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -26,7 +26,7 @@ is" without express or implied warranty.
 
 #include "Display.h"
 #include "Screen.h"
-#include "Window.h"
+#include "XNWindow.h"
 #include "Events.h"
 
 CARD32 lastEventTime = 0;
@@ -92,6 +92,7 @@ void xnestCollectEvents()
   XEvent X;
   xEvent x;
   ScreenPtr pScreen;
+  extern Window xnestParentWindow;
 
   while (XCheckIfEvent(xnestDisplay, &X, xnestNotExposurePredicate, NULL)) {
     switch (X.type) {
@@ -174,6 +175,11 @@ void xnestCollectEvents()
       }
       break;
       
+    case DestroyNotify:
+      if (xnestParentWindow != (Window) 0 &&
+	  X.xdestroywindow.window == xnestParentWindow)
+	exit (0);
+      break;
       
     default:
       ErrorF("xnest warning: unhandled event\n");

@@ -1,5 +1,5 @@
-/* $XConsortium: Font.c,v 1.2 95/07/10 17:42:22 ray Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xnest/Font.c,v 3.2 1996/01/24 22:04:11 dawes Exp $ */
+/* $XConsortium: Font.c /main/4 1996/12/02 10:21:13 lehors $ */
+/* $XFree86: xc/programs/Xserver/hw/xnest/Font.c,v 3.4 1996/12/27 07:07:48 dawes Exp $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -18,22 +18,14 @@ is" without express or implied warranty.
 #include "Xproto.h"
 #include "misc.h"
 #include "miscstruct.h"
-#ifdef __EMX__
-#include "../../../include/fonts/font.h" /* name clash with Font.h */
-#else
 #include "font.h"
-#endif
 #include "fontstruct.h"
 #include "scrnintstr.h"
 
 #include "Xnest.h"
 
 #include "Display.h"
-#ifdef __EMX__
-#include "os2Font.h"
-#else
-#include "Font.h"
-#endif
+#include "XNFont.h"
 
 int xnestFontPrivateIndex;
 
@@ -49,6 +41,9 @@ Bool xnestRealizeFont(pScreen, pFont)
   char *name;
 
   FontSetPrivate(pFont, xnestFontPrivateIndex, NULL);
+
+  if (requestingClient && XpClientIsPrintClient(requestingClient, NULL))
+      return True;
 
   name_atom = MakeAtom("FONT", 4, True);
   value_atom = 0L;

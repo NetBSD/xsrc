@@ -1,6 +1,6 @@
 /*
- * $XConsortium: constype.c /main/7 1995/10/05 07:36:37 kaleb $
- * $XFree86: xc/programs/Xserver/hw/sun/constype.c,v 3.3 1996/10/16 14:38:12 dawes Exp $
+ * $XConsortium: constype.c /main/9 1996/10/31 14:23:42 kaleb $
+ * $XFree86: xc/programs/Xserver/hw/sun/constype.c,v 3.4 1996/12/23 06:30:11 dawes Exp $
  * 
  * consoletype - utility to print out string identifying Sun console type
  *
@@ -50,25 +50,26 @@ main (argc, argv)
     int argc;
     char **argv;
 {
-    char *wu_fbid();
-    int retval = -1;
-    char *consoleid, *dev;
+    int fbtype = -1;
+    char *fbname, *dev;
     int print_num = 0;
+    int error;
 
     if (argc > 1 && argv[1][0] == '/') {
 	dev = argv[1];
 	argc--; argv++;
     } else
 	dev = "/dev/fb";
-    consoleid = wu_fbid(dev, &retval);
+    error = wu_fbid(dev, &fbname, &fbtype );
     if (argc > 1 && strncmp (argv[1], "-num", strlen(argv[1])) == 0)
 	print_num = 1;
 
-    printf ("%s", consoleid ? consoleid : "tty");
+    printf ("%s", fbname ? fbname : "tty");
     if (print_num) {
-	printf (" %d", retval);
+	printf (" %d", fbtype);
     }
     putchar ('\n');
+    return error;
 }
 #include <sys/ioctl.h>
 #include <sys/file.h>
@@ -76,12 +77,18 @@ main (argc, argv)
 #include <fcntl.h>
 #include <sys/fbio.h>
 #else
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
+#ifndef CSRG_BASED
 #include <sun/fbio.h>
 #else
 #include <machine/fbio.h>
 #endif
 #endif
+
+/* Sun doesn't see fit to update <sys/fbio.h> to reflect the addition
+ * of the TCX 
+ */
+#define XFBTYPE_TCX		21
+#define XFBTYPE_LASTPLUSONE	22
 
 /* decoding as of Release 3.4 : fbio.h 1.3 87/01/09 SMI */
 	/* the convention for entries in this table is to translate the
@@ -92,46 +99,82 @@ main (argc, argv)
 	 *	FBTYPE_SUNxGP		becomes gpx
 	 *	FBTYPE_NOTSUN[1-9]	becomes ns[A-J]
 	 */
-static char *decode_fb[FBTYPE_LASTPLUSONE] = {
+static char *decode_fb[] = {
 	"bw1", "cg1",
 	"bw2", "cg2",
 	"gp2",
 	"bw3", "cg3",
-	"bw4", "cg4",
+	"cg8", "cg4",
 	"nsA", "nsB", "nsC", 
-#if FBTYPE_LASTPLUSONE > 12
-	"gx", "rop", "vid", 
-	"res5", "res4", "res3", "res2", "res1"
+#ifdef FBTYPE_SUNFAST_COLOR
+	"gx/cg6", 
+#endif
+#ifdef FBTYPE_SUNROP_COLOR
+	"rop", 
+#endif
+#ifdef FBTYPE_SUNFB_VIDEO
+	"vid", 
+#endif
+#ifdef FBTYPE_SUNGIFB
+	"gifb", 
+#endif
+#ifdef FBTYPE_SUNGPLAS
+	"plas", 
+#endif
+#ifdef FBTYPE_SUNGP3
+	"gp3/cg12", 
+#endif
+#ifdef FBTYPE_SUNGT
+	"gt", 
+#endif
+#ifdef FBTYPE_SUNLEO
+	"leo/zx", 
+#endif
+#ifdef FBTYPE_MDICOLOR
+	"mdi/cg14",
 #endif
 	};
 
-char *
-wu_fbid(fbname, retval)
-	char *fbname;
-	int *retval;
+int wu_fbid(devname, fbname, fbtype)
+	char* devname;
+	char** fbname;
+	int* fbtype;
 {
 	struct fbgattr fbattr;
 	int fd, ioctl_ret;
-	*retval = -1;
-	if ( (fd = open(fbname, O_RDWR, 0)) == -1 )
-		return(0);
-		/* FBIOGATTR fails for early frame buffer types */
-	if (ioctl_ret = ioctl(fd,FBIOGATTR,&fbattr)) {	/*success=>0(false)*/
-		ioctl_ret = ioctl(fd, FBIOGTYPE, &fbattr.fbtype);
+	if ( (fd = open(devname, O_RDWR, 0)) == -1 ) {
+	    *fbname = "unable to open fb";
+	    return 2;
 	}
-	*retval = fbattr.fbtype.fb_type;
+	/* FBIOGATTR fails for early frame buffer types */
+	if (ioctl_ret = ioctl(fd,FBIOGATTR,&fbattr)) {	/*success=>0(false)*/
+	    ioctl_ret = ioctl(fd, FBIOGTYPE, &fbattr.fbtype);
+	}
 	close(fd);
-	if ( ioctl_ret == -1 )
-		return(0);
-	    /* The binary is obsolete and needs to be re-compiled:
-	     * the ioctl returned a value beyond what was possible
-	     * when the program was compiled */
-	if (fbattr.fbtype.fb_type>=FBTYPE_LASTPLUSONE)
-		return("unk");
-	    /* The source is obsolete.  The table "decode_fb" does not
-	     * have entries for some of the values returned by the ioctl.
-	     * Compare <sun/fbio.h> to the entries in "decode_fb" */
-	if ( decode_fb[fbattr.fbtype.fb_type] == 0 )	/* decode_fb is obs */
-                return("unk");
-	return(decode_fb[fbattr.fbtype.fb_type]);
+	if ( ioctl_ret == -1 ) {
+	    *fbname = "ioctl on fb failed";
+	    return 2;
+	}
+	*fbtype = fbattr.fbtype.fb_type;
+	/* The binary is obsolete and needs to be re-compiled:
+	 * the ioctl returned a value beyond what was possible
+	 * when the program was compiled */
+	if (fbattr.fbtype.fb_type>=FBTYPE_LASTPLUSONE) {
+	    if (fbattr.fbtype.fb_type == XFBTYPE_TCX) {
+		*fbname = "tcx";
+		return 0;
+	    } else {
+		*fbname = "unk";
+		return 1;
+	    }
+	}
+	/* The source is obsolete.  The table "decode_fb" does not
+	 * have entries for some of the values returned by the ioctl.
+	 * Compare <sun/fbio.h> to the entries in "decode_fb" */
+	if ( decode_fb[fbattr.fbtype.fb_type] == NULL ) {
+            *fbname = "unk";
+	    return 1;
+	}
+	*fbname = decode_fb[fbattr.fbtype.fb_type];
+	return 0;
 }

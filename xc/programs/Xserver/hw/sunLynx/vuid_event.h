@@ -1,5 +1,9 @@
-/*	$NetBSD: vuid_event.h,v 1.1.1.1 1997/03/15 06:11:33 scottr Exp $ */
-/*	$XFree86: xc/programs/Xserver/hw/sunLynx/vuid_event.h,v 3.0 1996/09/29 12:47:30 dawes Exp $ */
+/* $XConsortium: vuid_event.h /main/1 1996/10/31 14:21:02 kaleb $ */
+
+
+
+/*	$NetBSD: vuid_event.h,v 1.1.1.2 1997/06/30 12:56:18 mrg Exp $ */
+/*	$XFree86: xc/programs/Xserver/hw/sunLynx/vuid_event.h,v 3.1 1996/12/27 06:51:43 dawes Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

@@ -45,8 +45,8 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: io.c /main/r61_main/1 1996/01/31 19:26:44 dpw $ */
-/* $XFree86: xc/programs/Xserver/os/io.c,v 3.12 1996/05/10 07:02:14 dawes Exp $ */
+/* $XConsortium: io.c /main/72 1996/12/27 15:40:56 rws $ */
+/* $XFree86: xc/programs/Xserver/os/io.c,v 3.15 1997/01/18 06:58:00 dawes Exp $ */
 /*****************************************************************
  * i/o functions
  *
@@ -55,6 +55,9 @@ SOFTWARE.
  *
  *****************************************************************/
 
+#ifdef WIN32
+#include <X11/Xwinsock.h>
+#endif
 #include <stdio.h>
 #include <X11/Xtrans.h>
 #ifdef X_NOT_STDC_ENV
@@ -62,8 +65,12 @@ extern int errno;
 #endif
 #include "Xmd.h"
 #include <errno.h>
-#if !defined(AMOEBA) && !defined(MINIX) && !defined(__EMX__)
+#if !defined(AMOEBA) && !defined(MINIX) && !defined(__EMX__) && !defined(WIN32)
+#ifndef Lynx
 #include <sys/uio.h>
+#else
+#include <uio.h>
+#endif
 #endif
 #include "X.h"
 #define NEED_REPLIES
@@ -74,6 +81,9 @@ extern int errno;
 #include "opaque.h"
 #include "dixstruct.h"
 #include "misc.h"
+#ifdef LBX
+#include "lbxserve.h"
+#endif
 
 CallbackListPtr       ReplyCallback;
 CallbackListPtr       FlushCallback;
@@ -99,62 +109,17 @@ extern fd_set ClientsWithInput, IgnoredClientsWithInput, AllClients;
 extern fd_set ClientsWriteBlocked;
 extern fd_set OutputPending;
 extern int ConnectionTranslation[];
-#ifdef LBX
-extern int ConnectionOutputTranslation[];
-#endif
 extern Bool NewOutputPending;
 extern Bool AnyClientsWriteBlocked;
- Bool CriticalOutputPending;
- int timesThisConnection = 0;
- ConnectionInputPtr FreeInputs = (ConnectionInputPtr)NULL;
- ConnectionOutputPtr FreeOutputs = (ConnectionOutputPtr)NULL;
- OsCommPtr AvailableInput = (OsCommPtr)NULL;
 
-extern ConnectionInputPtr AllocateInputBuffer(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
-
-static ConnectionOutputPtr AllocateOutputBuffer(
-#if NeedFunctionPrototypes
-    void
-#endif
-);
-
-#ifdef LBX
-extern ClientPtr   WritingClient;
-#endif
+Bool CriticalOutputPending;
+int timesThisConnection = 0;
+ConnectionInputPtr FreeInputs = (ConnectionInputPtr)NULL;
+ConnectionOutputPtr FreeOutputs = (ConnectionOutputPtr)NULL;
+OsCommPtr AvailableInput = (OsCommPtr)NULL;
 
 #define get_req_len(req,cli) ((cli)->swapped ? \
 			      lswaps((req)->length) : (req)->length)
-
-#ifdef LBX
-StandardRequestLength(req,client,got,partp)
-    xReq	*req;
-    ClientPtr	client;
-    int		got;
-    Bool    	*partp;
-{
-    int	    len;
-    
-    if (!req)
-	req = (xReq *) client->requestBuffer;
-    if (got < sizeof (xReq))
-    {
-	*partp = TRUE;
-	return sizeof (xReq);
-    }
-    len = get_req_len(req,client) << 2;
-    if (len > MAXBUFSIZE)
-    {
-	*partp = TRUE;
-	return -1;
-    }
-    *partp = FALSE;
-    return len;
-}
-#endif
 
 #ifdef BIGREQS
 #include "bigreqstr.h"
@@ -245,7 +210,6 @@ ReadRequestFromClient(client)
     OsCommPtr oc = (OsCommPtr)client->osPrivate;
     register ConnectionInputPtr oci = oc->input;
     int fd = oc->fd;
-    XtransConnInfo trans_conn = oc->trans_conn;
     register int gotnow, needed;
     int result;
     register xReq *request;
@@ -383,7 +347,7 @@ ReadRequestFromClient(client)
 	 *  will be null.  Really ought to restructure things so that we
 	 *  never get here in those circumstances.
 	 */
-	if (!trans_conn)
+	if (!oc->trans_conn)
 	{
 	    /*  treat as if an error occured on the read, which is what
 	     *  used to happen
@@ -391,8 +355,15 @@ ReadRequestFromClient(client)
 	    YieldControlDeath();
 	    return -1;
 	}
-	result = _XSERVTransRead(trans_conn, oci->buffer + oci->bufcnt, 
-		      oci->size - oci->bufcnt); 
+#ifdef LBX
+	if (oc->proxy && oc->proxy->compHandle)
+	    result = (*oc->proxy->streamOpts.streamCompRead)(fd,
+			     (unsigned char *)oci->buffer + oci->bufcnt,
+			     oci->size - oci->bufcnt);
+	else
+#endif
+	    result = _XSERVTransRead(oc->trans_conn, oci->buffer + oci->bufcnt,
+				     oci->size - oci->bufcnt); 
 	if (result <= 0)
 	{
 	    if ((result < 0) && ETEST(errno))
@@ -531,11 +502,7 @@ InsertFakeRequest(client, data, count)
     OsCommPtr oc = (OsCommPtr)client->osPrivate;
     register ConnectionInputPtr oci = oc->input;
     int fd = oc->fd;
-    register xReq *request;
     register int gotnow, moveup;
-#ifdef LBX
-    Bool part;
-#endif
 
     if (AvailableInput)
     {
@@ -588,14 +555,9 @@ InsertFakeRequest(client, data, count)
     }
     memmove(oci->bufptr - count, data, count);
     oci->bufptr -= count;
-    request = (xReq *)oci->bufptr;
     gotnow += count;
-#ifndef LBX
     if ((gotnow >= sizeof(xReq)) &&
-	(gotnow >= (int)(get_req_len(request, client) << 2)))
-#else
-    if (gotnow >= RequestLength (request, client, gotnow, &part) && !part)
-#endif
+	(gotnow >= (int)(get_req_len((xReq *)oci->bufptr, client) << 2)))
 	FD_SET(fd, &ClientsWithInput);
     else
 	YieldControlNoInput();
@@ -618,29 +580,21 @@ ResetCurrentRequest(client)
     int gotnow, needed;
 #ifdef LBX
     Bool part;
-#endif
+    LbxClientPtr lbxClient = LbxClient(client);
 
+    if (lbxClient) {
+	LbxSetForBlock(lbxClient);
+	if (!oci) {
+	    AppendFakeRequest(client,
+			      client->requestBuffer, client->req_len << 2);
+	    return;
+	}
+    }
+#endif
     if (AvailableInput == oc)
 	AvailableInput = (OsCommPtr)NULL;
     oci->lenLastReq = 0;
     gotnow = oci->bufcnt + oci->buffer - oci->bufptr;
-#ifdef LBX
-    request = (xReq *)oci->bufptr;
-    if (gotnow >= RequestLength (request, client, gotnow, &part) && !part)
-    {
-	if (FD_ISSET(fd, &AllClients))
-	{
-	    FD_SET(fd, &ClientsWithInput);
-	}
-	else
-	{
-	    FD_SET(fd, &IgnoredClientsWithInput);
-	}
-	YieldControl();
-    }
-    else
-	YieldControlNoInput();
-#else
     if (gotnow < sizeof(xReq))
     {
 	YieldControlNoInput();
@@ -677,7 +631,6 @@ ResetCurrentRequest(client)
 	else
 	    YieldControlNoInput();
     }
-#endif	/* !LBX */
 }
 
 
@@ -890,12 +843,7 @@ FlushClient(who, oc, extraBuf, extraCount)
 	InsertIOV (padBuffer, padsize)
 
 	errno = 0;
-#ifdef LBX
-	WritingClient = who;
-	if ((len = (*oc->Writev) (connection, iov, i)) >= 0)
-#else
 	if (trans_conn && (len = _XSERVTransWritev(trans_conn, iov, i)) >= 0)
-#endif
 	{
 	    written += len;
 	    notWritten -= len;
@@ -1023,6 +971,9 @@ FlushAllOutput()
     OsCommPtr oc;
     register ClientPtr client;
     Bool newoutput = NewOutputPending;
+#ifdef WIN32
+    fd_set newOutputPending;
+#endif
 
     if (FlushCallback)
 	CallCallbacks(&FlushCallback, NULL);
@@ -1038,6 +989,7 @@ FlushAllOutput()
     CriticalOutputPending = FALSE;
     NewOutputPending = FALSE;
 
+#ifndef WIN32
     for (base = 0; base < howmany(XFD_SETSIZE, NFDBITS); base++)
     {
 	mask = OutputPending.fds_bits[ base ];
@@ -1046,17 +998,17 @@ FlushAllOutput()
 	{
 	    index = ffs(mask) - 1;
 	    mask &= ~lowbit(mask);
-#ifdef LBX
-	    if ((index = ConnectionOutputTranslation[(base << 5) + index]) == 0)
-#else
 	    if ((index = ConnectionTranslation[(base << 5) + index]) == 0)
-#endif
 		continue;
 	    client = clients[index];
 	    if (client->clientGone)
 		continue;
 	    oc = (OsCommPtr)client->osPrivate;
-	    if (FD_ISSET(oc->fd, &ClientsWithInput))
+	    if (
+#ifdef LBX
+		!oc->proxy &&
+#endif
+		FD_ISSET(oc->fd, &ClientsWithInput))
 	    {
 		FD_SET(oc->fd, &OutputPending); /* set the bit again */
 		NewOutputPending = TRUE;
@@ -1065,7 +1017,31 @@ FlushAllOutput()
 		(void)FlushClient(client, oc, (char *)NULL, 0);
 	}
     }
-
+#else  /* WIN32 */
+    FD_ZERO(&newOutputPending);
+    for (base = 0; base < XFD_SETCOUNT(&OutputPending); base++)
+    {
+	    index = XFD_FD(&OutputPending, base);
+	    if ((index = ConnectionTranslation[index]) == 0)
+		continue;
+	    client = clients[index];
+	    if (client->clientGone)
+		continue;
+	    oc = (OsCommPtr)client->osPrivate;
+	    if (
+#ifdef LBX
+		!oc->proxy &&
+#endif
+		FD_ISSET(oc->fd, &ClientsWithInput))
+	    {
+		FD_SET(oc->fd, &newOutputPending); /* set the bit again */
+		NewOutputPending = TRUE;
+	    }
+	    else
+		(void)FlushClient(client, oc, (char *)NULL, 0);
+    }
+    XFD_COPYSET(&newOutputPending, &OutputPending);
+#endif /* WIN32 */
 }
 
 void
@@ -1093,11 +1069,7 @@ SetCriticalOutputPending()
  *****************/
 
 int
-#if defined(LBX) || defined(LBX_COMPAT)
-StandardWriteToClient (who, count, buf)
-#else
 WriteToClient (who, count, buf)
-#endif
     ClientPtr who;
     char *buf;
     int count;
@@ -1117,16 +1089,18 @@ WriteToClient (who, count, buf)
 	}
 	else if (!(oco = AllocateOutputBuffer()))
 	{
-	    _XSERVTransDisconnect(oc->trans_conn);
-	    _XSERVTransClose(oc->trans_conn);
-	    oc->trans_conn = NULL;
+	    if (oc->trans_conn) {
+		_XSERVTransDisconnect(oc->trans_conn);
+		_XSERVTransClose(oc->trans_conn);
+		oc->trans_conn = NULL;
+	    }
 	    MarkClientException(who);
 	    return -1;
 	}
 	oc->output = oco;
     }
 
-    padBytes =  padlength[count & 3];
+    padBytes = padlength[count & 3];
 
     if(ReplyCallback)
     {
@@ -1142,7 +1116,7 @@ WriteToClient (who, count, buf)
 	    replyinfo.bytesRemaining = who->replyBytesRemaining;
 	    CallCallbacks((&ReplyCallback), (pointer)&replyinfo);
 	}
-	else if (who->sequence > 0 /* to avoid the conn setup info */
+	else if (who->clientState == ClientStateRunning
 		 && buf[0] == X_Reply)
         { /* start of new reply */
 	    CARD32 replylen;
@@ -1195,7 +1169,7 @@ AllocateInputBuffer()
     return oci;
 }
 
-static ConnectionOutputPtr
+ConnectionOutputPtr
 AllocateOutputBuffer()
 {
     register ConnectionOutputPtr oco;
@@ -1257,16 +1231,9 @@ FreeOsBuffers(oc)
 	}
     }
 #ifdef LBX
-    if (oco = oc->ofirst) {
-	ConnectionOutputPtr nextoco;
-	do {
-	    nextoco = oco->next;
-	    xfree(oco->buf);
-	    xfree(oco);
-	    if (oco == oc->olast)
-		break;
-	    oco = nextoco;
-	} while (1);
+    if (oci = oc->largereq) {
+	xfree(oci->buffer);
+	xfree(oci);
     }
 #endif
 }

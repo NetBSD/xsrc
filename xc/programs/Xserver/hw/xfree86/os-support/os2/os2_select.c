@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_select.c,v 3.4 1996/10/17 15:19:43 dawes Exp $ */
+/* $XConsortium: os2_select.c /main/6 1996/10/27 11:48:55 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_select.c,v 3.5 1996/12/27 07:04:30 dawes Exp $ */
 
 /*
  * (c) Copyright 1996 by Sebastien Marineau

@@ -1,4 +1,9 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/XF86Setup/Imakefile,v 3.7 1996/09/29 13:43:59 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/6 1996/10/25 10:34:41 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/XF86Setup/Imakefile,v 3.10.2.1 1997/05/17 12:25:23 dawes Exp $
 #include <Server.tmpl>
 #define IHaveSubdirs
 
@@ -35,7 +40,7 @@ includes::
 		   tcllib/tkerror.tcl tcllib/uparrow.xbm tcllib/license.terms
       PICS_FILES = pics/vidcard.xbm pics/vidcard.msk \
 		   pics/XFree86.xbm pics/XFree86.msk
-      SUBDIRS    = tcllib pics scripts
+         SUBDIRS = tcllib pics scripts
 
 #if BuildServersOnly && !defined(UseInstalled)
 /* Use installed X libraries and headers */
@@ -53,8 +58,10 @@ includes::
     EXTRASYSLIBS = -ldl
 #endif
 
-#if XF86SetupUsesStaticTkTcl
+#if XF86SetupUsesStaticTk
        TKLIBRARY = StaticLibrary($(TKLIBDIR),$(TKLIBNAME))
+#endif
+#if XF86SetupUsesStaticTcl
       TCLLIBRARY = StaticLibrary($(TCLLIBDIR),$(TCLLIBNAME))
 #endif
  TCLTK_LIBRARIES = $(TKLIBRARY) $(TCLLIBRARY)
@@ -74,9 +81,10 @@ includes::
  XF86SETUPLIBDIR = $(LIBDIR)/XF86Setup
          DEFINES = -DCARD_DATABASE_FILE='"$(CARDDBFILE)"' \
 		   $(XCONFIG_DEFINES)
-        INCLUDES = -I$(TCLINCDIR) -I../os-support -I../common \
-		   -I$(SERVERSRC)/include -I$(INCLUDESRC) \
-		   -I$(EXTINCSRC) $(USEINSTALLEDINC)
+        INCLUDES = -I../os-support -I../common \
+		   -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
+		   -I$(EXTINCSRC) $(USEINSTALLEDINC) \
+		   -I$(TCLINCDIR) -I$(TKINCDIR)
 
 #if HasLdRunPath
        CCENVSETUP = LD_RUN_PATH=$(USRLIBDIR):$(TCLLIBDIR)

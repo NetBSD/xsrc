@@ -1,5 +1,4 @@
-/* $XConsortium: apolloBlt.c,v 1.2 95/06/19 18:10:42 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/apollo/apolloBlt.c,v 3.3 1996/02/04 09:09:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/apollo/apolloBlt.c,v 3.4 1996/12/23 06:47:53 dawes Exp $ */
 /*
  * MONO: Driver family for interlaced and banked monochrome video adaptors
  * Pascal Haible 8/93, 3/94, 4/94 haible@IZFM.Uni-Stuttgart.DE
@@ -7,6 +6,7 @@
  * bdm2/driver/apollo/apolloBlt.c
  * Hamish Coleman 11/93 hamish@zot.apana.org.au
  */
+/* $XConsortium: apolloBlt.c /main/3 1996/02/21 17:49:16 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

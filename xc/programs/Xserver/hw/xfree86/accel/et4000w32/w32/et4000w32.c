@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/et4000w32.c,v 3.20 1996/09/22 05:02:05 dawes Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/et4000w32.c,v 3.22.2.2 1997/05/09 07:15:12 hohndel Exp $
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -23,7 +23,7 @@
  *
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  */
-/* $XConsortium: et4000w32.c /main/9 1995/12/17 08:10:12 kaleb $ */
+/* $XConsortium: et4000w32.c /main/13 1996/10/24 07:10:28 kaleb $ */
 
  /*
   *  Modified by Glenn G. Lai for the et4000/w32 series accelerators
@@ -94,7 +94,8 @@ vgaVideoChipRec ET4000W32 = {
     FALSE,			/* ChipHas24bpp */
     FALSE,			/* ChipHas32bpp */
     NULL,			/* ChipBuiltinModes */
-    1,				/* ChipClockScaleFactor */
+    1,				/* ChipClockMulFactor */
+    1				/* ChipClockDivFactor */
 };
 
 static et4000w32_initted = FALSE;
@@ -170,7 +171,9 @@ ET4000W32Probe()
     {
 	if (strcmp(save_chipset, et4000) == 0)
 	    return FALSE;
+#if 0
 	vga256InfoRec.chipset = et4000;
+#endif
     }
 
     save_videoram = vga256InfoRec.videoRam;
@@ -556,9 +559,10 @@ ET4000W32SaveScreen(start_finish)
  *
  */
 static int
-ET4000W32ValidMode(mode, verbose)
+ET4000W32ValidMode(mode, verbose, flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

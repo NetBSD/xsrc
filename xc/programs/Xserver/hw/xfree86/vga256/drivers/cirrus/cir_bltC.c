@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_bltC.c,v 3.11 1996/09/14 13:11:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_bltC.c,v 3.12.2.1 1997/05/10 09:10:21 hohndel Exp $ */
 /*
  
 
@@ -38,7 +38,7 @@ Author: Keith Packard
  *	Added CirrusCopyPlane1to8.
  *
  */
-/* $XConsortium: cir_bltC.c /main/6 1995/11/13 08:20:48 kaleb $ */
+/* $XConsortium: cir_bltC.c /main/9 1996/10/23 18:47:46 kaleb $ */
 
 /*
  * This is the high-level BitBlt function. Calls CirrusBitBlt.
@@ -150,7 +150,8 @@ CirrusDoBitbltCopy(pSrc, pDst, alu, prgnDst, pptSrc, planemask)
        else			/* Screen -> Mem */
 	    {
 /*	    if(NoCirrus || !HAVEBITBLTENGINE() || HAVE543X() || 
-               HAVE754X() || cirrusChip == CLGD5446) */
+               HAVE75XX() || cirrusChip == CLGD5446 ||
+	       cirrusChip == CLGD5480) */
 	    if (1)	/* ImageRead is unreliable. */
 		 {
 		 fnp = vgaImageRead;

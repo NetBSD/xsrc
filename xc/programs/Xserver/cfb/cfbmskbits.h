@@ -28,12 +28,16 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ********************************************************/
 
 /* $XConsortium: cfbmskbits.h,v 4.25 94/04/17 20:28:55 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/cfb/cfbmskbits.h,v 3.1 1996/08/20 12:25:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbmskbits.h,v 3.3.2.1 1997/05/27 06:28:09 dawes Exp $ */
 /* Optimizations for PSZ == 32 added by Kyle Marvin (marvin@vitec.com) */
 
 #include	"X.h"
 #include	"Xmd.h"
 #include	"servermd.h"
+#ifdef XFREE86
+#define NO_COMPILER_H_EXTRAS
+#include	"compiler.h"
+#endif
 
 /*
  * ==========================================================================
@@ -102,6 +106,10 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *  PSZ needs to be defined before we get here.  Usually it comes from a
  *  -DPSZ=foo on the compilation command line.
  */
+
+#ifndef PSZ
+#define PSZ 8
+#endif
 
 /*
  *  PixelGroup is the data type used to operate on groups of pixels.
@@ -803,9 +811,9 @@ if ((x) + (w) <= PPW) {\
 #define getstipplepixels( psrcstip, xt, w, ones, psrcpix, destpix ) \
 { \
     PixelGroup q; \
-    q = *(psrcstip) >> (xt); \
+    q = ldq_u(psrcstip) >> (xt); \
     if ( ((xt)+(w)) > (PPW*PSZ) ) \
-        q |= (*((psrcstip)+1)) << ((PPW*PSZ)-(xt)); \
+        q |= (ldq_u((psrcstip)+1)) << ((PPW*PSZ)-(xt)); \
     q = QuartetBitsTable[(w)] & ((ones) ? q : ~q); \
     *(destpix) = (*(psrcpix)) & QuartetPixelMaskTable[q]; \
 }

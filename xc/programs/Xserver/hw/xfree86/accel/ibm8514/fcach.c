@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/fcach.c,v 3.6 1996/02/04 09:01:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/fcach.c,v 3.7 1996/12/23 06:37:45 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -21,7 +21,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: fcach.c /main/4 1995/11/12 17:02:47 kaleb $ */
+/* $XConsortium: fcach.c /main/5 1996/02/21 17:24:12 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

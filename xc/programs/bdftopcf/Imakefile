@@ -1,13 +1,13 @@
-XCOMM $XConsortium: Imakefile,v 1.7 93/09/04 17:40:29 rws Exp $
-XCOMM $XFree86: xc/programs/bdftopcf/Imakefile,v 3.1 1994/12/17 11:22:28 dawes Exp $
-LOCAL_LIBRARIES = $(FONTLIB)
+XCOMM $XConsortium: Imakefile /main/9 1996/11/22 09:23:17 kaleb $
+XCOMM $XFree86: xc/programs/bdftopcf/Imakefile,v 3.4 1997/01/05 12:00:32 dawes Exp $
+#if GzipFontCompression
+ZLIB = GzipLibrary
+#endif
+LOCAL_LIBRARIES = $(FONTLIB) $(ZLIB)
 DEPLIBS = $(DEPFONTLIB)
 INCLUDES = -I$(FONTINCSRC) -I$(FONTLIBSRC)/include
 SRCS = bdftopcf.c
 OBJS = bdftopcf.o
 
 ComplexProgramTarget(bdftopcf)
-#ifdef OS2Architecture
-all:: bdftopcf.exe
-	$(CP) bdftopcf.exe /
-#endif
+LinkBuildBinary(ProgramTargetName(bdftopcf))

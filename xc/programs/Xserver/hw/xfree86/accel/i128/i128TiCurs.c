@@ -1,4 +1,4 @@
-/* $XConsortium: i128TiCurs.c /main/1 1995/12/09 15:31:35 kaleb $ */
+/* $XConsortium: i128TiCurs.c /main/3 1996/03/09 11:17:04 kaleb $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128TiCurs.c,v 3.3 1996/03/05 05:42:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128TiCurs.c,v 3.4 1996/12/23 06:35:39 dawes Exp $ */
 
 #include "servermd.h"
 

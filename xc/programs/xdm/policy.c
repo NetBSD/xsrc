@@ -1,5 +1,5 @@
 /* $XConsortium: policy.c,v 1.12 94/04/17 20:03:41 hersh Exp $ */
-/* $XFree86: xc/programs/xdm/policy.c,v 3.0 1994/06/28 12:32:38 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/policy.c,v 3.1 1997/01/18 07:02:22 dawes Exp $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -43,7 +43,11 @@ from the X Consortium.
 
 # include <X11/X.h>
 #ifndef MINIX
-# include <sys/socket.h>
+# ifndef Lynx
+#  include <sys/socket.h>
+# else
+#  include <socket.h>
+# endif
 #ifdef AF_INET
 # include <netinet/in.h>
 #endif

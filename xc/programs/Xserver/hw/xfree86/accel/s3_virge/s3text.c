@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3text.c,v 3.9 1996/10/21 05:27:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3text.c,v 3.11.2.1 1997/05/24 08:36:03 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -26,7 +26,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  *
  */
-/* $XConsortium: s3text.c /main/4 1995/12/28 17:12:10 kaleb $ */
+/* $XConsortium: s3text.c /main/10 1996/10/28 04:55:24 kaleb $ */
 
 
 #include	"X.h"
@@ -101,6 +101,7 @@ __inline__ void s3SimpleStipple(x, y, width, height, pb, pwidth, clip_l, clip_r,
 	    getbuf = SWPBIT(pix+3)<<24 | SWPBIT(pix+2)<<16
 	       |     SWPBIT(pix+1)<< 8 | SWPBIT(pix+0)<< 0;
 	    *IMG_TRANS = getbuf;
+	    write_mem_barrier();
 	    pix += 4;
 	 }
 	 pb += pwidth;
@@ -115,7 +116,7 @@ __inline__ void s3SimpleStipple(x, y, width, height, pb, pwidth, clip_l, clip_r,
 /*
  * The guts of this should possibly be tidied up and put in s3im.c.
  * The generic Stipple functions in s3im.c have quite a large unnecessary
- * overhead for bitmap copies in the case that we are doing an exacy copy
+ * overhead for bitmap copies in the case that we are doing an exact copy
  * with no tiling and starting from (0,0) in the source bitmap. - Jon.
  */
 __inline__ static void
@@ -225,7 +226,8 @@ unsigned char *pb;
    ;SET_MIX(FSS_FRGDCOL | s3alu[GXcopy], BSS_BKGDCOL | s3alu[GXcopy]);
    ;SET_PIX_CNTL(MIXSEL_EXPPC | COLCMPOP_F);
 
-   s3SimpleStipple(x, y, width, height, pb, pwidth, 0, s3DisplayWidth - 1, GXcopy, ~0);
+   s3SimpleStipple(x, y, width, height, pb, pwidth, 0, s3DisplayWidth - 1,
+		 GXcopy, /*~0*/ 0xffFFffFF);
 
    UNBLOCK_CURSOR;
 }
@@ -400,7 +402,7 @@ s3NoCImageText(pDraw, pGC, x, y, count, chars, is8bit)
    DoChangeGC(pGC, GCForeground, gcvals, 0);
    ValidateGC(pDraw, pGC);
 
-   /* begin the font blitting */
+   /* begin font BLT */
    {
       BoxPtr pBox;
       int   numRects;

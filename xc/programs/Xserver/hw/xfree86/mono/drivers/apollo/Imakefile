@@ -1,5 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/4 1996/01/26 14:30:45 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/apollo/Imakefile,v 3.4 1996/02/04 09:09:22 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/6 1996/09/28 17:22:48 rws $
+
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/apollo/Imakefile,v 3.5 1996/12/23 06:47:52 dawes Exp $
 #include <Server.tmpl>
 
 SRCS = apollodriv.c apolloBlt.c
@@ -11,7 +16,7 @@ INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
 #else
 INCLUDES = -I. -I../../mono -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
 	   -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
-	   -I$(INCLUDESRC)
+	   -I$(XINCLUDESRC)
 #endif
 
 #if MakeHasPosixVariableSubstitutions

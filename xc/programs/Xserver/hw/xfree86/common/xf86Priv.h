@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.21 1996/10/03 08:34:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Priv.h,v 3.24 1996/12/23 06:43:37 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,14 +21,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86Priv.h /main/13 1996/01/28 07:57:16 kaleb $ */
+/* $XConsortium: xf86Priv.h /main/18 1996/10/25 11:36:38 kaleb $ */
 
 #ifndef _XF86PRIV_H
 #define _XF86PRIV_H
 
 #ifndef _XF86VIDMODE_SERVER_
 #include "Xproto.h"
-#include "xf86_OSlib.h"
+#include "xf86_OSproc.h"
 #endif
 
 typedef struct {
@@ -68,7 +68,7 @@ typedef struct {
   Bool          serverNumLock;
   Bool          composeLock;
   Bool          vtSysreq;
-#if defined(SVR4) && defined(i386) && !defined(PC98)
+#if defined(SVR4) && defined(i386)
   Bool           panix106;
 #endif  /* SVR4 && i386 */
 

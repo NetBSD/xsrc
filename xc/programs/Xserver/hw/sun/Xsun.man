@@ -1,4 +1,4 @@
-.\" $XConsortium: Xsun.man /main/25 1995/12/15 14:06:11 gildea $
+.\" $XConsortium: Xsun.man /main/27 1996/12/09 17:32:41 kaleb $
 .\" Copyright 1988 Sun Microsystems, Inc.
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -25,7 +25,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH XSUN 1 "Release 6.1" "X Version 11"
+.TH XSUN 1 "Release 6.3" "X Version 11"
 .SH NAME
 Xsun, XsunMono, Xsun24 \- Sun server for X Version 11
 .SH SYNOPSIS
@@ -38,23 +38,22 @@ It will normally be started by the \fIxdm(1)\fP daemon or by a script
 that runs the program \fIxinit(1)\fP.
 .SH CONFIGURATIONS
 .PP
-.I Xsun
-supports 8-bit color and 1-bit monochrome screens.
 .I XsunMono
-is configured to support only monochrome screens, for low-end systems 
-with limited memory.
-Like Xsun,
+supports the BW2 monochrome frame buffer.
+.I Xsun
+supports the CG2, CG3, CG4, and CG6 8-bit color frame buffers in
+addition to the BW2 monochrome frame buffer. On Solaris 2.5 it also
+supports the TCX as an 8-bit color frame buffer.
 .I Xsun24
-supports 8-bit color and 1-bit monochrome screens in addition to the
-cgeight 24-bit color screen.
+supports the cgeight 24-bit color frame buffer in addition to the
+8-bit color and monochrome frame buffers that
+.I Xsun
+supports.
 .PP
 If specific framebuffer device files aren't specified on the command 
 line with the \fI\-dev\fP switch or in the \fIXDEVICE\fP environment
 variable, the server will search for all installed frame buffers and 
-will use all those that it finds. The following framebuffer types are 
-supported:
-.TP 8
-\fBbwtwo, cgtwo, cgthree, cgfour, cgsix, and cgeight.\fP
+will use all those that it finds.
 .PP
 Finally, if no specific framebuffers are found, the generic framebuffer 
 interface \fI/dev/fb\fP is used.

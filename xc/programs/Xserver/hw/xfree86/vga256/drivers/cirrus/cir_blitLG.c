@@ -1,3 +1,4 @@
+/* $XConsortium: cir_blitLG.c /main/5 1996/10/26 11:16:49 kaleb $ */
 /*
  * cir_blitLG.c
  *
@@ -25,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blitLG.c,v 3.2 1996/10/13 11:20:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blitLG.c,v 3.3 1996/12/27 07:05:21 dawes Exp $ */
 
 #include "vga256.h"
 #include "cfbrrop.h"

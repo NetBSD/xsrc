@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree68/fbdev/fbdev.c,v 3.1 1996/08/18 03:54:46 dawes Exp $ */
+/* $XConsortium: fbdev.c /main/1 1996/09/21 11:18:10 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree68/fbdev/fbdev.c,v 3.4.2.2 1997/05/16 11:35:07 hohndel Exp $ */
 /*
  *
  *  Author: Martin Schaller. Taken from hga2.c
@@ -17,7 +22,7 @@
  */
 
 
-#define fbdev_PATCHLEVEL "4"
+#define fbdev_PATCHLEVEL "7"
 
 
 #include "X.h"
@@ -111,7 +116,7 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 static void fbdevEnterLeaveVT(Bool enter, int screen_idx);
 static void fbdevAdjustFrame(int x, int y);
 static Bool fbdevCloseScreen(int screen_idx, ScreenPtr screen);
-static Bool fbdevValidMode(DisplayModePtr mode);
+static Bool fbdevValidMode(DisplayModePtr mode, Bool verbose, int flag);
 static Bool fbdevSwitchMode(DisplayModePtr mode);
 
 
@@ -129,12 +134,13 @@ ScrnInfoRec fbdevInfoRec = {
     -1,				/* int scrnIndex */
     fbdevProbe,			/* Bool (*Probe)() */
     fbdevScreenInit,		/* Bool (*Init)() */
-    (Bool (*)())NoopDDA,	/* Bool (*ValidMode)() */
+    (int (*)())NoopDDA,		/* int (*ValidMode)() */
     fbdevEnterLeaveVT,		/* void (*EnterLeaveVT)() */
     (void (*)())NoopDDA,	/* void (*EnterLeaveMonitor)() */
     (void (*)())NoopDDA,	/* void (*EnterLeaveCursor)() */
     (void (*)())NoopDDA,	/* void (*AdjustFrame)() */
-    (Bool (*)())NoopDDA,	/* void (*SwitchMode)() */
+    (Bool (*)())NoopDDA,	/* Bool (*SwitchMode)() */
+    (void (*)())NoopDDA,	/* void (*DPMSSet)() */
     fbdevPrintIdent,		/* void (*PrintIdent)() */
     8,				/* int depth */
     {0, },			/* xrgb weight */
@@ -148,7 +154,8 @@ ScrnInfoRec fbdevInfoRec = {
     {0, },			/* OFlagSet xconfigFlag */
     NULL,			/* char *chipset */
     NULL,			/* char *ramdac */
-    0,				/* int dacSpeed */
+    {0, },			/* int dacSpeeds[MAXDACSPEEDS] */
+    0,				/* int dacSpeedBpp */
     0,				/* int clocks */
     {0, },			/* int clock[MAXCLOCKS] */
     0,				/* int maxClock */
@@ -163,8 +170,8 @@ ScrnInfoRec fbdevInfoRec = {
     -1,				/* int textclock */
     FALSE,			/* Bool bankedMono */
     "FBDev",			/* char *name */
-    {0, },			/* RgbRec blackColour */
-    {0, },			/* RgbRec whiteColour */
+    {0, },			/* xrgb blackColour */
+    {0, },			/* xrgb whiteColour */
     fbdevValidTokens,		/* int *validTokens */
     fbdev_PATCHLEVEL,		/* char *patchLevel */
     0,				/* unsigned int IObase */
@@ -175,6 +182,25 @@ ScrnInfoRec fbdevInfoRec = {
     0,				/* int s3Madjust */
     0,				/* int s3Nadjust */
     0,				/* int s3MClk */
+    0,				/* int chipID */
+    0,				/* int chipRev */
+    0,				/* unsigned long VGAbase */
+    0,				/* int s3RefClk */
+    -1,				/* int s3BlankDelay */
+    0,				/* int textClockFreq */
+    NULL,			/* char *DCConfig */
+    NULL,			/* char *DCOptions */
+#ifdef XFreeXDGA
+    0,				/* int directMode */
+    NULL,			/* void (*setBank)() */
+    0,				/* unsigned long physBase */
+    0,				/* int physSize */
+#endif
+#ifdef XF86SETUP
+    NULL,			/* void *device */
+#endif
+
+
 };
 
 static pointer fbdevVirtBase = NULL;
@@ -408,7 +434,7 @@ static Bool fbdevLookupMode(DisplayModePtr target)
 	    target->CrtcVTotal     = p->CrtcVTotal;
 	    target->CrtcHAdjusted  = p->CrtcHAdjusted;
 	    target->CrtcVAdjusted  = p->CrtcVAdjusted;
-	    if (fbdevValidMode(target)) {
+	    if (fbdevValidMode(target,FALSE,MODE_USED)) {
 		found_mode = TRUE;
 		break;
 	    }
@@ -569,10 +595,13 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
     if (ioctl(fb_fd, FBIOGET_FSCREENINFO, &fb_fix))
 	FatalError("ioctl(fd, FBIOGET_FSCREENINFO, ...)");
 
+    fbdevInfoRec.chipset = fb_fix.id;
     fbdevInfoRec.videoRam = fb_fix.smem_len>>10;
 
     if (xf86Verbose) {
-	ErrorF("%s %s: Video memory: %dk\n", XCONFIG_PROBED, fbdevInfoRec.name,
+	ErrorF("%s %s: Frame buffer device: %s\n", XCONFIG_PROBED,
+	       fbdevInfoRec.name, fbdevInfoRec.chipset);
+	ErrorF("%s %s: Video memory: %dK\n", XCONFIG_PROBED, fbdevInfoRec.name,
 	       fbdevInfoRec.videoRam);
 	ErrorF("%s %s: Type %d type_aux %d bits_per_pixel %d\n", XCONFIG_PROBED,
 	       fbdevInfoRec.name, fb_fix.type, fb_fix.type_aux,
@@ -803,6 +832,7 @@ static Bool fbdevScreenInit(int scr_index, ScreenPtr pScreen, int argc,
 		break;
 
 	    case FB_TYPE_PACKED_PIXELS:
+		width = fb_fix.line_length ? 8*fb_fix.line_length/bpp : xsize;
 		switch (bpp) {
 #ifdef CONFIG_CFB8
 		    case 8:
@@ -1014,7 +1044,7 @@ static Bool fbdevCloseScreen(int screen_idx, ScreenPtr screen)
  *		      be rounded up by the Frame Buffer Device
  */
 
-static Bool fbdevValidMode(DisplayModePtr mode)
+static Bool fbdevValidMode(DisplayModePtr mode, Bool verbose, int flag)
 {
     struct fb_var_screeninfo var = initscrvar;
     Bool res = FALSE;
@@ -1041,10 +1071,6 @@ static Bool fbdevSwitchMode(DisplayModePtr mode)
 {
     struct fb_var_screeninfo var = initscrvar;
     ScreenPtr pScreen = savepScreen;
-    BoxRec pixBox;
-    RegionRec pixReg;
-    DDXPointRec pixPt;
-    PixmapPtr pspix, ppix;
     Bool res = FALSE;
 
     xfree2fbdev(mode, &var);
@@ -1052,34 +1078,13 @@ static Bool fbdevSwitchMode(DisplayModePtr mode)
     var.yoffset = fbdevInfoRec.frameY0;
     var.activate = FB_ACTIVATE_NOW;
 
-    /* Save the screen image */
-    pixBox.x1 = 0; pixBox.x2 = pScreen->width;
-    pixBox.y1 = 0; pixBox.y2 = pScreen->height;
-    pixPt.x = 0; pixPt.y = 0;
-    (pScreen->RegionInit)(&pixReg, &pixBox, 1);
-    if (fbdevPrivateIndexP)
-	pspix = (PixmapPtr)pScreen->devPrivates[*fbdevPrivateIndexP].ptr;
-    else
-	pspix = (PixmapPtr)pScreen->devPrivate;
-    ppix = (pScreen->CreatePixmap)(pScreen, pScreen->width, pScreen->height,
-    				   pScreen->rootDepth);
-    if (ppix)
-	(*fbdevBitBlt)(&pspix->drawable, &ppix->drawable, GXcopy, &pixReg,
-		       &pixPt, ~0);
-
     if (!ioctl(fb_fd, FBIOPUT_VSCREENINFO, &var)) {
 	/* Restore the colormap */
 	fbdevRestoreColors(pScreen);
-	/* restore the screen image */
-	if (ppix)
-	    (*fbdevBitBlt)(&ppix->drawable, &pspix->drawable, GXcopy, &pixReg,
-	    		   &pixPt, ~0);
 	initscrvar.xres = var.xres;
 	initscrvar.yres = var.yres;
 	res = TRUE;
     }
-    if (ppix)
-	(pScreen->DestroyPixmap)(ppix);
 
     return(res);
 }

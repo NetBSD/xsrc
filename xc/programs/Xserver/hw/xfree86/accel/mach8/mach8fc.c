@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8fc.c,v 3.6 1996/10/10 14:02:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8fc.c,v 3.7 1996/12/23 06:39:50 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  * 
@@ -26,7 +26,7 @@
  * Extract from s3fcach.c
  * Adapted to Mach8, Hans Nasten. (nasten@everyware.se).
  */
-/* $XConsortium: mach8fc.c /main/3 1995/11/12 18:00:16 kaleb $ */
+/* $XConsortium: mach8fc.c /main/6 1996/10/25 16:22:43 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

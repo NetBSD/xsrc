@@ -1,4 +1,4 @@
-/* $XConsortium: sunKbd.c /main/75 1996/02/03 15:48:09 kaleb $ */
+/* $XConsortium: sunKbd.c /main/76 1996/09/25 00:53:01 dpw $ */
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
  *
@@ -246,7 +246,7 @@ static void sunBell (percent, device, ctrl, unused)
     bell (pPriv->fd, kctrl->bell_duration * 1000);
 }
 
-static void EnqueueEvent (xE)
+static void sunEnqueueEvent (xE)
     xEvent* xE;
 {
 #ifndef i386
@@ -904,9 +904,9 @@ void sunEnqueueAutoRepeat ()
      * hold off any more inputs while we get these safely queued up
      * further SIGIO are 
      */
-    EnqueueEvent (&autoRepeatEvent);
+    sunEnqueueEvent (&autoRepeatEvent);
     autoRepeatEvent.u.u.type = KeyPress;
-    EnqueueEvent (&autoRepeatEvent);
+    sunEnqueueEvent (&autoRepeatEvent);
     if (ctrl->click) bell (pPriv->fd, 0);
 
     /* Update time of last key down */

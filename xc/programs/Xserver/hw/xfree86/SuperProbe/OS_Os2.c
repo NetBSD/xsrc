@@ -1,4 +1,4 @@
-/* $XConsortium: OS_Os2.c /main/4 1996/01/26 13:30:17 kaleb $ */
+/* $XConsortium: OS_Os2.c /main/7 1996/10/27 11:46:26 kaleb $ */
 /*
  * (c) Copyright 1994 by Holger Veit
  *			<Holger.Veit@gmd.de>
@@ -27,7 +27,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Os2.c,v 3.5 1996/10/17 15:16:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Os2.c,v 3.6.2.1 1997/05/06 13:24:24 dawes Exp $ */
 
 
 #include "Probe.h"
@@ -171,6 +171,13 @@ Byte *MapVGA()
 	}
 }
 
+Byte *MapMem(address,size)
+	unsigned long address;
+	unsigned long size;
+{
+	return((Byte*)0);
+}
+
 /*
  * UnMapVGA --
  *
@@ -180,6 +187,13 @@ void UnMapVGA(base)
 Byte *base;
 {
 	UnmapPhys(videoAddr,videoSize);
+}
+
+void UnMapMem(base,size)
+	Byte *base;
+	unsigned long size;
+{
+	return;
 }
 
 /*

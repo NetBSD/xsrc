@@ -1,4 +1,4 @@
-/* $XConsortium: xf86Elo.c /main/4 1996/01/26 13:36:41 kaleb $ */
+/* $XConsortium: xf86Elo.c /main/13 1996/10/25 14:11:31 kaleb $ */
 /*
  * Copyright 1995 by Patrick Lecoanet, France. <lecoanet@cenaath.cena.dgac.fr>       
  *                                                                            
@@ -22,7 +22,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Elo.c,v 3.16 1996/10/06 13:16:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Elo.c,v 3.19 1996/12/23 06:43:23 dawes Exp $ */
 
 /*
  *******************************************************************************
@@ -80,6 +80,7 @@
 #include "compiler.h"
 #include "xf86.h"
 #include "xf86Procs.h"
+#include "xf86_OSlib.h"
 #include "xf86_Config.h"
 #include "xf86Xinput.h"
 #include "xf86Version.h"
@@ -114,6 +115,7 @@
 #define DEBUG_LEVEL     10
 #define HISTORY_SIZE	11
 #define LINK_SPEED	12
+#define ALWAYS_CORE	13
 
 static SymTabRec EloTab[] = {
   { ENDSUBSECTION,     "endsubsection" },
@@ -129,6 +131,7 @@ static SymTabRec EloTab[] = {
   { DEBUG_LEVEL,       "debuglevel" },
   { HISTORY_SIZE,      "historysize" },
   { LINK_SPEED,        "linkspeed" },
+  { ALWAYS_CORE,       "alwayscore" },
   { -1,                "" },
 };
 
@@ -423,6 +426,13 @@ xf86EloConfig(LocalDevicePtr    *array,
 	       local->history_size);      
       break;
 	    
+    case ALWAYS_CORE:
+	xf86AlwaysCore(local, TRUE);
+	if (xf86Verbose)
+	    ErrorF("%s Elographics device always stays core pointer\n",
+		   XCONFIG_GIVEN);
+	break;
+
     case EOF:
       FatalError("Unexpected EOF (missing EndSubSection)");
       break;

@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/ICS2595.c,v 3.8 1996/05/06 05:57:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/ICS2595.c,v 3.9 1996/12/23 06:44:12 dawes Exp $ */
 
 
 /* Norbert Distler ndistler@physik.tu-muenchen.de  95/01/11 */
 
 
-/* $XConsortium: ICS2595.c /main/5 1995/11/12 19:30:07 kaleb $ */
+/* $XConsortium: ICS2595.c /main/7 1996/05/07 17:13:38 kaleb $ */
 
 #include "Xfuncproto.h"
 #include "ICS2595.h" 

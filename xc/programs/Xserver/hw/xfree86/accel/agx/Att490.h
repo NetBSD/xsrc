@@ -1,9 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/Att490.h,v 3.1 1996/02/04 08:57:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/Att490.h,v 3.2 1996/12/23 06:32:17 dawes Exp $ */
 /*
  *
  */
 
-/* $XConsortium: Att490.h /main/2 1995/11/13 10:05:47 kaleb $ */
+/* $XConsortium: Att490.h /main/3 1996/02/21 17:15:20 kaleb $ */
 
 #ifndef XF86_ATT490_H
 #define XF86_ATT490_H

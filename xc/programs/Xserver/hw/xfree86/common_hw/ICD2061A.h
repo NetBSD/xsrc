@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/ICD2061A.h,v 3.0 1996/05/06 05:57:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/ICD2061A.h,v 3.1 1996/12/23 06:44:11 dawes Exp $ */
 /* Based on the number 9 Inc code */
 /* Copyright (c) 1992, Number Nine Computer Corp.  All Rights Reserved.
  *
@@ -21,7 +21,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: ICD2061A.h /main/2 1995/11/12 19:30:05 kaleb $ */
+/* $XConsortium: ICD2061A.h /main/4 1996/05/07 17:13:31 kaleb $ */
 
 extern long ICD2061ACalcClock(
 #if NeedFunctionPrototypes

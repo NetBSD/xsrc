@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64fcach.c,v 3.7 1996/05/06 05:57:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64fcach.c,v 3.8 1996/12/23 06:39:13 dawes Exp $ */
 /*
  * Copyright 1992,1993,1994 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -26,7 +26,7 @@
  * Dynamic cache allocation added by Rickard E. Faith (faith@cs.unc.edu)
  * Modified for the Mach64 by Kevin E. Martin (martin@cs.unc.edu)
  */
-/* $XConsortium: mach64fcach.c /main/4 1995/12/17 08:18:24 kaleb $ */
+/* $XConsortium: mach64fcach.c /main/6 1996/05/07 17:10:57 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/BM-Lynx.shar,v 3.2 1996/08/10 13:06:50 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/BM-Lynx.shar,v 3.3.2.1 1997/05/12 12:52:33 hohndel Exp $
 # This is a shell archive (produced by GNU sharutils 4.1).
 # To extract the files from this archive, save it to some FILE, remove
 # everything before the `!/bin/bash' line above, then type `bash FILE'.
@@ -9,14 +9,16 @@
 #
 # Existing files will *not* be overwritten unless `-c' is specified.
 #
+# $XConsortium: BM-Lynx.shar /main/5 1996/10/19 18:04:56 kaleb $
+#
 # This shar contains:
 # length mode       name
 # ------ ---------- ------------------------------------------
-#   2187 -rw-r--r-- README.Mouse
+#   2459 -rw-r--r-- README.Mouse
 #   4329 -rw-r--r-- usr/include/busmouse.h
 #    751 -rw-r--r-- sys/devices/bmouseinfo.c
 #    145 -rw-r--r-- sys/dheaders/bmouseinfo.h
-#    664 -rw-r--r-- sys/drivers/bmouse/Makefile
+#    759 -rw-r--r-- sys/drivers/bmouse/Makefile
 #   5357 -rw-r--r-- sys/drivers/bmouse/atixlmouse.c
 #   2908 -rw-r----- sys/drivers/bmouse/bmouse.h
 #   2135 -rw-r--r-- sys/drivers/bmouse/inline.h
@@ -55,7 +57,7 @@ Bus mice).
 X
 The drivers are a port from Linux and were developed and tested using
 X
-X	- LynxOS AT V2.2, V2.2.1, V2.3 and V2.4
+X	- LynxOS AT V2.2, V2.2.1, V2.3, V2.4 and V2.5
 X	- several Notebook computers with PS/2 mouse interface
 X	- Microsoft Inport Mouse
 X	- ATI Graphics Vantage graphics card with ATI mouse port
@@ -86,11 +88,18 @@ X
 X
 X   # cd /sys/devices
 X   # make bmouseinfo.o
+X   On LynxOS versions earlier than 2.5.0:
 X   # libr rv /sys/devlib.a bmouseinfo.o
+X   Others:
+X   # ar rv /sys/lib/devices.a bmouseinfo.o
+X   # ranlib /sys/lib/devices.a
 X
 4. Compile driver
 X
 X   # cd /sys/drivers/bmouse
+X   On LynxOS versions earlier than 2.5.0:
+X   # make install-2.4.0
+X   Others:
 X   # make install
 X
 5. Generate new kernel
@@ -104,6 +113,9 @@ X   to the end of the CONFIG.TBL file. You may now generate and install
 X   a new kernel and reboot the machine using
 X
 X   # cd /sys/lynx.os
+X   On LynxOS versions after 2.4.0:
+X   # mv bmouse.cfg ../cfg
+X
 X   # make install
 X   # reboot -N
 X
@@ -122,8 +134,8 @@ SHAR_EOF
   chmod 0644 'README.Mouse' ||
   echo 'restore of README.Mouse failed'
   shar_count="`wc -c < 'README.Mouse'`"
-  test 2187 -eq "$shar_count" ||
-    echo "README.Mouse: original size 2187, current size $shar_count"
+  test 2459 -eq "$shar_count" ||
+    echo "README.Mouse: original size 2459, current size $shar_count"
 fi
 # ============= usr/include/busmouse.h ==============
 if test ! -d 'usr'; then
@@ -406,8 +418,12 @@ X
 mousedrvr.o : $(DRIVERS)
 X	/bin/ld -r -o mousedrvr.o $(DRIVERS)
 X
-install: mousedrvr.o
+install-2.4.0: mousedrvr.o
 X	libr rv ../../drivlib.a mousedrvr.o
+X
+install: mousedrvr.o
+X	ar rv ../../lib/drivers.a mousedrvr.o
+X	ranlib ../../lib/drivers.a
 X
 depend :
 X	makedepend *.c
@@ -430,8 +446,8 @@ SHAR_EOF
   chmod 0644 'sys/drivers/bmouse/Makefile' ||
   echo 'restore of sys/drivers/bmouse/Makefile failed'
   shar_count="`wc -c < 'sys/drivers/bmouse/Makefile'`"
-  test 664 -eq "$shar_count" ||
-    echo "sys/drivers/bmouse/Makefile: original size 664, current size $shar_count"
+  test 759 -eq "$shar_count" ||
+    echo "sys/drivers/bmouse/Makefile: original size 759, current size $shar_count"
 fi
 # ============= sys/drivers/bmouse/atixlmouse.c ==============
 if test -f 'sys/drivers/bmouse/atixlmouse.c' && test X"$1" != X"-c"; then

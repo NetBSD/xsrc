@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3cmap.c,v 3.4 1996/10/24 12:29:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3cmap.c,v 3.5 1996/12/27 07:02:26 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -27,7 +27,7 @@
 /*
  * Modified by Amancio Hasty and Jon Tombs
  */
-/* $XConsortium: s3cmap.c /main/7 1995/12/09 15:56:12 kaleb $ */
+/* $XConsortium: s3cmap.c /main/4 1996/10/28 05:22:50 kaleb $ */
 
 
 #include "X.h"

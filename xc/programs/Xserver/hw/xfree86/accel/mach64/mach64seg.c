@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64seg.c,v 3.2 1996/02/04 09:03:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64seg.c,v 3.3 1996/12/23 06:39:27 dawes Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts,
 and the Massachusetts Institute of Technology, Cambridge, Massachusetts.
@@ -28,7 +28,7 @@ Modified for the Mach32 by Kevin E. Maritn (martin@cs.unc.edu)
 Modified for the Mach64 by Kevin E. Maritn (martin@cs.unc.edu)
 
 ******************************************************************/
-/* $XConsortium: mach64seg.c /main/2 1995/11/12 17:39:29 kaleb $ */
+/* $XConsortium: mach64seg.c /main/3 1996/02/21 17:29:13 kaleb $ */
 
 #include "X.h"
 

@@ -1,5 +1,5 @@
-.\" $XConsortium: xdm.man /main/42 1996/01/15 15:16:40 gildea $
-.\" $XFree86: xc/programs/xdm/xdm.man,v 3.6 1996/09/14 13:14:54 dawes Exp $
+.\" $XConsortium: xdm.man /main/44 1996/12/09 17:08:44 kaleb $
+.\" $XFree86: xc/programs/xdm/xdm.man,v 3.7.2.1 1997/05/10 07:03:03 hohndel Exp $
 .\" Copyright (c) 1988, 1994  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -25,7 +25,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH XDM 1 "Release 6.1" "X Version 11"
+.TH XDM 1 "Release 6.3" "X Version 11"
 .SH NAME
 xdm \- X Display Manager with support for XDMCP, host chooser
 .SH SYNOPSIS
@@ -358,6 +358,11 @@ IndirectQuery within this time, the request is forwarded to the chosen
 host.  Otherwise, it is assumed to be from a new session and the
 chooser is offered again.
 Default is 15.
+.IP \fBDisplayManager.sourceAddress\fP
+Use the numeric IP address of the incoming connection on multihomed hosts
+instead of the host name. This is to avoid trying to connect on the wrong
+interface which might be down at this time.
+.PP
 .\"
 .IP "\fBDisplayManager.\fP\fIDISPLAY\fP\fB.resources\fP"
 This resource specifies the name of the file to be loaded by \fIxrdb\fP
@@ -713,6 +718,15 @@ and sends another \fBIndirect\fP XDMCP request.
 \fIxdm\fP remembers the user's choice (for
 \fBDisplayManager.choiceTimeout\fP seconds) and forwards the request
 to the chosen host, which starts a session on that display.
+
+When the user selects a host, \fIchooser\fP prints the host chosen,
+which is read by the parent \fIxdm\fP, and exits.
+\fIxdm\fP closes its connection to the X server, and the server resets
+and sends another \fBIndirect\fP XDMCP request.
+\fIxdm\fP remembers the user's choice (for
+\fBDisplayManager.choiceTimeout\fP seconds) and forwards the request
+to the chosen host, which starts a session on that display.
+
 .\"
 .SH "LOCAL SERVER SPECIFICATION"
 .PP
@@ -987,6 +1001,7 @@ the following environment variables are passed:
 
 	DISPLAY	the associated display name
 	HOME	the initial working directory of the user
+	LOGNAME	the user name
 	USER	the user name
 	PATH	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.systemPath\fP
 	SHELL	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.systemShell\fP
@@ -1022,7 +1037,7 @@ Here is a sample \fIXstartup\fP script:
 		xmessage\0\-file /etc/nologin\0\-timeout 30\0\-center
 		exit 1
 	fi
-	sessreg\0\-a\0\-l $DISPLAY\0\-x /usr/X11R6/lib/xdm/Xservers $USER
+	sessreg\0\-a\0\-l $DISPLAY\0\-x /usr/X11R6/lib/xdm/Xservers $LOGNAME
 	/usr/X11R6/lib/xdm/GiveConsole
 	exit 0
 .fi
@@ -1039,6 +1054,7 @@ the following environment variables are passed:
 
 	DISPLAY	the associated display name
 	HOME	the initial working directory of the user
+	LOGNAME	the user name
 	USER	the user name
 	PATH	the value of \fBDisplayManager.\fP\fIDISPLAY\fP\fB.userPath\fP
 	SHELL	the user's default shell (from \fIgetpwnam\fP)
@@ -1135,7 +1151,7 @@ A sample \fIXreset\fP script:
 	#
 	# This program is run as root after the session ends
 	#
-	sessreg\0\-d\0\-l $DISPLAY\0\-x /usr/X11R6/lib/xdm/Xservers $USER
+	sessreg\0\-d\0\-l $DISPLAY\0\-x /usr/X11R6/lib/xdm/Xservers $LOGNAME
 	/usr/X11R6/lib/xdm/TakeConsole
 	exit 0
 .fi

@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/reconfig.man,v 3.5 1996/10/19 15:16:05 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/reconfig/reconfig.man,v 3.6 1996/12/23 06:51:44 dawes Exp $
 .TH reconfig 1 "Version 3.2" "XFree86"
 .SH NAME
 reconfig \- convert old Xconfig to new XF86Config
@@ -19,4 +19,4 @@ XFree86(1), XF86Config(4/5), xf86config(1)
 Gertjan Akkerman.
 .SH BUGS
 Comment lines are stripped out when converting.
-.\" $XConsortium: reconfig.man /main/5 1996/01/14 19:02:07 kaleb $
+.\" $XConsortium: reconfig.man /main/8 1996/12/09 17:37:58 kaleb $

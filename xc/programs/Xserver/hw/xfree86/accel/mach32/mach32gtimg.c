@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32gtimg.c,v 3.5 1996/02/04 09:02:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32gtimg.c,v 3.6 1996/12/23 06:38:38 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -24,7 +24,7 @@
  *	Changes for mach32 server only changed the s3 -> mach32
  *
  */
-/* $XConsortium: mach32gtimg.c /main/3 1995/11/12 17:25:03 kaleb $ */
+/* $XConsortium: mach32gtimg.c /main/4 1996/02/21 17:26:56 kaleb $ */
 
 #include "X.h"
 #include "windowstr.h"

@@ -1,11 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ali/ali_bank.s,v 3.2 1996/02/04 09:12:32 dawes Exp $ */
-
-
-
-
-
-/* $XConsortium: ali_bank.s /main/2 1995/11/13 07:21:14 kaleb $ */
-
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ali/ali_bank.s,v 3.3 1996/12/23 06:55:51 dawes Exp $ */
 /*
  * These are here the very lowlevel VGA bankswitching routines.
  * The segment to switch to is passed via %eax. Only %eax and %edx my be used
@@ -16,6 +9,7 @@
  * These routines must be callable by other assembly routines. But I don't
  * want to have the overhead of pushing and poping the normal stack-frame.
  */
+/* $XConsortium: ali_bank.s /main/3 1996/02/21 18:01:43 kaleb $ */
 
 /*
  * first we have here a mirror for the segment register. That's because a

@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/IBMRGBCurs.c,v 3.6 1996/09/22 05:03:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/IBMRGBCurs.c,v 3.9 1997/01/08 20:33:36 dawes Exp $ */
 /*
  *
  * Copyright 1995 The XFree86 Project, Inc.
  *
  */
-/* $XConsortium: IBMRGBCurs.c /main/4 1995/12/17 08:23:17 kaleb $ */
+/* $XConsortium: IBMRGBCurs.c /main/7 1996/10/24 07:10:45 kaleb $ */
 
 #define NEED_EVENTS
 #include <X.h>
@@ -27,6 +27,7 @@
 #define MAX_CURS_HEIGHT 64   /* 64 scan lines */
 #define MAX_CURS_WIDTH  64   /* 64 pixels     */
 
+extern Bool tmp_useSWCursor;
 
 #ifndef __GNUC__
 # define __inline__ /**/
@@ -51,18 +52,23 @@ s3IBMRGBRealizeCursor(pScr, pCurs)
    register int i, j;
    unsigned char *pServMsk;
    unsigned char *pServSrc;
-   int   index = pScr->myNum;
-   pointer *pPriv = &pCurs->bits->devPriv[index];
+   int   indx2 = pScr->myNum;
+   pointer *pPriv = &pCurs->bits->devPriv[indx2];
    int   wsrc, h;
    unsigned char *ram, *plane0, *plane1;
    CursorBitsPtr bits = pCurs->bits;
+
+   if (bits->height > MAX_CURS_HEIGHT || bits->width > MAX_CURS_WIDTH) {
+      extern miPointerSpriteFuncRec miSpritePointerFuncs;
+      return (miSpritePointerFuncs.RealizeCursor)(pScr, pCurs);
+   }
 
    if (pCurs->bits->refcnt > 1)
       return TRUE;
 
    if (s3SwapExpandBits_init) {
       int k;
-      unsigned short s;
+      unsigned short s = 0;
       s3SwapExpandBits_init = 0;
       for(i=0; i<256; i++) {
 	 j = i;
@@ -184,6 +190,12 @@ s3IBMRGBMoveCursor(pScr, x, y)
    if (!xf86VTSema)
       return;
    
+   if (tmp_useSWCursor) {
+      extern miPointerSpriteFuncRec miSpritePointerFuncs;
+      (miSpritePointerFuncs.MoveCursor)(pScr, x, y);
+      return;
+   }
+
    if (s3BlockCursor)
       return;
    
@@ -278,7 +290,7 @@ s3IBMRGBLoadCursor(pScr, pCurs, x, y)
      CursorPtr pCurs;
      int x, y;
 {
-   int   index = pScr->myNum;
+   int   indx2 = pScr->myNum;
    register int   i;
    unsigned char *ram, *p, tmp, tmp2, tmpcurs;
    extern int s3InitCursorFlag;
@@ -296,7 +308,7 @@ s3IBMRGBLoadCursor(pScr, pCurs, x, y)
    /* load colormap */
    s3IBMRGBRecolorCursor(pScr, pCurs);
 
-   ram = (unsigned char *)pCurs->bits->devPriv[index];
+   ram = (unsigned char *)pCurs->bits->devPriv[indx2];
 
    UNLOCK_SYS_REGS;
    BLOCK_CURSOR;

@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/imfill.s,v 1.1.1.3 1996/01/03 07:12:35 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/imfill.s,v 3.1 1996/12/23 06:37:55 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: imfill.s /main/2 1995/11/12 16:54:35 kaleb $ */
+/* $XConsortium: imfill.s /main/3 1996/02/21 17:24:49 kaleb $ */
 /******************************************************************************
 
 This is a assembly language version of the ibm8514ImageFill routine.
@@ -12,7 +12,6 @@ It is renamed to enable a filter routine to catch the simplest
 cases and dispatch them to the more efficent ibm8514Imagewrite.
 
 Written by Hans Nasten ( nasten@everyware.se ) AUG 29, 1993.
-
 
 The equivalent C-code looks like this.
 

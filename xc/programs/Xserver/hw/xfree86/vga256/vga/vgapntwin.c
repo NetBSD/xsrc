@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgapntwin.c,v 3.2 1996/02/04 09:15:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgapntwin.c,v 3.4 1996/12/23 06:59:53 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: vgapntwin.c /main/2 1995/11/13 09:26:54 kaleb $ */
+/* $XConsortium: vgapntwin.c /main/3 1996/02/21 18:11:32 kaleb $ */
 
 #include "vga256.h"
 
@@ -156,8 +156,8 @@ vga256FillBoxSolid (pDrawable, nBox, pBox, pixel1, pixel2, alu)
     unsigned char * (* func)(
 #if NeedFunctionPrototypes
     unsigned char *,
-    int ,
-    int ,
+    unsigned long ,
+    unsigned long ,
     int ,
     int ,
     int ,
@@ -245,9 +245,9 @@ vga256FillBoxTile32 (pDrawable, nBox, pBox, tile)
     BoxPtr 	    pBox;	/* pointer to list of boxes to fill */
     PixmapPtr	    tile;	/* rotated, expanded tile */
 {
-    register int srcpix;	
-    int *psrc;		/* pointer to bits in tile, if needed */
-    int *lpsrc, *fpsrc; /* loop version of psrc */
+    register unsigned long srcpix;	
+    unsigned long *psrc;	/* pointer to bits in tile, if needed */
+    unsigned long *lpsrc, *fpsrc; /* loop version of psrc */
     int tileHeight;	/* height of the tile */
 
     int nlwDst;		/* width in longwords of the dest pixmap */
@@ -268,7 +268,7 @@ vga256FillBoxTile32 (pDrawable, nBox, pBox, tile)
     unsigned long *pbits;/* pointer to start of pixmap */
 
     tileHeight = tile->drawable.height;
-    psrc = (int *)tile->devPrivate.ptr;
+    psrc = (unsigned long *)tile->devPrivate.ptr;
 
     if (pDrawable->type == DRAWABLE_WINDOW)
     {
@@ -277,12 +277,12 @@ vga256FillBoxTile32 (pDrawable, nBox, pBox, tile)
 		  (pDrawable->pScreen->devPrivate))->devPrivate.ptr);
 	nlwDst = (int)
 		  (((PixmapPtr)
-		    (pDrawable->pScreen->devPrivate))->devKind) >> 2;
+		    (pDrawable->pScreen->devPrivate))->devKind) >> PWSH;
     }
     else
     {
 	pbits = (unsigned long *)(((PixmapPtr)pDrawable)->devPrivate.ptr);
-	nlwDst = (int)(((PixmapPtr)pDrawable)->devKind) >> 2;
+	nlwDst = (int)(((PixmapPtr)pDrawable)->devKind) >> PWSH;
     }
 
     flag = CHECKSCREEN(pbits);

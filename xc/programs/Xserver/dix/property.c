@@ -45,8 +45,8 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: property.c,v 5.16 94/04/17 20:26:42 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/dix/property.c,v 3.2 1996/05/06 05:56:23 dawes Exp $ */
+/* $XConsortium: property.c /main/41 1996/12/22 12:33:58 rws $ */
+/* $XFree86: xc/programs/Xserver/dix/property.c,v 3.5 1996/12/24 11:52:04 dawes Exp $ */
 
 #include "X.h"
 #define NEED_REPLIES
@@ -57,6 +57,10 @@ SOFTWARE.
 #include "dixstruct.h"
 #include "dispatch.h"
 #include "swaprep.h"
+#ifdef XCSECURITY
+#define _SECURITY_SERVER
+#include "extensions/security.h"
+#endif
 
 #if defined(LBX) || defined(LBX_COMPAT)
 int fWriteToClient(client, len, buf)
@@ -114,7 +118,8 @@ ProcRotateProperties(client)
 
     REQUEST_FIXED_SIZE(xRotatePropertiesReq, stuff->nAtoms << 2);
     UpdateCurrentTime();
-    pWin = (WindowPtr) LookupWindow(stuff->window, client);
+    pWin = (WindowPtr) SecurityLookupWindow(stuff->window, client,
+					    SecurityWriteAccess);
     if (!pWin)
         return(BadWindow);
     if (!stuff->nAtoms)
@@ -125,12 +130,27 @@ ProcRotateProperties(client)
 	return(BadAlloc);
     for (i = 0; i < stuff->nAtoms; i++)
     {
-        if (!ValidAtom(atoms[i]))
+#ifdef XCSECURITY
+	char action = SecurityCheckPropertyAccess(client, pWin, atoms[i],
+				SecurityReadAccess|SecurityWriteAccess);
+#endif
+        if (!ValidAtom(atoms[i])
+#ifdef XCSECURITY
+	    || (SecurityErrorOperation == action)
+#endif
+	   )
         {
             DEALLOCATE_LOCAL(props);
 	    client->errorValue = atoms[i];
             return BadAtom;
         }
+#ifdef XCSECURITY
+	if (SecurityIgnoreOperation == action)
+        {
+            DEALLOCATE_LOCAL(props);
+	    return Success;
+	}
+#endif
         for (j = i + 1; j < stuff->nAtoms; j++)
             if (atoms[j] == atoms[i])
             {
@@ -211,7 +231,8 @@ ProcChangeProperty(client)
     totalSize = len * sizeInBytes;
     REQUEST_FIXED_SIZE(xChangePropertyReq, totalSize);
 
-    pWin = (WindowPtr)LookupWindow(stuff->window, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->window, client,
+					   SecurityWriteAccess);
     if (!pWin)
 	return(BadWindow);
     if (!ValidAtom(stuff->property))
@@ -224,6 +245,18 @@ ProcChangeProperty(client)
 	client->errorValue = stuff->type;
 	return(BadAtom);
     }
+
+#ifdef XCSECURITY
+    switch (SecurityCheckPropertyAccess(client, pWin, stuff->property,
+					SecurityWriteAccess))
+    {
+	case SecurityErrorOperation:
+	    client->errorValue = stuff->property;
+	    return BadAtom;
+	case SecurityIgnoreOperation:
+	    return Success;
+    }
+#endif
 
 #ifdef LBX
     err = LbxChangeWindowProperty(client, pWin, stuff->property, stuff->type,
@@ -247,6 +280,11 @@ ChangeWindowProperty(pWin, property, type, format, mode, len, value, sendevent)
     pointer	value;
     Bool	sendevent;
 {
+#ifdef LBX
+    return LbxChangeWindowProperty(NULL, pWin, property, type,
+				   format, mode, len, TRUE, value,
+				   sendevent, NULL);
+#else
     PropertyPtr pProp;
     xEvent event;
     int sizeInBytes;
@@ -282,10 +320,6 @@ ChangeWindowProperty(pWin, property, type, format, mode, len, value, sendevent)
         pProp->type = type;
         pProp->format = format;
         pProp->data = data;
-#ifdef LBX
-	pProp->tag_id = 0;
-	pProp->owner_pid = 0;
-#endif
 	if (len)
 	    memmove((char *)data, (char *)value, totalSize);
 	pProp->size = len;
@@ -303,12 +337,6 @@ ChangeWindowProperty(pWin, property, type, format, mode, len, value, sendevent)
 	    return(BadMatch);
         if ((pProp->type != type) && (mode != PropModeReplace))
             return(BadMatch);
-#ifdef LBX
-	if (pProp->tag_id) {
-	    LbxFlushPropertyTag(pProp->tag_id);
-	    pProp->tag_id = 0;
-	}
-#endif
         if (mode == PropModeReplace)
         {
 	    if (totalSize != pProp->size * (pProp->format >> 3))
@@ -363,6 +391,7 @@ ChangeWindowProperty(pWin, property, type, format, mode, len, value, sendevent)
 	DeliverEvents(pWin, &event, 1, (WindowPtr)NULL);
     }
     return(Success);
+#endif
 }
 
 int
@@ -395,9 +424,8 @@ DeleteProperty(pWin, propName)
             prevProp->next = pProp->next;
         }
 #ifdef LBX
-	if (pProp->tag_id) {
-	    LbxFlushPropertyTag(pProp->tag_id);
-	}
+	if (pProp->tag_id)
+	    TagDeleteTag(pProp->tag_id);
 #endif
 	event.u.u.type = PropertyNotify;
 	event.u.property.window = pWin->drawable.id;
@@ -422,9 +450,8 @@ DeleteAllWindowProperties(pWin)
     while (pProp)
     {
 #ifdef LBX
-	if (pProp->tag_id) {
-	    LbxFlushPropertyTag(pProp->tag_id);
-	}
+	if (pProp->tag_id)
+	    TagDeleteTag(pProp->tag_id);
 #endif
 	event.u.u.type = PropertyNotify;
 	event.u.property.window = pWin->drawable.id;
@@ -437,6 +464,22 @@ DeleteAllWindowProperties(pWin)
         xfree(pProp);
 	pProp = pNextProp;
     }
+}
+
+static int
+NullPropertyReply(client, propertyType, format, reply)
+    ClientPtr client;
+    ATOM propertyType;
+    int format;
+    xGetPropertyReply *reply;
+{
+    reply->nItems = 0;
+    reply->length = 0;
+    reply->bytesAfter = 0;
+    reply->propertyType = propertyType;
+    reply->format = format;
+    WriteReplyToClient(client, sizeof(xGenericReply), reply);
+    return(client->noClientException);
 }
 
 /*****************
@@ -462,146 +505,147 @@ ProcGetProperty(client)
     REQUEST_SIZE_MATCH(xGetPropertyReq);
     if (stuff->delete)
 	UpdateCurrentTime();
-    pWin = (WindowPtr)LookupWindow(stuff->window, client);
-    if (pWin)
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->window, client,
+					   SecurityReadAccess);
+    if (!pWin)
+	return BadWindow;
+
+    if (!ValidAtom(stuff->property))
     {
-	if (!ValidAtom(stuff->property))
+	client->errorValue = stuff->property;
+	return(BadAtom);
+    }
+    if ((stuff->delete != xTrue) && (stuff->delete != xFalse))
+    {
+	client->errorValue = stuff->delete;
+	return(BadValue);
+    }
+    if ((stuff->type != AnyPropertyType) && !ValidAtom(stuff->type))
+    {
+	client->errorValue = stuff->type;
+	return(BadAtom);
+    }
+
+    pProp = wUserProps (pWin);
+    prevProp = (PropertyPtr)NULL;
+    while (pProp)
+    {
+	if (pProp->propertyName == stuff->property) 
+	    break;
+	prevProp = pProp;
+	pProp = pProp->next;
+    }
+
+    reply.type = X_Reply;
+    reply.sequenceNumber = client->sequence;
+    if (!pProp) 
+	return NullPropertyReply(client, None, 0, &reply);
+
+#ifdef XCSECURITY
+    {
+	Mask access_mode = SecurityReadAccess;
+
+	if (stuff->delete)
+	    access_mode |= SecurityDestroyAccess;
+	switch(SecurityCheckPropertyAccess(client, pWin, stuff->property,
+					   access_mode))
 	{
-	    client->errorValue = stuff->property;
-	    return(BadAtom);
-	}
-	if ((stuff->delete != xTrue) && (stuff->delete != xFalse))
-	{
-	    client->errorValue = stuff->delete;
-	    return(BadValue);
-	}
-	if ((stuff->type == AnyPropertyType) || ValidAtom(stuff->type))
-	{
-	    pProp = wUserProps (pWin);
-            prevProp = (PropertyPtr)NULL;
-            while (pProp)
-            {
-	        if (pProp->propertyName == stuff->property) 
-	            break;
-		prevProp = pProp;
-		pProp = pProp->next;
-            }
-	    reply.type = X_Reply;
-	    reply.sequenceNumber = client->sequence;
-            if (pProp) 
-            {
-
-		/* If the request type and actual type don't match. Return the
-		property information, but not the data. */
-
-                if ((stuff->type != pProp->type) &&
-		    (stuff->type != AnyPropertyType))
-		{
-		    reply.bytesAfter = pProp->size;
-		    reply.format = pProp->format;
-		    reply.length = 0;
-		    reply.nItems = 0;
-		    reply.propertyType = pProp->type;
-		    WriteReplyToClient(client, sizeof(xGenericReply), &reply);
-		    return(Success);
-		}
-#ifdef LBX
-		/* make sure we have the current value */                       
-		if (pProp->owner_pid != 0) {                                        
-		    LbxStallPropRequest(client, pProp);
-                    return client->noClientException;
-		}                                              
-#endif
-
-	    /*
-             *  Return type, format, value to client
-             */
-		n = (pProp->format/8) * pProp->size; /* size (bytes) of prop */
-		ind = stuff->longOffset << 2;        
-
-               /* If longOffset is invalid such that it causes "len" to
-                        be negative, it's a value error. */
-
-		if (n < ind)
-		{
-		    client->errorValue = stuff->longOffset;
-		    return BadValue;
-		}
-
-		len = min(n - ind, 4 * stuff->longLength);
-
-		reply.bytesAfter = n - (ind + len);
-		reply.format = pProp->format;
-		reply.length = (len + 3) >> 2;
-		reply.nItems = len / (pProp->format / 8 );
-		reply.propertyType = pProp->type;
-
-#ifdef LBX
-		if (stuff->delete && (reply.bytesAfter == 0) && pProp->tag_id) {
-		    LbxFlushPropertyTag(pProp->tag_id);
-		}
-#endif
-                if (stuff->delete && (reply.bytesAfter == 0))
-                { /* send the event */
-		    xEvent event;
-		
-		    event.u.u.type = PropertyNotify;
-		    event.u.property.window = pWin->drawable.id;
-		    event.u.property.state = PropertyDelete;
-		    event.u.property.atom = pProp->propertyName;
-		    event.u.property.time = currentTime.milliseconds;
-		    DeliverEvents(pWin, &event, 1, (WindowPtr)NULL);
-		}
-
-		WriteReplyToClient(client, sizeof(xGenericReply), &reply);
-		if (len)
-		{
-		    switch (reply.format) {
-		    case 32: client->pSwapReplyFunc = (ReplySwapPtr)CopySwap32Write; break;
-		    case 16: client->pSwapReplyFunc = (ReplySwapPtr)CopySwap16Write; break;
-#if defined(LBX) || defined(LBX_COMPAT)
-		    default: client->pSwapReplyFunc = (ReplySwapPtr)fWriteToClient; break;
-#else
-		    default: client->pSwapReplyFunc = (ReplySwapPtr)WriteToClient; break;
-#endif
-		    }
-		    WriteSwappedDataToClient(client, len,
-					     (char *)pProp->data + ind);
-		}
-
-                if (stuff->delete && (reply.bytesAfter == 0))
-                { /* delete the Property */
-                    if (prevProp == (PropertyPtr)NULL) /* takes care of head */
-		    {
-                        if (!(pWin->optional->userProps = pProp->next))
-			    CheckWindowOptionalNeed (pWin);
-		    }
-	            else
-                        prevProp->next = pProp->next;
-		    xfree(pProp->data);
-                    xfree(pProp);
-		}
-	    }
-            else 
-	    {   
-                reply.nItems = 0;
-		reply.length = 0;
-		reply.bytesAfter = 0;
-		reply.propertyType = None;
-		reply.format = 0;
-		WriteReplyToClient(client, sizeof(xGenericReply), &reply);
-	    }
-            return(client->noClientException);
-
-	}
-        else
-	{
-	    client->errorValue = stuff->type;
-            return(BadAtom);
+	    case SecurityErrorOperation:
+		client->errorValue = stuff->property;
+		return BadAtom;;
+	    case SecurityIgnoreOperation:
+		return NullPropertyReply(client, pProp->type, pProp->format,
+					 &reply);
 	}
     }
-    else            
-        return (BadWindow); 
+#endif
+    /* If the request type and actual type don't match. Return the
+    property information, but not the data. */
+
+    if (((stuff->type != pProp->type) &&
+	 (stuff->type != AnyPropertyType))
+       )
+    {
+	reply.bytesAfter = pProp->size;
+	reply.format = pProp->format;
+	reply.length = 0;
+	reply.nItems = 0;
+	reply.propertyType = pProp->type;
+	WriteReplyToClient(client, sizeof(xGenericReply), &reply);
+	return(Success);
+    }
+#ifdef LBX
+    /* make sure we have the current value */                       
+    if (pProp->tag_id && pProp->owner_pid) {
+	LbxStallPropRequest(client, pProp);
+	return client->noClientException;
+    }                                              
+#endif
+
+/*
+ *  Return type, format, value to client
+ */
+    n = (pProp->format/8) * pProp->size; /* size (bytes) of prop */
+    ind = stuff->longOffset << 2;        
+
+   /* If longOffset is invalid such that it causes "len" to
+	    be negative, it's a value error. */
+
+    if (n < ind)
+    {
+	client->errorValue = stuff->longOffset;
+	return BadValue;
+    }
+
+    len = min(n - ind, 4 * stuff->longLength);
+
+    reply.bytesAfter = n - (ind + len);
+    reply.format = pProp->format;
+    reply.length = (len + 3) >> 2;
+    reply.nItems = len / (pProp->format / 8 );
+    reply.propertyType = pProp->type;
+
+    if (stuff->delete && (reply.bytesAfter == 0))
+    { /* send the event */
+	xEvent event;
+
+	event.u.u.type = PropertyNotify;
+	event.u.property.window = pWin->drawable.id;
+	event.u.property.state = PropertyDelete;
+	event.u.property.atom = pProp->propertyName;
+	event.u.property.time = currentTime.milliseconds;
+	DeliverEvents(pWin, &event, 1, (WindowPtr)NULL);
+    }
+
+    WriteReplyToClient(client, sizeof(xGenericReply), &reply);
+    if (len)
+    {
+	switch (reply.format) {
+	case 32: client->pSwapReplyFunc = (ReplySwapPtr)CopySwap32Write; break;
+	case 16: client->pSwapReplyFunc = (ReplySwapPtr)CopySwap16Write; break;
+	default: client->pSwapReplyFunc = (ReplySwapPtr)WriteToClient; break;
+	}
+	WriteSwappedDataToClient(client, len,
+				 (char *)pProp->data + ind);
+    }
+
+    if (stuff->delete && (reply.bytesAfter == 0))
+    { /* delete the Property */
+#ifdef LBX
+	if (pProp->tag_id)
+	    TagDeleteTag(pProp->tag_id);
+#endif
+	if (prevProp == (PropertyPtr)NULL) /* takes care of head */
+	{
+	    if (!(pWin->optional->userProps = pProp->next))
+		CheckWindowOptionalNeed (pWin);
+	}
+	else
+	    prevProp->next = pProp->next;
+	xfree(pProp->data);
+	xfree(pProp);
+    }
+    return(client->noClientException);
 }
 
 int
@@ -616,7 +660,8 @@ ProcListProperties(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pWin = (WindowPtr)LookupWindow(stuff->id, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->id, client,
+					   SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
 
@@ -649,4 +694,43 @@ ProcListProperties(client)
         DEALLOCATE_LOCAL(pAtoms);
     }
     return(client->noClientException);
+}
+
+int 
+ProcDeleteProperty(client)
+    register ClientPtr client;
+{
+    WindowPtr pWin;
+    REQUEST(xDeletePropertyReq);
+    int result;
+              
+    REQUEST_SIZE_MATCH(xDeletePropertyReq);
+    UpdateCurrentTime();
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->window, client,
+					   SecurityWriteAccess);
+    if (!pWin)
+        return(BadWindow);
+    if (!ValidAtom(stuff->property))
+    {
+	client->errorValue = stuff->property;
+	return (BadAtom);
+    }
+
+#ifdef XCSECURITY
+    switch(SecurityCheckPropertyAccess(client, pWin, stuff->property,
+				       SecurityDestroyAccess))
+    {
+	case SecurityErrorOperation:
+	    client->errorValue = stuff->property;
+	    return BadAtom;;
+	case SecurityIgnoreOperation:
+	    return Success;
+    }
+#endif
+
+    result = DeleteProperty(pWin, stuff->property);
+    if (client->noClientException != Success)
+	return(client->noClientException);
+    else
+	return(result);
 }

@@ -1,4 +1,4 @@
-/* $XConsortium: geometry.c /main/6 1996/02/02 14:40:15 kaleb $ */
+/* $XConsortium: geometry.c /main/7 1996/12/27 21:16:35 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -1447,7 +1447,7 @@ Bool clobber;
 		into->errorCount++;
  	}
     }
-    if (!MergeAliases(&into->aliases,&from->aliases))
+    if (!MergeAliases(&into->aliases,&from->aliases,merge))
 	into->errorCount++;
     return;
 }

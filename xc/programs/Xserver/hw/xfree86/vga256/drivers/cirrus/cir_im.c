@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_im.c,v 3.12 1996/10/06 13:17:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_im.c,v 3.13 1996/12/23 06:56:48 dawes Exp $ */
 /*
  *
  * Copyright 1993 by Bill Reynolds, Santa Fe, New Mexico
@@ -27,7 +27,7 @@
  * Modifications: Harm Hanemaayer <hhanemaa@cs.ruu.nl>
  *
  */
-/* $XConsortium: cir_im.c /main/6 1995/11/13 08:21:07 kaleb $ */
+/* $XConsortium: cir_im.c /main/8 1996/10/25 14:12:36 kaleb $ */
 
 
 /*

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/frect.c,v 3.3 1996/02/04 09:01:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/frect.c,v 3.4 1996/12/23 06:37:47 dawes Exp $ */
 /*
  * Fill rectangles.
  */
@@ -44,7 +44,7 @@ Simple expansion of tiles added by incorporating parts of the code from
 mach8pcach.c 94-07-12, Hans Nasten ( nasten@everyware.se ).
 
 */
-/* $XConsortium: frect.c /main/4 1995/11/12 17:02:52 kaleb $ */
+/* $XConsortium: frect.c /main/5 1996/02/21 17:24:19 kaleb $ */
 
 
 

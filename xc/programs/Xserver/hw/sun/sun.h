@@ -1,6 +1,6 @@
 
-/* $XConsortium: sun.h /main/56 1995/10/08 11:12:03 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.4 1996/10/16 14:38:15 dawes Exp $ */
+/* $XConsortium: sun.h /main/60 1996/10/31 14:23:48 kaleb $ */
+/* $XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.5 1996/12/23 06:30:13 dawes Exp $ */
 
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -53,7 +53,7 @@ extern char *getenv();
 #include <fcntl.h>
 
 #ifndef __bsdi_
-# if !defined(__NetBSD__) && !defined(__OpenBSD__)
+# ifndef CSRG_BASED
 #  ifndef i386
 #   include <poll.h>
 #  else
@@ -87,7 +87,7 @@ extern int errno;
 # include <stropts.h>
 # define usleep(usec) poll((struct pollfd *) 0, (size_t) 0, usec / 1000)
 #else
-# if !defined( __NetBSD__) && !defined(__OpenBSD__)
+# ifndef CSRG_BASED
 #  include <sun/fbio.h>
 #  include <sundev/kbd.h>
 #  include <sundev/kbio.h>
@@ -100,7 +100,7 @@ extern int getrlimit();
 extern int setrlimit();
 extern int getpagesize();
 # else
-#  if defined(__NetBSD__) || defined(__OpenBSD__)
+#  ifdef CSRG_BASED
 #   include <machine/fbio.h>
 #   include <machine/kbd.h>
 #   include <machine/kbio.h>
@@ -114,6 +114,18 @@ extern int getpagesize();
 #  endif
 # endif
 #endif
+
+/*
+ * Sun doesn't see fit to add the TCX to <sys/fbio.h>
+ */
+#ifndef SVR4
+/* On SunOS 4.1.x the TCX pretends to be a CG3 */
+#define XFBTYPE_LASTPLUSONE	FBTYPE_LASTPLUSONE	
+#else
+#define XFBTYPE_TCX		21
+#define XFBTYPE_LASTPLUSONE	22
+#endif
+
 extern int gettimeofday();
 
 /* 
@@ -169,6 +181,7 @@ extern int monitorResolution;
 # define BWTWO2DEV	"/dev/fbs/bwtwo2"
 # define BWTWO3DEV	"/dev/fbs/bwtwo3"
 # define CGEIGHT0DEV	"/dev/fbs/cgeight0"
+# define TCX0DEV	"/dev/fbs/tcx0"
 #else
 # define CGTWO0DEV	"/dev/cgtwo0"
 # define CGTWO1DEV	"/dev/cgtwo1"

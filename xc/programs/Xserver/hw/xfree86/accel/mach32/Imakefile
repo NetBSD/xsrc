@@ -1,10 +1,10 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/Imakefile,v 3.9 1996/02/04 09:02:14 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/Imakefile,v 3.10 1996/12/23 06:38:17 dawes Exp $
 
 
 
 
 
-XCOMM $XConsortium: Imakefile /main/4 1995/11/12 17:24:11 kaleb $
+XCOMM $XConsortium: Imakefile /main/6 1996/09/28 17:21:12 rws $
 
 #include <Server.tmpl>
 
@@ -26,7 +26,7 @@ OBJS = 	mach32.o mach32cmap.o mach32gc.o mach32fs.o mach32ss.o \
 
 INCLUDES = -I$(XF86COMSRC) -I. -I$(XF86SRC)/vga256/vga \
 	   -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
-           -I$(SERVERSRC)/cfb -I$(INCLUDESRC) -I$(FONTSRC)/include \
+           -I$(SERVERSRC)/cfb -I$(XINCLUDESRC) -I$(FONTSRC)/include \
 	   -I$(FONTINCSRC) -I$(XF86OSSRC) -I$(XF86HWSRC) \
 	   -I$(XF86SRC)/accel/cache
 

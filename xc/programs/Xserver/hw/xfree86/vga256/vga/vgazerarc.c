@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgazerarc.c,v 3.2 1996/02/04 09:15:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgazerarc.c,v 3.3 1996/12/23 07:00:06 dawes Exp $ */
 /************************************************************
 
 Copyright (c) 1989  X Consortium
@@ -26,7 +26,7 @@ in this Software without prior written authorization from the X Consortium.
 
 ********************************************************/
 
-/* $XConsortium: vgazerarc.c /main/2 1995/11/13 09:27:28 kaleb $ */
+/* $XConsortium: vgazerarc.c /main/3 1996/02/21 18:12:21 kaleb $ */
 
 /* Derived from:
  * "Algorithm for drawing ellipses or hyperbolae with a digital plotter"

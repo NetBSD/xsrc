@@ -1,5 +1,4 @@
-/* $XConsortium: v7_driver.c /main/5 1996/01/12 12:18:57 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/video7/v7_driver.c,v 3.13 1996/10/16 14:43:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/video7/v7_driver.c,v 3.15.2.3 1997/05/09 09:31:42 hohndel Exp $ */
 /*
  * Copyright 1994 by Craig Struble   <cstruble@acm.vt.edu>
  * Stubs Driver Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -40,6 +39,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XConsortium: v7_driver.c /main/10 1996/10/27 11:08:46 kaleb $ */
 
 /*************************************************************************/
 
@@ -225,7 +225,8 @@ vgaVideoChipRec VIDEO7 = {
 	FALSE,
 	FALSE,
 	NULL,
-	1,
+	1,      /* ClockMulFactor */
+	1       /* ClockDivFactor */
 };
 
 #define VIDEO7_MAX_CLOCK_IN_KHZ 90000
@@ -573,6 +574,9 @@ VIDEO7Restore(restore)
 vgaVIDEO7Ptr restore;
 {
 	unsigned char temp;
+
+	vgaProtect(TRUE);
+
 	/*
 	 * Whatever code is needed to get things back to bank zero should be
 	 * placed here.  Things should be in the same state as when the
@@ -622,6 +626,8 @@ vgaVIDEO7Ptr restore;
 	outw(0x3C4, 0xFC | (restore->C4FC << 8));
 	outw(0x3C4, 0xFD | (restore->C4FD << 8));
 	outw(0x3C4, 0xFF | (restore->C4FF << 8));
+
+	vgaProtect(FALSE);
 }
 
 /*
@@ -852,9 +858,10 @@ int x, y;
  *
  */
 static int
-VIDEO7ValidMode(mode, verbose)
+VIDEO7ValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

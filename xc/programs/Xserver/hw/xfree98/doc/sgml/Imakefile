@@ -1,10 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/5 1996/01/28 07:49:02 kaleb $
+XCOMM $XConsortium: Imakefile /main/12 1996/10/28 05:13:56 kaleb $
 
 
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/sgml/Imakefile,v 3.13 1996/10/23 13:12:28 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/sgml/Imakefile,v 3.16.2.2 1997/05/24 13:38:20 dawes Exp $
 
 #include <Server.tmpl>
 
@@ -14,7 +14,7 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/sgml/Imakefile,v 3.13 1996/10
 
 #include <lnxdoc.rules>
 
-#if defined(BSD386Architecture) || BuildAllDocs
+#if (defined(BSD386Architecture) || BuildAllDocs) && 0
 LinuxDocReadmeTarget(Bsdi)
 #endif
 #if defined(FreeBSDArchitecture) || BuildAllDocs
@@ -26,7 +26,7 @@ LinuxDocReadmeTarget(NetBSD)
 #if defined(OpenBSDArchitecture) || BuildAllDocs
 LinuxDocReadmeTarget(OpenBSD)
 #endif
-#if defined(i386MachArchitecture) || BuildAllDocs
+#if (defined(i386MachArchitecture) || BuildAllDocs) && 0
 LinuxDocReadmeTarget(Mach)
 #endif
 #if defined(LinuxArchitecture) || BuildAllDocs
@@ -50,7 +50,7 @@ LinuxDocReadmeTarget(isc)
 # endif
 # if defined(OS2Architecture) || BuildAllDocs
 LinuxDocReadmeTarget(OS2)
-LinuxDocTargetLong(OS2note.sgml,OS2.Notes,OS2.Notes)
+LinuxDocTargetLong(OS2note.sgml,OS2.Notes,OS2Notes)
 # endif
 # if 0
 LinuxDocReadmeTarget(SVR3)
@@ -76,6 +76,7 @@ LinuxDocReadmeTarget(P9000)
 LinuxDocReadmeTarget(Video7)
 LinuxDocReadmeTarget(S3)
 LinuxDocReadmeTarget(S3V)
+LinuxDocReadmeTarget(SiS)
 LinuxDocReadmeTarget(W32)
 LinuxDocReadmeTarget(WstDig)
 LinuxDocReadmeTarget(ark)
@@ -90,7 +91,7 @@ LinuxDocReadmeTarget(tseng)
 LinuxDocTargetLong(CPYRIGHT.sgml,COPYRIGHT,COPYRIGHT)
 LinuxDocTargetLong(RELNOTE.sgml,RELNOTES,RELNOTES)
 LinuxDocReadmeTarget(Config)
-LinuxDocTarget(INSTALL)
+LinuxDocTarget(BUILD)
 LinuxDocTarget(README)
 LinuxDocTargetLong(QStart.sgml,QuickStart.doc,QuickStart)
 LinuxDocTarget(DocIndex)
@@ -110,7 +111,7 @@ LinkSourceFile(Config.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(DECtga.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(DocIndex.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(FreeBSD.sgml,$(XF86SRC)/doc/sgml)
-LinkSourceFile(INSTALL.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(BUILD.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(LinkKit.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Linux.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(LynxOS.sgml,$(XF86SRC)/doc/sgml)
@@ -132,6 +133,7 @@ LinkSourceFile(S3V.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(SCO.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(SOLX86.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(SVR4.sgml,$(XF86SRC)/doc/sgml)
+LinkSourceFile(SiS.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(VGADriv.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(VidModes.sgml,$(XF86SRC)/doc/sgml)
 LinkSourceFile(Video7.sgml,$(XF86SRC)/doc/sgml)

@@ -1,4 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_lline.h,v 3.0 1996/08/11 13:02:51 dawes Exp $ */
+/* $XConsortium: ct_lline.h /main/1 1996/09/21 13:36:37 kaleb $ */
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_lline.h,v 3.1 1996/12/27 07:05:10 dawes Exp $ */
 
 /* ct_lline.c */
 

@@ -1,4 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_Blitter.h,v 3.3 1996/09/29 13:39:12 dawes Exp $ */
+/* $XConsortium: ct_Blitter.h /main/2 1996/10/25 10:28:37 kaleb $ */
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_Blitter.h,v 3.4.2.1 1997/05/03 09:47:57 dawes Exp $ */
 
 /* Definitions for the Chips and Technology BitBLT engine communication. */
 /* registers */
@@ -66,50 +72,50 @@
   {HW_DEBUG(0x4+2); while(inw(DR(0x4)+2)&0x10){};}
 
 #define ctSETROP(op) \
-  {HW_DEBUG(0x4); outl(DR(0x4),op);}
+  {HW_DEBUG(0x4); outl(DR(0x4),(op));}
 
 #define ctSETSRCADDR(srcAddr) \
-  {HW_DEBUG(0x5); outl(DR(0x5),(srcAddr&0x1FFFFFL));}
+  {HW_DEBUG(0x5); outl(DR(0x5),((srcAddr)&0x1FFFFFL));}
 
 #define ctSETDSTADDR(dstAddr) \
-  {HW_DEBUG(0x6); outl(DR(0x6),(dstAddr&0x1FFFFFL));}
+  {HW_DEBUG(0x6); outl(DR(0x6),((dstAddr)&0x1FFFFFL));}
 
 #define ctSETPITCH(srcPitch,dstPitch) \
-  {HW_DEBUG(0x0); outl(DR(0x0),((dstPitch<<16)|srcPitch));}
+  {HW_DEBUG(0x0); outl(DR(0x0),(((dstPitch)<<16)|(srcPitch)));}
 
 /* Note that this command signal a blit to commence */
 #define ctSETHEIGHTWIDTHGO(Height,Width)\
-  {HW_DEBUG(0x7); outl(DR(0x7),((Height<<16)|Width));}
+  {HW_DEBUG(0x7); outl(DR(0x7),(((Height)<<16)|(Width)));}
 
 #define ctSETPATSRCADDR(srcAddr)\
-  {HW_DEBUG(0x1); outl(DR(0x1),(srcAddr&0x1FFFFFL));}
+  {HW_DEBUG(0x1); outl(DR(0x1),((srcAddr)&0x1FFFFFL));}
 
 /* I can't help pointing out at this point that I'm not complaining
  * about the american spelling of Colour!! [DGB] */
 
 #define ctSETBGCOLOR8(bgColor)\
-  {HW_DEBUG(0x2); outl(DR(0x2),(((((bgColor&0xFF)<<8)|(bgColor&0xFF))<<16) | \
-	       (((bgColor&0xFF)<<8)|(bgColor&0xFF))));}
+  {HW_DEBUG(0x2); outl(DR(0x2),((((((bgColor)&0xFF)<<8)|((bgColor)&0xFF))<<16) | \
+	       ((((bgColor)&0xFF)<<8)|((bgColor)&0xFF))));}
 
 #define ctSETBGCOLOR16(bgColor)\
-  {HW_DEBUG(0x02); outl(DR(0x2),(((bgColor&0xFFFF)<<16)|(bgColor&0xFFFF)));}
+  {HW_DEBUG(0x02); outl(DR(0x2),((((bgColor)&0xFFFF)<<16)|((bgColor)&0xFFFF)));}
 
 /* As the 6554x doesn't support 24bpp colour expansion this doesn't work */
 #define ctSETBGCOLOR24(bgColor)\
-  {HW_DEBUG(0x2); outl(DR(0x2),bgColor&0xFFFFFF);}
+  {HW_DEBUG(0x2); outl(DR(0x2),(bgColor)&0xFFFFFF);}
 
 #define ctSETFGCOLOR8(fgColor)\
-  {HW_DEBUG(0x3); outl(DR(0x3),(((((fgColor&0xFF)<<8)|(fgColor&0xFF))<<16) | \
-	       (((fgColor&0xFF)<<8)|(fgColor&0xFF))));}
+  {HW_DEBUG(0x3); outl(DR(0x3),((((((fgColor)&0xFF)<<8)|((fgColor)&0xFF))<<16) | \
+	       ((((fgColor)&0xFF)<<8)|((fgColor)&0xFF))));}
 
 #define ctSETFGCOLOR16(fgColor)\
-  {HW_DEBUG(0x3); outl(DR(0x3),(((fgColor&0xFFFF)<<16)|(fgColor&0xFFFF)));}
+  {HW_DEBUG(0x3); outl(DR(0x3),((((fgColor)&0xFFFF)<<16)|((fgColor)&0xFFFF)));}
 
 /* As the 6554x doesn't support 24bpp colour expansion this doesn't work */
 #define ctSETFGCOLOR24(fgColor)\
-  {HW_DEBUG(0x3); outl(DR(0x3),fgColor&0xFFFFFF);}
+  {HW_DEBUG(0x3); outl(DR(0x3),(fgColor)&0xFFFFFF);}
 
 #define ctGETHWCUR(status) \
  {HW_DEBUG(0x8); status = inl(DR(0x8));}
 #define ctPUTHWCUR(x) \
- {HW_DEBUG(0x8); outw(DR(0x8),x);}
+ {HW_DEBUG(0x8); outw(DR(0x8),(x));}

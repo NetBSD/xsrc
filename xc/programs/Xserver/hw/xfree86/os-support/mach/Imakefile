@@ -1,9 +1,9 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/mach/Imakefile,v 1.1.1.2 1996/01/03 07:20:27 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/mach/Imakefile,v 3.1 1996/12/23 06:50:09 dawes Exp $
 
 
 
 
-XCOMM $XConsortium: Imakefile /main/2 1995/11/13 06:00:59 kaleb $
+XCOMM $XConsortium: Imakefile /main/4 1996/09/28 17:23:58 rws $
 
 #include <Server.tmpl>
 
@@ -20,7 +20,7 @@ OBJS = mach_init.o mach_video.o mach_io.o $(BIOS_MOD).o mapVT_noop.o \
        VTsw_noop.o
 
 INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
-           -I$(INCLUDESRC)
+           -I$(XINCLUDESRC)
 
 SubdirLibraryRule($(OBJS))
 NormalLibraryObjectRule()
@@ -32,3 +32,4 @@ ObjectFromSpecialSource(mapVT_noop,../shared/mapVT_noop,/**/)
 ObjectFromSpecialSource(VTsw_noop,../shared/VTsw_noop,/**/)
 
 DependTarget()
+

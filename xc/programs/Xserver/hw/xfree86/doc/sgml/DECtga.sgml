@@ -1,17 +1,16 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
 
-<title> Information for DEC 21030 Users (aka TGA)
-<author> The XFree86 Project, Inc.
-<date> 17th October 1996
+<title>Information for DEC 21030 Users (aka TGA)
+<author>The XFree86 Project, Inc.
+<date>20th May 1997
 <toc>
 
 <p>
 <sect>DEC 21030
 <p>
 <itemize>
-<item>The DEC 21030 is now supported by XFree86 in this first release of
-XFree86 3.2. This server is still experimental but seems to work well.
+<item>The DEC 21030 is supported by XFree86 in this release of XFree86 3.3.
 
 <item>Current Known Problems
 
@@ -48,7 +47,7 @@ known as the Multia, in a Linux environment.
 
 <p>
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DECtga.sgml,v 3.4 1996/10/19 15:15:41 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DECtga.sgml,v 3.6.2.1 1997/05/21 15:02:39 dawes Exp $
 </verb>
 
 </article>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blt.c,v 3.4 1996/02/04 09:13:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_blt.c,v 3.5 1996/12/23 06:56:34 dawes Exp $ */
 /*
  *
  * Copyright 1993 by Bill Reynolds, Santa Fe, New Mexico
@@ -27,7 +27,7 @@
  * Modifications: Harm Hanemaayer <hhanemaa@cs.ruu.nl>
  *
  */
-/* $XConsortium: cir_blt.c /main/3 1995/11/13 08:20:43 kaleb $ */
+/* $XConsortium: cir_blt.c /main/4 1996/02/21 18:03:14 kaleb $ */
 
 #include "misc.h"
 #include "xf86.h"

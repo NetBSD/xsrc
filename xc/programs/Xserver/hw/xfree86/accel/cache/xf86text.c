@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/cache/xf86text.c,v 1.1.1.2 1996/01/03 07:12:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/cache/xf86text.c,v 3.1 1996/12/23 06:33:22 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  * 
@@ -21,13 +21,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  * 
  */
-/* $XConsortium: xf86text.c /main/2 1995/11/13 10:11:10 kaleb $ */
+/* $XConsortium: xf86text.c /main/3 1996/02/21 17:19:27 kaleb $ */
 
 /*
  * Extracted from s3fcach.c and adapted to XFree86 in X11R6 by
  * Hans Nasten. ( nasten@everyware.se ).
  */
-
 
 #include	"X.h"
 #include	"Xmd.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32.c,v 3.58 1996/10/17 15:17:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32.c,v 3.63.2.4 1997/05/26 14:36:16 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -30,7 +30,7 @@
  * Modified for more 16 bpp and Ramdac parsing by Bryan K. Feir
  *
  */
-/* $XConsortium: mach32.c /main/13 1996/01/13 13:13:11 kaleb $ */
+/* $XConsortium: mach32.c /main/23 1996/10/27 11:46:34 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -50,7 +50,6 @@
 #include "xf86.h"
 #include "xf86Priv.h"
 #include "xf86Procs.h"
-#include "xf86_OSlib.h"
 #include "xf86_HWlib.h"
 #include "mach32.h"
 #include "regmach32.h"
@@ -79,7 +78,8 @@ extern unsigned short vgaIOBase;
 static int mach32ValidMode(
 #if NeedFunctionPrototypes 
     DisplayModePtr,
-    Bool
+    Bool,
+    int
 #endif
 );
 
@@ -90,11 +90,12 @@ ScrnInfoRec mach32InfoRec = {
     mach32Probe,      	/* Bool (* Probe)() */
     mach32Initialize,	/* Bool (* Init)() */
     mach32ValidMode,	/* int (* ValidMode)() */
-    mach32EnterLeaveVT,/* void (* EnterLeaveVT)() */
-    (void (*)())NoopDDA,		/* void (* EnterLeaveMonitor)() */
-    (void (*)())NoopDDA,		/* void (* EnterLeaveCursor)() */
+    mach32EnterLeaveVT, /* void (* EnterLeaveVT)() */
+    (void (*)())NoopDDA,/* void (* EnterLeaveMonitor)() */
+    (void (*)())NoopDDA,/* void (* EnterLeaveCursor)() */
     mach32AdjustFrame,	/* void (* AdjustFrame)() */
     mach32SwitchMode,	/* Bool (* SwitchMode)() */
+    (void (*)())NoopDDA,/* void (* DPMSSet)() */
     mach32PrintIdent,	/* void (* PrintIdent)() */
     8,			/* int depth */
     {5, 6, 5},          /* xrgb weight */
@@ -108,7 +109,8 @@ ScrnInfoRec mach32InfoRec = {
     {0, },	       	/* OFlagSet xconfigFlag */
     NULL,	       	/* char *chipset */
     NULL,	       	/* char *ramdac */
-    0,			/* int dacSpeed */
+    {0, 0, 0, 0},	/* int dacSpeeds[MAXDACSPEEDS] */
+    0,			/* int dacSpeedBpp */
     0,			/* int clocks */
     {0, },		/* int clock[MAXCLOCKS] */
     0,			/* int maxClock */
@@ -135,17 +137,20 @@ ScrnInfoRec mach32InfoRec = {
     0,			/* int s3Madjust */
     0,			/* int s3Nadjust */
     0,			/* int s3MClk */
+    0,			/* int chipID */
+    0,			/* int chipRev */
     0,			/* unsigned long VGAbase */
     0,			/* int s3RefClk */
-    0,			/* int suspendTime */
-    0,			/* int offTime */
     -1,			/* int s3BlankDelay */
     0,			/* int textClockFreq */
+    NULL,               /* char* DCConfig */
+    NULL,               /* char* DCOptions */
+    0			/* int MemClk */
 #ifdef XFreeXDGA
-    0,			/* int directMode */
+    ,0,			/* int directMode */
     mach32SetVGAPage,	/* Set Vid Page */
     0,			/* unsigned long physBase */
-    0,			/* int physSize */
+    0			/* int physSize */
 #endif
 };
 
@@ -477,6 +482,7 @@ mach32Probe()
     switch (xf86bpp) {
     case 8:
 	break;
+    case 15:
     case 16:
         if (info->DAC_Type == DAC_BT476) {
 /*
@@ -492,7 +498,7 @@ mach32Probe()
 	    return(FALSE);
 	}
 
-	mach32InfoRec.depth = 16;	/* if 555, set to 15, below */
+	mach32InfoRec.depth = xf86bpp;	/* if 16/555, set to 15, below */
 	mach32InfoRec.bitsPerPixel = 16;
 	if (mach32InfoRec.defaultVisual < 0)
 	    mach32InfoRec.defaultVisual = TrueColor;
@@ -510,10 +516,18 @@ mach32Probe()
 	if (info->DAC_Type != DAC_TLC34075 && info->DAC_Type != DAC_BT481)
 	    ErrorF("number of bpp is 8\n");
 	else
-	    ErrorF("numbers of bpp are 8 and 16\n");
+	    ErrorF("numbers of bpp are 8, 15 and 16\n");
 	return(FALSE);
     }
 
+    if (xf86bpp == 15) {
+        if (xf86weight.red != 5 && xf86weight.green != 5
+            && xf86weight.blue != 5) {
+	    ErrorF("Invalid color weighting\n");
+	    return(FALSE);
+	}
+        mach32WeightMask = mach32WeightMasks[1];
+    }
     if (xf86bpp == 16) {
 	for (i = 0; i < 4; i++) {
 	    if (xf86weight.red == mach32weights[i].red
@@ -545,7 +559,10 @@ mach32Probe()
     if (mach32InfoRec.bitsPerPixel == 16) {
         /* Only the ATI68860 can MUX 4 pixels at 16bpp each */
         if (info->DAC_Type != DAC_ATI68860) {
-            mach32InfoRec.maxClock /= 2;
+            if (info->DAC_Type == DAC_ATI68875)
+                mach32InfoRec.maxClock = mach32MaxClock;
+            else
+                mach32InfoRec.maxClock /= 2;
         }
         /* 8-bit data path DACs have to be double-clocked */
         if (info->DAC_Type == DAC_ATI68830 || info->DAC_Type == DAC_SC11483 ||
@@ -666,6 +683,14 @@ mach32Probe()
 	ErrorF("\n");
     }
 
+    if (!mach32InfoRec.videoRam) {
+#ifdef NEW_MEM_DETECT
+	mach32InfoRec.videoRam = mach32GetMemSize();
+#else
+	mach32InfoRec.videoRam = info->Mem_Size;
+#endif
+    }
+
     tx = mach32InfoRec.virtualX;
     ty = mach32InfoRec.virtualY;
     pMode = mach32InfoRec.modes;
@@ -683,6 +708,28 @@ mach32Probe()
 	   */
 	  if(xf86LookupMode(pMode, &mach32InfoRec, LOOKUP_DEFAULT) == FALSE) {
 		pModeSv=pMode->next;
+		xf86DeleteMode(&mach32InfoRec, pMode);
+		pMode = pModeSv; 
+	  } else if (pMode->HDisplay > 1536) {
+		pModeSv=pMode->next;
+		ErrorF("%s %s: Width of mode \"%s\" is too large (max is"
+		       " 1536)\n", XCONFIG_PROBED, mach32InfoRec.name,
+		       pMode->name);
+		xf86DeleteMode(&mach32InfoRec, pMode);
+		pMode = pModeSv; 
+	  } else if (pMode->VDisplay > 1536) {
+		pModeSv=pMode->next;
+		ErrorF("%s %s: Height of mode \"%s\" is too large (max is"
+		       " 1536)\n", XCONFIG_PROBED, mach32InfoRec.name,
+		       pMode->name);
+		xf86DeleteMode(&mach32InfoRec, pMode);
+		pMode = pModeSv; 
+	  } else if (pMode->HDisplay * pMode->VDisplay *
+		     (mach32InfoRec.bitsPerPixel / 8) >
+		     mach32InfoRec.videoRam*1024) {
+		pModeSv=pMode->next;
+		ErrorF("%s %s: Too little memory for mode \"%s\"\n",
+		       XCONFIG_PROBED, mach32InfoRec.name, pMode->name);
 		xf86DeleteMode(&mach32InfoRec, pMode);
 		pMode = pModeSv; 
 	  } else if (((tx > 0) && (pMode->HDisplay > tx)) || 
@@ -744,14 +791,6 @@ mach32Probe()
     if (xf86Verbose) {
 	ErrorF("%s %s: Display width: %d\n",
 		XCONFIG_PROBED, mach32InfoRec.name, mach32DisplayWidth);
-    }
-
-    if (!mach32InfoRec.videoRam) {
-#ifdef NEW_MEM_DETECT
-	mach32InfoRec.videoRam = mach32GetMemSize();
-#else
-	mach32InfoRec.videoRam = info->Mem_Size;
-#endif
     }
 
     /* Set mach32MemorySize to required MEM_SIZE value in MISC_OPTIONS */
@@ -1309,7 +1348,7 @@ mach32ClockSelect(no)
  *
  */
 static int
-mach32ValidMode(pMode, verbose)
+mach32ValidMode(pMode, verbose, flag)
 DisplayModePtr pMode;
 Bool verbose;
 {

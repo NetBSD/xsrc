@@ -1,4 +1,4 @@
-/* $XConsortium: auth.c,v 1.21 94/04/17 20:26:54 dpw Exp $ */
+/* $XConsortium: auth.c /main/27 1996/12/02 10:22:41 lehors $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -43,6 +43,13 @@ from the X Consortium.
 # include   "dixstruct.h"
 # include   <sys/types.h>
 # include   <sys/stat.h>
+#ifdef XCSECURITY
+#define _SECURITY_SERVER
+# include   "extensions/security.h"
+#endif
+#ifdef WIN32
+#include "Xw32defs.h"
+#endif
 
 struct protocol {
     unsigned short   name_length;
@@ -53,6 +60,9 @@ struct protocol {
     XID	    (*ToID)();	    /* convert cookie to ID */
     int	    (*FromID)();    /* convert ID to cookie */
     int	    (*Remove)();    /* remove a specific cookie */
+#ifdef XCSECURITY
+    XID     (*Generate)();
+#endif
 };
 
 extern int  MitAddCookie ();
@@ -60,6 +70,7 @@ extern XID  MitCheckCookie ();
 extern int  MitResetCookie ();
 extern XID  MitToID ();
 extern int  MitFromID (), MitRemoveCookie ();
+extern XID  MitGenerateCookie();
 
 #ifdef HASXDMAUTH
 extern int  XdmAddCookie ();
@@ -85,27 +96,49 @@ extern XID K5ToID();
 extern int K5FromID(), K5Remove();
 #endif
 
+extern XID AuthSecurityCheck();
+
 static struct protocol   protocols[] = {
 {   (unsigned short) 18,    "MIT-MAGIC-COOKIE-1",
 		MitAddCookie,	MitCheckCookie,	MitResetCookie,
 		MitToID,	MitFromID,	MitRemoveCookie,
+#ifdef XCSECURITY
+		MitGenerateCookie
+#endif
 },
 #ifdef HASXDMAUTH
 {   (unsigned short) 19,    "XDM-AUTHORIZATION-1",
 		XdmAddCookie,	XdmCheckCookie,	XdmResetCookie,
 		XdmToID,	XdmFromID,	XdmRemoveCookie,
+#ifdef XCSECURITY
+		NULL
+#endif
 },
 #endif
 #ifdef SECURE_RPC
 {   (unsigned short) 9,    "SUN-DES-1",
 		SecureRPCAdd,	SecureRPCCheck,	SecureRPCReset,
 		SecureRPCToID,	SecureRPCFromID,SecureRPCRemove,
+#ifdef XCSECURITY
+		NULL
+#endif
 },
 #endif
 #ifdef K5AUTH
 {   (unsigned short) 14, "MIT-KERBEROS-5",
 		K5Add, K5Check, K5Reset,
 		K5ToID, K5FromID, K5Remove,
+#ifdef XCSECURITY
+		NULL
+#endif
+},
+#endif
+#ifdef XCSECURITY
+{   (unsigned short) XSecurityAuthorizationNameLen,
+	XSecurityAuthorizationName,
+		NULL, AuthSecurityCheck, NULL,
+		NULL, NULL, NULL,
+		NULL
 },
 #endif
 };
@@ -120,7 +153,6 @@ static struct protocol   protocols[] = {
 
 static char *authorization_file = (char *)NULL;
 
-static int  AuthorizationIndex = 0;
 static Bool ShouldLoadAuth = TRUE;
 
 void
@@ -144,15 +176,15 @@ LoadAuthorization ()
     f = fopen (authorization_file, "r");
     if (!f)
 	return 0;
-    AuthorizationIndex = 0;
     while (auth = XauReadAuth (f)) {
 	for (i = 0; i < NUM_AUTHORIZATION; i++) {
 	    if (protocols[i].name_length == auth->name_length &&
-		memcmp (protocols[i].name, auth->name, (int) auth->name_length) == 0)
+		memcmp (protocols[i].name, auth->name, (int) auth->name_length) == 0 &&
+		protocols[i].Add)
 	    {
 		++count;
 		(*protocols[i].Add) (auth->data_length, auth->data,
-					 ++AuthorizationIndex);
+					 FakeClientID(0));
 	    }
 	}
 	XauDisposeAuth (auth);
@@ -224,7 +256,8 @@ ResetAuthorization ()
     int	i;
 
     for (i = 0; i < NUM_AUTHORIZATION; i++)
-	(*protocols[i].Reset)();
+	if (protocols[i].Reset)
+	    (*protocols[i].Reset)();
     ShouldLoadAuth = TRUE;
 }
 
@@ -239,7 +272,8 @@ char	*data;
 
     for (i = 0; i < NUM_AUTHORIZATION; i++) {
     	if (protocols[i].name_length == name_length &&
-	    memcmp (protocols[i].name, name, (int) name_length) == 0)
+	    memcmp (protocols[i].name, name, (int) name_length) == 0 &&
+	    protocols[i].ToID)
     	{
 	    return (*protocols[i].ToID) (data_length, data);
     	}
@@ -258,7 +292,8 @@ char	**datap;
     int	i;
 
     for (i = 0; i < NUM_AUTHORIZATION; i++) {
-	if ((*protocols[i].FromID) (id, data_lenp, datap)) {
+	if (protocols[i].FromID &&
+	    (*protocols[i].FromID) (id, data_lenp, datap)) {
 	    *name_lenp = protocols[i].name_length;
 	    *namep = protocols[i].name;
 	    return 1;
@@ -278,7 +313,8 @@ char	*data;
 
     for (i = 0; i < NUM_AUTHORIZATION; i++) {
     	if (protocols[i].name_length == name_length &&
-	    memcmp (protocols[i].name, name, (int) name_length) == 0)
+	    memcmp (protocols[i].name, name, (int) name_length) == 0 &&
+	    protocols[i].Remove)
     	{
 	    return (*protocols[i].Remove) (data_length, data);
     	}
@@ -297,11 +333,79 @@ char	*data;
 
     for (i = 0; i < NUM_AUTHORIZATION; i++) {
     	if (protocols[i].name_length == name_length &&
-	    memcmp (protocols[i].name, name, (int) name_length) == 0)
+	    memcmp (protocols[i].name, name, (int) name_length) == 0 &&
+	    protocols[i].Add)
     	{
-	    return (*protocols[i].Add) (data_length, data,
-					++AuthorizationIndex);
+	    return (*protocols[i].Add) (data_length, data, FakeClientID(0));
     	}
     }
     return 0;
 }
+
+#ifdef XCSECURITY
+
+XID
+GenerateAuthorization(name_length, name, data_length, data,
+		      data_length_return, data_return)
+unsigned int name_length;
+char	*name;
+unsigned int data_length;
+char	*data;
+unsigned int *data_length_return;
+char	**data_return;
+{
+    int	i;
+
+    for (i = 0; i < NUM_AUTHORIZATION; i++) {
+    	if (protocols[i].name_length == name_length &&
+	    memcmp (protocols[i].name, name, (int) name_length) == 0 &&
+	    protocols[i].Generate)
+    	{
+	    return (*protocols[i].Generate) (data_length, data,
+			FakeClientID(0), data_length_return, data_return);
+    	}
+    }
+    return -1;
+}
+
+/* A random number generator that is more unpredictable
+   than that shipped with some systems.
+   This code is taken from the C standard. */
+
+static unsigned long int next = 1;
+
+static int
+xdm_rand()
+{
+    next = next * 1103515245 + 12345;
+    return (unsigned int)(next/65536) % 32768;
+}
+
+static void
+xdm_srand(seed)
+    unsigned int seed;
+{
+    next = seed;
+}
+
+void
+GenerateRandomData (len, buf)
+int	len;
+char	*buf;
+{
+    static int seed;
+    int value;
+    int i;
+
+    seed += GetTimeInMillis();
+    xdm_srand (seed);
+    for (i = 0; i < len; i++)
+    {
+	value = xdm_rand ();
+	buf[i] ^= (value & 0xff00) >> 8;
+    }
+
+    /* XXX add getrusage, popen("ps -ale") */
+}
+
+#endif /* XCSECURITY */

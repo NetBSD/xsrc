@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3dline.c,v 3.2 1996/10/08 13:11:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3dline.c,v 3.4 1997/01/14 22:17:18 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -52,7 +52,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 */
 
 /* s3dline.c from s3line.c with help from cfbresd.c and cfbline.c - Jon */
-/* $XConsortium: s3dline.c /main/6 1996/01/11 12:26:28 kaleb $ */
+/* $XConsortium: s3dline.c /main/3 1996/10/25 15:37:08 kaleb $ */
 
 #include "X.h"
 
@@ -107,18 +107,28 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
  *   e.g. We could producing the pattern stipple before hand?
  */
 void
+#ifndef POLYSEGMENT
 s3Dline(pDrawable, pGC, mode, npt, pptInit)
      DrawablePtr pDrawable;
      GCPtr pGC;
      int   mode;		/* Origin or Previous */
      int   npt;			/* number of points */
      DDXPointPtr pptInit;
+#else /* POLYSEGMENT */
+s3Dsegment (pDrawable, pGC, nseg, pSeg)
+    DrawablePtr pDrawable;
+    GCPtr pGC;
+    int   nseg;
+    register xSegment *pSeg;
+#endif /* POLYSEGMENT */
 {
    int   nboxInit;
    register int nbox;
    BoxPtr pboxInit;
    register BoxPtr pbox;
+#ifndef POLYSEGMENT
    register DDXPointPtr ppt;	/* pointer to list of translated points */
+#endif /* not POLYSEGMENT */
 
    unsigned int oc1;		/* outcode of point 1 */
    unsigned int oc2;		/* outcode of point 2 */
@@ -153,6 +163,7 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
    if (1 || !xf86VTSema || ((pGC->planemask & s3BppPMask) != s3BppPMask))
    {
       if (xf86VTSema) WaitIdleEmpty();
+#ifndef POLYSEGMENT
       switch (s3InfoRec.bitsPerPixel) {
       case 8:
 	 cfbLineSD(pDrawable, pGC, mode, npt, pptInit);
@@ -167,6 +178,22 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
 	 cfb32LineSD(pDrawable, pGC, mode, npt, pptInit);
          break;
       }
+#else /* POLYSEGMENT */
+      switch (s3InfoRec.bitsPerPixel) {
+      case 8:
+	 cfbSegmentSD(pDrawable, pGC, nseg, pSeg);
+         break;
+      case 16:
+	 cfb16SegmentSD(pDrawable, pGC, nseg, pSeg);
+         break;
+      case 24:
+	 cfb24SegmentSD(pDrawable, pGC, nseg, pSeg);
+         break;
+      case 32:
+	 cfb32SegmentSD(pDrawable, pGC, nseg, pSeg);
+         break;
+      }
+#endif /* POLYSEGMENT */
       if (xf86VTSema) WaitIdleEmpty();
       return;
    }
@@ -202,10 +229,12 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
 
    xorg = pDrawable->x;
    yorg = pDrawable->y;
+#ifndef POLYSEGMENT
    ppt = pptInit;
 
    x2 = ppt->x + xorg;
    y2 = ppt->y + yorg;
+#endif /* not POLYSEGMENT */
 
    pDash = (unsigned char *) pGC->dash;
    numInDashList = pGC->numInDashList;
@@ -219,6 +248,7 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
    thisDash = dashRemaining ;
 
 
+#ifndef POLYSEGMENT
    while (--npt) {
       nbox = nboxInit;
       pbox = pboxInit;
@@ -232,7 +262,23 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
       }
       x2 = ppt->x + xorg;
       y2 = ppt->y + yorg;
+#else /* POLYSEGMENT */
+   while (nseg--) {
+      nbox = nboxInit;
+      pbox = pboxInit;
 
+      x1 = pSeg->x1 + xorg;
+      y1 = pSeg->y1 + yorg;
+      x2 = pSeg->x2 + xorg;
+      y2 = pSeg->y2 + yorg;
+
+      pSeg++;
+#endif /* POLYSEGMENT */
+      /* The following code doesn't work as it can change the direction of
+       * the line in order to simplify the cliping. Dashed lines need to
+       * be drawn in the order given in order to caclulate the dash offset
+       * correctly.
+       */
 #ifdef fastaxislinesfixed
       if (x1 == x2) {
 
@@ -288,7 +334,9 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
 	       pbox++;
 	    }
 	 }
+#ifndef POLYSEGMENT
 	 y2 = ppt->y + yorg;
+#endif /* POLYSEGMENT */
       } else if (y1 == y2) {
 
        /*
@@ -340,7 +388,7 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
 		  thisDash = dashRemaining ;
 
 		  WaitQueue(4);
-		 SET_CURPT((short)x1t, (short)y1);
+		  SET_CURPT((short)x1t, (short)y1);
 		  len = x2t - x1t;
 		  SET_MAJ_AXIS_PCNT((short)(len - 1));
 		  SET_CMD(CMD_LINE | DRAW | LINETYPE | PLANAR |
@@ -354,7 +402,9 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
 	       pbox++;
 	    }
 	 }
+#ifndef POLYSEGMENT
 	 x2 = ppt->x + xorg;
+#endif /* POLYSEGMENT */
       }
       else
 #endif
@@ -405,18 +455,32 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
 		  len = adx;
 	       else
 		  len = ady;
+
+#ifndef POLYSEGMENT
 	     dashIndexTmp = dashIndex;
 	     dashOffsetTmp = dashOffset;
-	     /* No need to adjust dash offset */
-	     /*
-	      * NOTE:  The 8514/A hardware routines for generating lines do
-	      * not match the software generated lines of mi, cfb, and mfb.
-	      * This is a problem, and if I ever get time, I'll figure out
-	      * the 8514/A algorithm and implement it in software for mi,
-	      * cfb, and mfb.
-	      * 2-sep-93 TCG: apparently only change needed is
-	      * addition of 'fix' stuff in cfbline.c
-	      */
+#else /* POLYSEGMENT */
+	       if (pGC->capStyle != CapNotLast) {
+		  unclippedlen++;
+		  len++;
+	       }
+	       dashIndexTmp = dashIndex;
+	       dashOffsetTmp = dashOffset;
+
+	       dashRemaining = pDash[dashIndexTmp] - dashOffsetTmp;
+	       thisDash = dashRemaining ;
+#endif /* POLYSEGMENT */
+
+	       /* No need to adjust dash offset */
+	       /*
+	        * NOTE:  The 8514/A hardware routines for generating lines do
+	        * not match the software generated lines of mi, cfb, and mfb.
+	        * This is a problem, and if I ever get time, I'll figure out
+	        * the 8514/A algorithm and implement it in software for mi,
+	        * cfb, and mfb.
+	        * 2-sep-93 TCG: apparently only change needed is
+	        * addition of 'fix' stuff in cfbline.c
+	        */
 	       WaitQueue(7);
 	       SET_CURPT((short)x1, (short)y1);
 	       SET_ERR_TERM((short)(e + fix));
@@ -468,7 +532,12 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
 		     len = abs(new_y2 - new_y1);
 		  }
 
+#ifndef POLYSEGMENT
 		  len += (clip2 != 0);
+#else /* POLYSEGMENT */
+		  if (clip2 != 0 || pGC->capStyle != CapNotLast)
+		     len++;
+#endif /* POLYSEGMENT */
 		  if (len) {
 		   /* unwind bresenham error term to first point */
 		     if (clip1) {
@@ -519,6 +588,11 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
 		     }
 		     miStepDash (dlen, &dashIndexTmp, pDash,
 				 numInDashList, &dashOffsetTmp);
+#ifdef POLYSEGMENT
+		     dashRemaining = pDash[dashIndexTmp] - dashOffsetTmp;
+		     thisDash = dashRemaining ;
+#endif /* POLYSEGMENT */
+
 		     WaitQueue(7);
 		     SET_CURPT((short)new_x1, (short)new_y1);
 		     SET_ERR_TERM((short)(err + fix));
@@ -536,10 +610,13 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
 	    }
 	 }			/* while (nbox--) */
       }/* sloped line */
+#ifndef POLYSEGMENT
       miStepDash (unclippedlen, &dashIndex, pDash,
 		  numInDashList, &dashOffset);
+#endif /* POLYSEGMENT */
    } /* while (nline--) */
 
+#ifndef POLYSEGMENT
  /*
   * paint the last point if the end style isn't CapNotLast. (Assume that a
   * projecting, butt, or round cap that is one pixel wide is the same as the
@@ -567,6 +644,7 @@ s3Dline(pDrawable, pGC, mode, npt, pptInit)
 	    pbox++;
       }
    }
+#endif /* not POLYSEGMENT */
    WaitQueue(6);
    SET_MIX(FSS_FRGDCOL | ROP_S, BSS_BKGDCOL | ROP_S);
    SET_PIX_CNTL(MIXSEL_FRGDMIX | COLCMPOP_F);

@@ -1,5 +1,9 @@
-XCOMM $XConsortium: Imakefile.LK /main/5 1995/09/04 19:49:48 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/Imakefile.LK,v 3.32 1996/10/13 11:18:50 dawes Exp $
+XCOMM $XConsortium: Imakefile.LK /main/11 1996/10/25 21:18:33 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/Imakefile.LK,v 3.39.2.3 1997/05/12 12:52:17 hohndel Exp $
 /*
  * Server Makefile for LinkKit
  */
@@ -12,9 +16,9 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/Imakefile.LK,v 3.32 1996/
 #include <Server.tmpl>
 
 #define PreFbLibs $(DIX) $(OS) $(FONT)
-#define BarePostFbLibs $(MFB) $(MI)
+#define BarePostFbLibs $(MFB) $(XPSTUBS) $(MI)
 #define PostFbLibs BarePostFbLibs $(EXTENSIONS)
-#define NoMfbBarePostFbLibs $(MI)
+#define NoMfbBarePostFbLibs $(XPSTUBS) $(MI)
 #define NoMfbPostFbLibs NoMfbBarePostFbLibs $(EXTENSIONS)
 
 #define MFBBareLibs PreFbLibs BarePostFbLibs
@@ -40,6 +44,13 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/Imakefile.LK,v 3.32 1996/
                    lib/LibraryTargetName(ddpex1) \
                    lib/LibraryTargetName(ospex)
 #endif
+#if BuildGlxExt && !GlxModule
+#if GlxStubLib 
+        GLXLIB = lib/LibraryTargetName(ServerGlx) 
+#else
+	GLXLIB = GlxStaticServerLib
+#endif
+#endif
 #if BuildXInputExt
       XINPUTEXT = lib/LibraryTargetName(xinput)
 #endif
@@ -64,7 +75,7 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/Imakefile.LK,v 3.32 1996/
 
       OTHEREXTS = lib/LibraryTargetName(ext) $(XKBEXT) $(XINPUTEXT) $(XIEEXT) \
                   $(LBXEXT) $(DBEEXT) $(RECORDEXT) $(SITEEXTS)
-     EXTENSIONS = $(OTHEREXTS) $(PEXLIBS)
+     EXTENSIONS = $(OTHEREXTS) $(PEXLIBS) $(GLXLIB)
          XAULIB = lib/LibraryTargetName(Xau)
        XDMCPLIB = lib/LibraryTargetName(Xdmcp)
         BSDEMUL = lib/LibraryTargetName(Xbsd)
@@ -78,22 +89,25 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/LinkKit/Imakefile.LK,v 3.32 1996/
           CFB16 = lib/LibraryTargetName(cfb) lib/LibraryTargetName(cfb16)
           CFB24 = lib/LibraryTargetName(cfb) lib/LibraryTargetName(cfb24)
           CFB32 = lib/LibraryTargetName(cfb) lib/LibraryTargetName(cfb32)
-#if BuildLBX
-             OS = lib/LibraryTargetName(oslbx) $(XAULIB) $(XDMCPLIB)
-            DIX = lib/LibraryTargetName(dixlbx)
-#else
              OS = lib/LibraryTargetName(os) $(XAULIB) $(XDMCPLIB)
             DIX = lib/LibraryTargetName(dix)
-#endif
              MI = lib/LibraryTargetName(mi)
+        XPSTUBS = lib/LibraryTargetName(xpstubs)
+#if HasZlib
+           ZLIB = GzipLibrary
+#else
+           ZLIB = lib/LibraryTargetName(z)
+#endif
            FONT = lib/LibraryTargetName(font)
+        XAALIBS = lib/LibraryTargetName(xaa)
+        XAAOBJS = lib/xaavga256.o lib/xaa16.o lib/xaa24.o lib/xaa32.o
 #if NeedLibGcc
          GCCLIB = -lgcc
 #endif
 #ifdef ServerExtraSysLibs
    EXTRASYSLIBS = ServerExtraSysLibs
 #endif
-        SYSLIBS = MathLibrary Krb5Libraries $(EXTRASYSLIBS) $(GCCLIB)
+        SYSLIBS = $(ZLIB) MathLibrary Krb5Libraries $(EXTRASYSLIBS) $(GCCLIB)
            CBRT = lib/LibraryTargetName(cbrt)
 
        INCLUDES = -Iinclude -Iinclude/X11 -Idrivers
@@ -166,14 +180,17 @@ main.o : $(DIX)
 #  if XieDynamicModule
    XIE_MODULE_DEFINES = -DXIE_MODULE
 #  endif
+#  if GlxModule
+   GLX_MODULE_DEFINES = -DGLX_MODULE
+#  endif
 #endif
-EXT_MODULES_DEFINES = $(PEX_MODULE_DEFINES) $(XIE_MODULE_DEFINES)
+EXT_MODULES_DEFINES = $(PEX_MODULE_DEFINES) $(XIE_MODULE_DEFINES) $(GLX_MODULE_DEFINES)
 
 LinkFile(xf86IniExt.c,miinitext.c)
 LinkFile(xf86MIniExt.c,miinitext.c)
-SpecialCObjectRule(miinitext,$(ICONFIGFILES),-DXFREE86 -UXINPUT -UXF86VIDMODE -UXFreeXDGA -UXF86MISC)
+SpecialCObjectRule(miinitext,$(ICONFIGFILES),-DXFREE86 -UXINPUT -UXF86VIDMODE -UXFreeXDGA -UXF86MISC $(EXT_MODULES_DEFINES))
 SpecialCObjectRule(xf86IniExt,$(ICONFIGFILES),$(EXT_MODULES_DEFINES) -DXFREE86)
-SpecialCObjectRule(xf86MIniExt,$(ICONFIGFILES),$(EXT_MODULES_DEFINES) -DXFREE86 -UPEXEXT -UXIE)
+SpecialCObjectRule(xf86MIniExt,$(ICONFIGFILES),$(EXT_MODULES_DEFINES) -DXFREE86 -UPEXEXT -UXIE -UGLXEXT)
 
 /* 		  Build rule blocks, add one for each server
  *
@@ -216,8 +233,8 @@ XCOMM XFree86 SVGA Server
 XCOMM
 DDXDIR1 = $(VGADRIVERSRC)
 XF86SVGASUBDIRS = $(VGADRIVERSRC)
-XF86SVGAOBJS = XF86_SVGA.o vga256Conf.o
-XF86SVGALIBS = $(VGADRIVERSRC)/LibraryTargetName(driver256) \
+XF86SVGAOBJS = XF86_SVGA.o vga256Conf.o $(XAAOBJS)
+XF86SVGALIBS = $(VGADRIVERSRC)/LibraryTargetName(driver256) $(XAALIBS) \
 	       $(DRIVERSRC)/LibraryTargetName(vga256) $(XF86LIBS) CFBLibs
 XF86SVGASYSLIBS = $(SYSLIBS)
 VGADRIVERS = XF86SvgaDrivers
@@ -497,8 +514,8 @@ XCOMM
 INCLUDES = -Iinclude -Iinclude/X11 -Idrivers98
 DDXDIR1 = $(XF98VGADRIVERSRC)
 XF98GANBWAPSUBDIRS = $(XF98VGADRIVERSRC)
-XF98GANBWAPOBJS = XF86_SVGA.o vga256Conf.o
-XF98GANBWAPLIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(driverganbwap) \
+XF98GANBWAPOBJS = XF86_SVGA.o vga256Conf.o $(XAAOBJS)
+XF98GANBWAPLIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(driverganbwap) $(XAALIBS) \
 	       $(XF98DRIVERSRC)/LibraryTargetName(ganbwap) $(XF98LIBS) CFBLibs
 XF98GANBWAPSYSLIBS = $(SYSLIBS)
 XF98VGADRIVERS = XF98SvgaDrivers
@@ -518,8 +535,8 @@ XCOMM
 INCLUDES = -Iinclude -Iinclude/X11 -Idrivers98
 DDXDIR1 = $(XF98VGADRIVERSRC)
 XF98NEC480SUBDIRS = $(XF98VGADRIVERSRC)
-XF98NEC480OBJS = XF86_SVGA.o nec480Conf.o
-XF98NEC480LIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(drivernec480) \
+XF98NEC480OBJS = XF86_SVGA.o nec480Conf.o $(XAAOBJS)
+XF98NEC480LIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(drivernec480) $(XAALIBS) \
 	       $(XF98DRIVERSRC)/LibraryTargetName(nec480) $(XF98LIBS) CFBLibs
 XF98NEC480SYSLIBS = $(SYSLIBS)
 XF98VGADRIVERS = XF98SvgaDrivers
@@ -539,8 +556,8 @@ XCOMM
 INCLUDES = -Iinclude -Iinclude/X11 -Idrivers98
 DDXDIR1 = $(XF98VGADRIVERSRC)
 XF98NKVNECUBDIRS = $(XF98VGADRIVERSRC)
-XF98NKVNECOBJS = XF86_SVGA.o vga256Conf.o
-XF98NKVNECLIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(drivernkvnec) \
+XF98NKVNECOBJS = XF86_SVGA.o vga256Conf.o $(XAAOBJS)
+XF98NKVNECLIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(drivernkvnec) $(XAALIBS) \
 	       $(XF98DRIVERSRC)/LibraryTargetName(nkvnec) $(XF98LIBS) CFBLibs
 XF98NKVNECSYSLIBS = $(SYSLIBS)
 XF98VGADRIVERS = XF98SvgaDrivers
@@ -560,8 +577,8 @@ XCOMM
 INCLUDES = -Iinclude -Iinclude/X11 -Idrivers98
 DDXDIR1 = $(XF98VGADRIVERSRC)
 XF98WABSUBDIRS = $(XF98VGADRIVERSRC)
-XF98WABSOBJS = XF86_SVGA.o vga256Conf.o
-XF98WABSLIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(driverwabs) \
+XF98WABSOBJS = XF86_SVGA.o vga256Conf.o $(XAAOBJS)
+XF98WABSLIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(driverwabs) $(XAALIBS) \
 	       $(XF98DRIVERSRC)/LibraryTargetName(wabs) $(XF98LIBS) CFBLibs
 XF98WABSSYSLIBS = $(SYSLIBS)
 XF98VGADRIVERS = XF98SvgaDrivers
@@ -581,8 +598,8 @@ XCOMM
 INCLUDES = -Iinclude -Iinclude/X11 -Idrivers98
 DDXDIR1 = $(XF98VGADRIVERSRC)
 XF98WABEPUBDIRS = $(XF98VGADRIVERSRC)
-XF98WABEPOBJS = XF86_SVGA.o vga256Conf.o
-XF98WABEPLIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(driverwabep) \
+XF98WABEPOBJS = XF86_SVGA.o vga256Conf.o $(XAAOBJS)
+XF98WABEPLIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(driverwabep) $(XAALIBS) \
 	       $(XF98DRIVERSRC)/LibraryTargetName(wabep) $(XF98LIBS) CFBLibs
 XF98WABEPSYSLIBS = $(SYSLIBS)
 XF98VGADRIVERS = XF98SvgaDrivers
@@ -602,8 +619,8 @@ XCOMM
 INCLUDES = -Iinclude -Iinclude/X11 -Idrivers98
 DDXDIR1 = $(XF98VGADRIVERSRC)
 XF98WSNAUBDIRS = $(XF98VGADRIVERSRC)
-XF98WSNAOBJS = XF86_SVGA.o vga256Conf.o
-XF98WSNALIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(driverwsna) \
+XF98WSNAOBJS = XF86_SVGA.o vga256Conf.o $(XAAOBJS)
+XF98WSNALIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(driverwsna) $(XAALIBS) \
 	       $(XF98DRIVERSRC)/LibraryTargetName(wsna) $(XF98LIBS) CFBLibs
 XF98WSNASYSLIBS = $(SYSLIBS)
 XF98VGADRIVERS = XF98SvgaDrivers
@@ -623,8 +640,8 @@ XCOMM
 INCLUDES = -Iinclude -Iinclude/X11 -Idrivers98
 DDXDIR1 = $(XF98VGADRIVERSRC)
 XF98TGUIUBDIRS = $(XF98VGADRIVERSRC)
-XF98TGUIOBJS = XF86_SVGA.o tguiConf.o
-XF98TGUILIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(drivertrident) \
+XF98TGUIOBJS = XF86_SVGA.o tguiConf.o $(XAAOBJS)
+XF98TGUILIBS = $(XF98VGADRIVERSRC)/LibraryTargetName(drivertrident) $(XAALIBS) \
 	       $(XF98DRIVERSRC)/LibraryTargetName(trident) $(XF98LIBS) CFBLibs
 XF98TGUISYSLIBS = $(SYSLIBS)
 XF98VGADRIVERS = XF98SvgaDrivers
@@ -768,8 +785,9 @@ SetUIDServerTarget(XF98_GA968,$(XF98GA968SUBDIRS),$(XF98GA968OBJS),$(XF98GA968LI
 XCOMM
 XCOMM XFree86 I128 Server
 XCOMM
-XF86I128OBJS = XF86_I128.o
-XF86I128LIBS = $(DRIVERSRC)/LibraryTargetName(i128) $(XF86LIBS) CFBLibs \
+XF86I128OBJS = XF86_I128.o lib/xaa8.o lib/xaa16.o lib/xaa24.o lib/xaa32.o
+XF86I128LIBS = $(DRIVERSRC)/LibraryTargetName(i128) $(XAALIBS) \
+		$(XF86LIBS) CFBLibs \
 		lib/LibraryTargetName(xf86cache)
 XF86I128SYSLIBS = $(SYSLIBS)
 XF86_I128.o: XF86_I128.c $(ICONFIGFILES)
@@ -853,7 +871,7 @@ XNESTOBJS = miinitext.o main.o
 #endif
 XNESTDIRS =
 XNEST = lib/LibraryTargetName(xnest)
-XNESTLIBS = $(DIX) $(OS) $(FONT) $(XNEST) $(MI) $(EXTENSIONS)
+XNESTLIBS = $(DIX) $(OS) $(FONT) $(XNEST) $(XPSTUBS) $(MI) $(EXTENSIONS)
 XNESTSYSLIBS = ClientLibDir $(XLIB) $(XNEST) $(SYSLIBS)
 ServerTarget(Xnest,$(XNESTDIRS),$(XNESTOBJS),$(XNESTLIBS),$(XNESTSYSLIBS))
 #endif /* XnestServer */

@@ -1,11 +1,11 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/Imakefile,v 3.4 1996/10/18 15:00:15 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/Imakefile,v 3.6 1997/01/05 11:53:36 dawes Exp $
 
 
 
 
 
 
-XCOMM $XConsortium: Imakefile /main/2 1995/11/12 17:38:24 kaleb $
+XCOMM $XConsortium: Imakefile /main/5 1996/10/27 18:06:00 kaleb $
 
 #include <Server.tmpl>
 
@@ -23,7 +23,7 @@ OBJS = ativga.o mach64.o mach64blt.o mach64bstor.o mach64cmap.o mach64curs.o \
 
 INCLUDES = -I$(XF86COMSRC) -I. -I$(XF86SRC)/vga256/vga \
 	   -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
-           -I$(SERVERSRC)/cfb -I$(INCLUDESRC) -I$(FONTSRC)/include \
+           -I$(SERVERSRC)/cfb -I$(XINCLUDESRC) -I$(FONTSRC)/include \
 	   -I$(FONTINCSRC) -I$(XF86OSSRC) -I$(XF86HWSRC)
 
 DEFINES = -DMACH64_SERVER -DPSZ=8
@@ -38,4 +38,6 @@ LinkSourceFile(vgaHW.c,../../vga256/vga)
 
 InstallLinkKitLibrary(mach64,$(LINKKITDIR)/drivers)
 
+#ifndef OS2Architecture
 DependTarget()
+#endif

@@ -1,9 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga2/mfb.banked/mfblinebank.h,v 3.7 1996/02/04 09:12:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga2/mfb.banked/mfblinebank.h,v 3.9 1996/12/23 06:55:24 dawes Exp $ */
 /* mfblinebank.h */
 /* included from mfb.h if MFB_LINE_BANK is defined */
 
 
-/* $XConsortium: mfblinebank.h /main/6 1995/11/13 07:15:08 kaleb $ */
+/* $XConsortium: mfblinebank.h /main/7 1996/02/21 18:01:05 kaleb $ */
 
 /* This should be       */
 /* #include "vga.h"     */
@@ -30,14 +30,18 @@ extern int vgaSaveReadseg;
 #ifdef CSRG_BASED
 #define VGABASE 0xFF000000
 #else
+#if defined(__alpha__)
+#define VGABASE 0xFFFFFFFFF0000000UL
+#else
 #define VGABASE 0xF0000000
+#endif
 #endif
 
 #if __GNUC__ > 1
 #define USE_GCC_INLINE
 #endif
 
-#if __GNUC__ > 1
+#if __GNUC__ > 1 && !defined(__alpha__)
 #define USE_ASM_BANK_MACROS
 #endif
 

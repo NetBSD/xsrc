@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.7 1996/08/20 12:29:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/posix_tty.c,v 3.8 1996/12/23 06:51:01 dawes Exp $ */
 /*
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
  *
@@ -22,7 +22,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: posix_tty.c /main/4 1995/11/13 06:15:12 kaleb $ */
+/* $XConsortium: posix_tty.c /main/7 1996/10/19 18:07:47 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

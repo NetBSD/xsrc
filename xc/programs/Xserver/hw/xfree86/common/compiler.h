@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/compiler.h,v 3.19 1996/10/08 12:23:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/compiler.h,v 3.24 1997/01/05 11:58:02 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: compiler.h /main/7 1995/12/28 17:14:10 kaleb $ */
+/* $XConsortium: compiler.h /main/16 1996/10/25 15:38:34 kaleb $ */
 
 #ifndef _COMPILER_H
 #define _COMPILER_H
@@ -255,10 +255,112 @@ static __inline__ void stw_u(unsigned long r5, unsigned short * r11)
 		:"r" (r5), "r" (r11));
 }
 
-#define mem_barrier() __asm__ __volatile__("mb": : :"memory")
-
+#define mem_barrier()        __asm__ __volatile__("mb"  : : : "memory")
+#ifdef __ELF__
+#define write_mem_barrier()  __asm__ __volatile__("wmb" : : : "memory")
+#else  /*  ECOFF gas 2.6 doesn't know "wmb" :-(  */
+#define write_mem_barrier()  mem_barrier()
+#endif
 
 #else /* defined(linux) && defined(__alpha__) */
+#if defined(__mips__)
+
+unsigned int IOPortBase;  /* Memory mapped I/O port area */
+
+static __inline__ void
+outb(port, val)
+     short port;
+     char val;
+{
+	*(volatile unsigned char*)(((unsigned short)(port))+IOPortBase) = val;
+}
+
+static __inline__ void
+outw(port, val)
+     short port;
+     short val;
+{
+	*(volatile unsigned short*)(((unsigned short)(port))+IOPortBase) = val;
+}
+
+static __inline__ void
+outl(port, val)
+     short port;
+     int val;
+{
+	*(volatile unsigned long*)(((unsigned short)(port))+IOPortBase) = val;
+}
+
+static __inline__ unsigned int
+inb(port)
+     short port;
+{
+	return(*(volatile unsigned char*)(((unsigned short)(port))+IOPortBase));
+}
+
+static __inline__ unsigned int
+inw(port)
+     short port;
+{
+	return(*(volatile unsigned short*)(((unsigned short)(port))+IOPortBase));
+}
+
+static __inline__ unsigned int
+inl(port)
+     short port;
+{
+	return(*(volatile unsigned long*)(((unsigned short)(port))+IOPortBase));
+}
+
+
+static __inline__ unsigned long ldq_u(unsigned long * r11)
+{
+	unsigned long r1;
+	__asm__("lwr %0,%2\n\t"
+		"lwl %0,%3\n\t"
+		:"=&r" (r1)
+		:"r" (r11),
+		 "m" (*r11),
+		 "m" (*(unsigned long *)(3+(char *) r11)));
+	return r1;
+}
+
+static __inline__ unsigned long ldl_u(unsigned int * r11)
+{
+	unsigned long r1;
+	__asm__("lwr %0,%2\n\t"
+		"lwl %0,%3\n\t"
+		:"=&r" (r1)
+		:"r" (r11),
+		 "m" (*r11),
+		 "m" (*(unsigned long *)(3+(char *) r11)));
+	return r1;
+}
+
+static __inline__ unsigned long ldw_u(unsigned short * r11)
+{
+	unsigned long r1;
+	__asm__("lwr %0,%2\n\t"
+		"lwl %0,%3\n\t"
+		:"=&r" (r1)
+		:"r" (r11),
+		 "m" (*r11),
+		 "m" (*(unsigned long *)(1+(char *) r11)));
+	return r1;
+}
+
+#define stq_u(v,p)	stl_u(v,p)
+#define stl_u(v,p)	((unsigned char *)(p)) = (v); \
+			((unsigned char *)(p)+1) = ((v) >> 8);  \
+			((unsigned char *)(p)+2) = ((v) >> 16); \
+			((unsigned char *)(p)+3) = ((v) >> 24)
+
+#define stw_u(v,p)	((unsigned char *)(p)) = (v); \
+			((unsigned char *)(p)+1) = ((v) >> 8)
+
+#define mem_barrier()   /* NOP */
+
+#else /* defined(mips) */
 
 #define ldq_u(p)	(*((unsigned long  *)(p)))
 #define ldl_u(p)	(*((unsigned int   *)(p)))
@@ -267,6 +369,7 @@ static __inline__ void stw_u(unsigned long r5, unsigned short * r11)
 #define stl_u(v,p)	((unsigned int   *)(p)) = (v)
 #define stw_u(v,p)	((unsigned short *)(p)) = (v)
 #define mem_barrier()   /* NOP */
+#define write_mem_barrier()   /* NOP */
 
 #if !defined(FAKEIT) && !defined(__mc68000__)
 #ifdef GCCUSESGAS
@@ -872,6 +975,7 @@ unsigned short int port;
 
 #endif /* FAKEIT */
 
+#endif /* defined(mips) */
 #endif /* defined(AlphaArchitecture) && defined(LinuxArchitecture) */
 
 #else /* __GNUC__ */
@@ -1187,6 +1291,7 @@ static int inb(port)
 #define stl_u(v,p)	((unsigned int   *)(p)) = (v)
 #define stw_u(v,p)	((unsigned short *)(p)) = (v)
 #define mem_barrier()   /* NOP */
+#define write_mem_barrier()   /* NOP */
 #endif /* __GNUC__ */
 
 #if defined(IODEBUG) && defined(__GNUC__)
@@ -1205,6 +1310,14 @@ static int inb(port)
 #define outl(a,b) (ErrorF("outl(0x%03x, 0x%08x)\t@ line %4d, file %s\n", a, b, __LINE__, __FILE__),RealOutl(a,b))
 #endif
 
+/*
+ * This header sometimes gets included where is isn't needed, and on some
+ * OSs this causes problems because the following functions generate
+ * references to inb() and outb() which can't be resolved.  Defining
+ * NO_COMPILER_H_EXTRAS avoids this problem.
+ */
+
+#ifndef NO_COMPILER_H_EXTRAS
 /*
  *-----------------------------------------------------------------------
  * Port manipulation convenience functions
@@ -1333,6 +1446,7 @@ unsigned char ind;
 {
 	return(testinx2(port, ind, 0xFF));
 }
+#endif /* NO_COMPILER_H_EXTRAS */
 
 #endif /* NO_INLINE */
 #endif /* _COMPILER_H */

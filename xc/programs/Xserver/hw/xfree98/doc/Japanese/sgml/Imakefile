@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/Japanese/sgml/Imakefile,v 3.0 1996/02/18 03:44:27 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/Japanese/sgml/Imakefile,v 3.1 1997/01/26 04:44:00 dawes Exp $
 
 /* No rules for building jlinuxdoc-sgml yet */
 
@@ -11,8 +11,11 @@ LinkSourceFile(INSTALL.sgml,$(XF86SRC)/doc/Japanese/sgml)
 LinkSourceFile(LinkKit.sgml,$(XF86SRC)/doc/Japanese/sgml)
 LinkSourceFile(Linux.sgml,$(XF86SRC)/doc/Japanese/sgml)
 LinkSourceFile(Mach64.sgml,$(XF86SRC)/doc/Japanese/sgml)
+LinkSourceFile(QStart.sgml,$(XF86SRC)/doc/Japanese/sgml)
 LinkSourceFile(README.sgml,$(XF86SRC)/doc/Japanese/sgml)
+LinkSourceFile(RELNOTE.sgml,$(XF86SRC)/doc/Japanese/sgml)
 LinkSourceFile(S3.sgml,$(XF86SRC)/doc/Japanese/sgml)
 LinkSourceFile(VidModes.sgml,$(XF86SRC)/doc/Japanese/sgml)
+LinkSourceFile(VGADriv.sgml,$(XF86SRC)/doc/Japanese/sgml)
 LinkSourceFile(ati.sgml,$(XF86SRC)/doc/Japanese/sgml)
 LinkSourceFile(cirrus.sgml,$(XF86SRC)/doc/Japanese/sgml)

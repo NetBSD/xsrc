@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8bc.c,v 1.1.1.2 1996/01/03 07:13:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8bc.c,v 3.1 1996/12/23 06:39:43 dawes Exp $ */
 /*
  * Copyright 1993 by Jon Tombs. Oxford University
  * 
@@ -26,7 +26,7 @@
  * Extract from s3bcach.c
  * Adapted to Mach8, Hans Nasten. (nasten@everyware.se).
  */
-/* $XConsortium: mach8bc.c /main/2 1995/11/12 17:59:56 kaleb $ */
+/* $XConsortium: mach8bc.c /main/3 1996/02/21 17:29:42 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"
@@ -41,7 +41,6 @@
 #include        "xf86bcache.h"
 #include	"mach8.h"
 #include	"regmach8.h"
-
 
 extern unsigned char mach8cachemask[8];
 extern unsigned char mach8cachemaskswapped[8];

@@ -1,14 +1,12 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 
 <!-- Id: README.Config.sgml,v 1.1 1994/10/05 23:31:42 klemme Exp  -->
 
  <article>
 
- <title>		Configuring XFree86
-
-			A Step-By-Step Guide
- <author> David Wexelblat and The XFree86 Project, Inc
- <date> 5 October 1994
+ <title>Configuring XFree86: A Step-By-Step Guide
+ <author>David Wexelblat and The XFree86 Project, Inc
+ <date>5 October 1994
 
 <abstract>
 	This document describes how to set up your XFree86 server and
@@ -29,7 +27,7 @@ follow the specific instructions (there shouldn't be much of that, though).
 <toc>
 
 
-<sect>  Procedure Overview
+<sect>Procedure Overview
 <p>
 	There are two steps to getting things up and running.  The first
 is to select the appropriate server that you will be using and set it up
@@ -72,7 +70,7 @@ The sections of the <tt>XF86Config</tt> file are:
  </descrip>
 
 
-<sect>  Setting Up The Correct Default Server
+<sect>Setting Up The Correct Default Server
 <p>
 
 The default server name is <tt>/usr/X11R6/bin/X</tt>.
@@ -112,7 +110,7 @@ You can run <tt>/usr/X11R6/bin/X -showconfig</tt> to get a printout of the
 configured drivers.  If you need to relink your server, refer to the
 <tt>README</tt> file in the LinkKit for specific information.
 
-<sect>  The Easy Parts of XF86Config
+<sect>The Easy Parts of XF86Config
 <p>
 
 
@@ -151,7 +149,7 @@ time it is because the device is not correctly configured in the OS.
 Hence don't bug us until after you prove that your OS level support
 is correct.
 
-<sect>  Configuring the Video Hardware
+<sect>Configuring the Video Hardware
 <p>
 
 The video hardware is described in the "Device" sections.
@@ -166,10 +164,10 @@ To create a Device section you need to collect the data for your
 hardware, and make some configuration decisions.  The hardware data you
 need is:
 <itemize>
-	<item> Chipset
-	<item> Amount of video memory
-	<item> Dot-clocks available or clock chip used (if programmable)
-	<item> Ramdac type (for some servers)
+	<item>Chipset
+	<item>Amount of video memory
+	<item>Dot-clocks available or clock chip used (if programmable)
+	<item>Ramdac type (for some servers)
 </itemize>
 The server, in general, is capable of filling these on its own, but it
 is best to fully specify things in the <tt>XF86Config</tt> file, so that no
@@ -231,7 +229,7 @@ server manual pages will describe these options, and the
 chipset-specific <tt>README</tt> files will tell you if any are required for your
 board.
 
-<sect>  Configuring the Monitor and its Modes
+<sect>Configuring the Monitor and its Modes
 <p>
 
 	Configuring monitor modes can be a trying experience,
@@ -281,7 +279,7 @@ server will use the first mode with a matching clock.
 It is generally considered a bad idea to have more than one mode with
 the same name in your <tt>XF86Config</tt> file.
 
-<sect>  Combining the Video Hardware and Monitor Data
+<sect>Combining the Video Hardware and Monitor Data
 <p>
 
 	Once you have given a description of your monitor and graphics
@@ -319,7 +317,7 @@ list with Ctrl-Alt-Keypad+ or Ctrl-Alt-Keypad- hotkey sequences.
 	That's it.  Now you're ready to test out your new XFree86
 installation.
 
-<sect>  Generic Video Modes
+<sect>Generic Video Modes
 <p>
 <code>
 #
@@ -519,13 +517,13 @@ installation.
 </code>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Config.sgml,v 3.8 1996/08/13 11:30:51 dawes Exp $ 
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Config.sgml,v 3.11 1997/01/25 03:21:50 dawes Exp $ 
 
 
 
 
 
-$XConsortium: Config.sgml /main/5 1995/11/12 19:59:22 kaleb $
+$XConsortium: Config.sgml /main/7 1996/10/19 18:03:03 kaleb $
 </verb>
 
 </article>

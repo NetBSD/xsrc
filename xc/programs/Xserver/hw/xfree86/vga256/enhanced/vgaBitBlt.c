@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/vgaBitBlt.c,v 3.3 1996/02/04 09:14:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/vgaBitBlt.c,v 3.4 1996/12/23 06:59:15 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -23,7 +23,7 @@
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  *
  */
-/* $XConsortium: vgaBitBlt.c /main/3 1995/11/13 08:46:25 kaleb $ */
+/* $XConsortium: vgaBitBlt.c /main/4 1996/02/21 18:09:26 kaleb $ */
 
 #include	"vga256.h"
 #include	"fastblt.h"

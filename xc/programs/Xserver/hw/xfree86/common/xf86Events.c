@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.38 1996/10/03 08:34:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Events.c,v 3.42.2.2 1997/05/12 12:52:26 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86Events.c /main/30 1996/01/30 15:14:46 kaleb $ */
+/* $XConsortium: xf86Events.c /main/46 1996/10/25 11:36:30 kaleb $ */
 
 /* [JCH-96/01/21] Extended std reverse map to four buttons. */
 
@@ -34,12 +34,12 @@
 
 #include "compiler.h"
 
+#include "Xpoll.h"
 #include "xf86Procs.h"
 #include "xf86_OSlib.h"
 #include "xf86_Config.h"
 #include "atKeynames.h"
 
-#include "osdep.h"
 
 #ifdef XFreeXDGA
 #include "XIproto.h"
@@ -146,7 +146,7 @@ static Bool VTSysreqToggle = FALSE;
 #endif /* !USE_VT_SYSREQ */
 static Bool VTSwitchEnabled = TRUE;   /* Allows run-time disabling for *BSD */
 
-extern long EnabledDevices[];
+extern fd_set EnabledDevices;
 
 #if defined(CODRV_SUPPORT)
 extern unsigned char xf86CodrvMap[];
@@ -273,8 +273,10 @@ static char stateTab[48][3] = {
  * And we remap them (MSBit described first) :
  * 0 | 4th | 3rd | 2nd | 1st
  */
-static char reverseMap[16] = {0,  4,  2,  6,  1,  5,  3,  7,
-			      8, 12, 10, 14,  9, 13, 11, 15};
+static char reverseMap[32] = { 0,  4,  2,  6,  1,  5,  3,  7,
+			       8, 12, 10, 14,  9, 13, 11, 15,
+			      16, 20, 18, 22, 17, 21, 19, 23,
+			      24, 28, 26, 30, 25, 29, 27, 31};
 
 
 static char hitachMap[16] = {  0,  2,  1,  3, 
@@ -639,7 +641,13 @@ xf86PostKbdEvent(key)
       switch (specialkey) {
 	
       case KEY_BackSpace:
-	if (!xf86Info.dontZap) GiveUp(0);
+	if (!xf86Info.dontZap) {
+#ifdef XFreeXDGA
+  if (((ScrnInfoPtr)(xf86Info.currentScreen->devPrivates[xf86ScreenIndex].ptr))->directMode&XF86DGADirectGraphics) 
+	break;
+#endif
+	 GiveUp(0);
+        }
 	break;
 	
 	/*
@@ -684,7 +692,11 @@ xf86PostKbdEvent(key)
 	    )
         {
 	  if (down)
+#ifdef SCO325
+            ioctl(xf86Info.consoleFd, VT_ACTIVATE, specialkey - KEY_F1);
+#else
             ioctl(xf86Info.consoleFd, VT_ACTIVATE, specialkey - KEY_F1 + 1);
+#endif
           return;
         }
 	break;
@@ -697,7 +709,11 @@ xf86PostKbdEvent(key)
 	    )
         {
 	  if (down)
+#ifdef SCO325
+            ioctl(xf86Info.consoleFd, VT_ACTIVATE, specialkey - KEY_F11 + 10);
+#else
             ioctl(xf86Info.consoleFd, VT_ACTIVATE, specialkey - KEY_F11 + 11);
+#endif
           return;
         }
 	break;
@@ -1114,9 +1130,15 @@ xf86PostMseEvent(device, buttons, dx, dy)
         change = buttons ^ reverseMap[private->lastButtons];
       if (change & 02)
 	{
+#ifdef XINPUT
+	    if (xf86CheckButton(2, (buttons & 02))) {
+#endif
 	  ENQUEUE(mevent,
 		  2, (buttons & 02) ? ButtonPress : ButtonRelease,
 		  XE_POINTER);
+#ifdef XINPUT
+	    }
+#endif
 	}
       
       /*
@@ -1126,15 +1148,18 @@ xf86PostMseEvent(device, buttons, dx, dy)
 	{
 #ifdef XINPUT
           if (is_pointer) {
+	      if (xf86CheckButton(abs(id), (id >= 0))) {
 #endif
             ENQUEUE(mevent,
                     abs(id), (id < 0 ? ButtonRelease : ButtonPress), 
                     XE_POINTER);
 #ifdef XINPUT
+	      }
           }
           else {
             xev->type = (id < 0 ? DeviceButtonRelease : DeviceButtonPress);
             xev->deviceid = device->id | MORE_EVENTS;
+	    xev->detail = abs(id);
             xv->type = DeviceValuator;
             xv->deviceid = device->id;
             xv->num_valuators = 0;
@@ -1148,15 +1173,18 @@ xf86PostMseEvent(device, buttons, dx, dy)
 	{
 #ifdef XINPUT
 	  if (is_pointer) {
+	    if (xf86CheckButton(abs(id), (id >= 0))) {
 #endif
             ENQUEUE(mevent,
                     abs(id), (id < 0 ? ButtonRelease : ButtonPress), 
                     XE_POINTER);
 #ifdef XINPUT
+	    }
           }
           else {
             xev->type = (id < 0 ? DeviceButtonRelease : DeviceButtonPress);
             xev->deviceid = device->id | MORE_EVENTS;
+	    xev->detail = abs(id);
             xv->type = DeviceValuator;
             xv->deviceid = device->id;
             xv->num_valuators = 0;
@@ -1189,15 +1217,18 @@ xf86PostMseEvent(device, buttons, dx, dy)
       if (truebuttons != 0) {
 #ifdef XINPUT
           if (is_pointer) {
+	    if (xf86CheckButton(truebuttons)) {
 #endif
 	    ENQUEUE(mevent,
 		    truebuttons, (pressed ? ButtonPress : ButtonRelease),
 		    XE_POINTER);
 #ifdef XINPUT
+	    }
 	  }
 	  else {
             xev->type = pressed ? DeviceButtonPress : DeviceButtonRelease;
             xev->deviceid = device->id | MORE_EVENTS;
+	    xev->detail = truebuttons;
             xv->type = DeviceValuator;
             xv->deviceid = device->id;
             xv->num_valuators = 0;
@@ -1213,25 +1244,27 @@ xf86PostMseEvent(device, buttons, dx, dy)
        * is the reverse of the button mapping reported to the server.
        */
       if (private->mseType == P_MMHIT)
-        change = buttons ^ hitachMap[private->lastButtons];
+	change = buttons ^ hitachMap[private->lastButtons];
       else
-        change = buttons ^ reverseMap[private->lastButtons];
-
+	change = buttons ^ reverseMap[private->lastButtons];
       while (change)
 	{
 	  id = ffs(change);
 	  change &= ~(1 << (id-1));
 #ifdef XINPUT
           if (is_pointer) {
+	    if (xf86CheckButton(id, (buttons&(1<<(id-1))))) {
 #endif
             ENQUEUE(mevent,
                     id, (buttons&(1<<(id-1)))? ButtonPress : ButtonRelease,
                     XE_POINTER);
 #ifdef XINPUT
+	    }
           }
           else {
             xev->type = (buttons&(1<<(id-1)))? DeviceButtonPress : DeviceButtonRelease;
             xev->deviceid = device->id | MORE_EVENTS;
+	    xev->detail = id;
             xv->type = DeviceValuator;
             xv->deviceid = device->id;
             xv->num_valuators = 0;
@@ -1279,12 +1312,14 @@ xf86Wakeup(blockData, err, pReadmask)
 
 #ifndef __EMX__
 #ifdef	__OSF__
-  long kbdDevices[mskcnt];
-  long mseDevices[mskcnt];
+  fd_set kbdDevices;
+  fd_set mseDevices;
 #endif	/* __OSF__ */
-  long devicesWithInput[mskcnt];
+  fd_set* LastSelectMask = (fd_set*)pReadmask;
+  fd_set devicesWithInput;
 
   if ((int)err >= 0) {
+    XFD_ANDSET(&devicesWithInput, LastSelectMask, &EnabledDevices);
 #ifdef	__OSF__
    /*
      * Until the two devices are made nonblock on read, we have to do this.
@@ -1306,8 +1341,7 @@ xf86Wakeup(blockData, err, pReadmask)
         (xf86Info.mouseDev->mseEvents)(1);
 
 #else
-    MASKANDSETBITS(devicesWithInput, ((FdMask *)pReadmask), EnabledDevices);
-    if (ANYSET(devicesWithInput))
+    if (XFD_ANYSET(&devicesWithInput))
       {
 	(xf86Info.kbdEvents)();
 	(xf86Info.mouseDev->mseEvents)(xf86Info.mouseDev);

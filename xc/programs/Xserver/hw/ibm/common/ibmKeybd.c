@@ -1,5 +1,5 @@
 /*
- * $XConsortium: ibmKeybd.c /main/3 1995/12/05 15:44:31 matt $
+ * $XConsortium: ibmKeybd.c /main/5 1996/07/31 10:32:01 kaleb $
  *
  * Copyright IBM Corporation 1987,1988,1989,1990,1991
  *
@@ -63,6 +63,6 @@ ibmChangeKeyboardControl(pDevice,pCtrl)
     ibmLEDState=	pCtrl->leds;
 #ifdef _IBM_LFT
     ibmBellVolume= 	pCtrl->bell;
-#endif;
+#endif
     return;
 }

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/svr3_patch,v 3.1 1996/02/04 09:09:05 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/svr3_patch,v 3.2 1996/12/23 06:47:21 dawes Exp $
 #
 # Apply patch to kernel to prevent losing IOPL on signals.
 #
@@ -7,7 +7,7 @@
 #	adapted for svr3 by Steve Forsythe (forsse@meaddata.com) from initial
 #	svr4 version by David Wexelblat (dwex@goblin.org, dwex@aib.com)
 #
-# $XConsortium: svr3_patch /main/3 1995/11/12 20:17:41 kaleb $
+# $XConsortium: svr3_patch /main/4 1996/02/21 17:48:28 kaleb $
 #
 
 PATH=/bin:/usr/bin:/usr/local/bin

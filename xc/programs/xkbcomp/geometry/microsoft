@@ -1,4 +1,4 @@
-// $XConsortium: microsoft /main/5 1996/01/22 18:08:17 kaleb $
+// $XConsortium: microsoft /main/6 1996/08/31 12:16:27 kaleb $
 default xkb_geometry "natural" {
 
     // Approximate layout for a Microsoft Natural Keyboard

@@ -1,3 +1,4 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/realtek/rt_bank.s,v 3.2 1996/12/23 06:58:16 dawes Exp $ */
 /*
  * Stub driver Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -19,9 +20,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* $XConsortium: rt_bank.s /main/2 1995/09/05 19:37:16 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/realtek/rt_bank.s,v 3.1 1996/02/04 09:14:08 dawes Exp $ */
+/* $XConsortium: rt_bank.s /main/3 1996/02/21 18:07:00 kaleb $ */
 
 /*
  * These are here the very lowlevel VGA bankswitching routines.

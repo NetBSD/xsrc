@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/drivers/mmio_928/mmio_928.c,v 3.8 1996/02/04 09:05:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/drivers/mmio_928/mmio_928.c,v 3.9 1996/12/23 06:42:28 dawes Exp $ */
 /*
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
  *
@@ -22,7 +22,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: mmio_928.c /main/4 1995/11/12 18:22:44 kaleb $ */
+/* $XConsortium: mmio_928.c /main/5 1996/02/21 17:33:58 kaleb $ */
 
 #include "s3.h"
 #include "regs3.h"

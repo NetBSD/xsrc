@@ -15,6 +15,9 @@
  *	"$XConsortium: mibstore.h,v 5.2 93/10/12 11:41:12 dpw Exp $ SPRITE (Berkeley)"
  */
 
+
+/* $XFree86: xc/programs/Xserver/mi/mibstore.h,v 1.2 1997/01/08 20:52:06 dawes Exp $ */
+
 #ifndef _MIBSTORE_H
 #define _MIBSTORE_H
 
@@ -43,8 +46,16 @@ typedef struct _miBSFuncRec {
 		    RegionPtr /*pbackingCompositeClip*/
 #endif
 );
-    PixmapPtr	    (*GetImagePixmap)(); /* unused */
-    PixmapPtr	    (*GetSpansPixmap)(); /* unused */
+    PixmapPtr	    (*GetImagePixmap)(	/* unused */
+#if NeedNestedPrototypes
+    			void
+#endif
+);
+    PixmapPtr	    (*GetSpansPixmap)(	/* unused */
+#if NeedNestedPrototypes
+    			void
+#endif
+);
 } miBSFuncRec;
 
 #ifndef _XTYPEDEF_MIBSFUNCPTR

@@ -1,4 +1,4 @@
-.\" $XConsortium: xauth.man /main/13 1995/12/15 14:01:59 gildea $
+.\" $XConsortium: xauth.man /main/15 1996/12/09 17:08:01 kaleb $
 .\" Copyright (c) 1993  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -24,7 +24,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH XAUTH 1 "Release 6.1" "X Version 11"
+.TH XAUTH 1 "Release 6.3" "X Version 11"
 .SH NAME
 xauth \- X authority file utility
 .SH SYNOPSIS
@@ -38,7 +38,7 @@ used to extract authorization records from one machine and merge them in on
 another (as is the case when using remote logins or granting access to
 other users).  Commands (described below) may be entered interactively,
 on the \fIxauth\fP command line, or in scripts.  Note that this program
-does \fBnot\fP contact the X server.
+does \fBnot\fP contact the X server except when the generate command is used.
 Normally \fIxauth\fP is not used to create the authority file entry in
 the first place; \fIxdm\fP does that.
 .SH OPTIONS
@@ -84,6 +84,49 @@ of the octet, and the second digit of the pair gives the least significant 4
 bits.  For example, a 32 character hexkey would represent a 128-bit value.
 A protocol name consisting of just a 
 single period is treated as an abbreviation for \fIMIT-MAGIC-COOKIE-1\fP.
+
+.TP 8
+.B "generate \fIdisplayname protocolname\fP \fR[\fPtrusted|untrusted\fR]\fP"
+.B \fR[\fPtimeout \fIseconds\fP\fR]\fP  \fR[\fPgroup \fIgroup-id\fP\fR]\fP \fR[\fBdata \fIhexdata\fR]
+
+This command is similar to add.  The main difference is that instead
+of requiring the user to supply the key data, it connects to the
+server specified in \fIdisplayname\fP and uses the SECURITY extension
+in order to get the key data to store in the authorization file.  If
+the server cannot be contacted or if it does not support the SECURITY
+extension, the command fails.  Otherwise, an authorization entry for
+the indicated display using the given protocol is added to the
+authorization file.  A protocol name consisting of just a single
+period is treated as an abbreviation for \fIMIT-MAGIC-COOKIE-1\fP.
+
+If the \fBtrusted\fP option is used, clients that connect using this
+authorization will have full run of the display, as usual.  If
+\fBuntrusted\fP is used, clients that connect using this authorization
+will be considered untrusted and prevented from stealing or tampering
+with data belonging to trusted clients.  See the SECURITY extension
+specification for full details on the restrictions imposed on
+untrusted clients.  The default is \fBuntrusted\fP.
+
+The \fBtimeout\fP option specifies how long in seconds this
+authorization will be valid.  If the authorization remains unused (no
+clients are connected with it) for longer than this time period, the
+server purges the authorization, and future attempts to connect using
+it will fail.  Note that the purging done by the server does \fBnot\fP
+delete the authorization entry from the authorization file.  The
+default timeout is 60 seconds.
+
+The \fBgroup\fP option specifies the application group that clients
+connecting with this authorization should belong to.  See the
+application group extension specification for more details.  The
+default is to not belong to an application group.
+
+The \fBdata\fP option specifies data that the server should use to
+generate the authorization.  Note that this is \fBnot\fP the same data
+that gets written to the authorization file.  The interpretation of
+this data depends on the authorization protocol.  The \fIhexdata\fP is
+in the same format as the \fIhexkey\fP described in the add command.
+The default is to send no data.
+
 .TP 8
 .B "[n]extract \fIfilename displayname..."
 Authorization entries for each of the specified displays are written to the 
@@ -156,6 +199,14 @@ user's authority file on the remote machine:
 .sp
 .nf
         %  xauth extract \- $DISPLAY | rsh otherhost xauth merge \-
+.fi
+.PP
+.sp
+The following command contacts the server :0 to create an
+authorization using the MIT-MAGIC-COOKIE-1 protocol.  Clients that
+connect with this authorization will be untrusted.
+.nf
+	%  xauth generate :0 .
 .fi
 .SH ENVIRONMENT
 This \fIxauth\fP program uses the following environment variables:

@@ -1,4 +1,4 @@
-/* $XConsortium: PatchLevel.h /main/8 1996/01/26 13:30:22 kaleb $ */
+/* $XConsortium: PatchLevel.h /main/15 1996/10/28 04:46:29 kaleb $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,10 +26,10 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PatchLevel.h,v 3.17 1996/10/20 13:32:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PatchLevel.h,v 3.20.2.1 1997/05/21 15:02:26 dawes Exp $ */
 
 #define VERSION 	2
-#define PATCHLEV 	11
-#define RELDATE		"Oct 20 1996"
+#define PATCHLEV 	14
+#define RELDATE		"20 May 1997"
 #define PRINT_VERSION	printf("\n%s Version %d.%d (%s)\n", \
 				MyName,VERSION,PATCHLEV,RELDATE)

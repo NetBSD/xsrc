@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/7 1995/12/05 15:43:29 matt $
+XCOMM $XConsortium: Imakefile /main/8 1996/09/28 17:12:47 rws $
 #include <Server.tmpl>
 
 OSDEP_SRC = AIXV3.c AIXinit.c aixMsg.c aixError.c aixWrap.c
@@ -38,7 +38,7 @@ SOCK_DEFINES = -DBSD44SOCKETS
 #endif
 
 
-INCLUDES = -I. -I../ -I../../../include -I$(INCLUDESRC) -I../common -I$(EXTINCSRC) -I../../../os
+INCLUDES = -I. -I../ -I../../../include -I$(XINCLUDESRC) -I../common -I$(EXTINCSRC) -I../../../os
 
 #if DebugServer && ProfileServer
 DebuggedAndProfiledLibraryObjectRule()

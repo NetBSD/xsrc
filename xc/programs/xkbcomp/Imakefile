@@ -1,4 +1,5 @@
-XCOMM $XConsortium: Imakefile /main/10 1996/02/05 05:59:55 kaleb $
+XCOMM $XConsortium: Imakefile /main/12 1996/09/04 09:36:17 kaleb $
+XCOMM $XFree86: xc/programs/xkbcomp/Imakefile,v 3.3 1996/12/23 07:11:35 dawes Exp $
 #define IHaveSubdirs
 
           SRCS = xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
@@ -36,3 +37,7 @@ clean::
 
 ComplexProgramTarget(xkbcomp)
 
+#ifdef OS2Architecture
+all::
+	$(CP) ProgramTargetName(xkbcomp) /
+#endif

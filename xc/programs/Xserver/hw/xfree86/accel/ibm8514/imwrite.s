@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/imwrite.s,v 1.1.1.3 1996/01/03 07:12:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/ibm8514/imwrite.s,v 3.1 1996/12/23 06:37:58 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: imwrite.s /main/2 1995/11/12 16:54:43 kaleb $ */
+/* $XConsortium: imwrite.s /main/3 1996/02/21 17:25:00 kaleb $ */
 /******************************************************************************
 
 This is a assembly language version of the ibm8514ImageWrite routine.
@@ -24,7 +24,6 @@ ibm8514ImageWrite(x, y, w, h, psrc, pwidth, px, py, alu, planemask)
     short		planemask;
 
 ******************************************************************************/
-
 
 #define _8514_ASM_
 #include "assyntax.h"

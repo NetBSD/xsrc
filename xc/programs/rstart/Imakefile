@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile,v 1.12 94/12/01 20:16:44 kaleb Exp $
-XCOMM $XFree86: xc/programs/rstart/Imakefile,v 3.5 1996/09/29 13:48:29 dawes Exp $
+XCOMM $XFree86: xc/programs/rstart/Imakefile,v 3.5.4.2 1997/05/21 15:02:57 dawes Exp $
 XCOMM
 XCOMM Copyright (c) 1993 Quarterdeck Office Systems
 XCOMM
@@ -75,7 +75,7 @@ SpecialCObjectRule(server,NullParameter,$(SRVDEFS) $(PEDEFS))
 
 AllTarget($(SSERVERNAME))
 CppScriptTarget($(SSERVERNAME),server.cpp,$(OS) -DLIBDIR=$(MYLIBDIR) -DSERVERNAME=$(SERVERNAME),NullParameter)
-InstallNamedProg($(SSERVERNAME),$(SSERVERNAME),$(USRBIN))
+InstallNamedProg($(SSERVERNAME),$(SSERVERNAME),$(BINDIR))
 
 AllTarget($(CLIENTNAME))
 CppScriptTarget($(CLIENTNAME),client.cpp,-DRSHCMD=$(RSHCMD) -DSERVERNAME=$(SERVERNAME),NullParameter)
@@ -114,11 +114,11 @@ DEFAULT_USER_PATH=DefaultUserPath
 	esac
 
 #define	Recurse(src, dest, filefunc) set -x;				\@@\
-	for name in `find src -print` ;					\@@\
+	for name in `find src -print | grep -v CVS` ;			\@@\
 		do							\@@\
 			if test -f $$name;				\@@\
 			then						\@@\
-				filefunc($$name,$(DESTDIR)dest/$$name);	\@@\
+				filefunc($from: name,(DESTDIR)dest/$$name);	\@@\
 			else						\@@\
 				MakeDirect($(DESTDIR)dest/$$name);	\@@\
 			fi;						\@@\

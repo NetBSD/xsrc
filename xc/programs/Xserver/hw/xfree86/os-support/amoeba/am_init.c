@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/amoeba/am_init.c,v 3.4 1996/02/04 09:09:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/amoeba/am_init.c,v 3.5 1996/12/23 06:49:11 dawes Exp $ */
 /*
  * Copyright 1993 by Vrije Universiteit, The Netherlands
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -24,7 +24,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: am_init.c /main/4 1995/11/13 05:50:06 kaleb $ */
+/* $XConsortium: am_init.c /main/5 1996/02/21 17:50:35 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

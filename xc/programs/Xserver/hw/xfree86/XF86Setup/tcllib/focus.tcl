@@ -1,3 +1,10 @@
+# $XConsortium: focus.tcl /main/1 1996/09/21 14:15:25 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/focus.tcl,v 3.1 1996/12/27 06:54:57 dawes Exp $
+#
 # focus.tcl --
 #
 # This file defines several procedures for managing the input

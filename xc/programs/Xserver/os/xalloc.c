@@ -25,7 +25,7 @@ dealings in this Software without prior written authorization from
 Pascal Haible.
 */
 
-/* $XFree86: xc/programs/Xserver/os/xalloc.c,v 3.10 1996/10/03 08:49:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/os/xalloc.c,v 3.12.2.1 1997/05/10 07:03:02 hohndel Exp $ */
 
 /* Only used if INTERNAL_MALLOC is defined
  * - otherwise xalloc() in utils.c is used
@@ -179,6 +179,13 @@ extern Bool Must_have_memory;
 #endif
 #endif
 
+#undef TAIL_SIZE
+#ifdef SIZE_TAIL
+#define TAIL_SIZE		SIZE_TAIL
+#else
+#define TAIL_SIZE		0
+#endif
+
 #ifdef __alpha__
 #define MAGIC			0x1404196414071968
 #define MAGIC2			0x2515207525182079
@@ -199,7 +206,7 @@ extern Bool Must_have_memory;
 			fclose(f);			\
 		  }					\
 		}
-#ifdef linux
+#if defined(linux) && defined(i386)
 #define LOG_ALLOC(_fun, _size, _ret)						\
 	{	unsigned long *from;						\
 		__asm__("movl %%ebp,%0" : /*OUT*/ "=r" (from) : /*IN*/ );	\
@@ -302,7 +309,7 @@ Xalloc (amount)
     }
 
     /* alignment check */
-#if defined(__alpha__) || defined(__sparc__)
+#if defined(__alpha__) || defined(__sparc__) || defined(__mips__)
     amount = (amount + (sizeof(long)-1)) & ~(sizeof(long)-1);
 #endif
 
@@ -317,13 +324,8 @@ Xalloc (amount)
 		/* list empty - get 20 or 40 more */
 		/* amount = size rounded up */
 		amount = (indx+1) * SIZE_STEPS;
-#ifdef SIZE_TAIL
-		ptr = (unsigned long *)calloc(1,(amount+SIZE_HEADER+SIZE_TAIL)
+		ptr = (unsigned long *)calloc(1,(amount+SIZE_HEADER+TAIL_SIZE)
 						* (amount<100 ? 40 : 20));
-#else
-		ptr = (unsigned long *)calloc(1,(amount+SIZE_HEADER
-						* (amount<100 ? 40 : 20));
-#endif /* SIZE_TAIL */
 		if (NULL!=ptr) {
 			int i;
 			unsigned long *p1, *p2;
@@ -336,20 +338,14 @@ Xalloc (amount)
 #endif /* XALLOC_DEBUG */
 #ifdef SIZE_TAIL
 				*(unsigned long *)((unsigned char *)p1 + amount) = MAGIC2;
-				p2 = (unsigned long *)((char *)p1 + SIZE_HEADER + amount + SIZE_TAIL);
-#else
-				p2 = (unsigned long *)((char *)p1 + SIZE_HEADER + amount);
 #endif /* SIZE_TAIL */
+				p2 = (unsigned long *)((char *)p1 + SIZE_HEADER + amount + TAIL_SIZE);
 				*(unsigned long **)p1 = p2;
 			}
 			/* last one has no next one */
 			*(unsigned long **)p1 = NULL;
 			/* put the second in the list */
-#ifdef SIZE_TAIL
-			free_lists[indx] = (unsigned long *)((char *)ptr + SIZE_HEADER + amount + SIZE_TAIL + SIZE_HEADER);
-#else
-			free_lists[indx] = (unsigned long *)((char *)ptr + SIZE_HEADER + amount + SIZE_HEADER);
-#endif /* SIZE_TAIL */
+			free_lists[indx] = (unsigned long *)((char *)ptr + SIZE_HEADER + amount + TAIL_SIZE + SIZE_HEADER);
 			/* take the fist one */
 			ptr = (unsigned long *)((char *)ptr + SIZE_HEADER);
 			LOG_ALLOC("Xalloc-S", amount, ptr);
@@ -370,10 +366,7 @@ Xalloc (amount)
 	 */
 	/* mmapped malloc */
 	/* round up amount */
-	amount += SIZE_HEADER;
-#ifdef SIZE_TAIL
-	amount += SIZE_TAIL;
-#endif /* SIZE_TAIL */
+	amount += SIZE_HEADER + TAIL_SIZE;
 	/* round up brutto amount to a multiple of the page size */
 	amount = (amount + pagesize-1) & ~(pagesize-1);
 #ifdef MMAP_DEV_ZERO
@@ -392,10 +385,7 @@ Xalloc (amount)
 					(off_t)0);
 #endif
 	if (-1!=(long)ptr) {
-		ptr[0] = amount - SIZE_HEADER;
-#ifdef SIZE_TAIL
-		ptr[0] -= SIZE_TAIL;
-#endif
+		ptr[0] = amount - SIZE_HEADER - TAIL_SIZE;
 #ifdef XALLOC_DEBUG
 		ptr[1] = MAGIC;
 #endif /* XALLOC_DEBUG */
@@ -412,11 +402,7 @@ Xalloc (amount)
 	 * medium sized block
 	 */
 	/* 'normal' malloc() */
-#ifdef SIZE_TAIL
-	ptr=(unsigned long *)calloc(1,amount+SIZE_HEADER+SIZE_TAIL);
-#else
-	ptr=(unsigned long *)calloc(1,amount+SIZE_HEADER);
-#endif /* SIZE_TAIL */
+	ptr=(unsigned long *)calloc(1,amount+SIZE_HEADER+TAIL_SIZE);
 	if (ptr != (unsigned long *)NULL) {
 		ptr[0] = amount;
 #ifdef XALLOC_DEBUG
@@ -534,6 +520,8 @@ Xrealloc (ptr, amount)
 #else
 		ErrorF("Xalloc error: header corrupt in Xrealloc() :-(\n");
 #endif
+		LOG_REALLOC("Xalloc error: header corrupt in Xrealloc() :-(",
+			ptr, amount, 0);
 		return (unsigned long *)NULL;
 	}
 #endif /* XALLOC_DEBUG */
@@ -581,8 +569,6 @@ Xfree(ptr)
     unsigned long size;
     unsigned long *pheader;
 
-    LOG_FREE("Xfree", ptr);
-
     /* free(NULL) IS valid :-(  - and widely used throughout the server.. */
     if (!ptr)
 	return;
@@ -596,6 +582,7 @@ Xfree(ptr)
 #else
 	ErrorF("Xalloc error: Header corrupt in Xfree() :-(\n");
 #endif
+	LOG_FREE("Xalloc error:  Header corrupt in Xfree() :-(", ptr);
 	return;
     }
 #endif /* XALLOC_DEBUG */
@@ -614,6 +601,7 @@ Xfree(ptr)
 #else
 		ErrorF("Xalloc error: Tail corrupt in Xfree() for small block (adr=0x%x, val=0x%x)\n",(char *)ptr + size,*(unsigned long *)((char *)ptr + size));
 #endif
+		LOG_FREE("Xalloc error: Tail corrupt in Xfree() for small block", ptr);
 		return;
 	}
 #endif /* SIZE_TAIL */
@@ -626,6 +614,7 @@ Xfree(ptr)
 	indx = (size-1) / SIZE_STEPS;
 	*(unsigned long **)(ptr) = free_lists[indx];
 	free_lists[indx] = (unsigned long *)ptr;
+	LOG_FREE("Xfree", ptr);
 	return;
 
 #if defined(HAS_MMAP_ANON) || defined(MMAP_DEV_ZERO)
@@ -641,11 +630,13 @@ Xfree(ptr)
 #else
 		ErrorF("Xalloc error: Tail corrupt in Xfree() for big block (adr=0x%x, val=0x%x)\n",(char *)ptr+size,((unsigned long *)((char *)ptr + size))[0]);
 #endif
+		LOG_FREE("Xalloc error: Tail corrupt in Xfree() for big block", ptr);
 		return;
 	}
 	size += SIZE_TAIL;
 #endif /* SIZE_TAIL */
 
+	LOG_FREE("Xfree", ptr);
 	size += SIZE_HEADER;
 	munmap((caddr_t)pheader, (size_t)size);
 	/* no need to clear - mem is inaccessible after munmap.. */
@@ -663,6 +654,7 @@ Xfree(ptr)
 #else
 		ErrorF("Xalloc error: Tail corrupt in Xfree() for medium block (adr=0x%x, val=0x%x)\n",(char *)ptr + size,*(unsigned long *)((char *)ptr + size));
 #endif
+		LOG_FREE("Xalloc error: Tail corrupt in Xfree() for medium block", ptr);
 		return;
 	}
 #endif /* SIZE_TAIL */
@@ -671,6 +663,7 @@ Xfree(ptr)
 	memset(pheader,0xF0,size+SIZE_HEADER);
 #endif /* XFREE_ERASES */
 
+	LOG_FREE("Xfree", ptr);
 	free((char *)pheader);
     }
 }

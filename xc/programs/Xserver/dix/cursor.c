@@ -47,8 +47,8 @@ SOFTWARE.
 ******************************************************************/
 
 
-/* $XConsortium: cursor.c,v 1.44 94/04/17 20:26:20 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/dix/cursor.c,v 3.0 1996/04/15 11:19:35 dawes Exp $ */
+/* $XConsortium: cursor.c /main/19 1996/08/01 19:20:16 dpw $ */
+/* $XFree86: xc/programs/Xserver/dix/cursor.c,v 3.1 1996/12/23 06:29:36 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -214,8 +214,10 @@ AllocGlyphCursor(source, sourceChar, mask, maskChar,
     ScreenPtr 	pscr;
     GlyphSharePtr pShare;
 
-    sourcefont = (FontPtr) LookupIDByType(source, RT_FONT);
-    maskfont = (FontPtr) LookupIDByType(mask, RT_FONT);
+    sourcefont = (FontPtr) SecurityLookupIDByType(client, source, RT_FONT,
+						  SecurityReadAccess);
+    maskfont = (FontPtr) SecurityLookupIDByType(client, mask, RT_FONT,
+						SecurityReadAccess);
 
     if (!sourcefont)
     {

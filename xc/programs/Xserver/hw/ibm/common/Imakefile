@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/6 1995/12/19 13:28:07 matt $
+XCOMM $XConsortium: Imakefile /main/7 1996/09/28 17:12:53 rws $
 #include <Server.tmpl>
 
 SRCS =		ibmColor.c \
@@ -102,7 +102,7 @@ DEFINES =  -DIBM_SPECIAL_MALLOC $(SCREENS)
 DEFINES = $(SCREENS)
 #endif
 
-INCLUDES = -I. -I../../../include -I$(INCLUDESRC) -I../OPERATING_SYSTEM
+INCLUDES = -I. -I../../../include -I$(XINCLUDESRC) -I../OPERATING_SYSTEM
 
 #if DebugServer && ProfileServer
 DebuggedAndProfiledLibraryObjectRule()

@@ -1,11 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/coKeynames.h,v 3.2 1996/02/04 09:06:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/coKeynames.h,v 3.3 1996/12/23 06:43:16 dawes Exp $ */
 /*
  * This file is derived from "atKeynames.h"
  * Written by Holger Veit (veit@du9ds3.uni-duisburg.de)
  * Modified to provide a translation table between codrv's scancodes, and
  * the keycodes defined in "atKeynames.h" (David Dawes)
  */
-/* $XConsortium: coKeynames.h /main/4 1995/12/29 10:13:47 kaleb $ */
+/* $XConsortium: coKeynames.h /main/5 1996/02/21 17:37:43 kaleb $ */
 
 #ifndef _COKEYNAMES_H
 #define _COKEYNAMES_H

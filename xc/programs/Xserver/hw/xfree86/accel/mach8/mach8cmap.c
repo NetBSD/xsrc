@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8cmap.c,v 1.1.1.2 1996/01/03 07:13:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8cmap.c,v 3.1 1996/12/23 06:39:47 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -26,7 +26,7 @@
  * Further modifications by Tiago Gons (tiago@comosjn.hobby.nl)
  *
  */
-/* $XConsortium: mach8cmap.c /main/2 1995/11/12 18:00:07 kaleb $ */
+/* $XConsortium: mach8cmap.c /main/3 1996/02/21 17:29:56 kaleb $ */
 
 
 #include "X.h"

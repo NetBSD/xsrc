@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxGC.c,v 3.7 1996/02/04 08:58:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxGC.c,v 3.8 1996/12/23 06:32:43 dawes Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts,
 and the Massachusetts Institute of Technology, Cambridge, Massachusetts.
@@ -26,7 +26,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 Modified for the AGX    by Henry A. Worth  (haw30@eng.amdahl.com)
 
 ******************************************************************/
-/* $XConsortium: agxGC.c /main/5 1995/11/13 10:06:50 kaleb $ */
+/* $XConsortium: agxGC.c /main/6 1996/02/21 17:17:36 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

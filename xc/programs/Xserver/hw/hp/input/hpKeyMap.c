@@ -1,4 +1,4 @@
-/* $XConsortium: hpKeyMap.c,v 1.3 95/01/24 02:46:58 dpw Exp $ */
+/* $XConsortium: hpKeyMap.c /main/4 1996/12/27 16:15:16 kaleb $ */
 /*
 
 Copyright (c) 1986, 1987  X Consortium

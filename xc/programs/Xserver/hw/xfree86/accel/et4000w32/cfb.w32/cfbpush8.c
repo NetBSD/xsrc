@@ -1,7 +1,7 @@
 /*
  * Push Pixels for 8 bit displays.
  */
-/* $XConsortium: cfbpush8.c /main/2 1995/11/12 16:17:46 kaleb $ */
+/* $XConsortium: cfbpush8.c /main/3 1996/02/21 17:20:44 kaleb $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -27,7 +27,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbpush8.c,v 3.2 1996/02/04 08:59:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbpush8.c,v 3.3 1996/12/23 06:34:50 dawes Exp $ */
 
 #if PSZ == 8
 

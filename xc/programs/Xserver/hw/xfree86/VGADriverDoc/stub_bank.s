@@ -1,5 +1,4 @@
-/* $XConsortium: stub_bank.s /main/3 1995/11/12 15:33:49 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/VGADriverDoc/stub_bank.s,v 3.3 1996/02/04 08:57:29 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/VGADriverDoc/stub_bank.s,v 3.4 1996/12/23 06:32:00 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@XFree86.org>
  *
@@ -21,6 +20,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XConsortium: stub_bank.s /main/4 1996/02/21 17:13:50 kaleb $ */
 
 /*
  * These are here the very lowlevel VGA bankswitching routines.

@@ -1,4 +1,4 @@
-/* $XConsortium: window.h,v 1.7 94/04/17 20:26:12 dpw Exp $ */
+/* $XConsortium: window.h /main/8 1996/03/21 13:35:33 mor $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -53,6 +53,7 @@ SOFTWARE.
 #include "misc.h"
 #include "region.h"
 #include "screenint.h"
+#include "X11/Xproto.h"
 
 #define TOTALLY_OBSCURED 0
 #define UNOBSCURED 1
@@ -173,7 +174,8 @@ extern int ChangeWindowAttributes(
 extern void GetWindowAttributes(
 #if NeedFunctionPrototypes
     WindowPtr /*pWin*/,
-    ClientPtr /*client*/
+    ClientPtr /*client*/,
+    xGetWindowAttributesReply* /* wa */
 #endif
 );
 

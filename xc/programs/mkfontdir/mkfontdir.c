@@ -46,8 +46,8 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XConsortium: mkfontdir.c,v 1.12 94/04/17 20:38:47 hersh Exp $ */
-/* $XFree86: xc/programs/mkfontdir/mkfontdir.c,v 3.3 1996/05/06 06:00:44 dawes Exp $ */
+/* $XConsortium: mkfontdir.c /main/13 1996/09/28 17:17:17 rws $ */
+/* $XFree86: xc/programs/mkfontdir/mkfontdir.c,v 3.4 1996/12/23 07:10:37 dawes Exp $ */
 
 #ifdef WIN32
 #define _WILLWINSOCK_
@@ -465,7 +465,7 @@ GetDefaultPointSize ()
     return 120;
 }
 
-GetClientResolutions ()
+FontResolutionPtr GetClientResolutions ()
 {
     return 0;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Mach.c,v 3.3 1996/02/04 08:56:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/OS_Mach.c,v 3.4.2.1 1997/05/06 13:24:19 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by Robert V. Baron 
  *			<Robert.Baron@ernst.mach.cs.cmu.edu>
@@ -26,7 +26,7 @@
  * in this Software without prior written authorization from Robert V. Baron.
  *
  */
-/* $XConsortium: OS_Mach.c /main/4 1995/11/13 11:12:47 kaleb $ */
+/* $XConsortium: OS_Mach.c /main/5 1996/02/21 17:11:12 kaleb $ */
 
 #include "Probe.h"
 
@@ -104,6 +104,13 @@ Byte *MapVGA()
         return((Byte *)0);
 }
 
+Byte *MapMem(address,size)
+	unsigned long address;
+	unsigned long size;
+{
+	return((Byte *)0);
+}
+
 /*
  * UnMapVGA --
  *
@@ -111,6 +118,13 @@ Byte *MapVGA()
  */
 void UnMapVGA(base)
 Byte *base;
+{
+	return;
+}
+
+void UnMapMem(base,size)
+Byte *base;
+unsigned long size;
 {
 	return;
 }

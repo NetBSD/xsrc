@@ -1,5 +1,5 @@
 
-/* $XConsortium: sun.h,v 5.37 94/04/01 17:54:37 dpw Exp $ */
+/* $XConsortium: sun.h /main/3 1996/10/31 14:15:43 kaleb $ */
 
 /*-
  * Copyright (c) 1987 by the Regents of the University of California

@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile /main/8 1996/01/21 14:41:53 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/vfb/Imakefile,v 3.6 1996/03/10 12:01:15 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/10 1996/12/02 10:20:33 lehors $
+XCOMM $XFree86: xc/programs/Xserver/hw/vfb/Imakefile,v 3.8 1996/12/23 06:30:19 dawes Exp $
 #include <Server.tmpl>
 
 #if HasShm
@@ -7,7 +7,7 @@ SHMDEF = -DHAS_SHM
 #endif
 
 XCOMM add more architectures here as we discover them
-#if defined(HPArchitecture) || defined(SparcArchitecture) || SystemV4 || defined(OSF1Architecture) || defined(i386BsdArchitecture)
+#if defined(HPArchitecture) || (defined(SparcArchitecture) && !defined(LynxOSArchitecture)) || SystemV4 || defined(OSF1Architecture) || defined(i386BsdArchitecture)
 MMAPDEF = -DHAS_MMAP
 #endif
 
@@ -20,13 +20,14 @@ SRCS = 	InitInput.c InitOutput.c stubs.c $(SRCS1)
 
 OBJS = 	InitInput.o InitOutput.o stubs.o $(OBJS1)
 
-INCLUDES = -I. -I$(BUILDINCDIR) -I$(FONTINCSRC) \
+INCLUDES = -I. -I$(XBUILDINCDIR) -I$(FONTINCSRC) \
 	   -I../../cfb -I../../mfb -I../../mi -I../../include -I../../os  \
-           -I$(EXTINCSRC) -I$(INCLUDESRC)
+           -I$(EXTINCSRC) -I$(XINCLUDESRC)
 
 DEFINES = ServerOSDefines $(SHMDEF) $(MMAPDEF)
 
-all:: $(OBJS)
+NormalLibraryObjectRule()
+NormalLibraryTarget(vfb,$(OBJS))
 
 #ifdef OS2Architecture
 LinkSourceFile(os2_stubs.c,../xfree86/os-support/os2)
@@ -35,9 +36,6 @@ SpecialCObjectRule(os2_stubs,$(ICONFIGFILES),-DOS2NULLSELECT)
 
 LinkSourceFile(stubs.c,../../Xi)
 SpecialCObjectRule(InitInput,$(ICONFIGFILES),$(EXT_DEFINES))
-
-NormalLibraryObjectRule()
-NormalLibraryTarget(vfb,$(OBJS))
 
 InstallManPage(Xvfb,$(MANDIR))
 DependTarget()

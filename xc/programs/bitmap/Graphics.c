@@ -28,6 +28,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/* $XFree86: xc/programs/bitmap/Graphics.c,v 1.2 1996/12/28 08:21:42 dawes Exp $ */
 
 /*
  * Author:  Davor Matic, MIT X Consortium
@@ -866,7 +867,7 @@ void BWSet(w)
 		DrawSquare(BW, x, y);
     
     for (i = 0; i < length; i++)
-	BW->bitmap.image->data[i] = 255;
+	BW->bitmap.image->data[i] = (char)255;
 
 }
  

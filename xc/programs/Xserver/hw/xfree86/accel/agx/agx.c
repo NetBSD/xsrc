@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agx.c,v 3.50 1996/10/16 14:39:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agx.c,v 3.53.2.3 1997/05/11 02:56:01 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -31,7 +31,7 @@
  * Rewritten for the AGX by Henry A. Worth (haw30@eng.amdahl.com)
  *
  */
-/* $XConsortium: agx.c /main/15 1995/12/29 15:19:42 kaleb $ */
+/* $XConsortium: agx.c /main/20 1996/10/27 11:04:14 kaleb $ */
 
 
 #include "X.h"
@@ -79,7 +79,8 @@ extern void SetTimeSinceLastInputEvent();
 static int agxValidMode(
 #if NeedFunctionPrototypes
     DisplayModePtr,
-    Bool
+    Bool,
+    int
 #endif
 ); 
 
@@ -95,6 +96,7 @@ ScrnInfoRec agxInfoRec = {
     (void(*)())NoopDDA,	/* void (* EnterLeaveCursor)() */
     agxAdjustFrame, 	/* void (* AdjustFrame)() */
     agxSwitchMode,      /* Bool (* SwitchMode)() */
+    (void (*)())NoopDDA,/* void (* DPMSSet)() */
     agxPrintIdent,	/* void (* PrintIdent)() */
     8,			/* int depth */
     {0, 0, 0},          /* xrgb weight */
@@ -108,7 +110,8 @@ ScrnInfoRec agxInfoRec = {
     {0, },	       	/* OFlagSet xconfigFlag */
     NULL,       	/* char *chipset */
     NULL,       	/* char *ramdac */
-    0,			/* int dacSpeed */
+    {0, 0, 0, 0},	/* int dacSpeeds[MAXDACSPEEDS] */
+    0,			/* int dacSpeedBpp */
     0,			/* int clocks */
     {0, },		/* int clock[MAXCLOCKS] */
     0,			/* int maxClock */
@@ -135,17 +138,20 @@ ScrnInfoRec agxInfoRec = {
     0,                  /* int s3Madjust    */
     0,                  /* int s3Nadjust    */
     0,                  /* int s3MClk    */
-    0xA0000,		/* unsigned long VGABase */
+    0,                  /* int chipID    */
+    0,                  /* int chipRev   */
+    0xA0000,		/* unsigned long VGAbase */
     0,                  /* int s3RefClk    */
-    0,                  /* int suspendTime    */
-    0,                  /* int offTime    */
     -1,                 /* int s3BlankDelay    */
     0,			/* int textClockFreq */
+  NULL,                 /* char* DCConfig */
+  NULL,                 /* char* DCOptions */
+    0			/* int MemClk */
 #ifdef XFreeXDGA
-    0,                  /* int directMode    */
+    ,0,                  /* int directMode    */
     agxSetVidPage,      /* Set Vid Page    */
     0,                  /* unsigned long physBase    */
-    0,                  /* int physSize    */
+    0                  /* int physSize    */
 #endif
 };
 
@@ -677,7 +683,7 @@ for information on how to manually configure.\n",
       /* has programmable clocks */ 
       agxClockSelectFunc = xgaNiClockSelect;  
       if( OFLG_ISSET(XCONFIG_DACSPEED, &agxInfoRec.xconfigFlag) )
-         xf86MaxClock = min( MAX_XGA_NI_CLOCK, agxInfoRec.dacSpeed );
+         xf86MaxClock = min( MAX_XGA_NI_CLOCK, agxInfoRec.dacSpeeds[0] );
       else
          xf86MaxClock = MAX_XGA_NI_CLOCK_CONSERV;
       OFLG_SET(CLOCK_OPTION_PROGRAMABLE, &(agxInfoRec.clockOptions));
@@ -1899,9 +1905,10 @@ agxAdjustFrame(x, y)
  *
  */
 static int
-agxValidMode(mode, verbose)
+agxValidMode(mode, verbose, flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.35 1996/10/26 09:42:24 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/xf86config.c,v 3.37.2.3 1997/05/25 05:06:54 dawes Exp $ */
 
 /*
  * This is a configuration program that will create a base XF86Config
@@ -71,7 +71,7 @@
  * - The card database.
  *
  */
-/* $XConsortium: xf86config.c /main/11 1996/01/26 14:04:59 kaleb $ */
+/* $XConsortium: xf86config.c /main/21 1996/10/28 05:43:57 kaleb $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -285,7 +285,7 @@ void getstring(s)
  * the server will enable a third button automatically if there is one
  */
 
-static char *mousetype_identifier[9] = {
+static char *mousetype_identifier[10] = {
 	"Microsoft",
 	"MouseSystems",
 	"Busmouse",
@@ -294,6 +294,7 @@ static char *mousetype_identifier[9] = {
 	"MouseMan",
 	"MMSeries",
 	"MMHitTab",
+	"IntelliMouse",
 #ifdef __EMX__
 	"OSMOUSE"
 #endif
@@ -304,7 +305,7 @@ static char *mouseintro_text =
 "First specify a mouse protocol type. Choose one from the following list:\n"
 "\n";
 
-static char *mousetype_name[8] = {
+static char *mousetype_name[10] = {
 	"Microsoft compatible (2-button protocol)",
 	"Mouse Systems (3-button protocol)",
 	"Bus Mouse",
@@ -312,7 +313,8 @@ static char *mousetype_name[8] = {
 	"Logitech Mouse (serial, old type, Logitech protocol)",
 	"Logitech MouseMan (Microsoft compatible)",
 	"MM Series",	/* XXXX These descriptions should be improved. */
-	"MM HitTablet"
+	"MM HitTablet",
+	"Microsoft IntelliMouse"
 };
 
 static char *mousedev_text =
@@ -368,7 +370,7 @@ void mouse_configuration() {
 	char s[80];
 	printf("%s", mouseintro_text);
 	
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < 9; i++)
 		printf("%2d.  %s\n", i + 1, mousetype_name[i]);
 
 	printf("\n");
@@ -430,6 +432,7 @@ void mouse_configuration() {
 			printf("%s", twobuttonmousecomment_text);
 		break;
 	case 1 : /* Mouse Systems. */
+	case 8 : /* IntelliMouse */
 		printf("%s", threebuttonmousecomment_text);
 		break;
 	default :
@@ -461,7 +464,7 @@ void mouse_configuration() {
 
 #else /* __EMX__ */
        	/* set some reasonable defaults for OS/2 */
-       	config_mousetype = 8;
+       	config_mousetype = 9;
 	config_chordmiddle = 0;       
 	config_cleardtrrts = 0;
 	config_emulate3buttons = 0;
@@ -1756,9 +1759,8 @@ skipramdacselection:
 		/* compose a line with the real path */
 #ifndef __EMX__
 		sprintf(syscmdline,
-		       "XF86_%s -probeonly -pn -xf86config "
-		       TEMPORARY_XF86CONFIG_FILENAME " 2>" DUMBCONFIG2,
-		       card[card_selected].server);
+		       "X -probeonly -pn -xf86config "
+		       TEMPORARY_XF86CONFIG_FILENAME " 2>" DUMBCONFIG2);
 #else
 		/* OS/2 does not have symlinks, so "X" does not exist,
 		 * call the real X server
@@ -2258,31 +2260,88 @@ static char *modelines_text =
 "# 1024x768 @ 87 Hz interlaced, 35.5 kHz hsync\n"
 "Modeline \"1024x768\"    44.9  1024 1048 1208 1264   768  776  784  817 Interlace\n"
 "\n"
+"# 640x400 @ 85 Hz, 37.86 kHz hsync\n"
+"Modeline \"640x400\"     31.5   640  672 736   832   400  401  404  445 -HSync +VSync\n"
 "# 640x480 @ 72 Hz, 36.5 kHz hsync\n"
 "Modeline \"640x480\"     31.5   640  680  720  864   480  488  491  521\n"
+"# 640x480 @ 75 Hz, 37.50 kHz hsync\n"
+"ModeLine  \"640x480\"    31.5   640  656  720  840   480  481  484  500 -HSync -VSync\n"
 "# 800x600 @ 60 Hz, 37.8 kHz hsync\n"
 "Modeline \"800x600\"     40     800  840  968 1056   600  601  605  628 +hsync +vsync\n"
+"\n"
+"# 640x480 @ 85 Hz, 43.27 kHz hsync\n"
+"Modeline \"640x400\"     36     640  696  752  832   480  481  484  509 -HSync -VSync\n"
+"# 1152x864 @ 89 Hz interlaced, 44 kHz hsync\n"
+"ModeLine \"1152x864\"    65    1152 1168 1384 1480   864  865  875  985 Interlace\n"
 "\n"
 "# 800x600 @ 72 Hz, 48.0 kHz hsync\n"
 "Modeline \"800x600\"     50     800  856  976 1040   600  637  643  666 +hsync +vsync\n"
 "# 1024x768 @ 60 Hz, 48.4 kHz hsync\n"
 "Modeline \"1024x768\"    65    1024 1032 1176 1344   768  771  777  806 -hsync -vsync\n"
 "\n"
+"# 640x480 @ 100 Hz, 53.01 kHz hsync\n"
+"Modeline \"640x480\"     45.8   640  672  768  864   480  488  494  530 -HSync -VSync\n"
+"# 1152x864 @ 60 Hz, 53.5 kHz hsync\n"
+"Modeline  \"1152x864\"   89.9  1152 1216 1472 1680   864  868  876  892 -HSync -VSync\n"
+"# 800x600 @ 85 Hz, 55.84 kHz hsync\n"
+"Modeline  \"800x600\"    60.75  800  864  928 1088   600  616  621  657 -HSync -VSync\n"
+"\n"
 "# 1024x768 @ 70 Hz, 56.5 kHz hsync\n"
 "Modeline \"1024x768\"    75    1024 1048 1184 1328   768  771  777  806 -hsync -vsync\n"
 "# 1280x1024 @ 87 Hz interlaced, 51 kHz hsync\n"
 "Modeline \"1280x1024\"   80    1280 1296 1512 1568  1024 1025 1037 1165 Interlace\n"
 "\n"
+"# 800x600 @ 100 Hz, 64.02 kHz hsync\n"
+"Modeline  \"800x600\"    69.65  800  864  928 1088   600  604  610  640 -HSync -VSync\n"
 "# 1024x768 @ 76 Hz, 62.5 kHz hsync\n"
 "Modeline \"1024x768\"    85    1024 1032 1152 1360   768  784  787  823\n"
+"# 1152x864 @ 70 Hz, 62.4 kHz hsync\n"
+"Modeline  \"1152x864\"   92    1152 1208 1368 1474   864  865  875  895\n"
 "# 1280x1024 @ 61 Hz, 64.2 kHz hsync\n"
 "Modeline \"1280x1024\"  110    1280 1328 1512 1712  1024 1025 1028 1054\n"
+"\n"
+"# 1024x768 @ 85 Hz, 70.24 kHz hsync\n"
+"Modeline \"1024x768\"   98.9  1024 1056 1216 1408   768 782 788 822 -HSync -VSync\n"
+"# 1152x864 @ 78 Hz, 70.8 kHz hsync\n"
+"Modeline \"1152x864\"   110   1152 1240 1324 1552   864  864  876  908\n"
+"\n"
+"# 1280x1024 @ 70 Hz, 74.59 kHz hsync\n"
+"Modeline \"1280x1024\"  126.5 1280 1312 1472 1696  1024 1032 1040 1068 -HSync -VSync\n"
+"# 1600x1200 @ 60Hz, 75.00 kHz hsync\n"
+"Modeline \"1600x1200\"  162   1600 1664 1856 2160  1200 1201 1204 1250 +HSync +VSync\n"
+"# 1152x864 @ 84 Hz, 76.0 kHz hsync\n"
+"Modeline \"1152x864\"   135    1152 1464 1592 1776   864  864  876  908\n"
 "\n"
 "# 1280x1024 @ 74 Hz, 78.85 kHz hsync\n"
 "Modeline \"1280x1024\"  135    1280 1312 1456 1712  1024 1027 1030 1064\n"
 "\n"
+"# 1024x768 @ 100Hz, 80.21 kHz hsync\n"
+"Modeline \"1024x768\"   115.5  1024 1056 1248 1440  768  771  781  802 -HSync -VSync\n"
 "# 1280x1024 @ 76 Hz, 81.13 kHz hsync\n"
 "Modeline \"1280x1024\"  135    1280 1312 1416 1664  1024 1027 1030 1064\n"
+"\n"
+"# 1600x1200 @ 70 Hz, 87.50 kHz hsync\n"
+"Modeline \"1600x1200\"  189    1600 1664 1856 2160  1200 1201 1204 1250 -HSync -VSync\n"
+"# 1152x864 @ 100 Hz, 89.62 kHz hsync\n"
+"Modeline \"1152x864\"   137.65 1152 1184 1312 1536   864  866  885  902 -HSync -VSync\n"
+"# 1280x1024 @ 85 Hz, 91.15 kHz hsync\n"
+"Modeline \"1280x1024\"  157.5  1280 1344 1504 1728  1024 1025 1028 1072 +HSync +VSync\n"
+"# 1600x1200 @ 75 Hz, 93.75 kHz hsync\n"
+"Modeline \"1600x1200\"  202.5  1600 1664 1856 2160  1200 1201 1204 1250 +HSync +VSync\n"
+"# 1600x1200 @ 85 Hz, 105.77 kHz hsync\n"
+"Modeline \"1600x1200\"  220    1600 1616 1808 2080  1200 1204 1207 1244 +HSync +VSync\n"
+"# 1280x1024 @ 100 Hz, 107.16 kHz hsync\n"
+"Modeline \"1280x1024\"  181.75 1280 1312 1440 1696  1024 1031 1046 1072 -HSync -VSync\n"
+"\n"
+"# 1800x1440 @ 64Hz, 96.15 kHz hsync \n"
+"ModeLine \"1800X1440\"  230    1800 1896 2088 2392 1440 1441 1444 1490 +HSync +VSync\n"
+"# 1800x1440 @ 70Hz, 104.52 kHz hsync \n"
+"ModeLine \"1800X1440\"  250    1800 1896 2088 2392 1440 1441 1444 1490 +HSync +VSync\n"
+"\n"
+"# 512x384 @ 78 Hz, 31.50 kHz hsync\n"
+"Modeline \"512x384\"    20.160 512  528  592  640   384  385  388  404 -HSync -VSync\n"
+"# 512x384 @ 85 Hz, 34.38 kHz hsync\n"
+"Modeline \"512x384\"    22     512  528  592  640   384  385  388  404 -HSync -VSync\n"
 "\n"
 #if XFREE86_VERSION >= 311
 "# Low-res Doublescan modes\n"
@@ -2296,7 +2355,7 @@ static char *modelines_text =
 "# 320x240 @ 72 Hz, 36.5 kHz hsync\n"
 "Modeline \"320x240\"     15.750 320  336  384  400   240  244  246  262 Doublescan\n"
 "# 400x300 @ 56 Hz, 35.2 kHz hsync, 4:3 aspect ratio\n"
-"ModeLine \"400x300\"     18     400  416  448  512   300  301  602  312 Doublescan\n"
+"ModeLine \"400x300\"     18     400  416  448  512   300  301  302  312 Doublescan\n"
 "# 400x300 @ 60 Hz, 37.8 kHz hsync\n"
 "Modeline \"400x300\"     20     400  416  480  528   300  301  303  314 Doublescan\n"
 "# 400x300 @ 72 Hz, 48.0 kHz hsync\n"

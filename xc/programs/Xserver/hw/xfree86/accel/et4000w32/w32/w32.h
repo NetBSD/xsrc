@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/w32.h,v 3.12 1996/09/29 13:18:50 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/w32.h,v 3.13.2.1 1997/05/16 11:35:13 hohndel Exp $ */ 
 /*******************************************************************************
                         Copyright 1994 by Glenn G. Lai
 
@@ -27,7 +27,7 @@ glenn@cs.utexas.edu)
 4/6/94
 6/30/94
 *******************************************************************************/
-/* $XConsortium: w32.h /main/8 1995/12/09 15:53:01 kaleb $ */
+/* $XConsortium: w32.h /main/12 1996/10/25 10:21:49 kaleb $ */
 
 #ifndef W32_H
 #define W32_H
@@ -57,8 +57,10 @@ int W32RamdacType;
 #define ICS5341_DAC    10
 #define GENDAC_DAC     11
 #define STG1700_DAC    12
-#define STG1703_DAC    13
-#define ET6000_DAC     14
+#define STG1702_DAC    13
+#define STG1703_DAC    14
+#define ET6000_DAC     15
+#define CH8398_DAC     17
 
 
 extern

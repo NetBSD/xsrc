@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/cache/xf86text.h,v 3.3 1996/02/04 08:58:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/cache/xf86text.h,v 3.4 1996/12/23 06:33:23 dawes Exp $ */
 
 /*
  * Function prototypes for the text output functions.
  */
 
-/* $XConsortium: xf86text.h /main/4 1995/11/13 10:11:12 kaleb $ */
+/* $XConsortium: xf86text.h /main/5 1996/02/21 17:19:31 kaleb $ */
 
 #ifndef _XF86_TEXT_H
 #define _XF86_TEXT_H

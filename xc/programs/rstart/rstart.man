@@ -1,4 +1,4 @@
-.\" $XConsortium: rstart.man /main/5 1995/12/15 14:01:08 gildea $
+.\" $XConsortium: rstart.man /main/6 1996/12/09 17:07:24 kaleb $
 .\" Copyright (c) 1993 Quarterdeck Office Systems
 .\" 
 .\" Permission to use, copy, modify, distribute, and sell this software and
@@ -33,7 +33,7 @@
 .if t .sp .5
 ..
 .ta .3i .6i .9i 1.2i 1.5i 1.8i
-.TH RSTART 1 "Release 6.1" "X Version 11"
+.TH RSTART 1 "Release 6.3" "X Version 11"
 .SH NAME
 rstart - a sample implementation of a Remote Start client
 .SH SYNOPSIS

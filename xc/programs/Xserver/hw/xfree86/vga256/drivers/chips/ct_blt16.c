@@ -1,3 +1,4 @@
+/* $XConsortium: ct_blt16.c /main/3 1996/10/25 10:29:10 kaleb $ */
 /*
  * Hooks for cfb16/24 CopyArea
  */
@@ -42,7 +43,7 @@
  *    Modified again for use with Chips chipsets
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_blt16.c,v 3.2 1996/09/29 13:39:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/chips/ct_blt16.c,v 3.3 1996/12/27 07:05:07 dawes Exp $ */
 
 #include	"X.h"
 #include	"Xmd.h"

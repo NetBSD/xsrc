@@ -1,4 +1,4 @@
-// $XConsortium: dvorak /main/1 1996/02/02 14:20:17 kaleb $
+// $XConsortium: dvorak /main/1 1996/08/31 12:18:02 kaleb $
 default xkb_keymap "indy" {
     xkb_keycodes	{ include "sgi/indy"		};
     xkb_types		{ include "default"		};

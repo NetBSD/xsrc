@@ -1,3 +1,4 @@
+/* $XConsortium: ARK.c /main/3 1996/10/25 21:18:52 kaleb $ */
 /*
  * (c) Copyright 1996 Harm Hanemaayer <H.Hanemaayer@inter.nl.net>
  *
@@ -25,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ARK.c,v 3.1 1996/10/13 11:19:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/ARK.c,v 3.2 1996/12/27 06:53:24 dawes Exp $ */
 
 #include "Probe.h"
 

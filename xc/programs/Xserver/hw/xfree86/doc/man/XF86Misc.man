@@ -1,13 +1,17 @@
+.\" $XConsortium: XF86Misc.man /main/6 1996/12/09 17:45:38 kaleb $
+.\"
+.\"
+.\"
 .\" Copyright (c) 1996  Joe Moss, The XFree86 Project
 .\" 
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86Misc.man,v 3.4 1996/10/03 08:34:31 dawes Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86Misc.man,v 3.6.2.1 1997/05/21 15:02:36 dawes Exp $
 .de ZN
 .ie t \fB\^\\$1\^\fR\\$2
 .el \fI\^\\$1\^\fP\\$2
 ..
-.TH XF86MISC 3X11 "3.2" "XFree86" "X FUNCTIONS"
+.TH XF86MISC 3X11 "3.3" "XFree86" "X FUNCTIONS"
 .SH NAME
-XF86MiscQueryExtension, XF86MiscQueryVersion, XF86MiscGetSaver, XF86MiscSetSaver, XF86MiscGetMouseSettings, XF86MiscSetMouseSettings, XF86MiscGetKbdSettings, XF86MiscSetKbdSettings \- XFree86-Misc extension interface functions
+XF86MiscQueryExtension, XF86MiscQueryVersion, XF86MiscGetMouseSettings, XF86MiscSetMouseSettings, XF86MiscGetKbdSettings, XF86MiscSetKbdSettings \- XFree86-Misc extension interface functions
 .SH SYNTAX
 .nf
 .LP
@@ -22,6 +26,7 @@ Bool XF86MiscQueryVersion(
     Display *\fIdisplay\fP\^,
     int *\fImajor_version_return\fP\^,
     int *\fIminor_version_return\fP\^);
+.ig
 .LP
 Status XF86MiscGetSaver(
     Display *\fIdisplay\fP\^,
@@ -34,6 +39,7 @@ Status XF86MiscSetSaver(
     int \fIscreen\fP\^,
     int \fIsuspend_time\fP\^,
     int \fIoff_time\fP\^);
+..
 .LP
 Status XF86MiscGetMouseSettings(
     Display *\fIdisplay\fP\^,
@@ -64,6 +70,7 @@ Returns the base error number for the extension.
 Returns the major version number of the extension.
 .IP \fIminor_version_return\fP 2i
 Returns the minor version number of the extension.
+.ig
 .IP \fIsuspend_time_return\fP 2i
 Returns the number of seconds of idle time the server
 will wait before activating the monitor's suspend mode.
@@ -76,6 +83,7 @@ should wait before activating the monitor's suspend mode.
 .IP \fIoff_time\fP 2i
 Specifies the number of seconds of idle time the server
 should wait before causing the monitor to powerdown.
+..
 .IP \fImseinfo\fP 2i
 Specifies a structure which contains the mouse parameters.
 .IP \fIkbdinfo\fP 2i
@@ -115,9 +123,8 @@ The
 .ZN XF86MiscGetSaver
 and
 .ZN XF86MiscSetSaver
-functions are used to query and set the timeouts used by the
-server before activating the VESA powersaving modes of
-compliant monitors.
+functions have been removed.  This functionality is now provided by
+the DPMS extension.
 .SS "MOUSE FUNCTIONS"
 Mouse parameters can be queried using the function
 .ZN XF86MiscGetMouseSettings .

@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/IBMRGB.h,v 3.1 1996/02/04 09:06:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/IBMRGB.h,v 3.2 1996/12/23 06:44:10 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: IBMRGB.h /main/3 1995/11/12 19:30:03 kaleb $ */
+/* $XConsortium: IBMRGB.h /main/4 1996/02/21 17:40:04 kaleb $ */
 
 #define IBMRGB_REF_FREQ_1       14.31818
 #define IBMRGB_REF_FREQ_2       50.00000

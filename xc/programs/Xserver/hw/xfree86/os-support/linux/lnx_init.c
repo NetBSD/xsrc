@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_init.c,v 3.6 1996/09/14 13:10:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_init.c,v 3.7.2.2 1997/05/03 13:33:37 dawes Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: lnx_init.c /main/4 1995/11/13 05:58:38 kaleb $ */
+/* $XConsortium: lnx_init.c /main/7 1996/10/23 18:46:30 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -80,10 +80,10 @@ void xf86OpenConsole()
 	}
 	else 
 	{
-	    if ((fd = open("/dev/console",O_WRONLY,0)) < 0) 
+	    if ((fd = open("/dev/tty0",O_WRONLY,0)) < 0) 
 	    {
 		FatalError(
-		    "xf86OpenConsole: Cannot open /dev/console (%s)\n",
+		    "xf86OpenConsole: Cannot open /dev/tty0 (%s)\n",
 		    strerror(errno));
 	    }
 	    if ((ioctl(fd, VT_OPENQRY, &xf86Info.vtno) < 0) ||
@@ -127,8 +127,9 @@ void xf86OpenConsole()
 	/*
 	 * the current VT device we're running on is not "console", we want
 	 * to grab all consoles too
+	 *
+	 * Why is this needed?
 	 */
-	chown("/dev/console", getuid(), getgid());
 	chown("/dev/tty0", getuid(), getgid());
 
 	/*

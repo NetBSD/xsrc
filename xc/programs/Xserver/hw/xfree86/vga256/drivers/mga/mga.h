@@ -1,5 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga.h,v 3.3 1996/10/16 14:43:02 dawes Exp $ */
-
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/mga/mga.h,v 3.8.2.2 1997/05/25 05:06:50 dawes Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *
@@ -15,74 +14,72 @@
 #ifndef MGA_H
 #define MGA_H
 
-#define MGAREG8(addr) *(volatile CARD8 *)(MGAMMIOBase + (addr))
-#define MGAREG16(addr) *(volatile CARD16 *)(MGAMMIOBase + (addr))
-#define MGAREG32(addr) *(volatile CARD32 *)(MGAMMIOBase + (addr))
-#define MGAREG(addr) MGAREG32(addr)
-#define OUTREG(addr, val) MGAREG(addr) = (val)
+#if defined(__alpha__)
+#define mb() __asm__ __volatile__("mb": : :"memory")
+#define INREG8(addr) xf86ReadSparse8(MGAMMIOBase, (addr))
+#define INREG16(addr) xf86ReadSparse16(MGAMMIOBase, (addr))
+#define OUTREG8(addr,val) do { xf86WriteSparse8((val),MGAMMIOBase,(addr)); \
+				mb();} while(0)
+#define OUTREG16(addr,val) do { xf86WriteSparse16((val),MGAMMIOBase,(addr)); \
+				mb();} while(0)
+#define OUTREG(addr, val) do { xf86WriteSparse32((val),MGAMMIOBase,(addr)); \
+				mb();} while(0)
+#else /* __alpha__ */
+#define INREG8(addr) *(volatile CARD8 *)(MGAMMIOBase + (addr))
+#define INREG16(addr) *(volatile CARD16 *)(MGAMMIOBase + (addr))
+#define OUTREG8(addr, val) *(volatile CARD8 *)(MGAMMIOBase + (addr)) = (val)
+#define OUTREG16(addr, val) *(volatile CARD16 *)(MGAMMIOBase + (addr)) = (val)
+#define OUTREG(addr, val) *(volatile CARD32 *)(MGAMMIOBase + (addr)) = (val)
+#endif /* __alpha__ */
 
+#define MGAISBUSY() (INREG8(MGAREG_Status + 2) & 0x01)
+#define MGAWAITFIFO() while(INREG16(MGAREG_FIFOSTATUS) & 0x100);
+#define MGAWAITFREE() while(MGAISBUSY());
+#define MGAWAITFIFOSLOTS(slots) while ( ((INREG16(MGAREG_FIFOSTATUS) & 0x3f) - (slots)) < 0 );
+
+typedef struct {
+    Bool	isHwCursor;
+    pointer	(*RealizeCursor)();
+    void	(*LoadCursor)();
+    void	(*QueryCursorSize)();
+    Bool	(*CursorState)();
+    void	(*CursorOn)();
+    void	(*CursorOff)();
+    void	(*MoveCursor)();
+    void	(*RecolorCursor)();
+    long	maxPixelClock;
+    long	MemoryClock;
+} MGARamdacRec;
+
+extern MGARamdacRec MGAdac;
+extern pciTagRec MGAPciTag;
+extern int MGAchipset;
+extern int MGAinterleave;
+extern int MGABppShft;
+extern int MGAusefbitblt;
+extern int MGAydstorg;
 extern unsigned char *MGAMMIOBase;
-extern int MGAScrnWidth;
-
-#define MGAWAITFIFO() while(MGAREG16(MGAREG_FIFOSTATUS) & 0x100);
-#define MGAWAITFREE() while(MGAREG8(MGAREG_Status + 2) & 0x01);
-
-#define MGAWAITFIFOSLOTS(SLOTS) while ( ((MGAREG16(MGAREG_FIFOSTATUS) & 0x3f) - SLOTS) < 0 );
-
-void
-mgaLine (
-#ifdef NeedFunctionPrototypes
-	 DrawablePtr pDrawable, 
-	 GCPtr pGC, 
-	 int mode, 
-	 int npt, 
-	 DDXPointPtr pptInit
+#ifdef __alpha__
+extern unsigned char *MGAMMIOBaseDENSE;
 #endif
-);
 
-void
-mgaPolyFillRect(
-#ifdef NeedFunctionPrototypes
-	DrawablePtr pDrawable,
-	register GCPtr pGC,
-	int         nrectFill,
-	xRectangle  *prectInit
-#endif
-);                
+/*
+ * ROPs
+ *
+ * for some silly reason, the bits in the ROPs are just the other way round
+ */
 
-void
-mgaFillRectSolidCopy(
-#ifdef NeedFunctionPrototypes
-	DrawablePtr     pDrawable,
-	GCPtr           pGC,
-	int             nBox,
-	BoxPtr          pBox
-#endif
-);
+/*
+ * definitions for the new acceleration interface
+ */
+#define WAITUNTILFINISHED()	MGAWAITFREE()
+#define SETBACKGROUNDCOLOR(col)	OUTREG(MGAREG_BCOL, (col))
+#define SETFOREGROUNDCOLOR(col)	OUTREG(MGAREG_FCOL, (col))
+#define SETRASTEROP(rop)	mga_cmd |= (((rop & 1)==1)*8 | \
+					    ((rop & 2)==2)*4 | \
+					    ((rop & 4)==4)*2 | \
+					    ((rop & 8)==8)) << 16;
+#define SETWRITEPLANEMASK(pm)	OUTREG(MGAREG_PLNWT, (pm))
+#define SETBLTXYDIR(x,y)	OUTREG(MGAREG_SGN, ((-x+1)>>1)+4*((-y+1)>>1))
 
-void
-mgaPaintWindow(
-#ifdef NeedFunctionPrototypes
-	WindowPtr   pWin,
-	RegionPtr   pRegion,
-	int         what
-#endif
-);
-
-void
-mgaFillBoxSolid(
-#ifdef NeedFunctionPrototypes
-	DrawablePtr     pDrawable,
-	int             nBox,
-	BoxPtr          pBox,
-	unsigned long   pixel
-#endif
-);                
-
-int
-MGAWaitForBlitter(
-#ifdef NeedFunctionPrototypes
-	void
-#endif
-);
 #endif

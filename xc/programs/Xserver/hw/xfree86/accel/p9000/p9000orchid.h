@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000orchid.h,v 3.3 1996/02/04 09:04:25 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000orchid.h,v 3.4 1996/12/23 06:40:49 dawes Exp $ */
 /*
  * Copyright 1994, Erik Nygren (nygren@mit.edu)
  *
@@ -17,7 +17,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: p9000orchid.h /main/3 1995/11/12 18:19:24 kaleb $ */
+/* $XConsortium: p9000orchid.h /main/4 1996/02/21 17:32:56 kaleb $ */
 
 #define ORCHID_OCR_RESERVED_MASK     0xCF
 #define ORCHID_OCR_ENABLE_P9000      0x10

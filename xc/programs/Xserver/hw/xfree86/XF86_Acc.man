@@ -1,10 +1,9 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_Acc.man,v 3.56 1996/10/19 15:14:15 dawes Exp $ 
-.TH XF86_Accel 1 "Version 3.2"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86_Acc.man,v 3.58.2.3 1997/05/24 13:55:52 dawes Exp $ 
+.TH XF86_Accel 1 "Version 3.3"  "XFree86"
 .SH NAME
 XF86_Accel - accelerated X Window System servers for
 UNIX on x86 and Alpha platforms with an S3, Mach8, Mach32, Mach64, P9000, AGX,
-ET4000/W32, ET6000, I128*, TGA*, or 8514/A accelerator board
-(* not currently accelerated)
+ET4000/W32, ET6000, I128, TGA, or 8514/A accelerator board
 .SH SYNOPSIS
 .B XF86_S3
 [:displaynumber] [ option ] ...
@@ -76,13 +75,11 @@ accelerator boards.
 .I XF86_W32
 is an 8-bit PseudoColor server for ET4000/W32, ET4000/W32i, ET4000/W32p and
 ET6000 graphic accelerator boards. For 16, 24 and 32 bits per pixel support
-on the ET6000, try the XF86_SVGA (non-accelerated) server.
+on the ET6000, try the XF86_SVGA server.
 .PP
 .I XF86_I128
 is an server for Number Nine Imagine 128
 graphic accelerator boards.
-.B Note: this server currently does not use any of the accelerated features
-.B of this board.
 .PP
 .I XF86_TGA
 is an server for Digital's 21030 (TGA) chipset.  This server is available only
@@ -107,7 +104,7 @@ XF86_S3:
 86C964, 86C968
 .TP 13
 XF86_S3V:
-86C325 (ViRGE), 86C988 (ViRGE/VX)
+86C325 (ViRGE), 86C375 (ViRGE/DX), 86C385 (ViRGE/GX), 86C988 (ViRGE/VX)
 .TP 13
 XF86_Mach8:
 ATI Mach8, ATI Mach32
@@ -369,14 +366,13 @@ The only possible clockchip value for the ET6000 is \fB"et6000"\fP.
 This specifies the type of RAMDAC used on the board.  Only the S3,
 AGX, Mach32, Mach64, and W32 servers use this.
 .sp
-\fBnormal\fP - (S3, AGX) Card does not have one of the other RAMDACs mentioned
-here.  This option is only required for the S3 server if the server 
+\fBnormal\fP - (S3, AGX, W32) Card does not have one of the other RAMDACs
+mentioned here.  This option is only required for the S3 server if the server 
 incorrectly detects one of those other RAMDACs. 
 The AGX server does not yet auto-detect RAMDACs, this 
 is the default if no RAMDAC is specified.
-.sp
-\fBgeneric\fP - (W32) This forces the W32 server to treat the RAMDAC
-as a generic VGA RAMDAC.
+Use this option for W32 server if it incorrectly identifies
+your RAMDAC or if RAMDAC detection fails entirely.
 .sp
 \fBatt20c490\fP - (S3, AGX, Mach32) Card has an AT&T 20C490 or AT&T 20C491
 RAMDAC.
@@ -943,4 +939,4 @@ ET6000 chip (yet).
 \fIXFree86\fP source is available from the FTP server
 \fIftp.XFree86.Org\fP and mirrors.  Send email to
 \fIXFree86@XFree86.Org\fP for details.
-.\" $XConsortium: XF86_Acc.man /main/17 1996/01/14 18:59:06 kaleb $
+.\" $XConsortium: XF86_Acc.man /main/26 1996/12/09 17:33:05 kaleb $

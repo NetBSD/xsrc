@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.57 1996/10/20 13:32:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.9 1997/06/02 01:44:13 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993,1994,1995,1996 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -30,7 +30,7 @@
  * Support for the Mach64 CT added by David Dawes (dawes@XFree86.org)
  *
  */
-/* $XConsortium: mach64.c /main/17 1996/01/28 07:58:52 kaleb $ */
+/* $XConsortium: mach64.c /main/34 1996/10/28 04:46:47 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -56,6 +56,11 @@
 #include "mach64.h"
 #ifdef PIXPRIV
 #include "mach64im.h"
+#endif
+
+#ifdef DPMSExtension
+#include "opaque.h"
+#include "extensions/dpms.h"
 #endif
 
 #include "xf86_PCI.h"
@@ -92,7 +97,8 @@ int mach64PixmapIndex;
 static int mach64ValidMode(
 #if NeedFunctionPrototypes
     DisplayModePtr,
-    Bool
+    Bool,
+    int
 #endif
 ); 
 
@@ -108,6 +114,7 @@ ScrnInfoRec mach64InfoRec = {
     (void (*)())NoopDDA,/* void (* EnterLeaveCursor)() */
     mach64AdjustFrame,	/* void (* AdjustFrame)() */
     mach64SwitchMode,	/* Bool (* SwitchMode)() */
+    mach64DPMSSet	,/* void (* DPMSSet)() */
     mach64PrintIdent,	/* void (* PrintIdent)() */
     8,			/* int depth */
     {5, 6, 5},          /* xrgb weight */
@@ -121,7 +128,8 @@ ScrnInfoRec mach64InfoRec = {
     {0, },	       	/* OFlagSet xconfigFlag */
     NULL,	       	/* char *chipset */
     NULL,               /* char *ramdac */
-    0,                  /* int dacSpeed */
+    {0, 0, 0, 0},	/* int dacSpeeds[MAXDACSPEEDS] */
+    0,			/* int dacSpeedBpp */
     0,			/* int clocks */
     {0, },		/* int clock[MAXCLOCKS] */
     0,			/* int maxClock */
@@ -148,17 +156,20 @@ ScrnInfoRec mach64InfoRec = {
     0,                  /* int s3Madjust */
     0,                  /* int s3Nadjust */
     0,                  /* int s3MClk */
+    0,                  /* int chipID */
+    0,                  /* int chipRev */
     0,                  /* unsigned long VGAbase */
     0,                  /* int s3RefClk */
-    0,                  /* int suspendTime */
-    0,                  /* int offTime */
     -1,                 /* int s3BlankDelay */
     0,			/* int textClockFreq */
+    NULL,               /* char* DCConfig */
+    NULL,               /* char* DCOptions */
+    0			/* int MemClk */
 #ifdef XFreeXDGA
-    0,                  /* int directMode */
+    ,0,                  /* int directMode */
     NULL,               /* Set Vid Page */
     0,                  /* unsigned long physBase */
-    0,                  /* int physSize */
+    0                  /* int physSize */
 #endif
 };
 
@@ -191,7 +202,6 @@ int mach64VirtX, mach64VirtY;
 
 Bool mach64Use4MbAperture = FALSE;
 Bool mach64DAC8Bit = FALSE;
-Bool mach64PowerSaver = FALSE;
 
 static unsigned Mach64_IOPorts[] = {
 	/* VGA Registers */
@@ -439,6 +449,12 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
 	 return &info;
 
    tmp = inl(ioCONFIG_CHIP_ID);
+   if (mach64InfoRec.chipID) {
+	ErrorF("%s %s: Mach64 chipset override, using ChipID 0x%04x instead"
+		" of 0x%04x\n", XCONFIG_GIVEN, mach64InfoRec.name,
+		mach64InfoRec.chipID & CFG_CHIP_TYPE, tmp & CFG_CHIP_TYPE);
+	tmp = (tmp & ~CFG_CHIP_TYPE) | (mach64InfoRec.chipID & CFG_CHIP_TYPE);
+   }
    switch (tmp & CFG_CHIP_TYPE) {
    case MACH64_GX_ID:
 	info.ChipType = MACH64_GX;
@@ -470,7 +486,14 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
 	info.Mach64_Present = FALSE;
 	return &info;
    }
-   info.ChipRev = (tmp & CFG_CHIP_REV) >> 24;
+   if (mach64InfoRec.chipRev) {
+	ErrorF("%s %s: Mach64 chipset override, using ChipRev 0x%02x instead"
+		" of 0x%02x\n", XCONFIG_GIVEN, mach64InfoRec.name,
+		mach64InfoRec.chipRev & 0xFF, (tmp & CFG_CHIP_REV) >> 24);
+	info.ChipRev = mach64InfoRec.chipRev & 0xFF;
+   } else {
+	info.ChipRev = (tmp & CFG_CHIP_REV) >> 24;
+   }
 #ifdef DEBUG
    ErrorF("CONFIG_CHIP_ID reports: %s rev %d\n",
 	  xf86TokenToString(mach64ChipTable, info.ChipType), info.ChipRev);
@@ -632,7 +655,7 @@ GetATIPCIInformation()
 		break;
 	    }
 	    info.ChipRev = pcrp->_rev_id;
-	    info.ApertureBase = pcrp->_base0;
+	    info.ApertureBase = pcrp->_base0 & 0xFFFFFFF0;
 	    /*
 	     * The docs say check (pcrp->_user_config_0 & 0x04) for BlockIO
 	     * but this doesn't seem to be reliable.  Instead check if
@@ -681,11 +704,18 @@ GetATIPCIInformation()
     xf86cleanpci();
 
     if (found && xf86Verbose) {
+      if (info.ChipType != MACH64_UNKNOWN) {
 	ErrorF("%s %s: PCI: %s rev %d, Aperture @ 0x%08x,"
 		" %s I/O @ 0x%04x\n", XCONFIG_PROBED, mach64InfoRec.name,
 		xf86TokenToString(mach64ChipTable, info.ChipType),
 		info.ChipRev, info.ApertureBase,
 		info.BlockIO ? "Block" : "Sparse", info.IOBase);
+      } else {
+	ErrorF("%s %s: PCI: unknown ATI (%0x04x) rev %d, Aperture @ 0x%08x,"
+		" %s I/O @ 0x%04x\n", XCONFIG_PROBED, mach64InfoRec.name,
+		pcrp->_device, info.ChipRev, info.ApertureBase,
+		info.BlockIO ? "Block" : "Sparse", info.IOBase);
+      }
     }
     if (found) {
 	return &info;
@@ -858,7 +888,7 @@ mach64Probe()
 	return(FALSE);
     }
 
-    if (pciInfo) {
+    if (pciInfo && !mach64InfoRec.chipID) {
 	if (pciInfo->ChipType != info->ChipType) {
 	    ErrorF("%s %s: PCI (%s) and CONFIG_CHIP_ID (%s) don't agree on"
 		   " ChipType,\n"
@@ -871,7 +901,7 @@ mach64Probe()
 	mach64ChipType = info->ChipType;
     }
 
-    if (pciInfo) {
+    if (pciInfo && !mach64InfoRec.chipRev) {
 	if (pciInfo->ChipRev != info->ChipRev) {
 	    ErrorF("%s %s: PCI (%d) and CONFIG_CHIP_ID (%d) don't agree on"
 		   " ChipRev,\n"
@@ -1023,10 +1053,15 @@ mach64Probe()
 	mach64InfoRec.maxClock = 135000;
 	break;
     case DAC_INTERNAL:
-	if (xf86bpp == 8)
-	    mach64InfoRec.maxClock = 135000;
-	else
-	    mach64InfoRec.maxClock = 80000;
+	if ((mach64ChipType == MACH64_VT || mach64ChipType == MACH64_GT) &&
+	    (mach64ChipRev & 0x01)) {
+	    mach64InfoRec.maxClock = 170000;
+	} else {
+	    if (xf86bpp == 8)
+		mach64InfoRec.maxClock = 135000;
+	    else
+		mach64InfoRec.maxClock = 80000;
+	}
 	break;
     case DAC_IBMRGB514:
 	mach64InfoRec.maxClock = 220000;
@@ -1046,8 +1081,10 @@ mach64Probe()
     }
     OFLG_SET(OPTION_DAC_6_BIT, &validOptions);
     OFLG_SET(OPTION_OVERRIDE_BIOS, &validOptions);
-    OFLG_SET(OPTION_NO_BLOCK_WRITE, &validOptions);
-    OFLG_SET(OPTION_BLOCK_WRITE, &validOptions);
+    if (!mach64IntegratedController) {
+	OFLG_SET(OPTION_NO_BLOCK_WRITE, &validOptions);
+	OFLG_SET(OPTION_BLOCK_WRITE, &validOptions);
+    }
     OFLG_SET(OPTION_POWER_SAVER, &validOptions);
     OFLG_SET(OPTION_NO_BIOS_CLOCKS, &validOptions);
     OFLG_SET(OPTION_NO_PROGRAM_CLOCKS, &validOptions);
@@ -1216,6 +1253,10 @@ mach64Probe()
 	}
     }
 
+    if (!mach64InfoRec.videoRam) {
+	mach64InfoRec.videoRam = info->Mem_Size;
+    }
+
     tx = mach64InfoRec.virtualX;
     ty = mach64InfoRec.virtualY;
     pMode = mach64InfoRec.modes;
@@ -1235,6 +1276,14 @@ mach64Probe()
                 pModeSv=pMode->next;
                 xf86DeleteMode(&mach64InfoRec, pMode);
                 pMode = pModeSv; 
+	  } else if (pMode->HDisplay * pMode->VDisplay *
+	      (mach64InfoRec.bitsPerPixel / 8) >
+	      mach64InfoRec.videoRam*1024) {
+		pModeSv=pMode->next;
+		ErrorF("%s %s: Too little memory for mode \"%s\"\n",
+		       XCONFIG_PROBED, mach64InfoRec.name, pMode->name);
+		xf86DeleteMode(&mach64InfoRec, pMode);
+		pMode = pModeSv;
           } else if (((tx > 0) && (pMode->HDisplay > tx)) || 
                      ((ty > 0) && (pMode->VDisplay > ty))) {
                 pModeSv=pMode->next;
@@ -1332,10 +1381,6 @@ mach64Probe()
 	       OFLG_ISSET(XCONFIG_VIRTUAL, &mach64InfoRec.xconfigFlag) ?
 		XCONFIG_GIVEN : XCONFIG_PROBED,
 		mach64InfoRec.name, mach64VirtX, mach64VirtY);
-    }
-
-    if (!mach64InfoRec.videoRam) {
-	mach64InfoRec.videoRam = info->Mem_Size;
     }
 
     /* Set mach64MemorySize to required MEM_SIZE value in MISC_OPTIONS */
@@ -1508,8 +1553,12 @@ mach64Probe()
 	}
     }
 
-    if (OFLG_ISSET(OPTION_POWER_SAVER, &mach64InfoRec.options))
-	mach64PowerSaver = TRUE;
+#ifdef DPMSExtension
+    if (DPMSEnabledSwitch ||
+	(OFLG_ISSET(OPTION_POWER_SAVER, &mach64InfoRec.options) &&
+	 !DPMSDisabledSwitch))
+	defaultDPMSEnabled = DPMSEnabled = TRUE;
+#endif
 
 #ifdef XFreeXDGA
     mach64InfoRec.displayWidth = mach64InfoRec.virtualX;
@@ -1839,95 +1888,6 @@ mach64CloseScreen(screen_idx, pScreen)
     return(TRUE);
 }
 
-static OsTimerPtr suspendTimer = NULL, offTimer = NULL;
-extern CARD32 ScreenSaverTime;
-
-/*
- * mach64OffMode -- put the screen into power off mode.
- */
-
-static CARD32
-mach64OffMode(timer, now, arg)
-     OsTimerPtr timer;
-     CARD32 now;
-     pointer arg;
-{
-    Bool on = (Bool)arg;
-
-    if (!mach64PowerSaver) return(0);
-
-    if (xf86VTSema) {
-	int crtcGenCntl = regr(CRTC_GEN_CNTL);
-	if (on) {
-	    crtcGenCntl &= ~CRTC_HSYNC_DIS;
-	    crtcGenCntl &= ~CRTC_VSYNC_DIS;
-	} else {
-	    crtcGenCntl |= CRTC_HSYNC_DIS;
-	    crtcGenCntl |= CRTC_VSYNC_DIS;
-	}
-
-	usleep(10000);
-	regw(CRTC_GEN_CNTL, crtcGenCntl);
-   }
-   if (offTimer) {
-      TimerFree(offTimer);
-      offTimer = NULL;
-   }
-   return(0);
-}
-
-/*
- * mach64SuspendMode -- put the screen into suspend mode.
- */
-
-static CARD32
-mach64SuspendMode(timer, now, arg)
-     OsTimerPtr timer;
-     CARD32 now;
-     pointer arg;
-{
-    Bool on = (Bool)arg;
-
-    if (!mach64PowerSaver) return(0);
-
-    if (xf86VTSema) {
-	int crtcGenCntl = regr(CRTC_GEN_CNTL);
-	if (on) {
-	    crtcGenCntl &= ~CRTC_HSYNC_DIS;
-	    crtcGenCntl &= ~CRTC_VSYNC_DIS;
-	} else {
-	    crtcGenCntl |= CRTC_HSYNC_DIS;
-	}
-
-	usleep(10000);
-	regw(CRTC_GEN_CNTL, crtcGenCntl);
-
-	if (!on && mach64InfoRec.offTime != 0) {
-	    if (mach64InfoRec.offTime > mach64InfoRec.suspendTime &&
-		mach64InfoRec.offTime > ScreenSaverTime) {
-
-		int timeout;
-
-		/* Setup timeout for mach64OffMode() */
-		if (mach64InfoRec.suspendTime < ScreenSaverTime)
-		   timeout = mach64InfoRec.offTime - ScreenSaverTime;
-		else
-		   timeout = mach64InfoRec.offTime - mach64InfoRec.suspendTime;
-
-		offTimer = TimerSet(offTimer, 0, timeout,
-			        mach64OffMode, (pointer)FALSE);
-	    } else {
-		mach64OffMode(NULL, 0, (pointer)FALSE);
-	    }
-	}
-    }
-    if (suspendTimer) {
-      TimerFree(suspendTimer);
-      suspendTimer = NULL;
-   }
-   return(0);
-}
-
 /*
  * mach64SaveScreen --
  *      blank the screen.
@@ -1941,12 +1901,6 @@ mach64SaveScreen (pScreen, on)
 	SetTimeSinceLastInputEvent();
 
     if (xf86VTSema) {
-
-	/* Turn off Off and Suspend mode */
-	if (mach64PowerSaver && on) {
-	    mach64OffMode(NULL, 0, (pointer)TRUE);
-	    mach64SuspendMode(NULL, 0, (pointer)TRUE);
-	}
 
 	if (on) {
 	    mach64SetRamdac(mach64CRTCRegs.color_depth, TRUE,
@@ -1995,28 +1949,43 @@ mach64SaveScreen (pScreen, on)
 	    if (mach64RamdacSubType != DAC_ATI68875)
 		outb(ioDAC_REGS+2, 0x00);
 	}
-	if (mach64PowerSaver && !on) {
-	    if (mach64InfoRec.suspendTime != 0) {
-		if (mach64InfoRec.suspendTime > ScreenSaverTime) {
-		    suspendTimer = TimerSet(suspendTimer, 0,
-					    mach64InfoRec.suspendTime -
-					    ScreenSaverTime,
-					    mach64SuspendMode, (pointer)FALSE);
-		} else {
-		    mach64SuspendMode(NULL, 0, (pointer)FALSE);
-		}
-	    } else if (mach64InfoRec.offTime != 0) {
-		if (mach64InfoRec.offTime > ScreenSaverTime) {
-		    offTimer = TimerSet(offTimer, 0,
-					mach64InfoRec.offTime - ScreenSaverTime,
-					mach64OffMode, (pointer)FALSE);
-		} else {
-		    mach64OffMode(NULL, 0, (pointer)FALSE);
-		}
-	    }
-	}
     }
     return(TRUE);
+}
+
+/*
+ * mach64DPMSSet -- Sets VESA Display Power Management Signaling (DPMS) Mode
+ */
+
+void
+mach64DPMSSet(PowerManagementMode)
+    int PowerManagementMode;
+{
+#ifdef DPMSExtension
+    int crtcGenCntl;
+    if (!xf86VTSema) return;
+    crtcGenCntl = regr(CRTC_GEN_CNTL) & ~(CRTC_HSYNC_DIS | CRTC_VSYNC_DIS);
+    switch (PowerManagementMode)
+    {
+    case DPMSModeOn:
+	/* HSync: On, VSync: On */
+	break;
+    case DPMSModeStandby:
+	/* HSync: Off, VSync: On */
+	crtcGenCntl |= CRTC_HSYNC_DIS;
+	break;
+    case DPMSModeSuspend:
+	/* HSync: On, VSync: Off */
+	crtcGenCntl |= CRTC_VSYNC_DIS;
+	break;
+    case DPMSModeOff:
+	/* HSync: Off, VSync: Off */
+	crtcGenCntl |= (CRTC_HSYNC_DIS | CRTC_VSYNC_DIS);
+	break;
+    }
+    usleep(10000);
+    regw(CRTC_GEN_CNTL, crtcGenCntl);
+#endif
 }
 
 /*
@@ -2073,7 +2042,7 @@ mach64SwitchMode(mode)
  *
  */
 static int
-mach64ValidMode(mode, verbose)
+mach64ValidMode(mode, verbose, flag)
 DisplayModePtr mode;
 Bool verbose;
 {

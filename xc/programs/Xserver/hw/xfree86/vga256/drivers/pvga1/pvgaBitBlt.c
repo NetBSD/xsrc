@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/pvga1/pvgaBitBlt.c,v 3.6 1996/02/04 09:14:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/pvga1/pvgaBitBlt.c,v 3.7 1996/12/23 06:58:06 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -23,7 +23,7 @@
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  *
  */
-/* $XConsortium: pvgaBitBlt.c /main/6 1995/11/13 08:36:34 kaleb $ */
+/* $XConsortium: pvgaBitBlt.c /main/7 1996/02/21 18:06:42 kaleb $ */
 
 
 /* 90C31 accel code: Mike Tierney <floyd@eng.umd.edu> */

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/iplan2p4/Imakefile,v 3.1 1996/10/03 08:48:58 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/iplan2p4/Imakefile,v 3.2 1997/01/25 04:21:47 dawes Exp $
 XCOMM $XConsortium: Imakefile,v 5.41 93/09/06 18:37:23 rws Exp $
 #include <Server.tmpl>
 
@@ -34,7 +34,8 @@ OBJS =   iplgc.o iplrrop.o iplwindow.o \
  	 iplbitblt.o iplbltC.o iplbltX.o iplbltO.o iplbltG.o \
 	 iplply1rctC.o iplply1rctG.o iplpack.o
 
-   INCLUDES = -I. -I../mfb -I../mi -I../include -I$(INCLUDESRC) -I$(FONTINCSRC)
+   INCLUDES = -I. -I../cfb -I../mfb -I../mi -I../include -I$(XINCLUDESRC) \
+	      -I$(FONTINCSRC) $(EXTRAINCLUDES)
    LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln \
 	     ../mfb/llib-lmfb.ln ../mi/llib-lmi.ln
     DEFINES = -DINTER_PLANES=IPlanes
@@ -129,4 +130,6 @@ InstallLinkKitNonExecFile(iplrrop.h,$(LINKKITDIR)/include)
 InstallLinkKitLibrary(ipl2p8,$(LINKKITDIR)/lib)
 #endif
 
+#ifndef OS2Architecture
 DependTarget()
+#endif

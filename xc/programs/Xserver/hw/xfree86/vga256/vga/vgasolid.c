@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgasolid.c,v 3.2 1996/02/04 09:15:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgasolid.c,v 3.4 1996/12/23 07:00:00 dawes Exp $ */
 /*
  *
 Copyright (c) 1990  X Consortium
@@ -26,7 +26,7 @@ in this Software without prior written authorization from the X Consortium.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
-/* $XConsortium: vgasolid.c /main/2 1995/11/13 09:27:12 kaleb $ */
+/* $XConsortium: vgasolid.c /main/3 1996/02/21 18:11:58 kaleb $ */
 
 
 #include "vga256.h"
@@ -68,7 +68,7 @@ RROP_NAME(vga256FillRectSolid) (pDrawable, pGC, nBox, pBox)
 	w = pBox->x2 - pBox->x1;
 
         SpeedUpBox((unsigned char*)pdstRect + pBox->x1,
-			      rrop_xor, h, w, widthDst << 2);
+			      rrop_xor, h, w, widthDst << PWSH);
     }
 #endif /* GXcopy */
 #else /* SPEEDUP */

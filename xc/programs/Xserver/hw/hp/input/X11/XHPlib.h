@@ -1,4 +1,4 @@
-/* $XConsortium: XHPlib.h,v 1.3 95/01/24 23:40:16 gildea Exp $ */
+/* $XConsortium: XHPlib.h /main/4 1996/12/04 10:23:16 lehors $ */
 /************************************************************
 Copyright (c) 1992 by Hewlett-Packard Company, Palo Alto, California.
 
@@ -28,12 +28,6 @@ SOFTWARE.
 /* Definitions used by Xlib and the client */
 
 #include "XHPproto.h"
-#ifndef _NO_PROTO
-#if    !defined(__STDC__) && !defined(__cplusplus) && !defined(c_plusplus)
-#define _NO_PROTO
-#endif /* __STDC__ */
-#endif /* _NO_PROTO */
-
 
 #ifndef _XLIB_H_
 #include <X11/Xlib.h>
@@ -548,55 +542,6 @@ typedef struct {
 PtrFuncInt 	XHPSetErrorHandler();
 XFontStruct     *XHPGet16bitMixedFontStruct();
 
-#ifdef _NO_PROTO
-extern PtrFuncInt XHPGetEurasianCvt() ;
-extern int XGetHpKeyboardId() ;
-extern int XHPAcknowledge() ;
-extern int XHPDeviceAutoRepeatOff() ;
-extern int XHPDeviceAutoRepeatOn() ;
-extern int XHPChangeDeviceControl() ;
-extern int XHPChangeDeviceKeyMapping() ;
-extern int XHPDisableReset() ;
-extern int XHPDisableReset() ;
-extern int XHPFreeDeviceList() ;
-extern XHPTimeCoord * XHPGetDeviceMotionEvents() ;
-extern KeySym * XHPGetDeviceKeyMapping() ;
-extern XModifierKeymap * XHPGetDeviceModifierMapping() ;
-extern int XHPGetServerMode() ;
-extern int XHPGrabDeviceButton() ;
-extern int XHPGrabDeviceKey() ;
-extern int XHPGrabReset() ;
-extern int XHPGrabDevice() ;
-extern int XHPGetCurrentDeviceMask() ;
-extern int XHPGetExtEventMask() ;
-extern int XHPGetDeviceFocus() ;
-extern int XHPGetDeviceControl() ;
-extern XHPDeviceList * XHPListInputDevices() ;
-extern int XHPPrompt() ;
-extern XHPFilterId XHPRegisterEventFilter();
-extern int XHPSetInputDevice() ;
-extern int XHPSelectExtensionEvent() ;
-extern int XHPUngrabDevice() ;
-extern int XHPUngrabDeviceButton() ;
-extern int XHPUngrabDeviceKey() ;
-extern int XHPSetDeviceFocus() ;
-extern int XHPSetDeviceModifierMapping() ;
-extern Cursor XHPGetWindowCursor() ;
-extern int XHPConvertLookup() ;
-extern int input_isolatin1() ;
-extern KEYBOARD_ID XHPGetKeyboardID() ;
-extern void XHPUpdateKIDList() ;
-extern KEYBOARD_ID XHPGetCvtLang() ;
-extern KEYBOARD_ID XHPGetHILandCvt() ;
-extern int _XHPInitKbdState() ;
-extern int _XHP_alt_on() ;
-extern void _XHP_GetAltKeys() ;
-extern void _XHP_SetAltKeys() ;
-extern int _XHPIgnoreLang() ;
-extern int XHPInputRoman8() ;
-extern int XHPInputLatin1() ;
-extern int XHPInputISO8859_8() ;
-#else
 extern PtrFuncInt XHPGetEurasianCvt( 
                         Display *dpy) ;
 extern int XGetHpKeyboardId( 
@@ -806,7 +751,6 @@ extern int XHPInputISO8859_8(
                         char *buffer_return,
                         int bytes_buffer,
                         XComposeStatus *status_in_out) ;
-#endif /* _NO_PROTO */
 #ifdef __cplusplus
 }  /* Close scope of 'extern "C"' declaration that encloses file */
 #endif /* __cplusplus */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/mono/mono.c,v 3.26 1996/09/14 13:10:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/mono/mono.c,v 3.28.2.3 1997/05/11 02:56:21 dawes Exp $ */
 /*
  * MONO: Driver family for interlaced and banked monochrome video adaptors
  * Pascal Haible 8/93, 3/94, 4/94 haible@IZFM.Uni-Stuttgart.DE
@@ -14,7 +14,7 @@
  *
  * see mono/COPYRIGHT for copyright and disclaimers.
  */
-/* $XConsortium: mono.c /main/13 1995/12/29 10:19:47 kaleb $ */
+/* $XConsortium: mono.c /main/16 1996/10/23 18:46:08 kaleb $ */
 
 
 #include "X.h"
@@ -82,7 +82,8 @@ ScreenPtr pScreen
 int monoValidMode(
 #if NeedFunctionPrototypes
     DisplayModePtr,
-    Bool
+    Bool,
+    int
 #endif 
 );
 
@@ -103,6 +104,7 @@ ScrnInfoRec monoInfoRec = {
   (void (*)())NoopDDA,	/* void (* EnterLeaveCursor)(int) */
   monoAdjustFrame,	/* void (* AdjustFrame)(int,int) */
   (Bool (*)())NoopDDA,	/* Bool (* SwitchMode)() */
+  (void (*)())NoopDDA,	/* void (* DPMSSet)() */
   monoPrintIdent,	/* void (* PrintIdent)() */
   1,			/* int depth */
   {0, 0, 0},            /* xrgb weight */
@@ -116,7 +118,8 @@ ScrnInfoRec monoInfoRec = {
   {0, },                /* OFlagSet xconfigFlag */
   NULL,			/* char *chipset */
   NULL,			/* char *ramdac */
-  0,			/* int dacSpeed */
+  {0, 0, 0, 0},		/* int dacSpeeds[MAXDACSPEEDS] */
+  0,			/* int dacSpeedBpp */
   0,			/* int clocks */
   {0, },		/* int clock[MAXCLOCKS] */
   0,			/* int maxClock */
@@ -144,17 +147,20 @@ ScrnInfoRec monoInfoRec = {
   0,			/* int s3Madjust */
   0,			/* int s3Nadjust */
   0,			/* int s3MClk */
+  0,			/* int chipID */
+  0,			/* int chipRev */
   0,			/* unsigned long VGAbase */
   0,			/* int s3RefClk */
-  0,			/* int suspendTime */
-  0,			/* int offTime */
   -1,			/* int s3BlankDelay */
   0,			/* int textClockFreq */
+  NULL,			/* char* DCConfig */
+  NULL,			/* char* DCOptions */
+  0	                /* int MemClk */
 #ifdef XFreeXDGA
-  0,			/* int directMode */
+  ,0,			/* int directMode */
   NULL,			/* Set Vid Page */
   0,			/* unsigned long physBase */
-  0,			/* int physSize */
+  0			/* int physSize */
 #endif
 };
 
@@ -668,9 +674,10 @@ monoAdjustFrame(x, y)
 }
 
 int
-monoValidMode(mode, verbose)
+monoValidMode(mode, verbose, flag)
      DisplayModePtr mode;
      Bool verbose;
+     int flag;
 {
   /* Maybe this should return MODE_BAD since no XF86Config modes are used? */
   return(MODE_OK);

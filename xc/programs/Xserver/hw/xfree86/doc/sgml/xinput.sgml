@@ -1,4 +1,4 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
  
 <!-- made up title -->
@@ -15,7 +15,7 @@ implemented in XFree86&tm;.
 If  you have any suggestions,  comments, fixes  or ideas regarding the
 XInput extension in XFree86&tm; or about this document, send e-mail to
 
-<url url="mailto:lepied@XFree86.Org" 
+<htmlurl url="mailto:lepied@XFree86.Org" 
     name="lepied@XFree86.Org"><p>
 Bug Reports should be sent to<p>
 <em>XFree86@XFree86.Org</em><p>
@@ -38,7 +38,7 @@ clients (<em>xsetpointer</em> and <em>xsetmode</em>).
 
 The server supports the following extended devices :
 <itemize>
-	<item> Joystick (only on  supported systems ie. Linux, FreeBSD
+	<item>Joystick (only on  supported systems ie. Linux, FreeBSD
 	and NetBSD). Features :
 	<itemize>
 		<item>Relative mode.
@@ -46,21 +46,21 @@ The server supports the following extended devices :
 		<item>2 buttons.
 	</itemize>
 
-	<item> Elographics touchscreen. Features :
+	<item>Elographics touchscreen. Features :
 	<itemize>
 		<item>Absolute mode.
 		<item>2 valuators (x and y axis).
 		<item>1 button.
 	</itemize>
 
-	<item> Mouse. Features :
+	<item>Mouse. Features :
 	<itemize>
 		<item>Relative mode.
 		<item>2 valuators (x and y axis).
 		<item>up to 4 buttons.
 	</itemize>
 
-	<item> Wacom stylus. Features :
+	<item>Wacom stylus. Features :
 	<itemize>
 		<item>Absolute or relative modes.
 		<item>5 valuators :
@@ -77,7 +77,7 @@ The server supports the following extended devices :
 		<item>Macro/function buttons are reported as keys.
 	</itemize>
 
-	<item> Wacom eraser. Features :
+	<item>Wacom eraser. Features :
 	<itemize>
 		<item>Absolute or relative modes.
 		<item>5 valuators :
@@ -94,7 +94,7 @@ The server supports the following extended devices :
 		<item>Macro/function buttons are reported as keys.
 	</itemize>
 
-	<item> Wacom cursor. Features :
+	<item>Wacom cursor. Features :
 	<itemize>
 		<item>Absolute or relative modes.
 		<item>5 valuators :
@@ -111,7 +111,7 @@ The server supports the following extended devices :
 		<item>Macro/function buttons are reported as keys.
 	</itemize>
 
-	<item> SummaSketch tablet. Features :
+	<item>SummaSketch tablet. Features :
 	<itemize>
 		<item>Absolute or relative modes.
 		<item>2 valuators (x and y axis).
@@ -139,7 +139,12 @@ Consult the man pages for details.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/xinput.sgml,v 3.3 1996/10/16 14:41:17 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/xinput.sgml,v 3.6 1997/01/25 03:22:26 dawes Exp $
+
+
+
+
+$XConsortium: xinput.sgml /main/3 1996/10/27 11:06:13 kaleb $
 </verb>
 
 </article>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbtegblt.c,v 3.2 1996/02/04 08:59:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/cfb.w32/cfbtegblt.c,v 3.3 1996/12/23 06:34:53 dawes Exp $ */
 /***********************************************************
 
 Copyright (c) 1987  X Consortium
@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: cfbtegblt.c /main/2 1995/11/12 16:17:54 kaleb $ */
+/* $XConsortium: cfbtegblt.c /main/3 1996/02/21 19:51:27 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

@@ -1,3 +1,10 @@
+# $XConsortium: menu.tcl /main/1 1996/09/21 14:15:49 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/menu.tcl,v 3.1 1996/12/27 06:55:00 dawes Exp $
+#
 # menu.tcl --
 #
 # This file defines the default bindings for Tk menus and menubuttons.
@@ -805,7 +812,7 @@ proc tkMenuFirstEntry menu {
     }
     for {set i 0} {$i <= $last} {incr i} {
 	if {([catch {set state [$menu entrycget $i -state]}] == 0)
-		&& ($state != "disabled") && ([$menu type $i] != "tearoff")} {
+		&& (from: state != "disabled") && ([menu type $i] != "tearoff")} {
 	    $menu activate $i
 	    return
 	}

@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile /main/6 1996/02/02 14:14:14 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/xkb/Imakefile,v 3.8 1996/09/24 13:59:36 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/11 1996/12/02 10:23:37 lehors $
+XCOMM $XFree86: xc/programs/Xserver/xkb/Imakefile,v 3.10 1996/12/28 08:20:28 dawes Exp $
 #define SGIHyperOpt
 #include <Server.tmpl>
 
@@ -32,15 +32,15 @@ XKB_DDXDEFS = XkbServerDefines
 	    ddxList.o ddxConfig.o ddxDevBtn.o xkbconfig.o
      SRCS = xkb.c xkbUtils.c xkbEvents.c xkbAccessX.c xkbSwap.c \
             xkbLEDs.c xkbInit.c xkbActions.c xkbPrKeyEv.c \
-	    xkmread.c xkbtext.c xkbmisc.c xkberrs.c xkbout.c maprules.c \
-	    XKBMisc1.c XKBMAlloc.c XKBAlloc.c XKBGAlloc.c \
+	    xkmread.c xkbtext.c xkbfmisc.c xkberrs.c xkbout.c maprules.c \
+	    XKBMisc.c XKBMAlloc.c XKBAlloc.c XKBGAlloc.c \
 	    $(XKBXI_SRCS) $(DDX_SRCS)
      OBJS = xkb.o xkbUtils.o xkbEvents.o xkbAccessX.o xkbSwap.o \
             xkbLEDs.o xkbInit.o xkbActions.o xkbPrKeyEv.o \
-	    xkmread.o xkbtext.o xkbmisc.o xkberrs.o xkbout.o maprules.o \
-	    XKBMisc1.o XKBMAlloc.o XKBAlloc.o XKBGAlloc.o \
+	    xkmread.o xkbtext.o xkbfmisc.o xkberrs.o xkbout.o maprules.o \
+	    XKBMisc.o XKBMAlloc.o XKBAlloc.o XKBGAlloc.o \
 	    $(XKBXI_OBJS) $(DDX_OBJS)
-   INCLUDES = -I../include -I$(INCLUDESRC) -I$(EXTINCSRC)
+   INCLUDES = -I../include -I$(XINCLUDESRC) -I$(EXTINCSRC)
    LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln
 
 EXTRA_DEFINES = -DXKB_IN_SERVER $(EXTRA_ALLOC_DEFINES) $(XKB_DDXDEFS)
@@ -56,11 +56,12 @@ SpecialCObjectRule(xkbInit,$(ICONFIGFILES),$(XKB_DEFINES))
 LinkSourceFile(maprules.c,$(XKBFILELIBSRC))
 LinkSourceFile(xkmread.c,$(XKBFILELIBSRC))
 LinkSourceFile(xkbtext.c,$(XKBFILELIBSRC))
-LinkSourceFile(xkbmisc.c,$(XKBFILELIBSRC))
+XCOMM avoid clash between XKBMisc.c and xkbmisc.c on NT
+LinkFile(xkbfmisc.c,$(XKBFILELIBSRC)/xkbmisc.c)
 LinkSourceFile(xkberrs.c,$(XKBFILELIBSRC))
 LinkSourceFile(xkbconfig.c,$(XKBFILELIBSRC))
 LinkSourceFile(xkbout.c,$(XKBFILELIBSRC))
-LinkFile(XKBMisc1.c,$(XLIBSRC)/XKBMisc.c)
+LinkSourceFile(XKBMisc.c,$(XLIBSRC))
 LinkSourceFile(XKBMAlloc.c,$(XLIBSRC))
 LinkSourceFile(XKBAlloc.c,$(XLIBSRC))
 LinkSourceFile(XKBGAlloc.c,$(XLIBSRC))

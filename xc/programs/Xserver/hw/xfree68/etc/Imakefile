@@ -1,4 +1,9 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/etc/Imakefile,v 3.0 1996/08/18 01:46:44 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/2 1996/10/19 19:10:09 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/etc/Imakefile,v 3.2.2.1 1997/05/03 09:45:13 dawes Exp $
 
 #include <Server.tmpl>
 
@@ -10,17 +15,14 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/etc/Imakefile,v 3.0 1996/08/18 01
 #endif
 #endif
 
-#if 0
-#if XFree86Version % 10
+PREINST = preinst.sh
 POSTINST = postinst.sh
-#endif
-#endif
 
        FILES = $(CONFIGFILES) $(TERMFILES) \
                $(PATCHFILES) $(XDMCONF) \
-               xmodmap.std $(MISCFILES) $(POSTINST)
+               xmodmap.std $(MISCFILES) $(POSTINST) $(PREINST)
     INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) -I$(XF86HWSRC) \
-	       -I$(SERVERSRC)/include -I$(INCLUDESRC)
+	       -I$(SERVERSRC)/include -I$(XINCLUDESRC)
 
 all:: $(FILES)
 
@@ -70,12 +72,12 @@ LinkFile(xterm.terminfo,$(PROGRAMSRC)/xterm/terminfo)
 LinkSourceFile(joycal.c,$(XF86SRC)/etc)
 LinkSourceFile(kbd_mode.c,$(XF86SRC)/etc)
 LinkSourceFile(kbd_mode.man,$(XF86SRC)/etc)
+LinkSourceFile(preinst.sh,$(XF86SRC)/etc)
 LinkSourceFile(postinst.sh,$(XF86SRC)/etc)
 LinkSourceFile(scanpci.c,$(XF86SRC)/etc)
 LinkSourceFile(sun.tcap,$(XF86SRC)/etc)
 LinkSourceFile(sun.tinfo,$(XF86SRC)/etc)
 LinkSourceFile(vga.bdf,$(XF86SRC)/etc)
-LinkSourceFile(xf86pci.c,$(XF86SRC)/etc)
 LinkSourceFile(xmodmap.std,$(XF86SRC)/etc)
 
 LinkFile(sun.termcap,sun.tcap)

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgabstore.c,v 3.3 1996/02/04 09:15:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgabstore.c,v 3.5 1997/01/12 10:45:35 dawes Exp $ */
 /*
  * This file was derived from cfbbstore.c.
  */
@@ -18,7 +18,7 @@
  *
  *
  */
-/* $XConsortium: vgabstore.c /main/3 1995/11/13 09:26:24 kaleb $ */
+/* $XConsortium: vgabstore.c /main/4 1996/02/21 18:10:42 kaleb $ */
 
 #include    "vga256.h"
 
@@ -75,7 +75,7 @@ vga256SaveAreas(pPixmap, prgnSave, xorg, yorg, pWin)
 		(DrawablePtr)pPixmap,
 		GXcopy,
 		prgnSave,
-		pPtsInit, ~0L);
+		pPtsInit, ~0L, ~0L);
 
     DEALLOCATE_LOCAL (pPtsInit);
 }
@@ -132,6 +132,6 @@ vga256RestoreAreas(pPixmap, prgnRestore, xorg, yorg, pWin)
 		(DrawablePtr)pPixmap->drawable.pScreen->devPrivate,
 		GXcopy,
 		prgnRestore,
-		pPtsInit, ~0L);
+		pPtsInit, ~0L, ~0L);
     DEALLOCATE_LOCAL (pPtsInit);
 }

@@ -1,6 +1,6 @@
 /*
  * $XConsortium: choose.c,v 1.16 94/06/03 16:34:38 mor Exp $
- * $XFree86: xc/programs/xdm/choose.c,v 3.3 1994/08/31 04:50:49 dawes Exp $
+ * $XFree86: xc/programs/xdm/choose.c,v 3.4 1997/01/18 07:02:19 dawes Exp $
  *
 Copyright (c) 1990  X Consortium
 
@@ -41,10 +41,18 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/X.h>
 #include <sys/types.h>
 #ifndef MINIX
+#ifndef Lynx
 #include <sys/socket.h>
+#else
+#include <socket.h>
+#endif
 #include <netinet/in.h>
 #ifndef X_NO_SYS_UN
+#ifndef Lynx
 #include <sys/un.h>
+#else
+#include <un.h>
+#endif
 #endif
 #else /* MINIX */
 #include <sys/ioctl.h>

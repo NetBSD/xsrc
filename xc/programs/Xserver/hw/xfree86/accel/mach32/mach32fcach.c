@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32fcach.c,v 3.13 1996/10/10 14:01:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32fcach.c,v 3.14 1996/12/23 06:38:29 dawes Exp $ */
 /*
  * Copyright 1992, 1993 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -26,7 +26,7 @@
  * Dynamic cache allocation added by Rickard E. Faith (faith@cs.unc.edu)
  * Modified by Mike Bernson (mike@mbsun.mlb.org) for mach32 from s3 version
  */
-/* $XConsortium: mach32fcach.c /main/4 1995/11/12 17:24:47 kaleb $ */
+/* $XConsortium: mach32fcach.c /main/7 1996/10/25 16:22:34 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

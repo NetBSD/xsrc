@@ -45,8 +45,8 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: miarc.c /main/89 1995/12/06 17:04:51 ray $ */
-/* $XFree86: xc/programs/Xserver/mi/miarc.c,v 3.3 1996/08/20 12:32:08 dawes Exp $ */
+/* $XConsortium: miarc.c /main/90 1996/08/01 19:25:10 dpw $ */
+/* $XFree86: xc/programs/Xserver/mi/miarc.c,v 3.4 1996/12/23 07:09:42 dawes Exp $ */
 /* Author: Keith Packard and Bob Scheifler */
 /* Warning: this code is toxic, do not dally very long here. */
 
@@ -242,7 +242,7 @@ typedef struct _miPolyArc {
 #define GCValsJoinStyle		5
 #define GCValsMask		(GCFunction | GCForeground | GCBackground | \
 				 GCLineWidth | GCCapStyle | GCJoinStyle)
-static XID gcvals[6];
+static CARD32 gcvals[6];
 
 static void fillSpans(), newFinalSpan();
 static void drawArc(), drawQuadrant(), drawZeroArc();
@@ -1046,7 +1046,7 @@ miPolyArc(pDraw, pGC, narcs, parcs)
     int				width;
     Bool			fTricky;
     DrawablePtr			pDrawTo;
-    unsigned long		fg, bg;
+    CARD32			fg, bg;
     GCPtr			pGCTo;
     miPolyArcPtr		polyArcs;
     int				cap[2], join[2];
@@ -1140,7 +1140,7 @@ miPolyArc(pDraw, pGC, narcs, parcs)
 	    gcvals[GCValsLineWidth] = pGC->lineWidth;
 	    gcvals[GCValsCapStyle] = pGC->capStyle;
 	    gcvals[GCValsJoinStyle] = pGC->joinStyle;
-	    DoChangeGC(pGCTo, GCValsMask, gcvals, 0);
+	    dixChangeGC(NullClient, pGCTo, GCValsMask, gcvals, NULL);
     
 	    /* allocate a 1 bit deep pixmap of the appropriate size, and
 	     * validate it */
@@ -1179,10 +1179,10 @@ miPolyArc(pDraw, pGC, narcs, parcs)
 	     iphase--)
 	{
 	    if (iphase == 1) {
-		DoChangeGC (pGC, GCForeground, (XID *)&bg, 1);
+		dixChangeGC (NullClient, pGC, GCForeground, &bg, NULL);
 		ValidateGC (pDraw, pGC);
 	    } else if (pGC->lineStyle == LineDoubleDash) {
-		DoChangeGC (pGC, GCForeground, (XID *)&fg, 1);
+		dixChangeGC (NullClient, pGC, GCForeground, &fg, NULL);
 		ValidateGC (pDraw, pGC);
 	    }
 	    for (i = 0; i < polyArcs[iphase].narcs; i++) {

@@ -1,7 +1,10 @@
-/* $XConsortium: mfblinebank.h,v 1.2 95/06/19 18:16:26 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/mfb.banked/mfblinebank.h,v 3.2 1996/02/04 09:09:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/mfb.banked/mfblinebank.h,v 3.3 1996/12/23 06:48:37 dawes Exp $ */
 /* mfblinebank.h */
 /* included from mfb.h if MFB_LINE_BANK is defined */
+
+
+
+/* $XConsortium: mfblinebank.h /main/3 1996/02/21 17:50:03 kaleb $ */
 
 extern PixelType *(* monoScanlineOffsetFuncA)(
 #if NeedFunctionPrototypes

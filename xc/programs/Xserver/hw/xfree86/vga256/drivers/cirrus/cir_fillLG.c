@@ -1,3 +1,4 @@
+/* $XConsortium: cir_fillLG.c /main/4 1996/10/26 11:17:07 kaleb $ */
 /*
  * cir_fillLG.c
  *
@@ -25,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_fillLG.c,v 3.1 1996/09/29 13:39:49 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_fillLG.c,v 3.2 1996/12/27 07:05:23 dawes Exp $ */
 
 
 #include "vga256.h"

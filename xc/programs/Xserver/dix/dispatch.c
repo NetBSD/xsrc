@@ -1,5 +1,5 @@
-/* $XConsortium: dispatch.c /main/168 1995/12/08 13:37:16 dpw $ */
-/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.6 1996/05/06 05:56:13 dawes Exp $ */
+/* $XConsortium: dispatch.c /main/195 1996/12/15 21:24:40 rws $ */
+/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.7 1996/12/23 06:29:38 dawes Exp $ */
 /************************************************************
 
 Copyright (c) 1987, 1989  X Consortium
@@ -48,10 +48,6 @@ SOFTWARE.
 
 ********************************************************/
 
-#include "X.h"
-#define NEED_REPLIES
-#define NEED_EVENTS
-#include "Xproto.h"
 #include "windowstr.h"
 #include "fontstruct.h"
 #include "dixfontstr.h"
@@ -69,6 +65,13 @@ SOFTWARE.
 #include "swaprep.h"
 #include "swapreq.h"
 #include "dixevents.h"
+#ifdef XCSECURITY
+#define _SECURITY_SERVER
+#include "extensions/security.h"
+#endif
+#ifdef XAPPGROUP
+#include "extensions/Xagsrv.h"
+#endif
 
 #define mskcnt ((MAXCLIENTS + 31) / 32)
 #define BITMASK(i) (1 << ((i) & 31))
@@ -102,13 +105,6 @@ extern int connBlockScreenStart;
 #ifdef XKB
 extern Bool noXkbExtension;
 #endif
-
-extern int (* InitialVector[3]) ();
-extern int (* ProcVector[256]) ();
-#ifdef K5AUTH
-extern int (* k5_Vector[256]) ();
-#endif
-extern int (* SwappedProcVector[256]) ();
 
 static void KillAllClients(
 #if NeedFunctionPrototypes
@@ -303,20 +299,6 @@ Dispatch()
 		else
 		    result = (* client->requestVector[MAJOROP])(client);
 	    
-#ifdef LBX
-		if (client->largeReqBuf &&
-		    client->largeReqBuf == client->requestBuffer)
-		{
-		    /*
-		     * We just finished handling an LBX large request,
-		     * so free the large request buffer now.
-		     */
-
-		    xfree (client->largeReqBuf);
-		    client->largeReqBuf = NULL;
-		}
-#endif
-
 		if (result != Success) 
 		{
 		    if (client->noClientException != Success)
@@ -329,6 +311,8 @@ Dispatch()
 	        }
 	    }
 	    FlushAllOutput();
+
+	    requestingClient = NULL;
 	}
 	dispatchException &= ~DE_PRIORITYCHANGE;
     }
@@ -359,7 +343,8 @@ ProcCreateWindow(client)
     REQUEST_AT_LEAST_SIZE(xCreateWindowReq);
     
     LEGAL_NEW_RESOURCE(stuff->wid, client);
-    if (!(pParent = (WindowPtr)LookupWindow(stuff->parent, client)))
+    if (!(pParent = (WindowPtr)SecurityLookupWindow(stuff->parent, client,
+						    SecurityWriteAccess)))
         return BadWindow;
     len = client->req_len - (sizeof(xCreateWindowReq) >> 2);
     if (Ones(stuff->mask) != len)
@@ -400,7 +385,8 @@ ProcChangeWindowAttributes(client)
     int len;
 
     REQUEST_AT_LEAST_SIZE(xChangeWindowAttributesReq);
-    pWin = (WindowPtr)LookupWindow(stuff->window, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->window, client,
+					   SecurityWriteAccess);
     if (!pWin)
         return(BadWindow);
     len = client->req_len - (sizeof(xChangeWindowAttributesReq) >> 2);
@@ -422,12 +408,15 @@ ProcGetWindowAttributes(client)
 {
     register WindowPtr pWin;
     REQUEST(xResourceReq);
+    xGetWindowAttributesReply wa;
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pWin = (WindowPtr)LookupWindow(stuff->id, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->id, client,
+					   SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
-    GetWindowAttributes(pWin, client);
+    GetWindowAttributes(pWin, client, &wa);
+    WriteReplyToClient(client, sizeof(xGetWindowAttributesReply), &wa);
     return(client->noClientException);
 }
 
@@ -439,7 +428,8 @@ ProcDestroyWindow(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pWin = (WindowPtr)LookupWindow(stuff->id, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->id, client,
+					   SecurityDestroyAccess);
     if (!pWin)
         return(BadWindow);
     if (pWin->parent)
@@ -455,7 +445,8 @@ ProcDestroySubwindows(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pWin = (WindowPtr)LookupWindow(stuff->id, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->id, client,
+					   SecurityDestroyAccess);
     if (!pWin)
         return(BadWindow);
     DestroySubwindows(pWin, client);
@@ -468,10 +459,11 @@ ProcChangeSaveSet(client)
 {
     register WindowPtr pWin;
     REQUEST(xChangeSaveSetReq);
-    register result;
+    register int result;
 		  
     REQUEST_SIZE_MATCH(xChangeSaveSetReq);
-    pWin = (WindowPtr)LookupWindow(stuff->window, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->window, client,
+					   SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
     if (client->clientAsMask == (CLIENT_BITS(pWin->drawable.id)))
@@ -500,10 +492,12 @@ ProcReparentWindow(client)
     register int result;
 
     REQUEST_SIZE_MATCH(xReparentWindowReq);
-    pWin = (WindowPtr)LookupWindow(stuff->window, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->window, client,
+					   SecurityWriteAccess);
     if (!pWin)
         return(BadWindow);
-    pParent = (WindowPtr)LookupWindow(stuff->parent, client);
+    pParent = (WindowPtr)SecurityLookupWindow(stuff->parent, client,
+					      SecurityWriteAccess);
     if (!pParent)
         return(BadWindow);
     if (SAME_SCREENS(pWin->drawable, pParent->drawable))
@@ -533,7 +527,8 @@ ProcMapWindow(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pWin = (WindowPtr)LookupWindow(stuff->id, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->id, client,
+					   SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
     MapWindow(pWin, client);
@@ -549,7 +544,8 @@ ProcMapSubwindows(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pWin = (WindowPtr)LookupWindow( stuff->id, client);
+    pWin = (WindowPtr)SecurityLookupWindow( stuff->id, client,
+					    SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
     MapSubwindows(pWin, client);
@@ -565,7 +561,8 @@ ProcUnmapWindow(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pWin = (WindowPtr)LookupWindow( stuff->id, client);
+    pWin = (WindowPtr)SecurityLookupWindow( stuff->id, client,
+					    SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
     UnmapWindow(pWin, FALSE);
@@ -581,7 +578,8 @@ ProcUnmapSubwindows(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pWin = (WindowPtr)LookupWindow( stuff->id, client);
+    pWin = (WindowPtr)SecurityLookupWindow( stuff->id, client,
+					    SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
     UnmapSubwindows(pWin);
@@ -598,7 +596,8 @@ ProcConfigureWindow(client)
     int len;
 
     REQUEST_AT_LEAST_SIZE(xConfigureWindowReq);
-    pWin = (WindowPtr)LookupWindow( stuff->window, client);
+    pWin = (WindowPtr)SecurityLookupWindow( stuff->window, client,
+					    SecurityWriteAccess);
     if (!pWin)
         return(BadWindow);
     len = client->req_len - (sizeof(xConfigureWindowReq) >> 2);
@@ -626,7 +625,8 @@ ProcCirculateWindow(client)
 	client->errorValue = stuff->direction;
         return BadValue;
     }
-    pWin = (WindowPtr)LookupWindow(stuff->window, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->window, client,
+					   SecurityWriteAccess);
     if (!pWin)
         return(BadWindow);
     CirculateWindow(pWin, (int)stuff->direction, client);
@@ -634,23 +634,22 @@ ProcCirculateWindow(client)
 }
 
 int
-ProcGetGeometry(client)
+GetGeometry(client, rep)
     register ClientPtr client;
+    xGetGeometryReply *rep;
 {
-    xGetGeometryReply rep;
     register DrawablePtr pDraw;
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    VERIFY_GEOMETRABLE (pDraw, stuff->id, client);
-    rep.type = X_Reply;
-    rep.length = 0;
-    rep.sequenceNumber = client->sequence;
-    rep.root = WindowTable[pDraw->pScreen->myNum]->drawable.id;
-    rep.depth = pDraw->depth;
-
-    rep.width = pDraw->width;
-    rep.height = pDraw->height;
+    SECURITY_VERIFY_GEOMETRABLE (pDraw, stuff->id, client, SecurityReadAccess);
+    rep->type = X_Reply;
+    rep->length = 0;
+    rep->sequenceNumber = client->sequence;
+    rep->root = WindowTable[pDraw->pScreen->myNum]->drawable.id;
+    rep->depth = pDraw->depth;
+    rep->width = pDraw->width;
+    rep->height = pDraw->height;
 
     /* XXX - Because the pixmap-implementation of the multibuffer extension 
      *       may have the buffer-id's drawable resource value be a pointer
@@ -664,17 +663,33 @@ ProcGetGeometry(client)
         ((pDraw->type == DRAWABLE_WINDOW) && (stuff->id == pDraw->id)))
     {
         register WindowPtr pWin = (WindowPtr)pDraw;
-	rep.x = pWin->origin.x - wBorderWidth (pWin);
-	rep.y = pWin->origin.y - wBorderWidth (pWin);
-	rep.borderWidth = pWin->borderWidth;
+	rep->x = pWin->origin.x - wBorderWidth (pWin);
+	rep->y = pWin->origin.y - wBorderWidth (pWin);
+	rep->borderWidth = pWin->borderWidth;
     }
     else /* DRAWABLE_PIXMAP or DRAWABLE_BUFFER */
     {
-	rep.x = rep.y = rep.borderWidth = 0;
+	rep->x = rep->y = rep->borderWidth = 0;
     }
+
+    return Success;
+}
+
+
+int
+ProcGetGeometry(client)
+    register ClientPtr client;
+{
+    xGetGeometryReply rep;
+    int status;
+
+    if ((status = GetGeometry(client, &rep)) != Success)
+	return status;
+
     WriteReplyToClient(client, sizeof(xGetGeometryReply), &rep);
     return(client->noClientException);
 }
+
 
 int
 ProcQueryTree(client)
@@ -688,7 +703,8 @@ ProcQueryTree(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pWin = (WindowPtr)LookupWindow(stuff->id, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->id, client,
+					   SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
     reply.type = X_Reply;
@@ -785,34 +801,6 @@ ProcGetAtomName(client)
     }
 }
 
-int 
-ProcDeleteProperty(client)
-    register ClientPtr client;
-{
-    WindowPtr pWin;
-    REQUEST(xDeletePropertyReq);
-    int result;
-              
-    REQUEST_SIZE_MATCH(xDeletePropertyReq);
-    UpdateCurrentTime();
-    pWin = (WindowPtr)LookupWindow(stuff->window, client);
-    if (!pWin)
-        return(BadWindow);
-    if (ValidAtom(stuff->property))
-    {
-	result = DeleteProperty(pWin, stuff->property);
-        if (client->noClientException != Success)
-            return(client->noClientException);
-	else
-	    return(result);
-    }
-    else 
-    {
-	client->errorValue = stuff->property;
-	return (BadAtom);
-    }
-}
-
 #ifdef K5AUTH
 extern int k5_bad();
 #endif
@@ -835,7 +823,8 @@ ProcSetSelectionOwner(client)
     	return Success;
     if (stuff->window != None)
     {
-        pWin = (WindowPtr)LookupWindow(stuff->window, client);
+        pWin = (WindowPtr)SecurityLookupWindow(stuff->window, client,
+					       SecurityReadAccess);
         if (!pWin)
             return(BadWindow);
     }
@@ -947,7 +936,8 @@ ProcConvertSelection(client)
     REQUEST(xConvertSelectionReq);
 
     REQUEST_SIZE_MATCH(xConvertSelectionReq);
-    pWin = (WindowPtr)LookupWindow(stuff->requestor, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->requestor, client,
+					   SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
 
@@ -962,7 +952,14 @@ ProcConvertSelection(client)
 	while ((i < NumCurrentSelections) && 
 	       CurrentSelections[i].selection != stuff->selection) i++;
 	if ((i < NumCurrentSelections) && 
-	    (CurrentSelections[i].window != None))
+	    (CurrentSelections[i].window != None)
+#ifdef XCSECURITY
+	    && (!client->CheckAccess ||
+		(* client->CheckAccess)(client, CurrentSelections[i].window,
+					RT_WINDOW, SecurityReadAccess,
+					CurrentSelections[i].pWin))
+#endif
+	    )
 	{        
 	    event.u.u.type = SelectionRequest;
 	    event.u.selectionRequest.time = stuff->time;
@@ -1073,10 +1070,12 @@ ProcTranslateCoords(client)
     xTranslateCoordsReply rep;
 
     REQUEST_SIZE_MATCH(xTranslateCoordsReq);
-    pWin = (WindowPtr)LookupWindow(stuff->srcWid, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->srcWid, client,
+					   SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
-    pDst = (WindowPtr)LookupWindow(stuff->dstWid, client);
+    pDst = (WindowPtr)SecurityLookupWindow(stuff->dstWid, client,
+					   SecurityReadAccess);
     if (!pDst)
         return(BadWindow);
     rep.type = X_Reply;
@@ -1162,7 +1161,8 @@ ProcCloseFont(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pFont = (FontPtr)LookupIDByType(stuff->id, RT_FONT);
+    pFont = (FontPtr)SecurityLookupIDByType(client, stuff->id, RT_FONT,
+					    SecurityDestroyAccess);
     if ( pFont != (FontPtr)NULL)	/* id was valid */
     {
         FreeResource(stuff->id, RT_NONE);
@@ -1186,11 +1186,13 @@ ProcQueryFont(client)
 
     REQUEST_SIZE_MATCH(xResourceReq);
     client->errorValue = stuff->id;		/* EITHER font or gc */
-    pFont = (FontPtr)LookupIDByType(stuff->id, RT_FONT);
+    pFont = (FontPtr)SecurityLookupIDByType(client, stuff->id, RT_FONT,
+					    SecurityReadAccess);
     if (!pFont)
     {
 	  /* can't use VERIFY_GC because it might return BadGC */
-	pGC = (GC *) LookupIDByType(stuff->id, RT_GC);
+	pGC = (GC *) SecurityLookupIDByType(client, stuff->id, RT_GC,
+					    SecurityReadAccess);
         if (!pGC)
 	{
 	    client->errorValue = stuff->id;
@@ -1246,10 +1248,12 @@ ProcQueryTextExtents(client)
 
     REQUEST_AT_LEAST_SIZE(xQueryTextExtentsReq);
         
-    pFont = (FontPtr)LookupIDByType(stuff->fid, RT_FONT);
+    pFont = (FontPtr)SecurityLookupIDByType(client, stuff->fid, RT_FONT,
+					    SecurityReadAccess);
     if (!pFont)
     {
-        pGC = (GC *)LookupIDByType(stuff->fid, RT_GC);
+        pGC = (GC *)SecurityLookupIDByType(client, stuff->fid, RT_GC,
+					   SecurityReadAccess);
         if (!pGC)
 	{
 	    client->errorValue = stuff->fid;
@@ -1329,7 +1333,8 @@ ProcCreatePixmap(client)
     REQUEST_SIZE_MATCH(xCreatePixmapReq);
     client->errorValue = stuff->pid;
     LEGAL_NEW_RESOURCE(stuff->pid, client);
-    VERIFY_GEOMETRABLE (pDraw, stuff->drawable, client);
+    SECURITY_VERIFY_GEOMETRABLE (pDraw, stuff->drawable, client,
+				 SecurityReadAccess);
     if (!stuff->width || !stuff->height)
     {
 	client->errorValue = 0;
@@ -1367,7 +1372,8 @@ ProcFreePixmap(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pMap = (PixmapPtr)LookupIDByType(stuff->id, RT_PIXMAP);
+    pMap = (PixmapPtr)SecurityLookupIDByType(client, stuff->id, RT_PIXMAP,
+					     SecurityDestroyAccess);
     if (pMap) 
     {
 	FreeResource(stuff->id, RT_NONE);
@@ -1393,7 +1399,8 @@ ProcCreateGC(client)
     REQUEST_AT_LEAST_SIZE(xCreateGCReq);
     client->errorValue = stuff->gc;
     LEGAL_NEW_RESOURCE(stuff->gc, client);
-    VERIFY_DRAWABLE (pDraw, stuff->drawable, client);
+    SECURITY_VERIFY_DRAWABLE (pDraw, stuff->drawable, client,
+			      SecurityReadAccess);
     len = client->req_len -  (sizeof(xCreateGCReq) >> 2);
     if (len != Ones(stuff->mask))
         return BadLength;
@@ -1416,11 +1423,11 @@ ProcChangeGC(client)
     unsigned len;
 		
     REQUEST_AT_LEAST_SIZE(xChangeGCReq);
-    VERIFY_GC(pGC, stuff->gc, client);
+    SECURITY_VERIFY_GC(pGC, stuff->gc, client, SecurityWriteAccess);
     len = client->req_len -  (sizeof(xChangeGCReq) >> 2);
     if (len != Ones(stuff->mask))
         return BadLength;
-    result = DoChangeGC(pGC, stuff->mask, (XID *) &stuff[1], 0);
+    result = dixChangeGC(client, pGC, stuff->mask, (CARD32 *) &stuff[1], 0);
     if (client->noClientException != Success)
         return(client->noClientException);
     else
@@ -1440,8 +1447,8 @@ ProcCopyGC(client)
     REQUEST(xCopyGCReq);
 
     REQUEST_SIZE_MATCH(xCopyGCReq);
-    VERIFY_GC( pGC, stuff->srcGC, client);
-    VERIFY_GC( dstGC, stuff->dstGC, client);
+    SECURITY_VERIFY_GC( pGC, stuff->srcGC, client, SecurityReadAccess);
+    SECURITY_VERIFY_GC( dstGC, stuff->dstGC, client, SecurityWriteAccess);
     if ((dstGC->pScreen != pGC->pScreen) || (dstGC->depth != pGC->depth))
         return (BadMatch);    
     result = CopyGC(pGC, dstGC, stuff->mask);
@@ -1469,7 +1476,7 @@ ProcSetDashes(client)
          return BadValue;
     }
 
-    VERIFY_GC(pGC,stuff->gc, client);
+    SECURITY_VERIFY_GC(pGC,stuff->gc, client, SecurityWriteAccess);
 
     result = SetDashes(pGC, stuff->dashOffset, stuff->nDashes,
 		       (unsigned char *)&stuff[1]);
@@ -1498,7 +1505,7 @@ ProcSetClipRectangles(client)
 	client->errorValue = stuff->ordering;
         return BadValue;
     }
-    VERIFY_GC(pGC,stuff->gc, client);
+    SECURITY_VERIFY_GC(pGC,stuff->gc, client, SecurityWriteAccess);
 		 
     nr = (client->req_len << 2) - sizeof(xSetClipRectanglesReq);
     if (nr & 4)
@@ -1520,7 +1527,7 @@ ProcFreeGC(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    VERIFY_GC(pGC,stuff->id,client);
+    SECURITY_VERIFY_GC(pGC, stuff->id, client, SecurityDestroyAccess);
     FreeResource(stuff->id, RT_NONE);
     return(client->noClientException);
 }
@@ -1533,7 +1540,8 @@ ProcClearToBackground(client)
     register WindowPtr pWin;
 
     REQUEST_SIZE_MATCH(xClearAreaReq);
-    pWin = (WindowPtr)LookupWindow( stuff->window, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->window, client,
+					   SecurityWriteAccess);
     if (!pWin)
         return(BadWindow);
     if (pWin->drawable.class == InputOnly)
@@ -1567,7 +1575,8 @@ ProcCopyArea(client)
     VALIDATE_DRAWABLE_AND_GC(stuff->dstDrawable, pDst, pGC, client); 
     if (stuff->dstDrawable != stuff->srcDrawable)
     {
-	VERIFY_DRAWABLE(pSrc, stuff->srcDrawable, client);
+	SECURITY_VERIFY_DRAWABLE(pSrc, stuff->srcDrawable, client,
+				 SecurityReadAccess);
 	if ((pDst->pScreen != pSrc->pScreen) || (pDst->depth != pSrc->depth))
 	{
 	    client->errorValue = stuff->dstDrawable;
@@ -1607,7 +1616,8 @@ ProcCopyPlane(client)
     VALIDATE_DRAWABLE_AND_GC(stuff->dstDrawable, pdstDraw, pGC, client);
     if (stuff->dstDrawable != stuff->srcDrawable)
     {
-	VERIFY_DRAWABLE(psrcDraw, stuff->srcDrawable, client);
+	SECURITY_VERIFY_DRAWABLE(psrcDraw, stuff->srcDrawable, client,
+				 SecurityReadAccess);
 	if (pdstDraw->pScreen != psrcDraw->pScreen)
 	{
 	    client->errorValue = stuff->dstDrawable;
@@ -1849,7 +1859,7 @@ ProcPutImage(client)
     if (stuff->format == XYBitmap)
     {
         if ((stuff->depth != 1) ||
-	    (stuff->leftPad >= screenInfo.bitmapScanlinePad))
+	    (stuff->leftPad >= (unsigned int)screenInfo.bitmapScanlinePad))
             return BadMatch;
         length 	    = BitmapBytePad(stuff->width + stuff->leftPad);
 #ifdef INTERNAL_VS_EXTERNAL_PADDING
@@ -1859,7 +1869,7 @@ ProcPutImage(client)
     else if (stuff->format == XYPixmap)
     {
         if ((pDraw->depth != stuff->depth) || 
-	    (stuff->leftPad >= screenInfo.bitmapScanlinePad))
+	    (stuff->leftPad >= (unsigned int)screenInfo.bitmapScanlinePad))
             return BadMatch;
         length      = BitmapBytePad(stuff->width + stuff->leftPad);
 	length      *= stuff->depth;
@@ -1945,158 +1955,179 @@ ProcPutImage(client)
      return (client->noClientException);
 }
 
+
 int
-ProcGetImage(client)
+DoGetImage(client, format, drawable, x, y, width, height, planemask, im_return)
     register ClientPtr	client;
+    Drawable drawable;
+    int format;
+    int x, y, width, height;
+    Mask planemask;
+    xGetImageReply **im_return;
 {
     register DrawablePtr pDraw;
     int			nlines, linesPerBuf;
-    register int	height, linesDone;
+    register int	linesDone;
     long		widthBytesLine, length;
 #ifdef INTERNAL_VS_EXTERNAL_PADDING
     long		widthBytesLineProto, lengthProto;
-    char 		* tmpImage;
 #endif
     Mask		plane;
     char		*pBuf;
     xGetImageReply	xgi;
+    RegionPtr pVisibleRegion = NULL;
 
-    REQUEST(xGetImageReq);
-
-    height = stuff->height;
-    REQUEST_SIZE_MATCH(xGetImageReq);
-    if ((stuff->format != XYPixmap) && (stuff->format != ZPixmap))
+    if ((format != XYPixmap) && (format != ZPixmap))
     {
-	client->errorValue = stuff->format;
+	client->errorValue = format;
         return(BadValue);
     }
-    VERIFY_DRAWABLE(pDraw, stuff->drawable, client);
+    SECURITY_VERIFY_DRAWABLE(pDraw, drawable, client, SecurityReadAccess);
     if(pDraw->type == DRAWABLE_WINDOW)
     {
       if( /* check for being viewable */
 	 !((WindowPtr) pDraw)->realized ||
 	  /* check for being on screen */
-         pDraw->x + stuff->x < 0 ||
- 	 pDraw->x + stuff->x + (int)stuff->width > pDraw->pScreen->width ||
-         pDraw->y + stuff->y < 0 ||
-         pDraw->y + stuff->y + height > pDraw->pScreen->height ||
+         pDraw->x + x < 0 ||
+ 	 pDraw->x + x + width > pDraw->pScreen->width ||
+         pDraw->y + y < 0 ||
+         pDraw->y + y + height > pDraw->pScreen->height ||
           /* check for being inside of border */
-         stuff->x < - wBorderWidth((WindowPtr)pDraw) ||
-         stuff->x + (int)stuff->width >
-		wBorderWidth((WindowPtr)pDraw) + (int)pDraw->width ||
-         stuff->y < -wBorderWidth((WindowPtr)pDraw) ||
-         stuff->y + height >
-		wBorderWidth ((WindowPtr)pDraw) + (int)pDraw->height
+         x < - wBorderWidth((WindowPtr)pDraw) ||
+         x + width > wBorderWidth((WindowPtr)pDraw) + (int)pDraw->width ||
+         y < -wBorderWidth((WindowPtr)pDraw) ||
+         y + height > wBorderWidth ((WindowPtr)pDraw) + (int)pDraw->height
         )
 	    return(BadMatch);
 	xgi.visual = wVisual (((WindowPtr) pDraw));
     }
     else
     {
-      if(stuff->x < 0 ||
-         stuff->x+(int)stuff->width > (int)pDraw->width ||
-         stuff->y < 0 ||
-         stuff->y+height > (int)pDraw->height
+      if(x < 0 ||
+         x+width > (int)pDraw->width ||
+         y < 0 ||
+         y+height > (int)pDraw->height
         )
 	    return(BadMatch);
 	xgi.visual = None;
     }
 
-    SET_DBE_SRCBUF(pDraw, stuff->drawable);
+    SET_DBE_SRCBUF(pDraw, drawable);
 
     xgi.type = X_Reply;
     xgi.sequenceNumber = client->sequence;
     xgi.depth = pDraw->depth;
-    if(stuff->format == ZPixmap)
+    if(format == ZPixmap)
     {
-	widthBytesLine = PixmapBytePad(stuff->width, pDraw->depth);
+	widthBytesLine = PixmapBytePad(width, pDraw->depth);
 	length = widthBytesLine * height;
 
 #ifdef INTERNAL_VS_EXTERNAL_PADDING
-	widthBytesLineProto = PixmapBytePadProto(stuff->width, pDraw->depth);
+	widthBytesLineProto = PixmapBytePadProto(width, pDraw->depth);
 	lengthProto 	    = widthBytesLineProto * height;
 #endif
     }
     else 
     {
-	widthBytesLine = BitmapBytePad(stuff->width);
+	widthBytesLine = BitmapBytePad(width);
 	plane = ((Mask)1) << (pDraw->depth - 1);
 	/* only planes asked for */
 	length = widthBytesLine * height *
-		 Ones(stuff->planeMask & (plane | (plane - 1)));
+		 Ones(planemask & (plane | (plane - 1)));
 
 #ifdef INTERNAL_VS_EXTERNAL_PADDING
-	widthBytesLineProto = BitmapBytePadProto(stuff->width);
+	widthBytesLineProto = BitmapBytePadProto(width);
 	lengthProto = widthBytesLineProto * height *
-		 Ones(stuff->planeMask & (plane | (plane - 1)));
+		 Ones(planemask & (plane | (plane - 1)));
 #endif
     }
 
 #ifdef INTERNAL_VS_EXTERNAL_PADDING
-    xgi.length = (lengthProto + 3) >> 2;
+    xgi.length = lengthProto;
 #else
-    xgi.length = (length + 3) >> 2;
+    xgi.length = length;
 #endif
 
-    if (widthBytesLine == 0 || height == 0)
-	linesPerBuf = 0;
-    else if (widthBytesLine >= IMAGE_BUFSIZE)
-	linesPerBuf = 1;
-    else
-    {
-	linesPerBuf = IMAGE_BUFSIZE / widthBytesLine;
-	if (linesPerBuf > height)
+    if (im_return) {
+	pBuf = (char *)xalloc(sz_xGetImageReply + length);
+	if (!pBuf)
+	    return (BadAlloc);
+	if (widthBytesLine == 0)
+	    linesPerBuf = 0;
+	else
 	    linesPerBuf = height;
-    }
-    length = linesPerBuf * widthBytesLine;
-    if (linesPerBuf < height)
-    {
-	/* we have to make sure intermediate buffers don't need padding */
-	while ((linesPerBuf > 1) &&
-	       (length & ((1 << LOG2_BYTES_PER_SCANLINE_PAD)-1)))
+	*im_return = (xGetImageReply *)pBuf;
+	*(xGetImageReply *)pBuf = xgi;
+	pBuf += sz_xGetImageReply;
+    } else {
+	xgi.length = (xgi.length + 3) >> 2;
+	if (widthBytesLine == 0 || height == 0)
+	    linesPerBuf = 0;
+	else if (widthBytesLine >= IMAGE_BUFSIZE)
+	    linesPerBuf = 1;
+	else
 	{
-	    linesPerBuf--;
-	    length -= widthBytesLine;
+	    linesPerBuf = IMAGE_BUFSIZE / widthBytesLine;
+	    if (linesPerBuf > height)
+		linesPerBuf = height;
 	}
-	while (length & ((1 << LOG2_BYTES_PER_SCANLINE_PAD)-1))
+	length = linesPerBuf * widthBytesLine;
+	if (linesPerBuf < height)
 	{
-	    linesPerBuf++;
-	    length += widthBytesLine;
+	    /* we have to make sure intermediate buffers don't need padding */
+	    while ((linesPerBuf > 1) &&
+		   (length & ((1 << LOG2_BYTES_PER_SCANLINE_PAD)-1)))
+	    {
+		linesPerBuf--;
+		length -= widthBytesLine;
+	    }
+	    while (length & ((1 << LOG2_BYTES_PER_SCANLINE_PAD)-1))
+	    {
+		linesPerBuf++;
+		length += widthBytesLine;
+	    }
 	}
+	if(!(pBuf = (char *) ALLOCATE_LOCAL(length)))
+	    return (BadAlloc);
+	WriteReplyToClient(client, sizeof (xGetImageReply), &xgi);
     }
-    if(!(pBuf = (char *) ALLOCATE_LOCAL(length)))
-        return (BadAlloc);
 
-#ifdef INTERNAL_VS_EXTERNAL_PADDING
-    /* check for protocol/server padding differences */
-    if ( widthBytesLine != widthBytesLineProto ) {
-    	if(!(tmpImage = (char *) ALLOCATE_LOCAL(length))) {
-    		DEALLOCATE_LOCAL(pBuf);
-        	return (BadAlloc);
+#ifdef XCSECURITY
+    if (client->trustLevel != XSecurityClientTrusted &&
+	pDraw->type == DRAWABLE_WINDOW)
+    {
+	pVisibleRegion = NotClippedByChildren((WindowPtr)pDraw);
+	if (pVisibleRegion)
+	{
+	    REGION_TRANSLATE(pScreen, pVisibleRegion, -pDraw->x, -pDraw->y);
 	}
     }
 #endif
-
-    WriteReplyToClient(client, sizeof (xGetImageReply), &xgi);
 
     if (linesPerBuf == 0)
     {
 	/* nothing to do */
     }
-    else if (stuff->format == ZPixmap)
+    else if (format == ZPixmap)
     {
         linesDone = 0;
         while (height - linesDone > 0)
         {
 	    nlines = min(linesPerBuf, height - linesDone);
 	    (*pDraw->pScreen->GetImage) (pDraw,
-	                                 stuff->x,
-				         stuff->y + linesDone,
-				         stuff->width, 
+	                                 x,
+				         y + linesDone,
+				         width, 
 				         nlines,
-				         stuff->format,
-				         stuff->planeMask,
+				         format,
+				         planemask,
 				         (pointer) pBuf);
+#ifdef XCSECURITY
+	    if (pVisibleRegion)
+		SecurityCensorImage(client, pVisibleRegion, widthBytesLine,
+			pDraw, x, y + linesDone, width, 
+			nlines, format, pBuf);
+#endif
 
 #ifdef INTERNAL_VS_EXTERNAL_PADDING
 	    /* for 64-bit server, convert image to pad to 32 bits */
@@ -2104,23 +2135,29 @@ ProcGetImage(client)
 		register char * bufPtr, * protoPtr;
 		register int i;
 
-		bzero(tmpImage,length);
-
-		for ( i=0,bufPtr=pBuf,protoPtr=tmpImage; i < nlines;
-		    bufPtr += widthBytesLine,protoPtr += widthBytesLineProto, 
-			i++)
-		    memmove(protoPtr,bufPtr,widthBytesLineProto);
-
-	        /* Note that this is NOT a call to WriteSwappedDataToClient,
-                   as we do NOT byte swap */
-	        (void)WriteToClient(client, 
-		    (int)(nlines * widthBytesLineProto), tmpImage);
+		for (i = 1,
+		     bufPtr = pBuf + widthBytesLine,
+		     protoPtr = pBuf + widthBytesLineProto;
+		     i < nlines;
+		     bufPtr += widthBytesLine,
+		     protoPtr += widthBytesLineProto, 
+		     i++)
+		    memmove(protoPtr, bufPtr, widthBytesLineProto);
 	    }
-	    else 
 #endif
 	    /* Note that this is NOT a call to WriteSwappedDataToClient,
                as we do NOT byte swap */
-	    (void)WriteToClient(client, (int)(nlines * widthBytesLine), pBuf);
+	    if (!im_return)
+/* Don't split me, gcc pukes when you do */
+#ifdef INTERNAL_VS_EXTERNAL_PADDING
+		(void)WriteToClient(client,
+				    (int)(nlines * widthBytesLineProto),
+				    pBuf);
+#else
+		(void)WriteToClient(client,
+				    (int)(nlines * widthBytesLine),
+				    pBuf);
+#endif
 	    linesDone += nlines;
         }
     }
@@ -2128,20 +2165,27 @@ ProcGetImage(client)
     {
         for (; plane; plane >>= 1)
 	{
-	    if (stuff->planeMask & plane)
+	    if (planemask & plane)
 	    {
 	        linesDone = 0;
 	        while (height - linesDone > 0)
 	        {
 		    nlines = min(linesPerBuf, height - linesDone);
 	            (*pDraw->pScreen->GetImage) (pDraw,
-	                                         stuff->x,
-				                 stuff->y + linesDone,
-				                 stuff->width, 
+	                                         x,
+				                 y + linesDone,
+				                 width, 
 				                 nlines,
-				                 stuff->format,
+				                 format,
 				                 plane,
 				                 (pointer)pBuf);
+#ifdef XCSECURITY
+		    if (pVisibleRegion)
+			SecurityCensorImage(client, pVisibleRegion,
+				widthBytesLine,
+				pDraw, x, y + linesDone, width, 
+				nlines, format, pBuf);
+#endif
 
 #ifdef INTERNAL_VS_EXTERNAL_PADDING
 	    	    /* for 64-bit server, convert image to pad to 32 bits */
@@ -2149,38 +2193,62 @@ ProcGetImage(client)
 			register char * bufPtr, * protoPtr;
 			register int i;
 
-			bzero(tmpImage,length);
-
-			for ( i=0,bufPtr=pBuf,protoPtr=tmpImage; i < nlines;
-		    	      bufPtr += widthBytesLine,
-			      protoPtr += widthBytesLineProto, 
-			      i++)
-		    	    memmove(protoPtr,bufPtr,widthBytesLineProto);
-
-		        /* Note: NOT a call to WriteSwappedDataToClient,
-		           as we do NOT byte swap */
-		        (void)WriteToClient(client, 
-				 (int)(nlines * widthBytesLineProto), tmpImage);
+			for (i = 1,
+			     bufPtr = pBuf + widthBytesLine,
+			     protoPtr = pBuf + widthBytesLineProto;
+			     i < nlines;
+			     bufPtr += widthBytesLine,
+			     protoPtr += widthBytesLineProto,
+			     i++)
+		    	    memmove(protoPtr, bufPtr, widthBytesLineProto);
 	    	    }
-	    	    else 
 #endif
 		    /* Note: NOT a call to WriteSwappedDataToClient,
 		       as we do NOT byte swap */
-		    (void)WriteToClient(client, (int)(nlines * widthBytesLine),
+		    if (im_return) {
+#ifdef INTERNAL_VS_EXTERNAL_PADDING
+			pBuf += nlines * widthBytesLineProto;
+#else
+			pBuf += nlines * widthBytesLine;
+#endif
+		    } else
+/* Don't split me, gcc pukes when you do */
+#ifdef INTERNAL_VS_EXTERNAL_PADDING
+			(void)WriteToClient(client,
+					(int)(nlines * widthBytesLineProto),
 					pBuf);
+#else
+			(void)WriteToClient(client,
+					(int)(nlines * widthBytesLine),
+					pBuf);
+#endif
 		    linesDone += nlines;
 		}
             }
 	}
     }
-    DEALLOCATE_LOCAL(pBuf);
-#ifdef INTERNAL_VS_EXTERNAL_PADDING
-    if ( widthBytesLine != widthBytesLineProto ) 
-        DEALLOCATE_LOCAL(tmpImage);
+#ifdef XCSECURITY
+    if (pVisibleRegion)
+	REGION_DESTROY(pScreen, pVisibleRegion);
 #endif
+    if (!im_return)
+	DEALLOCATE_LOCAL(pBuf);
     return (client->noClientException);
 }
 
+int
+ProcGetImage(client)
+    register ClientPtr	client;
+{
+    REQUEST(xGetImageReq);
+
+    REQUEST_SIZE_MATCH(xGetImageReq);
+
+    return DoGetImage(client, stuff->format, stuff->drawable,
+		      stuff->x, stuff->y,
+		      (int)stuff->width, (int)stuff->height,
+		      stuff->planeMask, (xGetImageReply **)NULL);
+}
 
 int
 ProcPolyText(client)
@@ -2296,7 +2364,8 @@ ProcCreateColormap(client)
     }
     mid = stuff->mid;
     LEGAL_NEW_RESOURCE(mid, client);
-    pWin = (WindowPtr)LookupWindow(stuff->window, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->window, client,
+					   SecurityReadAccess);
     if (!pWin)
         return(BadWindow);
 
@@ -2326,7 +2395,8 @@ ProcFreeColormap(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pmap = (ColormapPtr )LookupIDByType(stuff->id, RT_COLORMAP);
+    pmap = (ColormapPtr )SecurityLookupIDByType(client, stuff->id, RT_COLORMAP,
+						SecurityDestroyAccess);
     if (pmap) 
     {
 	/* Freeing a default colormap is a no-op */
@@ -2354,7 +2424,8 @@ ProcCopyColormapAndFree(client)
     REQUEST_SIZE_MATCH(xCopyColormapAndFreeReq);
     mid = stuff->mid;
     LEGAL_NEW_RESOURCE(mid, client);
-    if( (pSrcMap = (ColormapPtr )LookupIDByType(stuff->srcCmap, RT_COLORMAP)) )
+    if( (pSrcMap = (ColormapPtr )SecurityLookupIDByType(client,	stuff->srcCmap,
+		RT_COLORMAP, SecurityReadAccess|SecurityWriteAccess)) )
     {
 	result = CopyColormapAndFree(mid, pSrcMap, client->index);
 	if (client->noClientException != Success)
@@ -2377,7 +2448,8 @@ ProcInstallColormap(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pcmp = (ColormapPtr  )LookupIDByType(stuff->id, RT_COLORMAP);
+    pcmp = (ColormapPtr)SecurityLookupIDByType(client, stuff->id,
+					    RT_COLORMAP, SecurityReadAccess);
     if (pcmp)
     {
         (*(pcmp->pScreen->InstallColormap)) (pcmp);
@@ -2398,7 +2470,8 @@ ProcUninstallColormap(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pcmp = (ColormapPtr )LookupIDByType(stuff->id, RT_COLORMAP);
+    pcmp = (ColormapPtr)SecurityLookupIDByType(client, stuff->id,
+					RT_COLORMAP, SecurityReadAccess);
     if (pcmp)
     {
 	if(pcmp->mid != pcmp->pScreen->defColormap)
@@ -2422,7 +2495,8 @@ ProcListInstalledColormaps(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pWin = (WindowPtr)LookupWindow(stuff->id, client);
+    pWin = (WindowPtr)SecurityLookupWindow(stuff->id, client,
+					   SecurityReadAccess);
 
     if (!pWin)
         return(BadWindow);
@@ -2448,7 +2522,7 @@ ProcListInstalledColormaps(client)
 }
 
 int
-ProcAllocColor                (client)
+ProcAllocColor(client)
     register ClientPtr client;
 {
     ColormapPtr pmap;
@@ -2457,9 +2531,19 @@ ProcAllocColor                (client)
     REQUEST(xAllocColorReq);
 
     REQUEST_SIZE_MATCH(xAllocColorReq);
-    pmap = (ColormapPtr )LookupIDByType(stuff->cmap, RT_COLORMAP);
+    pmap = (ColormapPtr)SecurityLookupIDByType(client, stuff->cmap,
+					RT_COLORMAP, SecurityWriteAccess);
     if (pmap)
     {
+#ifdef LBX
+	/*
+	 * If the colormap is grabbed by a proxy, the server will have
+	 * to regain control over the colormap.  This AllocColor request
+	 * will be handled after the server gets back the colormap control.
+	 */
+	if (LbxCheckColorRequest (client, pmap, (xReq *) stuff))
+	    return Success;
+#endif
 	acr.type = X_Reply;
 	acr.length = 0;
 	acr.sequenceNumber = client->sequence;
@@ -2494,13 +2578,23 @@ ProcAllocNamedColor           (client)
     REQUEST(xAllocNamedColorReq);
 
     REQUEST_FIXED_SIZE(xAllocNamedColorReq, stuff->nbytes);
-    pcmp = (ColormapPtr )LookupIDByType(stuff->cmap, RT_COLORMAP);
+    pcmp = (ColormapPtr)SecurityLookupIDByType(client, stuff->cmap,
+					    RT_COLORMAP, SecurityWriteAccess);
     if (pcmp)
     {
 	int		retval;
 
 	xAllocNamedColorReply ancr;
 
+#ifdef LBX
+	/*
+	 * If the colormap is grabbed by a proxy, the server will have
+	 * to regain control over the colormap.  This AllocNamedColor request
+	 * will be handled after the server gets back the colormap control.
+	 */
+	if (LbxCheckColorRequest (client, pcmp, (xReq *) stuff))
+	    return Success;
+#endif
 	ancr.type = X_Reply;
 	ancr.length = 0;
 	ancr.sequenceNumber = client->sequence;
@@ -2543,7 +2637,8 @@ ProcAllocColorCells           (client)
     REQUEST(xAllocColorCellsReq);
 
     REQUEST_SIZE_MATCH(xAllocColorCellsReq);
-    pcmp = (ColormapPtr )LookupIDByType(stuff->cmap, RT_COLORMAP);
+    pcmp = (ColormapPtr)SecurityLookupIDByType(client, stuff->cmap,
+					RT_COLORMAP, SecurityWriteAccess);
     if (pcmp)
     {
 	xAllocColorCellsReply	accr;
@@ -2551,6 +2646,15 @@ ProcAllocColorCells           (client)
 	long			length;
 	Pixel			*ppixels, *pmasks;
 
+#ifdef LBX
+	/*
+	 * If the colormap is grabbed by a proxy, the server will have
+	 * to regain control over the colormap.  This AllocColorCells request
+	 * will be handled after the server gets back the colormap control.
+	 */
+	if (LbxCheckColorRequest (client, pcmp, (xReq *) stuff))
+	    return Success;
+#endif
 	npixels = stuff->colors;
 	if (!npixels)
 	{
@@ -2604,7 +2708,8 @@ ProcAllocColorPlanes(client)
     REQUEST(xAllocColorPlanesReq);
 
     REQUEST_SIZE_MATCH(xAllocColorPlanesReq);
-    pcmp = (ColormapPtr )LookupIDByType(stuff->cmap, RT_COLORMAP);
+    pcmp = (ColormapPtr)SecurityLookupIDByType(client, stuff->cmap,
+					RT_COLORMAP, SecurityWriteAccess);
     if (pcmp)
     {
 	xAllocColorPlanesReply	acpr;
@@ -2612,6 +2717,15 @@ ProcAllocColorPlanes(client)
 	long			length;
 	Pixel			*ppixels;
 
+#ifdef LBX
+	/*
+	 * If the colormap is grabbed by a proxy, the server will have
+	 * to regain control over the colormap.  This AllocColorPlanes request
+	 * will be handled after the server gets back the colormap control.
+	 */
+	if (LbxCheckColorRequest (client, pcmp, (xReq *) stuff))
+	    return Success;
+#endif
 	npixels = stuff->colors;
 	if (!npixels)
 	{
@@ -2663,7 +2777,8 @@ ProcFreeColors          (client)
     REQUEST(xFreeColorsReq);
 
     REQUEST_AT_LEAST_SIZE(xFreeColorsReq);
-    pcmp = (ColormapPtr )LookupIDByType(stuff->cmap, RT_COLORMAP);
+    pcmp = (ColormapPtr)SecurityLookupIDByType(client, stuff->cmap,
+					RT_COLORMAP, SecurityWriteAccess);
     if (pcmp)
     {
 	int	count;
@@ -2698,7 +2813,8 @@ ProcStoreColors               (client)
     REQUEST(xStoreColorsReq);
 
     REQUEST_AT_LEAST_SIZE(xStoreColorsReq);
-    pcmp = (ColormapPtr )LookupIDByType(stuff->cmap, RT_COLORMAP);
+    pcmp = (ColormapPtr)SecurityLookupIDByType(client, stuff->cmap,
+					RT_COLORMAP, SecurityWriteAccess);
     if (pcmp)
     {
 	int	count;
@@ -2732,7 +2848,8 @@ ProcStoreNamedColor           (client)
     REQUEST(xStoreNamedColorReq);
 
     REQUEST_FIXED_SIZE(xStoreNamedColorReq, stuff->nbytes);
-    pcmp = (ColormapPtr )LookupIDByType(stuff->cmap, RT_COLORMAP);
+    pcmp = (ColormapPtr)SecurityLookupIDByType(client, stuff->cmap,
+					RT_COLORMAP, SecurityWriteAccess);
     if (pcmp)
     {
 	xColorItem	def;
@@ -2766,7 +2883,8 @@ ProcQueryColors(client)
     REQUEST(xQueryColorsReq);
 
     REQUEST_AT_LEAST_SIZE(xQueryColorsReq);
-    pcmp = (ColormapPtr )LookupIDByType(stuff->cmap, RT_COLORMAP);
+    pcmp = (ColormapPtr)SecurityLookupIDByType(client, stuff->cmap,
+					RT_COLORMAP, SecurityReadAccess);
     if (pcmp)
     {
 	int			count, retval;
@@ -2817,7 +2935,8 @@ ProcLookupColor(client)
     REQUEST(xLookupColorReq);
 
     REQUEST_FIXED_SIZE(xLookupColorReq, stuff->nbytes);
-    pcmp = (ColormapPtr )LookupIDByType(stuff->cmap, RT_COLORMAP);
+    pcmp = (ColormapPtr)SecurityLookupIDByType(client, stuff->cmap,
+					RT_COLORMAP, SecurityReadAccess);
     if (pcmp)
     {
 	xLookupColorReply lcr;
@@ -2867,8 +2986,10 @@ ProcCreateCursor( client)
     REQUEST_SIZE_MATCH(xCreateCursorReq);
     LEGAL_NEW_RESOURCE(stuff->cid, client);
 
-    src = (PixmapPtr)LookupIDByType(stuff->source, RT_PIXMAP);
-    msk = (PixmapPtr)LookupIDByType(stuff->mask, RT_PIXMAP);
+    src = (PixmapPtr)SecurityLookupIDByType(client, stuff->source,
+					      RT_PIXMAP, SecurityReadAccess);
+    msk = (PixmapPtr)SecurityLookupIDByType(client, stuff->mask,
+					      RT_PIXMAP, SecurityReadAccess);
     if (   src == (PixmapPtr)NULL)
     {
 	client->errorValue = stuff->source;
@@ -2969,7 +3090,8 @@ ProcFreeCursor(client)
     REQUEST(xResourceReq);
 
     REQUEST_SIZE_MATCH(xResourceReq);
-    pCursor = (CursorPtr)LookupIDByType(stuff->id, RT_CURSOR);
+    pCursor = (CursorPtr)SecurityLookupIDByType(client, stuff->id,
+					RT_CURSOR, SecurityDestroyAccess);
     if (pCursor) 
     {
 	FreeResource(stuff->id, RT_NONE);
@@ -2999,7 +3121,8 @@ ProcQueryBestSize   (client)
 	client->errorValue = stuff->class;
         return(BadValue);
     }
-    VERIFY_GEOMETRABLE (pDraw, stuff->drawable, client);
+    SECURITY_VERIFY_GEOMETRABLE (pDraw, stuff->drawable, client,
+				 SecurityReadAccess);
     if (stuff->class != CursorShape && pDraw->type == UNDRAWABLE_WINDOW)
 	return (BadMatch);
     pScreen = pDraw->pScreen;
@@ -3122,6 +3245,14 @@ ProcListHosts(client)
     pointer	pdata;
 
     REQUEST_SIZE_MATCH(xListHostsReq);
+#ifdef XCSECURITY
+    /* untrusted clients can't list hosts */
+    if (client->trustLevel != XSecurityClientTrusted)
+    {
+	SecurityAudit("client %d attempted to list hosts\n", client->index);
+	return BadAccess;
+    }
+#endif
     result = GetHosts(&pdata, &nHosts, &len, &reply.enabled);
     if (result != Success)
 	return(result);
@@ -3172,10 +3303,11 @@ ProcKillClient(client)
         return (client->noClientException);
     }
 
-    if ((killclient = LookupClient(stuff->id)))
+    if ((killclient = LookupClient(stuff->id, client)))
     {
 	CloseDownClient(killclient);
-	if (client == killclient)
+	/* if an LBX proxy gets killed, isItTimeToYield will be set */
+	if (isItTimeToYield || (client == killclient))
 	{
 	    /* force yield and return Success, so that Dispatch()
 	     * doesn't try to touch client
@@ -3372,6 +3504,12 @@ CloseDownClient(client)
             } 
 	}
 	client->clientGone = TRUE;  /* so events aren't sent to client */
+	if (ClientIsAsleep(client))
+	    ClientSignal (client);
+	ProcessWorkQueueZombies();
+#ifdef LBX
+	ProcessQTagZombies();
+#endif
 	CloseDownConnection(client);
 
 	/* If the client made it to the Running stage, nClients has
@@ -3388,40 +3526,31 @@ CloseDownClient(client)
 
     if (really_close_down)
     {
-	if (ClientIsAsleep(client))
-	    ClientSignal (client);
-	else
+	if (client->clientState == ClientStateRunning && nClients == 0)
 	{
-	    if (client->clientState == ClientStateRunning && nClients == 0)
-	    {
-		if (terminateAtReset)
-		    dispatchException |= DE_TERMINATE;
-		else
-		    dispatchException |= DE_RESET;
-	    }
-	    client->clientState = ClientStateGone;
-	    if (ClientStateCallback)
-            {
-		NewClientInfoRec clientinfo;
-
-		clientinfo.client = client; 
-		clientinfo.prefix = (xConnSetupPrefix *)NULL;  
-		clientinfo.setup = (xConnSetup *) NULL;
-		CallCallbacks((&ClientStateCallback), (pointer)&clientinfo);
-            } 	    
-	    FreeClientResources(client);
-	    if (client->index < nextFreeClientID)
-		nextFreeClientID = client->index;
-	    clients[client->index] = NullClient;
-#ifdef LBX
-	    if (client->largeReqBuf)
-		xfree (client->largeReqBuf);
-#endif
-	    xfree(client);
-
-	    while (!clients[currentMaxClients-1])
-		currentMaxClients--;
+	    if (terminateAtReset)
+		dispatchException |= DE_TERMINATE;
+	    else
+		dispatchException |= DE_RESET;
 	}
+	client->clientState = ClientStateGone;
+	if (ClientStateCallback)
+	{
+	    NewClientInfoRec clientinfo;
+
+	    clientinfo.client = client; 
+	    clientinfo.prefix = (xConnSetupPrefix *)NULL;  
+	    clientinfo.setup = (xConnSetup *) NULL;
+	    CallCallbacks((&ClientStateCallback), (pointer)&clientinfo);
+	} 	    
+	FreeClientResources(client);
+	if (client->index < nextFreeClientID)
+	    nextFreeClientID = client->index;
+	clients[client->index] = NullClient;
+	xfree(client);
+
+	while (!clients[currentMaxClients-1])
+	    currentMaxClients--;
     }
 }
 
@@ -3461,10 +3590,6 @@ void InitClient(client, i, ospriv)
     int i;
     pointer ospriv;
 {
-#ifdef LBX
-    client->public.requestLength = StandardRequestLength;
-    client->largeReqBuf = NULL;
-#endif
     client->index = i;
     client->sequence = 0; 
     client->clientAsMask = ((Mask)i) << CLIENTOFFSET;
@@ -3503,6 +3628,18 @@ void InitClient(client, i, ospriv)
     }
 #endif
     client->replyBytesRemaining = 0;
+#ifdef LBX
+    client->readRequest = StandardReadRequestFromClient;
+#endif
+#ifdef XCSECURITY
+    client->trustLevel = XSecurityClientTrusted;
+    client->CheckAccess = NULL;
+    client->authId = 0;
+#endif
+#ifdef XAPPGROUP
+    client->appgroup = NULL;
+#endif
+    client->fontResFunc = NULL;
 }
 
 extern int clientPrivateLen;
@@ -3640,6 +3777,9 @@ SendConnSetup(client, reason)
 {
     register xWindowRoot *root;
     register int i;
+    int numScreens;
+    char* lConnectionInfo;
+    xConnSetupPrefix* lconnSetupPrefix;
 
     if (reason)
     {
@@ -3656,11 +3796,12 @@ SendConnSetup(client, reason)
 	else
 	    (void)WriteToClient(client, sz_xConnSetupPrefix, (char *) &csp);
         (void)WriteToClient(client, (int)csp.lengthReason, reason);
-	if (csp.lengthReason & 3)
-	    (void)WriteToClient(client, (int)(4 - (csp.lengthReason & 3)),
-				pad);
 	return (client->noClientException = -1);
     }
+
+    numScreens = screenInfo.numScreens;
+    lConnectionInfo = ConnectionInfo;
+    lconnSetupPrefix = &connSetupPrefix;
 
     /* We're about to start speaking X protocol back to the client by
      * sending the connection setup info.  This means the authorization
@@ -3671,11 +3812,14 @@ SendConnSetup(client, reason)
 
     client->requestVector = client->swapped ? SwappedProcVector : ProcVector;
     client->sequence = 0;
-    ((xConnSetup *)ConnectionInfo)->ridBase = client->clientAsMask;
-    ((xConnSetup *)ConnectionInfo)->ridMask = RESOURCE_ID_MASK;
+#ifdef XAPPGROUP
+    XagConnectionInfo (client, &lconnSetupPrefix, &lConnectionInfo, &numScreens);
+#endif
+    ((xConnSetup *)lConnectionInfo)->ridBase = client->clientAsMask;
+    ((xConnSetup *)lConnectionInfo)->ridMask = RESOURCE_ID_MASK;
     /* fill in the "currentInputMask" */
-    root = (xWindowRoot *)(ConnectionInfo + connBlockScreenStart);
-    for (i=0; i<screenInfo.numScreens; i++) 
+    root = (xWindowRoot *)(lConnectionInfo + connBlockScreenStart);
+    for (i=0; i<numScreens; i++) 
     {
 	register unsigned int j;
 	register xDepth *pDepth;
@@ -3693,17 +3837,17 @@ SendConnSetup(client, reason)
 
     if (client->swapped)
     {
-	WriteSConnSetupPrefix(client, &connSetupPrefix);
+	WriteSConnSetupPrefix(client, lconnSetupPrefix);
 	WriteSConnectionInfo(client,
-			     (unsigned long)(connSetupPrefix.length << 2),
-			     ConnectionInfo);
+			     (unsigned long)(lconnSetupPrefix->length << 2),
+			     lConnectionInfo);
     }
     else
     {
 	(void)WriteToClient(client, sizeof(xConnSetupPrefix),
-			    (char *) &connSetupPrefix);
-	(void)WriteToClient(client, (int)(connSetupPrefix.length << 2),
-			    ConnectionInfo);
+			    (char *) lconnSetupPrefix);
+	(void)WriteToClient(client, (int)(lconnSetupPrefix->length << 2),
+			    lConnectionInfo);
     }
     client->clientState = ClientStateRunning;
     if (ClientStateCallback)
@@ -3711,8 +3855,8 @@ SendConnSetup(client, reason)
 	NewClientInfoRec clientinfo;
 
         clientinfo.client = client; 
-        clientinfo.prefix = &connSetupPrefix;  
-        clientinfo.setup = (xConnSetup *)ConnectionInfo;
+        clientinfo.prefix = lconnSetupPrefix;  
+        clientinfo.setup = (xConnSetup *)lConnectionInfo;
 	CallCallbacks((&ClientStateCallback), (pointer)&clientinfo);
     } 	
     return (client->noClientException);
@@ -3746,7 +3890,9 @@ ProcEstablishConnection(client)
      * So we don't want to send the connection setup info yet, since
      * the auth step isn't really done.
      */
-    if (client->clientState != ClientStateAuthenticating)
+    if (client->clientState == ClientStateCheckingSecurity)
+	client->clientState = ClientStateCheckedSecurity;
+    else if (client->clientState != ClientStateAuthenticating)
 	return(SendConnSetup(client, reason));
     return(client->noClientException);
 }

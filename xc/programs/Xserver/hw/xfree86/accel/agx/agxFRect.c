@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxFRect.c,v 3.8 1996/02/04 08:58:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxFRect.c,v 3.9 1996/12/23 06:32:40 dawes Exp $ */
 /*
  * Fill rectangles.
  */
@@ -31,7 +31,7 @@
  * Rewritten for the AGX by Henry A. Worth (haw30@eng.amdahl.com)
  * 
  */
-/* $XConsortium: agxFRect.c /main/4 1995/11/13 10:06:43 kaleb $ */
+/* $XConsortium: agxFRect.c /main/5 1996/02/21 17:17:23 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

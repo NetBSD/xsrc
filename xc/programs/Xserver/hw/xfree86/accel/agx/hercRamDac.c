@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/hercRamDac.c,v 3.8 1996/08/10 13:05:08 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/hercRamDac.c,v 3.9 1996/12/23 06:33:04 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  * Copyright 1994 by Henry A. Worth, Sunnyvale, California.
@@ -25,7 +25,7 @@
  * Rewritten for the Hercules Graphite by Henry A. Worth <haw30@eng.amdahl.com> 
  *
  */
-/* $XConsortium: hercRamDac.c /main/6 1995/11/13 10:07:36 kaleb $ */
+/* $XConsortium: hercRamDac.c /main/8 1996/10/19 17:50:22 kaleb $ */
 
 #define NEED_EVENTS
 #include <X.h>

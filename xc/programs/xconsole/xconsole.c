@@ -1,6 +1,6 @@
 /*
  * $XConsortium: xconsole.c /main/22 1995/12/07 13:52:50 kaleb $
- * $XFree86: xc/programs/xconsole/xconsole.c,v 3.15 1996/10/16 14:44:57 dawes Exp $
+ * $XFree86: xc/programs/xconsole/xconsole.c,v 3.16.2.2 1997/05/26 14:36:27 dawes Exp $
  *
 Copyright (c) 1990  X Consortium
 
@@ -81,6 +81,7 @@ static Widget	top, text;
 static XtInputId	input_id;
 
 static FILE    *input;
+static Boolean	regularFile = FALSE;
 
 static Boolean	notified;
 static Boolean	iconified;
@@ -173,7 +174,7 @@ static int child_pid;
 static void inputReady ();
 
 #ifdef Lynx
-static
+static void
 RestoreConsole()
 {
     int fd;
@@ -261,8 +262,20 @@ OpenConsole ()
 	}
 	else
 	{
-           if (access(app_resources.file, R_OK) == 0)
-	       input = fopen (app_resources.file, "r");
+	    struct stat sbuf;
+
+	    regularFile = FALSE;
+            if (access(app_resources.file, R_OK) == 0)
+	    {
+		input = fopen (app_resources.file, "r");
+		if (input)
+		    if (!stat(app_resources.file, &sbuf) &&
+			(sbuf.st_mode & S_IFMT) == S_IFREG)
+		    {
+			regularFile = TRUE;
+			fseek(input, 0, SEEK_END);
+		    }
+	    }
 	}
 	if (!input)
 	{
@@ -464,6 +477,15 @@ inputReady (w, source, id)
     n = read (*source, buffer, sizeof (buffer) - 1);
     if (n <= 0)
     {
+	if (app_resources.file && regularFile && n == 0)
+	{
+	    if (XPending(XtDisplay(w)))
+		return;
+
+	    sleep(1);
+	    return;
+	}
+	    
 #ifdef MINIX
 	if (n == -1 && errno == EAGAIN)
 		return;
@@ -471,6 +493,9 @@ inputReady (w, source, id)
 #endif
 	fclose (input);
 	XtRemoveInput (*id);
+	OpenConsole();
+#define INPUTFAILMSG "Read failed, re-opening console\n"
+	TextAppend ((Widget) text, INPUTFAILMSG, strlen(INPUTFAILMSG));
     }
     Notify ();
     buffer[n] = '\0';

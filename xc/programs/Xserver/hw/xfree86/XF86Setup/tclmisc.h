@@ -1,4 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclmisc.h,v 3.1 1996/06/30 10:44:12 dawes Exp $ */
+/* $Xconsortium: $ */
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclmisc.h,v 3.2 1996/12/27 06:54:18 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/Xmd.h>

@@ -1,6 +1,10 @@
+/* $XConsortium: sun.h /main/1 1996/10/31 14:20:43 kaleb $ */
+
+
+
 /* This is sun.h modified for LynxOS */
 
-/* $XFree86: xc/programs/Xserver/hw/sunLynx/sun.h,v 3.2 1996/10/16 14:38:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/sunLynx/sun.h,v 3.3.2.1 1997/05/12 12:52:13 hohndel Exp $ */
 
 /*-
  * Copyright (c) 1987 by the Regents of the University of California
@@ -130,6 +134,11 @@ extern int getpagesize();
 #    define KB_SUN2		2		/* type 2 keyboard */
 #    define KB_SUN3		3		/* type 3 keyboard */
 #    define KB_SUN4		4		/* type 4 keyboard */
+#    define KIOCSLED		TIOCLED
+#    define LED_NUM_LOCK	NUM_LOCK
+#    define LED_SCROLL_LOCK	SCROL_LOCK
+#    define LED_CAPS_LOCK	CAPS_LOCK
+#    define LED_COMPOSE		COMPOSE_LED
 #   endif
 #   include <smem.h>
 #   include "fbio.h"

@@ -46,8 +46,8 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XConsortium: gc.c,v 5.28 95/02/27 16:42:14 dpw Exp $ */
-/* $XFree86: xc/programs/Xserver/dix/gc.c,v 3.3 1996/08/11 12:35:25 dawes Exp $ */
+/* $XConsortium: gc.c /main/70 1996/08/01 19:21:09 dpw $ */
+/* $XFree86: xc/programs/Xserver/dix/gc.c,v 3.4 1996/12/23 06:29:45 dawes Exp $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -61,6 +61,7 @@ SOFTWARE.
 #include "region.h"
 
 #include "dix.h"
+#include <assert.h>
 
 extern XID clientErrorValue;
 extern FontPtr defaultFont;
@@ -84,55 +85,79 @@ ValidateGC(pDraw, pGC)
 }
 
 
+/* dixChangeGC(client, pGC, mask, pC32, pUnion)
+ * 
+ * This function was created as part of the Security extension
+ * implementation.  The client performing the gc change must be passed so
+ * that access checks can be performed on any tiles, stipples, or fonts
+ * that are specified.  ddxen can call this too; they should normally
+ * pass NullClient for the client since any access checking should have
+ * already been done at a higher level.
+ * 
+ * Since we had to create a new function anyway, we decided to change the
+ * way the list of gc values is passed to eliminate the compiler warnings
+ * caused by the DoChangeGC interface.  You can pass the values via pC32
+ * or pUnion, but not both; one of them must be NULL.  If you don't need
+ * to pass any pointers, you can use either one:
+ * 
+ *     /* example calling dixChangeGC using pC32 parameter
+ *     CARD32 v[2];
+ *     v[0] = foreground;
+ *     v[1] = background;
+ *     dixChangeGC(client, pGC, GCForeground|GCBackground, v, NULL);
+ * 
+ *     /* example calling dixChangeGC using pUnion parameter;
+ *     /* same effect as above
+ *     ChangeGCVal v[2];
+ *     v[0].val = foreground;
+ *     v[1].val = background;
+ *     dixChangeGC(client, pGC, GCForeground|GCBackground, NULL, v);
+ * 
+ * However, if you need to pass a pointer to a pixmap or font, you MUST
+ * use the pUnion parameter.
+ * 
+ *     /* example calling dixChangeGC passing pointers in the value list
+ *     ChangeGCVal v[2];
+ *     v[0].val = FillTiled;
+ *     v[1].ptr = pPixmap; /* pointer to a pixmap
+ *     dixChangeGC(client, pGC, GCFillStyle|GCTile, NULL, v);
+ * 
+ * Note: we could have gotten by with just the pUnion parameter, but on
+ * 64 bit machines that would have forced us to copy the value list that
+ * comes in the ChangeGC request.
+ * 
+ * Ideally, we'd change all the DoChangeGC calls to dixChangeGC, but this
+ * is far too many changes to consider at this time, so we've only
+ * changed the ones that caused compiler warnings.  New code should use
+ * dixChangeGC.
+ * 
+ * dpw
+ */
 
-/* Publically defined entry to ChangeGC.  Just calls DoChangeGC and tells
- * it that all of the entries are constants or IDs */
+#define NEXTVAL(_type, _var) { \
+      if (pC32) _var = (_type)*pC32++; \
+      else { \
+	_var = (_type)(pUnion->val); pUnion++; \
+      } \
+    }
+
+#define NEXT_PTR(_type, _var) { \
+    assert(pUnion); _var = (_type)pUnion->ptr; pUnion++; }
+
 int
-ChangeGC(pGC, mask, pval)
+dixChangeGC(client, pGC, mask, pC32, pUnion)
+    ClientPtr client;
     register GC 	*pGC;
     register BITS32	mask;
-    XID			*pval;
-{
-    return (DoChangeGC(pGC, mask, pval, 0));
-}
-/* DoChangeGC(pGC, mask, pval, fPointer)
-   mask is a set of bits indicating which values to change.
-   pval contains an appropriate value for each mask.
-   fPointer is true if the values for tiles, stipples, fonts or clipmasks
-   are pointers instead of IDs.  Note: if you are passing pointers you
-   MUST declare the array of values as type pointer!  Other data types
-   may not be large enough to hold pointers on some machines.  Yes,
-   this means you have to cast to (XID *) when you pass the array to
-   DoChangeGC.  Similarly, if you are not passing pointers (fPointer = 0) you
-   MUST declare the array as type XID (not unsigned long!), or again the wrong
-   size data type may be used.  I wish we could change the interface to accept
-   a union of (XID, pointer), but it's too late.
-
-   if there is an error, the value is marked as changed 
-   anyway, which is probably wrong, but infrequent.
-
-NOTE:
-	all values sent over the protocol for ChangeGC requests are
-32 bits long
-*/
-
-#define NEXTVAL(_type, _var) \
-    { if (fPointer) _var = (_type)((long)*pPtr++); \
-               else _var = (_type)((long)*pval++); }
-
-int
-DoChangeGC(pGC, mask, pval, fPointer)
-    register GC 	*pGC;
-    register BITS32	mask;
-    XID			*pval;
-    int			fPointer;
+    CARD32		*pC32;
+    ChangeGCValPtr	pUnion;
 {
     register BITS32 	index2;
     register int 	error = 0;
     PixmapPtr 		pPixmap;
     BITS32		maskQ;
-    pointer		*pPtr = (pointer *)pval;
 
+    assert( (pC32 && !pUnion) || (!pC32 && pUnion) );
     pGC->serialNumber |= GC_CHANGE_SERIAL_BIT;
 
     maskQ = mask;	/* save these for when we walk the GCque */
@@ -244,14 +269,15 @@ DoChangeGC(pGC, mask, pval, fPointer)
 	    case GCTile:
 	    {
 		XID newpix = 0;
-		if (fPointer)
+		if (pUnion)
 		{
-		    pPixmap = (PixmapPtr) *pPtr++;
+		    NEXT_PTR(PixmapPtr, pPixmap);
 		}
 		else
 		{
-		    newpix = (XID)*pval++;
-		    pPixmap = (PixmapPtr)LookupIDByType(newpix,	RT_PIXMAP);
+		    NEXTVAL(XID, newpix);
+		    pPixmap = (PixmapPtr)SecurityLookupIDByType(client,
+					newpix, RT_PIXMAP, SecurityReadAccess);
 		}
 		if (pPixmap)
 		{
@@ -279,14 +305,15 @@ DoChangeGC(pGC, mask, pval, fPointer)
 	    case GCStipple:
 	    {
 		XID newstipple = 0;
-		if (fPointer)
+		if (pUnion)
 		{
-		    pPixmap = (PixmapPtr) *pPtr++;
+		    NEXT_PTR(PixmapPtr, pPixmap);
 		}
 		else
 		{
-		    newstipple = (XID)*pval++;
-		    pPixmap = (PixmapPtr)LookupIDByType(newstipple, RT_PIXMAP);
+		    NEXTVAL(XID, newstipple)
+		    pPixmap = (PixmapPtr)SecurityLookupIDByType(client,
+				newstipple, RT_PIXMAP, SecurityReadAccess);
 		}
 		if (pPixmap)
 		{
@@ -320,14 +347,15 @@ DoChangeGC(pGC, mask, pval, fPointer)
     	    {
 		FontPtr	pFont;
 		XID newfont = 0;
-		if (fPointer)
+		if (pUnion)
 		{
-		    pFont = (FontPtr) *pPtr++;
+		    NEXT_PTR(FontPtr, pFont);
 		}
 		else
 		{
-		    newfont = (XID)*pval++;
-		    pFont = (FontPtr)LookupIDByType(newfont, RT_FONT);
+		    NEXTVAL(XID, newfont)
+		    pFont = (FontPtr)SecurityLookupIDByType(client, newfont,
+						RT_FONT, SecurityReadAccess);
 		}
 		if (pFont)
 		{
@@ -380,20 +408,21 @@ DoChangeGC(pGC, mask, pval, fPointer)
 		Pixmap pid;
 		int    clipType;
 
-		if (fPointer)
+		if (pUnion)
 		{
-		    pPixmap = (PixmapPtr)*pPtr++;
+		    NEXT_PTR(PixmapPtr, pPixmap);
 		}
 		else
 		{
-		    pid = (Pixmap)*pval++;
+		    NEXTVAL(Pixmap, pid)
 		    if (pid == None)
 		    {
 			clipType = CT_NONE;
 			pPixmap = NullPixmap;
 		    }
 		    else
-		        pPixmap = (PixmapPtr)LookupIDByType(pid, RT_PIXMAP);
+		        pPixmap = (PixmapPtr)SecurityLookupIDByType(client,
+					pid, RT_PIXMAP, SecurityReadAccess);
 		}
 
 		if (pPixmap)
@@ -409,7 +438,7 @@ DoChangeGC(pGC, mask, pval, fPointer)
 			pPixmap->refcnt++;
 		    }
 		}
-		else if (!fPointer && (pid != None))
+		else if (!pUnion && (pid != None))
 		{
 		    clientErrorValue = pid;
 		    error = BadPixmap;
@@ -494,6 +523,53 @@ DoChangeGC(pGC, mask, pval, fPointer)
 }
 
 #undef NEXTVAL
+#undef NEXT_PTR
+
+/* Publically defined entry to ChangeGC.  Just calls dixChangeGC and tells
+ * it that all of the entries are constants or IDs */
+int
+ChangeGC(pGC, mask, pval)
+    register GC 	*pGC;
+    register BITS32	mask;
+    XID			*pval;
+{
+    return (dixChangeGC(NullClient, pGC, mask, pval, NULL));
+}
+
+/* DoChangeGC(pGC, mask, pval, fPointer)
+   mask is a set of bits indicating which values to change.
+   pval contains an appropriate value for each mask.
+   fPointer is true if the values for tiles, stipples, fonts or clipmasks
+   are pointers instead of IDs.  Note: if you are passing pointers you
+   MUST declare the array of values as type pointer!  Other data types
+   may not be large enough to hold pointers on some machines.  Yes,
+   this means you have to cast to (XID *) when you pass the array to
+   DoChangeGC.  Similarly, if you are not passing pointers (fPointer = 0) you
+   MUST declare the array as type XID (not unsigned long!), or again the wrong
+   size data type may be used.  To avoid this cruftiness, use dixChangeGC
+   above.
+
+   if there is an error, the value is marked as changed 
+   anyway, which is probably wrong, but infrequent.
+
+NOTE:
+	all values sent over the protocol for ChangeGC requests are
+32 bits long
+*/
+int
+DoChangeGC(pGC, mask, pval, fPointer)
+    register GC 	*pGC;
+    register BITS32	mask;
+    XID			*pval;
+    int			fPointer;
+{
+    if (fPointer)
+    /* XXX might be a problem on 64 bit big-endian servers */
+	dixChangeGC(NullClient, pGC, mask, NULL, (ChangeGCValPtr)pval);
+    else
+	dixChangeGC(NullClient, pGC, mask, pval, NULL);
+}
+
 
 /* CreateGC(pDrawable, mask, pval, pStatus)
    creates a default GC for the given drawable, using mask to fill

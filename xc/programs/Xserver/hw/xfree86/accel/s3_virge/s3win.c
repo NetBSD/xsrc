@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3win.c,v 3.2 1996/10/18 15:01:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3win.c,v 3.4 1996/12/27 07:02:50 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -55,7 +55,7 @@ Rewritten for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
  * Modified by Amancio Hasty and Jon Tombs
  *
  */
-/* $XConsortium: s3win.c /main/4 1995/11/12 19:07:18 kaleb $ */
+/* $XConsortium: s3win.c /main/3 1996/10/27 18:07:21 kaleb $ */
 
 
 #include "X.h"
@@ -175,7 +175,7 @@ s3CopyWindow(pWin, ptOldOrg, prgnSrc)
       }
    }
 
-   WaitQueue(1);
+   WaitIdle();
    SETB_CMD_SET(CMD_NOP);
 
    UNBLOCK_CURSOR;

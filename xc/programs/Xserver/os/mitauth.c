@@ -1,4 +1,4 @@
-/* $XConsortium: mitauth.c,v 1.8 94/04/17 20:27:03 gildea Exp $ */
+/* $XConsortium: mitauth.c /main/11 1996/10/28 22:56:36 dpw $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -116,6 +116,7 @@ char	*data;
     return (XID) -1;
 }
 
+int
 MitFromID (id, data_lenp, datap)
 XID id;
 unsigned short	*data_lenp;
@@ -133,6 +134,7 @@ char	**datap;
     return 0;
 }
 
+int
 MitRemoveCookie (data_length, data)
 unsigned short	data_length;
 char	*data;
@@ -140,7 +142,7 @@ char	*data;
     struct auth	*auth, *prev;
 
     prev = 0;
-    for (auth = mit_auth; auth; auth=auth->next) {
+    for (auth = mit_auth; auth; prev = auth, auth=auth->next) {
 	if (data_length == auth->len &&
 	    memcmp (data, auth->data, data_length) == 0)
  	{
@@ -155,3 +157,39 @@ char	*data;
     }
     return 0;
 }
+
+#ifdef XCSECURITY
+
+static char cookie[16]; /* 128 bits */
+
+XID
+MitGenerateCookie (data_length, data, id, data_length_return, data_return)
+    unsigned int data_length;
+    char *data;
+    XID id;
+    unsigned int *data_length_return;
+    char	**data_return;
+{
+    int i = 0;
+    int status;
+
+    while (data_length--)
+    {
+	cookie[i++] += *data++;
+	if (i >= sizeof (cookie)) i = 0;
+    }
+    GenerateRandomData(sizeof (cookie), cookie);
+    status = MitAddCookie(sizeof (cookie), cookie, id);
+    if (!status)
+    {
+	id = -1;
+    }
+    else
+    {
+	*data_return = cookie;
+	*data_length_return = sizeof (cookie);
+    }
+    return id;
+}
+
+#endif /* XCSECURITY */

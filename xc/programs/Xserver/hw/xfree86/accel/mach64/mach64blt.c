@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64blt.c,v 3.7 1996/08/25 14:10:50 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64blt.c,v 3.8 1996/12/23 06:39:09 dawes Exp $ */
 /*
  * Copyright 1989 by the Massachusetts Institute of Technology
  * Copyright 1993,1994,1995,1996 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -30,7 +30,7 @@
  * Modified for the Mach64 by Kevin E. Martin (martin@cs.unc.edu)
  * 
  */
-/* $XConsortium: mach64blt.c /main/2 1995/11/12 17:38:39 kaleb $ */
+/* $XConsortium: mach64blt.c /main/7 1996/10/19 17:53:30 kaleb $ */
 
 #include	"X.h"
 #include	"Xmd.h"

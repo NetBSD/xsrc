@@ -1,6 +1,11 @@
-/* $XConsortium: mfbmap.h,v 1.2 95/06/19 18:16:26 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/mfb.banked/mfbmap.h,v 3.1 1996/02/04 09:09:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/mono/mfb.banked/mfbmap.h,v 3.2 1996/12/23 06:48:38 dawes Exp $ */
 /* mfbmap.h */
+
+
+
+
+
+/* $XConsortium: mfbmap.h /main/3 1996/02/21 17:50:06 kaleb $ */
 
 #ifndef _MFBMAP_H
 #define _MFBMAP_H

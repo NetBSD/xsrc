@@ -1,4 +1,4 @@
-/* $XConsortium: do_simple.c,v 2.11 94/03/17 20:24:36 dpw Exp $ */
+/* $XConsortium: do_simple.c /main/14 1996/08/01 19:32:37 dpw $ */
 /*****************************************************************************
 Copyright 1988, 1989 by Digital Equipment Corporation, Maynard, Massachusetts.
 
@@ -90,7 +90,7 @@ int InitGetProperty(xp, p, reps)
     root = RootWindow (xp->d, 0);
     XA_PK_TEMP = XInternAtom (xp->d, "_PK_TEMP", False);
     XChangeProperty (
-	    xp->d, root, XA_PK_TEMP, XA_INTEGER, 32,
+	    xp->d, xp->w, XA_PK_TEMP, XA_INTEGER, 32,
 	    PropModeReplace, (unsigned char *)foo, 4);
     return reps;
 }
@@ -110,7 +110,7 @@ void DoGetProperty(xp, p, reps)
 
     for (i = 0; i != reps; i++) {
 	status = XGetWindowProperty (
-		xp->d, root, XA_PK_TEMP, 0, 4,
+		xp->d, xp->w, XA_PK_TEMP, 0, 4,
 		False, AnyPropertyType, &actual_type, &actual_format,
 		&actual_length, &bytes_remaining, &prop);
     }

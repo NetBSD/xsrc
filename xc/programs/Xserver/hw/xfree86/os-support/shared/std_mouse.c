@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/std_mouse.c,v 3.5 1996/03/10 12:07:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/std_mouse.c,v 3.6 1996/12/23 06:51:03 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: std_mouse.c /main/3 1995/11/13 06:15:17 kaleb $ */
+/* $XConsortium: std_mouse.c /main/5 1996/03/11 10:47:40 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3font.c,v 3.4 1996/02/04 09:05:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3font.c,v 3.5 1996/12/23 06:41:43 dawes Exp $ */
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  * 
@@ -26,7 +26,7 @@
  * Modified by Amancio Hasty and Jon Tombs
  * 
  */
-/* $XConsortium: s3font.c /main/3 1995/11/12 19:06:22 kaleb $ */
+/* $XConsortium: s3font.c /main/4 1996/02/21 17:35:14 kaleb $ */
 
 
 #include "X.h"

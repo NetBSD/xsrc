@@ -552,5 +552,8 @@ FreeBSD用に<bf/__FreeBSD__/、  NetBSD用に<bf/__NetBSD__/、
 <p>また、日本語訳にあたりアドバイスをいただいたFreeBSD PC98移植チーム
 の方々に感謝いたします。日本語訳に関するコメントは
 <em/&lt;tsuka@kawalab.dnj.ynu.ac.jp&gt;/までお願いします。
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/FreeBSD.sgml,v 3.1 1997/01/26 04:34:17 dawes Exp $
+</verb>
 </article>
 

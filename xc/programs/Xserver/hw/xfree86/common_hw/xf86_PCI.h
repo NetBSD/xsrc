@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.h,v 3.11 1996/09/29 13:36:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.h,v 3.12 1996/12/23 06:44:27 dawes Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -22,7 +22,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86_PCI.h /main/6 1996/01/12 12:02:08 kaleb $ */
+/* $XConsortium: xf86_PCI.h /main/13 1996/10/25 10:25:59 kaleb $ */
 
 #ifndef _XF86_PCI_H
 #define _XF86_PCI_H 1

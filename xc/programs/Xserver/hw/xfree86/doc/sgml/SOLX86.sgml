@@ -1,11 +1,11 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
 
 <!-- Title information -->
 
 <title>Information for Solaris for x86 Users
 <author>David Holland
-<date>25 October 1996
+<date>16 May 1997
 
 <!-- Table of contents -->
 <toc>
@@ -16,7 +16,7 @@
 <!--Contents
 --------
 
-	1) What is XFree86 3.2
+	1) What is XFree86 3.3
 	2) Solaris versions on which XFree86 has been tested.
 	3) The VT-switching sub-system in Solaris x86
 	4) Various notes for building XFree86 on Solaris x86
@@ -24,11 +24,11 @@
  -->
 
 
-<sect>What is XFree86 3.2<p>
+<sect>What is XFree86 3.3<p>
 
-	XFree86 3.2 is a port of X11R6.1 that supports several versions of 
+	XFree86 3.3 is a port of X11R6.3 that supports several versions of 
 	Intel-based Unix.  It is derived from X386 1.2 which was the X server 
-	distributed with X11R5.  this release consists of many new features 
+	distributed with X11R5.  This release consists of many new features 
 	and 
 	performance improvements as well as many bug fixes.  The release is 
 	available as source patches against the X Consortium code, as well as 
@@ -36,26 +36,22 @@
 <p>
 The sources for XFree86 are available by anonymous ftp from:
 <quote>
-	<url name="ftp.XFree86.org:/pub/XFree86/current"
+	<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current"
 	url="ftp://ftp.XFree86.org/pub/XFree86/current">
 </quote>
 Solaris binaries for XFree86 are available for anonymous ftp from:
 <quote>
-	<url name="ftp.XFree86.org:/pub/XFree86/current/binaries/Solaris"
+	<htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/Solaris"
 	url="ftp://ftp.XFree86.org/pub/XFree86/current/binaries/Solaris"><p>
-<!--
-	<url name="abode.ccd.bnl.gov:/pub/XFree86"
-	url="ftp://abode.ccd.bnl.gov/pub/XFree86">
--->
 </quote>
 <!--
 Many thanks to <bf/Jerry Whelan/ for making the space available for these 
 binaries.
 -->
 
-<sect> Solaris for x86, versions on which XFree86 3.2 has been tested<p>
+<sect> Solaris for x86, versions on which XFree86 3.3 has been tested<p>
 
-XFree86 3.2 has been actively tested on:
+XFree86 3.3 has been actively tested on:
 <itemize>
 <!--
 <item>Solaris 2.1 for x86
@@ -157,11 +153,12 @@ Limitations of the virtual terminal sub-system under Solaris x86:<p>
 <sect>Notes for building XFree86 on Solaris x86<p>
 
 <enum>
-<item>	The majority of all modifications you will need to make are now in 
-	<tt>~xc/config/cf/xf86site.def</tt>, 
+<item>The majority of all modifications you will need to make are now in 
+	<tt>~xc/config/cf/xf86site.def</tt>.
+
+<!--
 	except one. You will need to set OSName, 
 	and OSMinorVersion correctly in <tt>~xc/config/cf/sun.cf</tt>.
-
 
 Under Solaris 2.1 for x86, <tt>sun.cf</tt> needs to read 
 (near the top of the file)
@@ -184,8 +181,9 @@ Under Solaris 2.4 for x86, <tt>sun.cf</tt> needs to read
 	#define OSMajorVersion		5
 	#define OSMinorVersion		4
 </verb>
+-->
 
-<item>	Both Gcc, and ProWorks are supported by XFree86. Gcc-2.5.8 or
+<item>Both Gcc, and ProWorks are supported by XFree86. Gcc-2.5.8 or
         gcc-2.7.2  are 
 	suggested, Gcc-2.6.0 is known not to work.  You also need to set 
 	HasGcc2 correctly in <tt>~xc/config/cf/xf86site.def</tt>.
@@ -204,14 +202,30 @@ Under Solaris 2.4 for x86, <tt>sun.cf</tt> needs to read
 	<tt>~xc/config/cf/sun.cf</tt> to NO, if you are using GCC.
 	ProWorks does not have this problem.
 
+<item> To build XFree86 with gcc you need gcc and (optionally)
+       c++filt from  GNU binutils. Don't install gas or ld from GNU
+       binutils, use the one provided by Sun. 
+       <p>
+       With XFree86 3.3, you will need to setup a /opt/SUNWspro/bin
+       directory containing symbolic links named <tt/cc/, <tt/CC/, and
+       <tt/c++filt/ pointing respectively to the actual <tt/gcc/,
+       <tt/g++/ and <tt/c++filt/ commands.
 
+<item>If you don't have c++filt or if you have troubles in making
+	World with c++filt, you need to set UseExportLists to NO in
+	<tt>~xc/config/cf/host.def</tt>.<p>
 
-<item>	If you are using ProWorks to compile the XFree86 distribution, you 
+<!--
+	If you use c++filt, you need to check the definition of PATH in
+	<tt>~xc/config/util/elistgen.sun</tt>.<p>
+-->        
+
+<item>If you are using ProWorks to compile the XFree86 distribution, you 
 	need to modify your PATH appropriately so the ProWorks tools are 
-	available.<p>
+	available. Normally, they should be in <tt>/opt/SUNWspro/bin</tt><p>
 
 
-<item>	You <bf>MUST</bf> put <tt>/usr/ccs/bin</tt>
+<item>You <bf>MUST</bf> put <tt>/usr/ccs/bin</tt>
  	at the front of your PATH. There are known 
 	problems with some GNU replacements for the utilities found there. So 
 	the <tt>/usr/ccs/bin</tt> versions of these programs 
@@ -219,25 +233,33 @@ must be found before any
 	other possible GNU versions. (Most notably GNU '<tt/ar/' does not work 
 	during the build).<p>
 
-<item>	If you wish to use the "memory aperture" feature of the S3, and Mach32 
+<item>If you wish to use the "memory aperture" feature of the S3, and Mach32 
 	servers, you need to compile, and install the Solaris x86 aperture 
 	driver for memory mapped I/O support.  This driver is <bf>REQUIRED</bf>
 	for the I128, P9000 and Mach 64 servers.<p>
 
-	The source for this driver is included in 
+	You  need to set HasSolx86apertureDrv to YES in 
+	<tt>~xc/config/cf/xf86site.def</tt>.<p> to enable the aperture
+	driver. 
+
+        Under Solaris 2.5 and 2.5.1, there's a system driver
+        (<tt>/dev/xsvc</tt> that provides this functionality. It will
+        be detected automatically by the server, so you don't need to
+        install the driver.
+
+	For Solaris 2.1 and 2.4, the source for this driver is included in 
 	<tt>~xc/programs/Xserver/hw/xfree86/etc/apSolx86.shar</tt>.  
 	Building, and 
 	installing the driver is relatively straight forward. Please read 
 	its accompanying README file.<p>
 
-	You also need to set HasSolx86apertureDrv to YES in 
-	<tt>~xc/config/cf/xf86site.def</tt>.<p>
+
 
 </enum>
 <sect> Notes for running XFree86 on Solaris x86<p>
 
 <enum>
-<item>	If you have not made the Virtual Terminal devices, you will need to 
+<item>If you have not made the Virtual Terminal devices, you will need to 
 	specify the terminal device to run the Xserver on.  The correct 
 	device is vt00 so your <tt>xinit</tt> command would look like so:<p>
 <tscreen><verb>
@@ -249,7 +271,7 @@ must be found before any
 	To be able to run XF86Setup, you must at least create
 	/dev/vt01. Otherwise XF86Setup won't start.
 
-<item>	For Solaris you will probably want to set your LD_LIBRARY_PATH to 
+<item>For Solaris you will probably want to set your LD_LIBRARY_PATH to 
 	<tt>/usr/X11R6/lib:/usr/openwin/lib:/usr/dt/lib</tt>.  
 	Including <tt>/usr/X11R6/lib</tt> in your 
 	LD_LIBRARY_PATH is probably not necessary, however it doesn't hurt. :)
@@ -262,13 +284,13 @@ must be found before any
         Motif and CDE applications may require <tt>/usr/dt/lib</tt> in your
         LD_LIBRARY_PATH too.
 
-<item>	Xqueue is <bf>NOT</bf> supported under Solaris. 
+<item>Xqueue is <bf>NOT</bf> supported under Solaris. 
 	The includes necessary for 
 	Xqueue are available, however the driver does not seem to be in the 
 	kernel. (Go figure)<p>
 
 
-<item>	If you want to use xdm with Solaris, extract the files from the shar 
+<item>If you want to use xdm with Solaris, extract the files from the shar 
 	file in <tt>/usr/X11R6/lib/X11/etc/XdmConf.svr4</tt> into a temporary 
 	directory. The <tt>README</tt> file tells where 
 	the individual files need to 
@@ -281,7 +303,7 @@ must be found before any
 
 <enum>
 
-<item>	The Solaris 2.1 for x86 OpenWindows filemgr does not work against a 
+<item>The Solaris 2.1 for x86 OpenWindows filemgr does not work against a 
 	X11R5 Xserver, it probably will also not work against a X11R6 
 Xserver.  
 	Attempting to 'Drag and Drop' a file causes the filemgr to abort 
@@ -291,9 +313,11 @@ Xserver.
 
 	There is no known work around.<p>
 
-<item>  It has been reported that the aperture driver doesn't work
+<!--
+<item>It has been reported that the aperture driver doesn't work
         under Solaris 2.5.1. It probably doesn't work either under
 	2.5. 
+-->
 
 </enum>
 <sect> Bug Notification<p>
@@ -305,12 +329,12 @@ Xserver.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SOLX86.sgml,v 3.9 1996/10/26 09:38:55 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/SOLX86.sgml,v 3.12.2.4 1997/05/24 08:36:08 dawes Exp $
 
 
 
 
 
-$XConsortium: SOLX86.sgml /main/4 1995/11/12 20:00:07 kaleb $
+$XConsortium: SOLX86.sgml /main/7 1996/10/28 05:43:28 kaleb $
 </verb>
 </article>

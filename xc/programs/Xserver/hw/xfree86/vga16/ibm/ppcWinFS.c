@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcWinFS.c,v 3.2 1996/02/04 09:11:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcWinFS.c,v 3.3 1996/12/23 06:53:19 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -44,7 +44,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: ppcWinFS.c /main/2 1995/11/13 07:05:52 kaleb $ */
+/* $XConsortium: ppcWinFS.c /main/3 1996/02/21 17:58:39 kaleb $ */
 
 #include "X.h"
 #include "misc.h"

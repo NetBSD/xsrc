@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase2.tcl,v 3.7 1996/09/29 12:51:13 dawes Exp $
+# $XConsortium: phase2.tcl /main/2 1996/10/25 10:21:29 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase2.tcl,v 3.10 1997/01/23 10:59:34 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -21,8 +26,10 @@ label $w.waitmsg -text "Loading  -  Please wait...\n\n\n"
 pack  $w.waitmsg -expand yes -fill both
 update idletasks
 
-mesg "The program is running on a different virtual terminal\n\n\
-	Please switch to the correct virtual terminal" info
+if $StartServer {
+	mesg "The program is running on a different virtual terminal\n\n\
+	    Please switch to the correct virtual terminal" info
+}
 
 set XKBrules $Xwinhome/lib/X11/xkb/rules/xfree86
 

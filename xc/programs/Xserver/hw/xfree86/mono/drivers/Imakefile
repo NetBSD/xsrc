@@ -1,5 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/7 1996/01/26 14:31:05 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/Imakefile,v 3.8 1996/02/24 10:21:16 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/9 1996/02/24 10:04:59 kaleb $
+
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/Imakefile,v 3.10 1997/01/05 11:58:44 dawes Exp $
 #include <Server.tmpl>
 #define IHaveSubdirs
 
@@ -9,8 +14,8 @@ SUBDIRS = XF86MonoDrivers
 SRCS = */?*.c
 OBJS = */?*_drv.o
 #else
-SRCS = apollo/?*.c hgc1280/?*.c sigma/?*.c
-OBJS = apollo/?*_drv.o hgc1280/?*_drv.o sigma/?*_drv.o
+SRCS = apollo/?*.c hgc1280/?*.c sigma/?*.c hercules/?*.c
+OBJS = apollo/?*_drv.o hgc1280/?*_drv.o sigma/?*_drv.o hercules/?*_drv.o
 #endif
 
 #if MakeHasPosixVariableSubstitutions

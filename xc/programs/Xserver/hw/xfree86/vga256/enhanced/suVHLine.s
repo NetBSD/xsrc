@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/suVHLine.s,v 3.1 1996/02/04 09:14:41 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/suVHLine.s,v 3.2 1996/12/23 06:59:14 dawes Exp $ */
 /*******************************************************************************
 			Copyright 1992, 1993 by Glenn G. Lai 
 
@@ -27,7 +27,7 @@ Austin, Tx 78765
 8/21/92
 7/10/93
 *******************************************************************************/
-/* $XConsortium: suVHLine.s /main/4 1995/11/13 08:46:23 kaleb $ */
+/* $XConsortium: suVHLine.s /main/5 1996/02/21 18:09:22 kaleb $ */
 
 #include "assyntax.h"
 

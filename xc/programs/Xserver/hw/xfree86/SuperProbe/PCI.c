@@ -7,7 +7,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.c,v 3.7 1996/08/23 11:02:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/PCI.c,v 3.7.4.1 1997/05/06 13:24:29 dawes Exp $ */
 
 #include "Probe.h"
 
@@ -16,9 +16,10 @@ struct pci_config_reg *pci_devp[MAX_PCI_DEVICES + 1] = {NULL, };
 void
 xf86scanpci()
 {
-    unsigned long tmplong1, tmplong2, config_cmd;
+    unsigned long tmplong1, tmplong2, config_cmd, cmd;
     unsigned char tmp1, tmp2;
     unsigned int i, j, idx = 0;
+    int func;
     struct pci_config_reg pcr;
 #ifdef PC98
     Word PCI_CtrlIOPorts[] = { 0xCF8, 0xCF9, 0xCFC };
@@ -84,14 +85,16 @@ xf86scanpci()
 #endif
     do {
         for (pcr._cardnum = 0x0; pcr._cardnum < 0x20; pcr._cardnum += 0x1) {
+	  func = 0;
+	  do { /* loop over different functions, if present */
 	    config_cmd = PCI_EN | (pcr._pcibuses[pcr._pcibusidx]<<16) |
-                                  (pcr._cardnum<<11);
+                                  (pcr._cardnum<<11) | (func<<8);
 
             outpl(PCI_MODE1_ADDRESS_REG, config_cmd);         /* ioreg 0 */
             pcr._device_vendor = inpl(PCI_MODE1_DATA_REG);
 
             if (pcr._vendor == 0xFFFF)   /* nothing there */
-                continue;
+                break;
 
 #ifdef DEBUGPCI
 	    printf("\npci bus 0x%x cardnum 0x%02x, vendor 0x%04x device 0x%04x\n",
@@ -124,20 +127,30 @@ xf86scanpci()
             outpl(PCI_MODE1_ADDRESS_REG, config_cmd | 0x40);
 	    pcr._user_config = inpl(PCI_MODE1_DATA_REG);
 
+	    pcr._funcnum = func;
+
             /* check for pci-pci bridges (currently we only know Digital) */
             if ((pcr._vendor == 0x1011) && (pcr._device == 0x0001))
                 if (pcr._secondary_bus_number > 0)
                     pcr._pcibuses[pcr._pcinumbus++] = pcr._secondary_bus_number;
 
 	    if (idx >= MAX_PCI_DEVICES)
-	        continue;
+	        break;;
 
 	    /* Ignore non-VGA devices */
 	    if (!((pcr._base_class == PCI_CLASS_PREHISTORIC &&
 		   pcr._sub_class == PCI_SUBCLASS_PREHISTORIC_VGA) ||
 		  (pcr._base_class == PCI_CLASS_DISPLAY &&
-		   pcr._sub_class == PCI_SUBCLASS_DISPLAY_VGA)))
-		continue;
+		   pcr._sub_class == PCI_SUBCLASS_DISPLAY_VGA) ||
+		  (pcr._base_class == PCI_CLASS_DISPLAY &&
+		   pcr._sub_class == PCI_SUBCLASS_DISPLAY_OTHER))) {
+		/*
+		 * unfortunately, sometimes GLINT chips are strapped
+		 * as class 0 subclass 0 by vendors...
+		 */
+		if( pcr._vendor != PCI_VENDOR_3DLABS )
+			break;
+	    }
 		  
 	    if ((pci_devp[idx] = (struct pci_config_reg *)malloc(sizeof(
 		 struct pci_config_reg))) == (struct pci_config_reg *)NULL) {
@@ -150,6 +163,13 @@ xf86scanpci()
 
 	    memcpy(pci_devp[idx++], &pcr, sizeof(struct pci_config_reg));
 	    pci_devp[idx] = NULL;
+	    if((func==0) && ((pcr._header_type & PCI_MULTIFUNC_DEV) == 0)) {
+	    	/* not a multi function device */
+		func = 8;
+	    } else {
+	    	func++;
+	    }
+	  } while (func<8);
         }
     } while (++pcr._pcibusidx < pcr._pcinumbus);
 

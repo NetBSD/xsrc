@@ -1,5 +1,5 @@
-/* $XConsortium: window.c /main/199 1995/09/22 10:22:27 dpw $ */
-/* $XFree86: xc/programs/Xserver/dix/window.c,v 3.3 1996/06/10 11:08:18 dawes Exp $ */
+/* $XConsortium: window.c /main/210 1996/10/28 07:24:59 kaleb $ */
+/* $XFree86: xc/programs/Xserver/dix/window.c,v 3.6 1997/01/18 06:53:16 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -51,10 +51,6 @@ SOFTWARE.
 
 */
 
-#include "X.h"
-#define NEED_REPLIES
-#define NEED_EVENTS
-#include "Xproto.h"
 #include "misc.h"
 #include "scrnintstr.h"
 #include "os.h"
@@ -69,6 +65,13 @@ SOFTWARE.
 #include "gcstruct.h"
 #include "servermd.h"
 #include "dixevents.h"
+#ifdef XAPPGROUP
+#include "extensions/Xagsrv.h"
+#endif
+#ifdef XCSECURITY
+#define _SECURITY_SERVER
+#include "extensions/security.h"
+#endif
 
 extern Bool permitOldBugs;
 
@@ -587,8 +590,17 @@ CreateWindow(wid, pParent, x, y, w, h, bw, class, vmask, vlist,
     ancwopt = pParent->optional;
     if (!ancwopt)
 	ancwopt = FindWindowWithOptional(pParent)->optional;
-    if (visual == CopyFromParent)
+    if (visual == CopyFromParent) {
+#ifdef XAPPGROUP
+	VisualID ag_visual;
+
+	if (client->appgroup && !pParent->parent &&
+	    (ag_visual = XagRootVisual (client)))
+	    visual = ag_visual;
+	else
+#endif
 	visual = ancwopt->visual;
+    }
 
     /* Find out if the depth and visual are acceptable for this Screen */
     if ((visual != ancwopt->visual) || (depth != pParent->drawable.depth))
@@ -671,6 +683,17 @@ CreateWindow(wid, pParent, x, y, w, h, bw, class, vmask, vlist,
     }
 
     pWin->borderWidth = bw;
+#ifdef XCSECURITY
+    /*  can't let untrusted clients have background None windows;
+     *  they make it too easy to steal window contents
+     */
+    if (client->trustLevel != XSecurityClientTrusted)
+    {
+	pWin->backgroundState = BackgroundPixel;
+	pWin->background.pixel = 0;
+    }
+    else
+#endif
     pWin->backgroundState = None;
 
     pWin->borderIsPixel = pParent->borderIsPixel;
@@ -915,6 +938,9 @@ DestroySubwindows(pWin, client)
 	FreeResource(pWin->lastChild->drawable.id, RT_NONE);
 }
 
+#define DeviceEventMasks (KeyPressMask | KeyReleaseMask | ButtonPressMask | \
+    ButtonReleaseMask | PointerMotionMask)
+
 /*****
  *  ChangeWindowAttributes
  *   
@@ -970,12 +996,24 @@ ChangeWindowAttributes(pWin, vmask, vlist, client)
 		borderRelative = TRUE;
 	    if (pixID == None)
 	    {
+#ifdef XCSECURITY
+		/*  can't let untrusted clients have background None windows */
+		if (client->trustLevel == XSecurityClientTrusted)
+		{
+#endif
 		if (pWin->backgroundState == BackgroundPixmap)
 		    (*pScreen->DestroyPixmap)(pWin->background.pixmap);
 		if (!pWin->parent)
 		    MakeRootTile(pWin);
 		else
 		    pWin->backgroundState = None;
+#ifdef XCSECURITY
+		}
+		else
+		{ /* didn't change the background to None, so don't tell ddx */
+		    index2 = 0; 
+		}
+#endif
 	    }
 	    else if (pixID == ParentRelative)
 	    {
@@ -997,7 +1035,8 @@ ChangeWindowAttributes(pWin, vmask, vlist, client)
 	    }
 	    else
 	    {	
-		pPixmap = (PixmapPtr)LookupIDByType(pixID, RT_PIXMAP);
+		pPixmap = (PixmapPtr)SecurityLookupIDByType(client, pixID,
+						RT_PIXMAP, SecurityReadAccess);
 		if (pPixmap != (PixmapPtr) NULL)
 		{
 		    if	((pPixmap->drawable.depth != pWin->drawable.depth) ||
@@ -1057,7 +1096,8 @@ ChangeWindowAttributes(pWin, vmask, vlist, client)
 	    }
 	    else
 	    {	
-		pPixmap = (PixmapPtr)LookupIDByType(pixID, RT_PIXMAP);
+		pPixmap = (PixmapPtr)SecurityLookupIDByType(client, pixID,
+					RT_PIXMAP, SecurityReadAccess);
 		if (pPixmap)
 		{
 		    if	((pPixmap->drawable.depth != pWin->drawable.depth) ||
@@ -1236,6 +1276,22 @@ ChangeWindowAttributes(pWin, vmask, vlist, client)
 	    pVlist++;
 	    if (cmap == CopyFromParent)
 	    {
+#ifdef XAPPGROUP
+		Colormap ag_colormap;
+		ClientPtr win_owner;
+
+		/*
+		 * win_owner == client for CreateWindow, other clients
+		 * can ChangeWindowAttributes
+		 */
+		win_owner = LookupClient (pWin->drawable.id, client);
+
+		if ( win_owner && win_owner->appgroup &&
+		    !pWin->parent->parent &&
+		    (ag_colormap = XagDefaultColormap (win_owner)))
+		    cmap = ag_colormap;
+		else
+#endif
 		if (pWin->parent &&
 		    (!pWin->optional ||
 		     pWin->optional->visual == wVisual (pWin->parent)))
@@ -1250,7 +1306,8 @@ ChangeWindowAttributes(pWin, vmask, vlist, client)
 		error = BadMatch;
 		goto PatchUp;
 	    }
-	    pCmap = (ColormapPtr)LookupIDByType(cmap, RT_COLORMAP);
+	    pCmap = (ColormapPtr)SecurityLookupIDByType(client, cmap,
+					      RT_COLORMAP, SecurityReadAccess);
 	    if (!pCmap)
 	    {
 		error = BadColor;
@@ -1325,7 +1382,8 @@ ChangeWindowAttributes(pWin, vmask, vlist, client)
 	    }
 	    else
 	    {
-		pCursor = (CursorPtr)LookupIDByType(cursorID, RT_CURSOR);
+		pCursor = (CursorPtr)SecurityLookupIDByType(client, cursorID,
+						RT_CURSOR, SecurityReadAccess);
 		if (!pCursor)
 		{
 		    error = BadCursor;
@@ -1436,44 +1494,41 @@ PatchUp:
  *****/
 
 void
-GetWindowAttributes(pWin, client)
+GetWindowAttributes(pWin, client, wa)
     register WindowPtr pWin;
     ClientPtr client;
+    xGetWindowAttributesReply *wa;
 {
-    xGetWindowAttributesReply wa;
-
-    wa.type = X_Reply;
-    wa.bitGravity = pWin->bitGravity;
-    wa.winGravity = pWin->winGravity;
+    wa->type = X_Reply;
+    wa->bitGravity = pWin->bitGravity;
+    wa->winGravity = pWin->winGravity;
     if (pWin->forcedBS && pWin->backingStore != Always)
-	wa.backingStore = NotUseful;
+	wa->backingStore = NotUseful;
     else
-	wa.backingStore = pWin->backingStore;
-    wa.length = (sizeof(xGetWindowAttributesReply) -
+	wa->backingStore = pWin->backingStore;
+    wa->length = (sizeof(xGetWindowAttributesReply) -
 		 sizeof(xGenericReply)) >> 2;
-    wa.sequenceNumber = client->sequence;
-    wa.backingBitPlanes =  wBackingBitPlanes (pWin);
-    wa.backingPixel =  wBackingPixel (pWin);
-    wa.saveUnder = (BOOL)pWin->saveUnder;
-    wa.override = pWin->overrideRedirect;
+    wa->sequenceNumber = client->sequence;
+    wa->backingBitPlanes =  wBackingBitPlanes (pWin);
+    wa->backingPixel =  wBackingPixel (pWin);
+    wa->saveUnder = (BOOL)pWin->saveUnder;
+    wa->override = pWin->overrideRedirect;
     if (!pWin->mapped)
-	wa.mapState = IsUnmapped;
+	wa->mapState = IsUnmapped;
     else if (pWin->realized)
-	wa.mapState = IsViewable;
+	wa->mapState = IsViewable;
     else
-	wa.mapState = IsUnviewable;
+	wa->mapState = IsUnviewable;
 
-    wa.colormap =  wColormap (pWin);
-    wa.mapInstalled = (wa.colormap == None) ? xFalse
-					    : IsMapInstalled(wa.colormap, pWin);
+    wa->colormap =  wColormap (pWin);
+    wa->mapInstalled = (wa->colormap == None) ? xFalse
+				: IsMapInstalled(wa->colormap, pWin);
 
-    wa.yourEventMask = EventMaskForClient(pWin, client);
-    wa.allEventMasks = pWin->eventMask | wOtherEventMasks (pWin);
-    wa.doNotPropagateMask = wDontPropagateMask (pWin);
-    wa.class = pWin->drawable.class;
-    wa.visualID = wVisual (pWin);
-
-    WriteReplyToClient(client, sizeof(xGetWindowAttributesReply), &wa);
+    wa->yourEventMask = EventMaskForClient(pWin, client);
+    wa->allEventMasks = pWin->eventMask | wOtherEventMasks (pWin);
+    wa->doNotPropagateMask = wDontPropagateMask (pWin);
+    wa->class = pWin->drawable.class;
+    wa->visualID = wVisual (pWin);
 }
 
 
@@ -2169,8 +2224,11 @@ ConfigureWindow(pWin, mask, vlist, client)
     unsigned short w = pWin->drawable.width,
 		   h = pWin->drawable.height,
 		   bw = pWin->borderWidth;
-    int action,
-	smode = Above;
+    int action, smode = Above;
+#ifdef XAPPGROUP
+    ClientPtr win_owner;
+    ClientPtr ag_leader = NULL;
+#endif
     xEvent event;
 
     if ((pWin->drawable.class == InputOnly) && (mask & IllegalInputOnlyConfigureMask))
@@ -2227,7 +2285,8 @@ ConfigureWindow(pWin, mask, vlist, client)
 	  case CWSibling:
 	    sibwid = (Window ) *pVlist;
 	    pVlist++;
-	    pSib = (WindowPtr )LookupIDByType(sibwid, RT_WINDOW);
+	    pSib = (WindowPtr )SecurityLookupIDByType(client, sibwid,
+						RT_WINDOW, SecurityReadAccess);
 	    if (!pSib)
 	    {
 		client->errorValue = sibwid;
@@ -2266,11 +2325,21 @@ ConfigureWindow(pWin, mask, vlist, client)
     else
 	pSib = pWin->nextSib;
 
-    if ((!pWin->overrideRedirect) && RedirectSend(pParent))
+#ifdef XAPPGROUP
+    win_owner = clients[CLIENT_ID(pWin->drawable.id)];
+    ag_leader = XagLeader (win_owner);
+#endif
+
+    if ((!pWin->overrideRedirect) && 
+	(RedirectSend(pParent)
+#ifdef XAPPGROUP
+	|| (win_owner->appgroup && ag_leader && 
+	    XagIsControlledRoot (client, pParent))
+#endif
+	))
     {
 	event.u.u.type = ConfigureRequest;
 	event.u.configureRequest.window = pWin->drawable.id;
-	event.u.configureRequest.parent = pParent->drawable.id;
 	if (mask & CWSibling)
 	   event.u.configureRequest.sibling = sibwid;
 	else
@@ -2285,6 +2354,17 @@ ConfigureWindow(pWin, mask, vlist, client)
 	event.u.configureRequest.height = h;
 	event.u.configureRequest.borderWidth = bw;
 	event.u.configureRequest.valueMask = mask;
+#ifdef XAPPGROUP
+	/* make sure if the ag_leader maps the window it goes to the wm */
+	if (ag_leader && ag_leader != client && 
+	    XagIsControlledRoot (client, pParent)) {
+	    event.u.configureRequest.parent = XagId (win_owner);
+	    (void) TryClientEvents (ag_leader, &event, 1,
+				    NoEventMask, NoEventMask, NullGrab);
+	    return Success;
+	}
+#endif
+	event.u.configureRequest.parent = pParent->drawable.id;
 	if (MaybeDeliverEventsToClient(pParent, &event, 1,
 		SubstructureRedirectMask, client) == 1)
 	    return(Success);
@@ -2629,16 +2709,47 @@ MapWindow(pWin, client)
 
     if (pWin->mapped)
 	return(Success);
+
+#ifdef XCSECURITY
+    /*  don't let an untrusted client map a child-of-trusted-window, InputOnly
+     *  window; too easy to steal device input
+     */
+    if ( (client->trustLevel != XSecurityClientTrusted) &&
+	 (pWin->drawable.class == InputOnly) &&
+	 (wClient(pWin->parent)->trustLevel == XSecurityClientTrusted) )
+	 return Success;
+#endif	
+
     pScreen = pWin->drawable.pScreen;
     if ( (pParent = pWin->parent) )
     {
 	xEvent event;
 	Bool anyMarked;
+#ifdef XAPPGROUP
+	ClientPtr win_owner = clients[CLIENT_ID(pWin->drawable.id)];
+	ClientPtr ag_leader = XagLeader (win_owner);
+#endif
 
-	if ((!pWin->overrideRedirect) && RedirectSend(pParent))
+	if ((!pWin->overrideRedirect) && 
+	    (RedirectSend(pParent)
+#ifdef XAPPGROUP
+	    || (win_owner->appgroup && ag_leader &&
+		XagIsControlledRoot (client, pParent))
+#endif
+	))
 	{
 	    event.u.u.type = MapRequest;
 	    event.u.mapRequest.window = pWin->drawable.id;
+#ifdef XAPPGROUP
+	    /* make sure if the ag_leader maps the window it goes to the wm */
+	    if (ag_leader && ag_leader != client &&
+		XagIsControlledRoot (client, pParent)) {
+		event.u.mapRequest.parent = XagId (win_owner);
+		(void) TryClientEvents (ag_leader, &event, 1,
+					NoEventMask, NoEventMask, NullGrab);
+		return Success;
+	    }
+#endif
 	    event.u.mapRequest.parent = pParent->drawable.id;
 
 	    if (MaybeDeliverEventsToClient(pParent, &event, 1,
@@ -3523,8 +3634,7 @@ DrawLogo(pWin)
     GC *pGC;
     int thin, gap, d31;
     DDXPointRec poly[4];
-    XID fore[2];
-    pointer back[2];
+    ChangeGCVal fore[2], back[2];
     xrgb rgb[2];
     BITS32 fmask, bmask;
     ColormapPtr cmap;
@@ -3540,34 +3650,38 @@ DrawLogo(pWin)
 	return;
 
     if ((rand() % 100) <= 17) /* make the probability for white fairly low */
-	fore[0] = pScreen->whitePixel;
+	fore[0].val = pScreen->whitePixel;
     else
-	fore[0] = pScreen->blackPixel;
+	fore[0].val = pScreen->blackPixel;
     if ((pWin->backgroundState == BackgroundPixel) &&
 	(cmap = (ColormapPtr)LookupIDByType(wColormap (pWin), RT_COLORMAP))) {
-	fore[1] = pWin->background.pixel;
-	QueryColors(cmap, 2, fore, rgb);
+	Pixel querypixels[2];
+
+	querypixels[0] = fore[0].val;
+	querypixels[1] = pWin->background.pixel;
+	QueryColors(cmap, 2, querypixels, rgb);
 	if ((rgb[0].red == rgb[1].red) &&
 	    (rgb[0].green == rgb[1].green) &&
 	    (rgb[0].blue == rgb[1].blue)) {
-	    if (fore[0] == pScreen->blackPixel)
-		fore[0] = pScreen->whitePixel;
+	    if (fore[0].val == pScreen->blackPixel)
+		fore[0].val = pScreen->whitePixel;
 	    else
-		fore[0] = pScreen->blackPixel;
+		fore[0].val = pScreen->blackPixel;
 	}
     }
-    fore[1] = FillSolid;
+    fore[1].val = FillSolid;
     fmask = GCForeground|GCFillStyle;
     if (pWin->backgroundState == BackgroundPixel) {
-	back[0] = (pointer)pWin->background.pixel;
-	back[1] = FillSolid;
+	back[0].val = pWin->background.pixel;
+	back[1].val = FillSolid;
 	bmask = GCForeground|GCFillStyle;
     } else {
-	back[0] = 0;
-	back[1] = 0;
-	(void)DoChangeGC(pGC, GCTileStipXOrigin|GCTileStipYOrigin, (XID *)back, 0);
-	back[0] = (pointer)FillTiled;
-	back[1] = pWin->background.pixmap;
+	back[0].val = 0;
+	back[1].val = 0;
+	dixChangeGC(NullClient, pGC, GCTileStipXOrigin|GCTileStipYOrigin,
+		    NULL, back);
+	back[0].val = FillTiled;
+	back[1].ptr = pWin->background.pixmap;
 	bmask = GCFillStyle|GCTile;
     }
 
@@ -3603,7 +3717,7 @@ DrawLogo(pWin)
     poly[1].x = x + size-d31;	       poly[1].y = y;
     poly[2].x = x + 0;		       poly[2].y = y + size;
     poly[3].x = x + d31;	       poly[3].y = y + size;
-    (void)DoChangeGC(pGC, fmask, fore, 0);
+    dixChangeGC(NullClient, pGC, fmask, NULL, fore);
     ValidateGC(pDraw, pGC);
     (*pGC->ops->FillPolygon)(pDraw, pGC, Convex, CoordModeOrigin, 4, poly);
 
@@ -3622,7 +3736,7 @@ DrawLogo(pWin)
     poly[1].x = x + size / 2;			 poly[1].y = y + size/2;
     poly[2].x = x + (size/2)+(d31-(d31/2));	 poly[2].y = y + size/2;
     poly[3].x = x + d31;			 poly[3].y = y + size;
-    (void)DoChangeGC(pGC, bmask, (XID *)back, 1);
+    dixChangeGC(NullClient, pGC, bmask, NULL, back);
     ValidateGC(pDraw, pGC);
     (*pGC->ops->FillPolygon)(pDraw, pGC, Convex, CoordModeOrigin, 4, poly);
 
@@ -3661,7 +3775,7 @@ DrawLogo(pWin)
     poly[1].x = x + size/4;	       poly[1].y = y;
     poly[2].x = x + size;	       poly[2].y = y + size;
     poly[3].x = x + size - size/4;     poly[3].y = y + size;
-    (void)DoChangeGC(pGC, fmask, fore, 0);
+    dixChangeGC(NullClient, pGC, fmask, NULL, fore);
     ValidateGC(pDraw, pGC);
     (*pGC->ops->FillPolygon)(pDraw, pGC, Convex, CoordModeOrigin, 4, poly);
 
@@ -3679,7 +3793,7 @@ DrawLogo(pWin)
     poly[1].x = x + size-( thin+gap);  poly[1].y = y;
     poly[2].x = x + thin;	      poly[2].y = y + size;
     poly[3].x = x + thin + gap;	      poly[3].y = y + size;
-    (void)DoChangeGC(pGC, bmask, (XID *)back, 1);
+    dixChangeGC(NullClient, pGC, bmask, NULL, back);
     ValidateGC(pDraw, pGC);
     (*pGC->ops->FillPolygon)(pDraw, pGC, Convex, CoordModeOrigin, 4, poly);
 

@@ -5,6 +5,13 @@
 # sets an element in the auto_index array, where the
 # element name is the name of a command and the value is
 # a script that loads the command.
+#
+# $XConsortium: tclIndex /main/1 1996/09/21 14:15:32 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/tclIndex,v 3.5 1997/01/08 20:33:26 dawes Exp $
 
 set auto_index(tkButtonEnter) "source $dir/button.tcl"
 set auto_index(tkButtonLeave) "source $dir/button.tcl"

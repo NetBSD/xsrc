@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Config.h,v 3.56 1996/10/03 08:34:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Config.h,v 3.59.2.4 1997/05/18 12:00:08 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86_Config.h /main/14 1996/01/29 18:51:32 kaleb $ */
+/* $XConsortium: xf86_Config.h /main/25 1996/10/25 11:36:49 kaleb $ */
 
 #ifndef _xf86_config_h
 #define _xf86_config_h
@@ -45,9 +45,6 @@
 #undef MONO
 #endif
 
-#define DEFAULT_SUSPEND_TIME	(15*60)		/* 15 minutes */
-#define DEFAULT_OFF_TIME	(30*60)		/* 30 minutes */
-
 typedef struct {
   int           num;                  /* returned number */
   char          *str;                 /* private copy of the return-string */
@@ -60,7 +57,7 @@ typedef struct {
    char *board;
    char *chipset;
    char *ramdac;
-   int dacSpeed;
+   int dacSpeeds[MAXDACSPEEDS];
    int clocks;
    int clock[MAXCLOCKS];
    OFlagSet options;
@@ -80,9 +77,14 @@ typedef struct {
    int s3Madjust;
    int s3Nadjust;
    int s3MClk;
+   int chipID;
+   int chipRev;
    unsigned long VGAbase;      /* VGA ot XGA 64K aperature base address */
    int s3RefClk;
    int s3BlankDelay;
+   char *DCConfig;
+   char *DCOptions;
+   int MemClk;                 /* General flag used for memory clocking */
 } GDevRec, *GDevPtr;
 
 typedef struct {
@@ -98,6 +100,7 @@ typedef struct {
    int defaultVisual;
    OFlagSet options;
    OFlagSet xconfigFlag;
+   char *DCOptions;
 } DispRec, *DispPtr;
 
 /*
@@ -171,6 +174,7 @@ static SymTabRec DriverTab[] = {
 #define PS_2		1026
 #define MMHITTAB	1027
 #define GLIDEPOINT	1028
+#define INTELLIMOUSE    1029
 #define XQUE      	1030
 #define OSMOUSE   	1031
 
@@ -185,6 +189,7 @@ static SymTabRec MouseTab[] = {
   { PS_2,	"ps/2" },
   { MMHITTAB,	"mmhittab" },
   { GLIDEPOINT,	"glidepoint" },
+  { INTELLIMOUSE,"intellimouse" },
   { XQUE,	"xqueue" },
   { OSMOUSE,	"osmouse" },
   { -1,		"" },
@@ -213,6 +218,10 @@ static SymTabRec FilesTab[] = {
 #define DISABLEMODINDEV		1056
 #define MODINDEVALLOWNONLOCAL	1057
 #define ALLOWMOUSEOPENFAIL	1058
+#define PCIPROBE1		1059
+#define PCIPROBE2		1060
+#define PCIFORCECONFIG1		1061
+#define PCIFORCECONFIG2		1062
 
 #ifdef INIT_CONFIG
 static SymTabRec ServerFlagsTab[] = {
@@ -225,18 +234,22 @@ static SymTabRec ServerFlagsTab[] = {
   { DISABLEMODINDEV, "disablemodindev" },
   { MODINDEVALLOWNONLOCAL, "allownonlocalmodindev" },
   { ALLOWMOUSEOPENFAIL, "allowmouseopenfail" },
+  { PCIPROBE1, "pciprobe1" },
+  { PCIPROBE2, "pciprobe2" },
+  { PCIFORCECONFIG1, "pciforceconfig1" },
+  { PCIFORCECONFIG2, "pciforceconfig2" },
   { -1,         "" },
 };
 #endif /* INIT_CONFIG */
 
-#define DISPLAYSIZE	1060
-#define MODELINE	1061
-#define MODEL		1062
-#define BANDWIDTH	1063
-#define HORIZSYNC	1064
-#define VERTREFRESH	1065
-#define MODE		1066
-#define GAMMA		1067
+#define DISPLAYSIZE	1070
+#define MODELINE	1071
+#define MODEL		1072
+#define BANDWIDTH	1073
+#define HORIZSYNC	1074
+#define VERTREFRESH	1075
+#define MODE		1076
+#define GAMMA		1077
 
 #ifdef INIT_CONFIG
 static SymTabRec MonitorTab[] = {
@@ -255,12 +268,12 @@ static SymTabRec MonitorTab[] = {
 };
 #endif /* INIT_CONFIG */
 
-#define DOTCLOCK	1070
-#define HTIMINGS	1071
-#define VTIMINGS	1072
-#define FLAGS		1073
-#define HSKEW		1074
-#define ENDMODE		1075
+#define DOTCLOCK	1090
+#define HTIMINGS	1091
+#define VTIMINGS	1092
+#define FLAGS		1093
+#define HSKEW		1094
+#define ENDMODE		1095
 
 #ifdef INIT_CONFIG
 static SymTabRec ModeTab[] = {
@@ -274,14 +287,15 @@ static SymTabRec ModeTab[] = {
 };
 #endif /* INIT_CONFIG */
 
-#define DRIVER		1080
-#define MDEVICE		1081
-#define MONITOR		1082
-#define SCREENNO	1083
-#define BLANKTIME	1084
-#define SUSPENDTIME	1085
-#define OFFTIME		1086
-#define DEFBPP		1087
+#define DRIVER		1110
+#define MDEVICE		1111
+#define MONITOR		1112
+#define SCREENNO	1113
+#define BLANKTIME	1114
+#define STANDBYTIME	1115
+#define SUSPENDTIME	1116
+#define OFFTIME		1117
+#define DEFBPP		1118
 
 #ifdef INIT_CONFIG
 static SymTabRec ScreenTab[] = {
@@ -291,6 +305,7 @@ static SymTabRec ScreenTab[] = {
   { MONITOR,	"monitor" },
   { SCREENNO,	"screenno" },
   { BLANKTIME,	"blanktime" },
+  { STANDBYTIME,"standbytime" },
   { SUSPENDTIME,"suspendtime" },
   { OFFTIME,	"offtime" },
   { SUBSECTION,	"subsection" },
@@ -300,16 +315,16 @@ static SymTabRec ScreenTab[] = {
 #endif /* INIT_CONFIG */
 
 /* Mode timing keywords */
-#define TT_INTERLACE	1090
-#define TT_PHSYNC	1091
-#define TT_NHSYNC	1092
-#define TT_PVSYNC	1093
-#define TT_NVSYNC	1094
-#define TT_CSYNC	1095
-#define TT_PCSYNC	1096
-#define TT_NCSYNC	1097
-#define TT_DBLSCAN	1098
-#define TT_HSKEW	1099
+#define TT_INTERLACE	1130
+#define TT_PHSYNC	1131
+#define TT_NHSYNC	1132
+#define TT_PVSYNC	1133
+#define TT_NVSYNC	1134
+#define TT_CSYNC	1135
+#define TT_PCSYNC	1136
+#define TT_NCSYNC	1137
+#define TT_DBLSCAN	1138
+#define TT_HSKEW	1139
 
 #ifdef INIT_CONFIG
 SymTabRec TimingTab[] = {
@@ -387,13 +402,16 @@ static SymTabRec KeyMapTab[] = {
 #define CLOCKCHIP	27
 #define S3MNADJUST	28
 #define S3MCLK		29
+#define CHIPID		30
+#define CHIPREV		31
+#define MEMCLOCK        32
 #define VGABASEADDR    100
 #define S3REFCLK       101
 #define S3BLANKDELAY   102
 #define TEXTCLOCKFRQ   103
 
 #ifdef INIT_CONFIG
-static SymTabRec DeviceTab[] = {
+SymTabRec DeviceTab[] = {
   { ENDSECTION, "endsection"},
   { IDENTIFIER, "identifier"},
   { VENDOR, 	"vendorname"},
@@ -418,12 +436,20 @@ static SymTabRec DeviceTab[] = {
   { S3MNADJUST,	"s3mnadjust" },
   { S3MCLK,	"s3mclk" },
   { S3MCLK,	"mclk" },
+  { CHIPID,	"chipid" },
+  { CHIPREV,	"chiprev" },
   { VGABASEADDR,"vgabase" },
   { S3REFCLK,	"s3refclk" },
   { S3BLANKDELAY,"s3blankdelay" },
   { TEXTCLOCKFRQ, "textclockfreq" },
+  { MEMCLOCK,   "set_memclk" },
+  { MEMCLOCK,   "set_mclk" },
   { -1,		"" },
 };
+#else
+
+extern SymTabRec DeviceTab[];
+
 #endif /* INIT_CONFIG */
 
 /* Keyboard keywords */
@@ -492,6 +518,7 @@ static SymTabRec KeyboardTab[] = {
 #define P_PS2		6			/* PS/2 mouse */
 #define P_MMHIT		7			/* MM_HitTab */
 #define P_GLIDEPOINT	8			/* ALPS GlidePoint */
+#define P_MSINTELLIMOUSE  9                     /* Microsoft IntelliMouse */
 
 #define EMULATE3	50
 #define BAUDRATE	51
@@ -505,6 +532,7 @@ static SymTabRec KeyboardTab[] = {
 /* This should be removed soon */
 #define REPEATEDMIDDLE	59
 #define DEVICE_NAME	60
+#define ALWAYSCORE	61
 
 #ifdef INIT_CONFIG
 static SymTabRec PointerTab[] = {
@@ -524,6 +552,9 @@ static SymTabRec PointerTab[] = {
   { REPEATEDMIDDLE,"repeatedmiddle" },
 #endif
   { DEVICE_NAME,"devicename" },
+#ifdef XINPUT
+  { ALWAYSCORE,"alwayscore" },
+#endif
   { -1,		"" },
 };
 #endif /* INIT_CONFIG */
@@ -611,6 +642,7 @@ static SymTabRec VisualTab[] = {
 #define XCONFIG_POSBASE         19      /* XF86Config or default */
 #define XCONFIG_VGABASE         20      /* XF86Config or default */
 #define XCONFIG_MODULEPATH      21      /* XF86Config or default */
+#define XCONFIG_MEMCLOCK        22      /* XF86Config or default */
 
 #define XCONFIG_GIVEN		"(**)"
 #define XCONFIG_PROBED		"(--)"

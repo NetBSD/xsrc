@@ -1,4 +1,4 @@
-/* $XConsortium: Drawable.h,v 1.1 93/07/12 15:28:11 rws Exp $ */
+/* $XConsortium: Drawable.h /main/2 1996/12/02 10:20:59 lehors $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -16,7 +16,7 @@ is" without express or implied warranty.
 #ifndef XNESTDRAWABLE_H
 #define XNESTDRAWABLE_H
 
-#include "Window.h"
+#include "XNWindow.h"
 #include "Pixmap.h"
 
 #define xnestDrawable(pDrawable) \

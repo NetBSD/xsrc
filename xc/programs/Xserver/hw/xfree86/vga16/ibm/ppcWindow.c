@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcWindow.c,v 3.3 1996/02/04 09:11:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcWindow.c,v 3.4 1996/12/23 06:53:20 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -68,7 +68,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XConsortium: ppcWindow.c /main/4 1995/11/13 07:05:55 kaleb $ */
+/* $XConsortium: ppcWindow.c /main/5 1996/02/21 17:58:43 kaleb $ */
 
 #include "X.h"
 #include "scrnintstr.h"

@@ -1,4 +1,4 @@
-/* $XConsortium: keycodes.c /main/10 1996/03/01 14:32:14 kaleb $ */
+/* $XConsortium: keycodes.c /main/11 1996/12/27 21:16:54 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 
@@ -49,15 +49,6 @@ char buf[4];
 
 /***====================================================================***/
 
-#define	HTBL_SIZE 257
-
-typedef struct _KeyNameHash {
-	char		codes[HTBL_SIZE];
-	unsigned long	names[HTBL_SIZE];
-} KeyNameHash;
-
-#define	HashKeyName(n)	(((n[0]^n[2])<<8)|(n[1]^n[3]))
-
 void
 #if NeedFunctionPrototypes
 LongToKeyName(unsigned long val,char *name)
@@ -72,71 +63,6 @@ LongToKeyName(val,name)
     name[2]= ((val>>8)&0xff);
     name[3]= (val&0xff);
     return;
-}
-
-static int
-#if NeedFunctionPrototypes
-HashAdd(KeyNameHash *tbl,char *name,int kc,int replace,int *kcRtrn)
-#else
-HashAdd(tbl,name,kc,replace,kcRtrn)
-    KeyNameHash *	tbl;
-    char *		name;
-    int			kc;
-    int			replace;
-    int *		kcRtrn;
-#endif
-{
-unsigned short hval,ndx;
-unsigned long lval;
-register unsigned i;
-
-    *kcRtrn= 0;
-    hval= HashKeyName(name);
-    lval= KeyNameToLong(name);
-    ndx= hval/HTBL_SIZE;
-    for (i=ndx;i<HTBL_SIZE;i++) {
-	if (tbl->codes[i]==0) {
-	    tbl->names[i]= lval;
-	    tbl->codes[i]= kc;
-	    return i;
-	}
-	else if (tbl->names[i]==lval) {
-	    if (kcRtrn)
-		*kcRtrn= tbl->codes[i];
-	    if (replace)
-		tbl->codes[i]= kc;
-	    return i;
-	}
-    }
-    for (i=0;i<ndx;i++) {
-	if (tbl->codes[i]==0) {
-	    tbl->names[i]= lval;
-	    tbl->codes[i]= kc;
-	    return i;
-	}
-	else if (tbl->names[i]==lval) {
-	    if (kcRtrn)
-		*kcRtrn= tbl->codes[i];
-	    if (replace)
-		tbl->codes[i]= kc;
-	    return i;
-	}
-    }
-    WSGO2("Couldn't add \"<%s> = %d\" to table\n",name,kc);
-    return -1;
-}
-
-static int
-#if NeedFunctionPrototypes
-HashRemoveName(KeyNameHash *tbl,char *name,int *kcRtrn)
-#else
-HashRemoveName(tbl,name,kcRtrn)
-    KeyNameHash *	tbl;
-    char *		name;
-    int *		kcRtrn;
-#endif
-{
-    return HashAdd(tbl,name,0,True,kcRtrn);
 }
 
 /***====================================================================***/
@@ -159,8 +85,8 @@ typedef struct _KeyNamesInfo {
     int			explicitMax;
     int			effectiveMin;
     int			effectiveMax;
-    KeyNameHash		hash;
-    unsigned long	names[256];
+    unsigned long	names[XkbMaxLegalKeyCode+1];
+    unsigned 		files[XkbMaxLegalKeyCode+1];
     IndicatorNameInfo *	leds;
     AliasInfo *		aliases;
 } KeyNamesInfo;
@@ -372,8 +298,8 @@ ClearKeyNamesInfo(info)
     info->computedMin= 256;
     info->effectiveMin= 8;
     info->effectiveMax= 255;
-    bzero((char *)&info->hash,sizeof(info->hash));
     bzero((char *)info->names,sizeof(info->names));
+    bzero((char *)info->files,sizeof(info->files));
     if (info->leds)
 	ClearIndicatorNameInfo(info->leds,info);
     if (info->aliases)
@@ -397,84 +323,110 @@ InitKeyNamesInfo(info)
     return;
 }
 
+int
+#if NeedFunctionPrototypes
+FindKeyByLong(KeyNamesInfo *info,unsigned long name)
+#else
+FindKeyByLong(info,name)
+    KeyNamesInfo *	info;
+    unsigned long	name;
+#endif
+{
+register int i;
+
+    for (i=info->effectiveMin;i<=info->effectiveMax;i++) {
+	if (info->names[i]==name)
+	    return i;
+    }
+    return 0;
+}
+
 static Bool
 #if NeedFunctionPrototypes
 AddKeyName(	KeyNamesInfo *	info,
-		int		code,
+		int		kc,
 		char *		name,
 		unsigned	merge,
+		unsigned	fileID,
 		Bool		reportCollisions)
 #else
-AddKeyName(info,code,name,merge,reportCollisions)
+AddKeyName(info,kc,name,merge,fileID,reportCollisions)
     KeyNamesInfo *	info;
-    int			code;
+    int			kc;
     char *		name;
     unsigned		merge;
+    unsigned		fileID;
     Bool		reportCollisions;
 #endif
 {
-int	old,override;
+int		old,override;
 unsigned long	lval;
 
-    if ((code<info->effectiveMin)||(code>info->effectiveMax)) {
-	ERROR2("Illegal keycode %d for name <%s>\n",code,name);
+    if ((kc<info->effectiveMin)||(kc>info->effectiveMax)) {
+	ERROR2("Illegal keycode %d for name <%s>\n",kc,name);
 	ACTION2("Must be in the range %d-%d inclusive\n",info->effectiveMin,
 							 info->effectiveMax);
-	return 0;
+	return False;
     }
-    if (code<info->computedMin)	info->computedMin= code;
-    if (code>info->computedMax)	info->computedMax= code;
+    if (kc<info->computedMin)	info->computedMin= kc;
+    if (kc>info->computedMax)	info->computedMax= kc;
     lval= KeyNameToLong(name);
-    if (info->names[code]!=0) {
+
+    if (reportCollisions) {
+	reportCollisions= ((warningLevel>7)||
+			   ((warningLevel>0)&&(fileID==info->files[kc])));
+    }
+
+    if (info->names[kc]!=0) {
 	char buf[6];
 
-	LongToKeyName(info->names[code],buf);
+	LongToKeyName(info->names[kc],buf);
 	buf[4]= '\0';
-	if (info->names[code]==lval) {
+	if (info->names[kc]==lval) {
 	    if (reportCollisions) {
-		WARN("Multiple identical key name defintions\n");
-		ACTION2("Later occurences of \"<%s> = %d\" ignored\n",buf,code);
+		WARN("Multiple identical key name definitions\n");
+		ACTION2("Later occurences of \"<%s> = %d\" ignored\n",buf,kc);
 	    }
-	    return 1;
+	    return True;
 	}
 	if (merge==MergeAugment) {
 	    if (reportCollisions) {
-		ERROR1("Multiple names for keycode %d\n",code);
+		WARN1("Multiple names for keycode %d\n",kc);
 		ACTION2("Using <%s>, ignoring <%s>\n",buf,name);
 	    }
-	    return 0;
+	    return True;
 	}
 	else {
 	    int old;
 	    if (reportCollisions) {
-		ERROR1("Multiple names for keycode %d\n",code);
+		WARN1("Multiple names for keycode %d\n",kc);
 		ACTION2("Using <%s>, ignoring <%s>\n",name,buf);
 	    }
-	    if (!HashRemoveName(&info->hash,buf,&old))
-		return 0;
-	    info->names[code]= 0;
+	    info->names[kc]= 0;
+	    info->files[kc]= 0;
 	}
     }
     override= (merge==MergeOverride);
-    if (HashAdd(&info->hash,name,code,override,&old)<0)
-	return 0;
-    else if ((old!=0)&&(old!=code)) {
+    old= FindKeyByLong(info,lval);
+    if ((old!=0)&&(old!=kc)) {
 	if (override) {
-	    info->names[code]= lval;
 	    info->names[old]= 0;
+	    info->files[old]= 0;
 	    if (reportCollisions) {
-		ERROR1("Key name <%s> assigned to multiple keys\n",name);
-		ACTION2("Using %d, ignoring %d\n",code,old);
-		return False;
+		WARN1("Key name <%s> assigned to multiple keys\n",name);
+		ACTION2("Using %d, ignoring %d\n",kc,old);
 	    }
 	}
-	else if (reportCollisions) {
-	    ERROR1("Key name <%s> assigned to multiple keys\n",name);
-	    ACTION2("Using %d, ignoring %d\n",old,code);
-	    return False;
+	else {
+	    if (reportCollisions) {
+		WARN1("Key name <%s> assigned to multiple keys\n",name);
+		ACTION2("Using %d, ignoring %d\n",old,kc);
+	    }
+	    return True;
 	}
     }
-    else info->names[code]= lval;
+    info->names[kc]= lval;
+    info->files[kc]= fileID;
     return True;
 }
 
@@ -506,7 +458,7 @@ char buf[5];
 	    continue;
 	LongToKeyName(from->names[i],buf);
 	buf[4]= '\0';
-	if (!AddKeyName(into,i,buf,merge,False))
+	if (!AddKeyName(into,i,buf,merge,from->fileID,False))
 	    into->errorCount++;
     }
     if (from->leds) {
@@ -519,8 +471,16 @@ char buf[5];
 	    next= (IndicatorNameInfo *)led->defs.next;
 	}
     }
-    if (!MergeAliases(&into->aliases,&from->aliases))
+    if (!MergeAliases(&into->aliases,&from->aliases,merge))
 	into->errorCount++;
+    if (from->explicitMin>0) {
+	if ((into->explicitMin<0)||(into->explicitMin>from->explicitMin))
+	    into->effectiveMin= into->explicitMin= from->explicitMin;
+    }
+    if (from->explicitMax>0) {
+	if ((into->explicitMax<0)||(into->explicitMax<from->explicitMax))
+	     into->effectiveMax= into->explicitMax= from->explicitMax;
+    }
     return;
 }
 
@@ -643,7 +603,7 @@ ExprResult	result;
 	     merge= MergeOverride;
 	else merge= stmt->merge;
     }
-    return AddKeyName(info,code,stmt->name,merge,True);
+    return AddKeyName(info,code,stmt->name,merge,info->fileID,True);
 }
 
 #define	MIN_KEYCODE_DEF		0

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_io.c,v 3.2 1996/08/11 13:02:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_io.c,v 3.3 1996/12/23 06:50:49 dawes Exp $ */
 /*
  * Copyright 1993 by David McCullough <davidm@stallion.oz.au>
  * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
@@ -23,7 +23,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: sco_io.c /main/2 1995/11/13 06:08:41 kaleb $ */
+/* $XConsortium: sco_io.c /main/7 1996/10/19 18:07:31 kaleb $ */
 
 #define NEED_EVENTS
 #include "X.h"

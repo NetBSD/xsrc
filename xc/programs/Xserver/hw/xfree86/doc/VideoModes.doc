@@ -1235,7 +1235,7 @@
 
 
 
-  $XConsortium: VideoModes.doc /main/11 1995/12/29 15:58:11 kaleb $
+  $XConsortium: VideoModes.doc /main/12 1996/02/21 17:44:38 kaleb $
 
 
 
@@ -1254,4 +1254,4 @@
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/VideoModes.doc,v 3.13 1996/02/04 09:07:49 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/VideoModes.doc,v 3.14 1996/12/23 06:45:20 dawes Exp $

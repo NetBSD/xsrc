@@ -1,5 +1,4 @@
-/* $XConsortium: vgabppscrin.c,v 1.2 95/06/19 19:33:39 kaleb Exp $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vgainit/vgabppscrin.c,v 3.3 1996/06/29 09:09:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vgainit/vgabppscrin.c,v 3.6 1996/12/23 07:04:35 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -28,6 +27,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
+/* $XConsortium: vgabppscrin.c /main/4 1996/10/19 18:15:02 kaleb $ */
 
 /*
  * This is the cfb16/24/32 ScreenInit function, modified for the XFree86
@@ -64,6 +64,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "xf86Priv.h"	/* for xf86weight */
 #include "vga.h"
 
+#if 1
 #if PSZ == 16
 #define vgabppScreenInit vga16bppScreenInit
 #endif
@@ -72,6 +73,20 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #endif
 #if PSZ == 32
 #define vgabppScreenInit vga32bppScreenInit
+#endif
+#else
+#ifdef VGA256
+#define vgabppScreenInit xf86XAAScreenInitvga256
+#endif
+#if PSZ == 16
+#define vgabppScreenInit xf86XAAScreenInit16bpp
+#endif
+#if PSZ == 24
+#define vgabppScreenInit xf86XAAScreenInit24bpp
+#endif
+#if PSZ == 32
+#define vgabppScreenInit xf86XAAScreenInit32bpp
+#endif
 #endif
 
 

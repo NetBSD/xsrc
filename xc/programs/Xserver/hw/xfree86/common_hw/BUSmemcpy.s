@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/BUSmemcpy.s,v 1.1.1.2 1996/01/03 07:19:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/BUSmemcpy.s,v 3.1 1996/12/23 06:44:01 dawes Exp $ */
 /******************************************************************************
                         Copyright 1993 by Glenn G. Lai
 
@@ -26,14 +26,14 @@ Austin, Tx 78765
 (glenn@cs.utexas.edu)
 8/9/93
 ******************************************************************************/
-/* $XConsortium: BUSmemcpy.s /main/3 1995/11/12 19:29:42 kaleb $ */
+/* $XConsortium: BUSmemcpy.s /main/4 1996/02/21 17:39:34 kaleb $ */
 
 /*
  * Modified to use long-alignment of video memory rather than word-alignment
  * to improve performance for LocalBus video cards.  Function names changed
  * from ISAToMem and MemToISA to BusToMem and MemToBus.
  *
- * David Dawes <dawes@physics.su.oz.au>, 25 August 1993.
+ * David Dawes <dawes@XFree86.org>, 25 August 1993.
  */
 
 

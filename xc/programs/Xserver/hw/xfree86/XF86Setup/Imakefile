@@ -1,4 +1,10 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/Imakefile,v 3.11 1996/09/23 13:26:13 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/4 1996/10/24 10:16:33 kaleb $
+
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/Imakefile,v 3.14.2.2 1997/05/27 11:26:49 dawes Exp $
 #include <Server.tmpl>
 #define IHaveSubdirs
 
@@ -53,8 +59,10 @@ includes::
     EXTRASYSLIBS = -ldl
 #endif
 
-#if XF86SetupUsesStaticTkTcl
+#if XF86SetupUsesStaticTk
        TKLIBRARY = StaticLibrary($(TKLIBDIR),$(TKLIBNAME))
+#endif
+#if XF86SetupUsesStaticTcl
       TCLLIBRARY = StaticLibrary($(TCLLIBDIR),$(TCLLIBNAME))
 #endif
  TCLTK_LIBRARIES = $(TKLIBRARY) $(TCLLIBRARY)
@@ -74,9 +82,10 @@ includes::
  XF86SETUPLIBDIR = $(LIBDIR)/XF86Setup
          DEFINES = -DCARD_DATABASE_FILE='"$(CARDDBFILE)"' \
 		   $(XCONFIG_DEFINES)
-        INCLUDES = -I$(TCLINCDIR) -I../os-support -I../common \
-		   -I$(SERVERSRC)/include -I$(INCLUDESRC) \
-		   -I$(EXTINCSRC) $(USEINSTALLEDINC)
+        INCLUDES = -I../os-support -I../common \
+		   -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(INCLUDESRC) \
+		   -I$(EXTINCSRC) $(USEINSTALLEDINC) \
+		   -I$(TCLINCDIR) -I$(TKINCDIR)
 
 #if HasLdRunPath
        CCENVSETUP = LD_RUN_PATH=$(USRLIBDIR):$(TCLLIBDIR)

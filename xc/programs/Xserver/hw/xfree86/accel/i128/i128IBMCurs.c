@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128IBMCurs.c,v 3.0 1996/04/15 11:29:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/i128/i128IBMCurs.c,v 3.0.4.1 1997/05/23 12:19:38 dawes Exp $ */
 
 #include "servermd.h"
 
@@ -32,7 +32,7 @@
 #define MAX_CURS_HEIGHT 64   /* 64 scan lines */
 #define MAX_CURS_WIDTH  64   /* 64 pixels     */
 
-extern struct i128mem i128mem;
+extern volatile struct i128mem i128mem;
 extern Bool i128BlockCursor;
 
 
@@ -231,7 +231,7 @@ i128IBMLoadCursor(pScr, pCurs, x, y)
    extern int i128hotX, i128hotY;
    int   index = pScr->myNum;
    register int   i;
-   unsigned char *ram, *p, tmp, tmp1, tmpcurs;
+   unsigned char *ram, *p, tmph, tmpl, tmpc, tmpcurs;
    extern int i128InitCursorFlag;
 
    if (!xf86VTSema)
@@ -240,7 +240,9 @@ i128IBMLoadCursor(pScr, pCurs, x, y)
    if (!pCurs)
       return;
 
-   tmp = i128mem.rbase_g_b[IDXL_I];
+   tmpc = i128mem.rbase_g_b[IDXCTL_I];
+   tmph = i128mem.rbase_g_b[IDXH_I];
+   tmpl = i128mem.rbase_g_b[IDXL_I];
 
    /* turn the cursor off */
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs;
@@ -253,6 +255,8 @@ i128IBMLoadCursor(pScr, pCurs, x, y)
    ram = (unsigned char *)pCurs->bits->devPriv[index];
 
    i128BlockCursor = TRUE;
+
+   i128mem.rbase_g_b[IDXCTL_I] = 0;
 
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_hot_x;
    i128mem.rbase_g_b[DATA_I] = 0x00;
@@ -267,18 +271,17 @@ i128IBMLoadCursor(pScr, pCurs, x, y)
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_yh;
    i128mem.rbase_g_b[DATA_I] = 0x7F;
 
-   tmp1 = i128mem.rbase_g_b[IDXCTL_I] & 0xFE;
-   i128mem.rbase_g_b[IDXCTL_I] = tmp1 | 1; /* enable auto-inc */
-
    i128mem.rbase_g_b[IDXH_I] = (IBMRGB_curs_array >> 8) & 0xFF;
    i128mem.rbase_g_b[IDXL_I] = IBMRGB_curs_array & 0xFF;
+
+   i128mem.rbase_g_b[IDXCTL_I] = 1; /* enable auto-inc */
 
    /* 
     * Output the cursor data.  The realize function has put the planes into
     * their correct order, so we can just blast this out.
     */
    p = ram;
-   for (i = 0; i < 1024; i++,p++)
+   for (i = 0; i < /*1024*/512; i++,p++)
       i128mem.rbase_g_b[DATA_I] = *p;
 
    if (i128hotX >= MAX_CURS_WIDTH)
@@ -290,9 +293,9 @@ i128IBMLoadCursor(pScr, pCurs, x, y)
    else if (i128hotY < 0)
       i128hotY = 0;
 
-   i128mem.rbase_g_b[IDXH_I] = 0;
-   i128mem.rbase_g_b[IDXCTL_I] = tmp1;
-   i128mem.rbase_g_b[IDXL_I] = tmp;
+   i128mem.rbase_g_b[IDXCTL_I] = tmpc;
+   i128mem.rbase_g_b[IDXH_I] = tmph;
+   i128mem.rbase_g_b[IDXL_I] = tmpl;
 
    i128BlockCursor = FALSE;
 

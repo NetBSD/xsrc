@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcGCstr.h,v 1.1.1.2 1996/01/03 07:22:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcGCstr.h,v 3.1 1996/12/23 06:53:01 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -43,7 +43,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: ppcGCstr.h /main/2 1995/11/13 07:05:11 kaleb $ */
+/* $XConsortium: ppcGCstr.h /main/3 1996/02/21 17:57:42 kaleb $ */
 
 typedef struct {
     unsigned long	planemask ;

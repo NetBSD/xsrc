@@ -1,4 +1,4 @@
-/* $XConsortium: Keyboard.c,v 1.3 95/07/10 17:42:22 ray Exp $ */
+/* $XConsortium: Keyboard.c /main/4 1996/09/28 17:13:49 rws $ */
 /*
 
 Copyright 1993 by Davor Matic
@@ -27,6 +27,7 @@ is" without express or implied warranty.
 #include "Display.h"
 #include "Screen.h"
 #include "Keyboard.h"
+#include "Args.h"
 
 void xnestBell(volume, pDev, ctrl, cls)
      int volume;
@@ -135,12 +136,12 @@ int xnestKeyboardProc(pDev, onoff, argc, argv)
       break;
     case DEVICE_ON: 
       xnestEventMask |= XNEST_KEYBOARD_EVENT_MASK;
-      for (i = 0; i < screenInfo.numScreens; i++)
+      for (i = 0; i < xnestNumScreens; i++)
 	XSelectInput(xnestDisplay, xnestDefaultWindows[i], xnestEventMask);
       break;
     case DEVICE_OFF: 
       xnestEventMask &= ~XNEST_KEYBOARD_EVENT_MASK;
-      for (i = 0; i < screenInfo.numScreens; i++)
+      for (i = 0; i < xnestNumScreens; i++)
 	XSelectInput(xnestDisplay, xnestDefaultWindows[i], xnestEventMask);
       break;
     case DEVICE_CLOSE: 

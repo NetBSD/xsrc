@@ -1,4 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8font.c,v 1.1.1.2 1996/01/03 07:13:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8font.c,v 3.1 1996/12/23 06:39:52 dawes Exp $ */
+
 /*
  * Copyright 1992 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -22,7 +23,7 @@
  *
  * Modified for the Mach-8 by Rickard E. Faith (faith@cs.unc.edu)
  */
-/* $XConsortium: mach8font.c /main/2 1995/11/12 18:00:21 kaleb $ */
+/* $XConsortium: mach8font.c /main/3 1996/02/21 17:30:14 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

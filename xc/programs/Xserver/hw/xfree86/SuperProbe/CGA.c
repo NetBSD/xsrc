@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/CGA.c,v 3.3 1996/02/04 08:56:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/CGA.c,v 3.4 1996/12/23 06:31:05 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: CGA.c /main/4 1995/11/13 11:11:58 kaleb $ */
+/* $XConsortium: CGA.c /main/5 1996/02/21 17:09:35 kaleb $ */
 
 #include "Probe.h"
 

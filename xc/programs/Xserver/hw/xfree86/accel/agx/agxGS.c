@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxGS.c,v 3.6 1996/02/04 08:58:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxGS.c,v 3.7 1996/12/23 06:32:47 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -57,7 +57,7 @@ Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
 Modified for the AGX by Henry A. Worth (haw30@eng.amdahl.com)
 
 */
-/* $XConsortium: agxGS.c /main/3 1995/11/13 10:06:59 kaleb $ */
+/* $XConsortium: agxGS.c /main/4 1996/02/21 17:17:50 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

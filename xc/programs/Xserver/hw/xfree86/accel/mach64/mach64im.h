@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64im.h,v 3.4 1996/02/04 09:03:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64im.h,v 3.5 1996/12/23 06:39:19 dawes Exp $ */
 /*
  * Copyright 1992,1993,1994 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: mach64im.h /main/2 1995/11/12 17:39:10 kaleb $ */
+/* $XConsortium: mach64im.h /main/3 1996/02/21 17:28:46 kaleb $ */
 
 #ifndef MACH64IM_H
 #define MACH64IM_H

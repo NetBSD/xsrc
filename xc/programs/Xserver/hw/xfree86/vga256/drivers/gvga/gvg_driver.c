@@ -1,5 +1,4 @@
-/* $XConsortium: gvg_driver.c /main/5 1996/01/12 12:17:16 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/gvga/gvg_driver.c,v 3.13 1996/10/16 14:42:53 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/gvga/gvg_driver.c,v 3.15.2.2 1997/05/09 07:15:40 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -24,6 +23,7 @@
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
  *
  */
+/* $XConsortium: gvg_driver.c /main/10 1996/10/27 11:07:47 kaleb $ */
 
 
 #include "X.h"
@@ -104,7 +104,8 @@ vgaVideoChipRec GVGA = {
   FALSE,
   FALSE,
   NULL,
-  1,
+  1,       /* ClockMulFactor */
+  1        /* ClockDivFactor */
 };
 
 
@@ -269,6 +270,8 @@ static void
 GVGARestore(restore)
   vgaGVGAPtr restore;
 {
+  vgaProtect(TRUE);
+
   outw(0x3C4, 0x0006);  /* segment select */
 
   vgaHWRestore((vgaHWPtr)restore);
@@ -280,6 +283,8 @@ GVGARestore(restore)
   outw(0x3C4, (restore->ExtCtrlReg3 << 8) | 0x08);
   outw(0x3C4, (restore->ExtCtrlReg4 << 8) | 0x10);
   outw(0x3CE, (restore->ExtCtrlReg5 << 8) | 0x09);
+
+  vgaProtect(FALSE);
 }
 
 
@@ -368,9 +373,10 @@ GVGAAdjust(x, y)
  *
  */
 static int
-GVGAValidMode(mode, verbose)
+GVGAValidMode(mode, verbose,flag)
 DisplayModePtr mode;
 Bool verbose;
+int flag;
 {
 return MODE_OK;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/emulTile.c,v 3.4 1996/02/04 09:11:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/emulTile.c,v 3.5 1996/12/23 06:52:39 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -21,7 +21,7 @@
  * SOFTWARE.
  *
 */
-/* $XConsortium: emulTile.c /main/3 1995/11/13 07:04:12 kaleb $ */
+/* $XConsortium: emulTile.c /main/4 1996/02/21 17:56:23 kaleb $ */
 
 /* ppc Tile
  * P. Shupak 11/87

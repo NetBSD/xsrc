@@ -5,12 +5,12 @@
 <!-- Title information -->
 <title> XFree86 PC98 General Information
 <author> The XFree86 Project Inc. / X98 CORE TEAM
-<date> 1996年 10 月 10日
+<date> 1996年 5 月 24日
 
 
 <sect> はじめに<p>
 XFree86は、NEC PC98および互換機で動作するFreeBSD(98)、NetBSD/pc98
-(based on NetBSD 1.2)、PANIX Ver.5.0 for 98をサポートします。PC98用
+(based on NetBSD 1.2)以降、PANIX Ver.5.0 for 98をサポートします。PC98用
 サーバはXFree86のソースツリーに含まれます。その開発とコードの保守は、
 The XFree86 Project Inc とX98 CORE TEAMが行っています。</p>
 
@@ -86,7 +86,7 @@ PC-VAN(JUNIX,JSPUNIX)、FreeBSD-users-jp ML、FreeBSD kit MLで多くの議論、
 	x98 ML,FreeBSD-users-jp ML,FreeBSD kit MLで動作報告
 	をくださった方々
 	<ITEM>FreeBSD PC98移植チーム
-	<ITEM>NetBSD PC98 Porting staff
+	<ITEM>NetBSD/pc98 Core Team
 	<ITEM>エー・アイ・ソフト株式会社
 </itemize>
      　　

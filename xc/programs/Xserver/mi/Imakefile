@@ -1,8 +1,13 @@
-XCOMM $XConsortium: Imakefile /main/42 1996/01/15 19:47:40 kaleb $
-XCOMM $XFree86: xc/programs/Xserver/mi/Imakefile,v 3.10 1996/10/03 08:49:08 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/mi/Imakefile,v 3.11.2.1 1997/05/03 09:50:45 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/44 1996/12/02 10:22:16 lehors $
 #include <Server.tmpl>
 
-SRCS =  mivaltree.c mipolyseg.c mipolyrect.c \
+#if ! HasCbrt
+CBRT_SRC = cbrt.c
+CBRT_OBJ = cbrt.o
+#endif
+
+SRCS =  $(CBRT_SRC) mivaltree.c mipolyseg.c mipolyrect.c \
 	mipoly.c mipolycon.c mipolygen.c mipolyutil.c \
 	mifillrct.c miwideline.c mispans.c \
 	miarc.c mizerarc.c mifillarc.c \
@@ -12,7 +17,7 @@ SRCS =  mivaltree.c mipolyseg.c mipolyrect.c \
 	midash.c mibstore.c miinitext.c mieq.c \
 	mipointer.c misprite.c midispcur.c miscrinit.c miclipn.c migc.c
 
-OBJS =	mivaltree.o mipolyseg.o mipolyrect.o \
+OBJS =	$(CBRT_OBJ) mivaltree.o mipolyseg.o mipolyrect.o \
 	mipoly.o mipolycon.o mipolygen.o mipolyutil.o \
 	mifillrct.o miwideline.o mispans.o \
 	miarc.o mizerarc.o mifillarc.o \
@@ -39,7 +44,8 @@ XIE_MODULE_DEFINES = -DXIE_MODULE
 #endif
 EXT_MODULES_DEFINES = $(PEX_MODULE_DEFINES) $(XIE_MODULE_DEFINES)
 
-INCLUDES = -I. -I../include -I$(INCLUDESRC) -I$(FONTINCSRC)
+INCLUDES = -I. -I../include -I../../../include/fonts \
+           -I$(XINCLUDESRC) -I$(FONTINCSRC)
 LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln
 
 NormalLibraryObjectRule()
@@ -47,9 +53,11 @@ NormalLibraryTarget(mi,$(OBJS))
 LintLibraryTarget(mi,$(SRCS))
 NormalLintTarget($(SRCS))
 
+#ifndef Win32Architecture
 NormalLibraryTarget(cbrt,cbrt.o)
+#endif
 
-SpecialCObjectRule(miinitext,$(ICONFIGFILES),$(EXT_DEFINES))
+SpecialCObjectRule(miinitext,$(ICONFIGFILES),$(EXT_DEFINES) -UGLXEXT)
 SpecialCObjectRule(miscrinit,$(ICONFIGFILES),$(EXT_DEFINES))
 
 InstallLinkKitLibrary(mi,$(LINKKITDIR)/lib)

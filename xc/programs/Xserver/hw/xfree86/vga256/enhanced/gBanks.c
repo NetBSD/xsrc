@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/gBanks.c,v 3.3 1996/02/04 09:14:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/gBanks.c,v 3.4 1996/12/23 06:59:07 dawes Exp $ */
 /*******************************************************************************
 			Copyright 1992 by Glenn G. Lai 
 
@@ -26,7 +26,7 @@ Austin, Tx 78765
 (glenn@cs.utexas.edu)
 6/3/92
 *******************************************************************************/
-/* $XConsortium: gBanks.c /main/3 1995/11/13 08:46:09 kaleb $ */
+/* $XConsortium: gBanks.c /main/4 1996/02/21 18:09:02 kaleb $ */
 
 #include "misc.h"
 #include "vgaBank.h"

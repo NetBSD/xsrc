@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.14 1996/10/17 15:18:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/xf86_PCI.c,v 3.16.2.4 1997/05/19 08:06:56 dawes Exp $ */
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -22,9 +22,9 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86_PCI.c /main/5 1996/01/10 10:21:13 kaleb $ */
+/* $XConsortium: xf86_PCI.c /main/14 1996/10/27 11:47:50 kaleb $ */
 
-/*#define DEBUGPCI  1 */
+/* #define DEBUGPCI  1 */
 
 #include <stdio.h>
 #include "os.h"
@@ -43,7 +43,7 @@
 
 static pciConfigPtr pci_devp[MAX_PCI_DEVICES + 1] = {NULL, };
 
-#ifdef USE_OLD_PCI_CODE
+#ifdef USE_OLD_PCI_CODE /* { */
 pciConfigPtr *
 xf86scanpci(scrnIndex)
 int scrnIndex;
@@ -94,10 +94,11 @@ int scrnIndex;
         tmplong2 = inl(PCI_MODE1_ADDRESS_REG);
         outl(PCI_MODE1_ADDRESS_REG, tmplong1);  
 #if 0
-        if (tmplong2 == PCI_EN) {
+        if (tmplong2 == PCI_EN) 
 #else
-        if (tmplong2 & PCI_EN) {
+        if (tmplong2 & PCI_EN) 
 #endif
+        {
 	    pcr._configtype = 1;
 #ifdef DEBUGPCI
             printf("PCI says configuration type 1\n");
@@ -433,7 +434,7 @@ xf86cleanpci()
     pci_devp[0] = (pciConfigPtr)NULL;
 }
 
-#else
+#else /* USE_OLD_PCI_CODE */	/* } { */
 
 /* New PCI code */
 
@@ -469,6 +470,30 @@ xf86cleanpci()
 static int pciConfigType = 0;
 static int pciMaxDevice = 0;
 
+#if defined(__alpha__)
+#include <asm/unistd.h>
+#define BUS(tag) (((tag)>>16)&0xff)
+#define DFN(tag) (((tag)>>8)&0xff)
+int pciconfig_read(
+          unsigned char bus,
+          unsigned char dfn,
+          unsigned char off,
+          unsigned char len,
+          void * buf)
+{
+  return __syscall(__NR_pciconfig_read, bus, dfn, off, len, buf);
+}
+int pciconfig_write(
+          unsigned char bus,
+          unsigned char dfn,
+          unsigned char off,
+          unsigned char len,
+          void * buf)
+{
+  return __syscall(__NR_pciconfig_write, bus, dfn, off, len, buf);
+}
+#endif /* __alpha__ */
+
 static Bool
 pcibusCheck()
 {
@@ -488,60 +513,186 @@ static void
 pcibusSetup()
 {
     static Bool setupDone = FALSE;
-    CARD32 mode1Res, oldVal1;
-    CARD8  mode2Res, oldVal2;
+    CARD32 mode1Res1 = 0, mode1Res2 = 0, oldVal1 = 0;
+    CARD8  mode2Res1 = 0, mode2Res2 = 0, oldVal2 = 0;
+    int stages = 0;
 
     if (setupDone)
 	return;
 
     setupDone = TRUE;
 
-    oldVal1 = inl(PCI_MODE1_ADDRESS_REG);
+#if !defined(__alpha__)
+    switch (xf86PCIFlags) {
 
-    /* Assuming config type 1 to start with */
-    if ((oldVal1 & 0x7ff00000) == 0) {
+    case PCIProbe1: /* { */
+
+      if (xf86Verbose > 1) {
+	ErrorF("PCI: Probing config type using method 1\n");
+      }
+
+      oldVal1 = inl(PCI_MODE1_ADDRESS_REG);
+
+#ifdef DEBUGPCI
+      if (xf86Verbose > 2) {
+	ErrorF("Checking config type 1:\n"
+		"\tinitial value of MODE1_ADDR_REG is 0x%08x\n", oldVal1);
+	ErrorF("\tChecking that all bits in mask 0x7f000000 are clear\n");
+      }
+#endif
+
+      /* Assuming config type 1 to start with */
+      if ((oldVal1 & 0x7f000000) == 0) {
+
+	stages |= 0x01;
+
+#ifdef DEBUGPCI
+	if (xf86Verbose > 2) {
+	    ErrorF("\tValue indicates possibly config type 1\n");
+	    ErrorF("\tWriting 32-bit value 0x%08x to MODE1_ADDR_REG\n", PCI_EN);
+#if 0
+	    ErrorF("\tWriting 8-bit value 0x00 to MODE1_ADDR_REG + 3\n");
+#endif
+	}
+#endif
+
 	pciConfigType = 1;
 	pciMaxDevice = PCI_CONFIG1_MAXDEV;
 
 	outl(PCI_MODE1_ADDRESS_REG, PCI_EN);
+
+#if 0
+	/*
+	 * This seems to cause some Neptune-based PCI machines to switch
+	 * from config type 1 to config type 2
+	 */
 	outb(PCI_MODE1_ADDRESS_REG + 3, 0);
-	mode1Res = inl(PCI_MODE1_ADDRESS_REG);
+#endif
+	mode1Res1 = inl(PCI_MODE1_ADDRESS_REG);
+
+#ifdef DEBUGPCI
+	if (xf86Verbose > 2) {
+	    ErrorF("\tValue read back from MODE1_ADDR_REG is 0x%08x\n",
+			mode1Res1);
+	    ErrorF("\tRestoring original contents of MODE1_ADDR_REG\n");
+	}
+#endif
+
 	outl(PCI_MODE1_ADDRESS_REG, oldVal1);
 
-	if (mode1Res) {
+	if (mode1Res1) {
+
+	    stages |= 0x02;
+
+#ifdef DEBUGPCI
+	    if (xf86Verbose > 2) {
+		ErrorF("\tValue read back is non-zero, and indicates possible"
+			" config type 1\n");
+	    }
+#endif
+
 	    if (pcibusCheck()) {
+
+#ifdef DEBUGPCI
+		if (xf86Verbose > 2)
+		    ErrorF("\tBus check Confirms this: ");
+#endif
+
 		if (xf86Verbose > 1) {
 		    ErrorF("PCI: Config type is 1\n");
 		}
+		if (xf86Verbose > 2) {
+		    ErrorF("PCI: stages = 0x%02x, oldVal1 = 0x%08x, mode1Res1"
+			   " = 0x%08x\n", stages, oldVal1, mode1Res1);
+		}
 		return;
 	    }
+
+#ifdef DEBUGPCI
+	    if (xf86Verbose > 2) {
+		ErrorF("\tBus check fails to confirm this, continuing type 1"
+			" check ...\n");
+	    }
+#endif
+
 	}
 
+	stages |= 0x04;
+
+#ifdef DEBUGPCI
+	if (xf86Verbose > 2) {
+	    ErrorF("\tWriting 0xff000001 to MODE1_ADDR_REG\n");
+	}
+#endif
 	outl(PCI_MODE1_ADDRESS_REG, 0xff000001);
-	mode1Res = inl(PCI_MODE1_ADDRESS_REG);
+	mode1Res2 = inl(PCI_MODE1_ADDRESS_REG);
+
+#ifdef DEBUGPCI
+	if (xf86Verbose > 2) {
+	    ErrorF("\tValue read back from MODE1_ADDR_REG is 0x%08x\n",
+			mode1Res2);
+	    ErrorF("\tRestoring original contents of MODE1_ADDR_REG\n");
+	}
+#endif
+
 	outl(PCI_MODE1_ADDRESS_REG, oldVal1);
 
-	if ((mode1Res & 0x80000001) == 0x80000000) {
+	if ((mode1Res2 & 0x80000001) == 0x80000000) {
+
+	    stages |= 0x08;
+
+#ifdef DEBUGPCI
+	    if (xf86Verbose > 2) {
+		ErrorF("\tValue read back has only the msb set\n"
+			"\tThis indicates possible config type 1\n");
+	    }
+#endif
+
 	    if (pcibusCheck()) {
+
+#ifdef DEBUGPCI
+		if (xf86Verbose > 2)
+		    ErrorF("\tBus check Confirms this: ");
+#endif
+
 		if (xf86Verbose > 1) {
 		    ErrorF("PCI: Config type is 1\n");
 		}
+		if (xf86Verbose > 2) {
+		    ErrorF("PCI: stages = 0x%02x, oldVal1 = 0x%08x,\n"
+			   "\tmode1Res1 = 0x%08x, mode1Res2 = 0x%08x\n",
+			   stages, oldVal1, mode1Res1, mode1Res2);
+		}
 		return;
 	    }
-	}
-    }
 
-    /* Try config type 2 */
-    oldVal2 = inb(PCI_MODE2_ENABLE_REG);
-    if ((oldVal2 & 0xf0) == 0) {
+#ifdef DEBUGPCI
+	    if (xf86Verbose > 2) {
+		ErrorF("\tBus check fails to confirm this.\n");
+	    }
+#endif
+
+	}
+      }
+   
+      if (xf86Verbose > 2) {
+	ErrorF("PCI: Standard check for type 1 failed.\n");
+	ErrorF("PCI: stages = 0x%02x, oldVal1 = 0x%08x,\n"
+	       "\tmode1Res1 = 0x%08x, mode1Res2 = 0x%08x\n",
+	       stages, oldVal1, mode1Res1, mode1Res2);
+      }
+ 
+      /* Try config type 2 */
+      oldVal2 = inb(PCI_MODE2_ENABLE_REG);
+      if ((oldVal2 & 0xf0) == 0) {
 	pciConfigType = 2;
 	pciMaxDevice = PCI_CONFIG2_MAXDEV;
 
 	outb(PCI_MODE2_ENABLE_REG, 0x0e);
-	mode2Res = inb(PCI_MODE2_ENABLE_REG);
+	mode2Res1 = inb(PCI_MODE2_ENABLE_REG);
 	outb(PCI_MODE2_ENABLE_REG, oldVal2);
 
-	if (mode2Res == 0x0e) {
+	if (mode2Res1 == 0x0e) {
 	    if (pcibusCheck()) {
 		if (xf86Verbose > 1) {
 		    ErrorF("PCI: Config type is 2\n");
@@ -549,7 +700,79 @@ pcibusSetup()
 		return;
 	    }
 	}
+      }
+      break; /* } */
+
+    case PCIProbe2: /* { */
+
+      /* The scanpci-style detection method */
+
+      if (xf86Verbose > 1) {
+	ErrorF("PCI: Probing config type using method 2\n");
+      }
+
+      outb(PCI_MODE2_ENABLE_REG, 0x00);
+      outb(PCI_MODE2_FORWARD_REG, 0x00);
+      mode2Res1 = inb(PCI_MODE2_ENABLE_REG);
+      mode2Res2 = inb(PCI_MODE2_FORWARD_REG);
+
+      if (mode2Res1 == 0 && mode2Res2 == 0) {
+	if (xf86Verbose > 1) {
+	    ErrorF("PCI: Config type is 2\n");
+	}
+	pciConfigType = 2;
+	pciMaxDevice = PCI_CONFIG2_MAXDEV;
+	return;
+      }
+
+      oldVal1 = inl(PCI_MODE1_ADDRESS_REG);
+      outl(PCI_MODE1_ADDRESS_REG, PCI_EN);
+      mode1Res1 = inl(PCI_MODE1_ADDRESS_REG);
+      outl(PCI_MODE1_ADDRESS_REG, oldVal1);
+      if (mode1Res1 == PCI_EN) {
+	if (xf86Verbose > 1) {
+	    ErrorF("PCI: Config type is 1\n");
+	}
+	pciConfigType = 1;
+	pciMaxDevice = PCI_CONFIG1_MAXDEV;
+	return;
+      }
+      break; /* } */
+
+    case PCIForceConfig1:
+
+      if (xf86Verbose > 1) {
+	ErrorF("PCI: Forcing config type 1\n");
+      }
+
+      pciConfigType = 1;
+      pciMaxDevice = PCI_CONFIG1_MAXDEV;
+      return;
+
+    case PCIForceConfig2:
+
+      if (xf86Verbose > 1) {
+	ErrorF("PCI: Forcing config type 2\n");
+      }
+
+      pciConfigType = 2;
+      pciMaxDevice = PCI_CONFIG2_MAXDEV;
+      return;
+
     }
+	
+#else /* !__alpha__ */
+    pciConfigType = 1;
+    pciMaxDevice = PCI_CONFIG1_MAXDEV;
+    if (pcibusCheck()) {
+      if (xf86Verbose > 1) {
+	ErrorF("PCI: Config type is 1(axp)\n");
+      }
+      return;
+    }
+    pciConfigType = 0;
+    pciMaxDevice = 0;
+#endif /* !__alpha__ */
 
     /* No PCI found */
 
@@ -573,10 +796,13 @@ pcibusTag(CARD8 bus, CARD8 cardnum, CARD8 func)
     switch (pciConfigType) {
     case 1:
 	if (cardnum < PCI_CONFIG1_MAXDEV) {
-	    tag.cfg1 = PCI_EN
-			| ((CARD32)bus << 16)
-			| ((CARD32)cardnum << 11)
-			| ((CARD32)func << 8);
+	    tag.cfg1 = 
+#if !defined(__alpha__)
+			PCI_EN |
+#endif
+	      		((CARD32)bus << 16) |
+			((CARD32)cardnum << 11) |
+			((CARD32)func << 8);
 	}
 	break;
     case 2:
@@ -618,6 +844,7 @@ pcibusRead(pciTagRec tag, CARD32 reg)
 	return 0xffffffff;
     }
 
+#if !defined(__alpha__)
     switch (pciConfigType) {
     case 1:
 	addr = tag.cfg1 | (reg & 0xfc);
@@ -634,6 +861,9 @@ pcibusRead(pciTagRec tag, CARD32 reg)
 	outb(PCI_MODE2_FORWARD_REG, 0);
 	break;
     }
+#else /* !__alpha__ */
+    pciconfig_read(BUS(tag.cfg1), DFN(tag.cfg1), reg, 4, &data);
+#endif /* !__alpha__ */
     return data;
 }
 
@@ -647,6 +877,7 @@ pciReadWord(pciTagRec tag, CARD32 reg)
 	return 0xff;
     }
 
+#if !defined(__alpha__)
     switch (pciConfigType) {
     case 1:
 	addr = tag.cfg1 | (reg & 0xfc);
@@ -663,6 +894,9 @@ pciReadWord(pciTagRec tag, CARD32 reg)
 	outb(PCI_MODE2_FORWARD_REG, 0);
 	break;
     }
+#else /* !__alpha__ */
+    pciconfig_read(BUS(tag.cfg1), DFN(tag.cfg1), reg, 2, &data);
+#endif /* !__alpha__ */
     return data;
 }
 
@@ -676,6 +910,7 @@ pciReadByte(pciTagRec tag, CARD32 reg)
 	return 0xff;
     }
 
+#if !defined(__alpha__)
     switch (pciConfigType) {
     case 1:
 	addr = tag.cfg1 | (reg & 0xfc);
@@ -692,6 +927,9 @@ pciReadByte(pciTagRec tag, CARD32 reg)
 	outb(PCI_MODE2_FORWARD_REG, 0);
 	break;
     }
+#else /* !__alpha__ */
+    pciconfig_read(BUS(tag.cfg1), DFN(tag.cfg1), reg, 1, &data);
+#endif /* !__alpha__ */
     return data;
 }
 
@@ -704,6 +942,7 @@ pcibusWrite(pciTagRec tag, CARD32 reg, CARD32 data)
 	return;
     }
 
+#if !defined(__alpha__)
     switch (pciConfigType) {
     case 1:
 	addr = tag.cfg1 | (reg & 0xfc);
@@ -720,6 +959,10 @@ pcibusWrite(pciTagRec tag, CARD32 reg, CARD32 data)
 	outb(PCI_MODE2_FORWARD_REG, 0);
 	break;
     }
+#else /* !__alpha__ */
+    addr = data;
+    pciconfig_write(BUS(tag.cfg1), DFN(tag.cfg1), reg, 4, &addr);
+#endif /* !__alpha__ */
 }
 
 void
@@ -731,6 +974,7 @@ pciWriteWord(pciTagRec tag, CARD32 reg, CARD16 data)
 	return;
     }
 
+#if !defined(__alpha__)
     switch (pciConfigType) {
     case 1:
 	addr = tag.cfg1 | (reg & 0xfc);
@@ -747,6 +991,10 @@ pciWriteWord(pciTagRec tag, CARD32 reg, CARD16 data)
 	outb(PCI_MODE2_FORWARD_REG, 0);
 	break;
     }
+#else /* !__alpha__ */
+    addr = data;
+    pciconfig_write(BUS(tag.cfg1), DFN(tag.cfg1), reg, 2, &addr);
+#endif /* !__alpha__ */
 }
 
 void
@@ -758,6 +1006,7 @@ pciWriteByte(pciTagRec tag, CARD32 reg, CARD8 data)
 	return;
     }
 
+#if !defined(__alpha__)
     switch (pciConfigType) {
     case 1:
 	addr = tag.cfg1 | (reg & 0xfc);
@@ -774,6 +1023,10 @@ pciWriteByte(pciTagRec tag, CARD32 reg, CARD8 data)
 	outb(PCI_MODE2_FORWARD_REG, 0);
 	break;
     }
+#else /* !__alpha__ */
+    addr = data;
+    pciconfig_write(BUS(tag.cfg1), DFN(tag.cfg1), reg, 1, &addr);
+#endif /* !__alpha__ */
 }
 
 static void
@@ -951,4 +1204,4 @@ xf86cleanpci()
     pci_devp[0] = (pciConfigPtr)NULL;
 }
 
-#endif
+#endif /* USE_OLD_PCI_CODE */	/* } */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3gs.c,v 3.2 1996/10/06 13:15:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3gs.c,v 3.4 1997/01/14 22:17:22 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -55,7 +55,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
  * Modified by Amancio Hasty and Jon Tombs
  *
  */
-/* $XConsortium: s3gs.c /main/6 1995/11/12 19:06:38 kaleb $ */
+/* $XConsortium: s3gs.c /main/3 1996/10/25 14:10:47 kaleb $ */
 
 
 #include "X.h"
@@ -94,7 +94,7 @@ s3GetSpans(pDrawable, wMax, ppt, pwidth, nspans, pdstStart)
    char *pdst;		/* where to put the bits */
    int   pixmapStride;
 
-   if (1 || !xf86VTSema)
+   if (!xf86VTSema)
    {
       if (xf86VTSema) WaitIdleEmpty();
       switch (s3InfoRec.bitsPerPixel) {

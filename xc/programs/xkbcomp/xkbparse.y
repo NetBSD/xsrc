@@ -1,4 +1,4 @@
-/* $XConsortium: xkbparse.y /main/7 1996/01/14 16:48:48 kaleb $ */
+/* $XConsortium: xkbparse.y /main/9 1996/08/31 12:16:06 kaleb $ */
 /************************************************************
  Copyright (c) 1994 by Silicon Graphics Computer Systems, Inc.
 

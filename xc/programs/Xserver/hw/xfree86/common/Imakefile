@@ -1,10 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/18 1996/01/16 16:08:36 kaleb $
+XCOMM $XConsortium: Imakefile /main/34 1996/10/27 11:05:08 kaleb $
 
 
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.45 1996/10/16 14:40:41 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.48.2.1 1997/05/03 09:46:36 dawes Exp $
 
 
 
@@ -80,23 +80,31 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common/Imakefile,v 3.45 1996/10/1
 #  endif
 #  if XieDynamicModule
    XIE_MODULE_DEFINES = -DXIE_MODULE
-#endif
+#  endif
    XF86DL_SRC = xf86Dl.c
    XF86DL_OBJ = xf86Dl.o
 #if HasDlsymBug
 DLSYM_DEFINES = -DDLSYM_BUG
 #endif
 MODULEDEFINES = -DDYNAMIC_MODULE -DDEFAULT_MODULE_PATH=\"$(MODULEDIR)\" $(DLSYM_DEFINES)
-EXT_MODULES_DEFINES = $(PEX_MODULE_DEFINES) $(XIE_MODULE_DEFINES)
+EXT_MODULES_DEFINES = $(PEX_MODULE_DEFINES) $(XIE_MODULE_DEFINES) $(GLX_DEFINES)
 #endif
 
-#if XFree86Version % 10
+#ifndef XF86ExpireServer
+#define XF86ExpireServer	NO
+#endif
+
+#if XFree86Version % 10 || XF86ExpireServer
       BETASRC = xf86Beta.c
       BETAOBJ = xf86Beta.o
      BETADEFS = -DDO_CHECK_BETA
 #ifndef NeedXF86Beta
 #define NeedXF86Beta YES
 #endif
+#endif
+
+#if XF86ExpireServer
+EXP_FORCE_DEFINES = -DSHOW_BETA_MESSAGE -DEXPIRE_SERVER
 #endif
 
 SERVERSRCS = \
@@ -117,6 +125,7 @@ SERVERSRCS = \
 SRCS =	\
 	$(XF86DL_SRC) \
 	$(XCONFIGSRC).c \
+	xf86DCConf.c \
 	xf86IniExt.c \
 	xf86MIniExt.c \
 	xf86Cursor.c \
@@ -140,6 +149,7 @@ SRCS =	\
 OBJS = \
 	$(XF86DL_OBJ) \
 	$(XCONFIGSRC).o \
+	xf86DCConf.o \
 	xf86Cursor.o \
 	xf86Events.o \
 	xf86Io.o \
@@ -163,13 +173,13 @@ OFILES = \
 
    INCLUDES = -I. -I.. -I$(XF86OSSRC) -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
               -I$(SERVERSRC)/include -I$(SERVERSRC)/os \
-              -I$(INCLUDESRC) -I$(EXTINCSRC)
+              -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
      OSNAME = OSName
    OSVENDOR = OSVendor
   OSNAMEDEF = -DOSNAME='"$(OSNAME)"' -DOSVENDOR='"$(OSVENDOR)"'
 CONSDEFINES = XFree86ConsoleDefines
-EXP_DEFINES = -DEXPIRY_TIME=XF86ServerExpiry
+EXP_DEFINES = -DEXPIRY_TIME=XF86ServerExpiry $(EXP_FORCE_DEFINES)
 
     DEFINES = $(XCONFIGDEFINES) $(CONSDEFINES)
 
@@ -217,6 +227,7 @@ InstallDynamicModule(xf86Summa.so,$(MODULEDIR))
 # endif
 #endif
 SpecialObjectRule($(XCONFIGSRC).o,$(XCONFIGSRC).c,'-DSERVER_CONFIG_FILE="$(LIBDIR)/$(XCONFIGFILE)"' $(MODULEDEFINES) $(EXT_DEFINES))
+SpecialObjectRule(xf86DCConf.o,xf86DCConf.c,'-DSERVER_CONFIG_FILE="$(LIBDIR)/$(XCONFIGFILE)"' $(MODULEDEFINES) $(EXT_DEFINES))
 SpecialObjectRule(xf86Init.o,xf86Init.c $(ICONFIGFILES),$(OSNAMEDEF) $(EXT_DEFINES) $(BETADEFS))
 SpecialCObjectRule(xf86Events,$(ICONFIGFILES),$(EXT_DEFINES))
 #if XF86SVGAServer
@@ -278,7 +289,7 @@ SpecialObjectRule($(BETAOBJ),$(BETASRC),$(EXP_DEFINES))
 
 ObjectFromSpecialSource(xf86Init_m,xf86Init,$(OSNAMEDEF) $(EXT_DEFINES) $(BETADEFS) -DXF86MONOVGA)
 SpecialObjectRule(xf86IniExt.o,xf86IniExt.c $(ICONFIGFILES),$(EXT_DEFINES) $(EXT_MODULES_DEFINES))
-SpecialObjectRule(xf86MIniExt.o,xf86IniExt.c $(ICONFIGFILES),$(EXT_DEFINES) $(EXT_MODULES_DEFINES) -UPEXEXT -UXIE)
+SpecialObjectRule(xf86MIniExt.o,xf86IniExt.c $(ICONFIGFILES),$(EXT_DEFINES) $(EXT_MODULES_DEFINES) -UPEXEXT -UXIE -UGLXEXT)
 
 NormalLibraryObjectRule()
 NormalLibraryTarget(xf86,$(OBJS))
@@ -299,6 +310,7 @@ InstallLinkKitNonExecFile(xf86Procs.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(xf86_Option.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(xf86_Option.c,$(LINKKITDIR))
 InstallLinkKitNonExecFile(xf86_Config.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(xf86DCConf.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(compiler.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(XF86_SVGA.c,$(LINKKITDIR))
 InstallLinkKitNonExecFile(XF86_VGA16.c,$(LINKKITDIR))

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_fill.c,v 3.10 1996/02/04 09:13:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_fill.c,v 3.11 1996/12/23 06:56:47 dawes Exp $ */
 /*
  *
  * Copyright 1993 by Bill Reynolds, Santa Fe, New Mexico
@@ -27,7 +27,7 @@
  * Modified by: Harm Hanemaayer, <hhanemaa@cs.ruu.nl>
  *
  */
-/* $XConsortium: cir_fill.c /main/5 1995/11/13 08:21:04 kaleb $ */
+/* $XConsortium: cir_fill.c /main/6 1996/02/21 18:03:44 kaleb $ */
 
 /*
  * This file contains mid-level solid fill functions that call different

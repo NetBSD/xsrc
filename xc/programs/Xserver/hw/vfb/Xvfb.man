@@ -1,4 +1,4 @@
-.\" $XConsortium: Xvfb.man /main/8 1995/12/15 14:06:26 gildea $
+.\" $XConsortium: Xvfb.man /main/10 1996/12/09 17:32:53 kaleb $
 .\" Copyright (c) 1993  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -24,7 +24,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH XVFB 1 "Release 6.1" "X Version 11"
+.TH XVFB 1 "Release 6.3" "X Version 11"
 .SH NAME
 Xvfb \- virtual framebuffer X server for X Version 11
 .SH SYNOPSIS
@@ -36,13 +36,22 @@ is an X server that can run on machines with no display hardware
 and no physical input devices.  It emulates a dumb framebuffer using
 virtual memory.
 .PP
-The primary use of this server is intended to be server testing.
-The mfb or cfb code for any depth can be exercised with this
-server without
-the need for real hardware that supports the desired depths.
+The primary use of this server was intended to be server testing.  The
+mfb or cfb code for any depth can be exercised with this server
+without the need for real hardware that supports the desired depths.
+The X community has found many other novel uses for \fIXvfb\fP,
+including testing clients against unusual depths and screen
+configurations, doing batch processing with \fIXvfb\fP as a background
+rendering engine, load testing, as an aid to porting the X server to a
+new platform, and providing an unobtrusive way to run applications
+that don't really need an X server but insist on having one anyway.
+.SH BUILDING
+To build \fIXvfb\fP, put the following in your host.def and remake.
 .PP
-A secondary use is testing clients against unusual depths and screen
-configurations.
+#define BuildServer YES /* if you aren't already building other servers */
+.br
+#define XVirtualFramebufferServer YES
+
 .SH OPTIONS
 .PP
 In addition to the normal server options described in the \fIXserver(1)\fP
@@ -80,13 +89,20 @@ the framebuffer memory will be allocated with malloc().
 This option specifies how to adjust the pixelization of thin lines.
 The value \fIn\fP is a bitmask of octants in which to prefer an axial
 step when the Bresenham error term is exactly zero.  See the file
-Xserver/mi/miline.h for more information.
+Xserver/mi/miline.h for more information.  This option is probably only useful
+to server developers to experiment with the range of line pixelization
+possible with the cfb and mfb code.
+.TP 4
+.B "\-blackpixel \fIpixel-value\fP, \-whitepixel \fIpixel-value\fP"
+These options specify the black and white pixel values the server should use.
 .SH FILES
 The following files are created if the \-fbdir option is given.
 .TP 4
 \fIframebuffer-directory\fP/Xvfb_screen<n>
 Memory mapped file containing screen n's framebuffer memory, one file
-per screen.  The file is in xwd format.
+per screen.  The file is in xwd format.  Thus, taking a full-screen
+snapshot can be done with a file copy command, and the resulting
+snapshot will even contain the cursor image.
 .SH EXAMPLES
 .TP 8
 Xvfb :1 -screen 0 1600x1200x32

@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga256.h,v 3.2 1996/02/04 09:14:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vga256.h,v 3.6 1997/01/12 10:45:31 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: vga256.h /main/4 1995/11/13 09:25:54 kaleb $ */
+/* $XConsortium: vga256.h /main/5 1996/02/21 18:09:52 kaleb $ */
 
 #ifndef _VGA256_H
 #define VGA256_H
@@ -59,6 +59,7 @@ typedef struct _Cfbfunc{
 		int,
 		RegionPtr,
 		DDXPointPtr,
+		unsigned long,
 		unsigned long
 #endif
 );
@@ -258,8 +259,8 @@ void fastBitBltCopy(
 unsigned char *fastFillSolidGXand(
 #if NeedFunctionPrototypes
     unsigned char *,
-    int ,
-    int ,
+    unsigned long ,
+    unsigned long ,
     int ,
     int ,
     int ,
@@ -272,8 +273,8 @@ unsigned char *fastFillSolidGXand(
 unsigned char *fastFillSolidGXor(
 #if NeedFunctionPrototypes
     unsigned char *,
-    int ,
-    int ,
+    unsigned long ,
+    unsigned long ,
     int ,
     int ,
     int ,
@@ -286,8 +287,8 @@ unsigned char *fastFillSolidGXor(
 unsigned char *fastFillSolidGXxor(
 #if NeedFunctionPrototypes
     unsigned char *,
-    int ,
-    int ,
+    unsigned long ,
+    unsigned long ,
     int ,
     int ,
     int ,
@@ -300,8 +301,8 @@ unsigned char *fastFillSolidGXxor(
 unsigned char *fastFillSolidGXcopy(
 #if NeedFunctionPrototypes
     unsigned char *,
-    int ,
-    int ,
+    unsigned long ,
+    unsigned long ,
     int ,
     int ,
     int ,
@@ -314,8 +315,8 @@ unsigned char *fastFillSolidGXcopy(
 unsigned char *fastFillSolidGXset(
 #if NeedFunctionPrototypes
     unsigned char *,
-    int ,
-    int ,
+    unsigned long ,
+    unsigned long ,
     int ,
     int ,
     int ,
@@ -358,7 +359,7 @@ int fastvga256HorzS(
 );
 
 /* vgalineV.s */
-int fastvga256VertS(
+void fastvga256VertS(
 #if NeedFunctionPrototypes
     int ,
     unsigned long ,
@@ -1231,6 +1232,7 @@ void vga256DoBitbltCopy(
     int ,
     RegionPtr ,
     DDXPointPtr ,
+    unsigned long ,
     unsigned long 
 #endif
 );
@@ -1242,6 +1244,7 @@ void speedupvga256DoBitbltCopy(
     int ,
     RegionPtr ,
     DDXPointPtr ,
+    unsigned long ,
     unsigned long 
 #endif
 );
@@ -1253,6 +1256,7 @@ void vga256DoBitbltXor(
     int ,
     RegionPtr ,
     DDXPointPtr ,
+    unsigned long ,
     unsigned long 
 #endif
 );
@@ -1264,6 +1268,7 @@ void vga256DoBitbltOr(
     int ,
     RegionPtr ,
     DDXPointPtr ,
+    unsigned long ,
     unsigned long 
 #endif
 );
@@ -1275,6 +1280,7 @@ void vga256DoBitbltGeneral(
     int ,
     RegionPtr ,
     DDXPointPtr ,
+    unsigned long ,
     unsigned long 
 #endif
 );

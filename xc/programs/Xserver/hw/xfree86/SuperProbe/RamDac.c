@@ -1,4 +1,4 @@
-/* $XConsortium: RamDac.c /main/9 1996/01/26 13:30:37 kaleb $ */ 
+/* $XConsortium: RamDac.c /main/17 1996/10/25 07:00:23 kaleb $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -30,7 +30,7 @@
  * 
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/RamDac.c,v 3.24 1996/09/25 14:15:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/RamDac.c,v 3.26.2.5 1997/05/22 14:00:35 dawes Exp $ */
 
 #include "Probe.h"
 
@@ -53,6 +53,7 @@ static Bool S3_STG1700Check __STDCARGS((int *));
 static Bool S3_GENDACCheck __STDCARGS((int *));
 static void CheckMach32 __STDCARGS((int, int *));
 static void CheckMach64 __STDCARGS((int, int *));
+static void CheckMatrox __STDCARGS((int, int *));
 
 #ifdef __STDC__
 static void ReadPelReg(Byte Index, Byte *Pixel)
@@ -553,6 +554,28 @@ int *RamDac;
 	return(Found);
 }
 
+static Bool CH8398Check(RamDac)
+int *RamDac;
+{
+/* This dac does not provide much information to distinguish itself. */
+/* So this probe may not be suitable, unless you know that the ch8398 */
+/* is a possibility. */
+	Byte cid;
+	Bool Found = FALSE;
+
+	dactopel();
+	inp(0x3c6);
+	inp(0x3c6);
+	inp(0x3c6);
+	cid = inp(0x3c6);     /* device ID */
+        if (cid == 0xc0) {
+	    Found = TRUE;
+	    *RamDac = DAC_CH8398;
+	}
+	dactopel();
+	return Found;
+}
+
 static Bool S3_STG1700Check(RamDac)
 int *RamDac;
 {
@@ -577,6 +600,11 @@ int *RamDac;
 	if ((cid == 0x44) && (did == 0x00)) {
 	   Found = TRUE;
 	   *RamDac = DAC_STG1700;
+	   *RamDac |= DAC_6_8_PROGRAM;
+	}
+	if ((cid == 0x44) && (did == 0x02)) {
+	   Found = TRUE;
+	   *RamDac = DAC_STG1702;
 	   *RamDac |= DAC_6_8_PROGRAM;
 	}
 	if ((cid == 0x44) && (did == 0x03)) {
@@ -654,11 +682,86 @@ int *RamDac;
       inp(0x3c6);
       inp(0x3c6);
       
-      /* the forth read will show the SDAC chip ID and revision */
+      /* the fourth read will show the SDAC chip ID and revision */
       if (((i=inp(0x3c6)) & 0xf0) == 0x70)
 	 *RamDac = DAC_S3_SDAC;
       else
 	 *RamDac = DAC_S3_GENDAC;
+      dactopel();
+   }
+      
+   return(Found);
+}
+
+static Bool Tseng_GENDACCheck(RamDac)
+int *RamDac;
+{
+   Byte daccomm;
+   int i;
+   Bool Found = FALSE;
+
+   Byte saveCR31, savelut[6];
+   Byte saveHercComp, saveModeContr;
+   long clock01, clock23;
+
+   /* probe for Tseng GENDAC or SDAC */
+   /* 
+    * S3 GENDAC and SDAC have two fixed read only PLL clocks
+    *     CLK0 f0: 25.255MHz   M-byte 0x28  N-byte 0x61
+    *     CLK0 f1: 28.311MHz   M-byte 0x3d  N-byte 0x62
+    * which can be used to detect GENDAC and SDAC since there is no chip-id
+    * for the GENDAC.
+    */
+
+
+   saveHercComp = inp(0x3BF);
+   saveModeContr= inp(0x3D8);
+   outp(0x3BF, 0x03);  /* unlock ET4000 special */
+   outp(0x3D8, 0xA0);
+
+   saveCR31 = rdinx(CRTC_IDX, 0x31);
+   wrinx(CRTC_IDX, 0x31, saveCR31 & ~0x40);
+   
+   outp(0x3c7,0);
+   for(i=0; i<2*3; i++)		/* save first two LUT entries */
+      savelut[i] = inp(0x3c9);
+   outp(0x3c8,0);
+   for(i=0; i<2*3; i++)		/* set first two LUT entries to zero */
+      outp(0x3c9,0);
+
+   wrinx(CRTC_IDX, 0x31, saveCR31 | 0x40);
+	 
+   outp(0x3c7,0);
+   for(i=clock01=0; i<4; i++)
+      clock01 = (clock01 << 8) | (inp(0x3c9) & 0xff);
+   for(i=clock23=0; i<4; i++)
+      clock23 = (clock23 << 8) | (inp(0x3c9) & 0xff);
+
+   wrinx(CRTC_IDX, 0x31, saveCR31 & ~0x40);
+
+   outp(0x3c8,0);
+   for(i=0; i<2*3; i++)		/* restore first two LUT entries */
+      outp(0x3c9,savelut[i]);
+
+   wrinx(CRTC_IDX, 0x31, saveCR31);
+
+   outp(0x3BF, saveHercComp);
+   outp(0x3D8, saveModeContr);
+
+   if ( clock01 == 0x28613d62 ||
+       (clock01 == 0x7f7f7f7f && clock23 != 0x7f7f7f7f)) {      
+      Found = TRUE;
+      
+      dactopel();
+      inp(0x3c6);
+      inp(0x3c6);
+      inp(0x3c6);
+      
+      /* the fourth read will show the SDAC chip ID and revision */
+      if (((i=inp(0x3c6)) & 0xf0) == 0xb0)
+	 *RamDac = DAC_ICS5341;
+      else
+	 *RamDac = DAC_ICS5301;  /* ID code ICS5301 = 0xf0 */
       dactopel();
    }
       
@@ -793,19 +896,21 @@ int *RamDac;
 {
 	extern Word ATIMach64DAC_CNTL, ATIMach64SCRATCH_REG1;
 
+	if (ChipSet >= CHIP_ATI264CT)
+	{
+		*RamDac = DAC_ATI_INTERNAL;
+		*RamDac |= DAC_6_8_PROGRAM;
+		if (Width8Check())
+			*RamDac |= DAC_8BIT;
+		return;
+	}
+
 	EnableIOPorts(1, &ATIMach64DAC_CNTL);
 	EnableIOPorts(1, &ATIMach64SCRATCH_REG1);
 
 	switch (((inpl(ATIMach64DAC_CNTL) & 0x00070000) |
 		 (inpl(ATIMach64SCRATCH_REG1) & 0x0000F000)) >> 12)
 	{
-	case 0x00:  case 0x01:  case 0x02:  case 0x03:
-	case 0x04:  case 0x05:  case 0x06:  case 0x07:
-	case 0x08:  case 0x09:  case 0x0A:  case 0x0B:
-	case 0x0C:  case 0x0D:  case 0x0E:  case 0x0F:
-		*RamDac = DAC_ATI_INTERNAL;
-		*RamDac |= DAC_6_8_PROGRAM;
-		break;
 	case 0x10:
 		*RamDac = DAC_IBMRGB525;
 		*RamDac |= DAC_6_8_PROGRAM;
@@ -1032,6 +1137,30 @@ int *RamDac;
 		DisableIOPorts(NUMPORTS, Ports);
 		return;
 	    }
+	    if (CH8398Check(RamDac))
+	    {
+		DisableIOPorts(NUMPORTS, Ports);
+		return;
+	    }
+	    if ( (SVGA_VENDOR(Chipset) == V_TSENG) && ( Chipset != CHIP_ET6K ) )
+	    {
+	        if (Tseng_GENDACCheck(RamDac))
+	        {
+		   DisableIOPorts(NUMPORTS, Ports);
+		   return;
+	        }
+	    }
+	}
+	else if (SVGA_VENDOR(Chipset) == V_MATROX) 
+	{
+		if (Chipset == CHIP_MGA2085PX)
+			*RamDac = DAC_BT485;
+		if (Chipset == CHIP_MGA2064W)
+			*RamDac = DAC_TVP3026;
+		if (Chipset == CHIP_MGA1064SG)
+			*RamDac = DAC_MGA1064SG;
+		DisableIOPorts(NUMPORTS, Ports);
+		return;
 	}
 	else if ( (SVGA_VENDOR(Chipset) == V_TRIDENT) && 
 		   (Chipset >= CHIP_TVGA9000I) )
@@ -1049,6 +1178,18 @@ int *RamDac;
 	    {
 		DisableIOPorts(NUMPORTS, Ports);
 		return;
+	    }
+	    if (S3_STG1700Check(RamDac))
+	    {
+		DisableIOPorts(NUMPORTS, Ports);
+		return;
+	    }
+	}
+	else if (SVGA_VENDOR(Chipset) == V_ALLIANCE)
+	{
+	    if (Chipset == CHIP_ALSC6422 || Chipset == CHIP_ALSCAT24)
+	    {
+	        *RamDac = DAC_ALSC_642x;
 	    }
 	    if (S3_STG1700Check(RamDac))
 	    {

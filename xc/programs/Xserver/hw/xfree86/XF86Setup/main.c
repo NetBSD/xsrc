@@ -1,4 +1,9 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/main.c,v 3.8 1996/09/03 06:48:26 dawes Exp $ */
+/* $XConsortium: main.c /main/2 1996/10/23 13:12:09 kaleb $ */
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/main.c,v 3.9 1996/12/27 06:54:05 dawes Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *

@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile /main/32 1996/01/26 18:20:58 gildea $
-XCOMM $XFree86: xc/programs/rgb/Imakefile,v 3.6 1996/10/03 08:49:23 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/34 1996/11/13 14:45:44 lehors $
+XCOMM $XFree86: xc/programs/rgb/Imakefile,v 3.7 1996/12/23 07:10:45 dawes Exp $
 
 #if UseRgbTxt
    RGB_DEFINES = -DUSE_RGB_TXT
@@ -46,6 +46,7 @@ all:: $(PROGRAMS) $(DATADEP)
 #if !UseRgbTxt
 SingleProgramTarget(rgb,$(OBJS1),NullParameter,$(DBMLIB))
 SpecialCObjectRule(rgb,$(ICONFIGFILES),$(_NOOP_))
+LinkBuildBinary(rgb)
 #endif
 SingleProgramTarget(showrgb,$(OBJS2),NullParameter,$(DBMLIB))
 SpecialCObjectRule(showrgb,$(ICONFIGFILES),$(_NOOP_))

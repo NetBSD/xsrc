@@ -1,5 +1,5 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XFree86.man,v 3.34 1996/10/24 12:29:39 dawes Exp $ 
-.TH XFree86 1 "Version 3.2"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XFree86.man,v 3.36.2.4 1997/05/29 14:01:01 dawes Exp $ 
+.TH XFree86 1 "Version 3.3"  "XFree86"
 .SH NAME
 XFree86 - X11R6 for UNIX on x86 platforms
 .SH DESCRIPTION
@@ -150,6 +150,17 @@ that can be used to change the video modes.
 .B \-allowNonLocalXvidtune
 Allow the xvidtune client to connect from another host.  By default non-local
 connections are not allowed.
+.TP 8
+.B \-disableModInDev
+Disable dynamic modification of input device settings.
+.TP 8
+.B \-allowNonLocalModInDev
+Allow changes to keyboard and mouse settings from non-local clients.
+By default, connections from non-local clients are not allowed to do this.
+.TP
+.B \-allowMouseOpenFail
+Allow the server to start up even if the mouse device can't be opened or
+initialised.
 .TP 8
 .B \-gamma \fIvalue\fP
 Set the gamma correction.  \fIvalue\fP must be between 0.1 and 10.  The
@@ -528,6 +539,26 @@ Hercules driver.
 Pascal Haible,     \fIhaible@izfm.uni-stuttgart.de\fP
 Banked monochrome VGA support, Hercules support, and mono frame buffer
 support for dumb monochrome devices
+.TP 8
+Martin Schaller,
+.TP 8
+Geert Uytterhoeven,\fIGeert.Uytterhoeven@cs.kuleuven.ac.be\fP
+Linux/m68k Frame Buffer Device driver
+.TP 8
+Andreas Schwab,    \fIschwab@issan.informatik.uni-dortmund.de\fP
+Linux/m68k Frame Buffer Device driver
+.TP 8
+Guenther Kelleter, \fIguenther@Pool.Informatik.RWTH-Aachen.de\fP
+Linux/m68k Frame Buffer Device driver
+.TP 8
+Frederic Lepied,   \fLepied@XFree86.Org\fP
+XInput extension integration. Wacom, joystick and extended mouse drivers.
+.TP 8
+Patrick Lecoanet,   \flecoanet@cena.dgac.fr\fP
+Elographics touchscreen driver.
+.TP 8
+Steven Lang,        \ftiger@ecis.com\fP
+SummaSketch tablet driver.
 .PP
  ... and many more people out there on the net who helped with beta-testing
 this enhancement.
@@ -535,4 +566,4 @@ this enhancement.
 \fIXFree86\fP source is available from the FTP server
 \fIftp.XFree86.org\fP, among others.  Send email to
 \fIXFree86@XFree86.org\fP for details.
-.\" $XConsortium: XFree86.man /main/16 1996/01/31 10:56:20 kaleb $
+.\" $XConsortium: XFree86.man /main/25 1996/12/09 17:33:22 kaleb $

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fBitBlt.s,v 1.1.1.2 1996/01/03 07:25:27 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fBitBlt.s,v 3.1 1996/12/23 06:59:01 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,9 +21,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  * Author:  Thomas Roell, roell@informatik.tu-muenchen.de
- *
  */
-/* $XConsortium: fBitBlt.s /main/3 1995/11/13 08:45:53 kaleb $ */
+/* $XConsortium: fBitBlt.s /main/4 1996/02/21 18:08:39 kaleb $ */
 
 
 /*

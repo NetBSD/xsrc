@@ -1,4 +1,4 @@
-/* $XConsortium: difsutils.c,v 1.12 94/04/17 19:56:12 gildea Exp $ */
+/* $XConsortium: difsutils.c /main/13 1996/09/28 17:17:45 rws $ */
 /*
  * misc utility routines
  */
@@ -176,6 +176,21 @@ GetDefaultPointSize()
 	return res->point_size;
     else
 	return default_point_size;
+}
+
+Bool
+XpClientIsBitmapClient(client)
+    ClientPtr client;
+{
+    return TRUE;
+}
+
+Bool
+XpClientIsPrintClient(client, fpe)
+    ClientPtr client;
+    FontPathElementPtr fpe;
+{
+    return FALSE;
 }
 
 void

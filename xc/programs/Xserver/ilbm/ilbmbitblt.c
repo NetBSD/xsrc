@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/ilbm/ilbmbitblt.c,v 3.0 1996/08/18 01:53:38 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/ilbm/ilbmbitblt.c,v 3.1 1997/01/25 04:21:35 dawes Exp $ */
 /* Combined Purdue/PurduePlus patches, level 2.0, 1/17/89 */
 /***********************************************************
 
@@ -68,7 +68,7 @@ SOFTWARE.
 #include "maskbits.h"
 
 
-static char ilbmRropsOS[AFB_MAX_DEPTH];
+static unsigned char ilbmRropsOS[AFB_MAX_DEPTH];
 
 /* CopyArea and CopyPlane for a monchrome frame buffer
 

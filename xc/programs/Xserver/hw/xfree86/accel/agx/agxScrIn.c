@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxScrIn.c,v 3.9 1996/02/04 08:58:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/agxScrIn.c,v 3.10 1996/12/23 06:32:57 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -38,7 +38,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 Modified for the AGX    by Henry A. Worth  (haw30@eng.amdahl.com)
 
 ********************************************************/
-/* $XConsortium: agxScrIn.c /main/5 1995/12/29 10:07:54 kaleb $ */
+/* $XConsortium: agxScrIn.c /main/6 1996/02/21 17:18:26 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

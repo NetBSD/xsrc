@@ -1,11 +1,11 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/Imakefile,v 3.4 1996/02/04 09:03:34 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/Imakefile,v 3.6 1997/01/05 11:54:04 dawes Exp $
 
 
 
 
 
 
-XCOMM $XConsortium: Imakefile /main/3 1995/11/12 17:59:46 kaleb $
+XCOMM $XConsortium: Imakefile /main/5 1996/09/28 17:21:24 rws $
 
 #include <Server.tmpl>
 
@@ -33,7 +33,7 @@ DEFINES = -DPSZ=8
 
 INCLUDES = -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) -I. \
 	   -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/include \
-           -I$(SERVERSRC)/cfb -I$(INCLUDESRC) -I$(FONTINCSRC) -I../cache
+           -I$(SERVERSRC)/cfb -I$(XINCLUDESRC) -I$(FONTINCSRC) -I../cache
 
 NormalLibraryObjectRule()
 
@@ -50,4 +50,6 @@ ObjectFromSpecialAsmSource(mach8imrdd,mach8imrd,-DDRAM_VERSION)
 ObjectFromSpecialAsmSource(mach8imstd,mach8imst,-DDRAM_VERSION)
 ObjectFromSpecialAsmSource(mach8imwrd,mach8imwrt,-DDRAM_VERSION)
 
+#ifndef OS2Architecture
 DependTarget()
+#endif

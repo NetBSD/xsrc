@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32dline.c,v 3.9 1996/02/04 09:02:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32dline.c,v 3.10 1996/12/23 06:38:27 dawes Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -54,7 +54,7 @@ Modified for the mach32 by Mike Bernson    (mike@mbsun.mlb.org)
 */
 
 /* s3dline.c from s3line.c with help from cfbresd.c and cfbline.c - Jon */
-/* $XConsortium: mach32dline.c /main/6 1996/01/11 12:27:17 kaleb $ */
+/* $XConsortium: mach32dline.c /main/7 1996/02/21 17:26:23 kaleb $ */
 
 #include "X.h"
 

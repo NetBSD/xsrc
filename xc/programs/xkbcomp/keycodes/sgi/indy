@@ -1,4 +1,4 @@
-// $XConsortium: sgi /main/4 1995/12/07 21:36:27 kaleb $
+// $XConsortium: indy /main/1 1996/08/31 12:17:15 kaleb $
 xkb_keycodes "pc101" {
     minimum= 15;
     maximum= 149;

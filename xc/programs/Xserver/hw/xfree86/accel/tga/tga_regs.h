@@ -1,3 +1,4 @@
+/* $XConsortium: tga_regs.h /main/4 1996/10/27 18:07:29 kaleb $ */
 /*
  * Copyright 1995,96 by Alan Hourihane, Wigan, England.
  *
@@ -29,7 +30,7 @@
  * Courtesy of Jay Estabrook.
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga_regs.h,v 3.2 1996/10/18 15:02:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/tga_regs.h,v 3.4 1997/01/05 11:54:33 dawes Exp $ */
 
 #ifndef TGA_REGS_H
 #define TGA_REGS_H
@@ -59,9 +60,29 @@
 #define	TGA_24PLANE_FB_OFFSET		0x0804000
 #define	TGA_24PLUSZ_FB_OFFSET		0x1004000
 
+#define TGA_FOREGROUND_REG		0x0020
+#define TGA_BACKGROUND_REG		0x0024
 #define	TGA_PLANEMASK_REG		0x0028
 #define	TGA_MODE_REG			0x0030
+#define		SIMPLE			0x00
+#define		Z3D			0x10
+#define		OPAQUESTIPPLE		0x01
+#define		FILL			0x20
+#define		TRANSPARENTSTIPPLE	0x05
+#define		BLOCKSTIPPLE		0x0D
+#define		BLOCKFILL		0x2D
+#define		OPAQUELINE		0x02
+#define		TRANSPARENTLINE		0x06
+#define		BPP8PACKED		(0x00 << 8)
+#define		BPP8UNPACK		(0x01 << 8)
+#define		BPP12LOW		(0x02 << 8)
+#define		BPP12HIGH		(0x06 << 8)
+#define		BPP24			(0x03 << 8)
+#define		CAP_ENDS		0x8000
+#define		X11			0x0000
+#define		WIN32			0x2000
 #define	TGA_RASTEROP_REG		0x0034
+#define TGA_ADDRESS_REG			0x003c
 #define	TGA_DEEP_REG			0x0050
 #define	TGA_PIXELMASK_REG		0x005c
 #define	TGA_CURSOR_BASE_REG		0x0060
@@ -71,6 +92,7 @@
 #define	TGA_VALID_REG			0x0070
 #define	TGA_CURSOR_XY_REG		0x0074
 #define	TGA_INTR_STAT_REG		0x007c
+#define TGA_SPAN_REG			0x00bc
 #define	TGA_RAMDAC_SETUP_REG		0x00c0
 #define	TGA_BLOCK_COLOR0_REG		0x0140
 #define	TGA_BLOCK_COLOR1_REG		0x0144

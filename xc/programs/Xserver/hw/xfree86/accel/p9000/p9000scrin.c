@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000scrin.c,v 3.11 1996/02/20 14:34:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000scrin.c,v 3.12 1996/12/23 06:40:53 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 Copyright 1993 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -42,7 +42,7 @@ Modified for the Mach32 by Kevin E. Martin (martin@cs.unc.edu)
 Modified for the P9000 by Erik Nygren (nygren@mit.edu)
 
 ********************************************************/
-/* $XConsortium: p9000scrin.c /main/6 1995/12/29 10:10:04 kaleb $ */
+/* $XConsortium: p9000scrin.c /main/7 1996/02/21 17:33:07 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

@@ -1,10 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_Mono.c,v 3.7 1996/02/04 09:05:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/XF86_Mono.c,v 3.8 1996/12/23 06:43:07 dawes Exp $ */
 
 
 
 
 
-/* $XConsortium: XF86_Mono.c /main/3 1995/11/12 19:20:44 kaleb $ */
+/* $XConsortium: XF86_Mono.c /main/4 1996/02/21 17:37:07 kaleb $ */
 #include "X.h"
 #include "os.h"
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/Bt485.c,v 3.5 1996/08/10 13:04:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/agx/Bt485.c,v 3.6 1996/12/23 06:32:20 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  * Copyright 1994 by Henry A. Worth  <haw30@eng.amdahl.com>
@@ -25,7 +25,7 @@
  * Modified for the AGX server and to increase portability by Henry A. Worth 
  *
  */
-/* $XConsortium: Bt485.c /main/3 1995/11/13 10:05:55 kaleb $ */
+/* $XConsortium: Bt485.c /main/5 1996/10/19 17:49:27 kaleb $ */
 
 #define NEED_EVENTS
 #include <X.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32cmap.c,v 3.9 1996/10/17 15:42:31 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32cmap.c,v 3.10 1996/12/23 06:38:25 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -30,7 +30,7 @@
  *
  * Header: /proj/X11/mit/server/ddx/xf86/vga/RCS/vgaCmap.c,v 1.2 1991/06/27 00:03:01 root Exp
  */
-/* $XConsortium: mach32cmap.c /main/4 1996/01/13 13:13:15 kaleb $ */
+/* $XConsortium: mach32cmap.c /main/9 1996/10/27 11:46:38 kaleb $ */
 
 
 #include "X.h"

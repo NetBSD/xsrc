@@ -1,5 +1,5 @@
 /* $XConsortium: netaddr.c,v 1.8 94/04/17 20:03:41 rws Exp $ */
-/* $XFree86: xc/programs/xdm/netaddr.c,v 3.1 1994/08/31 04:50:51 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/netaddr.c,v 3.2 1997/01/18 07:02:21 dawes Exp $ */
 /*
 
 Copyright (c) 1991  X Consortium
@@ -43,13 +43,21 @@ from the X Consortium.
 #ifdef XDMCP
 
 #ifndef MINIX
+#ifndef Lynx
 #include <sys/socket.h>		/* struct sockaddr */
+#else
+#include <socket.h>		/* struct sockaddr */
+#endif
 #include <netinet/in.h>		/* struct sockaddr_in */
 #endif
 
 #ifdef UNIXCONN
 #ifndef X_NO_SYS_UN
+#ifndef Lynx
 #include <sys/un.h>		/* struct sockaddr_un */
+#else
+#include <un.h>			/* struct sockaddr_un */
+#endif
 #endif
 #endif
 #ifdef DNETCONN

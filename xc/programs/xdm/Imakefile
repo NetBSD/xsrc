@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Imakefile /main/80 1996/01/14 18:35:47 kaleb $
-XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.16 1996/10/16 14:45:03 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/81 1996/10/22 18:32:26 kaleb $
+XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.2 1997/05/27 06:22:28 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
@@ -7,12 +7,31 @@ XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.16 1996/10/16 14:45:03 dawes Exp $
 #define BuildChooser !SystemV
 #endif
 
+/*
+ * We define ShareLibXdmGreet true if:
+ *	SystemV4 is true
+ *	AlphaArchitecture is set and NetBSDArchitecture is not
+ *	AlphaArchitecture and NetBSDArchitecture are set, and
+ *	    HasSharedLibraries is true.
+ *
+ * We'd like ShareLibXdmGreet true of SystemV4 or AlphaArchitecture,
+ * but not all NetBSD/Alpha systems have shared libraries, and
+ * it can't be shared on those which do not.
+ */
 #ifndef SharedLibXdmGreet
-#define SharedLibXdmGreet (defined(AlphaArchitecture) || SystemV4)
+#define SharedLibXdmGreet						\
+    ((defined(AlphaArchitecture) &&					\
+      (!defined(NetBSDArchitecture) ||					\
+       (defined(NetBSDArchitecture) && HasSharedLibraries))) ||		\
+     SystemV4)
 #endif
 
 #ifndef BuildBoth
-#define BuildBoth (defined(LinuxArchitecture) && !SharedLibXdmGreet && !(defined(AlphaArchitecture) && !UseElfFormat))
+#define BuildBoth (defined(LinuxArchitecture) && !SharedLibXdmGreet && !UseElfFormat)
+#endif
+
+#ifndef LinuxShadowSuite
+#define LinuxShadowSuite NO
 #endif
 
 #if HasXdmAuth
@@ -37,11 +56,8 @@ KRB5SRCS = krb5auth.c
 
 #if SharedLibXdmGreet
 GREET_DIR = greeter
-#if SystemV4
-    DLLIB = -ldl
-#endif
-#if defined(LinuxArchitecture) && (defined(AlphaArchitecture) || UseElfFormat)
-    DLLIB = -rdynamic -ldl
+#if SystemV4 || (SharedLibXdmGreet && (defined(LinuxArchitecture) || defined(NetBSDArchitecture)))
+    DLLIBRARY = DlLibrary
 #endif
 #else
 GREET_DEFINES = -DGREET_USER_STATIC
@@ -57,11 +73,18 @@ SHADOWLIB = -lshadow
 #endif
 
 #if SystemV4 || HasShadowPasswd
+#if !LinuxShadowSuite
 PWD_DEFINES = -DUSESHADOW
+#else
+PWD_DEFINES = -DUSESHADOW -DSHADOWSUITE
+#endif
+#if !defined(i386IscArchitecture) && !defined(i386ScoArchitecture) && !defined(LinuxArchitecture)
+SYS_LIBRARIES3 = -lresolv
+#endif
 #if SystemV || defined(SequentArchitecture)
 SYS_LIBRARIES1 = -lsec
 #endif
-#if defined(LinuxArchitecture)
+#if defined(LinuxArchitecture) && (!UseElfFormat || LinuxShadowSuite)
 SYS_LIBRARIES1 = -lshadow
 #endif
 #endif
@@ -82,7 +105,7 @@ SYS_LIBRARIES2 = -lcrypt
 #endif
 #endif
 
-SYS_LIBRARIES = $(SYS_LIBRARIES1) $(SYS_LIBRARIES2)
+SYS_LIBRARIES = $(SYS_LIBRARIES1) $(SYS_LIBRARIES2) $(SYS_LIBRARIES3)
 
 #if HasBSD44Sockets
 SOCK_DEFINES = -DBSD44SOCKETS
@@ -105,7 +128,7 @@ XKB_CLIENT_DEFINES = XkbClientDefines
 
 INCLUDES = $(KRB5_INCLUDE)
 DEPLIBS = $(DEPXMULIB) $(DEPXTOOLLIB) $(DEPXLIB) $(DEPXAUTHLIB) $(DEPXDMCPLIB)
-LOCAL_LIBRARIES = $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) $(XDMCPLIB) $(RPCLIB) $(DLLIB)
+LOCAL_LIBRARIES = $(XMULIB) $(XTOOLLIB) $(XLIB) $(XAUTHLIB) $(XDMCPLIB) $(RPCLIB) $(DLLIBRARY)
 
           SRCS1 = auth.c daemon.c server.c dpylist.c dm.c error.c file.c \
 		  netaddr.c reset.c resource.c protodpy.c policy.c \

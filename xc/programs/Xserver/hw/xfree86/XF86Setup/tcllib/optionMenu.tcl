@@ -1,3 +1,10 @@
+# $XConsortium: optionMenu.tcl /main/1 1996/09/21 14:15:53 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tcllib/optionMenu.tcl,v 3.1 1996/12/27 06:55:02 dawes Exp $
+#
 # optionMenu.tcl --
 #
 # This file defines the procedure tk_optionMenu, which creates

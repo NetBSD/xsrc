@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.c,v 3.10 1996/09/29 13:41:34 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.c,v 3.11.2.2 1997/05/14 08:39:45 dawes Exp $ */
 /*
  * PCI Probe
  *
@@ -7,7 +7,7 @@
  * A lot of this comes from Robin Cutshaw's scanpci
  *
  */
-/* $XConsortium: vgaPCI.c /main/2 1996/01/13 13:15:11 kaleb $ */
+/* $XConsortium: vgaPCI.c /main/10 1996/10/25 10:34:22 kaleb $ */
 
 #include "xf86.h"
 #include "xf86Priv.h"
@@ -26,6 +26,7 @@ vgaGetPCIInfo()
     pciConfigPtr pcrp, *pcrpp;
     Bool found = FALSE;
     int i = 0;
+    CARD32 membase = 0, membase2 = 0, mmiobase = 0, iobase = 0;
 
     pcrpp = xf86scanpci(vga256InfoRec.scrnIndex);
 
@@ -50,73 +51,93 @@ vgaGetPCIInfo()
 	    info->AllCards = pcrpp;
 	    info->ThisCard = pcrp;
 	    info->MemBase = 0;
+	    info->MMIOBase = 0;
 	    info->IOBase = 0;
 
-	    /*
-	     * It should be possible to move this out into the Cirrus
-	     * driver now.
-	     */
-	    if (info->Vendor == PCI_VENDOR_CIRRUS &&
-		(info->ChipType == PCI_CHIP_GD5462) ||
-		(info->ChipType == PCI_CHIP_GD5464) ||
-		(info->ChipType == PCI_CHIP_GD7548)) {
-	      info->IOBase = pcrp->_base0;
-	      info->MemBase = pcrp->_base1;
-
-	      xf86writepci(vga256InfoRec.scrnIndex, pcrp->_bus,
-			   pcrp->_cardnum, pcrp->_func,
-			   PCI_CMD_STAT_REG,
-			   PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE,
-			   PCI_CMD_IO_ENABLE | PCI_CMD_MEM_ENABLE);
-	      break;
-	    }
-
-
+	    /* If the alignment is finer than 256k, assume mmio */
 	    if (pcrp->_base0) {
 		if (pcrp->_base0 & 1)
-		    info->IOBase = pcrp->_base0 & 0xFFFFFFFC;
+		    iobase = pcrp->_base0 & 0xFFFFFFFC;
 		else
-		    info->MemBase = pcrp->_base0 & 0xFFFFFFF0;
+		    if (pcrp->_base0 & 0x3FFF0)
+			mmiobase = pcrp->_base0 & 0xFFFFFFF0;
+		    else
+			membase = pcrp->_base0 & 0xFFFFFFF0;
 	    }
 	    if (pcrp->_base1) {
 		if (pcrp->_base1 & 1) {
-		    if (!info->IOBase)
-			info->IOBase = pcrp->_base1 & 0xFFFFFFFC;
+		    if (!iobase)
+			iobase = pcrp->_base1 & 0xFFFFFFFC;
 		} else
-		    if (!info->MemBase)
-			info->MemBase = pcrp->_base1 & 0xFFFFFFF0;
+		    if (pcrp->_base1 & 0x3FFF0) {
+			if (!mmiobase)
+			    mmiobase = pcrp->_base1 & 0xFFFFFFF0;
+		    } else {
+			if (!membase)
+			    membase = pcrp->_base1 & 0xFFFFFFF0;
+			else if (!membase2)
+			    membase2 = pcrp->_base1 & 0xFFFFFFF0;
+		    }
 	    }
 	    if (pcrp->_base2) {
 		if (pcrp->_base2 & 1) {
-		    if (!info->IOBase)
-			info->IOBase = pcrp->_base2 & 0xFFFFFFFC;
+		    if (!iobase)
+			iobase = pcrp->_base2 & 0xFFFFFFFC;
 		} else
-		    if (!info->MemBase)
-			info->MemBase = pcrp->_base2 & 0xFFFFFFF0;
+		    if (pcrp->_base2 & 0x3FFF0) {
+			if (!mmiobase)
+			    mmiobase = pcrp->_base2 & 0xFFFFFFF0;
+		    } else {
+			if (!membase)
+			    membase = pcrp->_base2 & 0xFFFFFFF0;
+			else if (!membase2)
+			    membase2 = pcrp->_base2 & 0xFFFFFFF0;
+		    }
 	    }
 	    if (pcrp->_base3) {
 		if (pcrp->_base3 & 1) {
-		    if (!info->IOBase)
-			info->IOBase = pcrp->_base3 & 0xFFFFFFFC;
+		    if (!iobase)
+			iobase = pcrp->_base3 & 0xFFFFFFFC;
 		} else
-		    if (!info->MemBase)
-			info->MemBase = pcrp->_base3 & 0xFFFFFFF0;
+		    if (pcrp->_base3 & 0x3FFF0) {
+			if (!mmiobase)
+			    mmiobase = pcrp->_base3 & 0xFFFFFFF0;
+		    } else {
+			if (!membase)
+			    membase = pcrp->_base3 & 0xFFFFFFF0;
+			else if (!membase2)
+			    membase2 = pcrp->_base3 & 0xFFFFFFF0;
+		    }
 	    }
 	    if (pcrp->_base4) {
 		if (pcrp->_base4 & 1) {
-		    if (!info->IOBase)
-			info->IOBase = pcrp->_base4 & 0xFFFFFFFC;
+		    if (!iobase)
+			iobase = pcrp->_base4 & 0xFFFFFFFC;
 		} else
-		    if (!info->MemBase)
-			info->MemBase = pcrp->_base4 & 0xFFFFFFF0;
+		    if (pcrp->_base4 & 0x3FFF0) {
+			if (!mmiobase)
+			    mmiobase = pcrp->_base4 & 0xFFFFFFF0;
+		    } else {
+			if (!membase)
+			    membase = pcrp->_base4 & 0xFFFFFFF0;
+			else if (!membase2)
+			    membase2 = pcrp->_base4 & 0xFFFFFFF0;
+		    }
 	    }
 	    if (pcrp->_base5) {
 		if (pcrp->_base5 & 1) {
-		    if (!info->IOBase)
-			info->IOBase = pcrp->_base5 & 0xFFFFFFFC;
+		    if (!iobase)
+			iobase = pcrp->_base5 & 0xFFFFFFFC;
 		} else
-		    if (!info->MemBase)
-			info->MemBase = pcrp->_base5 & 0xFFFFFFF0;
+		    if (pcrp->_base5 & 0x3FFF0) {
+			if (!mmiobase)
+			    mmiobase = pcrp->_base5 & 0xFFFFFFF0;
+		    } else {
+			if (!membase)
+			    membase = pcrp->_base5 & 0xFFFFFFF0;
+			else if (!membase2)
+			    membase2 = pcrp->_base5 & 0xFFFFFFF0;
+		    }
 	    }
 	    break;
 	}
@@ -154,10 +175,18 @@ vgaGetPCIInfo()
 	    ErrorF("Unknown chipset (0x%04x) ", info->ChipType);
 	ErrorF("rev %d", info->ChipRev);
 
-	if (info->MemBase)
-	    ErrorF(", Memory @ 0x%08x", info->MemBase);
-	if (info->IOBase)
-	    ErrorF(", I/O @ 0x%04x", info->IOBase);
+	info->MemBase = membase;
+	info->MMIOBase = mmiobase;
+	info->IOBase = iobase;
+
+	if (membase)
+	    ErrorF(", Memory @ 0x%08x", membase);
+	if (membase2)
+	    ErrorF(", 0x%08x", membase2);
+	if (mmiobase)
+	    ErrorF(", MMIO @ 0x%08x", mmiobase);
+	if (iobase)
+	    ErrorF(", I/O @ 0x%04x", iobase);
 	ErrorF("\n");
     }
     return info;

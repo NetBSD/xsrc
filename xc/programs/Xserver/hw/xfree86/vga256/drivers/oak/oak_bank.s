@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/oak/oak_bank.s,v 3.3 1996/02/04 09:13:48 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/oak/oak_bank.s,v 3.4 1996/12/23 06:57:52 dawes Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -20,7 +20,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-/* $XConsortium: oak_bank.s /main/5 1995/11/13 11:42:01 kaleb $ */
+/* $XConsortium: oak_bank.s /main/6 1996/02/21 18:05:59 kaleb $ */
 
 /*
  * These are here the very lowlevel VGA bankswitching routines.

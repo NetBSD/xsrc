@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_init.c,v 3.9 1996/08/20 12:29:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_init.c,v 3.11.2.1 1997/05/11 05:04:25 dawes Exp $ */
 /*
  * (c) Copyright 1994 by Holger Veit
  *			<Holger.Veit@gmd.de>
@@ -27,6 +27,7 @@
  * in this Software without prior written authorization from Holger Veit.
  *
  */
+/* $XConsortium: os2_init.c /main/9 1996/10/19 18:07:13 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"
@@ -55,39 +56,15 @@ void os2KbdMonitorThread();
 void os2KbdBitBucketThread();
 HEV hevPopupPending;
 extern HEV hKbdSem;
-static BOOL emx_checked = FALSE;
 extern BOOL os2HRTimerFlag;
-
-/* from Eberhard to check for the right EMX version */
-static void check_emx (void)
-{
-	ULONG rc;
-	HMODULE hmod;
-	char name[CCHMAXPATH];
-	char fail[9];
-
-	if (_emx_rev < 42) {
-		ErrorF("This program requires emx.dll revision 42 (0.9b fix 04) "
-			"or later.\n");
-		rc = DosLoadModule (fail, sizeof (fail), "emx", &hmod);
-		if (rc == 0) {
-			rc = DosQueryModuleName (hmod, sizeof (name), name);
-			if (rc == 0)
-				ErrorF("Please delete or update `%s'.\n", name);
-			DosFreeModule (hmod);
-		}
-		exit (2);
-        }
-	emx_checked = TRUE;
-}
+extern void os2_checkinstallation(); /* os2_diag.c */
 
 void xf86OpenConsole()
 {
-    if (!emx_checked)
-	check_emx();
+    /* try to catch problems before they become obvious */
+    os2_checkinstallation();
 
-    if (serverGeneration == 1)
-    {
+    if (serverGeneration == 1) {
 	HKBD fd;
 	ULONG drive;
 	ULONG dummy;
@@ -96,6 +73,17 @@ void xf86OpenConsole()
 	int VioTid;
         ULONG actual_handles;
         LONG new_handles;
+
+	/* hv 250197 workaround for xkb-Problem: switch to X11ROOT drive */
+	char *x11r = getenv("X11ROOT");
+        /* Make sure X11ROOT is set before we go further sm280297 */
+        if (x11r == NULL){ 
+           ErrorF("The environment variable X11ROOT is not set! The xserver is aborting.\n");	
+           exit(1);  
+           }
+        if (_chdir2(x11r) < 0) {
+		ErrorF("xf86-OS/2: Cannot change to X11ROOT directory!\n");
+	}
 
 	ErrorF("xf86-OS/2: Console opened\n");
 	OriginalVideoMode.cb=sizeof(VIOMODEINFO);
@@ -106,11 +94,11 @@ void xf86OpenConsole()
         /* Set the number of handles to higher than the default 20. Set to 80 which should be plenty */
         new_handles = 0;
         rc = DosSetRelMaxFH(&new_handles,&actual_handles);
-        if(actual_handles < 80){
-            new_handles = 80 - actual_handles;
-            rc = DosSetRelMaxFH(&new_handles,&actual_handles);
-            ErrorF("xf86-OS/2: Increased number of available handles to %d\n",actual_handles);
-            }
+        if (actual_handles < 80) {
+		new_handles = 80 - actual_handles;
+		rc = DosSetRelMaxFH(&new_handles,&actual_handles);
+		ErrorF("xf86-OS/2: Increased number of available handles to %d\n",actual_handles);
+	}
 
 	/* grab the keyboard */
 	rc = KbdGetFocus(0,0);
@@ -142,7 +130,7 @@ void xf86OpenConsole()
 	rc=DosCreateEventSem("\\SEM32\\XF86PUP",&hevPopupPending,DC_SEM_SHARED,1);
 	if(rc) ErrorF("xf86-OS/2: Could not create popup semaphore! RC=%d\n",rc);
 	/* rc=VioRegister("xf86vio","XF86POPUP_SUBCLASS",0x20002004L,0L);
-	if(rc){ 
+	if(rc) {
 		FatalError("xf86-OS2: Could not register XF86VIO.DLL module. Please install in LIBPATH! RC=%d\n",rc);
 	}  */
 
@@ -167,7 +155,7 @@ void xf86OpenConsole()
 	
 	rc = KbdSetCp(0,0,fd);
 	if(rc != 0)
-		FatalError("xf86OpenConsole: cannot set keyboard codepage, rc=%d\n",rc);
+		FatalError("xf86-OS/2: xf86OpenConsole: cannot set keyboard codepage, rc=%d\n",rc);
 
 	hwid.cb = sizeof(hwid);	/* fix crash on P9000 */
 	rc = KbdGetHWID(&hwid, fd);
@@ -179,7 +167,7 @@ void xf86OpenConsole()
 		case 1: /*real AT 84 key*/
 			xf86Info.kbdType = KB_84; break;
 		case 0xab85: /* 122 key */
-			FatalError("OS/2 has detected an extended 122key keyboard: unsupported!\n");
+			FatalError("xf86-OS/2: OS/2 has detected an extended 122key keyboard: unsupported!\n");
 		case 0xab41: /* 101/102 key */
 			xf86Info.kbdType = KB_101; break;
 		}				
@@ -217,12 +205,11 @@ int argc;
 char *argv[];
 int i;
 {
-  if (!strcmp(argv[i], "-os2HRTimer"))
-  {
-    os2HRTimerFlag = TRUE;
-    return 1;
-  }
-  return 0;
+	if (!strcmp(argv[i], "-os2HRTimer")) {
+		os2HRTimerFlag = TRUE;
+		return 1;
+	}
+	return 0;
 }
 
 void xf86UseMsg()
@@ -230,5 +217,3 @@ void xf86UseMsg()
         ErrorF("-os2HRTimer    -use the OS/2 high-resolution timer driver (TIMER0.SYS)\n");
 	return;
 }
-
-

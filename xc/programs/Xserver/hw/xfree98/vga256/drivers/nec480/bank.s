@@ -1,4 +1,10 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/nec480/bank.s,v 3.0 1996/03/29 22:19:07 dawes Exp $ */
+/* $XConsortium: bank.s /main/1 1996/09/21 14:56:29 kaleb $ */
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/nec480/bank.s,v 3.1 1996/12/27 07:07:25 dawes Exp $ */
 
 #include "assyntax.h"
 

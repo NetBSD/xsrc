@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8frect.c,v 3.4 1996/02/04 09:03:44 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach8/mach8frect.c,v 3.5 1996/12/23 06:39:53 dawes Exp $ */
 /*
  * Fill rectangles.
  */
@@ -46,7 +46,7 @@ Simple expansion of tiles added by incorporating parts of the code from
 mach8pcach.c 94-07-12, Hans Nasten ( nasten@everyware.se ).
 
 */
-/* $XConsortium: mach8frect.c /main/7 1995/11/12 18:00:23 kaleb $ */
+/* $XConsortium: mach8frect.c /main/8 1996/02/21 17:30:18 kaleb $ */
 
 #include "X.h"
 #include "Xmd.h"

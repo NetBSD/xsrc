@@ -1,11 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/STG1703clk.c,v 3.6 1996/05/06 05:58:02 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/STG1703clk.c,v 3.7 1996/12/23 06:44:19 dawes Exp $ */
 /*
  * Copyright 1995 The XFree86 Project, Inc
  *
  * programming for the STG1703 clock derived from the code in the Mach64
  * server (by Kevin Martin).
  */
-/* $XConsortium: STG1703clk.c /main/4 1995/12/17 08:26:46 kaleb $ */
+/* $XConsortium: STG1703clk.c /main/6 1996/05/07 17:14:06 kaleb $ */
 
 #include "Xfuncproto.h"
 #include "compiler.h"

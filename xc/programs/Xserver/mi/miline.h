@@ -1,4 +1,4 @@
-/* $XConsortium: miline.h,v 1.5 94/07/29 11:54:51 dpw Exp $ */
+/* $XConsortium: miline.h /main/6 1996/08/12 21:51:09 dpw $ */
 
 /*
 
@@ -31,7 +31,7 @@ in this Software without prior written authorization from the X Consortium.
 
 /*
  * Public definitions used for configuring basic pixelization aspects
- * of the sample implementation graphics routines provided in
+ * of the sample implementation line-drawing routines provided in
  * {mfb,mi,cfb*} at run-time.
  */
 
@@ -71,6 +71,9 @@ in this Software without prior written authorization from the X Consortium.
  *     /  |  \
  *    / 6 | 7 \
  *   /    |    \
+ *
+ * For more information, see "Ambiguities in Incremental Line Rastering,"
+ * Jack E. Bresenham, IEEE CG&A, May 1987.
  */
 
 extern void miSetZeroLineBias(
@@ -111,7 +114,8 @@ extern void miSetZeroLineBias(
 }
 
 #define miGetZeroLineBias(_pScreen) \
-    ((_pScreen)->devPrivates[miZeroLineScreenIndex].uval)
+    ((miZeroLineScreenIndex < 0) ? \
+     		0 : ((_pScreen)->devPrivates[miZeroLineScreenIndex].uval))
 
 #define CalcLineDeltas(_x1,_y1,_x2,_y2,_adx,_ady,_sx,_sy,_SX,_SY,_octant) \
     (_octant) = 0;				\

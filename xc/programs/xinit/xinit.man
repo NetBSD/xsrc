@@ -1,5 +1,5 @@
-.\" $XConsortium: xinit.man /main/23 1995/12/15 14:04:11 gildea $
-.\" $XFree86: xc/programs/xinit/xinit.man,v 3.1 1996/01/05 13:21:46 dawes Exp $
+.\" $XConsortium: xinit.man /main/24 1996/12/09 17:09:20 kaleb $
+.\" $XFree86: xc/programs/xinit/xinit.man,v 3.2 1996/12/23 07:11:25 dawes Exp $
 .\" Copyright (c) 1988  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -25,7 +25,7 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH XINIT 1 "Release 6.1" "X Version 11"
+.TH XINIT 1 "Release 6.3" "X Version 11"
 .SH NAME
 xinit \- X Window System initializer
 .SH SYNOPSIS

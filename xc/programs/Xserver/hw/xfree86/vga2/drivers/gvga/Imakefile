@@ -1,10 +1,10 @@
-XCOMM $XConsortium: Imakefile /main/5 1996/01/26 13:51:18 kaleb $
+XCOMM $XConsortium: Imakefile /main/7 1996/09/28 17:27:14 rws $
 
 
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga2/drivers/gvga/Imakefile,v 3.5 1996/02/04 09:12:05 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga2/drivers/gvga/Imakefile,v 3.6 1996/12/23 06:54:43 dawes Exp $
 #include <Server.tmpl>
 
 SRCS = gvg_driver.c gvg_bank.s
@@ -15,7 +15,7 @@ OBJS = gvg_driver.o gvg_bank.o
 INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
 #else
 INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
-           -I../../../vga256/vga -I$(SERVERSRC)/include -I$(INCLUDESRC)
+           -I../../../vga256/vga -I$(SERVERSRC)/include -I$(XINCLUDESRC)
 #endif
 
 DEFINES = -DMONOVGA

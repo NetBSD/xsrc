@@ -1,10 +1,10 @@
-<!doctype linuxdoc system>
+<!DOCTYPE linuxdoc PUBLIC "-//XFree86//DTD linuxdoc//EN">
 <article>
  
 <!-- made up title -->
 <title> Information for ISC Users
 <author> Michael Rohleder
-<date> 26 August 1996
+<date> 13 January 1997
 <toc>
 
 <sect> X11R6/XFree86&tm; on Interactive Unix <p>
@@ -16,7 +16,7 @@ Interactive Unix, also referred to as ISC.
 If you have any suggestions, comments, fixes or ideas regarding
 X11R6/XFree86 on Interactive Unix, send e-mail to
 
-<url url="mailto:michael.rohleder@stadt-frankfurt.de" 
+<htmlurl url="mailto:michael.rohleder@stadt-frankfurt.de" 
     name="michael.rohleder@stadt-frankfurt.de"><p>
 Bug Reports should be sent to<p>
 <em>XFree86@XFree86.Org</em><p>
@@ -162,33 +162,38 @@ BOOTSTRAPCFLAGS="-DISC [-DISC30 | -DISC40] -DSYSV [-Di386]"
 <descrip>
 <tag>-DISC -DISC30</tag>
 	these two defines are necessary to build the release
-                   I don't know if the build will succeed for ISC versions 
-                   prior than 3.x
+        I don't know if the build will succeed for ISC versions 
+        prior than 3.x
 
 <tag>-DISC40</tag>
 	are only for getting the ISC version and therefore
-                   set the HasSymLinks to Yes ('cause symbolic linking
-                   were only supported from Version 4.x using the S5L 
-                   Filesystem)<p>
-                   If you could use long filenames, you could enable
-                   the installation of expanded Manual Pages by including
-                   <tt> &num;define ExpandManNames	YES </tt>
-                   inside xf86site.def.<p>
-		   A build on ISC 4.x only needs -DISC40 defined in
-		   the BOOTSTRAPCFLAGS -- 
-                   the -DISC30 will be included automatically.
+        set the HasSymLinks to Yes ('cause symbolic linking
+        were only supported from Version 4.x using the S5L Filesystem)<p>
+        If you could use long filenames, you could enable
+        the installation of expanded Manual Pages by including
+        <tt> &num;define ExpandManNames	YES </tt>
+        inside xf86site.def.<p>
+	A build on ISC 4.x only needs -DISC40 defined in the BOOTSTRAPCFLAGS 
+        ( -DISC30 will be included automatically ).<p>
+        Note: if you still use Version 4.0, or you want to build
+        binaries on Version 4.1 which should run on 4.0, you have 
+        to set <tt> &num;define UseChmod	YES </tt> inside your
+        host.def.<p>
+        (the fchmod function isn't available on 4.0, so it won't compile,
+        and binaries from 4.1 won't run cause of the unsupported System call)
+        On Versions less 4.0 this will be the default.
 
 <tag>-DSYSV &lsqb;-Di386&rsqb;</tag>
 	standard defines for SystemV Release3 on x86 platform.
-		  You don't need to explicitly define -Di386 because
-		  this is pre-defined in /lib/cpp.
+	You don't need to explicitly define -Di386 because
+	this is pre-defined in /lib/cpp.
 
 </descrip>
 
 <sect> linear Addressing <p>
 
 <itemize>
-<item> Compiling &hellip; <p>
+<item>Compiling &hellip; <p>
 If you want to include support for linear addressing into the server binaries,
 you have to define 
 <verb>
@@ -203,11 +208,15 @@ source in the file
 <verb>
 xc/programs/Xserver/hw/xfree86/etc/mmapSVR3.shar
 </verb>
+or
+<verb>
+/usr/X11R6/lib/X11/etc/mmapSVR3.shar
+</verb>
 Build and install the driver as instructed. You'll need the file
 /usr/include/sys/mmap.h for compiling the X11R6/XFree86 source tree,
 with linear addressing enabled.
 
-<item> Using &hellip; <p>
+<item>Using &hellip; <p>
 
 To use the linear address-mapping of the framebuffer you need the mmap Driver
 by Thomas Wolfram (Version 2.2.3) installed in your Kernel.
@@ -224,7 +233,7 @@ appropriate README of your Card/Server, for
 Note that the P9000 server will not work at all unless linear addressing
 is available.
 
-I could only test two cards against the linear addressing.
+I could only test these cards against the linear addressing.
 <itemize>
 	<item>Spea/V7 Vega - clgd5428 - VLB<p>
 	   with 32MB MainMemory installed I couldn't use it.
@@ -248,16 +257,14 @@ I could only test two cards against the linear addressing.
            This bug seems to be fixed since 3.1.2, and therefore the 
            workaround is not needed anymore.
 	<item>ELSA Winner 2000PRO/X Revision G<p>
-           be careful with the newmmio Driver in XF86_S3. It may be the case
-           that the Server fails because xf86MapVidMem says:<p>
-           Could not mmap framebuffer [s=1010000,a=f8000000] (Not enough space)
+           if you experience a Problem with this Card you could try to
+           use the older Chipset Driver instead "newmmio".
            <p>If you declare 
            <verb>
            Chipset "mmio_928"
            </verb>
-           inside your XF86Config, everything will be alright again.<p>
-           This seems to be a problem with mmap. I will look further, but
-           any help will be welcome.
+           inside your XF86Config, it may be alright again.<p>
+           With the current XF86_S3 I don't encounter any problem.
 
 </itemize>
 
@@ -266,7 +273,7 @@ I could only test two cards against the linear addressing.
 <sect>XKeyboard Extension<p>
 
 <itemize>
-<item> Sample Setup &hellip; <p>
+<item>Sample Setup &hellip; <p>
 Here is a sample XKeyboard Definition to include inside the Keyboard Section
 of your XF86Config File.
 <verb>
@@ -288,49 +295,6 @@ or you could use this one with the new Options:
    XkbVariant      "nodeadkeys"
 </verb>
 
-You may notice a change (again) with the Keys for Apostrophe (needed to mask
-something completely in the shell) and Acute. Here is a patch you could apply
-in your directory containing the xc directory to get back the (I think) 
-correct behavior.<p>
-This isn't needed in the binary distribution.<p>
-
-<verb>
-diff -c xc/programs/xkbcomp/symbols/de.orig xc/programs/xkbcomp/symbols/de
-*** xc/programs/xkbcomp/symbols/de.orig	Fri Aug 16 18:20:13 1996
---- xc/programs/xkbcomp/symbols/de	Fri Aug 16 19:24:42 1996
-***************
-*** 77,83 ****
-      include "de(basic)"
-      key <TLDE> {	[ asciicircum,	degree		],
-  			[   notsign 			]	};
-!     key <AE12> {	[ acute,	grave		],
-  			[ cedilla			]	};
-      key <AD11> {	[ udiaeresis,	Udiaeresis	],
-  			[ diaeresis 			]	};
---- 77,83 ----
-      include "de(basic)"
-      key <TLDE> {	[ asciicircum,	degree		],
-  			[   notsign 			]	};
-!     key <AE12> {	[ apostrophe,	grave		],
-  			[ cedilla			]	};
-      key <AD11> {	[ udiaeresis,	Udiaeresis	],
-  			[ diaeresis 			]	};
-***************
-*** 88,93 ****
-      key <AC11> {	[ adiaeresis,	Adiaeresis	],
-  			[ asciicircum			]	};
-  
-!     key <BKSL> {	[ numbersign,	apostrophe	],
-  			[ grave				]	};
-  };
---- 88,93 ----
-      key <AC11> {	[ adiaeresis,	Adiaeresis	],
-  			[ asciicircum			]	};
-  
-!     key <BKSL> {	[ numbersign,	acute		],
-  			[ grave				]	};
-  };
-</verb>
 </itemize>
 
 <sect> Multibuffer Extension <p>
@@ -347,13 +311,12 @@ necessary in xf86site.def, either it isn't to bad to have a look inside it ;-)
 
 #ifdef BeforeVendorCF
 
-/* Try it out */
-/* #define BuildLBX                YES */
-
-/* Only when building official binaries
-#define InstallEmptyHostDef 
+/* Only when building official binaries*/
+/*
 #define InstallJapaneseDocs     YES
+#define InstallEmptyHostDef 
 */
+
 
 /* Try MultiBuffer Extension */
 #define BuildMultibuffer        YES
@@ -364,8 +327,10 @@ necessary in xf86site.def, either it isn't to bad to have a look inside it ;-)
 #endif
 
 /* gcc 2.6.3 tested Optimization Flags                               */
-# define DefaultGcc2i386Opt	-O3 -fomit-frame-pointer -fstrength-reduce
-/* # define DefaultGcc2i386Opt	-O2 -fomit-frame-pointer -fstrength-reduce*/
+# define DefaultGcc2i386Opt	-O2 -fstrength-reduce -malign-loops=2 -malign-jumps=2 -malign-functions=2
+
+/* binaries which should run on ISC 4.0 or for the build on a real 4.0 System */
+# define UseChmod		YES
 
 /* For a POSIXized build on Interactive maybe needed to use gcc2.7.2 */
 # define UsePosix		YES
@@ -394,9 +359,12 @@ necessary in xf86site.def, either it isn't to bad to have a look inside it ;-)
 # define InstallXdmConfig      YES
 # define InstallFSConfig               YES
 
+#define BuildChooser		YES
+
 /* for the new XF86Setup Util */
 #define HasTk			YES
 #define HasTcl			YES
+
 
 #endif /* BeforeVendorCF */
 </verb>
@@ -413,7 +381,7 @@ filesystem.
 make install.man
 </verb>
 to install the compressed nroff versions of the manual pages into 
-/usr/X11R6/man. This directory will by generated if it doesn't exist.
+/usr/X11R6/man. This directory will be generated if it doesn't exist.
 <verb>
 make install.linkkit
 </verb>
@@ -433,6 +401,10 @@ to install the server binary LinkKit into /usr/X11R6/lib/Server.
 <sect>Using &hellip; <p>
 
 <itemize>
+<item>Xprt:<p>
+       The new Xprint Server is configured to use lpr as its print helper
+       so you have to install and configure lpr to use Xprt.<p>
+
 <item>Keyboard:<p>
        You don't need any modmap-File to get your keyboard
        working with any iso-8859-1 Font. Simply enable 
@@ -471,13 +443,13 @@ to install the server binary LinkKit into /usr/X11R6/lib/Server.
         You have to call your xpcterm with the option 
         <tt>-name XEga -fn ega</tt>
          
-	<item>Switching between X11R5 and X11R6 configuration<p>
+<item>Switching between X11R5 and X11R6 configuration<p>
           to compile X11-Clients as either R6 or R5 clients,
           should be as easy as you only switch the PATH components
           so that either <tt>/usr/X11R6/bin/xmkmf</tt> or 
           <tt>/usr/X386/bin/xmkmf</tt> would make the new Makefile.
 
-	<item>ISC Streams Pipes <p>
+<item>ISC Streams Pipes <p>
 	      The old path to the pipes on ISC's R4 <tt>/tmp/.X11-unix</tt>
 	      has changed to <tt>/dev/X/ISCCONN</tt>. For compatibility 
 	      reasons on ISC, the pipes in the new directory will be
@@ -491,6 +463,24 @@ to install the server binary LinkKit into /usr/X11R6/lib/Server.
               We tried to catch this signal, so if it dumps please send
               me a note.
           
+<item>Warnings you may see: <p>
+   <itemize>
+      <item>
+           Since 3.2A, you could see a warning from pre X11R6.3 clients.<p>
+           <verb>
+           Warning: Unable to load any usable fontset
+           </verb>
+           The case are the new gzipped fonts, but the Warning isn't serious.<p>
+      <item>
+           If you start a server you may see the following message:<p>
+           <verb>
+        _XSERVTransOpen: transport open failed for named/enigma:0
+        _XSERVTransMakeAllCOTSServerListeners: failed to open listener for named
+           </verb>
+           This message either isn't critical. Interactive doesn't support this
+           kind of connection.<p>
+   </itemize>
+
 </itemize>
 
                  
@@ -503,13 +493,13 @@ as to all who contribute to this excellent piece of free software.
 
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/isc.sgml,v 3.14 1996/09/01 04:16:09 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/isc.sgml,v 3.18 1997/01/25 03:22:23 dawes Exp $
 
 
 
 
 
-$XConsortium: isc.sgml /main/4 1995/11/12 20:00:42 kaleb $
+$XConsortium: isc.sgml /main/8 1996/10/23 11:45:58 kaleb $
 </verb>
 
 </article>

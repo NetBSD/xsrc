@@ -1,3 +1,5 @@
+** This document is out of date **
+
 The following is a list of files/directories required for a self-contained
 cut-down source tree suitable for building the lbxproxy server.  When
 using this cut-down tree, set BuildLBXProxyOnly to YES in
@@ -43,10 +45,10 @@ xc/config/cf/xf86site.def to have lbxproxy dynamically linked instead of
 statically linked against the X libraries.
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/LbxproxyOnly,v 3.1 1996/02/04 09:07:10 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/LbxproxyOnly,v 3.3 1996/12/26 07:00:12 dawes Exp $
 
 
 
 
 
-$XConsortium: LbxproxyOnly /main/2 1995/11/12 19:47:47 kaleb $
+$XConsortium: LbxproxyOnly /main/3 1996/02/21 17:42:14 kaleb $

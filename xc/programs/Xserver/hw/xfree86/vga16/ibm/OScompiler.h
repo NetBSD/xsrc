@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/OScompiler.h,v 3.4 1996/02/04 09:11:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/OScompiler.h,v 3.5 1996/12/23 06:52:34 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -21,7 +21,7 @@
  * SOFTWARE.
  *
 */
-/* $XConsortium: OScompiler.h /main/3 1995/11/13 07:04:02 kaleb $ */
+/* $XConsortium: OScompiler.h /main/4 1996/02/21 17:56:09 kaleb $ */
 
 #ifndef __COMPILER_DEPENDANCIES__
 #define __COMPILER_DEPENDANCIES__

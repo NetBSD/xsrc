@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/NCR.c,v 3.4 1996/09/22 05:01:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/NCR.c,v 3.5 1996/12/23 06:31:19 dawes Exp $ */
 /*
  * (c) Copyright 1993,1994 by David Wexelblat <dwex@xfree86.org>
  *
@@ -26,7 +26,7 @@
  *
  */
 
-/* $XConsortium: NCR.c /main/4 1995/11/13 11:12:37 kaleb $ */
+/* $XConsortium: NCR.c /main/6 1996/10/24 07:09:54 kaleb $ */
 
 #include "Probe.h"
 

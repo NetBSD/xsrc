@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32im.h,v 1.1.1.2 1996/01/03 07:13:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach32/mach32im.h,v 3.1 1996/12/23 06:38:40 dawes Exp $ */
 /*
  * Copyright 1992,1993 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: mach32im.h /main/2 1995/11/12 17:25:09 kaleb $ */
+/* $XConsortium: mach32im.h /main/3 1996/02/21 17:27:03 kaleb $ */
 
 #ifndef MACH32IM_H
 #define MACH32IM_H

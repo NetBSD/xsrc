@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgatileodd.c,v 3.2 1996/02/04 09:15:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgatileodd.c,v 3.4 1996/12/23 07:00:04 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -29,7 +29,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XConsortium: vgatileodd.c /main/2 1995/11/13 09:27:22 kaleb $ */
+/* $XConsortium: vgatileodd.c /main/3 1996/02/21 18:12:13 kaleb $ */
 
 /*
  * Fill odd tiled rectangles and spans.
@@ -64,8 +64,8 @@ from the X Consortium.
 	    bits = BitLeft(tmp, tileEndLeftShift) | \
 		   BitRight(bits, tileEndRightShift); \
 	xoff = (xoff + xoffStep) & PIM; \
-	leftShift = xoff << (5-PWSH); \
-	rightShift = 32 - leftShift; \
+	leftShift = xoff << LEFTSHIFT_AMT; \
+	rightShift = PGSZ - leftShift; \
     }\
 }
 
@@ -154,8 +154,8 @@ MROP_NAME(vga256FillBoxTileOdd) (pDrawable, nBox, pBox, tile, xrot, yrot, alu, p
 
     tileEndPart = tileWidth & PIM;
     tileEndMask = cfbendpartial[tileEndPart];
-    tileEndLeftShift = (tileEndPart) << (5-PWSH);
-    tileEndRightShift = 32 - tileEndLeftShift;
+    tileEndLeftShift = (tileEndPart) << LEFTSHIFT_AMT;
+    tileEndRightShift = PGSZ - tileEndLeftShift;
     xoffStep = PPW - tileEndPart;
     /*
      * current assumptions: tile > 32 bits wide.
@@ -268,7 +268,7 @@ MROP_NAME(vga256FillBoxTileOdd) (pDrawable, nBox, pBox, tile, xrot, yrot, alu, p
 #endif
 		{
 		    NextTileBits
-		    if (rightShift != 32)
+		    if (rightShift != PGSZ)
 		    {
 			*pDst = MROP_SOLID(BitLeft(tmp, leftShift) |
 					   BitRight(bits, rightShift),
@@ -357,7 +357,7 @@ MROP_NAME(vga256FillSpanTileOdd) (pDrawable, n, ppt, pwidth, tile, xrot, yrot, a
 
     tileHeight = tile->drawable.height;
     tileWidth = tile->drawable.width;
-    widthSrc = tile->devKind >> 2;
+    widthSrc = tile->devKind / PGSZB;
     narrowTile = FALSE;
     if (widthSrc == 1)
     {
@@ -413,7 +413,7 @@ MROP_NAME(vga256FillSpanTileOdd) (pDrawable, n, ppt, pwidth, tile, xrot, yrot, a
 	/* XXX only works when narrowShift >= PPW/2 */
 	if (narrowTile)
 	{
-	    tmp = pSrcLine[srcy] & narrowMask;
+	    tmp = pSrcLine[0] & narrowMask;
 	    narrow[0] = tmp | SCRRIGHT (tmp, narrowShift);
 	    narrow[1] = SCRLEFT (tmp, PPW - narrowShift) |
 			SCRRIGHT(tmp, 2 * narrowShift - PPW);
@@ -500,7 +500,7 @@ MROP_NAME(vga256FillSpanTileOdd) (pDrawable, n, ppt, pwidth, tile, xrot, yrot, a
 	if (endmask)
 	{
 	    NextTileBits
-	    if (rightShift == 32)
+	    if (rightShift == PGSZ)
 		bits = 0;
 	    *pDst = MROP_MASK (BitLeft(tmp, leftShift) |
 			       BitRight(bits,rightShift),
@@ -608,7 +608,7 @@ MROP_NAME(vga256FillBoxTile32s) (pDrawable, nBox, pBox, tile, xrot, yrot, alu, p
 	pdstT = pdstLine;
 	SETRW(pdstLine);
 	while (h) {
-	  maxh = min(h,((int*)vgaWriteTop - (int*)pdstLine) / widthDst);
+	  maxh = min(h,((long*)vgaWriteTop - (long*)pdstLine) / widthDst);
 	  pdstT += (maxh * widthDst);
 	  h -= maxh;
 	fastpath1:
@@ -642,7 +642,7 @@ MROP_NAME(vga256FillBoxTile32s) (pDrawable, nBox, pBox, tile, xrot, yrot, alu, p
 	      if (pdst >= (unsigned long *)vgaWriteTop)
 		pdst = vgaReadWriteNext(pdst);
 	    }
-	    nlTemp2 = (int*)vgaWriteTop - (int*)pdst;
+	    nlTemp2 = (long*)vgaWriteTop - (long*)pdst;
 	    nlTemp = min(nlMiddle, nlTemp2);
 	    nlTemp2 = nlMiddle - nlTemp;
 	    fCopyAL2 (psrc, pdst, nlTemp, srcRemaining, widthSrc,
@@ -686,7 +686,7 @@ MROP_NAME(vga256FillBoxTile32s) (pDrawable, nBox, pBox, tile, xrot, yrot, alu, p
 	  pdstT = pdstLine;
 	  SETRW(pdstLine);
 	  while (h) {
-	    maxh = min(h, ((int*)vgaWriteTop - (int*)pdstLine) / widthDst);
+	    maxh = min(h, ((long*)vgaWriteTop - (long*)pdstLine) / widthDst);
 	    h -= maxh;
 	    pdstT += (maxh * widthDst);
 	  fastpath2:
@@ -748,7 +748,7 @@ MROP_NAME(vga256FillBoxTile32s) (pDrawable, nBox, pBox, tile, xrot, yrot, alu, p
 		if (pdst >= (unsigned long *)vgaWriteTop)
 		  pdst = vgaReadWriteNext(pdst);
 	      }
-	      nlTemp2 = (int*)vgaWriteTop - (int*)pdst;
+	      nlTemp2 = (long*)vgaWriteTop - (long*)pdst;
 	      nlTemp = min(nlMiddle, nlTemp2);
 	      nlTemp2 = nlMiddle - nlTemp;
 	      while (nlTemp) {

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/minix/mnx_video.c,v 3.3 1996/02/04 09:10:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/minix/mnx_video.c,v 3.4 1996/12/23 06:50:20 dawes Exp $ */
 /*
  * Copyright 1993 by Vrije Universiteit, The Netherlands
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -24,7 +24,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: mnx_video.c /main/4 1995/11/13 11:29:37 kaleb $ */
+/* $XConsortium: mnx_video.c /main/5 1996/02/21 17:52:19 kaleb $ */
 
 #include "X.h"
 #include "input.h"

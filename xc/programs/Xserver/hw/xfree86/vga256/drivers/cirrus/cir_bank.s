@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_bank.s,v 3.3 1996/02/18 03:43:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_bank.s,v 3.4 1996/12/23 06:56:32 dawes Exp $ */
 /*
  *
  * Copyright 1990,91 by Bill Reynolds, Santa Fe, New Mexico
@@ -25,7 +25,7 @@
  * Changes: Piercarlo Grandi, Aberystwyth (pcg@aber.ac.uk)
  *
  */
-/* $XConsortium: cir_bank.s /main/4 1996/01/13 13:13:29 kaleb $ */
+/* $XConsortium: cir_bank.s /main/5 1996/02/21 18:03:06 kaleb $ */
 
 /*
  * These are here the very lowlevel VGA bankswitching routines.

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.42 1996/09/14 13:09:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86.h,v 3.47.2.4 1997/05/18 12:00:06 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -21,7 +21,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XConsortium: xf86.h /main/15 1996/01/07 18:53:17 kaleb $ */
+/* $XConsortium: xf86.h /main/28 1996/10/23 18:43:15 kaleb $ */
 
 #ifndef _XF86_H
 #define _XF86_H
@@ -92,7 +92,7 @@ typedef struct {
    char *id;
    char *vendor;
    char *model;
-   float bandwidth;
+   float EMPTY;
    int n_hsync;
    range hsync[MAX_HSYNC];       
    int n_vrefresh;                  
@@ -101,6 +101,7 @@ typedef struct {
 } MonRec, *MonPtr;
 
 #define MAXCLOCKS   128
+#define MAXDACSPEEDS  4  /* for <= 8, 16, 24, 32bpp */
 
 /* Set default max allowed clock to 90MHz */
 #define DEFAULT_MAX_CLOCK	90000
@@ -128,7 +129,8 @@ typedef struct {
   int            (* ValidMode)(
 #if NeedNestedPrototypes
     DisplayModePtr target,
-    Bool verbose
+    Bool verbose,
+    int flag
 #endif
 );
   void           (* EnterLeaveVT)(
@@ -158,6 +160,11 @@ typedef struct {
     DisplayModePtr modes
 #endif
 );
+  void           (* DPMSSet)(
+#if NeedNestedPrototypes
+    int level
+#endif
+);
   void           (* PrintIdent)(
 #if NeedNestedPrototypes
     void
@@ -175,7 +182,8 @@ typedef struct {
   OFlagSet	 xconfigFlag;
   char           *chipset;
   char           *ramdac;
-  int            dacSpeed;
+  int            dacSpeeds[MAXDACSPEEDS];
+  int            dacSpeedBpp;
   int            clocks;
   int            clock[MAXCLOCKS];
   int            maxClock;
@@ -202,12 +210,15 @@ typedef struct {
   int            s3Madjust;
   int            s3Nadjust;
   int            s3MClk;
+  int            chipID;
+  int            chipRev;
   unsigned long  VGAbase;         /* AGX - 64K aperture memory address    */
   int            s3RefClk;
-  int            suspendTime;
-  int            offTime;
   int            s3BlankDelay;
   int            textClockFreq;
+  char          *DCConfig;
+  char          *DCOptions;
+  int            MemClk;          /* General flag used for memory clocking */
 #ifdef XFreeXDGA
   int            directMode;
   void           (*setBank)(
@@ -242,6 +253,20 @@ typedef struct {
 #define MODE_HSYNC  1		/* hsync out of range */
 #define MODE_VSYNC  2		/* vsync out of range */
 #define MODE_BAD    255		/* unspecified reason */
+
+/* These are the possible flags for ValidMode */
+#define MODE_USED	1	/* this mode is really being used in the */
+				/* modes line of the Display Subsection  */
+#define MODE_SUGGESTED	2	/* this mode is included in the available*/
+				/* modes in the Monitor Section */
+#define MODE_VID	3	/* this is called from the VidMode extension */
+
+/* Indicates the level of DPMS support */
+typedef enum {
+    DPMSSupportUnknown,
+    DPMSNotSupported,
+    DPMSFullSupport
+} DPMSSupportStatus;
 
 /* flags for xf86LookupMode */
 #define LOOKUP_DEFAULT		0	/* Use default mode lookup method */
@@ -330,6 +355,9 @@ typedef struct _MouseDevRec {
     int           xqueFd;
     int           xqueSema;
 #endif
+#ifdef XINPUT
+    struct _LocalDeviceRec	*local;
+#endif
 } MouseDevRec, *MouseDevPtr;
 
 #ifdef XINPUT
@@ -350,6 +378,18 @@ extern Bool xf86VidModeAllowNonLocal;
 extern Bool xf86MiscModInDevEnabled;
 extern Bool xf86MiscModInDevAllowNonLocal;
 #endif
+
+/* PCI probe flags */
+
+
+typedef enum {
+    PCIProbe1 = 0,
+    PCIProbe2,
+    PCIForceConfig1,
+    PCIForceConfig2
+} PciProbeType;
+
+extern PciProbeType xf86PCIFlags;
 
 /* Function Prototypes */
 #ifndef _NO_XF86_PROTOTYPES

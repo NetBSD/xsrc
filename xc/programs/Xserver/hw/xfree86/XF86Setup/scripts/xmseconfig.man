@@ -1,4 +1,10 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/xmseconfig.man,v 3.2 1996/10/19 15:15:00 dawes Exp $
+.\" $XConsortium: xmseconfig.man /main/3 1996/12/09 17:42:35 kaleb $
+.\"
+.\"
+.\"
+.\"
+.\"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/xmseconfig.man,v 3.3 1996/12/27 06:54:50 dawes Exp $
 .TH xmseconfig 1 "Version 3.2"  "XFree86"
 .SH NAME
 xmseconfig - Graphical mouse configuration utility

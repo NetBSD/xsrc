@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fFillSet.s,v 3.4 1996/02/04 09:14:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fFillSet.s,v 3.5 1996/12/23 06:59:03 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -27,7 +27,7 @@
  * form by David Wexelblat (dwex@goblin.org).
  *
  */
-/* $XConsortium: fFillSet.s /main/4 1995/11/13 08:45:58 kaleb $ */
+/* $XConsortium: fFillSet.s /main/5 1996/02/21 18:08:46 kaleb $ */
 
 #include "assyntax.h"
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/cfb32.h,v 3.1 1996/02/04 09:06:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/cfb32.h,v 3.4 1997/01/08 20:34:27 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -26,7 +26,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XConsortium: cfb32.h /main/3 1995/11/12 19:21:05 kaleb $ */
+/* $XConsortium: cfb32.h /main/4 1996/02/21 17:37:38 kaleb $ */
 
 /* cfb8bit.c */
 
@@ -226,7 +226,17 @@ extern RegionPtr cfb32BitBlt(
     int /*height*/,
     int /*dstx*/,
     int /*dsty*/,
-    void (* /*doBitBlt*/)(),
+    void (* /*doBitBlt*/)(
+#if NeedNestedPrototypes
+	DrawablePtr /*pSrc*/,
+	DrawablePtr /*pDst*/,
+	int /*alu*/,
+	RegionPtr /*prgnDst*/,
+	DDXPointPtr /*pptSrc*/,
+	unsigned long /*planemask*/,
+	unsigned long /*bitPlane*/
+#endif
+	),
     unsigned long /*bitPlane*/
 #endif
 );
@@ -531,7 +541,7 @@ extern int cfb32HorzS(
 #endif
 );
 
-extern int cfb32VertS(
+extern void cfb32VertS(
 #if NeedFunctionPrototypes
     int /*rop*/,
     unsigned long /*and*/,

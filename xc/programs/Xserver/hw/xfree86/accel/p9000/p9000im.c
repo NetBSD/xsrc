@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000im.c,v 3.9 1996/02/04 09:04:20 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/p9000/p9000im.c,v 3.10 1996/12/23 06:40:44 dawes Exp $ */
 /*
  * Copyright 1992,1993 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -30,7 +30,7 @@
  *   Added outsw code.
  * Modified for the P9000 by Chris Mason (mason@mail.csh.rit.edu)
  * */
-/* $XConsortium: p9000im.c /main/8 1995/11/12 18:19:09 kaleb $ */
+/* $XConsortium: p9000im.c /main/9 1996/02/21 17:32:37 kaleb $ */
 
 #include "X.h"
 #include "misc.h"

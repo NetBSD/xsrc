@@ -1,4 +1,11 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.9 1996/09/01 04:15:08 dawes Exp $ */
+/* $XConsortium: tclxfconf.c /main/3 1996/10/23 11:44:07 kaleb $ */
+
+
+
+
+
+
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.15.2.3 1997/06/01 12:33:25 dawes Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -34,13 +41,12 @@
 #include "servermd.h"
 #include "scrnintstr.h"
 
-#include "compiler.h"
-
 #define INIT_OPTIONS
 #include "xf86_Option.h"
 
+#define NO_COMPILER_H_EXTRAS
 #include "xf86Procs.h"
-
+#include "xf86_OSlib.h"
 #include "xf86_Config.h"
 
 #include "tcl.h"
@@ -220,6 +226,8 @@ ScrnInfoRec	monoInfoRec, vga2InfoRec, vga16InfoRec,
 
 Bool		xf86AllowMouseOpenFail;
 int		xf86bpp, defaultColorVisualClass, xf86Verbose = 2;
+xrgb		xf86weight;
+PciProbeType	xf86PCIFlags;
 
 /* Note that the order is important. They must be ordered numerically */
 int		xf86MaxScreens, xf86ScreenNames[] = {
@@ -234,6 +242,14 @@ ScrnInfoPtr	xf86Screens[] = {
 #ifdef XKB
 Bool		noXkbExtension;
 char		*XkbInitialMap;
+#endif
+#ifdef DPMSExtension
+CARD32 defaultDPMSStandbyTime;
+CARD32 defaultDPMSSuspendTime;
+CARD32 defaultDPMSOffTime;
+CARD32 DPMSStandbyTime;
+CARD32 DPMSSuspendTime;
+CARD32 DPMSOffTime;
 #endif
 #ifdef XF86VIDMODE
 Bool		xf86VidModeEnabled;
@@ -264,6 +280,7 @@ init_config_vars(xwinhome)
 	xf86fpFlag = xf86coFlag = xf86sFlag       = FALSE;
 	xf86BestRefresh = FALSE;
 	xf86MaxScreens = XF86MAXSCREENS;
+	xf86weight.red = xf86weight.green = xf86weight.blue = 0;
 
 	pathlen = strlen(xwinhome);
 	if (rgbPath == NULL)
@@ -497,7 +514,7 @@ static char readconfig_usage[] = "Usage: xf86config_readfile " \
 #define StrOrNull(xx)	((xx)==NULL? "": (xx))
 static char *msetypes[] = { "None", "Microsoft", "MouseSystems", "MMSeries",
 		"Logitech", "BusMouse", "Mouseman", "PS/2", "MMHitTab",
-		"GlidePoint", "Unknown", "Xqueue", "OSMouse" };
+		"GlidePoint", "IntelliMouse", "Unknown", "Xqueue", "OSMouse" };
 
 
 int
@@ -669,11 +686,11 @@ getsection_pointer(interp, varname)
 
 #ifdef XQUEUE
 	if (xf86Info.mouseDev->mseProc == xf86XqueMseProc)
-		xf86Info.mouseDev->mseType = 10;
+		xf86Info.mouseDev->mseType = 11;
 #endif
 #if defined(USE_OSMOUSE) || defined(OSMOUSE_ONLY)
 	if (xf86Info.mouseDev->mseProc == xf86OsMouseProc)
-		xf86Info.mouseDev->mseType = 11;
+		xf86Info.mouseDev->mseType = 12;
 #endif
 	Tcl_SetVar2(interp, "mouse", "Protocol",
 		msetypes[xf86Info.mouseDev->mseType+1], 0);
@@ -809,7 +826,15 @@ getsection_device(interp, varname)
 		Tcl_SetVar2(interp, namebuf, "Ramdac",
 			StrOrNull(dptr->ramdac), 0);
 		Tcl_SetVar2(interp, namebuf, "DacSpeed",
-			NonZeroStr(dptr->dacSpeed,10), 0);
+			NonZeroStr(dptr->dacSpeeds[0]/1000,10), 0);
+		if (dptr->dacSpeeds[0]/1000 > 0)
+		   for (j = 1; j < MAXDACSPEEDS; j++) {
+		      if (dptr->dacSpeeds[j]/1000 <= 0)
+			 break;
+		      sprintf(tmpbuf, " %d", dptr->dacSpeeds[j]/1000);
+		      Tcl_SetVar2(interp, namebuf, "DacSpeed",
+				  tmpbuf, TCL_APPEND_VALUE);
+		   }
 		Tcl_SetVar2(interp, namebuf, "Clocks", "", 0);
 		for (j = 0; j < dptr->clocks; j++) {
 			sprintf(tmpbuf, "%.5g ", dptr->clock[j]/1000.0);
@@ -1024,10 +1049,14 @@ getsection_screen(interp, varname)
 		    StrOrNull(((GDevPtr) vptr->device)->identifier), 0);
             sprintf(tmpbuf, "%ld", ScreenSaverTime/MILLI_PER_MIN);
             Tcl_SetVar2(interp, namebuf, "BlankTime", tmpbuf, 0);
-            sprintf(tmpbuf, "%d", vptr->offTime/MILLI_PER_MIN);
-            Tcl_SetVar2(interp, namebuf, "OffTime", tmpbuf, 0);
-            sprintf(tmpbuf, "%d", vptr->suspendTime/MILLI_PER_MIN);
+#ifdef DPMSExtension
+            sprintf(tmpbuf, "%d", DPMSStandbyTime/MILLI_PER_MIN);
+            Tcl_SetVar2(interp, namebuf, "StandbyTime", tmpbuf, 0);
+            sprintf(tmpbuf, "%d", DPMSSuspendTime/MILLI_PER_MIN);
             Tcl_SetVar2(interp, namebuf, "SuspendTime", tmpbuf, 0);
+            sprintf(tmpbuf, "%d", DPMSOffTime/MILLI_PER_MIN);
+            Tcl_SetVar2(interp, namebuf, "OffTime", tmpbuf, 0);
+#endif
             if (vptr->tmpIndex >= 0) {
                 sprintf(tmpbuf, "%d", vptr->tmpIndex);
                 Tcl_SetVar2(interp, namebuf, "ScreenNo", tmpbuf, 0);

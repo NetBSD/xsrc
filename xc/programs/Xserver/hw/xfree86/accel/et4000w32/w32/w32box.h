@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/w32box.h,v 3.7 1996/09/14 13:08:36 dawes Exp $ */ 
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/w32/w32box.h,v 3.8 1996/12/23 06:35:23 dawes Exp $ */ 
 /*******************************************************************************
                         Copyright 1994 by Glenn G. Lai
 
@@ -25,7 +25,7 @@ glennlai@netcom.com
 4/6/94
 8/14/96
 *******************************************************************************/
-/* $XConsortium: w32box.h /main/4 1995/11/12 16:37:44 kaleb $ */
+/* $XConsortium: w32box.h /main/7 1996/10/23 18:41:15 kaleb $ */
 
 #ifndef W32_BOX_H
 #define W32_BOX_H

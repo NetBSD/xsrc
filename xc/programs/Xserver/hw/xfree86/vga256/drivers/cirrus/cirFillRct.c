@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cirFillRct.c,v 3.9 1996/09/29 13:39:37 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cirFillRct.c,v 3.10 1996/12/23 06:56:28 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 */
 /* Modified for Cirrus by Harm Hanemaayer, <hhanemaa@cs.ruu.nl> */
-/* $XConsortium: cirFillRct.c /main/3 1995/11/13 08:20:28 kaleb $ */
+/* $XConsortium: cirFillRct.c /main/6 1996/10/26 11:16:45 kaleb $ */
 
 /*
  * Fill rectangles.

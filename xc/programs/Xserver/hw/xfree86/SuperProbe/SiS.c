@@ -25,7 +25,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SiS.c,v 3.2 1996/02/22 05:11:16 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/SuperProbe/SiS.c,v 3.2.4.1 1997/05/06 13:24:48 dawes Exp $ */
 
 #include "Probe.h"
 
@@ -93,6 +93,8 @@ int Chipset;
 	switch (Chipset)
 	{
 	case CHIP_SIS86C201:
+	case CHIP_SIS86C202:
+	case CHIP_SIS86C205:
 		switch (rdinx(CRTC_IDX, 0xF) & 0x03)
 		{
 		case 0x00:
@@ -106,8 +108,8 @@ int Chipset;
 			break;
 		}
 		break;
-	}
+	    }
 
         DisableIOPorts(NUMPORTS, Ports);
 	return(Mem);
-}
+    }

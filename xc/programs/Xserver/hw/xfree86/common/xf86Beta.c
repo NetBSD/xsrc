@@ -1,6 +1,6 @@
 /* Copyright 1996, The XFree86 Project, Inc */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Beta.c,v 3.2 1996/10/16 14:40:42 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Beta.c,v 3.3 1997/01/18 06:55:29 dawes Exp $ */
 
 /*
  * This is for publicly released beta server binaries.
@@ -50,8 +50,8 @@
 #endif
 #define DAY_IN_SECONDS (24 * 60 * 60)
 
-#define XOR_VALUE_1 0x38479da4L
-#define XOR_VALUE_2 0x7df6314bL
+#define XOR_VALUE_1 0x39479da4L
+#define XOR_VALUE_2 0x7df6324bL
 #define KEY_LENGTH 16
 
 #ifdef X_NOT_STDC_ENV

@@ -1,5 +1,4 @@
-/* $XConsortium: regati.h /main/4 1995/09/04 19:41:42 kaleb $ */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/regati.h,v 3.10 1996/03/17 11:42:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/ati/regati.h,v 3.12 1996/12/28 08:16:48 dawes Exp $ */
 /*
  * Copyright 1994 through 1996 by Marc Aurele La France (TSI @ UQV), tsi@ualberta.ca
  *
@@ -32,6 +31,7 @@
  * ATI VGA Wonder, 8514/A, ATI Mach8, ATI Mach32 and ATI Mach64 video adapters,
  * not just the ones in use by the VGA Wonder driver.
  */
+/* $XConsortium: regati.h /main/7 1996/03/17 22:17:50 kaleb $ */
 
 #ifndef _REGATI_H_
 #define _REGATI_H_
@@ -49,14 +49,14 @@
  * Macros to get/set a contiguous bit field.  'Mask' should not be
  * self-modifying.
  */
-#define GetBits(Value, Mask)	\
-	(((Value) & (Mask)) / ((((Mask) ^ ((Mask) - 1)) + 1) >> 1))
-#define SetBits(Value, Mask)	\
-	(((Value) * ((((Mask) ^ ((Mask) - 1)) + 1) >> 1)) & (Mask))
+#define GetBits(_Value, _Mask)	\
+	(((_Value) & (_Mask)) / ((((_Mask) ^ ((_Mask) - 1)) + 1) >> 1))
+#define SetBits(_Value, _Mask)	\
+	(((_Value) * ((((_Mask) ^ ((_Mask) - 1)) + 1) >> 1)) & (_Mask))
 
-#define IOPortTag(SparseIOSelect, BlockIOSelect)	\
-	(SetBits((SparseIOSelect), SPARSE_IO_SELECT) | \
-	 SetBits((BlockIOSelect), BLOCK_IO_SELECT))
+#define IOPortTag(_SparseIOSelect, _BlockIOSelect)	\
+	(SetBits((_SparseIOSelect), SPARSE_IO_SELECT) | \
+	 SetBits((_BlockIOSelect), BLOCK_IO_SELECT))
 
 /* MDA/CGA/EGA/VGA I/O ports */
 #define GENVS			0x0102u		/* Write (and Read on uC only) */
@@ -96,23 +96,23 @@
 #define ColourIOBase		0x03d0u
 
 /* Other EGA/CGA/VGA I/O ports */
-/*	?(IOBase)		(IOBase + 0x00u) */
-/*	?(IOBase)		(IOBase + 0x01u) */
-/*	?(IOBase)		(IOBase + 0x02u) */
-/*	?(IOBase)		(IOBase + 0x03u) */
-#define CRTX(IOBase)		(IOBase + 0x04u)
-#define CRTD(IOBase)		(IOBase + 0x05u)
-/*	?(IOBase)		(IOBase + 0x06u) */
-/*	?(IOBase)		(IOBase + 0x07u) */
-#define GENMC(IOBase)		(IOBase + 0x08u)
-/*	?(IOBase)		(IOBase + 0x09u) */
-#define GENS1(IOBase)		(IOBase + 0x0au)	/* Read */
-#define GENFC(IOBase)		(IOBase + 0x0au)	/* Write */
-#define GENLPC(IOBase)		(IOBase + 0x0bu)
-/*	?(IOBase)		(IOBase + 0x0cu) */
-/*	?(IOBase)		(IOBase + 0x0du) */
-/*	?(IOBase)		(IOBase + 0x0eu) */
-/*	?(IOBase)		(IOBase + 0x0fu) */
+/*	?(_IOBase)		(_IOBase + 0x00u) */
+/*	?(_IOBase)		(_IOBase + 0x01u) */
+/*	?(_IOBase)		(_IOBase + 0x02u) */
+/*	?(_IOBase)		(_IOBase + 0x03u) */
+#define CRTX(_IOBase)		(_IOBase + 0x04u)
+#define CRTD(_IOBase)		(_IOBase + 0x05u)
+/*	?(_IOBase)		(_IOBase + 0x06u) */
+/*	?(_IOBase)		(_IOBase + 0x07u) */
+#define GENMC(_IOBase)		(_IOBase + 0x08u)
+/*	?(_IOBase)		(_IOBase + 0x09u) */
+#define GENS1(_IOBase)		(_IOBase + 0x0au)	/* Read */
+#define GENFC(_IOBase)		(_IOBase + 0x0au)	/* Write */
+#define GENLPC(_IOBase)		(_IOBase + 0x0bu)
+/*	?(_IOBase)		(_IOBase + 0x0cu) */
+/*	?(_IOBase)		(_IOBase + 0x0du) */
+/*	?(_IOBase)		(_IOBase + 0x0eu) */
+/*	?(_IOBase)		(_IOBase + 0x0fu) */
 
 /* 8514/A VESA approved register definitions */
 #define DISP_STAT		0x02e8u		/* Read */
@@ -614,9 +614,9 @@
 #define CTL_MEM_SD_LATCH_DLY		0x00000080ul
 #define CTL_MEM_FULL_PLS		0x00000100ul
 #define CTL_MEM_CYC_LNTH		0x00000600ul
-#define CTL_MEM_REFRESH_RATE		0x00001800ul	/* Mach64CT/ET */
-#define CTL_MEM_WR_RDY_SEL		0x00000800ul	/* Mach64GX/CX */
-#define CTL_MEM_EXT_RMW_CYC_EN		0x00001000ul	/* Mach64GX/CX */
+#define CTL_MEM_REFRESH_RATE		0x00001800ul	/* Mach64xT */
+#define CTL_MEM_WR_RDY_SEL		0x00000800ul	/* Mach64xX */
+#define CTL_MEM_EXT_RMW_CYC_EN		0x00001000ul	/* Mach64xX */
 /*	?				0x0000e000ul */
 #define CTL_MEM_BNDRY			0x00030000ul
 #define CTL_MEM_BNDRY_0K			0x00000000ul
@@ -634,74 +634,74 @@
 #define DAC_EXT_SEL			0x00000003ul
 #define DAC_EXT_SEL_RS2				0x000000001ul
 #define DAC_EXT_SEL_RS3				0x000000002ul
-#define DAC_BLANKING			0x00000004ul	/* Mach64CT/ET */
-#define DAC_CMP_DIS			0x00000008ul	/* Mach64CT/ET */
+#define DAC_BLANKING			0x00000004ul	/* Mach64xT */
+#define DAC_CMP_DIS			0x00000008ul	/* Mach64xT */
 /*	?				0x00000070ul */
-#define DAC_CMP_OUTPUT			0x00000080ul	/* Mach64CT/ET */
+#define DAC_CMP_OUTPUT			0x00000080ul	/* Mach64xT */
 #define DAC_8BIT_EN			0x00000100ul
 #define DAC_PIX_DLY			0x00000600ul
 #define DAC_BLANK_ADJ			0x00001800ul
 #define DAC_VGA_ADR_EN			0x00002000ul
-#define DAC_FEA_CON_EN			0x00004000ul	/* Mach64CT/ET */
-#define DAC_PDMN			0x00008000ul	/* Mach64CT/ET */
+#define DAC_FEA_CON_EN			0x00004000ul	/* Mach64xT */
+#define DAC_PDMN			0x00008000ul	/* Mach64xT */
 #define DAC_TYPE			0x00070000ul
 /*	?				0x00f80000ul */
 #define DAC_MON_ID_STATE0		0x01000000ul	/* Mach64GX-E+/CX */
-#define DAC_GIO_STATE_1			0x01000000ul	/* Mach64CT/ET */
+#define DAC_GIO_STATE_1			0x01000000ul	/* Mach64xT */
 #define DAC_MON_ID_STATE1		0x02000000ul	/* Mach64GX-E+/CX */
-#define DAC_GIO_STATE_0			0x02000000ul	/* Mach64CT/ET */
+#define DAC_GIO_STATE_0			0x02000000ul	/* Mach64xT */
 #define DAC_MON_ID_STATE2		0x04000000ul	/* Mach64GX-E+/CX */
-#define DAC_GIO_STATE_4			0x04000000ul	/* Mach64CT/ET */
+#define DAC_GIO_STATE_4			0x04000000ul	/* Mach64xT */
 #define DAC_MON_ID_DIR0			0x08000000ul	/* Mach64GX-E+/CX */
-#define DAC_GIO_DIR_1			0x08000000ul	/* Mach64CT/ET */
+#define DAC_GIO_DIR_1			0x08000000ul	/* Mach64xT */
 #define DAC_MON_ID_DIR1			0x10000000ul	/* Mach64GX-E+/CX */
-#define DAC_GIO_DIR_0			0x10000000ul	/* Mach64CT/ET */
+#define DAC_GIO_DIR_0			0x10000000ul	/* Mach64xT */
 #define DAC_MON_ID_DIR2			0x20000000ul	/* Mach64GX-E+/CX */
-#define DAC_GIO_DIR_4			0x20000000ul	/* Mach64CT/ET */
+#define DAC_GIO_DIR_4			0x20000000ul	/* Mach64xT */
 #define DAC_MAN_CMP_STATE		0x40000000ul	/* Mach64GX-E+ */
 /*	?				0x80000000ul */
 #define GEN_TEST_CNTL		IOPortTag(0x19u, 0x34u)
-#define GEN_EE_DATA_OUT			0x00000001ul	/* Mach64GX/CX */
-#define GEN_GIO2_DATA_OUT		0x00000001ul	/* Mach64CT/ET */
-#define GEN_EE_CLOCK			0x00000002ul	/* Mach64GX/CX */
-/*	?				0x00000002ul */	/* Mach64CT/ET */
-#define GEN_EE_CHIP_SEL			0x00000004ul	/* Mach64GX/CX */
-#define GEN_GIO3_DATA_OUT		0x00000004ul	/* Mach64CT/ET */
-#define GEN_EE_DATA_IN			0x00000008ul	/* Mach64GX/CX */
-#define GEN_GIO2_DATA_IN		0x00000008ul	/* Mach64CT/ET */
-#define GEN_EE_EN			0x00000010ul	/* Mach64GX/CX */
-#define GEN_GIO2_ENABLE			0x00000010ul	/* Mach64CT/ET */
-#define GEN_OVR_OUTPUT_EN		0x00000020ul	/* Mach64GX/CX */
-#define GEN_GIO2_WRITE			0x00000020ul	/* Mach64CT/ET */
-#define GEN_OVR_POLARITY		0x00000040ul	/* Mach64GX/CX */
-/*	?				0x00000040ul */	/* Mach64CT/ET */
+#define GEN_EE_DATA_OUT			0x00000001ul	/* Mach64xX */
+#define GEN_GIO2_DATA_OUT		0x00000001ul	/* Mach64xT */
+#define GEN_EE_CLOCK			0x00000002ul	/* Mach64xX */
+/*	?				0x00000002ul */	/* Mach64xT */
+#define GEN_EE_CHIP_SEL			0x00000004ul	/* Mach64xX */
+#define GEN_GIO3_DATA_OUT		0x00000004ul	/* Mach64xT */
+#define GEN_EE_DATA_IN			0x00000008ul	/* Mach64xX */
+#define GEN_GIO2_DATA_IN		0x00000008ul	/* Mach64xT */
+#define GEN_EE_EN			0x00000010ul	/* Mach64xX */
+#define GEN_GIO2_ENABLE			0x00000010ul	/* Mach64xT */
+#define GEN_OVR_OUTPUT_EN		0x00000020ul	/* Mach64xX */
+#define GEN_GIO2_WRITE			0x00000020ul	/* Mach64xT */
+#define GEN_OVR_POLARITY		0x00000040ul	/* Mach64xX */
+/*	?				0x00000040ul */	/* Mach64xT */
 #define GEN_CUR_EN			0x00000080ul
-#define GEN_GUI_EN			0x00000100ul	/* Mach64GX/CX */
-#define GEN_GUI_RESETB			0x00000100ul	/* Mach64CT/ET */
+#define GEN_GUI_EN			0x00000100ul	/* Mach64xX */
+#define GEN_GUI_RESETB			0x00000100ul	/* Mach64xT */
 #define GEN_BLOCK_WR_EN			0x00000200ul	/* Mach64GX */
-/*	?				0x00000200ul */	/* Mach64CX/CT/ET */
+/*	?				0x00000200ul */	/* Mach64CX/xT */
 /*	?				0x0000fc00ul */
-#define GEN_TEST_FIFO_EN		0x00010000ul	/* Mach64GX/CX */
-#define GEN_TEST_GUI_REGS_EN		0x00020000ul	/* Mach64GX/CX */
-#define GEN_TEST_VECT_EN		0x00040000ul	/* Mach64GX/CX */
+#define GEN_TEST_FIFO_EN		0x00010000ul	/* Mach64xX */
+#define GEN_TEST_GUI_REGS_EN		0x00020000ul	/* Mach64xX */
+#define GEN_TEST_VECT_EN		0x00040000ul	/* Mach64xX */
 #define GEN_TEST_CRC_STR		0x00080000ul	/* Mach64GX-C/-D */
 /*	?				0x00080000ul */	/* Mach64GX-E+/CX */
-#define GEN_TEST_MODE_T			0x000f0000ul	/* Mach64CT/ET */
-#define GEN_TEST_MODE			0x00700000ul	/* Mach64GX/CX */
-#define GEN_TEST_CNT_EN			0x00100000ul	/* Mach64CT/ET */
-#define GEN_TEST_CRC_EN			0x00200000ul	/* Mach64CT/ET */
-/*	?				0x00400000ul */	/* Mach64CT/ET */
+#define GEN_TEST_MODE_T			0x000f0000ul	/* Mach64xT */
+#define GEN_TEST_MODE			0x00700000ul	/* Mach64xX */
+#define GEN_TEST_CNT_EN			0x00100000ul	/* Mach64xT */
+#define GEN_TEST_CRC_EN			0x00200000ul	/* Mach64xT */
+/*	?				0x00400000ul */	/* Mach64xT */
 /*	?				0x00800000ul */
 #define GEN_TEST_MEM_WR			0x01000000ul	/* Mach64GX-C/-D */
 #define GEN_TEST_MEM_STROBE		0x02000000ul	/* Mach64GX-C/-D */
-#define GEN_TEST_DST_SS_EN		0x04000000ul	/* Mach64GX/CX */
-#define GEN_TEST_DST_SS_STROBE		0x08000000ul	/* Mach64GX/CX */
-#define GEN_TEST_SRC_SS_EN		0x10000000ul	/* Mach64GX/CX */
-#define GEN_TEST_SRC_SS_STROBE		0x20000000ul	/* Mach64GX/CX */
-#define GEN_TEST_CNT_VALUE		0x3f000000ul	/* Mach64CT/ET */
-#define GEN_TEST_CC_EN			0x40000000ul	/* Mach64GX/CX */
-#define GEN_TEST_CC_STROBE		0x80000000ul	/* Mach64GX/CX */
-/*	?				0xc0000000ul */	/* Mach64CT/ET */
+#define GEN_TEST_DST_SS_EN		0x04000000ul	/* Mach64xX */
+#define GEN_TEST_DST_SS_STROBE		0x08000000ul	/* Mach64xX */
+#define GEN_TEST_SRC_SS_EN		0x10000000ul	/* Mach64xX */
+#define GEN_TEST_SRC_SS_STROBE		0x20000000ul	/* Mach64xX */
+#define GEN_TEST_CNT_VALUE		0x3f000000ul	/* Mach64xT */
+#define GEN_TEST_CC_EN			0x40000000ul	/* Mach64xX */
+#define GEN_TEST_CC_STROBE		0x80000000ul	/* Mach64xX */
+/*	?				0xc0000000ul */	/* Mach64xT */
 #define CONFIG_CNTL		IOPortTag(0x1au, 0x37u)
 #define CFG_MEM_AP_SIZE			0x00000003ul
 #define CFG_MEM_VGA_AP_EN		0x00000004ul
@@ -717,44 +717,44 @@
 #define CFG_CHIP_TYPE			0x0000fffful
 #define CFG_CHIP_CLASS			0x00ff0000ul
 #define CFG_CHIP_REV			0xff000000ul
-#define CONFIG_STATUS64_0	IOPortTag(0x1cu, 0x39u) /* Read (R/W (CT/ET)) */
-#define CFG_BUS_TYPE			0x00000007ul	/* Mach64GX/CX */
-#define CFG_MEM_TYPE_T			0x00000007ul	/* Mach64CT/ET */
-#define CFG_MEM_TYPE			0x00000038ul	/* Mach64GX/CX */
-#define CFG_DUAL_CAS_EN_T		0x00000008ul	/* Mach64CT/ET */
-/*	?				0x00000010ul */	/* Mach64CT/ET */
-#define CFG_CLOCK_EN			0x00000020ul	/* Mach64CT/ET */
-#define CFG_DUAL_CAS_EN			0x00000040ul	/* Mach64GX/CX */
-#define CFG_LOCAL_BUS_OPTION		0x00000180ul	/* Mach64GX/CX */
-#define CFG_INIT_DAC_TYPE		0x00000e00ul	/* Mach64GX/CX */
+#define CONFIG_STATUS64_0	IOPortTag(0x1cu, 0x39u) /* Read (R/W (xT)) */
+#define CFG_BUS_TYPE			0x00000007ul	/* Mach64xX */
+#define CFG_MEM_TYPE_T			0x00000007ul	/* Mach64xT */
+#define CFG_MEM_TYPE			0x00000038ul	/* Mach64xX */
+#define CFG_DUAL_CAS_EN_T		0x00000008ul	/* Mach64xT */
+/*	?				0x00000010ul */	/* Mach64xT */
+#define CFG_CLOCK_EN			0x00000020ul	/* Mach64xT */
+#define CFG_DUAL_CAS_EN			0x00000040ul	/* Mach64xX */
+#define CFG_LOCAL_BUS_OPTION		0x00000180ul	/* Mach64xX */
+#define CFG_INIT_DAC_TYPE		0x00000e00ul	/* Mach64xX */
 #define CFG_INIT_CARD_ID		0x00007000ul	/* Mach64GX-C/-D */
 #define CFG_BLK_WR_SIZE			0x00001000ul	/* Mach64GX-E+ */
 #define CFG_INT_QSF_EN			0x00002000ul	/* Mach64GX-E+ */
 /*	?				0x00004000ul */	/* Mach64GX-E+ */
 /*	?				0x00007000ul */	/* Mach64CX */
-#define CFG_TRI_BUF_DIS			0x00008000ul	/* Mach64GX/CX */
-#define CFG_EXT_RAM_ADDR		0x003f0000ul	/* Mach64GX/CX */
-#define CFG_ROM_DIS			0x00400000ul	/* Mach64GX/CX */
-#define CFG_VGA_EN			0x00800000ul	/* Mach64GX/CX */
-#define CFG_LOCAL_BUS_CFG		0x01000000ul	/* Mach64GX/CX */
-#define CFG_CHIP_EN			0x02000000ul	/* Mach64GX/CX */
-#define CFG_LOCAL_READ_DLY_DIS		0x04000000ul	/* Mach64GX/CX */
-#define CFG_ROM_OPTION			0x08000000ul	/* Mach64GX/CX */
-#define CFG_BUS_OPTION			0x10000000ul	/* Mach64GX/CX */
-#define CFG_LOCAL_DAC_WR_EN		0x20000000ul	/* Mach64GX/CX */
-#define CFG_VLB_RDY_DIS			0x40000000ul	/* Mach64GX/CX */
-#define CFG_AP_4GBYTE_DIS		0x80000000ul	/* Mach64GX/CX */
-/*	?				0xffffffc0ul */	/* Mach64CT/ET */
+#define CFG_TRI_BUF_DIS			0x00008000ul	/* Mach64xX */
+#define CFG_EXT_RAM_ADDR		0x003f0000ul	/* Mach64xX */
+#define CFG_ROM_DIS			0x00400000ul	/* Mach64xX */
+#define CFG_VGA_EN			0x00800000ul	/* Mach64xX */
+#define CFG_LOCAL_BUS_CFG		0x01000000ul	/* Mach64xX */
+#define CFG_CHIP_EN			0x02000000ul	/* Mach64xX */
+#define CFG_LOCAL_READ_DLY_DIS		0x04000000ul	/* Mach64xX */
+#define CFG_ROM_OPTION			0x08000000ul	/* Mach64xX */
+#define CFG_BUS_OPTION			0x10000000ul	/* Mach64xX */
+#define CFG_LOCAL_DAC_WR_EN		0x20000000ul	/* Mach64xX */
+#define CFG_VLB_RDY_DIS			0x40000000ul	/* Mach64xX */
+#define CFG_AP_4GBYTE_DIS		0x80000000ul	/* Mach64xX */
+/*	?				0xffffffc0ul */	/* Mach64xT */
 #define	CONFIG_STATUS64_1	IOPortTag(0x1du, 0x3au) /* Read */
-#define CFG_PCI_DAC_CFG			0x00000001ul	/* Mach64GX/CX */
-/*	?				0x0000001eul */	/* Mach64GX/CX */
-#define CFG_1C8_IO_SEL			0x00000020ul	/* Mach64GX/CX */
-/*	?				0xffffffc0ul */	/* Mach64GX/CX */
-#define CRC_SIG				0xfffffffful	/* Mach64CT/ET */
+#define CFG_PCI_DAC_CFG			0x00000001ul	/* Mach64xX */
+/*	?				0x0000001eul */	/* Mach64xX */
+#define CFG_1C8_IO_SEL			0x00000020ul	/* Mach64xX */
+/*	?				0xffffffc0ul */	/* Mach64xX */
+#define CRC_SIG				0xfffffffful	/* Mach64xT */
 /*	?			IOPortTag(0x1eu, ?) */
 /*	CRTC_H_TOTAL_DISP	IOPortTag(0x1fu, 0x00u) */	/* Duplicate */
 
-/* Definitions for internal PLL registers on a Mach64CT/ET */
+/* Definitions for internal PLL registers on a Mach64xT */
 /*	?			0x00u */
 #define PLL_MACRO_CNTL		0x01u
 #define PLL_PC_GAIN			0x07u
@@ -768,13 +768,15 @@
 #define PLL_EXT_CLK_EN			0x08u
 #define PLL_MCLK_POST_DIV		0x10u
 #define PLL_MCLK_SRC_SEL		0x60u
-#define PLL_EXT_CLK_CNTL		0x80u
+#define PLL_EXT_CLK_CNTL		0x80u	/* CT/ET */
 #define PLL_MCLK_FB_DIV		0x04u
 #define PLL_VCLK_CNTL		0x05u
 #define PLL_VCLK_SRC_SEL		0x03u
 #define PLL_VCLK_RESET			0x04u
 #define PLL_VCLK_INVERT			0x08u
-/*	?				0xf0u */
+#define PLL_ECP_DIV			0x30u	/* VT/GT */
+#define PLL_ERATE_GT_XRATE		0x40u	/* VT/GT */
+#define PLL_SCALER_LOCK_EN		0x80u	/* VT/GT */
 #define PLL_VCLK_POST_DIV	0x06u
 #define PLL_VCLK0_POST_DIV		0x03u
 #define PLL_VCLK1_POST_DIV		0x0cu
@@ -784,10 +786,26 @@
 #define PLL_VCLK1_FB_DIV	0x08u
 #define PLL_VCLK2_FB_DIV	0x09u
 #define PLL_VCLK3_FB_DIV	0x0au
-/*	?			0x0bu */
-/*	?			0x0cu */
-/*	?			0x0du */
+#define PLL_XCLK_CNTL		0x0bu		/* VT/GT */
+#define PLL_XCLK_MCLK_RATIO		0x03u
+#define PLL_MFB_TIMES_4_2B		0x04u
+#define PLL_XCLK_MCKL_TST		0x08u
+/*	?				0xf0u */
+#define PLL_FCP_CNTL		0x0cu		/* VT/GT */
+#define	PLL_FCP_POST_DIV		0x0fu
+#define PLL_FCP_SRC_SEL			0x70u
+#define PLL_DCLK_BY2_EN			0x80u
+#define PLL_VFC_CNTL		0x0du		/* VT/GT */
+#define PLL_DCLK_INVB			0x01u
+#define PLL_DCLKBY2_EN			0x02u
+#define PLL_VFC_2PHASE			0x04u
+#define PLL_VFC_DELAY			0x18u
+/*	?				0xe0u */
 #define PLL_TEST_CNTL		0x0eu
+#define	PLL_TST_SRC_SEL			0x1fu
+#define PLL_TST_DIVIDERS		0x20u
+#define PLL_TST_MASK_READ		0x40u
+/*	?				0x80u */
 #define PLL_TEST_COUNT		0x0fu
 
 /* Miscellaneous */
@@ -831,13 +849,13 @@
 #define MIX_FN_PAINT			MIX_SRC
 
 /* Wait until "n" queue entries are free */
-#define ibm8514WaitQueue(n)						\
+#define ibm8514WaitQueue(_n)						\
 	{								\
-		while (inw(GP_STAT) & (0x0100 >> (n)));			\
+		while (inw(GP_STAT) & (0x0100U >> (_n)));		\
 	}
-#define ATIWaitQueue(n)							\
+#define ATIWaitQueue(_n)						\
 	{								\
-		while (inw(EXT_FIFO_STATUS) & (0x10000 >> (n)));	\
+		while (inw(EXT_FIFO_STATUS) & (0x10000U >> (_n)));	\
 	}
 
 /* Wait until GP is idle and queue is empty */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3dseg.c,v 3.12 1996/09/01 04:15:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3/s3dseg.c,v 3.14.2.1 1997/05/09 07:15:17 hohndel Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -52,7 +52,7 @@ Modified for the 8514/A by Kevin E. Martin (martin@cs.unc.edu)
 */
 
 /* s3dline.c from s3line.c with help from cfbresd.c and cfbline.c - Jon */
-/* $XConsortium: s3dseg.c /main/6 1996/01/11 12:26:32 kaleb $ */
+/* $XConsortium: s3dseg.c /main/9 1996/10/23 11:44:35 kaleb $ */
 
 #include "X.h"
 
@@ -140,14 +140,13 @@ s3Dsegment (pDrawable, pGC, nseg, pSeg)
    int dashIndex;
    int dashIndexTmp, dashOffsetTmp, thisDash, dashRemaining;
    int unclippedlen;
-   short dashPat;
+   short dashPat = 0;
  /* a bunch of temporaries */
    int   tmp;
    register int y1, y2;
    register int x1, x2;
    RegionPtr cclip;
    cfbPrivGCPtr devPriv;
-   short fix;
 
    if (!xf86VTSema)
    {
@@ -352,11 +351,8 @@ s3Dsegment (pDrawable, pGC, nseg, pSeg)
 #endif
       {			/* sloped line */
 	 direction = 0x0000;
-	 if ((adx = x2 - x1) < 0) {
-	    fix = 0;
-	 } else {
+	 if ((adx = x2 - x1) >= 0) {
 	    direction |= INC_X;
-	    fix = -1;
 	 }
 	 if ((ady = y2 - y1) >= 0) {
 	    direction |= INC_Y;
@@ -420,7 +416,7 @@ s3Dsegment (pDrawable, pGC, nseg, pSeg)
 	        */
 	       WaitQueue(7);
 	       SET_CURPT((short)x1, (short)y1);
-	       SET_ERR_TERM((short)(e + fix));
+	       SET_ERR_TERM((short)e);
 	       SET_DESTSTP((short)e2, (short)e1);
 	       SET_MAJ_AXIS_PCNT((short)len);
 	       SET_CMD(CMD_LINE | DRAW | LASTPIX | PLANAR | direction |
@@ -526,7 +522,7 @@ s3Dsegment (pDrawable, pGC, nseg, pSeg)
 
 		     WaitQueue(7);
 		     SET_CURPT((short)new_x1, (short)new_y1);
-		     SET_ERR_TERM((short)(err + fix));
+		     SET_ERR_TERM((short)err);
 		     SET_DESTSTP((short)e2, (short)e1);
 		     SET_MAJ_AXIS_PCNT((short)len);
 		     SET_CMD(CMD_LINE | DRAW | LASTPIX | PLANAR |

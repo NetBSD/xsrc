@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcImg.c,v 3.5 1996/02/18 03:43:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcImg.c,v 3.6 1996/12/23 06:53:04 dawes Exp $ */
 /*
  * Copyright IBM Corporation 1987,1988,1989
  *
@@ -22,7 +22,7 @@
  *
 */
 
-/* $XConsortium: ppcImg.c /main/3 1995/11/13 07:05:18 kaleb $ */
+/* $XConsortium: ppcImg.c /main/4 1996/02/21 17:57:53 kaleb $ */
 
 #include "X.h"
 #include "misc.h"

@@ -45,14 +45,15 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************/
-/* $XConsortium: dix.h /main/39 1995/12/08 13:32:23 dpw $ */
-/* $XFree86: xc/programs/Xserver/include/dix.h,v 3.4 1996/05/06 06:00:17 dawes Exp $ */
+/* $XConsortium: dix.h /main/44 1996/12/15 21:24:57 rws $ */
+/* $XFree86: xc/programs/Xserver/include/dix.h,v 3.7 1996/12/31 04:17:46 dawes Exp $ */
 
 #ifndef DIX_H
 #define DIX_H
 
 #include "gc.h"
 #include "window.h"
+#include "input.h"
 
 #define EARLIER -1
 #define SAMETIME 0
@@ -88,6 +89,60 @@ SOFTWARE.
 #define LOOKUP_DRAWABLE(did, client)\
     ((client->lastDrawableID == did) ? \
      client->lastDrawable : (DrawablePtr)LookupDrawable(did, client))
+
+#ifdef XCSECURITY
+
+#define SECURITY_VERIFY_DRAWABLE(pDraw, did, client, mode)\
+    if (client->lastDrawableID == did && !client->trustLevel)\
+	pDraw = client->lastDrawable;\
+    else \
+    {\
+	pDraw = (DrawablePtr) SecurityLookupIDByClass(client, did, \
+						      RC_DRAWABLE, mode);\
+	if (!pDraw) \
+	{\
+	    client->errorValue = did; \
+	    return BadDrawable;\
+	}\
+	if (pDraw->type == UNDRAWABLE_WINDOW)\
+	    return BadMatch;\
+    }
+
+#define SECURITY_VERIFY_GEOMETRABLE(pDraw, did, client, mode)\
+    if (client->lastDrawableID == did && !client->trustLevel)\
+	pDraw = client->lastDrawable;\
+    else \
+    {\
+	pDraw = (DrawablePtr) SecurityLookupIDByClass(client, did, \
+						      RC_DRAWABLE, mode);\
+	if (!pDraw) \
+	{\
+	    client->errorValue = did; \
+	    return BadDrawable;\
+	}\
+    }
+
+#define SECURITY_VERIFY_GC(pGC, rid, client, mode)\
+    if (client->lastGCID == rid && !client->trustLevel)\
+        pGC = client->lastGC;\
+    else\
+	pGC = (GC *) SecurityLookupIDByType(client, rid, RT_GC, mode);\
+    if (!pGC)\
+    {\
+	client->errorValue = rid;\
+	return (BadGC);\
+    }
+
+#define VERIFY_DRAWABLE(pDraw, did, client)\
+	SECURITY_VERIFY_DRAWABLE(pDraw, did, client, SecurityUnknownAccess)
+
+#define VERIFY_GEOMETRABLE(pDraw, did, client)\
+	SECURITY_VERIFY_GEOMETRABLE(pDraw, did, client, SecurityUnknownAccess)
+
+#define VERIFY_GC(pGC, rid, client)\
+	SECURITY_VERIFY_GC(pGC, rid, client, SecurityUnknownAccess)
+
+#else /* not XCSECURITY */
 
 #define VERIFY_DRAWABLE(pDraw, did, client)\
     if (client->lastDrawableID == did)\
@@ -127,6 +182,17 @@ SOFTWARE.
 	client->errorValue = rid;\
 	return (BadGC);\
     }
+
+#define SECURITY_VERIFY_DRAWABLE(pDraw, did, client, mode)\
+	VERIFY_DRAWABLE(pDraw, did, client)
+
+#define SECURITY_VERIFY_GEOMETRABLE(pDraw, did, client, mode)\
+	VERIFY_GEOMETRABLE(pDraw, did, client)
+
+#define SECURITY_VERIFY_GC(pGC, rid, client, mode)\
+	VERIFY_GC(pGC, rid, client)
+
+#endif /* XCSECURITY */
 
 /*
  * We think that most hardware implementations of DBE will want
@@ -185,8 +251,8 @@ SOFTWARE.
     if ((stuff->gc == INVALID) || (client->lastGCID != stuff->gc) ||\
 	(client->lastDrawableID != drawID))\
     {\
-	VERIFY_GEOMETRABLE(pDraw, drawID, client);\
-	VERIFY_GC(pGC, stuff->gc, client);\
+	SECURITY_VERIFY_GEOMETRABLE(pDraw, drawID, client, SecurityWriteAccess);\
+	SECURITY_VERIFY_GC(pGC, stuff->gc, client, SecurityReadAccess);\
 	if ((pGC->depth != pDraw->depth) ||\
 	    (pGC->pScreen != pDraw->pScreen))\
 	    return (BadMatch);\
@@ -223,20 +289,6 @@ typedef struct _Client *ClientPtr; /* also in misc.h */
 #define _XTYPEDEF_CLIENTPTR
 #endif
 
-#if defined(LBX) || defined(LBX_COMPAT)
-typedef struct _ClientPublic {
-    int             (*writeToClient) ();
-    int             (*uncompressedWriteToClient) ();
-    unsigned long   (*requestLength) ();
-    int             (*readRequest)();
-} ClientPublicRec, *ClientPublicPtr;
-
-#define WriteToClient(client,len,buf)   (((client)->public.writeToClient)(client,len,buf))
-#define UncompressedWriteToClient(client,len,buf)   (((client)->public.uncompressedWriteToClient)(client,len,buf))
-#define ReadRequestFromClient(client)   ((client)->public.readRequest(client))
-#define RequestLength(r,client,g,p)           (*(client)->public.requestLength) (r,client,g,p)
-#endif /* LBX || LBX_COMPAT */
-
 typedef struct _WorkQueue	*WorkQueuePtr;
 
 extern ClientPtr requestingClient;
@@ -244,7 +296,7 @@ extern ClientPtr *clients;
 extern ClientPtr serverClient;
 extern int currentMaxClients;
 
-#ifndef __alpha
+#if !(defined(__alpha) || defined(__alpha__))
 typedef long HWEventQueueType;
 #else
 typedef int HWEventQueueType;
@@ -252,6 +304,11 @@ typedef int HWEventQueueType;
 typedef HWEventQueueType* HWEventQueuePtr;
 
 extern HWEventQueuePtr checkForInput[2];
+
+typedef struct _TimeStamp {
+    CARD32 months;	/* really ~49.7 days */
+    CARD32 milliseconds;
+}           TimeStamp;
 
 /* dispatch.c */
 
@@ -341,6 +398,13 @@ extern void MarkClientException(
 #endif
 );
 
+extern int GetGeometry(
+#if NeedFunctionPrototypes
+    ClientPtr /*client*/,
+    xGetGeometryReply* /* wa */
+#endif
+);
+
 /* dixutils.c */
 
 extern void CopyISOLatin1Lowered(
@@ -348,6 +412,24 @@ extern void CopyISOLatin1Lowered(
     unsigned char * /*dest*/,
     unsigned char * /*source*/,
     int /*length*/
+#endif
+);
+
+#ifdef XCSECURITY
+
+extern WindowPtr SecurityLookupWindow(
+#if NeedFunctionPrototypes
+    XID /*rid*/,
+    ClientPtr /*client*/,
+    Mask /*access_mode*/
+#endif
+);
+
+extern pointer SecurityLookupDrawable(
+#if NeedFunctionPrototypes
+    XID /*rid*/,
+    ClientPtr /*client*/,
+    Mask /*access_mode*/
 #endif
 );
 
@@ -365,9 +447,34 @@ extern pointer LookupDrawable(
 #endif
 );
 
+#else
+
+extern WindowPtr LookupWindow(
+#if NeedFunctionPrototypes
+    XID /*rid*/,
+    ClientPtr /*client*/
+#endif
+);
+
+extern pointer LookupDrawable(
+#if NeedFunctionPrototypes
+    XID /*rid*/,
+    ClientPtr /*client*/
+#endif
+);
+
+#define SecurityLookupWindow(rid, client, access_mode) \
+	LookupWindow(rid, client)
+
+#define SecurityLookupDrawable(rid, client, access_mode) \
+	LookupDrawable(rid, client)
+
+#endif /* XCSECURITY */
+
 extern ClientPtr LookupClient(
 #if NeedFunctionPrototypes
-    XID /*rid*/
+    XID /*rid*/,
+    ClientPtr /*client*/
 #endif
 );
 
@@ -539,6 +646,254 @@ extern void InitAtoms(
 );
 
 /* events.c */
+
+extern void SetMaskForEvent(
+#if NeedFunctionPrototypes
+    Mask /* mask */,
+    int /* event */
+#endif
+);
+
+extern Bool PointerConfinedToScreen(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+
+extern Bool IsParent(
+#if NeedFunctionPrototypes
+    WindowPtr /* maybeparent */,
+    WindowPtr /* child */
+#endif
+);
+
+extern WindowPtr GetCurrentRootWindow(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+
+extern WindowPtr GetSpriteWindow(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+
+extern void GetSpritePosition(
+#if NeedFunctionPrototypes
+    int * /* px */,
+    int * /* py */
+#endif
+);
+
+extern void NoticeEventTime(
+#if NeedFunctionPrototypes
+    xEventPtr /* xE */
+#endif
+);
+
+extern void EnqueueEvent(
+#if NeedFunctionPrototypes
+    xEventPtr /* xE */,
+    DeviceIntPtr /* device */,
+    int	/* count */
+#endif
+);
+
+extern void ComputeFreezes(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+
+extern void CheckGrabForSyncs(
+#if NeedFunctionPrototypes
+    DeviceIntPtr /* dev */,
+    Bool /* thisMode */,
+    Bool /* otherMode */
+#endif
+);
+
+extern void ActivatePointerGrab(
+#if NeedFunctionPrototypes
+    DeviceIntPtr /* mouse */,
+    GrabPtr /* grab */,
+    TimeStamp /* time */,
+    Bool /* autoGrab */
+#endif
+);
+
+extern void DeactivatePointerGrab(
+#if NeedFunctionPrototypes
+    DeviceIntPtr /* mouse */
+#endif
+);
+
+extern void ActivateKeyboardGrab(
+#if NeedFunctionPrototypes
+    DeviceIntPtr /* keybd */,
+    GrabPtr /* grab */,
+    TimeStamp /* time */,
+    Bool /* passive */
+#endif
+);
+
+extern void DeactivateKeyboardGrab(
+#if NeedFunctionPrototypes
+    DeviceIntPtr /* keybd */
+#endif
+);
+
+extern void AllowSome(
+#if NeedFunctionPrototypes
+    ClientPtr	/* client */,
+    TimeStamp /* time */,
+    DeviceIntPtr /* thisDev */,
+    int /* newState */
+#endif
+);
+
+extern void ReleaseActiveGrabs(
+#if NeedFunctionPrototypes
+ClientPtr client
+#endif
+);
+
+extern int DeliverEventsToWindow(
+#if NeedFunctionPrototypes
+    WindowPtr /* pWin */,
+    xEventPtr /* pEvents */,
+    int /* count */,
+    Mask /* filter */,
+    GrabPtr /* grab */,
+    int /* mskidx */
+#endif
+);
+
+extern int DeliverDeviceEvents(
+#if NeedFunctionPrototypes
+    WindowPtr /* pWin */,
+    xEventPtr /* xE */,
+    GrabPtr /* grab */,
+    WindowPtr /* stopAt */,
+    DeviceIntPtr /* dev */,
+    int /* count */
+#endif
+);
+
+extern void DefineInitialRootWindow(
+#if NeedFunctionPrototypes
+    WindowPtr /* win */
+#endif
+);
+
+extern void WindowHasNewCursor(
+#if NeedFunctionPrototypes
+    WindowPtr /* pWin */
+#endif
+);
+
+extern Bool CheckDeviceGrabs(
+#if NeedFunctionPrototypes
+    DeviceIntPtr /* device */,
+    xEventPtr /* xE */,
+    int /* checkFirst */,
+    int /* count */
+#endif
+);
+
+extern void DeliverFocusedEvent(
+#if NeedFunctionPrototypes
+    DeviceIntPtr /* keybd */,
+    xEventPtr /* xE */,
+    WindowPtr /* window */,
+    int /* count */
+#endif
+);
+
+extern void DeliverGrabbedEvent(
+#if NeedFunctionPrototypes
+    xEventPtr /* xE */,
+    DeviceIntPtr /* thisDev */,
+    Bool /* deactivateGrab */,
+    int /* count */
+#endif
+);
+
+extern void RecalculateDeliverableEvents(
+#if NeedFunctionPrototypes
+    WindowPtr /* pWin */
+#endif
+);
+
+extern int OtherClientGone(
+#if NeedFunctionPrototypes
+    pointer /* value */,
+    XID /* id */
+#endif
+);
+
+extern void DoFocusEvents(
+#if NeedFunctionPrototypes
+    DeviceIntPtr /* dev */,
+    WindowPtr /* fromWin */,
+    WindowPtr /* toWin */,
+    int /* mode */
+#endif
+);
+
+extern int SetInputFocus(
+#if NeedFunctionPrototypes
+    ClientPtr /* client */,
+    DeviceIntPtr /* dev */,
+    Window /* focusID */,
+    CARD8 /* revertTo */,
+    Time /* ctime */,
+    Bool /* followOK */
+#endif
+);
+
+extern int GrabDevice(
+#if NeedFunctionPrototypes
+    ClientPtr /* client */,
+    DeviceIntPtr /* dev */,
+    unsigned /* this_mode */,
+    unsigned /* other_mode */,
+    Window /* grabWindow */,
+    unsigned /* ownerEvents */,
+    Time /* ctime */,
+    Mask /* mask */,
+    CARD8 * /* status */
+#endif
+);
+
+extern void InitEvents(
+#if NeedFunctionPrototypes
+    void
+#endif
+);
+
+extern void DeleteWindowFromAnyEvents(
+#if NeedFunctionPrototypes
+    WindowPtr	/* pWin */,
+    Bool /* freeResources */
+#endif
+);
+
+extern void CheckCursorConfinement(
+#if NeedFunctionPrototypes
+    WindowPtr /* pWin */
+#endif
+);
+
+extern Mask EventMaskForClient(
+#if NeedFunctionPrototypes
+    WindowPtr /* pWin */,
+    ClientPtr /* client */
+#endif
+);
+
+
 
 extern int DeliverEvents(
 #if NeedFunctionPrototypes

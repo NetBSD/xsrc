@@ -1,14 +1,18 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.11 1996/10/08 12:23:40 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/Imakefile,v 3.14.2.2 1997/05/11 05:04:24 dawes Exp $
 
 
 
 
 
-XCOMM $XConsortium: Imakefile /main/6 1995/12/07 21:15:39 gildea $
+XCOMM $XConsortium: Imakefile /main/9 1996/10/25 15:38:46 kaleb $
 
 #include <Server.tmpl>
 
 #define IHaveSubdirs
+
+#if defined(ArcArchitecture)
+OS_SUBDIR = bsd
+#endif
 
 #if defined(SVR3Architecture) 
 # if defined(i386ScoArchitecture)
@@ -73,6 +77,10 @@ DONES = $(OS_SUBDIR)/DONE misc/DONE
 MakeMutex($(SUBDIRS) $(OBJS) $(DONES))
 #endif
 
+#if HasGnuMake | HasBsdMake
+$(DONES): $(SUBDIRS)
+#endif
+
 NormalDepLibraryTarget(xf86_os,$(SUBDIRS) $(DONES),$(OBJS))
 
 ForceSubdirs($(SUBDIRS))
@@ -80,6 +88,7 @@ ForceSubdirs($(SUBDIRS))
 InstallLinkKitLibrary(xf86_os,$(LINKKITDIR)/lib86)
 InstallLinkKitNonExecFile(assyntax.h,$(LINKKITDIR)/include)
 InstallLinkKitNonExecFile(xf86_OSlib.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(xf86_OSproc.h,$(LINKKITDIR)/include)
 
 DependSubdirs($(SUBDIRS))
 

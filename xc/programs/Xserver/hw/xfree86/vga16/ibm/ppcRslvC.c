@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcRslvC.c,v 3.5 1996/02/04 09:11:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga16/ibm/ppcRslvC.c,v 3.6 1996/12/23 06:53:15 dawes Exp $ */
 /************************************************************
 Copyright 1987 by Sun Microsystems, Inc. Mountain View, CA.
 
@@ -51,7 +51,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
 */
 
-/* $XConsortium: ppcRslvC.c /main/6 1995/11/13 07:05:42 kaleb $ */
+/* $XConsortium: ppcRslvC.c /main/7 1996/02/21 17:58:25 kaleb $ */
 
 /* Generic Color Resolution Scheme
  * P. Shupak 12/31/87

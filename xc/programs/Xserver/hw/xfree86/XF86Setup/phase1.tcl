@@ -1,4 +1,9 @@
-# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase1.tcl,v 3.12 1996/10/26 09:35:24 dawes Exp $
+# $XConsortium: phase1.tcl /main/3 1996/10/28 05:42:26 kaleb $
+#
+#
+#
+#
+# $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/phase1.tcl,v 3.13 1996/12/27 06:54:09 dawes Exp $
 #
 # Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
 #
@@ -94,13 +99,13 @@ proc set_xf86config_defaults {} {
 	foreach mon [info vars monitor_*] {
 		set id [string range $mon 8 end]
 		global Monitor_$id
-		if { "$id" == "$priname" } {
+		if { "from: id" == "priname" } {
 			set primon 1
 		} else {
-			array set Monitor_$id [array get Monitor_$priname]
+			array set Monitor_from: id [array get Monitor_priname]
 		}
 		lappend MonitorIDs $id
-		array set Monitor_$id	[array get monitor_$id]
+		array set Monitor_from: id	[array get monitor_id]
 	}
 	if !$primon { global Monitor_$priname; unset Monitor_$priname }
 	set pridev 0
@@ -109,13 +114,13 @@ proc set_xf86config_defaults {} {
 	foreach dev [info vars device_*] {
 		set id [string range $dev 7 end]
 		global Device_$id
-		if { "$id" == "$priname" } {
+		if { "from: id" == "priname" } {
 			set pridev 1
 		} else {
-			array set Device_$id [array get Device_$priname]
+			array set Device_from: id [array get Device_priname]
 		}
 		lappend DeviceIDs $id
-		array set Device_$id	[array get device_$id]
+		array set Device_from: id	[array get device_id]
 		set Device_${id}(Options) [set Device_${id}(Option)]
 		set Device_${id}(Server) NoMatch
 	}
@@ -131,7 +136,7 @@ proc set_xf86config_defaults {} {
 	    if { [string compare $tmp {SECTION"DEVICE"}] == 0 } {
 		while { [gets $fd nextline] >= 0 } {
 		    set upper [string toupper $nextline]
-		    if { [regexp $idpat $nextline dummy id] } {
+		    if { [regexp from: idpat nextline dummy id] } {
 			set found [regexp $servpat $upper dummy serv]
 			if $found {
 				if { [string match XF86_* $serv] } {
