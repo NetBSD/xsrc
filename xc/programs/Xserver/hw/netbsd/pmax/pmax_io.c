@@ -1,11 +1,11 @@
-/*	$NetBSD: pmax_io.c,v 1.5 2000/01/07 14:41:03 ad Exp $	*/
+/*	$NetBSD: pmax_io.c,v 1.6 2001/09/18 16:19:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran <ad@NetBSD.org>.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
