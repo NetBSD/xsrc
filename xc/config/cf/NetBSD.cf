@@ -514,7 +514,30 @@ install.man:: 								@@\
 #if defined(i386Architecture) || defined(Arm32Architecture) || \
     defined(atariArchitecture)
 # include <xfree86.cf>
-#endif
+
+/*
+ * XXX The DynamicModuleTarget macro in xf86.rules does NOT work properly
+ * XXX on ELF systems.  This macro should be moved into bsdLib.rules, since
+ * XXX it depends on how shlibs are built on that platform.
+ * XXX
+ * XXX The following overrides DynamicModuleTarget so it should work on
+ * XXX ELF and a.out.
+ */
+/*
+ * DynamicModuleTarget - build a module to be dynamically loaded
+ */
+# undef DynamicModuleTarget
+# define DynamicModuleTarget(module,modlist)				@@\
+AllTarget(module)							@@\
+									@@\
+module: modlist								@@\
+	RemoveFile($@)							@@\
+	$(CC) -o $@ $(SHLIBLDFLAGS) modlist				@@\
+									@@\
+clean::									@@\
+	RemoveFile(module)
+
+#endif /* i386Architecture || Arm32Architecture || atariArchitecture */
 
 /*
  * NetBSD always uses the XFree86 contrib distribution.
