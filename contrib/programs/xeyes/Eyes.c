@@ -1,5 +1,5 @@
 /* $XConsortium: Eyes.c,v 1.28 94/04/17 20:45:22 eswu Exp $ */
-/* $XFree86: contrib/programs/xeyes/Eyes.c,v 3.0 1994/06/05 07:59:54 dawes Exp $ */
+/* $XFree86: contrib/programs/xeyes/Eyes.c,v 3.0.2.1 1997/05/27 07:51:21 dawes Exp $ */
 /*
 
 Copyright (c) 1991  X Consortium
@@ -207,6 +207,8 @@ static void Initialize (greq, gnew, args, num_args)
 
     w->eyes.pupil[0].x = w->eyes.pupil[1].x = -1000;
     w->eyes.pupil[0].y = w->eyes.pupil[1].y = -1000;
+
+    w->eyes.mouse.x = w->eyes.mouse.y = -1000;
 
     if (w->eyes.shape_window && !XShapeQueryExtension (XtDisplay (w),
 						       &shape_event_base,

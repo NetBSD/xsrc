@@ -1,5 +1,5 @@
 /* $XConsortium: get_load.c /main/37 1996/03/09 09:38:04 kaleb $ */
-/* $XFree86: contrib/programs/xload/get_load.c,v 3.5 1996/10/26 08:19:56 dawes Exp $ */
+/* $XFree86: contrib/programs/xload/get_load.c,v 3.6 1996/11/18 12:50:12 dawes Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -63,6 +63,9 @@ from the X Consortium.
 
 #ifdef sun
 #    include <sys/param.h>
+#    if defined(SVR4) && (OSMAJORVERSION == 5) && (OSMINORVERSION > 3)
+#        include <kvm.h>
+#    endif
 #    if defined(i386) && !defined(SVR4)
 #        include <kvm.h>
 #        define	KVM_ROUTINES
@@ -148,7 +151,11 @@ extern long lseek();
 #endif
 extern void exit();
 
-static xload_error();
+static xload_error(
+#if NeedFunctionPrototypes
+char *, char *
+#endif
+);
 
 
 #ifdef apollo
@@ -311,18 +318,18 @@ InitLoadPoint()					/* Sun 386i version */
 {
     kd = kvm_open("/vmunix", NULL, NULL, O_RDONLY, "Load Widget");
     if (kd == (kvm_t *)0) {
-	xload_error("cannot get access to kernel address space");
+	xload_error("cannot get access to kernel address space", "");
     }
 	
     nl[0].n_name = "avenrun";
     nl[1].n_name = NULL;
 	
     if (kvm_nlist(kd, nl) != 0) {
-	xload_error("cannot get name list");
+	xload_error("cannot get name list", "");
     }
     
     if (nl[0].n_value == 0) {
-	xload_error("Cannot find address for avenrun in the kernel\n");
+	xload_error("Cannot find address for avenrun in the kernel\n", "");
     }
 }
 
@@ -338,7 +345,7 @@ XtPointer call_data;	/* pointer to (double) return value */
 
     if (kvm_read(kd, nl[0].n_value, (char *)&temp, sizeof (temp)) != 
 	sizeof (temp)) {
-	xload_error("Kernel read error");
+	xload_error("Kernel read error", "");
     }
     *loadavg = (double)temp/FSCALE;
 }
@@ -476,7 +483,7 @@ void GetLoadPoint( w, closure, call_data )
 
 #else /* not __osf__ */
 
-#ifdef CSRG_BASED
+#ifdef __bsdi__
 #include <kvm.h>
 
 static struct nlist nl[] = {
@@ -494,18 +501,18 @@ void InitLoadPoint()
   fixpt_t averunnable[3];  /* unused really */
 
   if ((kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL)) == NULL)
-    xload_error("can't open kvm files");
+    xload_error("can't open kvm files", "");
 
   if (kvm_nlist(kd, nl) != 0)
-    xload_error("can't read name list");
+    xload_error("can't read name list", "");
 
   if (kvm_read(kd, (off_t)nl[X_AVERUNNABLE].n_value, (char *)averunnable,
 	       sizeof(averunnable)) != sizeof(averunnable))
-    xload_error("couldn't obtain _averunnable variable");
+    xload_error("couldn't obtain _averunnable variable", "");
 
   if (kvm_read(kd, (off_t)nl[X_FSCALE].n_value, (char *)&fscale,
 	       sizeof(fscale)) != sizeof(fscale))
-    xload_error("couldn't obtain _fscale variable");
+    xload_error("couldn't obtain _fscale variable", "");
 
   return;
 }
@@ -520,7 +527,7 @@ void GetLoadPoint(w, closure, call_data)
 
   if (kvm_read(kd, (off_t)nl[X_AVERUNNABLE].n_value, (char *)&t,
 	       sizeof(t)) != sizeof(t))
-    xload_error("couldn't obtain load average");
+    xload_error("couldn't obtain load average", "");
 
   *loadavg = (double)t/fscale;
 
@@ -542,7 +549,7 @@ void GetLoadPoint(w, closure, call_data)
   double *loadavg = (double *)call_data;
 
   if (getloadavg(loadavg, 1) < 0) 
-    xload_error("couldn't obtain load average");
+    xload_error("couldn't obtain load average", "");
 }
 
 #else /* not BSD >= 199306 */
@@ -761,6 +768,30 @@ InitLoadPoint()
 	nl[i].n_value = (int)nl[i].n_value - v.v_kvoffset;
     }
 #else /* not macII */
+#if defined(sun) && defined(SVR4) && (OSMAJORVERSION == 5) && (OSMINORVERSION > 3)
+    {
+      kvm_t *kd;
+
+      kd = kvm_open(NULL, NULL, NULL, O_RDONLY, "xload");
+      if (kd == NULL)
+      {
+        xload_error("cannot get name list from", "kernel");
+       exit(-1);
+      }
+      if (kvm_nlist (kd, namelist) < 0 )
+      {
+        xload_error("cannot get name list from", "kernel");
+       exit(-1);
+      }
+      if (namelist[LOADAV].n_type == 0 ||
+       namelist[LOADAV].n_value == 0) {
+       xload_error("cannot get name list from", "kernel");
+       exit(-1);
+      }
+      loadavg_seek = namelist[LOADAV].n_value;
+    }
+#else /* sun svr4 5.5 or later */
+
 #if (!defined(SVR4) || !defined(__STDC__)) && !defined(sgi) && !defined(MOTOROLA) && !(BSD >= 199103) && !defined(MINIX)
     extern void nlist();
 #endif
@@ -793,7 +824,7 @@ InitLoadPoint()
     loadavg_seek += ((char *) (((struct sysinfo *)NULL)->avenrun)) -
 	((char *) NULL);
 #endif /* CRAY && SYSINFO */
-  
+#endif /* sun svr4 5.5 or later */  
     kmem = open(KMEM_FILE, O_RDONLY);
     if (kmem < 0) xload_error("cannot open", KMEM_FILE);
 #endif /* macII else */
@@ -870,7 +901,6 @@ void GetLoadPoint( w, closure, call_data )
         static int init = 0;
         static kmem;
         static long loadavg_seek;
-        static xload_error();
 
 #define CEXP    0.25            /* Constant used for load averaging */
 
@@ -980,7 +1010,7 @@ void GetLoadPoint( w, closure, call_data )
 	return;
 }
 #endif /* BSD >= 199306 else */
-#endif /* CSRG_BASED else */
+#endif /* __bsdi__ else */
 #endif /* __osf__ else */
 #endif /* LOADSTUB else */
 #endif /* linux else */
@@ -992,7 +1022,7 @@ static xload_error(str1, str2)
 char *str1, *str2;
 {
     (void) fprintf(stderr,"xload: %s %s\n", str1, str2);
-#ifdef CSRG_BASED
+#ifdef __bsdi__
     if (kd)
 	kvm_close(kd);
 #endif
