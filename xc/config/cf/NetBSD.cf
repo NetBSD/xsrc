@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.61 1999/09/02 19:43:31 tron Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.62 2000/01/10 12:44:42 shin Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -24,6 +24,7 @@ XCOMM		NetBSD/vax	client/server
 XCOMM		NetBSD/pc532	client
 XCOMM		NetBSD/x68k	client/server
 XCOMM		NetBSD/macppc	client/server
+XCOMM		NetBSD/hpcmips	client
 XCOMM
 
 #ifndef OSName
@@ -321,6 +322,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 
 #if defined(pmaxArchitecture)
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+#endif
+
+#if defined(hpcmipsArchitecture)
+# define BuildServer		NO
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
 #endif

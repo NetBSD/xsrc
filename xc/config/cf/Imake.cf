@@ -186,6 +186,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.14 1999/07/29 09:22:23 hohndel Ex
 #  define pmaxArchitecture
 #  undef pmax
 # endif
+# if defined(__hpcmips__) || defined(hpcmips)
+#  define hpcmipsArchitecture
+#  undef hpcmips
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__
