@@ -165,23 +165,57 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
  */
 #ifdef i386Architecture
 #ifdef NetBSDArchitecture
-#define XF86SVGAServer          YES
-#define XF86VGA16Server         YES
-#define XF86VGA16DualServer	YES
-#define XF86MonoServer          YES
-#define XF86MonoDualServer	YES
-#define XF86S3Server            YES
-#define XF86S3VServer           YES
-#define XF86I8514Server         YES
-#define XF86Mach8Server         YES
-#define XF86Mach32Server        YES
-#define XF86Mach64Server        YES
-#define XF86P9000Server		YES
-#define XF86AGXServer		YES
-#define XF86W32Server		YES
-#define XF86I128Server		YES
+#ifndef	XF86SVGAServer
+# define XF86SVGAServer		YES
+#endif
+#ifndef XF86VGA16Server
+# define XF86VGA16Server	YES
+#endif
+#ifndef XF86VGA16DualServer
+# define XF86VGA16DualServer	YES
+#endif
+#ifndef XF86MonoServer
+# define XF86MonoServer		YES
+#endif
+#ifndef XF86MonoDualServer
+# define XF86MonoDualServer	YES
+#endif
+#ifndef XF86S3Server
+# define XF86S3Server		YES
+#endif
+#ifndef XF86S3VServer
+# define XF86S3VServer		YES
+#endif
+#ifndef XF86I8514Server
+# define XF86I8514Server	YES
+#endif
+#ifndef XF86Mach8Server
+# define XF86Mach8Server	YES
+#endif
+#ifndef XF86Mach32Server
+# define XF86Mach32Server	YES
+#endif
+#ifndef XF86Mach64Server
+# define XF86Mach64Server	YES
+#endif
+#ifndef XF86P9000Server
+# define XF86P9000Server	YES
+#endif
+#ifndef XF86AGXServer
+# define XF86AGXServer		YES
+#endif
+#ifndef XF86W32Server
+# define XF86W32Server		YES
+#endif
+#ifndef XF86I128Server
+# define XF86I128Server		YES
+#endif
+#ifndef XF86GLINTServer
 #define XF86GLINTServer		YES
+#endif
+#ifndef XF86FBDevServer
 #define XF86FBDevServer		NO
+#endif
 #else
 #define XF86SVGAServer          NO
 #define XF86VGA16Server         NO
@@ -297,12 +331,8 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
 #define XF86SvgaDrivers		nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
 				cirrus ncr77c22 compaq mga oak al2101 ali \
 				cl64xx video7 ark mx realtek apm \
-<<<<<<< xf86site.def
-				s3v s3_svga chips neomagic generic
-=======
 				s3v s3_svga neo chips cyrix rendition p9x00 \
 				generic
->>>>>>> 1.1.1.5
  */
 
 /*
@@ -576,26 +606,14 @@ XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.101.2.25 1998/11/08 09:06:29 dawes
  */
 
 /*
-<<<<<<< xf86site.def
- * To use ELF format shared libraries for Linux, uncomment this.
- * Note: gcc-2.6.0-941008 and gas-941008 (or later) is required for this.
- * Check linux.cf if you have problems regarding the location of elf-aware
- * gcc and gas binaries.
-=======
  * To use ELF format shared libraries for supported OSs, uncomment this.
  *
  * For Linux the default setting of this is the same as the setting of
  * LinuxElfDefault.
->>>>>>> 1.1.1.5
  *
-<<<<<<< xf86site.def
- * The default setting of this is the same as the setting of LinuxElfDefault
- *
-=======
  * For FreeBSD this should automatically be set correctly by imake.  Only
  * change it here if you need to override the automatic setting.
  *
->>>>>>> 1.1.1.5
 #define UseElfFormat		YES
  */
 
