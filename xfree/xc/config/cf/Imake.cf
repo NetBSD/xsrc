@@ -1,4 +1,4 @@
-XCOMM $TOG: Imake.cf /main/30 1998/04/28 13:55:25 barstow $
+XCOMM $Xorg: Imake.cf,v 1.4 2000/08/17 19:41:45 cpqbld Exp $
 /*
  * To add support for another platform:
  * 
@@ -17,13 +17,21 @@ XCOMM $TOG: Imake.cf /main/30 1998/04/28 13:55:25 barstow $
  *
  *     4.  Create a .cf file with the name given by MacroFile.
  */
-XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.62 2000/11/02 02:51:05 dawes Exp $
+XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.67 2001/04/18 17:13:58 dawes Exp $
 
 #if defined(__APPLE__)
 # undef __APPLE__
 # define MacroIncludeFile <darwin.cf>
 # define MacroFile darwin.cf
 # define DarwinArchitecture
+# ifdef __ppc__
+#  define PpcDarwinArchitecture
+#  undef __ppc__
+# endif
+# ifdef __i386__
+#  define i386DarwinArchitecture
+#  undef __i386__
+# endif
 #endif
 
 #if defined(clipper) || defined(__clipper__)
@@ -41,6 +49,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.62 2000/11/02 02:51:05 dawes Exp $
 #undef i386
 #undef __i386__
 #undef _X86_
+#undef __CYGWIN__
 #endif /* CYGWIN */
 
 #ifdef ultrix
@@ -53,6 +62,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.62 2000/11/02 02:51:05 dawes Exp $
 # ifdef mips
 #  undef mips
 #  define MipsArchitecture
+#  define MipselArchitecture
 # endif
 # undef ultrix
 # define UltrixArchitecture
@@ -568,6 +578,7 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.62 2000/11/02 02:51:05 dawes Exp $
 # ifdef __mips__
 #  undef __mips__
 #  define MipsArchitecture
+#  define MipselArchitecture
 # endif
 # ifdef __alpha
 #  undef __alpha
@@ -744,6 +755,11 @@ XCOMM Keep cpp from replacing path elements containing i486/i586/i686
 #  define MipsArchitecture
 #  undef mips
 #  undef __mips__
+#  if defined(MIPSEL) || defined(_MIPSEL)
+#   define MipselArchitecture
+#  endif
+#  undef MIPSEL
+#  undef _MIPSEL
 # endif
 XCOMM  for compatibility with 3.3.x 
 # ifdef PpcArchitecture
@@ -800,17 +816,14 @@ XCOMM  for compatibility with 3.3.x
 # define mc68000Architecture
 #endif /* __sxg__ */
 
-#if defined(sequent) || defined(_SEQUENT_)
+#ifdef _SEQUENT_
+/* undefine assignments resulting from -DSVR4 */
+# undef MacroIncludeFile
 # define MacroIncludeFile <sequent.cf>
+# undef MacroFile
 # define MacroFile sequent.cf
-# ifdef sequent
-#  undef sequent
-#  define Dynix3Architecture
-# endif
-# ifdef _SEQUENT_
-#  undef _SEQUENT_
-#  define DynixPtxArchitecture
-# endif
+# undef _SEQUENT_
+# define DynixPtxArchitecture
 # define SequentArchitecture
 #endif
 
