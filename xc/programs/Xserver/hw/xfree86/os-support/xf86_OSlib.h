@@ -412,11 +412,16 @@ extern int errno;
 #   if defined(PCVT_SUPPORT)
 #    if !defined(SYSCONS_SUPPORT)
       /* no syscons, so include pcvt specific header file */
-#     if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#     if defined(__FreeBSD__) || defined(__OpenBSD__)
 #      include <machine/pcvt_ioctl.h>
 #     else
-#      include <sys/pcvt_ioctl.h>
-#     endif /* __FreeBSD__ || __NetBSD__ || __OpenBSD__ */
+#      if defined(__NetBSD__)
+	/* NetBSD's wscons has a PCVT-compatibility module. */
+#       include <dev/wscons/wsdisplay_usl_io.h>
+#      else
+#       include <sys/pcvt_ioctl.h>
+#      endif /* __NetBSD__ */
+#     endif /* __FreeBSD__ || __OpenBSD__ */
 #    else /* pcvt and syscons: hard-code the ID magic */
 #     define VGAPCVTID _IOWR('V',113, struct pcvtid)
       struct pcvtid {

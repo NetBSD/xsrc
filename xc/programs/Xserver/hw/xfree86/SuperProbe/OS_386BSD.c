@@ -74,7 +74,12 @@
 #   include <machine/ioctl_pc.h>
 #  endif
 #  if defined(PCVT_SUPPORT) && !defined(SYSCONS_SUPPORT)
-#   include <machine/pcvt_ioctl.h>
+    /* NetBSD's wscons has a PCVT compatibility module. */
+#   if defined(__NetBSD__)
+#    include <dev/wscons/wsdisplay_usl_io.h>
+#   else
+#    include <machine/pcvt_ioctl.h>
+#   endif
 #  endif
 #  ifdef SYSCONS_SUPPORT
     /* both, Free and NetBSD have syscons */
