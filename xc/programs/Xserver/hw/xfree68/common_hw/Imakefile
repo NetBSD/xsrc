@@ -1,0 +1,90 @@
+XCOMM $XConsortium: Imakefile /main/16 1996/10/27 18:07:43 kaleb $
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/common_hw/Imakefile,v 3.24.2.1 1998/02/24 13:54:16 hohndel Exp $
+
+#include <Server.tmpl>
+
+#if defined(LinuxArchitecture) && defined(AlphaArchitecture)
+#if !UseElfFormat  /* fix/replacement for broken libc-0.43 io.c */
+IOSRC=glibcAxpIo.c
+IOOBJ=glibcAxpIo.o
+#endif
+XSRCS = BUSmemcpy.c IODelay.c SlowBcopy.c $(IOSRC)
+XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o $(IOOBJ)
+#else
+#if defined(ArcArchitecture) || defined(atariArchitecture)
+XSRCS = BUSmemcpy.c IODelay.c SlowBcopy.c $(IOSRC)
+XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o $(IOOBJ)
+#else
+XSRCS = BUSmemcpy.s IODelay.s SlowBcopy.s
+XOBJS = BUSmemcpy.o IODelay.o SlowBcopy.o
+#endif
+#endif
+
+SRCS = I2061Acal.c I2061Aset.c I2061Aalt.c xf86_ClkPr.c \
+       SC11412.c ATTDac.c S3gendac.c Ti3025clk.c \
+       ICS2595.c CirrusClk.c Ch8391clk.c Ti3026clk.c IBMRGB.c \
+       STG1703clk.c ICS1562.c $(XSRCS)
+
+OBJS = I2061Acal.o I2061Aset.o I2061Aalt.o xf86_ClkPr.o \
+       SC11412.o ATTDac.o S3gendac.o Ti3025clk.o \
+       ICS2595.o CirrusClk.o Ch8391clk.o Ti3026clk.o IBMRGB.o \
+       STG1703clk.o ICS1562.o $(XOBJS)
+
+INCLUDES = -I. -I$(XF68COMSRC) -I$(XF68OSSRC) \
+	   -I$(SERVERSRC)/include -I$(XINCLUDESRC) -I../accel/s3
+
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+NormalLibraryTarget(xf86_hw,$(OBJS))
+
+#if !(defined(atariArchitecture) && defined(NetBSDArchitecture))
+#if !(defined(LinuxArchitecture) && defined(AlphaArchitecture)) && !defined(ArcArchitecture)
+ObjectFromAsmSource(BUSmemcpy,NullParameter)
+ObjectFromAsmSource(IODelay,NullParameter)
+ObjectFromAsmSource(SlowBcopy,NullParameter)
+#endif
+#endif
+
+LinkSourceFile(ATTDac.c,$(XF86SRC)/common_hw)
+LinkSourceFile(BUSmemcpy.c,$(XF86SRC)/common_hw)
+LinkSourceFile(Ch8391clk.c,$(XF86SRC)/common_hw)
+LinkSourceFile(CirrusClk.c,$(XF86SRC)/common_hw)
+LinkSourceFile(CirrusClk.h,$(XF86SRC)/common_hw)
+LinkSourceFile(I2061Aalt.c,$(XF86SRC)/common_hw)
+LinkSourceFile(I2061Acal.c,$(XF86SRC)/common_hw)
+LinkSourceFile(I2061Aset.c,$(XF86SRC)/common_hw)
+LinkSourceFile(IBMRGB.c,$(XF86SRC)/common_hw)
+LinkSourceFile(IBMRGB.h,$(XF86SRC)/common_hw)
+LinkSourceFile(ICD2061A.h,$(XF86SRC)/common_hw)
+LinkSourceFile(ICS1562.c,$(XF86SRC)/common_hw)
+LinkSourceFile(ICS2595.c,$(XF86SRC)/common_hw)
+LinkSourceFile(ICS2595.h,$(XF86SRC)/common_hw)
+LinkSourceFile(IODelay.c,$(XF86SRC)/common_hw)
+LinkSourceFile(S3gendac.c,$(XF86SRC)/common_hw)
+LinkSourceFile(S3gendac.h,$(XF86SRC)/common_hw)
+LinkSourceFile(SC11412.c,$(XF86SRC)/common_hw)
+LinkSourceFile(SC11412.h,$(XF86SRC)/common_hw)
+LinkSourceFile(STG1703clk.c,$(XF86SRC)/common_hw)
+LinkSourceFile(SlowBcopy.c,$(XF86SRC)/common_hw)
+LinkSourceFile(Ti3025clk.c,$(XF86SRC)/common_hw)
+LinkSourceFile(Ti3026clk.c,$(XF86SRC)/common_hw)
+LinkSourceFile(Ti302X.h,$(XF86SRC)/common_hw)
+LinkSourceFile(glibcAxpIo.c,$(XF86SRC)/common_hw)
+LinkSourceFile(xf86_ClkPr.c,$(XF86SRC)/common_hw)
+LinkSourceFile(xf86_HWlib.h,$(XF86SRC)/common_hw)
+LinkSourceFile(xf86_PCI.h,$(XF86SRC)/common_hw)
+
+InstallLinkKitLibrary(xf86_hw,$(LINKKITDIR)/lib86)
+InstallLinkKitNonExecFile(xf86_HWlib.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(xf86_PCI.h,$(LINKKITDIR)/include)
+InstallLinkKitNonExecFile(IBMRGB.h,$(LINKKITDIR)/drivers)
+InstallLinkKitNonExecFile(Ti302X.h,$(LINKKITDIR)/drivers)
+
+DependTarget()
+
+
