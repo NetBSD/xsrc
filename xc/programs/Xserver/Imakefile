@@ -566,6 +566,26 @@ SetUIDServerTarget(XalphaNetBSD,$(ANBDIRS1),$(ANBOBJS1),$(ANBLIBS1),$(SYSLIBS))
 #endif
 #endif /* XalphaNetBSDServer */
 
+#if XdecNetBSDServer
+XCOMM
+XCOMM NetBSD/alpha and NetBSD/pmax server
+XCOMM
+MFBDIR   = mfb
+CFB8DIR  = cfb
+CFB32DIR = cfb32
+DDXDIR1  = hw/netbsd/dec
+ANBDIRS1 = $(STDDIRS) $(MFBDIR) $(CFB8DIR) $(CFB32DIR) $(DDXDIR1) $(DEPDIRS)
+ANBOBJS1 = hw/netbsd/dec/decInit.o
+ANBLIBS1 = hw/netbsd/dec/sfb/libdecSfb.a hw/netbsd/dec/px/libdecPX.a hw/netbsd/dec/cfb/libdecCfb.a hw/netbsd/dec/libdec.a CFB32Libs CFB8Libs
+#if defined(AlphaArchitecture)
+ANBLIBS1 += hw/netbsd/dec/tga/libdecTga.a
+#endif
+SetUIDServerTarget(XdecNetBSD,$(ANBDIRS1),$(ANBOBJS1),$(ANBLIBS1),$(SYSLIBS))
+#ifndef ServerToInstall
+#define ServerToInstall XdecNetBSD
+#endif
+#endif /* XdecNetBSDServer */
+
 
 #if X68kServer
 XCOMM
