@@ -288,15 +288,21 @@
 # if defined(linux)
 #  define ARCH_PCI_INIT linuxPciInit
 #  define INCLUDE_XF86_MAP_PCI_MEM
+#  define ARCH_PCI_PCI_BRIDGE sparcPciPciBridge
 # elif defined(sun)
 #  define ARCH_PCI_INIT sparcPciInit
 #  define INCLUDE_XF86_MAP_PCI_MEM
+#  define ARCH_PCI_PCI_BRIDGE sparcPciPciBridge
 # elif defined(__OpenBSD__) && defined(__sparc64__)
 #  define  ARCH_PCI_INIT freebsdPciInit
 #  define INCLUDE_XF86_MAP_PCI_MEM
 #  define INCLUDE_XF86_NO_DOMAIN
+#  define ARCH_PCI_PCI_BRIDGE sparcPciPciBridge
+# elif defined(__NetBSD__) && defined(__sparc64__)
+#  define ARCH_PCI_INIT netbsdPciInit
+#  define INCLUDE_XF86_MAP_PCI_MEM
+#  define INCLUDE_XF86_NO_DOMAIN
 # endif
-# define ARCH_PCI_PCI_BRIDGE sparcPciPciBridge
 #elif defined(__x86_64__)
 # define ARCH_PCI_INIT ix86PciInit
 # define INCLUDE_XF86_MAP_PCI_MEM
