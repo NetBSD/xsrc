@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: resize.c,v 1.34 95/05/24 22:12:04 gildea Exp $
- *	$XFree86: xc/programs/xterm/resize.c,v 3.18.2.11 1999/10/21 12:08:15 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/resize.c,v 3.39 1999/10/13 04:21:46 dawes Exp $
  */
 
 /*
@@ -31,6 +31,13 @@
 
 #ifdef HAVE_CONFIG_H
 #include <xtermcfg.h>
+
+#else
+
+#if defined(__EMX__) || defined(__CYGWIN__) || defined(SCO) || defined(sco)
+#define USE_TERMCAP 1
+#endif
+
 #endif
 
 #include <X11/Xos.h>
@@ -60,14 +67,8 @@
 #define CANT_OPEN_DEV_TTY
 #endif
 
-#ifdef __EMX__
+#if defined(__EMX__) || defined(__CYGWIN__)
 #define USE_SYSV_TERMIO
-#define USE_TERMCAP
-#endif
-
-#ifdef __QNX__
-#define USE_TERMINFO
-#include <unix.h>
 #endif
 
 #ifdef macII
@@ -75,13 +76,12 @@
 #undef SYSV				/* pretend to be bsd */
 #endif /* macII */
 
-#ifdef SCO
-#define USE_TERMCAP
-#endif
-
 #ifdef linux
 #define USE_TERMIOS
-#define USE_SYSV_UTMP
+#endif
+
+#ifdef Lynx
+#define USE_SYSV_TERMIO
 #endif
 
 #ifdef __OpenBSD__
@@ -89,28 +89,24 @@
 #include <term.h>
 #endif
 
-#ifndef USE_TERMINFO
-#if defined(SCO) || defined(linux)
+#ifndef USE_TERMINFO	/* avoid conflict with configure script */
+#if defined(SCO) || defined(sco) || defined(linux)
 #define USE_TERMINFO
 #endif
 #endif
 
-#if defined(SYSV) || defined(Lynx) || defined(__CYGWIN__)
+#if defined(SYSV) || defined(__CYGWIN__)
 #define USE_SYSV_TERMIO
-#ifndef Lynx
-#define USE_SYSV_UTMP
-#else
+#elif defined(__QNX__)
+#define USE_TERMINFO
+#include <unix.h>
+#elif !defined(USE_TERMCAP)
 #define USE_TERMCAP
-#endif
-#else /* else not SYSV */
-#ifndef __QNX__
-#define USE_TERMCAP
-#endif
 #endif /* SYSV */
 
 /*
- * some OS's may want to use both, like SCO for example we catch
- * here anyone who hasn't decided what they want.
+ * Some OS's may want to use both, like SCO for example.  We catch here anyone
+ * who hasn't decided what they want.
  */
 #if !defined(USE_TERMCAP) && !defined(USE_TERMINFO)
 #define USE_TERMINFO
@@ -269,7 +265,6 @@ static void Usage (void);
 static void readstring (FILE *fp, char *buf, char *str);
 
 #ifdef USE_TERMCAP
-static char *strindex (char *s1, char *s2);
 #ifdef HAVE_TERMCAP_H
 #include <termcap.h>
 #if defined(NCURSES_VERSION)
@@ -284,6 +279,12 @@ static char *strindex (char *s1, char *s2);
 #include <curses.h>
 #endif /* HAVE_TERMCAP_H  */
 #endif
+
+#ifdef USE_TERMCAP
+static char *strindex (char *s1, char *s2);
+#endif
+
+#define TERMCAP_SIZE 1500		/* 1023 is standard; 'screen' exceeds */
 
 /*
    resets termcap string to reflect current screen size
@@ -308,8 +309,8 @@ main (int argc, char **argv)
 #endif /* USE_SYSV_TERMIO */
 #ifdef USE_TERMCAP
 	int ok_tcap = 1;
-	char termcap [1024];
-	char newtc [1024];
+	char termcap [TERMCAP_SIZE];
+	char newtc [TERMCAP_SIZE];
 #endif /* USE_TERMCAP */
 	char buf[BUFSIZ];
 #if defined(sun) && !defined(SVR4)
@@ -554,10 +555,8 @@ main (int argc, char **argv)
 			 setname, termcap);
 #endif /* USE_TERMCAP */
 #ifdef USE_TERMINFO
-#ifndef SVR4
 		printf ("%sCOLUMNS=%d;\nLINES=%d;\nexport COLUMNS LINES;\n",
 			setname, cols, rows);
-#endif /* !SVR4 */
 #endif	/* USE_TERMINFO */
 
 	} else {		/* not Bourne shell */
@@ -568,10 +567,8 @@ main (int argc, char **argv)
 			 setname, termcap);
 #endif /* USE_TERMCAP */
 #ifdef USE_TERMINFO
-#ifndef SVR4
 		printf ("set noglob;\n%ssetenv COLUMNS '%d';\nsetenv LINES '%d';\nunset noglob;\n",
 			setname, cols, rows);
-#endif /* !SVR4 */
 #endif	/* USE_TERMINFO */
 	}
 	exit(0);

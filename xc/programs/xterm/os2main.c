@@ -5,7 +5,7 @@
 #ifndef lint
 static char *rid="$XConsortium: main.c,v 1.227.1.2 95/06/29 18:13:15 kaleb Exp $";
 #endif /* lint */
-/* $XFree86: xc/programs/xterm/os2main.c,v 3.5.2.7 1999/07/28 13:38:03 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/os2main.c,v 3.32 2000/02/08 17:19:39 dawes Exp $ */
 
 /***********************************************************
 
@@ -74,9 +74,12 @@ SOFTWARE.
 
 #include <X11/Xos.h>
 #include <X11/cursorfont.h>
-#include <X11/Xaw/SimpleMenu.h>
 #ifdef I18N
 #include <X11/Xlocale.h>
+#endif
+
+#if OPT_TOOLBAR
+#include <X11/Xaw/Form.h>
 #endif
 
 #include <pwd.h>
@@ -102,15 +105,8 @@ char *ttyname(int fd) { return "/dev/tty"; }
 
 #include <signal.h>
 
-extern char *strindex ();
-
-#undef  CTRL
-#define	CTRL(c)	((c) & 0x1f)
-
 static SIGNAL_T reapchild (int n);
 static char *base_name (char *name);
-static int pty_search (int *pty);
-static int remove_termcap_entry (char *buf, char *str);
 static int spawn (void);
 static void get_terminal (void);
 static void resize (TScreen *s, char *oldtc, char *newtc);
@@ -127,13 +123,13 @@ static struct termio d_tio;
 
 /* allow use of system default characters if defined and reasonable */
 #ifndef CEOF
-#define CEOF     CTRL('D')
+#define CEOF     CONTROL('D')
 #endif
 #ifndef CSUSP
-#define CSUSP    CTRL('Z')
+#define CSUSP    CONTROL('Z')
 #endif
 #ifndef CQUIT
-#define CQUIT    CTRL('\\')
+#define CQUIT    CONTROL('\\')
 #endif
 #ifndef CEOL
 #define CEOL 0
@@ -145,22 +141,22 @@ static struct termio d_tio;
 #define CSWTCH 0
 #endif
 #ifndef CLNEXT
-#define CLNEXT   CTRL('V')
+#define CLNEXT   CONTROL('V')
 #endif
 #ifndef CWERASE
-#define CWERASE  CTRL('W')
+#define CWERASE  CONTROL('W')
 #endif
 #ifndef CRPRNT
-#define CRPRNT   CTRL('R')
+#define CRPRNT   CONTROL('R')
 #endif
 #ifndef CFLUSH
-#define CFLUSH   CTRL('O')
+#define CFLUSH   CONTROL('O')
 #endif
 #ifndef CSTOP
-#define CSTOP    CTRL('S')
+#define CSTOP    CONTROL('S')
 #endif
 #ifndef CSTART
-#define CSTART   CTRL('Q')
+#define CSTART   CONTROL('Q')
 #endif
 
 /*
@@ -170,7 +166,7 @@ static struct termio d_tio;
 static int override_tty_modes = 0;
 struct _xttymodes {
     char *name;
-    int len;
+    size_t len;
     int set;
     char value;
 } ttymodelist[] = {
@@ -239,9 +235,13 @@ static struct _resource {
     char *term_name;
     char *tty_modes;
     Boolean utmpInhibit;
+    Boolean messages;
     Boolean sunFunctionKeys;	/* %%% should be widget resource? */
 #if OPT_SUNPC_KBD
     Boolean sunKeyboard;
+#endif
+#if OPT_HP_FUNC_KEYS
+    Boolean hpFunctionKeys;
 #endif
     Boolean wait_for_map;
     Boolean useInsertMode;
@@ -276,11 +276,17 @@ static XtResource application_resources[] = {
 	offset(tty_modes), XtRString, (caddr_t) NULL},
     {"utmpInhibit", "UtmpInhibit", XtRBoolean, sizeof (Boolean),
 	offset(utmpInhibit), XtRString, "false"},
+    {"messages", "Messages", XtRBoolean, sizeof (Boolean),
+	offset(messages), XtRString, "true"},
     {"sunFunctionKeys", "SunFunctionKeys", XtRBoolean, sizeof (Boolean),
 	offset(sunFunctionKeys), XtRString, "false"},
 #if OPT_SUNPC_KBD
     {"sunKeyboard", "SunKeyboard", XtRBoolean, sizeof (Boolean),
 	offset(sunKeyboard), XtRString, "false"},
+#endif
+#if OPT_HP_FUNC_KEYS
+    {"hpFunctionKeys", "HpFunctionKeys", XtRBoolean, sizeof (Boolean),
+	offset(hpFunctionKeys), XtRString, "false"},
 #endif
     {"waitForMap", "WaitForMap", XtRBoolean, sizeof (Boolean),
         offset(wait_for_map), XtRString, "false"},
@@ -327,6 +333,10 @@ static XrmOptionDescRec optionDescList[] = {
 {"+ai",		"*activeIcon",	XrmoptionNoArg,		(caddr_t) "on"},
 #endif /* NO_ACTIVE_ICON */
 {"-b",		"*internalBorder",XrmoptionSepArg,	(caddr_t) NULL},
+{"-bc",		"*cursorBlink",	XrmoptionNoArg,		(caddr_t) "on"},
+{"+bc",		"*cursorBlink",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-bcf",	"*cursorOffTime",XrmoptionSepArg,	(caddr_t) NULL},
+{"-bcn",	"*cursorOnTime",XrmoptionSepArg,	(caddr_t) NULL},
 {"-bdc",	"*colorBDMode",	XrmoptionNoArg,		(caddr_t) "off"},
 {"+bdc",	"*colorBDMode",	XrmoptionNoArg,		(caddr_t) "on"},
 {"-cb",		"*cutToBeginningOfLine", XrmoptionNoArg, (caddr_t) "off"},
@@ -349,6 +359,10 @@ static XrmOptionDescRec optionDescList[] = {
 #if OPT_HIGHLIGHT_COLOR
 {"-hc",		"*highlightColor", XrmoptionSepArg,	(caddr_t) NULL},
 #endif
+#if OPT_HP_FUNC_KEYS
+{"-hf",		"*hpFunctionKeys",XrmoptionNoArg,	(caddr_t) "on"},
+{"+hf",		"*hpFunctionKeys",XrmoptionNoArg,	(caddr_t) "off"},
+#endif
 {"-j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+j",		"*jumpScroll",	XrmoptionNoArg,		(caddr_t) "off"},
 /* parse logging options anyway for compatibility */
@@ -360,6 +374,8 @@ static XrmOptionDescRec optionDescList[] = {
 {"-mb",		"*marginBell",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+mb",		"*marginBell",	XrmoptionNoArg,		(caddr_t) "off"},
 {"-mc",		"*multiClickTime", XrmoptionSepArg,	(caddr_t) NULL},
+{"-mesg",	"*messages",	XrmoptionNoArg,		(caddr_t) "off"},
+{"+mesg",	"*messages",	XrmoptionNoArg,		(caddr_t) "on"},
 {"-ms",		"*pointerColor",XrmoptionSepArg,	(caddr_t) NULL},
 {"-nb",		"*nMarginBell",	XrmoptionSepArg,	(caddr_t) NULL},
 {"-nul",	"*underLine",	XrmoptionNoArg,		(caddr_t) "off"},
@@ -389,8 +405,13 @@ static XrmOptionDescRec optionDescList[] = {
 #endif
 {"-t",		"*tekStartup",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+t",		"*tekStartup",	XrmoptionNoArg,		(caddr_t) "off"},
+{"-ti",		"*decTerminalID",XrmoptionSepArg,	(caddr_t) NULL},
 {"-tm",		"*ttyModes",	XrmoptionSepArg,	(caddr_t) NULL},
 {"-tn",		"*termName",	XrmoptionSepArg,	(caddr_t) NULL},
+#if OPT_WIDE_CHARS
+{"-u8",		"*utf8",	XrmoptionNoArg,		(caddr_t) "2"},
+{"+u8",		"*utf8",	XrmoptionNoArg,		(caddr_t) "0"},
+#endif
 {"-ulc",	"*colorULMode",	XrmoptionNoArg,		(caddr_t) "off"},
 {"+ulc",	"*colorULMode",	XrmoptionNoArg,		(caddr_t) "on"},
 {"-ut",		"*utmpInhibit",	XrmoptionNoArg,		(caddr_t) "on"},
@@ -399,6 +420,10 @@ static XrmOptionDescRec optionDescList[] = {
 {"+im",		"*useInsertMode", XrmoptionNoArg,	(caddr_t) "off"},
 {"-vb",		"*visualBell",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+vb",		"*visualBell",	XrmoptionNoArg,		(caddr_t) "off"},
+#if OPT_WIDE_CHARS
+{"-wc",		"*wideChars",	XrmoptionNoArg,		(caddr_t) "on"},
+{"+wc",		"*wideChars",	XrmoptionNoArg,		(caddr_t) "off"},
+#endif
 {"-wf",		"*waitForMap",	XrmoptionNoArg,		(caddr_t) "on"},
 {"+wf",		"*waitForMap",	XrmoptionNoArg,		(caddr_t) "off"},
 #if OPT_ZICONBEEP
@@ -446,6 +471,9 @@ static struct _options {
 { "-fi fontname",	   "icon font for active icon" },
 #endif /* NO_ACTIVE_ICON */
 { "-b number",             "internal border in pixels" },
+{ "-/+bc",		   "turn on/off text cursor blinking" },
+{ "-bcf milliseconds",	   "time text cursor is off when blinking"},
+{ "-bcn milliseconds",	   "time text cursor is on when blinking"}.
 { "-/+bdc",                "turn off/on display of bold as color"},
 { "-/+cb",                 "turn on/off cut-to-beginning-of-line inhibit" },
 { "-cc classrange",        "specify additional character classes" },
@@ -457,6 +485,9 @@ static struct _options {
 { "-fb fontname",          "bold text font" },
 #if OPT_HIGHLIGHT_COLOR
 { "-hc",		   "selection background color" },
+#endif
+#if OPT_HP_FUNC_KEYS
+{ "-/+hf",                 "turn on/off HP Function Key escape codes" },
 #endif
 { "-/+im",		   "use insert mode for TERMCAP" },
 { "-/+j",                  "turn on/off jump scroll" },
@@ -470,6 +501,7 @@ static struct _options {
 { "-/+ls",                 "turn on/off login shell" },
 { "-/+mb",                 "turn on/off margin bell" },
 { "-mc milliseconds",      "multiclick time in milliseconds" },
+{ "-/+mesg",		   "forbid/allow messages" },
 { "-ms color",             "pointer color" },
 { "-nb number",            "margin bell in characters from right end" },
 { "-/+nul",                "turn on/off display of underlining" },
@@ -486,15 +518,24 @@ static struct _options {
 { "-/+si",                 "turn on/off scroll-on-tty-output inhibit" },
 { "-/+sk",                 "turn on/off scroll-on-keypress" },
 { "-sl number",            "number of scrolled lines to save" },
+#if OPT_SUNPC_KBD
 { "-/+sp",                 "turn on/off Sun/PC Function/Keypad mapping" },
+#endif
 #if OPT_TEK4014
 { "-/+t",                  "turn on/off Tek emulation window" },
 #endif
+{ "-ti termid",            "terminal identifier" },
 { "-tm string",            "terminal mode keywords and characters" },
 { "-tn name",              "TERM environment variable name" },
+#if OPT_WIDE_CHARS
+{ "-/+u8",                 "turn on/off UTF-8 mode (implies wide-characters)" },
+#endif
 { "-/+ulc",                "turn off/on display of underline as color" },
 { "-/+ut",                 "turn on/off utmp inhibit (not supported)" },
 { "-/+vb",                 "turn on/off visual bell" },
+#if OPT_WIDE_CHARS
+{ "-/+wc",                 "turn on/off wide-character mode" },
+#endif
 { "-/+wf",                 "turn on/off wait for map before command exec" },
 { "-e command args ...",   "command to execute" },
 #if OPT_TEK4014
@@ -569,7 +610,7 @@ static void Syntax (char *badOption)
 
 static void Version (void)
 {
-    puts (XTERM_VERSION);
+    printf("%s(%d)\n", XFREE86_VERSION, XTERM_PATCH);
     exit (0);
 }
 
@@ -578,8 +619,8 @@ static void Help (void)
     struct _options *opt;
     char **cpp;
 
-    fprintf (stderr, "%s usage:\n    %s [-options ...] [-e command args]\n\n",
-	     XTERM_VERSION, ProgramName);
+    fprintf (stderr, "%s(%d) usage:\n    %s [-options ...] [-e command args]\n\n",
+	     XFREE86_VERSION, XTERM_PATCH, ProgramName);
     fprintf (stderr, "where options include:\n");
     for (opt = options; opt->opt; opt++) {
 	fprintf (stderr, "    %-28s %s\n", opt->opt, opt->desc);
@@ -616,7 +657,6 @@ Arg ourTopLevelShellArgs[] = {
 };
 int number_ourTopLevelShellArgs = 2;
 
-Widget toplevel;
 Bool waiting_for_initial_map;
 
 /*
@@ -665,9 +705,6 @@ XtActionsRec actionProcs[] = {
 };
 
 Atom wm_delete_window;
-extern fd_set Select_mask;
-extern fd_set X_mask;
-extern fd_set pty_mask;
 
 #ifdef __EMX__
 
@@ -789,6 +826,7 @@ char **gblenvp;
 int
 main (int argc, char **argv, char **envp)
 {
+	Widget form_top, menu_top;
 	register TScreen *screen;
 	int mode;
 	extern char **environ;
@@ -835,9 +873,9 @@ main (int argc, char **argv, char **envp)
     	d_tio.c_cflag = B9600|CS8|CREAD|PARENB|HUPCL;
     	d_tio.c_lflag = ISIG|ICANON|ECHO|ECHOE|ECHOK;
 	d_tio.c_line = 0;
-	d_tio.c_cc[VINTR] = CTRL('C');		/* '^C'	*/
+	d_tio.c_cc[VINTR] = CONTROL('C');	/* '^C'	*/
 	d_tio.c_cc[VERASE] = 0x7f;		/* DEL	*/
-	d_tio.c_cc[VKILL] = CTRL('U');		/* '^U'	*/
+	d_tio.c_cc[VKILL] = CONTROL('U');	/* '^U'	*/
 	d_tio.c_cc[VQUIT] = CQUIT;		/* '^\'	*/
     	d_tio.c_cc[VEOF] = CEOF;		/* '^D'	*/
 	d_tio.c_cc[VEOL] = CEOL;		/* '^@'	*/
@@ -889,10 +927,6 @@ main (int argc, char **argv, char **envp)
         sameName = resource.sameName;
 #endif
 	xterm_name = resource.xterm_name;
-	sunFunctionKeys = resource.sunFunctionKeys;
-#if OPT_SUNPC_KBD
-	sunKeyboard = resource.sunKeyboard;
-#endif
 	if (strcmp(xterm_name, "-") == 0) xterm_name = DFT_TERMTYPE;
 	if (resource.icon_geometry != NULL) {
 	    int scr, junk;
@@ -958,36 +992,30 @@ main (int argc, char **argv, char **envp)
 	    break;
 	}
 
-	XawSimpleMenuAddGlobalActions (app_con);
-	XtRegisterGrabAction (HandlePopupMenu, True,
-			      (ButtonPressMask|ButtonReleaseMask),
-			      GrabModeAsync, GrabModeAsync);
+	SetupMenus(toplevel, &form_top, &menu_top);
 
-        term = (XtermWidget) XtCreateManagedWidget(
-	    "vt100", xtermWidgetClass, toplevel, NULL, 0);
+        term = (XtermWidget) XtVaCreateManagedWidget(
+		"vt100", xtermWidgetClass, form_top,
+#if OPT_TOOLBAR
+		XtNmenuBar,	menu_top,
+		XtNresizable,	True,
+		XtNfromVert,	menu_top,
+		XtNleft,	XawChainLeft,
+		XtNright,	XawChainRight,
+		XtNbottom,	XawChainBottom,
+#endif
+		0);
 	    /* this causes the initialize method to be called */
 
+#if OPT_HP_FUNC_KEYS
+	init_keyboard_type(keyboardIsHP, resource.hpFunctionKeys);
+#endif
+	init_keyboard_type(keyboardIsSun, resource.sunFunctionKeys);
+#if OPT_SUNPC_KBD
+	init_keyboard_type(keyboardIsVT220, resource.sunKeyboard);
+#endif
+
         screen = &term->screen;
-
-	if (screen->savelines < 0) screen->savelines = 0;
-
-	term->flags = 0;
-	if (!screen->jumpscroll) {
-	    term->flags |= SMOOTHSCROLL;
-	    update_jumpscroll();
-	}
-	if (term->misc.reverseWrap) {
-	    term->flags |= REVERSEWRAP;
-	    update_reversewrap();
-	}
-	if (term->misc.autoWrap) {
-	    term->flags |= WRAPAROUND;
-	    update_autowrap();
-	}
-	if (term->misc.re_verse) {
-	    term->flags |= REVERSE_VIDEO;
-	    update_reversevideo();
-	}
 
 	inhibit = 0;
 #ifdef ALLOWLOGGING
@@ -997,18 +1025,6 @@ main (int argc, char **argv, char **envp)
 #if OPT_TEK4014
 	if (term->misc.tekInhibit)		inhibit |= I_TEK;
 #endif
-
-	term->initflags = term->flags;
-
-	if (term->misc.appcursorDefault) {
-	    term->keyboard.flags |= MODE_DECCKM;
-	    update_appcursor();
-	}
-
-	if (term->misc.appkeypadDefault) {
-	    term->keyboard.flags |= MODE_DECKPAM;
-	    update_appkeypad();
-	}
 
 /*
  * Set title and icon name if not specified
@@ -1127,19 +1143,6 @@ base_name(char *name)
 	return(cp ? cp + 1 : name);
 }
 
-/* This function opens up a pty master and stuffs its value into pty.
- * If it finds one, it returns a value of 0.  If it does not find one,
- * it returns a value of !0.  This routine is designed to be re-entrant,
- * so that if a pty master is found and later, we find that the slave
- * has problems, we can re-enter this function and get another one.
- */
-
-static int
-get_pty (int *pty)
-{
-	return pty_search(pty);
-}
-
 /*
  * Called from get_pty to iterate over likely pseudo terminals
  * we might allocate.  Used on those systems that do not have
@@ -1166,6 +1169,19 @@ pty_search(int *pty)
 		}
 	}
 	return 1;
+}
+
+/* This function opens up a pty master and stuffs its value into pty.
+ * If it finds one, it returns a value of 0.  If it does not find one,
+ * it returns a value of !0.  This routine is designed to be re-entrant,
+ * so that if a pty master is found and later, we find that the slave
+ * has problems, we can re-enter this function and get another one.
+ */
+
+static int
+get_pty (int *pty)
+{
+	return pty_search(pty);
 }
 
 static void
@@ -1288,7 +1304,7 @@ spawn (void)
 	struct termio tio;
 	int status;
 
-	char termcap[1024], newtc[1024];
+	char termcap[TERMCAP_SIZE], newtc[TERMCAP_SIZE];
 	char *TermName = NULL;
 	char *ptr, *shname, buf[64];
 	int i, no_dev_tty = FALSE, envsize;
@@ -1508,7 +1524,7 @@ opencons();*/
 			chown (ttydev, screen->uid, screen->gid);
 
 			/* change protection of tty */
-			chmod (ttydev, 0622);
+			chmod (ttydev, (resource.messages? 0622 : 0600));
 
 			/* for the xf86sup-pty, we set the pty to bypass: OS/2 does
 			 * not have a line discipline structure
@@ -1545,7 +1561,7 @@ opencons();*/
 			for (i = 0 ; gblenvp [i] != NULL ; i++)
 				;
 
-			/* compute number of Setenv() calls below */
+			/* compute number of xtermSetenv() calls below */
 			envsize = 1;	/* (NULL terminating entry) */
 			envsize += 3;	/* TERM, WINDOWID, DISPLAY */
 			envsize += 2;	/* COLUMNS, LINES */
@@ -1553,16 +1569,16 @@ opencons();*/
 			envnew = (char **) calloc ((unsigned) i + envsize, sizeof(char *));
 			memmove( (char *)envnew, (char *)gblenvp, i * sizeof(char *));
 			gblenvp = envnew;
-			Setenv ("TERM=", TermName);
+			xtermSetenv ("TERM=", TermName);
 			if(!TermName)
 				*newtc = 0;
 
 			sprintf (buf, "%lu",
 				((unsigned long) XtWindow (XtParent(CURRENT_EMU(screen)))));
-			Setenv ("WINDOWID=", buf);
+			xtermSetenv ("WINDOWID=", buf);
 
 			/* put the display into the environment of the shell*/
-			Setenv ("DISPLAY=", XDisplayString (screen->display));
+			xtermSetenv ("DISPLAY=", XDisplayString (screen->display));
 
 			signal(SIGTERM, SIG_DFL);
 
@@ -1593,9 +1609,9 @@ opencons();*/
 			}
 
 			sprintf (numbuf, "%d", screen->max_col + 1);
-			Setenv("COLUMNS=", numbuf);
+			xtermSetenv("COLUMNS=", numbuf);
 			sprintf (numbuf, "%d", screen->max_row + 1);
-			Setenv("LINES=", numbuf);
+			xtermSetenv("LINES=", numbuf);
 
 			/* reconstruct dead environ variable */
 			environ = gblenvp;
@@ -1759,26 +1775,6 @@ static SIGNAL_T reapchild (int n GCC_UNUSED)
     SIGNAL_RETURN;
 }
 
-static int
-remove_termcap_entry (char *buf, char *str)
-{
-    register char *strinbuf;
-
-    strinbuf = strindex (buf, str);
-    if (strinbuf) {
-        register char *colonPtr = strchr(strinbuf+1, ':');
-        if (colonPtr) {
-            while (*colonPtr) {
-                *strinbuf++ = *colonPtr++;      /* copy down */
-            }
-            *strinbuf = '\0';
-        } else {
-            strinbuf[1] = '\0';
-        }
-    }
-    return 0;
-}
-
 /*
  * parse_tty_modes accepts lines of the following form:
  *
@@ -1808,7 +1804,16 @@ static int parse_tty_modes (char *s, struct _xttymodes *modelist)
 
 	if (*s == '^') {
 	    s++;
-	    c = ((*s == '?') ? 0177 : *s & 31);	 /* keep control bits */
+	    c = ((*s == '?') ? 0177 : CONTROL(*s));
+	    if (*s == '-') {
+		errno = 0;
+		c = fpathconf(0, _PC_VDISABLE);
+		if (c == -1) {
+		    if (errno != 0)
+			continue;	/* skip this (error) */
+		    c = 0377;
+		}
+	    }
 	} else {
 	    c = *s;
 	}
