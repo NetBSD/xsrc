@@ -155,19 +155,6 @@ fflush(stderr);
 	case DEVICE_ON:
 fprintf(stderr, "on\n");
 fflush(stderr);
-	    if (ioctl (alphaPtrPriv.fd, VUIDGFORMAT, &oformat) == -1) {
-		Error ("alphaMouseProc ioctl VUIDGFORMAT");
-		return !Success;
-	    }
-fprintf(stderr, "on a\n");
-fflush(stderr);
-	    format = VUID_FIRM_EVENT;
-	    if (ioctl (alphaPtrPriv.fd, VUIDSFORMAT, &format) == -1) {
-		Error ("alphaMouseProc ioctl VUIDSFORMAT");
-		return !Success;
-	    }
-fprintf(stderr, "on b\n");
-fflush(stderr);
 	    alphaPtrPriv.bmask = 0;
 	    AddEnabledDevice (alphaPtrPriv.fd);
 	    pMouse->on = TRUE;
@@ -176,8 +163,6 @@ fflush(stderr);
 	    break;
 
 	case DEVICE_CLOSE:
-	    if (ioctl (alphaPtrPriv.fd, VUIDSFORMAT, &oformat) == -1)
-		Error ("alphaMouseProc ioctl VUIDSFORMAT");
 	    break;
 
 	case DEVICE_OFF:
@@ -216,7 +201,7 @@ Firm_event* alphaMouseGetEvents (fd, pNumEvents, pAgain)
 #endif
 {
     int	    	  nBytes;	    /* number of bytes of events available. */
-    static Firm_event	evBuf[MAXEVENTS];   /* Buffer for Firm_events */
+    static struct wscons_event evBuf[MAXEVENTS];   /* Buffer for Firm_events */
 
     if ((nBytes = read (fd, (char *)evBuf, sizeof(evBuf))) == -1) {
 	if (errno == EWOULDBLOCK) {
@@ -287,11 +272,11 @@ MouseAccelerate (device, delta)
 #if NeedFunctionPrototypes
 void alphaMouseEnqueueEvent (
     DeviceIntPtr  device,
-    Firm_event	  *fe)
+    struct wscons_event *fe)
 #else
 void alphaMouseEnqueueEvent (device, fe)
     DeviceIntPtr  device;   	/* Mouse from which the event came */
-    Firm_event	  *fe;	    	/* Event to process */
+    struct wscons_event *fe;	    	/* Event to process */
 #endif
 {
     xEvent		xE;
@@ -304,20 +289,19 @@ void alphaMouseEnqueueEvent (device, fe)
 
     time = xE.u.keyButtonPointer.time = TVTOMILLI(fe->time);
 
-    switch (fe->id) {
-    case MS_LEFT:
-    case MS_MIDDLE:
-    case MS_RIGHT:
+    switch (fe->type) {
+    case WSCONS_EVENT_MOUSE_UP:
+    case WSCONS_EVENT_MOUSE_DOWN:
 	/*
-	 * A button changed state. Sometimes we will get two events
-	 * for a single state change. Should we get a button event which
+	 * A button changed state.  Sometimes we will get two events
+	 * for a single status change.  Should we get a button event which
 	 * reflects the current state of affairs, that event is discarded.
 	 *
 	 * Mouse buttons start at 1.
 	 */
-	xE.u.u.detail = (fe->id - MS_LEFT) + 1;
+	xE.u.u.detail = fe->value + 1;
 	bmask = 1 << xE.u.u.detail;
-	if (fe->value == VKEY_UP) {
+	if (fe->type == WSCONS_EVENT_MOUSE_UP) {
 	    if (pPriv->bmask & bmask) {
 		xE.u.u.type = ButtonRelease;
 		pPriv->bmask &= ~bmask;
@@ -334,10 +318,10 @@ void alphaMouseEnqueueEvent (device, fe)
 	}
 	mieqEnqueue (&xE);
 	break;
-    case LOC_X_DELTA:
+    case WSCONS_EVENT_MOUSE_DELTA_X:
 	miPointerDeltaCursor (MouseAccelerate(device,fe->value),0,time);
 	break;
-    case LOC_Y_DELTA:
+    case WSCONS_EVENT_MOUSE_DELTA_Y:
 	/*
 	 * For some reason, motion up generates a positive y delta
 	 * and motion down a negative delta, so we must subtract
@@ -345,11 +329,11 @@ void alphaMouseEnqueueEvent (device, fe)
 	 */
 	miPointerDeltaCursor (0,-MouseAccelerate(device,fe->value),time);
 	break;
-    case LOC_X_ABSOLUTE:
+    case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
 	miPointerPosition (&x, &y);
 	miPointerAbsoluteCursor (fe->value, y, time);
 	break;
-    case LOC_Y_ABSOLUTE:
+    case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
 	miPointerPosition (&x, &y);
 	miPointerAbsoluteCursor (x, fe->value, time);
 	break;

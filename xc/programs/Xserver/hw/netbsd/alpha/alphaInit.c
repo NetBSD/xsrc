@@ -57,9 +57,10 @@ alphaPtrPrivRec alphaPtrPriv = {
 
 /*
  * The name member in the following table corresponds to the 
- * FBTYPE_* macros defined in /usr/include/machine/fbio.h file
+ * WSDISPLAY_TYPE_* macros defined in /usr/include/sys/dev/wsdisplayio.h file
  */
-alphaFbDataRec alphaFbData[FBTYPE_LASTPLUSONE] = {
+#define	NUM_DISPLAY_TYPES	(WSDISPLAY_TYPE_PCIMISC + 1)
+alphaFbDataRec alphaFbData[NUM_DISPLAY_TYPES] = {
   { NULL, "PMAX monochrome" },
   { NULL, "PMAX color     " },
   { NULL, "CFB            " },
@@ -69,6 +70,8 @@ alphaFbDataRec alphaFbData[FBTYPE_LASTPLUSONE] = {
   { NULL, "VGA            " },
   { NULL, "PCIVGA         " },
   { TGAI, "TGA            " },
+  { NULL, "SFB+           " },
+  { NULL, "PCI misc.      " },
 };
 
 /*
@@ -101,36 +104,43 @@ static int OpenFrameBuffer(device, screen)
     char		*device;	/* e.g. "/dev/ttyE0" */
     int			screen;    	/* what screen am I going to be */
 {
-    int			ret = TRUE;
 
     alphaFbs[screen].fd = -1;
     if (access (device, R_OK | W_OK) == -1)
 	return FALSE;
     if ((alphaFbs[screen].fd = open(device, O_RDWR, 0)) == -1)
-	ret = FALSE;
+	return FALSE;
     else {
 printf("OpenFrameBuffer: about to ioctl()\n");
-	if (ioctl(alphaFbs[screen].fd, FBIOGTYPE,
-	    &alphaFbs[screen].info) == -1) {
+	if (ioctl(alphaFbs[screen].fd, WSDISPLAYIO_GTYPE,
+	    &alphaFbs[screen].type) == -1) {
 		Error("unable to get frame buffer type");
-		(void) close(alphaFbs[screen].fd);
-		alphaFbs[screen].fd = -1;
-		ret = FALSE; 
+		goto bad;
 	}
-printf("fbtype = %d, fb_cmsize = 0x%x\n", alphaFbs[screen].info.fb_type, alphaFbs[screen].info.fb_cmsize);
-	if (ret) {
-	    if (alphaFbs[screen].info.fb_type >= FBTYPE_LASTPLUSONE || 
-		!alphaFbData[alphaFbs[screen].info.fb_type].init) {
-		    Error("frame buffer type not supported");
-		    (void) close(alphaFbs[screen].fd);
-		    alphaFbs[screen].fd = -1;
-		    ret = FALSE;
-	    }
+printf("type = %d\n", alphaFbs[screen].type);
+	if (ret == TRUE &&
+	    (alphaFbs[screen].type >= NUM_DISPLAY_TYPES ||
+	     !alphaFbData[alphaFbs[screen].type].init)) {
+		Error("frame buffer type not supported");
+		goto bad;
 	}
+	if (ioctl(alphaFbs[screen].fd, WSDISPLAYIO_GINFO,
+	    &alphaFbs[screen].info) == -1) {
+		Error("unable to get frame buffer info");
+		goto bad;
+	}
+printf("geom = %d x %d x %d, cmsize = 0x%x\n",
+  alphaFbs[screen].info.width,
+  alphaFbs[screen].info.height,
+  alphaFbs[screen].info.depth,
+  alphaFbs[screen].info.cmsize);
     }
-    if (!ret)
-	alphaFbs[screen].fd = -1;
-    return ret;
+    return TRUE;
+
+ bad:
+    (void) close(alphaFbs[screen].fd);
+    alphaFbs[screen].fd = -1;
+    return FALSE;
 }
 
 /*-
@@ -220,9 +230,13 @@ fprintf(stderr, "OsVendorInit\n");
 	    rl.rlim_cur = maxfds < rl.rlim_max ? maxfds : rl.rlim_max;
 	    (void) setrlimit (RLIMIT_NOFILE, &rl);
 	}
-	alphaKbdPriv.fd = open ("/dev/kbd", O_RDWR, 0);
+	/*
+	 * XXX Need a way to specify alternate mouse and keyboard
+	 * XXX devices.
+	 */
+	alphaKbdPriv.fd = open ("/dev/wskbd0", O_RDWR, 0);
 fprintf(stderr, "alphaKbdPriv.fd = %d (%d)\n", alphaKbdPriv.fd, errno);
-	alphaPtrPriv.fd = open ("/dev/mouse", O_RDWR, 0);
+	alphaPtrPriv.fd = open ("/dev/wsmouse0", O_RDWR, 0);
 fprintf(stderr, "alphaPtrPriv.fd = %d (%d)\n", alphaPtrPriv.fd, errno);
 fflush(stderr);
         inited = 1;
@@ -291,7 +305,7 @@ void InitOutput(pScreenInfo, argc, argv)
     }
     for (scr = 0; scr < MAXSCREENS; scr++)
 	if (alphaFbs[scr].fd != -1)
-	    (void) AddScreen (alphaFbData[alphaFbs[scr].info.fb_type].init, 
+	    (void) AddScreen (alphaFbData[alphaFbs[scr].type].init, 
 			      argc, argv);
     (void) OsSignal(SIGWINCH, SIG_IGN);
 }

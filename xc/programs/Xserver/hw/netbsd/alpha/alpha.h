@@ -48,13 +48,7 @@ extern char *getenv();
 extern int errno;
 #endif
 
-#include <machine/fbio.h>
-#include <machine/wsconsio.h>
-#if 0 /* XXX */
-#include <machine/kbd.h>
-#include <machine/kbio.h>
-#endif
-#include <machine/vuid_event.h>
+#include <sys/dev/wsconsio.h>
 extern int gettimeofday();
 
 /* 
@@ -143,7 +137,8 @@ typedef struct {
 typedef struct {
     unsigned char*  fb;		/* Frame buffer itself */
     int		    fd;		/* frame buffer for ioctl()s, */
-    struct fbtype   info;	/* Frame buffer characteristics */
+    u_int	    type;	/* type of frame buffer */
+    struct wsdisplay_fbinfo info; /* Frame buffer characteristics */
     void	    (*EnterLeave)();/* screen switch */
 } fbFd;
 
