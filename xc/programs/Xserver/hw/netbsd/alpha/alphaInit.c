@@ -102,6 +102,10 @@ static int OpenFrameBuffer(device, screen)
     int			screen;    	/* what screen am I going to be */
 {
     int			ret = TRUE;
+#ifdef USE_WSCONS
+    struct		wsdisplay_fbinfo info;
+    int			type;
+#endif
 
     alphaFbs[screen].fd = -1;
     if (access (device, R_OK | W_OK) == -1)
@@ -109,7 +113,27 @@ static int OpenFrameBuffer(device, screen)
     if ((alphaFbs[screen].fd = open(device, O_RDWR, 0)) == -1)
 	ret = FALSE;
     else {
-printf("OpenFrameBuffer: about to ioctl()\n");
+#ifdef USE_WSCONS
+	if (ioctl(alphaFbs[screen].fd, WSDISPLAYIO_GTYPE, &type) == -1) {
+		Error("unable to get frame buffer type");
+		(void) close(alphaFbs[screen].fd);
+		alphaFbs[screen].fd = -1;
+		ret = FALSE; 
+	}
+	if (ioctl(alphaFbs[screen].fd, WSDISPLAYIO_GINFO,
+	    &info) == -1) {
+		Error("unable to get frame buffer info");
+		(void) close(alphaFbs[screen].fd);
+		alphaFbs[screen].fd = -1;
+		ret = FALSE; 
+	}
+	alphaFbs[screen].info.fb_type = type - 1;
+	alphaFbs[screen].info.fb_height = info.height;
+	alphaFbs[screen].info.fb_width = info.width;
+	alphaFbs[screen].info.fb_depth = info.depth;
+	alphaFbs[screen].info.fb_cmsize = info.cmsize;
+	alphaFbs[screen].info.fb_size = 4*1024*1024;
+#else
 	if (ioctl(alphaFbs[screen].fd, FBIOGTYPE,
 	    &alphaFbs[screen].info) == -1) {
 		Error("unable to get frame buffer type");
@@ -117,7 +141,7 @@ printf("OpenFrameBuffer: about to ioctl()\n");
 		alphaFbs[screen].fd = -1;
 		ret = FALSE; 
 	}
-printf("fbtype = %d, fb_cmsize = 0x%x\n", alphaFbs[screen].info.fb_type, alphaFbs[screen].info.fb_cmsize);
+#endif
 	if (ret) {
 	    if (alphaFbs[screen].info.fb_type >= FBTYPE_LASTPLUSONE || 
 		!alphaFbData[alphaFbs[screen].info.fb_type].init) {
@@ -206,7 +230,6 @@ void OsVendorInit(
 )
 {
     static int inited;
-fprintf(stderr, "OsVendorInit\n");
     if (!inited) {
 	struct rlimit rl;
 
@@ -221,10 +244,7 @@ fprintf(stderr, "OsVendorInit\n");
 	    (void) setrlimit (RLIMIT_NOFILE, &rl);
 	}
 	alphaKbdPriv.fd = open ("/dev/kbd", O_RDWR, 0);
-fprintf(stderr, "alphaKbdPriv.fd = %d (%d)\n", alphaKbdPriv.fd, errno);
 	alphaPtrPriv.fd = open ("/dev/mouse", O_RDWR, 0);
-fprintf(stderr, "alphaPtrPriv.fd = %d (%d)\n", alphaPtrPriv.fd, errno);
-fflush(stderr);
         inited = 1;
     }
 }
@@ -319,33 +339,19 @@ void InitInput(argc, argv)
     extern Bool mieqInit();
 
     p = AddInputDevice(alphaMouseProc, TRUE);
-fprintf(stderr, "added mouse = 0x%lx\n", p);
-fflush(stderr);
     k = AddInputDevice(alphaKbdProc, TRUE);
-fprintf(stderr, "added kbd = 0x%lx\n", k);
-fflush(stderr);
     if (!p || !k)
 	FatalError("failed to create input devices in InitInput");
 
-fprintf(stderr, "going to register\n");
-fflush(stderr);
     RegisterPointerDevice(p);
-fprintf(stderr, "registered mouse\n");
-fflush(stderr);
     RegisterKeyboardDevice(k);
-fprintf(stderr, "registered kbd\n");
-fflush(stderr);
     miRegisterPointerDevice(screenInfo.screens[0], p);
-fprintf(stderr, "mi-registered mouse\n");
-fflush(stderr);
     (void) mieqInit (k, p);
 #define SET_FLOW(fd) fcntl(fd, F_SETFL, FNDELAY | FASYNC)
     (void) OsSignal(SIGIO, SigIOHandler);
 #define WANT_SIGNALS(fd) fcntl(fd, F_SETOWN, getpid())
     if (alphaKbdPriv.fd >= 0) {
 	if (SET_FLOW(alphaKbdPriv.fd) == -1 || WANT_SIGNALS(alphaKbdPriv.fd) == -1) {	
-fprintf(stderr, "kbd failed inits (%d)\n", errno);
-fflush(stderr);
 	    (void) close (alphaKbdPriv.fd);
 	    alphaKbdPriv.fd = -1;
 	    FatalError("Async kbd I/O failed in InitInput");
@@ -353,8 +359,6 @@ fflush(stderr);
     }
     if (alphaPtrPriv.fd >= 0) {
 	if (SET_FLOW(alphaPtrPriv.fd) == -1 || WANT_SIGNALS(alphaPtrPriv.fd) == -1) {	
-fprintf(stderr, "mouse failed inits (%d)\n", errno);
-fflush(stderr);
 	    (void) close (alphaPtrPriv.fd);
 	    alphaPtrPriv.fd = -1;
 	    FatalError("Async mouse I/O failed in InitInput");
