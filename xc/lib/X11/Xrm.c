@@ -1229,7 +1229,7 @@ static void GetDatabase(db, str, filename, doall)
 	*t_bindings = XrmBindTightly;	
 	for(;;) {
 	    if (!is_binding(bits)) {
-		while (!is_EOQ(bits) && (ptr - lhs_s < DEF_BUFF_SIZE)) {
+		while (!is_EOQ(bits)) {
 		    *ptr++ = c;
 		    sig = (sig << 1) + c; /* Compute the signature. */
 		    bits = next_char(c, str);
