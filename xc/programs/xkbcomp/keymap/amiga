@@ -14,3 +14,11 @@ xkb_keymap "de" {
     xkb_symbols		{ include "amiga(de)"		};
     xkb_geometry	{ include "amiga(de)"		};
 };
+
+xkb_keymap "fr" {
+    xkb_keycodes	{ include "amiga(fr)"		};
+    xkb_types		{ include "default"		};
+    xkb_compatibility	{ include "default"		};
+    xkb_symbols		{ include "amiga(fr)"		};
+    xkb_geometry	{ include "amiga(fr)"		};
+};
