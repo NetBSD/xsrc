@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/21 16:42:31 coskrey Exp $
 
 
 
-XCOMM $XFree86: xc/fonts/bdf/misc/Imakefile,v 1.22 2001/04/07 01:49:12 dawes Exp $
+XCOMM $XFree86: xc/fonts/bdf/misc/Imakefile,v 1.23 2001/11/21 21:20:53 dawes Exp $
 
 
 #if BuildUCSFonts
@@ -13,7 +13,8 @@ ARABIC24OBJS = FontObj(arabic24)
 ARABIC24DIR = $(TOP)/extras/fonts/arabic24
 #endif
 
-CLEARLYUOBJS = FontObj(cu-alt12) FontObj(cu-arabic12) FontObj(cu-lig12) \
+CLEARLYUOBJS = FontObj(cu-alt12) FontObj(cu-arabic12) \
+	FontObj(cu-devnag12) FontObj(cu-lig12) \
 	FontObj(cu-pua12) FontObj(cu12)
 CLEARLYUDIR = $(TOP)/extras/fonts/ClearlyU
 
@@ -349,6 +350,7 @@ FontTarget(arabic24)
 #endif
 FontTarget(cu-alt12)
 FontTarget(cu-arabic12)
+FontTarget(cu-devnag12)
 FontTarget(cu-lig12)
 FontTarget(cu-pua12)
 FontTarget(cu12)
@@ -733,6 +735,7 @@ LinkSourceFile(arabic24.bdf,$(ARABIC24DIR))
 #endif
 LinkSourceFile(cu-alt12.bdf,$(CLEARLYUDIR))
 LinkSourceFile(cu-arabic12.bdf,$(CLEARLYUDIR))
+LinkSourceFile(cu-devnag12.bdf,$(CLEARLYUDIR))
 LinkSourceFile(cu-lig12.bdf,$(CLEARLYUDIR))
 LinkSourceFile(cu-pua12.bdf,$(CLEARLYUDIR))
 LinkSourceFile(cu12.bdf,$(CLEARLYUDIR))

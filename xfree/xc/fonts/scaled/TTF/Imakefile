@@ -1,3 +1,27 @@
-XCOMM $XFree86: xc/fonts/scaled/TTF/Imakefile,v 1.1 1999/01/31 04:59:14 dawes Exp $
+XCOMM $XFree86: xc/fonts/scaled/TTF/Imakefile,v 1.2 2001/11/21 21:31:21 dawes Exp $
 
-/* This is a place holder */
+FONTS = luximb.ttf luximbi.ttf luximr.ttf luximri.ttf \
+        luxirb.ttf luxirbi.ttf luxirr.ttf luxirri.ttf \
+        luxisb.ttf luxisbi.ttf luxisr.ttf luxisri.ttf
+
+OBJS = $(FONTS)
+
+FONTINSTDIR = $(FONTDIR)/TTF
+
+MakeFontsDir(fonts.scale)
+
+#if UseFreeType2
+MakeXftCache($(FONTS))
+#endif
+
+InstallFonts($(FONTINSTDIR))
+InstallFontScale($(FONTINSTDIR))
+InstallEncodingsDir($(ENCODINGSSRC),$(FONTINSTDIR))
+#if UseFreeType2
+InstallXftCache($(FONTINSTDIR))
+#endif
+
+#ifdef IHaveSubdirs
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))
+#endif
