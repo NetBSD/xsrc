@@ -131,7 +131,7 @@ unsigned long port;
 }
 #else
 #if defined(__arm32__) || defined(__arm__)
-unsigned int IOPortBase;  /* Memory mapped I/O port area */
+extern unsigned int IOPortBase;  /* Memory mapped I/O port area */
 
 static __inline__ void
 outb(port, val)
