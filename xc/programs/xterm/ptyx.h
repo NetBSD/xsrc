@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: ptyx.h /main/67 1996/11/29 10:34:19 swick $
- *	$XFree86: xc/programs/xterm/ptyx.h,v 3.35 1998/03/27 23:24:02 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/ptyx.h,v 3.36 1998/04/05 00:46:11 robin Exp $
  */
 
 /*
@@ -25,6 +25,9 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
+
+#ifndef included_ptyx_h
+#define included_ptyx_h 1
 
 /* ptyx.h */
 /* @(#)ptyx.h	X10/6.6	11/10/86 */
@@ -313,12 +316,20 @@ typedef struct {
 #define OPT_ISO_COLORS  1 /* true if xterm is configured with ISO colors */
 #endif
 
+#ifndef OPT_HIGHLIGHT_COLOR
+#define OPT_HIGHLIGHT_COLOR 1 /* true if xterm supports color highlighting */
+#endif
+
+#ifndef OPT_SAME_NAME
+#define OPT_SAME_NAME   1 /* suppress redundant updates of title, icon, etc. */
+#endif
+
 #ifndef OPT_PC_COLORS
 #define OPT_PC_COLORS   1 /* true if xterm supports PC-style (bold) colors */
 #endif
 
-#ifndef OPT_HIGHLIGHT_COLOR
-#define OPT_HIGHLIGHT_COLOR 1 /* true if xterm supports color highlighting */
+#ifndef OPT_PRINT_COLORS
+#define OPT_PRINT_COLORS 1 /* true if we print color information */
 #endif
 
 #ifndef OPT_SUNPC_KBD
@@ -339,6 +350,10 @@ typedef struct {
 
 #ifndef OPT_XMC_GLITCH
 #define OPT_XMC_GLITCH	0 /* true if xterm supports xmc (magic cookie glitch) */
+#endif
+
+#ifndef OPT_ZICONBEEP
+#define OPT_ZICONBEEP   1 /* true if xterm supports "-ziconbeep" option */
 #endif
 
 /***====================================================================***/
@@ -447,6 +462,7 @@ fixme: You must have ANSI/ISO colors to support AIX colors
 #include "trace.h"
 #else
 #define TRACE(p) /*nothing*/
+#define TRACE_CHILD /*nothing*/
 #endif
 
 /***====================================================================***/
@@ -620,10 +636,13 @@ typedef struct {
 #endif /* NO_ACTIVE_ICON */
 	Cursor pointer_cursor;		/* pointer cursor in window	*/
 
-	String printer_command;		/* pipe/shell command string	*/
+	String	printer_command;	/* pipe/shell command string	*/
 	Boolean printer_extent;		/* print complete page		*/
 	Boolean printer_formfeed;	/* print formfeed per function	*/
-	int printer_controlmode;	/* 0=off, 1=auto, 2=controller	*/
+	int	printer_controlmode;	/* 0=off, 1=auto, 2=controller	*/
+#ifdef OPT_PRINT_COLORS
+	int	print_attributes;	/* 0=off, 1=normal, 2=color	*/
+#endif
 
 	Boolean		fnt_prop;	/* true if proportional fonts	*/
 	XFontStruct	*fnt_norm;	/* normal font of terminal	*/
@@ -1051,3 +1070,5 @@ typedef struct Tek_Link
 #endif
 #define	I_SIGNAL	0x02
 #define	I_TEK		0x04
+
+#endif /* included_ptyx_h */

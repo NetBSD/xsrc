@@ -25,6 +25,9 @@
  * SOFTWARE.
  */
 
+#ifndef included_data_h
+#define included_data_h 1
+
 #if XtSpecificationRelease >= 6 && !defined(NO_XPOLL_H)
 #include <X11/Xpoll.h>
 #else
@@ -66,6 +69,13 @@ extern char *ptydev;
 extern char *ttydev;
 extern char *xterm_name;
 extern Boolean sunFunctionKeys;
+#if OPT_ZICONBEEP 
+extern int zIconBeep; 
+extern Boolean zIconBeep_flagged; 
+#endif 
+#if OPT_SAME_NAME 
+extern Boolean sameName; 
+#endif 
 #if OPT_SUNPC_KBD
 extern Boolean sunKeyboard;
 #endif
@@ -107,3 +117,5 @@ extern XtermWidget term;
 #define	XkbBI_MarginBell		10
 #define	XkbBI_CursorStuck		11
 #endif
+
+#endif /* included_data_h */
