@@ -866,16 +866,36 @@ char *cpp_argv[ARGUMENTS] = {
  */
 #  define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
 #  define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
-#  define DEFAULT_OS_TEENY_REV   "r %*d.%*d%[A-Z]" 
+#  define DEFAULT_OS_TEENY_REV   "r %s" 
 #  define DEFAULT_OS_TEENY_REV_FROB(buf, size)				\
     do {								\
-	int	teeny = 0;						\
-	char	*ptr = (buf);						\
+	int	major, minor, teeny = 0;				\
+	char	*ptr = (buf), *endptr;					\
 									\
-	while (*ptr >= 'A' && *ptr <= 'Z') /* sanity check */		\
-	    teeny = teeny * 26 + (int)(*ptr++ - 'A');			\
+	major = (int)strtol(ptr, &endptr, 10);				\
+	if (ptr == endptr || *endptr++ != '.')				\
+	    goto error;							\
 									\
-	snprintf((buf), (size), "%d", teeny + 1);			\
+	ptr = endptr;							\
+	minor = (int)strtol(ptr, &endptr, 10);				\
+	if (ptr == endptr)						\
+	    goto error;							\
+									\
+	if (major > 2 || (major == 2 && minor >= 99)) {			\
+		if (*endptr++ == '.') {					\
+			ptr = endptr;					\
+			teeny = (int)strtol(ptr, &endptr, 10);		\
+			if (ptr == endptr)				\
+				goto error;				\
+		}							\
+	} else {							\
+		while (*ptr >= 'A' && *ptr <= 'Z') /* sanity check */	\
+		    teeny = teeny * 26 + (int)(*ptr++ - 'A');		\
+		teeny++;						\
+	}								\
+									\
+error:									\
+	snprintf((buf), (size), "%d", teeny);				\
     } while (0)
 #  define DEFAULT_OS_NAME        "smr %[^\n]"
 #  define DEFAULT_OS_NAME_FROB(buf, size)				\
