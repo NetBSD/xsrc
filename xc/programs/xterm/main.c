@@ -3606,6 +3606,12 @@ spawn (void)
 		    sprintf(newtc + strlen(newtc), ":%s=\\%03o", TERMCAP_ERASE, initial_erase & 0377);
 		}
 #endif
+		/*
+		 * Remove ZZ entry so that libterm doesn't ignore $TERMCAP */
+#ifdef __NetBSD__
+		if(*newtc)
+		    remove_termcap_entry (newtc, "ZZ=");
+#endif
 		if(*newtc)
 		    xtermSetenv ("TERMCAP=", newtc);
 #endif /* USE_SYSV_ENVVARS */
