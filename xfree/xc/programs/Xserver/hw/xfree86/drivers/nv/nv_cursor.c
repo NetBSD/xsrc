@@ -24,7 +24,7 @@
 /* Rewritten with reference from mga driver and 3.3.4 NVIDIA driver by
    Jarno Paananen <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_cursor.c,v 1.5 2001/12/17 22:17:55 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_cursor.c,v 1.7 2002/02/06 01:33:06 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -109,7 +109,7 @@ NVSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
     NVPtr pNv = NVPTR(pScrn);
 
     pNv->riva.ShowHideCursor(&pNv->riva, 0);
-    *(pNv->riva.CURSORPOS) = (x & 0xFFFF) | (y << 16);
+    pNv->riva.PRAMDAC[0x0000300/4] = (x & 0xFFFF) | (y << 16);
     pNv->riva.ShowHideCursor(&pNv->riva, 1);
 }
 
@@ -123,8 +123,10 @@ NVSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
     back = ConvertToRGB555(bg);
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN
-    fore = (fore << 8) | (fore >> 8);
-    back = (back << 8) | (back >> 8);
+    if((pNv->Chipset & 0x0ff0) == 0x0110) {
+       fore = (fore << 8) | (fore >> 8);
+       back = (back << 8) | (back >> 8);
+    }
 #endif
 
     if (pNv->curFg != fore || pNv->curBg != back) {
