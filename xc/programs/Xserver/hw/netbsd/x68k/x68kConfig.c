@@ -1,4 +1,4 @@
-/* $NetBSD: x68kConfig.c,v 1.1.1.1 1998/11/10 14:13:11 minoura Exp $ */
+/* $NetBSD: x68kConfig.c,v 1.2 1999/06/26 15:00:39 minoura Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -32,7 +32,12 @@
 #include <stdarg.h>
 #include "x68k.h"
 
-static PixmapFormatRec x68kFormat;
+static PixmapFormatRec *x68kFormat = NULL;
+static PixmapFormatRec defaultFormat = {
+	1,
+	1,
+	BITMAP_SCANLINE_PAD
+};
 static X68kScreenRec x68kScreen[X68K_FB_TYPES];
 static X68kFbProcRec x68kFbProc[X68K_FB_TYPES];
 
@@ -89,7 +94,10 @@ void x68kRegisterPixmapFormats(ScreenInfo *pScreenInfo)
 {
     /* supports only one pixmap format for each screen type */
     pScreenInfo->numPixmapFormats = 1;
-    pScreenInfo->formats[0] = x68kFormat;
+    pScreenInfo->formats[0] = defaultFormat;
+
+    if (x68kFormat)
+	pScreenInfo->formats[pScreenInfo->numPixmapFormats++] = *x68kFormat;
 }
 
 /*-------------------------------------------------------------------------
@@ -102,7 +110,7 @@ void x68kRegisterPixmapFormats(ScreenInfo *pScreenInfo)
  *-----------------------------------------------------------------------*/
 char *hostConfigFilename = "/etc/X68kConfig";
 char *siteConfigFilename = X11_LIBDIR "/X68kConfig";
-char *configFilename;
+char *configFilename = NULL;
 static FILE *config;
 char modeSet = FALSE;
 
@@ -110,14 +118,18 @@ int x68kConfig(void)
 {
     static int parseCommand(void);
     
-    configFilename = hostConfigFilename;
-    config = fopen(configFilename, "r");
-    if (config == NULL) {
-	configFilename = siteConfigFilename;
+    if (configFilename)
 	config = fopen(configFilename, "r");
-	if (config == NULL)
-	    FatalError("Can't open X68kConfig file");
+    else {
+	configFilename = hostConfigFilename;
+	config = fopen(configFilename, "r");
+	if (config == NULL) {
+	    configFilename = siteConfigFilename;
+	    config = fopen(configFilename, "r");
+	}
     }
+    if (config == NULL)
+	FatalError("Can't open X68kConfig file");
     while (parseCommand())
         ;
     fclose(config);
@@ -522,7 +534,6 @@ static void parseMode(int argc, Token **argv)
     x68kScreen[0].x68kreg = mode->reg;
     x68kScreen[0].scr_width = mode->width;
     x68kScreen[0].scr_height = mode->height;
-    x68kFormat.scanlinePad = BITMAP_SCANLINE_PAD;
     
     switch (mode->type) {
         /* for TVRAM frame buffer */
@@ -530,8 +541,6 @@ static void parseMode(int argc, Token **argv)
             x68kFbProc[0].open = x68kTextOpen;
             x68kFbProc[0].init = x68kTextInit;
             x68kFbProc[0].close = x68kTextClose;
-            x68kFormat.depth = 1;
-            x68kFormat.bitsPerPixel = 1;
             x68kScreen[0].fb_width = 1024;
             x68kScreen[0].fb_height = 1024;
             break;
@@ -540,20 +549,22 @@ static void parseMode(int argc, Token **argv)
             x68kFbProc[0].open = x68kGraphOpen;
             x68kFbProc[0].init = x68kGraphInit;
             x68kFbProc[0].close = x68kGraphClose;
-            x68kFormat.bitsPerPixel = 16;
+	    x68kFormat = (PixmapFormatRec*) xalloc (sizeof(PixmapFormatRec));
+	    x68kFormat->scanlinePad = BITMAP_SCANLINE_PAD;
+            x68kFormat->bitsPerPixel = 16;
             switch (mode->depth) {
                 case 4:
-                    x68kFormat.depth = 4;
+                    x68kFormat->depth = 4;
                     x68kScreen[0].fb_width = 1024;
                     x68kScreen[0].fb_height = 1024;
                     break;
                 case 8:
-                    x68kFormat.depth = 8;
+                    x68kFormat->depth = 8;
                     x68kScreen[0].fb_width = 512;
                     x68kScreen[0].fb_height = 512;
                     break;
                 case 15:
-                    x68kFormat.depth = 15;
+                    x68kFormat->depth = 15;
                     x68kScreen[0].fb_width = 512;
                     x68kScreen[0].fb_height = 512;
             }
