@@ -260,6 +260,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  undef OptimizedCDebugFlags
 #  define OptimizedCDebugFlags	-O2
 #  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+#  define NetBSDMachineDefines	-D__AMD64__
 # else
 #  define ServerOSDefines 	/**/
 # endif
@@ -320,7 +321,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  define ServerExtraDefines GccGasOption
 #endif
 
-#define StandardDefines	-DCSRG_BASED
+#ifndef NetBSDMachineDefines
+#define NetBSDMachineDefines /**/
+#endif
+
+#define StandardDefines	-DCSRG_BASED NetBSDMachineDefines
+
 /* Citrus mb locale were added in 1.5P */
 #if ((OSMajorVersion > 1) || \
      (OSMajorVersion == 1 && OSMinorVersion > 5) || \
