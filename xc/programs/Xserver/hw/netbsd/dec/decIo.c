@@ -1,4 +1,4 @@
-/*	$NetBSD: decIo.c,v 1.2 2001/09/22 19:43:48 ad Exp $	*/
+/*	$NetBSD: decIo.c,v 1.3 2002/02/22 15:46:33 ad Exp $	*/
 
 /* XConsortium: sunIo.c,v 5.26.1.3 95/01/25 23:02:33 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sunIo.c,v 3.1 1995/01/28 15:46:06 dawes Exp */
@@ -99,9 +99,6 @@ void decEnqueueEvents (
     decKbdPrivPtr       kbdPriv;
     decPtrPrivPtr       ptrPriv;
 
-    u_char		*serPtrData;
-    int			serPtrBytes;
-
     pPointer = (DeviceIntPtr)LookupPointerDevice();
     pKeyboard = (DeviceIntPtr)LookupKeyboardDevice();
     ptrPriv = (decPtrPrivPtr) pPointer->public.devicePrivate;
@@ -120,69 +117,41 @@ void decEnqueueEvents (
      * for processing. The DDXEvent will be sent to ProcessInput by the
      * function called.
      */
-    if (!decSerMouse) {
-        while (1) {
-	    /*
-  	     * Get events from both the pointer and the keyboard, storing the number
-	     * of events gotten in nPE and nKE and keeping the start of both arrays
- 	     * in pE and kE
-	      */
-	     if ((numPtrEvents == 0) && PtrAgain) {
-	         ptrEvents = decWsMouseGetEvents (ptrPriv->fd, &nPE, &PtrAgain);
-	         numPtrEvents = nPE;
-	     }
-	     if ((numKbdEvents == 0) && KbdAgain) {
-	         kbdEvents = decKbdGetEvents (kbdPriv->fd, &nKE, &KbdAgain);
-	         numKbdEvents = nKE;
-	     }
-	     if ((numPtrEvents == 0) && (numKbdEvents == 0))
-	         break;
-	     if (numPtrEvents && numKbdEvents) {
-	         if (timespeccmp (&kbdEvents->time, &ptrEvents->time, <)) {
-	     	     decKbdEnqueueEvent (pKeyboard, kbdEvents);
-	     	     numKbdEvents--;
-	     	     kbdEvents++;
-	         } else {
-		     decWsMouseEnqueueEvent (pPointer, ptrEvents);
-		     numPtrEvents--;
-		     ptrEvents++;
-	         }
-	    } else if (numKbdEvents) {
-	         decKbdEnqueueEvent (pKeyboard, kbdEvents);
-	         numKbdEvents--;
-	         kbdEvents++;
+    while (1) {
+	/*
+  	 * Get events from both the pointer and the keyboard, storing the number
+	 * of events gotten in nPE and nKE and keeping the start of both arrays
+ 	 * in pE and kE
+	 */
+	if ((numPtrEvents == 0) && PtrAgain) {
+	    ptrEvents = decMouseGetEvents (ptrPriv->fd, &nPE, &PtrAgain);
+	    numPtrEvents = nPE;
+	}
+	if ((numKbdEvents == 0) && KbdAgain) {
+	    kbdEvents = decKbdGetEvents (kbdPriv->fd, &nKE, &KbdAgain);
+	    numKbdEvents = nKE;
+	}
+	if ((numPtrEvents == 0) && (numKbdEvents == 0))
+	    break;
+	if (numPtrEvents && numKbdEvents) {
+	    if (timespeccmp (&kbdEvents->time, &ptrEvents->time, <)) {
+	     	decKbdEnqueueEvent (pKeyboard, kbdEvents);
+	     	numKbdEvents--;
+	     	kbdEvents++;
 	    } else {
-	         decWsMouseEnqueueEvent (pPointer, ptrEvents);
-	         numPtrEvents--;
-	         ptrEvents++;
+		 decMouseEnqueueEvent (pPointer, ptrEvents);
+		 numPtrEvents--;
+		 ptrEvents++;
 	    }
-        }
-    } else {
-        while (1) {
-	    /*
-  	     * Get events from both the pointer and the keyboard, storing the number
-	     * of events gotten in nPE and nKE and keeping the start of both arrays
- 	     * in pE and kE
-	      */
-	     if (PtrAgain) {
-	         serPtrData = decSerMouseGetEvents (ptrPriv->fd, &serPtrBytes, &PtrAgain);
-	     }
-	     if ((numKbdEvents == 0) && KbdAgain) {
-	         kbdEvents = decKbdGetEvents (kbdPriv->fd, &nKE, &KbdAgain);
-	         numKbdEvents = nKE;
-	     }
-	     if ((serPtrBytes == 0) && (numKbdEvents == 0))
-	         break;
-	     if (numKbdEvents) {
-	         decKbdEnqueueEvent (pKeyboard, kbdEvents);
-	         numKbdEvents--;
-	         kbdEvents++;
-	     }
-             if (serPtrBytes) {
-	        decSerMouseEnqueueEvents (pPointer, serPtrData, serPtrBytes);
-	        serPtrBytes = 0;
-	     }
-        }
+	} else if (numKbdEvents) {
+	    decKbdEnqueueEvent (pKeyboard, kbdEvents);
+	    numKbdEvents--;
+	    kbdEvents++;
+	} else {
+	    decMouseEnqueueEvent (pPointer, ptrEvents);
+	    numPtrEvents--;
+	    ptrEvents++;
+	}
     }
 }
 
@@ -243,19 +212,6 @@ ddxProcessArgument (argc, argv, i)
 	decKbdDev = argv[i];
 	return 2;
     }
-    if (!strcmp(argv[i], "-serialmouse")) {
-	if (++i >= argc) UseMsg ();
-	decSerMouse = TRUE;
-    	decSerMouseType = atoi(argv[i]);
-    	if ((unsigned)decSerMouseType > SERMSE_MAX)
-    	    FatalError("invalid serial mouse type specified");
-	return 2;
-    }
-    if (!strcmp(argv[i], "-mousebaud")) {
-	if (++i >= argc) UseMsg ();
-    	decSerMouseBaud = atoi(argv[i]);
-	return 2;
-    }
     if (!strcmp(argv[i], "-swcursor")) {
         decSoftCursor = TRUE;
         return 1;
@@ -294,12 +250,12 @@ ddxProcessArgument (argc, argv, i)
 	if (++i >= argc) UseMsg ();
 	return 2;
     }
-#if 0 /* XXX */
-    if (strcmp (argv[i], "-mono") == 0) {	/* -mono */
+    if (strcmp (argv[i], "-zaphod") == 0) {	/* -zaphod */
+	decActiveZaphod = FALSE;
 	return 1;
     }
-    if (strcmp (argv[i], "-zaphod") == 0) {	/* -zaphod */
-	sunActiveZaphod = FALSE;
+#if 0 /* XXX */
+    if (strcmp (argv[i], "-mono") == 0) {	/* -mono */
 	return 1;
     }
     if (strcmp (argv[i], "-flipPixels") == 0) {	/* -flipPixels */
@@ -344,14 +300,12 @@ ddxUseMsg()
     ErrorF("-dev fn[:fn][:fn]   name of device[s] to open\n");
     ErrorF("-mouse fn           mouse device to open\n");
     ErrorF("-keyboard fn        keyboard device to open\n");
-    ErrorF("-serialmouse type   select serial mouse (default is wsmouse)\n");
-    ErrorF("-mousebaud speed    set serial mouse speed\n");
     ErrorF("-noaccel            disable SFB/TGA hardware accelleration\n");
     ErrorF("-swcursor           use a software generated cursor\n");
     ErrorF("-depth bpp          set desired depth (may not take effect)\n");
+    ErrorF("-zaphod             disable active Zaphod mode\n");
 #if 0 /* XXX */
     ErrorF("-mono               force monochrome-only screen\n");
-    ErrorF("-zaphod             disable active Zaphod mode\n");
     ErrorF("-fbinfo             tell more about the found frame buffer(s)\n");
 #ifdef UNDOCUMENTED
     ErrorF("-cg4frob            don't use the mono plane of the cgfour\n");

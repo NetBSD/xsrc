@@ -1,4 +1,4 @@
-XCOMM $NetBSD: Imakefile,v 1.1 2001/09/18 20:02:51 ad Exp $
+XCOMM $NetBSD: Imakefile,v 1.2 2002/02/22 15:46:33 ad Exp $
 XCOMM
 XCOMM XConsortium: Imakefile,v 5.27 94/07/28 16:44:16 dpw Exp
 
@@ -9,10 +9,9 @@ SRCS = decInit.c \
 	decIo.c \
 	decCursor.c \
 	decKbd.c \
-	decWsMouse.c \
-	decSerMouse.c \
 	decKeyMap.c \
-	decColormap.c
+	decColormap.c \
+	decMouse.c
 
 OFILES = decInit.o
 
@@ -20,10 +19,9 @@ OBJS =	decFbs.o \
 	decIo.o \
 	decCursor.o \
 	decKbd.o \
-	decWsMouse.o \
-	decSerMouse.o \
 	decKeyMap.o \
-	decColormap.o
+	decColormap.o \
+	decMouse.o
 
    INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb -I$(SERVERSRC)/mi \
 	      -I$(SERVERSRC)/include -I$(SERVERSRC)/os \

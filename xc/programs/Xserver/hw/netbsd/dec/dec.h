@@ -1,4 +1,4 @@
-/*	$NetBSD: dec.h,v 1.2 2001/09/22 19:43:47 ad Exp $	*/
+/*	$NetBSD: dec.h,v 1.3 2002/02/22 15:46:33 ad Exp $	*/
 
 /* XConsortium: sun.h,v 5.39.1.1 95/01/05 19:58:43 kaleb Exp */
 /* XFree86: xc/programs/Xserver/hw/sun/sun.h,v 3.2 1995/02/12 02:36:21 dawes Exp */
@@ -117,15 +117,6 @@ extern decKbdPrivRec decKbdPriv;
 typedef struct {
     int		fd;
     int		bmask;		/* last known button state */
-
-    /* Serial mouse data */
-    int		sampleRate;
-    int		oldBaudRate;
-    int		mseType;
-    int		chordMiddle;
-    int		pBufP;
-    u_char	protoPara[7];
-    u_char	pBuf[32];
 } decPtrPrivRec, *decPtrPrivPtr;
 
 extern decPtrPrivRec decPtrPriv;
@@ -201,10 +192,10 @@ extern long		sunAutoRepeatDelay;
 #endif
 extern decFbDataRec	decFbData[];
 extern fbFd		decFbs[];
+extern Bool		decActiveZaphod;
 #if 0
 extern Bool		sunSwapLkeys;
 extern Bool		sunFlipPixels;
-extern Bool		sunActiveZaphod;
 extern Bool		sunFbInfo;
 extern Bool		sunCG4Frob;
 extern Bool		sunNoGX;
@@ -216,23 +207,9 @@ extern int*		sunProtected;
 
 extern Bool		decSoftCursor;
 extern Bool		decAccelerate;
-extern Bool		decSerMouse;
-extern int		decSerMouseType;
-extern int		decSerMouseBaud;
 extern int		decWantedDepth;
 extern char		*decKbdDev;
 extern char		*decPtrDev;
-
-#define	SERMSE_MS		0x00	/* Microsoft */
-#define	SERMSE_MSC		0x01	/* Mouse Systems */
-#define	SERMSE_MM		0x02	/* MMSeries */
-#define	SERMSE_LOGI		0x03	/* Logitech */
-#define	SERMSE_LOGIMAN		0x04	/* MouseMan */
-#define	SERMSE_MMHIT		0x05	/* MM_HitTablet */
-#define	SERMSE_GLIDEPOINT	0x06	/* GlidePoint */
-#define	SERMSE_IMSERIAL		0x07	/* IntelliMouse */
-#define	SERMSE_THINKING		0x08	/* ThinkingMouse */
-#define	SERMSE_MAX		0x08
 
 extern Bool decCursorInitialize(
 #if NeedFunctionPrototypes
@@ -328,18 +305,10 @@ extern struct wscons_event* decKbdGetEvents(
 #endif
 );
 
-extern struct wscons_event* decWsMouseGetEvents(
+extern struct wscons_event* decMouseGetEvents(
 #if NeedFunctionPrototypes
     int /* fd */,
     int* /* pNumEvents */,
-    Bool* /* pAgain */
-#endif
-);
-
-extern u_char *decSerMouseGetEvents(
-#if NeedFunctionPrototypes
-    int /* fd */,
-    int* /* pNumBytes */,
     Bool* /* pAgain */
 #endif
 );
@@ -351,18 +320,10 @@ extern void decKbdEnqueueEvent(
 #endif
 );
 
-extern void decWsMouseEnqueueEvent(
+extern void decMouseEnqueueEvent(
 #if NeedFunctionPrototypes
     DeviceIntPtr /* device */,
     struct wscons_event * /* fe */
-#endif
-);
-
-extern void decSerMouseEnqueueEvents(
-#if NeedFunctionPrototypes
-    DeviceIntPtr /* device */,
-    u_char *, /* rBuf */
-    int /* nBytes */
 #endif
 );
 
@@ -373,14 +334,7 @@ extern int decKbdProc(
 #endif
 );
 
-extern int decWsMouseProc(
-#if NeedFunctionPrototypes
-    DeviceIntPtr /* pMouse */,
-    int /* what */
-#endif
-);
-
-extern int decSerMouseProc(
+extern int decMouseProc(
 #if NeedFunctionPrototypes
     DeviceIntPtr /* pMouse */,
     int /* what */
