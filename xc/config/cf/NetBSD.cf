@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.96 2002/05/09 23:13:01 eeh Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.97 2002/05/10 16:40:38 matt Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -298,8 +298,6 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define ServerExtraDefines	GccGasOption -D_XSERVER64
 # define PexDynamicModule	NO
 # define XieDynamicModule	NO
-# undef OptimizedCDebugFlags			/* XXX ??? */
-# define OptimizedCDebugFlags			/* XXX ??? */
 #endif
 
 #if defined(amigaArchitecture)
