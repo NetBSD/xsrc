@@ -719,10 +719,13 @@ char *cpp_argv[ARGUMENTS] = {
 # define DEFAULT_OS_TEENY_REV   "r %*d.%*d%[A-Z]" 
 # define DEFAULT_OS_TEENY_REV_FROB(buf, size)				\
     do {								\
-	if (*(buf) >= 'A' && *(buf) <= 'Z') /* sanity check */		\
-		snprintf((buf), (size), "%d", *(buf) - 'A' + 1);	\
-	else								\
-	    *(buf) = '\0';						\
+	int	teeny = 0;						\
+	char	*ptr = (buf);						\
+									\
+	while (*ptr >= 'A' && *ptr <= 'Z') /* sanity check */		\
+	    teeny = teeny * 26 + (int)(*ptr++ - 'A');			\
+									\
+	snprintf((buf), (size), "%d", teeny + 1);			\
     } while (0)
 # define DEFAULT_OS_NAME        "smr %[^\n]"
 # define DEFAULT_OS_NAME_FROB(buf, size)				\
