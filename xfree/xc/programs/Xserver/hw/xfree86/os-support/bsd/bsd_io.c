@@ -182,18 +182,25 @@ xf86KbdOn()
 #ifdef WSCONS_SUPPORT
 	case WSCONS:
 		if (xf86Info.kbdFd == -1) {
-		nTty = kbdtty;
-		nTty.c_iflag = IGNPAR | IGNBRK;
-		nTty.c_oflag = 0;
-		nTty.c_cflag = CREAD | CS8;
-		nTty.c_lflag = 0;
-		nTty.c_cc[VTIME] = 0;
-		nTty.c_cc[VMIN] = 1;
-		cfsetispeed(&nTty, 9600);
-		cfsetospeed(&nTty, 9600);
-		tcsetattr(xf86Info.consoleFd, TCSANOW, &nTty);
-		option = WSKBD_RAW;
-		ioctl(xf86Info.consoleFd, WSKBDIO_SETMODE, &option);
+			nTty = kbdtty;
+			nTty.c_iflag = IGNPAR | IGNBRK;
+			nTty.c_oflag = 0;
+			nTty.c_cflag = CREAD | CS8;
+			nTty.c_lflag = 0;
+			nTty.c_cc[VTIME] = 0;
+			nTty.c_cc[VMIN] = 1;
+			cfsetispeed(&nTty, 9600);
+			cfsetospeed(&nTty, 9600);
+			tcsetattr(xf86Info.consoleFd, TCSANOW, &nTty);
+			option = WSKBD_RAW;
+			if (ioctl(xf86Info.consoleFd, WSKBDIO_SETMODE,
+					&option) == -1)
+				FatalError("can't switch keyboard to raw mode. "
+					"Enable support for it in the kernel "
+					"or use for example:\n\n"
+					"Option \"Protocol\" \"wskbd\"\n"
+					"Option \"Device\" \"/dev/wskbd0\"\n"
+					"\nin your XF86Config(5) file\n");
 		} else {
 			return xf86Info.kbdFd;
 		}
