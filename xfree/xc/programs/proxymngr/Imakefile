@@ -26,6 +26,8 @@ XCOMM $XFree86: xc/programs/proxymngr/Imakefile,v 1.14 2003/07/09 15:27:36 tsi E
 
      SITE_CONFIG = -DLBXPROXY=$(LBXPROXY)
 
+    EXTRAMANDEFS = -DPROXYMANAGERDIR=$(PROXYMANAGERDIR)
+
 AllTarget(pmconfig)
 
 LinkConfDirectory(proxymngr,.,proxymngr,.)
