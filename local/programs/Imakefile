@@ -1,4 +1,4 @@
-XCOMM $NetBSD: Imakefile,v 1.4 2002/06/17 16:35:16 christos Exp $
+XCOMM $NetBSD: Imakefile,v 1.5 2002/06/18 09:04:00 tron Exp $
 
 #define IHaveSubdirs
 #define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
@@ -11,7 +11,14 @@ XCOMM $NetBSD: Imakefile,v 1.4 2002/06/17 16:35:16 christos Exp $
         FTSRCDIR = xftlsfonts
 #endif
 
-SUBDIRS = x11-ssh-askpass $(FTSRCDIR) xsystrace
+#if defined(NetBSDArchitecture) && \
+    ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion > 6) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 6 && OSTeenyVersion > 1))
+        XSSRCDIR = xsystrace
+#endif
+
+SUBDIRS = x11-ssh-askpass $(FTSRCDIR) $(XSSRCDIR)
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
