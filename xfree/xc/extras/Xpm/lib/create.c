@@ -44,6 +44,7 @@
  * Lorens Younes (d93-hyo@nada.kth.se) 4/96
  */
 
+#include "X11/Xmd.h"
 #include "XpmI.h"
 #include <ctype.h>
 
