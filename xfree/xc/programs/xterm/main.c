@@ -89,7 +89,7 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/xterm/main.c,v 3.167 2003/05/21 22:59:13 dickey Exp $ */
+/* $XFree86: xc/programs/xterm/main.c,v 3.174 2003/12/25 22:04:04 dickey Exp $ */
 
 /* main.c */
 
@@ -133,6 +133,11 @@ SOFTWARE.
 #ifdef __osf__
 #define USE_SYSV_SIGNALS
 #define WTMP
+#include <pty.h>		/* openpty() */
+#endif
+
+#ifdef __sgi
+#include <grp.h>		/* initgroups() */
 #endif
 
 #ifdef USE_ISPTS_FLAG
@@ -175,10 +180,12 @@ static Bool IsPts = False;
 #endif
 
 #ifdef SCO325
+#ifndef _SVID3
 #define _SVID3
 #endif
+#endif
 
-#ifdef __GNU__
+#if defined(__GLIBC__) && !defined(linux)
 #define USE_SYSV_PGRP
 #define WTMP
 #define HAS_BSD_GROUPS
@@ -1429,7 +1436,7 @@ my_utmp_id(char *device)
     } else {
 	sprintf(result, "p%s", leaf);
     }
-    TRACE(("my_utmp_id  (%s) -> '%s'\n", device, result));
+    TRACE(("my_utmp_id (%s) -> '%s'\n", device, result));
     return result;
 }
 #endif
@@ -2291,10 +2298,11 @@ get_pty(int *pty, char *from GCC_UNUSED)
        device types which need to be handled differently.
      */
     result = pty_search(pty);
+    if (!result)
+	IsPts = 0;
 
 #endif
 #if defined(USE_USG_PTYS) || defined(__CYGWIN__)
-
 #ifdef __GLIBC__		/* if __GLIBC__ and USE_USG_PTYS, we know glibc >= 2.1 */
     /* GNU libc 2 allows us to abstract away from having to know the
        master pty device name. */
@@ -2308,13 +2316,17 @@ get_pty(int *pty, char *from GCC_UNUSED)
 #elif defined(__MVS__)
     result = pty_search(pty);
 #else
-    result = ((*pty = open("/dev/ptmx", O_RDWR)) < 0);
+#if defined(USE_ISPTS_FLAG)
+    if (result) {
+#endif
+	result = ((*pty = open("/dev/ptmx", O_RDWR)) < 0);
 #endif
 #if defined(SVR4) || defined(SCO325) || defined(USE_ISPTS_FLAG)
-    if (!result)
-	strcpy(ttydev, ptsname(*pty));
+	if (!result)
+	    strcpy(ttydev, ptsname(*pty));
 #ifdef USE_ISPTS_FLAG
-    IsPts = !result;		/* true if we're successful */
+	IsPts = !result;	/* true if we're successful */
+    }
 #endif
 #endif
 
@@ -2638,7 +2650,7 @@ spawn(void)
 #if OPT_INITIAL_ERASE
     int initial_erase = VAL_INITIAL_ERASE;
 #endif
-    int rc;
+    int rc = 0;
     int tty = -1;
 #ifdef USE_ANY_SYSV_TERMIO
     struct termio tio;
@@ -2679,15 +2691,20 @@ spawn(void)
 #ifdef HAVE_UTMP
     struct UTMP_STR utmp;
 #ifdef USE_SYSV_UTMP
-    struct UTMP_STR *utret;
+    struct UTMP_STR *utret = NULL;
 #endif
 #ifdef USE_LASTLOG
-	struct lastlog lastlog;
-#endif	/* USE_LASTLOG */
+    struct lastlog lastlog;
 #ifdef USE_LASTLOGX
-	struct lastlogx lastlog;
-#endif	/* USE_LASTLOGX */
-#endif	/* HAVE_UTMP */
+    struct lastlogx lastlog;
+#endif /* USE_LASTLOG */
+#endif /* HAVE_UTMP */
+
+    /* Noisy compilers */
+    (void) rc;
+#if defined(HAVE_UTMP) && defined(USE_SYSV_UTMP)
+    (void) utret;
+#endif
 
     screen->uid = getuid();
     screen->gid = getgid();
@@ -3507,23 +3524,31 @@ spawn(void)
 	    if (!resource.ptyInitialErase
 		&& !override_tty_modes
 		&& !ttymodelist[XTTYMODE_erase].set) {
+#if OPT_TRACE
 		int old_erase;
+#endif
 #ifdef USE_ANY_SYSV_TERMIO
 		if (ioctl(tty, TCGETA, &tio) == -1)
 		    tio = d_tio;
+#if OPT_TRACE
 		old_erase = tio.c_cc[VERASE];
+#endif
 		tio.c_cc[VERASE] = initial_erase;
 		rc = ioctl(tty, TCSETA, &tio);
 #elif defined(USE_POSIX_TERMIOS)
 		if (tcgetattr(tty, &tio) == -1)
 		    tio = d_tio;
+#if OPT_TRACE
 		old_erase = tio.c_cc[VERASE];
+#endif
 		tio.c_cc[VERASE] = initial_erase;
 		rc = tcsetattr(tty, TCSANOW, &tio);
 #else /* !USE_ANY_SYSV_TERMIO && !USE_POSIX_TERMIOS */
 		if (ioctl(tty, TIOCGETP, (char *) &sg) == -1)
 		    sg = d_sg;
+#if OPT_TRACE
 		old_erase = sg.sg_erase;
+#endif
 		sg.sg_erase = initial_erase;
 		rc = ioctl(tty, TIOCSETP, (char *) &sg);
 #endif /* USE_ANY_SYSV_TERMIO */
@@ -3825,6 +3850,7 @@ spawn(void)
 		    updlastlogx(_PATH_LASTLOGX, screen->uid, &lastlog);
 		}
 #endif
+
 #ifdef USE_LASTLOG
 	    if (term->misc.login_shell &&
 		(i = open(etc_lastlog, O_WRONLY)) >= 0) {
@@ -4014,7 +4040,7 @@ spawn(void)
 		TRACE(("spawning command \"%s\"\n", *command_to_exec));
 		execvp(*command_to_exec, command_to_exec);
 		if (command_to_exec[1] == 0)
-		    execlp(ptr, shname, "-c", command_to_exec[0], 0);
+		    execlp(ptr, shname, "-c", command_to_exec[0], (void *) 0);
 		/* print error message on screen */
 		fprintf(stderr, "%s: Can't execvp %s: %s\n",
 			xterm_name, *command_to_exec, strerror(errno));
@@ -4194,12 +4220,6 @@ Exit(int n)
     struct UTMP_STR utmp;
     struct UTMP_STR *utptr;
 
-#if defined(WTMPX_FILE) && (defined(SVR4) || defined(SCO325))
-#elif defined(linux) && defined(__GLIBC__) && (__GLIBC__ >= 2) && !(defined(__powerpc__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ == 0))
-#else
-    int fd;			/* for /etc/wtmp */
-#endif
-
     /* don't do this more than once */
     if (xterm_exiting)
 	SIGNAL_RETURN;
@@ -4249,10 +4269,12 @@ Exit(int n)
 		updwtmp(etc_wtmp, utptr);
 #else
 	    /* set wtmp entry if wtmp file exists */
-	    if (term->misc.login_shell &&
-		(fd = open(etc_wtmp, O_WRONLY | O_APPEND)) >= 0) {
-		write(fd, utptr, sizeof(*utptr));
-		close(fd);
+	    if (term->misc.login_shell) {
+		int fd;
+		if ((fd = open(etc_wtmp, O_WRONLY | O_APPEND)) >= 0) {
+		    write(fd, utptr, sizeof(*utptr));
+		    close(fd);
+		}
 	    }
 #endif
 #endif

@@ -2,7 +2,7 @@ XCOMM platform:  $Xorg: NetBSD.cf,v 1.3 2000/08/17 19:41:46 cpqbld Exp $
 
 
 
-XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.108.2.1 2003/09/17 05:58:15 herrb Exp $
+XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.123 2003/11/20 16:18:18 dawes Exp $
 
 
 #ifndef OSName
@@ -41,6 +41,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #endif
 #define HasNdbm         	YES
 #define HasPutenv       	YES
+#if OSMajorVersion == 1 && OSMinorVersion > 4 || OSMajorVersion > 1
+# define HasStrlcat		YES
+#endif
 #define HasSnprintf		YES
 #define HasBSD44Sockets 	YES
 #define Malloc0ReturnsNull	NO
@@ -101,6 +104,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #define InstallXloadSetGID	NO
 
+#if OSMajorVersion < 1 || (OSMajorVersion == 1 && OSMinorVersion < 5)
+#define BuildIPv6		NO
+#endif
+
+#define IPv6SocketsAlsoIPv4	NO
+
 /*
  * NetBSD 1.6M and newer supports POSIX Threads.
  */
@@ -121,7 +130,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define LibraryMTDefines	-DUSE_NBSD_THREADLIB
 # define SystemMTDefines	-D_REENTRANT
 # define MTSafeAPIDefines	-DXUSE_MTSAFE_API -DXNO_MTSAFE_PWDAPI
-#else
+#else 
 # define ThreadedX		NO
 #endif
 
@@ -223,7 +232,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # ifndef DefaultGcc2i386Opt
 #  if OSMajorVersion > 1 || (OSMajorVersion == 1 && OSMinorVersion > 2)
     /* The GCC strength-reduce bug is fixed for NetBSD 1.3 and later */
-#   define DefaultGcc2i386Opt -O2
+#   define DefaultGcc2i386Opt -O2 GccAliasingArgs
 #  endif
 # endif
 # define OptimizedCDebugFlags 	DefaultGcc2i386Opt
@@ -247,7 +256,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #   define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME 
 # elif defined(PpcArchitecture)
 #  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
-# elif defined(x86_64Architecture)
+# elif defined(AMD64Architecture)
 #  undef OptimizedCDebugFlags
 #  define OptimizedCDebugFlags	-O2
 #  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
@@ -256,7 +265,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif
 # if defined(AlphaArchitecture)
 #  define ServerExtraSysLibs	-lalpha
-# elif defined(x86_64Architecture)
+# elif defined(AMD64Architecture)
 #  define ServerExtraSysLibs	-lx86_64
 # else
 #  define ServerExtraSysLibs	/**/
@@ -302,7 +311,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  ifndef XFree86ConsoleDefines
 #    define XFree86ConsoleDefines	-DWSCONS_SUPPORT
 #  endif
-#elif defined(x86_64Architecture)
+#elif defined(AMD64Architecture)
 # define ServerExtraDefines	GccGasOption XFree86ServerDefines -D_XSERVER64
 #  ifndef XFree86ConsoleDefines
 #    define XFree86ConsoleDefines -DWSCONS_SUPPORT
@@ -428,7 +437,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif /* MTRRBuiltin */
 #endif /* i386Architecture */
 
-#if defined(x86_64Architecture)
+#if defined(AMD64Architecture)
 # define HasMTRRBuiltin       YES
 # define XF86AFB              YES
 #endif
@@ -603,14 +612,24 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #define HasSharedLibraries	NO
 #endif 
 
+/*
+ * Unresolved references are fatal on NetBSD 1.5 for libGL, which is
+ * built with -Bsymbolic.
+ */
+#if UseElfFormat && OSMajorVersion == 1 && OSMinorVersion == 5
+#define SharedGLReqs		$(LDPRELIBS) $(XLIB) -lc
+#endif
+
 #if HasSharedLibraries
 #include <bsdLib.rules>
 #endif /* HasSharedLibraries */
 
 /* Always build the XInput library, regardless of server support on this plattform */
-#define BuildXInputLib          YES
+#if !defined(BuildXInputLib) && !defined(BuildServersOnly)
+# define BuildXInputLib          YES
+#endif
 
-#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture) || defined(CatsArchitecture) || defined(x86_64Architecture)
+#if defined(i386Architecture) || defined(Arm32Architecture) || defined(AlphaArchitecture) || defined(PpcArchitecture) || defined(CatsArchitecture) || defined(AMD64Architecture)
 # include <xfree86.cf>
 #endif
 
@@ -690,8 +709,8 @@ InstallManPageAliasesBase(file,destdir,aliases)
 #define PositionIndependentCFlags
 #define SharedLibraryLoadFlags -x -shared --whole-archive -soname `echo $@ |
 sed 's/\.[0-9]*$$//'`
-#define SharedXtReqs $(XLIBONLY) $(SMLIB) $(ICELIB)
-#define SharedXmuReqs $(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB) $(EXTENSIONLIB)
+#define SharedXtReqs $(XONLYLIB) $(SMLIB) $(ICELIB)
+#define SharedXmuReqs $(LDPRELIB) $(XTOOLONLYLIB) $(XLIB)
 #endif
 
 /*

@@ -24,7 +24,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS 
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/FS/FSQXExt.c,v 1.5.4.2 2003/09/01 21:05:36 herrb Exp $ */
+/* $XFree86: xc/lib/FS/FSQXExt.c,v 1.8 2003/12/22 17:48:02 tsi Exp $ */
 
 /*
 
@@ -93,8 +93,10 @@ FSQueryXExtents8(svr, fid, range_type, str, str_len, extents)
 		  fsFalse))
 	return FSBadAlloc;
     
+#if SIZE_MAX <= UINT_MAX
     if (reply.num_extents > SIZE_MAX / sizeof(FSXCharInfo)) 
 	return FSBadAlloc;
+#endif
 
     ext = (FSXCharInfo *) FSmalloc(sizeof(FSXCharInfo) * reply.num_extents);
     *extents = ext;
@@ -152,8 +154,10 @@ FSQueryXExtents16(svr, fid, range_type, str, str_len, extents)
 		  fsFalse))
 	return FSBadAlloc;
 
+#if SIZE_MAX <= UINT_MAX
     if (reply.num_extents > SIZE_MAX/sizeof(FSXCharInfo)) 
 	return FSBadAlloc;
+#endif
 
     ext = (FSXCharInfo *) FSmalloc(sizeof(FSXCharInfo) * reply.num_extents);
     *extents = ext;

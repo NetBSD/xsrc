@@ -23,7 +23,7 @@ Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 */
-/* $XFree86: xc/programs/Xserver/cfb/cfbglblt8.c,v 3.6 2001/12/14 19:59:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/cfb/cfbglblt8.c,v 3.8 2003/08/06 14:04:02 eich Exp $ */
 
 /*
  * Poly glyph blt.  Accepts an arbitrary font <= 32 bits wide, in Copy mode
@@ -87,7 +87,14 @@ typedef CARD32	*glyphPointer;
 
 #endif
 
-static void cfbPolyGlyphBlt8Clipped();
+static void cfbPolyGlyphBlt8Clipped(
+    DrawablePtr pDrawable,
+    GCPtr	pGC,
+    int 	x,
+    int         y,
+    unsigned int nglyph,
+    CharInfoPtr *ppci,		/* array of character info */
+    unsigned char *pglyphBase); /* start of array of glyphs */
 
 #if defined(HAS_STIPPLE_CODE) && !defined(GLYPHROP) && !defined(USE_LEFTBITS)
 #define USE_STIPPLE_CODE
@@ -267,13 +274,14 @@ cfbPolyGlyphBlt8 (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
 }
 
 static void
-cfbPolyGlyphBlt8Clipped (pDrawable, pGC, x, y, nglyph, ppci, pglyphBase)
-    DrawablePtr pDrawable;
-    GCPtr	pGC;
-    int 	x, y;
-    unsigned int nglyph;
-    CharInfoPtr *ppci;		/* array of character info */
-    unsigned char *pglyphBase;	/* start of array of glyphs */
+cfbPolyGlyphBlt8Clipped(
+    DrawablePtr pDrawable,
+    GCPtr	pGC,
+    int 	x,
+    int         y,
+    unsigned int nglyph,
+    CharInfoPtr *ppci,		/* array of character info */
+    unsigned char *pglyphBase)	/* start of array of glyphs */
 {
 #ifndef GLYPHROP
     register CfbBits	pixel;
