@@ -82,6 +82,7 @@ static char *fallbackList[] = {
 #define FALLBACK_LIST_LEN sizeof fallbackList / sizeof fallbackList[0]
 
 fbFd alphaFbs[MAXSCREENS];
+Bool alphaTgaAccelerate = 1;
 
 static PixmapFormatRec	formats[] = {
     { 8, 8, BITMAP_SCANLINE_PAD}	/* 8-bit deep */

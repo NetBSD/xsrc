@@ -1,4 +1,4 @@
-/* $NetBSD: alphaTGA.c,v 1.1 1999/04/27 08:18:24 ross Exp $ */
+/* $NetBSD: alphaTGA.c,v 1.2 2000/05/14 20:03:16 elric Exp $ */
 
 /* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
@@ -376,9 +376,16 @@ alphaTgaScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
     int width;			/* pixel width of frame buffer */
     int bpp;			/* bits per pixel of root */
 {
-    if (!alphaTgaSetupScreen(pScreen, pbits, xsize, ysize, dpix,
-      dpiy, width, bpp))
-	return FALSE;
-    return alphaTgaFinishScreenInit(pScreen, pbits, xsize, ysize, dpix,
-      dpiy, width, bpp);
+    if (alphaTgaAccelerate) {
+	if (!alphaTgaSetupScreen(pScreen, pbits, xsize, ysize, dpix,
+	  dpiy, width, bpp))
+	    return FALSE;
+	return alphaTgaFinishScreenInit(pScreen, pbits, xsize, ysize, dpix,
+	  dpiy, width, bpp);
+    } else {
+	if (!cfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width))
+	    return FALSE;
+	return cfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy,
+	  width);
+    }
 }
