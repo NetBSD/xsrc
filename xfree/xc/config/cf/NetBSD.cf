@@ -558,5 +558,9 @@ sed 's/\.[0-9]*$$//'`
 #endif
 
 #ifndef BuildHtmlManPages
-#define BuildHtmlManPages NO           /* We don't want HTML manpages */
+#define BuildHtmlManPages NO	/* We don't want HTML manpages */
+#endif
+
+#ifndef UseSeparateConfDir
+#define UseSeparateConfDir NO	/* We don't want appdefs in "/etc/X11". */
 #endif
