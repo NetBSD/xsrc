@@ -1,11 +1,11 @@
-/*	$NetBSD: pmax_init.c,v 1.5 2000/01/07 14:41:03 ad Exp $	*/
+/*	$NetBSD: pmax_init.c,v 1.6 2001/09/18 16:19:28 ad Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran <ad@NetBSD.org>.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,7 +60,6 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* Um, we don't need all these... */
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/file.h>
@@ -120,13 +119,11 @@ InitOutput(screenInfo, argc, argv)
     if ((fd = open("/dev/fb0", O_RDWR | O_NDELAY, 0)) < 0)
 	ErrorF("couldn't open /dev/fb0\n");
 
-    /* Damn DEC ioctls() aren't enough. Using the Sun ones too... */
     if (ioctl(fd, FBIOGTYPE, &fb) < 0) {
 	ErrorF("FBIOGTYPE ioctl failed: %s\n", strerror(errno));
 	exit(1);
     }
     
-    /* XXX horrible... */
     close(fd);
     screenInfo->numPixmapFormats = (fb.fb_depth == 8 ? 2 : 1);
 
@@ -152,4 +149,10 @@ InitInput(argc, argv)
 
     RegisterPointerDevice(p);
     RegisterKeyboardDevice(k);
+}
+
+void
+OsVendorInit(void)
+{
+
 }
