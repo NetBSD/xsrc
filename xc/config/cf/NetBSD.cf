@@ -639,7 +639,7 @@ clean::									@@\
 #ifndef BuildScreenSaverLibrary
 #define BuildScreenSaverLibrary	YES
 #endif
-/*
+
 #ifndef XkbServerDefines
 #define XkbServerDefines	-DXKB_ALWAYS_USES_SOFT_REPEAT
 #endif
