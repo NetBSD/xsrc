@@ -126,7 +126,7 @@ InitXdmcpWrapper ()
 
     _XdmcpWrapperToOddParity(sum, key);
 
-#elif DEV_RANDOM
+#elif defined(DEV_RANDOM)
     int fd;
     unsigned char   tmpkey[8];
     
