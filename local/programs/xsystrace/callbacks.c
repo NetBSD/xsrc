@@ -41,6 +41,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 #include <err.h>
 
@@ -106,7 +107,7 @@ freadline(char *line, size_t size, int fd)
 void
 getInput(XtPointer clientData, int *file, XtInputId *inputId)
 {
-	char line[1024], *p;
+	char line[_POSIX2_LINE_MAX], *p;
         char *name, *id, *polname, *filters;
         time_t curtime;
 	int nfilters;
