@@ -523,30 +523,26 @@ extern PixelType mask[];
 #endif
 
 #if GETLEFTBITS_ALIGNMENT == 1
-#if (BITMAP_BIT_ORDER == MSBFirst && PPW == 64)
-#define getleftbits(psrc, w, dst)      dst = SCRLEFT(*((CARD32 *) psrc), PPW - 32)
-#else
-#define getleftbits(psrc, w, dst)      dst = *((CARD32 *) psrc)
-#endif
+#define getleftbits(psrc, w, dst)	dst = *((CARD32 *)(pointer) psrc)
 #endif /* GETLEFTBITS_ALIGNMENT == 1 */
 
 #if GETLEFTBITS_ALIGNMENT == 2
 #define getleftbits(psrc, w, dst) \
     { \
-	if ( ((long)(psrc)) & 0x01 ) \
-		getbits( ((PixelType *)(((char *)(psrc))-1)), 8, (w), (dst) ); \
+	if ( ((int)(psrc)) & 0x01 ) \
+		getbits( ((CARD32 *)(((char *)(psrc))-1)), 8, (w), (dst) ); \
 	else \
-		getbits((PixelType *)psrc, 0, w, dst); \
+		getbits(psrc, 0, w, dst); \
     }
 #endif /* GETLEFTBITS_ALIGNMENT == 2 */
 
 #if GETLEFTBITS_ALIGNMENT == 4
 #define getleftbits(psrc, w, dst) \
     { \
-	long off, off_b; \
-	off_b = (off = ( ((long)(psrc)) & 0x03)) << 3; \
+	int off, off_b; \
+	off_b = (off = ( ((int)(psrc)) & 0x03)) << 3; \
 	getbits( \
-               (PixelType *)( ((char *)(psrc)) - off), \
+		(CARD32 *)( ((char *)(psrc)) - off), \
 		(off_b), (w), (dst) \
 	       ); \
     }

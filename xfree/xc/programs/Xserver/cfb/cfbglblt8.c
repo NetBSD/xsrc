@@ -60,8 +60,6 @@ in this Software without prior written authorization from The Open Group.
 
 #if GLYPHPADBYTES != 4
 #define USE_LEFTBITS
-#elif (BITMAP_BIT_ORDER == MSBFirst) && (PGSZ == 64)
-#define USE_LEFTBITS
 #endif
 
 #ifdef USE_LEFTBITS
