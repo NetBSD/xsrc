@@ -18,6 +18,7 @@ XCOMM 		NetBSD/pmax	client
 XCOMM		NetBSD/amiga	client/server
 XCOMM		NetBSD/alpha	client/server
 XCOMM		NetBSD/arm32	client
+XCOMM		NetBSD/vax	client
 XCOMM
 
 #ifndef OSName
@@ -248,6 +249,14 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define XieDynamicModule	NO
 #endif
 
+#if defined(VaxArchitecture)
+# define BuildServer		NO		/* XXX */
+# define ServerOSDefines	-DDDXOSINIT
+# define ServerExtraDefines	GccGasOption
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+#endif
+
 
 #ifndef OptimizedCDebugFlags
 # define OptimizedCDebugFlags 	-O2
@@ -436,8 +445,8 @@ install.man:: 								@@\
  * working shared libs).
  */
 #if ((OSMajorVersion > 0) && \
-     !defined(AlphaArchitecture) && !defined(MipsArchitecture)) || \
-    UseElfFormat
+     !defined(AlphaArchitecture) && !defined(MipsArchitecture) && \
+     !defined(VaxArchitecture)) || UseElfFormat
 # ifndef HasSharedLibraries
 # define HasSharedLibraries	YES
 # endif
