@@ -1,4 +1,4 @@
-/*	$NetBSD: rpccons.c,v 1.2 2001/03/10 13:01:22 rearnsha Exp $	*/
+/*	$NetBSD: rpccons.c,v 1.3 2001/12/17 23:59:49 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -65,7 +65,7 @@
 #include "resource.h"
 
 /* NetBSD headers RiscPC specific */
-#include <machine/vidc.h>
+#include <arm/iomd/vidc.h>
 #include <machine/vconsole.h>
 #include <machine/mouse.h>
 #include <machine/kbd.h>
@@ -97,7 +97,7 @@
 
 extern struct _private private;
 
-void write_palette(c, r, g, b)
+void rpccons_write_palette(c, r, g, b)
 	int	c;
 	int	r;
 	int	g;
