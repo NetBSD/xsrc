@@ -132,7 +132,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #elif defined(PpcArchitecture)
 # define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char GccWarningOptions
 #else
-# define DefaultCCOptions 	-g -ansi -Dasm=__asm GccWarningOptions
+# define DefaultCCOptions 	-ansi -Dasm=__asm GccWarningOptions
 #endif
 #endif
 #endif
@@ -192,7 +192,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #  define ServerExtraSysLibs	-li386
 # endif
 #else
-# define OptimizedCDebugFlags 	-g -O2
+# define OptimizedCDebugFlags 	-O2
 # if defined(SparcArchitecture)
 #  define ServerOSDefines 	-DDDXOSINIT
 # elif defined(AlphaArchitecture) || defined(PpcArchitecture)
