@@ -332,7 +332,7 @@ sed 's/\.[0-9]*$$//'`
  */
 #if defined(SparcArchitecture) || defined(Sun3Architecture)
 #ifndef Xsun24Server
-#define Xsun24Server	YES
+#define Xsun24Server	NO
 #endif
 #ifndef XsunServer
 #define XsunServer	YES
