@@ -251,6 +251,7 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 #define	DEV_MEM_IOSIZE	0x00010000
 
 static Bool     ExtendedEnabled = FALSE;
+unsigned int IOPortBase;
 static unsigned int IOPortBase2;
 
 void
