@@ -401,6 +401,7 @@ int
 xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 	     int Len)
 {
+#ifndef __alpha__
 	unsigned char *ptr;
 	int psize;
 	int mlen;
@@ -440,6 +441,9 @@ xf86ReadBIOS(unsigned long Base, unsigned long Offset, unsigned char *Buf,
 		Base, Offset, Len, Buf[0], Buf[1], Buf[2], Buf[3]);
 #endif
 	return(Len);
+#else
+	return(-1);
+#endif
 }
 
 #endif /* !__powerpc__ */
@@ -1495,7 +1499,7 @@ mapVidMemSparse(int ScreenNum, unsigned long Base, unsigned long Size, int flags
     xf86ReadMmio16 = readSparse16;
     xf86ReadMmio32 = readSparse32;
 	
-    if (((flags & VIDMEM_MMIO) && !(flags & VIDMEM_MMIO_32BIT)) ||
+    if ((flags & VIDMEM_MMIO) ||
         ((flags & VIDMEM_FRAMEBUFFER) && (flags & VIDMEM_SPARSE)))
 	mapflags = 0;
     else
@@ -1543,7 +1547,7 @@ static int
 readSparse32(pointer Base, register unsigned long Offset)
 {
     mem_barrier();
-    return *(vuip)((unsigned long)Base + Offset);
+    return *(vuip)((unsigned long)Base + (Offset << 5) + (3<<(5-2)));
 }
 
 static void
@@ -1569,7 +1573,7 @@ static void
 writeSparse32(int Value, pointer Base, register unsigned long Offset)
 {
     write_mem_barrier();
-    *(vuip)((unsigned long)Base + (Offset)) = Value;
+    *(vuip)((unsigned long)Base + (Offset << 5) + (3<<(5-2))) = Value;
 }
 
 static void
@@ -1591,7 +1595,7 @@ writeSparseNB16(int Value, pointer Base, register unsigned long Offset)
 static void
 writeSparseNB32(int Value, pointer Base, register unsigned long Offset)
 {
-    *(vuip)((unsigned long)Base + (Offset)) = Value;
+    *(vuip)((unsigned long)Base + (Offset << 5) + (3<<(5-2))) = Value;
 }
 
 void (*xf86WriteMmio8)(int Value, pointer Base, unsigned long Offset) 
