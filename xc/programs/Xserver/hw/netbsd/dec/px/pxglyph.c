@@ -1,4 +1,4 @@
-/*	$NetBSD: pxglyph.c,v 1.2 2001/09/22 19:43:51 ad Exp $	*/
+/*	$NetBSD: pxglyph.c,v 1.3 2002/02/22 16:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -133,10 +133,10 @@ GOP(pxPolyGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 	u_int32_t *pb, *fb;
 	pxPacket pxp;
 	int v1, v2, lw, xya, psy;
-	int stampw, stamph;
+	int stampw, stamphm;
 	CharInfoPtr pci;
 #ifndef _16
-	int sy, i;
+	int sy, i, xa;
 #endif
 
 #ifdef _IMAGEGLYPH
@@ -196,7 +196,7 @@ GOP(pxPolyGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 	pb[5] = 0x7ffffff;
 
 	stampw = sp->stampw;
-	stamph = sp->stamph;
+	stamphm = sp->stamphm;
 	x += pDrawable->x;
 	y += pDrawable->y;
 #ifdef _IMAGEGLYPH
@@ -220,7 +220,7 @@ GOP(pxPolyGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 		psy = (y0 << 3) + lw;
 		v1 = (x0 << 19) | psy;
 		v2 = (ex << 19) | psy;
-		xya = XYMASKADDR(stampw, stamph, x0, y, 0, 0);
+		xya = XYMASKADDR(stampw, stamphm, x0, y, 0, 0);
 #ifdef _IMAGEGLYPH
 		pb = pxPacketAddPrim(sp, &pxp);
 		DOBG(v1, v2, lw, xya, bg);
@@ -228,6 +228,8 @@ GOP(pxPolyGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 		pb = pxPacketAddPrim(sp, &pxp);
 		DOFG(v1, v2, lw, xya, fb, fg);
 #else
+		xa = XMASKADDR(stampw, x0, 0) << 16;
+
 		for (i = 0; i < h; i += 16, fb += 16) {
 			sy = y0 + i;
 
@@ -235,7 +237,7 @@ GOP(pxPolyGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 			psy = (sy << 3) + lw;
 			v1 = (x0 << 19) | psy;
 			v2 = (ex << 19) | psy;
-			xya = XYMASKADDR(stampw, stamph, x0, sy, 0, 0);
+			xya = YMASKADDR(stamphm, sy, 0) | xa;
 #ifdef _IMAGEGLYPH
 			pb = pxPacketAddPrim(sp, &pxp);
 			DOBG(v1, v2, lw, xya, bg);
@@ -269,9 +271,9 @@ GOP(pxPolyTEGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 	FontPtr pfont;
 	u_int32_t *pb, *fb;
 	pxPacket pxp;
-	int v1, v2, lw, xya, psy, stampw, stamph;
+	int v1, v2, lw, xya, psy, stampw, stamphm;
 #ifndef _16
-	int sy, i;
+	int sy, i, xa;
 #else
 	int ya;
 #endif
@@ -324,9 +326,9 @@ GOP(pxPolyTEGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 	y = y + pDrawable->y - FONTASCENT(pfont);
 
 	stampw = sp->stampw;
-	stamph = sp->stamph;
+	stamphm = sp->stamphm;
 #ifdef _16
-	ya = YMASKADDR(stamph, y, 0);
+	ya = YMASKADDR(stamphm, y, 0);
 #endif
 
 #ifdef _IMAGEGLYPH
@@ -338,7 +340,7 @@ GOP(pxPolyTEGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 #ifdef _16
 	xya = ya | (XMASKADDR(stampw, x, 0) << 16);
 #else
-	xya = XYMASKADDR(stampw, stamph, x, y, 0, 0);
+	xya = XYMASKADDR(stampw, stamphm, x, y, 0, 0);
 #endif
 	pb = pxPacketAddPrim(sp, &pxp);
 	DOBG(v1, v2, lw, xya, gcPriv->bgPixel);
@@ -362,6 +364,8 @@ GOP(pxPolyTEGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 		pb = pxPacketAddPrim(sp, &pxp);
 		DOFG(v1, v2, lw, xya, fb, fg);
 #else
+		xa = XMASKADDR(stampw, x, 0) << 16;
+
 		for (i = 0; i < heightGlyph; i += 16, fb += 16) {
 			sy = y + i;
 
@@ -369,7 +373,7 @@ GOP(pxPolyTEGlyphBlt)(DrawablePtr pDrawable, GCPtr pGC, int x, int y,
 			psy = (sy << 3) + lw;
 			v1 = (x << 19) | psy;
 			v2 = (ex << 19) | psy;
-			xya = XYMASKADDR(stampw, stamph, x, sy, 0, 0);
+			xya = YMASKADDR(stamphm, sy, 0) | xa;
 
 			pb = pxPacketAddPrim(sp, &pxp);
 			DOFG(v1, v2, lw, xya, fb, fg);

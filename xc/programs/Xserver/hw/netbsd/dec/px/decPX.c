@@ -1,4 +1,4 @@
-/*	$NetBSD: decPX.c,v 1.2 2001/09/22 19:43:49 ad Exp $	*/
+/*	$NetBSD: decPX.c,v 1.3 2002/02/22 16:06:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -418,6 +418,7 @@ decPXInit(int screen, ScreenPtr pScreen, int argc, char **argv)
 		sp->realbpp = realbpp;
 		sp->stampw = sxi.sxi_stampw;
 		sp->stamph = sxi.sxi_stamph;
+		sp->stamphm = sp->stamph - 1;
 		sp->buf_pa = sxi.sxi_buf_phys;
 		sp->nbuf = sxi.sxi_buf_pktcnt;
 #ifdef notyet

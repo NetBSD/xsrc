@@ -1,4 +1,4 @@
-/*	$NetBSD: pxmisc.c,v 1.2 2001/09/22 19:43:51 ad Exp $	*/
+/*	$NetBSD: pxmisc.c,v 1.3 2002/02/22 16:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -233,14 +233,14 @@ void
 pxFillBoxTiled(pxScreenPrivPtr sp, RegionPtr pRegion, pxMaskPtr mask)
 {
 	u_int32_t *pb;
-	int v1, v2, lw, xya, psy, stampw, stamph;
+	int v1, v2, lw, xya, psy, stampw, stamphm;
 	BoxPtr pBox, pBoxMax;
 	pxPacket pxp;
 
 	PX_TRACE("pxFillBoxTiled");
 
 	stampw = sp->stampw;
-	stamph = sp->stamph;
+	stamphm = sp->stamphm;
 
 	pb = pxPacketStart(sp, &pxp, 4, 13);
 	pb[0] = STAMP_CMD_LINES | STAMP_RGB_FLAT | STAMP_LW_PERPRIMATIVE |
@@ -258,7 +258,7 @@ pxFillBoxTiled(pxScreenPrivPtr sp, RegionPtr pRegion, pxMaskPtr mask)
 		v1 = (pBox->x1 << 19) | psy;
 		v2 = (pBox->x2 << 19) | psy;
 
-		xya = XYMASKADDR(stampw, stamph, pBox->x1, pBox->y1,
+		xya = XYMASKADDR(stampw, stamphm, pBox->x1, pBox->y1,
 		    pBox->x1 & 15, pBox->y1 & 15);
 
 		pb = pxPacketAddPrim(sp, &pxp);

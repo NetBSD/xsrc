@@ -1,4 +1,4 @@
-/*	$NetBSD: px.h,v 1.2 2001/09/22 19:43:50 ad Exp $	*/
+/*	$NetBSD: px.h,v 1.3 2002/02/22 16:06:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,6 +113,7 @@ typedef struct {
 typedef struct pxScreenPriv {
 	int		stampw;
 	int		stamph;
+	int		stamphm;
 	int		bpp;
 	int		realbpp;
 	int		queueing;
