@@ -1,4 +1,4 @@
-.\" $XConsortium: Xmbuf.man /main/6 1995/12/15 14:07:22 gildea $
+.\" $XConsortium: Xmbuf.man /main/7 1996/12/09 16:46:09 kaleb $
 .\" Copyright (c) 1989, 1994  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining a
@@ -37,7 +37,7 @@
 .ie t \fB\^\\$1\^\fR\\$2
 .el \fI\^\\$1\^\fP\\$2
 ..
-.TH XMBUF 3X11 "Release 6.1" "X Version 11" "X FUNCTIONS"
+.TH XMBUF 3X11 "Release 6.3" "X Version 11" "X FUNCTIONS"
 .SH NAME
 XmbufQueryExtension, XmbufGetVersion, XmbufCreateBuffers, XmbufDestroyBuffers, XmbufDisplayBuffers, XmbufGetWindowAttributes, XmbufChangeWindowAttributes, XmbufGetBufferAttributes, XmbufChangeBufferAttributes, XmbufGetScreenInfo, XmbufCreateStereoWindow - X multibuffering functions
 .SH SYNTAX

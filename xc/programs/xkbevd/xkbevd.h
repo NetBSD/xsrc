@@ -1,4 +1,4 @@
-/* $XConsortium: xkbevd.h /main/2 1996/05/24 15:03:23 kaleb $ */
+/* $XConsortium: xkbevd.h /main/3 1996/09/28 17:18:35 rws $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,4 +1,4 @@
-.\" $XConsortium: XtAppAI.man /main/10 1995/12/15 14:20:09 gildea $
+.\" $XConsortium: XtAppAI.man /main/11 1996/12/09 16:12:33 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAppAddInput 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAppAddInput 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAppAddInput, XtRemoveInput \- register and remove an input source
 .SH SYNTAX

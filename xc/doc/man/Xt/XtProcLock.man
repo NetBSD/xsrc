@@ -1,4 +1,4 @@
-.\" $XConsortium: XtProcLock.man /main/4 1995/12/15 14:26:55 gildea $
+.\" $XConsortium: XtProcLock.man /main/5 1996/12/09 16:19:48 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtProcessLock 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtProcessLock 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtProcessLock, XtProcessUnlock \- lock and unlock process
 .SH SYNTAX

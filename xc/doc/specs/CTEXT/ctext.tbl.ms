@@ -5,7 +5,7 @@
 .sp 6p
 Version 1.1
 X Consortium Standard
-X Version 11, Release 6.1
+X Version 11, Release 6.3
 Robert W. Scheifler
 .sp 2
 .LP
@@ -359,26 +359,26 @@ The following CharSet names for the standard character set encodings are
 registered for use in font names under the X Logical Font Description:
 .RS
 .TS
-l l.
+l l l.
 _
 .sp 6p
-\fBName\fP	\fBEncoding Standard\fP
+\fBName\fP	\fBEncoding Standard\fP	\fBDescription\fP
 .sp 6p
 _
 .sp 6p
-ISO8859-1	ISO 8859-1
-ISO8859-2	ISO 8859-2
-ISO8859-3	ISO 8859-3
-ISO8859-4	ISO 8859-4
-ISO8859-5	ISO 8859-5
-ISO8859-6	ISO 8859-6
-ISO8859-7	ISO 8859-7
-ISO8859-8	ISO 8859-8
-ISO8859-9	ISO 8859-9
-JISX0201.1976-0	JIS X0201-1976 (reaffirmed 1984)
-GB2312.1980-0	GB2312-1980, GL encoding
-JISX0208.1983-0	JIS X0208-1983, GL encoding
-KSC5601.1987-0	KS C5601-1987, GL encoding
+ISO8859-1	ISO 8859-1	Latin alphabet No. 1
+ISO8859-2	ISO 8859-2	Latin alphabet No. 2
+ISO8859-3	ISO 8859-3	Latin alphabet No. 3
+ISO8859-4	ISO 8859-4	Latin alphabet No. 4
+ISO8859-5	ISO 8859-5	Latin/Cyrillic alphabet
+ISO8859-6	ISO 8859-6	Latin/Arabic alphabet
+ISO8859-7	ISO 8859-7	Latin/Greek alphabet
+ISO8859-8	ISO 8859-8	Latin/Hebrew alphabet
+ISO8859-9	ISO 8859-9	Latin alphabet No. 5
+JISX0201.1976-0	JIS X0201-1976 (reaffirmed 1984)	8-bit Alphanumeric-Katakana Code
+GB2312.1980-0	GB2312-1980, GL encoding	China (PRC) Hanzi
+JISX0208.1983-0	JIS X0208-1983, GL encoding	Japanese Graphic Character Set
+KSC5601.1987-0	KS C5601-1987, GL encoding	Korean Graphic Character Set
 .sp 6p
 _
 .TE

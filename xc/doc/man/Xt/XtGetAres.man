@@ -1,4 +1,4 @@
-.\" $XConsortium: XtGetAres.man /main/4 1995/12/15 14:24:08 gildea $
+.\" $XConsortium: XtGetAres.man /main/5 1996/12/09 16:16:31 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtGetApplicationResources 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtGetApplicationResources 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtGetApplicationResources, XtVaGetApplicationResources \- obtain application resources
 .SH SYNTAX

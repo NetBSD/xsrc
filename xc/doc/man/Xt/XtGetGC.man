@@ -1,4 +1,4 @@
-.\" $XConsortium: XtGetGC.man /main/7 1995/12/15 14:24:23 gildea $
+.\" $XConsortium: XtGetGC.man /main/8 1996/12/09 16:16:43 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtGetGC 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtGetGC 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtGetGC, XtReleaseGC \- obtain and destroy a sharable GC
 .SH SYNTAX

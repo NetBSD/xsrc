@@ -1,4 +1,4 @@
-.\" $XConsortium: XtAllocGC.man /main/5 1996/02/08 15:14:30 swick $
+.\" $XConsortium: XtAllocGC.man /main/6 1996/12/09 16:12:14 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAllocateGC 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAllocateGC 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAllocateGC \- obtain a sharable GC with modifiable fields
 .SH SYNTAX

@@ -1,4 +1,4 @@
-.\" $XConsortium: XtAddGrab.man /main/7 1995/12/15 14:19:44 gildea $
+.\" $XConsortium: XtAddGrab.man /main/8 1996/12/09 16:12:04 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAddGrab 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAddGrab 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAddGrab, XtRemoveGrab \- redirect user input to a modal widget
 .SH SYNTAX

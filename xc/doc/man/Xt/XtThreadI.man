@@ -1,4 +1,4 @@
-.\" $XConsortium: XtThreadI.man /main/4 1995/12/15 14:28:21 gildea $
+.\" $XConsortium: XtThreadI.man /main/5 1996/12/09 16:20:56 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtToolkitThreadInitialize 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtToolkitThreadInitialize 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtToolkitThreadInitialize \- initialize the toolkit for multiple threads
 .SH SYNTAX

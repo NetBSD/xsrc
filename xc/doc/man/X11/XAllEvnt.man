@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XAllowEvents 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XAllowEvents 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XAllowEvents \- release queued events
 .SH SYNTAX

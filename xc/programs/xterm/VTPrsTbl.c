@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: VTPrsTbl.c,v 1.10 95/06/09 22:17:06 gildea Exp $
- *	$XFree86: xc/programs/xterm/VTPrsTbl.c,v 3.7 1996/09/22 05:16:01 dawes Exp $
+ *	$XFree86: xc/programs/xterm/VTPrsTbl.c,v 3.10 1997/01/08 20:52:20 dawes Exp $
  */
 
 /*
@@ -28,12 +28,15 @@
 
 #include "VTparse.h"
 
+/* FIXME: there should be a single config.h */
+#define OPT_VT52_MODE   1 /* true if xterm supports VT52 emulation */
+
 /*
  * Stupid Apollo C preprocessor can't handle long lines.  So... To keep
  * it happy, we put each onto a separate line....  Sigh...
  */
 
-Const PARSE_T groundtable[] =
+Const PARSE_T ansi_table[] =
 {
 /*	NUL		SOH		STX		ETX	*/
 CASE_IGNORE,
@@ -401,7 +404,7 @@ CASE_IGNORE,
 CASE_IGNORE,
 /*	SP		!		"		#	*/
 CASE_ESC_IGNORE,
-CASE_ESC_IGNORE,
+CASE_CSI_EX_STATE,
 CASE_CSI_QUOTE_STATE,
 CASE_ESC_IGNORE,
 /*	$		%		&		'	*/
@@ -482,7 +485,7 @@ CASE_GROUND_STATE,
 /*	`		a		b		c	*/
 CASE_HPA,
 CASE_GROUND_STATE,
-CASE_GROUND_STATE,
+CASE_REP,
 CASE_DA1,
 /*	d		e		f		g	*/
 CASE_VPA,
@@ -511,6 +514,330 @@ CASE_GROUND_STATE,
 CASE_GROUND_STATE,
 /*	x		y		z		{	*/
 CASE_DECREQTPARM,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	|		}		~		DEL	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      0x80            0x81            0x82            0x83    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x84            0x85            0x86            0x87    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x88            0x89            0x8a            0x8b    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x8c            0x8d            0x8e            0x8f    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x90            0x91            0x92            0x93    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x94            0x95            0x96            0x97    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x98            0x99            0x9a            0x9b    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x9c            0x9d            0x9e            0x9f    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      nobreakspace    exclamdown      cent            sterling        */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      currency        yen             brokenbar       section         */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      diaeresis       copyright       ordfeminine     guillemotleft   */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      notsign         hyphen          registered      macron          */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      degree          plusminus       twosuperior     threesuperior   */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      acute           mu              paragraph       periodcentered  */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      cedilla         onesuperior     masculine       guillemotright  */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      onequarter      onehalf         threequarters   questiondown    */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      Agrave          Aacute          Acircumflex     Atilde          */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      Adiaeresis      Aring           AE              Ccedilla        */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      Igrave          Iacute          Icircumflex     Idiaeresis      */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      Eth             Ntilde          Ograve          Oacute          */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      Ocircumflex     Otilde          Odiaeresis      multiply        */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      Ooblique        Ugrave          Uacute          Ucircumflex     */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      Udiaeresis      Yacute          Thorn           ssharp          */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      agrave          aacute          acircumflex     atilde          */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      adiaeresis      aring           ae              ccedilla        */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      egrave          eacute          ecircumflex     ediaeresis      */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      igrave          iacute          icircumflex     idiaeresis      */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      eth             ntilde          ograve          oacute          */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      ocircumflex     otilde          odiaeresis      division        */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      oslash          ugrave          uacute          ucircumflex     */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*      udiaeresis      yacute          thorn           ydiaeresis      */
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+};
+
+Const PARSE_T csi_ex_table[] =		/* ESC ! */
+{
+/*	NUL		SOH		STX		ETX	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	EOT		ENQ		ACK		BEL	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_BELL,
+/*	BS		HT		NL		VT	*/
+CASE_BS,
+CASE_TAB,
+CASE_VMOT,
+CASE_VMOT,
+/*	NP		CR		SO		SI	*/
+CASE_VMOT,
+CASE_CR,
+CASE_SO,
+CASE_SI,
+/*	DLE		DC1		DC2		DC3	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	DC4		NAK		SYN		ETB	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	CAN		EM		SUB		ESC	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_ESC,
+/*	FS		GS		RS		US	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	SP		!		"		#	*/
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+/*	$		%		&		'	*/
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+/*	(		)		*		+	*/
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+/*	,		-		.		/	*/
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+CASE_ESC_IGNORE,
+/*	0		1		2		3	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	4		5		6		7	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	8		9		:		;	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	<		=		>		?	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	@		A		B		C	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	D		E		F		G	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	H		I		J		K	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	L		M		N		O	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	P		Q		R		S	*/
+CASE_IGNORE_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	T		U		V		W	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	X		Y		Z		[	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	\		]		^		_	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	`		a		b		c	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	d		e		f		g	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	h		i		j		k	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	l		m		n		o	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	p		q		r		s	*/
+CASE_DECSTR,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	t		u		v		w	*/
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+CASE_GROUND_STATE,
+/*	x		y		z		{	*/
+CASE_GROUND_STATE,
 CASE_GROUND_STATE,
 CASE_GROUND_STATE,
 CASE_GROUND_STATE,
@@ -4572,3 +4899,653 @@ CASE_IGNORE,
 CASE_IGNORE,
 CASE_IGNORE,
 };
+
+#if OPT_VT52_MODE
+Const PARSE_T vt52_table[] =
+{
+/*	NUL		SOH		STX		ETX	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	EOT		ENQ		ACK		BEL	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_BELL,
+/*	BS		HT		NL		VT	*/
+CASE_BS,
+CASE_TAB,
+CASE_VMOT,
+CASE_IGNORE,
+/*	NP		CR		SO		SI	*/
+CASE_VMOT,
+CASE_CR,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	DLE		DC1		DC2		DC3	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	DC4		NAK		SYN		ETB	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	CAN		EM		SUB		ESC	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_ESC,
+/*	FS		GS		RS		US	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	SP		!		"		#	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	$		%		&		'	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	(		)		*		+	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	,		-		.		/	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	0		1		2		3	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	4		5		6		7	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	8		9		:		;	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	<		=		>		?	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT, 
+/*	@		A		B		C	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	D		E		F		G	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	H		I		J		K	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	L		M		N		O	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	P		Q		R		S	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	T		U		V		W	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	X		Y		Z		[	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	\		]		^		_	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	`		a		b		c	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	d		e		f		g	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	h		i		j		k	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	l		m		n		o	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	p		q		r		s	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	t		u		v		w	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	x		y		z		{	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+/*	|		}		~		DEL	*/
+CASE_PRINT,
+CASE_PRINT,
+CASE_PRINT,
+CASE_IGNORE,
+/*      0x80            0x81            0x82            0x83    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x84            0x85            0x86            0x87    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x88            0x89            0x8a            0x8b    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x8c            0x8d            0x8e            0x8f    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x90            0x91            0x92            0x93    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x94            0x95            0x96            0x97    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x98            0x99            0x9a            0x9b    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x9c            0x9d            0x9e            0x9f    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      nobreakspace    exclamdown      cent            sterling        */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      currency        yen             brokenbar       section         */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      diaeresis       copyright       ordfeminine     guillemotleft   */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      notsign         hyphen          registered      macron          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      degree          plusminus       twosuperior     threesuperior   */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      acute           mu              paragraph       periodcentered  */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      cedilla         onesuperior     masculine       guillemotright  */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      onequarter      onehalf         threequarters   questiondown    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Agrave          Aacute          Acircumflex     Atilde          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Adiaeresis      Aring           AE              Ccedilla        */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Igrave          Iacute          Icircumflex     Idiaeresis      */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Eth             Ntilde          Ograve          Oacute          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Ocircumflex     Otilde          Odiaeresis      multiply        */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Ooblique        Ugrave          Uacute          Ucircumflex     */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Udiaeresis      Yacute          Thorn           ssharp          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      agrave          aacute          acircumflex     atilde          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      adiaeresis      aring           ae              ccedilla        */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      egrave          eacute          ecircumflex     ediaeresis      */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      igrave          iacute          icircumflex     idiaeresis      */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      eth             ntilde          ograve          oacute          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      ocircumflex     otilde          odiaeresis      division        */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      oslash          ugrave          uacute          ucircumflex     */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      udiaeresis      yacute          thorn           ydiaeresis      */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+};
+
+Const PARSE_T vt52_esc_table[] =
+{
+/*	NUL		SOH		STX		ETX	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	EOT		ENQ		ACK		BEL	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	BS		HT		NL		VT	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	NP		CR		SO		SI	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	DLE		DC1		DC2		DC3	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	DC4		NAK		SYN		ETB	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	CAN		EM		SUB		ESC	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_ESC,
+/*	FS		GS		RS		US	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	SP		!		"		#	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	$		%		&		'	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	(		)		*		+	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	,		-		.		/	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	0		1		2		3	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	4		5		6		7	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	8		9		:		;	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	<		=		>		?	*/
+CASE_ANSI_LEVEL_1,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE, 
+/*	@		A		B		C	*/
+CASE_IGNORE,
+CASE_CUU,
+CASE_CUD,
+CASE_CUF,
+/*	D		E		F		G	*/
+CASE_CUB,
+CASE_IGNORE,
+CASE_SO,
+CASE_SI,
+/*	H		I		J		K	*/
+CASE_CUP,
+CASE_RI,
+CASE_ED,
+CASE_EL,
+/*	L		M		N		O	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	P		Q		R		S	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	T		U		V		W	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	X		Y		Z		[	*/
+CASE_IGNORE,
+CASE_VT52_CUP,
+CASE_DECID,
+CASE_IGNORE,
+/*	\		]		^		_	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	`		a		b		c	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	d		e		f		g	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	h		i		j		k	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	l		m		n		o	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	p		q		r		s	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	t		u		v		w	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	x		y		z		{	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*	|		}		~		DEL	*/
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x80            0x81            0x82            0x83    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x84            0x85            0x86            0x87    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x88            0x89            0x8a            0x8b    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x8c            0x8d            0x8e            0x8f    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x90            0x91            0x92            0x93    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x94            0x95            0x96            0x97    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x98            0x99            0x9a            0x9b    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      0x9c            0x9d            0x9e            0x9f    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      nobreakspace    exclamdown      cent            sterling        */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      currency        yen             brokenbar       section         */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      diaeresis       copyright       ordfeminine     guillemotleft   */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      notsign         hyphen          registered      macron          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      degree          plusminus       twosuperior     threesuperior   */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      acute           mu              paragraph       periodcentered  */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      cedilla         onesuperior     masculine       guillemotright  */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      onequarter      onehalf         threequarters   questiondown    */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Agrave          Aacute          Acircumflex     Atilde          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Adiaeresis      Aring           AE              Ccedilla        */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Egrave          Eacute          Ecircumflex     Ediaeresis      */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Igrave          Iacute          Icircumflex     Idiaeresis      */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Eth             Ntilde          Ograve          Oacute          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Ocircumflex     Otilde          Odiaeresis      multiply        */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Ooblique        Ugrave          Uacute          Ucircumflex     */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      Udiaeresis      Yacute          Thorn           ssharp          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      agrave          aacute          acircumflex     atilde          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      adiaeresis      aring           ae              ccedilla        */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      egrave          eacute          ecircumflex     ediaeresis      */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      igrave          iacute          icircumflex     idiaeresis      */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      eth             ntilde          ograve          oacute          */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      ocircumflex     otilde          odiaeresis      division        */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      oslash          ugrave          uacute          ucircumflex     */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+/*      udiaeresis      yacute          thorn           ydiaeresis      */
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+CASE_IGNORE,
+};
+#endif /* OPT_VT52_MODE */

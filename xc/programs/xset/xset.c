@@ -1,6 +1,6 @@
 /* 
- * $XConsortium: xset.c,v 1.70 95/05/12 17:22:03 mor Exp $ 
- * $XFree86: xc/programs/xset/xset.c,v 3.3 1996/08/25 14:15:35 dawes Exp $ 
+ * $XConsortium: xset.c /main/71 1996/11/24 17:24:48 rws $ 
+ * $XFree86: xc/programs/xset/xset.c,v 3.8.2.2 1997/05/11 05:04:30 dawes Exp $ 
  */
 
 /*
@@ -38,6 +38,9 @@ in this Software without prior written authorization from the X Consortium.
 #else
 char *malloc();
 #endif
+#ifdef DPMSExtension
+#include <X11/extensions/dpms.h>
+#endif
 
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>
@@ -71,10 +74,6 @@ char *malloc();
 #define ALLOW_EXP 4
 
 #ifdef XF86MISC
-#define POWER_SUSPEND 5
-#define POWER_OFF 6
-#define SUSPEND_DEFAULT 900
-#define OFF_DEFAULT 1800
 #define KBDDELAY_DEFAULT 500
 #define KBDRATE_DEFAULT 30
 #endif
@@ -98,6 +97,9 @@ register char *arg;
 register int i;
 int percent;
 int acc_num, acc_denom, threshold;
+#ifdef DPMSExtension
+int standby_timeout, suspend_timeout, off_timeout;
+#endif
 int key, auto_repeat_mode;
 XKeyboardControl values;
 #define MAX_PIXEL_COUNT 512
@@ -327,6 +329,124 @@ for (i = 1; i < argc; ) {
     }
     set_mouse(dpy, acc_num, acc_denom, threshold);
   } 
+#ifdef DPMSExtension
+  else if (strcmp(arg, "+dpms") == 0) {		/* turn on DPMS */
+      int dummy;
+      if (DPMSQueryExtension(dpy, &dummy, &dummy))
+	  DPMSEnable(dpy);
+      else
+	  fprintf(stderr, "server does not have extension for +dpms option\n");
+  }
+  else if (strcmp(arg, "-dpms") == 0) {		/* shut off DPMS */
+      int dummy;
+      if (DPMSQueryExtension(dpy, &dummy, &dummy))
+	  DPMSDisable(dpy);
+      else
+	  fprintf(stderr, "server does not have extension for -dpms option\n");
+
+  }
+  else if (strcmp(arg, "dpms") == 0) {		/* tune DPMS */
+      int dummy;
+      if (DPMSQueryExtension(dpy, &dummy, &dummy)) 
+      {
+	  DPMSGetTimeouts(dpy, &standby_timeout, &suspend_timeout,
+			  &off_timeout);
+	  if (i >= argc) {
+	      DPMSEnable(dpy);
+	      break; 
+	  }
+	  arg = argv[i];
+	  if (*arg >= '0' && *arg <= '9') {
+	      sscanf(arg, "%d", &standby_timeout);
+	      i++;
+	      arg = argv[i];
+	      if ((arg)&&(*arg >= '0' && *arg <= '9')) {
+		  sscanf(arg, "%d", &suspend_timeout);
+		  i++;
+		  arg = argv[i];
+		  if ((arg)&&(*arg >= '0' && *arg <= '9')) {
+		      sscanf(arg, "%d", &off_timeout);
+		      i++;
+		      arg = argv[i];
+		  }
+	      }
+	      if ((suspend_timeout != 0)&&(standby_timeout > suspend_timeout))
+	      {
+		  fprintf(stderr, "illegal combination of values\n");
+		  fprintf(stderr, "  standby time of %d is greater than suspend time of %d\n", standby_timeout, suspend_timeout);
+		  exit(0);
+	      }
+	      if ((off_timeout != 0)&&(suspend_timeout > off_timeout))
+	      {
+		  fprintf(stderr, "illegal combination of values\n");
+		  fprintf(stderr, "  suspend time of %d is greater than off time of %d\n", suspend_timeout, off_timeout);
+		  exit(0);
+	      }
+	      if ((suspend_timeout == 0)&&(standby_timeout > off_timeout))
+	      {
+		  fprintf(stderr, "illegal combination of values\n");
+		  fprintf(stderr, "  standby time of %d is greater than off time of %d\n", standby_timeout, off_timeout);
+		  exit(0);
+	      }
+	      DPMSEnable(dpy);
+	      DPMSSetTimeouts(dpy, standby_timeout, suspend_timeout, off_timeout);
+	  }
+	  else if (strcmp(arg, "force") == 0) {
+	      i++;
+	      arg = argv[i];
+	      /*
+	       * The calls to usleep below are necessary to delay the actual
+	       * DPMS mode setting briefly.  Without them, it's likely that the
+	       * mode will be set between the Down and Up key transitions, in
+	       * which case the Up transition may immediately turn the display
+	       * back on.
+	       *
+	       * NOTE: SYSV and SVR4 don't have usleep().  For now, just
+	       * use sleep(), but could probably do something better
+	       * using poll().
+	       * On OS/2, use _sleep2()
+	       */
+#if defined(SYSV) || defined(SVR4)
+#define usleep(us) sleep((us / 1000000 > 0) ? us / 1000000 : 1)
+#endif
+#ifdef __EMX__
+#define usleep(us) _sleep2((us / 1000 > 0) ? us / 1000 : 1)
+#endif
+
+	      if (strcmp(arg, "on") == 0) {
+		  DPMSEnable(dpy);
+		  DPMSForceLevel(dpy, DPMSModeOn);
+		  i++;
+	      }
+	      else if (strcmp(arg, "standby") == 0) {
+		  DPMSEnable(dpy);
+		  usleep(100000);
+		  DPMSForceLevel(dpy, DPMSModeStandby);
+		  i++;
+	      }
+	      else if (strcmp(arg, "suspend") == 0) {		  
+		  DPMSEnable(dpy);
+		  usleep(100000);
+		  DPMSForceLevel(dpy, DPMSModeSuspend);
+		  i++;
+	      }
+	      else if (strcmp(arg, "off") == 0) {  
+		  DPMSEnable(dpy);
+		  usleep(100000);
+		  DPMSForceLevel(dpy, DPMSModeOff);
+		  i++;
+	      }
+	      else { 
+		  fprintf(stderr, "bad parameter %s\n", arg);
+		  i++;
+	      }    
+	  }
+      }
+      else {
+	  fprintf(stderr, "server does not have extension for dpms option\n");
+      }
+}
+#endif /* DPMSExtension */
   else if (strcmp(arg, "s") == 0) {
     if (i >= argc) {
       set_saver(dpy, ALL, 0);  /* Set everything to default  */
@@ -376,38 +496,6 @@ for (i = 1; i < argc; ) {
 	XResetScreenSaver(dpy);
 	i++;
     }
-#ifdef XF86MISC
-    else if (strcmp(arg, "power") == 0) { /* XFree86 power saver settings */
-	if (!XF86MiscQueryVersion(dpy, &major, &minor)) {
-	    miscpresent = 0;
-	    fprintf(stderr,
-		"server does not have extension for \"s power\" option\n");
-	}
-
-	i++;
-	if (i >= argc) {
-	  if (miscpresent) {
-	    set_saver(dpy, POWER_SUSPEND, SUSPEND_DEFAULT);
-	    set_saver(dpy, POWER_OFF, OFF_DEFAULT);
-	  }
-	  break;
-	}
-	arg = argv[i];
-	if (*arg >= '0' && *arg <= '9') {
-	  if (miscpresent)
-	    set_saver(dpy, POWER_SUSPEND, atoi(arg));
-	  i++;
-	  if (i >= argc)
-	    break;
-	  arg = argv[i];
-	  if (*arg >= '0' && *arg <= '9') {
-	    if (miscpresent)
-	      set_saver(dpy, POWER_OFF, atoi(arg));
-	    i++;
-	  }
-	}
-    }
-#endif
     else if (*arg >= '0' && *arg <= '9') {  /*  Set as user wishes.   */
       set_saver(dpy, TIMEOUT, atoi(arg));
       i++;
@@ -454,14 +542,18 @@ for (i = 1; i < argc; ) {
       }
 
       i++;
-      arg = nextarg(i, argv);
-      if (is_number(arg, 10000)) {
-	delay = atoi(arg);
-	i++;
-        arg = nextarg(i, argv);
-        if (is_number(arg, 255)) {
-	  rate = atoi(arg);
+      arg = argv[i];
+      if (i < argc) {
+        if (is_number(arg, 10000)) {
+	  delay = atoi(arg);
 	  i++;
+          arg = argv[i];
+	  if (i < argc) {
+            if (is_number(arg, 255)) {
+	      rate = atoi(arg);
+	      i++;
+            }
+          }
         }
       }
       if (miscpresent)
@@ -777,9 +869,6 @@ Display *dpy;
 int mask, value;
 {
   int timeout, interval, prefer_blank, allow_exp;
-#ifdef XF86MISC
-  int suspendtime, offtime;
-#endif
   XGetScreenSaver(dpy, &timeout, &interval, &prefer_blank, 
 		  &allow_exp);
   if (mask == TIMEOUT) timeout = value;
@@ -792,14 +881,6 @@ int mask, value;
     prefer_blank = DefaultBlanking;
     allow_exp = DefaultExposures;
   }
-#ifdef XF86MISC
-  if (mask == POWER_SUSPEND || mask == POWER_OFF)
-    XF86MiscGetSaver(dpy, DefaultScreen(dpy), &suspendtime, &offtime);
-  if (mask == POWER_SUSPEND) suspendtime = value;
-  if (mask == POWER_OFF) offtime = value;
-  if (mask == POWER_SUSPEND || mask == POWER_OFF)
-    XF86MiscSetSaver(dpy, DefaultScreen(dpy), suspendtime, offtime);
-#endif
   XSetScreenSaver(dpy, timeout, interval, prefer_blank, 
 		  allow_exp);
   if (mask == ALL && value == DEFAULT_TIMEOUT) {
@@ -896,7 +977,7 @@ int numpixels;
       def.pixel = pixels[i];
       if (def.pixel >= max_cells)
 	fprintf(stderr, 
-		"%s:  pixel value %d out of colormap range 0 through %d\n",
+		"%s:  pixel value %ld out of colormap range 0 through %ld\n",
 		progName, def.pixel, max_cells - 1);
       else {
         if (XParseColor (dpy, cmap, colors[i], &def))
@@ -954,7 +1035,6 @@ XKeyboardState values;
 int acc_num, acc_denom, threshold;
 int timeout, interval, prefer_blank, allow_exp;
 #ifdef XF86MISC
-int suspendtime, offtime;
 XF86MiscKbdSettings kbdinfo;
 #endif
 char **font_path; int npaths;
@@ -999,10 +1079,6 @@ printf ("allow exposures:  %s\n",
 	on_or_off (allow_exp, AllowExposures, "yes",
 		   DontAllowExposures, "no", buf));
 printf ("  timeout:  %d    cycle:  %d\n", timeout, interval);
-#ifdef XF86MISC
-if (XF86MiscGetSaver(dpy, scr, &suspendtime, &offtime))
-  printf ("  suspend time:  %d    off time:  %d\n", suspendtime, offtime);
-#endif
 
 printf ("Colors:\n");
 printf ("  default colormap:  0x%lx    BlackPixel:  %d    WhitePixel:  %d\n",
@@ -1028,6 +1104,51 @@ if (npaths) {
 	else
 	    printf ("Bug Mode: compatibility mode is disabled\n");
     }
+}
+#endif
+#ifdef DPMSExtension
+{
+    
+      int dummy;
+      CARD16 standby, suspend, off;
+      BOOL onoff;
+      CARD16 state;
+
+      printf("DPMS (Energy Star):\n");
+      if (DPMSQueryExtension(dpy, &dummy, &dummy)) {
+	  if (DPMSCapable(dpy)) {
+	  DPMSGetTimeouts(dpy, &standby, &suspend, &off);
+	  printf ("  Standby: %d    Suspend: %d    Off: %d\n",
+		  standby, suspend, off);
+	  DPMSInfo(dpy, &state, &onoff);
+	  if (onoff) {
+	      printf("  DPMS is Enabled\n");
+	      switch (state) {
+		  case DPMSModeOn:
+		       printf("  Monitor is On\n");
+		       break;
+		  case DPMSModeStandby:
+		       printf("  Monitor is in Standby\n");
+		       break;
+		  case DPMSModeSuspend:
+		       printf("  Monitor is in Suspend\n");
+		       break;
+		  case DPMSModeOff:
+		       printf("  Monitor is Off\n");
+		       break;
+		  default:
+		       printf("  Unrecognized response from server\n");
+	      }
+	  }
+	  else
+	      printf("  DPMS is Disabled\n");
+          }
+	  else
+	      printf ("  Display is not capable of DPMS\n");  
+      }
+      else {
+	  printf ("  Server does not have the DPMS Extension\n");
+      }
 }
 #endif
 
@@ -1062,6 +1183,17 @@ usage (fmt, arg)
     fprintf (stderr, "\t-c                c off               c 0\n");
     fprintf (stderr, "    To set keyclick volume:\n");
     fprintf (stderr, "\t c [0-100]        c on\n");
+#ifdef DPMSExtension
+    fprintf (stderr, "    To control Energy Star (DPMS) features:\n");
+    fprintf (stderr, "\t-dpms      Energy Star features off\n");
+    fprintf (stderr, "\t+dpms      Energy Star features on\n");
+    fprintf (stderr, "\t dpms [standby [suspend [off]]]     \n");
+    fprintf (stderr, "\t      force standby \n");
+    fprintf (stderr, "\t      force suspend \n");
+    fprintf (stderr, "\t      force off \n");
+    fprintf (stderr, "\t      (also implicitly enables DPMS features) \n");
+    fprintf (stderr, "\t      a timeout value of zero disables the mode \n");
+#endif
     fprintf (stderr, "    To set the font path:\n" );
     fprintf (stderr, "\t fp= path[,path...]\n" );
     fprintf (stderr, "    To restore the default font path:\n");
@@ -1090,9 +1222,6 @@ usage (fmt, arg)
     fprintf (stderr, "\t s blank              s noblank    s off\n");
     fprintf (stderr, "\t s expose             s noexpose\n");
     fprintf (stderr, "\t s activate           s reset\n");
-#ifdef XF86MISC
-    fprintf (stderr, "\t s power [suspend [off]]\n");
-#endif
     fprintf (stderr, "    For status information:  q\n");
     exit(0);
 }

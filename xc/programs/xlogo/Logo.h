@@ -1,4 +1,4 @@
-/* *XConsortium: Logo.h,v 1.11 90/10/22 14:45:11 converse Exp $ */
+/* $XConsortium: Logo.h /main/13 1996/09/28 17:18:40 rws $ */
 /*
 
 Copyright (c) 1988, 1990  X Consortium

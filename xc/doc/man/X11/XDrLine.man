@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XDrawLine 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XDrawLine 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XDrawLine, XDrawLines, XDrawSegments, XSegment \- draw lines, polygons, and line structure
 .SH SYNTAX

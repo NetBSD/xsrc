@@ -1,4 +1,4 @@
-.\" $XConsortium: XtDStrCW.man /main/6 1995/12/15 14:23:03 gildea $
+.\" $XConsortium: XtDStrCW.man /main/7 1996/12/09 16:15:30 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtDisplayStringConversionWarning 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtDisplayStringConversionWarning 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtDisplayStringConversionWarning \- issue a conversion warning message
 .SH SYNTAX

@@ -1,4 +1,4 @@
-/* $XConsortium: printev.c /main/5 1996/05/24 15:03:15 kaleb $ */
+/* $XConsortium: printev.c /main/6 1996/09/28 17:18:22 rws $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 

@@ -1,4 +1,4 @@
-.\" $XConsortium: XtSetWMC.man /main/4 1995/12/15 14:28:11 gildea $
+.\" $XConsortium: XtSetWMC.man /main/5 1996/12/09 16:20:48 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtSetWMColormapWindows 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtSetWMColormapWindows 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtSetWMColormapWindows \- Set the value of the WM_COLORMAP_WINDOWS property
 .SH SYNTAX

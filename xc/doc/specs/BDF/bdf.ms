@@ -1,4 +1,4 @@
-.\" $XConsortium: bdf.ms /main/10 1996/02/07 05:22:51 converse $
+.\" $XConsortium: bdf.ms /main/11 1996/12/11 14:42:10 kaleb $
 \&
 .sp 1
 .ce 4
@@ -8,7 +8,7 @@
 
 X Consortium Standard
 
-X Version 11, Release 6.1
+X Version 11, Release 6.3
 .sp 3
 Copyright 1984, 1987, 1988 Adobe Systems, Inc.
 .sp 1

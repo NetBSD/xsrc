@@ -8,9 +8,9 @@
 .\" suitability for any purpose of the information in this document.  It is 
 .\" provided \`\`as is'' without express or implied warranty.
 .\" 
-.\" $XConsortium: XSelExtEv.man /main/7 1995/12/15 14:09:56 gildea $
+.\" $XConsortium: XSelExtEv.man /main/8 1996/12/09 16:49:51 kaleb $
 .ds xL Programming with Xlib
-.TH XSelectExtensionEvent 3X11 "Release 6.1" "X Version 11" "X FUNCTIONS"
+.TH XSelectExtensionEvent 3X11 "Release 6.3" "X Version 11" "X FUNCTIONS"
 .SH NAME
 XSelectExtensionEvent, XGetSelectedExtensionEvents \- select extension events, get the list of currently selected extension events
 .SH SYNTAX

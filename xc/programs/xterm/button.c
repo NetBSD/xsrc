@@ -1,5 +1,5 @@
-/* $XConsortium: button.c /main/72 1996/05/25 08:23:02 kaleb $ */
-/* $XFree86: xc/programs/xterm/button.c,v 3.9 1996/08/13 11:36:51 dawes Exp $ */
+/* $XConsortium: button.c /main/75 1996/11/29 10:33:33 swick $ */
+/* $XFree86: xc/programs/xterm/button.c,v 3.11.2.1 1997/05/23 09:24:33 dawes Exp $ */
 /*
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
  *
@@ -29,6 +29,10 @@ button.c	Handles button events in the terminal emulator.
 		passes button events through to some applications.
 				J. Gettys.
 */
+
+#ifdef HAVE_CONFIG_H
+#include <xtermcfg.h>
+#endif
 
 #include "ptyx.h"		/* Xlib headers included here. */
 
@@ -204,7 +208,7 @@ Cardinal *num_params;
     strcpy( Line, "\030\033G  " );
 
 	line = ( event->xbutton.y - screen->border ) / FontHeight( screen );
-	col = (event->xbutton.x - screen->border - screen->scrollbar)
+	col = (event->xbutton.x - screen->border - Scrollbar(screen))
 	 / FontWidth(screen);
 	Line[3] = ' ' + col;
 	Line[4] = ' ' + line;
@@ -429,17 +433,13 @@ EvalSelectUnit(buttonDownTime, defaultUnit)
     SelectUnit defaultUnit;
 {
     int delta;
-    static int firstTime = 1;
 
-    if (!firstTime) {
-	if (buttonDownTime > lastButtonUpTime) /* most of the time */
-	    delta = buttonDownTime - lastButtonUpTime;
-	else /* time has rolled over since lastButtonUpTime */
-	    delta = (((Time) ~0) - lastButtonUpTime) + buttonDownTime;
-    } else {
-	firstTime--;
+    if (lastButtonUpTime == (Time) 0) /* first time and once in a blue moon */
 	delta = term->screen.multiClickTime + 1;
-    }
+    else if (buttonDownTime > lastButtonUpTime) /* most of the time */
+	delta = buttonDownTime - lastButtonUpTime;
+    else /* time has rolled over since lastButtonUpTime */
+	delta = (((Time) ~0) - lastButtonUpTime) + buttonDownTime;
 
     if (delta > term->screen.multiClickTime) {
 	numberOfClicks = 1;
@@ -827,7 +827,7 @@ PointToRowCol(y, x, r, c)
 		row = firstValidRow;
 	else if(row > lastValidRow)
 		row = lastValidRow;
-	col = (x - screen->border - screen->scrollbar) / FontWidth(screen);
+	col = (x - screen->border - Scrollbar(screen)) / FontWidth(screen);
 	if(col < 0)
 		col = 0;
 	else if(col > screen->max_col+1) {
@@ -1204,8 +1204,8 @@ int *format;
 		    target, type, (caddr_t*)&std_targets, &std_length, format
 		   );
 	*length = std_length + 5;
-	*value = (XtPointer)XtMalloc(sizeof(Atom)*(*length));
-	targetP = *(Atom**)value;
+	targetP = (Atom*)XtMalloc(sizeof(Atom)*(*length));
+	*value = (XtPointer) targetP;
 	*targetP++ = XA_STRING;
 	*targetP++ = XA_TEXT(d);
 	*targetP++ = XA_COMPOUND_TEXT(d);
@@ -1273,7 +1273,7 @@ static void LoseSelection(w, selection)
 {
     register TScreen* screen = &((XtermWidget)w)->screen;
     register Atom* atomP;
-    int i;
+    Cardinal i;
     for (i = 0, atomP = screen->selection_atoms;
 	 i < screen->selection_count; i++, atomP++)
     {
@@ -1323,7 +1323,7 @@ static void _OwnSelection(termw, selections, count)
     Cardinal count;
 {
     Atom* atoms = termw->screen.selection_atoms;
-    int i;
+    Cardinal i;
     Boolean have_selection = False;
 
     if (termw->screen.selection_length < 0) return;
@@ -1376,7 +1376,7 @@ DisownSelection(termw)
 {
     Atom* atoms = termw->screen.selection_atoms;
     Cardinal count = termw->screen.selection_count;
-    int i;
+    Cardinal i;
 
     for (i = 0; i < count; i++) {
 	int cutbuffer;
@@ -1473,7 +1473,7 @@ EditorButton(event)
 
 	row = (event->y - screen->border) 
 	 / FontHeight(screen);
-	col = (event->x - screen->border - screen->scrollbar)
+	col = (event->x - screen->border - Scrollbar(screen))
 	 / FontWidth(screen);
 	if (screen->control_eight_bits) {
 		line[count++] = CSI;

@@ -1,5 +1,5 @@
-// $XConsortium: es /main/2 1995/12/07 21:42:16 kaleb $
-// $XFree86: xc/programs/xkbcomp/symbols/es,v 3.2 1996/10/13 11:35:30 dawes Exp $
+// $XConsortium: es /main/3 1996/08/31 12:19:38 kaleb $
+// $XFree86: xc/programs/xkbcomp/symbols/es,v 3.3 1996/12/23 07:13:22 dawes Exp $
 // Modified for a real Spanish Keyboard by Jon Tombs
 partial default alphanumeric_keys 
 xkb_symbols "basic" {

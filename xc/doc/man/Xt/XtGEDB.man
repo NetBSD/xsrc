@@ -1,4 +1,4 @@
-.\" $XConsortium: XtGEDB.man /main/4 1995/12/15 14:23:49 gildea $
+.\" $XConsortium: XtGEDB.man /main/5 1996/12/09 16:16:09 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtGetErrorDatabase 3Xt "Release 6.1" "X Version 11" "XT COMPATIBILITY FUNCTIONS"
+.TH XtGetErrorDatabase 3Xt "Release 6.3" "X Version 11" "XT COMPATIBILITY FUNCTIONS"
 .SH NAME
 XtGetErrorDatabase, XtGetErrorDatabaseText \- obtain error database
 .SH SYNTAX

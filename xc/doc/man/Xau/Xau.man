@@ -1,4 +1,4 @@
-.\" $XConsortium: Xau.man /main/15 1995/12/15 14:07:12 gildea $
+.\" $XConsortium: Xau.man /main/16 1996/12/09 16:42:11 kaleb $
 .\" Copyright (c) 1994  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining a
@@ -23,7 +23,7 @@
 .\" be used in advertising or otherwise to promote the sale, use or other 
 .\" dealing in this Software without prior written authorization from the 
 .\" X Consortium.
-.TH Xau 3 "Release 6.1" "X Version 11"
+.TH Xau 3 "Release 6.3" "X Version 11"
 .SH NAME
 Xau library: XauFileName, XauReadAuth, XauLockAuth, XauUnlockAuth,
 XauWriteAuth, XauDisposeAuth,

@@ -1,7 +1,7 @@
 
   /*\
-   * $XConsortium: utils.c /main/1 1995/11/30 19:20:24 kaleb $
-   * $XFree86: xc/programs/xkbutils/utils.c,v 3.0 1996/01/10 05:43:51 dawes Exp $
+   * $XConsortium: utils.c /main/2 1996/12/04 10:24:08 lehors $
+   * $XFree86: xc/programs/xkbutils/utils.c,v 3.1 1996/12/23 07:14:03 dawes Exp $
    *
    *		              COPYRIGHT 1990
    *		        DIGITAL EQUIPMENT CORPORATION
@@ -155,7 +155,7 @@ int	i;
     for (i=0;i<uEntryLevel;i++) {
 	putc(' ',entryFile);
     }
-    fprintf(entryFile,"---> 0x%x\n",rtVal);
+    fprintf(entryFile,"---> 0x%p\n",rtVal);
     return;
 }
 

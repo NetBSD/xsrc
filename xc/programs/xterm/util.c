@@ -1,6 +1,6 @@
 /*
- *	$XConsortium: util.c,v 1.31 91/06/20 18:34:47 gildea Exp $
- *	$XFree86: xc/programs/xterm/util.c,v 3.10 1996/08/21 08:43:35 dawes Exp $
+ *	$XConsortium: util.c /main/33 1996/12/01 23:47:10 swick $
+ *	$XFree86: xc/programs/xterm/util.c,v 3.13.2.2 1997/05/23 12:19:50 dawes Exp $
  */
 
 /*
@@ -27,6 +27,10 @@
  */
 
 /* util.c */
+
+#ifdef HAVE_CONFIG_H
+#include <xtermcfg.h>
+#endif
 
 #include "ptyx.h"
 #include "data.h"
@@ -124,7 +128,7 @@ register TScreen *screen;
 	if(refreshheight > 0) {
 		ClearCurBackground(screen,
 		    (int) refreshtop * FontHeight(screen) + screen->border,
-		    (int) screen->border + screen->scrollbar,
+		    (int) screen->border + Scrollbar(screen),
 		    (unsigned) refreshheight * FontHeight(screen),
 		    (unsigned) Width(screen));
 		ScrnRefresh(screen, refreshtop, 0, refreshheight,
@@ -243,7 +247,7 @@ register int amount;
 	if(refreshheight > 0) {
 		ClearCurBackground(screen,
 		    (int) refreshtop * FontHeight(screen) + screen->border,
-		    (int) screen->border + screen->scrollbar,
+		    (int) screen->border + Scrollbar(screen),
 		    (unsigned) refreshheight * FontHeight(screen),
 		    (unsigned) Width(screen));
 		if(refreshheight > shift)
@@ -321,7 +325,7 @@ register int amount;
 	if(refreshheight > 0) {
 		ClearCurBackground(screen,
 		    (int) refreshtop * FontHeight(screen) + screen->border,
-		    (int) screen->border + screen->scrollbar,
+		    (int) screen->border + Scrollbar(screen),
 		    (unsigned) refreshheight * FontHeight(screen),
 		    (unsigned) Width(screen));
 	}
@@ -381,7 +385,7 @@ register int n;
 	if(refreshheight > 0) {
 		ClearCurBackground(screen,
 		    (int) refreshtop * FontHeight(screen) + screen->border,
-		    (int) screen->border + screen->scrollbar,
+		    (int) screen->border + Scrollbar(screen),
 		    (unsigned) refreshheight * FontHeight(screen),
 		    (unsigned) Width(screen));
 	}
@@ -457,7 +461,7 @@ register int n;
 	if(refreshheight > 0) {
 		ClearCurBackground(screen,
 		    (int) refreshtop * FontHeight(screen) + screen->border,
-		    (int) screen->border + screen->scrollbar,
+		    (int) screen->border + Scrollbar(screen),
 		    (unsigned) refreshheight * FontHeight(screen),
 		    (unsigned) Width(screen));
 	}
@@ -570,7 +574,7 @@ register TScreen *screen;
 			if((height -= top) > 0) {
 				ClearCurBackground(screen,
 				    top * FontHeight(screen) + screen->border,
-				    screen->border + screen->scrollbar,
+				    screen->border + Scrollbar(screen),
 				    height * FontHeight(screen),
 				    Width(screen));
 			}
@@ -604,7 +608,7 @@ register TScreen *screen;
 			if(++top <= screen->max_row) {
 				ClearCurBackground(screen,
 				    top * FontHeight(screen) + screen->border,
-				    screen->border + screen->scrollbar,
+				    screen->border + Scrollbar(screen),
 				    (screen->max_row - top + 1) * FontHeight(screen),
 				    Width(screen));
 			}
@@ -697,10 +701,7 @@ ClearInLine(screen, row, col, len)
 	memset(SCRN_BUF_ATTRS(screen, row) + col, flags, len);
 
 	if_OPT_ISO_COLORS(screen,{
-		memset(SCRN_BUF_FORES(screen, row) + col,
-			flags & FG_COLOR ? term->cur_foreground : 0, len);
-		memset(SCRN_BUF_BACKS(screen, row) + col,
-			flags & BG_COLOR ? term->cur_background : 0, len);
+		memset(SCRN_BUF_COLOR(screen, row) + col, xtermColorPair(), len);
 	})
 
 	return rc;
@@ -765,7 +766,7 @@ register TScreen *screen;
 			FlushScroll(screen);
 		ClearCurBackground(screen,
 		    top * FontHeight(screen) + screen->border,	
-		    screen->border + screen->scrollbar, 
+		    screen->border + Scrollbar(screen), 
 		    (screen->max_row - top + 1) * FontHeight(screen),
 		    Width(screen));
 	}
@@ -931,7 +932,7 @@ copy_area(screen, src_x, src_y, width, height, dest_x, dest_y)
 
     XCopyArea(screen->display, 
 	      TextWindow(screen), TextWindow(screen),
-	      screen->normalGC,
+	      NormalGC(screen),
 	      src_x, src_y, width, height, dest_x, dest_y);
 }
 
@@ -964,7 +965,7 @@ vertical_copy_area(screen, firstline, nlines, amount)
     int amount;			/* number of lines to move up (neg=down) */
 {
     if(nlines > 0) {
-	int src_x = screen->border + screen->scrollbar;
+	int src_x = screen->border + Scrollbar(screen);
 	int src_y = firstline * FontHeight(screen) + screen->border;
 
 	copy_area(screen, src_x, src_y,
@@ -999,6 +1000,13 @@ HandleExposure (screen, event)
     register XEvent *event;
 {
     register XExposeEvent *reply = (XExposeEvent *)event;
+
+#ifndef NO_ACTIVE_ICON
+    if (reply->window == screen->iconVwin.window)
+	screen->whichVwin = &screen->iconVwin;
+    else
+	screen->whichVwin = &screen->fullVwin;
+#endif /* NO_ACTIVE_ICON */
 
     /* if not doing CopyArea or if this is a GraphicsExpose, don't translate */
     if(!screen->incopy  ||  event->type != Expose)
@@ -1050,14 +1058,14 @@ handle_translated_exposure (screen, rect_x, rect_y, rect_width, rect_height)
 	toprow = (rect_y - screen->border) / FontHeight(screen);
 	if(toprow < 0)
 		toprow = 0;
-	leftcol = (rect_x - screen->border - screen->scrollbar)
+	leftcol = (rect_x - screen->border - Scrollbar(screen))
 	    / FontWidth(screen);
 	if(leftcol < 0)
 		leftcol = 0;
 	nrows = (rect_y + rect_height - 1 - screen->border) / 
 		FontHeight(screen) - toprow + 1;
 	ncols =
-	 (rect_x + rect_width - 1 - screen->border - screen->scrollbar) /
+	 (rect_x + rect_width - 1 - screen->border - Scrollbar(screen)) /
 			FontWidth(screen) - leftcol + 1;
 	toprow -= screen->scrolls;
 	if (toprow < 0) {
@@ -1129,19 +1137,19 @@ ChangeColors(tw,pNew)
 	if (COLOR_DEFINED(pNew,TEXT_FG)) {
 	    Pixel	fg=	COLOR_VALUE(pNew,TEXT_FG);
 	    screen->foreground=	fg;
-	    XSetForeground(screen->display,screen->normalGC,fg);
-	    XSetBackground(screen->display,screen->reverseGC,fg);
-	    XSetForeground(screen->display,screen->normalboldGC,fg);
-	    XSetBackground(screen->display,screen->reverseboldGC,fg);
+	    XSetForeground(screen->display,NormalGC(screen),fg);
+	    XSetBackground(screen->display,ReverseGC(screen),fg);
+	    XSetForeground(screen->display,NormalBoldGC(screen),fg);
+	    XSetBackground(screen->display,ReverseBoldGC(screen),fg);
 	}
 
 	if (COLOR_DEFINED(pNew,TEXT_BG)) {
 	    Pixel	bg=	COLOR_VALUE(pNew,TEXT_BG);
 	    tw->core.background_pixel=	bg;
-	    XSetBackground(screen->display,screen->normalGC,bg);
-	    XSetForeground(screen->display,screen->reverseGC,bg);
-	    XSetBackground(screen->display,screen->normalboldGC,bg);
-	    XSetForeground(screen->display,screen->reverseboldGC,bg);
+	    XSetBackground(screen->display,NormalGC(screen),bg);
+	    XSetForeground(screen->display,ReverseGC(screen),bg);
+	    XSetBackground(screen->display,NormalBoldGC(screen),bg);
+	    XSetForeground(screen->display,ReverseBoldGC(screen),bg);
 	    XSetWindowBackground(screen->display, TextWindow(screen),
 						  tw->core.background_pixel);
 	}
@@ -1209,8 +1217,18 @@ ReverseVideo (termw)
 	screen->foreground = tmp;
 
 	EXCHANGE( screen->mousecolor,    screen->mousecolorback, tmp )
-	EXCHANGE( screen->normalGC,      screen->reverseGC,      tmpGC )
-	EXCHANGE( screen->normalboldGC,  screen->reverseboldGC,  tmpGC )
+	EXCHANGE( NormalGC(screen),      ReverseGC(screen),      tmpGC )
+	EXCHANGE( NormalBoldGC(screen),  ReverseBoldGC(screen),  tmpGC )
+
+#ifndef NO_ACTIVE_ICON
+	tmpGC = screen->iconVwin.normalGC;
+	screen->iconVwin.normalGC = screen->iconVwin.reverseGC;
+	screen->iconVwin.reverseGC = tmpGC;
+
+	tmpGC = screen->iconVwin.normalboldGC;
+	screen->iconVwin.normalboldGC = screen->iconVwin.reverseboldGC;
+	screen->iconVwin.reverseboldGC = tmpGC;
+#endif /* NO_ACTIVE_ICON */
 
 	recolor_cursor (screen->pointer_cursor, 
 			screen->mousecolor, screen->mousecolorback);
@@ -1277,6 +1295,7 @@ drawXtermText(screen, flags, gc, x, y, text, len)
 	char *text;
 	int len;
 {
+	y += FontAscent(screen);
 	XDrawImageString(screen->display, TextWindow(screen), gc, 
 		x, y,  text, len);
 	if ((flags & BOLD) && screen->enbolden)
@@ -1307,18 +1326,18 @@ updatedXtermGC(screen, flags, fg, bg, hilite)
 	if ( (!hilite && (flags & INVERSE) != 0)
 	  ||  (hilite && (flags & INVERSE) == 0) ) {
 		if (flags & BOLD)
-			gc = screen->reverseboldGC;
+			gc = ReverseBoldGC(screen);
 		else
-			gc = screen->reverseGC;
+			gc = ReverseGC(screen);
 
 		XSetForeground(screen->display, gc, bg_pix);
 		XSetBackground(screen->display, gc, fg_pix);
 
 	} else {
 		if (flags & BOLD)
-			gc = screen->normalboldGC;
+			gc = NormalBoldGC(screen);
 		else
-			gc = screen->normalGC;
+			gc = NormalGC(screen);
 
 		XSetForeground(screen->display, gc, fg_pix);
 		XSetBackground(screen->display, gc, bg_pix);
@@ -1344,18 +1363,18 @@ resetXtermGC(screen, flags, hilite)
 	if ( (!hilite && (flags & INVERSE) != 0)
 	  ||  (hilite && (flags & INVERSE) == 0) ) {
 		if (flags & BOLD)
-			gc = screen->reverseboldGC;
+			gc = ReverseBoldGC(screen);
 		else
-			gc = screen->reverseGC;
+			gc = ReverseGC(screen);
 
 		XSetForeground(screen->display, gc, bg_pix);
 		XSetBackground(screen->display, gc, fg_pix);
 
 	} else {
 		if (flags & BOLD)
-			gc = screen->normalboldGC;
+			gc = NormalBoldGC(screen);
 		else
-			gc = screen->normalGC;
+			gc = NormalGC(screen);
 
 		XSetForeground(screen->display, gc, fg_pix);
 		XSetBackground(screen->display, gc, bg_pix);
@@ -1363,6 +1382,58 @@ resetXtermGC(screen, flags, hilite)
 }
 
 #if OPT_ISO_COLORS
+/*
+ * Extract the foreground-color index from a one-byte color pair.  If we've got
+ * BOLD or UNDERLINE color-mode active, those will be used unless we've got
+ * an SGR foreground color active.
+ */
+unsigned
+extract_fg (color, flags)
+	unsigned color;
+	unsigned flags;
+{
+	unsigned fg = (color >> 4) & 0xf;
+	if (fg == extract_bg(color))
+	{
+		if (term->screen.colorULMode && (flags & UNDERLINE))
+			fg = COLOR_UL;
+		if (term->screen.colorBDMode && (flags & BOLD))
+			fg = COLOR_BD;
+	}
+	return fg;
+}
+
+unsigned
+extract_bg (color)
+	unsigned color;
+{
+	return color & 0xf;
+}
+
+/*
+ * Combine the current foreground and background into a single 8-bit number.
+ * Note that we're storing the SGR foreground, since cur_foreground may be set
+ * to COLOR_UL or COLOR_BD, which would make the code larger than 8 bits.
+ *
+ * FIXME: I'm using the coincidence of fg/bg values to unmask COLOR_UL/COLOR_BD,
+ * which will require more work...
+ */
+unsigned
+makeColorPair (fg, bg)
+	int fg;
+	int bg;
+{
+	unsigned my_bg = (bg >= 0) && (bg < 16) ? bg : 0;
+	unsigned my_fg = (fg >= 0) && (fg < 16) ? fg : my_bg;
+	return (my_fg << 4) | my_bg;
+}
+
+unsigned
+xtermColorPair ()
+{
+	return makeColorPair(term->sgr_foreground, term->cur_background);
+}
+
 Pixel
 getXtermForeground(flags, color)
 	int flags;
@@ -1419,3 +1490,42 @@ void ClearCurBackground(screen, top,left, height,width)
 	useCurBackground(FALSE);
 }
 #endif /* OPT_ISO_COLORS */
+
+#ifdef HAVE_CONFIG_H
+#if USE_MY_MEMMOVE
+char *	my_memmove(s1, s2, n)
+	char *	s1;
+	char *	s2;
+	size_t	n;
+{
+	if (n != 0) {
+		if ((s1+n > s2) && (s2+n > s1)) {
+			static	char	*buffer;
+			static	size_t	length;
+			register int	j;
+			if (length < n) {
+				length = (n * 3) / 2;
+				buffer = doalloc(buffer, length = n);
+			}
+			for (j = 0; j < n; j++)
+				buffer[j] = s2[j];
+			s2 = buffer;
+		}
+		while (n-- != 0)
+			s1[n] = s2[n];
+	}
+	return s1;
+}
+#endif /* USE_MY_MEMMOVE */
+
+#if !HAVE_STRERROR
+char *my_strerror(n)
+{
+	extern char *sys_errlist[];
+	extern int sys_nerr;
+	if (n > 0 && n < sys_nerr)
+		return sys_errlist[n];
+	return "?";
+}
+#endif
+#endif

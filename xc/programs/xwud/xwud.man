@@ -1,4 +1,4 @@
-.\" $XConsortium: xwud.man /main/18 1995/12/15 14:06:42 gildea $
+.\" $XConsortium: xwud.man /main/20 1996/12/09 17:11:17 kaleb $
 .\" Copyright (c) 1988  X Consortium
 .\" 
 .\" Permission is hereby granted, free of charge, to any person obtaining
@@ -24,13 +24,13 @@
 .\" not be used in advertising or otherwise to promote the sale, use or
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
-.TH XWUD 1 "Release 6.1" "X Version 11"
+.TH XWUD 1 "Release 6.3" "X Version 11"
 .SH NAME
 xwud - image displayer for X
 .SH SYNOPSIS
 .B "xwud"
 [-in \fIfile\fP] [-noclick] [-geometry \fIgeom\fP] [-display \fIdisplay\fP]
-[-new] [-std <maptype>] [-raw] [-vis <vis-type-or-id>]
+[-new] [-std <maptype>] [-raw] [-vis <vis-type-or-id>] [-scale]
 [-help] [-rv] [-plane \fInumber\fP] [-fg \fIcolor\fP] [-bg \fIcolor\fP]
 .SH DESCRIPTION
 .PP
@@ -106,6 +106,10 @@ If a bitmap image (or a single plane of an image) is displayed, this option
 forces the foreground and background colors to be swapped.  This may be
 needed when displaying a bitmap image which has the color sense of pixel
 values "0" and "1" reversed from what they are on your display.
+.PP
+.TP 8
+.B -scale
+Allow the window to be resized, and scale the image to the size of the window.
 .PP
 .TP 8
 .B "-std \fImaptype\fP"

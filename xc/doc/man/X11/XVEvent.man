@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XVisibilityEvent 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XVisibilityEvent 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XVisibilityNotifyEvent \- VisibilityNotify event structure
 .SH STRUCTURES

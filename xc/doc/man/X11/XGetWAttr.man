@@ -140,7 +140,7 @@
 ..
 .ny0
 '\" t
-.TH XGetWindowAttributes 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XGetWindowAttributes 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XGetWindowAttributes, XGetGeometry, XWindowAttributes \- get current window attribute or geometry and current window attributes structure
 .SH SYNTAX

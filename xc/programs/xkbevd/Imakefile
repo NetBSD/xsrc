@@ -1,4 +1,4 @@
-XCOMM $XConsortium: Imakefile /main/1 1995/11/30 19:18:08 kaleb $
+XCOMM $XConsortium: Imakefile /main/3 1996/09/04 09:36:24 kaleb $
 
           SRCS = xkbevd.c cfgscan.c cfgparse.c \
 		 evargs.c printev.c utils.c

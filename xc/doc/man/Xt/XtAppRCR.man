@@ -1,4 +1,4 @@
-.\" $XConsortium: XtAppRCR.man /main/4 1995/12/15 14:21:07 gildea $
+.\" $XConsortium: XtAppRCR.man /main/5 1996/12/09 16:13:37 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -123,7 +123,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAppReleaseCacheRefs 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAppReleaseCacheRefs 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAppReleaseCacheRefs \- decrement reference counts for resources
 .SH SYNTAX

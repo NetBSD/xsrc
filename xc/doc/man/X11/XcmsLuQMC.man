@@ -138,7 +138,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XcmsCIELuvQueryMaxC 3X11 "Release 6.1" "X Version 11" "XLIB FUNCTIONS"
+.TH XcmsCIELuvQueryMaxC 3X11 "Release 6.3" "X Version 11" "XLIB FUNCTIONS"
 .SH NAME
 XcmsCIELuvQueryMaxC, XcmsCIELuvQueryMaxL, XcmsCIELuvQueryMaxLC, XcmsCIELuvQueryMinL \- obtain the CIE L*u*v* coordinates
 .SH SYNTAX

@@ -8,9 +8,9 @@
 .\" suitability for any purpose of the information in this document.  It is 
 .\" provided \`\`as is'' without express or implied warranty.
 .\" 
-.\" $XConsortium: XChFCtl.man /main/6 1995/12/15 14:08:29 gildea $
+.\" $XConsortium: XChFCtl.man /main/7 1996/12/09 16:49:01 kaleb $
 .ds xL Programming With Xlib
-.TH XGetFeedbackControl 3X11 "Release 6.1" "X Version 11" "X FUNCTIONS"
+.TH XGetFeedbackControl 3X11 "Release 6.3" "X Version 11" "X FUNCTIONS"
 .SH NAME
 XGetFeedbackControl, XChangeFeedbackControl \- query and change input device feedbacks
 .SH SYNTAX

@@ -1,4 +1,4 @@
-.\" $XConsortium: XtAppE.man /main/7 1995/12/15 14:20:32 gildea $
+.\" $XConsortium: XtAppE.man /main/8 1996/12/09 16:12:58 kaleb $
 .\"
 .\" Copyright 1993 X Consortium
 .\"
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAppError 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAppError 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAppError, XtAppSetErrorHandler, XtAppSetWarningHandler, XtAppWarning \- low-level error handlers
 .SH SYNTAX

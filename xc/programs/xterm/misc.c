@@ -1,6 +1,6 @@
 /*
- *	$XConsortium: misc.c /main/106 1996/02/02 14:27:57 kaleb $
- *	$XFree86: xc/programs/xterm/misc.c,v 3.15 1996/09/22 05:16:10 dawes Exp $
+ *	$XConsortium: misc.c /main/112 1996/11/29 10:34:07 swick $
+ *	$XFree86: xc/programs/xterm/misc.c,v 3.17.2.1 1997/05/23 09:24:40 dawes Exp $
  */
 
 /*
@@ -25,6 +25,10 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
  */
+
+#ifdef HAVE_CONFIG_H
+#include <xtermcfg.h>
+#endif
 
 #include "ptyx.h"		/* X headers included here. */
 
@@ -496,7 +500,7 @@ Redraw()
 		event.width = term->core.width;
 		event.height = term->core.height;
 		(*term->core.widget_class->core_class.expose)((Widget)term, (XEvent *)&event, NULL);
-		if(screen->scrollbar) 
+		if(Scrollbar(screen)) 
 			(*screen->scrollWidget->core.widget_class->core_class.expose)(screen->scrollWidget, (XEvent *)&event, NULL);
 		}
 
@@ -1309,7 +1313,7 @@ xerror(d, ev)
 Display *d;
 register XErrorEvent *ev;
 {
-    fprintf (stderr, "%s:  warning, error event receieved:\n", xterm_name);
+    fprintf (stderr, "%s:  warning, error event received:\n", xterm_name);
     (void) XmuPrintDefaultErrorMessage (d, ev, stderr);
     Exit (ERROR_XERROR);
     return 0;	/* appease the compiler */

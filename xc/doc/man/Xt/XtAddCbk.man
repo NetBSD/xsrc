@@ -1,4 +1,4 @@
-.\" $XConsortium: XtAddCbk.man /main/8 1995/12/15 14:19:28 gildea $
+.\" $XConsortium: XtAddCbk.man /main/9 1996/12/09 16:11:44 kaleb $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
 .\" 
@@ -124,7 +124,7 @@
 .el .sp 10p
 ..
 .ny0
-.TH XtAddCallback 3Xt "Release 6.1" "X Version 11" "XT FUNCTIONS"
+.TH XtAddCallback 3Xt "Release 6.3" "X Version 11" "XT FUNCTIONS"
 .SH NAME
 XtAddCallback, XtAddCallbacks, XtRemoveCallback, XtRemoveCallbacks, XtRemoveAllCallbacks \- add and remove callback procedures
 .SH SYNTAX

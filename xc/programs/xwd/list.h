@@ -1,4 +1,4 @@
-/* $XConsortium: list.h /main/3 1995/12/15 14:51:15 converse $ */
+/* $XConsortium: list.h /main/4 1996/10/14 15:04:04 swick $ */
 /** ------------------------------------------------------------------------
 	This file contains routines for manipulating generic lists.
 	Lists are implemented with a "harness".  In other words, each
@@ -8,17 +8,33 @@
 	to the current member of the list (used by the first_in_list and
 	next_in_list functions).
 
-       (c)Copyright 1994 Hewlett-Packard Co.
-       
-                                RESTRICTED RIGHTS LEGEND
-       Use, duplication, or disclosure by the U.S. Government is subject to
-       restrictions as set forth in sub-paragraph (c)(1)(ii) of the Rights in
-       Technical Data and Computer Software clause in DFARS 252.227-7013.
-                                Hewlett-Packard Company
-                                3000 Hanover Street
-                                Palo Alto, CA 94304 U.S.A.
-       Rights for non-DOD U.S. Government Departments and Agencies are as set
-       forth in FAR 52.227-19(c)(1,2).
+Copyright (c) 1994 Hewlett-Packard Co.
+Copyright (c) 1996  X Consortium
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name of the X Consortium shall
+not be used in advertising or otherwise to promote the sale, use or
+other dealings in this Software without prior written authorization
+from the X Consortium.
+
     -------------------------------------------------------------------- **/
 
 #ifndef LIST_DEF
