@@ -37,7 +37,7 @@ OS_SUBDIR = linux
 OS_SUBDIR = lynxos
 #endif
 
-#if defined(i386BsdArchitecture)
+#if defined(i386BsdArchitecture) || defined(NetBSDArchitecture)
 # if defined(BSD386Architecture)
 OS_SUBDIR = bsdi
 # else

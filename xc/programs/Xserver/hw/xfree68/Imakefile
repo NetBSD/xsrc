@@ -8,9 +8,20 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree68/Imakefile,v 3.3 1996/12/27 06:51:
 #include <Server.tmpl>
 #define IHaveSubdirs
 
-SCREENS = fbdev
+#if XF68SVGAServer
+  SCREENS+= vga256
+  COMMONHW = common_hw
+  XAADIR = xaa
+#endif
+#if XF68FBDevServer
+  SCREENS+= fbdev
+#endif
+#if XF68AccelServer
+  SCREENS+= accel
+  COMMONHW = common_hw
+#endif
 
-SUBDIRS = os-support common $(SCREENS) doc $(XF86SETUPDIR) etc LinkKit
+SUBDIRS = os-support common $(COMMONHW) $(XAADIR) $(SCREENS) doc $(XF68SETUPDIR) etc LinkKit
 
 XF86CONFIG = XF86Config
 
@@ -48,7 +59,7 @@ DPI100USFONTPATH=\"$(LIBDIR)/fonts/100dpi/:unscaled\"
   USE_T1FONTS="XCOMM    FontPath"
 #endif
 
-#ifdef FreeBSDArchitecture
+#ifdef defined(FreeBSDArchitecture) || defined(NetBSDArchitecture)
   MOUSEDEV=\"/dev/mouse\"
 #else
 # if defined(i386BsdArchitecture)
@@ -82,6 +93,9 @@ InstallGenManPageLong(XF86Conf,$(FILEMANDIR),XF86Config,$(FILEMANSUFFIX))
 InstallManPage(XF68_FBDev,$(MANDIR))
 InstallNamedNonExec($(XF86CONFIG),XF86Config.eg,$(LIBDIR))
 
+#ifdef XF68SVGAServer
+LinkSourceFile(XF86_SVGA.man,$(XF86SRC))
+#endif
 LinkSourceFile(XF86Conf.man,$(XF86SRC))
 LinkSourceFile(XFree86.man,$(XF86SRC))
 LinkSourceFile(xf86Version.h,$(XF86SRC))

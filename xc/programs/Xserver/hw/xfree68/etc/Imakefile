@@ -57,7 +57,7 @@ POSTINST = postinst.sh
        FILES = $(CONFIGFILES) $(TERMFILES) \
                $(PATCHFILES) $(XDMCONF) \
                xmodmap.std $(MISCFILES) $(POSTINST) $(PREINST)
-    INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) -I$(XF86HWSRC) \
+    INCLUDES = -I. -I$(XF68COMSRC) -I$(XF68OSSRC) -I$(XF68HWSRC) \
 	       -I$(SERVERSRC)/include -I$(XINCLUDESRC)
 
 all:: $(FILES)

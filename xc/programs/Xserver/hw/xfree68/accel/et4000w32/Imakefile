@@ -1,0 +1,34 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/et4000w32/Imakefile,v 3.4 1996/02/04 08:59:00 dawes Exp $
+
+
+
+
+
+
+
+XCOMM $XConsortium: Imakefile /main/5 1995/11/12 16:20:41 kaleb $
+
+#include <Server.tmpl>
+
+#define IHaveSubdirs
+
+SUBDIRS = cfb.w32 w32
+
+INCLUDES = -I$(XF68SRC)/vga256/vga -Iw32 -I$(XF68COMSRC) -I$(XF68OSSRC) \
+           -I$(SERVERSRC)/include -I$(XINCLUDESRC)
+
+#if NetBSD_Atari
+DEFINES = -DNetBSD_Atari
+#endif
+
+W32DRIVERS = XF86W32Drivers
+
+ConfigTargetNoDepend(w32Conf,$(ICONFIGFILES),confw32.SHsuf,$(W32DRIVERS))
+
+NormalLibraryObjectRule()
+
+MakeSubdirs($(SUBDIRS))
+
+InstallLinkKitNonExecFile(confw32.SHsuf,$(LINKKITDIR))
+
+DependSubdirs($(SUBDIRS))

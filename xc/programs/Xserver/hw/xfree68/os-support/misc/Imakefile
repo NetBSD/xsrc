@@ -15,7 +15,7 @@ SRCS = xf86_Util.c xf86_IlHack.c
 
 OBJS = xf86_Util.o xf86_IlHack.o
 
-INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
+INCLUDES = -I$(XF68COMSRC) -I$(XF68OSSRC) -I. -I$(SERVERSRC)/include \
            -I$(XINCLUDESRC)
 
 SubdirLibraryRule($(OBJS))
