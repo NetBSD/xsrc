@@ -1,9 +1,9 @@
 dnl
-dnl $XFree86: xc/programs/xterm/aclocal.m4,v 3.1.2.8 1999/07/28 13:37:53 hohndel Exp $
+dnl $XFree86: xc/programs/xterm/aclocal.m4,v 3.30 2000/03/03 20:02:28 dawes Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl 
-dnl Copyright 1997,1998,1999 by Thomas E. Dickey <dickey@clark.net>
+dnl Copyright 1997-2000 by Thomas E. Dickey <dickey@clark.net>
 dnl 
 dnl                         All Rights Reserved
 dnl 
@@ -45,7 +45,7 @@ for cf_arg in "-DCC_HAS_PROTOS" \
 	"" \
 	-qlanglvl=ansi \
 	-std1 \
-	"-Aa -D_HPUX_SOURCE +e" \
+	-Ae \
 	"-Aa -D_HPUX_SOURCE" \
 	-Xc
 do
@@ -133,14 +133,20 @@ if test ".$system_name" != ".$cf_cv_system_name" ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl Check for data that is usually declared in <stdio.h> or <errno.h>
+dnl Check for data that is usually declared in <stdio.h> or <errno.h>, e.g.,
+dnl the 'errno' variable.  Define a DECL_xxx symbol if we must declare it
+dnl ourselves.
+dnl
+dnl (I would use AC_CACHE_CHECK here, but it will not work when called in a
+dnl loop from CF_SYS_ERRLIST).
+dnl
 dnl $1 = the name to check
 AC_DEFUN([CF_CHECK_ERRNO],
 [
-AC_MSG_CHECKING([declaration of $1])
+AC_MSG_CHECKING(if external $1 is declared)
 AC_CACHE_VAL(cf_cv_dcl_$1,[
     AC_TRY_COMPILE([
-#if HAVE_STDLIB_H
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
 #include <stdio.h>
@@ -148,33 +154,47 @@ AC_CACHE_VAL(cf_cv_dcl_$1,[
 #include <errno.h> ],
     [long x = (long) $1],
     [eval 'cf_cv_dcl_'$1'=yes'],
-    [eval 'cf_cv_dcl_'$1'=no]')])
+    [eval 'cf_cv_dcl_'$1'=no]')
+])
+
 eval 'cf_result=$cf_cv_dcl_'$1
 AC_MSG_RESULT($cf_result)
 
-# It's possible (for near-UNIX clones) that the data doesn't exist
-AC_CACHE_VAL(cf_cv_have_$1,[
-if test $cf_result = no ; then
+if test "$cf_result" = no ; then
     eval 'cf_result=DECL_'$1
     CF_UPPER(cf_result,$cf_result)
     AC_DEFINE_UNQUOTED($cf_result)
-    AC_MSG_CHECKING([existence of $1])
-        AC_TRY_LINK([
-#undef $1
-extern long $1;
-],
-            [$1 = 2],
-            [eval 'cf_cv_have_'$1'=yes'],
-            [eval 'cf_cv_have_'$1'=no'])
-        eval 'cf_result=$cf_cv_have_'$1
-        AC_MSG_RESULT($cf_result)
-else
-    eval 'cf_cv_have_'$1'=yes'
 fi
-])
-eval 'cf_result=HAVE_'$1
-CF_UPPER(cf_result,$cf_result)
-eval 'test $cf_cv_have_'$1' = yes && AC_DEFINE_UNQUOTED($cf_result)'
+
+# It's possible (for near-UNIX clones) that the data doesn't exist
+CF_CHECK_EXTERN_DATA($1,int)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl Check for existence of external data in the current set of libraries.  If
+dnl we can modify it, it's real enough.
+dnl $1 = the name to check
+dnl $2 = its type
+AC_DEFUN([CF_CHECK_EXTERN_DATA],
+[
+AC_MSG_CHECKING(if external $1 exists)
+AC_CACHE_VAL(cf_cv_have_$1,[
+    AC_TRY_LINK([
+#undef $1
+extern $2 $1;
+],
+    [$1 = 2],
+    [eval 'cf_cv_have_'$1'=yes'],
+    [eval 'cf_cv_have_'$1'=no'])])
+
+eval 'cf_result=$cf_cv_have_'$1
+AC_MSG_RESULT($cf_result)
+
+if test "$cf_result" = yes ; then
+    eval 'cf_result=HAVE_'$1
+    CF_UPPER(cf_result,$cf_result)
+    AC_DEFINE_UNQUOTED($cf_result)
+fi
+
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl You can always use "make -n" to see the actual options, but it's hard to
@@ -189,7 +209,7 @@ dnl
 AC_DEFUN([CF_DISABLE_ECHO],[
 AC_MSG_CHECKING(if you want to see long compiling messages)
 CF_ARG_DISABLE(echo,
-	[  --disable-echo          test: display "compiling" commands],
+	[  --disable-echo          display "compiling" commands],
 	[
     ECHO_LD='@echo linking [$]@;'
     RULE_CC='	@echo compiling [$]<'
@@ -286,7 +306,12 @@ LIBS="$cf_save_LIBS"
 # they are not executed when a cached value exists.)
 if test "$cf_cv_lib_tgetent" != no ; then
 	test "$cf_cv_lib_tgetent" != yes && LIBS="$LIBS $cf_cv_lib_tgetent"
-	AC_CHECK_HEADERS(termcap.h)
+	AC_DEFINE(USE_TERMCAP)
+	AC_TRY_COMPILE([
+#include <termcap.h>],[
+#ifdef NCURSES_VERSION
+make an error
+#endif],[AC_DEFINE(HAVE_TERMCAP_H)])
 else
         # If we didn't find a tgetent() that supports the buffer
         # argument, look again to see whether we can find even
@@ -339,7 +364,7 @@ cat > conftest.i <<EOF
 EOF
 if test -n "$GCC"
 then
-	AC_CHECKING([for gcc __attribute__ directives])
+	AC_CHECKING([for $CC __attribute__ directives])
 	changequote(,)dnl
 cat > conftest.$ac_ext <<EOF
 #line __oline__ "configure"
@@ -366,7 +391,7 @@ EOF
 	do
 		CF_UPPER(CF_ATTRIBUTE,$cf_attribute)
 		cf_directive="__attribute__(($cf_attribute))"
-		echo "checking for gcc $cf_directive" 1>&AC_FD_CC
+		echo "checking for $CC $cf_directive" 1>&AC_FD_CC
 		case $cf_attribute in
 		scanf|printf)
 		cat >conftest.h <<EOF
@@ -412,7 +437,7 @@ then
 int main(int argc, char *argv[]) { return (argv[argc-1] == 0) ; }
 EOF
 	changequote([,])dnl
-	AC_CHECKING([for gcc warning options])
+	AC_CHECKING([for $CC warning options])
 	cf_save_CFLAGS="$CFLAGS"
 	EXTRA_CFLAGS="-W -Wall"
 	cf_warn_CONST=""
@@ -440,6 +465,34 @@ EOF
 	CFLAGS="$cf_save_CFLAGS"
 fi
 AC_SUBST(EXTRA_CFLAGS)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl Check if we must define _GNU_SOURCE to get a reasonable value for
+dnl _XOPEN_SOURCE, upon which many POSIX definitions depend.  This is a defect
+dnl (or misfeature) of glibc2, which breaks portability of many applications,
+dnl since it is interwoven with GNU extensions.
+dnl
+dnl Well, yes we could work around it...
+AC_DEFUN([CF_GNU_SOURCE],
+[
+AC_CACHE_CHECK(if we must define _GNU_SOURCE,cf_cv_gnu_source,[
+AC_TRY_COMPILE([#include <sys/types.h>],[
+#ifndef _XOPEN_SOURCE
+make an error
+#endif],
+	[cf_cv_gnu_source=no],
+	[cf_save="$CFLAGS"
+	 CFLAGS="$CFLAGS -D_GNU_SOURCE"
+	 AC_TRY_COMPILE([#include <sys/types.h>],[
+#ifdef _XOPEN_SOURCE
+make an error
+#endif],
+	[cf_cv_gnu_source=no],
+	[cf_cv_gnu_source=yes])
+	CFLAGS="$cf_save"
+	])
+])
+test "$cf_cv_gnu_source" = yes && CFLAGS="$CFLAGS -D_GNU_SOURCE"
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl Use imake to obtain compiler flags.  We could, in principle, write tests to
@@ -546,6 +599,103 @@ AC_SUBST(IMAKE_CFLAGS)
 AC_SUBST(IMAKE_LOADFLAGS)
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl Check if the X libraries support input-method
+AC_DEFUN([CF_INPUT_METHOD],
+[
+AC_CACHE_CHECK([if X libraries support input-method],cf_cv_input_method,[
+AC_TRY_LINK([
+#include <X11/IntrinsicP.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
+#include <X11/Xmu/Atoms.h>
+#include <X11/Xmu/Converters.h>
+#include <X11/Xaw/XawImP.h>
+],[
+{
+	XIM xim;
+	XIMStyles *xim_styles = 0;
+	XIMStyle input_style;
+	Widget w = 0;
+
+	XSetLocaleModifiers("@im=none");
+	xim = XOpenIM(XtDisplay(w), NULL, NULL, NULL);
+	XGetIMValues(xim, XNQueryInputStyle, &xim_styles, NULL);
+	XCloseIM(xim);
+	input_style = (XIMPreeditNothing | XIMStatusNothing);
+}
+],
+[cf_cv_input_method=yes],
+[cf_cv_input_method=no])])
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl Check for header defining _PATH_LASTLOG, or failing that, see if the lastlog
+dnl file exists.
+AC_DEFUN([CF_LASTLOG],
+[
+AC_CHECK_HEADERS(lastlog.h paths.h)
+AC_CACHE_CHECK(for lastlog path,cf_cv_path_lastlog,[
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#ifdef HAVE_LASTLOG_H
+#include <lastlog.h>
+#else
+#ifdef HAVE_PATHS_H
+#include <paths.h>
+#endif
+#endif],[char *path = _PATH_LASTLOG],
+	[cf_cv_path_lastlog="_PATH_LASTLOG"],
+	[if test -f /usr/adm/lastlog ; then
+	 	cf_cv_path_lastlog=/usr/adm/lastlog
+	else
+		cf_cv_path_lastlog=no
+	fi])
+])
+test $cf_cv_path_lastlog != no && AC_DEFINE(USE_LASTLOG)
+]
+)dnl
+dnl ---------------------------------------------------------------------------
+dnl Special test to workaround gcc 2.6.2, which cannot parse C-preprocessor
+dnl conditionals.
+dnl
+dnl AC_CHECK_HEADERS(termios.h unistd.h)
+dnl AC_CHECK_FUNCS(tcgetattr)
+dnl
+AC_DEFUN([CF_POSIX_VDISABLE],
+[
+AC_MSG_CHECKING(if POSIX VDISABLE symbol should be used)
+AC_CACHE_VAL(cf_cv_posix_vdisable,[
+	AC_TRY_RUN([
+#if defined(HAVE_TERMIOS_H) && defined(HAVE_TCGETATTR)
+#include <termios.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#if defined(_POSIX_VDISABLE)
+int main() { exit(_POSIX_VDISABLE == -1); }
+#endif],
+	[cf_cv_posix_vdisable=yes],
+	[cf_cv_posix_vdisable=no],
+	[AC_TRY_COMPILE([
+#if defined(HAVE_TERMIOS_H) && defined(HAVE_TCGETATTR)
+#include <termios.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif],[
+#if defined(_POSIX_VDISABLE) && (_POSIX_VDISABLE != -1)
+int temp = _POSIX_VDISABLE;
+#else
+this did not work
+#endif],
+	[cf_cv_posix_vdisable=yes],
+	[cf_cv_posix_vdisable=no],
+	)])
+])
+AC_MSG_RESULT($cf_cv_posix_vdisable)
+test $cf_cv_posix_vdisable = yes && AC_DEFINE(HAVE_POSIX_VDISABLE)
+])dnl
+dnl ---------------------------------------------------------------------------
 dnl	On both Ultrix and CLIX, I find size_t defined in <stdio.h>
 AC_DEFUN([CF_SIZE_T],
 [
@@ -553,7 +703,7 @@ AC_MSG_CHECKING(for size_t in <sys/types.h> or <stdio.h>)
 AC_CACHE_VAL(cf_cv_type_size_t,[
 	AC_TRY_COMPILE([
 #include <sys/types.h>
-#if STDC_HEADERS
+#ifdef STDC_HEADERS
 #include <stdlib.h>
 #include <stddef.h>
 #endif
@@ -566,23 +716,75 @@ AC_MSG_RESULT($cf_cv_type_size_t)
 test $cf_cv_type_size_t = no && AC_DEFINE(size_t, unsigned)
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl Check if this is a SYSV flavor of UTMP
+AC_DEFUN([CF_SYSV_UTMP],
+[
+AC_REQUIRE([CF_UTMP])
+AC_CACHE_CHECK(if $cf_cv_have_utmp is SYSV flavor,cf_cv_sysv_utmp,[
+test "$cf_cv_have_utmp" = "utmp" && cf_prefix="ut" || cf_prefix="utx"
+AC_TRY_LINK([
+#include <sys/types.h>
+#include <${cf_cv_have_utmp}.h>],[
+struct $cf_cv_have_utmp x;
+	set${cf_prefix}ent ();
+	get${cf_prefix}id(&x);
+	put${cf_prefix}line(&x);
+	end${cf_prefix}ent();],
+	[cf_cv_sysv_utmp=yes],
+	[cf_cv_sysv_utmp=no])
+])
+test $cf_cv_sysv_utmp = yes && AC_DEFINE(USE_SYSV_UTMP)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl Check if the system has a tty-group defined.  This is used in xterm when
+dnl setting pty ownership.
+AC_DEFUN([CF_TTY_GROUP],
+[
+AC_CACHE_CHECK(for tty group,cf_cv_tty_group,[
+AC_TRY_RUN([
+#include <sys/types.h>
+#include <grp.h>
+int main()
+{
+	struct group *ttygrp;
+	int code = (ttygrp = getgrnam("tty")) == 0;
+	endgrent();
+	exit(code);
+}
+	],
+	[cf_cv_tty_group=yes],
+	[cf_cv_tty_group=no],
+	[cf_cv_tty_group=unknown])
+])
+test $cf_cv_tty_group = yes && AC_DEFINE(USE_TTY_GROUP)
+])dnl
+dnl ---------------------------------------------------------------------------
 dnl Check for the declaration of fd_set.  Some platforms declare it in
-dnl <sys/types.h>, and some in <sys/select.h>, which requires <sys/types.h>
+dnl <sys/types.h>, and some in <sys/select.h>, which requires <sys/types.h>.
+dnl Finally, if we are using this for an X application, Xpoll.h may include
+dnl <sys/select.h>, so we don't want to do it twice.
 AC_DEFUN([CF_TYPE_FD_SET],
 [
-AC_MSG_CHECKING(for declaration of fd_set)
-AC_CACHE_VAL(cf_cv_type_fd_set,[
+AC_CACHE_CHECK(for declaration of fd_set,cf_cv_type_fd_set,
+	[echo "trying sys/types alone" 1>&AC_FD_CC
 AC_TRY_COMPILE([
 #include <sys/types.h>],
 	[fd_set x],
 	[cf_cv_type_fd_set=sys/types.h],
-	[AC_TRY_COMPILE([
+	[echo "trying X11/Xpoll.h" 1>&AC_FD_CC
+AC_TRY_COMPILE([
+#ifdef HAVE_X11_XPOLL_H
+#include <X11/Xpoll.h>
+#endif],
+	[fd_set x],
+	[cf_cv_type_fd_set=X11/Xpoll.h],
+	[echo "trying sys/select.h" 1>&AC_FD_CC
+AC_TRY_COMPILE([
 #include <sys/types.h>
 #include <sys/select.h>],
 	[fd_set x],
 	[cf_cv_type_fd_set=sys/select.h],
-	[cf_cv_type_fd_set=unknown])])])
-AC_MSG_RESULT($cf_cv_type_fd_set)
+	[cf_cv_type_fd_set=unknown])])])])
 if test $cf_cv_type_fd_set = sys/select.h ; then
 	AC_DEFINE(USE_SYS_SELECT_H)
 fi
@@ -597,28 +799,184 @@ $1=`echo $2 | tr '[a-z]' '[A-Z]'`
 changequote([,])dnl
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl Try to link with utempter library
+AC_DEFUN([CF_UTEMPTER],
+[
+AC_CACHE_CHECK(if we can link with utempter library,cf_cv_have_utempter,[
+cf_save_LIBS="$LIBS"
+LIBS="-lutempter $LIBS"
+AC_TRY_LINK([
+#include <utempter.h>
+],[
+	addToUtmp("/dev/tty", 0, 1);
+	removeFromUtmp();
+],[
+	cf_cv_have_utempter=yes],[
+	cf_cv_have_utempter=no])
+LIBS="$cf_save_LIBS"
+])
+if test "$cf_cv_have_utempter" = yes ; then
+	AC_DEFINE(USE_UTEMPTER)
+	LIBS="-lutempter $LIBS"
+fi
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl Check for UTMP/UTMPX headers
+AC_DEFUN([CF_UTMP],
+[
+AC_REQUIRE([CF_LASTLOG])
+AC_CACHE_CHECK(for utmp implementation,cf_cv_have_utmp,[
+	cf_cv_have_utmp=no
+for cf_header in utmpx utmp ; do
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <${cf_header}.h>
+#define getutent getutxent
+#ifdef USE_LASTLOG
+#include <lastlog.h>	/* may conflict with utmpx.h on Linux */
+#endif
+],
+	[struct $cf_header x;
+	 char *name = x.ut_name; /* utmp.h and compatible definitions */
+	],
+	[cf_cv_have_utmp=$cf_header
+	 break],
+	[
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <${cf_header}.h>
+#define getutent getutxent
+#ifdef USE_LASTLOG
+#include <lastlog.h>	/* may conflict with utmpx.h on Linux */
+#endif
+],
+	[struct $cf_header x;
+	 char *name = x.ut_user; /* utmpx.h must declare this */
+	],
+	[cf_cv_have_utmp=$cf_header
+	 AC_DEFINE(ut_name,ut_user)
+	 break
+	])])
+done
+])
+
+if test $cf_cv_have_utmp != no ; then
+	AC_DEFINE(HAVE_UTMP)
+	test $cf_cv_have_utmp = utmpx && AC_DEFINE(UTMPX_FOR_UTMP)
+	CF_UTMP_UT_HOST
+	CF_UTMP_UT_XSTATUS
+	CF_UTMP_UT_XTIME
+	CF_UTMP_UT_SESSION
+	CF_SYSV_UTMP
+fi
+])
+dnl ---------------------------------------------------------------------------
+dnl Check if UTMP/UTMPX struct defines ut_host member
+AC_DEFUN([CF_UTMP_UT_HOST],
+[
+AC_REQUIRE([CF_UTMP])
+if test $cf_cv_have_utmp != no ; then
+AC_MSG_CHECKING(if utmp.ut_host is declared)
+AC_CACHE_VAL(cf_cv_have_utmp_ut_host,[
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <${cf_cv_have_utmp}.h>],
+	[struct $cf_cv_have_utmp x; char *y = &x.ut_host[0]],
+	[cf_cv_have_utmp_ut_host=yes],
+	[cf_cv_have_utmp_ut_host=no])
+	])
+AC_MSG_RESULT($cf_cv_have_utmp_ut_host)
+test $cf_cv_have_utmp_ut_host != no && AC_DEFINE(HAVE_UTMP_UT_HOST)
+fi
+])
+dnl ---------------------------------------------------------------------------
+dnl Check if UTMP/UTMPX struct defines ut_session member
+AC_DEFUN([CF_UTMP_UT_SESSION],
+[
+AC_REQUIRE([CF_UTMP])
+if test $cf_cv_have_utmp != no ; then
+AC_CACHE_CHECK(if utmp.ut_session is declared, cf_cv_have_utmp_ut_session,[
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <${cf_cv_have_utmp}.h>],
+	[struct $cf_cv_have_utmp x; long y = x.ut_session],
+	[cf_cv_have_utmp_ut_session=yes],
+	[cf_cv_have_utmp_ut_session=no])
+])
+if test $cf_cv_have_utmp_ut_session != no ; then
+	AC_DEFINE(HAVE_UTMP_UT_SESSION)
+fi
+fi
+])
+dnl ---------------------------------------------------------------------------
+dnl Check for known variants on the UTMP/UTMPX struct's exit-status as reported
+dnl by various people:
+dnl
+dnl	ut_exit.__e_exit (HPUX 11 - David Ellement, also in glibc2)
+dnl	ut_exit.e_exit (SVR4)
+dnl	ut_exit.ut_e_exit (os390 - Greg Smith)
+dnl	ut_exit.ut_exit (Tru64 4.0f - Jeremie Petit, 4.0e - Tomas Vanhala)
+dnl
+dnl Note: utmp_xstatus is not a conventional compatibility definition in the
+dnl system header files.
+AC_DEFUN([CF_UTMP_UT_XSTATUS],
+[
+AC_REQUIRE([CF_UTMP])
+if test $cf_cv_have_utmp != no ; then
+AC_CACHE_CHECK(for exit-status in $cf_cv_have_utmp,cf_cv_have_utmp_ut_xstatus,[
+for cf_result in \
+	ut_exit.__e_exit \
+	ut_exit.e_exit \
+	ut_exit.ut_e_exit \
+	ut_exit.ut_exit
+do
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <${cf_cv_have_utmp}.h>],
+	[struct $cf_cv_have_utmp x; long y = x.$cf_result = 0],
+	[cf_cv_have_utmp_ut_xstatus=$cf_result
+	 break],
+	[cf_cv_have_utmp_ut_xstatus=no])
+done
+])
+if test $cf_cv_have_utmp_ut_xstatus != no ; then
+	AC_DEFINE(HAVE_UTMP_UT_XSTATUS)
+	AC_DEFINE_UNQUOTED(ut_xstatus,$cf_cv_have_utmp_ut_xstatus)
+fi
+fi
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl Check if UTMP/UTMPX struct defines ut_xtime member
+AC_DEFUN([CF_UTMP_UT_XTIME],
+[
+AC_REQUIRE([CF_UTMP])
+if test $cf_cv_have_utmp != no ; then
+AC_CACHE_CHECK(if utmp.ut_xtime is declared, cf_cv_have_utmp_ut_xtime,[
+	AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <${cf_cv_have_utmp}.h>],
+	[struct $cf_cv_have_utmp x; long y = x.ut_xtime = 0],
+	[cf_cv_have_utmp_ut_xtime=yes],
+	[AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <${cf_cv_have_utmp}.h>],
+	[struct $cf_cv_have_utmp x; long y = x.ut_tv.tv_sec],
+	[cf_cv_have_utmp_ut_xtime=define],
+	[cf_cv_have_utmp_ut_xtime=no])
+	])
+])
+if test $cf_cv_have_utmp_ut_xtime != no ; then
+	AC_DEFINE(HAVE_UTMP_UT_XTIME)
+	if test $cf_cv_have_utmp_ut_xtime = define ; then
+		AC_DEFINE(ut_xtime,ut_tv.tv_sec)
+	fi
+fi
+fi
+])
+dnl ---------------------------------------------------------------------------
 dnl Use AC_VERBOSE w/o the warnings
 AC_DEFUN([CF_VERBOSE],
 [test -n "$verbose" && echo "	$1" 1>&AC_FD_MSG
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl Check if xterm is installed setuid, assume we want to do the same on a
-dnl new install
-AC_DEFUN([CF_XTERM_MODE],[
-AC_PATH_PROG(XTERM_PATH,xterm)
-XTERM_MODE=755
-AC_MSG_CHECKING(for presumed installation-mode)
-if test -f "$XTERM_PATH" ; then
-	ls -Ll $XTERM_PATH >conftest.out
-	read cf_mode cf_rest <conftest.out
-	case ".$cf_mode" in #(vi
-	.???s*)
-		XTERM_MODE=4711
-		;;
-	esac
-fi
-AC_MSG_RESULT($XTERM_MODE)
-AC_SUBST(XTERM_MODE)
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl Check for Xaw (Athena) libraries
@@ -635,21 +993,77 @@ AC_ARG_WITH(neXtaw,
 	[  --with-neXtaw           link with neXT Athena library],
 	[cf_x_athena=neXtaw])
 
-AC_CHECK_HEADERS(X11/$cf_x_athena/SimpleMenu.h)
 
 AC_CHECK_LIB(Xext,XextCreateExtension,
 	[LIBS="-lXext $LIBS"])
 
-AC_CHECK_LIB(Xmu, XmuClientWindow,,[
-AC_CHECK_LIB(Xmu_s, XmuClientWindow)])
+cf_x_athena_include=""
+cf_x_athena_lib=""
 
-AC_CHECK_LIB($cf_x_athena, XawSimpleMenuAddGlobalActions,
-	[LIBS="-l$cf_x_athena $LIBS"],[
-AC_CHECK_LIB(${cf_x_athena}_s, XawSimpleMenuAddGlobalActions,
-	[LIBS="-l${cf_x_athena}_s $LIBS"],
+for cf_path in default \
+	/usr/contrib/X11R6 \
+	/usr/contrib/X11R5 \
+	/usr/lib/X11R5
+do
+
+	if test -z "$cf_x_athena_include" ; then
+		cf_save="$CFLAGS"
+		cf_test=X11/$cf_x_athena/SimpleMenu.h
+		if test $cf_path != default ; then
+			CFLAGS="-I$cf_path/include $cf_save"
+			AC_MSG_CHECKING(for $cf_test in $cf_path)
+		else
+			AC_MSG_CHECKING(for $cf_test)
+		fi
+		AC_TRY_COMPILE([
+#include <X11/Intrinsic.h>
+#include <$cf_test>],[],
+			[cf_result=yes],
+			[cf_result=no])
+		AC_MSG_RESULT($cf_result)
+		if test "$cf_result" = yes ; then
+			cf_x_athena_include=$cf_path
+		else
+			CFLAGS="$cf_save"
+		fi
+	fi
+
+	for cf_lib in "-l$cf_x_athena -lXmu" "-l${cf_x_athena}_s -lXmu_s"
+	do
+		if test -z "$cf_x_athena_lib" ; then
+			cf_save="$LIBS"
+			cf_test=XawSimpleMenuAddGlobalActions
+			if test $cf_path != default ; then
+				LIBS="-L$cf_path/lib $cf_lib $LIBS"
+				AC_MSG_CHECKING(for $cf_lib in $cf_path)
+			else
+				LIBS="$cf_lib $LIBS"
+				AC_MSG_CHECKING(for $cf_test in $cf_lib)
+			fi
+			AC_TRY_LINK([],[$cf_test()],
+				[cf_result=yes],
+				[cf_result=no],
+				[$X_PRE_LIBS $LIBS $X_EXTRA_LIBS])
+			AC_MSG_RESULT($cf_result)
+			if test "$cf_result" = yes ; then
+				cf_x_athena_lib="$cf_lib"
+			else
+				LIBS="$cf_save"
+			fi
+		fi
+	done
+done
+
+if test -z "$cf_x_athena_include" ; then
+	AC_MSG_WARN(
+[Unable to successfully find Athena header files with test program])
+fi
+
+if test -z "$cf_x_athena_lib" ; then
 	AC_ERROR(
-[Unable to successfully link Athena library (-l$cf_x_athena) with test program]),
-	[$X_PRE_LIBS $LIBS $X_EXTRA_LIBS])])
+[Unable to successfully link Athena library (-l$cf_x_athena) with test program])
+fi
+
 CF_UPPER(CF_X_ATHENA_LIBS,HAVE_LIB_$cf_x_athena)
 AC_DEFINE_UNQUOTED($CF_X_ATHENA_LIBS)
 ])dnl

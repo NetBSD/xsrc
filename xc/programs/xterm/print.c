@@ -1,10 +1,10 @@
 /*
- * $XFree86: xc/programs/xterm/print.c,v 1.3.2.5 1999/07/28 13:38:04 hohndel Exp $
+ * $XFree86: xc/programs/xterm/print.c,v 1.15 2000/02/08 17:19:39 dawes Exp $
  */
 
 /************************************************************
 
-Copyright 1997,1998 by Thomas E. Dickey <dickey@clark.net>
+Copyright 1997-2000 by Thomas E. Dickey <dickey@clark.net>
 
                         All Rights Reserved
 
@@ -21,7 +21,7 @@ in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
 OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 IN NO EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY
 CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
@@ -40,6 +40,9 @@ authorization.
 
 #include <stdio.h>
 
+#undef  CTRL
+#define	CTRL(c)	((c) & 0x1f)
+
 #define SHIFT_IN  '\017'
 #define SHIFT_OUT '\016'
 
@@ -52,6 +55,9 @@ authorization.
 #define Strncmp(a,b,c) strncmp((char *)a,(char *)b,c)
 
 #define SGR_MASK (BOLD|BLINK|UNDERLINE|INVERSE)
+#ifdef VMS
+#define VMS_TEMP_PRINT_FILE "sys$scratch:xterm_print.txt"
+#endif
 
 static void charToPrinter (int chr);
 static void printLine (int row, int chr);
@@ -65,10 +71,23 @@ static int initialized;
 
 static void closePrinter(void)
 {
+#ifdef VMS
+	register TScreen *screen = &term->screen;
+	char pcommand[256];
+	(void)sprintf(pcommand,"%s %s;",
+	   screen->printer_command,
+	   VMS_TEMP_PRINT_FILE);
+#endif
+
 	if (Printer != 0) {
 		fclose(Printer);
 		TRACE(("closed printer, waiting...\n"));
+#ifdef VMS /* This is a quick hack, really should use spawn and check status
+	      or system services and go straight to the queue */
+		(void) system(pcommand);
+#else /* VMS */
 		while (nonblocking_wait() > 0)
+#endif /* VMS */
 			;
 		Printer = 0;
 		initialized = 0;
@@ -79,7 +98,7 @@ static void closePrinter(void)
 static void printCursorLine(void)
 {
 	register TScreen *screen = &term->screen;
-	TRACE(("printCursorLine\n"))
+	TRACE(("printCursorLine\n"));
 	printLine(screen->cur_row, '\n');
 }
 
@@ -93,19 +112,35 @@ static void printLine(int row, int chr)
 	register TScreen *screen = &term->screen;
 	Char *c = SCRN_BUF_CHARS(screen, row);
 	Char *a = SCRN_BUF_ATTRS(screen, row);
-	Char attr = *a & SGR_MASK;
-	int last = screen->max_col;
+	Char attr = 0;
+	unsigned ch;
+	int last = screen->max_col + 1;
 	int col;
 #if OPT_ISO_COLORS && OPT_PRINT_COLORS
+#if OPT_EXT_COLORS
+	register Char *fbf = 0;
+	register Char *fbb = 0;
+#else
 	register Char *fb = 0;
+#endif
 #endif
 	int fg = -1, last_fg = -1;
 	int bg = -1, last_bg = -1;
-	int cs = CSET_IN,last_cs = CSET_IN;
+	int cs = CSET_IN;
+	int last_cs = CSET_IN;
 
-	TRACE(("printLine(row=%d, chr=%d)\n", row, chr))
+	TRACE(("printLine(row=%d, top=%d:%d, chr=%d):%s\n",
+		row, screen->topline, screen->max_row, chr,
+		visibleChars(PAIRED_CHARS(c,
+				screen->utf8_mode
+					? SCRN_BUF_WIDEC(screen,row)
+					: 0), last)));
 
-	if_OPT_ISO_COLORS(screen,{
+	if_OPT_EXT_COLORS(screen,{
+		fbf = SCRN_BUF_FGRND(screen, row);
+		fbb = SCRN_BUF_BGRND(screen, row);
+	})
+	if_OPT_ISO_TRADITIONAL_COLORS(screen,{
 		fb = SCRN_BUF_COLOR(screen, row);
 	})
 	while (last > 0) {
@@ -120,9 +155,22 @@ static void printLine(int row, int chr)
 			send_SGR(0,-1,-1);
 		}
 		for (col = 0; col < last; col++) {
-			Char ch = c[col];
+			ch = c[col];
+			if_OPT_WIDE_CHARS(screen,{
+				ch = getXtermCell (screen, row, col);
+			})
 #if OPT_PRINT_COLORS
-			if_OPT_ISO_COLORS(screen,{
+			if_OPT_EXT_COLORS(screen,{
+				if (screen->print_attributes > 1) {
+					fg = (a[col] & FG_COLOR)
+						? extract_fg((fbf[col]<<8)|(fbb[col]), a[col])
+						: -1;
+					bg = (a[col] & BG_COLOR)
+						? extract_bg((fbf[col]<<8)|(fbb[col]))
+						: -1;
+				}
+			})
+			if_OPT_ISO_TRADITIONAL_COLORS(screen,{
 				if (screen->print_attributes > 1) {
 					fg = (a[col] & FG_COLOR)
 						? extract_fg(fb[col], a[col])
@@ -149,6 +197,11 @@ static void printLine(int row, int chr)
 			if (ch == 0)
 				ch = ' ';
 
+#if OPT_WIDE_CHARS
+			if (screen->utf8_mode)
+			    cs = CSET_IN;
+			else
+#endif
 			cs = (ch >= ' ' && ch != 0x7f) ? CSET_IN : CSET_OUT;
 			if (last_cs != cs) {
 				if (screen->print_attributes) {
@@ -156,7 +209,7 @@ static void printLine(int row, int chr)
 						? SHIFT_OUT
 						: SHIFT_IN);
 				}
-				last_cs = cs; 	
+				last_cs = cs;
 			}
 
 			/* FIXME:  we shouldn't have to map back from the
@@ -179,15 +232,43 @@ static void printLine(int row, int chr)
 	charToPrinter(chr);
 }
 
-void xtermPrintScreen(void)
+void xtermPrintScreen(Boolean use_DECPEX)
 {
 	register TScreen *screen = &term->screen;
-	int top = screen->printer_extent ? 0 : screen->top_marg;
-	int bot = screen->printer_extent ? screen->max_row : screen->bot_marg;
+	Boolean extent = (use_DECPEX && screen->printer_extent);
+	int top = extent ? 0 : screen->top_marg;
+	int bot = extent ? screen->max_row : screen->bot_marg;
 	int was_open = initialized;
 
-	TRACE(("xtermPrintScreen, rows %d..%d\n", top, bot))
+	TRACE(("xtermPrintScreen, rows %d..%d\n", top, bot));
 
+	while (top <= bot)
+		printLine(top++, '\n');
+	if (screen->printer_formfeed)
+		charToPrinter('\f');
+
+	if (!was_open || screen->printer_autoclose) {
+		closePrinter();
+	}
+}
+
+/*
+ * If the alternate screen is active, we'll print only that.  Otherwise, print
+ * the normal screen plus all scrolled-back lines.  The distinction is made
+ * because the normal screen's buffer is part of the overall scrollback buffer.
+ */
+static void
+xtermPrintEverything(void)
+{
+	register TScreen *screen = &term->screen;
+	int top = 0;
+	int bot = screen->max_row;
+	int was_open = initialized;
+
+	if (! screen->altbuf)
+		top = - screen->savedlines;
+
+	TRACE(("xtermPrintEverything, rows %d..%d\n", top, bot));
 	while (top <= bot)
 		printLine(top++, '\n');
 	if (screen->printer_formfeed)
@@ -230,7 +311,7 @@ static void send_SGR(unsigned attr, int fg, int bg)
 	if (attr & BOLD)
 		strcat(msg, ";1");
 	if (attr & UNDERLINE)
-		strcat(msg, ";2");
+		strcat(msg, ";4"); /* typo? DEC documents this as '2' */
 	if (attr & BLINK)
 		strcat(msg, ";5");
 	if (attr & INVERSE)	/* typo? DEC documents this as invisible */
@@ -243,7 +324,7 @@ static void send_SGR(unsigned attr, int fg, int bg)
 #if OPT_PC_COLORS
 		if (term->screen.boldColors
 		 && fg > 8
-		 && attr & BOLD)
+		 && (attr & BOLD) != 0)
 			fg -= 8;
 #endif
 		sprintf(msg + strlen(msg), ";%d", (fg < 8) ? (30 + fg) : (82 + fg));
@@ -259,18 +340,30 @@ static void send_SGR(unsigned attr, int fg, int bg)
 static void charToPrinter(int chr)
 {
 	if (!initialized) {
+#if defined(VMS)
+		/*
+		 * This implementation only knows how to write to a file.  When
+		 * the file is closed the print command executes.  Print
+		 * command must be of the form:
+		 *   print/que=name/delete [/otherflags].
+		 */
+		Printer = fopen(VMS_TEMP_PRINT_FILE, "w");
+#else
+		/*
+		 * This implementation only knows how to write to a pipe.
+		 */
 		FILE	*input;
 		int	my_pipe[2];
 		int	c;
 		register TScreen *screen = &term->screen;
 
-	    	if (pipe(my_pipe))
+		if (pipe(my_pipe))
 			SysError (ERROR_FORK);
 		if ((Printer_pid = fork()) < 0)
 			SysError (ERROR_FORK);
 
 		if (Printer_pid == 0) {
-			TRACE(((char *)0))
+			TRACE(((char *)0));
 			close(my_pipe[1]);	/* printer is silent */
 			close (screen->respond);
 
@@ -298,11 +391,19 @@ static void charToPrinter(int chr)
 			close(my_pipe[0]);	/* won't read from printer */
 			Printer = fdopen(my_pipe[1], "w");
 			TRACE(("opened printer from pid %d/%d\n",
-				(int)getpid(), Printer_pid))
+				(int)getpid(), Printer_pid));
 		}
+#endif
 		initialized++;
 	}
 	if (Printer != 0) {
+#if OPT_WIDE_CHARS
+		if (chr > 127) {
+			Char temp[10];
+			*convertToUTF8(temp, chr) = 0;
+			fputs((char *)temp, Printer);
+		} else
+#endif
 		fputc(chr, Printer);
 		if (isForm(chr))
 			fflush(Printer);
@@ -325,7 +426,7 @@ void xtermMediaControl (int param, int private_seq)
 {
 	register TScreen *screen = &term->screen;
 
-	TRACE(("MediaCopy param=%d, private=%d\n", param, private_seq))
+	TRACE(("MediaCopy param=%d, private=%d\n", param, private_seq));
 
 	if (private_seq) {
 		switch (param) {
@@ -334,26 +435,32 @@ void xtermMediaControl (int param, int private_seq)
 			break;
 		case  4:
 			screen->printer_controlmode = 0;
-			TRACE(("Reset autoprint mode\n"))
+			TRACE(("Reset autoprint mode\n"));
 			break;
 		case  5:
 			screen->printer_controlmode = 1;
-			TRACE(("Set autoprint mode\n"))
+			TRACE(("Set autoprint mode\n"));
+			break;
+		case  10:	/* VT320 */
+			xtermPrintScreen(FALSE);
+			break;
+		case  11:	/* VT320 */
+			xtermPrintEverything();
 			break;
 		}
 	} else {
 		switch (param) {
 		case -1:
 		case  0:
-			xtermPrintScreen();
+			xtermPrintScreen(TRUE);
 			break;
 		case  4:
 			screen->printer_controlmode = 0;
-			TRACE(("Reset printer controller mode\n"))
+			TRACE(("Reset printer controller mode\n"));
 			break;
 		case  5:
 			screen->printer_controlmode = 2;
-			TRACE(("Set printer controller mode\n"))
+			TRACE(("Set printer controller mode\n"));
 			break;
 		}
 	}
@@ -370,7 +477,7 @@ void xtermAutoPrint(int chr)
 	register TScreen *screen = &term->screen;
 
 	if (screen->printer_controlmode == 1) {
-		TRACE(("AutoPrint %d\n", chr))
+		TRACE(("AutoPrint %d\n", chr));
 		printLine(screen->cursor_row, chr);
 		if (Printer != 0)
 			fflush(Printer);
@@ -407,12 +514,12 @@ int xtermPrinterControl(int chr)
 	static size_t length;
 	size_t n;
 
-	TRACE(("In printer:%d\n", chr))
+	TRACE(("In printer:%d\n", chr));
 
 	switch (chr) {
 	case 0:
-	case 'Q' & 0x1f:
-	case 'S' & 0x1f:
+	case CTRL('Q'):
+	case CTRL('S'):
 		return 0;	/* ignored by application */
 
 	case CSI:
@@ -429,7 +536,7 @@ int xtermPrinterControl(int chr)
 			 && Strcmp(bfr, tbl[n].seq) == 0) {
 				screen->printer_controlmode = tbl[n].active;
 				TRACE(("Set printer controller mode %sactive\n",
-					tbl[n].active ? "" : "in"))
+					tbl[n].active ? "" : "in"));
 				if (screen->printer_autoclose
 				 && screen->printer_controlmode == 0)
 					closePrinter();

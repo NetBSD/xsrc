@@ -1,10 +1,10 @@
 /*
- * $XFree86: xc/programs/xterm/trace.c,v 3.1.2.4 1999/07/28 13:38:07 hohndel Exp $
+ * $XFree86: xc/programs/xterm/trace.c,v 3.10 2000/01/29 18:58:40 dawes Exp $
  */
 
 /************************************************************
 
-Copyright 1997 by Thomas E. Dickey <dickey@clark.net>
+Copyright 1997-2000 by Thomas E. Dickey <dickey@clark.net>
 
                         All Rights Reserved
 
@@ -60,7 +60,7 @@ Trace(char *fmt, ...)
 		fp = fopen(name, "w");
 		if (fp != 0) {
 			time_t now = time((time_t*)0);
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 			fprintf(fp, "process %d real (%d/%d) effective (%d/%d) -- %s",
 				getpid(),
 				getuid(), getgid(),
@@ -86,4 +86,66 @@ Trace(char *fmt, ...)
 		(void)fflush(stderr);
 	}
 	va_end(ap);
+}
+
+char *
+visibleChars(PAIRED_CHARS(Char *buf, Char *buf2), unsigned len)
+{
+	static char *result;
+	static unsigned used;
+	unsigned limit = ((len + 1) * 8) + 1;
+	char *dst;
+
+	if (limit > used) {
+		used = limit;
+		result = XtRealloc(result, used);
+	}
+	dst = result;
+	while (len--) {
+		unsigned value = *buf++;
+#if OPT_WIDE_CHARS
+		if (buf2 != 0) {
+			value |= (*buf2 << 8);
+			buf2++;
+		}
+		if (value > 255)
+			sprintf(dst, "\\u+%04X", value);
+		else
+#endif
+		if (value < 32 || (value > 127 && value < 160))
+			sprintf(dst, "\\%03o", value);
+		else
+			sprintf(dst, "%c", value);
+		dst += strlen(dst);
+	}
+	return result;
+}
+
+char *
+visibleIChar(IChar *buf, unsigned len)
+{
+	static char *result;
+	static unsigned used;
+	unsigned limit = ((len + 1) * 6) + 1;
+	char *dst;
+
+	if (limit > used) {
+		used = limit;
+		result = XtRealloc(result, used);
+	}
+	dst = result;
+	while (len--) {
+		unsigned value = *buf++;
+#if OPT_WIDE_CHARS
+		if (value > 255)
+			sprintf(dst, "\\u+%04X", value);
+		else
+#endif
+		if (value < 32 || (value > 127 && value < 160))
+			sprintf(dst, "\\%03o", value);
+		else
+			sprintf(dst, "%c", value);
+		dst += strlen(dst);
+	}
+	return result;
 }

@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: data.h /main/13 1996/11/24 17:35:40 rws $
- *	$XFree86: xc/programs/xterm/data.h,v 3.3.2.4 1999/07/28 13:38:00 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/data.h,v 3.24 2000/02/10 18:57:38 dawes Exp $
  */
 /*
  * Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
@@ -30,48 +30,58 @@
 
 #include <xterm.h>
 
+extern Widget toplevel;
+
 extern XtAppContext app_con;
 
+#ifdef VMS
+/* actually in vms.c */
+extern int tt_width;
+extern int tt_length;
+extern int tt_changed;
+extern int tt_pasting;
+extern int tt_new_output;
+#define VMS_TERM_BUFFER_SIZE	500
+struct q_head {
+	int flink;
+	int blink;
+};
+extern struct q_head read_queue;
+#endif
+
 #if OPT_TEK4014
-extern Char *Tbptr;
-extern Char *Tbuffer;
 extern Char *Tpushb;
 extern Char *Tpushback;
+extern PtyData *Tbuffer;
 extern TekLink *TekRefresh;
 extern TekWidget tekWidget;
+extern Widget tekshellwidget;
 extern int TEKgcFontMask;
 extern int T_lastx;
 extern int T_lasty;
-extern int Tbcnt;
 extern int Ttoggled;
 extern jmp_buf Tekend;
 #endif
 
-extern Char *bptr;
 #ifdef ALLOWLOGGING
 extern char log_def_name[];
 #endif
 extern char *ptydev;
 extern char *ttydev;
 extern char *xterm_name;
-extern Boolean sunFunctionKeys;
+extern int hold_screen;
 
-#if OPT_ZICONBEEP 
-extern int zIconBeep; 
-extern Boolean zIconBeep_flagged; 
-#endif 
-
-#if OPT_SAME_NAME 
-extern Boolean sameName; 
-#endif 
-
-#if OPT_SUNPC_KBD
-extern Boolean sunKeyboard;
+#if OPT_ZICONBEEP
+extern int zIconBeep;
+extern Boolean zIconBeep_flagged;
 #endif
 
-extern Char VTbuffer[];
+#if OPT_SAME_NAME
+extern Boolean sameName;
+#endif
+
+extern PtyData VTbuffer;
 extern int am_slave;
-extern int bcnt;
 extern int max_plus1;
 extern jmp_buf VTend;
 
@@ -79,9 +89,15 @@ extern jmp_buf VTend;
 extern int debug;
 #endif	/* DEBUG */
 
+#ifdef VMS
+extern int Select_mask;
+extern int X_mask;
+extern int pty_mask;
+#else /* VMS */
 extern fd_set Select_mask;
 extern fd_set X_mask;
 extern fd_set pty_mask;
+#endif /* VMS */
 
 extern int waitingForTrackInfo;
 
@@ -101,7 +117,11 @@ extern XtermWidget term;
 #define	XkbBI_MajorError		2
 #define	XkbBI_TerminalBell		9
 #define	XkbBI_MarginBell		10
-#define	XkbBI_CursorStuck		11
+#endif
+
+#if OPT_WIDE_CHARS
+extern char defaultUTF8[];
+extern const unsigned short dec2ucs[32];
 #endif
 
 #endif /* included_data_h */
