@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: ptyx.h /main/67 1996/11/29 10:34:19 swick $
- *	$XFree86: xc/programs/xterm/ptyx.h,v 3.36 1998/04/05 00:46:11 robin Exp $
+ *	$XFree86: xc/programs/xterm/ptyx.h,v 3.41 1998/07/04 14:48:28 robin Exp $
  */
 
 /*
@@ -36,6 +36,15 @@
 #include <X11/Xmu/Misc.h>	/* For Max() and Min(). */
 #include <X11/Xfuncs.h>
 #include <X11/Xosdefs.h>
+
+/* adapted from IntrinsicI.h */
+#define MyStackAlloc(size, stack_cache_array)     \
+    ((size) <= sizeof(stack_cache_array)	  \
+    ?  (XtPointer)(stack_cache_array)		  \
+    :  malloc((unsigned)(size)))
+
+#define MyStackFree(pointer, stack_cache_array) \
+    if ((pointer) != ((XtPointer)(stack_cache_array))) free(pointer)
 
 #ifdef AMOEBA
 /* Avoid name clashes with standard Amoeba types: */
@@ -76,49 +85,49 @@
 ** allow for mobility of the pty master/slave directories
 */
 #ifndef PTYDEV
-#ifdef hpux
+#ifdef __hpux 
 #define	PTYDEV		"/dev/ptym/ptyxx"
-#else	/* !hpux */
+#else	/* !__hpux */ 
 #ifndef __osf__
 #define	PTYDEV		"/dev/ptyxx"
 #endif
-#endif	/* !hpux */
+#endif	/* !__hpux */ 
 #endif	/* !PTYDEV */
 
 #ifndef TTYDEV
-#ifdef hpux
+#ifdef __hpux 
 #define TTYDEV		"/dev/pty/ttyxx"
-#else	/* !hpux */
+#else	/* !__hpux */ 
 #ifdef __osf__
 #define TTYDEV		"/dev/ttydirs/xxx/xxxxxxxxxxxxxx"
 #else
 #define	TTYDEV		"/dev/ttyxx"
 #endif
-#endif	/* !hpux */
+#endif	/* !__hpux */ 
 #endif	/* !TTYDEV */
 
 #ifndef PTYCHAR1
-#ifdef hpux
+#ifdef __hpux 
 #define PTYCHAR1	"zyxwvutsrqp"
-#else	/* !hpux */
+#else	/* !__hpux */ 
 #ifdef __EMX__
 #define PTYCHAR1	"pq"
 #else
 #define	PTYCHAR1	"pqrstuvwxyzPQRSTUVWXYZ"
 #endif  /* !__EMX__ */
-#endif	/* !hpux */
+#endif	/* !__hpux */ 
 #endif	/* !PTYCHAR1 */
 
 #ifndef PTYCHAR2
-#ifdef hpux
+#ifdef __hpux 
 #define	PTYCHAR2	"fedcba9876543210"
-#else	/* !hpux */
+#else	/* !__hpux */ 
 #ifdef __FreeBSD__
 #define	PTYCHAR2	"0123456789abcdefghijklmnopqrstuv"
 #else /* !__FreeBSD__ */
 #define	PTYCHAR2	"0123456789abcdef"
 #endif /* !__FreeBSD__ */
-#endif	/* !hpux */
+#endif	/* !__hpux */ 
 #endif	/* !PTYCHAR2 */
 
 #ifndef TTYFORMAT
@@ -256,6 +265,8 @@ typedef struct {
 #define	TEK_BG		6
 #define	HIGHLIGHT_BG	7
 #define	NCOLORS		8
+
+#define EXCHANGE(a,b,tmp) tmp = a; a = b; b = tmp;
 
 #define	COLOR_DEFINED(s,w)	((s)->which&(1<<(w)))
 #define	COLOR_VALUE(s,w)	((s)->colors[w])
@@ -637,6 +648,7 @@ typedef struct {
 	Cursor pointer_cursor;		/* pointer cursor in window	*/
 
 	String	printer_command;	/* pipe/shell command string	*/
+	Boolean printer_autoclose;	/* close printer when offline	*/
 	Boolean printer_extent;		/* print complete page		*/
 	Boolean printer_formfeed;	/* print formfeed per function	*/
 	int	printer_controlmode;	/* 0=off, 1=auto, 2=controller	*/
@@ -717,6 +729,7 @@ typedef struct {
 	int		scroll_amt;	/* amount to scroll		*/
 	int		refresh_amt;	/* amount to refresh		*/
 	int		protected_mode;	/* 0=off, 1=DEC, 2=ISO		*/
+	Boolean		old_fkeys;	/* true for compatible fkeys	*/
 	Boolean		jumpscroll;	/* whether we should jumpscroll */
 	Boolean         always_highlight; /* whether to highlight cursor */
 	Boolean		underline;	/* whether to underline text	*/
@@ -891,6 +904,8 @@ typedef struct _XtermWidgetRec {
     unsigned	flags;		/* mode flags			*/
     int         cur_foreground;	/* current foreground color	*/
     int         cur_background;	/* current background color	*/
+    Pixel       dft_foreground;	/* default foreground color	*/
+    Pixel       dft_background;	/* default background color	*/
 #if OPT_ISO_COLORS
     int         sgr_foreground;	/* current SGR foreground color	*/
 #endif

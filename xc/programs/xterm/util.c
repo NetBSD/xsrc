@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: util.c /main/33 1996/12/01 23:47:10 swick $
- *	$XFree86: xc/programs/xterm/util.c,v 3.26 1998/03/27 23:24:03 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/util.c,v 3.29 1998/07/04 14:48:30 robin Exp $
  */
 
 /*
@@ -43,23 +43,18 @@
 
 extern Bool waiting_for_initial_map;
 
-static int ClearInLine PROTO((TScreen *screen, int row, int col, int len));
-static int handle_translated_exposure PROTO((TScreen *screen, int rect_x, int rect_y, unsigned int rect_width, unsigned int rect_height));
-static void ClearAbove PROTO((TScreen *screen));
-static void ClearBelow PROTO((TScreen *screen));
-static void ClearLeft PROTO((TScreen *screen));
-static void ClearLine PROTO((TScreen *screen));
-static void CopyWait PROTO((TScreen *screen));
-static void copy_area PROTO((TScreen *screen, int src_x, int src_y, unsigned int width, unsigned int height, int dest_x, int dest_y));
-static void horizontal_copy_area PROTO((TScreen *screen, int firstchar, int nchars, int amount));
-static void vertical_copy_area PROTO((TScreen *screen, int firstline, int nlines, int amount));
+static int ClearInLine (TScreen *screen, int row, int col, int len);
+static int handle_translated_exposure (TScreen *screen, int rect_x, int rect_y, unsigned int rect_width, unsigned int rect_height);
+static void ClearLeft (TScreen *screen);
+static void CopyWait (TScreen *screen);
+static void horizontal_copy_area (TScreen *screen, int firstchar, int nchars, int amount);
+static void vertical_copy_area (TScreen *screen, int firstline, int nlines, int amount);
 
 /*
  * These routines are used for the jump scroll feature
  */
 void
-FlushScroll(screen)
-register TScreen *screen;
+FlushScroll(register TScreen *screen)
 {
 	register int i;
 	register int shift = -screen->topline;
@@ -137,8 +132,7 @@ register TScreen *screen;
 }
 
 int
-AddToRefresh(screen)
-register TScreen *screen;
+AddToRefresh(register TScreen *screen)
 {
 	register int amount = screen->refresh_amt;
 	register int row = screen->cur_row;
@@ -165,16 +159,14 @@ register TScreen *screen;
 	}
 }
 
-/* 
- * scrolls the screen by amount lines, erases bottom, doesn't alter 
+/*
+ * scrolls the screen by amount lines, erases bottom, doesn't alter
  * cursor position (i.e. cursor moves down amount relative to text).
- * All done within the scrolling region, of course. 
+ * All done within the scrolling region, of course.
  * requires: amount > 0
  */
 void
-Scroll(screen, amount)
-register TScreen *screen;
-register int amount;
+Scroll(register TScreen *screen, register int amount)
 {
 	register int i = screen->bot_marg - screen->top_marg + 1;
 	register int shift;
@@ -275,9 +267,7 @@ register int amount;
  * Requires: amount > 0
  */
 void
-RevScroll(screen, amount)
-register TScreen *screen;
-register int amount;
+RevScroll(register TScreen *screen, register int amount)
 {
 	register int i = screen->bot_marg - screen->top_marg + 1;
 	register int shift;
@@ -342,9 +332,7 @@ register int amount;
  * bottom margin are lost.
  */
 void
-InsertLine (screen, n)
-register TScreen *screen;
-register int n;
+InsertLine (register TScreen *screen, register int n)
 {
 	register int i;
 	register int shift;
@@ -401,9 +389,7 @@ register int n;
  * at the cursor's position, lines added at bottom margin are blank.
  */
 void
-DeleteLine(screen, n)
-register TScreen *screen;
-register int n;
+DeleteLine(register TScreen *screen, register int n)
 {
 	register int i;
 	register int shift;
@@ -482,9 +468,7 @@ register int n;
  * Insert n blanks at the cursor's position, no wraparound
  */
 void
-InsertChar (screen, n)
-    register TScreen *screen;
-    register int n;
+InsertChar (register TScreen *screen, register int n)
 {
 	if(screen->cursor_state)
 		HideCursor();
@@ -504,18 +488,18 @@ InsertChar (screen, n)
 		 * prevent InsertChar from shifting the end of a line over
 		 * if it is being appended to
 		 */
-		if (non_blank_line (screen->visbuf, screen->cur_row, 
+		if (non_blank_line (screen->visbuf, screen->cur_row,
 				    screen->cur_col, screen->max_col + 1))
 		    horizontal_copy_area(screen, screen->cur_col,
 					 col - screen->cur_col,
 					 n);
 
-		FillCurBackground(
+		ClearCurBackground(
 			screen,
-			CurCursorX (screen, screen->cur_row, screen->cur_col),
 			CursorY (screen, screen->cur_row),
-			n * CurFontWidth(screen,screen->cur_row),
-			FontHeight(screen));
+			CurCursorX (screen, screen->cur_row, screen->cur_col),
+			FontHeight(screen),
+			n * CurFontWidth(screen,screen->cur_row));
 	    }
 	}
 	/* adjust screen->buf */
@@ -526,9 +510,7 @@ InsertChar (screen, n)
  * Deletes n chars at the cursor's position, no wraparound.
  */
 void
-DeleteChar (screen, n)
-    register TScreen *screen;
-    register int	n;
+DeleteChar (register TScreen *screen, register int n)
 {
 	register int width;
 
@@ -537,13 +519,13 @@ DeleteChar (screen, n)
 	screen->do_wrap = 0;
 	if (n > (width = screen->max_col + 1 - screen->cur_col))
 	  	n = width;
-		
+
 	if(screen->cur_row - screen->topline <= screen->max_row) {
 	    if(!AddToRefresh(screen)) {
 		int col = screen->max_col + 1 - n;
 		if(screen->scroll_amt)
 			FlushScroll(screen);
-	
+
 #if OPT_DEC_CHRSET
 		if (CSET_DOUBLE(SCRN_BUF_CSETS(screen, screen->cur_row)[0])) {
 			col = (screen->max_col + 1) / 2 - n;
@@ -553,12 +535,12 @@ DeleteChar (screen, n)
 				     col - screen->cur_col,
 				     -n);
 
-		FillCurBackground (
+		ClearCurBackground (
 			screen,
-			CurCursorX(screen, screen->cur_row, col),
 			CursorY (screen, screen->cur_row),
-			n * CurFontWidth(screen,screen->cur_row),
-			FontHeight(screen));
+			CurCursorX(screen, screen->cur_row, col),
+			FontHeight(screen),
+			n * CurFontWidth(screen,screen->cur_row));
 	    }
 	}
 	/* adjust screen->buf */
@@ -569,8 +551,7 @@ DeleteChar (screen, n)
  * Clear from cursor position to beginning of display, inclusive.
  */
 static void
-ClearAbove (screen)
-register TScreen *screen;
+ClearAbove (register TScreen *screen)
 {
 	if (screen->protected_mode != OFF_PROTECT) {
 		register int row;
@@ -605,8 +586,7 @@ register TScreen *screen;
  * Clear from cursor position to end of display, inclusive.
  */
 static void
-ClearBelow (screen)
-register TScreen *screen;
+ClearBelow (register TScreen *screen)
 {
 	ClearRight(screen, -1);
 
@@ -637,11 +617,7 @@ register TScreen *screen;
  * protected characters were found, 0 otherwise.
  */
 static int
-ClearInLine(screen, row, col, len)
-	register TScreen *screen;
-	int row;
-	int col;
-	int len;
+ClearInLine(register TScreen *screen, int row, int col, int len)
 {
 	int rc = 1;
 	int flags = TERM_COLOR_FLAGS;
@@ -703,12 +679,12 @@ ClearInLine(screen, row, col, len)
 		if(!AddToRefresh(screen)) {
 			if(screen->scroll_amt)
 				FlushScroll(screen);
-			FillCurBackground (
+			ClearCurBackground (
 				screen,
-				CurCursorX (screen, row, col),
 				CursorY (screen, row),
-				len * CurFontWidth(screen,row),
-				FontHeight(screen));
+				CurCursorX (screen, row, col),
+				FontHeight(screen),
+				len * CurFontWidth(screen,row));
 		}
 	}
 
@@ -725,14 +701,12 @@ ClearInLine(screen, row, col, len)
 	return rc;
 }
 
-/* 
+/*
  * Clear the next n characters on the cursor's line, including the cursor's
  * position.
  */
 void
-ClearRight (screen, n)
-register TScreen *screen;
-int n;
+ClearRight (register TScreen *screen, int n)
 {
 	int	len = (screen->max_col - screen->cur_col + 1);
 
@@ -754,25 +728,22 @@ int n;
  * Clear first part of cursor's line, inclusive.
  */
 static void
-ClearLeft (screen)
-register TScreen *screen;
+ClearLeft (register TScreen *screen)
 {
 	(void) ClearInLine(screen, screen->cur_row, 0, screen->cur_col + 1);
 }
 
-/* 
+/*
  * Erase the cursor's line.
  */
 static void
-ClearLine(screen)
-register TScreen *screen;
+ClearLine(register TScreen *screen)
 {
 	(void) ClearInLine(screen, screen->cur_row, 0, screen->max_col + 1);
 }
 
 void
-ClearScreen(screen)
-register TScreen *screen;
+ClearScreen(register TScreen *screen)
 {
 	register int top;
 
@@ -783,8 +754,8 @@ register TScreen *screen;
 		if(screen->scroll_amt)
 			FlushScroll(screen);
 		ClearCurBackground(screen,
-		    top * FontHeight(screen) + screen->border,	
-		    OriginX(screen), 
+		    top * FontHeight(screen) + screen->border,
+		    OriginX(screen),
 		    (screen->max_row - top + 1) * FontHeight(screen),
 		    Width(screen));
 	}
@@ -797,10 +768,10 @@ register TScreen *screen;
  * ignore the protected flags.
  */
 void
-do_erase_line(screen, param, mode)
-	register TScreen *screen;
-	int param;
-	int mode;
+do_erase_line(
+	register TScreen *screen,
+	int param,
+	int mode)
 {
 	int saved_mode = screen->protected_mode;
 
@@ -830,10 +801,10 @@ do_erase_line(screen, param, mode)
  * protected mode flag in the screen data (it's slower).
  */
 void
-do_erase_display(screen, param, mode)
-	register TScreen *screen;
-	int param;
-	int mode;
+do_erase_display(
+	register TScreen *screen,
+	int param,
+	int mode)
 {
 	int saved_mode = screen->protected_mode;
 
@@ -886,14 +857,13 @@ do_erase_display(screen, param, mode)
 }
 
 static void
-CopyWait(screen)
-register TScreen *screen;
+CopyWait(register TScreen *screen)
 {
 	XEvent reply;
 	XEvent *rep = &reply;
 
 	while (1) {
-		XWindowEvent (screen->display, VWindow(screen), 
+		XWindowEvent (screen->display, VWindow(screen),
 		  ExposureMask, &reply);
 		switch (reply.type) {
 		case Expose:
@@ -928,11 +898,14 @@ register TScreen *screen;
  * used by vertical_copy_area and and horizontal_copy_area
  */
 static void
-copy_area(screen, src_x, src_y, width, height, dest_x, dest_y)
-    TScreen *screen;
-    int src_x, src_y;
-    unsigned int width, height;
-    int dest_x, dest_y;
+copy_area(
+	TScreen *screen,
+	int src_x,
+	int src_y,
+	unsigned int width,
+	unsigned int height,
+	int dest_x,
+	int dest_y)
 {
     /* wait for previous CopyArea to complete unless
        multiscroll is enabled and active */
@@ -948,7 +921,7 @@ copy_area(screen, src_x, src_y, width, height, dest_x, dest_y)
     screen->copy_dest_x = dest_x;
     screen->copy_dest_y = dest_y;
 
-    XCopyArea(screen->display, 
+    XCopyArea(screen->display,
 	      TextWindow(screen), TextWindow(screen),
 	      NormalGC(screen),
 	      src_x, src_y, width, height, dest_x, dest_y);
@@ -958,11 +931,11 @@ copy_area(screen, src_x, src_y, width, height, dest_x, dest_y)
  * use when inserting or deleting characters on the current line
  */
 static void
-horizontal_copy_area(screen, firstchar, nchars, amount)
-    TScreen *screen;
-    int firstchar;		/* char pos on screen to start copying at */
-    int nchars;
-    int amount;			/* number of characters to move right */
+horizontal_copy_area(
+	TScreen *screen,
+	int firstchar,		/* char pos on screen to start copying at */
+	int nchars,
+	int amount)		/* number of characters to move right */
 {
     int src_x = CurCursorX(screen, screen->cur_row, firstchar);
     int src_y = CursorY(screen, screen->cur_row);
@@ -977,11 +950,11 @@ horizontal_copy_area(screen, firstchar, nchars, amount)
  * use when inserting or deleting lines from the screen
  */
 static void
-vertical_copy_area(screen, firstline, nlines, amount)
-    TScreen *screen;
-    int firstline;		/* line on screen to start copying at */
-    int nlines;
-    int amount;			/* number of lines to move up (neg=down) */
+vertical_copy_area(
+	TScreen *screen,
+	int firstline,		/* line on screen to start copying at */
+	int nlines,
+	int amount)		/* number of lines to move up (neg=down) */
 {
     if(nlines > 0) {
 	int src_x = OriginX(screen);
@@ -997,11 +970,11 @@ vertical_copy_area(screen, firstline, nlines, amount)
  * use when scrolling the entire screen
  */
 void
-scrolling_copy_area(screen, firstline, nlines, amount)
-    TScreen *screen;
-    int firstline;		/* line on screen to start copying at */
-    int nlines;
-    int amount;			/* number of lines to move up (neg=down) */
+scrolling_copy_area(
+	TScreen *screen,
+	int firstline,		/* line on screen to start copying at */
+	int nlines,
+	int amount)		/* number of lines to move up (neg=down) */
 {
 
     if(nlines > 0) {
@@ -1014,9 +987,9 @@ scrolling_copy_area(screen, firstline, nlines, amount)
  * Returns 1 iff the area where the cursor was got refreshed.
  */
 int
-HandleExposure (screen, event)
-    register TScreen *screen;
-    register XEvent *event;
+HandleExposure (
+	register TScreen *screen,
+	register XEvent *event)
 {
     register XExposeEvent *reply = (XExposeEvent *)event;
 
@@ -1067,10 +1040,12 @@ HandleExposure (screen, event)
  * The rectangle passed in is pixel coordinates.
  */
 static int
-handle_translated_exposure (screen, rect_x, rect_y, rect_width, rect_height)
-    register TScreen *screen;
-    register int rect_x, rect_y;
-    register unsigned int rect_width, rect_height;
+handle_translated_exposure (
+	register TScreen *screen,
+	register int rect_x,
+	register int rect_y,
+	register unsigned int rect_width,
+	register unsigned int rect_height)
 {
 	register int toprow, leftcol, nrows, ncols;
 
@@ -1084,7 +1059,7 @@ handle_translated_exposure (screen, rect_x, rect_y, rect_width, rect_height)
 	    / CurFontWidth(screen,screen->cur_row);
 	if(leftcol < 0)
 		leftcol = 0;
-	nrows = (rect_y + rect_height - 1 - screen->border) / 
+	nrows = (rect_y + rect_height - 1 - screen->border) /
 		FontHeight(screen) - toprow + 1;
 	ncols = (rect_x + rect_width - 1 - OriginX(screen)) /
 		FontWidth(screen) - leftcol + 1;
@@ -1116,9 +1091,7 @@ handle_translated_exposure (screen, rect_x, rect_y, rect_width, rect_height)
 /***====================================================================***/
 
 void
-GetColors(tw,pColors)
-	XtermWidget tw;
-	ScrnColors *pColors;
+GetColors(XtermWidget tw, ScrnColors *pColors)
 {
 	register TScreen *screen = &tw->screen;
 
@@ -1138,9 +1111,7 @@ GetColors(tw,pColors)
 }
 
 void
-ChangeColors(tw,pNew)
-	XtermWidget tw;
-	ScrnColors *pNew;
+ChangeColors(XtermWidget tw, ScrnColors *pNew)
 {
 	register TScreen *screen = &tw->screen;
 	Bool	newCursor=	TRUE;
@@ -1225,11 +1196,8 @@ ChangeColors(tw,pNew)
 
 /***====================================================================***/
 
-#define EXCHANGE(a,b,tmp) tmp = a; a = b; b = tmp;
-
 void
-ReverseVideo (termw)
-	XtermWidget termw;
+ReverseVideo (XtermWidget termw)
 {
 	register TScreen *screen = &termw->screen;
 	GC tmpGC;
@@ -1272,7 +1240,7 @@ ReverseVideo (termw)
 	screen->iconVwin.reverseboldGC = tmpGC;
 #endif /* NO_ACTIVE_ICON */
 
-	recolor_cursor (screen->pointer_cursor, 
+	recolor_cursor (screen->pointer_cursor,
 			screen->mousecolor, screen->mousecolorback);
 	recolor_cursor (screen->arrow,
 			screen->mousecolor, screen->mousecolorback);
@@ -1314,9 +1282,10 @@ ReverseVideo (termw)
 }
 
 void
-recolor_cursor (cursor, fg, bg)
-    Cursor cursor;			/* X cursor ID to set */
-    unsigned long fg, bg;		/* pixel indexes to look up */
+recolor_cursor (
+	Cursor cursor,			/* X cursor ID to set */
+	unsigned long fg,		/* pixel indexes to look up */
+	unsigned long bg)		/* pixel indexes to look up */
 {
     register TScreen *screen = &term->screen;
     register Display *dpy = screen->display;
@@ -1334,15 +1303,15 @@ recolor_cursor (cursor, fg, bg)
  * Draws text with the specified combination of bold/underline
  */
 int
-drawXtermText(screen, flags, gc, x, y, chrset, text, len)
-	register TScreen *screen;
-	unsigned flags;
-	GC gc;
-	int x;
-	int y;
-	int chrset;
-	Char *text;
-	int len;
+drawXtermText(
+	register TScreen *screen,
+	unsigned flags,
+	GC gc,
+	int x,
+	int y,
+	int chrset,
+	Char *text,
+	int len)
 {
 #if OPT_DEC_CHRSET
 	if (CSET_DOUBLE(chrset)) {
@@ -1407,7 +1376,7 @@ drawXtermText(screen, flags, gc, x, y, chrset, text, len)
 		screen->cursor_state == OFF ? ' ' : '*',
 		y, x, chrset, len, len, text))
 	y += FontAscent(screen);
-	XDrawImageString(screen->display, TextWindow(screen), gc, 
+	XDrawImageString(screen->display, TextWindow(screen), gc,
 		x, y,  (char *)text, len);
 	if ((flags & (BOLD|BLINK)) && screen->enbolden)
 		XDrawString(screen->display, TextWindow(screen), gc,
@@ -1415,8 +1384,8 @@ drawXtermText(screen, flags, gc, x, y, chrset, text, len)
 	if ((flags & UNDERLINE) && screen->underline) {
 		if (FontDescent(screen) > 1)
 			y++;
-		XDrawLine(screen->display, TextWindow(screen), gc, 
-			x, y, x + len * FontWidth(screen), y);
+		XDrawLine(screen->display, TextWindow(screen), gc,
+			x, y, x + len * FontWidth(screen) - 1, y);
 	}
 
 	return x + len * FontWidth(screen);
@@ -1428,11 +1397,11 @@ drawXtermText(screen, flags, gc, x, y, chrset, text, len)
  * current screen foreground and background colors.
  */
 GC
-updatedXtermGC(screen, flags, fg_bg, hilite)
-	register TScreen *screen;
-	int flags;
-	int fg_bg;
-	Bool hilite;
+updatedXtermGC(
+	register TScreen *screen,
+	int flags,
+	int fg_bg,
+	Bool hilite)
 {
 	Pixel fg_pix = getXtermForeground(flags,extract_fg(fg_bg,flags));
 	Pixel bg_pix = getXtermBackground(flags,extract_bg(fg_bg));
@@ -1452,7 +1421,7 @@ updatedXtermGC(screen, flags, fg_bg, hilite)
 		if (hi_pix != screen->foreground
 		 && hi_pix != fg_pix
 		 && hi_pix != bg_pix
-		 && hi_pix != 0) {	/* FIXME: need a reliable undef-Pixel */
+		 && hi_pix != term->dft_foreground) {
 			bg_pix = fg_pix;
 			fg_pix = hi_pix;
 		}
@@ -1477,10 +1446,10 @@ updatedXtermGC(screen, flags, fg_bg, hilite)
  * duplicates some logic, but only modifies 1/4 as many GC's.
  */
 void
-resetXtermGC(screen, flags, hilite)
-	register TScreen *screen;
-	int flags;
-	Bool hilite;
+resetXtermGC(
+	register TScreen *screen,
+	int flags,
+	Bool hilite)
 {
 	Pixel fg_pix = getXtermForeground(flags,term->cur_foreground);
 	Pixel bg_pix = getXtermBackground(flags,term->cur_background);
@@ -1513,13 +1482,13 @@ resetXtermGC(screen, flags, hilite)
  * BOLD or UNDERLINE color-mode active, those will be used.
  */
 int
-extract_fg (color, flags)
-	unsigned color;
-	unsigned flags;
+extract_fg (
+	unsigned color,
+	unsigned flags)
 {
 	int fg = (int) ((color >> 4) & 0xf);
 
-	if (term->screen.colorAttrMode 
+	if (term->screen.colorAttrMode
 	 || (fg == extract_bg(color))) {
 		if (term->screen.colorULMode && (flags & UNDERLINE))
 			fg = COLOR_UL;
@@ -1532,8 +1501,7 @@ extract_fg (color, flags)
 }
 
 int
-extract_bg (color)
-	unsigned color;
+extract_bg (unsigned color)
 {
 	return (int) (color & 0xf);
 }
@@ -1548,9 +1516,7 @@ extract_bg (color)
  * attribute colors.
  */
 unsigned
-makeColorPair (fg, bg)
-	int fg;
-	int bg;
+makeColorPair (int fg, int bg)
 {
 	unsigned my_bg = (bg >= 0) && (bg < 16) ? bg : 0;
 	unsigned my_fg = (fg >= 0) && (fg < 16) ? fg : my_bg;
@@ -1558,16 +1524,14 @@ makeColorPair (fg, bg)
 }
 
 unsigned
-xtermColorPair ()
+xtermColorPair (void)
 {
 	/* FIXME? */
 	return makeColorPair(term->sgr_foreground, term->cur_background);
 }
 
 Pixel
-getXtermForeground(flags, color)
-	int flags;
-	int color;
+getXtermForeground(int flags, int color)
 {
 	Pixel fg = (flags & FG_COLOR) && (color >= 0)
 			? term->screen.Acolors[color]
@@ -1577,9 +1541,7 @@ getXtermForeground(flags, color)
 }
 
 Pixel
-getXtermBackground(flags, color)
-	int flags;
-	int color;
+getXtermBackground(int flags, int color)
 {
 	Pixel bg = (flags & BG_COLOR) && (color >= 0)
 			? term->screen.Acolors[color]
@@ -1594,8 +1556,7 @@ getXtermBackground(flags, color)
  * in the current SGR background. Otherwise, reset to the window's default
  * background.
  */
-void useCurBackground(flag)
-	Bool flag;
+void useCurBackground(Bool flag)
 {
 	TScreen *screen = &term->screen;
 	int color = flag ? term->cur_background : -1;
@@ -1607,12 +1568,12 @@ void useCurBackground(flag)
 /*
  * Using the "current" SGR background, clear a rectangle.
  */
-void ClearCurBackground(screen, top,left, height,width)
-	register TScreen *screen;
-	int top;
-	int left;
-	unsigned height;
-	unsigned width;
+void ClearCurBackground(
+	register TScreen *screen,
+	int top,
+	int left,
+	unsigned height,
+	unsigned width)
 {
 	useCurBackground(TRUE);
 	XClearArea (screen->display, TextWindow(screen),
@@ -1623,9 +1584,7 @@ void ClearCurBackground(screen, top,left, height,width)
 
 #if OPT_DEC_CHRSET
 int
-getXtermChrSet(row, col)
-	int row;
-	int col;
+getXtermChrSet(int row, int col)
 {
 	TScreen *screen = &term->screen;
 	Char set = SCRN_BUF_CSETS(screen, row)[0];
@@ -1635,8 +1594,7 @@ getXtermChrSet(row, col)
 }
 
 int
-curXtermChrSet(row)
-	int row;
+curXtermChrSet(int row)
 {
 	TScreen *screen = &term->screen;
 	Char set = SCRN_BUF_CSETS(screen, row)[0];
@@ -1648,10 +1606,7 @@ curXtermChrSet(row)
 
 #ifdef HAVE_CONFIG_H
 #if USE_MY_MEMMOVE
-char *	my_memmove(s1, s2, n)
-	char *	s1;
-	char *	s2;
-	size_t	n;
+char * my_memmove(char * s1, char * s2, size_t n)
 {
 	if (n != 0) {
 		if ((s1+n > s2) && (s2+n > s1)) {
@@ -1676,7 +1631,7 @@ char *	my_memmove(s1, s2, n)
 #endif /* USE_MY_MEMMOVE */
 
 #if !HAVE_STRERROR
-char *my_strerror(n)
+char *my_strerror(int n)
 {
 	extern char *sys_errlist[];
 	extern int sys_nerr;
