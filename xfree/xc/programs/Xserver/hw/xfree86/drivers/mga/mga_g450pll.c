@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_g450pll.c,v 1.5 2002/01/11 15:42:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga_g450pll.c,v 1.7 2002/04/06 17:55:11 tsi Exp $ */
 
 /* All drivers should typically include these */
 #include "xf86.h"
@@ -208,6 +208,26 @@ static CARD32 G450WriteMNP(ScrnInfoPtr pScrn, CARD32 ulMNP)
    return TRUE;
 }
 
+static CARD32 G450ReadMNP(ScrnInfoPtr pScrn)
+{
+   MGAPtr pMga = MGAPTR(pScrn);
+   MGARegPtr pReg;
+   CARD32 ret = 0;
+
+   pReg = &pMga->ModeReg;
+
+   if (!pMga->SecondCrtc) {
+      ret = (CARD8)inMGAdac(MGA1064_PIX_PLLC_M) << 16;   
+      ret |= (CARD8)inMGAdac(MGA1064_PIX_PLLC_N) << 8;   
+      ret |= (CARD8)inMGAdac(MGA1064_PIX_PLLC_P);   
+   } else {
+      ret = (CARD8)inMGAdac(MGA1064_VID_PLL_M) << 16;
+      ret |= (CARD8)inMGAdac(MGA1064_VID_PLL_N) << 8; 
+      ret |= (CARD8)inMGAdac(MGA1064_VID_PLL_P);
+   }
+   return ret;
+}
+
 
 static CARD32 G450CompareMNP(ScrnInfoPtr pScrn, CARD32 ulFout, CARD32 ulMNP1,
                       CARD32 ulMNP2, long *pulResult)
@@ -305,6 +325,9 @@ double MGAG450SetPLLFreq(ScrnInfoPtr pScrn, long f_out)
 
    MGAPtr pMga = MGAPTR(pScrn);
 
+#ifdef DEBUG
+   xf86DrvMsg(pScrn->scrnIndex,X_INFO, "Restoring PLLClk = %d\n",f_out);
+#endif
    G450FindFirstPLLParam(pScrn, f_out, &ulMNP);
    ulMNPTable[0] = ulMNP;
    G450FindNextPLLParam(pScrn, f_out, &ulMNP);
@@ -454,4 +477,21 @@ double MGAG450SetPLLFreq(ScrnInfoPtr pScrn, long f_out)
    }
   
    return TRUE;
+}
+
+long
+MGAG450SavePLLFreq(ScrnInfoPtr pScrn) 
+{
+    CARD32 ulMNP = G450ReadMNP(pScrn);
+    CARD8  ucP;
+    CARD32 freq;
+
+    G450CalculVCO(pScrn, ulMNP, &freq);
+    ucP = (CARD8)(ulMNP & 0x03);
+    G450ApplyPFactor(pScrn, ucP, &freq);
+
+#ifdef DEBUG
+    xf86DrvMsg(pScrn->scrnIndex,X_INFO,"Saved PLLClk = %d\n",freq);
+#endif
+    return freq;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.79 2002/01/11 15:42:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/mga/mga.h,v 1.82 2002/04/04 14:05:43 eich Exp $ */
 /*
  * MGA Millennium (MGA2064W) functions
  *
@@ -120,6 +120,7 @@ typedef struct {
     CARD32		Option;
     CARD32		Option2;
     CARD32		Option3;
+    long                Clock;
 } MGARegRec, *MGARegPtr;
 
 /* For programming the second CRTC */
@@ -350,9 +351,11 @@ typedef struct {
     void		(*GetQuiescence)(ScrnInfoPtr pScrn);
 
     int 		agpMode;
+    int		agpSize;
 
 #endif
     XF86VideoAdaptorPtr adaptor;
+    Bool		DualHeadEnabled;
     Bool		SecondCrtc;
     Bool                SecondOutput;
     GDevPtr		device;
@@ -495,6 +498,9 @@ void MGACRTC2GetPitch(ScrnInfoPtr pSrcn, xMODEINFO *pModeInfo);
 void MGACRTC2GetDisplayStart(ScrnInfoPtr pScrn, xMODEINFO *pModeInfo, CARD32 base, CARD32 ulX, CARD32 ulY);
  
 double MGAG450SetPLLFreq(ScrnInfoPtr pScrn, long f_out);
+
+double MGAG450SetPLLFreq(ScrnInfoPtr pScrn, long f_out);
+long MGAG450SavePLLFreq(ScrnInfoPtr pScrn);
 void MGAprintDac(ScrnInfoPtr pScrn);
 
 #ifdef USEMGAHAL
