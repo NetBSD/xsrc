@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.1 2004/01/18 04:15:18 rtr Exp $	*/
+/*	$NetBSD: wscons.c,v 1.2 2004/03/08 01:08:19 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -103,7 +103,7 @@ void wscons_bell(int percent, DeviceIntPtr device, pointer ctrl, int unused)
 	if (percent == 0 || kctrl->bell == 0)
 		return;
 
-	if (private.beep_fd >= 0)
+	if (private.wskbd_fd >= 0)
 		ioctl(private.wskbd_fd, WSKBDIO_BELL, NULL);
 }
 
@@ -170,29 +170,37 @@ void wskbd_io(void)
 			continue;
 		}
 
-		/*
-		 * Ok we now have a kludge to map the RiscPC raw keycodes
-		 * to AT keycodes. We don't get AT keycodes as the RiscPC
-		 * does not have a 8042 keyboard controller to translate
-		 * the raw codes from the keyboard.
-		 * We do the translation here so that we can then use
-		 * existing PC keyboard mapping info.
-		 * This is really just a hack as I don't want to spend
-		 * time now figuring out the correct mappings when I can
-		 * borrow existing AT ones.
-		 */
-		DPRINTF(("wscons code = 0x%x\n", wsev.value));
-		if (wsev.value < 0x90 && kbdmap[wsev.value] != -1)
-			x_event.u.u.detail = kbdmap[wsev.value];
-		else if (wsev.value > 0x110 && wsev.value < 0x115
-		    && kbdmap1[(wsev.value - 0x110)] != -1)
-			x_event.u.u.detail = kbdmap1[(wsev.value - 0x110)];
-		else if (wsev.value > 0x140 && wsev.value < 0x180
-		    && kbdmap2[(wsev.value - 0x140)] != -1)
-			x_event.u.u.detail = kbdmap2[(wsev.value - 0x140)];
-		else
-			continue;
-		DPRINTF(("X11 code = 0x%x\n", x_event.u.u.detail));
+		if (private.wskbd_type == WSKBD_TYPE_RISCPC) {
+			/*
+			 * Ok we now have a kludge to map the RiscPC
+			 * raw keycodes to AT keycodes. We don't get
+			 * AT keycodes as the RiscPC does not have a
+			 * 8042 keyboard controller to translate the
+			 * raw codes from the keyboard.  We do the
+			 * translation here so that we can then use
+			 * existing PC keyboard mapping info.  This is
+			 * really just a hack as I don't want to spend
+			 * time now figuring out the correct mappings
+			 * when I can borrow existing AT ones.
+			 */
+			DPRINTF(("wscons code = 0x%x\n", wsev.value));
+			if (wsev.value < 0x90 && kbdmap[wsev.value] != -1)
+				x_event.u.u.detail = kbdmap[wsev.value];
+			else if (wsev.value > 0x110 && wsev.value < 0x115
+			    && kbdmap1[(wsev.value - 0x110)] != -1)
+				x_event.u.u.detail =
+				    kbdmap1[(wsev.value - 0x110)];
+			else if (wsev.value > 0x140 && wsev.value < 0x180
+			    && kbdmap2[(wsev.value - 0x140)] != -1)
+				x_event.u.u.detail =
+				    kbdmap2[(wsev.value - 0x140)];
+			else
+				continue;
+			DPRINTF(("X11 code = 0x%x\n", x_event.u.u.detail));
+		} else {
+			/* Assume WSKBD_TYPE_PC_XT, i.e. no translation. */
+			x_event.u.u.detail = wsev.value;
+		}
 
 		/*
 		 * Bit of hackery to provide a Xserver kill hot key
@@ -261,11 +269,13 @@ wskbd_init(void)
 		ErrorF("Couldn't get keyboard type\n");
 		FatalError((char *)sys_errlist[errno]);
 	}
-	if (kbdtype != WSKBD_TYPE_RISCPC) {
-		ErrorF("%s is not a Risc PC keyboard\n", KBD_PATH);
+	if (kbdtype != WSKBD_TYPE_RISCPC &&
+	    kbdtype != WSKBD_TYPE_PC_XT) {
+		ErrorF("%s is not a Risc PC or PC/XT keyboard\n", KBD_PATH);
 		close(fd);
 		return -1;
 	}
+	private.wskbd_type = kbdtype;
 
 	/* Drain the keyboard buffer */
 	do {

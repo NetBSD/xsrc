@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.1 2004/01/18 04:15:18 rtr Exp $	*/
+/*	$NetBSD: private.h,v 1.2 2004/03/08 01:08:19 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -45,6 +45,7 @@ struct _private
 	int wsmouse_fd;		/* File descriptor for wsmouse */
 	int kbd_fd;		/* File descriptor for kbd */
 	int wskbd_fd;		/* File descriptor for wskbd */
+	u_int wskbd_type;	/* Keyboard type from WSKBDIO_GTYPE */
 	int con_fd;		/* File descriptor for the console */
 	int wsdisplay_fd;	/* File descriptor for wsdisplay */
 	int beep_fd;		/* File descriptor for beep */
