@@ -1,4 +1,4 @@
-/*	$NetBSD: rpccons.c,v 1.1.1.1 1999/06/05 00:21:00 mark Exp $	*/
+/*	$NetBSD: rpccons.c,v 1.2 2001/03/10 13:01:22 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1999 Mark Brinicombe & Neil A. Carson 
@@ -149,7 +149,7 @@ void rpc_mouse_io(void)
 {
 	int dy = 0, dx = 0;
 	struct mousebufrec mb;
-	static int buttons = 0;
+	static int buttons = BUTSTATMASK;
 	int was_mouse = 0;
 	xEvent x_event;
 
@@ -170,7 +170,7 @@ void rpc_mouse_io(void)
 		dy -= mb.y;
 
 		/* Have the buttons changed ? */
-		if (buttons != mb.status) {
+		if (buttons != (mb.status & BUTSTATMASK)) {
 			if(LEFTB(buttons) != LEFTB(mb.status)){
 				x_event.u.u.detail = 1;	/* leftmost */
 				x_event.u.u.type = LEFTB(mb.status) ?
@@ -189,7 +189,7 @@ void rpc_mouse_io(void)
 				    ButtonRelease : ButtonPress;
 				mieqEnqueue(&x_event);
 			}
-			buttons = mb.status;
+			buttons = mb.status & BUTSTATMASK;
 		}
 	}
 
