@@ -23,12 +23,10 @@ SUBDIRS = module
 PSZSRCS = cfb8bit.c cfbteblt8.c cfbglrop8.c cfbpush8.c cfbrctstp8.c
 PSZOBJS = cfb8bit.o cfbteblt8.o cfbglrop8.o cfbpush8.o cfbrctstp8.o
 #ifdef MipsArchitecture
-#ifndef ArcArchitecture
 #ifndef Mips64Architecture
 STIPPLESRC = stipmips.s stipmipste.s
 STIPPLEOBJ = stipmips.o stipmipste.o
 STIPPLEDEF = -DHAS_STIPPLE_CODE
-#endif
 #endif
 #endif
 #ifdef SparcArchitecture
@@ -235,10 +233,12 @@ clean::
 	$(RM) stipmipste.s
 
 stipmips.o: stipmips.s
-	$(CPP) stipmips.s AsmDefines | $(AS) -o $@ -
+	$(CPP) -DX_BYTE_ORDER=$(X_BYTE_ORDER) AsmDefines \
+		stipmips.s | $(AS) -o $@ -
 
 stipmipste.o: stipmipste.s
-	$(CPP) -DTETEXT stipmips.s AsmDefines | $(AS) -o $@ -
+	$(CPP) -DTETEXT -DX_BYTE_ORDER=$(X_BYTE_ORDER) AsmDefines \
+		stipmipste.s | $(AS) -o $@ -
 #endif
 
 #ifdef SparcArchitecture
