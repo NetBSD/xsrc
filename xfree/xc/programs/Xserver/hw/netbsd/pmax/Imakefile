@@ -1,0 +1,19 @@
+XCOMM	$NetBSD: Imakefile,v 1.1 2004/01/10 05:23:23 rtr Exp $
+
+#include <Server.tmpl>
+
+SRCS = pmax_init.c pmax_io.c lk201.c
+OBJS = pmax_init.o pmax_io.o lk201.o
+INCLUDES = -I. -I../../../mfb -I../../../cfb -I../../../mi -I../../../include \
+	    -I$(XINCLUDESRC) -I$(FONTINCSRC) -DPSZ=8
+LINTLIBS = ../../../dix/llib-ldix.ln ../../../os/llib-los.ln \
+	   ../../mfb/llib-lmfb.ln ../../mi/llib-lmi.ln
+
+all:: $(OBJS)
+
+NormalLibraryObjectRule()
+NormalLintTarget($(SRCS))
+
+lintlib:
+
+#DependTarget()
