@@ -1,0 +1,5 @@
+XCOMM $XConsortium: Imakefile,v 1.4 94/04/18 14:43:08 rws Exp $
+
+MakeTblDoc(ddx,ddx.tbl.ms)
+
+MakeSimpleDoc(fontlib,fontlib.ms)

@@ -1,0 +1,96 @@
+<!doctype linuxdoc system>
+ 
+<article>
+
+<!-- Title information -->
+<title> XFree86 の文書一覧
+<author> XFree86 プロジェクト 社
+<date> 1995 年 7 月 4 日
+<trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
+
+<sect> 利用可能な文書 <p>
+
+<itemize>
+<item> <url name="XFree86&tm; 3.1.2 のための README"
+	url="README.html">
+<item> <url name="XFree86 プロジェクト社 著作権表示"
+	url="CPYRIGHT.html">
+<!-- <item> <url name="README for XFree86 3.1.2 on BSD/OS 2.0"
+	url="Bsdi.html"> -->
+<!-- <item> <url name="README for XFree86 3.1.2 on FreeBSD 2.0.5"
+	url="FreeBSD.html"> -->
+<!-- <item> <url name="Information for ISC Users"
+	url="isc.html"> -->
+<item> <url name="Linux を使用している人のための情報"
+	url="Linux.html">
+<!-- <item> <url name="README for XFree86 3.1.2 on LynxOS"
+	url="LynxOS.html"> -->
+<!-- <item> <url name="README for XFree86 3.1 on Mach"
+	url="Mach.html"> -->
+<!-- <item> <url name="README for XFree86 3.1.2 on NetBSD"
+	url="NetBSD.html"> -->
+<!-- <item> <url name="Information for SCO Users"
+	url="SCO.html"> -->
+<!-- <item> <url name="Information for Solaris for x86 Users"
+	url="SOLX86.html"> -->
+<!-- <item> <url name="Information for SVR4 Users"
+	url="SVR4.html"> -->
+<item> <url name="XFree86 の設定について"
+	url="Config.html">
+<item> <url name="XFree86 3.1.2 インストールガイド"
+	url="INSTALL.html">
+<item> <url name="X386/XFree86 のビデオ情報調整を自分で行なうための手引き"
+	url="VidModes.html">
+<item> <url name="XFree86 3.1.2 リンクキットの Readme"
+	url="LinkKit.html">
+<!-- <item> <url name="How to add an (S)VGA driver to XFree86"
+	url="VGADriver.html"> -->
+<!-- <item> <url name="Information for using/developing external clock setting programs"
+	url="clkprog.html"> -->
+<!-- <item> <url name="Notes on the AGX Server"
+	url="agx.html"> -->
+<!-- <item> <url name="Information for ARK Logic Chipset Users"
+	url="ark.html"> -->
+<item> <url name="ATI ボードの README"
+	url="ati.html">
+<item> <url name="Cirrus チップセットユーザのための情報"
+	url="cirrus.html">
+<item> <url name="Mach64 X サーバー での注意事項"
+	url="Mach64.html">
+<!-- <item> <url name="Information for Oak Technologies Inc. Chipset Users"
+	url="Oak.html"> -->
+<!-- <item> <url name="XFree86 3.1.2 P9000 Server Release Notes"
+	url="P9000.html"> -->
+<item> <url name="S3 チップセット使用者のための情報"
+	url="S3.html">
+<!-- <item> <url name="Information for Trident Chipset Users"
+	url="trident.html"> -->
+<!-- <item> <url name="Information for Tseng Chipset Users"
+	url="tseng.html"> -->
+<!-- <item> <url name="README.VIDEO7"
+	url="Video7.html"> -->
+<!-- <item> <url name="Information for W32 Chipset Users"
+	url="W32.html"> -->
+<!-- <item> <url name="Information for Western Digital Chipset Users"
+	url="WstDig.html"> -->
+</itemize>
+
+<hrule>
+
+このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/DocIndex.sgml,v 3.6 
+1995/07/17 13:52:30 を、岡本  一幸 
+( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.1.2 を
+日本でインストールする人向けに和訳したものです。ここがおかしいとか、
+ここはこうしたほうがいいといったご意見がありましたら、電子メールで
+お知らせ下さい。
+原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
+XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
+電子メールで送って下さい。
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/DocIndex.sgml,v 3.1 1995/10/22 10:44:33 dawes Exp $
+</verb>
+<hrule>
+&lsqb;EOF&rsqb;
+
+</article>

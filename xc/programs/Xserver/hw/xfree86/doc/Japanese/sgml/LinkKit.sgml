@@ -1,0 +1,126 @@
+<!doctype linuxdoc system>
+
+<article>
+
+<title> XFree86 3.1.2 リンクキットの Readme
+<author> XFree86 プロジェクト社
+<date> 1995 年 7 月 7 日
+<trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
+<sect> XFree86 3.1.2 リンクキットの Readme <p>
+<enum>
+<item> gcc-2 を使用しないシステムで、gcc-2 で作成されたバイナリ配付物を使用
+	する場合は libgcc.a を組み込む必要があります。
+
+<item> リンクキットで Xnest を組み込む場合は XFree86 3.1.2 の
+	<tt>/usr/X11R6</tt> の
+	下に組み込まれたライブラリを確認して下さい。現在、リンクキットは他の
+	サーバーでは内蔵しています。
+
+<item> どのサーバーを組み込みたいかと、どのドライバと機能拡張を含ませたいか
+	を定義するために <tt/xf86site.def/ ファイルを編集して下さい。
+
+    <itemize>
+    <item> 初期値が正しくない場合に、使用するコンパイラーに合わせて
+	<tt>HasGcc</tt> と <tt>HasGcc2</tt> を設定して下さい。
+    <item> リンクキットが gcc-2.x で作成されていて、それと異なるコンパイラー
+	を使用する場合、
+	libgcc.a と <tt>NeedLibGcc</tt> を <tt>YES</tt> に設定する必要があ
+	ります。
+    <item>256 色サーバーを作成するには:
+	<tt>XF86SVGAServer</tt> を <tt>YES</tt> にします。
+    <item>16 色サーバーを作成するには:
+	<tt>XF86VGA16Server</tt> を <tt>YES</tt> にします。
+    <item>白黒サーバーを作成するには:
+	<tt>XF86MonoServer</tt> を <tt>YES</tt> にします。
+    <item>S3 サーバーを作成するには:
+	<tt>XF86S3Server</tt> を <tt>YES</tt> にします。
+    <item>Mach8 サーバーを作成するには:
+	<tt>XF86Mach8Server</tt> を <tt>YES</tt> にします。
+    <item>Mach32 サーバーを作成するには:
+	<tt>XF86Mach32Server</tt> を <tt>YES</tt> にします。
+    <item>Mach64 サーバーを作成するには:
+	<tt>XF86Mach64Server</tt> を <tt>YES</tt> にします。
+    <item>P9000 サーバーを作成するには:
+	<tt>XF86P9000Server</tt> を <tt>YES</tt> にします。
+    <item>AGX サーバーを作成するには:
+	<tt>XF86AGXServer</tt> を <tt>YES</tt> にします。
+    <item>ET4000/W32 サーバーを作成するには:
+	<tt>XF86W32Server</tt> を <tt>YES</tt> にします。
+    <item>IBM 8514/A サーバーを作成するには:
+	<tt>XF86I8514Server</tt> を <tt>YES</tt> にします。
+    <item>Xnest サーバーを作成するには:
+	<tt>XnestServer</tt> を <tt>YES</tt> にします。
+
+    <item> <tt>XF86SvgaDrivers</tt>  を SVGA サーバーに含めたいドライバの一覧に設定し
+           て下さい。
+    <item> <tt>XF86Vga16Drivers</tt> を 16 色 サーバーに含めたいドライバの一覧に設定
+           して下さい。
+    <item> <tt>XF86Vga2Drivers</tt> を白黒 vga サーバーに含めたいドライバの一覧に設定
+           して下さい。
+    <item> <tt>XF86MonoDrivers</tt> を白黒又は VGA16 サーバー(双頭のサーバーを作成す
+           るとき)を含めたい非 VGA ドライバの一覧に設定して下さい。
+    <item>注意: ドライバの順番はドライバの検出の順番を決定します。
+	`<tt>汎用</tt>'  (`<tt>generic</tt>') ドライバは常に検出に成功するので 
+	Mono と VGA16 と SVGA サーバーに含ませるドライバの最後に指定して下さい。
+    <item>PEX 機能拡張を組み込むには:
+	<tt>BuildPexExt</tt> を <tt>YES</tt> にします。
+    <item>X イメージ機能拡張を組み込むには:
+	<tt>BuildXIE</tt> を <tt>YES</tt> にします。
+    <item>低帯域 X 機能拡張を組み込むには: 
+	<tt>BuildLBX</tt> を <tt>YES</tt> にします。
+    <item>スクリーンセーバー機能拡張を組み込むには:
+	<tt>BuildScreenSaverExt</tt> を <tt>YES</tt> にします。
+
+    <item>１つ以上の X サーバーを作成する場合は、<tt>ServerToInstall</tt> 行の
+	コメントをはずして標準サーバー（つまり、``X''にシンボリックリンクを張る
+	サーバー）としたい X サーバーの名称を設定して下さい。
+    </itemize>
+
+<item> 標準配付物に含まれないドライバを組み込む場合は、<tt>drivers/vga256</tt> 
+   (白黒サーバーの VGA2 の場合は <tt>drivers/vga2</tt>、16 色サーバーの場合は
+   <tt>drivers/vga16</tt>、非 VGA の 白黒と 16 色サーバーの場合は 
+   <tt>drivers/mono</tt>) のディレクトリを作成して、そのディレクトリの下にソー
+   スファイルか .o ファイルのいずれかと適切な Imakefile をコピーしましょう。そ
+   のディレクトリの名称は該当するドライバの名称と一致させて下さい（より詳しくは 
+   <tt>VGADriverDoc</tt> ディレクトリの中にある文書を参照して下さい）。
+
+<item> Makefile を作成するには、次のコマンドを実行して下さい。
+<verb>
+  ./mkmf
+</verb>
+<item> `<tt>make</tt>' を実行すると構成定義したサーバーを結合します。
+
+<item> `<tt>make install</tt>' を実行すると新しいサーバーを組み込みます。
+
+<item> `<tt>make clean</tt>' を実行するとこの手順で作成したファイルを削除します。
+
+<item> <tt/xf86site.def/ ファイルを編集し、作成するサーバーかサーバーに含ませる
+   ドライバの選択を変更して、上記の手順を繰り返して下さい。<tt/xf86site.def/ 
+   ファイルにて X サーバー機能拡張の選択を変更した場合は、`<tt>./mkmf</tt>' の
+   かわりに `<tt>make Makefile</tt>' を実行すれば十分でしょう。
+
+<item> X サーバーに `<tt>-showconfig</tt>' オプションを付けて実行すれば X サー
+   バーに含まれているドライバを調べることが出来ます。どんな機能拡張が含まれてい
+   るかを確認するには、X サーバーを起動し、`<tt>xdpyinfo</tt>' を実行して下さ
+   い。
+</enum>
+
+<hrule>
+
+このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/LinkKit.sgml,v 3.7
+ 1995/07/12 13:20:41   を、岡本  一幸 
+( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.1.2 を
+日本でインストールする人向けに和訳したものです。ここがおかしいとか、
+ここはこうしたほうがいいといったご意見がありましたら、電子メールで
+お知らせ下さい。
+原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
+XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
+電子メールで送って下さい。
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/LinkKit.sgml,v 3.1 1995/10/22 10:44:35 dawes Exp $
+</verb>
+<hrule>
+&lsqb;EOF&rsqb;
+
+</article>

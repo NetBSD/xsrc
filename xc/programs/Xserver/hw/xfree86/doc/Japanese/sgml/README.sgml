@@ -1,0 +1,906 @@
+<!doctype linuxdoc system>
+
+ <article>
+
+ <title>XFree86&tm; 3.1.2 のための README
+ <author> XFree86 プロジェクト社
+ <date>1995 年 6 月 24 日
+ <trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
+
+<abstract>
+
+XFree86 とはインテル上で動くいくつかのバージョンの Unix と Unix に似ている
+オペレーティングシステムをサポートしている X11R6 に移植したものです。今回
+の版では、多くのバグの修正と同時に新しい機能の追加や性能の向上を図り
+ました。XFree86 は多くのアーキテクチャ用のバイナリ配付物と同様に X コンソ
+ーシアムの X11R6 のソースコードに対してのパッチデータとして入手可能です。
+</abstract>
+
+<toc>
+
+<sect> XFree86 3.1.2 で何が新しくなったか ?
+<p>
+
+次の項目を 1995 年 1 月にリリースした XFree86 3.1.1 に追加しました。:
+<enum>
+    <item> XFree86 3.1.2 は  X コンソーシアムの最新公式パッチデータ（fix-12）を
+        含んでいます。
+    <item> S3 968 と 868 チップセットをサポートしました。
+    <item> S3 サーバーで IBM RGB 5xx シリーズの RAMDAC をサポートしました。
+    <item> S3 サーバーで STG1703 の RAMDAC をサポートしました。
+    <item> S3 サーバーで 15bpp の&lcub;2,3,4,5,7,9&rcub;の RAMDAC をサポートしま
+した。
+        &lsqb; 訳注 bpp:bit per pixel=１ピクセル当りのビット数で多いほど表示出来
+        る色数や階調数が増える、深さ(depth) の単位&rsqb;
+    <item> AGX サーバーで XGA-2 をサポートしました。
+    <item> AGX サーバーで 16bpp をサポートしました。
+    <item> Mach64 サーバーのバグ修正と改良を行いました。
+    <item> Mach32 サーバーのバグ修正を行いました。
+    <item> P9000 サーバーの性能向上を行いました。
+    <item> VGA16 と白黒サーバーのバグ修正を行いました。
+    <item> インタラクティブビデオモード機能として新しい X サーバー機能拡張（と
+       クライアント）
+    <item> いくつかのサーバー向けに改良した VESA DPMS スクリーンサーバー
+    <item> SVGA サーバーに新しいチップセットをサポートしました。ARK Logic の
+        ARK1000PV と ARK2000PV と RealTek の RTG3106 です。
+    <item> ラップトップ用チップセットの WD90C24 サーバーをサポートしました。
+    <item> SVGA の vgawonder ドライバを更新しました。
+    <item> 3 ボタンマウスのエミュレーションを改良しました。
+    <item> LynxOS AT バージョン 2.2.1 と 2.3 をサポートしました。
+    <item> Unixware 2.0 をサポートしました。
+    <item> BSD/OS 2.0 をサポートしました。
+    <item> Linux/ELF をサポートしました。
+    <item> いくつかの NumLock の問題に関する成果物
+    <item> Cronyx 社より（ KIO8-R コードの）キリル文字 (Cyrillic) フォント
+    
+</enum>
+  多くのその他の小さな項目を追加しています。全ての詳細についてはソース配布物
+  に入っている CHANGELOG ファイルを参照してください。
+
+<sect> XFree86 3.1.1 で何が新しくなったか?
+<p>
+
+次の項目を 1994 年 10 月にリリースした XFree86 3.1 に追加しました。:
+<enum>
+    <item> 現在、XFree86 は  X コンソーシアムの最新の公式パッチデータ（fix-11 
+         まであります）を含んでいます。 X コンソーシアムの fix-11 を理解すべ
+         く XFree86 プロジェクト社は X コンソーシアム と作業をしています。
+    <item> Mach64 ビデオボードに対応した新しいアクセラレータサーバー
+    <item> S3 Trio32 と Trio64 チップセットをサポートしました。
+    <item> S3 サーバーで Chrontel 8391 クロックチップをサポートしました。
+    <item> SPEA Mercury P64 と MIRO Crystal 40SV をサポートしました。
+    <item> 殆どのアクセラレータサーバーでのバグ修正と性能向上を図りました。
+    <item> 二重スキャン(`double scan') ビデオモードを(殆どのサーバーで)サポート
+        しました。
+    <item> SVGA サーバー対応の新しいチップセットをサポートしました。新しいチッ
+       プセットは Avance Logic 2228/2301, Chips &amp; Technology 655xx, Cirrus 
+       Logic 6440, と Oak OTI-087です。  アクセラレータサーバーは OTI-087 を
+       含みました。
+    <item> FreeBSD 2.0 に対応しました。
+    <item> OS/2 に限定対応しました（現状ではクライアントだけですが、開発中で
+       す）。
+    <item> BSD/386 で実行するときは長さによる窓でアクセス(Linear aperture 
+        access)します。
+    <item> より多くの S3 ビデオボードに 16bpp と 32bpp 対応しました。詳しくは
+       <url url="S3.html" name="README.S3"> を参照して下さい。
+    <item> ISC の SVR3 をサポートしました(3.x と 4.x でしかテストしてません)。
+    <item> XF86Config を作成するユーティリティ `xf86config' が賢くなって、ビデ
+        オカードのデータベースを使うようになりました。
+    <item> X サーバーの LinkKit が LBX をサポートするように更新しました。
+    <item> 浮動小数点演算装置が無いマシンで遅かった X サーバーの起動時間を短縮
+        しました。
+</enum>
+更に、全ての詳細については、ソース配付物にある CHANGELOG ファイルを参照し
+  て下さい。
+
+<sect> XFree86 のテストを行ったシステム
+<p>
+
+    <DESCRIP>
+    <tag/SVR4.0:/
+	<itemize>
+	<ITEM>Esix: 4.0.3A, 4.0.4, 4.0.4.1
+	<ITEM>Microport: 2.2, 3.1, 4.1, 4.2
+	<ITEM>Dell: 2.1, 2.2, 2.2.1
+	<ITEM>UHC: 2.0, 3.6
+	<ITEM>Consensys: 1.2
+	<ITEM>MST: 4.0.3 (Load 2.07 and Load 3.02)
+	<ITEM>ISC: 4.0.3
+	<ITEM>AT&amp;T: 2.1, 4.0
+	<ITEM>NCR: MP-RAS
+	<ITEM>SunSoft: Solaris x86 2.1, 2.4
+	</itemize>	
+
+    <tag/SVR4.2:/
+	<itemize>
+	<ITEM>Consensys
+	<ITEM>Novell UnixWare
+	</itemize>	
+
+    <tag/SVR3:/
+	<itemize>
+	<ITEM>SCO: 3.2.2, 3.2.4
+	<ITEM>ISC: 3.0, 4.0, 4.1
+	</itemize>	
+
+    <tag/Others:/
+	<itemize>	
+	<ITEM>NetBSD 1.0
+	<ITEM>FreeBSD 1.1.5.1, 2.0, 2.0.5
+	<ITEM>BSD/386 1.1, BSD/OS 2.0
+	<ITEM>Mach 386
+	<ITEM>Linux
+	<ITEM>Amoeba
+	<ITEM>Minix-386
+	<ITEM>LynxOS AT 2.2.1, 2.3
+	</itemize>	
+
+    </DESCRIP>
+
+<sect> サポートしているビデオカードのチップセット
+<p>
+
+現在、XFree86 3.1.2 は次のアクセラレータチップをサポートしています:
+
+  <DESCRIP>
+    <tag>8514/A </tag>
+	(と、そのそっくりさん)
+    <tag/ATI /
+	 Mach8, Mach32, Mach64
+    <tag/Cirrus /
+	CLGD5420, CLGD5422, CLGD5424, CLGD5426, CLGD5428, CLGD5429,
+           CLGD5430, CLGD5434
+    <tag/S3 /
+	86C911, 86C924, 86C801, 86C805, 86C805i, 86C928, 86C864, 86C964,
+	86C732, 86C764, 86C868, 86C968
+    <tag/Western Digital /
+	WD90C31, WD90C33, WD90C24A
+    <tag/Weitek /
+	P9000
+    <tag/IIT /
+	AGX-014, AGX-015, AGX-016
+    <tag/IBM /
+	XGA-2
+    <tag/Tseng /
+	ET4000/W32, ET4000/W32i, ET4000/W32p 
+ </DESCRIP>
+
+Cirrus、 Western Digital と Oak アクセラレータは SVGA サーバーでサポートし
+ています。その他のチップセットについては、それら自身のサーバーでサポート
+しています。テスト済みのアクセラレータサーバーが動くカードの一覧は 
+AccelCards ファイル、Devices ファイルと xf86config ユーティリティの Cards 
+データベースといくつかのチップセット固有の <tt>README</tt> ファイルにあります。
+アクセラレータサーバーはその他のカードでも正常に動くと思われますが、我々はそれ
+を保証することは出来ません。
+
+加えて、次の SVGA チップセットがサポートしました。:
+  <DESCRIP>
+    <tag/Tseng /
+	ET3000, ET4000AX, ET4000/W32
+    <tag>Western Digital/Paradise </tag>
+	PVGA1 
+    <tag/Western Digital /
+	WD90C00, WD90C10, WD90C11, WD90C24, WD90C24A, WD90C30, WD90C31,WD90C33
+     <tag/Genoa /
+	GVGA 
+    <tag/Trident /
+	TVGA8800CS, TVGA8900B, TVGA8900C, TVGA8900CL, TVGA9000,
+	TVGA9000i, TVGA9100B, TVGA9200CX, TVGA9320, TVGA9400CX,
+ 	TVGA9420 
+    <tag/ATI /
+	18800, 18800-1, 28800-2, 28800-4, 28800-5, 28800-6, 68800-3,
+        68800-6, 68800AX, 68800LX, 88800CX, 88800GX
+    <tag/NCR /
+	77C22, 77C22E, 77C22E+ 
+    <tag/Cirrus Logic /
+	CLGD5420, CLGD5422, CLGD5424, CLGD5426, CLGD5428,
+	CLGD5429, CLGD5430, CLGD5434, CLGD6205, CLGD6215,
+	CLGD6225, CLGD6235, CLGD6410, CLGD6412, CLGD6420,
+	CLGD6440
+    <tag/Compaq /
+	AVGA 
+    <tag/OAK /
+	OTI067, OTI077, OTI087
+    <tag/Avance Logic /
+	ALG2101, ALG2228, ALG2301, ALG2302, ALG2308, ALG2401
+    <tag/Chips &amp; Technology /
+	65520, 65530, 65540, 65545
+    <tag/MX /
+	MX68000, MX680010 
+    <tag> Video 7/Headland Technologies </tag>
+	HT216-32 
+    <tag/ARK Logic/
+	ARK1000PV, ARK2000PV
+    <tag/RealTek/
+	RTG3106
+</DESCRIP> 
+
+上記の全てのチップセットは、256 色しかサポートしない Advance Logic、MX、
+Chips &amp; Technology、Video 7、ARK と RealTek chipsets のチップセットを除い
+て、256 色と白黒モードの両方をサポートしています。
+
+これらのチップセットを使う為の、より多くの情報は、チップセット固有の
+<tt>README</tt> ファイル（現在は Cirrus, Tseng, Western Digital, ATI, ARK, Trident,
+Oak と Video 7 が該当します）を参照して下さい。
+
+64k のシングルバンクのビデオメモリを使用している一般的な VGA カード（
+Hercules 白黒カード、現代（ Hyundai ）HGC1280、Sigma LaserView Visa 白黒
+カードと Apollo 白黒カード）を、白黒サーバーはサポートしています。64k バイ
+トのビデオメモリだけを持っている Compaq AVGA も白黒サーバーでサポートして
+いますが、64k バイト以上のビデオメモリでは、GVGA は未だテストしてません。
+
+VGA16 サーバーは 1MB のビデオメモリを搭載した時、約 1600x1200 以上の仮想画
+面表示が可能な ET4000、Trident、ATI、NCR、OAK と Cirrus 6420 を積んだメモ
+リバンクをサポートします。他のチップセットの場合は、画面の大きさは約 
+800X600 に制限されます。
+
+
+<bf>注意 :</bf>
+ Diamond 社が ET4000 を使っているとしても、Diamond SpeedStar 24 ボー
+ドは（多分最近の SpeedStar+ も）サポートしません。 ET4000/W32p を使ってい
+る Stealth 32 も全機能をサポートしません。ET4000/W32p を使っている Stealth
+32 も全機能をサポートしません。（ Diamond Viper Pro と Viper SE ボードに搭
+載している）Weitek 9100 と 9130 はサポートしません。殆どのその他の 
+Diamond 社のボードはこの版の XFree86 で稼働するでしょう。現在、Diamond 社
+は XFree86 Project 社 を積極的にサポートしています。
+
+Trident TGUI9440 シリーズのチップセットは未だサポートしていませんが、サポ
+ート作業中です。
+
+
+
+<sect>バージョン 2.1.1 と 3.1 の間での重要な変更事項<label id="Changes">
+<p>
+
+XFree86 2.1.1 と XFree86 3.1 の間には重要で明かな変更があります。最初は標
+準の導入場所です。XFree86 配付物を <tt>/usr/X386</tt> のかわりに 
+<tt>/usr/X11R6</tt> の下に導入します。
+これは昔の ``X386'' という名称を取り除くので、両方のバージョンを
+共存可能にします
+次の主な変更はサーバーの構成定義ファイルに関連したものです。前の <tt>Xconfig</tt>
+ファイルは XFree86 3.1 では <tt>XF86Config</tt>ファイルに置き換えました。
+これは単に名称が変更された以上の変更があります。
+新しい <tt>XF86Config</tt> ファイルは前の <tt>Xconfig</tt> ファイルとはかなり
+異なった書式を使用します。 
+前の書式に比べて新しい書式はより構造化、論理化と拡張可能化を図っています。 
+我々は困難無くこの新しい書式に変換することを達成しました。
+この変換を助ける為に、前の <tt>Xconfig</tt> ファイルから新しい
+<tt>XF86Config</tt> ファイルの書式へ変換するプログラム 
+(`reconfig') を提供します。これは古い書式以上の情報を新しい書式に含めるよ
+うな完璧な変換を提供するものではありません。
+通常、手で編集することが必要です。<tt>XF86Config</tt> が含んでいる新しい情報の
+１つはお手元の使用しているディスプレイに関する記述です。
+この追加はサーバーがディスプレイの仕様内のビデオモードになっているか確認するのに
+使用します。
+
+新しい構成定義ファイルの書式と如何に使うかの情報は <em>XF86Config(4章/5章)</em> 
+と<em>reconfig(1章)</em> のオンラインマニュアルと
+<tt>/usr/X11R6/lib/X11/doc</tt> にある 
+<url url="Config.html" name="README.Config"> ファイルを参照して下さい。
+
+構成定義ファイルに関連したその他の変更はサーバーが構成定義ファイルを見るこ
+とにあります。前の版のサーバーは使用者が指定した場所を見ていました。これは、
+安全性を高めました。これによりサーバーは通常、システム管理者の管理下におか
+れる場所のみを見るようになりました。さらなる詳細については、
+<em>XFree86(1章)</em> のオンラインマニュアルを参照して下さい。
+
+
+
+<sect> 更に多くの情報はどこにあるか
+<p>
+
+<em>XFree86(1章)</em>,
+<em>XF86Config(4章/5章)</em>, <em>XF86_SVGA(1章)</em>,
+<em>XF86_Mono(1章)</em>, <em>XF86_VGA16(1章)</em>,
+<em>XF86_Accel(1章)</em> と <em>xvidtune(1章)</em> のオンラインマニュアル
+を追加しています。
+さらに、いくつかの <tt>README</tt> ファイルと解説を供給しています。これらは、
+バイナリ配付物では、 <tt>/usr/X11R6/lib/X11/doc</tt> の、またソース配付物では 
+<tt>xc/programs/Xserver/hw/xfree86/doc</tt> のディレクトリにあります。
+
+<tt>README.Config</tt> と <tt>VideoModes.doc</tt> のファイルは XFree86 サーバー
+をどうやって設定するかについて参考情報になるでしょう。XFree86 チーム に支援の連
+絡を取る前に、提供した全ての文章とオンラインマニュアルを、読んで下さい。
+
+SVGA ドライバの開発についての文書は、
+バイナリ配付物では、<tt>/usr/X11R6/lib/Server/VGADriverDoc</tt> に、
+ソース配付物では、<tt>xc/programs/Xserver/hw/xfree86/VGADriverDoc</tt> にありま
+す。
+
+全く分からない場合は、<it/&lt;XFree86@XFree86.Org&gt;/ にいる XFree86 サポート
+チームに連絡して下さい。連絡をとる前に、最新版の XFree86 を使っていることを確認
+してください。<url name="ftp.xfree86.org:/pub/XFree86"
+url="ftp://ftp.xfree86.org/pub/XFree86"> に掲載しているバージョンを調べてくださ
+い。
+
+Usenet ニュースグループである comp.windows.x.i386unix では、たいていの 
+XFree86 と、XFree86 に関係する話題について議論されています。殆どの質問はそ
+こで回答されています。基本的な質問の回答は、内容に相当する FAQ で見つかる
+でしょう。
+
+
+<sect>協力者、提供者について
+<p>
+
+XFree86 の開発は次のメンバーで始めました。:
+<itemize>
+       <item>David Dawes <it>&lt;dawes@XFree86.org&gt;</it>
+       <item>Glenn Lai <it>&lt;glenn@cs.utexas.edu&gt;</it>
+       <item>Jim Tsillas <it>&lt;jtsilla@ccs.neu.edu&gt;</it>
+       <item>David Wexelblat <it>&lt;dwex@XFree86.org&gt;</it>
+</itemize>
+
+X11R6 パッケージに XFree86 を統合する作業は次のメンバーで行なっています。:
+<itemize>
+ <item>      Stuart Anderson <it>&lt;anderson@metrolink.com&gt;</it>
+ <item>      Doug Anson <it>&lt;danson@lgc.com&gt;</it>
+ <item>      Gertjan Akkerman <it>&lt;akkerman@dutiba.twi.tudelft.nl&gt;</it>
+ <item>      Mike Bernson <it>&lt;mike@mbsun.mlb.org&gt;</it>
+ <item>      Robin Cutshaw <it>&lt;robin@XFree86.org&gt;</it>
+ <item>      David Dawes <it>&lt;dawes@XFree86.org&gt;</it>
+ <item>      Marc Evans <it>&lt;marc@XFree86.org&gt;</it>
+ <item>      Pascal Haible <it>&lt;haible@izfm.uni-stuttgart.de&gt;</it>
+ <item>      Matthieu Herrb <it>&lt;Matthieu.Herrb@laas.fr&gt;</it>
+ <item>      Dirk Hohndel <it>&lt;hohndel@XFree86.org&gt;</it>
+ <item>      David Holland <it>&lt;davidh@use.com&gt;</it>
+ <item>      Alan Hourihane <it>&lt;alanh@fairlite.demon.co.uk&gt;</it>
+ <item>      Jeffrey Hsu <it>&lt;hsu@soda.berkeley.edu&gt;</it>
+ <item>      Glenn Lai <it>&lt;glenn@cs.utexas.edu&gt;</it>
+ <item>      Ted Lemon <it>&lt;mellon@ncd.com&gt;</it>
+ <item>      Rich Murphey <it>&lt;rich@XFree86.org&gt;</it>
+ <item>      Hans Nasten <it>&lt;nasten@everyware.se&gt;</it>
+ <item>      Mark Snitily <it>&lt;mark@sgcs.com&gt;</it>
+ <item>      Randy Terbush <it>&lt;randyt@cse.unl.edu&gt;</it>
+ <item>      Jon Tombs <it>&lt;tombs@XFree86.org&gt;</it>
+ <item>      Kees Verstoep <it>&lt;versto@cs.vu.nl&gt;</it>
+ <item>      Paul Vixie <it>&lt;paul@vix.com&gt;</it>
+ <item>      Mark Weaver <it>&lt;Mark_Weaver@brown.edu&gt;</it>
+ <item>      David Wexelblat <it>&lt;dwex@XFree86.org&gt;</it>
+ <item>      Philip Wheatley <it>&lt;Philip.Wheatley@ColumbiaSC.NCR.COM&gt;</it>
+ <item>      Thomas Wolfram <it>&lt;wolf@prz.tu-berlin.de&gt;</it>
+ <item>      Orest Zborowski <it>&lt;orestz@eskimo.com&gt;</it>
+</itemize>
+
+<DESCRIP>
+<tag/386BSD, FreeBSD, NetBSD 用は次のメンバーがサポートしています。: /
+<itemize>
+       <item> Rich Murphey <it>&lt;Rich@XFree86.org&gt;</it>
+</itemize>
+<tag/NetBSD 用は次のメンバーがサポートしています。: /
+<itemize>
+       <item> Matthieu Herrb <it>&lt;Matthieu.Herrb.@laas.fr&gt;</it>
+</itemize>
+<tag/次のメンバーが最初に 386BSD に移植しました。:  /
+<itemize>
+       <item> Pace Willison,
+       <item> Amancio Hasty Jr <it>&lt;hasty@netcom.com&gt;</it>
+</itemize>
+<tag/Mach 386 用は次のメンバーがサポートしています。:  /
+<itemize>
+       <item> Robert Baron <it>&lt;Robert.Baron@ernst.mach.cs.cmu.edu&gt;</it>
+</itemize>
+<tag/Linux 用は次のメンバーがサポートしています。:  /
+<itemize>
+       <item> Orest Zborowski <it>&lt;orestz@eskimo.com&gt;</it>
+</itemize>
+<tag/SCO Unix 用は次のメンバーがサポートしています。:  /
+<itemize>
+       <item> David McCullough <it>&lt;davidm@stallion.oz.au&gt;</it>
+</itemize>
+<tag/Amoeba 用は次のメンバーがサポートしています。:  /
+<itemize>
+       <item> Kees Verstoep <it>&lt;versto@cs.vu.nl&gt;</it>
+</itemize>
+<tag/Minix-386 用は次のメンバーがサポートしています。:  /
+<itemize>
+       <item> Philip Homburg <it>&lt;philip@cs.vu.nl&gt;</it>
+</itemize>
+<tag>OSF/1 用は次のメンバーがサポートしています。:  </tag>
+<itemize>
+       <item> Marc Evans <it>&lt;Marc@XFree86.org&gt;</it>
+</itemize>
+<tag>BSD/OS 用は次のメンバーがサポートしています。:  </tag>
+<itemize>
+       <item> Hans Nasten <it>&lt;nasten@everyware.se&gt;</it>,
+       <item> Paul Vixie <it>&lt;paul@vix.com&gt;</it>
+</itemize>
+<tag/Solaris 用は次のメンバーがサポートしています。:  /
+<itemize>
+       <item> Doug Anson <it>&lt;danson@lgc.com&gt;</it>,
+       <item> David Holland <it>&lt;davidh@use.com&gt;</it>
+</itemize>
+<tag/ISC SVR3 用は次のメンバーがサポートしています。:  /
+<itemize>
+       <item> Michael Rohleder <it>&lt;michael.rohleder@stadt-frankfurt.de&gt</it>
+</itemize>
+<tag/Linux 用共有ライブラリは次のメンバーがサポートしています。:  /
+<itemize>
+       <item> Orest Zborowski <it>&lt;orestz@eskimo.com&gt;</it>,
+       <item> Dirk Hohndel <it>&lt;hohndel@XFree86.org&gt;</it>
+</itemize>
+
+<tag/最初にアクセラレータプログラムは、次のメンバーが始めました。:  /
+<itemize>
+       <item> Kevin Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
+       <item> Rik Faith <it>&lt;faith@cs.unc.edu&gt;</it>,
+       <item> Jon Tombs <it>&lt;tombs@XFree86.org&gt;</it>
+</itemize>
+<tag/S3 アクセラレータプログラムは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Jon Tombs <it>&lt;tombs@XFree86.org&gt;</it>,
+       <item> Harald Koenig <it>&lt;koenig@tat.physik.uni-tuebingen.de&gt;</it>,
+       <item> David Wexelblat <it>&lt;dwex@XFree86.org&gt;</it>,
+       <item> David Dawes <it>&lt;dawes@XFree86.org&gt;</it>,
+       <item> Robin Cutshaw <it>&lt;robin@XFree86.org&gt;</it>,
+       <item> Amancio Hasty <it>&lt;hasty@netcom.com&gt;</it>,
+       <item> Norbert Distler <it>&lt;Norbert.Distler@physik.tu-muenchen.de&gt;</it>,
+       <item> Leonard N. Zubkoff <it>&lt;lnz@dandelion.com&gt;</it>,
+       <item> Bernhard Bender <it>&lt;br@elsa.mhs.compuserve.com&gt;</it>
+</itemize>
+<tag/Mach32 アクセラレータプログラムは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Kevin Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
+       <item> Rik Faith <it>&lt;faith@cs.unc.edu&gt;</it>,
+       <item> Mike Bernson <it>&lt;mike@mbsun.mlb.org&gt;</it>,
+       <item> Mark Weaver <it>&lt;Mark_Weaver@brown.edu&gt;</it>,
+       <item> Craig Groeschel <it>&lt;craig@metrolink.com&gt;</it>
+</itemize>
+<tag/Mach64 アクセラレータプログラムは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Kevin Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
+</itemize>
+<tag/Mach8、8514 アクセラレータプログラムは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Kevin Martin <it>&lt;martin@cs.unc.edu&gt;</it>,
+       <item> Rik Faith <it>&lt;faith@cs.unc.edu&gt;</it>,
+       <item> Tiago Gons <it>&lt;tiago@comosjn.hobby.nl&gt;</it>,
+       <item> Hans Nasten <it>&lt;nasten@everyware.se&gt;</it>,
+       <item> Scott Laird <it>&lt;lair@midway.uchicago.edu&gt;</it>
+</itemize>
+<tag/Cirrus アクセラレータプログラムは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Simon Cooper <it>&lt;scooper@vizlab.rutgers.edu&gt;</it>,
+       <item> Harm Hanemaayer <it>&lt;hhanemaa@cs.ruu.nl&gt;</it>,
+       <item> Bill Reynolds <it>&lt;bill@goshawk.lanl.gov&gt;</it>
+</itemize>
+<tag/Western Digital アクセラレータプログラムは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Mike Tierney <it>&lt;floyd@pepsi.eng.umd.edu&gt;</it>,
+       <item> Bill Conn <it>&lt;conn@bnr.ca&gt;</it>
+</itemize>
+<tag/P9000 アクセラレータプログラムは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Erik Nygren <it>&lt;nygren@mit.edu&gt;</it>,
+       <item> Harry Langenbacher <it>&lt;harry@brain.jpl.nasa.gov&gt;</it>
+       <item> Chris Mason <it>&lt;mason@mail.csh.rit.edu&gt;</it>
+       <item> Henrik Harmsen <it>&lt;harmsen@eritel.se&gt;</it>
+</itemize>
+<tag/AGX アクセラレータプログラムは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Henry Worth <it>&lt;henry.worth@amail.amdahl.com&gt;</it>,
+</itemize>
+<tag>ET4000/W32 アクセラレータプログラムは、次のメンバーが作成しました。:  </tag>
+<itemize>
+       <item> Glenn Lai <it>&lt;glenn@cs.utexas.edu&gt;</it>,
+</itemize>
+<tag/Oak Technologies Inc. アクセラレータプログラムは、次のメンバーが作成し
+     ました。:  /
+<itemize>
+       <item> Jorge Delgado <it>&lt;ernar@dit.upm.es&gt;</it>,
+</itemize>
+
+<tag/16 色の VGA サーバーは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Gertjan Akkerman <it>&lt;akkerman@dutiba.twi.tudelft.nl&gt;</it>
+</itemize>
+
+<tag/2 色 VGA と 非 VGA 白黒 サーバーは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Pascal Haible <it>&lt;haible@izfm.uni-stuttgart.de&gt;</it>
+</itemize>
+      
+<tag/ATI SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Per Lindqvist <it>&lt;pgd@compuram.bbt.se&gt;</it> と Doug Evans
+       <it>&lt;dje@cygnus.com&gt;</it>. 
+       <item> Rik Faith <it>&lt;faith@cs.unc.edu&gt;</it>によって X11R5 に移植さ
+れました。
+       <item> Marc La France <it>&lt;Marc.La-France@ualberta.ca&gt;</it>が書き換えました。
+</itemize>
+<tag/WD90C24 は、次のメンバーが作成しました。:/
+<itemize>
+       <item> Brad Bosch <it>&lt;brad@lachman.com&gt;</it>
+</itemize>
+<tag/Trident SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Alan Hourihane <it>&lt;alanh@fairlite.demon.co.uk&gt;</it>
+</itemize>
+<tag/NCR SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Stuart Anderson <it>&lt;anderson@metrolink.com&gt;</it>
+		NCR 社の承諾を得ています。
+</itemize>
+<tag/Cirrus SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Bill Reynolds <it>&lt;bill@goshawk.lanl.gov&gt;</it>,
+       <item> Hank Dietz <it>&lt;hankd@ecn.purdue.edu&gt;</it>,
+       <item> Simon Cooper <it>&lt;scooper@vizlab.rutgers.edu&gt;</it>,
+       <item> Harm Hanemaayer <it>&lt;hhanemaa@cs.ruu.nl&gt;</it>, 
+</itemize>
+<tag/Cirrus CL64xx ドライバは、次のメンバーが作成しました。: /
+<itemize>
+       <item> Manfred Brands <it>&lt;mb@oceonics.nl&gt;</it>
+       <item> Randy Hendry <it>&lt;randy@sgi.com&gt;</it>
+       <item> Jeff Kirk <it>&lt;jeff@bambam.dsd.ES.COM&gt;</it>
+</itemize>
+<tag/Compaq SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Hans Oey <it>&lt;hans@mo.hobby.nl&gt;</it>
+</itemize>
+<tag/Oak SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Steve Goldman <it>&lt;sgoldman@encore.com&gt;</it>
+       <item> Jorge Delgado <it>&lt;ernar@dit.upm.es&gt;</it>
+</itemize>
+<tag/ARK Logic SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Harm Hanemaayer <it>&lt;hhanemaa@cs.ruu.nl&gt;</it>, 
+</itemize>
+<tag/AL2101 SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Paolo Severini <it>&lt;lendl@dist.dist.unige.it&gt;</it>
+</itemize>
+<tag/Avance Logic ``ali'' SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Ching-Tai Chiu <it>&lt;cchiu@netcom.com&gt;</it>
+</itemize>
+<tag/Chips &amp; Technology SVGA ドライバは、次のメンバーが作成しました。:/
+<itemize>
+       <item> Regis Cridlig <it>&lt;cridlig@dmi.ens.fr&gt;</it>
+       <item> Jon Block <it>&lt;block@frc.com&gt;</it>
+       <item> Mike Hollick <it>&lt;hollick@graphics.cis.upenn.edu&gt;</it>
+</itemize>
+<tag/MX SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Frank Dikker <it>&lt;dikker@cs.utwente.nl&gt;</it>
+</itemize>
+<tag/Video7 SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Craig Struble <it>&lt;cstruble@acm.vt.edu&gt;</it>
+</itemize>
+<tag/RealTek SVGA ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Peter Trattler <it>&lt;peter@sbox.tu-graz.ac.at&gt;</it>
+</itemize>
+
+<tag/Apollo 白黒 ドライバは、次のメンバーが作成しました。:  /
+<itemize>
+       <item> Hamish Coleman <it>&lt;hamish@zot.apana.org.au&gt;</it>
+</itemize>
+
+<tag/XFree86-VidMode 機能拡張 と xvidtune クライアントは、次のメンバーが作成
+     しました。:  /
+<itemize>
+       <item> Kaleb S. Keithley <it>&lt;kaleb@x.org&gt;</it>
+       <item> David Dawes <it>&lt;dawes@XFree86.org&gt;</it>
+       <item> Jon Tombs <it>&lt;tombs@XFree86.org&gt;</it>
+       <item> Joe Moss <it>&lt;joe@morton.rain.com&gt;</it>
+</itemize>
+
+<tag/その他の貢献者:  /
+<itemize>
+       <item> Joerg Wunsch <it>&lt;joerg_wunsch@uriah.sax.de&gt;</it> (ET3000 の
+バンクメモリの白黒サーバー担当),
+       <item> Eric Raymond <it>&lt;esr@snark.thyrsus.com&gt;</it> (新しいビデオ
+モードの文章担当),
+
+       <item> そして、世界中の全てのベータテストを行なってくれた多くの人々！
+</itemize>
+</descrip>
+
+<sect>連絡情報
+<p>
+
+開発計画とサポートは XFree86 コアチームによって推進しています。現在、コア
+チームは、次のメンバーで構成しています。（順不同）:
+<itemize>
+       <item>Robin Cutshaw <it>&lt;robin@XFree86.org&gt;</it>
+       <item>David Dawes <it>&lt;dawes@XFree86.org&gt;</it>
+       <item>Marc Evans <it>&lt;marc@XFree86.org&gt;</it>
+       <item>Dirk Hohndel <it>&lt;hohndel@XFree86.org&gt;</it>
+       <item>Rich Murphey <it>&lt;rich@XFree86.org&gt;</it>
+       <item>Jon Tombs <it>&lt;tombs@XFree86.org&gt;</it>
+       <item>David Wexelblat <it>&lt;dwex@XFree86.org&gt;</it> 
+</itemize>
+コアチームへの連絡は <it>&lt;Core@XFree86.org&gt;</it> 宛てに電子メールを送信し
+てください。
+サポートに関する質問は <it>&lt;XFree86@XFree86.org&gt;</it> 宛てに電子メールを送
+信してください。
+
+<sect>XFree86 プロジェクト社
+<p>
+
+XFree86 プロジェクト社は２つの大きな目標を成し遂げる為に、結成しました。:
+<enum>
+	<item> XFree86 を X ウィンドウシステムの設計、開発と提供に責任を持つ X
+ コンソーシアムの中で、代表できるようなソフトにする手段を供給すること
+	<item> XFree86 の開発を推進する人材と、主として新しい表示装置と基礎的な
+電算処理設備を入手するための、いくらかの基本となる基金を集め、提供すること
+</enum>
+一つ目の目標が第一の動機でした。私たちは、緩やかに組織化されたフリーソフト
+プロジェクトが X コンソーシアムの中で発言権を持てるような抜け道はないもの
+かと、何カ月も 断続的に協議を重ねてきました。コンソーシアムの内規では、緩
+やかに組織化されたフリーソフトプロジェクトのような組織は認められませんでし
+た。私たちは基金募集に関してコンソーシアムの内規の要求を満たし、必要な基金
+を獲得するために、法人の形態を取ることに決定しました。
+
+法人化したことで、X11R6 のベータテストに参加が可能となり、XFree86 のコアの
+相当部分を X11R6 に提供できました。初めての X11R6 のコアリリース対応の 
+XFree86 はバージョン 3.0 です。現在の X11R6 のパッチ版の XFree86 はバージ
+ョン 3.1.1 です。いずれ、XFree86 はコンソーシアムの正式メンバーとして、X 
+ウィンドウズシステムの開発に ますます深く関わってゆくことになるでしょう。
+&lsqb; 訳注：X11R6 のパッチ版の XFree86 はバージョン 3.1.1 です。3.1.2 ではあり
+ません。X11R6 内部ではバージョン 3.1.1 で、公開したバージョンが 3.1.2 だと
+いうことです。&rsqb;
+
+法人組織としたことによるもう一つの利点は、XFree86 プロジェクト社が、私たち
+の仕事の為に、外部からの資金援助を獲得した事にあります。これによって、願わ
+くばもっと積極的に新しいビデオ関連の機材を導入できるようになり、よりよい製
+品をよりはやくリリースできるようになるかと思います。自分から動いて必要なも
+のを手に入れ、そしてそれを実際の開発作業にたずさわる人々に提供することが可
+能となるからです。 
+
+現在のXFree86 プロジェクト社の取締役会と幹事会は、以下の通り:
+<itemize>
+       <item> David Dawes, President and Secretary
+       <item> Dirk Hohndel, Vice-President
+       <item> Glenn Lai, Director
+       <item> Rich Murphey, Treasurer
+       <item> Jim Tsillas, Director
+       <item> Jon Tombs, Director
+       <item> David Wexelblat, Director
+</itemize>
+取締役会への連絡は <it>&lt;BOD@XFree86.org&gt;</it> まで電子メールを送って
+下さい。
+ 
+弊社の内規は、XFree86 が現在も、そして将来もずっと、フリーソフトウェアプロ
+ジェクトであり続けることを保証するような形で起草されています。コアチームの
+メンバー又は、その他の XFree86 関係者の誰にとっても、個人的な金銭的利益が
+無いように配慮しました。
+全ての会社の資産は会社の為に残し、会社の解散の時には、全ての資産を X コン
+ソーシアムに委譲する予定です。このような形式をとることで、弊社がこれまでの
+活動を単に形式化したものとなることを希望しています。従来の活動とまったくち
+がったものになるつもりはありません。
+
+ここに、XFree86 プロジェクト社のスポンサーとなり、金銭の提供又は機材と資源
+の提供をしてくださった組織と個人の方を一覧に致します。XFree86 プロジェクト
+社は彼らに大変感謝し、インターネット社会全体の改善の為に高品質なフリーソフ
+トウェアを継続して提供することで、彼らの期待に沿えることを願っております。
+<itemize>
+	<item> <url url="http://www.uu.net/" 
+	name = "UUNET Communications Services, Inc.">
+</itemize>
+UUNET Communications Services, Inc は、特別に名前を挙げたいと思います。
+この会社は積極的に、いち早く1994 年の X コンソーシアムの年会費全てを寄付し
+てくれました。この一回の資金提供により、X11R6 を XFree86 に巻き込む事が確
+実になったのです。
+
+<itemize>
+	<item> GUUG -- 第１回ドイツ Linux 会議（1st German Linux Congress）
+</itemize>
+また、当然特別に名前を挙げるべきはハンブルグで開催された第１回ドイツ 
+Linux 会議（1st German Linux Congress）の開催者と参加者の皆さんです。多く
+の資金を XFree86 プロジェクトに会議の収入から提供していただきました。
+
+<itemize>
+  <item>  <url url="ftp://ftp.uu.net/vendor/AIB/" 
+	name="AIB Software Corporation">, Herndon, VA
+  <item>  Roland Alder, Armin Fessler, Patrick Seemann, Martin Wunderli
+  <item>  American Micro Group
+  <item>  <url url="http://www.attgis.com/"  
+	name="AT&amp;T Global Information Services"> (formerly NCR)
+  <item>  Andrew Burgess
+  <item>  <url url="http://www.bsdi.com/"  
+	name="Berkeley Software Design, Inc">, Falls Church, VA
+  <item>  <url url="http://www.delix.de/"
+	name="Delix Computer GmbH">, Stuttgart, Germany
+  <item>  <url url="http://www.destek.net/Destek/"  
+	name="The Destek Group, Inc.">, Pelham, NH (formerly Synergytics)
+  <item>  <url url="http://www.diamondmm.com/"  
+	name="Diamond Multimedia Systems, Inc.">
+  <item>  <url url="http://www.digital.com/"  
+	name="Digital Equipment Corporation">
+  <item>  Elsa GmbH, Aachen, Germany
+  <item>  Genoa Systems Corporation
+  <item>  <url url="http://www.hercules.com/"
+	name="Hercules Computer Technology, Inc.">
+  <item>  Ralf Hockens
+  <item>  Dirk Hohndel
+  <item>  <url url="http://www.infomagic.com/"  
+	name="InfoMagic">, Flagstaff, AZ
+  <item>  Daniel Kraemer
+  <item>  Frank &amp; Paige McCormick
+  <item>  Linux International
+  <item>  Linux Support Team, Erlangen, Germany
+  <item>  <url url="http://www.lunetix.de"
+	name="LunetIX Softfair">, Berlin, Germany
+  <item>  <url url="http://www.morse.net"
+	name="Morse Telecommunications">, Long Beach, NY
+  <item>  MIRO Computer Products AG, Braunschweig, Germany
+  <item>  Rich &amp; Amy Murphey
+  <item>  Brett Neumeier
+  <item>  Number Nine, Lexington, MA
+  <item>  Kazuyuki Okamoto, Japan
+  <item>  <url url="http://www.ptf.com/"
+	name="Prime Time Freeware">, San Bruno, CA
+  <item>  Red Hat Software, Chapel Hill, NC
+  <item>  Norbert Reithinger
+  <item>  SPEA Software AG, Starnberg, Germany
+  <item>  STB Systems
+  <item>  Clifford M Stein
+  <item>  Joel Storm 
+  <item>  S.u.S.E, GmbH, Fuerth, Germany
+  <item>  Tekelec Airtronic GmbH, Muenchen, Germany
+  <item>  Jim Tsillas
+  <item>  Trans-Ameritech Enterprises, Inc., Santa Clara, CA
+  <item>  Unifix Software GmbH, Braunschweig, Germany
+  <item>  <url url="http://www.vix.com/"
+	       name="Vixie Enterprises">, La Honda, CA
+  <item>  <url url="http://www.cdrom.com/"  
+	name="Walnut Creek CDROM">, Concord, CA
+  <item>  Xtreme s.a.s., Livorno, Italy
+</itemize>
+  XFree86 プロジェクト社は基金と機材、又はどちらかの追加寄贈を歓迎致します。
+  このような寄贈は、所得税の控除対象となる*はず*です（がまだ確定はしていませ
+  ん）。私たちの弁護士が書類作業を終え次第、この点ははっきりするでしょう。
+  詳細は XFree86 プロジェクト社、
+<it>&lt;BOD@XFree86.org&gt;</it> まで。
+
+<sect>ソースとバイナリファイルのあるサイト
+<p>
+
+X コンソーシアム の X11R6 PL12 から XFree86 3.1.2 へのソースのバージョンア
+ップ用パッチが利用可能です。ソースへのパッチと様々な OS 用のバイナリは以下
+の匿名 FTP サイト経由で手に入ります:
+
+<itemize>
+<item>       <url url="ftp://ftp.XFree86.org/pub/XFree86/current"
+	     name="ftp.XFree86.org:/pub/XFree86/current">
+</itemize>
+
+また、次のミラーサイトが利用可能です。:
+<itemize>
+<item>       北米a:  
+<itemize>
+<item>   <url url="ftp://ftp.bsdi.com/contrib/X11/XFree86" 
+	name="ftp.bsdi.com:/contrib/X11/XFree86">
+	(ソース と BSD/386 用バイナリ)
+<item>   <url url="ftp://XFree86.cdrom.com/pub/XFree86" 
+	name="XFree86.cdrom.com:/pub/XFree86">
+	(ソース と バイナリ)
+<item>   <url url="ftp://ftp.iastate.edu/pub/XFree86/XFree86-3.1.2" 
+	name="ftp.iastate.edu:/pub/XFree86/XFree86-3.1.2">
+	(ソースパッチ と NetBSD 用バイナリ)<newline>
+	(また AFS 経由で:: /afs/iastate.edu/public/ftp/pub/XFree86/XFree86-3.1.2)
+<item>   <url url="ftp://tsx-11.mit.edu/pub/linux/packages/X11/XFree86-3.1.2" 
+	name="tsx-11.mit.edu:/pub/linux/packages/X11/XFree86-3.1.2">
+	(Linux 用バイナリ と ソース)
+<item>   <url url="ftp://ref.tfs.com/pub/mirrors/XFree86" 
+	name="ref.tfs.com:/pub/mirrors/XFree86">
+	(ソース パッチ とFreeBSD 用バイナリ)
+<item>   <url url="ftp://ftp.eecs.umich.edu/BSD/XFree86/current" 
+	name="ftp.eecs.umich.edu:/BSD/XFree86/current">
+	(ソース と バイナリ)
+<item>   <url url="ftp://sunsite.unc.edu/pub/X11/XFree86" 
+	name="sunsite.unc.edu:/pub/X11/XFree86">
+	(ソース パッチ と バイナリ)
+<item>   <url url="ftp://abode.ccd.bnl.gov/pub/XFree86" 
+	name="abode.ccd.bnl.gov:/pub/XFree86">
+	(Solaris, SVR4, SCO 用バイナリ)
+</itemize> 
+
+<item>      ヨーロッパ:  
+<itemize>
+<item>   <url url="ftp://fvkma.tu-graz.ac.at/pub/XFree86/3.1.2" 
+	name="fvkma.tu-graz.ac.at:/pub/X11/XFree86/3.1.2">
+	(ソース と バイナリ)
+<item>   <url url="ftp://ftp.switch.ch/mirror/XFree86" 
+	name="ftp.switch.ch:/mirror/XFree86">
+	(ソース と バイナリ)
+<item>   <url url="ftp://ftp.fee.vutbr.cz/pub/XFree86" 
+	name="ftp.fee.vutbr.cz:/pub/XFree86/3.1.2">
+	(ソース パッチ と バイナリ)
+<item>   <url url="ftp://ftp.gwdg.de/pub/xfree86" 
+	name="ftp.gwdg.de:/pub/xfree86">
+	(ソース と バイナリ)
+<item>   <url url="ftp://ftp.uni-erlangen.de/pub/Linux/MIRROR.xfree86/3.1.2" 
+	name="ftp.uni-erlangen.de:/pub/Linux/MIRROR.xfree86/3.1.2">
+	(ソース パッチ と Linux 用バイナリ)
+<item>   <url url="ftp://ftp.uni-stuttgart.de/pub/X11/Xfree86/3.1.2" 
+	name="ftp.uni-stuttgart.de:/pub/X11/Xfree86/3.1.2">
+	(ソース と バイナリ)
+<item>   <url url="ftp://ftp.funet.fi/pub/X11/XFree86/3.1.2" 
+	name="ftp.funet.fi:/pub/X11/XFree86/3.1.2">
+	(ソース と バイナリ)
+<item>   <url url="ftp://anasgard.calvacom.fr/pub/unix/X/XFree86" 
+	name="anasgard.calvacom.fr:/pub/unix/X/XFree86">
+	(ソース と バイナリ)
+<item>   <url url="ftp://ftp.ibp.fr/pub/X11/XFree86" 
+	name="ftp.ibp.fr:/pub/X11/XFree86">
+	(ソース と バイナリ)
+<item>   <url url="ftp://ftp.laas.fr/pub/NetBSD/XFree86-3.1.2" 
+	name="ftp.laas.fr:/pub/netbsd/XFree86-3.1.2">
+	(NetBSD 用バイナリのみ)
+<item>   <url url="ftp://ftp.unipi.it/pub/mirrors/XFree86-3.1.2"
+	name="ftp.unipi.it:/pub/mirrors/XFree86-3.1.2">
+	(ソース と バイナリ)
+<item>   <url url="ftp://ftp.pvv.unit.no/pub/XFree86/current" 
+	name="ftp.pvv.unit.no:/pub/XFree86/current">
+	(ソース と バイナリ)
+<!--
+<item>   <url url="ftp://ftp.demon.co.uk/pub/Xwindows/XFree86" 
+	name="ftp.demon.co.uk:/pub/Xwindows/XFree86">
+	(ソース と バイナリ)
+-->
+</itemize>
+
+  
+<!--
+<item>     中東:  
+<itemize>
+<item>   <url url="ftp://orgchem.weizmann.ac.il/pub/XFree86" 
+	name="orgchem.weizmann.ac.il:/pub/XFree86">
+	(ソース と FreeBSD 用バイナリ)
+</itemize>
+-->
+
+<item>   アジア/オーストラリア:
+<itemize>
+<item>   <url url="ftp://x.physics.usyd.edu.au/pub/XFree86/3.1.2" 
+	name="x.physics.usyd.edu.au:/pub/XFree86/3.1.2">
+	(ソース と バイナリ)
+<!--
+<item>   <url url="ftp://ftp.iij.ad.jp/pub/X/XFree86" 
+	name="ftp.iij.ad.jp:/pub/X/XFree86">
+	(ソース と バイナリ)
+-->
+<item>   <url url="ftp://ftp.hk.super.net/mirror/XFree86" 
+	name="ftp.hk.super.net:/mirror/XFree86">
+	(ソース と バイナリ)
+<item>   <url url="ftp://ftp.nectec.or.th/pub/mirrors/XFree86/3.1.2" 
+	name="ftp.nectec.or.th:/pub/mirrors/XFree86/3.1.2">
+	(ソース パッチ と バイナリ)
+<item>   <url url="ftp://ftp.edu.tw/X/XFree86/3.1.2" 
+	name="ftp.edu.tw:/X/XFree86/3.1.2">
+	(ソース と バイナリ)
+</itemize>
+
+</itemize>
+
+
+配付物から XFree86 を作成するのに必要な情報は、特定のディレクトリの下にあ
+る <tt>README</tt> ファイルを参照して下さい。
+
+入手した XFree86 3.1.2 をよく確認してください。いくつかのサイトは、古い版
+の XFree86 を格納していることがよくあります。各々のバイナリ配付物には、
+<tt>README</tt> ファイルに格納場所からダウンする必要のあるファイルについて記載されています。README ファイルのコンパイル時間オプションの選択をみると、配付物
+が作成されている状態が分かります。
+
+<hrule>
+
+このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.27
+ 1995/07/24 05:56:20   を、岡本  一幸 
+( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.1.2 を
+日本でインストールする人向けに和訳したものです。ここがおかしいとか、
+ここはこうしたほうがいいといったご意見がありましたら、電子メールで
+お知らせ下さい。
+原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
+XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
+電子メールで送って下さい。
+<verb>
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/README.sgml,v 3.1 1995/10/22 10:44:37 dawes Exp $
+</verb>
+<hrule>
+&lsqb;EOF&rsqb;
+</article>

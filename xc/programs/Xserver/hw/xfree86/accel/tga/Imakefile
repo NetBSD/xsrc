@@ -1,0 +1,28 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/accel/tga/Imakefile,v 3.2 1996/10/17 15:18:11 dawes Exp $
+#include <Server.tmpl>
+
+SRCS = 	tga.c tgainit.c tgacmap.c tgacurs.c tgaBtCurs.c tgafcache.c \
+	tgabcache.c tgaim.c
+
+OBJS = 	tga.o tgainit.o tgacmap.o tgacurs.o tgaBtCurs.o tgafcache.o \
+	tgabcache.o tgaim.o
+
+INCLUDES = -I$(XF86SRC) -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi \
+	   -I$(SERVERSRC)/include -I$(SERVERSRC)/cfb -I$(INCLUDESRC) \
+	   -I$(FONTSRC)/include -I$(XF86SRC)/vga256/vga -I$(XF86COMSRC) \
+	   -I$(XF86HWSRC) -I$(FONTINCSRC) -I$(XF86OSSRC) \
+	   -I$(XF86SRC)/accel/cache
+
+DEFINES = -DPSZ=8
+
+NormalLibraryObjectRule()
+
+NormalAsmObjectRule()
+
+NormalLibraryTarget(tga,$(OBJS))
+
+InstallLinkKitLibrary(tga,$(LINKKITDIR)/drivers)
+
+#ifndef OS2Architecture
+DependTarget()
+#endif

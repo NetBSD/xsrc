@@ -1,0 +1,6 @@
+XCOMM $XConsortium: Imakefile /main/4 1996/01/10 17:21:23 kaleb $
+
+all::
+
+InstallNamedNonExec(iso8859-1,Compose,$(XLOCALEDIR)/iso8859-1)
+InstallNamedNonExec(iso8859-2,Compose,$(XLOCALEDIR)/iso8859-2)

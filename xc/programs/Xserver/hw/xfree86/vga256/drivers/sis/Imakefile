@@ -1,0 +1,36 @@
+XCOMM $XConsortium: Imakefile /main/2 1996/01/26 13:59:08 kaleb $
+
+
+
+
+
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/Imakefile,v 3.5 1996/09/24 13:56:02 dawes Exp $
+#include <Server.tmpl>
+
+SRCS = sis86c201.c sis_bank.s sis_curs.c
+
+OBJS = sis86c201.o sis_bank.o sis_curs.o
+
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
+           -I../../vga -I$(SERVERSRC)/include -I$(INCLUDESRC)
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+NormalRelocatableTarget(sis_drv,$(OBJS))
+
+InstallLinkKitNonExecFile(sis86c201.c,$(LINKKITDIR)/drivers/vga256/sis)
+InstallLinkKitNonExecFile(sis_bank.s,$(LINKKITDIR)/drivers/vga256/sis)
+InstallLinkKitNonExecFile(sis_curs.c,$(LINKKITDIR)/drivers/vga256/sis)
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/sis)
+
+DependTarget()
+

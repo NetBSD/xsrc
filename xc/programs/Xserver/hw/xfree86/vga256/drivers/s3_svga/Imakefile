@@ -1,0 +1,29 @@
+XCOMM $XConsortium: Imakefile /main/4 1996/01/26 14:30:19 kaleb $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/s3_svga/Imakefile,v 3.4 1996/02/04 09:14:10 dawes Exp $
+#include <Server.tmpl>
+
+SRCS = s3_driver.c s3_bank.s
+
+OBJS = s3_driver.o s3_bank.o
+
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I../../vga -I$(SERVERSRC)/include \
+           -I$(INCLUDESRC)
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+NormalRelocatableTarget(s3_drv, $(OBJS))
+
+InstallLinkKitNonExecFile(s3_driver.c,$(LINKKITDIR)/drivers/vga256/s3_svga)
+InstallLinkKitNonExecFile(s3_bank.s,$(LINKKITDIR)/drivers/vga256/s3_svga)
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/s3_svga)
+
+DependTarget()

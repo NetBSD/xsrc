@@ -1,0 +1,27 @@
+XCOMM $XConsortium: Imakefile /main/4 1996/01/26 14:30:08 kaleb $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/generic/Imakefile,v 3.4 1996/02/04 09:13:36 dawes Exp $
+#include <Server.tmpl>
+
+SRCS = gen_driver.c
+
+OBJS = gen_driver.o
+
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I../../../common -I../../../common_hw -I../../../os-support \
+           -I../../vga -I$(SERVERSRC)/include -I$(INCLUDESRC)
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+
+NormalRelocatableTarget(gen_drv,$(OBJS))
+
+InstallLinkKitNonExecFile(gen_driver.c,$(LINKKITDIR)/drivers/vga256/generic)
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/vga256/generic)
+
+DependTarget()
+

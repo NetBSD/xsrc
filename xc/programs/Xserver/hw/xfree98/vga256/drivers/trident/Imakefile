@@ -1,0 +1,50 @@
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/vga256/drivers/trident/Imakefile,v 3.4 1996/10/08 12:45:15 dawes Exp $
+#include <Server.tmpl>
+
+SRCS = t89_driver.c t89_bank.s tgui_curs.c pc98_tgui.c
+
+OBJS = t89_driver.o t89_bank.o tgui_curs.o pc98_tgui.o
+
+DEFINES = -DPSZ=8 -DPC98 -DPC98_TGUI
+
+#if XF86LinkKit
+INCLUDES = -I. -I../../../include -I../../../include/X11 -I../..
+#else
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86HWSRC) -I$(XF86OSSRC) \
+           -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
+           -I$(XF86SRC)/vga256/vga -I$(FONTINCSRC) \
+           -I$(SERVERSRC)/include -I$(INCLUDESRC) \
+	   -I../../trident
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+SubdirLibraryRule($(OBJS))
+#endif
+NormalLibraryObjectRule()
+NormalAsmObjectRule()
+
+NormalRelocatableTarget(tvga89_drv,$(OBJS))
+
+#if !XF86LinkKit
+LinkSourceFile(bank.s,$(XF86SRC)/vga256/drivers/tvga8900)
+LinkSourceFile(t89_driver.c,$(XF86SRC)/vga256/drivers/tvga8900)
+LinkSourceFile(t89_driver.h,$(XF86SRC)/vga256/drivers/tvga8900)
+LinkSourceFile(tgui_curs.c,$(XF86SRC)/vga256/drivers/tvga8900)
+LinkSourceFile(tgui_drv.h,$(XF86SRC)/vga256/drivers/tvga8900)
+LinkSourceFile(tgui_ger.h,$(XF86SRC)/vga256/drivers/tvga8900)
+#endif
+
+ObjectFromSpecialAsmSource(t89_bank,bank,NullParameter)
+
+InstallLinkKitNonExecFile(t89_driver.c,$(XF98LINKKITDIR)/drivers98/vga256/trident)
+InstallLinkKitNonExecFile(t89_driver.h,$(XF98LINKKITDIR)/drivers98/vga256/trident)
+InstallLinkKitNonExecFile(bank.s,$(XF98LINKKITDIR)/drivers98/vga256/trident)
+InstallLinkKitNonExecFile(tgui_curs.c,$(XF98LINKKITDIR)/drivers98/vga256/trident)
+InstallLinkKitNonExecFile(tgui_drv.h,$(XF98LINKKITDIR)/drivers98/vga256/trident)
+InstallLinkKitNonExecFile(tgui_ger.h,$(XF98LINKKITDIR)/drivers98/vga256/trident)
+InstallLinkKitNonExecFile(Imakefile,$(XF98LINKKITDIR)/drivers98/vga256/trident)
+InstallLinkKitNonExecFile(pc98_tgui.h,$(XF98LINKKITDIR)/drivers98/vga256/trident)
+InstallLinkKitNonExecFile(pc98_tgui.c,$(XF98LINKKITDIR)/drivers98/vga256/trident)
+
+DependTarget()
+

@@ -1,0 +1,31 @@
+XCOMM $XConsortium: Imakefile,v 1.1 94/03/28 21:40:49 dpw Exp $
+#include <Server.tmpl>
+
+SRCS = mibitblt16.c mipushpx16.c
+
+OBJS = mibitblt16.o mipushpx16.o
+
+DEFINES = -DXF86VGA16
+
+INCLUDES = -I$(SERVERSRC)/mi -I$(SERVERSRC)/include -I$(INCLUDESRC) \
+	-I$(FONTINCSRC)
+LINTLIBS = ../../../../dix/llib-ldix.ln ../../../../os/llib-los.ln
+
+all:: $(OBJS)
+
+SubdirLibraryRule($(OBJS))
+NormalLibraryObjectRule()
+NormalLintTarget($(SRCS))
+
+ObjectFromSpecialSource(mibitblt16,$(SERVERSRC)/mi/mibitblt,-DXF86VGA16)
+ObjectFromSpecialSource(mipushpx16,$(SERVERSRC)/mi/mipushpxl,-DXF86VGA16)
+
+InstallLinkKitNonExecFile(mibitblt16.o,$(LINKKITDIR)/lib)
+InstallLinkKitNonExecFile(mipushpx16.o,$(LINKKITDIR)/lib)
+
+#if HasSaberC
+saber_src:
+	XCOMM load $(CFLAGS) $(SRCS)
+#endif
+
+DependTarget()

@@ -1,0 +1,13 @@
+XCOMM $XConsortium: Imakefile,v 1.7 91/12/20 11:29:16 rws Exp $
+XCOMM $XFree86: xc/programs/xset/Imakefile,v 3.5 1996/02/24 06:03:12 dawes Exp $
+
+        DEFINES = ExtensionDefines
+        DEPLIBS = $(DEPXMULIB) $(DEPXLIB) $(DEPXF86LIBS)
+LOCAL_LIBRARIES = $(XMULIB) $(XF86LIBS) $(XLIB)
+
+#if BuildXF86MiscExt
+       DEPXF86LIBS = $(DEPXXF86MISCLIB)
+          XF86LIBS = $(XXF86MISCLIB)
+#endif
+
+SimpleProgramTarget(xset)

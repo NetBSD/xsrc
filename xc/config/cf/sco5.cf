@@ -1,0 +1,125 @@
+XCOMM $XFree86: xc/config/cf/sco5.cf,v 3.0 1996/10/03 08:28:12 dawes Exp $
+
+/*
+ * This is for SCO Open Server 5.0.2 or later.
+ */
+
+#ifndef ScoOsMouse
+# define ScoOsMouse             YES
+#endif
+
+#ifndef OSName
+#define OSName                  UNIX System V/386 Open Server 5
+#endif
+#ifndef OSVendor
+#define OSVendor                SCO
+#endif
+#ifndef OSMajorVersion
+#define OSMajorVersion          5
+#endif
+#ifndef OSMinorVersion
+#define OSMinorVersion          0
+#endif
+#ifndef OSTeenyVersion
+#define OSTeenyVersion          2
+#endif
+
+/*
+ * NOTE: We define SVR4 here, as a lot of neat features depend on this.
+ * Where SCO does not have a true SVR4 implementation, we adjust accordingly.
+ * However, SCO Open Server 5 is a lot like SVR4.
+ */
+
+#define StandardDefines         -Dsco -DSCO -DSYSV -Di386 -DSCO325 -DSVR4
+#ifdef HasGcc2
+# define DefaultCCOptions       -melf
+# define CcCmd                  gcc
+# define ExtraLoadOptions       -melf
+# define DefaultCDebugFlags     -O2 -m486
+# define OptimizedCDebugFlags   -O2 -m486
+#else
+# define DefaultCCOptions       -dy 
+# define CcCmd                  cc
+# define ExtraLoadOptions       -b elf
+# define DefaultCDebugFlags     -O
+# define OptimizedCDebugFlags   -O
+#endif
+
+
+#ifndef HasSymLinks
+# define HasSymLinks            YES
+#endif
+
+#define XawI18nDefines          -DHAS_WCHAR_H -DHAS_ISW_FUNCS
+#if ScoOsMouse
+# define ServerExtraSysLibs     $(CBRT) -lm -levent
+# define ServerExtraDefines     -DUSE_OSMOUSE XFree86ServerDefines
+#else
+# define ServerExtraSysLibs     $(CBRT) -lm
+#endif
+#define ExtraLibraries          -lsocket
+#define NeedWidePrototypes      NO
+#define ServerOSDefines         -DDDXTIME
+#define ToolkitStringsABIOptions -intelabi
+#define ThreadedX               NO
+#define HasThreadSafeAPI        NO
+#define HasNdbm                 YES
+#define HasVFork                YES
+#define HasPutenv               YES
+#define ExecableScripts         YES
+#define HasShadowPasswd         YES
+#define ManSourcePath           $(MANPATH)/cat.
+#define Malloc0ReturnsNull      YES
+#define RemoveDSDENroffMacros   NO
+#define CompressManPages        YES
+
+#ifndef HasLibCrypt
+# define HasLibCrypt            YES
+# define SpecialLibCrypt        -lcrypt
+#endif
+#define PosixLibraries          /**/
+
+#define ForceNormalLib          YES 
+#define SharedLibXmu            NO
+#define SystemV                 YES
+#define LdCombineFlags          -r 
+
+#define HasLdRunPath            YES
+#define HasPoll                 YES
+#define PatheticCpp             YES
+
+#define ArCmdBase               ar
+#define AsCmd                   as
+#define CppCmd                  /lib/cpp
+#define LdCmd                   ld
+#define LexCmd                  lex
+#define MakeCmd	                make
+#define YaccCmd                 yacc
+
+#define DefaultUserPath         .:/bin:/usr/bin:$(BINDIR):/usr/bin/X11:/usr/local/bin:/etc
+#define DefaultSystemPath       /etc:/bin:/usr/bin:$(BINDIR):/usr/bin/X11
+
+/*
+ * R6.1 had FD_SETSIZE. According to the SCO header file this is possible
+ * but unwise, as it should pick up the system configured limit. You
+ * may wish to play with this. Please mail hug@netecom.com if you find
+ * that defining FD_SETSIZE makes a difference.
+#define ConnectionFlags         -DLOCALCONN -DTCPCONN -DFD_SETSIZE=256
+ */
+#define ConnectionFlags         -DLOCALCONN -DTCPCONN
+
+#define InstallManPageAliases(file,destdir,aliases)                     @@\
+install.man::                                                           @@\
+        @(SUFFIX=`echo $(DESTDIR)destdir/file.* | cut -f3,4 -d.`; \     @@\
+        for i in aliases; do (set -x; \                                 @@\
+        $(RM) $(DESTDIR)destdir/$$i.*; \                                @@\
+        (cd $(DESTDIR)destdir; $(LN) file.$${SUFFIX} \                  @@\
+        $$i.$${SUFFIX})); \                                             @@\
+        done)
+
+#include <scoLib.rules>  /* minor changes to sv4Lib.rules */
+#include <sv4Lib.rules>
+
+#ifdef i386Architecture
+#include <xfree86.cf>
+#endif

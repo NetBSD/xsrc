@@ -1,0 +1,9 @@
+XCOMM $XConsortium: Imakefile /main/4 1996/01/14 16:51:25 kaleb $
+
+     DATAFILES = be bg ca cs de de_CH dk dvorak en_US es fi fr fr_CH \
+		gb it no pl pt ru se th us
+
+all::
+
+InstallMultiple($(DATAFILES),$(LIBDIR)/xkb/keymap/sgi)
+DependTarget()

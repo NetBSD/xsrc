@@ -1,0 +1,21 @@
+Information on files in this directory
+--------------------------------------
+\xc\programs\xserver\hw\xfree86\os-support\os2
+
+The old implementation of xfree86 used an undocumented device driver, SMVDD.SYS.
+This has been replaced because this driver was not part of the OS/2 3.0 standard
+distribution, and had very limited capabilities. For example, it did not allow mapping 
+of linear frame buffers used by the new accelerated video cards. 
+A device driver was written for this purpose by Holger Veit <Holger.Veit@gmd.de> 
+which allows mapping of any physical address in user space (it also does plenty
+of other usefull stuff.....)
+The driver should be installed in the config.sys with a line:
+
+DEVICE=path\XF86SUP.SYS
+
+The driver is used for mapping video memory, as well as for granting access to IO ports,
+and provides additional functionality.
+
+        Sebastien Marineau <marineau@genie.uottawa.ca>
+
+$XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/README,v 3.1 1996/01/30 15:26:27 dawes Exp $

@@ -1,0 +1,54 @@
+<!doctype linuxdoc system>
+
+<article>
+<title> XFree86 プロジェクト社 著作権表示</title>
+<Author> XFree86 プロジェクト社
+<trans> 岡本　一幸 Kazuyuki Okamoto &lt;ikko-@pacific.rim.or.jp&gt;
+<p>
+Copyright (C) 1994, 1995 The XFree86 Project, Inc.  All Rights Reserved.
+
+無料で、誰もがこのソフトウェアと関連する文書ファイル（以降まとめて 
+``そふとうぇあ'' と呼ぶ）の写しを入手する事、使用権、複写権、
+変更権、併合権、出版権、配付権、再実施許諾権 かつ/または ``そふとうぇあ''
+ の写しの販売権を含んで制約無しで取り扱う事、``そふとうぇあ'' を制限無しで
+供給する人を許可する事、を以下の条件付きで、ここに承認する。
+
+上記の著作権告示とこの認可告示を ``そふとうぇあ'' の全ての写し
+または、重要な部分と共に置く事。
+
+
+如何なる種類、形容、意味でも、商品化の可能性及び、特定の目的かどうか、
+非侵害か否かの保証無しに、``そふとうぇあ'' を ``あるがまま'' 
+の形で供給します。要求、損害やその他の責任及び如何なる契約の実行や不正行為、
+``そふとうぇあ'' に関連が有っても無くても生じた現象、又は 
+``そふとうぇあ'' の使用結果や他の取り扱い結果について、どんな些細な
+ことでも XFree86 プロジェクトには責任がありません。
+
+
+この告示に含まれている事を除いて、 ``そふとうぇあ'' を XFree86 
+プロジェクトの名の下に広告したり、 XFree86 プロジェクト社から以前に発行した
+許可書無しに他者が ``そふとうぇあ'' を販売、使用、取り扱いを勧誘する
+ことはありません。
+
+
+<hrule>
+
+このファイルは xc/programs/Xserver/hw/xfree86/doc/sgml/CPYRIGHT.sgml,v 3.3 
+1995/01/28 16:01:20 を、岡本  一幸 
+( Kazuyuki Okamoto <url url="mailto:ikko-@pacific.rim.or.jp"
+name="&lt;ikko-@pacific.rim.or.jp&gt;"> ) が XFree86 3.1.2 を
+日本でインストールする人向けに和訳したものです。ここがおかしいとか、
+ここはこうしたほうがいいといったご意見がありましたら、電子メールで
+お知らせ下さい。
+原文の著作権は XFree86 プロジェクト社にあります。この和訳の著作権は 
+XFree86 プロジェクト社と岡本　一幸にありますが、この和訳の不具合は私に、
+電子メールで送って下さい。
+<verb>
+Copyright (C) 1995, Kazuyuki (ikko-) Okamoto. All Rights Reserved.
+
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Japanese/sgml/CPYRIGHT.sgml,v 3.1 1995/10/22 10:44:31 dawes Exp $
+</verb>
+<hrule>
+&lsqb;EOF&rsqb;
+
+</article>

@@ -1,0 +1,506 @@
+XCOMM $XFree86: xc/config/cf/xf86site.def,v 3.91 1996/10/19 15:12:30 dawes Exp $
+/******************************************************************************/
+/*
+ * This file is to provide a quick method for most people to change the
+ * behaviour of their XFree86 installation without having to fully
+ * understand the workings of site.def and all the various '.cf' files.
+ *
+ * These are the most common settings you would choose for compiling and
+ * installing XFree86 on the systems supported by it.
+ */
+/******************************************************************************/
+
+/*
+ * If using GCC 2.x on a system where it isn't the default, uncomment
+ * the following
+ *
+#define HasGcc2		YES
+#define HasGcc		YES
+ */
+
+/*
+ * If using GCC 2.x with C++ on a system where it isn't the default, uncomment
+ * the following.
+ *
+#define HasGcc2ForCplusplus	YES
+ */
+
+/*
+ * The default optimisation flags for GCC 2.x.  -fno-strength-reduce is
+ * here to work around a bug in -O2 for GCC 2.x on i386 platforms.
+ * If you are using a version that doesn't have this bug, you can
+ * uncomment the following line, and remove '-fno-strength-reduce'
+ *
+#define DefaultGcc2i386Opt	-O2 -fno-strength-reduce
+ */
+
+/*
+ * For Linux, this should match the Binutils version you have.  This example
+ * is for 2.6.0.7.  See linux.cf for the default setting.
+ *
+#define BinUtilsVersion		2607
+ */
+
+/*
+ * If you want to use the GNU malloc library, uncomment this
+ *
+#define UseGnuMalloc		YES
+ */
+
+/*
+ * Set this to whatever is required to access the GNU malloc library.
+ * The default is '-lgmalloc' unless is specified in the OS's .cf file.
+ *
+#define GnuMallocLibrary	-L/usr/local/lib -lgmalloc
+ */
+
+/*
+ * To disable the internal Xserver malloc, set this to NO
+ *
+#define UseInternalMalloc	YES
+ */
+
+/*
+ * If you have Tk (which is required to build XF86Setup), uncomment this
+ * Note: version 4.0 or 4.1 is required, and XF86Setup links it statically by
+ * default.
+ *
+#define HasTk			YES
+ */
+
+/*
+ * Set the paths and names for your Tk library if they don't match the
+ * defaults (check your OS .cf file or Imake.tmpl for the defaults).
+ *
+#define TkLibDir		/usr/local/lib
+#define TkIncDir		/usr/local/include
+#define TkLibName		tk
+ */
+
+/*
+ * If you have Tcl (which is required to build XF86Setup), uncomment this
+ * Note: version 7.4 or 7.5 is required, and XF86Setup links it statically by
+ * default.
+ *
+#define HasTcl			YES
+ */
+
+/*
+ * Set the paths and names for your Tcl library if they don't match the
+ * defaults (check your OS .cf file or Imake.tmpl for the defaults).
+ *
+#define TclLibDir		/usr/local/lib
+#define TclIncDir		/usr/local/include
+#define TclLibName		tcl
+ */
+
+/*
+ * Which servers do you wish to build, you can save a lot of disk space
+ * by only compiling the server you will be using.  It will also save you
+ * considerable compile time.
+ */
+
+#ifdef AlphaArchitecture
+#define XF86S3Server		YES
+#define XF86S3VServer		YES
+#define XF86Mach64Server	YES
+#define XF86P9000Server		YES
+#define XF86I128Server		YES
+#define XF86TGAServer		YES
+#endif
+
+#ifdef i386Architecture
+#define XF86SVGAServer          YES
+#define XF86VGA16Server         YES
+#define XF86VGA16DualServer	YES
+#define XF86MonoServer          YES
+#define XF86MonoDualServer	YES
+#define XF86S3Server            YES
+#define XF86S3VServer		YES
+#define XF86I8514Server         YES
+#define XF86Mach8Server         YES
+#define XF86Mach32Server        YES
+#define XF86Mach64Server        YES
+#define XF86P9000Server		YES
+#define XF86AGXServer		YES
+#define XF86W32Server		YES
+#define XF86I128Server		YES
+#endif
+
+#ifdef Mc68020Architecture
+#define XF68FBDevServer		YES
+#endif
+
+#ifndef XF86SVGAServer
+#define XF86SVGAServer          NO
+#endif
+#ifndef XF86VGA16Server
+#define XF86VGA16Server         NO
+#endif
+#ifndef XF86VGA16DualServer
+#define XF86VGA16DualServer	NO
+#endif
+#ifndef XF86MonoServer
+#define XF86MonoServer          NO
+#endif
+#ifndef XF86MonoDualServer
+#define XF86MonoDualServer	NO
+#endif
+#ifndef XF86S3Server
+#define XF86S3Server            NO
+#endif
+#ifndef XF86I8514Server
+#define XF86I8514Server         NO
+#endif
+#ifndef XF86Mach8Server
+#define XF86Mach8Server         NO
+#endif
+#ifndef XF86Mach32Server
+#define XF86Mach32Server        NO
+#endif
+#ifndef XF86Mach64Server
+#define XF86Mach64Server        NO
+#endif
+#ifndef XF86P9000Server
+#define XF86P9000Server		NO
+#endif
+#ifndef XF86AGXServer
+#define XF86AGXServer		NO
+#endif
+#ifndef XF86W32Server
+#define XF86W32Server		NO
+#endif
+#ifndef XF86I128Server
+#define XF86I128Server		NO
+#endif
+#ifndef XF86TGAServer
+#define XF86TGAServer		NO
+#endif
+
+/*
+ * PC98 X servers
+ *
+#define XF98EGCServer		YES
+#define XF98GANBWAPServer	YES
+#define XF98NEC480Server	YES
+#define XF98NKVNECServer	YES
+#define XF98WABSServer		YES
+#define XF98WABEPServer		YES
+#define XF98WSNAServer		YES
+#define XF98TGUIServer		YES
+#define XF98NECS3Server		YES
+#define XF98PWSKBServer		YES
+#define XF98PWLBServer		YES
+#define XF98GA968Server		YES
+ */
+
+#define XnestServer		YES
+
+/*
+ * Set the default server (ie the one that gets the sym-link to "X")
+ *
+#define ServerToInstall		XF86_S3
+ */
+
+
+/*
+ * To build Xvfb, uncomment this.
+ *
+#define XVirtualFramebufferServer	YES
+ */
+
+
+/*
+ * Server configuration parameters.  The defaults are shown here:
+ */
+
+/*
+ * SVGA server:
+ *
+#define XF86SvgaDrivers		nv et4000 et3000 pvga1 gvga ati sis tvga8900 \
+				cirrus ncr77c22 mga oak al2101 ali cl64xx \
+				video7 chips ark mx realtek apm generic
+ */
+
+/*
+ * VGA16 server:
+ *
+#define XF86Vga16Drivers	et4000 et3000 ncr77c22 ati sis tvga8900 oak \
+				cl64xx generic 
+ */
+
+/*
+ * VGA2 driver in Mono server:
+ *
+#define XF86Vga2Drivers		et4000 et3000 pvga1 gvga ati sis tvga8900
+				cirrus ncr77c22 oak cl64xx generic
+ */
+
+/*
+ * Mono driver in Mono or VGA16 server:
+ *
+#define XF86MonoDrivers		hgc1280 sigma apollo
+ */
+
+/*
+ * ET4000/W32 server:
+ *
+#define XF86W32Drivers		et4000w32
+ */
+
+/*
+ * BSD Console driver support (for FreeBSD and NetBSD).
+ *
+ * By default, support is included for pccons and pcvt for NetBSD, and
+ * pccons, syscons and pcvt for FreeBSD.
+ *
+ * To change the list of supported drivers, set the following parameter.
+ * Possible values are -DPCCONS_SUPPORT, -DSYSCONS_SUPPORT, -DPCVT_SUPPORT,
+ * -DCODRV_SUPPORT.  The following example includes support for syscons and
+ * pcvt only.
+ *
+#define XFree86ConsoleDefines	-DSYSCONS_SUPPORT -DPCVT_SUPPORT
+ */
+
+/*
+ * If you only run the X server under xdm the X servers don't need to be
+ * installed SetUID, and you may comment out the lines below.  If you run
+ * the servers by hand (with xinit or startx), then they do need to be
+ * installed SetUID on most OSs.
+ * Consult your system administrator before making the X server setuid.
+ *
+ */
+#if !defined(i386MachArchitecture) && !defined(OS2Architecture)
+#define InstallXserverSetUID	YES
+#endif
+
+/*
+ * Do you want to include support for the FontServer
+ *
+ */
+#define BuildFontServer		YES
+
+/*
+ * Do you want to Build Fonts (Usually you only want to build and install
+ * fonts once, if this is a first time install you will want to build the
+ * fonts)
+ *
+#define BuildFonts		NO
+ */
+
+/*
+ * To not build/install the 75dpi fonts, uncomment the following
+ *
+#define Build75DpiFonts		NO
+ */
+
+/*
+ * To not build/install the 100dpi fonts, uncomment the following
+ *
+#define Build100DpiFonts	NO
+ */
+
+/*
+ * To not build/install the Speedo fonts, uncomment the following
+ *
+#define BuildSpeedoFonts	NO
+ */
+
+/*
+ * To not build/install the Type1 fonts, uncomment the following
+ *
+#define BuildType1Fonts		NO
+ */
+
+/*
+ * To not build/install the Cyrillic fonts, uncomment the following
+ *
+#define BuildCyrillicFonts	NO
+ */
+
+/*
+ * To build only the servers with a cut-down source tree, uncomment
+ * this.
+ *
+#define BuildServersOnly	YES
+ */
+
+/*
+ * To build the servers with Extended input devices.
+ * Select the devices you want setting them to YES.       
+ *
+ * Note: Joystick support is only included for Linux and FreeBSD at the
+ * moment.  For Linux it requires the Joystick module to be installed (it
+ * isn't part of the standard kernel distribution).  For FreeBSD, a kernel
+ * will need to be built with the Joystick driver in order to be able to
+ * use this.
+ *
+ */
+#define BuildXInputExt		YES
+/*
+#define JoystickSupport		YES
+*/
+#define WacomSupport		YES
+#define ElographicsSupport	YES 
+#define SummaSketchSupport	YES
+
+/*
+ * if your system supports dynamic loading of modules using
+ * dlopen set this to YES.
+ *
+#define BuildDynamicLoading	YES
+ */
+
+/*
+ * To disable the ScreenSaver Extension, comment this line.
+ *
+ */
+#define BuildScreenSaverExt	YES
+
+/*
+ * If you don't want to build PEX, uncomment this.
+ *
+#define BuildPexExt		NO
+ */
+
+/*
+ * If you don't want to build XIE, uncomment this.
+ *
+#define BuildXIE		NO
+ */
+
+/*
+ * If you want to build only the DIS (Document Imaging Subset of XIE)
+ * uncomment this line.  This option is only relevant when XIE is built.
+ *
+#define BuildDIS		YES
+ */
+
+/*
+ * By default, the sample config files for xinit, xdm and xfs are installed
+ * only when there is no pre-existing version installed.  Uncommenting the
+ * following lines will force the sample versions to be installed even if
+ * it means over-writing existing versions.
+ *
+#define InstallXinitConfig	YES
+#define InstallXdmConfig	YES
+#define InstallFSConfig		YES
+ */
+
+/*
+ * By default the application defaults files are always installed.
+ * Uncommenting the the following will prevent exising application
+ * defaults files from being over-written.
+ *
+#define InstallAppDefFiles	NO
+ */
+
+/*
+ * If you are running Solaris x86, and have the aperture driver installed,
+ * uncomment this.
+ *
+#define HasSolx86ApertureDriver	YES
+ */
+
+/*
+ * If you are running NetBSD 0.9C or later, and have the aperture driver
+ * installed, uncomment this.
+ *
+#define HasNetBSDApertureDriver	YES
+ */
+
+/*
+ * If you are running SVR3 and have the mmap driver installed (for linear
+ * framebuffer access) uncomment this.
+ *
+#define HasSVR3mmapDrv	YES
+ */
+
+/*
+ * If you are using an SVR3 (like ISC 4.x) which supports long file names,
+ * you can * uncomment this to have manual pages installed under their
+ * full names
+ *
+#define ExpandManNames		YES
+ */
+
+/*
+ * For a POSIXized build on Interactive uncomment this
+ * Could be used with gcc 'till Version 2.6.3
+ * Should be used with gcc 2.7.2. 
+ *
+# define UsePosix		YES
+ */
+
+/*
+ * If you want XDMAUTH support (if you have Wraphelp.c), uncomment this.
+ *
+#define HasXdmAuth		YES
+ */
+
+/*
+ * To forceably build static libraries in addition to shared libraries,
+ * uncomment this.
+ *
+#define ForceNormalLib		YES
+ */
+
+/*
+ * Uncomment this if your default tools (eg, gcc, ld, as, etc) are
+ * not the Linux ELF versions.
+ *
+#define LinuxElfDefault		NO
+ */
+
+/*
+ * To use ELF format shared libraries for Linux, uncomment this.
+ * Note: gcc-2.6.0-941008 and gas-941008 (or later) is required for this.
+ * Check linux.cf if you have problems regarding the location of elf-aware
+ * gcc and gas binaries.
+ *
+ * The default setting of this is the same as the setting of LinuxElfDefault
+ *
+#define UseElfFormat		YES
+ */
+
+/*
+ * If you have trouble with make bombing out in Xlib, try uncommenting this.
+ * You will not get dependencies as a result, but better than nothing.
+ *
+#define MakeHashTableBug        YES
+ */
+
+/*
+ * If you do not want your man pages compress under SVR3 systems that
+ * support it, uncomment this.
+ *
+#define CompressManPages        NO
+ */
+
+/*
+ * LinuxDoc stuff.  Uncomment those of these you want.  Check in
+ * lnxdoc.tmpl for other things you might need to define/change here.
+ *
+#define HasLinuxDoc		YES
+#define HasLatex		YES
+#define HasDvips		YES
+#define BuildLinuxDocHtml	YES
+#define BuildAllDocs		YES
+ */
+
+/*
+ * To install Japanese versions of the documentation uncomment this.
+ * Note: The Japanese documentation consists of a subset of the
+ * XFree86 3.1 docs.
+ *
+#define InstallJapaneseDocs	YES
+ */
+
+/*
+ * Define to build only those parts of contrib supported by XFree86
+ * NOTE: This should not be defined at all if you want to build all
+ * of contrib.  Defining it to NO won't work.
+ *
+ */
+#define XF86Contrib
+

@@ -1,0 +1,79 @@
+XCOMM $XConsortium: Imakefile /main/71 1995/12/06 13:54:19 matt $
+XCOMM $XFree86: xc/programs/Imakefile,v 3.14 1996/08/13 11:27:15 dawes Exp $
+#define IHaveSubdirs
+#define PassCDebugFlags CDEBUGFLAGS="$(CDEBUGFLAGS)"
+
+#if !defined(Win32Architecture)
+
+#if HasXServer
+XINIDIR = xinit
+#endif
+#if BuildServer
+RGBDIR = rgb
+XSDIR = Xserver
+#endif
+#if BuildFontServer
+XFSDIR = xfs
+#endif
+#if BuildXKBlib
+XKBDIRS = setxkbmap xkbcomp xkbevd xkbprint xkbutils
+#endif
+
+#if BuildScreenSaverExt
+SCRNSAVDIR = beforelight
+#endif
+
+#if BuildXF86VidModeExt
+XVIDTUNE = xvidtune
+#endif
+
+#if BuildXF86DGA
+XF86DGA = xf86dga
+#endif
+
+#if BuildLBX
+LBXPROXY = lbxproxy
+#endif
+
+#if BuildServersOnly
+SUBDIRS = $(XSDIR)
+#else
+#ifndef AmoebaArchitecture
+SUBDIRS = \
+	appres bdftopcf $(SCRNSAVDIR) \
+	bitmap editres fsinfo fslsfonts fstobdf iceauth \
+	mkfontdir oclock $(RGBDIR) rstart smproxy \
+	twm x11perf xauth xclipboard xclock \
+	xcmsdb xconsole xdm xdpyinfo $(XF86DGA) xfd $(XFSDIR) xhost xieperf \
+	$(XINIDIR) $(XKBDIRS) xkill xlogo xlsatoms xlsclients xlsfonts \
+	xmag xmh xmodmap xprop xrdb xrefresh xset \
+	xsetmode xsetpointer xsetroot xsm xstdcmap xterm \
+	$(XVIDTUNE) $(LBXPROXY) \
+	xwd xwininfo xwud $(XSDIR) scripts
+
+#else /* AmoebaArchitecture */
+SUBDIRS = \
+	appres bdftopcf $(SCRNSAVDIR) bitmap editres iceauth \
+	mkfontdir oclock $(RGBDIR) rstart smproxy \
+	twm $(XVIDTUNE) x11perf xauth xclipboard xclock \
+	xcmsdb xconsole xdpyinfo xfd xhost \
+	xieperf $(XINIDIR) xkill xlogo xlsatoms xlsclients xlsfonts \
+	xmag xmodmap xprop xrdb xrefresh xset \
+	xsetmode xsetpointer xsetroot xstdcmap xterm \
+	xwd xwininfo xwud $(XSDIR) scripts
+#endif
+#endif /* BuildServersOnly */
+
+#else /* Win32Architecture */
+SUBDIRS = \
+	appres bdftopcf bitmap editres fsinfo fslsfonts fstobdf iceauth \
+	mkfontdir oclock $(XVIDTUNE) x11perf xauth xclipboard xclock \
+	xcmsdb xdpyinfo xfd $(XFSDIR) \
+	xieperf xkill xlogo xlsatoms xlsclients xlsfonts \
+	xmag xmodmap xprop xrdb xrefresh xset xsetroot xstdcmap \
+	xwd xwininfo xwud
+
+#endif
+
+MakeSubdirs($(SUBDIRS))
+DependSubdirs($(SUBDIRS))

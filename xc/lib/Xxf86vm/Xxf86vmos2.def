@@ -1,0 +1,16 @@
+LIBRARY XXF86VM
+DESCRIPTION "X11R6 XFree86 libXxf86vm.dll for OS/2 EMX09B VERSION=6.1"
+CODE
+	PRELOAD
+DATA
+	MULTIPLE NONSHARED
+STACKSIZE 4096
+EXPORTS
+	XF86VidModeQueryExtension @ 1
+	XF86VidModeQueryVersion @ 2
+	XF86VidModeGetModeLine @ 3
+	XF86VidModeModModeLine @ 4
+	XF86VidModeSwitchMode @ 5
+	XF86VidModeLockModeSwitch @ 6
+	XF86VidModeGetMonitor @ 7
+

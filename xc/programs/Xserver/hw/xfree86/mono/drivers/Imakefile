@@ -1,0 +1,30 @@
+XCOMM $XConsortium: Imakefile /main/7 1996/01/26 14:31:05 kaleb $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/mono/drivers/Imakefile,v 3.8 1996/02/24 10:21:16 dawes Exp $
+#include <Server.tmpl>
+#define IHaveSubdirs
+
+SUBDIRS = XF86MonoDrivers
+
+#ifndef OS2Architecture
+SRCS = */?*.c
+OBJS = */?*_drv.o
+#else
+SRCS = apollo/?*.c hgc1280/?*.c sigma/?*.c
+OBJS = apollo/?*_drv.o hgc1280/?*_drv.o sigma/?*_drv.o
+#endif
+
+#if MakeHasPosixVariableSubstitutions
+DONES=$(SUBDIRS:%=%/DONE)
+NormalDepLibraryTarget(monodrv,$(SUBDIRS) $(DONES),$(OBJS))
+#else
+NormalDepLibraryTarget(monodrv,$(SUBDIRS),$(OBJS))
+#endif
+
+NormalLibraryObjectRule()
+
+ForceSubdirs($(SUBDIRS))
+
+DependSubdirs($(SUBDIRS))
+
+InstallLinkKitNonExecFile(Imakefile,$(LINKKITDIR)/drivers/mono)
+

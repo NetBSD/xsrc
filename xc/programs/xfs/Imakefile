@@ -1,0 +1,75 @@
+XCOMM $XConsortium: Imakefile /main/27 1996/01/15 12:19:01 gildea $
+XCOMM $XFree86: xc/programs/xfs/Imakefile,v 3.5 1996/09/01 04:50:08 dawes Exp $
+#undef ServerDefines
+#include <Server.tmpl>
+#define	IHaveSubdirs
+
+OSDIR = os
+DIFSDIR = difs
+
+OSLIB = $(OSDIR)/LibraryTargetName(os)
+DIFSLIB = $(DIFSDIR)/LibraryTargetName(difs)
+SYSLIBS = MathLibrary
+#ifdef i386SVR3Architecture
+#ifndef i386Sco325Architecture
+BSDEMUL = $(DEPXBSDLIB)
+#endif
+#endif
+
+FSDIRS = $(OSDIR) $(DIFSDIR) $(PCFDIRS)
+FSLIBS = $(DIFSLIB) $(DEPFONTLIB) $(DIFSLIB) $(OSLIB) $(BSDEMUL)
+
+SUBDIRS = $(FSDIRS)
+
+FSLIBDIR = $(LIBDIR)/fs
+FSERRORS = $(FSLIBDIR)/fs-errors
+DEFAULTFONTPATH = DefaultFontPath
+SITE_CONFIG = -DDEFAULTFONTPATH=$(DEFAULTFONTPATH) -DFSERRORS=$(FSERRORS)
+
+#if HasParallelMake
+MakeMutex(config $(FSDIRS) $(FSLIBS))
+#endif
+
+all:: config
+
+#ifndef LynxOSArchitecture
+ServerTarget(xfs,$(FSDIRS),NullParameter,$(FSLIBS),$(SYSLIBS))
+#else
+ServerTarget(xfs,$(FSDIRS),difs/main.o,$(FSLIBS),$(SYSLIBS))
+#endif
+
+CppFileTarget(config,config.cpp,$(SITE_CONFIG),$(ICONFIGFILES))
+
+InstallManPage(xfs,$(MANDIR))
+
+#if InstallFSConfig
+InstallNonExecFile(config,$(FSLIBDIR))
+#else
+InstallNonExecFileNoClobber(config,$(FSLIBDIR))
+#endif
+
+#if HasCodeCenter
+debug_xfs:
+	XCOMM cd difs
+	XCOMM make debug_src
+	XCOMM cd ../os
+	XCOMM make debug_src
+	XCOMM cd ../../../lib/font/bitmap
+	XCOMM make debug_src
+	XCOMM cd ../fontfile
+	XCOMM make debug_src
+	XCOMM cd ../fc
+	XCOMM make debug_src
+	XCOMM cd ../Speedo
+	XCOMM make debug_src
+	XCOMM cd ../Type1
+	XCOMM make debug_src
+	XCOMM cd ../util
+	XCOMM make debug_src
+	XCOMM unload atom.c miscutil.c
+	XCOMM cd ../../../programs/xfs
+#endif
+
+DependSubdirs($(SUBDIRS))
+
+ForceSubdirs($(SUBDIRS))

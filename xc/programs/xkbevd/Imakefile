@@ -1,0 +1,21 @@
+XCOMM $XConsortium: Imakefile /main/1 1995/11/30 19:18:08 kaleb $
+
+          SRCS = xkbevd.c cfgscan.c cfgparse.c \
+		 evargs.c printev.c utils.c
+          OBJS = xkbevd.o cfgscan.o cfgparse.o \
+		 evargs.o printev.o utils.o
+        DEPLIBS = $(DEPXKBFILELIB) $(DEPXLIBONLY)
+LOCAL_LIBRARIES = $(XKBFILELIB) $(XLIB)
+
+ROOT_DEFINES = -DDFLT_XKB_CONFIG_ROOT=\"$(LIBDIR)/xkb\"
+
+INCLUDES = -I$(EXTINCSRC)
+
+all::
+
+YaccFile(cfgparse,/**/)
+
+clean::
+	RemoveFiles(test.h *.xkm *.xkb)
+
+ComplexProgramTarget(xkbevd)

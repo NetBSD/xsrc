@@ -1,0 +1,266 @@
+  Notes on Rebuilding XFree86/OS2 from Scratch
+  Holger Veit
+  Last modified 22 Feb 1996
+
+  1.  Preface
+
+  X11 and XFree86 were initially developed on Unix-based systems.
+  Usually Unix systems provide a rich number of tools and utilities to
+  get certain things done. Under OS/2, these tools are not installed,
+  but ports are available which are sometimes functionally equivalent to
+  Unix utilities with the same name, but also differ sometimes in a
+  subtle way.  This guide will give you hints if you intend to rebuild
+  the system from scratch under OS/2.
+
+  Please also read README.OS2 for end-user information, and set at least
+  the environment variables described there.
+
+  2.  Tools required
+
+  I have tried to reduce the number of external tools, but when looking
+  back it seems I were not very successful. At least I managed to get
+  everything working with the native CMD.EXE shell only. However, there
+  is still plenty of software required.  Most of this software is
+  available from hobbes.nmsu.edu or ftp.leo.org via anonymous FTP. The
+  following shopping list shows what you will need:
+
+
+     o  gcc     EMX/gcc emx 0.9B fix 1 or later
+
+     o  gzip    GNU zip/unzip
+
+     o  tar     GNU tar
+
+     o  patch   Larry Wall's patch utility (attention: incompatible tool
+        with same name in OS/2)
+
+     o  install BSD/GNU install
+
+     o  rm,mv,cp        GNU file utilities
+
+     o  tee,..  GNU shell utilities
+
+     o  groff   GNU nroff/troff
+
+     o  sed     GNU sed stream editor
+
+     o  grep    GNU grep
+
+     o  gawk    GNU awk
+
+     o  make    GNU make 3.71/3.72
+
+     o  flex    GNU flex
+
+     o  bison   GNU bison
+
+     o  find    GNU find    (attention: incompatible tool with the same
+        name in OS/2)
+
+  If there is no version number given, any new version will do.
+  Particularly critical is only EMX/gcc and GNU make. Note that the
+  second GCC implementation which might still be available from some
+  archives is NOT compatible.
+
+  Furthermore, you need the X11R6.1 and XFree86 sources.  At this
+
+  moment, I cannot say anything about the file names to obtain, because
+  things are currently in the flow. The X Consortium is about to publish
+  an update to X11R6, named X11R6.1 (cynics call this "X11'95" :-) ); I
+  don't know whether a patch or an entirely new version will be issued.
+  The public XFree86 sources will likely be called XFree86-3.2.tar.gz;
+  for sources for the alpha version XFree86/OS2 3.1.2D you must become a
+  member of XFree86.
+
+  3.  Compiling and Installing
+
+  You need about 300MB of free HPFS space for the whole system. This
+  does not include space for the postscript and troff documentation
+  files. I have never installed them. Nor did I install the test
+  subtree.
+
+
+     1. Install all the above utilities. Refer to the corresponding
+        documentation.  Verify that everything works well, particularly
+        EMX.
+
+     2. It is a good idea to use the same or a similar structure I have.
+        I have made a directory \x11 on the partition for compiling and
+        have put everything below this tree. I found that a clean tree
+        occupies less than the half space of the disk, this gives me the
+        opportunity to rename this tree to \x11old and copy a new
+        version to the same disk to produce diffs. Last time the
+        complete tree was arranged under the root directory xc, this
+        would become \x11\xc then.
+
+     3. To unpack the files you would usually execute the command
+
+        gzip -dc file.tar.gz | tar xvf -
+
+
+     in the \x11 directory. At the end you will usually see the irritat-
+     ing, but non-fatal message "gzip: stdout Broken pipe". Ignore it.
+
+     4. After that, is is likely necessary to apply some patches, either
+        from the XConsortium or from the XFree86 project. Before you do
+        this, enter
+
+              chmod -R a+rw \ex11\exc
+
+
+
+     to make certain files in the tree writable.
+
+     5. There should be a file added-XXX accompanying the patch file
+        which lists the files that are newly created. The patch program
+        has a problem with creating new directories, so we need to
+        create them on advance. For each added-XXX file you find,
+        execute from \x11
+
+        xc\config\util\added added-XXX
+
+
+     If there is no added-XXX file available, you can make one with the
+     following instructions:
+
+           grep "\*\*\* xc/" patchfile >added-file
+
+
+
+     Edit added-file with a text editor and remove the ***  at the
+     beginning and the time stamp at the end (search for a TAB and erase
+
+     to the end of the line). You get a list of file paths, one in a
+     line, which is the input to the added utility.
+
+     6. After that you can apply the patches in the right order. Usually
+        this is done by a command
+
+              patch -p -E <patchfile 2>&1 | tee patchlog
+
+
+
+     from the \x11 directory. Be aware to use the right patch - OS/2 has
+     a utility with the same name and different functionality.  Don't
+     use the recommended -s option, this makes patch quiet, and you
+     won't see problems in the patchlog file. Use
+
+           find \x11 -name *.rej -print
+           find \x11 -name *# -print
+
+
+
+     to find any rejects and unapplied patches (attention: yet another
+     OS/2 program with wrong functionality). Normally there shouldn't be
+     any problems of this kind, else you have made a mistake. finally
+     remove the original files with
+
+           find \x11 -name *.orig -print -exec rm {} ;
+
+
+
+
+     7. Go to the xc/config/cf directory and edit the xf86site.def file
+        to match your requirements (you probably don't want to compile
+        all X servers). Certain changes must be set to the following
+        values:
+
+        o  Disable if not already done any PC98 server; PC98 (Japanese
+           XFree86) does not work yet. Porters from Japan are welcome!
+
+        o  #define WacomSupport            NO #define ElographicsSupport
+           NO Both options are not yet supported.
+
+        o  #define ForceNormalLib NO There is no support for static
+           libraries yet; why would you need them anyway.
+
+     8. Go to the directory xc\util\compress and make compress.exe
+        there. Install the program produced there in your path. I
+        stumbled more than once on half-ported compress programs on OS/2
+        ftp servers that are defective w.r.t.  reading and writing
+        stdin/stdout. In some stage (font compression) otherwise you
+        will get a core dump of mkfontdir, because all compressed fonts
+        are corrupt.
+
+     9. Set the environment variable X11ROOT to something different than
+        it is; otherwise the installation process will overwrite your
+        original XFree86/OS2 installation. If you have not set this
+        variable, go back to the prefix section of this document: you
+        have forgotten something.
+
+     10.
+        Copy the file xc/config/util/buildos2.cmd into the xc directory.
+
+     11.
+        Execute this buildos2.cmd command in the xc directory; it will
+        produce a logfile buildxc.log in this directory.
+
+
+     12.
+        Go have a bucket of coffee. The compile will need between 2 and
+        20 hours.
+
+     13.
+        When finished, view the logfile for errors, and fix the problems
+        if there are some. I have managed to compile the whole system
+        flawlessly, so there is at least one configuration that works.
+
+     14.
+        Finally, from the xc dir, execute
+
+              xmake install
+              xmake install.man
+
+
+
+
+  Well, you see, this was quite easy :-)
+
+
+  Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2note.sgml,v 3.1 1996/02/24 10:19:19 dawes Exp $
+
+
+
+
+
+  $XConsortium$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.3 1996/02/24 10:48:46 dawes Exp $
