@@ -34,6 +34,7 @@
   chicony	=       xfree86         pc(pc104)
   macintosh	=	xfree86		macintosh(macintosh)
   macintosh_old	=	macintosh	macintosh(macintosh)
+  macintosh_usb =	macintosh(usb)	macintosh(macintosh)
   powerpcps2	=	powerpcps2	pc(pc104)
 
 //! model		layout	=	symbols
@@ -122,6 +123,9 @@
   macintosh_old	us	=	macintosh/us(extended)
   macintosh_old	en_US	=	macintosh/us(extended)
   macintosh_old	*	=	macintosh/us(extended)+macintosh/%l%(v)
+  macintosh_usb	us	=	macintosh/us(extended)
+  macintosh_usb	en_US	=	macintosh/us(extended)
+  macintosh_usb	*	=	macintosh/us(extended)+macintosh/%l%(v)
   powerpcps2	us	=	us(pc104)
   powerpcps2	en_US	=	en_US(pc104)
   powerpcps2	*	=	en_US(pc104)+%l%(v)

@@ -113,6 +113,7 @@ xkb_symbols "extended" {
     // End "Function" section
 
     // Begin "Editing" section
+    key <HELP> {	[  Help			]	};
     key  <INS> {	[  Insert		]	};
     key <HOME> {	[  Home			]	};
     key <PGUP> {	[  Prior		]	};
@@ -149,6 +150,7 @@ xkb_symbols "extended" {
 
     key  <KP0> {	[  KP_0	, KP_Insert	]	};
     key <KPDL> { 	[  KP_Decimal , KP_Delete ]	};
+    key <KPSP> {	[  KP_Separator		]	};
     // End "Keypad" section
 
     // Begin modifier mappings
@@ -156,6 +158,8 @@ xkb_symbols "extended" {
     key <LFSH> {	[  Shift_L		]	};
     key <LCTL> {	[  Control_L		]	};
     key <LALT> {	[  Alt_L	 	]	};
+    key <LMTA> {	[  Meta_L		]	};
+    key <RMTA> {	[  Meta_R		]	};
     key <RALT> {        [ Mode_switch,  Multi_key       ]       };
     key <RTSH> {	[  Shift_R		]	};
     key <RCTL> {	[  Control_R		]	};
