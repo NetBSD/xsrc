@@ -183,7 +183,8 @@ SOFTWARE.
     (defined(__uxp__) && (defined(sparc) || defined(mc68000))) || \
     (defined(Lynx) && defined(__sparc__)) || \
     ((defined(__NetBSD__) || defined(__OpenBSD__)) && \
-     (defined(__sparc__) || defined(__sparc_v9__) || defined(__mc68000__)))
+     (defined(__sparc__) || defined(__sparc_v9__) || defined(__mc68000__) \
+      || defined(__m68k__)))
 
 #if defined(sun386) || defined(sun5)
 # define IMAGE_BYTE_ORDER	LSBFirst        /* Values for the SUN only */
