@@ -1,4 +1,4 @@
-/*	$NetBSD: pxfillsp.c,v 1.2 2001/09/22 19:43:50 ad Exp $	*/
+/*	$NetBSD: pxfillsp.c,v 1.3 2002/02/22 16:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ void
 pxDoFillSpansS(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 	       BoxPtr pOneBox, int n, DDXPointPtr ppt, int *pwidth)
 {
-	int v1, v2, psy, x, y, w, xya, stampw, stamph, xorg, yorg;
+	int v1, v2, psy, x, y, w, xya, stampw, stamphm, xorg, yorg;
 	DDXPointPtr pptmax;
 	pxScreenPrivPtr sp;
 	u_int32_t *pb, std;
@@ -167,7 +167,7 @@ pxDoFillSpansS(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 
 	sp = gcPriv->sp;
 	stampw = sp->stampw;
-	stamph = sp->stamph;
+	stamphm = sp->stamphm;
 
 	pb = pxPacketStart(sp, &pxp, 5, 12);
 	pb[0] = STAMP_CMD_LINES | STAMP_RGB_FLAT | STAMP_LW_PERPACKET |
@@ -201,7 +201,7 @@ pxDoFillSpansS(DrawablePtr pDrawable, GCPtr pGC, pxPrivGCPtr gcPriv,
 		xorg = (x - pGC->patOrg.x - pDrawable->x) & 15;
 		yorg = (y - pGC->patOrg.y - pDrawable->y) & 15;
 
-		xya = XYMASKADDR(stampw, stamph, x, y, xorg, 0);
+		xya = XYMASKADDR(stampw, stamphm, x, y, xorg, 0);
 		psy = (y << 3) + (1 << 2) - 1;
 		v1 = (x << 19) | psy;
 		v2 = ((x + w) << 19) | psy;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxpushpxl.c,v 1.2 2001/09/22 19:43:51 ad Exp $	*/
+/*	$NetBSD: pxpushpxl.c,v 1.3 2002/02/22 16:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,14 +104,14 @@ pxSqueege(pxScreenPrivPtr sp, PixmapPtr pix, DrawablePtr pDst,
 	  pxPacketPtr pxp, int fx1, int fy1, int fx2, int fy2,
 	  int sx, int sy)
 {
-	int stride, xrot, x1, x2, y, th, rh, psy, lw, tw, stampw, stamph;
+	int stride, xrot, x1, x2, y, th, rh, psy, lw, tw, stampw, stamphm, xa;
 	u_int16_t *base, *p, *pbs;
 	u_int32_t *pb;
 
 	PX_TRACE("pxSqueege");
 
 	stampw = sp->stampw;
-	stamph = sp->stamph;
+	stamphm = sp->stamphm;
 
 	sx += pix->drawable.x;
 	sy += pix->drawable.y;
@@ -138,6 +138,7 @@ pxSqueege(pxScreenPrivPtr sp, PixmapPtr pix, DrawablePtr pDst,
 		p = base++;
 		y = fy1;
 		rh = fy2 - y;
+		xa = XMASKADDR(stampw, x1, xrot) << 16;
 
 		while (rh > 0) {
 			th = min(rh, 16);
@@ -145,7 +146,7 @@ pxSqueege(pxScreenPrivPtr sp, PixmapPtr pix, DrawablePtr pDst,
 			psy = (y << 3) + lw;
 
 			pb = pxPacketAddPrim(sp, pxp);
-			pb[8] = XYMASKADDR(stampw, stamph, x1, y, xrot, 0);
+			pb[8] = YMASKADDR(stamphm, y, 0) | xa;
 			pb[9] = (x1 << 19) | psy;
 			pb[10] = (x2 << 19) | psy;
 			pb[11] = lw;
@@ -166,14 +167,14 @@ pxSqueege16(pxScreenPrivPtr sp, PixmapPtr pix, DrawablePtr pDst,
 	    pxPacketPtr pxp, int fx1, int fy1, int fx2, int fy2,
 	    int sx, int sy)
 {
-	int stride, xrot, rh, psy, lw, tw, stampw, stamph, ya;
+	int stride, xrot, rh, psy, lw, tw, stampw, stamphm, ya;
 	u_int16_t *p, *pbs, *pbsmax, *base;
 	u_int32_t *pb;
 
 	PX_TRACE("pxSqueege16");
 
 	stampw = sp->stampw;
-	stamph = sp->stamph;
+	stamphm = sp->stamphm;
 
 	sx += pix->drawable.x;
 	sy += pix->drawable.y;
@@ -194,7 +195,7 @@ pxSqueege16(pxScreenPrivPtr sp, PixmapPtr pix, DrawablePtr pDst,
 	rh = fy2 - fy1;
 	lw = (rh << 2) - 1;
 	psy = (fy1 << 3) + lw;
-	ya = YMASKADDR(stamph, fy1, 0);
+	ya = YMASKADDR(stamphm, fy1, 0);
 
 	for (xrot = sx & 15; fx1 < fx2; xrot = 0, fx1 += tw) {
 		pb = pxPacketAddPrim(sp, pxp);

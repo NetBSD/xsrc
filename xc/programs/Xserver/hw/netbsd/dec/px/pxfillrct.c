@@ -1,4 +1,4 @@
-/*	$NetBSD: pxfillrct.c,v 1.1 2001/09/18 20:02:53 ad Exp $	*/
+/*	$NetBSD: pxfillrct.c,v 1.2 2002/02/22 16:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ PX_OP(pxPolyFillRect)(DrawablePtr pDrawable, GCPtr pGC,
 	u_int32_t *pb;
 	pxPacket pxp;
 #ifdef _STIPPLE
-	int xya, stampw, stamph;
+	int xya, stampw, stamphm;
 #endif
 
 	PX_TRACE("##PX_OP(pxPolyFillRct)##");
@@ -168,7 +168,7 @@ PX_OP(pxPolyFillRect)(DrawablePtr pDrawable, GCPtr pGC,
 	pb[3] = gcPriv->umet | STAMP_WE_XYMASK;
 
 	stampw = sp->stampw;
-	stamph = sp->stamph;
+	stamphm = sp->stamphm;
 #else
 	pb = pxPacketStart(sp, &pxp, 5, 3);
 	pb[0] = STAMP_CMD_LINES | STAMP_RGB_CONST | STAMP_LW_PERPRIMATIVE;
@@ -210,7 +210,7 @@ PX_OP(pxPolyFillRect)(DrawablePtr pDrawable, GCPtr pGC,
 #ifdef _STIPPLE
 			xorg = (x - pGC->patOrg.x - pDrawable->x) & 15;
 			yorg = (y - pGC->patOrg.y - pDrawable->y) & 15;
-			xya = XYMASKADDR(stampw, stamph, x, y, xorg, yorg);
+			xya = XYMASKADDR(stampw, stamphm, x, y, xorg, yorg);
 #ifdef _OPAQUE
 			pb = pxPacketAddPrim(sp, &pxp);
 			DOBG(v1, v2, lw, xya, gcPriv->mask.bg);
@@ -267,7 +267,7 @@ PX_OP(pxPolyFillRect)(DrawablePtr pDrawable, GCPtr pGC,
 #ifdef _STIPPLE
 				xorg = (x - pGC->patOrg.x - pDrawable->x) & 15;
 				yorg = (y - pGC->patOrg.y - pDrawable->y) & 15;
-				xya = XYMASKADDR(stampw, stamph, x, y, xorg,
+				xya = XYMASKADDR(stampw, stamphm, x, y, xorg,
 				    yorg);
 #ifdef _OPAQUE
 				pb = pxPacketAddPrim(sp, &pxp);
