@@ -55,7 +55,7 @@ Sun Microsystems, Inc. or its licensors is granted.
 #include "XlcPublic.h"
 #include "XlcPubI.h"
 
-#ifdef _LP64
+#if defined(_LP64) && !defined(__NetBSD__)
 #if defined(__sparcv9)
 #define	_MACH64_NAME		"sparcv9"
 #define	_MACH64_NAME_LEN	(sizeof (_MACH64_NAME) - 1)
@@ -238,7 +238,7 @@ const char *lc_dir;
     char *path;
     size_t len;
 
-#ifdef _LP64
+#if defined(_LP64) && !defined(__NetBSD__)
     len = (lc_dir ? strlen(lc_dir) : 0 ) +
 	(dl_name ? strlen(dl_name) : 0) + _MACH64_NAME_LEN + 10;
     path = Xmalloc(len + 1);
