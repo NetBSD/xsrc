@@ -926,7 +926,7 @@ DGAMapPhysical(
     if ((pMap->fd = open(name, O_RDWR)) < 0)
 	return False;
     pMap->virtual = mmap(NULL, size, PROT_READ | PROT_WRITE, 
-			MAP_FILE | MAP_SHARED, pMap->fd, (off_t)base);
+			MAP_FILE | MAP_SHARED, pMap->fd, (off_t)(unsigned long)base);
     if (pMap->virtual == (void *)-1)
 	return False;
 #endif

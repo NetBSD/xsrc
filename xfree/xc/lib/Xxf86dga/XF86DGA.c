@@ -558,7 +558,7 @@ MapPhysAddress(unsigned long address, unsigned long size)
 	    return NULL;
     }
     vaddr = (void *)mmap(NULL, size + delta, PROT_READ | PROT_WRITE,
-                        MAP_FILE | MAP_SHARED, mapFd, (off_t)offset);
+                        MAP_FILE | MAP_SHARED, mapFd, (off_t)(unsigned long)offset);
     if (vaddr == (void *)-1)
 	return NULL;
 #endif
