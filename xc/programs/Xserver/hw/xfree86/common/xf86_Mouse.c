@@ -960,7 +960,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
       struct wscons_event ev;
 
       /* copy to guarantee alignment */
-      memcpy(&ev, pBuf, sizeof ev);
+      memcpy(&ev, mouse->pBuf, sizeof ev);
       switch (ev.type) {
       case WSCONS_EVENT_MOUSE_UP:
 	dx = dy = 0;
