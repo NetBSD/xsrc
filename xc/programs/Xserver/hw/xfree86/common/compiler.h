@@ -310,7 +310,7 @@ static __inline__ void stw_u(unsigned long r5, unsigned short * r11)
 #endif
 
 #else /* defined(__alpha__) */
-#if defined(__mips__) || defined(__arm__) || defined(__arm32__)
+#if defined(__mips__) || defined(__arm__) || defined(__arm32__) || defined(__sh__)
 
 unsigned int IOPortBase;  /* Memory mapped I/O port area */
 
@@ -407,9 +407,9 @@ static __inline__ unsigned long ldw_u(unsigned short * r11)
 			((unsigned char *)(p)+1) = ((v) >> 8)
 
 #define mem_barrier()   /* NOP */
-#endif /* defined(mips) */
+#endif /* defined(__mips__) */
 
-#if defined(__arm__) || defined(__arm32__)
+#if defined(__arm__) || defined(__arm32__) || defined(__sh__)
 #define ldq_u(p)	(*((unsigned long  *)(p)))
 #define ldl_u(p)	(*((unsigned int   *)(p)))
 #define ldw_u(p)	(*((unsigned short *)(p)))
@@ -418,9 +418,9 @@ static __inline__ unsigned long ldw_u(unsigned short * r11)
 #define stw_u(v,p)	((unsigned short *)(p)) = (v)
 #define mem_barrier()   /* NOP */
 #define write_mem_barrier()   /* NOP */
-#endif /* defined(arm32) */
+#endif /* defined(__arm__) || defined(__arm32__) || defined(__sh__) */
 
-#else /* defined(mips) || defined(arm) || defined(arm32) */
+#else /* defined(mips) || defined(arm) || defined(arm32) || defined(__sh__) */
 
 #define ldq_u(p)	(*((unsigned long  *)(p)))
 #define ldl_u(p)	(*((unsigned int   *)(p)))
