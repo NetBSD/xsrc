@@ -30,41 +30,50 @@ builds with the native compiler for each platform;
 
 <p>
 There are a few starting points for getting the XFree86 source.  One option
-is to start directly with the XFree86 &relvers; source distribution.  In this
+is to start directly with the XFree86 &fullrelvers; source
+distribution<![ %updaterel; [ and updating it to &relvers; with a source
+patch]]>.  In this
 case, the procedure is as follows:
 <itemize>
-  <item>The XFree86 source is contained in files <tt>X&srcvers;src-1.tgz</tt>,
-	<tt>X&srcvers;src-2.tgz</tt> and <tt>X&srcvers;src-3.tgz</tt>.  These can be found
-	at <htmlurl name="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/source/"
-	url="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/source/"> and similar
-	locations on XFree86 mirror sites.  <tt>X&srcvers;src-2.tgz</tt> contains
-	the fonts and documentation source.  <tt>X&srcvers;src-3.tgz</tt> contains
-	the hardcopy documentation.  <tt>X&srcvers;src-1.tgz</tt> contains
-	everything else.  If you don't need the docs or fonts you can get
-	by with only <tt>X&srcvers;src-1.tgz</tt>.
+  <item>The XFree86 source is contained in files
+	<tt>X&fullsrcvers;src-1.tgz</tt>, <tt>X&fullsrcvers;src-2.tgz</tt>
+	and <tt>X&fullsrcvers;src-3.tgz</tt>.  These can be found at
+	<htmlurl
+	name="ftp://ftp.xfree86.org/pub/XFree86/&fullrelvers;/source/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/&fullrelvers;/source/">
+	and similar locations on XFree86 mirror sites.
+	<tt>X&fullsrcvers;src-2.tgz</tt> contains the fonts and
+	documentation source.  <tt>X&fullsrcvers;src-3.tgz</tt> contains
+	the hardcopy documentation.  <tt>X&fullsrcvers;src-1.tgz</tt>
+	contains everything else.  If you don't need the docs or fonts
+	you can get by with only <tt>X&fullsrcvers;src-1.tgz</tt>.
+
   <item>Extract each of these files by running the following from a directory
 	on a filesystem containing enough space (the full source requires
 	around 270MB, and a similar amount is required in addition to this
 	for the compiled binaries):
 	<quote><tt>
-	gzip -d &lt; X&srcvers;src-1.tgz | tar vxf -<newline>
-	gzip -d &lt; X&srcvers;src-2.tgz | tar vxf -<newline>
-	gzip -d &lt; X&srcvers;src-3.tgz | tar vxf -<newline>
+	gzip -d &lt; X&fullsrcvers;src-1.tgz | tar vxf -<newline>
+	gzip -d &lt; X&fullsrcvers;src-2.tgz | tar vxf -<newline>
+	gzip -d &lt; X&fullsrcvers;src-3.tgz | tar vxf -<newline>
 	</tt></quote>
-    <item>If the release is not a full release, it is available as a
-    patch against the previous full release in the 
-<htmlurl
-name="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/patches/"
-url="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/patches/">
-directory. Get the patch file from there and apply it by running the
-following command:
-<quote><tt>
-cd <em>the directory containing the</em> xc <em>directory</em><newline>
-gzip -d &lt; <em>file</em> | patch -s -p0 -E 
-</tt>
-</quote>
-Look for special patching instructions in the <htmlurl name="Release
-Notes" url="http://www.xfree86.org/&relvers;/RELNOTES.html">.
+
+<![ %updaterel; [
+  <item>A patch relative to &fullrelvers is available at
+	<htmlurl
+	name="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/patches/"
+	url="ftp://ftp.xfree86.org/pub/XFree86/&relvers;/patches/">.
+	The patch file is <tt>&fullrelvers;-&relvers;.diff.gz</tt>.
+
+	The patch can be applied by running:
+	<quote><tt>
+	cd <em>the directory containing the</em> xc <em>directory</em><newline>
+	gzip -d &lt; &fullrelvers;-&relvers;.diff.gz | patch -s -p0 -E 
+	</tt>
+	</quote>
+	Look for special patching instructions in the <htmlurl name="Release
+	Notes" url="http://www.xfree86.org/&relvers;/RELNOTES.html">.
+]]>
 </itemize>
 
 Another option is to get the source by anonymous CVS or CVSup. 
@@ -72,7 +81,7 @@ See <htmlurl name="http://www.xfree86.org/cvs/"
 url="http://www.xfree86.org/cvs/"> for details on the different
 procedure available. 
 
-All method will produce one main source directory called <tt>xc</tt>. 
+All methods will produce one main source directory called <tt>xc</tt>. 
 
 <sect>Configuring the source before building
 <p>
@@ -240,7 +249,7 @@ XFree86@XFree86.org.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.6 2001/11/15 17:32:16 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/BUILD.sgml,v 3.6.4.1 2002/09/04 03:33:11 dawes Exp $
 </verb>
 
 </article>

@@ -27,7 +27,7 @@
  *
  * Much code taken from X11R3 String and Disk Sources.
  */
-/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.24 2001/12/14 19:54:41 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.24.2.1 2002/07/04 17:07:09 paulo Exp $ */
 
 /*
 
@@ -320,7 +320,7 @@ XawMultiSrcInitialize(Widget request, Widget cnew,
  *	This function reads the source.
  *
  * Returns:
- *	The number of characters read into the buffer
+ *	The character position following the retrieved text.
  */
 static XawTextPosition
 ReadText(Widget w, XawTextPosition pos, XawTextBlock *text, int length)
@@ -333,7 +333,7 @@ ReadText(Widget w, XawTextPosition pos, XawTextBlock *text, int length)
     text->firstPos = pos;
     text->ptr = (char *)(piece->text + (pos - start));
     count = piece->used - (pos - start);
-    text->length = (length > count) ? count : length;
+    text->length = Max(0, (length > count) ? count : length);
 
     return (pos + text->length);
 }
@@ -1610,13 +1610,13 @@ CvtMultiTypeToString(Display *dpy, XrmValuePtr args, Cardinal *num_args,
 static void
 GetDefaultPieceSize(Widget w, int offset, XrmValue *value)
 {
-    static int pagesize;
+    static XPointer pagesize;
 
     if (pagesize == 0) {
-	pagesize = _XawGetPageSize();
-	if (pagesize < BUFSIZ)
-	    pagesize = BUFSIZ;
+	pagesize = (XPointer)((long)_XawGetPageSize());
+	if (pagesize < (XPointer)BUFSIZ)
+	    pagesize = (XPointer)BUFSIZ;
     }
 
-    value->addr = (XtPointer)&pagesize;
+    value->addr = (XPointer)&pagesize;
 }

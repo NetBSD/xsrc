@@ -25,7 +25,7 @@ in this Software without prior written authorization from The Open Group.
 
 */
 
-/* $XFree86: xc/lib/Xaw/TextSrc.c,v 1.30 2001/12/14 19:54:45 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/TextSrc.c,v 1.30.2.1 2002/07/04 17:07:10 paulo Exp $ */
 
 /*
  * Author:  Chris Peterson, MIT X Consortium.
@@ -405,6 +405,9 @@ XawTextSrcSetValues(Widget current, Widget request, Widget cnew,
  *
  * Description:
  *	This function reads the source.
+ *
+ * Returns:
+ *	The character position following the retrieved text.
  */
 /*ARGSUSED*/
 static XawTextPosition
@@ -940,7 +943,8 @@ XawTextSourceReplace(Widget w, XawTextPosition left,
 		    memcpy(list->left->buffer, undo->left->buffer, size);
 		}
 		++list->left->length;
-		XtFree(l_state->buffer);
+		if (l_state->buffer != SrcNL && l_state->buffer != (char*)SrcWNL)
+		    XtFree(l_state->buffer);
 	    }
 
 	    if (src->textSrc.undo->num_list >= UNDO_DEPTH)

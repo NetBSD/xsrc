@@ -6,7 +6,7 @@
 //
 //  Created by Andreas Monitzer on January 6, 2001.
 //
-/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/Xserver.m,v 1.37 2002/01/01 23:09:00 torrey Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/bundle/Xserver.m,v 1.37.2.1 2002/08/20 21:56:15 torrey Exp $ */
 
 #import "Xserver.h"
 #import "Preferences.h"
@@ -49,6 +49,7 @@ extern char **envpGlobal;
 extern int main(int argc, char *argv[], char *envp[]);
 extern void HideMenuBar(void);
 extern void ShowMenuBar(void);
+extern void QuartzReallySetCursor();
 static void childDone(int sig);
 
 static NSPortMessage *signalMessage;
@@ -753,6 +754,10 @@ static NSRect aquaMenuBarBox;
             if (!appQuitting) {
                 [NSApp terminate:nil];	// quit if we aren't already
             }
+            break;
+
+        case kQuartzCursorUpdate:
+            QuartzReallySetCursor();
             break;
 
         default:

@@ -1,4 +1,4 @@
-                     Driver Status for XFree86[tm] 4.2.0
+                     Driver Status for XFree86[tm] 4.2.1
 
                           The XFree86 Project, Inc
 
@@ -7,7 +7,7 @@
                                   Abstract
 
      This document provides information about the status of the driver
-     and hardware support in XFree86 4.2.0 compared with that in XFree86
+     and hardware support in XFree86 4.2.1 compared with that in XFree86
      3.3.6.  Please send updates for this document to
      <fixes@xfree86.org>.  Please do not send requests for information
      or support to that address (they will not be answered).
@@ -15,10 +15,10 @@
 1.  Introduction
 
 This document contains one section per vendor (organised alphabetically) for
-each chipset family that is supported in XFree86 3.3.6 or XFree86 4.2.0.  It
+each chipset family that is supported in XFree86 3.3.6 or XFree86 4.2.1.  It
 includes information about the status of the drivers and the hardware they
 support, including a comparison of the level of support between versions
-3.3.6 and 4.2.0.  Unless otherwise stated, hardware is classified as "sup-
+3.3.6 and 4.2.1.  Unless otherwise stated, hardware is classified as "sup-
 ported" if its driver provides basic 2D support.  Support for additional fea-
 tures may or may not be present.
 
@@ -27,9 +27,9 @@ XF86_SVGA server, which has a set of driver modules that are built into it at
 compile time.  In other cases, X servers for specific chips (or families of
 chips) are provided (such as XF86_AGX, XF86_Mach64, etc.).
 
-In XFree86 4.2.0, there is only one X server, called "XFree86", which can
+In XFree86 4.2.1, there is only one X server, called "XFree86", which can
 load driver modules at runtime.  Thus there is no specific mention of a
-server binary when 4.2.0 is discussed; only the XFree86 server is used.
+server binary when 4.2.1 is discussed; only the XFree86 server is used.
 Third-party vendors (often the manufacturers of various video chipsets) may
 provide their own drivers for the XFree86 server, but these third-party mod-
 ules are beyond the scope of this document.
@@ -45,7 +45,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Support (including acceleration) for Voodoo Banshee and Voodoo3
             cards is provided by the XF86_SVGA server with the tdfx driver.
 
-      4.2.0:
+      4.2.1:
             Support for Voodoo Graphics and Voodoo2 chips is provided by the
             "glide" driver (this requires version 2.x of the Glide library,
             which is not part of the XFree86 distribution).
@@ -54,9 +54,9 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Voodoo4, and Voodoo5 is provided by the "tdfx" driver.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0.  The
+            All hardware supported in 3.3.6 is also supported in 4.2.1.  The
             Voodoo Graphics, Voodoo2, Voodoo4, and Voodoo5 are supported only
-            in 4.2.0.
+            in 4.2.1.
 
 3.  3Dlabs
 
@@ -66,16 +66,16 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             RAMDACs), Permedia with IBM RGB526 RAMDAC, and Permedia 2, 2a, 2v
             is provided by the XF86_3DLabs server.
 
-      4.2.0:
+      4.2.1:
             Support (including acceleration) for the Permedia series (includ-
             ing 1, 2, 2a, 2v, 3, and 4) and GLINT series (including 300SX,
             500TX, MX, R3 and R4) with the Gamma, Gamma2 or Delta coprocessor
             is provided by the "glint" driver.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0.  The
+            All hardware supported in 3.3.6 is also supported in 4.2.1.  The
             Permedia 3, Permedia 4, GLINT R3, GLINT R4 and Gamma2 are sup-
-            ported only in 4.2.0.
+            ported only in 4.2.1.
 
 4.  Alliance
 
@@ -83,15 +83,15 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Support (including acceleration) for the AT24, AP6422, AT3D is
             provided by the XF86_SVGA server with the apm driver.
 
-      4.2.0:
+      4.2.1:
             Support (including acceleration) for the AT24, AT25 and AT3D is
             provided by the "apm" driver.  This driver currently has only
             incomplete support for the AP6422.
 
       Summary:
-            The AP6422 is supported in 3.3.6 but not fully in 4.2.0.  All
-            other hardware supported in 3.3.6 is also supported in 4.2.0.
-            The AT25 is supported only in 4.2.0.
+            The AP6422 is supported in 3.3.6 but not fully in 4.2.1.  All
+            other hardware supported in 3.3.6 is also supported in 4.2.1.
+            The AT25 is supported only in 4.2.1.
 
 5.  ARK Logic
 
@@ -100,12 +100,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             and ARK2000MT is provided by the XF86_SVGA server with the ark
             driver.
 
-      4.2.0:
+      4.2.1:
             Support (including acceleration) for the ARK1000PV, ARK2000PV,
             and ARK2000MT is provided by the "ark" driver.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0.
+            All hardware supported in 3.3.6 is also supported in 4.2.1.
 
 6.  ATI
 
@@ -123,13 +123,13 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             driver.  Accelerated support is provided for the Rage 128 chips
             by the XF86_SVGA server with the r128 driver.
 
-      4.2.0:
+      4.2.1:
             Accelerated support is provided for Mach64, Rage, Rage 128 and
             Radeon chips by the "ati" driver, as is unaccelerated support for
             all of the others except the Mach8 and some early Mach32 chips.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0 except
+            All hardware supported in 3.3.6 is also supported in 4.2.1 except
             for Mach8 and some old Mach32 chips.
 
 7.  Avance Logic
@@ -141,12 +141,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             the others.  These drivers reportedly work, but they have no
             maintainer.
 
-      4.2.0:
+      4.2.1:
             No Avance Logic chips are supported because the old drivers have
             not been ported.
 
       Summary:
-            No Avance Logic chips are supported in 4.2.0.
+            No Avance Logic chips are supported in 4.2.1.
 
 8.  Chips and Technologies
 
@@ -155,13 +155,13 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             65545, 65546, 65548, 65550, 65554, 65555, 68554, 69000, 64200 and
             64300 is provided by the XF86_SVGA server with the chips driver.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the 65520, 65525, 65530, 65535, 65540,
             65545, 65546, 65548, 65550, 65554, 65555, 68554, 69000, 64200 and
             64300 is provided by the "chips" driver.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0.
+            All hardware supported in 3.3.6 is also supported in 4.2.1.
 
 9.  Cirrus Logic
 
@@ -173,13 +173,13 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             7541, 7542, 7543, 7548, 7555 and 7556 is provided by the
             XF86_SVGA server with the cirrus driver.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the Alpine (5430, 5434, 5436, 5446,
             5480, 7548), and Laguna (5462, 5464, 5465) chips is provided by
             the "cirrus" driver.
 
       Summary:
-            The following chips are supported in 3.3.6 but not in 4.2.0:
+            The following chips are supported in 3.3.6 but not in 4.2.1:
             6410, 6412, 6420, 6440, 5420, 5422, 5424, 5426, 5428, 5429, 6205,
             6215, 6225, 6235, 7541, 7542, 7543, 7555 and 7556.
 
@@ -195,7 +195,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             24 plane 3D chips (on Alpha platforms) is provided by the
             XF86_TGA server.
 
-      4.2.0:
+      4.2.1:
             No support exists for the Compaq AVGA (its driver hasn't been
             ported).
 
@@ -204,8 +204,8 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             the "tga" driver.
 
       Summary:
-            No Compaq AVGA chips are supported in 4.2.0.  DEC TGA support is
-            equivalent in both 3.3.6 and 4.2.0.
+            No Compaq AVGA chips are supported in 4.2.1.  DEC TGA support is
+            equivalent in both 3.3.6 and 4.2.1.
 
 11.  Cyrix
 
@@ -213,13 +213,13 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Support (accelerated) for the Cyrix MediaGX is provided by the
             XF86_SVGA server with the cyrix driver.
 
-      4.2.0:
-            The 3.3.6 driver has been ported to 4.2.0, including acceleration
+      4.2.1:
+            The 3.3.6 driver has been ported to 4.2.1, including acceleration
             support, and is provided by the "cyrix" driver.  Feedback is
             wanted.
 
       Summary:
-            Cyrix MediaGX users are encouraged to test its support in 4.2.0.
+            Cyrix MediaGX users are encouraged to test its support in 4.2.1.
 
 12.  Epson
 
@@ -227,12 +227,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Support (accelerated) for the Epson SPC8110 is provided by the
             XF86_SVGA server with the spc8100 driver.
 
-      4.2.0:
+      4.2.1:
             No Epson chips are supported, because the old driver has not been
             ported.
 
       Summary:
-            No Epson chips are supported in 4.2.0.
+            No Epson chips are supported in 4.2.1.
 
 13.  Genoa
 
@@ -242,12 +242,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             because we don't have any recent test reports, and this driver
             has no maintainer.
 
-      4.2.0:
+      4.2.1:
             No Genoa chips are supported, because the old driver has not been
             ported.
 
       Summary:
-            No Genoa chips are supported in 4.2.0.
+            No Genoa chips are supported in 4.2.1.
 
 14.  IBM
 
@@ -262,7 +262,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Support for the IBM XGA-2 chip is provided by the XF86_AGX
             server.
 
-      4.2.0:
+      4.2.1:
             Support for the standard IBM VGA chip (and compatibles) is pro-
             vided by the "vga" driver.
 
@@ -271,7 +271,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
 
       Summary:
             The standard VGA core is supported in both versions, but there is
-            no support for the 8514/A or XGA-2 in 4.2.0.
+            no support for the 8514/A or XGA-2 in 4.2.1.
 
 15.  IIT
 
@@ -279,12 +279,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Support (accelerated) for the AGX-016, AGX-015 and AGX-014 is
             provided by the XF86_AGX server.
 
-      4.2.0:
+      4.2.1:
             No IIT chips are supported, because the old driver has not been
             ported.
 
       Summary:
-            No IIT chips are supported in 4.2.0.
+            No IIT chips are supported in 4.2.1.
 
 16.  Integrated Micro Solutions (IMS)
 
@@ -292,12 +292,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Support (accelerated) for the IMS Twin Turbo 128 and Twin Turbo
             3D is provided by the XF86_SVGA server with the imstt driver.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the IMS Twin Turbo 128 and Twin Turbo
             3D is provided by the "imstt" driver.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0.
+            All hardware supported in 3.3.6 is also supported in 4.2.1.
 
 17.  Intel
 
@@ -308,7 +308,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             requires the agpgart.o kernel module in order to use modes that
             require more than 1MB of video memory.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the Intel i740 is provided by the
             "i740" driver, and support for the Intel i810 (including
             i810-dc100 and i810e), i815, and i830 is provided by the "i810"
@@ -320,7 +320,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             The i740 and and original i810 are supported in both versions,
             but the i810 is supported only on Linux/x86 and recent
             FreeBSD/i386 platforms at present.  Support for later versions of
-            the i810 chipset, such as the i815, exists only in 4.2.0.
+            the i810 chipset, such as the i815, exists only in 4.2.1.
 
 18.  Matrox
 
@@ -329,14 +329,14 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             (Mystique), MGA2164W (Millennium II) (PCI and AGP), G100, G200
             and G400 is provided by the XF86_SVGA server with the mga driver.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the MGA2064W (Millennium I), MGA1064SG
             (Mystique), MGA2164W (Millennium II) (PCI and AGP), G100, G200,
             G400, G450, and G550 is provided by the "mga" driver.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0.  The
-            G450 and G550 are supported only in 4.2.0.
+            All hardware supported in 3.3.6 is also supported in 4.2.1.  The
+            G450 and G550 are supported only in 4.2.1.
 
 19.  Micronix, Inc. (MX)
 
@@ -346,12 +346,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             is unknown because we don't have any recent test reports, and
             this driver has no maintainer.
 
-      4.2.0:
+      4.2.1:
             No MX chips are supported, because the old driver has not been
             ported.
 
       Summary:
-            No MX chips are supported in 4.2.0.
+            No MX chips are supported in 4.2.1.
 
 20.  NCR
 
@@ -360,12 +360,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             XF86_SVGA server and the ncr77c22 driver.  The status of this
             support is unknown because we don't have any recent test reports.
 
-      4.2.0:
+      4.2.1:
             No NCR chips are supported, because the old driver has not been
             ported.
 
       Summary:
-            No NCR chips are supported in 4.2.0.
+            No NCR chips are supported in 4.2.1.
 
 21.  NeoMagic
 
@@ -374,14 +374,14 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             NM2097, NM2160 and NM2200 chipsets is provided by the XF86_SVGA
             server with the neo driver.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the NeoMagic NM2070, NM2090, NM2093,
             NM2097, NM2160, NM2200, NM2230, NM2360 and NM2380 chipsets is
             provided by the "neomagic" driver.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0.  The
-            NM2230 and later chips are supported only in 4.2.0.
+            All hardware supported in 3.3.6 is also supported in 4.2.1.  The
+            NM2230 and later chips are supported only in 4.2.1.
 
 22.  NVIDIA
 
@@ -390,15 +390,15 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             (Ultra, Vanta, M64), GeForce (DDR, 256) and Quadro is provided by
             the XF86_SVGA server and the nv driver.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the Riva 128, 128ZX, TNT, TNT2 (Ultra,
             Vanta, M64), GeForce (DDR, 256), Quadro, GeForce2 (GTS, Ultra,
             MX), GeForce3, and Quadro2 is provided by the "nv" driver.
 
       Summary:
             All chipsets supported in 3.3.6 except the NV1 are also supported
-            in 4.2.0.  Support for the newer chips listed above (starting
-            with the GeForce2) is available only in 4.2.0.
+            in 4.2.1.  Support for the newer chips listed above (starting
+            with the GeForce2) is available only in 4.2.1.
 
 23.  Number Nine
 
@@ -406,12 +406,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Support (accelerated) for the Imagine 128, Ticket 2 Ride, Revolu-
             tion 3D and Revolution IV is provided by the XF86_I128 server.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the Imagine 128, Ticket 2 Ride, Revolu-
             tion 3D and Revolution IV is provided by the "i128" driver.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0.
+            All hardware supported in 3.3.6 is also supported in 4.2.1.
 
 24.  Oak Technologies, Inc.
 
@@ -420,12 +420,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             acceleration) is provided by the XF86_SVGA server and the oak
             driver.
 
-      4.2.0:
+      4.2.1:
             No Oak chips are supported, because the old driver has not been
             ported.
 
       Summary:
-            No Oak chips are supported in 4.2.0.
+            No Oak chips are supported in 4.2.1.
 
 25.  Paradise/Western Digital
 
@@ -436,12 +436,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             port for some of these chipsets is uncertain because we don't
             have any recent test reports, and this driver has no maintainer.
 
-      4.2.0:
+      4.2.1:
             No Paradise/Western Digital chips are supported, because the old
             driver has not been ported.
 
       Summary:
-            No Paradise/Western Digital chips are supported in 4.2.0.
+            No Paradise/Western Digital chips are supported in 4.2.1.
 
 26.  RealTek
 
@@ -451,12 +451,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             unknown because we don't have any recent test reports, and this
             driver has no maintainer.
 
-      4.2.0:
+      4.2.1:
             No RealTek chips are supported, because the old driver has not
             been ported.
 
       Summary:
-            No RealTek chips are supported in 4.2.0.
+            No RealTek chips are supported in 4.2.1.
 
 27.  Rendition/Micron
 
@@ -464,12 +464,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Support for the Verite 1000, 2100 and 2200 is provided by the
             XF86_SVGA server with the rendition driver.
 
-      4.2.0:
+      4.2.1:
             Support for the Verite 1000, 2100 and 2200 is provided by the
             "rendition" driver.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0.
+            All hardware supported in 3.3.6 is also supported in 4.2.1.
 
 28.  S3
 
@@ -486,7 +486,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Savage4, and Savage2000, is provided by the XF86_SVGA server with
             the s3_savage driver on some OSes (Linux, *BSD).
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the 964 (revisions 0 and 1), 968,
             Trio32, Trio64, Trio64, Trio64V+, Trio64UV+, Aurora64V+,
             Trio64V2, and PLATO/PX is provided by the "s3" driver (however,
@@ -500,22 +500,22 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             yet been ported.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0 except
+            All hardware supported in 3.3.6 is also supported in 4.2.1 except
             for the 911, 924, 801, 805, 928, 864, and 868, and versions of
             the 964 and 968 that do not use the RAMDAC chips listed above.
-            The SuperSavage chipset is supported only in 4.2.0.
+            The SuperSavage chipset is supported only in 4.2.1.
 
 29.  Silicon Graphics, Inc. (SGI)
 
       3.3.6:
             No SGI hardware is supported in 3.3.6.
 
-      4.2.0:
+      4.2.1:
             Unaccelerated support for the SGI Indy's Newport (a.k.a. "XL")
             cards is provided by the "newport" driver.
 
       Summary:
-            SGI hardware is supported only in 4.2.0.
+            SGI hardware is supported only in 4.2.1.
 
 30.  Silicon Integrated Systems (SiS)
 
@@ -524,7 +524,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             86C225, 5597, 5598, 6326, 530, 620, 300, 630 and 540 is provided
             by the XF86_SVGA server with the sis driver.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the SiS
              530, 620, 6326 is provided by the "sis" driver.  The 630, 300,
             and 540 are also supported, but this code is new and there are
@@ -541,20 +541,20 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             LynxEM+ and Lynx3DM chips is provided by the XF86_SVGA server
             with the smi driver.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated) for the Lynx, LynxE, Lynx3D, LynxEM,
             LynxEM+ and Lynx3DM chips is provided by the "siliconmotion"
             driver.
 
       Summary:
-            All hardware supported in 3.3.6 is also supported in 4.2.0.
+            All hardware supported in 3.3.6 is also supported in 4.2.1.
 
 32.  Sun Microsystems
 
       3.3.6:
             No Sun hardware is supported in 3.3.6.
 
-      4.2.0:
+      4.2.1:
             Sun BW2 framebuffers are supported by the "sunbw2" driver.  Sun
             CG3 framebuffers are supported by the "suncg3" driver.  Sun CG6
             framebuffers are supported by the "suncg6" driver.  Sun CG14
@@ -564,7 +564,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             framebuffers are supported by the "suntcx" driver.
 
       Summary:
-            Sun hardware is supported only in 4.2.0.
+            Sun hardware is supported only in 4.2.1.
 
 33.  Trident Microsystems
 
@@ -579,7 +579,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             CyberBlade/DSTN/i7, CyberBlade/i1, and CyberBlade/i7 is provided
             by the XF86_SVGA server with the tvga8900 driver.
 
-      4.2.0:
+      4.2.1:
             Support (accelerated where the chip supports it) for the
             TVGA8900B, TVGA8900C, TVGA8900CL, TVGA9000, TVGA9000i, TVGA9100B,
             TVGA9200CXr, TVGA8900D, TGUI9440AGi, TGUI9660, TGUI9680, ProVidia
@@ -593,7 +593,7 @@ architectures known to work on (e.g., Alpha, PPC), etc.
 
       Summary:
             The following (older) chipsets are supported in 3.3.6 and not in
-            4.2.0: TVGA8200LX, TVGA8800CS, TVGA8900B, TVGA8900C, TVGA8900CL,
+            4.2.1: TVGA8200LX, TVGA8800CS, TVGA8900B, TVGA8900C, TVGA8900CL,
             TVGA9000, TVGA9000i, TVGA9100B, TVGA9200CXr, TGUI9400CXi,
             TGUI9420, and TGUI9430DGi.
 
@@ -603,10 +603,10 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             Blade3D, Cyber9320, Cyber9382, Cyber9385, Cyber9388, Cyber9397,
             Cyber9397/DVD, CyberBlade/DSTN/i1, CyberBlade/DSTN/i7,
             CyberBlade/i1 and CyberBlade/i7 are supported in both 3.3.6 and
-            4.2.0.
+            4.2.1.
 
             The CyberBlade/Ai1, CyberBlade/DSTN/Ai1, CyberBlade/e4,
-            CyberBladeXP, and BladeXP are supported only in 4.2.0.
+            CyberBladeXP, and BladeXP are supported only in 4.2.1.
 
 34.  Tseng Labs
 
@@ -618,13 +618,13 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             driver.  Support (accelerated) for the ET4000/W32 series and the
             ET6000 is also provided by the deprecated XF86_W32 server.
 
-      4.2.0:
+      4.2.1:
             Support for the ET4000AX, and accelerated support for the
             ET4000/W32, ET4000/W32i, ET4000/W32p, ET6000 and ET6100 is pro-
             vided by the "tseng" driver.
 
       Summary:
-            All cards supported by 3.3.6 are also supported by 4.2.0 except
+            All cards supported by 3.3.6 are also supported by 4.2.1 except
             for the old ET3000.
 
 35.  Video 7
@@ -635,12 +635,12 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             unknown because we don't have any recent test reports, and this
             driver has no maintainer.
 
-      4.2.0:
+      4.2.1:
             No Video 7 chips are supported, because the old driver has not
             been ported.
 
       Summary:
-            No Video 7 chips are supported in 4.2.0.
+            No Video 7 chips are supported in 4.2.1.
 
 36.  Weitek
 
@@ -649,14 +649,14 @@ architectures known to work on (e.g., Alpha, PPC), etc.
             server and accelerated support for the P9100 is provided by the
             XF86_SVGA server with the p9x00 driver.
 
-      4.2.0:
+      4.2.1:
             No Weitek chips are supported, because the old drivers have not
             been ported.
 
       Summary:
-            No Weitek chips are supported in 4.2.0.
+            No Weitek chips are supported in 4.2.1.
 
      Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/Status.sgml,v 1.37 2002/01/16 20:38:45 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/Status,v 1.29 2002/01/16 20:51:04 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/Status,v 1.29.2.1 2002/09/04 03:39:36 dawes Exp $

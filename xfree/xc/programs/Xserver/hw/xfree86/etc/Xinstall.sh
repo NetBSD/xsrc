@@ -1,13 +1,13 @@
 #!/bin/sh
 
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/etc/Xinstall.sh,v 1.37 2002/01/17 20:54:23 dawes Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/etc/Xinstall.sh,v 1.37.2.2 2002/09/04 03:01:49 dawes Exp $
 #
 # Copyright © 2000 by Precision Insight, Inc.
 # Copyright © 2000, 2001 by VA Linux Systems, Inc.
 # Copyright © 1996-2002 by The XFree86 Project, Inc.
 #
-# This script should be used to install XFree86 4.2.0.
+# This script should be used to install XFree86 4.2.1.
 #
 # Parts of this script are based on the old preinst.sh and postinst.sh
 # scripts.
@@ -21,7 +21,7 @@
 # These should be updated for each release.
 
 FULLPREFIX=4.2
-PATCHLEVEL=0
+PATCHLEVEL=1
 VERSION=$FULLPREFIX.$PATCHLEVEL
 FULLVERSION=$FULLPREFIX.0
 SCRIPTVERSION=$VERSION
@@ -435,7 +435,7 @@ FindDistName()
 			1.[2-3]*)
 				DistName="Darwin-ppc-1.x"
 				;;
-			1.4.* | 5.*)
+			1.4* | 5.*)
 				DistName="Darwin-ppc-5.x"
 				;;
 			[6-9].*)
@@ -448,7 +448,7 @@ FindDistName()
 			;;
 		x86*)
 			case "$OsVersion" in
-			1.4.* | 5.*)
+			1.4* | 5.*)
 				DistName="Darwin-ix86-5.x"
 				;;
 			[6-9].*)

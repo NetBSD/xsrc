@@ -324,7 +324,7 @@
 				0A79E1A4004499A1CE6F79C2,
 			);
 			buildSettings = {
-				INSTALL_PATH = "";
+				INSTALL_PATH = /;
 				OPTIMIZATION_CFLAGS = "";
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
@@ -338,7 +338,7 @@
 			);
 			isa = PBXApplicationTarget;
 			name = XDarwin;
-			productInstallPath = "";
+			productInstallPath = /;
 			productName = XDarwin;
 			productReference = 0A79E19E004499A1CE6F79C2;
 			productSettingsXML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -350,7 +350,7 @@
 	<key>CFBundleExecutable</key>
 	<string>XDarwin</string>
 	<key>CFBundleGetInfoString</key>
-	<string>XDarwin 1.1, ©2001-2002 XFree86 Project, Inc.</string>
+	<string>XDarwin 1.1.0.1, ©2001-2002 XFree86 Project, Inc.</string>
 	<key>CFBundleIconFile</key>
 	<string>XDarwin.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -362,7 +362,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>XDarwin 1.1</string>
+	<string>XDarwin 1.1.0.1</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
