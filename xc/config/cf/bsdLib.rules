@@ -31,7 +31,7 @@ XCOMM $XFree86: xc/config/cf/bsdLib.rules,v 3.4.2.6 1998/11/08 11:49:53 dawes Ex
 #define ShLibIncludeFile <bsdLib.tmpl>
 #endif
 #ifndef SharedLibraryLoadFlags
-#define SharedLibraryLoadFlags -Bshareable
+#define SharedLibraryLoadFlags -Bshareable -R$(USRLIBDIR)
 #endif
 #ifndef PositionIndependentCFlags
 #define PositionIndependentCFlags -fpic
