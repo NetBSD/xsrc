@@ -628,7 +628,7 @@ amigaCVCopyPlane(pSrcDrawable, pDstDrawable,
 	    return(NULL);
 	 }
 	 ValidateGC((DrawablePtr)pBitmap, pGC1);
-	 (void) cfbBitBlt(pSrcDrawable, (DrawablePtr)pBitmap, pGC1, srcx, srcy,
+	 (void) cfbCopyPlaneReduce(pSrcDrawable, (DrawablePtr)pBitmap, pGC1, srcx, srcy,
 			  width, height, srcx, srcy, cfbCopyPlane8to1, bitPlane);
          FreeScratchGC(pGC1);
 	 pSrcDrawable = (DrawablePtr)pBitmap;
