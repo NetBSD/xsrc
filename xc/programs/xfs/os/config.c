@@ -82,6 +82,7 @@ static ConfigOptionRec config_options[] = {
     {"default-resolutions", config_set_resolutions},
     {"deferglyphs", config_set_glyph_caching_mode},
     {"error-file", config_set_file},
+    {"pid-file", config_set_file},
     {"port", config_set_int},
     {"server-number", config_set_int},
     {"snf-format", config_set_snf_format},
@@ -492,6 +493,7 @@ config_set_file(parm, val)
     char       *val;
 {
     extern char ErrorFile[];
+    extern char PidFile[];
     char       *start = val,
                 t;
 
@@ -504,6 +506,8 @@ config_set_file(parm, val)
 #else
 	strcpy( ErrorFile, __XFSRedirRoot(start));
 #endif
+    } else if (!strcmp(parm->parm_name, "pid-file")) {
+	memmove( PidFile, start, val - start + 1);
     }
     *val = t;
     return val;

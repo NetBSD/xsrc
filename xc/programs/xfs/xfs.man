@@ -44,6 +44,7 @@ xfs \- X font server
 .B "xfs"
 [\-config \fIconfiguration_file\fP]
 [\-port \fItcp_port\fP]
+[\-debug]
 .SH DESCRIPTION
 .PP
 .I Xfs
@@ -57,6 +58,10 @@ private font servers for specific sets of fonts.
 .TP 8
 .B \-config configuration_file
 Specifies the configuration file the font server will use.
+.TP 8
+.B \-debug
+Specifies that the font server should not automatically attempt
+to put itself background.
 .TP 8
 .B \-ls listen-socket
 Specifies a file descriptor which is already set up to be used as the
@@ -118,6 +123,8 @@ Multiple resolutions are separated by commas.
 .IP "error-file (string)"
 Filename of the error file.  All warnings and errors
 will be logged here.
+.IP "pid-file (string)"
+Filename of the pid file. The process id of the parent font servers.
 .IP "port (cardinal)"
 TCP port on which the server will listen for connections.
 .IP "use-syslog (boolean)"

@@ -104,6 +104,7 @@ extern char *configfilename;
 char       *progname;
 Bool        CloneSelf;
 extern int  ListenPort;
+extern int  DebugMode;
 
 OldListenRec *OldListen = NULL;
 int 	     OldListenCount = 0;
@@ -203,7 +204,7 @@ GetTimeInMillis()
 static void
 usage()
 {
-    fprintf(stderr, "usage: %s [-config config_file] [-port tcp_port]\n",
+    fprintf(stderr, "usage: %s [-config config_file] [-port tcp_port] [-debug]\n",
 	    progname);
     exit(1);
 }
@@ -316,6 +317,8 @@ ProcessCmdLine(argc, argv)
 		configfilename = argv[++i];
 	    else
 		usage();
+	} else if (!strcmp(argv[i], "-debug")) {
+	    DebugMode++;
 	}
 #ifdef MEMBUG
 	else if ( strcmp( argv[i], "-alloc") == 0)

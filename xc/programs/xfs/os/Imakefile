@@ -11,9 +11,9 @@ SpecialCObjectRule(os2_stubs,$(ICONFIGFILES),-DOS2NULLSELECT)
 #endif
 
 SRCS =	connection.c waitfor.c io.c utils.c osinit.c \
-	config.c access.c osglue.c error.c $(SRCS1)
+	config.c access.c osglue.c error.c daemon.c $(SRCS1)
 OBJS =  connection.o waitfor.o io.o utils.o osinit.o \
-	config.o access.o osglue.o error.o $(OBJS1)
+	config.o access.o osglue.o error.o daemon.o $(OBJS1)
 
 INCLUDES = -I../include -I$(FONTINCSRC)
 
@@ -39,5 +39,9 @@ SpecialCObjectRule(waitfor,$(ICONFIGFILES),$(CONN_DEFINES))
 SpecialCObjectRule(error,$(ICONFIGFILES),$(ERROR_DEFINES))
 
 SpecialCObjectRule(osglue,$(ICONFIGFILES),$(CONN_DEFINES) $(OS_DEFINES))
+
+SpecialCObjectRule(daemon,$(ICONFIGFILES),-DLogError=ErrorF $(CONN_DEFINES) $(OS_DEFINES))
+
+LinkSourceFile(daemon.c,../../xdm)
 
 DependTarget()

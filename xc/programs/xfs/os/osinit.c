@@ -52,12 +52,44 @@ in this Software without prior written authorization from the X Consortium.
  *
  */
 
+#include <stdio.h>
+#ifndef X_NOT_POSIX
+#ifdef _POSIX_SOURCE
+#include <limits.h>
+#else
+#define _POSIX_SOURCE
+#include <limits.h>
+#undef _POSIX_SOURCE
+#endif
+#endif
+#ifndef PATH_MAX
+#include <sys/param.h>
+#ifndef PATH_MAX
+#ifdef MAXPATHLEN
+#define PATH_MAX MAXPATHLEN
+#else
+#define PATH_MAX 1024
+#endif
+#endif
+#endif
+
 #include	"os.h"
 
 extern long LastReapTime;
 
+char        PidFile[PATH_MAX];
+
 OsInit()
 {
+    if (PidFile[0]) {
+	FILE *pf;
+
+	pf = fopen(PidFile, "w");
+	if (pf != NULL) {
+		fprintf(pf, "%d\n", getpid());
+		fclose(pf);
+	}
+    }
     LastReapTime = GetTimeInMillis();
     OsInitAllocator ();
 }
