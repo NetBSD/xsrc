@@ -1,7 +1,7 @@
-XCOMM $NetBSD: Imakefile,v 1.2 2002/03/31 14:38:49 tron Exp $
+XCOMM $NetBSD: Imakefile,v 1.3 2002/04/04 15:12:05 mycroft Exp $
         DEPLIBS = $(DEPXFTLIB) $(DEPXLIB)
 LOCAL_LIBRARIES = $(XFTLIB) $(XLIB)
            SRCS = xftlsfonts.c
            OBJS = xftlsfonts.o
 
-ComplexProgramTargetNoMan(xftlsfonts)
+ComplexProgramTarget(xftlsfonts)

@@ -1,0 +1,20 @@
+.\" $NetBSD: xftlsfonts.man,v 1.1 2002/04/04 15:12:05 mycroft Exp $
+.TH XFTLSFONTS 1 __xorgversion__
+.SH NAME
+xftlsfonts \- FreeType font list displayer
+.SH SYNOPSIS
+.B xftlsfonts
+[\-fn family]
+.SH DESCRIPTION
+.I Xftlsfonts
+lists the fonts that match the given \fIfamily\fP.
+.SH "OPTIONS"
+.PP
+.TP 8
+.B \-fn \fIpattern\fP
+This option specifies the font family name to match.
+.PP
+.SH "SEE ALSO"
+X(__miscmansuffix__), Xserver(1), xset(1), xfd(1), xlsfonts(1)
+.SH AUTHOR
+yaoz@vidar.niaaa.nih.gov
