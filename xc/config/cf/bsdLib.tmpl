@@ -7,6 +7,12 @@ XCOMM $XFree86: xc/config/cf/bsdLib.tmpl,v 3.3.2.1 1997/07/27 02:41:03 dawes Exp
 
 #if !UseElfFormat
 
+#ifndef FixupLibReferences
+#define FixupLibReferences()						@@\
+XMULIBONLY = -lXmu							@@\
+XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
+#endif
+
 #ifndef SharedXtReqs
 #define SharedXtReqs /**/
 #endif
