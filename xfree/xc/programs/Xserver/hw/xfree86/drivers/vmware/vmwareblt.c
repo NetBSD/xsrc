@@ -92,7 +92,7 @@ vmwareDoBitblt(DrawablePtr  pSrc,
 	vmwareWriteWordToFIFO(pVMWARE, pbox->y1);
 	vmwareWriteWordToFIFO(pVMWARE, pbox->x2 - pbox->x1);
 	vmwareWriteWordToFIFO(pVMWARE, pbox->y2 - pbox->y1);
-	vmwareWriteWordToFIFO(pVMWARE, pGC->alu);
+	vmwareWriteWordToFIFO(pVMWARE, alu);
 	pbox++;
     }
     if (pboxNew2) {
