@@ -25,7 +25,7 @@
  * SOFTWARE.
  */
 
-/* $XFree86: xc/programs/xterm/screen.c,v 3.12.2.3 1998/10/20 20:51:52 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/screen.c,v 3.12.2.4 1998/12/18 11:56:41 dawes Exp $ */
 
 /* screen.c */
 
@@ -54,7 +54,9 @@
 #endif
 
 #ifdef SYSV
+#if !defined(DGUX)    /* Intel DG/ux uses termios.h */
 #include <sys/termio.h>
+#endif /* DGUX */
 #ifdef USE_USG_PTYS
 #include <sys/stream.h>			/* get typedef used in ptem.h */
 #include <sys/ptem.h>
