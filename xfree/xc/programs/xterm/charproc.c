@@ -3578,14 +3578,16 @@ report_win_label(
 	XTextProperty *text,
 	Status ok)
 {
+#if 0
 	char **list;
 	int length = 0;
+#endif
 
 	reply.a_type = ESC;
 	unparseputc(ESC, screen->respond);
 	unparseputc(']', screen->respond);
 	unparseputc(code, screen->respond);
-
+#if 0
 	if (ok) {
 		if (XTextPropertyToStringList(text, &list, &length)) {
 			int n, c;
@@ -3599,7 +3601,7 @@ report_win_label(
 		if (text->value != 0)
 			XFree(text->value);
 	}
-
+#endif
 	unparseputc(ESC, screen->respond);
 	unparseputc('\\', screen->respond);
 }
