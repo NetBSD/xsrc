@@ -1000,7 +1000,7 @@ xf86MouseProtocol(device, rBuf, nBytes)
       Firm_event fe;
 
       /* copy to guarantee alignment */
-      memcpy(&fe, pBuf, sizeof(Firm_event));
+      memcpy(&fe, mouse->pBuf, sizeof(Firm_event));
       switch(fe.id) {
 	case MS_LEFT:
 	case MS_MIDDLE:
