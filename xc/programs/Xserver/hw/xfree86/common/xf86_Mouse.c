@@ -584,6 +584,10 @@ MouseDevPtr mouse;
 #if defined(__NetBSD__)
       case P_WSMOUSE:
 	break;
+#if defined(__atari__)
+      case P_SUN:
+	break;
+#endif
 #endif
 
       default:
@@ -706,6 +710,9 @@ xf86MouseProtocol(device, rBuf, nBytes)
 #endif
 #if defined(__NetBSD__)
 	mouse->mseType != P_WSMOUSE &&
+#if defined(__atari__)
+	mouse->mseType != P_SUN &&
+#endif
 #endif
 	((rBuf[i] & mouse->protoPara[2]) != mouse->protoPara[3] 
 	 || rBuf[i] == 0x80))
