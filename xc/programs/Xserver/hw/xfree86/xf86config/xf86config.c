@@ -2395,7 +2395,7 @@ static char *modelines_text =
 "Modeline \"800x600\"     40     800  840  968 1056   600  601  605  628 +hsync +vsync\n"
 "\n"
 "# 640x480 @ 85 Hz, 43.27 kHz hsync\n"
-"Modeline \"640x400\"     36     640  696  752  832   480  481  484  509 -HSync -VSync\n"
+"Modeline \"640x480\"     36     640  696  752  832   480  481  484  509 -HSync -VSync\n"
 "# 1152x864 @ 89 Hz interlaced, 44 kHz hsync\n"
 "ModeLine \"1152x864\"    65    1152 1168 1384 1480   864  865  875  985 Interlace\n"
 "\n"
