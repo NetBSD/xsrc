@@ -1,7 +1,7 @@
 .\"#! troff -ms $1		-*- Nroff -*-
 .\" "Xterm Control Sequences" document
 .\" $XConsortium: ctlseqs.ms,v 1.16 94/12/28 20:45:48 gildea Exp $
-.\" $XFree86: xc/doc/specs/xterm/ctlseqs.ms,v 3.8.2.2 1998/02/15 16:08:34 hohndel Exp $
+.\" $XFree86: xc/doc/specs/xterm/ctlseqs.ms,v 3.8.2.3 1998/10/20 20:51:01 hohndel Exp $
 .\"
 .\" Copyright 1991, 1994 X Consortium
 .\"
@@ -156,6 +156,7 @@
 .[] N N
 .[] O O
 .[] P P
+.[] Q Q
 .[] R R
 .[] S S
 .[] T T
@@ -230,7 +231,7 @@ Thomas Dickey
 .AI
 XFree86 Project (1996)
 .AU
-
+.
 .am BT                  \" add page numbers after first page
 .ds CF %
 ..
@@ -278,13 +279,13 @@ End of Guarded Area (EPA: 0x97)
 Start of String (SOS: 0x98)
 .IP \\*(Es\\*Z
 Return Terminal ID (DECID: 0x9a).  Obsolete form of \*(Cs\*c (DA).
-.IP \\*(Es\\*([[ 
+.IP \\*(Es\\*([[
 Control Sequence Introducer (CSI: 0x9b)
 .IP \\*(Es\\*(bS
 String Terminator (ST: 0x9c)
-.IP \\*(Es\\*(]] 
+.IP \\*(Es\\*(]]
 Operating System Command (OSC: 0x9d)
-.IP \\*(Es\\*^ 
+.IP \\*(Es\\*^
 Privacy Message (PM: 0x9e)
 .IP \\*(Es\\*_
 Application Program Command (APC: 0x9f)
@@ -385,27 +386,30 @@ DEC Screen Alignment Test (DECALN)
 .
 .IP \\*(Es\\*(((\\*(Cc
 Designate G0 Character Set (ISO 2022)
-  \*(Cc = \*0 \(-> DEC Special Character and Line Drawing Set
-  \*(Cc = \*A \(-> United Kingdom (UK)
-  \*(Cc = \*(cB \(-> United States (USASCII)
-.
 .IP \\*(Es\\*)\\*(Cc
 Designate G1 Character Set (ISO 2022)
-  \*(Cc = \*0 \(-> DEC Special Character and Line Drawing Set
-  \*(Cc = \*A \(-> United Kingdom (UK)
-  \*(Cc = \*(cB \(-> United States (USASCII)
 .
 .IP \\*(Es\\**\\*(Cc
 Designate G2 Character Set (ISO 2022)
-  \*(Cc = \*0 \(-> DEC Special Character and Line Drawing Set
-  \*(Cc = \*A \(-> United Kingdom (UK)
-  \*(Cc = \*(cB \(-> United States (USASCII)
 .
 .IP \\*(Es\\*+\\*(Cc
 Designate G3 Character Set (ISO 2022)
+.br
+Final character \*(Cc for designating character sets
+(\*0, \*A and \*(cB apply to VT100 and up, the remainder to VT220 and up):
   \*(Cc = \*0 \(-> DEC Special Character and Line Drawing Set
   \*(Cc = \*A \(-> United Kingdom (UK)
   \*(Cc = \*(cB \(-> United States (USASCII)
+  \*(Cc = \*4 \(-> Dutch
+  \*(Cc = \*C or \*5 \(-> Finnish
+  \*(Cc = \*R \(-> French
+  \*(Cc = \*Q \(-> French Canadian
+  \*(Cc = \*K \(-> German
+  \*(Cc = \*Y \(-> Italian
+  \*(Cc = \*E or \*6 \(-> Norwegian/Danish
+  \*(Cc = \*Z \(-> Spanish
+  \*(Cc = \*H or \*7 \(-> Swedish
+  \*(Cc = \*= \(-> Swiss
 .
 .IP \\*(Es\\*7
 Save Cursor (DECSC)
@@ -628,10 +632,12 @@ Character Attributes (SGR)
   \*(Ps = \*4 \(-> Underlined
   \*(Ps = \*5 \(-> Blink (appears as Bold)
   \*(Ps = \*7 \(-> Inverse
+  \*(Ps = \*8 \(-> Invisible (hidden)
   \*(Ps = \*2\*2 \(-> Normal (neither bold nor faint)
   \*(Ps = \*2\*4 \(-> Not underlined
   \*(Ps = \*2\*5 \(-> Steady (not blinking)
   \*(Ps = \*2\*7 \(-> Positive (not inverse)
+  \*(Ps = \*2\*8 \(-> Visible (not hidden)
   \*(Ps = \*3\*0 \(-> Set foreground color to Black
   \*(Ps = \*3\*1 \(-> Set foreground color to Red
   \*(Ps = \*3\*2 \(-> Set foreground color to Green
@@ -729,23 +735,23 @@ Valid values for the first (and any additional parameters) are:
   \*(Ps = \*1 \(-> Restore (de-iconify) window.
   \*(Ps = \*2 \(-> Minimize (iconify) window.
   \*(Ps = \*3 ; \fIx ; y\fP \(-> Move window to [x, y].
-  \*(Ps = \*4 ; \fIheight ; width\fP \(-> Resize the xterm window to height and width in pixels.
-  \*(Ps = \*5 \(-> Raise the xterm window to the front of the stacking order.
-  \*(Ps = \*6 \(-> Lower the xterm window to the bottom of the stacking order.
-  \*(Ps = \*7 \(-> Refresh the xterm window.
+  \*(Ps = \*4 ; \fIheight ; width\fP \(-> Resize the \fIxterm\fP window to height and width in pixels.
+  \*(Ps = \*5 \(-> Raise the \fIxterm\fP window to the front of the stacking order.
+  \*(Ps = \*6 \(-> Lower the \fIxterm\fP window to the bottom of the stacking order.
+  \*(Ps = \*7 \(-> Refresh the \fIxterm\fP window.
   \*(Ps = \*8 ; \fIheight ; width\fP \(-> Resize the text area to [height;width] in characters.
-  \*(Ps = \*1\*1 \(-> Report xterm window state.
-If the xterm window is open (non-iconified), it returns \*(Cs\*1\*t.
-If the xterm window is iconified, it returns \*(Cs\*2\*t.
-  \*(Ps = \*1\*3 \(-> Report xterm window position as
+  \*(Ps = \*1\*1 \(-> Report \fIxterm\fP window state.
+If the \fIxterm\fP window is open (non-iconified), it returns \*(Cs\*1\*t.
+If the \fIxterm\fP window is iconified, it returns \*(Cs\*2\*t.
+  \*(Ps = \*1\*3 \(-> Report \fIxterm\fP window position as
 \*(Cs\*3\*;\*(Ix\*;\*(Iy\*t
-  \*(Ps = \*1\*4 \(-> Report xterm window in pixels as
+  \*(Ps = \*1\*4 \(-> Report \fIxterm\fP window in pixels as
 \*(Cs\*s\*4\*s\*;\*s\fIheight\fP\*s\*;\*s\fIwidth\fP\*s\*t
   \*(Ps = \*1\*8 \(-> Report the size of the text area in characters as
 \*(Cs\*s\*8\*s\*;\*s\fIheight\fP\*s\*;\*s\fIwidth\fP\*t
-  \*(Ps = \*2\*0 \(-> Report xterm window's icon label as
+  \*(Ps = \*2\*0 \(-> Report \fIxterm\fP window's icon label as
 \*(Os\*s\*L\*s\fIlabel\fP\*s\*(ST
-  \*(Ps = \*2\*1 \(-> Report xterm window's title as
+  \*(Ps = \*2\*1 \(-> Report \fIxterm\fP window's title as
 \*(Os\*s\*l\*s\fItitle\fP\*s\*(ST
   \*(Ps >= \*2\*4 \(-> Resize to \*(Ps lines (DECSLPP)
 .
@@ -771,6 +777,7 @@ See the section \fBMouse Tracking\fP.
   \*(Ps = \*3\*8 \(-> Enter Tektronix Mode (DECTEK)
   \*(Ps = \*4\*0 \(-> Allow 80 \z\(<-\(-> 132 Mode
   \*(Ps = \*4\*1 \(-> \fImore\fP(1) fix (see \fIcurses\fP resource)
+  \*(Ps = \*4\*2 \(-> Enable Nation Replacement Character sets (DECNRCM)
   \*(Ps = \*4\*4 \(-> Turn On Margin Bell
   \*(Ps = \*4\*5 \(-> Reverse-wraparound Mode
   \*(Ps = \*4\*6 \(-> Start Logging
@@ -781,7 +788,8 @@ disabled by the \fBtiteInhibit\fP resource)
   \*(Ps = \*1\*0\*0\*0 \(-> Send Mouse X & Y on button press and release.
 See the section \fBMouse Tracking\fP.
   \*(Ps = \*1\*0\*0\*1 \(-> Use Hilite Mouse Tracking.
-See the section \fBMouse Tracking\fP.
+  \*(Ps = \*1\*0\*0\*2 \(-> Use Cell Motion Mouse Tracking.
+  \*(Ps = \*1\*0\*0\*3 \(-> Use All Motion Mouse Tracking.
   \*(Ps = \*1\*0\*4\*7 \(-> Use Alternate Screen Buffer (unless
 disabled by the \fBtiteInhibit\fP resource)
   \*(Ps = \*1\*0\*4\*8 \(-> Save cursor as in DECSC (unless
@@ -803,6 +811,7 @@ DEC Private Mode Reset (DECRST)
   \*(Ps = \*2\*5 \(-> Hide Cursor (DECTCEM)
   \*(Ps = \*4\*0 \(-> Disallow 80 \z\(<-\(-> 132 Mode
   \*(Ps = \*4\*1 \(-> No \fImore\fP(1) fix (see \fIcurses\fP resource)
+  \*(Ps = \*4\*2 \(-> Disable Nation Replacement Character sets (DECNRCM)
   \*(Ps = \*4\*4 \(-> Turn Off Margin Bell
   \*(Ps = \*4\*5 \(-> No Reverse-wraparound Mode
   \*(Ps = \*4\*6 \(-> Stop Logging
@@ -810,8 +819,11 @@ DEC Private Mode Reset (DECRST)
   \*(Ps = \*4\*7 \(-> Use Normal Screen Buffer
   \*(Ps = \*6\*7 \(-> Backarrow key (DECBKM)
   \*(Ps = \*1\*0\*0\*0 \(-> Don't Send Mouse X & Y on button press and
-release
+release.
+See the section \fBMouse Tracking\fP.
   \*(Ps = \*1\*0\*0\*1 \(-> Don't Use Hilite Mouse Tracking
+  \*(Ps = \*1\*0\*0\*2 \(-> Don't Use Cell Motion Mouse Tracking
+  \*(Ps = \*1\*0\*0\*3 \(-> Don't Use All Motion Mouse Tracking
   \*(Ps = \*1\*0\*4\*7 \(-> Use Normal Screen Buffer, clearing screen
 first if in the Alternate Screen (unless
 disabled by the \fBtiteInhibit\fP resource)
@@ -852,40 +864,70 @@ compile-time option)
 .
 .Ed
 .
+.
 .SH
 Mouse Tracking
+.ds RH Mouse Tracking
 .LP
 The VT widget can be set to send the mouse position and other
 information on button presses.  These modes are typically used by
 editors and other full-screen applications that want to make use of
 the mouse.
+.
 .LP
-There are three mutually exclusive modes, each enabled (or disabled)
-by a different parameter in the DECSET (or DECRST) escape sequence.
-Parameters for all mouse tracking escape sequences generated by
-\fIxterm\fP encode numeric parameters in a single character as
-\fIvalue\fP+040.  For example, \*! is 1.  The screen
-coodinate system is 1-based.
+There are five mutually exclusive modes, each enabled (or disabled)
+by a different parameter in the
+DECSET \*(Cs\*?\*(Pm\*s\*h
+or
+DECRST \*(Cs\*?\*(Pm\*s\*l
+control sequence.
+.
 .LP
-X10 compatibility mode sends an escape sequence on button press
+Manifest constants for the parameter values
+are defined in \fBxcharmouse.h\fP as follows:
+.
+.DS
+#define SET_X10_MOUSE               9
+#define SET_VT200_MOUSE             1000
+#define SET_VT200_HIGHLIGHT_MOUSE   1001
+#define SET_BTN_EVENT_MOUSE         1002
+#define SET_ANY_EVENT_MOUSE         1003
+.DE
+.LP
+The motion reporting modes are strictly \fIxterm\fP extensions, and are not
+part of any standard, though they are analogous to the DEC VT200 DECELR
+locator reports.
+.LP
+Parameters (such as pointer position and button number) for all mouse
+tracking escape sequences generated by \fIxterm\fP
+encode numeric parameters in a single character as
+\fIvalue\fP+32.
+For example, \*! specifies the value 1.
+The upper left character position on the terminal is denoted as 1,1.
+.
+.LP
+X10 compatibility mode sends an escape sequence only on button press,
 encoding the location and the mouse button pressed.
 It is enabled by specifying parameter 9 to DECSET.
 On button press, \fIxterm\fP sends
-\*(Cs\*M\*(Cb\*(Cx\*(Cy (6 characters).  \*(Cb is button\-1.
+\*(Cs\*M\*(Cb\*(Cx\*(Cy (6 characters).
+\*(Cb is button\-1.
 \*(Cx and \*(Cy are the x and y coordinates of the mouse when the
 button was pressed.
+.
 .LP
 Normal tracking mode sends an escape sequence on both button press and
-release.  Modifier information is also sent.
+release.  Modifier key (shift, ctrl, meta) information is also sent.
 It is enabled by specifying parameter 1000 to DECSET.
 On button press or release, \fIxterm\fP sends
 \*(Cs\*M\*(Cb\*(Cx\*(Cy.
 The low two bits of \*(Cb encode button information:
 0=MB1 pressed, 1=MB2 pressed, 2=MB3 pressed, 3=release.
-The upper bits encode what modifiers were down when the button was
+The upper bits encode the modifiers which were down when the button was
 pressed and are added together.  4=Shift, 8=Meta, 16=Control.
-\*(Cx and \*(Cy are the x and y coordinates of the mouse event.  The
-upper left corner is (1,1).
+\*(Cx and \*(Cy are the x and y coordinates of the mouse event.
+The upper left corner is (1,1).
+.
 .LP
 Mouse hilite tracking notifies a program of a button press, receives a
 range of lines from the program, highlights the region covered by
@@ -894,7 +936,7 @@ program the release coordinates.
 It is enabled by specifying parameter 1001 to DECSET.
 Highlighting is performed only for button 1, though other button events
 can be received.
-Warning: use of this mode requires a cooperating program or it will
+\fBWarning:\fP use of this mode requires a cooperating program or it will
 hang \fIxterm.\fP
 On button press, the same information as for normal tracking is
 generated; \fIxterm\fP then waits for the program to send mouse
@@ -918,6 +960,30 @@ The parameters are \fIstartx, starty, endx, endy, mousex,\fP and \fImousey.\fP
 ending character positions of the region.  \fImousex\fP and \fImousey\fP
 give the location of the mouse at button up, which may not be over a
 character.
+.
+.LP
+Button-event tracking is essentially the same as normal tracking, but
+\fIxterm\fP also reports button-motion events.  Motion events
+are reported only if the mouse pointer has moved to a different character
+cell.  It is enabled by specifying parameter 1002 to DECSET.
+On button press or release, \fIxterm\fP sends the same codes used by normal
+tracking mode.  On button-motion events, \fIxterm\fP adds 4 to the event code
+(the third character, \*(Cb).
+The low two bits of the event code encode the button information.
+The third bit is set to indicate motion.
+Additional bits specify modifier keys as in normal mode.
+For example, motion into cell x,y with button 1
+down is reported as \*(Cs\*M\*@\*(Cx\*(Cy.
+( \*@ = 32 + 0 (button 1) + 32 (motion indicator) ).
+Similarly, motion with button 3
+down is reported as \*(Cs\*M\*(cB\*(Cx\*(Cy.
+( \*(cB = 32 + 2 (button 3) + 32 (motion indicator) ).
+.
+.LP
+Any-event mode is the same as button-event mode, except that all motion
+events are reported instead of just those that enter a new character cell.
+It is enabled by specifying 1003 to DECSET.
+.
 .br
 .ds RH Tektronix 4014 Mode
 .SH
@@ -1024,7 +1090,7 @@ Alpha Mode (Ctrl-_)
 VT52 Mode
 .LP
 Parameters for cursor movement are at the end of the \*(Es\*Y escape sequence.
-Each ordinate is encoded in a single character as \fIvalue\fP+040.
+Each ordinate is encoded in a single character as \fIvalue\fP+32.
 For example, \*! is 1.
 The screen coodinate system is 0-based.
 .St
