@@ -394,3 +394,17 @@ xkb_geometry "fr" {
     }; // End of "Keypad" section
 
 };
+
+// XXX simplified geometry (experimental)
+// Everyone uses either US layout or European layout 
+
+xkb_geometry "us" {
+    include "amiga(usa1)"
+
+    override description= "Amiga 3000/4000 (us)";
+};
+xkb_geometry "eur" {
+    include "amiga(de)"
+
+    override description= "Amiga 3000/4000 (eur)";
+};
