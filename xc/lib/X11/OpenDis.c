@@ -371,6 +371,14 @@ Display *XOpenDisplay (display)
 	dpy->max_request_size	= u.setup->maxRequestSize;
 	mask = dpy->resource_mask;
 	dpy->resource_shift	= 0;
+	if (!mask)
+	{
+	    fprintf (stderr, "Xlib: connection to \"%s\" invalid setup\n",
+		     fullname);
+	    OutOfMemory(dpy, setup);
+	    return (NULL);
+	}
+    
 	while (!(mask & 1)) {
 	    dpy->resource_shift++;
 	    mask = mask >> 1;
@@ -390,6 +398,13 @@ Display *XOpenDisplay (display)
   	(void) strncpy(dpy->vendor, u.vendor, vendorlen);
 	dpy->vendor[vendorlen] = '\0';
  	vendorlen = (vendorlen + 3) & ~3;	/* round up */
+/*
+ * validate setup length
+ */
+	if ((int) setuplength - sz_xConnSetup - vendorlen < 0) {
+	    OutOfMemory(dpy, setup);
+	    return (NULL);
+	}
 	memmove (setup, u.vendor + vendorlen,
 		 (int) setuplength - sz_xConnSetup - vendorlen);
  	u.vendor = setup;
@@ -568,6 +583,8 @@ Display *XOpenDisplay (display)
 
 	    if (_XReply (dpy, (xReply *) &reply, 0, xFalse)) {
 		if (reply.format == 8 && reply.propertyType == XA_STRING &&
+		    (reply.nItems + 1 > 0) &&
+		    (reply.nItems <= req->longLength * 4) &&
 		    (dpy->xdefaults = Xmalloc (reply.nItems + 1))) {
 		    _XReadPad (dpy, dpy->xdefaults, reply.nItems);
 		    dpy->xdefaults[reply.nItems] = '\0';

@@ -38,6 +38,8 @@ from the X Consortium.
 #define NEED_EVENTS
 #define NEED_REPLIES
 
+#define GENERIC_LENGTH_LIMIT (1 << 29)
+
 #include "Xlibint.h"
 #include <X11/Xpoll.h>
 #include <X11/Xtrans.h>
@@ -1689,6 +1691,17 @@ _XReply (dpy, rep, extra, discard)
 			!= (char *)rep)
 			continue;
 		}
+                /*
+                 * Don't accept ridiculously large values for
+                 * generic.length; doing so could cause stack-scribbling
+                 * problems elsewhere.
+                 */
+                if (rep->generic.length > GENERIC_LENGTH_LIMIT) {
+                    rep->generic.length = GENERIC_LENGTH_LIMIT;
+                    (void) fprintf(stderr,
+                                   "Xlib: suspiciously long reply length %d set to %d",
+                                   rep->generic.length, GENERIC_LENGTH_LIMIT);
+		}
 		if (extra <= rep->generic.length) {
 		    if (extra > 0)
 			/* 
@@ -1827,6 +1840,13 @@ _XAsyncReply(dpy, rep, buf, lenp, discard)
 #endif
 	if (len > *lenp)
 	    _XEatData(dpy, len - *lenp);
+    }
+    if (len < SIZEOF(xReply))
+    {
+	_XIOError (dpy);
+	buf += *lenp;
+	*lenp = 0;
+	return buf;
     }
     if (len >= *lenp) {
 	buf += *lenp;

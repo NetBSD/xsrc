@@ -76,21 +76,24 @@ XGetWindowProperty(dpy, w, property, offset, length, delete,
        */
 	  case 8:
 	    nbytes = netbytes = reply.nItems;
-	    if (*prop = (unsigned char *) Xmalloc ((unsigned)nbytes + 1))
+            if (nbytes + 1 > 0 &&
+                (*prop = (unsigned char *) Xmalloc ((unsigned)nbytes + 1)))
 		_XReadPad (dpy, (char *) *prop, netbytes);
 	    break;
 
 	  case 16:
 	    nbytes = reply.nItems * sizeof (short);
 	    netbytes = reply.nItems << 1;
-	    if (*prop = (unsigned char *) Xmalloc ((unsigned)nbytes + 1))
+            if (nbytes + 1 > 0 &&
+                (*prop = (unsigned char *) Xmalloc ((unsigned)nbytes + 1)))
 		_XRead16Pad (dpy, (short *) *prop, netbytes);
 	    break;
 
 	  case 32:
 	    nbytes = reply.nItems * sizeof (long);
 	    netbytes = reply.nItems << 2;
-	    if (*prop = (unsigned char *) Xmalloc ((unsigned)nbytes + 1))
+            if (nbytes + 1 > 0 &&
+                (*prop = (unsigned char *) Xmalloc ((unsigned)nbytes + 1)))
 		_XRead32 (dpy, (long *) *prop, netbytes);
 	    break;
 
