@@ -447,17 +447,6 @@ Error(str)
     perror(str);
 }
 
-#ifndef DDXTIME
-CARD32
-GetTimeInMillis()
-{
-    struct timeval  tp;
-
-    X_GETTIMEOFDAY(&tp);
-    return(tp.tv_sec * 1000) + (tp.tv_usec / 1000);
-}
-#endif
-
 void
 AdjustWaitForDelay (waitTime, newdelay)
     pointer	    waitTime;
