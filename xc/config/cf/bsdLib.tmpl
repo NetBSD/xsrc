@@ -49,17 +49,17 @@ XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
 #define FrescoSysLibs	CplusplusLibC MathLibrary
 
 #define SharedX11Reqs
-#define SharedOldXReqs	$(LDPRELIB) $(XLIBONLY)
-#define SharedXtReqs	$(LDPRELIB) $(XLIBONLY) $(SMLIB) $(ICELIB)
-#define SharedXawReqs	$(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
-#define SharedXmuReqs	$(LDPRELIB) $(XTOOLLIB) $(XLIB)
-#define SharedXextReqs	$(LDPRELIB) $(XLIBONLY)
-#define SharedXiReqs	$(LDPRELIB) $(XLIB)
-#define SharedPexReqs	$(LDPRELIB) $(XLIBONLY) MathLibrary
-#define SharedXtstReqs	$(LDPRELIB) $(XLIB)
-#define SharedXieReqs	$(LDPRELIB) $(XLIBONLY)
-#define SharedSMReqs	$(LDPRELIB) $(ICELIB)
-#define SharedFrescoReqs	$(LDPRELIB) $(XLIBONLY) FrescoSysLibs
-#define SharedXtfReqs	$(LDPRELIB) $(FRESCOLIB) $(XTOOLLIB) $(XLIB) FrescoSysLibs
+#define SharedOldXReqs	$(LDPRELIBS) $(XLIBONLY)
+#define SharedXtReqs	$(LDPRELIBS) $(XLIBONLY) $(SMLIB) $(ICELIB)
+#define SharedXawReqs	$(LDPRELIBS) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedXmuReqs	$(LDPRELIBS) $(XTOOLLIB) $(XLIB)
+#define SharedXextReqs	$(LDPRELIBS) $(XLIBONLY)
+#define SharedXiReqs	$(LDPRELIBS) $(XLIB)
+#define SharedPexReqs	$(LDPRELIBS) $(XLIBONLY) MathLibrary
+#define SharedXtstReqs	$(LDPRELIBS) $(XLIB)
+#define SharedXieReqs	$(LDPRELIBS) $(XLIBONLY)
+#define SharedSMReqs	$(LDPRELIBS) $(ICELIB)
+#define SharedFrescoReqs	$(LDPRELIBS) $(XLIBONLY) FrescoSysLibs
+#define SharedXtfReqs	$(LDPRELIBS) $(FRESCOLIB) $(XTOOLLIB) $(XLIB) FrescoSysLibs
 
 #endif /* UseElfFormat */
