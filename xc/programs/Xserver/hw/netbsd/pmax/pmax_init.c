@@ -108,7 +108,7 @@ InitOutput(screenInfo, argc, argv)
 {
     int i, fd, imageByteOrder, bitmapScanlineUnit, bitmapScanlinePad;
     int bitmapBitOrder, numPixmapFormats;
-    struct fbinfo fb;
+    struct fbtype fb;
 
     screenInfo->imageByteOrder = IMAGE_BYTE_ORDER;
     screenInfo->bitmapScanlineUnit = BITMAP_SCANLINE_UNIT;
