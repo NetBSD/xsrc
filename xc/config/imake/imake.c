@@ -289,6 +289,14 @@ extern int sys_nerr;
 #include <sys/utsname.h>
 #endif
 
+/*
+ * Avoid mktemp() if possible;  4.4BSD and derived platforms have a 
+ * safe mkstemp() so lets use that.
+ */
+#if defined(CSRG_BASED)
+# define HAVE_MKSTEMP
+#endif
+
 #define	TRUE		1
 #define	FALSE		0
 
@@ -383,6 +391,9 @@ main(argc, argv)
 	FILE	*tmpfd;
 	char	makeMacro[ BUFSIZ ];
 	char	makefileMacro[ BUFSIZ ];
+#ifdef HAVE_MKSTEMP
+	int fd;
+#endif
 
 	program = argv[0];
 	init();
@@ -394,7 +405,13 @@ main(argc, argv)
 		tmpMakefile = Makefile;
 	else {
 		tmpMakefile = Strdup(tmpMakefile);
+#ifdef HAVE_MKSTEMP
+		fd = mkstemp(tmpMakefile);
+		if (fd , 0)
+			LogFatal("Cannot mkstemp %s.", tmpMakefile);
+#else
 		(void) mktemp(tmpMakefile);
+#endif
 	}
 	AddMakeArg("-f");
 	AddMakeArg( tmpMakefile );
@@ -403,7 +420,11 @@ main(argc, argv)
 	sprintf(makefileMacro, "MAKEFILE=%s", Imakefile);
 	AddMakeArg( makefileMacro );
 
+#ifdef HAVE_MKSTEMP
+	if ((tmpfd = fdopen(fd, "w+")) == NULL)
+#else
 	if ((tmpfd = fopen(tmpMakefile, "w+")) == NULL)
+#endif
 		LogFatal("Cannot create temporary file %s.", tmpMakefile);
 
 	cleanedImakefile = CleanCppInput(Imakefile);
@@ -1229,9 +1250,19 @@ CleanCppInput(imakefile)
 		    strcmp(ptoken, "pragma") &&
 		    strcmp(ptoken, "undef")) {
 		    if (outFile == NULL) {
+#ifdef HAVE_MKSTEMP
+			int fd;
+#endif
 			tmpImakefile = Strdup(tmpImakefile);
+#ifdef HAVE_MKSTEMP
+			fd = mkstemp(tmpImakefile);
+			if (fd < 0)
+			    LogFatal("Cannot mkstemp %s", tmpImakefile);
+			outFile = fdopen(fd, "w");
+#else
 			(void) mktemp(tmpImakefile);
 			outFile = fopen(tmpImakefile, "w");
+#endif
 			if (outFile == NULL)
 			    LogFatal("Cannot open %s for write.",
 				tmpImakefile);
