@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xterm/version.h,v 3.9 1998/07/04 14:48:30 robin Exp $ */
+/* $XFree86: xc/programs/xterm/version.h,v 3.2.2.10 1998/11/01 09:59:25 hohndel Exp $ */
 
 /*
  * This is the string that's printed in response to "xterm -version", or
@@ -6,4 +6,4 @@
  * version of xterm has been built.  The number in parentheses is my patch
  * number (T.Dickey).
  */
-#define XTERM_VERSION "XFree86 3.9Aj(82)"
+#define XTERM_VERSION "XFree86 3.3.3(88)"

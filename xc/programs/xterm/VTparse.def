@@ -1,6 +1,6 @@
 #
 # $XConsortium: VTparse.def,v 1.4 92/09/15 15:28:31 gildea Exp $
-# $XFree86: xc/programs/xterm/VTparse.def,v 3.9 1997/08/12 12:02:17 hohndel Exp $
+# $XFree86: xc/programs/xterm/VTparse.def,v 3.7.2.2 1998/10/20 20:51:34 hohndel Exp $
 #
 # List of symbols that need to be defined for VTparse.h.  If you need to 
 # change any of the CASE_ macros, make the change here and rerun the command

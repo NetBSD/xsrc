@@ -5,7 +5,7 @@
 #ifndef lint
 static char *rid="$XConsortium: main.c,v 1.227.1.2 95/06/29 18:13:15 kaleb Exp $";
 #endif /* lint */
-/* $XFree86: xc/programs/xterm/os2main.c,v 3.19 1998/06/04 16:44:00 hohndel Exp $ */
+/* $XFree86: xc/programs/xterm/os2main.c,v 3.5.2.6 1998/10/20 20:51:49 hohndel Exp $ */
 
 /***********************************************************
 
@@ -66,8 +66,8 @@ SOFTWARE.
 #include <os2.h>
 #endif
 
-#include "version.h"
-#include "ptyx.h"
+#include <version.h>
+#include <xterm.h>
 
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
@@ -82,10 +82,9 @@ SOFTWARE.
 #include <pwd.h>
 #include <ctype.h>
 
-#include "data.h"
-#include "error.h"
-#include "menu.h"
-#include "xterm.h"
+#include <data.h>
+#include <error.h>
+#include <menu.h>
 
 #include <sys/termio.h>
 

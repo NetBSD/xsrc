@@ -1,6 +1,6 @@
 /*
  *	$XConsortium: VTparse.h,v 1.6 92/09/15 15:28:31 gildea Exp $
- *	$XFree86: xc/programs/xterm/VTparse.h,v 3.9 1997/08/12 12:02:18 hohndel Exp $
+ *	$XFree86: xc/programs/xterm/VTparse.h,v 3.7.2.2 1998/10/20 20:51:34 hohndel Exp $
  */
 
 /*
@@ -26,10 +26,15 @@
  * SOFTWARE.
  */
 
-#ifdef __STDC__
-#define Const const
-#else
-#define Const /**/
+#ifndef included_VTparse_h
+#define included_VTparse_h 1
+
+#ifndef Const
+# if defined(__STDC__) && !defined(__cplusplus)
+#  define Const const
+# else
+#  define Const /**/
+# endif
 #endif
 
 /*
@@ -183,3 +188,5 @@ extern Const PARSE_T vt52_esc_table[];
 #define CASE_DECSWL 111
 #define CASE_DECDWL 112
 #define CASE_DEC_MC 113
+
+#endif /* included_VTparse_h */

@@ -64,17 +64,13 @@ SOFTWARE.
 
 ******************************************************************/
 
-/* $XFree86: xc/programs/xterm/main.c,v 3.73 1998/07/04 14:48:27 robin Exp $ */
+/* $XFree86: xc/programs/xterm/main.c,v 3.47.2.16 1998/10/25 09:49:28 hohndel Exp $ */
 
 
 /* main.c */
 
-#ifdef HAVE_CONFIG_H
-#include <xtermcfg.h>
-#endif
-
-#include "version.h"
-#include "ptyx.h"
+#include <version.h>
+#include <xterm.h>
 
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
@@ -87,10 +83,9 @@ SOFTWARE.
 #include <pwd.h>
 #include <ctype.h>
 
-#include "data.h"
-#include "error.h"
-#include "menu.h"
-#include "xterm.h"
+#include <data.h>
+#include <error.h>
+#include <menu.h>
 
 #ifdef AMOEBA
 #include <amoeba.h>
@@ -206,6 +201,18 @@ static Bool IsPts = False;
 #define _SVID3
 #endif
 
+#ifdef __GNU__
+#define USE_POSIX_TERMIOS
+#define USE_SYSV_PGRP
+#define WTMP
+#define HAS_BSD_GROUPS
+#define USE_TTY_GROUP
+#endif
+
+#ifdef USE_TTY_GROUP
+#include <grp.h>
+#endif
+
 #ifndef __CYGWIN32__
 #include <sys/ioctl.h>
 #endif
@@ -257,6 +264,11 @@ static Bool IsPts = False;
 
 #if defined(__sgi) && OSMAJORVERSION >= 5
 #undef TIOCLSET				/* defined, but not useable */
+#endif
+
+#ifdef __GNU__
+#undef TIOCLSET
+#undef TIOCSLTC
 #endif
 
 #ifdef SYSV /* { */
@@ -351,7 +363,7 @@ static Bool IsPts = False;
 #define HAS_SAVED_IDS_AND_SETEUID
 #endif
 
-#if !defined(MINIX) && !defined(WIN32) && !defined(Lynx)
+#if !defined(MINIX) && !defined(WIN32) && !defined(Lynx) && !defined(__GNU__)
 #include <sys/param.h>	/* for NOFILE */
 #endif
 
@@ -488,7 +500,15 @@ extern char *ptsname();
 
 int switchfb[] = {0, 2, 1, 3};
 
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 extern int tgetent (char *ptr, char *name);
+
+#ifdef	__cplusplus
+	}
+#endif
 
 static SIGNAL_T reapchild (int n);
 static char *base_name (char *name);
@@ -635,6 +655,8 @@ struct _xttymodes {
 #define XTTYMODE_weras 14
 { "lnext", 5, 0, '\0' },		/* ltchars.t_lnextc ; VLNEXT */
 #define XTTYMODE_lnext 15
+{ "status", 6, 0, '\0' },		/* VSTATUS */
+#define XTTYMODE_status 16
 { NULL, 0, 0, '\0' },			/* end of data */
 };
 
@@ -1127,9 +1149,6 @@ XtActionsRec actionProcs[] = {
 };
 
 Atom wm_delete_window;
-extern fd_set Select_mask;
-extern fd_set X_mask;
-extern fd_set pty_mask;
 
 int
 main (int argc, char *argv[])
@@ -1324,6 +1343,9 @@ main (int argc, char *argv[])
 #ifdef VDSUSP
 	d_tio.c_cc[VDSUSP] = CDSUSP;
 #endif
+#ifdef VSTATUS
+	d_tio.c_cc[VSTATUS] = CSTATUS;
+#endif
 	/* now, try to inherit tty settings */
 	{
 	    int i;
@@ -1379,6 +1401,9 @@ main (int argc, char *argv[])
 #ifdef VDSUSP
 		    d_tio.c_cc[VDSUSP] = deftio.c_cc[VDSUSP];
 #endif
+#ifdef VSTATUS
+		    d_tio.c_cc[VSTATUS] = deftio.c_cc[VSTATUS];
+#endif
 		    break;
 		}
 	    }
@@ -1395,6 +1420,9 @@ main (int argc, char *argv[])
 	d_tio.c_cc[VSUSP] = CSUSP;
 #ifdef VDSUSP
 	d_tio.c_cc[VDSUSP] = '\000';
+#endif
+#ifdef VSTATUS
+	d_tio.c_cc[VSTATUS] = '\377';
 #endif
 	d_tio.c_cc[VREPRINT] = '\377';
 	d_tio.c_cc[VDISCARD] = '\377';
@@ -2192,10 +2220,8 @@ spawn (void)
 	screen->uid = getuid();
 	screen->gid = getgid();
 
-#ifdef linux
-	bzero(termcap, sizeof termcap);
-	bzero(newtc, sizeof newtc);
-#endif
+	termcap[0] = '\0';
+	newtc[0] = '\0';
 
 #ifdef SIGTTOU
 	/* so that TIOCSWINSZ || TIOCSIZE doesn't block */
@@ -2607,8 +2633,11 @@ spawn (void)
 
 			/* We have a new pty to try */
 			free(ttydev);
-			ttydev = malloc((unsigned)
+			ttydev = (char *)malloc((unsigned)
 			    (strlen(handshake.buffer) + 1));
+			if (ttydev == NULL) {
+			    SysError(ERROR_SPREALLOC);
+			}
 			strcpy(ttydev, handshake.buffer);
 		}
 
@@ -2618,8 +2647,11 @@ spawn (void)
 		if ((ptr = ttyname(tty)) != 0)
 		{
 			/* it may be bigger */
-			ttydev = realloc (ttydev,
+			ttydev = (char *)realloc (ttydev,
 				(unsigned) (strlen(ptr) + 1));
+			if (ttydev == NULL) {
+			    SysError(ERROR_SPREALLOC);
+			}
 			(void) strcpy(ttydev, ptr);
 		}
 #if defined(SYSV) && defined(i386) && !defined(SVR4)
@@ -2630,7 +2662,6 @@ spawn (void)
 
 #ifdef USE_TTY_GROUP
 	{
-#include <grp.h>
 		struct group *ttygrp;
 		if ((ttygrp = getgrnam("tty")) != 0) {
 			/* change ownership of tty to real uid, "tty" gid */
@@ -2792,6 +2823,9 @@ spawn (void)
 #endif
 #ifdef VSTOP
 			TMODE (XTTYMODE_stop, tio.c_cc[VSTOP]);
+#endif
+#ifdef VSTATUS
+			TMODE (XTTYMODE_status, tio.c_cc[VSTATUS]);
 #endif
 #ifdef HAS_LTCHARS
 			/* both SYSV and BSD have ltchars */
@@ -3088,7 +3122,7 @@ spawn (void)
 			       sizeof(utmp.ut_name));
 
 		utmp.ut_pid = getpid();
-#if defined(SVR4) || defined(SCO325) || (defined(linux) && __GLIBC__ >= 2)
+#if defined(SVR4) || defined(SCO325) || (defined(linux) && __GLIBC__ >= 2 && !(defined(__powerpc__) && __GLIBC__ == 2 && __GLIBC_MINOR__ == 0))
 		utmp.ut_session = getsid(0);
 		utmp.ut_xtime = time ((time_t *) 0);
 		utmp.ut_tv.tv_usec = 0;
@@ -3104,7 +3138,7 @@ spawn (void)
 		if (term->misc.login_shell)
 		    updwtmpx(WTMPX_FILE, &utmp);
 #else
-#if defined(linux) && __GLIBC__ >= 2
+#if defined(linux) && __GLIBC__ >= 2 && !(defined(__powerpc__) && __GLIBC__ == 2 && __GLIBC_MINOR__ == 0)
 		if (term->misc.login_shell)
 		    updwtmp(etc_wtmp, &utmp);
 #else
@@ -3342,7 +3376,7 @@ spawn (void)
 			shname++;
 		else
 			shname = ptr;
-		shname_minus = malloc(strlen(shname) + 2);
+		shname_minus = (char *)malloc(strlen(shname) + 2);
 		(void) strcpy(shname_minus, "-");
 		(void) strcat(shname_minus, shname);
 #if !defined(USE_SYSV_TERMIO) && !defined(USE_POSIX_TERMIOS)
@@ -3424,7 +3458,7 @@ spawn (void)
 			tslot = handshake.tty_slot;
 #endif	/* USE_SYSV_UTMP */
 			free(ttydev);
-			ttydev = malloc((unsigned) strlen(handshake.buffer) + 1);
+			ttydev = (char *)malloc((unsigned) strlen(handshake.buffer) + 1);
 			strcpy(ttydev, handshake.buffer);
 			break;
 		default:
@@ -3865,7 +3899,7 @@ Exit(int n)
 #endif
 	char* ptyname;
 	char* ptynameptr = 0;
-#if defined(WTMP) && !defined(SVR4) && !(defined(linux) && __GLIBC__ >= 2)
+#if defined(WTMP) && !defined(SVR4) && !(defined(linux) && __GLIBC__ >= 2 && !(defined(__powerpc__) && __GLIBC__ == 2 && __GLIBC_MINOR__ == 0))
 	int fd;			/* for /etc/wtmp */
 	int i;
 #endif
@@ -3897,7 +3931,7 @@ Exit(int n)
 	    /* write it out only if it exists, and the pid's match */
 	    if (utptr && (utptr->ut_pid == screen->pid)) {
 		    utptr->ut_type = DEAD_PROCESS;
-#if defined(SVR4) || defined(SCO325) || (defined(linux) && __GLIBC__ >= 2)
+#if defined(SVR4) || defined(SCO325) || (defined(linux) && __GLIBC__ >= 2 && !(defined(__powerpc__) && __GLIBC__ == 2 && __GLIBC_MINOR__ == 0))
 		    utptr->ut_session = getsid(0);
 		    utptr->ut_xtime = time ((time_t *) 0);
 		    utptr->ut_tv.tv_usec = 0;
@@ -3911,7 +3945,7 @@ Exit(int n)
 		    if (term->misc.login_shell)
 			updwtmpx(WTMPX_FILE, utptr);
 #else
-#if defined(linux) && __GLIBC__ >= 2
+#if defined(linux) && __GLIBC__ >= 2 && !(defined(__powerpc__) && __GLIBC__ == 2 && __GLIBC_MINOR__ == 0)
 		    strncpy (utmp.ut_line, utptr->ut_line, sizeof (utmp.ut_line));
 		    if (term->misc.login_shell)
 			updwtmp(etc_wtmp, utptr);

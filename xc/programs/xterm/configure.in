@@ -1,5 +1,5 @@
 dnl
-dnl $XFree86: xc/programs/xterm/configure.in,v 3.17 1998/06/04 16:43:56 hohndel Exp $
+dnl $XFree86: xc/programs/xterm/configure.in,v 3.1.2.6 1998/10/20 20:51:43 hohndel Exp $
 dnl
 dnl ---------------------------------------------------------------------------
 dnl 
@@ -98,6 +98,8 @@ CF_X_ATHENA
 CPPFLAGS="$cf_save_CPPFLAGS"
 
 LIBS="$LIBS $X_EXTRA_LIBS"
+
+CF_XTERM_MODE
 
 AC_CHECK_FUNCS( \
 	XkbStdBell \

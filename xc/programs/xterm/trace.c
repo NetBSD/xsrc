@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/trace.c,v 3.4 1998/06/04 16:44:02 hohndel Exp $
+ * $XFree86: xc/programs/xterm/trace.c,v 3.1.2.3 1998/10/20 20:51:55 hohndel Exp $
  */
 
 /************************************************************
@@ -38,9 +38,9 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include "trace.h"
-
 #include <stdarg.h>
+
+#include <trace.h>
 
 char *trace_who = "parent";
 
@@ -48,7 +48,15 @@ void
 Trace(char *fmt, ...)
 {
 	static	FILE	*fp;
+	static	char	*trace_out;
 	va_list ap;
+
+	if (fp != 0
+	 && trace_who != trace_out) {
+		fclose(fp);
+		fp = 0;
+	}
+	trace_out = trace_who;
 
 	if (!fp) {
 		char name[BUFSIZ];
