@@ -131,6 +131,12 @@ SOCK_DEFINES = -DBSD44SOCKETS
 FRAGILE_DEFINES = -DFRAGILE_DEV_MEM
 #endif
 
+#if defined(NetBSDArchitecture) && \
+    ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion > 3))
+RANDOM_DEFINES = -DDEV_RANDOM=\"/dev/urandom\"
+#endif
+
 #ifdef OpenBSDArchitecture
 RANDOM_DEFINES = -DARC4_RANDOM
 #endif
