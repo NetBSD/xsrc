@@ -172,6 +172,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.4 1998/05/22 16:38:18 dawes Exp $
 #  define pc532Architecture
 #  undef pc532
 # endif
+# if defined(__x68k__) || defined(x68k)
+#  define x68kArchitecture
+#  undef x68k
+# endif
 #endif /* NetBSD */
 
 #ifdef __FreeBSD__
