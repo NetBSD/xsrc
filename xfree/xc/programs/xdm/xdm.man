@@ -417,7 +417,7 @@ is the conventional name.
 .IP "\fBDisplayManager.\fP\fIDISPLAY\fP\fB.chooser\fP"
 Specifies the program run to offer a host menu for Indirect queries
 redirected to the special host name CHOOSER.
-\fI __projectroot__/lib/X11/xdm/chooser\fP is the default.
+\fI CHOOSERPATH\fP is the default.
 See the sections \fBXDMCP Access Control\fP and \fBChooser\fP.
 .IP "\fBDisplayManager.\fP\fIDISPLAY\fP\fB.xrdb\fP"
 Specifies the program used to load the resources.  By default,
@@ -1336,7 +1336,7 @@ the default configuration file
 .I $HOME/.Xauthority
 user authorization file where \fIxdm\fP stores keys for clients to read
 .TP 20
-.I __projectroot__/lib/X11/xdm/chooser
+.I CHOOSERPATH
 the default chooser
 .TP 20
 .I __projectroot__/bin/xrdb
