@@ -1,4 +1,4 @@
-/* $NetBSD: x68kGraph.c,v 1.1.1.1 2004/01/07 12:51:47 minoura Exp $ */
+/* $NetBSD: x68kGraph.c,v 1.2 2004/01/07 12:55:00 minoura Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -268,7 +268,7 @@ static Bool x68kCfbFinishScreenInit(
     int		ndepths;
     VisualID	defaultVisual;
     int		rootdepth = 0;
-    extern miBSFuncRec cfb16BSFuncRec;
+    extern BSFuncRec cfb16BSFuncRec;
     extern Bool cfb16CreateScreenResources(ScreenPtr pScreen);
 
     /* for 15/16bit TrueColor visual mode */
@@ -344,16 +344,18 @@ static Bool x68kCfbFinishScreenInit(
     if (!miScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width,
                       rootdepth, ndepths, depths,
                       defaultVisual, nvisuals, visuals,
-                      (miBSFuncPtr) 0))
+                      (VisualPtr) 0))
 	return FALSE;
     
     pScreen->CloseScreen = cfb16CloseScreen;
     pScreen->SaveScreen = x68kSaveScreen;
-    miInitializeBackingStore (pScreen, &cfbBSFuncRec);
+    miInitializeBackingStore (pScreen);
+#if 0				/* XXX FORCE_SEPARATE_PRIVATE */
     pScreen->CreateScreenResources = cfb16CreateScreenResources;
     pScreen->devPrivates[cfb16ScreenPrivateIndex].ptr =
         pScreen->devPrivate;
     pScreen->devPrivate = oldDevPrivate;
+#endif
 
     return TRUE;
 }

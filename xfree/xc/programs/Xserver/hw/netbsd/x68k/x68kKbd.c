@@ -1,4 +1,4 @@
-/* $NetBSD: x68kKbd.c,v 1.1.1.1 2004/01/07 12:51:44 minoura Exp $ */
+/* $NetBSD: x68kKbd.c,v 1.2 2004/01/07 12:55:00 minoura Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -177,8 +177,10 @@ static void x68kInitModMap(KeySymsRec *x68kKeySyms, CARD8 *x68kModMap)
         x68kKeySyms->minKeyCode += MIN_KEYCODE;
         x68kKeySyms->maxKeyCode += MIN_KEYCODE;
     }
+#if 0
     if (x68kKeySyms->maxKeyCode > MAX_KEYCODE)
         x68kKeySyms->maxKeyCode += MAX_KEYCODE;
+#endif
     for (i = x68kKeySyms->minKeyCode;
          i < x68kKeySyms->maxKeyCode; i++) {
         switch (x68kKeySyms->map[(i-x68kKeySyms->minKeyCode)*4]) {

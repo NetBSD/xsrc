@@ -1,4 +1,4 @@
-/* $NetBSD: x68kInit.c,v 1.1.1.1 2004/01/07 12:51:45 minoura Exp $ */
+/* $NetBSD: x68kInit.c,v 1.2 2004/01/07 12:55:00 minoura Exp $ */
 /*-------------------------------------------------------------------------
  * Copyright (c) 1996 Yasushi Yamasaki
  * All rights reserved.
@@ -73,6 +73,7 @@ THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 *******************************************************/
 
+#include "Xos.h"
 #include "x68k.h"
 
 static int nscreens;
@@ -234,5 +235,42 @@ void ddxUseMsg(void)
     ErrorF("\nX68k dependent options\n");
     ErrorF("-x68kconfig filename   specify configuration file\n");
 }
+
+CARD32 GetTimeInMillis(void)
+{
+    struct timeval  tp;
+
+    X_GETTIMEOFDAY(&tp);
+    return(tp.tv_sec * 1000) + (tp.tv_usec / 1000);
+}
+
+void OsVendorFatalError(void)
+{
+}
+
+#ifdef DPMSExtension
+/**************************************************************
+ * DPMSSet(), DPMSGet(), DPMSSupported()
+ *
+ * stubs
+ *
+ ***************************************************************/
+
+void DPMSSet (level)
+    int level;
+{
+}
+
+int DPMSGet (level)
+    int* level;
+{
+    return -1;
+}
+
+Bool DPMSSupported ()
+{
+    return FALSE;
+}
+#endif
 
 /* EOF x68kInit.c */
