@@ -129,10 +129,8 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.11 1998/12/22 11:23:01 hohndel Ex
 #  define SparcArchitecture
 #  undef sparc
 # endif
-# ifdef mips
+# if defined(__mips__)
 #   define MipsArchitecture
-#   define ArcArchitecture
-#   undef mips
 # endif
 # ifdef mc68000
 #   define Mc68020Architecture
@@ -183,6 +181,10 @@ XCOMM $XFree86: xc/config/cf/Imake.cf,v 3.34.2.11 1998/12/22 11:23:01 hohndel Ex
 # if defined(__macppc__) || defined(macppc)
 #  define macppcArchitecture
 #  undef macppc
+# endif
+# if defined(__pmax__) || defined(pmax)
+#  define pmaxArchitecture
+#  undef pmax
 # endif
 #endif /* NetBSD */
 
