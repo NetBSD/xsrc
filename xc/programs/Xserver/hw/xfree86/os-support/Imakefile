@@ -56,7 +56,7 @@ OS_SUBDIR = bsd
 # endif
 #endif
 
-#if defined(NetBSDArchitecture) && defined(arm32Architecture)
+#if defined(NetBSDArchitecture) && defined(sharkArchitecture)
 OS_SUBDIR = bsd
 #endif
 
