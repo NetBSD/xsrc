@@ -27,16 +27,12 @@ SHARED_CFLAGS = PositionIndependentCFlags
     && ((OSMajorVersion == 1 && OSMinorVersion >= 1) || OSMajorVersion >= 2)
 # if defined(AlphaArchitecture)
   IOPERMDEFINES = -DUSE_ALPHA_PIO
-# elif defined(ArcArchitecture)
-  IOPERMDEFINES = -DUSE_ARC_MMAP
-# elif defined(ArmArchitecture) || defined(CatsArchitecture)
-  IOPERMDEFINES = -DUSE_ARM32_MMAP
-# elif defined(PpcArchitecture) || \
-	defined(Sparc64Architecture)
+# elif defined(i386Architecture)
+  IOPERMDEFINES = -DUSE_I386_IOPL
+# elif !defined(ArmArchitecture) && \
+       !defined(MipsArchitecture)
   IOPERM_SRC = ioperm_noop.c
   IOPERM_OBJ = ioperm_noop.o
-# else
-  IOPERMDEFINES = -DUSE_I386_IOPL
 # endif
 #elif defined(OpenBSDArchitecture) 
 # if defined(i386Architecture) 
