@@ -298,6 +298,10 @@ ReadFontAlias(directory, isFile, pdir)
 	    status = AllocError;
 	    break;
 	case NAME:
+	    if (strlen(lexToken) >= sizeof alias) {
+		status = BadFontPath;
+		break;
+	    }
 	    strcpy(alias, lexToken);
 	    token = lexAlias(file, &lexToken);
 	    switch (token) {
