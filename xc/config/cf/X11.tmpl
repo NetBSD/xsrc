@@ -5,7 +5,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.8.2.3 1997/05/21 15:02:13 dawes Exp $
+XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.8.2.4 1998/01/23 12:35:08 dawes Exp $
 
 /***************************************************************************
  *                                                                         *
@@ -716,6 +716,9 @@ XCOMM $XFree86: xc/config/cf/X11.tmpl,v 1.8.2.3 1997/05/21 15:02:13 dawes Exp $
 #ifndef ServerConfigDir
 #define ServerConfigDir $(LIBDIR)/xserver
 #endif
+#ifndef VarDirectory
+#define VarDirectory /var/X11
+#endif
 #ifndef InstallSecurityConfig
 #define InstallSecurityConfig YES	/* Install sample security policy */
 #endif
@@ -797,6 +800,10 @@ XCOMM X Window System make variables; these need to be coordinated with rules
            ADMDIR = AdmDir		/* server log files */
            LIBDIR = LibDir		/* rgb, XErrorDB, etc. */
    TOP_X_INCLUDES = TopXInclude
+
+#ifdef VarDirectory
+           VARDIR = VarDirectory
+#endif
 
           FONTDIR = FontDir		/* font directories */
          XINITDIR = XinitDir		/* xinit config files */
@@ -1574,9 +1581,11 @@ ProjectUnsharedLibReferences(XKBUI,xkbui,$(XKBUILIBSRC),XBuildLibDir)
 #ifndef InstallAppDefaultsLong
 #if InstallAppDefFiles
 #define InstallAppDefaultsLong(file,class)				@@\
+LinkVarDirectory(app-defaults,.,app-defaults,.)				@@\
 InstallNamedTarget(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class)
 #else
 #define InstallAppDefaultsLong(file,class)				@@\
+LinkVarDirectory(app-defaults,.,app-defaults,.)				@@\
 InstallNamedTargetNoClobber(install,file.ad,$(INSTAPPFLAGS),$(XAPPLOADDIR),class)
 #endif /* InstallAppDefFiles */
 #endif /* InstallAppDefaultsLong */
