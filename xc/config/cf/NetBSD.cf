@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.95 2002/04/21 09:58:16 thomas Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.96 2002/05/09 23:13:01 eeh Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -12,7 +12,7 @@ XCOMM This file currently contains support for:
 XCOMM
 XCOMM 		NetBSD/i386	client/server
 XCOMM 		NetBSD/sparc	client/server
-XCOMM 		NetBSD/sparc64	client/server (server has issues)
+XCOMM 		NetBSD/sparc64	client/server
 XCOMM 		NetBSD/sun3	client/server
 XCOMM 		NetBSD/hp300	client
 XCOMM 		NetBSD/mac68k	client/server
@@ -152,6 +152,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define DefaultCCOptions 	/**/
 #elif defined(armArchitecture)
 #define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char -fomit-frame-pointer
+#elif defined(Sparc64Architecture)
+#define DefaultCCOptions 	-ansi -Dasm=__asm -ffixed-g4 -mcmodel=medlow
+#define LibraryCCOptions 	-ansi -Dasm=__asm -ffixed-g4 -mcmodel=medany
 #else
 #define DefaultCCOptions 	-ansi -Dasm=__asm
 #endif
