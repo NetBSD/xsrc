@@ -1,4 +1,4 @@
-/* $XConsortium: ReconfWin.c,v 11.16 94/04/17 20:20:45 rws Exp $ */
+/* $XConsortium: ReconfWin.c /main/9 1996/10/22 14:21:21 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -75,5 +75,5 @@ XConfigureWindow(dpy, w, mask, changes)
     Data32 (dpy, (long *) values, nvalues);
     UnlockDisplay(dpy);
     SyncHandle();
-
+    return 1;
     }

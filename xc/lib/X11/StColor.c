@@ -1,4 +1,4 @@
-/* $XConsortium: StColor.c,v 11.11 94/04/17 20:21:10 rws Exp $ */
+/* $XConsortium: StColor.c /main/8 1996/10/22 14:23:04 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -64,4 +64,5 @@ XColor *def;
 
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

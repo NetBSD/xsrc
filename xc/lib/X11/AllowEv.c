@@ -1,4 +1,4 @@
-/* $XConsortium: AllowEv.c,v 1.14 94/04/17 20:18:32 rws Exp $ */
+/* $XConsortium: AllowEv.c /main/5 1996/10/22 14:15:09 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -42,6 +42,7 @@ XAllowEvents(dpy, mode, time)
     req->time = time;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 
 

@@ -1,11 +1,12 @@
-XCOMM $XConsortium: Imakefile /main/26 1995/09/21 11:26:49 kaleb $
-XCOMM $XFree86: xc/lib/Xau/Imakefile,v 3.2 1996/01/05 13:11:34 dawes Exp $
+XCOMM $XConsortium: Imakefile /main/27 1996/09/28 16:43:28 rws $
+XCOMM $XFree86: xc/lib/Xau/Imakefile,v 3.3 1996/12/23 06:00:28 dawes Exp $
 #define DoNormalLib NormalLibXau
 #define DoSharedLib SharedLibXau
 #define DoDebugLib DebugLibXau
 #define DoProfileLib ProfileLibXau
 #define LibName Xau
 #define SoRev SOXAUTHREV
+#define IncSubdir X11
 
 #include <Threads.tmpl>
 

@@ -1,4 +1,4 @@
-/* $XConsortium: DrPoint.c,v 11.14 94/04/17 20:19:11 rws Exp $ */
+/* $XConsortium: DrPoint.c /main/8 1996/10/22 14:17:47 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -89,5 +89,6 @@ XDrawPoint(dpy, d, gc, x, y)
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

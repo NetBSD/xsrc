@@ -1,4 +1,4 @@
-/* $XConsortium: SetClOrig.c,v 11.14 94/04/17 20:20:53 rws Exp $ */
+/* $XConsortium: SetClOrig.c /main/5 1996/10/22 14:21:56 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -46,4 +46,5 @@ int xorig, yorig;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

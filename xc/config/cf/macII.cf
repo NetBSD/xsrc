@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: macII.cf /main/49 1996/02/02 18:59:43 gildea $
+XCOMM platform:  $XConsortium: macII.cf /main/50 1996/09/28 16:11:19 rws $
 
 #ifndef OSName
 #define OSName            A/UX 3.0.1

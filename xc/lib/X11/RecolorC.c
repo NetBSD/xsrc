@@ -1,4 +1,4 @@
-/* $XConsortium: RecolorC.c,v 11.9 94/04/17 20:20:44 rws Exp $ */
+/* $XConsortium: RecolorC.c /main/5 1996/10/22 14:21:17 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -46,5 +46,6 @@ XRecolorCursor(dpy, cursor, foreground, background)
     req->backBlue = background->blue;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

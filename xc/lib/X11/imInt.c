@@ -1,5 +1,9 @@
-/* $XConsortium: imInt.c,v 1.3 94/03/26 17:00:26 rws Exp $ */
-/* $XFree86: xc/lib/X11/imInt.c,v 3.0 1996/02/09 08:18:56 dawes Exp $ */
+/* $TOG: imInt.c /main/4 1997/04/28 16:39:57 barstow $ */
+
+
+
+
+/* $XFree86: xc/lib/X11/imInt.c,v 3.0.4.1 1997/05/03 09:43:41 dawes Exp $ */
 /******************************************************************
 
            Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -92,7 +96,8 @@ _XimDestroyIMStructureList(im)
 }
 
 Public void
-_XimServerDestroy()
+_XimServerDestroy(im_2_destroy)
+    Xim		  im_2_destroy;
 {
     register int  i;
     Xim		  im;
@@ -100,6 +105,11 @@ _XimServerDestroy()
 
     for(i = 0; i < _XimCurrentIMcount; i++) {
 	if(!(im = _XimCurrentIMlist[i]))
+	    continue;
+	/*
+	 * Only continue if this im is the one to be destroyed.
+	 */
+	if (im != im_2_destroy)
 	    continue;
 
 	if (im->core.destroy_callback.callback)
@@ -114,10 +124,9 @@ _XimServerDestroy()
 	_XimResetIMInstantiateCallback( im );
 	(void)im->methods->close((XIM)im);
 	Xfree(im);
+	_XimCurrentIMlist[i] = NULL;
+	return;
     }
-    Xfree(_XimCurrentIMlist);
-    _XimCurrentIMlist  = (Xim *)NULL;
-    return;
 }
 
 #ifdef XIM_CONNECTABLE

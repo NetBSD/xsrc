@@ -1,4 +1,4 @@
-/* $XConsortium: Quarks.c,v 1.40 94/04/17 20:20:41 rws Exp $ */
+/* $XConsortium: Quarks.c /main/42 1996/09/28 16:34:14 rws $ */
 
 /***********************************************************
 Copyright 1987, 1988, 1990 by Digital Equipment Corporation, Maynard,
@@ -83,7 +83,7 @@ static XrmQuark nextUniq = -1;	/* next quark from XrmUniqueQuark */
 #define LARGEQUARK	((Entry)0x80000000L)
 #define QUARKSHIFT	18
 #define QUARKMASK	((LARGEQUARK - 1) >> QUARKSHIFT)
-#define SIGMASK		((1L << QUARKSHIFT) - 1)
+#define XSIGMASK	((1L << QUARKSHIFT) - 1)
 
 #define STRQUANTSIZE	(sizeof(XrmString) * (QUANTUMMASK + 1))
 #ifdef PERMQ
@@ -269,7 +269,7 @@ XrmQuark _XrmInternalStringToQuark(name, len, sig, permstring)
 	if (entry & LARGEQUARK)
 	    q = entry & (LARGEQUARK-1);
 	else {
-	    if ((entry - sig) & SIGMASK)
+	    if ((entry - sig) & XSIGMASK)
 		goto nomatch;
 	    q = (entry >> QUARKSHIFT) & QUARKMASK;
 	}
@@ -346,7 +346,7 @@ nomatch:    if (!rehash)
     }
     NAME(q) = (char *)name;
     if (q <= QUARKMASK)
-	entry = (q << QUARKSHIFT) | (sig & SIGMASK);
+	entry = (q << QUARKSHIFT) | (sig & XSIGMASK);
     else
 	entry = q | LARGEQUARK;
     quarkTable[idx] = entry;

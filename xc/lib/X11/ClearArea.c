@@ -1,4 +1,4 @@
-/* $XConsortium: ClearArea.c,v 11.10 94/04/17 20:18:51 rws Exp $ */
+/* $XConsortium: ClearArea.c /main/5 1996/10/22 14:16:44 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -47,5 +47,6 @@ XClearArea (dpy, w, x, y, width, height, exposures)
     req->exposures = exposures;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

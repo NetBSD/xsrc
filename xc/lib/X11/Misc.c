@@ -1,4 +1,4 @@
-/* $XConsortium: Misc.c,v 1.6 94/04/17 20:20:17 rws Exp $ */
+/* $XConsortium: Misc.c /main/7 1996/10/22 14:20:21 kaleb $ */
 /*
 
 Copyright (c) 1988  X Consortium
@@ -52,6 +52,7 @@ XDisplayKeycodes(dpy, min_keycode_return, max_keycode_return)
 {
     *min_keycode_return = dpy->min_keycode;
     *max_keycode_return = dpy->max_keycode;
+    return 1;
 }
 
 VisualID XVisualIDFromVisual(visual)

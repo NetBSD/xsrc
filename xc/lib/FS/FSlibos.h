@@ -1,5 +1,5 @@
-/* $XConsortium: FSlibos.h,v 1.22 94/07/20 10:38:02 mor Exp $ */
-/* $XFree86: xc/lib/FS/FSlibos.h,v 3.1 1996/01/05 13:10:19 dawes Exp $ */
+/* $XConsortium: FSlibos.h /main/23 1996/11/13 14:43:51 lehors $ */
+/* $XFree86: xc/lib/FS/FSlibos.h,v 3.2 1996/12/23 05:58:50 dawes Exp $ */
 
 /* @(#)FSlibos.h	4.1	91/05/02
  * Copyright 1990 Network Computing Devices;
@@ -237,13 +237,7 @@ typedef unsigned long FdSet[MSKCNT];
 
 #else
 
-#define BOOL wBOOL
-#undef Status
-#define Status wStatus
-#include <winsock.h>
-#undef Status
-#define Status int
-#undef BOOL
+#include <X11/Xwinsock.h>
 #include <X11/Xw32defs.h>
 
 typedef fd_set FdSet;

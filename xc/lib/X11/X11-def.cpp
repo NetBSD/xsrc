@@ -730,3 +730,4 @@ EXPORTS
  XkbSetDeviceButtonActions
  XkbToControl
  XkbSetDebuggingFlags
+/* $XConsortium: X11-def.cpp /main/14 1996/12/18 16:53:53 lehors $ */

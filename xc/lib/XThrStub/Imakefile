@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/XThrStub/Imakefile,v 3.0 1995/11/02 00:27:05 dawes Exp $
+XCOMM $XFree86: xc/lib/XThrStub/Imakefile,v 3.1 1996/12/12 09:13:41 dawes Exp $
 #define DoNormalLib NormalLibXThrStub
 #define DoSharedLib SharedLibXThrStub
 #define DoDebugLib DebugLibXThrStub
@@ -25,7 +25,7 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
       DEFINES = $(ALLOC_DEFINES)
      INCLUDES = 
          SRCS = $(STUBSRCS)
-         OBJS = $(STUBOBJS
+         OBJS = $(STUBOBJS)
      LINTLIBS = $(LINTXLIB)
 
 #include <Library.tmpl>

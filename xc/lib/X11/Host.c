@@ -1,4 +1,4 @@
-/* $XConsortium: Host.c,v 11.13 94/04/17 20:19:53 rws Exp $ */
+/* $XConsortium: Host.c /main/7 1996/10/22 14:19:38 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -45,6 +45,7 @@ XAddHost (dpy, host)
     memcpy((char *) NEXTPTR(req,xChangeHostsReq), host->address, host->length);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
     }
 
 XRemoveHost (dpy, host)
@@ -62,6 +63,7 @@ XRemoveHost (dpy, host)
     memcpy((char *) NEXTPTR(req,xChangeHostsReq), host->address, host->length);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
     }
 
 
@@ -72,8 +74,9 @@ XAddHosts (dpy, hosts, n)
 {
     register int i;
     for (i = 0; i < n; i++) {
-	XAddHost(dpy, &hosts[i]);
+	(void) XAddHost(dpy, &hosts[i]);
       }
+    return 1;
 }
 
 XRemoveHosts (dpy, hosts, n)
@@ -83,6 +86,7 @@ XRemoveHosts (dpy, hosts, n)
 {
     register int i;
     for (i = 0; i < n; i++) {
-	XRemoveHost(dpy, &hosts[i]);
+	(void) XRemoveHost(dpy, &hosts[i]);
       }
+    return 1;
 }

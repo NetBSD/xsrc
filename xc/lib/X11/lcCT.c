@@ -1,4 +1,4 @@
-/* $XConsortium: lcCT.c /main/6 1995/11/18 16:09:43 kaleb $ */
+/* $TOG: lcCT.c /main/11 1997/02/11 17:48:39 kaleb $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -23,6 +23,15 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
+/*
+ * Copyright 1995 by FUJITSU LIMITED
+ * This is source code modified by FUJITSU LIMITED under the Joint
+ * Development Agreement for the CDE/Motif PST.
+ *
+ * Modifier: Takanori Tateno   FUJITSU LIMITED
+ *
+ */
+/* $XFree86: xc/lib/X11/lcCT.c,v 3.5.2.1 1997/05/03 09:43:42 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "XlcPubI.h"
@@ -83,6 +92,7 @@ static CTDataRec default_ct_data[] =
     /* Non-Standard Character Set Encodings */
     { "TIS620.2533-1:GR", "\033-T"},
 #endif
+    { "KOI8-R:GR", "\033%/1\200\210koi8-r\002"},
 } ; 
 
 #define XctC0		0x0000
@@ -127,6 +137,17 @@ typedef struct {
     int version;
     CTInfo ct_info;
 } CTParseRec, *CTParse;
+
+CTDataRec *default_ct_data_list()
+{
+	return(default_ct_data);
+}
+
+size_t default_ct_data_list_num()
+{
+	size_t num = sizeof(default_ct_data) / sizeof(CTDataRec);
+	return(num);
+}
 
 static CTInfo ct_list = NULL;
 
@@ -699,7 +720,7 @@ strtocs(conv, from, from_left, to, to_left, args, num_args)
     State state = (State) conv->state;
     register char *src, *dst;
     unsigned char side;
-    register length;
+    register int length;
 
     src = (char *) *from;
     dst = (char *) *to;

@@ -1,5 +1,5 @@
-XCOMM $XConsortium: xf86.rules,v 1.7 95/01/25 16:34:39 kaleb Exp $
-XCOMM $XFree86: xc/config/cf/xf86.rules,v 3.15 1996/09/24 13:48:46 dawes Exp $
+XCOMM $XConsortium: xf86.rules /main/9 1996/10/31 14:54:26 kaleb $
+XCOMM $XFree86: xc/config/cf/xf86.rules,v 3.16.2.1 1997/05/18 12:00:01 dawes Exp $
 
 /*
  * These rules are needed to build the Xfree86 X Servers
@@ -13,6 +13,7 @@ XCOMM $XFree86: xc/config/cf/xf86.rules,v 3.15 1996/09/24 13:48:46 dawes Exp $
 
 #ifndef AssembleObject
 #define AssembleObject(flags) CPPOnlyAsm($*,flags)			@@\
+	RemoveFile($*.o)						@@\
 	$(AS) -o $*.o $*.i						@@\
 	RemoveFile($*.i)
 #endif

@@ -1,4 +1,4 @@
-/* $XConsortium: MapSubs.c,v 11.7 94/04/17 20:20:16 rws Exp $ */
+/* $XConsortium: MapSubs.c /main/5 1996/10/22 14:20:14 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -37,4 +37,5 @@ XMapSubwindows(dpy, win)
     GetResReq(MapSubwindows, win, req);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

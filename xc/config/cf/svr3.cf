@@ -1,4 +1,8 @@
-XCOMM $XFree86: xc/config/cf/svr3.cf,v 3.8 1995/09/22 07:06:34 dawes Exp $
+XCOMM $XConsortium: svr3.cf /main/1 1996/10/31 14:47:37 kaleb $
+
+
+
+XCOMM $XFree86: xc/config/cf/svr3.cf,v 3.9.2.1 1997/05/24 13:38:09 dawes Exp $
 
 #ifndef HasGcc
 #define HasGcc      YES
@@ -18,7 +22,7 @@ XCOMM $XFree86: xc/config/cf/svr3.cf,v 3.8 1995/09/22 07:06:34 dawes Exp $
 
 #ifndef Gcc2MOption
 # if HasGcc2
-#  define Gcc2MOption -m486
+#  define Gcc2MOption /* */
 # else
 #  define Gcc2MOption /* */
 # endif

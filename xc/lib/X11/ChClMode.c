@@ -1,4 +1,4 @@
-/* $XConsortium: ChClMode.c,v 11.7 94/04/17 20:18:40 rws Exp $ */
+/* $XConsortium: ChClMode.c /main/5 1996/10/22 14:15:50 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -28,7 +28,6 @@ in this Software without prior written authorization from the X Consortium.
 
 #include "Xlibint.h"
 
-
 XSetCloseDownMode(dpy, mode)
     register Display *dpy; 
     int mode;
@@ -41,5 +40,6 @@ XSetCloseDownMode(dpy, mode)
     req->mode = mode;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

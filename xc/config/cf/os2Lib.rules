@@ -1,4 +1,8 @@
-XCOMM $XFree86: xc/config/cf/os2Lib.rules,v 3.5 1996/08/20 12:07:08 dawes Exp $
+XCOMM $XConsortium: os2Lib.rules /main/1 1996/10/31 14:47:29 kaleb $
+
+
+
+XCOMM $XFree86: xc/config/cf/os2Lib.rules,v 3.7 1997/01/27 06:12:49 dawes Exp $
 
 /*
  * OS2/EMX shared library rules (DLL version)
@@ -208,3 +212,33 @@ LibraryTargetName(Concat(libname,_s)): objlist1 objlist2 objlist3	@@\
 install::	LibraryTargetName(Concat(libname,_s))			@@\
 	$(INSTALL) $(INSTALLFLAGS) $(INSTLIBFLAGS) LibraryTargetName(Concat(libname,_s)) $(DESTDIR)$(SHLIBDIR)
 #endif /* UnsharedLibraryTarget3 */
+
+/*
+ * DebuggedLibraryTarget - generate rules to create a debuggable library.
+ */
+#ifndef DebuggedLibraryTarget
+#define	DebuggedLibraryTarget(libname,objlist)				@@\
+AllTarget(LibraryTargetNameSuffix(libname,_d))				@@\
+									@@\
+LibraryTargetNameSuffix(libname,_d): objlist $(EXTRALIBRARYDEPS)	@@\
+	RemoveFile($@)							@@\
+	ImakeIndir debugger MakeStaticLibrary(../$@)			@@\
+	RanLibrary($@)							@@\
+	_LinkBuildLibrary($@)
+
+#endif /* DebuggedLibraryTarget */
+
+/*
+ * ProfiledLibraryTarget - generate rules to create a profiled library.
+ */
+#ifndef ProfiledLibraryTarget
+#define	ProfiledLibraryTarget(libname,objlist)				@@\
+AllTarget(LibraryTargetNameSuffix(libname,_p))				@@\
+									@@\
+LibraryTargetNameSuffix(libname,_p): objlist $(EXTRALIBRARYDEPS)	@@\
+	RemoveFile($@)							@@\
+	ImakeIndir profiled MakeStaticLibrary(../$@)			@@\
+	RanLibrary($@)							@@\
+	_LinkBuildLibrary($@)
+
+#endif /* ProfiledLibraryTarget */

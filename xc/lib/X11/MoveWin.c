@@ -1,4 +1,4 @@
-/* $XConsortium: MoveWin.c,v 11.12 94/04/17 20:20:19 rws Exp $ */
+/* $XConsortium: MoveWin.c /main/8 1996/10/22 14:20:30 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -57,5 +57,6 @@ XMoveWindow (dpy, w, x, y)
 #endif /* MUSTCOPY */
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

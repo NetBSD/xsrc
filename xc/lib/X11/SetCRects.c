@@ -1,4 +1,4 @@
-/* $XConsortium: SetCRects.c,v 11.22 94/04/17 20:20:52 rws Exp $ */
+/* $XConsortium: SetCRects.c /main/12 1996/10/22 14:21:48 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -28,24 +28,8 @@ in this Software without prior written authorization from the X Consortium.
 
 #include "Xlibint.h"
 
-XSetClipRectangles (dpy, gc, clip_x_origin, clip_y_origin, rectangles, n,
-                    ordering)
-    register Display *dpy;
-    GC gc;
-    int clip_x_origin, clip_y_origin;
-    XRectangle *rectangles;
-    int n;
-    int ordering;
-{
-    LockDisplay(dpy);
-    _XSetClipRectangles (dpy, gc, clip_x_origin, clip_y_origin, rectangles, n,
-                    ordering);
-    UnlockDisplay(dpy);
-    SyncHandle();
-}
-    
 /* can only call when display is locked. */
-_XSetClipRectangles (dpy, gc, clip_x_origin, clip_y_origin, rectangles, n,
+void _XSetClipRectangles (dpy, gc, clip_x_origin, clip_y_origin, rectangles, n,
                     ordering)
     register Display *dpy;
     GC gc;
@@ -76,3 +60,21 @@ _XSetClipRectangles (dpy, gc, clip_x_origin, clip_y_origin, rectangles, n,
 	if (ext->flush_GC) (*ext->flush_GC)(dpy, gc, &ext->codes);
     gc->dirty = dirty;
 }
+
+XSetClipRectangles (dpy, gc, clip_x_origin, clip_y_origin, rectangles, n,
+                    ordering)
+    register Display *dpy;
+    GC gc;
+    int clip_x_origin, clip_y_origin;
+    XRectangle *rectangles;
+    int n;
+    int ordering;
+{
+    LockDisplay(dpy);
+    _XSetClipRectangles (dpy, gc, clip_x_origin, clip_y_origin, rectangles, n,
+                    ordering);
+    UnlockDisplay(dpy);
+    SyncHandle();
+    return 1;
+}
+    

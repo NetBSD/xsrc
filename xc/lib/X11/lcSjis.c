@@ -1,4 +1,4 @@
-/* $XConsortium: lcSjis.c /main/18 1995/11/18 16:58:54 kaleb $ */
+/* $XConsortium: lcSjis.c /main/19 1996/10/22 14:25:17 kaleb $ */
 /****************************************************************
 
         Copyright 1992, 1993 by FUJITSU LIMITED
@@ -265,7 +265,7 @@ sjis_wcstombs(conv, from, from_left, to, to_left, args, num_args)
     register XPointer outbufptr = *to;
     XPointer outbuf_base = outbufptr;
     wchar_t  wch;
-    register length;
+    register int length;
     Uchar tmp;
     Uchar t1, t2;
     int num_conv;
@@ -544,7 +544,7 @@ sjis_wcstocs(conv, from, from_left, to, to_left, args, num_args)
     register char *bufptr = *((char **) to);
     wchar_t wch;
     char *tmpptr;
-    register length;
+    register int length;
     CodeSet codeset;
     Ulong wc_encoding;
     int buf_len = *to_left;
@@ -616,7 +616,7 @@ GetCodeSetFromCharSet(lcd, charset)
 {
     register CodeSet *codeset = XLC_GENERIC(lcd, codeset_list);
     register XlcCharSet *charset_list;
-    register codeset_num, num_charsets;
+    register int codeset_num, num_charsets;
 
     codeset_num = XLC_GENERIC(lcd, codeset_num);
 
@@ -647,7 +647,7 @@ sjis_cstombs(conv, from, from_left, to, to_left, args, num_args)
     register char *csptr = *from;
     register char *bufptr = *to;
     int csstr_len = *from_left;
-    register buf_len = *to_left;
+    register int buf_len = *to_left;
     int length;
     CodeSet codeset;
     EncodingType type;
@@ -705,7 +705,7 @@ sjis_cstowcs(conv, from, from_left, to, to_left, args, num_args)
     wchar_t *bufptr = (wchar_t *) *to;
     wchar_t *toptr = (wchar_t *) *to;
     int csstr_len = *from_left;
-    register buf_len = *to_left;
+    register int buf_len = *to_left;
     wchar_t wch;
     int length;
     Ulong wc_shift_bits = (int)XLC_GENERIC(lcd, wc_shift_bits);
@@ -881,7 +881,7 @@ sjis_mbstocts(conv, from, from_left, to, to_left, args, num_args)
     XPointer *args;
     int num_args;
 {
-    register ct_len = *to_left;
+    register int ct_len = *to_left;
     int cs_num;
     int clen;
     int unconv_num = 0;
@@ -1016,12 +1016,12 @@ sjis_wcstocts(conv, from, from_left, to, to_left, args, num_args)
     XPointer *args;
     int num_args;
 {
-    register ct_len = *to_left;
+    register int ct_len = *to_left;
     register wchar_t *inbufptr = (wchar_t *) *from;
     register char *ctptr = *to;
     XPointer ct_base = ctptr;
     wchar_t  wch;
-    register length;
+    register int length;
     Uchar tmp;
     Uchar t1 = 0;
     int num_conv;
@@ -1141,7 +1141,7 @@ sjis_ctstombs(conv, from, from_left, to, to_left, args, num_args)
     register XPointer outbufptr =  *to;
     XPointer inbuf_base;
     XPointer outbuf_base = outbufptr;
-    register clen, length;
+    register int clen, length;
     int unconv_num = 0;
     int num_conv;
     unsigned int ct_seglen = 0;
@@ -1256,12 +1256,12 @@ sjis_ctstowcs(conv, from, from_left, to, to_left, args, num_args)
     XPointer inbuf_base;
     register wchar_t *outbufptr = (wchar_t *) *to;
     wchar_t *outbuf_base = outbufptr;
-    register clen, length;
+    register int clen, length;
     int num_conv;
     int unconv_num = 0;
     unsigned int ct_seglen = 0;
     Uchar ct_type = 0;
-    register shift_mult;
+    register int shift_mult;
     wchar_t wc_tmp;
     wchar_t wch;
     Ulong wc_encoding;

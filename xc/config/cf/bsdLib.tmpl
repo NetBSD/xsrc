@@ -1,9 +1,11 @@
-XCOMM $XConsortium: bsdLib.tmpl,v 1.2 95/01/23 19:07:12 kaleb Exp $
-XCOMM $XFree86: xc/config/cf/bsdLib.tmpl,v 3.1 1995/01/28 15:40:19 dawes Exp $
+XCOMM $XConsortium: bsdLib.tmpl /main/3 1996/09/28 16:09:25 rws $
+XCOMM $XFree86: xc/config/cf/bsdLib.tmpl,v 3.3 1996/12/31 04:14:38 dawes Exp $
 
 /*
  * NetBSD/FreeBSD shared library template
  */
+
+#if !UseElfFormat
 
 #ifndef SharedXtReqs
 #define SharedXtReqs /**/
@@ -12,5 +14,41 @@ XCOMM $XFree86: xc/config/cf/bsdLib.tmpl,v 3.1 1995/01/28 15:40:19 dawes Exp $
 #define SharedXawReqs /**/
 #endif
 #ifndef SharedXmuReqs
-#define SharedXmuReqs $(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB)
+#define SharedXmuReqs $(LDPRELIBS) $(XTOOLONLYLIB) $(XONLYLIB)
 #endif
+
+#else /* UseElfFormat */
+
+/*
+ * NetBSD/FreeBSD (ELF) shared library template
+ * Cloned from Linux ELF rules, but with a minor number.
+ */
+
+#ifndef FixupLibReferences
+#define FixupLibReferences()						@@\
+XMULIBONLY = -lXmu							@@\
+XMULIB = $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
+#endif
+
+#ifndef XawClientLibs
+#define XawClientLibs $(XAWLIB) $(XMULIBONLY) $(XTOOLLIB) $(XLIB)
+#endif
+
+#define CplusplusLibC
+#define FrescoSysLibs	CplusplusLibC MathLibrary
+
+#define SharedX11Reqs
+#define SharedOldXReqs	$(LDPRELIB) $(XLIBONLY)
+#define SharedXtReqs	$(LDPRELIB) $(XLIBONLY) $(SMLIB) $(ICELIB)
+#define SharedXawReqs	$(LDPRELIB) $(XMULIB) $(XTOOLLIB) $(XLIB)
+#define SharedXmuReqs	$(LDPRELIB) $(XTOOLLIB) $(XLIB)
+#define SharedXextReqs	$(LDPRELIB) $(XLIBONLY)
+#define SharedXiReqs	$(LDPRELIB) $(XLIB)
+#define SharedPexReqs	$(LDPRELIB) $(XLIBONLY) MathLibrary
+#define SharedXtstReqs	$(LDPRELIB) $(XLIB)
+#define SharedXieReqs	$(LDPRELIB) $(XLIBONLY)
+#define SharedSMReqs	$(LDPRELIB) $(ICELIB)
+#define SharedFrescoReqs	$(LDPRELIB) $(XLIBONLY) FrescoSysLibs
+#define SharedXtfReqs	$(LDPRELIB) $(FRESCOLIB) $(XTOOLLIB) $(XLIB) FrescoSysLibs
+
+#endif /* UseElfFormat */

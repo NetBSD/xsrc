@@ -1,4 +1,4 @@
-/* $XConsortium: DrArc.c,v 11.16 94/04/17 20:19:09 rws Exp $ */
+/* $XConsortium: DrArc.c /main/8 1996/10/22 14:17:32 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -76,4 +76,5 @@ XDrawArc(dpy, d, gc, x, y, width, height, angle1, angle2)
 
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

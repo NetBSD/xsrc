@@ -1,4 +1,4 @@
-/* $XConsortium: SelInput.c,v 11.10 94/04/17 20:20:50 rws Exp $ */
+/* $XConsortium: SelInput.c /main/7 1996/10/22 14:21:40 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -42,5 +42,6 @@ XSelectInput (dpy, w, mask)
     OneDataCard32 (dpy, NEXTPTR(req,xChangeWindowAttributesReq), mask);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

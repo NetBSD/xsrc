@@ -1,4 +1,4 @@
-/* $XConsortium: Font.c,v 11.46 94/04/17 20:19:22 rws Exp $ */
+/* $XConsortium: Font.c /main/29 1996/10/22 14:18:35 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -80,6 +80,7 @@ XFreeFont(dpy, fs)
     if (fs->properties)
        Xfree ((char *) fs->properties);
     Xfree ((char *) fs);
+    return 1;
 }
 
 static XFontStruct *

@@ -1,5 +1,5 @@
-! $XConsortium: XErrorDB /main/37 1996/02/02 16:08:31 kaleb $
-! $XFree86: xc/lib/X11/XErrorDB,v 3.14 1996/10/18 14:57:58 dawes Exp $
+! $XConsortium: XErrorDB /main/45 1996/12/04 10:12:00 swick $
+! $XFree86: xc/lib/X11/XErrorDB,v 3.16.2.1 1997/05/25 14:13:37 dawes Exp $
 ! Copyright (c) 1993, 1995  X Consortium
 ! 
 ! Permission is hereby granted, free of charge, to any person obtaining
@@ -576,6 +576,12 @@ XRequest.XFree86-VidModeExtension.3: XF86VidModeSwitchMode
 XRequest.XFree86-VidModeExtension.4: XF86VidModeGetMonitor
 XRequest.XFree86-VidModeExtension.5: XF86VidModeLockModeSwitch
 XRequest.XFree86-VidModeExtension.6: XF86VidModeGetAllModeLines
+XRequest.XFree86-VidModeExtension.7: XF86VidModeAddModeLine
+XRequest.XFree86-VidModeExtension.8: XF86VidModeDeleteModeLine
+XRequest.XFree86-VidModeExtension.9: XF86VidModeValidateModeLine
+XRequest.XFree86-VidModeExtension.10: XF86VidModeSwitchToMode
+XRequest.XFree86-VidModeExtension.11: XF86VidModeGetViewPort
+XRequest.XFree86-VidModeExtension.12: XF86VidModeSetViewPort
 XProtoError.XFree86-VidModeExtension.0: XF86VidModeBadClock
 XProtoError.XFree86-VidModeExtension.1: XF86VidModeBadHTimings
 XProtoError.XFree86-VidModeExtension.2: XF86VidModeBadVTimings
@@ -624,3 +630,103 @@ XRequest.DOUBLE-BUFFER.6: DBEGetVisualInfo
 XRequest.DOUBLE-BUFFER.7: DBEGetBackBufferAttributes
 XProtoError.DOUBLE-BUFFER.0: DBEBadBuffer  (invalid BackBuffer parameter)
 XlibMessage.DOUBLE-BUFFER.0: BackBuffer in failed request:  0x%lx
+! SECURITY
+XRequest.SECURITY.0: SecurityQueryVersion
+XRequest.SECURITY.1: SecurityGenerateAuthorization
+XProtoError.SECURITY.0: SecurityBadAuthorization  (invalid authorization id)
+XProtoError.SECURITY.1: SecurityBadAuthorizationProtocol  (invalid authorization name or data)
+XlibMessage.SECURITY.1: authorization id in failed request:  0x%lx
+! AppGroup
+XRequest.APPGROUP.0: XagQueryVersion
+XRequest.APPGROUP.1: XagCreate
+XRequest.APPGROUP.2: XagDestroy
+XRequest.APPGROUP.3: XagGetAttr
+XRequest.APPGROUP.4: XagQuery
+XRequest.APPGROUP.5: XagCreateAssoc
+XRequest.APPGROUP.6: XagDestroyAssoc
+XProtoError.APPGROUP.0: XagBadAppGroup  (invalid AppGroup parameter)
+! LBX
+XRequest.LBX.0: LbxQueryVersion
+XRequest.LBX.1: LbxStartProxy
+XRequest.LBX.2: LbxStopProxy
+XRequest.LBX.3: LbxSwitch
+XRequest.LBX.4: LbxNewClient
+XRequest.LBX.5: LbxCloseClient
+XRequest.LBX.6: LbxModifySequence
+XRequest.LBX.7: LbxAllowMotion
+XRequest.LBX.8: LbxIncrementPixel
+XRequest.LBX.9: LbxDelta
+XRequest.LBX.10: LbxGetModifierMapping
+XRequest.LBX.11: LbxQueryTag
+XRequest.LBX.12: LbxInvalidateTag
+XRequest.LBX.13: LbxPolyPoint
+XRequest.LBX.14: LbxPolyLine
+XRequest.LBX.15: LbxPolySegment
+XRequest.LBX.16: LbxPolyRectangle
+XRequest.LBX.17: LbxPolyArc
+XRequest.LBX.18: LbxFillPoly
+XRequest.LBX.19: LbxPolyFillRectangle
+XRequest.LBX.20: LbxPolyFillArc
+XRequest.LBX.21: LbxGetKeyboardMapping
+XRequest.LBX.22: LbxQueryFont
+XRequest.LBX.23: LbxChangeProperty
+XRequest.LBX.24: LbxGetProperty
+XRequest.LBX.25: LbxTagData
+XRequest.LBX.26: LbxCopyArea
+XRequest.LBX.27: LbxCopyPlane
+XRequest.LBX.28: LbxPolyText8
+XRequest.LBX.29: LbxPolyText16
+XRequest.LBX.30: LbxImageText8
+XRequest.LBX.31: LbxImageText16
+XRequest.LBX.32: LbxQueryExtension
+XRequest.LBX.33: LbxPutImage
+XRequest.LBX.34: LbxGetImage
+XRequest.LBX.35: LbxBeginLargeRequest
+XRequest.LBX.36: LbxLargeRequestData
+XRequest.LBX.37: LbxEndLargeRequest
+XRequest.LBX.38: LbxInternAtoms
+XRequest.LBX.39: LbxGetWinAttrAndGeom
+XRequest.LBX.40: LbxGrabCmap
+XRequest.LBX.41: LbxReleaseCmap
+XRequest.LBX.42: LbxAllocColor
+XRequest.LBX.43: LbxSync
+XProtoError.LBX.0: BadLbxClient
+! XpExtension
+XRequest.XpExtension.0: PrintQueryVersion
+XRequest.XpExtension.1: PrintGetPrinterList
+XRequest.XpExtension.2: PrintCreateContext
+XRequest.XpExtension.3: PrintSetContext
+XRequest.XpExtension.4: PrintGetContext
+XRequest.XpExtension.5: PrintDestroyContext
+XRequest.XpExtension.6: PrintGetContextScreen
+XRequest.XpExtension.7: PrintStartJob
+XRequest.XpExtension.8: PrintEndJob
+XRequest.XpExtension.9: PrintStartDoc
+XRequest.XpExtension.10: PrintEndDoc
+XRequest.XpExtension.11: PrintPutDocumentData
+XRequest.XpExtension.12: PrintGetDocumentData
+XRequest.XpExtension.13: PrintStartPage
+XRequest.XpExtension.14: PrintEndPage
+XRequest.XpExtension.15: PrintSelectInput
+XRequest.XpExtension.16: PrintInputSelected
+XRequest.XpExtension.17: PrintGetAttributes
+XRequest.XpExtension.18: PrintSetAttributes
+XRequest.XpExtension.19: PrintGetOneAttribute
+XRequest.XpExtension.20: PrintRehashPrinterList
+XRequest.XpExtension.21: PrintGetPageDimensions
+XRequest.XpExtension.22: PrintQueryScreens
+XRequest.XpExtension.23: PrintSetImageResolution
+XRequest.XpExtension.24: PrintGetImageResolution
+XProtoError.XpExtension.0: XPBadContext (Print Context invalid or missing)
+XlibMessage.XpExtension.0: Context in failed request:  0x%lx
+XProtoError.XpExtension.1: XPBadSequence (Illegal sequence of XP operations)
+XProtoError.XpExtension.2: XPBadResourceID (X resource not valid)
+! DPMS  -- not an X Consortium standard
+XRequest.DPMS.0: DPMSGetVersion
+XRequest.DPMS.1: DPMSCapable
+XRequest.DPMS.2: DPMSGetTimeouts
+XRequest.DPMS.3: DPMSSetTimeouts
+XRequest.DPMS.4: DPMSEnable
+XRequest.DPMS.5: DPMSDisable
+XRequest.DPMS.6: DPMSForceLevel
+XRequest.DPMS.7: DPMSInfo

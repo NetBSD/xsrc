@@ -1,4 +1,4 @@
-/* $XConsortium: SetSSaver.c,v 11.8 94/04/17 20:21:03 rws Exp $ */
+/* $XConsortium: SetSSaver.c /main/5 1996/10/22 14:22:40 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -43,5 +43,6 @@ XSetScreenSaver(dpy, timeout, interval, prefer_blank, allow_exp)
     req->allowExpose = allow_exp;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

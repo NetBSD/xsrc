@@ -1,4 +1,4 @@
-/* $XConsortium: ChKeyCon.c,v 11.14 94/04/17 20:18:41 rws Exp $ */
+/* $XConsortium: ChKeyCon.c /main/9 1996/10/22 14:16:03 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -77,5 +77,5 @@ XChangeKeyboardControl(dpy, mask, value_list)
     Data32 (dpy, (long *) values, nvalues);
     UnlockDisplay(dpy);
     SyncHandle();
-
+    return 1;
     }

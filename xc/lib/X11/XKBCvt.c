@@ -1,5 +1,5 @@
-/* $XConsortium: XKBCvt.c /main/22 1996/03/01 14:29:37 kaleb $ */
-/* $XFree86: xc/lib/X11/XKBCvt.c,v 3.10 1996/08/27 03:11:24 dawes Exp $ */
+/* $XConsortium: XKBCvt.c /main/25 1996/12/27 15:12:44 kaleb $ */
+/* $XFree86: xc/lib/X11/XKBCvt.c,v 3.13 1997/01/08 20:32:10 dawes Exp $ */
 /*
 
 Copyright (c) 1988, 1989  X Consortium
@@ -38,6 +38,8 @@ from the X Consortium.
 #include <X11/Xlib.h>
 #define NEED_EVENTS
 #include "Xlibint.h"
+#include "Xlcint.h"
+#include "XlcPubI.h"
 #include <X11/Xutil.h>
 #include <X11/Xmd.h>
 #define XK_LATIN1
@@ -49,7 +51,7 @@ from the X Consortium.
 #include <ctype.h>
 #include <X11/Xos.h>
 
-#ifdef __sgi
+#ifdef __sgi_not_xconsortium
 #define	XKB_EXTEND_LOOKUP_STRING
 #endif
 
@@ -107,7 +109,7 @@ static unsigned short Const latin2[128] =
    0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x000c};
 
 /* maps Cyrillic keysyms to 8859-5 */
-static unsigned char Const cyrillic[128] =
+unsigned char Const _Xcyrillic[128] =
    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -125,8 +127,8 @@ static unsigned char Const cyrillic[128] =
     0xbf, 0xcf, 0xc0, 0xc1, 0xc2, 0xc3, 0xb6, 0xb2, /* 15 */
     0xcc, 0xcb, 0xb7, 0xc8, 0xcd, 0xc9, 0xc7, 0xca};
 
-/* maps Cyrillic keysyms to KOI0-8 */
-static unsigned char Const koi8[128] =
+/* maps Cyrillic keysyms to KOI8-R */
+unsigned char Const _Xkoi8[128] =
    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -143,8 +145,9 @@ static unsigned char Const koi8[128] =
     0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef,
     0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, /* 15 */
     0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff};
+
 /* maps Greek keysyms to 8859-7 */
-static unsigned char Const greek[128] =
+unsigned char Const _Xgreek[128] =
    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -293,10 +296,10 @@ _XkbKSToKnownSet (priv, keysym, buffer, nbytes, extra_rtrn)
                 count = 0;
             break;
         case sCyrillic:
-            buf[0] = cyrillic[keysym & 0x7f];
+            buf[0] = _Xcyrillic[keysym & 0x7f];
             break;
         case sGreek:
-            buf[0] = greek[keysym & 0x7f];
+            buf[0] = _Xgreek[keysym & 0x7f];
             if (!buf[0])
                 count = 0;
             break;
@@ -467,7 +470,7 @@ static int _XkbKSToKoi8 (priv, keysym, buffer, nbytes, status)
 	if (nbytes>0) {
 	    if ( (keysym&0x80)==0 )
 		 buffer[0] = keysym&0x7f;
-	    else buffer[0] = koi8[keysym & 0x7f];
+	    else buffer[0] = _Xkoi8[keysym & 0x7f];
 	    if (nbytes>1)
 		buffer[1]= '\0';
 	    return 1;
@@ -489,9 +492,9 @@ _XkbKoi8ToKS(priv,buffer,nbytes,status)
         return buffer[0];
     else if ((buffer[0]&0x7f)>=32) {
 	register int i;
-	for (i=0;i<sizeof(koi8)/sizeof(unsigned char);i++) {
-	    if (koi8[i]==buffer[0])
-		return 0xd80|i;
+	for (i=0;i<sizeof(_Xkoi8)/sizeof(unsigned char);i++) {
+	    if (_Xkoi8[i]==buffer[0])
+		return 0x680|i;
 	}
     }
     return NoSymbol;
@@ -577,41 +580,51 @@ Strcmp(str1, str2)
 
 int 
 #if NeedFunctionPrototypes
-_XkbGetConverters(char *charset, XkbConverters *cvt_rtrn)
+_XkbGetConverters(char *encoding_name, XkbConverters *cvt_rtrn)
 #else
-_XkbGetConverters(charset, cvt_rtrn)
-    char *charset;
+_XkbGetConverters(encoding_name, cvt_rtrn)
+    char *encoding_name;
     XkbConverters *cvt_rtrn;
 #endif
 {
     if ( cvt_rtrn ) {
-	if ( (charset==NULL) || (Strcmp(charset,"ascii")==0) )
+	if ( (encoding_name==NULL) || 
+	     (Strcmp(encoding_name,"ascii")==0) ||
+	     (Strcmp(encoding_name,"string")==0) )
 	     *cvt_rtrn = cvt_ascii;
-	else if (Strcmp(charset,"iso8859-1")==0)
+	else if (Strcmp(encoding_name,"iso8859-1")==0)
 	     *cvt_rtrn = cvt_latin1;
-	else if (Strcmp(charset, "iso8859-2")==0)
+	else if (Strcmp(encoding_name, "iso8859-2")==0)
 	     *cvt_rtrn = cvt_latin2;
-	else if (Strcmp(charset, "iso8859-3")==0)
+	else if (Strcmp(encoding_name, "iso8859-3")==0)
 	     *cvt_rtrn = cvt_latin3;
-	else if (Strcmp(charset, "iso8859-4")==0)
+	else if (Strcmp(encoding_name, "iso8859-4")==0)
 	     *cvt_rtrn = cvt_latin4;
-	else if (Strcmp(charset, "iso8859-5")==0)
+	else if (Strcmp(encoding_name, "iso8859-5")==0)
 	     *cvt_rtrn = cvt_Cyrillic;
-	else if (Strcmp(charset, "iso8859-6")==0)
+	else if (Strcmp(encoding_name, "iso8859-6")==0)
 	     *cvt_rtrn = cvt_Arabic;
-	else if (Strcmp(charset, "iso8859-7")==0)
+	else if (Strcmp(encoding_name, "iso8859-7")==0)
 	     *cvt_rtrn = cvt_Greek;
-	else if (Strcmp(charset, "iso8859-8")==0)
+	else if (Strcmp(encoding_name, "iso8859-8")==0)
 	     *cvt_rtrn = cvt_Hebrew;
-	else if (Strcmp(charset, "apl")==0)
+	else if (Strcmp(encoding_name, "apl")==0) /* what is this? */
 	     *cvt_rtrn = cvt_APL;
-	else if (Strcmp(charset, "jisx0201")==0)
+#if 0
+	else if (Strcmp(encoding_name, "ja.euc")==0)
+	     *cvt_rtrn = ???;
+	else if (Strcmp(encoding_name, "ja.jis")==0)
+	     *cvt_rtrn = ???;
+	else if (Strcmp(encoding_name, "ja.sjis")==0)
+	     *cvt_rtrn = ???;
+#endif 
+	else if (Strcmp(encoding_name, "jisx0201")==0) /* ??? */
 	     *cvt_rtrn = cvt_X0201;
-	else if (Strcmp(charset, "kana")==0)
+	else if (Strcmp(encoding_name, "kana")==0) /* ??? */
 	     *cvt_rtrn = cvt_kana;
-	else if (Strcmp(charset, "tis620.2533-1")==0)
+	else if (Strcmp(encoding_name, "tactis")==0)
 	     *cvt_rtrn = cvt_Thai;
-	else if (Strcmp(charset, "koi8")==0)
+	else if (Strcmp(encoding_name, "koi8-r")==0)
 	     *cvt_rtrn = cvt_Koi8;
 	/* other codesets go here */
 	else *cvt_rtrn = cvt_latin1;
@@ -623,17 +636,17 @@ _XkbGetConverters(charset, cvt_rtrn)
 
 /***====================================================================***/
 
+/* 
+ * The function _XkbGetCharset seems to be missnamed as what it seems to
+ * be used for is to determine the encoding-name for the locale. ???
+ */
+
 #ifdef XKB_EXTEND_LOOKUP_STRING
 #define	CHARSET_FILE	"/usr/lib/X11/input/charsets"
-static char *_XkbKnownLanguages = "c=ascii:da,de,en,es,fi,fr,is,it,nl,no,pt,sv=iso8859-1:hu,pl,cs=iso8859-2:bg,ru=iso8859-5:ar,ara=iso8859-6:el=iso8859-7:th,th_TH,th_TH.TACTIS:tis620.2533-1";
+static char *_XkbKnownLanguages = "c=ascii:da,de,en,es,fi,fr,is,it,nl,no,pt,sv=iso8859-1:hu,pl,cs=iso8859-2:bg,ru=iso8859-5:ar,ara=iso8859-6:el=iso8859-7:th,th_TH,th_TH.TACTIS=tactis";
 
 char	*
-#if NeedFunctionPrototypes
-_XkbGetCharset(char *locale)
-#else
-_XkbGetCharset(locale)
-    char *locale;
-#endif
+_XkbGetCharset()
 {
     /*
      * PAGE USAGE TUNING: explicitly initialize to move these to data
@@ -643,13 +656,13 @@ _XkbGetCharset(locale)
     char lang[256];
     char *start,*tmp,*end,*next,*set;
     char *country,*charset;
+    char *locale;
 
-    if ( locale == NULL ) {
-	tmp = getenv( "_XKB_CHARSET" );
-	if ( tmp )
-	    return tmp;
-	else locale = setlocale(LC_CTYPE,NULL);
-    }
+    tmp = getenv( "_XKB_CHARSET" );
+    if ( tmp )
+	return tmp;
+    locale = setlocale(LC_CTYPE,NULL);
+
     if ( locale == NULL )
 	return NULL;
 
@@ -726,21 +739,19 @@ _XkbGetCharset(locale)
 }
 #else
 char	*
-#if NeedFunctionPrototypes
-_XkbGetCharset(char *locale)
-#else
-_XkbGetCharset(locale)
-    char *locale;
-#endif
+_XkbGetCharset()
 {
-char *tmp;
+    char *tmp;
+    XLCd lcd;
 
-    if ( locale == NULL ) {
-	tmp = getenv( "_XKB_CHARSET" );
-	if ( tmp )
-	    return tmp;
-	else locale = setlocale(LC_CTYPE,NULL);
-    }
+    tmp = getenv( "_XKB_CHARSET" );
+    if ( tmp )
+	return tmp;
+
+    lcd = _XlcCurrentLC();
+    if ( lcd )
+	return XLC_PUBLIC(lcd,encoding_name);
+
     return NULL;
 }
 #endif

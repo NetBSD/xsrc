@@ -1,4 +1,4 @@
-/* $XConsortium: UnmapWin.c,v 11.8 94/04/17 20:21:27 rws Exp $ */
+/* $XConsortium: UnmapWin.c /main/5 1996/10/22 14:24:02 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 */
 
 #include "Xlibint.h"
+
 XUnmapWindow (dpy, w)
         register Display *dpy;
 	Window w;
@@ -37,5 +38,6 @@ XUnmapWindow (dpy, w)
         GetResReq(UnmapWindow, w, req);
 	UnlockDisplay(dpy);
 	SyncHandle();
+	return 1;
 }
 

@@ -1,4 +1,8 @@
-XCOMM platform:  $XFree86: xc/config/cf/isc.cf,v 3.9 1996/09/01 04:12:51 dawes Exp $
+XCOMM $XConsortium: isc.cf /main/1 1996/10/31 14:45:18 kaleb $
+
+
+
+XCOMM platform:  $XFree86: xc/config/cf/isc.cf,v 3.11 1997/01/14 22:12:37 dawes Exp $
 
 #ifndef HasGcc2
 #define HasGcc2			YES
@@ -6,7 +10,7 @@ XCOMM platform:  $XFree86: xc/config/cf/isc.cf,v 3.9 1996/09/01 04:12:51 dawes E
 
 /* INTERACTIVE UNIX SYSTEM (IUS) Version 3.x 4.x */
 
-#if IscVersion == 400
+#if IscVersion > 300
 # define ISCVerDef -DISC40 -DISC30
 # define OSVendor		(IUS Version 4.x)
 #else
@@ -24,17 +28,41 @@ XCOMM platform:  $XFree86: xc/config/cf/isc.cf,v 3.9 1996/09/01 04:12:51 dawes E
 # endif
 #endif
 
+
+#if defined(UseChmod) || IscVersion < 400
+# define IscCompatDefines		-DUSE_CHMOD
+#else
+# define IscCompatDefines
+#endif 
+
 #ifdef UsePosix
 # define PosixDefines		-posix -D_SYSV3 -D_POSIX_SOURCE 
 #else
 # define PosixDefines
 #endif
 
-#define OSDefines		-DISC ISCVerDef
+#define OSDefines		-DISC ISCVerDef IscCompatDefines
 
+/*
 #define OSName			Unix System V/386 Release 3.2
 #define OSMajorVersion		3
 #define OSMinorVersion		2
+*/
+#ifndef OSMajorVersion
+#define OSMajorVersion		DefaultOSMajorVersion
+#endif
+#ifndef OSMinorVersion
+#define OSMinorVersion		DefaultOSMinorVersion
+#endif
+#ifndef OSTeenyVersion
+#define OSTeenyVersion		DefaultOSTeenyVersion
+#endif
+
+#ifndef OSName
+#define OSName			INTERACTIVE UNIX System V/386 Release 3.2
+#endif
+
+XCOMM operating system: OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
 
 /* Note, cpp already does -Di386 */
 #define BootstrapCFlags		OSDefines -DSYSV

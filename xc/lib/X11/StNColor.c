@@ -1,4 +1,4 @@
-/* $XConsortium: StNColor.c,v 11.26 94/04/17 20:21:11 rws Exp $ */
+/* $XConsortium: StNColor.c /main/20 1996/10/22 14:23:13 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -63,8 +63,7 @@ int flags;  /* DoRed, DoGreen, DoBlue */
 	    _XcmsRGB_to_XColor(&cmsColor_exact, &scr_def, 1);
 	    scr_def.pixel = pixel;
 	    scr_def.flags = flags;
-	    XStoreColor(dpy, cmap, &scr_def);
-	    return 0;
+	    return XStoreColor(dpy, cmap, &scr_def);
 	}
 	/*
 	 * Otherwise we failed; or name was changed with yet another

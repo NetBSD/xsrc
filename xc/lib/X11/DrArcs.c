@@ -1,4 +1,4 @@
-/* $XConsortium: DrArcs.c,v 11.19 94/04/17 20:19:09 rws Exp $ */
+/* $XConsortium: DrArcs.c /main/13 1996/10/22 14:17:36 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -51,4 +51,5 @@ int n_arcs;
     Data16 (dpy, (short *) arcs, len);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

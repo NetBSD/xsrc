@@ -1,4 +1,4 @@
-/* $XConsortium: UngrabBut.c,v 11.8 94/04/17 20:21:22 rws Exp $ */
+/* $XConsortium: UngrabBut.c /main/5 1996/10/22 14:23:30 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -43,4 +43,5 @@ Window grab_window;
     req->grabWindow = grab_window;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

@@ -1,5 +1,5 @@
-/* $XConsortium: imakemdep.h /main/91 1995/12/05 16:44:18 mor $ */
-/* $XFree86: xc/config/imake/imakemdep.h,v 3.18 1996/10/16 14:28:35 dawes Exp $ */
+/* $XConsortium: imakemdep.h /main/100 1996/10/31 14:32:02 kaleb $ */
+/* $XFree86: xc/config/imake/imakemdep.h,v 3.24 1997/01/14 22:12:48 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium
@@ -137,7 +137,11 @@ in this Software without prior written authorization from the X Consortium.
 #endif
 
 #ifdef WIN32
+#if _MSC_VER < 1000
 #define imake_ccflags "-nologo -batch -D__STDC__"
+#else
+#define imake_ccflags "-nologo -D__STDC__"
+#endif
 #endif
 
 #ifdef __uxp__
@@ -168,12 +172,12 @@ in this Software without prior written authorization from the X Consortium.
 #define imake_ccflags "-DSVR4"
 #endif
 
-#ifdef	MACH
+#ifdef  MACH
 #define imake_ccflags "-DNOSTDHDRS"
 #endif
 
 /* this is for OS/2 under EMX. This won't work with DOS */
-#if defined(__EMX__) 
+#if defined(__EMX__)
 #define imake_ccflags "-DBSD43"
 #endif
 
@@ -232,7 +236,7 @@ in this Software without prior written authorization from the X Consortium.
 #define DEFAULT_CPP "/usr/lib/cpp"
 #endif
 #if defined(_IBMR2) && !defined(DEFAULT_CPP)
-#define DEFAULT_CPP "/usr/lpp/X11/Xamples/util/cpp/cpp"
+#define DEFAULT_CPP "/usr/ccs/lib/cpp"
 #endif
 #if defined(sun) && (defined(SVR4) || defined(__svr4__) || defined(__SVR4) || defined(__sol__))
 #define DEFAULT_CPP "/usr/ccs/lib/cpp"
@@ -252,7 +256,10 @@ in this Software without prior written authorization from the X Consortium.
 #if defined(__386BSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 #define DEFAULT_CPP "/usr/libexec/cpp"
 #endif
-#ifdef	MACH
+#if defined(__sgi) && defined(__ANSI_CPP__)
+#define USE_CC_E
+#endif
+#ifdef  MACH
 #define USE_CC_E
 #endif
 #ifdef __minix_vmd
@@ -452,6 +459,9 @@ char *cpp_argv[ARGUMENTS] = {
 # ifdef __alpha
 	"-D__alpha",
 # endif
+# ifdef __alpha__
+	"-D__alpha__",
+# endif
 # ifdef __i386__
 	"-D__i386__",
 # endif
@@ -470,7 +480,9 @@ char *cpp_argv[ARGUMENTS] = {
 #ifdef WIN32
 	"-DWIN32",
 	"-nologo",
+#if _MSC_VER < 1000
 	"-batch",
+#endif
 	"-D__STDC__",
 #endif
 #ifdef NCR
@@ -514,8 +526,11 @@ char *cpp_argv[ARGUMENTS] = {
 #  endif
 # endif
 #endif
+#if defined(__sgi) && defined(__ANSI_CPP__)
+	"-cckr",
+#endif
 #ifdef __minix_vmd
-        "-Dminix",
+	"-Dminix",
 #endif
 
 #if defined(__EMX__)
@@ -524,9 +539,112 @@ char *cpp_argv[ARGUMENTS] = {
 #endif
 
 };
+
+
+/*
+ * Step 6: DEFAULT_OS_MAJOR_REV, DEFAULT_OS_MINOR_REV, DEFAULT_OS_TEENY_REV,
+ *	and DEFAULT_OS_NAME.
+ *	If your systems provides a way to generate the default major,
+ *	minor, teeny, or system names at runtime add commands below.
+ *	The syntax of the _REV strings is 'f fmt' where 'f' is an argument
+ *	you would give to uname, and "fmt" is a scanf() format string.
+ *	Supported uname arguments are "snrvm", and if you specify multiple
+ *	arguments they will be separated by spaces.  No more than 5 arguments
+ *	may be given.  Unlike uname() order of arguments matters.
+ *
+ *	DEFAULT_OS_MAJOR_REV_FROB, DEFAULT_OS_MINOR_REV_FROB,
+ *	DEFAULT_OS_TEENY_REV_FROB, and DEFAULT_OS_NAME_FROB can be used to
+ *	modify the results of the use of the various strings.
+ */
+#if defined(aix)
+/* uname -v returns "x" (e.g. "4"), and uname -r returns "y" (e.g. "1") */
+# define DEFAULT_OS_MAJOR_REV	"v %[0-9]"
+# define DEFAULT_OS_MINOR_REV	"r %[0-9]"
+/* No information available to generate default OSTeenyVersion value. */
+# define DEFAULT_OS_NAME	"srvm %[^\n]"
+#elif defined(sun) || defined(sgi) || defined(ultrix) || defined(__uxp__) || defined(sony)
+/* uname -r returns "x.y[.z]", e.g. "5.4" or "4.1.3" */
+# define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
+# define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
+# define DEFAULT_OS_TEENY_REV	"r %*d.%*d.%[0-9]"
+# define DEFAULT_OS_NAME	"srvm %[^\n]"
+#elif defined(hpux)
+/* uname -r returns "W.x.yz", e.g. "B.10.01" */
+# define DEFAULT_OS_MAJOR_REV	"r %*[^.].%[0-9]"
+# define DEFAULT_OS_MINOR_REV	"r %*[^.].%*d.%1s"
+# define DEFAULT_OS_TEENY_REV	"r %*[^.].%*d.%*c%[0-9]"
+# define DEFAULT_OS_NAME	"srvm %[^\n]"
+#elif defined(USL) || defined(__USLC__)
+/* uname -v returns "x.yz", e.g. "2.02". */
+# define DEFAULT_OS_MAJOR_REV	"v %[0-9]"
+# define DEFAULT_OS_MINOR_REV	"v %*d.%1s"
+# define DEFAULT_OS_TEENY_REV	"v %*d.%*c%[0-9]"
+# define DEFAULT_OS_NAME	"srvm %[^\n]"
+#elif defined(__osf__)
+/* uname -r returns "Wx.y", e.g. "V3.2" or "T4.0" */
+# define DEFAULT_OS_MAJOR_REV	"r %*[^0-9]%[0-9]"
+# define DEFAULT_OS_MINOR_REV	"r %*[^.].%[0-9]"
+# define DEFAULT_OS_NAME	"srvm %[^\n]"
+#elif defined(__uxp__)
+/* NOTE: "x.y[.z]" above handles UXP/DF.  This is a sample alternative. */
+/* uname -v returns "VxLy Yzzzzz ....", e.g. "V20L10 Y95021 Increment 5 ..." */
+# define DEFAULT_OS_MAJOR_REV	"v V%[0-9]"
+# define DEFAULT_OS_MINOR_REV	"v V%*dL%[0-9]"
+# define DEFAULT_OS_NAME	"srvm %[^\n]"
+#elif defined(linux)
+# define DEFAULT_OS_MAJOR_REV	"r %[0-9]"
+# define DEFAULT_OS_MINOR_REV	"r %*d.%[0-9]"
+# define DEFAULT_OS_TEENY_REV	"r %*d.%*d.%[0-9]"
+# define DEFAULT_OS_NAME	"srm %[^\n]"
+#elif defined(ISC)
+/* ISC all Versions ? */
+/* uname -r returns "x.y", e.g. "3.2" ,uname -v returns "x" e.g. "2" */
+# define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
+# define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
+# define DEFAULT_OS_TEENY_REV   "v %[0-9]" 
+/* # define DEFAULT_OS_NAME        "srm %[^\n]" */ /* Not useful on ISC */
+#elif defined(__FreeBSD__) || defined(__OpenBSD__)
+/* BSD/OS too? */
+/* uname -r returns "x.y[.z]-mumble", e.g. "2.1.5-RELEASE" or "2.2-0801SNAP" */
+# define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
+# define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
+# define DEFAULT_OS_TEENY_REV   "r %*d.%*d.%[0-9]" 
+# define DEFAULT_OS_NAME        "srm %[^\n]"
+#elif defined(__NetBSD__)
+/*
+ * uname -r returns "x.y([ABCD...]|_mumble)", e.g.:
+ *	1.2	1.2_BETA	1.2A	1.2B
+ *
+ * That means that we have to do something special to turn the
+ * TEENY revision into a form that we can use (i.e., a string of
+ * decimal digits).
+ *
+ * We also frob the name DEFAULT_OS_NAME so that it looks like the
+ * 'standard' NetBSD name for the version, e.g. "NetBSD/i386 1.2B" for
+ * NetBSD 1.2B on an i386.
+ */
+# define DEFAULT_OS_MAJOR_REV   "r %[0-9]"
+# define DEFAULT_OS_MINOR_REV   "r %*d.%[0-9]"
+# define DEFAULT_OS_TEENY_REV   "r %*d.%*d%[A-Z]" 
+# define DEFAULT_OS_TEENY_REV_FROB(buf, size)				\
+    do {								\
+	if (*(buf) >= 'A' && *(buf) <= 'Z') /* sanity check */		\
+		snprintf((buf), (size), "%d", *(buf) - 'A' + 1);	\
+	else								\
+	    *(buf) = '\0';						\
+    } while (0)
+# define DEFAULT_OS_NAME        "smr %[^\n]"
+# define DEFAULT_OS_NAME_FROB(buf, size)				\
+    do {								\
+	char *__sp;							\
+	if ((__sp = strchr((buf), ' ')) != NULL)			\
+		*__sp = '/';						\
+    } while (0)
+#endif
+
 #else /* else MAKEDEPEND */
 /*
- * Step 6:  predefs
+ * Step 7:  predefs
  *     If your compiler and/or preprocessor define any specific symbols, add
  *     them to the the following table.  The definition of struct symtab is
  *     in util/makedepend/def.h.
@@ -685,6 +803,9 @@ struct symtab	predefs[] = {
 #ifdef __alpha
 	{"__alpha", "1"},
 #endif
+#ifdef __alpha__
+	{"__alpha__", "1"},
+#endif
 #ifdef __DECC
 	{"__DECC",  "1"},
 #endif
@@ -745,6 +866,9 @@ struct symtab	predefs[] = {
 #endif
 #ifdef __NetBSD__
 	{"__NetBSD__", "1"},
+#endif
+#ifdef __ELF__
+	{"__ELF__", "1"},
 #endif
 #ifdef __EMX__
 	{"__EMX__", "1"},

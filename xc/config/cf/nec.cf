@@ -1,4 +1,4 @@
-XCOMM platform:  $XConsortium: nec.cf /main/3 1996/01/22 17:37:28 gildea $
+XCOMM platform:  $XConsortium: nec.cf /main/4 1996/09/28 16:11:37 rws $
 
 #ifdef nec_ews_svr2
 # define NecCISCArchitecture

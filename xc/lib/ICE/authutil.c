@@ -1,5 +1,5 @@
-/* $XConsortium: authutil.c,v 1.14 94/04/17 20:15:31 mor Exp $ */
-/* $XFree86: xc/lib/ICE/authutil.c,v 3.0 1994/10/20 06:02:08 dawes Exp $ */
+/* $XConsortium: authutil.c /main/16 1996/09/28 16:33:00 rws $ */
+/* $XFree86: xc/lib/ICE/authutil.c,v 3.2 1997/01/05 11:51:53 dawes Exp $ */
 /******************************************************************************
 
 
@@ -78,6 +78,7 @@ char *
 IceAuthFileName ()
 
 {
+    static char slashDotICEauthority[] = "/.ICEauthority";
     char    	*name;
     static char	*buf;
     static int	bsize;
@@ -110,7 +111,7 @@ IceAuthFileName ()
 	return (NULL);
     }
 
-    size = strlen (name) + strlen (".ICEauthority") + 2;
+    size = strlen (name) + strlen (&slashDotICEauthority[1]) + 2;
 
     if (size > bsize)
     {
@@ -123,11 +124,8 @@ IceAuthFileName ()
     }
 
     strcpy (buf, name);
-#ifdef __EMX__
-    strcat (buf, "/ICEauth." + (name[1] == '\0' ? 1 : 0));
-#else
-    strcat (buf, "/.ICEauthority" + (name[1] == '\0' ? 1 : 0));
-#endif
+    strcat (buf, slashDotICEauthority + (name[1] == '\0' ? 1 : 0));
+
     return (buf);
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: DestWind.c,v 11.8 94/04/17 20:19:06 rws Exp $ */
+/* $XConsortium: DestWind.c /main/5 1996/10/22 14:17:28 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 */
 
 #include "Xlibint.h"
+
 XDestroyWindow (dpy, w)
 	register Display *dpy;
 	Window w;
@@ -37,5 +38,6 @@ XDestroyWindow (dpy, w)
         GetResReq(DestroyWindow, w, req);
 	UnlockDisplay(dpy);
 	SyncHandle();
+	return 1;
 }
 

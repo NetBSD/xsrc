@@ -1,41 +1,44 @@
-XCOMM $XConsortium: sv4Lib.rules /main/17 1995/12/01 18:31:40 kaleb $
-XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.3 1996/10/06 13:09:48 dawes Exp $
+XCOMM $XConsortium: sv4Lib.rules /main/18 1996/09/28 16:13:29 rws $
+XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.4 1996/12/23 05:50:34 dawes Exp $
 
 /*
  * SVR4 shared library rules
  */
 
 #ifndef HasSharedLibraries
-#define HasSharedLibraries YES
+# define HasSharedLibraries YES
 #endif
 #ifndef SharedDataSeparation
-#define SharedDataSeparation NO
+# define SharedDataSeparation NO
 #endif
 #ifndef SharedCodeDef
-#define SharedCodeDef /**/
+# define SharedCodeDef /**/
 #endif
 #ifndef SharedLibraryDef
-#define SharedLibraryDef /**/
+# define SharedLibraryDef /**/
 #endif
 #ifndef ShLibIncludeFile
-#define ShLibIncludeFile <sv4Lib.tmpl>
+# define ShLibIncludeFile <sv4Lib.tmpl>
 #endif
 #ifndef SharedLibraryLoadFlags
-#define SharedLibraryLoadFlags -G -z text
+# define SharedLibraryLoadFlags -G -z text
 #endif
 #ifndef PositionIndependentCFlags
-#if HasGcc2
-#define PositionIndependentCFlags -fpic
-#else
-#define PositionIndependentCFlags -K PIC
-#endif
+# if HasGcc2
+#  define PositionIndependentCFlags -fpic
+# else
+#  define PositionIndependentCFlags -K PIC
+# endif
 #endif
 #ifndef PositionIndependentCplusplusFlags
-#if HasGcc2ForCplusplus
-#define PositionIndependentCplusplusFlags -fpic
-#else
-#define PositionIndependentCplusplusFlags -K PIC
+# if HasGcc2ForCplusplus
+#  define PositionIndependentCplusplusFlags -fpic
+# else
+#  define PositionIndependentCplusplusFlags -K PIC
+# endif
 #endif
+#ifndef UseExportLists
+# define UseExportLists NO
 #endif
 
 /*
@@ -43,7 +46,7 @@ XCOMM $XFree86: xc/config/cf/sv4Lib.rules,v 3.3 1996/10/06 13:09:48 dawes Exp $
  */
 #ifndef InstallSharedLibrary
 #if StripInstalledPrograms
-#define	InstallSharedLibrary(libname,rev,dest)				@@\
+# define InstallSharedLibrary(libname,rev,dest)				@@\
 install:: Concat(lib,libname.so.rev) 					@@\
 	MakeDir($(DESTDIR)dest)						@@\
 	$(INSTALL) $(INSTALLFLAGS) $(INSTLIBFLAGS) Concat(lib,libname.so.rev) $(DESTDIR)dest @@\
@@ -51,7 +54,7 @@ install:: Concat(lib,libname.so.rev) 					@@\
 	$(RM) Concat($(DESTDIR)dest/lib,libname.so)			@@\
 	cd $(DESTDIR)dest; $(LN) Concat(lib,libname.so.rev) Concat(lib,libname.so)
 #else
-#define	InstallSharedLibrary(libname,rev,dest)				@@\
+# define InstallSharedLibrary(libname,rev,dest)				@@\
 install:: Concat(lib,libname.so.rev) 					@@\
 	MakeDir($(DESTDIR)dest)						@@\
 	$(INSTALL) $(INSTALLFLAGS) $(INSTLIBFLAGS) Concat(lib,libname.so.rev) $(DESTDIR)dest @@\
@@ -65,9 +68,25 @@ install:: Concat(lib,libname.so.rev) 					@@\
  * InstallSharedLibraryData - generate rules to install the shared library data
  */
 #ifndef InstallSharedLibraryData
-#define	InstallSharedLibraryData(libname,rev,dest)
+# define InstallSharedLibraryData(libname,rev,dest)
 #endif /* InstallSharedLibraryData */
 
+#ifndef LinkWithExports
+# if UseExportLists
+#  define LinkWithExports(libname,rev,solist,down,up) \
+	(cd down; $(CCENVSETUP) $(LD) -o up/$@~ $(SHLIBLDFLAGS) -h $@ solist $(REQUIREDLIBS))	@@\
+	if [ -f Concat(lib,libname.elist) ]; then \			@@\
+	    $(RM) down/$@.exports $@.list; \				@@\
+	    $(CPP) $(ALLINCLUDES) $(EXTRA_DEFINES) $(PROTO_DEFINES) $(THREADS_DEFINES) $(DEFINES) Concat(lib,libname.elist) | CppSedMagic >$@.list; \	@@\
+	    $(EXPORTLISTGEN) $@~ $@.list > down/$@.exports; \		@@\
+	    (cd down; $(CCENVSETUP) $(LD) -o up/$@~ $(SHLIBLDFLAGS) -h $@ ShlibExportListOpt($@.exports) solist $(REQUIREDLIBS)); \	@@\
+	    $(RM) down/$@.exports $@.list; \				@@\
+	fi;
+# else
+#  define LinkWithExports(libname,rev,solist,down,up) \
+	(cd down; $(CCENVSETUP) $(LD) -o up/$@~ $(SHLIBLDFLAGS) -h $@ solist $(REQUIREDLIBS))
+# endif
+#endif
 
 /*
  * SharedLibraryTarget - generate rules to create a shared library;
@@ -75,12 +94,12 @@ install:: Concat(lib,libname.so.rev) 					@@\
  * the library gone for long periods.
  */
 #ifndef SharedLibraryTarget
-#define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
+# define SharedLibraryTarget(libname,rev,solist,down,up)		@@\
 AllTarget(Concat(lib,libname.so.rev))					@@\
 									@@\
-Concat(lib,libname.so.rev):  solist					@@\
+Concat(lib,libname.so.rev):  solist $(EXTRALIBRARYDEPS)			@@\
 	$(RM) $@~							@@\
-	(cd down; $(CCENVSETUP) $(LD) -o up/$@~ $(SHLIBLDFLAGS) -h $@ solist $(REQUIREDLIBS))		@@\
+	LinkWithExports(libname,rev,solist,down,up)			@@\
 	$(RM) $@ 							@@\
 	$(MV) $@~ $@							@@\
 	$(RM) Concat(lib,libname.so)					@@\
@@ -114,5 +133,5 @@ clean::									@@\
  * SharedLibraryDataTarget - generate rules to create shlib data file;
  */
 #ifndef SharedLibraryDataTarget
-#define SharedLibraryDataTarget(libname,rev,salist)
+# define SharedLibraryDataTarget(libname,rev,salist)
 #endif /* SharedLibraryTarget */

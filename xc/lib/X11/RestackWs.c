@@ -1,4 +1,4 @@
-/* $XConsortium: RestackWs.c,v 1.13 94/04/17 20:20:48 rws Exp $ */
+/* $XConsortium: RestackWs.c /main/9 1996/10/22 14:21:33 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -60,6 +60,7 @@ XRestackWindows (dpy, windows, n)
 	}
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
     }
 
     

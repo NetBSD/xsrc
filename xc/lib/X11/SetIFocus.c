@@ -1,4 +1,4 @@
-/* $XConsortium: SetIFocus.c,v 11.10 94/04/17 20:20:58 rws Exp $ */
+/* $XConsortium: SetIFocus.c /main/5 1996/10/22 14:22:21 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -43,5 +43,6 @@ XSetInputFocus(dpy, focus, revert_to, time)
     req->time = time;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,5 +1,5 @@
-XCOMM platform:  $XConsortium: Amoeba.cf /main/10 1996/01/22 17:35:12 gildea $
-XCOMM platform:  $XFree86: xc/config/cf/Amoeba.cf,v 3.8 1996/01/26 08:59:07 dawes Exp $
+XCOMM platform:  $XConsortium: Amoeba.cf /main/12 1996/09/28 16:04:48 rws $
+XCOMM platform:  $XFree86: xc/config/cf/Amoeba.cf,v 3.9 1996/12/23 05:50:00 dawes Exp $
 
 /*  The presence of this configuration file in the X distribution
  *  does not imply full support for the system it describes.
@@ -59,7 +59,6 @@ XCOMM operating system:  OSName
 
 #define BuildFonts              NO
 #define BuildFontServer         NO
-#define BuildPex                NO
 #define BuildPexExt		NO
 #define BuildXIE		NO
 
@@ -97,7 +96,7 @@ XCOMM operating system:  OSName
 #define ConnectionFlags         -DAMTCPCONN -DAMRPCCONN
 #define ServerXdmcpDefines	/* no -DXDMCP */
 #define UseRgbTxt		YES
-#define NdbmDefines		-DSDBM -DNDBM -I$(INCLUDESRC)
+#define NdbmDefines		-DSDBM -DNDBM -I$(XINCLUDESRC)
 #define DBMLibrary		/* $(LIBSRC)/sdbm/libsdbm.a */
 
 #if defined(i386Architecture)

@@ -46,3 +46,4 @@ EXPORTS
  _xibadevent
  _xibadmode
  _xidevicebusy
+/* $XConsortium: Xi-def.cpp /main/3 1996/05/07 13:15:35 kaleb $ */

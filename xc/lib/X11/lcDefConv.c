@@ -1,4 +1,4 @@
-/* $XConsortium: lcDefConv.c,v 1.3 94/01/20 18:06:33 rws Exp $ */
+/* $XConsortium: lcDefConv.c /main/5 1996/10/22 14:24:59 kaleb $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -47,7 +47,7 @@ strtostr(conv, from, from_left, to, to_left, args, num_args)
 {
     register char *src, *dst;
     unsigned char side;
-    register length;
+    register int length;
 
     if (from == NULL || *from == NULL)
 	return 0;
@@ -58,8 +58,8 @@ strtostr(conv, from, from_left, to, to_left, args, num_args)
     length = min(*from_left, *to_left);
 
     if (num_args > 0) {
-	side = *((unsigned char *) src) & 0x80;
-	while (side == (*((unsigned char *) src) & 0x80) && length-- > 0)
+	side = (length > 0) ? *((unsigned char *) src) & 0x80 : 0;
+	while (length-- > 0 && side == (*((unsigned char *) src) & 0x80))
 	    *dst++ = *src++;
     } else {
 	while (length-- > 0)
@@ -92,7 +92,7 @@ wcstostr(conv, from, from_left, to, to_left, args, num_args)
 {
     register wchar_t *src, side;
     register char *dst;
-    register length;
+    register int length;
 
     if (from == NULL || *from == NULL)
 	return 0;
@@ -103,8 +103,8 @@ wcstostr(conv, from, from_left, to, to_left, args, num_args)
     length = min(*from_left, *to_left);
 
     if (num_args > 0) {
-	side = *src & 0x80;
-	while (side == (*src & 0x80) && length-- > 0)
+	side = (length > 0) ? *src & 0x80 : 0;
+	while (length-- > 0 && side == (*src & 0x80))
 	    *dst++ = *src++;
     } else {
 	while (length-- > 0)
@@ -137,7 +137,7 @@ cstostr(conv, from, from_left, to, to_left, args, num_args)
 {
     register char *src, *dst;
     unsigned char side;
-    register length;
+    register int length;
 
     if (from == NULL || *from == NULL)
 	return 0;
@@ -156,8 +156,8 @@ cstostr(conv, from, from_left, to, to_left, args, num_args)
     length = min(*from_left, *to_left);
 
     if (num_args > 0) {
-	side = *((unsigned char *) src) & 0x80;
-	while (side == (*((unsigned char *) src) & 0x80) && length-- > 0)
+	side = (length > 0) ? *((unsigned char *) src) & 0x80 : 0;
+	while (length-- > 0 && side == (*((unsigned char *) src) & 0x80))
 	    *dst++ = *src++;
     } else {
 	while (length-- > 0)
@@ -190,7 +190,7 @@ strtowcs(conv, from, from_left, to, to_left, args, num_args)
 {
     register char *src;
     register wchar_t *dst;
-    register length;
+    register int length;
 
     if (from == NULL || *from == NULL)
 	return 0;

@@ -1,4 +1,4 @@
-/* $XConsortium: TextExt16.c,v 11.23 94/04/17 20:21:19 kaleb Exp $ */
+/* $XConsortium: TextExt16.c /main/16 1996/12/05 10:40:07 swick $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -28,6 +28,11 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
+/*
+ * Copyright 1995 by FUJITSU LIMITED
+ * This is source code modified by FUJITSU LIMITED under the Joint
+ * Development Agreement for the CDE/Motif PST.
+ */
 
 
 #include "Xlibint.h"
@@ -169,3 +174,57 @@ int XTextWidth16 (fs, string, count)
 
     return width;
 }
+
+
+/*
+ * _XTextHeight16 - compute the height of sequence of XChar2bs.
+ */
+#if NeedFunctionPrototypes
+int _XTextHeight16 (
+    XFontStruct *fs,
+    _Xconst XChar2b *string,
+    int count)
+#else
+int _XTextHeight16 (fs, string, count)
+    XFontStruct *fs;
+    XChar2b *string;
+    int count;
+#endif
+{
+    int i;				/* iterator */
+    Bool singlerow = (fs->max_byte1 == 0);  /* optimization */
+    XCharStruct *def;			/* info about default char */
+    int height = 0;			/* RETURN value */
+
+    if (singlerow) {
+	CI_GET_DEFAULT_INFO_1D (fs, def);
+    } else {
+	CI_GET_DEFAULT_INFO_2D (fs, def);
+    }
+
+    if (def && (fs->min_bounds.ascent == fs->max_bounds.ascent)
+	    && (fs->min_bounds.descent == fs->max_bounds.descent))
+	return ((fs->min_bounds.ascent + fs->min_bounds.descent) * count);
+
+    /*
+     * Iterate over all character in the input string; only consider characters
+     * that exist.
+     */
+    for (i = 0; i < count; i++, string++) {
+	register XCharStruct *cs;
+	unsigned int r = (unsigned int) string->byte1;	/* watch for macros */
+	unsigned int c = (unsigned int) string->byte2;	/* watch for macros */
+
+	if (singlerow) {
+	    unsigned int ind = ((r << 8) | c);		/* watch for macros */
+	    CI_GET_CHAR_INFO_1D (fs, ind, def, cs);
+	} else {
+	    CI_GET_CHAR_INFO_2D (fs, r, c, def, cs);
+	}
+
+	if (cs) height += (cs->ascent + cs->descent);
+    }
+
+    return height;
+}
+

@@ -1,55 +1,35 @@
-XCOMM platform:  $XConsortium: NetBSD.cf /main/14 1996/01/28 07:42:14 kaleb $
+XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
 
+XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.49.2.8 1997/05/25 05:06:25 dawes Exp $
 
-
-XCOMM platform:  $XFree86: xc/config/cf/NetBSD.cf,v 3.44 1996/10/23 13:07:55 dawes Exp $
-
-#ifndef OpenBSDArchitecture
 
 #ifndef OSName
-#define OSName		NetBSD 1.2
+#define OSName			DefaultOSName OSBinaryType
 #endif
 #ifndef OSMajorVersion
-#define OSMajorVersion    1
+#define OSMajorVersion		DefaultOSMajorVersion
 #endif
 #ifndef OSMinorVersion
-#define OSMinorVersion    2
+#define OSMinorVersion		DefaultOSMinorVersion
 #endif
-/* 1 = A, 2 = B, 3 = C */
 #ifndef OSTeenyVersion
-#define OSTeenyVersion	  0
+#define OSTeenyVersion		DefaultOSTeenyVersion
 #endif
 
-#else
-
-#ifndef OSName
-#define OSName		OpenBSD 2.0
-#endif
-#ifndef OSMajorVersion
-#define OSMajorVersion    2
-#endif
-#ifndef OSMinorVersion
-#define OSMinorVersion    0
-#endif
-/* 1 = A, 2 = B, 3 = C */
-#ifndef OSTeenyVersion
-#define OSTeenyVersion	  0
-#endif
-
-#endif
 
 #ifndef OSVendor
 #define	OSVendor	/**/
 #endif
-XCOMM operating system:  OSName
+XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVersion)
 
 /*
  * C library features
  */
-#if defined(OpenBSDArchitecture) || \
-   defined(NetBSDArchitecture) && (OsMajorVersion == 1 && OsMinorVersion >= 2)
+#if ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion > 2) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 2 && OSTeenyVersion > 1))
 #  define HasPoll			YES
 #endif
 #define HasNdbm         	YES
@@ -77,10 +57,15 @@ XCOMM operating system:  OSName
 /*
  * There's a bug in NetBSD 1.0, 1.1 and 1.2 dlsym()
  */
-#if !defined(OpenBSDArchitecture) && OSMajorVersion == 1 && OSMinorVersion <= 2
+#if ((OSMajorVersion == 1 && OSMinorVersion < 2) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 2 && OSTeenyVersion < 2))
 #  define HasDlsymBug		YES
 #endif
-
+/* Mkstemp is there since 1.2 (at least) */
+#if (!(OSMajorVersion == 0 || \
+       (OSMajorVersion == 1 && OSMinorVersion < 2))) 
+#define HasMkstemp		YES
+#endif
 /*
  * Compiler Features
  */
@@ -94,11 +79,6 @@ XCOMM operating system:  OSName
 #define UseGas			YES
 #define GnuCpp			YES
 
-/* OpenBSD has gcc 2.7.2.1 which fixes the strength-reduce bug */
-#ifdef OpenBSDArchitecture
-#define DefaultGcc2i386Opt	-O2
-#endif
-
 #define NeedConstPrototypes	YES
 #define NeedFunctionPrototypes	YES
 #define NeedNestedPrototypes	YES
@@ -110,15 +90,11 @@ XCOMM operating system:  OSName
 #define CppCmd          	/usr/libexec/cpp
 #define StandardCppDefines	-traditional
 #define PreProcessCmd   	CppCmd
-#ifndef OpenBSDArchitecture
 #define PreIncDir		/usr/include
-#else
-#define PreIncDir /usr/lib/gcc-lib/i386-unknown-openbsd1.2/2.7.2.1/include
-#endif
 
 #undef CcCmd
 #define CcCmd 			gcc
-#if UseInstalled
+#if defined(UseInstalled) && (!defined(XF86LinkKit) || !XF86LinkKit)
 #define DefaultCCOptions 	/**/
 #else
 #define DefaultCCOptions 	-ansi -Dasm=__asm
@@ -127,23 +103,58 @@ XCOMM operating system:  OSName
 #define GccGasOption 		-DGCCUSESGAS
 #define AsmDefines 		-DUSE_GAS
 
+/* UseElfFormat defaults to YES if __ELF__ set */
+#ifndef UseElfFormat
+# ifdef __ELF__
+#  undef __ELF__			/* other imake files shouldn't care */
+#  define UseElfFormat YES
+# else
+#  define UseElfFormat NO
+# endif
+#endif
+
+/*
+ * Dynamic loading supported starting in 1.0 on a.out platforms,
+ * and on all ELF platforms.
+ *
+ * XXX May not be correct on NetBSD/pmax (ELF, but might not have
+ * working shared libs).
+ */
+#if ((OSMajorVersion > 0) && \
+     !defined(AlphaArchitecture) && !defined(MipsArchitecture)) || \
+    UseElfFormat
+# ifndef BuildDynamicLoading
+# define BuildDynamicLoading	YES
+# endif
+#endif
+
+#if UseElfFormat
+#define DlLibrary		-rdynamic /* no -ldl yet */
+#else
+#define DlLibrary		/**/
+#endif
 
 #ifdef i386Architecture
-# define OptimizedCDebugFlags 	-m486 DefaultGcc2i386Opt
+# define OptimizedCDebugFlags 	DefaultGcc2i386Opt
 # if OSMajorVersion < 1
 #  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DXNO_SYSCONF
 # else
 #  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
 # endif
 # if OSMajorVersion == 1 && OSMinorVersion >= 1 || OSMajorVersion >= 2
-#  define ServerExtraSysLibs	-li386
+#  define ServerExtraSysLibs	-li386 DlLibrary
 # endif
 #else
 # define OptimizedCDebugFlags 	-O2
-# if defined(SparcArchitecture)
+# if defined(SparcArchitecture) || defined(AlphaArchitecture)
 #  define ServerOSDefines 	-DDDXOSINIT
 # else
 #  define ServerOSDefines 	/**/
+# endif
+# if BuildDynamicLoading
+#  define ServerExtraSysLibs	DlLibrary
+# else
+#  define ServerExtraSysLibs	/**/
 # endif
 #endif
 #ifdef i386Architecture
@@ -152,43 +163,42 @@ XCOMM operating system:  OSName
 #  define XFree86ConsoleDefines -DPCCONS_SUPPORT -DPCVT_SUPPORT
 # endif
 #else
-# define ServerExtraDefines GccGasOption
+# if defined(AlphaArchitecture)
+#  define ServerExtraDefines GccGasOption -D_XSERVER64
+# else
+#  define ServerExtraDefines GccGasOption
+# endif
 #endif
 
 #define StandardDefines	-DCSRG_BASED
 #define XawI18nDefines	-DUSE_XWCHAR_STRING -DUSE_XMBTOWC
 
-#if OSMajorVersion > 0
-# ifndef BuildDynamicLoading
-# define BuildDynamicLoading	YES
-# endif
-#endif
-
 #ifndef ExtraLibraries
 #define ExtraLibraries		/**/
 #endif
 #ifndef UseGnuMalloc
-#ifndef OpenBSDArchitecture
 #  define UseGnuMalloc		YES
-#else
-#  define UseGnuMalloc		NO
-#endif
 #endif
 #ifndef GnuMallocLibrary
 #define GnuMallocLibrary	-lgnumalloc
 #endif
 
+#if ((OSMajorVersion > 1) || \
+     (OSMajorVersion == 1 && OSMinorVersion > 2) || \
+     (OSMajorVersion == 1 && OSMinorVersion == 2 && OSTeenyVersion > 1))
+#ifndef HasZlib
+#define HasZlib			  YES
+#endif
+#endif 
+
 /*
  * Make & install Features
  */
-
-#define HasMakefileSafeInclude	YES
-#define IncludeMakefile(file) @@# dependencies are in .depend
-#define DependFileName .depend
-#define AvoidNullMakeCommand 	YES
+#define HasBsdMake		YES
 #define StripInstalledPrograms	YES
 #define CompressAllFonts	YES
-#define DefaultUserPath		.:/bin:/usr/bin:/usr/local/bin:$(BINDIR)
+#define GzipFontCompression	YES
+#define DefaultUserPath		/bin:/usr/bin:/usr/local/bin:$(BINDIR)
 #define DefaultSystemPath	/sbin:/usr/sbin:/bin:/usr/bin:$(BINDIR)
 
 #ifdef  InstallCmd
@@ -204,6 +214,7 @@ XCOMM operating system:  OSName
  * Documentation formatting
  */
 #define NeqnCmd			neqn -Tlatin1
+#define NroffCmd		nroff -Tlatin1
 #define	EqnCmd 			eqn -Tps
 #define TroffCmd        	groff -Tps
 
@@ -211,12 +222,10 @@ XCOMM operating system:  OSName
  * To use the NetBSD Aperture driver
  */
 #if defined(i386Architecture)
-#ifndef HasNetBSDApertureDrv
-#define HasNetBSDApertureDrv	NO
+#ifndef HasNetBSDApertureDriver
+#define HasNetBSDApertureDriver	YES
 #endif
 #endif
-
-#define MakeHasPosixVariableSubstitutions	YES
 
 /*
  * ForceSubdirs - force make to build subdirectories
@@ -285,7 +294,36 @@ install.man:: 								@@\
 #define InstallGenManPageAliases(file,destdir,suffix,aliases)		@@\
 	InstallManPageAliases(file,destdir,aliases)
 
+/*
+ * Shared libraries supported starting in 1.0 on a.out platforms,
+ * and on all ELF platforms.
+ *
+ * XXX May not be correct on NetBSD/pmax (ELF, but might not have
+ * working shared libs).
+ */
+#if ((OSMajorVersion > 0) && \
+     !defined(AlphaArchitecture) && !defined(MipsArchitecture)) || \
+    UseElfFormat
+# ifndef HasSharedLibraries
+# define HasSharedLibraries	YES
+# endif
+#endif
+
+#ifndef OSBinaryType
+#if UseElfFormat
+#define OSBinaryType	[ELF]
+#else
+#define OSBinaryType	/**/
+#endif
+#endif
+
+#ifndef HasSharedLibraries
+#define HasSharedLibraries	NO
+#endif 
+
+#if HasSharedLibraries
 #include <bsdLib.rules>
+#endif /* HasSharedLibraries */
 
 #ifdef i386Architecture
 # include <xfree86.cf>
@@ -327,4 +365,11 @@ install.man:: 								@@\
 sed 's/\.[0-9]*$$//'`
 #define SharedXtReqs $(XLIBONLY) $(SMLIB) $(ICELIB)
 #define SharedXmuReqs $(LDPRELIB) $(XTOOLONLYLIB) $(XONLYLIB) $(EXTENSIONLIB)
+#endif
+
+/*
+ * Definition for compiling on Alpha machines
+ */
+#ifdef AlphaArchitecture
+#define	BuildServer	NO
 #endif

@@ -1,4 +1,4 @@
-/* $XConsortium: GrServer.c,v 11.8 94/04/17 20:19:50 rws Exp $ */
+/* $XConsortium: GrServer.c /main/5 1996/10/22 14:19:35 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -27,6 +27,7 @@ in this Software without prior written authorization from the X Consortium.
 */
 
 #include "Xlibint.h"
+
 XGrabServer (dpy)
 register Display *dpy;
 {
@@ -35,5 +36,6 @@ register Display *dpy;
         GetEmptyReq(GrabServer, req);
 	UnlockDisplay(dpy);
 	SyncHandle();
+	return 1;
 }
 

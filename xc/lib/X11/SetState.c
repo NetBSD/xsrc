@@ -1,4 +1,4 @@
-/* $XConsortium: SetState.c,v 11.12 94/04/17 20:21:05 rws Exp $ */
+/* $XConsortium: SetState.c /main/5 1996/10/22 14:22:44 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -57,4 +57,5 @@ unsigned long foreground, background;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

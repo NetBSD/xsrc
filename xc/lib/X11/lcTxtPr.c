@@ -1,4 +1,4 @@
-/* $XConsortium: lcTxtPr.c,v 1.5 95/06/07 15:32:21 kaleb Exp $ */
+/* $XConsortium: lcTxtPr.c /main/7 1996/10/22 17:21:47 kaleb $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -36,7 +36,7 @@ get_buf_size(is_wide_char, list, count)
     XPointer list;
     int count;
 {
-    register length = 0;
+    register int length = 0;
     register char **mb_list;
     register wchar_t **wc_list;
 
@@ -107,9 +107,12 @@ _XTextListToTextProperty(lcd, dpy, from_type, list, count, style, text_prop)
 		nitems = 0;
 		mb_list = (char **) list;
 		to = buf;
-		for (i = 0; i < count; i++) {
-		    strcpy(to, *mb_list);
-		    from_left = strlen(*mb_list) + 1;
+		for (i = 0; i < count && buf_len > 0; i++) {
+		    if (*mb_list) 
+			strcpy(to, *mb_list);
+		    else
+			*to = '\0';
+		    from_left = (*mb_list ? strlen(*mb_list) : 0) + 1;
 		    nitems += from_left;
 		    to += from_left;
 		    mb_list++;
@@ -152,7 +155,7 @@ retry:
 	    wc_list++;
 	} else {
 	    from = (XPointer) *mb_list;
-	    from_left = strlen(*mb_list);
+	    from_left = (*mb_list ? strlen(*mb_list) : 0);
 	    mb_list++;
 	}
 

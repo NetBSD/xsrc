@@ -1,4 +1,4 @@
-/* $XConsortium: InitExt.c,v 11.32 94/04/17 20:20:00 rws Exp $ */
+/* $XConsortium: InitExt.c /main/22 1996/10/22 14:19:47 kaleb $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -119,6 +119,7 @@ XAddToExtensionList(structure, ext_data)
 {
     ext_data->next = *structure;
     *structure = ext_data;
+    return 1;
 }
 
 XExtData *XFindOnExtensionList(structure, number)

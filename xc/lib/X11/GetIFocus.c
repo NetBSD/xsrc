@@ -1,4 +1,4 @@
-/* $XConsortium: GetIFocus.c,v 11.11 94/04/17 20:19:35 rws Exp $ */
+/* $XConsortium: GetIFocus.c /main/5 1996/10/22 14:19:13 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -43,5 +43,6 @@ XGetInputFocus(dpy, focus, revert_to)
     *revert_to = rep.revertTo;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,10 +1,10 @@
 LIBRARY ICE
-DESCRIPTION "X11R6 XFree86 3.2 libICE.dll for OS/2 EMX09C VERSION=6.1"
-CODE
+DESCRIPTION "X11R6 XFree86 3.3 libICE.dll for OS/2 EMX09C VERSION=6.3"
+CODE	
 	PRELOAD
-DATA
+DATA	
 	MULTIPLE NONSHARED
-STACKSIZE 4096
+STACKSIZE 32768
 EXPORTS
 	IceAcceptConnection  @ 1
 	IceAddConnectionWatch  @ 2
@@ -131,3 +131,4 @@ EXPORTS
 	_IcePaAuthDataEntries @ 123
 	_IceTransSocketINETFuncs @ 124
 	_IceTransSocketTCPFuncs @ 125
+	IceListenForWellKnownConnections @ 126

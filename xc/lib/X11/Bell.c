@@ -1,4 +1,4 @@
-/* $XConsortium: Bell.c,v 11.9 94/04/17 20:18:35 rws Exp $ */
+/* $XConsortium: Bell.c /main/5 1996/10/22 14:15:33 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -39,5 +39,6 @@ XBell(dpy, percent)
     req->percent = percent;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

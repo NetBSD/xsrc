@@ -1,5 +1,9 @@
-/* $XConsortium: Ximint.h,v 1.9 94/10/10 18:33:16 kaleb Exp $ */
-/* $XFree86: xc/lib/X11/Ximint.h,v 3.0 1996/02/09 08:18:44 dawes Exp $ */
+/* $TOG: Ximint.h /main/10 1997/04/28 16:40:16 barstow $ */
+
+
+
+
+/* $XFree86: xc/lib/X11/Ximint.h,v 3.0.4.1 1997/05/03 09:43:35 dawes Exp $ */
 /******************************************************************
 
                 Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -676,7 +680,7 @@ extern void	_XimFreeRemakeArg(
 
 extern void	_XimServerDestroy(
 #if NeedFunctionPrototypes
-    void
+    Xim			im
 #endif
 );
 

@@ -1,4 +1,4 @@
-/* $XConsortium: RaiseWin.c,v 11.10 94/04/17 20:20:41 rws Exp $ */
+/* $XConsortium: RaiseWin.c /main/6 1996/10/22 14:21:13 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -42,5 +42,6 @@ XRaiseWindow (dpy, w)
     OneDataCard32 (dpy, NEXTPTR(req,xConfigureWindowReq), val);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

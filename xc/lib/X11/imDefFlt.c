@@ -1,4 +1,4 @@
-/* $XConsortium: imDefFlt.c /main/8 1995/12/06 11:23:17 kaleb $ */
+/* $TOG: imDefFlt.c /main/9 1997/04/28 16:39:25 barstow $ */
 /******************************************************************
 
            Copyright 1992, 1993, 1994 by FUJITSU LIMITED
@@ -370,7 +370,7 @@ _XimFilterServerDestroy (d, w, ev, client_data)
 	    return True;
 	}
 #endif /* XIM_CONNECTABLE */
-	_XimServerDestroy();
+	_XimServerDestroy(im);
     }
     return True;
 }

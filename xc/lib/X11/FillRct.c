@@ -1,4 +1,4 @@
-/* $XConsortium: FillRct.c,v 11.15 94/04/17 20:19:20 rws Exp $ */
+/* $XConsortium: FillRct.c /main/8 1996/10/22 14:18:23 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -89,4 +89,5 @@ XFillRectangle(dpy, d, gc, x, y, width, height)
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

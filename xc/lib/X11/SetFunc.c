@@ -1,4 +1,4 @@
-/* $XConsortium: SetFunc.c,v 11.10 94/04/17 20:20:56 rws Exp $ */
+/* $XConsortium: SetFunc.c /main/5 1996/10/22 14:22:13 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -40,4 +40,5 @@ int function;
     }
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }

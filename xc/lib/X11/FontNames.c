@@ -1,4 +1,4 @@
-/* $XConsortium: FontNames.c,v 11.27 94/04/17 20:19:24 rws Exp $ */
+/* $XConsortium: FontNames.c /main/12 1996/10/22 14:18:43 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -109,4 +109,5 @@ char **list;
 		Xfree (list[0]-1);
 		Xfree ((char *)list);
 	}
+	return 1;
 }

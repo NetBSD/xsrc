@@ -1,4 +1,4 @@
-/* $XConsortium: GetPCnt.c,v 11.12 94/04/17 20:19:38 rws Exp $ */
+/* $XConsortium: GetPCnt.c /main/5 1996/10/22 14:19:20 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -45,5 +45,6 @@ XGetPointerControl(dpy, accel_numer, accel_denom, threshold)
     *threshold = rep.threshold;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

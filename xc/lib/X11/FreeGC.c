@@ -1,4 +1,4 @@
-/* $XConsortium: FreeGC.c,v 11.14 94/04/17 20:19:27 rws Exp $ */
+/* $XConsortium: FreeGC.c /main/8 1996/10/22 14:18:58 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -43,5 +43,6 @@ XFreeGC (dpy, gc)
     SyncHandle();
     _XFreeExtData(gc->ext_data);
     Xfree ((char *) gc);
+    return 1;
     }
     

@@ -1,4 +1,4 @@
-/* $XConsortium: XlibAsync.c /main/8 1995/11/16 15:56:31 gildea $ */
+/* $XConsortium: XlibAsync.c /main/9 1996/10/22 14:24:17 kaleb $ */
 /*
 
 Copyright (c) 1992  X Consortium
@@ -63,7 +63,7 @@ _XAsyncErrorHandler(dpy, rep, buf, len, data)
     return False;
 }
 
-_XDeqAsyncHandler(dpy, handler)
+void _XDeqAsyncHandler(dpy, handler)
     Display *dpy;
     register _XAsyncHandler *handler;
 {

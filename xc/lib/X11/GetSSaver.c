@@ -1,4 +1,4 @@
-/* $XConsortium: GetSSaver.c,v 11.12 94/04/17 20:19:43 rws Exp $ */
+/* $XConsortium: GetSSaver.c /main/5 1996/10/22 14:19:24 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -48,5 +48,6 @@ XGetScreenSaver(dpy, timeout, interval, prefer_blanking, allow_exp)
     *allow_exp = rep.allowExposures;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,4 +1,4 @@
-XCOMM $XConsortium: osfLib.rules /main/15 1995/11/13 18:31:07 kaleb $
+XCOMM $XConsortium: osfLib.rules /main/16 1996/09/28 16:11:55 rws $
 
 /*
  * OSF/1 shared library rules
@@ -75,7 +75,7 @@ install:: Concat(lib,libname.so.rev) 					@@\
 #define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
 AllTarget(Concat(lib,libname.so.rev))					@@\
 									@@\
-Concat(lib,libname.so.rev):  solist					@@\
+Concat(lib,libname.so.rev):  solist $(EXTRALIBRARYDEPS)			@@\
 	$(RM) $@~							@@\
 	(cd down; $(LD) -o up/$@~ $(SHLIBLDFLAGS) PackageName($@) \	@@\
 		-soname $@ Objects(solist) \				@@\
@@ -93,7 +93,7 @@ clean::									@@\
 #define SharedLibraryTarget(libname,rev,solist,down,up)			@@\
 AllTarget(Concat(lib,libname.so.rev))					@@\
 									@@\
-Concat(lib,libname.so.rev):  solist					@@\
+Concat(lib,libname.so.rev):  solist $(EXTRALIBRARYDEPS)			@@\
 	$(RM) $@~							@@\
 	$(LD) -o $@~ $(SHLIBLDFLAGS) PackageName($@) \			@@\
 		-soname $@ Objects(solist) \				@@\

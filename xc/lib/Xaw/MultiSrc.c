@@ -27,6 +27,7 @@
  *
  * Much code taken from X11R3 String and Disk Sources.
  */
+/* $XFree86: xc/lib/Xaw/MultiSrc.c,v 1.1.1.2.8.1 1997/05/11 05:04:09 dawes Exp $ */
 
 /*
 
@@ -733,6 +734,7 @@ SetValues(current, request, new, args, num_args)
   
   if ( string_set || (old_src->multi_src.type != src->multi_src.type) ) {
     RemoveOldStringOrFile(old_src, string_set);
+    src->multi_src.allocated_string = old_src->multi_src.allocated_string;
     file = InitStringOrFile(src, string_set);
 
     /* Load pieces does this logic for us, but it shouldn't.  Its messy.*/
@@ -1129,9 +1131,6 @@ InitStringOrFile(src, newString)
     case XawtextAppend:
     case XawtextEdit:
 	if (src->multi_src.string == NULL) {
-
-            if ( src->multi_src.allocated_string )
-                XtFree( src->multi_src.string );
             src->multi_src.allocated_string = False;
 	    src->multi_src.string = fileName;
 
@@ -1152,9 +1151,10 @@ InitStringOrFile(src, newString)
      * .string first check .allocated_string and free it - plumbing Sheeran.
      */
     if (newString || src->multi_src.is_tempfile) {
+	String temp = XtNewString(src->multi_src.string);
 	if ( src->multi_src.allocated_string )
             XtFree( src->multi_src.string );
-	src->multi_src.string = XtNewString(src->multi_src.string);
+	src->multi_src.string = temp;
 	src->multi_src.allocated_string = TRUE;
     }
     

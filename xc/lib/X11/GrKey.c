@@ -1,4 +1,4 @@
-/* $XConsortium: GrKey.c,v 11.9 94/04/17 20:19:47 rws Exp $ */
+/* $XConsortium: GrKey.c /main/6 1996/10/22 14:19:31 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -49,6 +49,7 @@ XGrabKey(dpy, key, modifiers, grab_window, owner_events,
     req->keyboardMode = keyboard_mode;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 
 

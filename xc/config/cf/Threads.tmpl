@@ -1,5 +1,5 @@
-XCOMM $XConsortium: Threads.tmpl /main/8 1995/11/14 19:56:41 kaleb $
-XCOMM $XFree86: xc/config/cf/Threads.tmpl,v 3.1 1996/01/05 13:06:32 dawes Exp $
+XCOMM $XConsortium: Threads.tmpl /main/11 1996/09/28 16:07:06 rws $
+XCOMM $XFree86: xc/config/cf/Threads.tmpl,v 3.2 1996/12/23 05:50:12 dawes Exp $
 
 /*
  * For a multi-threaded application or library,
@@ -87,12 +87,12 @@ XCOMM $XFree86: xc/config/cf/Threads.tmpl,v 3.1 1996/01/05 13:06:32 dawes Exp $
 
 #if LocalThreads
     THREADS_CFLAGS = ThreadsCompileFlags
-   THREADS_DEFINES = LocalThreadsDefines ThreadTypeDefines SystemMTDefines MTSafeAPIDefines ThreadPreStdAPIDefines
+   THREADS_DEFINES = LocalThreadsDefines ThreadTypeDefines SystemMTDefines MTSafeAPIDefines ThreadPreStdAPIDefines $(LIB_MT_DEFINES)
    THREADS_LDFLAGS = ThreadsLoadFlags
       THREADS_LIBS = ThreadsLibraries
 
   THREADS_CXXFLAGS = ThreadsCplusplusCompileFlags
-THREADS_CXXDEFINES = LocalThreadsDefines ThreadTypeDefines CplusplusSystemMTDefines MTSafeAPIDefines ThreadPreStdAPIDefines
+THREADS_CXXDEFINES = LocalThreadsDefines ThreadTypeDefines CplusplusSystemMTDefines MTSafeAPIDefines ThreadPreStdAPIDefines $(LIB_MT_DEFINES)
 THREADS_CXXLDFLAGS = ThreadsCplusplusLoadFlags
    THREADS_CXXLIBS = ThreadsCplusplusLibraries
 #endif

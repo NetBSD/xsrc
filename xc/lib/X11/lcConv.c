@@ -1,4 +1,4 @@
-/* $XConsortium: lcConv.c /main/7 1995/11/18 16:08:37 kaleb $ */
+/* $XConsortium: lcConv.c /main/8 1996/09/28 16:37:28 rws $ */
 /*
  * Copyright 1992, 1993 by TOSHIBA Corp.
  *
@@ -249,7 +249,7 @@ open_indirect_converter(from_lcd, from, to_lcd, to)
     
     lc_conv->methods = &conv_methods;
 
-    lc_conv->state = (XPointer) Xmalloc(sizeof(ConvRec));
+    lc_conv->state = (XPointer) Xcalloc(1, sizeof(ConvRec));
     if (lc_conv->state == NULL)
 	goto err;
     

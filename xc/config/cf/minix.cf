@@ -1,4 +1,8 @@
-XCOMM platform:  $XFree86: xc/config/cf/minix.cf,v 3.3 1994/06/28 12:15:02 dawes Exp $
+XCOMM $XConsortium: minix.cf /main/1 1996/10/31 14:47:22 kaleb $
+
+
+
+XCOMM platform:  $XFree86: xc/config/cf/minix.cf,v 3.4 1996/12/27 06:50:21 dawes Exp $
 
 
 /*

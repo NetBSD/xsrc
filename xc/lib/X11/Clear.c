@@ -1,4 +1,4 @@
-/* $XConsortium: Clear.c,v 11.9 94/04/17 20:18:51 rws Exp $ */
+/* $XConsortium: Clear.c /main/5 1996/10/22 14:16:40 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -42,5 +42,6 @@ XClearWindow(dpy, w)
     req->exposures = xFalse;
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
 

@@ -1,4 +1,4 @@
-/* $XConsortium: UnmapSubs.c,v 11.9 94/04/17 20:21:26 rws Exp $ */
+/* $XConsortium: UnmapSubs.c /main/5 1996/10/22 14:23:58 kaleb $ */
 /*
 
 Copyright (c) 1986  X Consortium
@@ -38,4 +38,5 @@ Window win;
     GetResReq(UnmapSubwindows,win, req);
     UnlockDisplay(dpy);
     SyncHandle();
+    return 1;
 }
