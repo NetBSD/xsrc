@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/streams.c,v 3.6.4.1 2003/09/17 05:58:17 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/streams.c,v 3.8 2003/10/27 21:39:08 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -53,7 +53,7 @@ extern FD_TYPE	WellKnownSocketsMask;
 extern int	WellKnownSocketsMax;
 
 void
-CreateWellKnownSockets ()
+CreateWellKnownSockets (void)
 {
     struct t_bind bind_addr;
     struct netconfig *nconf;
@@ -127,9 +127,9 @@ CreateWellKnownSockets ()
     FD_SET (chooserFd, &WellKnownSocketsMask);
 }
 
-GetChooserAddr (addr, lenp)
-    char	*addr;		/* return */
-    int		*lenp;		/* size of addr, returned as amt used */
+int
+GetChooserAddr (char *addr,	/* return */
+    int *lenp)			/* size of addr, returned as amt used */
 {
     struct netbuf nbuf;
     int retval;

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/loader/Imakefile,v 1.35.2.1 2003/03/13 04:10:47 tsi Exp $ */
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/loader/Imakefile,v 1.39 2003/12/20 20:04:34 dawes Exp $ */
 
 
 
@@ -26,16 +26,20 @@ DLOBJ=dlloader.o
  COMPAT_DEFINES = -DFONTENC_COMPATIBILITY
 #endif
 
+#if BuildFontCache
+ FONTCACHE_DEFINES = -DFONTCACHE
+#endif
+
 #if HasShm
     SHM_DEFINES = -DHAS_SHM
 #endif
 
-#if defined (x86_64Architecture)
+#if defined (AMD64Architecture) && defined(linux)
 ARCHDEFINES = -DDoMMAPedMerge -DMmapPageAlign
 #endif
 
 DEFINES = $(DBMALLOCDEFINE) $(DLOPENDEFINES) $(OS_DEFINES) $(COMPAT_DEFINES) \
-	  $(SHM_DEFINES) $(ARCHDEFINES)
+	  $(SHM_DEFINES) $(FONTCACHE_DEFINES) $(ARCHDEFINES)
 
 MODULEDEFINES = -DDEFAULT_MODULE_PATH=\"$(MODULEDIR)\"
 

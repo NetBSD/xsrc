@@ -35,15 +35,16 @@
 /*
  * mystdio.h
  *
- * $Date: 2001/06/09 15:20:57 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/nurbtess/Attic/mystdio.h,v 1.1.1.1 2001/06/09 15:20:57 tron Exp $
+ * $Date: 2004/03/05 14:26:37 $ $Revision: 1.1.1.2 $
+ * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/nurbtess/Attic/mystdio.h,v 1.1.1.2 2004/03/05 14:26:37 tron Exp $
  */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/nurbtess/mystdio.h,v 1.2 2003/10/22 19:20:57 tsi Exp $ */
 
 #ifndef __glumystdio_h_
 #define __glumystdio_h_
 
 #ifdef STANDALONE
-inline void dprintf( char *, ... ) { }
+static inline void dprintf( char *fmt, ... ) { }
 #endif
 
 #ifdef LIBRARYBUILD
@@ -51,12 +52,12 @@ inline void dprintf( char *, ... ) { }
 #include <stdio.h>
 #define dprintf printf
 #else
-inline void dprintf( char *, ... ) { }
+static inline void dprintf( char *fmt, ... ) { }
 #endif
 #endif
 
 #ifdef GLBUILD
-inline void dprintf( char *, ... ) { }
+static inline void dprintf( char *fmt, ... ) { }
 #endif
 
 #ifndef NULL

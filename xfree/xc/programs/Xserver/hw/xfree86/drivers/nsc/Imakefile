@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/Imakefile,v 1.6.2.1 2003/05/24 22:22:13 sven Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nsc/Imakefile,v 1.7 2003/04/21 12:32:10 sven Exp $
 XCOMM Imakefile for the National Semiconductor display driver
 XCOMM that is based on the durango code.
 XCOMM

@@ -31,11 +31,12 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/06/09 15:20:52 $ $Revision: 1.1.1.1 $
+** $Date: 2004/03/05 14:26:37 $ $Revision: 1.1.1.2 $
 */
 /*
-** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/monoTriangulationBackend.cc,v 1.1.1.1 2001/06/09 15:20:52 tron Exp $
+** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/monoTriangulationBackend.cc,v 1.1.1.2 2004/03/05 14:26:37 tron Exp $
 */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/monoTriangulationBackend.cc,v 1.2 2003/10/22 19:20:57 tsi Exp $ */
 
 #include "monoTriangulation.h"
 #include "polyUtil.h"
@@ -45,7 +46,9 @@
 void reflexChain::outputFan(Real v[2], Backend* backend)
 {
   Int i;
+  /*
   TrimVertex trimVert;
+  */
   backend->bgntfan();
 
   /*
@@ -84,7 +87,10 @@ void reflexChain::processNewVertex(Real v[2], Backend* backend)
 {
   Int i,j,k;
   Int isReflex;
+  /*
   TrimVertex trimVert;
+  */
+
   /*if there are at most one vertex in the queue, then simply insert
    */
   if(index_queue <=1){

@@ -35,9 +35,10 @@
 /*
  * arc.c++
  *
- * $Date: 2001/06/09 15:20:49 $ $Revision: 1.1.1.1 $
- * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/arc.cc,v 1.1.1.1 2001/06/09 15:20:49 tron Exp $
+ * $Date: 2004/03/05 14:26:35 $ $Revision: 1.1.1.2 $
+ * $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/Attic/arc.cc,v 1.1.1.2 2004/03/05 14:26:35 tron Exp $
  */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/internals/arc.cc,v 1.2 2003/10/22 19:20:56 tsi Exp $ */
 
 #include <stdio.h>
 #include "glimports.h"
@@ -224,6 +225,7 @@ Arc::isDisconnected( void )
     }
 }
 
+#ifndef NDEBUG
 /*-------------------------------------------------------------------------
  * neq_vert - assert that two 2D vertices are not equal
  *-------------------------------------------------------------------------
@@ -234,6 +236,7 @@ neq_vert( REAL	*v1, REAL *v2 )
 {
      return ((v1[0] != v2[0]) || (v1[1] != v2[1] )) ? 1 : 0;
 }
+#endif
 
 /*-------------------------------------------------------------------------
  * check - verify consistency of a loop, including
@@ -330,7 +333,7 @@ Arc::check( void )
 
 #define TOL 0.00001
 
-inline long tooclose( REAL x, REAL y )
+long tooclose( REAL x, REAL y )
 {
     return (abs(x-y) < TOL) ?  1 : 0;
 }

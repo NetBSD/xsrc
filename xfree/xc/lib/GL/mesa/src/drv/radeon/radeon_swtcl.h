@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_swtcl.h,v 1.1.2.1 2003/05/06 23:21:44 daenzer Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_swtcl.h,v 1.3 2003/09/28 20:15:30 alanh Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and

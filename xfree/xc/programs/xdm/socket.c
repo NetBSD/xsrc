@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from the copyright holder.
 
 */
-/* $XFree86: xc/programs/xdm/socket.c,v 3.10.4.1 2003/09/17 05:58:16 herrb Exp $ */
+/* $XFree86: xc/programs/xdm/socket.c,v 3.14 2003/11/25 22:21:08 herrb Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -66,7 +66,11 @@ CreateWellKnownSockets (void)
     char *name = localHostname ();
     registerHostname (name, strlen (name));
 
+#if defined(IPv6) && defined(AF_INET6)
+    chooserFd = socket (AF_INET6, SOCK_STREAM, 0);
+#else
     chooserFd = socket (AF_INET, SOCK_STREAM, 0);
+#endif
     Debug ("Created chooser socket %d\n", chooserFd);
     if (chooserFd == -1)
     {
@@ -84,7 +88,11 @@ GetChooserAddr (
     char	*addr,
     int		*lenp)
 {
+#if defined(IPv6) && defined(AF_INET6)
+    struct sockaddr_storage in_addr;
+#else
     struct sockaddr_in	in_addr;
+#endif
     int			len;
     int			retval = 0;
 
@@ -93,6 +101,12 @@ GetChooserAddr (
 	return -1;	/* TODO check other listening sockets */
     if (getsockname (chooserFd, (struct sockaddr *)&in_addr, (void *)&len) < 0)
 	return -1;
+#if defined(IPv6) && defined(AF_INET6)
+    if (((struct sockaddr *)&in_addr)->sa_family == AF_INET6)
+	Debug ("Chooser socket port: %d (IPv6)\n", 
+	  ntohs(((struct sockaddr_in6 *) &in_addr)->sin6_port));
+    else
+#endif
 	Debug ("Chooser socket port: %d\n", 
 	  ntohs(((struct sockaddr_in *) &in_addr)->sin_port));
     if (*lenp < len)  
@@ -109,12 +123,27 @@ CreateListeningSocket (struct sockaddr *sock_addr, int salen)
 {
     int fd;
     const char *addrstring = "unknown";
+#if defined(IPv6) && defined(AF_INET6)
+    char addrbuf[INET6_ADDRSTRLEN];
+#endif
 
     if (request_port == 0)
 	    return -1;
 
     if (debugLevel > 0) {
+#if defined(IPv6) && defined(AF_INET6)
+	void *ipaddr;
+	if (sock_addr->sa_family == AF_INET6) {
+	    ipaddr = & ((struct sockaddr_in6 *) sock_addr)->sin6_addr;
+	} else {
+	    ipaddr = & ((struct sockaddr_in *) sock_addr)->sin_addr;
+	}
+	addrstring =
+	  inet_ntop(sock_addr->sa_family, ipaddr, addrbuf, sizeof(addrbuf));
+
+#else
 	addrstring = inet_ntoa(((struct sockaddr_in *) sock_addr)->sin_addr);
+#endif
 
 	Debug ("creating socket to listen on port %d of address %s\n", 
 	  request_port,addrstring);
@@ -192,6 +221,12 @@ FindInList(struct socklist *list, ARRAY8Ptr addr)
 		addrdata = (char *)
 		  &(((struct sockaddr_in *)s->addr)->sin_addr.s_addr);
 		break;
+#if defined(IPv6) && defined(AF_INET6)
+	    case AF_INET6:
+		addrdata = (char *)
+		  &(((struct sockaddr_in6 *)s->addr)->sin6_addr.s6_addr);
+		break;
+#endif
 	    default:
 		/* Unrecognized address family */
 		continue;
@@ -231,6 +266,26 @@ CreateSocklistEntry(ARRAY8Ptr addr)
 	sin->sin_port = htons ((short) request_port);
 	memcpy(&sin->sin_addr, addr->data, addr->length);
     }
+#if defined(IPv6) && defined(AF_INET6)
+    else if (addr->length == 16) /* IPv6 */
+    {
+	struct sockaddr_in6 *sin6;
+	sin6 = malloc (sizeof(struct sockaddr_in6));
+	if (sin6 == NULL) 
+	    LogOutOfMem("CreateSocklistEntry");
+	s->addr = (struct sockaddr *) sin6;
+
+	bzero (sin6, sizeof (struct sockaddr_in6));
+#ifdef SIN6_LEN
+	sin6->sin6_len = sizeof(struct sockaddr_in6);
+#endif
+	s->salen = sizeof(struct sockaddr_in6);
+	s->addrlen = sizeof(struct in6_addr);
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_port = htons ((short) request_port);
+	memcpy(&sin6->sin6_addr, addr->data, addr->length);
+    } 
+#endif
     else {
 	/* Unknown address type */
 	free(s);
@@ -248,10 +303,16 @@ UpdateListener(ARRAY8Ptr addr, void **closure)
     *closure = NULL;
 
     if (addr == NULL || addr->length == 0) {
+#if defined(IPv6) && defined(AF_INET6)
+	struct in6_addr in6 = in6addr_any;
+	tmpaddr.length = sizeof(in6);
+	tmpaddr.data = (CARD8Ptr) &in6;
+#else
 	struct in_addr in;
 	in.s_addr = htonl (INADDR_ANY);
 	tmpaddr.length = sizeof(in);
 	tmpaddr.data = (CARD8Ptr) &in;
+#endif
 	addr = &tmpaddr;
     }
     
@@ -317,6 +378,50 @@ ChangeMcastMembership(struct socklist *s, struct socklist *g, int op)
 		  inet_ntoa(((struct sockaddr_in *) g->addr)->sin_addr));
 	    }
 	}
+#if defined(IPv6) && defined(AF_INET6)
+#ifndef IPV6_JOIN_GROUP
+#define IPV6_JOIN_GROUP IPV6_ADD_MEMBERSHIP 
+#endif
+#ifndef IPV6_LEAVE_GROUP
+#define IPV6_LEAVE_GROUP IPV6_DROP_MEMBERSHIP
+#endif
+	case AF_INET6:
+	{
+	    struct ipv6_mreq mreq6;
+	    memcpy(&mreq6.ipv6mr_multiaddr, 
+	      &((struct sockaddr_in6 *) g->addr)->sin6_addr, 
+	      sizeof(struct in6_addr));
+	    mreq6.ipv6mr_interface = 0;  /* TODO: fix this */
+	    if (op == JOIN_MCAST_GROUP) {
+		sockopt = IPV6_JOIN_GROUP;
+	    } else {
+		sockopt = IPV6_LEAVE_GROUP;
+	    }
+	    if (setsockopt(s->fd, IPPROTO_IPV6, sockopt,
+	      &mreq6, sizeof(mreq6)) < 0) {
+		int saveerr = errno;
+		char addrbuf[INET6_ADDRSTRLEN];
+
+		inet_ntop(s->addr->sa_family, 
+		  &((struct sockaddr_in6 *) g->addr)->sin6_addr,
+		  addrbuf, sizeof(addrbuf));
+
+		LogError ("XDMCP socket multicast %s to %s failed, errno %d\n",
+		  (op == JOIN_MCAST_GROUP) ? "join" : "drop", addrbuf,
+		  saveerr);
+		return;
+	    } else if (debugLevel > 0) {
+		char addrbuf[INET6_ADDRSTRLEN];
+
+		inet_ntop(s->addr->sa_family, 
+		  &((struct sockaddr_in6 *) g->addr)->sin6_addr,
+		  addrbuf, sizeof(addrbuf));
+
+		Debug ("XDMCP socket multicast %s to %s succeeded\n", 
+		  (op == JOIN_MCAST_GROUP) ? "join" : "drop", addrbuf);
+	    }
+	}
+#endif
     }
 }
 
@@ -325,7 +430,10 @@ UpdateMcastGroup(ARRAY8Ptr addr, void **closure)
 {
     struct socklist *s = (struct socklist *) *closure;
     struct socklist *g;
-	
+
+    if (s == NULL) 
+	    return;
+
     g = FindInList(s->mcastgroups, addr);
 
     if (g) { /* Already in the group, mark & continue */

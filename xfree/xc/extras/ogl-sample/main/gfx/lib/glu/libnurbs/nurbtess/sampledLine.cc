@@ -31,10 +31,12 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 **
-** $Date: 2001/06/09 15:21:00 $ $Revision: 1.1.1.1 $
+** $Date: 2004/03/05 14:26:38 $ $Revision: 1.1.1.2 $
 */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/nurbtess/sampledLine.cc,v 1.2 2003/10/22 19:20:58 tsi Exp $ */
+
 /*
-** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/nurbtess/Attic/sampledLine.cc,v 1.1.1.1 2001/06/09 15:21:00 tron Exp $
+** $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/gfx/lib/glu/libnurbs/nurbtess/Attic/sampledLine.cc,v 1.1.1.2 2004/03/05 14:26:38 tron Exp $
 */
 
 #include <stdlib.h>
@@ -96,7 +98,6 @@ sampledLine::sampledLine(Int n_points, Real2 pts[])
 
 sampledLine::sampledLine(Real pt1[2], Real pt2[2])
 {
-  int i;
   npoints = 2;
   points = (Real2*) malloc(sizeof(Real2) * 2);
   assert(points);

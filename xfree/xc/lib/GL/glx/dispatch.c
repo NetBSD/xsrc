@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/dispatch.c,v 1.4 2002/02/22 21:32:53 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/dispatch.c,v 1.5 2003/06/30 01:45:10 torrey Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -31,6 +31,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *   Brian Paul <brian@precisioninsight.com>
  *
  */
+
+#ifndef GLX_USE_APPLEGL
 
 #include <GL/gl.h>
 #include "glapi.h"
@@ -67,3 +69,5 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "glapitemp.h"
 
 #endif /* USE_X86_ASM */
+
+#endif /* !GLX_USE_APPLEGL */

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vbe/Imakefile,v 1.1.2.1 2003/05/24 22:22:16 sven Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vbe/Imakefile,v 1.2 2003/04/21 12:32:13 sven Exp $
 
 
 /*

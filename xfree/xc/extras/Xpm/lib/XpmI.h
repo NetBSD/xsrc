@@ -22,7 +22,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from GROUPE BULL.
  */
-/* $XFree86: xc/extras/Xpm/lib/XpmI.h,v 1.8 2002/01/07 19:40:23 dawes Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/XpmI.h,v 1.9 2003/08/06 14:03:58 eich Exp $ */
 
 /*****************************************************************************\
 * XpmI.h:                                                                     *
@@ -58,6 +58,7 @@ extern FILE *popen();
 
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>
+#include <X11/Xmd.h>
 
 #ifdef VMS
 #include <unixio.h>

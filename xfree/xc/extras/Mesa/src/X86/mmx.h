@@ -1,4 +1,3 @@
-/* $Id: mmx.h,v 1.1.1.2 2003/02/28 13:19:08 tron Exp $ */
 
 /*
  * Mesa 3-D graphics library
@@ -31,5 +30,21 @@
 extern void _ASMAPI
 _mesa_mmx_blend_transparency( GLcontext *ctx, GLuint n, const GLubyte mask[],
                               GLubyte rgba[][4], const GLubyte dest[][4] );
+
+extern void _ASMAPI
+_mesa_mmx_blend_add( GLcontext *ctx, GLuint n, const GLubyte mask[],
+                     GLubyte rgba[][4], const GLubyte dest[][4] );
+
+extern void _ASMAPI
+_mesa_mmx_blend_min( GLcontext *ctx, GLuint n, const GLubyte mask[],
+                     GLubyte rgba[][4], const GLubyte dest[][4] );
+
+extern void _ASMAPI
+_mesa_mmx_blend_max( GLcontext *ctx, GLuint n, const GLubyte mask[],
+                     GLubyte rgba[][4], const GLubyte dest[][4] );
+
+extern void _ASMAPI
+_mesa_mmx_blend_modulate( GLcontext *ctx, GLuint n, const GLubyte mask[],
+                          GLubyte rgba[][4], const GLubyte dest[][4] );
 
 #endif
