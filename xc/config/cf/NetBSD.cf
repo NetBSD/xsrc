@@ -376,7 +376,16 @@ install.man:: 								@@\
 	done
 
 #define InstallMultipleMan(list,dest)                                   @@\
-	InstallMultipleManSuffix(list,dest,man)
+	MakeDir($(DESTDIR)dest)						@@\
+	case '${MFLAGS}' in *[i]*) set +e;; esac; \			@@\
+	for i in list; do \                                             @@\
+	  (set -x; \							@@\
+	  MNAME=`echo $$i | cut -f1 -d.`; \				@@\
+	  cat $$i | $(NEQN) | $(TBL) | $(NROFF) $(MANMACROS) | $(COL) >/tmp/$$$$.man; \	@@\
+	  $(INSTALL) -c $(INSTMANFLAGS) /tmp/$$$$.man $(DESTDIR)dest/$${MNAME}.0; \	@@\
+	  $(RM) /tmp/$$$$.man); \						@@\
+	done
+
 
 #define InstallManPageAliases(file,destdir,aliases)                     @@\
 install.man:: 								@@\
