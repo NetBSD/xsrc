@@ -32,7 +32,7 @@ XCOMM
 /* 1 = A, 2 = B, 3 = C, 4 = D, 5 = E, ... */
 #ifndef OSTeenyVersion
 #define OSTeenyVersion	  0
-#else
+#endif
 
 #ifndef OSVendor
 #define	OSVendor	/**/
@@ -85,6 +85,7 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #if (!(OSMajorVersion == 0 || \
        (OSMajorVersion == 1 && OSMinorVersion < 2))) 
 #define HasMkstemp		YES
+#endif
 /*
  * Compiler Features
  */
@@ -209,14 +210,16 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define XieDynamicModule	NO
 #endif
 
+#if defined(AlphaArchitecture)
+# define ServerExtraDefines	GccGasOption -D_XSERVER64
+# define ServerOSDefines	-DDDXOSINIT
+# define PexDynamicModule	NO
+# define XieDynamicModule	NO
+# define OptimizedCDebugFlags	
+#endif
+
 #ifndef OptimizedCDebugFlags
 # define OptimizedCDebugFlags 	-O2
-#else
-# if defined(AlphaArchitecture)
-#  define ServerExtraDefines GccGasOption -D_XSERVER64
-# else
-#  define ServerExtraDefines GccGasOption
-# endif
 #endif
 
 #define StandardDefines	-DCSRG_BASED
