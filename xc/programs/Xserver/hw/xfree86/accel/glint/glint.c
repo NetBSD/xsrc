@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint.c,v 1.32.2.11 1999/07/01 16:23:28 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/glint.c,v 1.32.2.12 1999/08/17 07:39:26 hohndel Exp $ */
 /*
  * Copyright 1997 by Alan Hourihane, Wigan, England.
  *
@@ -933,7 +933,9 @@ glintProbe()
   OFLG_SET(OPTION_OVERCLOCK_MEM, &validOptions);
   OFLG_SET(OPTION_POWER_SAVER, &validOptions);
 
+  /* SOG is only implemented for Permedia2 based boards */
   if (IS_3DLABS_PM2_CLASS(coprotype))
+      /* Permedia2v doesn't have this capability */
       if (coprotype != PCI_CHIP_3DLABS_PERMEDIA2V)
 	  OFLG_SET(OPTION_SYNC_ON_GREEN, &validOptions);
 

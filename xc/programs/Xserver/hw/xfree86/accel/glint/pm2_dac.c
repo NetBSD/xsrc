@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/pm2_dac.c,v 1.6.2.4 1999/07/01 16:23:29 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/glint/pm2_dac.c,v 1.6.2.5 1999/08/17 07:39:27 hohndel Exp $ */
 /*
  * Copyright 1997 The XFree86 Project, Inc
  *
@@ -175,7 +175,15 @@ PM2DACInit(int clock)
      * set up the RAMDAC in the right mode
      */
     GLINT_WRITE_REG(CC & 0xFFFFFFFD, ChipConfig); /* Disable VGA */
-    /* 8bit DAC */
+
+    /* - PaletteWidth 8bits
+     *
+     * Set some additional magic bits, only needed for SOG:
+     * - Inverted HSyncPolarity 
+     * - Inverted VSyncPolarity
+     * - Enable BlankPedestal (whatever this does, really magic!)
+     * - Enable SyncOnGreen (of course)
+     */
     glintOutPM2IndReg(PM2DACIndexMCR, 0x00,  
                       OFLG_ISSET (OPTION_SYNC_ON_GREEN, 
                                   &glintInfoRec.options) ? 0x3e : 0x02);

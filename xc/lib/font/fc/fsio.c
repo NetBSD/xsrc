@@ -1,5 +1,5 @@
 /* $XConsortium: fsio.c,v 1.37 95/04/05 19:58:13 kaleb Exp $ */
-/* $XFree86: xc/lib/font/fc/fsio.c,v 3.5.2.1 1998/02/15 16:08:40 hohndel Exp $ */
+/* $XFree86: xc/lib/font/fc/fsio.c,v 3.5.2.2 1999/07/23 13:22:20 hohndel Exp $ */
 /*
  * Copyright 1990 Network Computing Devices
  *
@@ -211,11 +211,11 @@ _fs_setup_connection(conn, servername, timeout, copy_name_p)
     prefix.num_auths = 0;
     prefix.auth_len = 0;
 
-    if (_fs_write(conn, (char *) &prefix, SIZEOF(fsConnClientPrefix)) == -1)
+    if (_fs_write(conn, (char *) &prefix, (unsigned long) SIZEOF(fsConnClientPrefix)) == -1)
 	return FALSE;
 
     /* read setup info */
-    if (_fs_read(conn, (char *) &rep, SIZEOF(fsConnSetup)) == -1)
+    if (_fs_read(conn, (char *) &rep, (unsigned long) SIZEOF(fsConnSetup)) == -1)
 	return FALSE;
 
     conn->fsMajorVersion = rep.major_version;
@@ -234,7 +234,7 @@ _fs_setup_connection(conn, servername, timeout, copy_name_p)
 	    return FALSE;
 	}
 	alt_data = (char *) (alts + nalts);
-	if (_fs_read(conn, (char *) alt_data, setuplength) == -1) {
+	if (_fs_read(conn, (char *) alt_data, (unsigned long) setuplength) == -1) {
 	    xfree(alts);
 	    return FALSE;
 	}
@@ -261,7 +261,7 @@ _fs_setup_connection(conn, servername, timeout, copy_name_p)
 	errno = ENOMEM;
 	return FALSE;
     }
-    if (_fs_read(conn, (char *) auth_data, setuplength) == -1) {
+    if (_fs_read(conn, (char *) auth_data, (unsigned long) setuplength) == -1) {
 	xfree(auth_data);
 	return FALSE;
     }

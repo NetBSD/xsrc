@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/xtrans/Xtransos2.c,v 3.5 1997/01/28 10:53:32 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtransos2.c,v 3.5.2.1 1999/08/02 08:37:54 hohndel Exp $ */
 
 /*
  * (c) Copyright 1996 by Sebastien Marineau and Holger Veit
@@ -83,12 +83,12 @@ char *port;
 
     if (port && *port ) {
 	if( *port == '/' ) { /* A full pathname */
-		(void) sprintf(pipename, "\\PIPE\\X\\%s,", port);
+		(void) sprintf(pipename, "\\PIPE\\%s,", port);
 	    } else {
-		(void) sprintf(pipename, "%s%s", "\\PIPE\\X\\xf86.", port);
+		(void) sprintf(pipename, "%s%s", "\\PIPE\\xf86.", port);
 	    }
     } else {
-	(void) sprintf(pipename, "\\PIPE\\X\\xfree86"); }
+	(void) sprintf(pipename, "\\PIPE\\xfree86"); }
 
     PRMSG(5, "Os2OpenClient: Creating pipe %s\n",pipename, 0,0 );
 
@@ -124,7 +124,7 @@ char *port;
 /* OK, now we are talking to the server. Generate a unique pipe name and pass it to
  * the server. Make the pipe and wait for server to connect */
 
-   sprintf(clientname,"\\PIPE\\X\\%d.%d",getpid(),unique_id++);
+   sprintf(clientname,"\\PIPE\\%d.%d",getpid(),unique_id++);
  
    rc = DosCreateNPipe (clientname, &hfd,
                        NP_NOINHERIT | NP_ACCESS_DUPLEX,
@@ -284,12 +284,12 @@ char *port;
 
     if (port && *port ) {
 	if( *port == '/' ) { /* A full pathname */
-		(void) sprintf(pipename, "\\PIPE\\X\\%s", port);
+		(void) sprintf(pipename, "\\PIPE\\%s", port);
 	    } else {
-		(void) sprintf(pipename, "%s%s", "\\PIPE\\X\\xf86.", port);
+		(void) sprintf(pipename, "%s%s", "\\PIPE\\xf86.", port);
 	    }
     } else {
-	(void) sprintf(pipename, "\\PIPE\\X\\xfree86");
+	(void) sprintf(pipename, "\\PIPE\\xfree86");
     }
 
     PRMSG(5, "Os2OpenServer: Creating pipe %s\n",pipename, 0,0 );

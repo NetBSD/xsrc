@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.18 1999/07/05 09:07:24 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.c,v 3.62.2.19 1999/07/19 11:46:36 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  * Copyright 1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -431,7 +431,7 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    char                       signature[]    = " 761295520";
    char                       bios_data[BIOS_DATA_SIZE];
    char                       bios_signature[10];
-   unsigned short             *sbios_data = (unsigned short *)bios_data;
+#define sbios_data(_n)        (*((CARD16 *)(bios_data + (_n))))
    int                        tmp,tmp2,i,j;
    static ATIInformationBlock info = { 0, };
    int                        ROM_Table_Offset;
@@ -653,25 +653,25 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
    }
 
    
-   ROM_Table_Offset = sbios_data[0x48 >> 1];
-   Freq_Table_Ptr = sbios_data[(ROM_Table_Offset >> 1) + 8];
+   ROM_Table_Offset = sbios_data(0x48);
+   Freq_Table_Ptr = sbios_data(ROM_Table_Offset + 0x10);
    info.Clock_Type = bios_data[Freq_Table_Ptr];
 
-   info.MinFreq = sbios_data[(Freq_Table_Ptr >> 1) + 1];
-   info.MaxFreq = sbios_data[(Freq_Table_Ptr >> 1) + 2];
-   info.RefFreq = sbios_data[(Freq_Table_Ptr >> 1) + 4];
-   info.RefDivider = sbios_data[(Freq_Table_Ptr >> 1) + 5];
-   info.NAdj = sbios_data[(Freq_Table_Ptr >> 1) + 6];
-   info.DRAMMemClk = sbios_data[(Freq_Table_Ptr >> 1) + 8];
-   info.VRAMMemClk = sbios_data[(Freq_Table_Ptr >> 1) + 9];
+   info.MinFreq = sbios_data(Freq_Table_Ptr + 0x02);
+   info.MaxFreq = sbios_data(Freq_Table_Ptr + 0x04);
+   info.RefFreq = sbios_data(Freq_Table_Ptr + 0x08);
+   info.RefDivider = sbios_data(Freq_Table_Ptr + 0x0A);
+   info.NAdj = sbios_data(Freq_Table_Ptr + 0x0C);
+   info.DRAMMemClk = sbios_data(Freq_Table_Ptr + 0x10);
+   info.VRAMMemClk = sbios_data(Freq_Table_Ptr + 0x12);
    info.MemClk = bios_data[Freq_Table_Ptr + 22];
    info.CXClk = bios_data[Freq_Table_Ptr + 6];
 
-   CDepth_Table_Ptr = sbios_data[(Freq_Table_Ptr >> 1) - 3];
-   Freq_Table_Ptr = sbios_data[(Freq_Table_Ptr >> 1) - 1];
+   CDepth_Table_Ptr = sbios_data(Freq_Table_Ptr - 0x06);
+   Freq_Table_Ptr = sbios_data(Freq_Table_Ptr - 0x02);
 
    for (i = 0; i < MACH64_NUM_CLOCKS; i++)
-      info.Clocks[i] = sbios_data[(Freq_Table_Ptr >> 1) + i];
+      info.Clocks[i] = sbios_data((2 * i) + Freq_Table_Ptr);
 
    info.MemCycle = bios_data[ROM_Table_Offset + 0];
 
@@ -707,8 +707,8 @@ static ATIInformationBlock *GetATIInformationBlock(BlockIO)
        return &info;
 
    /* Pick up panel dimensions */
-   LCDTable = sbios_data[0x78 >> 1];
-   LCDPanelInfo = sbios_data[(LCDTable >> 1) + 5];
+   LCDTable = sbios_data(0x78);
+   LCDPanelInfo = sbios_data(LCDTable + 0x0A);
 
    if (!LCDTable || !LCDPanelInfo ||
        (bios_data[LCDTable + 5] != 0x1A) ||

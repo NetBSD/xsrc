@@ -9,7 +9,7 @@
  *	
  *	Xavier Ducoin <x.ducoin@lectra.com>
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_accel2.c,v 1.1.2.2 1999/04/24 08:22:26 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis_accel2.c,v 1.1.2.3 1999/07/23 13:23:00 hohndel Exp $ */
 
 #if 0
 #define PDEBUG(arg)  arg 
@@ -95,6 +95,10 @@ void SISNAME(AccelInit)()
      */
        
 
+    /* Yeou: SiS 530/620 2D engine not support 24bpp */ 	
+
+    if ((SISchipset == SIS530) && 
+       (vga256InfoRec.bitsPerPixel == 24)) return;
 
     xf86AccelInfoRec.Flags =  BACKGROUND_OPERATIONS | 
 	  (sisUseXAAcolorExp ? PIXMAP_CACHE : 0 ) |
@@ -140,7 +144,7 @@ void SISNAME(AccelInit)()
         SISNAME(SubsequentScreenToScreenCopy);
 
     /* Color Expansion */
-    if (vga256InfoRec.bitsPerPixel != 24) {
+    if (vga256InfoRec.bitsPerPixel != 24) { 
 	/* the enhanced color expansion is not supported
 	 * by the engine in 16M-color graphic mode.
 	 */

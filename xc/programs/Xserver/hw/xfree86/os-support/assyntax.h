@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/assyntax.h,v 3.7.2.3 1998/09/05 03:32:04 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/assyntax.h,v 3.7.2.5 1999/07/29 09:22:55 hohndel Exp $ */
 #ifndef __ASSYNTAX_H__
 #define	__ASSYNTAX_H__
 
@@ -212,7 +212,7 @@
 #endif /* ACK_ASSEMBLER */
 
 
-#if defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || defined(__ELF__)
+#if defined(__QNX__) || defined(__QNXNTO__) || defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || defined(__ELF__)
 #define GLNAME(a)       a
 #else
 #define GLNAME(a)       CONCAT(_,a)

@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/19 1996/10/25 21:24:28 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.8 1999/06/21 09:45:25 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.9 1999/08/02 08:38:27 hohndel Exp $
 
 
 
@@ -108,7 +108,7 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/common/Imakefile,v 3.28.2.8 1999/
 # endif
 #endif
 
-#if !defined(LynxOSArchitecture) && !defined(OS2Architecture)
+#if !defined(LynxOSArchitecture) && !defined(OS2Architecture) && !defined(QNXArchitecture)
  PNP_MOUSE_SRC=xf86_PnPMouse.c
  PNP_MOUSE_OBJ=xf86_PnPMouse.o
  PNP_MOUSE_DEFINES=-DPNP_MOUSE
@@ -347,7 +347,11 @@ SpecialObjectRule($(BETAOBJ),$(BETASRC),$(EXP_DEFINES))
 
 ObjectFromSpecialSource(xf86Init_m,xf86Init,$(OSNAMEDEF) $(EXT_DEFINES) $(BETADEFS) -DXF86MONOVGA)
 SpecialObjectRule(xf86IniExt.o,xf86IniExt.c $(ICONFIGFILES),$(EXT_DEFINES) $(EXT_MODULES_DEFINES))
+#ifndef QNXArchitecture
 SpecialObjectRule(xf86MIniExt.o,xf86IniExt.c $(ICONFIGFILES),$(EXT_DEFINES) $(EXT_MODULES_DEFINES) -UPEXEXT -UXIE -UGLXEXT)
+#else
+SpecialObjectRule(xf86MIniExt.o,xf86IniExt.c $(ICONFIGFILES),$(EXT_DEFINES) $(EXT_MODULES_DEFINES) -DNO_GRAFEXT )
+#endif
 
 NormalLibraryObjectRule()
 NormalLibraryTarget(xf86,$(OBJS))

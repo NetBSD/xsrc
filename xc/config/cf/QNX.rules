@@ -1,0 +1,72 @@
+XCOMM platform:  $XFree86: xc/config/cf/QNX.rules,v 1.1.2.2 1999/07/23 13:42:29 hohndel Exp $
+
+XCOMM Rules to work around wlib for QNX...
+
+#define LinkFile(tofile, fromfile)				@@\
+tofile:: fromfile						@@\
+	$(CP) fromfile tofile					@@\
+								@@\
+includes:: tofile						@@\
+								@@\
+depend:: tofile							@@\
+								@@\
+clean::								@@\
+	RemoveFile(tofile)
+
+XCOMM This special rule is used to install the install script.
+XCOMM Else there's a name conflict with the QNX installer.
+
+#define QNXCopyInstaller(tofile, fromfile)			@@\
+tofile:: 							@@\
+	$(CP) fromfile tofile					@@\
+								@@\
+includes:: tofile
+
+
+#define ObjectFromSpecialSource(dst, src, flags)		@@\
+NoConfigRec(dst.c)						@@\
+								@@\
+dst.c: src.c							@@\
+	RemoveFile($@)						@@\
+	$(CP) $? $@						@@\
+								@@\
+SpecialCObjectRule(dst,NullParameter,flags)			@@\
+								@@\
+includes:: dst.c						@@\
+								@@\
+depend:: dst.c							@@\
+								@@\
+clean::								@@\
+	RemoveFile(dst.c)
+
+
+#define ObjectFromSpecialAsmSource(dst, src, flags)		@@\
+dst.s: src.s							@@\
+	RemoveFile($@)						@@\
+	$(CP) $? $@						@@\
+								@@\
+dst.o: dst.s							@@\
+	AssembleObject(flags)					@@\
+								@@\
+dst.i: dst.s							@@\
+	CPPOnlyAsm(dst,flags)					@@\
+								@@\
+depend:: dst.s							@@\
+								@@\
+clean::								@@\
+	RemoveFile(dst.s)
+
+/* This is the rule to make reloc. OMF objects. We use a little
+ * trick which works only for OMF....
+ */
+#define NormalRelocatableTarget(objname,objlist)		@@\
+AllTarget(objname.Osuf)						@@\
+								@@\
+objname.Osuf: objlist $(EXTRALIBRARYDEPS)			@@\
+	RemoveFile($@)						@@\
+	/bin/cat objlist > $@
+
+
+	
+
+

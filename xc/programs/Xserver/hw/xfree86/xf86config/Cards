@@ -18,7 +18,7 @@
 # The majority of entries are just a binding of a model name to a
 # chipset/server and untested.
 #
-# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.34 1999/06/23 12:37:25 hohndel Exp $
+# $XFree86: xc/programs/Xserver/hw/xfree86/xf86config/Cards,v 3.51.2.37 1999/08/17 07:39:38 hohndel Exp $
 
 # VGA
 
@@ -1125,10 +1125,16 @@ CHIPSET S3 Trio3D
 SERVER SVGA
 NOCLOCKPROBE
 
+NAME S3 86C365 (Trio3D)
+SEE S3 Trio3D
+
 NAME Elsa Winner T3D
 SEE S3 Trio3D
 
 NAME Hercules Terminator 128/3D
+SEE S3 Trio3D
+
+NAME AOpen PG128
 SEE S3 Trio3D
 
 NAME S3 86C325 (generic)
@@ -1195,17 +1201,17 @@ SEE S3 ViRGE (generic)
 NAME Hercules Terminator 3D/DX
 SEE S3 ViRGE/DX (generic)
 
+NAME AOpen PT70
+SEE S3 ViRGE/DX (generic)
+
+NAME AOpen PT75
+SEE S3 ViRGE/DX (generic)
+
 NAME LeadTek WinFast 3D S600
 SEE S3 ViRGE (generic)
 
-NAME WinFast 3D S600
-SEE LeadTek WinFast 3D S600
-
 NAME LeadTek WinFast 3D S680
 SEE S3 ViRGE/GX2 (generic)
-
-NAME WinFast 3D S600
-SEE LeadTek WinFast 3D S680
 
 NAME Miro MiroMedia 3D
 SEE S3 ViRGE (generic)
@@ -1280,9 +1286,6 @@ NAME Toshiba Tecra 550CDT
 SEE S3 ViRGE/MX (generic)
 
 # currently unsupported S3
-
-NAME S3 86C365 (Trio3D)
-SEE S3 Trio3D
 
 NAME S3 86C391 (Savage3D)
 SEE Unsupported VGA compatible
@@ -2175,36 +2178,6 @@ CHIPSET Cyber9397
 SERVER SVGA
 NOCLOCKPROBE
 
-NAME Trident TGUI9682 (generic)
-CHIPSET TGUI9682
-SERVER SVGA
-NOCLOCKPROBE
-
-NAME Trident TGUI9685 (generic)
-CHIPSET TGUI9685
-SERVER SVGA
-NOCLOCKPROBE
-
-NAME Trident Cyber 9382 (generic)
-CHIPSET Cyber9382
-SERVER SVGA
-NOCLOCKPROBE
-
-NAME Trident Cyber 9385 (generic)
-CHIPSET Cyber9385
-SERVER SVGA
-NOCLOCKPROBE
-
-NAME Trident Cyber 9388 (generic)
-CHIPSET Cyber9388
-SERVER SVGA
-NOCLOCKPROBE
-
-NAME Trident Cyber 9397 (generic)
-CHIPSET Cyber9397
-SERVER SVGA
-NOCLOCKPROBE
-
 NAME Trident Cyber 9397 DVD (generic)
 CHIPSET Cyber9397DVD
 SERVER SVGA
@@ -2218,6 +2191,12 @@ NOCLOCKPROBE
 NAME Trident Cyber 9325 (generic)
 CHIPSET Cyber9325
 SERVER SVGA
+NOCLOCKPROBE
+
+NAME Trident Cyber 9525 (generic)
+CHIPSET Cyber9525
+SERVER SVGA
+LINE     # Option "accel" # Use this if acceleration works on your laptop
 NOCLOCKPROBE
 
 NAME Trident 3DImage975 (generic)
@@ -2250,6 +2229,9 @@ SEE Generic VGA compatible
 
 NAME Trident TVGA 8800CS
 SEE Generic VGA compatible
+
+NAME AOpen PG975
+SEE Trident 3DImage975 AGP (generic)
 
 # SiS
 
@@ -2351,6 +2333,33 @@ NAME PC-Chips M567 Mainboard
 SEE SiS 5597
 
 NAME Diamond SpeedStar A50
+SEE SiS 6326
+
+NAME AOpen PA50D
+SEE SiS 6326
+
+NAME AOpen PA50V
+SEE SiS 6326
+
+NAME AOpen PA50E
+SEE SiS 6326
+
+NAME AOpen PA80/DVD
+SEE SiS 6326
+
+NAME AOpen PA45
+SEE SiS 6326
+
+NAME AOpen PT80
+SEE SiS 6326
+
+NAME Chaintech Tornado S6000
+SEE SiS 6326
+
+NAME Chaintech Desperado SI21
+SEE SiS 6326
+
+NAME Chaintech Desperado SI31
 SEE SiS 6326
 
 # Cyrix
@@ -2471,7 +2480,7 @@ SERVER SVGA
 LINE VideoRam 16384
 NOCLOCKPROBE
 
-NAME Matrox Millennium G200 32MB
+NAME Matrox Millennium G400 32MB
 CHIPSET mgag400
 SERVER SVGA
 LINE VideoRam 32768
@@ -2570,6 +2579,9 @@ SEE RIVA TNT
 NAME Diamond Viper 770
 SEE RIVA TNT2
 
+NAME AOpen PS3010
+SEE RIVA TNT2
+
 NAME STB Velocity 128
 SEE RIVA128
 
@@ -2578,6 +2590,21 @@ SEE RIVA128
 
 NAME ASUS 3Dexplorer
 SEE RIVA128
+
+NAME Chaintech Desperado RI20
+SEE RIVA128
+
+NAME Chaintech Desperado RI30
+SEE RIVA TNT
+
+NAME Chaintech Desperado RI40/41
+SEE RIVA TNT2
+
+NAME Chaintech Desperado RI50
+SEE RIVA TNT2
+
+NAME Chaintech Desperado RI60
+SEE RIVA TNT2
 
 NAME Hercules Dynamite TNT
 SEE RIVA TNT
@@ -2820,6 +2847,9 @@ SEE Intel 740 (generic)
 NAME Chaintech AGP-740D
 SEE Intel 740 (generic)
 
+NAME Chaintech Tornado I7000
+SEE Intel 740 (generic)
+
 NAME EliteGroup(ECS) 3DVision-i740 AGP
 SEE Intel 740 (generic)
 
@@ -2913,6 +2943,13 @@ SEE Voodoo Banshee (generic)
 
 NAME Diamond Monster Fusion
 SEE Voodoo Banshee (generic)
+
+NAME AOpen PA2010
+SEE Voodoo Banshee (generic)
+
+NAME Chaintech Desperado 3F10
+SEE Voodoo Banshee (generic)
+
 # Misc
 
 END

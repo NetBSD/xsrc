@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/15 1996/10/28 05:13:52 kaleb $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/Imakefile,v 3.22.2.6 1998/12/22 07:50:01 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree98/doc/Imakefile,v 3.22.2.7 1999/08/02 08:38:28 hohndel Exp $
 
 #include <Server.tmpl>
 #include <lnxdoc.rules>
@@ -37,6 +37,9 @@ OSREADME = README.OpenBSD
 #endif
 #ifdef i386MachArchitecture
 OSREADME = /* README.Mach */
+#endif
+#ifdef DguxArchitecture
+OSREADME = README.DGux
 #endif
 #ifdef LinuxArchitecture
 OSREADME = README.Linux
@@ -80,13 +83,14 @@ REPORTFORM = BetaReport
 all::
 
 #if !BuildLinuxDocText
-HWREADME =  README.ati README.trident README.tseng README.WstDig \ 
+HWREADME =  README.ati README.trident README.tseng README.WstDig \
             README.DECtga  README.apm README.rendition README.epson \
             README.chips README.cirrus README.Video7 README.P9000 README.agx \
             README.S3 README.S3V README.SiS README.W32 README.Oak \
             README.I128 README.Mach32 \
             README.Mach64 README.ark README.MGA README.NVIDIA README.mouse \
-            README.neo README.rendition README.3DLabs README.cyrix
+	    README.neo README.rendition README.3DLabs README.cyrix \
+	    README.i740
 
 MAINDOCS = COPYRIGHT README README.Config BUILD RELNOTES
 
@@ -124,6 +128,7 @@ LinkSourceFile(README.Bsdi,$(XF86SRC)/doc)
 LinkSourceFile(README.Config,$(XF86SRC)/doc)
 LinkSourceFile(README.DECtga,$(XF86SRC)/doc)
 LinkSourceFile(README.DGA,$(XF86SRC)/doc)
+LinkSourceFile(README.DGux,$(XF86SRC)/doc)
 LinkSourceFile(README.I128,$(XF86SRC)/doc)
 LinkSourceFile(README.Linux,$(XF86SRC)/doc)
 LinkSourceFile(README.LynxOS,$(XF86SRC)/doc)
@@ -154,6 +159,7 @@ LinkSourceFile(README.cirrus,$(XF86SRC)/doc)
 LinkSourceFile(README.clkprog,$(XF86SRC)/doc)
 LinkSourceFile(README.cyrix,$(XF86SRC)/doc)
 LinkSourceFile(README.epson,$(XF86SRC)/doc)
+LinkSourceFile(README.i740,$(XF86SRC)/doc)
 LinkSourceFile(README.isc,$(XF86SRC)/doc)
 LinkSourceFile(README.mouse,$(XF86SRC)/doc)
 LinkSourceFile(README.neo,$(XF86SRC)/doc)

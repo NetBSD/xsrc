@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_fill.c,v 3.11 1996/12/23 06:56:47 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_fill.c,v 3.11.2.1 1999/07/23 13:22:56 hohndel Exp $ */
 /*
  *
  * Copyright 1993 by Bill Reynolds, Santa Fe, New Mexico
@@ -58,7 +58,7 @@ CirrusFillRectSolidCopy (pDrawable, pGC, nBox, pBox)
   unsigned long rrop_xor,rrop_and;
   RROP_FETCH_GC(pGC);
 
-  CirrusFillBoxSolid (pDrawable, nBox, pBox, rrop_xor, 0, pGC->alu);
+  CirrusFillBoxSolid (pDrawable, nBox, pBox, rrop_xor, 0L, pGC->alu);
 }
 
 

@@ -21,7 +21,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86MuTouch.c,v 3.5.2.4 1999/05/25 06:55:41 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86MuTouch.c,v 3.5.2.5 1999/07/19 11:46:38 hohndel Exp $ */
 
 /*
  *******************************************************************************
@@ -47,7 +47,9 @@
 #ifdef XFREE86_V4
 #include <misc.h>
 #include <xf86.h>
+#if !defined(DGUX)
 #include <xf86_ansic.h>
+#endif
 #include <xf86_OSproc.h>
 #include <xf86Xinput.h>
 #include <exevents.h>

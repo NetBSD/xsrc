@@ -1,6 +1,6 @@
 /*
  * $XConsortium: xconsole.c /main/22 1995/12/07 13:52:50 kaleb $
- * $XFree86: xc/programs/xconsole/xconsole.c,v 3.16.2.3 1998/12/18 11:56:36 dawes Exp $
+ * $XFree86: xc/programs/xconsole/xconsole.c,v 3.16.2.5 1999/08/17 07:39:47 hohndel Exp $
  *
 Copyright (c) 1990  X Consortium
 
@@ -46,6 +46,7 @@ in this Software without prior written authorization from the X Consortium.
 
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>
+#include <X11/Xlocale.h>
 #include <sys/stat.h>
 #ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE
@@ -645,6 +646,8 @@ main (argc, argv)
     Cardinal num_args;
     char     *hostname;
 
+    setlocale(LC_ALL, "");
+
     top = XtInitialize ("xconsole", "XConsole", options, XtNumber (options),
 			&argc, argv);
     XtGetApplicationResources (top, (XtPointer)&app_resources, resources,
@@ -739,6 +742,7 @@ TextAppend (w, s, len)
 TextInsert (w, s, len)
     Widget  w;
     char    *s;
+    unsigned long len;
 {
     XawTextBlock    block;
     long	    current;

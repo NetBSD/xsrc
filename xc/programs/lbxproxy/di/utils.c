@@ -50,7 +50,7 @@ SOFTWARE.
 
 
 
-/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.5.2.1 1997/07/05 15:55:48 dawes Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/utils.c,v 1.5.2.2 1999/07/23 13:23:15 hohndel Exp $ */
 
 #include "lbx.h"
 #include <stdio.h>
@@ -67,7 +67,7 @@ SOFTWARE.
 #undef _POSIX_SOURCE
 #endif
 #endif
-#if !defined(SYSV) && !defined(Lynx)
+#if !defined(SYSV) && !defined(Lynx) && !defined(__QNX__)
 #include <sys/resource.h>
 #endif
 

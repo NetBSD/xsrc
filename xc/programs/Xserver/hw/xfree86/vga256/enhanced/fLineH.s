@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fLineH.s,v 3.6 1996/12/23 06:59:05 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fLineH.s,v 3.6.2.1 1999/07/23 13:23:01 hohndel Exp $ */
 /* Copyright 1992 by James Tsillas, Arlington, Massachusetts.
 
 		All Rights Reserved
@@ -54,6 +54,10 @@ GLNAME(fastvga256HorzS):
 	PUSH_L		(ESI)
 	PUSH_L		(EDI)
 	PUSH_L		(EBX)
+#ifdef __QNX__
+	PUSH_SR		(DS)
+	POP_SR		(ES)
+#endif
 	MOV_L		(REGOFF(16,EBP),xorv)
 	MOV_L		(REGOFF(20,EBP),addrl)
 	MOV_L		(REGOFF(36,EBP),len)

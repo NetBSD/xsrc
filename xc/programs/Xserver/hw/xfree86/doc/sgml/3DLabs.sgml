@@ -50,6 +50,13 @@ on that card. The second screen is currently not supported.
 Run the memory at a higher clock. Useful on some cards with display glitches
 at higher resolutions. But adds the risk to damage the hardware. Use with
 caution.
+<tag>Option "sync_on_green"</tag>
+Composite sync on green. Possibly useful if you wish to use an old
+workstation monitor. This feature is only implemented for Permedia 2
+based boards (Permedia 2v doesn't have this capability). Default is to
+use positive sync polarity. As many SOG monitor want negative sync
+polarity, you'll have to play around with the "-HSync" and "-VSync"
+Modeline flags if you own such a monitor.
 </descrip>
 
 <sect>Bugs and Limitations<p>
@@ -77,7 +84,7 @@ server.
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/3DLabs.sgml,v 1.1.2.4 1999/06/25 08:57:12 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/3DLabs.sgml,v 1.1.2.5 1999/08/17 07:39:28 hohndel Exp $
 </verb>
 
 </article>

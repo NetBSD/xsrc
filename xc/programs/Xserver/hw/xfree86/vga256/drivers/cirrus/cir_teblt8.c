@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_teblt8.c,v 3.23.2.3 1997/07/07 05:49:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_teblt8.c,v 3.23.2.4 1999/07/23 13:22:57 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -613,7 +613,7 @@ glyphwidth, fg)
 	int h;
 	unsigned long **glyphp;
 	int glyphwidth;
-	int fg;
+	unsigned long fg;
 {
 	int line, shift_init, destaddr;
 	unsigned char *base;

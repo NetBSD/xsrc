@@ -29,7 +29,7 @@ other dealings in this Software without prior written authorization
 from the X Consortium.
 
 */
-/* $XFree86: xc/include/Xpoll.h,v 3.1.2.2 1998/12/20 12:08:42 hohndel Exp $ */
+/* $XFree86: xc/include/Xpoll.h,v 3.1.2.3 1999/07/23 13:22:13 hohndel Exp $ */
 
 #ifndef _XPOLL_H_
 #define _XPOLL_H_
@@ -50,6 +50,11 @@ from the X Consortium.
 #include <sys/time.h> 
 #include <sys/types.h>
 #include <sys/_int_unistd.h>
+#endif
+
+#ifdef __QNX__  /* Make sure we get 256 bit select masks */
+#define FD_SETSIZE 256
+#include <sys/select.h>
 #endif
 
 /* AIX 4.2 fubar-ed <sys/select.h>, so go to heroic measures to get it */

@@ -1,5 +1,5 @@
 /* $XConsortium: XawI18n.h,v 1.12 95/01/25 00:48:44 kaleb Exp $ */
-/* $XFree86: xc/lib/Xaw/XawI18n.h,v 3.3 1996/10/19 15:13:22 dawes Exp $ */
+/* $XFree86: xc/lib/Xaw/XawI18n.h,v 3.3.4.1 1999/07/23 13:22:15 hohndel Exp $ */
 
 /************************************************************
 
@@ -56,6 +56,10 @@ extern int _Xaw_iswspace(wchar_t);
 #include <jctype.h>
 #define iswspace(c) jisspace(c)
 #endif
+#endif
+
+#ifdef __QNX__
+#define toascii( c ) ((unsigned)(c) & 0x007f)
 #endif
 
 #ifdef USE_XWCHAR_STRING

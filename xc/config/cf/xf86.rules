@@ -1,5 +1,5 @@
 XCOMM $XConsortium: xf86.rules /main/9 1996/10/31 14:54:26 kaleb $
-XCOMM $XFree86: xc/config/cf/xf86.rules,v 3.16.2.1 1997/05/18 12:00:01 dawes Exp $
+XCOMM $XFree86: xc/config/cf/xf86.rules,v 3.16.2.2 1999/07/23 09:00:21 hohndel Exp $
 
 /*
  * These rules are needed to build the Xfree86 X Servers
@@ -162,6 +162,7 @@ InstallMultipleDestFlags(install.linkkit,list,dest,flags)
 /*
  * DynamicModuleTarget - build a module to be dynamically loaded
  */
+#if !UseElfFormat
 #ifndef DynamicModuleTarget
 #define DynamicModuleTarget(module,modlist)				@@\
 AllTarget(module)							@@\
@@ -173,7 +174,19 @@ module: modlist								@@\
 clean::									@@\
 	RemoveFile(module)
 #endif /* DynamicModuleTarget */
-
+#else
+#ifndef DynamicModuleTarget
+#define DynamicModuleTarget(module,modlist)				@@\
+AllTarget(module)							@@\
+									@@\
+module: modlist								@@\
+	RemoveFile($@)							@@\
+	$(CC) -o $@ $(SHLIBLDFLAGS) modlist				@@\
+									@@\
+clean::									@@\
+	RemoveFile(module)
+#endif /* DynamicModuleTarget */
+#endif
 /*
  * InstallDynamicModule - install a dynamic module
  */

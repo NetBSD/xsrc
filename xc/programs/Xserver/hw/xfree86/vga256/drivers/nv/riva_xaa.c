@@ -36,7 +36,7 @@
 |*     those rights set forth herein.                                        *|
 |*                                                                           *|
  \***************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_xaa.c,v 1.1.2.6 1999/07/05 09:07:40 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/riva_xaa.c,v 1.1.2.7 1999/08/17 07:39:35 hohndel Exp $ */
 /*
  * Based initially on the NV1, NV3 code by Dave McKay.
  *
@@ -271,6 +271,7 @@ static void RivaTransparentGlyph(int x, int y, int w, int h, unsigned long *pbit
 {
     int i, padHeight, padWidth;
 
+    while (riva.Busy(&riva));
     RIVA_FIFO_FREE(riva, Bitmap, 3);
     if (w <= 8)
     {
@@ -320,6 +321,7 @@ static void RivaOpaqueGlyph(int x, int y, int w, int h, unsigned long *pbits)
 {
     int i, padHeight, padWidth;
 
+    while (riva.Busy(&riva));
     RIVA_FIFO_FREE(riva, Bitmap, 3);
     if (w <= 8)
     {

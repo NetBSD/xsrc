@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fBitBlt.s,v 3.1 1996/12/23 06:59:01 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/enhanced/fBitBlt.s,v 3.1.2.1 1999/07/23 13:23:01 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -77,6 +77,11 @@ GLNAME(fastBitBltCopy):
 	PUSH_L	(EDI)
 	PUSH_L	(ESI)
 	PUSH_L	(EBX)
+#ifdef __QNX__
+	PUSH_SR (DS)
+	POP_SR  (ES)
+#endif
+	
 	MOV_L	(REGOFF(12,EBP),psrc)
 	MOV_L	(REGOFF(16,EBP),pdst)
 	MOV_L	(REGOFF(20,EBP),hcount)

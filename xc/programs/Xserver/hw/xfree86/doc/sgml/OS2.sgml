@@ -3,12 +3,13 @@
 <article>
 <title>README for XFree86 on OS/2
 <author>Holger Veit
-<Date>Last modified on: July 6th, 1999
+<Date>Last modified on: August 1st, 1999
 
 <toc>
 
-<sect>Introductory Note about the release 3.3.4
+<sect>Introductory Note about the release 3.3.5
 <p>
+
 Before looking into this file, please check for any LATEST.OS2 files
 that may come with the binary distribution. Please also check out the
 following XFree86/OS2 WWW pages:
@@ -19,22 +20,22 @@ following XFree86/OS2 WWW pages:
 </itemize>
 before you claim to have found any problems.
 
-This version of the code is called XFree86/OS2 3.3.4. This is a
-bugfix release for 3.3.3 and later which also adds hardware support for
-some newer cards (including AGP boards). XFree86-3.3.4 contains all
-security fixes that were released for earlier versions. See the
-RELNOTES document for details. 
+This version of the code is called XFree86/OS2 3.3.5. This is a
+bugfix release for 3.3.3.1 (3.3.4 was never released for XFree86/OS2)
+which also adds hardware support for some newer cards, including AGP 
+boards. XFree86-3.3.5 contains all security fixes that were released 
+for earlier versions. See the RELNOTES document for details. 
 
-XFree86/OS2-3.3.4 is a full, unrestricted version which does not
+XFree86/OS2-3.3.5 is a full, unrestricted version which does not
 expire, and for which the complete  source code is available. In
 contrast to beta versions, we consider this  code as sufficiently
 stable for use by an end user. Since there  have been numerous
 bugfixes, we recommend this version, even if you had  XFree86/OS2 3.3.x
 before and it worked satisfyingly with your hardware. By the time
-3.3.4 is released, the older version 3.3 will be withdrawn, and
+3.3.5 is released, the older version 3.3 will be withdrawn, and
 archives will be updated to this version. There may still be
 references  to 3.3 or 3.3.x still in documents; these apply 
-to 3.3.4 as well, unless otherwise noted.
+to 3.3.5 as well, unless otherwise noted.
 
 Previous versions have been tested in a large number of configurations
 and have been found to be working, with some bugs left, rather flawlessly.
@@ -85,13 +86,13 @@ See the <htmlurl url="COPYRIGHT.html" name="Copyright Notice">.
 <!--
 The sources for XFree86/OS2 are available by anonymous ftp from:
 
-<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.4/source"
-url="ftp://ftp.XFree86.org/pub/XFree86/3.3.4/source">
+<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.5/source"
+url="ftp://ftp.XFree86.org/pub/XFree86/3.3.5/source">
 -->
 
 Binaries for OS/2 Warp and Merlin are available from:
-<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.4/OS2"
-url="ftp://ftp.XFree86.org/pub/XFree86/3.3.4/OS2">
+<htmlurl name="ftp.XFree86.org:/pub/XFree86/3.3.5/OS2"
+url="ftp://ftp.XFree86.org/pub/XFree86/3.3.5/OS2">
 <p>
 The WWW page
 <htmlurl name="http://borneo.gmd.de/~veit/os2/xf86os2.html"
@@ -159,7 +160,7 @@ this file and we'll revise it.
 <p>
 <itemize>
 <item>Any version of Warp 3 with at least fixpack 17, or Warp 4 is required
-<item>XFree86/OS2-3.3.4 may use a local named-pipe connection or a TCP/IP 
+<item>XFree86/OS2-3.3.5 may use a local named-pipe connection or a TCP/IP 
        based network connection.
        <enum>
        <item>Warp comes with the Internet Access Kit (IAK), which is
@@ -643,7 +644,7 @@ port heavily relies on
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.9 1999/07/13 07:09:49 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2.sgml,v 3.9.2.10 1999/08/02 08:38:16 hohndel Exp $
 
 
 

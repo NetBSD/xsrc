@@ -1,4 +1,7 @@
 XCOMM! /bin/sh
+XCOMM
+XCOMM $XFree86: xc/programs/x11perf/x11pcomp.cpp,v 1.1.1.1.12.3 1999/07/22 14:21:29 hohndel Exp $
+XCOMM
 XCOMM Collects multiple outputs of x11perf.  Just feed it a list of files, each
 XCOMM containing the output from an x11perf run, and this shell will extract the
 XCOMM object/second information and show it in tabular form.  An 80-column line
@@ -22,9 +25,10 @@ PATH=LIBPATH:.:$PATH
 export PATH
 
 set -e
-tmp=/tmp/rates.$$
+tmp=${TMPDIR-/tmp}/rates.$$
 trap "rm -rf $tmp" 0 1 2 15
-mkdir $tmp $tmp/rates
+mkdir $tmp || exit 1
+mkdir $tmp/rates
 ratio=
 allfiles=
 XCOMM Include relative rates in output?  Report only relative rates?

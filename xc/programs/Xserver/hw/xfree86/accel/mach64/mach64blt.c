@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64blt.c,v 3.8 1996/12/23 06:39:09 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64blt.c,v 3.8.2.1 1999/07/23 13:22:36 hohndel Exp $ */
 /*
  * Copyright 1989 by the Massachusetts Institute of Technology
  * Copyright 1993,1994,1995,1996 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -90,14 +90,14 @@ mach64CopyArea(pSrcDrawable, pDstDrawable,
 		ErrorF("mach64CopyArea: unsupported depth %d \n",
 			max(pSrcDrawable->bitsPerPixel, 
 			    pDstDrawable->bitsPerPixel));
-		return;
+		return 0;
 	}
     }
     else
     {
         pRgnExposed = mach64BitBlt (pSrcDrawable, pDstDrawable, pGC, 
 				    srcx, srcy, width, height, dstx, dsty,
-                                    mach64DoBitBlt, 0);
+                                    mach64DoBitBlt, 0L);
         return pRgnExposed;
     }
 }
@@ -182,7 +182,7 @@ mach64CopyPlane(pSrcDrawable, pDstDrawable,
         /* no exposures here, copy bits from inside a pixmap */
         (void) mach64BitBlt ((DrawablePtr) pBitmap, pDstDrawable, pGC,
                              0, 0, width, height, dstx, dsty, 
-			     mach64CopyPlane1toN, 1);
+			     mach64CopyPlane1toN, 1L);
 
         FreeScratchGC (pGC1);
         (*pScreen->DestroyPixmap) (pBitmap);
@@ -919,7 +919,7 @@ cfbCopyPlane1to32 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc,
     unsigned long planemask;
     RegionPtr prgnDst;
     DDXPointPtr pptSrc;
-    int         bitPlane;
+    unsigned long bitPlane;
     GC          *pGC;
 {
     int	srcx, srcy, dstx, dsty;
@@ -1252,7 +1252,7 @@ cfbCopyPlane1to16 (pSrcDrawable, pDstDrawable, rop, prgnDst, pptSrc,
     unsigned long planeMask;
     RegionPtr prgnDst;
     DDXPointPtr pptSrc;
-    int         bitPlane;
+    unsigned long bitPlane;
     GC          *pGC;
 {
     int	srcx, srcy, dstx, dsty;

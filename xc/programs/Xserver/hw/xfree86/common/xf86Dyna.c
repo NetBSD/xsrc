@@ -27,7 +27,7 @@
  * in this Software without prior written authorization from Metro Link.
  *
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Dyna.c,v 1.1.2.1 1999/06/17 16:27:48 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Dyna.c,v 1.1.2.2 1999/07/28 13:37:42 hohndel Exp $ */
 
 
 #include "Xos.h"
@@ -75,6 +75,7 @@
 #define LINK_SPEED	9
 #define ALWAYS_CORE	10
 #define BUTTON_NO       11
+#define SWAP_XY         12
 
 static SymTabRec DynaTab[] = {
   { ENDSUBSECTION,     "endsubsection" },
@@ -89,6 +90,7 @@ static SymTabRec DynaTab[] = {
   { LINK_SPEED,        "linkspeed" },
   { ALWAYS_CORE,       "alwayscore" },
   { BUTTON_NO,         "buttonno" },
+  { SWAP_XY,           "swapxy" },
   { -1,                "" },
 };
 
@@ -139,6 +141,7 @@ typedef struct _DynaproPrivateRec
 	int max_x;				/* Maximum x                    */
 	int min_y;				/* Minimum y reported by calibration        */
 	int max_y;				/* Maximum y                    */
+	int swap_xy;				/* Swap dimensions */
 	Bool button_down;			/* is the "button" currently down */
 	int button_number;			/* which button to report */
 	char *input_dev;
@@ -302,7 +305,13 @@ xf86DynaproConfig(LocalDevicePtr    *array,
       }
       break;
 
-
+    case SWAP_XY:
+      priv->swap_xy=1;
+      if (xf86Verbose) {
+	ErrorF("%s Dynapro device will swap X and Y dimensions\n",
+	      XCONFIG_GIVEN);
+      }
+      break;
 
     case EOF:
       FatalError("Unexpected EOF (missing EndSubSection)");
@@ -361,6 +370,11 @@ xf86DynaproAllocate(void)
   priv->screen_num = 0;
   priv->screen_width = -1;
   priv->screen_height = -1;
+  priv->lex_mode = Dynapro_byte0;
+  priv->swap_xy = 0;
+  priv->button_down = FALSE;
+  priv->button_number = 1;
+  priv->proximity = FALSE;
   local->name = XI_TOUCHSCREEN;
   local->flags = XI86_NO_OPEN_ON_INIT;
   local->device_config = xf86DynaproConfig;
@@ -546,9 +560,13 @@ xf86DynaproReadInput (LocalDevicePtr pInfo)
 
 	while (DynaproGetPacket (pInfo) == Success)
 	{
+		if (priv->swap_xy) {
+			y = priv->packet[1] | ((priv->packet[0] & 0x38) << 4);
+			x = priv->packet[2] | ((priv->packet[0] & 0x07) << 7);
+		} else {
 		x = priv->packet[1] | ((priv->packet[0] & 0x38) << 4);
 		y = priv->packet[2] | ((priv->packet[0] & 0x07) << 7);
-		
+		}
 				    
 		if ((priv->proximity == FALSE) && (priv->packet[0] & 0x40))
 		{

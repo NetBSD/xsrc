@@ -2,17 +2,17 @@
 
 <article>
 
-<title>Release Notes for XFree86&tm; 3.3.4
+<title>Release Notes for XFree86&tm; 3.3.5
 <author>The XFree86 Project, Inc
-<date>21 June 1999
+<date>17 August 1999
 
 <abstract>
 
 This document describes the bugs fixed and the features added in
-XFree86 3.3.4 compared with the 3.3.3 and 3.3.3.1 release, 
+XFree86 3.3.5 compared with the 3.3.4 release, 
 It also includes installation instructions for the binary distributions.
 It is strongly recommended that anyone using XFree86 update to version
-3.3.4. 
+3.3.5. 
 
 </abstract>
 
@@ -49,7 +49,7 @@ X11R6.4 back to the old free X Consortium style copyright.
 Given the fact that our main development focus is on XFree86-4.0 and that 
 the 3.3.3 release was intended mostly to fix some bugs and get out new
 drivers to the public, we opted not to include X11R6.4 in XFree86-3.3.3.
-Since XFree86-3.3.4 and XFree86-3.3.3.1 are merely quick bug fix releases to
+Since XFree86-3.3.5, XFree86-3.3.4 and XFree86-3.3.3.1 are merely quick bug fix releases to
 XFree86-3.3.3 (that happen to add support for some new common hardware as
 well), the same applies here.
 <p>
@@ -67,6 +67,23 @@ release.
 Users running FreeBSD 3.0 should note that only ELF binaries are provided
 with this release.  a.out shared libraries are also included for compatibility
 purposes.
+
+<p> 
+<sect> What's new in 3.3.5?
+<p>
+<itemize>
+  <item>Support for S3 Savage4 and Savage3D. Limited to Linux/x86 at this point. Please see README.S3V.
+  <item>Support for S3 Trio3D/2X.
+  <item>Support for DGux.
+  <item>Support for QNX.
+  <item>Fix bug in Mach64 server on Rage LT and Rage LT Pro.
+  <item>Fix SiS driver for 530 and 620.
+  <item>Fix the spurious underline problem on NVidia Riva TNT cards.
+  <item>Fix the PS/2 mouse problem with later Linux kernels.
+  <item>Misc updates and bugfixes in Rendition driver.
+  <item>Updates from SuSE and Red Hat, including more keyboards, PAM support, ARM and AXP fixes,
+        security fixes.
+</itemize>
 
 <p> 
 <sect> What's new in 3.3.4?
@@ -246,12 +263,12 @@ as set forth at <htmlurl name="http://www.opensource.org/osd.html"
 url="http://www.opensource.org/osd.html">. 
 This definition is actually a subset of our requirements.
 <p>
-All code in XFree86 3.3.4 satisfies the Open Source Software definition.
+All code in XFree86 3.3.5 satisfies the Open Source Software definition.
 <p>
 
-<sect>Installing the XFree86 3.3.4 Release
+<sect>Installing the XFree86 3.3.5 Release
 <p>
-The XFree86 3.3.4 binaries are distributed as a full release.
+The XFree86 3.3.5 binaries are distributed as a full release.
 <!--
 , and as an
 update to the 3.3.3 release.  For information about upgrading from 3.3.3
@@ -522,7 +539,7 @@ To update your installation to 3.3.4, run the following as
 -->
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.76 1999/06/30 13:00:29 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.79 1999/08/17 07:39:30 hohndel Exp $
 </verb>
 
 </article>

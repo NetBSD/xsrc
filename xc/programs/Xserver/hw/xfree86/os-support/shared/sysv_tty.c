@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sysv_tty.c,v 3.8.2.2 1999/05/07 00:52:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/sysv_tty.c,v 3.8.2.3 1999/08/17 07:39:34 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
@@ -167,6 +167,21 @@ int
 xf86FlushInput(fd)
 int fd;
 {
-	return ioctl(fd, TCFLSH, 0);
-}
+	fd_set fds;
+	struct timeval timeout;
+	char c[4];
 
+	if (tcflush(fd, TCIFLUSH) == 0)
+		return 0;
+
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
+	FD_ZERO(&fds);
+	FD_SET(fd, &fds);
+	while (select(FD_SETSIZE, &fds, NULL, NULL, &timeout) > 0) {
+		read(fd, &c, sizeof(c));
+		FD_ZERO(&fds);
+		FD_SET(fd, &fds);
+	}
+	return 0;
+}

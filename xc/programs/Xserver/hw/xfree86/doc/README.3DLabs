@@ -63,6 +63,15 @@ This server supports the following 3DLabs chipsets:
             play glitches at higher resolutions. But adds the risk to damage
             the hardware. Use with caution.
 
+      Option "sync_on_green"
+            Composite sync on green. Possibly useful if you wish to use an
+            old workstation monitor. This feature is only implemented for
+            Permedia 2 based boards (Permedia 2v doesn't have this capabil-
+            ity). Default is to use positive sync polarity. As many SOG moni-
+            tor want negative sync polarity, you'll have to play around with
+            the "-HSync" and "-VSync" Modeline flags if you own such a moni-
+            tor.
+
 4.  Bugs and Limitations
 
    o The 500TX and MX chipsets cannot switch modes, therefore only the first
@@ -93,7 +102,7 @@ This server supports the following 3DLabs chipsets:
      work on this server on paid time, thereby financing development of this
      server.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/3DLabs.sgml,v 1.1.2.4 1999/06/25 08:57:12 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/3DLabs.sgml,v 1.1.2.5 1999/08/17 07:39:28 hohndel Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.3DLabs,v 1.1.2.7 1999/06/25 09:10:40 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.3DLabs,v 1.1.2.8 1999/08/17 13:28:09 hohndel Exp $

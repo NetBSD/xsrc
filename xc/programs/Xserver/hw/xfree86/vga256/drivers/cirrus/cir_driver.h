@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.h,v 3.32.2.3 1998/09/27 12:59:06 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/cirrus/cir_driver.h,v 3.32.2.4 1999/07/23 13:22:56 hohndel Exp $ */
 /*
  *
  * Copyright 1993 by Simon P. Cooper, New Brunswick, New Jersey, USA.
@@ -161,7 +161,8 @@ extern void CirrusCopyWindow();
 /* cir_fillsp.c */
 extern void CirrusFillSolidSpansGeneral();
 extern void CirrusMMIOFillRectSolid();
-extern void CirrusMMIOFillBoxSolid();
+extern void CirrusMMIOFillBoxSolid(DrawablePtr pDrawable, int nBox, BoxPtr pBox, 
+				   int pixel1, int pixel2, unsigned char alu);
 extern void CirrusMMIOBanded32x32PatternFill();
 extern void CirrusMMIOPoly32x32PatternFill();
 extern void CirrusWriteSolidPattern();

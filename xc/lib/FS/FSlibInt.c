@@ -1,5 +1,5 @@
 /* $XConsortium: FSlibInt.c /main/19 1996/09/28 16:32:39 rws $ */
-/* $XFree86: xc/lib/FS/FSlibInt.c,v 3.2.2.1 1998/02/15 16:08:36 hohndel Exp $ */
+/* $XFree86: xc/lib/FS/FSlibInt.c,v 3.2.2.2 1999/07/29 09:22:29 hohndel Exp $ */
 
 /*
  * Copyright 1990 Network Computing Devices;
@@ -1264,7 +1264,9 @@ _FSFreeQ()
 }
 
 #ifdef _POSIX_SOURCE                     /* stupid makedepend [need if] */
+#ifndef __QNX__   /* QNX's uname nodename entry is not same as tcpip hostname */
 #define NEED_UTSNAME
+#endif
 #endif
 #ifdef hpux
 #define NEED_UTSNAME

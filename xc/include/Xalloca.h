@@ -28,6 +28,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from the X Consortium.
 
+$XFree86: xc/include/Xalloca.h,v 3.4.2.2 1999/07/23 13:56:13 hohndel Exp $
 */
 
 /*
@@ -109,12 +110,14 @@ from the X Consortium.
  */
 /* alloca might be a macro taking one arg (hi, Sun!), so give it one. */
 #        ifndef __sgi			/* IRIX 5/6 has definition */
+#         ifndef __QNX__
 #          define __Xnullarg		/* as nothing */
 #          ifndef X_NOT_STDC_ENV
              extern void *alloca(__Xnullarg);
 #          else
              extern char *alloca(__Xnullarg);
 #          endif
+#         endif /* __QNX__ */
 #        endif /* __sgi */
 #        define ALLOCATE_LOCAL(size) alloca((int)(size))
 #        define DEALLOCATE_LOCAL(ptr)  /* as nothing */

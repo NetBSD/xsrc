@@ -31,14 +31,14 @@
  *   Modifier: Masayoshi Shimamura      FUJITSU LIMITED
  *
  */
-/* $XFree86: xc/lib/X11/lcGenConv.c,v 3.6.2.2 1998/01/25 06:11:07 dawes Exp $ */
+/* $XFree86: xc/lib/X11/lcGenConv.c,v 3.6.2.3 1999/07/26 07:33:14 hohndel Exp $ */
 
 
 #include "Xlibint.h"
 #include "XlcGeneric.h"
 #include <stdio.h>
 
-#if !defined(X_NOT_STDC_ENV) && !defined(macII) && !defined(Lynx_22)
+#if !defined(X_NOT_STDC_ENV) && !defined(macII) && !defined(Lynx_22) && !defined(X_LOCALE)
 #define STDCVT
 #endif
 
@@ -1324,6 +1324,11 @@ ctstowcs(conv, from, from_left, to, to_left, args, num_args)
 	      {
 		state->GR_charset = state->charset;
 	      }	
+	    else if (state->charset->side == XlcGLGR)
+	      {
+		state->GL_charset = state->charset;
+		state->GR_charset = state->charset;
+	      }
 
 	    if (*from_left < ctr_seq_len) {
 		inbufptr--;

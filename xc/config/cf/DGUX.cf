@@ -1,7 +1,8 @@
-XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.1.1.3.2.7 1999/07/17 05:00:46 dawes Exp $
+XCOMM platform:  $XFree86: xc/config/cf/DGUX.cf,v 1.1.1.3.2.13 1999/08/17 07:39:16 hohndel Exp $
 /* Copyright Takis Psarogiannakopoulos <takis@dpmms.cam.ac.uk>
- * This is the DG/ux configuration file of X11R6.3
- * XFree86 Version 3.3.4 ix86 DG/ux Release 4.20 MU04
+ * This is the DG/ux configuration file of X11R6.3 
+ * XFree86 Version 3.3.5 ix86 DG/ux Release 4.20 MU04
+ * July 17 1999 (Connections type changes)
  */
 #ifndef OSName
 #define OSName			DefaultOSName
@@ -56,10 +57,11 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 
 /*
  * Here are the default paths to use tools for building.
- * Adjust as in your system , or link then to the locations
- * below and dont change nothing in this section
- * You could use DG-gcc 2.7.2.9 but I strongly suggest 2.8.1
- * Remember: cpp below is pointing to elink !
+ * Use links to make these tools visible as below,
+ * or modify below the locations as you like.
+ * Remeber that cpp below is pointing to elink so
+ * if you using gcc-2.8.1 make sure that it is 
+ * installed also as elink gcc.
  */
 
 #define ArCmdBase       /usr/bin/ar
@@ -73,12 +75,8 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #define YaccCmd         /usr/bin/yacc
 #define InstallCmd      /usr/bin/install   /* I use gnu install-sh */
 #define LnCmd           ln -s
-#define RanlibCmd true                         /* Or make a link ranlib->true */
+#define RanlibCmd true                         /* Or make a link ranlib->true */ 
 #define CplusplusCmd    /usr/local/bin/g++
-
-
-
-
 
 
 #ifndef MkdirHierCmd
@@ -89,9 +87,20 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #define XawI18nDefines          -DUSE_XWCHAR_STRING
 #endif
 
-#if 0
+/*
+ * Define here your project root by
+ * changing this. 
+ * Default is /usr/X11R6
+ * My choice is:
+ */
+
+#if 0 
 #define ProjectRoot /usr/X11R6.3   /* Look also in site.def for the default */
-#endif
+#endif 
+
+
+/* Added for 3.3.5 */
+#define HasMktemp YES
 
 #define HasPutenv YES
 #define HasVFork YES
@@ -126,14 +135,14 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #define StandardDefines -DDGUX -DSVR4 -Di386 -D__ix86 -D_DGUX_SOURCE -D_LITTLE_ENDIAN -DPENTIUM_CHANGE
 
 #ifndef HasGcc2
-#define HasGcc2 YES     /* We suppose that your DG/ux has gcc-dg.2.7.2.88 */
+#define HasGcc2 YES     /* We suppose that your DG/ux has gcc-dg.2.8.1.3 */
 #endif                  /* Do NOT use native DG/ux gcc, it is faulty in general */
 #ifndef HasGcc
 #define HasGcc HasGcc2
 #endif
 
-#define PositionIndependentCFlags -fpic
-#define PositionIndependentCplusplusFlags -fpic
+#define PositionIndependentCFlags -fPIC
+#define PositionIndependentCplusplusFlags -fPIC
 
 /*
  * To forceably build static libraries in addition to shared libraries,
@@ -151,10 +160,6 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #define DebuggableCDebugFlags -g -mstandard
 #define DebuggableCplusplusDebugFlags
 #define SharedLibraryLoadFlags -G -z text
-#define PositionIndependentCFlags -fpic
-#define PositionIndependentCplusplusFlags -fpic
-
-
 
 /*
  * The default optimisation flags for GCC 2.x.  -fno-strength-reduce is
@@ -170,7 +175,7 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 
 
 
-/* Manual pages installed under their full names */
+/* Manual pages installed under their full names */ 
 
 #define ExpandManNames          YES
 #define CompressManPages        YES
@@ -195,6 +200,30 @@ XCOMM operating system:	OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVer
 #if BuildDynamicLoading
 #define ServerExtraSysLibs -ldl
 #endif
+
+
+/*
+ * Streams connections were "broken" for DG/ux.
+ * We activate sockets to be sure. The code for 
+ * STREAMS works in most SVR4s but not in 
+ * DG/ux... 
+ * But I "fix" that in XFree86-3.3.5.
+ * So -DSTREAMSCONN works now OK also. 
+ * Switch the flag -DTCPCONN below to
+ * -DSTREAMSCONN to allow STREAMS ioctls.
+ * Takis, 21/Jul/1999 
+ *
+ * NOTE:
+ *     -DSTREAMSCONN = STREAMS ioctls
+ *     -DTCPCONN = sockets
+ * Do not define both,only one of the above.
+ * PS:
+ * I learned that BSD sockets perform better
+ * in DG/ux than the streams.
+ * Contact DG for a new "/usr/lib/tcpip.so"
+ * if you insist to build with SVR4 streams.
+ *
+ */
 
 #ifndef ConnectionFlags
 #define ConnectionFlags	-DTCPCONN -DUNIXCONN -DLOCALCONN

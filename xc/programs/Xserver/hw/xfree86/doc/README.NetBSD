@@ -2,7 +2,7 @@
 
 Rich  Murphey, David Dawes, Marc  Wandschneider, Mark  Weaver, Matthieu Herrb
 
-                       Last modified on: 25 June 1999
+                      Last modified on: 20 August 1999
 
 1.  What and Where is XFree86?
 
@@ -19,9 +19,6 @@ The sources for XFree86 are available by anonymous ftp from:
 
 ftp://ftp.XFree86.org/pub/XFree86/current
 
-Binaries for NetBSD 1.2 are available from:
-ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.2
-
 Binaries for NetBSD 1.4 and later are available from:
 ftp://ftp.XFree86.org/pub/XFree86/current/binaries/NetBSD-1.4
 
@@ -31,7 +28,7 @@ RORS
 Other NetBSD versions:
 
 These binaries are not compatible with earlier NetBSD versions. If you're
-still running NetBSD 0.9, 1.0 or 1.1, you should think about upgrading to a
+still running NetBSD earlier than 1.4, you should think about upgrading to a
 newer version of NetBSD first.
 
 If you don't upgrade, you'll have to build XFree86 from the sources.  XFree86
@@ -39,7 +36,7 @@ should compile cleanly under earlier versions of NetBSD, although this has
 not been tested.
 
 XFree86 also builds on NetBSD/sparc. See section Building on other architec-
-tures (section 8.5, page 1) for details.
+tures (section 9.5, page 1) for details.
 
 The client side of XFree86 also builds on NetBSD/alpha and many other archi-
 tecture supported by NetBSD.
@@ -51,7 +48,13 @@ XFree86 also supports NetBSD on PC98 machines.
 Send email to matthieu@laas.fr (Matthieu Herrb) or XFree86@XFree86.org if you
 have comments or suggestions about this file and we'll revise it.
 
-3.  New features in this release
+3.  New OS-dependant features in XFree86 3.3.5
+
+None.
+
+See the Release Notes for non-OS dependent new features in XFree86 3.3.5.
+
+4.  New OS-dependant features in XFree86 3.3.4
 
    o The maximum number of open connections in the server has been raised to
      128,
@@ -59,14 +62,12 @@ have comments or suggestions about this file and we'll revise it.
    o support for the wsmouse mouse protocol included in  NetBSD 1.4 has been
      added.
 
-See the Release Notes for non-OS dependent new features in XFree86 3.3.4.
-
-4.  Installing the Binaries
+5.  Installing the Binaries
 
 Refer to section 5 of the Release Notes  for detailed installation instruc-
 tions.
 
-5.  Configuring X for Your Hardware
+6.  Configuring X for Your Hardware
 
 The /etc/XF86Config file tells the X server what kind of monitor, video card
 and mouse you have.  You must create it to tell the server what specific
@@ -94,7 +95,7 @@ ual page.
 Once you've set up a XF86Config file, you can fine tune the video modes with
 the xvidtune utility.
 
-5.1  About mouse configuration
+6.1  About mouse configuration
 
 If your serial mouse does not work try using kermit or tip to connect to the
 mouse serial port and verify that it does indeed generate characters.
@@ -107,14 +108,14 @@ Only standard PS/2 mice are supported by this driver. Newest PS/2 mice that
 send more than three bytes at a time (especially Intellimouse, or MouseMan+
 with a ``3D'' roller) are not supported yet.
 
-XFree86 3.3.4 also has support for the mouse driver included in the new
-wscons console driver introduced by NetBSD 1.4. Specify ``wsmouse'' as the
-protocol and ``/dev/wsmouse0'' as the device in /etc/XF86Config if you're
-using NetBSD 1.4 with wscons.
+XFree86 3.3.4 and later also have support for the mouse driver included in
+the new wscons console driver introduced by NetBSD 1.4. Specify ``wsmouse''
+as the protocol and ``/dev/wsmouse0'' as the device in /etc/XF86Config if
+you're using NetBSD 1.4 with wscons.
 
 See README.mouse  for general instruction on mouse configuration in XFree86.
 
-5.2  Other input devices
+6.2  Other input devices
 
 XFree86  supports the dynamic loading of drivers for external input devices
 using the XInput extension. Currently supported devices are:
@@ -142,7 +143,7 @@ pointer(1) command.
 For joystick support, you'll need to install the joystick device driver in
 the kernel. It is included in NetBSD 1.2. See joy(4) for details.
 
-5.3  Configuring PEX and XIE extensions
+6.3  Configuring PEX and XIE extensions
 
 The PEX and XIE extensions are  supported as external modules.  If you want
 to have access to these extensions, add the following lines to the Module
@@ -151,7 +152,7 @@ section of XF86Config:
         load    "pex5.so"
         load    "xie.so"
 
-6.  Running X
+7.  Running X
 
 8mb of memory is a recommended minimum for running X.  The server, window
 manager and an xterm take about 4 Mb of memory themselves.  On a 4Mb system
@@ -171,7 +172,7 @@ To get out of X windows, type: ``exit'' in the console xterm.  You can cus-
 tomize your X by creating .xinitrc, .xserverrc, and .twmrc files in your home
 directory as described in the xinit and startx man pages.
 
-6.1  Starting Xdm, the display manager
+7.1  Starting Xdm, the display manager
 
 To start the display manager, log in as root on the console and type: ``xdm
 -nodaemon''.
@@ -194,7 +195,7 @@ console for the X server first. To do this follow these steps:
    o Make sure the device file exists. If not, ``cd /dev ; ./MAKEDEV
      wscons''.
 
-   o Next, make sure your kernel wants to do wscons. (see below (section 7.1,
+   o Next, make sure your kernel wants to do wscons. (see below (section 8.1,
      page 1)).
 
    o Next, make sure ``wscons=YES'' in /etc/rc.conf.
@@ -214,14 +215,14 @@ explanation)
 Note that the binary distributions of XFree86 for NetBSD don't include sup-
 port for the XDM-AUTHORIZATION-1 protocol.
 
-7.  Kernel Support for X
+8.  Kernel Support for X
 
 To make sure X support is enabled under NetBSD, the following line must be in
 your config file in /sys/arch/i386/conf:
 
      options XSERVER, UCONSOLE
 
-7.1  Console drivers
+8.1  Console drivers
 
 The server supports the standard NetBSD/i386 console drivers: pccons, pcvt
 and wscons (in pcvt compatibility mode). They are detected at runtime and no
@@ -254,7 +255,7 @@ in your kernel configuration file if you're using wscons. Refer to the
 wscons(4) and wsmouse(4) manual pages for informations on how to configure
 wscons into the kernel.
 
-7.2  Aperture Driver
+8.2  Aperture Driver
 
 By default NetBSD 0.9C and higher include the BSD 4.4 kernel security feature
 that disable access to the /dev/mem device when in multi-users mode. But
@@ -310,7 +311,7 @@ to run another kernel.
      the first one will have linear memory access.  Use 'option INSE-
      CURE' if you need more that one X server at a time.
 
-7.3  MIT-SHM
+8.3  MIT-SHM
 
 NetBSD 1.0 and later supports System V shared memory. If XFree86 detects this
 support in your kernel, it will support the MIT-SHM extension.
@@ -324,7 +325,7 @@ To add support for system V shared memory to your kernel add the lines:
 
 to your kernel config file.
 
-8.  Rebuilding the XFree86 Distribution
+9.  Rebuilding the XFree86 Distribution
 
 The server link kit allow you to rebuild just the X server with a minimum
 amount of disk space.  Just unpack it, make the appropriate changes to the
@@ -338,7 +339,7 @@ You should configure the distribution by editing xc/config/cf/host.def
 before compiling.  To compile the sources, invoke ``make World'' in the xc
 directory.
 
-8.1  Console drivers
+9.1  Console drivers
 
 XFree86 has a configuration option to select the console drivers to use in
 xf86site.def:
@@ -366,7 +367,7 @@ Syscons and codrv are not bundled with NetBSD. They are available by anony-
 mous FTP from a number of sites. They are not supported by the XFree86 binary
 distribution anymore.
 
-8.2  pcvt_ioctl.h file:
+9.2  pcvt_ioctl.h file:
 
 XFree86's default configuration includes support for the PCVT console driver.
 Unfortunately, NetBSD versions before 19980413 don't install the pcvt_ioctl.h
@@ -379,7 +380,7 @@ If you don't have kernel sources, you can grab this file from ftp.netbsd.org
 or one of its mirrors. If you're not running PCVT, you can remove -DPCVT_SUP-
 PORT from XFree86ConsoleDefines in xf86site.def too.
 
-8.3  console.h and ioctl_pc.h files:
+9.3  console.h and ioctl_pc.h files:
 
 If you want to build a server supporting codrv and you don't already have the
 corresponding header file ioctl_pc.h installed in /usr/include/machine, then
@@ -394,7 +395,7 @@ from your installed version of the driver.
 The console.h file for syscons isn't distributed with XFree86 anymore. You
 should get it from the syscons distribution.
 
-8.4  Support for shared libs under NetBSD 1.0 and later
+9.4  Support for shared libs under NetBSD 1.0 and later
 
 By default XFree86 builds for NetBSD with shared libraries support. If you're
 building on 0.9 or don't want shared libraries add the following line to
@@ -402,7 +403,7 @@ host.def:
 
      #define BuildBsdSharedLibs    NO
 
-8.5  Building on other architectures
+9.5  Building on other architectures
 
 XFree86 also compiles on NetBSD/sparc. The Sun server patches from Dennis
 Ferguson and Matthew Green have been integrated in xc/pro-
@@ -426,7 +427,7 @@ XFree86 source tree, with some local modifications. You may want to start
 with this tree to rebuild from sources.  The NetBSD xsrc source tree is
 available at: ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/xsrc/
 
-9.  Building New X Clients
+10.  Building New X Clients
 
 The easiest way to build a new client (X application) is to use xmkmf if an
 Imakefile is included in the sources.  Type ``xmkmf -a'' to create the Make-
@@ -466,7 +467,7 @@ standard Imakefile, this dependency will probably by included in the Makefile
 automagically -- you'll not see the problem. Otherwise, just add ``-lXt'' to
 your library list in the Imakefile or Makefile and relink.
 
-10.  Thanks
+11.  Thanks
 
 Many thanks to:
 
@@ -481,9 +482,9 @@ Many thanks to:
    o Rod Grimes and Jack Velte of Walnut Creek Cdrom for use of their
      machines in preparing the FreeBSD binary release.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.45.2.12 1999/06/30 13:00:27 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/NetBSD.sgml,v 3.45.2.13 1999/08/23 08:49:48 hohndel Exp $
 
      $XConsortium: NetBSD.sgml /main/26 1996/10/28 05:43:20 kaleb $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.NetBSD,v 3.57.2.16 1999/07/05 10:25:11 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/README.NetBSD,v 3.57.2.17 1999/08/23 08:53:16 hohndel Exp $

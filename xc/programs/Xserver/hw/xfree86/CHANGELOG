@@ -1,3 +1,102 @@
+XFree86 3.3.5 (23 August 1999)
+1473. Update preinst.sh (#3140,3143, Joe Gibson).
+1472. Update NetBSD and OpenBSD docs (#3136, Matthieu Herrb).
+1471. Update Oak docs (Jorge Delgado).
+1470. Updates to scanpci and vgaPCI.h (Dirk Hohndel).
+1469. Add locale support to xconsole (Preston Brown).
+1468. Fix for spurious underlines in NVIDIA driver (#3121, Jarno Paananen).
+1467. Two small fixes to Banshee driver (#3115, Scott J. Bertin).
+1466. Fix XF86FlushInput() in order to handle unwanted ACK bytes from the
+      PS/2 mouse (#3114, Kazutaka YOKOTA).
+1465. Fix rendition text mode restauration (#3108, Dejan Ilic).
+1464. Update PC98 docs, Imakefiles and Cards98 database (#3107, Takaaki Nomura).
+1463. Increase mouse event buffer size for NetBSD (#3106, Matthias Scheler).
+1462. Compile fixes for QNX NTO (#3103,3104,3109, Frank Guangxin Liu).
+1461. Update 3Dlabs driver docs (#3102, Stefan Dirsch).
+1460. Fix DGux mktemp configuration.
+
+XFree86 3.3.4Z (3 August 1999)
+1459. Update XFree86Version to 335.
+1458. Add mktemp for DGux (#3098,3099, Takis Psarogiannakopoulos).
+1457. Update S3V docs to reflect the Savage driver (Dirk Hohndel).
+1456. Fix 15bpp for Rendtition driver and update docs, add bandwidth limits
+      for RAMDAC (#3096,3097, Dejan Ilic).
+1455. Update docs and manpages for 3.3.5. Resync PC98 Imakefiles (#3095,
+      Takaaki Nomura).
+1454. Small updates and changes needed for OS/2, documentation updates,
+      fix typos in hw/xfree86/vga256/drivers/Imakefile (#3094, Holger Veit).
+1453. Add missing hunk from change 1435 (#3091, Frank Guangxin Liu).
+1452. Use mktemp only on systems that support it (Dirk Hohndel).
+
+XFree86 3.3.4d (30 July 1999)
+1451. Enable hw cursor for Rendition V2x00 (Dejan Ilic).
+1450. Add Linux specific S3 Savage4 driver (S3).
+1449. Update Polish xkb layout (Marek Michalkiewicz).
+1448. Fix MGA driver for 32MB boards (#3085, Mark Vojkovich).
+1447. Add support for the wscons console driver in NetBSD 1.4 and 
+      later (#3083, Matthias Drochner).
+1446. Add Trio3D/2X support to SVGA server (#3086, Harald Koenig).
+1445. Fix a SEGV in xsm (#3073, Matthias Scheler).
+1444. Fix a SEGV in xinit on QNX amd the QNX NEED_UTSNAME bug (#3072, 
+      Frank Guangxin Liu).
+1443. Add support for QNX/Neutrino (#3071, Sebastien Marineau).
+1442. Initialises the incoming packet state machine for the Dynapro 
+      driver and add a 'SwapXY' option (#3067,3068, David Woodhouse).
+1441. xterm update (#3066, Thomas Dickey).
+1440. Add two SiS chipsets to scanpci (#3065, Matthieu Herrb).
+1439. Remove XExtensionVersion from XPrint headers (Dirk Hohndel).
+1438. Fix bug in Xlib regarding handling GLGR charset (Chia-liang Kao).
+1437. DG/ux updates (#3063, Takis Psarogiannakopoulos).
+1436. Fix compile problem with gcc specific __attribute__.
+1435. QNX updates (#3061,3070,3084, Jean-Claude Michot, Frank Guangxin Liu).
+1434. Fix use of DLLIBRARIY in xdm/Imakefile (#3062, Takaaki Nomura).
+
+XFree86 3.3.4c (23 July 1999)
+1433. Add QNX support (and lots of Watcom compiler fixes) (#3054, 
+      Jean-Claude Michot, Frank Liu and Sebastien Marineau).
+1432. Fix SiS530/620 support (Can-Ru Yeou, SiS).
+1431. Update xf86config to offer a more capable monitor choice.
+1430. Update Xos_r.h to comply with latest POSIX.1b (HJ Lu).
+1429. Remove duplicated entries in the Cards file (#3058,
+      Wanderlei Antonio Cavassin).
+1428. Change DynamicModuleTarget to use $(CC) instead of $(LD) on ELF
+      platforms (#3057, Matthieu Herrb).
+1427. Fix typo in Xserver/os/Imakefile (#3056, 3059, Matthieu Herrb,
+      Takaaki Nomura).
+1426. Correct the "r" constraint in PPC assembler code (#3055, Franz Sirl).
+1425. Fix xf86config to use PROJECTROOT and USRLIBDIR instead of hardcoded
+      /usr/X11R6 based paths (Okada Kenji, Dirk Hohndel).
+
+XFree86 3.3.4b (22 July 1999)
+1424. Some updates and fixes for Cards file (Dirk Hohndel).
+1423. Update Xos_r.h so that XFree86 can be built with glibc-2.1.2
+      (HJ Lu, Dirk Hohndel).
+1422. More DGux fixes (Takis Psarogiannakopoulos).
+1421. Add Linux PAM support to xdm (from Red Hat and SuSE patches).
+1420. Fix building docs on non-Linux OSes when BuildAllDocs is NO (#3053,
+      Matthieu Herrb).
+1419. Fix a bug in the InstallGenManPageLong() rule in lynx.cf (#3052,
+      Thomas Mueller).
+1418. Enable FBDev server by default on Linux. Fix DGA for AXP (Georg Acher).
+      Icelandic, Czech and Slovak keyboard (Hrafnkell Eiriksson, 
+      Stanislav Meduna). Updates for ARM architecture. Fix MGA XAA problem
+      with unaligned 32bit accesses. Allow those using an iso8859-2 locale
+      to type characters in the iso8859-1 character set when needed. Fix DGA
+      on non-WRAM MGA boards. (from the Red Hat patches).
+1417. AXP fixes (Jay Estabrook).
+1416. Security fixes to config utils and x11pcomp. Fix potential SEGV in xauth.
+      Give load indication in xdm chooser (from the SuSE patches).
+1415. Fix typo in xf86Version.h (#3050, Takaaki Nomura).
+
+XFree86 3.3.4a (20 July 1999)
+1414. Further DG/ux fixes (Takis Psarogiannakopoulos).
+1413. Fix problems with wheels on some mice, refine Logitech MouseMan+
+      protocol support (#3020, Kazutaka Yokota).
+1412. Update Cards98 and VideoBoards98 (#3023, Isao Ohishi).
+1411. Fix problems with some Rage LT Laptops and Mach64 server (#3026,
+      Marc LaFrance).
+1410. Fix XIM segv error (#3033, Manabe Takashi).
+
 XFree86 3.3.4 (13 July 1999)
 1409. DG/ux support updates (Takis Psarogiannakopoulos).
 1408. Attempt at making the a.out libraries built on FreeBSD/ELF suitable for
@@ -5741,4 +5840,4 @@ XFree86 3.0a (28 April 1994)
 
 XFree86 3.0 (26 April 1994)
 
-$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.256 1999/07/17 05:00:48 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/CHANGELOG,v 3.390.2.277 1999/08/23 08:49:37 hohndel Exp $

@@ -23,7 +23,7 @@ Except as contained in this notice, the name of the X Consortium shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from the X Consortium.
 */
-/* $XFree86: xc/include/Xos_r.h,v 1.3 1997/01/18 07:17:11 dawes Exp $ */
+/* $XFree86: xc/include/Xos_r.h,v 1.3.2.2 1999/07/23 09:00:22 hohndel Exp $ */
 
 /* 
  * Various and sundry Thread-Safe functions used by X11, Motif, and CDE.
@@ -282,14 +282,14 @@ typedef struct {
 # if defined(_POSIX_REENTRANT_FUNCTIONS) || !defined(SVR4) || defined(Lynx)
 #  ifndef Lynx
 #   define _XGetpwuid(u,p) \
-((getpwuid_r((u),&(p).pws,(p).pwbuf,sizeof((p).pwbuf)) == -1) ? NULL : &(p).pws)
+((getpwuid_r((u),&(p).pws,(p).pwbuf,sizeof((p).pwbuf)) == 0) ? &(p).pws : NULL)
 #   define _XGetpwnam(u,p) \
-((getpwnam_r((u),&(p).pws,(p).pwbuf,sizeof((p).pwbuf)) == -1) ? NULL : &(p).pws)
+((getpwnam_r((u),&(p).pws,(p).pwbuf,sizeof((p).pwbuf)) == 0) ? &(p).pws : NULL)
 #  else /* Lynx */
 #   define _XGetpwuid(u,p) \
-((getpwuid_r(&(p).pws,(u),(p).pwbuf,sizeof((p).pwbuf)) == -1) ? NULL : &(p).pws)
+((getpwuid_r(&(p).pws,(u),(p).pwbuf,sizeof((p).pwbuf)) == 0) ? &(p).pws : NULL)
 #   define _XGetpwnam(u,p) \
-((getpwnam_r(&(p).pws,(u),(p).pwbuf,sizeof((p).pwbuf)) == -1) ? NULL : &(p).pws)
+((getpwnam_r(&(p).pws,(u),(p).pwbuf,sizeof((p).pwbuf)) == 0) ? &(p).pws : NULL)
 #  endif
 # else /* SVR4 */
 #  define _XGetpwuid(u,p) \
@@ -312,11 +312,11 @@ typedef struct {
 } _Xgetpwparams;
 typedef int _Xgetpwret;
 # define _XGetpwuid(u,p) \
-((getpwuid_r((u),&(p).pws,(p).pwbuf,sizeof((p).pwbuf),&(p).pwp) == -1) ? \
- NULL : (p).pwp)
+((getpwuid_r((u),&(p).pws,(p).pwbuf,sizeof((p).pwbuf),&(p).pwp) == 0) ? \
+ (p).pwp : NULL)
 # define _XGetpwnam(u,p) \
-((getpwnam_r((u),&(p).pws,(p).pwbuf,sizeof((p).pwbuf),&(p).pwp) == -1) ? \
- NULL : (p).pwp)
+((getpwnam_r((u),&(p).pws,(p).pwbuf,sizeof((p).pwbuf),&(p).pwp) == 0) ? \
+ (p).pwp : NULL)
 #endif /* X_INCLUDE_PWD_H */
 
 #if defined(X_INCLUDE_PWD_H) && !defined(_XOS_INCLUDED_PWD_H)
@@ -454,13 +454,13 @@ typedef struct {
 } _Xgetservbynameparams;
 #  define _XGethostbyname(h,hp) \
   (bzero((char*)&(hp).hdata,sizeof((hp).hdata)),	\
-   ((gethostbyname_r((h),&(hp).hent,&(hp).hdata) == -1) ? NULL : &(hp).hent))
+   ((gethostbyname_r((h),&(hp).hent,&(hp).hdata) == 0) ? &(hp).hent) : NULL)
 #  define _XGethostbyaddr(a,al,t,hp) \
   (bzero((char*)&(hp).hdata,sizeof((hp).hdata)),	\
-   ((gethostbyaddr_r((a),(al),(t),&(hp).hent,&(hp).hdata) == -1) ? NULL : &(hp).hent))
+   ((gethostbyaddr_r((a),(al),(t),&(hp).hent,&(hp).hdata) == 0) ? &(hp).hent) : NULL)
 #  define _XGetservbyname(s,p,sp) \
   (bzero((char*)&(sp).sdata,sizeof((sp).sdata)),	\
-   ((getservbyname_r((s),(p),&(sp).sent,&(sp).sdata) == -1) ? NULL : &(sp).sent) )
+   ((getservbyname_r((s),(p),&(sp).sent,&(sp).sdata) == 0) ? &(sp).sent : NULL) )
 # endif
 # ifdef X_POSIX_THREAD_SAFE_FUNCTIONS
 #  undef X_POSIX_THREAD_SAFE_FUNCTIONS
@@ -705,9 +705,9 @@ typedef struct {
 # endif
 } _Xttynameparams;
 
-# define _XGetlogin(p)	(getlogin_r((p).buf, sizeof((p).buf)) ? NULL : (p).buf)
+# define _XGetlogin(p)	(getlogin_r((p).buf, sizeof((p).buf)) == 0 ? (p).buf : NULL)
 # define _XTtyname(f,p)	\
-	(ttyname_r((f), (p).buf, sizeof((p).buf)) ? NULL : (p).buf)
+	(ttyname_r((f), (p).buf, sizeof((p).buf)) == 0 ? (p).buf : NULL)
 
 #else
 /* Pre-POSIX API.
@@ -1088,11 +1088,11 @@ typedef struct {
 } _Xgetgrparams;
 
 #define _XGetgrgid(g,p)	\
- ((getgrgid_r((g), &(p).grp, (p).buf, sizeof((p).buf), &(p).result) ? \
-   NULL : (p).result))
+ ((getgrgid_r((g), &(p).grp, (p).buf, sizeof((p).buf), &(p).result) == 0 ? \
+   (p).result) : NULL)
 #define _XGetgrnam(n,p)	\
- ((getgrnam_r((n), &(p).grp, (p).buf, sizeof((p).buf), &(p).result) ? \
-   NULL : (p).result))
+ ((getgrnam_r((n), &(p).grp, (p).buf, sizeof((p).buf), &(p).result) == 0 ? \
+   (p).result) : NULL)
 #endif
 
 #if defined(X_INCLUDE_GRP_H) && !defined(_XOS_INCLUDED_GRP_H)

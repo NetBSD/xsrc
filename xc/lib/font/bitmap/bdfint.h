@@ -28,6 +28,7 @@ not be used in advertising or otherwise to promote the sale, use or
 other dealings in this Software without prior written authorization
 from the X Consortium.
 
+$XFree86: xc/lib/font/bitmap/bdfint.h,v 1.1.1.1.12.2 1999/07/23 13:56:16 hohndel Exp $
 */
 
 #ifndef BDFINT_H
@@ -71,8 +72,30 @@ typedef struct BDFSTAT {
 
 extern unsigned char *bdfGetLine();
 
-extern void bdfError();
-extern void bdfWarning();
+extern void bdfError(
+#if NeedVarargsPrototypes
+    char * message, ...);
+#else
+    char       *message,
+    pointer     a0,
+    pointer     a1,
+    pointer     a2,
+    pointer     a3,
+    pointer     a4,
+    pointer     a5);
+#endif
+extern void bdfWarning(
+#if NeedVarargsPrototypes
+    char *message, ...);
+#else
+    char       *message;
+    pointer     a0,
+    pointer     a1,
+    pointer     a2,
+    pointer     a3,
+    pointer     a4,
+    pointer     a5);
+#endif
 extern Atom bdfForceMakeAtom();
 extern Atom bdfGetPropertyValue();
 extern unsigned char bdfHexByte();

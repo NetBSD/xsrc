@@ -4,8 +4,8 @@
 .\"
 .\"
 .\"
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/xmseconfig.man,v 3.3.2.1 1998/11/06 09:46:19 hohndel Exp $
-.TH xmseconfig 1 "Version 3.3.3"  "XFree86"
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/scripts/xmseconfig.man,v 3.3.2.2 1999/08/02 08:38:13 hohndel Exp $
+.TH xmseconfig 1 "Version 3.3.5"  "XFree86"
 .SH NAME
 xmseconfig - Graphical mouse configuration utility
 .SH SYNOPSIS

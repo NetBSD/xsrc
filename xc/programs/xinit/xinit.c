@@ -1,5 +1,5 @@
 /* $XConsortium: xinit.c /main/58 1996/02/22 10:37:38 kaleb $ */
-/* $XFree86: xc/programs/xinit/xinit.c,v 3.17.2.3 1999/06/27 10:32:26 dawes Exp $ */
+/* $XFree86: xc/programs/xinit/xinit.c,v 3.17.2.7 1999/08/17 07:39:50 hohndel Exp $ */
 
 /*
 
@@ -58,6 +58,7 @@ in this Software without prior written authorization from the X Consortium.
 #define SIGCHLD SIGCLD
 #endif
 #ifdef __EMX__
+#include <sys/signal.h>
 #define INCL_DOSMODULEMGR
 #include <os2.h>
 #define setpgid(a,b)
@@ -158,7 +159,11 @@ char xserverrcbuf[256];
 #define	ERR_EXIT	1
 
 char *default_wrapper = BINDIR "/Xwrapper";
+#if !defined(__QNX__) || defined(__QNXNTO__)
 char *default_server = "X";
+#else
+char qnx_server[16];  /* QNX default server will be of format "X.nnn" */
+#endif
 char *default_display = ":0";		/* choose most efficient */
 #ifndef __EMX__
 char *default_client[] = {"xterm", "-geometry", "+1+1", "-n", "login", NULL};
@@ -173,7 +178,7 @@ char *displayNum;
 char *program;
 Display *xd;			/* server connection */
 #ifndef SYSV
-#if defined(SVR4) || defined(_POSIX_SOURCE) || defined(CSRG_BASED) || defined(__EMX__) || defined(Lynx)
+#if defined(SVR4) || defined(_POSIX_SOURCE) || defined(CSRG_BASED) || defined(__EMX__) || defined(Lynx) || defined(__QNX__)
 int status;
 #else
 union wait	status;
@@ -189,6 +194,12 @@ extern int errno;
 
 static void shutdown();
 static void set_environment();
+
+#if NeedVarargsPrototypes
+#include <stdarg.h>
+void Error (char *fmt, ...);
+void Fatal (char *fmt, ...);
+#endif
 
 #ifdef SIGNALRETURNSINT
 #define SIGVAL int
@@ -323,7 +334,15 @@ main(int argc, char **argv, char **envp)
 		if (access(default_wrapper, X_OK) == 0)
 			*sptr++ = default_wrapper;
 		else
+#if !defined(__QNX__) || defined(__QNXNTO__)
 			*sptr++ = default_server;
+#else
+			/* Use the X.nid link name */
+			{ 
+			 sprintf(qnx_server, "X.%d", getnid());
+			 *sptr++ = qnx_server;
+			}
+#endif /* !__QNX__ */
 #else
 	    (**argv != '/' && **argv != '\\' && **argv != '.' &&
 	     !(isalpha(**argv) && (*argv)[1]==':'))) {
@@ -486,7 +505,7 @@ processTimeout(timeout, string)
 			break;
 		alarm(0);
 #else /* SYSV */
-#if defined(SVR4) || defined(_POSIX_SOURCE) || defined(Lynx)
+#if defined(SVR4) || defined(_POSIX_SOURCE) || defined(Lynx) || defined(__QNX__)
 		if ((pidfound = waitpid(serverpid, &status, WNOHANG)) == serverpid)
 			break;
 #else
@@ -514,17 +533,13 @@ processTimeout(timeout, string)
 startServer(server)
 	char *server[];
 {
-#if !defined(X_NOT_POSIX) && !defined(__EMX__)
+#if !defined(X_NOT_POSIX)
 	sigset_t mask, old;
-#else
-	int old;
-#endif
-
-#ifndef X_NOT_POSIX
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGUSR1);
 	sigprocmask(SIG_BLOCK, &mask, &old);
 #else
+	int old;
 	old = sigblock (sigmask (SIGUSR1));
 #endif
 	serverpid = fork(); 
@@ -753,18 +768,46 @@ static void set_environment ()
     return;
 }
 
-Fatal(fmt, x0,x1,x2,x3,x4,x5,x6,x7,x8,x9)
+void Fatal(
+#if NeedVarargsPrototypes
+        char *fmt, ...)
+#else
+        fmt, x0,x1,x2,x3,x4,x5,x6,x7,x8,x9)
 	char	*fmt;
+#endif
 {
+#if NeedVarargsPrototypes
+	va_list args;
+
+	va_start(args, fmt);
+	Error(fmt, args);
+	va_end(args);
+	exit(ERR_EXIT);
+#else
 	Error(fmt, x0,x1,x2,x3,x4,x5,x6,x7,x8,x9);
 	exit(ERR_EXIT);
+#endif
 }
 
-Error(fmt, x0,x1,x2,x3,x4,x5,x6,x7,x8,x9)
+void Error(
+#if NeedVarargsPrototypes
+        char *fmt, ...)
+#else
+        fmt, x0,x1,x2,x3,x4,x5,x6,x7,x8,x9)
 	char	*fmt;
+#endif
 {
+#if NeedVarargsPrototypes
+	va_list args;
+
+	va_start(args, fmt);
+#endif
 	fprintf(stderr, "%s:  ", program);
 	if (errno > 0)
 	  fprintf (stderr, "%s (errno %d):  ", strerror(errno), errno);
+#if NeedVarargsPrototypes
+	vfprintf(stderr, fmt, args);
+#else
 	fprintf(stderr, fmt, x0,x1,x2,x3,x4,x5,x6,x7,x8,x9);
+#endif
 }

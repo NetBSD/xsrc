@@ -1,16 +1,16 @@
-                     Release Notes for XFree86[tm] 3.3.4
+                     Release Notes for XFree86[tm] 3.3.5
 
                           The XFree86 Project, Inc
 
-                                21 June 1999
+                               17 August 1999
 
                                   Abstract
 
      This document describes the bugs fixed and the features added in
-     XFree86 3.3.4 compared with the 3.3.3 and 3.3.3.1 release, It also
-     includes installation instructions for the binary distributions.
-     It is strongly recommended that anyone using XFree86 update to ver-
-     sion 3.3.4.
+     XFree86 3.3.5 compared with the 3.3.4 release, It also includes
+     installation instructions for the binary distributions.  It is
+     strongly recommended that anyone using XFree86 update to version
+     3.3.5.
 
 1.  XFree86 and X11R6.3
 
@@ -40,9 +40,10 @@ non-free copyright used for the initial release of X11R6.4 back to the old
 free X Consortium style copyright.  Given the fact that our main development
 focus is on XFree86-4.0 and that the 3.3.3 release was intended mostly to fix
 some bugs and get out new drivers to the public, we opted not to include
-X11R6.4 in XFree86-3.3.3.  Since XFree86-3.3.4 and XFree86-3.3.3.1 are merely
-quick bug fix releases to XFree86-3.3.3 (that happen to add support for some
-new common hardware as well), the same applies here.
+X11R6.4 in XFree86-3.3.3.  Since XFree86-3.3.5, XFree86-3.3.4 and
+XFree86-3.3.3.1 are merely quick bug fix releases to XFree86-3.3.3 (that hap-
+pen to add support for some new common hardware as well), the same applies
+here.
 
 XFree86-4.0 will be X11R6.4 based.
 
@@ -59,7 +60,31 @@ Users running FreeBSD 3.0 should note that only ELF binaries are provided
 with this release.  a.out shared libraries are also included for compatibil-
 ity purposes.
 
-4.  What's new in 3.3.4?
+4.  What's new in 3.3.5?
+
+   o Support for S3 Savage4 and Savage3D. Limited to Linux/x86 at this point.
+     Please see README.S3V.
+
+   o Support for S3 Trio3D/2X.
+
+   o Support for DGux.
+
+   o Support for QNX.
+
+   o Fix bug in Mach64 server on Rage LT and Rage LT Pro.
+
+   o Fix SiS driver for 530 and 620.
+
+   o Fix the spurious underline problem on NVidia Riva TNT cards.
+
+   o Fix the PS/2 mouse problem with later Linux kernels.
+
+   o Misc updates and bugfixes in Rendition driver.
+
+   o Updates from SuSE and Red Hat, including more keyboards, PAM support,
+     ARM and AXP fixes, security fixes.
+
+5.  What's new in 3.3.4?
 
    o Several security fixes.
 
@@ -99,7 +124,7 @@ ity purposes.
    o Bug fixed for cards with S3 Aurora64V+ (M65) chip, VGA output should now
      work.
 
-5.  What's new in 3.3.3.1?
+6.  What's new in 3.3.3.1?
 
    o A system clock slowdown caused by 3Dlabs driver has been fixed.
 
@@ -141,9 +166,9 @@ ity purposes.
    o PC98 cards database, sample config file and XKB handling have been
      fixed.
 
-6.  What's new in 3.3.3?
+7.  What's new in 3.3.3?
 
-6.1  Security fixes
+7.1  Security fixes
 
    o Several buffer overrun problem discovered since the release of
      XFree86-3.3.2 have been fixed
@@ -154,7 +179,7 @@ ity purposes.
      Note that this is only a short-term partial solution, and it is doesn't
      help at all for some SYSV based OSs (like Solaris 2.x).
 
-6.2  Bug fixes
+7.2  Bug fixes
 
    o Fix a serious LBX bug using uninitialized variables.
 
@@ -223,7 +248,7 @@ ity purposes.
 
    o Fix VT switch problem with MGA server on Linux/98.
 
-6.3  New Features
+7.3  New Features
 
    o New driver for Cyrix MediaGX based motherboards.
 
@@ -269,7 +294,7 @@ ity purposes.
 
    o Add local font directory.
 
-6.4  Known Problems
+7.4  Known Problems
 
 The problems listed here are those known at the time of the release.  See the
 XFree86 FAQ for more up to date information.
@@ -294,17 +319,17 @@ XFree86 FAQ for more up to date information.
      improving the design of SuperProbe's code, let's come and join as the
      member of the XFree86 ``developer team''.
 
-7.  XFree86 and Open Source Software
+8.  XFree86 and Open Source Software
 
 XFree86 public releases in general follow the Open Source Software definition
 as set forth at http://www.opensource.org/osd.html.  This definition is actu-
 ally a subset of our requirements.
 
-All code in XFree86 3.3.4 satisfies the Open Source Software definition.
+All code in XFree86 3.3.5 satisfies the Open Source Software definition.
 
-8.  Installing the XFree86 3.3.4 Release
+9.  Installing the XFree86 3.3.5 Release
 
-The XFree86 3.3.4 binaries are distributed as a full release.
+The XFree86 3.3.5 binaries are distributed as a full release.
 
 NOTE: the X servers are no longer installed setuid root.  If you are starting
 your X servers with startx/xinit, or something similar, you will need a copy
@@ -504,7 +529,7 @@ tion utilities (XF86Setup or xf86config) to configure the X server.  This is
 essential for a new installation but optional for an existing installation.
 Refer to the QuickStart document for configuration information.
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.76 1999/06/30 13:00:29 hohndel Exp $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/RELNOTE.sgml,v 3.59.2.79 1999/08/17 07:39:30 hohndel Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/RELNOTES,v 3.52.2.49 1999/07/05 10:25:14 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/RELNOTES,v 3.52.2.51 1999/08/17 13:28:10 hohndel Exp $

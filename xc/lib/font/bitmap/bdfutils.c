@@ -20,6 +20,7 @@ WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
 ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
+$XFree86: xc/lib/font/bitmap/bdfutils.c,v 1.1.1.1.12.2 1999/07/23 13:56:16 hohndel Exp $
 ************************************************************************/
 
 /*
@@ -60,6 +61,9 @@ from the X Consortium.
 /* use bitmap structure */
 #include "bitmap.h"
 #include "bdfint.h"
+#if NeedVarargsPrototypes
+#include <stdarg.h>
+#endif
 
 int bdfFileLineNum;
 
@@ -67,7 +71,11 @@ int bdfFileLineNum;
 
 /* VARARGS1 */
 void
-bdfError(message, a0, a1, a2, a3, a4, a5)
+bdfError(
+#if NeedVarargsPrototypes
+    char * message, ...)
+#else
+message, a0, a1, a2, a3, a4, a5)
     char       *message;
     pointer     a0,
                 a1,
@@ -75,16 +83,30 @@ bdfError(message, a0, a1, a2, a3, a4, a5)
                 a3,
                 a4,
                 a5;
+#endif
 {
+#if NeedVarargsPrototypes
+    va_list args;
+
+    va_start(args, message);
+    fprintf(stderr, "BDF Error on line %d: ", bdfFileLineNum);
+    vfprintf(stderr, message, args);
+    va_end(args);
+#else
     fprintf(stderr, "BDF Error on line %d: ", bdfFileLineNum);
     fprintf(stderr, message, a0, a1, a2, a3, a4, a5);
+#endif
 }
 
 /***====================================================================***/
 
 /* VARARGS1 */
 void
-bdfWarning(message, a0, a1, a2, a3, a4, a5)
+bdfWarning(
+#if NeedVarargsPrototypes
+    char *message, ...)
+#else
+message, a0, a1, a2, a3, a4, a5)
     char       *message;
     pointer     a0,
                 a1,
@@ -92,9 +114,19 @@ bdfWarning(message, a0, a1, a2, a3, a4, a5)
                 a3,
                 a4,
                 a5;
+#endif
 {
+#if NeedVarargsPrototypes
+    va_list args;
+
+    va_start(args, message);
+    fprintf(stderr, "BDF Warning on line %d: ", bdfFileLineNum);
+    vsprintf(stderr, message, args);
+    va_end(args);
+#else
     fprintf(stderr, "BDF Warning on line %d: ", bdfFileLineNum);
     fprintf(stderr, message, a0, a1, a2, a3, a4, a5);
+#endif
 }
 
 /*

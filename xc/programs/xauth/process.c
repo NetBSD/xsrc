@@ -1,5 +1,5 @@
 /* $XConsortium: process.c /main/51 1996/10/07 15:37:05 dpw $ */
-/* $XFree86: xc/programs/xauth/process.c,v 3.2.2.1 1998/12/06 05:40:43 dawes Exp $ */
+/* $XFree86: xc/programs/xauth/process.c,v 3.2.2.2 1999/07/21 18:07:42 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -817,7 +817,9 @@ int auth_finalize ()
 	    if (verbose) {
 		/* called from a signal handler -- printf is *not* reentrant */
 		WRITES(fileno(stdout), "\nAborting changes to authority file ");
-		WRITES(fileno(stdout), xauth_filename);
+		if (xauth_filename) {
+			WRITES(fileno(stdout), xauth_filename);
+		}
 		WRITES(fileno(stdout), "\n");
 	    }
 	} else if (!xauth_allowed) {
@@ -853,7 +855,7 @@ int auth_finalize ()
 	}
     }
 
-    if (xauth_locked) {
+    if (xauth_locked && xauth_filename) {
 	XauUnlockAuth (xauth_filename);
     }
     (void) umask (original_umask);

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/print.c,v 1.3.2.4 1998/10/20 20:51:50 hohndel Exp $
+ * $XFree86: xc/programs/xterm/print.c,v 1.3.2.5 1999/07/28 13:38:04 hohndel Exp $
  */
 
 /************************************************************
@@ -34,11 +34,11 @@ authorization.
 
 ********************************************************/
 
-#include <stdio.h>
-
 #include <xterm.h>
 #include <data.h>
 #include <error.h>
+
+#include <stdio.h>
 
 #define SHIFT_IN  '\017'
 #define SHIFT_OUT '\016'

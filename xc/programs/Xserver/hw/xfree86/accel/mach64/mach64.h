@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.h,v 3.14.2.5 1999/07/05 09:07:25 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/mach64/mach64.h,v 3.14.2.6 1999/07/23 13:22:36 hohndel Exp $ */
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
  *
@@ -26,7 +26,7 @@
  */
 /* $XConsortium: mach64.h /main/9 1996/10/27 18:06:13 kaleb $ */
 
-#ifndef MACH64
+#ifndef MACH64_H
 #define MACH64_H
 
 #define MACH64_PATCHLEVEL "0"
@@ -350,7 +350,7 @@ void mach64P_RGB514Index(
 );
 unsigned char mach64R_RGB514Index(
 #if NeedFunctionPrototypes
-    int index
+    int index_ /* Watcom didn't like the original name... */
 #endif
 );
 void mach64SetRamdac(

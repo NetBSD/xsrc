@@ -34,7 +34,7 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpAttr.c,v 1.3 1996/12/29 13:43:18 dawes Exp $ */
+/* $XFree86: xc/lib/Xp/XpAttr.c,v 1.3.2.1 1999/07/26 09:21:06 hohndel Exp $ */
 
 #define NEED_REPLIES
 
@@ -59,7 +59,7 @@ XpGetAttributes (
 
     xPrintGetAttributesReq     *req;
     xPrintGetAttributesReply   rep;
-    XExtensionVersion          *ext;
+
     XExtDisplayInfo *info = (XExtDisplayInfo *) xp_find_display (dpy);
 
 
@@ -115,7 +115,7 @@ XpGetOneAttribute (
 
     xPrintGetOneAttributeReq     *req;
     xPrintGetOneAttributeReply   rep;
-    XExtensionVersion          *ext;
+
     XExtDisplayInfo *info = (XExtDisplayInfo *) xp_find_display (dpy);
 
 
@@ -178,7 +178,7 @@ XpSetAttributes (
     int     i;
 
     xPrintSetAttributesReq     *req;
-    XExtensionVersion          *ext;
+
     XExtDisplayInfo *info = (XExtDisplayInfo *) xp_find_display (dpy);
 
 

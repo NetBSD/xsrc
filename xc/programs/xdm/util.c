@@ -1,5 +1,5 @@
 /* $XConsortium: util.c,v 1.18 94/11/21 18:33:11 kaleb Exp $ */
-/* $XFree86: xc/programs/xdm/util.c,v 3.7.4.2 1998/12/22 11:23:32 hohndel Exp $ */
+/* $XFree86: xc/programs/xdm/util.c,v 3.7.4.4 1999/07/29 09:23:05 hohndel Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -53,7 +53,7 @@ from the X Consortium.
 #undef _POSIX_SOURCE
 #endif
 #endif
-#if defined(__osf__) || defined(linux) || defined(MINIX)
+#if defined(__osf__) || defined(linux) || defined(MINIX) || defined(__QNXNTO__)
 #define setpgrp setpgid
 #endif
 
@@ -139,6 +139,32 @@ setEnv (e, name, value)
 	new[envsize] = newe;
 	new[envsize+1] = 0;
 	return new;
+}
+
+char **
+putEnv(string, env)
+     const char *string;
+     char ** env;
+{
+  char *v, *b, *n;
+  int nl;
+  
+  if ((b = strchr(string, '=')) == NULL) return NULL;
+  v = b + 1;
+  
+  nl = b - string;
+  if ((n = malloc(nl + 1)) == NULL)
+    {
+      LogOutOfMem ("putAllEnv");
+      return NULL;
+    }
+  
+  strncpy(n, string,nl + 1);
+  n[nl] = 0;
+  
+  env = setEnv(env,n,v);
+  free(n);
+  return env;
 }
 
 freeEnv (env)

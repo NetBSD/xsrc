@@ -2,9 +2,9 @@
 
 <article>
 <title> Information for S3 ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, 
-ViRGE/MX, ViRGE/VX and Trio3D Users
+ViRGE/MX, ViRGE/VX, Trio3D, Trio3D/2X, Savage3D and Savage4 Users
 <author>The XFree86 Project Inc.
-<date>23 June 1998
+<date>2 August 1999
 <toc>
 
 <sect> Supported hardware
@@ -18,7 +18,8 @@ server is no longer recommended. It is not actively being supported anymore.
 The above ViRGE chipsets are supported in the 
 XF86_SVGA server, which includes a new ViRGE driver making use 
 of the XAA acceleration architecture and also supports 
-ViRGE/GX2 (86C357), ViRGE/MX (86C260) and Trio3D (86C365) chips as of 3.3.4.
+ViRGE/GX2 (86C357), ViRGE/MX (86C260), Trio3D (86C365), Trio3D/2X (86C362), 
+Savage3D (86C391) and Savage4 (86C396/86C397) chips as of 3.3.5.
 <p>
 The following sections describe details of ViRGE support.  Be aware that
 there are two servers described.  XF86_S3V is the ViRGE specific server
@@ -69,17 +70,8 @@ using the appropriate bug report sheet.
 <item>The driver only works with linear addressing.
 <item>For 24/32 bpp some simple dashed line acceleration is implemented, but
 sloped dash/double dash are drawn as solid lines.
-</itemize>
-
-<sect1>Future Features (in order from highest to lowest priority)
-<p>
-
-<itemize>
-<item>there is a good chance that the SVGA ViRGE driver will replace XF86_S3V
-in future releases
-<item>some more hardware acceleration
-<item>3d acceleration (once we work out how that's done)
-<item>more chipsets and RAMDACs
+<item>No support for current chipsets.
+<item>No longer actively maintained.
 </itemize>
 
 <sect1>Configuration:
@@ -100,7 +92,7 @@ The "nolinear" option is unsupported.
 <sect> XF86_SVGA server
 <p>
 The XF86_SVGA ViRGE driver supports all current flavors of the S3 ViRGE
-chipset including Trio3D.
+chipset including Trio3D and the Savage family.
 It uses the XAA acceleration architecture for acceleration, and allows
 color depths of 8, 15, 16, 24 and 32 bpp. It has been tested on several 2MB
 and 4MB ViRGE cards, a 4MB ViRGE/DX card, a ViRGE/VX card and a 4MB Trio3D
@@ -115,7 +107,7 @@ using the appropriate bug report sheet.
 
 <itemize>
 <item>Supports PCI hardware, ViRGE, ViRGE/DX, ViRGE/GX, ViRGE/GX2, ViRGE/MX, 
-ViRGE/VX and Trio3D.
+ViRGE/VX, Trio3D and the Savage family.
 <item>Supports 8bpp, 15/16bpp, 24bpp and 32bpp.
 <item>VT switching seems to work well, no corruption reported 
 at all color depths. 
@@ -129,7 +121,24 @@ acceleration, so the graphics engine is used in 16bpp mode.
 <item>All modes include support for a hardware cursor.
 </itemize>
 
-<sect1>Known limitations
+<sect1>Known limitations in the Savage family support (s3_savage driver)
+<p>
+The Savage family driver for the Savage3D and the Savage4 was donated to XFree86
+by S3 very closely before the release of XFree86-3.3.5. The driver violates a few
+design principles and goals, but since there is massive demand for it, we decided
+to include it in XFree86-3.3.5.
+<p>
+The following issues and problems will be addressed for a future release of this 
+driver:
+<itemize>
+<item>Only supported on Linux/x86 due to use of the Linux Real Mode Interface.
+<item>Restricted to modes that the BIOS supports. The Modeline specified in the
+      XF86Config file is being ignored.
+<item>Limited acceleration.
+<item>Limited testing.
+</itemize>
+
+<sect1>Known limitations of the s3_virge driver
 <p>
 
 <itemize>
@@ -301,7 +310,7 @@ and:
 </itemize>
 
 <verb>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.11 1999/06/24 05:56:29 hohndel Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/S3V.sgml,v 3.3.2.12 1999/08/02 12:45:00 hohndel Exp $
 </verb>
 
 </article>

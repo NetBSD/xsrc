@@ -26,7 +26,7 @@
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis86c201.c,v 3.17.2.18 1999/06/02 07:51:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/sis/sis86c201.c,v 3.17.2.19 1999/07/23 13:22:59 hohndel Exp $ */
 
 /* 
   Modified Feb - Jul 1998 for SiS 5597/8 by Mike Chapman <mike@paranoia.com>, 
@@ -187,7 +187,7 @@ vgaVideoChipRec SIS = {
   0,
   TRUE,
   TRUE,
-  FALSE,
+  TRUE,
   NULL,
   1,            /* ClockMulFactor */
   1             /* ClockDivFactor */
@@ -287,11 +287,30 @@ ClockProgramable()
 static int
 sisMClk()
 { int mclk;
-  unsigned char xr28, xr29, xr13;
+  unsigned char xr28, xr29, xr13, xr10;
 #ifdef DEBUG
   ErrorF("sisMClk()");
 #endif
 
+    if (SISchipset == SIS530) {
+	/* The MCLK in SiS530/620 is set by BIOS in SR10 */
+	read_xr(0x10, xr10);
+	switch(xr10 & 0x0f) {
+	case 1:
+		mclk = 75000; /* 75 Mhz */
+		break;
+	case 2:
+		mclk = 83000; /* 83 Mhz */
+		break;
+	case 3:
+		mclk = 100000;/* 100 Mhz */
+		break;
+	case 0:
+	default:
+		mclk = 66000; /* 66 Mhz */
+	}
+	return(mclk);
+    }
     /* Numerator */
     read_xr(0x28,xr28);
     mclk=14318*((xr28 & 0x7f)+1);
@@ -375,6 +394,110 @@ sisMemBandWidth()
    if ((inb(0x3c5) & 0x30) == 0x30) band=band*2;
 
    return(band*7/10);
+}
+
+int compute_vclk(
+	int Clock,
+	int *out_n,
+	int *out_dn,
+	int *out_div,
+	int *out_sbit,
+	int *out_scale)
+{
+	float f,x,y,t, error, min_error;
+	int n, dn, best_n, best_dn;
+
+	/*
+	 * Rules
+	 *
+	 * VCLK = 14.318 * (Divider/Post Scalar) * (Numerator/DeNumerator)
+	 * Factor = (Divider/Post Scalar)
+	 * Divider is 1 or 2
+	 * Post Scalar is 1, 2, 3, 4, 6 or 8
+	 * Numberator ranged from 1 to 128
+	 * DeNumerator ranged from 1 to 32
+	 * a. VCO = VCLK/Factor, suggest range is 150 to 250 Mhz
+	 * b. Post Scalar selected from 1, 2, 4 or 8 first.
+	 * c. DeNumerator selected from 2.
+	 *
+	 * According to rule a and b, the VCO ranges that can be scaled by
+	 * rule b are:
+	 *	150    - 250    (Factor = 1)
+	 *	 75    - 125    (Factor = 2)
+	 *	 37.5  -  62.5  (Factor = 4)
+	 *	 18.75 -  31.25 (Factor = 8)
+	 *
+	 * The following ranges use Post Scalar 3 or 6:
+	 *	125    - 150    (Factor = 1.5)
+	 *	 62.5  -  75    (Factor = 3)
+	 *       31.25 -  37.5  (Factor = 6)
+	 *
+	 * Steps:
+	 * 1. divide the Clock by 2 until the Clock is less or equal to 31.25.
+	 * 2. if the divided Clock is range from 18.25 to 31.25, than
+	 *    the Factor is 1, 2, 4 or 8.
+	 * 3. if the divided Clock is range from 15.625 to 18.25, than
+	 *    the Factor is 1.5, 3 or 6.
+	 * 4. select the Numberator and DeNumberator with minimum deviation.
+	 *
+	 * ** this function can select VCLK ranged from 18.75 to 250 Mhz
+	 */
+	f = (float) Clock;
+	f /= 1000.0;
+	if ((f > 250.0) || (f < 18.75))
+		return 0;
+
+	min_error = f;
+	y = 1.0;
+	x = f;
+	while (x > 31.25) {
+		y *= 2.0;
+		x /= 2.0;
+	}
+	if (x >= 18.25) {
+		x *= 8.0;
+		y = 8.0 / y;
+	} else if (x >= 15.625) {
+		x *= 12.0;
+		y = 12.0 / y;
+	}
+
+	t = y;
+	if (t == (float) 1.5) {
+		*out_div = 2;
+		t *= 2.0;
+	} else {
+		*out_div = 1;
+	}
+	if (t > (float) 4.0) {
+		*out_sbit = 1;
+		t /= 2.0;
+	} else {
+		*out_sbit = 0;
+	}
+
+	*out_scale = (int) t;
+
+	for (dn=2;dn<=32;dn++) {
+		for (n=1;n<=128;n++) {
+			error = x;
+			error -= ((float) 14.318 * (float) n / (float) dn);
+			if (error < (float) 0)
+				error = -error;
+			if (error < min_error) {
+				min_error = error;
+				best_n = n;
+				best_dn = dn;
+			}
+		}
+	}
+	*out_n = best_n;
+	*out_dn = best_dn;
+#ifdef DEBUG 
+ErrorF("compute_vclk: Clock=%d, n=%d, dn=%d, div=%d, sbit=%d, scale=%d\n",
+	Clock, best_n, best_dn, *out_div, *out_sbit, *out_scale);
+#endif 
+	return 1;
 }
 
 static void
@@ -659,14 +782,36 @@ sisClockLoad(Clock)
  {
     unsigned int 	vclk[5];
     unsigned char 	temp, xr2a, xr2b;
+    int num, denum, div, sbit, scale;
   #ifdef DEBUG
       ErrorF("sisClockLoad(Clock)\n");
   #endif
 
     if (!Clock->Clock) {       /* Hack to load saved console clock */
 	sisClockRestore(Clock) ;
-    }
-    else {
+    } else if ((SISchipset == SIS530) && (compute_vclk(Clock->Clock, &num,
+		&denum, &div, &sbit, &scale))){
+		xr2a = (num - 1) & 0x7f;
+		xr2a |= (div == 2)? 0x80 : 0;
+		xr2b = (denum - 1) & 0x1f;
+		xr2b |= (((scale - 1) & 0x3) << 5);
+
+		/* When set VCLK, you should set SR13 first */
+		if (sbit) {
+			read_xr(0x13, temp);
+			temp |= 0x40;
+			write_xr(0x13, temp);
+		} else {
+			read_xr(0x13, temp);
+			temp &= 0xBF;
+			write_xr(0x13, temp);
+		}
+
+		write_xr(0x2A, xr2a);
+		write_xr(0x2B, xr2b);
+		/* if compute_vclk cannot handle the request clock,
+		   try sisCalcClock! */
+    } else {
 	sisCalcClock(Clock->Clock, 2, vclk);
 
 	xr2a = (vclk[Midx] - 1) & 0x7f ;
@@ -892,6 +1037,9 @@ SISProbe()
 			vga256InfoRec.videoRam = 4096;
 			break;
 		case 0x0B: 
+			if(SISchipset == SIS530) {
+				vga256InfoRec.videoRam = 8192;
+			} else {
 			/* Detected 8mb board, but we use 4MB for now */
 			ErrorF("%s %s: Found 8MB board, treating like 4MB.\n",
 			XCONFIG_PROBED, vga256InfoRec.name);
@@ -900,6 +1048,7 @@ SISProbe()
 #else
 			vga256InfoRec.videoRam = 4096;
 #endif
+			}
 			break;
 		}
 	    }		
@@ -940,7 +1089,7 @@ SISProbe()
 			}
 		}
 	    }
-	    if (vga256InfoRec.videoRam > 4096) 
+	    if ((SISchipset != SIS530) && (vga256InfoRec.videoRam > 4096))
 	    {
 	    	ErrorF("%s %s: Restricting video memory use to 4 MB\n",
 		       XCONFIG_PROBED, vga256InfoRec.name);
@@ -1003,7 +1152,7 @@ SISProbe()
 	    if (vga256InfoRec.maxClock > 175500)
                vga256InfoRec.maxClock = 175500;
 	  } else if (SISchipset == SIS530) {
-            vga256InfoRec.maxClock = 180000;
+            vga256InfoRec.maxClock = 230000;
 	    /* check the mem type installed */
 	    read_xr(0x0e, temp);
 	    ErrorF("%s %s: memory type installed %s\n",XCONFIG_PROBED, vga256InfoRec.name,
@@ -1398,7 +1547,6 @@ SISFbInit()
 
 		break ;
 	      case 24:
-
 		cfb24TEOps1Rect.CopyArea = siscfb24CopyArea;
 		cfb24TEOps.CopyArea = siscfb24CopyArea;
 		cfb24NonTEOps1Rect.CopyArea = siscfb24CopyArea;
@@ -1440,6 +1588,7 @@ SISFbInit()
 		sisAvoidImageBLT = TRUE;
 
 		break;
+
 	    }
 	    vgaSetScreenInitHook(SISScrnInit);
 	   }
@@ -1679,6 +1828,8 @@ int *thresholdHigh;
     unsigned char temp2;
     int mclk;
     int safetymargin, gap;
+    float z, z1, z2; /* Yeou */
+    int factor; 
     
 
     /* here is an hack to set the CRT/CPU threshold register.
@@ -1725,7 +1876,7 @@ int *thresholdHigh;
                                               {95000,0xf,0xd},{110000,0xf,0xd}};
 
     static struct ThresholdREC threshold24[]={{25250,0xa,0x7},{31500,0xa,0x7},
-					      {40000,0xc,0x9},{56250,0xe,0xc}};
+                                              {40000,0xc,0x9},{56250,0xe,0xc}};
 
     int nfreq ;
     int i;
@@ -1772,61 +1923,80 @@ int *thresholdHigh;
 
     }
 
-#ifdef DEBUG
+#ifdef DEBUG 
     ErrorF("Old FindCRT_CPUthreshold(%d, %d) = 0x%x 0x%x\n", dotClock, bpp,
 	   *thresholdLow,*thresholdHigh);
-#endif
+#endif 
 #else /*OldThresholds*/
     /* Juanjo Santamarta */
     
     mclk=sisMClk();
-    
-    /* Adjust thresholds. Safetymargin is to be adjusted by fifo_XXX 
-       options. Try to mantain a fifo margin of gap. At high Vclk*bpp
-       this isn't possible, so limit the thresholds. 
+
+    if (SISchipset == SIS530) /* Yeou for 530 thresholod */
+    {
+        /* z = f *((dotClock * bpp)/(buswidth*mclk);
+           thresholdLow  = (z+1)/2 + 4;
+           thresholdHigh = 0x1F;
+           
+           where f = 0x60 when UMA (SR0D D[0] = 1)
+                     0x30      LFB (SR0D D[0] = 0)
+        */
+        read_xr (0x0d, temp); 
+	if (temp & 0x01) factor = 0x60;
+        else factor = 0x30;
+   
+        z1 = (float)(dotClock * bpp); 
+        z2 = (float)(64.0 * mclk);
+ 	z = ((float) factor * (z1 / z2));
+        *thresholdLow = ((int)z + 1) / 2 + 4 ;   
+        *thresholdHigh = 0x1F; 
+    }
+    else {   /* For sis other product */
+        /* Adjust thresholds. Safetymargin is to be adjusted by fifo_XXX 
+           options. Try to mantain a fifo margin of gap. At high Vclk*bpp
+           this isn't possible, so limit the thresholds. 
        
-       The values I guess are :
+           The values I guess are :
 
-         FIFO_CONSERVATIVE : safetymargin = 5 ;
-         FIFO_MODERATE     : safetymargin = 3 ;
-         Default           : safetymargin = 1 ;  (good enough in many cases) 
-         FIFO_AGGRESSIVE   : safetymargin = 0 ;
+           FIFO_CONSERVATIVE : safetymargin = 5 ;
+           FIFO_MODERATE     : safetymargin = 3 ;
+           Default           : safetymargin = 1 ;  (good enough in many cases) 
+           FIFO_AGGRESSIVE   : safetymargin = 0 ;
 	 
-       gap=4 seems to be the best value in either case...
-    */
+           gap=4 seems to be the best value in either case...
+       */
     
-    if (OFLG_ISSET(OPTION_FIFO_CONSERV, &vga256InfoRec.options)) 
-       safetymargin=5; 
-    else if (OFLG_ISSET(OPTION_FIFO_MODERATE, &vga256InfoRec.options)) 
-       safetymargin=3; 
-    else if (OFLG_ISSET(OPTION_FIFO_AGGRESSIVE, &vga256InfoRec.options)) 
-       safetymargin=0; 
-    else 
-       safetymargin=1; 
+       if (OFLG_ISSET(OPTION_FIFO_CONSERV, &vga256InfoRec.options)) 
+           safetymargin=5; 
+       else if (OFLG_ISSET(OPTION_FIFO_MODERATE, &vga256InfoRec.options)) 
+           safetymargin=3; 
+       else if (OFLG_ISSET(OPTION_FIFO_AGGRESSIVE, &vga256InfoRec.options)) 
+           safetymargin=0; 
+       else 
+           safetymargin=1; 
 
-    gap = 4;
-    *thresholdLow = ((bpp*dotClock) / mclk)+safetymargin;
-    *thresholdHigh = ((bpp*dotClock) / mclk)+gap+safetymargin;
+       gap = 4;
+       *thresholdLow = ((bpp*dotClock) / mclk)+safetymargin;
+       *thresholdHigh = ((bpp*dotClock) / mclk)+gap+safetymargin;
 
-    /* 24 bpp seems to need lower FIFO limits. 
-      At 16bpp is possible to put a thresholdHigh of 0 (0x10) with good results
-      on my system (good performance, and virtually no noise) */
-      
-    if ( *thresholdLow > (bpp < 24 ? 0xe:0x0d) ) { 
-	    *thresholdLow = (bpp < 24 ? 0xe:0x0d); 
+       /* 24 bpp seems to need lower FIFO limits. 
+          At 16bpp is possible to put a thresholdHigh of 0 (0x10) with 
+          good results on my system(good performance, and virtually no noise) */
+     
+        if ( *thresholdLow > (bpp < 24 ? 0xe:0x0d) ) { 
+    	     *thresholdLow = (bpp < 24 ? 0xe:0x0d); 
+ 	}
+
+        if ( *thresholdHigh > (bpp < 24 ? 0x10:0x0f) ) { 
+ 	     *thresholdHigh = (bpp < 24 ? 0x10:0x0f);
 	}
-
-    if ( *thresholdHigh > (bpp < 24 ? 0x10:0x0f) ) { 
-	    *thresholdHigh = (bpp < 24 ? 0x10:0x0f);
-	}
-
-
-#ifdef DEBUG
+    }; /* sis530 */
+#ifdef DEBUG 
     ErrorF("FindCRT_CPUthreshold(%d, %d) = 0x%x 0x%x\n", dotClock, bpp,
 	   *thresholdLow,*thresholdHigh);
-#endif
     ErrorF("%s %s: %s: MClk = %d Hz\n", XCONFIG_PROBED,
 	    vga256InfoRec.name, vga256InfoRec.chipset, sisMClk()*1000); 
+#endif  
 #endif
 }
 
@@ -1896,26 +2066,48 @@ SISInit(mode)
 	new->std.Attribute[0x12] = 0x0F;   /* enable all color planes */
 	new->std.Attribute[0x13] = 0x00;   /* horiz pixel panning 0 */
 
-	if ( (vgaBitsPerPixel == 16) || (vgaBitsPerPixel == 24) )
+	if ( (vgaBitsPerPixel == 16) || (vgaBitsPerPixel == 24) ||
+	     (vgaBitsPerPixel == 32) )
 	    new->std.Graphics[0x05] = 0x00;    /* normal read/write mode */
 
 	if (vgaBitsPerPixel == 16) {
 	    offset <<= 1;	       /* double the width of the buffer */
 	} else if (vgaBitsPerPixel == 24) {
 	    offset += offset << 1;
+	} else if (vgaBitsPerPixel == 32) {
+	    offset <<= 2;
 	} 
 
 	new->BankReg = 0x02;
-	new->DualBanks = 0x00; 
+	new->DualBanks = 0x01; 
 
 	if ( sisUseLinear ) {
 	    new->BankReg |= 0x80;  	/* enable linear mode addressing */
 	    new->LinearAddr0 = (SIS.ChipLinearBase & 0x07f80000) >> 19 ; 
-	    new->LinearAddr1 = ((SIS.ChipLinearBase & 0xf8000000) >> 27) |
+	    if ((SISchipset == SIS530) && (vga256InfoRec.videoRam == 8192))
+		new->LinearAddr1 = ((SIS.ChipLinearBase & 0xf8000000) >> 27) |
+				(0x80) ; /* Enable Linear with max 8 mb*/
+	    else
+		new->LinearAddr1 = ((SIS.ChipLinearBase & 0xf8000000) >> 27) |
 		                (0x60) ; /* Enable Linear with max 4 mb*/
 	}	
 	else
 	    new->DualBanks |= 0x08;
+
+	if (SISchipset == SIS530) {
+		if (mode->CrtcVDisplay > 1024)
+			/* disable line compare */
+			new->Port_3C4[0x38] |= 0x04;
+		else
+			new->Port_3C4[0x38] &= 0xFB;
+
+		if ((vgaBitsPerPixel == 24) || (vgaBitsPerPixel == 32) ||
+			(mode->CrtcHDisplay >= 1280))
+			/* Enable high speed DCLK */
+			 new->Port_3C4[0x3E] |= 1;
+		else
+			new->Port_3C4[0x3E] &= 0xFE;
+	}
 
 	if (vgaBitsPerPixel == 16) 
 	    if (xf86weight.green == 5)
@@ -1928,12 +2120,28 @@ SISInit(mode)
 	    new->DualBanks |= 0x80;
 	}
 
+	if ((SISchipset == SIS530) && (vgaBitsPerPixel == 32)) {
+	    new->Port_3C4[0x09] |= 0x80;
+	    new->DualBanks |= 0x80;
+	}
+
 	new->std.CRTC[0x13] = offset & 0xFF;
 	new->CRTCOff = ((offset & 0xF00) >> 4) | 
 	    (((mode->CrtcVTotal-2) & 0x400) >> 10 ) |
 		(((mode->CrtcVDisplay-1) & 0x400) >> 9 ) |
-		    ((mode->CrtcVSyncStart & 0x400) >> 8 ) |
+		    (((mode->CrtcVDisplay-1) & 0x400) >> 8 ) |
 			(((mode->CrtcVSyncStart) & 0x400) >> 7 ) ;
+
+	if (SISchipset == SIS530) {
+		/* Extended Horizontal Overflow Register */
+		new->Port_3C4[0x12] &= 0xE0;
+		new->Port_3C4[0x12] |= (
+			(((mode->CrtcHTotal >> 3) - 5) & 0x100) >> 8 |
+			(((mode->CrtcHDisplay >> 3) - 1) & 0x100) >> 7 |
+			(((mode->CrtcHSyncStart >> 3) - 1)& 0x100) >> 6 |
+			((mode->CrtcHSyncStart >> 3) & 0x100) >> 5 |
+			((mode->CrtcHSyncEnd >> 3) & 0x40)  >> 2);
+	}
 	
 	if (mode->Flags & V_INTERLACE)
 		new->BankReg |= 0x20;
@@ -1959,13 +2167,23 @@ SISInit(mode)
 	 *  (pixelsize, displaysize, dotclock)
          *  worst case is not optimal
 	 */
-	CRT_ENGthreshold = 0x0F ;	
+	CRT_ENGthreshold = 0x1F; 
 	FindCRT_CPUthreshold(vga256InfoRec.clock[new->std.NoClock], 
 			     vgaBitsPerPixel,
 			     &CRT_CPUthresholdLow, &CRT_CPUthresholdHigh);
 	new->Port_3C4[0x08] = (CRT_ENGthreshold & 0x0F) | 
 	    (CRT_CPUthresholdLow & 0x0F)<<4 ;
-	new->Port_3C4[0x09] = (CRT_CPUthresholdHigh & 0x0F) ;
+        new->Port_3C4[0x09] &= 0xF0;  /* Yeou */
+        new->Port_3C4[0x09] |= (CRT_CPUthresholdHigh & 0x0F); /* Yeou */
+	/* new->Port_3C4[0x09] = (CRT_CPUthresholdHigh & 0x0F) ; */
+
+	if (SISchipset == SIS530) {
+		/* CRT/CPU/Engine Threshold Bit[4] */
+		new->Port_3C4[0x3F] &= 0xE3;
+		new->Port_3C4[0x3F] |= ((CRT_CPUthresholdHigh & 0x10) |
+					((CRT_ENGthreshold & 0x10) >> 1) |
+					((CRT_CPUthresholdLow & 0x10) >> 2));
+	}
 
 	new->Port_3C4[0x27] |= 0x30 ; /* invalid logical screen width */
 
@@ -2073,6 +2291,8 @@ SISAdjust(x, y)
 	    base = ((base * 3)) >> 2;
 	    base -= base % 6;
 	    break;
+	  case 32:
+	    break;
 	  default:       /* 8bpp */
 	    base >>= 2;
 	    break;
@@ -2089,6 +2309,14 @@ SISAdjust(x, y)
 #ifdef DEBUG
 	ErrorF("3C5/27h set to hex %2X, base %d\n",  temp, base);
 #endif
+
+	if (SISchipset == SIS530) {
+		/* Extended screen starting address Bit[20] */
+		read_xr(0x26,temp);
+		temp &= 0xFE;
+		temp |= (base >> 20) & 1;
+		write_xr(0x26,temp);
+	}
 
 #ifdef XFreeXDGA
 	if (vga256InfoRec.directMode & XF86DGADirectGraphics) {

@@ -1,6 +1,6 @@
 /*
  * $XConsortium: Tekproc.c /main/120 1996/11/29 10:33:20 swick $
- * $XFree86: xc/programs/xterm/Tekproc.c,v 3.13.2.5 1998/10/20 20:51:32 hohndel Exp $
+ * $XFree86: xc/programs/xterm/Tekproc.c,v 3.13.2.6 1999/07/28 13:37:52 hohndel Exp $
  *
  * Warning, there be crufty dragons here.
  */
@@ -68,7 +68,6 @@ in this Software without prior written authorization from the X Consortium.
 
 #include <stdio.h>
 #include <ctype.h>
-#include <setjmp.h>
 #include <signal.h>
 
 #include <Tekparse.h>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/hwcursor.c,v 1.1.2.4 1999/06/21 09:45:15 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/rendition/hwcursor.c,v 1.1.2.5 1999/07/30 13:19:21 hohndel Exp $ */
 /*
  * includes
  */
@@ -72,7 +72,7 @@ void RENDITIONLoadCursorImage(register unsigned char *src, int xorigin, int yori
 
 
 /*
- * This is top-level initialization funtion called from mga_driver
+ * This is top-level initialization funtion
  */
 void RENDITIONHwCursorInit(void)
 {

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/38 1996/11/07 14:43:46 kaleb $
-XCOMM $XFree86: xc/config/cf/Imakefile,v 3.13.2.3 1998/12/22 11:23:01 hohndel Exp $
+XCOMM $XFree86: xc/config/cf/Imakefile,v 3.13.2.5 1999/07/29 09:22:24 hohndel Exp $
 
 XCOMM Some compilers generate fatal errors if an -L directory does
 XCOMM not exist.  Since BUILDLIBDIR may not exist yet suppress its use.
@@ -34,6 +34,7 @@ lnxLib.rules \
 lnxdoc.rules \
 necLib.rules \
 noop.rules \
+nto.rules \
 oldlib.rules \
 os2.rules \
 os2Lib.rules \
@@ -44,6 +45,7 @@ sgiLib.rules \
 sunLib.rules \
 sv3Lib.rules \
 sv4Lib.rules \
+QNX.rules \
 xf86.rules
 
 TMPLFILES = \
@@ -100,6 +102,7 @@ minix.cf \
 moto.cf \
 ncr.cf \
 nec.cf \
+nto.cf \
 os2.cf \
 osf1.cf \
 pegasus.cf \
@@ -115,6 +118,7 @@ ultrix.cf \
 usl.cf \
 lynx.cf \
 x386.cf \
+QNX.cf \
 xfree86.cf
 
 INSTFILES = $(RULEFILES) $(TMPLFILES) $(DEFFILES) $(CFFILES) $(LOCALFILES)
