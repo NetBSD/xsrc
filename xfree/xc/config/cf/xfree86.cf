@@ -599,6 +599,10 @@ XCOMM $Xorg: xfree86.cf,v 1.4 2000/08/17 19:41:49 cpqbld Exp $
 # ifndef XF4Bpp
 #  define XF4Bpp		YES
 # endif
+/* 8/32wid fb module */
+# ifndef XF8_32Wid
+#  define XF8_32Wid		YES
+# endif
 /* 8/32bpp overlay module */
 # ifndef XF8_32Bpp
 #  define XF8_32Bpp		YES
