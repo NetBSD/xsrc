@@ -184,9 +184,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # endif
 # define OptimizedCDebugFlags 	DefaultGcc2i386Opt
 # if OSMajorVersion < 1
-#  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME -DXNO_SYSCONF
+#  define ServerOSDefines	XFree86ServerOSDefines -DXNO_SYSCONF
 # else
-#  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+#  define ServerOSDefines	XFree86ServerOSDefines
 # endif
 # if OSMajorVersion == 1 && OSMinorVersion >= 1 || OSMajorVersion >= 2
 #  define ServerExtraSysLibs	-li386
@@ -196,9 +196,9 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # if defined(SparcArchitecture)
 #  define ServerOSDefines 	-DDDXOSINIT
 # elif defined(AlphaArchitecture) || defined(PpcArchitecture)
-#  define ServerOSDefines 	XFree86ServerOSDefines -DDDXTIME -DDDXOSINIT
+#  define ServerOSDefines 	XFree86ServerOSDefines
 # elif defined(Arm32Architecture)
-#  define ServerOSDefines	XFree86ServerOSDefines -DDDXTIME
+#  define ServerOSDefines	XFree86ServerOSDefines
 # else
 #  define ServerOSDefines 	/**/
 # endif
