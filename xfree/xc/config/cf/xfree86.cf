@@ -582,7 +582,8 @@ XCOMM $Xorg: xfree86.cf,v 1.4 2000/08/17 19:41:49 cpqbld Exp $
 #endif
 
 /* Sparc64 Drivers */
-#if defined(OpenBSDArchitecture) && defined(Sparc64Architecture)
+#if defined(Sparc64Architecture)  && \
+    (defined(OpenBSDArchitecture) || defined(NetBSDArchitecture))
 # ifndef XF86Server
 #  define XF86Server		YES
 # endif
