@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2002/12/25 22:08:21 tron Exp $
+#	$NetBSD: Makefile,v 1.36 2003/02/04 18:57:34 matt Exp $
 #
 # Targets & Variables
 #
@@ -134,19 +134,19 @@ release snapshot: build
 #
 .endif # INSTALL_DONE or BUILD_DONE
 #
-	${INSTALL} -d -m 755 -o root -g wheel ${RELEASEDIR}/binary/sets
+	${INSTALL} -d -m 755 -o root -g wheel ${RELEASEDIR}/${MACHINE}/binary/sets
 .if (${MACHINE} == "amiga") && !(defined(USE_XF86_4) && (${USE_XF86_4} != no))
 	cd ${XCDIR}/programs/Xserver/hw/netbsd/amiga && \
-		${INSTALL} -c -m 644 INSTALL.X11 ${RELEASEDIR}
+		${INSTALL} -c -m 644 INSTALL.X11 ${RELEASEDIR}/${MACHINE}
 .endif
 .if defined(METALOG.add) && !exists(${DESTDIR}/etc)
 	cd ${NETBSDSRCDIR}/distrib/sets && \
-	    sh ./maketars -x -d ${DESTDIR:S,^$,/,} -N ${NETBSDSRCDIR}/etc -t ${RELEASEDIR}/binary/sets
+	    sh ./maketars -x -d ${DESTDIR:S,^$,/,} -N ${NETBSDSRCDIR}/etc -t ${RELEASEDIR}/${MACHINE}/binary/sets
 .else
 	cd ${NETBSDSRCDIR}/distrib/sets && \
-	    sh ./maketars -x -d ${DESTDIR:S,^$,/,} -t ${RELEASEDIR}/binary/sets
+	    sh ./maketars -x -d ${DESTDIR:S,^$,/,} -t ${RELEASEDIR}/${MACHINE}/binary/sets
 .endif
-	cd ${RELEASEDIR}/binary/sets && \
+	cd ${RELEASEDIR}/${MACHINE}/binary/sets && \
 		cksum -o 1 *.tgz >BSDSUM && \
 		cksum *.tgz >CKSUM && \
 		cksum -m *.tgz >MD5 && \
