@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include <X11/Xlib.h>
-#include <X11/Xft//Xft.h>
+#include <X11/Xft/Xft.h>
 
 char           *program_name;
 
