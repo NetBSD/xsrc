@@ -84,7 +84,7 @@ ProcSetEventMask(client)
     REQUEST_AT_LEAST_SIZE(fsSetEventMaskReq);
 
     if (stuff->event_mask & ~AllEventMasks) {
-	SendErrToClient(client, FSBadEventMask, (pointer) stuff->event_mask);
+	SendErrToClient(client, FSBadEventMask, (pointer) &stuff->event_mask);
 	return FSBadEventMask;
     }
     client->eventmask = stuff->event_mask;
