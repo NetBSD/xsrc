@@ -155,8 +155,10 @@ int DRM(irq_uninstall)( drm_device_t *dev )
 		return DRM_ERR(EINVAL);
 
 	dev->irq_enabled = 0;
+#ifdef __FreeBSD__
 	irqrid = dev->irqrid;
 	dev->irqrid = 0;
+#endif /* __FreeBSD__ */
 
 	DRM_DEBUG( "%s: irq=%d\n", __FUNCTION__, dev->irq );
 
