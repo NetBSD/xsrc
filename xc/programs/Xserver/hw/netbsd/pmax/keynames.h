@@ -1,3 +1,5 @@
+/*	$NetBSD: keynames.h,v 1.2 2000/01/07 14:41:03 ad Exp $	*/
+
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts,
 and the Massachusetts Institute of Technology, Cambridge, Massachusetts.
