@@ -1,4 +1,4 @@
-/* $NetBSD: hpcInit.c,v 1.4 2000/08/11 04:09:32 jun Exp $	*/
+/* $NetBSD: hpcInit.c,v 1.5 2001/01/12 15:30:43 sato Exp $	*/
 
 #include    "hpc.h"
 #include    "gcstruct.h"
@@ -7,6 +7,7 @@
 #include    "cfb.h"
 
 #include <stdio.h>
+#include <unistd.h>
 
 static Bool hpcDevsInited = FALSE;
 
@@ -123,21 +124,45 @@ GetDeviceList (argc, argv)
     char	*envList = NULL;
     char	*cmdList = NULL;
     char	**deviceList = (char **)NULL;
+    char	*ttyn = NULL;
+    char	*p;
+    int		ttyfd = -1;
+    char	ttyE0[] = "/dev/ttyE0";
 
     for (i = 1; i < argc; i++)
 	if (strcmp (argv[i], "-dev") == 0 && i+1 < argc) {
 	    cmdList = argv[i + 1];
 	    break;
 	}
+
     if (!cmdList)
 	envList = getenv ("XDEVICE");
 
-    if (cmdList || envList) {
+    if (!cmdList && !envList) {
+	if (isatty(2))
+	    ttyfd = 2;
+	else if (isatty(0))
+	    ttyfd = 0;
+	else if (isatty(1))
+	    ttyfd = 1;
+
+	if (ttyfd >= 0) {
+	    if ((p = ttyname(ttyfd)) == NULL)
+		ttyn = ttyE0;
+	    else if (strncmp(p, ttyE0, strlen(ttyE0)-1) == 0) 
+		ttyn = p;
+	    else
+		ttyn = ttyE0;
+        } else
+	    ttyn = ttyE0;
+    }
+
+    if (cmdList || envList || ttyn) {
 	char	*_tmpa;
 	char	*_tmpb;
 	int	_i1;
 	deviceList = (char **) xalloc ((MAXSCREENS + 1) * sizeof (char *));
-	_tmpa = (cmdList) ? cmdList : envList;
+	_tmpa = (cmdList) ? cmdList : (envList) ? envList : ttyn;
 	for (_i1 = 0; _i1 < MAXSCREENS; _i1++) {
 	    _tmpb = strtok (_tmpa, ":");
 	    if (_tmpb)
@@ -148,6 +173,7 @@ GetDeviceList (argc, argv)
 	}
 	deviceList[MAXSCREENS] = NULL;
     }
+#if 0
     if (!deviceList) {
 	/* no environment and no cmdline, so default */
 	deviceList =
@@ -156,6 +182,7 @@ GetDeviceList (argc, argv)
 	    deviceList[i] = fallbackList[i];
 	deviceList[FALLBACK_LIST_LEN] = NULL;
     }
+#endif
     return deviceList;
 }
 
