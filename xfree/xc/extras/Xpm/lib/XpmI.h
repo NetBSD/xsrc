@@ -22,7 +22,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from GROUPE BULL.
  */
-/* $XFree86: xc/extras/Xpm/lib/XpmI.h,v 1.9 2003/08/06 14:03:58 eich Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/XpmI.h,v 1.7 2001/11/01 23:35:25 dawes Exp $ */
 
 /*****************************************************************************\
 * XpmI.h:                                                                     *
@@ -84,6 +84,18 @@ extern FILE *popen();
 #define XpmRealloc(ptr, size) boundCheckingRealloc((ptr),(long)(size))
 #define XpmCalloc(nelem, elsize) \
 		boundCheckingCalloc((long)(nelem),(long) (elsize))
+#endif
+
+#if defined(SCO) || defined(__USLC__)
+#include <stdint.h>	/* For SIZE_MAX */
+#endif
+#include <limits.h>
+#ifndef SIZE_MAX
+# ifdef ULONG_MAX
+#  define SIZE_MAX ULONG_MAX
+# else 
+#  define SIZE_MAX UINT_MAX
+# endif
 #endif
 
 #define XPMMAXCMTLEN BUFSIZ
@@ -187,9 +199,9 @@ typedef struct _xpmHashAtom {
 }      *xpmHashAtom;
 
 typedef struct {
-    int size;
-    int limit;
-    int used;
+    unsigned int size;
+    unsigned int limit;
+    unsigned int used;
     xpmHashAtom *atomTable;
 }      xpmHashTable;
 

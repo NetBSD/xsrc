@@ -31,7 +31,7 @@
 *                                                                             *
 *  Developed by Arnaud Le Hors                                                *
 \*****************************************************************************/
-/* $XFree86: xc/extras/Xpm/lib/data.c,v 1.4 2002/01/07 19:40:49 dawes Exp $ */
+/* $XFree86: xc/extras/Xpm/lib/data.c,v 1.3 2001/10/28 03:32:10 tsi Exp $ */
 
 #ifndef CXPMPROG
 #if 0
@@ -375,7 +375,7 @@ xpmGetCmt(data, cmt)
 {
     if (!data->type)
 	*cmt = NULL;
-    else if (data->CommentLength) {
+    else if (data->CommentLength != 0 && data->CommentLength < SIZE_MAX - 1) {
 	*cmt = (char *) XpmMalloc(data->CommentLength + 1);
 	strncpy(*cmt, data->Comment, data->CommentLength);
 	(*cmt)[data->CommentLength] = '\0';

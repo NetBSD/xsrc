@@ -22,7 +22,7 @@
  * used in advertising or otherwise to promote the sale, use or other dealings
  * in this Software without prior written authorization from GROUPE BULL.
  */
-/* $XFree86: xc/extras/Xpm/sxpm/sxpm.c,v 1.3 2001/10/28 03:32:13 tsi Exp $ */
+/* $XFree86: xc/extras/Xpm/sxpm/sxpm.c,v 1.2 2001/08/01 00:44:34 tsi Exp $ */
 
 /*****************************************************************************\
 * sxpm.c:                                                                     *
