@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2002/12/16 00:38:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.34 2002/12/25 22:01:43 tron Exp $
 #
 # Targets & Variables
 #
@@ -139,8 +139,13 @@ release snapshot: build
 	cd ${XCDIR}/programs/Xserver/hw/netbsd/amiga && \
 		${INSTALL} -c -m 644 INSTALL.X11 ${RELEASEDIR}
 .endif
+.if defined(METALOG) && !exists(${DESTDIR}/etc)
+	cd ${NETBSDSRCDIR}/distrib/sets && \
+	    sh ./maketars -x -d ${DESTDIR:S,^$,/,} -N ${NETBSDSRCDIR}/etc -t ${RELEASEDIR}/binary/sets
+.else
 	cd ${NETBSDSRCDIR}/distrib/sets && \
 	    sh ./maketars -x -d ${DESTDIR:S,^$,/,} -t ${RELEASEDIR}/binary/sets
+.endif
 	cd ${RELEASEDIR}/binary/sets && \
 		cksum -o 1 *.tgz >BSDSUM && \
 		cksum *.tgz >CKSUM && \
