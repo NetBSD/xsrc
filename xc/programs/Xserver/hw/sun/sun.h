@@ -48,11 +48,15 @@ extern char *getenv();
 #  include <signal.h>
 #  undef _POSIX_SOURCE
 # endif
+#else
+# ifdef CSRG_BASED
+#  include <signal.h>
+# endif
 #endif
 
 #include <fcntl.h>
 
-#ifndef __bsdi_
+#ifndef __bsdi__
 # ifndef CSRG_BASED
 #  ifndef i386
 #   include <poll.h>
