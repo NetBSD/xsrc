@@ -769,7 +769,8 @@ int auth_initialize (authfilename)
 static int write_auth_file (tmp_nam)
     char *tmp_nam;
 {
-    FILE *fp;
+    FILE *fp = NULL;
+    int fd;
     AuthList *list;
 
     /*
@@ -778,8 +779,11 @@ static int write_auth_file (tmp_nam)
     strcpy (tmp_nam, xauth_filename);
     strcat (tmp_nam, "-n");		/* for new */
     (void) unlink (tmp_nam);
-    fp = fopen (tmp_nam, "wb");		/* umask is still set to 0077 */
+    /* CPhipps 2000/02/12 - fix file unlink/fopen race */
+    fd = open(tmp_nam, O_WRONLY|O_CREAT|O_EXCL, 0600);
+    if (fd != -1) fp = fdopen(fd, "wb");
     if (!fp) {
+	if (fd != -1) close(fd);
 	fprintf (stderr, "%s:  unable to open tmp file \"%s\"\n",
 		 ProgramName, tmp_nam);
 	return -1;
