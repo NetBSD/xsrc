@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dga.c,v 1.10 2001/01/22 21:32:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_dga.c,v 1.11 2002/01/25 21:56:06 tsi Exp $ */
 
 #include "nv_local.h"
 #include "nv_include.h"
@@ -234,8 +234,8 @@ NV_SetViewport(
 
    NVAdjustFrame(pScrn->pScreen->myNum, x, y, flags);
 
-   while(pNv->riva.PCIO[0x3da] & 0x08);
-   while(!(pNv->riva.PCIO[0x3da] & 0x08));
+   while(VGA_RD08(pNv->riva.PCIO, 0x3da) & 0x08);
+   while(!(VGA_RD08(pNv->riva.PCIO, 0x3da) & 0x08));
 
    pNv->DGAViewportStatus = 0;  
 }

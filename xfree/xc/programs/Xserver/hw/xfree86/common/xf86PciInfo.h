@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PciInfo.h,v 1.119 2002/01/16 02:00:43 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86PciInfo.h,v 1.123 2002/03/18 21:45:55 mvojkovi Exp $ */
 /*
  * PCI Probe
  *
@@ -506,42 +506,47 @@
 #define PCI_CHIP_BT849		0x0351
 
 /* NVIDIA */
-#define PCI_CHIP_NV1		0x0008
-#define PCI_CHIP_DAC64		0x0009
-#define PCI_CHIP_TNT		0x0020
-#define PCI_CHIP_TNT2		0x0028
-#define PCI_CHIP_UTNT2		0x0029
-#define PCI_CHIP_VTNT2		0x002C
-#define PCI_CHIP_UVTNT2		0x002D
-#define PCI_CHIP_ITNT2		0x00A0
-#define PCI_CHIP_GEFORCE256     0x0100
-#define PCI_CHIP_GEFORCEDDR     0x0101
-#define PCI_CHIP_QUADRO         0x0103
-#define PCI_CHIP_GEFORCE2MX     0x0110
-#define PCI_CHIP_GEFORCE2MXDDR  0x0111
-#define PCI_CHIP_GEFORCE2GO	0x0112
-#define PCI_CHIP_QUADRO2MXR     0x0113
-#define PCI_CHIP_GEFORCE2GTS    0x0150
-#define PCI_CHIP_GEFORCE2GTS_1  0x0151
-#define PCI_CHIP_GEFORCE2ULTRA  0x0152
-#define PCI_CHIP_QUADRO2PRO     0x0153
-#define PCI_CHIP_0x0170         0x0170
-#define PCI_CHIP_0x0171         0x0171
-#define PCI_CHIP_0x0172         0x0172
-#define PCI_CHIP_0x0173         0x0173
-#define PCI_CHIP_0x0174         0x0174
-#define PCI_CHIP_0x0175         0x0175
-#define PCI_CHIP_0x0178         0x0178
-#define PCI_CHIP_0x017A         0x017A
-#define PCI_CHIP_0x017B         0x017B
-#define PCI_CHIP_0x017C         0x017C
-#define PCI_CHIP_IGEFORCE2      0x01A0
-#define PCI_CHIP_GEFORCE3	0x0200
-#define PCI_CHIP_GEFORCE3_1	0x0201
-#define PCI_CHIP_GEFORCE3_2	0x0202
-#define PCI_CHIP_QUADRO_DDC	0x0203
-#define PCI_CHIP_0x0250         0x0250
-#define PCI_CHIP_0x0258         0x0258
+#define PCI_CHIP_NV1			0x0008
+#define PCI_CHIP_DAC64			0x0009
+#define PCI_CHIP_TNT			0x0020
+#define PCI_CHIP_TNT2			0x0028
+#define PCI_CHIP_UTNT2			0x0029
+#define PCI_CHIP_VTNT2			0x002C
+#define PCI_CHIP_UVTNT2			0x002D
+#define PCI_CHIP_ITNT2			0x00A0
+#define PCI_CHIP_GEFORCE_256		0x0100
+#define PCI_CHIP_GEFORCE_DDR		0x0101
+#define PCI_CHIP_QUADRO			0x0103
+#define PCI_CHIP_GEFORCE2_MX		0x0110
+#define PCI_CHIP_GEFORCE2_MX_100  	0x0111
+#define PCI_CHIP_GEFORCE2_GO		0x0112
+#define PCI_CHIP_QUADRO2_MXR     	0x0113
+#define PCI_CHIP_GEFORCE2_GTS    	0x0150
+#define PCI_CHIP_GEFORCE2_TI  		0x0151
+#define PCI_CHIP_GEFORCE2_ULTRA  	0x0152
+#define PCI_CHIP_QUADRO2_PRO     	0x0153
+#define PCI_CHIP_GEFORCE4_MX_460 	0x0170
+#define PCI_CHIP_GEFORCE4_MX_440 	0x0171
+#define PCI_CHIP_GEFORCE4_MX_420 	0x0172
+#define PCI_CHIP_GEFORCE4_440_GO	0x0174
+#define PCI_CHIP_GEFORCE4_420_GO	0x0175
+#define PCI_CHIP_GEFORCE4_420_GO_M32	0x0176
+#define PCI_CHIP_QUADRO4_500XGL		0x0178
+#define PCI_CHIP_GEFORCE4_440_GO_M64	0x0179
+#define PCI_CHIP_QUADRO4_200		0x017A
+#define PCI_CHIP_QUADRO4_550XGL		0x017B
+#define PCI_CHIP_QUADRO4_500_GOGL       0x017C
+#define PCI_CHIP_IGEFORCE2      	0x01A0
+#define PCI_CHIP_GEFORCE3		0x0200
+#define PCI_CHIP_GEFORCE3_TI_200	0x0201
+#define PCI_CHIP_GEFORCE3_TI_500	0x0202
+#define PCI_CHIP_QUADRO_DCC		0x0203
+#define PCI_CHIP_GEFORCE4_TI_4600	0x0250
+#define PCI_CHIP_GEFORCE4_TI_4400	0x0251
+#define PCI_CHIP_GEFORCE4_TI_4200	0x0253
+#define PCI_CHIP_QUADRO4_900XGL		0x0258
+#define PCI_CHIP_QUADRO4_750XGL		0x0259
+#define PCI_CHIP_QUADRO4_700XGL		0x025B
 
 /* NVIDIA & SGS */
 #define PCI_CHIP_RIVA128	0x0018
@@ -640,10 +645,10 @@
 #define PCI_CHIP_NM2380		0x0016
 
 /* Intel */
-#define PCI_CHIP_I830_M_BRIDGE		0x3575
-#define PCI_CHIP_I830_M			0x3577
 #define PCI_CHIP_I815_BRIDGE		0x1130
 #define PCI_CHIP_I815			0x1132
+#define PCI_CHIP_I830_M_BRIDGE		0x3575
+#define PCI_CHIP_I830_M			0x3577
 #define PCI_CHIP_I810_BRIDGE		0x7120
 #define PCI_CHIP_I810			0x7121
 #define PCI_CHIP_I810_DC100_BRIDGE	0x7122
@@ -651,6 +656,7 @@
 #define PCI_CHIP_I810_E_BRIDGE		0x7124
 #define PCI_CHIP_I810_E			0x7125
 #define PCI_CHIP_I740_AGP		0x7800
+#define PCI_CHIP_460GX_SAC		0x84E0
 
 /* Silicon Motion Inc. */
 #define PCI_CHIP_SMI910		0x910
@@ -1029,7 +1035,7 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{PCI_CHIP_MGA2164_AGP,	"MGA 2164W AGP",0},
 				{PCI_CHIP_MGAG200_PCI,	"MGA G200 PCI",0},
 				{PCI_CHIP_MGAG200,	"MGA G200 AGP",0},
-				{PCI_CHIP_MGAG400,	"MGA G400 AGP",0},
+				{PCI_CHIP_MGAG400,	"MGA G400/450 AGP",0},
 				{PCI_CHIP_MGAG550,	"MGA G550 AGP",0},
 				{PCI_CHIP_MGAG100_PCI,	"MGA G100 PCI",0},
 				{PCI_CHIP_MGAG100,	"MGA G100 AGP",0},
@@ -1308,42 +1314,47 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{0x0000,		NULL,0}}},
 #endif
     {PCI_VENDOR_NVIDIA,	{
-				{PCI_CHIP_NV1,		"NV1",0},
-				{PCI_CHIP_DAC64,	"DAC64",0},
-				{PCI_CHIP_TNT,		"RIVA TNT",0},
-				{PCI_CHIP_TNT2,		"RIVA TNT2/TNT2 Pro",0},
-				{PCI_CHIP_UTNT2,	"RIVA TNT2 Ultra",0},
-				{PCI_CHIP_VTNT2,	"Vanta",0},
-				{PCI_CHIP_UVTNT2,	"Riva TNT2 M64",0},
-				{PCI_CHIP_ITNT2,	"Aladdin TNT2",0},
-				{PCI_CHIP_GEFORCE256,	"GeForce 256",0},
-				{PCI_CHIP_GEFORCEDDR,	"GeForce DDR",0},
-				{PCI_CHIP_QUADRO,	"Quadro",0},
-				{PCI_CHIP_GEFORCE2MX,	"GeForce2 MX/MX 400",0},
-				{PCI_CHIP_GEFORCE2MXDDR,"GeForce2 MX 100/200",0},
-				{PCI_CHIP_GEFORCE2GO,   "GeForce2 Go", 0},
-				{PCI_CHIP_QUADRO2MXR,	"Quadro2 MXR",0},
-				{PCI_CHIP_GEFORCE2GTS,	"GeForce2 GTS/Pro",0},
-				{PCI_CHIP_GEFORCE2GTS_1,"GeForce2 Ti",0},
-				{PCI_CHIP_GEFORCE2ULTRA,"GeForce2 Ultra",0},
-				{PCI_CHIP_QUADRO2PRO,	"Quadro2 Pro",0},
-				{PCI_CHIP_0x0170,	"0x0170",0},
-				{PCI_CHIP_0x0171,	"0x0171",0},
-				{PCI_CHIP_0x0172,	"0x0172",0},
-				{PCI_CHIP_0x0173,	"0x0173",0},
-				{PCI_CHIP_0x0174,	"0x0174",0},
-				{PCI_CHIP_0x0175,	"0x0175",0},
-				{PCI_CHIP_0x0178,	"0x0178",0},
-				{PCI_CHIP_0x017A,	"0x017A",0},
-				{PCI_CHIP_0x017B,	"0x017B",0},
-				{PCI_CHIP_0x017C,	"0x017C",0},
-				{PCI_CHIP_IGEFORCE2,	"GeForce2 Integrated",0},
-				{PCI_CHIP_GEFORCE3,	"GeForce3",0},
-				{PCI_CHIP_GEFORCE3_1,	"GeForce3 Ti 200",0},
-				{PCI_CHIP_GEFORCE3_2,	"GeForce3 Ti 500",0},
-				{PCI_CHIP_QUADRO_DDC,	"Quadro DDC",0},
-				{PCI_CHIP_0x0250,	"0x0250",0},
-				{PCI_CHIP_0x0258,	"0x0258",0},
+				{PCI_CHIP_NV1,		      "NV1",0},
+				{PCI_CHIP_DAC64,	      "DAC64",0},
+				{PCI_CHIP_TNT,		      "RIVA TNT",0},
+				{PCI_CHIP_TNT2,		      "RIVA TNT2/TNT2 Pro",0},
+				{PCI_CHIP_UTNT2,	      "RIVA TNT2 Ultra",0},
+				{PCI_CHIP_VTNT2,	      "Vanta",0},
+				{PCI_CHIP_UVTNT2,	      "Riva TNT2 M64",0},
+				{PCI_CHIP_ITNT2,	      "Aladdin TNT2",0},
+				{PCI_CHIP_GEFORCE_256,        "GeForce 256",0},
+				{PCI_CHIP_GEFORCE_DDR,	      "GeForce DDR",0},
+				{PCI_CHIP_QUADRO,	      "Quadro",0},
+				{PCI_CHIP_GEFORCE2_MX,	      "GeForce2 MX/MX 400",0},
+				{PCI_CHIP_GEFORCE2_MX_100,    "GeForce2 MX 100/200",0},
+				{PCI_CHIP_GEFORCE2_GO,        "GeForce2 Go", 0},
+				{PCI_CHIP_QUADRO2_MXR,	      "Quadro2 MXR",0},
+				{PCI_CHIP_GEFORCE2_GTS,	      "GeForce2 GTS/Pro",0},
+				{PCI_CHIP_GEFORCE2_TI,        "GeForce2 Ti",0},
+				{PCI_CHIP_GEFORCE2_ULTRA,     "GeForce2 Ultra",0},
+				{PCI_CHIP_QUADRO2_PRO,	      "Quadro2 Pro",0},
+				{PCI_CHIP_GEFORCE4_MX_460,    "GeForce4 MX 460",0},
+				{PCI_CHIP_GEFORCE4_MX_440,    "GeForce4 MX 440",0},
+				{PCI_CHIP_GEFORCE4_MX_420,    "GeForce4 MX 420",0},
+				{PCI_CHIP_GEFORCE4_440_GO,    "GeForce4 440 Go",0},
+				{PCI_CHIP_GEFORCE4_420_GO,    "GeForce4 420 Go",0},
+				{PCI_CHIP_GEFORCE4_420_GO_M32,"GeForce4 420 Go M32",0},
+				{PCI_CHIP_QUADRO4_500XGL,     "Quadro4 500XGL",0},
+				{PCI_CHIP_GEFORCE4_440_GO_M64,"GeForce4 440 Go M64",0},
+				{PCI_CHIP_QUADRO4_200,        "Quadro4 200/400NVS",0},
+				{PCI_CHIP_QUADRO4_550XGL,     "Quadro4 550XGL",0},
+				{PCI_CHIP_QUADRO4_500_GOGL,   "Quadro4 GoGL",0},
+				{PCI_CHIP_IGEFORCE2,	      "GeForce2 Integrated",0},
+				{PCI_CHIP_GEFORCE3,	      "GeForce3",0},
+				{PCI_CHIP_GEFORCE3_TI_200,    "GeForce3 Ti 200",0},
+				{PCI_CHIP_GEFORCE3_TI_500,    "GeForce3 Ti 500",0},
+				{PCI_CHIP_QUADRO_DCC,	      "Quadro DCC",0},
+				{PCI_CHIP_GEFORCE4_TI_4600,   "GeForce4 Ti 4600",0},
+				{PCI_CHIP_GEFORCE4_TI_4400,   "GeForce4 Ti 4400",0},
+				{PCI_CHIP_GEFORCE4_TI_4200,   "GeForce4 Ti 4200",0},
+				{PCI_CHIP_QUADRO4_900XGL,     "Quadro4 900 XGL",0},
+				{PCI_CHIP_QUADRO4_750XGL,     "Quadro4 750 XGL",0},
+				{PCI_CHIP_QUADRO4_700XGL,     "Quadro4 700 XGL",0},
 				{0x0000,		NULL,0}}},
     {PCI_VENDOR_IMS, {
 				{PCI_CHIP_IMSTT128,	"TwinTurbo 128", 0},
@@ -1559,6 +1570,8 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{0x0486, "82430ZX Aries",0},
 				{0x04A3, "82434LX/NX pci cache mem controller",0},
 				{0x0960, "960RD processor/bridge",0},
+				{0x0964, "960RD processor/bridge",0},
+				{PCI_CHIP_I815_BRIDGE, "i815 Bridge",0},
 				{0x1221, "82092AA",0},
 				{0x1222, "82092AA",0},
 				{0x1223, "SAA7116",0},
@@ -1571,8 +1584,11 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{0x1234, "82371MX bus-master IDE controller",0},
 				{0x1235, "82437MX",0},
 				{0x1237, "82441FX Natoma",0},
+				{0x123D, "683053 Programmable Interrupt Controller",0},
+				{0x123F, "460GX Integrated Hot-Plug Controller",0},
 				{0x124B, "82380FB",0},
 				{0x1250, "82439",0},
+				{PCI_CHIP_I830_M_BRIDGE, "i830M Bridge",0},
 				{0x7000, "82371 pci-isa bridge",0},
 				{0x7010, "82371 bus-master IDE controller",0},
 				{0x7020, "82371 bus-master IDE controller",0},
@@ -1582,6 +1598,9 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{0x7111, "82371AB PIIX4 IDE",0},
 				{0x7112, "82371AB PIIX4 USB",0},
 				{0x7113, "82371AB PIIX4 ACPI",0},
+				{PCI_CHIP_I810_BRIDGE, "i810 Bridge",0},
+				{PCI_CHIP_I810_DC100_BRIDGE, "i810-dc100 Bridge",0},
+				{PCI_CHIP_I810_E_BRIDGE, "i810e Bridge",0},
 				{0x7180, "82443LX PAC Host",0},
 				{0x7181, "82443LX PAC AGP",0},
 				{0x7190, "82443BX Host",0},
@@ -1590,20 +1609,25 @@ static pciVendorDeviceInfo xf86PCIVendorInfoData[] = {
 				{0x71a0, "82443GX Host",0},
 				{0x71a1, "82443GX AGP",0},
 				{0x71a2, "82443GX Host (no AGP)",0},
+				{0x7600, "82372FB PCI-to-ISA (LPC) bridge",0},
+				{0x7601, "82372FB IDE",0},
+				{0x7602, "82372FB USB",0},
+				{0x7603, "82372FB SMBus",0},
 				{0x84C4, "P6",0},
 				{0x84C5, "82450GX20",0},
-				{PCI_CHIP_I810_BRIDGE,	"i810 Bridge",0},
-				{PCI_CHIP_I810_DC100_BRIDGE,	"i810-dc100 Bridge",0},
-				{PCI_CHIP_I810_E_BRIDGE,"i810e Bridge",0},
-				{PCI_CHIP_I815_BRIDGE,	"i815 Bridge",0},
-				{PCI_CHIP_I830_M_BRIDGE,"i830M Bridge",0},
+				{0x84CB, "460GX PCI Expander Bridge",0},
+				{PCI_CHIP_460GX_SAC, "84460GX System Address Controller",0},
+				{0x84E1, "460GX System Data Controller",0},
+				{0x84E2, "460GX AGP Bridge",0},
+				{0x84E3, "460GX Memory Access Controller",0},
+				{0x84E4, "460GX Memory Data Controller",0},
 #endif
-				{PCI_CHIP_I740_AGP,	"i740 (AGP)",0},
+				{PCI_CHIP_I815,		"i815",0},
+				{PCI_CHIP_I830_M,	"i830M",0},
 				{PCI_CHIP_I810,		"i810",0},
 				{PCI_CHIP_I810_DC100,	"i810-dc100",0},
 				{PCI_CHIP_I810_E,	"i810e",0},
-				{PCI_CHIP_I815,		"i815",0},
-				{PCI_CHIP_I830_M,	"i830M",0},
+				{PCI_CHIP_I740_AGP,	"i740 (AGP)",0},
 				{0x0000,		NULL,0}}},
     {PCI_VENDOR_ADAPTEC, {
 				{0x0010, "2940U2",0 },

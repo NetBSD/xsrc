@@ -24,7 +24,7 @@
 /* Hacked together from mga driver and 3.3.4 NVIDIA driver by Jarno Paananen
    <jpaana@s2.org> */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_driver.c,v 1.81 2002/01/04 21:22:33 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_driver.c,v 1.87 2002/03/18 21:47:48 mvojkovi Exp $ */
 
 #include "nv_include.h"
 
@@ -87,81 +87,91 @@ DriverRec NV = {
 
 /* Supported chipsets */
 static SymTabRec NVChipsets[] = {
-    { NV_CHIP_RIVA128,    "RIVA128" },
-    { NV_CHIP_TNT,        "RIVA TNT" },
-    { NV_CHIP_TNT2,       "RIVA TNT2" },
-    { NV_CHIP_UTNT2,      "RIVA TNT2 Ultra" },
-    { NV_CHIP_VTNT2,      "Vanta" },
-    { NV_CHIP_UVTNT2,     "RIVA TNT2 M64" },
-    { NV_CHIP_ITNT2,      "Aladdin TNT2" },
-    { NV_CHIP_GEFORCE256, "GeForce 256" },
-    { NV_CHIP_GEFORCEDDR, "GeForce DDR" },
-    { NV_CHIP_QUADRO,     "Quadro" },
-    { NV_CHIP_GEFORCE2GTS,  "GeForce2 GTS/Pro"},
-    { NV_CHIP_GEFORCE2GTS_1,"GeForce2 Ti"},
-    { NV_CHIP_GEFORCE2ULTRA,"GeForce2 Ultra"},
-    { NV_CHIP_QUADRO2PRO,   "Quadro2 Pro"},
-    { NV_CHIP_GEFORCE2MX,   "GeForce2 MX/MX 400"},
-    { NV_CHIP_GEFORCE2MXDDR, "GeForce2 MX 100/200"},
-    { NV_CHIP_0x0170,      "0x0170" },
-    { NV_CHIP_0x0171,      "0x0171" },
-    { NV_CHIP_0x0172,      "0x0172" },
-    { NV_CHIP_0x0173,      "0x0173" },
-    { NV_CHIP_0x0174,      "0x0174" },
-    { NV_CHIP_0x0175,      "0x0175" },
-    { NV_CHIP_0x0178,      "0x0178" },
-    { NV_CHIP_0x017A,      "0x017A" },
-    { NV_CHIP_0x017B,      "0x017B" },
-    { NV_CHIP_0x017C,      "0x017C" },
-    { NV_CHIP_IGEFORCE2,    "GeForce2 Integrated"},
-    { NV_CHIP_QUADRO2MXR,   "Quadro2 MXR"},
-    { NV_CHIP_GEFORCE2GO,   "GeForce2 Go"},
-    { NV_CHIP_GEFORCE3,     "GeForce3"},
-    { NV_CHIP_GEFORCE3_1,   "GeForce3 Ti 200"},
-    { NV_CHIP_GEFORCE3_2,   "GeForce3 Ti 500"},
-    { NV_CHIP_QUADRO_DDC,   "Quadro DDC"},
-    { NV_CHIP_0x0250,       "0x0250"},
-    { NV_CHIP_0x0258,       "0x0258"},
+    {NV_CHIP_RIVA_128,           "RIVA 128"},
+    {NV_CHIP_TNT,                "RIVA TNT"},
+    {NV_CHIP_TNT2,               "RIVA TNT2/TNT2 Pro"},
+    {NV_CHIP_UTNT2,              "RIVA TNT2 Ultra"},
+    {NV_CHIP_VTNT2,              "Vanta"},
+    {NV_CHIP_UVTNT2,             "Riva TNT2 M64"},
+    {NV_CHIP_ITNT2,              "Aladdin TNT2"},
+    {NV_CHIP_GEFORCE_256,        "GeForce 256"},
+    {NV_CHIP_GEFORCE_DDR,        "GeForce DDR"},
+    {NV_CHIP_QUADRO,             "Quadro"},
+    {NV_CHIP_GEFORCE2_MX,        "GeForce2 MX/MX 400"},
+    {NV_CHIP_GEFORCE2_MX_100,    "GeForce2 MX 100/200"},
+    {NV_CHIP_GEFORCE2_GO,        "GeForce2 Go"},
+    {NV_CHIP_QUADRO2_MXR,        "Quadro2 MXR"},
+    {NV_CHIP_GEFORCE2_GTS,       "GeForce2 GTS/Pro"},
+    {NV_CHIP_GEFORCE2_TI,        "GeForce2 Ti"},
+    {NV_CHIP_GEFORCE2_ULTRA,     "GeForce2 Ultra"},
+    {NV_CHIP_QUADRO2_PRO,        "Quadro2 Pro"},
+    {NV_CHIP_GEFORCE4_MX_460,    "GeForce4 MX 460"},
+    {NV_CHIP_GEFORCE4_MX_440,    "GeForce4 MX 440"},
+    {NV_CHIP_GEFORCE4_MX_420,    "GeForce4 MX 420"},
+    {NV_CHIP_GEFORCE4_440_GO,    "GeForce4 440 Go"},
+    {NV_CHIP_GEFORCE4_420_GO,    "GeForce4 420 Go"},
+    {NV_CHIP_GEFORCE4_420_GO_M32,"GeForce4 420 Go M32"},
+    {NV_CHIP_QUADRO4_500XGL,     "Quadro4 500XGL"},
+    {NV_CHIP_GEFORCE4_440_GO_M64,"GeForce4 440 Go M64"},
+    {NV_CHIP_QUADRO4_200,        "Quadro4 200/400NVS"},
+    {NV_CHIP_QUADRO4_550XGL,     "Quadro4 550XGL"},
+    {NV_CHIP_QUADRO4_500_GOGL,   "Quadro4 GoGL"},
+    {NV_CHIP_IGEFORCE2,          "GeForce2 Integrated"},
+    {NV_CHIP_GEFORCE3,           "GeForce3"},
+    {NV_CHIP_GEFORCE3_TI_200,    "GeForce3 Ti 200"},
+    {NV_CHIP_GEFORCE3_TI_500,    "GeForce3 Ti 500"},
+    {NV_CHIP_QUADRO_DCC,         "Quadro DCC"},
+    {NV_CHIP_GEFORCE4_TI_4600,   "GeForce4 Ti 4600"},
+    {NV_CHIP_GEFORCE4_TI_4400,   "GeForce4 Ti 4400"},
+    {NV_CHIP_GEFORCE4_TI_4200,   "GeForce4 Ti 4200"},
+    {NV_CHIP_QUADRO4_900XGL,     "Quadro4 900 XGL"},
+    {NV_CHIP_QUADRO4_750XGL,     "Quadro4 750 XGL"},
+    {NV_CHIP_QUADRO4_700XGL,     "Quadro4 700 XGL"},
     {-1,                        NULL }
 };
 
 static PciChipsets NVPciChipsets[] = {
-    { NV_CHIP_RIVA128,          NV_CHIP_RIVA128,        RES_SHARED_VGA },
-    { NV_CHIP_TNT,              NV_CHIP_TNT,            RES_SHARED_VGA },
-    { NV_CHIP_TNT2,             NV_CHIP_TNT2,           RES_SHARED_VGA },
-    { NV_CHIP_UTNT2,            NV_CHIP_UTNT2,          RES_SHARED_VGA },
-    { NV_CHIP_VTNT2,            NV_CHIP_VTNT2,          RES_SHARED_VGA },
-    { NV_CHIP_UVTNT2,           NV_CHIP_UVTNT2,         RES_SHARED_VGA },
-    { NV_CHIP_ITNT2,            NV_CHIP_ITNT2,          RES_SHARED_VGA },
-    { NV_CHIP_GEFORCE256,       NV_CHIP_GEFORCE256,     RES_SHARED_VGA },
-    { NV_CHIP_GEFORCEDDR,       NV_CHIP_GEFORCEDDR,     RES_SHARED_VGA },
-    { NV_CHIP_QUADRO,           NV_CHIP_QUADRO,         RES_SHARED_VGA },
-    { NV_CHIP_GEFORCE2GTS,      NV_CHIP_GEFORCE2GTS,    RES_SHARED_VGA },
-    { NV_CHIP_GEFORCE2GTS_1,    NV_CHIP_GEFORCE2GTS_1,  RES_SHARED_VGA },
-    { NV_CHIP_GEFORCE2ULTRA,    NV_CHIP_GEFORCE2ULTRA,  RES_SHARED_VGA },
-    { NV_CHIP_QUADRO2PRO,       NV_CHIP_QUADRO2PRO,     RES_SHARED_VGA },
-    { NV_CHIP_GEFORCE2MX,       NV_CHIP_GEFORCE2MX,     RES_SHARED_VGA },
-    { NV_CHIP_GEFORCE2MXDDR,    NV_CHIP_GEFORCE2MXDDR,  RES_SHARED_VGA },
-    { NV_CHIP_0x0170,           NV_CHIP_0x0170,         RES_SHARED_VGA },
-    { NV_CHIP_0x0171,           NV_CHIP_0x0171,         RES_SHARED_VGA },
-    { NV_CHIP_0x0172,           NV_CHIP_0x0172,         RES_SHARED_VGA },
-    { NV_CHIP_0x0173,           NV_CHIP_0x0173,         RES_SHARED_VGA },
-    { NV_CHIP_0x0174,           NV_CHIP_0x0174,         RES_SHARED_VGA },
-    { NV_CHIP_0x0175,           NV_CHIP_0x0175,         RES_SHARED_VGA },
-    { NV_CHIP_0x0178,           NV_CHIP_0x0178,         RES_SHARED_VGA },
-    { NV_CHIP_0x017A,           NV_CHIP_0x017A,         RES_SHARED_VGA },
-    { NV_CHIP_0x017B,           NV_CHIP_0x017B,         RES_SHARED_VGA },
-    { NV_CHIP_0x017C,           NV_CHIP_0x017C,         RES_SHARED_VGA },
-    { NV_CHIP_IGEFORCE2,        NV_CHIP_IGEFORCE2,      RES_SHARED_VGA },
-    { NV_CHIP_QUADRO2MXR,       NV_CHIP_QUADRO2MXR,     RES_SHARED_VGA },
-    { NV_CHIP_GEFORCE2GO,       NV_CHIP_GEFORCE2GO,     RES_SHARED_VGA },
-    { NV_CHIP_GEFORCE3,         NV_CHIP_GEFORCE3,       RES_SHARED_VGA },
-    { NV_CHIP_GEFORCE3_1,       NV_CHIP_GEFORCE3_1,     RES_SHARED_VGA },
-    { NV_CHIP_GEFORCE3_2,       NV_CHIP_GEFORCE3_2,     RES_SHARED_VGA },
-    { NV_CHIP_QUADRO_DDC,       NV_CHIP_QUADRO_DDC,     RES_SHARED_VGA },
-    { NV_CHIP_0x0250,           NV_CHIP_0x0250,         RES_SHARED_VGA },
-    { NV_CHIP_0x0258,           NV_CHIP_0x0258,         RES_SHARED_VGA },
-    { -1,                       -1,                     RES_UNDEFINED  }
+    {NV_CHIP_RIVA_128,           NV_CHIP_RIVA_128,           RES_SHARED_VGA},
+    {NV_CHIP_TNT,                NV_CHIP_TNT,                RES_SHARED_VGA},
+    {NV_CHIP_TNT2,               NV_CHIP_TNT2,               RES_SHARED_VGA},
+    {NV_CHIP_UTNT2,              NV_CHIP_UTNT2,              RES_SHARED_VGA},
+    {NV_CHIP_VTNT2,              NV_CHIP_VTNT2,              RES_SHARED_VGA},
+    {NV_CHIP_UVTNT2,             NV_CHIP_UVTNT2,             RES_SHARED_VGA},
+    {NV_CHIP_ITNT2,              NV_CHIP_ITNT2,              RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE_256,        NV_CHIP_GEFORCE_256,        RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE_DDR,        NV_CHIP_GEFORCE_DDR,        RES_SHARED_VGA},
+    {NV_CHIP_QUADRO,             NV_CHIP_QUADRO,             RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE2_MX,        NV_CHIP_GEFORCE2_MX,        RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE2_MX_100,    NV_CHIP_GEFORCE2_MX_100,    RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE2_GO,        NV_CHIP_GEFORCE2_GO,        RES_SHARED_VGA},
+    {NV_CHIP_QUADRO2_MXR,        NV_CHIP_QUADRO2_MXR,        RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE2_GTS,       NV_CHIP_GEFORCE2_GTS,       RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE2_TI,        NV_CHIP_GEFORCE2_TI,        RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE2_ULTRA,     NV_CHIP_GEFORCE2_ULTRA,     RES_SHARED_VGA},
+    {NV_CHIP_QUADRO2_PRO,        NV_CHIP_QUADRO2_PRO,        RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE4_MX_460,    NV_CHIP_GEFORCE4_MX_460,    RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE4_MX_440,    NV_CHIP_GEFORCE4_MX_440,    RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE4_MX_420,    NV_CHIP_GEFORCE4_MX_420,    RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE4_440_GO,    NV_CHIP_GEFORCE4_440_GO,    RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE4_420_GO,    NV_CHIP_GEFORCE4_420_GO,    RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE4_420_GO_M32,NV_CHIP_GEFORCE4_420_GO_M32,RES_SHARED_VGA},
+    {NV_CHIP_QUADRO4_500XGL,     NV_CHIP_QUADRO4_500XGL,     RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE4_440_GO_M64,NV_CHIP_GEFORCE4_440_GO_M64,RES_SHARED_VGA},
+    {NV_CHIP_QUADRO4_200,        NV_CHIP_QUADRO4_200,        RES_SHARED_VGA},
+    {NV_CHIP_QUADRO4_550XGL,     NV_CHIP_QUADRO4_550XGL,     RES_SHARED_VGA},
+    {NV_CHIP_QUADRO4_500_GOGL,   NV_CHIP_QUADRO4_500_GOGL,   RES_SHARED_VGA},
+    {NV_CHIP_IGEFORCE2,          NV_CHIP_IGEFORCE2,          RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE3,           NV_CHIP_GEFORCE3,           RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE3_TI_200,    NV_CHIP_GEFORCE3_TI_200,    RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE3_TI_500,    NV_CHIP_GEFORCE3_TI_500,    RES_SHARED_VGA},
+    {NV_CHIP_QUADRO_DCC,         NV_CHIP_QUADRO_DCC,         RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE4_TI_4600,   NV_CHIP_GEFORCE4_TI_4600,   RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE4_TI_4400,   NV_CHIP_GEFORCE4_TI_4400,   RES_SHARED_VGA},
+    {NV_CHIP_GEFORCE4_TI_4200,   NV_CHIP_GEFORCE4_TI_4200,   RES_SHARED_VGA},
+    {NV_CHIP_QUADRO4_900XGL,     NV_CHIP_QUADRO4_900XGL,     RES_SHARED_VGA},
+    {NV_CHIP_QUADRO4_750XGL,     NV_CHIP_QUADRO4_750XGL,     RES_SHARED_VGA},
+    {NV_CHIP_QUADRO4_700XGL,     NV_CHIP_QUADRO4_700XGL,     RES_SHARED_VGA},
+    { -1,                       -1,                          RES_UNDEFINED  }
 };
 
 /*
@@ -179,13 +189,11 @@ static const char *vgahwSymbols[] = {
     "vgaHWGetHWRec",
     "vgaHWGetIndex",
     "vgaHWInit",
-    "vgaHWLock",
     "vgaHWMapMem",
     "vgaHWProtect",
     "vgaHWRestore",
     "vgaHWSave",
     "vgaHWSaveScreen",
-    "vgaHWUnlock",
     "vgaHWddc1SetSpeed",
     NULL
 };
@@ -305,7 +313,8 @@ typedef enum {
     OPTION_FBDEV,
     OPTION_ROTATE,
     OPTION_VIDEO_KEY,
-    OPTION_FLAT_PANEL
+    OPTION_FLAT_PANEL,
+    OPTION_CRTC_NUMBER
 } NVOpts;
 
 
@@ -319,6 +328,7 @@ static const OptionInfoRec NVOptions[] = {
     { OPTION_ROTATE,		"Rotate",	OPTV_ANYSTR,	{0}, FALSE },
     { OPTION_VIDEO_KEY,		"VideoKey",	OPTV_INTEGER,	{0}, FALSE },
     { OPTION_FLAT_PANEL,	"FlatPanel",	OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_CRTC_NUMBER,	"CrtcNumber",	OPTV_INTEGER,	{0}, FALSE },
     { -1,                       NULL,           OPTV_NONE,      {0}, FALSE }
 };
 
@@ -333,7 +343,7 @@ static int pix24bpp = 0;
  */
 static NVRamdacRec DacInit = {
         FALSE, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL,
-        0, NULL, NULL, NULL, NULL, NULL
+        0, NULL, NULL, NULL, NULL
 }; 
 
 
@@ -565,13 +575,9 @@ static Bool
 NVEnterVT(int scrnIndex, int flags)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
-    NVPtr pNv = NVPTR(pScrn);
-    vgaHWPtr hwp = VGAHWPTR(pScrn);
 
     DEBUG(xf86DrvMsg(scrnIndex, X_INFO, "NVEnterVT\n"));
 
-    vgaHWUnlock(hwp);
-    pNv->riva.LockUnlock(&pNv->riva, 0);
     if (!NVModeInit(pScrn, pScrn->currentMode))
         return FALSE;
     NVAdjustFrame(scrnIndex, pScrn->frameX0, pScrn->frameY0, 0);
@@ -600,13 +606,11 @@ NVLeaveVT(int scrnIndex, int flags)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
     NVPtr pNv = NVPTR(pScrn);
-    vgaHWPtr hwp = VGAHWPTR(pScrn);
 
     DEBUG(xf86DrvMsg(scrnIndex, X_INFO, "NVLeaveVT\n"));
 
     NVRestore(pScrn);
     pNv->riva.LockUnlock(&pNv->riva, 1);
-    vgaHWLock(hwp);
 }
 
 
@@ -645,7 +649,6 @@ static Bool
 NVCloseScreen(int scrnIndex, ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[scrnIndex];
-    vgaHWPtr hwp = VGAHWPTR(pScrn);
     NVPtr pNv = NVPTR(pScrn);
 
     DEBUG(xf86DrvMsg(scrnIndex, X_INFO, "NVCloseScreen\n"));
@@ -653,7 +656,6 @@ NVCloseScreen(int scrnIndex, ScreenPtr pScreen)
     if (pScrn->vtSema) {
         NVRestore(pScrn);
         pNv->riva.LockUnlock(&pNv->riva, 1);
-        vgaHWLock(hwp);
     }
 
     NVUnmapMem(pScrn);
@@ -779,15 +781,13 @@ nvDoDDCVBE(ScrnInfoPtr pScrn)
  
 
 /* Internally used */
-static xf86MonPtr
+xf86MonPtr
 NVdoDDC(ScrnInfoPtr pScrn)
 {
-    vgaHWPtr hwp;
     NVPtr pNv;
     NVRamdacPtr NVdac;
     xf86MonPtr MonInfo = NULL;
 
-    hwp = VGAHWPTR(pScrn);
     pNv = NVPTR(pScrn);
     NVdac = &pNv->Dac;
 
@@ -800,7 +800,6 @@ NVdoDDC(ScrnInfoPtr pScrn)
     /*    if ((MonInfo = nvDoDDCVBE(pScrn))) return MonInfo;      */
 
     /* Enable access to extended registers */
-    vgaHWUnlock(hwp);
     pNv->riva.LockUnlock(&pNv->riva, 0);
     /* Save the current state */
     NVSave(pScrn);
@@ -814,7 +813,6 @@ NVdoDDC(ScrnInfoPtr pScrn)
     /* Restore previous state */
     NVRestore(pScrn);
     pNv->riva.LockUnlock(&pNv->riva, 1);
-    vgaHWLock(hwp);
 
     return MonInfo;
 }
@@ -972,7 +970,7 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
                 /* OK */
                 break;
             case 16:
-                if(pNv->Chipset == NV_CHIP_RIVA128) {
+                if(pNv->Chipset == NV_CHIP_RIVA_128) {
                     xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                         "The Riva 128 chipset does not support depth 16.  "
 			"Using depth 15 instead\n");
@@ -1141,10 +1139,23 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
         (((pScrn->mask.blue >> pScrn->offset.blue) - 1) << pScrn->offset.blue); 
     }
 
-    if (xf86ReturnOptValBool(pNv->Options, OPTION_FLAT_PANEL, FALSE)) {
-	pNv->FlatPanel = TRUE;
-	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "using flat panel\n");
+    if (xf86GetOptValBool(pNv->Options, OPTION_FLAT_PANEL, &(pNv->FlatPanel))) {
+        xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "forcing %s usage\n",
+                   pNv->FlatPanel ? "DFP" : "CRTC");
+    } else {
+        pNv->FlatPanel = -1;   /* autodetect later */
     }
+
+    if (xf86GetOptValInteger(pNv->Options, OPTION_CRTC_NUMBER, 
+                                &pNv->forceCRTC)) 
+    {
+	if((pNv->forceCRTC < 0) || (pNv->forceCRTC > 1)) {
+           pNv->forceCRTC = -1;
+           xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, 
+                      "Invalid CRTC number.  Must be 0 or 1\n");
+        }
+    } else pNv->forceCRTC = -1;
+
     
     if (pNv->pEnt->device->MemBase != 0) {
 	/* Require that the config file value matches one of the PCI values. */
@@ -1233,12 +1244,6 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
     }
 
     /*
-     * fill riva structure etc.
-     */
-    (*pNv->PreInit)(pScrn);
-    
-
-    /*
      * If the user has specified the amount of memory in the XF86Config
      * file, we respect that setting.
      */
@@ -1258,42 +1263,6 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
 	
     pNv->FbMapSize = pScrn->videoRam * 1024;
 
-#if !defined(__powerpc__)
-    /* Read and print the Monitor DDC info */
-    pScrn->monitor->DDC = NVdoDDC(pScrn);
-#endif
-
-#if 0
-    /*
-     * This code was for testing. It will be removed as soon
-     * as this is integrated into the common level.
-     */
-    if ((!pScrn->monitor->nHsync || !pScrn->monitor->nVrefresh)
- 	&& pScrn->monitor->DDC) {
- 	int i;
- 	int h = (!pScrn->monitor->nHsync) ? 0 : -1;
- 	int v = (!pScrn->monitor->nVrefresh) ? 0 : -1;
- 	xf86MonPtr pMon = (xf86MonPtr)pScrn->monitor->DDC;
- 	for (i = 0; i < DET_TIMINGS; i++) {
- 	    if (pMon->det_mon[i].type == DS_RANGES) {
- 		if (h != -1) {
- 		    pScrn->monitor->hsync[h].lo
- 			= pMon->det_mon[i].section.ranges.min_h;
- 		    pScrn->monitor->hsync[h++].hi
- 			= pMon->det_mon[i].section.ranges.max_h;
- 		}
- 		if (v != -1) {
- 		    pScrn->monitor->vrefresh[v].lo
- 			= pMon->det_mon[i].section.ranges.min_v;
- 		    pScrn->monitor->vrefresh[v++].hi
- 			= pMon->det_mon[i].section.ranges.max_v;
- 		}
- 	    }
- 	}
- 	if (h != -1) pScrn->monitor->nHsync = h;
- 	if (v != -1) pScrn->monitor->nVrefresh = v;
-     }     
-#endif
     /*
      * If the driver can do gamma correction, it should call xf86SetGamma()
      * here.
@@ -1318,6 +1287,7 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
         case NV_ARCH_04:
         case NV_ARCH_10:
         case NV_ARCH_20:
+        default:
             pNv->FbUsableSize -= 128 * 1024;
             break;
     }
@@ -1343,6 +1313,11 @@ NVPreInit(ScrnInfoPtr pScrn, int flags)
     } else  /* Chips after NV15 (including NV11) do not support interlaced */
        clockRanges->interlaceAllowed = FALSE;
     clockRanges->doubleScanAllowed = TRUE;
+
+    if(pNv->FlatPanel == 1) {
+       clockRanges->interlaceAllowed = FALSE;
+       clockRanges->doubleScanAllowed = FALSE;
+    }
 
     /*
      * xf86ValidateModes will check that the mode HTotal and VTotal values
@@ -1538,9 +1513,7 @@ NVUnmapMem(ScrnInfoPtr pScrn)
 
 
 /*
- * Initialise a new mode.  This is currently still using the old
- * "initialise struct, restore/write struct to HW" model.  That could
- * be changed.
+ * Initialise a new mode. 
  */
 
 static Bool
@@ -1558,18 +1531,15 @@ NVModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	return FALSE;
     pScrn->vtSema = TRUE;
 
-    if ( pNv->ModeInit ) {
-        if (!(*pNv->ModeInit)(pScrn, mode))
-            return FALSE;
-    }
+    if(!(*pNv->ModeInit)(pScrn, mode))
+        return FALSE;
 
     /* Program the registers */
     vgaHWProtect(pScrn, TRUE);
     vgaReg = &hwp->ModeReg;
     nvReg = &pNv->ModeReg;
 
-    if ( pNv->Restore )
-        (*pNv->Restore)(pScrn, vgaReg, nvReg, FALSE);
+    (*pNv->Restore)(pScrn, vgaReg, nvReg, FALSE);
 
 #if X_BYTE_ORDER == X_BIG_ENDIAN
     /* turn on LFB swapping */
@@ -1606,10 +1576,7 @@ NVRestore(ScrnInfoPtr pScrn)
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "NVRestore\n"));
     /* Only restore text mode fonts/text for the primary card */
     vgaHWProtect(pScrn, TRUE);
-    if (pNv->Primary)
-        (*pNv->Restore)(pScrn, vgaReg, nvReg, TRUE);
-    else
-        vgaHWRestore(pScrn, vgaReg, VGA_SR_MODE);
+    (*pNv->Restore)(pScrn, vgaReg, nvReg, pNv->Primary);
     vgaHWProtect(pScrn, FALSE);
 }
 
@@ -1666,7 +1633,6 @@ NVScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    return FALSE;
     } else {
 	/* Save the current state */
-        vgaHWUnlock(hwp);
         pNv->riva.LockUnlock(&pNv->riva, 0);
 	NVSave(pScrn);
 	/* Initialise the first mode */
@@ -1897,12 +1863,6 @@ NVSave(ScrnInfoPtr pScrn)
     vgaRegPtr vgaReg = &pVga->SavedReg;
 
     DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "NVSave\n"));
-#if defined(__powerpc__)
-    /* The console driver will have to save the fonts, we can't */
-    vgaHWSave(pScrn, vgaReg, VGA_SR_CMAP | VGA_SR_MODE);
-#else
-    vgaHWSave(pScrn, vgaReg, VGA_SR_CMAP | VGA_SR_MODE | VGA_SR_FONTS);
-#endif
-    pNv->riva.UnloadStateExt(&pNv->riva, nvReg);
+    (*pNv->Save)(pScrn, vgaReg, nvReg, pNv->Primary);
 }
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_proto.h,v 1.6 2001/03/28 01:17:43 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_proto.h,v 1.7 2002/03/15 05:16:40 mvojkovi Exp $ */
 
 #ifndef __NV_PROTO_H__
 #define __NV_PROTO_H__
@@ -6,6 +6,8 @@
 /* in nv_driver.c */
 Bool    NVSwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
 void    NVAdjustFrame(int scrnIndex, int x, int y, int flags);
+xf86MonPtr NVdoDDC(ScrnInfoPtr pScrn);
+
 
 /* in nv_dac.c */
 void    NVRamdacInit(ScrnInfoPtr pScrn);
