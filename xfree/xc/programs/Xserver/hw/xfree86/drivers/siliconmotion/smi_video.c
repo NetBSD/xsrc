@@ -277,7 +277,7 @@ static XF86AttributeRec SMI_VideoAttributesSAA711x[N_ATTRS] = {
     {XvSettable | XvGettable,        0,             1, XV_INTERLACED_NAME},
 };
 
-static XF86AttributeRec SMI_VideoAttributes[N_ATTRS] = {
+static XF86AttributeRec SMI_VideoAttributes[2] = {
     {XvSettable | XvGettable,        0,           255, XV_BRIGHTNESS_NAME},
     {XvSettable | XvGettable, 0x000000,      0xFFFFFF, XV_COLORKEY_NAME},
 };
