@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.36.2.11 1999/07/29 09:22:55 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.36.2.12 2001/02/04 21:41:27 herrb Exp $ */
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1992 by David Dawes <dawes@XFree86.org>
@@ -430,6 +430,12 @@ extern int errno;
       };
 #    endif /* PCVT_SUPPORT && SYSCONS_SUPPORT */
 #   endif /* PCVT_SUPPORT */
+#   if defined(WSCONS_SUPPORT)
+#    if !defined(PCVT_SUPPORT)
+      /* Wscons has a PCVT-compatibility module */
+#     include <dev/wscons/wsdisplay_usl_io.h>
+#    endif
+#   endif
 #   if defined(__FreeBSD__)
 #    undef MOUSE_GETINFO
 #    include <machine/mouse.h>

@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/81 1996/10/22 18:32:26 kaleb $
-XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.11 1999/12/11 17:20:01 hohndel Exp $
+XCOMM $XFree86: xc/programs/xdm/Imakefile,v 3.19.2.14 2001/02/26 23:05:19 dawes Exp $
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
@@ -121,7 +121,7 @@ CRYPT_DEFINES = -DHAS_CRYPT
 #endif
 
 #if HasPam
-PAM_LIBRARIES = -lpam DlLibrary
+PAM_LIBRARIES = $(PAMLIBRARY)
 #endif
 
 SYS_LIBRARIES = $(SYS_LIBRARIES1) $(SYS_LIBRARIES2) $(SYS_LIBRARIES3)

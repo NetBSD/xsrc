@@ -1,15 +1,9 @@
-/* $XConsortium: OpenDis.c /main/110 1996/02/02 14:09:01 kaleb $ */
-/* $XFree86: xc/lib/X11/OpenDis.c,v 3.3 1996/02/04 08:54:22 dawes Exp $ */
+/* $TOG: OpenDis.c /main/111 1998/02/06 17:46:07 kaleb $ */
 /*
 
-Copyright (c) 1985, 1986  X Consortium
+Copyright 1985, 1986, 1998  The Open Group
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+All Rights Reserved.
 
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
@@ -17,15 +11,16 @@ all copies or substantial portions of the Software.
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+OPEN GROUP BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
 AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Except as contained in this notice, the name of the X Consortium shall not be
+Except as contained in this notice, the name of The Open Group shall not be
 used in advertising or otherwise to promote the sale, use or other dealings
-in this Software without prior written authorization from the X Consortium.
+in this Software without prior written authorization from The Open Group.
 
 */
+/* $XFree86: xc/lib/X11/OpenDis.c,v 3.3.4.1 2001/02/08 21:14:38 herrb Exp $ */
 
 #define NEED_REPLIES
 #define NEED_EVENTS
@@ -34,6 +29,10 @@ in this Software without prior written authorization from the X Consortium.
 #include <X11/Xatom.h>
 #include "bigreqstr.h"
 #include <stdio.h>
+
+#ifdef XKB
+#include "XKBlib.h"
+#endif /* XKB */
 
 #ifdef X_NOT_STDC_ENV
 extern char *getenv();
@@ -66,7 +65,7 @@ void (*_XFreeDisplayLock_fn)() = NULL;
 #else
 #define InitDisplayLock(dis) Success
 #define FreeDisplayLock(dis)
-#endif
+#endif /* XTHREADS */
 
 static xReq _dummy_request = {
 	0, 0, 0
@@ -78,6 +77,16 @@ static Bool _XBigReqHandler();
 extern Bool _XWireToEvent();
 extern Status _XUnknownNativeEvent();
 extern Bool _XUnknownWireEvent();
+
+/* XlibInt.c */
+extern Bool _XPollfdCacheInit();
+
+/* ConnDis.c */
+extern int _XDisconnectDisplay();
+
+/* FreeEData.c */
+extern int _XFreeExtData();
+
 /* 
  * Connects to a server, creates a Display object and returns a pointer to
  * the newly created Display back to the caller.
@@ -388,6 +397,11 @@ Display *XOpenDisplay (display)
  * now extract the vendor string...  String must be null terminated,
  * padded to multiple of 4 bytes.
  */
+	/* Check for a sane vendor string length */
+	if (u.setup->nbytesVendor > 256) {
+	    OutOfMemory(dpy, setup);
+	    return (NULL);
+	}
 	dpy->vendor = (char *) Xmalloc((unsigned) (u.setup->nbytesVendor + 1));
 	if (dpy->vendor == NULL) {
 	    OutOfMemory(dpy, setup);

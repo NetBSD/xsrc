@@ -2,7 +2,7 @@ XCOMM $TOG: Imakefile /main/235 1997/05/25 15:12:21 kaleb $
 /*
  * Server Master Makefile
  */
-XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.85.2.18 1999/12/01 14:53:58 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/Imakefile,v 3.85.2.20 2000/06/21 00:50:41 dawes Exp $
 
 #include <Server.tmpl>
 
@@ -171,8 +171,13 @@ XPFBLIBS = dix/LibraryTargetName(xpstubs)
 	$(USB) $(EXTRASYSLIBS)
 #endif
 #if HasPam
-	PAMLIBS = -lpam -lpam_misc -ldl
+#if defined(LinuxArchitecture)
+	PAMLIBS = $(PAMLIBRARY) -lpam_misc DlLibrary
+#else
+	PAMLIBS = $(PAMLIBRARY)
 #endif
+#endif
+
            CBRT = mi/LibraryTargetName(cbrt)
         STDDIRS = include dix os mi $(XPDDXDIR) $(EXTDIRS)
 
@@ -2064,11 +2069,7 @@ ServerTarget(Xvfb,$(XVFBDIRS),$(XVFBOBJS),$(XVFBLIBS),$(XVFBSYSLIBS))
 
 
 #if UseXserverWrapper
-#if HasPam
 SetUIDProgramTarget(Xwrapper,os/wrapper.o,NullParameter,$(PAMLIBS),NullParameter)
-#else
-SetUIDProgramTarget(Xwrapper,os/wrapper.o,NullParameter,NullParameter,NullParameter)
-#endif
 InstallProgramWithFlags(Xwrapper,$(BINDIR),$(INSTUIDFLAGS))
 #endif
 

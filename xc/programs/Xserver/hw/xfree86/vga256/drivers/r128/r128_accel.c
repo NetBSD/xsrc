@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/r128/r128_accel.c,v 1.1.2.3 1999/11/18 15:37:32 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/r128/r128_accel.c,v 1.1.2.4 2000/01/28 03:35:54 martin Exp $ */
 /**************************************************************************
 
 Copyright 1999 ATI Technologies Inc. and Precision Insight, Inc.,

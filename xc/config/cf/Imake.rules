@@ -1,7 +1,7 @@
 XCOMM ---------------------------------------------------------------------
 XCOMM Imake rules for building libraries, programs, scripts, and data files
 XCOMM rules:  $TOG: Imake.rules /main/222 1997/07/17 20:04:40 kaleb $
-XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.10 1998/11/04 10:53:01 dawes Exp $
+XCOMM rules:  $XFree86: xc/config/cf/Imake.rules,v 3.33.2.11 2001/01/27 11:07:39 herrb Exp $
 
 /*
  *		   MACHINE-INDEPENDENT RULES; DO NOT MODIFY
@@ -1102,7 +1102,7 @@ InstallManPageLong(file,destdir,file)
 #ifndef InstallManPageAliases
 #define	InstallManPageAliases(file,destdir,aliases)			@@\
 install.man::								@@\
-	@(TMP=/tmp/tmp.$$$$; \						@@\
+	@(TMP=#tmp.$$$$; \						@@\
 	RemoveFile($${TMP}); \						@@\
 	echo .so `basename destdir`/file.$(MANSUFFIX) > $${TMP}; \	@@\
 	for i in aliases; do (set -x; \					@@\
@@ -1139,7 +1139,7 @@ InstallGenManPageLong(file,destdir,file,suffix)
 #ifndef InstallGenManPageAliases
 #define	InstallGenManPageAliases(file,destdir,suffix,aliases)		@@\
 install.man::								@@\
-	@(TMP=/tmp/tmp.$$$$; \						@@\
+	@(TMP=#tmp.$$$$; \						@@\
 	RemoveFile($${TMP}); \						@@\
 	echo .so `basename destdir`/file.suffix > $${TMP}; \		@@\
 	for i in aliases; do (set -x; \					@@\

@@ -29,7 +29,7 @@ from the X Consortium.
 
 */
 
-/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9.2.3 1999/07/29 09:22:30 hohndel Exp $ */
+/* $XFree86: xc/lib/X11/XlibInt.c,v 3.9.2.5 2001/02/08 21:11:24 herrb Exp $ */
 
 /*
  *	XlibInt.c - Internal support routines for the C subroutine
@@ -599,7 +599,10 @@ static void _XFlushInt (dpy, cv)
 	register char *bufindex;
 	_XExtension *ext;
 
-	if (dpy->flags & XlibDisplayIOError) return;
+       if (dpy->flags & XlibDisplayIOError) {
+            dpy->bufptr = dpy->buffer;  /* reset to avoid buffer overflows */
+            return;
+       }
 #ifdef XTHREADS
 	while (dpy->flags & XlibDisplayWriting) {
 	    ConditionWait(dpy, dpy->lock->writers);

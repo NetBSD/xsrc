@@ -1,5 +1,5 @@
 /* $XConsortium: process.c /main/51 1996/10/07 15:37:05 dpw $ */
-/* $XFree86: xc/programs/xauth/process.c,v 3.2.2.2 1999/07/21 18:07:42 hohndel Exp $ */
+/* $XFree86: xc/programs/xauth/process.c,v 3.2.2.4 2001/02/08 21:09:28 herrb Exp $ */
 /*
 
 Copyright (c) 1989  X Consortium
@@ -37,6 +37,7 @@ from the X Consortium.
 #include "xauth.h"
 #include <ctype.h>
 #include <errno.h>
+#include <sys/stat.h>
 #ifdef X_NOT_STDC_ENV
 extern int errno;
 #endif
@@ -783,7 +784,7 @@ static int write_auth_file (tmp_nam)
     fd = open(tmp_nam, O_WRONLY|O_CREAT|O_EXCL, 0600);
     if (fd != -1) fp = fdopen(fd, "wb");
     if (!fp) {
-	if (fd != -1) close(fd);
+        if (fd != -1) close(fd);
 	fprintf (stderr, "%s:  unable to open tmp file \"%s\"\n",
 		 ProgramName, tmp_nam);
 	return -1;

@@ -1,5 +1,5 @@
 XCOMM platform:  $TOG: FreeBSD.cf /main/18 1997/06/12 07:40:35 kaleb $
-XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.21 1999/12/02 14:27:24 hohndel Exp $
+XCOMM platform:  $XFree86: xc/config/cf/FreeBSD.cf,v 3.58.2.23 2001/02/26 18:28:17 dawes Exp $
 
 #ifndef UseElfFormat
 #define UseElfFormat		DefaultToElfFormat
@@ -67,6 +67,15 @@ XCOMM math.h uses _REENTRANT in FreeBSD, so we define it here too
 #define NeedWidePrototypes	NO
 
 #define MkdirHierCmd		mkdir -p
+
+#ifndef HasMktemp
+#if (OSMajorVersion >= 4) || (OSMajorVersion == 3 && OSMinorVersion >= 1) || \
+	(OSMajorVersion == 2 && OSMinorVersion == 2 && OSTeenyVersion >= 7)
+#define HasMktemp		YES
+#else
+#define HasMktemp		NO
+#endif
+#endif
 
 #define CcCmd			cc
 #define CppCmd			/usr/libexec/cpp
@@ -161,6 +170,10 @@ XCOMM math.h uses _REENTRANT in FreeBSD, so we define it here too
 #ifndef HasZlib
 #define HasZlib		YES
 #endif
+#endif
+
+#if HasPam
+#define PamLibrary		-lpam
 #endif
 
 /*
