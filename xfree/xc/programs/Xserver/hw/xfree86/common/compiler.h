@@ -1006,7 +1006,7 @@ xf86WriteMmio32Be(__volatile__ void *base, const unsigned long offset,
 #     endif /* !linux */
 #    endif /* __mips__ */
 
-#    if defined(__arm32__)
+#    if defined(__arm32__) || defined(__arm__)
 #     define ldq_u(p)	(*((unsigned long  *)(p)))
 #     define ldl_u(p)	(*((unsigned int   *)(p)))
 #     define ldw_u(p)	(*((unsigned short *)(p)))
@@ -1015,7 +1015,7 @@ xf86WriteMmio32Be(__volatile__ void *base, const unsigned long offset,
 #     define stw_u(v,p)	(*(unsigned short *)(p)) = (v)
 #     define mem_barrier()	/* NOP */
 #     define write_mem_barrier()	/* NOP */
-#    endif /* __arm32__ */
+#    endif /* __arm32__ || __arm__ */
 
 #   elif (defined(Lynx) || defined(linux) || defined(__OpenBSD__) || defined(__NetBSD__)) && defined(__powerpc__)
 
