@@ -124,12 +124,11 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #else
 #ifdef Arm32Architecture
 #define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char \
-				-fomit-frame-pointer GccWarningOptions
+				-fomit-frame-pointer
 #elif defined(PpcArchitecture)
-# define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char \
-				GccWarningOptions
+# define DefaultCCOptions 	-ansi -Dasm=__asm -fsigned-char
 #else
-# define DefaultCCOptions 	-ansi -Dasm=__asm GccWarningOptions
+# define DefaultCCOptions 	-ansi -Dasm=__asm
 #endif
 #endif
 #endif
