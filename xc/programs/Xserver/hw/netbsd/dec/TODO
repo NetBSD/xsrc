@@ -1,0 +1,15 @@
+$NetBSD: TODO,v 1.1 2001/09/18 20:02:51 ad Exp $
+
+- Test serial mice.
+- HX+, MX and mono PM support.
+- More SFB acceleration.
+- Figure out why SFB hardware cursor refuses to display.
+- Unmap framebuffer before core-dump.
+- Save colormap and restore; reset display mode on abort/exit.
+- Multiscreeen (fix the cursor stuff).
+- In-kernel wsmouse->wsdisplay shortcut, mainly for mips.
+- Proper write barriers.
+- Fix lk keyboard map.
+- Remove decFbInfo::size.
+- Miscellaneous clean up.
+- ... and, probably more.

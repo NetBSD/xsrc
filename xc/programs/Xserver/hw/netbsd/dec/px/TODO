@@ -1,0 +1,24 @@
+$NetBSD: TODO,v 1.1 2001/09/18 20:02:52 ad Exp $
+
+-- Remaining bugs
+
+Using a Motif textbox leaves artifacts on alpha, and possibly mips 8-bit
+color. Works fine on mips with 32-bit color. pxDoFillSpansUS() and/or raw
+scanline routines are the suspects.
+
+software cursor leaves a trail of rubbish. Backing store or scanline
+routines?
+
+Some glyphs are slightly garbled on mips in 32-bit color mode. Same problem
+doesn't exist on alpha. Problem: the glyph routines, both TE and non-TE.
+
+-- TODO, in order of priority
+
+- MIPS and Alpha assembly versions of compress/expand routines
+- Redo cfb stacking
+- Compile with -Wall and clear up compiler warnings
+- Stippled PushPixels (important for Motif menus)
+- Unnatural stippled spans with XYMASKs
+- Full-blown tiling should be a combo of WRITE and COPY
+- Figure out why queueing doesn't work
+- Make i860 firmware work

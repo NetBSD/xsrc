@@ -1,0 +1,38 @@
+XCOMM $NetBSD: Imakefile,v 1.1 2001/09/18 20:02:52 ad Exp $
+
+#include <Server.tmpl>
+
+SRCS =	pxbitblt.c pxbresd.c pxgc.c pxgetsp.c pxline.c pxpacket.c \
+	pxpolypnt.c pxsetsp.c pxwindow.c pxsegment.c pxfillrct.c \
+	pxfillrctS.c pxfillrctSO.c pxfillsp.c pxPglyphN.c pxPglyph16.c \
+	pxIglyphN.c pxIglyph16.c pximage.c pxmisc.c pxpushpxl.c decPX.c
+
+OBJS =	pxbitblt.o pxbresd.o pxgc.o pxgetsp.o pxline.o pxpacket.o \
+	pxpolypnt.o pxsetsp.o pxwindow.o pxsegment.o pxfillrct.o \
+	pxfillrctS.o pxfillrctSO.o pxfillsp.o pxPglyphN.o pxPglyph16.o \
+	pxIglyphN.o pxIglyph16.o pximage.o pxmisc.o pxpushpxl.o decPX.o
+
+INCLUDES = -I. -I$(SERVERSRC)/mfb -I$(SERVERSRC)/mi -I$(SERVERSRC)/cfb \
+	   -I$(SERVERSRC)/include -I$(SERVERSRC)/os \
+	   -I$(FONTINCSRC) -I$(XINCLUDESRC) -I$(EXTINCSRC)
+LINTLIBS = ../../../../dix/llib-ldix.ln ../../../../os/llib-los.ln \
+	   ../../../mfb/llib-lmfb.ln ../../../mi/llib-lmi.ln
+
+NormalLibraryObjectRule()
+
+all::
+
+NormalLibraryTarget(decPX,$(OBJS))
+LintLibraryTarget(decPX,$(SRCS))
+
+ObjectFromSpecialSource(pxsegment,pxline,-D_POLYSEGMENT=1)
+
+ObjectFromSpecialSource(pxfillrctS,pxfillrct,-D_STIPPLE=1)
+ObjectFromSpecialSource(pxfillrctSO,pxfillrct,-D_STIPPLE=1 -D_OPAQUE=1)
+
+ObjectFromSpecialSource(pxPglyphN,pxglyph,-D_N=1)
+ObjectFromSpecialSource(pxPglyph16,pxglyph,-D_16=1)
+ObjectFromSpecialSource(pxIglyphN,pxglyph,-D_IMAGEGLYPH=1 -D_N=1)
+ObjectFromSpecialSource(pxIglyph16,pxglyph,-D_IMAGEGLYPH=1 -D_16=1)
+
+DependTarget()
