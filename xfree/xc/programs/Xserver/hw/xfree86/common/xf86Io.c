@@ -350,10 +350,17 @@ xf86KbdProc (pKeyboard, what)
      * passing on parts of the VT switch sequence.
      */
     sleep(1);
-    if (kbdFd != -1) {
-	char buf[16];
-	read(kbdFd, buf, 16);
+#if defined(WSCONS_SUPPORT)
+    if (xf86Info.consType != WSCONS) {
+#endif
+	if (kbdFd != -1) {
+	    char buf[16];
+
+	    read(kbdFd, buf, 16);
+	}
+#if defined(WSCONS_SUPPORT)
     }
+#endif
 
 #if !defined(__EMX__) /* Under EMX, keyboard cannot be select()'ed */
     if (kbdFd != -1)
