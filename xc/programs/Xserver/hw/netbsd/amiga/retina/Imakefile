@@ -5,12 +5,12 @@ SRCS =	amigaGX.c
 
 OBJS = 	amigaGX.o
 
-   INCLUDES = -I. -I.. -I../../.. -I../../../mi -I../../../mfb -I../../../cfb \
-		-I../../../include -I/sys/arch/amiga -I$(XINCLUDESRC) \
-		-I$(FONTINCSRC)
-   LINTLIBS = ../../../dix/llib-ldix.ln ../../../os/llib-los.ln \
-		../../../mfb/llib-lmfb.ln ../../../mi/llib-lmi.ln \
-		../../../cfb/llib-lcfb.ln
+   INCLUDES = -I. -I.. -I../../../.. -I../../../../mi -I../../../../mfb \
+		-I../../../../cfb -I../../../../include -I/sys/arch/amiga \
+		-I$(XINCLUDESRC) -I$(FONTINCSRC)
+   LINTLIBS = ../../../../dix/llib-ldix.ln ../../../../os/llib-los.ln \
+		../../../../mfb/llib-lmfb.ln ../../../../mi/llib-lmi.ln \
+		../../../../cfb/llib-lcfb.ln
 
 DEFINES = -DGFX_CARD_SUPPORT -DAMIGAMAXDEPTH=32 -DRETINAZ3_SUPPORT
 

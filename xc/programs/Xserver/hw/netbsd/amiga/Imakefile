@@ -11,12 +11,12 @@ OFILES = amigaInExMono.o
 OBJS = 	amigaInit.o amigaCfb.o amigaCursor.o amigaFbs.o amigaIo.o \
 	amigaKbd.o amigaMfb.o amigaMouse.o amigaKeyMap.o  amigaC.o $(OFILES)
 
-   INCLUDES = -I. -I../.. -I../../mi -I../../mfb -I../../cfb -I./afb \
-		-I../../include -I/sys/arch/amiga -I$(XINCLUDESRC) \
+   INCLUDES = -I. -I../../.. -I../../../mi -I../../../mfb -I../../../cfb \
+		-I./afb -I../../../include -I/sys/arch/amiga -I$(XINCLUDESRC) \
 		-I$(FONTINCSRC)
-   LINTLIBS = ../../dix/llib-ldix.ln ../../os/llib-los.ln \
-		../../mfb/llib-lmfb.ln ../../mi/llib-lmi.ln \
-		../../cfb/llib-lcfb.ln
+   LINTLIBS = ../../../dix/llib-ldix.ln ../../../os/llib-los.ln \
+		../../../mfb/llib-lmfb.ln ../../../mi/llib-lmi.ln \
+		../../../cfb/llib-lcfb.ln
 
 #if XamigaCCcolor
 DefCCcolor = -DAMIGA_CC_COLOR
@@ -57,7 +57,7 @@ NormalLintTarget($(SRCS))
 
 #if XamigaCCmono
 amigaInExMono.o: $(ICONFIGFILES)
-ObjectFromSpecialSource(amigaInExMono,../../mi/miinitext,$(EXT_DEFINES) -UPEXEXT)
+ObjectFromSpecialSource(amigaInExMono,../../../mi/miinitext,$(EXT_DEFINES) -UPEXEXT)
 #endif
 
 InstallManPage(Xamiga,$(MANDIR))
