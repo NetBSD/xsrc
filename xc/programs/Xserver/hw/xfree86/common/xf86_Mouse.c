@@ -1,8 +1,8 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.17 1998/12/20 01:54:07 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Mouse.c,v 3.21.2.20 1999/05/07 00:52:04 dawes Exp $ */
 /*
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
- * Copyright 1993 by David Dawes <dawes@physics.su.oz.au>
+ * Copyright 1993 by David Dawes <dawes@xfree86.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -938,7 +938,8 @@ xf86MouseProtocol(device, rBuf, nBytes)
 	        (mouse->pBuf[0] & 0x02) >> 1 |       /* Right */
 		(mouse->pBuf[0] & 0x01) << 2 |       /* Left */
 		((mouse->pBuf[0] & 0x08) ? 0x08 : 0);/* fourth button */
-      dx = (mouse->pBuf[0] & 0x10) ?    mouse->pBuf[1]-256  :  mouse->pBuf[1];
+      dx = (mouse->pBuf[0] & 0x10) ?   (mouse->pBuf[1]&0x7f)-128 :
+						mouse->pBuf[1];
       dy = (mouse->pBuf[0] & 0x20) ?  -(mouse->pBuf[2]-256) : -mouse->pBuf[2];
       break;
 
@@ -1236,6 +1237,8 @@ xf86MouseAllocate()
 {
     LocalDevicePtr	local = (LocalDevicePtr) xalloc(sizeof(LocalDeviceRec));
     MouseDevPtr		mouse = (MouseDevPtr) xalloc(sizeof(MouseDevRec));
+
+    memset(mouse, 0, sizeof(MouseDevRec));
     
     local->name = "MOUSE";
     local->type_name = "Mouse";

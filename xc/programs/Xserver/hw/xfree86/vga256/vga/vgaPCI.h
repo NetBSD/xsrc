@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.23 1998/11/04 08:02:07 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/vga256/vga/vgaPCI.h,v 3.22.2.34 1999/07/13 07:09:55 hohndel Exp $ */
 /*
  * PCI Probe
  *
@@ -14,6 +14,7 @@
 
 #include "xf86_PCI.h"
 
+#define PCI_VENDOR_REAL3D	0x003D
 #define PCI_VENDOR_NCR_1	0x1000
 #define PCI_VENDOR_ATI		0x1002
 #define PCI_VENDOR_AVANCE	0x1005
@@ -41,8 +42,12 @@
 #define PCI_VENDOR_RENDITION	0x1163
 #define PCI_VENDOR_3DLABS	0x3D3D
 #define PCI_VENDOR_S3		0x5333
+#define PCI_VENDOR_INTEL	0x8086
 #define PCI_VENDOR_ARK		0xEDD8
 
+
+/* Real 3D */
+#define PCI_CHIP_I740_PCI	0x00D1
 
 /* ATI */
 #define PCI_CHIP_MACH32		0x4158
@@ -52,8 +57,13 @@
 #define PCI_CHIP_MACH64GB	0x4742
 #define PCI_CHIP_MACH64GD	0x4744
 #define PCI_CHIP_MACH64GI	0x4749
+#define PCI_CHIP_MACH64GM	0x474D
+#define PCI_CHIP_MACH64GN	0x474E
+#define PCI_CHIP_MACH64GO	0x474F
 #define PCI_CHIP_MACH64GP	0x4750
 #define PCI_CHIP_MACH64GQ	0x4751
+#define PCI_CHIP_MACH64GR	0x4752
+#define PCI_CHIP_MACH64GS	0x4753
 #define PCI_CHIP_MACH64GT	0x4754
 #define PCI_CHIP_MACH64GU	0x4755
 #define PCI_CHIP_MACH64GV	0x4756
@@ -104,6 +114,9 @@
 #define PCI_CHIP_GD7541         0x1204
 
 /* Trident */
+#define PCI_CHIP_8400		0x8400
+#define PCI_CHIP_8420		0x8420
+#define PCI_CHIP_8500		0x8500
 #define PCI_CHIP_9320		0x9320
 #define PCI_CHIP_9420		0x9420
 #define PCI_CHIP_9440		0x9440
@@ -111,8 +124,12 @@
 #define PCI_CHIP_9388		0x9388
 #define PCI_CHIP_9397		0x9397
 #define PCI_CHIP_9520		0x9520
+#define PCI_CHIP_9525		0x9525
 #define PCI_CHIP_9750		0x9750
 #define PCI_CHIP_9850		0x9850
+#define PCI_CHIP_9880		0x9880
+/* Bill Mair */
+#define PCI_CHIP_9397_DVD	0x939A
 
 /* Matrox */
 #define PCI_CHIP_MGA2085	0x0518
@@ -124,6 +141,7 @@
 #define PCI_CHIP_MGAG200	0x0521
 #define PCI_CHIP_MGAG100_PCI	0x1000
 #define PCI_CHIP_MGAG100	0x1001
+#define PCI_CHIP_MGAG400	0x0525
 
 /* Chips & Tech */
 #define PCI_CHIP_65545		0x00D8
@@ -146,6 +164,8 @@
 #define PCI_CHIP_SIS5598	0x0200	
 #define PCI_CHIP_SIS5597	0x0200
 #define PCI_CHIP_SIS6326	0x6326
+#define PCI_CHIP_SIS530		0x6306
+#define PCI_CHIP_SIS620		0x6306
 
 /* SGS */
 #define PCI_CHIP_STG2000	0x0008
@@ -172,6 +192,11 @@
 #define PCI_CHIP_NV1		0x0008
 #define PCI_CHIP_DAC64		0x0009
 #define PCI_CHIP_TNT		0x0020
+#define PCI_CHIP_TNT2		0x0028
+#define PCI_CHIP_UTNT2		0x0029
+#define PCI_CHIP_VTNT2		0x002C
+#define PCI_CHIP_UVTNT2		0x002D
+#define PCI_CHIP_ITNT2		0x00A0
 
 /* NVIDIA & SGS */
 #define PCI_CHIP_RIVA128        0x0018
@@ -183,6 +208,7 @@
 
 /* 3Dfx */
 #define PCI_CHIP_BANSHEE	0x0003
+#define PCI_CHIP_VOODOO3	0x0005
 
 /* Rendition */
 #define PCI_CHIP_V1000		0x0001
@@ -206,6 +232,7 @@
 #define PCI_CHIP_VIRGE_GX2	0x8A10
 #define PCI_CHIP_VIRGE_MX	0x8C01
 #define PCI_CHIP_VIRGE_MXP	0x8C03
+#define PCI_CHIP_TRIO_3D	0x8904
 #define PCI_CHIP_868		0x8880
 #define PCI_CHIP_928		0x88B0
 #define PCI_CHIP_864_0		0x88C0
@@ -213,6 +240,9 @@
 #define PCI_CHIP_964_0		0x88D0
 #define PCI_CHIP_964_1		0x88D1
 #define PCI_CHIP_968		0x88F0
+
+/* Intel */
+#define PCI_CHIP_I740_AGP	0x7800
 
 /* ARK Logic */
 #define PCI_CHIP_1000PV		0xA091
@@ -265,6 +295,9 @@ extern vgaPCIInformation *vgaGetPCIInfo(
    
 #ifdef INIT_PCI_VENDOR_INFO
 pciVendorDeviceInfo xf86PCIVendorInfo[] = {
+    {PCI_VENDOR_REAL3D,	"Real 3D", {
+				{PCI_CHIP_I740_PCI,	"i740 (PCI)"},
+				{0x0000,		NULL}}},
     {PCI_VENDOR_NCR_1,	"NCR",	{
 				{0x0000,		NULL}}},
     {PCI_VENDOR_ATI,	"ATI",	{
@@ -291,6 +324,11 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_MACH64LD,	"Mach64 LT Pro"},
 				{PCI_CHIP_MACH64LI,	"Mach64 LT Pro"},
 				{PCI_CHIP_MACH64LP,	"Mach64 LT Pro"},
+				{PCI_CHIP_MACH64GM,	"Mach64 XL or XC"},
+				{PCI_CHIP_MACH64GN,	"Mach64 XL or XC"},
+				{PCI_CHIP_MACH64GO,	"Mach64 XL or XC"},
+				{PCI_CHIP_MACH64GR,	"Mach64 XL or XC"},
+				{PCI_CHIP_MACH64GS,	"Mach64 XL or XC"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_AVANCE,	"Avance Logic",	{
 				{PCI_CHIP_ALG2301,	"ALG2301"},
@@ -335,9 +373,15 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_9660,		"TGUI 96xx"},
 				{PCI_CHIP_9388,		"Cyber 9388"},
 				{PCI_CHIP_9397,		"Cyber 9397"},
+				{PCI_CHIP_9397_DVD,	"Cyber 9397 DVD"},
 				{PCI_CHIP_9520,		"Cyber 9520"},
+				{PCI_CHIP_9525,		"Cyber 9525 DVD"},
 				{PCI_CHIP_9750,		"3DImage975"},
 				{PCI_CHIP_9850,		"3DImage985"},
+				{PCI_CHIP_9880,		"Blade3D"},
+				{PCI_CHIP_8400,		"CyberBlade/i7"},
+				{PCI_CHIP_8420,		"CyberBlade/i7/DSTN"},
+				{PCI_CHIP_8500,		"CyberBlade/i1"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_MATROX,	"Matrox", {
 				{PCI_CHIP_MGA2085,	"MGA 2085PX"},
@@ -370,6 +414,7 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_SG86C225,	"SG86C225"},
 				{PCI_CHIP_SIS5597,	"5597/98"},
 				{PCI_CHIP_SIS6326,	"6326"},
+				{PCI_CHIP_SIS530,	"530/620"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_SGS,	"SGS-Thomson",	{
 				{PCI_CHIP_STG2000,	"STG2000"},
@@ -383,6 +428,11 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
     {PCI_VENDOR_NVIDIA,	"NVidia",	{
 				{PCI_CHIP_NV1,		"NV1"},
 				{PCI_CHIP_TNT,		"Riva TNT"},
+				{PCI_CHIP_TNT2,		"Riva TNT2"},
+				{PCI_CHIP_UTNT2,	"Riva Ultra TNT2"},
+				{PCI_CHIP_VTNT2,	"Riva Vanta TNT2"},
+				{PCI_CHIP_UVTNT2,   "Riva Ultra Vanta"},
+				{PCI_CHIP_ITNT2,	"Riva Integrated"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_NVIDIA_SGS,	"NVidia/SGS-Thomson",	{
 				{PCI_CHIP_RIVA128,	"Riva128"},
@@ -407,6 +457,7 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{0x0000,		NULL}}},
     {PCI_VENDOR_3DFX, "3Dfx", {
 				{PCI_CHIP_BANSHEE,	"Banshee"},
+				{PCI_CHIP_VOODOO3,	"Voodoo3"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_RENDITION, "Rendition", {
 				{PCI_CHIP_V1000,	"Verite 1000"},
@@ -430,6 +481,7 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_VIRGE_GX2,	"ViRGE/GX2"},
 				{PCI_CHIP_VIRGE_MX,	"ViRGE/MX"},
 				{PCI_CHIP_VIRGE_MXP,	"ViRGE/MX+"},
+				{PCI_CHIP_TRIO_3D,	"Trio 3D"},
 				{PCI_CHIP_868,		"868"},
 				{PCI_CHIP_928,		"928"},
 				{PCI_CHIP_864_0,	"864"},
@@ -437,6 +489,9 @@ pciVendorDeviceInfo xf86PCIVendorInfo[] = {
 				{PCI_CHIP_964_0,	"964"},
 				{PCI_CHIP_964_1,	"964"},
 				{PCI_CHIP_968,		"968"},
+				{0x0000,		NULL}}},
+    {PCI_VENDOR_INTEL,	"Intel", {
+				{PCI_CHIP_I740_AGP,	"i740 (AGP)"},
 				{0x0000,		NULL}}},
     {PCI_VENDOR_ARK,	"ARK Logic", {
 				{PCI_CHIP_1000PV,	"1000PV"},

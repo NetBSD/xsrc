@@ -5,7 +5,7 @@
 
 
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.15.2.5 1998/02/15 16:08:56 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/XF86Setup/tclxfconf.c,v 3.15.2.7 1999/06/23 12:37:17 hohndel Exp $ */
 /*
  * Copyright 1996 by Joseph V. Moss <joe@XFree86.Org>
  *
@@ -516,7 +516,8 @@ static char *msetypes[] = { "None", "Microsoft", "MouseSystems", "MMSeries",
 		"Logitech", "BusMouse", "Mouseman", "PS/2", "MMHitTab",
 		"GlidePoint", "IntelliMouse", "ThinkingMouse", "IMPS/2",
 		"ThinkingMousePS/2", "MouseManPlusPS/2", "GlidePointPS/2",
-		"NetMousePS/2", "NetScrollPS/2", "SysMouse", "wsmouse", "Auto", };
+		"NetMousePS/2", "NetScrollPS/2", "SysMouse", "Auto",
+		"AceCad", "wsmouse", };
 
 
 int

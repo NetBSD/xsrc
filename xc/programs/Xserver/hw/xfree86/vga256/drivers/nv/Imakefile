@@ -1,12 +1,12 @@
 XCOMM $XConsortium: Imakefile /main/2 1996/10/27 13:00:56 kaleb $
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/Imakefile,v 3.2.2.6 1998/12/22 12:39:13 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/Imakefile,v 3.2.2.7 1999/04/15 12:04:33 hohndel Exp $
 
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/Imakefile,v 3.2.2.6 1998/12/22 12:39:13 hohndel Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/vga256/drivers/nv/Imakefile,v 3.2.2.7 1999/04/15 12:04:33 hohndel Exp $
 #include <Server.tmpl>
 
 SRCS = nv_driver.c nv1driver.c nv1accel.c nv1setup.c \
@@ -47,5 +47,8 @@ InstallLinkKitNonExecFile(riva_hw.c,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(riva_hw.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(riva_tbl.h,$(LINKKITDIR)/drivers/vga256/nv)
 InstallLinkKitNonExecFile(riva_xaa.c,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nvcursor.h,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(nvuser.h,$(LINKKITDIR)/drivers/vga256/nv)
+InstallLinkKitNonExecFile(README.RIVA,$(LINKKITDIR)/drivers/vga256/nv)
 
 DependTarget()

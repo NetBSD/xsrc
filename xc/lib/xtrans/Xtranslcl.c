@@ -1,5 +1,5 @@
 /* $XConsortium: Xtranslcl.c /main/27 1996/09/28 16:50:14 rws $ */
-/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21.2.8 1998/12/18 11:56:11 dawes Exp $ */
+/* $XFree86: xc/lib/xtrans/Xtranslcl.c,v 3.21.2.9 1999/03/29 03:16:55 dawes Exp $ */
 /*
 
 Copyright (c) 1993, 1994  X Consortium

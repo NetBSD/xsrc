@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3.c,v 3.14.2.12 1998/10/19 04:09:34 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/accel/s3_virge/s3.c,v 3.14.2.14 1999/06/18 13:08:20 hohndel Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -343,7 +343,9 @@ s3GetPCIInfo()
       return NULL;
 
    while ((pcrp = pcrpp[i])) {
-      if (pcrp->_vendor == PCI_S3_VENDOR_ID && pcrp->_command != 0) {
+      if ((pcrp->_vendor == PCI_S3_VENDOR_ID) && 
+          (pcrp->_command & PCI_CMD_IO_ENABLE) &&
+	  (pcrp->_command & PCI_CMD_MEM_ENABLE)) {
 	 found = TRUE;
 	 switch (pcrp->_device) {
 	 case PCI_ViRGE:
@@ -1811,7 +1813,7 @@ redo_mode_lookup:
 
 #ifdef XFreeXDGA
       s3InfoRec.displayWidth = s3DisplayWidth;
-      s3InfoRec.directMode = XF86DGADirectPresent;
+      s3InfoRec.directMode = XF86DGADirectPresent | XF86DGAAccelPresent;
 #endif
    in_s3Probe = FALSE;
    return TRUE;

@@ -19,10 +19,11 @@
  *                        wcc386p -zq -omaxet -7 -4s -s -w3 -d2 name.c
  *                        and link with PharLap or other dos extender for exe
  * case Intel DG/ux:  gcc -DDGUX scanpci.c -o scanpci (with gcc-DG-2.7.2.88)
+ *                    DGUX part: Takis Psarogiannakopoulos <takis@dpmms.cam.ac.uk>
  *
  */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.22 1998/12/29 10:57:46 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/etc/scanpci.c,v 3.34.2.25 1999/07/17 05:00:56 dawes Exp $ */
 
 /*
  * Copyright 1995 by Robin Cutshaw <robin@XFree86.Org>
@@ -84,7 +85,9 @@
 #else
 #include <sys/seg.h>
 #endif
+#if !defined(V86SC_IOPL)
 #include <sys/v86.h>
+#endif
 #endif
 #if defined(__FreeBSD__) || defined(__386BSD__)
 #include <sys/file.h>
@@ -115,6 +118,8 @@
 #include <sys/proc.h>
 #include <sys/param.h>
 #include <sys/kd.h>
+#include <sys/sysi86.h>  /* Definition of SI86IOPL for DG/ux */
+#define SI86IOPL 112
 #endif
 #if defined(SCO) || defined(ISC)
 #ifndef ISC
@@ -690,8 +695,13 @@ struct pci_vendor_device {
                             { 0x4742, "Mach64 GB", print_mach64 },
                             { 0x4744, "Mach64 GD", print_mach64 },
                             { 0x4749, "Mach64 GI", print_mach64 },
+                            { 0x474D, "Mach64 GM", print_mach64 },
+                            { 0x474E, "Mach64 GN", print_mach64 },
+                            { 0x474F, "Mach64 GO", print_mach64 },
                             { 0x4750, "Mach64 GP", print_mach64 },
                             { 0x4751, "Mach64 GQ", print_mach64 },
+                            { 0x4752, "Mach64 GR", print_mach64 },
+                            { 0x4753, "Mach64 GS", print_mach64 },
                             { 0x4754, "Mach64 GT", print_mach64 },
                             { 0x4755, "Mach64 GU", print_mach64 },
                             { 0x4756, "Mach64 GV", print_mach64 },
@@ -1279,7 +1289,7 @@ main(int argc, char *argv[])
 #endif
 
 #if defined(DGUX)
-    printf("Scanpci for Intel ix86 DG/ux R4.20MU03...MUxx\n\n");
+    printf("Scanpci for Intel ix86 DG/ux R4.20MU04...MUxx\n\n");
 #endif
 
     enable_os_io();
@@ -1727,15 +1737,18 @@ enable_os_io()
     sysi86(SI86V86, V86SC_IOPL, PS_IOPL);
 #endif
 #endif
+#if defined(DGUX)
+    sysi86(SI86IOPL ,3);
+#endif
 #if defined(linux)
     iopl(3);
 #endif
-#if defined(__FreeBSD__)  || defined(__386BSD__) || defined(__bsdi__) || defined(DGUX)
+#if defined(__FreeBSD__)  || defined(__386BSD__) || defined(__bsdi__)
     if ((io_fd = open("/dev/console", O_RDWR, 0)) < 0) {
         perror("/dev/console");
         exit(1);
     }
-#if defined(__FreeBSD__)  || defined(__386BSD__) || defined(DGUX)
+#if defined(__FreeBSD__)  || defined(__386BSD__)
     if (ioctl(io_fd, KDENABIO, 0) < 0) {
         perror("ioctl(KDENABIO)");
         exit(1);
@@ -1831,10 +1844,13 @@ disable_os_io()
     sysi86(SI86V86, V86SC_IOPL, 0);
 #endif
 #endif
+#if defined(DGUX)
+    sysi86(SI86IOPL ,0);
+#endif
 #if defined(linux)
     iopl(0);
 #endif
-#if defined(__FreeBSD__)  || defined(__386BSD__) || defined(DGUX)
+#if defined(__FreeBSD__)  || defined(__386BSD__)
     if (ioctl(io_fd, KDDISABIO, 0) < 0) {
         perror("ioctl(KDDISABIO)");
         close(io_fd);
@@ -1869,4 +1885,17 @@ disable_os_io()
     pciConfBase = NULL;
 #endif
 }
+
+#if defined(DGUX)
+      asm("sysi86:_sysi86:pushl %ebp");
+      asm("movl %esp,%ebp");
+      asm("pushl 12(%ebp)");
+      asm("pushl 8(%ebp)");
+      asm("pushl 4(%ebp)");
+      asm("movl $50,%eax");
+      asm("lcall $7,$0");
+      asm("addl $12,%esp");
+      asm("leave");
+      asm("ret");
+#endif /* DGUX */
 

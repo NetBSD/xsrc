@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Option.h,v 3.65.2.18 1998/12/29 10:57:45 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86_Option.h,v 3.65.2.19 1999/04/15 12:04:29 hohndel Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
  *
@@ -95,6 +95,8 @@ typedef struct {
 #define OPTION_SLOW_EDODRAM	49 /* slow EDO-DRAM (for S3) */
 #define OPTION_EARLY_RAS_PRECHARGE	50 /* shift RAS prechange signal (for S3) */
 #define OPTION_LATE_RAS_PRECHARGE	51 /* shift RAS prechange signal (for S3) */
+#define OPTION_SDRAM		52 /* Card uses SDRAM (i740) */
+#define OPTION_SGRAM		53 /* Card uses SGRAM (i740) */
 
 /* Accel/cursor features */
 #define OPTION_NOACCEL		60 /* Disable accel support in SVGA server */
@@ -314,6 +316,8 @@ OptFlagRec xf86_OptionTab[] = {
   { "slow_edodram",	OPTION_SLOW_EDODRAM },
   { "early_ras_precharge",	OPTION_EARLY_RAS_PRECHARGE },
   { "late_ras_precharge",	OPTION_LATE_RAS_PRECHARGE },
+  { "sdram",		OPTION_SDRAM },
+  { "sgram",		OPTION_SGRAM },
   { "nomemaccess",	OPTION_NO_MEM_ACCESS },
   { "nolinear",		OPTION_NOLINEAR_MODE },
   { "intel_gx",		OPTION_INTEL_GX },

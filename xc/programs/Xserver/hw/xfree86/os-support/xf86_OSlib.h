@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.36.2.8 1998/12/22 11:23:27 hohndel Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86_OSlib.h,v 3.36.2.9 1999/03/27 12:28:57 dawes Exp $ */
 /*
  * Copyright 1990, 1991 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1992 by David Dawes <dawes@XFree86.org>
@@ -107,7 +107,15 @@
 #  if defined(SVR4) && !defined(sun)
 #   include <sys/seg.h>
 #  endif /* SVR4 && !sun */
-#  include <sys/v86.h>
+#  if defined(sun) && defined (i386) && defined (SVR4)	/* Solaris? */
+#   if !defined(V86SC_IOPL)				/* Solaris 7? */
+#    include <sys/v86.h>				/* Nope */
+#   else
+#    /* Do nothing what so ever */			/* Yup */
+#   endif /* V86SC_IOPL */
+#  else
+#   include <sys/v86.h>					/* Not Solaris */
+#  endif /* sun && i386 && SVR4 */
 #  if defined(sun) && defined (i386) && defined (SVR4)
 #    include <sys/psw.h>
 #  endif
