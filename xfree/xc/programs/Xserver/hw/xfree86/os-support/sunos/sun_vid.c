@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/sun_vid.c,v 1.2 2001/10/28 03:34:03 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/sun_vid.c,v 1.3 2002/10/03 02:04:19 tsi Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -54,15 +54,14 @@ xf86LinearVidMem(void)
 	    apertureDevName = "/dev/fbs/aperture";
 	    if((mmapFd = open(apertureDevName, O_RDWR)) < 0)
 	    {
-		xf86Msg(X_WARNING,
-			"xf86LinearVidMem: failed to open %s (%s)\n",
-			apertureDevName, strerror(errno));
-		xf86Msg(X_WARNING, "xf86LinearVidMem:"
-			" either /dev/fbs/aperture or"
-			" /dev/xsvc device driver"
-			" required\n");
-		xf86Msg(X_WARNING,
-			"xf86LinearVidMem: linear memory access disabled\n");
+		xf86MsgVerb(X_WARNING, 0,
+		    "xf86LinearVidMem: failed to open %s (%s)\n",
+		    apertureDevName, strerror(errno));
+		xf86MsgVerb(X_WARNING, 0,
+		    "xf86LinearVidMem: either /dev/fbs/aperture or /dev/xsvc"
+		    " device driver required\n");
+		xf86MsgVerb(X_WARNING, 0,
+		    "xf86LinearVidMem: linear memory access disabled\n");
 		apertureDevName = NULL;
 		return FALSE;
 	    }

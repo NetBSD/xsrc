@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/Imakefile,v 3.21 2000/08/15 16:05:38 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/lynxos/Imakefile,v 3.24 2002/12/14 04:41:14 dawes Exp $
 #include <Server.tmpl>
 
 #if !defined(PpcArchitecture)
@@ -10,7 +10,7 @@ IOPERM_OBJS=ioperm_noop.o
 #endif
 
 #if defined(PpcArchitecture)
-PPC_SRCS=lynx_noinline.c lynx_ppc.S
+PPC_SRCS=lynx_noinline.c lynx_ppc.c
 PPC_OBJS=lynx_noinline.o lynx_ppc.o
 #endif
 
@@ -28,7 +28,8 @@ OBJS = lynx_init.o lynx_video.o lynx_io.o lynx_mmap.o \
        vidmem.o sigio.o pm_noop.o kmod_noop.o agp_noop.o
 
 INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
-           -I$(XINCLUDESRC) -I$(EXTINCSRC)
+           -I$(XINCLUDESRC) -I$(EXTINCSRC) \
+           -I$(ENV_PREFIX)/sys/lynx.os
 
 RESDEFINES = -DUSESTDRES
 

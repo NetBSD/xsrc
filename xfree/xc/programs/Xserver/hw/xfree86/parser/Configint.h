@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Configint.h,v 1.19 2001/08/06 20:51:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Configint.h,v 1.20 2002/03/04 16:11:06 dawes Exp $ */
 /*
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -95,7 +95,9 @@ else\
 }\
 }
 
-#define Error(a,b) { xf86parseError (a, b); CLEANUP (ptr); return NULL; }
+#define Error(a,b) do { \
+			xf86parseError (a, b); CLEANUP (ptr); return NULL; \
+		   } while (0)
 
 /* 
  * These are defines for error messages to promote consistency.

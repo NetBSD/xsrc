@@ -3,7 +3,7 @@ XCOMM $XConsortium: Imakefile,v 1.15 94/04/04 21:49:55 gildea Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xditview/Imakefile,v 1.3 2000/12/03 05:20:53 keithp Exp $
+XCOMM $XFree86: xc/programs/xditview/Imakefile,v 1.5 2002/04/04 14:05:58 eich Exp $
 
 
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
@@ -11,12 +11,13 @@ XCOMM $XFree86: xc/programs/xditview/Imakefile,v 1.3 2000/12/03 05:20:53 keithp 
     DEPFONTLIBS = XftClientDepLibs
        FONTLIBS = XftClientLibs
        FONTDEFS = -DUSE_XFT
+      INCLUDES = $(XFTINCLUDES)
 #endif
 #if HasMkstemp
        TEMPDEFS = -DHAS_MKSTEMP
 #endif
         DEPLIBS = XawClientDepLibs $(DEPFONTLIBS)
-LOCAL_LIBRARIES = XawClientLibs $(FONTLIBS)
+LOCAL_LIBRARIES = $(FONTLIBS) XawClientLibs
   SYS_LIBRARIES = MathLibrary
         DEFINES = $(TEMPDEFS) $(FONTDEFS)
         BITMAPS = ldblarrow rdblarrow

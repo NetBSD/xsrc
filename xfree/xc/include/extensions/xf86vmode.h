@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/xf86vmode.h,v 3.30 2001/05/07 20:09:50 mvojkovi Exp $ */
+/* $XFree86: xc/include/extensions/xf86vmode.h,v 3.31 2002/12/22 00:46:50 dawes Exp $ */
 /*
 
 Copyright 1995  Kaleb S. KEITHLEY
@@ -59,6 +59,7 @@ from Kaleb S. KEITHLEY
 #define X_XF86VidModeGetGammaRamp	17
 #define X_XF86VidModeSetGammaRamp	18
 #define X_XF86VidModeGetGammaRampSize	19
+#define X_XF86VidModeGetPermissions	20
 
 #define CLKFLAG_PROGRAMABLE		1
 
@@ -82,6 +83,9 @@ from Kaleb S. KEITHLEY
 #define XF86VidModeClientNotLocal	5
 #define XF86VidModeZoomLocked		6
 #define XF86VidModeNumberErrors		(XF86VidModeZoomLocked + 1)
+
+#define XF86VM_READ_PERMISSION	1
+#define XF86VM_WRITE_PERMISSION	2
 
 #ifndef _XF86VIDMODE_SERVER_
 
@@ -305,6 +309,11 @@ Bool XF86VidModeGetGammaRampSize(
     int*                        /* size */
 );
 
+Bool XF86VidModeGetPermissions(
+    Display*                    /* dpy */,
+    int                         /* screen */,
+    int*			/* permissions */
+);
 
 _XFUNCPROTOEND
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Vendor.c,v 1.13 2001/08/06 20:51:15 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Vendor.c,v 1.16 2003/01/04 20:20:23 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -158,7 +158,7 @@ xf86parseVendorSection (void)
 void
 xf86printVendorSection (FILE * cf, XF86ConfVendorPtr ptr)
 {
-    XF86ConfVendSubPtr pptr;
+	XF86ConfVendSubPtr pptr;
 
 	while (ptr)
 	{
@@ -216,12 +216,12 @@ xf86freeVendorSubList (XF86ConfVendSubPtr ptr)
 XF86ConfVendorPtr
 xf86findVendor (const char *name, XF86ConfVendorPtr list)
 {
-    while (list)
-    {
-        if (xf86nameCompare (list->vnd_identifier, name) == 0)
-            return (list);
-        list = list->list.next;
-    }
-    return (NULL);
+	while (list)
+	{
+		if (xf86nameCompare (list->vnd_identifier, name) == 0)
+			return (list);
+		list = list->list.next;
+	}
+	return (NULL);
 }
 

@@ -1,4 +1,9 @@
 // $Xorg: misc,v 1.3 2000/08/17 19:54:34 cpqbld Exp $
+//
+//
+//
+// $XFree86: xc/programs/xkbcomp/compat/misc,v 1.3 2003/02/21 03:17:42 dawes Exp $
+
 default partial xkb_compatibility "misc"  {
 
     virtual_modifiers	Alt,ScrollLock;
@@ -16,8 +21,7 @@ default partial xkb_compatibility "misc"  {
     };
 
     interpret Alt_R+Any	{
-	virtualModifier= Alt;
-	action = SetMods(modifiers=modMapMods);
+	action = SetMods(modifiers=Alt);
     };
 
     // Sets the "ScrollLock" virtual modifier and

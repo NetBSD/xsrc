@@ -32,7 +32,7 @@ PERFORMANCE OF THIS SOFTWARE.
 		 	     makoto@sm.sony.co.jp
 				
 ***********************************************************************/
-/* $XFree86: xc/lib/X11/imCallbk.c,v 3.7 2001/08/18 02:41:28 dawes Exp $ */
+/* $XFree86: xc/lib/X11/imCallbk.c,v 3.8 2002/12/15 01:20:56 dawes Exp $ */
 
 #include "Xlibint.h"
 #include "Xlcint.h"
@@ -835,7 +835,8 @@ _XimStatusDrawCallback(im, ic, proto, len)
 
 	(*cb->callback)((XIC)ic, cb->client_data, (XPointer)&cbs);
 
-	_free_memory_for_text((XIMText *)cbs.data.text);
+	if (cbs.type == XIMTextType)
+	    _free_memory_for_text((XIMText *)cbs.data.text);
     }
     else {
 

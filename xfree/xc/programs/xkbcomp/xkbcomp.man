@@ -3,7 +3,7 @@
 .\"
 .\"
 .\"
-.\" $XFree86: xc/programs/xkbcomp/xkbcomp.man,v 1.9 2001/01/27 18:21:16 dawes Exp $
+.\" $XFree86: xc/programs/xkbcomp/xkbcomp.man,v 1.10 2002/11/15 03:14:12 dawes Exp $
 .\"
 .TH XKBCOMP 1 __xorgversion__
 .SH NAME
@@ -55,7 +55,13 @@ Compute defaults for any missing components, such as key names.
 .TP 8
 .B \-I\fIdir\fP
 Specifies top-level directories to be searched for files included by the 
-keymap description.
+keymap description.  After all directories specified by \-I options
+have been searched, the current directory and finally, the default
+xkb directory (usually __projectroot__/lib/X11/xkb) will be searched.
+.sp
+To prevent the current and default directories from being searched,
+use the \-I option alone (i.e. without a directory), before any \-I
+options that specify the directories you do want searched.
 .TP 8
 .B \-l
 List maps that specify the \fImap\fP pattern in any files listed on the
@@ -82,7 +88,7 @@ keycodes, symbols and types, respectively.
 Specifies the root directory for relative path names.
 .TP 8
 .B -synch
-Force synchonization for X requests.
+Force synchronization for X requests.
 .TP 8
 .B \-w\ \fIlvl\fP
 Controls the reporting of warnings during compilation.  A warning level 

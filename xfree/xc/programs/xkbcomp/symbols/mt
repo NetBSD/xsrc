@@ -1,55 +1,43 @@
-// Maltese keyboard map (for UK-based keyboards)
+// Maltese keyboard map (based on MSA Standard DMS100)
 // by Ramon Casha (ramon.casha@linux.org.mt)
 //
-// $XFree86: xc/programs/xkbcomp/symbols/mt,v 1.2 2001/12/17 20:00:47 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/mt,v 1.3 2002/12/13 04:18:03 dawes Exp $
 
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
 
-    // Describes the differences between a UK keyboard
-    // and a Maltese layout.
-    include "gb(basic)"
-    name[Group1]= "Maltese (UK layout)";
+    // Describes the differences between the en_GB
+    // keyboard and the Maltese keyboard.
 
-    // define the ^ as a deadkey for long accents (â). The use of
-    // long accents was officially dropped recently but there are 
-    // still exists literature using it.
-    key <AE06> {
-        symbols[Group1]= [	6,		dead_circumflex ],
-        symbols[Group2]= [	asciicircum	]
-    };
-    // define the grave accent as a deadkey for the ordinary accent (à).
-    key <TLDE> {
-        symbols[Group1]= [      dead_grave,      notsign ],
-        symbols[Group2]= [           grave,	 bar ]
-    };
-    // the following four sets are the four additional letters Å,Õ,¡,¯ (CGHZ)
-    key <AE12> {
-        symbols[Group1]= [       cabovedot,       Cabovedot ],
-        symbols[Group2]= [           equal,            plus ]
-    };
-    key <AD11> {
-        symbols[Group1]= [       gabovedot,       Gabovedot ],
-        symbols[Group2]= [     bracketleft,       braceleft ]
-    };
-    key <AD12> {
-        symbols[Group1]= [         hstroke,         Hstroke ],
-        symbols[Group2]= [    bracketright,      braceright ]
-    };
-    key <LSGT> {
-	symbols[Group1]= [       zabovedot,	 Zabovedot  	],	
-	symbols[Group2]= [	backslash,	       bar	]
-    };
-    // add Å Õ ¡ and ¯ as AltGr + C G H or Z for convenience.
-    key <AC05> {	[], [	gabovedot,	Gabovedot	]	};
-    key <AC06> {	[], [	hstroke,	Hstroke		]	};
-    key <AB01> {	[], [	zabovedot,	Zabovedot 	]	};
-    key <AB03> {	[], [	cabovedot,	Cabovedot	]	};
-    // and the Euro sign as AltGr-E
-    key <AD03> {	[], [	EuroSign	]	};
+    include "gb(basic)"
+    name[Group1]= "Maltese";
+
+    // the following four sets are the four additional letters (C. G. H- Z.)
+    // Group 2 contains the UK equivalents
+    key <TLDE> {	[	cabovedot,	Cabovedot	],
+			[	grave,		notsign		] };
+    key <AD11> {	[	gabovedot,	Gabovedot	],
+			[	bracketleft,	braceleft	] };
+    key <AD12> {	[	hstroke,	Hstroke		],
+			[	bracketright,	braceright	] };
+    key <LSGT> {	[	zabovedot,	Zabovedot	],
+			[	backslash,	bar		] };
+
+    // Euro symbol
+    key <AE03> {	[	3,		EuroSign	],
+    			[	sterling			]	};
+    // Long accent
+    key <AE06> { [],	[	dead_circumflex, dead_circumflex ]	};
+
+    // Normal accented vowels
+    key <AD03> { [],	[	egrave,		Egrave		]	};
+    key <AD07> { [],	[	ugrave,		Ugrave		]	};
+    key <AD08> { [],	[	igrave,		Igrave		]	};
+    key <AD09> { [],	[	ograve,		Ograve		]	};
+    key <AC01> { [],	[	agrave,		Agrave		]	};
 
     // End alphanumeric section
-    
+
     // begin modifier mappings
     
     modifier_map Shift  { Shift_L };

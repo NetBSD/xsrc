@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/VTsw_usl.c,v 3.3 1999/12/03 19:17:45 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/VTsw_usl.c,v 3.4 2002/09/16 18:06:14 eich Exp $ */
 /*
  * Copyright 1993 by David Wexelblat <dwex@XFree86.org>
  *
@@ -49,7 +49,7 @@ xf86VTRequest(int sig)
 Bool
 xf86VTSwitchPending()
 {
-	return(xf86Info.vtRequestsPending ? TRUE : FALSE);
+    return(xf86Info.vtRequestsPending ? TRUE : FALSE);
 }
 
 Bool

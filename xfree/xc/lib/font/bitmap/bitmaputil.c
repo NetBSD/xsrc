@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/bitmap/bitmaputil.c,v 1.7 2001/12/14 19:56:46 dawes Exp $ */
+/* $XFree86: xc/lib/font/bitmap/bitmaputil.c,v 1.11 2003/02/19 01:22:34 dawes Exp $ */
 
 #include "fntfilst.h"
 #include "bitmap.h"
@@ -53,8 +53,8 @@ MINSHORT, MINSHORT, MINSHORT, MINSHORT, MINSHORT, 0x0000};
 	     maxbounds->field = (ci)->field;
 
 #define COMPUTE_MINMAX(ci) \
-    if ((ci)->ascent != -(ci)->descent || \
-	(ci)->leftSideBearing != (ci)->rightSideBearing || \
+    if ((ci)->ascent || (ci)->descent || \
+	(ci)->leftSideBearing || (ci)->rightSideBearing || \
 	(ci)->characterWidth) \
     { \
 	MINMAX(ascent, (ci)); \
@@ -210,7 +210,8 @@ bitmapAddInkMetrics(FontPtr pFont)
     bitmapFont = (BitmapFontPtr) pFont->fontPrivate;
     bitmapFont->ink_metrics = (xCharInfo *) xalloc(bitmapFont->num_chars * sizeof(xCharInfo));
     if (!bitmapFont->ink_metrics) {
-      fprintf(stderr, "Error: Couldn't allocate ink_metrics (%d*%d)\n", bitmapFont->num_chars, sizeof(xCharInfo));
+      fprintf(stderr, "Error: Couldn't allocate ink_metrics (%d*%ld)\n",
+	      bitmapFont->num_chars, (unsigned long)sizeof(xCharInfo));
 	return FALSE;
     }
     for (i = 0; i < bitmapFont->num_chars; i++)

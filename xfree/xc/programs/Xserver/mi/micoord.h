@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/mi/micoord.h,v 1.3 2001/10/28 03:34:15 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/mi/micoord.h,v 1.5 2002/05/22 21:38:31 herrb Exp $ */
 /*
  * Copyright (C) 2000 The XFree86 Project, Inc.  All Rights Reserved.
  *
@@ -45,11 +45,12 @@
  */
 
 #if defined(mips) || \
-    defined(sparc) || \
+    defined(sparc) || defined(__sparc64__) || \
     defined(__alpha) || defined(__alpha__) || \
     defined(__i386__) || defined(i386) || \
     defined(__ia64__) || defined(ia64) || \
-    defined(__s390x__) || defined(__s390__)
+    defined(__s390x__) || defined(__s390__) || \
+    defined(__x86_64__) || defined(x86_64)
 #define GetHighWord(x) (((int) (x)) >> 16)
 #else
 #define GetHighWord(x) (((int) (x)) / 65536)

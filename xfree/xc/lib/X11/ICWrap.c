@@ -64,7 +64,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/ICWrap.c,v 1.7 2001/12/14 19:54:01 dawes Exp $ */
+/* $XFree86: xc/lib/X11/ICWrap.c,v 1.8 2002/11/25 14:04:53 eich Exp $ */
 
 #define NEED_EVENTS
 #include "Xlibint.h"
@@ -394,8 +394,12 @@ char *
 Xutf8ResetIC(ic)
     XIC ic;
 {
-    if (ic->core.im)
-	return (*ic->methods->utf8_reset)(ic);
+    if (ic->core.im) {
+	if (*ic->methods->utf8_reset)
+	    return (*ic->methods->utf8_reset)(ic);
+	else if (*ic->methods->mb_reset)
+	    return (*ic->methods->mb_reset)(ic);
+    }
     return (char *)NULL;
 }
 
@@ -438,8 +442,13 @@ Xutf8LookupString(ic, ev, buffer, nbytes, keysym, status)
     KeySym *keysym;
     Status *status;
 {
-    if (ic->core.im)
-	return (*ic->methods->utf8_lookup_string) (ic, ev, buffer, nbytes,
-						   keysym, status);
+    if (ic->core.im) {
+	if (*ic->methods->utf8_lookup_string)
+	    return (*ic->methods->utf8_lookup_string) (ic, ev, buffer, nbytes,
+						   	keysym, status);
+	else if (*ic->methods->mb_lookup_string)
+	    return (*ic->methods->mb_lookup_string) (ic, ev, buffer, nbytes,
+						   	keysym, status);
+    }
     return XLookupNone;
 }

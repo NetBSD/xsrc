@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Device.c,v 1.22 2001/08/06 20:51:12 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Device.c,v 1.26 2003/01/04 20:20:22 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -184,7 +184,7 @@ xf86parseDeviceSection (void)
 		case CLOCKS:
 			token = xf86getSubToken(&(ptr->dev_comment));
 			for( i = ptr->dev_clocks;
-			     token == NUMBER && i < CONF_MAXCLOCKS; i++ ) {
+				token == NUMBER && i < CONF_MAXCLOCKS; i++ ) {
 				ptr->dev_clock[i] = (int)(val.realnum * 1000.0 + 0.5);
 				token = xf86getSubToken(&(ptr->dev_comment));
 			}
@@ -330,21 +330,21 @@ xf86freeDeviceList (XF86ConfDevicePtr ptr)
 int
 xf86validateDevice (XF86ConfigPtr p)
 {
-  XF86ConfDevicePtr device = p->conf_device_lst;
+	XF86ConfDevicePtr device = p->conf_device_lst;
 
-  if (!device) {
-    xf86validationError ("At least one Device section is required.");
-    return (FALSE);
-  }
+	if (!device) {
+		xf86validationError ("At least one Device section is required.");
+		return (FALSE);
+	}
 
-  while (device) {
-    if (!device->dev_driver) {
-      xf86validationError (UNDEFINED_DRIVER_MSG, device->dev_identifier);
-      return (FALSE);
-    }
-  device = device->list.next;
-  }
-  return (TRUE);
+	while (device) {
+		if (!device->dev_driver) {
+			xf86validationError (UNDEFINED_DRIVER_MSG, device->dev_identifier);
+			return (FALSE);
+		}
+	device = device->list.next;
+	}
+	return (TRUE);
 }
 
 XF86ConfDevicePtr
@@ -363,7 +363,9 @@ xf86findDevice (const char *ident, XF86ConfDevicePtr p)
 char *
 xf86configStrdup (const char *s)
 {
-	char *tmp = xf86confmalloc (sizeof (char) * (strlen (s) + 1));
+	char *tmp;
+	if (!s) return NULL;
+	tmp = xf86confmalloc (sizeof (char) * (strlen (s) + 1));
 	if (tmp)
 		strcpy (tmp, s);
 	return (tmp);

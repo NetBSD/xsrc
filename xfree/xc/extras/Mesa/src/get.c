@@ -1,20 +1,20 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4.2
- * 
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
- * 
+ * Version:  4.0.4
+ *
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -28,16 +28,17 @@
 #include "all.h"
 #else
 #include "glheader.h"
+#include "colormac.h"
 #include "context.h"
 #include "enable.h"
 #include "enums.h"
 #include "extensions.h"
 #include "get.h"
 #include "macros.h"
-#include "matrix.h"
 #include "mmath.h"
-#include "types.h"
-#include "vb.h"
+#include "mtypes.h"
+
+#include "math/m_matrix.h"
 #endif
 
 
@@ -55,6 +56,43 @@
 #define ENUM_TO_FLOAT(X) ((GLfloat)(X))
 #define ENUM_TO_DOUBLE(X) ((GLdouble)(X))
 #endif
+
+
+
+/* Check if named extension is enabled, if not generate error and return */
+
+#define CHECK_EXTENSION_B(EXTNAME, PNAME)			\
+   if (!ctx->Extensions.EXTNAME) {				\
+      char message[100];					\
+      sprintf(message, "glGetBooleanv(0x%x)", (int) PNAME);	\
+      _mesa_error(ctx, GL_INVALID_VALUE, message);		\
+      return;							\
+   }	
+
+#define CHECK_EXTENSION_I(EXTNAME, PNAME)			\
+   if (!ctx->Extensions.EXTNAME) {				\
+      char message[100];					\
+      sprintf(message, "glGetIntegerv(0x%x)", (int) PNAME);	\
+      _mesa_error(ctx, GL_INVALID_VALUE, message);		\
+      return;							\
+   }	
+
+#define CHECK_EXTENSION_F(EXTNAME, PNAME)			\
+   if (!ctx->Extensions.EXTNAME) {				\
+      char message[100];					\
+      sprintf(message, "glGetFloatv(0x%x)", (int) PNAME);	\
+      _mesa_error(ctx, GL_INVALID_VALUE, message);		\
+      return;							\
+   }	
+
+#define CHECK_EXTENSION_D(EXTNAME, PNAME)			\
+   if (!ctx->Extensions.EXTNAME) {				\
+      char message[100];					\
+      sprintf(message, "glGetDoublev(0x%x)", (int) PNAME);	\
+      _mesa_error(ctx, GL_INVALID_VALUE, message);		\
+      return;							\
+   }	
+
 
 
 static GLenum
@@ -79,23 +117,25 @@ pixel_texgen_mode(const GLcontext *ctx)
 }
 
 
-
 void
 _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
-   GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetBooleanv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;
 
-   if (MESA_VERBOSE & VERBOSE_API) 
-      fprintf(stderr, "glGetBooleanv %s\n", gl_lookup_enum_by_nr(pname));
+   /* We need this in order to get correct results for
+    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+    */
+   FLUSH_VERTICES(ctx, 0);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "glGetBooleanv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetBooleanv
        && (*ctx->Driver.GetBooleanv)(ctx, pname, params))
@@ -103,16 +143,16 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
-         *params = INT_TO_BOOL(ctx->Visual->AccumRedBits);
+         *params = INT_TO_BOOL(ctx->Visual.accumRedBits);
          break;
       case GL_ACCUM_GREEN_BITS:
-         *params = INT_TO_BOOL(ctx->Visual->AccumGreenBits);
+         *params = INT_TO_BOOL(ctx->Visual.accumGreenBits);
          break;
       case GL_ACCUM_BLUE_BITS:
-         *params = INT_TO_BOOL(ctx->Visual->AccumBlueBits);
+         *params = INT_TO_BOOL(ctx->Visual.accumBlueBits);
          break;
       case GL_ACCUM_ALPHA_BITS:
-         *params = INT_TO_BOOL(ctx->Visual->AccumAlphaBits);
+         *params = INT_TO_BOOL(ctx->Visual.accumAlphaBits);
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = FLOAT_TO_BOOL(ctx->Accum.ClearColor[0]);
@@ -124,7 +164,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = FLOAT_TO_BOOL(ctx->Pixel.AlphaBias);
          break;
       case GL_ALPHA_BITS:
-         *params = INT_TO_BOOL(ctx->Visual->AlphaBits);
+         *params = INT_TO_BOOL(ctx->Visual.alphaBits);
          break;
       case GL_ALPHA_SCALE:
          *params = FLOAT_TO_BOOL(ctx->Pixel.AlphaScale);
@@ -136,7 +176,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ENUM_TO_BOOL(ctx->Color.AlphaFunc);
          break;
       case GL_ALPHA_TEST_REF:
-         *params = FLOAT_TO_BOOL((GLfloat) ctx->Color.AlphaRef / 255.0);
+         *params = FLOAT_TO_BOOL((GLfloat) ctx->Color.AlphaRef / CHAN_MAXF);
          break;
       case GL_ATTRIB_STACK_DEPTH:
          *params = INT_TO_BOOL(ctx->AttribStackDepth);
@@ -181,7 +221,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = FLOAT_TO_BOOL(ctx->Pixel.BlueBias);
          break;
       case GL_BLUE_BITS:
-         *params = INT_TO_BOOL( ctx->Visual->BlueBits );
+         *params = INT_TO_BOOL( ctx->Visual.blueBits );
          break;
       case GL_BLUE_SCALE:
          *params = FLOAT_TO_BOOL(ctx->Pixel.BlueScale);
@@ -198,10 +238,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ctx->Transform.ClipEnabled[pname-GL_CLIP_PLANE0];
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = FLOAT_TO_BOOL(ctx->Color.ClearColor[0]);
-         params[1] = FLOAT_TO_BOOL(ctx->Color.ClearColor[1]);
-         params[2] = FLOAT_TO_BOOL(ctx->Color.ClearColor[2]);
-         params[3] = FLOAT_TO_BOOL(ctx->Color.ClearColor[3]);
+         params[0] = ctx->Color.ClearColor[0] ? GL_TRUE : GL_FALSE;
+         params[1] = ctx->Color.ClearColor[1] ? GL_TRUE : GL_FALSE;
+         params[2] = ctx->Color.ClearColor[2] ? GL_TRUE : GL_FALSE;
+         params[3] = ctx->Color.ClearColor[3] ? GL_TRUE : GL_FALSE;
          break;
       case GL_COLOR_MATERIAL:
          *params = ctx->Light.ColorMaterialEnabled;
@@ -225,15 +265,18 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ENUM_TO_BOOL(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         params[0] = INT_TO_BOOL(ctx->Current.ByteColor[0]);
-         params[1] = INT_TO_BOOL(ctx->Current.ByteColor[1]);
-         params[2] = INT_TO_BOOL(ctx->Current.ByteColor[2]);
-         params[3] = INT_TO_BOOL(ctx->Current.ByteColor[3]);
+	 FLUSH_CURRENT(ctx, 0);
+         params[0] = FLOAT_TO_BOOL(ctx->Current.Color[0]);
+         params[1] = FLOAT_TO_BOOL(ctx->Current.Color[1]);
+         params[2] = FLOAT_TO_BOOL(ctx->Current.Color[2]);
+         params[3] = FLOAT_TO_BOOL(ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
+	 FLUSH_CURRENT(ctx, 0);
          *params = INT_TO_BOOL(ctx->Current.Index);
          break;
       case GL_CURRENT_NORMAL:
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_BOOL(ctx->Current.Normal[0]);
          params[1] = FLOAT_TO_BOOL(ctx->Current.Normal[1]);
          params[2] = FLOAT_TO_BOOL(ctx->Current.Normal[2]);
@@ -257,25 +300,26 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 params[3] = FLOAT_TO_BOOL(ctx->Current.RasterPos[3]);
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-         params[0] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texTransformUnit][0]);
-         params[1] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texTransformUnit][1]);
-         params[2] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texTransformUnit][2]);
-         params[3] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texTransformUnit][3]);
+         params[0] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][0]);
+         params[1] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][1]);
+         params[2] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][2]);
+         params[3] = FLOAT_TO_BOOL(ctx->Current.RasterMultiTexCoord[texUnit][3]);
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
          *params = ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
-         params[0] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][0]);
-         params[1] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][1]);
-         params[2] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][2]);
-         params[3] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texTransformUnit][3]);
+	 FLUSH_CURRENT(ctx, 0);
+         params[0] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texUnit][0]);
+         params[1] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texUnit][1]);
+         params[2] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texUnit][2]);
+         params[3] = FLOAT_TO_BOOL(ctx->Current.Texcoord[texUnit][3]);
 	 break;
       case GL_DEPTH_BIAS:
          *params = FLOAT_TO_BOOL(ctx->Pixel.DepthBias);
 	 break;
       case GL_DEPTH_BITS:
-	 *params = INT_TO_BOOL(ctx->Visual->DepthBits);
+	 *params = INT_TO_BOOL(ctx->Visual.depthBits);
 	 break;
       case GL_DEPTH_CLEAR_VALUE:
          *params = FLOAT_TO_BOOL(ctx->Depth.Clear);
@@ -300,12 +344,13 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = ctx->Color.DitherFlag;
 	 break;
       case GL_DOUBLEBUFFER:
-	 *params = ctx->Visual->DBflag;
+	 *params = ctx->Visual.doubleBufferMode;
 	 break;
       case GL_DRAW_BUFFER:
 	 *params = ENUM_TO_BOOL(ctx->Color.DrawBuffer);
 	 break;
       case GL_EDGE_FLAG:
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = ctx->Current.EdgeFlag;
 	 break;
       case GL_FEEDBACK_BUFFER_SIZE:
@@ -348,22 +393,28 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = FLOAT_TO_BOOL(ctx->Pixel.GreenBias);
 	 break;
       case GL_GREEN_BITS:
-         *params = INT_TO_BOOL( ctx->Visual->GreenBits );
+         *params = INT_TO_BOOL( ctx->Visual.greenBits );
 	 break;
       case GL_GREEN_SCALE:
          *params = FLOAT_TO_BOOL(ctx->Pixel.GreenScale);
 	 break;
       case GL_HISTOGRAM:
-         *params = ctx->Pixel.HistogramEnabled;
+         if (ctx->Extensions.EXT_histogram) {
+            *params = ctx->Pixel.HistogramEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
 	 break;
       case GL_INDEX_BITS:
-         *params = INT_TO_BOOL( ctx->Visual->IndexBits );
+         *params = INT_TO_BOOL( ctx->Visual.indexBits );
 	 break;
       case GL_INDEX_CLEAR_VALUE:
 	 *params = INT_TO_BOOL(ctx->Color.ClearIndex);
 	 break;
       case GL_INDEX_MODE:
-	 *params = ctx->Visual->RGBAflag ? GL_FALSE : GL_TRUE;
+	 *params = ctx->Visual.rgbMode ? GL_FALSE : GL_TRUE;
 	 break;
       case GL_INDEX_OFFSET:
 	 *params = INT_TO_BOOL(ctx->Pixel.IndexOffset);
@@ -537,19 +588,19 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = INT_TO_BOOL( MAX_CLIENT_ATTRIB_STACK_DEPTH);
          break;
       case GL_MAX_CLIP_PLANES:
-	 *params = INT_TO_BOOL(MAX_CLIP_PLANES);
+	 *params = INT_TO_BOOL(ctx->Const.MaxClipPlanes);
 	 break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
-         *params = INT_TO_BOOL(VB_MAX);
+         *params = INT_TO_BOOL(ctx->Const.MaxArrayLockSize);
          break;
       case GL_MAX_ELEMENTS_INDICES:   /* GL_VERSION_1_2 */
-         *params = INT_TO_BOOL(VB_MAX);
+         *params = INT_TO_BOOL(ctx->Const.MaxArrayLockSize);
          break;
       case GL_MAX_EVAL_ORDER:
 	 *params = INT_TO_BOOL(MAX_EVAL_ORDER);
 	 break;
       case GL_MAX_LIGHTS:
-	 *params = INT_TO_BOOL(MAX_LIGHTS);
+	 *params = INT_TO_BOOL(ctx->Const.MaxLights);
 	 break;
       case GL_MAX_LIST_NESTING:
 	 *params = INT_TO_BOOL(MAX_LIST_NESTING);
@@ -567,8 +618,10 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(MAX_PROJECTION_STACK_DEPTH);
 	 break;
       case GL_MAX_TEXTURE_SIZE:
+         *params = INT_TO_BOOL(1 << (ctx->Const.MaxTextureLevels - 1));
+	 break;
       case GL_MAX_3D_TEXTURE_SIZE:
-         *params = INT_TO_BOOL(ctx->Const.MaxTextureSize);
+         *params = INT_TO_BOOL(1 << (ctx->Const.Max3DTextureLevels - 1));
 	 break;
       case GL_MAX_TEXTURE_STACK_DEPTH:
 	 *params = INT_TO_BOOL(MAX_TEXTURE_STACK_DEPTH);
@@ -618,6 +671,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_PACK_IMAGE_HEIGHT_EXT:
          *params = ctx->Pack.ImageHeight;
          break;
+      case GL_PACK_INVERT_MESA:
+         *params = ctx->Pack.Invert;
+         break;
       case GL_PERSPECTIVE_CORRECTION_HINT:
 	 *params = ENUM_TO_BOOL(ctx->Hint.PerspectiveCorrection);
 	 break;
@@ -652,7 +708,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(ctx->Pixel.MapStoSsize);
 	 break;
       case GL_POINT_SIZE:
-	 *params = FLOAT_TO_BOOL(ctx->Point.UserSize);
+	 *params = FLOAT_TO_BOOL(ctx->Point.Size);
 	 break;
       case GL_POINT_SIZE_GRANULARITY:
 	 *params = FLOAT_TO_BOOL(ctx->Const.PointSizeGranularity );
@@ -722,7 +778,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = FLOAT_TO_BOOL(ctx->Pixel.RedBias);
 	 break;
       case GL_RED_BITS:
-         *params = INT_TO_BOOL( ctx->Visual->RedBits );
+         *params = INT_TO_BOOL( ctx->Visual.redBits );
 	 break;
       case GL_RED_SCALE:
          *params = FLOAT_TO_BOOL(ctx->Pixel.RedScale);
@@ -734,7 +790,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ctx->Transform.RescaleNormals;
          break;
       case GL_RGBA_MODE:
-         *params = ctx->Visual->RGBAflag;
+         *params = ctx->Visual.rgbMode;
 	 break;
       case GL_SCISSOR_BOX:
 	 params[0] = INT_TO_BOOL(ctx->Scissor.X);
@@ -755,7 +811,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ctx->Texture.SharedPalette;
          break;
       case GL_STENCIL_BITS:
-	 *params = INT_TO_BOOL(ctx->Visual->StencilBits);
+	 *params = INT_TO_BOOL(ctx->Visual.stencilBits);
 	 break;
       case GL_STENCIL_CLEAR_VALUE:
 	 *params = INT_TO_BOOL(ctx->Stencil.Clear);
@@ -785,7 +841,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = INT_TO_BOOL(ctx->Stencil.WriteMask);
 	 break;
       case GL_STEREO:
-	 *params = ctx->Visual->StereoFlag;
+	 *params = ctx->Visual.stereoMode;
 	 break;
       case GL_SUBPIXEL_BITS:
 	 *params = INT_TO_BOOL(ctx->Const.SubPixelBits);
@@ -800,13 +856,13 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = _mesa_IsEnabled(GL_TEXTURE_3D);
 	 break;
       case GL_TEXTURE_BINDING_1D:
-         *params = INT_TO_BOOL(textureUnit->CurrentD[1]->Name);
+         *params = INT_TO_BOOL(textureUnit->Current1D->Name);
           break;
       case GL_TEXTURE_BINDING_2D:
-         *params = INT_TO_BOOL(textureUnit->CurrentD[2]->Name);
+         *params = INT_TO_BOOL(textureUnit->Current2D->Name);
           break;
       case GL_TEXTURE_BINDING_3D:
-         *params = INT_TO_BOOL(textureUnit->CurrentD[3]->Name);
+         *params = INT_TO_BOOL(textureUnit->Current3D->Name);
          break;
       case GL_TEXTURE_ENV_COLOR:
          {
@@ -833,12 +889,12 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 break;
       case GL_TEXTURE_MATRIX:
 	 for (i=0;i<16;i++) {
-	    params[i] = 
-	       FLOAT_TO_BOOL(ctx->TextureMatrix[texTransformUnit].m[i]);
+	    params[i] =
+	       FLOAT_TO_BOOL(ctx->TextureMatrix[texUnit].m[i]);
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = INT_TO_BOOL(ctx->TextureStackDepth[texTransformUnit] + 1);
+	 *params = INT_TO_BOOL(ctx->TextureStackDepth[texUnit] + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = INT_TO_BOOL(ctx->Unpack.Alignment);
@@ -864,6 +920,9 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
       case GL_UNPACK_IMAGE_HEIGHT_EXT:
          *params = ctx->Unpack.ImageHeight;
          break;
+      case GL_UNPACK_CLIENT_STORAGE_APPLE:
+         *params = ctx->Unpack.ClientStorage;
+         break;
       case GL_VIEWPORT:
 	 params[0] = INT_TO_BOOL(ctx->Viewport.X);
 	 params[1] = INT_TO_BOOL(ctx->Viewport.Y);
@@ -877,159 +936,82 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 	 *params = FLOAT_TO_BOOL(ctx->Pixel.ZoomY);
 	 break;
       case GL_VERTEX_ARRAY:
-#ifdef VAO
-         *params = ctx->Array.Current->Vertex.Enabled;
-#else
          *params = ctx->Array.Vertex.Enabled;
-#endif
          break;
       case GL_VERTEX_ARRAY_SIZE:
-#ifdef VAO
-         *params = INT_TO_BOOL(ctx->Array.Current->Vertex.Size);
-#else
          *params = INT_TO_BOOL(ctx->Array.Vertex.Size);
-#endif
          break;
       case GL_VERTEX_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_BOOL(ctx->Array.Current->Vertex.Type);
-#else
          *params = ENUM_TO_BOOL(ctx->Array.Vertex.Type);
-#endif
          break;
       case GL_VERTEX_ARRAY_STRIDE:
-#ifdef VAO
-         *params = INT_TO_BOOL(ctx->Array.Current->Vertex.Stride);
-#else
          *params = INT_TO_BOOL(ctx->Array.Vertex.Stride);
-#endif
          break;
       case GL_VERTEX_ARRAY_COUNT_EXT:
          *params = INT_TO_BOOL(0);
          break;
       case GL_NORMAL_ARRAY:
-#ifdef VAO
-         *params = ctx->Array.Current->Normal.Enabled;
-#else
          *params = ctx->Array.Normal.Enabled;
-#endif
          break;
       case GL_NORMAL_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_BOOL(ctx->Array.Current->Normal.Type);
-#else
          *params = ENUM_TO_BOOL(ctx->Array.Normal.Type);
-#endif
          break;
       case GL_NORMAL_ARRAY_STRIDE:
-#ifdef VAO
-         *params = INT_TO_BOOL(ctx->Array.Current->Normal.Stride);
-#else
          *params = INT_TO_BOOL(ctx->Array.Normal.Stride);
-#endif
          break;
       case GL_NORMAL_ARRAY_COUNT_EXT:
          *params = INT_TO_BOOL(0);
          break;
       case GL_COLOR_ARRAY:
-#ifdef VAO
-         *params = ctx->Array.Current->Color.Enabled;
-#else
          *params = ctx->Array.Color.Enabled;
-#endif
          break;
       case GL_COLOR_ARRAY_SIZE:
-#ifdef VAO
-         *params = INT_TO_BOOL(ctx->Array.Current->Color.Size);
-#else
          *params = INT_TO_BOOL(ctx->Array.Color.Size);
-#endif
          break;
       case GL_COLOR_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_BOOL(ctx->Array.Current->Color.Type);
-#else
          *params = ENUM_TO_BOOL(ctx->Array.Color.Type);
-#endif
          break;
       case GL_COLOR_ARRAY_STRIDE:
-#ifdef VAO
-         *params = INT_TO_BOOL(ctx->Array.Current->Color.Stride);
-#else
          *params = INT_TO_BOOL(ctx->Array.Color.Stride);
-#endif
          break;
       case GL_COLOR_ARRAY_COUNT_EXT:
          *params = INT_TO_BOOL(0);
          break;
       case GL_INDEX_ARRAY:
-#ifdef VAO
-         *params = ctx->Array.Current->Index.Enabled;
-#else
          *params = ctx->Array.Index.Enabled;
-#endif
          break;
       case GL_INDEX_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_BOOL(ctx->Array.Current->Index.Type);
-#else
          *params = ENUM_TO_BOOL(ctx->Array.Index.Type);
-#endif
          break;
       case GL_INDEX_ARRAY_STRIDE:
-#ifdef VAO
-         *params = INT_TO_BOOL(ctx->Array.Current->Index.Stride);
-#else
          *params = INT_TO_BOOL(ctx->Array.Index.Stride);
-#endif
          break;
       case GL_INDEX_ARRAY_COUNT_EXT:
          *params = INT_TO_BOOL(0);
          break;
       case GL_TEXTURE_COORD_ARRAY:
-#ifdef VAO
-         *params = ctx->Array.Current->TexCoord[texUnit].Enabled;
-#else
          *params = ctx->Array.TexCoord[texUnit].Enabled;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_SIZE:
-#ifdef VAO
-         *params = INT_TO_BOOL(ctx->Array.Current->TexCoord[texUnit].Size);
-#else
          *params = INT_TO_BOOL(ctx->Array.TexCoord[texUnit].Size);
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_BOOL(ctx->Array.Current->TexCoord[texUnit].Type);
-#else
          *params = ENUM_TO_BOOL(ctx->Array.TexCoord[texUnit].Type);
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_STRIDE:
-#ifdef VAO
-         *params = INT_TO_BOOL(ctx->Array.Current->TexCoord[texUnit].Stride);
-#else
          *params = INT_TO_BOOL(ctx->Array.TexCoord[texUnit].Stride);
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_COUNT_EXT:
          *params = INT_TO_BOOL(0);
          break;
       case GL_EDGE_FLAG_ARRAY:
-#ifdef VAO
-         *params = ctx->Array.Current->EdgeFlag.Enabled;
-#else
          *params = ctx->Array.EdgeFlag.Enabled;
-#endif
          break;
       case GL_EDGE_FLAG_ARRAY_STRIDE:
-#ifdef VAO
-         *params = INT_TO_BOOL(ctx->Array.Current->EdgeFlag.Stride);
-#else
          *params = INT_TO_BOOL(ctx->Array.EdgeFlag.Stride);
-#endif
+         break;
+      case GL_EDGE_FLAG_ARRAY_COUNT_EXT:
+         *params = INT_TO_BOOL(0);
          break;
 
       /* GL_ARB_multitexture */
@@ -1045,113 +1027,55 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = INT_TO_BOOL(textureUnit->CurrentCubeMap->Name);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
-            *params = INT_TO_BOOL(ctx->Const.MaxCubeTextureSize);
+         if (ctx->Extensions.ARB_texture_cube_map)
+            *params = INT_TO_BOOL(1 << (ctx->Const.MaxCubeTextureLevels - 1));
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = INT_TO_BOOL(ctx->Hint.TextureCompression);
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = INT_TO_BOOL(ctx->Const.NumCompressedTextureFormats);
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             GLuint i;
             for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
                params[i] = INT_TO_BOOL(ctx->Const.CompressedTextureFormats[i]);
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
          break;
-
-      /* GL_PGI_misc_hints */
-      case GL_STRICT_DEPTHFUNC_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_NICEST);
-         break;
-      case GL_STRICT_LIGHTING_HINT_PGI:
-	 *params = ENUM_TO_BOOL(ctx->Hint.StrictLighting);
-	 break;
-      case GL_STRICT_SCISSOR_HINT_PGI:
-      case GL_FULL_STIPPLE_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_TRUE);
-	 break;
-      case GL_CONSERVE_MEMORY_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_FALSE);
-	 break;
-      case GL_ALWAYS_FAST_HINT_PGI:
-	 *params = (GLboolean) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_FALSE && 
-			      ctx->Hint.AllowDrawMem == GL_FALSE);
-	 break;
-      case GL_ALWAYS_SOFT_HINT_PGI:
-	 *params = (GLboolean) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_TRUE && 
-			      ctx->Hint.AllowDrawMem == GL_TRUE);
-	 break;
-      case GL_ALLOW_DRAW_OBJ_HINT_PGI:
-	 *params = (GLboolean) GL_TRUE;
-	 break;
-      case GL_ALLOW_DRAW_WIN_HINT_PGI:
-	 *params = (GLboolean) ctx->Hint.AllowDrawWin;
-	 break;
-      case GL_ALLOW_DRAW_FRG_HINT_PGI:
-	 *params = (GLboolean) ctx->Hint.AllowDrawFrg;
-	 break;
-      case GL_ALLOW_DRAW_MEM_HINT_PGI:
-	 *params = (GLboolean) ctx->Hint.AllowDrawMem;
-	 break;
-      case GL_CLIP_NEAR_HINT_PGI:
-      case GL_CLIP_FAR_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_TRUE);
-	 break;
-      case GL_WIDE_LINE_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_DONT_CARE);
-	 break;
-      case GL_BACK_NORMALS_HINT_PGI:
-	 *params = ENUM_TO_BOOL(GL_TRUE);
-	 break;
-      case GL_NATIVE_GRAPHICS_HANDLE_PGI:
-	 *params = 0;
-	 break;
 
       /* GL_EXT_compiled_vertex_array */
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
-#ifdef VAO
-	 *params = ctx->Array.Current->LockFirst ? GL_TRUE : GL_FALSE;
-#else
 	 *params = ctx->Array.LockFirst ? GL_TRUE : GL_FALSE;
-#endif
 	 break;
       case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
-#ifdef VAO
-	 *params = ctx->Array.Current->LockCount ? GL_TRUE : GL_FALSE;
-#else
 	 *params = ctx->Array.LockCount ? GL_TRUE : GL_FALSE;
-#endif
 	 break;
 
       /* GL_ARB_transpose_matrix */
@@ -1159,7 +1083,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->ColorMatrix.m);
+            _math_transposef(tm, ctx->ColorMatrix.m);
             for (i=0;i<16;i++) {
                params[i] = FLOAT_TO_BOOL(tm[i]);
             }
@@ -1169,7 +1093,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->ModelView.m);
+            _math_transposef(tm, ctx->ModelView.m);
             for (i=0;i<16;i++) {
                params[i] = FLOAT_TO_BOOL(tm[i]);
             }
@@ -1179,7 +1103,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->ProjectionMatrix.m);
+            _math_transposef(tm, ctx->ProjectionMatrix.m);
             for (i=0;i<16;i++) {
                params[i] = FLOAT_TO_BOOL(tm[i]);
             }
@@ -1189,7 +1113,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->TextureMatrix[texTransformUnit].m);
+            _math_transposef(tm, ctx->TextureMatrix[texUnit].m);
             for (i=0;i<16;i++) {
                params[i] = FLOAT_TO_BOOL(tm[i]);
             }
@@ -1198,15 +1122,15 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
 
       /* GL_HP_occlusion_test */
       case GL_OCCLUSION_TEST_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             *params = ctx->Depth.OcclusionTest;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             if (ctx->Depth.OcclusionTest)
                *params = ctx->OcclusionResult;
             else
@@ -1216,7 +1140,7 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
             ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
          }
          return;
 
@@ -1271,11 +1195,32 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          break;
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
-      case GL_MAX_CONVOLUTION_WIDTH:
-         *params = INT_TO_BOOL(ctx->Const.MaxConvolutionWidth);
+      case GL_CONVOLUTION_1D_EXT:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = ctx->Pixel.Convolution1DEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
          break;
-      case GL_MAX_CONVOLUTION_HEIGHT:
-         *params = INT_TO_BOOL(ctx->Const.MaxConvolutionHeight);
+      case GL_CONVOLUTION_2D:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = ctx->Pixel.Convolution2DEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+      case GL_SEPARABLE_2D:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = ctx->Pixel.Separable2DEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
          *params = FLOAT_TO_BOOL(ctx->Pixel.PostConvolutionScale[0]);
@@ -1313,12 +1258,174 @@ _mesa_GetBooleanv( GLenum pname, GLboolean *params )
          *params = ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
 
+      /* GL_EXT_secondary_color */
+      case GL_COLOR_SUM_EXT:
+	 *params = ctx->Fog.ColorSumEnabled;
+	 break;
+      case GL_CURRENT_SECONDARY_COLOR_EXT:
+	 FLUSH_CURRENT(ctx, 0);
+         params[0] = INT_TO_BOOL(ctx->Current.SecondaryColor[0]);
+         params[1] = INT_TO_BOOL(ctx->Current.SecondaryColor[1]);
+         params[2] = INT_TO_BOOL(ctx->Current.SecondaryColor[2]);
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         *params = ctx->Array.SecondaryColor.Enabled;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
+	 *params = ENUM_TO_BOOL(ctx->Array.SecondaryColor.Type);
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
+	 *params = INT_TO_BOOL(ctx->Array.SecondaryColor.Stride);
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
+	 *params = INT_TO_BOOL(ctx->Array.SecondaryColor.Stride);
+	 break;
+
+      /* GL_EXT_fog_coord */
+      case GL_CURRENT_FOG_COORDINATE_EXT:
+	 FLUSH_CURRENT(ctx, 0);
+	 *params = FLOAT_TO_BOOL(ctx->Current.FogCoord);
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         *params = ctx->Array.FogCoord.Enabled;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
+	 *params = ENUM_TO_BOOL(ctx->Array.FogCoord.Type);
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
+	 *params = INT_TO_BOOL(ctx->Array.FogCoord.Stride);
+	 break;
+
+      /* GL_EXT_texture_lod_bias */
+      case GL_MAX_TEXTURE_LOD_BIAS_EXT:
+         *params = FLOAT_TO_BOOL(ctx->Const.MaxTextureLodBias);
+         break;
+
+      /* GL_EXT_texture_filter_anisotropic */
+      case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
+         if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+	    *params = FLOAT_TO_BOOL(ctx->Const.MaxTextureMaxAnisotropy);
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+            return;
+         }
+	 break;
+
+      /* GL_ARB_multisample */
+      case GL_MULTISAMPLE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.Enabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleAlphaToCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleAlphaToOne;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_VALUE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = FLOAT_TO_BOOL(ctx->Multisample.SampleCoverageValue);
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_INVERT_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleCoverageInvert;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_BUFFERS_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+      case GL_SAMPLES_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+            return;
+         }
+         break;
+
+      /* GL_IBM_rasterpos_clip */
+      case GL_RASTER_POSITION_UNCLIPPED_IBM:
+         if (ctx->Extensions.IBM_rasterpos_clip) {
+            *params = ctx->Transform.RasterPositionUnclipped;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBoolean");
+            return;
+         }
+         break;
+
+      /* GL_SGIS_generate_mipmap */
+      case GL_GENERATE_MIPMAP_HINT_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            *params = ENUM_TO_BOOL(ctx->Hint.GenerateMipmap);
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetBooleanv");
+	    return;
+         }
+         break;
+
+      /* GL_NV_texture_rectangle */
+      case GL_TEXTURE_RECTANGLE_NV:
+         CHECK_EXTENSION_B(NV_texture_rectangle, pname);
+         *params = _mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV);
+         break;
+      case GL_TEXTURE_BINDING_RECTANGLE_NV:
+         CHECK_EXTENSION_B(NV_texture_rectangle, pname);
+         *params = INT_TO_BOOL(textureUnit->CurrentRect->Name);
+         break;
+      case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
+         CHECK_EXTENSION_B(NV_texture_rectangle, pname);
+         *params = INT_TO_BOOL(ctx->Const.MaxTextureRectSize);
+         break;
+
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetBooleanv" );
    }
 }
-
-
 
 
 void
@@ -1327,32 +1434,35 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
-   GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetDoublev");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;
 
-   if (MESA_VERBOSE & VERBOSE_API) 
-      fprintf(stderr, "glGetDoublev %s\n", gl_lookup_enum_by_nr(pname));
+   /* We need this in order to get correct results for
+    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+    */
+   FLUSH_VERTICES(ctx, 0);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "glGetDoublev %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetDoublev && (*ctx->Driver.GetDoublev)(ctx, pname, params))
       return;
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
-         *params = (GLdouble) ctx->Visual->AccumRedBits;
+         *params = (GLdouble) ctx->Visual.accumRedBits;
          break;
       case GL_ACCUM_GREEN_BITS:
-         *params = (GLdouble) ctx->Visual->AccumGreenBits;
+         *params = (GLdouble) ctx->Visual.accumGreenBits;
          break;
       case GL_ACCUM_BLUE_BITS:
-         *params = (GLdouble) ctx->Visual->AccumBlueBits;
+         *params = (GLdouble) ctx->Visual.accumBlueBits;
          break;
       case GL_ACCUM_ALPHA_BITS:
-         *params = (GLdouble) ctx->Visual->AccumAlphaBits;
+         *params = (GLdouble) ctx->Visual.accumAlphaBits;
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = (GLdouble) ctx->Accum.ClearColor[0];
@@ -1364,7 +1474,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.AlphaBias;
          break;
       case GL_ALPHA_BITS:
-         *params = (GLdouble) ctx->Visual->AlphaBits;
+         *params = (GLdouble) ctx->Visual.alphaBits;
          break;
       case GL_ALPHA_SCALE:
          *params = (GLdouble) ctx->Pixel.AlphaScale;
@@ -1376,7 +1486,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = ENUM_TO_DOUBLE(ctx->Color.AlphaFunc);
          break;
       case GL_ALPHA_TEST_REF:
-         *params = (GLdouble) ctx->Color.AlphaRef / 255.0;
+         *params = (GLdouble) ctx->Color.AlphaRef / CHAN_MAXF;
          break;
       case GL_ATTRIB_STACK_DEPTH:
          *params = (GLdouble ) (ctx->AttribStackDepth);
@@ -1421,7 +1531,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.BlueBias;
          break;
       case GL_BLUE_BITS:
-         *params = (GLdouble) ctx->Visual->BlueBits;
+         *params = (GLdouble) ctx->Visual.blueBits;
          break;
       case GL_BLUE_SCALE:
          *params = (GLdouble) ctx->Pixel.BlueScale;
@@ -1438,10 +1548,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Transform.ClipEnabled[pname-GL_CLIP_PLANE0];
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = (GLdouble) ctx->Color.ClearColor[0];
-         params[1] = (GLdouble) ctx->Color.ClearColor[1];
-         params[2] = (GLdouble) ctx->Color.ClearColor[2];
-         params[3] = (GLdouble) ctx->Color.ClearColor[3];
+         params[0] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[0]);
+         params[1] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[1]);
+         params[2] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[2]);
+         params[3] = (GLdouble) CHAN_TO_FLOAT(ctx->Color.ClearColor[3]);
          break;
       case GL_COLOR_MATERIAL:
          *params = (GLdouble) ctx->Light.ColorMaterialEnabled;
@@ -1465,15 +1575,18 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = ENUM_TO_DOUBLE(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-         params[0] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[0]);
-         params[1] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[1]);
-         params[2] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[2]);
-         params[3] = UBYTE_COLOR_TO_FLOAT_COLOR(ctx->Current.ByteColor[3]);
+	 FLUSH_CURRENT(ctx, 0);
+         params[0] = (ctx->Current.Color[0]);
+         params[1] = (ctx->Current.Color[1]);
+         params[2] = (ctx->Current.Color[2]);
+         params[3] = (ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
+	 FLUSH_CURRENT(ctx, 0);
          *params = (GLdouble) ctx->Current.Index;
          break;
       case GL_CURRENT_NORMAL:
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = (GLdouble) ctx->Current.Normal[0];
          params[1] = (GLdouble) ctx->Current.Normal[1];
          params[2] = (GLdouble) ctx->Current.Normal[2];
@@ -1497,25 +1610,26 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 params[3] = (GLdouble) ctx->Current.RasterPos[3];
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-	 params[0] = (GLdouble) ctx->Current.RasterMultiTexCoord[texTransformUnit][0];
-	 params[1] = (GLdouble) ctx->Current.RasterMultiTexCoord[texTransformUnit][1];
-	 params[2] = (GLdouble) ctx->Current.RasterMultiTexCoord[texTransformUnit][2];
-	 params[3] = (GLdouble) ctx->Current.RasterMultiTexCoord[texTransformUnit][3];
+	 params[0] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][0];
+	 params[1] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][1];
+	 params[2] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][2];
+	 params[3] = (GLdouble) ctx->Current.RasterMultiTexCoord[texUnit][3];
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
 	 *params = (GLdouble) ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
-	 params[0] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][0];
-	 params[1] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][1];
-	 params[2] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][2];
-	 params[3] = (GLdouble) ctx->Current.Texcoord[texTransformUnit][3];
+	 FLUSH_CURRENT(ctx, 0);
+	 params[0] = (GLdouble) ctx->Current.Texcoord[texUnit][0];
+	 params[1] = (GLdouble) ctx->Current.Texcoord[texUnit][1];
+	 params[2] = (GLdouble) ctx->Current.Texcoord[texUnit][2];
+	 params[3] = (GLdouble) ctx->Current.Texcoord[texUnit][3];
 	 break;
       case GL_DEPTH_BIAS:
 	 *params = (GLdouble) ctx->Pixel.DepthBias;
 	 break;
       case GL_DEPTH_BITS:
-	 *params = (GLdouble) ctx->Visual->DepthBits;
+	 *params = (GLdouble) ctx->Visual.depthBits;
 	 break;
       case GL_DEPTH_CLEAR_VALUE:
 	 *params = (GLdouble) ctx->Depth.Clear;
@@ -1540,12 +1654,13 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Color.DitherFlag;
 	 break;
       case GL_DOUBLEBUFFER:
-	 *params = (GLdouble) ctx->Visual->DBflag;
+	 *params = (GLdouble) ctx->Visual.doubleBufferMode;
 	 break;
       case GL_DRAW_BUFFER:
 	 *params = ENUM_TO_DOUBLE(ctx->Color.DrawBuffer);
 	 break;
       case GL_EDGE_FLAG:
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = (GLdouble) ctx->Current.EdgeFlag;
 	 break;
       case GL_FEEDBACK_BUFFER_SIZE:
@@ -1588,22 +1703,28 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.GreenBias;
          break;
       case GL_GREEN_BITS:
-         *params = (GLdouble) ctx->Visual->GreenBits;
+         *params = (GLdouble) ctx->Visual.greenBits;
          break;
       case GL_GREEN_SCALE:
          *params = (GLdouble) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         *params = (GLdouble) ctx->Pixel.HistogramEnabled;
+         if (ctx->Extensions.EXT_histogram || ctx->Extensions.ARB_imaging) {
+            *params = (GLdouble) ctx->Pixel.HistogramEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
 	 break;
       case GL_INDEX_BITS:
-         *params = (GLdouble) ctx->Visual->IndexBits;
+         *params = (GLdouble) ctx->Visual.indexBits;
 	 break;
       case GL_INDEX_CLEAR_VALUE:
          *params = (GLdouble) ctx->Color.ClearIndex;
 	 break;
       case GL_INDEX_MODE:
-	 *params = ctx->Visual->RGBAflag ? 0.0 : 1.0;
+	 *params = ctx->Visual.rgbMode ? 0.0 : 1.0;
 	 break;
       case GL_INDEX_OFFSET:
 	 *params = (GLdouble) ctx->Pixel.IndexOffset;
@@ -1777,19 +1898,19 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) MAX_CLIENT_ATTRIB_STACK_DEPTH;
          break;
       case GL_MAX_CLIP_PLANES:
-	 *params = (GLdouble) MAX_CLIP_PLANES;
+	 *params = (GLdouble) ctx->Const.MaxClipPlanes;
 	 break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
-         *params = (GLdouble) VB_MAX;
+         *params = (GLdouble) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_ELEMENTS_INDICES:   /* GL_VERSION_1_2 */
-         *params = (GLdouble) VB_MAX;
+         *params = (GLdouble) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_EVAL_ORDER:
 	 *params = (GLdouble) MAX_EVAL_ORDER;
 	 break;
       case GL_MAX_LIGHTS:
-	 *params = (GLdouble) MAX_LIGHTS;
+	 *params = (GLdouble) ctx->Const.MaxLights;
 	 break;
       case GL_MAX_LIST_NESTING:
 	 *params = (GLdouble) MAX_LIST_NESTING;
@@ -1807,8 +1928,10 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) MAX_PROJECTION_STACK_DEPTH;
 	 break;
       case GL_MAX_TEXTURE_SIZE:
+         *params = (GLdouble) (1 << (ctx->Const.MaxTextureLevels - 1));
+	 break;
       case GL_MAX_3D_TEXTURE_SIZE:
-         *params = (GLdouble) ctx->Const.MaxTextureSize;
+         *params = (GLdouble) (1 << (ctx->Const.Max3DTextureLevels - 1));
 	 break;
       case GL_MAX_TEXTURE_STACK_DEPTH:
 	 *params = (GLdouble) MAX_TEXTURE_STACK_DEPTH;
@@ -1858,6 +1981,9 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_PACK_IMAGE_HEIGHT_EXT:
          *params = (GLdouble) ctx->Pack.ImageHeight;
          break;
+      case GL_PACK_INVERT_MESA:
+         *params = (GLdouble) ctx->Pack.Invert;
+         break;
       case GL_PERSPECTIVE_CORRECTION_HINT:
 	 *params = ENUM_TO_DOUBLE(ctx->Hint.PerspectiveCorrection);
 	 break;
@@ -1892,7 +2018,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Pixel.MapStoSsize;
 	 break;
       case GL_POINT_SIZE:
-         *params = (GLdouble) ctx->Point.UserSize;
+         *params = (GLdouble) ctx->Point.Size;
          break;
       case GL_POINT_SIZE_GRANULARITY:
 	 *params = (GLdouble) ctx->Const.PointSizeGranularity;
@@ -1962,7 +2088,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.RedBias;
          break;
       case GL_RED_BITS:
-         *params = (GLdouble) ctx->Visual->RedBits;
+         *params = (GLdouble) ctx->Visual.redBits;
          break;
       case GL_RED_SCALE:
          *params = (GLdouble) ctx->Pixel.RedScale;
@@ -1974,7 +2100,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Transform.RescaleNormals;
          break;
       case GL_RGBA_MODE:
-	 *params = (GLdouble) ctx->Visual->RGBAflag;
+	 *params = (GLdouble) ctx->Visual.rgbMode;
 	 break;
       case GL_SCISSOR_BOX:
 	 params[0] = (GLdouble) ctx->Scissor.X;
@@ -1995,7 +2121,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Texture.SharedPalette;
          break;
       case GL_STENCIL_BITS:
-         *params = (GLdouble) ctx->Visual->StencilBits;
+         *params = (GLdouble) ctx->Visual.stencilBits;
          break;
       case GL_STENCIL_CLEAR_VALUE:
 	 *params = (GLdouble) ctx->Stencil.Clear;
@@ -2025,7 +2151,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Stencil.WriteMask;
 	 break;
       case GL_STEREO:
-	 *params = (GLdouble) ctx->Visual->StereoFlag;
+	 *params = (GLdouble) ctx->Visual.stereoMode;
 	 break;
       case GL_SUBPIXEL_BITS:
 	 *params = (GLdouble) ctx->Const.SubPixelBits;
@@ -2040,13 +2166,13 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1.0 : 0.0;
 	 break;
       case GL_TEXTURE_BINDING_1D:
-         *params = (GLdouble) textureUnit->CurrentD[1]->Name;
+         *params = (GLdouble) textureUnit->Current1D->Name;
           break;
       case GL_TEXTURE_BINDING_2D:
-         *params = (GLdouble) textureUnit->CurrentD[2]->Name;
+         *params = (GLdouble) textureUnit->Current2D->Name;
           break;
       case GL_TEXTURE_BINDING_3D:
-         *params = (GLdouble) textureUnit->CurrentD[3]->Name;
+         *params = (GLdouble) textureUnit->Current3D->Name;
           break;
       case GL_TEXTURE_ENV_COLOR:
 	 params[0] = (GLdouble) textureUnit->EnvColor[0];
@@ -2071,11 +2197,11 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 break;
       case GL_TEXTURE_MATRIX:
          for (i=0;i<16;i++) {
-	    params[i] = (GLdouble) ctx->TextureMatrix[texTransformUnit].m[i];
+	    params[i] = (GLdouble) ctx->TextureMatrix[texUnit].m[i];
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = (GLdouble) (ctx->TextureStackDepth[texTransformUnit] + 1);
+	 *params = (GLdouble) (ctx->TextureStackDepth[texUnit] + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = (GLdouble) ctx->Unpack.Alignment;
@@ -2101,6 +2227,9 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
       case GL_UNPACK_IMAGE_HEIGHT_EXT:
          *params = (GLdouble) ctx->Unpack.ImageHeight;
          break;
+      case GL_UNPACK_CLIENT_STORAGE_APPLE:
+         *params = (GLdouble) ctx->Unpack.ClientStorage;
+         break;
       case GL_VIEWPORT:
 	 params[0] = (GLdouble) ctx->Viewport.X;
 	 params[1] = (GLdouble) ctx->Viewport.Y;
@@ -2114,159 +2243,79 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 	 *params = (GLdouble) ctx->Pixel.ZoomY;
 	 break;
       case GL_VERTEX_ARRAY:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->Vertex.Enabled;
-#else
          *params = (GLdouble) ctx->Array.Vertex.Enabled;
-#endif
          break;
       case GL_VERTEX_ARRAY_SIZE:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->Vertex.Size;
-#else
          *params = (GLdouble) ctx->Array.Vertex.Size;
-#endif
          break;
       case GL_VERTEX_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_DOUBLE(ctx->Array.Current->Vertex.Type);
-#else
          *params = ENUM_TO_DOUBLE(ctx->Array.Vertex.Type);
-#endif
          break;
       case GL_VERTEX_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->Vertex.Stride;
-#else
          *params = (GLdouble) ctx->Array.Vertex.Stride;
-#endif
          break;
       case GL_VERTEX_ARRAY_COUNT_EXT:
          *params = 0.0;
          break;
       case GL_NORMAL_ARRAY:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->Normal.Enabled;
-#else
          *params = (GLdouble) ctx->Array.Normal.Enabled;
-#endif
          break;
       case GL_NORMAL_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_DOUBLE(ctx->Array.Current->Normal.Type);
-#else
          *params = ENUM_TO_DOUBLE(ctx->Array.Normal.Type);
-#endif
          break;
       case GL_NORMAL_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->Normal.Stride;
-#else
          *params = (GLdouble) ctx->Array.Normal.Stride;
-#endif
          break;
       case GL_NORMAL_ARRAY_COUNT_EXT:
          *params = 0.0;
          break;
       case GL_COLOR_ARRAY:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->Color.Enabled;
-#else
          *params = (GLdouble) ctx->Array.Color.Enabled;
-#endif
          break;
       case GL_COLOR_ARRAY_SIZE:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->Color.Size;
-#else
          *params = (GLdouble) ctx->Array.Color.Size;
-#endif
          break;
       case GL_COLOR_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_DOUBLE(ctx->Array.Current->Color.Type);
-#else
          *params = ENUM_TO_DOUBLE(ctx->Array.Color.Type);
-#endif
          break;
       case GL_COLOR_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->Color.Stride;
-#else
          *params = (GLdouble) ctx->Array.Color.Stride;
-#endif
          break;
       case GL_COLOR_ARRAY_COUNT_EXT:
          *params = 0.0;
          break;
       case GL_INDEX_ARRAY:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->Index.Enabled;
-#else
          *params = (GLdouble) ctx->Array.Index.Enabled;
-#endif
          break;
       case GL_INDEX_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_DOUBLE(ctx->Array.Current->Index.Type);
-#else
          *params = ENUM_TO_DOUBLE(ctx->Array.Index.Type);
-#endif
          break;
       case GL_INDEX_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->Index.Stride;
-#else
          *params = (GLdouble) ctx->Array.Index.Stride;
-#endif
          break;
       case GL_INDEX_ARRAY_COUNT_EXT:
          *params = 0.0;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->TexCoord[texUnit].Enabled;
-#else
          *params = (GLdouble) ctx->Array.TexCoord[texUnit].Enabled;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_SIZE:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->TexCoord[texUnit].Size;
-#else
          *params = (GLdouble) ctx->Array.TexCoord[texUnit].Size;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_DOUBLE(ctx->Array.Current->TexCoord[texUnit].Type);
-#else
          *params = ENUM_TO_DOUBLE(ctx->Array.TexCoord[texUnit].Type);
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->TexCoord[texUnit].Stride;
-#else
          *params = (GLdouble) ctx->Array.TexCoord[texUnit].Stride;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_COUNT_EXT:
          *params = 0.0;
          break;
       case GL_EDGE_FLAG_ARRAY:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->EdgeFlag.Enabled;
-#else
          *params = (GLdouble) ctx->Array.EdgeFlag.Enabled;
-#endif
          break;
       case GL_EDGE_FLAG_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLdouble) ctx->Array.Current->EdgeFlag.Stride;
-#else
          *params = (GLdouble) ctx->Array.EdgeFlag.Stride;
-#endif
          break;
       case GL_EDGE_FLAG_ARRAY_COUNT_EXT:
          *params = 0.0;
@@ -2285,113 +2334,55 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLdouble) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLdouble) textureUnit->CurrentCubeMap->Name;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
-            *params = (GLdouble) ctx->Const.MaxCubeTextureSize;
+         if (ctx->Extensions.ARB_texture_cube_map)
+            *params = (GLdouble) (1 << (ctx->Const.MaxCubeTextureLevels - 1));
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          return;
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLdouble) ctx->Hint.TextureCompression;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLdouble) ctx->Const.NumCompressedTextureFormats;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             GLuint i;
             for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
                params[i] = (GLdouble) ctx->Const.CompressedTextureFormats[i];
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
          break;
-
-      /* GL_PGI_misc_hints */
-      case GL_STRICT_DEPTHFUNC_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_NICEST);
-         break;
-      case GL_STRICT_LIGHTING_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(ctx->Hint.StrictLighting);
-	 break;
-      case GL_STRICT_SCISSOR_HINT_PGI:
-      case GL_FULL_STIPPLE_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_TRUE);
-	 break;
-      case GL_CONSERVE_MEMORY_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_FALSE);
-	 break;
-      case GL_ALWAYS_FAST_HINT_PGI:
-	 *params = (GLdouble) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_FALSE && 
-			      ctx->Hint.AllowDrawMem == GL_FALSE);
-	 break;
-      case GL_ALWAYS_SOFT_HINT_PGI:
-	 *params = (GLdouble) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_TRUE && 
-			      ctx->Hint.AllowDrawMem == GL_TRUE);
-	 break;
-      case GL_ALLOW_DRAW_OBJ_HINT_PGI:
-	 *params = (GLdouble) GL_TRUE;
-	 break;
-      case GL_ALLOW_DRAW_WIN_HINT_PGI:
-	 *params = (GLdouble) ctx->Hint.AllowDrawWin;
-	 break;
-      case GL_ALLOW_DRAW_FRG_HINT_PGI:
-	 *params = (GLdouble) ctx->Hint.AllowDrawFrg;
-	 break;
-      case GL_ALLOW_DRAW_MEM_HINT_PGI:
-	 *params = (GLdouble) ctx->Hint.AllowDrawMem;
-	 break;
-      case GL_CLIP_NEAR_HINT_PGI:
-      case GL_CLIP_FAR_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_TRUE);
-	 break;
-      case GL_WIDE_LINE_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_DONT_CARE);
-	 break;
-      case GL_BACK_NORMALS_HINT_PGI:
-	 *params = ENUM_TO_DOUBLE(GL_TRUE);
-	 break;
-      case GL_NATIVE_GRAPHICS_HANDLE_PGI:
-	 *params = 0;
-	 break;
 
       /* GL_EXT_compiled_vertex_array */
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
-#ifdef VAO
-	 *params = (GLdouble) ctx->Array.Current->LockFirst;
-#else
 	 *params = (GLdouble) ctx->Array.LockFirst;
-#endif
 	 break;
       case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
-#ifdef VAO
-	 *params = (GLdouble) ctx->Array.Current->LockCount;
-#else
 	 *params = (GLdouble) ctx->Array.LockCount;
-#endif
 	 break;
 
       /* GL_ARB_transpose_matrix */
@@ -2399,7 +2390,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->ColorMatrix.m);
+            _math_transposef(tm, ctx->ColorMatrix.m);
             for (i=0;i<16;i++) {
                params[i] = (GLdouble) tm[i];
             }
@@ -2409,7 +2400,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->ModelView.m);
+            _math_transposef(tm, ctx->ModelView.m);
             for (i=0;i<16;i++) {
                params[i] = (GLdouble) tm[i];
             }
@@ -2419,7 +2410,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->ProjectionMatrix.m);
+            _math_transposef(tm, ctx->ProjectionMatrix.m);
             for (i=0;i<16;i++) {
                params[i] = (GLdouble) tm[i];
             }
@@ -2429,7 +2420,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->TextureMatrix[texTransformUnit].m);
+            _math_transposef(tm, ctx->TextureMatrix[texUnit].m);
             for (i=0;i<16;i++) {
                params[i] = (GLdouble) tm[i];
             }
@@ -2438,15 +2429,15 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
 
       /* GL_HP_occlusion_test */
       case GL_OCCLUSION_TEST_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             *params = (GLdouble) ctx->Depth.OcclusionTest;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             if (ctx->Depth.OcclusionTest)
                *params = (GLdouble) ctx->OcclusionResult;
             else
@@ -2456,7 +2447,7 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
             ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
          }
          return;
 
@@ -2511,11 +2502,32 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          break;
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
-      case GL_MAX_CONVOLUTION_WIDTH:
-         *params = (GLdouble) ctx->Const.MaxConvolutionWidth;
+      case GL_CONVOLUTION_1D_EXT:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = (GLdouble) ctx->Pixel.Convolution1DEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
          break;
-      case GL_MAX_CONVOLUTION_HEIGHT:
-         *params = (GLdouble) ctx->Const.MaxConvolutionHeight;
+      case GL_CONVOLUTION_2D:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = (GLdouble) ctx->Pixel.Convolution2DEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+      case GL_SEPARABLE_2D:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = (GLdouble) ctx->Pixel.Separable2DEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
          *params = (GLdouble) ctx->Pixel.PostConvolutionScale[0];
@@ -2553,13 +2565,182 @@ _mesa_GetDoublev( GLenum pname, GLdouble *params )
          *params = (GLdouble) ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
 
+      /* GL_EXT_secondary_color */
+      case GL_COLOR_SUM_EXT:
+	 *params = (GLdouble) ctx->Fog.ColorSumEnabled;
+	 break;
+      case GL_CURRENT_SECONDARY_COLOR_EXT:
+	 FLUSH_CURRENT(ctx, 0);
+         params[0] = (ctx->Current.SecondaryColor[0]);
+         params[1] = (ctx->Current.SecondaryColor[1]);
+         params[2] = (ctx->Current.SecondaryColor[2]);
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         *params = (GLdouble) ctx->Array.SecondaryColor.Enabled;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
+	 *params = (GLdouble) ctx->Array.SecondaryColor.Type;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
+	 *params = (GLdouble) ctx->Array.SecondaryColor.Stride;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
+	 *params = (GLdouble) ctx->Array.SecondaryColor.Stride;
+	 break;
+
+      /* GL_EXT_fog_coord */
+      case GL_CURRENT_FOG_COORDINATE_EXT:
+	 FLUSH_CURRENT(ctx, 0);
+	 *params = (GLdouble) ctx->Current.FogCoord;
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         *params = (GLdouble) ctx->Array.FogCoord.Enabled;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
+	 *params = (GLdouble) ctx->Array.FogCoord.Type;
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
+	 *params = (GLdouble) ctx->Array.FogCoord.Stride;
+	 break;
+
+      /* GL_EXT_texture_lod_bias */
+      case GL_MAX_TEXTURE_LOD_BIAS_EXT:
+         *params = (GLdouble) ctx->Const.MaxTextureLodBias;
+         break;
+
+      /* GL_EXT_texture_filter_anisotropic */
+      case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
+         if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+	    *params = (GLdouble) ctx->Const.MaxTextureMaxAnisotropy;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+            return;
+         }
+	 break;
+
+      /* GL_ARB_multisample */
+      case GL_MULTISAMPLE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLdouble) ctx->Multisample.Enabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+      case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLdouble) ctx->Multisample.SampleAlphaToCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+      case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLdouble) ctx->Multisample.SampleAlphaToOne;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLdouble) ctx->Multisample.SampleCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_VALUE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleCoverageValue;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_INVERT_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLdouble) ctx->Multisample.SampleCoverageInvert;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+      case GL_SAMPLE_BUFFERS_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0.0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+      case GL_SAMPLES_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0.0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+
+      /* GL_IBM_rasterpos_clip */
+      case GL_RASTER_POSITION_UNCLIPPED_IBM:
+         if (ctx->Extensions.IBM_rasterpos_clip) {
+            *params = (GLdouble) ctx->Transform.RasterPositionUnclipped;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+            return;
+         }
+         break;
+
+      /* GL_SGIS_generate_mipmap */
+      case GL_GENERATE_MIPMAP_HINT_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            *params = (GLdouble) ctx->Hint.GenerateMipmap;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetDoublev");
+	    return;
+         }
+         break;
+
+      /* GL_NV_texture_rectangle */
+      case GL_TEXTURE_RECTANGLE_NV:
+         CHECK_EXTENSION_D(NV_texture_rectangle, pname);
+         *params = (GLdouble) _mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV);
+         break;
+      case GL_TEXTURE_BINDING_RECTANGLE_NV:
+         CHECK_EXTENSION_D(NV_texture_rectangle, pname);
+         *params = (GLdouble) textureUnit->CurrentRect->Name;
+         break;
+      case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
+         CHECK_EXTENSION_D(NV_texture_rectangle, pname);
+         *params = (GLdouble) ctx->Const.MaxTextureRectSize;
+         break;
+
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetDoublev" );
    }
 }
 
 
-
+#define GET_FLOAT_ERROR				\
+{						\
+   char s[100];					\
+   sprintf(s, "glGetFloatv(0x%x)", pname);	\
+   _mesa_error(ctx, GL_INVALID_ENUM, s);	\
+}
 
 void
 _mesa_GetFloatv( GLenum pname, GLfloat *params )
@@ -2567,32 +2748,35 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
-   GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetFloatv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;
 
-   if (MESA_VERBOSE & VERBOSE_API) 
-      fprintf(stderr, "glGetFloatv %s\n", gl_lookup_enum_by_nr(pname));
+   /* We need this in order to get correct results for
+    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+    */
+   FLUSH_VERTICES(ctx, 0);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "glGetFloatv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetFloatv && (*ctx->Driver.GetFloatv)(ctx, pname, params))
       return;
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
-         *params = (GLfloat) ctx->Visual->AccumRedBits;
+         *params = (GLfloat) ctx->Visual.accumRedBits;
          break;
       case GL_ACCUM_GREEN_BITS:
-         *params = (GLfloat) ctx->Visual->AccumGreenBits;
+         *params = (GLfloat) ctx->Visual.accumGreenBits;
          break;
       case GL_ACCUM_BLUE_BITS:
-         *params = (GLfloat) ctx->Visual->AccumBlueBits;
+         *params = (GLfloat) ctx->Visual.accumBlueBits;
          break;
       case GL_ACCUM_ALPHA_BITS:
-         *params = (GLfloat) ctx->Visual->AccumAlphaBits;
+         *params = (GLfloat) ctx->Visual.accumAlphaBits;
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = ctx->Accum.ClearColor[0];
@@ -2604,7 +2788,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ctx->Pixel.AlphaBias;
          break;
       case GL_ALPHA_BITS:
-         *params = (GLfloat) ctx->Visual->AlphaBits;
+         *params = (GLfloat) ctx->Visual.alphaBits;
          break;
       case GL_ALPHA_SCALE:
          *params = ctx->Pixel.AlphaScale;
@@ -2616,7 +2800,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(ctx->Color.AlphaFunc);
          break;
       case GL_ALPHA_TEST_REF:
-         *params = (GLfloat) ctx->Color.AlphaRef / 255.0;
+         *params = (GLfloat) ctx->Color.AlphaRef / CHAN_MAXF;
          break;
       case GL_ATTRIB_STACK_DEPTH:
          *params = (GLfloat) (ctx->AttribStackDepth);
@@ -2661,7 +2845,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ctx->Pixel.BlueBias;
          break;
       case GL_BLUE_BITS:
-         *params = (GLfloat) ctx->Visual->BlueBits;
+         *params = (GLfloat) ctx->Visual.blueBits;
          break;
       case GL_BLUE_SCALE:
          *params = ctx->Pixel.BlueScale;
@@ -2678,10 +2862,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Transform.ClipEnabled[pname-GL_CLIP_PLANE0];
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = (GLfloat) ctx->Color.ClearColor[0];
-         params[1] = (GLfloat) ctx->Color.ClearColor[1];
-         params[2] = (GLfloat) ctx->Color.ClearColor[2];
-         params[3] = (GLfloat) ctx->Color.ClearColor[3];
+         params[0] = CHAN_TO_FLOAT(ctx->Color.ClearColor[0]);
+         params[1] = CHAN_TO_FLOAT(ctx->Color.ClearColor[1]);
+         params[2] = CHAN_TO_FLOAT(ctx->Color.ClearColor[2]);
+         params[3] = CHAN_TO_FLOAT(ctx->Color.ClearColor[3]);
          break;
       case GL_COLOR_MATERIAL:
          *params = (GLfloat) ctx->Light.ColorMaterialEnabled;
@@ -2705,12 +2889,18 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(ctx->Polygon.CullFaceMode);
          break;
       case GL_CURRENT_COLOR:
-	 UBYTE_RGBA_TO_FLOAT_RGBA(params, ctx->Current.ByteColor);
+	 FLUSH_CURRENT(ctx, 0);
+         params[0] = (ctx->Current.Color[0]);
+         params[1] = (ctx->Current.Color[1]);
+         params[2] = (ctx->Current.Color[2]);
+         params[3] = (ctx->Current.Color[3]);
          break;
       case GL_CURRENT_INDEX:
+	 FLUSH_CURRENT(ctx, 0);
          *params = (GLfloat) ctx->Current.Index;
          break;
       case GL_CURRENT_NORMAL:
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = ctx->Current.Normal[0];
          params[1] = ctx->Current.Normal[1];
          params[2] = ctx->Current.Normal[2];
@@ -2734,25 +2924,26 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 params[3] = ctx->Current.RasterPos[3];
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-	 params[0] = ctx->Current.RasterMultiTexCoord[texTransformUnit][0];
-	 params[1] = ctx->Current.RasterMultiTexCoord[texTransformUnit][1];
-	 params[2] = ctx->Current.RasterMultiTexCoord[texTransformUnit][2];
-	 params[3] = ctx->Current.RasterMultiTexCoord[texTransformUnit][3];
+	 params[0] = ctx->Current.RasterMultiTexCoord[texUnit][0];
+	 params[1] = ctx->Current.RasterMultiTexCoord[texUnit][1];
+	 params[2] = ctx->Current.RasterMultiTexCoord[texUnit][2];
+	 params[3] = ctx->Current.RasterMultiTexCoord[texUnit][3];
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
 	 *params = (GLfloat) ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
-	 params[0] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][0];
-	 params[1] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][1];
-	 params[2] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][2];
-	 params[3] = (GLfloat) ctx->Current.Texcoord[texTransformUnit][3];
+	 FLUSH_CURRENT(ctx, 0);
+	 params[0] = (GLfloat) ctx->Current.Texcoord[texUnit][0];
+	 params[1] = (GLfloat) ctx->Current.Texcoord[texUnit][1];
+	 params[2] = (GLfloat) ctx->Current.Texcoord[texUnit][2];
+	 params[3] = (GLfloat) ctx->Current.Texcoord[texUnit][3];
 	 break;
       case GL_DEPTH_BIAS:
 	 *params = (GLfloat) ctx->Pixel.DepthBias;
 	 break;
       case GL_DEPTH_BITS:
-	 *params = (GLfloat) ctx->Visual->DepthBits;
+	 *params = (GLfloat) ctx->Visual.depthBits;
 	 break;
       case GL_DEPTH_CLEAR_VALUE:
 	 *params = (GLfloat) ctx->Depth.Clear;
@@ -2777,12 +2968,13 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Color.DitherFlag;
 	 break;
       case GL_DOUBLEBUFFER:
-	 *params = (GLfloat) ctx->Visual->DBflag;
+	 *params = (GLfloat) ctx->Visual.doubleBufferMode;
 	 break;
       case GL_DRAW_BUFFER:
 	 *params = ENUM_TO_FLOAT(ctx->Color.DrawBuffer);
 	 break;
       case GL_EDGE_FLAG:
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = (GLfloat) ctx->Current.EdgeFlag;
 	 break;
       case GL_FEEDBACK_BUFFER_SIZE:
@@ -2825,22 +3017,28 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Pixel.GreenBias;
          break;
       case GL_GREEN_BITS:
-         *params = (GLfloat) ctx->Visual->GreenBits;
+         *params = (GLfloat) ctx->Visual.greenBits;
          break;
       case GL_GREEN_SCALE:
          *params = (GLfloat) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         *params = (GLfloat) ctx->Pixel.HistogramEnabled;
+         if (ctx->Extensions.EXT_histogram || ctx->Extensions.ARB_imaging) {
+            *params = (GLfloat) ctx->Pixel.HistogramEnabled;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
 	 break;
       case GL_INDEX_BITS:
-         *params = (GLfloat) ctx->Visual->IndexBits;
+         *params = (GLfloat) ctx->Visual.indexBits;
 	 break;
       case GL_INDEX_CLEAR_VALUE:
          *params = (GLfloat) ctx->Color.ClearIndex;
 	 break;
       case GL_INDEX_MODE:
-	 *params = ctx->Visual->RGBAflag ? 0.0F : 1.0F;
+	 *params = ctx->Visual.rgbMode ? 0.0F : 1.0F;
 	 break;
       case GL_INDEX_OFFSET:
 	 *params = (GLfloat) ctx->Pixel.IndexOffset;
@@ -3014,19 +3212,19 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) MAX_CLIENT_ATTRIB_STACK_DEPTH;
          break;
       case GL_MAX_CLIP_PLANES:
-	 *params = (GLfloat) MAX_CLIP_PLANES;
+	 *params = (GLfloat) ctx->Const.MaxClipPlanes;
 	 break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
-         *params = (GLfloat) VB_MAX;
+         *params = (GLfloat) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_ELEMENTS_INDICES:   /* GL_VERSION_1_2 */
-         *params = (GLfloat) VB_MAX;
+         *params = (GLfloat) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_EVAL_ORDER:
 	 *params = (GLfloat) MAX_EVAL_ORDER;
 	 break;
       case GL_MAX_LIGHTS:
-	 *params = (GLfloat) MAX_LIGHTS;
+	 *params = (GLfloat) ctx->Const.MaxLights;
 	 break;
       case GL_MAX_LIST_NESTING:
 	 *params = (GLfloat) MAX_LIST_NESTING;
@@ -3044,8 +3242,10 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) MAX_PROJECTION_STACK_DEPTH;
 	 break;
       case GL_MAX_TEXTURE_SIZE:
+         *params = (GLfloat) (1 << (ctx->Const.MaxTextureLevels - 1));
+	 break;
       case GL_MAX_3D_TEXTURE_SIZE:
-         *params = (GLfloat) ctx->Const.MaxTextureSize;
+         *params = (GLfloat) (1 << (ctx->Const.Max3DTextureLevels - 1));
 	 break;
       case GL_MAX_TEXTURE_STACK_DEPTH:
 	 *params = (GLfloat) MAX_TEXTURE_STACK_DEPTH;
@@ -3095,6 +3295,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_PACK_IMAGE_HEIGHT_EXT:
          *params = (GLfloat) ctx->Pack.ImageHeight;
          break;
+      case GL_PACK_INVERT_MESA:
+         *params = (GLfloat) ctx->Pack.Invert;
+         break;
       case GL_PERSPECTIVE_CORRECTION_HINT:
 	 *params = ENUM_TO_FLOAT(ctx->Hint.PerspectiveCorrection);
 	 break;
@@ -3129,7 +3332,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Pixel.MapStoSsize;
 	 break;
       case GL_POINT_SIZE:
-         *params = (GLfloat) ctx->Point.UserSize;
+         *params = (GLfloat) ctx->Point.Size;
          break;
       case GL_POINT_SIZE_GRANULARITY:
 	 *params = (GLfloat) ctx->Const.PointSizeGranularity;
@@ -3201,7 +3404,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = ctx->Pixel.RedBias;
          break;
       case GL_RED_BITS:
-         *params = (GLfloat) ctx->Visual->RedBits;
+         *params = (GLfloat) ctx->Visual.redBits;
          break;
       case GL_RED_SCALE:
          *params = ctx->Pixel.RedScale;
@@ -3213,7 +3416,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Transform.RescaleNormals;
          break;
       case GL_RGBA_MODE:
-	 *params = (GLfloat) ctx->Visual->RGBAflag;
+	 *params = (GLfloat) ctx->Visual.rgbMode;
 	 break;
       case GL_SCISSOR_BOX:
 	 params[0] = (GLfloat) ctx->Scissor.X;
@@ -3234,7 +3437,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Texture.SharedPalette;
          break;
       case GL_STENCIL_BITS:
-         *params = (GLfloat) ctx->Visual->StencilBits;
+         *params = (GLfloat) ctx->Visual.stencilBits;
          break;
       case GL_STENCIL_CLEAR_VALUE:
 	 *params = (GLfloat) ctx->Stencil.Clear;
@@ -3264,28 +3467,28 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Stencil.WriteMask;
 	 break;
       case GL_STEREO:
-	 *params = (GLfloat) ctx->Visual->StereoFlag;
+	 *params = (GLfloat) ctx->Visual.stereoMode;
 	 break;
       case GL_SUBPIXEL_BITS:
 	 *params = (GLfloat) ctx->Const.SubPixelBits;
 	 break;
       case GL_TEXTURE_1D:
-         *params = _mesa_IsEnabled(GL_TEXTURE_1D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_1D) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_2D:
-         *params = _mesa_IsEnabled(GL_TEXTURE_2D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_2D) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_3D:
-         *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1.0 : 0.0;
+         *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_BINDING_1D:
-         *params = (GLfloat) textureUnit->CurrentD[1]->Name;
+         *params = (GLfloat) textureUnit->Current1D->Name;
           break;
       case GL_TEXTURE_BINDING_2D:
-         *params = (GLfloat) textureUnit->CurrentD[2]->Name;
+         *params = (GLfloat) textureUnit->Current2D->Name;
           break;
       case GL_TEXTURE_BINDING_3D:
-         *params = (GLfloat) textureUnit->CurrentD[2]->Name;
+         *params = (GLfloat) textureUnit->Current2D->Name;
           break;
       case GL_TEXTURE_ENV_COLOR:
 	 params[0] = textureUnit->EnvColor[0];
@@ -3297,24 +3500,24 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = ENUM_TO_FLOAT(textureUnit->EnvMode);
 	 break;
       case GL_TEXTURE_GEN_S:
-	 *params = (textureUnit->TexGenEnabled & S_BIT) ? 1.0 : 0.0;
+	 *params = (textureUnit->TexGenEnabled & S_BIT) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_GEN_T:
-	 *params = (textureUnit->TexGenEnabled & T_BIT) ? 1.0 : 0.0;
+	 *params = (textureUnit->TexGenEnabled & T_BIT) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_GEN_R:
-	 *params = (textureUnit->TexGenEnabled & R_BIT) ? 1.0 : 0.0;
+	 *params = (textureUnit->TexGenEnabled & R_BIT) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_GEN_Q:
-	 *params = (textureUnit->TexGenEnabled & Q_BIT) ? 1.0 : 0.0;
+	 *params = (textureUnit->TexGenEnabled & Q_BIT) ? 1.0F : 0.0F;
 	 break;
       case GL_TEXTURE_MATRIX:
          for (i=0;i<16;i++) {
-	    params[i] = ctx->TextureMatrix[texTransformUnit].m[i];
+	    params[i] = ctx->TextureMatrix[texUnit].m[i];
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = (GLfloat) (ctx->TextureStackDepth[texTransformUnit] + 1);
+	 *params = (GLfloat) (ctx->TextureStackDepth[texUnit] + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = (GLfloat) ctx->Unpack.Alignment;
@@ -3340,6 +3543,9 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
       case GL_UNPACK_IMAGE_HEIGHT_EXT:
          *params = (GLfloat) ctx->Unpack.ImageHeight;
          break;
+      case GL_UNPACK_CLIENT_STORAGE_APPLE:
+         *params = (GLfloat) ctx->Unpack.ClientStorage;
+         break;
       case GL_VIEWPORT:
 	 params[0] = (GLfloat) ctx->Viewport.X;
 	 params[1] = (GLfloat) ctx->Viewport.Y;
@@ -3353,159 +3559,79 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 	 *params = (GLfloat) ctx->Pixel.ZoomY;
 	 break;
       case GL_VERTEX_ARRAY:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->Vertex.Enabled;
-#else
          *params = (GLfloat) ctx->Array.Vertex.Enabled;
-#endif
          break;
       case GL_VERTEX_ARRAY_SIZE:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->Vertex.Size;
-#else
          *params = (GLfloat) ctx->Array.Vertex.Size;
-#endif
          break;
       case GL_VERTEX_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_FLOAT(ctx->Array.Current->Vertex.Type);
-#else
          *params = ENUM_TO_FLOAT(ctx->Array.Vertex.Type);
-#endif
          break;
       case GL_VERTEX_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->Vertex.Stride;
-#else
          *params = (GLfloat) ctx->Array.Vertex.Stride;
-#endif
          break;
       case GL_VERTEX_ARRAY_COUNT_EXT:
          *params = 0.0;
          break;
       case GL_NORMAL_ARRAY:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->Normal.Enabled;
-#else
          *params = (GLfloat) ctx->Array.Normal.Enabled;
-#endif
          break;
       case GL_NORMAL_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_FLOAT(ctx->Array.Current->Normal.Type);
-#else
          *params = ENUM_TO_FLOAT(ctx->Array.Normal.Type);
-#endif
          break;
       case GL_NORMAL_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->Normal.Stride;
-#else
          *params = (GLfloat) ctx->Array.Normal.Stride;
-#endif
          break;
       case GL_NORMAL_ARRAY_COUNT_EXT:
          *params = 0.0;
          break;
       case GL_COLOR_ARRAY:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->Color.Enabled;
-#else
          *params = (GLfloat) ctx->Array.Color.Enabled;
-#endif
          break;
       case GL_COLOR_ARRAY_SIZE:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->Color.Size;
-#else
          *params = (GLfloat) ctx->Array.Color.Size;
-#endif
          break;
       case GL_COLOR_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_FLOAT(ctx->Array.Current->Color.Type);
-#else
          *params = ENUM_TO_FLOAT(ctx->Array.Color.Type);
-#endif
          break;
       case GL_COLOR_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->Color.Stride;
-#else
          *params = (GLfloat) ctx->Array.Color.Stride;
-#endif
          break;
       case GL_COLOR_ARRAY_COUNT_EXT:
          *params = 0.0;
          break;
       case GL_INDEX_ARRAY:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->Index.Enabled;
-#else
          *params = (GLfloat) ctx->Array.Index.Enabled;
-#endif
          break;
       case GL_INDEX_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_FLOAT(ctx->Array.Current->Index.Type);
-#else
          *params = ENUM_TO_FLOAT(ctx->Array.Index.Type);
-#endif
          break;
       case GL_INDEX_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->Index.Stride;
-#else
          *params = (GLfloat) ctx->Array.Index.Stride;
-#endif
          break;
       case GL_INDEX_ARRAY_COUNT_EXT:
          *params = 0.0;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->TexCoord[texUnit].Enabled;
-#else
          *params = (GLfloat) ctx->Array.TexCoord[texUnit].Enabled;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_SIZE:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->TexCoord[texUnit].Size;
-#else
          *params = (GLfloat) ctx->Array.TexCoord[texUnit].Size;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_TYPE:
-#ifdef VAO
-         *params = ENUM_TO_FLOAT(ctx->Array.Current->TexCoord[texUnit].Type);
-#else
          *params = ENUM_TO_FLOAT(ctx->Array.TexCoord[texUnit].Type);
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->TexCoord[texUnit].Stride;
-#else
          *params = (GLfloat) ctx->Array.TexCoord[texUnit].Stride;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_COUNT_EXT:
          *params = 0.0;
          break;
       case GL_EDGE_FLAG_ARRAY:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->EdgeFlag.Enabled;
-#else
          *params = (GLfloat) ctx->Array.EdgeFlag.Enabled;
-#endif
          break;
       case GL_EDGE_FLAG_ARRAY_STRIDE:
-#ifdef VAO
-         *params = (GLfloat) ctx->Array.Current->EdgeFlag.Stride;
-#else
          *params = (GLfloat) ctx->Array.EdgeFlag.Stride;
-#endif
          break;
       case GL_EDGE_FLAG_ARRAY_COUNT_EXT:
          *params = 0.0;
@@ -3524,140 +3650,82 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLfloat) textureUnit->CurrentCubeMap->Name;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
-            *params = (GLfloat) ctx->Const.MaxCubeTextureSize;
+         if (ctx->Extensions.ARB_texture_cube_map)
+            *params = (GLfloat) (1 << (ctx->Const.MaxCubeTextureLevels - 1));
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          return;
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLfloat) ctx->Hint.TextureCompression;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLfloat) ctx->Const.NumCompressedTextureFormats;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             GLuint i;
             for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
                params[i] = (GLfloat) ctx->Const.CompressedTextureFormats[i];
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            GET_FLOAT_ERROR;
          break;
-
-      /* GL_PGI_misc_hints */
-      case GL_STRICT_DEPTHFUNC_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_NICEST);
-         break;
-      case GL_STRICT_LIGHTING_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(ctx->Hint.StrictLighting);
-	 break;
-      case GL_STRICT_SCISSOR_HINT_PGI:
-      case GL_FULL_STIPPLE_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_TRUE);
-	 break;
-      case GL_CONSERVE_MEMORY_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_FALSE);
-	 break;
-      case GL_ALWAYS_FAST_HINT_PGI:
-	 *params = (GLfloat) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_FALSE && 
-			      ctx->Hint.AllowDrawMem == GL_FALSE);
-	 break;
-      case GL_ALWAYS_SOFT_HINT_PGI:
-	 *params = (GLfloat) (ctx->Hint.AllowDrawWin == GL_TRUE &&
-			      ctx->Hint.AllowDrawFrg == GL_TRUE && 
-			      ctx->Hint.AllowDrawMem == GL_TRUE);
-	 break;
-      case GL_ALLOW_DRAW_OBJ_HINT_PGI:
-	 *params = (GLfloat) GL_TRUE;
-	 break;
-      case GL_ALLOW_DRAW_WIN_HINT_PGI:
-	 *params = (GLfloat) ctx->Hint.AllowDrawWin;
-	 break;
-      case GL_ALLOW_DRAW_FRG_HINT_PGI:
-	 *params = (GLfloat) ctx->Hint.AllowDrawFrg;
-	 break;
-      case GL_ALLOW_DRAW_MEM_HINT_PGI:
-	 *params = (GLfloat) ctx->Hint.AllowDrawMem;
-	 break;
-      case GL_CLIP_NEAR_HINT_PGI:
-      case GL_CLIP_FAR_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_TRUE);
-	 break;
-      case GL_WIDE_LINE_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_DONT_CARE);
-	 break;
-      case GL_BACK_NORMALS_HINT_PGI:
-	 *params = ENUM_TO_FLOAT(GL_TRUE);
-	 break;
-      case GL_NATIVE_GRAPHICS_HANDLE_PGI:
-	 *params = 0;
-	 break;
 
       /* GL_EXT_compiled_vertex_array */
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
-#ifdef VAO
-	 *params = (GLfloat) ctx->Array.Current->LockFirst;
-#else
 	 *params = (GLfloat) ctx->Array.LockFirst;
-#endif
 	 break;
       case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
-#ifdef VAO
-	 *params = (GLfloat) ctx->Array.Current->LockCount;
-#else
 	 *params = (GLfloat) ctx->Array.LockCount;
-#endif
 	 break;
 
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
-         gl_matrix_transposef(params, ctx->ColorMatrix.m);
+         _math_transposef(params, ctx->ColorMatrix.m);
          break;
       case GL_TRANSPOSE_MODELVIEW_MATRIX_ARB:
-         gl_matrix_transposef(params, ctx->ModelView.m);
+         _math_transposef(params, ctx->ModelView.m);
          break;
       case GL_TRANSPOSE_PROJECTION_MATRIX_ARB:
-         gl_matrix_transposef(params, ctx->ProjectionMatrix.m);
+         _math_transposef(params, ctx->ProjectionMatrix.m);
          break;
       case GL_TRANSPOSE_TEXTURE_MATRIX_ARB:
-         gl_matrix_transposef(params, ctx->TextureMatrix[texTransformUnit].m);
+         _math_transposef(params, ctx->TextureMatrix[texUnit].m);
          break;
 
       /* GL_HP_occlusion_test */
       case GL_OCCLUSION_TEST_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             *params = (GLfloat) ctx->Depth.OcclusionTest;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            GET_FLOAT_ERROR;
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             if (ctx->Depth.OcclusionTest)
                *params = (GLfloat) ctx->OcclusionResult;
             else
@@ -3667,7 +3735,7 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
             ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+            GET_FLOAT_ERROR;
          }
          return;
 
@@ -3722,11 +3790,32 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          break;
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
-      case GL_MAX_CONVOLUTION_WIDTH:
-         *params = (GLfloat) ctx->Const.MaxConvolutionWidth;
+      case GL_CONVOLUTION_1D_EXT:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = (GLfloat) ctx->Pixel.Convolution1DEnabled;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
          break;
-      case GL_MAX_CONVOLUTION_HEIGHT:
-         *params = (GLfloat) ctx->Const.MaxConvolutionHeight;
+      case GL_CONVOLUTION_2D:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = (GLfloat) ctx->Pixel.Convolution2DEnabled;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+         break;
+      case GL_SEPARABLE_2D:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = (GLfloat) ctx->Pixel.Separable2DEnabled;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
          *params = ctx->Pixel.PostConvolutionScale[0];
@@ -3764,12 +3853,174 @@ _mesa_GetFloatv( GLenum pname, GLfloat *params )
          *params = (GLfloat) ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
 
-      default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetFloatv" );
+      /* GL_EXT_secondary_color */
+      case GL_COLOR_SUM_EXT:
+	 *params = (GLfloat) ctx->Fog.ColorSumEnabled;
+	 break;
+      case GL_CURRENT_SECONDARY_COLOR_EXT:
+	 FLUSH_CURRENT(ctx, 0);
+         params[0] = (ctx->Current.SecondaryColor[0]);
+         params[1] = (ctx->Current.SecondaryColor[1]);
+         params[2] = (ctx->Current.SecondaryColor[2]);
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         *params = (GLfloat) ctx->Array.SecondaryColor.Enabled;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
+	 *params = (GLfloat) ctx->Array.SecondaryColor.Type;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
+	 *params = (GLfloat) ctx->Array.SecondaryColor.Stride;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
+	 *params = (GLfloat) ctx->Array.SecondaryColor.Stride;
+	 break;
+
+      /* GL_EXT_fog_coord */
+      case GL_CURRENT_FOG_COORDINATE_EXT:
+	 FLUSH_CURRENT(ctx, 0);
+	 *params = (GLfloat) ctx->Current.FogCoord;
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         *params = (GLfloat) ctx->Array.FogCoord.Enabled;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
+	 *params = (GLfloat) ctx->Array.FogCoord.Type;
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
+	 *params = (GLfloat) ctx->Array.FogCoord.Stride;
+	 break;
+
+      /* GL_EXT_texture_lod_bias */
+      case GL_MAX_TEXTURE_LOD_BIAS_EXT:
+         *params = ctx->Const.MaxTextureLodBias;
+         break;
+
+      /* GL_EXT_texture_filter_anisotropic */
+      case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
+         if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+	    *params = ctx->Const.MaxTextureMaxAnisotropy;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+	 break;
+
+      /* GL_ARB_multisample */
+      case GL_MULTISAMPLE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLfloat) ctx->Multisample.Enabled;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+         break;
+      case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLfloat) ctx->Multisample.SampleAlphaToCoverage;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+         break;
+      case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLfloat) ctx->Multisample.SampleAlphaToOne;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLfloat) ctx->Multisample.SampleCoverage;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_VALUE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = ctx->Multisample.SampleCoverageValue;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_INVERT_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLfloat) ctx->Multisample.SampleCoverageInvert;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+         break;
+      case GL_SAMPLE_BUFFERS_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0.0; /* XXX fix someday */
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+         break;
+      case GL_SAMPLES_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0.0; /* XXX fix someday */
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+         break;
+
+      /* GL_IBM_rasterpos_clip */
+      case GL_RASTER_POSITION_UNCLIPPED_IBM:
+         if (ctx->Extensions.IBM_rasterpos_clip) {
+            *params = (GLfloat) ctx->Transform.RasterPositionUnclipped;
+         }
+         else {
+            GET_FLOAT_ERROR;
+            return;
+         }
+         break;
+
+      /* GL_SGIS_generate_mipmap */
+      case GL_GENERATE_MIPMAP_HINT_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            *params = (GLfloat) ctx->Hint.GenerateMipmap;
+         }
+         else {
+            GET_FLOAT_ERROR;
+	    return;
+         }
+         break;
+
+      /* GL_NV_texture_rectangle */
+      case GL_TEXTURE_RECTANGLE_NV:
+         CHECK_EXTENSION_F(NV_texture_rectangle, pname);
+         *params = (GLfloat) _mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV);
+         break;
+      case GL_TEXTURE_BINDING_RECTANGLE_NV:
+         CHECK_EXTENSION_F(NV_texture_rectangle, pname);
+         *params = (GLfloat) textureUnit->CurrentRect->Name;
+         break;
+      case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
+         CHECK_EXTENSION_F(NV_texture_rectangle, pname);
+         *params = (GLfloat) ctx->Const.MaxTextureRectSize;
+         break;
+
+       default:
+         GET_FLOAT_ERROR;
    }
 }
-
-
 
 
 void
@@ -3778,16 +4029,19 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
    GET_CURRENT_CONTEXT(ctx);
    GLuint i;
    GLuint texUnit = ctx->Texture.CurrentUnit;
-   GLuint texTransformUnit = ctx->Texture.CurrentTransformUnit;
    const struct gl_texture_unit *textureUnit = &ctx->Texture.Unit[texUnit];
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetIntegerv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;
 
-   if (MESA_VERBOSE & VERBOSE_API) 
-      fprintf(stderr, "glGetIntegerv %s\n", gl_lookup_enum_by_nr(pname));
+   /* We need this in order to get correct results for
+    * GL_OCCLUSION_TEST_RESULT_HP.  There might be other important cases.
+    */
+   FLUSH_VERTICES(ctx, 0);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "glGetIntegerv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetIntegerv
        && (*ctx->Driver.GetIntegerv)(ctx, pname, params))
@@ -3795,16 +4049,16 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
    switch (pname) {
       case GL_ACCUM_RED_BITS:
-         *params = (GLint) ctx->Visual->AccumRedBits;
+         *params = (GLint) ctx->Visual.accumRedBits;
          break;
       case GL_ACCUM_GREEN_BITS:
-         *params = (GLint) ctx->Visual->AccumGreenBits;
+         *params = (GLint) ctx->Visual.accumGreenBits;
          break;
       case GL_ACCUM_BLUE_BITS:
-         *params = (GLint) ctx->Visual->AccumBlueBits;
+         *params = (GLint) ctx->Visual.accumBlueBits;
          break;
       case GL_ACCUM_ALPHA_BITS:
-         *params = (GLint) ctx->Visual->AccumAlphaBits;
+         *params = (GLint) ctx->Visual.accumAlphaBits;
          break;
       case GL_ACCUM_CLEAR_VALUE:
          params[0] = FLOAT_TO_INT( ctx->Accum.ClearColor[0] );
@@ -3816,7 +4070,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Pixel.AlphaBias;
          break;
       case GL_ALPHA_BITS:
-         *params = ctx->Visual->AlphaBits;
+         *params = ctx->Visual.alphaBits;
          break;
       case GL_ALPHA_SCALE:
          *params = (GLint) ctx->Pixel.AlphaScale;
@@ -3825,7 +4079,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Color.AlphaEnabled;
          break;
       case GL_ALPHA_TEST_REF:
-         *params = FLOAT_TO_INT( (GLfloat) ctx->Color.AlphaRef / 255.0 );
+         *params = FLOAT_TO_INT( (GLfloat) ctx->Color.AlphaRef / CHAN_MAXF );
          break;
       case GL_ALPHA_TEST_FUNC:
          *params = (GLint) ctx->Color.AlphaFunc;
@@ -3873,7 +4127,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Pixel.BlueBias;
          break;
       case GL_BLUE_BITS:
-         *params = (GLint) ctx->Visual->BlueBits;
+         *params = (GLint) ctx->Visual.blueBits;
          break;
       case GL_BLUE_SCALE:
          *params = (GLint) ctx->Pixel.BlueScale;
@@ -3891,10 +4145,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Transform.ClipEnabled[i];
          break;
       case GL_COLOR_CLEAR_VALUE:
-         params[0] = FLOAT_TO_INT( ctx->Color.ClearColor[0] );
-         params[1] = FLOAT_TO_INT( ctx->Color.ClearColor[1] );
-         params[2] = FLOAT_TO_INT( ctx->Color.ClearColor[2] );
-         params[3] = FLOAT_TO_INT( ctx->Color.ClearColor[3] );
+         params[0] = FLOAT_TO_INT( (ctx->Color.ClearColor[0]) );
+         params[1] = FLOAT_TO_INT( (ctx->Color.ClearColor[1]) );
+         params[2] = FLOAT_TO_INT( (ctx->Color.ClearColor[2]) );
+         params[3] = FLOAT_TO_INT( (ctx->Color.ClearColor[3]) );
          break;
       case GL_COLOR_MATERIAL:
          *params = (GLint) ctx->Light.ColorMaterialEnabled;
@@ -3918,15 +4172,18 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Polygon.CullFaceMode;
          break;
       case GL_CURRENT_COLOR:
-         params[0] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[0] ) );
-         params[1] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[1] ) );
-         params[2] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[2] ) );
-         params[3] = FLOAT_TO_INT( UBYTE_COLOR_TO_FLOAT_COLOR( ctx->Current.ByteColor[3] ) );
+	 FLUSH_CURRENT(ctx, 0);
+         params[0] = FLOAT_TO_INT( ( ctx->Current.Color[0] ) );
+         params[1] = FLOAT_TO_INT( ( ctx->Current.Color[1] ) );
+         params[2] = FLOAT_TO_INT( ( ctx->Current.Color[2] ) );
+         params[3] = FLOAT_TO_INT( ( ctx->Current.Color[3] ) );
          break;
       case GL_CURRENT_INDEX:
+	 FLUSH_CURRENT(ctx, 0);
          *params = (GLint) ctx->Current.Index;
          break;
       case GL_CURRENT_NORMAL:
+	 FLUSH_CURRENT(ctx, 0);
          params[0] = FLOAT_TO_INT( ctx->Current.Normal[0] );
          params[1] = FLOAT_TO_INT( ctx->Current.Normal[1] );
          params[2] = FLOAT_TO_INT( ctx->Current.Normal[2] );
@@ -3950,25 +4207,26 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 params[3] = (GLint) ctx->Current.RasterPos[3];
 	 break;
       case GL_CURRENT_RASTER_TEXTURE_COORDS:
-	 params[0] = (GLint) ctx->Current.RasterMultiTexCoord[texTransformUnit][0];
-	 params[1] = (GLint) ctx->Current.RasterMultiTexCoord[texTransformUnit][1];
-	 params[2] = (GLint) ctx->Current.RasterMultiTexCoord[texTransformUnit][2];
-	 params[3] = (GLint) ctx->Current.RasterMultiTexCoord[texTransformUnit][3];
+	 params[0] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][0];
+	 params[1] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][1];
+	 params[2] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][2];
+	 params[3] = (GLint) ctx->Current.RasterMultiTexCoord[texUnit][3];
 	 break;
       case GL_CURRENT_RASTER_POSITION_VALID:
 	 *params = (GLint) ctx->Current.RasterPosValid;
 	 break;
       case GL_CURRENT_TEXTURE_COORDS:
-         params[0] = (GLint) ctx->Current.Texcoord[texTransformUnit][0];
-         params[1] = (GLint) ctx->Current.Texcoord[texTransformUnit][1];
-         params[2] = (GLint) ctx->Current.Texcoord[texTransformUnit][2];
-         params[3] = (GLint) ctx->Current.Texcoord[texTransformUnit][3];
+	 FLUSH_CURRENT(ctx, 0);
+         params[0] = (GLint) ctx->Current.Texcoord[texUnit][0];
+         params[1] = (GLint) ctx->Current.Texcoord[texUnit][1];
+         params[2] = (GLint) ctx->Current.Texcoord[texUnit][2];
+         params[3] = (GLint) ctx->Current.Texcoord[texUnit][3];
 	 break;
       case GL_DEPTH_BIAS:
          *params = (GLint) ctx->Pixel.DepthBias;
 	 break;
       case GL_DEPTH_BITS:
-	 *params = ctx->Visual->DepthBits;
+	 *params = ctx->Visual.depthBits;
 	 break;
       case GL_DEPTH_CLEAR_VALUE:
          *params = (GLint) ctx->Depth.Clear;
@@ -3993,12 +4251,13 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = (GLint) ctx->Color.DitherFlag;
 	 break;
       case GL_DOUBLEBUFFER:
-	 *params = (GLint) ctx->Visual->DBflag;
+	 *params = (GLint) ctx->Visual.doubleBufferMode;
 	 break;
       case GL_DRAW_BUFFER:
 	 *params = (GLint) ctx->Color.DrawBuffer;
 	 break;
       case GL_EDGE_FLAG:
+	 FLUSH_CURRENT(ctx, 0);
 	 *params = (GLint) ctx->Current.EdgeFlag;
 	 break;
       case GL_FEEDBACK_BUFFER_SIZE:
@@ -4041,22 +4300,28 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Pixel.GreenBias;
          break;
       case GL_GREEN_BITS:
-         *params = (GLint) ctx->Visual->GreenBits;
+         *params = (GLint) ctx->Visual.greenBits;
          break;
       case GL_GREEN_SCALE:
          *params = (GLint) ctx->Pixel.GreenScale;
          break;
       case GL_HISTOGRAM:
-         *params = (GLint) ctx->Pixel.HistogramEnabled;
+         if (ctx->Extensions.EXT_histogram || ctx->Extensions.ARB_imaging) {
+            *params = (GLint) ctx->Pixel.HistogramEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetFloatv");
+            return;
+         }
 	 break;
       case GL_INDEX_BITS:
-         *params = (GLint) ctx->Visual->IndexBits;
+         *params = (GLint) ctx->Visual.indexBits;
          break;
       case GL_INDEX_CLEAR_VALUE:
          *params = (GLint) ctx->Color.ClearIndex;
          break;
       case GL_INDEX_MODE:
-	 *params = ctx->Visual->RGBAflag ? 0 : 1;
+	 *params = ctx->Visual.rgbMode ? 0 : 1;
 	 break;
       case GL_INDEX_OFFSET:
 	 *params = ctx->Pixel.IndexOffset;
@@ -4230,19 +4495,19 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) MAX_CLIENT_ATTRIB_STACK_DEPTH;
          break;
       case GL_MAX_CLIP_PLANES:
-         *params = (GLint) MAX_CLIP_PLANES;
+         *params = (GLint) ctx->Const.MaxClipPlanes;
          break;
       case GL_MAX_ELEMENTS_VERTICES:  /* GL_VERSION_1_2 */
-         *params = VB_MAX;
+         *params = (GLint) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_ELEMENTS_INDICES:   /* GL_VERSION_1_2 */
-         *params = VB_MAX;
+         *params = (GLint) ctx->Const.MaxArrayLockSize;
          break;
       case GL_MAX_EVAL_ORDER:
 	 *params = (GLint) MAX_EVAL_ORDER;
 	 break;
       case GL_MAX_LIGHTS:
-         *params = (GLint) MAX_LIGHTS;
+         *params = (GLint) ctx->Const.MaxLights;
          break;
       case GL_MAX_LIST_NESTING:
          *params = (GLint) MAX_LIST_NESTING;
@@ -4260,8 +4525,10 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) MAX_PROJECTION_STACK_DEPTH;
          break;
       case GL_MAX_TEXTURE_SIZE:
+         *params = (1 << (ctx->Const.MaxTextureLevels - 1));
+	 break;
       case GL_MAX_3D_TEXTURE_SIZE:
-         *params = ctx->Const.MaxTextureSize;
+         *params = (1 << (ctx->Const.Max3DTextureLevels - 1));
 	 break;
       case GL_MAX_TEXTURE_STACK_DEPTH:
 	 *params = (GLint) MAX_TEXTURE_STACK_DEPTH;
@@ -4311,6 +4578,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_PACK_IMAGE_HEIGHT_EXT:
          *params = ctx->Pack.ImageHeight;
          break;
+      case GL_PACK_INVERT_MESA:
+         *params = ctx->Pack.Invert;
+         break;
       case GL_PERSPECTIVE_CORRECTION_HINT:
 	 *params = (GLint) ctx->Hint.PerspectiveCorrection;
 	 break;
@@ -4345,7 +4615,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = ctx->Pixel.MapStoSsize;
 	 break;
       case GL_POINT_SIZE:
-         *params = (GLint) ctx->Point.UserSize;
+         *params = (GLint) ctx->Point.Size;
          break;
       case GL_POINT_SIZE_GRANULARITY:
 	 *params = (GLint) ctx->Const.PointSizeGranularity;
@@ -4415,7 +4685,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Pixel.RedBias;
          break;
       case GL_RED_BITS:
-         *params = (GLint) ctx->Visual->RedBits;
+         *params = (GLint) ctx->Visual.redBits;
          break;
       case GL_RED_SCALE:
          *params = (GLint) ctx->Pixel.RedScale;
@@ -4427,7 +4697,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Transform.RescaleNormals;
          break;
       case GL_RGBA_MODE:
-	 *params = (GLint) ctx->Visual->RGBAflag;
+	 *params = (GLint) ctx->Visual.rgbMode;
 	 break;
       case GL_SCISSOR_BOX:
 	 params[0] = (GLint) ctx->Scissor.X;
@@ -4448,7 +4718,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Texture.SharedPalette;
          break;
       case GL_STENCIL_BITS:
-         *params = ctx->Visual->StencilBits;
+         *params = ctx->Visual.stencilBits;
          break;
       case GL_STENCIL_CLEAR_VALUE:
 	 *params = (GLint) ctx->Stencil.Clear;
@@ -4478,7 +4748,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = (GLint) ctx->Stencil.WriteMask;
 	 break;
       case GL_STEREO:
-	 *params = (GLint) ctx->Visual->StereoFlag;
+	 *params = (GLint) ctx->Visual.stereoMode;
 	 break;
       case GL_SUBPIXEL_BITS:
 	 *params = ctx->Const.SubPixelBits;
@@ -4493,13 +4763,13 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = _mesa_IsEnabled(GL_TEXTURE_3D) ? 1 : 0;
 	 break;
       case GL_TEXTURE_BINDING_1D:
-         *params = textureUnit->CurrentD[1]->Name;
+         *params = textureUnit->Current1D->Name;
           break;
       case GL_TEXTURE_BINDING_2D:
-         *params = textureUnit->CurrentD[2]->Name;
+         *params = textureUnit->Current2D->Name;
           break;
       case GL_TEXTURE_BINDING_3D:
-         *params = textureUnit->CurrentD[3]->Name;
+         *params = textureUnit->Current3D->Name;
           break;
       case GL_TEXTURE_ENV_COLOR:
 	 params[0] = FLOAT_TO_INT( textureUnit->EnvColor[0] );
@@ -4524,11 +4794,11 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 break;
       case GL_TEXTURE_MATRIX:
          for (i=0;i<16;i++) {
-	    params[i] = (GLint) ctx->TextureMatrix[texTransformUnit].m[i];
+	    params[i] = (GLint) ctx->TextureMatrix[texUnit].m[i];
 	 }
 	 break;
       case GL_TEXTURE_STACK_DEPTH:
-	 *params = (GLint) (ctx->TextureStackDepth[texTransformUnit] + 1);
+	 *params = (GLint) (ctx->TextureStackDepth[texUnit] + 1);
 	 break;
       case GL_UNPACK_ALIGNMENT:
 	 *params = ctx->Unpack.Alignment;
@@ -4554,6 +4824,9 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
       case GL_UNPACK_IMAGE_HEIGHT_EXT:
          *params = ctx->Unpack.ImageHeight;
          break;
+      case GL_UNPACK_CLIENT_STORAGE_APPLE:
+         *params = ctx->Unpack.ClientStorage;
+         break;
       case GL_VIEWPORT:
          params[0] = (GLint) ctx->Viewport.X;
          params[1] = (GLint) ctx->Viewport.Y;
@@ -4567,159 +4840,79 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 	 *params = (GLint) ctx->Pixel.ZoomY;
 	 break;
       case GL_VERTEX_ARRAY:
-#ifdef VAO
-         *params = (GLint) ctx->Array.Current->Vertex.Enabled;
-#else
          *params = (GLint) ctx->Array.Vertex.Enabled;
-#endif
          break;
       case GL_VERTEX_ARRAY_SIZE:
-#ifdef VAO
-         *params = ctx->Array.Current->Vertex.Size;
-#else
          *params = ctx->Array.Vertex.Size;
-#endif
          break;
       case GL_VERTEX_ARRAY_TYPE:
-#ifdef VAO
-         *params = ctx->Array.Current->Vertex.Type;
-#else
          *params = ctx->Array.Vertex.Type;
-#endif
          break;
       case GL_VERTEX_ARRAY_STRIDE:
-#ifdef VAO
-         *params = ctx->Array.Current->Vertex.Stride;
-#else
          *params = ctx->Array.Vertex.Stride;
-#endif
          break;
       case GL_VERTEX_ARRAY_COUNT_EXT:
          *params = 0;
          break;
       case GL_NORMAL_ARRAY:
-#ifdef VAO
-         *params = (GLint) ctx->Array.Current->Normal.Enabled;
-#else
          *params = (GLint) ctx->Array.Normal.Enabled;
-#endif
          break;
       case GL_NORMAL_ARRAY_TYPE:
-#ifdef VAO
-         *params = ctx->Array.Current->Normal.Type;
-#else
          *params = ctx->Array.Normal.Type;
-#endif
          break;
       case GL_NORMAL_ARRAY_STRIDE:
-#ifdef VAO
-         *params = ctx->Array.Current->Normal.Stride;
-#else
          *params = ctx->Array.Normal.Stride;
-#endif
          break;
       case GL_NORMAL_ARRAY_COUNT_EXT:
          *params = 0;
          break;
       case GL_COLOR_ARRAY:
-#ifdef VAO
-         *params = (GLint) ctx->Array.Current->Color.Enabled;
-#else
          *params = (GLint) ctx->Array.Color.Enabled;
-#endif
          break;
       case GL_COLOR_ARRAY_SIZE:
-#ifdef VAO
-         *params = ctx->Array.Current->Color.Size;
-#else
          *params = ctx->Array.Color.Size;
-#endif
          break;
       case GL_COLOR_ARRAY_TYPE:
-#ifdef VAO
-         *params = ctx->Array.Current->Color.Type;
-#else
          *params = ctx->Array.Color.Type;
-#endif
          break;
       case GL_COLOR_ARRAY_STRIDE:
-#ifdef VAO
-         *params = ctx->Array.Current->Color.Stride;
-#else
          *params = ctx->Array.Color.Stride;
-#endif
          break;
       case GL_COLOR_ARRAY_COUNT_EXT:
          *params = 0;
          break;
       case GL_INDEX_ARRAY:
-#ifdef VAO
-         *params = (GLint) ctx->Array.Current->Index.Enabled;
-#else
          *params = (GLint) ctx->Array.Index.Enabled;
-#endif
          break;
       case GL_INDEX_ARRAY_TYPE:
-#ifdef VAO
-         *params = ctx->Array.Current->Index.Type;
-#else
          *params = ctx->Array.Index.Type;
-#endif
          break;
       case GL_INDEX_ARRAY_STRIDE:
-#ifdef VAO
-         *params = ctx->Array.Current->Index.Stride;
-#else
          *params = ctx->Array.Index.Stride;
-#endif
          break;
       case GL_INDEX_ARRAY_COUNT_EXT:
          *params = 0;
          break;
       case GL_TEXTURE_COORD_ARRAY:
-#ifdef VAO
-         *params = (GLint) ctx->Array.Current->TexCoord[texUnit].Enabled;
-#else
          *params = (GLint) ctx->Array.TexCoord[texUnit].Enabled;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_SIZE:
-#ifdef VAO
-         *params = ctx->Array.Current->TexCoord[texUnit].Size;
-#else
          *params = ctx->Array.TexCoord[texUnit].Size;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_TYPE:
-#ifdef VAO
-         *params = ctx->Array.Current->TexCoord[texUnit].Type;
-#else
          *params = ctx->Array.TexCoord[texUnit].Type;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_STRIDE:
-#ifdef VAO
-         *params = ctx->Array.Current->TexCoord[texUnit].Stride;
-#else
          *params = ctx->Array.TexCoord[texUnit].Stride;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_COUNT_EXT:
          *params = 0;
          break;
       case GL_EDGE_FLAG_ARRAY:
-#ifdef VAO
-         *params = (GLint) ctx->Array.Current->EdgeFlag.Enabled;
-#else
          *params = (GLint) ctx->Array.EdgeFlag.Enabled;
-#endif
          break;
       case GL_EDGE_FLAG_ARRAY_STRIDE:
-#ifdef VAO
-         *params = ctx->Array.Current->EdgeFlag.Stride;
-#else
          *params = ctx->Array.EdgeFlag.Stride;
-#endif
          break;
       case GL_EDGE_FLAG_ARRAY_COUNT_EXT:
          *params = 0;
@@ -4738,121 +4931,63 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = (GLint) _mesa_IsEnabled(GL_TEXTURE_CUBE_MAP_ARB);
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
       case GL_TEXTURE_BINDING_CUBE_MAP_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
+         if (ctx->Extensions.ARB_texture_cube_map)
             *params = textureUnit->CurrentCubeMap->Name;
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
       case GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB:
-         if (ctx->Extensions.HaveTextureCubeMap)
-            *params = ctx->Const.MaxCubeTextureSize;
+         if (ctx->Extensions.ARB_texture_cube_map)
+            *params = (1 << (ctx->Const.MaxCubeTextureLevels - 1));
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          return;
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSION_HINT_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLint) ctx->Hint.TextureCompression;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          break;
       case GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             *params = (GLint) ctx->Const.NumCompressedTextureFormats;
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          break;
       case GL_COMPRESSED_TEXTURE_FORMATS_ARB:
-         if (ctx->Extensions.HaveTextureCompression) {
+         if (ctx->Extensions.ARB_texture_compression) {
             GLuint i;
             for (i = 0; i < ctx->Const.NumCompressedTextureFormats; i++)
                params[i] = (GLint) ctx->Const.CompressedTextureFormats[i];
          }
          else
-            gl_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
          break;
-
-      /* GL_PGI_misc_hints */
-      case GL_STRICT_DEPTHFUNC_HINT_PGI:
-	 *params = (GL_NICEST);
-         break;
-      case GL_STRICT_LIGHTING_HINT_PGI:
-	 *params = (ctx->Hint.StrictLighting);
-	 break;
-      case GL_STRICT_SCISSOR_HINT_PGI:
-      case GL_FULL_STIPPLE_HINT_PGI:
-	 *params = GL_TRUE;
-	 break;
-      case GL_CONSERVE_MEMORY_HINT_PGI:
-	 *params = GL_FALSE;
-	 break;
-      case GL_ALWAYS_FAST_HINT_PGI:
-	 *params = (ctx->Hint.AllowDrawWin == GL_TRUE &&
-		    ctx->Hint.AllowDrawFrg == GL_FALSE && 
-		    ctx->Hint.AllowDrawMem == GL_FALSE);
-	 break;
-      case GL_ALWAYS_SOFT_HINT_PGI:
-	 *params =  (ctx->Hint.AllowDrawWin == GL_TRUE &&
-		     ctx->Hint.AllowDrawFrg == GL_TRUE && 
-		     ctx->Hint.AllowDrawMem == GL_TRUE);
-	 break;
-      case GL_ALLOW_DRAW_OBJ_HINT_PGI:
-	 *params = GL_TRUE;
-	 break;
-      case GL_ALLOW_DRAW_WIN_HINT_PGI:
-	 *params = ctx->Hint.AllowDrawWin;
-	 break;
-      case GL_ALLOW_DRAW_FRG_HINT_PGI:
-	 *params = ctx->Hint.AllowDrawFrg;
-	 break;
-      case GL_ALLOW_DRAW_MEM_HINT_PGI:
-	 *params = ctx->Hint.AllowDrawMem;
-	 break;
-      case GL_CLIP_NEAR_HINT_PGI:
-      case GL_CLIP_FAR_HINT_PGI:
-	 *params = GL_TRUE;
-	 break;
-      case GL_WIDE_LINE_HINT_PGI:
-	 *params = GL_DONT_CARE;
-	 break;
-      case GL_BACK_NORMALS_HINT_PGI:
-	 *params = GL_TRUE;
-	 break;
-      case GL_NATIVE_GRAPHICS_HANDLE_PGI:
-	 *params = 0;
-	 break;
 
       /* GL_EXT_compiled_vertex_array */
       case GL_ARRAY_ELEMENT_LOCK_FIRST_EXT:
-#ifdef VAO
-	 *params = ctx->Array.Current->LockFirst;
-#else
 	 *params = ctx->Array.LockFirst;
-#endif
 	 break;
       case GL_ARRAY_ELEMENT_LOCK_COUNT_EXT:
-#ifdef VAO
-	 *params = ctx->Array.Current->LockCount;
-#else
 	 *params = ctx->Array.LockCount;
-#endif
 	 break;
-	 
+
       /* GL_ARB_transpose_matrix */
       case GL_TRANSPOSE_COLOR_MATRIX_ARB:
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->ColorMatrix.m);
+            _math_transposef(tm, ctx->ColorMatrix.m);
             for (i=0;i<16;i++) {
                params[i] = (GLint) tm[i];
             }
@@ -4862,7 +4997,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->ModelView.m);
+            _math_transposef(tm, ctx->ModelView.m);
             for (i=0;i<16;i++) {
                params[i] = (GLint) tm[i];
             }
@@ -4872,7 +5007,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->ProjectionMatrix.m);
+            _math_transposef(tm, ctx->ProjectionMatrix.m);
             for (i=0;i<16;i++) {
                params[i] = (GLint) tm[i];
             }
@@ -4882,7 +5017,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          {
             GLfloat tm[16];
             GLuint i;
-            gl_matrix_transposef(tm, ctx->TextureMatrix[texTransformUnit].m);
+            _math_transposef(tm, ctx->TextureMatrix[texUnit].m);
             for (i=0;i<16;i++) {
                params[i] = (GLint) tm[i];
             }
@@ -4891,15 +5026,15 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
 
       /* GL_HP_occlusion_test */
       case GL_OCCLUSION_TEST_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             *params = (GLint) ctx->Depth.OcclusionTest;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
          }
          return;
       case GL_OCCLUSION_TEST_RESULT_HP:
-         if (ctx->Extensions.HaveHpOcclusionTest) {
+         if (ctx->Extensions.HP_occlusion_test) {
             if (ctx->Depth.OcclusionTest)
                *params = (GLint) ctx->OcclusionResult;
             else
@@ -4909,7 +5044,7 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
             ctx->OcclusionResultSaved = GL_FALSE;
          }
          else {
-            gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
          }
          return;
 
@@ -4964,11 +5099,32 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          break;
 
       /* GL_EXT_convolution (also in 1.2 imaging) */
-      case GL_MAX_CONVOLUTION_WIDTH:
-         *params = ctx->Const.MaxConvolutionWidth;
+      case GL_CONVOLUTION_1D_EXT:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = (GLint) ctx->Pixel.Convolution1DEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
          break;
-      case GL_MAX_CONVOLUTION_HEIGHT:
-         *params = ctx->Const.MaxConvolutionHeight;
+      case GL_CONVOLUTION_2D:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = (GLint) ctx->Pixel.Convolution2DEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+      case GL_SEPARABLE_2D:
+         if (ctx->Extensions.EXT_convolution || ctx->Extensions.ARB_imaging) {
+            *params = (GLint) ctx->Pixel.Separable2DEnabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
          break;
       case GL_POST_CONVOLUTION_RED_SCALE_EXT:
          *params = (GLint) ctx->Pixel.PostConvolutionScale[0];
@@ -5006,8 +5162,193 @@ _mesa_GetIntegerv( GLenum pname, GLint *params )
          *params = (GLint) ctx->Pixel.PostColorMatrixColorTableEnabled;
          break;
 
+
+      /* GL_EXT_secondary_color */
+      case GL_COLOR_SUM_EXT:
+	 *params = (GLint) ctx->Fog.ColorSumEnabled;
+	 break;
+      case GL_CURRENT_SECONDARY_COLOR_EXT:
+	 FLUSH_CURRENT(ctx, 0);
+         params[0] = FLOAT_TO_INT( (ctx->Current.SecondaryColor[0]) );
+         params[1] = FLOAT_TO_INT( (ctx->Current.SecondaryColor[1]) );
+         params[2] = FLOAT_TO_INT( (ctx->Current.SecondaryColor[2]) );
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_EXT:
+         *params = (GLint) ctx->Array.SecondaryColor.Enabled;
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_TYPE_EXT:
+	 *params = (GLint) ctx->Array.SecondaryColor.Type;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_STRIDE_EXT:
+	 *params = (GLint) ctx->Array.SecondaryColor.Stride;
+	 break;
+      case GL_SECONDARY_COLOR_ARRAY_SIZE_EXT:
+	 *params = (GLint) ctx->Array.SecondaryColor.Stride;
+	 break;
+
+      /* GL_EXT_fog_coord */
+      case GL_CURRENT_FOG_COORDINATE_EXT:
+         if (ctx->Extensions.EXT_fog_coord) {
+            FLUSH_CURRENT(ctx, 0);
+            *params = (GLint) ctx->Current.FogCoord;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_EXT:
+         if (ctx->Extensions.EXT_fog_coord) {
+            *params = (GLint) ctx->Array.FogCoord.Enabled;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
+         break;
+      case GL_FOG_COORDINATE_ARRAY_TYPE_EXT:
+         if (ctx->Extensions.EXT_fog_coord) {
+            *params = (GLint) ctx->Array.FogCoord.Type;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
+	 break;
+      case GL_FOG_COORDINATE_ARRAY_STRIDE_EXT:
+         if (ctx->Extensions.EXT_fog_coord) {
+            *params = (GLint) ctx->Array.FogCoord.Stride;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         }
+	 break;
+
+      /* GL_EXT_texture_lod_bias */
+      case GL_MAX_TEXTURE_LOD_BIAS_EXT:
+         *params = (GLint) ctx->Const.MaxTextureLodBias;
+         break;
+
+      /* GL_EXT_texture_filter_anisotropic */
+      case GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT:
+         if (ctx->Extensions.EXT_texture_filter_anisotropic) {
+	    *params = (GLint) ctx->Const.MaxTextureMaxAnisotropy;
+         }
+         else {
+            _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+            return;
+         }
+	 break;
+
+      /* GL_ARB_multisample */
+      case GL_MULTISAMPLE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.Enabled;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_ALPHA_TO_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.SampleAlphaToCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_ALPHA_TO_ONE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.SampleAlphaToOne;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.SampleCoverage;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_VALUE_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.SampleCoverageValue;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_COVERAGE_INVERT_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = (GLint) ctx->Multisample.SampleCoverageInvert;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+      case GL_SAMPLE_BUFFERS_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+      case GL_SAMPLES_ARB:
+         if (ctx->Extensions.ARB_multisample) {
+            *params = 0; /* XXX fix someday */
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+
+      /* GL_IBM_rasterpos_clip */
+      case GL_RASTER_POSITION_UNCLIPPED_IBM:
+         if (ctx->Extensions.IBM_rasterpos_clip) {
+            *params = (GLint) ctx->Transform.RasterPositionUnclipped;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+            return;
+         }
+         break;
+
+      /* GL_SGIS_generate_mipmap */
+      case GL_GENERATE_MIPMAP_HINT_SGIS:
+         if (ctx->Extensions.SGIS_generate_mipmap) {
+            *params = (GLint) ctx->Hint.GenerateMipmap;
+         }
+         else {
+            _mesa_error(ctx, GL_INVALID_ENUM, "glGetIntegerv");
+	    return;
+         }
+         break;
+
+      /* GL_NV_texture_rectangle */
+      case GL_TEXTURE_RECTANGLE_NV:
+         CHECK_EXTENSION_I(NV_texture_rectangle, pname);
+         *params = (GLint) _mesa_IsEnabled(GL_TEXTURE_RECTANGLE_NV);
+         break;
+      case GL_TEXTURE_BINDING_RECTANGLE_NV:
+         CHECK_EXTENSION_I(NV_texture_rectangle, pname);
+         *params = (GLint) textureUnit->CurrentRect->Name;
+         break;
+      case GL_MAX_RECTANGLE_TEXTURE_SIZE_NV:
+         CHECK_EXTENSION_I(NV_texture_rectangle, pname);
+         *params = (GLint) ctx->Const.MaxTextureRectSize;
+         break;
+
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetIntegerv" );
    }
 }
 
@@ -5018,14 +5359,13 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 {
    GET_CURRENT_CONTEXT(ctx);
    GLuint texUnit = ctx->Texture.CurrentUnit;
-
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx, "glGetPointerv");
+   ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (!params)
       return;
 
-   if (MESA_VERBOSE & VERBOSE_API) 
-      fprintf(stderr, "glGetPointerv %s\n", gl_lookup_enum_by_nr(pname));
+   if (MESA_VERBOSE & VERBOSE_API)
+      fprintf(stderr, "glGetPointerv %s\n", _mesa_lookup_enum_by_nr(pname));
 
    if (ctx->Driver.GetPointerv
        && (*ctx->Driver.GetPointerv)(ctx, pname, params))
@@ -5033,46 +5373,28 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
 
    switch (pname) {
       case GL_VERTEX_ARRAY_POINTER:
-#ifdef VAO
-         *params = ctx->Array.Current->Vertex.Ptr;
-#else
          *params = ctx->Array.Vertex.Ptr;
-#endif
          break;
       case GL_NORMAL_ARRAY_POINTER:
-#ifdef VAO
-         *params = ctx->Array.Current->Normal.Ptr;
-#else
          *params = ctx->Array.Normal.Ptr;
-#endif
          break;
       case GL_COLOR_ARRAY_POINTER:
-#ifdef VAO
-         *params = ctx->Array.Current->Color.Ptr;
-#else
          *params = ctx->Array.Color.Ptr;
-#endif
+         break;
+      case GL_SECONDARY_COLOR_ARRAY_POINTER_EXT:
+         *params = ctx->Array.SecondaryColor.Ptr;
+         break;
+      case GL_FOG_COORDINATE_ARRAY_POINTER_EXT:
+         *params = ctx->Array.FogCoord.Ptr;
          break;
       case GL_INDEX_ARRAY_POINTER:
-#ifdef VAO
-         *params = ctx->Array.Current->Index.Ptr;
-#else
          *params = ctx->Array.Index.Ptr;
-#endif
          break;
       case GL_TEXTURE_COORD_ARRAY_POINTER:
-#ifdef VAO
-         *params = ctx->Array.Current->TexCoord[texUnit].Ptr;
-#else
          *params = ctx->Array.TexCoord[texUnit].Ptr;
-#endif
          break;
       case GL_EDGE_FLAG_ARRAY_POINTER:
-#ifdef VAO
-         *params = ctx->Array.Current->EdgeFlag.Ptr;
-#else
          *params = ctx->Array.EdgeFlag.Ptr;
-#endif
          break;
       case GL_FEEDBACK_BUFFER_POINTER:
          *params = ctx->Feedback.Buffer;
@@ -5081,7 +5403,7 @@ _mesa_GetPointerv( GLenum pname, GLvoid **params )
          *params = ctx->Select.Buffer;
          break;
       default:
-         gl_error( ctx, GL_INVALID_ENUM, "glGetPointerv" );
+         _mesa_error( ctx, GL_INVALID_ENUM, "glGetPointerv" );
          return;
    }
 }
@@ -5094,9 +5416,10 @@ _mesa_GetString( GLenum name )
    GET_CURRENT_CONTEXT(ctx);
    static const char *vendor = "Brian Paul";
    static const char *renderer = "Mesa";
-   static const char *version = "1.2 Mesa 3.4.2";
+   static const char *version_1_2 = "1.2 Mesa 4.0.4";
+   static const char *version_1_3 = "1.3 Mesa 4.0.4";
 
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH_WITH_RETVAL(ctx, "glGetString", 0);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    /* this is a required driver function */
    assert(ctx->Driver.GetString);
@@ -5111,12 +5434,22 @@ _mesa_GetString( GLenum name )
           case GL_RENDERER:
              return (const GLubyte *) renderer;
           case GL_VERSION:
-             return (const GLubyte *) version;
+             if (ctx->Extensions.ARB_multitexture &&
+                 ctx->Extensions.ARB_multisample &&
+                 ctx->Extensions.ARB_texture_border_clamp &&
+                 ctx->Extensions.ARB_texture_compression &&
+                 ctx->Extensions.ARB_texture_cube_map &&
+                 ctx->Extensions.EXT_texture_env_add &&
+                 ctx->Extensions.ARB_texture_env_combine &&
+                 ctx->Extensions.ARB_texture_env_dot3)
+                return (const GLubyte *) version_1_3;
+             else
+                return (const GLubyte *) version_1_2;
           case GL_EXTENSIONS:
-             return (GLubyte *) gl_extensions_get_string( ctx );
+             return (const GLubyte *) _mesa_extensions_get_string(ctx);
           default:
-             gl_error( ctx, GL_INVALID_ENUM, "glGetString" );
-             return (GLubyte *) 0;
+             _mesa_error( ctx, GL_INVALID_ENUM, "glGetString" );
+             return (const GLubyte *) 0;
        }
    }
 }
@@ -5129,15 +5462,12 @@ GLenum
 _mesa_GetError( void )
 {
    GET_CURRENT_CONTEXT(ctx);
-
    GLenum e = ctx->ErrorValue;
-
-   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL( ctx, "glGetError", (GLenum) 0);
+   ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      fprintf(stderr, "glGetError <-- %s\n", gl_lookup_enum_by_nr(e));
+      fprintf(stderr, "glGetError <-- %s\n", _mesa_lookup_enum_by_nr(e));
 
    ctx->ErrorValue = (GLenum) GL_NO_ERROR;
    return e;
 }
-

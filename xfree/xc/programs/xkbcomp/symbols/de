@@ -3,7 +3,7 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/symbols/de,v 3.10 2001/10/01 14:04:15 eich Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/de,v 3.12 2002/11/25 14:05:06 eich Exp $
 
 default partial alphanumeric_keys 
 xkb_symbols "basic" {
@@ -71,7 +71,9 @@ xkb_symbols "basic" {
 			[ dead_grave			]	};
     key <RALT> {	[ Mode_switch,	Multi_key	]	};
 
-    // End alphanumeric section
+    // End alphanumeric section, begin "Keypad"
+    key <KPDL> {	[  KP_Delete,	KP_Separator	]	};
+    // End "Keypad" section
 
     // begin modifier mappings
     modifier_map Shift  { Shift_L };
@@ -86,7 +88,7 @@ xkb_symbols "nodeadkeys" {
     include "de(basic)"
     key <TLDE> {	[ asciicircum,	degree		],
 			[   notsign 			]	};
-    key <AE12> {	[ acute,	grave		],
+    key <AE12> {	[ apostrophe,	grave		],
 			[ cedilla			]	};
     key <AD11> {	[ udiaeresis,	Udiaeresis	],
 			[ diaeresis 			]	};

@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    FreeType CharMap cache (body)                                        */
 /*                                                                         */
-/*  Copyright 2000-2001 by                                                 */
+/*  Copyright 2000-2001, 2002 by                                           */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -32,7 +32,7 @@
   /* codes to equivalent glyph indices.                                    */
   /*                                                                       */
   /* For now, the implementation is very basic: Each node maps a range of  */
-  /* 128 consecutive character codes to their correspondingglyph indices.  */
+  /* 128 consecutive character codes to their corresponding glyph indices. */
   /*                                                                       */
   /* We could do more complex things, but I don't think it is really very  */
   /* useful.                                                               */
@@ -130,7 +130,7 @@
   FT_CALLBACK_DEF( FT_ULong )
   ftc_cmap_node_weight( FTC_CMapNode  cnode )
   {
-    FT_UNUSED(cnode);
+    FT_UNUSED( cnode );
     
     return sizeof ( *cnode );
   }
@@ -177,27 +177,27 @@
     if ( !error )
     {
       FT_UInt      count = face->num_charmaps;
-      FT_UInt      index = count;
+      FT_UInt      idx   = count;
       FT_CharMap*  cur   = face->charmaps;
 
 
       switch ( desc->type )
       {
       case FTC_CMAP_BY_INDEX:
-        index = desc->u.index;
-        hash  = index * 33;
+        idx  = desc->u.index;
+        hash = idx * 33;
         break;
 
       case FTC_CMAP_BY_ENCODING:
-        for ( index = 0; index < count; index++, cur++ )
+        for ( idx = 0; idx < count; idx++, cur++ )
           if ( cur[0]->encoding == desc->u.encoding )
             break;
 
-        hash = index * 67;
+        hash = idx * 67;
         break;
 
       case FTC_CMAP_BY_ID:
-        for ( index = 0; index < count; index++, cur++ )
+        for ( idx = 0; idx < count; idx++, cur++ )
         {
           if ( (FT_UInt)cur[0]->platform_id == desc->u.id.platform &&
                (FT_UInt)cur[0]->encoding_id == desc->u.id.encoding )
@@ -212,11 +212,11 @@
         ;
       }
 
-      if ( index >= count )
+      if ( idx >= count )
         goto Bad_Descriptor;
 
       /* compute hash value, both in family and query */
-      cfam->index               = index;
+      cfam->index               = idx;
       cfam->hash                = hash ^ FTC_FACE_ID_HASH( desc->face_id );
       FTC_QUERY( cquery )->hash = FTC_CMAP_HASH( cfam, cquery );
 
@@ -228,7 +228,7 @@
 
   Bad_Descriptor:
     FT_ERROR(( "ftp_cmap_family_init: invalid charmap descriptor\n" ));
-    return FT_Err_Invalid_Argument;
+    return FTC_Err_Invalid_Argument;
   }
 
 
@@ -318,6 +318,25 @@
   }
 
 
+#ifdef FTC_CACHE_USE_INLINE
+
+#define GEN_CACHE_FAMILY_COMPARE( f, q, c ) \
+          ftc_cmap_family_compare( (FTC_CMapFamily)(f), (FTC_CMapQuery)(q) )
+
+#define GEN_CACHE_NODE_COMPARE( n, q, c ) \
+          ftc_cmap_node_compare( (FTC_CMapNode)(n), (FTC_CMapQuery)(q) )
+
+#define GEN_CACHE_LOOKUP  ftc_cmap_cache_lookup
+
+#include "ftccache.i"
+
+#else  /* !FTC_CACHE_USE_INLINE */
+
+#define ftc_cmap_cache_lookup  ftc_cache_lookup
+
+#endif /* !FTC_CACHE_USE_INLINE */
+
+
   /* documentation is in ftccmap.h */
 
   FT_EXPORT_DEF( FT_UInt )
@@ -340,13 +359,15 @@
     cquery.desc      = desc;
     cquery.char_code = char_code;
 
-    error = ftc_cache_lookup( FTC_CACHE( cache ),
-                              FTC_QUERY( &cquery ),
-                              (FTC_Node*)&node );
+    error = ftc_cmap_cache_lookup( FTC_CACHE( cache ),
+                                   FTC_QUERY( &cquery ),
+                                   (FTC_Node*)&node );
     if ( !error )
     {
       FT_UInt  offset = (FT_UInt)( char_code - node->first );
 
+
+      FT_ASSERT( offset < FTC_CMAP_INDICES_MAX );
 
       gindex = node->indices[offset];
       if ( gindex == FTC_CMAP_UNKNOWN )
@@ -375,7 +396,7 @@
 
           /* perform lookup */
           gindex                = FT_Get_Char_Index( face, char_code );
-          node->indices[offset] = (FT_UInt16) gindex;
+          node->indices[offset] = (FT_UInt16)gindex;
 
           /* restore old charmap */
           FT_Set_Charmap( face, old );

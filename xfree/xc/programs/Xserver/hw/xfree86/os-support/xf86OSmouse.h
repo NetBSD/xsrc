@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86OSmouse.h,v 1.16 2001/08/06 20:51:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/xf86OSmouse.h,v 1.20 2002/12/17 20:55:23 dawes Exp $ */
 
 /*
  * Copyright (c) 1997-1999 by The XFree86 Project, Inc.
@@ -22,6 +22,8 @@
 					 * specific protocol names that are
 					 * supported for this class. */
 
+struct _MouseDevRec;
+
 typedef int (*GetInterfaceTypesProc)(void);
 typedef const char **(*BuiltinNamesProc)(void);
 typedef Bool (*CheckProtocolProc)(const char *protocol);
@@ -31,6 +33,10 @@ typedef const char *(*DefaultProtocolProc)(void);
 typedef const char *(*SetupAutoProc)(InputInfoPtr pInfo, int *protoPara);
 typedef void (*SetResProc)(InputInfoPtr pInfo, const char* protocol, int rate,
 			   int res);
+typedef void (*checkMovementsProc)(InputInfoPtr,int, int);
+typedef void (*autoProbeProc)(InputInfoPtr, Bool, Bool);
+typedef Bool (*collectDataProc)(struct _MouseDevRec *, unsigned char);
+typedef Bool (*dataGoodProc)(struct _MouseDevRec *);
 
 /*
  * OSMouseInfoRec is used to pass information from the OSMouse layer to the
@@ -114,10 +120,9 @@ typedef struct _MouseDevRec {
     int			buttons;	/* # of buttons */
     int			emulateState;	/* automata state for 2 button mode */
     Bool		emulate3Buttons;
+    Bool		emulate3ButtonsSoft;
     int			emulate3Timeout;/* Timeout for 3 button emulation */
     Bool		chordMiddle;
-    Bool		clearDTR;
-    Bool		clearRTS;
     Bool                flipXY;
     int                 invX;
     int                 invY;
@@ -151,6 +156,13 @@ typedef struct _MouseDevRec {
     int			positiveY;
     int			wheelYDistance;
     int			wheelXDistance;
+    Bool		autoProbe;
+    checkMovementsProc  checkMovements;
+    autoProbeProc	autoProbeMouse;
+    collectDataProc	collectData;
+    dataGoodProc	dataGood;
+    int			angleOffset;
+    pointer		pDragLock;	/* drag lock area */
 } MouseDevRec, *MouseDevPtr;
 
 /* Z axis mapping */

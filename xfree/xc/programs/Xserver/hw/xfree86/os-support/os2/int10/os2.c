@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/int10/os2.c,v 1.3 2001/04/30 14:34:58 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/int10/os2.c,v 1.4 2002/01/25 21:56:20 tsi Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -154,9 +154,9 @@ xf86DrvMsg(screen,X_INFO,"%s\n",buf);
 	setupTable(pInt,(memType)vbiosMem,V_BIOS,V_BIOS_SIZE);
 	pInt->BIOSseg = V_BIOS >> 4;
 	pInt->num = 0xe6;
-	LockLegacyVGA(screen, &vga); 
+	LockLegacyVGA(pInt, &vga); 
 	xf86ExecX86int10(pInt);
-	UnlockLegacyVGA(screen, &vga);
+	UnlockLegacyVGA(pInt, &vga);
     }
 #else
     if (!sysMem) {
@@ -173,9 +173,9 @@ xf86DrvMsg(screen,X_INFO,"%s\n",buf);
     setupTable(pInt,(memType)vbiosMem,V_BIOS,V_BIOS_SIZE);
     pInt->BIOSseg = V_BIOS >> 4;
     pInt->num = 0xe6;
-    LockLegacyVGA(screen, &vga);	   
+    LockLegacyVGA(pInt, &vga);	   
     xf86ExecX86int10(pInt);
-    UnlockLegacyVGA(screen, &vga);
+    UnlockLegacyVGA(pInt, &vga);
 #endif
     return pInt;
 

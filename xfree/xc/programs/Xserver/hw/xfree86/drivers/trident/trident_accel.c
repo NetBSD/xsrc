@@ -23,7 +23,7 @@
  * 
  * Trident accelerated options.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_accel.c,v 1.22 2001/09/24 11:19:10 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_accel.c,v 1.26 2003/02/12 21:46:42 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -79,6 +79,7 @@ static void TridentSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn,
 				int patternx, int patterny, int x, int y, 
 				int w, int h);
 #endif
+#if 0
 static void TridentSetupForScanlineCPUToScreenColorExpandFill(
 				ScrnInfoPtr pScrn,
 				int fg, int bg, int rop, 
@@ -87,6 +88,7 @@ static void TridentSubsequentScanlineCPUToScreenColorExpandFill(
 				ScrnInfoPtr pScrn, int x,
 				int y, int w, int h, int skipleft);
 static void TridentSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno);
+#endif
 
 
 static void
@@ -183,7 +185,6 @@ TridentAccelInit(ScreenPtr pScreen)
 				TridentSetupForMono8x8PatternFill;
     	infoPtr->SubsequentMono8x8PatternFillRect = 
 				TridentSubsequentMono8x8PatternFillRect;
-    	infoPtr->MonoPatternPitch = 64;
     }
 
 #if 0 /* Not convinced this works 100% yet */
@@ -199,23 +200,27 @@ TridentAccelInit(ScreenPtr pScreen)
 				TridentSubsequentColor8x8PatternFillRect;
 #endif
 
-    infoPtr->ScanlineCPUToScreenColorExpandFillFlags = NO_PLANEMASK |
+#if 0 /* This is buggy, it only seems to work 95% of the time.... */
+    {
+    	infoPtr->ScanlineCPUToScreenColorExpandFillFlags = NO_PLANEMASK |
 					NO_TRANSPARENCY |
 					BIT_ORDER_IN_BYTE_MSBFIRST;
 
-    pTrident->XAAScanlineColorExpandBuffers[0] =
+    	pTrident->XAAScanlineColorExpandBuffers[0] =
 	    xnfalloc(((pScrn->virtualX + 63)) *4* (pScrn->bitsPerPixel / 8));
 
-    infoPtr->NumScanlineColorExpandBuffers = 1;
-    infoPtr->ScanlineColorExpandBuffers = 
+    	infoPtr->NumScanlineColorExpandBuffers = 1;
+    	infoPtr->ScanlineColorExpandBuffers = 
 					pTrident->XAAScanlineColorExpandBuffers;
 
-    infoPtr->SetupForScanlineCPUToScreenColorExpandFill =
+    	infoPtr->SetupForScanlineCPUToScreenColorExpandFill =
 			TridentSetupForScanlineCPUToScreenColorExpandFill;
-    infoPtr->SubsequentScanlineCPUToScreenColorExpandFill = 
+    	infoPtr->SubsequentScanlineCPUToScreenColorExpandFill = 
 			TridentSubsequentScanlineCPUToScreenColorExpandFill;
-    infoPtr->SubsequentColorExpandScanline = 
+    	infoPtr->SubsequentColorExpandScanline = 
 			TridentSubsequentColorExpandScanline;
+    }
+#endif
 
     return(XAAInit(pScreen, infoPtr));
 }
@@ -473,6 +478,7 @@ TridentSubsequentFillRectSolid(ScrnInfoPtr pScrn, int x, int y, int w, int h)
     TridentSync(pScrn);
 }
 
+#if 0
 static void MoveDWORDS(
    register CARD32* dest,
    register CARD32* src,
@@ -500,6 +506,7 @@ static void MoveDWORDS(
      dest += 1;
      src += 1;
 }
+#endif
 
 static void 
 TridentSetupForMono8x8PatternFill(ScrnInfoPtr pScrn, 
@@ -600,6 +607,7 @@ TridentSubsequentColor8x8PatternFillRect(ScrnInfoPtr pScrn,
 }
 #endif
 
+#if 0
 static void
 TridentSetupForScanlineCPUToScreenColorExpandFill(
 	ScrnInfoPtr pScrn,
@@ -662,3 +670,4 @@ TridentSubsequentColorExpandScanline(ScrnInfoPtr pScrn, int bufno)
     	TGUI_COMMAND(GE_BLT);
     }
 }
+#endif

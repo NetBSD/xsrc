@@ -22,7 +22,7 @@
  * Adapted from ts300.c by Alan Hourihane <alanh@fairlite.demon.co.uk>
  * For the Compaq IPAQ handheld, with the HP VGA Out Card (F1252A).
  */
-/* $XFree86: xc/programs/Xserver/hw/kdrive/ipaq/ipaq.c,v 1.3 2001/10/12 06:33:09 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/kdrive/ipaq/ipaq.c,v 1.4 2002/10/14 18:01:41 keithp Exp $ */
 
 #include "pcmcia.h"
 
@@ -58,28 +58,5 @@ extern pcmciaDisplayModeRec pcmciaDefaultModes[];
 int
 ddxProcessArgument (int argc, char **argv, int i)
 {
-    int	ret;
-    
-    if (!strcmp (argv[i], "-listmodes"))
-    {
-	int j = 0, bpp = 0;
-	ErrorF("Valid modes are....\n\n");
-	
-	for (bpp = 8; bpp < 24; bpp += 8) {
-    	  while (pcmciaDefaultModes[j].Width != 0) {
-	    if ((pcmciaDefaultModes[j].Width *
-		 pcmciaDefaultModes[j].Height * bpp/8) <= 512 * 1024) {
-		ErrorF("%dx%dx%dx%d\n",
-			pcmciaDefaultModes[j].Width,
-			pcmciaDefaultModes[j].Height,
-			bpp,
-			pcmciaDefaultModes[j].Refresh);
-	    }
-	    j++;
-	  }
-	  j = 0;
-	} 
-	exit(1);
-    }
     return KdProcessArgument (argc, argv, i);
 }

@@ -3,7 +3,7 @@
  *
  * accelerator functions for X
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/accelX.c,v 1.10 2001/06/15 21:22:54 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/accelX.c,v 1.12 2002/04/04 14:05:45 eich Exp $ */
 
 
 
@@ -17,7 +17,6 @@
 #include "vboard.h"
 #include "vmodes.h"
 #include "vos.h"
-#include "vmisc.h"
 #include "v1kregs.h"
 #include "v1krisc.h"
 #include "v2kregs.h"
@@ -117,11 +116,11 @@ RENDITIONAccelPreInit(ScrnInfoPtr pScreenInfo)
     ErrorF("RENDITION: RENDITIONAccelPreInit called\n");
     sleep(1);
 #endif
-
+#if 1
     if (RENDITIONLoadUcode(pScreenInfo)){
       ErrorF ("RENDITION: AccelPreInit - Warning. Loading of microcode failed!!\n");
     }
-
+#endif
     pRendition->board.fbOffset += MC_SIZE;
 
 #ifdef DEBUG
@@ -211,10 +210,10 @@ RENDITIONAccelXAAInit(ScreenPtr pScreen)
     AvailFBArea.x1 = 0;
     AvailFBArea.y1 = 0;
     AvailFBArea.x2 = pScreenInfo->displayWidth;
-    AvailFBArea.y2 = (((pScreenInfo->videoRam*1024)-
-		      pRendition->board.fbOffset) /
-      ((pScreenInfo->displayWidth * pScreenInfo->bitsPerPixel) / 8));
-
+    AvailFBArea.y2 = (((pScreenInfo->videoRam*1024) -
+		       pRendition->board.fbOffset) /
+		      ((pScreenInfo->displayWidth * pScreenInfo->bitsPerPixel)
+		       / 8));
     xf86InitFBManager(pScreen, &AvailFBArea);
 
     XAAInit(pScreen, pXAAinfo);
@@ -290,7 +289,7 @@ int
 RENDITIONInitUcode(ScrnInfoPtr pScreenInfo)
 {
     renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-    vu16 iob = pRendition->board.io_base;
+    IOADDRESS iob = pRendition->board.io_base;
 
     if (0 == verite_getstride(pScreenInfo, NULL,
 			 &pRendition->board.mode.stride0, 
@@ -368,7 +367,7 @@ void
 RENDITIONRestoreUcode(ScrnInfoPtr pScreenInfo)
 {
     renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-    vu16 iob = pRendition->board.io_base;
+    IOADDRESS iob = pRendition->board.io_base;
 
     vu8 memend;
 
@@ -411,7 +410,7 @@ void
 RENDITIONSaveUcode(ScrnInfoPtr pScreenInfo)
 {
     renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-    vu16 iob = pRendition->board.io_base;
+    IOADDRESS iob = pRendition->board.io_base;
     vu8 memend;
 
 #ifdef DEBUG
@@ -446,7 +445,7 @@ void
 RENDITIONSyncV1000(ScrnInfoPtr pScreenInfo)
 {
     renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-    vu16 iob = pRendition->board.io_base;
+    IOADDRESS iob = pRendition->board.io_base;
 
     int c;
 
@@ -556,7 +555,7 @@ RENDITIONSubsequentScreenToScreenCopy(ScrnInfoPtr pScreenInfo,
 					   int w, int h)
 {
     renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-    vu16 iob = pRendition->board.io_base;
+    IOADDRESS iob = pRendition->board.io_base;
 
 
 #ifdef DEBUG
@@ -608,7 +607,7 @@ RENDITIONSubsequentSolidFillRect(ScrnInfoPtr pScreenInfo,
 				      int x, int y, int w, int h)
 {
     renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-    vu16 iob = pRendition->board.io_base;
+    IOADDRESS iob = pRendition->board.io_base;
 
 
 #ifdef DEBUG
@@ -640,7 +639,7 @@ RENDITIONSubsequentTwoPointLine(ScrnInfoPtr pScreenInfo,
 				     int bias)
 {
     renditionPtr pRendition = RENDITIONPTR(pScreenInfo);
-    vu16 iob = pRendition->board.io_base;
+    IOADDRESS iob = pRendition->board.io_base;
 
 
 #ifdef DEBUG

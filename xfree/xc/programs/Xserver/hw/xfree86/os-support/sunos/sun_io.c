@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/sun_io.c,v 1.1 2001/05/28 02:42:31 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/sun_io.c,v 1.3 2003/02/17 15:12:00 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Dawes <dawes@xfree86.org>
@@ -53,4 +53,12 @@ xf86SetKbdLeds(int leds)
 {
 	if( ioctl(xf86Info.kbdFd, KIOCSLED, &leds) < 0 )
 		ErrorF("Failed to set Keyboard LED's\n");
+}
+
+#include "xf86OSKbd.h"
+
+Bool
+xf86OSKbdPreInit(InputInfoPtr pInfo)
+{
+    return FALSE;
 }

@@ -39,7 +39,7 @@
 ** tree and for generating both Motif(TM) 1.2 and 2.x versions of the widgets
 ** in the same library.
 */
-/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glw/GLwDrawA.h,v 1.3 2001/05/02 13:37:45 dawes Exp $ */
+/* $XFree86: xc/extras/ogl-sample/main/gfx/lib/glw/GLwDrawA.h,v 1.4 2002/05/31 16:36:50 dawes Exp $ */
 
 #ifndef _GLwDrawA_h
 #define _GLwDrawA_h
@@ -151,6 +151,7 @@
 #  define _GLwMDrawingAreaRec		_GLwM1DrawingAreaRec
 */
 #  define glwMDrawingAreaWidgetClass	glwM1DrawingAreaWidgetClass
+#  define glwMDrawingAreaClassRec	glwM1DrawingAreaClassRec
 #  define GLwCreateMDrawingArea		GLwCreateM1DrawingArea
 #elif XmVERSION == 2
 /*
@@ -158,6 +159,7 @@
 #  define _GLwMDrawingAreaRec		_GLwM2DrawingAreaRec
 */
 #  define glwMDrawingAreaWidgetClass	glwM2DrawingAreaWidgetClass
+#  define glwMDrawingAreaClassRec	glwM2DrawingAreaClassRec
 #  define GLwCreateMDrawingArea		GLwCreateM2DrawingArea
 #else
 #error "Sorry, unknown Motif version."

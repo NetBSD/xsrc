@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_xv.c,v 1.5 2001/11/21 22:43:00 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/s3v_xv.c,v 1.7 2003/02/04 02:20:50 dawes Exp $ */
 /*
 Copyright (C) 2000 The XFree86 Project, Inc.  All Rights Reserved.
 
@@ -55,6 +55,7 @@ in this Software without prior written authorization from the XFree86 Project.
 
 #ifndef XvExtension
 void S3VInitVideo(ScreenPtr pScreen) {}
+int S3VQueryXvCapable(ScrnInfoPtr) {return FALSE;}
 #else
 
 #if 0
@@ -93,6 +94,25 @@ static Atom xvBrightness, xvContrast, xvColorKey;
 
 #endif /* 0 */
 
+int S3VQueryXvCapable(ScrnInfoPtr pScrn)
+{
+  S3VPtr ps3v = S3VPTR(pScrn);
+
+  if(
+     ((pScrn->bitsPerPixel == 24) || 
+      (pScrn->bitsPerPixel == 16)
+      ) 
+     &&
+     ((ps3v->Chipset == S3_ViRGE_DXGX)  || 
+      S3_ViRGE_MX_SERIES(ps3v->Chipset) || 
+      S3_ViRGE_GX2_SERIES(ps3v->Chipset)
+      ))
+    return TRUE;
+  else
+    return FALSE;
+}
+
+
 void S3VInitVideo(ScreenPtr pScreen)
 {
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
@@ -115,7 +135,7 @@ void S3VInitVideo(ScreenPtr pScreen)
        && ps3v->XVideo
        )
     {
-	#if 0
+#if 0
 	if((pMga->Overlay8Plus24 /* || dualhead */ || pMga->TexturedVideo) &&
 	   (pScrn->bitsPerPixel != 24))
         {
@@ -123,12 +143,12 @@ void S3VInitVideo(ScreenPtr pScreen)
 	    newAdaptor = MGASetupImageVideoTexture(pScreen);
 	    pMga->TexturedVideo = TRUE;
 	} else {
-	#endif
+#endif
 
 	    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Using overlay video\n");
 	    newAdaptor = S3VSetupImageVideoOverlay(pScreen);
 
-	#if 0
+#if 0
 	    pMga->TexturedVideo = FALSE;
 	}*/
 
@@ -136,7 +156,7 @@ void S3VInitVideo(ScreenPtr pScreen)
 	  S3VInitOffscreenImages(pScreen);
 	pMga->BlockHandler = pScreen->BlockHandler;
 	pScreen->BlockHandler = MGABlockHandler;
-	#endif
+#endif
     }
     
 
@@ -762,6 +782,10 @@ S3VDisplayVideoOverlay(
   vgaCRIndex = vgaIOBase + 4;
   vgaCRReg = vgaIOBase + 5;
 
+   /* If streams aren't enabled, do nothing */
+   if(!ps3v->NeedSTREAMS)
+     return;
+
 #if 0
     /* got 64 scanlines to do it in */
     tmp = INREG(MGAREG_VCOUNT) + 64;
@@ -961,6 +985,10 @@ S3VPutImage(
    CARD32 tmp;
    static int once = 1;
    static int once2 = 1;
+
+   /* If streams aren't enabled, do nothing */
+   if(!ps3v->NeedSTREAMS)
+     return Success;
 
    /* Clip */
    x1 = src_x;

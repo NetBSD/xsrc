@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/Xft.h,v 1.19 2001/04/29 03:21:17 keithp Exp $
+ * $XFree86: xc/lib/Xft/Xft.h,v 1.32 2003/02/25 21:57:53 dawes Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -25,136 +25,41 @@
 #ifndef _XFT_H_
 #define _XFT_H_
 
-#include <X11/extensions/Xrender.h>
+#define XFT_MAJOR	2
+#define XFT_MINOR	1
+#define XFT_REVISION	0
+#define XFT_VERSION	((XFT_MAJOR * 10000) + (XFT_MINOR * 100) + (XFT_REVISION))
+#define XftVersion	XFT_VERSION
+
 #include <stdarg.h>
+#include <freetype/freetype.h>
+#include <fontconfig/fontconfig.h>
+#include <X11/extensions/Xrender.h>
 
 #include <X11/Xfuncproto.h>
-#include <X11/Xosdefs.h>
+/* #include <X11/Xosdefs.h>*/
 
-typedef unsigned char	XftChar8;
-typedef unsigned short	XftChar16;
-typedef unsigned int	XftChar32;
+#ifndef _XFT_NO_COMPAT_
+#include <X11/Xft/XftCompat.h>
+#endif
 
-#define XFT_FAMILY	    "family"	/* String */
-#define XFT_STYLE	    "style"	/* String */
-#define XFT_SLANT	    "slant"	/* Int */
-#define XFT_WEIGHT	    "weight"	/* Int */
-#define XFT_SIZE	    "size"	/* Double */
-#define XFT_PIXEL_SIZE	    "pixelsize"	/* Double */
-#define XFT_ENCODING	    "encoding"	/* String */
-#define XFT_SPACING	    "spacing"	/* Int */
-#define XFT_FOUNDRY	    "foundry"	/* String */
-#define XFT_CORE	    "core"	/* Bool */
-#define XFT_ANTIALIAS	    "antialias"	/* Bool */
-#define XFT_XLFD	    "xlfd"	/* String */
-#define XFT_FILE	    "file"	/* String */
-#define XFT_INDEX	    "index"	/* Int */
-#define XFT_RASTERIZER	    "rasterizer"/* String */
-#define XFT_OUTLINE	    "outline"	/* Bool */
-#define XFT_SCALABLE	    "scalable"	/* Bool */
-#define XFT_RGBA	    "rgba"	/* Int */
+#define XFT_CORE		"core"
+#define XFT_RENDER		"render"
+#define XFT_XLFD		"xlfd"
+#define XFT_MAX_GLYPH_MEMORY	"maxglyphmemory"
+#define XFT_MAX_UNREF_FONTS	"maxunreffonts"
 
-/* defaults from resources */
-#define XFT_SCALE	    "scale"	/* double */
-#define XFT_RENDER	    "render"	/* Bool */
-#define XFT_MINSPACE	    "minspace"	/* Bool use minimum line spacing */
-#define XFT_DPI		    "dpi"	/* double */
+extern FT_Library	_XftFTlibrary;
 
-/* specific to FreeType rasterizer */
-#define XFT_CHAR_WIDTH	    "charwidth"	/* Int */
-#define XFT_CHAR_HEIGHT	    "charheight"/* Int */
-#define XFT_MATRIX	    "matrix"    /* XftMatrix */
-
-#define XFT_WEIGHT_LIGHT	0
-#define XFT_WEIGHT_MEDIUM	100
-#define XFT_WEIGHT_DEMIBOLD	180
-#define XFT_WEIGHT_BOLD		200
-#define XFT_WEIGHT_BLACK	210
-
-#define XFT_SLANT_ROMAN		0
-#define XFT_SLANT_ITALIC	100
-#define XFT_SLANT_OBLIQUE	110
-
-#define XFT_PROPORTIONAL    0
-#define XFT_MONO	    100
-#define XFT_CHARCELL	    110
-
-#define XFT_RGBA_NONE	    0
-#define XFT_RGBA_RGB	    1
-#define XFT_RGBA_BGR	    2
-#define XFT_RGBA_VRGB	    3
-#define XFT_RGBA_VBGR	    4
-
-typedef enum _XftType {
-    XftTypeVoid, 
-    XftTypeInteger, 
-    XftTypeDouble, 
-    XftTypeString, 
-    XftTypeBool,
-    XftTypeMatrix
-} XftType;
-
-typedef struct _XftMatrix {
-    double xx, xy, yx, yy;
-} XftMatrix;
-
-#define XftMatrixInit(m)	((m)->xx = (m)->yy = 1, \
-				 (m)->xy = (m)->yx = 0)
-
-typedef enum _XftResult {
-    XftResultMatch, XftResultNoMatch, XftResultTypeMismatch, XftResultNoId
-} XftResult;
-
-typedef struct _XftValue {
-    XftType	type;
-    union {
-	char    *s;
-	int	i;
-	Bool	b;
-	double	d;
-	XftMatrix *m;
-    } u;
-} XftValue;
-
-typedef struct _XftValueList {
-    struct _XftValueList    *next;
-    XftValue		    value;
-} XftValueList;
-
-typedef struct _XftPatternElt {
-    const char	    *object;
-    XftValueList    *values;
-} XftPatternElt;
-
-typedef struct _XftPattern {
-    int		    num;
-    int		    size;
-    XftPatternElt   *elts;
-} XftPattern;
-
-typedef struct _XftFontSet {
-    int		nfont;
-    int		sfont;
-    XftPattern	**fonts;
-} XftFontSet;
-
-typedef struct _XftFontStruct	XftFontStruct;
+typedef struct _XftFontInfo XftFontInfo;
 
 typedef struct _XftFont {
     int		ascent;
     int		descent;
     int		height;
     int		max_advance_width;
-    Bool	core;
-    XftPattern	*pattern;
-    union {
-	struct {
-	    XFontStruct	    *font;
-	} core;
-	struct {
-	    XftFontStruct   *font;
-	} ft;
-    } u;
+    FcCharSet	*charset;
+    FcPattern	*pattern;
 } XftFont;
 
 typedef struct _XftDraw XftDraw;
@@ -164,31 +69,48 @@ typedef struct _XftColor {
     XRenderColor    color;
 } XftColor;
 
-typedef struct _XftObjectSet {
-    int		nobject;
-    int		sobject;
-    const char	**objects;
-} XftObjectSet;
+typedef struct _XftCharSpec {
+    FcChar32	    ucs4;
+    short	    x;
+    short	    y;
+} XftCharSpec;
+
+typedef struct _XftCharFontSpec {
+    XftFont	    *font;
+    FcChar32	    ucs4;
+    short	    x;
+    short	    y;
+} XftCharFontSpec;
+
+typedef struct _XftGlyphSpec {
+    FT_UInt	    glyph;
+    short	    x;
+    short	    y;
+} XftGlyphSpec;
+
+typedef struct _XftGlyphFontSpec {
+    XftFont	    *font;
+    FT_UInt	    glyph;
+    short	    x;
+    short	    y;
+} XftGlyphFontSpec;
 
 _XFUNCPROTOBEGIN
 
-/* xftcfg.c */
-Bool
-XftConfigSubstitute (XftPattern *p);
-
+    
 /* xftcolor.c */
 Bool
 XftColorAllocName (Display  *dpy,
-		   Visual   *visual,
+		   _Xconst Visual   *visual,
 		   Colormap cmap,
-		   char	    *name,
+		   _Xconst char	    *name,
 		   XftColor *result);
 
 Bool
 XftColorAllocValue (Display	    *dpy,
 		    Visual	    *visual,
 		    Colormap	    cmap,
-		    XRenderColor    *color,
+		    _Xconst XRenderColor    *color,
 		    XftColor	    *result);
 
 void
@@ -199,29 +121,23 @@ XftColorFree (Display	*dpy,
 
 
 /* xftcore.c */
-/* xftdbg.c */
-void
-XftValuePrint (XftValue v);
-
-void
-XftValueListPrint (XftValueList *l);
-
-void
-XftPatternPrint (XftPattern *p);
-
-void
-XftFontSetPrint (XftFontSet *s);
 
 /* xftdir.c */
+FcBool
+XftDirScan (FcFontSet *set, _Xconst char *dir, FcBool force);
+
+FcBool
+XftDirSave (FcFontSet *set, _Xconst char *dir);
+
 /* xftdpy.c */
 Bool
 XftDefaultHasRender (Display *dpy);
     
 Bool
-XftDefaultSet (Display *dpy, XftPattern *defaults);
+XftDefaultSet (Display *dpy, FcPattern *defaults);
 
 void
-XftDefaultSubstitute (Display *dpy, int screen, XftPattern *pattern);
+XftDefaultSubstitute (Display *dpy, int screen, FcPattern *pattern);
     
 /* xftdraw.c */
 
@@ -235,290 +151,482 @@ XftDraw *
 XftDrawCreateBitmap (Display  *dpy,
 		     Pixmap   bitmap);
 
+XftDraw *
+XftDrawCreateAlpha (Display *dpy, 
+		    Pixmap  pixmap,
+		    int	    depth);
+
 void
 XftDrawChange (XftDraw	*draw,
 	       Drawable	drawable);
 
+Display *
+XftDrawDisplay (XftDraw *draw);
+
+Drawable
+XftDrawDrawable (XftDraw *draw);
+
+Colormap
+XftDrawColormap (XftDraw *draw);
+
+Visual *
+XftDrawVisual (XftDraw *draw);
+
 void
 XftDrawDestroy (XftDraw	*draw);
 
-void
-XftDrawString8 (XftDraw		*d,
-		XftColor	*color,
-		XftFont		*font,
-		int		x, 
-		int		y,
-		XftChar8	*string,
-		int		len);
+Picture
+XftDrawPicture (XftDraw *draw);
+
+Picture
+XftDrawSrcPicture (XftDraw *draw, _Xconst XftColor *color);
 
 void
-XftDrawString16 (XftDraw	*draw,
-		 XftColor	*color,
-		 XftFont	*font,
-		 int		x,
-		 int		y,
-		 XftChar16	*string,
-		 int		len);
+XftDrawGlyphs (XftDraw		*draw,
+	       _Xconst XftColor	*color,
+	       XftFont		*pub,
+	       int		x,
+	       int		y,
+	       _Xconst FT_UInt	*glyphs,
+	       int		nglyphs);
 
 void
-XftDrawString32 (XftDraw	*draw,
-		 XftColor	*color,
-		 XftFont	*font,
-		 int		x,
-		 int		y,
-		 XftChar32	*string,
-		 int		len);
+XftDrawString8 (XftDraw		    *draw,
+		_Xconst XftColor    *color,
+		XftFont		    *pub,
+		int		    x, 
+		int		    y,
+		_Xconst FcChar8	    *string,
+		int		    len);
 
 void
-XftDrawStringUtf8 (XftDraw	*d,
-		   XftColor	*color,
-		   XftFont	*font,
-		   int		x, 
-		   int		y,
-		   XftChar8	*string,
-		   int		len);
+XftDrawString16 (XftDraw	    *draw,
+		 _Xconst XftColor   *color,
+		 XftFont	    *pub,
+		 int		    x,
+		 int		    y,
+		 _Xconst FcChar16   *string,
+		 int		    len);
 
 void
-XftDrawRect (XftDraw	    *d,
-	     XftColor	    *color,
-	     int	    x, 
-	     int	    y,
-	     unsigned int   width,
-	     unsigned int   height);
+XftDrawString32 (XftDraw	    *draw,
+		 _Xconst XftColor   *color,
+		 XftFont	    *pub,
+		 int		    x,
+		 int		    y,
+		 _Xconst FcChar32   *string,
+		 int		    len);
+
+void
+XftDrawStringUtf8 (XftDraw	    *draw,
+		   _Xconst XftColor *color,
+		   XftFont	    *pub,
+		   int		    x, 
+		   int		    y,
+		   _Xconst FcChar8  *string,
+		   int		    len);
+
+void
+XftDrawStringUtf16 (XftDraw		*draw,
+		    _Xconst XftColor	*color,
+		    XftFont		*pub,
+		    int			x,
+		    int			y,
+		    _Xconst FcChar8	*string,
+		    FcEndian		endian,
+		    int			len);
+
+void
+XftDrawCharSpec (XftDraw		*draw,
+		 _Xconst XftColor	*color,
+		 XftFont		*pub,
+		 _Xconst XftCharSpec	*chars,
+		 int			len);
+
+void
+XftDrawCharFontSpec (XftDraw			*draw,
+		     _Xconst XftColor		*color,
+		     _Xconst XftCharFontSpec	*chars,
+		     int			len);
+
+void
+XftDrawGlyphSpec (XftDraw		*draw,
+		  _Xconst XftColor	*color,
+		  XftFont		*pub,
+		  _Xconst XftGlyphSpec	*glyphs,
+		  int			len);
+
+void
+XftDrawGlyphFontSpec (XftDraw			*draw,
+		      _Xconst XftColor		*color,
+		      _Xconst XftGlyphFontSpec	*glyphs,
+		      int			len);
+
+void
+XftDrawRect (XftDraw		*draw,
+	     _Xconst XftColor	*color,
+	     int		x, 
+	     int		y,
+	     unsigned int	width,
+	     unsigned int	height);
 
 
 Bool
-XftDrawSetClip (XftDraw	    *d,
+XftDrawSetClip (XftDraw	    *draw,
 		Region	    r);
+
+
+Bool
+XftDrawSetClipRectangles (XftDraw		*draw,
+			  int			xOrigin,
+			  int			yOrigin,
+			  _Xconst XRectangle	*rects,
+			  int			n);
+
+void
+XftDrawSetSubwindowMode (XftDraw    *draw,
+			 int	    mode);
 
 /* xftextent.c */
 
 void
-XftTextExtents8 (Display	*dpy,
-		 XftFont	*font,
-		 XftChar8	*string, 
-		 int		len,
-		 XGlyphInfo	*extents);
+XftGlyphExtents (Display	    *dpy,
+		 XftFont	    *pub,
+		 _Xconst FT_UInt    *glyphs,
+		 int		    nglyphs,
+		 XGlyphInfo	    *extents);
+
+void
+XftTextExtents8 (Display	    *dpy,
+		 XftFont	    *pub,
+		 _Xconst FcChar8    *string, 
+		 int		    len,
+		 XGlyphInfo	    *extents);
 
 void
 XftTextExtents16 (Display	    *dpy,
-		  XftFont	    *font,
-		  XftChar16	    *string, 
+		  XftFont	    *pub,
+		  _Xconst FcChar16  *string, 
 		  int		    len,
 		  XGlyphInfo	    *extents);
 
 void
-XftTextExtents32 (Display	*dpy,
-		  XftFont	*font,
-		  XftChar32	*string, 
-		  int		len,
-		  XGlyphInfo	*extents);
+XftTextExtents32 (Display	    *dpy,
+		  XftFont	    *pub,
+		  _Xconst FcChar32  *string, 
+		  int		    len,
+		  XGlyphInfo	    *extents);
     
 void
-XftTextExtentsUtf8 (Display	*dpy,
-		    XftFont	*font,
-		    XftChar8	*string, 
-		    int		len,
-		    XGlyphInfo	*extents);
+XftTextExtentsUtf8 (Display	    *dpy,
+		    XftFont	    *pub,
+		    _Xconst FcChar8 *string, 
+		    int		    len,
+		    XGlyphInfo	    *extents);
+
+void
+XftTextExtentsUtf16 (Display		*dpy,
+		     XftFont		*pub,
+		     _Xconst FcChar8	*string, 
+		     FcEndian		endian,
+		     int		len,
+		     XGlyphInfo		*extents);
 
 /* xftfont.c */
-XftPattern *
-XftFontMatch (Display *dpy, int screen, XftPattern *pattern, XftResult *result);
-
-XftFont *
-XftFontOpenPattern (Display *dpy, XftPattern *pattern);
+FcPattern *
+XftFontMatch (Display		*dpy,
+	      int		screen,
+	      _Xconst FcPattern *pattern,
+	      FcResult		*result);
 
 XftFont *
 XftFontOpen (Display *dpy, int screen, ...);
 
 XftFont *
-XftFontOpenName (Display *dpy, int screen, const char *name);
+XftFontOpenName (Display *dpy, int screen, _Xconst char *name);
 
 XftFont *
-XftFontOpenXlfd (Display *dpy, int screen, const char *xlfd);
+XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd);
 
-void
-XftFontClose (Display *dpy, XftFont *font);
-
-Bool
-XftGlyphExists (Display *dpy, XftFont *font, XftChar32 glyph);
-    
 /* xftfreetype.c */
-/* xftfs.c */
 
-XftFontSet *
-XftFontSetCreate (void);
+FT_Face
+XftLockFace (XftFont *pub);
 
 void
-XftFontSetDestroy (XftFontSet *s);
+XftUnlockFace (XftFont *pub);
 
-Bool
-XftFontSetAdd (XftFontSet *s, XftPattern *font);
+XftFontInfo *
+XftFontInfoCreate (Display *dpy, _Xconst FcPattern *pattern);
+
+void
+XftFontInfoDestroy (Display *dpy, XftFontInfo *fi);
+
+FcChar32
+XftFontInfoHash (_Xconst XftFontInfo *fi);
+
+FcBool
+XftFontInfoEqual (_Xconst XftFontInfo *a, _Xconst XftFontInfo *b);
+
+XftFont *
+XftFontOpenInfo (Display	*dpy, 
+		 FcPattern	*pattern, 
+		 XftFontInfo	*fi);
+
+XftFont *
+XftFontOpenPattern (Display *dpy, FcPattern *pattern);
+
+XftFont *
+XftFontCopy (Display *dpy, XftFont *pub);
+
+void
+XftFontClose (Display *dpy, XftFont *pub);
+
+FcBool
+XftInitFtLibrary(void);
 
 /* xftglyphs.c */
-/* see XftFreetype.h */
+void
+XftFontLoadGlyphs (Display	    *dpy,
+		   XftFont	    *pub,
+		   FcBool	    need_bitmaps,
+		   _Xconst FT_UInt  *glyphs,
+		   int		    nglyph);
 
+void
+XftFontUnloadGlyphs (Display		*dpy,
+		     XftFont		*pub,
+		     _Xconst FT_UInt	*glyphs,
+		     int		nglyph);
+
+#define XFT_NMISSING		256
+
+FcBool
+XftFontCheckGlyph (Display  *dpy,
+		   XftFont  *pub,
+		   FcBool   need_bitmaps,
+		   FT_UInt  glyph,
+		   FT_UInt  *missing,
+		   int	    *nmissing);
+
+FcBool
+XftCharExists (Display	    *dpy,
+	       XftFont	    *pub,
+	       FcChar32    ucs4);
+    
+FT_UInt
+XftCharIndex (Display	    *dpy, 
+	      XftFont	    *pub,
+	      FcChar32	    ucs4);
+    
 /* xftgram.y */
 
 /* xftinit.c */
-Bool
-XftInit (char *config);
-    
+FcBool
+XftInit (_Xconst char *config);
+
+int
+XftGetVersion (void);
+
 /* xftlex.l */
 
 /* xftlist.c */
-XftObjectSet *
-XftObjectSetCreate (void);
 
-Bool
-XftObjectSetAdd (XftObjectSet *os, const char *object);
-
-void
-XftObjectSetDestroy (XftObjectSet *os);
-
-XftObjectSet *
-XftObjectSetVaBuild (const char *first, va_list va);
-
-XftObjectSet *
-XftObjectSetBuild (const char *first, ...);
-
-XftFontSet *
-XftListFontSets (XftFontSet	**sets,
-		 int		nsets,
-		 XftPattern	*p,
-		 XftObjectSet	*os);
-
-XftFontSet *
-XftListFontsPatternObjects (Display	    *dpy,
-			    int		    screen,
-			    XftPattern	    *pattern,
-			    XftObjectSet    *os);
-
-XftFontSet *
+FcFontSet *
 XftListFonts (Display	*dpy,
 	      int	screen,
 	      ...);
 
 /* xftmatch.c */
-XftPattern *
-XftFontSetMatch (XftFontSet	**sets, 
-		 int		nsets, 
-		 XftPattern	*p, 
-		 XftResult	*result);
 
 /* xftmatrix.c */
-int
-XftMatrixEqual (const XftMatrix *mat1, const XftMatrix *mat2);
-
-void
-XftMatrixMultiply (XftMatrix *result, XftMatrix *a, XftMatrix *b);
-
-void
-XftMatrixRotate (XftMatrix *m, double c, double s);
-
-void
-XftMatrixScale (XftMatrix *m, double sx, double sy);
-
-void
-XftMatrixShear (XftMatrix *m, double sh, double sv);
 
 /* xftname.c */
-XftPattern *
-XftNameParse (const char *name);
-
-Bool
-XftNameUnparse (XftPattern *pat, char *dest, int len);
+FcPattern 
+*XftNameParse (_Xconst char *name);
 
 /* xftpat.c */
-XftPattern *
-XftPatternCreate (void);
-
-XftPattern *
-XftPatternDuplicate (XftPattern *p);
-
-void
-XftValueDestroy (XftValue v);
-
-void
-XftValueListDestroy (XftValueList *l);
-    
-void
-XftPatternDestroy (XftPattern *p);
-
-XftPatternElt *
-XftPatternFind (XftPattern *p, const char *object, Bool insert);
-
-Bool
-XftPatternAdd (XftPattern *p, const char *object, XftValue value, Bool append);
-    
-XftResult
-XftPatternGet (XftPattern *p, const char *object, int id, XftValue *v);
-    
-Bool
-XftPatternDel (XftPattern *p, const char *object);
-
-Bool
-XftPatternAddInteger (XftPattern *p, const char *object, int i);
-
-Bool
-XftPatternAddDouble (XftPattern *p, const char *object, double d);
-
-Bool
-XftPatternAddString (XftPattern *p, const char *object, const char *s);
-
-Bool
-XftPatternAddMatrix (XftPattern *p, const char *object, const XftMatrix *s);
-
-Bool
-XftPatternAddBool (XftPattern *p, const char *object, Bool b);
-
-XftResult
-XftPatternGetInteger (XftPattern *p, const char *object, int n, int *i);
-
-XftResult
-XftPatternGetDouble (XftPattern *p, const char *object, int n, double *d);
-
-XftResult
-XftPatternGetString (XftPattern *p, const char *object, int n, char **s);
-
-XftResult
-XftPatternGetMatrix (XftPattern *p, const char *object, int n, XftMatrix **s);
-
-XftResult
-XftPatternGetBool (XftPattern *p, const char *object, int n, Bool *b);
-
-XftPattern *
-XftPatternVaBuild (XftPattern *orig, va_list va);
-    
-XftPattern *
-XftPatternBuild (XftPattern *orig, ...);
 
 /* xftrender.c */
-/* see XftFreetype.h */
+void
+XftGlyphRender (Display		*dpy,
+		int		op,
+		Picture		src,
+		XftFont		*pub,
+		Picture		dst,
+		int		srcx,
+		int		srcy,
+		int		x,
+		int		y,
+		_Xconst FT_UInt	*glyphs,
+		int		nglyphs);
+
+void
+XftGlyphSpecRender (Display		    *dpy,
+		    int			    op,
+		    Picture		    src,
+		    XftFont		    *pub,
+		    Picture		    dst,
+		    int			    srcx,
+		    int			    srcy,
+		    _Xconst XftGlyphSpec    *glyphs,
+		    int			    nglyphs);
+
+void
+XftCharSpecRender (Display		*dpy,
+		   int			op,
+		   Picture		src,
+		   XftFont		*pub,
+		   Picture		dst,
+		   int			srcx, 
+		   int			srcy,
+		   _Xconst XftCharSpec	*chars,
+		   int			len);
+
+void
+XftGlyphFontSpecRender (Display			    *dpy,
+			int			    op,
+			Picture			    src,
+			Picture			    dst,
+			int			    srcx,
+			int			    srcy,
+			_Xconst XftGlyphFontSpec    *glyphs,
+			int			    nglyphs);
+
+void
+XftCharFontSpecRender (Display			*dpy,
+		       int			op,
+		       Picture			src,
+		       Picture			dst,
+		       int			srcx,
+		       int			srcy,
+		       _Xconst XftCharFontSpec	*chars,
+		       int			len);
+
+void
+XftTextRender8 (Display		*dpy,
+		int		op,
+		Picture		src,
+		XftFont		*pub,
+		Picture		dst,
+		int		srcx,
+		int		srcy,
+		int		x,
+		int		y,
+		_Xconst FcChar8	*string,
+		int		len);
+
+void
+XftTextRender16 (Display	    *dpy,
+		 int		    op,
+		 Picture	    src,
+		 XftFont	    *pub,
+		 Picture	    dst,
+		 int		    srcx,
+		 int		    srcy,
+		 int		    x,
+		 int		    y,
+		 _Xconst FcChar16   *string,
+		 int		    len);
+
+void
+XftTextRender16BE (Display	    *dpy,
+		   int		    op,
+		   Picture	    src,
+		   XftFont	    *pub,
+		   Picture	    dst,
+		   int		    srcx,
+		   int		    srcy,
+		   int		    x,
+		   int		    y,
+		   _Xconst FcChar8  *string,
+		   int		    len);
+
+void
+XftTextRender16LE (Display	    *dpy,
+		   int		    op,
+		   Picture	    src,
+		   XftFont	    *pub,
+		   Picture	    dst,
+		   int		    srcx,
+		   int		    srcy,
+		   int		    x,
+		   int		    y,
+		   _Xconst FcChar8  *string,
+		   int		    len);
+
+void
+XftTextRender32 (Display	    *dpy,
+		 int		    op,
+		 Picture	    src,
+		 XftFont	    *pub,
+		 Picture	    dst,
+		 int		    srcx,
+		 int		    srcy,
+		 int		    x,
+		 int		    y,
+		 _Xconst FcChar32   *string,
+		 int		    len);
+
+void
+XftTextRender32BE (Display	    *dpy,
+		   int		    op,
+		   Picture	    src,
+		   XftFont	    *pub,
+		   Picture	    dst,
+		   int		    srcx,
+		   int		    srcy,
+		   int		    x,
+		   int		    y,
+		   _Xconst FcChar8  *string,
+		   int		    len);
+
+void
+XftTextRender32LE (Display	    *dpy,
+		   int		    op,
+		   Picture	    src,
+		   XftFont	    *pub,
+		   Picture	    dst,
+		   int		    srcx,
+		   int		    srcy,
+		   int		    x,
+		   int		    y,
+		   _Xconst FcChar8  *string,
+		   int		    len);
+
+void
+XftTextRenderUtf8 (Display	    *dpy,
+		   int		    op,
+		   Picture	    src,
+		   XftFont	    *pub,
+		   Picture	    dst,
+		   int		    srcx,
+		   int		    srcy,
+		   int		    x,
+		   int		    y,
+		   _Xconst FcChar8  *string,
+		   int		    len);
+
+void
+XftTextRenderUtf16 (Display	    *dpy,
+		    int		    op,
+		    Picture	    src,
+		    XftFont	    *pub,
+		    Picture	    dst,
+		    int		    srcx,
+		    int		    srcy,
+		    int		    x,
+		    int		    y,
+		    _Xconst FcChar8 *string,
+		    FcEndian	    endian,
+		    int		    len);
 
 /* xftstr.c */
 
-int
-XftUtf8ToUcs4 (XftChar8    *src_orig,
-	       XftChar32   *dst,
-	       int	    len);
-
-Bool
-XftUtf8Len (XftChar8	*string,
-	    int		len,
-	    int		*nchar,
-	    int		*wchar);
-
 /* xftxlfd.c */
-XftPattern *
-XftXlfdParse (const char *xlfd_orig, Bool ignore_scalable, Bool complete);
+FcPattern *
+XftXlfdParse (_Xconst char *xlfd_orig, Bool ignore_scalable, Bool complete);
     
-XFontStruct *
-XftCoreOpen (Display *dpy, XftPattern *pattern);
-
-void
-XftCoreClose (Display *dpy, XFontStruct *font);
-
 _XFUNCPROTOEND
 
 #endif /* _XFT_H_ */

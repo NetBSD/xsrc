@@ -1,9 +1,11 @@
-/* $XFree86: xc/programs/xedit/strcasecmp.c,v 1.1 1999/06/14 02:38:07 dawes Exp $ */
+/* $XFree86: xc/programs/xedit/strcasecmp.c,v 1.3 2002/02/10 02:50:05 paulo Exp $ */
 
 #include <ctype.h>
 #include <sys/types.h>
 
+#ifndef LISP
 #include "xedit.h"
+#endif
 
 /* Just like the BSD version.  It assumes that tolower() is ANSI-compliant */
 

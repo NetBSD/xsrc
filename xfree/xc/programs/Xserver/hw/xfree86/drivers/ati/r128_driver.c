@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_driver.c,v 1.57.2.1 2002/08/14 17:36:15 anderson Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/r128_driver.c,v 1.75 2003/02/19 01:19:41 dawes Exp $ */
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
  *                      Precision Insight, Inc., Cedar Park, Texas, and
@@ -126,6 +126,7 @@ typedef enum {
   OPTION_DAC_6BIT,
   OPTION_DAC_8BIT,
 #ifdef XF86DRI
+  OPTION_XV_DMA,
   OPTION_IS_PCI,
   OPTION_CCE_PIO,
   OPTION_NO_SECURITY,
@@ -154,6 +155,7 @@ const OptionInfoRec R128Options[] = {
   { OPTION_DAC_6BIT,     "Dac6Bit",          OPTV_BOOLEAN, {0}, FALSE },
   { OPTION_DAC_8BIT,     "Dac8Bit",          OPTV_BOOLEAN, {0}, TRUE  },
 #ifdef XF86DRI
+  { OPTION_XV_DMA,       "DMAForXv",         OPTV_BOOLEAN, {0}, FALSE },
   { OPTION_IS_PCI,       "ForcePCIMode",     OPTV_BOOLEAN, {0}, FALSE },
   { OPTION_CCE_PIO,      "CCEPIOMode",       OPTV_BOOLEAN, {0}, FALSE },
   { OPTION_NO_SECURITY,  "CCENoSecurity",    OPTV_BOOLEAN, {0}, FALSE },
@@ -199,6 +201,8 @@ static const char *fbdevHWSymbols[] = {
     "fbdevHWUseBuildinMode",
     "fbdevHWGetLineLength",
     "fbdevHWGetVidmem",
+
+    "fbdevHWDPMSSet",
 
     /* colormap */
     "fbdevHWLoadPalette",
@@ -280,18 +284,17 @@ static const char *drmSymbols[] = {
     "drmAgpUnbind",
     "drmAgpVendorId",
     "drmAvailable",
+    "drmCommandNone",
+    "drmCommandRead",
+    "drmCommandWrite",
+    "drmCommandWriteRead",
+    "drmFreeBufs",
     "drmFreeVersion",
+    "drmGetLibVersion",
     "drmGetVersion",
     "drmMap",
     "drmMapBufs",
     "drmDMA",
-    "drmR128CleanupCCE",
-    "drmR128InitCCE",
-    "drmR128ResetCCE",
-    "drmR128StartCCE",
-    "drmR128StopCCE",
-    "drmR128WaitForIdleCCE",
-    "drmR128FlushIndirectBuffer",
     "drmScatterGatherAlloc",
     "drmScatterGatherFree",
     "drmUnmap",
@@ -327,6 +330,33 @@ static const char *int10Symbols[] = {
     "xf86int10Addr",
     NULL
 };
+
+void R128LoaderRefSymLists(void)
+{
+    /*
+     * Tell the loader about symbols from other modules that this module might
+     * refer to.
+     */
+    xf86LoaderRefSymLists(vgahwSymbols,
+#ifdef USE_FB
+		      fbSymbols,
+#else
+		      cfbSymbols,
+#endif
+		      xaaSymbols,
+		      ramdacSymbols,
+#ifdef XF86DRI
+		      drmSymbols,
+		      driSymbols,
+#endif
+		      fbdevHWSymbols,
+		      int10Symbols,
+		      vbeSymbols,
+		      /* ddcsymbols, */
+		      i2cSymbols,
+		      /* shadowSymbols, */
+		      NULL);
+}
 
 /* Allocate our private R128InfoRec. */
 static Bool R128GetRec(ScrnInfoPtr pScrn)
@@ -537,7 +567,7 @@ static Bool R128GetBIOSParameters(ScrnInfoPtr pScrn, xf86Int10InfoPtr pInt10)
 	    xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
 		       "Attempting to read Video BIOS from legacy ISA space!\n");
 	    info->BIOSAddr = 0x000c0000;
-	    xf86ReadBIOS(info->BIOSAddr, 0, info->VBIOS, R128_VBIOS_SIZE);
+	    xf86ReadDomainMemory(info->PciTag, info->BIOSAddr, R128_VBIOS_SIZE, info->VBIOS);
 	}
     }
     if (info->VBIOS[0] != 0x55 || info->VBIOS[1] != 0xaa) {
@@ -899,10 +929,44 @@ static Bool R128PreInitConfig(ScrnInfoPtr pScrn)
 	switch (info->Chipset) {
 	/* R128 Pro and Pro2 can have DFP, we will deal with it.
 	   No support for dual-head/xinerama yet.
-          M3 can also have DFP, no support for now */	
+           M3 can also have DFP, no support for now */	
 	case PCI_CHIP_RAGE128TF: 
 	case PCI_CHIP_RAGE128TL:
-	case PCI_CHIP_RAGE128TR: info->isPro2 = TRUE; 
+	case PCI_CHIP_RAGE128TR:
+	/* FIXME: RAGE128 TS/TT/TU are assumed to be PRO2 as all 6 chips came
+	 *        out at the same time, so are of the same family likely.
+	 *        This requires confirmation however to be fully correct.
+	 *        Mike A. Harris <mharris@redhat.com>
+	 */
+	case PCI_CHIP_RAGE128TS: 
+	case PCI_CHIP_RAGE128TT:
+	case PCI_CHIP_RAGE128TU: info->isPro2 = TRUE; 
+	/* FIXME: RAGE128 P[ABCEGHIJKLMNOQSTUVWX] are assumed to have DFP
+	 *        capability, as the comment at the top suggests.
+	 *        This requires confirmation however to be fully correct.
+	 *        Mike A. Harris <mharris@redhat.com>
+	 */
+	case PCI_CHIP_RAGE128PA:
+	case PCI_CHIP_RAGE128PB:
+	case PCI_CHIP_RAGE128PC:
+	case PCI_CHIP_RAGE128PE:
+	case PCI_CHIP_RAGE128PG:
+	case PCI_CHIP_RAGE128PH:
+	case PCI_CHIP_RAGE128PI:
+	case PCI_CHIP_RAGE128PJ:
+	case PCI_CHIP_RAGE128PK:
+	case PCI_CHIP_RAGE128PL:
+	case PCI_CHIP_RAGE128PM:
+	case PCI_CHIP_RAGE128PN:
+	case PCI_CHIP_RAGE128PO:
+	case PCI_CHIP_RAGE128PQ:
+	case PCI_CHIP_RAGE128PS:
+	case PCI_CHIP_RAGE128PT:
+	case PCI_CHIP_RAGE128PU:
+	case PCI_CHIP_RAGE128PV:
+	case PCI_CHIP_RAGE128PW:
+	case PCI_CHIP_RAGE128PX:
+
 	case PCI_CHIP_RAGE128PD:
 	case PCI_CHIP_RAGE128PF:
 	case PCI_CHIP_RAGE128PP:
@@ -918,6 +982,18 @@ static Bool R128PreInitConfig(ScrnInfoPtr pScrn)
 	case PCI_CHIP_RAGE128RK:
 	case PCI_CHIP_RAGE128RL:
 	case PCI_CHIP_RAGE128SM:
+	/* FIXME: RAGE128 S[EFGHKLN] are assumed to be like the SM above as
+	 *        all of them are listed as "Rage 128 4x" in ATI docs.
+	 *        This requires confirmation however to be fully correct.
+	 *        Mike A. Harris <mharris@redhat.com>
+	 */
+	case PCI_CHIP_RAGE128SE:
+	case PCI_CHIP_RAGE128SF:
+	case PCI_CHIP_RAGE128SG:
+	case PCI_CHIP_RAGE128SH:
+	case PCI_CHIP_RAGE128SK:
+	case PCI_CHIP_RAGE128SL:
+	case PCI_CHIP_RAGE128SN:
 	default:                 info->HasPanelRegs = FALSE; break;
 	}
     }
@@ -1009,7 +1085,6 @@ static Bool R128PreInitConfig(ScrnInfoPtr pScrn)
 	       "VideoRAM: %d kByte (%s)\n", pScrn->videoRam, info->ram->name);
 
 				/* Flat panel (part 2) */
-    if (info->HasPanelRegs) {
 	switch (info->BIOSDisplay) {
 	case R128_BIOS_DISPLAY_FP:
 	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
@@ -1026,6 +1101,7 @@ static Bool R128PreInitConfig(ScrnInfoPtr pScrn)
 	    break;
 	}
 
+    if (info->HasPanelRegs) {
 				/* Panel width/height overrides */
 	info->PanelXRes = 0;
 	info->PanelYRes = 0;
@@ -1042,6 +1118,13 @@ static Bool R128PreInitConfig(ScrnInfoPtr pScrn)
     }
 
 #ifdef XF86DRI
+				/* DMA for Xv */
+    info->DMAForXv = xf86ReturnOptValBool(info->Options, OPTION_XV_DMA, FALSE);
+    if (info->DMAForXv) {
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+		   "Will try to use DMA for Xv image transfers\n");
+    }
+
 				/* AGP/PCI */
     if (xf86ReturnOptValBool(info->Options, OPTION_IS_PCI, FALSE)) {
 	info->IsPCI = TRUE;
@@ -1051,20 +1134,53 @@ static Bool R128PreInitConfig(ScrnInfoPtr pScrn)
 	case PCI_CHIP_RAGE128LE:
 	case PCI_CHIP_RAGE128RE:
 	case PCI_CHIP_RAGE128RK:
-	case PCI_CHIP_RAGE128PP:
+	case PCI_CHIP_RAGE128PD:
 	case PCI_CHIP_RAGE128PR:
-	case PCI_CHIP_RAGE128PD: info->IsPCI = TRUE;  break;
+	case PCI_CHIP_RAGE128PP: info->IsPCI = TRUE;  break;
 	case PCI_CHIP_RAGE128LF:
 	case PCI_CHIP_RAGE128MF:
 	case PCI_CHIP_RAGE128ML:
+	case PCI_CHIP_RAGE128PF:
 	case PCI_CHIP_RAGE128RF:
 	case PCI_CHIP_RAGE128RG:
 	case PCI_CHIP_RAGE128RL:
 	case PCI_CHIP_RAGE128SM:
-	case PCI_CHIP_RAGE128PF:
 	case PCI_CHIP_RAGE128TF:
 	case PCI_CHIP_RAGE128TL:
 	case PCI_CHIP_RAGE128TR:
+	/* FIXME: Rage 128 S[EFGHKLN], T[STU], P[ABCEGHIJKLMNOQSTUVWX] are
+	 * believed to be AGP, but need confirmation. <mharris@redhat.com>
+	 */
+	case PCI_CHIP_RAGE128PA:
+	case PCI_CHIP_RAGE128PB:
+	case PCI_CHIP_RAGE128PC:
+	case PCI_CHIP_RAGE128PE:
+	case PCI_CHIP_RAGE128PG:
+	case PCI_CHIP_RAGE128PH:
+	case PCI_CHIP_RAGE128PI:
+	case PCI_CHIP_RAGE128PJ:
+	case PCI_CHIP_RAGE128PK:
+	case PCI_CHIP_RAGE128PL:
+	case PCI_CHIP_RAGE128PM:
+	case PCI_CHIP_RAGE128PN:
+	case PCI_CHIP_RAGE128PO:
+	case PCI_CHIP_RAGE128PQ:
+	case PCI_CHIP_RAGE128PS:
+	case PCI_CHIP_RAGE128PT:
+	case PCI_CHIP_RAGE128PU:
+	case PCI_CHIP_RAGE128PV:
+	case PCI_CHIP_RAGE128PW:
+	case PCI_CHIP_RAGE128PX:
+	case PCI_CHIP_RAGE128TS:
+	case PCI_CHIP_RAGE128TT:
+	case PCI_CHIP_RAGE128TU:
+	case PCI_CHIP_RAGE128SE:
+	case PCI_CHIP_RAGE128SF:
+	case PCI_CHIP_RAGE128SG:
+	case PCI_CHIP_RAGE128SH:
+	case PCI_CHIP_RAGE128SK:
+	case PCI_CHIP_RAGE128SL:
+	case PCI_CHIP_RAGE128SN:
 	default:                 info->IsPCI = FALSE; break;
 	}
     }
@@ -1473,9 +1589,11 @@ static Bool R128PreInitModes(ScrnInfoPtr pScrn)
 
     if(info->isDFP) {
         R128MapMem(pScrn);
+        info->BIOSDisplay = R128_BIOS_DISPLAY_FP;
         /* validate if DFP really connected. */
         if(!R128GetDFPInfo(pScrn)) {
             info->isDFP = FALSE;
+            info->BIOSDisplay = R128_BIOS_DISPLAY_CRT;
         } else if(!info->isPro2) {
             /* RageProII doesn't support rmx, we can't use native-mode 
                stretching for other non-native modes. It will rely on
@@ -1489,7 +1607,6 @@ static Bool R128PreInitModes(ScrnInfoPtr pScrn)
                 
             }
         }
-        info->BIOSDisplay = R128_BIOS_DISPLAY_FP;
         R128UnmapMem(pScrn);
     }
 
@@ -1751,29 +1868,6 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
 
     R128TRACE(("R128PreInit\n"));
 
-    /*
-     * Tell the loader about symbols from other modules that this module might
-     * refer to.
-     */
-    xf86LoaderRefSymLists(vgahwSymbols,
-#ifdef USE_FB
-		      fbSymbols,
-#else
-		      cfbSymbols,
-#endif
-		      xaaSymbols,
-		      ramdacSymbols,
-#ifdef XF86DRI
-		      drmSymbols,
-		      driSymbols,
-#endif
-		      fbdevHWSymbols,
-		      vbeSymbols,
-		      /* ddcsymbols, */
-		      i2cSymbols,
-		      /* shadowSymbols, */
-		      NULL);
-
     if (pScrn->numEntities != 1) return FALSE;
 
     if (!R128GetRec(pScrn)) return FALSE;
@@ -1807,8 +1901,9 @@ Bool R128PreInit(ScrnInfoPtr pScrn, int flags)
 	       info->PciInfo->func);
 
     if (xf86RegisterResources(info->pEnt->index, 0, ResNone)) goto fail;
+    if (xf86SetOperatingState(resVga, info->pEnt->index, ResUnusedOpr)) goto fail;
 
-    pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_CURSOR;
+    pScrn->racMemFlags = RAC_FB | RAC_COLORMAP | RAC_VIEWPORT | RAC_CURSOR;
     pScrn->monitor     = pScrn->confScreen->monitor;
 
     if (!R128PreInitVisual(pScrn))    goto fail;
@@ -1992,6 +2087,7 @@ Bool R128ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 #ifdef XF86DRI
 				/* Turn off the CCE for now. */
     info->CCEInUse     = FALSE;
+    info->indirectBuffer = NULL;
 #endif
 
     if (!R128MapMem(pScrn)) return FALSE;
@@ -2335,12 +2431,6 @@ Bool R128ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    }
 	}
     }
-				/* Backing store setup */
-    miInitializeBackingStore(pScreen);
-    xf86SetBackingStore(pScreen);
-
-				/* Set Silken Mouse */
-    xf86SetSilkenMouse(pScreen);
 
 				/* Acceleration setup */
     if (!xf86ReturnOptValBool(info->Options, OPTION_NOACCEL, FALSE)) {
@@ -2360,6 +2450,13 @@ Bool R128ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
 				/* DGA setup */
     R128DGAInit(pScreen);
+
+				/* Backing store setup */
+    miInitializeBackingStore(pScreen);
+    xf86SetBackingStore(pScreen);
+
+				/* Set Silken Mouse */
+    xf86SetSilkenMouse(pScreen);
 
 				/* Cursor setup */
     miDCInitialize(pScreen, xf86GetPointerScreenFuncs());
@@ -2384,6 +2481,7 @@ Bool R128ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	    xf86DrvMsg(scrnIndex, X_INFO, "Using software cursor\n");
 	}
     } else {
+	info->cursor_start = 0;
 	xf86DrvMsg(scrnIndex, X_INFO, "Using software cursor\n");
     }
 
@@ -2400,10 +2498,14 @@ Bool R128ScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			     )) return FALSE;
 
     /* DPMS setup - FIXME: also for mirror mode in non-fbdev case? - Michel */
-    if (!info->HasPanelRegs || info->BIOSDisplay == R128_BIOS_DISPLAY_CRT)
-        xf86DPMSInit(pScreen, R128DisplayPowerManagementSet, 0);
-    if (info->HasPanelRegs || info->BIOSDisplay == R128_BIOS_DISPLAY_FP)
-        xf86DPMSInit(pScreen, R128DisplayPowerManagementSetLCD, 0);
+    if (info->FBDev)
+	xf86DPMSInit(pScreen, fbdevHWDPMSSet, 0);
+    else {
+	if (!info->HasPanelRegs || info->BIOSDisplay == R128_BIOS_DISPLAY_CRT)
+	    xf86DPMSInit(pScreen, R128DisplayPowerManagementSet, 0);
+	else if (info->HasPanelRegs || info->BIOSDisplay == R128_BIOS_DISPLAY_FP)
+	    xf86DPMSInit(pScreen, R128DisplayPowerManagementSetLCD, 0);
+    }
 
     R128InitVideo(pScreen);
 
@@ -3218,6 +3320,7 @@ static Bool R128Init(ScrnInfoPtr pScrn, DisplayModePtr mode, R128SavePtr save)
 	   pScrn->depth,
 	   pScrn->bitsPerPixel);
     if (mode->Flags & V_DBLSCAN)   ErrorF(" D");
+    if (mode->Flags & V_CSYNC)     ErrorF(" C");
     if (mode->Flags & V_INTERLACE) ErrorF(" I");
     if (mode->Flags & V_PHSYNC)    ErrorF(" +H");
     if (mode->Flags & V_NHSYNC)    ErrorF(" -H");
@@ -3240,6 +3343,7 @@ static Bool R128Init(ScrnInfoPtr pScrn, DisplayModePtr mode, R128SavePtr save)
 	   pScrn->depth,
 	   pScrn->bitsPerPixel);
     if (mode->Flags & V_DBLSCAN)   ErrorF(" D");
+    if (mode->Flags & V_CSYNC)     ErrorF(" C");
     if (mode->Flags & V_INTERLACE) ErrorF(" I");
     if (mode->Flags & V_PHSYNC)    ErrorF(" +H");
     if (mode->Flags & V_NHSYNC)    ErrorF(" -H");
@@ -3419,6 +3523,11 @@ Bool R128EnterVT(int scrnIndex, int flags)
 
 #ifdef XF86DRI
     if (info->directRenderingEnabled) {
+	if (info->irq) {
+	    /* Need to make sure interrupts are enabled */
+	    unsigned char *R128MMIO = info->MMIO;
+	    OUTREG(R128_GEN_INT_CNTL, info->gen_int_cntl);
+	}
 	R128CCE_START(pScrn, info);
 	DRIUnlock(pScrn->pScreen);
     }
@@ -3440,7 +3549,7 @@ void R128LeaveVT(int scrnIndex, int flags)
 
     R128TRACE(("R128LeaveVT\n"));
 #ifdef XF86DRI
-    if (R128PTR(pScrn)->directRenderingEnabled) {
+    if (info->directRenderingEnabled) {
 	DRILock(pScrn->pScreen, 0);
 	R128CCE_STOP(pScrn, info);
     }

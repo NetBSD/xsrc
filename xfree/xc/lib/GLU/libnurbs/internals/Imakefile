@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GLU/libnurbs/internals/Imakefile,v 1.6.4.1 2002/07/16 22:03:06 torrey Exp $
+XCOMM $XFree86: xc/lib/GLU/libnurbs/internals/Imakefile,v 1.9 2002/12/14 04:41:12 dawes Exp $
 
 XCOMM License Applicability. Except to the extent portions of this file are
 XCOMM made subject to an alternative license as permitted in the SGI Free
@@ -143,7 +143,7 @@ INCLUDES = \
 	-I$(TOP)/include \
 	-I$(TOP)/include/GL
 
-#if SystemV4
+#if SystemV4 || defined(LynxOSArchitecture)
 OSDEFINES = -DNEEDCEILF
 #elif defined(DarwinArchitecture)
 # if OSMajorVersion <= 5

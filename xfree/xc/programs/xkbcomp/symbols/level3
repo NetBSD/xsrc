@@ -1,7 +1,7 @@
 // using the level(switch) map, the right Control key temporarily
 // chooses the third group level (until it is released).
 //
-// $XFree86: xc/programs/xkbcomp/symbols/level3,v 1.1 2001/08/17 13:27:58 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/level3,v 1.2 2002/12/17 19:55:15 dawes Exp $
 //
 
 partial modifier_keys
@@ -28,8 +28,8 @@ xkb_symbols "menu_switch" {
 // pc105.
 partial modifier_keys
 xkb_symbols "win_switch" {
-  include group(lwin_switch);
-  include group(rwin_switch);
+  include "level3(lwin_switch)"
+  include "level3(rwin_switch)"
 };
 
 // using the level(lwin_switch) map, the left Windows' logo key

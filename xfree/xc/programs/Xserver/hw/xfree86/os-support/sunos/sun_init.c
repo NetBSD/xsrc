@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/sun_init.c,v 1.5 2001/11/25 13:51:24 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/sun_init.c,v 1.6 2002/06/06 13:49:34 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -116,7 +116,7 @@ xf86OpenConsole(void)
 		if (ioctl(fd, VT_ACTIVATE, i) != 0)
 		    FreeVTslot = 1;
 
-	    if (!FreeVTslot) ||
+	    if (!FreeVTslot ||
 	        (ioctl(fd, VT_OPENQRY, &xf86Info.vtno) < 0) ||
 		(xf86Info.vtno == -1))
 		FatalError("xf86OpenConsole: Cannot find a free VT\n");

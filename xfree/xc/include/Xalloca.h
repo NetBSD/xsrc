@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/include/Xalloca.h,v 3.10 2001/12/14 19:53:25 dawes Exp $ */
+/* $XFree86: xc/include/Xalloca.h,v 3.11 2002/12/01 20:08:41 tsi Exp $ */
 
 /*
  * The purpose of this header is to define the macros ALLOCATE_LOCAL and
@@ -83,7 +83,6 @@ from The Open Group.
 #    else /* NCR */
 #      define ALLOCATE_LOCAL(size)	alloca(size)
 #    endif
-#  define DEALLOCATE_LOCAL(ptr)  /* as nothing */
 #  endif /* defined(__HIGHC__) */
 
 
@@ -92,7 +91,6 @@ from The Open Group.
 #      define alloca __builtin_alloca
 #    endif /* !alloca */
 #    define ALLOCATE_LOCAL(size) alloca((int)(size))
-#    define DEALLOCATE_LOCAL(ptr)  /* as nothing */
 #  else /* ! __GNUC__ */
 
 /*
@@ -118,7 +116,6 @@ from The Open Group.
 #         endif /* __QNX__ */
 #        endif /* __sgi */
 #        define ALLOCATE_LOCAL(size) alloca((int)(size))
-#        define DEALLOCATE_LOCAL(ptr)  /* as nothing */
 #      endif /* who does alloca */
 #    endif /* NCR */
 #  endif /* __GNUC__ */
@@ -133,6 +130,10 @@ from The Open Group.
 #    define ALLOCATE_LOCAL(_size)  ALLOCATE_LOCAL_FALLBACK undefined!
 #    define DEALLOCATE_LOCAL(_ptr) DEALLOCATE_LOCAL_FALLBACK undefined!
 #  endif /* defined(ALLOCATE_LOCAL_FALLBACK && DEALLOCATE_LOCAL_FALLBACK) */
-#endif /* !defined(ALLOCATE_LOCAL) */
+#else
+#  if !defined(DEALLOCATE_LOCAL)
+#    define DEALLOCATE_LOCAL(_ptr) do {} while(0)
+#  endif
+#endif /* defined(ALLOCATE_LOCAL) */
 
 #endif /* XALLOCA_H */

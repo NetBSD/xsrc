@@ -1,120 +1,61 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_tritmp.h,v 1.1 2000/06/20 05:08:40 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_tritmp.h,v 1.2 2002/02/22 21:32:59 dawes Exp $ */
 
-static void TAG(ffb_triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2, GLuint pv)
+static void TAG(ffb_triangle)( GLcontext *ctx, 	
+			       ffb_vertex *v0,
+			       ffb_vertex *v1,
+			       ffb_vertex *v2 )
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	ffb_fbcPtr ffb = fmesa->regs;
-	struct vertex_buffer *VB = ctx->VB;
-	ffb_vertex *ffbVB = FFB_DRIVER_DATA(VB)->verts;
-	const ffb_vertex *v0 = &ffbVB[e0];
-	const ffb_vertex *v1 = &ffbVB[e1];
-	const ffb_vertex *v2 = &ffbVB[e2];
-#if (IND & FFB_TRI_OFFSET_BIT)
-	GLuint ffb_zoffset = FFB_Z_FROM_FLOAT(ctx->PolygonZoffset);
-#endif
 #if (IND & FFB_TRI_FLAT_BIT)
 	GLuint const_fg;
 #endif
-#if (IND & FFB_TRI_TWOSIDE_BIT)
-	int which_color = (VB->ColorPtr == VB->Color[0]) ? 0 : 1;
-#else
-	const int which_color = 0;
+	FFB_DELAYED_VIEWPORT_VARS;
+
+#ifdef TRI_DEBUG
+	fprintf(stderr, "FFB: ffb_triangle ["
+#if (IND & FFB_TRI_CULL_BIT)
+		" CULL"
+#endif
+#if (IND & FFB_TRI_FLAT_BIT)
+		" FLAT"
+#endif
+#if (IND & FFB_TRI_ALPHA_BIT)
+		" ALPHA"
+#endif
+		" ]\n");
 #endif
 
 #if (IND & FFB_TRI_CULL_BIT)
-	{
-		GLfloat (*win)[4] = VB->Win.data;
-		GLfloat ex = win[e1][0] - win[e0][0];
-		GLfloat ey = win[e1][1] - win[e0][1];
-		GLfloat fx = win[e2][0] - win[e0][0];
-		GLfloat fy = win[e2][1] - win[e0][1];
+	{	/* NOTE: These are not viewport transformed yet. */
+		GLfloat ex = v1->x - v0->x;
+		GLfloat ey = v1->y - v0->y;
+		GLfloat fx = v2->x - v0->x;
+		GLfloat fy = v2->y - v0->y;
 		GLfloat c = ex*fy-ey*fx;
 
 		/* Culled... */
-		if (c * ctx->backface_sign > 0)
+		if (c * fmesa->backface_sign > fmesa->ffb_zero)
 			return;
 	}
 #endif
 
 #if (IND & FFB_TRI_FLAT_BIT)
-	const_fg = (((GLuint)VB->Color[which_color]->data[pv][0] << 0) |
-		    ((GLuint)VB->Color[which_color]->data[pv][1] << 8) |
-		    ((GLuint)VB->Color[which_color]->data[pv][2] << 16) |
-		    ((GLuint)VB->Color[which_color]->data[pv][3] << 24));
+	const_fg = FFB_PACK_CONST_UBYTE_ARGB_COLOR( v2->color[0] );
+#ifdef TRI_DEBUG
+	fprintf(stderr, "FFB_tri: const_fg %08x (B[%f] G[%f] R[%f])\n",
+		const_fg,
+		FFB_2_30_FIXED_TO_FLOAT(v2->color[0].blue),
+		FFB_2_30_FIXED_TO_FLOAT(v2->color[0].green),
+		FFB_2_30_FIXED_TO_FLOAT(v2->color[0].red));
+#endif
 #endif
 
-	FFB_DUMP_PRIM(TRIANGLE);
 
 #if (IND & FFB_TRI_FLAT_BIT)
 	FFBFifo(fmesa, 1);
 	ffb->fg = const_fg;
 #endif
-
-	/* First, check for a triangle strip/fan sequences.
-	 * These checks rely on how MESA sends these primitives
-	 * down to us in render_tmp.h
-	 */
-	if (v0 == fmesa->vtx_cache[1] &&
-	    v1 == fmesa->vtx_cache[2] &&
-	    v2 != fmesa->vtx_cache[0]) {
-#if (IND & FFB_TRI_FLAT_BIT)
-		FFBFifo(fmesa, 3);
-#else
-#if (IND & FFB_TRI_ALPHA_BIT)
-		FFBFifo(fmesa, 7);
-#else
-		FFBFifo(fmesa, 6);
-#endif
-#endif
-		FFB_DUMP_VERTEX(v2);
-#if !(IND & FFB_TRI_FLAT_BIT)
-#if (IND & FFB_TRI_ALPHA_BIT)
-		ffb->alpha = v2->color[which_color].alpha;
-#endif
-		ffb->red = v2->color[which_color].red;
-		ffb->green = v2->color[which_color].green;
-		ffb->blue = v2->color[which_color].blue;
-#endif
-#if (IND & FFB_TRI_OFFSET_BIT)
-		ffb->z = v2->z + ffb_zoffset;
-#else
-		ffb->z = v2->z;
-#endif
-		ffb->y = v2->y;
-		ffb->x = v2->x;
-
-		goto update_vcache;
-	} else if (v0 == fmesa->vtx_cache[0] &&
-		   v1 == fmesa->vtx_cache[2] &&
-		   v2 != fmesa->vtx_cache[1]) {
-#if (IND & FFB_TRI_FLAT_BIT)
-		FFBFifo(fmesa, 3);
-#else
-#if (IND & FFB_TRI_ALPHA_BIT)
-		FFBFifo(fmesa, 7);
-#else
-		FFBFifo(fmesa, 6);
-#endif
-#endif
-		FFB_DUMP_VERTEX(v2);
-#if !(IND & FFB_TRI_FLAT_BIT)
-#if (IND & FFB_TRI_ALPHA_BIT)
-		ffb->alpha = v2->color[which_color].alpha;
-#endif
-		ffb->red = v2->color[which_color].red;
-		ffb->green = v2->color[which_color].green;
-		ffb->blue = v2->color[which_color].blue;
-#endif
-#if (IND & FFB_TRI_OFFSET_BIT)
-		ffb->z = v2->z + ffb_zoffset;
-#else
-		ffb->z = v2->z;
-#endif
-		ffb->dmyf = v2->y;
-		ffb->dmxf = v2->x;
-
-		goto update_vcache;
-	}
 
 #if (IND & FFB_TRI_FLAT_BIT)
 	FFBFifo(fmesa, 9);
@@ -129,108 +70,98 @@ static void TAG(ffb_triangle)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2, G
 	FFB_DUMP_VERTEX(v0);
 #if !(IND & FFB_TRI_FLAT_BIT)
 #if (IND & FFB_TRI_ALPHA_BIT)
-	ffb->alpha = v0->color[which_color].alpha;
+	ffb->alpha = FFB_GET_ALPHA(v0);
 #endif
-	ffb->red = v0->color[which_color].red;
-	ffb->green = v0->color[which_color].green;
-	ffb->blue = v0->color[which_color].blue;
+	ffb->red   = FFB_GET_RED(v0);
+	ffb->green = FFB_GET_GREEN(v0);
+	ffb->blue  = FFB_GET_BLUE(v0);
 #endif
-#if (IND & FFB_TRI_OFFSET_BIT)
-	ffb->z = v0->z + ffb_zoffset;
-#else
-	ffb->z = v0->z;
-#endif
-	ffb->ryf = v0->y;
-	ffb->rxf = v0->x;
+	ffb->z     = FFB_GET_Z(v0);
+	ffb->ryf   = FFB_GET_Y(v0);
+	ffb->rxf   = FFB_GET_X(v0);
 
 	FFB_DUMP_VERTEX(v1);
 #if !(IND & FFB_TRI_FLAT_BIT)
 #if (IND & FFB_TRI_ALPHA_BIT)
-	ffb->alpha = v1->color[which_color].alpha;
+	ffb->alpha = FFB_GET_ALPHA(v1);
 #endif
-	ffb->red = v1->color[which_color].red;
-	ffb->green = v1->color[which_color].green;
-	ffb->blue = v1->color[which_color].blue;
+	ffb->red   = FFB_GET_RED(v1);
+	ffb->green = FFB_GET_GREEN(v1);
+	ffb->blue  = FFB_GET_BLUE(v1);
 #endif
-#if (IND & FFB_TRI_OFFSET_BIT)
-	ffb->z = v1->z + ffb_zoffset;
-#else
-	ffb->z = v1->z;
-#endif
-	ffb->y = v1->y;
-	ffb->x = v1->x;
+	ffb->z     = FFB_GET_Z(v1);
+	ffb->y     = FFB_GET_Y(v1);
+	ffb->x     = FFB_GET_X(v1);
 
 	FFB_DUMP_VERTEX(v2);
 #if !(IND & FFB_TRI_FLAT_BIT)
 #if (IND & FFB_TRI_ALPHA_BIT)
-	ffb->alpha = v2->color[which_color].alpha;
+	ffb->alpha = FFB_GET_ALPHA(v2);
 #endif
-	ffb->red = v2->color[which_color].red;
-	ffb->green = v2->color[which_color].green;
-	ffb->blue = v2->color[which_color].blue;
+	ffb->red   = FFB_GET_RED(v2);
+	ffb->green = FFB_GET_GREEN(v2);
+	ffb->blue  = FFB_GET_BLUE(v2);
 #endif
-#if (IND & FFB_TRI_OFFSET_BIT)
-	ffb->z = v2->z + ffb_zoffset;
-#else
-	ffb->z = v2->z;
-#endif
-	ffb->y = v2->y;
-	ffb->x = v2->x;
-
-update_vcache:
-	fmesa->vtx_cache[0] = (void *)v0;
-	fmesa->vtx_cache[1] = (void *)v1;
-	fmesa->vtx_cache[2] = (void *)v2;
+	ffb->z     = FFB_GET_Z(v2);
+	ffb->y     = FFB_GET_Y(v2);
+	ffb->x     = FFB_GET_X(v2);
 
 	fmesa->ffbScreen->rp_active = 1;
 }
 
 
-static void TAG(ffb_quad)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2, GLuint e3, GLuint pv)
+static void TAG(ffb_quad)(GLcontext *ctx, 			      
+			  ffb_vertex *v0,
+			  ffb_vertex *v1,
+			  ffb_vertex *v2,
+			  ffb_vertex *v3 )
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	ffb_fbcPtr ffb = fmesa->regs;
-	struct vertex_buffer *VB = ctx->VB;
-	ffb_vertex *ffbVB = FFB_DRIVER_DATA(VB)->verts;
-	const ffb_vertex *v0 = &ffbVB[e0];
-	const ffb_vertex *v1 = &ffbVB[e1];
-	const ffb_vertex *v2 = &ffbVB[e2];
-	const ffb_vertex *v3 = &ffbVB[e3];
-#if (IND & FFB_TRI_OFFSET_BIT)
-	GLuint ffb_zoffset = FFB_Z_FROM_FLOAT(ctx->PolygonZoffset);
-#endif
 #if (IND & FFB_TRI_FLAT_BIT)
 	GLuint const_fg;
 #endif
-#if (IND & FFB_TRI_TWOSIDE_BIT)
-	int which_color = (VB->ColorPtr == VB->Color[0]) ? 0 : 1;
-#else
-	const int which_color = 0;
+	FFB_DELAYED_VIEWPORT_VARS;
+
+#ifdef TRI_DEBUG
+	fprintf(stderr, "FFB: ffb_quad ["
+#if (IND & FFB_TRI_CULL_BIT)
+		" CULL"
 #endif
+#if (IND & FFB_TRI_FLAT_BIT)
+		" FLAT"
+#endif
+#if (IND & FFB_TRI_ALPHA_BIT)
+		" ALPHA"
+#endif
+		" ]\n");
+#endif /* TRI_DEBUG */
 
 #if (IND & FFB_TRI_CULL_BIT)
-	{
-		GLfloat (*win)[4] = VB->Win.data;
-		GLfloat ex = win[e2][0] - win[e0][0];
-		GLfloat ey = win[e2][1] - win[e0][1];
-		GLfloat fx = win[e3][0] - win[e1][0];
-		GLfloat fy = win[e3][1] - win[e1][1];
+	{	/* NOTE: These are not viewport transformed yet. */
+		GLfloat ex = v2->x - v0->x;
+		GLfloat ey = v2->y - v0->y;
+		GLfloat fx = v3->x - v1->x;
+		GLfloat fy = v3->y - v1->y;
 		GLfloat c = ex*fy-ey*fx;
 
 		/* Culled... */
-		if (c * ctx->backface_sign > 0)
+		if (c * fmesa->backface_sign > fmesa->ffb_zero)
 			return;
 	}
 #endif
 
 #if (IND & FFB_TRI_FLAT_BIT)
-	const_fg = (((GLuint)VB->Color[which_color]->data[pv][0] << 0) |
-		    ((GLuint)VB->Color[which_color]->data[pv][1] << 8) |
-		    ((GLuint)VB->Color[which_color]->data[pv][2] << 16) |
-		    ((GLuint)VB->Color[which_color]->data[pv][3] << 24));
+	const_fg = FFB_PACK_CONST_UBYTE_ARGB_COLOR( v3->color[0] );
+#ifdef TRI_DEBUG
+	fprintf(stderr, "FFB_quad: const_fg %08x (B[%f] G[%f] R[%f])\n",
+		const_fg,
+		FFB_2_30_FIXED_TO_FLOAT(v3->color[0].blue),
+		FFB_2_30_FIXED_TO_FLOAT(v3->color[0].green),
+		FFB_2_30_FIXED_TO_FLOAT(v3->color[0].red));
+#endif
 #endif
 
-	FFB_DUMP_PRIM(QUAD);
 
 #if (IND & FFB_TRI_FLAT_BIT)
 	FFBFifo(fmesa, 13);
@@ -246,75 +177,59 @@ static void TAG(ffb_quad)(GLcontext *ctx, GLuint e0, GLuint e1, GLuint e2, GLuin
 	FFB_DUMP_VERTEX(v0);
 #if !(IND & FFB_TRI_FLAT_BIT)
 #if (IND & FFB_TRI_ALPHA_BIT)
-	ffb->alpha = v0->color[which_color].alpha;
+	ffb->alpha = FFB_GET_ALPHA(v0);
 #endif
-	ffb->red = v0->color[which_color].red;
-	ffb->green = v0->color[which_color].green;
-	ffb->blue = v0->color[which_color].blue;
+	ffb->red   = FFB_GET_RED(v0);
+	ffb->green = FFB_GET_GREEN(v0);
+	ffb->blue  = FFB_GET_BLUE(v0);
 #endif
-#if (IND & FFB_TRI_OFFSET_BIT)
-	ffb->z = v0->z + ffb_zoffset;
-#else
-	ffb->z = v0->z;
-#endif
-	ffb->ryf = v0->y;
-	ffb->rxf = v0->x;
+	ffb->z     = FFB_GET_Z(v0);
+	ffb->ryf   = FFB_GET_Y(v0);
+	ffb->rxf   = FFB_GET_X(v0);
 
 	FFB_DUMP_VERTEX(v1);
 #if !(IND & FFB_TRI_FLAT_BIT)
 #if (IND & FFB_TRI_ALPHA_BIT)
-	ffb->alpha = v1->color[which_color].alpha;
+	ffb->alpha = FFB_GET_ALPHA(v1);
 #endif
-	ffb->red = v1->color[which_color].red;
-	ffb->green = v1->color[which_color].green;
-	ffb->blue = v1->color[which_color].blue;
+	ffb->red   = FFB_GET_RED(v1);
+	ffb->green = FFB_GET_GREEN(v1);
+	ffb->blue  = FFB_GET_BLUE(v1);
 #endif
-#if (IND & FFB_TRI_OFFSET_BIT)
-	ffb->z = v1->z + ffb_zoffset;
-#else
-	ffb->z = v1->z;
-#endif
-	ffb->y = v1->y;
-	ffb->x = v1->x;
+	ffb->z     = FFB_GET_Z(v1);
+	ffb->y     = FFB_GET_Y(v1);
+	ffb->x     = FFB_GET_X(v1);
 
 	FFB_DUMP_VERTEX(v2);
 #if !(IND & FFB_TRI_FLAT_BIT)
 #if (IND & FFB_TRI_ALPHA_BIT)
-	ffb->alpha = v2->color[which_color].alpha;
+	ffb->alpha = FFB_GET_ALPHA(v2);
 #endif
-	ffb->red = v2->color[which_color].red;
-	ffb->green = v2->color[which_color].green;
-	ffb->blue = v2->color[which_color].blue;
+	ffb->red   = FFB_GET_RED(v2);
+	ffb->green = FFB_GET_GREEN(v2);
+	ffb->blue  = FFB_GET_BLUE(v2);
 #endif
-#if (IND & FFB_TRI_OFFSET_BIT)
-	ffb->z = v2->z + ffb_zoffset;
-#else
-	ffb->z = v2->z;
-#endif
-	ffb->y = v2->y;
-	ffb->x = v2->x;
+	ffb->z     = FFB_GET_Z(v2);
+	ffb->y     = FFB_GET_Y(v2);
+	ffb->x     = FFB_GET_X(v2);
 
 	FFB_DUMP_VERTEX(v3);
 #if !(IND & FFB_TRI_FLAT_BIT)
 #if (IND & FFB_TRI_ALPHA_BIT)
-	ffb->alpha = v3->color[which_color].alpha;
+	ffb->alpha = FFB_GET_ALPHA(v3);
 #endif
-	ffb->red = v3->color[which_color].red;
-	ffb->green = v3->color[which_color].green;
-	ffb->blue = v3->color[which_color].blue;
+	ffb->red   = FFB_GET_RED(v3);
+	ffb->green = FFB_GET_GREEN(v3);
+	ffb->blue  = FFB_GET_BLUE(v3);
 #endif
-#if (IND & FFB_TRI_OFFSET_BIT)
-	ffb->z = v3->z + ffb_zoffset;
-#else
-	ffb->z = v3->z;
-#endif
-	ffb->dmyf = v3->y;
-	ffb->dmxf = v3->x;
+	ffb->z     = FFB_GET_Z(v3);
+	ffb->dmyf  = FFB_GET_Y(v3);
+	ffb->dmxf  = FFB_GET_X(v3);
 
 	fmesa->ffbScreen->rp_active = 1;
 }
 
-static void TAG(init)(void)
+static void TAG(ffb_init)(void)
 {
 	ffb_tri_tab[IND]	= TAG(ffb_triangle);
 	ffb_quad_tab[IND]	= TAG(ffb_quad);

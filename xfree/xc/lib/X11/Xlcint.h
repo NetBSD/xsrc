@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlcint.h,v 3.13 2001/12/14 19:54:08 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlcint.h,v 3.14 2002/11/01 13:43:31 alanh Exp $ */
 
 /*
  * Copyright 1990, 1991 by OMRON Corporation, NTT Software Corporation,
@@ -988,6 +988,8 @@ extern char *_XlcSetValues(
 
 /* documented in i18n/Framework.PS */
 extern void _XlcInitLoader (void);
+
+extern void _XlcDeInitLoader (void);
 
 /* documented in i18n/Framework.PS */
 /* Returns True on success, False on failure. */

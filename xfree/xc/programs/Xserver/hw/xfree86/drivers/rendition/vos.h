@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vos.h,v 1.8 2000/03/31 20:13:28 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/rendition/vos.h,v 1.9 2002/01/25 21:56:07 tsi Exp $ */
 /*
  * file vos.h
  *
@@ -24,18 +24,18 @@
 /*
  * function prototypes
  */
-#define /*void*/ verite_out8(/*vu16*/ port, /*vu8*/ data) \
+#define /*void*/ verite_out8(/*IOADDRESS*/ port, /*vu8*/ data) \
                    outb(port, data)
 
-#define /*void*/ verite_out16(/*vu16*/ port, /*vu16*/ data) \
+#define /*void*/ verite_out16(/*IOADDRESS*/ port, /*vu16*/ data) \
                    outw(port, data)
 
-#define /*void*/ verite_out32(/*vu16*/ port, /*vu32*/ data) \
+#define /*void*/ verite_out32(/*IOADDRESS*/ port, /*vu32*/ data) \
                    outl(port, data)
 
-#define /*vu8*/  verite_in8(/*vu16*/ io_base)  ((vu8)inb(io_base))
-#define /*vu16*/ verite_in16(/*vu16*/ io_base) ((vu16)inw(io_base))
-#define /*vu32*/ verite_in32(/*vu16*/ io_base) ((vu32)inl(io_base))
+#define /*vu8*/  verite_in8(/*IOADDRESS*/ io_base)  ((vu8)inb(io_base))
+#define /*vu16*/ verite_in16(/*IOADDRESS*/ io_base) ((vu16)inw(io_base))
+#define /*vu32*/ verite_in32(/*IOADDRESS*/ io_base) ((vu32)inl(io_base))
 
 /* memory accesses */
 #define verite_read_memory32(base, offset) MMIO_IN32(base, offset)

@@ -26,6 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
+/* $XFree86: xc/programs/xlogo/Logo.h,v 1.4 2002/07/01 02:26:04 tsi Exp $ */
 
 #ifndef _XawLogo_h
 #define _XawLogo_h
@@ -50,6 +51,14 @@ from The Open Group.
 
 #define XtNshapeWindow "shapeWindow"
 #define XtCShapeWindow "ShapeWindow"
+
+#define XtNrender "render"
+#define XtCRender "Render"
+
+#define XtRXftColor "XftColor"
+
+#define XtNsharp "sharp"
+#define XtCSharp "Sharp"
 
 typedef struct _LogoRec *LogoWidget;
 typedef struct _LogoClassRec *LogoWidgetClass;

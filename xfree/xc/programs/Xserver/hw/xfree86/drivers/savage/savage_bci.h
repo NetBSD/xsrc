@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_bci.h,v 1.2 2001/10/01 13:44:09 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_bci.h,v 1.4 2002/10/02 20:39:54 alanh Exp $ */
 
 #ifndef _S3BCI_H_
 #define _S3BCI_H_
@@ -87,9 +87,11 @@
 #define BCI_LINE_X_Y(x, y)           (((y) << 16) | ((x) & 0xFFFF))
 #define BCI_LINE_STEPS(diag, axi)    (((axi) << 16) | ((diag) & 0xFFFF))
 #define BCI_LINE_MISC(maj, ym, xp, yp, err) \
-(((maj) & 0xFFF) | (((ym) & 1) << 13) | \
-(((xp) & 1) << 14) | (((yp) & 1) << 15) | \
-((err) << 16))
+	(((maj) & 0x1FFF) | \
+	((ym) ? 1<<13 : 0) | \
+	((xp) ? 1<<14 : 0) | \
+	((yp) ? 1<<15 : 0) | \
+	((err) << 16))
 
 
 #endif /* _S3BCI_H_ */

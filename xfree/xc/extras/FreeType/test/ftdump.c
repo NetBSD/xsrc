@@ -15,6 +15,7 @@
 /*         debug the current engine.                                        */
 /*                                                                          */
 /****************************************************************************/
+/* $XFree86: xc/extras/FreeType/test/ftdump.c,v 1.2 2003/01/12 03:55:44 tsi Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,7 +90,7 @@
   /*                                                            */
   /* We thus avoid the external reference on these compilers.   */
 
-  #define TTMemory_Allocated  0L
+# define TTMemory_Allocated  0L
 
 #else
   extern long  TTMemory_Allocated;

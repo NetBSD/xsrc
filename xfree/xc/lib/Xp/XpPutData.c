@@ -34,10 +34,10 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpPutData.c,v 1.3 2001/01/17 19:43:02 dawes Exp $ */
+/* $XFree86: xc/lib/Xp/XpPutData.c,v 1.4 2002/10/16 00:37:32 dawes Exp $ */
 
-#include "Printstr.h"
-#include "Xlibint.h"
+#include <X11/extensions/Printstr.h>
+#include <X11/Xlibint.h>
 #include "XpExtUtil.h"
 
 #define _XpPadOut(len) (((len) + 3) & ~3)

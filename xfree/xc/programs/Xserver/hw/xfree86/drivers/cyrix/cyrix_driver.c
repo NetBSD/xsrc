@@ -1,5 +1,6 @@
 /*
  * Copyright 2000 by Richard A. Hecker, California, United States
+ * Copyright 2002 by Red Hat Inc.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,14 +20,37 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  *
+ * RED HAT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
+ * EVENT SHALL RICHARD HECKER BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+ * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ *
  * Author:  Richard Hecker, hecker@cat.dfrc.nasa.gov
  *          Re-written for XFree86 v4.0
+ *
+ * Chunks re-written again for XFree86 v4.2
+ *	    Alan Cox <alan@redhat.com>
+ *		- Fixed cursor handling
+ *		- Rewrote parts of the broken mode switch code
+ *		- Added proper PCI detection
+ *		- Added ShadowFB support
+ *		- Added rotate support
+ *		- Fixed palette loading/restore
+ *		- Added "Nocompression" option
+ *		- Fixed line length loading
+ *		- Fixed panning logic
+ *
  * Previous driver (pre-XFree86 v4.0) by
  *          Annius V. Groenink (A.V.Groenink@zfc.nl, avg@cwi.nl),
  *          Dirk H. Hohndel (hohndel@suse.de),
  *          Portions: the GGI project & confidential CYRIX databooks.
+ *		(note that most of the data books have been released by
+ *		 NatSemi and are downloadable for free as pdf files)
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_driver.c,v 1.24 2002/01/04 21:22:29 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cyrix/cyrix_driver.c,v 1.26 2003/01/07 00:05:13 alanh Exp $ */
 
 #include "fb.h"
 #include "mibank.h"
@@ -38,10 +62,14 @@
 #include "xf86PciInfo.h"
 #include "xf86Pci.h"
 #include "xf86cmap.h"
+#include "shadowfb.h"
 #include "vgaHW.h"
+#include "xf86DDC.h"
 #include "xf86RAC.h"
 #include "xf86Resources.h"
 #include "compiler.h"
+#include "xf86int10.h"
+#include "vbe.h"
 
 #include "cyrix.h"
 
@@ -75,12 +103,11 @@ static int	CYRIXValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose,
 			     int flags);
 
 /* Internally used functions */
-#if 0
-static void     CYRIXEnterLeave(Bool enter);
-#endif
 static void	CYRIXSave(ScrnInfoPtr pScrn);
 static void	CYRIXRestore(ScrnInfoPtr pScrn);
 static Bool	CYRIXModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode);
+static void	CYRIXRestorePalette(ScrnInfoPtr pScrn);
+static void	CYRIXSavePalette(ScrnInfoPtr pScrn);
 
 /* Misc additional routines */
 void     CYRIXSetRead(int bank);
@@ -130,13 +157,19 @@ static IsaChipsets CYRIXISAChipsets[] = {
 typedef enum {
     OPTION_SW_CURSOR,
     OPTION_HW_CURSOR,
-    OPTION_NOACCEL
+    OPTION_NOACCEL,
+    OPTION_NOCOMPRESS,
+    OPTION_SHADOW_FB,
+    OPTION_ROTATE
 } CYRIXOpts;
 
 static const OptionInfoRec CYRIXOptions[] = {
     { OPTION_SW_CURSOR,		"SWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
-    { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE  },
+    { OPTION_HW_CURSOR,		"HWcursor",	OPTV_BOOLEAN,	{0}, FALSE },
     { OPTION_NOACCEL,		"NoAccel",	OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_NOCOMPRESS,	"NoCompression",OPTV_BOOLEAN,   {0}, FALSE },
+    { OPTION_SHADOW_FB,		"ShadowFB",	OPTV_BOOLEAN,	{0}, FALSE },
+    { OPTION_ROTATE,		"Rotate",	OPTV_ANYSTR,	{0}, FALSE },
     { -1,			NULL,		OPTV_NONE,	{0}, FALSE }
 };
 
@@ -166,6 +199,18 @@ static const char *fbSymbols[] = {
 static const char *xaaSymbols[] = {
     "XAACreateInfoRec",
     "XAADestroyInfoRec",
+    NULL
+};
+
+static const char *shadowSymbols[] = {
+    "ShadowFBInit",
+    NULL
+};
+
+static const char *vbeSymbols[] = {
+    "VBEInit",
+    "vbeDoEDID",
+    "vbeFree",
     NULL
 };
 
@@ -204,7 +249,7 @@ cyrixSetup(pointer module, pointer opts, int *errmaj, int *errmin)
     if (!setupDone) {
 	setupDone = TRUE;
 	xf86AddDriver(&CYRIX, module, 0);
-	LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols, NULL);
+	LoaderRefSymLists(vgahwSymbols, fbSymbols, xaaSymbols, vbeSymbols, shadowSymbols, NULL);
 	return (pointer)TRUE;
     } 
 
@@ -294,6 +339,18 @@ CYRIXAvailableOptions(int chip, int busid)
     return CYRIXOptions;
 }
 
+#define PCI_CHIP_CYRIX5510	0x0000
+#define PCI_CHIP_CYRIX5520	0x0002
+#define PCI_CHIP_CYRIX5530	0x0104
+
+/* Conversion PCI ID to chipset name */
+static PciChipsets CYRIXPCIchipsets[] = {
+	{ CHIP_CYRIXmediagx, PCI_CHIP_CYRIX5510, RES_EXCLUSIVE_VGA },
+	{ CHIP_CYRIXmediagx, PCI_CHIP_CYRIX5520, RES_EXCLUSIVE_VGA },
+	{ CHIP_CYRIXmediagx, PCI_CHIP_CYRIX5530, RES_EXCLUSIVE_VGA },
+	{ -1,        -1,                 RES_UNDEFINED }
+};
+
 /* Mandatory */
 static Bool
 CYRIXProbe(DriverPtr drv, int flags)
@@ -324,43 +381,80 @@ CYRIXProbe(DriverPtr drv, int flags)
 	 */
 	return FALSE;
     }
+#ifdef DEBUG
     xf86ErrorFVerb(3,"%s: Device Sections found: %d\n",CYRIX_NAME, numDevSections);
+#endif
+
     /* Should look like an ISA device */
+
+    /* PCI BUS */
+    if (xf86GetPciVideoInfo() ) {
+	numUsed = xf86MatchPciInstances(CYRIX_NAME, PCI_VENDOR_CYRIX,
+					CYRIXChipsets, CYRIXPCIchipsets, 
+					devSections,numDevSections,
+					drv, &usedChips);
+
+	if (numUsed > 0) {
+	    if (flags & PROBE_DETECT)
+		foundScreen = TRUE;
+	    else for (i = 0; i < numUsed; i++) {
+		ScrnInfoPtr pScrn = NULL;
+		/* Allocate a ScrnInfoRec and claim the slot */
+		if ((pScrn = xf86ConfigPciEntity(pScrn, 0, usedChips[i],
+						       CYRIXPCIchipsets,NULL, NULL,
+						       NULL, NULL, NULL))) {
+		    pScrn->driverVersion = VERSION;
+		    pScrn->driverName    = CYRIX_DRIVER_NAME;
+		    pScrn->name          = CYRIX_NAME;
+		    pScrn->Probe         = CYRIXProbe;
+		    pScrn->PreInit       = CYRIXPreInit;
+		    pScrn->ScreenInit    = CYRIXScreenInit;
+		    pScrn->SwitchMode    = CYRIXSwitchMode;
+		    pScrn->AdjustFrame   = CYRIXAdjustFrame;
+		    pScrn->LeaveVT       = CYRIXLeaveVT;
+		    pScrn->EnterVT       = CYRIXEnterVT;
+		    pScrn->FreeScreen    = CYRIXFreeScreen;
+		    pScrn->ValidMode     = CYRIXValidMode;
+		    foundScreen = TRUE;
+		}
+	    }
+	    xfree(usedChips);
+	}
+    }
+    
 
     numUsed = xf86MatchIsaInstances(CYRIX_NAME,CYRIXChipsets,
 					CYRIXISAChipsets,drv,
 					CYRIXFindIsaDevice,devSections,
 					numDevSections,&usedChips);
+    if(numUsed > 0) {
+        foundScreen = TRUE;
 
-    if (numUsed <= 0)
-	return FALSE;
+        /* Free it since we don't need that list after this */
+        xfree(devSections);
 
-    foundScreen = TRUE;
+        if (!(flags & PROBE_DETECT)) {
+          for (i=0; i < numUsed; i++) {
 
-    /* Free it since we don't need that list after this */
-    xfree(devSections);
-
-    if (!(flags & PROBE_DETECT)) {
-      for (i=0; i < numUsed; i++) {
-
-      /* Fill in what we can of the ScrnInfoRec */
-	    pScrn = NULL;
-	    if ((pScrn = xf86ConfigIsaEntity(pScrn, 0, usedChips[i],
+          /* Fill in what we can of the ScrnInfoRec */
+	        pScrn = NULL;
+	        if ((pScrn = xf86ConfigIsaEntity(pScrn, 0, usedChips[i],
 						   CYRIXISAChipsets, NULL,
 						   NULL, NULL, NULL, NULL))){
-		pScrn->driverVersion = VERSION;
-		pScrn->driverName    = CYRIX_DRIVER_NAME;
-		pScrn->name          = CYRIX_NAME;
-		pScrn->Probe         = CYRIXProbe;
-		pScrn->PreInit       = CYRIXPreInit;
-		pScrn->ScreenInit    = CYRIXScreenInit;
-		pScrn->SwitchMode    = CYRIXSwitchMode;
-		pScrn->AdjustFrame   = CYRIXAdjustFrame;
-		pScrn->LeaveVT       = CYRIXLeaveVT;
-		pScrn->EnterVT       = CYRIXEnterVT;
-		pScrn->FreeScreen    = CYRIXFreeScreen;
-		pScrn->ValidMode     = CYRIXValidMode;
-	    }
+		    pScrn->driverVersion = VERSION;
+		    pScrn->driverName    = CYRIX_DRIVER_NAME;
+		    pScrn->name          = CYRIX_NAME;
+		    pScrn->Probe         = CYRIXProbe;
+		    pScrn->PreInit       = CYRIXPreInit;
+		    pScrn->ScreenInit    = CYRIXScreenInit;
+		    pScrn->SwitchMode    = CYRIXSwitchMode;
+		    pScrn->AdjustFrame   = CYRIXAdjustFrame;
+		    pScrn->LeaveVT       = CYRIXLeaveVT;
+		    pScrn->EnterVT       = CYRIXEnterVT;
+		    pScrn->FreeScreen    = CYRIXFreeScreen;
+		    pScrn->ValidMode     = CYRIXValidMode;
+	        }
+	 }
       }
     }
     xfree(usedChips);
@@ -423,6 +517,7 @@ CYRIXFindIsaDevice(GDevPtr dev)
     /* Unprotect MediaGX extended registers */
     outb(vgaIOBase + 4, CrtcExtendedRegisterLock);
     outb(vgaIOBase + 5, 0x00);
+
     return (int)CHIP_CYRIXmediagx;
 
  fail:
@@ -430,6 +525,17 @@ CYRIXFindIsaDevice(GDevPtr dev)
     outb(vgaIOBase + 4, CrtcExtendedRegisterLock);
     outb(vgaIOBase + 5, 0x00);
     return -1;
+}
+
+static void
+CYRIXProbeDDC(ScrnInfoPtr pScrn, int index)
+{
+    vbeInfoPtr pVbe;
+    if (xf86LoadSubModule(pScrn, "vbe")) {
+	pVbe = VBEInit(NULL,index);
+	ConfiguredMonitor = vbeDoEDID(pVbe, NULL);
+	vbeFree(pVbe);
+    }
 }
 	
 /* Mandatory */
@@ -446,8 +552,8 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
     int device_step, device_revision;
     int vgaIOBase;
     unsigned char gcr;
-
-    if (flags & PROBE_DETECT) return FALSE;
+    static int accelWidths[3]= {2,1024, 2048};
+    const char *s;
 
     /* Allocate the CYRIXRec driverPrivate */
     if (!CYRIXGetRec(pScrn)) return FALSE;
@@ -465,6 +571,16 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
      * AllocateScreenPrivateIndex() from the ScreenInit() function.
      */
     pCyrix = CYRIXPTR(pScrn);
+
+    pCyrix->pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
+
+    if (pCyrix->pEnt->location.type != BUS_PCI)
+      return FALSE;
+
+    if (flags & PROBE_DETECT) {
+	CYRIXProbeDDC(pScrn, pCyrix->pEnt->index);
+	return TRUE;
+    }
 
     /* The vgahw module should be loaded here when needed */
     if (!xf86LoadSubModule(pScrn, "vgahw"))
@@ -496,7 +612,6 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
 
     physbase = (gcr & 3) << 30;
     padsize = (gcr & 12) ? (((gcr & 12) >> 2) + 1) : 0;
-
 
     /*      end GGI MediaGX driver based code */
     if (padsize == 0) return (FALSE);
@@ -623,20 +738,10 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
     xf86ProcessOptions(pScrn->scrnIndex, pScrn->options, pCyrix->Options);
 
     /* Set the bits per RGB for 8bpp mode */
-    if (pScrn->depth == 8) {
-	/* XXX This is here just to test options. */
-	/* Default to 8 */
-	pScrn->rgbBits = 8;
-#if 0
-	if (xf86GetOptValInteger(pCyrix->Options, OPTION_RGB_BITS,
-				 &pScrn->rgbBits)) {
-	    xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Bits per RGB set to %d\n",
-		       pScrn->rgbBits);
-	}
-#endif
-    }
+    pScrn->rgbBits = 6;
+
     from = X_DEFAULT;
-    pCyrix->HWCursor = TRUE;
+    pCyrix->HWCursor = FALSE;
     if (xf86IsOptionSet(pCyrix->Options, OPTION_HW_CURSOR)) {
 	from = X_CONFIG;
 	pCyrix->HWCursor = TRUE;
@@ -645,11 +750,50 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
 	from = X_CONFIG;
 	pCyrix->HWCursor = FALSE;
     }
+    if (pCyrix->HWCursor == TRUE)
+    	xf86DrvMsg(pScrn->scrnIndex, from, "Hardware cursor is disabled in this release\n");
+
+    if (xf86ReturnOptValBool(pCyrix->Options, OPTION_SHADOW_FB, FALSE)) {
+	pCyrix->ShadowFB = TRUE;
+	pCyrix->NoAccel = TRUE;
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+		"Using \"Shadow Framebuffer\" - acceleration disabled\n");
+    }
+    pCyrix->Rotate = 0;
+    if ((s = xf86GetOptValString(pCyrix->Options, OPTION_ROTATE))) {
+      if(!xf86NameCmp(s, "CW")) {
+	pCyrix->ShadowFB = TRUE;
+	pCyrix->NoAccel = TRUE;
+	pCyrix->HWCursor = FALSE;
+	pCyrix->Rotate = 1;
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+		"Rotating screen clockwise - acceleration disabled\n");
+      } else
+      if(!xf86NameCmp(s, "CCW")) {
+	pCyrix->ShadowFB = TRUE;
+	pCyrix->NoAccel = TRUE;
+	pCyrix->HWCursor = FALSE;
+	pCyrix->Rotate = -1;
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+		"Rotating screen counter clockwise - acceleration disabled\n");
+      } else {
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG,
+		"\"%s\" is not a valid value for Option \"Rotate\"\n", s);
+	xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+		"Valid options are \"CW\" or \"CCW\"\n");
+      }
+    }
     xf86DrvMsg(pScrn->scrnIndex, from, "Using %s cursor\n",
 		pCyrix->HWCursor ? "HW" : "SW");
     if (xf86IsOptionSet(pCyrix->Options, OPTION_NOACCEL)) {
 	pCyrix->NoAccel = TRUE;
 	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Acceleration disabled\n");
+    }
+
+    pCyrix->NoCompress = FALSE;
+    if (xf86IsOptionSet(pCyrix->Options, OPTION_NOCOMPRESS)) {
+	pCyrix->NoCompress = TRUE;
+	xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "Compression disabled\n");
     }
 
     pCyrix->PciInfo = NULL;
@@ -672,8 +816,6 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
 
 
     pCyrix->EngineOperation = 0x00;
-    pCyrix->IsCyber = FALSE;
-    pCyrix->NewClockCode = FALSE;
 
     xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Found %s chip\n", pScrn->chipset);
     
@@ -751,7 +893,7 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
      */
     i = xf86ValidateModes(pScrn, pScrn->monitor->Modes,
 			pScrn->display->modes, clockRanges,
-			NULL, 256, 2048,
+			accelWidths, 256, 2048,
 			pScrn->bitsPerPixel, 128, 2048,
 			pScrn->display->virtualX,
 			pScrn->display->virtualY,
@@ -823,6 +965,15 @@ CYRIXPreInit(ScrnInfoPtr pScrn, int flags)
 	}
     }
 
+    /* Load shadowfb if needed */
+    if (pCyrix->ShadowFB) {
+	if (!xf86LoadSubModule(pScrn, "shadowfb")) {
+	    CYRIXFreeRec(pScrn);
+	    return FALSE;
+	}
+	xf86LoaderReqSymLists(shadowSymbols, NULL);
+    }
+
     return TRUE;
 }
 
@@ -843,6 +994,7 @@ CYRIXSave(ScrnInfoPtr pScrn)
 
     vgaHWSave(pScrn, vgaReg, VGA_SR_ALL);
     CyrixSave(pScrn, cyrixReg); 
+    CYRIXSavePalette(pScrn);
 }
 
 
@@ -869,7 +1021,6 @@ CYRIXModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
         return FALSE;
     pScrn->vtSema = TRUE;
 
-
     pCyrix = CYRIXPTR(pScrn);
 
     /* Do the guts of this work */
@@ -883,7 +1034,7 @@ CYRIXModeInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     cyrixReg = &pCyrix->ModeReg;
 
     CyrixRestore(pScrn, cyrixReg);
-    /*vgaHWRestore(pScrn, vgaReg, VGA_SR_MODE); */
+/*    vgaHWRestore(pScrn, vgaReg, VGA_SR_MODE);*/
 
     return TRUE;
 }
@@ -907,12 +1058,80 @@ CYRIXRestore(ScrnInfoPtr pScrn)
     vgaHWProtect(pScrn, TRUE);
 
     /*CyrixRestore(pScrn, cyrixReg);*/
-
+    CYRIXRestorePalette(pScrn);
     vgaHWRestore(pScrn, vgaReg, VGA_SR_ALL);
 
     vgaHWProtect(pScrn, FALSE);
 }
 
+/* Needed because we are not VGA enough in all cases (eg 5530 LCD) */
+
+static void
+CYRIXLoadPalette(
+   ScrnInfoPtr pScrn,
+   int numColors,
+   int *indices,
+   LOCO *colors,
+   VisualPtr pVisual
+){
+   int i;
+   unsigned int locked;
+   CYRIXPrvPtr pCyrix = CYRIXPTR(pScrn);
+   
+   switch(pScrn->depth) {
+   case 15:	
+   case 16:
+	return;
+   }
+
+   locked = GX_REG(DC_UNLOCK);
+   GX_REG(DC_UNLOCK) = DC_UNLOCK_VALUE;
+   
+   for(i = 0; i < numColors; i++) {
+        unsigned int red, green, blue;
+        int index = indices[i];
+        
+        red = colors[index].red;
+        green = colors[index].green;
+        blue = colors[index].blue;;
+        
+        GX_REG(DC_PAL_ADDRESS) = index;
+        GX_REG(DC_PAL_DATA) = (red << 12) | (green << 6) | blue;
+   } 
+   GX_REG(DC_UNLOCK) = locked;
+}
+
+static void CYRIXSavePalette(ScrnInfoPtr pScrn)
+{
+   int i;
+   unsigned int locked;
+   CYRIXPrvPtr pCyrix = CYRIXPTR(pScrn);
+   
+   locked = GX_REG(DC_UNLOCK);
+   GX_REG(DC_UNLOCK) = DC_UNLOCK_VALUE;
+   
+   for(i = 0; i < 256; i++) {
+        GX_REG(DC_PAL_ADDRESS) = i;
+        pCyrix->SavedReg.Colormap[i] = GX_REG(DC_PAL_DATA);
+   } 
+   GX_REG(DC_UNLOCK) = locked;
+}
+
+static void CYRIXRestorePalette(ScrnInfoPtr pScrn)
+{
+   int i;
+   unsigned int locked;
+   CYRIXPrvPtr pCyrix = CYRIXPTR(pScrn);
+   
+   locked = GX_REG(DC_UNLOCK);
+   GX_REG(DC_UNLOCK) = DC_UNLOCK_VALUE;
+   
+   for(i = 0; i < 256; i++) {
+        GX_REG(DC_PAL_ADDRESS) = i;
+        GX_REG(DC_PAL_DATA) = pCyrix->SavedReg.Colormap[i];
+   } 
+   GX_REG(DC_UNLOCK) = locked;
+}
 
 /* Mandatory */
 
@@ -927,7 +1146,8 @@ CYRIXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     CYRIXPrvPtr pCyrix;
     int ret;
     VisualPtr visual;
-
+    int width, height, displayWidth;
+    unsigned char *FBStart;
     /* 
      * First get the ScrnInfoRec
      */
@@ -981,6 +1201,9 @@ CYRIXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 			      pScrn->defaultVisual))
 	    return FALSE;
     } else {
+	if (!xf86SetDefaultVisual(pScrn, -1))
+	    return FALSE;
+
 	if (!miSetVisualTypes(pScrn->depth, 
 			      miGetDefaultVisualMask(pScrn->depth),
 			      pScrn->rgbBits, pScrn->defaultVisual))
@@ -989,6 +1212,25 @@ CYRIXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 
     miSetPixmapDepths ();
     
+    width = pScrn->virtualX;
+    height = pScrn->virtualY;
+    displayWidth = pScrn->displayWidth;
+
+
+    if(pCyrix->Rotate) {
+	height = pScrn->virtualX;
+	width = pScrn->virtualY;
+    }
+
+    if(pCyrix->ShadowFB) {
+ 	pCyrix->ShadowPitch = BitmapBytePad(pScrn->bitsPerPixel * width);
+	pCyrix->ShadowPtr = xalloc(pCyrix->ShadowPitch * height);
+	displayWidth = pCyrix->ShadowPitch / (pScrn->bitsPerPixel >> 3);
+        FBStart = pCyrix->ShadowPtr;
+    } else {
+	pCyrix->ShadowPtr = NULL;
+	FBStart = pCyrix->FbBase;
+    }
     /*
      * Call the framebuffer layer's ScreenInit function, and fill in other
      * pScreen fields.
@@ -999,9 +1241,9 @@ CYRIXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     case 4:
     case 8:
     case 16:
-	ret = fbScreenInit(pScreen, pCyrix->FbBase, pScrn->virtualX,
-			pScrn->virtualY, pScrn->xDpi, pScrn->yDpi, 
-			pScrn->displayWidth, pScrn->bitsPerPixel);
+	ret = fbScreenInit(pScreen, FBStart, width,
+			height, pScrn->xDpi, pScrn->yDpi, 
+			displayWidth, pScrn->bitsPerPixel);
 	break;
     default:
 	xf86DrvMsg(scrnIndex, X_ERROR,
@@ -1079,13 +1321,33 @@ CYRIXScreenInit(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
     if (!miCreateDefColormap(pScreen))
 	return FALSE;
 
-    if (!vgaHWHandleColormaps(pScreen))
-	return FALSE;
+    if (!xf86HandleColormaps(pScreen, 256, pScrn->rgbBits, 
+    			CYRIXLoadPalette, NULL,
+    			CMAP_RELOAD_ON_MODE_SWITCH))
+	return FALSE;    			
 
     xf86DPMSInit(pScreen, (DPMSSetProcPtr)CYRIXDisplayPowerManagementSet, 0);
 
     pScrn->memPhysBase = pCyrix->FbAddress;
     pScrn->fbOffset = 0;
+
+    if(pCyrix->ShadowFB) {
+	RefreshAreaFuncPtr refreshArea = CYRIXRefreshArea;
+
+	if(pCyrix->Rotate) {
+	    if (!pCyrix->PointerMoved) {
+		    pCyrix->PointerMoved = pScrn->PointerMoved;
+		    pScrn->PointerMoved = CYRIXPointerMoved;
+	    }
+
+	   switch(pScrn->bitsPerPixel) {
+	   case 8:	refreshArea = CYRIXRefreshArea8;	break;
+	   case 16:	refreshArea = CYRIXRefreshArea16;	break;
+	   }
+	}
+
+	ShadowFBInit(pScreen, refreshArea);
+    }
 
     pCyrix->CloseScreen = pScreen->CloseScreen;
     pScreen->CloseScreen = CYRIXCloseScreen;
@@ -1126,18 +1388,23 @@ CYRIXAdjustFrame(int scrnIndex, int x, int y, int flags)
 
     switch (pScrn->bitsPerPixel) {
 	case 4:
-	    base /= 2;
+/*	    base /= 2; */
+	    base = base >> 4;
 	    break;
 	case 8:
 	    base = (base & 0xFFFFFFF8) >> 2; 
 	    break;
 	case 16:
-	    base *= (pScrn->bitsPerPixel / 8);
+/*	    base *= (pScrn->bitsPerPixel / 8); */
+	    base /= 2;
 	    break;
     }
 
     GX_REG(DC_UNLOCK) = DC_UNLOCK_VALUE;
     
+    /* If you switch to poking FB_ST_OFFSET directly it expects to be
+       fed different values to the SoftVGA emulation code */
+       
     /*GX_REG(DC_FB_ST_OFFSET) = base; */
     /* CRT bits 0-15 */
     outw(vgaIOBase + 4, (base & 0x00FF00) | 0x0C); 
@@ -1209,6 +1476,8 @@ CYRIXCloseScreen(int scrnIndex, ScreenPtr pScreen)
     pCyrix = CYRIXPTR(pScrn);
     if(pCyrix->AccelInfoRec)
 	XAADestroyInfoRec(pCyrix->AccelInfoRec);
+    if (pCyrix->ShadowPtr)
+	xfree(pCyrix->ShadowPtr);
     pScrn->vtSema = FALSE;
     
     pScreen->CloseScreen = pCyrix->CloseScreen;
@@ -1245,34 +1514,3 @@ CYRIXSaveScreen(ScreenPtr pScreen, int mode)
     return vgaHWSaveScreen(pScreen, mode);
 }
 
-#if 0
-static void
-CYRIXEnterLeave(enter)
-Bool enter;
-{
-    unsigned char temp;
-
-    if (enter) {
-    	GX_REG(DC_UNLOCK) = DC_UNLOCK_VALUE;
-
-	/* Unprotect CRTC[0-7] */
-	outb(vgaIOBase + 4, 0x11); temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, temp & 0x7F);
-
-	/* Unprotect MediaGX extended registers */
-	outb(vgaIOBase + 4, CrtcExtendedRegisterLock);
-	outb(vgaIOBase + 5, 0x57);
-	outb(vgaIOBase + 5, 0x4C);
-
-    } else {
-	/* Protect MediaGX extended registers */
-	outb(vgaIOBase + 4, CrtcExtendedRegisterLock);
-	outb(vgaIOBase + 5, 0x00);
-
-	/* Protect CRTC[0-7] */
-	outb(vgaIOBase + 4, 0x11); temp = inb(vgaIOBase + 5);
-	outb(vgaIOBase + 5, (temp & 0x7F) | 0x80);
-    	GX_REG(DC_UNLOCK) = 0;
-    }
-}
-#endif

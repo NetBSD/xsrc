@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgastate.h,v 1.3 2001/04/10 16:07:51 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgastate.h,v 1.5 2002/10/30 12:51:36 alanh Exp $ */
 /*
  * Copyright 2000-2001 VA Linux Systems, Inc.
  * All Rights Reserved.
@@ -23,21 +23,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #ifndef _MGA_STATE_H
 #define _MGA_STATE_H
 
 
+extern void mgaInitState( mgaContextPtr mmesa );
 extern void mgaDDInitStateFuncs(GLcontext *ctx);
 extern void mgaDDUpdateHwState( GLcontext *ctx );
-extern void mgaDDUpdateState( GLcontext *ctx );
-extern void mgaDDReducedPrimitiveChange( GLcontext *ctx, GLenum prim );
-
-extern void mgaInitState( mgaContextPtr mmesa );
-
 extern void mgaUpdateClipping(const GLcontext *ctx);
+extern void mgaUpdateCull( GLcontext *ctx );
+extern void mgaCalcViewport( GLcontext *ctx );
 
 
 

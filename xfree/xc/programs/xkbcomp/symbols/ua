@@ -1,7 +1,7 @@
 // ukrainian standard keyboard 
 // AEN <aen@logic.ru> & Leon Kanter <leon@geon.donetsk.ua>
 // Last Changes 2001/12/11 by Andriy Rysin <arysin@yahoo.com>
-// $XFree86: xc/programs/xkbcomp/symbols/ua,v 1.2 2002/01/14 18:30:11 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/ua,v 1.3 2003/02/15 22:27:05 dawes Exp $
 
 partial default alphanumeric_keys 
 xkb_symbols "basic" {
@@ -139,6 +139,8 @@ xkb_symbols "winkeys" {
                         [               8,        asterisk      ]       };
     key <AB10> {        [           slash,        question      ],
                         [          period,           comma      ]       };
+    key <BKSL> {        [       backslash,             bar      ],
+                        [       backslash,           slash      ]       };
 
 //    key	<AC02> {	[		s,		 S	],
 //			[     Ukrainian_i,     Ukrainian_I	]	};

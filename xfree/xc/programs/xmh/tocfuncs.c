@@ -24,18 +24,19 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xmh/tocfuncs.c,v 1.3 2001/10/28 03:34:39 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/tocfuncs.c,v 1.4 2002/04/05 21:06:29 dickey Exp $ */
 
 /* tocfuncs.c -- action procedures concerning things in the toc widget. */
 
 #include "xmh.h"
 #include "tocutil.h"
+#include "actions.h"
 
 #define MAX_SYSTEM_LEN 510
 
-Boolean UserWantsAction(w, scrn) /* general action procedure "filter" */
-    Widget	w;
-    Scrn	scrn;
+Boolean UserWantsAction(
+    Widget	w,
+    Scrn	scrn)
 {
     /* Commands in the command menus invoke callbacks directly. 
      * Keyboard accelerators use the command menus as source widgets.
@@ -66,9 +67,9 @@ Boolean UserWantsAction(w, scrn) /* general action procedure "filter" */
 
 
 /*ARGSUSED*/
-static void NextAndPreviousView(scrn, next)
-    Scrn	scrn;
-    Boolean	next;	/* if true, next or forward; if false, previous */
+static void NextAndPreviousView(
+    Scrn	scrn,
+    Boolean	next)	/* if true, next or forward; if false, previous */
 {
     Toc		toc = scrn->toc;
     MsgList	mlist;
@@ -112,10 +113,10 @@ static void NextAndPreviousView(scrn, next)
 
 
 /*ARGSUSED*/
-void DoReverseReadOrder(widget, client_data, call_data)
-    Widget	widget;		/* the menu entry widget */
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoReverseReadOrder(
+    Widget	widget,		/* the menu entry widget */
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     app_resources.reverse_read_order =
 	(app_resources.reverse_read_order ? False : True);
@@ -124,21 +125,21 @@ void DoReverseReadOrder(widget, client_data, call_data)
 
 
 /*ARGSUSED*/
-void DoNextView(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+void DoNextView(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     NextAndPreviousView((Scrn) client_data,
 			(app_resources.reverse_read_order ? False : True));
 }
 
 /*ARGSUSED*/
-void XmhViewNextMessage(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhViewNextMessage(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -146,21 +147,21 @@ void XmhViewNextMessage(w, event, params, num_params)
 }
 
 /*ARGSUSED*/
-void DoPrevView(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;	
-    XtPointer	call_data;	/* unused */
+void DoPrevView(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     NextAndPreviousView((Scrn) client_data, 
 			(app_resources.reverse_read_order ? True : False));
 }
 
 /*ARGSUSED*/
-void XmhViewPreviousMessage(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhViewPreviousMessage(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -169,10 +170,10 @@ void XmhViewPreviousMessage(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoViewNew(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoViewNew(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Toc		toc = scrn->toc;
@@ -192,11 +193,11 @@ void DoViewNew(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhViewInNewWindow(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhViewInNewWindow(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -204,10 +205,10 @@ void XmhViewInNewWindow(w, event, params, num_params)
 }
 
 
-void DoForwardMsg(scrn, params, num_params)
-    Scrn	scrn;
-    String	*params;
-    Cardinal	num_params;
+static void DoForwardMsg(
+    Scrn	scrn,
+    String	*params,
+    Cardinal	num_params)
 {
     Toc		toc = scrn->toc;
     MsgList	mlist;
@@ -221,21 +222,21 @@ void DoForwardMsg(scrn, params, num_params)
 
 
 /*ARGSUSED*/
-void DoForward(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoForward(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     DoForwardMsg((Scrn) client_data, (String *)NULL, (Cardinal)0);
 }
 
 
 /*ARGSUSED*/
-void XmhForward(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhForward(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -244,10 +245,10 @@ void XmhForward(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoTocUseAsComp(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoTocUseAsComp(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Toc		toc = scrn->toc;
@@ -274,11 +275,11 @@ void DoTocUseAsComp(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhUseAsComposition(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhUseAsComposition(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -288,10 +289,7 @@ void XmhUseAsComposition(w, event, params, num_params)
 
 /* Utility: change the fate of a set of messages. */
 
-static void MarkMessages(scrn, fate, skip)
-Scrn scrn;
-FateType fate;
-int skip;
+static void MarkMessages(Scrn scrn, FateType fate, int skip)
 {
     Toc toc = scrn->toc;
     Toc desttoc;
@@ -325,11 +323,11 @@ int skip;
 
 
 /*ARGSUSED*/
-void XmhMarkDelete(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhMarkDelete(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -338,10 +336,10 @@ void XmhMarkDelete(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoDelete(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoDelete(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn scrn = (Scrn) client_data;
     MarkMessages(scrn, Fdelete, app_resources.skip_deleted);
@@ -349,10 +347,10 @@ void DoDelete(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void DoCopy(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoCopy(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn scrn = (Scrn) client_data;
     MarkMessages(scrn, Fcopy, app_resources.skip_copied);
@@ -360,11 +358,11 @@ void DoCopy(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhMarkCopy(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhMarkCopy(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -373,10 +371,10 @@ void XmhMarkCopy(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoMove(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoMove(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn scrn = (Scrn) client_data;
     MarkMessages(scrn, Fmove, app_resources.skip_moved);
@@ -384,11 +382,11 @@ void DoMove(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhMarkMove(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhMarkMove(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -397,10 +395,10 @@ void XmhMarkMove(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoUnmark(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoUnmark(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn scrn = (Scrn) client_data;
     MarkMessages(scrn, Fignore, FALSE);
@@ -408,11 +406,11 @@ void DoUnmark(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhUnmark(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhUnmark(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -421,10 +419,10 @@ void XmhUnmark(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoCommit(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	 call_data;
+void DoCommit(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	 call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     TocCommitChanges(w, (XtPointer) scrn->toc, (XtPointer) NULL);
@@ -432,11 +430,11 @@ void DoCommit(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhCommitChanges(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhCommitChanges(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -445,11 +443,11 @@ void XmhCommitChanges(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void XmhShellCommand(w, event, params, num_params)
-    Widget	w;	 /* any widget on same scrn as the messages */
-    XEvent	*event;	 /* unused */
-    String	*params; /* shell command to execute with msgs appended */
-    Cardinal	*num_params;
+void XmhShellCommand(
+    Widget	w,	 /* any widget on same scrn as the messages */
+    XEvent	*event,	 /* unused */
+    String	*params, /* shell command to execute with msgs appended */
+    Cardinal	*num_params)
 {
     int		i, len, used;
     MsgList	mlist;
@@ -512,11 +510,11 @@ void XmhShellCommand(w, event, params, num_params)
 }
 
 
-void XmhPrint(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhPrint(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     if (! num_params || ! *num_params) {
 	/* use the print command specified in application resources */
@@ -533,10 +531,10 @@ void XmhPrint(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoPrint(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+void DoPrint(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     Scrn	scrn = (Scrn) client_data;
     Cardinal	num_params = 0;
@@ -549,10 +547,10 @@ void DoPrint(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void DoPack(widget, client_data, call_data)
-    Widget	widget;
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+void DoPack(
+    Widget	widget,
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     Scrn	scrn = (Scrn) client_data;
     Toc		toc = scrn->toc;
@@ -584,11 +582,11 @@ void DoPack(widget, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhPackFolder(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhPackFolder(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -597,10 +595,10 @@ void XmhPackFolder(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoSort(widget, client_data, call_data)
-    Widget	widget;
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+void DoSort(
+    Widget	widget,
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     Scrn	scrn = (Scrn) client_data;
     Toc		toc = scrn->toc;
@@ -630,11 +628,11 @@ void DoSort(widget, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhSortFolder(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhSortFolder(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -643,11 +641,11 @@ void XmhSortFolder(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void XmhForceRescan(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhForceRescan(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -655,10 +653,10 @@ void XmhForceRescan(w, event, params, num_params)
 }
 
 /*ARGSUSED*/
-void DoForceRescan(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoForceRescan(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Toc		toc = scrn->toc;
@@ -671,11 +669,11 @@ void DoForceRescan(w, client_data, call_data)
 }
 
 /*ARGSUSED*/
-void XmhCheckForNewMail(w, e, p, n)
-    Widget w;
-    XEvent *e;
-    String *p;
-    Cardinal *n;
+void XmhCheckForNewMail(
+    Widget w,
+    XEvent *e,
+    String *p,
+    Cardinal *n)
 {
     TocCheckForNewMail(True);
 }
@@ -683,11 +681,11 @@ void XmhCheckForNewMail(w, e, p, n)
 /* Incorporate new mail. */
 
 /*ARGSUSED*/
-void XmhIncorporateNewMail(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhIncorporateNewMail(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn)) {
@@ -697,10 +695,10 @@ void XmhIncorporateNewMail(w, event, params, num_params)
 }
 
 
-void DoIncorporateNewMail(w, client_data, call_data)
-    Widget	w;		/* unused */
-    XtPointer	client_data;	/* screen */
-    XtPointer	call_data;	/* unused */
+void DoIncorporateNewMail(
+    Widget	w,		/* unused */
+    XtPointer	client_data,	/* screen */
+    XtPointer	call_data)	/* unused */
 {
     Scrn scrn = (Scrn) client_data;
     Toc toc = scrn->toc;
@@ -728,10 +726,10 @@ void DoIncorporateNewMail(w, client_data, call_data)
 }
 
 
-void DoReplyMsg(scrn, params, num_params)
-    Scrn	scrn;
-    String	*params;
-    Cardinal	num_params;
+static void DoReplyMsg(
+    Scrn	scrn,
+    String	*params,
+    Cardinal	num_params)
 {
     Toc		toc = scrn->toc;
     Scrn	nscrn;
@@ -754,21 +752,21 @@ void DoReplyMsg(scrn, params, num_params)
     
 
 /*ARGSUSED*/
-void DoReply(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoReply(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     DoReplyMsg((Scrn) client_data, (String *)NULL, (Cardinal)0);
 }
     
 
 /*ARGSUSED*/
-void XmhReply(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhReply(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -777,10 +775,10 @@ void XmhReply(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoPickMessages(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoPickMessages(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Toc		toc = scrn->toc;
@@ -815,11 +813,11 @@ void DoPickMessages(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhPickMessages(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhPickMessages(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -828,10 +826,10 @@ void XmhPickMessages(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoSelectSequence(widget, client_data, call_data)
-    Widget	widget;		/* sequence menu entry object */
-    XtPointer	client_data;	/* the screen */
-    XtPointer	call_data;
+void DoSelectSequence(
+    Widget	widget,		/* sequence menu entry object */
+    XtPointer	client_data,	/* the screen */
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Toc		toc  = (Toc) scrn->toc;
@@ -854,10 +852,10 @@ void DoSelectSequence(widget, client_data, call_data)
 
 
 /*ARGSUSED*/
-void DoOpenSeq(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoOpenSeq(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     Toc		toc = scrn->toc;
@@ -867,11 +865,11 @@ void DoOpenSeq(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhOpenSequence(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhOpenSequence(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Widget	entry_object;
     Scrn	scrn = ScrnFromWidget(w);
@@ -937,9 +935,7 @@ void XmhOpenSequence(w, event, params, num_params)
 
 typedef enum {ADD, REMOVE, DELETE} TwiddleOperation;
 
-static void TwiddleSequence(scrn, op)
-Scrn scrn;
-TwiddleOperation op;
+static void TwiddleSequence(Scrn scrn, TwiddleOperation op)
 {
     Toc toc = scrn->toc;
     char **argv, str[100];
@@ -997,10 +993,10 @@ TwiddleOperation op;
 
 
 /*ARGSUSED*/
-void DoAddToSeq(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoAddToSeq(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     TwiddleSequence(scrn, ADD);
@@ -1008,11 +1004,11 @@ void DoAddToSeq(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhAddToSequence(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhAddToSequence(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (! UserWantsAction(w, scrn))
@@ -1027,10 +1023,10 @@ void XmhAddToSequence(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoRemoveFromSeq(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoRemoveFromSeq(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     TwiddleSequence(scrn, REMOVE);
@@ -1038,11 +1034,11 @@ void DoRemoveFromSeq(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhRemoveFromSequence(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhRemoveFromSequence(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (UserWantsAction(w, scrn))
@@ -1052,10 +1048,10 @@ void XmhRemoveFromSequence(w, event, params, num_params)
 
 
 /*ARGSUSED*/
-void DoDeleteSeq(w, client_data, call_data)
-    Widget	w;
-    XtPointer	client_data;
-    XtPointer	call_data;
+void DoDeleteSeq(
+    Widget	w,
+    XtPointer	client_data,
+    XtPointer	call_data)
 {
     Scrn	scrn = (Scrn) client_data;
     TwiddleSequence(scrn, DELETE);
@@ -1064,11 +1060,11 @@ void DoDeleteSeq(w, client_data, call_data)
 
 
 /*ARGSUSED*/
-void XmhDeleteSequence(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhDeleteSequence(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     if (! UserWantsAction(w, scrn))
@@ -1080,4 +1076,3 @@ void XmhDeleteSequence(w, event, params, num_params)
     if (TocHasSequences(scrn->toc))
 	DoDeleteSeq(w, (XtPointer) scrn, (XtPointer) NULL);
 }
-

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atidac.c,v 1.14 2002/01/16 16:22:26 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atidac.c,v 1.18 2003/02/25 17:58:13 tsi Exp $ */
 /*
- * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,7 +29,7 @@
 /*
  * RAMDAC-related definitions.
  */
-const DACRec ATIDACDescriptors[] =
+const SymTabRec ATIDACDescriptors[] =
 {   /* Keep this table in ascending DACType order */
     {ATI_DAC_ATI68830,      "ATI 68830 or similar"},
     {ATI_DAC_SC11483,       "Sierra 11483 or similar"},
@@ -78,6 +78,7 @@ ATISetDACIOPorts
             pATI->CPIO_DAC_MASK = VGA_DAC_MASK;
             pATI->CPIO_DAC_READ = VGA_DAC_READ;
             pATI->CPIO_DAC_WRITE = VGA_DAC_WRITE;
+            pATI->CPIO_DAC_WAIT = GENS1(pATI->CPIO_VGABase);
             break;
 
         case ATI_CRTC_8514:
@@ -85,6 +86,7 @@ ATISetDACIOPorts
             pATI->CPIO_DAC_MASK = IBM_DAC_MASK;
             pATI->CPIO_DAC_READ = IBM_DAC_READ;
             pATI->CPIO_DAC_WRITE = IBM_DAC_WRITE;
+            pATI->CPIO_DAC_WAIT = pATI->CPIO_DAC_MASK;
             break;
 
         case ATI_CRTC_MACH64:
@@ -92,6 +94,7 @@ ATISetDACIOPorts
             pATI->CPIO_DAC_MASK = ATIIOPort(DAC_REGS) + 2;
             pATI->CPIO_DAC_READ = ATIIOPort(DAC_REGS) + 3;
             pATI->CPIO_DAC_WRITE = ATIIOPort(DAC_REGS) + 0;
+            pATI->CPIO_DAC_WAIT = pATI->CPIOBase;
             break;
 
         default:

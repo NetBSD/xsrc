@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * Author:  Keith Packard, MIT X Consortium
  */
 
-/* $XFree86: xc/programs/xconsole/xconsole.c,v 3.29 2001/12/14 20:01:19 dawes Exp $ */
+/* $XFree86: xc/programs/xconsole/xconsole.c,v 3.31 2002/10/16 02:27:40 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -45,9 +45,8 @@ in this Software without prior written authorization from The Open Group.
 #include <X11/Xaw/Paned.h>
 #include <X11/Xaw/Box.h>
 
-extern char *_XawTextGetSTRING(TextWidget ctx, XawTextPosition left, 
-			       XawTextPosition	right);
-
+extern char *_XawTextGetSTRING(TextWidget ctx, XawTextPosition left,
+			       XawTextPosition right);
 
 #include <X11/Xos.h>
 #include <X11/Xfuncs.h>
@@ -73,22 +72,25 @@ static long TextLength(Widget w);
 static void TextReplace(Widget w, int start, int end, XawTextBlock *block);
 static void TextAppend(Widget w, char *s, int len);
 static void TextInsert(Widget w, char *s, int len);
+static Bool ExceededMaxLines(Widget w);
+static void ScrollLine(Widget w);
 
-static Widget	top, text;
+static Widget		top, text;
 
 static XtInputId	input_id;
 
-static FILE    *input;
-static Boolean	regularFile = FALSE;
+static FILE		*input;
+static Boolean		regularFile = FALSE;
 
-static Boolean	notified;
-static Boolean	iconified;
+static Boolean		notified;
+static Boolean		iconified;
 
-static Atom	wm_delete_window;
-static Atom	mit_console;
-#define MIT_CONSOLE_LEN	12
+static Atom		wm_delete_window;
+static Atom		mit_console;
+
+#define MIT_CONSOLE_LEN 12
 #define MIT_CONSOLE "MIT_CONSOLE_"
-static char	mit_console_name[255 + MIT_CONSOLE_LEN + 1] = MIT_CONSOLE;
+static char		mit_console_name[255 + MIT_CONSOLE_LEN + 1] = MIT_CONSOLE;
 
 static struct _app_resources {
     char    *file;
@@ -97,6 +99,7 @@ static struct _app_resources {
     Boolean daemon;
     Boolean verbose;
     Boolean exitOnFail;
+    int     saveLines;
 } app_resources;
 
 #define Offset(field) XtOffsetOf(struct _app_resources, field)
@@ -114,44 +117,45 @@ static XtResource  resources[] = {
 	Offset (verbose),XtRImmediate, (XtPointer)False},
     {"exitOnFail",	"ExitOnFail",    XtRBoolean,	sizeof (Boolean),
 	Offset (exitOnFail),XtRImmediate, (XtPointer)False},
+    {"saveLines",	"SaveLines",	XtRInt,	sizeof (int),
+	Offset (saveLines), XtRImmediate, (XtPointer) 0 },
 };
 
 #undef Offset
 
 static XrmOptionDescRec options[] = {
-    {"-file",	    "*file",		XrmoptionSepArg,    NULL},
-    {"-notify",	    "*notify",		XrmoptionNoArg,	    "TRUE"},
-    {"-nonotify",   "*notify",		XrmoptionNoArg,	    "FALSE"},
-    {"-daemon",	    "*daemon",		XrmoptionNoArg,	    "TRUE"},
-    {"-verbose",    "*verbose",		XrmoptionNoArg,	    "TRUE"},
-    {"-exitOnFail", "*exitOnFail",	XrmoptionNoArg,	    "TRUE"},
+    {"-file",		"*file",		XrmoptionSepArg,	NULL},
+    {"-notify",		"*notify",		XrmoptionNoArg,		"TRUE"},
+    {"-nonotify",	"*notify",		XrmoptionNoArg,		"FALSE"},
+    {"-daemon",		"*daemon",		XrmoptionNoArg,		"TRUE"},
+    {"-verbose",	"*verbose",		XrmoptionNoArg,		"TRUE"},
+    {"-exitOnFail",	"*exitOnFail",		XrmoptionNoArg,		"TRUE"},
+    {"-saveLines",	"*saveLines",		XrmoptionSepArg,	NULL},
 };
 
 #ifdef ultrix
 #define USE_FILE
-#define FILE_NAME   "/dev/xcons"
+#define FILE_NAME "/dev/xcons"
 #endif
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define USE_FILE
-#define FILE_NAME   "/dev/console$"
+#define FILE_NAME "/dev/console$"
 #define INCL_DOSFILEMGR
 #define INCL_DOSDEVIOCTL
 #include <os2.h>
 #endif
 
-
-
 #ifndef USE_FILE
-#include    <sys/ioctl.h>
+#include <sys/ioctl.h>
 #ifdef hpux
-#include    <termios.h>
+#include <termios.h>
 #endif
 #ifdef SVR4
-#include    <termios.h>
-#include    <sys/stropts.h>		/* for I_PUSH */
+#include <termios.h>
+#include <sys/stropts.h>		/* for I_PUSH */
 #ifdef sun
-#include    <sys/strredir.h>
+#include <sys/strredir.h>
 #endif
 #endif
 
@@ -181,7 +185,7 @@ RestoreConsole(void)
 {
     int fd;
     if ((fd = open("/dev/con", O_RDONLY)) >= 0)
-    	newconsole(fd);
+	newconsole(fd);
 }
 #endif
 
@@ -194,7 +198,7 @@ OpenConsole(void)
 	if (!strcmp (app_resources.file, "console"))
 	{
 	    /* must be owner and have read/write permission */
-#if !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(Lynx) && !defined(__EMX__)
+#if !defined(__NetBSD__) && !defined(__OpenBSD__) && !defined(Lynx) && !defined(__UNIXOS2__)
 	    struct stat sbuf;
 
 	    if (!stat("/dev/console", &sbuf) &&
@@ -203,20 +207,19 @@ OpenConsole(void)
 #endif
 	    {
 #ifdef USE_FILE
-	    	input = fopen (FILE_NAME, "r");
-
-#ifdef __EMX__
-		if (input) 
+		input = fopen (FILE_NAME, "r");
+#ifdef __UNIXOS2__
+		if (input)
 		{
 		    ULONG arg = 1,arglen;
 		    APIRET rc;
-		    if ((rc=DosDevIOCtl(fileno(input), 0x76,0x4d, 
+		    if ((rc=DosDevIOCtl(fileno(input), 0x76,0x4d,
 			&arg, sizeof(arg), &arglen,
-			NULL, 0, NULL)) != 0) 
+			NULL, 0, NULL)) != 0)
 		    {
 			fclose(input);
 			input = 0;
-		    }	    	
+		    }
 		}
 #endif
 #endif
@@ -238,7 +241,7 @@ OpenConsole(void)
 		    }
 #else
 		    if (newconsole(tty_fd) < 0)
-		    	perror("newconsole");
+			perror("newconsole");
 		    else
 		    {
 			input = fdopen (pty_fd, "r");
@@ -268,7 +271,7 @@ OpenConsole(void)
 	    struct stat sbuf;
 
 	    regularFile = FALSE;
-            if (access(app_resources.file, R_OK) == 0)
+	    if (access(app_resources.file, R_OK) == 0)
 	    {
 		input = fopen (app_resources.file, "r");
 		if (input)
@@ -299,7 +302,8 @@ OpenConsole(void)
 static void
 CloseConsole (void)
 {
-    if (input) {
+    if (input)
+    {
 	XtRemoveInput (input_id);
 	fclose (input);
     }
@@ -377,15 +381,16 @@ Deiconified(Widget widget, XEvent *event, String *params, Cardinal *num_params)
     XtSetArg (arglist[0], XtNiconName, &oldName);
     XtGetValues (top, arglist, 1);
     oldlen = strlen (oldName);
-    if (oldlen >= 2) {
-    	newName = malloc (oldlen - 1);
-    	if (!newName)
+    if (oldlen >= 2)
+    {
+	newName = malloc (oldlen - 1);
+	if (!newName)
 	    return;
-    	strncpy (newName, oldName, oldlen - 2);
+	strncpy (newName, oldName, oldlen - 2);
 	newName[oldlen - 2] = '\0';
-    	XtSetArg (arglist[0], XtNiconName, newName);
-    	XtSetValues (top, arglist, 1);
-    	free (newName);
+	XtSetArg (arglist[0], XtNiconName, newName);
+	XtSetValues (top, arglist, 1);
+	free (newName);
     }
     notified = False;
 }
@@ -413,10 +418,10 @@ Clear(Widget widget, XEvent *event, String *params, Cardinal *num_params)
 }
 
 static XtActionsRec actions[] = {
-    { "Quit",	    Quit },
-    { "Iconified",    Iconified },
-    { "Deiconified",  Deiconified },
-    { "Clear",	    Clear },
+    { "Quit",		Quit },
+    { "Iconified",	Iconified },
+    { "Deiconified",	Deiconified },
+    { "Clear",		Clear },
 };
 
 static void
@@ -455,7 +460,7 @@ inputReady(XtPointer w, int *source, XtInputId *id)
 	    sleep(1);
 	    return;
 	}
-	    
+
 	fclose (input);
 	XtRemoveInput (*id);
 
@@ -473,18 +478,20 @@ inputReady(XtPointer w, int *source, XtInputId *id)
 	stripNonprint (buffer);
 	n = strlen (buffer);
     }
+
     TextAppend ((Widget) text, buffer, n);
 }
 
 static Boolean
-ConvertSelection(Widget w, Atom *selection, Atom *target, Atom *type, 
+ConvertSelection(Widget w, Atom *selection, Atom *target, Atom *type,
 		 XtPointer *value, unsigned long *length, int *format)
 {
     Display* d = XtDisplay(w);
     XSelectionRequestEvent* req =
 	XtGetSelectionRequest(w, *selection, (XtRequestId)NULL);
 
-    if (*target == XA_TARGETS(d)) {
+    if (*target == XA_TARGETS(d))
+    {
 	Atom* targetP;
 	Atom* std_targets;
 	unsigned long std_length;
@@ -509,46 +516,46 @@ ConvertSelection(Widget w, Atom *selection, Atom *target, Atom *type,
     if (*target == XA_LIST_LENGTH(d) ||
 	*target == XA_LENGTH(d))
     {
-    	long * temp;
-    	
-    	temp = (long *) XtMalloc(sizeof(long));
-    	if (*target == XA_LIST_LENGTH(d))
-      	  *temp = 1L;
-    	else			/* *target == XA_LENGTH(d) */
-      	  *temp = (long) TextLength (text);
-    	
-    	*value = (XtPointer) temp;
-    	*type = XA_INTEGER;
-    	*length = 1L;
-    	*format = 32;
-    	return True;
+	long * temp;
+
+	temp = (long *) XtMalloc(sizeof(long));
+	if (*target == XA_LIST_LENGTH(d))
+	  *temp = 1L;
+	else			/* *target == XA_LENGTH(d) */
+	  *temp = (long) TextLength (text);
+
+	*value = (XtPointer) temp;
+	*type = XA_INTEGER;
+	*length = 1L;
+	*format = 32;
+	return True;
     }
-    
+
     if (*target == XA_CHARACTER_POSITION(d))
     {
-    	long * temp;
-    	
-    	temp = (long *) XtMalloc(2 * sizeof(long));
-    	temp[0] = (long) 0;
-    	temp[1] = TextLength (text);
-    	*value = (XtPointer) temp;
-    	*type = XA_SPAN(d);
-    	*length = 2L;
-    	*format = 32;
-    	return True;
+	long * temp;
+
+	temp = (long *) XtMalloc(2 * sizeof(long));
+	temp[0] = (long) 0;
+	temp[1] = TextLength (text);
+	*value = (XtPointer) temp;
+	*type = XA_SPAN(d);
+	*length = 2L;
+	*format = 32;
+	return True;
     }
-    
+
     if (*target == XA_STRING ||
       *target == XA_TEXT(d) ||
       *target == XA_COMPOUND_TEXT(d))
     {
-    	if (*target == XA_COMPOUND_TEXT(d))
+	if (*target == XA_COMPOUND_TEXT(d))
 	    *type = *target;
-    	else
+	else
 	    *type = XA_STRING;
 	*length = TextLength (text);
-    	*value = (XtPointer)_XawTextGetSTRING((TextWidget) text, 0, *length);
-    	*format = 8;
+	*value = (XtPointer)_XawTextGetSTRING((TextWidget) text, 0, *length);
+	*format = 8;
 	/*
 	 * Drop our connection to the file; the new console program
 	 * will open as soon as it receives the selection contents; there
@@ -558,9 +565,9 @@ ConvertSelection(Widget w, Atom *selection, Atom *target, Atom *type,
 	 * worse
 	 */
 	CloseConsole ();
-    	return True;
+	return True;
     }
-    
+
     if (XmuConvertStandardSelection(w, req->time, selection, target, type,
 				    (XPointer *)value, length, format))
 	return True;
@@ -576,7 +583,7 @@ LoseSelection(Widget w, Atom *selection)
 
 /*ARGSUSED*/
 static void
-InsertSelection(Widget w, XtPointer client_data, Atom *selection, Atom *type, 
+InsertSelection(Widget w, XtPointer client_data, Atom *selection, Atom *type,
 		XtPointer value, unsigned long *length, int *format)
 {
     if (*type != XT_CONVERT_FAIL)
@@ -600,10 +607,10 @@ main(int argc, char *argv[])
     if (app_resources.daemon)
 	if (fork ()) exit (0);
     XtAddActions (actions, XtNumber (actions));
-    
+
     text = XtCreateManagedWidget ("text", asciiTextWidgetClass,
 				  top, NULL, 0);
-    
+
     XtRealizeWidget (top);
     num_args = 0;
     XtSetArg(arglist[num_args], XtNiconic, &iconified); num_args++;
@@ -639,12 +646,12 @@ main(int argc, char *argv[])
     return 0;
 }
 
-static long 
+static long
 TextLength(Widget w)
 {
     return XawTextSourceScan (XawTextGetSource (w),
 			      (XawTextPosition) 0,
- 			      XawstAll, XawsdRight, 1, TRUE);
+			      XawstAll, XawsdRight, 1, TRUE);
 }
 
 static void
@@ -676,9 +683,18 @@ TextAppend(Widget w, char *s, int len)
     block.firstPos = 0;
     block.length = len;
     block.format = FMT8BIT;
-    TextReplace (w, last, last, &block);
+    /*
+     * If saveLines is 1, just replace the entire contents of the widget
+     * each time, so the test in ExceededMaxLines() isn't fooled.
+     */
+    if (app_resources.saveLines == 1)
+	TextReplace (w, 0, last, &block);
+    else
+	TextReplace (w, last, last, &block);
     if (current == last)
 	XawTextSetInsertionPoint (w, last + block.length);
+    if (ExceededMaxLines(w))
+	ScrollLine(w);
 }
 
 static void
@@ -695,10 +711,60 @@ TextInsert(Widget w, char *s, int len)
     TextReplace (w, 0, 0, &block);
     if (current == 0)
 	XawTextSetInsertionPoint (w, len);
+    if (ExceededMaxLines(w))
+	ScrollLine(w);
+}
+
+static Bool
+ExceededMaxLines(Widget w)
+{
+    XawTextPosition end_of_last_line;
+    Bool retval = False;
+
+    if (app_resources.saveLines > 0)
+    {
+    /*
+     * XawTextSourceScan() will return the end of the widget if it cannot
+     * find what it is searching for.
+     */
+	end_of_last_line = XawTextSourceScan (XawTextGetSource (w),
+					      (XawTextPosition) 0,
+					      XawstEOL, XawsdRight,
+					      app_resources.saveLines, TRUE);
+	if (TextLength(w) > end_of_last_line)
+	    retval = True;
+	else
+	    retval = False;
+    }
+    else
+	retval = False;
+    return retval;
+}
+
+static void
+ScrollLine(Widget w)
+{
+    XawTextPosition firstnewline;
+    XawTextBlock    block;
+
+    /*
+     * This is pretty inefficient but should work well enough unless the
+     * console device is getting totally spammed.  Generally, new lines
+     * only come in one at a time anyway.
+     */
+    firstnewline = XawTextSourceScan (XawTextGetSource (w),
+				      (XawTextPosition) 0,
+				      XawstEOL, XawsdRight, 1, TRUE);
+    block.ptr = "";
+    block.firstPos = 0;
+    block.length = 0;
+    block.format = FMT8BIT;
+    TextReplace (w, 0, firstnewline, &block);
 }
 
 #ifdef USE_PTY
-/* This function opens up a pty master and stuffs it's value into pty.
+/*
+ * This function opens up a pty master and stuffs its value into pty.
  * If it finds one, it returns a value of 0.  If it does not find one,
  * it returns a value of !0.  This routine is designed to be re-entrant,
  * so that if a pty master is found and later, we find that the slave
@@ -710,13 +776,13 @@ static int
 get_pty(int *pty, int *tty, char *ttydev, char *ptydev)
 {
 #ifdef SVR4
-	if ((*pty = open ("/dev/ptmx", O_RDWR)) < 0) {
+	if ((*pty = open ("/dev/ptmx", O_RDWR)) < 0)
 	    return 1;
-	}
 	grantpt(*pty);
 	unlockpt(*pty);
 	strcpy(ttydev, (char *)ptsname(*pty));
-	if ((*tty = open(ttydev, O_RDWR)) >= 0) {
+	if ((*tty = open(ttydev, O_RDWR)) >= 0)
+	{
 	    (void)ioctl(*tty, I_PUSH, "ttcompat");
 	    return 0;
 	}
@@ -736,12 +802,14 @@ get_pty(int *pty, int *tty, char *ttydev, char *ptydev)
 	struct stat fstat_buf;
 
 	*pty = open ("/dev/ptc", O_RDWR);
-	if (*pty < 0 || (fstat (*pty, &fstat_buf)) < 0) {
+	if (*pty < 0 || (fstat (*pty, &fstat_buf)) < 0)
+	{
 	  return(1);
 	}
 	sprintf (ttydev, "/dev/ttyq%d", minor(fstat_buf.st_rdev));
 	sprintf (ptydev, "/dev/ptyq%d", minor(fstat_buf.st_rdev));
-	if ((*tty = open (ttydev, O_RDWR)) >= 0) {
+	if ((*tty = open (ttydev, O_RDWR)) >= 0)
+	{
 	    /* got one! */
 	    return(0);
 	}
@@ -755,7 +823,8 @@ get_pty(int *pty, int *tty, char *ttydev, char *ptydev)
 	    if ((*pty = open (ptydev, O_RDWR)) >= 0 &&
 		(*tty = open (ttydev, O_RDWR)) >= 0)
 	    {
-		/* We need to set things up for our next entry
+		/*
+		 * We need to set things up for our next entry
 		 * into this function!
 		 */
 		(void) devindex++;
@@ -766,7 +835,7 @@ get_pty(int *pty, int *tty, char *ttydev, char *ptydev)
 	}
 #else /* !CRAY */
 #ifdef sgi
-	{ 
+	{
 	    char *slave;
 	    slave = _getpty (pty, O_RDWR, 0622, 0);
 	    if ((*tty = open (slave, O_RDWR)) != -1)
@@ -785,7 +854,8 @@ get_pty(int *pty, int *tty, char *ttydev, char *ptydev)
 		if ((*pty = open (ptydev, O_RDWR)) >= 0 &&
 		    (*tty = open (ttydev, O_RDWR)) >= 0)
 		{
-			/* We need to set things up for our next entry
+			/*
+			 * We need to set things up for our next entry
 			 * into this function!
 			 */
 			(void) devindex++;
@@ -803,7 +873,8 @@ get_pty(int *pty, int *tty, char *ttydev, char *ptydev)
 #endif /* umips && SYSTYPE_SYSV */
 #endif /* USE_GET_PSEUDOTTY */
 #endif /* SVR4 */
-	/* We were unable to allocate a pty master!  Return an error
+	/*
+	 * We were unable to allocate a pty master!  Return an error
 	 * condition and let our caller terminate cleanly.
 	 */
 	return(1);
@@ -836,46 +907,53 @@ get_pty(int *pty, int *tty, char *ttydev, char *ptydev)
 static FILE *
 osm_pipe(void)
 {
-  int tty;
-  char ttydev[64];
-    
-  if (access(OSM_DEVICE, R_OK) < 0) return NULL;
-  if ((tty = open("/dev/ptmx", O_RDWR)) < 0)  return NULL;
+    int tty;
+    char ttydev[64];
 
-  grantpt(tty);
-  unlockpt(tty);
-  strcpy(ttydev, (char *)ptsname(tty));
+    if (access(OSM_DEVICE, R_OK) < 0)
+	return NULL;
+    if ((tty = open("/dev/ptmx", O_RDWR)) < 0)
+	return NULL;
 
-  if ((child_pid = fork()) == 0) {
-    int pty, osm, nbytes, skip;
-    char cbuf[128];
+    grantpt(tty);
+    unlockpt(tty);
+    strcpy(ttydev, (char *)ptsname(tty));
 
-    skip = 0;
+    if ((child_pid = fork()) == 0)
+    {
+	int pty, osm, nbytes, skip;
+	char cbuf[128];
+
+	skip = 0;
 #ifndef NO_READAHEAD
-    osm = open(OSM_DEVICE, O_RDONLY);
-    if (osm >= 0) {
-	while ((nbytes = read(osm, cbuf, sizeof(cbuf))) > 0)
-	    skip += nbytes;
-	close(osm);
-    }
+	osm = open(OSM_DEVICE, O_RDONLY);
+	if (osm >= 0)
+	{
+	    while ((nbytes = read(osm, cbuf, sizeof(cbuf))) > 0)
+		skip += nbytes;
+	    close(osm);
+	}
 #endif
-    pty = open(ttydev, O_RDWR);
-    if (pty < 0) exit(1);
-    osm = open(OSM_DEVICE, O_RDONLY);
-    if (osm < 0) exit(1);
-    for (nbytes = 0; skip > 0 && nbytes >= 0; skip -= nbytes) {
-	nbytes = skip;
-	if (nbytes > sizeof(cbuf))
-	    nbytes = sizeof(cbuf);
-	nbytes = read(osm, cbuf, nbytes);
+	pty = open(ttydev, O_RDWR);
+	if (pty < 0)
+	    exit(1);
+	osm = open(OSM_DEVICE, O_RDONLY);
+	if (osm < 0)
+	    exit(1);
+	for (nbytes = 0; skip > 0 && nbytes >= 0; skip -= nbytes)
+	{
+	    nbytes = skip;
+	    if (nbytes > sizeof(cbuf))
+		nbytes = sizeof(cbuf);
+	    nbytes = read(osm, cbuf, nbytes);
+	}
+	while ((nbytes = read(osm, cbuf, sizeof(cbuf))) >= 0)
+	    write(pty, cbuf, nbytes);
+	exit(0);
     }
-    while ((nbytes = read(osm, cbuf, sizeof(cbuf))) >= 0)
-      write(pty, cbuf, nbytes);
-    exit(0);
-  }
-  signal(SIGHUP, KillChild);
-  signal(SIGINT, KillChild);
-  signal(SIGTERM, KillChild);
-  return fdopen(tty, "r");
+    signal(SIGHUP, KillChild);
+    signal(SIGINT, KillChild);
+    signal(SIGTERM, KillChild);
+    return fdopen(tty, "r");
 }
 #endif  /* USE_OSM */

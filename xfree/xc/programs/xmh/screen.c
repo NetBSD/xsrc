@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xmh/screen.c,v 1.2 2001/10/28 03:34:39 tsi Exp $ */
+/* $XFree86: xc/programs/xmh/screen.c,v 1.3 2002/04/05 21:06:29 dickey Exp $ */
 
 /* scrn.c -- management of scrns. */
 
@@ -103,8 +103,8 @@ XmhMenuButtonDescRec	MenuBoxButtons[] = {
 
 /* Fill in the buttons for the view commands. */
 
-static void FillViewButtons(scrn)
-Scrn scrn;
+static void FillViewButtons(
+Scrn scrn)
 {
     ButtonBox buttonbox = scrn->viewbuttons;
     BBoxAddButton(buttonbox, "close", commandWidgetClass, True);
@@ -119,8 +119,8 @@ Scrn scrn;
     
 
 
-static void FillCompButtons(scrn)
-Scrn scrn;
+static void FillCompButtons(
+Scrn scrn)
 {
     ButtonBox buttonbox = scrn->viewbuttons;
     BBoxAddButton(buttonbox, "close", commandWidgetClass, True);
@@ -132,11 +132,11 @@ Scrn scrn;
 }
 
 
-static void MakeCommandMenu(scrn, mbd)
-    Scrn		scrn;
-    XmhMenuButtonDesc	mbd;
+static void MakeCommandMenu(
+    Scrn		scrn,
+    XmhMenuButtonDesc	mbd)
 {
-    register int i;
+    register Cardinal i;
     Cardinal	 n;
     Widget	menu;
     ButtonBox	buttonbox = scrn->mainbuttons;
@@ -189,8 +189,7 @@ static void MakeCommandMenu(scrn, mbd)
 
 /* Create subwidgets for a toc&view window. */
 
-static void MakeTocAndView(scrn)
-Scrn scrn;
+static void MakeTocAndView(Scrn scrn)
 {
     register int	i;
     XmhMenuButtonDesc	mbd;
@@ -251,8 +250,7 @@ Scrn scrn;
     }
 }
 
-static void MakeView(scrn)
-Scrn scrn;
+static void MakeView(Scrn scrn)
 {
     scrn->viewlabel = CreateTitleBar(scrn, "viewTitlebar");
     scrn->viewwidget = CreateTextSW(scrn, "view", (ArgList)NULL, (Cardinal)0);
@@ -261,8 +259,7 @@ Scrn scrn;
 }
 
 
-static void MakeComp(scrn)
-Scrn scrn;
+static void MakeComp(Scrn scrn)
 {
     scrn->viewlabel = CreateTitleBar(scrn, "composeTitlebar");
     scrn->viewwidget = CreateTextSW(scrn, "comp", (ArgList)NULL, (Cardinal)0);
@@ -273,8 +270,7 @@ Scrn scrn;
 
 /* Create a scrn of the given type. */
 
-Scrn CreateNewScrn(kind)
-ScrnKind kind;
+Scrn CreateNewScrn(ScrnKind kind)
 {
     int i;
     Scrn scrn;
@@ -380,12 +376,12 @@ ScrnKind kind;
 }
 
 
-Scrn NewViewScrn()
+Scrn NewViewScrn(void)
 {
     return CreateNewScrn(STview);
 }
 
-Scrn NewCompScrn()
+Scrn NewCompScrn(void)
 {
     Scrn scrn;
     scrn = CreateNewScrn(STcomp);
@@ -393,17 +389,14 @@ Scrn NewCompScrn()
     return scrn;
 }
 
-void ScreenSetAssocMsg(scrn, msg)
-  Scrn scrn;
-  Msg msg;
+void ScreenSetAssocMsg(Scrn scrn, Msg msg)
 {
     scrn->assocmsg = msg;
 }
 
 /* Destroy the screen.  If unsaved changes are in a msg, too bad. */
 
-void DestroyScrn(scrn)
-  Scrn scrn;
+void DestroyScrn(Scrn scrn)
 {
     if (scrn->mapped) {
 	scrn->mapped = False;
@@ -415,8 +408,7 @@ void DestroyScrn(scrn)
 }
 
 
-void MapScrn(scrn)
-Scrn scrn;
+void MapScrn(Scrn scrn)
 {
     if (!scrn->mapped) {
 	XtPopup(scrn->parent, XtGrabNone);
@@ -425,8 +417,7 @@ Scrn scrn;
 }
 
 
-Scrn ScrnFromWidget(w)		/* heavily used, should be efficient */
-Widget w;
+Scrn ScrnFromWidget(Widget w) /* heavily used, should be efficient */
 {
     register int i;
     while (w && ! XtIsTopLevelShell(w))
@@ -449,22 +440,17 @@ Widget w;
 
 
 /*ARGSUSED*/
-static void EnableCallback(w, data, junk)
-Widget w;
-XtPointer data, junk;
+static void EnableCallback(Widget w, XtPointer data, XtPointer junk)
 {
   EnableProperButtons( (Scrn) data);
 }  
-
-static void EnableCallback();
 
 #define SetButton(buttonbox, name, value) \
     if (value) BBoxEnable(BBoxFindButtonNamed(buttonbox, name)); \
     else BBoxDisable(BBoxFindButtonNamed(buttonbox, name));
 
 
-void EnableProperButtons(scrn)
-Scrn scrn;
+void EnableProperButtons(Scrn scrn)
 {
     int value, changed, reapable;
     Button	button;

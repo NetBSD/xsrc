@@ -1,7 +1,7 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_state.c,v 1.2 2001/05/24 16:34:49 dawes Exp $
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_state.c,v 1.5 2002/10/30 12:51:27 alanh Exp $
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
- * Copyright (C) 2000 David S. Miller
+ * Copyright (C) 2000, 2001 David S. Miller
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,8 +25,7 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "types.h"
-#include "vbrender.h"
+#include "mtypes.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,11 +42,14 @@
 #include "ffb_state.h"
 #include "ffb_lock.h"
 #include "extensions.h"
-#include "vb.h"
-#include "dd.h"
 #include "enums.h"
-#include "pipeline.h"
-#include "pb.h"
+
+#include "swrast/swrast.h"
+#include "array_cache/acache.h"
+#include "tnl/tnl.h"
+#include "swrast_setup/swrast_setup.h"
+
+#include "tnl/t_pipeline.h"
 
 #undef STATE_TRACE
 
@@ -57,7 +59,7 @@ static unsigned int ffbComputeAlphaFunc(GLcontext *ctx)
 
 #ifdef STATE_TRACE
 	fprintf(stderr, "ffbDDAlphaFunc: func(%s) ref(%02x)\n",
-		gl_lookup_enum_by_nr(ctx->Color.AlphaFunc),
+		_mesa_lookup_enum_by_nr(ctx->Color.AlphaFunc),
 		ctx->Color.AlphaRef & 0xff);
 #endif
 
@@ -80,7 +82,7 @@ static unsigned int ffbComputeAlphaFunc(GLcontext *ctx)
 	return xclip;
 }
 
-static void ffbDDAlphaFunc(GLcontext *ctx, GLenum func, GLclampf ref)
+static void ffbDDAlphaFunc(GLcontext *ctx, GLenum func, GLchan ref)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 
@@ -89,23 +91,18 @@ static void ffbDDAlphaFunc(GLcontext *ctx, GLenum func, GLclampf ref)
 
 		if (fmesa->xclip != xclip) {
 			fmesa->xclip = xclip;
-			fmesa->state_dirty |= FFB_STATE_XCLIP;
-			fmesa->state_fifo_ents += 1;
+			FFB_MAKE_DIRTY(fmesa, FFB_STATE_XCLIP, 1);
 		}
 	}
 }
 
 static void ffbDDBlendEquation(GLcontext *ctx, GLenum mode)
 {
-	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 
 #ifdef STATE_TRACE
-	fprintf(stderr, "ffbDDBlendEquation: mode(%s)\n", gl_lookup_enum_by_nr(mode));
+	fprintf(stderr, "ffbDDBlendEquation: mode(%s)\n", _mesa_lookup_enum_by_nr(mode));
 #endif
-	if (mode != GL_FUNC_ADD_EXT)
-		fmesa->bad_fragment_attrs |= FFB_BADATTR_BLENDEQN;
-	else
-		fmesa->bad_fragment_attrs &= ~FFB_BADATTR_BLENDEQN;
+	FALLBACK( ctx, (mode != GL_FUNC_ADD_EXT), FFB_BADATTR_BLENDEQN);
 }
 
 static void ffbDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
@@ -115,7 +112,7 @@ static void ffbDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
 
 #ifdef STATE_TRACE
 	fprintf(stderr, "ffbDDBlendFunc: sfactor(%s) dfactor(%s)\n",
-		gl_lookup_enum_by_nr(sfactor), gl_lookup_enum_by_nr(dfactor));
+		_mesa_lookup_enum_by_nr(sfactor), _mesa_lookup_enum_by_nr(dfactor));
 #endif
 	switch (ctx->Color.BlendSrcRGB) {
 	case GL_ZERO:
@@ -136,7 +133,7 @@ static void ffbDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
 
 	default:
 		if (ctx->Color.BlendEnabled)
-			fmesa->bad_fragment_attrs |= FFB_BADATTR_BLENDFUNC;
+			FALLBACK( ctx, FFB_BADATTR_BLENDFUNC, GL_TRUE );
 		return;
 	};
 
@@ -159,7 +156,7 @@ static void ffbDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
 
 	default:
 		if (ctx->Color.BlendEnabled)
-			fmesa->bad_fragment_attrs |= FFB_BADATTR_BLENDFUNC;
+			FALLBACK( ctx, FFB_BADATTR_BLENDFUNC, GL_TRUE );
 		return;
 	};
 
@@ -173,17 +170,15 @@ static void ffbDDBlendFunc(GLcontext *ctx, GLenum sfactor, GLenum dfactor)
 		 * also it would add more state tracking to a lot
 		 * of the code in this file.
 		 */
-		fmesa->bad_fragment_attrs |= FFB_BADATTR_BLENDROP;
+		FALLBACK(ctx, FFB_BADATTR_BLENDROP, GL_TRUE);
 		return;
 	}
 
-	fmesa->bad_fragment_attrs &= ~(FFB_BADATTR_BLENDFUNC |
-				       FFB_BADATTR_BLENDROP);
+	FALLBACK( ctx, (FFB_BADATTR_BLENDFUNC|FFB_BADATTR_BLENDROP), GL_FALSE );
 
 	if (blendc != fmesa->blendc) {
 		fmesa->blendc = blendc;
-		fmesa->state_dirty |= FFB_STATE_BLEND;
-		fmesa->state_fifo_ents += 1;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_BLEND, 1);
 	}
 }
 
@@ -193,10 +188,10 @@ static void ffbDDBlendFuncSeparate(GLcontext *ctx, GLenum sfactorRGB,
 {
 #ifdef STATE_TRACE
 	fprintf(stderr, "ffbDDBlendFuncSeparate: sRGB(%s) dRGB(%s) sA(%s) dA(%s)\n",
-		gl_lookup_enum_by_nr(sfactorRGB),
-		gl_lookup_enum_by_nr(dfactorRGB),
-		gl_lookup_enum_by_nr(sfactorA),
-		gl_lookup_enum_by_nr(dfactorA));
+		_mesa_lookup_enum_by_nr(sfactorRGB),
+		_mesa_lookup_enum_by_nr(dfactorRGB),
+		_mesa_lookup_enum_by_nr(sfactorA),
+		_mesa_lookup_enum_by_nr(dfactorA));
 #endif
 
 	ffbDDBlendFunc(ctx, sfactorRGB, dfactorRGB);
@@ -209,7 +204,7 @@ static void ffbDDDepthFunc(GLcontext *ctx, GLenum func)
 
 #ifdef STATE_TRACE
 	fprintf(stderr, "ffbDDDepthFunc: func(%s)\n",
-		gl_lookup_enum_by_nr(func));
+		_mesa_lookup_enum_by_nr(func));
 #endif
 
 	switch (func) {
@@ -248,8 +243,7 @@ static void ffbDDDepthFunc(GLcontext *ctx, GLenum func)
 	cmp = (fmesa->cmp & ~(0xff<<16)) | cmp;
 	if (cmp != fmesa->cmp) {
 		fmesa->cmp = cmp;
-		fmesa->state_dirty |= FFB_STATE_CMP;
-		fmesa->state_fifo_ents += 1;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_CMP, 1);
 	}
 }
 
@@ -277,8 +271,7 @@ static void ffbDDDepthMask(GLcontext *ctx, GLboolean flag)
 			fbc &= ~FFB_FBC_WB_C;
 		}
 		fmesa->fbc = fbc;
-		fmesa->state_dirty |= FFB_STATE_FBC;
-		fmesa->state_fifo_ents += 1;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_FBC, 1);
 	}
 }
 
@@ -322,8 +315,7 @@ static void ffbDDStencilFunc(GLcontext *ctx, GLenum func, GLint ref, GLuint mask
 		fmesa->stencil = stencil;
 		fmesa->stencilctl = stencilctl;
 		fmesa->consty = consty;
-		fmesa->state_dirty |= FFB_STATE_STENCIL;
-		fmesa->state_fifo_ents += 6;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_STENCIL, 6);
 	}
 }
 
@@ -334,8 +326,7 @@ static void ffbDDStencilMask(GLcontext *ctx, GLuint mask)
 	mask &= 0xf;
 	if (fmesa->ypmask != mask) {
 		fmesa->ypmask = mask;
-		fmesa->state_dirty |= FFB_STATE_YPMASK;
-		fmesa->state_fifo_ents += 1;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_YPMASK, 1);
 	}
 }
 
@@ -391,60 +382,115 @@ static void ffbDDStencilOp(GLcontext *ctx, GLenum fail, GLenum zfail, GLenum zpa
 
 	if (fmesa->stencilctl != stencilctl) {
 		fmesa->stencilctl = stencilctl;
-		fmesa->state_dirty |= FFB_STATE_STENCIL;
-		fmesa->state_fifo_ents += 6;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_STENCIL, 6);
 	}
 }
 
-void ffbDDScissor(GLcontext *ctx, GLint cx, GLint cy,
-		  GLsizei cw, GLsizei ch)
+static void ffbCalcViewportRegs(GLcontext *ctx)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
-	GLint x, y;
+	GLuint xmin, xmax, ymin, ymax, zmin, zmax;
 	unsigned int vcmin, vcmax;
 
-#ifdef STATE_TRACE
-	fprintf(stderr, "ffbDDScissor: x(%x) y(%x) w(%x) h(%x)\n",
-		cx, cy, cw, ch);
-#endif
-	x = cx + dPriv->x;
-	y = dPriv->y + (cy - ch);
-	vcmin = ((y & 0xffff) << 16) | (x & 0xffff);
-	vcmax = ((((y + ch) & 0xffff) << 16) |
-		 (((x + cw) & 0xffff)));
+	xmin = ctx->Viewport.X + dPriv->x;
+	xmax = xmin + ctx->Viewport.Width;
+	ymax = dPriv->y + dPriv->h - ctx->Viewport.Y;
+	ymin = ymax - ctx->Viewport.Height;
+	if (ctx->Scissor.Enabled) {
+		GLuint sc_xmin, sc_xmax, sc_ymin, sc_ymax;
+
+		sc_xmin = ctx->Viewport.X + dPriv->x;
+		sc_xmax = sc_xmin + ctx->Viewport.Width;
+		sc_ymax = dPriv->y + dPriv->h - ctx->Viewport.Y;
+		sc_ymin = sc_ymax - ctx->Viewport.Height;
+		if (sc_xmin > xmin)
+			xmin = sc_xmin;
+		if (sc_xmax < xmax)
+			xmax = sc_xmax;
+		if (sc_ymin > ymin)
+			ymin = sc_ymin;
+		if (sc_ymax < ymax)
+			ymax = sc_ymax;
+	}
+	zmin = ((GLdouble)ctx->Viewport.Near * 0x0fffffff);
+	zmax = ((GLdouble)ctx->Viewport.Far  * 0x0fffffff);
+
+	vcmin = ((ymin & 0xffff) << 16) | (xmin & 0xffff);
+	vcmax = ((ymax & 0xffff) << 16) | (xmax & 0xffff);
 	if (fmesa->vclipmin != vcmin ||
-	    fmesa->vclipmax != vcmax) {
+	    fmesa->vclipmax != vcmax ||
+	    fmesa->vclipzmin != zmin ||
+	    fmesa->vclipzmax != zmax) {
 		fmesa->vclipmin = vcmin;
 		fmesa->vclipmax = vcmax;
-		fmesa->state_dirty |= FFB_STATE_CLIP;
-		fmesa->state_fifo_ents += 4 + (4 * 2);
+		fmesa->vclipzmin = zmin;
+		fmesa->vclipzmax = zmax;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_CLIP, (4 + (4 * 2)));
 	}
 }
 
-static GLboolean ffbDDSetDrawBuffer(GLcontext *ctx, GLenum buffer)
+void ffbCalcViewport(GLcontext *ctx)
+{
+	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
+	const GLfloat *v = ctx->Viewport._WindowMap.m;
+	GLfloat *m = fmesa->hw_viewport;
+	__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
+
+	m[MAT_SX] =   v[MAT_SX];
+	m[MAT_TX] =   v[MAT_TX] + dPriv->x + SUBPIXEL_X;
+	m[MAT_SY] = - v[MAT_SY];
+	m[MAT_TY] = - v[MAT_TY] + dPriv->h + dPriv->y + SUBPIXEL_Y;
+	m[MAT_SZ] =   v[MAT_SZ] * ((GLdouble)1.0 / (GLdouble)0x0fffffff);
+	m[MAT_TZ] =   v[MAT_TZ] * ((GLdouble)1.0 / (GLdouble)0x0fffffff);
+
+	fmesa->depth_scale = ((GLdouble)1.0 / (GLdouble)0x0fffffff);
+
+	ffbCalcViewportRegs(ctx);
+
+	fmesa->setupnewinputs |= VERT_CLIP;
+}
+
+static void ffbDDViewport(GLcontext *ctx, GLint x, GLint y,
+			  GLsizei width, GLsizei height)
+{
+	ffbCalcViewport(ctx);
+}
+
+static void ffbDDDepthRange(GLcontext *ctx, GLclampd nearval, GLclampd farval)
+{
+	ffbCalcViewport(ctx);
+}
+
+static void ffbDDScissor(GLcontext *ctx, GLint cx, GLint cy,
+		  GLsizei cw, GLsizei ch)
+{
+	ffbCalcViewport(ctx);
+}
+
+static void ffbDDSetDrawBuffer(GLcontext *ctx, GLenum buffer)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	unsigned int fbc = fmesa->fbc;
 
 #ifdef STATE_TRACE
 	fprintf(stderr, "ffbDDSetDrawBuffer: mode(%s)\n",
-		gl_lookup_enum_by_nr(buffer));
+		_mesa_lookup_enum_by_nr(buffer));
 #endif
-	fbc &= ~(FFB_FBC_WB_AB);
+	fbc &= ~(FFB_FBC_WB_AB | FFB_FBC_RB_MASK);
 	switch (buffer) {
 	case GL_FRONT_LEFT:
 		if (fmesa->back_buffer == 0)
-			fbc |= FFB_FBC_WB_B;
+			fbc |= FFB_FBC_WB_B | FFB_FBC_RB_B;
 		else
-			fbc |= FFB_FBC_WB_A;
+			fbc |= FFB_FBC_WB_A | FFB_FBC_RB_A;
 		break;
 
 	case GL_BACK_LEFT:
 		if (fmesa->back_buffer == 0)
-			fbc |= FFB_FBC_WB_A;
+			fbc |= FFB_FBC_WB_A | FFB_FBC_RB_A;
 		else
-			fbc |= FFB_FBC_WB_B;
+			fbc |= FFB_FBC_WB_B | FFB_FBC_RB_B;
 		break;
 
 	case GL_FRONT_AND_BACK:
@@ -452,16 +498,13 @@ static GLboolean ffbDDSetDrawBuffer(GLcontext *ctx, GLenum buffer)
 		break;
 
 	default:
-		return GL_FALSE;
+		return;
 	};
 
 	if (fbc != fmesa->fbc) {
 		fmesa->fbc = fbc;
-		fmesa->state_dirty |= FFB_STATE_FBC;
-		fmesa->state_fifo_ents += 1;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_FBC, 1);
 	}
-
-	return GL_TRUE;
 }
 
 static void ffbDDSetReadBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
@@ -472,7 +515,7 @@ static void ffbDDSetReadBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 
 #ifdef STATE_TRACE
 	fprintf(stderr, "ffbDDSetReadBuffer: mode(%s)\n",
-		gl_lookup_enum_by_nr(buffer));
+		_mesa_lookup_enum_by_nr(buffer));
 #endif
 	fbc &= ~(FFB_FBC_RB_MASK);
 	switch (buffer) {
@@ -496,27 +539,17 @@ static void ffbDDSetReadBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
 
 	if (fbc != fmesa->fbc) {
 		fmesa->fbc = fbc;
-		fmesa->state_dirty |= FFB_STATE_FBC;
-		fmesa->state_fifo_ents += 1;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_FBC, 1);
 	}
 }
 
-static void ffbDDSetColor(GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a)
+static void ffbDDClearColor(GLcontext *ctx, const GLchan color[4])
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 
-	fmesa->MonoColor = ((r <<  0) |
-			    (g << 8) |
-			    (b << 16));
-}
-
-static void ffbDDClearColor(GLcontext *ctx, GLubyte r, GLubyte g, GLubyte b, GLubyte a)
-{
-	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-
-	fmesa->clear_pixel = ((r << 0) |
-			      (g << 8) |
-			      (b << 16));
+	fmesa->clear_pixel = ((color[0] << 0) |
+			      (color[1] << 8) |
+			      (color[2] << 16));
 }
 
 static void ffbDDClearDepth(GLcontext *ctx, GLclampd depth)
@@ -533,149 +566,10 @@ static void ffbDDClearStencil(GLcontext *ctx, GLint stencil)
 	fmesa->clear_stencil = stencil & 0xf;
 }
 
-static void ffbDDReducedPrimitiveChange(GLcontext *ctx, GLenum prim)
-{
-	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-	GLuint drawop, fbc, ppc;
-	int do_sw = 0;
-
-	drawop = fmesa->drawop;
-	fbc = fmesa->fbc;
-	ppc = fmesa->ppc & ~(FFB_PPC_ZS_MASK | FFB_PPC_CS_MASK);
-
-#ifdef STATE_TRACE
-	fprintf(stderr,
-		"ffbDDReducedPrimitiveChange: prim(%d) ", prim);
-#endif
-	switch(prim) {
-	case GL_POINT:
-	case GL_POINTS:
-#ifdef STATE_TRACE
-		fprintf(stderr, "GL_POINTS ");
-#endif
-		if (ctx->IndirectTriangles & DD_POINT_SW_RASTERIZE) {
-			do_sw = 1;
-			break;
-		}
-
-		if (ctx->TriangleCaps & DD_POINT_SIZE) {
-			ppc |= FFB_PPC_ZS_CONST | FFB_PPC_CS_CONST;
-			drawop = FFB_DRAWOP_TRIANGLE;
-		} else {
-			if (ctx->Point.SmoothFlag) {
-				ppc |= (FFB_PPC_ZS_VAR | FFB_PPC_CS_CONST);
-				drawop = FFB_DRAWOP_AADOT;
-			} else {
-				ppc |= (FFB_PPC_ZS_CONST | FFB_PPC_CS_CONST);
-				drawop = FFB_DRAWOP_DOT;
-			}
-		}
-		break;
-
-	case GL_LINE:
-	case GL_LINES:
-#ifdef STATE_TRACE
-		fprintf(stderr, "GL_LINES ");
-#endif
-		if (ctx->IndirectTriangles & DD_LINE_SW_RASTERIZE) {
-			do_sw = 1;
-			break;
-		}
-
-		if (ctx->TriangleCaps & DD_FLATSHADE) {
-			ppc |= FFB_PPC_ZS_VAR | FFB_PPC_CS_CONST;
-		} else {
-			ppc |= FFB_PPC_ZS_VAR | FFB_PPC_CS_VAR;
-		}
-		if (ctx->TriangleCaps & DD_LINE_WIDTH) {
-			drawop = FFB_DRAWOP_TRIANGLE;
-		} else {
-			if (ctx->Line.SmoothFlag)
-				drawop = FFB_DRAWOP_AALINE;
-			else
-				drawop = FFB_DRAWOP_DDLINE;
-		}
-		break;
-
-	case GL_POLYGON:
-#ifdef STATE_TRACE
-		fprintf(stderr, "GL_POLYGON ");
-#endif
-		if (ctx->IndirectTriangles & DD_TRI_SW_RASTERIZE) {
-			do_sw = 1;
-			break;
-		}
-
-		ppc &= ~FFB_PPC_APE_MASK;
-		if (ctx->Polygon.StippleFlag)
-			ppc |= FFB_PPC_APE_ENABLE;
-		else
-			ppc |= FFB_PPC_APE_DISABLE;
-
-		if (ctx->TriangleCaps & DD_FLATSHADE) {
-			ppc |= FFB_PPC_ZS_VAR | FFB_PPC_CS_CONST;
-		} else {
-			ppc |= FFB_PPC_ZS_VAR | FFB_PPC_CS_VAR;
-		}
-		drawop = FFB_DRAWOP_TRIANGLE;
-		break;
-
-	default:
-#ifdef STATE_TRACE
-		fprintf(stderr, "unknown %d!\n", prim);
-#endif
-		return;
-	};
-
-#ifdef STATE_TRACE
-	fprintf(stderr, "do_sw(%d) ", do_sw);
-#endif
-	if (do_sw != 0) {
-		fbc &= ~(FFB_FBC_WB_C);
-		fbc &= ~(FFB_FBC_ZE_MASK | FFB_FBC_RGBE_MASK);
-		fbc |=   FFB_FBC_ZE_OFF  | FFB_FBC_RGBE_MASK;
-		ppc &= ~(FFB_PPC_XS_MASK | FFB_PPC_ABE_MASK |
-			 FFB_PPC_DCE_MASK | FFB_PPC_APE_MASK);
-		ppc |=  (FFB_PPC_ZS_VAR | FFB_PPC_CS_VAR | FFB_PPC_XS_WID |
-			 FFB_PPC_ABE_DISABLE | FFB_PPC_DCE_DISABLE |
-			 FFB_PPC_APE_DISABLE);
-	} else {
-		fbc |= FFB_FBC_WB_C;
-		fbc &= ~(FFB_FBC_RGBE_MASK);
-		fbc |=   FFB_FBC_RGBE_MASK;
-		ppc &= ~(FFB_PPC_ABE_MASK | FFB_PPC_XS_MASK);
-		if (ctx->Color.BlendEnabled) {
-			ppc |= FFB_PPC_ABE_ENABLE | FFB_PPC_XS_VAR;
-		} else {
-			ppc |= FFB_PPC_ABE_DISABLE | FFB_PPC_XS_WID;
-		}
-	}
-#ifdef STATE_TRACE
-	fprintf(stderr, "fbc(%08x) ppc(%08x)\n", fbc, ppc);
-#endif
-
-	FFBFifo(fmesa, 4);
-	if (fmesa->drawop != drawop)
-		fmesa->regs->drawop = fmesa->drawop = drawop;
-	if (fmesa->fbc != fbc)
-		fmesa->regs->fbc = fmesa->fbc = fbc;
-	if (fmesa->ppc != ppc)
-		fmesa->regs->ppc = fmesa->ppc = ppc;
-	if (do_sw != 0) {
-		fmesa->regs->cmp =
-			(fmesa->cmp & ~(0xff<<16)) | (0x80 << 16);
-	} else
-		fmesa->regs->cmp = fmesa->cmp;
-
-	/* Flush the vertex cache. */
-	fmesa->vtx_cache[0] = fmesa->vtx_cache[1] =
-		fmesa->vtx_cache[2] = fmesa->vtx_cache[3] = NULL;
-}
-
 /* XXX Actually, should I be using FBC controls for this? -DaveM */
-static GLboolean ffbDDColorMask(GLcontext *ctx,
-				GLboolean r, GLboolean g,
-				GLboolean b, GLboolean a)
+static void ffbDDColorMask(GLcontext *ctx,
+			   GLboolean r, GLboolean g,
+			   GLboolean b, GLboolean a)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	unsigned int new_pmask = 0x0;
@@ -693,21 +587,18 @@ static GLboolean ffbDDColorMask(GLcontext *ctx,
 
 	if (fmesa->pmask != new_pmask) {
 		fmesa->pmask = new_pmask;
-		fmesa->state_dirty |= FFB_STATE_PMASK;
-		fmesa->state_fifo_ents += 1;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_PMASK, 1);
 	}
-
-	return GL_TRUE;
 }
 
-static GLboolean ffbDDLogicOp(GLcontext *ctx, GLenum op)
+static void ffbDDLogicOp(GLcontext *ctx, GLenum op)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 	unsigned int rop;
 
 #ifdef STATE_TRACE
 	fprintf(stderr, "ffbDDLogicOp: op(%s)\n",
-		gl_lookup_enum_by_nr(op));
+		_mesa_lookup_enum_by_nr(op));
 #endif
 	switch (op) {
 	case GL_CLEAR: rop = FFB_ROP_ZERO; break;
@@ -728,20 +619,17 @@ static GLboolean ffbDDLogicOp(GLcontext *ctx, GLenum op)
 	case GL_OR_INVERTED: rop = FFB_ROP_NNEW_OR_OLD; break;
 
 	default:
-		return GL_FALSE;
+		return;
 	};
 
 	rop |= fmesa->rop & ~0xff;
 	if (rop != fmesa->rop) {
 		fmesa->rop = rop;
-		fmesa->state_dirty |= FFB_STATE_ROP;
-		fmesa->state_fifo_ents += 1;
+		FFB_MAKE_DIRTY(fmesa, FFB_STATE_ROP, 1);
 
 		if (op == GL_COPY)
-			fmesa->bad_fragment_attrs &= ~FFB_BADATTR_BLENDROP;
+			FALLBACK( ctx, FFB_BADATTR_BLENDROP, GL_FALSE );
 	}
-
-	return GL_TRUE;
 }
 
 #if 0
@@ -824,7 +712,7 @@ static void ffb_fog_linear(GLcontext *ctx, ffbContextPtr fmesa)
 static void ffbDDFogfv(GLcontext *ctx, GLenum pname, const GLfloat *param)
 {
 #ifdef STATE_TRACE
-	fprintf(stderr, "ffbDDFogfv: pname(%s)\n", gl_lookup_enum_by_nr(pname));
+	fprintf(stderr, "ffbDDFogfv: pname(%s)\n", _mesa_lookup_enum_by_nr(pname));
 #endif
 }
 
@@ -839,11 +727,9 @@ static void ffbDDLineStipple(GLcontext *ctx, GLint factor, GLushort pattern)
 	if (ctx->Line.StippleFlag) {
 		factor = ctx->Line.StippleFactor;
 		pattern = ctx->Line.StipplePattern;
-		if ((GLuint) factor > 15) {
-			ctx->Driver.TriangleCaps &= ~DD_LINE_STIPPLE;
+		if ((GLuint) factor > 15) {			
 			fmesa->lpat = FFB_LPAT_BAD;
 		} else {
-			ctx->Driver.TriangleCaps |= DD_LINE_STIPPLE;
 			fmesa->lpat = ((factor << FFB_LPAT_SCALEVAL_SHIFT) |
 				       (0 << FFB_LPAT_PATLEN_SHIFT) |
 				       ((pattern & 0xffff) << FFB_LPAT_PATTERN_SHIFT));
@@ -874,8 +760,7 @@ void ffbXformAreaPattern(ffbContextPtr fmesa, const GLubyte *mask)
 		mask += 4;
 	}
 
-	fmesa->state_dirty |= FFB_STATE_APAT;
-	fmesa->state_fifo_ents += 32;
+	FFB_MAKE_DIRTY(fmesa, FFB_STATE_APAT, 32);
 }
 
 static void ffbDDPolygonStipple(GLcontext *ctx, const GLubyte *mask)
@@ -886,11 +771,6 @@ static void ffbDDPolygonStipple(GLcontext *ctx, const GLubyte *mask)
 	fprintf(stderr, "ffbDDPolygonStipple: state(%d)\n",
 		ctx->Polygon.StippleFlag);
 #endif
-	if (ctx->Polygon.StippleFlag) {
-		ctx->Driver.TriangleCaps |= DD_TRI_STIPPLE;
-	} else {
-		ctx->Driver.TriangleCaps &= ~DD_TRI_STIPPLE;
-	}
 	ffbXformAreaPattern(fmesa, mask);
 }
 
@@ -901,7 +781,7 @@ static void ffbDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 
 #ifdef STATE_TRACE
 	fprintf(stderr, "ffbDDEnable: %s state(%d)\n",
-		gl_lookup_enum_by_nr(cap), state);
+		_mesa_lookup_enum_by_nr(cap), state);
 #endif
 	switch (cap) {
 	case GL_ALPHA_TEST:
@@ -912,8 +792,7 @@ static void ffbDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 
 		if (tmp != fmesa->xclip) {
 			fmesa->xclip = tmp;
-			fmesa->state_dirty |= FFB_STATE_XCLIP;
-			fmesa->state_fifo_ents += 1;
+			FFB_MAKE_DIRTY(fmesa, FFB_STATE_XCLIP, 1);
 		}
 		break;
 
@@ -926,8 +805,7 @@ static void ffbDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 		}
 		if (fmesa->ppc != tmp) {
 			fmesa->ppc = tmp;
-			fmesa->state_dirty |= FFB_STATE_PPC;
-			fmesa->state_fifo_ents += 1;
+			FFB_MAKE_DIRTY(fmesa, FFB_STATE_PPC, 1);
 			ffbDDBlendFunc(ctx, 0, 0);
 		}
 		break;
@@ -947,29 +825,18 @@ static void ffbDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 			fmesa->fbc = fbc;
 			ffbDDDepthFunc(ctx, ctx->Depth.Func);
 			fmesa->magnc = tmp;
-			fmesa->state_dirty |= FFB_STATE_MAGNC | FFB_STATE_FBC;
-			fmesa->state_fifo_ents += 2;
+			FFB_MAKE_DIRTY(fmesa, (FFB_STATE_MAGNC | FFB_STATE_FBC), 2);
 		}
 		break;
 
 	case GL_SCISSOR_TEST:
-		tmp = fmesa->ppc & ~FFB_PPC_VCE_MASK;
-		if (state) {
-			ffbDDScissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
-				     ctx->Scissor.Width, ctx->Scissor.Height);
-			tmp |= FFB_PPC_VCE_2D;
-	        } else {
-			tmp |= FFB_PPC_VCE_DISABLE;
-		}
+		ffbDDScissor(ctx, ctx->Scissor.X, ctx->Scissor.Y,
+			     ctx->Scissor.Width, ctx->Scissor.Height);
 		break;
 
 	case GL_STENCIL_TEST:
 		if (!(fmesa->ffb_sarea->flags & FFB_DRI_FFB2PLUS)) {
-			if (state)
-				fmesa->bad_fragment_attrs |= FFB_BADATTR_STENCIL;
-			else
-				fmesa->bad_fragment_attrs &= ~FFB_BADATTR_STENCIL;
-			break;
+			FALLBACK( ctx, FFB_BADATTR_STENCIL, state );
 		}
 
 		tmp = fmesa->fbc & ~FFB_FBC_YE_MASK;
@@ -987,23 +854,18 @@ static void ffbDDEnable(GLcontext *ctx, GLenum cap, GLboolean state)
 		} else {
 			fmesa->stencil		= 0xf0000000;
 			fmesa->stencilctl	= 0x33300000;
-			fmesa->state_dirty |= FFB_STATE_STENCIL;
-			fmesa->state_fifo_ents += 6;
+			FFB_MAKE_DIRTY(fmesa, FFB_STATE_STENCIL, 6);
 			tmp |= FFB_FBC_YE_OFF;
 		}
 		if (tmp != fmesa->fbc) {
 			fmesa->fbc = tmp;
-			fmesa->state_dirty |= FFB_STATE_FBC;
-			fmesa->state_fifo_ents += 1;
+			FFB_MAKE_DIRTY(fmesa, FFB_STATE_FBC, 1);
 		}
 		break;
 
 	case GL_FOG:
 		/* Until I implement the fog support... */
-		if (state)
-			fmesa->bad_fragment_attrs |= FFB_BADATTR_FOG;
-		else
-			fmesa->bad_fragment_attrs &= ~FFB_BADATTR_FOG;
+		FALLBACK( ctx, FFB_BADATTR_FOG, state );
 		break;
 
 	case GL_LINE_STIPPLE:
@@ -1137,59 +999,36 @@ void ffbSyncHardware(ffbContextPtr fmesa)
 	fmesa->ffbScreen->rp_active = 1;
 }
 
-static void ffbDDRenderStart(GLcontext *ctx)
+static void ffbDDUpdateState(GLcontext *ctx, GLuint newstate)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 
-	LOCK_HARDWARE(fmesa);
-	fmesa->hw_locked = 1;
+	/* When we are hw rendering, changing certain kinds of
+	 * state does not require flushing all of our context.
+	 */
+	if (fmesa->bad_fragment_attrs == 0 &&
+	    (newstate & ~_NEW_COLOR) == 0)
+		return;
 
-	if (fmesa->state_dirty != 0)
-		ffbSyncHardware(fmesa);
-}
+	_swrast_InvalidateState( ctx, newstate );
+	_swsetup_InvalidateState( ctx, newstate );
+	_ac_InvalidateState( ctx, newstate );
+	_tnl_InvalidateState( ctx, newstate );
 
-static void ffbDDRenderFinish(GLcontext *ctx)
-{
-	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
+	if (newstate & _NEW_TEXTURE)
+	   FALLBACK( ctx, FFB_BADATTR_TEXTURE, 
+		     (ctx->Texture._ReallyEnabled != 0));
 
-	UNLOCK_HARDWARE(fmesa);
-	fmesa->hw_locked = 0;
-}
+#ifdef STATE_TRACE
+	fprintf(stderr, "ffbDDUpdateState: newstate(%08x)\n", newstate);
+#endif
 
-#define INTERESTED (~(NEW_MODELVIEW|NEW_PROJECTION|\
-                      NEW_TEXTURE_MATRIX|\
-                      NEW_USER_CLIP|NEW_CLIENT_STATE|\
-                      NEW_TEXTURE_ENABLE))
+	fmesa->new_gl_state |= newstate;
 
-static void ffbDDUpdateState(GLcontext *ctx)
-{
-	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
-	unsigned int flags;
-
-	if (ctx->NewState & INTERESTED) {
-		if (fmesa->SWrender ||
-		    fmesa->bad_fragment_attrs != 0) {
-			/* Force SW rendering. */
-			fmesa->PointsFunc = NULL;
-			fmesa->LineFunc = NULL;
-			fmesa->TriangleFunc = NULL;
-			fmesa->QuadFunc = NULL;
-		} else {
-			ffbDDChooseTriRenderState(ctx);
-			ffbDDChooseLineRenderState(ctx);
-			ffbDDChoosePointRenderState(ctx);
-		}
-
-		if (0)
-			gl_print_tri_caps("tricaps", ctx->TriangleCaps);
-
-		ffbChooseRasterSetupFunc(ctx);
-
-		/* Force a reduced primitive change next rendering
-		 * pass.
-		 */
-		ctx->PB->primitive = GL_POLYGON + 1;
-	}
+	/* Force a reduced primitive change next rendering
+	 * pass.
+	 */
+	fmesa->raster_primitive = GL_POLYGON + 1;
 
 #if 0
 	/* When the modelview matrix changes, this changes what
@@ -1198,45 +1037,18 @@ static void ffbDDUpdateState(GLcontext *ctx)
 	 *
 	 * XXX DD_HAVE_HARDWARE_FOG.
 	 */
-	if (ctx->Fog.Enabled && (ctx->NewState & NEW_MODELVIEW))
+	if (ctx->Fog.Enabled && (newstate & _NEW_MODELVIEW))
 		ffb_update_fog();
 #endif
-
-	/* XXX It may be possible to eliminate all of Mesa's sw clip
-	 * XXX processing using the hw clip registers we have.  If
-	 * XXX this is correct, it is just a matter of verifying the
-	 * XXX FFB coordinate overflow rules in ffb_vb.c and if they
-	 * XXX are not violated we clear CLIP_MASK_ACTIVE in
-	 * XXX VB->CullMode.
-	 * XXX
-	 * XXX We would specify the xyz min/max values in the primary
-	 * XXX viewport clip registers, and the user specified
-	 * XXX scissor clip can go into one of the auxilliary viewport
-	 * XXX clips.
-	 */
-	flags = ctx->IndirectTriangles;
-	if (fmesa->PointsFunc != NULL) {
-		ctx->Driver.PointsFunc = fmesa->PointsFunc;
-		flags &= ~DD_POINT_SW_RASTERIZE;
-	}
-	if (fmesa->LineFunc != NULL) {
-		ctx->Driver.LineFunc = fmesa->LineFunc;
-		flags &= ~DD_LINE_SW_RASTERIZE;
-	}
-	if (fmesa->TriangleFunc != NULL) {
-		ctx->Driver.TriangleFunc = fmesa->TriangleFunc;
-		ctx->Driver.QuadFunc = fmesa->QuadFunc;
-		flags &= ~(DD_TRI_SW_RASTERIZE |
-			   DD_QUAD_SW_RASTERIZE);
-	}
-	ctx->IndirectTriangles = flags;
 }
+
 
 void ffbDDInitStateFuncs(GLcontext *ctx)
 {
 	ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 
 	ctx->Driver.UpdateState = ffbDDUpdateState;
+
 	ctx->Driver.Enable = ffbDDEnable;
 	ctx->Driver.LightModelfv = NULL;
 	ctx->Driver.AlphaFunc = ffbDDAlphaFunc;
@@ -1252,10 +1064,9 @@ void ffbDDInitStateFuncs(GLcontext *ctx)
 	ctx->Driver.CullFace = NULL;
 	ctx->Driver.FrontFace = NULL;
 	ctx->Driver.ColorMask = ffbDDColorMask;
-	ctx->Driver.LogicOp = ffbDDLogicOp;
-	ctx->Driver.ReducedPrimitiveChange = ffbDDReducedPrimitiveChange;
-	ctx->Driver.RenderStart = ffbDDRenderStart; 
-	ctx->Driver.RenderFinish = ffbDDRenderFinish; 
+	ctx->Driver.LogicOpcode = ffbDDLogicOp;
+	ctx->Driver.Viewport = ffbDDViewport;
+	ctx->Driver.DepthRange = ffbDDDepthRange;
 
 	if (fmesa->ffb_sarea->flags & FFB_DRI_FFB2PLUS) {
 		ctx->Driver.StencilFunc = ffbDDStencilFunc;
@@ -1268,17 +1079,38 @@ void ffbDDInitStateFuncs(GLcontext *ctx)
 	}
 
 	ctx->Driver.SetDrawBuffer = ffbDDSetDrawBuffer;
-	ctx->Driver.SetReadBuffer = ffbDDSetReadBuffer;
-	ctx->Driver.Color = ffbDDSetColor;
 	ctx->Driver.ClearColor = ffbDDClearColor;
 	ctx->Driver.ClearDepth = ffbDDClearDepth;
 	ctx->Driver.ClearStencil = ffbDDClearStencil;
-	ctx->Driver.Dither = NULL;
 
 	/* We will support color index modes later... -DaveM */
-	ctx->Driver.Index = 0;
 	ctx->Driver.ClearIndex = 0;
 	ctx->Driver.IndexMask = 0;
+
+
+
+	/* Pixel path fallbacks.
+	 */
+	ctx->Driver.Accum = _swrast_Accum;
+	ctx->Driver.CopyPixels = _swrast_CopyPixels;
+	ctx->Driver.DrawPixels = _swrast_DrawPixels;
+	ctx->Driver.ReadPixels = _swrast_ReadPixels;
+	ctx->Driver.ResizeBuffers = _swrast_alloc_buffers;
+
+	/* Swrast hooks for imaging extensions:
+	 */
+	ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
+	ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
+	ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
+	ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
+
+	{
+		struct swrast_device_driver *swdd = 
+			_swrast_GetDeviceDriverReference(ctx);
+		swdd->SetReadBuffer = ffbDDSetReadBuffer;
+	}
+   
+
 }
 
 void ffbDDInitContextHwState(GLcontext *ctx)
@@ -1291,13 +1123,14 @@ void ffbDDInitContextHwState(GLcontext *ctx)
 
 	fmesa->bad_fragment_attrs = 0;
 	fmesa->state_dirty = FFB_STATE_ALL;
+	fmesa->new_gl_state = ~0;
 
 	fifo_count = 1;
 	fmesa->fbc = (FFB_FBC_WE_FORCEON | FFB_FBC_WM_COMBINED |
 		      FFB_FBC_SB_BOTH | FFB_FBC_ZE_MASK |
 		      FFB_FBC_YE_OFF | FFB_FBC_XE_OFF |
 		      FFB_FBC_RGBE_MASK);
-	if (ctx->Visual->DBflag) {
+	if (ctx->Visual.doubleBufferMode) {
 		/* Buffer B is the initial back buffer. */
 		fmesa->back_buffer = 1;
 		fmesa->fbc |= FFB_FBC_WB_BC | FFB_FBC_RB_B;
@@ -1308,7 +1141,7 @@ void ffbDDInitContextHwState(GLcontext *ctx)
 
 	fifo_count += 1;
 	fmesa->ppc = (FFB_PPC_ACE_DISABLE | FFB_PPC_DCE_DISABLE |
-		      FFB_PPC_ABE_DISABLE | FFB_PPC_VCE_DISABLE |
+		      FFB_PPC_ABE_DISABLE | FFB_PPC_VCE_3D |
 		      FFB_PPC_APE_DISABLE | FFB_PPC_TBE_OPAQUE |
 		      FFB_PPC_ZS_CONST | FFB_PPC_YS_CONST |
 		      FFB_PPC_XS_WID | FFB_PPC_CS_VAR);
@@ -1378,9 +1211,9 @@ void ffbDDInitContextHwState(GLcontext *ctx)
 	/* ViewPort clip state. */
 	fifo_count += 4 + (4 * 2);
 	fmesa->vclipmin  = 0x00000000;
-	fmesa->vclipmax  = 0x00000000;
+	fmesa->vclipmax  = 0xffffffff;
 	fmesa->vclipzmin = 0x00000000;
-	fmesa->vclipzmax = 0x00000000;
+	fmesa->vclipzmax = 0x0fffffff;
 	for (i = 0; i < 4; i++) {
 		fmesa->aux_clips[0].min = 0x00000000;
 		fmesa->aux_clips[0].max = 0x00000000;

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/Imakefile,v 1.10 2001/10/04 18:28:22 alanh Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/drm/Imakefile,v 1.13 2002/10/30 12:52:32 alanh Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -17,24 +17,14 @@ MTRR_DEFINES = -DHAS_MTRR_SUPPORT
 	xf86drmHash.c \
 	xf86drmRandom.c \
 	xf86drmSL.c \
-	xf86drmI810.c \
-	xf86drmMga.c \
-	xf86drmR128.c \
-	xf86drmRadeon.c \
-	xf86drmSiS.c \
-	xf86drmI830.c \
+	xf86drmCompat.c \
 	$(MSRC)
 
  OBJS = xf86drm.o \
 	xf86drmHash.o \
 	xf86drmRandom.o \
 	xf86drmSL.o \
-	xf86drmI810.o \
-	xf86drmMga.o \
-	xf86drmR128.o \
-	xf86drmRadeon.o \
-	xf86drmSiS.o \
-	xf86drmI830.o \
+	xf86drmCompat.o \
 	$(MOBJ)
 
 INCLUDES = -I$(XF86COMSRC) -I$(XF86OSSRC) -I. -I$(SERVERSRC)/include \
@@ -62,6 +52,8 @@ NormalLibraryObjectRule()
 
 #define IHaveSubdirs
 SUBDIRS = kernel
+
+DependTarget()
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))

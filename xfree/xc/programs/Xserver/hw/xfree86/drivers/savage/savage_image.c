@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_image.c,v 1.5 2001/08/09 19:14:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_image.c,v 1.6 2002/05/14 20:19:52 alanh Exp $ */
 
 #include "savage_driver.h"
 #include "xaarop.h"

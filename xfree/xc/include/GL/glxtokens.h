@@ -1,7 +1,7 @@
 #ifndef __GLX_glxtokens_h__
 #define __GLX_glxtokens_h__
 
-/* $XFree86: xc/include/GL/glxtokens.h,v 1.5 2001/03/21 15:51:38 dawes Exp $ */
+/* $XFree86: xc/include/GL/glxtokens.h,v 1.6 2002/02/22 21:32:50 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -43,6 +43,7 @@ extern "C" {
 #define GLX_VERSION_1_1 1
 #define GLX_VERSION_1_2 1
 #define GLX_VERSION_1_3 1
+#define GLX_VERSION_1_4 1
 
 /*
 ** Visual Config Attributes (glXGetConfig, glXGetFBConfigAttrib)
@@ -217,11 +218,11 @@ extern "C" {
 #define GLX_VISUAL_ID_EXT	0x800B	/* id of context's visual */
 #define GLX_SCREEN_EXT		0x800C	/* screen number */
 
-/* GLX Extension Strings */
-#define GLX_EXT_import_context	1
-#define GLX_EXT_visual_info	1
-#define GLX_EXT_visual_rating	1
-#define GLX_ARB_get_proc_address 1
+/*
+ * GLX 1.4 and later:
+ */
+#define GLX_SAMPLE_BUFFERS_SGIS            100000
+#define GLX_SAMPLES_SGIS                   100001
 
 #ifdef __cplusplus
 }

@@ -1,37 +1,60 @@
-/* $XFree86: xc/programs/Xserver/hw/darwin/darwin.h,v 1.10 2001/10/14 03:02:18 torrey Exp $ */
+/*
+ * Copyright (c) 2001-2002 Torrey T. Lyons. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the sale,
+ * use or other dealings in this Software without prior written authorization.
+ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/darwin.h,v 1.15 2002/12/10 00:00:38 torrey Exp $ */
 
 #ifndef _DARWIN_H
 #define _DARWIN_H
 
-#include <pthread.h>
-#include <IOKit/graphics/IOFramebufferShared.h>
+#include <IOKit/IOTypes.h>
 #include "inputstr.h"
 #include "screenint.h"
 #include "extensions/XKB.h"
-#include "bundle/quartzShared.h"
+#include "quartz/quartzShared.h"
 
 typedef struct {
-    io_connect_t        fbService;
     void                *framebuffer;
     int                 x;
     int                 y;
     int                 width;
     int                 height;
     int                 pitch;
+    int                 colorType;
     int                 bitsPerPixel;
     int                 colorBitsPerPixel;
-    IOPixelInformation  pixelInfo;
-    StdFBShmem_t        *cursorShmem;
+    int                 bitsPerComponent;
 } DarwinFramebufferRec, *DarwinFramebufferPtr;
-
-typedef struct {
-    pthread_t           thread;
-    io_connect_t        connect;
-    io_connect_t        paramConnect;  
-} DarwinInputRec;
 
 
 void xf86SetRootClip (ScreenPtr pScreen, BOOL enable);
+
+// From darwinEvents.c
+Bool DarwinEQInit(DevicePtr pKbd, DevicePtr pPtr);
+void DarwinEQEnqueue(const xEvent *e);
+void DarwinEQPointerPost(xEvent *e);
+void DarwinEQSwitchScreen(ScreenPtr pScreen, Bool fromDIX);
 
 // From darwinKeyboard.c
 int DarwinModifierNXKeyToNXKeycode(int key, int side);
@@ -58,8 +81,26 @@ int DarwinModifierStringToNXKey(const char *string);
  */
 extern int              darwinScreenIndex; // index into pScreen.devPrivates
 extern int              darwinScreensFound;
-extern DarwinInputRec   hid;
+extern io_connect_t     darwinParamConnect;
 extern int              darwinEventFD;
 extern Bool             quartz;
+
+/*
+ * Special ddx events understood by the X server
+ */
+enum {
+  kXDarwinUpdateModifiers   // update all modifier keys
+            = LASTEvent+1,  // (from X.h list of event names)
+  kXDarwinUpdateButtons,    // update state of mouse buttons 2 and up
+  kXDarwinScrollWheel,      // scroll wheel event
+  kXDarwinShow,             // vt switch to X server;
+                            // recapture screen and restore X drawing
+  kXDarwinHide,             // vt switch away from X server;
+                            // release screen and clip X drawing
+  kXDarwinSetRootClip,      // enable or disable drawing to the X screen
+  kXDarwinQuit,             // kill the X server and release the display
+  kXDarwinReadPasteboard,   // copy Mac OS X pasteboard into X cut buffer
+  kXDarwinWritePasteboard   // copy X cut buffer onto Mac OS X pasteboard
+};
 
 #endif	/* _DARWIN_H */

@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/XvMC/Imakefile,v 1.4 2001/10/09 07:46:46 alanh Exp $
+XCOMM $XFree86: xc/lib/XvMC/Imakefile,v 1.5 2002/10/16 00:37:33 dawes Exp $
 
 #define DoNormalLib NormalLibXvMC
 #define DoSharedLib SharedLibXvMC
@@ -19,7 +19,6 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
 
       DEFINES = $(ALLOC_DEFINES)
-     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC)
          SRCS = XvMC.c
          OBJS = XvMC.o
      LINTLIBS = $(LINTXLIB)

@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/connect.c,v 3.9 2001/12/14 19:53:35 dawes Exp $ */
+/* $XFree86: xc/lib/ICE/connect.c,v 3.10 2002/12/02 21:50:29 tsi Exp $ */
 
 #include <X11/ICE/ICElib.h>
 #include "ICElibint.h"
@@ -205,7 +205,7 @@ char 	   *errorStringRet;
     iceConn->inbufmax = iceConn->inbuf + ICE_INBUFSIZE;
 
     if ((iceConn->outbuf = iceConn->outbufptr =
-	(char *) malloc (ICE_OUTBUFSIZE)) == NULL)
+	(char *) calloc (1, ICE_OUTBUFSIZE)) == NULL)
     {
 	_IceFreeConnection (iceConn);
 	strncpy (errorStringRet, "Can't malloc", errorLength);

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/xf86HWCurs.c,v 1.10 2001/05/18 20:22:31 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/ramdac/xf86HWCurs.c,v 1.12 2003/02/13 20:28:41 tsi Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -124,6 +124,9 @@ xf86SetCursor(ScreenPtr pScreen, CursorPtr pCurs, int x, int y)
     x -= infoPtr->pScrn->frameX0 + ScreenPriv->HotX;
     y -= infoPtr->pScrn->frameY0 + ScreenPriv->HotY;
 
+#ifdef ARGB_CURSOR
+    if (!pCurs->bits->argb || !infoPtr->LoadCursorARGB)
+#endif
     if (!bits) {
 	bits = (*infoPtr->RealizeCursor)(infoPtr, pCurs);
 	pCurs->devPriv[pScreen->myNum] = bits;
@@ -132,12 +135,38 @@ xf86SetCursor(ScreenPtr pScreen, CursorPtr pCurs, int x, int y)
     if (!(infoPtr->Flags & HARDWARE_CURSOR_UPDATE_UNHIDDEN))
 	(*infoPtr->HideCursor)(infoPtr->pScrn);
 
+#ifdef ARGB_CURSOR
+    if (pCurs->bits->argb && infoPtr->LoadCursorARGB)
+	(*infoPtr->LoadCursorARGB) (infoPtr->pScrn, pCurs);
+    else
+#endif
     if (bits)
 	(*infoPtr->LoadCursorImage)(infoPtr->pScrn, bits);
 
     xf86RecolorCursor(pScreen, pCurs, 1);
 
     (*infoPtr->SetCursorPosition)(infoPtr->pScrn, x, y);
+
+    (*infoPtr->ShowCursor)(infoPtr->pScrn);
+}
+
+void
+xf86SetTransparentCursor(ScreenPtr pScreen)
+{
+    xf86CursorScreenPtr ScreenPriv =
+	pScreen->devPrivates[xf86CursorScreenIndex].ptr;
+    xf86CursorInfoPtr infoPtr = ScreenPriv->CursorInfoPtr;
+
+    if (!ScreenPriv->transparentData)
+	ScreenPriv->transparentData =
+	    (*infoPtr->RealizeCursor)(infoPtr, NullCursor);
+
+    if (!(infoPtr->Flags & HARDWARE_CURSOR_UPDATE_UNHIDDEN))
+	(*infoPtr->HideCursor)(infoPtr->pScrn);
+
+    if (ScreenPriv->transparentData)
+	(*infoPtr->LoadCursorImage)(infoPtr->pScrn,
+				    ScreenPriv->transparentData);
 
     (*infoPtr->ShowCursor)(infoPtr->pScrn);
 }
@@ -209,6 +238,16 @@ RealizeCursorInterleave0(xf86CursorInfoPtr infoPtr, CursorPtr pCurs)
 
     if (!(mem = xcalloc(1, size)))
 	return NULL;
+
+    if (pCurs == NullCursor) {
+	if (infoPtr->Flags & HARDWARE_CURSOR_INVERT_MASK) {
+	    DstM = (SCANLINE*)mem;
+	    if (!(infoPtr->Flags & HARDWARE_CURSOR_SWAP_SOURCE_AND_MASK))
+		DstM += words;
+	    (void)memset(DstM, -1, words * sizeof(SCANLINE));
+	}
+	return mem;
+    }
 
     /* SrcPitch == the number of scanlines wide the cursor image is */
     SrcPitch = (pCurs->bits->width + (BITMAP_SCANLINE_PAD - 1)) >>

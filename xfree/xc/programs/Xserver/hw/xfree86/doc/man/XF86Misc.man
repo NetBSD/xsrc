@@ -4,7 +4,7 @@
 .\"
 .\" Copyright (c) 1996  Joe Moss, The XFree86 Project
 .\" 
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86Misc.man,v 3.11 2001/02/07 22:35:22 tsi Exp $
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/doc/man/XF86Misc.man,v 3.12 2002/12/22 00:46:54 dawes Exp $
 .de ZN
 .ie t \fB\^\\$1\^\fR\\$2
 .el \fI\^\\$1\^\fP\\$2
@@ -210,7 +210,7 @@ Keyboard types
 .IP \fBMF_\fP* 1i
 Mouse flags
 .SH "SEE ALSO"
-xset(1)
+xset(1), XF86Config(__filemansuffix__)
 .SH AUTHORS
 Joe Moss and David Dawes, The XFree86 Project, Inc.
 

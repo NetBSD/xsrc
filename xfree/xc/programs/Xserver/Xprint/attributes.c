@@ -44,7 +44,7 @@ copyright holders.
 **    *********************************************************
 ** 
 ********************************************************************/
-/* $XFree86: xc/programs/Xserver/Xprint/attributes.c,v 1.17 2001/12/19 21:55:57 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xprint/attributes.c,v 1.18 2002/05/31 18:45:53 dawes Exp $ */
 
 #include <X11/Xproto.h>
 #include <string.h>
@@ -1207,7 +1207,7 @@ ReplaceAllKeywords(
     defined(__CYGWIN__) || \
     (defined(sun) && !defined(SVR4)) || \
     (defined(SVR4) && !defined(sun) && !defined(USL)) || \
-    defined(__EMX__) || \
+    defined(__UNIXOS2__) || \
     defined(ISC) || \
     defined(Lynx) || \
     defined(__QNX__) || \

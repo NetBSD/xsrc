@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1999 by The XFree86 Project, Inc.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86MiscExt.c,v 1.8 2001/08/16 14:33:51 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86MiscExt.c,v 1.11 2002/11/20 04:04:57 dawes Exp $ */
 
 /*
  * This file contains the Pointer/Keyboard functions needed by the 
@@ -75,39 +75,51 @@ static void MiscExtClientStateCallback(pointer, pointer, pointer);
     The extension should probably be changed to use protocol
     names instead of ID numbers
 */
+struct mouse_map {
+    int mtype;
+    MouseProtocolID proto;
+};
+
 static int
 MapMseProto(int proto, MseProtoMapDirection mapping)
 {
-    static int MapProto_ToMisc[] = {
-	MTYPE_MICROSOFT,	MTYPE_MOUSESYS,		MTYPE_MMSERIES,
-	MTYPE_LOGITECH,		MTYPE_LOGIMAN,		MTYPE_MMHIT,
-	MTYPE_GLIDEPOINT,	MTYPE_IMSERIAL,		MTYPE_THINKING,
-	MTYPE_ACECAD,		MTYPE_PS_2,		MTYPE_IMPS2,
-	MTYPE_EXPPS2,           MTYPE_THINKINGPS2,	MTYPE_MMANPLUSPS2,
-	MTYPE_GLIDEPOINTPS2,	MTYPE_NETPS2,		MTYPE_NETSCROLLPS2,
-	MTYPE_BUSMOUSE, 	MTYPE_AUTOMOUSE,	MTYPE_SYSMOUSE
+    int i;
+    
+    static struct mouse_map m_map[] = 
+    {
+	{ MTYPE_MICROSOFT, PROT_MS },
+	{ MTYPE_MOUSESYS, PROT_MSC },
+	{ MTYPE_MMSERIES, PROT_MM },
+	{ MTYPE_LOGITECH, PROT_LOGI },
+	{ MTYPE_LOGIMAN, PROT_LOGIMAN },
+	{ MTYPE_MMHIT, PROT_MMHIT },
+	{ MTYPE_GLIDEPOINT, PROT_GLIDE },
+	{ MTYPE_IMSERIAL, PROT_IMSERIAL },
+	{ MTYPE_THINKING, PROT_THINKING },
+	{ MTYPE_ACECAD, PROT_ACECAD },
+	{ MTYPE_PS_2, PROT_PS2 },
+	{ MTYPE_IMPS2, PROT_IMPS2 },
+	{ MTYPE_EXPPS2, PROT_EXPPS2 },
+	{ MTYPE_THINKINGPS2, PROT_THINKPS2 },
+	{ MTYPE_MMANPLUSPS2, PROT_MMPS2 },
+	{ MTYPE_GLIDEPOINTPS2, PROT_GLIDEPS2 },
+	{ MTYPE_NETPS2, PROT_NETPS2 },
+	{ MTYPE_NETSCROLLPS2, PROT_NETSCPS2 },
+	{ MTYPE_BUSMOUSE, PROT_BM },
+	{ MTYPE_AUTOMOUSE, PROT_AUTO },
+	{ MTYPE_SYSMOUSE, PROT_SYSMOUSE },
+	{ MTYPE_UNKNOWN, PROT_UNKNOWN }
     };
-
-    static MouseProtocolID MapProto_FromMisc[] = {
-	PROT_MS,	PROT_MSC,	PROT_MM,	PROT_LOGI,
-	PROT_BM,	PROT_LOGIMAN,	PROT_PS2,	PROT_MMHIT,
-	PROT_GLIDE,	PROT_IMSERIAL,	PROT_THINKING,	PROT_IMPS2,
-	PROT_THINKPS2,	PROT_MMPS2,	PROT_GLIDEPS2,	PROT_NETPS2,
-	PROT_NETSCPS2,	PROT_SYSMOUSE,	PROT_AUTO,	PROT_ACECAD,
-	PROT_EXPPS2
-    };
-#define PROT_DEFAULT  -2 /* PROT_UNKNOWN */
-
+    
     if (mapping == TO_MISC) {
-	if (proto < 0 || proto >= sizeof(MapProto_ToMisc)/sizeof(int))
-		return MTYPE_UNKNOWN;
-	return MapProto_ToMisc[proto];
+	for (i = 0; m_map[i].proto != PROT_UNKNOWN; i++)
+	    if (proto == m_map[i].proto) return m_map[i].mtype;
+	return MTYPE_UNKNOWN;
     } else {
-	if (proto < 0 || proto >= sizeof(MapProto_FromMisc)/sizeof(int))
-		return PROT_DEFAULT;
-	return MapProto_FromMisc[proto];
+	for (i = 0; m_map[i].mtype != MTYPE_UNKNOWN; i++)
+	    if (proto == m_map[i].mtype) return m_map[i].proto;
+	return PROT_UNKNOWN;
     }
-#undef PROT_DEFAULT
 }
 
 Bool
@@ -202,18 +214,16 @@ MiscExtSetMouseValue(pointer mouse, MiscExtMseValType valtype, int value)
     return FALSE;
 }
 
-/* The misc extension doesn't (yet) call this. */
-#if 0
 Bool
 MiscExtSetMouseDevice(pointer mouse, char* device)
 {
     mseParamsPtr mse = mouse;
 
     mse->device = device;
+    
     return TRUE;
 }
-#endif
-                                                                               
+
 Bool
 MiscExtGetKbdSettings(pointer *kbd)
 {
@@ -357,12 +367,64 @@ MiscExtDestroyStruct(pointer structure, MiscExtStructType mse_or_kbd)
     }
 }
 
+static Bool
+MiscExtAuthorizeDevice(InputInfoPtr pInfo, char *device)
+{
+    Bool authorized = FALSE;
+    char *elem;
+    struct stat dev, dev_list;
+    const char *olddev = xf86FindOptionValue(pInfo->options, "Device");
+    
+    if (stat(device,&dev))
+	return FALSE;
+
+    if (!S_ISCHR(dev.st_mode))
+	return FALSE;
+
+    if (!stat(olddev,&dev_list)) {
+	if (dev_list.st_dev == dev.st_dev
+	    && dev_list.st_ino == dev.st_ino) {
+	    authorized = TRUE;
+	}
+    }
+
+    if (!authorized) {
+	char *path;
+
+	if (!xf86InputDeviceList
+	    || (path = strdup(xf86InputDeviceList)) == NULL) 
+	    return FALSE;
+	
+	elem = strtok(path,",");
+	
+	while (elem) {
+	    
+	    if (!stat(elem,&dev_list)) {
+		if (dev_list.st_dev == dev.st_dev
+		    && dev_list.st_ino == dev.st_ino) {
+		    authorized = TRUE;
+		    break;
+
+		}
+	    }
+	    elem = strtok(NULL,",");
+	}
+	xfree(path);
+    }
+#if 0
+    ErrorF("AUTHORIZED: %s\n",authorized?"Yes":"No");
+#endif
+    return (authorized);
+}
+
 MiscExtReturn
 MiscExtApply(pointer structure, MiscExtStructType mse_or_kbd)
 {
     DEBUG_P("MiscExtApply");
 
     if (mse_or_kbd == MISC_POINTER) {
+	Bool protoChanged = FALSE;
+	int oldflags;
 	Bool reopen = FALSE;
 	mseParamsPtr mse = structure;
 	InputInfoPtr pInfo;
@@ -374,7 +436,7 @@ MiscExtApply(pointer structure, MiscExtStructType mse_or_kbd)
 	    return MISC_RET_NOMODULE;
 #endif
 	if (mse->type < MTYPE_MICROSOFT
-		|| ( mse->type > MTYPE_ACECAD
+		|| ( mse->type > MTYPE_EXPPS2
 		    && (mse->type!=MTYPE_OSMOUSE && mse->type!=MTYPE_XQUEUE)))
 	    return MISC_RET_BADMSEPROTO;
 #ifdef OSMOUSE_ONLY
@@ -391,7 +453,9 @@ MiscExtApply(pointer structure, MiscExtStructType mse_or_kbd)
 	    return MISC_RET_BADVAL;
 
 	if (mse->type == MTYPE_LOGIMAN
-		&& !(mse->baudrate == 1200 || mse->baudrate == 9600) )
+	    && !(mse->baudrate == 0
+		 || mse->baudrate == 1200
+		 || mse->baudrate == 9600))
 	    return MISC_RET_BADBAUDRATE;
 	if (mse->type == MTYPE_LOGIMAN && mse->samplerate)
 	    return MISC_RET_BADCOMBO;
@@ -413,7 +477,8 @@ MiscExtApply(pointer structure, MiscExtStructType mse_or_kbd)
 		&& mse->type != MTYPE_SYSMOUSE)
 	{
 	    if (mse->baudrate % 1200 != 0
-		    || mse->baudrate < 1200 || mse->baudrate > 9600)
+		|| (mse->baudrate != 0 && mse->baudrate < 1200)
+		|| mse->baudrate > 9600)
 		return MISC_RET_BADBAUDRATE;
 	}
 	if ((mse->flags & (MF_CLEAR_DTR|MF_CLEAR_RTS))
@@ -441,17 +506,22 @@ MiscExtApply(pointer structure, MiscExtStructType mse_or_kbd)
 
 	pInfo = mse->private;
 	pMse = pInfo->private;
-
-	if (pMse->protocolID != MapMseProto(mse->type, FROM_MISC)
+	oldflags = pMse->mouseFlags;
+	
+	protoChanged = pMse->protocolID != MapMseProto(mse->type, FROM_MISC);
+	if (protoChanged
 		|| pMse->baudRate != mse->baudrate
 		|| pMse->sampleRate != mse->samplerate
 		|| pMse->resolution != mse->resolution
 		|| pMse->mouseFlags != mse->flags)
 	    reopen = TRUE;
 
+	if (mse->device)
+	    reopen = TRUE;
+
 	if (reopen)
 	    (pMse->device->deviceProc)(pMse->device, DEVICE_CLOSE);
-
+	
 	pMse->protocolID      = MapMseProto(mse->type, FROM_MISC);
 	pMse->baudRate        = mse->baudrate;
 	pMse->sampleRate      = mse->samplerate;
@@ -468,13 +538,29 @@ MiscExtApply(pointer structure, MiscExtStructType mse_or_kbd)
 #else
 	pMse->protocol = xf86MouseProtocolIDToName(pMse->protocolID);
 #endif
-	if (reopen)
+	
+	if (mse->device) {
+	    if (MiscExtAuthorizeDevice(pInfo, mse->device)) {
+		xf86ReplaceStrOption(pInfo->options, "Device", mse->device);
+	    } else {
+		return MISC_RET_BADVAL;
+	    }
+	}
+	
+	if (reopen) {
+	    /* Only if protocol is changed explicitely disable auto detect */
+	    if (protoChanged)
+		pMse->autoProbe = FALSE;
 	    (pMse->device->deviceProc)(pMse->device, DEVICE_ON);
+	}
 	/* Set pInfo->options too */
 	
-       if (mse->device)
-           xf86ReplaceStrOption(pInfo->options, "Device", mse->device);        
-
+       if ((oldflags & MF_CLEAR_DTR) != (pMse->mouseFlags & MF_CLEAR_DTR))
+	   xf86ReplaceBoolOption(pInfo->options, "ClearDTR",
+				 pMse->mouseFlags | MF_CLEAR_DTR);
+       if ((oldflags & MF_CLEAR_RTS) != (pMse->mouseFlags & MF_CLEAR_RTS))
+	   xf86ReplaceBoolOption(pInfo->options, "ClearRTS",
+				 pMse->mouseFlags | MF_CLEAR_RTS);
     }
     if (mse_or_kbd == MISC_KEYBOARD) {
 	kbdParamsPtr kbd = structure;
@@ -507,6 +593,19 @@ MiscExtApply(pointer structure, MiscExtStructType mse_or_kbd)
 #endif
     }
     return MISC_RET_SUCCESS;
+}
+
+Bool
+MiscExtGetFilePaths(const char **configfile, const char **modulepath,
+		    const char **logfile)
+{
+    DEBUG_P("MiscExtGetFilePaths");
+
+    *configfile = xf86ConfigFile;
+    *modulepath = xf86ModulePath;
+    *logfile    = xf86LogFile;
+
+    return TRUE;
 }
 
 #endif /* XF86MISC */

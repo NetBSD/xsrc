@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkbtext.c,v 3.10 2001/10/28 03:32:47 tsi Exp $ */
+/* $XFree86: xc/lib/xkbfile/xkbtext.c,v 3.11 2002/12/21 18:49:02 paulo Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -873,7 +873,7 @@ char *rtrn;
 	}
 	return rtrn;
     }
-    sprintf(buf,"0x%x",type);
+    sprintf(buf,"Private");
     return buf;
 }
 

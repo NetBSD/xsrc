@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.185 2002/01/15 01:56:56 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Init.c,v 3.198 2003/02/26 09:21:38 dawes Exp $ */
 
 /*
  * Copyright 1991-1999 by The XFree86 Project, Inc.
@@ -20,6 +20,7 @@
 #include "windowstr.h"
 #include "scrnintstr.h"
 #include "site.h"
+#include "mi.h"
 
 #include "compiler.h"
 
@@ -36,6 +37,8 @@
 #include "xf86Config.h"
 #include "xf86_OSlib.h"
 #include "xf86Version.h"
+#include "xf86Date.h"
+#include "xf86Build.h"
 #include "mipointer.h"
 #ifdef XINPUT
 #include "XI.h"
@@ -43,8 +46,12 @@
 #else
 #include "inputstr.h"
 #endif
+#include "xf86DDC.h"
 #include "xf86Xinput.h"
 #include "xf86InPriv.h"
+#ifdef RENDER
+#include "picturestr.h"
+#endif
 
 #include "globals.h"
 
@@ -65,7 +72,7 @@ static int extraDays = 0;
 static char *expKey = NULL;
 #endif
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 extern void os2ServerVideoAccess();
 #endif
 
@@ -209,7 +216,7 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
   MessageType		 pix24From = X_DEFAULT;
   Bool			 pix24Fail = FALSE;
   
-#ifdef __EMX__
+#ifdef __UNIXOS2__
   os2ServerVideoAccess();  /* See if we have access to the screen before doing anything */
 #endif
 
@@ -239,14 +246,13 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 
     xf86PrintBanner();
     xf86PrintMarkers();
-    {
+    if (xf86LogFile)  {
 	time_t t;
 	const char *ct;
 	t = time(NULL);
 	ct = ctime(&t);
-	if (xf86LogFile)
-	    xf86MsgVerb(xf86LogFileFrom, 0, "Log file: \"%s\", Time: %s",
-			xf86LogFile, ct);
+	xf86MsgVerb(xf86LogFileFrom, 0, "Log file: \"%s\", Time: %s",
+		    xf86LogFile, ct);
     }
 
     /* Read and parse the config file */
@@ -279,6 +285,9 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 #endif
 #ifdef SIGXFSZ
        signal(SIGXFSZ,xf86SigHandler);
+#endif
+#ifdef MEMDEBUG
+       signal(SIGUSR2,xf86SigMemDebug);
 #endif
     }
 
@@ -843,6 +852,23 @@ InitOutput(ScreenInfo *pScreenInfo, int argc, char **argv)
 	= (void*)(xf86Screens[i]->pScreen->CreateWindow);
       xf86Screens[i]->pScreen->CreateWindow = xf86CreateRootWindow;
 
+#ifdef RENDER
+    if (PictureGetSubpixelOrder (xf86Screens[i]->pScreen) == SubPixelUnknown)
+    {
+	xf86MonPtr DDC = (xf86MonPtr)(xf86Screens[i]->monitor->DDC); 
+	PictureSetSubpixelOrder (xf86Screens[i]->pScreen,
+				 DDC ?
+				 (DDC->features.input_type ?
+				  SubPixelHorizontalRGB : SubPixelNone) :
+				 SubPixelUnknown);
+    }
+#endif
+#ifdef RANDR
+    if (!xf86Info.disableRandR)
+	xf86RandRInit (screenInfo.screens[scr_index]);
+    xf86Msg(xf86Info.randRFrom, "RandR %s\n",
+	    xf86Info.disableRandR ? "disabled" : "enabled");
+#endif
 #ifdef NOT_USED
       /*
        * Here we have to let the driver getting access of the VT. Note that
@@ -898,7 +924,8 @@ InitInput(argc, argv)
 {
     IDevPtr pDev;
     InputDriverPtr pDrv;
-    InputInfoPtr pInfo, coreKeyboard = NULL, corePointer = NULL;
+    InputInfoPtr pInfo;
+    static InputInfoPtr coreKeyboard = NULL, corePointer = NULL;
 
     xf86Info.vtRequestsPending = FALSE;
     xf86Info.inputPending = FALSE;
@@ -991,6 +1018,7 @@ InitInput(argc, argv)
 
     if (coreKeyboard) {
       xf86Info.pKeyboard = coreKeyboard->dev;
+      xf86Info.kbdEvents = NULL; /* to prevent the internal keybord driver usage*/
     }
     else {
       xf86Info.pKeyboard = AddInputDevice(xf86Info.kbdProc, TRUE);
@@ -1003,7 +1031,7 @@ InitInput(argc, argv)
 #ifdef XINPUT
   xf86eqInit ((DevicePtr)xf86Info.pKeyboard, (DevicePtr)xf86Info.pMouse);
 #else
-  mieqInit (xf86Info.pKeyboard, xf86Info.pMouse);
+  mieqInit ((DevicePtr)xf86Info.pKeyboard, (DevicePtr)xf86Info.pMouse);
 #endif
 }
 
@@ -1074,7 +1102,24 @@ OsVendorInit()
 void
 ddxGiveUp()
 {
+    int i;
+
+    if (xf86OSPMClose)
+	xf86OSPMClose();
+    xf86OSPMClose = NULL;
+
     xf86AccessLeaveState();
+
+    for (i = 0; i < xf86NumScreens; i++) {
+	/*
+	 * zero all access functions to
+	 * trap calls when switched away.
+	 */
+	xf86Screens[i]->vtSema = FALSE;
+	xf86Screens[i]->access = NULL;
+	xf86Screens[i]->busAccess = NULL;
+    }
+
 #ifdef USE_XF86_SERVERLOCK
     xf86UnlockServer();
 #endif
@@ -1083,9 +1128,6 @@ ddxGiveUp()
 #endif
 
     xf86CloseConsole();
-    if (xf86OSPMClose)
-	xf86OSPMClose();
-    xf86OSPMClose = NULL;
 
     xf86CloseLog();
 
@@ -1152,7 +1194,7 @@ OsVendorFatalError()
 	 "the full server output, not just the last messages.\n");
   if (xf86LogFile && xf86LogFileWasOpened)
     ErrorF("This can be found in the log file \"%s\".\n", xf86LogFile);
-  ErrorF("Please report problems to %s.\n",BUILDERADDR);
+  ErrorF("Please report problems to %s.\n", BUILDERADDR);
   ErrorF("\n");
 }
 
@@ -1597,7 +1639,7 @@ xf86PrintBanner()
     "way.  Bugs may be reported to XFree86@XFree86.Org and patches submitted\n"
     "to fixes@XFree86.Org.  Before reporting bugs in pre-release versions,\n"
     "please check the latest version in the XFree86 CVS repository\n"
-    "(http://www.XFree86.Org/cvs)\n");
+    "(http://www.XFree86.Org/cvs).\n");
 #endif
   ErrorF("\nXFree86 Version %d.%d.%d", XF86_VERSION_MAJOR, XF86_VERSION_MINOR,
 					XF86_VERSION_PATCH);
@@ -1613,17 +1655,29 @@ xf86PrintBanner()
 #ifdef XF86_CUSTOM_VERSION
   ErrorF(" (%s)", XF86_CUSTOM_VERSION);
 #endif
-  ErrorF(" / X Window System\n");
-  ErrorF("(protocol Version %d, revision %d, vendor release %d)\n",
-         X_PROTOCOL, X_PROTOCOL_REVISION, VENDOR_RELEASE );
-  ErrorF("Release Date: %s\n", XF86_DATE);
-  ErrorF("\tIf the server is older than 6-12 months, or if your card is\n"
-	 "\tnewer than the above date, look for a newer version before\n"
-	 "\treporting problems.  (See http://www.XFree86.Org/)\n");
+  ErrorF("\nRelease Date: %s\n", XF86_DATE);
+  ErrorF("X Protocol Version %d, Revision %d, %s\n",
+         X_PROTOCOL, X_PROTOCOL_REVISION, XORG_RELEASE );
   ErrorF("Build Operating System:%s%s\n", OSNAME, OSVENDOR);
+#ifdef BUILD_DATE
+  {
+    struct tm t;
+    char buf[100];
+
+    bzero(&t, sizeof(t));
+    bzero(buf, sizeof(buf));
+    t.tm_mday = BUILD_DATE % 100;
+    t.tm_mon = (BUILD_DATE / 100) % 100 - 1;
+    t.tm_year = BUILD_DATE / 10000 - 1900;
+    if (strftime(buf, sizeof(buf), "%d %B %Y", &t))
+       ErrorF("Build Date: %s\n", buf);
+  }
+#endif
 #if defined(BUILDERSTRING)
   ErrorF("%s \n",BUILDERSTRING);
 #endif
+  ErrorF("\tBefore reporting problems, check http://www.XFree86.Org/\n"
+	 "\tto make sure that you have the latest version.\n");
 #ifdef XFree86LOADER
   ErrorF("Module Loader present\n");
 #endif
@@ -1668,7 +1722,7 @@ xf86RunVtInit(void)
               dup(xf86Info.consoleFd);
             }
           }
-          execl("/bin/sh", "sh", "-c", xf86Info.vtinit, NULL);
+          execl("/bin/sh", "sh", "-c", xf86Info.vtinit, (void *)NULL);
           xf86Msg(X_WARNING, "exec of /bin/sh failed for VTInit (%s)\n",
                  strerror(errno));
           exit(255);

@@ -20,7 +20,7 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_driver.c,v 1.6 2001/05/16 06:48:11 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/suncg6/cg6_driver.c,v 1.7 2002/12/06 16:44:38 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -658,10 +658,26 @@ CG6ValidMode(int scrnIndex, DisplayModePtr mode, Bool verbose, int flags)
 /* Mandatory */
 static Bool
 CG6SaveScreen(ScreenPtr pScreen, int mode)
-    /* this function should blank the screen when unblank is FALSE and
-       unblank it when unblank is TRUE -- it doesn't actually seem to be
-       used for much though */
 {
+    ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
+    Cg6Ptr pCg6 = GET_CG6_FROM_SCRN(pScrn);
+    unsigned int tmp = pCg6->thc->thc_misc;
+
+    switch(mode)
+    {
+    case SCREEN_SAVER_ON:
+    case SCREEN_SAVER_CYCLE:
+       tmp &= ~CG6_THC_MISC_SYNC_ENAB;
+       break;
+    case SCREEN_SAVER_OFF:
+    case SCREEN_SAVER_FORCER:
+       tmp |= CG6_THC_MISC_SYNC_ENAB;
+       break;
+    default:
+       return FALSE;
+    }
+
+    pCg6->thc->thc_misc = tmp;
     return TRUE;
 }
 

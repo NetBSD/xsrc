@@ -1,5 +1,5 @@
 /* $XConsortium: lex.l,v 1.8 94/03/31 20:40:44 rws Exp $ */
-/* $XFree86: xc/programs/xgc/lex.l,v 1.3 2000/04/05 18:14:07 dawes Exp $ */
+/* $XFree86: xc/programs/xgc/lex.l,v 1.4 2002/05/31 18:46:13 dawes Exp $ */
 /*
 ** lex file for xgc syntax
 */
@@ -11,7 +11,7 @@
 #include <X11/X.h>
 #include "gram.h"
 #include "constants.h"
-#if defined(FLEX_SCANNER) && !defined(YY_FLEX_LEX_COMPAT) && !defined(__EMX__)
+#if defined(FLEX_SCANNER) && !defined(YY_FLEX_LEX_COMPAT) && !defined(__UNIXOS2__)
 int yylineno = 0;
 #endif
 %}

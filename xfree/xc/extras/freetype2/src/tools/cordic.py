@@ -1,4 +1,3 @@
-# $XFree86: xc/extras/freetype2/src/tools/cordic.py,v 1.2 2001/10/28 03:32:21 tsi Exp $
 # compute arctangent table for CORDIC computations in fttrigon.c
 import sys, math
 
@@ -76,4 +75,4 @@ print "shrink factor    = " + repr( shrink )
 print "shrink factor 2  = " + repr( shrink * (2.0**32) )
 print "expansion factor = " + repr(1/shrink)
 print ""
-
+   

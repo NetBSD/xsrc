@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.man,v 1.10 2002/01/13 21:06:59 alanh Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident.man,v 1.12 2003/01/06 10:15:26 alanh Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH TRIDENT __drivermansuffix__ __vendorversion__
@@ -26,9 +26,7 @@ Trident chips:
 .TP 12
 .B Blade
 Blade3D, CyberBlade series i1, i7 (DSTN), i1, i1 (DSTN), Ai1, Ai1 (DSTN),
-CyberBlade/e4, CyberBladeXPm8, CyberBladeXPm16, CyberBladeAi1/XP, BladeXP
-NOTE: The XP series are NOT hardware accelerated due to the specifications
-of the chip not being released.
+CyberBlade/e4, CyberBladeXP, CyberBladeAi1/XP, BladeXP
 .TP 12
 .B Image
 3DImage975, 3DImage985, Cyber9520, Cyber9525, Cyber9397, Cyber9397DVD
@@ -91,6 +89,7 @@ Override the default Vertical-sync value for the Xv extension.
 This is used to center the Xv image on the screen.  By default the values
 are assigned based on the video card.
 Default: 0.
+.TP
 .BI "Option \*qXvBskew\*q \*q" integer \*q
 Override the default Bottom skew value for the Xv extension.
 This is used to extend the Xv image on the screen at the bottom.  By 
@@ -102,6 +101,24 @@ Override the default Right skew value for the Xv extension.
 This is used to extend the Xv image on the screen at the right.  By 
 default the values are assigned based on the video card.
 Default: 0.
+.TP
+.BI "Option \*qDisplay\*q \*q" string \*q
+Override the display.
+Possible values are \*qCRT\*q, \*qLCD\*q and \*qDual\*q.
+Please note that this option is only experimentally.
+Default: Use display active when X started.
+.TP
+.BI "Option \*qDisplay1400\*q \*q" boolean \*q
+Inform driver to expect 1400x1050 display instead of a 1280x1024.
+Default: off.
+.TP
+.BI "Option \*qGammaBrightness\*q \*q" string \*q
+Set display gamma value and brightness. \*q\fIstring\fP\*q is 
+\*q\fIgamma\fP, \fIbrightness\fP\*q, where \fIgamma\fP is a floating 
+point value greater than 0 and less or equal to 10. \fIbrightness\fP is 
+an integer value greater or equal to 0 and less than 128. 
+Default: gamma and brightness control is turned off. 
+Note: This is not supported on all chipsets.
 .SH "SEE ALSO"
 XFree86(1), XF86Config(__filemansuffix__), xf86config(1), Xserver(1), X(__miscmansuffix__)
 .SH AUTHOR

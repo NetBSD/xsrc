@@ -13,7 +13,7 @@
     <date>15 June 2001
 
     <ident>
-    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.27 2002/01/07 22:05:57 dawes Exp $
+    $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/DRI.sgml,v 1.29 2003/02/17 03:57:29 dawes Exp $
     </ident>
 
     <toc>
@@ -50,7 +50,7 @@
 
     <sect>Introduction
 <p>
-        With XFree86 4.0 and the Direct Rendering Interface
+        With XFree86 4.x and the Direct Rendering Interface
         (DRI), hardware accelerated 3D graphics can be considered a standard
         feature on Linux workstations.
         Support for other operating systems, such as FreeBSD, is underway.
@@ -62,9 +62,9 @@
 	software downloads.
       <p>
         This document does not cover compilation or installation of
-        XFree86 4.0.
+        XFree86 4.x.
         It is assumed that you've already installed a Linux distribution which
-        includes XFree86 4.0 or that you're an experienced Linux developer
+        includes XFree86 4.x or that you're an experienced Linux developer
         who has compiled the DRI for himself.
         DRI download, compilation and installation instructions can be found
         at <htmlurl url="http://dri.sourceforge.net/doc/DRIcompile.html"
@@ -100,7 +100,7 @@
 
       <sect1> Graphics Hardware
 <p>
-          XFree86 4.0 (or later versions) includes 3D acceleration for the
+          XFree86 4.2 (or later versions) includes 3D acceleration for the
           following graphics hardware:
 
         <itemize>
@@ -123,11 +123,13 @@
 	      <item>Matrox G200
 	      <item>Matrox G400
             </itemize>
-          <item>Intel i810 (motherboard chipset)
+          <item>Intel i810/i815/i830 (motherboard chipsets)
             <itemize>
               <item>i810
               <item>i810-dc100
               <item>i810e
+              <item>i815
+              <item>i830
             </itemize>
 	  <item>ATI Rage 128, supported on Intel x86, AMD and Alpha:
             <itemize>
@@ -146,6 +148,11 @@
               <item>Radeon SDR AGP
               <item>Radeon DDR AGP
               <item>Radeon 32MB SDR PCI (Alpha-based systems)
+              <item>Radeon 7000, M6 (RV100)
+              <item>Radeon 7200 (R100)
+              <item>Radeon 7500, M7 (RV200)
+              <item>Radeon 8500, 9100 (R200)
+	      <item>Radeon 9000, M9 (RV250)
             </itemize>
           <item>3Dlabs, supported on Intel x86 and AMD:
             <itemize>
@@ -308,7 +315,7 @@
       <sect1>libGL.so
 <p>
           Your OpenGL program must link with the libGL.so.1.2 library provided
-          by XFree86 4.0.
+          by XFree86.
           The libGL.so.1.2 library contains a GLX protocol encoder for
           indirect/remote rendering and DRI code for accessing hardware
           drivers.

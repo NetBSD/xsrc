@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaBitBlt.c,v 1.3 1999/06/06 08:49:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaBitBlt.c,v 1.4 2002/01/25 21:56:22 tsi Exp $ */
 /* GJA -- span move routines */
 
 
@@ -136,6 +136,7 @@ int alu;
 int writeplanes; /* planes */
 int x0, y0, x1, y1, w, h;
 {
+    IOADDRESS REGBASE;
     int plane, bit;
 
     if ( !w || !h ) return;
@@ -144,6 +145,9 @@ int x0, y0, x1, y1, w, h;
         xf4bppOffBitBlt(pWin,alu,writeplanes,x0,y0,x1,y1,w,h);
         return;
     }
+
+    REGBASE =
+	xf86Screens[((DrawablePtr)pWin)->pScreen->myNum]->domainIOBase + 0x300;
 
     /* 0x7, not WMASK: it is hardware dependant */
     if ( ((x0 - x1) & 0x7) || (alu != GXcopy) ) {
@@ -405,6 +409,8 @@ int h;
 int alu;
 int planes;
 {
+  IOADDRESS REGBASE =
+	xf86Screens[((DrawablePtr)pWin)->pScreen->myNum]->domainIOBase + 0x300;
   int plane, bit;
 
   if ( ((x1 & WMASK) + w) <= WORDSZ ) {

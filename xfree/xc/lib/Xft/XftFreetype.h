@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/lib/Xft/XftFreetype.h,v 1.15 2001/03/31 23:07:29 keithp Exp $
+ * $XFree86: xc/lib/Xft/XftFreetype.h,v 1.16 2002/02/15 07:36:10 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -22,84 +22,84 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*
+ * This file is strictly for backwards compatibility with 
+ * old Xft applications
+ */
+
 #ifndef _XFTFREETYPE_H_
 #define _XFTFREETYPE_H_
 
-#include <X11/Xft/Xft.h>
-#include <freetype/freetype.h>
-
+/* #include <Xft/Xft.h> */
+/* #include <X11/Xft/Xft.h>*/
+#include "Xft.h"
 #include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
 
-extern FT_Library	_XftFTlibrary;
-
-struct _XftFontStruct {
-    FT_Face		face;      /* handle to face object */
-    GlyphSet		glyphset;
-    int			min_char;
-    int			max_char;
-    FT_F26Dot6		size;
-    int			ascent;
-    int			descent;
-    int			height;
-    int			max_advance_width;
-    int			spacing;
-    int			rgba;
-    Bool		antialias;
-    int			charmap;    /* -1 for unencoded */
-    XRenderPictFormat	*format;
-    XGlyphInfo		**realized;
-    int			nrealized;
-    Bool		transform;
-    FT_Matrix		matrix;
-};
+typedef struct _XftFontStruct {
+    FT_Face             __DEPRECATED_face;      /* handle to face object */
+    GlyphSet            __DEPRECATED_glyphset;
+    int                 min_char;
+    int                 max_char;
+    FT_F26Dot6          size;
+    int                 ascent;
+    int                 descent;
+    int                 height;
+    int                 max_advance_width;
+    int                 __DEPRECATED_spacing;
+    int                 __DEPRECATED_rgba;
+    Bool                __DEPRECATED_antialias;
+    int                 __DEPRECATED_charmap;    /* -1 for unencoded */
+    XRenderPictFormat   *__DEPRECATED_format;
+    XGlyphInfo          **__DEPRECATED_realized;
+    int                 __DEPRECATED_nrealized;
+    FcBool              __DEPRECATED_transform;
+    FT_Matrix           __DEPRECATED_matrix;
+    /* private field */
+    XftFont		*font;
+} XftFontStruct;
 
 _XFUNCPROTOBEGIN
 
-/* xftdir.c */
-Bool
-XftDirScan (XftFontSet *set, const char *dir, Bool force);
-
-Bool
-XftDirSave (XftFontSet *set, const char *dir);
-
-/* xftfreetype.c */
-XftPattern *
-XftFreeTypeQuery (const char *file, int id, int *count);
-
-Bool
-XftFreeTypeSetFace (FT_Face face, FT_F26Dot6 size, int charmap, FT_Matrix *matrix);
-
 XftFontStruct *
-XftFreeTypeOpen (Display *dpy, XftPattern *pattern);
-
-void
-XftFreeTypeClose (Display *dpy, XftFontStruct *font);
+XftFreeTypeOpen (Display *dpy, FcPattern *pattern);
 
 XftFontStruct *
 XftFreeTypeGet (XftFont *font);
 
-Bool
-XftInitFtLibrary(void);
+void
+XftFreeTypeClose (Display *dpy, XftFontStruct *font);
 
-/* xftglyphs.c */
+void
+XftGlyphLoad (Display           *dpy,
+	      XftFontStruct     *font,
+	      FcChar32		*glyphs,
+	      int               nglyph);
+
+void
+XftGlyphCheck (Display          *dpy,
+	       XftFontStruct    *font,
+	       FcChar32		glyph,
+	       FcChar32        *missing,
+	       int              *nmissing);
+
 void
 XftGlyphLoad (Display		*dpy,
 	      XftFontStruct	*font,
-	      XftChar32		*glyphs,
+	      FcChar32		*glyphs,
 	      int		nglyph);
 
 void
 XftGlyphCheck (Display		*dpy,
 	       XftFontStruct	*font,
-	       XftChar32	glyph,
-	       XftChar32	*missing,
+	       FcChar32	glyph,
+	       FcChar32	*missing,
 	       int		*nmissing);
 
 Bool
 XftFreeTypeGlyphExists (Display		*dpy,
 			XftFontStruct	*font,
-			XftChar32	glyph);
+			FcChar32	glyph);
 
 /* xftrender.c */
 
@@ -108,54 +108,54 @@ XftRenderString8 (Display *dpy, Picture src,
 		  XftFontStruct *font, Picture dst,
 		  int srcx, int srcy,
 		  int x, int y,
-		  XftChar8 *string, int len);
+		  FcChar8 *string, int len);
 
 void
 XftRenderString16 (Display *dpy, Picture src, 
 		   XftFontStruct *font, Picture dst,
 		   int srcx, int srcy,
 		   int x, int y,
-		   XftChar16 *string, int len);
+		   FcChar16 *string, int len);
 
 void
 XftRenderString32 (Display *dpy, Picture src, 
 		   XftFontStruct *font, Picture dst,
 		   int srcx, int srcy,
 		   int x, int y,
-		   XftChar32 *string, int len);
+		   FcChar32 *string, int len);
 
 void
 XftRenderStringUtf8 (Display *dpy, Picture src, 
 		     XftFontStruct *font, Picture dst,
 		     int srcx, int srcy,
 		     int x, int y,
-		     XftChar8 *string, int len);
+		     FcChar8 *string, int len);
 
 void
 XftRenderExtents8 (Display	    *dpy,
 		   XftFontStruct    *font,
-		   XftChar8	    *string, 
+		   FcChar8	    *string, 
 		   int		    len,
 		   XGlyphInfo	    *extents);
 
 void
 XftRenderExtents16 (Display	    *dpy,
 		    XftFontStruct   *font,
-		    XftChar16	    *string, 
+		    FcChar16	    *string, 
 		    int		    len,
 		    XGlyphInfo	    *extents);
 
 void
 XftRenderExtents32 (Display	    *dpy,
 		    XftFontStruct   *font,
-		    XftChar32	    *string, 
+		    FcChar32	    *string, 
 		    int		    len,
 		    XGlyphInfo	    *extents);
 
 void
 XftRenderExtentsUtf8 (Display	    *dpy,
 		      XftFontStruct *font,
-		      XftChar8	    *string, 
+		      FcChar8	    *string, 
 		      int	    len,
 		      XGlyphInfo    *extents);
 

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/kdrive/vesa/vm86.c,v 1.1 2000/10/20 00:19:51 keithp Exp $
+ * $XFree86: xc/programs/Xserver/hw/kdrive/vesa/vm86.c,v 1.3 2002/06/04 22:19:58 dawes Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -372,13 +372,12 @@ vm86_emulate(Vm86InfoPtr vi)
         if(pref_rep) {
             if(pref_66) {
                 regs->ecx--;
-                if(regs->ecx != 0) {
+                if(regs->ecx != 0)
                     goto again;
-                } else {
-                    SET_16(regs->ecx, regs->ecx - 1);
-                    if(regs->ecx & 0xFFFF != 0)
-                        goto again;
-                }
+            } else {
+                SET_16(regs->ecx, regs->ecx - 1);
+                if(regs->ecx & 0xFFFF != 0)
+                    goto again;
             }
         }
         INC_IP(1);
@@ -431,13 +430,12 @@ vm86_emulate(Vm86InfoPtr vi)
         if(pref_rep) {
             if(pref_66) {
                 regs->ecx--;
-                if(regs->ecx != 0) {
+                if(regs->ecx != 0)
                     goto again;
-                } else {
-                    SET_16(regs->ecx, regs->ecx - 1);
-                    if(regs->ecx & 0xFFFF != 0)
-                        goto again;
-                }
+            } else {
+                SET_16(regs->ecx, regs->ecx - 1);
+                if(regs->ecx & 0xFFFF != 0)
+                    goto again;
             }
         }
         INC_IP(1);

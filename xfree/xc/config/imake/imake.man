@@ -23,7 +23,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/config/imake/imake.man,v 1.8 2001/12/14 19:53:19 dawes Exp $
+.\" $XFree86: xc/config/imake/imake.man,v 1.9 2002/11/20 21:48:46 herrb Exp $
 .\"
 .TH IMAKE 1 __xorgversion__
 .SH NAME
@@ -224,7 +224,7 @@ Imakefile.c	temporary input file for cpp
 .br
 /tmp/IIf.XXXXXX	temporary Imakefile if specified Imakefile uses # comments
 .br
-/lib/cpp	default C preprocessor
+__cpp__	default C preprocessor
 .DT
 .SH "SEE ALSO"
 make(1), xmkmf(1)
@@ -246,7 +246,7 @@ If defined, this should be a valid path to a preprocessor program.
 E.g., ``/usr/local/cpp''.
 By default,
 .I imake
-will use /lib/cpp.
+will use cc -E or __cpp__, depending on the OS specific configuration.
 .TP 5
 .B IMAKEMAKE
 If defined, this should be a valid path to a make program,

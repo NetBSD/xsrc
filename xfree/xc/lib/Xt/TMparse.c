@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/TMparse.c,v 3.8 2001/12/14 19:56:31 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/TMparse.c,v 3.9 2002/05/31 18:45:46 dawes Exp $ */
 
 /*
 
@@ -369,7 +369,7 @@ static EventKey events[] = {
 
 };
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 #define IsNewline(str) ((str) == '\n')
 #else
 #define IsNewline(str) ((str) == '\n' || (str) == '\r')
@@ -385,7 +385,7 @@ static EventKey events[] = {
            ('a' <= *(str) && *(str) <= 'z') || \
            ('0' <= *(str) && *(str) <= '9')) (str)++
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
 #define ScanWhitespace(str) \
     while (*(str) == ' ' || *(str) == '\t') (str)++
 #else
@@ -1802,7 +1802,7 @@ static void ShowProduction(currentProduction)
     int len;
     char *eol, *production, productionbuf[500];
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     eol = strchr(currentProduction, '\r');
     if (!eol) /* try '\n' as well below */
 #endif

@@ -21,7 +21,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ******************************************************************************/
-/* $XFree86: xc/programs/x11perf/do_text.c,v 1.7 2001/01/17 23:45:12 dawes Exp $ */
+/* $XFree86: xc/programs/x11perf/do_text.c,v 1.9 2002/12/04 10:28:08 eich Exp $ */
 
 #include "x11perf.h"
 #include <stdio.h>
@@ -422,21 +422,13 @@ InitAAText(XParms xp, Parms p, int reps)
 	return 0;
     }
 
-    if (aafont->core)
-    {
-	printf ("FreeType font '%s' not available, benchmark omitted\n",
-		p->font);
-	XftFontClose (xp->d, aafont);
-	return 0;
-    }
-    
     aadraw = XftDrawCreate (xp->d, xp->w, 
-			    DefaultVisual (xp->d, DefaultScreen (xp->d)), 
-			    DefaultColormap (xp->d, DefaultScreen (xp->d)));
+			    xp->vinfo.visual, 
+			    xp->cmap);
 
     if (!aadraw) 
     {
-	printf ("Render extension not supported in window\n");
+	printf ("Cannot create XftDraw object\n");
 	XftFontClose (xp->d, aafont);
 	return 0;
     }
@@ -445,8 +437,8 @@ InitAAText(XParms xp, Parms p, int reps)
     color.blue = 0;
     color.alpha = 0xffff;
     if (!XftColorAllocValue (xp->d,
-			     DefaultVisual (xp->d, DefaultScreen (xp->d)), 
-			     DefaultColormap (xp->d, DefaultScreen (xp->d)),
+			     xp->vinfo.visual, 
+			     xp->cmap,
 			     &color, &aacolor))
     {
 	printf ("Cannot allocate black\n");
@@ -514,8 +506,8 @@ EndAAText(XParms xp, Parms p)
     XftDrawDestroy (aadraw);
     XftFontClose (xp->d, aafont);
     XftColorFree (xp->d,
-		  DefaultVisual (xp->d, DefaultScreen (xp->d)), 
-		  DefaultColormap (xp->d, DefaultScreen (xp->d)),
+		  xp->vinfo.visual, 
+		  xp->cmap,
 		  &aacolor);
 }
 

@@ -23,7 +23,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/bitmap/bitmap.man,v 1.7 2001/12/14 20:00:41 dawes Exp $
+.\" $XFree86: xc/programs/bitmap/bitmap.man,v 1.8 2002/10/12 16:06:44 herrb Exp $
 .\"
 .TH BITMAP 1 __xorgversion__
 .SH NAME
@@ -609,9 +609,8 @@ in the #ifdef COLOR section of the file you read with xrdb:
 This will cause bitmap to pick up the colors in the app-defaults color
 customization file:
 .sp 1
-    <XRoot>/lib/X11/app-defaults/Bitmap-color
+    __apploaddir__/Bitmap-color
 .sp 1
-where <XRoot> refers to the root of the X11 install tree.
 .fi
 .SH BITMAP WIDGET
 Bitmap widget is a stand-alone widget for editing raster images.  It

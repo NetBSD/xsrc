@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/dynapro/Imakefile,v 1.4 2001/01/24 00:06:35 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/dynapro/Imakefile,v 1.5 2002/10/16 01:47:02 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -8,7 +8,7 @@ OBJS = xf86Dyna.o
 
 DRIVER = dynapro
 
-INCLUDES = -I. -I$(XF86COMSRC) -I../../loader -I$(XF86OSSRC) \
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86SRC)/loader -I$(XF86OSSRC) \
 			-I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
 #if MakeHasPosixVariableSubstitutions

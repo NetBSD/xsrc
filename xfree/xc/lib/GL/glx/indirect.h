@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/indirect.h,v 1.3 2001/03/21 16:04:39 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/indirect.h,v 1.4 2002/02/22 21:32:54 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -381,7 +381,7 @@ void __indirect_glTexGeni(GLenum coord, GLenum pname, GLint param);
 void __indirect_glTexGeniv(GLenum coord, GLenum pname, const GLint *params);
 void __indirect_glTexImage1D(GLenum target, GLint level, GLint components, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid *image);
 void __indirect_glTexImage2D(GLenum target, GLint level, GLint components, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *image);
-void __indirect_glTexImage3D(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *image);
+void __indirect_glTexImage3D(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *image);
 void __indirect_glTexParameterf(GLenum target, GLenum pname, GLfloat param);
 void __indirect_glTexParameterfv(GLenum target, GLenum pname, const GLfloat *params);
 void __indirect_glTexParameteri(GLenum target, GLenum pname, GLint param);
@@ -454,5 +454,10 @@ void __indirect_glMultiTexCoord4ivARB(GLenum target, const GLint *v);
 void __indirect_glMultiTexCoord4sARB(GLenum target, GLshort s, GLshort t, GLshort r, GLshort q);
 void __indirect_glMultiTexCoord4svARB(GLenum target, const GLshort *v);
 
+
+void __indirect_glLoadTransposeMatrixfARB(const GLfloat *m);
+void __indirect_glMultTransposeMatrixfARB(const GLfloat *m);
+void __indirect_glLoadTransposeMatrixdARB(const GLdouble *m);
+void __indirect_glMultTransposeMatrixdARB(const GLdouble *m);
 
 #endif /* _INDIRECT_H_ */

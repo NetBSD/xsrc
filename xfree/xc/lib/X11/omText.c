@@ -23,7 +23,7 @@
  * Author: Katsuhisa Yano	TOSHIBA Corp.
  *			   	mopi@osa.ilab.toshiba.co.jp
  */
-/* $XFree86: xc/lib/X11/omText.c,v 1.5 2001/10/28 03:32:35 tsi Exp $ */
+/* $XFree86: xc/lib/X11/omText.c,v 1.6 2002/09/16 18:05:23 eich Exp $ */
 /*
  * Copyright 1995 by FUJITSU LIMITED
  * This is source code modified by FUJITSU LIMITED under the Joint
@@ -196,10 +196,10 @@ DrawStringWithFontSet(dpy, d, oc, fs, gc, x, y, text, length)
 	* *always* contain good data.   We should probably remove
 	* the check for "fd->font", but we won't :-) -- jjw/pma (HP)
 	*/
-        if(fd == (FontData) NULL ||
-	   (font = fs->font) == (XFontStruct *) NULL){
+        if((font = fs->font) == (XFontStruct *) NULL){
 
-	    if((font = fd->font) == (XFontStruct *) NULL)
+	    if(fd == (FontData) NULL ||
+	       (font = fd->font) == (XFontStruct *) NULL)
 		break;
         }
 

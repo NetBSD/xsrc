@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/Xmu/RdBitF.c,v 3.12 2001/12/14 19:55:48 dawes Exp $ */
+/* $XFree86: xc/lib/Xmu/RdBitF.c,v 3.13 2002/05/31 18:45:45 dawes Exp $ */
 
 /*
  * This file contains miscellaneous utility routines and is not part of the
@@ -300,7 +300,7 @@ AccessFile(char *path, char *pathbuf, int len_pathbuf, char **pathret)
 
     /* try the places set in the environment */
     drive = getenv ("_XBASEDRIVE");
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     if (!drive)
 	drive = getenv ("X11ROOT");
 #endif
@@ -316,7 +316,7 @@ AccessFile(char *path, char *pathbuf, int len_pathbuf, char **pathret)
 	return 1;
     }
 
-#ifndef __EMX__ 
+#ifndef __UNIXOS2__ 
     /* one last place to look */
     drive = getenv ("HOMEDRIVE");
     if (drive) {
@@ -386,7 +386,7 @@ XmuReadBitmapDataFromFile(_Xconst char *filename, unsigned int *width,
     FILE *fstream;
     int status;
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     filename = __XOS2RedirRoot(filename);
 #endif
     if ((fstream = fopen_file (filename, "r")) == NULL) {

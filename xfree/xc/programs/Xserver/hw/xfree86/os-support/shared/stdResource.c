@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/stdResource.c,v 1.19 2001/02/16 14:45:11 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/shared/stdResource.c,v 1.20 2002/01/25 21:56:20 tsi Exp $ */
 
 /* Standard resource information code */
 
@@ -11,6 +11,9 @@
 #include "xf86_OSlib.h"
 #include "xf86Resources.h"
 
+/* Avoid Imakefile changes */
+#include "bus/Pci.h"
+
 #ifdef USESTDRES
 #define xf86StdBusAccWindowsFromOS xf86BusAccWindowsFromOS
 #define xf86StdAccResFromOS xf86AccResFromOS
@@ -19,6 +22,8 @@
 
 resRange PciAvoid[] = {_PCI_AVOID_PC_STYLE, _END};
 #endif
+
+#ifdef INCLUDE_XF86_NO_DOMAIN
 
 resPtr
 xf86StdBusAccWindowsFromOS(void)
@@ -52,6 +57,8 @@ xf86StdPciBusAccWindowsFromOS(void)
     return ret;
 }
 
+#ifdef INCLUDE_UNUSED
+
 resPtr
 xf86StdIsaBusAccWindowsFromOS(void)
 {
@@ -67,6 +74,8 @@ xf86StdIsaBusAccWindowsFromOS(void)
     ret = xf86AddResToList(ret, &range, -1);
     return ret;
 }
+
+#endif /* INCLUDE_UNUSED */
 
 resPtr
 xf86StdAccResFromOS(resPtr ret)
@@ -133,3 +142,5 @@ xf86StdAccResFromOS(resPtr ret)
     /* XXX add others */
     return ret;
 }
+
+#endif /* INCLUDE_XF86_NO_DOMAIN */

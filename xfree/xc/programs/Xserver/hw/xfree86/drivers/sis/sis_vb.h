@@ -1,33 +1,43 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vb.h,v 1.5 2002/01/17 09:57:30 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/sis/sis_vb.h,v 1.7 2003/01/29 15:42:17 eich Exp $ */
+/*
+ * Video bridge detection and configuration for 300 and 310/325 series
+ *
+ * Copyright 2002 by Thomas Winischhofer, Vienna, Austria
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation, and that the name of Thomas Winischhofer not be used in
+ * advertising or publicity pertaining to distribution of the software without
+ * specific, written prior permission.  Thomas Winischhofer makes no representations
+ * about the suitability of this software for any purpose.  It is provided
+ * "as is" without express or implied warranty.
+ *
+ * THOMAS WINISCHHOFER DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
+ * EVENT SHALL THOMAS WINISCHHOFER BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+ * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Author: 	Thomas Winischhofer <thomas@winischhofer.net>
+ *		(Completely rewritten)
+ */
 
-/* CR30 VBInfo = CR31:CR30 */
-#define SET_SIMU_SCAN_MODE  0x0001
-#define SWITCH_TO_CRT2      0x0002
-#define SET_CRT2_TO_AVIDEO  0x0004      /* Composite */
-#define SET_CRT2_TO_SVIDEO  0x0008
-#define SET_CRT2_TO_SCART   0x0010
-#define SET_CRT2_TO_LCD     0x0020
-#define SET_CRT2_TO_RAMDAC  0x0040
-#define SET_CRT2_TO_HIVISION_TV 0x0080
-#define SET_CRT2_TO_TV      (SET_CRT2_TO_AVIDEO | SET_CRT2_TO_SVIDEO | \
-                SET_CRT2_TO_SCART | SET_CRT2_TO_HIVISION_TV)
-/* CR31 */
-#define SET_PAL_TV          0x0100
-#define SET_IN_SLAVE_MODE   0x0200
-#define SET_NO_SIMU_ON_LOCK 0x0400
-#define SET_NO_SIMU_TV_ON_LOCK          SET_NO_SIMU_ON_LOCK
-#define DISABLE_LOAD_CRT2DAC    0x1000
-#define DISABLE_CRT2_DISPLAY    0x2000
-#define DRIVER_MODE         0x4000  
+typedef struct _SiS_LCD_StStruct
+{
+	ULONG VBLCD_lcdflag;
+	USHORT LCDwidth;
+	USHORT LCDheight;
+	USHORT LCDtype;
+	UCHAR  LCDrestextindex;
+} SiS_LCD_StStruct;
 
-typedef struct  _SiS301Reg  {
-    CARD8   *VBPart1;
-    CARD8   *VBPart2;
-    CARD8   *VBPart3;
-    CARD8   *VBPart4;
-} SiS301RegRec, SiS301RegPtr;
-
-
+void SISCRT1PreInit(ScrnInfoPtr pScrn);
 void SISLCDPreInit(ScrnInfoPtr pScrn);
 void SISTVPreInit(ScrnInfoPtr pScrn);
 void SISCRT2PreInit(ScrnInfoPtr pScrn);
+
+extern BOOLEAN SiS_GetPanelID(SiS_Private *SiS_Pr, PSIS_HW_DEVICE_INFO HwDeviceExtension);

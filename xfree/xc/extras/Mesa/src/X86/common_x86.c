@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,31 +23,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 /*
  * Check CPU capabilities & initialize optimized funtions for this particular
  * processor.
  *
  * Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
  * Changed by Andre Werthmann <wertmann@cs.uni-potsdam.de> for using the
- * new Katmai functions.
+ * new SSE functions.
  */
 
 #include <stdlib.h>
 #include <stdio.h>
-#if defined(USE_KATMAI_ASM) && defined(__linux__)
+#if defined(USE_SSE_ASM) && defined(__linux__)
 #include <signal.h>
+#endif
+#if defined(USE_SSE_ASM) && defined(__FreeBSD__)
+#include <sys/types.h>
+#include <sys/sysctl.h>
 #endif
 
 #include "context.h"
 #include "common_x86_asm.h"
 
 
-int gl_x86_cpu_features = 0;
+int _mesa_x86_cpu_features = 0;
 
 /* No reason for this to be public.
  */
-extern int gl_identify_x86_cpu_features( void );
+extern int _mesa_identify_x86_cpu_features( void );
 
 
 static void message( const char *msg )
@@ -67,7 +70,7 @@ static void message( const char *msg )
    }
 }
 
-#if defined(USE_KATMAI_ASM)
+#if defined(USE_SSE_ASM)
 /*
  * We must verify that the Streaming SIMD Extensions are truly supported
  * on this processor before we go ahead and hook out the optimized code.
@@ -84,8 +87,8 @@ static void message( const char *msg )
  * not good.
  */
 
-extern void gl_test_os_katmai_support( void );
-extern void gl_test_os_katmai_exception_support( void );
+extern void _mesa_test_os_sse_support( void );
+extern void _mesa_test_os_sse_exception_support( void );
 
 #if defined(__linux__) && defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)
 static void sigill_handler( int signal, struct sigcontext sc )
@@ -104,7 +107,7 @@ static void sigill_handler( int signal, struct sigcontext sc )
     */
    sc.eip += 3;
 
-   gl_x86_cpu_features &= ~(X86_FEATURE_XMM);
+   _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
 }
 
 static void sigfpe_handler( int signal, struct sigcontext sc )
@@ -122,7 +125,7 @@ static void sigfpe_handler( int signal, struct sigcontext sc )
       /* If we ever get here, we're completely hosed.
        */
       message( "\n\n" );
-      gl_problem( NULL, "SSE enabling test failed badly!" );
+      _mesa_problem( NULL, "SSE enabling test failed badly!" );
    }
 }
 #endif /* __linux__ && _POSIX_SOURCE && X86_FXSR_MAGIC */
@@ -135,7 +138,7 @@ static void sigfpe_handler( int signal, struct sigcontext sc )
  *
  * GH: Isn't this just awful?
  */
-static void check_os_katmai_support( void )
+static void check_os_sse_support( void )
 {
 #if defined(__linux__)
 #if defined(_POSIX_SOURCE) && defined(X86_FXSR_MAGIC)
@@ -159,7 +162,7 @@ static void check_os_katmai_support( void )
    if ( cpu_has_xmm ) {
       message( "Testing OS support for SSE... " );
 
-      gl_test_os_katmai_support();
+      _mesa_test_os_sse_support();
 
       if ( cpu_has_xmm ) {
 	 message( "yes.\n" );
@@ -184,7 +187,7 @@ static void check_os_katmai_support( void )
    if ( cpu_has_xmm ) {
       message( "Testing OS support for SSE unmasked exceptions... " );
 
-      gl_test_os_katmai_exception_support();
+      _mesa_test_os_sse_exception_support();
 
       if ( cpu_has_xmm ) {
 	 message( "yes.\n" );
@@ -211,29 +214,37 @@ static void check_os_katmai_support( void )
     * SSE, so we disable it by default.
     */
    message( "Cannot test OS support for SSE, disabling to be safe.\n" );
-   gl_x86_cpu_features &= ~(X86_FEATURE_XMM);
+   _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
 #endif /* _POSIX_SOURCE && X86_FXSR_MAGIC */
+#elif defined(__FreeBSD__)
+   {
+      int ret, len, enabled;
+      len = sizeof(enabled);
+      ret = sysctlbyname("hw.instruction_sse", &enabled, &len, NULL, 0);
+      if (ret || !enabled)
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
+   }
 #else
-   /* Do nothing on non-Linux platforms for now.
+   /* Do nothing on other platforms for now.
     */
    message( "Not testing OS support for SSE, leaving enabled.\n" );
 #endif /* __linux__ */
 }
 
-#endif /* USE_KATMAI_ASM */
+#endif /* USE_SSE_ASM */
 
 
-void gl_init_all_x86_transform_asm( void )
+void _mesa_init_all_x86_transform_asm( void )
 {
 #ifdef USE_X86_ASM
-   gl_x86_cpu_features = gl_identify_x86_cpu_features();
+   _mesa_x86_cpu_features = _mesa_identify_x86_cpu_features();
 
    if ( getenv( "MESA_NO_ASM" ) ) {
-      gl_x86_cpu_features = 0;
+      _mesa_x86_cpu_features = 0;
    }
 
-   if ( gl_x86_cpu_features ) {
-      gl_init_x86_transform_asm();
+   if ( _mesa_x86_cpu_features ) {
+      _mesa_init_x86_transform_asm();
    }
 
 #ifdef USE_MMX_ASM
@@ -241,7 +252,7 @@ void gl_init_all_x86_transform_asm( void )
       if ( getenv( "MESA_NO_MMX" ) == 0 ) {
          message( "MMX cpu detected.\n" );
       } else {
-         gl_x86_cpu_features &= ~(X86_FEATURE_MMX);
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_MMX);
       }
    }
 #endif
@@ -250,23 +261,23 @@ void gl_init_all_x86_transform_asm( void )
    if ( cpu_has_3dnow ) {
       if ( getenv( "MESA_NO_3DNOW" ) == 0 ) {
          message( "3DNow! cpu detected.\n" );
-         gl_init_3dnow_transform_asm();
+         _mesa_init_3dnow_transform_asm();
       } else {
-         gl_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_3DNOW);
       }
    }
 #endif
 
-#ifdef USE_KATMAI_ASM
-   if ( cpu_has_xmm && getenv( "MESA_FORCE_KATMAI" ) == 0 ) {
-      check_os_katmai_support();
+#ifdef USE_SSE_ASM
+   if ( cpu_has_xmm && getenv( "MESA_FORCE_SSE" ) == 0 ) {
+      check_os_sse_support();
    }
    if ( cpu_has_xmm ) {
-      if ( getenv( "MESA_NO_KATMAI" ) == 0 ) {
-         message( "Katmai cpu detected.\n" );
-         gl_init_katmai_transform_asm();
+      if ( getenv( "MESA_NO_SSE" ) == 0 ) {
+         message( "SSE cpu detected.\n" );
+         _mesa_init_sse_transform_asm();
       } else {
-         gl_x86_cpu_features &= ~(X86_FEATURE_XMM);
+         _mesa_x86_cpu_features &= ~(X86_FEATURE_XMM);
       }
    }
 #endif
@@ -274,39 +285,24 @@ void gl_init_all_x86_transform_asm( void )
 }
 
 /* Note: the above function must be called before this one, so that
- * gl_x86_cpu_features gets correctly initialized.
+ * _mesa_x86_cpu_features gets correctly initialized.
  */
-void gl_init_all_x86_shade_asm( void )
+void _mesa_init_all_x86_vertex_asm( void )
 {
 #ifdef USE_X86_ASM
-   if ( gl_x86_cpu_features ) {
-      /* Nothing here yet... */
+   if ( _mesa_x86_cpu_features ) {
+      _mesa_init_x86_vertex_asm();
    }
 
 #ifdef USE_3DNOW_ASM
    if ( cpu_has_3dnow && getenv( "MESA_NO_3DNOW" ) == 0 ) {
-      gl_init_3dnow_shade_asm();
-   }
-#endif
-#endif
-}
-
-void gl_init_all_x86_vertex_asm( void )
-{
-#ifdef USE_X86_ASM
-   if ( gl_x86_cpu_features ) {
-      gl_init_x86_vertex_asm();
-   }
-
-#ifdef USE_3DNOW_ASM
-   if ( cpu_has_3dnow && getenv( "MESA_NO_3DNOW" ) == 0 ) {
-      gl_init_3dnow_vertex_asm();
+      _mesa_init_3dnow_vertex_asm();
    }
 #endif
 
-#ifdef USE_KATMAI_ASM
-   if ( cpu_has_xmm && getenv( "MESA_NO_KATMAI" ) == 0 ) {
-      gl_init_katmai_vertex_asm();
+#ifdef USE_SSE_ASM
+   if ( cpu_has_xmm && getenv( "MESA_NO_SSE" ) == 0 ) {
+      _mesa_init_sse_vertex_asm();
    }
 #endif
 #endif

@@ -46,7 +46,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 */
-/* $XFree86: xc/programs/Xserver/dix/grabs.c,v 3.3 2001/12/14 19:59:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/grabs.c,v 3.4 2002/02/19 11:09:22 alanh Exp $ */
 
 #include "X.h"
 #include "misc.h"
@@ -56,8 +56,6 @@ SOFTWARE.
 #include "inputstr.h"
 #include "cursorstr.h"
 #include "dixgrabs.h"
-
-extern InputInfo inputInfo;
 
 #define BITMASK(i) (((Mask)1) << ((i) & 31))
 #define MASKIDX(i) ((i) >> 5)

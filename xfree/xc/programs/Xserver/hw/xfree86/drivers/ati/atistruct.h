@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atistruct.h,v 1.30 2002/01/16 16:22:28 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atistruct.h,v 1.37 2003/01/10 20:57:58 tsi Exp $ */
 /*
- * Copyright 1999 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1999 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -28,10 +28,10 @@
 #include "aticlock.h"
 #include "atiregs.h"
 
+#include "xaa.h"
 #include "xf86Cursor.h"
 #include "xf86Pci.h"
 #include "xf86Resources.h"
-#include "xaa.h"
 
 #define CacheSlotOf(____Register) ((____Register) / UnitOf(DWORD_SELECT))
 
@@ -91,7 +91,8 @@ typedef struct _ATIHWRec
            cur_clr0, cur_clr1, cur_offset,
            cur_horz_vert_posn, cur_horz_vert_off,
            clock_cntl, bus_cntl, mem_cntl, mem_vga_wp_sel, mem_vga_rp_sel,
-           dac_cntl, gen_test_cntl, config_cntl;
+           dac_cntl, gen_test_cntl, config_cntl, mpp_config, mpp_strobe_seq,
+           tvo_cntl;
 
     /* LCD registers */
     CARD32 lcd_index, config_panel, lcd_gen_ctrl,
@@ -101,7 +102,7 @@ typedef struct _ATIHWRec
     CARD32 shadow_h_total_disp, shadow_h_sync_strt_wid,
            shadow_v_total_disp, shadow_v_sync_strt_wid;
 
-    /* Mach64 MMIO Block 0 registers */
+    /* Mach64 MMIO Block 0 registers and related subfields */
     CARD32 dst_off_pitch;
     CARD16 dst_x, dst_y, dst_height;
     CARD32 dst_bres_err, dst_bres_inc, dst_bres_dec, dst_cntl;
@@ -200,7 +201,8 @@ typedef struct _ATIRec
 
 #ifndef AVOID_CPIO
 
-    IOADDRESS CPIO_DAC_MASK, CPIO_DAC_DATA, CPIO_DAC_READ, CPIO_DAC_WRITE;
+    IOADDRESS CPIO_DAC_MASK, CPIO_DAC_DATA, CPIO_DAC_READ, CPIO_DAC_WRITE,
+              CPIO_DAC_WAIT;
 
 #endif /* AVOID_CPIO */
 
@@ -347,12 +349,13 @@ typedef struct _ATIRec
     struct
     {
         /* Mach64 registers */
-        CARD32 bus_cntl, crtc_gen_cntl, mem_cntl, gen_test_cntl, crtc_int_cntl,
-               lcd_index;
+        CARD32 crtc_int_cntl, crtc_gen_cntl, i2c_cntl_0, hw_debug,
+               scratch_reg3, bus_cntl, lcd_index, mem_cntl, i2c_cntl_1,
+               dac_cntl, gen_test_cntl, mpp_config, mpp_strobe_seq, tvo_cntl;
 
 #ifndef AVOID_CPIO
 
-        CARD32 config_cntl, dac_cntl;
+        CARD32 config_cntl;
 
         /* Mach8/Mach32 registers */
         CARD16 clock_sel, misc_options, mem_bndry, mem_cfg;
@@ -385,7 +388,7 @@ typedef struct _ATIRec
      */
     CARD8 OptionAccel;          /* Use hardware draw engine */
     CARD8 OptionBlend;          /* Force horizontal blending */
-    CARD8 OptionCRT;            /* Prefer CRT over digital panel */
+    CARD8 OptionCRTDisplay;     /* Display on both CRT and digital panel */
     CARD8 OptionCSync;          /* Use composite sync */
     CARD8 OptionDevel;          /* Intentionally undocumented */
 
@@ -396,6 +399,7 @@ typedef struct _ATIRec
 #endif /* AVOID_CPIO */
 
     CARD8 OptionMMIOCache;      /* Cache MMIO writes */
+    CARD8 OptionPanelDisplay;   /* Prefer CRT over digital panel */
     CARD8 OptionProbeClocks;    /* Force probe for fixed clocks */
     CARD8 OptionShadowFB;       /* Use shadow frame buffer */
     CARD8 OptionSync;           /* Temporary */

@@ -4,6 +4,7 @@
  * Copyright (C) 1995-1998 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
+/* $XFree86: xc/lib/zlib/zutil.h,v 1.8 2002/07/01 02:25:53 tsi Exp $ */
 
 /* WARNING: this file should *not* be used by applications. It is
    part of the implementation of the compression library and is
@@ -15,7 +16,7 @@
 
 #include "zlib.h"
 
-#if defined(MSDOS)||defined(VMS)||defined(CRAY)||defined(WIN32)||defined(RISCOS)||defined(__EMX__)||defined(STDC)
+#if defined(MSDOS)||defined(VMS)||defined(CRAY)||defined(WIN32)||defined(RISCOS)||defined(__UNIXOS2__)||defined(STDC)
 #   include <stddef.h>
 #   include <errno.h>
 #else

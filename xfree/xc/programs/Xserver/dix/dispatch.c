@@ -68,7 +68,7 @@ SOFTWARE.
 *                                                               *
 *****************************************************************/
 
-/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.26 2001/12/14 19:59:30 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/dispatch.c,v 3.29 2003/01/12 02:44:26 dawes Exp $ */
 
 #ifdef PANORAMIX_DEBUG
 #include <stdio.h>
@@ -91,7 +91,6 @@ int ProcInitialConnection();
 #include "dispatch.h"
 #include "swaprep.h"
 #include "swapreq.h"
-#include "dixevents.h"
 #ifdef PANORAMIX
 #include "panoramiX.h"
 #include "panoramiXsrv.h"
@@ -120,16 +119,8 @@ int ProcInitialConnection();
 #define BITCLEAR(buf, i) MASKWORD(buf, i) &= ~BITMASK(i)
 #define GETBIT(buf, i) (MASKWORD(buf, i) & BITMASK(i))
 
-extern WindowPtr *WindowTable;
 extern xConnSetupPrefix connSetupPrefix;
 extern char *ConnectionInfo;
-extern void ReleaseActiveGrabs();
-extern void NotImplemented();
-extern void SwapConnClientPrefix(
-#if NeedFunctionPrototypes
-    xConnClientPrefix	*
-#endif
-);
 
 Selection *CurrentSelections;
 int NumCurrentSelections;
@@ -144,9 +135,6 @@ CallbackListPtr ServerGrabCallback = NULL;
 HWEventQueuePtr checkForInput[2];
 extern int connBlockScreenStart;
 
-extern void Swap32Write(), SLHostsExtend(), SQColorsExtend(), WriteSConnectionInfo();
-extern void WriteSConnSetupPrefix();
-
 static void KillAllClients(
 #if NeedFunctionPrototypes
     void
@@ -158,10 +146,6 @@ static void DeleteClientFromAnySelections(
     ClientPtr /*client*/
 #endif
 );
-
-#ifdef LBX
-extern unsigned long  StandardRequestLength();
-#endif
 
 static int nextFreeClientID; /* always MIN free client ID */
 
@@ -272,10 +256,14 @@ long	    SmartScheduleMaxSlice = SMART_SCHEDULE_MAX_SLICE;
 long	    SmartScheduleTime;
 ClientPtr   SmartLastClient;
 int	    SmartLastIndex[SMART_MAX_PRIORITY-SMART_MIN_PRIORITY+1];
+int         SmartScheduleClient(int *clientReady, int nready);
 
 #ifdef SMART_DEBUG
 long	    SmartLastPrint;
 #endif
+
+void        Dispatch(void);
+void        InitProcVectors(void);
 
 int
 SmartScheduleClient (int *clientReady, int nready)
@@ -361,7 +349,7 @@ SmartScheduleClient (int *clientReady, int nready)
 #define MAJOROP ((xReq *)client->requestBuffer)->reqType
 
 void
-Dispatch()
+Dispatch(void)
 {
     register int        *clientReady;     /* array of request ready clients */
     register int	result;
@@ -3359,7 +3347,6 @@ int
 ProcListHosts(client)
     register ClientPtr client;
 {
-extern int GetHosts();
     xListHostsReply reply;
     int	len, nHosts, result;
     pointer	pdata;
@@ -3552,7 +3539,7 @@ int ProcNoOperation(client)
 }
 
 void
-InitProcVectors()
+InitProcVectors(void)
 {
     int i;
     for (i = 0; i<256; i++)

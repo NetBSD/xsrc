@@ -26,14 +26,13 @@
 #ifndef I810TEX_INC
 #define I810TEX_INC
 
-#include "types.h"
+#include "mtypes.h"
 #include "mmath.h"
 #include "mm.h"
 
 #include "i810context.h"
 #include "i810_3d_reg.h"
 
-#define VALID_I810_TEXTURE_OBJECT(tobj)  (tobj) 
 
 #define I810_TEX_MAXLEVELS 10
 
@@ -61,12 +60,10 @@ struct i810_texture_object_t {
    int Height;
    int texelBytes;
    int totalSize;
-   int bound;
 
    PMemBlock MemBlock;   
    char *BufAddr;
    
-   GLuint min_level;
    GLuint max_level;
    GLuint dirty_images;
 
@@ -77,22 +74,18 @@ struct i810_texture_object_t {
       int internalFormat;
    } image[I810_TEX_MAXLEVELS];
 
-   /* Support for multitexture.
-    */
-   GLuint current_unit;   
    GLuint Setup[I810_TEX_SETUP_SIZE];
+   GLuint dirty;
+
+   GLint firstLevel, lastLevel;  /* upload tObj->Image[first .. lastLevel] */
 };		
 
-#define I810_NO_PALETTE        0x0
-#define I810_USE_PALETTE       0x1
-#define I810_UPDATE_PALETTE    0x2
-#define I810_FALLBACK_PALETTE  0x4
-
 void i810UpdateTextureState( GLcontext *ctx );
-void i810DDInitTextureFuncs( GLcontext *ctx );
+void i810InitTextureFuncs( GLcontext *ctx );
 
-void i810DestroyTexObj( i810ContextPtr imesa, i810TextureObjectPtr t);
-int i810UploadTexImages( i810ContextPtr imesa, i810TextureObjectPtr t );
+void i810DestroyTexObj( i810ContextPtr imesa, i810TextureObjectPtr t );
+void i810SwapOutTexObj( i810ContextPtr imesa, i810TextureObjectPtr t );
+void i810UploadTexImages( i810ContextPtr imesa, i810TextureObjectPtr t );
 
 void i810ResetGlobalLRU( i810ContextPtr imesa );
 void i810TexturesGone( i810ContextPtr imesa, 
@@ -101,6 +94,7 @@ void i810TexturesGone( i810ContextPtr imesa,
 
 void i810PrintLocalLRU( i810ContextPtr imesa );
 void i810PrintGlobalLRU( i810ContextPtr imesa );
+void i810UpdateTexLRU( i810ContextPtr imesa, i810TextureObjectPtr t );
 
 
 

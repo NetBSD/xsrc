@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/glx/glxext.c,v 1.13 2001/04/10 16:07:49 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/glxext.c,v 1.16 2003/01/20 21:37:19 tsi Exp $ */
 
 /*
 ** License Applicability. Except to the extent portions of this file are
@@ -125,7 +125,6 @@ void __glXSetCurrentContext(__GLXcontext *c)
 
 /* Used by the __glXLock() and __glXUnlock() macros */
 xmutex_rec __glXmutex;
-xmutex_rec __glXSwapBuffersMutex;
 
 #else
 
@@ -345,12 +344,13 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	if (!_XReply(dpy, (xReply*) &reply, 0, False)) {
 	    /* Something is busted. Punt. */
 	    UnlockDisplay(dpy);
+	    SyncHandle();
 	    FreeScreenConfigs(priv);
 	    return GL_FALSE;
 	}
-	UnlockDisplay(dpy);
 	if (!reply.numVisuals) {
 	    /* This screen does not support GL rendering */
+	    UnlockDisplay(dpy);
 	    continue;
 	}
 
@@ -359,6 +359,8 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	if ((nprops < __GLX_MIN_CONFIG_PROPS) ||
 	    (nprops > __GLX_MAX_CONFIG_PROPS)) {
 	    /* Huh?  Not in protocol defined limits.  Punt */
+	    UnlockDisplay(dpy);
+	    SyncHandle();
 	    FreeScreenConfigs(priv);
 	    return GL_FALSE;
 	}
@@ -368,6 +370,8 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	    Xmalloc(reply.numVisuals * sizeof(__GLXvisualConfig));
 	psc->numConfigs = reply.numVisuals;
 	if (!psc->configs) {
+	    UnlockDisplay(dpy);
+	    SyncHandle();
 	    FreeScreenConfigs(priv);
 	    return GL_FALSE;
 	}
@@ -445,6 +449,7 @@ static Bool AllocAndFetchScreenConfigs(Display *dpy, __GLXdisplayPrivate *priv)
 	if (props != buf) {
 	    Xfree((char *)props);
 	}
+	UnlockDisplay(dpy);
 
 #ifdef GLX_DIRECT_RENDERING
 	/* Initialize the direct rendering per screen data and functions */
@@ -479,7 +484,6 @@ __GLXdisplayPrivate *__glXInitialize(Display* dpy)
         if (firstCall) {
             /* initialize the GLX mutexes */
             xmutex_init(&__glXmutex);
-            xmutex_init(&__glXSwapBuffersMutex);
             firstCall = 0;
         }
     }
@@ -726,10 +730,6 @@ GLXDrawable glXGetCurrentDrawable(void)
     return gc->currentDrawable;
 }
 
-GLXDrawable glXGetCurrentDrawableEXT(void)
-{
-    return glXGetCurrentDrawable();
-}
 
 /************************************************************************/
 
@@ -764,7 +764,7 @@ __DRIscreen *__glXFindDRIScreen(Display *dpy, int scrn)
 ** Make a particular context current.
 ** NOTE: this is in this file so that it can access dummyContext.
 */
-Bool glXMakeCurrent(Display *dpy, GLXDrawable draw, GLXContext gc)
+Bool GLX_PREFIX(glXMakeCurrent)(Display *dpy, GLXDrawable draw, GLXContext gc)
 {
     xGLXMakeCurrentReq *req;
     xGLXMakeCurrentReply reply;
@@ -874,7 +874,7 @@ Bool glXMakeCurrent(Display *dpy, GLXDrawable draw, GLXContext gc)
 
     if (!bindReturnValue) {
 	/* The make current failed. */
-	if (!gc->isDirect) {
+	if (gc && !gc->isDirect) {
 	    SyncHandle();
 	}
 

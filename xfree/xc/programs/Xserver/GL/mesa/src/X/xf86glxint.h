@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/mesa/src/X/xf86glxint.h,v 1.3 2000/02/23 04:46:57 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/mesa/src/X/xf86glxint.h,v 1.4 2002/02/22 21:45:08 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -39,10 +39,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <GL/gl.h>
 #include <GL/xmesa.h>
 
-struct __GLcontextRec {
-    __GLinterface iface;
-    XMesaContext xm_ctx;
-};
+/*  struct __GLcontextRec { */
+/*      __GLinterface iface; */
+/*      XMesaContext xm_ctx; */
+/*  }; */
 
 typedef struct __MESA_screenRec __MESA_screen;
 struct __MESA_screenRec {
@@ -85,8 +85,7 @@ extern __GLinterface *__MESA_createContext(__GLimports *imports,
 					   __GLinterface *shareGC);
 extern GLboolean __MESA_destroyContext(__GLcontext *gc);
 extern GLboolean __MESA_loseCurrent(__GLcontext *gc);
-extern GLboolean __MESA_makeCurrent(__GLcontext *gc,
-				    __GLdrawablePrivate *glPriv);
+extern GLboolean __MESA_makeCurrent(__GLcontext *gc, __GLdrawablePrivate *oldglPriv);
 extern GLboolean __MESA_shareContext(__GLcontext *gc, __GLcontext *gcShare);
 extern GLboolean __MESA_copyContext(__GLcontext *dst, const __GLcontext *src,
 				GLuint mask);

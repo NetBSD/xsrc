@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_reg.h,v 1.6 2001/10/28 03:33:32 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i810/i810_reg.h,v 1.13 2003/02/06 04:18:04 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -28,7 +28,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Keith Whitwell <keithw@precisioninsight.com>
+ *   Keith Whitwell <keith@tungstengraphics.com>
  *
  *   based on the i740 driver by
  *        Kevin E. Martin <kevin@precisioninsight.com> 
@@ -36,7 +36,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
 
-/* I/O register offsets 
+#ifndef _I810_REG_H
+#define _I810_REG_H
+
+/* I/O register offsets
  */
 #define SRX 0x3C4		/* p208 */
 #define GRX 0x3CE		/* p213 */
@@ -147,18 +150,46 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* Cursor control registers, pp383-384
  */
+/* Desktop (845G, 865G) */
 #define CURSOR_CONTROL     0x70080
-#define CURSOR_ORIGIN_SCREEN   0x00
-#define CURSOR_ORIGIN_DISPLAY  0x10
-#define CURSOR_MODE            0x07
+#define CURSOR_ENABLE          0x80000000
+#define CURSOR_GAMMA_ENABLE    0x40000000
+#define CURSOR_STRIDE_MASK     0x30000000
+#define CURSOR_FORMAT_SHIFT    24
+#define CURSOR_FORMAT_MASK     (0x07 << CURSOR_FORMAT_SHIFT)
+#define CURSOR_FORMAT_2C       (0x00 << CURSOR_FORMAT_SHIFT)
+#define CURSOR_FORMAT_3C       (0x01 << CURSOR_FORMAT_SHIFT)
+#define CURSOR_FORMAT_4C       (0x02 << CURSOR_FORMAT_SHIFT)
+#define CURSOR_FORMAT_ARGB     (0x04 << CURSOR_FORMAT_SHIFT)
+#define CURSOR_FORMAT_XRGB     (0x05 << CURSOR_FORMAT_SHIFT)
+
+/* Mobile and i810 */
+#define CURSOR_A_CONTROL   CURSOR_CONTROL
+#define CURSOR_ORIGIN_SCREEN   0x00	/* i810 only */
+#define CURSOR_ORIGIN_DISPLAY  0x1	/* i810 only */
+#define CURSOR_MODE            0x27
 #define CURSOR_MODE_DISABLE    0x00
-#define CURSOR_MODE_32_4C_AX   0x01
+#define CURSOR_MODE_32_4C_AX   0x01	/* i810 only */
 #define CURSOR_MODE_64_3C      0x04
 #define CURSOR_MODE_64_4C_AX   0x05
 #define CURSOR_MODE_64_4C      0x06
-#define CURSOR_MODE_RESERVED   0x07
+#define CURSOR_MODE_64_32B_AX  0x07
+#define CURSOR_MODE_64_ARGB_AX (0x20 | CURSOR_MODE_64_32B_AX)
+#define MCURSOR_PIPE_SELECT    (1 << 28)
+#define MCURSOR_PIPE_A         0x00
+#define MCURSOR_PIPE_B         (1 << 28)
+#define MCURSOR_GAMMA_ENABLE   (1 << 26)
+#define MCURSOR_MEM_TYPE_LOCAL (1 << 25)
+
+
 #define CURSOR_BASEADDR    0x70084
+#define CURSOR_A_BASE      CURSOR_BASEADDR
 #define CURSOR_BASEADDR_MASK 0x1FFFFF00
+#define CURSOR_A_POSITION  0x70088
+#define CURSOR_POS_SIGN        0x8000
+#define CURSOR_POS_MASK        0x007FF
+#define CURSOR_X_SHIFT	       0
+#define CURSOR_Y_SHIFT         16
 #define CURSOR_X_LO        0x70088
 #define CURSOR_X_HI        0x70089
 #define CURSOR_X_POS           0x00
@@ -168,6 +199,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define CURSOR_Y_POS           0x00
 #define CURSOR_Y_NEG           0x80
 
+#define CURSOR_A_PALETTE0  0x70090
+#define CURSOR_A_PALETTE1  0x70094
+#define CURSOR_A_PALETTE2  0x70098
+#define CURSOR_A_PALETTE3  0x7009C
+
+#define CURSOR_SIZE	   0x700A0
+#define CURSOR_SIZE_MASK       0x3FF
+#define CURSOR_SIZE_HSHIFT     0
+#define CURSOR_SIZE_VSHIFT     12
 
 
 /* Similar registers exist in Device 0 on the i810 (pp55-65), but I'm
@@ -393,14 +433,17 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define RING_TAIL      0x00
 #define TAIL_ADDR           0x000FFFF8
+#define I830_TAIL_MASK	    0x001FFFF8
 
 #define RING_HEAD      0x04
 #define HEAD_WRAP_COUNT     0xFFE00000
 #define HEAD_WRAP_ONE       0x00200000
 #define HEAD_ADDR           0x001FFFFC
+#define I830_HEAD_MASK      0x001FFFFC
 
 #define RING_START     0x08
 #define START_ADDR          0x00FFFFF8
+#define I830_RING_START_MASK	0xFFFFF000
 
 #define RING_LEN       0x0C
 #define RING_NR_PAGES       0x000FF000 
@@ -570,6 +613,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define CS_USE_CTX0              0
 #define CS_USE_CTX1              (1<<0)
 
+/* I810 LCD/TV registers */
+#define LCD_TV_HTOTAL	0x60000
+#define LCD_TV_C	0x60018
+#define LCD_TV_OVRACT   0x6001C
+
+#define LCD_TV_ENABLE (1 << 31)
+#define LCD_TV_VGAMOD (1 << 28)
+
 /* I830 CRTC registers */
 #define HTOTAL_A	0x60000
 #define HBLANK_A	0x60004
@@ -618,7 +669,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define ADPA			0x61100
 #define ADPA_DAC_ENABLE 	(1<<31)
 #define ADPA_DAC_DISABLE	0
+#define ADPA_PIPE_SELECT_MASK	(1<<30)
 #define ADPA_PIPE_A_SELECT	0
+#define ADPA_PIPE_B_SELECT	(1<<30)
 #define ADPA_USE_VGA_HVPOLARITY (1<<15)
 #define ADPA_SETS_HVPOLARITY	0
 #define ADPA_VSYNC_CNTL_DISABLE (1<<11)
@@ -631,12 +684,16 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define ADPA_HSYNC_ACTIVE_LOW	0
 
 
-#define DV0A			0x61120
-#define DV0A_DISABLE		(1<<31)
+#define DVOA			0x61120
+#define DVOB			0x61140
+#define DVOC			0x61160
+#define DVO_ENABLE		(1<<31)
 
-#define DV0B			0x61140
-#define DV0B_DISABLE		(1<<31)
+#define DVOA_SRCDIM		0x61124
+#define DVOB_SRCDIM		0x61144
+#define DVOC_SRCDIM		0x61164
 
+#define LVDS			0x61180
 
 #define PIPEACONF 0x70008
 #define PIPEACONF_ENABLE	(1<<31)
@@ -655,53 +712,39 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define PIPEBCONF_PALETTE	0
 
 #define DSPACNTR		0x70180
-#define DSPACNTR_PLANE_A_ENABLE 	(1<<31)
-#define DSPACNTR_PLANE_A_DISABLE	0
-#define DSPACNTR_GAMMA_ENABLE		(1<<30)
-#define DSPACNTR_GAMMA_DISABLE		0
-#define DSPACNTR_8BPP			(1<<27)
-#define DSPACNTR_16BPP			((1<<26)|(1<<28))
-#define DSPACNTR_32BPP_NO_ALPHA 	((1<<27)|(1<<28))
-#define DSPACNTR_32BPP			((1<<26)|(1<<27)|(1<<28))
-#define DSPACNTR_STEREO_ENABLE		(1<<25)
-#define DSPACNTR_STEREO_DISABLE 	0
-#define DSPACNTR_SEL_PIPE_A		0
-#define DSPACNTR_SEL_PIPE_B		(1<<24)
-#define DSPACNTR_SRC_KEY_ENABLE 	(1<<22)
-#define DSPACNTR_SRC_KEY_DISABLE	0
-#define DSPACNTR_LINE_DOUBLE		(1<<20)
-#define DSPACNTR_NO_LINE_DOUBLE 	0
-#define DSPACNTR_STEREO_POLARITY_FIRST	0
-#define DSPACNTR_STEREO_POLARITY_SECOND (1<<18)
+#define DSPBCNTR		0x71180
+#define DISPLAY_PLANE_ENABLE 			(1<<31)
+#define DISPLAY_PLANE_DISABLE			0
+#define DISPPLANE_GAMMA_ENABLE			(1<<30)
+#define DISPPLANE_GAMMA_DISABLE			0
+#define DISPPLANE_PIXFORMAT_MASK		(0xf<<26)
+#define DISPPLANE_8BPP				(0x2<<26)
+#define DISPPLANE_15_16BPP			(0x4<<26)
+#define DISPPLANE_16BPP				(0x5<<26)
+#define DISPPLANE_32BPP_NO_ALPHA 		(0x6<<26)
+#define DISPPLANE_32BPP				(0x7<<26)
+#define DISPPLANE_STEREO_ENABLE			(1<<25)
+#define DISPPLANE_STEREO_DISABLE		0
+#define DISPPLANE_SEL_PIPE_MASK			(1<<24)
+#define DISPPLANE_SEL_PIPE_A			0
+#define DISPPLANE_SEL_PIPE_B			(1<<24)
+#define DISPPLANE_SRC_KEY_ENABLE		(1<<22)
+#define DISPPLANE_SRC_KEY_DISABLE		0
+#define DISPPLANE_LINE_DOUBLE			(1<<20)
+#define DISPPLANE_NO_LINE_DOUBLE		0
+#define DISPPLANE_STEREO_POLARITY_FIRST		0
+#define DISPPLANE_STEREO_POLARITY_SECOND	(1<<18)
+/* plane B only */
+#define DISPPLANE_ALPHA_TRANS_ENABLE		(1<<15)
+#define DISPPLANE_ALPHA_TRANS_DISABLE		0
+#define DISPPLANE_SPRITE_ABOVE_DISPLAYA		0
+#define DISPPLANE_SPRITE_ABOVE_OVERLAY		(1)
 
 #define DSPABASE		0x70184
 #define DSPASTRIDE		0x70188
 
-#define DSPBCNTR		0x71180
-#define DSPBCNTR_PLANE_B_ENABLE 	(1<<31)
-#define DSPBCNTR_PLANE_B_DISABLE	0
-#define DSPBCNTR_GAMMA_ENABLE		(1<<30)
-#define DSPBCNTR_GAMMA_DISABLE		0
-#define DSPBCNTR_8BPP			(1<<27)
-#define DSPBCNTR_16BPP			((1<<26)|(1<<28))
-#define DSPBCNTR_32BPP_NO_ALPHA 	((1<<27)|(1<<28))
-#define DSPBCNTR_32BPP			((1<<26)|(1<<27)|(1<<28))
-#define DSPBCNTR_STEREO_ENABLE		(1<<25)
-#define DSPBCNTR_STEREO_DISABLE 	0
-#define DSPBCNTR_SEL_PIPE_A		0
-#define DSPBCNTR_SEL_PIPE_B		(1<<24)
-#define DSPBCNTR_SRC_KEY_ENABLE 	(1<<22)
-#define DSPBCNTR_SRC_KEY_DISABLE	0
-#define DSPBCNTR_LINE_DOUBLE		(1<<20)
-#define DSPBCNTR_NO_LINE_DOUBLE 	0
-#define DSPBCNTR_STEREO_POLARITY_FIRST	0
-#define DSPBCNTR_STEREO_POLARITY_SECOND (1<<18)
-#define DSPBCNTR_ALPHA_TRANS_ENABLE	(1<<15)
-#define DSPBCNTR_ALPHA_TRANS_DISABLE	0
-#define DSPBCNTR_SPRITE_ABOVE_DISPLAYA	0
-#define DSPBCNTR_SPRITE_ABOVE_OVERLAY	(1)
-
 #define DSPBBASE		0x71184
+#define DSPBADDR		DSPBBASE
 #define DSPBSTRIDE		0x71188
 
 /* Various masks for reserved bits, etc. */
@@ -750,6 +793,22 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define I830_RDRAM_CHANNEL_TYPE		0x03010
 #define I830_RDRAM_ND(x)			(((x) & 0x20) >> 5)
 #define I830_RDRAM_DDT(x)			(((x) & 0x18) >> 3)
+
+#define I855_GMCH_GMS_MASK			(0x7 << 4)
+#define I855_GMCH_GMS_DISABLED			0x00
+#define I855_GMCH_GMS_STOLEN_1M			(0x1 << 4)
+#define I855_GMCH_GMS_STOLEN_4M			(0x2 << 4)
+#define I855_GMCH_GMS_STOLEN_8M			(0x3 << 4)
+#define I855_GMCH_GMS_STOLEN_16M		(0x4 << 4)
+#define I855_GMCH_GMS_STOLEN_32M		(0x5 << 4)
+
+#define I85X_CAPID			0x44
+#define I85X_VARIANT_MASK			0x7
+#define I85X_VARIANT_SHIFT			5
+#define I855_GME				0x0
+#define I855_GM					0x4
+#define I852_GME				0x2
+#define I852_GM					0x5
 
 /* BLT commands */
 #define COLOR_BLT_CMD		((2<<29)|(0x40<<22)|(0x3))
@@ -806,9 +865,128 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Dword 1 */
 #define MI_VERTEX_BUFFER_DISABLE	(1)
 
+/* Overlay Flip */
+#define MI_OVERLAY_FLIP			(0x11<<23)
+#define MI_OVERLAY_FLIP_CONTINUE	(0<<21)
+#define MI_OVERLAY_FLIP_ON		(1<<21)
+#define MI_OVERLAY_FLIP_OFF		(2<<21)
+
+/* Wait for Events */
+#define MI_WAIT_FOR_EVENT		(0x03<<23)
+#define MI_WAIT_FOR_OVERLAY_FLIP	(1<<16)
+
+/* Flush */
+#define MI_FLUSH			(0x04<<23)
+#define MI_WRITE_DIRTY_STATE		(1<<4)
+#define MI_END_SCENE			(1<<3)
+#define MI_INHIBIT_RENDER_CACHE_FLUSH	(1<<2)
+#define MI_INVALIDATE_MAP_CACHE		(1<<0)
+
+/* Noop */
+#define MI_NOOP				0x00
+#define MI_NOOP_WRITE_ID		(1<<22)
+#define MI_NOOP_ID_MASK			(1<<22 - 1)
+
 #define STATE3D_COLOR_FACTOR	((0x3<<29)|(0x1d<<24)|(0x01<<16))
 
 /* STATE3D_FOG_MODE stuff */
 #define ENABLE_FOG_SOURCE	(1<<27)
 #define ENABLE_FOG_CONST	(1<<24)
 #define ENABLE_FOG_DENSITY	(1<<23)
+
+
+#define MAX_DISPLAY_PIPES	2
+
+typedef enum {
+   CrtIndex = 0,
+   TvIndex,
+   DfpIndex,
+   LfpIndex,
+   Tv2Index,
+   Dfp2Index,
+   UnknownIndex,
+   Unknown2Index,
+   NumDisplayTypes,
+   NumKnownDisplayTypes = UnknownIndex
+} DisplayType;
+
+/* What's connected to the pipes (as reported by the BIOS) */
+#define PIPE_ACTIVE_MASK		0xff
+#define PIPE_CRT_ACTIVE			(1 << CrtIndex)
+#define PIPE_TV_ACTIVE			(1 << TvIndex)
+#define PIPE_DFP_ACTIVE			(1 << DfpIndex)
+#define PIPE_LCD_ACTIVE			(1 << LfpIndex)
+#define PIPE_TV2_ACTIVE			(1 << Tv2Index)
+#define PIPE_DFP2_ACTIVE		(1 << Dfp2Index)
+#define PIPE_UNKNOWN_ACTIVE		((1 << UnknownIndex) |	\
+					 (1 << Unknown2Index))
+
+#define PIPE_SIZED_DISP_MASK		(PIPE_DFP_ACTIVE |	\
+					 PIPE_LCD_ACTIVE |	\
+					 PIPE_DFP2_ACTIVE)
+
+#define PIPE_A_SHIFT			0
+#define PIPE_B_SHIFT			8
+#define PIPE_SHIFT(n)			((n) == 0 ? \
+					 PIPE_A_SHIFT : PIPE_B_SHIFT)
+
+/*
+ * Some BIOS scratch area registers.  The 845 (and 830?) store the amount
+ * of video memory available to the BIOS in SWF1.
+ */
+
+#define SWF0			0x71410
+#define SWF1			0x71414
+#define SWF2			0x71418
+#define SWF3			0x7141c
+#define SWF4			0x71420
+#define SWF5			0x71424
+#define SWF6			0x71428
+
+/*
+ * 855 scratch registers.
+ */
+#define SWF00			0x70410
+#define SWF01			0x70414
+#define SWF02			0x70418
+#define SWF03			0x7041c
+#define SWF04			0x70420
+#define SWF05			0x70424
+#define SWF06			0x70428
+
+#define SWF10			SWF0
+#define SWF11			SWF1
+#define SWF12			SWF2
+#define SWF13			SWF3
+#define SWF14			SWF4
+#define SWF15			SWF5
+#define SWF16			SWF6
+
+#define SWF30			0x72414
+#define SWF31			0x72418
+#define SWF32			0x7241c
+
+/*
+ * Overlay registers.  These are overlay registers accessed via MMIO.
+ * Those loaded via the overlay register page are defined in i830_video.c.
+ */
+#define OVADD			0x30000
+
+#define DOVSTA			0x30008
+#define OC_BUF			(0x3<<20)
+
+#define OGAMC5			0x30010
+#define OGAMC4			0x30014
+#define OGAMC3			0x30018
+#define OGAMC2			0x3001c
+#define OGAMC1			0x30020
+#define OGAMC0			0x30024
+
+
+/*
+ * Palette registers
+ */
+#define PALETTE_A		0x0a000
+#define PALETTE_B		0x0a800
+
+#endif /* _I810_REG_H */

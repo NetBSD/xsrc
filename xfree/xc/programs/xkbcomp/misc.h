@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/misc.h,v 1.5 2002/07/01 02:26:01 tsi Exp $ */
 
 #ifndef MISC_H
 #define MISC_H 1
@@ -35,123 +36,91 @@ typedef	struct	_CommonInfo {
     struct _CommonInfo *	next;
 } CommonInfo;
 
-_XFUNCPROTOBEGIN
-
 extern Bool	UseNewField(
-#if NeedFunctionPrototypes
     unsigned		/* field */,
     CommonInfo * 	/* oldDefs */,
     CommonInfo *	/* newDefs */,
     unsigned *		/* pCollide */
-#endif
 );
 
 extern Bool	MergeNewField(
-#if NeedFunctionPrototypes
     unsigned		/* field */,
     CommonInfo * 	/* oldDefs */,
     CommonInfo *	/* newDefs */,
     unsigned *		/* pCollide */
-#endif
 );
 
 extern XPointer ClearCommonInfo(
-#if NeedFunctionPrototypes
     CommonInfo *	/* cmn */
-#endif
 );
 
 extern XPointer AddCommonInfo(
-#if NeedFunctionPrototypes
     CommonInfo *	/* old */,
     CommonInfo *	/* new */
-#endif
 );
 
 extern int	ReportNotArray(
-#if NeedFunctionPrototypes
     char *	/* type */,
     char *	/* field */,
     char *	/* name */
-#endif
 );
 
 extern int	ReportShouldBeArray(
-#if NeedFunctionPrototypes
     char *	/* type */,
     char *	/* field */,
     char *	/* name */
-#endif
 );
 
 extern int	ReportBadType(
-#if NeedFunctionPrototypes
     char *	/* type */,
     char *	/* field */,
     char *	/* name */,
     char *	/* wanted */
-#endif
 );
 
 extern int	ReportBadIndexType(
-#if NeedFunctionPrototypes
     char *	/* type */,
     char *	/* field */,
     char *	/* name */,
     char *	/* wanted */
-#endif
 );
 
 extern int	ReportBadField(
-#if NeedFunctionPrototypes
     char *	/* type */,
     char *	/* field */,
     char *	/* name */
-#endif
 );
 
 extern int	ReportMultipleDefs(
-#if NeedFunctionPrototypes
     char *	/* type */,
     char *	/* field */,
     char *	/* which */
-#endif
 );
 
 extern Bool	ProcessIncludeFile(
-#if NeedFunctionPrototypes
     IncludeStmt	*	/* stmt */,
     unsigned		/* file_type */,
     XkbFile **		/* file_rtrn */,
     unsigned *		/* merge_rtrn */
-#endif
 );
 
 extern Status	ComputeKbdDefaults(
-#if NeedFunctionPrototypes
     XkbDescPtr		/* xkb */
-#endif
 );
 
 extern Bool FindNamedKey(
-#if NeedFunctionPrototypes
     XkbDescPtr		/* xkb */,
     unsigned long	/* name */,
     unsigned int *	/* kc_rtrn */,
     Bool		/* use_aliases */,
     Bool		/* create */,
     int			/* start_from */
-#endif
 );
 
 extern Bool FindKeyNameForAlias(
-#if NeedFunctionPrototypes
     XkbDescPtr		/* xkb */,
     unsigned long	/* lname */,
     unsigned long *	/* real_name */
-#endif
 );
-
-_XFUNCPROTOEND
 
 #endif /* MISC_H */

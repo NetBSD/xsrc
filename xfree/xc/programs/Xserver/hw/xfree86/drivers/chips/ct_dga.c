@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_dga.c,v 1.3 2001/10/01 13:44:04 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_dga.c,v 1.5 2002/11/25 14:04:58 eich Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -18,8 +18,10 @@ static int  CHIPS_GetViewport(ScrnInfoPtr);
 static void CHIPS_SetViewport(ScrnInfoPtr, int, int, int);
 static void CHIPS_FillRect(ScrnInfoPtr, int, int, int, int, unsigned long);
 static void CHIPS_BlitRect(ScrnInfoPtr, int, int, int, int, int, int);
+#if 0
 static void CHIPS_BlitTransRect(ScrnInfoPtr, int, int, int, int, int, int, 
 					unsigned long);
+#endif
 
 static
 DGAFunctionRec CHIPS_DGAFuncs = {
@@ -129,7 +131,7 @@ SECOND_PASS:
 	currentMode->viewportHeight = pMode->VDisplay;
 	currentMode->xViewportStep = 1;
 	currentMode->yViewportStep = 1;
-	currentMode->viewportFlags = DGA_FLIP_RETRACE;
+ 	currentMode->viewportFlags = DGA_FLIP_RETRACE | DGA_FLIP_IMMEDIATE;
 	currentMode->offset = 0;
 	currentMode->address = cPtr->FbBase;
 
@@ -230,11 +232,17 @@ CHIPS_SetViewport(
    ScrnInfoPtr pScrn, 
    int x, int y, 
    int flags
-){
-   CHIPSPtr cPtr = CHIPSPTR(pScrn);
+   ){
+    vgaHWPtr hwp = VGAHWPTR(pScrn);
+    CHIPSPtr cPtr = CHIPSPTR(pScrn);
+  
+    if (flags & DGA_FLIP_RETRACE) {
+ 	while ((hwp->readST01(hwp)) & 0x08){};
+ 	while (!(hwp->readST01(hwp)) & 0x08){};
+    }
 
-   CHIPSAdjustFrame(pScrn->pScreen->myNum, x, y, flags);
-   cPtr->DGAViewportStatus = 0;  /* CHIPSAdjustFrame loops until finished */
+    CHIPSAdjustFrame(pScrn->pScreen->myNum, x, y, flags);
+    cPtr->DGAViewportStatus = 0;  /* CHIPSAdjustFrame loops until finished */
 }
 
 static void 
@@ -273,7 +281,7 @@ CHIPS_BlitRect(
     }
 }
 
-
+#if 0
 static void 
 CHIPS_BlitTransRect(
    ScrnInfoPtr pScrn, 
@@ -285,7 +293,7 @@ CHIPS_BlitTransRect(
   /* this one should be separate since the XAA function would
      prohibit usage of ~0 as the key */
 }
-
+#endif
 
 static Bool 
 CHIPS_OpenFramebuffer(

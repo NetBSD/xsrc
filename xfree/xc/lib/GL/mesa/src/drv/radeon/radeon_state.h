@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_state.h,v 1.1 2001/01/08 01:07:28 martin Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_state.h,v 1.5 2002/11/05 17:46:09 tsi Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -41,15 +41,36 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "radeon_context.h"
 
-extern void radeonDDInitState( radeonContextPtr rmesa );
-extern void radeonDDInitStateFuncs( GLcontext *ctx );
+extern void radeonInitState( radeonContextPtr rmesa );
+extern void radeonInitStateFuncs( GLcontext *ctx );
 
-extern void radeonDDUpdateState( GLcontext *ctx );
-extern void radeonDDUpdateHWState( GLcontext *ctx );
+extern void radeonUpdateMaterial( GLcontext *ctx );
 
+extern void radeonSetCliprects( radeonContextPtr rmesa, GLenum mode );
+extern void radeonRecalcScissorRects( radeonContextPtr rmesa );
+extern void radeonUpdateViewportOffset( GLcontext *ctx );
 extern void radeonUpdateWindow( GLcontext *ctx );
 
-extern void radeonEmitHwStateLocked( radeonContextPtr rmesa );
+extern void radeonValidateState( GLcontext *ctx );
+
+extern void radeonPrintDirty( radeonContextPtr rmesa,
+			      const char *msg );
+
+
+extern void radeonFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+#define FALLBACK( rmesa, bit, mode ) do {				\
+   if ( 0 ) fprintf( stderr, "FALLBACK in %s: #%d=%d\n",		\
+		     __FUNCTION__, bit, mode );				\
+   radeonFallback( rmesa->glCtx, bit, mode );				\
+} while (0)
+
+
+#define MODEL_PROJ 0
+#define MODEL      1
+#define MODEL_IT   2
+#define TEXMAT_0   3
+#define TEXMAT_1   4
+#define TEXMAT_2   5
 
 #endif
 #endif

@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/include/fntfil.h,v 1.9 2001/12/14 19:56:54 dawes Exp $ */
+/* $XFree86: xc/lib/font/include/fntfil.h,v 1.10 2002/12/09 17:30:00 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -146,6 +146,8 @@ extern void FontFileSortTable ( FontTablePtr table );
 extern void FontDefaultFormat ( int *bit, int *byte, int *glyph, int *scan );
 
 extern Bool FontFileRegisterRenderer ( FontRendererPtr renderer );
+extern Bool FontFilePriorityRegisterRenderer ( FontRendererPtr renderer,
+                                               int priority );
 extern FontRendererPtr FontFileMatchRenderer ( char *fileName );
 
 extern Bool FontFileAddScaledInstance ( FontEntryPtr entry, 

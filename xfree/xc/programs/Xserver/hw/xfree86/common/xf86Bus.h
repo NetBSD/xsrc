@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Bus.h,v 1.18 2001/02/12 01:25:23 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Bus.h,v 1.21 2002/11/25 14:04:56 eich Exp $ */
 /*
  * Copyright (c) 1997 by The XFree86 Project, Inc.
  */
@@ -44,6 +44,7 @@ typedef struct {
     DevUnion *                  entityPrivates;
     int                         numInstances;
     GDevPtr *                   devices;   
+    IOADDRESS                   domainIO;
 } EntityRec, *EntityPtr;
 
 /* asynchronous event handling */
@@ -66,6 +67,8 @@ typedef struct _AsyncQRec {
 #define ACCEL_IS_SHARABLE 0x0100
 #define IS_SHARED_ACCEL 0x0200
 #define SA_PRIM_INIT_DONE 0x0400
+#define NEED_VGA_MEM 0x1000
+#define NEED_VGA_IO  0x2000
 
 #define NEED_SHARED (NEED_MEM_SHARED | NEED_IO_SHARED)
 
@@ -94,7 +97,7 @@ typedef struct x_BusAccRec {
 	    int bus;
 	    int primary_bus;
 	    PCITAG acc;
-	    pciBridgeSave save;
+	    pciBridgesSave save;
 	    void (*func)(PCITAG,int,CARD32,CARD32);
 	} pci;
     } busdep;

@@ -1,7 +1,6 @@
-/* Id: glxinfo.c,v 1.12 2001/03/23 21:41:44 brianp Exp $ */
 
 /*
- * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +19,8 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-/* $XFree86: xc/programs/glxinfo/glxinfo.c,v 1.7 2001/08/17 13:27:57 dawes Exp $ */
+
+/* $XFree86: xc/programs/glxinfo/glxinfo.c,v 1.10 2002/11/20 04:43:50 dawes Exp $ */
 
 /*
  * This program is a work-alike of the IRIX glxinfo program.
@@ -29,11 +29,11 @@
  *  -v                     print verbose information
  *  -display DisplayName   specify the X display to interogate
  *  -b                     only print ID of "best" visual on screen 0
+ *  -i                     use indirect rendering connection only
+ *  -l                     print interesting OpenGL limits (added 5 Sep 2002)
  *
  * Brian Paul  26 January 2000
  */
-
-#define DO_GLU
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -51,6 +51,9 @@
 #define GLX_NONE_EXT  0x8000
 #endif
 
+#ifndef GLX_TRANSPARENT_RGB
+#define GLX_TRANSPARENT_RGB 0x8008
+#endif
 
 typedef enum
 {
@@ -72,7 +75,12 @@ struct visual_attribs
 
    /* GL visual attribs */
    int supportsGL;
-   int transparent;
+   int transparentType;
+   int transparentRedValue;
+   int transparentGreenValue;
+   int transparentBlueValue;
+   int transparentAlphaValue;
+   int transparentIndexValue;
    int bufferSize;
    int level;
    int rgba;
@@ -148,7 +156,59 @@ print_display_info(Display *dpy)
 
 
 static void
-print_screen_info(Display *dpy, int scrnum)
+print_limits(void)
+{
+   struct token_name {
+      GLuint count;
+      GLenum token;
+      const char *name;
+   };
+   static const struct token_name limits[] = {
+      { 1, GL_MAX_ATTRIB_STACK_DEPTH, "GL_MAX_ATTRIB_STACK_DEPTH" },
+      { 1, GL_MAX_CLIENT_ATTRIB_STACK_DEPTH, "GL_MAX_CLIENT_ATTRIB_STACK_DEPTH" },
+      { 1, GL_MAX_CLIP_PLANES, "GL_MAX_CLIP_PLANES" },
+      { 1, GL_MAX_COLOR_MATRIX_STACK_DEPTH, "GL_MAX_COLOR_MATRIX_STACK_DEPTH" },
+      { 1, GL_MAX_ELEMENTS_VERTICES, "GL_MAX_ELEMENTS_VERTICES" },
+      { 1, GL_MAX_ELEMENTS_INDICES, "GL_MAX_ELEMENTS_INDICES" },
+      { 1, GL_MAX_EVAL_ORDER, "GL_MAX_EVAL_ORDER" },
+      { 1, GL_MAX_LIGHTS, "GL_MAX_LIGHTS" },
+      { 1, GL_MAX_LIST_NESTING, "GL_MAX_LIST_NESTING" },
+      { 1, GL_MAX_MODELVIEW_STACK_DEPTH, "GL_MAX_MODELVIEW_STACK_DEPTH" },
+      { 1, GL_MAX_NAME_STACK_DEPTH, "GL_MAX_NAME_STACK_DEPTH" },
+      { 1, GL_MAX_PIXEL_MAP_TABLE, "GL_MAX_PIXEL_MAP_TABLE" },
+      { 1, GL_MAX_PROJECTION_STACK_DEPTH, "GL_MAX_PROJECTION_STACK_DEPTH" },
+      { 1, GL_MAX_TEXTURE_STACK_DEPTH, "GL_MAX_TEXTURE_STACK_DEPTH" },
+      { 1, GL_MAX_TEXTURE_SIZE, "GL_MAX_TEXTURE_SIZE" },
+      { 1, GL_MAX_3D_TEXTURE_SIZE, "GL_MAX_3D_TEXTURE_SIZE" },
+      { 1, GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB, "GL_MAX_CUBE_MAP_TEXTURE_SIZE_ARB" },
+      { 1, GL_MAX_RECTANGLE_TEXTURE_SIZE_NV, "GL_MAX_RECTANGLE_TEXTURE_SIZE_NV" },
+      { 1, GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB, "GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB" },
+      { 1, GL_MAX_TEXTURE_UNITS_ARB, "GL_MAX_TEXTURE_UNITS_ARB" },
+      { 1, GL_MAX_TEXTURE_LOD_BIAS_EXT, "GL_MAX_TEXTURE_LOD_BIAS_EXT" },
+      { 1, GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, "GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT" },
+      { 2, GL_MAX_VIEWPORT_DIMS, "GL_MAX_VIEWPORT_DIMS" },
+      { 2, GL_ALIASED_LINE_WIDTH_RANGE, "GL_ALIASED_LINE_WIDTH_RANGE" },
+      { 2, GL_SMOOTH_LINE_WIDTH_RANGE, "GL_SMOOTH_LINE_WIDTH_RANGE" },
+      { 2, GL_ALIASED_POINT_SIZE_RANGE, "GL_ALIASED_POINT_SIZE_RANGE" },
+      { 2, GL_SMOOTH_POINT_SIZE_RANGE, "GL_SMOOTH_POINT_SIZE_RANGE" },
+      { 0, (GLenum) 0, NULL }
+   };
+   GLint i, max[2];
+   printf("OpenGL limits:\n");
+   for (i = 0; limits[i].count; i++) {
+      glGetIntegerv(limits[i].token, max);
+      if (glGetError() == GL_NONE) {
+         if (limits[i].count == 1)
+            printf("    %s = %d\n", limits[i].name, max[0]);
+         else /* XXX fix if we ever query something with more than 2 values */
+            printf("    %s = %d, %d\n", limits[i].name, max[0], max[1]);
+      }
+   }
+}
+
+
+static void
+print_screen_info(Display *dpy, int scrnum, Bool allowDirect, GLboolean limits)
 {
    Window win;
    int attribSingle[] = {
@@ -192,7 +252,7 @@ print_screen_info(Display *dpy, int scrnum)
 		       0, visinfo->depth, InputOutput,
 		       visinfo->visual, mask, &attr);
 
-   ctx = glXCreateContext( dpy, visinfo, NULL, True );
+   ctx = glXCreateContext( dpy, visinfo, NULL, allowDirect );
    if (!ctx) {
       fprintf(stderr, "Error: glXCreateContext failed\n");
       XDestroyWindow(dpy, win);
@@ -218,7 +278,7 @@ print_screen_info(Display *dpy, int scrnum)
       const char *gluExtensions = (const char *) gluGetString(GLU_EXTENSIONS);
 #endif
       /* Strip the screen number from the display name, if present. */
-      if (!(displayName = malloc(strlen(DisplayString(dpy)) + 1))) {
+      if (!(displayName = (char *) malloc(strlen(DisplayString(dpy)) + 1))) {
          fprintf(stderr, "Error: malloc() failed\n");
          exit(1);
       }
@@ -247,6 +307,8 @@ print_screen_info(Display *dpy, int scrnum)
       printf("OpenGL version string: %s\n", glVersion);
       printf("OpenGL extensions:\n");
       print_extension_list(glExtensions);
+      if (limits)
+         print_limits();
 #ifdef DO_GLU
       printf("glu version: %s\n", gluVersion);
       printf("glu extensions:\n");
@@ -346,12 +408,29 @@ get_visual_attribs(Display *dpy, XVisualInfo *vInfo,
    glXGetConfig(dpy, vInfo, GLX_ACCUM_BLUE_SIZE, &attribs->accumBlueSize);
    glXGetConfig(dpy, vInfo, GLX_ACCUM_ALPHA_SIZE, &attribs->accumAlphaSize);
 
-   /* transparent pixel value not implemented yet */
-   attribs->transparent = 0;
+   /* get transparent pixel stuff */
+   glXGetConfig(dpy, vInfo,GLX_TRANSPARENT_TYPE, &attribs->transparentType);
+   if (attribs->transparentType == GLX_TRANSPARENT_RGB) {
+     glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_RED_VALUE, &attribs->transparentRedValue);
+     glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_GREEN_VALUE, &attribs->transparentGreenValue);
+     glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_BLUE_VALUE, &attribs->transparentBlueValue);
+     glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_ALPHA_VALUE, &attribs->transparentAlphaValue);
+   }
+   else if (attribs->transparentType == GLX_TRANSPARENT_INDEX) {
+     glXGetConfig(dpy, vInfo, GLX_TRANSPARENT_INDEX_VALUE, &attribs->transparentIndexValue);
+   }
 
-   /* multisample tests not implemented yet */
-   attribs->numSamples = 0;
-   attribs->numMultisample = 0;
+   /* multisample attribs */
+#ifdef GLX_ARB_multisample
+   if (strstr("GLX_ARB_multisample", ext) == 0) {
+      glXGetConfig(dpy, vInfo, GLX_SAMPLE_BUFFERS_ARB, &attribs->numMultisample);
+      glXGetConfig(dpy, vInfo, GLX_SAMPLES_ARB, &attribs->numSamples);
+   }
+#endif
+   else {
+      attribs->numSamples = 0;
+      attribs->numMultisample = 0;
+   }
 
 #if defined(GLX_EXT_visual_rating)
    if (ext && strstr(ext, "GLX_EXT_visual_rating")) {
@@ -392,7 +471,15 @@ print_visual_attribs_verbose(const struct visual_attribs *attribs)
    else if (attribs->visualCaveat == GLX_NON_CONFORMANT_VISUAL_EXT)
       printf("    visualCaveat=Nonconformant\n");
 #endif
-   printf("    %s\n", attribs->transparent ? "Transparent." : "Opaque.");
+   if (attribs->transparentType == GLX_NONE) {
+     printf("    Opaque.\n");
+   }
+   else if (attribs->transparentType == GLX_TRANSPARENT_RGB) {
+     printf("    Transparent RGB: Red=%d Green=%d Blue=%d Alpha=%d\n",attribs->transparentRedValue,attribs->transparentGreenValue,attribs->transparentBlueValue,attribs->transparentAlphaValue);
+   }
+   else if (attribs->transparentType == GLX_TRANSPARENT_INDEX) {
+     printf("    Transparent index=%d\n",attribs->transparentIndexValue);
+   }
 }
 
 
@@ -408,7 +495,7 @@ print_visual_attribs_short_header(void)
 static void
 print_visual_attribs_short(const struct visual_attribs *attribs)
 {
-   char *caveat;
+   char *caveat = NULL;
 #ifdef GLX_EXT_visual_rating
    if (attribs->visualCaveat == GLX_NONE_EXT || attribs->visualCaveat == 0)
       caveat = "None";
@@ -426,7 +513,7 @@ print_visual_attribs_short(const struct visual_attribs *attribs)
           attribs->id,
           attribs->depth,
           visual_class_abbrev(attribs->klass),
-          attribs->transparent,
+          attribs->transparentType != GLX_NONE,
           attribs->bufferSize,
           attribs->level,
           attribs->rgba ? "r" : "c",
@@ -464,7 +551,7 @@ print_visual_attribs_long(const struct visual_attribs *attribs)
           attribs->id,
           attribs->depth,
           visual_class_name(attribs->klass),
-          attribs->transparent,
+          attribs->transparentType != GLX_NONE,
           attribs->bufferSize,
           attribs->level,
           attribs->rgba ? "rgba" : "ci  ",
@@ -488,16 +575,16 @@ print_visual_attribs_long(const struct visual_attribs *attribs)
 static void
 print_visual_info(Display *dpy, int scrnum, InfoMode mode)
 {
-   XVisualInfo template;
+   XVisualInfo theTemplate;
    XVisualInfo *visuals;
    int numVisuals;
    long mask;
    int i;
 
    /* get list of all visuals on this screen */
-   template.screen = scrnum;
+   theTemplate.screen = scrnum;
    mask = VisualScreenMask;
-   visuals = XGetVisualInfo(dpy, mask, &template, &numVisuals);
+   visuals = XGetVisualInfo(dpy, mask, &theTemplate, &numVisuals);
 
    if (mode == Verbose) {
       for (i = 0; i < numVisuals; i++) {
@@ -571,7 +658,7 @@ mesa_hack(Display *dpy, int scrnum)
 static int
 find_best_visual(Display *dpy, int scrnum)
 {
-   XVisualInfo template;
+   XVisualInfo theTemplate;
    XVisualInfo *visuals;
    int numVisuals;
    long mask;
@@ -579,9 +666,9 @@ find_best_visual(Display *dpy, int scrnum)
    struct visual_attribs bestVis;
 
    /* get list of all visuals on this screen */
-   template.screen = scrnum;
+   theTemplate.screen = scrnum;
    mask = VisualScreenMask;
-   visuals = XGetVisualInfo(dpy, mask, &template, &numVisuals);
+   visuals = XGetVisualInfo(dpy, mask, &theTemplate, &numVisuals);
 
    /* init bestVis with first visual info */
    get_visual_attribs(dpy, &visuals[0], &bestVis);
@@ -619,6 +706,20 @@ find_best_visual(Display *dpy, int scrnum)
 }
 
 
+static void
+usage(void)
+{
+   printf("Usage: glxinfo [-v] [-t] [-h] [-i] [-b] [-display <dname>]\n");
+   printf("\t-v: Print visuals info in verbose form.\n");
+   printf("\t-t: Print verbose table.\n");
+   printf("\t-display <dname>: Print GLX visuals on specified server.\n");
+   printf("\t-h: This information.\n");
+   printf("\t-i: Force an indirect rendering context.\n");
+   printf("\t-b: Find the 'best' visual and print it's number.\n");
+   printf("\t-l: Print interesting OpenGL limits.\n");
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -627,6 +728,8 @@ main(int argc, char *argv[])
    int numScreens, scrnum;
    InfoMode mode = Normal;
    GLboolean findBest = GL_FALSE;
+   GLboolean limits = GL_FALSE;
+   Bool allowDirect = True;
    int i;
 
    for (i = 1; i < argc; i++) {
@@ -643,10 +746,20 @@ main(int argc, char *argv[])
       else if (strcmp(argv[i], "-b") == 0) {
          findBest = GL_TRUE;
       }
+      else if (strcmp(argv[i], "-i") == 0) {
+         allowDirect = False;
+      }
+      else if (strcmp(argv[i], "-l") == 0) {
+         limits = GL_TRUE;
+      }
+      else if (strcmp(argv[i], "-h") == 0) {
+         usage();
+         return 0;
+      }
       else {
-         fprintf(stderr, "Usage: %s [-t] [-v] [-b] [-display <display>]\n",
-                 argv[0]);
-         return -1;
+         printf("Unknown option `%s'\n", argv[i]);
+         usage();
+         return 0;
       }
    }
 
@@ -667,7 +780,7 @@ main(int argc, char *argv[])
       print_display_info(dpy);
       for (scrnum = 0; scrnum < numScreens; scrnum++) {
          mesa_hack(dpy, scrnum);
-         print_screen_info(dpy, scrnum);
+         print_screen_info(dpy, scrnum, allowDirect, limits);
          printf("\n");
          print_visual_info(dpy, scrnum, mode);
          if (scrnum + 1 < numScreens)

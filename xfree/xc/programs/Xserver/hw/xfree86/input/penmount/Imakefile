@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/penmount/Imakefile,v 1.2 2001/01/24 00:06:38 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/input/penmount/Imakefile,v 1.3 2002/10/16 01:47:02 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -8,7 +8,7 @@ OBJS = xf86PM.o
 
 DRIVER = penmount
 
-INCLUDES = -I. -I$(XF86COMSRC) -I../../loader -I$(XF86OSSRC) \
+INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86SRC)/loader -I$(XF86OSSRC) \
 			-I$(SERVERSRC)/include -I$(XINCLUDESRC) -I$(EXTINCSRC)
 
 #if MakeHasPosixVariableSubstitutions

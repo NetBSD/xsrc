@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_diag.c,v 3.7 2000/04/05 18:13:52 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/os2/os2_diag.c,v 3.8 2002/05/31 18:46:01 dawes Exp $ */
 /*
  * (c) Copyright 1997 by Holger Veit
  *			<Holger.Veit@gmd.de>
@@ -32,6 +32,7 @@
  * to avoid the numerous questions why this or that does not work
  */
 
+#define I_NEED_OS2_H
 #include "X.h"
 #include "Xmd.h"
 #include "input.h"
@@ -39,7 +40,6 @@
 
 #include "compiler.h"
 
-#define I_NEED_OS2_H
 #define INCL_DOSFILEMGR
 #define INCL_KBD
 #define INCL_VIO

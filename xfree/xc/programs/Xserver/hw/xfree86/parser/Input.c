@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Input.c,v 1.10 2001/08/06 20:51:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/Input.c,v 1.13 2003/01/04 20:20:22 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -137,23 +137,23 @@ xf86freeInputList (XF86ConfInputPtr ptr)
 int
 xf86validateInput (XF86ConfigPtr p)
 {
-  XF86ConfInputPtr input = p->conf_input_lst;
+	XF86ConfInputPtr input = p->conf_input_lst;
 
 #if 0 /* Enable this later */
-  if (!input) {
-    xf86validationError ("At least one InputDevice section is required.");
-    return (FALSE);
-  }
+	if (!input) {
+		xf86validationError ("At least one InputDevice section is required.");
+		return (FALSE);
+	}
 #endif
 
-  while (input) {
-    if (!input->inp_driver) {
-      xf86validationError (UNDEFINED_INPUTDRIVER_MSG, input->inp_identifier);
-      return (FALSE);
-    }
-  input = input->list.next;
-  }
-  return (TRUE);
+	while (input) {
+		if (!input->inp_driver) {
+			xf86validationError (UNDEFINED_INPUTDRIVER_MSG, input->inp_identifier);
+			return (FALSE);
+		}
+		input = input->list.next;
+	}
+	return (TRUE);
 }
 
 XF86ConfInputPtr

@@ -1,7 +1,6 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/drv/ffb/Imakefile,v 1.12 2001/05/10 16:56:10 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/ffb/Imakefile,v 1.17 2002/11/25 14:04:50 eich Exp $
 
 #include <Threads.tmpl>
-
 
 #if GlxUseBuiltInDRIDriver
 #define DoNormalLib (NormalLibGlx || SharedLibGlxWithoutPIC)
@@ -19,36 +18,62 @@ XCOMM $XFree86: xc/lib/GL/mesa/src/drv/ffb/Imakefile,v 1.12 2001/05/10 16:56:10 
 
 #include "../common/Imakefile.inc"
 #include "Imakefile.inc"
+#include "../../array_cache/Imakefile.inc"
+#include "../../math/Imakefile.inc"
+#include "../../swrast/Imakefile.inc"
+#include "../../swrast_setup/Imakefile.inc"
+#include "../../tnl/Imakefile.inc"
+#include "../../tnl_dd/Imakefile.inc"
 #include "../../Imakefile.inc"
-#ifdef i386Architecture
+#if defined(i386Architecture) && MesaUseX86Asm
 #include "../../X86/Imakefile.inc"
+#endif
+#ifdef SparcArchitecture
+#include "../../SPARC/Imakefile.inc"
 #endif
 
       DEFINES = $(ALLOC_DEFINES) $(DRI_DEFINES) $(MESA_ASM_DEFINES)
-     INCLUDES = $(X_INCLUDES) $(MESA_INCLUDES) $(DRI_INCLUDES)
+     INCLUDES = $(X_INCLUDES) $(MESA_INCLUDES) $(DRI_INCLUDES) \
+		-I$(XF86DRIVERSRC)/sunffb
 
-      DRIOBJS = $(GLXLIBSRC)/mesa/dri/dri_mesa.o \
-		$(GLXLIBSRC)/dri/dri_tmm.o
+      DRIOBJS = $(GLXLIBSRC)/dri/dri_util.o
 
       DRMOBJS = $(GLXLIBSRC)/dri/drm/xf86drm.o \
 		$(GLXLIBSRC)/dri/drm/xf86drmHash.o \
 		$(GLXLIBSRC)/dri/drm/xf86drmRandom.o \
 		$(GLXLIBSRC)/dri/drm/xf86drmSL.o
 
-	 SRCS = $(FFBSRCS)
-	 OBJS = $(FFBOBJS) $(DRIOBJS) $(DRMOBJS) $(COREMESAOBJS)
+#ifdef GlxSoProf
+       LOSRCS = ../../../../lowpc.c
+       HISRCS = ../../../../highpc.c
 
-REQUIREDLIBS = MathLibrary $(LDPRELIB) $(GLXLIB)
+       LOOBJS = ../../../../lowpc.o
+       HIOBJS = ../../../../highpc.o
+#endif
+
+         SRCS = $(FFBSRCS)
+         OBJS = $(LOOBJS) $(DRIOBJS) $(DRMOBJS) $(COREMESAOBJS) \
+		$(MESA_ASM_OBJS) $(COMMONOBJS) $(FFBOBJS) $(HIOBJS)
+
+REQUIREDLIBS = MathLibrary $(LDPRELIB) $(GLXLIB) $(XONLYLIB)
 
 #include <Library.tmpl>
 
-SubdirLibraryRule($(OBJS))
+LibraryObjectRule()
+
+SubdirLibraryRule($(FFBOBJS))
 NormalLintTarget($(SRCS))
 
 #if !GlxUseBuiltInDRIDriver
 LIBNAME = ffb_dri.so
 SharedDriModuleTarget($(LIBNAME),DONE $(OBJS),$(OBJS))
 InstallDynamicModule($(LIBNAME),$(MODULEDIR),dri)
+
+#ifdef GlxSoProf
+SOPROF_LIBNAME = _ffb_dri_p
+NormalDepLibraryTarget($(SOPROF_LIBNAME),DONE $(OBJS),$(OBJS))
+InstallLibrary($(SOPROF_LIBNAME),$(MODULEDIR)/dri)
+#endif
 #endif
 
 DependTarget()

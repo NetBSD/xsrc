@@ -19,20 +19,22 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/* $XFree86: xc/programs/luit/iso2022.c,v 1.3 2001/12/19 21:29:02 dawes Exp $ */
+/* $XFree86: xc/programs/luit/iso2022.c,v 1.9 2002/12/08 20:19:49 dickey Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
-
+#include <X11/fonts/fontenc.h>
 #include "luit.h"
+#include "sys.h"
+#include "other.h"
 #include "charset.h"
 #include "iso2022.h"
-#include "sys.h"
 
 #define BUFFERED_INPUT_SIZE 4
 unsigned char buffered_input[BUFFERED_INPUT_SIZE];
@@ -177,12 +179,12 @@ allocIso2022(void)
     if(!is)
         return NULL;
     is->glp = is->grp = NULL;
-    G0(is) = G1(is) = G2(is) = G3(is) = NULL;
+    G0(is) = G1(is) = G2(is) = G3(is) = OTHER(is) = NULL;
 
     is->parserState = P_NORMAL;
     is->shiftState = S_NORMAL;
 
-    is->inputFlags = IF_EIGHTBIT | IF_SS;
+    is->inputFlags = IF_EIGHTBIT | IF_SS | IF_SSGR;
     is->outputFlags = OF_SS | OF_LS | OF_SELECT;
 
     is->buffered = NULL;
@@ -196,6 +198,7 @@ allocIso2022(void)
         free(is);
         return NULL;
     }
+    is->outbuf_count = 0;
 
     return is;
 }
@@ -228,6 +231,10 @@ identifyCharset(Iso2022Ptr i, CharsetPtr *p)
 void
 reportIso2022(Iso2022Ptr i)
 {
+    if(OTHER(i) != NULL) {
+        fprintf(stderr, "%s, non-ISO-2022 encoding.\n", OTHER(i)->name);
+        return;
+    }
     fprintf(stderr, "G0 is %s, ", G0(i)->name);
     fprintf(stderr, "G1 is %s, ", G1(i)->name);
     fprintf(stderr, "G2 is %s, ", G2(i)->name);
@@ -237,16 +244,21 @@ reportIso2022(Iso2022Ptr i)
 }
 
 int
-initIso2022(char *locale, Iso2022Ptr i)
+initIso2022(char *locale, char *charset, Iso2022Ptr i)
 {
     int gl = 0, gr = 2;
-    CharsetPtr g0 = NULL, g1 = NULL, g2 = NULL, g3 = NULL;
+    CharsetPtr g0 = NULL, g1 = NULL, g2 = NULL, g3 = NULL, other = NULL;
     int rc;
     
-    rc = getLocaleState(locale, &gl, &gr, &g0, &g1, &g2, &g3);
-    if(rc < 0)
-        ErrorF("Warning: couldn't find charset data for locale %s; "
-               "using ISO 8859-1.\n", locale);
+    rc = getLocaleState(locale, charset, &gl, &gr, &g0, &g1, &g2, &g3, &other);
+    if(rc < 0) {
+        if(charset)
+            ErrorF("Warning: couldn't find charset %s; "
+                   "using ISO 8859-1.\n", charset);
+        else
+            ErrorF("Warning: couldn't find charset data for locale %s; "
+                   "using ISO 8859-1.\n", locale);
+    }
 
     if(g0)
         G0(i) = g0;
@@ -268,6 +280,11 @@ initIso2022(char *locale, Iso2022Ptr i)
     else
         G3(i) = getUnknownCharset(T_94);
 
+    if(other)
+        OTHER(i) = other;
+    else
+        OTHER(i) = NULL;
+
     i->glp = &i->g[gl];
     i->grp = &i->g[gr];
     return 0;
@@ -284,6 +301,8 @@ mergeIso2022(Iso2022Ptr d, Iso2022Ptr s)
         G2(d) = G2(s);
     if(G3(d) == NULL)
         G3(d) = G3(s);
+    if(OTHER(d) == NULL)
+        OTHER(d) = OTHER(s);
     if(d->glp == NULL)
         d->glp = &(d->g[identifyCharset(s, s->glp)]);
     if(d->grp == NULL)
@@ -291,7 +310,7 @@ mergeIso2022(Iso2022Ptr d, Iso2022Ptr s)
     return 0;
 }
 
-int
+static int
 utf8Count(unsigned char c)
 {
     /* All return values must be less than BUFFERED_INPUT_SIZE */
@@ -403,6 +422,14 @@ copyIn(Iso2022Ptr is, int fd, unsigned char *buf, int count)
 #define WRITE_2(i) do \
       {obuf[0]=((i)>>8)&0xFF; obuf[1]=(i)&0xFF; write(fd, obuf, 2);} \
     while(0)
+#define WRITE_3(i) do \
+      {obuf[0]=((i)>>16)&0xFF; obuf[1]=((i)>>8)&0xFF; obuf[2]=(i)&0xFF; \
+       write(fd, obuf, 3);} \
+    while(0)
+#define WRITE_4(i) do \
+      {obuf[0]=((i)>>24)&0xFF; obuf[1]=((i)>>16)&0xFF; obuf[2]=((i)>>8)&0xFF; \
+       obuf[3]=(i)&0xFF; write(fd, obuf, 4);} \
+    while(0)
 #define WRITE_1_P_8bit(p, i) \
     {obuf[0]=(p); obuf[1]=(i); write(fd, obuf, 2);}
 #define WRITE_1_P_7bit(p, i) \
@@ -431,9 +458,18 @@ copyIn(Iso2022Ptr is, int fd, unsigned char *buf, int count)
     while(0)
 
             if(codepoint < 0x20 ||
-               (CHARSET_REGULAR(GR(is)) &&
+               (OTHER(is) == NULL && CHARSET_REGULAR(GR(is)) &&
                 (codepoint >= 0x80 && codepoint < 0xA0))) {
                 WRITE_1(codepoint);
+                continue;
+            }
+            if(OTHER(is) != NULL) {
+                unsigned int c;
+                c = OTHER(is)->other_reverse(codepoint, OTHER(is)->other_aux);
+                if(c>>24) WRITE_4(c);
+                else if (c>>16) WRITE_3(c);
+                else if (c>>8) WRITE_2(c);
+                else if (c) WRITE_1(c);
                 continue;
             }
             i = (GL(is)->reverse)(codepoint, GL(is));
@@ -452,7 +488,7 @@ copyIn(Iso2022Ptr is, int fd, unsigned char *buf, int count)
                 }
                 continue;
             }
-            if(is->inputFlags & IF_EIGHTBIT)  {
+            if(is->inputFlags & IF_EIGHTBIT) {
                 i = GR(is)->reverse(codepoint, GR(is));
                 if(i >= 0) {
                     switch(GR(is)->type) {
@@ -477,12 +513,28 @@ copyIn(Iso2022Ptr is, int fd, unsigned char *buf, int count)
                 if(i >= 0) {
                     switch(GR(is)->type) {
                     case T_94: case T_96: case T_128:
-                        if(i >= 0x20)
+                        if(i >= 0x20) {
+                            if((is->inputFlags & IF_EIGHTBIT) &&
+                               (is->inputFlags & IF_SSGR))
+                                i |= 0x80;
                             WRITE_1_P(SS2, i);
+                        }
                         break;
-                    case T_9494: case T_9696: case T_94192:
-                        if(i >= 0x2020)
+                    case T_9494: case T_9696:
+                        if(i >= 0x2020) {
+                            if((is->inputFlags & IF_EIGHTBIT) &&
+                               (is->inputFlags & IF_SSGR))
+                                i |= 0x8080;
                             WRITE_2_P(SS2, i);
+                        }
+                        break;
+                    case T_94192:
+                        if(i >= 0x2020) {
+                            if((is->inputFlags & IF_EIGHTBIT) &&
+                               (is->inputFlags & IF_SSGR))
+                                i |= 0x8000;
+                            WRITE_2_P(SS2, i);
+                        }
                         break;
                     default:
                         abort();
@@ -492,21 +544,35 @@ copyIn(Iso2022Ptr is, int fd, unsigned char *buf, int count)
             }
             if(is->inputFlags & IF_SS) {
                 i = G3(is)->reverse(codepoint, G3(is));
-                if(i > 0) {
                     switch(GR(is)->type) {
                     case T_94: case T_96: case T_128:
-                        if(i >= 0x20)
+                        if(i >= 0x20) {
+                            if((is->inputFlags & IF_EIGHTBIT) &&
+                               (is->inputFlags & IF_SSGR))
+                                i |= 0x80;
                             WRITE_1_P(SS3, i);
+                        }
                         break;
-                    case T_9494: case T_9696: case T_94192:
-                        if(i >= 0x2020)
+                    case T_9494: case T_9696:
+                        if(i >= 0x2020) {
+                            if((is->inputFlags & IF_EIGHTBIT) &&
+                               (is->inputFlags & IF_SSGR))
+                                i |= 0x8080;
                             WRITE_2_P(SS3, i);
+                        }
+                        break;
+                    case T_94192:
+                        if(i >= 0x2020) {
+                            if((is->inputFlags & IF_EIGHTBIT) &&
+                               (is->inputFlags & IF_SSGR))
+                                i |= 0x8000;
+                            WRITE_2_P(SS3, i);
+                        }
                         break;
                     default:
                         abort();
                     }
                     continue;
-                }
             }
             if(is->inputFlags & IF_LS)  {
                 i = GR(is)->reverse(codepoint, GR(is));
@@ -555,6 +621,13 @@ copyOut(Iso2022Ptr is, int fd, unsigned char *buf, int count)
                 if(*s == ESC) {
                     buffer(is, *s++);
                     is->parserState = P_ESC;
+                } else if(OTHER(is) != NULL) {
+                    int c = OTHER(is)->other_stack(*s, OTHER(is)->other_aux);
+                    if(c >= 0) {
+                        outbufUTF8(is, fd, OTHER(is)->other_recode(c, OTHER(is)->other_aux));
+                        is->shiftState = S_NORMAL;
+                    }
+                    s++;
                 } else if(*s == CSI && CHARSET_REGULAR(GR(is))) {
                     buffer(is, *s++);
                     is->parserState = P_CSI;
@@ -569,7 +642,7 @@ copyOut(Iso2022Ptr is, int fd, unsigned char *buf, int count)
                     s++;
                 } else {
                     CharsetPtr charset;
-                    unsigned char code;
+                    unsigned char code = 0;
                     if(*s <= 0x7F) {
                         switch(is->shiftState) {
                         case S_NORMAL: charset = GL(is); break;
@@ -579,7 +652,12 @@ copyOut(Iso2022Ptr is, int fd, unsigned char *buf, int count)
                         }
                         code = *s;
                     } else {
-                        charset = GR(is);
+                        switch(is->shiftState) {
+                        case S_NORMAL: charset = GR(is); break;
+                        case S_SS2: charset = G2(is); break;
+                        case S_SS3: charset = G3(is); break;
+                        default: abort();
+                        }
                         code = *s - 0x80;
                     }
 
@@ -614,7 +692,7 @@ copyOut(Iso2022Ptr is, int fd, unsigned char *buf, int count)
             } else {        /* buffered_ku */
                 CharsetPtr charset;
                 unsigned char ku_code;
-                int code;
+                unsigned code = 0;
                 if(is->buffered_ku <= 0x7F) {
                     switch(is->shiftState) {
                     case S_NORMAL: charset = GL(is); break;
@@ -625,15 +703,16 @@ copyOut(Iso2022Ptr is, int fd, unsigned char *buf, int count)
                     ku_code = is->buffered_ku;
                     if(*s < 0x80)
                         code = *s;
-                    else
-                        code = -1;
                 } else {
-                    charset = GR(is);
+                    switch(is->shiftState) {
+                    case S_NORMAL: charset = GR(is); break;
+                    case S_SS2: charset = G2(is); break;
+                    case S_SS3: charset = G3(is); break;
+                    default: abort();
+                    }
                     ku_code = is->buffered_ku - 0x80;
                     if(*s >= 0x80)
                         code = *s - 0x80;
-                    else
-                        code = -1;
                 }
                 switch(charset->type) {
                 case T_94:

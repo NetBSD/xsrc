@@ -26,7 +26,7 @@
  * this work is sponsored by Appian Graphics.
  * 
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_dac.c,v 1.30 2001/12/10 21:11:00 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm3_dac.c,v 1.33 2002/07/19 15:33:45 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -128,35 +128,116 @@ Permedia3MemorySizeDetect(ScrnInfoPtr pScrn)
 static unsigned long
 PM3DAC_CalculateClock
 (
- unsigned long reqclock,		/* In kHz units */
- unsigned long refclock,		/* In kHz units */
+ unsigned long ReqClock,		/* In kHz units */
+ unsigned long RefClock,		/* In kHz units */
  unsigned char *prescale,		/* ClkPreScale */
- unsigned char *feedback, 		/* ClkFeedBackScale */
+ unsigned char *feedback,		/* ClkFeedBackScale */
  unsigned char *postscale		/* ClkPostScale */
  )
 {
-    int			f, pre, post;
-    unsigned long	freq;
-    long		freqerr = 1000;
-    unsigned long  	actualclock = 0;
+  unsigned long fMinVCO = 2000000; /* min fVCO is 200MHz (in 100Hz units) */
+  unsigned long fMaxVCO = 6220000; /* max fVCO is 622MHz (in 100Hz units) */
+  unsigned long fMinINTREF = 10000;/* min fINTREF is 1MHz (in 100Hz units) */
+  unsigned long fMaxINTREF = 20000;/* max fINTREF is 2MHz (in 100Hz units) */
+  unsigned long	M, N, P; /* M=feedback, N=prescale, P=postscale */
+  unsigned long	fINTREF;
+  unsigned long	fVCO;
+  unsigned long	ActualClock;
+  long		Error;
+  unsigned long LowestError = 1000000;
+  unsigned int	bFoundFreq = FALSE;
+  int		cInnerLoopIterations = 0;
+  int		LoopCount;
+  unsigned long	ClosestClock = 0;
 
-    for (f=1;f<256;f++) {
-	for (pre=1;pre<256;pre++) {
-	    for (post=0;post<5;post++) { 
-	    	freq = ((2* refclock * f) / (pre * (1 << post)));
-		if ((reqclock > freq - freqerr)&&(reqclock < freq + freqerr)){
-		    freqerr = (reqclock > freq) ? 
-			reqclock - freq : freq - reqclock;
-		    *feedback = f;
-		    *prescale = pre;
-		    *postscale = post;
-		    actualclock = freq;
+  ReqClock*=10; /* convert into 100Hz units */
+  RefClock*=10; /* convert into 100Hz units */
+
+  for(P = 0; P <= 5; ++P)
+    {
+      unsigned long fVCOLowest, fVCOHighest;
+
+      /* it is pointless going through the main loop if all values of
+         N produce an fVCO outside the acceptable range */
+      N = 1;
+      M = (N * (1UL << P) * ReqClock) / (2 * RefClock);
+      fVCOLowest = (2 * RefClock * M) / N;
+      N = 255;
+      M = (N * (1UL << P) * ReqClock) / (2 * RefClock);
+      fVCOHighest = (2 * RefClock * M) / N;
+
+      if(fVCOHighest < fMinVCO || fVCOLowest > fMaxVCO)
+	{
+	  continue;
+	}
+
+      for(N = 1; N <= 255; ++N, ++cInnerLoopIterations)
+	{
+	  fINTREF = RefClock / N;
+	  if(fINTREF < fMinINTREF || fINTREF > fMaxINTREF)
+	    {
+	      if(fINTREF > fMaxINTREF)
+		{
+		  /* hopefully we will get into range as the prescale
+		     value increases */
+		  continue;
+		}
+	      else
+		{
+		  /* already below minimum and it will only get worse:
+		     move to the next postscale value */
+		  break;
+		}
+	    }
+
+	  M = (N * (1UL << P) * ReqClock) / (2 * RefClock);
+	  if(M > 255)
+	    {
+	      /* M, N & P registers are only 8 bits wide */
+	      break;
+	    }
+
+	  /* we can expect rounding errors in calculating M, which
+	     will always be rounded down. So we will checkout our
+	     calculated value of M along with (M+1) */
+	  for(LoopCount = (M == 255) ? 1 : 2; --LoopCount >= 0; ++M)
+	    {
+	      fVCO = (2 * RefClock * M) / N;
+	      if(fVCO >= fMinVCO && fVCO <= fMaxVCO)
+		{
+		  ActualClock = fVCO / (1UL << P);
+		  Error = ActualClock - ReqClock;
+		  if(Error < 0)
+		    Error = -Error;
+		  if(Error < LowestError)
+		    {
+		      bFoundFreq = TRUE;
+		      LowestError = Error;
+		      ClosestClock = ActualClock;
+		      *prescale = N;
+		      *feedback = M;
+		      *postscale = P;
+		      if(Error == 0)
+			goto Done;
+		    }
 		}
 	    }
 	}
     }
 
-    return(actualclock);
+Done:
+	
+  if(bFoundFreq)
+    ActualClock = ClosestClock;
+  else
+    ActualClock = 0;
+	
+#if 0
+  ErrorF("PM3DAC_CalculateClock: Got prescale=%d, feedback=%d, postscale=%d, WantedClock = %d00 ActualClock = %d00 (Error %d00)\n",
+	 *prescale, *feedback, *postscale, ReqClock, ActualClock, LowestError);
+#endif
+
+    return(ActualClock);
 }
 
 static unsigned long
@@ -439,7 +520,7 @@ Permedia3Init(ScrnInfoPtr pScrn, DisplayModePtr mode, GLINTRegPtr pReg)
 	    STOREREG(PM3ByAperture1Mode, PM3ByApertureMode_PIXELSIZE_32BIT);
 	    STOREREG(PM3ByAperture2Mode, PM3ByApertureMode_PIXELSIZE_32BIT);
 #else
-	    STOREREG(PM3ByAperture2Mode, PM3ByApertureMode_PIXELSIZE_32BIT |
+	    STOREREG(PM3ByAperture1Mode, PM3ByApertureMode_PIXELSIZE_32BIT |
 					 PM3ByApertureMode_BYTESWAP_DCBA);
 	    STOREREG(PM3ByAperture2Mode, PM3ByApertureMode_PIXELSIZE_32BIT |
 					 PM3ByApertureMode_BYTESWAP_DCBA);
@@ -692,7 +773,9 @@ void Permedia3LoadPalette(
     LOCO *colors,
     VisualPtr pVisual
 ){
+#if 0
     GLINTPtr pGlint = GLINTPTR(pScrn);
+#endif
     int i, index, shift = 0, j, repeat = 1;
 
     if (pScrn->depth == 15) {
@@ -708,11 +791,13 @@ void Permedia3LoadPalette(
 	    Permedia2WriteData(pScrn, colors[index].green);
 	    Permedia2WriteData(pScrn, colors[index].blue);
 	}
+#if 0
         GLINT_SLOW_WRITE_REG(index, PM3LUTIndex);
 	GLINT_SLOW_WRITE_REG((colors[index].red & 0xFF) |
 			     ((colors[index].green & 0xFF) << 8) |
 			     ((colors[index].blue & 0xFF) << 16),
 			     PM3LUTData);
+#endif
     }
 }
 
@@ -724,7 +809,9 @@ void Permedia3LoadPalette16(
     LOCO *colors,
     VisualPtr pVisual
 ){
+#if 0
     GLINTPtr pGlint = GLINTPTR(pScrn);
+#endif
     int i, index, j;
 
     for(i = 0; i < numColors; i++) {
@@ -735,11 +822,13 @@ void Permedia3LoadPalette16(
 	    Permedia2WriteData(pScrn, colors[index].green);
 	    Permedia2WriteData(pScrn, colors[index >> 1].blue);
 	}
+#if 0
         GLINT_SLOW_WRITE_REG(index, PM3LUTIndex);
 	GLINT_SLOW_WRITE_REG((colors[index].red & 0xFF) |
 			     ((colors[index].green & 0xFF) << 8) |
 			     ((colors[index].blue & 0xFF) << 16),
 			     PM3LUTData);
+#endif
 
 	if(index <= 31) {
 	    for (j = 0; j < 4; j++) {

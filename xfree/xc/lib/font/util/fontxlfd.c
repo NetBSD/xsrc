@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/util/fontxlfd.c,v 3.13 2001/12/14 19:56:56 dawes Exp $ */
+/* $XFree86: xc/lib/font/util/fontxlfd.c,v 3.15 2002/05/31 18:45:50 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -196,8 +196,9 @@ xlfd_round_double(double x)
 #if defined(i386) || defined(__i386__) || \
     defined(ia64) || defined(__ia64__) || \
     defined(__alpha__) || defined(__alpha) || \
-    defined(__hppa__)
-#if !defined(__EMX__)
+    defined(__hppa__) || \
+    defined(__x86_64__) || defined(__x86_64)
+#if !defined(__UNIXOS2__)
 #include <float.h>
 
 /* if we have IEEE 754 fp, we can round to binary digits... */
@@ -258,7 +259,7 @@ xlfd_round_double(double x)
    }
    else 
 #endif
-#endif /* !__EMX__ */
+#endif /* !__UNIXOS2__ */
 #endif /* i386 || __i386__ */
     {
 	/*

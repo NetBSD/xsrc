@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/record/module/Imakefile,v 1.1 2000/04/05 18:14:03 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/record/module/Imakefile,v 1.2 2002/09/17 01:15:14 dawes Exp $
 XCOMM
 XCOMM
 XCOMM $XConsortium: Imakefile /main/3 1996/09/28 17:15:43 rws $
@@ -13,7 +13,8 @@ XCOMM $XConsortium: Imakefile /main/3 1996/09/28 17:15:43 rws $
 
        SRCS = record.c set.c $(MSRCS)
        OBJS = record.o set.o $(MOBJS)
-   INCLUDES = -I.. -I../../include -I$(XINCLUDESRC) -I$(EXTINCSRC)
+   INCLUDES = -I.. -I../../include -I$(XINCLUDESRC) -I$(EXTINCSRC) \
+	-I$(SERVERSRC)/Xext
    LINTLIBS = ../../dix/llib-ldix.ln
     DEFINES = -DNDEBUG
 

@@ -6,10 +6,10 @@
 <title>README for XFree86 &relvers; on OpenBSD
 <author>
 Matthieu Herrb
-<Date>Last modified on: 16 January 2002
+<Date>Last modified on: 9 November 2002
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.24 2002/01/16 22:35:17 herrb Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.30 2003/02/25 19:31:01 dawes Exp $
 </ident>
 
 <toc>
@@ -18,18 +18,20 @@ $XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OpenBSD.sgml,v 1.24 2002/01/16
 <sect>What and Where is XFree86?
 
 <p>
-XFree86 is the Open Source port of X.Org's X11R6.6 release that supports
-several UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86)
-operating systems on Intel and other platforms.
+XFree86 is an Open Source version of the X Window System that supports
+several UNIX(R) and UNIX-like operating systems (such as Linux, the BSDs
+and Solaris x86) on Intel and other platforms.  This version is compatible
+with X11R6.6.
 
 See the <htmlurl url="COPYRIGHT.html" name="Copyright Notice">.
 
+<![ %notsnapshot [
 The sources for XFree86 &relvers; are available by anonymous ftp from:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/&relvers;"
 url="ftp://ftp.XFree86.org/pub/XFree86/&relvers;">
 
-Binaries for OpenBSD/i386 3.0 and later are available from:
+Binaries for OpenBSD/i386 3.2 and later are available from:
 
 <htmlurl name="ftp://ftp.XFree86.org/pub/XFree86/&relvers;/binaries/OpenBSD"
 url="ftp://ftp.XFree86.org/pub/XFree86/&relvers;/binaries/OpenBSD">
@@ -37,6 +39,7 @@ url="ftp://ftp.XFree86.org/pub/XFree86/&relvers;/binaries/OpenBSD">
 A list of mirror sites is provided by
 <htmlurl name="http://www.xfree86.org/MIRRORS.shtml"
 url="http://www.xfree86.org/MIRRORS.shtml">
+]]>
 
 <p>
 
@@ -56,11 +59,17 @@ this file and we'll revise it.
 See the <htmlurl url="RELNOTES.html" name="Release Notes"> for
 non-OS dependent new features in XFree86 &relvers;.
 
+<sect1>New OS related features in 4.3
+<p>
+<itemize>
+<item>Support for some VGA cards on OpenBSD/alpha
+</itemize>
+
 <sect1>New OS dependent features in 4.2
 <p>
 <itemize>
 <item>Support for OpenBSD/macppc on the ATI Rage128 based
-Power Macintosh. 
+Power Macintoshes. 
 <item>Support for building clients on OpenBSD/sparc64.
 </itemize>
 
@@ -149,7 +158,7 @@ which can be used as a starting point.
 
 
 For details about the <tt/XF86Config/ file format, refer to the
-<em>XF86Config(5)</em> manual page.
+<em><htmlurl name="XF86Config(5)" url="XF86Config.5.html"></em> manual page.
 
 Once you've set up a XF86Config file, you can fine tune the video
 modes with the <tt>xvidtune</tt> utility. 
@@ -211,7 +220,6 @@ To make sure X support is enabled under  OpenBSD, the following
 line must be in your config file in <tt>/sys/arch/i386/conf</tt>:
 
 <tscreen>
- option XSERVER
  option APERTURE
 </tscreen>
 
@@ -267,62 +275,12 @@ OpenBSD supports System V shared memory. If XFree86
 detects this support in your kernel, it will support the MIT-SHM
 extension.
 
-To add support for system V shared memory to your kernel add the
-lines:
-
-<tscreen><verb>
- # System V-like IPC
- options         SYSVMSG
- options         SYSVSEM
- options         SYSVSHM
-</verb></tscreen>
- 
-to your kernel config file. 
-
 <sect> Rebuilding the XFree86 Distribution
 
 You should configure the distribution by editing
 <tt>xc/config/cf/host.def</tt>  before compiling.  To compile the
 sources, invoke ``<tt/make World/'' in the xc directory.
 
-<sect1>Console drivers<label id="console-drivers">
-
-<p>
-XFree86 has a configuration option to select the console
-drivers to use in <tt/host.def/:
-<itemize>
-<item> if you're using pccons only put:
-<tscreen><verb>
- #define XFree86ConsoleDefines -DPCCONS_SUPPORT
-</verb></tscreen>
-<item>if you're using pcvt only put:
-<tscreen><verb>
- #define XFree86ConsoleDefines -DPCVT_SUPPORT
-</verb></tscreen>
-</itemize>
-If you don't define <bf/XFree86ConsoleDefines/ in <tt/host.def/ the
-pccons and pcvt drivers will be supported by default.
-
-<p>
-Native support for the wscons console driver found on
-OpenBSD/macppc and on OpenBSD/i386 2.9 and later is built
-by adding:
-<tscreen><verb>
- #define XFree86ConsoleDefines -DWSCONS_SUPPORT
-</verb></tscreen>
-to <tt>xc/config/host.def</tt> before rebuilding the server. 
-
-For the i386, you should include both pcvt and wscons support in order
-to use the pcvt compatibility mode of wscons:
-<tscreen><verb>
- #define XFree86ConsoleDefines -DPCVT_SUPPORT -DWSCONS_SUPPORT
-</verb></tscreen>
-
-
-<sect1>Building on other architectures<label id="otherarch">
-
-<p>
-XFree86  also compiles on other OpenBSD architectures. 
 
 <p> 
 Note that OpenBSD project now has its own source tree, based on
@@ -332,7 +290,29 @@ source tree is available by anoncvs from all OpenBSD anoncvs
 servers. See <htmlurl url="http://www.openbsd.org/anoncvs.html"
 name="http://www.openbsd.org/anoncvs.html"> for details on anoncvs.
 
-<sect2>XFree86 on OpenBSD/macppc
+<label id="otherarch">
+
+<p>
+XFree86  also compiles on other OpenBSD architectures. 
+<sect1>XFree86 on OpenBSD/alpha
+<p>
+The XFree86 server is known to work on some VGA cards in alpha
+machines that support BWX I/O, with OpenBSD 3.2 and higher. 
+<p>
+The following cards have been successfully tested for now:
+<itemize>
+<item>3DLabs Permedia 2 (8, 15, 16 and 24 bits depth) 
+<item>ATI Rage Pro (works with 'Option "NoAccel"')
+<item>Cirrus Logic CL5430 (works with 'Option "NoAccel"')
+<item>Cirrus Logic GD5446 (8, 16 and 24 bits depth)
+<item>Matrox MGA 2064 (8, 16 and 24 bits depth)
+</itemize>
+<p>
+Note that this version of XFree86 doesn't work on TGA cards. The
+version shipped with OpenBSD 3.1 and higher includes an OS-specific
+driver <em/wsfb/ that is used to support TGA cards. 
+
+<sect1>XFree86 on OpenBSD/macppc
 <p>
 The XFree86 server is currently known to work on the G4 Macs and new
 iBooks with ATI Rage 128 cards running OpenBSD 3.0 or later.
@@ -341,22 +321,26 @@ lack some kernel support for it.
 <p>
 Use xf86config to build a /etc/X11/XF86Config file before starting 
 the server for the first time. 
-<p> 
-Tou configure the keyboard, the protocol should be specified as
-<bf/wskbd/ and the device as <tt>/dev/wskbd0</tt>.
-Using a wsmux device as the keyboard device doesn't work (yet). Use 
-<bf/macintosh/ as XkbModel. 
 <p>
 For the Titanium Powerbook G4, you can try the following mode line in
 <tt>/etc/X11/XF86Config</tt> to match the flat panel resolution:
 
 <tscreen><verb>
-Modeline "1152x768" 78.741 1152 1173 1269 1440  768 769 772 800 +HSync +VSync
+Modeline "1152x768" 64.995 1152 1213 1349 1472  768 771 777 806 -HSync -VSync
 </verb></tscreen>
+
+<sect1>XFree86 on OpenBSD/sparc
 <p>
-You need to set <tt/securelevel/ to -1 in the
-<tt>/etc/rc.securelevel</tt> 
-configuration file to run XFree86 on OpenBSD/macppc. 
+OpenBSD 3.2 on sparc switched to the wscons device driver and now uses
+the OS specific <em/wsfb/ driver in the XFree86 server. This driver is
+not included in XFree86 4.3. Please use the version shipped with
+OpenBSD instead. 
+
+<sect1>XFree86 on OpenBSD/sparc64
+<p>
+This version of XFree68 only has support for X clients on
+OpenBSD/sparc64. Note that the version shipped with OpenBSD also has
+support for the X server on both SBus and PCI based machines. 
 
 
 <sect>Building New X Clients
@@ -372,8 +356,18 @@ pages you should update <tt/whatis.db/ by running ``<tt>makewhatis
 <sect> Thanks
 <p>
 Many thanks to all people who contributed to make XFree86 work on
-*BSD, in particular, <bf/David Dawes/,
-<bf/Pace Willison/, <bf/Amancio Hasty/, <bf/Christoph Robitschko/,
-<bf/Nate Williams/, <bf/Rod Grimes/, <bf/Jack Velte/ and <bf/Michael Smith/.
+*BSD, in particular:
+<bf/David Dawes/,
+<bf/Todd Fries/,
+<bf/Rod Grimes/,
+<bf/Charles Hannum/,
+<bf/Amancio Hasty/, 
+<bf/Christoph Robitschko/,
+<bf/Matthias Scheler/,
+<bf/Michael Smith/,
+<bf/Ignatios Souvatzis/,
+<bf/Jack Velte/,
+<bf/Nate Williams/ and
+<bf/Pace Willison/.
 
 </article>

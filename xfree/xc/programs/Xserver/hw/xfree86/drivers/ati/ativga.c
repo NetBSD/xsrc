@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/ativga.c,v 1.15 2002/01/16 16:22:28 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/ativga.c,v 1.19 2003/01/01 19:16:34 tsi Exp $ */
 /*
- * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -28,8 +28,6 @@
 #include "atistruct.h"
 #include "ativga.h"
 #include "ativgaio.h"
-
-#include "xf86.h"
 
 #ifndef DPMS_SERVER
 # define DPMS_SERVER
@@ -204,10 +202,24 @@ ATIVGACalculate
         Index = pMode->CrtcHBlankEnd - pMode->CrtcHBlankStart - 0x3F;
         if (Index > 0)
         {
-            pMode->CrtcHBlankStart += Index / 2;
-            if (pMode->CrtcHBlankStart >= pMode->CrtcHSyncStart)
-                pMode->CrtcHBlankStart = pMode->CrtcHSyncStart - 1;
-            pMode->CrtcHBlankEnd = pMode->CrtcHBlankStart + 0x3F;
+            if ((pMode->CrtcHBlankEnd - Index) > pMode->CrtcHSyncEnd)
+            {
+                pMode->CrtcHBlankStart += Index / 2;
+                if (pMode->CrtcHBlankStart >= pMode->CrtcHSyncStart)
+                    pMode->CrtcHBlankStart = pMode->CrtcHSyncStart - 1;
+                pMode->CrtcHBlankEnd = pMode->CrtcHBlankStart + 0x3F;
+            }
+            else
+            {
+                Index -= 0x40;
+                if (Index > 0)
+                {
+                    pMode->CrtcHBlankStart += Index / 2;
+                    if (pMode->CrtcHBlankStart >= pMode->CrtcHSyncStart)
+                        pMode->CrtcHBlankStart = pMode->CrtcHSyncStart - 1;
+                    pMode->CrtcHBlankEnd = pMode->CrtcHBlankStart + 0x7F;
+                }
+            }
         }
     }
 
@@ -258,7 +270,7 @@ ATIVGACalculate
     {
         pMode->Flags &= ~(V_PHSYNC | V_NHSYNC | V_PVSYNC | V_NVSYNC);
 
-        if (!pATI->OptionCRT && (pATI->LCDPanelID >= 0))
+        if (pATI->OptionPanelDisplay && (pATI->LCDPanelID >= 0))
             VDisplay = pATI->LCDVertical;
         else
             VDisplay = pMode->CrtcVDisplay;
@@ -328,13 +340,27 @@ ATIVGACalculate
     }
 
     /* Check blank pulse width */
-    Index = pMode->CrtcVBlankEnd - pMode->CrtcVBlankStart - 0x0FF;
+    Index = pMode->CrtcVBlankEnd - pMode->CrtcVBlankStart - 0x00FF;
     if (Index > 0)
     {
-        pMode->CrtcVBlankStart += Index / 2;
-        if (pMode->CrtcVBlankStart >= pMode->CrtcVSyncStart)
-            pMode->CrtcVBlankStart = pMode->CrtcVSyncStart - 1;
-        pMode->CrtcVBlankEnd = pMode->CrtcVBlankStart + 0x0FF;
+        if ((pMode->CrtcVBlankEnd - Index) > pMode->CrtcVSyncEnd)
+        {
+            pMode->CrtcVBlankStart += Index / 2;
+            if (pMode->CrtcVBlankStart >= pMode->CrtcVSyncStart)
+                pMode->CrtcVBlankStart = pMode->CrtcVSyncStart - 1;
+            pMode->CrtcVBlankEnd = pMode->CrtcVBlankStart + 0x00FF;
+        }
+        else
+        {
+            Index -= 0x0100;
+            if (Index > 0)
+            {
+                pMode->CrtcVBlankStart += Index / 2;
+                if (pMode->CrtcVBlankStart >= pMode->CrtcVSyncStart)
+                    pMode->CrtcVBlankStart = pMode->CrtcVSyncStart - 1;
+                pMode->CrtcVBlankEnd = pMode->CrtcVBlankStart + 0x01FF;
+            }
+        }
     }
 
     /* Set up sequencer register values */

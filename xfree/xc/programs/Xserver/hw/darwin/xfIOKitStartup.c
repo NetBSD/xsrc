@@ -3,9 +3,39 @@
  * Startup code for the IOKit Darwin X Server
  *
  **************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/darwin/xfIOKitStartup.c,v 1.7 2001/12/22 05:28:34 torrey Exp $ */
+/*
+ * Copyright (c) 2001-2002 Torrey T. Lyons. All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * Except as contained in this notice, the name(s) of the above copyright
+ * holders shall not be used in advertising or otherwise to promote the sale,
+ * use or other dealings in this Software without prior written authorization.
+ */
+/* $XFree86: xc/programs/Xserver/hw/darwin/xfIOKitStartup.c,v 1.12 2003/01/15 02:34:04 torrey Exp $ */
 
-#include "bundle/quartz.h"
+#include "quartz/quartz.h"
+#include "micmap.h"
+
+void GlxExtensionInit(void);
+void GlxWrapInitVisuals(miInitVisualsProcPtr *procPtr);
+
 
 /*
  * DarwinHandleGUI
@@ -18,6 +48,28 @@ void DarwinHandleGUI(
     char        *envp[] )
 {
 }
+
+
+/*
+ * DarwinGlxExtensionInit
+ *  Initialize the GLX extension.
+ *  Mesa is linked into the IOKit mode X server so we just call directly.
+ */
+void DarwinGlxExtensionInit(void)
+{
+    GlxExtensionInit();
+}
+
+
+/*
+ * DarwinGlxWrapInitVisuals
+ */
+void DarwinGlxWrapInitVisuals(
+    miInitVisualsProcPtr *procPtr)
+{
+    GlxWrapInitVisuals(procPtr);
+}
+
 
 // The IOKit X server does not accept any Quartz command line options.
 int QuartzProcessArgument( int argc, char *argv[], int i )
@@ -34,6 +86,7 @@ int QuartzProcessArgument( int argc, char *argv[], int i )
     return 0;
 }
 
+
 // No Quartz support. All Quartz functions are no-ops.
 
 Bool QuartzAddScreen(int index, ScreenPtr pScreen) {
@@ -48,24 +101,16 @@ void QuartzInitOutput(int argc, char **argv) {
     FatalError("QuartzInitOutput called without Quartz support.\n");
 }
 
+void QuartzInitInput(int argc, char **argv) {
+    FatalError("QuartzInitInput called without Quartz support.\n");
+}
+
 void QuartzGiveUp(void) {
     return;	// no message, we are quitting anyway
 }
 
-void QuartzHide(void) {
-    FatalError("QuartzHide called without Quartz support.\n");
-}
-
-void QuartzShow(int x, int y) {
-    FatalError("QuartzShow called without Quartz support.\n");
-}
-
-void QuartzReadPasteboard(void) {
-    FatalError("QuartzReadPasteboard called without Quartz support.\n");
-}
-
-void QuartzWritePasteboard(void) {
-    FatalError("QuartzWritePasteboard called without Quartz support.\n");
+void QuartzProcessEvent(xEvent *xe) {
+    FatalError("QuartzProcessEvent called without Quartz support.\n");
 }
 
 void QuartzBell(void) {

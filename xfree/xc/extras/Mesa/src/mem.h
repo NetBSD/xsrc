@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.3
+ * Version:  4.0.2
  *
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,18 +22,40 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
+/* $XFree86: xc/extras/Mesa/src/mem.h,v 1.9 2003/01/12 03:55:44 tsi Exp $ */
 
 #ifndef MEM_H
 #define MEM_H
 
 
 #include "glheader.h"
-
+/* Do not reference mtypes.h from this file.
+ */
 
 /*
  * Memory allocation
  */
+#if defined(WIN32) && defined(_DEBUG)
+#include <malloc.h>  
+#ifndef _CRTDBG_MAP_ALLOC
+# define _CRTDBG_MAP_ALLOC 1
+#endif
+#include <crtdbg.h>
+
+#define _mesa_malloc(n)  _malloc_dbg( n, _NORMAL_BLOCK, __FILE__ , __LINE__ )
+#define _mesa_calloc(n)  _calloc_dbg( 1, n, _NORMAL_BLOCK, __FILE__ , __LINE__ )
+#define _mesa_free(p)    _free_dbg(p, _NORMAL_BLOCK )
+
+extern void *_mesa_align_malloc_dbg(size_t bytes, unsigned long alignment, const char *_file, int _line );
+extern void *_mesa_align_calloc_dbg(size_t bytes, unsigned long alignment, const char *_file, int _line );
+extern void _mesa_align_free_dbg(void *ptr, const char *_file, int _line);
+
+#define _mesa_align_malloc( s, a ) _mesa_align_malloc_dbg( s, a, __FILE__ , __LINE__ )
+#define _mesa_align_calloc( s, a ) _mesa_align_calloc_dbg( s, a, __FILE__ , __LINE__ )
+#define _mesa_align_free(p)        _mesa_align_free_dbg(p, __FILE__ , __LINE__)
+
+#else /* WIN32 && _DEBUG */
+
 extern void *_mesa_malloc(size_t bytes);
 extern void *_mesa_calloc(size_t bytes);
 extern void _mesa_free(void *ptr);
@@ -41,6 +63,8 @@ extern void _mesa_free(void *ptr);
 extern void *_mesa_align_malloc(size_t bytes, unsigned long alignment);
 extern void *_mesa_align_calloc(size_t bytes, unsigned long alignment);
 extern void _mesa_align_free(void *ptr);
+
+#endif /* WIN32 && _DEBUG */
 
 
 #ifdef DEBUG
@@ -71,6 +95,25 @@ extern void _mesa_align_free(void *ptr);
 #define ALIGN_FREE(PTR)            _mesa_align_free(PTR)
 
 
+#ifdef MESA_EXTERNAL_BUFFERALLOC
+/*
+ * If you want Mesa's depth/stencil/accum/etc buffers to be allocated
+ * with a specialized allocator you can define MESA_EXTERNAL_BUFFERALLOC
+ * and implement _ext_mesa_alloc/free_pixelbuffer() in your app.
+ * Contributed by Gerk Huisma (gerk@five-d.demon.nl).
+ */
+extern void *_ext_mesa_alloc_pixelbuffer( unsigned int size );
+extern void _ext_mesa_free_pixelbuffer( void *pb );
+
+#define MESA_PBUFFER_ALLOC(BYTES)  (void *) _ext_mesa_alloc_pixelbuffer(BYTES)
+#define MESA_PBUFFER_FREE(PTR)     _ext_mesa_free_pixelbuffer(PTR)
+#else
+/* Default buffer allocation uses the aligned allocation routines: */
+#define MESA_PBUFFER_ALLOC(BYTES)  (void *) _mesa_align_malloc(BYTES, 512)
+#define MESA_PBUFFER_FREE(PTR)     _mesa_align_free(PTR)
+#endif
+
+
 /* Memory copy: */
 #ifdef SUNOS4
 #define MEMCPY( DST, SRC, BYTES) \
@@ -90,6 +133,11 @@ extern void _mesa_align_free(void *ptr);
 	memset( (void *) (DST), (int) (VAL), (size_t) (N) )
 #endif
 
+extern void _mesa_memset16( GLushort *dst, GLushort val, size_t n );
+
+#define MEMSET16( DST, VAL, N ) \
+        _mesa_memset16( (GLushort *) (DST), (GLushort) (VAL), (size_t) (N) )
+
 
 /* On some systems we might want to use bzero() (but is bzero portable?) */
 #if defined(__FreeBSD__)
@@ -103,20 +151,24 @@ extern void _mesa_align_free(void *ptr);
 
 /* MACs and BeOS don't support static larger than 32kb, so... */
 #if defined(macintosh) && !defined(__MRC__)
-  extern char *AGLAlloc(int size);
-  extern void AGLFree(char* ptr);
-#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE *NAME = (TYPE*)AGLAlloc(sizeof(TYPE)*(SIZE))
-#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)		TYPE (*NAME)[SIZE2] = (TYPE(*)[SIZE2])AGLAlloc(sizeof(TYPE)*(SIZE1)*(SIZE2))
-#  define CHECKARRAY(NAME,CMD)				do {if (!(NAME)) {CMD;}} while (0) 
-#  define UNDEFARRAY(NAME)          			do {if ((NAME)) {AGLFree((char*)NAME);}  }while (0)
+/*extern char *AGLAlloc(int size);*/
+/*extern void AGLFree(char* ptr);*/
+#  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE *NAME = (TYPE*)MALLOC(sizeof(TYPE)*(SIZE))
+#  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)		TYPE (*NAME)[SIZE2] = (TYPE(*)[SIZE2])MALLOC(sizeof(TYPE)*(SIZE1)*(SIZE2))
+#  define DEFMNARRAY(TYPE,NAME,SIZE1,SIZE2,SIZE3)	TYPE (*NAME)[SIZE2][SIZE3] = (TYPE(*)[SIZE2][SIZE3])MALLOC(sizeof(TYPE)*(SIZE1)*(SIZE2)*(SIZE3))
+
+#  define CHECKARRAY(NAME,CMD)				do {if (!(NAME)) {CMD;}} while (0)
+#  define UNDEFARRAY(NAME)          			do {if ((NAME)) {FREE((char*)NAME);}  }while (0)
 #elif defined(__BEOS__)
 #  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE *NAME = (TYPE*)malloc(sizeof(TYPE)*(SIZE))
 #  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)  		TYPE (*NAME)[SIZE2] = (TYPE(*)[SIZE2])malloc(sizeof(TYPE)*(SIZE1)*(SIZE2))
+#  define DEFMNARRAY(TYPE,NAME,SIZE1,SIZE2,SIZE3)	TYPE (*NAME)[SIZE2][SIZE3] = (TYPE(*)[SIZE2][SIZE3])malloc(sizeof(TYPE)*(SIZE1)*(SIZE2)*(SIZE3))
 #  define CHECKARRAY(NAME,CMD)				do {if (!(NAME)) {CMD;}} while (0)
 #  define UNDEFARRAY(NAME)          			do {if ((NAME)) {free((char*)NAME);}  }while (0)
 #else
 #  define DEFARRAY(TYPE,NAME,SIZE)  			TYPE NAME[SIZE]
 #  define DEFMARRAY(TYPE,NAME,SIZE1,SIZE2)		TYPE NAME[SIZE1][SIZE2]
+#  define DEFMNARRAY(TYPE,NAME,SIZE1,SIZE2,SIZE3)	TYPE NAME[SIZE1][SIZE2][SIZE3]
 #  define CHECKARRAY(NAME,CMD)				do {} while(0)
 #  define UNDEFARRAY(NAME)
 #endif

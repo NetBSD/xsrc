@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_accel.c,v 1.14 2001/12/13 18:01:50 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_accel.c,v 1.18 2002/11/08 18:03:32 alanh Exp $ */
 
 /*
  *
@@ -399,9 +399,11 @@ SavageInitAccel(ScreenPtr pScreen)
     xaaptr->SetClippingRectangle = SavageSetClippingRectangle;
     xaaptr->DisableClipping = SavageDisableClipping;
     xaaptr->ClippingFlags = 0
+#if 0
 	| HARDWARE_CLIP_SOLID_FILL 
 	| HARDWARE_CLIP_SOLID_LINE
 	| HARDWARE_CLIP_DASHED_LINE
+#endif
 	| HARDWARE_CLIP_SCREEN_TO_SCREEN_COPY
 	| HARDWARE_CLIP_MONO_8x8_FILL
 	| HARDWARE_CLIP_COLOR_8x8_FILL
@@ -415,7 +417,7 @@ SavageInitAccel(ScreenPtr pScreen)
 #if 1
     xaaptr->SetupForScreenToScreenCopy = SavageSetupForScreenToScreenCopy;
     xaaptr->SubsequentScreenToScreenCopy = SavageSubsequentScreenToScreenCopy;
-    xaaptr->ScreenToScreenCopyFlags = NO_TRANSPARENCY;
+    xaaptr->ScreenToScreenCopyFlags = NO_TRANSPARENCY | NO_PLANEMASK | ROP_NEEDS_SOURCE;
 #endif
 
 
@@ -424,7 +426,7 @@ SavageInitAccel(ScreenPtr pScreen)
 #if 1
     xaaptr->SetupForSolidFill = SavageSetupForSolidFill;
     xaaptr->SubsequentSolidFillRect = SavageSubsequentSolidFillRect;
-    xaaptr->SolidFillFlags = NO_PLANEMASK;
+    xaaptr->SolidFillFlags = NO_PLANEMASK | ROP_NEEDS_SOURCE;
 #endif
 
     /* Mono 8x8 pattern fills */
@@ -436,6 +438,7 @@ SavageInitAccel(ScreenPtr pScreen)
     xaaptr->Mono8x8PatternFillFlags = 0
 	| HARDWARE_PATTERN_PROGRAMMED_BITS 
 	| HARDWARE_PATTERN_SCREEN_ORIGIN
+	| ROP_NEEDS_SOURCE
 	| BIT_ORDER_IN_BYTE_MSBFIRST
 	;
     if( psav->Chipset == S3_SAVAGE4 )
@@ -444,16 +447,31 @@ SavageInitAccel(ScreenPtr pScreen)
 
     /* Color 8x8 pattern fills */
 
+    /*
+     * With the exception of the Savage3D and Savage4, all of the Savage
+     * chips require that bitmap descriptors have a stride that is a
+     * multiple of 16 pixels.  This includes any descriptor used for
+     * color pattern fills, which COMPLETELY screws the XAA 8x8 color 
+     * pattern support.
+     *
+     * We could double the width ourselves into a reserved frame buffer
+     * section, but since I went 18 months with only ONE report of this
+     * error, it seems hardly worth the trouble.
+     */
+
 #if 1
-    xaaptr->SetupForColor8x8PatternFill =
-            SavageSetupForColor8x8PatternFill;
-    xaaptr->SubsequentColor8x8PatternFillRect =
-            SavageSubsequentColor8x8PatternFillRect;
-    xaaptr->Color8x8PatternFillFlags = 0
-	| NO_TRANSPARENCY
-    	| HARDWARE_PATTERN_PROGRAMMED_BITS
-	| HARDWARE_PATTERN_PROGRAMMED_ORIGIN
-	;
+    if( (psav->Chipset == S3_SAVAGE3D) || (psav->Chipset == S3_SAVAGE4) )
+    {
+	xaaptr->SetupForColor8x8PatternFill =
+		SavageSetupForColor8x8PatternFill;
+	xaaptr->SubsequentColor8x8PatternFillRect =
+		SavageSubsequentColor8x8PatternFillRect;
+	xaaptr->Color8x8PatternFillFlags = 0
+	    | NO_TRANSPARENCY
+	    | HARDWARE_PATTERN_PROGRAMMED_BITS
+	    | HARDWARE_PATTERN_PROGRAMMED_ORIGIN
+	    ;
+    }
 #endif
 
     /* Solid lines */
@@ -467,7 +485,7 @@ SavageInitAccel(ScreenPtr pScreen)
     xaaptr->SubsequentSolidFillTrap = SavageSubsequentSolidFillTrap; 
 #endif
 
-    xaaptr->SolidBresenhamLineErrorTermBits = 16;
+    xaaptr->SolidBresenhamLineErrorTermBits = 14;
 #endif
 
     /* ImageWrite */
@@ -988,9 +1006,9 @@ SavageSetupForColor8x8PatternFill(
     pat_offset = (int) (patternx * psav->Bpp + patterny * psav->Bpl);
 
     cmd = BCI_CMD_RECT | BCI_CMD_RECT_XP | BCI_CMD_RECT_YP
-        | BCI_CMD_DEST_GBD | BCI_CMD_PAT_SBD_COLOR_NEW;
+        | BCI_CMD_DEST_GBD | BCI_CMD_PAT_PBD_COLOR_NEW;
         
-    mix = SavageHelpSolidROP( pScrn, &trans_col, planemask, &rop );
+    mix = XAAHelpSolidROP( pScrn, &trans_col, planemask, &rop );
 
     BCI_CMD_SET_ROP(cmd, rop);
     bd = BCI_BD_BW_DISABLE;
@@ -1020,10 +1038,11 @@ SavageSubsequentColor8x8PatternFillRect(
     if( !w || !h )
 	return;
 
-    psav->WaitQueue(psav,5);
+    psav->WaitQueue(psav,6);
     BCI_SEND(psav->SavedBciCmd);
     BCI_SEND(psav->SavedSbdOffset);
     BCI_SEND(psav->SavedSbd);
+    BCI_SEND(BCI_X_Y(patternx,patterny));
     BCI_SEND(BCI_X_Y(x, y));
     BCI_SEND(BCI_W_H(w, h));
 }
@@ -1048,8 +1067,8 @@ SavageSubsequentSolidBresenhamLine(
     cmd |= BCI_CMD_LINE_LAST_PIXEL;
 
 #ifdef DEBUG_EXTRA
-    ErrorF("BresenhamLine, (%4d,%4d), len %4d, oct %d, err %4d,%4d, clr %08x\n",
-        x1, y1, length, octant, e2, e1, psav->SavedFgColor );
+    ErrorF("BresenhamLine, (%4d,%4d), len %4d, oct %d, err %4d,%4d,%4d clr %08x\n",
+        x1, y1, length, octant, e1, e2, err, psav->SavedFgColor );
 #endif
 
     psav->WaitQueue(psav, 5 );
@@ -1059,7 +1078,7 @@ SavageSubsequentSolidBresenhamLine(
     BCI_SEND(BCI_LINE_X_Y(x1, y1));
     BCI_SEND(BCI_LINE_STEPS(e2-e1, e2));
     BCI_SEND(BCI_LINE_MISC(length, 
-    			   !!(octant & YMAJOR),
+    			   (octant & YMAJOR),
 			   !(octant & XDECREASING),
 			   !(octant & YDECREASING),
 			   e2+err));

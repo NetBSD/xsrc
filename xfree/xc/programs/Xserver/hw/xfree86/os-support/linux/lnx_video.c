@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.60 2001/11/01 23:35:33 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/linux/lnx_video.c,v 3.64 2003/02/17 15:29:22 dawes Exp $ */
 /*
  * Copyright 1992 by Orest Zborowski <obz@Kodak.com>
  * Copyright 1993 by David Wexelblat <dwex@goblin.org>
@@ -41,8 +41,6 @@
 #ifdef HAS_MTRR_SUPPORT
 #include <asm/mtrr.h>
 #endif
-
-extern int ioperm(unsigned long from, unsigned long num, int turn_on);
 
 #ifndef MAP_FAILED
 #define MAP_FAILED ((void *)-1)
@@ -265,22 +263,14 @@ mtrr_add_wc_region(int screenNum, unsigned long base, unsigned long size,
 	 */
 
 	{
-	    unsigned long last, lbase, d_size;
+	    unsigned long lbase, d_size = 1;
 	    unsigned long n_size = size;
 	    unsigned long n_base = base;
-	    
-	    int i = 0;
-	    last = n_base + n_size - 1;
-	    for (lbase = n_base; !(lbase & 1) && (last & 1);
-		 lbase = lbase >> 1, last = last >> 1, i++)
-		if (lbase != last) {
-		    while((lbase & 1) == (last & 1)) {
-			i++;
-			lbase >>= 1;
-			last >>= 1;
-		    }
-		}
-	    d_size = 1 << i;
+
+	    for (lbase = n_base, d_size = 1; !(lbase & 1);
+		 lbase = lbase >> 1, d_size <<= 1);
+	    while (d_size > n_size)
+		d_size = d_size >> 1;
 #ifdef DEBUG
 	    ErrorF("WC_BASE: 0x%lx WC_END: 0x%lx\n",base,base+d_size-1);
 #endif
@@ -723,7 +713,7 @@ mapVidMemSparse(int ScreenNum, unsigned long Base, unsigned long Size, int flags
 
     close(fd);
       
-    if (ret == (unsigned long)MAP_FAILED || ret != (DENSE_BASE + Base)) {
+    if (ret == (unsigned long)MAP_FAILED) {
         FatalError("xf86MapVidMemSparse: Could not (dense) mmap fb (%s)\n",
 		   strerror(errno));
     }
@@ -750,7 +740,7 @@ mapVidMemSparse(int ScreenNum, unsigned long Base, unsigned long Size, int flags
 		Base, Size, ret);
 
 #endif
-    return (pointer)(DENSE_BASE + Base);
+    return (pointer) ret;
 }
 
 static void

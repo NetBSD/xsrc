@@ -4,6 +4,7 @@
  * Copyright (C) 1995-1998 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
+/* $XFree86: xc/lib/zlib/infblock.c,v 1.7 2002/02/14 17:46:06 tsi Exp $ */
 
 #include "zutil.h"
 #include "infblock.h"

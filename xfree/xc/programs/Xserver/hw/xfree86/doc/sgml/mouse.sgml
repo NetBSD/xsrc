@@ -5,10 +5,10 @@
 <article>
 <title>Mouse Support in XFree86
 <author>Kazutaka Yokota
-<date>9 February 2000
+<date>17 December 2002
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.11 2000/03/01 00:25:23 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/mouse.sgml,v 1.13 2002/12/17 20:55:22 dawes Exp $
 </ident>
 
 <toc>
@@ -350,7 +350,7 @@ Choose one from the following list:
 <itemize>
 	<item><tt>GlidePoint</tt>
 	<item><tt>IntelliMouse</tt>
-	<item><tt>Logictech</tt>
+	<item><tt>Logitech</tt>
 	<item><tt>Microsoft</tt>
 	<item><tt>MMHittab</tt>
 	<item><tt>MMSeries</tt>
@@ -493,6 +493,36 @@ counts per inch, if possible:
 Not all mice and OSs can support this option.
 This option can be set in the <tt>XF86Setup</tt> program.
 
+<sect1>Drag Lock Buttons <p>
+Some people find it difficult or inconvenient to hold a trackball
+button down, while at the same time moving the ball. Drag lock buttons
+simulate the holding down of another button. When a drag lock button
+is  first pressed, its target buttons is "locked" down until the
+second time the lock button is released, or until the button itself
+is pressed and released. This allows the starting of a drag, the movement
+of the trackball, and the ending of the drag to be separate operations.
+
+<verb>
+	Option	"DragLockButtons"	"W X Y Z"
+</verb>
+
+This option consists of pairs of buttons. Each lock button number
+is followed by the number of the button that it locks. In the above,
+button number "W" is a drag lock button for button "X" and button number
+"Y" is a drag lock button for button "Z".
+
+It may not be desirable to use multiple buttons as drag locks.
+Instead, a "master drag lock button" may be defined. A master drag
+lock button acts as a "META" key. After a master lock button is released,
+the next button pressed is "locked" and not released until the
+second time the real button is released.
+
+<verb>
+	Option	"DragLockButtons"	"M"
+</verb>
+
+Since button "M" is unpaired it is a master drag lock button.
+
 <sect>Mouse Gallery <p>
 
 In all of the examples below, it is assumed that <tt>/dev/mouse</tt> is
@@ -571,9 +601,10 @@ mouse detection:
 	Option	"Protocol"	"Auto"
 </verb>
 
-<sect1>Kensington Thinking Mouse (serial, PS/2) <p>
-This mouse has four buttons.
-Thinking Mouse supports the PnP COM device specification.
+<sect1>Kensington Thinking Mouse and Kensington Expert Mouse (serial, PS/2) <p>
+These mice have four buttons.
+The Kensington Expert Mouse is really a trackball.
+Both Thinking mice  support the PnP COM device specification.
 <p>
 To use this mouse as a serial device:
 <verb>
@@ -1032,5 +1063,41 @@ EndSection
 The movement of the first wheel is mapped to the button 4 and 5.  The
 second wheel's movement will be reported as the buttons 6 and 7.
 
+The Kensington Expert mouse is really a trackball. It has 4 buttons
+arranged in a rectangle around the ball.
+
+<code>
+Section "InputDevice"
+	Identifier  "DLB"
+	Driver      "mouse"
+	Option      "Protocol" "ThinkingMousePS/2"
+	Option      "Buttons" "3"
+	Option      "Emulate3Buttons"
+	Option      "Device" "/dev/mouse"
+	Option      "DragLockButtons" "2 1 4 3"
+EndSection
+</code>
+In this example, button 2 is a drag lock button for button
+number 1, and button 4 is a drag lock button for button 3.
+Since button 2 is above button 1 and button 4 is above button 3
+in the layout of this trackball, this is reasonable.
+
+Because button 2 is being used as a drag lock, it can not be
+used as an ordinary button. However, it can be activated by
+using the "Emulate3Buttons" feature. However, some people my
+be unable to press two buttons at the same time. They may
+prefer the following <tt>InputDevice</tt> section which
+defines button 4 as a master drag lock button, and leaves
+button 2 free for ordinary use.
+<code>
+Section "InputDevice"
+	Identifier  "MasterDLB"
+	Driver      "mouse"
+	Option      "Protocol" "ThinkingMousePS/2"
+	Option      "Buttons" "3"
+	Option      "Device" "/dev/mouse"
+	Option      "DragLockButtons" "4"
+EndSection
+</code>
 
 </article>

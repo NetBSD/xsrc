@@ -24,7 +24,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/config/makedepend/def.h,v 3.12 2001/12/17 20:52:22 dawes Exp $ */
+/* $XFree86: xc/config/makedepend/def.h,v 3.14 2003/01/17 17:09:49 tsi Exp $ */
 
 #include "Xos.h"
 #include "Xfuncproto.h"
@@ -45,6 +45,7 @@ in this Software without prior written authorization from The Open Group.
 
 #define MAXDEFINES	512
 #define MAXFILES	1024
+#define MAXINCFILES	128	/* "-include" files */
 #define MAXDIRS		64
 #define SYMTABINC	10	/* must be > 1 for define() to work right */
 #define	TRUE		1
@@ -120,11 +121,15 @@ struct	inclist {
 };
 
 struct filepointer {
+	char	*f_name;
 	char	*f_p;
 	char	*f_base;
 	char	*f_end;
 	long	f_len;
 	long	f_line;
+	long	cmdinc_count;
+	char	**cmdinc_list;
+	long	cmdinc_line;
 };
 
 #include <stdlib.h>

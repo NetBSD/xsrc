@@ -24,6 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/globals.h,v 1.3 2002/07/01 02:26:05 tsi Exp $ */
 
 #ifdef MAIN
 #define ext
@@ -121,7 +122,7 @@ ext Boolean	subProcessRunning; /* interlock for DoCommand/CheckMail */
 
 typedef struct _XmhMenuEntry {
     char	*name;			/* menu entry name */
-    void   	(*function)();		/* menu entry callback function */
+    void   	(*function)(XMH_CB_ARGS); /* menu entry callback function */
 } XmhMenuEntryRec, *XmhMenuEntry;	
 
 

@@ -1,4 +1,4 @@
-// $XFree86: xc/programs/xkbcomp/types/extra,v 1.1 2001/05/18 23:35:35 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/types/extra,v 1.3 2002/11/26 02:14:02 dawes Exp $
 
 partial default xkb_types "default" {
     // Definition for a key type used for the czech keymap, for instance.
@@ -13,6 +13,22 @@ partial default xkb_types "default" {
 	map[Shift] = Level2;
 	map[LevelThree] = Level3;
 	map[Shift+LevelThree] = Level4;
+	level_name[Level1] = "Base";
+	level_name[Level2] = "Shift";
+	level_name[Level3] = "Alt Base";  
+	level_name[Level4] = "Shift Alt";  
+    };
+
+    type "FOUR_LEVEL_ALPHABETIC" {
+        modifiers = Shift+Lock+LevelThree;
+	map[None] = Level1;
+	map[Shift] = Level2;
+	map[LevelThree] = Level3;
+	map[Shift+LevelThree] = Level4;
+	map[Lock+LevelThree] =  Level3;
+        map[Lock+Shift+LevelThree] = Level3;
+        preserve[Lock]= Lock;
+        preserve[Lock+LevelThree]= Lock;
 	level_name[Level1] = "Base";
 	level_name[Level2] = "Shift";
 	level_name[Level3] = "Alt Base";  

@@ -30,8 +30,6 @@
 # published by SGI, but has not been independently verified as being
 # compliant with the OpenGL(R) version 1.2.1 Specification.
 #
-# $Date: 2002/01/19 15:26:46 $ $Revision: 1.1.1.1 $
-# $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/doc/man/mangl/standard/Attic/const.awk,v 1.1.1.1 2002/01/19 15:26:46 tron Exp $
 
 # compare manpages to gl.h
 #

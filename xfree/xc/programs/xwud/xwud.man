@@ -23,7 +23,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/xwud/xwud.man,v 1.8 2001/12/14 20:02:35 dawes Exp $
+.\" $XFree86: xc/programs/xwud/xwud.man,v 1.9 2002/04/22 20:53:11 herrb Exp $
 .\"
 .TH XWUD 1 __xorgversion__
 .SH NAME
@@ -90,8 +90,7 @@ by typing 'q', 'Q', or ctrl-c.
 .B "-plane \fInumber\fP"
 You can select a single bit plane of the image to display
 with this option.  Planes are numbered with zero being the least
-significant bit.  This option can be used to figure out which plane to
-pass to \fIxpr(1)\fP for printing.
+significant bit.
 .PP
 .TP 8
 .B -raw
@@ -146,7 +145,7 @@ X Window Dump File format definition file.
 xwud doesn't handle big/deep images very well on servers that don't 
 have the BIG-REQUESTS extension.
 .SH SEE ALSO
-xwd(1), xpr(1), xstdcmap(1), X(__miscmansuffix__)
+xwd(1), xstdcmap(1), X(__miscmansuffix__)
 .SH AUTHOR
 Bob Scheifler, MIT X Consortium
 

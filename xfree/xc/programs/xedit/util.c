@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xedit/util.c,v 1.18 2001/09/11 06:42:54 paulo Exp $ */
+/* $XFree86: xc/programs/xedit/util.c,v 1.25 2002/12/04 05:27:56 paulo Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>		/* for realpath() */
@@ -63,18 +63,18 @@ extern XawTextWrapMode wrapmodes[3];
 void
 XeditPrintf(char *str)
 {
-  XawTextBlock text;
-  static XawTextPosition pos = 0;
+    XawTextBlock text;
+    XawTextPosition pos = XawTextSourceScan(XawTextGetSource(messwidget),
+					    0, XawstAll, XawsdRight, 1, True);
 
-  text.length = strlen(str);
-  text.ptr = str;
-  text.firstPos = 0;
-  text.format = FMT8BIT;
+    text.length = strlen(str);
+    text.ptr = str;
+    text.firstPos = 0;
+    text.format = FMT8BIT;
 
-  XawTextReplace( messwidget, pos, pos, &text);
+    XawTextReplace(messwidget, pos, pos, &text);
 
-  pos += text.length;
-  XawTextSetInsertionPoint(messwidget, pos);
+    XawTextSetInsertionPoint(messwidget, pos + text.length);
 }
 
 Widget
@@ -186,6 +186,7 @@ AddTextSource(Widget source, char *name, char *filename, int flags,
     item->display_position = item->insert_position = 0;
     item->mode = 0;
     item->properties = NULL;
+    item->xldata = NULL;
 
     flist.itens = (xedit_flist_item**)
 	XtRealloc((char*)flist.itens, sizeof(xedit_flist_item*)
@@ -213,7 +214,7 @@ AddTextSource(Widget source, char *name, char *filename, int flags,
     XtAddCallback(item->sme, XtNcallback,
 		  SwitchSourceCallback, (XtPointer)item);
 
-    SetTextProperties(item, False);
+    SetTextProperties(item);
 
     return (item);
 }
@@ -272,7 +273,7 @@ KillTextSource(xedit_flist_item *item)
 	    XawTextDisableRedisplay(texts[i]);
 	    XtSetValues(texts[i], targs, tnum_args);
 
-	    UpdateTextProperties();
+	    UpdateTextProperties(0);
 
 	    _XawTextShowPosition((TextWidget)texts[i]);
 	    XawTextEnableRedisplay(texts[i]);
@@ -287,6 +288,7 @@ KillTextSource(xedit_flist_item *item)
 	    }
 	}
 
+    UnsetTextProperties(item);
     XtFree(item->name);
     XtFree(item->filename);
     XtDestroyWidget(item->sme);
@@ -405,7 +407,7 @@ SwitchTextSource(xedit_flist_item *item)
     ++num_args;
     XtSetValues(textwindow, args, num_args);
 
-    UpdateTextProperties();
+    UpdateTextProperties(0);
 
     _XawTextShowPosition((TextWidget)textwindow);
     XawTextEnableRedisplay(textwindow);
@@ -420,16 +422,15 @@ SwitchTextSource(xedit_flist_item *item)
     XtSetValues(filenamewindow, args, num_args);
 }
 
+/* XXX sizeof(name) must match argument size for realpath */
+static char name[BUFSIZ];
 char *
 ResolveName(char *filename)
 {
-    /* XXX sizeof(name) must match argument size for realpath */
-    static char name[BUFSIZ];
-
     if (filename == NULL)
 	filename = GetString(filenamewindow);
 
-#ifndef __EMX__
+#ifndef __UNIXOS2__
     return (realpath(filename, name));
 #else
     return filename;
@@ -582,7 +583,7 @@ DeleteWindow(Widget w, XEvent *event, String *params, Cardinal *num_params)
 		     wrapmodes[WindowIndex(texts[current ? idx : uidx])]);
 	XtSetValues(texts[0], args, num_args);
 
-	UpdateTextProperties();
+	UpdateTextProperties(0);
     }
 
     labelwindow = labels[0];
@@ -783,7 +784,7 @@ SplitWindow(Widget w, XEvent *event, String *params, Cardinal *num_params)
     ++num_args;
     XtSetValues(ntext, args, num_args);
 
-    UpdateTextProperties();
+    UpdateTextProperties(0);
 
     _XawTextShowPosition((TextWidget)textwindow);
     _XawTextShowPosition((TextWidget)ntext);
@@ -878,14 +879,18 @@ DirWindow(Widget w, XEvent *event, String *params, Cardinal *num_params)
     }
 
     dir = ResolveName(path);
-    strncpy(path, dir, sizeof(path) - 2);
-    path[sizeof(path) - 2] = '\0';
-    if (*path && path[strlen(path) - 1] != '/')
-	strcat(path, "/");
+    if (dir != NULL) {
+	strncpy(path, dir, sizeof(path) - 2);
+	path[sizeof(path) - 2] = '\0';
+	if (*path && path[strlen(path) - 1] != '/')
+	    strcat(path, "/");
 
-    XtSetArg(args[0], XtNlabel, "");
-    XtSetValues(dirlabel, args, 1);
+	XtSetArg(args[0], XtNlabel, "");
+	XtSetValues(dirlabel, args, 1);
 
-    SwitchDirWindow(True);
-    DirWindowCB(dirwindow, path, NULL);
+	SwitchDirWindow(True);
+	DirWindowCB(dirwindow, path, NULL);
+    }
+    else
+	Feep();
 }

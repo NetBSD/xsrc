@@ -26,10 +26,19 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loadmod.c,v 1.8 2001/12/31 18:15:10 herrb Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/loadmod.c,v 1.14 2003/02/26 20:08:03 dawes Exp $
  */
 
 #ifdef USE_MODULES
+#include <setjmp.h>
+
+#ifndef HAS_GLIBC_SIGSETJMP
+#if defined(setjmp) && \
+    defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ < 2
+#define HAS_GLIBC_SIGSETJMP 1
+#endif
+#endif
+
 #define LOADER_PRIVATE
 #include "loader.h"
 
@@ -54,6 +63,7 @@ Bool xf86ServerIsOnlyDetecting(void);
 void xf86AddInputDriver(InputDriverPtr, pointer, int);
 void xf86AddModuleInfo(ModuleInfoPtr, void*);
 Bool xf86LoaderCheckSymbol(const char*);
+void xf86LoaderRefSymLists(const char **, ...);
 void xf86LoaderReqSymLists(const char **, ...);
 void xf86Msg(int, const char*, ...);
 void xf86PrintChipsets(const char*, const char*, SymTabPtr);
@@ -64,8 +74,9 @@ int xf86MatchPciInstances(const char*, int, SymTabPtr, PciChipsets*, GDevPtr*, i
 int xf86MatchIsaInstances(const char*, SymTabPtr, pointer*, DriverPtr, pointer, GDevPtr*, int, int**);
 void *xf86LoadDrvSubModule(DriverPtr drv, const char*);
 void xf86DrvMsg(int, int, const char*, ...);
+pciConfigPtr *xf86GetPciConfigInfo(void);
+Bool xf86IsPrimaryPci(pcVideoPtr*);
 #endif
-void *xf86GetPciConfigInfo(void);
 
 extern char *loaderPath, **loaderList, **ploaderList;
 xf86cfgModuleOptions *module_options;
@@ -168,7 +179,7 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86memchr)
    SYMFUNC(xf86memcmp)
    SYMFUNC(xf86memcpy)
-#if (defined(__powerpc__) && (defined(Lynx) || defined(linux))) || defined(__sparc__) || defined(__ia64__)
+#if (defined(__powerpc__) && (defined(Lynx) || defined(linux))) || defined(__sparc__) || defined(__ia64__) || defined (__x86_64__)
    /*
     * Some PPC, SPARC, and IA64 compilers generate calls to memcpy to handle
     * structure copies.  This causes a problem both here and in shared
@@ -262,8 +273,17 @@ LOOKUP xfree86LookupTab[] = {
    SYMFUNC(xf86shmat)
    SYMFUNC(xf86shmdt)
    SYMFUNC(xf86shmctl)
+#ifdef HAS_GLIBC_SIGSETJMP
    SYMFUNC(xf86setjmp)
-   SYMFUNC(xf86longjmp)
+   SYMFUNCALIAS("xf86setjmp1",__sigsetjmp)
+#else
+   SYMFUNCALIAS("xf86setjmp",setjmp)
+   SYMFUNC(xf86setjmp1)
+#endif
+   SYMFUNCALIAS("xf86longjmp",longjmp)
+   SYMFUNC(xf86getjmptype)
+   SYMFUNC(xf86setjmp1_arg2)
+   SYMFUNC(xf86setjmperror)
 
     SYMFUNC(xf86AddDriver)
     SYMFUNC(xf86ServerIsOnlyDetecting)
@@ -271,6 +291,7 @@ LOOKUP xfree86LookupTab[] = {
     SYMFUNC(xf86AddModuleInfo)
     SYMFUNC(xf86LoaderCheckSymbol)
 
+    SYMFUNC(xf86LoaderRefSymLists)
     SYMFUNC(xf86LoaderReqSymLists)
     SYMFUNC(xf86Msg)
     SYMFUNC(ErrorF)
@@ -284,6 +305,7 @@ LOOKUP xfree86LookupTab[] = {
     SYMFUNC(xf86LoadDrvSubModule)
     SYMFUNC(xf86DrvMsg)
     SYMFUNC(xf86GetPciConfigInfo)
+    SYMFUNC(xf86IsPrimaryPci)
     {0,0}
 };
 
@@ -300,6 +322,17 @@ AddModuleOptions(char *name, const OptionInfoRec *option)
     const OptionInfoRec *tmp;
     SymTabPtr ctmp;
     int count;
+
+    /* XXX If the module is already in the list, then it means that
+     * it is now being properly loaded by xf86cfg and the "fake" entry
+     * added in xf86cfgLoaderInitList() isn't required anymore.
+     * Currently:
+     *	ati and vmware are known to fail. */
+    for (ptr = module_options; ptr; ptr = ptr->next)
+	if (strcmp(name, ptr->name) == 0) {
+	    fprintf(stderr, "Module %s already in list!\n", name);
+	    return;
+	}
 
     ptr = XtNew(xf86cfgModuleOptions);
     ptr->name = XtNewString(name);
@@ -386,6 +419,16 @@ xf86cfgLoaderInitList(int type)
     }
     LoaderSetPath(loaderPath);
     loaderList = LoaderListDirs(subdirs, NULL);
+
+    /* XXX Xf86cfg isn't able to provide enough wrapper functions
+     * to these drivers. Maybe the drivers could also be changed
+     * to work better when being loaded "just for testing" */
+    if (type == VideoModule) {
+	module_type = VideoModule;
+	AddModuleOptions("vmware", NULL);
+	AddModuleOptions("ati", NULL);
+	module_type = NullModule;
+    }
 }
 
 void
@@ -517,6 +560,11 @@ xf86LoaderCheckSymbol(const char *symbol)
 }
 
 void
+xf86LoaderRefSymLists(const char **list0, ...)
+{
+}
+
+void
 xf86LoaderReqSymLists(const char **list0, ...)
 {
 }
@@ -559,7 +607,8 @@ xf86MatchPciInstances(const char *name, int VendorID, SymTabPtr chipsets, PciChi
 		      GDevPtr *devList, int numDevs, DriverPtr drvp, int **foundEntities)
 {
     vendor = VendorID;
-    chips = chipsets;
+    if (chips == NULL)
+	chips = chipsets;
     *foundEntities = NULL;
 
     return (0);
@@ -588,9 +637,15 @@ xf86LoadDrvSubModule(DriverPtr drv, const char *name)
     return (ret);
 }
 
-void *
+pciConfigPtr *
 xf86GetPciConfigInfo(void)
 {
     return (NULL);
+}
+
+Bool
+xf86IsPrimaryPci(pciVideoPtr pPci)
+{
+    return (True);
 }
 #endif

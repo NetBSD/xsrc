@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaa.h,v 1.36 2001/06/03 19:47:59 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaa.h,v 1.39 2002/10/30 12:52:43 alanh Exp $ */
 
 #ifndef _XAA_H
 #define _XAA_H
@@ -15,7 +15,7 @@
 21           LINE_PATTERN_MSBFIRST_MSBJUSTIFIED
 20           LINE_PATTERN_MSBFIRST_LSBJUSTIFIED
 19           LINE_PATTERN_POWER_OF_2_ONLY
-18                         .
+18           LINE_LIMIT_COORDS
 17                         .
 16                         .
 ---------               -------
@@ -162,7 +162,8 @@
 #define LINE_PATTERN_LSBFIRST_LSBJUSTIFIED	0x00400000
 #define LINE_PATTERN_MSBFIRST_MSBJUSTIFIED	0x00200000
 #define LINE_PATTERN_MSBFIRST_LSBJUSTIFIED	0x00100000
-#define LINE_PATTERN_POWER_OF_2_ONLY 		0x00080000
+#define LINE_PATTERN_POWER_OF_2_ONLY		0x00080000
+#define LINE_LIMIT_COORDS			0x00040000
 
 /* clipping flags */
 #define HARDWARE_CLIP_SCREEN_TO_SCREEN_COLOR_EXPAND	0x00400000
@@ -1327,7 +1328,11 @@ typedef struct _XAAInfoRec {
 
 
 #endif
-    
+
+   /* these were added for 4.3.0 */
+   BoxRec SolidLineLimits;
+   BoxRec DashedLineLimits;
+
 } XAAInfoRec, *XAAInfoRecPtr;
 
 #define SET_SYNC_FLAG(infoRec)	(infoRec)->NeedToSync = TRUE

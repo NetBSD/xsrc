@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/Imakefile,v 1.2 2001/05/16 06:48:12 keithp Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/vmware/Imakefile,v 1.6 2003/02/17 17:06:45 dawes Exp $
 XCOMM
 XCOMM This is an Imakefile for the VMware virtual SVGA driver.  
 XCOMM
@@ -6,15 +6,9 @@ XCOMM
 #define IHaveModules
 #include <Server.tmpl>
 
-SRCS = vmware.c vmwaregc.c vmwarefs.c vmwarepolypnt.c vmwarepush.c \
-	vmwareglblt.c vmwaretext.c vmwarerect.c vmwarefillarc.c \
-	vmwareply1rct.c vmwarezerarc.c vmwareline.c vmwareblt.c vmwareimage.c \
-	vmwarewindow.c vmwarecurs.c vmwarebstor.c bits2pixels.c
+SRCS = vmware.c vmwarecurs.c vmwarexaa.c bits2pixels.c offscreen_manager.c
 
-OBJS = vmware.o vmwaregc.o vmwarefs.o vmwarepolypnt.o vmwarepush.o \
-	vmwareglblt.o vmwaretext.o vmwarerect.o vmwarefillarc.o \
-	vmwareply1rct.o vmwarezerarc.o vmwareline.o vmwareblt.o vmwareimage.o \
-	vmwarewindow.o vmwarecurs.o vmwarebstor.o bits2pixels.o
+OBJS = vmware.o vmwarecurs.o vmwarexaa.o bits2pixels.o offscreen_manager.o
 
 #if defined(XF86DriverSDK)
 INCLUDES = -I. -I../../include
@@ -27,7 +21,7 @@ INCLUDES = -I. -I$(XF86COMSRC) -I$(XF86OSSRC) \
            -I$(SERVERSRC)/Xext -I$(SERVERSRC)/render \
            -I$(FONTINCSRC) -I$(SERVERSRC)/include -I$(XINCLUDESRC) \
            -I$(XF86SRC)/shadowfb -I$(EXTINCSRC) \
-	   -I$(XF86OSSRC)/vbe $(DRIINCLUDES)
+	   -I$(XF86SRC)/vbe $(DRIINCLUDES)
 #endif
 
 DEFINES = $(DRIDEFINES)

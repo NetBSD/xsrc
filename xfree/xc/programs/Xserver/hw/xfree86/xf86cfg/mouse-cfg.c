@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/mouse-cfg.c,v 1.7 2001/04/22 08:36:31 herrb Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/mouse-cfg.c,v 1.10 2003/02/15 05:37:58 paulo Exp $
  */
 
 #include "xf86config.h"
@@ -51,23 +51,39 @@ static Bool MouseConfigCheck(void);
 /*
  * Initialization
  */
-static char *protocols[] = {
-#ifdef WSCONS_SUPPORT
-    "wsmouse",
+static struct MouseProtocol {
+    char *name;
+    int type;
+} protocols[] = {
+#ifdef SCO
+    {"OsMouse",			MTYPE_AUTOMOUSE},
 #endif
-    "Auto",
-    "BusMouse",
-    "GlidePoint",
-    "IntelliMouse",
-    "Logitech",
-    "Microsoft",
-    "MMHitTab",
-    "MMSeries",
-    "MouseMan",
-    "MouseSystems",
-    "PS/2",
-    "SysMouse",
-    "ThinkingMouse",
+#ifdef WSCONS_SUPPORT
+    {"wsmouse",			MTYPE_AUTOMOUSE},
+#endif
+    {"Auto",			MTYPE_AUTOMOUSE},
+    {"SysMouse",		MTYPE_SYSMOUSE},
+    {"MouseSystems",		MTYPE_MOUSESYS},
+    {"BusMouse",		MTYPE_BUSMOUSE},
+    {"PS/2",			MTYPE_PS_2},
+    {"Microsoft",		MTYPE_MICROSOFT},
+#ifndef __FreeBSD__
+    {"ImPS/2",			MTYPE_IMPS2},
+    {"ExplorerPS/2",		MTYPE_EXPPS2},
+    {"GlidePointPS/2",		MTYPE_GLIDEPOINTPS2},
+    {"MouseManPlusPS/2",	MTYPE_MMANPLUSPS2},
+    {"NetMousePS/2",		MTYPE_NETPS2},
+    {"NetScrollPS/2",		MTYPE_NETSCROLLPS2},
+    {"ThinkingMousePS/2",	MTYPE_THINKINGPS2},
+#endif
+    {"AceCad",			MTYPE_ACECAD},
+    {"GlidePoint",		MTYPE_GLIDEPOINT},
+    {"IntelliMouse",		MTYPE_IMSERIAL},
+    {"Logitech",		MTYPE_LOGITECH},
+    {"MMHitTab",		MTYPE_MMHIT},
+    {"MMSeries",		MTYPE_MMSERIES},
+    {"MouseMan",		MTYPE_LOGIMAN},
+    {"ThinkingMouse",		MTYPE_THINKING},
 };
 
 static Widget text;
@@ -253,6 +269,7 @@ MouseEmulateCallback(Widget w, XtPointer user_data, XtPointer call_data)
 static void
 MouseApplyCallback(Widget w, XtPointer user_data, XtPointer call_data)
 {
+    int i;
     XF86MiscMouseSettings mouse;
 
     XF86MiscGetMouseSettings(XtDisplay(w), &mouse);
@@ -262,32 +279,12 @@ MouseApplyCallback(Widget w, XtPointer user_data, XtPointer call_data)
 	mouse.baudrate % 1200)
 	mouse.baudrate = 1200;
 
-    if (strcmp(protocol, "BusMouse") == 0)
-	mouse.type = MTYPE_BUSMOUSE;
-    else if (strcmp(protocol, "GlidePoint") == 0)
-	mouse.type = MTYPE_GLIDEPOINT;
-    else if (strcmp(protocol, "IntelliMouse") == 0)
-	mouse.type = MTYPE_IMSERIAL;
-    else if (strcmp(protocol, "Logitech") == 0)
-	mouse.type = MTYPE_LOGITECH;
-    else if (strcmp(protocol, "Microsoft") == 0)
-	mouse.type = MTYPE_MICROSOFT;
-    else if (strcmp(protocol, "MMHitTab") == 0)
-	mouse.type = MTYPE_MMHIT;
-    else if (strcmp(protocol, "MMSeries") == 0)
-	mouse.type = MTYPE_MMSERIES;
-    else if (strcmp(protocol, "MouseMan") == 0)
-	mouse.type = MTYPE_LOGIMAN;
-    else if (strcmp(protocol, "MouseSystems") == 0)
-	mouse.type = MTYPE_MOUSESYS;
-    else if (strcmp(protocol, "PS/2") == 0)
-	mouse.type = MTYPE_PS_2;
-    else if (strcmp(protocol, "SysMouse") == 0)
-	mouse.type = MTYPE_SYSMOUSE;
-    else if (strcmp(protocol, "ThinkingMouse") == 0)
-	mouse.type = MTYPE_THINKING;
-    else
-	mouse.type = MTYPE_AUTOMOUSE;
+    mouse.type = MTYPE_AUTOMOUSE;
+    for (i = 0; i < sizeof(protocols) / sizeof(protocols[0]); i++)
+	if (strcmp(protocols[i].name, protocol) == 0) {
+	    mouse.type = protocols[i].type;
+	    break;
+	}
 
     mouse.emulate3buttons = emulate;
     mouse.flags |= MF_REOPEN;
@@ -304,11 +301,18 @@ MouseDeviceAndProtocol(XF86SetupInfo *info)
     static int first = 1, ndevices;
     static Widget mouse_dp, listD, listP, emul3, apply;
     static char **devices;
+    static char *dirs[] = {
+	"/dev",
+#ifdef __linux__
+	"/dev/input"
+#endif
+    };
     static char *patterns[] = {
 #ifdef WSCONS_SUPPORT
 	"wsmouse",
 #endif
-	"cua",
+	"cuaa",
+	"mice",
 	"mouse",
 	"ps",
 	"sysmouse",
@@ -321,6 +325,8 @@ MouseDeviceAndProtocol(XF86SetupInfo *info)
 	Widget label, viewport;
 	struct dirent *ent;
 	DIR *dir;
+	char **list;
+	int count;
 
 	first = 0;
 
@@ -328,27 +334,29 @@ MouseDeviceAndProtocol(XF86SetupInfo *info)
 				  configp, NULL, 0);
 
 	/* DEVICE */
-	if ((dir = opendir("/dev")) != NULL) {
-	    int i, len;
+	for (count = 0; count < sizeof(dirs) / sizeof(dirs[0]); count++) {
+	    if ((dir = opendir(dirs[count])) != NULL) {
+		int i, len, xlen = strlen(dirs[count]) + 2;
 
-	    (void)readdir(dir);
-	    (void)readdir(dir);
-	    while ((ent = readdir(dir)) != NULL) {
-		for (i = 0; i < sizeof(patterns) / sizeof(patterns[0]); i++) {
-		    len = strlen(patterns[i]);
+		(void)readdir(dir);
+		(void)readdir(dir);
+		while ((ent = readdir(dir)) != NULL) {
+		    for (i = 0; i < sizeof(patterns) / sizeof(patterns[0]); i++) {
+			len = strlen(patterns[i]);
 
-		    if (strncmp(patterns[i], ent->d_name, len) == 0) {
-			len = strlen(ent->d_name) + 6;
+			if (strncmp(patterns[i], ent->d_name, len) == 0) {
+			    len = strlen(ent->d_name) + xlen;
 
-			devices = (char**)XtRealloc((XtPointer)devices,
-						    sizeof(char*) * ++ndevices);
-			devices[ndevices - 1] = XtMalloc(len);
-			XmuSnprintf(devices[ndevices - 1], len, "/dev/%s",
-				    ent->d_name);
+			    devices = (char**)XtRealloc((XtPointer)devices,
+							sizeof(char*) * ++ndevices);
+			    devices[ndevices - 1] = XtMalloc(len);
+			    XmuSnprintf(devices[ndevices - 1], len, "%s/%s",
+					dirs[count], ent->d_name);
+			}
 		    }
 		}
+		closedir(dir);
 	    }
-	    closedir(dir);
 	}
 
 	label = XtCreateManagedWidget("labelD", labelWidgetClass,
@@ -373,11 +381,14 @@ MouseDeviceAndProtocol(XF86SetupInfo *info)
 	viewport = XtCreateManagedWidget("viewportP", viewportWidgetClass,
 					 mouse_dp, NULL, 0);
 
+	list = (char**)XtMalloc(sizeof(char*) *
+				sizeof(protocols)/sizeof(protocols[0]));
+	for (count = 0; count < sizeof(protocols)/sizeof(protocols[0]); count++)
+	    list[count] = XtNewString(protocols[count].name);
 	listP = XtVaCreateManagedWidget("listP", listWidgetClass,
 					viewport,
-					XtNlist, protocols,
-					XtNnumberStrings,
-					sizeof(protocols) / sizeof(protocols[0]),
+					XtNlist, list,
+					XtNnumberStrings, count,
 					NULL, 0);
 	XtAddCallback(listP, XtNcallback, MouseProtocolCallback, NULL);
 
@@ -419,15 +430,15 @@ MouseDeviceAndProtocol(XF86SetupInfo *info)
 
     if (protocol != NULL) {
 	for (i = 0; i < sizeof(protocols) / sizeof(protocols[0]); i++)
-	    if (strcasecmp(protocol, protocols[i]) == 0) {
-		protocol = protocols[i];
+	    if (strcasecmp(protocol, protocols[i].name) == 0) {
+		protocol = protocols[i].name;
 		XawListHighlight(listP, i);
 		break;
 	    }
     }
     else {
 	/* "Auto" is the default */
-	protocol = protocols[0];
+	protocol = protocols[0].name;
 	XawListHighlight(listP, 0);
     }
 

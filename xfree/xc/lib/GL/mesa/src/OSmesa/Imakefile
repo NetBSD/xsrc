@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/OSmesa/Imakefile,v 1.11 2001/06/04 20:43:30 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/OSmesa/Imakefile,v 1.17 2002/11/27 18:28:02 tsi Exp $
 
 #include <Threads.tmpl>
 
@@ -8,9 +8,18 @@ XCOMM $XFree86: xc/lib/GL/mesa/src/OSmesa/Imakefile,v 1.11 2001/06/04 20:43:30 d
 #define DoDebugLib DebugLibGlx
 #define DoProfileLib ProfileLibGlx
 
+#include "../array_cache/Imakefile.inc"
+#include "../math/Imakefile.inc"
+#include "../swrast/Imakefile.inc"
+#include "../swrast_setup/Imakefile.inc"
+#include "../tnl/Imakefile.inc"
+#include "../tnl_dd/Imakefile.inc"
 #include "../Imakefile.inc"
-#ifdef i386Architecture
+#if defined(i386Architecture) && !SystemV4 && MesaUseX86Asm
 #include "../X86/Imakefile.inc"
+#endif
+#ifdef SparcArchitecture
+#include "../SPARC/Imakefile.inc"
 #endif
 
 LinkSourceFile(osmesa.c, $(MESASRCDIR)/src/OSmesa)
@@ -20,10 +29,11 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
 
 MESA_INCLUDES = -I$(MESASRCDIR)/src/OSmesa -I$(MESASRCDIR)/src \
-		-I$(MESASRCDIR)/include
+		-I$(MESASRCDIR)/include 
 
       DEFINES = $(ALLOC_DEFINES) $(DRI_DEFINES)
-     INCLUDES = -I$(XINCLUDESRC) -I$(EXTINCSRC) $(MESA_INCLUDES) $(DRI_INCLUDES)
+     INCLUDES = -I$(XINCLUDESRC) -I$(EXTINCSRC) $(MESA_INCLUDES) \
+     	 	$(DRI_INCLUDES) -I$(GLXLIBSRC)/include
 
      MESAOBJS = $(COREMESAOBJS) $(MESA_ASM_OBJS)
     MESAUOBJS = $(COREMESAUOBJS) $(MESA_ASM_UOBJS)
@@ -56,7 +66,7 @@ SubdirLibraryRule($(OBJS))
 NormalLintTarget($(SRCS))
 
 LIBNAME = OSMesa
-SOREV = 3.3
+SOREV = 4.0
 
 
 #if DoNormalLib

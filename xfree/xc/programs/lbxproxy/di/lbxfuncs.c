@@ -22,7 +22,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
-/* $XFree86: xc/programs/lbxproxy/di/lbxfuncs.c,v 1.5 2001/10/28 03:34:22 tsi Exp $ */
+/* $XFree86: xc/programs/lbxproxy/di/lbxfuncs.c,v 1.6 2002/09/18 17:11:50 tsi Exp $ */
 
 /*
  * top level LBX request & reply handling
@@ -141,14 +141,14 @@ send_setup_reply(client, success, majorVer, minorVer, cs, cs_len)
     ClientPtr client;
     Bool success;
     int majorVer, minorVer;
-    char *cs;
+    void *cs;
     int cs_len;
 {
     xConnSetupPrefix reply;
 
     reply.success = success;
     if (!success) {
-	reply.lengthReason = strlen(cs);
+	reply.lengthReason = strlen((char *)cs);
 	cs_len = reply.lengthReason + 3;
     }
     reply.majorVersion = majorVer;

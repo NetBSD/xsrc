@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.h,v 1.6 2001/04/10 16:07:51 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgavb.h,v 1.8 2002/10/30 12:51:36 alanh Exp $ */
 /*
  * Copyright 2000-2001 VA Linux Systems, Inc.
  * All Rights Reserved.
@@ -23,99 +23,43 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #ifndef MGAVB_INC
 #define MGAVB_INC
 
-#include "types.h"
-#include "vb.h"
+#include "mtypes.h"
+#include "mgacontext.h"
+#include "swrast/swrast.h"
+
+#define _MGA_NEW_RASTERSETUP (_NEW_TEXTURE |			\
+			      _DD_NEW_SEPARATE_SPECULAR |	\
+			      _DD_NEW_TRI_UNFILLED |		\
+			      _DD_NEW_TRI_LIGHT_TWOSIDE |	\
+			      _NEW_FOG)
 
 
-/* common datatypes for the mga warp engines */
+extern void mgaChooseVertexState( GLcontext *ctx );
+extern void mgaCheckTexSizes( GLcontext *ctx );
+extern void mgaBuildVertices( GLcontext *ctx, 
+			      GLuint start, 
+			      GLuint count,
+			      GLuint newinputs );
 
-/*
- *  color type for the vertex data
- *  we probably want to use an internal datatype here?
- */
-typedef struct mga_warp_color_t {
-  GLubyte	blue;
-  GLubyte       green;
-  GLubyte       red;
-  GLubyte       alpha;
-} mga_warp_color;
-
-
-
-/*
- * The vertex structure.  The final tu1/tv1 values only used in multitexture
- * modes.
- */
-typedef struct mga_warp_vertex_t {
-  GLfloat		x,y,z;	        /* coordinates in screen space*/
-  GLfloat 		rhw;	        /* reciprocal homogeneous w */
-  mga_warp_color	color;		/* vertex color */
-  mga_warp_color	specular;	/* specular color, alpha is fog */
-  GLfloat		tu0,tv0;	/* texture coordinates */
-  GLfloat		tu1,tv1;	/* same for second stage */
-} mga_warp_vertex;
-
-
-/* The fastpath code still expects a 16-float stride vertex.
- */
-union mga_vertex_t {
-   mga_warp_vertex v;
-   float f[16];
-   GLuint ui[16];
-};
-
-typedef union mga_vertex_t mgaVertex;
-typedef union mga_vertex_t *mgaVertexPtr;
-
-struct mga_vertex_buffer_t {
-   GLvector1ui clipped_elements;
-   mgaVertexPtr verts;
-   int last_vert;
-   GLuint *primitive;
-   GLuint *next_primitive;
-   void *vert_store;
-   GLuint size;
-
-   GLuint *vert_buf;
-   GLuint *elt_buf;
-   GLuint vert_phys_start;
-};
-
-typedef struct mga_vertex_buffer_t *mgaVertexBufferPtr;
-
-#define MGA_CONTEXT(ctx)    ((mgaContextPtr)((ctx)->DriverCtx))
-#define MGA_DRIVER_DATA(vb) ((mgaVertexBufferPtr)((vb)->driver_data))
-
-
-#define MGA_FOG_BIT	   MGA_F
-#define MGA_ALPHA_BIT      MGA_A
-#define MGA_SPEC_BIT       MGA_S
-#define MGA_TEX1_BIT       MGA_T2
-#define MGA_TEX0_BIT       0x10	    /* non-warp parameters */
-#define MGA_RGBA_BIT       0x20
-#define MGA_WIN_BIT        0x40
-
-struct gl_pipeline_stage;
-
-extern void mgaChooseRasterSetupFunc(GLcontext *ctx);
 extern void mgaPrintSetupFlags(char *msg, GLuint flags );
-extern void mgaDDDoRasterSetup( struct vertex_buffer *VB );
-extern void mgaDDPartialRasterSetup( struct vertex_buffer *VB );
-extern void mgaDDCheckPartialRasterSetup( GLcontext *ctx,
-					  struct gl_pipeline_stage *d );
 
+extern void mgaInitVB( GLcontext *ctx );
+extern void mgaFreeVB( GLcontext *ctx );
 
-extern void mgaDDUnregisterVB( struct vertex_buffer *VB );
-extern void mgaDDRegisterVB( struct vertex_buffer *VB );
-extern void mgaDDResizeVB( struct vertex_buffer *VB, GLuint size );
+extern void mga_emit_contiguous_verts( GLcontext *ctx,
+					GLuint start,
+					GLuint count );
 
-extern void mgaDDSetupInit( void );
+extern void mga_translate_vertex(GLcontext *ctx, 
+				 const mgaVertex *src, 
+				 SWvertex *dst);
 
+extern void mga_print_vertex( GLcontext *ctx, const mgaVertex *v );
 
 #endif

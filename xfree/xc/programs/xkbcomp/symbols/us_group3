@@ -4,7 +4,7 @@
 // so that the US keyboard would show as Group 3 on the keymap.
 // I am reachable at eric_moreau@compuserve.com
 //
-// $XFree86: xc/programs/xkbcomp/symbols/us_group3,v 1.2 2000/06/15 20:34:15 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/us_group3,v 1.4 2002/11/25 14:05:06 eich Exp $
 //
 // Original Header follows:
 //
@@ -36,7 +36,10 @@ xkb_symbols "basic" {
     key <AE10> {	[], [], [	  0,	parenright	]	};
     key <AE11> {	[], [], [     minus,	underscore	]	};
     key <AE12> {	[], [], [     equal,	plus		]	};
-    key <BKSP> {	[], [], [ 	BackSpace		]	};
+    key <BKSP> {
+	type="CTRL+ALT",
+	symbols[Group3]= [ BackSpace,	Terminate_Server ]
+    };
 
     key  <TAB> {	[], [], [ 	Tab,	ISO_Left_Tab	]	};
     key <AD01> {	[], [], [	  q,	Q 		]	};
@@ -278,3 +281,7 @@ xkb_symbols "pc105compose" {
     include "us_group3(pc104compose)"
     key <LSGT> {	[], [], [      less,    greater		]	};
 };
+// Override broken Numlock key on some IBM keyboards 
+xkb_symbols "ibm_space_saver" { 
+    key <NMLK> {        [  Num_Lock, Num_Lock   ]       }; 
+}; 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86vmode.c,v 3.53 2001/08/06 20:51:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86vmode.c,v 3.54 2002/12/22 00:46:51 dawes Exp $ */
 
 /*
 
@@ -1625,6 +1625,37 @@ ProcXF86VidModeGetGammaRampSize(ClientPtr client)
 }
 
 static int
+ProcXF86VidModeGetPermissions(ClientPtr client)
+{
+    xXF86VidModeGetPermissionsReply rep;
+    int n;
+    REQUEST(xXF86VidModeGetPermissionsReq);
+
+    if(stuff->screen >= screenInfo.numScreens)
+        return BadValue;
+
+    REQUEST_SIZE_MATCH(xXF86VidModeGetPermissionsReq);
+
+    rep.type = X_Reply;
+    rep.length = 0;
+    rep.sequenceNumber = client->sequence;
+    rep.permissions = XF86VM_READ_PERMISSION;
+    if (xf86GetVidModeEnabled() &&
+	(xf86GetVidModeAllowNonLocal() || LocalClient (client))) {
+	rep.permissions |= XF86VM_WRITE_PERMISSION;
+    }
+    if(client->swapped) {
+        swaps(&rep.sequenceNumber, n);
+        swapl(&rep.length, n);
+        swapl(&rep.permissions, n);
+    }
+    WriteToClient(client,sizeof(xXF86VidModeGetPermissionsReply),(char*)&rep);
+
+    return (client->noClientException);
+}
+
+
+static int
 ProcXF86VidModeSetClientVersion(ClientPtr client)
 {
     REQUEST(xXF86VidModeSetClientVersionReq);
@@ -1657,14 +1688,26 @@ ProcXF86VidModeDispatch(ClientPtr client)
 	return ProcXF86VidModeQueryVersion(client);
     case X_XF86VidModeGetModeLine:
 	return ProcXF86VidModeGetModeLine(client);
-    case X_XF86VidModeGetAllModeLines:
-	return ProcXF86VidModeGetAllModeLines(client);
     case X_XF86VidModeGetMonitor:
 	return ProcXF86VidModeGetMonitor(client);
+    case X_XF86VidModeGetAllModeLines:
+	return ProcXF86VidModeGetAllModeLines(client);
     case X_XF86VidModeValidateModeLine:
 	return ProcXF86VidModeValidateModeLine(client);
     case X_XF86VidModeGetViewPort:
 	return ProcXF86VidModeGetViewPort(client);
+    case X_XF86VidModeGetDotClocks:
+	return ProcXF86VidModeGetDotClocks(client);
+    case X_XF86VidModeSetClientVersion:
+	return ProcXF86VidModeSetClientVersion(client);
+    case X_XF86VidModeGetGamma:
+	return ProcXF86VidModeGetGamma(client);
+    case X_XF86VidModeGetGammaRamp:
+	return ProcXF86VidModeGetGammaRamp(client);
+    case X_XF86VidModeGetGammaRampSize:
+	return ProcXF86VidModeGetGammaRampSize(client);
+    case X_XF86VidModeGetPermissions:
+	return ProcXF86VidModeGetPermissions(client);
     default:
 	if (!xf86GetVidModeEnabled())
 	    return VidModeErrorBase + XF86VidModeExtensionDisabled;
@@ -1684,20 +1727,10 @@ ProcXF86VidModeDispatch(ClientPtr client)
 		return ProcXF86VidModeLockModeSwitch(client);
 	    case X_XF86VidModeSetViewPort:
 		return ProcXF86VidModeSetViewPort(client);
-	    case X_XF86VidModeGetDotClocks:
-		return ProcXF86VidModeGetDotClocks(client);
 	    case X_XF86VidModeSetGamma:
 		return ProcXF86VidModeSetGamma(client);
-	    case X_XF86VidModeGetGamma:
-		return ProcXF86VidModeGetGamma(client);
-	    case X_XF86VidModeSetClientVersion:
-		return ProcXF86VidModeSetClientVersion(client);
-            case X_XF86VidModeGetGammaRamp:
-                return ProcXF86VidModeGetGammaRamp(client);
-            case X_XF86VidModeSetGammaRamp:
-                return ProcXF86VidModeSetGammaRamp(client);
-            case X_XF86VidModeGetGammaRampSize:
-                return ProcXF86VidModeGetGammaRampSize(client);
+	    case X_XF86VidModeSetGammaRamp:
+		return ProcXF86VidModeSetGammaRamp(client);
 	    default:
 		return BadRequest;
 	    }
@@ -2078,7 +2111,16 @@ SProcXF86VidModeGetGammaRampSize(ClientPtr client)
     return ProcXF86VidModeGetGammaRampSize(client);
 }
 
-
+static int
+SProcXF86VidModeGetPermissions(ClientPtr client)
+{   
+    int n;
+    REQUEST(xXF86VidModeGetPermissionsReq);
+    swaps(&stuff->length, n);
+    REQUEST_SIZE_MATCH(xXF86VidModeGetPermissionsReq);
+    swaps(&stuff->screen, n);
+    return ProcXF86VidModeGetPermissions(client);
+}
 
 
 static int
@@ -2091,14 +2133,26 @@ SProcXF86VidModeDispatch(ClientPtr client)
 	return SProcXF86VidModeQueryVersion(client);
     case X_XF86VidModeGetModeLine:
 	return SProcXF86VidModeGetModeLine(client);
-    case X_XF86VidModeGetAllModeLines:
-	return SProcXF86VidModeGetAllModeLines(client);
     case X_XF86VidModeGetMonitor:
 	return SProcXF86VidModeGetMonitor(client);
+    case X_XF86VidModeGetAllModeLines:
+	return SProcXF86VidModeGetAllModeLines(client);
     case X_XF86VidModeGetViewPort:
 	return SProcXF86VidModeGetViewPort(client);
     case X_XF86VidModeValidateModeLine:
 	return SProcXF86VidModeValidateModeLine(client);
+    case X_XF86VidModeGetDotClocks:
+	return SProcXF86VidModeGetDotClocks(client);
+    case X_XF86VidModeSetClientVersion:
+	return SProcXF86VidModeSetClientVersion(client);
+    case X_XF86VidModeGetGamma:
+	return SProcXF86VidModeGetGamma(client);
+    case X_XF86VidModeGetGammaRamp:
+	return SProcXF86VidModeGetGammaRamp(client);
+    case X_XF86VidModeGetGammaRampSize:
+	return SProcXF86VidModeGetGammaRampSize(client);
+    case X_XF86VidModeGetPermissions:
+	return SProcXF86VidModeGetPermissions(client);
     default:
 	if (!xf86GetVidModeEnabled())
 	    return VidModeErrorBase + XF86VidModeExtensionDisabled;
@@ -2118,20 +2172,10 @@ SProcXF86VidModeDispatch(ClientPtr client)
 		return SProcXF86VidModeLockModeSwitch(client);
 	    case X_XF86VidModeSetViewPort:
 		return SProcXF86VidModeSetViewPort(client);
-	    case X_XF86VidModeGetDotClocks:
-		return SProcXF86VidModeGetDotClocks(client);
 	    case X_XF86VidModeSetGamma:
 		return SProcXF86VidModeSetGamma(client);
-	    case X_XF86VidModeGetGamma:
-		return SProcXF86VidModeGetGamma(client);
-	    case X_XF86VidModeSetClientVersion:
-		return SProcXF86VidModeSetClientVersion(client);
-	    case X_XF86VidModeGetGammaRamp:
-		return SProcXF86VidModeGetGammaRamp(client);
-            case X_XF86VidModeSetGammaRamp:
-                return SProcXF86VidModeSetGammaRamp(client);
-            case X_XF86VidModeGetGammaRampSize:
-                return SProcXF86VidModeGetGammaRampSize(client);
+	    case X_XF86VidModeSetGammaRamp:
+		return SProcXF86VidModeSetGammaRamp(client);
 	    default:
 		return BadRequest;
 	    }

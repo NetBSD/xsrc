@@ -22,7 +22,7 @@
  *
  * Author:  	Dave Lemke, Network Computing Devices, Inc
  */
-/* $XFree86: xc/lib/font/fc/fsconvert.c,v 1.10 2001/01/17 19:43:28 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fsconvert.c,v 1.11 2002/09/10 16:14:35 tsi Exp $ */
 /*
  * FS data conversion
  */
@@ -127,6 +127,7 @@ _fs_convert_props(fsPropInfo *pi, fsPropOffset *po, pointer pd,
 	    if (dprop->value == BAD_RESOURCE)
 	    {
 		xfree (pfi->props);
+		pfi->nprops = 0;
 		pfi->props = 0;
 		pfi->isStringProp = 0;
 		return -1;
@@ -144,6 +145,7 @@ _fs_free_props (FontInfoPtr pfi)
     if (pfi->props)
     {
 	xfree (pfi->props);
+	pfi->nprops = 0;
 	pfi->props = 0;
     }
 }
@@ -723,6 +725,7 @@ fs_create_font (FontPathElementPtr  fpe,
     pfont->scan = scan;
     pfont->glyph = glyph;
     
+    pfont->info.nprops = 0;
     pfont->info.props = 0;
     pfont->info.isStringProp = 0;
     

@@ -23,7 +23,7 @@
 ! other dealings in this Software without prior written authorization
 ! from The Open Group.
 !
-! $XFree86: xc/lib/X11/XErrorDB,v 3.36 2001/12/14 19:54:08 dawes Exp $
+! $XFree86: xc/lib/X11/XErrorDB,v 3.41 2002/12/22 00:46:50 dawes Exp $
 !
 ! these are used in XGetErrorMessage.
 XlibMessage.XError: X Error of failed request
@@ -588,12 +588,13 @@ XRequest.XFree86-VidModeExtension.16: XF86VidModeGetGamma
 XRequest.XFree86-VidModeExtension.17: XF86VidModeGetGammaRamp
 XRequest.XFree86-VidModeExtension.18: XF86VidModeSetGammaRamp
 XRequest.XFree86-VidModeExtension.19: XF86VidModeGetGammaRampSize
+XRequest.XFree86-VidModeExtension.20: XF86VidModeGetPermissions
 XProtoError.XFree86-VidModeExtension.0: XF86VidModeBadClock
 XProtoError.XFree86-VidModeExtension.1: XF86VidModeBadHTimings
 XProtoError.XFree86-VidModeExtension.2: XF86VidModeBadVTimings
 XProtoError.XFree86-VidModeExtension.3: XF86VidModeModeUnsuitable
-XProtoError.XFree86-VidModeExtension.4: XF86VidModeClientNotLocal
-XProtoError.XFree86-VidModeExtension.5: XF86VidModeExtensionDisabled
+XProtoError.XFree86-VidModeExtension.4: XF86VidModeExtensionDisabled
+XProtoError.XFree86-VidModeExtension.5: XF86VidModeClientNotLocal
 XProtoError.XFree86-VidModeExtension.6: XF86VidModeZoomLocked
 ! XFree86-Misc -- not an X Consortium standard
 XRequest.XFree86-Misc.0: XF86MiscQueryVersion
@@ -603,6 +604,9 @@ XRequest.XFree86-Misc.3: XF86MiscGetMouseSettings
 XRequest.XFree86-Misc.4: XF86MiscGetKbdSettings
 XRequest.XFree86-Misc.5: XF86MiscSetMouseSettings
 XRequest.XFree86-Misc.6: XF86MiscSetKbdSettings
+XRequest.XFree86-Misc.7: XF86MiscSetGrabKeysState
+XRequest.XFree86-Misc.8: XF86MiscSetClientVersion
+XRequest.XFree86-Misc.9: XF86MiscGetFilePaths
 XProtoError.XFree86-Misc.0: XF86MiscBadMouseProtocol
 XProtoError.XFree86-Misc.1: XF86MiscBadMouseBaudRate
 XProtoError.XFree86-Misc.2: XF86MiscBadMouseFlags
@@ -830,4 +834,52 @@ XProtoError.Adobe-DPS-Extension.1: PSErrorBadSpace (invalid Space parameter)
 XlibMessage.Adobe-DPS-Extension.1: Space id in failed request:  0x%lx
 XProtoError.Adobe-DPS-Extension.2: PSErrorAbort (interpreter aborted)
 XlibMessage.Adobe-DPS-Extension.2: Value in failed request:  0x%lx
-
+! RANDR
+XRequest.RANDR.0: RRQueryVersion
+XRequest.RANDR.1: RROldGetScreenInfo
+XRequest.RANDR.2: RRSetScreenConfig
+XRequest.RANDR.3: RROldScreenChangeSelectInput
+XRequest.RANDR.4: RRSelectInput
+XRequest.RANDR.5: RRGetScreenInfo
+! RENDER
+XRequest.RENDER.0: RenderQueryVersion
+XRequest.RENDER.1: RenderQueryPictFormats
+XRequest.RENDER.2: RenderQueryPictIndexValues
+XRequest.RENDER.3: RenderQueryDithers
+XRequest.RENDER.4: RenderCreatePicture
+XRequest.RENDER.5: RenderChangePicture
+XRequest.RENDER.6: RenderSetPictureClipRectangles
+XRequest.RENDER.7: RenderFreePicture
+XRequest.RENDER.8: RenderComposite
+XRequest.RENDER.9: RenderScale
+XRequest.RENDER.10: RenderTrapezoids
+XRequest.RENDER.11: RenderTriangles
+XRequest.RENDER.12: RenderTriStrip
+XRequest.RENDER.13: RenderTriFan
+XRequest.RENDER.14: RenderColorTrapezoids
+XRequest.RENDER.15: RenderColorTriangles
+XRequest.RENDER.16: RenderTransform
+XRequest.RENDER.17: RenderCreateGlyphSet
+XRequest.RENDER.18: RenderReferenceGlyphSet
+XRequest.RENDER.19: RenderFreeGlyphSet
+XRequest.RENDER.20: RenderAddGlyphs
+XRequest.RENDER.21: RenderAddGlyphsFromPicture
+XRequest.RENDER.22: RenderFreeGlyphs
+XRequest.RENDER.23: RenderCompositeGlyphs8
+XRequest.RENDER.24: RenderCompositeGlyphs16
+XRequest.RENDER.25: RenderCompositeGlyphs32
+XRequest.RENDER.26: RenderFillRectangles
+XRequest.RENDER.27: RenderCreateCursor
+XRequest.RENDER.28: RenderSetPictureTransform
+XRequest.RENDER.29: RenderQueryFilters
+XRequest.RENDER.30: RenderSetPictureFilter
+XProtoError.RENDER.0: RenderBadFormat (invalid PictFormat parameter)
+XlibMessage.RENDER.0: PictFormat id in failed request: 0x%lx
+XProtoError.RENDER.1: RenderBadPicture (invalid Picture parameter)
+XlibMessage.RENDER.1: Picture id in failed request: 0x%lx
+XProtoError.RENDER.2: RenderBadPictOp (invalid PictOp parameter)
+XlibMessage.RENDER.2: PictOp in failed request: 0x%lx
+XProtoError.RENDER.3: RenderBadGlyphSet (invalid GlyphSet parameter)
+XlibMessage.RENDER.3: GlyphSet id in failed request: 0x%lx
+XProtoError.RENDER.4: RenderBadGlyph (invalid Glyph parameter)
+XlibMessage.RENDER.4: Glyph in failed request: 0x%lx

@@ -22,9 +22,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.c,v 1.12 2001/08/18 02:51:05 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgatex.c,v 1.14 2002/10/30 12:51:36 alanh Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,13 +34,17 @@
 #include "mgacontext.h"
 #include "mgatex.h"
 #include "mgaregs.h"
+#include "mgatris.h"
 #include "mgaioctl.h"
 
-#include "context.h"
 #include "enums.h"
 #include "simple_list.h"
 #include "mem.h"
-#include "texutil.h"
+#include "macros.h"
+#include "texformat.h"
+#include "texstore.h"
+
+#include "swrast/swrast.h"
 
 #define TEX_0 1
 #define TEX_1 2
@@ -60,7 +64,7 @@ mgaDestroyTexObj( mgaContextPtr mmesa, mgaTextureObjectPtr t )
       mmFreeMem( t->MemBlock );
       t->MemBlock = 0;
 
-      if (t->age > mmesa->dirtyAge)
+      if (mmesa && t->age > mmesa->dirtyAge)
 	 mmesa->dirtyAge = t->age;
    }
 
@@ -69,9 +73,11 @@ mgaDestroyTexObj( mgaContextPtr mmesa, mgaTextureObjectPtr t )
       t->tObj->DriverData = NULL;
 
    /* see if it was the driver's current object */
-   if (t->bound & TEX_0) mmesa->CurrentTexObj[0] = 0;
-   if (t->bound & TEX_1) mmesa->CurrentTexObj[1] = 0;
-
+   if (mmesa) {
+      if (t->bound & TEX_0) mmesa->CurrentTexObj[0] = 0;
+      if (t->bound & TEX_1) mmesa->CurrentTexObj[1] = 0;
+   }
+	
    remove_from_list(t);
    FREE( t );
 }
@@ -157,9 +163,9 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
       fprintf( stderr, "internal=%s format=%s type=%s\n",
 	       texImage->IntFormat == 3 ? "GL_RGB (3)" :
 	       texImage->IntFormat == 4 ? "GL_RGBA (4)" :
-	       gl_lookup_enum_by_nr( texImage->IntFormat ),
-	       gl_lookup_enum_by_nr( format ),
-	       gl_lookup_enum_by_nr( type ) );
+	       _mesa_lookup_enum_by_nr( texImage->IntFormat ),
+	       _mesa_lookup_enum_by_nr( format ),
+	       _mesa_lookup_enum_by_nr( type ) );
 
 #define SET_FORMAT( r, gl )						\
    do {									\
@@ -179,8 +185,13 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
    } while (0)
 
    switch ( texImage->IntFormat ) {
-   case GL_RGBA:
+      /* GH: Bias towards GL_RGB, GL_RGBA texture formats.  This has
+       * got to be better than sticking them way down the end of this
+       * huge list.
+       */
    case 4:
+   case GL_RGBA:
+   case GL_COMPRESSED_RGBA:
       if ( format == GL_BGRA ) {
 	 if ( type == GL_UNSIGNED_INT_8_8_8_8_REV ) {
 	    SET_FORMAT( TMC_tformat_tw32, _mesa_texformat_argb8888 );
@@ -197,8 +208,9 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
 			TMC_tformat_tw12, _mesa_texformat_argb4444 );
       break;
 
-   case GL_RGB:
    case 3:
+   case GL_RGB:
+   case GL_COMPRESSED_RGB:
       if ( format == GL_RGB && type == GL_UNSIGNED_SHORT_5_6_5 ) {
 	 SET_FORMAT( TMC_tformat_tw16, _mesa_texformat_rgb565 );
 	 break;
@@ -207,6 +219,9 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
 			TMC_tformat_tw16, _mesa_texformat_rgb565 );
       break;
 
+      /* GH: Okay, keep checking as normal.  Still test for GL_RGB,
+       * GL_RGBA formats first.
+       */
    case GL_RGBA8:
    case GL_RGB10_A2:
    case GL_RGBA12:
@@ -217,17 +232,12 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
 
    case GL_RGBA4:
    case GL_RGBA2:
-   case GL_RGB5_A1:
       SET_FORMAT( TMC_tformat_tw12, _mesa_texformat_argb4444 );
       break;
 
-#if 0
    case GL_RGB5_A1:
-      /* GH: Leave this until we use the new texture conversion code.
-       */
       SET_FORMAT( TMC_tformat_tw15, _mesa_texformat_argb1555 );
       break;
-#endif
 
    case GL_RGB8:
    case GL_RGB10:
@@ -248,6 +258,7 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
    case GL_ALPHA8:
    case GL_ALPHA12:
    case GL_ALPHA16:
+   case GL_COMPRESSED_ALPHA:
       /* FIXME: This will report incorrect component sizes... */
       SET_FORMAT( TMC_tformat_tw12, _mesa_texformat_argb4444 );
       break;
@@ -258,6 +269,7 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
    case GL_LUMINANCE8:
    case GL_LUMINANCE12:
    case GL_LUMINANCE16:
+   case GL_COMPRESSED_LUMINANCE:
       /* FIXME: This will report incorrect component sizes... */
       SET_FORMAT( TMC_tformat_tw16, _mesa_texformat_rgb565 );
       break;
@@ -270,6 +282,7 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
    case GL_LUMINANCE12_ALPHA4:
    case GL_LUMINANCE12_ALPHA12:
    case GL_LUMINANCE16_ALPHA16:
+   case GL_COMPRESSED_LUMINANCE_ALPHA:
       /* FIXME: This will report incorrect component sizes... */
       SET_FORMAT( TMC_tformat_tw12, _mesa_texformat_argb4444 );
       break;
@@ -279,6 +292,7 @@ static GLint mgaChooseTexFormat( mgaContextPtr mmesa,
    case GL_INTENSITY8:
    case GL_INTENSITY12:
    case GL_INTENSITY16:
+   case GL_COMPRESSED_INTENSITY:
       /* FIXME: This will report incorrect component sizes... */
       SET_FORMAT( TMC_tformat_tw12, _mesa_texformat_argb4444 );
       break;
@@ -417,7 +431,7 @@ static void mgaCreateTexObj(mgaContextPtr mmesa,
 
 static void mgaUpdateTextureEnvG200( GLcontext *ctx )
 {
-   struct gl_texture_object *tObj = ctx->Texture.Unit[0].Current;
+   struct gl_texture_object *tObj = ctx->Texture.Unit[0]._Current;
    mgaTextureObjectPtr t;
 
    if (!tObj || !tObj->DriverData)
@@ -439,7 +453,7 @@ static void mgaUpdateTextureEnvG200( GLcontext *ctx )
       t->setup.texctl2 |= TMC_decalblend_enable;
       break;
    case GL_BLEND:
-      t->ctx->Fallback |= MGA_FALLBACK_TEXTURE;
+      FALLBACK( ctx, MGA_FALLBACK_TEXTURE, GL_TRUE );
       break;
    default:
       break;
@@ -451,13 +465,10 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
    GLuint *reg = ((GLuint *)&mmesa->setup.tdualstage0 + unit);
    GLuint source = mmesa->tmu_source[unit];
-   struct gl_texture_object *tObj = ctx->Texture.Unit[source].Current;
+   struct gl_texture_object *tObj = ctx->Texture.Unit[source]._Current;
    GLenum format;
 
-   if ( tObj != ctx->Texture.Unit[source].CurrentD[2] ||
-	!tObj ||
-	!tObj->Complete ||
-	((ctx->Enabled>>(source*4))&TEXTURE0_ANY) != TEXTURE0_2D )
+   if ( tObj != ctx->Texture.Unit[source].Current2D || !tObj ) 
       return;
 
    format = tObj->Image[tObj->BaseLevel]->Format;
@@ -483,16 +494,16 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
    case GL_MODULATE:
       if (unit == 0) {
 	 *reg = ( TD0_color_arg2_diffuse |
-		  TD0_color_sel_mulout |
+		  TD0_color_sel_mul |
 		  TD0_alpha_arg2_diffuse |
-		  TD0_alpha_sel_mulout);
+		  TD0_alpha_sel_mul);
       }
       else {
 	 *reg = ( TD0_color_arg2_prevstage |
 		  TD0_color_alpha_prevstage |
-		  TD0_color_sel_mulout |
+		  TD0_color_sel_mul |
 		  TD0_alpha_arg2_prevstage |
-		  TD0_alpha_sel_mulout);
+		  TD0_alpha_sel_mul);
       }
       break;
    case GL_DECAL:
@@ -538,7 +549,7 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
          }
 #else
          /* s/w fallback, pretty sure we can't do in h/w */
-	 mmesa->Fallback |= MGA_FALLBACK_TEXTURE;
+	 FALLBACK( ctx, MGA_FALLBACK_TEXTURE, GL_TRUE );
 	 if ( MGA_DEBUG & DEBUG_VERBOSE_FALLBACK )
 	    fprintf( stderr, "FALLBACK: GL_DECAL RGBA texture, unit=%d\n",
 		     unit );
@@ -565,44 +576,44 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
          if (format == GL_INTENSITY)
             *reg = ( TD0_color_arg2_diffuse |
                      TD0_color_add_add |
-                     TD0_color_sel_addout |
+                     TD0_color_sel_add |
                      TD0_alpha_arg2_diffuse |
                      TD0_alpha_add_enable |
-                     TD0_alpha_sel_addout);
+                     TD0_alpha_sel_add);
          else if (format == GL_ALPHA)
             *reg = ( TD0_color_arg2_diffuse |
-                     TD0_color_sel_mulout |
+                     TD0_color_sel_mul |
                      TD0_alpha_arg2_diffuse |
-                     TD0_alpha_sel_mulout);
+                     TD0_alpha_sel_mul);
          else
             *reg = ( TD0_color_arg2_diffuse |
                      TD0_color_add_add |
-                     TD0_color_sel_addout |
+                     TD0_color_sel_add |
                      TD0_alpha_arg2_diffuse |
-                     TD0_alpha_sel_mulout);
+                     TD0_alpha_sel_mul);
       }
       else {
          if (format == GL_INTENSITY) {
             *reg = ( TD0_color_arg2_prevstage |
                      TD0_color_add_add |
-                     TD0_color_sel_addout |
+                     TD0_color_sel_add |
                      TD0_alpha_arg2_prevstage |
                      TD0_alpha_add_enable |
-                     TD0_alpha_sel_addout);
+                     TD0_alpha_sel_add);
          }
          else if (format == GL_ALPHA) {
             *reg = ( TD0_color_arg2_prevstage |
-                     TD0_color_sel_mulout |
+                     TD0_color_sel_mul |
                      TD0_alpha_arg2_prevstage |
-                     TD0_alpha_sel_mulout);
+                     TD0_alpha_sel_mul);
          }
          else {
             *reg = ( TD0_color_arg2_prevstage |
                      TD0_color_alpha_prevstage |
                      TD0_color_add_add |
-                     TD0_color_sel_addout |
+                     TD0_color_sel_add |
                      TD0_alpha_arg2_prevstage |
-                     TD0_alpha_sel_mulout);
+                     TD0_alpha_sel_mul);
          }
       }
       break;
@@ -610,12 +621,12 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
    case GL_BLEND:
       if (format == GL_ALPHA) {
 	 *reg = ( TD0_color_arg2_diffuse |
-		  TD0_color_sel_mulout |
+		  TD0_color_sel_mul |
 		  TD0_alpha_arg2_diffuse |
-		  TD0_alpha_sel_mulout);
+		  TD0_alpha_sel_mul);
       }
       else {
-	 mmesa->Fallback |= MGA_FALLBACK_TEXTURE;
+	 FALLBACK( ctx, MGA_FALLBACK_TEXTURE, GL_TRUE );
 	 if ( MGA_DEBUG & DEBUG_VERBOSE_FALLBACK )
 	    fprintf( stderr, "FALLBACK: GL_BLEND envcolor=0x%08x\n",
 		     mmesa->envcolor );
@@ -630,7 +641,7 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
              */
             *reg = ( TD0_color_arg2_diffuse |
                      TD0_color_arg1_inv_enable |
-                     TD0_color_sel_mulout |
+                     TD0_color_sel_mul |
                      TD0_alpha_arg2_diffuse |
                      TD0_alpha_sel_arg1);
          } else {
@@ -639,7 +650,7 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
              */
             *reg = ( TD0_color_arg2_prevstage |
                      TD0_color_add_add |
-                     TD0_color_sel_addout |
+                     TD0_color_sel_add |
                      TD0_alpha_arg2_prevstage |
                      TD0_alpha_sel_arg2);
          }
@@ -652,67 +663,52 @@ static void mgaUpdateTextureEnvG400( GLcontext *ctx, int unit )
 
 
 
-static void mgaUpdateTextureObject( GLcontext *ctx, int unit )
+static void mgaUpdateTextureObject( GLcontext *ctx, int hw_unit )
 {
    mgaTextureObjectPtr t;
    struct gl_texture_object	*tObj;
    GLuint enabled;
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
-   GLuint source = mmesa->tmu_source[unit];
+   GLuint gl_unit = mmesa->tmu_source[hw_unit];
 
 
-   enabled = (ctx->Texture.ReallyEnabled>>(source*4))&TEXTURE0_ANY;
-   tObj = ctx->Texture.Unit[source].Current;
+   enabled = ctx->Texture.Unit[gl_unit]._ReallyEnabled;
+   tObj = ctx->Texture.Unit[gl_unit]._Current;
 
    if (enabled != TEXTURE0_2D) {
-      if (enabled) {
-	 mmesa->Fallback |= MGA_FALLBACK_TEXTURE;
-	 if ( MGA_DEBUG & DEBUG_VERBOSE_FALLBACK )
-	    fprintf( stderr, "FALLBACK: tex enable != 2D\n" );
-      }
-      return;
-   }
-
-   if ( !tObj || tObj != ctx->Texture.Unit[source].CurrentD[2] ) {
-      mmesa->Fallback |= MGA_FALLBACK_TEXTURE;
-      if ( MGA_DEBUG & DEBUG_VERBOSE_FALLBACK )
-	 fprintf( stderr, "FALLBACK: tObj != 2D texture\n" );
+      if (enabled)
+	 FALLBACK( ctx, MGA_FALLBACK_TEXTURE, GL_TRUE );
       return;
    }
 
    if (tObj->Image[tObj->BaseLevel]->Border > 0) {
-      mmesa->Fallback |= MGA_FALLBACK_TEXTURE;
+      FALLBACK( ctx, MGA_FALLBACK_TEXTURE, GL_TRUE );
       if ( MGA_DEBUG & DEBUG_VERBOSE_FALLBACK )
 	 fprintf( stderr, "FALLBACK: texture border\n" );
       return;
    }
 
-/*     if (!tObj) tObj = ctx->Texture.Unit[0].Current; */
-/*     if (!tObj) return; */
-
    if ( !tObj->DriverData ) {
       mgaCreateTexObj( mmesa, tObj );
       if ( !tObj->DriverData ) {
-	 mmesa->Fallback |= MGA_FALLBACK_TEXTURE;
-	 if ( MGA_DEBUG & DEBUG_VERBOSE_FALLBACK )
-	    fprintf( stderr, "FALLBACK: could not create texture object\n" );
-	 return;
+	 FALLBACK( ctx, MGA_FALLBACK_TEXTURE, GL_TRUE );
+	 return;		
       }
    }
 
    t = (mgaTextureObjectPtr)tObj->DriverData;
 
    if (t->dirty_images)
-      mmesa->dirty |= (MGA_UPLOAD_TEX0IMAGE << unit);
+      mmesa->dirty |= (MGA_UPLOAD_TEX0IMAGE << hw_unit);
 
-   mmesa->CurrentTexObj[unit] = t;
-   t->bound |= unit+1;
+   mmesa->CurrentTexObj[hw_unit] = t;
+   t->bound |= hw_unit+1;
 
 /*     if (t->MemBlock) */
 /*        mgaUpdateTexLRU( mmesa, t ); */
 
    t->setup.texctl2 &= ~TMC_dualtex_enable;
-   if (mmesa->multitex)
+   if (ctx->Texture._ReallyEnabled == (TEXTURE0_2D|TEXTURE1_2D)) 
       t->setup.texctl2 |= TMC_dualtex_enable;
 
    t->setup.texctl2 &= ~TMC_specen_enable;
@@ -730,7 +726,7 @@ static void mgaUpdateTextureObject( GLcontext *ctx, int unit )
 void mgaUpdateTextureState( GLcontext *ctx )
 {
    mgaContextPtr mmesa = MGA_CONTEXT( ctx );
-   mmesa->Fallback &= ~MGA_FALLBACK_TEXTURE;
+   FALLBACK( ctx, MGA_FALLBACK_TEXTURE, GL_FALSE );
 
    if (mmesa->CurrentTexObj[0]) {
       mmesa->CurrentTexObj[0]->bound = 0;
@@ -742,24 +738,23 @@ void mgaUpdateTextureState( GLcontext *ctx )
       mmesa->CurrentTexObj[1] = 0;
    }
 
+   if (ctx->Texture._ReallyEnabled == TEXTURE1_2D) {
+      mmesa->tmu_source[0] = 1;
+   } else {
+      mmesa->tmu_source[0] = 0;
+   }
+
    if (MGA_IS_G400(mmesa)) {
       mgaUpdateTextureObject( ctx, 0 );
       mgaUpdateTextureEnvG400( ctx, 0 );
 
       mmesa->setup.tdualstage1 = mmesa->setup.tdualstage0;
-
-      if (mmesa->multitex || 1) {
-	 mgaUpdateTextureObject( ctx, 1 );
+      
+      if (ctx->Texture._ReallyEnabled == (TEXTURE0_2D|TEXTURE1_2D)) {
+	 mgaUpdateTextureObject( ctx, 1 );	
 	 mgaUpdateTextureEnvG400( ctx, 1 );
+	 mmesa->dirty |= MGA_UPLOAD_TEX1;
       }
-/*  else  */
-/*  	 mmesa->Setup[MGA_CTXREG_TDUAL1] = ( TD0_color_arg2_prevstage | */
-/*  					     TD0_color_sel_arg2 |  */
-/*  					     TD0_alpha_arg2_prevstage | */
-/*  					     TD0_alpha_sel_arg2); */
-
-
-      mmesa->dirty |= MGA_UPLOAD_TEX1;
    } else {
       mgaUpdateTextureObject( ctx, 0 );
       mgaUpdateTextureEnvG200( ctx );
@@ -768,7 +763,7 @@ void mgaUpdateTextureState( GLcontext *ctx )
    mmesa->dirty |= MGA_UPLOAD_CONTEXT | MGA_UPLOAD_TEX0;
 
    mmesa->setup.dwgctl &= DC_opcod_MASK;
-   mmesa->setup.dwgctl |= (ctx->Texture.ReallyEnabled
+   mmesa->setup.dwgctl |= (ctx->Texture._ReallyEnabled
 			   ? DC_opcod_texture_trap
 			   : DC_opcod_trap);
 }
@@ -820,66 +815,46 @@ static void mgaDDTexEnv( GLcontext *ctx, GLenum target,
 }
 
 
-static void mgaDDTexImage( GLcontext *ctx, GLenum target,
-			   struct gl_texture_object *tObj, GLint level,
-			   GLint internalFormat,
-			   const struct gl_texture_image *image )
+static void mgaTexImage2D( GLcontext *ctx, GLenum target, GLint level,
+			    GLint internalFormat,
+			    GLint width, GLint height, GLint border,
+			    GLenum format, GLenum type, const GLvoid *pixels,
+			    const struct gl_pixelstore_attrib *packing,
+			    struct gl_texture_object *texObj,
+			    struct gl_texture_image *texImage )
 {
-   mgaContextPtr mmesa = MGA_CONTEXT( ctx );
-   mgaTextureObjectPtr t;
-   GLint tformat;
-   /* hack: cast-away const */
-   struct gl_texture_image *img = (struct gl_texture_image *) image;
-
-   /* just free the mga texture if it exists, it will be recreated at
-      mgaUpdateTextureState time. */
-   t = (mgaTextureObjectPtr) tObj->DriverData;
-   if ( t ) {
-      if (t->bound) FLUSH_BATCH(mmesa);
-      /* if this is the current object, it will force an update */
-      mgaDestroyTexObj( mmesa, t );
-      mmesa->new_state |= MGA_NEW_TEXTURE;
+   mgaTextureObjectPtr t = (mgaTextureObjectPtr) texObj->DriverData;
+   if (t) {
+      mgaDestroyTexObj( MGA_CONTEXT(ctx), t );
+      texObj->DriverData = 0;
    }
+   _mesa_store_teximage2d( ctx, target, level, internalFormat,
+			   width, height, border, format, type,
+			   pixels, packing, texObj, texImage );
+}
 
-   tformat = mgaChooseTexFormat( mmesa, img, img->Format,
-				 GL_UNSIGNED_BYTE );
-
-   if (0)
-      fprintf(stderr, "mgaDDTexImage tObj %p, level %d, image %p\n",
-	      tObj, level, image);
+static void mgaTexSubImage2D( GLcontext *ctx, 
+			       GLenum target,
+			       GLint level,	
+			       GLint xoffset, GLint yoffset,
+			       GLsizei width, GLsizei height,
+			       GLenum format, GLenum type,
+			       const GLvoid *pixels,
+			       const struct gl_pixelstore_attrib *packing,
+			       struct gl_texture_object *texObj,
+			       struct gl_texture_image *texImage )
+{
+   mgaTextureObjectPtr t = (mgaTextureObjectPtr) texObj->DriverData;
+   if (t) {
+      mgaDestroyTexObj( MGA_CONTEXT(ctx), t );
+      texObj->DriverData = 0;
+   }
+   _mesa_store_texsubimage2d(ctx, target, level, xoffset, yoffset, width, 
+			     height, format, type, pixels, packing, texObj,
+			     texImage);
 
 }
 
-static void mgaDDTexSubImage( GLcontext *ctx, GLenum target,
-			      struct gl_texture_object *tObj, GLint level,
-			      GLint xoffset, GLint yoffset,
-			      GLsizei width, GLsizei height,
-			      GLint internalFormat,
-			      const struct gl_texture_image *image )
-{
-   mgaContextPtr mmesa = MGA_CONTEXT( ctx );
-   mgaTextureObjectPtr t;
-
-   t = (mgaTextureObjectPtr) tObj->DriverData;
-
-
-   /* just free the mga texture if it exists, it will be recreated at
-      mgaUpdateTextureState time. */
-   t = (mgaTextureObjectPtr) tObj->DriverData;
-   if ( t ) {
-      if (t->bound) FLUSH_BATCH(mmesa);
-      /* if this is the current object, it will force an update */
-      mgaDestroyTexObj( mmesa, t );
-      mmesa->new_state |= MGA_NEW_TEXTURE;
-   }
-
-
-
-#if 0
-   /* the texture currently exists, so directly update it */
-   mgaUploadSubImage( t, level, xoffset, yoffset, width, height );
-#endif
-}
 
 
 
@@ -958,15 +933,16 @@ mgaDDDeleteTexture( GLcontext *ctx, struct gl_texture_object *tObj )
    mgaTextureObjectPtr t = (mgaTextureObjectPtr)tObj->DriverData;
 
    if ( t ) {
-      if (t->bound) {
-	 FLUSH_BATCH(mmesa);
-	 if (t->bound & TEX_0) mmesa->CurrentTexObj[0] = 0;
-	 if (t->bound & TEX_1) mmesa->CurrentTexObj[1] = 0;
-	 mmesa->new_state |= MGA_NEW_TEXTURE;
+      if (mmesa) {
+         if (t->bound) {
+            FLUSH_BATCH(mmesa);
+            if (t->bound & TEX_0) mmesa->CurrentTexObj[0] = 0;
+            if (t->bound & TEX_1) mmesa->CurrentTexObj[1] = 0;
+         }
+         mmesa->new_state |= MGA_NEW_TEXTURE;
       }
 
       mgaDestroyTexObj( mmesa, t );
-      mmesa->new_state |= MGA_NEW_TEXTURE;
    }
 }
 
@@ -983,8 +959,21 @@ void
 mgaDDInitTextureFuncs( GLcontext *ctx )
 {
    ctx->Driver.TexEnv = mgaDDTexEnv;
-   ctx->Driver.TexImage = mgaDDTexImage;
-   ctx->Driver.TexSubImage = mgaDDTexSubImage;
+
+   ctx->Driver.ChooseTextureFormat = _mesa_choose_tex_format;
+   ctx->Driver.TexImage1D = _mesa_store_teximage1d;
+   ctx->Driver.TexImage2D = mgaTexImage2D;
+   ctx->Driver.TexImage3D = _mesa_store_teximage3d;
+   ctx->Driver.TexSubImage1D = _mesa_store_texsubimage1d;
+   ctx->Driver.TexSubImage2D = mgaTexSubImage2D;
+   ctx->Driver.TexSubImage3D = _mesa_store_texsubimage3d;
+   ctx->Driver.CopyTexImage1D = _swrast_copy_teximage1d;
+   ctx->Driver.CopyTexImage2D = _swrast_copy_teximage2d;
+   ctx->Driver.CopyTexSubImage1D = _swrast_copy_texsubimage1d;
+   ctx->Driver.CopyTexSubImage2D = _swrast_copy_texsubimage2d;
+   ctx->Driver.CopyTexSubImage3D = _swrast_copy_texsubimage3d;
+   ctx->Driver.TestProxyTexImage = _mesa_test_proxy_teximage;
+
    ctx->Driver.BindTexture = mgaDDBindTexture;
    ctx->Driver.DeleteTexture = mgaDDDeleteTexture;
    ctx->Driver.TexParameter = mgaDDTexParameter;

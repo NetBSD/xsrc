@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atidsp.c,v 1.14 2002/01/16 16:22:26 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atidsp.c,v 1.19 2003/01/01 19:16:31 tsi Exp $ */
 /*
- * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -72,6 +72,14 @@ ATIDSPPreInit
 
     pATI->XCLKPostDivider -= GetBits(IOValue, PLL_MFB_TIMES_4_2B);
     pATI->XCLKFeedbackDivider = ATIGetMach64PLLReg(PLL_MCLK_FB_DIV);
+
+    xf86DrvMsgVerb(iScreen, X_INFO, 2,
+        "Engine XCLK %.3f MHz;  Refresh rate code %d.\n",
+        ATIDivide(pATI->XCLKFeedbackDivider * pATI->ReferenceNumerator,
+                  pATI->XCLKReferenceDivider * pATI->ClockDescriptor.MaxM *
+                  pATI->ReferenceDenominator, 1 - pATI->XCLKPostDivider, 0) /
+        (double)1000.0,
+        GetBits(pATI->LockData.mem_cntl, CTL_MEM_REFRESH_RATE_B));
 
     /* Compute maximum RAS delay and friends */
     trp = GetBits(pATI->LockData.mem_cntl, CTL_MEM_TRP);
@@ -149,7 +157,7 @@ ATIDSPPreInit
          (!dsp_config || !((dsp_config ^ vga_dsp_config) & DSP_XCLKS_PER_QW))))
     {
         if (ATIDivide(GetBits(vga_dsp_on_off, VGA_DSP_OFF),
-                      GetBits(vga_dsp_config, VGA_DSP_XCLKS_PER_QW), 5, 1) > 23)
+                      GetBits(vga_dsp_config, VGA_DSP_XCLKS_PER_QW), 5, 1) > 24)
             pATI->DisplayFIFODepth = 32;
         else
             pATI->DisplayFIFODepth = 24;
@@ -226,7 +234,7 @@ ATIDSPCalculate
 
 #endif /* AVOID_CPIO */
 
-    if (!pATI->OptionCRT && (pATI->LCDPanelID >= 0))
+    if (pATI->OptionPanelDisplay && (pATI->LCDPanelID >= 0))
     {
         /* Compensate for horizontal stretching */
         Multiplier *= pATI->LCDHorizontal;

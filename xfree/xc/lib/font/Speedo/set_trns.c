@@ -21,7 +21,7 @@ INCIDENTAL OR CONSEQUENTIAL DAMAGES, ARISING OUT OF OR IN ANY WAY CONNECTED
 WITH THE SPEEDO SOFTWARE OR THE BITSTREAM CHARTER OUTLINE FONT.
 
 */
-/* $XFree86: xc/lib/font/Speedo/set_trns.c,v 1.4 2001/08/27 19:49:50 dawes Exp $ */
+/* $XFree86: xc/lib/font/Speedo/set_trns.c,v 1.5 2002/09/18 17:11:44 tsi Exp $ */
 
 
 
@@ -128,8 +128,8 @@ intsize[6] = 2;
 intsize[7] = 0;
 intsize[8] = 0;
 
-n = ((format & BIT6)? (fix15)NEXT_BYTE(pointer): 0) +
-    ((format & BIT7)? (fix15)NEXT_BYTE(pointer): 0);
+n =  ((format & BIT6)? (fix15)NEXT_BYTE(pointer): 0);
+n += ((format & BIT7)? (fix15)NEXT_BYTE(pointer): 0);
 for (i = 0; i < n; i++)          /* For each entry in int table ... */
     {
     format = NEXT_BYTE(pointer); /* Read format byte */

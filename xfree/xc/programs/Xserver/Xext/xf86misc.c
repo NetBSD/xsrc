@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.35 2001/08/15 16:25:20 paulo Exp $ */
+/* $XFree86: xc/programs/Xserver/Xext/xf86misc.c,v 3.37 2002/11/20 04:04:58 dawes Exp $ */
 
 /*
  * Copyright (c) 1995, 1996  The XFree86 Project, Inc
@@ -42,12 +42,38 @@
 #endif
 
 static int miscErrorBase;
+static int MiscGeneration = 0;
+static int MiscClientPrivateIndex;
+
+/* This holds the client's version information */
+typedef struct {
+    int		major;
+    int		minor;
+} MiscPrivRec, *MiscPrivPtr;
+
+#define MPRIV(c) ((c)->devPrivates[MiscClientPrivateIndex].ptr)
 
 static void XF86MiscResetProc(
 #if NeedFunctionPrototypes
     ExtensionEntry* /* extEntry */
 #endif
 );
+
+static void
+ClientVersion(ClientPtr client, int *major, int *minor)
+{
+    MiscPrivPtr pPriv;
+
+    pPriv = MPRIV(client);
+    if (!pPriv) {
+	if (major) *major = 0;
+	if (minor) *minor = 0;
+	return;
+    }
+    
+    if (major) *major = pPriv->major;
+    if (minor) *minor = pPriv->minor;
+}
 
 static DISPATCH_PROC(ProcXF86MiscDispatch);
 static DISPATCH_PROC(ProcXF86MiscQueryVersion);
@@ -56,6 +82,8 @@ static DISPATCH_PROC(ProcXF86MiscGetMouseSettings);
 static DISPATCH_PROC(ProcXF86MiscSetKbdSettings);
 static DISPATCH_PROC(ProcXF86MiscSetMouseSettings);
 static DISPATCH_PROC(ProcXF86MiscSetGrabKeysState);
+static DISPATCH_PROC(ProcXF86MiscSetClientVersion);
+static DISPATCH_PROC(ProcXF86MiscGetFilePaths);
 #ifdef _XF86MISC_SAVER_COMPAT_
 static DISPATCH_PROC(ProcXF86MiscGetSaver);
 static DISPATCH_PROC(ProcXF86MiscSetSaver);
@@ -67,6 +95,8 @@ static DISPATCH_PROC(SProcXF86MiscGetMouseSettings);
 static DISPATCH_PROC(SProcXF86MiscSetKbdSettings);
 static DISPATCH_PROC(SProcXF86MiscSetMouseSettings);
 static DISPATCH_PROC(SProcXF86MiscSetGrabKeysState);
+static DISPATCH_PROC(SProcXF86MiscSetClientVersion);
+static DISPATCH_PROC(SProcXF86MiscGetFilePaths);
 #ifdef _XF86MISC_SAVER_COMPAT_
 static DISPATCH_PROC(SProcXF86MiscGetSaver);
 static DISPATCH_PROC(SProcXF86MiscSetSaver);
@@ -92,6 +122,24 @@ XFree86MiscExtensionInit(void)
     if (!xf86GetModInDevEnabled())
 	return;
 
+    /*
+     * Allocate a client private index to hold the client's version
+     * information.
+     */
+    if (MiscGeneration != serverGeneration) {
+	MiscClientPrivateIndex = AllocateClientPrivateIndex();
+	/*
+	 * Allocate 0 length, and use the private to hold a pointer to our
+	 * MiscPrivRec.
+	 */
+	if (!AllocateClientPrivate(MiscClientPrivateIndex, 0)) {
+	    ErrorF("XFree86MiscExtensionInit: "
+		   "AllocateClientPrivate failed\n");
+	    return;
+	}
+	MiscGeneration = serverGeneration;
+    }
+    
     if (
 	(extEntry = AddExtension(XF86MISCNAME,
 				XF86MiscNumberEvents,
@@ -293,12 +341,17 @@ ProcXF86MiscSetMouseSettings(client)
 {
     MiscExtReturn ret;
     pointer mouse;
+    char *devname = NULL;
+    int major, minor;
+    
     REQUEST(xXF86MiscSetMouseSettingsReq);
 
     DEBUG_P("XF86MiscSetMouseSettings");
 
-    REQUEST_SIZE_MATCH(xXF86MiscSetMouseSettingsReq);
+    REQUEST_AT_LEAST_SIZE(xXF86MiscSetMouseSettingsReq);
 
+    ClientVersion(client, &major, &minor);
+    
     if (xf86GetVerbosity() > 1) {
 	ErrorF("SetMouseSettings - type: %d brate: %d srate: %d chdmid: %d\n",
 		stuff->mousetype, stuff->baudrate,
@@ -308,6 +361,7 @@ ProcXF86MiscSetMouseSettings(client)
 		stuff->resolution, stuff->flags);
     }
 
+    
     if ((mouse = MiscExtCreateStruct(MISC_POINTER)) == (pointer) 0)
 	return BadAlloc;
 
@@ -320,8 +374,28 @@ ProcXF86MiscSetMouseSettings(client)
     MiscExtSetMouseValue(mouse, MISC_MSE_EM3TIMEOUT,	stuff->emulate3timeout);
     MiscExtSetMouseValue(mouse, MISC_MSE_CHORDMIDDLE,	stuff->chordmiddle);
     MiscExtSetMouseValue(mouse, MISC_MSE_FLAGS,		stuff->flags);
+    
+    if ((major > 0 || minor > 5) && stuff->devnamelen) {
+	int size = sizeof(xXF86MiscSetMouseSettingsReq) + stuff->devnamelen;
+	size = (size + 3) >> 2;
+	if (client->req_len < size)
+	    return BadLength;
+	if (stuff->devnamelen) {
+	    if (!(devname = xalloc(stuff->devnamelen)))
+		return BadAlloc;
+	    strncpy(devname,(char*)(&stuff[1]),stuff->devnamelen);
+	    if (xf86GetVerbosity() > 1)
+		ErrorF("SetMouseSettings - device: %s\n",devname);
+	    MiscExtSetMouseDevice(mouse, devname);
+	}
+    }
 
-    switch ((ret = MiscExtApply(mouse, MISC_POINTER))) {
+    ret = MiscExtApply(mouse, MISC_POINTER);
+
+    if (devname)
+	xfree(devname);
+    
+    switch ((ret)) {
         case MISC_RET_SUCCESS:      break;
 	case MISC_RET_BADVAL:       return BadValue;
 	case MISC_RET_BADMSEPROTO:  return MISCERR(XF86MiscBadMouseProtocol);
@@ -411,6 +485,76 @@ ProcXF86MiscSetGrabKeysState(client)
 }
 
 static int
+ProcXF86MiscSetClientVersion(ClientPtr client)
+{
+    REQUEST(xXF86MiscSetClientVersionReq);
+
+    MiscPrivPtr pPriv;
+
+    DEBUG_P("XF86MiscSetClientVersion");
+
+    REQUEST_SIZE_MATCH(xXF86MiscSetClientVersionReq);
+
+    if ((pPriv = MPRIV(client)) == NULL) {
+	pPriv = xalloc(sizeof(MiscPrivRec));
+	if (!pPriv)
+	    return BadAlloc;
+	MPRIV(client) = pPriv;
+    }
+    ErrorF("SetClientVersion: %i %i\n",stuff->major,stuff->minor);
+    pPriv->major = stuff->major;
+    pPriv->minor = stuff->minor;
+    
+    return (client->noClientException);
+}
+
+static int
+ProcXF86MiscGetFilePaths(client)
+    register ClientPtr client;
+{
+    xXF86MiscGetFilePathsReply rep;
+    const char *configfile;
+    const char *modulepath;
+    const char *logfile;
+    register int n;
+
+    DEBUG_P("XF86MiscGetFilePaths");
+
+    REQUEST_SIZE_MATCH(xXF86MiscGetFilePathsReq);
+    rep.type = X_Reply;
+    rep.sequenceNumber = client->sequence;
+
+    if (!MiscExtGetFilePaths(&configfile, &modulepath, &logfile))
+	return BadValue;
+
+    rep.configlen = (configfile? strlen(configfile): 0);
+    rep.modulelen = (modulepath? strlen(modulepath): 0);
+    rep.loglen = (logfile? strlen(logfile): 0);
+    rep.length = (SIZEOF(xXF86MiscGetFilePathsReply) - SIZEOF(xGenericReply) +
+		  ((rep.configlen + 3) & ~3) +
+		  ((rep.modulelen + 3) & ~3) +
+		  ((rep.loglen + 3) & ~3) ) >> 2;
+    
+    if (client->swapped) {
+    	swaps(&rep.sequenceNumber, n);
+    	swapl(&rep.length, n);
+    	swaps(&rep.configlen, n);
+    	swaps(&rep.modulelen, n);
+    	swaps(&rep.loglen, n);
+    }
+    WriteToClient(client, SIZEOF(xXF86MiscGetFilePathsReply), (char *)&rep);
+    
+    if (rep.configlen)
+        WriteToClient(client, rep.configlen, (char *)configfile);
+    if (rep.modulelen)
+        WriteToClient(client, rep.modulelen, (char *)modulepath);
+    if (rep.loglen)
+        WriteToClient(client, rep.loglen, (char *)logfile);
+
+    return (client->noClientException);
+}
+
+static int
 ProcXF86MiscDispatch (client)
     register ClientPtr	client;
 {
@@ -429,6 +573,10 @@ ProcXF86MiscDispatch (client)
 	return ProcXF86MiscGetMouseSettings(client);
     case X_XF86MiscGetKbdSettings:
 	return ProcXF86MiscGetKbdSettings(client);
+    case X_XF86MiscSetClientVersion:
+		return ProcXF86MiscSetClientVersion(client);
+    case X_XF86MiscGetFilePaths:
+	return ProcXF86MiscGetFilePaths(client);
     default:
 	if (!xf86GetModInDevEnabled())
 	    return miscErrorBase + XF86MiscModInDevDisabled;
@@ -553,6 +701,29 @@ SProcXF86MiscSetGrabKeysState(client)
 }
 
 static int
+SProcXF86MiscSetClientVersion(ClientPtr client)
+{
+    register int n;
+    REQUEST(xXF86MiscSetClientVersionReq);
+    swaps(&stuff->length, n);
+    REQUEST_SIZE_MATCH(xXF86MiscSetClientVersionReq);
+    swaps(&stuff->major, n);
+    swaps(&stuff->minor, n);
+    return ProcXF86MiscSetClientVersion(client);
+}
+
+static int
+SProcXF86MiscGetFilePaths(client)
+    ClientPtr client;
+{
+    register int n;
+    REQUEST(xXF86MiscGetFilePathsReq);
+    swaps(&stuff->length, n);
+    REQUEST_SIZE_MATCH(xXF86MiscGetFilePathsReq);
+    return ProcXF86MiscGetFilePaths(client);
+}
+
+static int
 SProcXF86MiscDispatch (client)
     register ClientPtr	client;
 {
@@ -571,6 +742,10 @@ SProcXF86MiscDispatch (client)
 	return SProcXF86MiscGetMouseSettings(client);
     case X_XF86MiscGetKbdSettings:
 	return SProcXF86MiscGetKbdSettings(client);
+    case X_XF86MiscSetClientVersion:
+	return SProcXF86MiscSetClientVersion(client);
+    case X_XF86MiscGetFilePaths:
+	return SProcXF86MiscGetFilePaths(client);
     default:
 	if (!xf86GetModInDevEnabled())
 	    return miscErrorBase + XF86MiscModInDevDisabled;

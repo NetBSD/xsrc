@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/include/dixstruct.h,v 3.16 2001/10/28 03:34:12 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/include/dixstruct.h,v 3.18 2003/01/12 02:44:27 dawes Exp $ */
 /***********************************************************
 Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 

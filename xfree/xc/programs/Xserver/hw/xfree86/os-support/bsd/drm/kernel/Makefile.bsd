@@ -1,6 +1,6 @@
 # $FreeBSD$
 
 # i810, i830 & sis are not complete
-SUBDIR = tdfx mga r128 radeon gamma # i810 sis i830
+SUBDIR = mga r128 radeon tdfx # gamma i810 i830 sis
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_fifo.h,v 1.1 2000/06/20 05:08:38 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_fifo.h,v 1.2 2002/02/22 21:32:58 dawes Exp $ */
 
 #ifndef _FFB_FIFO_H
 #define _FFB_FIFO_H
@@ -17,7 +17,7 @@ do {	ffbScreenPrivate *__fScrn = (__fmesa)->ffbScreen; \
 do {	ffbScreenPrivate *__fScrn = (__fmesa)->ffbScreen; \
 	if (__fScrn->rp_active) { \
 		unsigned int __regval = (__ffb)->ucsr; \
-		while((__regval & FFB_UCSR_RP_BUSY) != 0) { \
+		while((__regval & FFB_UCSR_ALL_BUSY) != 0) { \
 			__regval = (__ffb)->ucsr; \
 		} \
 		__fScrn->fifo_cache = ((int)(__regval & FFB_UCSR_FIFO_MASK)) - 4; \

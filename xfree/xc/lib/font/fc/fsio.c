@@ -23,7 +23,7 @@
  *
  * Author:  	Dave Lemke, Network Computing Devices, Inc
  */
-/* $XFree86: xc/lib/font/fc/fsio.c,v 3.15 2001/07/25 15:04:56 dawes Exp $ */
+/* $XFree86: xc/lib/font/fc/fsio.c,v 3.16 2002/05/31 18:45:49 dawes Exp $ */
 /*
  * font server i/o routines
  */
@@ -57,7 +57,7 @@
 #define EINTR WSAEINTR
 #endif
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define select(n,r,w,x,t) os2PseudoSelect(n,r,w,x,t)
 #endif
 

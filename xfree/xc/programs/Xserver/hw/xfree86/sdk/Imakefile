@@ -1,4 +1,6 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/sdk/Imakefile,v 1.1 1999/08/14 10:50:08 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/sdk/Imakefile,v 1.2 2002/11/14 21:01:20 tsi Exp $
+
+#include <lnxdoc.rules>
 
 CppScriptTarget(mkmf,mkmf.cpp,-DCONFIGDIRSPEC=-I$(CONFIGDIR),$(ICONFIGFILES))
 

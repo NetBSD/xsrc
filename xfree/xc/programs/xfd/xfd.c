@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
  * *
  * Author:  Jim Fulton, MIT X Consortium
  */
-/* $XFree86: xc/programs/xfd/xfd.c,v 1.6 2001/12/14 20:01:31 dawes Exp $ */
+/* $XFree86: xc/programs/xfd/xfd.c,v 1.8 2003/02/20 02:56:40 dawes Exp $ */
 
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -41,11 +41,18 @@ in this Software without prior written authorization from The Open Group.
 #include <stdio.h>
 #include <stdlib.h>
 #include "grid.h"
+#ifdef XRENDER
+#include <X11/Xft/Xft.h>
+#include <X11/extensions/Xrender.h>
+#endif
 
 char *ProgramName;
 
 static XrmOptionDescRec xfd_options[] = {
 {"-fn",		"*grid.font",	XrmoptionSepArg,	(caddr_t) NULL },
+#ifdef XRENDER
+{"-fa",		"*grid.face", XrmoptionSepArg,		(caddr_t) NULL },
+#endif
 {"-start",	"*startChar",	XrmoptionSepArg, 	(caddr_t) NULL },
 {"-box",	"*grid.boxChars", XrmoptionNoArg,	(caddr_t) "on" },
 {"-bc",		"*grid.boxColor", XrmoptionSepArg, 	(caddr_t) NULL },
@@ -64,6 +71,10 @@ static void do_prev(Widget w, XEvent *event, String *params,
 		    Cardinal *num_params);
 static void do_next(Widget w, XEvent *event, String *params, 
 		    Cardinal *num_params);
+static void do_prev16(Widget w, XEvent *event, String *params, 
+		      Cardinal *num_params);
+static void do_next16(Widget w, XEvent *event, String *params, 
+		      Cardinal *num_params);
 static char *get_font_name(Display *dpy, XFontStruct *fs);
 static void CatchFontConversionWarning(String name, String type, String class, 
 				       String defaultp, String *params, 
@@ -71,20 +82,22 @@ static void CatchFontConversionWarning(String name, String type, String class,
 
 static XtActionsRec xfd_actions[] = {
   { "Quit", do_quit },
+  { "Prev16", do_prev16 },
   { "Prev", do_prev },
   { "Next", do_next },
+  { "Next16", do_next16 },
 };
 
 static Atom wm_delete_window;
 
-Widget quitButton, prevButton, nextButton;
+Widget quitButton, prev16Button, prevButton, nextButton, next16Button;
 
 
-#define DEF_SELECT_FORMAT "character 0x%02x%02x (%u,%u) (%#o,%#o)"
+#define DEF_SELECT_FORMAT "character 0x%04x%02x (%u,%u) (%#o,%#o)"
 #define DEF_METRICS_FORMAT "width %d; left %d, right %d; ascent %d, descent %d (font %d, %d)"
-#define DEF_RANGE_FORMAT "range:  0x%02x%02x (%u,%u) thru 0x%02x%02x (%u,%u)"
-#define DEF_START_FORMAT "upper left:  0x%04x (%d,%d)"
-#define DEF_NOCHAR_FORMAT "no such character 0x%02x%02x (%u,%u) (%#o,%#o)"
+#define DEF_RANGE_FORMAT "range:  0x%04x%02x (%u,%u) thru 0x%04x%02x (%u,%u)"
+#define DEF_START_FORMAT "upper left:  0x%06x (%d,%d)"
+#define DEF_NOCHAR_FORMAT "no such character 0x%04x%02x (%u,%u) (%#o,%#o)"
 
 static struct _xfd_resources {
   char *select_format;
@@ -150,7 +163,11 @@ main(int argc, char *argv[])
     Cardinal i;
     static XtCallbackRec cb[2] = { { SelectChar, NULL }, { NULL, NULL } };
     XFontStruct *fs;
+#ifdef XRENDER
+    XftFont *xft;
+#endif
     char *fontname;
+    long minn, maxn;
 
     ProgramName = argv[0];
 
@@ -178,9 +195,13 @@ main(int argc, char *argv[])
     box = XtCreateManagedWidget ("box", boxWidgetClass, pane, NULL, ZERO);
     quitButton = XtCreateManagedWidget ("quit", commandWidgetClass, box,
 					NULL, ZERO);
+    prev16Button = XtCreateManagedWidget ("prev16", commandWidgetClass, box,
+					NULL, ZERO);
     prevButton = XtCreateManagedWidget ("prev", commandWidgetClass, box,
 					NULL, ZERO);
     nextButton = XtCreateManagedWidget ("next", commandWidgetClass, box,
+					NULL, ZERO);
+    next16Button = XtCreateManagedWidget ("next16", commandWidgetClass, box,
 					NULL, ZERO);
 
 
@@ -216,26 +237,56 @@ main(int argc, char *argv[])
     XtAppSetWarningMsgHandler(xtcontext, oldWarningHandler);
 
     /* set the label at the top to tell us which font this is */
+#ifdef XRENDER
     i = 0;
-    XtSetArg (av[i], XtNfont, &fs); i++;
+    XtSetArg (av[i], XtNface, &xft); i++;
     XtGetValues (fontGrid, av, i);
-    if (!fs || fontConversionFailed) {
-	fprintf (stderr, "%s:  no font to display\n", ProgramName);
-	exit (1);
+    if (xft)
+    {
+	FcChar8	*family;
+	FcChar8	*style;
+	FcPattern   *p;
+	double	size;
+	family = (FcChar8 *) "";
+	FcPatternGetString (xft->pattern, FC_FAMILY, 0, &family);
+	style = (FcChar8 *) "";
+	FcPatternGetString (xft->pattern, FC_STYLE, 0, &style);
+	size = 0;
+	FcPatternGetDouble (xft->pattern, FC_SIZE, 0, &size);
+	p = FcPatternBuild (0,
+			    FC_FAMILY, FcTypeString, family,
+			    FC_STYLE, FcTypeString, style,
+			    FC_SIZE, FcTypeDouble, size,
+			    NULL);
+	fontname = (char *) FcNameUnparse (p);
+	FcPatternDestroy (p);
     }
-    fontname = get_font_name (XtDisplay(toplevel), fs);
-    if (!fontname) fontname = "unknown font!";
+    else
+#endif
+    {
+	i = 0;
+	XtSetArg (av[i], XtNfont, &fs); i++;
+	XtGetValues (fontGrid, av, i);
+	if (!fs || fontConversionFailed) {
+	    fprintf (stderr, "%s:  no font to display\n", ProgramName);
+	    exit (1);
+	}
+	fontname = get_font_name (XtDisplay(toplevel), fs);
+    }
     i = 0;
     XtSetArg (av[i], XtNlabel, fontname); i++;
     XtSetValues (toplabel, av, i);
 
+    minn = GridFirstChar (fontGrid);
+    maxn = GridLastChar (fontGrid);
+    sprintf (buf, xfd_resources.range_format, 
+	     minn >> 8, minn & 0xff,
+	     minn >> 8, minn & 0xff,
+	     maxn >> 8, maxn & 0xff,
+	     maxn >> 8, maxn & 0xff);
+    
     i = 0;
     XtSetArg (av[i], XtNlabel, buf); i++;
-    sprintf (buf, xfd_resources.range_format, 
-	     fs->min_byte1, fs->min_char_or_byte2,
-	     fs->min_byte1, fs->min_char_or_byte2,
-	     fs->max_byte1, fs->max_char_or_byte2,
-	     fs->max_byte1, fs->max_char_or_byte2);
     XtSetValues (rangeLabel, av, i);
 
     XtRealizeWidget (toplevel);
@@ -256,42 +307,73 @@ SelectChar(Widget w, XtPointer closure, XtPointer data)
 {
     FontGridCharRec *p = (FontGridCharRec *) data;
     XFontStruct *fs = p->thefont;
-    unsigned n = ((((unsigned) p->thechar.byte1) << 8) |
-		  ((unsigned) p->thechar.byte2));
+    long n = p->thechar;
     int direction, fontascent, fontdescent;
     XCharStruct metrics;
     char buf[256];
     Arg arg;
+    Boolean has_char = 1;
 
     XtSetArg (arg, XtNlabel, buf);
 
-    if ((!fs->min_byte1 && !fs->max_byte1) ?
-	(n < fs->min_char_or_byte2 || n > fs->max_char_or_byte2) :
-	(p->thechar.byte1 < fs->min_byte1 || p->thechar.byte1 > fs->max_byte1 ||
-	 p->thechar.byte2 < fs->min_char_or_byte2 ||
-	 p->thechar.byte2 > fs->max_char_or_byte2)) {
-	sprintf (buf, xfd_resources.nochar_format,
-		 (unsigned) p->thechar.byte1, (unsigned) p->thechar.byte2,
-		 (unsigned) p->thechar.byte1, (unsigned) p->thechar.byte2,
-		 (unsigned) p->thechar.byte1, (unsigned) p->thechar.byte2);
-	XtSetValues (selectLabel, &arg, ONE);
-	buf[0] = '\0';
-	XtSetValues (metricsLabel, &arg, ONE);
-	return;
+    buf[0] = '\0';
+#ifdef XRENDER
+    if (p->theface)
+    {
+	XftFont	*xft = p->theface;
+	FcChar32    c = (FcChar32) n;
+	has_char = (Boolean) FcCharSetHasChar (xft->charset, n);
+	if (has_char)
+	{
+	    XGlyphInfo	extents;
+	    XftTextExtents32 (XtDisplay (w), xft, &c, 1, &extents);
+	    sprintf (buf, xfd_resources.metrics_format,
+		     extents.xOff, - extents.x, 
+		     extents.xOff - extents.width + extents.x,
+		     extents.y, extents.height - extents.y,
+		     xft->ascent, xft->descent);
+	}
     }
-
-    XTextExtents16 (fs, &p->thechar, 1, &direction, &fontascent, &fontdescent,
-		    &metrics);
-    sprintf (buf, xfd_resources.select_format,
-	     (unsigned) p->thechar.byte1, (unsigned) p->thechar.byte2,
-	     (unsigned) p->thechar.byte1, (unsigned) p->thechar.byte2,
-	     (unsigned) p->thechar.byte1, (unsigned) p->thechar.byte2);
-    XtSetValues (selectLabel, &arg, ONE);
-
-    sprintf (buf, xfd_resources.metrics_format,
-	     metrics.width, metrics.lbearing, metrics.rbearing,
-	     metrics.ascent, metrics.descent, fontascent, fontdescent);
+    else
+#endif
+    {
+	if ((!fs->min_byte1 && !fs->max_byte1) ?
+	    (n < fs->min_char_or_byte2 || n > fs->max_char_or_byte2) :
+	    (n >> 8 < fs->min_byte1 || n >> 8 > fs->max_byte1 ||
+	     (n & 0xff)  < fs->min_char_or_byte2 ||
+	     (n & 0xff) > fs->max_char_or_byte2)) 
+	{
+	    has_char = 0;
+	}
+	else
+	{
+	    XChar2b char2b;
+	    char2b.byte1 = p->thechar >> 8;
+	    char2b.byte2 = p->thechar & 0xff;
+	    XTextExtents16 (fs, &char2b, 1, &direction, &fontascent, &fontdescent,
+			    &metrics);
+	    sprintf (buf, xfd_resources.metrics_format,
+		     metrics.width, metrics.lbearing, metrics.rbearing,
+		     metrics.ascent, metrics.descent, fontascent, fontdescent);
+	}
+    }
     XtSetValues (metricsLabel, &arg, ONE);
+
+    if (has_char)
+    {
+	sprintf (buf, xfd_resources.select_format, 
+		 n >> 8, n & 0xff,
+		 n >> 8, n & 0xff,
+		 n >> 8, n & 0xff);
+    }
+    else
+    {
+	    sprintf (buf, xfd_resources.nochar_format,
+		     n >> 8, n & 0xff,
+		     n >> 8, n & 0xff,
+		     n >> 8, n & 0xff);
+    }
+    XtSetValues (selectLabel, &arg, ONE);
 
     return;
 }
@@ -307,7 +389,7 @@ do_quit (Widget w, XEvent *event, String *params, Cardinal *num_params)
 static void 
 change_page(int page)
 {
-    Dimension oldstart, newstart;
+    long oldstart, newstart;
     int ncols, nrows;
     char buf[256];
     Arg arg;
@@ -346,19 +428,31 @@ change_page(int page)
 static void 
 set_button_state(void)
 {
-    Bool prevvalid, nextvalid;
+    Bool prevvalid, nextvalid, prev16valid, next16valid;
     Arg arg;
 
-    GetPrevNextStates (fontGrid, &prevvalid, &nextvalid);
+    GetPrevNextStates (fontGrid, &prevvalid, &nextvalid, &prev16valid, &next16valid);
     arg.name = XtNsensitive;
     arg.value = (XtArgVal) (prevvalid ? TRUE : FALSE);
     XtSetValues (prevButton, &arg, ONE);
     arg.value = (XtArgVal) (nextvalid ? TRUE : FALSE);
     XtSetValues (nextButton, &arg, ONE);
+    arg.name = XtNsensitive;
+    arg.value = (XtArgVal) (prev16valid ? TRUE : FALSE);
+    XtSetValues (prev16Button, &arg, ONE);
+    arg.value = (XtArgVal) (next16valid ? TRUE : FALSE);
+    XtSetValues (next16Button, &arg, ONE);
 }
 
 
 /* ARGSUSED */
+static void 
+do_prev16(Widget w, XEvent *event, String *params, Cardinal *num_params)
+{
+    change_page (-16);
+}
+
+
 static void 
 do_prev(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
@@ -371,6 +465,13 @@ static void
 do_next(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
     change_page (1);
+}
+
+/* ARGSUSED */
+static void 
+do_next16(Widget w, XEvent *event, String *params, Cardinal *num_params)
+{
+    change_page (16);
 }
 
 

@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_state.c,v 1.4 2001/10/02 11:44:13 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_state.c,v 1.7 2002/10/30 12:52:00 alanh Exp $ */
 
 /*
  * Original rewrite:
@@ -32,19 +32,26 @@
  * Authors:
  *	Gareth Hughes <gareth@valinux.com>
  *	Brian Paul <brianp@valinux.com>
+ *      Keith Whitwell <keith@tungstengraphics.com> (port to 3.5)
  *
  */
 
-#include "types.h"
-#include "pb.h"
+#include "mtypes.h"
+#include "texformat.h"
+#include "texstore.h"
 
-#include "dri_glide.h"
+#include "swrast/swrast.h"
+#include "array_cache/acache.h"
+#include "tnl/tnl.h"
+#include "tnl/t_pipeline.h"
+#include "swrast_setup/swrast_setup.h"
 
 #include "tdfx_context.h"
 #include "tdfx_state.h"
 #include "tdfx_vb.h"
 #include "tdfx_tex.h"
 #include "tdfx_texman.h"
+#include "tdfx_texstate.h"
 #include "tdfx_tris.h"
 #include "tdfx_render.h"
 
@@ -60,7 +67,6 @@ static void tdfxUpdateAlphaMode( GLcontext *ctx )
    GrCmpFnc_t func;
    GrAlphaBlendFnc_t srcRGB, dstRGB, srcA, dstA;
    GrAlpha_t ref = ctx->Color.AlphaRef;
-   const int hasAlpha = ctx->Visual->AlphaBits > 0;
 
    if ( TDFX_DEBUG & DEBUG_VERBOSE_API ) {
       fprintf( stderr, "%s()\n", __FUNCTION__ );
@@ -120,13 +126,13 @@ static void tdfxUpdateAlphaMode( GLcontext *ctx )
 	 srcRGB = GR_BLEND_ONE_MINUS_SRC_ALPHA;
 	 break;
       case GL_DST_ALPHA:
-	 srcRGB = hasAlpha ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE;
+	 srcRGB = GR_BLEND_DST_ALPHA;
 	 break;
       case GL_ONE_MINUS_DST_ALPHA:
-	 srcRGB = hasAlpha ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO;
+	 srcRGB = GR_BLEND_ONE_MINUS_DST_ALPHA;
 	 break;
       case GL_SRC_ALPHA_SATURATE:
-	 srcRGB = hasAlpha ? GR_BLEND_ALPHA_SATURATE : GR_BLEND_ZERO;
+	 srcRGB = GR_BLEND_ALPHA_SATURATE;
 	 break;
       default:
 	 srcRGB = GR_BLEND_ONE;
@@ -139,23 +145,23 @@ static void tdfxUpdateAlphaMode( GLcontext *ctx )
       case GL_ONE:
 	 srcA = GR_BLEND_ONE;
 	 break;
-      case GL_DST_COLOR:		/* Napalm only */
-	 srcA = hasAlpha ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE;
+      case GL_DST_COLOR:
+	 srcA = GR_BLEND_DST_ALPHA;  /* Napalm only */
 	 break;
-      case GL_ONE_MINUS_DST_COLOR:	/* Napalm only */
-	 srcA = hasAlpha ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO;
+      case GL_ONE_MINUS_DST_COLOR:
+	 srcA = GR_BLEND_ONE_MINUS_DST_ALPHA;  /* Napalm only */
 	 break;
-      case GL_SRC_ALPHA:		/* Napalm only */
-	 srcA = GR_BLEND_SRC_ALPHA;
+      case GL_SRC_ALPHA:
+	 srcA = GR_BLEND_SRC_ALPHA;  /* Napalm only */
 	 break;
-      case GL_ONE_MINUS_SRC_ALPHA:	/* Napalm only */
-	 srcA = GR_BLEND_ONE_MINUS_SRC_ALPHA;
+      case GL_ONE_MINUS_SRC_ALPHA:
+	 srcA = GR_BLEND_ONE_MINUS_SRC_ALPHA;  /* Napalm only */
 	 break;
-      case GL_DST_ALPHA:		/* Napalm only */
-	 srcA = hasAlpha ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE;
+      case GL_DST_ALPHA:
+	 srcA = GR_BLEND_DST_ALPHA;  /* Napalm only */
 	 break;
-      case GL_ONE_MINUS_DST_ALPHA:	/* Napalm only */
-	 srcA = hasAlpha ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO;
+      case GL_ONE_MINUS_DST_ALPHA:
+	 srcA = GR_BLEND_ONE_MINUS_DST_ALPHA;  /* Napalm only */
 	 break;
       case GL_SRC_ALPHA_SATURATE:
          srcA = GR_BLEND_ONE;
@@ -184,10 +190,10 @@ static void tdfxUpdateAlphaMode( GLcontext *ctx )
 	 dstRGB = GR_BLEND_ONE_MINUS_SRC_ALPHA;
 	 break;
       case GL_DST_ALPHA:
-	 dstRGB = hasAlpha ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE;
+	 dstRGB = GR_BLEND_DST_ALPHA;
 	 break;
       case GL_ONE_MINUS_DST_ALPHA:
-	 dstRGB = hasAlpha ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO;
+	 dstRGB = GR_BLEND_ONE_MINUS_DST_ALPHA;
 	 break;
       default:
 	 dstRGB = GR_BLEND_ZERO;
@@ -200,23 +206,23 @@ static void tdfxUpdateAlphaMode( GLcontext *ctx )
       case GL_ONE:
 	 dstA = GR_BLEND_ONE;
 	 break;
-      case GL_SRC_COLOR:		/* Napalm only */
-	 dstA = GR_BLEND_SRC_ALPHA;
+      case GL_SRC_COLOR:
+	 dstA = GR_BLEND_SRC_ALPHA;  /* Napalm only */
 	 break;
-      case GL_ONE_MINUS_SRC_COLOR:	/* Napalm only */
-	 dstA = GR_BLEND_ONE_MINUS_SRC_ALPHA;
+      case GL_ONE_MINUS_SRC_COLOR:
+	 dstA = GR_BLEND_ONE_MINUS_SRC_ALPHA;  /* Napalm only */
 	 break;
-      case GL_SRC_ALPHA:		/* Napalm only */
-	 dstA = GR_BLEND_SRC_ALPHA;
+      case GL_SRC_ALPHA:
+	 dstA = GR_BLEND_SRC_ALPHA;  /* Napalm only */
 	 break;
-      case GL_ONE_MINUS_SRC_ALPHA:	/* Napalm only */
-	 dstA = GR_BLEND_ONE_MINUS_SRC_ALPHA;
+      case GL_ONE_MINUS_SRC_ALPHA:
+	 dstA = GR_BLEND_ONE_MINUS_SRC_ALPHA;  /* Napalm only */
 	 break;
-      case GL_DST_ALPHA:		/* Napalm only */
-	 dstA = hasAlpha ? GR_BLEND_DST_ALPHA : GR_BLEND_ONE;
+      case GL_DST_ALPHA:
+	 dstA = GR_BLEND_DST_ALPHA;  /* Napalm only */
 	 break;
-      case GL_ONE_MINUS_DST_ALPHA:	/* Napalm only */
-	 dstA = hasAlpha ? GR_BLEND_ONE_MINUS_DST_ALPHA : GR_BLEND_ZERO;
+      case GL_ONE_MINUS_DST_ALPHA:
+	 dstA = GR_BLEND_ONE_MINUS_DST_ALPHA;  /* Napalm only */
 	 break;
       default:
 	 dstA = GR_BLEND_ZERO;
@@ -251,7 +257,7 @@ static void tdfxUpdateAlphaMode( GLcontext *ctx )
    }
 }
 
-static void tdfxDDAlphaFunc( GLcontext *ctx, GLenum func, GLclampf ref )
+static void tdfxDDAlphaFunc( GLcontext *ctx, GLenum func, GLchan ref )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
 
@@ -265,11 +271,6 @@ static void tdfxDDBlendEquation( GLcontext *ctx, GLenum mode )
 
    FLUSH_BATCH( fxMesa );
    fxMesa->new_state |= TDFX_NEW_ALPHA;
-
-   if (ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY)
-      fxMesa->Fallback |= TDFX_FALLBACK_LOGICOP;
-   else
-      fxMesa->Fallback &= ~TDFX_FALLBACK_LOGICOP;
 }
 
 static void tdfxDDBlendFunc( GLcontext *ctx, GLenum sfactor, GLenum dfactor )
@@ -300,7 +301,7 @@ static void tdfxDDBlendFuncSeparate( GLcontext *ctx,
  * Stipple
  */
 
-static void tdfxUpdateStipple( GLcontext *ctx )
+void tdfxUpdateStipple( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
    GrStippleMode_t mode = GR_STIPPLE_DISABLE;
@@ -333,9 +334,9 @@ static void tdfxUpdateZMode( GLcontext *ctx )
    FxI32 bias;
    FxBool mask;
 
-   if ( TDFX_DEBUG & DEBUG_VERBOSE_API ) {
+   if ( TDFX_DEBUG & DEBUG_VERBOSE_API ) 
       fprintf( stderr, "%s()\n", __FUNCTION__ );
-   }
+
 
    bias = (FxI32) (ctx->Polygon.OffsetUnits * TDFX_DEPTH_BIAS_SCALE);
 
@@ -381,7 +382,7 @@ static void tdfxUpdateZMode( GLcontext *ctx )
       mask = FXFALSE;        /* zbuffer is not touched */
    }
 
-   fxMesa->Depth.Clear = (FxU32) (((1 << fxMesa->glVis->DepthBits) - 1)
+   fxMesa->Depth.Clear = (FxU32) (((1 << fxMesa->glCtx->Visual.depthBits) - 1)
                                   * ctx->Depth.Clear);
 
    if ( fxMesa->Depth.Bias != bias ) {
@@ -451,7 +452,7 @@ static GrStencil_t convertGLStencilOp( GLenum op )
    case GL_DECR_WRAP_EXT:
       return GR_STENCILOP_DECR_WRAP;
    default:
-      gl_problem( NULL, "bad stencil op in convertGLStencilOp" );
+      _mesa_problem( NULL, "bad stencil op in convertGLStencilOp" );
    }
    return GR_STENCILOP_KEEP;   /* never get, silence compiler warning */
 }
@@ -547,14 +548,14 @@ static void tdfxUpdateFogAttrib( GLcontext *ctx )
    {
       switch( ctx->Fog.Mode ) {
       case GL_EXP:
-	 fxMesa->Glide.guFogGenerateExp(fxMesa->Fog.Table, ctx->Fog.Density);
+	 fxMesa->Glide.guFogGenerateExp( fxMesa->Fog.Table, ctx->Fog.Density );
 	 break;
       case GL_EXP2:
-	 fxMesa->Glide.guFogGenerateExp2(fxMesa->Fog.Table, ctx->Fog.Density);
+	 fxMesa->Glide.guFogGenerateExp2( fxMesa->Fog.Table, ctx->Fog.Density);
 	 break;
       case GL_LINEAR:
-	 fxMesa->Glide.guFogGenerateLinear(fxMesa->Fog.Table,
-                                           ctx->Fog.Start, ctx->Fog.End);
+	 fxMesa->Glide.guFogGenerateLinear( fxMesa->Fog.Table,
+                                            ctx->Fog.Start, ctx->Fog.End );
 	 break;
       }
 
@@ -619,6 +620,7 @@ void tdfxUpdateClipping( GLcontext *ctx )
       fxMesa->height = dPriv->h;
       fxMesa->y_delta =
 	 fxMesa->screen_height - fxMesa->y_offset - fxMesa->height;
+      tdfxUpdateViewport( ctx );
    }
 
    if (fxMesa->scissoredClipRects && fxMesa->pClipRects) {
@@ -678,18 +680,15 @@ void tdfxUpdateClipping( GLcontext *ctx )
  * Culling
  */
 
-static void tdfxUpdateCull( GLcontext *ctx )
+void tdfxUpdateCull( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    GrCullMode_t mode = GR_CULL_DISABLE;
 
-   if ( TDFX_DEBUG & DEBUG_VERBOSE_API ) {
-      fprintf( stderr, "%s()\n", __FUNCTION__ );
-   }
-
-   if ( ctx->Polygon.CullFlag &&
-        (ctx->PB->primitive == GL_POLYGON ||
-         ctx->PB->primitive == GL_BITMAP) ) {
+   /* KW: don't need to check raster_primitive here as we don't
+    * attempt to draw lines or points with triangles.
+    */
+   if ( ctx->Polygon.CullFlag ) {
       switch ( ctx->Polygon.CullFaceMode ) {
       case GL_FRONT:
 	 if ( ctx->Polygon.FrontFace == GL_CCW ) {
@@ -708,8 +707,11 @@ static void tdfxUpdateCull( GLcontext *ctx )
 	 break;
 
       case GL_FRONT_AND_BACK:
+	 /* Handled as a fallback on triangles in tdfx_tris.c */
+	 return;
+
       default:
-	 mode = GR_CULL_DISABLE;
+	 ASSERT(0);
 	 break;
       }
    }
@@ -762,32 +764,13 @@ static void tdfxDDLineWidth( GLcontext *ctx, GLfloat width )
 }
 
 
-
 /* =============================================================
  * Color Attributes
  */
 
-static void tdfxDDLogicOp( GLcontext *ctx, GLenum opcode )
-{
-   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-
-   if (ctx->Color.ColorLogicOpEnabled)
-   {
-      FLUSH_BATCH( fxMesa );
-
-      if (opcode == GL_COPY)
-	 fxMesa->Fallback &= ~TDFX_FALLBACK_LOGICOP;
-      else
-	 fxMesa->Fallback |= TDFX_FALLBACK_LOGICOP;
-   }
-   else
-      fxMesa->Fallback &= ~TDFX_FALLBACK_LOGICOP;
-}
-
-
-static GLboolean tdfxDDColorMask( GLcontext *ctx,
-				  GLboolean r, GLboolean g,
-				  GLboolean b, GLboolean a )
+static void tdfxDDColorMask( GLcontext *ctx,
+			     GLboolean r, GLboolean g,
+			     GLboolean b, GLboolean a )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -803,48 +786,22 @@ static GLboolean tdfxDDColorMask( GLcontext *ctx,
       fxMesa->Color.ColorMask[ACOMP] = a;
       fxMesa->dirty |= TDFX_UPLOAD_COLOR_MASK;
 
-      if (ctx->Visual->RedBits < 8) {
+      if (ctx->Visual.redBits < 8) {
          /* Can't do RGB colormasking in 16bpp mode. */
          /* We can completely ignore the alpha mask. */
-         if (r != g || g != b) {
-            fxMesa->Fallback |= TDFX_FALLBACK_COLORMASK;
-         }
-         else {
-            fxMesa->Fallback &= ~TDFX_FALLBACK_COLORMASK;
-         }
+	 FALLBACK( fxMesa, TDFX_FALLBACK_COLORMASK, (r != g || g != b) );
       }
    }
-
-   return GL_FALSE; /* This forces the software paths to do colormasking. */
-                    /* This function will return void when we use Mesa 3.5 */
 }
 
-static void tdfxDDColor( GLcontext *ctx,
-			 GLubyte r, GLubyte g, GLubyte b, GLubyte a )
-{
-   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   GrColor_t color;
-
-   FLUSH_BATCH( fxMesa );
-
-   color = tdfxPackColor( fxMesa->fxScreen->cpp, r, g, b, a );
-
-   if ( fxMesa->Color.MonoColor != color ) {
-      fxMesa->Color.MonoColor = color;
-      fxMesa->dirty |= TDFX_UPLOAD_CONSTANT_COLOR;
-   }
-}
 
 static void tdfxDDClearColor( GLcontext *ctx,
-			      GLubyte red, GLubyte green,
-			      GLubyte blue, GLubyte alpha )
+			      const GLchan color[4] )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-
    FLUSH_BATCH( fxMesa );
-
-   fxMesa->Color.ClearColor = TDFXPACKCOLOR888( red, green, blue );
-   fxMesa->Color.ClearAlpha = alpha;
+   fxMesa->Color.ClearColor = TDFXPACKCOLOR888( color[0], color[1], color[2] );
+   fxMesa->Color.ClearAlpha = color[3];
 }
 
 
@@ -858,14 +815,9 @@ static void tdfxDDLightModelfv( GLcontext *ctx, GLenum pname,
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
    if ( pname == GL_LIGHT_MODEL_COLOR_CONTROL ) {
-      FLUSH_BATCH( fxMesa );
-
-      fxMesa->Fallback &= ~TDFX_FALLBACK_SPECULAR;
-
-      if ( ctx->Light.Enabled &&
-	   ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ) {
-	 fxMesa->Fallback |= TDFX_FALLBACK_SPECULAR;
-      }
+      FALLBACK( fxMesa, TDFX_FALLBACK_SPECULAR,
+		(ctx->Light.Enabled &&
+		 ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ));
    }
 }
 
@@ -906,12 +858,20 @@ static void tdfxUpdateRenderAttrib( GLcontext *ctx )
  * Viewport
  */
 
-static void tdfxUpdateViewport( GLcontext *ctx )
+void tdfxUpdateViewport( GLcontext *ctx )
 {
-   /* XXX: Implement this when we're doing clip coordinates */
-   if ( TDFX_DEBUG & DEBUG_VERBOSE_API ) {
-      fprintf( stderr, "%s()\n", __FUNCTION__ );
-   }
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+   const GLfloat *v = ctx->Viewport._WindowMap.m;
+   GLfloat *m = fxMesa->hw_viewport;
+
+   m[MAT_SX] = v[MAT_SX];
+   m[MAT_TX] = v[MAT_TX] + fxMesa->x_offset + TRI_X_OFFSET;
+   m[MAT_SY] = v[MAT_SY];
+   m[MAT_TY] = v[MAT_TY] + fxMesa->y_delta + TRI_Y_OFFSET;
+   m[MAT_SZ] = v[MAT_SZ];
+   m[MAT_TZ] = v[MAT_TZ];
+
+   fxMesa->SetupNewInputs |= VERT_CLIP;
 }
 
 
@@ -924,7 +884,7 @@ static void tdfxDDViewport( GLcontext *ctx, GLint x, GLint y,
 }
 
 
-static void tdfxDDNearFar( GLcontext *ctx, GLfloat nearVal, GLfloat farVal )
+static void tdfxDDDepthRange( GLcontext *ctx, GLclampd nearVal, GLclampd farVal )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
    FLUSH_BATCH( fxMesa );
@@ -949,11 +909,9 @@ static void tdfxDDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
    case GL_BLEND:
       FLUSH_BATCH( fxMesa );
       fxMesa->new_state |= TDFX_NEW_ALPHA;
-
-      if (ctx->Color.ColorLogicOpEnabled && ctx->Color.LogicOp != GL_COPY)
-	 fxMesa->Fallback |= TDFX_FALLBACK_LOGICOP;
-      else
-	 fxMesa->Fallback &= ~TDFX_FALLBACK_LOGICOP;
+      FALLBACK( fxMesa, TDFX_FALLBACK_LOGICOP,
+		(ctx->Color.ColorLogicOpEnabled &&
+		 ctx->Color.LogicOp != GL_COPY));
       break;
 
    case GL_CULL_FACE:
@@ -982,17 +940,24 @@ static void tdfxDDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
       break;
 
    case GL_COLOR_LOGIC_OP:
-      FLUSH_BATCH( fxMesa );
-      if ( state && ctx->Color.LogicOp != GL_COPY ) {
-         fxMesa->Fallback |= TDFX_FALLBACK_LOGICOP;
-      } else {
-         fxMesa->Fallback &= ~TDFX_FALLBACK_LOGICOP;
-      }
+      FALLBACK( fxMesa, TDFX_FALLBACK_LOGICOP,
+		(ctx->Color.ColorLogicOpEnabled &&
+		 ctx->Color.LogicOp != GL_COPY));
+      break;
+
+   case GL_LIGHTING:
+      FALLBACK( fxMesa, TDFX_FALLBACK_SPECULAR,
+		(ctx->Light.Enabled &&
+		 ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR ));
       break;
 
    case GL_LINE_SMOOTH:
       FLUSH_BATCH( fxMesa );
       fxMesa->new_state |= TDFX_NEW_LINE;
+      break;
+
+   case GL_LINE_STIPPLE:
+      FALLBACK(fxMesa, TDFX_FALLBACK_LINE_STIPPLE, state);
       break;
 
    case GL_POLYGON_STIPPLE:
@@ -1007,20 +972,13 @@ static void tdfxDDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
    case GL_STENCIL_TEST:
       FLUSH_BATCH( fxMesa );
-      if (fxMesa->haveHwStencil)
-	 fxMesa->new_state |= TDFX_NEW_STENCIL;
-      else if (state)
-	 fxMesa->Fallback |= TDFX_FALLBACK_STENCIL;
-      else
-	 fxMesa->Fallback &= ~TDFX_FALLBACK_STENCIL;
+      FALLBACK( fxMesa, TDFX_FALLBACK_STENCIL, state && !fxMesa->haveHwStencil);
       break;
 
    case GL_TEXTURE_1D:
    case GL_TEXTURE_3D:
-      if (state)
-	 fxMesa->Fallback |= TDFX_FALLBACK_TEXTURE;
-      else
-	 fxMesa->Fallback &= ~TDFX_FALLBACK_TEXTURE;
+      FLUSH_BATCH( fxMesa );
+      FALLBACK( fxMesa, TDFX_FALLBACK_TEXTURE_1D_3D, state); /* wrong */
       fxMesa->new_state |= TDFX_NEW_TEXTURE;
       break;
 
@@ -1038,7 +996,7 @@ static void tdfxDDEnable( GLcontext *ctx, GLenum cap, GLboolean state )
 
 /* Set the buffer used for drawing */
 /* XXX support for separate read/draw buffers hasn't been tested */
-static GLboolean tdfxDDSetDrawBuffer( GLcontext *ctx, GLenum mode )
+static void tdfxDDSetDrawBuffer( GLcontext *ctx, GLenum mode )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
@@ -1048,56 +1006,31 @@ static GLboolean tdfxDDSetDrawBuffer( GLcontext *ctx, GLenum mode )
 
    FLUSH_BATCH( fxMesa );
 
-   fxMesa->Fallback &= ~TDFX_FALLBACK_BUFFER;
-
-   switch ( mode ) {
+   switch( mode) {
    case GL_FRONT_LEFT:
-      fxMesa->DrawBuffer = GR_BUFFER_FRONTBUFFER;
+      fxMesa->DrawBuffer = fxMesa->ReadBuffer = GR_BUFFER_FRONTBUFFER;
       fxMesa->new_state |= TDFX_NEW_RENDER;
-      return GL_TRUE;
+      FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_FALSE );
+      break;
 
    case GL_BACK_LEFT:
-      fxMesa->DrawBuffer = GR_BUFFER_BACKBUFFER;
+      fxMesa->DrawBuffer = fxMesa->ReadBuffer = GR_BUFFER_BACKBUFFER;
       fxMesa->new_state |= TDFX_NEW_RENDER;
-      return GL_TRUE;
+      FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_FALSE );
+      break;
 
    case GL_NONE:
       FX_grColorMaskv( ctx, false4 );
-      return GL_TRUE;
+      FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_FALSE );
+      break;
 
    default:
-      fxMesa->Fallback |= TDFX_FALLBACK_BUFFER;
-      return GL_FALSE;
+      FALLBACK( fxMesa, TDFX_FALLBACK_DRAW_BUFFER, GL_TRUE );
+      break;
    }
 }
 
 
-/* Set the buffer used for reading */
-/* XXX support for separate read/draw buffers hasn't been tested */
-static void tdfxDDSetReadBuffer( GLcontext *ctx,
-				 GLframebuffer *buffer, GLenum mode )
-{
-   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-   (void) buffer;
-
-   FLUSH_BATCH( fxMesa );
-
-   fxMesa->Fallback &= ~TDFX_FALLBACK_BUFFER;
-
-   switch ( mode ) {
-   case GL_FRONT_LEFT:
-      fxMesa->ReadBuffer = GR_BUFFER_FRONTBUFFER;
-      break;
-
-   case GL_BACK_LEFT:
-      fxMesa->ReadBuffer = GR_BUFFER_BACKBUFFER;
-      break;
-
-   default:
-      fxMesa->Fallback |= TDFX_FALLBACK_BUFFER;
-      break;
-   }
-}
 
 /* =============================================================
  * Polygon stipple
@@ -1109,12 +1042,30 @@ static void tdfxDDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
    const GLubyte *m = mask;
    GLubyte q[4];
    int i,j,k;
-   int active = (ctx->Polygon.StippleFlag && ctx->PB->primitive == GL_POLYGON);
+   GLboolean allBitsSet;
+
+/*     int active = (ctx->Polygon.StippleFlag &&  */
+/*  		 fxMesa->reduced_prim == GL_TRIANGLES); */
 
    FLUSH_BATCH(fxMesa);
+   fxMesa->Stipple.Pattern = 0xffffffff;
+   fxMesa->dirty |= TDFX_UPLOAD_STIPPLE;
+   fxMesa->new_state |= TDFX_NEW_STIPPLE;
 
-   if (active) {
-      ctx->Driver.TriangleCaps |= DD_TRI_STIPPLE;
+   /* Check if the stipple pattern is fully opaque.  If so, use software
+    * rendering.  This basically a trick to make sure the OpenGL conformance
+    * test passes.
+    */
+   allBitsSet = GL_TRUE;
+   for (i = 0; i < 32; i++) {
+      if (((GLuint *) mask)[i] != 0xffffffff) {
+         allBitsSet = GL_FALSE;
+         break;
+      }
+   }
+   if (allBitsSet) {
+      fxMesa->haveHwStipple = GL_FALSE;
+      return;
    }
 
    q[0] = mask[0];
@@ -1126,43 +1077,24 @@ static void tdfxDDPolygonStipple( GLcontext *ctx, const GLubyte *mask )
       for (j = 0 ; j < 4; j++)
 	 for (i = 0 ; i < 4 ; i++,m++) {
 	    if (*m != q[j]) {
-	       ctx->Driver.TriangleCaps &= ~DD_TRI_STIPPLE;
-               fxMesa->Stipple.Pattern = 0xffffffff; /* ensure all pixels on */
+	       fxMesa->haveHwStipple = GL_FALSE;
 	       return;
 	    }
          }
 
-   /* We can do it, so flag an upload of the stipple pattern */
+   fxMesa->haveHwStipple = GL_TRUE;
    fxMesa->Stipple.Pattern = ( (q[0] << 0) |
                                (q[1] << 8) |
                                (q[2] << 16) |
                                (q[3] << 24) );
-   fxMesa->dirty |= TDFX_UPLOAD_STIPPLE;
 }
 
-/* Always called between RenderStart and RenderFinish --> We already
- * hold the lock.
- */
-static void tdfxDDReducedPrimitiveChange( GLcontext *ctx, GLenum prim )
+
+
+static void tdfxDDRenderMode( GLcontext *ctx, GLenum mode )
 {
-   tdfxContextPtr fxMesa = TDFX_CONTEXT( ctx );
-
-   FLUSH_BATCH( fxMesa );
-
-   tdfxUpdateCull(ctx);
-   if ( fxMesa->dirty & TDFX_UPLOAD_CULL ) {
-      fxMesa->Glide.grCullMode( fxMesa->CullMode );
-      fxMesa->dirty &= ~TDFX_UPLOAD_CULL;
-   }
-
-#if defined(__linux__) || defined(__FreeBSD__)
-   tdfxUpdateStipple(ctx);
-   if ( fxMesa->dirty & TDFX_UPLOAD_STIPPLE ) {
-      fxMesa->Glide.grStipplePattern ( fxMesa->Stipple.Pattern );
-      fxMesa->Glide.grStippleMode ( fxMesa->Stipple.Mode );
-      fxMesa->dirty &= ~TDFX_UPLOAD_STIPPLE;
-   }
-#endif /* __linux__ || __FreeBSD__ */
+   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
+   FALLBACK( fxMesa, TDFX_FALLBACK_RENDER_MODE, (mode != GL_RENDER) );
 }
 
 
@@ -1266,65 +1198,13 @@ void tdfxDDUpdateHwState( GLcontext *ctx )
 }
 
 
-static void tdfxDDRenderStart( GLcontext *ctx )
+static void tdfxDDInvalidateState( GLcontext *ctx, GLuint new_state )
 {
-   tdfxDDUpdateHwState( ctx );
-   LOCK_HARDWARE( TDFX_CONTEXT(ctx) );
-}
-
-static void tdfxDDRenderFinish( GLcontext *ctx )
-{
-   UNLOCK_HARDWARE( TDFX_CONTEXT(ctx) );
-}
-
-#define INTERESTED (~(NEW_MODELVIEW |		\
-		      NEW_PROJECTION |		\
-		      NEW_TEXTURE_MATRIX |	\
-		      NEW_USER_CLIP |		\
-		      NEW_CLIENT_STATE |	\
-		      NEW_TEXTURE_ENABLE))
-
-static void tdfxDDUpdateState( GLcontext *ctx )
-{
-   tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
-
-   if ( TDFX_DEBUG & DEBUG_VERBOSE_API ) {
-      fprintf( stderr, "%s()\n", __FUNCTION__ );
-   }
-
-   /* Have to do this here to detect texture, line fallbacks in time:
-    */
-   if ( fxMesa->new_state & (TDFX_NEW_TEXTURE | TDFX_NEW_LINE) )
-      tdfxDDUpdateHwState( ctx );
-
-   if ( ctx->NewState & INTERESTED ) {
-      tdfxDDChooseRenderState( ctx );
-   }
-
-   /* The choise of vertex setup function only depends on whether fog
-    * and/or texturing is enabled.
-    */
-   if ( ctx->NewState & (NEW_FOG | NEW_TEXTURE_ENABLE | NEW_TEXTURING)) {
-      tdfxDDChooseRasterSetupFunc( ctx );
-   }
-
-   if ( 0 )
-      fprintf( stderr, "fallback %x indirect %x\n",
-	       fxMesa->Fallback, fxMesa->IndirectTriangles );
-
-   if ( fxMesa->Fallback ) {
-      ctx->IndirectTriangles |= ctx->TriangleCaps;
-   }
-   else {
-      ctx->IndirectTriangles &= ~DD_SW_RASTERIZE;
-      ctx->IndirectTriangles |= fxMesa->IndirectTriangles;
-
-      ctx->Driver.PointsFunc	= fxMesa->PointsFunc;
-      ctx->Driver.LineFunc	= fxMesa->LineFunc;
-      ctx->Driver.TriangleFunc	= fxMesa->TriangleFunc;
-      ctx->Driver.QuadFunc	= fxMesa->QuadFunc;
-      ctx->Driver.RenderVBRawTab = fxMesa->RenderVBRawTab;
-   }
+   _swrast_InvalidateState( ctx, new_state );
+   _swsetup_InvalidateState( ctx, new_state );
+   _ac_InvalidateState( ctx, new_state );
+   _tnl_InvalidateState( ctx, new_state );
+   TDFX_CONTEXT(ctx)->new_gl_state |= new_state;
 }
 
 
@@ -1405,7 +1285,7 @@ void tdfxInitState( tdfxContextPtr fxMesa )
       fxMesa->TexState.Enabled		= 0;
    }
 
-   if ( ctx->Visual->DBflag) {
+   if ( ctx->Visual.doubleBufferMode) {
       fxMesa->DrawBuffer		= GR_BUFFER_BACKBUFFER;
       fxMesa->ReadBuffer		= GR_BUFFER_BACKBUFFER;
    } else {
@@ -1430,7 +1310,7 @@ void tdfxInitState( tdfxContextPtr fxMesa )
 
    fxMesa->Color.Dither			= GR_DITHER_2x2;
 
-   if ( fxMesa->glVis->DepthBits > 0 ) {
+   if ( fxMesa->glCtx->Visual.depthBits > 0 ) {
       fxMesa->Depth.Mode		= GR_DEPTHBUFFER_ZBUFFER;
    } else {
       fxMesa->Depth.Mode		= GR_DEPTHBUFFER_DISABLE;
@@ -1486,30 +1366,17 @@ void tdfxDDInitStateFuncs( GLcontext *ctx )
 {
    tdfxContextPtr fxMesa = TDFX_CONTEXT(ctx);
 
-   ctx->Driver.UpdateState		= tdfxDDUpdateState;
+   ctx->Driver.UpdateState		= tdfxDDInvalidateState;
 
+
+   /* State notification callbacks:
+    */
    ctx->Driver.ClearIndex		= NULL;
    ctx->Driver.ClearColor		= tdfxDDClearColor;
-   ctx->Driver.Index			= NULL;
-   ctx->Driver.Color			= tdfxDDColor;
    ctx->Driver.SetDrawBuffer		= tdfxDDSetDrawBuffer;
-   ctx->Driver.SetReadBuffer		= tdfxDDSetReadBuffer;
 
    ctx->Driver.IndexMask		= NULL;
    ctx->Driver.ColorMask		= tdfxDDColorMask;
-
-   ctx->Driver.NearFar			= tdfxDDNearFar;
-
-   ctx->Driver.RenderStart		= tdfxDDRenderStart;
-   ctx->Driver.RenderFinish		= tdfxDDRenderFinish;
-   ctx->Driver.RasterSetup		= NULL;
-
-   ctx->Driver.RenderVBClippedTab	= NULL;
-   ctx->Driver.RenderVBCulledTab	= NULL;
-   ctx->Driver.RenderVBRawTab		= NULL;
-
-   ctx->Driver.ReducedPrimitiveChange	= tdfxDDReducedPrimitiveChange;
-   ctx->Driver.MultipassFunc		= NULL;
 
    ctx->Driver.AlphaFunc		= tdfxDDAlphaFunc;
    ctx->Driver.BlendEquation		= tdfxDDBlendEquation;
@@ -1521,7 +1388,7 @@ void tdfxDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.FrontFace		= tdfxDDFrontFace;
    ctx->Driver.DepthFunc		= tdfxDDDepthFunc;
    ctx->Driver.DepthMask		= tdfxDDDepthMask;
-   ctx->Driver.DepthRange		= NULL;
+   ctx->Driver.DepthRange		= tdfxDDDepthRange;
    ctx->Driver.Enable			= tdfxDDEnable;
    ctx->Driver.Fogfv			= tdfxDDFogfv;
    ctx->Driver.Hint			= NULL;
@@ -1529,13 +1396,36 @@ void tdfxDDInitStateFuncs( GLcontext *ctx )
    ctx->Driver.LightModelfv		= tdfxDDLightModelfv;
    ctx->Driver.LineStipple		= NULL;
    ctx->Driver.LineWidth		= tdfxDDLineWidth;
-   ctx->Driver.LogicOpcode		= tdfxDDLogicOp;
-#if 0
-   ctx->Driver.PolygonMode		= NULL;
-#endif
    ctx->Driver.PolygonStipple		= tdfxDDPolygonStipple;
+   ctx->Driver.RenderMode               = tdfxDDRenderMode;
    ctx->Driver.Scissor			= tdfxDDScissor;
    ctx->Driver.ShadeModel		= tdfxDDShadeModel;
+
+   ctx->Driver.BindTexture		= tdfxDDBindTexture;
+   ctx->Driver.DeleteTexture		= tdfxDDDeleteTexture;
+   ctx->Driver.TexEnv			= tdfxDDTexEnv;
+   ctx->Driver.TexParameter		= tdfxDDTexParameter;
+   ctx->Driver.ChooseTextureFormat      = tdfxDDChooseTextureFormat;
+   ctx->Driver.TexImage2D		= tdfxDDTexImage2D;
+   ctx->Driver.TexSubImage2D		= tdfxDDTexSubImage2D;
+   /*
+   ctx->Driver.TexImage2D               = _mesa_store_teximage2d;
+   ctx->Driver.TexSubImage2D            = _mesa_store_texsubimage2d;
+   */
+
+   ctx->Driver.TexImage1D               = _mesa_store_teximage1d;
+   ctx->Driver.TexImage3D               = _mesa_store_teximage3d;
+   ctx->Driver.TexSubImage1D            = _mesa_store_texsubimage1d;
+   ctx->Driver.TexSubImage3D            = _mesa_store_texsubimage3d;
+   ctx->Driver.CopyTexImage1D           = _swrast_copy_teximage1d;
+   ctx->Driver.CopyTexImage2D           = _swrast_copy_teximage2d;
+   ctx->Driver.CopyTexSubImage1D        = _swrast_copy_texsubimage1d;
+   ctx->Driver.CopyTexSubImage2D        = _swrast_copy_texsubimage2d;
+   ctx->Driver.CopyTexSubImage3D        = _swrast_copy_texsubimage3d;
+   ctx->Driver.TestProxyTexImage        = _mesa_test_proxy_teximage;
+
+/*     ctx->Driver.GetTexImage		= tdfxDDGetTexImage; */
+   ctx->Driver.UpdateTexturePalette	= tdfxDDTexturePalette;
 
    if ( fxMesa->haveHwStencil ) {
       ctx->Driver.StencilFunc		= tdfxDDStencilFunc;
@@ -1548,4 +1438,12 @@ void tdfxDDInitStateFuncs( GLcontext *ctx )
    }
 
    ctx->Driver.Viewport			= tdfxDDViewport;
+
+
+   /* Swrast hooks for imaging extensions:
+    */
+   ctx->Driver.CopyColorTable = _swrast_CopyColorTable;
+   ctx->Driver.CopyColorSubTable = _swrast_CopyColorSubTable;
+   ctx->Driver.CopyConvolutionFilter1D = _swrast_CopyConvolutionFilter1D;
+   ctx->Driver.CopyConvolutionFilter2D = _swrast_CopyConvolutionFilter2D;
 }

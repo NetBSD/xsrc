@@ -3,7 +3,7 @@
 
 
 
-// $XFree86: xc/programs/xkbcomp/keycodes/xfree86,v 3.17 2001/11/30 12:12:04 eich Exp $
+// $XFree86: xc/programs/xkbcomp/keycodes/xfree86,v 3.18 2002/10/15 02:11:38 dawes Exp $
 
 // "standard" XFree86 codes
 // It seems that the "default" must be the first entry in the file.
@@ -155,7 +155,8 @@ xkb_keycodes "basic" {
     <NFER> =   131;		// Muhenkan
     <AE13> =   133;		// Yen
 
-    // Keys that are generated on Japanese and Brazillian keyboards
+    // Keys that are generated on Japanese keyboards and the
+    // ABNT2 Brazillian keyboards
     alias <AC12> = <BKSL>;
 
     // Extended keys that may be generated on "Internet" keyboards.

@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/ati.c,v 1.19 2002/01/16 16:22:25 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/ati.c,v 1.21 2003/01/01 19:16:30 tsi Exp $ */
 /*
- * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -32,43 +32,16 @@
  * exception.  Contributions, intentional or not, to this and previous versions
  * of this driver by the following are hereby acknowledged:
  *
- * Thomas Roell, roell@informatik.tu-muenchen.de
- * Per Lindqvist, pgd@compuram.bbt.se
- * Doug Evans, dje@cygnus.com
- * Rik Faith, faith@precisioninsight.com
- * Arthur Tateishi, ruhtra@turing.toronto.edu
- * Alain Hebert, aal@broue.rot.qc.ca
- * Ton van Rosmalen, ton@stack.urc.tue.nl
- * David Chambers, davidc@netcom.com
- * William Shubert, wms@ssd.intel.com
- * ATI Technologies Incorporated
- * Robert Wolff
- * David Dawes, dawes@xfree86.org
- * Mark Weaver, Mark_Weaver@brown.edu
- * Hans Nasten, nasten@everyware.se
- * Kevin Martin, martin@precisioninsight.com
- * Frederic Rienthaler, root@mojo.synapse.com
- * Marc Bolduc, bolduc@cim.mcgill.ca
- * Reuben Sumner, rasumner@undergrad.math.uwaterloo.ca
- * Benjamin T. Yang, risk@uclink.berkeley.edu
- * James Fast Kane, jfk2@engr.uark.edu
- * Randall Hopper, rhh@ct.picker.com
- * W. Marcus Miller, marcus@llnl.gov
- * Henrik Harmsen, ervhch@erv.ericsson.se
- * Christian Lupien, lupien@physics.utoronto.ca
- * Precision Insight Incorporated
- * Mark Vojkovich, mvojkovich@nvidia.com
- * Huw D M Davies, h.davies1@physics.ox.ac.uk
- * Andrew C Aitchison, A.C.Aitchison@dpmms.cam.ac.uk
- * Ani Joshi, ajoshi@shell.unixbox.com
- * Kostas Gewrgiou, gewrgiou@imbc.gr
- * Jakub Jelinek, jakub@redhat.com
- * David S. Miller, davem@redhat.com
- * A E Lawrence, adrian.lawrence@computing-services.oxford.ac.uk
- * Linus Torvalds, torvalds@transmeta.com
- * William Blew, wblew@home.com
- * Ignacio Garcia Etxebarria, garetxe@euskalnet.net
- * Patrick Chase, pchase2@pacbell.net
+ * Thomas Roell, Per Lindqvist, Doug Evans, Rik Faith, Arthur Tateishi,
+ * Alain Hebert, Ton van Rosmalen, David Chambers, William Shubert,
+ * ATI Technologies Incorporated, Robert Wolff, David Dawes, Mark Weaver,
+ * Hans Nasten, Kevin Martin, Frederic Rienthaler, Marc Bolduc, Reuben Sumner,
+ * Benjamin T. Yang, James Fast Kane, Randall Hopper, W. Marcus Miller,
+ * Henrik Harmsen, Christian Lupien, Precision Insight Incorporated,
+ * Mark Vojkovich, Huw D M Davies, Andrew C Aitchison, Ani Joshi,
+ * Kostas Gewrgiou, Jakub Jelinek, David S. Miller, A E Lawrence,
+ * Linus Torvalds, William Blew, Ignacio Garcia Etxebarria, Patrick Chase,
+ * Vladimir Dergachev
  *
  * ... and, many, many others from around the world.
  *

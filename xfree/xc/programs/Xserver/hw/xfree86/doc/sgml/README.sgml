@@ -13,17 +13,18 @@
 
 <title>README for XFree86&tm; &relvers;
 <author>The XFree86 Project, Inc
-<date>3 September 2002
+<date>26 February 2003
 
 <ident>
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.119.2.1 2002/09/04 03:01:48 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/README.sgml,v 3.134 2003/02/27 01:19:32 dawes Exp $
 </ident>
 
 <abstract>
 
-XFree86 is the Open Source port of X.Org's X11R6.6 release that supports
-several UNIX(R) and UNIX-like (such as Linux, the BSDs and Solaris x86)
-operating systems on Intel and other platforms.
+XFree86 is an Open Source version of the X Window System that supports
+many UNIX(R) and UNIX-like operating systems (such as Linux, FreeBSD,
+NetBSD, OpenBSD and Solaris x86) on Intel and other platforms.  This
+version is compatible with X11R6.6.
 
 </abstract>
 
@@ -36,7 +37,7 @@ operating systems on Intel and other platforms.
 XFree86 &relvers; is the &whichupdaterel; update to &fullrelvers;,
 the &whichfullrel; full release in the
 <![ %earlyrel; [new]]>
-XFree86 4 series.
+XFree86 4.x series.
 
 Update releases are taken from a stable/maintenance branch.  They are
 designed to be installed on top of the full release that they are
@@ -48,46 +49,68 @@ stability.
 <![ %fullrel [
 XFree86 &relvers; is the &whichfullrel; full release in the
 <![ %earlyrel; [new]]>
-XFree86 4 series.
+XFree86 4.x series.
 ]]>
 
+<![ %snapshot [
+XFree86 &relvers; is a pre-release snapshot of XFree86 &nextfullrelvers;.
+<![ %relcandidate [
+This snapshot is release candidate &rcnum; for version &nextfullrelvers;.
+]]>
+Pre-release snapshots are provided for beta testing.  You should only install
+snapshots if you're comfortable dealing with possibly unstable beta-level
+software.  If you find problems with this snapshot, you are encouraged
+to report your findings to the public XFree86 mailing list:
+<email>XFree86@XFree86.org</email>.
+
+XFree86 &relvers; is a feature-complete snapshot of XFree86
+&nextfullrelvers;.
+]]> 
+
 <p>
-XFree86 release 4 is a major re-design of the basic architectural
-underpinnings of XFree86's implementation of the original X Consortium's
-X Server.  This re-design allows for a modular interaction between the
-hardware drivers and the XFree86 core X server.  With 4.x, upgrades to
-the X server with new and unsupported hardware can be easily done and
-installed without undergoing the previous process of rebuilding an X
-server.  All that is required is installing the new driver module and
-updating the configuration file.
-
-The road to XFree86 release 4 began as an architectural concept in mid
-1997, with the serious framework being implemented in code the beginning
-of 1998.  There were several snapshots on the road to 4.0 which are now
-part of the 4.0 base release.
-<![ %fullrel [The &relvers; version is an upgrade to
-&prevrelvers;, which include more hardware ports, code enhancements and
-bug fixes.]]>
-
-Release 4 also included the long-awaited integration of the DRI (Direct
-Rendering Infrastructure).  This upgrade into the code base  gives
-XFree86 the abilities of accelerated direct 3-D graphics rendering, used
-widely in games and other visualization programs.
-
-While some driver available in the old 3.3.x release series have not
-been converted over to the 4.x series, those required for most modern
-video hardware are available.  Please check the <htmlurl name="Driver
-Status document" url="Status.html"> first to see whether your hardware
-is supported before upgrading to the 4.x series.
-
+XFree86 4.x is the current XFree86 release series.  The first release in
+this series was in early 2000.  The core of XFree86 4.x is a modular
+X server.
+<![ %fullrel [The &relvers; version is a new release that includes
+additional hardware support, functional enhancements and bug fixes.]]>
 <![ %haverelnotes [
 Specific release enhancements can be viewed in the
 <htmlurl name="Release Notes" url="RELNOTES.html">.
 ]]>
 
-The XFree86 version numbering system has had some changes as of the
-4.0.2 release.  Information about this can be found in the
-<htmlurl name="Versions Document" url="Versions.html">.
+Most modern PC video hardware is supported in XFree86 &relvers;, and
+most PC video hardware that isn't supported explicitly can be used with
+the "vesa" driver.  The <htmlurl name="Driver Status document"
+url="Status.html"> has a summary of what hardware is supported in
+&relvers; compared with the old 3.3.x (&legacyvers;) series.  It is a
+good idea to check there before upgrading if you are currently running
+&legacyvers; with older hardware.
+
+XFree86 is produced by The XFree86 Project, Inc, which is a group of
+mostly volunteer independent developers.  XFree86 is a non-commercial
+organisation, and would not be viable without the invaluable development
+contributions of volunteers.  This release is dedicated to all who have
+supported and contributed to XFree86 over the last eleven years.
+
+<![ %snapshot [
+<sect>Redistribution of Snapshots
+<p>
+
+While the XFree86 <htmlurl name="License" url="LICENSE.html"> doesn't
+prohibit vendors and others redistributing binaries of this snapshot
+release, we don't recommend including them in production releases.
+]]>
+
+<sect>Pointers to additional information
+<p>
+
+The documentation for this release can be found online at the <url
+name="XFree86 web site" url="http://www.xfree86.org/&relvers;/">.
+Documentation for the latest release version can always be found <url
+name="here" url="http://www.xfree86.org/current/">, and documentation
+for the latest pre-release snapshot can be found <url name="here"
+url="http://www.xfree86.org/snapshot/">.  Checking those last two links
+is a good way of finding out the latest versions available from XFree86.
 
 Information about binary distributions and the attendant installation
 instructions can be found in the <htmlurl name="Installation Document"
@@ -97,117 +120,52 @@ Copyright and Licensing information for this release and all XFree86
 releases can be found in the <htmlurl name="License Document"
 url="LICENSE.html">.
 
-<![ %snapshot [
-<sect>Redistribution of the Snapshots
-<p>
+The XFree86 version numbering system (including historical information)
+can be found in the <htmlurl name="Versions Document" url="Versions.html">.
 
-While the XFree86 <htmlurl name="License" url="LICENSE.html"> doesn't
-prohibit vendors and others redistributing binaries of this release, we
-don't recommend it.  We ask that if you do distribute such binaries,
-you make it clear that people using then should contact you for support
-and not XFree86.
-]]>
+Additional information may be available at the <url
+name="XFree86 web site" url="http://www.xfree86.org/">, and pointers to
+other information are available at the <url name="XFree86 support page"
+url="http://www.xfree86.org/support.html">.
 
-<sect>Joining The Team
-<sect1> Development
-<p>
-
-If you would like to work on the development of XFree86 4, either by
-helping with the conversion of our older drivers to the new 4.x design,
-or assisting in the addition of new drivers or platforms to the code base
-then send a request to <url name="join the XFree86 development team"
-url="http://www.xfree86.org:/developer.html">.  This will give you direct
-access to the latest XFree86 related development topics and discussions.
-Include in your note, your name, email address, reason for joining (what
-you will work on) and, level of expertise (coder, DRI, core, specific
-driver) and area of interest.
-
-</sect1>
-
-
-<sect1> Documentation
-<p>
-If instead your interests are on the Documentation side of the Project,
-or you want to contribute and are not ready for plunging into the code,
-you can join the Documentation Team (those hardy souls responsible for
-the content you are reading :-).  Amongst the Doc Team's activities are
-converting our SGML based documentation into an XML based one and updating
-and creating technical documentation used by staff and public.  If this
-sounds interesting then please send a request to <url name="join the
-XFree86 documentation team" url="mailto:signup@xfree86.org">.
-Include in your note, you name, email address, reason for joining (what
-you will work on) and level of expertise and whether you are interested
-in the tools or content side of the group.
-
-</sect1>
-</sect> 
-
-<sect> The Public Mailing Lists
-<sect1>  Newbie
-<p> 
-For those who are new to XFree86  and want to learn more about our
-Project we recommend that you join our Newbie list, located at <url name
-= "Public Mailing Lists" url = "http://www.xfree86.org/mailman/listinfo">,
-where this and other discussions occur with our senior all-volunteer
-staff.  This is great forum to get introduced to XFree86 and ask for
-help on how to set up the XServer or whether your hardware is supported,
-and why not?,  and make suggestions for future releases of XFree86.
-This list is supported by our volunteer staff who needs to know how you
-are using and interacting with XFree86 and what is wrong and could be
-better.  Tell them, they want to know!
-
-</sect1>
-
-<sect1> Announce
-<p>
-For those who just want to know  the release schedule 
-this is a good list  to join.
-
-<sect1> CVS Commit
+<sect>The Public Mailing Lists
+<sect1>CVS Commit
 <p>
 For those who want to see what has been committed recently to our CVS
 repository this is the list that will show you those updates.  This list
 is updated dynamically every time the repository is updated after the
 the commit happens.
 
-<!--
+<sect1>Devel
 <p>
-A followup to the commit list is the soon to be public, patch archives.
-This archive will be available on our web-site and will show what patches
-have been submitted and will soon be committed.  This is helpful for
-people who are interested in a specific area and want to know what work
-is happening there.  When this goes public we will announce it
-on our web site and our Announce mailing list, so keep watching.
--->
+This list is available for discussions about XFree86 development and
+for following up well-defined bug reports.  Many experienced XFree86
+developers are present on this list.
 
-
-<sect1>  Xpert
+<sect1>XFree86
 <p>
-If instead you are the lone developer who is improving XFree86 on an
-ad hoc basis for your particular environment (I want to get my mouse or
-video card to work), and need a specific question asked then you should
-go over to our Xpert list where such questions are raised and answered
-by our technical development staff.  Remember you do not have to be a
-member to write fixes to our code base and if your changes are discrete
-and self-contained the volume of developer mail may just be too noisy.
-
-
-Once your work is finished (coded, debugged and documented) please send
-your fix to <email>fixes@XFree86.org</email>.  This will ensure that
-they are included in future releases. And thanks!  You make this truly
-an Open group.
+This list is available for any discussions and questions related to XFree86.
+Support related questions should be sent here.  Many experienced XFree86
+developers monitor this list.
 
 </sect1>
 </sect>
+
+<sect>Contributing to XFree86
+<p>
+If you have any new work or enhancements/bug fixes for existing work,
+please submit them to <email>fixes@XFree86.org</email>.  This will ensure
+that they are included in future releases.  For new work, it's usually
+a good idea to discuss it first on the <email>devel@XFree86.org</email>
+list.
 
 <sect>How to get XFree86 &relvers;
 <p>
 <![ %snapshot; [
 XFree86 &relvers; can be found at the <url name="XFree86 ftp server"
 url="ftp://ftp.xfree86.org/pub/XFree86/snapshots/&relvers;/">, and at
-mirrors of this server.  This snapshot is available primarily in source
-form.  Binaries for some platforms may be made available at a later
-time.
+mirrors of this server.  This snapshot is available primarily in binary
+form for several popular platforms.
 ]]>
 
 <![ %release; [
@@ -239,13 +197,16 @@ README file for that version, which can be found on the
 ]]>
 
 <![ %fullrel [
-The source for version &fullrelvers; is split into three tarballs:
+The source for version &fullrelvers; is split into seven tarballs:
 <tt>X&fullsrcvers;src-1.tgz</tt>, <tt>X&fullsrcvers;src-2.tgz</tt>,
-<tt>X&fullsrcvers;src-3.tgz</tt>.  The first contains everything except the
-fonts and general X11 documentation.  It is sufficient for building
-XFree86 if you already have a set of fonts.  The second contains the
-fonts and the source for the general X11 documentation.  The third
-contains the general X11 documentation in hardcopy format.
+<tt>X&fullsrcvers;src-3.tgz</tt>, <tt>X&fullsrcvers;src-4.tgz</tt>,
+<tt>X&fullsrcvers;src-5.tgz</tt>, <tt>X&fullsrcvers;src-6.tgz</tt> and
+<tt>X&fullsrcvers;src-7.tgz</tt>.  The first three contain everything
+except the fonts and general X11 documentation.  Those three are sufficient
+for building XFree86 if you already have a set of fonts.  The fourth
+and fifth contain the fonts.  The sixth contains the source for the
+general X11 documentation.  The seventh contains the general X11
+documentation in hardcopy format.
 
 <![ %onediff; [
 A source patch relative to version &prevfullrelvers; is also available.
@@ -346,14 +307,18 @@ gzip -d &lt; &prevfullrelvers;-&fullrelvers;.diff4.gz | patch -p0 -E
 <![ %difftar; [
 <![ %removefiles; [
 <tscreen><verb>
-rm -f xc/extras/freetype2/builds/mac/ftlib.prj
-rm -fr xc/extras/freetype2/docs/design 
-rm -fr xc/extras/freetype2/docs/glyphs
-rm -fr xc/extras/freetype2/docs/image
-rm -fr xc/extras/freetype2/docs/tutorial
-rm -f xc/programs/Xserver/hw/darwin/bundle/English.lproj/MainMenu.nib/objects.nib
-rm -f xc/programs/Xserver/hw/darwin/bundle/Japanese.lproj/Localizable.strings
-rm -f xc/programs/Xserver/hw/darwin/bundle/Japanese.lproj/MainMenu.nib/objects.nib
+rm -f xc/doc/hardcopy/Xext/mit-shm.PS.gz
+rm -f xc/doc/hardcopy/saver/saver.PS.gz
+rm -fr xc/fonts/scaled/Ethiopic
+rm -fr xc/fonts/scaled/Meltho
+rm -fr xc/programs/Xserver/hw/darwin/bundle
+rm -f xc/programs/Xserver/hw/hp/input/drivers/XHPKeymaps
+rm -f xc/programs/Xserver/hw/hp/ngle/ngledoblt.o.8.07
+rm -f xc/programs/Xserver/hw/xwin/X.ico
+rm -fr xc/programs/xcursorgen/redglass
+rm -fr xc/programs/xcursorgen/whiteglass
+touch xc/extras/Mesa/src/Trace/tr_attrib.c
+touch xc/lib/fontconfig/NEWS
 </verb></tscreen>
 ]]>
 <tscreen><verb>
@@ -362,34 +327,42 @@ gzip -d &lt; &fullrelvers;.tgz | tar vxf -
 ]]>
 ]]>
 
+<!--
 <![ %prevrelwasupdate; [
 Patches might also be available relative to &prevrelvers;.  If so, the
 instructions for applying them are the same, except that you should start 
 with a clean &prevrelvers; source tree.
 ]]>
-
-The contrib part of the distribution was folded into the main source
-tree a while ago, so a separate contrib tarball is not required.
+-->
 
 To format the XFree86 documentation use the latest version of our doctools
-package available as <tt>doctools-&doctoolsvers;.tgz</tt>.
+package available from the XFree86 CVS repository's "doctools" module,
+and from our <url name="ftp site"
+url="ftp://ftp.xfree86.org/pub/XFree86/misc/doctools-&doctoolsvers;.tgz">.
 ]]>  <!-- fullrel -->
 
-The XFree86 source code can also be accessed via the XFree86 CVS repository.
+The XFree86 source code for this and all releases/snapshots as well as
+development versions can also be accessed via the XFree86 CVS repository.
 Information about accessing this can be found at the <url name="CVS page"
 url="http://www.xfree86.org/cvs/"> on our web site.  It's also possible
 to browse the XFree86 CVS repository at our <url name="CVSWeb server"
-url="http://cvsweb.xfree86.org/">.
+url="http://cvsweb.xfree86.org/">.  The CVS tag for this version is
+"&reltag;".
+<![ %notsnapshot [
+The CVS tag for the stable branch for this release is "&relbranchtag;".
+]]>
+To check out the latest development version, don't specify any tag.
+
 
 <sect>Reporting Bugs
 <p>
 
 Bugs should be reported to <email>XFree86@XFree86.org</email>.  Before
-reporting bugs, please check the X server log file, which can be found
-at <tt>/var/log/XFree86.0.log</tt> on most platforms.  If you can't
-resolve the problem yourself, send the entire log file with your bug
-report but not the operating system core dump.  Do not edit  the log
-file as our developers use it to reproduce and debug your problem.
+reporting bugs, please check the XFree86 server log file, which can be
+found at <tt>/var/log/XFree86.0.log</tt> on most platforms.  If you
+can't resolve the problem yourself, send the entire log file with your
+bug report but not the operating system core dump.  Do not edit  the
+log file as our developers use it to reproduce and debug your problem.
 
 
 

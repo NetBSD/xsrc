@@ -26,7 +26,7 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from the XFree86 Project and SIlicon Motion.
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/regsmi.h,v 1.1 2000/11/28 20:59:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/regsmi.h,v 1.2 2002/01/25 21:56:09 tsi Exp $ */
 
 #ifndef _REGSMI_H
 #define _REGSMI_H
@@ -57,8 +57,8 @@ VGAIN8_INDEX(SMIPtr pSmi, int indexPort, int dataPort, CARD8 index)
 	}
 	else
 	{
-		outb(indexPort, index);
-		return(inb(dataPort));
+		outb(pSmi->PIOBase + indexPort, index);
+		return(inb(pSmi->PIOBase + dataPort));
 	}
 }
 
@@ -72,8 +72,8 @@ VGAOUT8_INDEX(SMIPtr pSmi, int indexPort, int dataPort, CARD8 index, CARD8 data)
 	}
 	else
 	{
-		outb(indexPort, index);
-		outb(dataPort, data);
+		outb(pSmi->PIOBase + indexPort, index);
+		outb(pSmi->PIOBase + dataPort, data);
 	}
 }
 
@@ -86,7 +86,7 @@ VGAIN8(SMIPtr pSmi, int port)
 	}
 	else
 	{
-		return(inb(port));
+		return(inb(pSmi->PIOBase + port));
 	}
 }
 
@@ -99,7 +99,7 @@ VGAOUT8(SMIPtr pSmi, int port, CARD8 data)
 	}
 	else
 	{
-		outb(port, data);
+		outb(pSmi->PIOBase + port, data);
 	}
 }
 

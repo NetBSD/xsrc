@@ -10,6 +10,7 @@
 * This file is included by FDSTRUCS.H
 *
 \*********************************************************************/
+/* $XFree86: xc/extras/FreeType/contrib/ftos2/ifi/32ifimet.h,v 1.2 2003/01/12 03:55:43 tsi Exp $ */
 #ifndef     __32IFIMET_H__
 #define     __32IFIMET_H__
 
@@ -52,9 +53,9 @@
 #define IFIMETRICS_HOLLOW      0x0800   /*Outline (hollow) */
 
 #if defined(__IBMCPP__) || defined(__IBMC__)
-    #pragma pack(1)
+#    pragma pack(1)
 #else
-    #pragma Align_members(1)
+#    pragma Align_members(1)
 #endif
 
 typedef struct _IFIMETRICS    /* ifim */
@@ -110,9 +111,9 @@ typedef struct _IFIMETRICS    /* ifim */
 } IFIMETRICS;
 typedef IFIMETRICS FAR *PIFIMETRICS;
 #if defined(__IBMCPP__) || defined(__IBMC__)
-    #pragma pack()
+#    pragma pack()
 #else
-    #pragma Align_members()
+#    pragma Align_members()
 #endif
 
 #endif

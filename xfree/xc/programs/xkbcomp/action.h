@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/action.h,v 3.3 2002/07/01 02:26:00 tsi Exp $ */
 
 #ifndef ACTION_H
 #define ACTION_H 1
@@ -65,30 +66,26 @@ typedef struct _ActionInfo {
 } ActionInfo;
 
 extern int HandleActionDef(
-#if NeedFunctionPrototypes
 	ExprDef *		/* def */,
 	XkbDescPtr		/* xkb */,
 	XkbAnyAction *		/* action */,
 	unsigned		/* mergeMode */,
 	ActionInfo *		/* info */
-#endif
 );
 
 extern int SetActionField(
-#if NeedFunctionPrototypes
 	XkbDescPtr		/* xkb */,
 	char *			/* elem */,
 	char *			/* field */,
 	ExprDef *		/* index */,
 	ExprDef *		/* value */,
 	ActionInfo **		/* info_rtrn */
-#endif
 );
 
 extern void ActionsInit(
-#if NeedFunctionPrototypes
 	void
-#endif
 );
+
+extern LookupEntry ctrlNames[];
 
 #endif /* ACTION_H */

@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.h,v 1.3 2001/10/02 11:44:13 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_context.h,v 1.5 2002/02/24 21:51:10 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -40,10 +40,7 @@
 #ifdef GLX_DIRECT_RENDERING
 
 #include <sys/time.h>
-#include "dri_tmm.h"
-#include "dri_mesaint.h"
-#include "dri_mesa.h"
-#include "dri_xmesaapi.h"
+#include "dri_util.h"
 #ifdef XFree86Server
 #include "GL/xf86glx.h"
 #else
@@ -52,34 +49,19 @@
 #if defined(__linux__)
 #include <signal.h>
 #endif
+
+#include "tdfx_glide.h"
+
 #include "clip.h"
 #include "context.h"
-
 #include "macros.h"
 #include "matrix.h"
 #include "mem.h"
-#include "texture.h"
-#include "types.h"
-#include "vb.h"
-#include "vbrender.h"
-#include "xform.h"
+#include "mtypes.h"
 
-#include "tdfx_wrapper.h"
 #include "tdfx_screen.h"
-#include "tdfx_lock.h"
 
 
-
-/* Mergable items first
- */
-#define SETUP_RGBA		0x1
-#define SETUP_TMU0		0x2
-#define SETUP_TMU1		0x4
-#define SETUP_XY		0x8
-#define SETUP_Z			0x10
-#define SETUP_W			0x20
-
-#define MAX_MERGABLE		0x8
 
 
 #define TDFX_TMU0		GR_TMU0
@@ -129,7 +111,6 @@
 #define TDFX_UPLOAD_CULL		0x00004000
 #define TDFX_UPLOAD_VERTEX_LAYOUT	0x00008000
 #define TDFX_UPLOAD_COLOR_MASK		0x00010000
-#define TDFX_UPLOAD_CONSTANT_COLOR	0x00020000
 #define TDFX_UPLOAD_DITHER		0x00040000
 #define TDFX_UPLOAD_STENCIL		0x00080000
 
@@ -143,27 +124,28 @@
 
 #define TDFX_UPLOAD_STIPPLE		0x04000000
 
-/* Flags for software fallback cases
- */
-#define TDFX_FALLBACK_TEXTURE		0x0001
-#define TDFX_FALLBACK_BUFFER		0x0002
+/* Flags for software fallback cases */
+/* See correponding strings in tdfx_tris.c */
+#define TDFX_FALLBACK_TEXTURE_1D_3D	0x0001
+#define TDFX_FALLBACK_DRAW_BUFFER	0x0002
 #define TDFX_FALLBACK_SPECULAR		0x0004
 #define TDFX_FALLBACK_STENCIL		0x0008
 #define TDFX_FALLBACK_RENDER_MODE	0x0010
-#define TDFX_FALLBACK_MULTIDRAW		0x0020
-#define TDFX_FALLBACK_LOGICOP		0x0040
-#define TDFX_FALLBACK_WIDE_AA_LINE	0x0080
-#define TDFX_FALLBACK_TEXTURE_ENV	0x0100
-#define TDFX_FALLBACK_TEXTURE_BORDER	0x0200
-#define TDFX_FALLBACK_COLORMASK		0x0400
-#define TDFX_FALLBACK_BLEND		0x0800
+#define TDFX_FALLBACK_LOGICOP		0x0020
+#define TDFX_FALLBACK_TEXTURE_ENV	0x0040
+#define TDFX_FALLBACK_TEXTURE_BORDER	0x0080
+#define TDFX_FALLBACK_COLORMASK		0x0100
+#define TDFX_FALLBACK_BLEND		0x0200
+#define TDFX_FALLBACK_LINE_STIPPLE	0x0400
 
 /* Different Glide vertex layouts
  */
-#define TDFX_LAYOUT_SINGLE	0
-#define TDFX_LAYOUT_MULTI	1
-#define TDFX_LAYOUT_PROJECT	2
-#define TDFX_NUM_LAYOUTS	3
+#define TDFX_LAYOUT_TINY	0
+#define TDFX_LAYOUT_NOTEX	1
+#define TDFX_LAYOUT_SINGLE	2
+#define TDFX_LAYOUT_MULTI	3
+#define TDFX_LAYOUT_PROJECT	4
+#define TDFX_NUM_LAYOUTS	5
 
 #define TDFX_XY_OFFSET		0
 #define TDFX_Z_OFFSET		8
@@ -260,18 +242,15 @@
       (((GLuint) (G) & 0xF8)     << 2)  | \
       (((GLuint) (R) & 0xF8)     >> 3))
 
-typedef void (*tdfxRenderEltsFunc)( struct vertex_buffer * );
-
 /* Used in calls to grColorMaskv()...
  */
 extern const GLboolean false4[4];
 extern const GLboolean true4[4];
 
 
-typedef void (*tdfx_interp_func)( GLfloat t,
-				  GLfloat *result,
-				  const GLfloat *in,
-				  const GLfloat *out );
+typedef struct tdfx_context tdfxContextRec;
+typedef struct tdfx_context *tdfxContextPtr;
+
 
 typedef struct {
    volatile int fifoPtr;
@@ -279,7 +258,9 @@ typedef struct {
    volatile int fifoOwner;
    volatile int ctxOwner;
    volatile int texOwner;
-} TDFXSAREAPriv;
+}
+TDFXSAREAPriv;
+
 
 typedef struct {
    GLuint swapBuffer;
@@ -289,74 +270,121 @@ typedef struct {
    GLuint texSwaps;
 } tdfxStats;
 
+
+
 /*
  *  Memory range from startAddr to endAddr-1
  */
 typedef struct mem_range {
    struct mem_range *next;
    FxU32 startAddr, endAddr;
-} tdfxMemRange;
+}
+tdfxMemRange;
+
 
 typedef struct {
-   GLvoid *data;
-   GLsizei width, height;
-   FxU32 size;
-} tdfxTexRawData;
-
-typedef struct {
-   tdfxTexRawData original;		/* Mesa-formatted texture image */
-   tdfxTexRawData rescaled;		/* Only needed if aspect ratio > 8:1 */
-
-   GLvoid *data;			/* Final version of texture image */
-   FxU32 size;				/* image size in bytes */
-
-   GrTextureFormat_t glideFormat;	/* Glide image format */
-   GLint wScale, hScale;		/* Broken hardware... */
-} tdfxTexImage, *tdfxTexImagePtr;
+    GLsizei		width, height;	/* image size */
+    GLint		wScale, hScale; /* scale factors */
+    GrTextureFormat_t	glideFormat;	/* Glide image format */
+}
+tdfxMipMapLevel;
 
 
 #define TDFX_NUM_TMU		2
 
 
-typedef struct {
+typedef struct tdfxTexInfo_t
+{
    GLboolean isInTM;
    GLboolean reloadImages;  /* if true, resend images to Glide */
    GLuint lastTimeUsed;
    FxU32 whichTMU;
 
    GrTexInfo info;
-   tdfxTexImage image[MAX_TEXTURE_LEVELS];
-   tdfxMemRange *range[TDFX_NUM_TMU];
+   GrAspectRatio_t aspectRatio;
+   tdfxMemRange *tm[TDFX_NUM_TMU];
 
    GLint minLevel, maxLevel;
-   GrMipMapMode_t mmMode;
-   GrAspectRatio_t aspectRatio;
-   FxBool LODblend;
    GrTextureFilterMode_t minFilt;
    GrTextureFilterMode_t magFilt;
    GrTextureClampMode_t sClamp;
    GrTextureClampMode_t tClamp;
+   FxBool LODblend;
+   GrMipMapMode_t mmMode;
 
-   GLfloat sScale, tScale;		/* texcoord scale factor */
+   GLfloat sScale, tScale;  /* texcoord scale factor */
 
    GuTexPalette palette;
-} tdfxTexObj, *tdfxTexObjPtr;
+}
+tdfxTexInfo;
 
-#define TDFX_TEXTURE_DATA(tObj)		((tdfxTexObjPtr)((tObj)->DriverData))
+
+#define TDFX_TEXTURE_DATA(mesaObj) ((tdfxTexInfo *)((mesaObj)->DriverData))
+
+#define TDFX_TEXIMAGE_DATA(mesaImg) ((tdfxMipMapLevel *)((mesaImg)->DriverData))
 
 
-/* This is state which may be shared by several tdfx contexts.
+
+/*
+ * This is state which may be shared by several tdfx contexts.
  * It hangs off of Mesa's gl_shared_state object (ctx->Shared->DriverData).
  */
-typedef struct tdfx_shared_state {
+struct tdfxSharedState {
    GLboolean umaTexMemory;
-   GLuint totalTexMem[TDFX_NUM_TMU];	/* constant */
-   GLuint freeTexMem[TDFX_NUM_TMU];	/* changes as we go */
-   tdfxMemRange *rangePool;
-   tdfxMemRange *freeRanges[TDFX_NUM_TMU];
-} tdfxSharedState, *tdfxSharedStatePtr;
+   GLuint totalTexMem[TDFX_NUM_TMU]; /* constant */
+   GLuint freeTexMem[TDFX_NUM_TMU]; /* changes as we go */
+   tdfxMemRange *tmPool;
+   tdfxMemRange *tmFree[TDFX_NUM_TMU];
+};
 
 
+
+/* ================================================================
+ * The vertex structures.
+ */
+typedef struct {
+   GLubyte	blue;
+   GLubyte	green;
+   GLubyte	red;
+   GLubyte	alpha;
+} tdfx_color_t;
+
+typedef struct {
+   GLfloat x, y, z;			/* Coordinates in screen space */
+   GLfloat rhw;				/* Reciprocal homogeneous w */
+   tdfx_color_t color;		/* Diffuse color */
+   GLuint pad;			
+   GLfloat tu0, tv0;			/* Texture 0 coordinates */
+   GLfloat tu1, tv1;			/* Texture 1 coordinates */
+} tdfx_vertex;
+
+typedef struct {
+   GLfloat x, y, z;			/* Coordinates in screen space */
+   GLfloat rhw;				/* Reciprocal homogeneous w */
+   tdfx_color_t color;		/* Diffuse color */
+   GLuint pad;			
+   GLfloat tu0, tv0;		/* Texture 0 coordinates */
+   GLfloat tu1, tv1;		/* Texture 1 coordinates */
+   GLfloat tq0, tq1;		/* Texture 0/1 q coords */
+} tdfx_ptex_vertex;
+
+typedef struct {
+   GLfloat x, y, z;			/* Coordinates in screen space */
+   tdfx_color_t color;		/* Diffuse color */
+} tdfx_tiny_vertex;
+
+/* The size of this union is not of relevence:
+ */
+union tdfx_vertex_t {
+   tdfx_vertex v;
+   tdfx_tiny_vertex tv;
+   tdfx_ptex_vertex pv;
+   GLfloat f[16];
+   GLuint ui[16];
+   GLubyte ub4[16][4];
+};
+
+typedef union tdfx_vertex_t tdfxVertex, *tdfxVertexPtr;
 
 
 /* ================================================================
@@ -512,11 +540,6 @@ struct tdfx_depth {
    FxBool Mask;				/* Write enable flag */
 };
 
-#ifndef GR_STIPPLE_PATTERN
-#error You MUST upgrade your Glide3 libraries and headers.
-#error Get the latest from http://dri.sourceforge.net/res.phtml
-#endif
-
 struct tdfx_stipple {
    GrStippleMode_t Mode;		/* Stipple enable/disable */
    FxU32 Pattern;			/* 8x4 Stipple Pattern */
@@ -650,10 +673,8 @@ struct tdfx_glide {
    void (*grDisable)( GrEnableMode_t mode );
    void (*grCoordinateSpace)( GrCoordinateSpaceMode_t mode );
    void (*grDepthRange)( FxFloat n, FxFloat f );
-#if defined(__linux__) || defined (__FreeBSD__)
    void (*grStippleMode)( GrStippleMode_t mode );
    void (*grStipplePattern)( GrStipplePattern_t mode );
-#endif /* __linux__ || __FreeBSD__ */
    void (*grViewport)( FxI32 x, FxI32 y, FxI32 width, FxI32 height );
    FxU32 (*grTexCalcMemRequired)(GrLOD_t lodmin, GrLOD_t lodmax,
                                 GrAspectRatio_t aspect, GrTextureFormat_t fmt);
@@ -799,13 +820,17 @@ struct tdfx_glide {
    void (*txErrorSetCallback)( void *fnc );
 };
 
+typedef void (*tdfx_tri_func)( tdfxContextPtr, tdfxVertex *, tdfxVertex *,
+			       tdfxVertex * );
+typedef void (*tdfx_line_func)( tdfxContextPtr, tdfxVertex *, tdfxVertex * );
+typedef void (*tdfx_point_func)( tdfxContextPtr, tdfxVertex * );
 
 struct tdfx_context {
    /* Set once and never changed:
     */
    GLcontext *glCtx;			/* The core Mesa context */
-   GLvisual *glVis;			/* Describes the color buffer */
 
+   GLuint new_gl_state;
    GLuint new_state;
    GLuint dirty;
 
@@ -843,36 +868,50 @@ struct tdfx_context {
 
    struct tdfx_glide	Glide;
 
+
+   /* Temporaries for translating away float colors:
+    */
+   struct gl_client_array UbyteColor;
+
+   /* Fallback rasterization functions 
+    */
+   tdfx_point_func draw_point;
+   tdfx_line_func draw_line;
+   tdfx_tri_func draw_triangle;
+
+
    /* Variable-size Glide vertex formats
     */
-   GLuint vertsize;                /* bytes per vertex */
    GLuint vertexFormat;            /* the current format */
+   GLuint vertex_stride_shift;
    void *layout[TDFX_NUM_LAYOUTS];
-
-   GLuint tmu_source[TDFX_NUM_TMU];
-   GLuint tex_dest[MAX_TEXTURE_UNITS];
-   GLuint numTMUs;
-
+   char *verts;			   /* tdfxVertices, arbitarily packed */
+   
+   GLfloat hw_viewport[16];
+   
    GLuint SetupIndex;
-   GLuint SetupDone;
+   GLuint SetupNewInputs;
    GLuint RenderIndex;
-
-   GLuint IndirectTriangles;
    GLuint Fallback;
+   GLenum render_primitive;	/* what GL thinks */
+   GLenum raster_primitive;	/* what the hardware thinks */
 
    GLfloat sScale0, tScale0;
    GLfloat sScale1, tScale1;
 
-   GLuint using_fast_path, passes, multipass;
    GLuint texBindNumber;
    GLint tmuSrc;
 
    int screen_width;
    int screen_height;
 
+   GLboolean haveTwoTMUs;      /* True if we have 2 tmu's  */
    GLboolean haveHwStencil;
+   GLboolean haveHwStipple;
 
    GLint maxPendingSwapBuffers;
+
+   char rendererString[100];
 
    /* stuff added for DRI */
    __DRIscreenPrivate *driScreen;
@@ -897,39 +936,41 @@ struct tdfx_context {
    XF86DRIClipRectPtr pClipRects;
    GLboolean scissoredClipRects;  /* if true, pClipRects is private storage */
 
-
    GuTexPalette glbPalette;         /* global texture palette */
-
-   tdfx_interp_func interp;
-
-   points_func PointsFunc;
-   line_func LineFunc;
-   triangle_func TriangleFunc;
-   quad_func QuadFunc;
-   render_func *RenderVBRawTab;
-   tdfxRenderEltsFunc RenderElementsRaw;
-
 
    tdfxStats stats;
 
-   /* HACK: Let's get some buffering of vertices happening...
-    */
-   GLuint *buffer;
-   GLuint buffer_total;
-   GLuint buffer_used;
+   GLboolean debugFallbacks;
 };
 
 #define TDFX_CONTEXT(ctx)	((tdfxContextPtr)((ctx)->DriverCtx))
 
 
-extern GLboolean tdfxCreateContext( Display *dpy, GLvisual *mesaVis,
-				    __DRIcontextPrivate *driContextPriv );
-extern void tdfxDestroyContext( tdfxContextPtr fxMesa );
+extern GLboolean
+tdfxCreateContext( Display *dpy,
+                   const __GLcontextModes *mesaVis,
+                   __DRIcontextPrivate *driContextPriv,
+                   void *sharedContextPrivate );
 
-extern GLboolean tdfxInitContext( __DRIdrawablePrivate *driDrawPriv,
-				  tdfxContextPtr fxMesa );
+extern void
+tdfxDestroyContext( __DRIcontextPrivate *driContextPriv );
 
-extern GLboolean tdfxInitGlide(tdfxContextPtr tmesa);
+extern GLboolean
+tdfxUnbindContext( __DRIcontextPrivate *driContextPriv );
+
+extern GLboolean
+tdfxMakeCurrent( __DRIcontextPrivate *driContextPriv,
+                 __DRIdrawablePrivate *driDrawPriv,
+                 __DRIdrawablePrivate *driReadPriv );
+
+extern GLboolean
+tdfxInitGlide( tdfxContextPtr tmesa );
+
+extern void
+FX_grColorMaskv(GLcontext *ctx, const GLboolean rgba[4]);
+
+extern void
+FX_grColorMaskv_NoLock(GLcontext *ctx, const GLboolean rgba[4]);
 
 
 /* Color packing utilities
@@ -981,7 +1022,6 @@ extern int TDFX_DEBUG;
 #define DEBUG_VERBOSE_DRI	0x10
 #define DEBUG_VERBOSE_IOCTL	0x20
 #define DEBUG_VERBOSE_2D	0x40
-#define DEBUG_VERBOSE_TEXTURE	0x80
 
 #endif /* GLX_DIRECT_RENDERING */
 

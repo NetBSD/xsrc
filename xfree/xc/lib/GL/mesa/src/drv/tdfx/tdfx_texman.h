@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_texman.h,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_texman.h,v 1.2 2002/02/22 21:45:04 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -38,39 +38,47 @@
 #ifndef __TDFX_TEXMAN_H__
 #define __TDFX_TEXMAN_H__
 
+
 #include "tdfx_lock.h"
 
+
 extern void tdfxTMInit( tdfxContextPtr fxMesa );
+
 extern void tdfxTMClose( tdfxContextPtr fxMesa );
 
-extern void tdfxTMDownloadTextureLocked( tdfxContextPtr fxMesa,
-					 struct gl_texture_object *tObj );
-extern void tdfxTMReloadMipMapLevelLocked( GLcontext *ctx,
-					   struct gl_texture_object *tObj,
-					   GLint level );
-extern void tdfxTMMoveInTMLocked( tdfxContextPtr fxMesa,
-				  struct gl_texture_object *tObj,
-				  FxU32 targetTMU );
-extern void tdfxTMMoveOutTMLocked( tdfxContextPtr fxMesa,
-				   struct gl_texture_object *tObj );
-extern void tdfxTMRestoreTexturesLocked( tdfxContextPtr fxMesa );
+extern void tdfxTMDownloadTexture(tdfxContextPtr fxMesa,
+                                  struct gl_texture_object *tObj);
 
-extern void tdfxTMFreeTextureLocked( tdfxContextPtr fxMesa,
-				     struct gl_texture_object *tObj );
+extern void tdfxTMReloadMipMapLevel( GLcontext *ctx,
+				     struct gl_texture_object *tObj,
+				     GLint level );
+
+extern void tdfxTMMoveInTM_NoLock( tdfxContextPtr fxMesa,
+                                   struct gl_texture_object *tObj,
+                                   FxU32 targetTMU );
+
+extern void tdfxTMMoveOutTM_NoLock( tdfxContextPtr fxMesa,
+                                    struct gl_texture_object *tObj );
+
+extern void tdfxTMFreeTexture( tdfxContextPtr fxMesa,
+			       struct gl_texture_object *tObj );
+
+extern void tdfxTMRestoreTextures_NoLock( tdfxContextPtr fxMesa );
 
 
-#define tdfxTMMoveInTM( fxMesa, tObj, targetTMU )			\
-do {									\
-   LOCK_HARDWARE( fxMesa );						\
-   tdfxTMMoveInTMLocked( fxMesa, tObj, targetTMU );			\
-   UNLOCK_HARDWARE( fxMesa );						\
-} while (0)
+#define tdfxTMMoveInTM( fxMesa, tObj, targetTMU )		\
+   do {								\
+      LOCK_HARDWARE( fxMesa );					\
+      tdfxTMMoveInTM_NoLock( fxMesa, tObj, targetTMU );		\
+      UNLOCK_HARDWARE( fxMesa );				\
+   } while (0)
 
-#define tdfxTMMoveOutTM( fxMesa, tObj )					\
-do {									\
-   LOCK_HARDWARE( fxMesa );						\
-   tdfxTMMoveOutTMLocked( fxMesa, tObj );				\
-   UNLOCK_HARDWARE( fxMesa );						\
-} while (0)
+#define tdfxTMMoveOutTM( fxMesa, tObj )				\
+   do {								\
+      LOCK_HARDWARE( fxMesa );					\
+      tdfxTMMoveOutTM_NoLock( fxMesa, tObj );			\
+      UNLOCK_HARDWARE( fxMesa );				\
+   } while (0)
+
 
 #endif

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/helper_mem.c,v 1.21 2001/05/22 16:24:37 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/helper_mem.c,v 1.26 2002/11/25 14:05:01 eich Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -10,7 +10,9 @@
 #include "compiler.h"
 #include "xf86Pci.h"
 #define _INT10_PRIVATE
+#if 0
 #include "int10Defines.h"
+#endif
 #include "xf86int10.h"
 
 #define REG pInt
@@ -197,8 +199,8 @@ xf86HandleInt10Options(ScrnInfoPtr pScrn, int entityIndex)
 
 	/* Check if xf86CollectOptions() has already been called */
 	if (((pEnt->index < 0) ||
-	    !xf86Screens[pEnt->index] ||
-	    !(configOptions = xf86Screens[pEnt->index]->options)) &&
+	    !pScrn ||
+	    !(configOptions = pScrn->options)) &&
 	    pEnt->device)
 	    configOptions = pEnt->device->options;
 
@@ -264,6 +266,14 @@ initPrimary(void* options)
     return initPrimary;
 }
 
+/*
+ * xf86int10ParseBiosLocation(): allows to set the location of the
+ * BIOS. One may select a BIOS of another card for posting or the
+ * legacy V_BIOS range located at 0xc0000 or an alternative address
+ * (BUS_ISA).
+ * This is only useful under very special circumstances and should
+ * be used with extreme care.
+ */
 void
 xf86int10ParseBiosLocation(void* options, 
 			   xf86int10BiosLocationPtr bios)
@@ -281,9 +291,9 @@ xf86int10ParseBiosLocation(void* options,
     
     s = xstrdup(str);
     p = strtok(s,":");
-    if (xf86NameCmp(p,"pci")) bios->bus = BUS_PCI;
+    if (xf86NameCmp(p,"pci") == 0) bios->bus = BUS_PCI;
     else
-	if (xf86NameCmp(p,"primary")) bios->bus = BUS_ISA;
+	if (xf86NameCmp(p,"primary") == 0) bios->bus = BUS_ISA;
 
     xfree(s);
     

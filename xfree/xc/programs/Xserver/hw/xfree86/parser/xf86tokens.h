@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86tokens.h,v 1.15 2000/10/24 22:45:10 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/parser/xf86tokens.h,v 1.19 2003/01/04 20:20:23 paulo Exp $ */
 /* 
  * 
  * Copyright (c) 1997  Metro Link Incorporated
@@ -69,6 +69,7 @@ typedef enum {
     FONTPATH,
     RGBPATH,
     MODULEPATH,
+    INPUTDEVICES,
     LOGFILEPATH,
 
     /* Server Flag tokens.  These are deprecated in favour of generic Options */
@@ -235,6 +236,7 @@ typedef enum {
     ABOVE,
     BELOW,
     RELATIVE,
+    ABSOLUTE,
 
     /* Vendor Tokens */
     VENDORNAME,

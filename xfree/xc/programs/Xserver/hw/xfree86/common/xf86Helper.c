@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Helper.c,v 1.120 2001/12/04 17:28:58 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Helper.c,v 1.128 2003/02/26 23:45:24 dawes Exp $ */
 
 /*
  * Copyright (c) 1997-1998 by The XFree86 Project, Inc.
@@ -29,6 +29,7 @@
 #include "mivalidate.h"
 #include "xf86RAC.h"
 #include "xf86Bus.h"
+#include "xf86Version.h"
 
 /* For xf86GetClocks */
 #if defined(CSRG_BASED) || defined(__GNU__)
@@ -1003,7 +1004,7 @@ xf86SetBlackWhitePixels(ScreenPtr pScreen)
  */
 
 static void
-xf86SetRootClip (ScreenPtr pScreen, BOOL enable)
+xf86SetRootClip (ScreenPtr pScreen, Bool enable)
 {
     WindowPtr	pWin = WindowTable[pScreen->myNum];
     WindowPtr	pChild;
@@ -1052,8 +1053,13 @@ xf86SetRootClip (ScreenPtr pScreen, BOOL enable)
 	box.y1 = 0;
 	box.x2 = pScreen->width;
 	box.y2 = pScreen->height;
-	REGION_RESET(pScreen, &pWin->borderClip, &box);
-	REGION_BREAK (pWin->drawable.pScreen, &pWin->clipList);
+	REGION_INIT (pScreen, &pWin->winSize, &box, 1);
+	REGION_INIT (pScreen, &pWin->borderSize, &box, 1);
+	if (WasViewable)
+	    REGION_RESET(pScreen, &pWin->borderClip, &box);
+	pWin->drawable.width = pScreen->width;
+	pWin->drawable.height = pScreen->height;
+        REGION_BREAK (pWin->drawable.pScreen, &pWin->clipList);
     }
     else
     {
@@ -1213,8 +1219,11 @@ VWrite(int verb, const char *f, va_list args)
     if ((verb < 0 || xf86LogVerbose >= verb) && len > 0) {
 	if (logfile) {
 	    fwrite(buffer, len, 1, logfile);
-	    if (xf86Info.syncLog)
+	    if (xf86Info.log) {
 		fflush(logfile);
+		if (xf86Info.log == LogSync)
+		    fsync(fileno(logfile));
+	    }
 	} else {
 	    /*
 	     * Note, this code is used before OsInit() has been called, so
@@ -1381,11 +1390,11 @@ OsVendorVErrorF(const char *f, va_list args)
 void
 xf86LogInit()
 {
-#ifndef __EMX__
     char *lf;
 
 #define LOGSUFFIX ".log"
-
+#define LOGOLDSUFFIX ".old"
+    
     /* Get the log file name */
     if (xf86LogFileFrom == X_DEFAULT) {
 	/* Append the display number and ".log" */
@@ -1396,6 +1405,20 @@ xf86LogInit()
 	sprintf(lf, "%s%s" LOGSUFFIX, xf86LogFile, display);
 	xf86LogFile = lf;
     }
+    {
+	struct stat buf;
+	if (!stat(xf86LogFile,&buf) && S_ISREG(buf.st_mode)) {
+	    char *oldlog = (char *)malloc(strlen(xf86LogFile)
+					  + strlen(LOGOLDSUFFIX));
+	    if (!oldlog)
+		FatalError("Cannot allocate space for the log file name\n");
+	    sprintf(oldlog, "%s" LOGOLDSUFFIX, xf86LogFile);
+	    if (rename(xf86LogFile,oldlog) == -1)
+		FatalError("Cannot move old logfile \"%s\"\n",oldlog);
+	    free(oldlog);
+	}
+    }
+    
     if ((logfile = fopen(xf86LogFile, "w")) == NULL)
 	FatalError("Cannot open log file \"%s\"\n", xf86LogFile);
     xf86LogFileWasOpened = TRUE;
@@ -1408,17 +1431,17 @@ xf86LogInit()
     /* Flush saved log information */
     if (saveBuffer && size > 0) {
 	fwrite(saveBuffer, pos, 1, logfile);
-	if (xf86Info.syncLog)
+	if (xf86Info.log) {
 	    fflush(logfile);
+	    if (xf86Info.log == LogFlush)
+		fsync(fileno(logfile));
+	}
 	free(saveBuffer);	/* Note, must be free(), not xfree() */
 	saveBuffer = 0;
 	size = 0;
     }
 
 #undef LOGSUFFIX
-#else /* __EMX__ */
-    xf86LogFile = NULL;
-#endif /* __EMX__ */
 }
 
 void
@@ -1718,7 +1741,10 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 	GDevPtr pGDev;
 	int actualcards = 0;
 	for (i = 0; i < allocatedInstances; i++) {
+	    pPci = instances[i].pci;
 	    if (instances[i].foundHW) {
+		if (!xf86CheckPciSlot(pPci->bus, pPci->device, pPci->func))
+		    continue;
 		actualcards++;
 	    	pGDev = xf86AddDeviceToConfigure(drvp->driverName,
 						 instances[i].pci, -1);
@@ -1808,9 +1834,11 @@ xf86MatchPciInstances(const char *driverName, int vendorID,
 	}
 	if (devBus) dev = devBus;  /* busID preferred */ 
 	if (!dev) {
-	    xf86MsgVerb(X_WARNING, 0, "%s: No matching Device section "
-			"for instance (BusID PCI:%i:%i:%i) found\n",
-			driverName, pPci->bus, pPci->device, pPci->func);
+	    if (xf86CheckPciSlot(pPci->bus, pPci->device, pPci->func)) {
+		xf86MsgVerb(X_WARNING, 0, "%s: No matching Device section "
+			    "for instance (BusID PCI:%i:%i:%i) found\n",
+			    driverName, pPci->bus, pPci->device, pPci->func);
+	    }
 	} else {
 	    numClaimedInstances++;
 	    instances[i].claimed = TRUE;
@@ -2030,7 +2058,7 @@ xf86MatchIsaInstances(const char *driverName, SymTabPtr chipsets,
 	    }
 	}
 	
-/* Check if the chip type is listed in the chipset table - for sanity*/
+	/* Check if the chip type is listed in the chipset table - for sanity*/
 
 	if (foundChip >= 0){
 	    for (Chips = ISAchipsets; Chips->numChipset >= 0; Chips++) {
@@ -2067,7 +2095,7 @@ xf86MatchIsaInstances(const char *driverName, SymTabPtr chipsets,
 void
 xf86GetClocks(ScrnInfoPtr pScrn, int num, Bool (*ClockFunc)(ScrnInfoPtr, int),
 	      void (*ProtectRegs)(ScrnInfoPtr, Bool),
-	      void (*BlankScreen)(ScrnInfoPtr, Bool), int vertsyncreg,
+	      void (*BlankScreen)(ScrnInfoPtr, Bool), IOADDRESS vertsyncreg,
 	      int maskval, int knownclkindex, int knownclkvalue)
 {
     register int status = vertsyncreg;
@@ -2331,6 +2359,29 @@ xf86IsPc98()
     return xf86Info.pc98;
 #else
     return FALSE;
+#endif
+}
+
+void
+xf86DisableRandR()
+{
+    xf86Info.disableRandR = TRUE;
+    xf86Info.randRFrom = X_PROBED;
+}
+
+CARD32
+xf86GetVersion()
+{
+    return XF86_VERSION_CURRENT;
+}
+
+CARD32
+xf86GetModuleVersion(pointer module)
+{
+#ifdef XFree86LOADER
+    return (CARD32)LoaderGetModuleVersion(module);
+#else
+    return 0;
 #endif
 }
 

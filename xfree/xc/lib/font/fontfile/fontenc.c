@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-/* $XFree86: xc/lib/font/fontfile/fontenc.c,v 1.14 2001/11/02 03:06:40 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontenc.c,v 1.15 2003/02/20 03:25:19 dawes Exp $ */
 
 /* Backend-independent encoding code */
 
@@ -745,11 +745,13 @@ FontEncLoad(const char *encoding_name, const char *filename)
         if(strcasecmp(encoding->name, encoding_name) == 0) {
             found = 1;
         } else {
-            for(alias=encoding->aliases; *alias; alias++)
-                if(!strcasecmp(*alias, encoding_name)) {
-                    found = 1;
-                    break;
-                }
+            if(encoding->aliases) {
+                for(alias=encoding->aliases; *alias; alias++)
+                    if(!strcasecmp(*alias, encoding_name)) {
+                        found = 1;
+                        break;
+                    }
+            }
         }
         
         if(!found) {
@@ -763,17 +765,21 @@ FontEncLoad(const char *encoding_name, const char *filename)
             if(new_name == NULL)
                 return NULL;
             strcpy(new_name, encoding_name);
-            for(alias = encoding->aliases; *alias; alias++)
-                numaliases++;
+            if(encoding->aliases) {
+                for(alias = encoding->aliases; *alias; alias++)
+                    numaliases++;
+            }
             new_aliases = (char**)xalloc((numaliases+2)*sizeof(char*));
             if(new_aliases == NULL) {
                 xfree(new_name);
                 return NULL;
             }
-            memcpy(new_aliases, encoding->aliases, numaliases*sizeof(char*));
+            if(encoding->aliases) {
+                memcpy(new_aliases, encoding->aliases, numaliases*sizeof(char*));
+                xfree(encoding->aliases);
+            }
             new_aliases[numaliases] = new_name;
             new_aliases[numaliases+1] = NULL;
-            xfree(encoding->aliases);
             encoding->aliases = new_aliases;
         }
         

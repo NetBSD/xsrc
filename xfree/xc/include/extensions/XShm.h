@@ -1,4 +1,4 @@
-/* $XFree86: xc/include/extensions/XShm.h,v 1.8 2001/12/14 19:53:28 dawes Exp $ */
+/* $XFree86: xc/include/extensions/XShm.h,v 1.10 2002/11/08 00:46:27 alanh Exp $ */
 /************************************************************
 
 Copyright 1989, 1998  The Open Group
@@ -73,7 +73,13 @@ _XFUNCPROTOBEGIN
 
 Bool XShmQueryExtension(
 #if NeedFunctionPrototypes
-    Display*            /* dpy */
+    Display*		/* dpy */
+#endif
+);
+
+int XShmGetEventBase(
+#if NeedFunctionPrototypes
+    Display*		/* dpy */
 #endif
 );
 
@@ -169,6 +175,8 @@ _XFUNCPROTOEND
 #else /* _XSHM_SERVER_ */
 
 #include "screenint.h"
+#include "pixmap.h"
+#include "gc.h"
 
 extern void ShmRegisterFbFuncs(
 #if NeedFunctionPrototypes

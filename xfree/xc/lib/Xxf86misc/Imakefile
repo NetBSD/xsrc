@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/Xxf86misc/Imakefile,v 3.1 1998/12/20 11:57:13 dawes Exp $
+XCOMM $XFree86: xc/lib/Xxf86misc/Imakefile,v 3.4 2003/01/04 02:48:25 dawes Exp $
 #define DoNormalLib NormalLibXxf86misc
 #define DoSharedLib SharedLibXxf86misc
 #define DoExtraLib SharedLibXxf86misc
@@ -22,10 +22,11 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
 
       DEFINES = $(ALLOC_DEFINES)
-     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC)
          SRCS = $(XF86MISCSRCS)
          OBJS = $(XF86MISCOBJS)
      LINTLIBS = $(LINTXLIB)
+
+#define IncludeSharedObjectInNormalLib
 
 #include <Library.tmpl>
 

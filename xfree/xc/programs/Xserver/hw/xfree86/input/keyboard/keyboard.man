@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/keyboard/keyboard.man,v 1.2 2001/01/27 18:20:57 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/input/keyboard/keyboard.man,v 1.3 2002/10/11 01:40:33 dawes Exp $ 
 .\" shorthand for double quote that works everywhere.
 .ds q \N'34'
 .TH KEYBOARD __drivermansuffix__ __vendorversion__
@@ -33,7 +33,7 @@ The following driver
 are supported:
 .TP 7
 .BI "Option \*qProtocol\*q \*q" string \*q
-Specify the mouse protocol.  Valid protocol types include:
+Specify the keyboard protocol.  Valid protocol types include:
 .PP
 .RS 12
 Standard, Xqueue.
@@ -61,6 +61,12 @@ in the range 1 to 3.  Default: empty list.
 .BI "Option \*qXkbDisable\*q \*q" boolean \*q
 disable/enable the XKEYBOARD extension.  The \-kb command line
 option overrides this config file option.  Default: XKB is enabled.
+.PP
+.RS 7
+NOTE: This option should be specified in the
+.B ServerFlags
+section rather than here.  It's use here is deprecated.
+.RE
 .TP 7
 .BI "Option \*qXkbRules\*q \*q" rules \*q
 specifies which XKB rules file to use for interpreting the
@@ -94,4 +100,4 @@ Some other XKB-related options are available, but they are incompatible
 with the ones listed above and are not recommended, so they are not
 documented here.
 .SH "SEE ALSO"
-XFree86(1), XF86Config(__filemansuffix__), xf86config(1), Xserver(1), X(__miscmansuffix__).
+kbd(__drivermansuffix__), XFree86(1), XF86Config(__filemansuffix__), xf86config(1), Xserver(1), X(__miscmansuffix__).

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_regs.h,v 1.4 2001/02/07 13:26:17 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_regs.h,v 1.5 2002/02/22 21:33:02 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -139,6 +139,16 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define AB_AlphaConversionScale       0x00000000
 #define AB_AlphaConversionShift       0x00020000
 
+/* AntialiasMode */
+#define AntialiasModeDisable          0x00000000
+#define AntialiasModeEnable           0x00000001
+
+/* AreaStippleMode */
+#define AreaStippleModeDisable        0x00000000
+#define AreaStippleModeEnable         0x00000001
+#define ASM_X32                       0x00000008
+#define ASM_Y32                       0x00000040
+
 /* DepthMode */
 #define DepthModeDisable              0x00000000
 #define DepthModeEnable               0x00000001
@@ -173,6 +183,42 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define LBW_UploadNone                0x00000000
 #define LBW_UploadDepth               0x00000002
 #define LBW_UploadStencil             0x00000004
+
+/* LBRead/Write Format */
+#define LBRF_DepthWidth15   0x03  /* only permedia */
+#define LBRF_DepthWidth16   0x00
+#define LBRF_DepthWidth24   0x01
+#define LBRF_DepthWidth32   0x02
+#define LBRF_StencilWidth0  (0 << 2)
+#define LBRF_StencilWidth4  (1 << 2)
+#define LBRF_StencilWidth8  (2 << 2)
+#define LBRF_StencilPos16   (0 << 4)
+#define LBRF_StencilPos20   (1 << 4)
+#define LBRF_StencilPos24   (2 << 4)
+#define LBRF_StencilPos28   (3 << 4)
+#define LBRF_StencilPos32   (4 << 4)
+#define LBRF_FrameCount0    (0 << 7)
+#define LBRF_FrameCount4    (1 << 7)
+#define LBRF_FrameCount8    (2 << 7)
+#define LBRF_FrameCountPos16  (0 << 9)
+#define LBRF_FrameCountPos20  (1 << 9)
+#define LBRF_FrameCountPos24  (2 << 9)
+#define LBRF_FrameCountPos28  (3 << 9)
+#define LBRF_FrameCountPos32  (4 << 9)
+#define LBRF_FrameCountPos36  (5 << 9)
+#define LBRF_FrameCountPos40  (6 << 9)
+#define LBRF_GIDWidth0 (0 << 12)
+#define LBRF_GIDWidth4 (1 << 12)
+#define LBRF_GIDPos16  (0 << 13)
+#define LBRF_GIDPos20  (1 << 13)
+#define LBRF_GIDPos24  (2 << 13)
+#define LBRF_GIDPos28  (3 << 13)
+#define LBRF_GIDPos32  (4 << 13)
+#define LBRF_GIDPos36  (5 << 13)
+#define LBRF_GIDPos40  (6 << 13)
+#define LBRF_GIDPos44  (7 << 13)
+#define LBRF_GIDPos48  (8 << 13)
+#define LBRF_Compact32  (1 << 17)
 
 /* StencilMode */
 #define StencilDisable                0x00000000
@@ -382,7 +428,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define TF_LUTOffsetMask              0x0003fc00
 #define TF_OneCompFmt_Lum             0x00000000
 #define TF_OneCompFmt_Alpha           0x00040000
-#define TF_OneCompFmt_Intesity        0x00080000
+#define TF_OneCompFmt_Intensity        0x00080000
 #define TF_OneCompFmt_Mask            0x000c0000
 /**************** MX FLAGS ****************/
 

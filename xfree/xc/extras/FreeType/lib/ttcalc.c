@@ -14,6 +14,7 @@
  *  understand and accept it fully.
  *
  ******************************************************************/
+/* $XFree86: xc/extras/FreeType/lib/ttcalc.c,v 1.6 2002/07/01 02:25:52 tsi Exp $ */
 
 #include "ttcalc.h"
 #include "ttdebug.h"
@@ -84,7 +85,7 @@
 
     while ( z )
     {
-      z = (unsigned INT64)z >> 1;
+      z = (CARD64)z >> 1;
       j++;
     }
     return j - 1;

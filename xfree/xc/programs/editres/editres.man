@@ -23,7 +23,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/editres/editres.man,v 1.8 2001/12/14 20:00:42 dawes Exp $
+.\" $XFree86: xc/programs/editres/editres.man,v 1.9 2002/10/12 16:06:44 herrb Exp $
 .\"
 .TH EDITRES 1 __xorgversion__
 .SH NAME
@@ -424,7 +424,9 @@ to get the default host and display number.
 to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH FILES
-<XRoot>/lib/X11/app-defaults/Editres - specifies required resources
+.TP
+.I __apploaddir__/Editres
+specifies required resources
 .SH SEE ALSO
 X(__miscmansuffix__), xrdb(1), Athena Widget Set
 .SH RESTRICTIONS

@@ -1,4 +1,3 @@
- 
 /*
  * Copyright 1992-2000 by Alan Hourihane, Wigan, England.
  *
@@ -22,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_dac.c,v 1.63.2.1 2002/03/29 18:34:24 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_dac.c,v 1.70 2003/01/05 18:09:00 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -96,7 +95,8 @@ static newModes newModeRegs [] = {
   { 640, 480, 0x13, 0x61 },
   { 800, 600, 0x13, 0x61 },
   { 1024, 768, 0x3b, 0x63 },
-  { 1280, 1024, 0x7b, 0x64 }
+  { 1280, 1024, 0x7b, 0x64 },
+  { 1400, 1050, 0x11, 0x7b } 
 };
 
 int
@@ -175,6 +175,57 @@ TridentFindNewMode(int xres, int yres, CARD8 *gr5a, CARD8 *gr5c)
     return;
 }
 
+static void
+tridentSetBrightnessAndGamma(TRIDENTRegPtr tridentReg,
+			     Bool on, double exp,int brightness)
+{
+    int pivots[] = {0,3,15,63,255};
+
+    double slope;
+    double y_0;
+    double x, x_prev = 0, y, y_prev = 0;
+    int i;
+    CARD8 i_slopes[4];
+    CARD8 intercepts[4];
+
+    if (!on) {
+	tridentReg->tridentRegs3C4[0xB4] &= ~0x80;
+	return;
+    }
+
+    for (i = 0; i < 4; i++) {
+	x = pivots[i + 1] / 255.0;
+	y = pow(x,exp);
+	slope = (y - y_prev) / (x - x_prev);
+	y_0 = y - x * slope;
+	{
+#define RND(x) ((((x) - (int) (x)) < 0.5) ? (int)(x) : (int)(x) + 1)
+	    int val = slope;
+	    if (val > 7) 
+		i_slopes[i] = (3 << 4) | (RND(slope) & 0xf);
+	    else if (val > 3) 
+		i_slopes[i] = (2 << 4) | (RND(slope * 2) & 0xf);
+	    else if (val > 1) 
+		i_slopes[i] = (1 << 4) | (RND(slope * 4) & 0xf);
+	    else 
+		i_slopes[i] = (RND(slope * 8) & 0xf);
+#undef RND
+	}
+	intercepts[i] = (char)(y_0 * 256 / 4);
+	x_prev = x;
+	y_prev = y;
+    }
+    
+    tridentReg->tridentRegs3C4[0xB4] = 0x80 | i_slopes[0];
+    tridentReg->tridentRegs3C4[0xB5] = i_slopes[1];
+    tridentReg->tridentRegs3C4[0xB6] = i_slopes[2];
+    tridentReg->tridentRegs3C4[0xB7] = i_slopes[3];
+    tridentReg->tridentRegs3C4[0xB8] = (intercepts[0] + brightness);
+    tridentReg->tridentRegs3C4[0xB9] = (intercepts[1] + brightness);
+    tridentReg->tridentRegs3C4[0xBA] = (intercepts[2] + brightness);
+    tridentReg->tridentRegs3C4[0xBB] = (intercepts[3] + brightness);
+}
+
 Bool
 TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 {
@@ -184,7 +235,7 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     int vgaIOBase;
     int offset = 0;
     int clock = pTrident->currentClock;
-    CARD8 protect;
+    CARD8 protect = 0;
     Bool fullSize = FALSE;
     Bool isShadow = FALSE;
 
@@ -192,11 +243,13 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     vgaRegPtr regp = &hwp->ModeReg;
     vgaRegPtr vgaReg = &hwp->ModeReg;
     vgaIOBase = VGAHWPTR(pScrn)->IOBase;
-    
+
     /* Unprotect */
-    OUTB(0x3C4, 0x11);
-    protect = INB(0x3C5);
-    OUTB(0x3C5, 0x92);
+    if (pTrident->Chipset > PROVIDIA9685) {
+    	OUTB(0x3C4, Protection);
+    	protect = INB(0x3C5);
+    	OUTB(0x3C5, 0x92);
+    }
 
     OUTB(0x3C4, 0x0B); INB(0x3C5); /* Ensure we are in New Mode */
 
@@ -229,13 +282,31 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	ShadowModeActive = ((INB(0x3CF) & 0x81) == 0x81);
 #endif
 	OUTB(0x3CE, FPConfig);
-	LCDActive = (INB(0x3CF) & 0x10);
-	
+	pReg->tridentRegs3CE[FPConfig] = INB(0x3CF);
+	if (pTrident->dspOverride) {
+	    if (pTrident->dspOverride & LCD_ACTIVE) {
+		pReg->tridentRegs3CE[FPConfig] |= 0x10;
+		    LCDActive = TRUE;
+	    } else {
+		pReg->tridentRegs3CE[FPConfig] &= ~0x10;
+		    LCDActive = FALSE;
+	    }
+	    if (pTrident->dspOverride & CRT_ACTIVE)
+		pReg->tridentRegs3CE[FPConfig] |= 0x20;
+	    else
+		pReg->tridentRegs3CE[FPConfig] &= ~0x20;
+	} else {
+	    LCDActive = (pReg->tridentRegs3CE[FPConfig] & 0x10);
+	}
+
 	OUTB(0x3CE, CyberEnhance); 
 #if 0
 	pReg->tridentRegs3CE[CyberEnhance] = INB(0x3CF);
 #else
 	pReg->tridentRegs3CE[CyberEnhance] = INB(0x3CF) & 0x8F;
+ 	if (mode->CrtcVDisplay > 1024)
+	    pReg->tridentRegs3CE[CyberEnhance] |= 0x50;
+	else
 	if (mode->CrtcVDisplay > 768)
 	    pReg->tridentRegs3CE[CyberEnhance] |= 0x30;
 	else
@@ -339,8 +410,11 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    pReg->tridentRegs3CE[CyberControl] &= 0x7E;
 	    xf86DrvMsgVerb(pScrn->scrnIndex,X_INFO,1,"Shadow off\n");
 	}
-
-
+	if (pTrident->FPDelay < 6) {
+	    pReg->tridentRegs3CE[CyberControl] &= 0xC7;
+	    pReg->tridentRegs3CE[CyberControl] |= (pTrident->FPDelay + 2) << 3;
+	}
+	
 	if (pTrident->CyberShadow) {
 	    pReg->tridentRegs3CE[CyberControl] &= 0x7E;
 	    isShadow = FALSE;
@@ -396,7 +470,7 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	pReg->tridentRegs3x4[PreEndFetch] = INB(vgaIOBase + 5);
 #endif
 	/* set mode */
-	if (pTrident->Chipset < CYBERBLADEXPm8) {
+	if (pTrident->Chipset < BLADEXP) {
 	  pReg->tridentRegs3CE[BiosMode] = TridentFindMode(
 					   pScrn->currentMode->HDisplay,
 					   pScrn->currentMode->VDisplay,
@@ -416,7 +490,10 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	};
 	
 	/* no stretch */
-	pReg->tridentRegs3CE[BiosReg] = 0;
+	if (pTrident->Chipset != CYBERBLADEXPAI1)
+	    pReg->tridentRegs3CE[BiosReg] = 0;
+	else
+	    pReg->tridentRegs3CE[BiosReg] = 8;
 
 	if (pTrident->CyberStretch) {
 	    pReg->tridentRegs3CE[VertStretch] |= 0x01;
@@ -428,8 +505,7 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     /* Enable Chipset specific options */
     switch (pTrident->Chipset) {
 	case CYBERBLADEXPAI1:
-	case CYBERBLADEXPm8:
-	case CYBERBLADEXPm16:
+	case BLADEXP:
 	case CYBERBLADEI7:
 	case CYBERBLADEI7D:
 	case CYBERBLADEI1:
@@ -477,7 +553,6 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    }	
     }
 
-
     /* Defaults for all trident chipsets follows */
     switch (pScrn->bitsPerPixel) {
 	case 1:
@@ -516,7 +591,8 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	    break;
 	case 32:
 	    pReg->tridentRegs3CE[MiscExtFunc] |= 0x02;
-	    if (pTrident->Chipset != CYBERBLADEE4) {
+	    if (pTrident->Chipset != CYBERBLADEE4
+		&& pTrident->Chipset != CYBERBLADEXPAI1) {
 	        /* Clock Division by 2*/
 	        pReg->tridentRegs3CE[MiscExtFunc] |= 0x08; 
 		clock *= 2;	/* Double the clock */
@@ -524,11 +600,12 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     	    offset = pScrn->displayWidth >> 1;
     	    pReg->tridentRegs3x4[PixelBusReg] = 0x09;
 	    pReg->tridentRegsDAC[0x00] = 0xD0;
-	    if (pTrident->Chipset == CYBERBLADEE4) {
+	    if (pTrident->Chipset == CYBERBLADEE4
+		|| pTrident->Chipset == CYBERBLADEXPAI1) {
     		OUTB(vgaIOBase+ 4, New32);
 		pReg->tridentRegs3x4[New32] = INB(vgaIOBase + 5) | 0x80;
 		/* With new mode 32bpp we set the packed flag */
-    	    	pReg->tridentRegs3x4[PixelBusReg] |= 0x20;
+      	    	pReg->tridentRegs3x4[PixelBusReg] |= 0x20; 
 	    }
 	    break;
     }
@@ -571,8 +648,7 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     OUTB(vgaIOBase+ 4, Performance);
     pReg->tridentRegs3x4[Performance] = INB(vgaIOBase + 5);
-
-    if (pTrident->Chipset < CYBERBLADEXPm8)
+    if (pTrident->Chipset < BLADEXP)
 	pReg->tridentRegs3x4[Performance] |= 0x10;
 
     OUTB(vgaIOBase+ 4, DRAMControl);
@@ -580,6 +656,11 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 
     if (pTrident->IsCyber && !pTrident->MMIOonly)
 	pReg->tridentRegs3x4[DRAMControl] |= 0x20;
+
+    if (pTrident->NewClockCode && pTrident->Chipset <= CYBER9397DVD) {
+	    OUTB(vgaIOBase + 4, ClockControl);
+	    pReg->tridentRegs3x4[ClockControl] = INB(vgaIOBase + 5) | 0x01;
+    }
 
     OUTB(vgaIOBase+ 4, AddColReg);
     pReg->tridentRegs3x4[AddColReg] = INB(vgaIOBase + 5) & 0xEF;
@@ -620,15 +701,32 @@ TridentInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	}
     }
 
+    if (pTrident->Chipset >= CYBER9388) {
+	if (pTrident->GammaBrightnessOn)
+	    xf86DrvMsgVerb(pScrn->scrnIndex,X_INFO,1,
+			   "Setting Gamma: %f Brightness: %i\n",
+			   pTrident->gamma, pTrident->brightness);
+	tridentSetBrightnessAndGamma(pReg,
+				     pTrident->GammaBrightnessOn,
+				     pTrident->gamma, pTrident->brightness);
+    }
+    
     /* Video */
     OUTB(0x3C4,0x20);
     pReg->tridentRegs3C4[SSetup] = INB(0x3C5) | 0x4;
     pReg->tridentRegs3C4[SKey] = 0x00;
     pReg->tridentRegs3C4[SPKey] = 0xC0;
-
+    OUTB(0x3C4,0x12);
+    pReg->tridentRegs3C4[Threshold] = INB(0x3C5);
+    if (pScrn->bitsPerPixel > 16)
+	pReg->tridentRegs3C4[Threshold] =
+	    (pReg->tridentRegs3C4[Threshold] & 0xf0) | 0x2;
+    
      /* restore */
-    OUTB(0x3C4, 0x11);
-    OUTB(0x3C5, protect);
+    if (pTrident->Chipset > PROVIDIA9685) {
+    	OUTB(0x3C4, Protection);
+    	OUTB(0x3C5, protect);
+    }
    
     return(TRUE);
 }
@@ -682,11 +780,24 @@ TridentRestore(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg)
     OUTW_3CE(MiscIntContReg);
     OUTW_3CE(MiscExtFunc);
     OUTW_3x4(Offset);
-    OUTW_3C4(SSetup);
-    OUTW_3C4(SKey);
-    OUTW_3C4(SPKey);
-    OUTW_3x4(PreEndControl);
-    OUTW_3x4(PreEndFetch);
+    if (pTrident->NewClockCode && pTrident->Chipset <= CYBER9397DVD)
+	OUTW_3x4(ClockControl);
+    if (pTrident->Chipset >= CYBER9388) {
+	OUTW_3C4(Threshold);
+	OUTW_3C4(SSetup);
+	OUTW_3C4(SKey);
+	OUTW_3C4(SPKey);
+	OUTW_3x4(PreEndControl);
+	OUTW_3x4(PreEndFetch);
+	OUTW_3C4(GBslope1);
+	OUTW_3C4(GBslope2);
+	OUTW_3C4(GBslope3);
+	OUTW_3C4(GBslope4);
+	OUTW_3C4(GBintercept1);
+	OUTW_3C4(GBintercept2);
+	OUTW_3C4(GBintercept3);
+	OUTW_3C4(GBintercept4);
+    }
     if (pTrident->Chipset >= CYBER9385)    OUTW_3x4(Enhancement0);
     if (pTrident->Chipset >= BLADE3D)      OUTW_3x4(RAMDACTiming);
     if (pTrident->Chipset == CYBERBLADEE4) OUTW_3x4(New32);
@@ -695,13 +806,14 @@ TridentRestore(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg)
 
 	OUTW_3CE(VertStretch);
 	OUTW_3CE(HorStretch);
-	if (pTrident->Chipset < CYBERBLADEXPm8) {
+	if (pTrident->Chipset < BLADEXP) {
 	    OUTW_3CE(BiosMode);
 	} else {
 	    OUTW_3CE(BiosNewMode1);
 	    OUTW_3CE(BiosNewMode2);
 	};
-	OUTW_3CE(BiosReg);	
+	OUTW_3CE(BiosReg);
+	OUTW_3CE(FPConfig);
     	OUTW_3CE(CyberControl);
     	OUTW_3CE(CyberEnhance);
 	SHADOW_ENABLE(tmp);
@@ -762,7 +874,7 @@ TridentRestore(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg)
     	OUTB(0x3C5, tridentReg->tridentRegs3C4[Protection]);
     }
 
-    OUTW(0x3C4, ((tridentReg->tridentRegs3C4[NewMode1] ^ 0x02) << 8)| NewMode1);
+    OUTW(0x3C4, ((tridentReg->tridentRegs3C4[NewMode1] ^ 0x02) << 8)| NewMode1);    
 }
 
 void
@@ -783,7 +895,8 @@ TridentSave(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg)
     
     /* Unprotect registers */
     OUTW(0x3C4, ((0xC0 ^ 0x02) << 8) | NewMode1);
-    OUTW(0x3C4, (0x92 << 8) | Protection);
+    if (pTrident->Chipset > PROVIDIA9685)
+    	OUTW(0x3C4, (0x92 << 8) | Protection);
 
     INB_3x4(Offset);
     INB_3x4(LinearAddReg);
@@ -798,11 +911,24 @@ TridentSave(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg)
     INB_3x4(GraphEngReg);
     INB_3x4(PCIReg);
     INB_3x4(PCIRetry);
-    INB_3C4(SSetup);
-    INB_3C4(SKey);
-    INB_3C4(SPKey);
-    INB_3x4(PreEndControl);
-    INB_3x4(PreEndFetch);
+    if (pTrident->NewClockCode && pTrident->Chipset <= CYBER9397DVD)
+	INB_3x4(ClockControl);
+    if (pTrident->Chipset >= CYBER9388) {
+	INB_3C4(Threshold);
+	INB_3C4(SSetup);
+	INB_3C4(SKey);
+	INB_3C4(SPKey);
+	INB_3x4(PreEndControl);
+	INB_3x4(PreEndFetch);
+	INB_3C4(GBslope1);
+	INB_3C4(GBslope2);
+	INB_3C4(GBslope3);
+	INB_3C4(GBslope4);
+	INB_3C4(GBintercept1);
+	INB_3C4(GBintercept2);
+	INB_3C4(GBintercept3);
+	INB_3C4(GBintercept4);
+    }
     if (pTrident->Chipset >= CYBER9385)    INB_3x4(Enhancement0);
     if (pTrident->Chipset >= BLADE3D)      INB_3x4(RAMDACTiming);
     if (pTrident->Chipset == CYBERBLADEE4) INB_3x4(New32);
@@ -810,10 +936,14 @@ TridentSave(ScrnInfoPtr pScrn, TRIDENTRegPtr tridentReg)
 	CARD8 tmp;
 	INB_3CE(VertStretch);
 	INB_3CE(HorStretch);
-	INB_3CE(BiosMode);
+	if (pTrident->Chipset < BLADEXP) {
+    	    INB_3CE(BiosMode);
+	} else {
 	INB_3CE(BiosNewMode1);
 	INB_3CE(BiosNewMode2);
+	}
 	INB_3CE(BiosReg);	
+	INB_3CE(FPConfig);
     	INB_3CE(CyberControl);
     	INB_3CE(CyberEnhance);
 	SHADOW_ENABLE(tmp);

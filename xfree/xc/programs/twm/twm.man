@@ -25,7 +25,7 @@
 .\" other dealings in this Software without prior written authorization
 .\" from The Open Group.
 .\"
-.\" $XFree86: xc/programs/twm/twm.man,v 1.9 2001/12/14 20:01:10 dawes Exp $
+.\" $XFree86: xc/programs/twm/twm.man,v 1.10 2002/10/12 16:06:46 herrb Exp $
 .\"
 .de EX		\"Begin example
 .ne 5
@@ -136,12 +136,11 @@ differing visual types.
 .B "$HOME/.twmrc"
 This is the usual name for an individual user's startup file.
 .TP 8
-.B "<XRoot>/lib/X11/twm/system.twmrc"
+.B __projectroot__/lib/X11/twm/system.twmrc
 If neither of the preceding files are found, \fItwm\fP will look in this
 file for a 
 default configuration.  This is often tailored by the site administrator to
-provide convenient menus or familiar bindings for novice users.  <XRoot>
-refers to the root of the X11 install tree.
+provide convenient menus or familiar bindings for novice users.
 .PP
 If no startup files are found, \fItwm\fP will use the built-in defaults
 described above.  The only resource used by \fItwm\fP is 
@@ -333,7 +332,8 @@ Shapes from the \fBcursor\fP font may be specified directly as:
 .EE
 where \fIcursorname\fP is one of the cursor names listed below, and
 \fIstring\fP is the name of a glyph as found in the file
-<XRoot>/include/X11/cursorfont.h (without the ``XC_'' prefix).
+.I __projectroot__/include/X11/cursorfont.h
+(without the ``XC_'' prefix).
 If the cursor is to be defined
 from bitmap files, the following syntax is used instead:
 .EX 0
@@ -1257,9 +1257,9 @@ they may be lost if they are iconified and no bindings to
 .SH FILES
 .PP
 .nf
- $HOME/.twmrc.<screen number>
- $HOME/.twmrc
- <XRoot>/lib/X11/twm/system.twmrc
+.I $HOME/.twmrc.<screen number>
+.I $HOME/.twmrc
+.I __projectroot__/lib/X11/twm/system.twmrc
 .fi
 .SH "ENVIRONMENT VARIABLES"
 .IP "DISPLAY" 8

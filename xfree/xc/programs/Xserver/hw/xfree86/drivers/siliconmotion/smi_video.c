@@ -1,5 +1,4 @@
 /* Header:   //Mercury/Projects/archives/XFree86/4.0/smi_video.c.-arc   1.14   30 Nov 2000 16:51:40   Frido  $ */
-
 /*
 Copyright (C) 1994-1999 The XFree86 Project, Inc.  All Rights Reserved.
 Copyright (C) 2000 Silicon Motion, Inc.  All Rights Reserved.
@@ -33,6 +32,7 @@ this is a heavy modified version of the V1.2.2 original siliconmotion driver.
 - SAA7111 support
 - supports attributes: XV_ENCODING, XV_BRIGHTNESS, XV_CONTRAST,
   XV_SATURATION, XV_HUE, XV_COLORKEY, XV_INTERLACED
+  XV_CAPTURE_BRIGHTNESS can be used to set brightness in the capture device
 - bug fixes
 - tries not to use acceleration functions (if USE_XAA = 0)
 - interlaced video for double vertical resolution
@@ -41,7 +41,7 @@ Author of changes: Corvin Zahn <zahn@zac.de>
 Date:   2.11.2001
 */
 
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_video.c,v 1.6 2001/12/20 21:35:39 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_video.c,v 1.9 2003/01/12 03:55:49 tsi Exp $ */
 
 #include "smi.h"
 #include "smi_video.h"
@@ -134,7 +134,9 @@ static void SMI_DisplayVideo(ScrnInfoPtr pScrn, int id, int offset,
 		BoxPtr dstBox, short vid_w, short vid_h, short drw_w, short drw_h);
 static void SMI_BlockHandler(int i, pointer blockData, pointer pTimeout,
 		pointer pReadMask);
+#if 0
 static void SMI_WaitForSync(ScrnInfoPtr pScrn);
+#endif
 /*static int SMI_SendI2C(ScrnInfoPtr pScrn, CARD8 device, char *devName,
         SMI_I2CDataPtr i2cData);*/
 
@@ -169,7 +171,7 @@ static int SetAttrSAA7111(ScrnInfoPtr pScrn, int i, int value);
 
 static Atom xvColorKey;
 static Atom xvEncoding;
-static Atom xvBrightness, xvContrast, xvSaturation, xvHue;
+static Atom xvBrightness,xvCapBrightness, xvContrast, xvSaturation, xvHue;
 static Atom xvInterlaced;
 
 
@@ -255,6 +257,7 @@ static XF86VideoFormatRec SMI_VideoFormats[] =
 
 #define XV_ENCODING_NAME        "XV_ENCODING"
 #define XV_BRIGHTNESS_NAME      "XV_BRIGHTNESS"
+#define XV_CAPTURE_BRIGHTNESS_NAME      "XV_CAPTURE_BRIGHTNESS"
 #define XV_CONTRAST_NAME        "XV_CONTRAST"
 #define XV_SATURATION_NAME      "XV_SATURATION"
 #define XV_HUE_NAME             "XV_HUE"
@@ -263,14 +266,20 @@ static XF86VideoFormatRec SMI_VideoFormats[] =
 
 
 /* fixed order! */
-static XF86AttributeRec SMI_VideoAttributes[N_ATTRS] = {
+static XF86AttributeRec SMI_VideoAttributesSAA711x[N_ATTRS] = {
     {XvSettable | XvGettable,        0, N_ENCODINGS-1, XV_ENCODING_NAME},
     {XvSettable | XvGettable,        0,           255, XV_BRIGHTNESS_NAME},
+    {XvSettable | XvGettable,        0,           255, XV_CAPTURE_BRIGHTNESS_NAME},
     {XvSettable | XvGettable,        0,           127, XV_CONTRAST_NAME},
     {XvSettable | XvGettable,        0,           127, XV_SATURATION_NAME},
     {XvSettable | XvGettable,     -128,           127, XV_HUE_NAME},
     {XvSettable | XvGettable, 0x000000,      0xFFFFFF, XV_COLORKEY_NAME},
     {XvSettable | XvGettable,        0,             1, XV_INTERLACED_NAME},
+};
+
+static XF86AttributeRec SMI_VideoAttributes[N_ATTRS] = {
+    {XvSettable | XvGettable,        0,           255, XV_BRIGHTNESS_NAME},
+    {XvSettable | XvGettable, 0x000000,      0xFFFFFF, XV_COLORKEY_NAME},
 };
 
 
@@ -393,7 +402,7 @@ static I2CByte SAA7111VideoStd[3][8] = {
 };
 
 
-
+#if 0
 static I2CByte SAA7110InitData[] =
 {
 	/* Configuration */
@@ -418,7 +427,7 @@ static I2CByte SAA7110InitData[] =
     0x22, 0x40, 0x2C, 0x03,
 
 };
-
+#endif
 
 static I2CByte SAA7111InitData[] =
 {
@@ -616,7 +625,7 @@ SMI_InitVideo(ScreenPtr pScreen)
 
     if (numAdaptors != 0)
     {
-      DEBUG((VERBLEV, "ScreenInit\n"));
+      DEBUG((VERBLEV, "ScreenInit %i\n",numAdaptors));
         xf86XVScreenInit(pScreen, ptrAdaptors, numAdaptors);
     }
 
@@ -635,6 +644,7 @@ SMI_InitVideo(ScreenPtr pScreen)
  *  Video codec controls
  */
 
+#if 0
 /**
  * scales value value of attribute i to range min, max
  */
@@ -644,13 +654,16 @@ Scale(int i, int value, int min, int max)
     return min + (value - SMI_VideoAttributes[i].min_value) * (max - min) /
 	(SMI_VideoAttributes[i].max_value - SMI_VideoAttributes[i].min_value);
 }
-
+#endif
 /**
  * sets video decoder attributes channel, encoding, brightness, contrast, saturation, hue
  */
 static int
 SetAttr(ScrnInfoPtr pScrn, int i, int value)
 {
+    SMIPtr pSmi = SMIPTR(pScrn);
+    SMI_PortPtr pPort = (SMI_PortPtr) pSmi->ptrAdaptor->pPortPrivates[0].ptr;
+
     if (i < XV_ENCODING || i > XV_HUE)
 	return BadMatch;
     
@@ -658,15 +671,16 @@ SetAttr(ScrnInfoPtr pScrn, int i, int value)
     value = CLAMP(value, SMI_VideoAttributes[i].min_value,
 		  SMI_VideoAttributes[i].max_value);
 
-#if 0
-    if (pPPriv->I2CDev == SAA7110) {
+    if (i == XV_BRIGHTNESS) {
+	int my_value = (value <= 128? value + 128 : value - 128);
+	WRITE_VPR(pSmi, 0x5C, 0xEDEDED | (my_value << 24));
+    } else if (pPort->I2CDev.SlaveAddr == SAA7110) {
 	return SetAttrSAA7110(pScrn, i, value);
     }
-    else if (pPPriv->I2CDev == SAA7111) {
-#endif
+    else if (pPort->I2CDev.SlaveAddr == SAA7111) {
 	return SetAttrSAA7111(pScrn, i, value);
-#if 0
     }
+#if 0
     else {
 	return XvBadAlloc;
     }
@@ -729,12 +743,12 @@ SetAttrSAA7111(ScrnInfoPtr pScrn, int i, int value)
 	    }
 	}
     }
-    else if (i >= XV_BRIGHTNESS && i <= XV_HUE) {
+    else if (i >= XV_CAPTURE_BRIGHTNESS && i <= XV_HUE) {
 	int slave_adr = 0;
 
 	switch (i) {
 
-	case XV_BRIGHTNESS:
+	case XV_CAPTURE_BRIGHTNESS:
 	    DEBUG((VERBLEV, "SetAttribute XV_BRIGHTNESS: %d\n", value));
 	    slave_adr = 0x0a;
 	    break;
@@ -764,8 +778,6 @@ SetAttrSAA7111(ScrnInfoPtr pScrn, int i, int value)
 	return BadMatch;
     }
 
-    pPort->Attribute[i] = value;
-    
     /* debug: show registers */
     {
 	I2CByte i2c_bytes[32];
@@ -886,38 +898,40 @@ SMI_SetupVideo(
     smiPortPtr->I2CDev.SlaveAddr = SAA7111;
     smiPortPtr->I2CDev.pI2CBus = pSmi->I2C;
 
-    if (!xf86I2CDevInit(&(smiPortPtr->I2CDev)))
+    
+    if (xf86I2CDevInit(&(smiPortPtr->I2CDev)))
     {
-        LEAVE_PROC("SMI_SetupVideo");
-        return(NULL);
-    }
-    DEBUG((VERBLEV, "SAA7111 intialized\n"));
-
-    if (!xf86I2CWriteVec(&(smiPortPtr->I2CDev), SAA7111InitData, ENTRIES(SAA7111InitData) / 2))
-    {
-        LEAVE_PROC("SMI_SetupVideo");
-        return(NULL);
-    }
-
-	REGION_INIT(pScreen, &smiPortPtr->clip, NullBox, 0);
-
-	pSmi->ptrAdaptor = ptrAdaptor;
-	pSmi->BlockHandler = pScreen->BlockHandler;
-	pScreen->BlockHandler = SMI_BlockHandler;
-
-    xvEncoding   = MAKE_ATOM(XV_ENCODING_NAME);
-    xvHue        = MAKE_ATOM(XV_HUE_NAME);
-    xvSaturation = MAKE_ATOM(XV_SATURATION_NAME);
-    xvBrightness = MAKE_ATOM(XV_BRIGHTNESS_NAME);
-    xvContrast   = MAKE_ATOM(XV_CONTRAST_NAME);
-
+	
+	if (xf86I2CWriteVec(&(smiPortPtr->I2CDev), 	SAA7111InitData, 
+			    ENTRIES(SAA7111InitData) / 2)) {
+	    xvEncoding   = MAKE_ATOM(XV_ENCODING_NAME);
+	    xvHue        = MAKE_ATOM(XV_HUE_NAME);
+	    xvSaturation = MAKE_ATOM(XV_SATURATION_NAME);
+	    xvContrast   = MAKE_ATOM(XV_CONTRAST_NAME);
+	    
+	    xvInterlaced = MAKE_ATOM(XV_INTERLACED_NAME);
+	    DEBUG((VERBLEV, "SAA7111 intialized\n"));
+    
+	} else { 
+	    xf86DestroyI2CDevRec(&(smiPortPtr->I2CDev),FALSE);
+	    smiPortPtr->I2CDev.SlaveAddr = 0;
+	}
+    } else
+	smiPortPtr->I2CDev.SlaveAddr = 0;
+	
+    REGION_INIT(pScreen, &smiPortPtr->clip, NullBox, 0);
+    
+    pSmi->ptrAdaptor = ptrAdaptor;
+    pSmi->BlockHandler = pScreen->BlockHandler;
+    pScreen->BlockHandler = SMI_BlockHandler;
+    
     xvColorKey   = MAKE_ATOM(XV_COLORKEY_NAME);
-    xvInterlaced = MAKE_ATOM(XV_INTERLACED_NAME);
-
-	SMI_ResetVideo(pScrn);
-
-	LEAVE_PROC("SMI_SetupVideo");
-	return(ptrAdaptor);
+    xvBrightness = MAKE_ATOM(XV_BRIGHTNESS_NAME);
+    xvCapBrightness = MAKE_ATOM(XV_CAPTURE_BRIGHTNESS_NAME);
+    
+    SMI_ResetVideo(pScrn);
+    LEAVE_PROC("SMI_SetupVideo");
+    return(ptrAdaptor);
 }
 
 
@@ -934,6 +948,7 @@ SMI_ResetVideo(
 
     SetAttr(pScrn, XV_ENCODING, 0);     /* Encoding = pal-composite-0 */
     SetAttr(pScrn, XV_BRIGHTNESS, 128); /* Brightness = 128 (CCIR level) */
+    SetAttr(pScrn, XV_CAPTURE_BRIGHTNESS, 128); /* Brightness = 128 (CCIR level) */
     SetAttr(pScrn, XV_CONTRAST, 71);    /* Contrast = 71 (CCIR level) */
     SetAttr(pScrn, XV_SATURATION, 64);  /* Color saturation = 64 (CCIR level) */
     SetAttr(pScrn, XV_HUE, 0);          /* Hue = 0 */
@@ -1253,9 +1268,9 @@ SMI_PutVideo(
 
 	OUT_SEQ(pSmi, 0x21, IN_SEQ(pSmi, 0x21) & ~0x04);
 	WRITE_VPR(pSmi, 0x54, READ_VPR(pSmi, 0x54) | 0x00200000);
-
+#if 0
 	SMI_WaitForSync(pScrn);
-
+#endif
     /* Video Window I Left and Top Boundaries */
 	WRITE_VPR(pSmi, 0x14, dstBox.x1 + (dstBox.y1 << 16));
     /* Video Window I Right and Bottom Boundaries */
@@ -1339,11 +1354,11 @@ SMI_StopVideo(
 		if (pPort->videoStatus & CLIENT_VIDEO_ON)
 		{
 			WRITE_VPR(pSmi, 0x00, READ_VPR(pSmi, 0x00) & ~0x01000008);
-			#if SMI_USE_CAPTURE
+#if SMI_USE_CAPTURE
 			WRITE_CPR(pSmi, 0x00, READ_CPR(pSmi, 0x00) & ~0x00000001);
 			WRITE_VPR(pSmi, 0x54, READ_VPR(pSmi, 0x54) & ~0x00F00000);
 /* #864		OUT_SEQ(pSmi, 0x21, IN_SEQ(pSmi, 0x21) | 0x04); */
-			#endif
+#endif
 		}
         if (pPort->area != NULL)
 		{
@@ -1415,6 +1430,9 @@ SMI_SetPortAttribute(
     else if (attribute == xvBrightness) {
         res = SetAttr(pScrn, XV_BRIGHTNESS, value);
     }
+    else if (attribute == xvCapBrightness) {
+        res = SetAttr(pScrn, XV_CAPTURE_BRIGHTNESS, value);
+    }
     else if (attribute == xvContrast) {
         res = SetAttr(pScrn, XV_CONTRAST, value);
     }
@@ -1444,11 +1462,12 @@ SMI_GetPortAttribute(
     SMI_PortPtr pPort = (SMI_PortPtr) data;
 
 	ENTER_PROC("SMI_GetPortAttribute");
-
     if (attribute == xvEncoding)
         *value = pPort->Attribute[XV_ENCODING];
-	else if (attribute == xvBrightness)
+    else if (attribute == xvBrightness)
         *value = pPort->Attribute[XV_BRIGHTNESS];
+    else if (attribute == xvCapBrightness)
+        *value = pPort->Attribute[XV_CAPTURE_BRIGHTNESS];
     else if (attribute == xvContrast)
         *value = pPort->Attribute[XV_CONTRAST];
     else if (attribute == xvSaturation)
@@ -1756,7 +1775,7 @@ SMI_QueryImageAttributes(
 **						S U P P O R T   F U N C T I O N S					  **
 **																			  **
 \******************************************************************************/
-
+#if 0
 static void
 SMI_WaitForSync(
 	ScrnInfoPtr	pScrn
@@ -1770,6 +1789,7 @@ SMI_WaitForSync(
 
 	VerticalRetraceWait();
 }
+#endif
 
 static Bool
 RegionsEqual(
@@ -2007,9 +2027,9 @@ SMI_DisplayVideo(
 	{
 		vstretch = 0;
 	}
-
+#if 0
 	SMI_WaitForSync(pScrn);
-
+#endif
 	WRITE_VPR(pSmi, 0x00, vpr00 | (1 << 3) | (1 << 20));
 	WRITE_VPR(pSmi, 0x14, (dstBox->x1) | (dstBox->y1 << 16));
 	WRITE_VPR(pSmi, 0x18, (dstBox->x2) | (dstBox->y2 << 16));
@@ -2083,7 +2103,6 @@ SMI_SendI2C(
 	}
 
 	dev = xf86CreateI2CDevRec();
-	ErrorF("zz %x\n",dev);
 	if (dev == NULL)
 	{
 		LEAVE_PROC("SMI_SendI2C");
@@ -2130,6 +2149,7 @@ SMI_InitOffscreenImages(
 	XF86OffscreenImagePtr offscreenImages;
 	ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
 	SMIPtr pSmi = SMIPTR(pScrn);
+	SMI_PortPtr pPort = (SMI_PortPtr) pSmi->ptrAdaptor->pPortPrivates[0].ptr;
 
 	ENTER_PROC("SMI_InitOffscreenImages");
 
@@ -2151,9 +2171,14 @@ SMI_InitOffscreenImages(
 	offscreenImages->setAttribute = SMI_SetSurfaceAttribute;
 	offscreenImages->max_width = pSmi->lcdWidth;
 	offscreenImages->max_height = pSmi->lcdHeight;
-	offscreenImages->num_attributes = nElems(SMI_VideoAttributes);
-	offscreenImages->attributes = SMI_VideoAttributes;
-
+	if (!pPort->I2CDev.SlaveAddr) {
+	    offscreenImages->num_attributes = nElems(SMI_VideoAttributes);
+	    offscreenImages->attributes = SMI_VideoAttributes; 
+	} else {
+	    offscreenImages->num_attributes = 
+		nElems(SMI_VideoAttributesSAA711x);
+	    offscreenImages->attributes = SMI_VideoAttributesSAA711x; 
+	}
 	xf86XVRegisterOffscreenImages(pScreen, offscreenImages, 1);
 
 	LEAVE_PROC("SMI_InitOffscreenImages");

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_video.c,v 3.7 2001/06/30 22:41:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_video.c,v 3.8 2002/06/03 21:22:10 dawes Exp $ */
 /*
  * Copyright 2001 by J. Kean Johnston <jkj@sco.com>
  *
@@ -51,7 +51,7 @@
 #define MPXNAME "/dev/atp1"
 #define BASECPU 1
 
-extern Bool mpxLock;
+Bool mpxLock = TRUE;
 
 #define USE_VASMETHOD	1
 
@@ -289,91 +289,3 @@ xf86OSInitVidMem(VidMemInfoPtr pVidMem)
   }
 }
 
-/***************************************************************************/
-/* I/O Permissions section                                                 */
-/***************************************************************************/
-
-/*
- * There is a right way and a wrong way of doing this. Unfortunately, we
- * are forced to do it the wrong way. The right way is to be told the range
- * or ranges of I/O ports the driver(s) need access to, in order to use the
- * CONS_IOPERM ioctl() to grant access only to those ports we care about.
- * This way we can guarantee some small level of stability because a driver
- * does not have access to all ports (which would mean it could play with
- * the PIT and thus affect scheduling times, or a whole slew of other
- * nasty things). However, because XFree86 currently only enables or disables
- * ALL port access, we need to run at IOPL 3, which basically means the
- * X Server runs at the same level as the kernel. You can image why this is
- * unsafe. Oh, and this is not a problem unique to OSR5, other OSes are
- * affected by this as well.
- *
- * So, for the time being, we change our IOPL until such time as the XFree86
- * architecture is changed to allow for tighter control of I/O ports. If and
- * when it is, then the CONS_ADDIOP/DELIOP ioctl() should be used to enable 
- * or disable access to the desired ports.
- */
-
-extern long sysi86 (int cmd, ...);
-
-static Bool IOEnabled = FALSE;
-
-void xf86EnableIO(void)
-{
-	if (IOEnabled)
-		return;
-
-	if (sysi86(SI86V86, V86SC_IOPL, PS_IOPL) < 0)
-		FatalError("Failed to set IOPL for extended I/O\n");
-	IOEnabled = TRUE;
-}
-
-void xf86DisableIO(void)
-{
-	if (!IOEnabled)
-		return;
-
-	sysi86(SI86V86, V86SC_IOPL, 0);
-	IOEnabled = FALSE;
-}
-
-/***************************************************************************/
-/* Interrupt Handling section                                              */
-/***************************************************************************/
-
-Bool xf86DisableInterrupts()
-{
-  if (!IOEnabled) {
-    if (sysi86(SI86V86, V86SC_IOPL, PS_IOPL) < 0)
-      return FALSE;
-  }
-
-#ifdef __GNUC__
-  __asm__ __volatile__("cli");
-#else 
-  asm("cli");
-#endif /* __GNUC__ */
-
-  if (!IOEnabled) {
-    sysi86(SI86V86, V86SC_IOPL, PS_IOPL);
-  }
-
-  return(TRUE);
-}
-
-void xf86EnableInterrupts()
-{
-  if (!IOEnabled) {
-    if (sysi86(SI86V86, V86SC_IOPL, PS_IOPL) < 0)
-      return;
-  }
-
-#ifdef __GNUC__
-  __asm__ __volatile__("sti");
-#else 
-  asm("sti");
-#endif /* __GNUC__ */
-
-  if (!IOEnabled) {
-    sysi86(SI86V86, V86SC_IOPL, PS_IOPL);
-  }
-}

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.19 2001/12/14 20:01:25 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/xdmcp.c,v 3.21 2002/12/10 22:37:17 tsi Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -1152,16 +1152,29 @@ NetworkAddressToHostname (
     {
     case FamilyInternet:
 	{
-	    struct hostent	*hostent;
+	    struct hostent	*hostent = NULL;
 	    char dotted[20];
-	    char *local_name;
+	    char *local_name = "";
 
 	    hostent = gethostbyaddr ((char *)connectionAddress->data,
 				     connectionAddress->length, AF_INET);
 
-	    if (hostent)
-		local_name = hostent->h_name;
-	    else {
+	    if (hostent) {
+		/* check for DNS spoofing */
+		char *s = strdup(hostent->h_name); /* fscking non-reentrancy of getXXX() */
+		if ((hostent = gethostbyname(s))) {
+			if (memcmp((char*)connectionAddress->data, hostent->h_addr,
+			    hostent->h_length) != 0) {
+				LogError("Possible DNS spoof attempt.");
+				hostent = NULL; /* so it enters next if() */
+			} else {
+				local_name = hostent->h_name;
+			}
+		}
+		free(s);
+	    }
+
+	    if (!hostent) {
 		/* can't get name, so use emergency fallback */
 		sprintf(dotted, "%d.%d.%d.%d",
 			connectionAddress->data[0],
@@ -1185,7 +1198,7 @@ NetworkAddressToHostname (
 	break;
     }
     return name;
-}
+    }
 
 #if 0
 static int
@@ -1280,4 +1293,3 @@ CARD16Ptr   displayNumber)
 #endif
 
 #endif /* XDMCP */
-

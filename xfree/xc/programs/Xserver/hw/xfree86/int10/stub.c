@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/stub.c,v 1.3 2001/04/30 14:34:57 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/int10/stub.c,v 1.4 2002/04/04 14:05:51 eich Exp $ */
 /*
  *                   XFree86 int10 module
  *   execute BIOS int 10h calls in x86 real mode environment
@@ -12,6 +12,12 @@
 
 xf86Int10InfoPtr
 xf86InitInt10(int entityIndex)
+{
+    return xf86ExtendedInitInt10(entityIndex, 0);
+}
+
+xf86Int10InfoPtr
+xf86ExtendedInitInt10(int entityIndex, int Flags)
 {
     return NULL;
 }

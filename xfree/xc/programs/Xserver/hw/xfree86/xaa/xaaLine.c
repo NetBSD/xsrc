@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaLine.c,v 1.5 2001/10/28 03:34:04 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaLine.c,v 1.6 2002/09/18 18:15:00 martin Exp $ */
 
 #include "X.h"
 #include "misc.h"
@@ -45,6 +45,58 @@ XAAPolyLines(
 
     if(!nboxInit)
 	return;
+
+    if (infoRec->SolidLineFlags & LINE_LIMIT_COORDS) {
+	int minValX = infoRec->SolidLineLimits.x1;
+	int maxValX = infoRec->SolidLineLimits.x2;
+	int minValY = infoRec->SolidLineLimits.y1;
+	int maxValY = infoRec->SolidLineLimits.y2;
+#ifdef POLYSEGMENT
+	int n = nseg;
+	xSegment *s = pSeg;
+
+	while (n--)
+#else
+	int n = npt;
+	int xorgtmp = xorg;
+	int yorgtmp = yorg;
+
+	ppt = pptInit;
+	x2 = ppt->x + xorgtmp;
+	y2 = ppt->y + yorgtmp;
+	while (--n)
+#endif
+	{
+#ifdef POLYSEGMENT
+	    x1 = s->x1 + xorg;
+	    y1 = s->y1 + yorg;
+	    x2 = s->x2 + xorg;
+	    y2 = s->y2 + yorg;
+	    s++;
+#else
+	    x1 = x2;
+	    y1 = y2;
+	    ++ppt;
+	    if (mode == CoordModePrevious) {
+		xorgtmp = x1;
+		yorgtmp = y1;
+	    }
+	    x2 = ppt->x + xorgtmp;
+	    y2 = ppt->y + yorgtmp;
+#endif
+	    if (x1 > maxValX || x1 < minValX ||
+		x2 > maxValX || x2 < minValX ||
+		y1 > maxValY || y1 < minValY ||
+		y2 > maxValY || y2 < minValY) {
+#ifdef POLYSEGMENT
+		XAAFallbackOps.PolySegment(pDrawable, pGC, nseg, pSeg);
+#else
+		XAAFallbackOps.Polylines(pDrawable, pGC, mode, npt, pptInit);
+#endif
+		return;
+	    }
+	}
+    }
 
     (*infoRec->SetupForSolidLine)(infoRec->pScrn, pGC->fgPixel,
 					pGC->alu, pGC->planemask);

@@ -23,6 +23,7 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+/* $XFree86: xc/extras/Mesa/src/X86/assyntax.h,v 1.12 2002/09/09 21:30:02 dawes Exp $ */
 
 /*
  * assyntax.h
@@ -67,6 +68,11 @@
  */
 
 #if !(defined(NASM_ASSEMBLER) || defined(MASM_ASSEMBLER))
+
+/* Default to ATT_ASSEMBLER when SVR4 or SYSV are defined */
+#if (defined(SVR4) || defined(SYSV)) && !defined(GNU_ASSEMBLER)
+#define ATT_ASSEMBLER
+#endif
 
 #if !defined(ATT_ASSEMBLER) && !defined(GNU_ASSEMBLER) && !defined(ACK_ASSEMBLER)
 #define GNU_ASSEMBLER
@@ -199,6 +205,11 @@
 #define _STX6		%st(6)
 #define _STX7		%st(7)
 #define ST(x)		CONCAT(_STX,x)
+#ifdef GNU_ASSEMBLER
+#define ST0		%st(0)
+#else
+#define ST0		%st
+#endif
 /* MMX Registers */
 #define MM0		%mm0
 #define MM1		%mm1
@@ -243,7 +254,7 @@
 #endif /* ACK_ASSEMBLER */
 
 
-#if defined(__QNX__) || defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || defined(__ELF__) || defined(__GNU__)
+#if defined(__QNX__) || defined(Lynx) || (defined(SYSV) || defined(SVR4)) && !defined(ACK_ASSEMBLER) || defined(__ELF__) || defined(__GNU__) || defined(__GNUC__) && !defined(DJGPP)
 #define GLNAME(a)	a
 #else
 #define GLNAME(a)	CONCAT(_,a)
@@ -857,6 +868,7 @@
 #if defined(NASM_ASSEMBLER)
 
 #define ST(n)		st ## n
+#define ST0		st0
 
 #define TBYTE_PTR	tword
 #define QWORD_PTR	qword
@@ -979,12 +991,21 @@ SECTION _DATA public align=16 class=DATA use32 flat
 #define B_CONST(a)		a
 
 /* Indirect Mode */
+#ifdef NASM_ASSEMBLER
+#define P_CONTENT(a)		[a]
+#define X_CONTENT(a)		TBYTE_PTR [a]
+#define D_CONTENT(a)		QWORD_PTR [a]
+#define L_CONTENT(a)		DWORD_PTR [a]
+#define W_CONTENT(a)		WORD_PTR [a]
+#define B_CONTENT(a)		BYTE_PTR [a]
+#else
 #define P_CONTENT(a)		a
 #define X_CONTENT(a)		TBYTE_PTR a
 #define D_CONTENT(a)		QWORD_PTR a
 #define L_CONTENT(a)		DWORD_PTR a
 #define W_CONTENT(a)		WORD_PTR a
 #define B_CONTENT(a)		BYTE_PTR a
+#endif
 
 /* Register a indirect */
 #define P_REGIND(a)		[a]

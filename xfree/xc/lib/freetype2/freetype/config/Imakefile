@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/freetype2/freetype/config/Imakefile,v 1.8 2002/01/15 22:55:27 herrb Exp $
+XCOMM $XFree86: xc/lib/freetype2/freetype/config/Imakefile,v 1.9 2002/06/20 08:26:18 keithp Exp $
 
 FREETYPETOP = $(TOP)/extras/freetype2
 FREETYPESRC = $(FREETYPETOP)/src
@@ -8,7 +8,8 @@ HEADERS= \
         ftconfig.h \
 	ftheader.h \
         ftmodule.h \
-        ftoption.h
+        ftoption.h \
+        ftstdlib.h
 
 BuildIncludes($(HEADERS),freetype2/freetype/config,../../..)
 InstallMultipleFlags($(HEADERS),$(INCDIR)/freetype2/freetype/config,$(INSTINCFLAGS))
@@ -17,6 +18,7 @@ LinkSourceFile(ftconfig.h,$(FREETYPEINC)/config)
 LinkSourceFile(ftheader.h,$(FREETYPEINC)/config)
 LinkSourceFile(ftmodule.h,$(FREETYPEINC)/config)
 LinkSourceFile(ftoption.h,$(FREETYPEINC)/config)
+LinkSourceFile(ftstdlib.h,$(FREETYPEINC)/config)
 
 XCOMM Build and install a configure-compatible freetype-config
 

@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/keymap.c,v 1.3 2002/07/01 02:26:01 tsi Exp $ */
 
 #include "xkbcomp.h"
 #include "tokens.h"
@@ -43,14 +44,7 @@
 XkbFile *	sections[MAX_SECTIONS];
 
 Bool
-#if NeedFunctionPrototypes
 CompileKeymap(XkbFile *file,XkbFileInfo *result,unsigned merge)
-#else
-CompileKeymap(file,result,merge)
-    XkbFile	*	file;
-    XkbFileInfo *	result;
-    unsigned	 	merge;
-#endif
 {
 unsigned	have;
 Bool		ok;

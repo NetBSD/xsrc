@@ -1,20 +1,20 @@
-/* $XFree86: xc/extras/Mesa/src/mmath.h,v 1.15 2002/01/07 17:26:06 alanh Exp $ */
+
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
- * 
- * Copyright (C) 1999-2000  Brian Paul   All Rights Reserved.
- * 
+ * Version:  4.0.3
+ *
+ * Copyright (C) 1999-2002  Brian Paul   All Rights Reserved.
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
@@ -36,61 +36,61 @@
 
 
 #include "glheader.h"
-
+/* Do not reference mtypes.h from this file.
+ */
 
 /*
  * Set the x86 FPU control word to guarentee only 32 bits of presision
  * are stored in registers.  Allowing the FPU to store more introduces
  * differences between situations where numbers are pulled out of memory
  * vs. situations where the compiler is able to optimize register usage.
- * 
+ *
  * In the worst case, we force the compiler to use a memory access to
  * truncate the float, by specifying the 'volatile' keyword.
  */
-#if defined(__linux__) && defined(__i386__)
-#include <fpu_control.h>
+#if defined(__GNUC__) && defined(__i386__)
 
-#if !defined(_FPU_SETCW)
-#define _FPU_SETCW __setfpucw
-typedef unsigned short fpu_control_t;
-#endif
-
-#if !defined(_FPU_GETCW)
-#define _FPU_GETCW(a) (a) = __fpu_control;
-#endif
-
-/* Set it up how we want it.
+/* Hardware default: All exceptions masked, extended double precision,
+ * round to nearest.  IEEE compliant.
  */
-#if !defined(NO_FAST_MATH) 
-#define START_FAST_MATH(x)                  \
-   {								\
-      static fpu_control_t mask = _FPU_SINGLE | _FPU_MASK_IM	\
-            | _FPU_MASK_DM | _FPU_MASK_ZM | _FPU_MASK_OM	\
-            | _FPU_MASK_UM | _FPU_MASK_PM;			\
-      _FPU_GETCW( x );						\
-      _FPU_SETCW( mask );					\
-   }
+#define DEFAULT_X86_FPU		0x037f
+
+/* All exceptions masked, single precision, round to nearest.
+ */
+#define FAST_X86_FPU		0x003f
+
+/* Set it up how we want it.  The fldcw instruction will cause any
+ * pending FP exceptions to be raised prior to entering the block, and
+ * we clear any pending exceptions before exiting the block.  Hence, asm
+ * code has free reign over the FPU while in the fast math block.
+ */
+#if defined(NO_FAST_MATH)
+#define START_FAST_MATH(x)						\
+do {									\
+   static GLuint mask = DEFAULT_X86_FPU;				\
+   __asm__ ( "fnstcw %0" : "=m" (*&(x)) );				\
+   __asm__ ( "fldcw %0" : : "m" (mask) );				\
+} while (0)
 #else
-#define START_FAST_MATH(x)			\
-   {						\
-      static fpu_control_t mask = _FPU_DEFAULT;	\
-      _FPU_GETCW( x );				\
-      _FPU_SETCW( mask );			\
-   }
+#define START_FAST_MATH(x)						\
+do {									\
+   static GLuint mask = FAST_X86_FPU;					\
+   __asm__ ( "fnstcw %0" : "=m" (*&(x)) );				\
+   __asm__ ( "fldcw %0" : : "m" (mask) );				\
+} while (0)
 #endif
 
-
-/* Put it back how the application had it.
+/* Put it back how the application had it, and clear any exceptions that
+ * may have occurred in the FAST_MATH block.
  */
-#define END_FAST_MATH(x)			\
-   {						\
-      _FPU_SETCW( x );				\
-   }
-
+#define END_FAST_MATH(x)						\
+do {									\
+   __asm__ ( "fnclex ; fldcw %0" : : "m" (*&(x)) );			\
+} while (0)
 
 #define HAVE_FAST_MATH
 
-#elif defined(__WATCOMC__) && !defined(NO_FAST_MATH) 
+#elif defined(__WATCOMC__) && !defined(NO_FAST_MATH)
 
 /* This is the watcom specific inline assembly version of setcw and getcw */
 
@@ -108,25 +108,25 @@ void END_FAST_MATH2(unsigned short *x);
     parm [esi]                          \
     modify exact [];
 
-#define START_FAST_MATH(x)  START_FAST_MATH2(& x)          
+#define START_FAST_MATH(x)  START_FAST_MATH2(& x)
 #define END_FAST_MATH(x)  END_FAST_MATH2(& x)
 
 /*
 __inline START_FAST_MATH(unsigned short x)
-    {                               
-    _asm {                          
-        fstcw   ax                  
-        mov     x , ax              
-        or      ax, 0x3f            
-        fldcw   ax                  
-        }                           
+    {
+    _asm {
+        fstcw   ax
+        mov     x , ax
+        or      ax, 0x3f
+        fldcw   ax
+        }
     }
 
-__inline END_FAST_MATH(unsigned short x)    
-    {                               
-    _asm {                          
-        fldcw   x                   
-        }                           
+__inline END_FAST_MATH(unsigned short x)
+    {
+    _asm {
+        fldcw   x
+        }
     }
 */
 #define HAVE_FAST_MATH
@@ -138,7 +138,7 @@ __inline END_FAST_MATH(unsigned short x)
 /* The mac float really is a float, with the same precision as a
  * single precision 387 float.
  */
-#if defined(macintosh)
+#if defined(macintosh) || defined(__powerpc__)
 #define HAVE_FAST_MATH
 #endif
 
@@ -147,58 +147,13 @@ __inline END_FAST_MATH(unsigned short x)
 
 
 /*
- * Float -> Int conversion
- */
-
-#if defined(USE_X86_ASM)
-#if defined(__GNUC__) && defined(__i386__)
-static __inline__ int FloatToInt(float f)
-{
-   int r;
-   __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
-   return r;
-}
-#elif  defined(__MSC__) && defined(__WIN32__) && !defined(__CYGWIN__)
-static __inline int FloatToInt(float f)
-{
-   int r;
-   _asm {
-	 fld f
-	 fistp r
-	}
-   return r;
-}
-#elif defined(__WATCOMC__)
-long FloatToInt(float f);
-#pragma aux FloatToInt =                \
-	"push   eax"                        \
-	"fistp  dword ptr [esp]"            \
-	"pop    eax"                        \
-	parm [8087]                         \
-	value [eax]                         \
-	modify exact [eax];
-float asm_sqrt (float x);
-#pragma aux asm_sqrt =                  \
-	"fsqrt"                             \
-	parm [8087]                         \
-	value [8087]                        \
-	modify exact [];
-#else
-#define FloatToInt(F) ((int) (F))
-#endif
-#else
-#define FloatToInt(F) ((int) (F))
-#endif
-
-
-/*
  * Square root
  */
 
 extern float gl_sqrt(float x);
-    
+
 #ifdef FAST_MATH
-#if defined (__WATCOMC__) && defined(USE_X86_ASM)
+#if defined(__WATCOMC__) && defined(USE_X86_ASM)
 #  define GL_SQRT(X)  asm_sqrt(X)
 #else
 #  define GL_SQRT(X)  gl_sqrt(X)
@@ -213,78 +168,421 @@ extern float gl_sqrt(float x);
  */
 #define NORMALIZE_3FV( V )			\
 do {						\
-   GLdouble len = LEN_SQUARED_3FV(V);		\
-   if (len > 1e-50) {				\
-      len = 1.0 / GL_SQRT(len);			\
-      V[0] = (GLfloat) (V[0] * len);		\
-      V[1] = (GLfloat) (V[1] * len);		\
-      V[2] = (GLfloat) (V[2] * len);		\
+   GLfloat len = LEN_SQUARED_3FV(V);		\
+   if (len) {					\
+      len = (GLfloat) (1.0 / GL_SQRT(len));	\
+      (V)[0] = (GLfloat) ((V)[0] * len);		\
+      (V)[1] = (GLfloat) ((V)[1] * len);		\
+      (V)[2] = (GLfloat) ((V)[2] * len);		\
    }						\
 } while(0)
 
-#define LEN_3FV( V ) (GL_SQRT(V[0]*V[0]+V[1]*V[1]+V[2]*V[2]))
+#define LEN_3FV( V ) (GL_SQRT((V)[0]*(V)[0]+(V)[1]*(V)[1]+(V)[2]*(V)[2]))
+#define LEN_2FV( V ) (GL_SQRT((V)[0]*(V)[0]+(V)[1]*(V)[1]))
 
-#define LEN_SQUARED_3FV( V ) (V[0]*V[0]+V[1]*V[1]+V[2]*V[2])
+#define LEN_SQUARED_3FV( V ) ((V)[0]*(V)[0]+(V)[1]*(V)[1]+(V)[2]*(V)[2])
+#define LEN_SQUARED_2FV( V ) ((V)[0]*(V)[0]+(V)[1]*(V)[1])
+
 
 /*
- * Optimization for:
- * GLfloat f;
- * GLubyte b = FloatToInt(CLAMP(f, 0, 1) * 255)
+ * Single precision ceiling, floor, and absolute value functions
  */
+#if defined(__sparc__) /* XXX this probably isn't the ideal test */
+#define CEILF(x)   ceil(x)
+#define FLOORF(x)  floor(x)
+#define FABSF(x)   fabs(x)
+#else
+#define CEILF(x)   ceilf(x)
+#define FLOORF(x)  floorf(x)
+#define FABSF(x)   fabsf(x)
+#endif
+
 
 #if defined(__i386__) || defined(__sparc__) || defined(__s390x__) || \
-    defined(__ppc__) || defined(__powerpc__) || \
-    ( defined(__alpha__) && ( defined( __IEEE_FLOAT ) || !defined( VMS ) ) )
+    defined(__powerpc__) || defined(__x86_64__) || \
+    ( defined(__alpha__) && ( defined(__IEEE_FLOAT) || !defined(VMS) ) )
 #define USE_IEEE
-#define IEEE_ONE 0x3f7f0000
 #endif
+
+
+
+#define GET_FLOAT_BITS(x) ((fi_type *) &(x))->i
+
+/*
+ * Float -> Int conversions (rounding, floor, ceiling)
+ */
+
+#if defined(USE_SPARC_ASM) && defined(__GNUC__) && defined(__sparc__)
+
+static INLINE int iround(float f)
+{
+       int r;
+       __asm__ ("fstoi %1, %0" : "=f" (r) : "f" (f));
+       return r;
+}
+
+#define IROUND(x)  iround(x)
+
+#elif defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
+
+
+static INLINE int iround(float f)
+{
+   int r;
+   __asm__ ("fistpl %0" : "=m" (r) : "t" (f) : "st");
+   return r;
+}
+
+#define IROUND(x)  iround(x)
+
+/*
+ * IEEE floor for computers that round to nearest or even.
+ * 'f' must be between -4194304 and 4194303.
+ * This floor operation is done by "(iround(f + .5) + iround(f - .5)) >> 1",
+ * but uses some IEEE specific tricks for better speed.
+ * Contributed by Josh Vanderhoof
+ */
+static INLINE int ifloor(float f)
+{
+   int ai, bi;
+   double af, bf;
+   af = (3 << 22) + 0.5 + (double)f;
+   bf = (3 << 22) + 0.5 - (double)f;
+   /* GCC generates an extra fstp/fld without this. */
+   __asm__ ("fstps %0" : "=m" (ai) : "t" (af) : "st");
+   __asm__ ("fstps %0" : "=m" (bi) : "t" (bf) : "st");
+   return (ai - bi) >> 1;
+}
+
+#define IFLOOR(x)  ifloor(x)
+
+/*
+ * IEEE ceil for computers that round to nearest or even.
+ * 'f' must be between -4194304 and 4194303.
+ * This ceil operation is done by "(iround(f + .5) + iround(f - .5) + 1) >> 1",
+ * but uses some IEEE specific tricks for better speed.
+ * Contributed by Josh Vanderhoof
+ */
+static INLINE int iceil(float f)
+{
+   int ai, bi;
+   double af, bf;
+   af = (3 << 22) + 0.5 + (double)f;
+   bf = (3 << 22) + 0.5 - (double)f;
+   /* GCC generates an extra fstp/fld without this. */
+   __asm__ ("fstps %0" : "=m" (ai) : "t" (af) : "st");
+   __asm__ ("fstps %0" : "=m" (bi) : "t" (bf) : "st");
+   return (ai - bi + 1) >> 1;
+}
+
+#define ICEIL(x)  iceil(x)
+
+
+#elif defined(USE_X86_ASM) && defined(__MSC__) && defined(__WIN32__)
+
+
+static INLINE int iround(float f)
+{
+   int r;
+   _asm {
+	 fld f
+	 fistp r
+	}
+   return r;
+}
+
+#define IROUND(x)  iround(x)
+
+
+#elif defined(USE_X86_ASM) && defined(__WATCOMC__)
+
+
+long iround(float f);
+#pragma aux iround =                        \
+	"push   eax"                        \
+	"fistp  dword ptr [esp]"            \
+	"pop    eax"                        \
+	parm [8087]                         \
+	value [eax]                         \
+	modify exact [eax];
+
+#define IROUND(x)  iround(x)
+
+float asm_sqrt (float x);
+#pragma aux asm_sqrt =                      \
+	"fsqrt"                             \
+	parm [8087]                         \
+	value [8087]                        \
+	modify exact [];
+
+
+#endif /* assembly/optimized IROUND, IROUND_POS, IFLOOR, ICEIL macros */
+
+
+/* default IROUND macro */
+#ifndef IROUND
+#define IROUND(f)  ((int) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
+#endif
+
+
+/* default IROUND_POS macro */
+#ifndef IROUND_POS
+#ifdef DEBUG
+#define IROUND_POS(f) (ASSERT((f) >= 0.0F), IROUND(f))
+#else
+#define IROUND_POS(f) (IROUND(f))
+#endif
+#endif /* IROUND_POS */
+
+
+/* default IFLOOR macro */
+#ifndef IFLOOR
+static INLINE int ifloor(float f)
+{
+#ifdef USE_IEEE
+   int ai, bi;
+   double af, bf;
+   union { int i; float f; } u;
+
+   af = (3 << 22) + 0.5 + (double)f;
+   bf = (3 << 22) + 0.5 - (double)f;
+   u.f = af; ai = u.i;
+   u.f = bf; bi = u.i;
+   return (ai - bi) >> 1;
+#else
+   int i = IROUND(f);
+   return (i > f) ? i - 1 : i;
+#endif
+}
+#define IFLOOR(x)  ifloor(x)
+#endif /* IFLOOR */
+
+
+/* default ICEIL macro */
+#ifndef ICEIL
+static INLINE int iceil(float f)
+{
+#ifdef USE_IEEE
+   int ai, bi;
+   double af, bf;
+   union { int i; float f; } u;
+   af = (3 << 22) + 0.5 + (double)f;
+   bf = (3 << 22) + 0.5 - (double)f;
+   u.f = af; ai = u.i;
+   u.f = bf; bi = u.i;
+   return (ai - bi + 1) >> 1;
+#else
+   int i = IROUND(f);
+   return (i < f) ? i + 1 : i;
+#endif
+}
+#define ICEIL(x)  iceil(x)
+#endif /* ICEIL */
+
+
+
+/*
+ * Convert unclamped or clamped ([0,1]) floats to ubytes for color
+ * conversion only.  These functions round to the nearest int.
+ */
+#define IEEE_ONE 0x3f800000
+#define IEEE_0996 0x3f7f0000	/* 0.996 or something??? used in macro
+                                   below only */
 
 #if defined(USE_IEEE) && !defined(DEBUG)
 
-#define CLAMP_FLOAT_COLOR(f)			\
-	do {					\
-	   if (*(GLuint *)&f >= IEEE_ONE)	\
-	      f = (*(GLint *)&f < 0) ? 0 : 1;	\
-	} while(0)
-
-#define CLAMP_FLOAT_COLOR_VALUE(f)		\
-    ( (*(GLuint *)&f >= IEEE_ONE)		\
-      ? ((*(GLint *)&f < 0) ? 0 : 1)		\
-      : f )
-
-/* 
+/*
  * This function/macro is sensitive to precision.  Test carefully
  * if you change it.
  */
-#define FLOAT_COLOR_TO_UBYTE_COLOR(b, f)                        \
-        do {                                                    \
-           union { GLfloat r; GLuint i; } tmp;                  \
-           tmp.r = f;                                           \
-           b = ((tmp.i >= IEEE_ONE)                             \
-               ? ((GLint)tmp.i < 0) ? (GLubyte)0 : (GLubyte)255 \
-               : (tmp.r = tmp.r*(255.0F/256.0F) + 32768.0F,     \
-                  (GLubyte)tmp.i));                             \
+#define UNCLAMPED_FLOAT_TO_UBYTE(b, f)					\
+        do {								\
+           union { GLfloat r; GLuint i; } __tmp;			\
+           __tmp.r = (f);						\
+           b = ((__tmp.i >= IEEE_0996)				\
+               ? ((GLint)__tmp.i < 0) ? (GLubyte)0 : (GLubyte)255	\
+               : (__tmp.r = __tmp.r*(255.0F/256.0F) + 32768.0F,		\
+                  (GLubyte)__tmp.i));					\
         } while (0)
 
+#define CLAMPED_FLOAT_TO_UBYTE(b, f) \
+        UNCLAMPED_FLOAT_TO_UBYTE(b, f)
 
-#define CLAMPED_FLOAT_COLOR_TO_UBYTE_COLOR(b,f) \
-         FLOAT_COLOR_TO_UBYTE_COLOR(b, f)
+#define COPY_FLOAT( dst, src )					\
+	((fi_type *) &(dst))->i = ((fi_type *) &(src))->i
 
-#else
+#else /* USE_IEEE */
 
-#define CLAMP_FLOAT_COLOR(f) \
-        (void) CLAMP_SELF(f,0,1)
+#define UNCLAMPED_FLOAT_TO_UBYTE(b, f) \
+	b = ((GLubyte) IROUND(CLAMP(f, 0.0F, 1.0F) * 255.0F))
 
-#define CLAMP_FLOAT_COLOR_VALUE(f) \
-        CLAMP(f,0,1)
-       
-#define FLOAT_COLOR_TO_UBYTE_COLOR(b, f)			\
-	b = ((GLubyte) FloatToInt(CLAMP(f, 0.0F, 1.0F) * 255.0F))
+#define CLAMPED_FLOAT_TO_UBYTE(b, f) \
+	b = ((GLubyte) IROUND((f) * 255.0F))
 
-#define CLAMPED_FLOAT_COLOR_TO_UBYTE_COLOR(b,f) \
-	b = ((GLubyte) FloatToInt(f * 255.0F))
+#define COPY_FLOAT( dst, src )		(dst) = (src)
 
-#endif
+#endif /* USE_IEEE */
+
+
+
+/*
+ * Integer / float conversion for colors, normals, etc.
+ */
+
+/* Convert GLubyte in [0,255] to GLfloat in [0.0,1.0] */
+extern float _mesa_ubyte_to_float_color_tab[256];
+#define UBYTE_TO_FLOAT(u) _mesa_ubyte_to_float_color_tab[(unsigned int)(u)]
+
+/* Convert GLfloat in [0.0,1.0] to GLubyte in [0,255] */
+#define FLOAT_TO_UBYTE(X)	((GLubyte) (GLint) ((X) * 255.0F))
+
+
+/* Convert GLbyte in [-128,127] to GLfloat in [-1.0,1.0] */
+#define BYTE_TO_FLOAT(B)	((2.0F * (B) + 1.0F) * (1.0F/255.0F))
+
+/* Convert GLfloat in [-1.0,1.0] to GLbyte in [-128,127] */
+#define FLOAT_TO_BYTE(X)	( (((GLint) (255.0F * (X))) - 1) / 2 )
+
+
+/* Convert GLushort in [0,65536] to GLfloat in [0.0,1.0] */
+#define USHORT_TO_FLOAT(S)	((GLfloat) (S) * (1.0F / 65535.0F))
+
+/* Convert GLfloat in [0.0,1.0] to GLushort in [0,65536] */
+#define FLOAT_TO_USHORT(X)	((GLushort) (GLint) ((X) * 65535.0F))
+
+
+/* Convert GLshort in [-32768,32767] to GLfloat in [-1.0,1.0] */
+#define SHORT_TO_FLOAT(S)	((2.0F * (S) + 1.0F) * (1.0F/65535.0F))
+
+/* Convert GLfloat in [0.0,1.0] to GLshort in [-32768,32767] */
+#define FLOAT_TO_SHORT(X)	( (((GLint) (65535.0F * (X))) - 1) / 2 )
+
+
+/* Convert GLuint in [0,4294967295] to GLfloat in [0.0,1.0] */
+#define UINT_TO_FLOAT(U)	((GLfloat) (U) * (1.0F / 4294967295.0F))
+
+/* Convert GLfloat in [0.0,1.0] to GLuint in [0,4294967295] */
+#define FLOAT_TO_UINT(X)	((GLuint) ((X) * 4294967295.0))
+
+
+/* Convert GLint in [-2147483648,2147483647] to GLfloat in [-1.0,1.0] */
+#define INT_TO_FLOAT(I)		((2.0F * (I) + 1.0F) * (1.0F/4294967294.0F))
+
+/* Convert GLfloat in [-1.0,1.0] to GLint in [-2147483648,2147483647] */
+/* causes overflow:
+#define FLOAT_TO_INT(X)		( (((GLint) (4294967294.0F * (X))) - 1) / 2 )
+*/
+/* a close approximation: */
+#define FLOAT_TO_INT(X)		( (GLint) (2147483647.0 * (X)) )
+
+
+#define BYTE_TO_UBYTE(b)   ((GLubyte) ((b) < 0 ? 0 : (GLubyte) (b)))
+#define SHORT_TO_UBYTE(s)  ((GLubyte) ((s) < 0 ? 0 : (GLubyte) ((s) >> 7)))
+#define USHORT_TO_UBYTE(s) ((GLubyte) ((s) >> 8))
+#define INT_TO_UBYTE(i)    ((GLubyte) ((i) < 0 ? 0 : (GLubyte) ((i) >> 23)))
+#define UINT_TO_UBYTE(i)   ((GLubyte) ((i) >> 24))
+
+
+#define BYTE_TO_USHORT(b)  ((b) < 0 ? 0 : ((GLushort) (((b) * 65535) / 255)))
+#define UBYTE_TO_USHORT(b) (((GLushort) (b) << 8) | (GLushort) (b))
+#define SHORT_TO_USHORT(s) ((s) < 0 ? 0 : ((GLushort) (((s) * 65535 / 32767))))
+#define INT_TO_USHORT(i)   ((i) < 0 ? 0 : ((GLushort) ((i) >> 15)))
+#define UINT_TO_USHORT(i)  ((i) < 0 ? 0 : ((GLushort) ((i) >> 16)))
+#define UNCLAMPED_FLOAT_TO_USHORT(us, f)   us = (GLushort) ((f) * 65535.0F)
+
+
+
+/*
+ * Linear interpolation
+ * NOTE:  OUT argument is evaluated twice!
+ * NOTE:  Be wary of using *coord++ as an argument to any of these macros!
+ */
+#define LINTERP(T, OUT, IN)	((OUT) + (T) * ((IN) - (OUT)))
+
+/* Can do better with integer math:
+ */
+#define INTERP_UB( t, dstub, outub, inub )	\
+do {						\
+   GLfloat inf = UBYTE_TO_FLOAT( inub );	\
+   GLfloat outf = UBYTE_TO_FLOAT( outub );	\
+   GLfloat dstf = LINTERP( t, outf, inf );	\
+   UNCLAMPED_FLOAT_TO_UBYTE( dstub, dstf );	\
+} while (0)
+
+#define INTERP_CHAN( t, dstc, outc, inc )	\
+do {						\
+   GLfloat inf = CHAN_TO_FLOAT( inc );		\
+   GLfloat outf = CHAN_TO_FLOAT( outc );	\
+   GLfloat dstf = LINTERP( t, outf, inf );	\
+   UNCLAMPED_FLOAT_TO_CHAN( dstc, dstf );	\
+} while (0)
+
+#define INTERP_UI( t, dstui, outui, inui )	\
+   dstui = (GLuint) (GLint) LINTERP( t, (GLfloat) (outui), (GLfloat) (inui) )
+
+#define INTERP_F( t, dstf, outf, inf )		\
+   dstf = LINTERP( t, outf, inf )
+
+#define INTERP_4F( t, dst, out, in )			\
+do {							\
+   (dst)[0] = LINTERP( (t), (out)[0], (in)[0] );	\
+   (dst)[1] = LINTERP( (t), (out)[1], (in)[1] );	\
+   (dst)[2] = LINTERP( (t), (out)[2], (in)[2] );	\
+   (dst)[3] = LINTERP( (t), (out)[3], (in)[3] );	\
+} while (0)
+
+#define INTERP_3F( t, dst, out, in )			\
+do {							\
+   (dst)[0] = LINTERP( (t), (out)[0], (in)[0] );	\
+   (dst)[1] = LINTERP( (t), (out)[1], (in)[1] );	\
+   (dst)[2] = LINTERP( (t), (out)[2], (in)[2] );	\
+} while (0)
+
+#define INTERP_4CHAN( t, dst, out, in )			\
+do {							\
+   INTERP_CHAN( (t), (dst)[0], (out)[0], (in)[0] );	\
+   INTERP_CHAN( (t), (dst)[1], (out)[1], (in)[1] );	\
+   INTERP_CHAN( (t), (dst)[2], (out)[2], (in)[2] );	\
+   INTERP_CHAN( (t), (dst)[3], (out)[3], (in)[3] );	\
+} while (0)
+
+#define INTERP_3CHAN( t, dst, out, in )			\
+do {							\
+   INTERP_CHAN( (t), (dst)[0], (out)[0], (in)[0] );	\
+   INTERP_CHAN( (t), (dst)[1], (out)[1], (in)[1] );	\
+   INTERP_CHAN( (t), (dst)[2], (out)[2], (in)[2] );	\
+} while (0)
+
+#define INTERP_SZ( t, vec, to, out, in, sz )				\
+do {							       		\
+   switch (sz) {							\
+   case 4: (vec)[to][3] = LINTERP( (t), (vec)[out][3], (vec)[in][3] );	\
+   case 3: (vec)[to][2] = LINTERP( (t), (vec)[out][2], (vec)[in][2] );	\
+   case 2: (vec)[to][1] = LINTERP( (t), (vec)[out][1], (vec)[in][1] );	\
+   case 1: (vec)[to][0] = LINTERP( (t), (vec)[out][0], (vec)[in][0] );	\
+   }									\
+} while(0)
+
+
+/*
+ * Fixed point arithmetic macros
+ */
+#define FIXED_ONE       0x00000800
+#define FIXED_HALF      0x00000400
+#define FIXED_FRAC_MASK 0x000007FF
+#define FIXED_INT_MASK  (~FIXED_FRAC_MASK)
+#define FIXED_EPSILON   1
+#define FIXED_SCALE     2048.0f
+#define FIXED_SHIFT     11
+#define FloatToFixed(X) (IROUND((X) * FIXED_SCALE))
+#define IntToFixed(I)   ((I) << FIXED_SHIFT)
+#define FixedToInt(X)   ((X) >> FIXED_SHIFT)
+#define FixedToUns(X)   (((unsigned int)(X)) >> FIXED_SHIFT)
+#define FixedCeil(X)    (((X) + FIXED_ONE - FIXED_EPSILON) & FIXED_INT_MASK)
+#define FixedFloor(X)   ((X) & FIXED_INT_MASK)
+#define FixedToFloat(X) ((X) * (1.0F / FIXED_SCALE))
+#define PosFloatToFixed(X)      FloatToFixed(X)
+#define SignedFloatToFixed(X)   FloatToFixed(X)
 
 #ifdef USE_IEEE
 /* Returns TRUE for x == Inf or x == NaN. */
@@ -297,50 +595,6 @@ static INLINE int IS_INF_OR_NAN( float x )
 #else
 #define IS_INF_OR_NAN(x)        (!finite(x)) 
 #endif
-
-extern float gl_ubyte_to_float_color_tab[256];
-extern float gl_ubyte_to_float_255_color_tab[256];
-#define UBYTE_COLOR_TO_FLOAT_COLOR(c) gl_ubyte_to_float_color_tab[c]
-
-#define UBYTE_COLOR_TO_FLOAT_255_COLOR(c) gl_ubyte_to_float_255_color_tab[c]
-
-#define UBYTE_COLOR_TO_FLOAT_255_COLOR2(f,c) \
-    (*(int *)&(f)) = ((int *)gl_ubyte_to_float_255_color_tab)[c]
-
-
-#define UBYTE_RGBA_TO_FLOAT_RGBA(f,b) 		\
-do {						\
-   f[0] = UBYTE_COLOR_TO_FLOAT_COLOR(b[0]);	\
-   f[1] = UBYTE_COLOR_TO_FLOAT_COLOR(b[1]);	\
-   f[2] = UBYTE_COLOR_TO_FLOAT_COLOR(b[2]);	\
-   f[3] = UBYTE_COLOR_TO_FLOAT_COLOR(b[3]);	\
-} while(0)
-
-
-#define UBYTE_RGBA_TO_FLOAT_255_RGBA(f,b) 		\
-do {						\
-   f[0] = UBYTE_COLOR_TO_FLOAT_255_COLOR(b[0]);	\
-   f[1] = UBYTE_COLOR_TO_FLOAT_255_COLOR(b[1]);	\
-   f[2] = UBYTE_COLOR_TO_FLOAT_255_COLOR(b[2]);	\
-   f[3] = UBYTE_COLOR_TO_FLOAT_255_COLOR(b[3]);	\
-} while(0)
-
-#define FLOAT_RGBA_TO_UBYTE_RGBA(b,f) 		\
-do {						\
-   FLOAT_COLOR_TO_UBYTE_COLOR((b[0]),(f[0]));	\
-   FLOAT_COLOR_TO_UBYTE_COLOR((b[1]),(f[1]));	\
-   FLOAT_COLOR_TO_UBYTE_COLOR((b[2]),(f[2]));	\
-   FLOAT_COLOR_TO_UBYTE_COLOR((b[3]),(f[3]));	\
-} while(0)
-
-#define FLOAT_RGB_TO_UBYTE_RGB(b,f) 		\
-do {						\
-   FLOAT_COLOR_TO_UBYTE_COLOR(b[0],f[0]);	\
-   FLOAT_COLOR_TO_UBYTE_COLOR(b[1],f[1]);	\
-   FLOAT_COLOR_TO_UBYTE_COLOR(b[2],f[2]);	\
-} while(0)
-
-
 
 extern void
 _mesa_init_math(void);

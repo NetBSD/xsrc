@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/expert.c,v 1.12 2001/07/08 00:44:33 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/expert.c,v 1.14 2003/02/07 05:46:53 paulo Exp $
  */
 
 #include "config.h"
@@ -433,7 +433,7 @@ ExpertConfigureEnd(void)
     InitializeVidmodes();
 
     if (save_config_mode != CONFIG_LAYOUT)
-	SetConfigModeCallback(topMenu, (XtPointer)save_config_mode, NULL);
+	SetConfigModeCallback(topMenu, (XtPointer)(long)save_config_mode, NULL);
 }
 
 /*ARGSUSED*/
@@ -1992,11 +1992,11 @@ MonitorUpdate(TreeNode *node)
 
     /* width */
     XtVaGetValues(node->data->monitor.width, XtNstring, &str, NULL, 0);
-    node->data->monitor.monitor->mon_width = atoi(str);
+    node->data->monitor.monitor->mon_width = strtoul(str, NULL, 0);
 
     /* height */
     XtVaGetValues(node->data->monitor.height, XtNstring, &str, NULL, 0);
-    node->data->monitor.monitor->mon_height = atoi(str);
+    node->data->monitor.monitor->mon_height = strtoul(str, NULL, 0);
 
     /* hsync */
     XtVaGetValues(node->data->monitor.hsync, XtNstring, &str, NULL, 0);
@@ -2613,7 +2613,7 @@ DeviceUpdate(TreeNode *node)
 
     /* videoRam */
     XtVaGetValues(node->data->device.videoRam, XtNstring, &str, NULL, 0);
-    node->data->device.device->dev_videoram = atoi(str);
+    node->data->device.device->dev_videoram = strtoul(str, NULL, 0);
 
     /* textClockFreq */
     XtVaGetValues(node->data->device.textClockFreq, XtNstring, &str, NULL, 0);
@@ -2656,28 +2656,28 @@ DeviceUpdate(TreeNode *node)
     /* chipId */
     XtVaGetValues(node->data->device.chipId, XtNstring, &str, NULL, 0);
     if (*str)
-	node->data->device.device->dev_chipid = atoi(str);
+	node->data->device.device->dev_chipid = strtoul(str, NULL, 0);
     else
 	node->data->device.device->dev_chipid = -1;
 
     /* chipRev */
     XtVaGetValues(node->data->device.chipRev, XtNstring, &str, NULL, 0);
     if (*str)
-	node->data->device.device->dev_chiprev = atoi(str);
+	node->data->device.device->dev_chiprev = strtoul(str, NULL, 0);
     else
 	node->data->device.device->dev_chiprev = -1;
 
     /* irq */
     XtVaGetValues(node->data->device.irq, XtNstring, &str, NULL, 0);
     if (*str)
-	node->data->device.device->dev_irq = atoi(str);
+	node->data->device.device->dev_irq = strtoul(str, NULL, 0);
     else
 	node->data->device.device->dev_irq = -1;
 
     /* screen */
     XtVaGetValues(node->data->device.screen, XtNstring, &str, NULL, 0);
     if (*str)
-	node->data->device.device->dev_screen = atoi(str);
+	node->data->device.device->dev_screen = strtoul(str, NULL, 0);
     else
 	node->data->device.device->dev_screen = -1;
 }
@@ -2917,15 +2917,15 @@ ScreenUpdate(TreeNode *node)
 
     /* defautDepth */
     XtVaGetValues(node->data->screen.defaultDepth, XtNstring, &str, NULL, 0);
-    node->data->screen.screen->scrn_defaultdepth = atoi(str);
+    node->data->screen.screen->scrn_defaultdepth = strtoul(str, NULL, 0);
 
         /* defautBpp */
     XtVaGetValues(node->data->screen.defaultBpp, XtNstring, &str, NULL, 0);
-    node->data->screen.screen->scrn_defaultbpp = atoi(str);
+    node->data->screen.screen->scrn_defaultbpp = strtoul(str, NULL, 0);
 
     /* defautFbBpp */
     XtVaGetValues(node->data->screen.defaultFbBpp, XtNstring, &str, NULL, 0);
-    node->data->screen.screen->scrn_defaultfbbpp = atoi(str);
+    node->data->screen.screen->scrn_defaultfbbpp = strtoul(str, NULL, 0);
 
 
     /* XXX Monitor and Device should be changed to a menu interface */
@@ -3254,11 +3254,11 @@ ScreenDisplayUpdate(TreeNode *node)
 
     /* depth */
     XtVaGetValues(node->data->display.depth, XtNstring, &str, NULL, 0);
-    node->data->display.display->disp_depth = atoi(str);
+    node->data->display.display->disp_depth = strtoul(str, NULL, 0);
 
     /* bpp */
     XtVaGetValues(node->data->display.bpp, XtNstring, &str, NULL, 0);
-    node->data->display.display->disp_bpp = atoi(str);
+    node->data->display.display->disp_bpp = strtoul(str, NULL, 0);
 
     /* visual */
     XtVaGetValues(node->data->display.visual, XtNstring, &str, NULL, 0);
@@ -3923,8 +3923,8 @@ AdjacencyToggleCallback(Widget w, XtPointer user_data, XtPointer call_data)
     XtVaGetValues(node->data->adjacency.adjx, XtNstring, &x, NULL, 0);
     XtVaGetValues(node->data->adjacency.adjy, XtNstring, &y, NULL, 0);
 
-    adj->adj_x = atoi(x);
-    adj->adj_y = atoi(y);
+    adj->adj_x = strtol(x, NULL, 0);
+    adj->adj_y = strtol(y, NULL, 0);
 
     if (strcmp(XtName(w), "absolute") == 0) {
     XtVaSetValues(node->data->adjacency.button, XtNlabel, "", NULL, 0);
@@ -4365,7 +4365,7 @@ DRIUpdate(TreeNode *node)
     /* group */
     XtVaGetValues(node->data->dri.group, XtNstring, &str, NULL, 0);
     if (*str)
-	node->data->dri.dri->dri_group = atoi(str);
+	node->data->dri.dri->dri_group = strtoul(str, NULL, 0);
     else
 	node->data->dri.dri->dri_group = -1;
 
@@ -4488,11 +4488,11 @@ BuffersUpdate(TreeNode *node)
 
     /* count */
     XtVaGetValues(node->data->buffers.count, XtNstring, &str, NULL, 0);
-    node->data->buffers.buffers->buf_count = atoi(str);
+    node->data->buffers.buffers->buf_count = strtoul(str, NULL, 0);
 
     /* size */
     XtVaGetValues(node->data->buffers.size, XtNstring, &str, NULL, 0);
-    node->data->buffers.buffers->buf_size = atoi(str);
+    node->data->buffers.buffers->buf_size = strtoul(str, NULL, 0);
 
     /* flags */
     XtVaGetValues(node->data->buffers.flags, XtNstring, &str, NULL, 0);

@@ -66,9 +66,6 @@ int DRM(sg_alloc)( struct inode *inode, struct file *filp,
 	drm_scatter_gather_t request;
 	drm_sg_mem_t *entry;
 	unsigned long pages, i, j;
-	pgd_t *pgd;
-	pmd_t *pmd;
-	pte_t *pte;
 
 	DRM_DEBUG( "%s\n", __FUNCTION__ );
 
@@ -96,6 +93,8 @@ int DRM(sg_alloc)( struct inode *inode, struct file *filp,
 		DRM(free)( entry, sizeof(*entry), DRM_MEM_SGLISTS );
 		return -ENOMEM;
 	}
+
+	memset(entry->pagelist, 0, pages * sizeof(*entry->pagelist));
 
 	entry->busaddr = DRM(alloc)( pages * sizeof(*entry->busaddr),
 				     DRM_MEM_PAGES );
@@ -135,21 +134,10 @@ int DRM(sg_alloc)( struct inode *inode, struct file *filp,
 	DRM_DEBUG( "sg alloc virtual = %p\n", entry->virtual );
 
 	for ( i = entry->handle, j = 0 ; j < pages ; i += PAGE_SIZE, j++ ) {
-		pgd = pgd_offset_k( i );
-		if ( !pgd_present( *pgd ) )
+		entry->pagelist[j] = vmalloc_to_page((void *)i);
+		if (!entry->pagelist[j])
 			goto failed;
-
-		pmd = pmd_offset( pgd, i );
-		if ( !pmd_present( *pmd ) )
-			goto failed;
-
-		pte = pte_offset( pmd, i );
-		if ( !pte_present( *pte ) )
-			goto failed;
-
-		entry->pagelist[j] = pte_page( *pte );
-
-		SetPageReserved( entry->pagelist[j] );
+		SetPageReserved(entry->pagelist[j]);
 	}
 
 	request.handle = entry->handle;

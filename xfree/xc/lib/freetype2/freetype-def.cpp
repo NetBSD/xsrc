@@ -7,14 +7,18 @@ autohint_module_class
 autohinter_interface
 cff_driver_class
 FT_Access_Frame
+#ifndef __UNIXOS2__
 FT_Add64
+#endif
 FT_Add_Module
 FT_Alloc
 FT_Attach_File
 FT_Attach_Stream
 FT_Create_Extensions
 FT_Destroy_Extensions
+#ifndef __UNIXOS2__
 FT_Div64by32
+#endif
 FT_DivFix
 FT_Done_Extensions
 FT_Done_Face
@@ -64,7 +68,9 @@ FT_Load_Glyph
 FT_Lookup_Renderer
 FT_MulDiv
 FT_MulFix
+#ifndef __UNIXOS2__
 FT_MulTo64
+#endif
 FT_New_Face
 FT_New_GlyphSlot
 FT_New_Library
@@ -108,7 +114,9 @@ FT_Set_Pixel_Sizes
 FT_Set_Renderer
 FT_Set_Transform
 FT_Skip_Stream
+#ifndef __UNIXOS2__
 FT_Sqrt64
+#endif
 FT_SqrtFixed
 FT_Stream_Pos
 FT_Vector_Transform
@@ -132,9 +140,11 @@ FT_Set_MM_Design_Coordinates
 FT_Done_Memory
 FT_New_Memory
 FT_New_Stream
+#ifndef __UNIXOS2__
 _cygwin_dll_entry@12
 _cygwin_noncygwin_dll_entry@12
 dll_main@12
+#endif
 ps_table_funcs
 psaux_module_class
 t1_builder_funcs
@@ -148,7 +158,6 @@ sbit_metrics_fields
 sfnt_module_class
 ft_grays_raster
 ft_smooth_renderer_class
-grays_raster_render
 TT_New_Context
 TT_RunIns
 tt_default_graphics_state
@@ -157,4 +166,4 @@ t1_driver_class
 t1cid_driver_class
 winfnt_driver_class
 
-/* $XFree86: xc/lib/freetype2/freetype-def.cpp,v 1.1 2001/04/05 19:29:38 dawes Exp $ */
+/* $XFree86: xc/lib/freetype2/freetype-def.cpp,v 1.2 2002/05/31 18:45:50 dawes Exp $ */

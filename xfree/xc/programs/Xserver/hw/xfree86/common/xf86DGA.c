@@ -3,7 +3,7 @@
 
    Written by Mark Vojkovich
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DGA.c,v 1.43 2001/12/16 18:30:22 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DGA.c,v 1.46 2002/12/03 18:17:40 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86str.h"
@@ -13,7 +13,6 @@
 #include "colormapst.h"
 #include "pixmapstr.h"
 #include "inputstr.h"
-#include "XIproto.h"
 #include "globals.h"
 #include "servermd.h"
 #include "micmap.h"
@@ -28,6 +27,7 @@ static int DGAScreenIndex = -1;
 static Bool DGACloseScreen(int i, ScreenPtr pScreen);
 static void DGADestroyColormap(ColormapPtr pmap);
 static void DGAInstallColormap(ColormapPtr pmap);
+static void DGAUninstallColormap(ColormapPtr pmap);
 
 static void
 DGACopyModeInfo(
@@ -59,6 +59,7 @@ typedef struct {
    CloseScreenProcPtr	CloseScreen;
    DestroyColormapProcPtr DestroyColormap;
    InstallColormapProcPtr InstallColormap;
+   UninstallColormapProcPtr UninstallColormap;
    DGADevicePtr		current;
    DGAFunctionPtr	funcs;
    int			input;
@@ -129,6 +130,8 @@ DGAInit(
     pScreen->DestroyColormap = DGADestroyColormap;
     pScreenPriv->InstallColormap = pScreen->InstallColormap;
     pScreen->InstallColormap = DGAInstallColormap;
+    pScreenPriv->UninstallColormap = pScreen->UninstallColormap;
+    pScreen->UninstallColormap = DGAUninstallColormap;
 
     /*
      * This is now set in InitOutput().
@@ -180,6 +183,7 @@ DGACloseScreen(int i, ScreenPtr pScreen)
    pScreen->CloseScreen = pScreenPriv->CloseScreen;
    pScreen->DestroyColormap = pScreenPriv->DestroyColormap;
    pScreen->InstallColormap = pScreenPriv->InstallColormap;
+   pScreen->UninstallColormap = pScreenPriv->UninstallColormap;
 
    /* DGAShutdown() should have ensured that no DGA
 	screen were active by here */
@@ -235,6 +239,23 @@ DGAInstallColormap(ColormapPtr pmap)
     pScreen->InstallColormap = pScreenPriv->InstallColormap;
     (*pScreen->InstallColormap)(pmap);
     pScreen->InstallColormap = DGAInstallColormap;
+}
+
+static void 
+DGAUninstallColormap(ColormapPtr pmap)
+{
+    ScreenPtr pScreen = pmap->pScreen;
+    DGAScreenPtr pScreenPriv = DGA_GET_SCREEN_PRIV(pScreen);
+
+    if(pScreenPriv->current && pScreenPriv->dgaColormap) {
+	if (pmap == pScreenPriv->dgaColormap) {
+	    pScreenPriv->dgaColormap = NULL;
+	}
+    }
+
+    pScreen->UninstallColormap = pScreenPriv->UninstallColormap;
+    (*pScreen->UninstallColormap)(pmap);
+    pScreen->UninstallColormap = DGAUninstallColormap;
 }
 
 int
@@ -914,7 +935,7 @@ DGAProcessKeyboardEvent (ScreenPtr pScreen, dgaEvent *de, DeviceIntPtr keybd)
     de->u.event.dy = 0;
     de->u.event.screen = pScreen->myNum;
     de->u.event.state = keyc->state | (inputInfo.pointer)->button->state;
-    
+
     /*
      * Keep the core state in sync by duplicating what
      * CoreProcessKeyboardEvent does
@@ -929,14 +950,16 @@ DGAProcessKeyboardEvent (ScreenPtr pScreen, dgaEvent *de, DeviceIntPtr keybd)
 	inputInfo.pointer->valuator->motionHintWindow = NullWindow;
 	*kptr |= bit;
 	keyc->prev_state = keyc->state;
-	for (i = 0, mask = 1; modifiers; i++, mask <<= 1)
-	{
-	    if (mask & modifiers)
+	if (noXkbExtension) {
+	    for (i = 0, mask = 1; modifiers; i++, mask <<= 1)
 	    {
-		/* This key affects modifier "i" */
-		keyc->modifierKeyCount[i]++;
-		keyc->state |= mask;
-		modifiers &= ~mask;
+		if (mask & modifiers)
+		{
+		    /* This key affects modifier "i" */
+		    keyc->modifierKeyCount[i]++;
+		    keyc->state |= mask;
+		    modifiers &= ~mask;
+		}
 	    }
 	}
 	break;
@@ -944,20 +967,21 @@ DGAProcessKeyboardEvent (ScreenPtr pScreen, dgaEvent *de, DeviceIntPtr keybd)
 	inputInfo.pointer->valuator->motionHintWindow = NullWindow;
 	*kptr &= ~bit;
 	keyc->prev_state = keyc->state;
-	for (i = 0, mask = 1; modifiers; i++, mask <<= 1)
-	{
-	    if (mask & modifiers) {
-		/* This key affects modifier "i" */
-		if (--keyc->modifierKeyCount[i] <= 0) {
-		    keyc->state &= ~mask;
-		    keyc->modifierKeyCount[i] = 0;
+	if (noXkbExtension) {
+	    for (i = 0, mask = 1; modifiers; i++, mask <<= 1)
+	    {
+		if (mask & modifiers) {
+		    /* This key affects modifier "i" */
+		    if (--keyc->modifierKeyCount[i] <= 0) {
+			keyc->state &= ~mask;
+			keyc->modifierKeyCount[i] = 0;
+		    }
+		    modifiers &= ~mask;
 		}
-		modifiers &= ~mask;
 	    }
 	}
 	break;
     }
-
     /*
      * Deliver the DGA event
      */

@@ -99,7 +99,7 @@ from The Open Group.
  * The Original Software is CID font code that was developed by Silicon
  * Graphics, Inc.
  */
-/* $XFree86: xc/lib/font/Type1/t1info.c,v 1.17 2001/12/14 19:56:44 dawes Exp $ */
+/* $XFree86: xc/lib/font/Type1/t1info.c,v 1.18 2002/09/10 16:14:33 tsi Exp $ */
 
 #include "fntfilst.h"
 #include "fontutil.h"
@@ -627,6 +627,7 @@ CIDComputeStdProps(FontInfoPtr pInfo, FontScalablePtr Vals,
         pInfo->isStringProp = (char *) 0;
         xfree(pInfo->props);
         pInfo->props = (FontPropPtr) 0;
+        pInfo->nprops = 0;
         return;
     }
     bzero(pInfo->isStringProp, (sizeof(char) * nprops));

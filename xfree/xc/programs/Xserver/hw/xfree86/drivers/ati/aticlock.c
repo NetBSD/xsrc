@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticlock.c,v 1.18 2002/01/16 16:22:26 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/aticlock.c,v 1.20 2003/01/01 19:16:31 tsi Exp $ */
 /*
- * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -430,7 +430,7 @@ static const CARD8 ClockMaps[][4] =
  * This function tries to match the XF86Config clocks to one of an array of
  * clock lines.  It returns a clock line number or 0.
  */
-static const int
+static int
 ATIMatchClockLine
 (
     ScrnInfoPtr              pScreenInfo,

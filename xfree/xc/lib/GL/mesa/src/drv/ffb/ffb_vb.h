@@ -1,63 +1,46 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_vb.h,v 1.1 2000/06/20 05:08:40 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_vb.h,v 1.2 2002/02/22 21:32:59 dawes Exp $ */
 
 #ifndef _FFB_VB_H
 #define _FFB_VB_H
 
-#include "vb.h"
-#include "types.h"
+#include "mtypes.h"
+#include "macros.h"
+#include "mmath.h"
+#include "tnl/t_context.h"
+#include "swrast/swrast.h"
 
-/* Use this to disable ffb VB processing, presumable to try
- * and isolate bugs.
- */
-#undef FFB_VB_DISABLE
+#define __FFB_2_30_FIXED_SCALE		1073741824.0f
+#define FFB_2_30_FLOAT_TO_FIXED(X)	\
+	(IROUND((X) * fmesa->ffb_2_30_fixed_scale))
+#define FFB_2_30_FIXED_TO_FLOAT(X)	\
+	(((GLfloat)(X)) * fmesa->ffb_one_over_2_30_fixed_scale)
 
-/* These are all in 2:30 signed fixed point format. */
-typedef struct {
-	GLuint	alpha;
-	GLuint	red;
-	GLuint	green;
-	GLuint	blue;
-} ffb_color;
+#define __FFB_16_16_FIXED_SCALE		65536.0f
+#define FFB_16_16_FLOAT_TO_FIXED(X)	\
+	(IROUND((X) * fmesa->ffb_16_16_fixed_scale))
+#define FFB_16_16_FIXED_TO_FLOAT(X)	\
+	(((GLfloat)(X)) * fmesa->ffb_one_over_16_16_fixed_scale)
 
-#define FFB_COLOR_FROM_UBYTE(VAL)	(((((GLuint)(VAL)) + 1) & (255 << 1)) << (30 - 8))
+#define FFB_Z_FROM_FLOAT(VAL)	  FFB_2_30_FLOAT_TO_FIXED(VAL)
+#define FFB_Z_TO_FLOAT(VAL)	  FFB_2_30_FIXED_TO_FLOAT(VAL)
+#define FFB_XY_FROM_FLOAT(VAL)	  FFB_16_16_FLOAT_TO_FIXED(VAL)
+#define FFB_XY_TO_FLOAT(VAL)	  FFB_16_16_FIXED_TO_FLOAT(VAL)
 
-typedef struct {
-	/* As for colors, this is in 2:30 signed fixed point. */
-	GLint		z;
+#define FFB_UBYTE_FROM_COLOR(VAL) ((IROUND((VAL) * fmesa->ffb_ubyte_color_scale)))
 
-	/* These are in 16:16 fixed point. */
-	GLuint		y, x;
+#define FFB_PACK_CONST_UBYTE_ARGB_COLOR(C) 		\
+        ((FFB_UBYTE_FROM_COLOR(C.alpha) << 24) |	\
+         (FFB_UBYTE_FROM_COLOR(C.blue)  << 16) |	\
+         (FFB_UBYTE_FROM_COLOR(C.green) <<  8) |	\
+         (FFB_UBYTE_FROM_COLOR(C.red)   <<  0))
 
-	ffb_color	color[2];
-} ffb_vertex;
+#define FFB_COLOR_FROM_FLOAT(VAL) FFB_2_30_FLOAT_TO_FIXED(VAL)
 
-#define FFB_Z_FROM_FLOAT(VAL)		((GLint)((VAL) * 1073741824.0f))
-#define FFB_COORD_FROM_FLOAT(VAL)	((GLuint)((VAL) * 65536.0f))
-
-struct ffb_vertex_buffer_t {
-	GLvector1ui	clipped_elements;
-	ffb_vertex	*verts;
-	int		last_virt;
-	GLuint		*primitive;
-	GLuint		*next_primitive;
-	GLuint		size;
-};
-
-typedef struct ffb_vertex_buffer_t *FFBVertexBufferPtr;
-
-#define FFB_DRIVER_DATA(vb)	((FFBVertexBufferPtr)((vb)->driver_data))
-
-#define FFB_VB_RGBA_BIT		0x01
-#define FFB_VB_WIN_BIT		0x02
-#define FFB_VB_TWOSIDE_BIT	0x04
+#define _FFB_NEW_VERTEX (_DD_NEW_TRI_LIGHT_TWOSIDE)
 
 extern void ffbDDSetupInit(void);
-extern void ffbChooseRasterSetupFunc(GLcontext *);
-extern void ffbDDCheckPartialRasterSetup(GLcontext *, struct gl_pipeline_stage *);
-extern void ffbDDPartialRasterSetup(struct vertex_buffer *);
-extern void ffbDDDoRasterSetup(struct vertex_buffer *);
-extern void ffbDDResizeVB(struct vertex_buffer *, GLuint);
-extern void ffbDDRegisterVB(struct vertex_buffer *);
-extern void ffbDDUnregisterVB(struct vertex_buffer *);
+extern void ffbChooseVertexState(GLcontext *);
+extern void ffbInitVB( GLcontext *ctx );
+extern void ffbFreeVB( GLcontext *ctx );
 
 #endif /* !(_FFB_VB_H) */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_regs.h,v 1.7 2000/02/29 03:09:18 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_regs.h,v 1.8 2002/01/25 21:55:55 tsi Exp $ */
 
 
 
@@ -48,27 +48,39 @@
 			curr32[MIN(((addr) / 4), 0x20)] = (val); }} while (0)
 
 /* IO port access to extended registers */
-#define RDXB_IOP(addr)     (wrinx(0x3C4, 0x1D, (addr) >> 2),inb(pApm->xbase + ((addr) & 3)))
-#define RDXW_IOP(addr)     (wrinx(0x3C4, 0x1D, (addr) >> 2),inw(pApm->xbase + ((addr) & 2)))
-#define RDXL_IOP(addr)     (wrinx(0x3C4, 0x1D, (addr) >> 2),inl(pApm->xbase))
-#define WRXB_IOP(addr,val) do { if (check08((addr), (val))) {		     \
-				    wrinx(0x3C4, 0x1D, (addr) >> 2);	     \
-				    outb(pApm->xbase + ((addr) & 3), (val)); \
-				    curr08[MIN((addr), 0x80)] = (val);	     \
-				    break;				     \
-				}} while (1)
-#define WRXW_IOP(addr,val) do { if (check16((addr), (val))) {		     \
-				    wrinx(0x3C4, 0x1D, (addr) >> 2);	     \
-				    outw(pApm->xbase + ((addr) & 2), (val)); \
-				    curr16[MIN(((addr) / 2), 0x40)] = (val); \
-				    break;				     \
-				}} while (1)
-#define WRXL_IOP(addr,val) do { if (check32((addr), (val))) {		     \
-				    wrinx(0x3C4, 0x1D, (addr) >> 2);	     \
-				    outl(pApm->xbase, (val));		     \
-				    curr32[MIN(((addr) / 4), 0x20)] = (val); \
-				    break;				     \
-				}} while (1)
+#define RDXB_IOP(addr)     (wrinx(pApm->xport, 0x1D, (addr) >> 2), \
+			    inb(pApm->xbase + ((addr) & 3)))
+#define RDXW_IOP(addr)     (wrinx(pApm->xport, 0x1D, (addr) >> 2), \
+			    inw(pApm->xbase + ((addr) & 2)))
+#define RDXL_IOP(addr)     (wrinx(pApm->xport, 0x1D, (addr) >> 2), \
+			    inl(pApm->xbase))
+#define WRXB_IOP(addr,val)					   \
+    do { 							   \
+	if (check08((addr), (val))) {				   \
+	    wrinx(pApm->xport, 0x1D, (addr) >> 2);		   \
+	    outb(pApm->xbase + ((addr) & 3), (val));		   \
+	    curr08[MIN((addr), 0x80)] = (val);			   \
+	    break;						   \
+	}							   \
+    } while (1)
+#define WRXW_IOP(addr,val)					   \
+    do {							   \
+	if (check16((addr), (val))) {				   \
+	    wrinx(pApm->xport, 0x1D, (addr) >> 2);		   \
+	    outw(pApm->xbase + ((addr) & 2), (val));		   \
+	    curr16[MIN(((addr) / 2), 0x40)] = (val);		   \
+	    break;						   \
+	}							   \
+    } while (1)
+#define WRXL_IOP(addr,val)					   \
+    do {							   \
+	if (check32((addr), (val))) {				   \
+	    wrinx(pApm->xport, 0x1D, (addr) >> 2);		   \
+	    outl(pApm->xbase, (val));				   \
+	    curr32[MIN(((addr) / 4), 0x20)] = (val);		   \
+	    break;						   \
+	}							   \
+    } while (1)
 
 #define WRXL	WRXL_M
 #define WRXW	WRXW_M

@@ -1,5 +1,5 @@
 .\"
-.\" $XFree86: xc/lib/Xft/Xft.man,v 1.2 2000/11/30 06:59:45 keithp Exp $
+.\" $XFree86: xc/lib/Xft/Xft.man,v 1.3 2002/10/04 15:06:18 keithp Exp $
 .\"
 .\" Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
 .\"
@@ -172,10 +172,11 @@ Where ASSIGN is "=", the matching value in the pattern will be replaced by
 the given expression.  "+="/"=+" will prepend/append a new value to the list
 of values for the indicated field.
 
-.SH RESTRICTIONS
+.SH COMPATIBILITY
+As of version 2, 
 .B Xft
-will probably change radically in the future; weak attempts will be made to
-retain some level of source-file compatibility.
+has become relatively stable and is expected to retain source and binary
+compatibility in future releases.
 
 .SH AUTHOR
 Keith Packard, member of the XFree86 Project, Inc.

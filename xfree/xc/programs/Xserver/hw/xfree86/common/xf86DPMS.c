@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DPMS.c,v 1.7 2001/10/28 03:33:18 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86DPMS.c,v 1.8 2003/02/13 02:41:09 dawes Exp $ */
 
 /*
  * Copyright (c) 1997-1998 by The XFree86 Project, Inc.
@@ -79,7 +79,13 @@ xf86DPMSInit(ScreenPtr pScreen, DPMSSetProcPtr set, int flags)
 static Bool
 DPMSClose(int i, ScreenPtr pScreen)
 {
-    DPMSPtr pDPMS = (DPMSPtr)pScreen->devPrivates[DPMSIndex].ptr;
+    DPMSPtr pDPMS;
+
+    /* This shouldn't happen */
+    if (DPMSIndex < 0)
+	return FALSE;
+
+    pDPMS = (DPMSPtr)pScreen->devPrivates[DPMSIndex].ptr;
 
     /* This shouldn't happen */
     if (!pDPMS)
@@ -88,7 +94,7 @@ DPMSClose(int i, ScreenPtr pScreen)
     pScreen->CloseScreen = pDPMS->CloseScreen;
 
     xfree((pointer)pDPMS);
-    pDPMS = NULL;
+    pScreen->devPrivates[DPMSIndex].ptr = NULL;
     if (--DPMSCount == 0)
 	DPMSIndex = -1;
     return pScreen->CloseScreen(i, pScreen);

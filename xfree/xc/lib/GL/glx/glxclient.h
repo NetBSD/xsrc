@@ -31,7 +31,7 @@
 ** published by SGI, but has not been independently verified as being
 ** compliant with the OpenGL(R) version 1.2.1 Specification.
 */
-/* $XFree86: xc/lib/GL/glx/glxclient.h,v 1.13 2001/04/10 16:07:49 dawes Exp $ */
+/* $XFree86: xc/lib/GL/glx/glxclient.h,v 1.15 2002/10/30 12:51:26 alanh Exp $ */
 
 /*
  * Direct rendering support added by Precision Insight, Inc.
@@ -47,11 +47,12 @@
 #define NEED_EVENTS
 #include <X11/Xproto.h>
 #include <X11/Xlibint.h>
+#define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
 #include <string.h>
 #include <stdlib.h>
-#include "glxint.h"
-#include "glxproto.h"
+#include "GL/glxint.h"
+#include "GL/glxproto.h"
 #include "glapitable.h"
 #ifdef NEED_GL_FUNCS_WRAPPED
 #include "indirect.h"
@@ -59,7 +60,9 @@
 #ifdef XTHREADS
 #include "Xthreads.h"
 #endif
-
+#ifdef GLX_BUILT_IN_XMESA
+#include "realglx.h"  /* just silences prototype warnings */
+#endif
 
 #define GLX_MAJOR_VERSION	1	/* current version numbers */
 #define GLX_MINOR_VERSION	2
@@ -95,7 +98,7 @@ struct __DRIdisplayRec {
     /*
     ** Method to destroy the private DRI display data.
     */
-    void (*destroyDisplay)(Display *dpy, void *private);
+    void (*destroyDisplay)(Display *dpy, void *displayPrivate);
 
     /*
     ** Methods to create the private DRI screen data and initialize the
@@ -108,7 +111,7 @@ struct __DRIdisplayRec {
     /*
     ** Opaque pointer to private per display direct rendering data.
     ** NULL if direct rendering is not supported on this display.  Never
-    ** dereference by this code.
+    ** dereferenced in libGL.
     */
     void *private;
 };
@@ -121,13 +124,13 @@ struct __DRIscreenRec {
     /*
     ** Method to destroy the private DRI screen data.
     */
-    void (*destroyScreen)(Display *dpy, int scrn, void *private);
+    void (*destroyScreen)(Display *dpy, int scrn, void *screenPrivate);
 
     /*
     ** Method to create the private DRI context data and initialize the
     ** context dependent methods.
     */
-    void *(*createContext)(Display *dpy, XVisualInfo *vis, void *shared,
+    void *(*createContext)(Display *dpy, XVisualInfo *vis, void *sharedPrivate,
 			   __DRIcontext *pctx);
 
     /*
@@ -141,12 +144,18 @@ struct __DRIscreenRec {
     ** Method to return a pointer to the DRI drawable data.
     */
     __DRIdrawable *(*getDrawable)(Display *dpy, GLXDrawable draw,
-				  void *private);
+				  void *drawablePrivate);
+
+    /*
+    ** XXX in the future, implement this:
+    void *(*createPBuffer)(Display *dpy, int scrn, GLXPbuffer pbuffer,
+			   GLXFBConfig config, __DRIdrawable *pdraw);
+    **/
 
     /*
     ** Opaque pointer to private per screen direct rendering data.  NULL
     ** if direct rendering is not supported on this screen.  Never
-    ** dereference by this code.
+    ** dereferenced in libGL.
     */
     void *private;
 };
@@ -159,10 +168,12 @@ struct __DRIcontextRec {
     /*
     ** Method to destroy the private DRI context data.
     */
-    void (*destroyContext)(Display *dpy, int scrn, void *private);
+    void (*destroyContext)(Display *dpy, int scrn, void *contextPrivate);
 
     /*
     ** Method to bind a DRI drawable to a DRI graphics context.
+    ** XXX in the future, also pass a 'read' GLXDrawable for
+    ** glXMakeCurrentReadSGI() and GLX 1.3's glXMakeContextCurrent().
     */
     Bool (*bindContext)(Display *dpy, int scrn, GLXDrawable draw,
 			GLXContext gc);
@@ -176,33 +187,31 @@ struct __DRIcontextRec {
     /*
     ** Opaque pointer to private per context direct rendering data.
     ** NULL if direct rendering is not supported on the display or
-    ** screen used to create this context.  Never dereference by this
-    ** code.
+    ** screen used to create this context.  Never dereferenced in libGL.
     */
     void *private;
 };
 
 /*
 ** Drawable dependent methods.  This structure is initialized during the
-** (*createDrawable)() call.  These methods are not currently called
-** from GLX 1.2, but could be used in GLX 1.3.
+** (*createDrawable)() call.  createDrawable() is not called by libGL at
+** this time.  It's currently used via the dri_util.c utility code instead.
 */
 struct __DRIdrawableRec {
     /*
     ** Method to destroy the private DRI drawable data.
     */
-    void (*destroyDrawable)(Display *dpy, void *private);
+    void (*destroyDrawable)(Display *dpy, void *drawablePrivate);
 
     /*
     ** Method to swap the front and back buffers.
     */
-    void (*swapBuffers)(Display *dpy, void *private);
+    void (*swapBuffers)(Display *dpy, void *drawablePrivate);
 
     /*
     ** Opaque pointer to private per drawable direct rendering data.
     ** NULL if direct rendering is not supported on the display or
-    ** screen used to create this drawable.  Never dereference by this
-    ** code.
+    ** screen used to create this drawable.  Never dereferenced in libGL.
     */
     void *private;
 };
@@ -538,6 +547,10 @@ extern __GLXdisplayPrivate *__glXInitialize(Display*);
 /* Query drivers for dynamically registered extensions */
 extern void __glXRegisterExtensions(void);
 
+/* Functions for extending the GLX API: */
+extern void *__glXRegisterGLXFunction(const char *funcName, void *funcAddr);
+extern void __glXRegisterGLXExtensionString(const char *extName);
+
 
 /************************************************************************/
 
@@ -560,7 +573,6 @@ extern __GLXcontext *__glXcurrentContext;
 */
 #if defined(GLX_DIRECT_RENDERING) && defined(XTHREADS)
 extern xmutex_rec __glXmutex;
-extern xmutex_rec __glXSwapBuffersMutex;
 #define __glXLock()    xmutex_lock(&__glXmutex)
 #define __glXUnlock()  xmutex_unlock(&__glXmutex)
 #else
@@ -675,5 +687,19 @@ extern Status _XReply(Display*, xReply*, int, Bool);
 extern void _XRead(Display*, void*, long);
 extern void _XSend(Display*, const void*, long);
 #endif
+
+
+/*
+** GLX_BUILT_IN_XMESA controls whether libGL has a built-in verions of
+** Mesa that can render to non-GLX displays.
+*/
+#ifdef GLX_BUILT_IN_XMESA
+#define GLX_PREFIX(function)  _real_##function
+#else
+#define GLX_PREFIX(function)  function
+#endif
+
+
+extern char *__glXstrdup(const char *str);
 
 #endif /* !__GLX_client_h__ */

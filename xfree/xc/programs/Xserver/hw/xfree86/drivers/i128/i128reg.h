@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128reg.h,v 1.2 2000/10/23 14:11:39 robin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i128/i128reg.h,v 1.3 2002/01/25 21:56:02 tsi Exp $ */
 /*
  * Copyright 1994 by Robin Cutshaw <robin@XFree86.Org>
  *
@@ -26,6 +26,7 @@
 #ifndef I128REG_H
 #define I128REG_H
 
+#include "xf86Pci.h"
 
 struct i128pci {
     CARD32 devicevendor;
@@ -75,7 +76,7 @@ struct i128mem {
 
 /* save the registers needed for restoration in this structure */
 typedef struct {
-	unsigned short iobase;		/* saved only for iobase indexing    */
+	IOADDRESS iobase;		/* saved only for iobase indexing    */
 	CARD32 config1;			/* iobase+0x1C register              */
 	CARD32 config2;			/* iobase+0x20 register              */
 	CARD32 sgram;			/* iobase+0x24 register              */

@@ -1,3 +1,4 @@
+/* $XFree86: xc/extras/FreeType/contrib/ftos2/ifi/test.c,v 1.2 2003/01/12 03:55:43 tsi Exp $ */
 
 #include <os2.h>
 
@@ -8,13 +9,13 @@
 
 //#define USE_ORIG
 #ifdef USE_ORIG
-   #pragma import (fdhdr, "FONT_DRIVER_DISPATCH_TABLE", "TRUETYPE", 0)
+#  pragma import (fdhdr, "FONT_DRIVER_DISPATCH_TABLE", "TRUETYPE", 0)
 #else
-  #if defined USE_ATM
-    #pragma import (fdhdr, "FONT_DRIVER_DISPATCH_TABLE", "PMATM", 0)
-  #else
-    #pragma import (fdhdr, "FONT_DRIVER_DISPATCH_TABLE", "FREETYPE", 0)
-  #endif
+#  if defined USE_ATM
+#    pragma import (fdhdr, "FONT_DRIVER_DISPATCH_TABLE", "PMATM", 0)
+#  else
+#    pragma import (fdhdr, "FONT_DRIVER_DISPATCH_TABLE", "FREETYPE", 0)
+#  endif
 #endif
 
 extern FDHEADER fdhdr;
@@ -42,9 +43,9 @@ char *fontnames[20] = {
 
 #define FNTNAME1 "\\PSFONTS\\TIMES.TTF"
 #ifdef USE_ATM
-   #define FNTNAME2 "\\PSFONTS\\helv.ofm"
+#  define FNTNAME2 "\\PSFONTS\\helv.ofm"
 #else
-   #define FNTNAME2 "\\PSFONTS\\symbol.tTf"
+#  define FNTNAME2 "\\PSFONTS\\symbol.tTf"
 #endif
 
 #define BUFSIZE 32768

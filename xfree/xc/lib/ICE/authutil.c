@@ -26,7 +26,7 @@ in this Software without prior written authorization from The Open Group.
 
 Author: Ralph Mor, X Consortium
 ******************************************************************************/
-/* $XFree86: xc/lib/ICE/authutil.c,v 3.8 2001/12/14 19:53:35 dawes Exp $ */
+/* $XFree86: xc/lib/ICE/authutil.c,v 3.9 2002/05/31 18:45:41 dawes Exp $ */
 
 #include <X11/ICE/ICElib.h>
 #include "ICElibint.h"
@@ -37,7 +37,7 @@ Author: Ralph Mor, X Consortium
 
 #include <time.h>
 #define Time_t time_t
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 extern char* getenv(const char*);
 #define link rename
 #endif
@@ -75,7 +75,7 @@ IceAuthFileName ()
     static char	*buf;
     static int	bsize;
     int	    	size;
-#if defined(WIN32) || defined(__EMX__)
+#if defined(WIN32) || defined(__UNIXOS2__)
 #ifndef PATH_MAX
 #define PATH_MAX 512
 #endif
@@ -107,7 +107,7 @@ IceAuthFileName ()
     }
     if (!name)
 #endif
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 	strcpy (dir,"c:");
 	name = dir;
 	if (!name)

@@ -35,6 +35,7 @@
 * Description:  Header file for instruction decoding logic.
 *
 ****************************************************************************/
+/* $XFree86: xc/extras/x86emu/src/x86emu/x86emu/decode.h,v 1.3 2002/07/23 01:51:03 tsi Exp $ */
 
 #ifndef __X86EMU_DECODE_H
 #define __X86EMU_DECODE_H
@@ -76,9 +77,10 @@ u8* 	decode_rm_byte_register(int reg);
 u16* 	decode_rm_word_register(int reg);
 u32* 	decode_rm_long_register(int reg);
 u16* 	decode_rm_seg_register(int reg);
-unsigned decode_rm00_address(int rm);
-unsigned decode_rm01_address(int rm);
-unsigned decode_rm10_address(int rm);
+u32	decode_rm00_address(int rm);
+u32	decode_rm01_address(int rm);
+u32	decode_rm10_address(int rm);
+u32	decode_sib_address(int sib, int mod);
 
 #ifdef  __cplusplus
 }                       			/* End of "C" linkage for C++   	*/

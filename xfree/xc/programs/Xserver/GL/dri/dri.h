@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/dri.h,v 1.18 2001/03/21 16:21:40 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/dri.h,v 1.19 2002/10/30 12:52:03 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -28,7 +28,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /*
  * Authors:
- *   Jens Owen <jens@precisioninsight.com>
+ *   Jens Owen <jens@tungstengraphics.com>
  *
  */
 
@@ -97,7 +97,12 @@ typedef struct {
 
 
 typedef struct {
-    /* driver call back functions */
+    /* driver call back functions
+     *
+     * New fields should be added at the end for backwards compatability.
+     * Don't forget to bump the version minor number in 
+     *   xc/lib/GL/dri/xf86dristr.h
+     */
     Bool	(*CreateContext)(ScreenPtr pScreen,
 				 VisualPtr visual,
 				 drmContext hHWContext,
@@ -121,6 +126,7 @@ typedef struct {
 			       CARD32 indx);
     void        (*TransitionTo3d)(ScreenPtr pScreen);
     void        (*TransitionTo2d)(ScreenPtr pScreen);
+
     void	(*SetDrawableIndex)(WindowPtr pWin, CARD32 indx);
     Bool        (*OpenFullScreen)(ScreenPtr pScreen);
     Bool        (*CloseFullScreen)(ScreenPtr pScreen);
@@ -148,6 +154,10 @@ typedef struct {
     void*		devPrivate;
     Bool		createDummyCtx;
     Bool		createDummyCtxPriv;
+
+    /* New with DRI version 4.1.0 */
+    void        (*TransitionSingleToMulti3D)(ScreenPtr pScreen);
+    void        (*TransitionMultiToSingle3D)(ScreenPtr pScreen);
 } DRIInfoRec, *DRIInfoPtr;
 
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_depth.c,v 1.1 2000/06/20 05:08:38 dawes Exp $
+/* $XFree86: xc/lib/GL/mesa/src/drv/ffb/ffb_depth.c,v 1.2 2002/02/22 21:32:58 dawes Exp $
  *
  * GLX Hardware Device Driver for Sun Creator/Creator3D
  * Copyright (C) 2000 David S. Miller
@@ -25,17 +25,26 @@
  *    David S. Miller <davem@redhat.com>
  */
 
-#include "types.h"
+#include "mtypes.h"
+#include "swrast/swrast.h"
 #include "ffb_dd.h"
 #include "ffb_span.h"
 #include "ffb_context.h"
 #include "ffb_depth.h"
 #include "ffb_lock.h"
 
+#include "swrast/swrast.h"
+
+#undef DEPTH_TRACE
+
 static void 
 FFBWriteDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y,
 		  const GLdepth depth[], const GLubyte mask[])
 {
+#ifdef DEPTH_TRACE
+	fprintf(stderr, "FFBWriteDepthSpan: n(%d) x(%d) y(%d)\n",
+		(int) n, x, y);
+#endif
 	if (ctx->Depth.Mask) {
 		ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 		__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
@@ -76,6 +85,9 @@ static void
 FFBWriteDepthPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
 		    const GLdepth depth[], const GLubyte mask[])
 {
+#ifdef DEPTH_TRACE
+	fprintf(stderr, "FFBWriteDepthPixels: n(%d)\n", (int) n);
+#endif
 	if (ctx->Depth.Mask) {
 		ffbContextPtr fmesa = FFB_CONTEXT(ctx);
 		__DRIdrawablePrivate *dPriv = fmesa->driDrawable;
@@ -122,6 +134,10 @@ FFBReadDepthSpan(GLcontext *ctx, GLuint n, GLint x, GLint y, GLdepth depth[])
 	GLuint *zptr;
 	GLuint i;
 
+#ifdef DEPTH_TRACE
+	fprintf(stderr, "FFBReadDepthSpan: n(%d) x(%d) y(%d)\n",
+		(int) n, x, y);
+#endif
 	if (!fmesa->hw_locked)
 		LOCK_HARDWARE(fmesa);
 	FFBFifo(fmesa, 1);
@@ -156,6 +172,9 @@ FFBReadDepthPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
 	char *zbase;
 	GLuint i;
 
+#ifdef DEPTH_TRACE
+	fprintf(stderr, "FFBReadDepthPixels: n(%d)\n", (int) n);
+#endif
 	if (!fmesa->hw_locked)
 		LOCK_HARDWARE(fmesa);
 	FFBFifo(fmesa, 1);
@@ -185,8 +204,11 @@ FFBReadDepthPixels(GLcontext *ctx, GLuint n, const GLint x[], const GLint y[],
 
 void ffbDDInitDepthFuncs(GLcontext *ctx)
 {
-	ctx->Driver.WriteDepthSpan	= FFBWriteDepthSpan;
-	ctx->Driver.ReadDepthSpan	= FFBReadDepthSpan;
-	ctx->Driver.WriteDepthPixels	= FFBWriteDepthPixels;
-	ctx->Driver.ReadDepthPixels	= FFBReadDepthPixels;
+	struct swrast_device_driver *swdd = 
+		_swrast_GetDeviceDriverReference(ctx);
+   
+	swdd->WriteDepthSpan	= FFBWriteDepthSpan;
+	swdd->ReadDepthSpan	= FFBReadDepthSpan;
+	swdd->WriteDepthPixels	= FFBWriteDepthPixels;
+	swdd->ReadDepthPixels	= FFBReadDepthPixels;
 }

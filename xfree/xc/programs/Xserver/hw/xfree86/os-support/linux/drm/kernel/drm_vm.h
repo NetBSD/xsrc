@@ -33,27 +33,27 @@
 #include "drmP.h"
 
 struct vm_operations_struct   DRM(vm_ops) = {
-	nopage:	 DRM(vm_nopage),
-	open:	 DRM(vm_open),
-	close:	 DRM(vm_close),
+	.nopage = DRM(vm_nopage),
+	.open	= DRM(vm_open),
+	.close	= DRM(vm_close),
 };
 
 struct vm_operations_struct   DRM(vm_shm_ops) = {
-	nopage:	 DRM(vm_shm_nopage),
-	open:	 DRM(vm_open),
-	close:	 DRM(vm_shm_close),
+	.nopage = DRM(vm_shm_nopage),
+	.open	= DRM(vm_open),
+	.close	= DRM(vm_shm_close),
 };
 
 struct vm_operations_struct   DRM(vm_dma_ops) = {
-	nopage:	 DRM(vm_dma_nopage),
-	open:	 DRM(vm_open),
-	close:	 DRM(vm_close),
+	.nopage = DRM(vm_dma_nopage),
+	.open	= DRM(vm_open),
+	.close	= DRM(vm_close),
 };
 
 struct vm_operations_struct   DRM(vm_sg_ops) = {
-	nopage:  DRM(vm_sg_nopage),
-	open:    DRM(vm_open),
-	close:   DRM(vm_close),
+	.nopage = DRM(vm_sg_nopage),
+	.open   = DRM(vm_open),
+	.close  = DRM(vm_close),
 };
 
 struct page *DRM(vm_nopage)(struct vm_area_struct *vma,
@@ -71,7 +71,7 @@ struct page *DRM(vm_nopage)(struct vm_area_struct *vma,
          * Find the right map
          */
 
-	if(!dev->agp->cant_use_aperture) goto vm_nopage_error;
+	if(!dev->agp || !dev->agp->cant_use_aperture) goto vm_nopage_error;
 
 	list_for_each(list, &dev->maplist->head) {
 		r_list = (drm_map_list_t *)list;
@@ -130,9 +130,6 @@ struct page *DRM(vm_shm_nopage)(struct vm_area_struct *vma,
 	drm_map_t	 *map	 = (drm_map_t *)vma->vm_private_data;
 	unsigned long	 offset;
 	unsigned long	 i;
-	pgd_t		 *pgd;
-	pmd_t		 *pmd;
-	pte_t		 *pte;
 	struct page	 *page;
 
 	if (address > vma->vm_end) return NOPAGE_SIGBUS; /* Disallow mremap */
@@ -140,20 +137,12 @@ struct page *DRM(vm_shm_nopage)(struct vm_area_struct *vma,
 
 	offset	 = address - vma->vm_start;
 	i = (unsigned long)map->handle + offset;
-	/* We have to walk page tables here because we need large SAREA's, and
-	 * they need to be virtually contiguous in kernel space.
-	 */
-	pgd = pgd_offset_k( i );
-	if( !pgd_present( *pgd ) ) return NOPAGE_OOM;
-	pmd = pmd_offset( pgd, i );
-	if( !pmd_present( *pmd ) ) return NOPAGE_OOM;
-	pte = pte_offset( pmd, i );
-	if( !pte_present( *pte ) ) return NOPAGE_OOM;
-
-	page = pte_page(*pte);
+	page = vmalloc_to_page((void *)i);
+	if (!page)
+		return NOPAGE_OOM;
 	get_page(page);
 
-	DRM_DEBUG("0x%08lx => 0x%08x\n", address, page_to_bus(page));
+	DRM_DEBUG("shm_nopage 0x%lx\n", address);
 	return page;
 }
 
@@ -255,8 +244,7 @@ struct page *DRM(vm_dma_nopage)(struct vm_area_struct *vma,
 
 	get_page(page);
 
-	DRM_DEBUG("0x%08lx (page %lu) => 0x%08x\n", address, page_nr, 
-		  page_to_bus(page));
+	DRM_DEBUG("dma_nopage 0x%lx (page %lu)\n", address, page_nr);
 	return page;
 }
 
@@ -355,7 +343,7 @@ int DRM(mmap_dma)(struct file *filp, struct vm_area_struct *vma)
 
 	vma->vm_ops   = &DRM(vm_dma_ops);
 
-#if LINUX_VERSION_CODE <= 0x020414
+#if LINUX_VERSION_CODE <= 0x02040e /* KERNEL_VERSION(2,4,14) */
 	vma->vm_flags |= VM_LOCKED | VM_SHM; /* Don't swap */
 #else
 	vma->vm_flags |= VM_RESERVED; /* Don't swap */
@@ -420,7 +408,7 @@ int DRM(mmap)(struct file *filp, struct vm_area_struct *vma)
 
 	if (!capable(CAP_SYS_ADMIN) && (map->flags & _DRM_READ_ONLY)) {
 		vma->vm_flags &= VM_MAYWRITE;
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 		pgprot_val(vma->vm_page_prot) &= ~_PAGE_RW;
 #else
 				/* Ye gads this is ugly.  With more thought
@@ -447,7 +435,7 @@ int DRM(mmap)(struct file *filp, struct vm_area_struct *vma)
 	case _DRM_FRAME_BUFFER:
 	case _DRM_REGISTERS:
 		if (VM_OFFSET(vma) >= __pa(high_memory)) {
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
 			if (boot_cpu_data.x86 > 3 && map->type != _DRM_AGP) {
 				pgprot_val(vma->vm_page_prot) |= _PAGE_PCD;
 				pgprot_val(vma->vm_page_prot) &= ~_PAGE_PWT;
@@ -462,10 +450,17 @@ int DRM(mmap)(struct file *filp, struct vm_area_struct *vma)
 			vma->vm_flags |= VM_IO;	/* not in core dump */
 		}
 		offset = DRIVER_GET_REG_OFS();
-		if (remap_page_range(vma->vm_start,
+#ifdef __sparc__
+		if (io_remap_page_range(DRM_RPR_ARG(vma) vma->vm_start,
+					VM_OFFSET(vma) + offset,
+					vma->vm_end - vma->vm_start,
+					vma->vm_page_prot, 0))
+#else
+		if (remap_page_range(DRM_RPR_ARG(vma) vma->vm_start,
 				     VM_OFFSET(vma) + offset,
 				     vma->vm_end - vma->vm_start,
 				     vma->vm_page_prot))
+#endif
 				return -EAGAIN;
 		DRM_DEBUG("   Type = %d; start = 0x%lx, end = 0x%lx,"
 			  " offset = 0x%lx\n",
@@ -478,7 +473,7 @@ int DRM(mmap)(struct file *filp, struct vm_area_struct *vma)
 		vma->vm_private_data = (void *)map;
 				/* Don't let this area swap.  Change when
 				   DRM_KERNEL advisory is supported. */
-#if LINUX_VERSION_CODE <= 0x020414
+#if LINUX_VERSION_CODE <= 0x02040e /* KERNEL_VERSION(2,4,14) */
 		vma->vm_flags |= VM_LOCKED;
 #else
 		vma->vm_flags |= VM_RESERVED;
@@ -487,7 +482,7 @@ int DRM(mmap)(struct file *filp, struct vm_area_struct *vma)
 	case _DRM_SCATTER_GATHER:
 		vma->vm_ops = &DRM(vm_sg_ops);
 		vma->vm_private_data = (void *)map;
-#if LINUX_VERSION_CODE <= 0x020414
+#if LINUX_VERSION_CODE <= 0x02040e /* KERNEL_VERSION(2,4,14) */
 		vma->vm_flags |= VM_LOCKED;
 #else
 		vma->vm_flags |= VM_RESERVED;
@@ -496,7 +491,7 @@ int DRM(mmap)(struct file *filp, struct vm_area_struct *vma)
 	default:
 		return -EINVAL;	/* This should never happen. */
 	}
-#if LINUX_VERSION_CODE <= 0x020414
+#if LINUX_VERSION_CODE <= 0x02040e /* KERNEL_VERSION(2,4,14) */
 	vma->vm_flags |= VM_LOCKED | VM_SHM; /* Don't swap */
 #else
 	vma->vm_flags |= VM_RESERVED; /* Don't swap */

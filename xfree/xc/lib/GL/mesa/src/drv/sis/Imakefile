@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/GL/mesa/src/drv/sis/Imakefile,v 1.18 2001/11/02 23:29:27 dawes Exp $
+XCOMM $XFree86: xc/lib/GL/mesa/src/drv/sis/Imakefile,v 1.22 2002/11/25 14:04:52 eich Exp $
 
 #include <Threads.tmpl>
 
@@ -18,9 +18,18 @@ XCOMM $XFree86: xc/lib/GL/mesa/src/drv/sis/Imakefile,v 1.18 2001/11/02 23:29:27 
 
 #include "../common/Imakefile.inc"
 #include "Imakefile.inc"
+#include "../../array_cache/Imakefile.inc"
+#include "../../math/Imakefile.inc"
+#include "../../swrast/Imakefile.inc"
+#include "../../swrast_setup/Imakefile.inc"
+#include "../../tnl/Imakefile.inc"
+#include "../../tnl_dd/Imakefile.inc"
 #include "../../Imakefile.inc"
-#ifdef i386Architecture
+#if defined(i386Architecture) && MesaUseX86Asm
 #include "../../X86/Imakefile.inc"
+#endif
+#ifdef SparcArchitecture
+#include "../../SPARC/Imakefile.inc"
 #endif
 
 XCOMM SIS_DEFINES = -DSIS_USE_HW_CULL -DSIS_USE_FASTPATH
@@ -53,7 +62,7 @@ XCOMM DEBUG_DEFINES = -DSIS_DEBUG
          OBJS = $(DRIOBJS) $(DRMOBJS) $(COREMESAOBJS) \
 		$(MESA_ASM_OBJS) $(SISOBJS) $(HIOBJS)
 
-REQUIREDLIBS = MathLibrary $(LDPRELIB) $(GLXLIB)
+REQUIREDLIBS = MathLibrary $(LDPRELIB) $(GLXLIB) $(XONLYLIB)
 
 #include <Library.tmpl>
 

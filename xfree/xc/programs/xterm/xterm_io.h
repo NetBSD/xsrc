@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/xterm/xterm_io.h,v 1.7 2002/01/07 21:02:44 dawes Exp $
+ * $XFree86: xc/programs/xterm/xterm_io.h,v 1.9 2002/10/05 17:57:14 dickey Exp $
  */
 
 /*
@@ -43,11 +43,6 @@
  * FIXME:  some, such as those defining USE_TERMIOS should be moved to xterm.h
  * as they are integrated with the configure script.
  */
-#ifdef AMOEBA
-#define USE_TERMIOS
-#define _POSIX_SOURCE
-#endif
-
 #ifdef CSRG_BASED
 #define USE_TERMIOS
 #endif
@@ -59,7 +54,7 @@
 #define USE_SYSV_TERMIO
 #endif
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 #define USE_SYSV_TERMIO
 #endif
 
@@ -80,11 +75,6 @@
 #ifdef macII
 #undef SYSV				/* pretend to be bsd (sgtty.h) */
 #endif /* macII */
-
-#ifdef MINIX
-#define USE_SYSV_TERMIO
-#define USE_TERMIOS
-#endif
 
 #ifdef __MVS__
 #define SVR4
@@ -180,7 +170,8 @@
 #define TIOCSPGRP (_IOW('t', 118, pid_t))
 #endif
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
+
 #define XFREE86_PTY	0x76
 
 #define XTY_TIOCSETA	0x48
@@ -199,6 +190,7 @@
 #define NCCS 11
 #endif
 
+#define TIOCCONS	108
 #define TIOCSWINSZ	113
 #define TIOCGWINSZ	117
 
@@ -219,10 +211,12 @@ struct winsize {
 	unsigned short	ws_ypixel;	/* vertical size, pixels */
 };
 
+#ifdef XTERM_MAIN
 extern int ptioctl(int fd, int func, void* data);
 #define ioctl ptioctl
+#endif
 
-#endif /* __EMX__ */
+#endif /* __UNIXOS2__ */
 
 #ifdef __hpux
 #include <sys/bsdtty.h>		/* defines TIOCSLTC */
@@ -243,12 +237,6 @@ extern int ptioctl(int fd, int func, void* data);
 #undef FIOCLEX
 #undef FIONCLEX
 #endif /* macII */
-
-#ifdef MINIX
-#define termio termios
-#define TCGETA TCGETS
-#define TCSETAW TCSETSW
-#endif
 
 #ifdef __QNX__
 #undef TIOCSLTC			/* <sgtty.h> conflicts with <termios.h> */

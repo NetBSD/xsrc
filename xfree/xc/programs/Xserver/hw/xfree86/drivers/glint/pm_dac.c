@@ -27,7 +27,7 @@
  * this work is sponsored by S.u.S.E. GmbH, Fuerth, Elsa GmbH, Aachen and
  * Siemens Nixdorf Informationssysteme
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm_dac.c,v 1.10 2001/05/24 19:55:05 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm_dac.c,v 1.11 2002/02/27 18:41:04 alanh Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
@@ -37,6 +37,7 @@
 #include "xf86Pci.h"
 
 #include "IBM.h"
+#include "TI.h"
 #include "glint_regs.h"
 #include "glint.h"
 
@@ -89,6 +90,9 @@ PermediaInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     pReg->glintRegs[PMVTotal >> 3] -= 1; /* PMVTotal */
     pReg->glintRegs[ChipConfig >> 3] = GLINT_READ_REG(ChipConfig) & 0xFFFFFFFD;
 
+    switch(pGlint->RamDac->RamDacType) {
+    case IBM526_RAMDAC:
+    case IBM526DB_RAMDAC:
     {
 	/* Get the programmable clock values */
     	unsigned long m=0,n=0,p=0,c=0;
@@ -115,7 +119,6 @@ PermediaInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
 	ramdacReg->DacRegs[IBMRGB_sysclk_p] = p;
 	ramdacReg->DacRegs[IBMRGB_sysclk_c] = c;
     }
-
     ramdacReg->DacRegs[IBMRGB_misc1] = SENS_DSAB_DISABLE | VRAM_SIZE_32;
     ramdacReg->DacRegs[IBMRGB_misc2] = COL_RES_8BIT | PORT_SEL_VRAM;
     if (pScrn->depth >= 24)
@@ -129,8 +132,52 @@ PermediaInit(ScrnInfoPtr pScrn, DisplayModePtr mode)
     ramdacReg->DacRegs[IBMRGB_pwr_mgmt] = 0;
     ramdacReg->DacRegs[IBMRGB_dac_op] = 0;
     ramdacReg->DacRegs[IBMRGB_pal_ctrl] = 0;
+    break;
+    case TI3026_RAMDAC:
+    {
+	/* Get the programmable clock values */
+	unsigned long m=0,n=0,p=0;
+	unsigned long clock;
+	unsigned long q, VCO = 0;
+
+	clock = TIramdacCalculateMNPForClock(pGlint->RefClock, 
+		mode->Clock, 1, pGlint->MinClock, pGlint->MaxClock, &m, &n, &p);
+
+	STORERAMDAC(TIDAC_PIXEL_N, ((n & 0x3f) | 0xC0));
+	STORERAMDAC(TIDAC_PIXEL_M,  (m & 0x3f));
+	STORERAMDAC(TIDAC_PIXEL_P, ((p & 0x03) | 0xbc));
+	STORERAMDAC(TIDAC_PIXEL_VALID, TRUE);
+
+    	if (pGlint->RamDac->RamDacType == (TI3026_RAMDAC))
+            n = 65 - ((32 << 2) / pScrn->bitsPerPixel);
+	else
+            n = 65 - ((128 << 2) / pScrn->bitsPerPixel);
+	m = 61;
+	p = 0;
+	for (q = 0; q < 8; q++) {
+	    if (q > 0) p = 3;
+	    for ( ; p < 4; p++) {
+		VCO = ((clock * (q + 1) * (65 - m)) / (65 - n)) << (p + 1);
+		if (VCO >= 110000) { break; }
+	    }
+	    if (VCO >= 110000) { break; }
+	}
+	STORERAMDAC(TIDAC_clock_ctrl, (q | 0x38));
+
+	STORERAMDAC(TIDAC_LOOP_N, ((n & 0x3f) | 0xC0));
+	STORERAMDAC(TIDAC_LOOP_M,  (m & 0x3f));
+	STORERAMDAC(TIDAC_LOOP_P, ((p & 0x03) | 0xF0));
+	STORERAMDAC(TIDAC_LOOP_VALID, TRUE);
+	break;
+    }
+    }
 
     (*pGlint->RamDac->SetBpp)(pScrn, ramdacReg);
+
+    /* The permedia uses a 32bit data path, the TI ramdac code
+     * defaults to 64bit. So we knock it down to 32bit here */
+    if (pGlint->RamDac->RamDacType == (TI3026_RAMDAC))
+	ramdacReg->DacRegs[TIDAC_multiplex_ctrl] -= 1;
 
     return(TRUE);
 }

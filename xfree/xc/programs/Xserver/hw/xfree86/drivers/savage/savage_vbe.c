@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_vbe.c,v 1.9 2001/05/19 02:05:55 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_vbe.c,v 1.12 2002/10/02 20:39:55 alanh Exp $ */
 
 #include "savage_driver.h"
 #include "savage_vbe.h"
@@ -14,6 +14,8 @@
 #define L_ADD(x)  (B_O32(x) & 0xffff) + ((B_O32(x) >> 12) & 0xffff00)
 
 Bool vbeModeInit( vbeInfoPtr, int );
+static int SavageGetDevice( SavagePtr psav );
+/*static int SavageGetTVType( SavagePtr psav );*/
 
 static void
 SavageClearVM86Regs( xf86Int10InfoPtr pInt )
@@ -31,6 +33,15 @@ SavageClearVM86Regs( xf86Int10InfoPtr pInt )
 void
 SavageSetTextMode( SavagePtr psav )
 {
+    /* Restore display device if changed. */
+    if( psav->iDevInfo != psav->iDevInfoPrim ) {
+	SavageClearVM86Regs( psav->pInt10 );
+	psav->pInt10->ax = 0x4f14;
+	psav->pInt10->bx = 0x0003;
+	psav->pInt10->cx = psav->iDevInfoPrim;
+	xf86ExecX86int10( psav->pInt10 );
+    }
+
     SavageClearVM86Regs( psav->pInt10 );
 
     psav->pInt10->ax = 0x83;
@@ -42,15 +53,54 @@ SavageSetTextMode( SavagePtr psav )
 void
 SavageSetVESAMode( SavagePtr psav, int n, int Refresh )
 {
-    /* First, establish the refresh rate for this mode. */
+    int iDevInfo;
+    static int iCount = 0;
+
+    /* Get current display device status. */
+
+    iDevInfo = SavageGetDevice(psav);
+    psav->iDevInfo = iDevInfo;
+    if( !iCount++ )
+	psav->iDevInfoPrim = psav->iDevInfo;
+    if( psav->CrtOnly )
+	psav->iDevInfo = CRT_ACTIVE;
+    if( psav->TvOn )
+	psav->iDevInfo = TV_ACTIVE;
+
+    /* Establish the refresh rate for this mode. */
 
     SavageClearVM86Regs( psav->pInt10 );
     psav->pInt10->ax = 0x4f14;	/* S3 extensions */
     psav->pInt10->bx = 0x0001;	/* Set default refresh rate */
     psav->pInt10->cx = n;
-    psav->pInt10->di = Refresh;
+    psav->pInt10->di = Refresh & 0xffff;
 
     xf86ExecX86int10( psav->pInt10 );
+
+    /* Set TV type if TV is on. */
+    if( psav->TvOn ) {
+	SavageClearVM86Regs( psav->pInt10 );
+	psav->pInt10->ax = 0x4f14;	/* S3 extensions */
+	psav->pInt10->bx = 0x0007;	/* TV extensions */
+	psav->pInt10->cx = psav->PAL ? 0x08 : 0x04;
+	psav->pInt10->dx = 0x0c;
+	xf86ExecX86int10( psav->pInt10 );
+    }
+
+    /* Manipulate output device set. */
+    if( psav->iDevInfo != iDevInfo ) {
+	SavageClearVM86Regs( psav->pInt10 );
+	psav->pInt10->ax = 0x4f14;	/* S3 extensions */
+	psav->pInt10->bx = 0x0003;	/* set active devices */
+	psav->pInt10->cx = psav->PAL ? 0x08 : 0x04;
+	xf86ExecX86int10( psav->pInt10 );
+
+	/* Re-fetch actual device set. */
+	psav->iDevInfo = SavageGetDevice( psav );
+	iDevInfo = psav->iDevInfo;
+	psav->CrtOnly = (iDevInfo == 1);
+	psav->TvOn = !!(iDevInfo & 4);
+    }
 
     /* Now, make this mode current. */
 
@@ -70,6 +120,20 @@ SavageSetVESAMode( SavagePtr psav, int n, int Refresh )
 	}
     }
 #endif
+}
+
+
+/* Function to get supported device list. */
+
+static int SavageGetDevice( SavagePtr psav )
+{
+    SavageClearVM86Regs( psav->pInt10 );
+    psav->pInt10->ax = 0x4f14;	/* S3 extensions */
+    psav->pInt10->bx = 0x0103;	/* get active devices */
+
+    xf86ExecX86int10( psav->pInt10 );
+
+    return ((psav->pInt10->cx) & 0xf);
 }
 
 
@@ -128,6 +192,11 @@ SavageGetBIOSModes(
 
     vbe = (vbeControllerInfoPtr) psav->pVbe->memory;
     vbeLinear = xf86Int10AllocPages( psav->pInt10, 1, &vbeReal );
+    if( !vbeLinear )
+    {
+	ErrorF( "Cannot allocate scratch page in real mode memory." );
+	return 0;
+    }
     vmib = (struct vbe_mode_info_block *) vbeLinear;
     
     for (

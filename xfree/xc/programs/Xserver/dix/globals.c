@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/dix/globals.c,v 1.9 2001/12/14 19:59:32 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/dix/globals.c,v 1.10 2002/10/08 23:55:18 dawes Exp $ */
 /************************************************************
 
 Copyright 1987, 1998  The Open Group
@@ -126,6 +126,7 @@ FontPtr defaultFont;   /* not declared in dix.h to avoid including font.h in
 			every compilation of dix code */
 Bool loadableFonts = FALSE;
 CursorPtr rootCursor;
+Bool blackRoot=FALSE;
 ClientPtr requestingClient;	/* XXX this should be obsolete now, remove? */
 
 TimeStamp currentTime;

@@ -25,7 +25,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/lib/font/fontfile/fontfile.c,v 3.15 2001/12/14 19:56:51 dawes Exp $ */
+/* $XFree86: xc/lib/font/fontfile/fontfile.c,v 3.16 2002/05/31 18:45:50 dawes Exp $ */
 
 /*
  * Author:  Keith Packard, MIT X Consortium
@@ -48,7 +48,7 @@ int
 FontFileNameCheck (char *name)
 {
 #ifndef NCD
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     /* OS/2 uses D:/... as a path name for fonts, so accept this as a valid
      * path if it starts with a letter and a colon
      */

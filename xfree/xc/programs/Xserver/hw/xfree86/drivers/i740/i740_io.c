@@ -24,7 +24,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_io.c,v 1.3 2000/02/23 04:47:14 martin Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740_io.c,v 1.5 2002/10/21 13:32:58 alanh Exp $ */
 
 /*
  * Authors:
@@ -36,7 +36,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "xf86_ansic.h"
 #include "xf86_OSproc.h"
 #include "compiler.h"
+#include "vgaHW.h"
 
+#include "xf86xv.h"
 #include "i740.h"
 
 static void I740WriteControlPIO(I740Ptr pI740, int addr, unsigned char index, char val) {

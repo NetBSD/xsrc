@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86str.h,v 1.83 2001/11/30 12:11:55 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86str.h,v 1.90 2002/11/25 14:04:56 eich Exp $ */
 
 /*
  * Copyright (c) 1997-2000 by The XFree86 Project, Inc.
@@ -18,6 +18,7 @@
 #include "pixmapstr.h"
 #include "xf86Module.h"
 #include "xf86Opt.h"
+#include "xf86Pci.h"
 
 /*
  * memType is of the size of the addressable memory (machine size)
@@ -100,6 +101,7 @@ typedef enum {
 # define M_T_CLOCK_CRTC_C  (M_T_CLOCK_C | M_T_CRTC_C)
                                /* built-in mode - configure CRTC and clock */
 # define M_T_DEFAULT 0x10	/* (VESA) default modes */
+# define M_T_USERDEF 0x20	/* One of the modes from the config file */
 
 /* Video mode */
 typedef struct _DisplayModeRec {
@@ -244,6 +246,15 @@ typedef struct _ModuleInfoRec {
  * required for the public interface should be added to xf86str.h, with
  * function prototypes added to xf86.h.
  */
+
+/* Tolerate prior #include <linux/input.h> */
+#if defined(linux) && defined(_INPUT_H)
+#undef BUS_NONE
+#undef BUS_ISA
+#undef BUS_PCI
+#undef BUS_SBUS
+#undef BUS_last
+#endif
 
 typedef enum {
     BUS_NONE,
@@ -557,14 +568,19 @@ typedef struct _CurrAccRec {
 #define ResSparse	0x0800
 #define ResExtMask	0x0C00
 
-#define ResEstimated	0x1000
-#define ResInit 	0x2000
-#define ResBios		0x4000
-#define ResMiscMask	0xF000
+#define ResEstimated	0x001000
+#define ResInit 	0x002000
+#define ResBios		0x004000
+#define ResMiscMask	0x00F000
 
-#define ResBus          0x10000
+#define ResBus		0x010000
+#define ResOverlap	0x020000
 
-#define ResDomain	0xff000000ul
+#if defined(__alpha__) && defined(linux)
+# define ResDomain	0x1ff000000ul
+#else
+# define ResDomain	0xff000000ul
+#endif
 #define ResTypeMask	(ResPhysMask | ResDomain)	/* For conflict check */
 
 #define ResEnd		ResNone
@@ -597,6 +613,7 @@ typedef struct _CurrAccRec {
 #define ResIsBlock(r)		(((r)->type & ResExtMask) == ResBlock)
 #define ResIsSparse(r)		(((r)->type & ResExtMask) == ResSparse)
 #define ResIsEstimated(r)	(((r)->type & ResMiscMask) == ResEstimated)
+#define ResCanOverlap(r)	(ResIsEstimated(r) || ((r)->type & ResOverlap))
 
 typedef struct {
     unsigned long type;     /* shared, exclusive, unused etc. */
@@ -604,6 +621,8 @@ typedef struct {
     memType b;
 } resRange, *resList;
 
+#define RANGE_TYPE(type, domain) \
+               (((unsigned long)(domain) << 24) | ((type) & ~ResBus))
 #define RANGE(r,u,v,t) {\
                        (r).a = (u);\
                        (r).b = (v);\
@@ -829,7 +848,7 @@ typedef struct _ScrnInfoRec {
     unsigned long	biosBase;		/* Base address of video BIOS */
     unsigned long	memPhysBase;		/* Physical address of FB */
     unsigned long 	fbOffset;		/* Offset of FB in the above */
-    unsigned long	ioBase;			/* I/O or MMIO base adderss */
+    IOADDRESS    	domainIOBase;		/* Domain I/O base address */
     int			memClk;			/* memory clock */
     int			textClockFreq;		/* clock of text mode */
     Bool		flipPixels;		/* swap default black/white */
@@ -990,5 +1009,21 @@ typedef struct {
 #define LD_RESOLV_NOW			1	/* finish one delay step */
 #define LD_RESOLV_FORCE			2	/* force checking... */
 #endif
+
+/* Values of xf86Info.mouseFlags */
+#define MF_CLEAR_DTR       1
+#define MF_CLEAR_RTS       2
+
+/* Action Events */
+typedef enum {
+    ACTION_TERMINATE		= 0,	/* Terminate Server */
+    ACTION_NEXT_MODE		= 10,	/* Switch to next video mode */
+    ACTION_PREV_MODE,
+    ACTION_DISABLEGRAB		= 20,	/* Cancel server/pointer/kbd grabs */
+    ACTION_CLOSECLIENT,			/* Kill client holding grab */
+    ACTION_SWITCHSCREEN		= 100,	/* VT switch */
+    ACTION_SWITCHSCREEN_NEXT,
+    ACTION_SWITCHSCREEN_PREV
+} ActionEvent;
 
 #endif /* _XF86STR_H */

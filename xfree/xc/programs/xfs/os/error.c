@@ -44,7 +44,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/os/error.c,v 1.10 2001/12/14 20:01:41 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/os/error.c,v 1.11 2002/10/15 01:45:03 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -106,7 +106,7 @@ InitErrors(void)
 
 #ifdef USE_SYSLOG
     if (UseSyslog && !log_open) {
-	openlog("Font Server", LOG_PID, LOG_LOCAL0);
+	openlog("xfs", LOG_PID, LOG_DAEMON);
 	log_open = TRUE;
 	return;
     }
@@ -118,7 +118,7 @@ InitErrors(void)
 	    dup2(i, 2);
 	    close(i);
 	} else {
-	    ErrorF("Can't open error file \"%s\"\n", ErrorFile);
+	    ErrorF("can't open error file \"%s\"\n", ErrorFile);
 	}
     }
 }
@@ -161,9 +161,10 @@ NoticeF(char *f, ...)
 	vsyslog(LOG_NOTICE, f, args);
 	return;
     }
-#endif
+#else
     fprintf(stderr, "%s notice: ", progname);
     vfprintf(stderr, f, args);
+#endif /* USE_SYSLOG */
     va_end(args);
 }
 
@@ -177,12 +178,13 @@ ErrorF(char * f, ...)
     va_start(args, f);
 #ifdef USE_SYSLOG
     if (UseSyslog) {
-	vsyslog(LOG_NOTICE, f, args);
+	vsyslog(LOG_WARNING, f, args);
 	return;
     }
-#endif
+#else
     fprintf(stderr, "%s error: ", progname);
     vfprintf(stderr, f, args);
+#endif
     va_end(args);
 }
 
@@ -191,8 +193,15 @@ FatalError(char * f, ...)
 {
     va_list args;
     va_start(args, f);
-    fprintf(stderr, "%s error: ", progname);
+#ifdef USE_SYSLOG
+    if (UseSyslog) {
+	vsyslog(LOG_ERR, f, args);
+	return;
+    }
+#else
+    fprintf(stderr, "%s fatal error: ", progname);
     vfprintf(stderr, f, args);
+#endif
     va_end(args);
     abort_server();
     /* NOTREACHED */

@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xedit/xedit.c,v 1.13 2001/09/11 06:42:54 paulo Exp $ */
+/* $XFree86: xc/programs/xedit/xedit.c,v 1.18 2002/11/10 23:21:57 paulo Exp $ */
 
 #include <X11/IntrinsicP.h>
 #include "xedit.h"
@@ -52,10 +52,13 @@ static XtActionsRec actions[] = {
 {"xedit-focus", XeditFocus},
 {"other-window", OtherWindow},
 {"switch-source", SwitchSource},
-{"ispell", IspellAction},
+#ifndef __UNIXOS2__
 {"lisp-eval", XeditLispEval},
 {"xedit-print-lisp-eval", XeditPrintLispEval},
-{"xedit-keyboard-reset",XeditKeyboardReset}
+{"xedit-keyboard-reset",XeditKeyboardReset},
+#endif
+{"ispell", IspellAction},
+{"line-edit", LineEditAction}
 };
 
 #define DEF_HINT_INTERVAL	300	/* in seconds, 5 minutes */
@@ -69,6 +72,7 @@ Widget topwindow, textwindow, messwidget, labelwindow, filenamewindow;
 Widget scratch, hpane, vpanes[2], labels[3], texts[3], forms[3], positions[3];
 Widget options_popup, dirlabel, dirwindow;
 Boolean international;
+Boolean line_edit;
 XawTextWrapMode wrapmodes[3];
 
 extern void ResetSourceChanged(xedit_flist_item*);
@@ -142,6 +146,10 @@ main(int argc, char *argv[])
   }
   XtRealizeWidget(topwindow);
 
+#ifndef __UNIXOS2__
+  XeditLispInitialize();
+#endif
+
   options_popup = XtCreatePopupShell("optionsMenu", simpleMenuWidgetClass,
 				     topwindow, NULL, 0);
   XtRealizeWidget(options_popup);
@@ -154,6 +162,9 @@ main(int argc, char *argv[])
 				 False);
   (void) XSetWMProtocols (XtDisplay(topwindow), XtWindow(topwindow),
 			  &wm_delete_window, 1);
+
+  /* This first call is just to save the default font and colors */
+  UpdateTextProperties(0);
 
   if (argc > 1) {
       Boolean exists;

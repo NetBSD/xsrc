@@ -22,14 +22,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *    Keith Whitwell <keithw@valinux.com>
+ *    Keith Whitwell <keith@tungstengraphics.com>
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgapixel.h,v 1.3 2001/04/10 16:07:51 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/mga/mgapixel.h,v 1.5 2002/10/30 12:51:36 alanh Exp $ */
 
 #ifndef MGA_PIXELS_H
 #define MGA_PIXELS_H
 
-#include "types.h"
+#include "mtypes.h"
 
 extern void mgaDDInitPixelFuncs( GLcontext *ctx );
 

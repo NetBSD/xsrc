@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fbpict.h,v 1.8 2001/08/16 08:03:25 keithp Exp $
+ * $XFree86: xc/programs/Xserver/fb/fbpict.h,v 1.11 2002/09/26 02:56:48 keithp Exp $
  *
  * Copyright © 2000 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -75,17 +75,43 @@ typedef struct _FbCompositeOperand FbCompositeOperand;
 typedef CARD32 (*FbCompositeFetch)(FbCompositeOperand *op);
 typedef void (*FbCompositeStore) (FbCompositeOperand *op, CARD32 value);
 
+typedef void (*FbCompositeStep) (FbCompositeOperand *op);
+typedef void (*FbCompositeSet) (FbCompositeOperand *op, int x, int y);
+
 struct _FbCompositeOperand {
-    FbBits		*line;
-    CARD32		offset;
-    FbStride		stride;
-    int			xoff;
-    int			yoff;
-    int			bpp;
+    union {
+	struct {
+	    FbBits		*top_line;
+	    int			left_offset;
+	    
+	    int			start_offset;
+	    FbBits		*line;
+	    CARD32		offset;
+	    FbStride		stride;
+	    int			bpp;
+	} drawable;
+	struct {
+	    int			alpha_dx;
+	    int			alpha_dy;
+	} external;
+	struct {
+	    int			top_y;
+	    int			left_x;
+	    int			start_x;
+	    int			x;
+	    int			y;
+	    PictTransformPtr	transform;
+	    int			filter;
+	} transform;
+    } u;
     FbCompositeFetch	fetch;
     FbCompositeFetch	fetcha;
     FbCompositeStore	store;
+    FbCompositeStep	over;
+    FbCompositeStep	down;
+    FbCompositeSet	set;
     miIndexedPtr	indexed;
+    RegionPtr		clip;
 };
 
 typedef void (*FbCombineFunc) (FbCompositeOperand	*src,
@@ -279,6 +305,221 @@ fbCombineSaturateC (FbCompositeOperand   *src,
 		    FbCompositeOperand   *msk,
 		    FbCompositeOperand   *dst);
 
+CARD8
+fbCombineDisjointOutPart (CARD8 a, CARD8 b);
+
+CARD8
+fbCombineDisjointInPart (CARD8 a, CARD8 b);
+
+void
+fbCombineDisjointGeneralU (FbCompositeOperand   *src,
+			   FbCompositeOperand   *msk,
+			   FbCompositeOperand   *dst,
+			   CARD8		combine);
+
+void
+fbCombineDisjointGeneralC (FbCompositeOperand   *src,
+			   FbCompositeOperand   *msk,
+			   FbCompositeOperand   *dst,
+			   CARD8		combine);
+
+void
+fbCombineDisjointOverU (FbCompositeOperand   *src,
+			FbCompositeOperand   *msk,
+			FbCompositeOperand   *dst);
+
+void
+fbCombineDisjointOverC (FbCompositeOperand   *src,
+			FbCompositeOperand   *msk,
+			FbCompositeOperand   *dst);
+
+void
+fbCombineDisjointOverReverseU (FbCompositeOperand    *src,
+			       FbCompositeOperand    *msk,
+			       FbCompositeOperand    *dst);
+
+void
+fbCombineDisjointOverReverseC (FbCompositeOperand    *src,
+			       FbCompositeOperand    *msk,
+			       FbCompositeOperand    *dst);
+
+void
+fbCombineDisjointInU (FbCompositeOperand	    *src,
+		      FbCompositeOperand	    *msk,
+		      FbCompositeOperand	    *dst);
+
+void
+fbCombineDisjointInC (FbCompositeOperand	    *src,
+		      FbCompositeOperand	    *msk,
+		      FbCompositeOperand	    *dst);
+
+void
+fbCombineDisjointInReverseU (FbCompositeOperand  *src,
+                             FbCompositeOperand  *msk,
+                             FbCompositeOperand  *dst);
+
+void
+fbCombineDisjointInReverseC (FbCompositeOperand  *src,
+                             FbCompositeOperand  *msk,
+                             FbCompositeOperand  *dst);
+
+void
+fbCombineDisjointOutU (FbCompositeOperand    *src,
+                       FbCompositeOperand    *msk,
+                       FbCompositeOperand    *dst);
+
+void
+fbCombineDisjointOutC (FbCompositeOperand    *src,
+                       FbCompositeOperand    *msk,
+                       FbCompositeOperand    *dst);
+void
+fbCombineDisjointOutReverseU (FbCompositeOperand *src,
+                              FbCompositeOperand *msk,
+                              FbCompositeOperand *dst);
+
+void
+fbCombineDisjointOutReverseC (FbCompositeOperand *src,
+                              FbCompositeOperand *msk,
+                              FbCompositeOperand *dst);
+
+void
+fbCombineDisjointAtopU (FbCompositeOperand   *src,
+                        FbCompositeOperand   *msk,
+                        FbCompositeOperand   *dst);
+
+void
+fbCombineDisjointAtopC (FbCompositeOperand   *src,
+                        FbCompositeOperand   *msk,
+                        FbCompositeOperand   *dst);
+
+void
+fbCombineDisjointAtopReverseU (FbCompositeOperand    *src,
+                               FbCompositeOperand    *msk,
+                               FbCompositeOperand    *dst);
+
+void
+fbCombineDisjointAtopReverseC (FbCompositeOperand    *src,
+                               FbCompositeOperand    *msk,
+                               FbCompositeOperand    *dst);
+
+void
+fbCombineDisjointXorU (FbCompositeOperand    *src,
+                       FbCompositeOperand    *msk,
+                       FbCompositeOperand    *dst);
+
+void
+fbCombineDisjointXorC (FbCompositeOperand    *src,
+                       FbCompositeOperand    *msk,
+                       FbCompositeOperand    *dst);
+
+CARD8
+fbCombineConjointOutPart (CARD8 a, CARD8 b);
+
+CARD8
+fbCombineConjointInPart (CARD8 a, CARD8 b);
+
+
+void
+fbCombineConjointGeneralU (FbCompositeOperand   *src,
+                           FbCompositeOperand   *msk,
+                           FbCompositeOperand   *dst,
+                           CARD8                combine);
+
+void
+fbCombineConjointGeneralC (FbCompositeOperand   *src,
+                           FbCompositeOperand   *msk,
+                           FbCompositeOperand   *dst,
+                           CARD8                combine);
+
+void
+fbCombineConjointOverU (FbCompositeOperand   *src,
+                        FbCompositeOperand   *msk,
+                        FbCompositeOperand   *dst);
+
+void
+fbCombineConjointOverC (FbCompositeOperand   *src,
+                        FbCompositeOperand   *msk,
+                        FbCompositeOperand   *dst);
+void
+fbCombineConjointOverReverseU (FbCompositeOperand    *src,
+                               FbCompositeOperand    *msk,
+                               FbCompositeOperand    *dst);
+
+void
+fbCombineConjointOverReverseC (FbCompositeOperand    *src,
+                               FbCompositeOperand    *msk,
+                               FbCompositeOperand    *dst);
+
+void
+fbCombineConjointInU (FbCompositeOperand            *src,
+                      FbCompositeOperand            *msk,
+                      FbCompositeOperand            *dst);
+
+void
+fbCombineConjointInC (FbCompositeOperand            *src,
+                      FbCompositeOperand            *msk,
+                      FbCompositeOperand            *dst);
+
+void
+fbCombineConjointInReverseU (FbCompositeOperand  *src,
+                             FbCompositeOperand  *msk,
+                             FbCompositeOperand  *dst);
+
+
+void
+fbCombineConjointInReverseC (FbCompositeOperand  *src,
+                             FbCompositeOperand  *msk,
+                             FbCompositeOperand  *dst);
+
+void
+fbCombineConjointOutU (FbCompositeOperand    *src,
+                       FbCompositeOperand    *msk,
+                       FbCompositeOperand    *dst);
+
+void
+fbCombineConjointOutC (FbCompositeOperand    *src,
+                       FbCompositeOperand    *msk,
+                       FbCompositeOperand    *dst);
+
+void
+fbCombineConjointOutReverseU (FbCompositeOperand *src,
+                              FbCompositeOperand *msk,
+                              FbCompositeOperand *dst);
+
+void
+fbCombineConjointOutReverseC (FbCompositeOperand *src,
+                              FbCompositeOperand *msk,
+                              FbCompositeOperand *dst);
+
+void
+fbCombineConjointAtopU (FbCompositeOperand   *src,
+                        FbCompositeOperand   *msk,
+                        FbCompositeOperand   *dst);
+
+void
+fbCombineConjointAtopC (FbCompositeOperand   *src,
+                        FbCompositeOperand   *msk,
+                        FbCompositeOperand   *dst);
+
+void
+fbCombineConjointAtopReverseU (FbCompositeOperand    *src,
+                               FbCompositeOperand    *msk,
+                               FbCompositeOperand    *dst);
+void
+fbCombineConjointAtopReverseC (FbCompositeOperand    *src,
+                               FbCompositeOperand    *msk,
+                               FbCompositeOperand    *dst);
+
+void
+fbCombineConjointXorU (FbCompositeOperand    *src,
+                       FbCompositeOperand    *msk,
+                       FbCompositeOperand    *dst);
+
+void
+fbCombineConjointXorC (FbCompositeOperand    *src,
+                       FbCompositeOperand    *msk,
+                       FbCompositeOperand    *dst);
+
 /*
  * All fetch functions
  */
@@ -320,6 +561,18 @@ CARD32
 fbFetch_x1b5g5r5 (FbCompositeOperand *op);
 
 CARD32
+fbFetch_a4r4g4b4 (FbCompositeOperand *op);
+
+CARD32
+fbFetch_x4r4g4b4 (FbCompositeOperand *op);
+
+CARD32
+fbFetch_a4b4g4r4 (FbCompositeOperand *op);
+
+CARD32
+fbFetch_x4b4g4r4 (FbCompositeOperand *op);
+
+CARD32
 fbFetch_a8 (FbCompositeOperand *op);
 
 CARD32
@@ -336,6 +589,9 @@ fbFetch_a2r2g2b2 (FbCompositeOperand *op);
 
 CARD32
 fbFetch_a2b2g2r2 (FbCompositeOperand *op);
+
+CARD32
+fbFetch_c8 (FbCompositeOperand *op);
 
 CARD32
 fbFetch_a4 (FbCompositeOperand *op);
@@ -356,10 +612,16 @@ CARD32
 fbFetch_a1b1g1r1 (FbCompositeOperand *op);
 
 CARD32
+fbFetch_c4 (FbCompositeOperand *op);
+
+CARD32
 fbFetch_a1 (FbCompositeOperand *op);
 
 CARD32
 fbFetcha_a1 (FbCompositeOperand *op);
+
+CARD32
+fbFetch_g1 (FbCompositeOperand *op);
 
 void
 fbStore_a8r8g8b8 (FbCompositeOperand *op, CARD32 value);
@@ -398,6 +660,18 @@ void
 fbStore_x1b5g5r5 (FbCompositeOperand *op, CARD32 value);
 
 void
+fbStore_a4r4g4b4 (FbCompositeOperand *op, CARD32 value);
+
+void
+fbStore_x4r4g4b4 (FbCompositeOperand *op, CARD32 value);
+
+void
+fbStore_a4b4g4r4 (FbCompositeOperand *op, CARD32 value);
+
+void
+fbStore_x4b4g4r4 (FbCompositeOperand *op, CARD32 value);
+
+void
 fbStore_a8 (FbCompositeOperand *op, CARD32 value);
 
 void
@@ -408,6 +682,13 @@ fbStore_b2g3r3 (FbCompositeOperand *op, CARD32 value);
 
 void
 fbStore_a2r2g2b2 (FbCompositeOperand *op, CARD32 value);
+
+void
+fbStore_c8 (FbCompositeOperand *op, CARD32 value);
+
+void
+fbStore_g8 (FbCompositeOperand *op, CARD32 value);
+
 
 void
 fbStore_a4 (FbCompositeOperand *op, CARD32 value);
@@ -425,10 +706,25 @@ void
 fbStore_a1b1g1r1 (FbCompositeOperand *op, CARD32 value);
 
 void
+fbStore_c4 (FbCompositeOperand *op, CARD32 value);
+
+void
+fbStore_g4 (FbCompositeOperand *op, CARD32 value);
+
+void
 fbStore_a1 (FbCompositeOperand *op, CARD32 value);
+
+void
+fbStore_g1 (FbCompositeOperand *op, CARD32 value);
 
 CARD32
 fbFetch_external (FbCompositeOperand *op);
+
+CARD32
+fbFetch_transform (FbCompositeOperand *op);
+
+CARD32
+fbFetcha_transform (FbCompositeOperand *op);
 
 CARD32
 fbFetcha_external (FbCompositeOperand *op);
@@ -446,7 +742,9 @@ Bool
 fbBuildCompositeOperand (PicturePtr	    pPict,
 			 FbCompositeOperand *op,
 			 INT16		    x,
-			 INT16		    y);
+			 INT16		    y,
+			 Bool		    transform,
+			 Bool		    alpha);
 void
 fbCompositeGeneral (CARD8	op,
 		    PicturePtr	pSrc,
@@ -667,5 +965,12 @@ fbComposite (CARD8      op,
 	     INT16      yDst,
 	     CARD16     width,
 	     CARD16     height);
+
+/* fbtrap.c */
+void
+fbRasterizeTrapezoid (PicturePtr    alpha,
+		      xTrapezoid    *trap,
+		      int	    x_off,
+		      int	    y_off);
 
 #endif /* _FBPICT_H_ */

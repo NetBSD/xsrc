@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/rensize.c,v 1.4 2001/10/31 22:50:27 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/rensize.c,v 1.5 2002/02/22 21:45:07 dawes Exp $ */
 /*
 ** License Applicability. Except to the extent portions of this file are
 ** made subject to an alternative license as permitted in the SGI Free
@@ -301,6 +301,7 @@ int __glXImageSize( GLenum format, GLenum type, GLsizei w, GLsizei h,
 	  case GL_BLUE:
 	  case GL_ALPHA:
 	  case GL_LUMINANCE:
+	  case GL_INTENSITY:
 	    elementsPerGroup = 1;
 	    break;
 	  case GL_LUMINANCE_ALPHA:
@@ -412,6 +413,7 @@ int __glXImage3DSize( GLenum format, GLenum type, GLsizei w, GLsizei h,
 	  case GL_BLUE:
 	  case GL_ALPHA:
 	  case GL_LUMINANCE:
+	  case GL_INTENSITY:
 	    elementsPerGroup = 1;
 	    break;
 	  case GL_LUMINANCE_ALPHA:
@@ -581,7 +583,7 @@ int __glXTexImage2DReqSize(GLbyte *pc, Bool swap )
 	skipRows = SWAPL( skipRows );
 	alignment = SWAPL( alignment );
     }
-    if (target == GL_PROXY_TEXTURE_2D) {
+    if (target == GL_PROXY_TEXTURE_2D || target == GL_PROXY_TEXTURE_CUBE_MAP_ARB) {
 	return 0;
     } else if (format == GL_STENCIL_INDEX || format == GL_DEPTH_COMPONENT) {
 	return -1;
@@ -945,6 +947,7 @@ int __glXColorTableReqSize(GLbyte *pc, Bool swap )
       case GL_PROXY_COLOR_TABLE:
       case GL_PROXY_POST_CONVOLUTION_COLOR_TABLE:
       case GL_PROXY_POST_COLOR_MATRIX_COLOR_TABLE:
+      case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
           return 0;
     }
 

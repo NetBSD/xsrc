@@ -1,9 +1,8 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_rush.c,v 1.10 2001/05/23 20:13:23 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_rush.c,v 1.12 2003/02/12 21:46:42 tsi Exp $ */
 /*
  * Copyright Loïc Grenié 1999
  */
 
-#define COMPILER_H_EXTRAS
 #include "apm.h"
 #include "xaalocal.h"
 
@@ -271,8 +270,8 @@ xf86RushUnlockPixmap(int scrnIndex, PixmapPtr pix)
 
 	    db = RDXB_IOP(0xDB);
 	    WRXB_IOP(0xDB, (db & 0xF4) |  0x0A);
-	    wrinx(0x3C4, 0x1B, 0x20);
-	    wrinx(0x3C4, 0x1C, 0x2F);
+	    wrinx(pApm->xport, 0x1B, 0x20);
+	    wrinx(pApm->xport, 0x1C, 0x2F);
 	}
 	pApm->apmLock = FALSE;
     }
@@ -327,7 +326,9 @@ static DISPATCH_PROC(ProcXF86RushLockPixmap);
 static DISPATCH_PROC(ProcXF86RushUnlockPixmap);
 static DISPATCH_PROC(ProcXF86RushUnlockAllPixmaps);
 static DISPATCH_PROC(ProcXF86RushSetCopyMode);
+#if 0
 static DISPATCH_PROC(ProcXF86RushSetPixelStride);
+#endif
 static DISPATCH_PROC(ProcXF86RushOverlayPixmap);
 static DISPATCH_PROC(ProcXF86RushStatusRegOffset);
 static DISPATCH_PROC(ProcXF86RushAT3DEnableRegs);
@@ -463,6 +464,7 @@ ProcXF86RushSetCopyMode(register ClientPtr client)
   return client->noClientException;
 }
 
+#if 0
 static int
 ProcXF86RushSetPixelStride(register ClientPtr client)
 {
@@ -472,6 +474,7 @@ ProcXF86RushSetPixelStride(register ClientPtr client)
   APMPTR(xf86Screens[stuff->screen])->pixelStride = stuff->PixelStride;
   return client->noClientException;
 }
+#endif
 
 int
 ProcXF86RushDispatch (register ClientPtr client)

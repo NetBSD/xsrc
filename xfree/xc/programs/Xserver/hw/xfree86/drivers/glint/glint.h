@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.h,v 1.54 2001/12/08 16:01:52 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/glint.h,v 1.58 2003/02/17 16:08:28 dawes Exp $ */
 /*
  * Copyright 1997-2001 by Alan Hourihane <alanh@fairlite.demon.co.uk>
  *
@@ -71,6 +71,7 @@ typedef struct {
 typedef struct {
     pciVideoPtr		PciInfo;
     pciVideoPtr		MultiPciInfo[GLINT_MAX_MULTI_DEVICES];
+    int			MultiIndex;
     int			numMultiDevices;
     int			MultiChip;
     Bool		MultiAperture;
@@ -140,7 +141,6 @@ typedef struct {
     CARD32		BltScanDirection;
     CARD32		TexMapFormat;
     CARD32		PixelWidth;
-    CARD32		FIFOSize;
     RamDacRecPtr	RamDacRec;
     xf86CursorInfoPtr	CursorInfoRec;
     XAAInfoRecPtr	AccelInfoRec;
@@ -162,6 +162,7 @@ typedef struct {
     CARD32		PM3_Render2D;
     CARD32		PM3_AreaStippleMode;
     CARD32		PM3_VideoControl;
+    int			FIFOSize;
     int			InFifoSpace;
 #ifdef XvExtension
     void		(*VideoTimerCallback)(ScrnInfoPtr, Time);
@@ -170,13 +171,18 @@ typedef struct {
 #endif
 #ifdef XF86DRI
     Bool		directRenderingEnabled;
+    Bool		PCIMode;
     DRIInfoPtr		pDRIInfo;
     int			drmSubFD;
     drmBufMapPtr        drmBufs;         /* Map of DMA buffers */
+    drmRegion		agp;
+    drmRegion		buffers;
     int			numVisualConfigs;
     __GLXvisualConfig*	pVisualConfigs;
     GLINTConfigPrivPtr	pVisualConfigsPriv;
     GLINTRegRec		DRContextRegs;
+    int			DRIctx;
+    unsigned char 	*buf2D;
 #endif
     OptionInfoPtr	Options;
     Bool		PM3_UsingSGRAM;
@@ -302,8 +308,6 @@ void Permedia2WriteAddress(ScrnInfoPtr pScrn, CARD32 index);
 void Permedia2ReadAddress(ScrnInfoPtr pScrn, CARD32 index);
 void Permedia2WriteData(ScrnInfoPtr pScrn, unsigned char data);
 unsigned char Permedia2ReadData(ScrnInfoPtr pScrn);
-void TIramdacLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
-    			  LOCO *colors, VisualPtr pVisual);
 void Permedia2LoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices,
     			  LOCO *colors, VisualPtr pVisual);
 void Permedia2LoadPalette16(ScrnInfoPtr pScrn, int numColors, int *indices,

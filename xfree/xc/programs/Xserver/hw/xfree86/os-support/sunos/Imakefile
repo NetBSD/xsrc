@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/Imakefile,v 1.2 2001/08/17 22:08:15 tsi Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sunos/Imakefile,v 1.4 2002/10/17 02:22:49 dawes Exp $
 XCOMM
 XCOMM Copyright 2001 The XFree86 Project, Inc.  All Rights Reserved.
 XCOMM

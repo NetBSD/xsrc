@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_driver.c,v 1.89 2002/01/04 21:22:36 tsi Exp $ 
+ * $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tseng/tseng_driver.c,v 1.91 2002/07/24 01:47:34 tsi Exp $ 
  *
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -140,6 +140,7 @@ static SymTabRec TsengChipsets[] =
     {TYPE_ET4000W32P,	"ET4000W32p"},
     {TYPE_ET6000,	"ET6000"},
     {TYPE_ET6100,	"ET6100"},
+    {TYPE_TSENG,	""},
     {-1, NULL}
 };
 
@@ -159,6 +160,7 @@ static IsaChipsets TsengIsaChipsets[] =
     {TYPE_ET4000,	RES_EXCLUSIVE_VGA},
     {TYPE_ET4000W32,	RES_EXCLUSIVE_VGA},
     {TYPE_ET4000W32I,	RES_EXCLUSIVE_VGA},
+    {TYPE_TSENG,        RES_EXCLUSIVE_VGA},
     {-1,		RES_UNDEFINED}
 };
 
@@ -459,7 +461,7 @@ TsengLock(void)
  * This code is only called when the chipset is not given beforehand,
  * and if the PCI code hasn't detected one previously.
  */
-#if 0
+#if 1
 static Bool
 ET4000MinimalProbe(void)
 {
@@ -505,6 +507,9 @@ static int
 TsengFindIsaDevice(GDevPtr dev)
 {
     /* XXX Need to implement this */
+    if (ET4000MinimalProbe())
+	return TYPE_TSENG;
+
     return -1;
 }
 
@@ -873,6 +878,8 @@ TsengFindNonPciBusType(ScrnInfoPtr pScrn)
 	pTseng->Bustype = T_BUS_PCI;
 	pTseng->LinFbAddressMask = 0xFF000000;
 	break;
+	case TYPE_TSENG: /* generic */
+	    break;
     }
 }
 
@@ -1768,7 +1775,7 @@ TsengPreInit(ScrnInfoPtr pScrn, int flags)
 	 * but to play safe, it is marked as "unused" for now.
 	 * Changed this to "disable". Otherwise it might interfere with DGA.
 	 */
-	xf86SetOperatingState(resVgaMemShared, pTseng->pEnt->index, ResDisableOpr);
+	xf86SetOperatingState(resVgaMem, pTseng->pEnt->index, ResDisableOpr);
     }
     
     /* hibit processing (TsengProcessOptions() must have been called first) */

@@ -725,6 +725,8 @@ Name						Reference
 	ISO Latin alphabet No. 8
 "ISO8859-15"					[15],[12]
 	ISO Latin alphabet No. 9
+"ISO8859-16"					[15],[12]
+	ISO Latin alphabet No. 10
 "FCD8859-15"					[7]
 	(deprecated)
 	ISO Latin alphabet No. 9, Final Committee Draft
@@ -1119,7 +1121,7 @@ REFERENCES
 	Todd Brunhoff, Tektronix
 
 [15]	ISO 8859, Information technology -- 8-bit single-byte coded graphic
-	character sets, Parts 1 through 10, 13, 14, and 15
+	character sets, Parts 1 through 10, 13, 14, 15, and 16
 
 [16]	Inter-Client Communication Conventions Manual
 	The X.Org Group
@@ -1683,3 +1685,5 @@ REFERENCES
 [134]   In R6.6 X.Org is reserving the string UTF8_STRING for use as an ICCCM
         property type and selection target.  The ICCCM spec will be updated
         in a future release to fully specify UTF8_STRING.
+
+/* $XFree86: xc/registry,v 1.7 2002/07/01 02:25:51 tsi Exp $ */

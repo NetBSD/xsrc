@@ -34,10 +34,10 @@
  **
  ******************************************************************************
  *****************************************************************************/
-/* $XFree86: xc/lib/Xp/XpPage.c,v 1.4 2001/12/19 21:28:44 dawes Exp $ */
+/* $XFree86: xc/lib/Xp/XpPage.c,v 1.5 2002/10/16 00:37:32 dawes Exp $ */
 
-#include "Printstr.h"
-#include "Xlibint.h"
+#include <X11/extensions/Printstr.h>
+#include <X11/Xlibint.h>
 #include "XpExtUtil.h"
 
 

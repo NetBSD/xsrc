@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/dri/XF86dri.c,v 1.12 2001/08/27 17:40:57 dawes Exp $ */
+/* $XFree86: xc/lib/GL/dri/XF86dri.c,v 1.13 2002/10/30 12:51:25 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -30,7 +30,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Kevin E. Martin <martin@valinux.com>
- *   Jens Owen <jens@valinux.com>
+ *   Jens Owen <jens@tungstengraphics.com>
  *   Rickard E. (Rik) Faith <faith@valinux.com>
  *
  */
@@ -86,7 +86,8 @@ static XEXT_GENERATE_CLOSE_DISPLAY (close_display, xf86dri_info)
  *****************************************************************************/
 
 #if 0
-#define TRACE(msg)  printf("XF86DRI%s\n", msg);
+#include <stdio.h>
+#define TRACE(msg)  fprintf(stderr,"XF86DRI%s\n", msg);
 #else
 #define TRACE(msg)
 #endif

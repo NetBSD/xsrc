@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:45:53 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/lib/Xi/Imakefile,v 1.4 2001/01/17 19:42:47 dawes Exp $
+XCOMM $XFree86: xc/lib/Xi/Imakefile,v 1.5 2002/10/16 00:37:28 dawes Exp $
 
 #define DoNormalLib NormalLibXi
 #define DoSharedLib SharedLibXi
@@ -25,7 +25,6 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
 
  DEFINES = $(ALLOC_DEFINES)
-INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC)
 SRCS = XAllowDv.c \
 		  XChgDCtl.c \
 		  XChgFCtl.c \

@@ -32,7 +32,7 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ******************************************************************/
-/* $XFree86: xc/lib/Xt/Create.c,v 3.9 2001/12/14 19:56:10 dawes Exp $ */
+/* $XFree86: xc/lib/Xt/Create.c,v 3.10 2002/12/17 04:50:58 dawes Exp $ */
 
 /*
 
@@ -291,6 +291,7 @@ xtWidgetAlloc(
 	    }
 	}
 	widget = (Widget) __XtMalloc((unsigned)(wsize + csize));
+	bzero(widget, wsize + csize);
 	widget->core.constraints =
 	    (csize ? (XtPointer)((char *)widget + wsize) : NULL);
     }

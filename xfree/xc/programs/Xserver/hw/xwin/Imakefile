@@ -1,5 +1,5 @@
 XCOMM $XConsortium: Imakefile /main/10 1996/12/02 10:20:33 lehors $
-XCOMM $XFree86: xc/programs/Xserver/hw/xwin/Imakefile,v 1.12 2001/11/11 22:45:57 alanh Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xwin/Imakefile,v 1.15 2003/02/12 15:01:38 alanh Exp $
 
 #include <Server.tmpl>
 
@@ -41,7 +41,26 @@ SRCS =	InitInput.c \
 	winlayer.c \
 	winerror.c \
 	winengine.c \
-	wincreatewnd.c
+	wincreatewnd.c \
+	winregistry.c \
+	winconfig.c \
+	winmsg.c \
+	winmultiwindowwindow.c \
+	winmultiwindowwm.c \
+	winclipboardinit.c \
+	winclipboardtextconv.c \
+	winclipboardthread.c \
+	winclipboardunicode.c \
+	winclipboardwndproc.c \
+	winclipboardxevents.c
+
+/*
+ * NOTE: The windialogs.rc file is compiled into windialogs.res.
+ * This compiled-resource file must be directly linked into XWin.exe
+ * by the commands in xc/programs/Xserver/Imakefile; it cannot be
+ * linked into libXwin.a because it will not be correctly positioned
+ * in the XWin.exe image for Windows to be able to find the resources.
+ */
 
 OBJS =	InitInput.o \
 	InitOutput.o \
@@ -75,7 +94,18 @@ OBJS =	InitInput.o \
 	winlayer.o \
 	winerror.o \
 	winengine.o \
-	wincreatewnd.o
+	wincreatewnd.o \
+	winregistry.o \
+	winconfig.o \
+	winmsg.o \
+	winmultiwindowwindow.o \
+	winmultiwindowwm.o \
+	winclipboardinit.o \
+	winclipboardtextconv.o \
+	winclipboardthread.o \
+	winclipboardunicode.o \
+	winclipboardwndproc.o \
+	winclipboardxevents.o
 
 INCLUDES = -I. -I$(XBUILDINCDIR) -I$(FONTINCSRC) \
 	   -I$(SERVERSRC)/fb -I$(SERVERSRC)/mi \
@@ -84,10 +114,18 @@ INCLUDES = -I. -I$(XBUILDINCDIR) -I$(FONTINCSRC) \
            -I$(EXTINCSRC) -I$(XINCLUDESRC) \
 	   -I$(SERVERSRC)/render -I$(SERVERSRC)/randr
 
-DEFINES = $(OS_DEFINES) $(SHMDEF) $(MMAPDEF) -UXFree86LOADER -UXF86DRI
+DEFINES = $(OS_DEFINES) $(SHMDEF) $(MMAPDEF) -UXFree86LOADER -UXF86DRI \
+          -DPROJECTROOT="\"$(PROJECTROOT)\""
 
 LinkSourceFile(stubs.c,$(SERVERSRC)/Xi)
 SpecialCObjectRule(stubs,$(ICONFIGFILES),$(EXT_DEFINES))
+
+
+/*
+ * Build the Windows resource file (contains the program icon, etc.)
+ */
+
+ResourceObjectRule(XWin,,)
 
 NormalLibraryObjectRule()
 NormalLibraryTarget(Xwin,$(OBJS))

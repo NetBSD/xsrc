@@ -1,3 +1,5 @@
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_kmod.c,v 3.2 2002/11/29 17:47:24 tsi Exp $ */
+
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -18,7 +20,7 @@
  */
 int xf86LoadKernelModule(const char *modName)
 {
-    if (kldload(modName))
+    if (kldload(modName) != -1)
 	return 1;
     else
 	return 0;

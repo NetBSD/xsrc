@@ -23,7 +23,7 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_state.h,v 1.1 2001/03/21 16:14:28 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/tdfx/tdfx_state.h,v 1.2 2002/02/22 21:45:04 dawes Exp $ */
 
 /*
  * Original rewrite:
@@ -50,6 +50,15 @@ extern void tdfxDDUpdateHwState( GLcontext *ctx );
 extern void tdfxInitState( tdfxContextPtr fxMesa );
 
 extern void tdfxUpdateClipping( GLcontext *ctx );
+
+
+extern void tdfxFallback( GLcontext *ctx, GLuint bit, GLboolean mode );
+#define FALLBACK( rmesa, bit, mode ) tdfxFallback( rmesa->glCtx, bit, mode )
+
+extern void tdfxUpdateCull( GLcontext *ctx );
+extern void tdfxUpdateStipple( GLcontext *ctx );
+extern void tdfxUpdateViewport( GLcontext *ctx );
+
 
 #endif
 #endif

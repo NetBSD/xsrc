@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/fb/fb.h,v 1.32 2001/10/28 03:33:08 tsi Exp $
+ * $XFree86: xc/programs/Xserver/fb/fb.h,v 1.35 2003/01/30 21:46:30 tsi Exp $
  *
  * Copyright © 1998 Keith Packard
  *
@@ -104,7 +104,8 @@ typedef unsigned __int64    FbBits;
 #  if defined(__alpha__) || defined(__alpha) || \
       defined(ia64) || defined(__ia64__) || \
       defined(__sparc64__) || \
-      defined(__s390x__)
+      defined(__s390x__) || \
+      defined(x86_64) || defined (__x86_64__)
 typedef unsigned long	    FbBits;
 #  else
 typedef unsigned long long  FbBits;
@@ -636,7 +637,7 @@ typedef struct {
 	((WindowPtr) (pWin))->devPrivates[fbWinPrivateIndex].ptr)
 #endif
 
-#if 0
+#ifdef __DARWIN__
 #define __fbPixOriginX(pPix)	((pPix)->drawable.x)
 #define __fbPixOriginY(pPix)	((pPix)->drawable.y)
 #else

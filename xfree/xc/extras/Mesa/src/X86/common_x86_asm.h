@@ -1,9 +1,9 @@
 
 /*
  * Mesa 3-D graphics library
- * Version:  3.4
+ * Version:  3.5
  *
- * Copyright (C) 1999  Brian Paul   All Rights Reserved.
+ * Copyright (C) 1999-2001  Brian Paul   All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,7 @@
  *
  * Written by Holger Waechtler <holger@akaflieg.extern.tu-berlin.de>
  * Changed by Andre Werthmann <wertmann@cs.uni-potsdam.de> for using the
- * new Katmai functions
+ * new SSE functions
  *
  * Reimplemented by Gareth Hughes <gareth@valinux.com> in a more
  * future-proof manner, based on code in the Linux kernel.
@@ -38,6 +38,8 @@
 #ifndef __COMMON_X86_ASM_H__
 #define __COMMON_X86_ASM_H__
 
+/* Do not reference mtypes.h from this file.
+ */
 #include "common_x86_features.h"
 
 #ifdef HAVE_CONFIG_H
@@ -49,15 +51,14 @@
 #ifdef USE_3DNOW_ASM
 #include "3dnow.h"
 #endif
-#ifdef USE_KATMAI_ASM
-#include "katmai.h"
+#ifdef USE_SSE_ASM
+#include "sse.h"
 #endif
 #endif
 
-extern int gl_x86_cpu_features;
+extern int _mesa_x86_cpu_features;
 
-extern void gl_init_all_x86_transform_asm( void );
-extern void gl_init_all_x86_shade_asm( void );
-extern void gl_init_all_x86_vertex_asm( void );
+extern void _mesa_init_all_x86_transform_asm( void );
+extern void _mesa_init_all_x86_vertex_asm( void );
 
 #endif

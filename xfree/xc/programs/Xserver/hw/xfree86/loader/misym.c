@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/misym.c,v 1.33 2001/08/06 22:45:52 mvojkovi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/loader/misym.c,v 1.35 2002/09/16 18:06:11 eich Exp $ */
 
 /*
  *
@@ -39,6 +39,9 @@
 #ifdef PANORAMIX
 #include "resource.h"
 #include "panoramiX.h"
+#endif
+#ifdef RENDER
+#include "mipict.h"
 #endif
 
 /* mi things */
@@ -154,6 +157,7 @@ LOOKUP miLookupTab[] = {
    SYMFUNC(miSegregateChildren)
    SYMFUNC(miClipNotify)
    SYMFUNC(miHookInitVisuals)
+   SYMFUNC(miPointerAbsoluteCursor)
    SYMFUNC(miPointerGetMotionEvents)
    SYMFUNC(miPointerGetMotionBufferSize)
    SYMFUNC(miOverlayCopyUnderlay)
@@ -168,7 +172,9 @@ LOOKUP miLookupTab[] = {
    SYMVAR(miPointerScreenIndex)
    SYMVAR(miInstalledMaps)
    SYMVAR(miInitVisualsProc)
-
+#ifdef RENDER
+   SYMVAR(miGlyphExtents)
+#endif
   { 0, 0 },
 
 };

@@ -45,7 +45,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 
 ************************************************************************/
-/* $XFree86: xc/lib/X11/Region.c,v 1.8 2001/12/14 19:54:05 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Region.c,v 1.9 2002/06/04 22:19:57 dawes Exp $ */
 /*
  * The functions in this file implement the Region abstraction, similar to one
  * used in the X11 sample server. A Region is simply an area, as the name
@@ -1457,7 +1457,8 @@ miSubtractO (pReg, r1, r1End, r2, r2End, y1, y2)
 		assert(pReg->numRects<=pReg->size);
 	    }
 	    r1++;
-	    x1 = r1->x1;
+	    if (r1 != r1End)
+		x1 = r1->x1;
 	}
     }
 

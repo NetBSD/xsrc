@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/dri/xf86dri.c,v 1.10 2000/12/07 20:26:14 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/dri/xf86dri.c,v 1.12 2002/12/14 01:36:08 dawes Exp $ */
 /**************************************************************************
 
 Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -30,7 +30,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * Authors:
  *   Kevin E. Martin <martin@valinux.com>
- *   Jens Owen <jens@valinux.com>
+ *   Jens Owen <jens@tungstengraphics.com>
  *   Rickard E. (Rik) Faith <faith@valinux.com>
  *
  */
@@ -155,6 +155,11 @@ ProcXF86DRIQueryDirectRenderingCapable(
 
     REQUEST(xXF86DRIQueryDirectRenderingCapableReq);
     REQUEST_SIZE_MATCH(xXF86DRIQueryDirectRenderingCapableReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
+
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
@@ -184,6 +189,10 @@ ProcXF86DRIOpenConnection(
 
     REQUEST(xXF86DRIOpenConnectionReq);
     REQUEST_SIZE_MATCH(xXF86DRIOpenConnectionReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
 
     if (!DRIOpenConnection( screenInfo.screens[stuff->screen], 
 			    &hSAREA,
@@ -221,6 +230,10 @@ ProcXF86DRIAuthConnection(
     
     REQUEST(xXF86DRIAuthConnectionReq);
     REQUEST_SIZE_MATCH(xXF86DRIAuthConnectionReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
 
     rep.type = X_Reply;
     rep.length = 0;
@@ -242,6 +255,10 @@ ProcXF86DRICloseConnection(
 {
     REQUEST(xXF86DRICloseConnectionReq);
     REQUEST_SIZE_MATCH(xXF86DRICloseConnectionReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
 
     DRICloseConnection( screenInfo.screens[stuff->screen]);
 
@@ -258,6 +275,10 @@ ProcXF86DRIGetClientDriverName(
 
     REQUEST(xXF86DRIGetClientDriverNameReq);
     REQUEST_SIZE_MATCH(xXF86DRIGetClientDriverNameReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
 
     DRIGetClientDriverName( screenInfo.screens[stuff->screen],
 			    (int *)&rep.ddxDriverMajorVersion,
@@ -295,6 +316,11 @@ ProcXF86DRICreateContext(
 
     REQUEST(xXF86DRICreateContextReq);
     REQUEST_SIZE_MATCH(xXF86DRICreateContextReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
+
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
@@ -329,6 +355,10 @@ ProcXF86DRIDestroyContext(
 {
     REQUEST(xXF86DRIDestroyContextReq);
     REQUEST_SIZE_MATCH(xXF86DRIDestroyContextReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
 
     if (!DRIDestroyContext( screenInfo.screens[stuff->screen],
 			    stuff->context)) {
@@ -348,6 +378,11 @@ ProcXF86DRICreateDrawable(
 
     REQUEST(xXF86DRICreateDrawableReq);
     REQUEST_SIZE_MATCH(xXF86DRICreateDrawableReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
+
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
@@ -378,6 +413,10 @@ ProcXF86DRIDestroyDrawable(
     REQUEST(xXF86DRIDestroyDrawableReq);
     DrawablePtr pDrawable;
     REQUEST_SIZE_MATCH(xXF86DRIDestroyDrawableReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
 
     if (!(pDrawable = (DrawablePtr)SecurityLookupDrawable(
 						(Drawable)stuff->drawable,
@@ -409,6 +448,11 @@ ProcXF86DRIGetDrawableInfo(
 
     REQUEST(xXF86DRIGetDrawableInfoReq);
     REQUEST_SIZE_MATCH(xXF86DRIGetDrawableInfoReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
+
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
@@ -483,6 +527,11 @@ ProcXF86DRIGetDeviceInfo(
 
     REQUEST(xXF86DRIGetDeviceInfoReq);
     REQUEST_SIZE_MATCH(xXF86DRIGetDeviceInfoReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
+
     rep.type = X_Reply;
     rep.length = 0;
     rep.sequenceNumber = client->sequence;
@@ -528,6 +577,11 @@ ProcXF86DRIOpenFullScreen (
     DrawablePtr                 pDrawable;
 
     REQUEST_SIZE_MATCH(xXF86DRIOpenFullScreenReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
+
     rep.type           = X_Reply;
     rep.length         = 0;
     rep.sequenceNumber = client->sequence;
@@ -554,6 +608,11 @@ ProcXF86DRICloseFullScreen (
     DrawablePtr                  pDrawable;
 
     REQUEST_SIZE_MATCH(xXF86DRICloseFullScreenReq);
+    if (stuff->screen >= screenInfo.numScreens) {
+	client->errorValue = stuff->screen;
+	return BadValue;
+    }
+
     rep.type           = X_Reply;
     rep.length         = 0;
     rep.sequenceNumber = client->sequence;

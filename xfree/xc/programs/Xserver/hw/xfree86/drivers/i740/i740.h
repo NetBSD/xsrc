@@ -25,7 +25,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740.h,v 1.4 2001/05/04 19:05:39 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/i740/i740.h,v 1.7 2002/10/23 16:08:36 tsi Exp $ */
 
 /*
  * Authors:
@@ -95,8 +95,8 @@ typedef struct _I740Rec {
   int MaxClock;
   int CursorStart;
   int Chipset;
-  int LinearAddr;
-  int MMIOAddr;
+  unsigned long LinearAddr;
+  unsigned long MMIOAddr;
   EntityInfoPtr pEnt;
   pciVideoPtr PciInfo;
   PCITAG PciTag;
@@ -114,6 +114,29 @@ typedef struct _I740Rec {
   I740WriteByteFunc writeStandard;
   I740ReadByteFunc readStandard;
   OptionInfoPtr Options;
+
+  /*DGA*/
+  DGAModePtr DGAModes;
+  int numDGAModes;
+  Bool DGAactive;
+  int DGAViewportStatus;
+  BoxRec FbMemBox;
+  /*-*/
+
+  /*I2C*/
+  I2CBusPtr             rc_i2c;
+  /*-*/
+
+  /*-*/ /*Overlay*/
+  XF86VideoAdaptorPtr adaptor;
+  unsigned long OverlayStart;
+  unsigned long OverlayPhysical;
+  int colorKey;
+  ScreenBlockHandlerProcPtr BlockHandler;
+  int ov_offset_x,ov_offset_y;
+  /*-*/
+
+  Bool usevgacompat;
 } I740Rec;
 
 #define I740PTR(p) ((I740Ptr)((p)->driverPrivate))
@@ -122,13 +145,13 @@ extern Bool I740CursorInit(ScreenPtr pScreen);
 extern Bool I740AccelInit(ScreenPtr pScreen);
 void I740SetPIOAccess(I740Ptr pI740);
 void I740SetMMIOAccess(I740Ptr pI740);
+void I740InitVideo(ScreenPtr pScreen);
+
+Bool I740SwitchMode(int scrnIndex, DisplayModePtr mode, int flags);
+void I740AdjustFrame(int scrnIndex, int x, int y, int flags);
+
 
 #define minb(p) MMIO_IN8(pI740->MMIOBase, (p))
 #define moutb(p,v) MMIO_OUT8(pI740->MMIOBase, (p),(v))
 
 #endif
-  
-
-
-
-

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaDashLine.c,v 1.4 2001/10/28 03:34:04 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaDashLine.c,v 1.5 2002/09/18 18:14:59 martin Exp $ */
 
 #include "X.h"
 #include "misc.h"
@@ -49,6 +49,58 @@ XAAPolyLinesDashed(
 
     if(!nboxInit)
 	return;
+
+    if (infoRec->DashedLineFlags & LINE_LIMIT_COORDS) {
+	int minValX = infoRec->DashedLineLimits.x1;
+	int maxValX = infoRec->DashedLineLimits.x2;
+	int minValY = infoRec->DashedLineLimits.y1;
+	int maxValY = infoRec->DashedLineLimits.y2;
+#ifdef POLYSEGMENT
+	int n = nseg;
+	xSegment *s = pSeg;
+
+	while (n--)
+#else
+	int n = npt;
+	int xorgtmp = xorg;
+	int yorgtmp = yorg;
+
+	ppt = pptInit;
+	x2 = ppt->x + xorgtmp;
+	y2 = ppt->y + yorgtmp;
+	while (--n)
+#endif
+	{
+#ifdef POLYSEGMENT
+	    x1 = s->x1 + xorg;
+	    y1 = s->y1 + yorg;
+	    x2 = s->x2 + xorg;
+	    y2 = s->y2 + yorg;
+	    s++;
+#else
+	    x1 = x2;
+	    y1 = y2;
+	    ++ppt;
+	    if (mode == CoordModePrevious) {
+		xorgtmp = x1;
+		yorgtmp = y1;
+	    }
+	    x2 = ppt->x + xorgtmp;
+	    y2 = ppt->y + yorgtmp;
+#endif
+	    if (x1 > maxValX || x1 < minValX ||
+		x2 > maxValX || x2 < minValX ||
+		y1 > maxValY || y1 < minValY ||
+		y2 > maxValY || y2 < minValY) {
+#ifdef POLYSEGMENT
+		XAAFallbackOps.PolySegment(pDrawable, pGC, nseg, pSeg);
+#else
+		XAAFallbackOps.Polylines(pDrawable, pGC, mode, npt, pptInit);
+#endif
+		return;
+	    }
+	}
+    }
 
     PatternLength = pGCPriv->DashLength; 
     PatternOffset = pGC->dashOffset % PatternLength;

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_i2c.c,v 1.1 2001/02/13 21:15:19 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/savage/savage_i2c.c,v 1.3 2002/10/02 20:39:55 alanh Exp $ */
 
 /*
 Copyright (C) 1994-2000 The XFree86 Project, Inc.  All Rights Reserved.
@@ -41,23 +41,25 @@ in this Software without prior written authorization from the XFree86 Project.
 static void
 SavageI2CPutBits(I2CBusPtr b, int clock,  int data)
 {
-    SavagePtr psav = SAVPTR(xf86Screens[b->scrnIndex]);
-    unsigned int reg = 0x10;
+    ScrnInfoPtr pScrn = (ScrnInfoPtr)(xf86Screens[b->scrnIndex]);
+    SavagePtr psav = SAVPTR(pScrn);
+    unsigned char reg = 0x10;
 
     if(clock) reg |= 0x1;
     if(data)  reg |= 0x2;
 
-    OUTREG(DDC_REG,reg);
+    OutI2CREG(psav,reg);
     /*ErrorF("SavageI2CPutBits: %d %d\n", clock, data); */
 }
 
 static void
 SavageI2CGetBits(I2CBusPtr b, int *clock, int *data)
 {
-    SavagePtr psav = SAVPTR(xf86Screens[b->scrnIndex]);
-    unsigned int reg;
+    ScrnInfoPtr pScrn = (ScrnInfoPtr)(xf86Screens[b->scrnIndex]);
+    SavagePtr psav = SAVPTR(pScrn);
+    unsigned char reg = 0x10;
 
-    reg = (INREG(DDC_REG));
+    InI2CREG(psav,reg);
 
     *clock = reg & 0x4;
     *data = reg & 0x8;

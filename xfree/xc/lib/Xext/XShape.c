@@ -25,14 +25,15 @@ in this Software without prior written authorization from The Open Group.
  *
  * Author:  Keith Packard, MIT X Consortium
  */
+/* $XFree86: xc/lib/Xext/XShape.c,v 1.4 2002/10/16 02:19:22 dawes Exp $ */
 #define NEED_EVENTS
 #define NEED_REPLIES
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
 #include "region.h"			/* in Xlib sources */
-#include "Xext.h"			/* in ../include */
-#include "extutil.h"			/* in ../include */
-#include "shapestr.h"			/* in ../include */
+#include <X11/extensions/Xext.h>
+#include <X11/extensions/extutil.h>
+#include <X11/extensions/shapestr.h>
 
 static XExtensionInfo _shape_info_data;
 static XExtensionInfo *shape_info = &_shape_info_data;
@@ -50,9 +51,9 @@ static /* const */ char *shape_extension_name = SHAPENAME;
  *                                                                           *
  *****************************************************************************/
 
-static int close_display();
-static Bool wire_to_event();
-static Status event_to_wire();
+static int close_display(Display *dpy, XExtCodes *codes);
+static Bool wire_to_event (Display *dpy, XEvent *re, xEvent *event);
+static Status event_to_wire (Display *dpy, XEvent *re, xEvent *event);
 static /* const */ XExtensionHooks shape_extension_hooks = {
     NULL,				/* create_gc */
     NULL,				/* copy_gc */
@@ -75,10 +76,8 @@ static XEXT_GENERATE_FIND_DISPLAY (find_display, shape_info,
 static XEXT_GENERATE_CLOSE_DISPLAY (close_display, shape_info)
 
 
-static Bool wire_to_event (dpy, re, event)
-    Display *dpy;
-    XEvent  *re;
-    xEvent  *event;
+static Bool
+wire_to_event (Display *dpy, XEvent *re, xEvent *event)
 {
     XExtDisplayInfo *info = find_display (dpy);
     XShapeEvent		*se;
@@ -109,10 +108,8 @@ static Bool wire_to_event (dpy, re, event)
     return False;
 }
 
-static Status event_to_wire (dpy, re, event)
-    Display *dpy;
-    XEvent  *re;
-    xEvent  *event;
+static Status
+event_to_wire (Display *dpy, XEvent *re, xEvent *event)
 {
     XExtDisplayInfo *info = find_display (dpy);
     XShapeEvent		*se;

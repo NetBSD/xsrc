@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/lib/Xxf86rush/Imakefile,v 1.1 1999/09/04 09:14:09 dawes Exp $
+XCOMM $XFree86: xc/lib/Xxf86rush/Imakefile,v 1.2 2002/10/16 00:37:34 dawes Exp $
 #define DoNormalLib NormalLibXxf86rush
 #define DoSharedLib SharedLibXxf86rush
 #define DoDebugLib DebugLibXxf86rush
@@ -21,7 +21,6 @@ ALLOC_DEFINES = -DMALLOC_0_RETURNS_NULL
 #endif
 
       DEFINES = $(ALLOC_DEFINES)
-     INCLUDES = -I$(XLIBSRC) -I$(EXTINCSRC)
          SRCS = $(XF86RUSHSRCS)
          OBJS = $(XF86RUSHOBJS)
      LINTLIBS = $(LINTXLIB)

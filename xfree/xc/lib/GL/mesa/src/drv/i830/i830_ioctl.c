@@ -1,3 +1,4 @@
+
 /**************************************************************************
 
 Copyright 2001 VA Linux Systems Inc., Fremont, California.
@@ -25,74 +26,75 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 **************************************************************************/
 
-/* $XFree86: xc/lib/GL/mesa/src/drv/i830/i830_ioctl.c,v 1.1 2001/10/04 18:28:21 alanh Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/i830/i830_ioctl.c,v 1.5 2002/12/10 01:26:53 dawes Exp $ */
 
 /*
  * Author:
- *   Jeff Hartmann <jhartmann@valinux.com>
+ *   Jeff Hartmann <jhartmann@2d3d.com>
+ *   Graeme Fisher <graeme@2d3d.co.za>
+ *   Abraham vd Merwe <abraham@2d3d.co.za>
  *
  * Heavily based on the I810 driver, which was written by:
- *   Keith Whitwell <keithw@valinux.com>
+ *   Keith Whitwell <keith@tungstengraphics.com>
  */
 
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
 
-#include "types.h"
-#include "pb.h"
+#include "glheader.h"
+#include "mtypes.h"
+#include "macros.h"
 #include "dd.h"
+#include "swrast/swrast.h"
 
 #include "mm.h"
-#include "i830_drv.h"
+
+#include "i830_screen.h"
+#include "i830_dri.h"
+
+#include "i830_context.h"
 #include "i830_ioctl.h"
+#include "i830_state.h"
+#include "i830_debug.h"
 
 #include "drm.h"
-#include <sys/ioctl.h>
 
-drmBufPtr i830_get_buffer_ioctl( i830ContextPtr imesa )
+static drmBufPtr i830_get_buffer_ioctl( i830ContextPtr imesa )
 {
-   drm_i830_dma_t dma;
+   drmI830DMA dma;
    drmBufPtr buf;
-   int retcode;
-   
-   if (I830_DEBUG&DEBUG_VERBOSE_IOCTL)
-      fprintf(stderr,  "Getting dma buffer\n");
-
+   int retcode,i = 0;
    while (1) {
-      retcode = ioctl(imesa->driFd, DRM_IOCTL_I830_GETBUF, &dma);
+      retcode = drmCommandWriteRead(imesa->driFd, 
+				    DRM_I830_GETBUF, 
+				    &dma, 
+				    sizeof(drmI830DMA));
+      if (dma.granted == 1 && retcode == 0)
+	break;
 
-      if (dma.granted == 1 && retcode == 0) 
-	 break;
-
-      if (I830_DEBUG&DEBUG_VERBOSE_IOCTL)
-	 fprintf(stderr, "Retcode : %d, granted : %d\n", retcode, dma.granted);
-
-      ioctl(imesa->driFd, DRM_IOCTL_I830_FLUSH);
+      if (++i > 1000) {
+	 imesa->sarea->perf_boxes |= I830_BOX_WAIT;
+	 retcode = drmCommandNone(imesa->driFd, DRM_I830_FLUSH);
+	 i = 0;
+      }
    }
-
-   if (I830_DEBUG&DEBUG_VERBOSE_IOCTL)
-      fprintf(stderr, 
-	      "imesa->i830Screen->bufs->list : %p, "
-	      "dma.request_idx : %d\n", 
-	      imesa->i830Screen->bufs->list, dma.request_idx);
 
    buf = &(imesa->i830Screen->bufs->list[dma.request_idx]);
    buf->idx = dma.request_idx;
-   buf->used = 4;		/* leave room for instruction header */
+   buf->used = 0;
    buf->total = dma.request_size;
+   buf->address = (drmAddress)dma.virtual;
 
-   if(imesa->i830Screen->use_copy_buf != 1) 
-       buf->address = (drmAddress)dma.virtual;
    return buf;
 }
-
 
 static void i830ClearDrawQuad(i830ContextPtr imesa, float left, 
 				 float right,
 				 float bottom, float top, GLubyte red,
 				 GLubyte green, GLubyte blue, GLubyte alpha)
 {
-    GLuint *vb = i830AllocDwordsInlineLocked( imesa, 32 );
+    GLuint *vb = i830AllocDmaLowLocked( imesa, 128 );
     i830Vertex tmp;
     int i;
 
@@ -102,7 +104,7 @@ static void i830ClearDrawQuad(i830ContextPtr imesa, float left,
     tmp.v.x = left;
     tmp.v.y = bottom;
     tmp.v.z = 1.0;
-    tmp.v.oow = 1.0;
+    tmp.v.w = 1.0;
     tmp.v.color.red = red;
     tmp.v.color.green = green;
     tmp.v.color.blue = blue;
@@ -111,8 +113,8 @@ static void i830ClearDrawQuad(i830ContextPtr imesa, float left,
     tmp.v.specular.green = 0;
     tmp.v.specular.blue = 0;
     tmp.v.specular.alpha = 0;
-    tmp.v.tu0 = 0.0f;
-    tmp.v.tv0 = 0.0f;
+    tmp.v.u0 = 0.0f;
+    tmp.v.v0 = 0.0f;
     for (i = 0 ; i < 8 ; i++)
         vb[i] = tmp.ui[i];
 
@@ -147,7 +149,7 @@ static void i830ClearWithTris(GLcontext *ctx, GLbitfield mask,
    GLuint old_dirty;
    int x0, y0, x1, y1;
 
-   if(I830_DEBUG&DEBUG_VERBOSE_IOCTL)
+   if (I830_DEBUG & DEBUG_IOCTL)
      fprintf(stderr, "Clearing with triangles\n");
 
    old_dirty = imesa->dirty & ~I830_UPLOAD_CLIPRECTS;
@@ -179,9 +181,10 @@ static void i830ClearWithTris(GLcontext *ctx, GLbitfield mask,
    memcpy(sarea->BufferState,
 	  imesa->BufferSetup,
 	  sizeof(imesa->BufferSetup) );
+   sarea->StippleState[I830_STPREG_ST1] = 0;
 
-   old_vertex_prim = imesa->vertex_prim;
-   imesa->vertex_prim = PRIM3D_TRIFAN;
+   old_vertex_prim = imesa->hw_primitive;
+   imesa->hw_primitive = PRIM3D_TRIFAN;
 
    if(mask & DD_FRONT_LEFT_BIT) {
       GLuint tmp = sarea->ContextState[I830_CTXREG_ENABLES_2];
@@ -242,7 +245,7 @@ static void i830ClearWithTris(GLcontext *ctx, GLbitfield mask,
       i830ClearDrawQuad(imesa, (float)x0, (float)x1, (float)y0, (float)y1,
 			   imesa->clear_red, imesa->clear_green,
 		   imesa->clear_blue, imesa->clear_alpha);
-      i830FlushVerticesLocked(imesa);
+      i830FlushPrimsLocked( imesa );
    }
 
    if(mask & DD_BACK_LEFT_BIT) {
@@ -305,7 +308,7 @@ static void i830ClearWithTris(GLcontext *ctx, GLbitfield mask,
       i830ClearDrawQuad(imesa, (float)x0, (float)x1, (float)y0, (float)y1,
 		      imesa->clear_red, imesa->clear_green,
 		      imesa->clear_blue, imesa->clear_alpha);
-      i830FlushVerticesLocked(imesa);
+      i830FlushPrimsLocked( imesa );
    }
 
    if(mask & DD_STENCIL_BIT) {
@@ -387,7 +390,7 @@ static void i830ClearWithTris(GLcontext *ctx, GLbitfield mask,
       
       i830ClearDrawQuad(imesa, (float)x0, (float)x1, (float)y0, (float)y1,
 			   255, 255, 255, 255);
-      i830FlushVerticesLocked(imesa);
+      i830FlushPrimsLocked( imesa );
    }
 
    UNLOCK_HARDWARE(imesa);
@@ -396,31 +399,34 @@ static void i830ClearWithTris(GLcontext *ctx, GLbitfield mask,
 		    I830_UPLOAD_BUFFERS |
 		    I830_UPLOAD_TEXBLEND0);
 
-   imesa->vertex_prim = old_vertex_prim;
+   imesa->hw_primitive = old_vertex_prim;
 }
 
-GLbitfield i830Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
-		      GLint cx, GLint cy, GLint cw, GLint ch )
+static void i830Clear(GLcontext *ctx, GLbitfield mask, GLboolean all,
+		      GLint cx1, GLint cy1, GLint cw, GLint ch)
 {
    i830ContextPtr imesa = I830_CONTEXT( ctx );
    __DRIdrawablePrivate *dPriv = imesa->driDrawable;
    const GLuint colorMask = *((GLuint *) &ctx->Color.ColorMask);
-   drm_i830_clear_t clear;
+   drmI830Clear clear;
    GLbitfield tri_mask = 0;
    int i;
-
-   FLUSH_BATCH( imesa );
+   GLint cx, cy;
 
    /* flip top to bottom */
-   cy = dPriv->h-cy-ch;
-   cx += imesa->drawX;
+   cy = dPriv->h-cy1-ch;
+   cx = cx1 + imesa->drawX;
    cy += imesa->drawY;
 
+   if(0) fprintf(stderr, "\nClearColor : 0x%08x\n", imesa->ClearColor);
+   
    clear.flags = 0;
    clear.clear_color = imesa->ClearColor;
    clear.clear_depth = 0;
    clear.clear_colormask = 0;
    clear.clear_depthmask = 0;
+
+   I830_FIREVERTICES( imesa );
 
    if (mask & DD_FRONT_LEFT_BIT) {
       if(colorMask == ~0) {
@@ -453,86 +459,92 @@ GLbitfield i830Clear( GLcontext *ctx, GLbitfield mask, GLboolean all,
       } else {
 	 clear.flags |= I830_DEPTH;
 	 clear.clear_depthmask |= imesa->stencil_clear_mask;
-	 clear.clear_depth |= ((ctx->Stencil.Clear<<24) & 
-			       imesa->stencil_clear_mask);
+	 clear.clear_depth |= imesa->stencil_clear_mask;
       }
       mask &= ~DD_STENCIL_BIT;
    }
 
    /* First check for clears that need to happen with triangles */
-
    if(tri_mask) {
       i830ClearWithTris(ctx, tri_mask, all, cx, cy, cw, ch);
+   } else {
+      mask |= tri_mask;
    }
 
-   if (!clear.flags)
-      return mask;
+   if (clear.flags) {
+      LOCK_HARDWARE( imesa );
 
-   LOCK_HARDWARE( imesa );
+      for (i = 0 ; i < imesa->numClipRects ; ) 
+      { 	 
+	 int nr = MIN2(i + I830_NR_SAREA_CLIPRECTS, imesa->numClipRects);
+	 XF86DRIClipRectRec *box = imesa->pClipRects;	 
+	 drm_clip_rect_t *b = (drm_clip_rect_t *)imesa->sarea->boxes;
+	 int n = 0;
 
-   if (I830_DEBUG&DEBUG_VERBOSE_IOCTL)
-      fprintf(stderr, "Clear, bufs %x nbox %d\n", 
-	      (int)clear.flags, (int)imesa->numClipRects);
+	 if (!all) {
+	    for ( ; i < nr ; i++) {
+	       GLint x = box[i].x1;
+	       GLint y = box[i].y1;
+	       GLint w = box[i].x2 - x;
+	       GLint h = box[i].y2 - y;
 
-   for (i = 0 ; i < imesa->numClipRects ; ) 
-   { 	 
-      int nr = MIN2(i + I830_NR_SAREA_CLIPRECTS, imesa->numClipRects);
-      XF86DRIClipRectRec *box = imesa->pClipRects;	 
-      drm_clip_rect_t *b = (drm_clip_rect_t *)imesa->sarea->boxes;
-      int n = 0;
+	       if (x < cx) w -= cx - x, x = cx; 
+	       if (y < cy) h -= cy - y, y = cy;
+	       if (x + w > cx + cw) w = cx + cw - x;
+	       if (y + h > cy + ch) h = cy + ch - y;
+	       if (w <= 0) continue;
+	       if (h <= 0) continue;
 
-      if (!all) {
-	 for ( ; i < nr ; i++) {
-	    GLint x = box[i].x1;
-	    GLint y = box[i].y1;
-	    GLint w = box[i].x2 - x;
-	    GLint h = box[i].y2 - y;
-
-	    if (x < cx) w -= cx - x, x = cx; 
-	    if (y < cy) h -= cy - y, y = cy;
-	    if (x + w > cx + cw) w = cx + cw - x;
-	    if (y + h > cy + ch) h = cy + ch - y;
-	    if (w <= 0) continue;
-	    if (h <= 0) continue;
-
-	    b->x1 = x;
-	    b->y1 = y;
-	    b->x2 = x + w;
-	    b->y2 = y + h;
-	    b++;
-	    n++;
+	       b->x1 = x;
+	       b->y1 = y;
+	       b->x2 = x + w;
+	       b->y2 = y + h;
+	       b++;
+	       n++;
+	    }
+	 } else {
+	    for ( ; i < nr ; i++) {
+	       *b++ = *(drm_clip_rect_t *)&box[i];
+	       n++;
+	    }
 	 }
-      } else {
-	 for ( ; i < nr ; i++) {
-	    *b++ = *(drm_clip_rect_t *)&box[i];
-	    n++;
-	 }
+
+	 imesa->sarea->nbox = n;
+	 drmCommandWrite(imesa->driFd, DRM_I830_CLEAR,
+			 &clear, sizeof(drmI830Clear));
       }
 
-      imesa->sarea->nbox = n;
-      ioctl(imesa->driFd, DRM_IOCTL_I830_CLEAR, &clear);
+      UNLOCK_HARDWARE( imesa );
+      imesa->upload_cliprects = GL_TRUE;
    }
 
-   UNLOCK_HARDWARE( imesa );
-   imesa->dirty |= I830_UPLOAD_CLIPRECTS;
-
-   return mask;
+   if (mask)
+      _swrast_Clear( ctx, mask, all, cx1, cy1, cw, ch );
 }
+
+
 
 /*
  * Copy the back buffer to the front buffer. 
  */
-void i830SwapBuffers( i830ContextPtr imesa ) 
+void i830CopyBuffer( const __DRIdrawablePrivate *dPriv ) 
 {
-   __DRIdrawablePrivate *dPriv = imesa->driDrawable;
+   i830ContextPtr imesa;
    XF86DRIClipRectPtr pbox;
-   int nbox;
-   int i;
-   int tmp;
+   int nbox, i, tmp;
 
-   FLUSH_BATCH( imesa );
+   assert(dPriv);
+   assert(dPriv->driContextPriv);
+   assert(dPriv->driContextPriv->driverPrivate);
+
+   imesa = (i830ContextPtr) dPriv->driContextPriv->driverPrivate;
+
+   I830_FIREVERTICES( imesa );
    LOCK_HARDWARE( imesa );
-   
+
+   imesa->sarea->perf_boxes |= imesa->perf_boxes;
+   imesa->perf_boxes = 0;
+
    pbox = dPriv->pClipRects;
    nbox = dPriv->numClipRects;
 
@@ -545,117 +557,136 @@ void i830SwapBuffers( i830ContextPtr imesa )
 
       for ( ; i < nr ; i++) 
 	 *b++ = pbox[i];
-
-      ioctl(imesa->driFd, DRM_IOCTL_I830_SWAP);
+      drmCommandNone(imesa->driFd, DRM_I830_SWAP);
    }
 
    tmp = GET_ENQUEUE_AGE(imesa);
    UNLOCK_HARDWARE( imesa );
 
-   if (GET_DISPATCH_AGE(imesa) < imesa->lastSwap)
+   /* multiarb will suck the life out of the server without this throttle:
+    */
+   if (GET_DISPATCH_AGE(imesa) < imesa->lastSwap) {
       i830WaitAge(imesa, imesa->lastSwap);
+   }
 
    imesa->lastSwap = tmp;
-   imesa->dirty |= I830_UPLOAD_CLIPRECTS;
+   imesa->upload_cliprects = GL_TRUE;
 }
 
+/* Flip the front & back buffes
+ */
+void i830PageFlip( const __DRIdrawablePrivate *dPriv )
+{
+   i830ContextPtr imesa;
+   int tmp, ret;
 
+   if (I830_DEBUG & DEBUG_IOCTL)
+      fprintf(stderr, "%s\n", __FUNCTION__);
 
+   assert(dPriv);
+   assert(dPriv->driContextPriv);
+   assert(dPriv->driContextPriv->driverPrivate);
 
+   imesa = (i830ContextPtr) dPriv->driContextPriv->driverPrivate;
 
+   I830_FIREVERTICES( imesa );
+   LOCK_HARDWARE( imesa );
+
+   imesa->sarea->perf_boxes |= imesa->perf_boxes;
+   imesa->perf_boxes = 0;
+
+   if (dPriv->pClipRects) {
+      *(XF86DRIClipRectRec *)imesa->sarea->boxes = dPriv->pClipRects[0];
+      imesa->sarea->nbox = 1;
+   }
+
+   ret = drmCommandNone(imesa->driFd, DRM_I830_FLIP); 
+   if (ret) {
+      fprintf(stderr, "%s: %d\n", __FUNCTION__, ret);
+      UNLOCK_HARDWARE( imesa );
+      exit(1);
+   }
+
+   tmp = GET_ENQUEUE_AGE(imesa);
+   UNLOCK_HARDWARE( imesa );
+
+   /* multiarb will suck the life out of the server without this throttle:
+    */
+   if (GET_DISPATCH_AGE(imesa) < imesa->lastSwap) {
+      i830WaitAge(imesa, imesa->lastSwap);
+   }
+
+   i830SetDrawBuffer( imesa->glCtx, imesa->glCtx->Color.DriverDrawBuffer );
+   imesa->upload_cliprects = GL_TRUE;
+   imesa->lastSwap = tmp;
+}
 
 /* This waits for *everybody* to finish rendering -- overkill.
  */
-void i830DmaFinish( i830ContextPtr imesa  ) 
+void i830DmaFinish( i830ContextPtr imesa  )
 {
-   FLUSH_BATCH( imesa );
-
-
-   if (1 || imesa->sarea->last_quiescent != imesa->sarea->last_enqueue) {
-     
-      if (I830_DEBUG&DEBUG_VERBOSE_IOCTL) 
-	 fprintf(stderr, "i830DmaFinish\n");
-
-      LOCK_HARDWARE( imesa );
-      i830RegetLockQuiescent( imesa );
-      UNLOCK_HARDWARE( imesa );
-      imesa->sarea->last_quiescent = imesa->sarea->last_enqueue;
-   }
+   I830_FIREVERTICES( imesa );
+   LOCK_HARDWARE_QUIESCENT( imesa );
+   UNLOCK_HARDWARE( imesa );
 }
 
-
-void i830RegetLockQuiescent( i830ContextPtr imesa  ) 
+void i830RegetLockQuiescent( i830ContextPtr imesa )
 {
-   if (1 || imesa->sarea->last_quiescent != imesa->sarea->last_enqueue) {
-      if (I830_DEBUG&DEBUG_VERBOSE_IOCTL)
-	 fprintf(stderr, "i830RegetLockQuiescent\n");
-
-      drmUnlock(imesa->driFd, imesa->hHWContext);
-      i830GetLock( imesa, DRM_LOCK_QUIESCENT ); 
-      imesa->sarea->last_quiescent = imesa->sarea->last_enqueue;
-   }
+   drmUnlock(imesa->driFd, imesa->hHWContext);
+   i830GetLock( imesa, DRM_LOCK_QUIESCENT );
 }
 
-void i830WaitAgeLocked( i830ContextPtr imesa, int age  ) 
+void i830WaitAgeLocked( i830ContextPtr imesa, int age )
 {
    int i = 0;
-
-
-   while (++i < 500000 && GET_DISPATCH_AGE(imesa) < age) {
-      ioctl(imesa->driFd, DRM_IOCTL_I830_GETAGE);
+   while (++i < 5000) {
+      drmCommandNone(imesa->driFd, DRM_I830_GETAGE);
+      if (GET_DISPATCH_AGE(imesa) >= age) return;
+      imesa->sarea->perf_boxes |= I830_BOX_WAIT;
+      UNLOCK_HARDWARE( imesa );
+      if (I830_DEBUG & DEBUG_SLEEP) fprintf(stderr, ".");
+      usleep(1);
+      LOCK_HARDWARE( imesa );
    }
-
-   if (GET_DISPATCH_AGE(imesa) < age) {
-      if (0)
-	 fprintf(stderr, "wait locked %d %d\n", age, GET_DISPATCH_AGE(imesa));
-      ioctl(imesa->driFd, DRM_IOCTL_I830_FLUSH);
-   }
+   /* If that didn't work, just do a flush:
+    */
+   drmCommandNone(imesa->driFd, DRM_I830_FLUSH); 
 }
-
 
 void i830WaitAge( i830ContextPtr imesa, int age  ) 
 {
    int i = 0;
+   if (GET_DISPATCH_AGE(imesa) >= age) return;
 
-   while (++i < 500000 && GET_DISPATCH_AGE(imesa) < age) {
-      ioctl(imesa->driFd, DRM_IOCTL_I830_GETAGE);
+   while (1) {
+      drmCommandNone(imesa->driFd, DRM_I830_GETAGE);
+      if (GET_DISPATCH_AGE(imesa) >= age) return;
+      imesa->perf_boxes |= I830_BOX_WAIT;
+
+      if (imesa->do_irqs) {
+	 drmI830IrqEmit ie;
+	 drmI830IrqWait iw;
+	 int ret;
+      
+	 ie.irq_seq = &iw.irq_seq;
+	 
+	 LOCK_HARDWARE( imesa ); 
+	 ret = drmCommandWriteRead( imesa->driFd, DRM_I830_IRQ_EMIT, &ie, sizeof(ie) );
+	 if ( ret ) {
+	    fprintf( stderr, "%s: drmI830IrqEmit: %d\n", __FUNCTION__, ret );
+	    exit(1);
+	 }
+	 UNLOCK_HARDWARE(imesa);
+	 
+	 ret = drmCommandWrite( imesa->driFd, DRM_I830_IRQ_WAIT, &iw, sizeof(iw) );
+	 if ( ret ) {
+	    fprintf( stderr, "%s: drmI830IrqWait: %d\n", __FUNCTION__, ret );
+	    exit(1);
+	 }
+      } else {
+	 if (++i > 5000) usleep(1); 
+      }
    }
-
-   if (GET_DISPATCH_AGE(imesa) >= age)
-      return;
-
-   i = 0;
-   while (++i < 1000 && GET_DISPATCH_AGE(imesa) < age) {
-      ioctl(imesa->driFd, DRM_IOCTL_I830_GETAGE);
-      usleep(1000);
-   }
-   
-   /* To be effective at letting other clients at the hardware,
-    * particularly the X server which regularly needs quiescence to
-    * touch the framebuffer, we really need to sleep *beyond* the
-    * point where our last buffer clears the hardware.  
-    */
-   if (imesa->any_contend) {
-      usleep(3000); 
-   }
-
-   imesa->any_contend = 0;
-
-   if (GET_DISPATCH_AGE(imesa) < age) {
-      LOCK_HARDWARE(imesa);
-      if (GET_DISPATCH_AGE(imesa) < age) 
-	 ioctl(imesa->driFd, DRM_IOCTL_I830_FLUSH);
-      UNLOCK_HARDWARE(imesa);
-   }
-}
-
-void i830FlushVertices( i830ContextPtr imesa ) 
-{
-   if (!imesa->vertex_dma_buffer) return;
-
-   LOCK_HARDWARE( imesa );
-   i830FlushVerticesLocked( imesa );
-   UNLOCK_HARDWARE( imesa );
 }
 
 static void age_imesa( i830ContextPtr imesa, int age )
@@ -664,139 +695,130 @@ static void age_imesa( i830ContextPtr imesa, int age )
    if (imesa->CurrentTexObj[1]) imesa->CurrentTexObj[1]->age = age;
 }
 
-void i830FlushVerticesLocked( i830ContextPtr imesa )
+void i830FlushPrimsLocked( i830ContextPtr imesa )
 {
-   drm_clip_rect_t *pbox = (drm_clip_rect_t *)imesa->pClipRects;
+   XF86DRIClipRectPtr pbox = (XF86DRIClipRectPtr)imesa->pClipRects;
    int nbox = imesa->numClipRects;
-   drmBufPtr buffer = imesa->vertex_dma_buffer;
-   drm_i830_vertex_t vertex;
-   int i;
+   drmBufPtr buffer = imesa->vertex_buffer;
+   I830SAREAPtr sarea = imesa->sarea;
+   drmI830Vertex vertex;
+   int i, nr;
 
-   if (I830_DEBUG&DEBUG_VERBOSE_IOCTL)
-      fprintf(stderr, "i830FlushVerticesLocked, buf->used %d\n", 
-	      buffer->used);
+   if (I830_DEBUG & DEBUG_IOCTL) 
+      fprintf(stderr, "%s dirty: %08x\n", __FUNCTION__, imesa->dirty);
 
-   if (!buffer)
-      return;
-
-   if (imesa->dirty & ~I830_UPLOAD_CLIPRECTS)
-      i830EmitHwStateLocked( imesa );
-
-   if (I830_DEBUG&DEBUG_VERBOSE_IOCTL)
-      fprintf(stderr, "i830FlushVerticesLocked, used %d\n",
-	      buffer->used);
-   
-   imesa->vertex_dma_buffer = 0;
 
    vertex.idx = buffer->idx;
-   vertex.used = buffer->used;
+   vertex.used = imesa->vertex_low;
    vertex.discard = 0;
+   sarea->vertex_prim = imesa->hw_primitive;
 
-   if (!nbox)
-      vertex.used = 0;
+   /* Reset imesa vars:
+    */
+   imesa->vertex_buffer = 0;
+   imesa->vertex_addr = 0;
+   imesa->vertex_low = 0;
+   imesa->vertex_high = 0;
+   imesa->vertex_last_prim = 0;
 
-   if (nbox > I830_NR_SAREA_CLIPRECTS)
-      imesa->dirty |= I830_UPLOAD_CLIPRECTS;
-   
-   if(imesa->i830Screen->use_copy_buf == 1 && vertex.used) {
-      drm_i830_copy_t copy;
-      
-      copy.idx = buffer->idx;
-      copy.used = buffer->used;
-      copy.address = buffer->address;
-      ioctl(imesa->driFd, DRM_IOCTL_I830_COPY, &copy);
-   }
-
-
-   imesa->sarea->vertex_prim = imesa->vertex_prim;
-
-   if (!nbox || !(imesa->dirty & I830_UPLOAD_CLIPRECTS)) 
-   {
-      if (nbox == 1) 
-	 imesa->sarea->nbox = 0;
+   if (imesa->dirty) {
+      if (I830_DEBUG & DEBUG_SANITY)
+	 i830EmitHwStateLockedDebug(imesa);
       else
-	 imesa->sarea->nbox = nbox;
-
-      if (I830_DEBUG&DEBUG_VERBOSE_IOCTL)
-	 fprintf(stderr, "DRM_IOCTL_I830_VERTEX CASE1 nbox %d used %d\n", 
-		 nbox, vertex.used);
-
-      vertex.discard = 1;
-      ioctl(imesa->driFd, DRM_IOCTL_I830_VERTEX, &vertex);
-      age_imesa(imesa, imesa->sarea->last_enqueue);
+	 i830EmitHwStateLocked(imesa);
    }
-   else 
-   {
-      for (i = 0 ; i < nbox ; )
-      {
-	 int nr = MIN2(i + I810_NR_SAREA_CLIPRECTS, nbox);
-	 drm_clip_rect_t *b = (drm_clip_rect_t *)imesa->sarea->boxes;
 
-	 imesa->sarea->nbox = nr - i;
-	 for ( ; i < nr ; i++, b++) {
-	    *b++ = pbox[i];
-	    if(0) fprintf(stderr, "x1: %d y1: %d x2: %d y2: %d\n",
-			  pbox[i].x1,
-			  pbox[i].y1,
-			  pbox[i].x2,
-			  pbox[i].y2);
-	 }
+   if (I830_DEBUG & DEBUG_IOCTL)
+      fprintf(stderr,"%s: Vertex idx %d used %d discard %d\n", 
+	      __FUNCTION__, vertex.idx, vertex.used, vertex.discard);
 
-	 /* Finished with the buffer?
-	  */
-	 if (nr == nbox) 
-	    vertex.discard = 1;
-
-     	 if (I830_DEBUG&DEBUG_VERBOSE_IOCTL)
-	    fprintf(stderr, "DRM_IOCTL_I830_VERTEX nbox %d used %d\n", 
-		    nbox, vertex.used);
-
-	 ioctl(imesa->driFd, DRM_IOCTL_I830_VERTEX, &vertex);
-	 age_imesa(imesa, imesa->sarea->last_enqueue);
+   if (!nbox) {
+      vertex.used = 0;
+      vertex.discard = 1;
+      if (drmCommandWrite (imesa->driFd, DRM_I830_VERTEX, 
+			   &vertex, sizeof(drmI830Vertex))) {
+	 fprintf(stderr, "DRM_I830_VERTEX: %d\n",  -errno);
+	 UNLOCK_HARDWARE(imesa);
+	 exit(1);
       }
+      return;
+   }
+
+   for (i = 0 ; i < nbox ; i = nr ) {
+      XF86DRIClipRectPtr b = sarea->boxes;
+      int j;
+
+      nr = MIN2(i + I830_NR_SAREA_CLIPRECTS, nbox);
+      sarea->nbox = nr - i;
+
+      for ( j = i ; j < nr ; j++) {
+	 b[j-i] = pbox[j];
+      }
+
+      /* Finished with the buffer?
+       */
+      if (nr == nbox)
+	 vertex.discard = 1;
+
+      /* Do a bunch of sanity checks on the vertices sent to the hardware */
+      if (I830_DEBUG & DEBUG_SANITY) {
+	 i830VertexSanity(imesa, vertex);
+      
+	 for ( j = 0 ; j < sarea->nbox ; j++) {
+	    fprintf(stderr, "box %d/%d %d,%d %d,%d\n",
+		    j, sarea->nbox, b[j].x1, b[j].y1, b[j].x2, b[j].y2);
+	 }
+      }
+
+      drmCommandWrite (imesa->driFd, DRM_I830_VERTEX, 
+		       &vertex, sizeof(drmI830Vertex));
+      age_imesa(imesa, imesa->sarea->last_enqueue);
    }
 
    imesa->dirty = 0;
-   if (I830_DEBUG&DEBUG_VERBOSE_IOCTL)
-      fprintf(stderr, "finished i830FlushVerticesLocked\n");
+   imesa->upload_cliprects = GL_FALSE;
+}
+
+void i830FlushPrimsGetBufferLocked( i830ContextPtr imesa )
+{
+   if (imesa->vertex_buffer)
+     i830FlushPrimsLocked( imesa );
+   imesa->vertex_buffer = i830_get_buffer_ioctl( imesa );
+   imesa->vertex_addr = (char *)imesa->vertex_buffer->address;
+
+   /* leave room for instruction header & footer:
+    */
+   imesa->vertex_high = imesa->vertex_buffer->total - 4; 
+   imesa->vertex_low = 4;	
+   imesa->vertex_last_prim = imesa->vertex_low;
+}
+
+void i830FlushPrimsGetBuffer( i830ContextPtr imesa )
+{
+   LOCK_HARDWARE(imesa);
+   i830FlushPrimsGetBufferLocked( imesa );
+   UNLOCK_HARDWARE(imesa);
 }
 
 
-GLuint *i830AllocDwords( i830ContextPtr imesa, int dwords )
+void i830FlushPrims( i830ContextPtr imesa )
 {
-   GLuint *start;
-
-   if (!imesa->vertex_dma_buffer) 
-   {
-      LOCK_HARDWARE(imesa);
-      imesa->vertex_dma_buffer = i830_get_buffer_ioctl( imesa );
-      UNLOCK_HARDWARE(imesa);
-   } 
-   else if (imesa->vertex_dma_buffer->used + dwords * 4 > 
-	    imesa->vertex_dma_buffer->total) 
-   {
-      LOCK_HARDWARE(imesa);
-      i830FlushVerticesLocked( imesa );
-      imesa->vertex_dma_buffer = i830_get_buffer_ioctl( imesa );
-      UNLOCK_HARDWARE(imesa);
+   if (imesa->vertex_buffer) {
+      LOCK_HARDWARE( imesa );
+      i830FlushPrimsLocked( imesa );
+      UNLOCK_HARDWARE( imesa );
    }
-
-   start = (GLuint *)((char *)imesa->vertex_dma_buffer->address + 
-		      imesa->vertex_dma_buffer->used);
-
-   imesa->vertex_dma_buffer->used += dwords * 4;
-   return start;
 }
 
 int i830_check_copy(int fd)
 {
-   return(ioctl(fd, DRM_IOCTL_I830_DOCOPY));
+   return drmCommandNone(fd, DRM_I830_DOCOPY);
 }
 
 static void i830DDFlush( GLcontext *ctx )
 {
    i830ContextPtr imesa = I830_CONTEXT( ctx );
-   FLUSH_BATCH( imesa );
+   I830_FIREVERTICES( imesa );
 }
 
 static void i830DDFinish( GLcontext *ctx  ) 
@@ -808,5 +830,7 @@ static void i830DDFinish( GLcontext *ctx  )
 void i830DDInitIoctlFuncs( GLcontext *ctx )
 {
    ctx->Driver.Flush = i830DDFlush;
+   ctx->Driver.Clear = i830Clear;
    ctx->Driver.Finish = i830DDFinish;
 }
+

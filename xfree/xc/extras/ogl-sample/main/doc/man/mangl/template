@@ -33,8 +33,6 @@ _C_ was created using the OpenGL(R) version 1.2.1 Sample Implementation
 _C_ published by SGI, but has not been independently verified as being
 _C_ compliant with the OpenGL(R) version 1.2.1 Specification.
 _C_
-_C_ $Date: 2002/01/19 15:26:43 $ $Revision: 1.1.1.1 $
-_C_ $Header: /cvsroot/xsrc/xfree/xc/extras/ogl-sample/main/doc/man/mangl/Attic/template,v 1.1.1.1 2002/01/19 15:26:43 tron Exp $
 _C_
 _C_ _define(_filters,tbl|eqn)_C_
 _C_	 eqn is automatically replaced with neqn for nroff

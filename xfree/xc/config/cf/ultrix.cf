@@ -1,5 +1,9 @@
 XCOMM platform:  $Xorg: ultrix.cf,v 1.3 2000/08/17 19:41:48 cpqbld Exp $
 
+
+
+XCOMM $XFree86: xc/config/cf/ultrix.cf,v 1.2 2002/11/14 21:01:14 tsi Exp $
+
 #ifndef OSName
 # define OSName		DefaultOSName
 #endif
@@ -17,6 +21,9 @@ XCOMM operating system: OSName (OSMajorVersion.OSMinorVersion)
 #define LintLibFlag -o
 #define LintOpts -ax
 
+#ifndef HasDECnet
+#define HasDECnet	NO
+#endif
 #if HasDECnet
 #define ExtraLibraries -ldnet
 #endif

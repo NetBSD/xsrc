@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_span.c,v 1.4 2001/04/10 16:07:53 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/radeon/radeon_span.c,v 1.6 2002/10/30 12:51:56 alanh Exp $ */
 /**************************************************************************
 
 Copyright 2000, 2001 ATI Technologies Inc., Ontario, Canada, and
@@ -31,7 +31,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Authors:
  *   Kevin E. Martin <martin@valinux.com>
  *   Gareth Hughes <gareth@valinux.com>
- *   Keith Whitwell <keithw@valinux.com>
+ *   Keith Whitwell <keith@tungstengraphics.com>
  *
  */
 
@@ -39,22 +39,25 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "radeon_ioctl.h"
 #include "radeon_state.h"
 #include "radeon_span.h"
+#include "radeon_tex.h"
+
+#include "swrast/swrast.h"
 
 #define DBG 0
 
 #define LOCAL_VARS							\
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);			\
    radeonScreenPtr radeonScreen = rmesa->radeonScreen;			\
-   __DRIscreenPrivate *sPriv = rmesa->driScreen;			\
-   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
+   __DRIscreenPrivate *sPriv = rmesa->dri.screen;			\
+   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;			\
    GLuint pitch = radeonScreen->frontPitch * radeonScreen->cpp;		\
    GLuint height = dPriv->h;						\
    char *buf = (char *)(sPriv->pFB +					\
-			rmesa->drawOffset +				\
+			rmesa->state.color.drawOffset +			\
 			(dPriv->x * radeonScreen->cpp) +		\
 			(dPriv->y * pitch));				\
    char *read_buf = (char *)(sPriv->pFB +				\
-			     rmesa->readOffset +			\
+			     rmesa->state.pixel.readOffset +		\
 			     (dPriv->x * radeonScreen->cpp) +		\
 			     (dPriv->y * pitch));			\
    GLuint p;								\
@@ -63,8 +66,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define LOCAL_DEPTH_VARS						\
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);			\
    radeonScreenPtr radeonScreen = rmesa->radeonScreen;			\
-   __DRIscreenPrivate *sPriv = rmesa->driScreen;			\
-   __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
+   __DRIscreenPrivate *sPriv = rmesa->dri.screen;			\
+   __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;			\
    GLuint height = dPriv->h;						\
    GLuint xo = dPriv->x;						\
    GLuint yo = dPriv->y;						\
@@ -73,7 +76,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define LOCAL_STENCIL_VARS	LOCAL_DEPTH_VARS
 
-#define INIT_MONO_PIXEL( p )	p = rmesa->Color
 
 #define CLIPPIXEL( _x, _y )						\
    ((_x >= minx) && (_x < maxx) && (_y >= miny) && (_y < maxy))
@@ -92,15 +94,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define Y_FLIP( _y )		(height - _y - 1)
 
 
-#define HW_LOCK()							\
-   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);			\
-   FLUSH_BATCH( rmesa );						\
-   LOCK_HARDWARE( rmesa );						\
-   radeonWaitForIdleLocked( rmesa );
+#define HW_LOCK() 
 
 #define HW_CLIPLOOP()							\
    do {									\
-      __DRIdrawablePrivate *dPriv = rmesa->driDrawable;			\
+      __DRIdrawablePrivate *dPriv = rmesa->dri.drawable;		\
       int _nc = dPriv->numClipRects;					\
 									\
       while ( _nc-- ) {							\
@@ -113,8 +111,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
       }									\
    } while (0)
 
-#define HW_UNLOCK()							\
-   UNLOCK_HARDWARE( rmesa )
+#define HW_UNLOCK()							
 
 
 
@@ -124,6 +121,9 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 16 bit, RGB565 color spanline and pixel functions
  */
+#define INIT_MONO_PIXEL(p, color) \
+  p = PACK_COLOR_565( color[0], color[1], color[2] )
+
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    *(GLushort *)(buf + _x*2 + _y*pitch) = ((((int)r & 0xf8) << 8) |	\
 					   (((int)g & 0xfc) << 3) |	\
@@ -135,13 +135,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define READ_RGBA( rgba, _x, _y )					\
    do {									\
       GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
-      rgba[0] = (p >> 8) & 0xf8;					\
-      rgba[1] = (p >> 3) & 0xfc;					\
-      rgba[2] = (p << 3) & 0xf8;					\
+      rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;				\
+      rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;				\
+      rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;				\
       rgba[3] = 0xff;							\
-      if ( rgba[0] & 0x08 ) rgba[0] |= 0x07;				\
-      if ( rgba[1] & 0x04 ) rgba[1] |= 0x03;				\
-      if ( rgba[2] & 0x08 ) rgba[2] |= 0x07;				\
    } while (0)
 
 #define TAG(x) radeon##x##_RGB565
@@ -149,6 +146,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* 32 bit, ARGB8888 color spanline and pixel functions
  */
+#undef INIT_MONO_PIXEL
+#define INIT_MONO_PIXEL(p, color) \
+  p = PACK_COLOR_8888( color[3], color[0], color[1], color[2] )
+
 #define WRITE_RGBA( _x, _y, r, g, b, a )				\
    *(GLuint *)(buf + _x*4 + _y*pitch) = ((b <<  0) |			\
 					 (g <<  8) |			\
@@ -260,7 +261,6 @@ do {									\
  * Stencil buffer
  */
 
-#if 0
 /* 24 bit depth, 8 bit stencil depthbuffer functions
  */
 #define WRITE_STENCIL( _x, _y, d )					\
@@ -282,69 +282,115 @@ do {									\
 
 #define TAG(x) radeon##x##_24_8
 #include "stenciltmp.h"
-#endif
 
 
-void radeonDDInitSpanFuncs( GLcontext *ctx )
+static void radeonSetReadBuffer( GLcontext *ctx,
+				 GLframebuffer *colorBuffer,
+				 GLenum mode )
 {
    radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
 
+   switch ( mode ) {
+   case GL_FRONT_LEFT:
+      if ( rmesa->sarea->pfCurrentPage == 1 ) {
+        rmesa->state.pixel.readOffset = rmesa->radeonScreen->backOffset;
+        rmesa->state.pixel.readPitch  = rmesa->radeonScreen->backPitch;
+      } else {
+      	rmesa->state.pixel.readOffset = rmesa->radeonScreen->frontOffset;
+      	rmesa->state.pixel.readPitch  = rmesa->radeonScreen->frontPitch;
+      }
+      break;
+   case GL_BACK_LEFT:
+      if ( rmesa->sarea->pfCurrentPage == 1 ) {
+      	rmesa->state.pixel.readOffset = rmesa->radeonScreen->frontOffset;
+      	rmesa->state.pixel.readPitch  = rmesa->radeonScreen->frontPitch;
+      } else {
+        rmesa->state.pixel.readOffset = rmesa->radeonScreen->backOffset;
+        rmesa->state.pixel.readPitch  = rmesa->radeonScreen->backPitch;
+      }
+      break;
+   default:
+      assert(0);
+      break;
+   }
+}
+
+/* Move locking out to get reasonable span performance (10x better
+ * than doing this in HW_LOCK above).  WaitForIdle() is the main
+ * culprit.
+ */
+
+static void radeonSpanRenderStart( GLcontext *ctx )
+{
+   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
+   RADEON_FIREVERTICES( rmesa );
+   LOCK_HARDWARE( rmesa );
+   radeonWaitForIdleLocked( rmesa );
+}
+
+static void radeonSpanRenderFinish( GLcontext *ctx )
+{
+   radeonContextPtr rmesa = RADEON_CONTEXT( ctx );
+   _swrast_flush( ctx );
+   UNLOCK_HARDWARE( rmesa );
+}
+
+void radeonInitSpanFuncs( GLcontext *ctx )
+{
+   radeonContextPtr rmesa = RADEON_CONTEXT(ctx);
+   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
+
+   swdd->SetReadBuffer = radeonSetReadBuffer;
+
    switch ( rmesa->radeonScreen->cpp ) {
    case 2:
-      ctx->Driver.WriteRGBASpan		= radeonWriteRGBASpan_RGB565;
-      ctx->Driver.WriteRGBSpan		= radeonWriteRGBSpan_RGB565;
-      ctx->Driver.WriteMonoRGBASpan	= radeonWriteMonoRGBASpan_RGB565;
-      ctx->Driver.WriteRGBAPixels	= radeonWriteRGBAPixels_RGB565;
-      ctx->Driver.WriteMonoRGBAPixels	= radeonWriteMonoRGBAPixels_RGB565;
-      ctx->Driver.ReadRGBASpan		= radeonReadRGBASpan_RGB565;
-      ctx->Driver.ReadRGBAPixels	= radeonReadRGBAPixels_RGB565;
+      swdd->WriteRGBASpan	= radeonWriteRGBASpan_RGB565;
+      swdd->WriteRGBSpan	= radeonWriteRGBSpan_RGB565;
+      swdd->WriteMonoRGBASpan	= radeonWriteMonoRGBASpan_RGB565;
+      swdd->WriteRGBAPixels	= radeonWriteRGBAPixels_RGB565;
+      swdd->WriteMonoRGBAPixels	= radeonWriteMonoRGBAPixels_RGB565;
+      swdd->ReadRGBASpan	= radeonReadRGBASpan_RGB565;
+      swdd->ReadRGBAPixels      = radeonReadRGBAPixels_RGB565;
       break;
 
    case 4:
-      ctx->Driver.WriteRGBASpan		= radeonWriteRGBASpan_ARGB8888;
-      ctx->Driver.WriteRGBSpan		= radeonWriteRGBSpan_ARGB8888;
-      ctx->Driver.WriteMonoRGBASpan	= radeonWriteMonoRGBASpan_ARGB8888;
-      ctx->Driver.WriteRGBAPixels	= radeonWriteRGBAPixels_ARGB8888;
-      ctx->Driver.WriteMonoRGBAPixels	= radeonWriteMonoRGBAPixels_ARGB8888;
-      ctx->Driver.ReadRGBASpan		= radeonReadRGBASpan_ARGB8888;
-      ctx->Driver.ReadRGBAPixels	= radeonReadRGBAPixels_ARGB8888;
+      swdd->WriteRGBASpan	= radeonWriteRGBASpan_ARGB8888;
+      swdd->WriteRGBSpan	= radeonWriteRGBSpan_ARGB8888;
+      swdd->WriteMonoRGBASpan   = radeonWriteMonoRGBASpan_ARGB8888;
+      swdd->WriteRGBAPixels     = radeonWriteRGBAPixels_ARGB8888;
+      swdd->WriteMonoRGBAPixels = radeonWriteMonoRGBAPixels_ARGB8888;
+      swdd->ReadRGBASpan	= radeonReadRGBASpan_ARGB8888;
+      swdd->ReadRGBAPixels      = radeonReadRGBAPixels_ARGB8888;
       break;
 
    default:
       break;
    }
 
-   switch ( rmesa->glCtx->Visual->DepthBits ) {
+   switch ( rmesa->glCtx->Visual.depthBits ) {
    case 16:
-      ctx->Driver.ReadDepthSpan		= radeonReadDepthSpan_16;
-      ctx->Driver.WriteDepthSpan	= radeonWriteDepthSpan_16;
-      ctx->Driver.ReadDepthPixels	= radeonReadDepthPixels_16;
-      ctx->Driver.WriteDepthPixels	= radeonWriteDepthPixels_16;
+      swdd->ReadDepthSpan	= radeonReadDepthSpan_16;
+      swdd->WriteDepthSpan	= radeonWriteDepthSpan_16;
+      swdd->ReadDepthPixels	= radeonReadDepthPixels_16;
+      swdd->WriteDepthPixels	= radeonWriteDepthPixels_16;
       break;
 
-    case 24:
-	ctx->Driver.ReadDepthSpan	= radeonReadDepthSpan_24_8;
-	ctx->Driver.WriteDepthSpan	= radeonWriteDepthSpan_24_8;
-	ctx->Driver.ReadDepthPixels	= radeonReadDepthPixels_24_8;
-	ctx->Driver.WriteDepthPixels	= radeonWriteDepthPixels_24_8;
+   case 24:
+      swdd->ReadDepthSpan	= radeonReadDepthSpan_24_8;
+      swdd->WriteDepthSpan	= radeonWriteDepthSpan_24_8;
+      swdd->ReadDepthPixels	= radeonReadDepthPixels_24_8;
+      swdd->WriteDepthPixels	= radeonWriteDepthPixels_24_8;
 
-#if 0 /* only need these for hardware stencil buffers */
-	ctx->Driver.ReadStencilSpan	= radeonReadStencilSpan_24_8;
-	ctx->Driver.WriteStencilSpan	= radeonWriteStencilSpan_24_8;
-	ctx->Driver.ReadStencilPixels	= radeonReadStencilPixels_24_8;
-	ctx->Driver.WriteStencilPixels	= radeonWriteStencilPixels_24_8;
-#endif
-	break;
+      swdd->ReadStencilSpan	= radeonReadStencilSpan_24_8;
+      swdd->WriteStencilSpan	= radeonWriteStencilSpan_24_8;
+      swdd->ReadStencilPixels	= radeonReadStencilPixels_24_8;
+      swdd->WriteStencilPixels	= radeonWriteStencilPixels_24_8;
+      break;
 
-    default:
-	break;
-    }
+   default:
+      break;
+   }
 
-    ctx->Driver.WriteCI8Span		= NULL;
-    ctx->Driver.WriteCI32Span		= NULL;
-    ctx->Driver.WriteMonoCISpan		= NULL;
-    ctx->Driver.WriteCI32Pixels		= NULL;
-    ctx->Driver.WriteMonoCIPixels	= NULL;
-    ctx->Driver.ReadCI32Span		= NULL;
-    ctx->Driver.ReadCI32Pixels		= NULL;
+   swdd->SpanRenderStart          = radeonSpanRenderStart;
+   swdd->SpanRenderFinish         = radeonSpanRenderFinish; 
 }

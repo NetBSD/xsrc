@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_kqueue_apm.c,v 1.3 2001/09/30 16:31:49 herrb Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_kqueue_apm.c,v 1.5 2002/07/30 23:24:32 herrb Exp $ */
 /*
  * Copyright (C) 2001 The XFree86 Project, Inc.  All Rights Reserved.
  * 
@@ -26,7 +26,7 @@
  * or other dealings in this Software without prior written authorization
  * from the XFree86 Project.
  */
-/* $OpenBSD: bsd_kqueue_apm.c,v 1.2 2001/08/20 22:17:19 matthieu Exp $ */
+/* $OpenBSD: bsd_kqueue_apm.c,v 1.5 2002/07/30 23:07:42 matthieu Exp $ */
 
 #include "X.h"
 #include "os.h"
@@ -95,7 +95,7 @@ bsdPMGetEventFromOS(int kq, pmEvent *events, int num)
     
     for (i = 0; i < num; i++) {
 	result = kevent(kq, NULL, 0, &ev, 1, &ts);
-	if (result == 0) {
+	if (result == 0 || APM_EVENT_TYPE(ev.data) == APM_NOEVENT) {
 	    /* no event */
 	    break;
 	} else if (result < 0) {
@@ -188,8 +188,11 @@ bsdCloseAPM(void)
     if (APMihPtr) {
 	kq = xf86RemoveInputHandler(APMihPtr);
 	close(devFd);
+	devFd = -1;
+	close(kq);
 	if (ctlFd >= 0) {
 	    close(ctlFd);
+	    ctlFd = -1;
 	}
 	APMihPtr = NULL;
     }

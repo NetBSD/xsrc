@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_accel.c,v 1.38 2002/01/07 18:46:03 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_accel.c,v 1.40 2002/11/25 14:04:58 eich Exp $ */
 /*
  * Copyright 1996, 1997, 1998 by David Bateman <dbateman@ee.uts.edu.au>
  *   Modified 1997, 1998 by Nozomi Ytow
@@ -53,12 +53,6 @@
 /* Our driver specific include file */
 #include "ct_driver.h"
 
-#ifdef DEBUG
-# define DEBUG_P(x) ErrorF(x"\n");
-#else
-# define DEBUG_P(x) /**/
-#endif
-
 #if !defined(UNIXCPP) || defined(ANSICPP)
 #define CATNAME(prefix,subname) prefix##subname
 #else
@@ -78,6 +72,17 @@
 #define CTNAME(subname) CATNAME(CHIPS,subname)
 #endif
 
+#ifdef DEBUG
+# define DEBUG_P(x) ErrorF(x"\n");
+#elif defined X_DEBUG
+# define DEBUG_P(x) snprintf(CTNAME(accel_debug),1024,x"\n");
+#else
+# define DEBUG_P(x) /**/
+#endif
+
+#ifdef X_DEBUG
+static char CTNAME(accel_debug)[1024];
+#endif
 
 #ifdef CHIPS_HIQV
 static void CTNAME(DepthChange)(ScrnInfoPtr pScrn, int depth);
@@ -157,7 +162,6 @@ CTNAME(AccelInit)(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     CHIPSPtr cPtr = CHIPSPTR(pScrn);
     CHIPSACLPtr cAcl = CHIPSACLPTR(pScrn);
-    BoxRec AvailFBArea;
 
     DEBUG_P("AccelInit");
     cPtr->AccelInfoRec = infoPtr = XAACreateInfoRec();
@@ -274,13 +278,22 @@ CTNAME(AccelInit)(ScreenPtr pScreen)
 	LEFT_EDGE_CLIPPING | LEFT_EDGE_CLIPPING_NEGATIVE_X |
 	ROP_NEEDS_SOURCE;
 #ifdef UNDOCUMENTED_FEATURE
-    infoPtr->ScreenToScreenColorExpandFillFlags = BIT_ORDER_IN_BYTE_MSBFIRST |
-	LEFT_EDGE_CLIPPING;
+    infoPtr->ScreenToScreenColorExpandFillFlags = BIT_ORDER_IN_BYTE_MSBFIRST
+	| LEFT_EDGE_CLIPPING;
 #endif        
     if (cAcl->BitsPerPixel == 24) {
 	infoPtr->CPUToScreenColorExpandFillFlags |= NO_PLANEMASK;
 #ifdef UNDOCUMENTED_FEATURE
 	infoPtr->ScreenToScreenColorExpandFillFlags |= NO_PLANEMASK;
+#endif
+    }
+    /* The ct65550 has problems with transparency which leads to video
+     * corruption unless disabled.
+     */
+    if (!(cPtr->Flags & ChipsColorTransparency)) {
+	infoPtr->CPUToScreenColorExpandFillFlags |= NO_TRANSPARENCY;
+#ifdef UNDOCUMENTED_FEATURE
+	infoPtr->ScreenToScreenColorExpandFillFlags |= NO_TRANSPARENCY;
 #endif
     }
 #else
@@ -390,16 +403,6 @@ chips_imagewrite:
         infoPtr->ImageWriteFlags |= NO_PLANEMASK;
 #endif
 
-    AvailFBArea.x1 = 0;
-    AvailFBArea.y1 = 0;
-    AvailFBArea.x2 = pScrn->displayWidth;
-    AvailFBArea.y2 = cAcl->CacheEnd /
-      (pScrn->displayWidth * cAcl->BytesPerPixel);
-
-#ifdef CHIPS_HIQV
-    if (!(cPtr->Flags & ChipsOverlay8plus16))      
-#endif
-	xf86InitFBManager(pScreen, &AvailFBArea); 
 
 #ifdef CHIPS_HIQV
     if (XAAInit(pScreen, infoPtr)) {

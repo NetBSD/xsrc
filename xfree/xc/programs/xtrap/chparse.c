@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xtrap/chparse.c,v 1.2 2002/01/07 20:38:31 dawes Exp $ */
+/* $XFree86: xc/programs/xtrap/chparse.c,v 1.3 2002/09/18 17:11:57 tsi Exp $ */
 /*****************************************************************************
 Copyright 1987, 1988, 1989, 1990, 1991 by Digital Equipment Corp., Maynard, MA
 
@@ -59,6 +59,7 @@ SOFTWARE.
 #include	<sys/types.h>
 #include	<sys/time.h>
 #endif
+#include	<string.h>
 #include	<unistd.h>
 #include	"chparse.h"
 

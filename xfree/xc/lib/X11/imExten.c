@@ -26,7 +26,7 @@ PERFORMANCE OF THIS SOFTWARE.
                                fujiwara@a80.tech.yk.fujitsu.co.jp
 
 ******************************************************************/
-/* $XFree86: xc/lib/X11/imExten.c,v 1.2 2001/10/28 03:32:34 tsi Exp $ */
+/* $XFree86: xc/lib/X11/imExten.c,v 1.3 2003/02/20 03:30:36 dawes Exp $ */
 
 #include <X11/Xatom.h>
 #define NEED_EVENTS
@@ -480,9 +480,12 @@ _XimExtension(im)
     len += sizeof(CARD16)		/* sizeof imid */
 	 + sizeof(INT16);		/* sizeof length of extensions */
 
-   _XimSetHeader((XPointer)buf, XIM_QUERY_EXTENSION, 0, &len);
-    if (!(_XimWrite(im, len, (XPointer)buf)))
+    _XimSetHeader((XPointer)buf, XIM_QUERY_EXTENSION, 0, &len);
+    if (!(_XimWrite(im, len, (XPointer)buf))) {
+        XFree(buf);
 	return False;
+    }
+    XFree(buf);
     _XimFlush(im);
     buf_size = BUFSIZE;
     ret_code = _XimRead(im, &len, (XPointer)reply, buf_size,

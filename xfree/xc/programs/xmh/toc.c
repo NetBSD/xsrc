@@ -1,5 +1,5 @@
 /* $XConsortium: toc.c,v 2.59 95/01/09 16:52:53 swick Exp $
- * $XFree86: xc/programs/xmh/toc.c,v 3.4 2001/10/28 03:34:39 tsi Exp $
+ * $XFree86: xc/programs/xmh/toc.c,v 3.5 2002/04/05 21:06:29 dickey Exp $
  *
  *
  *			  COPYRIGHT 1987
@@ -31,10 +31,11 @@
 #include "tocintrnl.h"
 #include "toc.h"
 #include "tocutil.h"
+#include "actions.h"
+
 #include <sys/stat.h>
 
-static int IsDir(name)
-char *name;
+static int IsDir(char *name)
 {
     char str[500];
     struct stat buf;
@@ -50,10 +51,10 @@ char *name;
 }
 
 
-static void MakeSureFolderExists(namelistptr, numfoldersptr, name)
-char ***namelistptr;
-int *numfoldersptr;
-char *name;
+static void MakeSureFolderExists(
+    char ***namelistptr,
+    int *numfoldersptr,
+    char *name)
 {
     int i;
     char str[200];
@@ -68,10 +69,10 @@ char *name;
 }
 
 
-static void MakeSureSubfolderExists(namelistptr, numfoldersptr, name)
-    char ***		namelistptr;
-    int *		numfoldersptr;
-    char *		name;
+static void MakeSureSubfolderExists(
+    char ***		namelistptr,
+    int *		numfoldersptr,
+    char *		name)
 {
     char folder[300];
     char subfolder_path[300];
@@ -101,8 +102,7 @@ static void MakeSureSubfolderExists(namelistptr, numfoldersptr, name)
 	Punt("Can't create new xmh subfolder!");
 }
 
-int TocFolderExists(toc)
-    Toc	toc;
+int TocFolderExists(Toc toc)
 {
     struct stat buf;
     if (! toc->path) {
@@ -118,7 +118,7 @@ int TocFolderExists(toc)
 #endif
 }
 
-static void LoadCheckFiles()
+static void LoadCheckFiles(void)
 {
     FILE *fid;
     char str[1024];
@@ -156,7 +156,7 @@ static void LoadCheckFiles()
 
 /* Read in the list of folders. */
 
-void TocInit()
+void TocInit(void)
 {
     Toc toc;
     char **namelist;
@@ -200,8 +200,7 @@ void TocInit()
 
 /* Create a toc and add a folder to the folderList.  */
 
-Toc TocCreate(foldername)
-    char	*foldername;
+Toc TocCreate(char *foldername)
 {
     Toc		toc = TUMalloc();
 
@@ -215,8 +214,7 @@ Toc TocCreate(foldername)
 
 /* Create a new folder with the given name. */
 
-Toc TocCreateFolder(foldername)
-char *foldername;
+Toc TocCreateFolder(char *foldername)
 {
     Toc toc;
     char str[500];
@@ -227,14 +225,12 @@ char *foldername;
     return toc;
 }
 
-int TocHasMail(toc)
-    Toc toc;
+int TocHasMail(Toc toc)
 {
     return toc->mailpending;
 }
 
-static int CheckForNewMail(toc)
-    Toc toc;
+static int CheckForNewMail(Toc toc)
 {
     if (toc->incfile)
 	return (GetFileLength(toc->incfile) > 0);
@@ -258,8 +254,8 @@ static int CheckForNewMail(toc)
 }
 
 /*ARGSUSED*/
-void TocCheckForNewMail(update)
-    Boolean update;	/* if True, actually make the check */
+void TocCheckForNewMail(
+    Boolean update)	/* if True, actually make the check */
 {
     Toc toc;
     Scrn scrn;
@@ -323,8 +319,7 @@ void TocCheckForNewMail(update)
  * of the confirm popup.
  */
 
-Boolean TocTestAndSetDeletePending(toc)
-    Toc	toc;
+Boolean TocTestAndSetDeletePending(Toc toc)
 {
     Boolean flag;
 
@@ -333,8 +328,7 @@ Boolean TocTestAndSetDeletePending(toc)
     return flag;
 }
 
-void TocClearDeletePending(toc)
-    Toc	toc;
+void TocClearDeletePending(Toc toc)
 {
     toc->delete_pending = False;
 }
@@ -342,8 +336,7 @@ void TocClearDeletePending(toc)
 
 /* Recursively delete an entire directory.  Nasty. */
 
-static void NukeDirectory(path)
-    char *path;
+static void NukeDirectory(char *path)
 {
     struct stat buf;
 
@@ -371,8 +364,7 @@ static void NukeDirectory(path)
 
 /* Destroy the given folder. */
 
-void TocDeleteFolder(toc)
-Toc toc;
+void TocDeleteFolder(Toc toc)
 {
     Toc toc2;
     int i, j, w;
@@ -409,11 +401,10 @@ Toc toc;
  * toc from all scrns displaying it.
  */
 
-void TocSetScrn(toc, scrn)
-Toc toc;
-Scrn scrn;
+void TocSetScrn(Toc toc, Scrn scrn)
 {
-    int i;
+    Cardinal i;
+
     if (toc == NULL && scrn == NULL) return;
     if (scrn == NULL) {
 	for (i=0 ; i<toc->num_scrns ; i++)
@@ -461,9 +452,7 @@ Scrn scrn;
 /* Remove the given message from the toc.  Doesn't actually touch the file.
    Also note that it does not free the storage for the msg. */
 
-void TocRemoveMsg(toc, msg)
-Toc toc;
-Msg msg;
+void TocRemoveMsg(Toc toc, Msg msg)
 {
     Msg newcurmsg;
     MsgList mlist;
@@ -499,10 +488,10 @@ Msg msg;
     
 
 
-void TocRecheckValidity(toc)
-    Toc toc;
+void TocRecheckValidity(Toc toc)
 {
-    int i;
+    Cardinal i;
+
     if (toc && toc->validity == valid && TUScanFileOutOfDate(toc)) {
 	if (app_resources.block_events_on_busy) ShowBusyCursor();
 
@@ -519,12 +508,11 @@ void TocRecheckValidity(toc)
 
 /* Set the current message. */
 
-void TocSetCurMsg(toc, msg)
-  Toc toc;
-  Msg msg;
+void TocSetCurMsg(Toc toc, Msg msg)
 {
     Msg msg2;
-    int i;
+    Cardinal i;
+
     if (toc->validity != valid) return;
     if (msg != toc->curmsg) {
 	msg2 = toc->curmsg;
@@ -549,8 +537,7 @@ void TocSetCurMsg(toc, msg)
 
 /* Return the current message. */
 
-Msg TocGetCurMsg(toc)
-Toc toc;
+Msg TocGetCurMsg(Toc toc)
 {
     return toc->curmsg;
 }
@@ -560,9 +547,7 @@ Toc toc;
 
 /* Return the message after the given one.  (If none, return NULL.) */
 
-Msg TocMsgAfter(toc, msg)
-  Toc toc;
-  Msg msg;
+Msg TocMsgAfter(Toc toc, Msg msg)
 {
     int i;
     i = TUGetMsgPosition(toc, msg);
@@ -578,9 +563,7 @@ Msg TocMsgAfter(toc, msg)
 
 /* Return the message before the given one.  (If none, return NULL.) */
 
-Msg TocMsgBefore(toc, msg)
-  Toc toc;
-  Msg msg;
+Msg TocMsgBefore(Toc toc, Msg msg)
 {
     int i;
     i = TUGetMsgPosition(toc, msg);
@@ -596,10 +579,10 @@ Msg TocMsgBefore(toc, msg)
 
 /* The caller KNOWS the toc's information is out of date; rescan it. */
 
-void TocForceRescan(toc)
-    Toc	toc;
+void TocForceRescan(Toc toc)
 {
-    register int i;
+    register Cardinal i;
+
     if (toc->num_scrns) {
 	toc->viewedseq = toc->seqlist[0];
 	for (i=0 ; i<toc->num_scrns ; i++)
@@ -619,10 +602,10 @@ void TocForceRescan(toc)
 
 /* The caller has just changed a sequence list.  Reread them from mh. */
 
-void TocReloadSeqLists(toc)
-Toc toc;
+void TocReloadSeqLists(Toc toc)
 {
-    int i;
+    Cardinal i;
+
     TocSetCacheValid(toc);
     TULoadSeqLists(toc);
     TURefigureWhatsVisible(toc);
@@ -634,11 +617,11 @@ Toc toc;
 
 
 /*ARGSUSED*/
-void XmhReloadSeqLists(w, event, params, num_params)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*num_params;
+void XmhReloadSeqLists(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*num_params)
 {
     Scrn scrn = ScrnFromWidget(w);
     TocReloadSeqLists(scrn->toc);
@@ -649,8 +632,7 @@ void XmhReloadSeqLists(w, event, params, num_params)
 
 /* Return TRUE if the toc has an interesting sequence. */
 
-int TocHasSequences(toc)
-Toc toc;
+int TocHasSequences(Toc toc)
 {
     return toc && toc->numsequences > 1;
 }
@@ -658,9 +640,7 @@ Toc toc;
 
 /* Change which sequence is being viewed. */
 
-void TocChangeViewedSeq(toc, seq)
-  Toc toc;
-  Sequence seq;
+void TocChangeViewedSeq(Toc toc, Sequence seq)
 {
     if (seq == NULL) seq = toc->viewedseq;
     toc->viewedseq = seq;
@@ -671,9 +651,7 @@ void TocChangeViewedSeq(toc, seq)
 
 /* Return the sequence with the given name in the given toc. */
 
-Sequence TocGetSeqNamed(toc, name)
-Toc toc;
-char *name;
+Sequence TocGetSeqNamed(Toc toc, char *name)
 {
     register int i;
     if (name == NULL)
@@ -688,8 +666,7 @@ char *name;
 
 /* Return the sequence currently being viewed in the toc. */
 
-Sequence TocViewedSequence(toc)
-Toc toc;
+Sequence TocViewedSequence(Toc toc)
 {
     return toc->viewedseq;
 }
@@ -697,9 +674,9 @@ Toc toc;
 
 /* Set the selected sequence in the toc */
 
-void TocSetSelectedSequence(toc, sequence)
-    Toc		toc;
-    Sequence	sequence;
+void TocSetSelectedSequence(
+    Toc		toc,
+    Sequence	sequence)
 {
     if (toc) 
 	toc->selectseq = sequence;
@@ -708,8 +685,7 @@ void TocSetSelectedSequence(toc, sequence)
 
 /* Return the sequence currently selected */
 
-Sequence TocSelectedSequence(toc)
-    Toc	toc;
+Sequence TocSelectedSequence(Toc toc)
 {
     if (toc) return (toc->selectseq);
     else return (Sequence) NULL;
@@ -720,12 +696,11 @@ Sequence TocSelectedSequence(toc)
 
 #define SrcScan XawTextSourceScan
 
-MsgList TocCurMsgList(toc)
-  Toc toc;
+MsgList TocCurMsgList(Toc toc)
 {
     MsgList result;
     XawTextPosition pos1, pos2;
-    extern Msg MsgFromPosition();
+
     if (toc->num_scrns == 0) return NULL;
     result = MakeNullMsgList();
     XawTextGetSelectionPos( toc->scrn[0]->tocwidget, &pos1, &pos2); /* %%% */
@@ -745,8 +720,7 @@ MsgList TocCurMsgList(toc)
 
 /* Unset the current selection. */
 
-void TocUnsetSelection(toc)
-Toc toc;
+void TocUnsetSelection(Toc toc)
 {
     if (toc->source)
         XawTextUnsetSelection(toc->scrn[0]->tocwidget);
@@ -756,8 +730,7 @@ Toc toc;
 
 /* Create a brand new, blank message. */
 
-Msg TocMakeNewMsg(toc)
-Toc toc;
+Msg TocMakeNewMsg(Toc toc)
 {
     Msg msg;
     static int looping = False;
@@ -779,10 +752,10 @@ Toc toc;
 
 /* Set things to not update cache or display until further notice. */
 
-void TocStopUpdate(toc)
-Toc toc;
+void TocStopUpdate(Toc toc)
 {
-    int i;
+    Cardinal i;
+
     for (i=0 ; i<toc->num_scrns ; i++)
 	XawTextDisableRedisplay(toc->scrn[i]->tocwidget);
     toc->stopupdate++;
@@ -791,10 +764,10 @@ Toc toc;
 
 /* Start updating again, and do whatever updating has been queued. */
 
-void TocStartUpdate(toc)
-Toc toc;
+void TocStartUpdate(Toc toc)
 {
-    int i;
+    Cardinal i;
+
     if (toc->stopupdate && --(toc->stopupdate) == 0) {
 	for (i=0 ; i<toc->num_scrns ; i++) {
 	    if (toc->needsrepaint) 
@@ -814,8 +787,7 @@ Toc toc;
 /* Something has happened that could later convince us that our cache is out
    of date.  Make this not happen; our cache really *is* up-to-date. */
 
-void TocSetCacheValid(toc)
-Toc toc;
+void TocSetCacheValid(Toc toc)
 {
     TUSaveTocFile(toc);
 }
@@ -823,16 +795,14 @@ Toc toc;
 
 /* Return the full folder pathname of the given toc, prefixed w/'+' */
 
-char *TocMakeFolderName(toc)
-Toc toc;
+char *TocMakeFolderName(Toc toc)
 {
     char* name = XtMalloc((Cardinal) (strlen(toc->path) + 2) );
     (void)sprintf( name, "+%s", toc->path );
     return name;
 }
 
-char *TocName(toc)
-Toc toc;
+char *TocName(Toc toc)
 {
     return toc->foldername;
 }
@@ -841,8 +811,7 @@ Toc toc;
 
 /* Given a foldername, return the corresponding toc. */
 
-Toc TocGetNamed(name)
-char *name;
+Toc TocGetNamed(char *name)
 {
     int i;
     for (i=0; i<numFolders ; i++)
@@ -851,8 +820,7 @@ char *name;
 }
 
 
-Boolean TocHasChanges(toc)
-    Toc toc;
+Boolean TocHasChanges(Toc toc)
 {
     int i;
     for (i=0 ; i<toc->nummsgs ; i++)
@@ -867,10 +835,10 @@ Boolean TocHasChanges(toc)
    Requires confirmation by the user. */
 
 /*ARGSUSED*/
-static void TocCataclysmOkay(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;
-    XtPointer	call_data;	/* unused */
+static void TocCataclysmOkay(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,
+    XtPointer	call_data)	/* unused */
 {
     Toc			toc = (Toc) client_data;
     register int	i;
@@ -884,12 +852,13 @@ static void TocCataclysmOkay(widget, client_data, call_data)
 		   (XtCallbackList) NULL);
 }
 	
-int TocConfirmCataclysm(toc, confirms, cancels)
-    Toc			toc;
-    XtCallbackList	confirms;
-    XtCallbackList	cancels;
+int TocConfirmCataclysm(
+    Toc			toc,
+    XtCallbackList	confirms,
+    XtCallbackList	cancels)
 {	
     register int	i;
+
     static XtCallbackRec yes_callbacks[] = {
 	{TocCataclysmOkay,	(XtPointer) NULL},
 	{(XtCallbackProc) NULL,	(XtPointer) NULL},
@@ -935,10 +904,10 @@ int TocConfirmCataclysm(toc, confirms, cancels)
 /* Commit all the changes in this toc; all messages will meet their 'fate'. */
 
 /*ARGSUSED*/
-void TocCommitChanges(widget, client_data, call_data)
-    Widget	widget;		/* unused */
-    XtPointer	client_data;	
-    XtPointer	call_data;	/* unused */
+void TocCommitChanges(
+    Widget	widget,		/* unused */
+    XtPointer	client_data,	
+    XtPointer	call_data)	/* unused */
 {
     Toc toc = (Toc) client_data;
     Msg msg;
@@ -1056,8 +1025,7 @@ void TocCommitChanges(widget, client_data, call_data)
 
 /* Return whether the given toc can incorporate mail. */
 
-int TocCanIncorporate(toc)
-Toc toc;
+int TocCanIncorporate(Toc toc)
 {
     return (toc && (toc == InitialFolder || toc->incfile));
 }
@@ -1065,8 +1033,7 @@ Toc toc;
 
 /* Incorporate new messages into the given toc. */
 
-int TocIncorporate(toc)
-Toc toc;
+int TocIncorporate(Toc toc)
 {
     char **argv;
     char str[100], *file, *ptr;
@@ -1116,14 +1083,14 @@ Toc toc;
 
 /* The given message has changed.  Rescan it and change the scanfile. */
 
-void TocMsgChanged(toc, msg)
-Toc toc;
-Msg msg;
+void TocMsgChanged(Toc toc, Msg msg)
 {
     char **argv, str[100], str2[10], *ptr;
-    int length, delta, i;
+    int length, delta;
+    int i;
     FateType fate;
     Toc desttoc;
+
     if (toc->validity != valid) return;
     fate = MsgGetFate(msg, &desttoc);
     MsgSetFate(msg, Fignore, (Toc) NULL);
@@ -1162,9 +1129,7 @@ Msg msg;
 
 
 
-Msg TocMsgFromId(toc, msgid)
-Toc toc;
-int msgid;
+Msg TocMsgFromId(Toc toc, int msgid)
 {
     int h, l, m;
     l = 0;
@@ -1201,15 +1166,15 @@ int msgid;
  */
 
 /*ARGSUSED*/
-void XmhPushSequence(w, event, params, count)
-    Widget	w;
-    XEvent	*event;
-    String	*params;
-    Cardinal	*count;
+void XmhPushSequence(
+    Widget	w,
+    XEvent	*event,
+    String	*params,
+    Cardinal	*count)
 {
     Scrn	scrn = ScrnFromWidget(w);
     Toc		toc;
-    int		i;
+    Cardinal	i;
 
     if (! (toc = scrn->toc)) return;
     
@@ -1224,11 +1189,11 @@ void XmhPushSequence(w, event, params, count)
 
 
 /*ARGSUSED*/
-void XmhPopSequence(w, event, params, count)
-    Widget	w;		/* any widget on the screen of interest */
-    XEvent	*event;
-    String	*params;
-    Cardinal	*count;
+void XmhPopSequence(
+    Widget	w,		/* any widget on the screen of interest */
+    XEvent	*event,
+    String	*params,
+    Cardinal	*count)
 {
     Scrn	scrn = ScrnFromWidget(w);
     char	*seqname;

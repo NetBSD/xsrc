@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/GL/glx/glxcontext.h,v 1.3 2001/03/21 16:29:36 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/GL/glx/glxcontext.h,v 1.4 2002/02/22 21:45:07 dawes Exp $ */
 #ifndef _GLX_context_h_
 #define _GLX_context_h_
 
@@ -38,6 +38,9 @@
 */
 
 typedef struct __GLXcontextRec __GLXcontext;
+
+/* XXX: should be defined somewhere globally */
+#define CAPI
 
 #include "GL/internal/glcore.h"
 

@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/hw/xfree86/input/magictouch/xf86MagicTouch.c,v 1.2 2001/07/04 13:38:09 tsi Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/input/magictouch/xf86MagicTouch.c,v 1.3 2003/01/12 03:55:50 tsi Exp $
  */
 
 #include <xf86Version.h>
@@ -601,9 +601,9 @@ xf86MagicControl(DeviceIntPtr dev,
 			 */
 			xf86MotionHistoryAllocate(local);
 			
-			#ifndef XFREE86_V4
+#ifndef XFREE86_V4
 			AssignTypeAndName(dev, local->atom, local->name);
-			#endif /* XFREE86_V4 */
+#endif /* XFREE86_V4 */
 			
 			DBG(2, ErrorF("MagicTouch INIT OK\n") );
 			
@@ -612,20 +612,20 @@ xf86MagicControl(DeviceIntPtr dev,
 		case DEVICE_ON:
 			DBG(2, ErrorF("MagicTouch ON\n") );
 			if (local->fd<0) {
-			#ifndef XFREE86_V4
+#ifndef XFREE86_V4
 			struct termios termios_tty;
 			int 		i,result;
-			#endif
+#endif
 			
 			DBG(2, ErrorF("Opening device...\n") );
 			
-			#ifdef XFREE86_V4
+#ifdef XFREE86_V4
 			local->fd = xf86OpenSerial(local->options);
 			if (local->fd<0) {
 				ErrorF("Impossibile aprire MagicTouch\n");
 				return !Success;
 			}
-			#else
+#else
 			SYSCALL( local->fd = open(priv->input_dev, O_RDWR | O_NDELAY, 0) );
 			if (local->fd<0) {
 				Error("Impossibile aprire MagicTouch\n");
@@ -646,7 +646,7 @@ xf86MagicControl(DeviceIntPtr dev,
 			/*
 			 * Attivo l'RTS per abilitare il touch controller
 			 */
-			#if 0
+#if 0
          SYSCALL( result = ioctl(local->fd, TIOCMGET, &status_line) );
 			if (result<0) 
 			{
@@ -662,7 +662,7 @@ xf86MagicControl(DeviceIntPtr dev,
 				close(local->fd);
 				return !Success;
 			}
-			#endif
+#endif
 			
 			SYSCALL( result = tcsetattr(local->fd, TCSANOW, &termios_tty) );
 			if (result<0) 
@@ -671,7 +671,7 @@ xf86MagicControl(DeviceIntPtr dev,
 				close(local->fd);
 				return !Success;
 			}
-			#endif
+#endif
 			
 								
 			/* Controlla se e' presente il touch controller.*/
@@ -987,11 +987,11 @@ xf86MagicAllocate(void)
 xf86MagicAllocate(InputDriverPtr drv)
 #endif
 {
-	#ifndef XFREE86_V4
+#ifndef XFREE86_V4
 	LocalDevicePtr	local = (LocalDevicePtr) xalloc( sizeof(LocalDeviceRec) );
-	#else
+#else
 	LocalDevicePtr	local = xf86AllocateInput(drv, 0);
-	#endif
+#endif
 
 	MagicPrivatePtr	priv = (MagicPrivatePtr) xalloc( sizeof(MagicPrivateRec) );
 
@@ -1011,12 +1011,12 @@ xf86MagicAllocate(InputDriverPtr drv)
 	}
 	
 	/* I buffers sono allocati correttamente */
-	#ifdef XFREE86_V4
+#ifdef XFREE86_V4
 	priv->input_dev = strdup(MAGIC_PORT);
-	#else
+#else
 	priv->input_dev = MAGIC_PORT;
 	priv->link_speed = MAGIC_LINK_SPEED;
-	#endif
+#endif
 	
 	priv->min_x = 60;
 	priv->max_x = 960;
@@ -1042,11 +1042,11 @@ xf86MagicAllocate(InputDriverPtr drv)
 	local->name = XI_TOUCHSCREEN;
 	local->flags = 0;
 	
-	#ifndef XFREE86_V4
-	#if !defined(sun) || defined(i386)
+#ifndef XFREE86_V4
+#if !defined(sun) || defined(i386)
 	local->device_config = xf86MagicConfig;	
-	#endif /* !defined(sun) || defined(i386) */	
-	#endif /* XFREE86_V4*/
+#endif /* !defined(sun) || defined(i386) */	
+#endif /* XFREE86_V4*/
 	
 	local->device_control = xf86MagicControl;
 	local->read_input = xf86MagicReadInput;

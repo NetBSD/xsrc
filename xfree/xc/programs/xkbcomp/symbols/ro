@@ -7,7 +7,7 @@
 // Modified by Miºu Moldovan, <dumol@go.ro> (C) 2001
 // Modified by Marius Andreiana, <mandreiana@yahoo.com> (C) 2001
 // 
-// $XFree86: xc/programs/xkbcomp/symbols/ro,v 3.4 2001/12/21 21:03:59 dawes Exp $
+// $XFree86: xc/programs/xkbcomp/symbols/ro,v 3.5 2002/06/04 22:50:58 dawes Exp $
 // Diacriticele se scriu cu ALT-ul din dreapta si q,t,i,a,s (+shift eventual)
 // 
 
@@ -34,3 +34,11 @@ xkb_symbols "basic" {
     modifier_map Mod3	{ Mode_switch };
 
 };
+
+xkb_symbols "comma" {
+    include "ro(basic)"
+
+    key <AC02> { [], [ 0x1000219,	0x1000218	] };
+    key <AD05> { [], [ 0x100021b,	0x100021a	] };
+};
+

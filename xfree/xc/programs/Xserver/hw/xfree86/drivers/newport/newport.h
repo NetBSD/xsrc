@@ -1,7 +1,7 @@
 /* 
  * Id: newport.h,v 1.4 2000/11/29 20:58:10 agx Exp $
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport.h,v 1.8 2001/12/19 21:31:21 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/newport/newport.h,v 1.10 2002/12/10 04:03:00 dawes Exp $ */
 
 #ifndef __NEWPORT_H__
 #define __NEWPORT_H__
@@ -25,7 +25,7 @@
 #include "newport_regs.h"
 
 #define NEWPORT_BASE_ADDR0  0x1f0f0000
-#define NEWPORT_BASE_OFFSET 0x0040000
+#define NEWPORT_BASE_OFFSET 0x00400000
 #define NEWPORT_MAX_BOARDS 4
 
 #if 0
@@ -47,13 +47,20 @@ typedef struct {
 	int bitplanes; 
 	/* revision numbers of the various pieces of silicon */
 	unsigned int board_rev, cmap_rev, rex3_rev, xmap9_rev, bt445_rev;
+	/* shadow copies of frequently used registers */
 	NewportRegsPtr pNewportRegs;	/* Pointer to REX3 registers */
 	npireg_t drawmode1;		/* REX3 drawmode1 common to all drawing operations */
+	CARD16 vc2ctrl;                 /* VC2 control register */
 
 	/* ShadowFB stuff: */
-	pointer ShadowPtr;
+	CARD32* ShadowPtr;
 	unsigned long int ShadowPitch;
 	unsigned int Bpp;		/* Bytes per pixel */
+
+	/* HWCursour stuff: */
+	Bool hwCursor;
+	xf86CursorInfoPtr CursorInfoRec;
+	CARD16 curs_cmap_base;          /* MSB of the cursor's cmap */
 
 	/* wrapped funtions: */
 	CloseScreenProcPtr  CloseScreen;
@@ -68,12 +75,19 @@ typedef struct {
 	npireg_t txt_smask2y;
 	npireg_t txt_clipmode;		/* Rex3 clip mode register */
 
-	unsigned short txt_vc2ctrl;	/* VC2 control register */
+	CARD16 txt_vc2ctrl;             /* VC2 control register */
+	CARD16 txt_vc2cur_x;            /* VC2 hw cursor x location */
+	CARD16 txt_vc2cur_y;            /* VC2 hw cursor x location */
+	CARD32  txt_vc2cur_data[64];    /* VC2 hw cursor glyph data */
+
 	CARD8  txt_xmap9_cfg0;		/* 0. Xmap9's control register */
 	CARD8  txt_xmap9_cfg1;		/* 1. Xmap9's control register */
+	CARD8  txt_xmap9_ccmsb;         /* cursor cmap msb */
 	CARD8  txt_xmap9_mi;		/* Xmap9s' mode index register */
 	CARD32 txt_xmap9_mod0;		/* Xmap9s' mode 0 register */
+
 	LOCO txt_colormap[256];
+
 	OptionInfoPtr Options;
 } NewportRec, *NewportPtr;
 
@@ -91,15 +105,24 @@ void NewportBackupRex3( ScrnInfoPtr pScrn);
 void NewportRestoreRex3( ScrnInfoPtr pScrn);
 void NewportBackupXmap9s( ScrnInfoPtr pScrn);
 void NewportRestoreXmap9s( ScrnInfoPtr pScrn);
+void NewportBackupVc2( ScrnInfoPtr pScrn);
+void NewportRestoreVc2( ScrnInfoPtr pScrn);
+void NewportBackupVc2Cursor( ScrnInfoPtr pScrn);
+void NewportRestoreVc2Cursor( ScrnInfoPtr pScrn);
 
 /* newort_cmap.c */
 void NewportLoadPalette(ScrnInfoPtr pScrn, int numColors, int *indices, 
 			LOCO* colors, VisualPtr pVisual);
 void NewportRestorePalette(ScrnInfoPtr pScrn);
 void NewportBackupPalette(ScrnInfoPtr pScrn);
+void NewportCmapSetRGB( NewportRegsPtr pNewportRegs, unsigned short addr, LOCO color);
 
 /* newport_shadow.c */
 void NewportRefreshArea8(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
 void NewportRefreshArea24(ScrnInfoPtr pScrn, int num, BoxPtr pbox);
+
+/* newport_cursor.c */
+Bool NewportHWCursorInit(ScreenPtr pScreen);
+void NewportLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *bits);
 
 #endif /* __NEWPORT_H__ */

@@ -1,9 +1,9 @@
-XCOMM $XFree86: xc/lib/font/Type1/module/Imakefile,v 1.6 1999/08/14 10:49:18 dawes Exp $
+XCOMM $XFree86: xc/lib/font/Type1/module/Imakefile,v 1.7 2002/02/13 21:32:48 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
 
-INCLUDES = -I$(FONTINCSRC) -I../ -I../../include -I$(XTOP)/include \
+INCLUDES = -I$(FONTINCSRC) -I../ -I../../include -I$(XINCLUDESRC) \
 	   -I$(SERVERSRC)/include
 
 #if BuildCID

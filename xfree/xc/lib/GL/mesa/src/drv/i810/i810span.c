@@ -1,8 +1,13 @@
-#include "types.h"
-#include "i810dd.h"
-#include "i810log.h"
+#include "glheader.h"
+#include "macros.h"
+#include "mtypes.h"
+
+#include "i810screen.h"
+#include "i810_dri.h"
+
 #include "i810span.h"
 #include "i810ioctl.h"
+#include "swrast/swrast.h"
 
 
 #define DBG 0
@@ -12,13 +17,13 @@
    i810ScreenPrivate *i810Screen = imesa->i810Screen;	\
    GLuint pitch = i810Screen->backPitch;		\
    GLuint height = dPriv->h;				\
+   GLushort p;						\
    char *buf = (char *)(imesa->drawMap +		\
 			dPriv->x * 2 +			\
 			dPriv->y * pitch);		\
    char *read_buf = (char *)(imesa->readMap +		\
 			     dPriv->x * 2 +		\
-			     dPriv->y * pitch); 	\
-   GLushort p = I810_CONTEXT( ctx )->MonoColor;         \
+			     dPriv->y * pitch);		\
    (void) read_buf; (void) buf; (void) p
 
 #define LOCAL_DEPTH_VARS				\
@@ -30,7 +35,8 @@
 			dPriv->x * 2 +			\
 			dPriv->y * pitch)
 
-#define INIT_MONO_PIXEL(p)
+#define INIT_MONO_PIXEL(p, color) \
+   p = PACK_COLOR_565( color[0], color[1], color[2] )
 
 #define CLIPPIXEL(_x,_y) (_x >= minx && _x < maxx && \
 			  _y >= miny && _y < maxy)
@@ -50,7 +56,7 @@
 
 #define HW_LOCK()				\
    i810ContextPtr imesa = I810_CONTEXT(ctx);	\
-   FLUSH_BATCH(imesa);				\
+   I810_FIREVERTICES(imesa);			\
    i810DmaFinish(imesa);			\
    LOCK_HARDWARE_QUIESCENT(imesa);
 
@@ -84,43 +90,17 @@
 #define WRITE_PIXEL( _x, _y, p )  \
    *(GLushort *)(buf + _x*2 + _y*pitch) = p
 
-#define READ_RGBA( rgba, _x, _y )				\
-do {								\
-   GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);	\
-   rgba[0] = (((p >> 11) & 0x1f) * 255) / 31;			\
-   rgba[1] = (((p >>  5) & 0x3f) * 255) / 63;			\
-   rgba[2] = (((p >>  0) & 0x1f) * 255) / 31;			\
-   rgba[3] = 255;						\
+#define READ_RGBA( rgba, _x, _y )					\
+do {									\
+   GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);		\
+   rgba[0] = ((p >> 8) & 0xf8) * 255 / 0xf8;				\
+   rgba[1] = ((p >> 3) & 0xfc) * 255 / 0xfc;				\
+   rgba[2] = ((p << 3) & 0xf8) * 255 / 0xf8;				\
+   rgba[3] = 255;							\
 } while(0)
 
 #define TAG(x) i810##x##_565
 #include "spantmp.h"
-
-
-
-
-/* 15 bit, 555 rgb color spanline and pixel functions
- */
-#define WRITE_RGBA( _x, _y, r, g, b, a )			\
-   *(GLushort *)(buf + _x*2 + _y*pitch)  = (((r & 0xf8) << 7) |	\
-		                            ((g & 0xf8) << 3) |	\
-                         		    ((b & 0xf8) >> 3))
-
-#define WRITE_PIXEL( _x, _y, p )  \
-   *(GLushort *)(buf + _x*2 + _y*pitch)  = p
-
-#define READ_RGBA( rgba, _x, _y )				\
-do {								\
-   GLushort p = *(GLushort *)(read_buf + _x*2 + _y*pitch);	\
-   rgba[0] = (p >> 7) & 0xf8;					\
-   rgba[1] = (p >> 3) & 0xf8;					\
-   rgba[2] = (p << 3) & 0xf8;					\
-   rgba[3] = 255;						\
-} while(0)
-
-#define TAG(x) i810##x##_555
-#include "spantmp.h"
-
 
 
 
@@ -132,43 +112,43 @@ do {								\
 #define READ_DEPTH( d, _x, _y )	\
    d = *(GLushort *)(buf + _x*2 + _y*pitch);
 
-/*     d = 0xffff; */
-
 #define TAG(x) i810##x##_16
 #include "depthtmp.h"
 
 
-
-void i810DDInitSpanFuncs( GLcontext *ctx )
+static void i810SetReadBuffer(GLcontext *ctx, GLframebuffer *colorBuffer,
+				GLenum mode )
 {
-   if (1) {
-      ctx->Driver.WriteRGBASpan = i810WriteRGBASpan_565;
-      ctx->Driver.WriteRGBSpan = i810WriteRGBSpan_565;
-      ctx->Driver.WriteMonoRGBASpan = i810WriteMonoRGBASpan_565;
-      ctx->Driver.WriteRGBAPixels = i810WriteRGBAPixels_565;
-      ctx->Driver.WriteMonoRGBAPixels = i810WriteMonoRGBAPixels_565;
-      ctx->Driver.ReadRGBASpan = i810ReadRGBASpan_565;
-      ctx->Driver.ReadRGBAPixels = i810ReadRGBAPixels_565;
-   } else {
-      ctx->Driver.WriteRGBASpan = i810WriteRGBASpan_555;
-      ctx->Driver.WriteRGBSpan = i810WriteRGBSpan_555;
-      ctx->Driver.WriteMonoRGBASpan = i810WriteMonoRGBASpan_555;
-      ctx->Driver.WriteRGBAPixels = i810WriteRGBAPixels_555;
-      ctx->Driver.WriteMonoRGBAPixels = i810WriteMonoRGBAPixels_555;
-      ctx->Driver.ReadRGBASpan = i810ReadRGBASpan_555;
-      ctx->Driver.ReadRGBAPixels = i810ReadRGBAPixels_555;
+   i810ContextPtr imesa = I810_CONTEXT(ctx);
+
+   if (mode == GL_FRONT_LEFT) {
+      imesa->readMap = (char *)imesa->driScreen->pFB;
    }
+   else if (mode == GL_BACK_LEFT) {
+      imesa->readMap = imesa->i810Screen->back.map;
+   }
+   else {
+      ASSERT(0);
+   }
+}
 
-   ctx->Driver.ReadDepthSpan = i810ReadDepthSpan_16;
-   ctx->Driver.WriteDepthSpan = i810WriteDepthSpan_16;
-   ctx->Driver.ReadDepthPixels = i810ReadDepthPixels_16;
-   ctx->Driver.WriteDepthPixels = i810WriteDepthPixels_16;
 
-   ctx->Driver.WriteCI8Span        =NULL;
-   ctx->Driver.WriteCI32Span       =NULL;
-   ctx->Driver.WriteMonoCISpan     =NULL;
-   ctx->Driver.WriteCI32Pixels     =NULL;
-   ctx->Driver.WriteMonoCIPixels   =NULL;
-   ctx->Driver.ReadCI32Span        =NULL;
-   ctx->Driver.ReadCI32Pixels      =NULL;
+void i810InitSpanFuncs( GLcontext *ctx )
+{
+   struct swrast_device_driver *swdd = _swrast_GetDeviceDriverReference(ctx);
+
+   swdd->SetReadBuffer = i810SetReadBuffer;
+
+   swdd->WriteRGBASpan = i810WriteRGBASpan_565;
+   swdd->WriteRGBSpan = i810WriteRGBSpan_565;
+   swdd->WriteMonoRGBASpan = i810WriteMonoRGBASpan_565;
+   swdd->WriteRGBAPixels = i810WriteRGBAPixels_565;
+   swdd->WriteMonoRGBAPixels = i810WriteMonoRGBAPixels_565;
+   swdd->ReadRGBASpan = i810ReadRGBASpan_565;
+   swdd->ReadRGBAPixels = i810ReadRGBAPixels_565;
+
+   swdd->ReadDepthSpan = i810ReadDepthSpan_16;
+   swdd->WriteDepthSpan = i810WriteDepthSpan_16;
+   swdd->ReadDepthPixels = i810ReadDepthPixels_16;
+   swdd->WriteDepthPixels = i810WriteDepthPixels_16;
 }

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_funcs.c,v 1.15 2001/10/01 13:44:03 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_funcs.c,v 1.17 2002/05/07 12:53:49 alanh Exp $ */
 
 #define FASTER
 #ifndef PSZ
@@ -19,7 +19,7 @@
 #  define WRXB	WRXB_IOP
 #  define WRXW	WRXW_IOP
 #  define WRXL	WRXL_IOP
-#  define ApmWriteSeq(i, v)	wrinx(0x3C4, i, v)
+#  define ApmWriteSeq(i, v)	wrinx(pApm->xport, i, v)
 #else
 #  define APM_SUFF_IOP	""
 #endif
@@ -887,7 +887,7 @@ A(SetupForImageWrite)(ScrnInfoPtr pScrn, int rop, unsigned int planemask,
 {
   APMDECL(pScrn);
 
-  DPRINTNAME(SetupForImageWriteRect);
+  DPRINTNAME(SetupForImageWrite);
   if (trans_color != -1)
   {
 #ifndef FASTER
@@ -1200,19 +1200,25 @@ A(WritePixmap)(ScrnInfoPtr pScrn, int x, int y, int w, int h,
     int PlusOne = 0, mask, count;
 
     DPRINTNAME(WritePixmap);
+    if (rop == GXnoop)
+	return;
+    /*
+     * The function seems to crash more than it feels good. I hope that a
+     * good sync will help. This sync is anyway needed for direct write.
+     */
+    (*pApm->AccelInfoRec->Sync)(pScrn);
     /*
      * First the fast case : source and dest have same alignment. Doc says
      * it's faster to do it here, which may be true since one has to read
      * the chip when CPU to screen-ing.
      */
-    if ((skipleft = (long)src & 3L) == ((long)dst & 3L)) {
+    if ((skipleft = (long)src & 3L) == ((long)dst & 3L) && rop == GXcopy) {
 	int skipright;
 
 	if (skipleft)
 	    skipleft = 4 - skipleft;
 	dwords = (skipright = w * Bpp - skipleft) >> 2;
 	skipright %= 4;
-	(*pApm->AccelInfoRec->Sync)(pScrn);
 	if (!skipleft && !skipright)
 	    while (h-- > 0) {
 		CARD32 *src2 = (CARD32 *)src;

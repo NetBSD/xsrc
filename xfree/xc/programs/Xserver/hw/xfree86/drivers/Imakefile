@@ -1,4 +1,4 @@
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/Imakefile,v 1.22 2001/07/02 10:46:04 alanh Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/Imakefile,v 1.23 2002/05/31 18:45:59 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -7,17 +7,7 @@ XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/drivers/Imakefile,v 1.22 2001/07/
 SUBDIRS = XF86CardDrivers
 DRIVERS = XF86CardDrivers
 
-#ifndef OS2Architecture
 OBJS = `cat driver.list`
-#else
-OBJS = apm/?*_drv.o ati/?*_drv.o chips/?*_drv.o cirrus/?*_drv.o \
-       cyrix/?*_drv.o glint/?*_drv.o i128/?*_drv.o i740/?*_drv.o \
-       i810/?*_drv.o imstt/?*_drv.o mga/?*_drv.o neomagic/?*_drv.o \
-       nv/?*_drv.o rendition/?*_drv.o s3/?*_drv.o s3virge/?*_drv.o \
-       sis/?*_drv.o tdfx/?*_drv.o tga/?*_drv.o trident/?*_drv.o tseng/?*_drv.o \
-       vesa/?*_drv.o vga/?*_drv.o siliconmotion/?*.drv.o vmware/?*_drv.o
-
-#endif
 
 #if DoLoadableServer
 MakeSubdirs($(SUBDIRS))

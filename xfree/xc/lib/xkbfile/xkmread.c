@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/lib/xkbfile/xkmread.c,v 1.5 2001/07/25 15:04:58 dawes Exp $ */
+/* $XFree86: xc/lib/xkbfile/xkmread.c,v 1.6 2002/02/13 22:09:42 herrb Exp $ */
 
 #include <stdio.h>
 
@@ -171,7 +171,7 @@ XkmGetCARD32(file,pNRead)
     int *	pNRead;
 #endif
 {
-unsigned long	val;
+CARD32	val;
 
     if ((fread(&val,4,1,file)==1)&&(pNRead))
 	(*pNRead)+= 4;

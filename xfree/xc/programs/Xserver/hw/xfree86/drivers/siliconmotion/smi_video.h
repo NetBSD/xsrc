@@ -26,7 +26,7 @@ Silicon Motion shall not be used in advertising or otherwise to promote the
 sale, use or other dealings in this Software without prior written
 authorization from the XFree86 Project and silicon Motion.
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_video.h,v 1.3 2001/12/20 21:35:39 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/siliconmotion/smi_video.h,v 1.4 2002/09/16 18:06:01 eich Exp $ */
 
 #ifndef _SMI_VIDEO_H
 #define _SMI_VIDEO_H
@@ -56,15 +56,16 @@ authorization from the XFree86 Project and silicon Motion.
  * Attributes
  */
 
-#define N_ATTRS                 7
+#define N_ATTRS                 8
 
 #define XV_ENCODING             0
 #define XV_BRIGHTNESS           1
-#define XV_CONTRAST             2
-#define XV_SATURATION           3
-#define XV_HUE                  4
-#define XV_COLORKEY             5
-#define XV_INTERLACED           6
+#define XV_CAPTURE_BRIGHTNESS	2
+#define XV_CONTRAST             3
+#define XV_SATURATION           4
+#define XV_HUE                  5
+#define XV_COLORKEY             6
+#define XV_INTERLACED           7
 
 typedef struct
 {

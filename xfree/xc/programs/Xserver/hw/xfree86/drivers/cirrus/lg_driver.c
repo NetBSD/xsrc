@@ -13,7 +13,7 @@
  *	David Dawes, Andrew E. Mileski, Leonard N. Zubkoff,
  *	Guy DESBIEF, Itai Nahshon.
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_driver.c,v 1.41 2002/01/04 21:22:29 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/cirrus/lg_driver.c,v 1.43 2002/07/24 01:47:27 tsi Exp $ */
 
 #define EXPERIMENTAL
 
@@ -444,6 +444,7 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 
 	pCir = CIRPTR(pScrn);
 	pCir->pScrn = pScrn;
+	pCir->PIOReg = hwp->PIOOffset + 0x3CE;
 
 	/* Get the entity, and make sure it is PCI. */
 	pCir->pEnt = xf86GetEntityInfo(pScrn->entityList[0]);
@@ -650,7 +651,7 @@ LgPreInit(ScrnInfoPtr pScrn, int flags)
 	  | RAC_VIEWPORT
 #endif
 ;
- 	xf86SetOperatingState(resVgaMemShared, pCir->pEnt->index,ResUnusedOpr);
+ 	xf86SetOperatingState(resVgaMem, pCir->pEnt->index, ResUnusedOpr);
 	
 	/* Register the PCI-assigned resources. */
 	if (xf86RegisterResources(pCir->pEnt->index, NULL, ResExclusive)) {

@@ -46,7 +46,7 @@ in this Software without prior written authorization from The Open Group.
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
  * THIS SOFTWARE.
  */
-/* $XFree86: xc/programs/xfs/difs/main.c,v 3.11 2001/12/14 20:01:35 dawes Exp $ */
+/* $XFree86: xc/programs/xfs/difs/main.c,v 3.12 2002/10/15 01:45:02 dawes Exp $ */
 
 #include	<stdlib.h>
 #include	<sys/types.h>
@@ -98,12 +98,11 @@ main(int argc, char *argv[])
     InitErrors();
 
     /*
-     * do this first thing, to get any options that only take effect at
-     * startup time.  it is read again each time the server resets
+     * Do this first thing, to get any options that only take effect at
+     * startup time.  It is read again each time the server resets.
      */
     if (ReadConfigFile(configfilename) != FSSuccess) {
-	ErrorF("fatal: couldn't read config file\n");
-	exit(1);
+	FatalError("couldn't read config file\n");
     }
 
     /* make sure at least world write access is disabled */
@@ -181,7 +180,7 @@ NotImplemented(void)
 {
     NoopDDA();			/* dummy to get difsutils.o to link */
     /* Getting here can become the next xfs exploit... so don't exit */
-    ErrorF("Not implemented\n");
+    ErrorF("not implemented\n");
 
     return (FSBadImplementation);
 }

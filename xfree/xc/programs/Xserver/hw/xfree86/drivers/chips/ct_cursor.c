@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_cursor.c,v 1.24 2001/10/01 13:44:03 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/chips/ct_cursor.c,v 1.27 2002/11/25 14:04:58 eich Exp $ */
 
 /*
  * Copyright 1994  The XFree86 Project
@@ -57,6 +57,20 @@
 	} \
     }
 
+/* Swing your cursor bytes round and round... yeehaw! */
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+#define P_SWAP32( a , b )                \
+       ((char *)a)[0] = ((char *)b)[3];  \
+       ((char *)a)[1] = ((char *)b)[2];  \
+       ((char *)a)[2] = ((char *)b)[1];  \
+       ((char *)a)[3] = ((char *)b)[0]
+
+#define P_SWAP16( a , b )                \
+       ((char *)a)[0] = ((char *)b)[1];  \
+       ((char *)a)[1] = ((char *)b)[0];  \
+       ((char *)a)[2] = ((char *)b)[3];  \
+       ((char *)a)[3] = ((char *)b)[2]
+#endif
 
 static void
 CHIPSShowCursor(ScrnInfoPtr pScrn)
@@ -64,7 +78,7 @@ CHIPSShowCursor(ScrnInfoPtr pScrn)
     CHIPSPtr cPtr = CHIPSPTR(pScrn);
     unsigned char tmp;
 
-    CURSOR_SYNC(pScrn);
+    CURSOR_SYNC(pScrn); 
     
     /* turn the cursor on */
     if (IS_HiQV(cPtr)) {
@@ -87,7 +101,7 @@ CHIPSShowCursor(ScrnInfoPtr pScrn)
     } else {
 	if(!cPtr->UseMMIO) {
 	    HW_DEBUG(0x8);
-	    outw(DR(0x8), 0x21);
+	    outw(cPtr->PIOBase+DR(0x8), 0x21);
 	} else {
 	    HW_DEBUG(DR(8));
 	    /*  Used to be: MMIOmemw(MR(8)) = 0x21; */
@@ -126,7 +140,7 @@ CHIPSHideCursor(ScrnInfoPtr pScrn)
     } else {
 	if(!cPtr->UseMMIO) {
 	    HW_DEBUG(0x8);
-	    outw(DR(0x8), 0x20);
+	    outw(cPtr->PIOBase+DR(0x8), 0x20);
 	} else {
 	    HW_DEBUG(DR(0x8));
 	    /* Used to be: MMIOmemw(DR(0x8)) = 0x20; */
@@ -180,7 +194,7 @@ CHIPSSetCursorPosition(ScrnInfoPtr pScrn, int x, int y)
 	xy = (xy << 16) | x;
 	if(!cPtr->UseMMIO) {
 	    HW_DEBUG(0xB);
-	    outl(DR(0xB), xy);
+	    outl(cPtr->PIOBase+DR(0xB), xy);
 	} else {
 	    HW_DEBUG(MR(0xB));
 	    MMIOmeml(MR(0xB)) = xy;
@@ -270,8 +284,8 @@ CHIPSSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 	    cPtr->writeMSS(cPtr, hwp, MSS);
 	}
     } else if (IS_Wingine(cPtr)) {
-	outl(DR(0xA), (bg & 0xFFFFFF));
-	outl(DR(0x9), (fg & 0xFFFFFF));
+	outl(cPtr->PIOBase+DR(0xA), (bg & 0xFFFFFF));
+	outl(cPtr->PIOBase+DR(0x9), (fg & 0xFFFFFF));
     } else {
 	packedcolfg =  ((fg & 0xF80000) >> 8) | ((fg & 0xFC00) >> 5)
 	    | ((fg & 0xF8) >> 3);
@@ -280,7 +294,7 @@ CHIPSSetCursorColors(ScrnInfoPtr pScrn, int bg, int fg)
 	packedcolfg = (packedcolfg << 16) | packedcolbg;
 	if(!cPtr->UseMMIO) {
 	    HW_DEBUG(0x9);
-	    outl(DR(0x9), packedcolfg);
+	    outl(cPtr->PIOBase+DR(0x9), packedcolfg);
 	} else {
 	    MMIOmeml(MR(0x9)) = packedcolfg;
 	    HW_DEBUG(MR(0x9));
@@ -293,8 +307,13 @@ CHIPSLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
 {
     CHIPSPtr cPtr = CHIPSPTR(pScrn);
     CHIPSACLPtr cAcl = CHIPSACLPTR(pScrn);
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+    CARD32 *s = (pointer)src;
+    CARD32 *d = (pointer)(cPtr->FbBase + cAcl->CursorAddress);
+    int y;
+#endif
 
-    CURSOR_SYNC(pScrn);
+    CURSOR_SYNC(pScrn); 
 
     if (cPtr->cursorDelay) {
 	usleep(200000);
@@ -305,16 +324,56 @@ CHIPSLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
 	int i;
 	CARD32 *tmp = (CARD32 *)src;
 	
-	outl(DR(0x8),0x20);
+	outl(cPtr->PIOBase+DR(0x8),0x20);
 	for (i=0; i<64; i++) {
-	    outl(DR(0xC),*(CARD32 *)tmp);
+	    outl(cPtr->PIOBase+DR(0xC),*(CARD32 *)tmp);
 	    tmp++;
 	}
     } else {
 	if (cPtr->Flags & ChipsLinearSupport) {
+#if X_BYTE_ORDER == X_BIG_ENDIAN
+	    /* On big endian machines we must flip our cursor image around. */
+    	    switch(cAcl->BytesPerPixel) {
+    	        case 4:
+    	        case 3:
+        	    for (y = 0; y < 64; y++) {
+            	        P_SWAP32(d,s);
+            	        d++; s++;
+            	        P_SWAP32(d,s);
+            	        d++; s++;
+            	        P_SWAP32(d,s);
+            	        d++; s++;
+            	        P_SWAP32(d,s);
+            	        d++; s++;
+        	    }
+        	    break;
+    	        case 2:
+           	    for (y = 0; y < 64; y++) {
+            	        P_SWAP16(d,s);
+            	        d++; s++;
+                        P_SWAP16(d,s);
+                        d++; s++;
+                        P_SWAP16(d,s);
+                        d++; s++;
+                        P_SWAP16(d,s);
+                        d++; s++;
+                        P_SWAP16(d,s);
+                        d++; s++;
+                    }
+                    break;
+                default:
+                    for (y = 0; y < 64; y++) {
+                        *d++ = *s++;
+                        *d++ = *s++;
+                        *d++ = *s++;
+                        *d++ = *s++;
+                    }
+            }
+#else
 	    memcpy((unsigned char *)cPtr->FbBase + cAcl->CursorAddress,
 			src, cPtr->CursorInfoRec->MaxWidth * 
 			cPtr->CursorInfoRec->MaxHeight / 4);
+#endif
 	} else {
 	    /*
 	     * The cursor can only be in the last 16K of video memory,
@@ -361,7 +420,7 @@ CHIPSLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
     } else if (!IS_Wingine(cPtr)) {
 	if (!cPtr->UseMMIO) {
 	    HW_DEBUG(0xC);
-	    outl(DR(0xC), cAcl->CursorAddress);
+	    outl(cPtr->PIOBase+DR(0xC), cAcl->CursorAddress);
 	} else {
 	    HW_DEBUG(MR(0xC));
 	    MMIOmeml(MR(0xC)) = cAcl->CursorAddress;
@@ -372,9 +431,8 @@ CHIPSLoadCursorImage(ScrnInfoPtr pScrn, unsigned char *src)
 static Bool
 CHIPSUseHWCursor(ScreenPtr pScr, CursorPtr pCurs)
 {
-    CHIPSACLPtr cAcl = CHIPSACLPTR(xf86Screens[pScr->myNum]);
-
-    return cAcl->UseHWCursor;
+    CHIPSPtr cPtr = CHIPSPTR(xf86Screens[pScr->myNum]);
+    return ((cPtr->Flags & ChipsHWCursor) != 0);
 }
 
 Bool
@@ -383,13 +441,16 @@ CHIPSCursorInit(ScreenPtr pScreen)
     ScrnInfoPtr pScrn = xf86Screens[pScreen->myNum];
     CHIPSPtr cPtr = CHIPSPTR(pScrn);
     xf86CursorInfoPtr infoPtr;
-    
+
     infoPtr = xf86CreateCursorInfoRec();
     if(!infoPtr) return FALSE;
 
     cPtr->CursorInfoRec = infoPtr;
 
-    infoPtr->Flags = HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
+    infoPtr->Flags =
+#if X_BYTE_ORDER == X_LITTLE_ENDIAN
+	HARDWARE_CURSOR_BIT_ORDER_MSBFIRST |
+#endif
 	HARDWARE_CURSOR_INVERT_MASK |
 	HARDWARE_CURSOR_SWAP_SOURCE_AND_MASK |
 	HARDWARE_CURSOR_TRUECOLOR_AT_8BPP;

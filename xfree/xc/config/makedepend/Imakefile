@@ -3,7 +3,7 @@ XCOMM
 XCOMM
 XCOMM
 XCOMM
-XCOMM $XFree86: xc/config/makedepend/Imakefile,v 3.11 2001/10/09 21:40:21 alanh Exp $
+XCOMM $XFree86: xc/config/makedepend/Imakefile,v 3.12 2002/05/31 16:31:20 dawes Exp $
 
     SRCS = include.c main.c parse.c pr.c cppsetup.c ifparser.c 
     OBJS = include.o main.o parse.o pr.o cppsetup.o ifparser.o 
@@ -88,10 +88,5 @@ ComplexProgramTarget(makedepend)
 SpecialCObjectRule(main,$(ICONFIGFILES),$(MAIN_DEFINES))
 
 InstallManPageLong(mkdepend,$(MANDIR),makedepend)
-
-#ifdef OS2Architecture
-all::
-	$(CP) ProgramTargetName(makedepend) /
-#endif
 
 InstallDriverSDKNamedProg(makedepend,makedepend,$(DRIVERSDKDIR)/config/makedepend)

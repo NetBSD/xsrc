@@ -27,19 +27,53 @@
  * Author: Paulo César Pereira de Andrade
  */
 
-/* $XFree86: xc/programs/xedit/lisp/lsp.c,v 1.1 2001/08/31 15:00:14 paulo Exp $ */
+/* $XFree86: xc/programs/xedit/lisp/lsp.c,v 1.7 2002/11/23 08:26:49 paulo Exp $ */
 
+#include <stdio.h>
+#include <string.h>
 #include "lisp.h"
+
+#ifdef NEED_STRCASECMP
+int strcasecmp(const char *s1, const char *s2);
+int strncasecmp(const char *s1, const char *s2, size_t n);
+#endif
+#ifdef NEED_REALPATH
+#include <sys/param.h>
+#if defined(ISC)
+#ifndef MAXPATHLEN
+#define MAXPATHLEN      1024
+#endif
+#endif
+char *realpath(const char *pathname, char resolvedname[MAXPATHLEN]);
+#endif
 
 int
 main(int argc, char *argv[])
 {
-    LispMac *mac = LispBegin(argc, argv);
+    int i;
 
-    LispExecute(mac, "(require \"fun\")\n");
-    LispMachine(mac);
+    LispBegin();
 
-    LispEnd(mac);
+    i = 1;
+    if (argc > 1 && strcmp(argv[1], "-d") == 0) {
+	LispDebug(1);
+	++i;
+    }
+
+    if (i < argc) {
+	char buffer[2048];
+
+	for (; i < argc; i++) {
+	    snprintf(buffer, sizeof(buffer),
+		     "(load \"%s\" :if-does-not-exist :error)",
+		     argv[i]);
+	    LispExecute(buffer);
+	}
+    }
+    else
+	LispMachine();
+
+    LispEnd();
 
     return (0);
 }

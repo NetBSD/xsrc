@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/layer/layerinit.c,v 1.4 2001/10/28 03:34:16 tsi Exp $
+ * $XFree86: xc/programs/Xserver/miext/layer/layerinit.c,v 1.6 2002/11/08 22:19:42 keithp Exp $
  *
  * Copyright © 2001 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -144,6 +144,9 @@ LayerNewKind (ScreenPtr pScreen)
     pLayKind->PaintWindowBorder = pScreen->PaintWindowBorder;
     pLayKind->CopyWindow = pScreen->CopyWindow;
 
+    pLayKind->CreatePixmap = pScreen->CreatePixmap;
+    pLayKind->DestroyPixmap = pScreen->DestroyPixmap;
+    
     pLayKind->CreateGC = pScreen->CreateGC;
 
 #ifdef RENDER
@@ -168,6 +171,9 @@ LayerNewKind (ScreenPtr pScreen)
 	pScreen->PaintWindowBackground = pLayKinds->PaintWindowBackground;
 	pScreen->PaintWindowBorder = pLayKinds->PaintWindowBorder;
 	pScreen->CopyWindow = pLayKinds->CopyWindow;
+
+	pScreen->CreatePixmap = pLayKinds->CreatePixmap;
+	pScreen->DestroyPixmap = pLayKinds->DestroyPixmap;
 
 	pScreen->CreateGC = pLayKinds->CreateGC;
 
@@ -206,6 +212,9 @@ LayerFinishInit (ScreenPtr pScreen)
     pScreen->PaintWindowBorder = layerPaintWindowBorder;
     pScreen->CopyWindow = layerCopyWindow;
 
+    pScreen->CreatePixmap = layerCreatePixmap;
+    pScreen->DestroyPixmap = layerDestroyPixmap;
+
     pScreen->CreateGC = layerCreateGC;
 
 #ifdef RENDER
@@ -230,7 +239,7 @@ LayerCreate (ScreenPtr		pScreen,
 	     PixmapPtr		pPixmap,
 	     ShadowUpdateProc	update,
 	     ShadowWindowProc	window,
-	     int		rotate,
+	     int		randr,
 	     void		*closure)
 {
     layerScrPriv(pScreen);
@@ -254,7 +263,7 @@ LayerCreate (ScreenPtr		pScreen,
     pLay->pPixmap = pPixmap;
     pLay->update = update;
     pLay->window = window;
-    pLay->rotate = rotate;
+    pLay->randr = randr;
     pLay->closure = closure;
     if (pPixmap == LAYER_SCREEN_PIXMAP)
 	pLay->freePixmap = FALSE;

@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xprop/xprop.c,v 1.11 2001/12/14 20:02:14 dawes Exp $ */
+/* $XFree86: xc/programs/xprop/xprop.c,v 1.12 2002/12/02 22:10:23 tsi Exp $ */
 
 
 #include <X11/Xlib.h>
@@ -55,6 +55,7 @@ from The Open Group.
 #include "dsimple.h"
 
 #define MAXSTR 10000
+#define MAXELEMENTS 64
 
 #ifndef min
 #define min(a,b)  ((a) < (b) ? (a) : (b))
@@ -1341,9 +1342,9 @@ Set_Property (Display *dpy, Window w, const char *propname, const char *value)
     const char *dformat;
     int size;
     char format_char;
-    Atom type;
-    unsigned char *data;
-    int nelements;
+    Atom type = 0;
+    unsigned char *data = NULL;
+    int nelements = 0;
 
     atom = Parse_Atom(propname, False);
 
@@ -1379,37 +1380,83 @@ Set_Property (Display *dpy, Window w, const char *propname, const char *value)
       }
       case 'x':
       case 'c': {
-	unsigned long intvalue = strtoul(value, NULL, 0);
-	static unsigned char data8;
-	static unsigned short data16;
-	static unsigned long data32;
-	type = XA_INTEGER;
-	switch (size) {
-	  case 8:
-	    data8 = intvalue; data = (unsigned char *) &data8; break;
-	  case 16:
-	    data16 = intvalue; data = (unsigned char *) &data16; break;
-	  case 32: default:
-	    data32 = intvalue; data = (unsigned char *) &data32; break;
-	}
+	static unsigned char data8[MAXELEMENTS];
+	static unsigned short data16[MAXELEMENTS];
+	static unsigned long data32[MAXELEMENTS];
+	unsigned long intvalue;
+	unsigned char * value2 = strdup(value);
+	unsigned char * tmp = strtok(value2,",");
 	nelements = 1;
+	intvalue = strtoul(tmp, NULL, 0);
+	switch(size) {
+	    case 8:
+	        data8[0] = intvalue; data = (unsigned char *) data8; break;
+	    case 16:    
+	        data16[0] = intvalue; data = (unsigned char *) data16; break;
+	    case 32:    
+	        data32[0] = intvalue; data = (unsigned char *) data32; break;
+	}
+	tmp = strtok(NULL,",");
+	while(tmp != NULL){
+	    intvalue = strtoul(tmp, NULL,0);
+	    switch(size) {
+		case 8:
+	    	    data8[nelements] = intvalue; break;
+		case 16:    
+	    	    data16[nelements] = intvalue; break;
+		case 32:    
+	    	    data32[nelements] = intvalue; break;
+	    }
+	    nelements++;
+	    if(nelements == MAXELEMENTS){
+		fprintf(stderr, "Maximum number of elements reached (%d). List truncated.\n",MAXELEMENTS);
+		break;
+	    }
+	    tmp = strtok(NULL,",");
+	}
+	
+	type = XA_CARDINAL;
+	free(value2);
 	break;
       }
       case 'i': {
-	long intvalue = strtol(value, NULL, 0);
-	static signed char data8;
-	static short data16;
-	static long data32;
-	type = XA_INTEGER;
-	switch (size) {
-	  case 8:
-	    data8 = intvalue; data = (unsigned char *) &data8; break;
-	  case 16:
-	    data16 = intvalue; data = (unsigned char *) &data16; break;
-	  case 32: default:
-	    data32 = intvalue; data = (unsigned char *) &data32; break;
-	}
+	static unsigned char data8[MAXELEMENTS];
+	static unsigned short data16[MAXELEMENTS];
+	static unsigned long data32[MAXELEMENTS];
+	unsigned long intvalue;
+	unsigned char * value2 = strdup(value);
+	unsigned char * tmp = strtok(value2,",");
 	nelements = 1;
+	intvalue = strtoul(tmp, NULL, 0);
+	switch(size) {
+	    case 8:
+	        data8[0] = intvalue; data = (unsigned char *) data8; break;
+	    case 16:    
+	        data16[0] = intvalue; data = (unsigned char *) data16; break;
+	    case 32:    
+	        data32[0] = intvalue; data = (unsigned char *) data32; break;
+	}
+	tmp = strtok(NULL,",");
+	while(tmp != NULL){
+	    intvalue = strtoul(tmp, NULL,0);
+	    switch(size) {
+		case 8:
+	    	    data8[nelements] = intvalue; break;
+		case 16:    
+	    	    data16[nelements] = intvalue; break;
+		case 32:    
+	    	    data32[nelements] = intvalue; break;
+	    }
+	    nelements++;
+	    if(nelements == MAXELEMENTS){
+		fprintf(stderr, "Maximum number of elements reached (%d). List truncated.\n",MAXELEMENTS);
+		break;
+	    }
+	    tmp = strtok(NULL,",");
+	}
+	
+	type = XA_INTEGER;
+	free(value2);
 	break;
       }
       case 'b': {

@@ -49,7 +49,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xrm.c,v 3.19 2001/12/14 19:54:10 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xrm.c,v 3.20 2002/05/31 18:45:42 dawes Exp $ */
 
 #include	<stdio.h>
 #include	<ctype.h>
@@ -289,7 +289,7 @@ typedef unsigned char XrmBits;
 static XrmBits const xrmtypes[256] = {
     EOS,0,0,0,0,0,0,0,
     0,SPACE,EOL,0,0,
-#if defined(WIN32) || defined(__EMX__) /* || defined(OS2) */
+#if defined(WIN32) || defined(__UNIXOS2__)
                     EOL,	/* treat CR the same as LF, just in case */
 #else
                     0,
@@ -1593,7 +1593,7 @@ char * filename;
     register int fd, size;
     char * filebuf;
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     filename = __XOS2RedirRoot(filename);
 #endif
 
@@ -1620,7 +1620,7 @@ char * filename;
     }
     size = read (fd, filebuf, size);
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
     { /* kill CRLF */
       int i,k;
       for (i=k=0; i<size; i++)

@@ -8,7 +8,7 @@
 <author>Juliusz Chroboczek, <email/jch@xfree86.org/
 <date>27 February 2001</date>
 
-<ident>$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/dps.sgml,v 1.1 2001/03/02 02:45:37 dawes Exp $</ident>
+<ident>$XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/dps.sgml,v 1.2 2003/01/20 03:43:07 dawes Exp $</ident>
 
 <toc>
 
@@ -111,7 +111,8 @@ The <tt/makepsres/ utility is used for managing PostScript resources.
 Its basic operation consists in walking recursively a filesystem tree,
 noting all resources, and then writing out a ``Unix PostScript
 Resources,'' file, basically a directory of all the resources found.
-This utility is documented in the makepsres(1) manual page.
+This utility is documented in the <htmlurl name="makepsres(1)"
+url="makepsres.1.html"> manual page.
 
 The <tt/pswrap/ utility is a stub generator for PostScript clients.
 Roughly speaking, it takes as its input textual PostScript code, and

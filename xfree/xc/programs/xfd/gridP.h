@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-
+/* $XFree86: xc/programs/xfd/gridP.h,v 1.4 2002/07/23 01:45:41 tsi Exp $ */
 
 #ifndef _FontGridP_h_
 #define _FontGridP_h_
@@ -46,18 +46,25 @@ typedef struct _FontGridPart {
     XFontStruct *	text_font;		/* font to display */
     int			cell_cols, cell_rows;  /* number of cells */
     int			cell_width, cell_height;  /* size of cell */
+#ifndef XRENDER
     Pixel		foreground_pixel;	/* color of text */
+#endif
     Pixel		box_pixel;	/* for box_chars */
     Boolean		center_chars;	/* center characters in grid */
     Boolean		box_chars;	/* put box around logical width */
     XtCallbackList	callbacks;	/* for notifying caller */
     int			internal_pad;	/* extra padding inside grid */
-    Dimension		start_char;	/* first character of grid */
+    long		start_char;	/* first character of grid */
     int			grid_width;	/* width of grid lines */
     /* private data */
     GC			text_gc;	/* printing text */
     GC			box_gc;		/* for box_chars */
     int			xoff, yoff;	/* extra offsets within grid */
+#ifdef XRENDER
+    XftDraw		*draw;
+    XftColor		fg_color;
+    XftFont		*text_face;
+#endif
 } FontGridPart;
 
 typedef struct _FontGridRec {
@@ -66,12 +73,38 @@ typedef struct _FontGridRec {
     FontGridPart	fontgrid;
 } FontGridRec;
 
-#define DefaultCellWidth(fgw) (((fgw)->fontgrid.text_font->max_bounds.width) \
-			       + ((fgw)->fontgrid.internal_pad * 2))
-#define DefaultCellHeight(fgw) ((fgw)->fontgrid.text_font->ascent + \
-				(fgw)->fontgrid.text_font->descent + \
-				((fgw)->fontgrid.internal_pad * 2))
+#ifdef XRENDER
 
+#define GridFontHeight(g)   ((g)->fontgrid.text_face ? \
+			     (g)->fontgrid.text_face->height : \
+			     (g)->fontgrid.text_font ? \
+			     (g)->fontgrid.text_font->ascent + \
+			     (g)->fontgrid.text_font->descent : 1)
+#define GridFontAscent(g)   ((g)->fontgrid.text_face ? \
+			     (g)->fontgrid.text_face->ascent : \
+			     (g)->fontgrid.text_font ? \
+			     (g)->fontgrid.text_font->ascent: 1)
+#define GridFontWidth(g)    ((g)->fontgrid.text_face ? \
+			     (g)->fontgrid.text_face->max_advance_width : \
+			     (g)->fontgrid.text_font ? \
+			     (g)->fontgrid.text_font->max_bounds.width : 1)
+#define GridForeground(g)   ((g)->fontgrid.fg_color.pixel)
+			     
+#else /* XRENDER */
+			     
+#define GridFontHeight(g)   ((g)->fontgrid.text_font->ascent + \
+			     (g)->fontgrid.text_font->descent)
+#define GridFontAscent(g)   ((g)->fontgrid.text_font ? \
+			     (g)->fontgrid.text_font->ascent: 1)
+#define GridFontWidth(g)    ((g)->fontgrid.text_font->max_bounds.width)
+#define GridForeground(g)   ((g)->fontgrid.foreground_pixel)
+			     
+#endif /* else XRENDER */
+
+#define DefaultCellWidth(fgw) (GridFontWidth(fgw) \
+			       + ((fgw)->fontgrid.internal_pad * 2))
+#define DefaultCellHeight(fgw) (GridFontHeight(fgw) + \
+				((fgw)->fontgrid.internal_pad * 2))
 
 #define CellWidth(fgw) (((int)(fgw)->core.width - (fgw)->fontgrid.grid_width) \
 			/ (fgw)->fontgrid.cell_cols \

@@ -24,7 +24,7 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION  WITH
 THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ********************************************************/
-/* $XFree86: xc/lib/X11/XKB.c,v 1.6 2001/10/28 03:32:33 tsi Exp $ */
+/* $XFree86: xc/lib/X11/XKB.c,v 1.7 2002/12/10 04:30:39 dawes Exp $ */
 
 #include <stdio.h>
 #define NEED_REPLIES
@@ -417,9 +417,10 @@ XkbSetXlibControls(dpy,affect,values)
     unsigned	values;
 #endif
 {
-    if ((dpy->flags & XlibDisplayNoXkb) ||
-	(!dpy->xkb_info && !XkbUseExtension(dpy,NULL,NULL)))
-	return False;
+    if (!dpy->xkb_info)
+	XkbUseExtension(dpy,NULL,NULL);
+    if (!dpy->xkb_info)
+	return 0;
     affect&= XkbLC_AllControls;
     dpy->xkb_info->xlib_ctrls&= ~affect;
     dpy->xkb_info->xlib_ctrls|= (affect&values);
@@ -434,8 +435,9 @@ XkbGetXlibControls(dpy)
     Display *	dpy;
 #endif
 {
-    if ((dpy->flags & XlibDisplayNoXkb) ||
-	(!dpy->xkb_info && !XkbUseExtension(dpy,NULL,NULL)))
+    if (!dpy->xkb_info)
+	XkbUseExtension(dpy,NULL,NULL);
+    if (!dpy->xkb_info)
 	return 0;
     return dpy->xkb_info->xlib_ctrls;
 }

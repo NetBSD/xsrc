@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaGC.c,v 1.3 1999/06/06 08:49:06 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/vgaGC.c,v 1.4 2003/02/18 21:29:59 tsi Exp $ */
 /*
 
 Copyright (c) 1987  X Consortium
@@ -83,7 +83,6 @@ register GC *pGC ;
 register ppcPrivGCPtr devPriv ;
 {
 	if ( devPriv->lastDrawableType == DRAWABLE_PIXMAP ) {
-	    devPriv->FillArea	= mfbSolidInvertArea ;
 	    pGC->ops->CopyArea	= miCopyArea ;
 	    pGC->ops->PolyFillRect	= miPolyFillRect ;
 	    pGC->ops->PushPixels	= miPushPixels ;
@@ -92,7 +91,6 @@ register ppcPrivGCPtr devPriv ;
 	    pGC->ops->PolySegment	= miPolySegment ;
 	}
 	else {
-	    devPriv->FillArea	= xf4bppAreaFill ;
 	    pGC->ops->CopyArea	= xf4bppCopyArea ;
 	    pGC->ops->PolyFillRect	= xf4bppPolyFillRect ;
 	    pGC->ops->PushPixels	= miPushPixels ; /* GJA */

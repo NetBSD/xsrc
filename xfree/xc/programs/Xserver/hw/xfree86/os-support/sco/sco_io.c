@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_io.c,v 3.7 2001/06/30 22:41:49 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/os-support/sco/sco_io.c,v 3.10 2003/02/17 15:11:59 dawes Exp $ */
 /*
  * Copyright 2001 by J. Kean Johnston <jkj@sco.com>
  *
@@ -28,8 +28,10 @@
 
 #include "compiler.h"
 
+#define _NEED_SYSI86
 #include "xf86.h"
 #include "xf86Priv.h"
+#include "xf86OSpriv.h"
 #include "xf86_OSlib.h"
 
 #include <sys/param.h>
@@ -262,3 +264,10 @@ xf86KbdOff()
   return(xf86Info.consoleFd);
 }
 
+#include "xf86OSKbd.h"
+
+Bool
+xf86OSKbdPreInit(InputInfoPtr pInfo)
+{
+    return FALSE;
+}

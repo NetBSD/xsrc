@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark.h,v 1.2 2001/01/29 15:15:44 keithp Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ark/ark.h,v 1.3 2002/01/25 21:55:56 tsi Exp $ */
 /*
  * ark
  */
@@ -68,5 +68,17 @@ typedef struct _ARKRec {
 #define ATT490		0x101
 
 Bool ARKAccelInit(ScreenPtr pScreen);
+
+#define rdinx(port, ind)	(outb((port), (ind)), inb((port) + 1))
+#define wrinx(port, ind, val)						\
+    do {								\
+	outb((port), (ind));  outb((port) + 1, (val));			\
+    } while(0)
+#define modinx(port, ind, mask, bits)					\
+    do {								\
+	unsigned char tmp;						\
+	tmp = (rdinx((port), (ind)) & ~(mask)) | ((bits) & (mask));	\
+	wrinx((port), (ind), tmp);					\
+    } while(0)
 
 #endif /* _ARK_H */

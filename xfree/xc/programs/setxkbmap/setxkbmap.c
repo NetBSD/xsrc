@@ -23,7 +23,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/setxkbmap/setxkbmap.c,v 3.6 2001/08/17 15:39:50 dawes Exp $ */
+/* $XFree86: xc/programs/setxkbmap/setxkbmap.c,v 3.7 2003/01/20 04:15:08 dawes Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,7 +81,7 @@
 #define	NUM_STRING_VALS	13
 
 /***====================================================================***/
-
+Bool			print= False;
 Bool			synch= False;
 int			verbose= 5;
 
@@ -153,6 +153,7 @@ char * stringFromOptions ( char * orig, int numNew, char ** newOpts );
 Bool applyConfig ( char * name );
 Bool applyRules ( void );
 Bool applyComponentNames ( void );
+void printKeymap( void );
 
 /***====================================================================***/
 
@@ -224,6 +225,7 @@ usage(argc,argv)
     MSG("-layout <name>      Specifies layout used to choose component names\n");
     MSG("-model <name>       Specifies model used to choose component names\n");
     MSG("-option <name>      Adds an option used to choose component names\n");
+    MSG("-print              Print a complete xkb_keymap description and exit\n");
     MSG("-rules <name>       Name of rules file to use\n");
     MSG("-symbols <name>     Specifies symbols component name\n");
     MSG("-synch              Synchronize request w/X server\n");
@@ -402,6 +404,8 @@ unsigned	present;
 		ok= addToList(&szOptions,&numOptions,&options,argv[++i]);
 	    }
 	}
+	else if (streq(argv[i],"-print"))
+	    print= True;
 	else if (streq(argv[i],"-rules"))
 	    ok= setOptString(&i,argc,argv,RULES_NDX,FROM_CMD_LINE);
 	else if (streq(argv[i],"-symbols"))
@@ -847,6 +851,27 @@ checkName()
    return ret;
 }
 
+void
+#if NeedFunctionPrototypes
+printKeymap(void)
+#else
+printKeymap()
+#endif
+{
+    MSG("xkb_keymap {\n");
+    if (svValue[KEYCODES_NDX])
+	MSG1("\txkb_keycodes  { include \"%s\"\t};\n",svValue[KEYCODES_NDX]);
+    if (svValue[TYPES_NDX])
+	MSG1("\txkb_types     { include \"%s\"\t};\n",svValue[TYPES_NDX]);
+    if (svValue[COMPAT_NDX])
+	MSG1("\txkb_compat    { include \"%s\"\t};\n",svValue[COMPAT_NDX]);
+    if (svValue[SYMBOLS_NDX])
+	MSG1("\txkb_symbols   { include \"%s\"\t};\n",svValue[SYMBOLS_NDX]);
+    if (svValue[GEOMETRY_NDX])
+	MSG1("\txkb_geometry  { include \"%s\"\t};\n",svValue[GEOMETRY_NDX]);
+    MSG("};\n");
+}
+
 Bool
 #if NeedFunctionPrototypes
 applyComponentNames(void)
@@ -871,7 +896,7 @@ applyComponentNames()
 	MSG("Trying to build keymap using the following components:\n");
 	dumpNames(False,True);
     }
-    if (dpy) {
+    if (dpy && !print) {
 	XkbComponentNamesRec	cmdNames;
 	cmdNames.types= svValue[TYPES_NDX];
 	cmdNames.compat= svValue[COMPAT_NDX];
@@ -892,6 +917,9 @@ applyComponentNames()
 		VMSG(0,"Error updating the XKB names property\n");
 	    }
 	}
+    }
+    if (print) {
+        printKeymap();
     }
     return True;
 }

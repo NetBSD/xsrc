@@ -1,5 +1,5 @@
 /*
- * $XFree86: xc/programs/Xserver/miext/layer/layerwin.c,v 1.5 2001/10/28 03:34:16 tsi Exp $
+ * $XFree86: xc/programs/Xserver/miext/layer/layerwin.c,v 1.7 2002/11/08 22:19:42 keithp Exp $
  *
  * Copyright © 2001 Keith Packard, member of The XFree86 Project, Inc.
  *
@@ -55,15 +55,20 @@ FreeLayerList (ScreenPtr pScreen, LayerListPtr pLayList)
 Bool
 LayerCreatePixmap (ScreenPtr pScreen, LayerPtr pLayer)
 {
+    LayerKindPtr    pKind = pLayer->pKind;
+    
+    LayerUnwrap (pScreen, pKind, CreatePixmap);
     /* XXX create full-screen sized layers all around */
     pLayer->pPixmap = (*pScreen->CreatePixmap) (pScreen, pScreen->width, 
 						pScreen->height, pLayer->depth);
+    LayerWrap (pScreen, pKind, CreatePixmap, layerCreatePixmap);
     if (!pLayer->pPixmap)
 	return FALSE;
     if (pLayer->pKind->kind == LAYER_SHADOW)
     {
 	if (!shadowAdd (pScreen, pLayer->pPixmap, pLayer->update, 
-			pLayer->window, pLayer->rotate, pLayer->closure))
+			pLayer->window, pLayer->randr, 
+			pLayer->closure))
 	    return FALSE;
     }
     return TRUE;
@@ -81,9 +86,15 @@ LayerDestroyPixmap (ScreenPtr pScreen, LayerPtr pLayer)
 	if (pLayer->pKind->kind == LAYER_SHADOW)
 	    shadowRemove (pScreen, pLayer->pPixmap);
 	if (pLayer->freePixmap)
+	{
+	    LayerKindPtr    pKind = pLayer->pKind;
+
+	    LayerUnwrap (pScreen, pKind, DestroyPixmap);
 	    (*pScreen->DestroyPixmap) (pLayer->pPixmap);
+	    LayerWrap (pScreen, pKind, DestroyPixmap, layerDestroyPixmap);
+	}
+	pLayer->pPixmap = 0;
     }
-    pLayer->pPixmap = 0;
 }
     
 /*
@@ -433,5 +444,40 @@ layerCopyWindow(WindowPtr pWin, DDXPointRec ptOldOrg, RegionPtr prgnSrc)
 	dy = ptOldOrg.y - pWin->drawable.y;
     }
     LayerWindowDone (pWin, &loop);
+}
+
+PixmapPtr
+layerCreatePixmap (ScreenPtr pScreen, int width, int height, int depth)
+{
+    /* XXX assume the first layer can handle all pixmaps */
+    layerScrPriv (pScreen);
+    LayerKindPtr    pKind;
+    PixmapPtr	    pPixmap;
+    
+    pKind = &pLayScr->kinds[0];
+    if (pLayScr->pLayers)
+	pKind = pLayScr->pLayers->pKind;
+    LayerUnwrap (pScreen, pKind, CreatePixmap);
+    pPixmap = (*pScreen->CreatePixmap) (pScreen, width, height, depth);
+    LayerWrap (pScreen,pKind,CreatePixmap,layerCreatePixmap);
+    return pPixmap;
+}
+
+Bool
+layerDestroyPixmap (PixmapPtr pPixmap)
+{
+    /* XXX assume the first layer can handle all pixmaps */
+    ScreenPtr	    pScreen = pPixmap->drawable.pScreen;
+    layerScrPriv (pScreen);
+    LayerKindPtr    pKind;
+    Bool	    ret;
+    
+    pKind = &pLayScr->kinds[0];
+    if (pLayScr->pLayers)
+	pKind = pLayScr->pLayers->pKind;
+    LayerUnwrap (pScreen, pKind, DestroyPixmap);
+    ret = (*pScreen->DestroyPixmap) (pPixmap);
+    LayerWrap (pScreen,pKind,DestroyPixmap,layerDestroyPixmap);
+    return ret;
 }
 

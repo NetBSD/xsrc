@@ -1,371 +1,551 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_inithw.c,v 1.7 2001/01/31 16:15:37 alanh Exp $ */
-/**************************************************************************
-
-Copyright 1998-1999 Precision Insight, Inc., Cedar Park, Texas.
-All Rights Reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sub license, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice (including the
-next paragraph) shall be included in all copies or substantial portions
-of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
-IN NO EVENT SHALL PRECISION INSIGHT AND/OR ITS SUPPLIERS BE LIABLE FOR
-ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-**************************************************************************/
-
 /*
- * Authors:
- *   Kevin E. Martin <kevin@precisioninsight.com>
- *   Alan Hourihane <alanh@fairlite.demon.co.uk>
+ * Copyright 2001 by Alan Hourihane.
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation, and that the name of Alan Hourihane not be used in
+ * advertising or publicity pertaining to distribution of the software without
+ * specific, written prior permission.  Alan Hourihane makes no representations
+ * about the suitability of this software for any purpose.  It is provided
+ * "as is" without express or implied warranty.
+ *
+ * ALAN HOURIHANE DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
+ * EVENT SHALL ALAN HOURIHANE BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
+ * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Authors:  Alan Hourihane, <alanh@tungstengraphics.com>
+ *           Kevin E. Martin <martin@valinux.com>
  *
  */
+/* $XFree86: xc/lib/GL/mesa/src/drv/gamma/gamma_inithw.c,v 1.9 2002/10/30 12:51:29 alanh Exp $ */
 
-#ifdef GLX_DIRECT_RENDERING
-
-#include "gamma_init.h"
+#include "gamma_context.h"
 #include "glint_dri.h"
 
-void gammaInitHW(gammaContextPrivate *gcp)
+void gammaInitHW( gammaContextPtr gmesa )
 {
-    __DRIscreenPrivate *driScrnPriv = gcp->gammaScrnPriv->driScrnPriv;
-    GLINTDRIPtr         gDRIPriv = (GLINTDRIPtr)driScrnPriv->pDevPriv;
+    GLINTDRIPtr gDRIPriv = (GLINTDRIPtr)gmesa->driScreen->pDevPriv;
+    int i;
 
     if (gDRIPriv->numMultiDevices == 2) {
 	/* Set up each MX's ScanLineOwnership for OpenGL */
-	CHECK_DMA_BUFFER(nullCC, gcp, 4);
-	WRITE(gcp->buf, BroadcastMask, 1);
-	WRITE(gcp->buf, ScanLineOwnership, 5); /* Use bottom left as [0,0] */
-	WRITE(gcp->buf, BroadcastMask, 2);
-	WRITE(gcp->buf, ScanLineOwnership, 1); /* Use bottom left as [0,0] */
-
+	CHECK_DMA_BUFFER(gmesa, 5);
+	WRITE(gmesa->buf, BroadcastMask, 1);
+	WRITE(gmesa->buf, ScanLineOwnership, 5); /* Use bottom left as [0,0] */
+	WRITE(gmesa->buf, BroadcastMask, 2);
+	WRITE(gmesa->buf, ScanLineOwnership, 1); /* Use bottom left as [0,0] */
 	/* Broadcast to both MX's */
-	CHECK_DMA_BUFFER(nullCC, gcp, 1);
-	WRITE(gcp->buf, BroadcastMask, 3);
+	WRITE(gmesa->buf, BroadcastMask, 3);
+	FLUSH_DMA_BUFFER(gmesa); 
     }
 
-    /* Set MXs to known state */
-    CHECK_DMA_BUFFER(nullCC, gcp, 27);
-    WRITE(gcp->buf, RasterizerMode, 0);
-    WRITE(gcp->buf, AreaStippleMode, 0);
-    WRITE(gcp->buf, LineStippleMode, 0);
-    WRITE(gcp->buf, ScissorMode, 0);
-    WRITE(gcp->buf, RouterMode, 0);
-    WRITE(gcp->buf, TextureAddressMode, 0);
-    WRITE(gcp->buf, TextureReadMode, 0);
-    WRITE(gcp->buf, TextureFilterMode, 0);
-    WRITE(gcp->buf, ColorDDAMode, 0);
-    WRITE(gcp->buf, TextureColorMode, 0);
-    WRITE(gcp->buf, FogMode, 0);
-    WRITE(gcp->buf, AntialiasMode, 0);
-    WRITE(gcp->buf, AlphaTestMode, 0);
-    WRITE(gcp->buf, LBReadMode, 0);
-    WRITE(gcp->buf, GLINTWindow, 0);
-    WRITE(gcp->buf, StencilMode, 0);
-    WRITE(gcp->buf, DepthMode, 0);
-    WRITE(gcp->buf, LBWriteMode, 0);
-    WRITE(gcp->buf, FBReadMode, 0);
-    WRITE(gcp->buf, PatternRamMode, 0);
-    WRITE(gcp->buf, AlphaBlendMode, 0);
-    WRITE(gcp->buf, ChromaTestMode, 0);
-    WRITE(gcp->buf, DitherMode, 0);
-    WRITE(gcp->buf, LogicalOpMode, 0);
-    WRITE(gcp->buf, FBWriteMode, 0);
-    WRITE(gcp->buf, StatisticMode, 0);
-    WRITE(gcp->buf, PixelSize, 0);
+    gmesa->AlphaBlendMode = (AlphaBlendModeDisable |
+			     AB_Src_One |
+			     AB_Dst_Zero |
+			     AB_NoAlphaBufferPresent |
+			     AB_ColorFmt_8888 |
+			     AB_ColorOrder_RGB |
+			     AB_OpenGLType |
+			     AB_AlphaDst_FBData |
+			     AB_ColorConversionScale |
+			     AB_AlphaConversionScale);
 
-    /* Set Gamma to known state */
-    CHECK_DMA_BUFFER(nullCC, gcp, 10);
-    WRITE(gcp->buf, TriangleMode, 0);
-    WRITE(gcp->buf, GeometryMode, 0);
-    WRITE(gcp->buf, NormalizeMode, 0);
-    WRITE(gcp->buf, LightingMode, 0);
-    WRITE(gcp->buf, ColorMaterialMode, 0);
-    WRITE(gcp->buf, MaterialMode, 0);
-    WRITE(gcp->buf, PointMode, 0);
-    WRITE(gcp->buf, LineMode, 0);
-    WRITE(gcp->buf, TransformMode, 0);
-    WRITE(gcp->buf, DeltaMode, 0);
+    gmesa->DitherMode = DitherModeEnable | DM_ColorOrder_RGB;
 
-#ifdef FORCE_DEPTH32
-    CHECK_DMA_BUFFER(nullCC, gcp, 2);
-    WRITE(gcp->buf, LBWriteFormat, 0x00000d4a);
-    WRITE(gcp->buf, LBReadFormat,  0x00000d4a);
-#endif
+    switch (gmesa->gammaScreen->cpp) {
+	case 2:
+    		gmesa->DitherMode |= DM_ColorFmt_5555;
+		gmesa->AlphaBlendMode |= AB_ColorFmt_5555;
+		CHECK_DMA_BUFFER(gmesa, 1);
+		WRITE(gmesa->buf, PixelSize, 1);
+		break;
+	case 4:
+    		gmesa->DitherMode |= DM_ColorFmt_8888;
+		gmesa->AlphaBlendMode |= AB_ColorFmt_8888;
+		WRITE(gmesa->buf, PixelSize, 0);
+		break;
+    }
 
-    /* Framebuffer initialization */
-    CHECK_DMA_BUFFER(nullCC, gcp, 10);
-    WRITE(gcp->buf, FBSourceData, 0);
-    WRITE(gcp->buf, FBReadMode, gcp->FBReadMode);
-    if (gcp->EnabledFlags & GAMMA_BACK_BUFFER)
-	WRITE(gcp->buf, FBPixelOffset,
-	      (driScrnPriv->fbHeight/2)*driScrnPriv->fbWidth);
-    else
-	WRITE(gcp->buf, FBPixelOffset, 0);
-    WRITE(gcp->buf, FBSourceOffset, 0);
-    WRITE(gcp->buf, FBHardwareWriteMask, 0xffffffff);
-    WRITE(gcp->buf, FBSoftwareWriteMask, 0xffffffff);
-    WRITE(gcp->buf, FBWriteMode, FBWriteModeEnable);
-    WRITE(gcp->buf, FBWindowBase, gcp->FBWindowBase);
-    WRITE(gcp->buf, ScreenSize, ((driScrnPriv->fbHeight << 16) |
-				 (driScrnPriv->fbWidth)));
-    WRITE(gcp->buf, WindowOrigin, 0x00000000);
+    /* FIXME for stencil, gid, etc */
+    switch (gmesa->DepthSize) {
+	case 16:
+   		gmesa->LBReadFormat = 
+			 (LBRF_DepthWidth16    | 
+                          LBRF_StencilWidth8   |
+                          LBRF_StencilPos16    |
+                          LBRF_FrameCount8     |
+                          LBRF_FrameCountPos24 |
+                          LBRF_GIDWidth4       |
+                          LBRF_GIDPos32         );
+   		gmesa->LBWriteFormat = 
+			 (LBRF_DepthWidth16    | 
+                          LBRF_StencilWidth8   |
+                          LBRF_StencilPos16    |
+                          LBRF_FrameCount8     |
+                          LBRF_FrameCountPos24 |
+                          LBRF_GIDWidth4       |
+                          LBRF_GIDPos32         );
+		break;
+	case 24:
+   		gmesa->LBReadFormat = 
+			 (LBRF_DepthWidth24    | 
+                          LBRF_StencilWidth8   |
+                          LBRF_StencilPos24    |
+                          LBRF_FrameCount8     |
+                          LBRF_FrameCountPos32 |
+                          LBRF_GIDWidth4       |
+                          LBRF_GIDPos36         );
+   		gmesa->LBWriteFormat = 
+			 (LBRF_DepthWidth24    | 
+                          LBRF_StencilWidth8   |
+                          LBRF_StencilPos24    |
+                          LBRF_FrameCount8     |
+                          LBRF_FrameCountPos32 |
+                          LBRF_GIDWidth4       |
+                          LBRF_GIDPos36         );
+		break;
+	case 32:
+   		gmesa->LBReadFormat = 
+			 (LBRF_DepthWidth32    | 
+                          LBRF_StencilWidth8   |
+                          LBRF_StencilPos32    |
+                          LBRF_FrameCount8     |
+                          LBRF_FrameCountPos40 |
+                          LBRF_GIDWidth4       |
+                          LBRF_GIDPos44         );
+   		gmesa->LBWriteFormat = 
+			 (LBRF_DepthWidth32    | 
+                          LBRF_StencilWidth8   |
+                          LBRF_StencilPos32    |
+                          LBRF_FrameCount8     |
+                          LBRF_FrameCountPos40 |
+                          LBRF_GIDWidth4       |
+                          LBRF_GIDPos44         );
+		break;
+    }
 
-    /* Localbuffer initialization */
-    CHECK_DMA_BUFFER(nullCC, gcp, 5);
-    WRITE(gcp->buf, LBReadMode, gcp->LBReadMode);
-    WRITE(gcp->buf, LBSourceOffset, 0);
-    WRITE(gcp->buf, LBWriteMode, LBWriteModeEnable);
-    WRITE(gcp->buf, LBWindowOffset, 0);
-    WRITE(gcp->buf, LBWindowBase, gcp->LBWindowBase);
+    gmesa->FBHardwareWriteMask = 0xffffffff;
+    gmesa->FogMode = FogModeDisable;
+    gmesa->ClearDepth = 0xffffffff;
+    gmesa->AreaStippleMode = AreaStippleModeDisable;
+    gmesa->x = 0;
+    gmesa->y = 0;
+    gmesa->w = 0;
+    gmesa->h = 0;
+    gmesa->FrameCount = 0;
+    gmesa->MatrixMode = GL_MODELVIEW;
+    gmesa->ModelViewCount = 0;
+    gmesa->ProjCount = 0;
+    gmesa->TextureCount = 0;
+    gmesa->PointMode = PM_AntialiasQuality_4x4;
+    gmesa->LineMode = LM_AntialiasQuality_4x4;
+    gmesa->TriangleMode = TM_AntialiasQuality_4x4;
+    gmesa->AntialiasMode = AntialiasModeDisable;
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 1);
-    WRITE(gcp->buf, Rectangle2DControl, 1);
+    for (i = 0; i < 16; i++)
+	if (i % 5 == 0)
+	    gmesa->ModelView[i] =
+		gmesa->Proj[i] =
+		gmesa->ModelViewProj[i] =
+		gmesa->Texture[i] = 1.0;
+	else
+	    gmesa->ModelView[i] =
+		gmesa->Proj[i] =
+		gmesa->ModelViewProj[i] =
+		gmesa->Texture[i] = 0.0;
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 11);
-    WRITE(gcp->buf, DepthMode, gcp->DepthMode);
-    WRITE(gcp->buf, ColorDDAMode, gcp->ColorDDAMode);
-    WRITE(gcp->buf, FBBlockColor, 0x00000000);
-    WRITE(gcp->buf, ConstantColor, 0x00000000);
-    WRITE(gcp->buf, AlphaTestMode, gcp->AlphaTestMode);
-    WRITE(gcp->buf, AlphaBlendMode, gcp->AlphaBlendMode);
-    WRITE(gcp->buf, DitherMode, DitherModeEnable | DM_ColorOrder_RGB);
-    if (gDRIPriv->numMultiDevices == 2)
-    	WRITE(gcp->buf, RasterizerMode, RM_MultiGLINT | RM_BiasCoordNearHalf);
-    else
-    	WRITE(gcp->buf, RasterizerMode, RM_BiasCoordNearHalf);
-    WRITE(gcp->buf, GLINTWindow, gcp->Window);
-    WRITE(gcp->buf, FastClearDepth, 0xffffffff);
-    WRITE(gcp->buf, GLINTDepth, 0xffffffff);
+    gmesa->LBReadMode = (LBReadSrcDisable |
+			 LBReadDstDisable |
+			 LBDataTypeDefault |
+			 LBWindowOriginBot | 
+			 gDRIPriv->pprod);
+    gmesa->FBReadMode = (FBReadSrcDisable |
+			 FBReadDstDisable |
+			 FBDataTypeDefault |
+			 FBWindowOriginBot |  
+			 gDRIPriv->pprod);
+ 
+    if (gDRIPriv->numMultiDevices == 2) {
+	gmesa->LBReadMode |= LBScanLineInt2;
+	gmesa->FBReadMode |= FBScanLineInt2;
+        gmesa->LBWindowBase = gmesa->driScreen->fbWidth *
+			     (gmesa->driScreen->fbHeight/2 - 1);
+    	gmesa->FBWindowBase = gmesa->driScreen->fbWidth * 
+			     (gmesa->driScreen->fbHeight/2 - 1);
+    } else {
+        gmesa->LBWindowBase = gmesa->driScreen->fbWidth *
+			     (gmesa->driScreen->fbHeight - 1);
+    	gmesa->FBWindowBase = gmesa->driScreen->fbWidth * 
+			     (gmesa->driScreen->fbHeight - 1);
+    }
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 1);
-    WRITE(gcp->buf, TextureColorMode, gcp->curTexObj->TextureColorMode);
+    gmesa->Begin = (B_AreaStippleDisable |
+		    B_LineStippleDisable |
+		    B_AntiAliasDisable |
+		    B_TextureDisable |
+		    B_FogDisable |
+		    B_SubPixelCorrectEnable |
+		    B_PrimType_Null);
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 1);
-    WRITE(gcp->buf, EdgeFlag, EdgeFlagEnable);
+    gmesa->ColorDDAMode = (ColorDDAEnable |
+			   ColorDDAGouraud);
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 16);
-    WRITEF(gcp->buf, ModelViewMatrix0,  1.0);
-    WRITEF(gcp->buf, ModelViewMatrix1,  0.0);
-    WRITEF(gcp->buf, ModelViewMatrix2,  0.0);
-    WRITEF(gcp->buf, ModelViewMatrix3,  0.0);
-    WRITEF(gcp->buf, ModelViewMatrix4,  0.0);
-    WRITEF(gcp->buf, ModelViewMatrix5,  1.0);
-    WRITEF(gcp->buf, ModelViewMatrix6,  0.0);
-    WRITEF(gcp->buf, ModelViewMatrix7,  0.0);
-    WRITEF(gcp->buf, ModelViewMatrix8,  0.0);
-    WRITEF(gcp->buf, ModelViewMatrix9,  0.0);
-    WRITEF(gcp->buf, ModelViewMatrix10, 1.0);
-    WRITEF(gcp->buf, ModelViewMatrix11, 0.0);
-    WRITEF(gcp->buf, ModelViewMatrix12, 0.0);
-    WRITEF(gcp->buf, ModelViewMatrix13, 0.0);
-    WRITEF(gcp->buf, ModelViewMatrix14, 0.0);
-    WRITEF(gcp->buf, ModelViewMatrix15, 1.0);
+    gmesa->GeometryMode = (GM_TextureDisable |
+			   GM_FogDisable |
+			   GM_FogExp |
+			   GM_FrontPolyFill |
+			   GM_BackPolyFill |
+			   GM_FrontFaceCCW |
+			   GM_PolyCullDisable |
+			   GM_PolyCullBack |
+			   GM_ClipShortLinesDisable |
+			   GM_ClipSmallTrisDisable |
+			   GM_RenderMode |
+			   GM_Feedback2D |
+			   GM_CullFaceNormDisable |
+			   GM_AutoFaceNormDisable |
+			   GM_GouraudShading |
+			   GM_UserClipNone |
+			   GM_PolyOffsetPointDisable |
+			   GM_PolyOffsetLineDisable |
+			   GM_PolyOffsetFillDisable |
+			   GM_InvertFaceNormCullDisable);
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 16);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix0,  1.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix1,  0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix2,  0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix3,  0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix4,  0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix5,  1.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix6,  0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix7,  0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix8,  0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix9,  0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix10, 1.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix11, 0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix12, 0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix13, 0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix14, 0.0);
-    WRITEF(gcp->buf, ModelViewProjectionMatrix15, 1.0);
+    gmesa->AlphaTestMode = (AlphaTestModeDisable |
+			    AT_Always);
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 16);
-    WRITEF(gcp->buf, TextureMatrix0,  1.0);
-    WRITEF(gcp->buf, TextureMatrix1,  0.0);
-    WRITEF(gcp->buf, TextureMatrix2,  0.0);
-    WRITEF(gcp->buf, TextureMatrix3,  0.0);
-    WRITEF(gcp->buf, TextureMatrix4,  0.0);
-    WRITEF(gcp->buf, TextureMatrix5,  1.0);
-    WRITEF(gcp->buf, TextureMatrix6,  0.0);
-    WRITEF(gcp->buf, TextureMatrix7,  0.0);
-    WRITEF(gcp->buf, TextureMatrix8,  0.0);
-    WRITEF(gcp->buf, TextureMatrix9,  0.0);
-    WRITEF(gcp->buf, TextureMatrix10, 1.0);
-    WRITEF(gcp->buf, TextureMatrix11, 0.0);
-    WRITEF(gcp->buf, TextureMatrix12, 0.0);
-    WRITEF(gcp->buf, TextureMatrix13, 0.0);
-    WRITEF(gcp->buf, TextureMatrix14, 0.0);
-    WRITEF(gcp->buf, TextureMatrix15, 1.0);
+    gmesa->AB_FBReadMode_Save = gmesa->AB_FBReadMode = 0;
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 16);
-    WRITEF(gcp->buf, TexGen0,  0.0);
-    WRITEF(gcp->buf, TexGen1,  0.0);
-    WRITEF(gcp->buf, TexGen2,  0.0);
-    WRITEF(gcp->buf, TexGen3,  0.0);
-    WRITEF(gcp->buf, TexGen4,  0.0);
-    WRITEF(gcp->buf, TexGen5,  0.0);
-    WRITEF(gcp->buf, TexGen6,  0.0);
-    WRITEF(gcp->buf, TexGen7,  0.0);
-    WRITEF(gcp->buf, TexGen8,  0.0);
-    WRITEF(gcp->buf, TexGen9,  0.0);
-    WRITEF(gcp->buf, TexGen10, 0.0);
-    WRITEF(gcp->buf, TexGen11, 0.0);
-    WRITEF(gcp->buf, TexGen12, 0.0);
-    WRITEF(gcp->buf, TexGen13, 0.0);
-    WRITEF(gcp->buf, TexGen14, 0.0);
-    WRITEF(gcp->buf, TexGen15, 0.0);
+    gmesa->Window = (WindowEnable  | /* For GID testing */
+		     W_PassIfEqual |
+		     (0 << 5)); /* GID part is set from draw priv (below) */
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 9);
-    WRITEF(gcp->buf, NormalMatrix0, 1.0);
-    WRITEF(gcp->buf, NormalMatrix1, 0.0);
-    WRITEF(gcp->buf, NormalMatrix2, 0.0);
-    WRITEF(gcp->buf, NormalMatrix3, 0.0);
-    WRITEF(gcp->buf, NormalMatrix4, 1.0);
-    WRITEF(gcp->buf, NormalMatrix5, 0.0);
-    WRITEF(gcp->buf, NormalMatrix6, 0.0);
-    WRITEF(gcp->buf, NormalMatrix7, 0.0);
-    WRITEF(gcp->buf, NormalMatrix8, 1.0);
+    gmesa->NotClipped = GL_FALSE;
+    gmesa->WindowChanged = GL_TRUE;
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 3);
-    WRITEF(gcp->buf, FogDensity, 0.0);
-    WRITEF(gcp->buf, FogEnd,     0.0);
-    WRITEF(gcp->buf, FogScale,   0.0);
+    gmesa->Texture1DEnabled = GL_FALSE;
+    gmesa->Texture2DEnabled = GL_FALSE;
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 2);
-    WRITEF(gcp->buf, LineClipLengthThreshold,   0.0);
-    WRITEF(gcp->buf, TriangleClipAreaThreshold, 0.0);
+    gmesa->DepthMode |= (DepthModeDisable |
+			DM_WriteMask |
+			DM_Less);
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 5);
-    WRITE(gcp->buf, GeometryMode, gcp->GeometryMode);
-    WRITE(gcp->buf, NormalizeMode, NormalizeModeDisable);
-    WRITE(gcp->buf, LightingMode, gcp->LightingMode);
-    WRITE(gcp->buf, ColorMaterialMode, ColorMaterialModeDisable);
-    WRITE(gcp->buf, MaterialMode, MaterialModeDisable);
+    gmesa->DeltaMode |= (DM_SubPixlCorrectionEnable |
+			DM_SmoothShadingEnable |
+			DM_Target500TXMX);
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 2);
-    WRITE(gcp->buf, FrontSpecularExponent, 0); /* fixed point */
-    WRITE(gcp->buf, BackSpecularExponent,  0); /* fixed point */
+    gmesa->LightingMode = LightingModeDisable | LightingModeSpecularEnable;
+    gmesa->Light0Mode = LNM_Off;
+    gmesa->Light1Mode = LNM_Off;
+    gmesa->Light2Mode = LNM_Off;
+    gmesa->Light3Mode = LNM_Off;
+    gmesa->Light4Mode = LNM_Off;
+    gmesa->Light5Mode = LNM_Off;
+    gmesa->Light6Mode = LNM_Off;
+    gmesa->Light7Mode = LNM_Off;
+    gmesa->Light8Mode = LNM_Off;
+    gmesa->Light9Mode = LNM_Off;
+    gmesa->Light10Mode = LNM_Off;
+    gmesa->Light11Mode = LNM_Off;
+    gmesa->Light12Mode = LNM_Off;
+    gmesa->Light13Mode = LNM_Off;
+    gmesa->Light14Mode = LNM_Off;
+    gmesa->Light15Mode = LNM_Off;
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 29);
-    WRITEF(gcp->buf, FrontAmbientColorRed,    0.2);
-    WRITEF(gcp->buf, FrontAmbientColorGreen,  0.2);
-    WRITEF(gcp->buf, FrontAmbientColorBlue,   0.2);
-    WRITEF(gcp->buf, BackAmbientColorRed,     0.2);
-    WRITEF(gcp->buf, BackAmbientColorGreen,   0.2);
-    WRITEF(gcp->buf, BackAmbientColorBlue,    0.2);
-    WRITEF(gcp->buf, FrontDiffuseColorRed,    0.8);
-    WRITEF(gcp->buf, FrontDiffuseColorGreen,  0.8);
-    WRITEF(gcp->buf, FrontDiffuseColorBlue,   0.8);
-    WRITEF(gcp->buf, BackDiffuseColorRed,     0.8);
-    WRITEF(gcp->buf, BackDiffuseColorGreen,   0.8);
-    WRITEF(gcp->buf, BackDiffuseColorBlue,    0.8);
-    WRITEF(gcp->buf, FrontSpecularColorRed,   0.0);
-    WRITEF(gcp->buf, FrontSpecularColorGreen, 0.0);
-    WRITEF(gcp->buf, FrontSpecularColorBlue,  0.0);
-    WRITEF(gcp->buf, BackSpecularColorRed,    0.0);
-    WRITEF(gcp->buf, BackSpecularColorGreen,  0.0);
-    WRITEF(gcp->buf, BackSpecularColorBlue,   0.0);
-    WRITEF(gcp->buf, FrontEmissiveColorRed,   0.0);
-    WRITEF(gcp->buf, FrontEmissiveColorGreen, 0.0);
-    WRITEF(gcp->buf, FrontEmissiveColorBlue,  0.0);
-    WRITEF(gcp->buf, BackEmissiveColorRed,    0.0);
-    WRITEF(gcp->buf, BackEmissiveColorGreen,  0.0);
-    WRITEF(gcp->buf, BackEmissiveColorBlue,   0.0);
-    WRITEF(gcp->buf, SceneAmbientColorRed,    0.2);
-    WRITEF(gcp->buf, SceneAmbientColorGreen,  0.2);
-    WRITEF(gcp->buf, SceneAmbientColorBlue,   0.2);
-    WRITEF(gcp->buf, FrontAlpha,              1.0);
-    WRITEF(gcp->buf, BackAlpha,               1.0);
+    gmesa->LogicalOpMode = LogicalOpModeDisable;
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 8);
-    WRITE(gcp->buf, PointMode, (PM_AntialiasDisable |
-				PM_AntialiasQuality_4x4));
-    WRITE(gcp->buf, PointSize, 1);
-    WRITE(gcp->buf, LineMode, (LM_StippleDisable |
-			       LM_MirrorDisable |
-			       LM_AntialiasDisable |
-			       LM_AntialiasQuality_4x4));
-    WRITE(gcp->buf, LineWidth, 1);
-    WRITE(gcp->buf, LineWidthOffset, 0);
-    WRITE(gcp->buf, TriangleMode, (TM_AntialiasDisable |
-				   TM_AntialiasQuality_4x4 |
-				   TM_UseTriPacketInterface));
-    WRITE(gcp->buf, TransformMode, (XM_UseModelViewProjMatrix |
+    gmesa->MaterialMode = MaterialModeDisable;
+
+    gmesa->ScissorMode = UserScissorDisable | ScreenScissorDisable;
+
+    gmesa->TransformMode = XM_UseModelViewProjMatrix |
 				    XM_TexGenModeS_None |
 				    XM_TexGenModeT_None |
 				    XM_TexGenModeR_None |
-				    XM_TexGenModeQ_None));
-    WRITE(gcp->buf, DeltaMode, gcp->DeltaMode);
+				    XM_TexGenModeQ_None;
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 16);
-    WRITE(gcp->buf, Light0Mode,  LNM_Off);
-    WRITE(gcp->buf, Light1Mode,  LNM_Off);
-    WRITE(gcp->buf, Light2Mode,  LNM_Off);
-    WRITE(gcp->buf, Light3Mode,  LNM_Off);
-    WRITE(gcp->buf, Light4Mode,  LNM_Off);
-    WRITE(gcp->buf, Light5Mode,  LNM_Off);
-    WRITE(gcp->buf, Light6Mode,  LNM_Off);
-    WRITE(gcp->buf, Light7Mode,  LNM_Off);
-    WRITE(gcp->buf, Light8Mode,  LNM_Off);
-    WRITE(gcp->buf, Light9Mode,  LNM_Off);
-    WRITE(gcp->buf, Light10Mode, LNM_Off);
-    WRITE(gcp->buf, Light11Mode, LNM_Off);
-    WRITE(gcp->buf, Light12Mode, LNM_Off);
-    WRITE(gcp->buf, Light13Mode, LNM_Off);
-    WRITE(gcp->buf, Light14Mode, LNM_Off);
-    WRITE(gcp->buf, Light15Mode, LNM_Off);
+    CHECK_DMA_BUFFER(gmesa, 20);
+    WRITE(gmesa->buf, LineStippleMode, 0);
+    WRITE(gmesa->buf, RouterMode, 0);
+    WRITE(gmesa->buf, TextureAddressMode, 0);
+    WRITE(gmesa->buf, TextureReadMode, 0);
+    WRITE(gmesa->buf, TextureFilterMode, 0);
+    WRITE(gmesa->buf, TextureColorMode, 0);
+    WRITE(gmesa->buf, StencilMode, 0);
+    WRITE(gmesa->buf, PatternRamMode, 0);
+    WRITE(gmesa->buf, ChromaTestMode, 0);
+    WRITE(gmesa->buf, StatisticMode, 0);
+    WRITE(gmesa->buf, AreaStippleMode, gmesa->AreaStippleMode);
+    WRITE(gmesa->buf, ScissorMode, gmesa->ScissorMode);
+    WRITE(gmesa->buf, FogMode, gmesa->FogMode);
+    WRITE(gmesa->buf, AntialiasMode, gmesa->AntialiasMode);
+    WRITE(gmesa->buf, LogicalOpMode, gmesa->LogicalOpMode);
+    WRITE(gmesa->buf, TriangleMode, gmesa->TriangleMode);
+    WRITE(gmesa->buf, PointMode, gmesa->PointMode);
+    WRITE(gmesa->buf, LineMode, gmesa->LineMode);
+    WRITE(gmesa->buf, LBWriteFormat, gmesa->LBWriteFormat);
+    WRITE(gmesa->buf, LBReadFormat,  gmesa->LBReadFormat);
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 22);
-    WRITEF(gcp->buf, Light0AmbientIntensityBlue, 0.0);
-    WRITEF(gcp->buf, Light0AmbientIntensityGreen, 0.0);
-    WRITEF(gcp->buf, Light0AmbientIntensityRed, 0.0);
-    WRITEF(gcp->buf, Light0DiffuseIntensityBlue, 1.0);
-    WRITEF(gcp->buf, Light0DiffuseIntensityGreen, 1.0);
-    WRITEF(gcp->buf, Light0DiffuseIntensityRed, 1.0);
-    WRITEF(gcp->buf, Light0SpecularIntensityBlue, 1.0);
-    WRITEF(gcp->buf, Light0SpecularIntensityGreen, 1.0);
-    WRITEF(gcp->buf, Light0SpecularIntensityRed, 1.0);
-    WRITEF(gcp->buf, Light0SpotlightDirectionZ, 0.0);
-    WRITEF(gcp->buf, Light0SpotlightDirectionY, 0.0);
-    WRITEF(gcp->buf, Light0SpotlightDirectionX, -1.0);
-    WRITEF(gcp->buf, Light0SpotlightExponent, 0.0);
-    WRITEF(gcp->buf, Light0PositionZ, 0.0);
-    WRITEF(gcp->buf, Light0PositionY, 0.0);
-    WRITEF(gcp->buf, Light0PositionX, 1.0);
-    WRITEF(gcp->buf, Light0PositionW, 0.0);
-    WRITEF(gcp->buf, Light0CosSpotlightCutoffAngle, -1.0);
-    WRITEF(gcp->buf, Light0ConstantAttenuation, 1.0);
-    WRITEF(gcp->buf, Light0LinearAttenuation,   0.0);
-    WRITEF(gcp->buf, Light0QuadraticAttenuation,0.0);
+    /* Framebuffer initialization */
+    CHECK_DMA_BUFFER(gmesa, 10);
+    WRITE(gmesa->buf, FBSourceData, 0);
+    WRITE(gmesa->buf, FBReadMode, gmesa->FBReadMode);
+    if (gmesa->EnabledFlags & GAMMA_BACK_BUFFER) {
+	if (gDRIPriv->numMultiDevices == 2) {
+	    WRITE(gmesa->buf, FBPixelOffset,
+	      (gmesa->driScreen->fbHeight/2)*gmesa->driScreen->fbWidth);
+	} else {
+	    WRITE(gmesa->buf, FBPixelOffset,
+	      gmesa->driScreen->fbHeight*gmesa->driScreen->fbWidth);
+	}
+    } else
+	WRITE(gmesa->buf, FBPixelOffset, 0);
+    WRITE(gmesa->buf, FBSourceOffset, 0);
+    WRITE(gmesa->buf, FBHardwareWriteMask, 0xffffffff);
+    WRITE(gmesa->buf, FBSoftwareWriteMask, 0xffffffff);
+    WRITE(gmesa->buf, FBWriteMode, FBWriteModeEnable);
+    WRITE(gmesa->buf, FBWindowBase, gmesa->FBWindowBase);
+    WRITE(gmesa->buf, ScreenSize, ((gmesa->driScreen->fbHeight << 16) |
+				 (gmesa->driScreen->fbWidth)));
+    WRITE(gmesa->buf, WindowOrigin, 0x00000000);
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 6);
-    WRITEF(gcp->buf, ViewPortScaleX,  (gcp->w)/2.0);
-    WRITEF(gcp->buf, ViewPortScaleY,  (gcp->h)/2.0);
-    WRITEF(gcp->buf, ViewPortScaleZ,  (gcp->zFar-gcp->zNear)/2.0);
-    WRITEF(gcp->buf, ViewPortOffsetX, gcp->x);
-    WRITEF(gcp->buf, ViewPortOffsetY, gcp->y);
-    WRITEF(gcp->buf, ViewPortOffsetZ, (gcp->zFar+gcp->zNear)/2.0);
+    /* Localbuffer initialization */
+    CHECK_DMA_BUFFER(gmesa, 5);
+    WRITE(gmesa->buf, LBReadMode, gmesa->LBReadMode);
+    WRITE(gmesa->buf, LBSourceOffset, 0);
+    WRITE(gmesa->buf, LBWriteMode, LBWriteModeEnable);
+    WRITE(gmesa->buf, LBWindowOffset, 0);
+    WRITE(gmesa->buf, LBWindowBase, gmesa->LBWindowBase);
 
-    CHECK_DMA_BUFFER(nullCC, gcp, 3);
-    WRITEF(gcp->buf, Nz, 1.0);
-    WRITEF(gcp->buf, Ny, 0.0);
-    WRITEF(gcp->buf, Nx, 0.0);
+    CHECK_DMA_BUFFER(gmesa, 1);
+    WRITE(gmesa->buf, Rectangle2DControl, 1);
+
+    CHECK_DMA_BUFFER(gmesa, 11);
+    WRITE(gmesa->buf, DepthMode, gmesa->DepthMode);
+    WRITE(gmesa->buf, ColorDDAMode, gmesa->ColorDDAMode);
+    WRITE(gmesa->buf, FBBlockColor, 0x00000000);
+    WRITE(gmesa->buf, ConstantColor, 0x00000000);
+    WRITE(gmesa->buf, AlphaTestMode, gmesa->AlphaTestMode);
+    WRITE(gmesa->buf, AlphaBlendMode, gmesa->AlphaBlendMode);
+    WRITE(gmesa->buf, DitherMode, gmesa->DitherMode);
+    if (gDRIPriv->numMultiDevices == 2)
+    	WRITE(gmesa->buf, RasterizerMode, RM_MultiGLINT | RM_BiasCoordNearHalf);
+    else
+    	WRITE(gmesa->buf, RasterizerMode, RM_BiasCoordNearHalf);
+    WRITE(gmesa->buf, GLINTWindow, gmesa->Window);
+    WRITE(gmesa->buf, FastClearDepth, gmesa->ClearDepth);
+    WRITE(gmesa->buf, GLINTDepth, gmesa->ClearDepth);
+
+    CHECK_DMA_BUFFER(gmesa, 1);
+    WRITE(gmesa->buf, EdgeFlag, EdgeFlagEnable);
+
+    CHECK_DMA_BUFFER(gmesa, 16);
+    WRITEF(gmesa->buf, ModelViewMatrix0,  1.0);
+    WRITEF(gmesa->buf, ModelViewMatrix1,  0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix2,  0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix3,  0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix4,  0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix5,  1.0);
+    WRITEF(gmesa->buf, ModelViewMatrix6,  0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix7,  0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix8,  0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix9,  0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix10, 1.0);
+    WRITEF(gmesa->buf, ModelViewMatrix11, 0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix12, 0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix13, 0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix14, 0.0);
+    WRITEF(gmesa->buf, ModelViewMatrix15, 1.0);
+
+    CHECK_DMA_BUFFER(gmesa, 16);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix0,  1.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix1,  0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix2,  0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix3,  0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix4,  0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix5,  1.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix6,  0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix7,  0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix8,  0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix9,  0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix10, 1.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix11, 0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix12, 0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix13, 0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix14, 0.0);
+    WRITEF(gmesa->buf, ModelViewProjectionMatrix15, 1.0);
+
+    CHECK_DMA_BUFFER(gmesa, 16);
+    WRITEF(gmesa->buf, TextureMatrix0,  1.0);
+    WRITEF(gmesa->buf, TextureMatrix1,  0.0);
+    WRITEF(gmesa->buf, TextureMatrix2,  0.0);
+    WRITEF(gmesa->buf, TextureMatrix3,  0.0);
+    WRITEF(gmesa->buf, TextureMatrix4,  0.0);
+    WRITEF(gmesa->buf, TextureMatrix5,  1.0);
+    WRITEF(gmesa->buf, TextureMatrix6,  0.0);
+    WRITEF(gmesa->buf, TextureMatrix7,  0.0);
+    WRITEF(gmesa->buf, TextureMatrix8,  0.0);
+    WRITEF(gmesa->buf, TextureMatrix9,  0.0);
+    WRITEF(gmesa->buf, TextureMatrix10, 1.0);
+    WRITEF(gmesa->buf, TextureMatrix11, 0.0);
+    WRITEF(gmesa->buf, TextureMatrix12, 0.0);
+    WRITEF(gmesa->buf, TextureMatrix13, 0.0);
+    WRITEF(gmesa->buf, TextureMatrix14, 0.0);
+    WRITEF(gmesa->buf, TextureMatrix15, 1.0);
+
+    CHECK_DMA_BUFFER(gmesa, 16);
+    WRITEF(gmesa->buf, TexGen0,  0.0);
+    WRITEF(gmesa->buf, TexGen1,  0.0);
+    WRITEF(gmesa->buf, TexGen2,  0.0);
+    WRITEF(gmesa->buf, TexGen3,  0.0);
+    WRITEF(gmesa->buf, TexGen4,  0.0);
+    WRITEF(gmesa->buf, TexGen5,  0.0);
+    WRITEF(gmesa->buf, TexGen6,  0.0);
+    WRITEF(gmesa->buf, TexGen7,  0.0);
+    WRITEF(gmesa->buf, TexGen8,  0.0);
+    WRITEF(gmesa->buf, TexGen9,  0.0);
+    WRITEF(gmesa->buf, TexGen10, 0.0);
+    WRITEF(gmesa->buf, TexGen11, 0.0);
+    WRITEF(gmesa->buf, TexGen12, 0.0);
+    WRITEF(gmesa->buf, TexGen13, 0.0);
+    WRITEF(gmesa->buf, TexGen14, 0.0);
+    WRITEF(gmesa->buf, TexGen15, 0.0);
+
+    CHECK_DMA_BUFFER(gmesa, 9);
+    WRITEF(gmesa->buf, NormalMatrix0, 1.0);
+    WRITEF(gmesa->buf, NormalMatrix1, 0.0);
+    WRITEF(gmesa->buf, NormalMatrix2, 0.0);
+    WRITEF(gmesa->buf, NormalMatrix3, 0.0);
+    WRITEF(gmesa->buf, NormalMatrix4, 1.0);
+    WRITEF(gmesa->buf, NormalMatrix5, 0.0);
+    WRITEF(gmesa->buf, NormalMatrix6, 0.0);
+    WRITEF(gmesa->buf, NormalMatrix7, 0.0);
+    WRITEF(gmesa->buf, NormalMatrix8, 1.0);
+
+    CHECK_DMA_BUFFER(gmesa, 3);
+    WRITEF(gmesa->buf, FogDensity, 0.0);
+    WRITEF(gmesa->buf, FogEnd,     0.0);
+    WRITEF(gmesa->buf, FogScale,   0.0);
+
+    CHECK_DMA_BUFFER(gmesa, 2);
+    WRITEF(gmesa->buf, LineClipLengthThreshold,   0.0);
+    WRITEF(gmesa->buf, TriangleClipAreaThreshold, 0.0);
+
+    CHECK_DMA_BUFFER(gmesa, 5);
+    WRITE(gmesa->buf, GeometryMode, gmesa->GeometryMode);
+    WRITE(gmesa->buf, NormalizeMode, NormalizeModeDisable);
+    WRITE(gmesa->buf, LightingMode, gmesa->LightingMode);
+    WRITE(gmesa->buf, ColorMaterialMode, ColorMaterialModeDisable);
+    WRITE(gmesa->buf, MaterialMode, MaterialModeDisable);
+
+    CHECK_DMA_BUFFER(gmesa, 2);
+    WRITE(gmesa->buf, FrontSpecularExponent, 0); /* fixed point */
+    WRITE(gmesa->buf, BackSpecularExponent,  0); /* fixed point */
+
+    CHECK_DMA_BUFFER(gmesa, 29);
+    WRITEF(gmesa->buf, FrontAmbientColorRed,    0.2);
+    WRITEF(gmesa->buf, FrontAmbientColorGreen,  0.2);
+    WRITEF(gmesa->buf, FrontAmbientColorBlue,   0.2);
+    WRITEF(gmesa->buf, BackAmbientColorRed,     0.2);
+    WRITEF(gmesa->buf, BackAmbientColorGreen,   0.2);
+    WRITEF(gmesa->buf, BackAmbientColorBlue,    0.2);
+    WRITEF(gmesa->buf, FrontDiffuseColorRed,    0.8);
+    WRITEF(gmesa->buf, FrontDiffuseColorGreen,  0.8);
+    WRITEF(gmesa->buf, FrontDiffuseColorBlue,   0.8);
+    WRITEF(gmesa->buf, BackDiffuseColorRed,     0.8);
+    WRITEF(gmesa->buf, BackDiffuseColorGreen,   0.8);
+    WRITEF(gmesa->buf, BackDiffuseColorBlue,    0.8);
+    WRITEF(gmesa->buf, FrontSpecularColorRed,   0.0);
+    WRITEF(gmesa->buf, FrontSpecularColorGreen, 0.0);
+    WRITEF(gmesa->buf, FrontSpecularColorBlue,  0.0);
+    WRITEF(gmesa->buf, BackSpecularColorRed,    0.0);
+    WRITEF(gmesa->buf, BackSpecularColorGreen,  0.0);
+    WRITEF(gmesa->buf, BackSpecularColorBlue,   0.0);
+    WRITEF(gmesa->buf, FrontEmissiveColorRed,   0.0);
+    WRITEF(gmesa->buf, FrontEmissiveColorGreen, 0.0);
+    WRITEF(gmesa->buf, FrontEmissiveColorBlue,  0.0);
+    WRITEF(gmesa->buf, BackEmissiveColorRed,    0.0);
+    WRITEF(gmesa->buf, BackEmissiveColorGreen,  0.0);
+    WRITEF(gmesa->buf, BackEmissiveColorBlue,   0.0);
+    WRITEF(gmesa->buf, SceneAmbientColorRed,    0.2);
+    WRITEF(gmesa->buf, SceneAmbientColorGreen,  0.2);
+    WRITEF(gmesa->buf, SceneAmbientColorBlue,   0.2);
+    WRITEF(gmesa->buf, FrontAlpha,              1.0);
+    WRITEF(gmesa->buf, BackAlpha,               1.0);
+
+    CHECK_DMA_BUFFER(gmesa, 7);
+    WRITE(gmesa->buf, PointSize, 1);
+    WRITEF(gmesa->buf, AApointSize, 1.0);
+    WRITE(gmesa->buf, LineWidth, 1);
+    WRITEF(gmesa->buf, AAlineWidth, 1.0);
+    WRITE(gmesa->buf, LineWidthOffset, 0);
+    WRITE(gmesa->buf, TransformMode, gmesa->TransformMode);
+    WRITE(gmesa->buf, DeltaMode, gmesa->DeltaMode);
+
+    CHECK_DMA_BUFFER(gmesa, 16);
+    WRITE(gmesa->buf, Light0Mode,  LNM_Off);
+    WRITE(gmesa->buf, Light1Mode,  LNM_Off);
+    WRITE(gmesa->buf, Light2Mode,  LNM_Off);
+    WRITE(gmesa->buf, Light3Mode,  LNM_Off);
+    WRITE(gmesa->buf, Light4Mode,  LNM_Off);
+    WRITE(gmesa->buf, Light5Mode,  LNM_Off);
+    WRITE(gmesa->buf, Light6Mode,  LNM_Off);
+    WRITE(gmesa->buf, Light7Mode,  LNM_Off);
+    WRITE(gmesa->buf, Light8Mode,  LNM_Off);
+    WRITE(gmesa->buf, Light9Mode,  LNM_Off);
+    WRITE(gmesa->buf, Light10Mode, LNM_Off);
+    WRITE(gmesa->buf, Light11Mode, LNM_Off);
+    WRITE(gmesa->buf, Light12Mode, LNM_Off);
+    WRITE(gmesa->buf, Light13Mode, LNM_Off);
+    WRITE(gmesa->buf, Light14Mode, LNM_Off);
+    WRITE(gmesa->buf, Light15Mode, LNM_Off);
+
+    CHECK_DMA_BUFFER(gmesa, 22);
+    WRITEF(gmesa->buf, Light0AmbientIntensityBlue, 0.0);
+    WRITEF(gmesa->buf, Light0AmbientIntensityGreen, 0.0);
+    WRITEF(gmesa->buf, Light0AmbientIntensityRed, 0.0);
+    WRITEF(gmesa->buf, Light0DiffuseIntensityBlue, 1.0);
+    WRITEF(gmesa->buf, Light0DiffuseIntensityGreen, 1.0);
+    WRITEF(gmesa->buf, Light0DiffuseIntensityRed, 1.0);
+    WRITEF(gmesa->buf, Light0SpecularIntensityBlue, 1.0);
+    WRITEF(gmesa->buf, Light0SpecularIntensityGreen, 1.0);
+    WRITEF(gmesa->buf, Light0SpecularIntensityRed, 1.0);
+    WRITEF(gmesa->buf, Light0SpotlightDirectionZ, 0.0);
+    WRITEF(gmesa->buf, Light0SpotlightDirectionY, 0.0);
+    WRITEF(gmesa->buf, Light0SpotlightDirectionX, -1.0);
+    WRITEF(gmesa->buf, Light0SpotlightExponent, 0.0);
+    WRITEF(gmesa->buf, Light0PositionZ, 0.0);
+    WRITEF(gmesa->buf, Light0PositionY, 0.0);
+    WRITEF(gmesa->buf, Light0PositionX, 1.0);
+    WRITEF(gmesa->buf, Light0PositionW, 0.0);
+    WRITEF(gmesa->buf, Light0CosSpotlightCutoffAngle, -1.0);
+    WRITEF(gmesa->buf, Light0ConstantAttenuation, 1.0);
+    WRITEF(gmesa->buf, Light0LinearAttenuation,   0.0);
+    WRITEF(gmesa->buf, Light0QuadraticAttenuation,0.0);
+
+    CHECK_DMA_BUFFER(gmesa, 2);
+    WRITEF(gmesa->buf, XBias, 0.0);
+    WRITEF(gmesa->buf, YBias, 0.0);
+
+    CHECK_DMA_BUFFER(gmesa, 6);
+    WRITEF(gmesa->buf, ViewPortScaleX, gmesa->driScreen->fbWidth/4);
+    WRITEF(gmesa->buf, ViewPortScaleY, gmesa->driScreen->fbHeight/4);
+    WRITEF(gmesa->buf, ViewPortScaleZ, 1.0f);
+    WRITEF(gmesa->buf, ViewPortOffsetX, gmesa->x);
+    WRITEF(gmesa->buf, ViewPortOffsetY, gmesa->y);
+    WRITEF(gmesa->buf, ViewPortOffsetZ, 0.0f);
+
+    CHECK_DMA_BUFFER(gmesa, 3);
+    WRITEF(gmesa->buf, Nz, 1.0);
+    WRITEF(gmesa->buf, Ny, 0.0);
+    WRITEF(gmesa->buf, Nx, 0.0);
 
     /* Send the initialization commands to the HW */
-    FLUSH_DMA_BUFFER(nullCC, gcp);
+    FLUSH_DMA_BUFFER(gmesa);
 }
-
-#endif

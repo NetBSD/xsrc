@@ -24,52 +24,53 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
+/* $XFree86: xc/programs/xmh/toc.h,v 1.3 2002/07/01 02:26:05 tsi Exp $ */
 
 #ifndef _toc_h
 #define _toc_h
 
-extern void	TocInit			(/* void */);
-extern Toc	TocCreate		(/* char * */);
-extern Toc	TocCreateFolder		(/* char * */);
-extern int	TocHasMail		(/* Toc */);
-extern void	TocCheckForNewMail	(/* Boolean */);
-extern Boolean	TocTestAndSetDeletePending(/* Toc */);
-extern void	TocClearDeletePending	(/* Toc */);
-extern void	TocDeleteFolder		(/* Toc */);
-extern void	TocSetScrn		(/* Toc, Scrn */);
+extern void	TocInit			(void);
+extern Toc	TocCreate		(char *);
+extern Toc	TocCreateFolder		(char *);
+extern int	TocHasMail		(Toc);
+extern void	TocCheckForNewMail	(Boolean);
+extern Boolean	TocTestAndSetDeletePending(Toc);
+extern void	TocClearDeletePending	(Toc);
+extern void	TocDeleteFolder		(Toc);
+extern void	TocSetScrn		(Toc, Scrn);
 
-extern void	TocRemoveMsg		(/* Toc, Msg */);
-extern void	TocRecheckValidity	(/* Toc */);
-extern void	TocSetCurMsg		(/* Toc, Msg */);
-extern Msg	TocGetCurMsg		(/* Toc */);
-extern Msg	TocMsgAfter		(/* Toc, Msg */);
-extern Msg	TocMsgBefore		(/* Toc, Msg */);
-extern void	TocForceRescan		(/* Toc */);
+extern void	TocRemoveMsg		(Toc, Msg);
+extern void	TocRecheckValidity	(Toc);
+extern void	TocSetCurMsg		(Toc, Msg);
+extern Msg	TocGetCurMsg		(Toc);
+extern Msg	TocMsgAfter		(Toc, Msg);
+extern Msg	TocMsgBefore		(Toc, Msg);
+extern void	TocForceRescan		(Toc);
 
-extern void	TocReloadSeqLists	(/* Toc */);
-extern int	TocHasSequences		(/* Toc */);
-extern void	TocChangeViewedSeq	(/* Toc, Sequence */);
-extern Sequence	TocViewedSequence	(/* Toc */);
-extern Sequence	TocGetSeqNamed		(/* Toc, char * */);
-extern void	TocSetSelectedSequence	(/* Toc, Sequence */);
-extern Sequence	TocSelectedSequence	(/* Toc */);
+extern void	TocReloadSeqLists	(Toc);
+extern int	TocHasSequences		(Toc);
+extern void	TocChangeViewedSeq	(Toc, Sequence);
+extern Sequence	TocViewedSequence	(Toc);
+extern Sequence	TocGetSeqNamed		(Toc, char *);
+extern void	TocSetSelectedSequence	(Toc, Sequence);
+extern Sequence	TocSelectedSequence	(Toc);
 
-extern MsgList	TocCurMsgList		(/* Toc */);
-extern void	TocUnsetSelection	(/* Toc */);
-extern Msg	TocMakeNewMsg		(/* Toc */);
-extern void	TocStopUpdate		(/* Toc */);
-extern void	TocStartUpdate		(/* Toc */);
-extern void	TocSetCacheValid	(/* Toc */);
+extern MsgList	TocCurMsgList		(Toc);
+extern void	TocUnsetSelection	(Toc);
+extern Msg	TocMakeNewMsg		(Toc);
+extern void	TocStopUpdate		(Toc);
+extern void	TocStartUpdate		(Toc);
+extern void	TocSetCacheValid	(Toc);
 
-extern char *	TocMakeFolderName	(/* Toc */);
-extern char *	TocName			(/* Toc */);
-extern Toc	TocGetNamed		(/* char* */);
+extern char *	TocMakeFolderName	(Toc);
+extern char *	TocName			(Toc);
+extern Toc	TocGetNamed		(char*);
 
-extern int	TocConfirmCataclysm(/* Toc, XtCallbackList, XtCallbackList */);
-extern void	TocCommitChanges	(/* Widget, XtPointer, XtPointer */);
-extern int	TocCanIncorporate	(/* Toc */);
-extern int	TocIncorporate		(/* Toc */);
-extern void	TocMsgChanged		(/* Toc, Msg */);
-extern Msg	TocMsgFromId		(/* Toc, int */);
+extern int	TocConfirmCataclysm(Toc, XtCallbackList, XtCallbackList);
+extern void	TocCommitChanges	(Widget, XtPointer, XtPointer);
+extern int	TocCanIncorporate	(Toc);
+extern int	TocIncorporate		(Toc);
+extern void	TocMsgChanged		(Toc, Msg);
+extern Msg	TocMsgFromId		(Toc, int);
 
 #endif /* _toc_h */

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyWin.c,v 1.2 1998/07/25 16:58:43 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/xaa/xaaCpyWin.c,v 1.3 2003/02/17 16:08:29 dawes Exp $ */
 
 #include "misc.h"
 #include "xf86.h"
@@ -18,8 +18,6 @@
 /*
     Written by Harm Hanemaayer (H.Hanemaayer@inter.nl.net).
 */
-
-extern WindowPtr *WindowTable;
 
 void 
 XAACopyWindow(

@@ -24,6 +24,8 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbcomp/parseutils.c,v 1.5 2002/07/01 02:26:01 tsi Exp $ */
+
 #define DEBUG_VAR_NOT_LOCAL
 #define	DEBUG_VAR parseDebug
 #include "parseutils.h"
@@ -35,13 +37,7 @@
 XkbFile	*rtrnValue;
 
 ParseCommon *
-#if NeedFunctionPrototypes
 AppendStmt(ParseCommon *to,ParseCommon *append)
-#else
-AppendStmt(to,append)
-    ParseCommon *	to;
-    ParseCommon *	append;
-#endif
 {
 ParseCommon	*start= to;
 
@@ -58,13 +54,7 @@ ParseCommon	*start= to;
 }
 
 ExprDef *
-#if NeedFunctionPrototypes
 ExprCreate(unsigned op,unsigned type)
-#else
-ExprCreate(op,type)
-    unsigned	op;
-    unsigned	type;
-#endif
 {
 ExprDef *expr;
     expr= uTypedAlloc(ExprDef);
@@ -82,14 +72,7 @@ ExprDef *expr;
 }
 
 ExprDef *
-#if NeedFunctionPrototypes
 ExprCreateUnary(unsigned op,unsigned type,ExprDef *child)
-#else
-ExprCreateUnary(op,type,child)
-    unsigned	 op;
-    unsigned	 type;
-    ExprDef	*child;
-#endif
 {
 ExprDef *expr;
     expr= uTypedAlloc(ExprDef);
@@ -108,14 +91,7 @@ ExprDef *expr;
 }
 
 ExprDef *
-#if NeedFunctionPrototypes
 ExprCreateBinary(unsigned op,ExprDef *left,ExprDef *right)
-#else
-ExprCreateBinary(op,left,right)
-    unsigned	 op;
-    ExprDef	*left;
-    ExprDef	*right;
-#endif
 {
 ExprDef *expr;
     expr= uTypedAlloc(ExprDef);
@@ -139,13 +115,7 @@ ExprDef *expr;
 }
 
 KeycodeDef *
-#if NeedFunctionPrototypes
 KeycodeCreate(char *name,ExprDef *value)
-#else
-KeycodeCreate(name,value)
-    char *	name;
-    ExprDef *	value;
-#endif
 {
 KeycodeDef *def;
 
@@ -165,13 +135,7 @@ KeycodeDef *def;
 }
 
 KeyAliasDef *
-#if NeedFunctionPrototypes
 KeyAliasCreate(char *alias,char *real)
-#else
-KeyAliasCreate(alias,real)
-    char *	alias;
-    char *	real;
-#endif
 {
 KeyAliasDef *def;
 
@@ -192,13 +156,7 @@ KeyAliasDef *def;
 }
 
 VModDef *
-#if NeedFunctionPrototypes
 VModCreate(Atom name,ExprDef *value)
-#else
-VModCreate(name,value)
-    Atom	name;
-    ExprDef *	value;
-#endif
 {
 VModDef *def;
     def= uTypedAlloc(VModDef);
@@ -216,13 +174,7 @@ VModDef *def;
 }
 
 VarDef *
-#if NeedFunctionPrototypes
 VarCreate(ExprDef *name,ExprDef *value)
-#else
-VarCreate(name,value)
-    ExprDef *	name;
-    ExprDef *	value;
-#endif
 {
 VarDef *def;
     def= uTypedAlloc(VarDef);
@@ -240,13 +192,7 @@ VarDef *def;
 }
 
 VarDef *
-#if NeedFunctionPrototypes
 BoolVarCreate(Atom nameToken,unsigned set)
-#else
-BoolVarCreate(nameToken,set)
-    Atom	nameToken;
-    unsigned	set;
-#endif
 {
 ExprDef	*name,*value;
 
@@ -258,13 +204,7 @@ ExprDef	*name,*value;
 }
 
 InterpDef *
-#if NeedFunctionPrototypes
 InterpCreate(KeySym sym,ExprDef *match)
-#else
-InterpCreate(sym,match)
-    KeySym	sym;
-    ExprDef *	match;
-#endif
 {
 InterpDef *def;
 
@@ -283,13 +223,7 @@ InterpDef *def;
 }
 
 KeyTypeDef *
-#if NeedFunctionPrototypes
 KeyTypeCreate(Atom name,VarDef *body)
-#else
-KeyTypeCreate(name,body)
-    Atom	name;
-    VarDef *	body;
-#endif
 {
 KeyTypeDef *def;
 
@@ -309,13 +243,7 @@ KeyTypeDef *def;
 }
 
 SymbolsDef *
-#if NeedFunctionPrototypes
 SymbolsCreate(char *keyName,ExprDef *symbols)
-#else
-SymbolsCreate(keyName,symbols)
-    char *	keyName;
-    ExprDef *	symbols;
-#endif
 {
 SymbolsDef *def;
 
@@ -336,13 +264,7 @@ SymbolsDef *def;
 }
 
 GroupCompatDef *
-#if NeedFunctionPrototypes
 GroupCompatCreate(int group,ExprDef *val)
-#else
-GroupCompatCreate(group,val)
-    int		group;
-    ExprDef *	val;
-#endif
 {
 GroupCompatDef *def;
 
@@ -362,13 +284,7 @@ GroupCompatDef *def;
 }
 
 ModMapDef *
-#if NeedFunctionPrototypes
 ModMapCreate(Atom modifier,ExprDef *keys)
-#else
-ModMapCreate(modifier,keys)
-    Atom	modifier;
-    ExprDef *	keys;
-#endif
 {
 ModMapDef *def;
 
@@ -388,13 +304,7 @@ ModMapDef *def;
 }
 
 IndicatorMapDef *
-#if NeedFunctionPrototypes
 IndicatorMapCreate(Atom name,VarDef *body)
-#else
-IndicatorMapCreate(name,body)
-    Atom	name;
-    VarDef *	body;
-#endif
 {
 IndicatorMapDef *def;
 
@@ -414,14 +324,7 @@ IndicatorMapDef *def;
 }
 
 IndicatorNameDef *
-#if NeedFunctionPrototypes
 IndicatorNameCreate(int	ndx,ExprDef *name,Bool virtual)
-#else
-IndicatorNameCreate(ndx,name,virtual)
-    int		ndx;
-    ExprDef *	name;
-    Bool	virtual;
-#endif
 {
 IndicatorNameDef *def;
 
@@ -442,13 +345,7 @@ IndicatorNameDef *def;
 }
 
 ExprDef *
-#if NeedFunctionPrototypes
 ActionCreate(Atom name,ExprDef *args)
-#else
-ActionCreate(name,args)
-    Atom	 name;
-    ExprDef	*args;
-#endif
 {
 ExprDef *act;
 
@@ -466,12 +363,7 @@ ExprDef *act;
 }
 
 ExprDef *
-#if NeedFunctionPrototypes
 CreateKeysymList(KeySym sym)
-#else
-CreateKeysymList(sym)
-    KeySym	sym;
-#endif
 {
 ExprDef	 *def;
 
@@ -490,13 +382,7 @@ ExprDef	 *def;
 }
 
 ShapeDef *
-#if NeedFunctionPrototypes
 ShapeDeclCreate(Atom name,OutlineDef *outlines)
-#else
-ShapeDeclCreate(name,outlines)
-    Atom		name;
-    OutlineDef *	outlines;
-#endif
 {
 ShapeDef *	shape;
 OutlineDef *	ol;
@@ -519,13 +405,7 @@ OutlineDef *	ol;
 }
 
 OutlineDef *
-#if NeedFunctionPrototypes
 OutlineCreate(Atom field,ExprDef *points)
-#else
-OutlineCreate(field,points)
-    Atom		field;
-    ExprDef *		points;
-#endif
 {
 OutlineDef *	outline;
 ExprDef *	pt;
@@ -548,13 +428,7 @@ ExprDef *	pt;
 }
 
 KeyDef *
-#if NeedFunctionPrototypes
 KeyDeclCreate(char *name,ExprDef *expr)
-#else
-KeyDeclCreate(name,expr)
-    char *	name;
-    ExprDef *	expr;
-#endif
 {
 KeyDef *	key;
 
@@ -570,13 +444,7 @@ KeyDef *	key;
 }
 
 KeyDef *
-#if NeedFunctionPrototypes
 KeyDeclMerge(KeyDef *into,KeyDef *from)
-#else
-KeyDeclMerge(into,from)
-    KeyDef *	into;
-    KeyDef *	from;
-#endif
 {
     into->expr= (ExprDef *)AppendStmt(&into->expr->common,&from->expr->common);
     from->expr= NULL;
@@ -585,12 +453,7 @@ KeyDeclMerge(into,from)
 }
 
 RowDef *
-#if NeedFunctionPrototypes
 RowDeclCreate(KeyDef *	keys)
-#else
-RowDeclCreate(keys)
-    KeyDef *	keys;
-#endif
 {
 RowDef *	row;
 KeyDef *	key;
@@ -611,13 +474,7 @@ KeyDef *	key;
 }
 
 SectionDef *
-#if NeedFunctionPrototypes
 SectionDeclCreate(Atom name,RowDef *rows)
-#else
-SectionDeclCreate(name,rows)
-    Atom	name;
-    RowDef *	rows;
-#endif
 {
 SectionDef *	section;
 RowDef *	row;
@@ -639,13 +496,7 @@ RowDef *	row;
 }
 
 OverlayKeyDef *
-#if NeedFunctionPrototypes
 OverlayKeyCreate(char *	under,char *over)
-#else
-OverlayKeyCreate(under,over)
-    char *	under;
-    char *	over;
-#endif
 {
 OverlayKeyDef *	key;
 
@@ -662,13 +513,7 @@ OverlayKeyDef *	key;
 }
 
 OverlayDef *
-#if NeedFunctionPrototypes
 OverlayDeclCreate(Atom name,OverlayKeyDef *keys)
-#else
-OverlayDeclCreate(name,keys)
-    Atom		name;
-    OverlayKeyDef *	keys;
-#endif
 {
 OverlayDef *	ol;
 OverlayKeyDef *	key;
@@ -687,14 +532,7 @@ OverlayKeyDef *	key;
 }
 
 DoodadDef *
-#if NeedFunctionPrototypes
 DoodadCreate(unsigned type,Atom name,VarDef *body)
-#else
-DoodadCreate(type,name,body)
-    unsigned	type;
-    Atom	name;
-    VarDef *	body;
-#endif
 {
 DoodadDef *	doodad;
 
@@ -711,13 +549,7 @@ DoodadDef *	doodad;
 }
 
 ExprDef *
-#if NeedFunctionPrototypes
 AppendKeysymList(ExprDef *list,KeySym sym)
-#else
-AppendKeysymList(list,sym)
-    ExprDef *	list;
-    KeySym	sym;
-#endif
 {
     if (list->value.list.nSyms>=list->value.list.szSyms) {
 	list->value.list.szSyms*=2;
@@ -735,13 +567,7 @@ AppendKeysymList(list,sym)
 }
 
 int
-#if NeedFunctionPrototypes
 LookupKeysym(char *str,KeySym *sym_rtrn)
-#else
-LookupKeysym(str,sym_rtrn)
-    char	*str;
-    KeySym	*sym_rtrn;
-#endif
 {
 KeySym sym;
 
@@ -762,16 +588,10 @@ KeySym sym;
 }
 
 IncludeStmt *
-#if NeedFunctionPrototypes
 IncludeCreate(char *str,unsigned merge)
-#else
-IncludeCreate(str,merge)
-    char *	str;
-    unsigned	merge;
-#endif
 {
 IncludeStmt *	incl,*first;
-char *		file,*map,*stmt,*tmp;
+char *		file,*map,*stmt,*tmp, *extra_data;
 char 		nextop;
 Bool		haveSelf;
 
@@ -781,7 +601,7 @@ Bool		haveSelf;
     tmp= str;
     stmt= uStringDup(str);
     while ((tmp)&&(*tmp)) {
-	if (XkbParseIncludeMap(&tmp,&file,&map,&nextop)) {
+	if (XkbParseIncludeMap(&tmp,&file,&map,&nextop,&extra_data)) {
 	    if ((file==NULL)&&(map==NULL)) {
 		if (haveSelf)
 		    goto BAIL;
@@ -800,6 +620,7 @@ Bool		haveSelf;
 		incl->stmt= NULL;
 		incl->file= file;
 		incl->map= map;
+		incl->modifier= extra_data;
 		incl->path= NULL;
 		incl->next= NULL;
 	    }
@@ -825,6 +646,7 @@ BAIL:
 	incl= first->next;
 	if (first->file) uFree(first->file);
 	if (first->map) uFree(first->map);
+	if (first->modifier) uFree(first->modifier);
 	if (first->path) uFree(first->path);
 	first->file= first->map= first->path= NULL;
 	uFree(first);
@@ -837,12 +659,7 @@ BAIL:
 
 #ifdef DEBUG
 void
-#if NeedFunctionPrototypes
 PrintStmtAddrs(ParseCommon *stmt)
-#else
-PrintStmtAddrs(stmt)
-    ParseCommon *	stmt;
-#endif
 {
     fprintf(stderr,"0x%x",stmt);
     if (stmt) {
@@ -856,12 +673,7 @@ PrintStmtAddrs(stmt)
 #endif
 
 static void
-#if NeedFunctionPrototypes
 CheckDefaultMap(XkbFile	*maps)
-#else
-CheckDefaultMap(maps)
-XkbFile	*maps;
-#endif
 {
 XkbFile * dflt,*tmp;
 
@@ -885,24 +697,8 @@ XkbFile * dflt,*tmp;
     return;
 }
 
-_XFUNCPROTOBEGIN
-extern int yyparse(
-#if NeedFunctionPrototypes
-	void
-#endif
-);
-_XFUNCPROTOEND
-
-extern FILE *	yyin;
-
 int
-#if NeedFunctionPrototypes
 XKBParseFile(FILE *file,XkbFile	**pRtrn)
-#else
-XKBParseFile(file,pRtrn)
-FILE 		 *file;
-XkbFile		**pRtrn;
-#endif
 {
     if (file) {
 	yyin= file;
@@ -921,15 +717,7 @@ XkbFile		**pRtrn;
 }
 
 XkbFile *
-#if NeedFunctionPrototypes
 CreateXKBFile(int type,char *name,ParseCommon *defs,unsigned flags)
-#else
-CreateXKBFile(type,name,defs,flags)
-int		type;
-char *		name;
-ParseCommon *	defs;
-unsigned	flags;
-#endif
 {
 XkbFile *	file;
 static int	fileID;
@@ -950,13 +738,7 @@ static int	fileID;
 }
 
 unsigned 
-#if NeedFunctionPrototypes
 StmtSetMerge(ParseCommon *stmt,unsigned	merge)
-#else
-StmtSetMerge(stmt,merge)
-    ParseCommon *	stmt;
-    unsigned		merge;
-#endif
 {
     if ((merge==MergeAltForm) && (stmt->stmtType!=StmtKeycodeDef)) {
 	yyerror("illegal use of 'alternate' merge mode");

@@ -49,7 +49,7 @@ static struct drm_stub_info {
 
 static int DRM(stub_open)(struct inode *inode, struct file *filp)
 {
-	int                    minor = MINOR(inode->i_rdev);
+	int                    minor = minor(inode->i_rdev);
 	int                    err   = -ENODEV;
 	struct file_operations *old_fops;
 
@@ -66,8 +66,8 @@ static int DRM(stub_open)(struct inode *inode, struct file *filp)
 }
 
 static struct file_operations DRM(stub_fops) = {
-	owner:   THIS_MODULE,
-	open:	 DRM(stub_open)
+	.owner = THIS_MODULE,
+	.open  = DRM(stub_open)
 };
 
 static int DRM(stub_getminor)(const char *name, struct file_operations *fops,

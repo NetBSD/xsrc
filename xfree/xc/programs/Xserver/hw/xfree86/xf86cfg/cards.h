@@ -26,7 +26,7 @@
  *
  * Author: Paulo César Pereira de Andrade <pcpa@conectiva.com.br>
  *
- * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/cards.h,v 1.2 2001/07/06 02:04:10 paulo Exp $
+ * $XFree86: xc/programs/Xserver/hw/xfree86/xf86cfg/cards.h,v 1.3 2002/07/15 20:46:04 dawes Exp $
  */
 
 #include <stdio.h>
@@ -45,10 +45,8 @@
 #ifdef CARDS_PRIVATE
 #include "loader.h"
 
-#define SELF_CONTAINED_PCI_INFO
-#define INIT_PCI_VENDOR_NAME_INFO
-#define INIT_PCI_VENDOR_INFO
-#include "xf86PciInfo.h"
+#include "xf86PciStr.h"
+#include "xf86PciIds.h"
 #endif		/* CARDS_PRIVATE */
 #endif		/* USE_MODULES */
 

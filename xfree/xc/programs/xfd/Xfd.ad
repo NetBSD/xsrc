@@ -1,12 +1,19 @@
 ! $Xorg: Xfd.ad,v 1.3 2000/08/17 19:54:18 cpqbld Exp $
+
+
+
+! $XFree86: xc/programs/xfd/Xfd.ad,v 1.3 2002/07/23 01:45:41 tsi Exp $
+
 *internalBorderWidth: 0
 *showGrip: false
 
 *grid.borderWidth: 0
 
 *quit.Label: Quit
-*prev.Label: Prev Page
-*next.Label: Next Page
+*prev.Label: Prev
+*next.Label: Next
+*prev16.Label: -16
+*next16.Label: +16
 
 *select.Label: Select a character
 *metrics.Label: 
@@ -17,10 +24,14 @@
 
 *quit.Translations:  #override \
 		<Btn1Down>,<Btn1Up>: Quit() unset()
+*next16.Translations:  #override \
+		<Btn1Down>,<Btn1Up>: Next16() unset()
 *next.Translations:  #override \
 		<Btn1Down>,<Btn1Up>: Next() unset()
 *prev.Translations:  #override \
 		<Btn1Down>,<Btn1Up>: Prev() unset()
+*prev16.Translations:  #override \
+		<Btn1Down>,<Btn1Up>: Prev16() unset()
 
 *Translations: #override \n\
 <Key>q: Quit()\n\

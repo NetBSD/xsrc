@@ -1,28 +1,26 @@
 S3 ViRGE 4.0 devel notes
 
-rev: 
-10 Jan 2002 KJB
-
-
-Function		Implemented
---------		-----------
--required-
-S3VProbe;      		X
-S3VPreInit;    		X
-S3VScreenInit; 		X
-S3VSwitchMode; 		X
-S3VAdjustFrame;		X
-S3VEnterVT;    		X
-S3VLeaveVT;    		X
-S3VFreeScreen; 		X
-S3VValidMode;		X - dummy
--private-
-S3VSave			X
-S3VRestore		X
 
 
 Status
 ------
+1/26/2003
+Ver 1.8.6
+Pre-4.3.0 release.  320x240 doublescan support w/mouse adjust,
+power management printouts, DAC error printout fix, log XVideo status based
+on chipset, preliminary support for disabling XV when a mode doesn't
+support it.
+
+5/18/2002
+Ver 1.8.5
+320x240 mode support (doublescan).
+
+2/2/02
+Ver 1.8.4
+Make 320x240 mode work in depth 15 & 16.
+Testing, need to switch streams on/off based on dblscan_v flag and mode.
+Virge MX panel_on test (doesn't work.)
+
 1/10/02
 Ver 1.8.3
 DGA fix, buffer pointer used wrong value.  Submitted for 4.2.0 (late).
@@ -277,13 +275,25 @@ mode is not recovered.
 
 TODO items
 ----------
-Put vgaHWUnlockmmio in S3VModeInit (see MGAModeInit for example)?
+1/30/03 General option "videoram" is ignored by the virge driver.
+  (Meelis Roos)
+3/24/02 Xv reported to not work as secondary in Xinerama multihead.
+  (xav on irc)
+3/24/02 DPMS doesn't fully disable the screen.  Blue line across the
+  center in all modes. (xav on irc)
+3/25/02 Secondary reports primary BIOS during int10 detection. ie:
 
+(II) S3VIRGE(1): VESA BIOS detected
+(II) S3VIRGE(1): VESA VBE Version 2.0
+(II) S3VIRGE(1): VESA VBE Total Mem: 4194240 kB
+(II) S3VIRGE(1): VESA VBE OEM: ATI RAGE128
+(II) S3VIRGE(1): VESA VBE OEM Software Rev: 1.0
+(II) S3VIRGE(1): VESA VBE OEM Vendor: ATI Technologies Inc.
+(II) S3VIRGE(1): VESA VBE OEM Product: R128
+(II) S3VIRGE(1): VESA VBE OEM Product Rev: 01.00
 
-ViRGE MX code appears to be in 3.3.2 tree only, port to 4.0.  I have
-started to added the chipset info in the main driver code. (KJB)
+(xav on irc)
 
-modes notes: move mode Private S3V settings to mode init function?
 
 Check CR65 usage, bit 2 set based on S3_EARLY_SC?  In my manual bit 2 is
 enable MMIO to RAMDAC registers.
@@ -313,4 +323,4 @@ the new config. management stuff may help here.
 
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/TODO_NOTES,v 1.21 2002/01/14 18:02:58 dawes Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/drivers/s3virge/TODO_NOTES,v 1.23 2003/02/13 03:21:33 dawes Exp $

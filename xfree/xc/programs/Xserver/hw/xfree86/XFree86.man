@@ -1,4 +1,4 @@
-.\" $XFree86: xc/programs/Xserver/hw/xfree86/XFree86.man,v 3.54 2002/01/17 17:10:37 dawes Exp $ 
+.\" $XFree86: xc/programs/Xserver/hw/xfree86/XFree86.man,v 3.59 2003/02/26 18:59:49 dawes Exp $ 
 .TH XFree86 1 __vendorversion__
 .SH NAME
 XFree86 - X11R6 X server
@@ -10,12 +10,12 @@ XFree86 is an X server that was originally designed for UNIX and UNIX-like
 operating systems running on Intel x86 hardware.  It now runs on a wider
 range of hardware and OS platforms.
 .PP
-This work is derived from
+This work was originally derived from
 .I "X386\ 1.2"
 which was contributed to X11R5 by Snitily Graphics Consulting Service.
-The current XFree86 release is based on X11R6.3.  The XFree86 X server
-architecture was redesigned for the 4.0 release, and it includes among
-other things a loadable module system donated by Metro Link, Inc.
+The XFree86 X server architecture was redesigned for the 4.0 release,
+and it includes among other things a loadable module system donated by
+Metro Link, Inc.  The current XFree86 release is compatible with X11R6.6.
 .SH CONFIGURATIONS
 .PP
 .I XFree86
@@ -77,7 +77,7 @@ To globally override the compiled-in defaults, you should define (and
 export if using \fIsh\fP or \fIksh\fP) \fIXLOCAL\fP globally.  If you
 use \fIstartx/xinit\fP, the definition should be at the top of
 your \fI.xinitrc\fP file.  If you use \fIxdm\fP, the definitions should be
-early on in the \fI<XRoot>/lib/X11/xdm/Xsession\fP script.
+early on in the \fI __projectroot__/lib/X11/xdm/Xsession\fP script.
 .SH OPTIONS
 In addition to the normal server options described in the \fIXserver(1)\fP
 manual page, \fIXFree86\fP accepts the following command line switches:
@@ -319,10 +319,10 @@ sections.
 .B \-showconfig
 This is the same as the
 .B \-version
-option, and is included for compatibilty reasons.  It may be removed in
+option, and is included for compatibility reasons.  It may be removed in
 a future release, so the
 .B \-version
-options hould be used instead.
+option should be used instead.
 .TP 8
 .B \-weight \fInnn\fP
 Set RGB weighting at 16 bpp.  The default is 565.  This applies only to
@@ -348,7 +348,25 @@ for any file when the server is run as root (i.e, with real-uid 0), or
 for files relative to a directory in the config search path for all
 other users.
 .SH "KEYBOARD"
-Multiple key presses recognized directly by \fIXFree86\fP are:
+.PP
+The XFree86 server is normally configured to recognize various
+special combinations of key presses that instruct the server to
+perform some action, rather than just sending the keypress event
+to a client application.
+The default XKEYBOARD keymap defines the key combinations listed below.
+The server also has these key combinations builtin to its event
+handler for cases where the XKEYBOARD extension is not being used.
+When using the XKEYBOARD extension, which key combinations
+perform which actions is completely configurable.
+.PP
+For more information about when the builtin event handler
+is used to recognize the special key combinations, see
+the documentation on the
+.B HandleSpecialKeys
+option in the XF86Config(__filemansuffix__) man page.
+.PP
+The special combinations of key presses recognized directly
+by \fIXFree86\fP are:
 .TP 8
 .B Ctrl+Alt+Backspace
 Immediately kills the server -- no questions asked.  This can be disabled
@@ -368,9 +386,26 @@ This can be disabled with the
 .B DontZoom
 XF86Config(__filemansuffix__) file option.
 .TP 8
+.B Ctrl+Alt+Keypad-Multiply
+Not treated specially by default.  If the
+.B AllowClosedownGrabs
+XF86Config(__filemansuffix__) file option is specified, this key sequence
+kills clients with an active keyboard or mouse grab as well as killing any
+application that may have locked the server, normally using the
+XGrabServer(__libmansuffix__) Xlib function.
+.TP 8
+.B Ctrl+Alt+Keypad-Divide
+Not treated specially by default.  If the
+.B AllowDeactivateGrabs
+XF86Config(__filemansuffix__) file option is specified, this key sequence
+deactivates any active keyboard and mouse grabs.
+.TP 8
 .B Ctrl+Alt+F1...F12
 For BSD and Linux systems with virtual terminal support, these keystroke
-combinations are used to switch to Virtual Console 1 through 12.
+combinations are used to switch to virtual terminals 1 through 12,
+respectively.  This can be disabled with the
+.B DontVTSwitch
+XF86Config(__filemansuffix__) file option.
 .SH SETUP
 .I XFree86
 uses a configuration file called \fBXF86Config\fP for its initial setup.  
@@ -445,6 +480,7 @@ i810(__drivermansuffix__),
 imstt(__drivermansuffix__),
 mga(__drivermansuffix__),
 neomagic(__drivermansuffix__),
+nsc(__drivermansuffix__),
 nv(__drivermansuffix__),
 r128(__drivermansuffix__),
 rendition(__drivermansuffix__),
@@ -535,8 +571,7 @@ The current XFree86 core team consists of:
 .PP
 .RS 4
 .nf
-Stuart Anderson    \fIanderson@metrolink.com\fP
-Preston Brown      \fIpbrown@redhat.com\fP
+Stuart Anderson    \fIanderson@netsweng.com\fP
 Robin Cutshaw      \fIrobin@xfree86.org\fP
 David Dawes        \fIdawes@xfree86.org\fP
 Egbert Eich        \fIeich@xfree86.org\fP
@@ -556,6 +591,7 @@ David Wexelblat    \fIdwex@xfree86.org\fP
 .RE
 .PP
 \fIXFree86\fP source is available from the FTP server
-\fI<ftp://ftp.XFree86.org/pub/XFree86/>\fP, among others.  Documentation
+\fI<ftp://ftp.XFree86.org/pub/XFree86/>\fP, and from the XFree86
+CVS server \fI<http://www.xfree86.org/cvs/>\fP.  Documentation
 and other information can be found from the XFree86 web site
 \fI<http://www.xfree86.org/>\fP.

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_sarea.h,v 1.2 2001/03/21 17:02:22 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_sarea.h,v 1.5 2002/10/30 12:52:14 alanh Exp $ */
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario,
  *                VA Linux Systems Inc., Fremont, California.
@@ -20,7 +20,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NON-INFRINGEMENT. IN NO EVENT SHALL ATI, VA LINUX SYSTEMS AND/OR
+ * NON-INFRINGEMENT.  IN NO EVENT SHALL ATI, VA LINUX SYSTEMS AND/OR
  * THEIR SUPPLIERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
  * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
@@ -29,7 +29,7 @@
 
 /*
  * Authors:
- *   Kevin E. Martin <martin@valinux.com>
+ *   Kevin E. Martin <martin@xfree86.org>
  *   Gareth Hughes <gareth@valinux.com>
  *
  */
@@ -43,8 +43,7 @@
 #ifndef __RADEON_SAREA_DEFINES__
 #define __RADEON_SAREA_DEFINES__
 
-/* What needs to be changed for the current vertex buffer?
- */
+/* What needs to be changed for the current vertex buffer? */
 #define RADEON_UPLOAD_CONTEXT		0x00000001
 #define RADEON_UPLOAD_VERTFMT		0x00000002
 #define RADEON_UPLOAD_LINE		0x00000004
@@ -62,14 +61,16 @@
 #define RADEON_UPLOAD_TEX2IMAGES	0x00004000
 #define RADEON_UPLOAD_CLIPRECTS		0x00008000 /* handled client-side */
 #define RADEON_REQUIRE_QUIESCENCE	0x00010000
-#define RADEON_UPLOAD_ALL		0x0001ffff
+#define RADEON_UPLOAD_ZBIAS		0x00020000
+#define RADEON_UPLOAD_ALL		0x0002ffff
+#define RADEON_UPLOAD_CONTEXT_ALL       0x000201ff
 
 #define RADEON_FRONT			0x1
 #define RADEON_BACK			0x2
 #define RADEON_DEPTH			0x4
+#define RADEON_STENCIL                  0x8
 
-/* Primitive types
- */
+/* Primitive types */
 #define RADEON_POINTS			0x1
 #define RADEON_LINES			0x2
 #define RADEON_LINE_STRIP		0x3
@@ -79,19 +80,16 @@
 #define RADEON_3VTX_POINTS		0x9
 #define RADEON_3VTX_LINES		0xa
 
-/* Vertex/indirect buffer size
- */
+/* Vertex/indirect buffer size */
 #define RADEON_BUFFER_SIZE		65536
 
-/* Byte offsets for indirect buffer data
- */
+/* Byte offsets for indirect buffer data */
 #define RADEON_INDEX_PRIM_OFFSET	20
 #define RADEON_HOSTDATA_BLIT_OFFSET	32
 
 #define RADEON_SCRATCH_REG_OFFSET	32
 
-/* Keep these small for testing
- */
+/* Keep these small for testing */
 #define RADEON_NR_SAREA_CLIPRECTS	12
 
 /* There are 2 heaps (local/AGP).  Each region within a heap is a
@@ -103,7 +101,7 @@
 #define RADEON_NR_TEX_REGIONS		64
 #define RADEON_LOG_TEX_GRANULARITY	16
 
-#define RADEON_MAX_TEXTURE_LEVELS	11
+#define RADEON_MAX_TEXTURE_LEVELS	12
 #define RADEON_MAX_TEXTURE_UNITS	3
 
 /* Blits have strict offset rules.  All blit offset must be aligned on
@@ -170,23 +168,6 @@ typedef struct {
     /* Setup state */
     unsigned int se_cntl_status;
 
-#ifdef TCL_ENABLE
-    /* TCL state */
-    radeon_color_regs_t se_tcl_material_emmissive;
-    radeon_color_regs_t se_tcl_material_ambient;
-    radeon_color_regs_t se_tcl_material_diffuse;
-    radeon_color_regs_t se_tcl_material_specular;
-    unsigned int se_tcl_shininess;
-    unsigned int se_tcl_output_vtx_fmt;
-    unsigned int se_tcl_output_vtx_sel;
-    unsigned int se_tcl_matrix_select_0;
-    unsigned int se_tcl_matrix_select_1;
-    unsigned int se_tcl_ucp_vert_blend_ctl;
-    unsigned int se_tcl_texture_proc_ctl;
-    unsigned int se_tcl_light_model_ctl;
-    unsigned int se_tcl_per_light_ctl[4];
-#endif
-
     /* Misc state */
     unsigned int re_top_left;
     unsigned int re_misc;
@@ -200,13 +181,7 @@ typedef struct {
     unsigned int pp_txcblend;
     unsigned int pp_txablend;
     unsigned int pp_tfactor;
-
     unsigned int pp_border_color;
-
-#ifdef CUBIC_ENABLE
-    unsigned int pp_cubic_faces;
-    unsigned int pp_cubic_offset[5];
-#endif
 } radeon_texture_regs_t;
 
 typedef struct {
@@ -225,13 +200,11 @@ typedef struct {
     unsigned int vertsize;
     unsigned int vc_format;
 
-    /* The current cliprects, or a subset thereof
-     */
+    /* The current cliprects, or a subset thereof */
     XF86DRIClipRectRec boxes[RADEON_NR_SAREA_CLIPRECTS];
     unsigned int nbox;
 
-    /* Counters for throttling of rendering clients
-     */
+    /* Counters for throttling of rendering clients */
     unsigned int last_frame;
     unsigned int last_dispatch;
     unsigned int last_clear;
@@ -256,6 +229,9 @@ typedef struct {
     int texAge[RADEON_NR_TEX_HEAPS];
 
     int ctxOwner;		/* last context to upload state */
+    int pfAllowPageFlip;	/* set by the 2d driver, read by the client */
+    int pfCurrentPage;		/* set by kernel, read by others */
+    int crtc2_base;		/* for pageflipping with CloneMode */
 } RADEONSAREAPriv, *RADEONSAREAPrivPtr;
 
 #endif

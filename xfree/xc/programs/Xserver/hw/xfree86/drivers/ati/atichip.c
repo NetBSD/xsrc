@@ -1,6 +1,6 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atichip.c,v 1.25 2002/01/16 16:22:25 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/atichip.c,v 1.33 2003/02/19 15:07:46 tsi Exp $ */
 /*
- * Copyright 1997 through 2002 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
+ * Copyright 1997 through 2003 by Marc Aurele La France (TSI @ UQV), tsi@xfree86.org
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -90,6 +90,9 @@ const char *ATIChipNames[] =
     "ATI Radeon Mobility M7",
     "ATI Radeon 8500",
     "ATI Radeon 7500",
+    "ATI Radeon 9000",
+    "ATI Radeon Mobility M9",
+    "ATI Radeon 9700",
     "ATI Rage HDTV"
 };
 
@@ -439,7 +442,7 @@ ATIChipID
         case OldChipID('X', 'X'):  case NewChipID('X', 'X'):
             return ATI_CHIP_68800_6;
 
-        case OldChipID('L', 'X'):  case NewChipID('L', 'X'):
+        case OldChipID('L', 'X'):
             return ATI_CHIP_68800LX;
 
         case OldChipID('A', 'X'):  case NewChipID('A', 'X'):
@@ -534,18 +537,33 @@ ATIChipID
 
         case NewChipID('R', 'E'):
         case NewChipID('R', 'F'):
+        case NewChipID('R', 'G'):
         case NewChipID('S', 'K'):
         case NewChipID('S', 'L'):
         case NewChipID('S', 'M'):
+        /* "SN" is listed as ATI_CHIP_RAGE128_4X in ATI docs */
         case NewChipID('S', 'N'):
             return ATI_CHIP_RAGE128GL;
 
         case NewChipID('R', 'K'):
         case NewChipID('R', 'L'):
+        /*
+         * ATI documentation lists SE/SF/SG under both ATI_CHIP_RAGE128VR
+         * and ATI_CHIP_RAGE128_4X, and lists SH/SK/SL under Rage 128 4X only.
+         * I'm stuffing them here for now until this can be clarified as ATI
+         * documentation doesn't mention their details. <mharris@redhat.com>
+         */
         case NewChipID('S', 'E'):
         case NewChipID('S', 'F'):
         case NewChipID('S', 'G'):
+        case NewChipID('S', 'H'):
             return ATI_CHIP_RAGE128VR;
+
+     /* case NewChipID('S', 'H'): */
+     /* case NewChipID('S', 'K'): */
+     /* case NewChipID('S', 'L'): */
+     /* case NewChipID('S', 'N'): */
+     /*     return ATI_CHIP_RAGE128_4X; */
 
         case NewChipID('P', 'A'):
         case NewChipID('P', 'B'):
@@ -578,10 +596,17 @@ ATIChipID
         case NewChipID('T', 'F'):
         case NewChipID('T', 'L'):
         case NewChipID('T', 'R'):
+        case NewChipID('T', 'S'):
+        case NewChipID('T', 'T'):
+        case NewChipID('T', 'U'):
             return ATI_CHIP_RAGE128PROULTRA;
 
         case NewChipID('L', 'E'):
         case NewChipID('L', 'F'):
+        /*
+         * "LK" and "LL" are not in any ATI documentation I can find
+         * - mharris
+         */
         case NewChipID('L', 'K'):
         case NewChipID('L', 'L'):
             return ATI_CHIP_RAGE128MOBILITY3;
@@ -605,17 +630,50 @@ ATIChipID
             return ATI_CHIP_RADEONMOBILITY6;
 
         case NewChipID('L', 'W'):
+        case NewChipID('L', 'X'):
             return ATI_CHIP_RADEONMOBILITY7;
 
+        case NewChipID('Q', 'H'):
+        case NewChipID('Q', 'I'):
+        case NewChipID('Q', 'J'):
+        case NewChipID('Q', 'K'):
         case NewChipID('Q', 'L'):
+        case NewChipID('Q', 'M'):
         case NewChipID('Q', 'N'):
         case NewChipID('Q', 'O'):
+        case NewChipID('Q', 'h'):
+        case NewChipID('Q', 'i'):
+        case NewChipID('Q', 'j'):
+        case NewChipID('Q', 'k'):
         case NewChipID('Q', 'l'):
         case NewChipID('B', 'B'):
             return ATI_CHIP_R200;
 
         case NewChipID('Q', 'W'):
+        case NewChipID('Q', 'X'):
             return ATI_CHIP_RV200;
+
+        case NewChipID('I', 'd'):
+        case NewChipID('I', 'e'):
+        case NewChipID('I', 'f'):
+        case NewChipID('I', 'g'):
+            return ATI_CHIP_RV250;
+
+        case NewChipID('L', 'd'):
+        case NewChipID('L', 'e'):
+        case NewChipID('L', 'f'):
+        case NewChipID('L', 'g'):
+            return ATI_CHIP_RADEONMOBILITY9;
+
+        case NewChipID('A', 'D'):
+        case NewChipID('A', 'E'):
+        case NewChipID('A', 'F'):
+        case NewChipID('A', 'G'):
+        case NewChipID('N', 'D'):
+        case NewChipID('N', 'E'):
+        case NewChipID('N', 'F'):
+        case NewChipID('N', 'G'):
+            return ATI_CHIP_R300;
 
         case NewChipID('H', 'D'):
             return ATI_CHIP_HDTV;

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xlsfonts/dsimple.h,v 1.7 2001/12/14 20:02:10 dawes Exp $ */
+/* $XFree86: xc/programs/xlsfonts/dsimple.h,v 1.8 2002/12/24 17:43:01 tsi Exp $ */
 
 /*
  * Just_display.h: This file contains the definitions needed to use the
@@ -100,7 +100,7 @@ Window Select_Window();
 void blip();
 Window Window_With_Name();
 #endif
-#if __GNUC__
+#ifdef __GNUC__
 void Fatal_Error(char *, ...) __attribute__((__noreturn__));
 #else
 void Fatal_Error(char *, ...);

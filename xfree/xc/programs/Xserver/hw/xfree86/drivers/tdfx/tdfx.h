@@ -5,7 +5,7 @@
 
    Copyright: 1998,1999
 */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx.h,v 1.25 2001/08/18 02:51:13 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfx.h,v 1.27 2002/10/17 01:02:08 dawes Exp $ */
 
 #ifndef _TDFX_H_
 #define _TDFX_H_
@@ -138,7 +138,7 @@ typedef struct _TDFXRec {
   unsigned char *MMIOBase[MAXCHIPS];
   unsigned char *FbBase;
   unsigned char *myFbBase;
-  unsigned int PIOBase[MAXCHIPS];
+  IOADDRESS PIOBase[MAXCHIPS];
   long FbMapSize;
   int pixelFormat;
   int stride;
@@ -219,6 +219,8 @@ typedef struct _TDFXRec {
   int videoKey;
   void (*VideoTimerCallback)(ScrnInfoPtr, Time);
   FBLinearPtr overlayBuffer;
+  FBLinearPtr overlayBuffer2;	/* for double-buffering */
+  int whichOverlayBuffer;	/* flip-flop */
   FBAreaPtr textureBuffer;
   Bool TextureXvideo;
   XF86VideoAdaptorPtr overlayAdaptor;

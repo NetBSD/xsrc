@@ -3,7 +3,7 @@ XCOMM $Xorg: Imakefile,v 1.3 2000/08/17 19:54:19 cpqbld Exp $
 
 
 
-XCOMM $XFree86: xc/programs/xfs/Imakefile,v 3.22 2001/01/17 23:45:27 dawes Exp $
+XCOMM $XFree86: xc/programs/xfs/Imakefile,v 3.23 2002/10/15 01:45:02 dawes Exp $
 
 #undef ServerDefines
 #include <Server.tmpl>
@@ -40,7 +40,7 @@ FSSYSLIBS = $(LDPRELIBS) $(FONTLIB) $(FONTCACHELIB) $(SYSLIBS) $(ZLIB)
 SUBDIRS = $(FSDIRS)
 
 FSLIBDIR = $(LIBDIR)/fs
-FSERRORS = $(LOGDIRECTORY)/fs-errors
+FSERRORS = $(LOGDIRECTORY)/xfs.log
 DEFAULTFONTPATH = DefaultFSFontPath
 SITE_CONFIG = -DDEFAULTFONTPATH=$(DEFAULTFONTPATH) -DFSERRORS=$(FSERRORS)
 

@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Privstr.h,v 1.30 2001/11/30 12:11:55 eich Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Privstr.h,v 1.37 2003/02/20 04:05:14 dawes Exp $ */
 
 /*
  * Copyright (c) 1997,1998 by The XFree86 Project, Inc.
@@ -22,8 +22,21 @@ typedef enum {
     PCIProbe2,
     PCIForceConfig1,
     PCIForceConfig2,
+    PCIForceNone,
     PCIOsConfig
 } PciProbeType;
+
+typedef enum {
+    LogNone,
+    LogFlush,
+    LogSync
+} Log;
+
+typedef enum {
+    SKNever,
+    SKWhenNeeded,
+    SKAlways
+} SpecialKeysInDDX;
 
 /*
  * xf86InfoRec contains global parameters which the video drivers never
@@ -56,6 +69,8 @@ typedef struct {
     Bool		modeSwitchLock;
     Bool		composeLock;
     Bool		vtSysreq;
+    SpecialKeysInDDX	ddxSpecialKeys;
+    Bool		ActionKeyBindingsSet;
 #if defined(SVR4) && defined(i386)
     Bool		panix106;
 #endif  /* SVR4 && i386 */
@@ -73,6 +88,7 @@ typedef struct {
     int			lastEventTime;
     Bool		vtRequestsPending;
     Bool		inputPending;
+    Bool		dontVTSwitch;
     Bool		dontZap;
     Bool		dontZoom;
     Bool		notrapSignals;	/* don't exit cleanly - die at fault */
@@ -120,10 +136,12 @@ typedef struct {
 #if defined(i386) || defined(__i386__)
     Bool		pc98;
 #endif
-    Bool                pmFlag;
-    Bool		syncLog;
-    int                 estimateSizesAggressively;
-    Bool                kbdCustomKeycodes;
+    Bool		pmFlag;
+    Log			log;
+    int			estimateSizesAggressively;
+    Bool		kbdCustomKeycodes;
+    Bool		disableRandR;
+    MessageType		randRFrom;
     struct {
 	Bool		disabled;		/* enable/disable deactivating
 						 * grabs or closing the
@@ -180,10 +198,6 @@ typedef struct {
 #define PCVT		  16
 #define WSCONS		  32
 #endif
-
-/* Values of xf86Info.mouseFlags */
-#define MF_CLEAR_DTR       1
-#define MF_CLEAR_RTS       2
 
 /* Prefix strings for driver messages */
 #ifndef X_UNKNOWN_STRING

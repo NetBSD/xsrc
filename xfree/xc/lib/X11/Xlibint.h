@@ -27,7 +27,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/lib/X11/Xlibint.h,v 3.23 2001/12/19 21:37:30 dawes Exp $ */
+/* $XFree86: xc/lib/X11/Xlibint.h,v 3.24 2002/05/31 18:45:42 dawes Exp $ */
 
 #ifndef _XLIBINT_H_
 #define _XLIBINT_H_ 1
@@ -1415,7 +1415,7 @@ struct _XConnWatchInfo {	/* info from XAddConnectionWatch */
     struct _XConnWatchInfo *next;
 };
 
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 extern char* __XOS2RedirRoot(
 #if NeedFunctionPrototypes
     char*

@@ -29,8 +29,9 @@
  *		Suhaib M Siddiqi
  *		Peter Busch
  *		Harold L Hunt II
+ *		Kensuke Matsuzaki
  */
-/* $XFree86: xc/programs/Xserver/hw/xwin/winscrinit.c,v 1.22 2001/11/11 22:45:57 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xwin/winscrinit.c,v 1.26 2003/02/12 15:01:38 alanh Exp $ */
 
 #include "win.h"
 
@@ -48,16 +49,17 @@ winScreenInit (int index,
 {
   winScreenInfoPtr      pScreenInfo = &g_ScreenInfo[index];
   winPrivScreenPtr	pScreenPriv;
-  DEBUG_FN_NAME("winScreenInit");
-  DEBUGVARS;
-  /*DEBUGPROC_MSG;*/
+  HDC			hdc;
 
-  DEBUG_MSG ("Hello");
+#if CYGDEBUG
+  ErrorF ("winScreenInit - dwWidth: %d dwHeight: %d\n",
+	  pScreenInfo->dwWidth, pScreenInfo->dwHeight);
+#endif
 
   /* Allocate privates for this screen */
   if (!winAllocatePrivates (pScreen))
     {
-      ErrorF ("winScreenInit () - Couldn't allocate screen privates\n");
+      ErrorF ("winScreenInit - Couldn't allocate screen privates\n");
       return FALSE;
     }
 
@@ -68,67 +70,115 @@ winScreenInit (int index,
   pScreenInfo->pScreen = pScreen;
 
   /* Save a pointer to the screen info in the screen privates structure */
-  /* This allows us to get back to the screen info from a sceen pointer */
+  /* This allows us to get back to the screen info from a screen pointer */
   pScreenPriv->pScreenInfo = pScreenInfo;
 
-  /* Detect which engines are supported */
-  winDetectSupportedEngines (pScreen);
-
-  /* Determine which engine to use */
+  /*
+   * Determine which engine to use.
+   *
+   * NOTE: This is done once per screen because each screen possibly has
+   * a preferred engine specified on the command line.
+   */
   if (!winSetEngine (pScreen))
     {
-      ErrorF ("winScreenInit () - winSetEngine () failed\n");
+      ErrorF ("winScreenInit - winSetEngine () failed\n");
       return FALSE;
     }
 
   /* Adjust the video mode for our engine type */
   if (!(*pScreenPriv->pwinAdjustVideoMode) (pScreen))
     {
-      ErrorF ("winScreenInit () - winAdjustVideoMode () failed\n");
+      ErrorF ("winScreenInit - winAdjustVideoMode () failed\n");
       return FALSE;
     }
 
   /* Check for supported display depth */
-  if (!(WIN_SUPPORTED_DEPTHS & (1 << (pScreenInfo->dwDepth - 1))))
+  if (!(WIN_SUPPORTED_BPPS & (1 << (pScreenInfo->dwBPP - 1))))
     {
-      ErrorF ("winScreenInit () - Unsupported display depth: %d\n" \
+      ErrorF ("winScreenInit - Unsupported display depth: %d\n" \
 	      "Change your Windows display depth to 15, 16, 24, or 32 bits "
 	      "per pixel.\n",
-	      pScreenInfo->dwDepth);
-      ErrorF ("winScreenInit () - Supported depths: %08x\n",
-	      WIN_SUPPORTED_DEPTHS);
+	      pScreenInfo->dwBPP);
+      ErrorF ("winScreenInit - Supported depths: %08x\n",
+	      WIN_SUPPORTED_BPPS);
 #if WIN_CHECK_DEPTH
       return FALSE;
 #endif
     }
 
+  /*
+   * Check that all monitors have the same display depth if we are using
+   * multiple monitors
+   */
+  if (pScreenInfo->fMultipleMonitors 
+      && !GetSystemMetrics (SM_SAMEDISPLAYFORMAT))
+    {
+      ErrorF ("winScreenInit - Monitors do not all have same pixel format / "
+	      "display depth.\n"
+	      "Using primary display only.\n");
+      pScreenInfo->fMultipleMonitors = FALSE;
+    }
+
   /* Create display window */
   if (!(*pScreenPriv->pwinCreateBoundingWindow) (pScreen))
     {
-      ErrorF ("winScreenInitFB () - pwinCreateBoundingWindow () "
+      ErrorF ("winScreenInit - pwinCreateBoundingWindow () "
 	      "failed\n");
       return FALSE;
     }
 
-  /* Set the padded screen width */
-  pScreenInfo->dwPaddedWidth = PixmapBytePad (pScreenInfo->dwWidth,
-					      pScreenInfo->dwDepth);
+  /* Get a device context */
+  hdc = GetDC (pScreenPriv->hwndScreen);
 
+  /* Store the initial height, width, and depth of the display */
+  /* Are we using multiple monitors? */
+  if (pScreenInfo->fMultipleMonitors)
+    {
+      pScreenPriv->dwLastWindowsWidth = GetSystemMetrics (SM_CXVIRTUALSCREEN);
+      pScreenPriv->dwLastWindowsHeight = GetSystemMetrics (SM_CYVIRTUALSCREEN);
+
+      /* 
+       * In this case, some of the defaults set in
+       * winInitializeDefaultScreens () are not correct ...
+       */
+      if (!pScreenInfo->fUserGaveHeightAndWidth)
+	{
+	  pScreenInfo->dwWidth = GetSystemMetrics (SM_CXVIRTUALSCREEN);
+	  pScreenInfo->dwHeight = GetSystemMetrics (SM_CYVIRTUALSCREEN);
+	  pScreenInfo->dwWidth_mm = (pScreenInfo->dwWidth /
+				     WIN_DEFAULT_DPI) * 25.4;
+	  pScreenInfo->dwHeight_mm = (pScreenInfo->dwHeight /
+				      WIN_DEFAULT_DPI) * 25.4;
+	}
+    }
+  else
+    {
+      pScreenPriv->dwLastWindowsWidth = GetSystemMetrics (SM_CXSCREEN);
+      pScreenPriv->dwLastWindowsHeight = GetSystemMetrics (SM_CYSCREEN);
+    }
+
+  /* Save the original bits per pixel */
+  pScreenPriv->dwLastWindowsBitsPixel = GetDeviceCaps (hdc, BITSPIXEL);
+
+  /* Release the device context */
+  ReleaseDC (pScreenPriv->hwndScreen, hdc);
+    
   /* Clear the visuals list */
   miClearVisualTypes ();
   
-  pScreenInfo->dwBPP = winBitsPerPixel (pScreenInfo->dwDepth);
-  pScreenPriv->dwOrigDepth = pScreenInfo->dwDepth;
+  /* Set the padded screen width */
+  pScreenInfo->dwPaddedWidth = PixmapBytePad (pScreenInfo->dwWidth,
+					      pScreenInfo->dwBPP);
 
   /* Call the engine dependent screen initialization procedure */
   if (!((*pScreenPriv->pwinFinishScreenInit) (index, pScreen, argc, argv)))
     {
-      ErrorF ("winScreenInit () - winFinishScreenInit () failed\n");
+      ErrorF ("winScreenInit - winFinishScreenInit () failed\n");
       return FALSE;
     }
 
 #if CYGDEBUG || YES
-  ErrorF ("winScreenInit () - returning\n");
+  ErrorF ("winScreenInit - returning\n");
 #endif
 
   return TRUE;
@@ -145,20 +195,37 @@ winFinishScreenInitFB (int index,
   winScreenInfo		*pScreenInfo = pScreenPriv->pScreenInfo;
   VisualPtr		pVisual = NULL;
   char			*pbits = NULL;
+  int			iReturn;
 
+#if WIN_LAYER_SUPPORT
   pScreenPriv->dwLayerKind = LAYER_SHADOW;
+#endif
 
   /* Create framebuffer */
   if (!(*pScreenPriv->pwinAllocateFB) (pScreen))
     {
-      ErrorF ("winFinishScreenInitFB () - Could not allocate framebuffer\n");
+      ErrorF ("winFinishScreenInitFB - Could not allocate framebuffer\n");
       return FALSE;
     }
+
+  /*
+   * Grab the number of bits that are used to represent color in each pixel.
+   */
+  if (pScreenInfo->dwBPP == 8)
+    pScreenInfo->dwDepth = 8;
+  else
+    pScreenInfo->dwDepth = winCountBits (pScreenPriv->dwRedMask)
+      + winCountBits (pScreenPriv->dwGreenMask)
+      + winCountBits (pScreenPriv->dwBlueMask);
+  
+  ErrorF ("winFinishScreenInitFB - Masks: %08x %08x %08x\n",
+	  pScreenPriv->dwRedMask, pScreenPriv->dwGreenMask,
+	  pScreenPriv->dwBlueMask);
 
   /* Init visuals */
   if (!(*pScreenPriv->pwinInitVisuals) (pScreen))
     {
-      ErrorF ("winFinishScreenInitFB () - winInitVisuals failed\n");
+      ErrorF ("winFinishScreenInitFB - winInitVisuals failed\n");
       return FALSE;
     }
 
@@ -176,7 +243,7 @@ winFinishScreenInitFB (int index,
 		      pScreenInfo->dwStride,
 		      pScreenInfo->dwBPP))
     {
-      ErrorF ("winFinishScreenInitFB () - fbSetupScreen failed\n");
+      ErrorF ("winFinishScreenInitFB - fbSetupScreen failed\n");
       return FALSE;
     }
 
@@ -227,7 +294,7 @@ winFinishScreenInitFB (int index,
 			   pScreenInfo->dwStride,
 			   pScreenInfo->dwBPP))
     {
-      ErrorF ("winFinishScreenInitFB () - fbFinishScreenInit failed\n");
+      ErrorF ("winFinishScreenInitFB - fbFinishScreenInit failed\n");
       return FALSE;
     }
 
@@ -250,7 +317,7 @@ winFinishScreenInitFB (int index,
   /* Render extension initialization, calls miPictureInit */
   if (!fbPictureInit (pScreen, NULL, 0))
     {
-      ErrorF ("winFinishScreenInitFB () - fbPictureInit () failed\n");
+      ErrorF ("winFinishScreenInitFB - fbPictureInit () failed\n");
       return FALSE;
     }
 #endif
@@ -259,21 +326,21 @@ winFinishScreenInitFB (int index,
   /* KDrive does LayerStartInit right after fbPictureInit */
   if (!LayerStartInit (pScreen))
     {
-      ErrorF ("winFinishScreenInitFB () - LayerStartInit () failed\n");
+      ErrorF ("winFinishScreenInitFB - LayerStartInit () failed\n");
       return FALSE;
     }
 
   /* Not sure what we're adding to shadow, but add it anyway */
   if (!shadowAdd (pScreen, 0, pScreenPriv->pwinShadowUpdate, NULL, 0, 0))
     {
-      ErrorF ("winFinishScreenInitFB () - shadowAdd () failed\n");
+      ErrorF ("winFinishScreenInitFB - shadowAdd () failed\n");
       return FALSE;
     }
 
   /* KDrive does LayerFinishInit right after LayerStartInit */
   if (!LayerFinishInit (pScreen))
     {
-      ErrorF ("winFinishScreenInitFB () - LayerFinishInit () failed\n");
+      ErrorF ("winFinishScreenInitFB - LayerFinishInit () failed\n");
       return FALSE;
     }
 
@@ -281,7 +348,7 @@ winFinishScreenInitFB (int index,
   pScreenPriv->pLayer = winLayerCreate (pScreen);
   if (!pScreenPriv->pLayer)
     {
-      ErrorF ("winFinishScreenInitFB () - winLayerCreate () failed\n");
+      ErrorF ("winFinishScreenInitFB - winLayerCreate () failed\n");
       return FALSE;
     }
   
@@ -289,7 +356,7 @@ winFinishScreenInitFB (int index,
 #ifdef RANDR
   if (pScreenInfo->dwDepth != 8 && !winRandRInit (pScreen))
     {
-      ErrorF ("winFinishScreenInitFB () - winRandRInit () failed\n");
+      ErrorF ("winFinishScreenInitFB - winRandRInit () failed\n");
       return FALSE;
     }
 #endif
@@ -304,18 +371,18 @@ winFinishScreenInitFB (int index,
   /* KDrive does miDCInitialize right after miInitializeBackingStore */
   /* Setup the cursor routines */
 #if CYGDEBUG
-  ErrorF ("winFinishScreenInitFB () - Calling miDCInitialize ()\n");
+  ErrorF ("winFinishScreenInitFB - Calling miDCInitialize ()\n");
 #endif
   miDCInitialize (pScreen, &g_winPointerCursorFuncs);
 
   /* KDrive does winCreateDefColormap right after miDCInitialize */
   /* Create a default colormap */
 #if CYGDEBUG
-  ErrorF ("winFinishScreenInitFB () - Calling winCreateDefColormap ()\n");
+  ErrorF ("winFinishScreenInitFB - Calling winCreateDefColormap ()\n");
 #endif
   if (!winCreateDefColormap (pScreen))
     {
-      ErrorF ("winFinishScreenInitFB () - Could not create colormap\n");
+      ErrorF ("winFinishScreenInitFB - Could not create colormap\n");
       return FALSE;
     }
 
@@ -326,27 +393,162 @@ winFinishScreenInitFB (int index,
       || pScreenInfo->dwEngine == WIN_SERVER_SHADOW_DDNL)
     {
 #if CYGDEBUG
-      ErrorF ("winFinishScreenInitFB () - Calling shadowInit ()\n");
+      ErrorF ("winFinishScreenInitFB - Calling shadowInit ()\n");
 #endif
       if (!shadowInit (pScreen,
 		       pScreenPriv->pwinShadowUpdate,
 		       NULL))
 	{
-	  ErrorF ("winFinishScreenInitFB () - shadowInit () failed\n");
+	  ErrorF ("winFinishScreenInitFB - shadowInit () failed\n");
 	  return FALSE;
 	}
     }
 #endif
 
+
+  /* Handle pseudo-rootless mode */
+  if (pScreenInfo->fRootless)
+    {
+      /* Define the WRAP macro temporarily for local use */
+#define WRAP(a) \
+    if (pScreen->a) { \
+        pScreenPriv->a = pScreen->a; \
+    } else { \
+        ErrorF("null screen fn " #a "\n"); \
+        pScreenPriv->a = NULL; \
+    }
+
+      /* Save a pointer to each lower-level window procedure */
+      WRAP(CreateWindow);
+      WRAP(DestroyWindow);
+      WRAP(RealizeWindow);
+      WRAP(UnrealizeWindow);
+      WRAP(PositionWindow);
+      WRAP(ChangeWindowAttributes);
+#ifdef SHAPE
+      WRAP(SetShape);
+#endif
+
+      /* Assign pseudo-rootless window procedures to be top level procedures */
+      pScreen->CreateWindow = winCreateWindowPRootless;
+      pScreen->DestroyWindow = winDestroyWindowPRootless;
+      pScreen->PositionWindow = winPositionWindowPRootless;
+      pScreen->ChangeWindowAttributes = winChangeWindowAttributesPRootless;
+      pScreen->RealizeWindow = winMapWindowPRootless;
+      pScreen->UnrealizeWindow = winUnmapWindowPRootless;
+#ifdef SHAPE
+      pScreen->SetShape = winSetShapePRootless;
+#endif
+
+      /* Undefine the WRAP macro, as it is not needed elsewhere */
+#undef WRAP
+    }
+  /* Handle multi window mode */
+  else if (pScreenInfo->fMultiWindow)
+    {
+      /* Define the WRAP macro temporarily for local use */
+#define WRAP(a) \
+    if (pScreen->a) { \
+        pScreenPriv->a = pScreen->a; \
+    } else { \
+        ErrorF("null screen fn " #a "\n"); \
+        pScreenPriv->a = NULL; \
+    }
+
+      /* Save a pointer to each lower-level window procedure */
+      WRAP(CreateWindow);
+      WRAP(DestroyWindow);
+      WRAP(RealizeWindow);
+      WRAP(UnrealizeWindow);
+      WRAP(PositionWindow);
+      WRAP(ChangeWindowAttributes);
+      WRAP(ReparentWindow);
+      WRAP(RestackWindow);
+#ifdef SHAPE
+      WRAP(SetShape);
+#endif
+
+      /* Assign multi-window window procedures to be top level procedures */
+      pScreen->CreateWindow = winCreateWindowMultiWindow;
+      pScreen->DestroyWindow = winDestroyWindowMultiWindow;
+      pScreen->PositionWindow = winPositionWindowMultiWindow;
+      pScreen->ChangeWindowAttributes = winChangeWindowAttributesMultiWindow;
+      pScreen->RealizeWindow = winMapWindowMultiWindow;
+      pScreen->UnrealizeWindow = winUnmapWindowMultiWindow;
+      pScreen->ReparentWindow = winReparentWindowMultiWindow;
+      pScreen->RestackWindow = winRestackWindowMultiWindow;
+#ifdef SHAPE
+      pScreen->SetShape = winSetShapeMultiWindow;
+#endif
+
+      /* Undefine the WRAP macro, as it is not needed elsewhere */
+#undef WRAP
+    }
+
   /* Wrap either fb's or shadow's CloseScreen with our CloseScreen */
   pScreenPriv->CloseScreen = pScreen->CloseScreen;
   pScreen->CloseScreen = pScreenPriv->pwinCloseScreen;
 
+  /* Create a mutex for modules in seperate threads to wait for */
+  iReturn = pthread_mutex_init (&pScreenPriv->pmServerStarted, NULL);
+  if (iReturn != 0)
+    {
+      ErrorF ("winFinishScreenInitFB - pthread_mutex_init () failed: %d\n",
+	      iReturn);
+      return FALSE;
+    }
+
+  /* Own the mutex for modules in seperate threads */
+  iReturn = pthread_mutex_lock (&pScreenPriv->pmServerStarted);
+  if (iReturn != 0)
+    {
+      ErrorF ("winFinishScreenInitFB - pthread_mutex_lock () failed: %d\n",
+	      iReturn);
+      return FALSE;
+    }
+
+  /* Set the ServerStarted flag to false */
+  pScreenPriv->fServerStarted = FALSE;
+
+#if CYGDEBUG || YES
+  if (pScreenInfo->fMultiWindow)
+    ErrorF ("winFinishScreenInitFB - Calling winInitWM.\n");
+#endif
+
+  /* Initialize multi window mode */
+  if (pScreenInfo->fMultiWindow
+      && !winInitWM (&pScreenPriv->pWMInfo,
+		     &pScreenPriv->ptWMProc,
+		     &pScreenPriv->pmServerStarted,
+		     pScreenInfo->dwScreen))
+    {
+      ErrorF ("winFinishScreenInitFB - winInitWM () failed.\n");
+      return FALSE;
+    }
+
+#if CYGDEBUG || YES
+  if (pScreenInfo->fClipboard)
+    ErrorF ("winFinishScreenInitFB - Calling winInitClipboard.\n");
+#endif
+
+  /* Initialize the clipboard manager */
+  if (pScreenInfo->fClipboard
+      && !winInitClipboard (&pScreenPriv->ptClipboardProc,
+			    &pScreenPriv->pmServerStarted,
+			    pScreenInfo->dwScreen))
+    {
+      ErrorF ("winFinishScreenInitFB - winClipboardInit () failed.\n");
+      return FALSE;
+    }
+
   /* Tell the server that we are enabled */
   pScreenPriv->fEnabled = TRUE;
 
-#if CYGDEBUG
-  ErrorF ("winFinishScreenInitFB () - returning\n");
+  /* Tell the server that we have a valid depth */
+  pScreenPriv->fBadDepth = FALSE;
+
+#if CYGDEBUG || YES
+  ErrorF ("winFinishScreenInitFB - returning\n");
 #endif
 
   return TRUE;
@@ -387,12 +589,12 @@ winFinishScreenInitNativeGDI (int index,
   /* Get device contexts for the screen and shadow bitmap */
   pScreenPriv->hdcScreen = GetDC (pScreenPriv->hwndScreen);
   if (pScreenPriv->hdcScreen == NULL)
-    FatalError ("winFinishScreenInitNativeGDI () - Couldn't get a DC\n");
+    FatalError ("winFinishScreenInitNativeGDI - Couldn't get a DC\n");
 
   /* Init visuals */
   if (!(*pScreenPriv->pwinInitVisuals) (pScreen))
     {
-      ErrorF ("winFinishScreenInitNativeGDI () - pwinInitVisuals failed\n");
+      ErrorF ("winFinishScreenInitNativeGDI - pwinInitVisuals failed\n");
       return FALSE;
     }
 
@@ -402,7 +604,7 @@ winFinishScreenInitNativeGDI (int index,
 		      ((unsigned long)1 << (pScreenInfo->dwDepth - 1)), 8,
 		      TrueColor))
     {
-      ErrorF ("winFinishScreenInitNativeGDI () - miInitVisuals () failed\n");
+      ErrorF ("winFinishScreenInitNativeGDI - miInitVisuals () failed\n");
       return FALSE;
     }
 
@@ -414,11 +616,11 @@ winFinishScreenInitNativeGDI (int index,
 		     NULL, /* No framebuffer */
 		     pScreenInfo->dwWidth, pScreenInfo->dwHeight,
 		     monitorResolution, monitorResolution,
-		     pScreenInfo->dwStride,
+		     pScreenInfo->dwWidth,
 		     nRootDepth, nDepths, pDepths, rootVisual,
 		     nVisuals, pVisuals))
     {
-      ErrorF ("winFinishScreenInitNativeGDI () - miScreenInit failed\n");
+      ErrorF ("winFinishScreenInitNativeGDI - miScreenInit failed\n");
       return FALSE;
     }
 
@@ -477,7 +679,7 @@ winFinishScreenInitNativeGDI (int index,
   /* Bitmap */
   pScreen->BitmapToRegion = winPixmapToRegionNativeGDI;
 
-  ErrorF ("winFinishScreenInitNativeGDI () - calling miDCInitialize\n");
+  ErrorF ("winFinishScreenInitNativeGDI - calling miDCInitialize\n");
 
   /* Set the default white and black pixel positions */
   pScreen->whitePixel = pScreen->blackPixel = (Pixel) 0;
@@ -485,19 +687,19 @@ winFinishScreenInitNativeGDI (int index,
   /* Initialize the cursor */
   if (!miDCInitialize (pScreen, &g_winPointerCursorFuncs))
     {
-      ErrorF ("winFinishScreenInitNativeGDI () - miDCInitialize failed\n");
+      ErrorF ("winFinishScreenInitNativeGDI - miDCInitialize failed\n");
       return FALSE;
     }
   
   /* Create a default colormap */
   if (!miCreateDefColormap (pScreen))
     {
-        ErrorF ("winFinishScreenInitNativeGDI () - miCreateDefColormap () "
+        ErrorF ("winFinishScreenInitNativeGDI - miCreateDefColormap () "
 		"failed\n");
 	return FALSE;
     }
 
-  ErrorF ("winFinishScreenInitNativeGDI () - miCreateDefColormap () "
+  ErrorF ("winFinishScreenInitNativeGDI - miCreateDefColormap () "
 	  "returned\n");
   
   /* mi doesn't use a CloseScreen procedure, so no need to wrap */
@@ -506,7 +708,7 @@ winFinishScreenInitNativeGDI (int index,
   /* Tell the server that we are enabled */
   pScreenPriv->fEnabled = TRUE;
 
-  ErrorF ("winFinishScreenInitNativeGDI () - Successful addition of "
+  ErrorF ("winFinishScreenInitNativeGDI - Successful addition of "
 	  "screen %08x\n",
 	  pScreen);
 

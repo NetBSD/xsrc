@@ -24,7 +24,7 @@
  * used in advertising or publicity pertaining to distribution of the software
  * without specific, written prior permission.
  */
-/* $XFree86: xc/programs/xedit/commands.c,v 1.25 2001/09/05 17:43:25 paulo Exp $ */
+/* $XFree86: xc/programs/xedit/commands.c,v 1.29 2002/11/05 06:57:05 paulo Exp $ */
 
 #include <X11/Xfuncs.h>
 #include <X11/Xos.h>
@@ -126,7 +126,9 @@ DoQuit(Widget w, XtPointer client_data, XtPointer call_data)
 	    }
     }
     if(!source_changed) {
+#ifndef __UNIXOS2__
 	XeditLispCleanUp();
+#endif
 	exit(0);
     }
 
@@ -332,8 +334,9 @@ DoSave(Widget w, XtPointer client_data, XtPointer call_data)
 	      item->flags = EXISTS_BIT;
 	  }
 	  else {
-	      if (!item)
-		  item = flist.itens[0];
+	      item = flist.itens[0];
+	      XtRemoveCallback(scratch, XtNcallback, SourceChanged,
+			       (XtPointer)item);
 	      item->source = scratch =
 		  XtVaCreateWidget("textSource", international ?
 				   multiSrcObjectClass : asciiSrcObjectClass,
@@ -618,13 +621,16 @@ FindFile(Widget w, XEvent *event, String *params, Cardinal *num_params)
 	XawTextReplace(filenamewindow, 0, end, &block);
     XawTextSetInsertionPoint(filenamewindow, end);
     XtSetKeyboardFocus(topwindow, filenamewindow);
+    line_edit = False;
 }
 
 /*ARGSUSED*/
 void
 LoadFile(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
-    if (ReallyDoLoad(GetString(filenamewindow), ResolveName(NULL))) {
+    if (line_edit)
+	LineEdit(textwindow);
+    else if (ReallyDoLoad(GetString(filenamewindow), ResolveName(NULL))) {
 	SwitchDirWindow(False);
 	XtSetKeyboardFocus(topwindow, textwindow);
     }
@@ -637,7 +643,6 @@ CancelFindFile(Widget w, XEvent *event, String *params, Cardinal *num_params)
     Arg args[1];
     xedit_flist_item *item;
 
-    Feep();
     XtSetKeyboardFocus(topwindow, textwindow);
 
     item = FindTextSource(XawTextGetSource(textwindow), NULL);
@@ -651,6 +656,8 @@ CancelFindFile(Widget w, XEvent *event, String *params, Cardinal *num_params)
 
    if (XtIsManaged(XtParent(dirwindow)))
 	SwitchDirWindow(False);
+
+    line_edit = False;
 }
 
 static int
@@ -680,6 +687,10 @@ FileCompletion(Widget w, XEvent *event, String *params, Cardinal *num_params)
     if (!text) {
 	Feep();
 	return;
+    }
+    else if (line_edit) {
+	Feep();
+	line_edit = 0;
     }
 
     {
@@ -815,8 +826,10 @@ FileCompletion(Widget w, XEvent *event, String *params, Cardinal *num_params)
 
 		strncpy(pptr, ent->d_name, bytes);
 		pptr[bytes] = '\0';
-		if (stat(path, &st) != 0) /* Probably a broken symbolic link */
-		    is_dir = False;
+		if (stat(path, &st) != 0)
+		    /* Should check errno, may be a broken symbolic link
+		     * a directory with r-- permission, etc */
+		    continue;
 		else if (first || show_matches != SM_NEVER) {
 		    is_dir = S_ISDIR(st.st_mode);
 		}
@@ -983,13 +996,14 @@ DirWindowCB(Widget w, XtPointer user_data, XtPointer call_data)
 		d_namlen = strlen(ent->d_name);
 		strncpy(pptr, ent->d_name, bytes);
 		pptr[bytes] = '\0';
-		if (stat(path, &st) == 0) {
-		    isdir = S_ISDIR(st.st_mode);
-		}
+		if (stat(path, &st) != 0)
+		    /* Should check errno, may be a broken symbolic link
+		     * a directory with r-- permission, etc */
+		    continue;
 		else
-		    isdir = False;	/* Probably a broken symbolic link */
+		    isdir = S_ISDIR(st.st_mode);
 
-		entries = (char **)XtRealloc((char*)entries, sizeof(char**)
+		entries = (char **)XtRealloc((char*)entries, sizeof(char*)
 					     * (n_entries + 1));
 		if (isdir) {
 		    entries[n_entries] = XtMalloc(d_namlen + 2);
@@ -1006,6 +1020,12 @@ DirWindowCB(Widget w, XtPointer user_data, XtPointer call_data)
 	    XtSetArg(args[1], XtNnumberStrings, &n_list);
 	    XtGetValues(dirwindow, args, 2);
 
+	    if (n_entries == 0) {
+		entries = (char**)XtMalloc(sizeof(char*) * 2);
+		/* Directory has read but not execute permission? */
+		entries[n_entries++] = XtNewString("./");
+		entries[n_entries++] = XtNewString("../");
+	    }
 	    qsort(entries, n_entries, sizeof(char*), compar);
 	    XtSetArg(args[0], XtNlist, entries);
 	    XtSetArg(args[1], XtNnumberStrings, n_entries);
@@ -1018,7 +1038,10 @@ DirWindowCB(Widget w, XtPointer user_data, XtPointer call_data)
 	    }
 
 	    *pptr = '\0';
-	    label = ResolveName(path);
+	    if ((label = ResolveName(path)) == NULL) {
+		Feep();
+		label = path;
+	    }
 	    XtSetArg(args[0], XtNlabel, label);
 	    XtSetValues(dirlabel, args, 1);
 

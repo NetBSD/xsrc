@@ -29,7 +29,6 @@
  *    Gareth Hughes <gareth@valinux.com>
  */
 
-#define __NO_VERSION__
 #include "drmP.h"
 
 #if __HAVE_DMA_WAITLIST
@@ -37,26 +36,28 @@
 int DRM(waitlist_create)(drm_waitlist_t *bl, int count)
 {
 	if (bl->count)
-		DRM_OS_RETURN( EINVAL );
+		return DRM_ERR( EINVAL );
 
 	bl->bufs       = DRM(alloc)((bl->count + 2) * sizeof(*bl->bufs),
 				    DRM_MEM_BUFLISTS);
 
-	if(!bl->bufs) DRM_OS_RETURN(ENOMEM);
+	if(!bl->bufs) return DRM_ERR(ENOMEM);
+
+	bzero(bl->bufs, sizeof(*bl->bufs));
 
 	bl->count      = count;
 	bl->rp	       = bl->bufs;
 	bl->wp	       = bl->bufs;
 	bl->end	       = &bl->bufs[bl->count+1];
-	DRM_OS_SPININIT( bl->write_lock, "writelock" );
-	DRM_OS_SPININIT( bl->read_lock, "readlock" );
+	DRM_SPININIT( bl->write_lock, "writelock" );
+	DRM_SPININIT( bl->read_lock, "readlock" );
 	return 0;
 }
 
 int DRM(waitlist_destroy)(drm_waitlist_t *bl)
 {
 	if (bl->rp != bl->wp)
-		DRM_OS_RETURN( EINVAL );
+		return DRM_ERR( EINVAL );
 	if (bl->bufs) DRM(free)(bl->bufs,
 				(bl->count + 2) * sizeof(*bl->bufs),
 				DRM_MEM_BUFLISTS);
@@ -65,6 +66,8 @@ int DRM(waitlist_destroy)(drm_waitlist_t *bl)
 	bl->rp	  = NULL;
 	bl->wp	  = NULL;
 	bl->end	  = NULL;
+	DRM_SPINUNINIT( bl->write_lock );
+	DRM_SPINUNINIT( bl->read_lock );
 	return 0;
 }
 
@@ -76,19 +79,19 @@ int DRM(waitlist_put)(drm_waitlist_t *bl, drm_buf_t *buf)
 	if (!left) {
 		DRM_ERROR("Overflow while adding buffer %d from pid %d\n",
 			  buf->idx, buf->pid);
-		DRM_OS_RETURN( EINVAL );
+		return DRM_ERR( EINVAL );
 	}
 #if __HAVE_DMA_HISTOGRAM
 	getnanotime(&buf->time_queued);
 #endif
 	buf->list	 = DRM_LIST_WAIT;
 
-	DRM_OS_SPINLOCK(&bl->write_lock);
+	DRM_SPINLOCK(&bl->write_lock);
 	s = spldrm();
 	*bl->wp = buf;
 	if (++bl->wp >= bl->end) bl->wp = bl->bufs;
 	splx(s);
-	DRM_OS_SPINUNLOCK(&bl->write_lock);
+	DRM_SPINUNLOCK(&bl->write_lock);
 
 	return 0;
 }
@@ -98,17 +101,17 @@ drm_buf_t *DRM(waitlist_get)(drm_waitlist_t *bl)
 	drm_buf_t     *buf;
 	int		s;
 
-	DRM_OS_SPINLOCK(&bl->read_lock);
+	DRM_SPINLOCK(&bl->read_lock);
 	s = spldrm();
 	buf = *bl->rp;
 	if (bl->rp == bl->wp) {
 		splx(s);
-		DRM_OS_SPINUNLOCK(&bl->read_lock);
+		DRM_SPINUNLOCK(&bl->read_lock);
 		return NULL;
 	}				     
 	if (++bl->rp >= bl->end) bl->rp = bl->bufs;
 	splx(s);
-	DRM_OS_SPINUNLOCK(&bl->read_lock);
+	DRM_SPINUNLOCK(&bl->read_lock);
 	
 	return buf;
 }
@@ -127,7 +130,7 @@ int DRM(freelist_create)(drm_freelist_t *bl, int count)
 	bl->low_mark  = 0;
 	bl->high_mark = 0;
 	atomic_set(&bl->wfh,   0);
-	DRM_OS_SPININIT( bl->lock, "freelistlock" );
+	DRM_SPININIT( bl->lock, "freelistlock" );
 	++bl->initialized;
 	return 0;
 }
@@ -136,6 +139,7 @@ int DRM(freelist_destroy)(drm_freelist_t *bl)
 {
 	atomic_set(&bl->count, 0);
 	bl->next = NULL;
+	DRM_SPINUNINIT( bl->lock );
 	return 0;
 }
 
@@ -159,10 +163,10 @@ int DRM(freelist_put)(drm_device_t *dev, drm_freelist_t *bl, drm_buf_t *buf)
 #endif
 	buf->list	= DRM_LIST_FREE;
 
-	DRM_OS_SPINLOCK( &bl->lock );
+	DRM_SPINLOCK( &bl->lock );
 	buf->next	= bl->next;
 	bl->next	= buf;
-	DRM_OS_SPINUNLOCK( &bl->lock );
+	DRM_SPINUNLOCK( &bl->lock );
 
 	atomic_inc(&bl->count);
 	if (atomic_read(&bl->count) > dma->buf_count) {
@@ -174,7 +178,7 @@ int DRM(freelist_put)(drm_device_t *dev, drm_freelist_t *bl, drm_buf_t *buf)
 				/* Check for high water mark */
 	if (atomic_read(&bl->wfh) && atomic_read(&bl->count)>=bl->high_mark) {
 		atomic_set(&bl->wfh, 0);
-		DRM_OS_WAKEUP_INT(&bl->waiting);
+		DRM_WAKEUP_INT(&bl->waiting);
 	}
 	return 0;
 }
@@ -186,14 +190,14 @@ static drm_buf_t *DRM(freelist_try)(drm_freelist_t *bl)
 	if (!bl) return NULL;
 
 				/* Get buffer */
-	DRM_OS_SPINLOCK(&bl->lock);
+	DRM_SPINLOCK(&bl->lock);
 	if (!bl->next) {
-		DRM_OS_SPINUNLOCK(&bl->lock);
+		DRM_SPINUNLOCK(&bl->lock);
 		return NULL;
 	}
 	buf	  = bl->next;
 	bl->next  = bl->next->next;
-	DRM_OS_SPINUNLOCK(&bl->lock);
+	DRM_SPINUNLOCK(&bl->lock);
 
 	atomic_dec(&bl->count);
 	buf->next = NULL;

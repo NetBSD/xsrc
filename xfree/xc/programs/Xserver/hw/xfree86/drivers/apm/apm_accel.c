@@ -1,7 +1,5 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_accel.c,v 1.18 2001/10/28 03:33:21 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/apm/apm_accel.c,v 1.21 2002/10/08 22:14:03 tsi Exp $ */
 
-
-#define COMPILER_H_EXTRAS
 #include "apm.h"
 #include "miline.h"
 
@@ -28,8 +26,6 @@ static unsigned char apmROP[] = {
   0xFF
 };
 
-
-static void Dump(void* start, u32 len);
 
 #include "apm_funcs.c"
 
@@ -754,21 +750,4 @@ void ApmSetupXAAInfo(ApmPtr pApm, XAAInfoRecPtr pXAAinfo)
 #undef XAA
 	}
     }
-}
-
-
-
-static void
-Dump(void* start, u32 len)
-{
-  u8* i;
-  int c = 0;
-  ErrorF("Memory Dump. Start 0x%x length %d\n", (u32)start, len);
-  for (i = (u8*)start; i < ((u8*)start+len); i++)
-  {
-    ErrorF("%02x ", *i);
-    if (c++ % 25 == 24)
-      ErrorF("\n");
-  }
-  ErrorF("\n");
 }

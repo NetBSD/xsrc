@@ -1,10 +1,13 @@
-XCOMM platform:  $XFree86: xc/config/cf/darwin.cf,v 1.21.2.1 2002/05/03 00:36:17 torrey Exp $
+XCOMM platform:  $XFree86: xc/config/cf/darwin.cf,v 1.34 2002/12/04 04:40:15 torrey Exp $
 
 /* Darwin / Mac OS X configuration by John Carmack <johnc@idsoftware.com> */
 
 /* imake determines the default values by parsing uname */
 #ifndef OSName
 #define OSName                  DefaultOSName
+#endif
+#ifndef OSVendor
+#define OSVendor                Apple Computer, Inc.
 #endif
 #ifndef OSMajorVersion
 #define OSMajorVersion          DefaultOSMajorVersion
@@ -24,15 +27,35 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 #define HasSnprintf             YES
 #define HasPutenv               YES
 #define HasBSD44Sockets         YES
+#define Malloc0ReturnsNull      NO
+#define HasShadowPasswd         NO
 #define HasUsableFileMmap       YES
 #define HasZlib                 YES
 #ifndef HasShm
 # define HasShm                 YES
 #endif
 #define HasNdbm                 YES
-
+#if OSMajorVersion >= 6
+# define HasNCurses             YES
+#else
+# define HasNCurses             NO
+#endif
 #ifndef HasGroff
 # define HasGroff               YES
+#endif
+#ifndef HasGcc3
+# define HasGcc3                NO
+#endif
+
+/* Thread support */
+#define HasPosixThreads         YES
+#define SystemMTDefines         -D_REENTRANT
+#if OSMajorVersion >= 6
+# define HasThreadSafeAPI       YES
+# define MTSafeAPIDefines       -DXUSE_MTSAFE_API -DXNO_MTSAFE_UNISTDAPI
+#else
+# define HasThreadSafeAPI       NO
+# define MTSafeAPIDefines       -DXOS_USE_MTSAFE_NETDBAPI
 #endif
 
 /* Libtool on Darwin always uses minor numbers */
@@ -58,19 +81,53 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 # define DarwinQuartzSupport    YES
 #endif
 
+#if DarwinQuartzSupport
+
+# ifndef GlxUseAqua
+#  define GlxUseAqua            YES
+# endif
+
+/*
+ * Before Mac OS X 10.1 a number of features were missing or broken.
+ */
+# if (OSMajorVersion == 1 && OSMinorVersion >= 4) || OSMajorVersion >= 5
+#  ifndef HasNSCarbonWindow
+#   define HasNSCarbonWindow    YES
+#  endif
+#  ifndef HasCGMachPort
+#   define HasCGMachPort        YES
+#  endif
+# else
+/* NSWindow(NSCarbonExtensions) is broken. */
+#  ifndef HasNSCarbonWindow
+#   define HasNSCarbonWindow    NO
+#  endif
+/* CGWindowServerCFMachPort() does not exist. */
+#  ifndef HasCGMachPort
+#   define HasCGMachPort        NO
+#  endif
+# endif
+
+#endif  /* DarwinQuartzSupport */
+
 /* we don't need -lm */
 #define MathLibrary             /**/
 
 #define TermcapLibrary          -lcurses
+#define SetTtyGroup             YES             /* for xterm */
 
 /* we don't have a dbm library */
 #define DBMLibrary              /**/
 
 #define MkdirHierCmd            mkdir -p
 
-/* our cpp isn't in /lib/cpp and it doesn't like -undef */
+/* our cpp isn't in /lib/cpp and early versions don't like -undef */
 #define CppCmd                  /usr/bin/cpp
-#define RawCppCmd               CppCmd
+#if HasGcc3
+# define RawCppCmd              CppCmd -undef
+#else
+# define RawCppCmd              CppCmd
+#endif
 
 /* we have a gcc compatible compiler, but its not called gcc */
 #define CcCmd                   /usr/bin/cc
@@ -95,13 +152,21 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 #ifdef PpcDarwinArchitecture
 # define DarwinMachineDefines   -D__powerpc__
-# define OptimizedCDebugFlags   -O2
+# if HasGcc3
+#  define OptimizedCDebugFlags   -Os
+# else
+#  define OptimizedCDebugFlags   -O2
+# endif
 # define ByteOrder              X_BIG_ENDIAN
 #endif /* PpcDarwinArchitecture */
 
 #ifdef i386DarwinArchitecture
 # define DarwinMachineDefines   -D__i386__
-# define OptimizedCDebugFlags   -O2 -fno-strength-reduce
+# if HasGcc3
+#  define OptimizedCDebugFlags   -Os
+# else
+#  define OptimizedCDebugFlags   -O2 -fno-strength-reduce
+# endif
 # define ByteOrder              X_LITTLE_ENDIAN
 #endif /* i386DarwinArchitecture */
 
@@ -115,16 +180,18 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
  * Darwin's setlocale() doesn't work properly, so use X11's instead.
  */
 #define StandardDefines         DarwinMachineDefines -D__DARWIN__ \
-                                -DNO_ALLOCA -DX_LOCALE
+                                -DNO_ALLOCA -DX_LOCALE -DCSRG_BASED
 
 /*
  * Set this to NO to just build the client libs, which should work without
  * having to write any platform specific code.
  */
-#define BuildServer             YES
+#ifndef BuildServer
+# define BuildServer            YES
 
 /* our custom X server */
-#define XDarwinServer           YES
+# define XDarwinServer          YES
+#endif
 
 /* Thanks to the IOKit, the X server does not have to be SetUID. */
 #ifndef InstallXserverSetUID
@@ -140,6 +207,12 @@ XCOMM operating system:  OSName (OSMajorVersion./**/OSMinorVersion./**/OSTeenyVe
 
 /* no Display Power Management extension */
 #define BuildDPMSExt            NO
+
+/* no XFree86-Misc extension */
+#define BuildXF86MiscExt        NO
+
+/* no XFree86-VidMode extension */
+#define BuildXF86VidModeExt	NO
 
 #define BuildLibPathVar         DYLD_LIBRARY_PATH
 

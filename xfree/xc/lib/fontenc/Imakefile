@@ -1,7 +1,7 @@
-XCOMM $XFree86: xc/lib/fontenc/Imakefile,v 1.5 2001/11/15 19:10:04 dawes Exp $
+XCOMM $XFree86: xc/lib/fontenc/Imakefile,v 1.6 2002/02/13 21:32:49 dawes Exp $
 
    INCLUDES = -I$(FONTINCSRC) -I$(FONTLIBSRC)/include -I$(FONTLIBSRC)/fontfile \
-	      -I$(XTOP)/include
+	      -I$(INCLUDESRC)
 
 FONTENCDEFS = -DFONTENC_NO_LIBFONT \
 	      -DFONT_ENCODINGS_DIRECTORY=\"$(FONTDIR)/encodings/encodings.dir\"

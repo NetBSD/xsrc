@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/xtrap/xtrapproto.c,v 1.2 2001/11/08 04:00:15 tsi Exp $ */
+/* $XFree86: xc/programs/xtrap/xtrapproto.c,v 1.3 2002/09/18 17:11:57 tsi Exp $ */
 /*
  * @DEC_COPYRIGHT@
  */
@@ -50,6 +50,7 @@ SOFTWARE.
  *
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <X11/extensions/xtraplib.h>
 #include <X11/extensions/xtraplibp.h>
 

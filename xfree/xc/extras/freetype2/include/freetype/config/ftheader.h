@@ -4,7 +4,7 @@
 /*                                                                         */
 /*    Build macros of the FreeType 2 library.                              */
 /*                                                                         */
-/*  Copyright 1996-2001 by                                                 */
+/*  Copyright 1996-2001, 2002 by                                           */
 /*  David Turner, Robert Wilhelm, and Werner Lemberg.                      */
 /*                                                                         */
 /*  This file is part of the FreeType project, and may only be used,       */
@@ -105,6 +105,20 @@
   /*                                                                       */
 #ifndef FT_CONFIG_CONFIG_H
 #define FT_CONFIG_CONFIG_H  <freetype/config/ftconfig.h>
+#endif
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* @macro:                                                               */
+  /*    FT_CONFIG_STANDARD_LIBRARY_H                                       */
+  /*                                                                       */
+  /* @description:                                                         */
+  /*    A macro used in #include statements to name the file containing    */
+  /*    FreeType 2 configuration data.                                     */
+  /*                                                                       */
+#ifndef FT_CONFIG_STANDARD_LIBRARY_H
+#define FT_CONFIG_STANDARD_LIBRARY_H  <freetype/config/ftstdlib.h>
 #endif
 
 
@@ -338,6 +352,19 @@
   /*************************************************************************/
   /*                                                                       */
   /* @macro:                                                               */
+  /*    FT_BDF_H                                                           */
+  /*                                                                       */
+  /* @description:                                                         */
+  /*    A macro used in #include statements to name the file containing    */
+  /*    the definitions of an API to access BDF-specific strings from a    */
+  /*    face.                                                              */
+  /*                                                                       */
+#define FT_BDF_H  <freetype/ftbdf.h>
+
+
+  /*************************************************************************/
+  /*                                                                       */
+  /* @macro:                                                               */
   /*    FT_GLYPH_H                                                         */
   /*                                                                       */
   /* @description:                                                         */
@@ -357,19 +384,6 @@
   /*    the API of the optional exact bounding box computation routines.   */
   /*                                                                       */
 #define FT_BBOX_H  <freetype/ftbbox.h>
-
-
-  /*************************************************************************/
-  /*                                                                       */
-  /* @macro:                                                               */
-  /*    FT_BEZIER_H                                                        */
-  /*                                                                       */
-  /* @description:                                                         */
-  /*    A macro used in #include statements to name the file containing    */
-  /*    a small useful API to handle bezier arcs.  Note that you _must_    */
-  /*    include FT_FREETYPE_H or FT_IMAGE_H before this header.            */
-  /*                                                                       */
-#define FT_BEZIER_H  <freetype/ftbezier.h>
 
 
   /*************************************************************************/
@@ -474,12 +488,15 @@
 
 #define FT_TRIGONOMETRY_H          <freetype/fttrigon.h>
 #define FT_SYNTHESIS_H             <freetype/ftsynth.h>
+#define FT_ERROR_DEFINITIONS_H     <freetype/fterrdef.h>
 
 #define FT_CACHE_MANAGER_H         <freetype/cache/ftcmanag.h>
 
 #define FT_CACHE_INTERNAL_LRU_H    <freetype/cache/ftlru.h>
 #define FT_CACHE_INTERNAL_GLYPH_H  <freetype/cache/ftcglyph.h>
 #define FT_CACHE_INTERNAL_CACHE_H  <freetype/cache/ftccache.h>
+
+#define FT_XFREE86_H               <freetype/ftxf86.h>
 
   /* now include internal headers definitions from <freetype/internal/...> */
 

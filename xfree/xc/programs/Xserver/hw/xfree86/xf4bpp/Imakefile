@@ -4,7 +4,7 @@ XCOMM $XConsortium: Imakefile /main/8 1996/09/28 17:25:44 rws $
 
 
 
-XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/Imakefile,v 1.5 1999/08/14 10:50:16 dawes Exp $
+XCOMM $XFree86: xc/programs/Xserver/hw/xfree86/xf4bpp/Imakefile,v 1.6 2002/05/31 18:46:03 dawes Exp $
 
 #define IHaveModules
 #include <Server.tmpl>
@@ -52,9 +52,7 @@ ObjectFromSpecialSource(mfbseg,mfbline,-DPOLYSEGMENT)
 
 InstallLibraryModule(xf4bpp,$(MODULEDIR),.)
 
-#ifndef OS2Architecture
 DependTarget()
-#endif
 
 InstallDriverSDKLibraryModule(xf4bpp,$(DRIVERSDKMODULEDIR),.)
 

@@ -26,7 +26,7 @@ other dealings in this Software without prior written authorization
 from The Open Group.
 
 */
-/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.21 2001/12/14 20:01:29 dawes Exp $ */
+/* $XFree86: xc/programs/xdm/greeter/verify.c,v 3.24 2002/11/26 01:16:09 dawes Exp $ */
 
 /*
  * xdm - display manager daemon
@@ -37,12 +37,13 @@ from The Open Group.
  * typical unix verification routine.
  */
 
-# include	"dm.h"
-# include	"dm_error.h"
+#include	"dm.h"
+#include	"dm_error.h"
 
-# include	<pwd.h>
+#include	<pwd.h>
 #ifdef USE_PAM
 # include	<security/pam_appl.h>
+# include	<stdlib.h>
 #else
 # ifdef USESHADOW
 #  include	<shadow.h>
@@ -78,7 +79,6 @@ static char *envvars[] = {
 #ifdef KERBEROS
 #include <sys/param.h>
 #include <kerberosIV/krb.h>
-#include <kerberosIV/kafs.h>
 static char krbtkfile[MAXPATHLEN];
 #endif
 
@@ -123,13 +123,10 @@ static int PAM_conv (int num_msg,
 		     void *appdata_ptr) {
 	int count = 0, replies = 0;
 	struct pam_response *reply = NULL;
-	size_t size = sizeof(struct pam_response);
 
-#define GET_MEM \
-	if (reply) realloc(reply, size); \
-	else reply = (struct pam_response*)malloc(size); \
-	if (!reply) return PAM_CONV_ERR; \
-	size += sizeof(struct pam_response)
+#define PAM_RESPONSE_SIZE	sizeof(struct pam_response)
+	size_t size = PAM_RESPONSE_SIZE;
+
 #define COPY_STRING(s) (s) ? strdup(s) : (char*)NULL
 
 	for (count = 0; count < num_msg; count++) {
@@ -139,7 +136,19 @@ static int PAM_conv (int num_msg,
 			return PAM_CONV_ERR;
 		case PAM_PROMPT_ECHO_OFF:
 			/* wants password */
-			GET_MEM;
+			if (reply) {
+				reply = realloc(reply, size);
+				bzero(reply + size - PAM_RESPONSE_SIZE, PAM_RESPONSE_SIZE);
+			} else {
+				reply = (struct pam_response*)malloc(size);
+				bzero(reply, size);
+			}
+
+			if (!reply)
+				return PAM_CONV_ERR;
+
+			size += PAM_RESPONSE_SIZE;
+			
 			reply[replies].resp_retcode = PAM_SUCCESS;
 			reply[replies].resp = COPY_STRING(PAM_password);
 			/* PAM frees resp */
@@ -155,7 +164,6 @@ static int PAM_conv (int num_msg,
 	}
 
 #undef COPY_STRING
-#undef GET_MEM
 	if (reply) *resp = reply;
 	return PAM_SUCCESS;
 }
@@ -223,7 +231,8 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 
 	/* Build path of the auth script and call it */
 	snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", style);
-	auth_call(as, path, style, "-s", "response", greet->name, NULL);
+	auth_call(as, path, style, "-s", "response", greet->name, 
+		  (void *)NULL);
 	authok = auth_getstate(as);
 
 	if ((authok & AUTH_ALLOW) == 0) {
@@ -305,7 +314,7 @@ Verify (struct display *d, struct greet_info *greet, struct verify_info *verify)
 		return 0;
 	} else {
 #ifdef linux
-	    if (p->pw_passwd[0] == '!' || p->pw_passwd[0] == '*') {
+	    if (!strcmp(p->pw_passwd, "!") || !strcmp(p->pw_passwd, "*")) {
 		Debug ("The account is locked, no login allowed.\n");
 		bzero(greet->password, strlen(greet->password));
 		return 0;

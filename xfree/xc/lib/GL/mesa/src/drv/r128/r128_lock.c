@@ -1,4 +1,4 @@
-/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_lock.c,v 1.3 2001/03/21 16:14:23 dawes Exp $ */
+/* $XFree86: xc/lib/GL/mesa/src/drv/r128/r128_lock.c,v 1.5 2002/10/30 12:51:38 alanh Exp $ */
 /**************************************************************************
 
 Copyright 1999, 2000 ATI Technologies Inc. and Precision Insight, Inc.,
@@ -67,12 +67,12 @@ void r128GetLock( r128ContextPtr rmesa, GLuint flags )
     * Since the hardware state depends on having the latest drawable
     * clip rects, all state checking must be done _after_ this call.
     */
-   XMESA_VALIDATE_DRAWABLE_INFO( rmesa->display, sPriv, dPriv );
+   DRI_VALIDATE_DRAWABLE_INFO( rmesa->display, sPriv, dPriv );
 
    if ( rmesa->lastStamp != dPriv->lastStamp ) {
       rmesa->lastStamp = dPriv->lastStamp;
       rmesa->new_state |= R128_NEW_WINDOW | R128_NEW_CLIP;
-      rmesa->SetupDone = 0;
+      rmesa->SetupNewInputs = ~0;
    }
 
    rmesa->dirty |= R128_UPLOAD_CONTEXT | R128_UPLOAD_CLIPRECTS;
@@ -86,7 +86,7 @@ void r128GetLock( r128ContextPtr rmesa, GLuint flags )
    }
 
    for ( i = 0 ; i < rmesa->lastTexHeap ; i++ ) {
-      if ( sarea->texAge[i] != rmesa->lastTexAge[i] ) {
+      if ( rmesa->texHeap[i] && sarea->texAge[i] != rmesa->lastTexAge[i] ) {
 	 r128AgeTextures( rmesa, i );
       }
    }

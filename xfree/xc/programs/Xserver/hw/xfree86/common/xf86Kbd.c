@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Kbd.c,v 3.23 2001/10/28 03:33:19 tsi Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/common/xf86Kbd.c,v 3.24 2002/05/31 18:45:58 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
  *
@@ -40,13 +40,13 @@
 
 #if defined(KDGKBTYPE) && \
 	!defined(Lynx) && \
-	!defined(__EMX__) && !defined(__mips__) && \
+	!defined(__UNIXOS2__) && !defined(__mips__) && \
 	!defined(__arm32__) && !defined(__GNU__) && !defined(__QNX__)
 #define HAS_GETKBTYPE
 #endif
 #if defined(GIO_KEYMAP) && \
 	!defined(Lynx) && \
-	!defined(__EMX__) && !defined(__mips__) && \
+	!defined(__UNIXOS2__) && !defined(__mips__) && \
 	!defined(__arm32__) && !defined(__GNU__) && !defined(DGUX) && \
 	!defined(__QNX__)
 #define HAS_GETKEYMAP
@@ -270,7 +270,7 @@ xf86KbdGetMapping (pKeySyms, pModMap)
     pMap = map;
 #else
 /* OS/2 sets the keyboard type during xf86OpenKbd */
-#ifndef __EMX__
+#ifndef __UNIXOS2__
   xf86Info.kbdType = 0;
 #endif
   pMap = map;

@@ -27,7 +27,7 @@ used in advertising or otherwise to promote the sale, use or other dealings
 in this Software without prior written authorization from The Open Group.
 
 */
-/* $XFree86: xc/programs/xset/xset.c,v 3.25 2001/12/14 20:02:22 dawes Exp $ */
+/* $XFree86: xc/programs/xset/xset.c,v 3.30 2003/02/06 18:48:17 dawes Exp $ */
 /* Modified by Stephen so keyboard rate is set using XKB extensions */
 
 #include <stdio.h>
@@ -556,7 +556,7 @@ for (i = 1; i < argc; ) {
 #  define Usleep(us) usleep((us))
 # endif
 #endif
-#ifdef __EMX__
+#ifdef __UNIXOS2__
 # define Usleep(us) _sleep2((us / 1000 > 0) ? us / 1000 : 1)
 #endif
 #ifdef WIN32
@@ -1091,7 +1091,9 @@ set_repeatrate(Display *dpy, int delay, int rate)
 static void 
 xkbset_repeatrate(Display *dpy, int delay, int interval)
 {
-  XkbDescPtr xkb = XkbGetKeyboard(dpy,XkbControlsMask,XkbUseCoreKbd);
+  XkbDescPtr xkb = XkbAllocKeyboard();
+  if (!xkb)
+    return;
   XkbGetControls(dpy, XkbRepeatKeysMask, xkb);
   xkb->ctrls->repeat_delay = delay;
   xkb->ctrls->repeat_interval = interval;
@@ -1249,7 +1251,7 @@ printf ("  auto repeat:  %s    key click percent:  %d    LED mask:  %08lx\n",
 	values.key_click_percent, values.led_mask);
 #ifdef XKB
 if (XkbQueryExtension(dpy, &xkbopcode, &xkbevent, &xkberror, &xkbmajor, &xkbminor)
-    && (xkb = XkbGetKeyboard(dpy,XkbControlsMask,XkbUseCoreKbd)) != NULL
+    && (xkb = XkbAllocKeyboard()) != NULL
     && XkbGetControls(dpy, XkbRepeatKeysMask, xkb) == Success)
   printf ("  auto repeat delay:  %d    repeat rate:  %d\n",
           xkb->ctrls->repeat_delay,  1000/xkb->ctrls->repeat_interval);
@@ -1377,6 +1379,23 @@ if (npaths) {
     }
 }
 #endif
+#ifdef XF86MISC
+{
+    int dummy;
+    int maj, min;
+    XF86MiscFilePaths paths;
+
+    if (XF86MiscQueryExtension(dpy, &dummy, &dummy) &&
+	XF86MiscQueryVersion(dpy, &maj, &min) &&
+	((maj > 0) || (maj == 0 && min >= 7)) && 
+	XF86MiscGetFilePaths(dpy, &paths)) {
+	printf("File paths:\n");
+	printf("  Config file:  %s\n", paths.configfile);
+	printf("  Modules path: %s\n", paths.modulepath);
+	printf("  Log file:     %s\n", paths.logfile);
+    }
+}
+#endif
 
 return;
 }
@@ -1467,6 +1486,7 @@ usage(char *fmt, ...)
     fprintf (stderr, "\t      force standby \n");
     fprintf (stderr, "\t      force suspend \n");
     fprintf (stderr, "\t      force off \n");
+    fprintf (stderr, "\t      force on \n");
     fprintf (stderr, "\t      (also implicitly enables DPMS features) \n");
     fprintf (stderr, "\t      a timeout value of zero disables the mode \n");
 #endif

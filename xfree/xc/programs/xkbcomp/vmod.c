@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbcomp/vmod.c,v 3.3 2001/01/17 23:45:45 dawes Exp $ */
+/* $XFree86: xc/programs/xkbcomp/vmod.c,v 3.4 2002/06/05 00:00:37 dawes Exp $ */
 
 #define	DEBUG_VAR_NOT_LOCAL
 #define	DEBUG_VAR debugFlags
@@ -40,13 +40,7 @@
 #include "vmod.h"
 
 void
-#if NeedFunctionPrototypes
 InitVModInfo(VModInfo *info,XkbDescPtr xkb)
-#else
-InitVModInfo(info,xkb)
-    VModInfo *	info;
-    XkbDescPtr	xkb;
-#endif
 {
     ClearVModInfo(info,xkb);
     info->errorCount= 0;
@@ -54,13 +48,7 @@ InitVModInfo(info,xkb)
 }
 
 void
-#if NeedFunctionPrototypes
 ClearVModInfo(VModInfo *info,XkbDescPtr xkb)
-#else
-ClearVModInfo(info,xkb)
-    VModInfo *	info;
-    XkbDescPtr	xkb;
-#endif
 {
 register int i;
 
@@ -83,14 +71,7 @@ register int i;
 /***====================================================================***/
 
 Bool
-#if NeedFunctionPrototypes
 HandleVModDef(VModDef *stmt,unsigned mergeMode,VModInfo *info)
-#else
-HandleVModDef(stmt,mergeMode,info)
-    VModDef *	stmt;
-    unsigned	mergeMode;
-    VModInfo * 	info;
-#endif
 {
 register int 	i,bit,nextFree;
 ExprResult 	mod;
@@ -157,20 +138,11 @@ Atom		stmtName;
 }
 
 int
-#if NeedFunctionPrototypes
 LookupVModIndex(	XPointer	priv,
 			Atom 		elem,
 			Atom 		field,
 			unsigned 	type,
 			ExprResult *	val_rtrn)
-#else
-LookupVModIndex(priv,elem,field,type,val_rtrn)
-    XPointer 		priv;
-    Atom		elem;
-    Atom		field;
-    unsigned		type;
-    ExprResult *	val_rtrn;
-#endif
 {
 register int	i;
 register char *	fieldStr;
@@ -195,20 +167,11 @@ XkbDescPtr	xkb;
 }
 
 int
-#if NeedFunctionPrototypes
 LookupVModMask(	XPointer 	priv,
 		Atom 		elem,
 		Atom 		field,
 		unsigned 	type,
 		ExprResult *	val_rtrn)
-#else
-LookupVModMask(priv,elem,field,type,val_rtrn)
-    XPointer 		priv;
-    Atom		elem;
-    Atom		field;
-    unsigned		type;
-    ExprResult *	val_rtrn;
-#endif
 {
     if (LookupVModIndex(priv,elem,field,type,val_rtrn)) {
 	register unsigned ndx= val_rtrn->uval;
@@ -219,12 +182,7 @@ LookupVModMask(priv,elem,field,type,val_rtrn)
 }
 
 int
-#if NeedFunctionPrototypes
 FindKeypadVMod(XkbDescPtr xkb)
-#else
-FindKeypadVMod(xkb)
-    XkbDescPtr	xkb;
-#endif
 {
 Atom name;
 ExprResult rtrn;
@@ -238,14 +196,7 @@ ExprResult rtrn;
 }
 
 Bool
-#if NeedFunctionPrototypes
 ResolveVirtualModifier(ExprDef *def,ExprResult *val_rtrn,VModInfo *info)
-#else
-ResolveVirtualModifier(def,val_rtrn,info)
-    ExprDef *		def;
-    ExprResult *	val_rtrn;
-    VModInfo *		info;
-#endif
 {
 XkbNamesPtr	names;
 

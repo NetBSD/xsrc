@@ -21,14 +21,13 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  */
  
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_video.c,v 1.22 2001/08/18 11:41:44 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/glint/pm2_video.c,v 1.23 2002/12/02 22:52:30 tsi Exp $ */
 
 #include "xf86.h"
 #include "xf86_OSproc.h"
 #include "xf86_ansic.h"
 #include "xf86Pci.h"
 #include "xf86PciInfo.h"
-#include "xf86Xinput.h"
 #include "xf86fbman.h"
 #include "xf86i2c.h"
 #include "xf86xv.h"

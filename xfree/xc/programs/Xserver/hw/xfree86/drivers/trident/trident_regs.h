@@ -21,7 +21,7 @@
  *
  * Author:  Alan Hourihane, alanh@fairlite.demon.co.uk
  */
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_regs.h,v 1.22 2002/01/11 13:06:30 alanh Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/trident/trident_regs.h,v 1.26 2002/09/16 18:06:03 eich Exp $ */
 
 #define DEBUG 1
 
@@ -40,6 +40,7 @@
 #define OldMode1 0x0E
 #define NewMode1 0x0E
 #define Protection 0x11
+#define Threshold 0x12
 #define MCLKLow 0x16
 #define MCLKHigh 0x17
 #define ClockLow 0x18
@@ -47,6 +48,14 @@
 #define SSetup 0x20
 #define SKey 0x37
 #define SPKey 0x57
+#define GBslope1 0xB4
+#define GBslope2 0xB5
+#define GBslope3 0xB6
+#define GBslope4 0xB7
+#define GBintercept1 0xB8
+#define GBintercept2 0xB9
+#define GBintercept3 0xBA
+#define GBintercept4 0xBB
 
 /* 3x4 */
 #define Offset 0x13
@@ -196,6 +205,7 @@
 
 /* Defines for BLADE Graphics Engine */
 #define BLADE_GE_STATUS		0x2120
+#define BLADE_XP_GER_OPERMODE	0x2125
 
 #define REPLICATE(r)						\
 {								\
@@ -222,6 +232,8 @@
 /* Merge XY */
 #define XY_MERGE(x,y) \
 		((((CARD32)(y)&0xFFFF) << 16) | ((CARD32)(x) & 0xffff))
+#define XP_XY_MERGE(y,x) \
+		((((CARD32)(y)&0xFFFF) << 16) | ((CARD32)(x) & 0xffff))
 
 #define TRIDENT_WRITE_REG(v,r)					\
         MMIO_OUT32(pTrident->IOBase,(r),(v))
@@ -234,7 +246,7 @@
 	if (IsPciCard && UseMMIO) { \
             MMIO_OUT8(pTrident->IOBase, addr, data); \
 	} else { \
-	    outb(addr, data); \
+	    outb(pTrident->PIOBase + (addr), data); \
 	} \
 }
 #define OUTW(addr, data) \
@@ -242,10 +254,15 @@
 	if (IsPciCard && UseMMIO) { \
             MMIO_OUT16(pTrident->IOBase, addr, data); \
 	} else { \
-	    outw(addr, data); \
+	    outw(pTrident->PIOBase + (addr), data); \
 	} \
 }
-#define INB(addr) ((IsPciCard && UseMMIO) ? MMIO_IN8(pTrident->IOBase, addr) : inb(addr))
+#define INB(addr) \
+( \
+	(IsPciCard && UseMMIO) ? \
+	    MMIO_IN8(pTrident->IOBase, addr) : \
+	    inb(pTrident->PIOBase + (addr)) \
+)
 
 #define OUTW_3C4(reg) \
     	OUTW(0x3C4, (tridentReg->tridentRegs3C4[reg])<<8 | (reg))
@@ -284,6 +301,8 @@
 	MMIO_OUT8(pTrident->IOBase, OLDGER_STATUS, (c))
 #define TGUI_OPERMODE(c) \
 	MMIO_OUT16(pTrident->IOBase, GER_OPERMODE, (c))
+#define BLADE_XP_OPERMODE(c) \
+	MMIO_OUT8(pTrident->IOBase, BLADE_XP_GER_OPERMODE, (c))
 /* XXX */
 #define OLDTGUI_OPERMODE(c) \
 	{ \
@@ -317,14 +336,20 @@
 	MMIO_OUT8(pTrident->IOBase, OLDGER_BMIX, (c))
 #define TGUI_DIM_XY(w,h) \
 	MMIO_OUT32(pTrident->IOBase, GER_DIM_XY, XY_MERGE((w)-1,(h)-1))
+#define XP_DIM_XY(w,h) \
+	MMIO_OUT32(pTrident->IOBase, GER_DIM_XY, XY_MERGE((h),(w)))
 #define TGUI_STYLE(c) \
 	MMIO_OUT32(pTrident->IOBase, GER_STYLE, (c))
 #define OLDTGUI_DIMXY(w,h) \
 	MMIO_OUT32(pTrident->IOBase, OLDGER_DIMXY, XY_MERGE((w)-1,(h)-1))
 #define TGUI_SRC_XY(x,y) \
 	MMIO_OUT32(pTrident->IOBase, GER_SRC_XY, XY_MERGE(x,y))
+#define XP_SRC_XY(x,y) \
+	MMIO_OUT32(pTrident->IOBase, GER_SRC_XY, XP_XY_MERGE(x,y))
 #define TGUI_DEST_XY(x,y) \
 	MMIO_OUT32(pTrident->IOBase, GER_DEST_XY, XY_MERGE(x,y))
+#define XP_DEST_XY(x,y) \
+	MMIO_OUT32(pTrident->IOBase, GER_DEST_XY, XP_XY_MERGE(x,y))
 #define OLDTGUI_DESTXY(x,y) \
 	MMIO_OUT32(pTrident->IOBase, OLDGER_DESTXY, XY_MERGE(x,y))
 #define OLDTGUI_DESTLINEAR(c) \

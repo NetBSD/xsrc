@@ -23,10 +23,11 @@ earlier versions, may now no longer work, or work differently.  Be aware that
 for OS/2, XFree86-4.0 is considered to be alpha software.
 
 If you want to join the XFree86 developer team, e.g. to add support for cer-
-tain hardware, please send a request to BOD@XFree86.org. Please think about
-such a step carefully before, though, since much work is involved. Please use
-the XFree86-4.0 source code as a test example how to compile the system. The
-ability to manage that is a basic requirement for becoming a developer.
+tain hardware, please send a request to <BOD@XFree86.org>.  Please think
+about such a step carefully before, though, since much work is involved.
+Please use the XFree86-4.0 source code as a test example how to compile the
+system. The ability to manage that is a basic requirement for becoming a
+developer.
 
 2.  Tools required
 
@@ -221,9 +222,7 @@ installed them. Nor did I install the test subtree.
 
 Well, you see, this was quite easy :-)
 
-     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2Notes.sgml,v 1.1 2001/06/04 13:50:15 dawes Exp $
-
-     $XConsortium: OS2note.sgml /main/1 1996/02/24 10:08:59 kaleb $
+     Generated from XFree86: xc/programs/Xserver/hw/xfree86/doc/sgml/OS2Notes.sgml,v 1.2 2003/01/04 04:20:23 dawes Exp $
 
 
-$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.19 2001/06/30 22:58:09 tsi Exp $
+$XFree86: xc/programs/Xserver/hw/xfree86/doc/OS2.Notes,v 3.20 2003/01/04 04:28:27 dawes Exp $

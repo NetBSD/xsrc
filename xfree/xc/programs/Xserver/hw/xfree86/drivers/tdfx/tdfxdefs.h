@@ -1,4 +1,4 @@
-/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfxdefs.h,v 1.12 2001/04/05 21:29:17 dawes Exp $ */
+/* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/tdfx/tdfxdefs.h,v 1.13 2002/10/17 01:02:08 dawes Exp $ */
 /*
    Voodoo Banshee driver version 1.0.1
 
@@ -197,12 +197,16 @@
 
 /* 3D Registers */
 #define SST_3D_OFFSET           	0x200000
+#define SST_3D_STATUS			SST_3D_OFFSET+0
 #define SST_3D_LFBMODE               	SST_3D_OFFSET+0x114
 #define SST_3D_COMMAND 			SST_3D_OFFSET+0x120
+#define SST_3D_SWAPBUFFERCMD		SST_3D_OFFSET+0x128
 #define SST_3D_SLICTRL 			SST_3D_OFFSET+0x20C
 #define SST_3D_AACTRL			SST_3D_OFFSET+0x210
+#define SST_3D_SWAPPENDING		SST_3D_OFFSET+0x24C
 #define SST_3D_LEFTOVERLAYBUF		SST_3D_OFFSET+0x250
 #define SST_3D_RIGHTOVERLAYBUF		SST_3D_OFFSET+0x254
+#define SST_3D_FBISWAPHISTORY		SST_3D_OFFSET+0x258
 
 /* NAPALM REGISTERS */
 #define CFG_PCI_COMMAND			4
