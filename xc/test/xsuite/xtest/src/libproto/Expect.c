@@ -62,6 +62,7 @@ in this Software without prior written authorization from the X Consortium.
  *  SOFTWARE.                                                                *
  * ***************************************************************************
  */
+/* $XFree86: test/xsuite/xtest/src/libproto/Expect.c,v 1.3.2.1 1997/05/17 11:34:37 dawes Exp $ */
 
 #include "XstlibInt.h"
 
@@ -71,7 +72,9 @@ in this Software without prior written authorization from the X Consortium.
 
 extern int  errno;
 extern int  sys_nerr;
+#if !defined(CSRG_BASED) && !defined(linux)
 extern char *sys_errlist[];
+#endif
 
 static int  max_extra = IBUFSIZE - sizeof (xReply);
 static char rbuf[IBUFSIZE];
