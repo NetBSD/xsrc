@@ -33,7 +33,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+/* $XFree86: xc/fonts/util/ucs2any.c,v 1.1 2003/09/21 10:54:14 herrb Exp $ */
 /*
  * This utility allows you to generate from an ISO10646-1 encoded
  * BDF font other BDF fonts in any possible encoding. This way, you can
@@ -48,6 +48,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifndef NEED_BASENAME
+#include <libgen.h>
+#endif
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -58,17 +61,21 @@
 /* global variable for argv[0] */
 const char *my_name = NULL;
 
-static char *basename(char *pathname)
+#ifdef NEED_BASENAME
+static char *
+basename(char *pathname)
 {
 	char	*ptr;
 
 	ptr = strrchr(pathname, '/');
 	return ((ptr == NULL) ? pathname : &ptr[1]);
 }
+#endif
 
 /* "CLASS" "z" string and memory manipulation */
 
-void *zmalloc(size_t size)
+static void *
+zmalloc(size_t size)
 {
 	void *r;
 	r = malloc(size);
@@ -80,7 +87,8 @@ void *zmalloc(size_t size)
 	return r;
 }
 
-void *zrealloc(void *ptr, size_t size)
+static void *
+zrealloc(void *ptr, size_t size)
 {
 	void *temp;
 	temp = realloc(ptr, size);
@@ -91,7 +99,8 @@ void *zrealloc(void *ptr, size_t size)
 	return temp;
 }
 
-char *zstrdup(const char *str)
+static char *
+zstrdup(const char *str)
 {
 	char *retval;
 
@@ -107,14 +116,16 @@ char *zstrdup(const char *str)
 	return retval;
 }
 
-void zstrcpy(char **dest, const char *source)
+static void 
+zstrcpy(char **dest, const char *source)
 {
 	if (*dest != NULL)
 		free(*dest);
 	*dest = zstrdup(source);
 }
 
-void zquotedcpy(char **dest, const char *source)
+static void 
+zquotedcpy(char **dest, const char *source)
 {
 	const char *start, *end;
 
@@ -134,7 +145,8 @@ void zquotedcpy(char **dest, const char *source)
 	}
 }
 
-void zstrcat(char **dest, const char *source)
+static void 
+zstrcat(char **dest, const char *source)
 {
 	int dest_size = 1;
 	int source_size;
@@ -146,34 +158,13 @@ void zstrcat(char **dest, const char *source)
 	strcpy(*dest + dest_size - 1, source);
 }
 
-void zstrtoupper(char *s)
+static void 
+zstrtoupper(char *s)
 {
 	char *t;
 
 	for (t = s; *t != '\000'; t++)
 		*t = toupper(*t);
-}
-
-char *zitoa(int value)
-{
-	static char zitoa_buf[23];
-	char *p = zitoa_buf;
-	int n = value;
-	int i = 10;
-
-	if (n < 0) {
-		*p++ = '-';
-		n *= -1;
-	}
-	while (n / i)
-		i *= 10;
-	while (i > 9) {
-		i /= 10;
-		*p++ = '0' + n / i;
-		n -= n / i * i;
-	}
-	*p = '\000';
-	return zitoa_buf;
 }
 
 #define zs_true(x)	(x != NULL && strcmp(x, "0") != 0)
@@ -189,7 +180,8 @@ typedef struct {
 	void *nv;
 } da_t;
 
-da_t *da_new(char *name)
+static da_t *
+da_new(char *name)
 {
 	da_t *da;
 
@@ -203,7 +195,8 @@ da_t *da_new(char *name)
 	return da;
 }
 
-void *da_fetch(da_t *da, int key)
+static void *
+da_fetch(da_t *da, int key)
 {
 	void *r = NULL;
 
@@ -216,7 +209,8 @@ void *da_fetch(da_t *da, int key)
 	return r;
 }
 
-int da_fetch_int(da_t *da, int key)
+static int 
+da_fetch_int(da_t *da, int key)
 {
 	int *t;
 	int r = -1;
@@ -229,7 +223,8 @@ int da_fetch_int(da_t *da, int key)
 #define da_fetch_str(a,k)	\
 	(char *)da_fetch(a,k)
 
-void da_add(da_t *da, int key, void *value)
+static void 
+da_add(da_t *da, int key, void *value)
 {
 	int i = da->size;
 	if (key >= 0) {
@@ -258,12 +253,14 @@ void da_add(da_t *da, int key, void *value)
 	}
 }
 
-void da_add_str(da_t *da, int key, char *value)
+static void 
+da_add_str(da_t *da, int key, char *value)
 {
 	da_add(da, key, value?zstrdup(value):NULL);
 }
 
-void da_add_int(da_t *da, int key, int value)
+static void 
+da_add_int(da_t *da, int key, int value)
 {
 	int *v;
 
@@ -275,7 +272,8 @@ void da_add_int(da_t *da, int key, int value)
 #define da_count(da) (da->count)
 #define da_size(da) (da->size)
 
-void da_clear(da_t *da)
+static void 
+da_clear(da_t *da)
 {
 	int i;
 
@@ -293,7 +291,8 @@ void da_clear(da_t *da)
 #define TYPICAL_LINE_SIZE (80)
 
 /* read a line and strip trailing whitespace */
-int read_line(FILE *fp, char **buffer)
+static int 
+read_line(FILE *fp, char **buffer)
 {
 	int buffer_size = TYPICAL_LINE_SIZE;
 	int eof = 0;
@@ -375,13 +374,15 @@ int decmap[decmap_size] = {
 	0x00B7  /* MIDDLE DOT */
 };
 
-int is_control(int ucs)
+static int 
+is_control(int ucs)
 {
 	return ((ucs >= 0x00 && ucs <= 0x1f) ||
 		(ucs >= 0x7f && ucs <= 0x9f));
 }
 
-int is_blockgraphics(int ucs)
+static int 
+is_blockgraphics(int ucs)
 {
 	return ucs >= 0x2500 && ucs <= 0x25FF;
 }
@@ -394,7 +395,8 @@ typedef struct {
 	int cyoff;
 } bbx_t;
 
-bbx_t *combine_bbx(int awidth, int aheight, int axoff, int ayoff,
+static bbx_t *
+combine_bbx(int awidth, int aheight, int axoff, int ayoff,
 	int cwidth, int cheight, int cxoff, int cyoff, bbx_t *r)
 {
 	r->cwidth = cwidth;
@@ -420,7 +422,8 @@ bbx_t *combine_bbx(int awidth, int aheight, int axoff, int ayoff,
 	return r;
 }
 
-void usage(void) {
+static void 
+usage(void) {
 	printf("%s", "\n"
 "Usage: ucs2any [+d|-d] <source-name> { <mapping-file> <registry-encoding> }\n"
 "\n"
@@ -449,7 +452,8 @@ void usage(void) {
 "\n");
 }
 
-int chars_compare(const void *aa, const void *bb)
+static int 
+chars_compare(const void *aa, const void *bb)
 {
 	int a = *(int *)aa;
 	int b = *(int *)bb;
@@ -461,7 +465,8 @@ int chars_compare(const void *aa, const void *bb)
  * Return != 0 if "string" starts with "pattern" followed by whitespace.
  * If it does, return a pointer to the first non space char.
  */
-static const char * startswith(const char *string, const char *pattern)
+static const char *
+startswith(const char *string, const char *pattern)
 {
 	int l = strlen(pattern);
 
@@ -474,7 +479,8 @@ static const char * startswith(const char *string, const char *pattern)
 	return string;
 }
 
-int main(int argc, char *argv[])
+int 
+main(int argc, char *argv[])
 {
 	int ai = 1;
 	int dec_chars = -1;
