@@ -4,7 +4,7 @@ LOCAL_LIBRARIES = $(FSLIB)
 DEPLIBS = $(DEPFSLIB)
 SRCS = showfont.c
 OBJS = showfont.o
-INCLUDES = -I$(INCDIR)/fonts
+INCLUDES = -I$(INCDIR)/X11/fonts
 
 ComplexProgramTarget(showfont)
 
