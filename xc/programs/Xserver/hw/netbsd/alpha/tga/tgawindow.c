@@ -1,4 +1,4 @@
-/* $NetBSD: tgawindow.c,v 1.1 1999/04/27 08:18:24 ross Exp $ */
+/* $NetBSD: tgawindow.c,v 1.2 2000/07/03 21:06:32 elric Exp $ */
 
 /* $XConsortium: cfbwindow.c,v 5.22 94/04/17 20:29:07 dpw Exp $ */
 /***********************************************************
@@ -52,6 +52,10 @@ SOFTWARE.
 #include <stdio.h>
 #include <unistd.h>
 
+#ifndef PSZ
+#define PSZ 8
+#endif
+
 #include "X.h"
 #include "scrnintstr.h"
 #include "windowstr.h"
@@ -59,6 +63,8 @@ SOFTWARE.
 #include "mistruct.h"
 #include "regionstr.h"
 #include "cfbmskbits.h"
+
+#include "tgamap.h"
 
 extern WindowPtr *WindowTable;
 

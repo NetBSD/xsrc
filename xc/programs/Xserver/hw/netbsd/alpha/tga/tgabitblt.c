@@ -1,4 +1,4 @@
-/* $NetBSD: tgabitblt.c,v 1.2 1999/10/27 05:42:41 elric Exp $ */
+/* $NetBSD: tgabitblt.c,v 1.3 2000/07/03 21:06:31 elric Exp $ */
 
 /*
  * cfb copy area
@@ -36,6 +36,10 @@ Author: Keith Packard
 
 #include <stdio.h>
 
+#ifndef PSZ
+#define PSZ 8
+#endif
+
 #include	"X.h"
 #include	"Xmd.h"
 #include	"Xproto.h"
@@ -50,6 +54,8 @@ Author: Keith Packard
 #include	"fastblt.h"
 #define MFB_CONSTS_ONLY
 #include	"maskbits.h"
+
+#include	"tgamap.h"
 
 void
 alphaTgaDoBitbltCopy(

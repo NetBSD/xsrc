@@ -449,6 +449,15 @@ alphaTgaCopyWindow(
 #endif
 );
 
+void 
+alphaTga32CopyWindow(
+#if NeedFunctionPrototypes
+    WindowPtr /* pWin */,
+    DDXPointRec /* ptOldOrg */,
+    RegionPtr /* prgnSrc */
+#endif
+);
+
 Bool
 alphaTgaCreateGC(
 #if NeedFunctionPrototypes
@@ -456,8 +465,24 @@ alphaTgaCreateGC(
 #endif
 );
 
+Bool
+alphaTga32CreateGC(
+#if NeedFunctionPrototypes
+    register GCPtr /* pGC */
+#endif
+);
+
 void
 alphaTgaValidateGC(
+#if NeedFunctionPrototypes
+    register GCPtr  /* pGC */,
+    unsigned long   /* changes */,
+    DrawablePtr	    /* pDrawable */
+#endif
+);
+
+void
+alphaTga32ValidateGC(
 #if NeedFunctionPrototypes
     register GCPtr  /* pGC */,
     unsigned long   /* changes */,
@@ -480,8 +505,35 @@ alphaTgaCopyArea(
 #endif
 );
 
+RegionPtr
+alphaTga32CopyArea(
+#if NeedFunctionPrototypes
+    register DrawablePtr /* pSrcDrawable */,
+    register DrawablePtr /* pDstDrawable */,
+    GCPtr /* pGC */,
+    int /* srcx */,
+    int /* srcy */,
+    int /* width */,
+    int /* height */,
+    int /* dstx */,
+    int /* dsty */
+#endif
+);
+
 void
 alphaTgaFillSpans(
+#if NeedFunctionPrototypes
+    DrawablePtr /* pDrawable */,
+    GCPtr	/* pGC */,
+    int		/* nInit */,
+    DDXPointPtr /* pptInit */,
+    int*	/* pwidthInit */,
+    int 	/* fSorted */
+#endif
+);
+
+void
+alphaTga32FillSpans(
 #if NeedFunctionPrototypes
     DrawablePtr /* pDrawable */,
     GCPtr	/* pGC */,

@@ -1,4 +1,4 @@
-/* $NetBSD: tgasimpleblt.c,v 1.2 1999/04/27 17:52:43 ross Exp $ */
+/* $NetBSD: tgasimpleblt.c,v 1.3 2000/07/03 21:06:32 elric Exp $ */
 
 /*
  * tga simple rops
@@ -32,6 +32,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define PSZ	8
 
 #include	"X.h"
 #include	"Xmd.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: alphaTGA.c,v 1.2 2000/05/14 20:03:16 elric Exp $ */
+/* $NetBSD: alphaTGA.c,v 1.3 2000/07/03 21:06:31 elric Exp $ */
 
 /* $XConsortium: sunCfb.c,v 1.15.1.2 95/01/12 18:54:42 kaleb Exp $ */
 /* $XFree86: xc/programs/Xserver/hw/sun/sunCfb.c,v 3.2 1995/02/12 02:36:22 dawes Exp $ */
@@ -327,12 +327,16 @@ Bool alphaTGAInit (screen, pScreen, argc, argv)
 	    alphaFbs[screen].info.fb_height,
 	    monitorResolution, monitorResolution,
 	    realwidth,
-	    alphaFbs[screen].info.fb_depth))
+	    alphaFbs[screen].info.fb_depth)) {
+fprintf(stderr, "alphaTgaScreenInit failed\n");
             return FALSE;
+	}
 
 	CGScreenInit(pScreen);
-	if (!alphaScreenInit(pScreen))
+	if (!alphaScreenInit(pScreen)) {
+fprintf(stderr, "alphaScreenInit failed\n");
 		return FALSE;
+	}
 	(void) alphaSaveScreen(pScreen, SCREEN_SAVER_OFF);
 	return cfbCreateDefColormap(pScreen);
 }
@@ -346,12 +350,25 @@ alphaTgaSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
     int width;			/* pixel width of frame buffer */
     int	bpp;			/* bits per pixel of root */
 {
-    if (!cfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy,
-      width))
+    switch (bpp) {
+    case 32:
+	if (!cfb32SetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy,
+	  width))
+	    return FALSE;
+	return cfbSetVisualTypes(24, 1 << TrueColor, 8);
+    case 8:
+	if (!cfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy,
+	  width))
+	    return FALSE;
+	if (alphaTgaAccelerate) {
+	    pScreen->CopyWindow = alphaTgaCopyWindow;
+	    pScreen->CreateGC = alphaTgaCreateGC;
+	}
+	return TRUE;
+    default:
+	fprintf(stderr, "alphaTgaSetupScreen:  unsupported bpp = %d\n", bpp);
 	return FALSE;
-    pScreen->CopyWindow = alphaTgaCopyWindow;
-    pScreen->CreateGC = alphaTgaCreateGC;
-    return TRUE;
+    }
 }
 
 Bool
@@ -363,8 +380,32 @@ alphaTgaFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
     int width;			/* pixel width of frame buffer */
     int bpp;			/* bits per pixel of root */
 {
-    return cfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy,
-			       width);
+    Bool retval;
+
+    switch (bpp) {
+    case 32:
+	retval = cfb32FinishScreenInit(pScreen, pbits, xsize, ysize,
+		    dpix, dpiy, width);
+
+	/* XXXNJW cfb doesn't provide a way to tweak these, so cheat. */
+	pScreen->visuals[0].redMask = 0xff0000;
+	pScreen->visuals[0].greenMask = 0xff00;
+	pScreen->visuals[0].blueMask = 0xff;
+
+	pScreen->visuals[0].offsetRed = 16;
+	pScreen->visuals[0].offsetGreen = 8;
+	pScreen->visuals[0].offsetBlue = 0;
+
+	break;
+    case 8:
+	retval = cfbFinishScreenInit(pScreen, pbits, xsize, ysize,
+		    dpix, dpiy, width);
+	break;
+    default:
+	retval = FALSE;
+    }
+
+    return retval;
 }
 
 Bool
@@ -376,16 +417,9 @@ alphaTgaScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy, width, bpp)
     int width;			/* pixel width of frame buffer */
     int bpp;			/* bits per pixel of root */
 {
-    if (alphaTgaAccelerate) {
-	if (!alphaTgaSetupScreen(pScreen, pbits, xsize, ysize, dpix,
-	  dpiy, width, bpp))
+    if (!alphaTgaSetupScreen(pScreen, pbits, xsize, ysize, dpix,
+	dpiy, width, bpp))
 	    return FALSE;
-	return alphaTgaFinishScreenInit(pScreen, pbits, xsize, ysize, dpix,
+    return alphaTgaFinishScreenInit(pScreen, pbits, xsize, ysize, dpix,
 	  dpiy, width, bpp);
-    } else {
-	if (!cfbSetupScreen(pScreen, pbits, xsize, ysize, dpix, dpiy, width))
-	    return FALSE;
-	return cfbFinishScreenInit(pScreen, pbits, xsize, ysize, dpix, dpiy,
-	  width);
-    }
 }
