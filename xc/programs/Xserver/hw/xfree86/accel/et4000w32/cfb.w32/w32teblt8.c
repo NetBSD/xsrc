@@ -134,16 +134,16 @@ CFBTEGBLT8 (pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 	    char1 = (glyphPointer) FONTGLYPHBITS(pglyphBase, *ppci++);
 	    if (i&1)
 	    {
-		*ACL_MIX_ADDRESS = byteswap32(MixDstPong);
-		*MBP0 = byteswap32(W32MixPong);
+		*ACL_MIX_ADDRESS = MixDstPong;
+		*MBP0 = W32MixPong;
 	    }
 	    else
 	    {
-		*ACL_MIX_ADDRESS = byteswap32(MixDstPing);
-		*MBP0 = byteswap32(W32Mix);
+		*ACL_MIX_ADDRESS = MixDstPing;
+		*MBP0 = W32Mix;
 	    }
 	    memcpy(W32Buffer, char1, h<<2); /* is well-optimized in most OSses */
-	    *ACL_DESTINATION_ADDRESS = byteswap32(dst);
+	    *ACL_DESTINATION_ADDRESS = dst;
 	    dst += widthGlyph;
 	}
     }
@@ -196,9 +196,9 @@ CFBTEGBLT8 (pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 	    nglyph -= count; \
 	    hTmp = h; \
 	    if (W32OrW32i) \
-		*MBP2 = SWAPL(dst); \
+		*MBP2 = dst; \
 	    else \
-		*ACL_DESTINATION_ADDRESS = byteswap32(dst); \
+		*ACL_DESTINATION_ADDRESS = dst; \
             dst += width; \
 	    TEXT_IT(init, fetch) \
     	}
@@ -213,7 +213,6 @@ CFBTEGBLT8 (pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
     if (widthGlyph <= 8)
     {
 	widthGlyphs = widthGlyph << 2;
-#ifndef __mc68000__
 	DO_IMAGE_TEXT(4, widthGlyphs,
 		      char1 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
 		      char2 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
@@ -224,23 +223,10 @@ CFBTEGBLT8 (pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 							     << widthGlyph))
 						<< widthGlyph))
 				   << widthGlyph)));
-#else
-	DO_IMAGE_TEXT(4, widthGlyphs,
-		      char1 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
-		      char2 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
-		      char3 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
-		      char4 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
-		      ,
-		      (*char1++ | ((*char2++ | ((*char3++ | (*char4++
-							     >> widthGlyph))
-						>> widthGlyph))
-				   >> widthGlyph)) >> (32 - widthGlyphs));
-#endif
     }
     else if (widthGlyph <= 10)
     {
 	widthGlyphs = (widthGlyph << 1) + widthGlyph;
-#ifndef __mc68000__
 	DO_IMAGE_TEXT(3, widthGlyphs,
 		      char1 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
 		      char2 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
@@ -248,44 +234,20 @@ CFBTEGBLT8 (pDrawable, pGC, xInit, yInit, nglyph, ppci, pglyphBase)
 		      ,
 		      (*char1++ | ((*char2++ |
 				    (*char3++ << widthGlyph)) << widthGlyph)));
-#else
-	DO_IMAGE_TEXT(3, widthGlyphs,
-		      char1 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
-		      char2 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
-		      char3 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
-		      ,
-		      (*char1++ | ((*char2++ |
-				    (*char3++ >> widthGlyph)) >> widthGlyph)) >>(32 - widthGlyphs));
-#endif
     }
     else if (widthGlyph <= 16)
     {
 	widthGlyphs = widthGlyph << 1;
-#ifndef __mc68000__
 	DO_IMAGE_TEXT(2, widthGlyphs,
 		      char1 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
 		      char2 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
 		      ,
 		      (*char1++ | (*char2++ << widthGlyph)));
-#else
-	DO_IMAGE_TEXT(2, widthGlyphs,
-		      char1 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
-		      char2 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);
-		      ,
-		      (*char1++ | (*char2++ >> widthGlyph)) >> (32 - widthGlyphs));
-#endif
     }
 
-#ifndef __mc68000__
     DO_IMAGE_TEXT(1, widthGlyph,
 		  char1 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);,
 		  *char1++);
     }
-#else
-    DO_IMAGE_TEXT(1, widthGlyph,
-		  char1 = (glyphPointer)FONTGLYPHBITS(pglyphBase, *ppci++);,
-		  (*char1++) >> (32 - widthGlyph));
-    }
-#endif
 }
 #endif /* PSZ == 8 */

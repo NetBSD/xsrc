@@ -64,7 +64,8 @@ OBJS =	 cfbgc.o cfbwindow.o \
 	      -I$(SERVERSRC)/include \
 	      -I$(XINCLUDESRC) -I$(FONTINCSRC) \
 	      -I$(XF86ACCELSRC)/et4000w32/w32 \
-	      -I$(XF86SRC)/vga256/vga
+	      -I$(XF86SRC)/vga256/vga \
+	      -I$(XF86SRC)/common
 	
    LINTLIBS = ../dix/llib-ldix.ln ../os/llib-los.ln \
 	     ../mfb/llib-lmfb.ln ../mi/llib-lmi.ln
