@@ -57,10 +57,11 @@ extern int errno;
 
 #ifdef USE_WSCONS
 #include <dev/wscons/wsconsio.h>
+#else
+#include <machine/wsconsio.h>
 #endif
 
 #include <machine/fbio.h>
-#include <machine/wsconsio.h>
 #if 0 /* XXX */
 #include <machine/kbd.h>
 #include <machine/kbio.h>

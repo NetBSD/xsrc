@@ -217,18 +217,18 @@ static void alphaBell (percent, device, ctrl, unused)
 {
     KeybdCtrl*      kctrl = (KeybdCtrl*) ctrl;
     alphaKbdPrivPtr   pPriv = (alphaKbdPrivPtr) device->public.devicePrivate;
-    struct wsconsio_bell_data wbd;
+    struct wskbd_bell_data wbd;
  
     if (percent == 0 || kctrl->bell == 0)
  	return;
 
-    wbd.wbd_flags = WSCONSIO_BELLDATA_VOLUME | WSCONSIO_BELLDATA_PITCH |
-	WSCONSIO_BELLDATA_PERIOD;
-    wbd.wbd_volume = percent;
-    wbd.wbd_pitch = kctrl->bell_pitch;
-    wbd.wbd_period = kctrl->bell_duration;
+    wbd.which = WSKBD_BELL_DOVOLUME | WSKBD_BELL_DOPITCH |
+	WSKBD_BELL_DOPERIOD;
+    wbd.volume = percent;
+    wbd.pitch = kctrl->bell_pitch;
+    wbd.period = kctrl->bell_duration;
 
-    if (ioctl (pPriv->fd, WSCONSIO_COMPLEXBELL, &wbd) == -1) {
+    if (ioctl (pPriv->fd, WSKBDIO_COMPLEXBELL, &wbd) == -1) {
  	Error("Failed to activate bell");
 	return;
     }
