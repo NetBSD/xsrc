@@ -485,13 +485,7 @@ _LoaderFileToMem(int fd, unsigned long offset, int size, char *label)
 #ifdef UseMMAP
     unsigned long ret;
 
-# if defined(__NetBSD__) && defined(__AMD64__)
-#  define LOADER_MMAP_AREA_SIZE (256*1024*1024)
-#  define LOADER_MMAP_AREA_START ((2U*1024*1024*1024) - LOADER_MMAP_AREA_SIZE)
-    static char *mm_addr = (char *)LOADER_MMAP_AREA_START;
-# else
     char *mm_addr = NULL;
-# endif
 
 # ifdef MmapPageAlign
     unsigned long pagesize;
@@ -515,30 +509,22 @@ _LoaderFileToMem(int fd, unsigned long offset, int size, char *label)
     if ((new_off_bias + size) > new_size)
 	new_size += pagesize;
     ret = (unsigned long)mmap(mm_addr, new_size, MMAP_PROT, MAP_PRIVATE
-#  if defined(__AMD64__) && !defined(__NetBSD__)
+#  if defined(__AMD64__)
 			      | MAP_32BIT
 #  endif
 			      , fd, new_off);
     if (ret == -1)
 	FatalError("mmap() failed: %s\n", strerror(errno));
 
-# if defined(__NetBSD__) && defined(__AMD64__)
-    mm_addr += new_size;
-# endif
-
     return (void *)(ret + new_off_bias);
 # else
     ret = (unsigned long)mmap(mm_addr, size, MMAP_PROT, MAP_PRIVATE
-#  if defined(__AMD64__) && !defined(__NetBSD__)
+#  if defined(__AMD64__)
 			      | MAP_32BIT
 #  endif
 			      , fd, offset + offsetbias);
     if (ret == -1)
 	FatalError("mmap() failed: %s\n", strerror(errno));
-
-# if defined(__NetBSD__) && defined(__AMD64__)
-    mm_addr += (size + 4095) & ~4095;
-# endif
 
     return (void *)ret;
 # endif
