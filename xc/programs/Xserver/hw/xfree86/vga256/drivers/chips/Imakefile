@@ -85,7 +85,7 @@ ObjectFromSpecialSource(ct_teblt8hi, ct_teblt8, -DCHIPS_MMIO -DCHIPS_HIQV)
 ObjectFromSpecialSource(ct_colexphi, ct_colexp, -DCHIPS_MMIO -DCHIPS_HIQV)
 #else
 #ifdef i386Architecture
-ObjectFromSpecialAsmSource(ct_bank,ct_bank,NullParameter)
+ObjectFromAsmSource(ct_bank, NullParameter)
 #endif
 ObjectFromSpecialSource(ct_accelmm, ct_accel, -DCHIPS_MMIO)
 ObjectFromSpecialSource(ct_accelhi, ct_accel, -DCHIPS_MMIO -DCHIPS_HIQV)
