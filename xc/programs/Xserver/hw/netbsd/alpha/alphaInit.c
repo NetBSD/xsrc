@@ -230,6 +230,9 @@ void OsVendorInit(
 )
 {
     static int inited;
+    char *kbd = "/dev/wskbd0";
+    char *ptr = "/dev/wsmouse0";
+
     if (!inited) {
 	struct rlimit rl;
 
@@ -243,9 +246,12 @@ void OsVendorInit(
 	    rl.rlim_cur = maxfds < rl.rlim_max ? maxfds : rl.rlim_max;
 	    (void) setrlimit (RLIMIT_NOFILE, &rl);
 	}
-	alphaKbdPriv.fd = open ("/dev/wskbd0", O_RDWR, 0);
-	alphaPtrPriv.fd = open ("/dev/wsmouse0", O_RDWR, 0);
-        inited = 1;
+	/* warn(3) isn't X11 API, but we know we are on NetBSD */
+	if((alphaKbdPriv.fd = open (kbd, O_RDWR, 0)) == -1)
+		warn("Keyboard device %s", kbd);
+	else if((alphaPtrPriv.fd = open ("/dev/wsmouse0", O_RDWR, 0)) == -1)
+		warn("Pointer device %s", ptr);
+	inited = 1;
     }
 }
 
