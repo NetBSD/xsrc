@@ -647,15 +647,15 @@ InstallManPage(program,$(MANDIR))
 
 #ifndef ProgramTargetHelperNoMan
 #define        ProgramTargetHelperNoMan(program,srcs,objs,deplib,locallib,syslib) @@\
-ProgramTargetName(program): $(objs) $(deplib)                          @@\
-       RemoveTargetProgram($@)                                         @@\
-       LinkRule($@,$(LDOPTIONS),$(objs),locallib $(LDLIBS) syslib)     @@\
-                                                                       @@\
-CenterProgramTarget(program,$(srcs),$(objs),locallib,syslib)           @@\
+ProgramTargetName(program): $(objs) $(deplib)				@@\
+	RemoveTargetProgram($@)						@@\
+	LinkRule($@,$(LDOPTIONS),$(objs),locallib $(LDLIBS) syslib)	@@\
+									@@\
+CenterProgramTarget(program,$(srcs),$(objs),locallib,syslib)		@@\
 SentinelProgramTarget(program,$(objs) $(deplib),$(objs) locallib $(LDLIBS) syslib) @@\
 PurifyProgramTarget(program,$(objs) $(deplib),$(objs) locallib $(LDLIBS) syslib) @@\
 ProofProgramTarget(program,$(objs) $(deplib),$(objs) locallib $(LDLIBS) syslib) @@\
-                                                                       @@\
+									@@\
 InstallProgram(program,$(BINDIR))
 #endif /* ProgramTargetHelperNoMan */
 
@@ -717,18 +717,18 @@ clean::									@@\
  * that describe a single program.
  */
 #ifndef ComplexProgramTargetNoMan
-#define        ComplexProgramTargetNoMan(program)                      @@\
-        PROGRAM = program                                              @@\
-                                                                       @@\
-AllTarget(program)                                                     @@\
-                                                                       @@\
+#define ComplexProgramTargetNoMan(program)				@@\
+        PROGRAM = program						@@\
+									@@\
+AllTarget(program)							@@\
+									@@\
 ProgramTargetHelperNoMan(program,SRCS,OBJS,DEPLIBS,$(LOCAL_LIBRARIES),NullParameter) @@\
-                                                                       @@\
-DependTarget()                                                         @@\
-LintTarget()                                                           @@\
-                                                                       @@\
-clean::                                                                @@\
-       RemoveFile(ProgramTargetName(program))
+									@@\
+DependTarget()								@@\
+LintTarget()								@@\
+									@@\
+clean::									@@\
+	RemoveFile(ProgramTargetName(program))
 #endif /* ComplexProgramTargetNoMan */
 
 /*
