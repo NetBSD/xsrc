@@ -1,4 +1,4 @@
-XCOMM $NetBSD: NetBSD.cf,v 1.82 2001/01/14 13:40:20 scw Exp $
+XCOMM $NetBSD: NetBSD.cf,v 1.83 2001/01/14 13:49:58 scw Exp $
 XCOMM platform:  $XConsortium: NetBSD.cf /main/16 1996/10/31 14:47:14 kaleb $
 
 
@@ -26,6 +26,7 @@ XCOMM		NetBSD/pc532	client
 XCOMM		NetBSD/x68k	client/server
 XCOMM		NetBSD/macppc	client/server
 XCOMM		NetBSD/hpcmips	client/server
+XCOMM		NetBSD/mvme68k	client
 XCOMM		NetBSD/next68k	client
 XCOMM		NetBSD/prep	client
 XCOMM		NetBSD/news68k	client
