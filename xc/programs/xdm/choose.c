@@ -583,7 +583,13 @@ RunChooser (d)
     char    **env;
 
     Debug ("RunChooser %s\n", d->name);
+#ifndef NOXDMTITLE
+#ifndef CSRG_BASED
     SetTitle (d->name, "chooser", (char *) 0);
+#else
+    setproctitle ("%s chooser", d->name);
+#endif
+#endif
     LoadXloginResources (d);
     args = parseArgs ((char **) 0, d->chooser);
     strcpy (buf, "-xdmaddress ");

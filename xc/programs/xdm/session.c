@@ -259,7 +259,13 @@ struct display	*d;
     Debug ("ManageSession %s\n", d->name);
     (void)XSetIOErrorHandler(IOErrorHandler);
     (void)XSetErrorHandler(ErrorHandler);
+#ifndef NOXDMTITLE
+#ifndef CSRG_BASED
     SetTitle(d->name, (char *) 0);
+#else
+    setproctitle ("%s session", d->name);
+#endif
+#endif
     /*
      * Load system default Resources
      */

@@ -96,8 +96,10 @@ static void	StartDisplays ();
 int nofork_session = 0;
 
 #ifndef NOXDMTITLE
+#ifndef CSRG_BASED
 static char *Title;
 static int TitleLen;
+#endif
 #endif
 
 #ifndef UNRELIABLE_SIGNALS
@@ -115,8 +117,10 @@ char	**argv;
     if (((oldumask = umask(022)) & 002) == 002)
 	(void) umask (oldumask);
 #ifndef NOXDMTITLE
+#ifndef CSRG_BASED
     Title = argv[0];
     TitleLen = (argv[argc - 1] + strlen(argv[argc - 1])) - Title;
+#endif
 #endif
 
     /*
@@ -818,39 +822,21 @@ UnlockPidFile ()
     fclose (pidFilePtr);
 }
 
+#ifndef NOXDMTITLE
+#ifndef CSRG_BASED
 #if NeedVarargsPrototypes
-SetTitle (char *name, ...)
+SetTitle (char *fmt, ...)
 #else
 /*VARARGS*/
-SetTitle (name, va_alist)
+SetTitle (fmt, va_alist)
 char *name;
 va_dcl
 #endif
 {
-#ifndef NOXDMTITLE
-    char	*p = Title;
-    int	left = TitleLen;
-    char	*s;
-    va_list	args;
-
-    Va_start(args,name);
-    *p++ = '-';
-    --left;
-    s = name;
-    while (s)
-    {
-	while (*s && left > 0)
-	{
-	    *p++ = *s++;
-	    left--;
-	}
-	s = va_arg (args, char *);
-    }
-    while (left > 0)
-    {
-	*p++ = ' ';
-	--left;
-    }
+    Va_start(args, fmt);
+    Title[0] = '-';
+    vsnprintf(&Title[0], TitleLen - 1, fmt, args);
     va_end(args);
-#endif	
 }
+#endif
+#endif
