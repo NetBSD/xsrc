@@ -842,6 +842,8 @@ char *name;
 va_dcl
 #endif
 {
+    va_list args;
+
     Va_start(args, fmt);
     Title[0] = '-';
     vsnprintf(&Title[0], TitleLen - 1, fmt, args);
