@@ -28,6 +28,9 @@ LOCAL_LIBRARIES = XawClientLibs
 #ifdef i386BsdArchitecture
   SYS_LIBRARIES = -lutil -lkvm
 #endif
+#ifdef NetBSDArchitecture
+  SYS_LIBRARIES = -lkvm
+#endif
            SRCS = xload.c get_load.c
            OBJS = xload.o get_load.o
  OSMAJORVERSION = OSMajorVersion
@@ -37,7 +40,7 @@ LOCAL_LIBRARIES = XawClientLibs
 AllTarget(xload)
 NormalProgramTarget(xload,$(OBJS),$(DEPLIBS),$(LOCAL_LIBRARIES),NullParameter)
 
-#if defined(OSF1Architecture) || defined(NetBSDArchitecture) || (defined(FreeBSDArchitecture) && OSMajorVersion > 1)
+#if defined(OSF1Architecture) || (defined(FreeBSDArchitecture) && OSMajorVersion > 1)
 InstallProgram(xload,$(BINDIR))
 #else
 InstallProgramWithFlags(xload,$(BINDIR),$(INSTKMEMFLAGS))
