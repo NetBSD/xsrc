@@ -512,7 +512,7 @@ I128Init(ScrnInfoPtr pScrn, DisplayModePtr mode)
         if (pI128->Debug)
         	xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "I128Init complete\n");
 
-	return(ret);
+	return ret;
 }
 
 

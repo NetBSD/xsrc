@@ -942,6 +942,7 @@ I128PreInit(ScrnInfoPtr pScrn, int flags)
 			mclk / 1000.0);
 	  pI128->minClock = 20000;
 	  pI128->ProgramDAC = I128ProgramTi3025;
+	  pI128->HWCursor = FALSE;
 	  break;
 
        case IBM524_DAC:
